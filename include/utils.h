@@ -15,6 +15,7 @@
 
 struct config;
 struct sockaddr_in;
+struct sockaddr;
 
 /// The log level which is passed as first argument to print()
 enum log_level
@@ -54,6 +55,19 @@ int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags);
  * @param g The global configuration
  */
 void init_realtime(struct config *g);
+
+/** Compare two socket addresses based on their family and address.
+ *
+ * Only the family and the address is compared.
+ * Port numbers etc are ignored.
+ *
+ * @param a First address
+ * @param b Second address
+ * @return
+ *  - 0 if the addresses are equal
+ *  - otherwise they are not equal
+ */
+int sockaddr_cmp(struct sockaddr *a, struct sockaddr *b);
 
 /// Check assertion and exit if failed.
 #define assert(exp) do { \
