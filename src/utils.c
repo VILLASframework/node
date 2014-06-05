@@ -7,7 +7,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
+#include <errno.h>
+
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "config.h"
 #include "utils.h"
@@ -33,7 +39,46 @@ void print(enum log_level lvl, const char *fmt, ...)
 	printf("\n");
 
 	va_end(ap);
+}
 
-	if (lvl >= FATAL)
-		exit(EXIT_FAILURE);
+int resolve(const char *addr, struct sockaddr_in *sa, int flags)
+{
+	int ret;
+	char *node;
+	char *service;
+
+	/* Split addr into node:service */
+	if (sscanf(addr, "%m[^:]:%ms", &node, &service) != 2)
+		return -EINVAL;
+
+	/* Check for wildcards */
+	if (!strcmp(node, "*")) {
+		free(node);
+		node = NULL;
+	}
+
+	if (!strcmp(service, "*")) {
+		free(service);
+		service = NULL;
+	}
+
+	/* Get IP */
+	struct addrinfo *result;
+	struct addrinfo hint = {
+		.ai_flags = flags,
+		.ai_family = AF_INET,
+		.ai_socktype = SOCK_DGRAM,
+		.ai_protocol = 0
+	};
+
+	if (getaddrinfo(node, service, &hint, &result))
+		error("Failed to lookup address: %s", gai_strerror(ret));
+
+	memcpy(sa, result->ai_addr, result->ai_addrlen);
+
+	free(node);
+	free(service);
+	freeaddrinfo(result);
+
+	return 0;
 }

@@ -15,111 +15,86 @@
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
-#include <netdb.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "cfg.h"
 #include "utils.h"
 #include "msg.h"
 #include "node.h"
 
-struct node* node_create(const char *name, enum node_type type, const char *local, const char *remote)
+extern struct config config;
+
+int node_create(struct node *n, const char *name, enum node_type type,
+	struct sockaddr_in local, struct sockaddr_in remote)
 {
 	int ret;
-	struct node *n = malloc(sizeof(struct node));
-	if (!n)
-		return NULL;
 
-	memset(n, 0, sizeof(struct node));
-
-	n->name = strdup(name);
+	n->name = name;
 	n->type = type;
+	n->local = local;
+	n->remote = remote;
 
-	if (!resolve(local, &n->local))
-		error("Failed to resolve local address '%s' of node '%s'", local, name);
-	if (!resolve(remote, &n->remote))
-		error("Failed to resolve remote address '%s' of node '%s'", remote, name);
-
-	/* Create socket */
-	n->sd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (n->sd < 0) {
-		node_destroy(n);
-		error("Failed to create socket: %s", strerror(errno));
-		return NULL;
-	}
-
-	/* Bind socket for receiving */
-	ret = bind(n->sd, (struct sockaddr *) &n->local, sizeof(struct sockaddr_in));
-	if (ret < 0) {
-		node_destroy(n);
-		error("Failed to bind socket: %s", strerror(errno));
-		return NULL;
-	}
-	debug(1, "We listen for node %s at %s:%u", name, inet_ntoa(n->local.sin_addr), ntohs(n->local.sin_port));
-
-	/* Connect socket for sending */
-	ret = connect(n->sd, (struct sockaddr *) &n->remote, sizeof(struct sockaddr_in));
-	if (ret < 0) {
-		node_destroy(n);
-		error("Failed to connect socket: %s", strerror(errno));
-		return NULL;
-	}
-	debug(1, "We sent to node %s at %s:%u", name, inet_ntoa(n->remote.sin_addr), ntohs(n->remote.sin_port));
-
-	return n;
+	return 0;
 }
 
-int resolve(const char *addr, struct sockaddr_in *sa)
+int node_connect(struct node *n)
 {
-	/* split host:port */
-	char *host;
-	char *port;
+	/* Create socket */
+	n->sd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (n->sd < 0)
+		error("Failed to create socket: %s", strerror(errno));
 
-	if (sscanf(addr, "%m[^:]:%ms", &host, &port) != 2) {
-		print(FATAL, "Invalid address format: %s", addr);
-	}
+	/* Set socket options */
+	int prio = SOCKET_PRIO;
+	if (setsockopt(n->sd, SOL_SOCKET, SOCKET_PRIO, &prio, sizeof(prio)))
+		perror("Failed to set socket options");
 
-	/* get ip */
-	struct addrinfo *result;
-	struct addrinfo hint = {
-		.ai_family = AF_INET,
-		.ai_socktype = SOCK_DGRAM,
-		.ai_protocol = 0
-	};
+	/* Bind socket for receiving */
+	if (bind(n->sd, (struct sockaddr *) &n->local, sizeof(struct sockaddr_in)))
+		error("Failed to bind socket: %s", strerror(errno));
 
-	int ret = getaddrinfo(host, port, &hint, &result);
-	if (ret) {
-		print(FATAL, "Failed to get address for node %s: %s", addr, gai_strerror(ret));
-		return -EINVAL;
-	}
+	debug(1, "  We listen for node %s at %s:%u", n->name, inet_ntoa(n->local.sin_addr), ntohs(n->local.sin_port));
 
-	memcpy(sa, result->ai_addr, sizeof(struct sockaddr_in));
-	sa->sin_family = AF_INET;
-	sa->sin_port = htons(atoi(port));
+	/* Connect socket for sending */
+	/*if (connect(n->sd, (struct sockaddr *) &n->remote, sizeof(struct sockaddr_in)))
+		error("Failed to connect socket: %s", strerror(errno));*/
 
-	freeaddrinfo(result);
-	free(host);
-	free(port);
+	debug(1, "  We sent to node %s at %s:%u", n->name, inet_ntoa(n->remote.sin_addr), ntohs(n->remote.sin_port));
 
 	return 0;
 }
 
 void node_destroy(struct node* n)
 {
-	if (!n)
-		return;
+	assert(n);
 
 	close(n->sd);
-
-	if (n->name)
-		free(n->name);
-
-	free(n);
 }
 
+enum node_type node_lookup_type(const char *str)
 {
+	     if (!strcmp(str, "workstation"))
+		return NODE_WORKSTATION;
+	else if (!strcmp(str, "server"))
+		return NODE_SERVER;
+	else if (!strcmp(str, "rtds"))
+		return NODE_SIM_RTDS;
+	else if (!strcmp(str, "opal"))
+		return NODE_SIM_OPAL;
+	else if (!strcmp(str, "dsp"))
+		return NODE_SIM_DSP;
+	else
+		return NODE_INVALID;
 }
 
+struct node* node_lookup_name(const char *str, struct node *nodes, int len)
 {
+	for (int i = 0; i < len; i++) {
+		if (!strcmp(str, nodes[i].name)) {
+			return &nodes[i];
+		}
+	}
 
+	return NULL;
 }
+

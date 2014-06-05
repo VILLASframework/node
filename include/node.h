@@ -19,15 +19,21 @@
 
 enum node_type
 {
-	SIMULATOR,
-	SERVER,
-	WORKSTATION
+	NODE_INVALID,
+	NODE_SERVER,
+	NODE_WORKSTATION,
+	NODE_SIM_OPAL,
+	NODE_SIM_RTDS,
+	NODE_SIM_DSP
 };
 
 struct node
 {
 	/// The socket descriptor
 	int sd;
+
+	/// Reference counter
+	int ref_cnt;
 
 	// Local address of the socket
 	struct sockaddr_in local;
@@ -39,7 +45,7 @@ struct node
 	enum node_type type;
 
 	/// A short identifier of the node
-	char *name;
+	const char *name;
 };
 
 struct msg; /* forward decl */
@@ -49,29 +55,59 @@ struct msg; /* forward decl */
  *
  * Memory is allocated dynamically and has to be freed by node_destroy()
  *
+ * @param n A pointer to the node structure
  * @param name An acroynm, describing the node
- * @param type The type of a node (SERVER, SIMULATOR, WORKSTATION)
- * @param local A string specifying the local ip:port
- * @param remote A string specifying the remote ip:port
+ * @param type The type of a node (server, simulator, workstation)
  * @return
  *  - 0 on success
  *  - otherwise on error occured
  */
-struct node* node_create(const char *name, enum node_type type, const char *local, const char *remote);
+int node_create(struct node *n, const char *name, enum node_type type,
+	struct sockaddr_in local, struct sockaddr_in remote);
 
 /**
  * @brief Delete a node created by node_create()
  *
  * @param p A pointer to the node struct
  */
-void node_destroy(struct node* n);
+void node_destroy(struct node *n);
 
 /**
+ * @brief Connect and bind the UDP socket of this node
  *
+ * @param n A pointer to the node structure
+ * @return
+ *  - 0 on success
+ *  - otherwise on error occured
  */
+int node_connect(struct node *n);
 
 /**
+ * @brief Disconnect the UDP socket of this node
  *
+ * @param n A pointer to the node structure
+ * @return
+ *  - 0 on success
+ *  - otherwise on error occured
  */
+int node_disconnect(struct node *n);
+
+/**
+ * @brief Lookup node type from string
+ *
+ * @param str The string containing the node type
+ * @return The node type enumeration value
+ */
+enum node_type node_lookup_type(const char *str);
+
+/**
+ * @brief Search list of nodes for a name
+ *
+ * @param str The name of the wanted node
+ * @param nodes A pointer to the first list element
+ * @param len Length of the node list
+ * @return A pointer to the node or NULL if not found
+ */
+struct node* node_lookup_name(const char *str, struct node *nodes, int len);
 
 #endif /* _NODE_H_ */
