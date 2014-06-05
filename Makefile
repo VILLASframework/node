@@ -1,55 +1,34 @@
 TARGETS = server test
 
-OBJS = utils.o msg.o
+SRCS = server.c test.c node.c path.c utils.c msg.c
+VPATH = src
 
-SRCS = $(wildcard src/*.c)
-DEPS = $(SRCS:src/%.c=dep/%.d)
-
-DIRS = dep bin build
-
-# Files
-bin/server: OBJS += main.o node.o path.o
-bin/test: OBJS += test.o
-
-# Flags
-INCS = -Iinclude/
-DEFS = -D_XOPEN_SOURCE -D_GNU_SOURCE -D_POSIX_C_SOURCE=200809L
-LIBS = -lrt
-
-CFLAGS = -g -std=c99 $(DEFS) $(INCS)
-LDFLAGS = -pthread $(LIBS)
-
-# Tools
+CC = gcc
 RM = rm -f
-CC = gcc -c
-LD = gcc
-DEP = gcc -MM
-MKDIR = mkdir -p
-RMDIR = rm -rf
 
-# Pseudotargets
-.SECONDARY:
-.SECONDEXPANSION:
+
+LDFLAGS = -pthread -lrt
+CFLAGS = -std=c99 -Iinclude/ -D_XOPEN_SOURCE=500
+
+ifdef (DEBUG)
+	CFLAGS += -DDEBUG=$(DEBUG) -g
+endif
+
 .PHONY: all clean doc
 
-all:    $(addprefix bin/,$(TARGETS))
+all: $(TARGETS)
 
-bin/%: $$(addprefix build/,$$(OBJS)) | bin
-	$(LD) $(LDFLAGS) $^ -o $@
+server: node.o msg.o utils.o path.o
+test: msg.o utils.o
 
-build/%.o: src/%.c dep/%.d | build
-	$(CC) $(CFLAGS) $< -o $@
-
-dep/%.d: src/%.c | dep
-	$(DEP) $(CFLAGS) $< -o $@
+%.d: %.c
+	$(CC) -MM $(CFLAGS) $< -o $@
 
 clean:
-	$(RMDIR) $(DIRS)
-
-$(DIRS):
-	$(MKDIR) $@
+	$(RM) *~ *.o *.d
+	$(RM) $(TARGETS)
 
 doc:
 	$(MAKE) -C $@
 
--include $(DEPS)
+-include $(SRCS:.c=.d)
