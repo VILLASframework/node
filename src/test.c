@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <signal.h>
+#include <time.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -18,6 +20,25 @@
 #include "config.h"
 #include "utils.h"
 #include "msg.h"
+
+int dev_id;
+int sd;
+
+void quit()
+{
+	print(INFO, "Goodbye");
+	exit(EXIT_SUCCESS);
+}
+
+void tick()
+{
+	struct msg m;
+
+	msg_random(&m, dev_id);
+	msg_fprint(stdout, &m);
+
+	send(sd, &m, sizeof(struct msg), 0);
+}
 
 int main(int argc, char *argv[])
 {
@@ -31,35 +52,53 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	int dev_id = atoi(argv[1]);
+	dev_id = atoi(argv[1]);
 	int ret;
 
 	print(INFO, "Test node started on %s:%s with id=%u", argv[2], argv[3], dev_id);
 
-	int sd = socket(AF_INET, SOCK_DGRAM, 0);
+	sd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sd < 0)
 		print(FATAL, "Failed to create socket: %s", strerror(errno));
 
-	struct sockaddr_in sa;
-	struct msg m;
-
-	sa.sin_family = AF_INET;
-	sa.sin_port = htons(atoi(argv[3]));
+	struct sockaddr_in sa = {
+		.sin_family = AF_INET,
+		.sin_port = htons(atoi(argv[3]))
+	};
 	inet_aton(argv[2], &sa.sin_addr);
+
+	sigset_t mask;
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGUSR1);
+	//sigprocmask(SIG_SETMASK, &mask, NULL);
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
+
+	ret = bind(sd, &sa, sizeof(struct sockaddr_in));
 
 	ret = connect(sd, &sa, sizeof(struct sockaddr_in));
 	if (ret < 0)
 		print(FATAL, "Failed to connect socket: %s", strerror(errno));
 
-	while (1) {
-		msg_random(&m, dev_id);
-		msg_fprint(stdout, &m);
+	struct sigevent si = {
+		.sigev_notify = SIGEV_SIGNAL,
+		.sigev_signo = SIGUSR1
+	};
 
-		send(sd, &m, sizeof(struct msg), 0);
+	struct itimerspec its = {
+		{ 0, 250000000 },
+		{ 0, 500000000 }
+	};
 
-		sleep(3);
-	}
+	timer_t t;
+	timer_create(CLOCK_MONOTONIC, &si, &t);
+	timer_settime(t, 0, &its, NULL);
 
-	pause();
+	signal(SIGUSR1, tick);
+	signal(SIGINT, quit);
+
+	while(1) pause();
+
+	timer_delete(t);
+
 	return 0;
 }
