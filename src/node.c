@@ -128,5 +128,4 @@ int node_recv(struct node *n, struct msg *m)
 		print(ERROR, "Recv failed: %s", strerror(errno));
 
 	print(DEBUG, "Message received from node %s", n->name);
-	msg_fprint(stdout, m);
 }

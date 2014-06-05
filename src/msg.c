@@ -13,10 +13,10 @@
 
 void msg_fprint(FILE *f, struct msg *msg)
 {
-	fprintf(f, "p: dev_id = %u, msg_id = %u, data", msg->dev_id, msg->msg_id);
+	fprintf(f, "p: dev_id = %u, msg_id = %4u, data", msg->dev_id, msg->msg_id);
 
 	for (int i = 0; i < msg->msg_len / sizeof(double); i++)
-		fprintf(f, "\t%f", msg->data[i]);
+		fprintf(f, "%8.3f", msg->data[i]);
 
 	fprintf(f, "\n");
 }

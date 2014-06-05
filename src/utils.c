@@ -29,7 +29,7 @@ void print(enum log_level lvl, const char *fmt, ...)
 
 	clock_gettime(CLOCK_REALTIME, &ts);
 
-	printf("%lu.%lu [%-7s] ", (long) ts.tv_sec, (long) ts.tv_nsec / 1000, log_prefix[lvl]);
+	printf("%14.3f [%-7s] ", ts.tv_sec + ts.tv_nsec / 1e9, log_prefix[lvl]);
 	vprintf(fmt, ap);
 	printf("\n");
 
