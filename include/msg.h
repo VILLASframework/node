@@ -21,7 +21,6 @@
  * This struct defines the format of a message (protocol version 0)
  * Its declared as "packed" because it represents the "on wire" data.
  */
-
 struct msg
 {
 	/// Sender device ID

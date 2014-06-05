@@ -50,9 +50,9 @@ int main(int argc, char *argv[])
 
 	int rate = atoi(argv[3]);
 	struct msg msg = {
-		.dev_id = atoi(argv[1]),
-		.msg_len = atoi(argv[2]) * sizeof(double),
-		.seq_no = 0,
+		.device = atoi(argv[1]),
+		.length = atoi(argv[2]) * sizeof(double),
+		.sequence = 0,
 		.data = { 0 }
 	};
 
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 	};
 
 	/* Print header */
-	printf("# %-6s %-8s %-12s\n", "dev_id", "seq_no", "data");
+	fprintf(stderr, "# %-6s %-8s %-12s\n", "dev_id", "seq_no", "data");
 
 	timer_create(CLOCKID, &sev, &t);
 	timer_settime(t, 0, &its, NULL);

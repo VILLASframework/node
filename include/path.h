@@ -34,13 +34,16 @@ struct path
 	int (*hooks[MAX_HOOKS])(struct msg *m);
 
 	/// Counter for received messages
-	int msg_received;
+	int received;
 
-	/// Counter for dropped messages
-	int msg_dropped;
+	/// Counter for messages which arrived reordered
+	int delayed;
+
+	/// Counter for messages which arrived multiple times
+	int duplicated;
 
 	/// Last known message number
-	int seq_no;
+	int sequence;
 
 	/// The current path state
 	enum path_state state;
@@ -54,14 +57,15 @@ struct path
  *
  * Memory is allocated dynamically and has to be freed by path_destroy()
  *
+ * @param p A pointer to the path structure
  * @param in The node we are receiving messages from
  * @param out The nodes we are sending to
  * @param len count of outgoing nodes
  * @return
- *  - a pointer to the new path on success
- *  - NULL if an error occured
+ *  - 0 on success
+ *  - otherwise an error occured
  */
-struct path* path_create(struct node *in, struct node *out);
+int path_create(struct path *p, struct node *in, struct node *out);
 
 /**
  * @brief Delete a path created by path_create()

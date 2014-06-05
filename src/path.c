@@ -7,60 +7,62 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <poll.h>
 #include <errno.h>
 
+#include "cfg.h"
 #include "utils.h"
 #include "path.h"
 
-struct path* path_create(struct node *in, struct node *out)
-{
-	struct path *p = malloc(sizeof(struct path));
-	if (!p)
-		return NULL;
+extern struct config config;
 
+int path_create(struct path *p, struct node *in, struct node *out)
+{
 	memset(p, 0, sizeof(struct path));
 
 	p->in = in;
 	p->out = out;
 
-	return p;
+	return 0;
 }
 
 void path_destroy(struct path *p)
 {
-	if (!p)
-		return;
-
-	free(p);
+	assert(p);
 }
 
 static void * path_run(void *arg)
 {
 	struct path *p = (struct path *) arg;
-	struct pollfd pfd;
 	struct msg m;
 
-	pfd.fd = p->in->sd;
-	pfd.events = POLLIN;
+	assert(p);
 
-	debug(1, "Established path: %12s => %s => %-12s", p->in->name, NAME, p->out->name);
+	debug(1, "Established path: %12s => %s => %-12s", p->in->name, config.name, p->out->name);
 
 	/* main thread loop */
 	while (p->state == RUNNING) {
-		/* wait for new incoming messages */
-		//poll(&pfd, 1, 1);
+		/* Receive message */
+		msg_recv(&m, p->in);
 
-		/* receive message */
-		node_recv(p->in, &m);
+		/* Check message sequence number */
+		if (m.sequence < p->sequence) {
+			p->delayed++;
+			continue;
+		}
+		else if (m.sequence == p->sequence) {
+			p->duplicated++;
+		}
 
-		/* call hooks */
+		p->received++;
+
+
+		/* Call hooks */
 		for (int i = 0; i < MAX_HOOKS && p->hooks[i]; i++) {
 			p->hooks[i](&m);
 		}
 
-		/* send messages */
-		node_send(p->out, &m);
+		/* Send message */
+		msg_send(&m, p->out);
 	}
 
 	return NULL;
@@ -68,8 +70,7 @@ static void * path_run(void *arg)
 
 int path_start(struct path *p)
 {
-	if (!p)
-		return -EFAULT;
+	assert(p);
 
 	p->state = RUNNING;
 	pthread_create(&p->tid, NULL, &path_run, (void *) p);
@@ -79,8 +80,7 @@ int path_stop(struct path *p)
 {
 	void * ret;
 
-	if (!p)
-		return -EFAULT;
+	assert(p);
 
 	p->state = STOPPED;
 
