@@ -1,0 +1,10 @@
+bin/*
+build/*
+dep/*
+
+doc/html/
+doc/latex/
+
+*.d
+*.o
+*~
