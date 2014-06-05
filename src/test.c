@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <string.h>
 #include <limits.h>
+#include <arpa/inet.h>
 
 #include "msg.h"
 #include "utils.h"
@@ -26,19 +27,19 @@ void quit(int sig, siginfo_t *si, void *ptr)
 
 int main(int argc, char *argv[])
 {
-	if (argc != 3 && argc != 4) {
-		printf("Usage: %s TEST REMOTE [LOCAL]\n", argv[0]);
+	if (argc != 4) {
+		printf("Usage: %s TEST LOCAL REMOTE\n", argv[0]);
 		printf("  TEST     has to be 'latency' for now\n");
-		printf("  REMOTE   is a IP:PORT combination of the remote host\n");
-		printf("  LOCAL    is a IP:PORT combination of the remote host\n\n");
+		printf("  LOCAL    is a IP:PORT combination of the local host\n");
+		printf("  REMOTE   is a IP:PORT combination of the remote host\n\n");
 		printf("s2ss Simulator2Simulator Server v%s\n", VERSION);
 		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
 		exit(EXIT_FAILURE);
 	}
 
 	const char *test = argv[1];
-	const char *remote_str = argv[2];
-	const char *local_str = argv[3];
+	const char *local_str = argv[2];
+	const char *remote_str = argv[3];
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -51,16 +52,11 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	/* Resolve addresses */
- 	struct sockaddr_in remote;
 	struct sockaddr_in local;
+ 	struct sockaddr_in remote;
 
 	if (resolve_addr(local_str, &local, 0))
 		error("Failed to resolve local address: %s", local_str);
-	else {
-		local.sin_family = AF_INET;
-		local.sin_addr.s_addr = INADDR_ANY;
-		local.sin_port = 0;
-	}
 
 	if (resolve_addr(remote_str, &remote, 0))
 		error("Failed to resolve remote address: %s", remote_str);
@@ -69,6 +65,9 @@ int main(int argc, char *argv[])
 	struct node n;
 	node_create(&n, NULL, NODE_SERVER, local, remote);
 	node_connect(&n);
+
+	debug(1, "We listen at %s:%u", inet_ntoa(n.local.sin_addr), ntohs(n.local.sin_port));
+	debug(1, "We sent to %s:%u", inet_ntoa(n.remote.sin_addr), ntohs(n.remote.sin_port));
 
 	if (!strcmp(test, "latency")) {
 		struct msg m2, m1 = {
