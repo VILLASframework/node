@@ -20,11 +20,17 @@
 #include "path.h"
 #include "node.h"
 
-/// Global settings
-struct config config;
+/// Global default settings
+struct config config = {
+	.debug = 0,
+	.priority = 0,
+	.affinity = 0xC0,
+	.protocol = 0
+};
 
-void start()
+static void start()
 {
+	/* Connect and bind nodes to their sockets, set socket options */
 	for (int i = 0; i < config.node_count; i++) {
 		struct node *n = &config.nodes[i];
 
@@ -34,6 +40,7 @@ void start()
 		debug(1, "  We sent to node '%s' at %s:%u", n->name, inet_ntoa(n->remote.sin_addr), ntohs(n->remote.sin_port));
 	}
 
+	/* Start on thread per path for asynchronous processing */
 	for (int i = 0; i < config.path_count; i++) {
 		struct path *p = &config.paths[i];
 
@@ -43,8 +50,9 @@ void start()
 	}
 }
 
-void stop()
+static void stop()
 {
+	/* Join all threads and print statistics */
 	for (int i = 0; i < config.path_count; i++) {
 		struct path *p = &config.paths[i];
 
@@ -56,6 +64,7 @@ void stop()
 		info("  %u messages delayed", p->delayed);
 	}
 
+	/* Close all sockets we listing on */
 	for (int i = 0; i < config.node_count; i++) {
 		struct node *n = &config.nodes[i];
 
@@ -63,9 +72,8 @@ void stop()
 	}
 }
 
-void quit()
+static void quit()
 {
-	/* Stop and disconnect all paths/nodes */
 	stop();
 
 	free(config.paths);
@@ -77,8 +85,18 @@ void quit()
 
 int main(int argc, char *argv[])
 {
+	/* Setup signals */
+	struct sigaction sa_quit = {
+		.sa_flags = SA_SIGINFO,
+		.sa_sigaction = quit
+	};
+
+	sigemptyset(&sa_quit.sa_mask);
+	sigaction(SIGTERM, &sa_quit, NULL);
+	sigaction(SIGINT, &sa_quit, NULL);
 	atexit(&quit);
 
+	/* Check arguments */
 	if (argc != 2) {
 		printf("Usage: %s CONFIG\n", argv[0]);
 		printf("  CONFIG is a required path to a configuration file\n\n");
@@ -90,36 +108,21 @@ int main(int argc, char *argv[])
 
 	info("This is s2ss %s", VERSION);
 
-	/* Default settings */
+	/* Parse configuration file */
 	config.filename = argv[1];
-	config.debug = 0;
-	config.priority = 0;
-	config.affinity = 0xC0;
-	config.protocol = 0;
-
 	config_init(&config.obj);
 	config_parse(&config.obj, &config);
 
-
-	if (config.path_count)
-		info("Parsed %u nodes and %u paths", config.node_count, config.path_count);
-	else
+	if (!config.path_count)
 		error("No paths found. Terminating...");
+	else
+		info("Parsed %u nodes and %u paths", config.node_count, config.path_count);
 
 	/* Setup various realtime related things */
 	init_realtime(&config);
-	/* Start and connect all paths/nodes */
+
+	/* Connect all nodes to their sockets and start one thread per path */
 	start();
-
-	/* Setup signals */
-	struct sigaction sa_quit = {
-		.sa_flags = SA_SIGINFO,
-		.sa_sigaction = quit
-	};
-
-	sigemptyset(&sa_quit.sa_mask);
-	sigaction(SIGTERM, &sa_quit, NULL);
-	sigaction(SIGINT, &sa_quit, NULL);
 
 	/* Main thread is sleeping */
 	while (1) pause();
