@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 	/* Create socket */
 	sd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sd < 0)
-		error("Failed to create socket: %s", strerror(errno));
+		perror("Failed to create socket");
 
 	/* Bind socket */
 	if (bind(sd, (struct sockaddr *) &sa, sizeof(struct sockaddr_in)))

@@ -66,9 +66,8 @@ int main(int argc, char *argv[])
 	};
 
 	/* Connect socket */
-	if (connect(sd, (struct sockaddr *) &sa, sizeof(struct sockaddr_in))) {
-		error("Failed to connect socket: %s", strerror(errno));
-	}
+	if (connect(sd, (struct sockaddr *) &sa, sizeof(struct sockaddr_in)))
+		perror("Failed to connect socket");
 
 	while (!feof(stdin)) {
 		msg_fscan(stdin, &msg);
