@@ -29,6 +29,10 @@ void quit()
 
 		path_stop(p);
 
+		info("Path %u stopped:", i);
+		info("  %u messages received", p->received);
+		info("  %u messages duplicated", p->duplicated);
+		info("  %u messages delayed", p->delayed);
 
 		path_destroy(p);
 	}
