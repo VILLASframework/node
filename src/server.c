@@ -64,15 +64,19 @@ int main(int argc, char *argv[])
 {
 	atexit(&quit);
 
+	assert(0);
+
 	if (argc != 1) {
 		printf("Usage: s2ss [config]\n");
 		printf("  config is an optional path to a configuration file\n\n");
-		printf("s2ss Simulator2Simulator Server v%s\n", VERSION);
-		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
+		printf("Simulator2Simulator Server %s\n", VERSION);
+		printf(" Build: %s %s\n", __DATE__, __TIME__);
+		printf(" Contact:   Steffen Vogel <stvogel@eonerc.rwth-aachen.de\n");
+		printf(" Copyright: 2014, Institute for Automation of Complex Power Systems, EONERC\n");
 		exit(EXIT_FAILURE);
 	}
 
-	print(INFO, "Good morning! This is s2ss v%s", VERSION);
+	print(INFO, "Good morning! This is s2ss %s", VERSION);
 
 	init(); /* Setup paths and nodes manually */
 

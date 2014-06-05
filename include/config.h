@@ -9,7 +9,7 @@
 #define _CONFIG_H_
 
 /// The version number of the s2ss server
-#define VERSION		"0.01"
+#define VERSION		__GIT_TAG__ "-" __GIT_REV__
 /// The Procotol version determines the format of a struct msg
 #define PROTOCOL	0
 /// The name of this node
