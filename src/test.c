@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 		.sin_family = AF_INET,
 		.sin_port = htons(atoi(argv[3]))
 	};
-	inet_aton(argv[2], &sa.sin_addr);
+	inet_pton(AF_INET, argv[2], &sa.sin_addr);
 
 	sigset_t mask;
 	sigemptyset(&mask);
@@ -73,9 +73,9 @@ int main(int argc, char *argv[])
 	//sigprocmask(SIG_SETMASK, &mask, NULL);
 	sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
-	ret = bind(sd, &sa, sizeof(struct sockaddr_in));
+	ret = bind(sd, (struct sockaddr *) &sa, sizeof(struct sockaddr_in));
 
-	ret = connect(sd, &sa, sizeof(struct sockaddr_in));
+	ret = connect(sd, (struct sockaddr *) &sa, sizeof(struct sockaddr_in));
 	if (ret < 0)
 		print(FATAL, "Failed to connect socket: %s", strerror(errno));
 

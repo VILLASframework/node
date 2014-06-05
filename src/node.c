@@ -46,14 +46,14 @@ struct node* node_create(const char *name, enum node_type type, const char *loca
 		return NULL;
 	}
 
-	ret = bind(n->sd, &n->local, sizeof(struct sockaddr_in));
+	ret = bind(n->sd, (struct sockaddr *) &n->local, sizeof(struct sockaddr_in));
 	if (ret < 0) {
 		node_destroy(n);
 		print(FATAL, "Failed to bind socket: %s", strerror(errno));
 		return NULL;
 	}
 
-	ret = connect(n->sd, &n->remote, sizeof(struct sockaddr_in));
+	ret = connect(n->sd, (struct sockaddr *) &n->remote, sizeof(struct sockaddr_in));
 	if (ret < 0) {
 		node_destroy(n);
 		print(FATAL, "Failed to connect socket: %s", strerror(errno));
