@@ -33,14 +33,16 @@ int main(int argc, char *argv[])
  	struct sockaddr_in sa;
 
 	if (argc != 2) {
-		printf("Usage: %s REMOTE\n", argv[0]);
-		printf("  REMOTE   is a IP:PORT combination of the remote host\n\n");
+		printf("Usage: %s REMOTE VALUES\n", argv[0]);
+		printf("  REMOTE   is a IP:PORT combination of the remote host\n");
+		printf("  VALUES   is the number of values to be read from stdin\n\n");
 		printf("s2ss Simulator2Simulator Server v%s\n", VERSION);
 		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
 		exit(EXIT_FAILURE);
 	}
 
 	const char *remote_str = argv[1];
+	int values = atoi(argv[2]);
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -63,19 +65,17 @@ int main(int argc, char *argv[])
 	if (sd < 0)
 		perror("Failed to create socket");
 
-	// TODO: remove workaround
-	struct msg msg = {
-		.length = 5 * sizeof(double)
-	};
-
 	/* Connect socket */
 	if (connect(sd, (struct sockaddr *) &remote, sizeof(struct sockaddr_in)))
 		perror("Failed to connect socket");
 
+	struct msg m;
+	m.length = values * sizeof(double);
+
 	while (!feof(stdin)) {
-		msg_fscan(stdin, &msg);
-		send(sd, &msg, 8 + msg.length, 0);
-		msg_fprint(stdout, &msg);
+		msg_fscan(stdin, &m);
+		send(sd, &m, 8 + m.length, 0);
+		msg_fprint(stdout, &m);
 	}
 
 	return 0;

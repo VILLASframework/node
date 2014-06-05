@@ -40,7 +40,7 @@ int node_connect(struct node *n)
 	/* Create socket */
 	n->sd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (n->sd < 0)
-		error("Failed to create socket: %s", strerror(errno));
+		perror("Failed to create socket");
 
 	/* Set socket options */
 	int prio = SOCKET_PRIO;
@@ -49,14 +49,9 @@ int node_connect(struct node *n)
 
 	/* Bind socket for receiving */
 	if (bind(n->sd, (struct sockaddr *) &n->local, sizeof(struct sockaddr_in)))
-		error("Failed to bind socket: %s", strerror(errno));
+		perror("Failed to bind to socket");
 
 	debug(1, "  We listen for node %s at %s:%u", n->name, inet_ntoa(n->local.sin_addr), ntohs(n->local.sin_port));
-
-	/* Connect socket for sending */
-	/*if (connect(n->sd, (struct sockaddr *) &n->remote, sizeof(struct sockaddr_in)))
-		error("Failed to connect socket: %s", strerror(errno));*/
-
 	debug(1, "  We sent to node %s at %s:%u", n->name, inet_ntoa(n->remote.sin_addr), ntohs(n->remote.sin_port));
 
 	return 0;

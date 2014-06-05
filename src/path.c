@@ -13,8 +13,6 @@
 #include "utils.h"
 #include "path.h"
 
-extern struct config config;
-
 int path_create(struct path *p, struct node *in, struct node *out)
 {
 	/* Reset counters */
