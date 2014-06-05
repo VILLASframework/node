@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 
 			avg += rtt;
 
-			printf("rtt %.3f min %.3f max %.3f avg %.3f uS\n", 1e-3 * rtt, 1e-3 * rtt_min, 1e-3 * rtt_max, 1e-3 * avg / ++run);
+			info("rtt %.3f min %.3f max %.3f avg %.3f uS\n", 1e-3 * rtt, 1e-3 * rtt_min, 1e-3 * rtt_max, 1e-3 * avg / ++run);
 
 			m1.sequence++;
 			usleep(1000);

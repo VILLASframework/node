@@ -13,7 +13,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <unistd.h>
 #include <arpa/inet.h>
 
@@ -27,10 +26,9 @@ extern struct config config;
 int node_create(struct node *n, const char *name, enum node_type type,
 	struct sockaddr_in local, struct sockaddr_in remote)
 {
-	int ret;
-
 	n->name = name;
 	n->type = type;
+
 	n->local = local;
 	n->remote = remote;
 
@@ -64,10 +62,8 @@ int node_connect(struct node *n)
 	return 0;
 }
 
-void node_destroy(struct node* n)
+int node_disconnect(struct node *n)
 {
-	assert(n);
-
 	close(n->sd);
 }
 
