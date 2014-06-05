@@ -33,13 +33,14 @@ int main(int argc, char *argv[])
  	struct sockaddr_in sa;
 
 	if (argc != 2) {
-		printf("Usage: %s IP:PORT\n", argv[0]);
-		printf("  IP is the destination ip of our packets\n");
-		printf("  PORT is the port to receive from\n\n");
+		printf("Usage: %s LOCAL\n", argv[0]);
+		printf("  LOCAL   is a IP:PORT combination of the local host\n\n");
 		printf("s2ss Simulator2Simulator Server v%s\n", VERSION);
 		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
 		exit(EXIT_FAILURE);
 	}
+
+	const char *local_str = argv[1];
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -52,8 +53,10 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	/* Resolve address */
-	if (resolve(argv[1], &sa, 0))
-		error("Failed to resolve: %s", argv[1]);
+	struct sockaddr_in local;
+
+	if (resolve(local_str, &local, 0))
+		error("Failed to resolve local address: %s", local_str);
 
 	/* Create socket */
 	sd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -61,7 +64,7 @@ int main(int argc, char *argv[])
 		perror("Failed to create socket");
 
 	/* Bind socket */
-	if (bind(sd, (struct sockaddr *) &sa, sizeof(struct sockaddr_in)))
+	if (bind(sd, (struct sockaddr *) &local, sizeof(struct sockaddr_in)))
 		perror("Failed to bind to socket");
 
 	struct msg m;

@@ -26,17 +26,19 @@ void quit(int sig, siginfo_t *si, void *ptr)
 
 int main(int argc, char *argv[])
 {
- 	struct sockaddr_in sa;
-
-	if (argc != 3) {
-		printf("Usage: %s TEST IP:PORT\n", argv[0]);
-		printf("  TEST has to be 'latency' for now\n");
-		printf("  IP is the destination ip of our packets\n");
-		printf("  PORT is the port to send to\n\n");
+	if (argc != 3 && argc != 4) {
+		printf("Usage: %s TEST REMOTE [LOCAL]\n", argv[0]);
+		printf("  TEST     has to be 'latency' for now\n");
+		printf("  REMOTE   is a IP:PORT combination of the remote host\n");
+		printf("  LOCAL    is a IP:PORT combination of the remote host\n\n");
 		printf("s2ss Simulator2Simulator Server v%s\n", VERSION);
 		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
 		exit(EXIT_FAILURE);
 	}
+
+	const char *test = argv[1];
+	const char *remote_str = argv[2];
+	const char *local_str = (argc == 4) ? argv[3] : NULL;
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -48,9 +50,15 @@ int main(int argc, char *argv[])
 	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT, &sa_quit, NULL);
 
-	/* Resolve address */
-	if (resolve(argv[2], &sa, 0))
-		error("Failed to resolve: %s", argv[2]);
+	/* Resolve addresses */
+ 	struct sockaddr_in remote;
+	struct sockaddr_in local;
+
+	if (resolve(remote_str, &remote, 0))
+		error("Failed to resolve remote address: %s", remote_str);
+
+	if (resolve(local_str, &local, 0))
+		error("Failed to resolve local address: %s", local_str);
 
 	/* Create socket */
 	sd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -58,17 +66,14 @@ int main(int argc, char *argv[])
 		perror("Failed to create socket");
 
 	/* Bind socket */
-	if (bind(sd, (struct sockaddr *) &sa, sizeof(struct sockaddr_in)))
-		error("Failed to bind socket: %s", strerror(errno));
+	if (bind(sd, (struct sockaddr *) &local, sizeof(struct sockaddr_in)))
+		perror("Failed to bind to socket");
 
 	/* Connect socket */
-	sa.sin_port = htons(ntohs(sa.sin_port) + 1);
-	if (connect(sd, (struct sockaddr *) &sa, sizeof(struct sockaddr_in))) {
-		error("Failed to connect socket: %s", strerror(errno));
-	}
+	if (connect(sd, (struct sockaddr *) &remote, sizeof(struct sockaddr_in)))
+		perror("Failed to connect socket");
 
-
-	if (!strcmp(argv[1], "latency")) {
+	if (!strcmp(test, "latency")) {
 		struct msg m2, m1 = {
 			.device = 99,
 			.sequence = 0
