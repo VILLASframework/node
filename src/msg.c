@@ -7,8 +7,11 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <arpa/inet.h>
 
 #include "msg.h"
+#include "utils.h"
 
 int msg_fprint(FILE *f, struct msg *msg)
 {
@@ -47,3 +50,20 @@ void msg_random(struct msg *m)
 	m->sequence++;
 }
 
+int msg_send(struct msg *m, struct node *n)
+{
+	if (sendto(n->sd, m, m->length + 8, 0,
+		(struct sockaddr *) &n->remote,
+		sizeof(struct sockaddr_in)) < 0)
+		perror("Failed sendto");
+
+	debug(10, "Message sent to node %s (%s:%u)", n->name, inet_ntoa(n->remote.sin_addr), ntohs(n->remote.sin_port));
+}
+
+int msg_recv(struct msg *m, struct node *n)
+{
+	if (recv(n->sd, m, sizeof(struct msg), 0) < 0)
+		perror("Failed recv");
+
+	debug(10, "Message received from node %s", n->name);
+}

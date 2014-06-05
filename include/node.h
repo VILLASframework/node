@@ -67,19 +67,11 @@ struct node* node_create(const char *name, enum node_type type, const char *loca
 void node_destroy(struct node* n);
 
 /**
- * Send a single message to a node
  *
- * @param sd The descriptor of the UDP socket
- * @param msg A pointer to the UDP message
  */
-int node_send(struct node *n, struct msg *m);
 
 /**
- * Receive a single message from a node
  *
- * @param sd The descriptor of the UDP socket
- * @param msg A pointer to the UDP message
  */
-int node_recv(struct node *n, struct msg *m);
 
 #endif /* _NODE_H_ */

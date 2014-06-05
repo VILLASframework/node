@@ -117,18 +117,9 @@ void node_destroy(struct node* n)
 	free(n);
 }
 
-int node_send(struct node *n, struct msg *m)
 {
-	send(n->sd, m, sizeof(struct msg), 0);
-	debug(1, "Message sent to node %s", n->name);
-	msg_fprint(stdout, m);
 }
 
-int node_recv(struct node *n, struct msg *m)
 {
-	size_t ret = recv(n->sd, m, sizeof(struct msg), 0);
-	if (ret < 0)
-		error("Recv failed: %s", strerror(errno));
 
-	debug(1, "Message received from node %s", n->name);
 }
