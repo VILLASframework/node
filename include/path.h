@@ -27,8 +27,8 @@ enum path_state
  */
 struct path
 {
-	struct node *in;
-	struct node *out[MAX_NODES];
+	/// Pointers to the incoming and outgoing node
+	struct node *in, *out;
 
 	/// Hooks are called for every message which is passed
 	int (*hooks[MAX_HOOKS])(struct msg *m);
@@ -61,7 +61,7 @@ struct path
  *  - a pointer to the new path on success
  *  - NULL if an error occured
  */
-struct path* path_create(struct node *in, struct node *out[], int len);
+struct path* path_create(struct node *in, struct node *out);
 
 /**
  * @brief Delete a path created by path_create()

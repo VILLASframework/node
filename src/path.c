@@ -8,21 +8,21 @@
 #include <string.h>
 #include <stdlib.h>
 #include <poll.h>
+#include <errno.h>
 
 #include "utils.h"
 #include "path.h"
 
-struct path* path_create(struct node *in, struct node *out[], int len)
+struct path* path_create(struct node *in, struct node *out)
 {
 	struct path *p = malloc(sizeof(struct path));
 	if (!p)
 		return NULL;
 
-	p->in = in;
+	memset(p, 0, sizeof(struct path));
 
-	for (int i = 0; i < len; i++) {
-		p->out[i] = out[i];
-	}
+	p->in = in;
+	p->out = out;
 
 	return p;
 }
@@ -44,8 +44,7 @@ static void * path_run(void *arg)
 	pfd.fd = p->in->sd;
 	pfd.events = POLLIN;
 
-	// TODO: add support for multiple outgoing nodes
-	print(DEBUG, "Established path: %12s => %s => %-12s", p->in->name, NAME, p->out[0]->name);
+	print(DEBUG, "Established path: %12s => %s => %-12s", p->in->name, NAME, p->out->name);
 
 	/* main thread loop */
 	while (p->state == RUNNING) {
