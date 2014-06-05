@@ -10,13 +10,14 @@
 
 #include <stdarg.h>
 
+#include <netinet/ip.h>
+
 enum log_level
 {
 	DEBUG,
 	INFO,
 	WARN,
-	ERROR,
-	FATAL
+	ERROR
 };
 
 /**
@@ -26,20 +27,40 @@ enum log_level
  */
 void print(enum log_level lvl, const char *fmt, ...);
 
-#define assert(exp) do { \
-	if (exp); print(FATAL, "Assertion failed: '%s' in %s, %s:%d", \
-		#exp, __FUNCTION__, __BASE_FILE__, __LINE__); \
-	} while(0)
+/**
+ * @brief Resolve host/service name by local databases and/or nameservers
+ *
+ * @param addr A string containing the hostname/ip and port seperated by a colon
+ * @param sa A pointer to the resolved address
+ * @return
+ * - 0 on success
+ */
+int resolve(const char *addr, struct sockaddr_in *sa);
 
-#define debug(lvl, ...) do { \
+#define assert(exp) do { \
+	if (!(exp)) { \
+		print(ERROR, "Assertion failed: '%s' in %s, %s:%d", \
+			#exp, __FUNCTION__, __BASE_FILE__, __LINE__); \
+		exit(EXIT_FAILURE); \
+	} } while (0)
+
+#define debug(lvl, msg, ...) do { \
 	if (lvl <= V) \
-		print(DEBUG, __VA_ARGS__); \
+		print(DEBUG, msg, ##__VA_ARGS__); \
 	} while (0)
 
-/**
- * @brief Print short usage info to stdout
- */
-void usage();
+#define info(msg, ...) do { \
+		print(INFO, msg, ##__VA_ARGS__); \
+	} while (0)
+
+#define warn(msg, ...) do { \
+		print(WARN, msg, ##__VA_ARGS__); \
+	} while (0)
+
+#define error(msg, ...) do { \
+		print(ERROR, msg, ##__VA_ARGS__); \
+		exit(EXIT_FAILURE); \
+	} while (0)
 
 #endif /* _UTILS_H_ */
 

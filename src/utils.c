@@ -16,8 +16,7 @@ static const char *log_prefix[] = {
 	"Debug",
 	"Info",
 	"Warning",
-	"Error",
-	"Fatal"
+	"Error"
 };
 
 void print(enum log_level lvl, const char *fmt, ...)

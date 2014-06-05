@@ -26,7 +26,7 @@ int sd;
 
 void quit()
 {
-	print(INFO, "Goodbye");
+	debug(1, "Goodbye");
 	exit(EXIT_SUCCESS);
 }
 
@@ -55,11 +55,11 @@ int main(int argc, char *argv[])
 	dev_id = atoi(argv[1]);
 	int ret;
 
-	print(INFO, "Test node started on %s:%s with id=%u", argv[2], argv[3], dev_id);
+	info("Test node started on %s:%s with id=%u", argv[2], argv[3], dev_id);
 
 	sd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (sd < 0)
-		print(FATAL, "Failed to create socket: %s", strerror(errno));
+		error("Failed to create socket: %s", strerror(errno));
 
 	struct sockaddr_in sa = {
 		.sin_family = AF_INET,
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 
 	ret = connect(sd, (struct sockaddr *) &sa, sizeof(struct sockaddr_in));
 	if (ret < 0)
-		print(FATAL, "Failed to connect socket: %s", strerror(errno));
+		error("Failed to connect socket: %s", strerror(errno));
 
 	struct sigevent si = {
 		.sigev_notify = SIGEV_SIGNAL,

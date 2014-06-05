@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 	signal(SIGINT, quit);
 	pause();
 
-	print(INFO, "Good night!");
+	info("Good night!");
 
 	return 0;
 }

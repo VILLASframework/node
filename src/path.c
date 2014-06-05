@@ -44,7 +44,7 @@ static void * path_run(void *arg)
 	pfd.fd = p->in->sd;
 	pfd.events = POLLIN;
 
-	print(DEBUG, "Established path: %12s => %s => %-12s", p->in->name, NAME, p->out->name);
+	debug(1, "Established path: %12s => %s => %-12s", p->in->name, NAME, p->out->name);
 
 	/* main thread loop */
 	while (p->state == RUNNING) {

@@ -35,33 +35,36 @@ struct node* node_create(const char *name, enum node_type type, const char *loca
 	n->name = strdup(name);
 	n->type = type;
 
-	resolve(local, &n->local);
-	resolve(remote, &n->remote);
+	if (!resolve(local, &n->local))
+		error("Failed to resolve local address '%s' of node '%s'", local, name);
+	if (!resolve(remote, &n->remote))
+		error("Failed to resolve remote address '%s' of node '%s'", remote, name);
 
-	/* create and connect socket */
+	/* Create socket */
 	n->sd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (n->sd < 0) {
 		node_destroy(n);
-		print(FATAL, "Failed to create socket: %s", strerror(errno));
+		error("Failed to create socket: %s", strerror(errno));
 		return NULL;
 	}
 
+	/* Bind socket for receiving */
 	ret = bind(n->sd, (struct sockaddr *) &n->local, sizeof(struct sockaddr_in));
 	if (ret < 0) {
 		node_destroy(n);
-		print(FATAL, "Failed to bind socket: %s", strerror(errno));
+		error("Failed to bind socket: %s", strerror(errno));
 		return NULL;
 	}
+	debug(1, "We listen for node %s at %s:%u", name, inet_ntoa(n->local.sin_addr), ntohs(n->local.sin_port));
 
+	/* Connect socket for sending */
 	ret = connect(n->sd, (struct sockaddr *) &n->remote, sizeof(struct sockaddr_in));
 	if (ret < 0) {
 		node_destroy(n);
-		print(FATAL, "Failed to connect socket: %s", strerror(errno));
+		error("Failed to connect socket: %s", strerror(errno));
 		return NULL;
 	}
-
-	print(DEBUG, "We listen for node %s at %s:%u", name, inet_ntoa(n->local.sin_addr), ntohs(n->local.sin_port));
-	print(DEBUG, "We sent to node %s at %s:%u", name, inet_ntoa(n->remote.sin_addr), ntohs(n->remote.sin_port));
+	debug(1, "We sent to node %s at %s:%u", name, inet_ntoa(n->remote.sin_addr), ntohs(n->remote.sin_port));
 
 	return n;
 }
@@ -117,7 +120,7 @@ void node_destroy(struct node* n)
 int node_send(struct node *n, struct msg *m)
 {
 	send(n->sd, m, sizeof(struct msg), 0);
-	print(DEBUG, "Message sent to node %s", n->name);
+	debug(1, "Message sent to node %s", n->name);
 	msg_fprint(stdout, m);
 }
 
@@ -125,7 +128,7 @@ int node_recv(struct node *n, struct msg *m)
 {
 	size_t ret = recv(n->sd, m, sizeof(struct msg), 0);
 	if (ret < 0)
-		print(ERROR, "Recv failed: %s", strerror(errno));
+		error("Recv failed: %s", strerror(errno));
 
-	print(DEBUG, "Message received from node %s", n->name);
+	debug(1, "Message received from node %s", n->name);
 }
