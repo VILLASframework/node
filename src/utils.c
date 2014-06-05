@@ -95,6 +95,7 @@ void realtime_init(struct config *g)
 	/* Prefault stack */
 	char dummy[MAX_SAFE_STACK];
 	memset(dummy, 0, MAX_SAFE_STACK);
+	debug(3, "Prefaulted stack");
 
 	/* Lock memory */
 	if(mlockall(MCL_CURRENT | MCL_FUTURE))
@@ -105,7 +106,7 @@ void realtime_init(struct config *g)
 	/* Check for realtime kernel patch */
 	struct stat st;
 	if (stat("/sys/kernel/realtime", &st))
-		warn("This is not a a realtime patched kernel");
+		warn("This is not a a realtime patched kernel!");
 	else
 		debug(3 ,"This is a realtime patched kernel");
 
