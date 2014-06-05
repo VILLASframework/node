@@ -27,6 +27,7 @@ Contacts:
 
 	  - CAP_NET_ADMIN to increase the socket priority
 	  - CAP_SYS_NICE to set the realtime priority and cpu affinity
+	  - CAP_IPC_LOC to lock pages for better realtime
 
  3. Examples
 --------------------------------------------------------------------------------

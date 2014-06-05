@@ -90,15 +90,18 @@ int main(int argc, char *argv[])
 
 	info("This is s2ss %s", VERSION);
 
-	// Default settings
+	/* Default settings */
 	config.filename = argv[1];
 	config.debug = 0;
-	config.nice = 0;
+	config.priority = 0;
 	config.affinity = 0xC0;
 	config.protocol = 0;
 
 	config_init(&config.obj);
 	config_parse(&config.obj, &config);
+
+	/* Setup various realtime related things */
+	realtime_init(&config);
 
 	if (config.path_count)
 		info("Parsed %u nodes and %u paths", config.node_count, config.path_count);

@@ -13,7 +13,8 @@
 #include <errno.h>
 #include <string.h>
 
-#include <netinet/ip.h>
+struct config;
+struct sockaddr_in;
 
 enum log_level
 {
@@ -40,6 +41,18 @@ void print(enum log_level lvl, const char *fmt, ...);
  * - 0 on success
  */
 int resolve(const char *addr, struct sockaddr_in *sa, int flags);
+
+/**
+ * @brief Setup various realtime realated things
+ *
+ *  - Prefault the stack
+ *  - Lock memory
+ *  - Use FIFO scheduler with realtime priority
+ *  - Set CPU affinity
+ *
+ * @param g The global configuration
+ */
+void realtime_init(struct config *g);
 
 /// Check assertion and exit if failed
 #define assert(exp) do { \

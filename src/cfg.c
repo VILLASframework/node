@@ -11,6 +11,8 @@
 #include <stdlib.h>
 
 #include "cfg.h"
+#include "node.h"
+#include "path.h"
 #include "utils.h"
 
 int config_parse(config_t *cfg, struct config *g)
@@ -71,7 +73,7 @@ int config_parse_global(config_setting_t *c, struct config *g)
 
 	config_setting_lookup_int(c, "debug", &g->debug);
 	config_setting_lookup_int(c, "affinity", &g->affinity);
-	config_setting_lookup_int(c, "nice", &g->nice);
+	config_setting_lookup_int(c, "priority", &g->priority);
 	config_setting_lookup_int(c, "protocol", &g->protocol);
 
 	return CONFIG_TRUE;
@@ -95,8 +97,6 @@ int config_parse_path(config_setting_t *c, struct config *g)
 
 	if (!config_setting_lookup_string(c, "out", &out_str))
 		cerror(c, "Missing output node for path");
-
-	if (!config_setting_lookup_int)
 
 	info("Loading path from '%s' to '%s'", in_str, out_str);
 

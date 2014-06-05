@@ -10,8 +10,8 @@
 
 #include <libconfig.h>
 
-#include "path.h"
-#include "node.h"
+struct node;
+struct path;
 
 struct config {
 	/// Name of this node
@@ -21,7 +21,7 @@ struct config {
 	/// Verbosity level
 	int debug;
 	/// Task priority (lower is better)
-	int nice;
+	int priority;
 	/// Core affinity of this task
 	int affinity;
 	/// Protocol version of UDP packages
