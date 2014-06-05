@@ -48,6 +48,12 @@ struct node
 	/// Remote address of the socket
 	struct sockaddr_in remote;
 
+	/// Name of the local interface
+	const char *ifname;
+	/// Index of the local interface
+	int ifindex;
+	/// Socket Mark
+	int mark;
 
 	/// A short identifier of the node
 	const char *name;
