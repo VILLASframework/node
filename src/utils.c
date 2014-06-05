@@ -90,6 +90,18 @@ int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags)
 	return 0;
 }
 
+static cpu_set_t to_cpu_set_t(int set)
+{
+	cpu_set_t cset;
+
+	for (int i = 0; i < sizeof(int) * 8; i++) {
+		if (set & (1L << i))
+			CPU_SET(i, &cset);
+	}
+
+	return cset;
+}
+
 void init_realtime(struct config *g)
 {
 	/* Prefault stack */
@@ -119,9 +131,9 @@ void init_realtime(struct config *g)
 		debug(3, "Set task priority to %u", g->priority);
 
 	/* Pin threads to CPUs by setting the affinity */
-	size_t cset = g->affinity;
+	cpu_set_t cset = to_cpu_set_t(g->affinity);
 	pid_t pid = getpid();
-	if (sched_setaffinity(pid, sizeof(cset), (const struct cpu_set_t *) &cset))
+	if (sched_setaffinity(pid, sizeof(cset), &cset))
 		perror("Failed to set CPU affinity");
 	else
 		debug(3, "Set affinity to %#x", g->affinity);
