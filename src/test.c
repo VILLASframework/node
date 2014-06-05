@@ -45,6 +45,7 @@ int main(int argc, char *argv[])
 	};
 
 	sigemptyset(&sa_quit.sa_mask);
+	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	/* Resolve address */

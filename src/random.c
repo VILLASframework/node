@@ -57,10 +57,7 @@ int main(int argc, char *argv[])
 	};
 
 	sigemptyset(&sa_tick.sa_mask);
-
-	if (sigaction(SIG, &sa_tick, NULL)) {
-               error("Failed sigaction(): %s", strerror(errno));
-	}
+	sigaction(SIG, &sa_tick, NULL);
 
 	/* Setup timer */
 	timer_t t;
