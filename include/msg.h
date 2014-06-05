@@ -33,6 +33,46 @@ struct msg
 	/// Message data
 	double data[MAX_VALUES];
 } __attribute__((packed));
+#elif PROTOCOL == 1
+/**
+ * Next generation message format for RTDS integration
+ *
+ * This struct defines the format of a message (protocol version 1)
+ * Its declared as "packed" because it represents the "on wire" data.
+ */
+struct msg
+{
+	struct
+	{
+		/// Protocol version
+		unsigned version : 4;
+		/// Header length
+		unsigned hdr_len : 4;
+		/// Message flags
+		uint8_t flags;
+		/// Sender device ID
+		uint16_t dev_id;
+		/// Message ID
+		uint32_t sequence;
+		/// Message length (data only)
+		uint16_t data_len;
+		/// Digital signature for authentication
+		uint32_t signature;
+		/// Timestamp in uS since unix epoch
+		uint64_t timestamp
+	} header;
+	union
+	{
+		uint32_t integer;
+		float data float_single;
+		char * data_str;
+	} data[MAX_VALUES];
+
+} __attribute__((packed));
+#else
+  #error "Unknown protocol version!"
+#endif
+
 /**
  * @brief Print a raw UDP packge in human readable form
  *
