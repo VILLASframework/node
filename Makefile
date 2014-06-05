@@ -6,16 +6,14 @@ VPATH = src
 CC = gcc
 RM = rm -f
 
-GIT_TAG = $(shell git describe --tags)
+GIT_TAG = $(shell git describe --tags  --abbrev=0)
 GIT_REV = $(shell git rev-parse --short HEAD)
 
-LDFLAGS = -pthread -lrt
-CFLAGS = -std=c99 -Iinclude/ -D_XOPEN_SOURCE=500
-CFLAGS += -D__GIT_REV__='"$(GIT_REV)"' -D__GIT_TAG__='"$(GIT_TAG)"'
+V ?= 0
 
-ifdef (DEBUG)
-	CFLAGS += -DDEBUG=$(DEBUG) -g
-endif
+LDFLAGS = -pthread -lrt
+CFLAGS = -g -std=c99 -Iinclude/ -D_XOPEN_SOURCE=500 -DV=$(V)
+CFLAGS += -D__GIT_REV__='"$(GIT_REV)"' -D__GIT_TAG__='"$(GIT_TAG)"'
 
 .PHONY: all clean doc
 

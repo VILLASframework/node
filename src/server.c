@@ -56,27 +56,24 @@ void quit()
 	for (int i = 0; i < MAX_NODES && nodes[i]; i++)
 		node_destroy(nodes[i]);
 
-	print(INFO, "Goodbye!");
-	_exit(0);
+	debug(1, "Goodbye!");
+	_exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char *argv[])
 {
 	atexit(&quit);
 
-	assert(0);
-
 	if (argc != 1) {
-		printf("Usage: s2ss [config]\n");
+		printf("Usage: %s [config]\n", argv[0]);
 		printf("  config is an optional path to a configuration file\n\n");
-		printf("Simulator2Simulator Server %s\n", VERSION);
-		printf(" Build: %s %s\n", __DATE__, __TIME__);
-		printf(" Contact:   Steffen Vogel <stvogel@eonerc.rwth-aachen.de\n");
-		printf(" Copyright: 2014, Institute for Automation of Complex Power Systems, EONERC\n");
+		printf("Simulator2Simulator Server %s (%s %s)\n", VERSION, __DATE__, __TIME__);
+		printf(" Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
+		printf("   Steffen Vogel <stvogel@eonerc.rwth-aachen.de>\n\n");
 		exit(EXIT_FAILURE);
 	}
 
-	print(INFO, "Good morning! This is s2ss %s", VERSION);
+	debug(1, "Good morning! This is s2ss %s", VERSION);
 
 	init(); /* Setup paths and nodes manually */
 
