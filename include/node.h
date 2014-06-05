@@ -16,6 +16,7 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <libconfig.h>
 
 /** The type of a node.
  *
@@ -37,26 +38,29 @@ enum node_type
  */
 struct node
 {
-	/// The socket descriptor
+	/** The socket descriptor */
 	int sd;
 
-	/// The type of this node
+	/** The type of this node */
 	enum node_type type;
 
-	/// Local address of the socket
+	/** Local address of the socket */
 	struct sockaddr_in local;
-	/// Remote address of the socket
+	/** Remote address of the socket */
 	struct sockaddr_in remote;
 
-	/// Name of the local interface
+	/** Name of the local interface */
 	const char *ifname;
-	/// Index of the local interface
+	/** Index of the local interface */
 	int ifindex;
 	/// Socket Mark
 	int mark;
 
-	/// A short identifier of the node
+	/** A short identifier of the node */
 	const char *name;
+
+	/** A pointer to the libconfig object which instantiated this node */
+	config_setting_t *cfg;
 };
 
 /** Create a new node.

@@ -13,27 +13,25 @@
 struct node;
 struct path;
 
-/// Global configuration
+/** Global configuration */
 struct config {
-	/// Name of this node
+	/** Name of this node */
 	const char *name;
-	/// Configuration filename
+	/** Configuration filename */
 	const char *filename;
-	/// Verbosity level
-	int debug;
-	/// Task priority (lower is better)
+	/** Task priority (lower is better) */
 	int priority;
-	/// Core affinity of this task
+	/** Core affinity of this task */
 	int affinity;
-	/// Protocol version of UDP packages
+	/** Protocol version of UDP packages */
 	int protocol;
 	/// Number of parsed paths
 	int path_count;
 	/// Number of parsed nodes
 	int node_count;
 
-	/// libconfig object
-	config_t obj;
+	/** A libconfig object pointing to the root of the config file */
+	config_setting_t *cfg;
 
 	/// Array of nodes
 	struct node *nodes;
@@ -45,6 +43,9 @@ struct config {
  *
  * @param c A libconfig object
  * @param g The global configuration structure (also contains the config filename)
+ * @return
+ *  - 0 on success
+ *  - otherwise an error occured
  */
 int config_parse(config_t *c, struct config *g);
 

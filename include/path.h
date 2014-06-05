@@ -9,6 +9,7 @@
 #define _PATH_H_
 
 #include <pthread.h>
+#include <libconfig.h>
 
 #include "config.h"
 #include "node.h"
@@ -20,9 +21,9 @@
  */
 struct path
 {
-	/// Pointer to the incoming node
+	/** Pointer to the incoming node */
 	struct node *in;
-	/// Pointer to the outgoing node
+	/** Pointer to the outgoing node */
 	struct node *out;
 
 	/** If non NULL this function is called for every received message.
@@ -32,20 +33,19 @@ struct path
 	 */
 	int (*hook)(struct msg *m);
 
-	/// Counter for received messages
+	/** Counter for received messages */
 	unsigned int received;
-
-	/// Counter for messages which arrived reordered
+	/** Counter for messages which arrived reordered */
 	unsigned int delayed;
-
-	/// Counter for messages which arrived multiple times
+	/** Counter for messages which arrived multiple times */
 	unsigned int duplicated;
-
-	/// Last known message number
+	/** Last known message number */
 	unsigned int sequence;
 
-	/// The thread for this path
+	/** The thread for this path */
 	pthread_t tid;
+	/** A pointer to the libconfig object which instantiated this path */
+	config_setting_t *cfg;
 };
 
 /** Setup a new path.

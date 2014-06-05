@@ -20,9 +20,8 @@
 #include "path.h"
 #include "node.h"
 
-/// Global default settings
-struct config config = {
-	.debug = 0,
+/** Default settings */
+static struct config config = {
 	.priority = 0,
 	.affinity = 0xC0,
 	.protocol = 0

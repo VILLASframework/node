@@ -1,7 +1,7 @@
 /**
  * Configuration parser
  *
- * @author Steffen Vogel <steffen.vogel@rwth-aachen.de>
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
  */
 
@@ -76,6 +76,8 @@ int config_parse_global(config_setting_t *c, struct config *g)
 	config_setting_lookup_int(c, "priority", &g->priority);
 	config_setting_lookup_int(c, "protocol", &g->protocol);
 
+	g->cfg = c;
+
 	return CONFIG_TRUE;
 }
 
@@ -112,6 +114,7 @@ int config_parse_path(config_setting_t *c, struct config *g)
 		if (path_create(&g->paths[g->path_count], in, out))
 			cerror(c, "Failed to parse path");
 
+		g->cfg = c;
 		g->path_count++;
 
 		if (reverse) {
@@ -132,8 +135,7 @@ int config_parse_node(config_setting_t *c, struct config *g)
 	const char *remote_str = NULL;
 	const char *local_str = NULL;
 
-	struct sockaddr_in local;
-	struct sockaddr_in remote;
+	struct sockaddr_in local, remote;
 	enum node_type type;
 
 	/* Optional settings */
@@ -168,5 +170,6 @@ int config_parse_node(config_setting_t *c, struct config *g)
 	if (node_create(&g->nodes[g->node_count], name, type, local, remote))
 		cerror(c, "Failed to parse node");
 
+	g->cfg = c;
 	g->node_count++;
 }
