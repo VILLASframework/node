@@ -23,8 +23,9 @@
 #include "msg.h"
 #include "node.h"
 
-struct node* node_create(const char *name, enum node_type type, const char *addr, int port)
+struct node* node_create(const char *name, enum node_type type, const char *local, const char *remote)
 {
+	int ret;
 	struct node *n = malloc(sizeof(struct node));
 	if (!n)
 		return NULL;
@@ -34,6 +35,47 @@ struct node* node_create(const char *name, enum node_type type, const char *addr
 	n->name = strdup(name);
 	n->type = type;
 
+	resolve(local, &n->local);
+	resolve(remote, &n->remote);
+
+	/* create and connect socket */
+	n->sd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (n->sd < 0) {
+		node_destroy(n);
+		print(FATAL, "Failed to create socket: %s", strerror(errno));
+		return NULL;
+	}
+
+	ret = bind(n->sd, &n->local, sizeof(struct sockaddr_in));
+	if (ret < 0) {
+		node_destroy(n);
+		print(FATAL, "Failed to bind socket: %s", strerror(errno));
+		return NULL;
+	}
+
+	ret = connect(n->sd, &n->remote, sizeof(struct sockaddr_in));
+	if (ret < 0) {
+		node_destroy(n);
+		print(FATAL, "Failed to connect socket: %s", strerror(errno));
+		return NULL;
+	}
+
+	print(DEBUG, "We listen for node %s at %s:%u", name, inet_ntoa(n->local.sin_addr), ntohs(n->local.sin_port));
+	print(DEBUG, "We sent to node %s at %s:%u", name, inet_ntoa(n->remote.sin_addr), ntohs(n->remote.sin_port));
+
+	return n;
+}
+
+int resolve(const char *addr, struct sockaddr_in *sa)
+{
+	/* split host:port */
+	char *host;
+	char *port;
+
+	if (sscanf(addr, "%m[^:]:%ms", &host, &port) != 2) {
+		print(FATAL, "Invalid address format: %s", addr);
+	}
+
 	/* get ip */
 	struct addrinfo *result;
 	struct addrinfo hint = {
@@ -42,43 +84,21 @@ struct node* node_create(const char *name, enum node_type type, const char *addr
 		.ai_protocol = 0
 	};
 
-	int ret = getaddrinfo(addr, NULL, &hint, &result);
+	int ret = getaddrinfo(host, port, &hint, &result);
 	if (ret) {
-		print(ERROR, "Failed to get address for node %s: %s", name, gai_strerror(ret));
-		return NULL;
+		print(FATAL, "Failed to get address for node %s: %s", addr, gai_strerror(ret));
+		return -EINVAL;
 	}
 
-	memcpy(&n->addr, result->ai_addr, sizeof(struct sockaddr_in));
-	n->addr.sin_family = AF_INET;
-	n->addr.sin_port = htons(port);
+	memcpy(sa, result->ai_addr, sizeof(struct sockaddr_in));
+	sa->sin_family = AF_INET;
+	sa->sin_port = htons(atoi(port));
 
 	freeaddrinfo(result);
+	free(host);
+	free(port);
 
-	print(DEBUG, "Node %s is reachable at %s:%u", name, inet_ntoa(n->addr.sin_addr), ntohs(n->addr.sin_port));
-
-	/* create and connect socket */
-	n->sd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (n->sd < 0) {
-		print(ERROR, "failed to create socket: %s", strerror(errno));
-		node_destroy(n);
-		return NULL;
-	}
-
-	/*ret = connect(n->sd, &n->addr, sizeof(struct sockaddr_in));
-	if (ret < 0) {
-		print(ERROR, "Failed to connect socket: %s", strerror(errno));
-		node_destroy(n);
-		return NULL;
-	}*/
-
-	ret = bind(n->sd, &n->addr, sizeof(struct sockaddr_in));
-	if (ret < 0) {
-		print(ERROR, "Failed to bind socket: %s", strerror(errno));
-		node_destroy(n);
-		return NULL;
-	}
-
-	return n;
+	return 0;
 }
 
 void node_destroy(struct node* n)

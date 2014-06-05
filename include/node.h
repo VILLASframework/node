@@ -28,10 +28,16 @@ struct node
 {
 	/// The socket descriptor
 	int sd;
+
+	// Local address of the socket
+	struct sockaddr_in local;
+
 	// Remote address of the socket
-	struct sockaddr_in addr;
+	struct sockaddr_in remote;
+
 	/// The type of this node
 	enum node_type type;
+
 	/// A short identifier of the node
 	char *name;
 };
@@ -45,13 +51,13 @@ struct msg; /* forward decl */
  *
  * @param name An acroynm, describing the node
  * @param type The type of a node (SERVER, SIMULATOR, WORKSTATION)
- * @param addr A string containing the node address
- * @param port The UDP port of the node
+ * @param local A string specifying the local ip:port
+ * @param remote A string specifying the remote ip:port
  * @return
  *  - 0 on success
  *  - otherwise on error occured
  */
-struct node* node_create(const char *name, enum node_type type, const char *addr, int port);
+struct node* node_create(const char *name, enum node_type type, const char *local, const char *remote);
 
 /**
  * @brief Delete a node created by node_create()
