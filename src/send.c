@@ -71,8 +71,8 @@ int main(int argc, char *argv[])
 
 	while (!feof(stdin)) {
 		msg_fscan(stdin, &msg);
-		msg_fprint(stdout, &msg);
 		send(sd, &msg, 8 + msg.length, 0);
+		msg_fprint(stdout, &msg);
 	}
 
 	return 0;

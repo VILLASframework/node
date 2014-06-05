@@ -21,12 +21,6 @@
 #define CLOCKID	CLOCK_REALTIME
 #define SIG	SIGRTMIN
 
-void quit(int sig, siginfo_t *si, void *ptr)
-{
-	debug(1, "Good night");
-	exit(EXIT_SUCCESS);
-}
-
 void tick(int sig, siginfo_t *si, void *ptr)
 {
 	struct msg *m = (struct msg*) si->si_value.sival_ptr;
@@ -62,17 +56,7 @@ int main(int argc, char *argv[])
 		.sa_sigaction = tick
 	};
 
-	struct sigaction sa_quit = {
-		.sa_flags = SA_SIGINFO,
-		.sa_sigaction = quit
-	};
-
 	sigemptyset(&sa_tick.sa_mask);
-	sigemptyset(&sa_quit.sa_mask);
-
-	if (sigaction(SIGINT, &sa_quit, NULL)) {
-               error("Failed sigaction(): %s", strerror(errno));
-	}
 
 	if (sigaction(SIG, &sa_tick, NULL)) {
                error("Failed sigaction(): %s", strerror(errno));

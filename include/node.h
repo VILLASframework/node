@@ -32,9 +32,6 @@ struct node
 	/// The socket descriptor
 	int sd;
 
-	/// Reference counter
-	int ref_cnt;
-
 	// Local address of the socket
 	struct sockaddr_in local;
 
@@ -64,13 +61,6 @@ struct msg; /* forward decl */
  */
 int node_create(struct node *n, const char *name, enum node_type type,
 	struct sockaddr_in local, struct sockaddr_in remote);
-
-/**
- * @brief Delete a node created by node_create()
- *
- * @param p A pointer to the node struct
- */
-void node_destroy(struct node *n);
 
 /**
  * @brief Connect and bind the UDP socket of this node

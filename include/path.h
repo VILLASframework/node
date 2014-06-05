@@ -14,14 +14,6 @@
 #include "node.h"
 #include "msg.h"
 
-enum path_state
-{
-	UNKNOWN,
-	CONNECTED,
-	RUNNING,
-	STOPPED
-};
-
 /**
  * @brief The datastructure for a path
  */
@@ -53,9 +45,7 @@ struct path
 };
 
 /**
- * @brief Create a new path
- *
- * Memory is allocated dynamically and has to be freed by path_destroy()
+ * @brief Setup a new path
  *
  * @param p A pointer to the path structure
  * @param in The node we are receiving messages from
@@ -66,13 +56,6 @@ struct path
  *  - otherwise an error occured
  */
 int path_create(struct path *p, struct node *in, struct node *out);
-
-/**
- * @brief Delete a path created by path_create()
- *
- * @param p A pointer to the path struct
- */
-void path_destroy(struct path *p);
 
 /**
  * @brief Start a path

@@ -25,22 +25,13 @@ int path_create(struct path *p, struct node *in, struct node *out)
 	return 0;
 }
 
-void path_destroy(struct path *p)
-{
-	assert(p);
-}
-
 static void * path_run(void *arg)
 {
 	struct path *p = (struct path *) arg;
 	struct msg m;
 
-	assert(p);
-
-	debug(1, "Established path: %12s => %s => %-12s", p->in->name, config.name, p->out->name);
-
 	/* main thread loop */
-	while (p->state == RUNNING) {
+	while (1) {
 		/* Receive message */
 		msg_recv(&m, p->in);
 
@@ -70,22 +61,15 @@ static void * path_run(void *arg)
 
 int path_start(struct path *p)
 {
-	assert(p);
-
-	p->state = RUNNING;
 	pthread_create(&p->tid, NULL, &path_run, (void *) p);
 }
 
 int path_stop(struct path *p)
 {
-	void * ret;
-
-	assert(p);
-
-	p->state = STOPPED;
+	void *ret;
 
 	pthread_cancel(p->tid);
 	pthread_join(p->tid, &ret);
 
-	return 0; // TODO
+	return 0;
 }
