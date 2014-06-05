@@ -22,12 +22,17 @@ int path_create(struct path *p, struct node *in, struct node *out)
 	p->delayed = 0;
 	p->duplicated = 0;
 
+	p->hook = NULL;
+
 	p->in = in;
 	p->out = out;
 
 	return 0;
 }
 
+/**
+ * @brief This is the main thread function per path
+ */
 static void * path_run(void *arg)
 {
 	struct path *p = (struct path *) arg;
@@ -35,12 +40,13 @@ static void * path_run(void *arg)
 
 	/* main thread loop */
 	while (1) {
-		/* Receive message */
-		msg_recv(&m, p->in);
+		msg_recv(&m, p->in); /* Receive message */
 
 		/* Check message sequence number */
 		if (m.sequence < p->sequence) {
 			p->delayed++;
+
+			/* Delayed messages will be skipped */
 			continue;
 		}
 		else if (m.sequence == p->sequence) {
@@ -50,14 +56,15 @@ static void * path_run(void *arg)
 		p->sequence = m.sequence;
 		p->received++;
 
-
-		/* Call hooks */
-		for (int i = 0; i < MAX_HOOKS && p->hooks[i]; i++) {
-			p->hooks[i](&m);
+		/* Call hook */
+		if (p->hook && p->hook(&m)) {
+			/* The hook can act as a simple filter
+			 * Returning a non-zero value will skip
+			 * the message from being forwarded */
+			continue;
 		}
 
-		/* Send message */
-		msg_send(&m, p->out);
+		msg_send(&m, p->out); /* Send message */
 	}
 
 	return NULL;

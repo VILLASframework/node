@@ -22,8 +22,8 @@ struct path
 	/// Pointers to the incoming and outgoing node
 	struct node *in, *out;
 
-	/// Hooks are called for every message which is passed
-	int (*hooks[MAX_HOOKS])(struct msg *m);
+	/// If non NULL this function is called for every received message
+	int (*hook)(struct msg *m);
 
 	/// Counter for received messages
 	unsigned int received;
