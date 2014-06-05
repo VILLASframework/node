@@ -17,7 +17,10 @@ extern struct config config;
 
 int path_create(struct path *p, struct node *in, struct node *out)
 {
-	memset(p, 0, sizeof(struct path));
+	/* Reset counters */
+	p->received = 0;
+	p->delayed = 0;
+	p->duplicated = 0;
 
 	p->in = in;
 	p->out = out;
@@ -44,6 +47,7 @@ static void * path_run(void *arg)
 			p->duplicated++;
 		}
 
+		p->sequence = m.sequence;
 		p->received++;
 
 

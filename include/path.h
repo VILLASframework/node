@@ -26,19 +26,16 @@ struct path
 	int (*hooks[MAX_HOOKS])(struct msg *m);
 
 	/// Counter for received messages
-	int received;
+	unsigned int received;
 
 	/// Counter for messages which arrived reordered
-	int delayed;
+	unsigned int delayed;
 
 	/// Counter for messages which arrived multiple times
-	int duplicated;
+	unsigned int duplicated;
 
 	/// Last known message number
-	int sequence;
-
-	/// The current path state
-	enum path_state state;
+	unsigned int sequence;
 
 	/// The path thread
 	pthread_t tid;
