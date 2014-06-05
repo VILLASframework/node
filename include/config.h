@@ -1,8 +1,10 @@
-/**
- * Configuration
+/** Static server configuration
+ * 
+ * This file contains some defines which are not part of the configuration file.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @file config.h
  */
 
 #ifndef _CONFIG_H_

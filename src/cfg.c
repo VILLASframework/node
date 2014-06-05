@@ -15,7 +15,7 @@
 #include "path.h"
 #include "utils.h"
 
-int config_parse(config_t *cfg, struct config *g)
+int config_parse(config_t *c, struct config *g)
 {
 	config_setting_t *cfg_nodes, *cfg_paths, *cfg_root;
 
@@ -27,7 +27,7 @@ int config_parse(config_t *cfg, struct config *g)
 		);
 	}
 
-	cfg_root = config_root_setting(cfg);
+	cfg_root = config_root_setting(c);
 
 	/* Read global settings */
 	config_parse_global(cfg_root, g);

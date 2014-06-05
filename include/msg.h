@@ -1,8 +1,8 @@
-/**
- * Message format
+/** Message format and message related functions
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @file msg.h
  */
 
 #ifndef _MSG_H_
@@ -15,10 +15,9 @@
 #include "node.h"
 
 #if PROTOCOL == 0
-/**
- * The format of a message (OPAL-RT example format)
+/** The format of a message (OPAL-RT example format).
  *
- * This struct defines the format of a message (protocol version 0)
+ * This struct defines the format of a message (protocol version 0).
  * Its declared as "packed" because it represents the "on wire" data.
  */
 struct msg
@@ -33,10 +32,9 @@ struct msg
 	double data[MAX_VALUES];
 } __attribute__((packed));
 #elif PROTOCOL == 1
-/**
- * Next generation message format for RTDS integration
+/** Next generation message format for RTDS integration.
  *
- * This struct defines the format of a message (protocol version 1)
+ * This struct defines the format of a message (protocol version 1).
  * Its declared as "packed" because it represents the "on wire" data.
  */
 struct msg
@@ -72,8 +70,7 @@ struct msg
   #error "Unknown protocol version!"
 #endif
 
-/**
- * @brief Print a raw UDP packge in human readable form
+/** Print a raw UDP message in human readable form.
  *
  * @param f The file stream
  * @param msg A pointer to the message
@@ -83,8 +80,7 @@ struct msg
  */
 int msg_fprint(FILE *f, struct msg *m);
 
-/**
- * @brief Read a message from a file stream
+/** Read a message from a file stream.
  *
  * @param f The file stream
  * @param m A pointer to the message
@@ -94,15 +90,13 @@ int msg_fprint(FILE *f, struct msg *m);
  */
 int msg_fscan(FILE *f, struct msg *m);
 
-/**
- * @brief Change the values of an existing message in a random fashion
+/** Change the values of an existing message in a random fashion.
  *
- * @param msg A pointer to the message whose values will be updated
+ * @param m A pointer to the message whose values will be updated
  */
 void msg_random(struct msg *m);
 
-/**
- * @brief Send a message to a node
+/** Send a message to a node.
  *
  * @param m A pointer to the message
  * @param n A pointer to the node
@@ -112,8 +106,7 @@ void msg_random(struct msg *m);
  */
 int msg_send(struct msg *m, struct node *n);
 
-/**
- * @brief Receive a message from a node
+/** Receive a message from a node.
  *
  * @param m A pointer to the message
  * @param n A pointer to the node
