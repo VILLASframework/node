@@ -5,7 +5,7 @@ OBJS = utils.o msg.o
 SRCS = $(wildcard src/*.c)
 DEPS = $(SRCS:src/%.c=dep/%.d)
 
-SUBDIRS = doc
+DIRS = dep bin build
 
 # Files
 bin/server: OBJS += main.o node.o path.o
@@ -24,38 +24,32 @@ RM = rm -f
 CC = gcc -c
 LD = gcc
 DEP = gcc -MM
-GDB = gdb -q
 MKDIR = mkdir -p
+RMDIR = rm -rf
 
 # Pseudotargets
 .SECONDARY:
 .SECONDEXPANSION:
-.PHONY: all clean realclean debug depend $(SUBDIRS)
+.PHONY: all clean doc
 
-all: $(addprefix bin/,$(TARGETS))
+all:    $(addprefix bin/,$(TARGETS))
 
-
-bin/%: $$(addprefix build/,$$(OBJS))
+bin/%: $$(addprefix build/,$$(OBJS)) | bin
 	$(LD) $(LDFLAGS) $^ -o $@
 
-build/%.o: src/%.c dep/%.d
+build/%.o: src/%.c dep/%.d | build
 	$(CC) $(CFLAGS) $< -o $@
 
-dep/%.d: src/%.c
+dep/%.d: src/%.c | dep
 	$(DEP) $(CFLAGS) $< -o $@
 
-debug: bin/server
-	$(GDB) -ex "break main" -ex "run $(ARGS)" bin/server
-
 clean:
-	$(RM) build/* bin/*
+	$(RMDIR) $(DIRS)
 
-realclean: clean
-	@for DIR in $(SUBDIRS); do $(MAKE) -C $$DIR clean; done
+$(DIRS):
+	$(MKDIR) $@
 
-depend: $(DEPS)
-
-$(SUBDIRS):
+doc:
 	$(MAKE) -C $@
 
 -include $(DEPS)
