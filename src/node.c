@@ -20,8 +20,6 @@
 #include "msg.h"
 #include "node.h"
 
-extern struct config config;
-
 int node_create(struct node *n, const char *name, enum node_type type,
 	struct sockaddr_in local, struct sockaddr_in remote)
 {
