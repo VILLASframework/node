@@ -7,31 +7,43 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #include "msg.h"
 
-void msg_fprint(FILE *f, struct msg *msg)
+int msg_fprint(FILE *f, struct msg *msg)
 {
-	fprintf(f, "p: dev_id = %u, msg_id = %4u, data", msg->dev_id, msg->msg_id);
+	fprintf(f, "%-8u %-8u", msg->device, msg->sequence);
 
-	for (int i = 0; i < msg->msg_len / sizeof(double); i++)
-		fprintf(f, "%8.3f", msg->data[i]);
+	for (int i = 0; i < msg->length / sizeof(double); i++) {
+		fprintf(f, "%-12.6f ", msg->data[i]);
+	}
 
 	fprintf(f, "\n");
+
+	return 0;
 }
 
-void msg_random(struct msg *msg, short dev_id)
+int msg_fscan(FILE *f, struct msg *msg)
 {
-	static uint16_t msg_id;
-	static double data[4];
+	fscanf(f, "%8u %8u ", &msg->device, &msg->sequence);
 
-	for (int i = 0; i < MAX_VALUES; i++)
-		data[i] += (double) random() / RAND_MAX - .5;
+	for (int i = 0; i < msg->length / sizeof(double); i++) {
+		fscanf(f, "%12lf ", &msg->data[i]);
+	}
 
-	msg->msg_id = ++msg_id;
-	msg->dev_id = dev_id;
-	msg->msg_len = sizeof(data);
-	memcpy(&msg->data, data, msg->msg_len);
+	fscanf(f, "\n");
+
+	return 0;
+}
+
+void msg_random(struct msg *m)
+{
+	int values = m->length / sizeof(double);
+
+	for (int i = 0; i < values; i++) {
+		m->data[i] += (double) random() / RAND_MAX - .5;
+	}
+
+	m->sequence++;
 }
 
