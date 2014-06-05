@@ -11,6 +11,7 @@
 
 #include <signal.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 
 #include "config.h"
 #include "cfg.h"
@@ -28,6 +29,9 @@ void start()
 		struct node *n = &config.nodes[i];
 
 		node_connect(n);
+
+		debug(1, "  We listen for node '%s' at %s:%u", n->name, inet_ntoa(n->local.sin_addr), ntohs(n->local.sin_port));
+		debug(1, "  We sent to node '%s' at %s:%u", n->name, inet_ntoa(n->remote.sin_addr), ntohs(n->remote.sin_port));
 	}
 
 	for (int i = 0; i < config.path_count; i++) {

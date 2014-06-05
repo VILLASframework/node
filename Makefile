@@ -20,10 +20,10 @@ CFLAGS += -D__GIT_REV__='"$(GIT_REV)"' -D__GIT_TAG__='"$(GIT_TAG)"'
 all: $(TARGETS)
 
 server: node.o msg.o utils.o path.o cfg.o caps.o
-send: msg.o utils.o
-receive: msg.o utils.o
-random: msg.o utils.o
-test: msg.o utils.o
+send: node.o msg.o utils.o
+receive: node.o msg.o utils.o
+random: node.o msg.o utils.o
+test: node.o msg.o utils.o
 
 %.d: %.c
 	$(CC) -MM $(CFLAGS) $< -o $@

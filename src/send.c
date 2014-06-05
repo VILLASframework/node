@@ -32,17 +32,19 @@ int main(int argc, char *argv[])
 {
  	struct sockaddr_in sa;
 
-	if (argc != 2) {
-		printf("Usage: %s REMOTE VALUES\n", argv[0]);
+	if (argc != 3 && argc != 4) {
+		printf("Usage: %s VALUES REMOTE [LOCAL]\n", argv[0]);
 		printf("  REMOTE   is a IP:PORT combination of the remote host\n");
+		printf("  LOCAL    is an optional IP:PORT combination of the local host\n");
 		printf("  VALUES   is the number of values to be read from stdin\n\n");
 		printf("s2ss Simulator2Simulator Server v%s\n", VERSION);
 		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
 		exit(EXIT_FAILURE);
 	}
 
-	const char *remote_str = argv[1];
-	int values = atoi(argv[2]);
+	int values = atoi(argv[1]);
+	const char *remote_str = argv[2];
+	const char *local_str = argv[3];
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -55,26 +57,31 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	/* Resolve addresses */
- 	struct sockaddr_in remote;
+ 	struct sockaddr_in local;
+	struct sockaddr_in remote;
+
+	if (argc == 4 && resolve(remote_str, &remote, 0))
+		error("Failed to resolve local address: %s", local_str);
+	else {
+		local.sin_family = AF_INET;
+		local.sin_addr.s_addr = INADDR_ANY;
+		local.sin_port = 0;
+	}
 
 	if (resolve(remote_str, &remote, 0))
 		error("Failed to resolve remote address: %s", remote_str);
 
-	/* Create socket */
-	sd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (sd < 0)
-		perror("Failed to create socket");
-
-	/* Connect socket */
-	if (connect(sd, (struct sockaddr *) &remote, sizeof(struct sockaddr_in)))
-		perror("Failed to connect socket");
+	/* Create node */
+	struct node n;
+	node_create(&n, NULL, NODE_SERVER, local, remote);
+	node_connect(&n);
 
 	struct msg m;
 	m.length = values * sizeof(double);
 
 	while (!feof(stdin)) {
 		msg_fscan(stdin, &m);
-		send(sd, &m, 8 + m.length, 0);
+		msg_send(&m, &n);
 		msg_fprint(stdout, &m);
 	}
 

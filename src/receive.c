@@ -52,24 +52,24 @@ int main(int argc, char *argv[])
 	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT, &sa_quit, NULL);
 
-	/* Resolve address */
+	/* Resolve addresses */
 	struct sockaddr_in local;
+ 	struct sockaddr_in remote;
 
 	if (resolve(local_str, &local, 0))
-		error("Failed to resolve local address: %s", local_str);
+		error("Failed to resolve remote address: %s", local_str);
 
-	/* Create socket */
-	sd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (sd < 0)
-		perror("Failed to create socket");
+	/* Print header */
+	fprintf(stderr, "# %-6s %-8s %-12s\n", "dev_id", "seq_no", "data");
 
-	/* Bind socket */
-	if (bind(sd, (struct sockaddr *) &local, sizeof(struct sockaddr_in)))
-		perror("Failed to bind to socket");
+	/* Create node */
+	struct node n;
+	node_create(&n, NULL, NODE_SERVER, local, remote);
+	node_connect(&n);
 
 	struct msg m;
 	while (1) {
-		recv(sd, &m, sizeof(struct msg), 0);
+		msg_recv(&m, &n);
 		msg_fprint(stdout, &m);
 	}
 

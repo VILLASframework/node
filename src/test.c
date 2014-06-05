@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 
 	const char *test = argv[1];
 	const char *remote_str = argv[2];
-	const char *local_str = (argc == 4) ? argv[3] : NULL;
+	const char *local_str = argv[3];
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -54,24 +54,21 @@ int main(int argc, char *argv[])
  	struct sockaddr_in remote;
 	struct sockaddr_in local;
 
+	if (argc == 4 && resolve(remote_str, &remote, 0))
+		error("Failed to resolve local address: %s", local_str);
+	else {
+		local.sin_family = AF_INET;
+		local.sin_addr.s_addr = INADDR_ANY;
+		local.sin_port = 0;
+	}
+
 	if (resolve(remote_str, &remote, 0))
 		error("Failed to resolve remote address: %s", remote_str);
 
-	if (resolve(local_str, &local, 0))
-		error("Failed to resolve local address: %s", local_str);
-
-	/* Create socket */
-	sd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (sd < 0)
-		perror("Failed to create socket");
-
-	/* Bind socket */
-	if (bind(sd, (struct sockaddr *) &local, sizeof(struct sockaddr_in)))
-		perror("Failed to bind to socket");
-
-	/* Connect socket */
-	if (connect(sd, (struct sockaddr *) &remote, sizeof(struct sockaddr_in)))
-		perror("Failed to connect socket");
+	/* Create node */
+	struct node n;
+	node_create(&n, NULL, NODE_SERVER, local, remote);
+	node_connect(&n);
 
 	if (!strcmp(test, "latency")) {
 		struct msg m2, m1 = {
@@ -87,9 +84,8 @@ int main(int argc, char *argv[])
 
 		while (1) {
 			clock_gettime(CLOCK_REALTIME, ts1);
-			send(sd, &m1, 8 + m1.length, 0);
-
-			recv(sd, &m2, sizeof(struct msg), 0);
+			msg_send(&m1, &n);
+			msg_recv(&m2, &n);
 			clock_gettime(CLOCK_REALTIME, ts3);
 
 			rtt = ts3->tv_nsec - ts2->tv_nsec;
