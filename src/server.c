@@ -22,24 +22,47 @@
 /// Global settings
 struct config config;
 
-void quit()
+void start()
+{
+	for (int i = 0; i < config.node_count; i++) {
+		struct node *n = &config.nodes[i];
+
+		node_connect(n);
+	}
+
+	for (int i = 0; i < config.path_count; i++) {
+		struct path *p = &config.paths[i];
+
+		path_start(p);
+
+		info("Starting path: %12s => %s => %-12s", p->in->name, config.name, p->out->name);
+	}
+}
+
+void stop()
 {
 	for (int i = 0; i < config.path_count; i++) {
 		struct path *p = &config.paths[i];
 
 		path_stop(p);
 
-		info("Path %u stopped:", i);
+		info("Stopping path: %12s => %s => %-12s", p->in->name, config.name, p->out->name);
 		info("  %u messages received", p->received);
 		info("  %u messages duplicated", p->duplicated);
 		info("  %u messages delayed", p->delayed);
-
-		path_destroy(p);
 	}
 
 	for (int i = 0; i < config.node_count; i++) {
-		node_destroy(&config.nodes[i]);
+		struct node *n = &config.nodes[i];
+
+		node_disconnect(n);
 	}
+}
+
+void quit()
+{
+	/* Stop and disconnect all paths/nodes */
+	stop();
 
 	free(config.paths);
 	free(config.nodes);
@@ -78,11 +101,9 @@ int main(int argc, char *argv[])
 	else
 		error("No paths found. Terminating...");
 
-	for (int i = 0; i < config.path_count; i++) {
-		path_start(&config.paths[i]);
-	}
-
 	/* Start and connect all paths/nodes */
+	start();
+
 	/* Setup signals */
 	struct sigaction sa_quit = {
 		.sa_flags = SA_SIGINFO,
@@ -96,6 +117,7 @@ int main(int argc, char *argv[])
 	/* Main thread is sleeping */
 	while (1) pause();
 
+	/* Stop and free ressources */
 	quit();
 
 	return 0;
