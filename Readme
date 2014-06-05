@@ -1,0 +1,31 @@
+S2SS Documentation
+================================================================================
+
+Contacts:
+	Marija Stevic <MStevic@eonerc.rwth-aachen.de>
+	Steffen Vogel <StVogel@eonerc.rwth-aachen.de>
+
+
+1. Installation of the S2SS Server
+--------------------------------------------------------------------------------
+
+    1.a Operating System and Kernel
+    ----------------------------------------------------------------------------
+
+	Kernel command line: isolcpus=[cpu_number]
+
+	Map NIC IRQs	=> ???
+	Map Tasks	=> taskset or sched_cpuaffinity
+	Nice Task	=> Realtime Priority
+
+	Linux RT-preemp: https://rt.wiki.kernel.org/index.php/Main_Page
+		precompiled kernels: http://ccrma.stanford.edu/planetccrma/software/
+			for Fedora 20 (https://fedoraproject.org/)
+
+    1.b S2SS Socket Server
+    ----------------------------------------------------------------------------
+
+	// TODO
+
+	$ make
+
