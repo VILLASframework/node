@@ -45,8 +45,6 @@ struct node
 	const char *name;
 };
 
-struct msg; /* forward decl */
-
 /**
  * @brief Create a new node
  *
