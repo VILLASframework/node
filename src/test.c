@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
  	struct sockaddr_in remote;
 	struct sockaddr_in local;
 
-	if (argc == 4 && resolve(remote_str, &remote, 0))
+	if (resolve_addr(local_str, &local, 0))
 		error("Failed to resolve local address: %s", local_str);
 	else {
 		local.sin_family = AF_INET;
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 		local.sin_port = 0;
 	}
 
-	if (resolve(remote_str, &remote, 0))
+	if (resolve_addr(remote_str, &remote, 0))
 		error("Failed to resolve remote address: %s", remote_str);
 
 	/* Create node */

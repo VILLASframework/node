@@ -48,7 +48,7 @@ void print(enum log_level lvl, const char *fmt, ...)
 	va_end(ap);
 }
 
-int resolve(const char *addr, struct sockaddr_in *sa, int flags)
+int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags)
 {
 	int ret;
 	char *node;
@@ -90,7 +90,7 @@ int resolve(const char *addr, struct sockaddr_in *sa, int flags)
 	return 0;
 }
 
-void realtime_init(struct config *g)
+void init_realtime(struct config *g)
 {
 	/* Prefault stack */
 	char dummy[MAX_SAFE_STACK];
@@ -108,7 +108,7 @@ void realtime_init(struct config *g)
 	if (stat("/sys/kernel/realtime", &st))
 		warn("This is not a a realtime patched kernel!");
 	else
-		debug(3 ,"This is a realtime patched kernel");
+		debug(3, "This is a realtime patched kernel");
 
 	/* Use FIFO scheduler with realtime priority */
 	struct sched_param param;

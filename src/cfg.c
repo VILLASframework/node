@@ -159,10 +159,10 @@ int config_parse_node(config_setting_t *c, struct config *g)
 
 	info("Loading %s node '%s'", type_str, name);
 
-	if (resolve(local_str, &local, 0))
+	if (resolve_addr(local_str, &local, 0))
 		cerror(c, "Failed to resolve local address '%s' of node '%s'", local_str, name);
 
-	if (resolve(remote_str, &remote, 0))
+	if (resolve_addr(remote_str, &remote, 0))
 		cerror(c, "Failed to resolve remote address '%s' of node '%s'", remote_str, name);
 
 	if (node_create(&g->nodes[g->node_count], name, type, local, remote))
@@ -170,4 +170,3 @@ int config_parse_node(config_setting_t *c, struct config *g)
 
 	g->node_count++;
 }
-

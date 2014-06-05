@@ -41,7 +41,7 @@ void print(enum log_level lvl, const char *fmt, ...);
  * - 0 on success
  * - otherwise an error occured
  */
-int resolve(const char *addr, struct sockaddr_in *sa, int flags);
+int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags);
 
 /** Setup various realtime related things.
  *
@@ -53,7 +53,7 @@ int resolve(const char *addr, struct sockaddr_in *sa, int flags);
  *
  * @param g The global configuration
  */
-void realtime_init(struct config *g);
+void init_realtime(struct config *g);
 
 /// Check assertion and exit if failed.
 #define assert(exp) do { \

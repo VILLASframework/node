@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 	struct sockaddr_in local;
  	struct sockaddr_in remote;
 
-	if (resolve(local_str, &local, 0))
+	if (resolve_addr(local_str, &local, 0))
 		error("Failed to resolve remote address: %s", local_str);
 
 	/* Print header */
