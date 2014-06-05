@@ -55,11 +55,12 @@ static void * path_run(void *arg)
 		node_recv(p->in, &m);
 
 		/* call hooks */
+		for (int i = 0; i < MAX_HOOKS && p->hooks[i]; i++) {
+			p->hooks[i](&m);
+		}
 
 		/* send messages */
-		/*for (struct node **n = p->out; *n; n++) {
-			node_send(*n, &m);
-		}*/
+		node_send(p->out, &m);
 	}
 
 	return NULL;
@@ -67,6 +68,9 @@ static void * path_run(void *arg)
 
 int path_start(struct path *p)
 {
+	if (!p)
+		return -EFAULT;
+
 	p->state = RUNNING;
 	pthread_create(&p->tid, NULL, &path_run, (void *) p);
 }
@@ -74,6 +78,9 @@ int path_start(struct path *p)
 int path_stop(struct path *p)
 {
 	void * ret;
+
+	if (!p)
+		return -EFAULT;
 
 	p->state = STOPPED;
 
