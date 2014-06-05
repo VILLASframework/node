@@ -95,4 +95,3 @@ struct node* node_lookup_name(const char *str, struct node *nodes, int len)
 
 	return NULL;
 }
-
