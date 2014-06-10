@@ -23,6 +23,10 @@ struct settings {
 	int affinity;
 	/** Protocol version of UDP packages */
 	int protocol;
+	/** User for the server process */
+	int uid;
+	/** Group for the server process */
+	int gid;
 
 	/** A libconfig object pointing to the root of the config file */
 	config_setting_t *cfg;

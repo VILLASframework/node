@@ -120,6 +120,15 @@ int main(int argc, char *argv[])
 	/* Connect all nodes and start one thread per path */
 	start();
 
+	/* Process is running as root, drop privileges */
+	if (getuid() == 0) {
+		if (setgid(settings.gid) || setuid(settings.uid))
+			perror("Unable to drop privileges");
+		else
+			debug(3, "Dropped privileges to uid = %u, gid = %u",
+				settings.uid, settings.gid);
+	}
+
 	/* Main thread is sleeping */
 	pause();
 

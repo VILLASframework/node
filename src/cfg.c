@@ -5,10 +5,12 @@
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
  */
 
+#include <stdlib.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <stdlib.h>
+#include <grp.h>
+#include <pwd.h>
 
 #include "cfg.h"
 #include "node.h"
@@ -85,6 +87,30 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 	config_setting_lookup_int(cfg, "affinity", &set->affinity);
 	config_setting_lookup_int(cfg, "priority", &set->priority);
 	config_setting_lookup_int(cfg, "protocol", &set->protocol);
+
+	const char *user = NULL;
+	const char *group = NULL;
+
+	config_setting_lookup_string(cfg, "user", &user);
+	config_setting_lookup_string(cfg, "group", &group);
+
+	/* Lookup uid and gid */
+	if (user) {
+		struct passwd *pw = getpwnam(user);
+		if (!pw)
+			error("Unknown username: '%s'", user);
+
+		set->uid = pw->pw_uid;
+		set->gid = pw->pw_gid;
+	}
+
+	if (group) {
+		struct group *gr = getgrnam(group);
+		if (!gr)
+			error("Unknown group: '%s'", group);
+
+		set->gid = gr->gr_gid;
+	}
 
 	set->cfg = cfg;
 
