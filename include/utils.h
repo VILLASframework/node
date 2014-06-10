@@ -13,7 +13,7 @@
 #include <errno.h>
 #include <string.h>
 
-struct config;
+struct settings;
 struct sockaddr_in;
 struct sockaddr;
 
@@ -54,7 +54,7 @@ int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags);
  *
  * @param g The global configuration
  */
-void init_realtime(struct config *g);
+void init_realtime(struct settings *g);
 
 /** Compare two socket addresses based on their family and address.
  *

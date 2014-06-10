@@ -14,11 +14,9 @@ struct node;
 struct path;
 
 /** Global configuration */
-struct config {
+struct settings {
 	/** Name of this node */
 	const char *name;
-	/** Configuration filename */
-	const char *filename;
 	/** Task priority (lower is better) */
 	int priority;
 	/** Core affinity of this task */
@@ -39,7 +37,7 @@ struct config {
 	struct path *paths;
 };
 
-/** Parse configuration file and store settings in supplied struct config.
+/** Parse configuration file and store settings in supplied struct settings.
  *
  * @param c A libconfig object
  * @param g The global configuration structure (also contains the config filename)
@@ -47,7 +45,7 @@ struct config {
  *  - 0 on success
  *  - otherwise an error occured
  */
-int config_parse(config_t *c, struct config *g);
+int config_parse(const char *filename, config_t *c, struct settings *g);
 
 /** Parse the global section of a configuration file.
  *
@@ -57,7 +55,7 @@ int config_parse(config_t *c, struct config *g);
  *  - 0 on success
  *  - otherwise an error occured
  */
-int config_parse_global(config_setting_t *c, struct config *g);
+int config_parse_global(config_setting_t *c, struct settings *g);
 
 /** Parse a single path and add it to the global configuration.
   *
@@ -67,7 +65,7 @@ int config_parse_global(config_setting_t *c, struct config *g);
  *  - 0 on success
  *  - otherwise an error occured
  */
-int config_parse_path(config_setting_t *c, struct config *g);
+int config_parse_path(config_setting_t *c, struct settings *g);
 
 /** Parse a single node and add it to the global configuration.
   *
@@ -77,6 +75,6 @@ int config_parse_path(config_setting_t *c, struct config *g);
  *  - 0 on success
  *  - otherwise an error occured
  */
-int config_parse_node(config_setting_t *c, struct config *g);
+int config_parse_node(config_setting_t *c, struct settings *g);
 
 #endif /* _CFG_H_ */

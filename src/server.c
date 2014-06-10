@@ -21,17 +21,19 @@
 #include "node.h"
 
 /** Default settings */
-static struct config config = {
+static struct settings settings = {
 	.priority = 0,
 	.affinity = 0xC0,
 	.protocol = 0
 };
 
+static config_t config;
+
 static void start()
 {
 	/* Connect and bind nodes to their sockets, set socket options */
-	for (int i = 0; i < config.node_count; i++) {
-		struct node *n = &config.nodes[i];
+	for (int i = 0; i < settings.node_count; i++) {
+		struct node *n = &settings.nodes[i];
 
 		node_connect(n);
 
@@ -40,32 +42,32 @@ static void start()
 	}
 
 	/* Start on thread per path for asynchronous processing */
-	for (int i = 0; i < config.path_count; i++) {
-		struct path *p = &config.paths[i];
+	for (int i = 0; i < settings.path_count; i++) {
+		struct path *p = &settings.paths[i];
 
 		path_start(p);
 
-		info("Starting path: %12s => %s => %-12s", p->in->name, config.name, p->out->name);
+		info("Starting path: %12s => %s => %-12s", p->in->name, settings.name, p->out->name);
 	}
 }
 
 static void stop()
 {
 	/* Join all threads and print statistics */
-	for (int i = 0; i < config.path_count; i++) {
-		struct path *p = &config.paths[i];
+	for (int i = 0; i < settings.path_count; i++) {
+		struct path *p = &settings.paths[i];
 
 		path_stop(p);
 
-		info("Stopping path: %12s => %s => %-12s", p->in->name, config.name, p->out->name);
+		info("Stopping path: %12s => %s => %-12s", p->in->name, settings.name, p->out->name);
 		info("  %u messages received", p->received);
 		info("  %u messages duplicated", p->duplicated);
 		info("  %u messages delayed", p->delayed);
 	}
 
 	/* Close all sockets we listing on */
-	for (int i = 0; i < config.node_count; i++) {
-		struct node *n = &config.nodes[i];
+	for (int i = 0; i < settings.node_count; i++) {
+		struct node *n = &settings.nodes[i];
 
 		node_disconnect(n);
 	}
@@ -75,9 +77,9 @@ static void quit()
 {
 	stop();
 
-	free(config.paths);
-	free(config.nodes);
-	config_destroy(&config.obj);
+	free(settings.paths);
+	free(settings.nodes);
+	config_destroy(&config);
 
 	_exit(EXIT_SUCCESS);
 }
@@ -108,17 +110,16 @@ int main(int argc, char *argv[])
 	info("This is s2ss %s", VERSION);
 
 	/* Parse configuration file */
-	config.filename = argv[1];
-	config_init(&config.obj);
-	config_parse(&config.obj, &config);
+	config_init(&config);
+	config_parse(argv[1], &config, &settings);
 
-	if (!config.path_count)
+	if (!settings.path_count)
 		error("No paths found. Terminating...");
 	else
-		info("Parsed %u nodes and %u paths", config.node_count, config.path_count);
+		info("Parsed %u nodes and %u paths", settings.node_count, settings.path_count);
 
 	/* Setup various realtime related things */
-	init_realtime(&config);
+	init_realtime(&settings);
 
 	/* Connect all nodes to their sockets and start one thread per path */
 	start();

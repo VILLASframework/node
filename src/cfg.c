@@ -15,11 +15,9 @@
 #include "path.h"
 #include "utils.h"
 
-int config_parse(config_t *c, struct config *g)
+int config_parse(const char *filename, config_t *cfg, struct settings *g)
 {
-	config_setting_t *cfg_nodes, *cfg_paths, *cfg_root;
-
-	if (!config_read_file(cfg, g->filename)) {
+	if (!config_read_file(cfg, filename)) {
 		error("Failed to parse configuration: %s in %s:%d",
 			config_error_text(cfg),
 			config_error_file(cfg),
@@ -27,19 +25,20 @@ int config_parse(config_t *c, struct config *g)
 		);
 	}
 
-	cfg_root = config_root_setting(c);
+	config_setting_t *cfg_root = config_root_setting(cfg);
+	if (!cfg_root || !config_setting_is_group(cfg_root))
+		error("Missing global section in config");
 
-	/* Read global settings */
-	config_parse_global(cfg_root, g);
-
-	/* Allocate memory for paths and nodes */
-	cfg_nodes = config_setting_get_member(cfg_root, "nodes");
+	config_setting_t *cfg_nodes = config_setting_get_member(cfg_root, "nodes");
 	if (!cfg_nodes || !config_setting_is_group(cfg_nodes))
 		error("Missing node section in config");
 
-	cfg_paths = config_setting_get_member(cfg_root, "paths");
+	config_setting_t *cfg_paths = config_setting_get_member(cfg_root, "paths");
 	if (!cfg_paths || !config_setting_is_list(cfg_paths))
 		error("Missing path section in config");
+
+	/* Read global settings */
+	config_parse_global(cfg_root, g);
 
 	int node_count = config_setting_length(cfg_nodes);
 	int path_count = config_setting_length(cfg_paths);
@@ -66,12 +65,11 @@ int config_parse(config_t *c, struct config *g)
 	return CONFIG_TRUE;
 }
 
-int config_parse_global(config_setting_t *c, struct config *g)
+int config_parse_global(config_setting_t *c, struct settings *g)
 {
 	if (!config_setting_lookup_string(c, "name", &g->name))
 		cerror(c, "Missing node name");
 
-	config_setting_lookup_int(c, "debug", &g->debug);
 	config_setting_lookup_int(c, "affinity", &g->affinity);
 	config_setting_lookup_int(c, "priority", &g->priority);
 	config_setting_lookup_int(c, "protocol", &g->protocol);
@@ -81,7 +79,7 @@ int config_parse_global(config_setting_t *c, struct config *g)
 	return CONFIG_TRUE;
 }
 
-int config_parse_path(config_setting_t *c, struct config *g)
+int config_parse_path(config_setting_t *c, struct settings *g)
 {
 	struct node *in, *out;
 	const char *in_str = NULL;
@@ -128,7 +126,7 @@ int config_parse_path(config_setting_t *c, struct config *g)
 		warn("  Path is not enabled");
 }
 
-int config_parse_node(config_setting_t *c, struct config *g)
+int config_parse_node(config_setting_t *c, struct settings *g)
 {
 	const char *name = NULL;
 	const char *type_str = NULL;

@@ -125,7 +125,7 @@ static cpu_set_t to_cpu_set_t(int set)
 	return cset;
 }
 
-void init_realtime(struct config *g)
+void init_realtime(struct settings *g)
 {
 	/* Prefault stack */
 	char dummy[MAX_SAFE_STACK];
