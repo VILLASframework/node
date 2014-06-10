@@ -20,6 +20,12 @@
 #include "path.h"
 #include "node.h"
 
+/** Linked list of nodes */
+static struct node *nodes;
+
+/** Linked list of paths */
+static struct path *paths;
+
 /** Default settings */
 static struct settings settings = {
 	.priority = 0,
@@ -32,9 +38,7 @@ static config_t config;
 static void start()
 {
 	/* Connect and bind nodes to their sockets, set socket options */
-	for (int i = 0; i < settings.node_count; i++) {
-		struct node *n = &settings.nodes[i];
-
+	for (struct node *n = nodes; n; n = n->next) {
 		node_connect(n);
 
 		debug(1, "  We listen for node '%s' at %s:%u", n->name, inet_ntoa(n->local.sin_addr), ntohs(n->local.sin_port));
@@ -42,9 +46,7 @@ static void start()
 	}
 
 	/* Start on thread per path for asynchronous processing */
-	for (int i = 0; i < settings.path_count; i++) {
-		struct path *p = &settings.paths[i];
-
+	for (struct path *p = paths; p; p = p->next) {
 		path_start(p);
 
 		info("Starting path: %12s => %s => %-12s", p->in->name, settings.name, p->out->name);
@@ -54,9 +56,7 @@ static void start()
 static void stop()
 {
 	/* Join all threads and print statistics */
-	for (int i = 0; i < settings.path_count; i++) {
-		struct path *p = &settings.paths[i];
-
+	for (struct path *p = paths; p; p = p->next) {
 		path_stop(p);
 
 		info("Stopping path: %12s => %s => %-12s", p->in->name, settings.name, p->out->name);
@@ -66,9 +66,7 @@ static void stop()
 	}
 
 	/* Close all sockets we listing on */
-	for (int i = 0; i < settings.node_count; i++) {
-		struct node *n = &settings.nodes[i];
-
+	for (struct node *n = nodes; n; n = n->next) {
 		node_disconnect(n);
 	}
 }
@@ -77,8 +75,8 @@ static void quit()
 {
 	stop();
 
-	free(settings.paths);
-	free(settings.nodes);
+	// TODO: free nodes and paths
+
 	config_destroy(&config);
 
 	_exit(EXIT_SUCCESS);
@@ -111,24 +109,19 @@ int main(int argc, char *argv[])
 
 	/* Parse configuration file */
 	config_init(&config);
-	config_parse(argv[1], &config, &settings);
+	config_parse(argv[1], &config, &settings, &nodes, &paths);
 
-	if (!settings.path_count)
+	if (!paths)
 		error("No paths found. Terminating...");
-	else
-		info("Parsed %u nodes and %u paths", settings.node_count, settings.path_count);
 
 	/* Setup various realtime related things */
 	init_realtime(&settings);
 
-	/* Connect all nodes to their sockets and start one thread per path */
+	/* Connect all nodes and start one thread per path */
 	start();
 
 	/* Main thread is sleeping */
-	while (1) pause();
-
-	/* Stop and free ressources */
-	quit();
+	pause();
 
 	return 0;
 }

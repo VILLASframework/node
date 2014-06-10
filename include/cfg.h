@@ -23,58 +23,53 @@ struct settings {
 	int affinity;
 	/** Protocol version of UDP packages */
 	int protocol;
-	/// Number of parsed paths
-	int path_count;
-	/// Number of parsed nodes
-	int node_count;
 
 	/** A libconfig object pointing to the root of the config file */
 	config_setting_t *cfg;
-
-	/// Array of nodes
-	struct node *nodes;
-	/// Array of paths
-	struct path *paths;
 };
 
 /** Parse configuration file and store settings in supplied struct settings.
  *
- * @param c A libconfig object
- * @param g The global configuration structure (also contains the config filename)
+ * @param cfg A libconfig object
+ * @param set The global configuration structure (also contains the config filename)
+ * @param nodes A pointer to a linked list of nodes which should be parsed
+ * @param paths A pointer to a linked list of paths which should be parsed
  * @return
  *  - 0 on success
  *  - otherwise an error occured
  */
-int config_parse(const char *filename, config_t *c, struct settings *g);
+int config_parse(const char *filename, config_t *cfg,
+	struct settings *set, struct node **nodes, struct path **paths);
 
 /** Parse the global section of a configuration file.
  *
- * @param c A libconfig object pointing to the root of the file
- * @param g The global configuration file
+ * @param cfg A libconfig object pointing to the root of the file
+ * @param set The global configuration file
  * @return
  *  - 0 on success
  *  - otherwise an error occured
  */
-int config_parse_global(config_setting_t *c, struct settings *g);
+int config_parse_global(config_setting_t *cfg, struct settings *set);
 
 /** Parse a single path and add it to the global configuration.
-  *
- * @param c A libconfig object pointing to the path
- * @param g The global configuration file
+ *
+ * @param cfg A libconfig object pointing to the path
+ * @param path A pointer to the new path
+ * @param nodes A linked list of all existing nodes
  * @return
  *  - 0 on success
  *  - otherwise an error occured
  */
-int config_parse_path(config_setting_t *c, struct settings *g);
+int config_parse_path(config_setting_t *cfg, struct path *path, struct node *nodes);
 
 /** Parse a single node and add it to the global configuration.
-  *
- * @param c A libconfig object pointing to the node
- * @param g The global configuration file
+ *
+ * @param cfg A libconfig object pointing to the node
+ * @param node A pointer to the new node
  * @return
  *  - 0 on success
  *  - otherwise an error occured
  */
-int config_parse_node(config_setting_t *c, struct settings *g);
+int config_parse_node(config_setting_t *cfg, struct node *node);
 
 #endif /* _CFG_H_ */

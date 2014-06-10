@@ -85,11 +85,11 @@ enum node_type node_lookup_type(const char *str)
 		return NODE_INVALID;
 }
 
-struct node* node_lookup_name(const char *str, struct node *nodes, int len)
+struct node* node_lookup_name(const char *str, struct node *nodes)
 {
-	for (int i = 0; i < len; i++) {
-		if (!strcmp(str, nodes[i].name)) {
-			return &nodes[i];
+	for (struct node *n = nodes; n; n = n->next) {
+		if (!strcmp(str, n->name)) {
+			return n;
 		}
 	}
 

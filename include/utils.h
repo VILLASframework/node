@@ -69,6 +69,12 @@ void init_realtime(struct settings *g);
  */
 int sockaddr_cmp(struct sockaddr *a, struct sockaddr *b);
 
+/** Append an element to a single linked list */
+#define list_add(list, elm) do { \
+		elm->next = list; \
+		list = elm; \
+	} while (0)
+
 /** Check assertion and exit if failed. */
 #define assert(exp) do { \
 	if (!(exp)) { \

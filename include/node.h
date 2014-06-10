@@ -61,6 +61,9 @@ struct node
 
 	/** A pointer to the libconfig object which instantiated this node */
 	config_setting_t *cfg;
+
+	/** Linked list pointer */
+	struct node *next;
 };
 
 /** Create a new node.
@@ -109,10 +112,9 @@ enum node_type node_lookup_type(const char *str);
 /** Search list of nodes for a name.
  *
  * @param str The name of the wanted node
- * @param nodes A pointer to the first list element
- * @param len Length of the node list
+ * @param nodes A linked list of all nodes
  * @return A pointer to the node or NULL if not found
  */
-struct node* node_lookup_name(const char *str, struct node *nodes, int len);
+struct node* node_lookup_name(const char *str, struct node *nodes);
 
 #endif /* _NODE_H_ */
