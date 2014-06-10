@@ -10,16 +10,11 @@
 #include <string.h>
 #include <time.h>
 #include <errno.h>
-#include <sched.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <sched.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 
 #include "config.h"
 #include "cfg.h"
@@ -113,7 +108,7 @@ int sockaddr_cmp(struct sockaddr *a, struct sockaddr *b)
 	return -1;
 }
 
-static cpu_set_t to_cpu_set_t(int set)
+cpu_set_t to_cpu_set_t(int set)
 {
 	cpu_set_t cset;
 
@@ -123,41 +118,4 @@ static cpu_set_t to_cpu_set_t(int set)
 	}
 
 	return cset;
-}
-
-void init_realtime(struct settings *g)
-{
-	/* Prefault stack */
-	char dummy[MAX_SAFE_STACK];
-	memset(dummy, 0, MAX_SAFE_STACK);
-	debug(3, "Prefaulted stack");
-
-	/* Lock memory */
-	if(mlockall(MCL_CURRENT | MCL_FUTURE))
-		perror("Failed mlockall");
-	else
-		debug(3, "Locked memory");
-
-	/* Check for realtime kernel patch */
-	struct stat st;
-	if (stat("/sys/kernel/realtime", &st))
-		warn("This is not a a realtime patched kernel!");
-	else
-		debug(3, "This is a realtime patched kernel");
-
-	/* Use FIFO scheduler with realtime priority */
-	struct sched_param param;
-	param.sched_priority = g->priority;
-	if (sched_setscheduler(0, SCHED_FIFO, &param))
-		perror("Failed to set realtime priority");
-	else
-		debug(3, "Set task priority to %u", g->priority);
-
-	/* Pin threads to CPUs by setting the affinity */
-	cpu_set_t cset = to_cpu_set_t(g->affinity);
-	pid_t pid = getpid();
-	if (sched_setaffinity(pid, sizeof(cset), &cset))
-		perror("Failed to set CPU affinity");
-	else
-		debug(3, "Set affinity to %#x", g->affinity);
 }

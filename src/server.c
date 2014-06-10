@@ -9,9 +9,13 @@
 #include <stdio.h>
 #include <error.h>
 
+#include <sched.h>
 #include <signal.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/mman.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "config.h"
 #include "cfg.h"
@@ -114,8 +118,39 @@ int main(int argc, char *argv[])
 	if (!paths)
 		error("No paths found. Terminating...");
 
-	/* Setup various realtime related things */
-	init_realtime(&settings);
+	/* Lock memory */
+	/*if(mlockall(MCL_CURRENT | MCL_FUTURE))
+		perror("Failed mlockall");
+	else
+		debug(3, "Locked memory");*/
+
+	/* Prefault stack */
+	/*char dummy[MAX_SAFE_STACK];
+	memset(dummy, 0, MAX_SAFE_STACK);
+	debug(3, "Prefaulted stack");*/
+
+	/* Check for realtime kernel patch */
+	struct stat st;
+	if (stat("/sys/kernel/realtime", &st))
+		warn("This is not a a realtime patched kernel!");
+	else
+		debug(3, "This is a realtime patched kernel");
+
+	/* Use FIFO scheduler with realtime priority */
+	struct sched_param param;
+	param.sched_priority = settings.priority;
+	if (sched_setscheduler(0, SCHED_FIFO, &param))
+		perror("Failed to set realtime priority");
+	else
+		debug(3, "Set task priority to %u", settings.priority);
+
+	/* Pin threads to CPUs by setting the affinity */
+	cpu_set_t cset = to_cpu_set_t(settings.affinity);
+	pid_t pid = getpid();
+	if (sched_setaffinity(pid, sizeof(cset), &cset))
+		perror("Failed to set CPU affinity");
+	else
+		debug(3, "Set affinity to %#x", settings.affinity);
 
 	/* Connect all nodes and start one thread per path */
 	start();

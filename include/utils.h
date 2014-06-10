@@ -13,6 +13,8 @@
 #include <errno.h>
 #include <string.h>
 
+#include <sched.h>
+
 struct settings;
 struct sockaddr_in;
 struct sockaddr;
@@ -44,18 +46,6 @@ void print(enum log_level lvl, const char *fmt, ...);
  */
 int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags);
 
-/** Setup various realtime related things.
- *
- * We use the following techniques for performance tuning
- *  - Prefault the stack
- *  - Lock memory
- *  - Use FIFO scheduler with realtime priority
- *  - Set CPU affinity
- *
- * @param g The global configuration
- */
-void init_realtime(struct settings *g);
-
 /** Compare two socket addresses based on their family and address.
  *
  * Only the family and the address is compared.
@@ -68,6 +58,13 @@ void init_realtime(struct settings *g);
  *  - otherwise they are not equal
  */
 int sockaddr_cmp(struct sockaddr *a, struct sockaddr *b);
+
+/** Convert integer into cpu_set_t
+ *
+ * @param set A cpu bitmask
+ * @return The opaque cpu_set_t datatype
+ */
+cpu_set_t to_cpu_set_t(int set);
 
 /** Append an element to a single linked list */
 #define list_add(list, elm) do { \
