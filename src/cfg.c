@@ -25,17 +25,18 @@ int config_parse(const char *filename, config_t *cfg, struct settings *g)
 		);
 	}
 
+	/* Get and check config sections */
 	config_setting_t *cfg_root = config_root_setting(cfg);
 	if (!cfg_root || !config_setting_is_group(cfg_root))
-		error("Missing global section in config");
+		error("Missing global section in config file: %s", filename);
 
 	config_setting_t *cfg_nodes = config_setting_get_member(cfg_root, "nodes");
 	if (!cfg_nodes || !config_setting_is_group(cfg_nodes))
-		error("Missing node section in config");
+		error("Missing node section in config file: %s", filename);
 
 	config_setting_t *cfg_paths = config_setting_get_member(cfg_root, "paths");
 	if (!cfg_paths || !config_setting_is_list(cfg_paths))
-		error("Missing path section in config");
+		error("Missing path section in config file: %s", filename);
 
 	/* Read global settings */
 	config_parse_global(cfg_root, g);
@@ -135,8 +136,6 @@ int config_parse_node(config_setting_t *c, struct settings *g)
 
 	struct sockaddr_in local, remote;
 	enum node_type type;
-
-	/* Optional settings */
 
 	/* Required settings */
 	name = config_setting_name(c);
