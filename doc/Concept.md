@@ -9,7 +9,7 @@ Messages from the incoming node get forwarded to the outgoing node.
 For bidirectional communication a corresponding path in the reverse direction must be added.
 
 The server is designed to allow multiple outgoing nodes as an extension.
-This has **not** been implemented at the moment!
+@todo This has **not** been implemented at the moment!
 
 \diafile path_simple.dia
 
