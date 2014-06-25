@@ -12,6 +12,8 @@
 #include <errno.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <time.h>
+#include <math.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -93,4 +95,27 @@ cpu_set_t to_cpu_set(int set)
 	}
 
 	return cset;
+}
+
+double timespec_delta(struct timespec *start, struct timespec *end)
+{
+	double sec  = end->tv_sec - start->tv_sec;
+	double nsec = end->tv_nsec - start->tv_nsec;
+
+	if (nsec < 0) {
+		sec  -= 1;
+		nsec += 1e9;
+	}
+
+	return sec + nsec * 1e-9;
+}
+
+struct timespec timespec_rate(double rate)
+{
+	struct timespec ts;
+
+	ts.tv_sec  = 1 / rate;
+	ts.tv_nsec = 1.0e9 * (1 / rate - ts.tv_sec);
+
+	return ts;
 }

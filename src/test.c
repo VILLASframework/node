@@ -71,8 +71,8 @@ int main(int argc, char *argv[])
 		struct timespec *ts1 = (struct timespec *) &m.data;
 		struct timespec *ts2 = malloc(sizeof(struct timespec));
 
-		long long rtt, rtt_max = LLONG_MIN, rtt_min = LLONG_MAX;
-		long long run = 0, avg = 0;
+		double rtt, rtt_max = LLONG_MIN, rtt_min = LLONG_MAX, avg = 0;
+		int run = 0;
 
 		while (1) {
 			clock_gettime(CLOCK_REALTIME, ts1);
@@ -80,20 +80,21 @@ int main(int argc, char *argv[])
 			msg_recv(&m, &n);
 			clock_gettime(CLOCK_REALTIME, ts2);
 
-			rtt = ts2->tv_nsec - ts1->tv_nsec;
+			rtt = timespec_delta(ts1, ts2);
 
 			if (rtt < 0) continue;
 			if (rtt > rtt_max) rtt_max = rtt;
 			if (rtt < rtt_min) rtt_min = rtt;
 
 			avg += rtt;
-
-			info("rtt %.3f min %.3f max %.3f avg %.3f uS", 1e-3 * rtt, 1e-3 * rtt_min, 1e-3 * rtt_max, 1e-3 * avg / run);
-
 			run++;
+
+			info("rtt %.3f min %.3f max %.3f avg %.3f", 1e3 * rtt, 1e3 * rtt_min, 1e3 * rtt_max, 1e3 * avg / run);
+
 			m.sequence++;
-			usleep(1000);
 		}
+
+		free(ts2);
 	}
 
 	return 0;

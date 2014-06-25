@@ -57,6 +57,12 @@ int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags);
  */
 cpu_set_t to_cpu_set(int set);
 
+/** Get delta between two timespec structs */
+double timespec_delta(struct timespec *start, struct timespec *end);
+
+/** Get period as timespec from rate */
+struct timespec timespec_rate(double rate);
+
 /** Append an element to a single linked list */
 #define list_add(list, elm) do { \
 		elm->next = list; \
