@@ -1,11 +1,11 @@
 TARGETS = server send receive random test
-SRCS = server.c send.c receive.c random.c node.c path.c utils.c msg.c cfg.c if.c
+SRCS = server.c send.c receive.c random.c node.c path.c utils.c msg.c cfg.c if.c tc.c
 
 # Default target: build everything
 all: $(TARGETS)
 
 # Dependencies for individual binaries
-server: node.o msg.o utils.o path.o cfg.o if.o
+server: node.o msg.o utils.o path.o cfg.o if.o tc.c
 send: node.o msg.o utils.o
 receive: node.o msg.o utils.o
 random: node.o msg.o utils.o
@@ -29,6 +29,7 @@ LDFLAGS = -pthread -lrt -lm -lconfig
 CFLAGS = -g -std=c99 -Iinclude/ -MMD -Wall
 CFLAGS += -D_XOPEN_SOURCE=500 -D_GNU_SOURCE -DV=$(V)
 CFLAGS += -D__GIT_REV__='"$(GIT_REV)"' -D__GIT_TAG__='"$(GIT_TAG)"'
+CFLAGS += -fdiagnostics-color=auto
 
 .PHONY: all clean doc
 
