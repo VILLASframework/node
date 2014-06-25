@@ -164,6 +164,8 @@ int config_parse_path(config_setting_t *cfg,
 int config_parse_node(config_setting_t *cfg,
 	struct node **nodes, struct interface **interfaces)
 {
+	static int id;
+
 	const char *type_str = NULL;
 	const char *remote_str = NULL;
 	const char *local_str = NULL;
@@ -181,9 +183,6 @@ int config_parse_node(config_setting_t *cfg,
 	node->name = config_setting_name(cfg);
 	if (!node->name)
 		cerror(cfg, "Missing node name");
-
-	if (!config_setting_lookup_int(cfg, "id", &node->id))
-		cerror(cfg, "Missing id for node '%s'", node->name);
 
 	if (!config_setting_lookup_string(cfg, "type", &type_str))
 		cerror(cfg, "Missing type for node '%s'", node->name);
@@ -210,6 +209,9 @@ int config_parse_node(config_setting_t *cfg,
 		node->netem = (struct netem *) malloc(sizeof(struct netem));
 		config_parse_netem(cfg_netem, node->netem);
 	}
+
+	if (!config_setting_lookup_int(cfg, "id", &node->id))
+		node->id = id++;
 
 	/* Determine outgoing interface */
 	int index = if_getegress(&node->remote);
