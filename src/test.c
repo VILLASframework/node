@@ -64,34 +64,34 @@ int main(int argc, char *argv[])
 	debug(1, "We sent to %s:%u", inet_ntoa(n.remote.sin_addr), ntohs(n.remote.sin_port));
 
 	if (!strcmp(argv[1], "latency")) {
-		struct msg m2, m1 = {
+		struct msg m = {
 			.device = 99,
 			.sequence = 0
 		};
-		struct timespec *ts1 = (struct timespec *) &m1.data;
-		struct timespec *ts2 = (struct timespec *) &m2.data;
-		struct timespec *ts3 = malloc(sizeof(struct timespec));
+		struct timespec *ts1 = (struct timespec *) &m.data;
+		struct timespec *ts2 = malloc(sizeof(struct timespec));
 
 		long long rtt, rtt_max = LLONG_MIN, rtt_min = LLONG_MAX;
 		long long run = 0, avg = 0;
 
 		while (1) {
 			clock_gettime(CLOCK_REALTIME, ts1);
-			msg_send(&m1, &n);
-			msg_recv(&m2, &n);
-			clock_gettime(CLOCK_REALTIME, ts3);
+			msg_send(&m, &n);
+			msg_recv(&m, &n);
+			clock_gettime(CLOCK_REALTIME, ts2);
 
-			rtt = ts3->tv_nsec - ts2->tv_nsec;
+			rtt = ts2->tv_nsec - ts1->tv_nsec;
+
 			if (rtt < 0) continue;
-
 			if (rtt > rtt_max) rtt_max = rtt;
 			if (rtt < rtt_min) rtt_min = rtt;
 
 			avg += rtt;
 
-			info("rtt %.3f min %.3f max %.3f avg %.3f uS\n", 1e-3 * rtt, 1e-3 * rtt_min, 1e-3 * rtt_max, 1e-3 * avg / ++run);
+			info("rtt %.3f min %.3f max %.3f avg %.3f uS", 1e-3 * rtt, 1e-3 * rtt_min, 1e-3 * rtt_max, 1e-3 * avg / run);
 
-			m1.sequence++;
+			run++;
+			m.sequence++;
 			usleep(1000);
 		}
 	}
