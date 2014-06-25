@@ -15,6 +15,15 @@
 
 #include <sched.h>
 
+/* Some color escape codes for pretty log messages */
+#define RED(str)	"\x1B[31m" str "\x1B[0m"
+#define GRN(str)	"\x1B[32m" str "\x1B[0m"
+#define YEL(str)	"\x1B[33m" str "\x1B[0m"
+#define BLU(str)	"\x1B[34m" str "\x1B[0m"
+#define MAG(str)	"\x1B[35m" str "\x1B[0m"
+#define CYN(str)	"\x1B[36m" str "\x1B[0m"
+#define WHT(str)	"\x1B[37m" str "\x1B[0m"
+
 struct settings;
 struct sockaddr_in;
 struct sockaddr;

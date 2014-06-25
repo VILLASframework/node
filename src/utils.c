@@ -20,13 +20,6 @@
 #include "cfg.h"
 #include "utils.h"
 
-static const char *log_prefix[] = {
-	"Debug",
-	"Info",
-	"Warning",
-	"Error"
-};
-
 void print(enum log_level lvl, const char *fmt, ...)
 {
 	struct timespec ts;
@@ -36,7 +29,16 @@ void print(enum log_level lvl, const char *fmt, ...)
 
 	clock_gettime(CLOCK_REALTIME, &ts);
 
-	printf("%17.6f [%-7s] ", ts.tv_sec + ts.tv_nsec / 1e9, log_prefix[lvl]);
+	/* Timestamp */
+	printf("%15.4f", ts.tv_sec + ts.tv_nsec / 1e9);
+
+	switch (lvl) {
+		case DEBUG: printf(" [" BLU("Debug") "] "); break;
+		case INFO:  printf(" [" WHT("Info ") "] "); break;
+		case WARN:  printf(" [" YEL("Warn ") "] "); break;
+		case ERROR: printf(" [" RED("Error") "] "); break;
+	}
+
 	vprintf(fmt, ap);
 	printf("\n");
 

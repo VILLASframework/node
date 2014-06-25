@@ -53,7 +53,8 @@ static void start()
 	for (struct path *p = paths; p; p = p->next) {
 		path_start(p);
 
-		info("Starting path: %12s => %s => %-12s", p->in->name, settings.name, p->out->name);
+		info("Starting path: %12s " GRN("=>") " %s " GRN("=>") " %-12s",
+			p->in->name, settings.name, p->out->name);
 	}
 }
 
@@ -63,7 +64,8 @@ static void stop()
 	for (struct path *p = paths; p; p = p->next) {
 		path_stop(p);
 
-		info("Stopping path: %12s => %s => %-12s", p->in->name, settings.name, p->out->name);
+		info("Stopping path: %12s " RED("=>") " %s " RED("=>") " %-12s",
+			p->in->name, settings.name, p->out->name);
 		info("  %u messages received", p->received);
 		info("  %u messages duplicated", p->duplicated);
 		info("  %u messages delayed", p->delayed);
@@ -109,7 +111,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	info("This is s2ss %s", VERSION);
+	info("This is " BLU("s2ss %s"), VERSION);
 
 	/* Parse configuration file */
 	config_init(&config);
