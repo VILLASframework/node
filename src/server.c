@@ -47,9 +47,6 @@ static void start()
 	for (struct interface *i = interfaces; i; i = i->next) {
 		if_indextoname(i->index, i->name);
 
-		if (i->index == 1) /* Skipping loopback interface */
-			continue;
-
 		debug(3, "Configure interface %s (index = %d, refcnt = %u)",
 			i->name, i->index, i->refcnt);
 
@@ -57,7 +54,6 @@ static void start()
 		if_setaffinity(i, settings.affinity);
 
 		/* Create priority queuing discipline */
-		tc_reset(i);
 		tc_prio(i, TC_HDL(4000, 0), i->refcnt);
 	}
 
@@ -66,7 +62,7 @@ static void start()
 		node_connect(n);
 
 		/* Create queueing discipline */
-		if (n->netem && n->interface->index != 1) {
+		if (n->netem) {
 			tc_mark(n->interface, TC_HDL(4000, n->mark), n->mark);
 			tc_netem(n->interface, TC_HDL(4000, n->mark), n->netem);
 		}
