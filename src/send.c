@@ -11,6 +11,7 @@
 #include <string.h>
 #include <errno.h>
 #include <signal.h>
+#include <time.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -74,6 +75,13 @@ int main(int argc, char *argv[])
 	while (!feof(stdin)) {
 		msg_fscan(stdin, &m);
 		msg_send(&m, &n);
+
+#if 1
+		struct timespec ts;
+		clock_gettime(CLOCK_REALTIME, &ts);
+		fprintf(stdout, "%17.6f", ts.tv_sec + ts.tv_nsec / 1e9);
+#endif
+
 		msg_fprint(stdout, &m);
 	}
 

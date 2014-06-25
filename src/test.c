@@ -74,6 +74,12 @@ int main(int argc, char *argv[])
 		double rtt, rtt_max = LLONG_MIN, rtt_min = LLONG_MAX, avg = 0;
 		int run = 0;
 
+
+#if 1		/* Print header */
+		fprintf(stdout, "%17s", "timestamp");
+#endif
+		fprintf(stdout, "%10s%10s%10s%10s\n", "rtt", "min", "max", "avg");
+
 		while (1) {
 			clock_gettime(CLOCK_REALTIME, ts1);
 			msg_send(&m, &n);
@@ -89,7 +95,13 @@ int main(int argc, char *argv[])
 			avg += rtt;
 			run++;
 
-			info("rtt %.3f min %.3f max %.3f avg %.3f", 1e3 * rtt, 1e3 * rtt_min, 1e3 * rtt_max, 1e3 * avg / run);
+#if 1
+			struct timespec ts;
+			clock_gettime(CLOCK_REALTIME, &ts);
+			fprintf(stdout, "%17.6f", ts.tv_sec + ts.tv_nsec / 1e9);
+#endif
+
+			fprintf(stdout, "%10.3f%10.3f%10.3f%10.3f\n", 1e3 * rtt, 1e3 * rtt_min, 1e3 * rtt_max, 1e3 * avg / run);
 
 			m.sequence++;
 		}
