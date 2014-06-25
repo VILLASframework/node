@@ -195,7 +195,7 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	if (node->type == NODE_INVALID)
 		cerror(cfg, "Invalid type '%s' for node '%s'", type_str, node->name);
 
-	if (resolve_addr(local_str, &node->local, 0))
+	if (resolve_addr(local_str, &node->local, AI_PASSIVE))
 		cerror(cfg, "Failed to resolve local address '%s' of node '%s'", local_str, node->name);
 
 	if (resolve_addr(remote_str, &node->remote, 0))
