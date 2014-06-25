@@ -28,7 +28,7 @@ int msg_fprint(FILE *f, struct msg *msg)
 
 int msg_fscan(FILE *f, struct msg *msg)
 {
-	fscanf(f, "%8u %8u ", &msg->device, &msg->sequence);
+	fscanf(f, "%8hu %8u ", &msg->device, &msg->sequence);
 
 	for (int i = 0; i < msg->length / sizeof(double); i++) {
 		fscanf(f, "%12lf ", &msg->data[i]);
@@ -58,6 +58,8 @@ int msg_send(struct msg *m, struct node *n)
 		perror("Failed sendto");
 
 	debug(10, "Message sent to node %s (%s:%u)", n->name, inet_ntoa(n->remote.sin_addr), ntohs(n->remote.sin_port));
+
+	return 0;
 }
 
 int msg_recv(struct msg *m, struct node *n)
@@ -66,4 +68,6 @@ int msg_recv(struct msg *m, struct node *n)
 		perror("Failed recv");
 
 	debug(10, "Message received from node %s", n->name);
+
+	return 0;
 }

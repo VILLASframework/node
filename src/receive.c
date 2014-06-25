@@ -34,7 +34,6 @@ int main(int argc, char *argv[])
 	struct msg m;
 
 	memset(&n, 0, sizeof(struct node));
- 	struct sockaddr_in sa;
 
 	if (argc != 2) {
 		printf("Usage: %s LOCAL\n", argv[0]);

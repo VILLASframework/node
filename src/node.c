@@ -51,6 +51,8 @@ int node_connect(struct node *n)
 int node_disconnect(struct node *n)
 {
 	close(n->sd);
+
+	return 0;
 }
 
 enum node_type node_lookup_type(const char *str)

@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 		printf("  CONFIG is a required path to a configuration file\n\n");
 		printf("Simulator2Simulator Server %s (%s %s)\n", VERSION, __DATE__, __TIME__);
 		printf(" Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
-		printf("   Steffen Vogel <stvogel@eonerc.rwth-aachen.de>\n\n");
+		printf("   Steffen Vogel <stvogel@eonerc.rwth-aachen.de>\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
 	/* Check for realtime kernel patch */
 	struct stat st;
 	if (stat("/sys/kernel/realtime", &st))
-		warn("This is not a a realtime patched kernel!");
+		warn("Use a RT-preempt patched Linux for lower latencies!");
 	else
 		debug(3, "This is a realtime patched kernel");
 

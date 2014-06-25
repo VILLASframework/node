@@ -56,7 +56,7 @@ struct node
 	const char *ifname;
 	/** Index of the local interface */
 	int ifindex;
-	/// Socket Mark
+	/** Socket mark for netem, routing and filtering */
 	int mark;
 
 	/** A short identifier of the node */

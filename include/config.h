@@ -1,5 +1,5 @@
 /** Static server configuration
- * 
+ *
  * This file contains some defines which are not part of the configuration file.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>

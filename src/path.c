@@ -55,7 +55,7 @@ static void * path_run(void *arg)
 
 int path_start(struct path *p)
 {
-	pthread_create(&p->tid, NULL, &path_run, (void *) p);
+	return pthread_create(&p->tid, NULL, &path_run, (void *) p);
 }
 
 int path_stop(struct path *p)

@@ -73,7 +73,8 @@ int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags)
 		.ai_protocol = 0
 	};
 
-	if (getaddrinfo(node, service, &hint, &result))
+	ret = getaddrinfo(node, service, &hint, &result);
+	if (ret)
 		error("Failed to lookup address: %s", gai_strerror(ret));
 
 	memcpy(sa, result->ai_addr, result->ai_addrlen);

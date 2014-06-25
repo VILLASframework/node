@@ -30,8 +30,6 @@ void quit(int sig, siginfo_t *si, void *ptr)
 
 int main(int argc, char *argv[])
 {
- 	struct sockaddr_in sa;
-
 	if (argc != 3 && argc != 4) {
 		printf("Usage: %s VALUES REMOTE [LOCAL]\n", argv[0]);
 		printf("  REMOTE   is a IP:PORT combination of the remote host\n");
