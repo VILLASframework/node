@@ -118,17 +118,6 @@ int main(int argc, char *argv[])
 	if (!paths)
 		error("No paths found. Terminating...");
 
-	/* Lock memory */
-	/*if(mlockall(MCL_CURRENT | MCL_FUTURE))
-		perror("Failed mlockall");
-	else
-		debug(3, "Locked memory");*/
-
-	/* Prefault stack */
-	/*char dummy[MAX_SAFE_STACK];
-	memset(dummy, 0, MAX_SAFE_STACK);
-	debug(3, "Prefaulted stack");*/
-
 	/* Check for realtime kernel patch */
 	struct stat st;
 	if (stat("/sys/kernel/realtime", &st))
