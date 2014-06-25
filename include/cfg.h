@@ -58,22 +58,22 @@ int config_parse_global(config_setting_t *cfg, struct settings *set);
 /** Parse a single path and add it to the global configuration.
  *
  * @param cfg A libconfig object pointing to the path
- * @param path A pointer to the new path
+ * @param paths Add new paths to this linked list
  * @param nodes A linked list of all existing nodes
  * @return
  *  - 0 on success
  *  - otherwise an error occured
  */
-int config_parse_path(config_setting_t *cfg, struct path *path, struct node *nodes);
+int config_parse_path(config_setting_t *cfg, struct path **paths, struct node *nodes);
 
 /** Parse a single node and add it to the global configuration.
  *
  * @param cfg A libconfig object pointing to the node
- * @param node A pointer to the new node
+ * @param nodes Add new nodes to this linked list
  * @return
  *  - 0 on success
  *  - otherwise an error occured
  */
-int config_parse_node(config_setting_t *cfg, struct node *node);
+int config_parse_node(config_setting_t *cfg, struct node **nodes);
 
 #endif /* _CFG_H_ */

@@ -18,7 +18,7 @@
 #include "utils.h"
 
 int config_parse(const char *filename, config_t *cfg,
-	struct settings *g, struct node **n, struct path **p)
+	struct settings *set, struct node **nodes, struct path **paths)
 {
 	if (!config_read_file(cfg, filename)) {
 		error("Failed to parse configuration: %s in %s:%d",
@@ -42,38 +42,18 @@ int config_parse(const char *filename, config_t *cfg,
 		error("Missing path section in config file: %s", filename);
 
 	/* Parse global settings */
-	config_parse_global(cfg_root, g);
+	config_parse_global(cfg_root, set);
 
 	/* Parse nodes */
 	for (int i = 0; i < config_setting_length(cfg_nodes); i++) {
 		config_setting_t *cfg_node = config_setting_get_elem(cfg_nodes, i);
-
-		struct node *node = (struct node *) malloc(sizeof(struct node));
-		if (!node)
-			error("Failed to allocate memory for node");
-
-		if (!config_parse_node(cfg_node, node)) {
-			free(node);
-			cerror(cfg_node, "Failed to parse node");
-		}
-
-		list_add(*n, node);
+		config_parse_node(cfg_node, nodes);
 	}
 
 	/* Parse paths */
 	for (int i = 0; i < config_setting_length(cfg_paths); i++) {
 		config_setting_t *cfg_path = config_setting_get_elem(cfg_paths, i);
-
-		struct path *path = (struct path *) malloc(sizeof(struct path));
-		if (!path)
-			error("Failed to allocate memory for path");
-
-		if (!config_parse_path(cfg_path, path, *n)) {
-			free(path);
-			cerror(cfg_path, "Failed to parse path");
-		}
-
-		list_add(*p, path);
+		config_parse_path(cfg_path, paths, *nodes);
 	}
 
 	return CONFIG_TRUE;
@@ -118,8 +98,9 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 }
 
 int config_parse_path(config_setting_t *cfg,
-	struct path *path, struct node *nodes)
+	struct path **paths, struct node *nodes)
 {
+	struct path *path;
 	struct node *in, *out;
 	const char *in_str = NULL;
 	const char *out_str = NULL;
@@ -148,28 +129,39 @@ int config_parse_path(config_setting_t *cfg,
 		cerror(cfg, "Invalid output node '%s'", out_str);
 
 	if (enabled) {
+		path = (struct path *) malloc(sizeof(struct path));
+		if (!path)
+			error("Failed to allocate memory for path");
+
 		if (path_create(path, in, out))
 			cerror(cfg, "Failed to parse path");
 
 		path->cfg = cfg;
+		list_add(*paths, path);
 
-		// TODO
-		/*if (reverse) {
+		if (reverse) {
+			path = (struct path *) malloc(sizeof(struct path));
+			if (!path)
+				error("Failed to allocate memory for path");
+
 			if (path_create(path, out, in))
-				cerror(c, "Failed to parse path");
-		}*/
+				cerror(cfg, "Failed to parse path");
+			path->cfg = cfg;
+			list_add(*paths, path);
+		}
 	}
 	else
 		warn("  Path is not enabled");
 }
 
-int config_parse_node(config_setting_t *cfg, struct node *node)
+int config_parse_node(config_setting_t *cfg, struct node **nodes)
 {
 	const char *name = NULL;
 	const char *type_str = NULL;
 	const char *remote_str = NULL;
 	const char *local_str = NULL;
 
+	struct node *node;
 	struct sockaddr_in local, remote;
 	enum node_type type;
 
@@ -199,8 +191,14 @@ int config_parse_node(config_setting_t *cfg, struct node *node)
 	if (resolve_addr(remote_str, &remote, 0))
 		cerror(cfg, "Failed to resolve remote address '%s' of node '%s'", remote_str, name);
 
+	node = (struct node *) malloc(sizeof(struct node));
+	if (!node)
+		error("Failed to allocate memory for node");
+
 	if (node_create(node, name, type, local, remote))
 		cerror(cfg, "Failed to parse node");
+
+	list_add(*nodes, node);
 
 	node->cfg = cfg;
 }
