@@ -43,6 +43,24 @@ static config_t config;
 
 static void start()
 {
+	/* Configure interfaces */
+	for (struct interface *i = interfaces; i; i = i->next) {
+		if_indextoname(i->index, i->name);
+
+		if (i->index == 1) /* Skipping loopback interface */
+			continue;
+
+		debug(3, "Configure interface %s (index = %d, refcnt = %u)",
+			i->name, i->index, i->refcnt);
+
+		if_getirqs(i);
+		if_setaffinity(i, settings.affinity);
+
+		/* Create priority queuing discipline */
+		tc_reset(i);
+		tc_prio(i, TC_HDL(4000, 0), i->refcnt + 2);
+	}
+
 	/* Connect and bind nodes to their sockets, set socket options */
 	for (struct node *n = nodes; n; n = n->next) {
 		node_connect(n);
@@ -72,6 +90,8 @@ static void start()
 
 static void stop()
 {
+	int affinity;
+
 	/* Join all threads and print statistics */
 	for (struct path *p = paths; p; p = p->next) {
 		path_stop(p);
@@ -87,6 +107,20 @@ static void stop()
 	/* Close all sockets we listen on */
 	for (struct node *n = nodes; n; n = n->next) {
 		node_disconnect(n);
+	}
+
+	if (getuid() != 0)
+		return; /* The following tasks require root privs */
+
+	/* Determine default affinity */
+	FILE * f = fopen("/proc/irq/default_smp_affinity", "r");
+	fscanf(f, "%x", &affinity);
+	fclose(f);
+
+	/* Reset interface queues and affinity */
+	for (struct interface *i = interfaces; i; i = i->next) {
+		if_setaffinity(i, affinity);
+		tc_reset(i);
 	}
 }
 
