@@ -107,10 +107,6 @@ int config_parse_path(config_setting_t *cfg,
 	int enabled = 1;
 	int reverse = 0;
 
-	/* Optional settings */
-	config_setting_lookup_bool(cfg, "enabled", &enabled);
-	config_setting_lookup_bool(cfg, "reverse", &reverse);
-
 	struct path *path = (struct path *) malloc(sizeof(struct path));
 	if (!path)
 		error("Failed to allocate memory for path");
@@ -131,6 +127,11 @@ int config_parse_path(config_setting_t *cfg,
 	path->out = node_lookup_name(out_str, *nodes);
 	if (!path->out)
 		cerror(cfg, "Invalid output node '%s'", out_str);
+
+	/* Optional settings */
+	config_setting_lookup_bool(cfg, "enabled", &enabled);
+	config_setting_lookup_bool(cfg, "reverse", &reverse);
+	config_setting_lookup_float(cfg, "rate", &path->rate);
 
 	path->cfg = cfg;
 

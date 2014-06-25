@@ -33,6 +33,12 @@ struct path
 	 */
 	int (*hook)(struct msg *m);
 
+	/** Send messages with a fixed rate over this path */
+	double rate;
+
+	/** A pointer to the last received message */
+	struct msg *last;
+
 	/** Counter for received messages */
 	unsigned int received;
 	/** Counter for messages which arrived reordered */
@@ -42,8 +48,8 @@ struct path
 	/** Last known message number */
 	unsigned int sequence;
 
-	/** The thread for this path */
-	pthread_t tid;
+	/** The thread ids for this path */
+	pthread_t tid, tid2;
 	/** A pointer to the libconfig object which instantiated this path */
 	config_setting_t *cfg;
 
