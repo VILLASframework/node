@@ -24,18 +24,13 @@
 #define CYN(str)	"\x1B[36m" str "\x1B[0m"
 #define WHT(str)	"\x1B[37m" str "\x1B[0m"
 
+/** The log level which is passed as first argument to print() */
+enum log_level { DEBUG, INFO, WARN, ERROR };
+
+/* Forward declarations */
 struct settings;
 struct sockaddr_in;
 struct sockaddr;
-
-/** The log level which is passed as first argument to print() */
-enum log_level
-{
-	DEBUG,
-	INFO,
-	WARN,
-	ERROR
-};
 
 /** Logs variadic messages to stdout.
  *
@@ -73,7 +68,7 @@ int sockaddr_cmp(struct sockaddr *a, struct sockaddr *b);
  * @param set A cpu bitmask
  * @return The opaque cpu_set_t datatype
  */
-cpu_set_t to_cpu_set_t(int set);
+cpu_set_t to_cpu_set(int set);
 
 /** Append an element to a single linked list */
 #define list_add(list, elm) do { \

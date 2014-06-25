@@ -45,8 +45,18 @@ static void start()
 	for (struct node *n = nodes; n; n = n->next) {
 		node_connect(n);
 
-		debug(1, "  We listen for node '%s' at %s:%u", n->name, inet_ntoa(n->local.sin_addr), ntohs(n->local.sin_port));
-		debug(1, "  We sent to node '%s' at %s:%u", n->name, inet_ntoa(n->remote.sin_addr), ntohs(n->remote.sin_port));
+		/* Create queueing discipline */
+		if (n->netem && n->interface->index != 1) {
+			tc_mark(n->interface, TC_HDL(4000, n->mark), n->mark);
+			tc_netem(n->interface, TC_HDL(4000, n->mark), n->netem);
+		}
+
+		debug(1, "  We listen for node '%s' at %s:%u",
+			n->name, inet_ntoa(n->local.sin_addr),
+			ntohs(n->local.sin_port));
+		debug(1, "  We sent to node '%s' at %s:%u",
+			n->name, inet_ntoa(n->remote.sin_addr),
+			ntohs(n->remote.sin_port));
 	}
 
 	/* Start on thread per path for asynchronous processing */
@@ -66,12 +76,13 @@ static void stop()
 
 		info("Stopping path: %12s " RED("=>") " %s " RED("=>") " %-12s",
 			p->in->name, settings.name, p->out->name);
+
 		info("  %u messages received", p->received);
 		info("  %u messages duplicated", p->duplicated);
 		info("  %u messages delayed", p->delayed);
 	}
 
-	/* Close all sockets we listing on */
+	/* Close all sockets we listen on */
 	for (struct node *n = nodes; n; n = n->next) {
 		node_disconnect(n);
 	}
@@ -136,10 +147,9 @@ int main(int argc, char *argv[])
 		debug(3, "Set task priority to %u", settings.priority);
 
 	/* Pin threads to CPUs by setting the affinity */
-	cpu_set_t cset = to_cpu_set_t(settings.affinity);
-	pid_t pid = getpid();
-	if (sched_setaffinity(pid, sizeof(cset), &cset))
-		perror("Failed to set CPU affinity");
+	cpu_set_t cset = to_cpu_set(settings.affinity);
+	if (sched_setaffinity(0, sizeof(cset), &cset))
+		perror("Failed to set CPU affinity to '%#x'", settings.affinity);
 	else
 		debug(3, "Set affinity to %#x", settings.affinity);
 

@@ -123,8 +123,6 @@ int config_parse_path(config_setting_t *cfg,
 	if (!config_setting_lookup_string(cfg, "out", &out_str))
 		cerror(cfg, "Missing output node for path");
 
-	info("Loading path from '%s' to '%s'", in_str, out_str);
-
 	path->in = node_lookup_name(in_str, nodes);
 	if (!path->in)
 		cerror(cfg, "Invalid input node '%s'");
@@ -134,6 +132,8 @@ int config_parse_path(config_setting_t *cfg,
 		cerror(cfg, "Invalid output node '%s'", out_str);
 
 	path->cfg = cfg;
+
+	debug(3, "Loaded path from '%s' to '%s'", path->in->name, path->out->name);
 
 	if (enabled) {
 		list_add(*paths, path);

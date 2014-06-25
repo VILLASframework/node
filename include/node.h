@@ -44,6 +44,9 @@ struct node
 	/** The socket descriptor */
 	int sd;
 
+	/** A short identifier of the node */
+	const char *name;
+
 	/** The type of this node */
 	enum node_type type;
 
@@ -59,9 +62,6 @@ struct node
 	/** Socket mark for netem, routing and filtering */
 	int mark;
 
-	/** A short identifier of the node */
-	const char *name;
-
 	/** A pointer to the libconfig object which instantiated this node */
 	config_setting_t *cfg;
 
@@ -69,7 +69,7 @@ struct node
 	struct node *next;
 };
 
-/** Connect and bind the UDP socket of this node
+/** Connect and bind the UDP socket of this node.
  *
  * @param n A pointer to the node structure
  * @return

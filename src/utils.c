@@ -104,11 +104,13 @@ int sockaddr_cmp(struct sockaddr *a, struct sockaddr *b)
 	return -1;
 }
 
-cpu_set_t to_cpu_set_t(int set)
+cpu_set_t to_cpu_set(int set)
 {
 	cpu_set_t cset;
 
-	for (int i = 0; i < sizeof(int) * 8; i++) {
+	CPU_ZERO(&cset);
+
+	for (int i = 0; i < sizeof(set) * 8; i++) {
 		if (set & (1L << i))
 			CPU_SET(i, &cset);
 	}
