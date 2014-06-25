@@ -18,6 +18,8 @@
 #include <netinet/in.h>
 #include <libconfig.h>
 
+#include "tc.h"
+
 /** The type of a node.
  *
  * This type is used to determine the message format of the remote node
@@ -57,6 +59,9 @@ struct node
 
 	/** The egress interface */
 	struct interface *interface;
+
+	/** Network emulator settings */
+	struct netem *netem;
 
 	/** Socket mark for netem, routing and filtering */
 	int mark;

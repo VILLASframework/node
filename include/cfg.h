@@ -14,6 +14,8 @@ struct node;
 struct path;
 struct interface;
 
+struct netem;
+
 /** Global configuration */
 struct settings {
 	/** Name of this node */
@@ -79,9 +81,15 @@ int config_parse_path(config_setting_t *cfg,
  */
 int config_parse_node(config_setting_t *cfg,
 	struct node **nodes, struct interface **interfaces);
+
+/** Parse network emulator (netem) settings
+ *
+ * @param cfg A libconfig object containing the settings
+ * @param em A pointer to the settings
  * @return
  *  - 0 on success
  *  - otherwise an error occured
  */
+int config_parse_netem(config_setting_t *cfg, struct netem *em);
 
 #endif /* _CFG_H_ */

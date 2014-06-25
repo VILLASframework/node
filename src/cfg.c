@@ -13,6 +13,7 @@
 #include <pwd.h>
 
 #include "if.h"
+#include "tc.h"
 #include "cfg.h"
 #include "node.h"
 #include "path.h"
@@ -147,7 +148,7 @@ int config_parse_path(config_setting_t *cfg,
 
 			path_rev->in = path->out; /* Swap in/out */
 			path_rev->out = path->in;
-				
+
 			list_add(*paths, path_rev);
 		}
 	}
@@ -202,6 +203,13 @@ int config_parse_node(config_setting_t *cfg,
 	if (resolve_addr(remote_str, &node->remote, 0))
 		cerror(cfg, "Failed to resolve remote address '%s' of node '%s'", remote_str, node->name);
 
+	/* Optional settings */
+	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
+	if (cfg_netem) {
+		node->netem = (struct netem *) malloc(sizeof(struct netem));
+		config_parse_netem(cfg_netem, node->netem);
+	}
+
 	/* Determine outgoing interface */
 	int index = if_getegress(&node->remote);
 	struct interface *i = if_lookup_index(index, *interfaces);
@@ -222,6 +230,30 @@ int config_parse_node(config_setting_t *cfg,
 	list_add(*nodes, node);
 
 	debug(3, "Loaded %s node '%s'", type_str, node->name);
+
+	return 0;
+}
+
+int config_parse_netem(config_setting_t *cfg, struct netem *em)
+{
+	em->valid = 0;
+
+	if (config_setting_lookup_string(cfg, "distribution", &em->distribution))
+		em->valid |= TC_NETEM_DISTR;
+	if (config_setting_lookup_int(cfg, "limit", &em->limit))
+		em->valid |= TC_NETEM_LIMIT;
+	if (config_setting_lookup_int(cfg, "delay", &em->delay))
+		em->valid |= TC_NETEM_DELAY;
+	if (config_setting_lookup_int(cfg, "jitter", &em->jitter))
+		em->valid |= TC_NETEM_JITTER;
+	if (config_setting_lookup_int(cfg, "loss", &em->loss))
+		em->valid |= TC_NETEM_LOSS;
+	if (config_setting_lookup_int(cfg, "duplicate", &em->duplicate))
+		em->valid |= TC_NETEM_DUPL;
+	if (config_setting_lookup_int(cfg, "corrupt", &em->corrupt))
+		em->valid |= TC_NETEM_CORRUPT;
+
+	// TODO: check values
 
 	return 0;
 }
