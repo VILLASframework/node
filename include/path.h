@@ -51,17 +51,6 @@ struct path
 	struct path *next;
 };
 
-/** Setup a new path.
- *
- * @param p A pointer to the path structure
- * @param in The node we are receiving messages from
- * @param out The destination node
- * @return
- *  - 0 on success
- *  - otherwise an error occured
- */
-int path_create(struct path *p, struct node *in, struct node *out);
-
 /** Start a path.
  *
  * Start a new pthread for receiving/sending messages over this path.

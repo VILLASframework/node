@@ -13,21 +13,6 @@
 #include "utils.h"
 #include "path.h"
 
-int path_create(struct path *p, struct node *in, struct node *out)
-{
-	/* Reset counters */
-	p->received = 0;
-	p->delayed = 0;
-	p->duplicated = 0;
-
-	p->hook = NULL;
-
-	p->in = in;
-	p->out = out;
-
-	return 0;
-}
-
 /**
  * @brief This is the main thread function per path
  */

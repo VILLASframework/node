@@ -30,6 +30,10 @@ void quit(int sig, siginfo_t *si, void *ptr)
 
 int main(int argc, char *argv[])
 {
+	struct node n;
+	struct msg m;
+
+	memset(&n, 0, sizeof(struct node));
  	struct sockaddr_in sa;
 
 	if (argc != 2) {
@@ -39,8 +43,6 @@ int main(int argc, char *argv[])
 		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
 		exit(EXIT_FAILURE);
 	}
-
-	const char *local_str = argv[1];
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -53,21 +55,14 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	/* Resolve addresses */
-	struct sockaddr_in local;
- 	struct sockaddr_in remote;
-
-	if (resolve_addr(local_str, &local, 0))
-		error("Failed to resolve remote address: %s", local_str);
+	if (resolve_addr(argv[1], &n.local, 0))
+		error("Failed to resolve local address: %s", argv[1]);
 
 	/* Print header */
 	fprintf(stderr, "# %-6s %-8s %-12s\n", "dev_id", "seq_no", "data");
 
-	/* Create node */
-	struct node n;
-	node_create(&n, NULL, NODE_SERVER, local, remote);
 	node_connect(&n);
 
-	struct msg m;
 	while (1) {
 		msg_recv(&m, &n);
 		msg_fprint(stdout, &m);

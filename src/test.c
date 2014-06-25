@@ -27,6 +27,10 @@ void quit(int sig, siginfo_t *si, void *ptr)
 
 int main(int argc, char *argv[])
 {
+	struct node n;
+
+	memset(&n, 0, sizeof(struct node));
+
 	if (argc != 4) {
 		printf("Usage: %s TEST LOCAL REMOTE\n", argv[0]);
 		printf("  TEST     has to be 'latency' for now\n");
@@ -36,10 +40,6 @@ int main(int argc, char *argv[])
 		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
 		exit(EXIT_FAILURE);
 	}
-
-	const char *test = argv[1];
-	const char *local_str = argv[2];
-	const char *remote_str = argv[3];
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -52,24 +52,18 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	/* Resolve addresses */
-	struct sockaddr_in local;
- 	struct sockaddr_in remote;
+	if (resolve_addr(argv[2], &n.local, 0))
+		error("Failed to resolve local address: %s", argv[2]);
 
-	if (resolve_addr(local_str, &local, 0))
-		error("Failed to resolve local address: %s", local_str);
+	if (resolve_addr(argv[3], &n.remote, 0))
+		error("Failed to resolve remote address: %s", argv[3]);
 
-	if (resolve_addr(remote_str, &remote, 0))
-		error("Failed to resolve remote address: %s", remote_str);
-
-	/* Create node */
-	struct node n;
-	node_create(&n, NULL, NODE_SERVER, local, remote);
 	node_connect(&n);
 
 	debug(1, "We listen at %s:%u", inet_ntoa(n.local.sin_addr), ntohs(n.local.sin_port));
 	debug(1, "We sent to %s:%u", inet_ntoa(n.remote.sin_addr), ntohs(n.remote.sin_port));
 
-	if (!strcmp(test, "latency")) {
+	if (!strcmp(argv[1], "latency")) {
 		struct msg m2, m1 = {
 			.device = 99,
 			.sequence = 0

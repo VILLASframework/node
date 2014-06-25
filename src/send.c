@@ -42,9 +42,12 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	int values = atoi(argv[1]);
-	const char *remote_str = argv[2];
-	const char *local_str = argv[3];
+	struct node n;
+	struct msg m = {
+		.length = atoi(argv[1]) * sizeof(double)
+	};
+
+	memset(&n, 0, sizeof(struct node));
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -57,27 +60,18 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	/* Resolve addresses */
- 	struct sockaddr_in local;
-	struct sockaddr_in remote;
+	if (resolve_addr(argv[2], &n.remote, 0))
+		error("Failed to resolve remote address: %s", argv[2]);
 
-	if (argc == 4 && resolve_addr(remote_str, &remote, 0))
-		error("Failed to resolve local address: %s", local_str);
+	if (argc == 4 && resolve_addr(argv[3], &n.local, 0))
+		error("Failed to resolve local address: %s", argv[3]);
 	else {
-		local.sin_family = AF_INET;
-		local.sin_addr.s_addr = INADDR_ANY;
-		local.sin_port = 0;
+		n.local.sin_family = AF_INET;
+		n.local.sin_addr.s_addr = INADDR_ANY;
+		n.local.sin_port = 0;
 	}
 
-	if (resolve_addr(remote_str, &remote, 0))
-		error("Failed to resolve remote address: %s", remote_str);
-
-	/* Create node */
-	struct node n;
-	node_create(&n, NULL, NODE_SERVER, local, remote);
 	node_connect(&n);
-
-	struct msg m;
-	m.length = values * sizeof(double);
 
 	while (!feof(stdin)) {
 		msg_fscan(stdin, &m);

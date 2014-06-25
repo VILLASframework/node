@@ -12,6 +12,7 @@
 #include <grp.h>
 #include <pwd.h>
 
+#include "if.h"
 #include "cfg.h"
 #include "node.h"
 #include "path.h"
@@ -100,8 +101,6 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 int config_parse_path(config_setting_t *cfg,
 	struct path **paths, struct node *nodes)
 {
-	struct path *path;
-	struct node *in, *out;
 	const char *in_str = NULL;
 	const char *out_str = NULL;
 	int enabled = 1;
@@ -110,6 +109,12 @@ int config_parse_path(config_setting_t *cfg,
 	/* Optional settings */
 	config_setting_lookup_bool(cfg, "enabled", &enabled);
 	config_setting_lookup_bool(cfg, "reverse", &reverse);
+
+	struct path *path = (struct path *) malloc(sizeof(struct path));
+	if (!path)
+		error("Failed to allocate memory for path");
+	else
+		memset(path, 0, sizeof(struct path));
 
 	/* Required settings */
 	if (!config_setting_lookup_string(cfg, "in", &in_str))
@@ -120,85 +125,93 @@ int config_parse_path(config_setting_t *cfg,
 
 	info("Loading path from '%s' to '%s'", in_str, out_str);
 
-	in = node_lookup_name(in_str, nodes);
-	if (!in)
+	path->in = node_lookup_name(in_str, nodes);
+	if (!path->in)
 		cerror(cfg, "Invalid input node '%s'");
 
-	out = node_lookup_name(out_str, nodes);
-	if (!out)
+	path->out = node_lookup_name(out_str, nodes);
+	if (!path->out)
 		cerror(cfg, "Invalid output node '%s'", out_str);
 
+	path->cfg = cfg;
+
 	if (enabled) {
-		path = (struct path *) malloc(sizeof(struct path));
-		if (!path)
-			error("Failed to allocate memory for path");
-
-		if (path_create(path, in, out))
-			cerror(cfg, "Failed to parse path");
-
-		path->cfg = cfg;
 		list_add(*paths, path);
 
 		if (reverse) {
-			path = (struct path *) malloc(sizeof(struct path));
-			if (!path)
+			struct path *path_rev = (struct path *) malloc(sizeof(struct path));
+			if (!path_rev)
 				error("Failed to allocate memory for path");
+			else
+				memcpy(path_rev, path, sizeof(struct path));
 
-			if (path_create(path, out, in))
-				cerror(cfg, "Failed to parse path");
-			path->cfg = cfg;
-			list_add(*paths, path);
+			path_rev->in = path->out; /* Swap in/out */
+			path_rev->out = path->in;
+				
+			list_add(*paths, path_rev);
 		}
 	}
-	else
+	else {
+		free(path);
 		warn("  Path is not enabled");
+	}
+
+	return 0;
 }
 
 int config_parse_node(config_setting_t *cfg, struct node **nodes)
 {
-	const char *name = NULL;
 	const char *type_str = NULL;
 	const char *remote_str = NULL;
 	const char *local_str = NULL;
 
 	struct node *node;
-	struct sockaddr_in local, remote;
-	enum node_type type;
 
-	/* Required settings */
-	name = config_setting_name(cfg);
-	if (!name)
-		cerror(cfg, "Missing node name");
-
-	if (!config_setting_lookup_string(cfg, "type", &type_str))
-		cerror(cfg, "Missing node type");
-
-	if (!config_setting_lookup_string(cfg, "remote", &remote_str))
-		cerror(cfg, "Missing node remote address");
-
-	if (!config_setting_lookup_string(cfg, "local", &local_str))
-		cerror(cfg, "Missing node local address");
-
-	type = node_lookup_type(type_str);
-	if (type == NODE_INVALID)
-		cerror(cfg, "Invalid node type '%s'", type);
-
-	info("Loading %s node '%s'", type_str, name);
-
-	if (resolve_addr(local_str, &local, 0))
-		cerror(cfg, "Failed to resolve local address '%s' of node '%s'", local_str, name);
-
-	if (resolve_addr(remote_str, &remote, 0))
-		cerror(cfg, "Failed to resolve remote address '%s' of node '%s'", remote_str, name);
-
+	/* Allocate memory */
 	node = (struct node *) malloc(sizeof(struct node));
 	if (!node)
 		error("Failed to allocate memory for node");
+	else
+		memset(node, 0, sizeof(struct node));
 
-	if (node_create(node, name, type, local, remote))
-		cerror(cfg, "Failed to parse node");
+	/* Required settings */
+	node->name = config_setting_name(cfg);
+	if (!node->name)
+		cerror(cfg, "Missing node name");
+
+	if (!config_setting_lookup_int(cfg, "id", &node->id))
+		cerror(cfg, "Missing id for node '%s'", node->name);
+
+	if (!config_setting_lookup_string(cfg, "type", &type_str))
+		cerror(cfg, "Missing type for node '%s'", node->name);
+
+	if (!config_setting_lookup_string(cfg, "remote", &remote_str))
+		cerror(cfg, "Missing remote address for node '%s'", node->name);
+
+	if (!config_setting_lookup_string(cfg, "local", &local_str))
+		cerror(cfg, "Missing local address for node '%s'", node->name);
+
+	node->type = node_lookup_type(type_str);
+	if (node->type == NODE_INVALID)
+		cerror(cfg, "Invalid type '%s' for node '%s'", type_str, node->name);
+
+	if (resolve_addr(local_str, &node->local, 0))
+		cerror(cfg, "Failed to resolve local address '%s' of node '%s'", local_str, node->name);
+
+	if (resolve_addr(remote_str, &node->remote, 0))
+		cerror(cfg, "Failed to resolve remote address '%s' of node '%s'", remote_str, node->name);
+
+	if (!config_setting_lookup_string(cfg, "interface", &node->ifname)) {
+		node->ifname = if_addrtoname((struct sockaddr*) &node->local);
+	}
+
+	node->cfg = cfg;
+	node->ifindex = if_nametoindex(node->ifname);
+	node->mark = node->ifindex + 8000;
 
 	list_add(*nodes, node);
 
-	node->cfg = cfg;
+	debug(3, "Loaded %s node '%s'", type_str, node->name);
+
+	return 0;
 }

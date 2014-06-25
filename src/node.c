@@ -21,22 +21,6 @@
 #include "node.h"
 #include "if.h"
 
-int node_create(struct node *n, const char *name, enum node_type type,
-	struct sockaddr_in local, struct sockaddr_in remote)
-{
-	n->name = name;
-	n->type = type;
-
-	n->local = local;
-	n->remote = remote;
-
-	/* We use to local address to determine the outgoing interface */
-	//n->ifname = if_addrtoname((struct sockaddr*) &local);
-	//n->ifindex = if_nametoindex(n->ifname);
-
-	return 0;
-}
-
 int node_connect(struct node *n)
 {
 	/* Create socket */

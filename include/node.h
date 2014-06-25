@@ -38,6 +38,9 @@ enum node_type
  */
 struct node
 {
+	/** A system-wide unique id per node */
+	int id;
+
 	/** The socket descriptor */
 	int sd;
 
@@ -65,24 +68,6 @@ struct node
 	/** Linked list pointer */
 	struct node *next;
 };
-
-/** Create a new node.
- *
- * Memory is allocated dynamically and has to be freed by node_destroy()
- *
- * @param n A pointer to the node structure.
- * @param name An acroynm which describes the node.
- * @param type The type of a node (server, simulator, workstation).
- * @param local The local address of this node.
- *	This is where to server is listening for the arrival of new messages.
- * @param remote The local address of this node.
- * 	This is where messages are sent to.
- * @return
- *  - 0 on success
- *  - otherwise on error occured
- */
-int node_create(struct node *n, const char *name, enum node_type type,
-	struct sockaddr_in local, struct sockaddr_in remote);
 
 /** Connect and bind the UDP socket of this node
  *
