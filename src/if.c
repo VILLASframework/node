@@ -10,68 +10,94 @@
 #include <string.h>
 
 #include <dirent.h>
-#include <ifaddrs.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/ip.h>
+#include <arpa/inet.h>
+#include <net/if.h>
 
+#include "if.h"
 #include "utils.h"
 
-char* if_addrtoname(struct sockaddr *addr)
+int if_getegress(struct sockaddr_in *sa)
 {
-	char *ifname = NULL;
-	struct ifaddrs *ifas, *ifa;
+	char cmd[128];
+	char token[32];
 
-	if(getifaddrs(&ifas))
-		return NULL;
+	snprintf(cmd, sizeof(cmd), "ip route get %s", inet_ntoa(sa->sin_addr));
 
-	for(ifa = ifas; ifa; ifa = ifa->ifa_next) {
-		if (ifa->ifa_addr && !sockaddr_cmp(ifa->ifa_addr, addr)) {
-			ifname = malloc(strlen(ifa->ifa_name) + 1);
-			if (!ifname)
-				goto out;
+	debug(6, "system: %s", cmd);
+	FILE *p = popen(cmd, "r");
+	if (!p)
+		return -1;
 
-			strcpy(ifname, ifa->ifa_name);
-			goto out;
+	while (fscanf(p, "%31s", token)) {
+		if (!strcmp(token, "dev")) {
+			fscanf(p, "%31s", token);
+			break;
 		}
 	}
 
-out:
-	freeifaddrs(ifas);
+	fclose(p);
 
-	return ifname;
+	return if_nametoindex(token);
 }
 
-int if_setaffinity(const char *ifname, int affinity)
+int if_getirqs(struct interface *i)
 {
-	char *dirname[NAME_MAX];
-	char *filename[NAME_MAX];
-
+	char dirname[NAME_MAX];
 	DIR *dir;
-	FILE *file;
 
-	/* Determine IRQs numbers */
-	snprintf(dirname, sizeof(dirname), "/sys/class/net/%s/device/msi_irqs/", ifname);
+	snprintf(dirname, sizeof(dirname), "/sys/class/net/%s/device/msi_irqs/", i->name);
 	dir = opendir(dirname);
 	if (!dir)
 		return -1;
 
+	memset(&i->irqs, 0, sizeof(char) * IF_IRQ_MAX);
+
+	int n = 0;
 	struct dirent *entry;
-	while (entry = readdir(dir)) {
-		/* Set SMP affinity */
-		snprintf(filename, sizeof(filename), "/proc/irq/%s/smp_affinity");
+	while((entry = readdir(dir)) && n < IF_IRQ_MAX) {
+		if (entry->d_type & DT_REG) {
+			i->irqs[n++] = atoi(entry->d_name);
+		}
+	}
+
+	closedir(dir);
+	return 0;
+}
+
+int if_setaffinity(struct interface *i, int affinity)
+{
+	char filename[NAME_MAX];
+	FILE *file;
+
+	for (int n = 0; n < IF_IRQ_MAX && i->irqs[n]; n++) {
+		snprintf(filename, sizeof(filename), "/proc/irq/%u/smp_affinity", i->irqs[n]);
+
 		file = fopen(filename, "w");
 		if (!file)
 			continue;
 
-		debug(3, "Setting SMP affinity of IRQ %s (%s) to %8x\n", entry->d_name, ifname, affinity);
+		if (fprintf(file, "%8x", affinity) < 0)
+			error("Failed to set affinity for IRQ %u", i->irqs[n]);
+		else
+			debug(3, "Set affinity of MSI IRQ %u (%s) to %#x", i->irqs[n], i->name, affinity);
 
-		fprintf("%8x", affinity);
 		fclose(file);
 	}
 
-	closedir(dir);
-
 	return 0;
+}
+
+struct interface* if_lookup_index(int index, struct interface *interfaces)
+{
+	for (struct interface *i = interfaces; i; i = i->next) {
+		if (i->index == index) {
+			return i;
+		}
+	}
+
+	return NULL;
 }

@@ -81,29 +81,6 @@ int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags)
 	return 0;
 }
 
-int sockaddr_cmp(struct sockaddr *a, struct sockaddr *b)
-{
-	if (a->sa_family == b->sa_family) {
-		switch (a->sa_family) {
-			case AF_INET: {
-				struct sockaddr_in *ai = (struct sockaddr_in *) a;
-				struct sockaddr_in *bi = (struct sockaddr_in *) b;
-
-				return memcmp(&ai->sin_addr, &bi->sin_addr, sizeof(struct in_addr));
-			}
-
-			case AF_INET6: {
-				struct sockaddr_in6 *ai = (struct sockaddr_in6 *) a;
-				struct sockaddr_in6 *bi = (struct sockaddr_in6 *) b;
-
-				return memcmp(&ai->sin6_addr, &bi->sin6_addr, sizeof(struct in6_addr));
-			}
-		}
-	}
-
-	return -1;
-}
-
 cpu_set_t to_cpu_set(int set)
 {
 	cpu_set_t cset;

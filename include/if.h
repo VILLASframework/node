@@ -8,25 +8,66 @@
 #ifndef _IF_H_
 #define _IF_H_
 
+#include <sys/types.h>
 #include <net/if.h>
 
-/** Get the name of first interface which listens on addr.
+#define IF_NAME_MAX	IFNAMSIZ
+#define IF_IRQ_MAX	3
+
+/** Interface data structure */
+struct interface {
+	/** The index used by the kernel to reference this interface */
+	int index;
+	/** How many nodes use this interface for outgoing packets */
+	int refcnt;
+	/** Human readable name of this interface */
+	char name[IF_NAME_MAX];
+	/** List of IRQs of the NIC */
+	char irqs[IF_IRQ_MAX];
+
+	/** Linked list pointer */
+	struct interface *next;
+};
+
+/** Get outgoing interface
  *
- * @param addr The address whose related interface is searched
- * @return
- *  - A pointer to the interface name (has to be freed by caller)
- *  - NULL if the address is not used on the system
+ * Does a lookup in the kernel routing table to determine
+ * the interface which sends the data to a certain socket
+ * address.
+ *
+ * @param sa A destination address for outgoing packets
+ * @return The interface index
  */
-char* if_addrtoname(struct sockaddr *addr);
+int if_getegress(struct sockaddr_in *sa);
+
+/** Get all IRQs for this interface
+ *
+ * Only MSI IRQs are determined by looking at:
+ *  /sys/class/net/{ifname}/device/msi_irqs/
+ *
+ * @param i A pointer to the interface structure
+ * @return
+ *  - 0 on success
+ *  - otherwise an error occured
+ */
+int if_getirqs(struct interface *i);
 
 /** Change the SMP affinity of NIC interrupts.
  *
- * @param ifname The interface whose IRQs should be pinned
+ * @param i A pointer to the interface structure
  * @param affinity A mask specifying which cores should handle this interrupt.
  * @return
  *  - 0 on success
  *  - otherwise an error occured
  */
-int if_setaffinity(const char *ifname, int affinity);
+int if_setaffinity(struct interface *i, int affinity);
+
+/** Search list of interface for a index
+ *
+ * @param index The interface index to search for
+ * @param interfaces A linked list of all interfaces
+ * @return A pointer to the node or NULL if not found
+ */
+struct interface* if_lookup_index(int index, struct interface *interfaces);
 
 #endif /* _IF_H_ */

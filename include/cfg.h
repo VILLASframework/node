@@ -12,6 +12,7 @@
 
 struct node;
 struct path;
+struct interface;
 
 /** Global configuration */
 struct settings {
@@ -42,8 +43,8 @@ struct settings {
  *  - 0 on success
  *  - otherwise an error occured
  */
-int config_parse(const char *filename, config_t *cfg,
-	struct settings *set, struct node **nodes, struct path **paths);
+int config_parse(const char *filename, config_t *cfg, struct settings *set,
+	struct node **nodes, struct path **paths, struct interface **interfaces);
 
 /** Parse the global section of a configuration file.
  *
@@ -64,16 +65,23 @@ int config_parse_global(config_setting_t *cfg, struct settings *set);
  *  - 0 on success
  *  - otherwise an error occured
  */
-int config_parse_path(config_setting_t *cfg, struct path **paths, struct node *nodes);
+int config_parse_path(config_setting_t *cfg,
+	struct path **paths, struct node **nodes);
 
 /** Parse a single node and add it to the global configuration.
  *
  * @param cfg A libconfig object pointing to the node
  * @param nodes Add new nodes to this linked list
+ * @param interfaces Search this list for existing interfaces
  * @return
  *  - 0 on success
  *  - otherwise an error occured
  */
-int config_parse_node(config_setting_t *cfg, struct node **nodes);
+int config_parse_node(config_setting_t *cfg,
+	struct node **nodes, struct interface **interfaces);
+ * @return
+ *  - 0 on success
+ *  - otherwise an error occured
+ */
 
 #endif /* _CFG_H_ */

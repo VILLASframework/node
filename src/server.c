@@ -19,6 +19,7 @@
 
 #include "config.h"
 #include "cfg.h"
+#include "if.h"
 #include "msg.h"
 #include "utils.h"
 #include "path.h"
@@ -26,9 +27,10 @@
 
 /** Linked list of nodes */
 static struct node *nodes;
-
 /** Linked list of paths */
 static struct path *paths;
+/** Linked list of interfaces */
+static struct interface *interfaces;
 
 /** Default settings */
 static struct settings settings = {
@@ -126,7 +128,7 @@ int main(int argc, char *argv[])
 
 	/* Parse configuration file */
 	config_init(&config);
-	config_parse(argv[1], &config, &settings, &nodes, &paths);
+	config_parse(argv[1], &config, &settings, &nodes, &paths, &interfaces);
 
 	if (!paths)
 		error("No paths found. Terminating...");

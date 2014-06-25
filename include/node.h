@@ -55,10 +55,9 @@ struct node
 	/** Remote address of the socket */
 	struct sockaddr_in remote;
 
-	/** Name of the local interface */
-	const char *ifname;
-	/** Index of the local interface */
-	int ifindex;
+	/** The egress interface */
+	struct interface *interface;
+
 	/** Socket mark for netem, routing and filtering */
 	int mark;
 

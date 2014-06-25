@@ -50,20 +50,7 @@ void print(enum log_level lvl, const char *fmt, ...);
  */
 int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags);
 
-/** Compare two socket addresses based on their family and address.
- *
- * Only the family and the address is compared.
- * Port numbers etc are ignored.
- *
- * @param a First address
- * @param b Second address
- * @return
- *  - 0 if the addresses are equal
- *  - otherwise they are not equal
- */
-int sockaddr_cmp(struct sockaddr *a, struct sockaddr *b);
-
-/** Convert integer into cpu_set_t
+/** Convert integer to cpu_set_t
  *
  * @param set A cpu bitmask
  * @return The opaque cpu_set_t datatype

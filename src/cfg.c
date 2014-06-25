@@ -18,8 +18,8 @@
 #include "path.h"
 #include "utils.h"
 
-int config_parse(const char *filename, config_t *cfg,
-	struct settings *set, struct node **nodes, struct path **paths)
+int config_parse(const char *filename, config_t *cfg, struct settings *set,
+	struct node **nodes, struct path **paths, struct interface **interfaces)
 {
 	if (!config_read_file(cfg, filename)) {
 		error("Failed to parse configuration: %s in %s:%d",
@@ -48,13 +48,13 @@ int config_parse(const char *filename, config_t *cfg,
 	/* Parse nodes */
 	for (int i = 0; i < config_setting_length(cfg_nodes); i++) {
 		config_setting_t *cfg_node = config_setting_get_elem(cfg_nodes, i);
-		config_parse_node(cfg_node, nodes);
+		config_parse_node(cfg_node, nodes, interfaces);
 	}
 
 	/* Parse paths */
 	for (int i = 0; i < config_setting_length(cfg_paths); i++) {
 		config_setting_t *cfg_path = config_setting_get_elem(cfg_paths, i);
-		config_parse_path(cfg_path, paths, *nodes);
+		config_parse_path(cfg_path, paths, nodes);
 	}
 
 	return CONFIG_TRUE;
@@ -99,7 +99,7 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 }
 
 int config_parse_path(config_setting_t *cfg,
-	struct path **paths, struct node *nodes)
+	struct path **paths, struct node **nodes)
 {
 	const char *in_str = NULL;
 	const char *out_str = NULL;
@@ -123,11 +123,11 @@ int config_parse_path(config_setting_t *cfg,
 	if (!config_setting_lookup_string(cfg, "out", &out_str))
 		cerror(cfg, "Missing output node for path");
 
-	path->in = node_lookup_name(in_str, nodes);
+	path->in = node_lookup_name(in_str, *nodes);
 	if (!path->in)
 		cerror(cfg, "Invalid input node '%s'");
 
-	path->out = node_lookup_name(out_str, nodes);
+	path->out = node_lookup_name(out_str, *nodes);
 	if (!path->out)
 		cerror(cfg, "Invalid output node '%s'", out_str);
 
@@ -159,7 +159,8 @@ int config_parse_path(config_setting_t *cfg,
 	return 0;
 }
 
-int config_parse_node(config_setting_t *cfg, struct node **nodes)
+int config_parse_node(config_setting_t *cfg,
+	struct node **nodes, struct interface **interfaces)
 {
 	const char *type_str = NULL;
 	const char *remote_str = NULL;
@@ -201,13 +202,22 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	if (resolve_addr(remote_str, &node->remote, 0))
 		cerror(cfg, "Failed to resolve remote address '%s' of node '%s'", remote_str, node->name);
 
-	if (!config_setting_lookup_string(cfg, "interface", &node->ifname)) {
-		node->ifname = if_addrtoname((struct sockaddr*) &node->local);
+	/* Determine outgoing interface */
+	int index = if_getegress(&node->remote);
+	struct interface *i = if_lookup_index(index, *interfaces);
+	if (!i) {
+		i = malloc(sizeof(struct interface));
+		memset(i, 0, sizeof(struct interface));
+
+		i->index = index;
+
+		list_add(*interfaces, i);
 	}
 
+	node->mark = 1 + i->refcnt++;
+	node->interface = i;
+
 	node->cfg = cfg;
-	node->ifindex = if_nametoindex(node->ifname);
-	node->mark = node->ifindex + 8000;
 
 	list_add(*nodes, node);
 
