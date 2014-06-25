@@ -26,13 +26,14 @@ int tc_prio(struct interface *i, tc_hdl_t handle, int bands)
 {
 	char cmd[128];
 	int len = 0;
+	int priomap[] = { 1, 2, 2, 2, 1, 2, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1 };
 
 	len += snprintf(cmd+len, sizeof(cmd)-len,
 		"tc qdisc add dev %s root handle %u prio bands %u priomap",
-		i->name, TC_HDL_MAJ(handle), bands);
+		i->name, TC_HDL_MAJ(handle), bands + 3);
 
-	for (int i = 0; i < bands; i++)
-		len += snprintf(cmd+len, sizeof(cmd)-len, " 0");
+	for (int i = 0; i < 16; i++)
+		len += snprintf(cmd+len, sizeof(cmd)-len, " %u", priomap[i] + bands);
 
 	debug(6, "system: %s", cmd);
 	return system(cmd);

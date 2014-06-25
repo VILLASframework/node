@@ -58,7 +58,7 @@ static void start()
 
 		/* Create priority queuing discipline */
 		tc_reset(i);
-		tc_prio(i, TC_HDL(4000, 0), i->refcnt + 2);
+		tc_prio(i, TC_HDL(4000, 0), i->refcnt);
 	}
 
 	/* Connect and bind nodes to their sockets, set socket options */
