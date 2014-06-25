@@ -14,8 +14,6 @@ This project is developed at the [Institute for Automation of Complex Power Syst
 Install libraries including developement headers for:
 
  - libconfig
- - libnl-3
- - libnl-route-3
 
 Start the compilation with:
 
@@ -27,22 +25,32 @@ Add `V=5` for a more verbose debugging output.
 
 Install the server by executing:
 
-	$ make install
+	$ sudo make install
 
 Add `PREFIX=/usr/local/` to specify a non-standard installation destination.
 
-The s2ss server needs several [capabilities(7)](http://man7.org/linux/man-pages/man7/capabilities.7.html) to run:
+**Important:** Please note that the server requires the
+[iproute2](http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2)
+tools to setup the network emulation and interfaces.
 
- - `CAP_NET_ADMIN` to increase the socket priority
- - `CAP_NET_BIND_SERVICE` to listen to UDP ports below 1024
- - `CAP_SYS_NICE` to set the realtime priority and cpu affinity
- - `CAP_IPC_LOC` to lock pages for better realtime
+Install these via:
+
+	$ sudo yum install iproute2
+
+or:
+
+	$ sudo apt-get install iproute2
 
 ## Configuration
 
 See [configuration](Configuration.md) for more information.
 
 ## Usage
+
+The S2SS server (`server`) expects the path to a configuration file as a single argument.
+
+The server requires root privileges during the startup.
+Afterwards privileges can be dropped by using the `user` and `group` settings in the config file.
 
 	Usage: ./server CONFIG
 	  CONFIG is a required path to a configuration file
@@ -60,17 +68,4 @@ See [configuration](Configuration.md) for more information.
 
  2. Ping/Pong Latency
 
-	$ ./test latency 192.168.1.12:10200	
-
-## A Operating System and Kernel
-
-Kernel command line: isolcpus=[cpu_number]
-
-Map NIC IRQs	=> ???
-Map Tasks	=> taskset or sched_cpuaffinity
-Nice Task	=> Realtime Priority
-
-Linux RT-preemp: https://rt.wiki.kernel.org/index.php/Main_Page
-Precompiled kernels: http://ccrma.stanford.edu/planetccrma/software/
-			for Fedora 20 (https://fedoraproject.org/)
-
+	$ ./test latency 192.168.1.12:10200
