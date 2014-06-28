@@ -1,6 +1,4 @@
-# Readme \section Readme
-
-This is the readme file for the S2SS server. Take a look at the `doc/html` directory for a full documentation.
+S2SS is a client server application based on UDP/IP to connect simulation equipment.
 
 ## Contact
 
@@ -36,9 +34,7 @@ tools to setup the network emulation and interfaces.
 Install these via:
 
 	$ sudo yum install iproute2
-
 or:
-
 	$ sudo apt-get install iproute2
 
 ## Configuration
@@ -62,10 +58,22 @@ Afterwards privileges can be dropped by using the `user` and `group` settings in
 
 ### Examples
 
- 1. Send/Receive of random data:
+ 1. Start server:
+
+	$ ./server etc/example.conf
+
+ 2. Receive/dump data to file
+
+	$ ./receive *:10200 > dump.csv
+
+ 3. Replay recorded data:
+
+	$ ./send 4 192.168.1.12:10200 < dump.csv
+
+ 4. Send random generated values:
 
 	$ ./random 1 4 100 | ./send 4 192.168.1.12:10200
 
- 2. Ping/Pong Latency
+ 5. Test ping/pong latency:
 
 	$ ./test latency 192.168.1.12:10200

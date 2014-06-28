@@ -1,8 +1,21 @@
 # Configuration
 
-## Configuration file
+## File
 
-Take a look in the 'Examples' section for some configurations.
+The server gets exclusively configured by its configuration file.
+
+The following sections describes the available options.
+Take a look in the 'Examples' section for some examples.
+
+### Global
+
+- *name*:
+- *affinity*
+
+
+### Nodes
+
+### Paths
 
 ## Tuning
 
