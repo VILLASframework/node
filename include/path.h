@@ -2,7 +2,7 @@
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
- * @file path.h
+ * @file
  */
 
 #ifndef _PATH_H_
@@ -47,9 +47,13 @@ struct path
 	unsigned int duplicated;
 	/** Last known message number */
 	unsigned int sequence;
+	/** Counter for received messages with invalid device id or data */
+	unsigned int invalid;
 
-	/** The thread ids for this path */
-	pthread_t tid, tid2;
+	/** The thread id for this path */
+	pthread_t tid;
+	/** A second thread id for fixed rate sending thread */
+	phtread_t tid2;
 	/** A pointer to the libconfig object which instantiated this path */
 	config_setting_t *cfg;
 

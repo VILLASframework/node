@@ -2,7 +2,7 @@
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
- * @file if.h
+ * @file
  */
 
 #ifndef _IF_H_
@@ -11,8 +11,8 @@
 #include <sys/types.h>
 #include <net/if.h>
 
-#define IF_NAME_MAX	IFNAMSIZ
-#define IF_IRQ_MAX	3
+#define IF_NAME_MAX	IFNAMSIZ /**< Maximum length of an interface name */
+#define IF_IRQ_MAX	3	 /**< Maxmimal number of IRQs of an interface */
 
 /** Interface data structure */
 struct interface {

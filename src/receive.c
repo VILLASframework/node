@@ -1,5 +1,4 @@
-/**
- * Receive messages from server snd print them on stdout
+/** Receive messages from server snd print them on stdout
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC

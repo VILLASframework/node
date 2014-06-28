@@ -2,7 +2,7 @@
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
- * @file utils.h
+ * @file
  */
 
 #ifndef _UTILS_H_
@@ -16,13 +16,13 @@
 #include <sched.h>
 
 /* Some color escape codes for pretty log messages */
-#define RED(str)	"\x1B[31m" str "\x1B[0m"
-#define GRN(str)	"\x1B[32m" str "\x1B[0m"
-#define YEL(str)	"\x1B[33m" str "\x1B[0m"
-#define BLU(str)	"\x1B[34m" str "\x1B[0m"
-#define MAG(str)	"\x1B[35m" str "\x1B[0m"
-#define CYN(str)	"\x1B[36m" str "\x1B[0m"
-#define WHT(str)	"\x1B[37m" str "\x1B[0m"
+#define RED(str)	"\x1B[31m" str "\x1B[0m" /**< Print str in red */
+#define GRN(str)	"\x1B[32m" str "\x1B[0m" /**< Print str in green */
+#define YEL(str)	"\x1B[33m" str "\x1B[0m" /**< Print str in yellow */
+#define BLU(str)	"\x1B[34m" str "\x1B[0m" /**< Print str in blue */
+#define MAG(str)	"\x1B[35m" str "\x1B[0m" /**< Print str in magenta */
+#define CYN(str)	"\x1B[36m" str "\x1B[0m" /**< Print str in cyan */
+#define WHT(str)	"\x1B[37m" str "\x1B[0m" /**< Print str in white */
 
 /** The log level which is passed as first argument to print() */
 enum log_level { DEBUG, INFO, WARN, ERROR };

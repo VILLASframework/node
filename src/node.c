@@ -1,5 +1,4 @@
-/**
- * Nodes
+/** Nodes
  *
  * The S2SS server connects multiple nodes.
  * There are multiple types of nodes:

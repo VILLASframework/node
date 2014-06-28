@@ -4,7 +4,7 @@
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
- * @file config.h
+ * @file
  */
 
 #ifndef _CONFIG_H_
@@ -18,9 +18,6 @@
 
 /** Maximum number of registrable hook functions per path */
 #define MAX_HOOKS	5
-
-/** Size of the stack which gets prefaulted during initialization */
-#define MAX_SAFE_STACK	(16*1024)	/* 16 KiB */
 
 /** Socket priority */
 #define SOCKET_PRIO	7

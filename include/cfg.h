@@ -2,7 +2,7 @@
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
- * @file cfg.h
+ * @file
  */
 
 #ifndef _CFG_H_
@@ -37,10 +37,12 @@ struct settings {
 
 /** Parse configuration file and store settings in supplied struct settings.
  *
- * @param cfg A libconfig object
- * @param set The global configuration structure (also contains the config filename)
- * @param nodes A pointer to a linked list of nodes which should be parsed
- * @param paths A pointer to a linked list of paths which should be parsed
+ * @param filename The path to the configration file (relative or absolute)
+ * @param cfg A initialized libconfig object
+ * @param set The global configuration structure
+ * @param nodes A linked list of nodes which should be parsed
+ * @param paths A linked list of paths which should be parsed
+ * @param interfaces A linked list of interfaces which should be parsed
  * @return
  *  - 0 on success
  *  - otherwise an error occured

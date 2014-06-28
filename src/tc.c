@@ -1,5 +1,6 @@
-/**
- * Traffic control: setup interface queuing desciplines
+/** Traffic control: setup interface queuing desciplines
+ *
+ * S2SS uses these functions to setup the network emulation feature.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
