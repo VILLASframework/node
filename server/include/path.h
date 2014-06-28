@@ -53,7 +53,7 @@ struct path
 	/** The thread id for this path */
 	pthread_t tid;
 	/** A second thread id for fixed rate sending thread */
-	phtread_t tid2;
+	pthread_t tid2;
 	/** A pointer to the libconfig object which instantiated this path */
 	config_setting_t *cfg;
 
