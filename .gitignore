@@ -1,7 +1,4 @@
 
-doc/html/
-doc/latex/
-
 *.d
 *.o
 *~
