@@ -1,3 +1,0 @@
-# GTFPGA {#gtfpga}
-
-Hallo :-)

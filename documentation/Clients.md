@@ -1,6 +1,7 @@
 # Clients
 
 @subpage gtfpga
+@subpage opal
 
 Every server needs clients which they serve. In case of S2SS these clients are called _nodes_.
 
