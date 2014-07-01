@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<Project>
+    <General>
+        <att_name>test</att_name>
+        <att_description>This is a project!</att_description>
+        <att_autosave>ON</att_autosave>
+        <att_filename>D:\msv\svo\s2ss\clients\opal\01_server2OPAL.llp</att_filename>
+    </General>
+    <Models>
+        <Model>
+            <Path>
+                <Relative>models\AsyncIP_sl\AsyncIP_sl.mdl</Relative>
+                <Absolute>D:\msv\svo\s2ss\clients\opal\models\AsyncIP_sl\AsyncIP_sl.mdl</Absolute>
+                <UNC>D:\msv\svo\s2ss\clients\opal\models\AsyncIP_sl\AsyncIP_sl.mdl</UNC>
+            </Path>
+        </Model>
+    </Models>
+</Project>
