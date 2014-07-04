@@ -5,7 +5,7 @@ SRCS = server.c send.c receive.c random.c node.c path.c utils.c msg.c cfg.c if.c
 all: $(TARGETS)
 
 # Dependencies for individual binaries
-server: node.o msg.o utils.o path.o cfg.o if.o tc.c
+server: node.o msg.o utils.o path.o cfg.o if.o tc.o
 send: node.o msg.o utils.o
 receive: node.o msg.o utils.o
 random: node.o msg.o utils.o

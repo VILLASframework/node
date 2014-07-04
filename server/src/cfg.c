@@ -21,6 +21,8 @@
 int config_parse(const char *filename, config_t *cfg, struct settings *set,
 	struct node **nodes, struct path **paths, struct interface **interfaces)
 {
+	config_set_auto_convert(cfg, 1);
+
 	if (!config_read_file(cfg, filename)) {
 		error("Failed to parse configuration: %s in %s:%d",
 			config_error_text(cfg),
@@ -67,7 +69,6 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 
 	config_setting_lookup_int(cfg, "affinity", &set->affinity);
 	config_setting_lookup_int(cfg, "priority", &set->priority);
-	config_setting_lookup_int(cfg, "protocol", &set->protocol);
 
 	set->cfg = cfg;
 
@@ -229,7 +230,7 @@ int config_parse_netem(config_setting_t *cfg, struct netem *em)
 	if (config_setting_lookup_int(cfg, "corrupt", &em->corrupt))
 		em->valid |= TC_NETEM_CORRUPT;
 
-	// TODO: check values
+	/** @todo Check netem config values */
 
 	return 0;
 }
