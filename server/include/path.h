@@ -39,16 +39,19 @@ struct path
 	/** A pointer to the last received message */
 	struct msg *last;
 
-	/** Counter for received messages */
-	unsigned int received;
-	/** Counter for messages which arrived reordered */
-	unsigned int delayed;
-	/** Counter for messages which arrived multiple times */
-	unsigned int duplicated;
 	/** Last known message number */
 	unsigned int sequence;
+
+	/** Counter for sent messages */
+	unsigned long sent;
+	/** Counter for received messages */
+	unsigned long received;
+	/** Counter for messages which arrived reordered */
+	unsigned long delayed;
+	/** Counter for messages which arrived multiple times */
+	unsigned long duplicated;
 	/** Counter for received messages with invalid device id or data */
-	unsigned int invalid;
+	unsigned long invalid;
 
 	/** The thread id for this path */
 	pthread_t tid;

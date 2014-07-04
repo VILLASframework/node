@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 	timer_create(CLOCKID, &sev, &t);
 	timer_settime(t, 0, &its, NULL);
 
-	while(1) pause();
+	while (1) pause();
 
 	timer_delete(t);
 

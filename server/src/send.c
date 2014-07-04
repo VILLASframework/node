@@ -40,12 +40,12 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	struct node n;
+	struct node n = {
+		.name = "node"
+	};
 	struct msg m = {
 		.length = atoi(argv[1]) * sizeof(double)
 	};
-
-	memset(&n, 0, sizeof(struct node));
 
 	/* Setup signals */
 	struct sigaction sa_quit = {

@@ -22,6 +22,7 @@
 /** Send messages */
 static void * path_send(void *arg)
 {
+	int sig;
 	struct path *p = (struct path *) arg;
 	timer_t tmr;
 	sigset_t set;
@@ -49,10 +50,12 @@ static void * path_send(void *arg)
 		perror("Failed to start timer");
 
 	while (1) {
-		int sig;
 		sigwait(&set, &sig);
-
-		msg_send(p->last, p->out);
+		if (p->last) {
+			msg_send(p->last, p->out);
+			p->last = NULL;
+			p->sent++;
+		}
 	}
 
 	return NULL;
@@ -64,39 +67,42 @@ static void * path_run(void *arg)
 	struct path *p = (struct path *) arg;
 	struct msg m;
 
-	p->last = &m;
-
 	/* Main thread loop */
 	while (1) {
 		msg_recv(&m, p->in); /* Receive message */
 
-		/* Check message sequence number */
-		if (m.sequence < p->sequence) {
-			p->delayed++;
+		p->received++;
 
-			/* Delayed messages will be skipped */
-			continue;
+		if (m.sequence == 0 && p->sequence > 0) {
+			path_stats(p);
+			info("Simulation restarted");
+
+			p->sequence = 0;
+			p->received = 0;
+			p->sent = 0;
+			p->delayed = 0;
+			p->duplicated = 0;
+			p->invalid = 0;
+		}
+		else if (m.sequence < p->sequence) {
+			p->delayed++;
 		}
 		else if (m.sequence == p->sequence) {
 			p->duplicated++;
 		}
 
-		p->sequence = m.sequence;
-		p->received++;
-
 		/* Call hook */
-		if (p->hook && p->hook(&m)) {
-			/* The hook can act as a simple filter
-			 * Returning a non-zero value will skip
-			 * the message from being forwarded */
+		if (p->hook && p->hook(&m))
 			continue;
-		}
 
 		/* At fixed rate mode, messages are send by another thread */
 		if (p->rate)
-			continue;
+			p->last = &m;
+		else
+			msg_send(p->last, p->out);
 
-		msg_send(p->last, p->out);
+		p->sequence = m.sequence;
+		p->sent++;
 	}
 
 	return NULL;
@@ -126,8 +132,9 @@ int path_stop(struct path *p)
 
 void path_stats(struct path *p)
 {
-	info("%12s " MAG("=>") " %-12s:   %-8u %-8u %-8u",
+	info("%12s " MAG("=>") " %-12s:   %-8u %-8u %-8u %-8u %-8u",
 		p->in->name, p->out->name,
-		p->received, p->delayed,
-		p->duplicated);
+		p->sent, p->received, p->delayed,
+		p->duplicated, p->invalid
+	);
 }

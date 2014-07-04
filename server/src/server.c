@@ -85,7 +85,6 @@ static void stop()
 	/* Join all threads and print statistics */
 	for (struct path *p = paths; p; p = p->next) {
 		path_stop(p);
-		path_stats(p);
 
 		info("Stopping path: %12s " RED("=>") " %-12s",
 			p->in->name, p->out->name);
@@ -181,9 +180,9 @@ int main(int argc, char *argv[])
 
 		info("");
 		info("Runtime Statistics:");
-		info("%12s " MAG("=>") " %-12s:   %-8s %-8s %-8s",
-			"Source", "Destination", "#Recv", "#Delay", "#Duplicated");
-		info("--------------------------------------------------------------");
+		info("%12s " MAG("=>") " %-12s:   %-8s %-8s %-8s %-8s %-8s",
+			"Source", "Destination", "#Sent", "#Recv", "#Delay", "#Dupl", "#Inval");
+		info("---------------------------------------------------------------------------");
 
 		while (1) {
 			sleep(5);
