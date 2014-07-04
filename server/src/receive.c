@@ -30,10 +30,10 @@ void quit(int sig, siginfo_t *si, void *ptr)
 
 int main(int argc, char *argv[])
 {
-	struct node n;
+	struct node n = {
+		.name ="node"
+	};
 	struct msg m;
-
-	memset(&n, 0, sizeof(struct node));
 
 	if (argc != 2) {
 		printf("Usage: %s LOCAL\n", argv[0]);
@@ -64,6 +64,11 @@ int main(int argc, char *argv[])
 
 	while (1) {
 		msg_recv(&m, &n);
+
+		if (m.version != MSG_VERSION)
+			continue;
+		if (m.type != MSG_TYPE_DATA)
+			continue;
 
 #if 1
 		struct timespec ts;

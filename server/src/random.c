@@ -31,9 +31,8 @@ void tick(int sig, siginfo_t *si, void *ptr)
 
 int main(int argc, char *argv[])
 {
-	if (argc != 4) {
-		printf("Usage: %s DEVID VALUES RATE\n", argv[0]);
-		printf("  DEVID  is the device id of this node\n");
+	if (argc != 3) {
+		printf("Usage: %s VALUES RATE\n", argv[0]);
 		printf("  VALUES is the number of values a message contains\n");
 		printf("  RATE   how many messages per second\n\n");
 		printf("s2ss Simulator2Simulator Server v%s\n", VERSION);
@@ -41,10 +40,9 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	int rate = atoi(argv[3]);
+	int rate = atoi(argv[2]);
 	struct msg msg = {
-		.device = atoi(argv[1]),
-		.length = atoi(argv[2]) * sizeof(double),
+		.length = atoi(argv[1]),
 		.sequence = 0,
 		.data = { 0 }
 	};
@@ -76,7 +74,7 @@ int main(int argc, char *argv[])
 	};
 
 	/* Print header */
-	fprintf(stderr, "# %-6s %-8s %-12s\n", "dev_id", "seq_no", "data");
+	fprintf(stderr, "# %-6s%-12s\n", "seq", "data");
 
 	timer_create(CLOCKID, &sev, &t);
 	timer_settime(t, 0, &its, NULL);

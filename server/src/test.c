@@ -64,7 +64,6 @@ int main(int argc, char *argv[])
 
 	if (!strcmp(argv[1], "latency")) {
 		struct msg m = {
-			.device = 99,
 			.sequence = 0
 		};
 		struct timespec *ts1 = (struct timespec *) &m.data;

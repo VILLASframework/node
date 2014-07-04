@@ -14,61 +14,34 @@
 #include "config.h"
 #include "node.h"
 
-#if PROTOCOL == 0
-/** The format of a message (OPAL-RT example format).
- *
- * This struct defines the format of a message (protocol version 0).
- * Its declared as "packed" because it represents the "on wire" data.
- */
-struct msg
-{
-	/** Sender device ID */
-	uint16_t device;
-	/** Message ID */
-	uint32_t sequence;
-	/** Message length (data only) */
-	uint16_t length;
-	/** Message data */
-	double data[MAX_VALUES];
-} __attribute__((packed));
-#elif PROTOCOL == 1
-/** Next generation message format for RTDS integration.
- *
- * This struct defines the format of a message (protocol version 1).
- * Its declared as "packed" because it represents the "on wire" data.
- */
-struct msg
-{
-	struct
-	{
-		/** Protocol version */
-		unsigned version : 4;
-		/** Header length */
-		unsigned hdr_len : 4;
-		/** Message flags */
-		uint8_t flags;
-		/** Sender device ID */
-		uint16_t dev_id;
-		/** Message ID */
-		uint32_t sequence;
-		/** Message length (data only) */
-		uint16_t data_len;
-		/** Digital signature for authentication */
-		uint32_t signature;
-		/** Timestamp in uS since unix epoch */
-		uint64_t timestamp
-	} header;
-	union
-	{
-		uint32_t integer;
-		float data float_single;
-		char * data_str;
-	} data[MAX_VALUES];
+#define MSG_VERSION	0
 
+/** @todo Implement more message types */
+#define MSG_TYPE_DATA	0
+#define MSG_TYPE_START	1
+#define MSG_TYPE_STOP	2
+
+struct node;
+
+/** This message format is used by all clients
+ *
+ * @diafile msg_format.dia
+ **/
+struct msg
+{
+	/** The version specifies the format of the remaining message */
+	unsigned version	: 4;
+	/** Data or control message */
+	unsigned type		: 2;
+	/** These bits are reserved for future extensions */
+	unsigned __padding	: 2;
+	/** Length in dwords of the whole message */
+	uint8_t length;
+	/** The sequence number gets incremented by one for consecutive messages */
+	uint16_t sequence;
+	/** The message payload */
+	float data[MAX_VALUES];
 } __attribute__((packed));
-#else
-  #error "Unknown protocol version!"
-#endif
 
 /** Print a raw UDP message in human readable form.
  *

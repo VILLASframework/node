@@ -70,36 +70,51 @@ static void * path_run(void *arg)
 	/* Main thread loop */
 	while (1) {
 		msg_recv(&m, p->in); /* Receive message */
-
 		p->received++;
 
-		if (m.sequence == 0 && p->sequence > 0) {
-			path_stats(p);
-			info("Simulation restarted");
+		/** Check header fields */
+		if (m.version != MSG_VERSION) {
+			p->invalid++;
+			continue;
+		}
 
-			p->sequence = 0;
-			p->received = 0;
-			p->sent = 0;
-			p->delayed = 0;
-			p->duplicated = 0;
-			p->invalid = 0;
+		if (m.type != MSG_TYPE_DATA) {
+			p->invalid++;
+			continue;
+		}
+
+		/* Check sequence number */
+		if (m.sequence <= 1) {
+			path_stats(p);
+			info("Simulation started");
+
+			p->sequence	= 0;
+			p->received	= 1;
+			p->sent		= 0;
+			p->skipped	= 0;
+			p->delayed	= 0;
+			p->duplicated	= 0;
+			p->invalid	= 0;
 		}
 		else if (m.sequence < p->sequence) {
 			p->delayed++;
+			continue;
 		}
 		else if (m.sequence == p->sequence) {
 			p->duplicated++;
+			continue;
 		}
 
-		/* Call hook */
-		if (p->hook && p->hook(&m))
+		if (p->hook && p->hook(&m)) {
+			p->skipped++;
 			continue;
+		}
 
 		/* At fixed rate mode, messages are send by another thread */
 		if (p->rate)
 			p->last = &m;
 		else
-			msg_send(p->last, p->out);
+			msg_send(&m, p->out);
 
 		p->sequence = m.sequence;
 		p->sent++;

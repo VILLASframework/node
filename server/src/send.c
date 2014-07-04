@@ -44,7 +44,9 @@ int main(int argc, char *argv[])
 		.name = "node"
 	};
 	struct msg m = {
-		.length = atoi(argv[1]) * sizeof(double)
+		.version = MSG_VERSION,
+		.type = MSG_TYPE_DATA,
+		.length = atoi(argv[1])
 	};
 
 	/* Setup signals */
@@ -69,7 +71,8 @@ int main(int argc, char *argv[])
 		n.local.sin_port = 0;
 	}
 
-	node_connect(&n);
+	if (node_connect(&n))
+		error("Failed to connect node");
 
 	while (!feof(stdin)) {
 		msg_fscan(stdin, &m);

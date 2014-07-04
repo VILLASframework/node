@@ -50,8 +50,10 @@ struct path
 	unsigned long delayed;
 	/** Counter for messages which arrived multiple times */
 	unsigned long duplicated;
-	/** Counter for received messages with invalid device id or data */
+	/** Counter for received messages with invalid version or type */
 	unsigned long invalid;
+	/** Counter for skipped or filtered messages by hook */
+	unsigned long skipped;
 
 	/** The thread id for this path */
 	pthread_t tid;
