@@ -123,3 +123,11 @@ int path_stop(struct path *p)
 
 	return 0;
 }
+
+void path_stats(struct path *p)
+{
+	info("%12s " MAG("=>") " %-12s:   %-8u %-8u %-8u",
+		p->in->name, p->out->name,
+		p->received, p->delayed,
+		p->duplicated);
+}

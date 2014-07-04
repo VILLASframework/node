@@ -81,4 +81,10 @@ int path_start(struct path *p);
  */
 int path_stop(struct path *p);
 
+/** Show some basic statistics for a path
+ *
+ * @param p A pointer to the path struct
+ */
+void path_stats(struct path *p);
+
 #endif /* _PATH_H_ */

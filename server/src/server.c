@@ -75,8 +75,8 @@ static void start()
 	for (struct path *p = paths; p; p = p->next) {
 		path_start(p);
 
-		info("Starting path: %12s " GRN("=>") " %s " GRN("=>") " %-12s",
-			p->in->name, settings.name, p->out->name);
+		info("Starting path: %12s " GRN("=>") " %-12s",
+			p->in->name, p->out->name);
 	}
 }
 
@@ -85,13 +85,10 @@ static void stop()
 	/* Join all threads and print statistics */
 	for (struct path *p = paths; p; p = p->next) {
 		path_stop(p);
+		path_stats(p);
 
-		info("Stopping path: %12s " RED("=>") " %s " RED("=>") " %-12s",
-			p->in->name, settings.name, p->out->name);
-
-		info("  %u messages received", p->received);
-		info("  %u messages duplicated", p->duplicated);
-		info("  %u messages delayed", p->delayed);
+		info("Stopping path: %12s " RED("=>") " %-12s",
+			p->in->name, p->out->name);
 	}
 
 	/* Close all sockets we listen on */
@@ -178,8 +175,24 @@ int main(int argc, char *argv[])
 	/* Connect all nodes and start one thread per path */
 	start();
 
-	/* Main thread is sleeping */
-	pause();
+	if (V >= 5) {
+		struct path *p = paths;
+
+		info("");
+		info("Runtime Statistics:");
+		info("%12s " MAG("=>") " %-12s:   %-8s %-8s %-8s",
+			"Source", "Destination", "#Recv", "#Delay", "#Duplicated");
+		info("--------------------------------------------------------------");
+
+		while (1) {
+			sleep(5);
+			path_stats(p);
+
+			p = (p->next) ? p->next : paths;
+		}
+	}
+	else
+		pause();
 
 	return 0;
 }
