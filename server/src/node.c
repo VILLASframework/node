@@ -1,11 +1,5 @@
 /** Nodes
  *
- * The S2SS server connects multiple nodes.
- * There are multiple types of nodes:
- *  - simulators
- *  - servers
- *  - workstations
- *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
  */
@@ -52,22 +46,6 @@ int node_disconnect(struct node *n)
 	close(n->sd);
 
 	return 0;
-}
-
-enum node_type node_lookup_type(const char *str)
-{
-	     if (!strcmp(str, "workstation"))
-		return NODE_WORKSTATION;
-	else if (!strcmp(str, "server"))
-		return NODE_SERVER;
-	else if (!strcmp(str, "rtds"))
-		return NODE_SIM_RTDS;
-	else if (!strcmp(str, "opal"))
-		return NODE_SIM_OPAL;
-	else if (!strcmp(str, "dsp"))
-		return NODE_SIM_DSP;
-	else
-		return NODE_UNKNOWN;
 }
 
 struct node* node_lookup_name(const char *str, struct node *nodes)

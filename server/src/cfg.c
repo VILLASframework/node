@@ -134,7 +134,6 @@ int config_parse_path(config_setting_t *cfg,
 int config_parse_node(config_setting_t *cfg,
 	struct node **nodes, struct interface **interfaces)
 {
-	const char *type_str = NULL;
 	const char *remote_str = NULL;
 	const char *local_str = NULL;
 
@@ -164,12 +163,6 @@ int config_parse_node(config_setting_t *cfg,
 
 	if (resolve_addr(remote_str, &node->remote, 0))
 		cerror(cfg, "Failed to resolve remote address '%s' of node '%s'", remote_str, node->name);
-
-	/* Optional settings */
-	if (config_setting_lookup_string(cfg, "type", &type_str))
-		node->type = node_lookup_type(type_str);
-	else
-		node->type = NODE_UNKNOWN;
 
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {

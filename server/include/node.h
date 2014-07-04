@@ -21,20 +21,6 @@
 #include "msg.h"
 #include "tc.h"
 
-/** The type of a node.
- *
- * This type is used to determine the message format of the remote node
- */
-enum node_type
-{
-	NODE_UNKNOWN,
-	NODE_SERVER,
-	NODE_WORKSTATION,
-	NODE_SIM_OPAL,
-	NODE_SIM_RTDS,
-	NODE_SIM_DSP
-};
-
 /** The datastructure for a node.
  *
  * Every entity which exchanges messages is represented by a node.
@@ -46,9 +32,6 @@ struct node
 
 	/** A short identifier of the node, only used for configuration and logging */
 	const char *name;
-
-	/** The type of this node */
-	enum node_type type;
 
 	/** Local address of the socket */
 	struct sockaddr_in local;
@@ -88,13 +71,6 @@ int node_connect(struct node *n);
  *  - otherwise on error occured
  */
 int node_disconnect(struct node *n);
-
-/** Lookup node type from string.
- *
- * @param str The string containing the node type
- * @return The node type enumeration value
- */
-enum node_type node_lookup_type(const char *str);
 
 /** Search list of nodes for a name.
  *
