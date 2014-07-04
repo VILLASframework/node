@@ -85,8 +85,6 @@ static void start()
 
 static void stop()
 {
-	int affinity;
-
 	/* Join all threads and print statistics */
 	for (struct path *p = paths; p; p = p->next) {
 		path_stop(p);
@@ -104,14 +102,9 @@ static void stop()
 		node_disconnect(n);
 	}
 
-	/* Determine default affinity */
-	FILE * f = fopen("/proc/irq/default_smp_affinity", "r");
-	fscanf(f, "%x", &affinity);
-	fclose(f);
-
 	/* Reset interface queues and affinity */
 	for (struct interface *i = interfaces; i; i = i->next) {
-		if_setaffinity(i, affinity);
+		if_setaffinity(i, -1);
 		tc_reset(i);
 	}
 }
