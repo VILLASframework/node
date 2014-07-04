@@ -67,7 +67,7 @@ enum node_type node_lookup_type(const char *str)
 	else if (!strcmp(str, "dsp"))
 		return NODE_SIM_DSP;
 	else
-		return NODE_INVALID;
+		return NODE_UNKNOWN;
 }
 
 struct node* node_lookup_name(const char *str, struct node *nodes)

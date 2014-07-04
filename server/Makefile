@@ -18,7 +18,7 @@ RM = rm -f
 DOXY = doxygen
 
 # Debug level (if not set via 'make V=?')
-V ?= 6
+V ?= 5
 
 # Some details about the compiled version
 GIT_TAG = $(shell git describe --tags --abbrev=0)

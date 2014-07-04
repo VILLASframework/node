@@ -26,7 +26,8 @@ int if_getegress(struct sockaddr_in *sa)
 
 	snprintf(cmd, sizeof(cmd), "ip route get %s", inet_ntoa(sa->sin_addr));
 
-	debug(6, "system: %s", cmd);
+	debug(8, "System: %s", cmd);
+
 	FILE *p = popen(cmd, "r");
 	if (!p)
 		return -1;
@@ -57,11 +58,13 @@ int if_getirqs(struct interface *i)
 
 	int n = 0;
 	struct dirent *entry;
-	while((entry = readdir(dir)) && n < IF_IRQ_MAX) {
+	while ((entry = readdir(dir)) && n < IF_IRQ_MAX) {
 		if (entry->d_type & DT_REG) {
 			i->irqs[n++] = atoi(entry->d_name);
 		}
 	}
+
+	debug(7, "Found %u interrupts for interface '%s'", n, i->name);
 
 	closedir(dir);
 	return 0;
@@ -76,15 +79,13 @@ int if_setaffinity(struct interface *i, int affinity)
 		snprintf(filename, sizeof(filename), "/proc/irq/%u/smp_affinity", i->irqs[n]);
 
 		file = fopen(filename, "w");
-		if (!file)
-			continue;
+		if (file) {
+			if (fprintf(file, "%8x", affinity) < 0)
+				error("Failed to set affinity for IRQ %u", i->irqs[n]);
 
-		if (fprintf(file, "%8x", affinity) < 0)
-			error("Failed to set affinity for IRQ %u", i->irqs[n]);
-		else
-			debug(3, "Set affinity of MSI IRQ %u (%s) to %#x", i->irqs[n], i->name, affinity);
-
-		fclose(file);
+			fclose(file);
+			debug(5, "Set affinity of IRQ %u for interface '%s' to %#x", i->irqs[n], i->name, affinity);
+		}
 	}
 
 	return 0;

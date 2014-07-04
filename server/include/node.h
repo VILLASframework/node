@@ -18,6 +18,7 @@
 #include <netinet/in.h>
 #include <libconfig.h>
 
+#include "msg.h"
 #include "tc.h"
 
 /** The type of a node.
@@ -26,7 +27,7 @@
  */
 enum node_type
 {
-	NODE_INVALID,
+	NODE_UNKNOWN,
 	NODE_SERVER,
 	NODE_WORKSTATION,
 	NODE_SIM_OPAL,

@@ -56,7 +56,9 @@ int msg_send(struct msg *m, struct node *n)
 		sizeof(struct sockaddr_in)) < 0)
 		perror("Failed sendto");
 
-	debug(10, "Message sent to node %s (%s:%u)", n->name, inet_ntoa(n->remote.sin_addr), ntohs(n->remote.sin_port));
+	debug(10, "Message sent to node %s (%s:%u)", n->name,
+		inet_ntoa(n->remote.sin_addr),
+		ntohs(n->remote.sin_port));
 
 	return 0;
 }

@@ -105,10 +105,7 @@ int config_parse_path(config_setting_t *cfg,
 	config_setting_lookup_bool(cfg, "enabled", &enabled);
 	config_setting_lookup_bool(cfg, "reverse", &reverse);
 	config_setting_lookup_float(cfg, "rate", &path->rate);
-
 	path->cfg = cfg;
-
-	debug(3, "Loaded path from '%s' to '%s'", path->in->name, path->out->name);
 
 	if (enabled) {
 		list_add(*paths, path);
@@ -198,8 +195,6 @@ int config_parse_node(config_setting_t *cfg,
 	node->cfg = cfg;
 
 	list_add(*nodes, node);
-
-	debug(3, "Loaded %s node '%s'", type_str, node->name);
 
 	return 0;
 }

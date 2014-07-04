@@ -19,7 +19,9 @@ int tc_reset(struct interface *i)
 	char cmd[128];
 	snprintf(cmd, sizeof(cmd), "tc qdisc del dev %s root", i->name);
 
-	debug(6, "system: %s", cmd);
+	debug(6, "Reset traffic control for interface '%s'", i->name);
+	debug(8, "System: %s", cmd);
+
 	return system(cmd);
 }
 
@@ -36,7 +38,9 @@ int tc_prio(struct interface *i, tc_hdl_t handle, int bands)
 	for (int i = 0; i < 16; i++)
 		len += snprintf(cmd+len, sizeof(cmd)-len, " %u", priomap[i] + bands);
 
-	debug(6, "system: %s", cmd);
+	debug(6, "Replace master qdisc for interface '%s'", i->name);
+	debug(8, "System: %s", cmd);
+
 	return system(cmd);
 }
 
@@ -64,7 +68,9 @@ int tc_netem(struct interface *i, tc_hdl_t parent, struct netem *em)
 	if (em->valid & TC_NETEM_CORRUPT)
 		len += snprintf(cmd+len, sizeof(cmd)-len, " corrupt %u", em->corrupt);
 
-	debug(6, "system: %s", cmd);
+	debug(6, "Setup netem qdisc for interface '%s'", i->name);
+	debug(8, "System: %s", cmd);
+
 	return system(cmd);
 }
 
@@ -75,7 +81,9 @@ int tc_mark(struct interface *i, tc_hdl_t flowid, int mark)
 		"tc filter add dev %s protocol ip handle %u fw flowid %u:%u",
 		i->name, mark, TC_HDL_MAJ(flowid), TC_HDL_MIN(flowid));
 
-	debug(6, "system: %s", cmd);
+	debug(7, "Add traffic filter to interface '%s': fwmark %u => flowid %u", i->name, mark, flowid);
+	debug(8, "System: %s", cmd);
+
 	return system(cmd);
 
 }

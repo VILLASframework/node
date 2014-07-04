@@ -116,17 +116,6 @@ static void quit()
 
 int main(int argc, char *argv[])
 {
-	/* Setup signals */
-	struct sigaction sa_quit = {
-		.sa_flags = SA_SIGINFO,
-		.sa_sigaction = quit
-	};
-
-	sigemptyset(&sa_quit.sa_mask);
-	sigaction(SIGTERM, &sa_quit, NULL);
-	sigaction(SIGINT, &sa_quit, NULL);
-	atexit(&quit);
-
 	/* Check arguments */
 	if (argc != 2) {
 		printf("Usage: %s CONFIG\n", argv[0]);
@@ -140,12 +129,24 @@ int main(int argc, char *argv[])
 	info("This is %s %s", BLU("s2ss"), BLU(VERSION));
 	debug(1, "Running with debug level: %u", V);
 
+	/* Check priviledges */
+	if (getuid() != 0)
+		error("The server requires superuser privileges!");
+
+	/* Setup signals */
+	struct sigaction sa_quit = {
+		.sa_flags = SA_SIGINFO,
+		.sa_sigaction = quit
+	};
+
+	sigemptyset(&sa_quit.sa_mask);
+	sigaction(SIGTERM, &sa_quit, NULL);
+	sigaction(SIGINT, &sa_quit, NULL);
+	atexit(&quit);
+
 	/* Parse configuration file */
 	config_init(&config);
 	config_parse(argv[1], &config, &settings, &nodes, &paths, &interfaces);
-
-	if (!paths)
-		error("No paths found. Terminating...");
 
 	/* Check for realtime kernel patch */
 	struct stat st;
