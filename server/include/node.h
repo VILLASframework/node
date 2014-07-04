@@ -40,13 +40,10 @@ enum node_type
  */
 struct node
 {
-	/** A system-wide unique id per node */
-	int id;
-
 	/** The socket descriptor */
 	int sd;
 
-	/** A short identifier of the node */
+	/** A short identifier of the node, only used for configuration and logging */
 	const char *name;
 
 	/** The type of this node */

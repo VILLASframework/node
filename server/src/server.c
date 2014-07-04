@@ -31,13 +31,8 @@ static struct path *paths;
 /** Linked list of interfaces */
 static struct interface *interfaces;
 
-/** Default settings */
-static struct settings settings = {
-	.priority = 0,
-	.affinity = 0xC0,
-	.protocol = 0
-};
-
+/** The global configuration */
+static struct settings settings;
 static config_t config;
 
 static void start()
@@ -46,11 +41,13 @@ static void start()
 	for (struct interface *i = interfaces; i; i = i->next) {
 		if_indextoname(i->index, i->name);
 
-		debug(3, "Configure interface %s (index = %d, refcnt = %u)",
+		debug(3, "Setup interface '%s'",
 			i->name, i->index, i->refcnt);
 
-		if_getirqs(i);
-		if_setaffinity(i, settings.affinity);
+		if (settings.affinity) {
+			if_getirqs(i);
+			if_setaffinity(i, settings.affinity);
+		}
 
 		/* Create priority queuing discipline */
 		tc_prio(i, TC_HDL(4000, 0), i->refcnt);
@@ -161,19 +158,22 @@ int main(int argc, char *argv[])
 		debug(3, "This is a realtime patched kernel");
 
 	/* Use FIFO scheduler with realtime priority */
-	struct sched_param param;
-	param.sched_priority = settings.priority;
-	if (sched_setscheduler(0, SCHED_FIFO, &param))
-		perror("Failed to set realtime priority");
-	else
-		debug(3, "Set task priority to %u", settings.priority);
+	if (settings.priority) {
+		struct sched_param param = { .sched_priority = settings.priority };
+		if (sched_setscheduler(0, SCHED_FIFO, &param))
+			perror("Failed to set realtime priority");
+		else
+			debug(3, "Set task priority to %u", settings.priority);
+	}
 
 	/* Pin threads to CPUs by setting the affinity */
-	cpu_set_t cset = to_cpu_set(settings.affinity);
-	if (sched_setaffinity(0, sizeof(cset), &cset))
-		perror("Failed to set CPU affinity to '%#x'", settings.affinity);
-	else
-		debug(3, "Set affinity to %#x", settings.affinity);
+	if (settings.affinity) {
+		cpu_set_t cset = to_cpu_set(settings.affinity);
+		if (sched_setaffinity(0, sizeof(cset), &cset))
+			perror("Failed to set CPU affinity to '%#x'", settings.affinity);
+		else
+			debug(3, "Set affinity to %#x", settings.affinity);
+	}
 
 	/* Connect all nodes and start one thread per path */
 	start();

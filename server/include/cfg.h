@@ -18,8 +18,6 @@ struct netem;
 
 /** Global configuration */
 struct settings {
-	/** Name of this node */
-	const char *name;
 	/** Task priority (lower is better) */
 	int priority;
 	/** Core affinity of this task */

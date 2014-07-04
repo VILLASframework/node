@@ -64,9 +64,6 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 
 int config_parse_global(config_setting_t *cfg, struct settings *set)
 {
-	if (!config_setting_lookup_string(cfg, "name", &set->name))
-		cerror(cfg, "Missing node name");
-
 	config_setting_lookup_int(cfg, "affinity", &set->affinity);
 	config_setting_lookup_int(cfg, "priority", &set->priority);
 
@@ -140,8 +137,6 @@ int config_parse_path(config_setting_t *cfg,
 int config_parse_node(config_setting_t *cfg,
 	struct node **nodes, struct interface **interfaces)
 {
-	static int id;
-
 	const char *type_str = NULL;
 	const char *remote_str = NULL;
 	const char *local_str = NULL;
@@ -160,18 +155,12 @@ int config_parse_node(config_setting_t *cfg,
 	if (!node->name)
 		cerror(cfg, "Missing node name");
 
-	if (!config_setting_lookup_string(cfg, "type", &type_str))
-		cerror(cfg, "Missing type for node '%s'", node->name);
-
 	if (!config_setting_lookup_string(cfg, "remote", &remote_str))
 		cerror(cfg, "Missing remote address for node '%s'", node->name);
 
 	if (!config_setting_lookup_string(cfg, "local", &local_str))
 		cerror(cfg, "Missing local address for node '%s'", node->name);
 
-	node->type = node_lookup_type(type_str);
-	if (node->type == NODE_INVALID)
-		cerror(cfg, "Invalid type '%s' for node '%s'", type_str, node->name);
 
 	if (resolve_addr(local_str, &node->local, AI_PASSIVE))
 		cerror(cfg, "Failed to resolve local address '%s' of node '%s'", local_str, node->name);
@@ -180,14 +169,16 @@ int config_parse_node(config_setting_t *cfg,
 		cerror(cfg, "Failed to resolve remote address '%s' of node '%s'", remote_str, node->name);
 
 	/* Optional settings */
+	if (config_setting_lookup_string(cfg, "type", &type_str))
+		node->type = node_lookup_type(type_str);
+	else
+		node->type = NODE_UNKNOWN;
+
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
 		node->netem = (struct netem *) malloc(sizeof(struct netem));
 		config_parse_netem(cfg_netem, node->netem);
 	}
-
-	if (!config_setting_lookup_int(cfg, "id", &node->id))
-		node->id = id++;
 
 	/* Determine outgoing interface */
 	int index = if_getegress(&node->remote);
@@ -232,5 +223,5 @@ int config_parse_netem(config_setting_t *cfg, struct netem *em)
 
 	/** @todo Check netem config values */
 
-	return 0;
+	return CONFIG_TRUE;
 }
