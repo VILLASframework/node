@@ -19,7 +19,7 @@
 #include "utils.h"
 
 int config_parse(const char *filename, config_t *cfg, struct settings *set,
-	struct node **nodes, struct path **paths, struct interface **interfaces)
+	struct node **nodes, struct path **paths)
 {
 	config_set_auto_convert(cfg, 1);
 
@@ -50,7 +50,7 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 	/* Parse nodes */
 	for (int i = 0; i < config_setting_length(cfg_nodes); i++) {
 		config_setting_t *cfg_node = config_setting_get_elem(cfg_nodes, i);
-		config_parse_node(cfg_node, nodes, interfaces);
+		config_parse_node(cfg_node, nodes);
 	}
 
 	/* Parse paths */
@@ -131,8 +131,7 @@ int config_parse_path(config_setting_t *cfg,
 	return 0;
 }
 
-int config_parse_node(config_setting_t *cfg,
-	struct node **nodes, struct interface **interfaces)
+int config_parse_node(config_setting_t *cfg, struct node **nodes)
 {
 	const char *remote_str = NULL;
 	const char *local_str = NULL;
@@ -169,21 +168,6 @@ int config_parse_node(config_setting_t *cfg,
 		node->netem = (struct netem *) malloc(sizeof(struct netem));
 		config_parse_netem(cfg_netem, node->netem);
 	}
-
-	/* Determine outgoing interface */
-	int index = if_getegress(&node->remote);
-	struct interface *i = if_lookup_index(index, *interfaces);
-	if (!i) {
-		i = malloc(sizeof(struct interface));
-		memset(i, 0, sizeof(struct interface));
-
-		i->index = index;
-
-		list_add(*interfaces, i);
-	}
-
-	node->mark = 1 + i->refcnt++;
-	node->interface = i;
 
 	node->cfg = cfg;
 

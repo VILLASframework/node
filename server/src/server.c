@@ -37,31 +37,49 @@ static config_t config;
 
 static void start()
 {
-	/* Configure interfaces */
-	for (struct interface *i = interfaces; i; i = i->next) {
-		if_indextoname(i->index, i->name);
-
-		debug(3, "Setup interface '%s'",
-			i->name, i->index, i->refcnt);
-
-		if (settings.affinity) {
-			if_getirqs(i);
-			if_setaffinity(i, settings.affinity);
-		}
-
-		/* Create priority queuing discipline */
-		tc_prio(i, TC_HDL(4000, 0), i->refcnt);
-	}
-
 	/* Connect and bind nodes to their sockets, set socket options */
 	for (struct node *n = nodes; n; n = n->next) {
-		node_connect(n);
+		/* Determine outgoing interface */
+		int index = if_getegress(&n->remote);
+		if (index < 0)
+			error("Failed to get egress interface for node '%s'", n->name);
+
+		n->interface = if_lookup_index(index, interfaces);
+
+		/* Create new interface */
+		if (!n->interface) {
+			n->interface = malloc(sizeof(struct interface));
+			if (!n->interface)
+				error("Failed to allocate memory for interface");
+			else
+				memset(n->interface, 0, sizeof(struct interface));
+
+			n->interface->index = index;
+			if_indextoname(index, n->interface->name);
+
+			debug(3, "Setup interface '%s'", n->interface->name,
+				n->interface->index, n->interface->refcnt);
+
+			if (settings.affinity) {
+				if_getirqs(n->interface);
+				if_setaffinity(n->interface, settings.affinity);
+			}
+
+			/* Create priority queuing discipline */
+			tc_prio(n->interface, TC_HDL(4000, 0), n->interface->refcnt);
+
+			list_add(interfaces, n->interface);
+		}
+
+		n->mark = 1 + n->interface->refcnt++;
 
 		/* Create queueing discipline */
-		if (n->netem) {
+		if (n->netem && n->mark) {
 			tc_mark(n->interface, TC_HDL(4000, n->mark), n->mark);
 			tc_netem(n->interface, TC_HDL(4000, n->mark), n->netem);
 		}
+
+		node_connect(n);
 
 		debug(1, "  We listen for node '%s' at %s:%u",
 			n->name, inet_ntoa(n->local.sin_addr),
@@ -145,7 +163,7 @@ int main(int argc, char *argv[])
 
 	/* Parse configuration file */
 	config_init(&config);
-	config_parse(argv[1], &config, &settings, &nodes, &paths, &interfaces);
+	config_parse(argv[1], &config, &settings, &nodes, &paths);
 
 	/* Check for realtime kernel patch */
 	struct stat st;

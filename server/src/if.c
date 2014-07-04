@@ -32,16 +32,14 @@ int if_getegress(struct sockaddr_in *sa)
 	if (!p)
 		return -1;
 
-	while (fscanf(p, "%31s", token)) {
+	while (!feof(p) && fscanf(p, "%31s", token)) {
 		if (!strcmp(token, "dev")) {
 			fscanf(p, "%31s", token);
 			break;
 		}
 	}
 
-	fclose(p);
-
-	return if_nametoindex(token);
+	return (WEXITSTATUS(fclose(p))) ? -1 : if_nametoindex(token);
 }
 
 int if_getirqs(struct interface *i)
