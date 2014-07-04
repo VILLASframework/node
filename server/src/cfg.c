@@ -69,30 +69,6 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 	config_setting_lookup_int(cfg, "priority", &set->priority);
 	config_setting_lookup_int(cfg, "protocol", &set->protocol);
 
-	const char *user = NULL;
-	const char *group = NULL;
-
-	config_setting_lookup_string(cfg, "user", &user);
-	config_setting_lookup_string(cfg, "group", &group);
-
-	/* Lookup uid and gid */
-	if (user) {
-		struct passwd *pw = getpwnam(user);
-		if (!pw)
-			error("Unknown username: '%s'", user);
-
-		set->uid = pw->pw_uid;
-		set->gid = pw->pw_gid;
-	}
-
-	if (group) {
-		struct group *gr = getgrnam(group);
-		if (!gr)
-			error("Unknown group: '%s'", group);
-
-		set->gid = gr->gr_gid;
-	}
-
 	set->cfg = cfg;
 
 	return CONFIG_TRUE;

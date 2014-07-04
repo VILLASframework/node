@@ -35,6 +35,7 @@ Install these via:
 
 	$ sudo yum install iproute2
 or:
+
 	$ sudo apt-get install iproute2
 
 ## Configuration
@@ -45,9 +46,6 @@ See [configuration](Configuration.md) for more information.
 
 The S2SS server (`server`) expects the path to a configuration file as a single argument.
 
-The server requires root privileges during the startup.
-Afterwards privileges can be dropped by using the `user` and `group` settings in the config file.
-
 	Usage: ./server CONFIG
 	  CONFIG is a required path to a configuration file
 
@@ -55,6 +53,12 @@ Afterwards privileges can be dropped by using the `user` and `group` settings in
 	 Copyright 2014, Institute for Automation of Complex Power Systems, EONERC
 	   Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 
+The server requires root privileges for:
+
+ - Enable the realtime fifo scheduler
+ - Increase the task priority
+ - Configure the network emulator (netem)
+ - Change the SMP affinity of threads and network interrupts
 
 ### Examples
 
