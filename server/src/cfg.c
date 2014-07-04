@@ -218,8 +218,6 @@ int config_parse_netem(config_setting_t *cfg, struct netem *em)
 
 	if (config_setting_lookup_string(cfg, "distribution", &em->distribution))
 		em->valid |= TC_NETEM_DISTR;
-	if (config_setting_lookup_int(cfg, "limit", &em->limit))
-		em->valid |= TC_NETEM_LIMIT;
 	if (config_setting_lookup_int(cfg, "delay", &em->delay))
 		em->valid |= TC_NETEM_DELAY;
 	if (config_setting_lookup_int(cfg, "jitter", &em->jitter))

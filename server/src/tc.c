@@ -48,8 +48,6 @@ int tc_netem(struct interface *i, tc_hdl_t parent, struct netem *em)
 		"tc qdisc add dev %s parent %u:%u netem",
 		i->name, TC_HDL_MAJ(parent), TC_HDL_MIN(parent));
 
-	if (em->valid & TC_NETEM_LIMIT)
-		len += snprintf(cmd+len, sizeof(cmd)-len, " limit %u", em->limit);
 	if (em->valid & TC_NETEM_DELAY) {
 		len += snprintf(cmd+len, sizeof(cmd)-len, " delay %u", em->delay);
 

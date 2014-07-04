@@ -32,13 +32,12 @@ typedef uint32_t tc_hdl_t;
 #define TC_HDL_ROOT		(0xFFFFFFFFU)
 
 /* Bitfield for valid fields in struct netem */
-#define TC_NETEM_LIMIT		(1 << 0) /**< netem::limit is valid @see netem::valid */
-#define TC_NETEM_DELAY		(1 << 1) /**< netem::delay is valid @see netem::valid */
-#define TC_NETEM_JITTER		(1 << 2) /**< netem::jitter is valid @see netem::valid */
-#define TC_NETEM_DISTR		(1 << 3) /**< netem::distribution is valid @see netem::valid */
-#define TC_NETEM_LOSS		(1 << 4) /**< netem::loss is valid @see netem::valid */
-#define TC_NETEM_CORRUPT	(1 << 5) /**< netem::corrupt is valid @see netem::valid */
-#define TC_NETEM_DUPL		(1 << 6) /**< netem::duplicate is valid @see netem::valid */
+#define TC_NETEM_DELAY		(1 << 0) /**< netem::delay is valid @see netem::valid */
+#define TC_NETEM_JITTER		(1 << 1) /**< netem::jitter is valid @see netem::valid */
+#define TC_NETEM_DISTR		(1 << 2) /**< netem::distribution is valid @see netem::valid */
+#define TC_NETEM_LOSS		(1 << 3) /**< netem::loss is valid @see netem::valid */
+#define TC_NETEM_CORRUPT	(1 << 4) /**< netem::corrupt is valid @see netem::valid */
+#define TC_NETEM_DUPL		(1 << 5) /**< netem::duplicate is valid @see netem::valid */
 
 struct interface;
 
@@ -53,8 +52,6 @@ struct netem {
 
 	/** Delay distribution: uniform, normal, pareto, paretonormal */
 	const char *distribution;
-	/** Fifo limit (packets) */
-	int limit;
 	/** Added delay (uS) */
 	int delay;
 	/** Delay jitter (uS) */
