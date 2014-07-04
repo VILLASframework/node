@@ -11,47 +11,33 @@ For bidirectional communication a corresponding path in the reverse direction mu
 The server is designed to allow multiple outgoing nodes as an extension.
 @todo This has **not** been implemented at the moment!
 
-\diafile path_simple.dia
+@diafile path_simple.dia
 
 ## Path
 
 @todo Add documentation
 
-@see path
+@see path For a detailed descriptions of the fields.
 
 ## Node
 
 @todo Add documentation
 
-@see node
+@see node For a detailed descriptions of the fields.
 
 ## Message
 
 @todo Add documentation
 
+@diafile msg_format.dia
+
 A message contains a variable number of values.
 Usually a a simulator sends one message per timestep.
 
-The format of a message is defined by the following structure:
-
-~~~{.c}
-struct msg
-{
-	/** Sender device ID */
-	uint16_t device;
-	/** Message ID */
-	uint32_t sequence;
-	/** Message length (data only) */
-	uint16_t length;
-	/** Message data */
-	double data[MAX_VALUES];
-} __attribute__((packed));
-~~~
-
-@see msg
+@see msg For a detailed descriptions of the fields.
 
 ## Interface
 
 @todo Add documentation
 
-@see interface
+@see interface For a detailed descriptions of the fields.

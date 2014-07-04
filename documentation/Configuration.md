@@ -49,5 +49,5 @@ This are some proposals for the selection of appropriate server hardware:
 - Server-grade network cards: Intel PRO/1000
   - These allow offloading of UDP checksumming to the hardware
 
-\example etc/loopback.conf
-\example etc/example.conf
+\example server/etc/loopback.conf
+\example server/etc/example.conf
