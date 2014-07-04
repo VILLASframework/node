@@ -1,3 +1,9 @@
 *.d
 *.o
 *~
+
+server
+test
+send
+receive
+random
