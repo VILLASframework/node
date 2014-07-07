@@ -119,11 +119,11 @@ void *SendToIPPort(void * arg)
 	struct data_out comdata;
 	int comdata_size;
 	int count = 0;
-	
+
 	OpalPrint("%s: SendToIPPort thread started\n", PROGNAME);
-	
+
 	OpalGetNbAsyncSendIcon(&nbSend);
-	
+
 	if (nbSend >= 1) {
 		do {
 			/* This call unblocks when the 'Data Ready' line of a send icon is asserted. */
@@ -135,7 +135,7 @@ void *SendToIPPort(void * arg)
 				}
 				continue;
 			}
-		
+
 			/* No errors encountered yet */
 			OpalSetAsyncSendIconError(0, SendID);
 
@@ -158,7 +158,7 @@ void *SendToIPPort(void * arg)
 		comdata.msg_id++;          /* The message ID is just incremented */
 		comdata.msg_len = mdldata_size;
 //		comdata.msg_len = (mdldata_size/sizeof(double)) * sizeof(int); /* If comdata.data was an "int" */
-	  
+
 /* In our case, because the data in the packet is in double format
  * we don't need to cast the data from the model to another format */
 		for (i=0; i < (mdldata_size / sizeof(double)); i++)
@@ -211,11 +211,11 @@ void *RecvFromIPPort (void * arg)
 	int mdldata_size;
 	struct data_in comdata;
 	int comdata_size;
-	
+
 	OpalPrint("%s: RecvFromIPPort thread started\n", PROGNAME);
-	
+
 	OpalGetNbAsyncRecvIcon(&nbRecv);
-	
+
 	if (nbRecv >= 1) {
 		do {
 			memset (&comdata, 0, sizeof(comdata));
@@ -291,38 +291,38 @@ void *RecvFromIPPort (void * arg)
 	else {
 		OpalPrint("%s: RecvFromIPPort: No reception block for this controller. Stopping thread.\n", PROGNAME);
 	}
-	
+
 	return NULL;
 }
 
-int main(int argc, char *argv[]) 
+int main(int argc, char *argv[])
 {
 	Opal_GenAsyncParam_Ctrl IconCtrlStruct;
 	int err;
 	pthread_t tid_send,  tid_recv;
 	pthread_attr_t attr_send, attr_recv;
-	
+
 	/* Check for the proper arguments to the program */
 	if (argc < 4) {
 		printf("Invalid Arguments: 1-AsyncShmemName 2-AsyncShmemSize 3-PrintShmemName\n");
 		exit(0);
 	}
-	
+
 	/* Enable the OpalPrint function. This prints to the OpalDisplay. */
 	if (OpalSystemCtrl_Register(PRINT_SHMEM_NAME) != EOK) {
 		printf("%s: ERROR: OpalPrint() access not available\n", PROGNAME);
-		exit(EXIT_FAILURE);	
+		exit(EXIT_FAILURE);
 	}
-	
+
 	/* Open Share Memory created by the model. */
 	if ((OpalOpenAsyncMem(ASYNC_SHMEM_SIZE, ASYNC_SHMEM_NAME)) != EOK) {
 		OpalPrint("%s: ERROR: Model shared memory not available\n", PROGNAME);
 		exit(EXIT_FAILURE);
 	}
-	
+
 	/* For Redhawk, Assign this process to CPU 0 in order to support partial XHP */
-	AssignProcToCpu0();  
-	
+	AssignProcToCpu0();
+
 	/* Get IP Controler Parameters (ie: ip address, port number...) and
 	 * initialize the device on the QNX node. */
 	memset(&IconCtrlStruct, 0, sizeof(IconCtrlStruct));
@@ -330,7 +330,7 @@ int main(int argc, char *argv[])
 		OpalPrint("%s: ERROR: Could not get controller parameters (%d).\n", PROGNAME, err);
 		exit(EXIT_FAILURE);
 	}
-	
+
 	if (InitSocket(IconCtrlStruct) != EOK) {
 		OpalPrint("%s: ERROR: Initialization failed.\n", PROGNAME);
 		exit(EXIT_FAILURE);
@@ -355,4 +355,3 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
-

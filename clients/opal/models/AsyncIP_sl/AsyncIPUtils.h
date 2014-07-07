@@ -67,7 +67,7 @@ int InitSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 			OpalPrint("%s: ERROR: Protocol (%d) not supported!\n", PROGNAME, proto);
 			return EINVAL;
 	}
-	
+
 	OpalPrint("%s: Remote Address : %s\n", PROGNAME, IconCtrlStruct.StringParam[0]);
 	OpalPrint("%s: Remote Port    : %d\n", PROGNAME, (int)IconCtrlStruct.FloatParam[1]);
 
@@ -76,19 +76,19 @@ int InitSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 		OpalPrint("%s: ERROR: Could not open socket\n", PROGNAME);
 		return EIO;
 	}
-	
+
 	/* Set the structure for the remote port and address */
 	memset(&send_ad, 0, sizeof(send_ad));
 	send_ad.sin_family = AF_INET;
 	send_ad.sin_addr.s_addr = inet_addr(IconCtrlStruct.StringParam[0]);
 	send_ad.sin_port = htons((u_short)IconCtrlStruct.FloatParam[1]);
-	
+
 	/* Set the structure for the local port and address */
 	memset(&recv_ad, 0, sizeof(recv_ad));
 	recv_ad.sin_family = AF_INET;
 	recv_ad.sin_addr.s_addr = INADDR_ANY;
 	recv_ad.sin_port = htons((u_short)IconCtrlStruct.FloatParam[2]);
-	
+
 	/* Bind local port and address to socket. */
 	if (bind(sd, (struct sockaddr *)&recv_ad, sizeof(struct sockaddr_in)) == -1) {
 		OpalPrint("%s: ERROR: Could not bind local port to socket\n", PROGNAME);
@@ -96,7 +96,7 @@ int InitSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 	}
 	else
 		OpalPrint("%s: Local Port     : %d\n", PROGNAME, (int)IconCtrlStruct.FloatParam[2]);
- 
+
 	switch (proto) {
 		case UDP_PROTOCOL:	/* Communication using UDP/IP protocol */
 			/* If sending to a multicast address */
@@ -118,7 +118,7 @@ int InitSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 				if ((inet_addr(IconCtrlStruct.StringParam[1]) & inet_addr("240.0.0.0")) == inet_addr("224.0.0.0")) {
 					mreq.imr_multiaddr.s_addr = inet_addr(IconCtrlStruct.StringParam[1]);
 					mreq.imr_interface.s_addr = INADDR_ANY;
-				
+
 					/* Have the multicast socket join the multicast group */
 					if (setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&mreq, sizeof(mreq)) == -1) {
 						OpalPrint("%s: ERROR: Could not join multicast group (%d)\n", PROGNAME, errno);
@@ -138,10 +138,10 @@ int InitSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 
 			/* Connect to server to start data transmission */
 			rc = connect(sd, (struct sockaddr *)&send_ad, sizeof(send_ad));
-			if (rc < 0)  { 
+			if (rc < 0)  {
 				OpalPrint("%s: ERROR: Call to connect() failed\n", PROGNAME);
 				return EIO;
-			} 
+			}
 	}
 
 	return EOK;
@@ -150,7 +150,7 @@ int InitSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 int SendPacket (char* DataSend, int datalength)
 {
 	int err;
-	
+
 	if(sd < 0)
 		return -1;
 
@@ -159,7 +159,7 @@ int SendPacket (char* DataSend, int datalength)
 		err = send (sd, DataSend, datalength, 0);
 	else
 		err = sendto (sd, DataSend, datalength, 0, (struct sockaddr *)&send_ad, sizeof(send_ad));
-	
+
 	return err;
 }
 
@@ -170,14 +170,14 @@ int RecvPacket (char* DataRecv, int datalength, double timeout)
 	socklen_t client_ad_size = sizeof(client_ad);
 	fd_set sd_set;
 	struct timeval tv;
-	
+
 	if (sd < 0)
 		return -1;
-	
+
 	/* Set the descriptor set for the select() call */
 	FD_ZERO (&sd_set);
 	FD_SET  (sd, &sd_set);
-		
+
 	/* Set the tv structure to the correct timeout value */
 	tv.tv_sec = (int)(timeout);
 	tv.tv_usec = (int)((timeout - tv.tv_sec)*1000000);
@@ -199,16 +199,16 @@ int RecvPacket (char* DataRecv, int datalength, double timeout)
 				return -1;
 			}
 	}
-	
+
 	/* Clear the DataRecv array (in case we receive an incomplete packet) */
 	memset (DataRecv, 0, datalength);
-	
+
 	/* Perform the reception */
 	if (proto == TCP_PROTOCOL)
 		len = recv (sd, DataRecv, datalength, 0);
 	else
 		len = recvfrom (sd, DataRecv, datalength, 0, (struct sockaddr *)&client_ad, &client_ad_size);
-		
+
 	return len;
 }
 
