@@ -18,6 +18,7 @@
 
 #include "config.h"
 #include "utils.h"
+#include "node.h"
 #include "msg.h"
 
 int sd;

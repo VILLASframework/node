@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 
 #include "msg.h"
+#include "node.h"
 #include "utils.h"
 
 int msg_fprint(FILE *f, struct msg *msg)

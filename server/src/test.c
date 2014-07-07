@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 
 #include "msg.h"
+#include "node.h"
 #include "utils.h"
 
 int sd;
