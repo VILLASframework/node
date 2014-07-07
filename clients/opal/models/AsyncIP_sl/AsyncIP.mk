@@ -1,18 +1,10 @@
-# ----------------------------------------------------------------------------#
 # Specify program name
 PROGRAM = AsyncIP
 
-
-# ----------------------------------------------------------------------------#
 # Specify default values if we are not compiling from RT-LAB
-#
-# ----------------------------------------------------------------------------#
 TARGET_OPALRT_ROOT = /usr/opalrt
 
-
-# ----------------------------------------------------------------------------#
 # QNX v6.x
-#
 ifeq "$(SYSNAME)" "nto"
 
 	CC = gcc
@@ -20,14 +12,11 @@ ifeq "$(SYSNAME)" "nto"
 	TARGET_LIB =  -lsocket
 
 endif
-# ----------------------------------------------------------------------------#
 
-# ----------------------------------------------------------------------------#
 # RedHawk Linux
-#
 ifeq "$(shell uname)" "Linux"
-
 	RTLAB_INTEL_COMPILER ?= 1
+
 	# Intel Compiler support
 	ifeq ($(RTLAB_INTEL_COMPILER),1)
 		CC = opicc
@@ -51,7 +40,6 @@ ifeq "$(shell uname)" "Linux"
 	TARGET_LIB = -lpthread -lm -ldl -lutil -lrt $(RH_LIBS) $(INTEL_LIBS)
 
 endif
-# ----------------------------------------------------------------------------#
 
 # Support for debugging symbols
 ifeq ($(DEBUG),1)
