@@ -36,12 +36,17 @@ WATCHDOG_TIMEOUT=5000
 INTERNAL_IGN_SOURCE_FILE=sfun_gen_async_ctrl.c sfun_recv_async.c sfun_send_async.c
 INTERNAL_LIBRARY2=-lOpalAsyncApiR2011b
 INTERNAL_LIBRARY3=-lOpalAsyncApiCore
-[ExtraGetFilesComp]
-AsyncIP=Binary
 [ExtraPutFilesComp]
-AsyncIP.c=Ascii
-AsyncIP.mk=Ascii
-AsyncIPUtils.h=Ascii
+s2ss\AsyncIP.mk=Ascii
+s2ss\include\Interface.h=Ascii
+s2ss\include\MsgFormat.h=Ascii
+s2ss\include\Sched.h=Ascii
+s2ss\include\Socket.h=Ascii
+s2ss\include\config.h=Ascii
+s2ss\src\AsyncIP.c=Ascii
+s2ss\src\Interface.c=Ascii
+s2ss\src\Sched.c=Ascii
+s2ss\src\Socket.c=Ascii
 [ExtraPutFilesComp_1_RT_LAB]
 C:\OPAL-RT\RT-LAB\v10.5.9.356\common\lib\redhawk\libOpalAsyncApiCore.a=Binary
 [General]
@@ -54,12 +59,12 @@ ATT_CREATED_ON=Thu Apr 15 08:21:54 1999
 ATT_ENABLE_PTA=OFF
 ATT_HANDLE_CONSOLE=ON
 ATT_LAST_SAVED_BY=ACS
-ATT_LAST_SAVED_ON=Wed May 28 12:53:21 2014
-ATT_REVISION=1.425
+ATT_LAST_SAVED_ON=Mon Jul 14 19:24:22 2014
+ATT_REVISION=1.429
 AutoRetrieveFiles=ON
 AutoRetrieveRtlab=ON
 CompilerVersion=AUTOMATIC
-DESCRIPTION=Simple ping pong test between S2SS and OPAL$%CR%$$%CR%$Using sine waves no measure round trip time.
+DESCRIPTION=Simple ping pong test between S2SS and OPAL$%CR%$$%CR%$Using sine waves to measure round trip time.
 DinamoFlag=OFF
 FILENAME=D:\msv\svo\s2ss\clients\opal\models\AsyncIP_sl\AsyncIP_sl.mdl
 FORCE_RECOMPILE=0

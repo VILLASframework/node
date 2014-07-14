@@ -7,7 +7,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.426"
+    ComputedModelVersion    "1.430"
     NumModelReferences	    0
     NumTestPointedSignals   0
   }
@@ -28,9 +28,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "ACS"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Wed May 28 12:53:40 2014"
-  RTWModifiedTimeStamp	  323182420
-  ModelVersionFormat	  "1.%<AutoIncrement:426>"
+  LastModifiedDate	  "Mon Jul 14 20:00:02 2014"
+  RTWModifiedTimeStamp	  327268802
+  ModelVersionFormat	  "1.%<AutoIncrement:430>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -1809,7 +1809,7 @@ Model {
     }
     Annotation {
       Name		      "Simple analysis of round trip time"
-      Position		      [488, 57]
+      Position		      [293, 52]
       FontName		      "Verdana"
       FontSize		      14
       FontWeight	      "bold"

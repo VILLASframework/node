@@ -7,7 +7,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.426"
+    ComputedModelVersion    "1.429"
     NumModelReferences	    0
     NumTestPointedSignals   0
   }
@@ -28,9 +28,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "ACS"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Wed May 28 13:45:50 2014"
-  RTWModifiedTimeStamp	  323183499
-  ModelVersionFormat	  "1.%<AutoIncrement:426>"
+  LastModifiedDate	  "Mon Jul 14 19:24:22 2014"
+  RTWModifiedTimeStamp	  327266577
+  ModelVersionFormat	  "1.%<AutoIncrement:429>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -722,19 +722,6 @@ Model {
       SamplingMode	      "auto"
     }
     Block {
-      BlockType		      Sin
-      SineType		      "Time based"
-      TimeSource	      "Use simulation time"
-      Amplitude		      "1"
-      Bias		      "0"
-      Frequency		      "1"
-      Phase		      "0"
-      Samples		      "10"
-      Offset		      "0"
-      SampleTime	      "-1"
-      VectorParams1D	      on
-    }
-    Block {
       BlockType		      SubSystem
       ShowPortLabels	      "FromPortIcon"
       Permissions	      "ReadWrite"
@@ -808,7 +795,7 @@ Model {
       System {
 	Name			"sc_console"
 	Location		[2, 82, 1645, 997]
-	Open			off
+	Open			on
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
 	ScreenColor		"white"
@@ -1185,7 +1172,7 @@ Model {
 	}
 	Annotation {
 	  Name			  "Simple analysis of round trip time"
-	  Position		  [488, 57]
+	  Position		  [293, 52]
 	  FontName		  "Verdana"
 	  FontSize		  14
 	  FontWeight		  "bold"
@@ -1208,7 +1195,7 @@ Model {
       MaskHideContents	      off
       System {
 	Name			"sm_ip_test"
-	Location		[86, 258, 1746, 1156]
+	Location		[2, 82, 1662, 980]
 	Open			on
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
@@ -1220,13 +1207,13 @@ Model {
 	TiledPaperMargins	[1.270000, 1.270000, 1.270000, 1.270000]
 	TiledPageScale		1
 	ShowPageBoundaries	off
-	ZoomFactor		"183"
+	ZoomFactor		"180"
 	Block {
 	  BlockType		  Mux
 	  Name			  "Mux"
 	  SID			  "16"
 	  Ports			  [3, 1]
-	  Position		  [845, 125, 850, 175]
+	  Position		  [870, 140, 875, 190]
 	  ShowName		  off
 	  Inputs		  "3"
 	  DisplayOption		  "bar"
@@ -1236,7 +1223,7 @@ Model {
 	  Name			  "Mux1"
 	  SID			  "17"
 	  Ports			  [2, 1]
-	  Position		  [255, 144, 260, 206]
+	  Position		  [290, 209, 295, 271]
 	  BackgroundColor	  "yellow"
 	  ShowName		  off
 	  Inputs		  "2"
@@ -1247,13 +1234,13 @@ Model {
 	  Name			  "OpIPSocketCtrl1"
 	  SID			  "18"
 	  Ports			  []
-	  Position		  [15, 152, 144, 213]
+	  Position		  [105, 112, 234, 173]
 	  LibraryVersion	  "1.10"
 	  SourceBlock		  "rtio_generic_ip/OpIPSocketCtrl"
 	  SourceType		  "OpAsyncIPCtrl"
 	  ctl_id		  "1"
 	  proto			  "UDP/IP"
-	  ip_addr_remote	  "137.226.160.91"
+	  ip_addr_remote	  "134.130.169.31"
 	  ip_port_remote	  "10200"
 	  ip_port_local		  "10201"
 	  ip_addr_mcast		  "0.0.0.0"
@@ -1264,8 +1251,9 @@ Model {
 	  Name			  "Pulse\nGenerator"
 	  SID			  "44"
 	  Ports			  [0, 1]
-	  Position		  [165, 198, 215, 232]
+	  Position		  [190, 238, 240, 272]
 	  ZOrder		  -13
+	  BackgroundColor	  "yellow"
 	  PulseType		  "Time based"
 	  Amplitude		  "5"
 	  Period		  "0.1"
@@ -1275,7 +1263,7 @@ Model {
 	  BlockType		  Constant
 	  Name			  "constants"
 	  SID			  "19"
-	  Position		  [165, 151, 235, 169]
+	  Position		  [180, 216, 250, 234]
 	  BackgroundColor	  "yellow"
 	  NamePlacement		  "alternate"
 	  Value			  "[1 2 3 4]"
@@ -1285,7 +1273,7 @@ Model {
 	  Name			  "data ready 1 kHz"
 	  SID			  "20"
 	  Ports			  [0, 1]
-	  Position		  [265, 116, 310, 134]
+	  Position		  [290, 131, 335, 149]
 	  NamePlacement		  "alternate"
 	  SampleTime		  "0.001"
 	}
@@ -1294,7 +1282,7 @@ Model {
 	  Name			  "receive message 1"
 	  SID			  "21"
 	  Ports			  [1, 3]
-	  Position		  [600, 144, 775, 186]
+	  Position		  [625, 159, 800, 201]
 	  LibraryVersion	  "1.348"
 	  SourceBlock		  "rtlab/Communication/Asynchronous/OpAsyncRecv"
 	  SourceType		  "OpAsyncRecv"
@@ -1317,7 +1305,7 @@ Model {
 	  Name			  "send message 1"
 	  SID			  "22"
 	  Ports			  [2, 1]
-	  Position		  [350, 114, 520, 156]
+	  Position		  [375, 129, 545, 171]
 	  LibraryVersion	  "1.348"
 	  SourceBlock		  "rtlab/Communication/Asynchronous/OpAsyncSend"
 	  SourceType		  "OpAsyncSend"
@@ -1340,31 +1328,21 @@ Model {
 	  BlockType		  SignalSpecification
 	  Name			  "set width"
 	  SID			  "23"
-	  Position		  [805, 172, 830, 188]
+	  Position		  [830, 187, 855, 203]
 	  Dimensions		  "5"
-	}
-	Block {
-	  BlockType		  Sin
-	  Name			  "sine"
-	  SID			  "24"
-	  Ports			  [0, 1]
-	  Position		  [65, 37, 135, 73]
-	  BackgroundColor	  "yellow"
-	  Amplitude		  "1.5"
-	  Frequency		  "50"
 	}
 	Block {
 	  BlockType		  Constant
 	  Name			  "timeout"
 	  SID			  "25"
-	  Position		  [555, 158, 585, 172]
+	  Position		  [580, 173, 610, 187]
 	  Value			  "2"
 	}
 	Block {
 	  BlockType		  Outport
 	  Name			  "data recv"
 	  SID			  "26"
-	  Position		  [890, 172, 925, 188]
+	  Position		  [915, 187, 950, 203]
 	  BackgroundColor	  "yellow"
 	  IconDisplay		  "Port number"
 	}
@@ -1372,9 +1350,8 @@ Model {
 	  BlockType		  Outport
 	  Name			  "errors_status"
 	  SID			  "27"
-	  Position		  [890, 142, 925, 158]
+	  Position		  [915, 142, 950, 158]
 	  BackgroundColor	  "yellow"
-	  NamePlacement		  "alternate"
 	  Port			  "2"
 	  IconDisplay		  "Port number"
 	}
@@ -1382,7 +1359,7 @@ Model {
 	  BlockType		  Outport
 	  Name			  "data send"
 	  SID			  "28"
-	  Position		  [890, 217, 925, 233]
+	  Position		  [915, 232, 950, 248]
 	  BackgroundColor	  "yellow"
 	  Port			  "3"
 	  IconDisplay		  "Port number"
@@ -1420,6 +1397,7 @@ Model {
 	Line {
 	  SrcBlock		  "Mux"
 	  SrcPort		  1
+	  Points		  [0, -15]
 	  DstBlock		  "errors_status"
 	  DstPort		  1
 	}
@@ -1439,15 +1417,14 @@ Model {
 	  Labels		  [0, 0]
 	  SrcBlock		  "Mux1"
 	  SrcPort		  1
-	  Points		  [55, 0]
+	  Points		  [45, 0]
 	  Branch {
-	    Points		    [0, -30]
+	    Points		    [0, -80]
 	    DstBlock		    "send message 1"
 	    DstPort		    2
 	  }
 	  Branch {
 	    Labels		    [1, 0]
-	    Points		    [0, 50]
 	    DstBlock		    "data send"
 	    DstPort		    1
 	  }
@@ -1461,13 +1438,12 @@ Model {
 	Line {
 	  SrcBlock		  "Pulse\nGenerator"
 	  SrcPort		  1
-	  Points		  [0, -25]
 	  DstBlock		  "Mux1"
 	  DstPort		  2
 	}
 	Annotation {
 	  Name			  "Simple S2SS to OPAL test using UDP messages"
-	  Position		  [433, 47]
+	  Position		  [288, 52]
 	  FontName		  "Verdana"
 	  FontSize		  14
 	  FontWeight		  "bold"

@@ -1,7 +1,0 @@
-[S-Function list]
-asyncip_sl_1_sm_ip_test/sm_ip_test/OpIPSocketCtrl1=0
-asyncip_sl_1_sm_ip_test/sm_ip_test/receive message 1/S-Function1=0
-asyncip_sl_1_sm_ip_test/sm_ip_test/rtlab_send_subsystem/Subsystem1/Send1/S-Function=0
-asyncip_sl_1_sm_ip_test/sm_ip_test/send message 1/S-Function2=0
-
-[S-Function parameters]
