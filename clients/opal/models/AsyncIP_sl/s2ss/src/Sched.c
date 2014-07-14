@@ -7,6 +7,14 @@
  * @file
  */
 
+#include <errno.h>
+
+/* Define RTLAB before including OpalPrint.h for messages to be sent
+ * to the OpalDisplay. Otherwise stdout will be used. */
+#define RTLAB
+#include "OpalPrint.h"
+
+#include "config.h"
 #include "Sched.h"
 
 #if defined(__QNXNTO__)
@@ -27,13 +35,13 @@ int AssignProcToCpu0(void)
 {
 #if defined(__linux__)
     #if defined(__redhawk__)
-	int			rc;
-	pid_t			pid = getpid();
-	cpuset_t		*pCpuset;
+	int rc;
+	pid_t pid = getpid();
+	cpuset_t *pCpuset;
 
 	pCpuset = cpuset_alloc();
 	if (NULL == pCpuset) {
-		fprintf(stderr, "Error allocating a cpuset\n");
+		OpalPrint("Error allocating a cpuset\n");
 		return ENOMEM;
 	}
 
@@ -43,13 +51,12 @@ int AssignProcToCpu0(void)
 	rc = mpadvise(MPA_PRC_SETBIAS, MPA_TID, pid, pCpuset);
 	if (MPA_FAILURE == rc) {
 		rc = errno;
-		fprintf(stderr, "Error from mpadvise, %d %s, for pid %d\n", errno, strerror(errno), pid);
+		OpalPrint("Error from mpadvise, %d %s, for pid %d\n", errno, strerror(errno), pid);
 		cpuset_free(pCpuset);
 		return rc;
 	}
 
 	cpuset_free(pCpuset);
-	return EOK;
     #else
 	cpu_set_t bindSet;
 	CPU_ZERO(&bindSet);
@@ -57,10 +64,11 @@ int AssignProcToCpu0(void)
 
 	/* changing process cpu affinity */
 	if (sched_setaffinity(0, sizeof(cpu_set_t), &bindSet) != 0) {
-		fprintf(stderr, "Unable to bind the process to CPU 0. (sched_setaffinity errno %d)\n", errno );
+		OpalPrint("Unable to bind the process to CPU 0. (sched_setaffinity errno %d)\n", errno);
 		return EINVAL;
 	}
-	return EOK;
+	
     #endif
+	return EOK;
 #endif	/* __linux__ */
 }

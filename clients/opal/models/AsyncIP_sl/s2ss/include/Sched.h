@@ -10,6 +10,8 @@
 #ifndef _SCHED_H_
 #define _SCHED_H_
 
+#define EOK	0
+
 int AssignProcToCpu0(void);
 
 #endif /* _SCHED_H_ */

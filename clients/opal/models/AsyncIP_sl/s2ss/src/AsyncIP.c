@@ -12,8 +12,6 @@
  * @file
  */
 
-#define PROGNAME "AsyncIP"
-
 /* Standard ANSI C headers needed for this program */
 #include <errno.h>
 #include <fcntl.h>
@@ -40,6 +38,7 @@
 #include "AsyncApi.h"
 
 /* This is the message format */
+#include "config.h"
 #include "MsgFormat.h"
 #include "Socket.h"
 #include "Interface.h"
@@ -50,22 +49,18 @@
 #define ASYNC_SHMEM_SIZE	atoi(argv[2])
 #define PRINT_SHMEM_NAME	argv[3]
 
-/* This defines the maximum number of signals (doubles) that can be sent
- * or received by any individual Send or Recv block in the model. This
- * only applies to the "model <-> asynchronous process" communication. */
-#define MAX_SEND_SIZE		64
-#define MAX_RECV_SIZE		64
-
 static void *SendToIPPort(void *arg)
 {
-	int SendID = 1;
-	int i, n;
+	unsigned SendID = 1;
+	unsigned i, n;
 	int nbSend = 0;
-	int ModelState;
+	unsigned ModelState;
 
-	double mdldata[MAXSENDSIZE];
+	/* Data from OPAL-RT model */
+	double mdldata[MSG_VALUES];
 	int mdldata_size;
 
+	/* Data from the S2SS server */
 	struct msg msg = MSG_INIT(0);
 	int msg_size;
 
@@ -90,9 +85,9 @@ static void *SendToIPPort(void *arg)
 
 			/* Get the size of the data being sent by the unblocking SendID */
 			OpalGetAsyncSendIconDataLength(&mdldata_size, SendID);
-			if (mdldata_size / sizeof(double) > MAXSENDSIZE) {
+			if (mdldata_size / sizeof(double) > MSG_VALUES) {
 				OpalPrint("%s: Number of signals for SendID=%d exceeds allowed maximum (%d)\n",
-					PROGNAME, SendID, MAXSENDSIZE);
+					PROGNAME, SendID, MSG_VALUES);
 
 				return NULL;
 			}
@@ -107,6 +102,8 @@ static void *SendToIPPort(void *arg)
 
 			for (i = 0; i < msg.length; i++)
 				msg.data[i] = (float) mdldata[i];
+			
+			msg_size = 4 * (msg.length + 1);
 /**********************************************************************/
 
 			/* Perform the actual write to the ip port */
@@ -139,16 +136,18 @@ static void *SendToIPPort(void *arg)
 
 static void *RecvFromIPPort(void *arg)
 {
-	int RecvID = 1;
-	int i, n;
+	unsigned RecvID = 1;
+	unsigned i, n;
 	int nbRecv = 0;
-	int ModelState;
+	unsigned ModelState;
 
-	double mdldata[MAXRECVSIZE];
+	/* Data from OPAL-RT model */
+	double mdldata[MSG_VALUES];
 	int mdldata_size;
 
-	struct msg msg;
-	int msg_size;
+	/* Data from the S2SS server */
+	struct msg msg = MSG_INIT(0);
+	unsigned msg_size;
 
 	OpalPrint("%s: RecvFromIPPort thread started\n", PROGNAME);
 
@@ -192,16 +191,15 @@ static void *RecvFromIPPort(void *arg)
 			}
 
 /******* FORMAT TO SPECIFIC PROTOCOL HERE *******************************/
-			RecvID = 0; // msg.dev_id;				/* Use the deviceID as the RecvID */
 			OpalSetAsyncRecvIconStatus(msg.sequence, RecvID);	/* Set the Status to the message ID */
 			OpalSetAsyncRecvIconError(0, RecvID);			/* Set the Error to 0 */
 
 			/* Get the number of signals to send back to the model */
 			OpalGetAsyncRecvIconDataLength(&mdldata_size, RecvID);
 
-			if (mdldata_size / sizeof(double) > MAX_RECV_VALUES) {
+			if (mdldata_size / sizeof(double) > MSG_VALUES) {
 				OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds allowed maximum (%d)\n",
-					PROGNAME, RecvID, mdldata_size / sizeof(double), MAX_RECV_SIZE);
+					PROGNAME, RecvID, mdldata_size / sizeof(double), MSG_VALUES);
 				return NULL;
 			}
 
@@ -238,6 +236,8 @@ int main(int argc, char *argv[])
 
 	pthread_t tid_send, tid_recv;
 	pthread_attr_t attr_send, attr_recv;
+	
+	OpalPrint("%s: This is a S2SS client\n", PROGNAME);
 
 	/* Check for the proper arguments to the program */
 	if (argc < 4) {

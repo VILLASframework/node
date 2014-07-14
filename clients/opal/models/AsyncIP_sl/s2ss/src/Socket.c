@@ -20,15 +20,20 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#include "Socket.c"
+/* Define RTLAB before including OpalPrint.h for messages to be sent
+ * to the OpalDisplay. Otherwise stdout will be used. */
+#define RTLAB
 #include "OpalPrint.h"
 #include "AsyncApi.h"
 
+#include "config.h"
+#include "Socket.h"
+
 /* Globals variables */
 struct sockaddr_in send_ad;	/* Send address */
-struct sockaddr_in recv_ad;	/* Recveive address */
+struct sockaddr_in recv_ad;	/* Receive address */
 int sd = -1;			/* socket descriptor */
-int proto = 1;
+int proto = UDP_PROTOCOL;
 
 int InitSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 {
@@ -47,11 +52,15 @@ int InitSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 			socket_proto = IPPROTO_UDP;
 			socket_type = SOCK_DGRAM;
 			OpalPrint("%s: Protocol       : UDP/IP\n", PROGNAME);
+			break;
+			
 		case TCP_PROTOCOL:	/* Communication using TCP/IP protocol */
 			socket_proto = IPPROTO_IP;
 			socket_type = SOCK_STREAM;
 			OpalPrint("%s: Protocol       : TCP/IP\n", PROGNAME);
-		case default:		/* Protocol is not recognized */
+			break;
+			
+		default:		/* Protocol is not recognized */
 			OpalPrint("%s: ERROR: Protocol (%d) not supported!\n", PROGNAME, proto);
 			return EINVAL;
 	}
@@ -121,6 +130,8 @@ int InitSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 						PROGNAME);
 				}
 			}
+			break;
+			
 		case TCP_PROTOCOL:	/* Communication using TCP/IP protocol */
 			OpalPrint("%s: Calling connect()\n", PROGNAME);
 
@@ -130,6 +141,7 @@ int InitSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 				OpalPrint("%s: ERROR: Call to connect() failed\n", PROGNAME);
 				return EIO;
 			}
+			break;
 	}
 
 	return EOK;
@@ -163,8 +175,8 @@ int RecvPacket(char* DataRecv, int datalength, double timeout)
 		return -1;
 
 	/* Set the descriptor set for the select() call */
-	FD_ZERO (&sd_set);
-	FD_SET  (sd, &sd_set);
+	FD_ZERO(&sd_set);
+	FD_SET(sd, &sd_set);
 
 	/* Set the tv structure to the correct timeout value */
 	tv.tv_sec = (int) timeout;

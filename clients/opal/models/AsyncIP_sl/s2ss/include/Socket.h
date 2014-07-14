@@ -15,9 +15,6 @@
 #ifndef _SOCKET_H_
 #define _SOCKET_H_
 
-/* Modify this version line if you make changes to this file */
-#define VERSION  "Opal-RT_20060524"
-
 #define RT
 #include "OpalGenAsyncParamCtrl.h"
 
