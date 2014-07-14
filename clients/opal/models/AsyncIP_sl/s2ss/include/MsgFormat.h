@@ -20,6 +20,14 @@
 #define MSG_TYPE_START	1
 #define MSG_TYPE_STOP	2
 
+/** Initialize a message */
+#define MSG_INIT(i)	{ \
+	.version = MSG_VERSION, \
+	.type = MSG_TYPE_DATA, \
+	.length = i, \
+	.sequence = 0 \
+}
+
 /** This message format is used by all clients
  *
  * @diafile msg_format.dia

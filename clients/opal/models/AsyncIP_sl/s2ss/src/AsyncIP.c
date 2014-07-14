@@ -66,19 +66,13 @@ static void *SendToIPPort(void *arg)
 	double mdldata[MAXSENDSIZE];
 	int mdldata_size;
 
-	struct msg msg;
+	struct msg msg = MSG_INIT(0);
 	int msg_size;
 
 	OpalPrint("%s: SendToIPPort thread started\n", PROGNAME);
 
 	OpalGetNbAsyncSendIcon(&nbSend);
 	if (nbSend >= 1) {
-
-		/* Prepare message header */
-		msg.version = MSG_VERSION;
-		msg.type = MSG_TYPE_DATA;
-		msg.sequence = 0;
-
 		do {
 			/* This call unblocks when the 'Data Ready' line of a send icon is asserted. */
 			if ((n = OpalWaitForAsyncSendRequest(&SendID)) != EOK) {
