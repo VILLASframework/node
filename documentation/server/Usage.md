@@ -1,4 +1,4 @@
-# Usage Instructions {#Usage}
+# Usage Instructions {#usage}
 
 The S2SS server (`server`) expects the path to a configuration file as a single argument.
 

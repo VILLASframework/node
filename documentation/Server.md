@@ -1,9 +1,7 @@
 # Server {#server}
 
-@defgroup server Server
-
-@subpage Configuration
-@subpage Usage
-@subpage Netem
+@subpage configuration
+@subpage usage
+@subpage netem
 
 @todo Move documentation from Mainpage to Server.
