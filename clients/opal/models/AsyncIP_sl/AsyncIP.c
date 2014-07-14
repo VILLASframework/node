@@ -69,23 +69,29 @@ void *SendToIPPort(void * arg)
 
 	double mdldata[MAXSENDSIZE];
 	int mdldata_size;
-	struct data_out comdata;
-	int comdata_size;
-	int count = 0;
+
+	struct msg msg;
+	int msg_size;
 
 	OpalPrint("%s: SendToIPPort thread started\n", PROGNAME);
 
 	OpalGetNbAsyncSendIcon(&nbSend);
-
 	if (nbSend >= 1) {
+
+		/* Prepare message header */
+		msg.version = MSG_VERSION;
+		msg.type = MSG_TYPE_DATA;
+		msg.sequence = 0;
+
 		do {
 			/* This call unblocks when the 'Data Ready' line of a send icon is asserted. */
-			if ((n = OpalWaitForAsyncSendRequest (&SendID)) != EOK) {
+			if ((n = OpalWaitForAsyncSendRequest(&SendID)) != EOK) {
 				ModelState = OpalGetAsyncModelState();
 				if ((ModelState != STATE_RESET) && (ModelState != STATE_STOP)) {
 					OpalSetAsyncSendIconError(n, SendID);
 					OpalPrint("%s: OpalWaitForAsyncSendRequest(), errno %d\n", PROGNAME, n);
 				}
+
 				continue;
 			}
 
@@ -93,40 +99,30 @@ void *SendToIPPort(void * arg)
 			OpalSetAsyncSendIconError(0, SendID);
 
 			/* Get the size of the data being sent by the unblocking SendID */
-			OpalGetAsyncSendIconDataLength (&mdldata_size, SendID);
-			if (mdldata_size/sizeof(double) > MAXSENDSIZE) {
+			OpalGetAsyncSendIconDataLength(&mdldata_size, SendID);
+			if (mdldata_size / sizeof(double) > MAXSENDSIZE) {
 				OpalPrint("%s: Number of signals for SendID=%d exceeds allowed maximum (%d)\n",
 					PROGNAME, SendID, MAXSENDSIZE);
+
 				return NULL;
 			}
 
 			/* Read data from the model */
-			OpalGetAsyncSendIconData (mdldata, mdldata_size, SendID);
+			OpalGetAsyncSendIconData(mdldata, mdldata_size, SendID);
 
-/******* FORMAT TO SPECIFIC PROTOCOL HERE ******************************
- * Modify this section to use values differently or to cast them
- * to other data types depending on the structure...
- */
-		comdata.dev_id  = SendID;  /* Use the SendID as a device ID here */
-		comdata.msg_id++;          /* The message ID is just incremented */
-		comdata.msg_len = mdldata_size;
-//		comdata.msg_len = (mdldata_size/sizeof(double)) * sizeof(int); /* If comdata.data was an "int" */
+/******* FORMAT TO SPECIFIC PROTOCOL HERE *****************************/
 
-/* In our case, because the data in the packet is in double format
- * we don't need to cast the data from the model to another format */
-		for (i=0; i < (mdldata_size / sizeof(double)); i++)
-			comdata.data[i] = mdldata[i];
-//			comdata.data[i] = (int)mdldata[i]; /* If comdata.data was an "int" */
+			// msg.dev_id = SendID; /* Use the SendID as a device ID here */
+			msg.sequence++;
+			msg.length = mdldata_size / sizeof(double);
 
-/* Because the useful length of the structure is variable, we use
- * the comdata_size variable to send just what is necessary with
- * the write function. */
-		comdata_size = 8 + comdata.msg_len;
-//        	comdata_size = sizeof(comdata);   /* For fixed length packets */
+			for (i = 0; i < msg.length; i++)
+				msg.data[i] = (float) mdldata[i];
+
 /**********************************************************************/
 
 			/* Perform the actual write to the ip port */
-			if (SendPacket((char*)&comdata, comdata_size) < 0)
+			if (SendPacket((char *) &msg, msg_size) < 0)
 				OpalSetAsyncSendIconError(errno, SendID);
 			else
 				OpalSetAsyncSendIconError(0, SendID);
@@ -153,37 +149,33 @@ void *SendToIPPort(void * arg)
 	return NULL;
 }
 
-void *RecvFromIPPort (void * arg)
+void *RecvFromIPPort(void * arg)
 {
 	int RecvID = 1;
-	int i, n1, n2, nt, n;
+	int i, n;
 	int nbRecv = 0;
 	int ModelState;
 
 	double mdldata[MAXRECVSIZE];
 	int mdldata_size;
-	struct data_in comdata;
-	int comdata_size;
+
+	struct msg msg;
+	int msg_size;
 
 	OpalPrint("%s: RecvFromIPPort thread started\n", PROGNAME);
 
 	OpalGetNbAsyncRecvIcon(&nbRecv);
-
 	if (nbRecv >= 1) {
 		do {
-			memset (&comdata, 0, sizeof(comdata));
+			memset(&msg, 0, sizeof(msg));
 
 /******* FORMAT TO SPECIFIC PROTOCOL HERE ******************************
  * Modify this section if your protocol needs to receive more than one
  * packet to process the data */
-			comdata_size = sizeof(comdata);
-			n  = RecvPacket((char*)&comdata, comdata_size, 1.0);
-			nt = n;
+			msg_size = sizeof(msg);
+			n  = RecvPacket((char *) &msg, msg_size, 1.0);
 
-/* In our example protocol, the length of the message is variable and it
- * is specified in the header. If your protocol is fixed-length, you can
- * remove this line. */
-			comdata_size = 8 + comdata.msg_len;
+			msg_size =  4 * (msg.length + 1);
 /***********************************************************************/
 
 			if (n < 1) {
@@ -199,37 +191,32 @@ void *RecvFromIPPort (void * arg)
 				}
 				break;
 			}
-			else if (nt != comdata_size) {
-				/* Disable this print. It may happen in TCP/IP mode.
-				 * The server needs to be modified to check packet size. */
-				// OpalPrint("%s: Received incoherent packet (size: %d, complete: %d)\n", PROGNAME, nt, comdata_size);
+			else if (n != msg_size) {
+				OpalPrint("%s: Received incoherent packet (size: %d, complete: %d)\n", PROGNAME, n, msg_size);
 				continue;
 			}
 
-/******* FORMAT TO SPECIFIC PROTOCOL HERE ******************************
- * Modify this section to use values differently or to cast them
- * to other data types depending on the structure...  */
-			RecvID = comdata.dev_id;				/* Use the deviceID as the RecvID */
-			OpalSetAsyncRecvIconStatus(comdata.msg_id, RecvID);	/* Set the Status to the message ID */
+/******* FORMAT TO SPECIFIC PROTOCOL HERE *******************************/
+			RecvID = 0; // msg.dev_id;				/* Use the deviceID as the RecvID */
+			OpalSetAsyncRecvIconStatus(msg.sequence, RecvID);	/* Set the Status to the message ID */
 			OpalSetAsyncRecvIconError(0, RecvID);			/* Set the Error to 0 */
 
 			/* Get the number of signals to send back to the model */
 			OpalGetAsyncRecvIconDataLength(&mdldata_size, RecvID);
 
-			if (mdldata_size/sizeof(double) > MAXRECVSIZE) {
+			if (mdldata_size / sizeof(double) > MAX_VALUES) {
 				OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds allowed maximum (%d)\n",
 					PROGNAME, RecvID, mdldata_size/sizeof(double), MAXRECVSIZE);
 				return NULL;
 			}
 
-//			if (mdldata_size/sizeof(double) > comdata.msg_len/sizeof(int)) // If comdata.data was an "int"
-			if (mdldata_size > comdata.msg_len) {
+			if (mdldata_size > msg.length * sizeof(float)) {
 				OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds what was received (%d)\n",
-					PROGNAME, RecvID, mdldata_size/sizeof(double), comdata.msg_len/sizeof(double));
+					PROGNAME, RecvID, mdldata_size / sizeof(double), msg.length);
 			}
 
-			for (i=0; i < (mdldata_size / sizeof(double)); i++)
-				mdldata[i] = (double)comdata.data[i];
+			for (i = 0; i < msg.length; i++)
+				mdldata[i] = (double) msg.data[i];
 /************************************************************************/
 
 			OpalSetAsyncRecvIconData(mdldata, mdldata_size, RecvID);
