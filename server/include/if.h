@@ -1,5 +1,8 @@
 /** Interface related functions
  *
+ * These functions are used to manage a network interface.
+ * Most of them make use of Linux-specific APIs.
+ *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
  * @file
@@ -29,7 +32,7 @@ struct interface {
 	struct interface *next;
 };
 
-/** Get outgoing interface
+/** Get outgoing interface.
  *
  * Does a lookup in the kernel routing table to determine
  * the interface which sends the data to a certain socket
@@ -40,7 +43,7 @@ struct interface {
  */
 int if_getegress(struct sockaddr_in *sa);
 
-/** Get all IRQs for this interface
+/** Get all IRQs for this interface.
  *
  * Only MSI IRQs are determined by looking at:
  *  /sys/class/net/{ifname}/device/msi_irqs/
@@ -62,7 +65,7 @@ int if_getirqs(struct interface *i);
  */
 int if_setaffinity(struct interface *i, int affinity);
 
-/** Search list of interface for a index
+/** Search list of interface for a index.
  *
  * @param index The interface index to search for
  * @param interfaces A linked list of all interfaces

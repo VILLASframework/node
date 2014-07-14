@@ -15,7 +15,7 @@
 #include "node.h"
 #include "msg.h"
 
-/** The datastructure for a path
+/** The datastructure for a path.
  *
  * @todo Add support for multiple outgoing nodes
  */
@@ -86,7 +86,7 @@ int path_start(struct path *p);
  */
 int path_stop(struct path *p);
 
-/** Show some basic statistics for a path
+/** Show some basic statistics for a path.
  *
  * @param p A pointer to the path struct
  */

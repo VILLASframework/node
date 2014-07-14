@@ -20,7 +20,7 @@
 #define MSG_TYPE_START	1
 #define MSG_TYPE_STOP	2
 
-/** This message format is used by all clients
+/** This message format is used by all clients.
  *
  * @diafile msg_format.dia
  **/

@@ -41,7 +41,7 @@ typedef uint32_t tc_hdl_t;
 
 struct interface;
 
-/** Netem configuration settings
+/** Netem configuration settings.
  *
  * This struct is used to pass the netem configuration
  * from config_parse_netem() to tc_netem()
@@ -64,7 +64,7 @@ struct netem {
 	int duplicate;
 };
 
-/** Remove all queuing disciplines and filters 
+/** Remove all queuing disciplines and filters.
  *
  * @param i The interface
  * @return
@@ -73,7 +73,7 @@ struct netem {
  */
 int tc_reset(struct interface *i);
 
-/** Create a prio queueing discipline
+/** Create a priority (prio) queueing discipline.
  *
  * @param i The interface
  * @param handle The handle for the new qdisc
@@ -84,7 +84,7 @@ int tc_reset(struct interface *i);
  */
 int tc_prio(struct interface *i, tc_hdl_t handle, int bands);
 
-/** Add a new network emulator discipline
+/** Add a new network emulator (netem) discipline.
  *
  * @param i The interface
  * @param parent Make this qdisc a child of
@@ -95,7 +95,7 @@ int tc_prio(struct interface *i, tc_hdl_t handle, int bands);
  */
 int tc_netem(struct interface *i, tc_hdl_t parent, struct netem *em);
 
-/** Add a new filter based on the netfilter mark
+/** Add a new filter based on the netfilter mark.
  *
  * @param i The interface
  * @param flowid The destination class for matched traffic

@@ -1,4 +1,4 @@
-/** Traffic control: setup interface queuing desciplines
+/** Traffic control (tc): setup interface queuing desciplines.
  *
  * S2SS uses these functions to setup the network emulation feature.
  *

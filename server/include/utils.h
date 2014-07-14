@@ -1,4 +1,4 @@
-/** Various helper functions
+/** Various helper functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
@@ -44,13 +44,12 @@ void print(enum log_level lvl, const char *fmt, ...);
  * @param addr A string containing the hostname/ip and port seperated by a colon
  * @param sa A pointer to the resolved address
  * @param flags Flags for gai
- * @return
- * - 0 on success
- * - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags);
 
-/** Convert integer to cpu_set_t
+/** Convert integer to cpu_set_t.
  *
  * @param set A cpu bitmask
  * @return The opaque cpu_set_t datatype
