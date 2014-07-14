@@ -12,7 +12,6 @@ Take a look in the 'Examples' section for some examples.
 - *name*:
 - *affinity*
 
-
 ### Nodes
 
 ### Paths
@@ -32,7 +31,7 @@ Precompiled kernels for Fedora can be found here: http://ccrma.stanford.edu/plan
 - Increase socket priority
 - Configure NIC interrupt coalescence with `ethtool`:
 
-	ethtool -C|--coalesce devname	[adaptive-rx on|off] [adaptive-tx on|off] ...
+	$ ethtool -C|--coalesce devname [adaptive-rx on|off] [adaptive-tx on|off] ...
 
 - Configure NIC kernel driver in `/etc/modprobe.d/e1000e.conf`:
 
