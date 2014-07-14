@@ -6,11 +6,9 @@ TARGET_OPALRT_ROOT = /usr/opalrt
 
 # QNX v6.x
 ifeq "$(SYSNAME)" "nto"
-
 	CC = gcc
 	LD = $(CC)
-	TARGET_LIB =  -lsocket
-
+	TARGET_LIB = -lsocket
 endif
 
 # RedHawk Linux
@@ -38,7 +36,6 @@ ifeq "$(shell uname)" "Linux"
 	endif
 
 	TARGET_LIB = -lpthread -lm -ldl -lutil -lrt $(RH_LIBS) $(INTEL_LIBS)
-
 endif
 
 # Support for debugging symbols
@@ -50,12 +47,11 @@ else
 	LD_DEBUG_OPTS=
 endif
 
-
 INCLUDES = -I. 
 LIBPATH  = -L. 
 CC_OPTS =
 LD_OPTS = 
-OBJS = ${PROGRAM}.o
+OBJS = ${PROGRAM}.o Sched.o Interface.o Socket.o
 
 ADDLIB = -lOpalCore -lOpalUtils
 LIBS   = -lOpalAsyncApiCore $(ADDLIB) $(TARGET_LIB)

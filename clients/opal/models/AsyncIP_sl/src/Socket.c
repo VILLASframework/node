@@ -12,15 +12,6 @@
  * @file
  */
 
-#ifndef OPAL_IP_H
-#define OPAL_IP_H
-
-#ifndef PROGNAME
-#define PROGNAME "AsyncIPUtils"
-#endif
-/* Modify this version line if you make changes to this file */
-#define VERSION  "Opal-RT_20060524"
-
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -29,15 +20,9 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#define RT
+#include "Socket.c"
 #include "OpalPrint.h"
 #include "AsyncApi.h"
-#include "OpalGenAsyncParamCtrl.h"
-#pragma pack()
-
-#define UDP_PROTOCOL	1
-#define TCP_PROTOCOL	2
-#define	EOK		0
 
 /* Globals variables */
 struct sockaddr_in send_ad;	/* Send address */
@@ -98,7 +83,7 @@ int InitSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 		return EIO;
 	}
 	else
-		OpalPrint("%s: Local Port     : %d\n", PROGNAME, (int)IconCtrlStruct.FloatParam[2]);
+		OpalPrint("%s: Local Port     : %d\n", PROGNAME, (int) IconCtrlStruct.FloatParam[2]);
 
 	switch (proto) {
 		case UDP_PROTOCOL:	/* Communication using UDP/IP protocol */
@@ -224,5 +209,3 @@ int CloseSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 
 	return 0;
 }
-
-#endif /* OPAL_IP_H */

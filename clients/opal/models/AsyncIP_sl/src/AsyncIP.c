@@ -33,29 +33,30 @@
 #       define _GNU_SOURCE   1
 #endif
 
-/* This is the message format */
-#include "msg_types.h"
-
 /* Define RTLAB before including OpalPrint.h for messages to be sent
  * to the OpalDisplay. Otherwise stdout will be used. */
 #define RTLAB
 #include "OpalPrint.h"
 #include "AsyncApi.h"
-#include "AsyncIPUtils.h"
+
+/* This is the message format */
+#include "MsgFormat.h"
+#include "Socket.h"
+#include "Interface.h"
 
 /* This is just for initializing the shared memory access to communicate
  * with the RT-LAB model. It's easier to remember the arguments like this */
-#define	ASYNC_SHMEM_NAME argv[1]
-#define ASYNC_SHMEM_SIZE atoi(argv[2])
-#define PRINT_SHMEM_NAME argv[3]
+#define	ASYNC_SHMEM_NAME	argv[1]
+#define ASYNC_SHMEM_SIZE	atoi(argv[2])
+#define PRINT_SHMEM_NAME	argv[3]
 
 /* This defines the maximum number of signals (doubles) that can be sent
  * or received by any individual Send or Recv block in the model. This
  * only applies to the "model <-> asynchronous process" communication. */
-#define MAXSENDSIZE 64
-#define MAXRECVSIZE 64
+#define MAX_SEND_SIZE		64
+#define MAX_RECV_SIZE		64
 
-void *SendToIPPort(void * arg)
+static void *SendToIPPort(void *arg)
 {
 	int SendID = 1;
 	int i, n;
@@ -106,14 +107,12 @@ void *SendToIPPort(void * arg)
 			OpalGetAsyncSendIconData(mdldata, mdldata_size, SendID);
 
 /******* FORMAT TO SPECIFIC PROTOCOL HERE *****************************/
-
 			// msg.dev_id = SendID; /* Use the SendID as a device ID here */
 			msg.sequence++;
 			msg.length = mdldata_size / sizeof(double);
 
 			for (i = 0; i < msg.length; i++)
 				msg.data[i] = (float) mdldata[i];
-
 /**********************************************************************/
 
 			/* Perform the actual write to the ip port */
@@ -144,7 +143,7 @@ void *SendToIPPort(void * arg)
 	return NULL;
 }
 
-void *RecvFromIPPort(void * arg)
+static void *RecvFromIPPort(void *arg)
 {
 	int RecvID = 1;
 	int i, n;
@@ -162,13 +161,20 @@ void *RecvFromIPPort(void * arg)
 	OpalGetNbAsyncRecvIcon(&nbRecv);
 	if (nbRecv >= 1) {
 		do {
-			memset(&msg, 0, sizeof(msg));
 
-/******* FORMAT TO SPECIFIC PROTOCOL HERE ******************************
- * Modify this section if your protocol needs to receive more than one
- * packet to process the data */
+/******* FORMAT TO SPECIFIC PROTOCOL HERE ******************************/
 			msg_size = sizeof(msg);
 			n  = RecvPacket((char *) &msg, msg_size, 1.0);
+
+			if (msg.version != MSG_VERSION) {
+				OpalPrint("%s: Received message with unknown version. Skipping..\n", PROGNAME);
+				continue;
+			}
+
+			if (msg.type != MSG_TYPE_DATA) {
+				OpalPrint("%s: Received no data. Skipping..\n", PROGNAME);
+				continue;
+			}
 
 			msg_size =  4 * (msg.length + 1);
 /***********************************************************************/
@@ -199,13 +205,13 @@ void *RecvFromIPPort(void * arg)
 			/* Get the number of signals to send back to the model */
 			OpalGetAsyncRecvIconDataLength(&mdldata_size, RecvID);
 
-			if (mdldata_size / sizeof(double) > MAX_VALUES) {
+			if (mdldata_size / sizeof(double) > MAX_RECV_VALUES) {
 				OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds allowed maximum (%d)\n",
-					PROGNAME, RecvID, mdldata_size/sizeof(double), MAXRECVSIZE);
+					PROGNAME, RecvID, mdldata_size / sizeof(double), MAX_RECV_SIZE);
 				return NULL;
 			}
 
-			if (mdldata_size > msg.length * sizeof(float)) {
+			if (mdldata_size / sizeof(double) > msg.length) {
 				OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds what was received (%d)\n",
 					PROGNAME, RecvID, mdldata_size / sizeof(double), msg.length);
 			}
@@ -232,9 +238,11 @@ void *RecvFromIPPort(void * arg)
 
 int main(int argc, char *argv[])
 {
-	Opal_GenAsyncParam_Ctrl IconCtrlStruct;
 	int err;
-	pthread_t tid_send,  tid_recv;
+
+	Opal_GenAsyncParam_Ctrl IconCtrlStruct;
+
+	pthread_t tid_send, tid_recv;
 	pthread_attr_t attr_send, attr_recv;
 
 	/* Check for the proper arguments to the program */

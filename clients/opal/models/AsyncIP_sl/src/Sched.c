@@ -7,6 +7,7 @@
  * @file
  */
 
+#include "Sched.h"
 
 #if defined(__QNXNTO__)
 #       include <process.h>

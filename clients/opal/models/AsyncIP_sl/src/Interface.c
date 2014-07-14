@@ -1,4 +1,11 @@
+/** OPAL Interface setup
+ *
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @file
+ */
 
+#include "Interface.h"
 
 int if_setup(const char *op, const char *iface, const char *addr)
 {
