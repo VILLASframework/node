@@ -1,4 +1,4 @@
-# Network Emulation
+# Network Emulation {#Netem}
 
 S2SS supports the emulation of wide-area network characterisics.
 
