@@ -13,6 +13,7 @@
 #include <limits.h>
 #include <arpa/inet.h>
 
+#include "config.h"
 #include "msg.h"
 #include "node.h"
 #include "utils.h"

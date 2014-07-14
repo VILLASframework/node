@@ -10,8 +10,9 @@
 
 #include <stdint.h>
 
-#include "config.h"
-
+/** Maximum number of dword values in a message */
+#define MSG_VALUES	16
+/** The current version number for the message format */
 #define MSG_VERSION	0
 
 /** @todo Implement more message types */
@@ -31,12 +32,12 @@ struct msg
 	unsigned type		: 2;
 	/** These bits are reserved for future extensions */
 	unsigned __padding	: 2;
-	/** Length in dwords of the whole message */
+	/** Number of valid dword values in msg::data[] */
 	uint8_t length;
 	/** The sequence number gets incremented by one for consecutive messages */
 	uint16_t sequence;
 	/** The message payload */
-	float data[MAX_VALUES];
+	float data[MSG_VALUES];
 } __attribute__((packed));
 
 #endif /* _MSG_FORMAT_H_ */

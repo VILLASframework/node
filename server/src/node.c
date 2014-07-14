@@ -8,6 +8,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "config.h"
 #include "cfg.h"
 #include "utils.h"
 #include "msg.h"
