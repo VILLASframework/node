@@ -2,16 +2,18 @@
 
 @defgroup opal OPAL-RT
 
-The communication between OPAL-RT models and the S2SS is established by using ansychronus programs.
-Asynchronous programs are a feature of RT-LAB.
+The communication between OPAL-RT models and the S2SS is established by using ansychronous programs.
+Asynchronous programs are are a feature of RT-LAB. They are used to exchange data between Simulink models and custom C programs.
 
-## Source Code
+For this purpose the C program handels IP/UDP communication via BSD sockets.
 
-The source code of the asynchronus program is located at:
-
-	/clients/opal/models/AsyncIP_sl/s2ss/
 
 ## Arguments for OPAL-RT block
+
+RT-LAB already provides a block to establish simple TCP/IP communication: ???
+This block is based on a more generic block used for aynchronous programs: ???
+
+@todo Insert name of RT-LAB blocks.
 
 | Param		 | Description   | Example Value  |
 | :------------- | :------------ |:-------------- |

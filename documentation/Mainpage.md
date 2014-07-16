@@ -1,6 +1,26 @@
-S2SS is a client server application based on UDP/IP to connect simulation equipment.
+S2SS is a client/server application based on UDP/IP to connect simulation equipment/software such as:
 
-It's designed with focus on low latency to establish soft-realtime communication.
+ - OPAL-RT,
+ - RTDS,
+ - Simulink,
+ - LabView,
+ - custom made equipment,
+ - and FPGA models.
+
+It's designed with focus on very low latency to achieve almost realtime communication.
+S2SS is used in distributed- and co-simulation scenarios and developed for the field of power grid simulation at the EON Energy Research Centre in Aachen, Germany.
+
+## Overview
+
+The project consists of a server and several client applications.
+Both server-to-server and direct client-to-client communication is possible.
+All communication links use the same message protocol to exchange their measurement values.
+
+### Server
+
+For optimal performance the server is implemented in lowlevel C and makes use of several Linux-specific realtime features.
+
+### Clients
 
 ## Contact
 
@@ -8,40 +28,5 @@ This project is developed at the [Institute for Automation of Complex Power Syst
 
  - Steffen Vogel <StVogel@eonerc.rwth-aachen.de>
  - Marija Stevic <MStevic@eonerc.rwth-aachen.de>
-
-## Compilation
-
-Install libraries including developement headers for:
-
- - libconfig
-
-Start the compilation with:
-
-	$ make
-
-Add `V=5` for a more verbose debugging output.
-
-## Installation
-
-Install the server by executing:
-
-	$ sudo make install
-
-Add `PREFIX=/usr/local/` to specify a non-standard installation destination.
-
-**Important:** Please note that the server requires the
-[iproute2](http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2)
-tools to setup the network emulation and interfaces.
-
-Install these via:
-
-	$ sudo yum install iproute2
-or:
-
-	$ sudo apt-get install iproute2
-
-## Configuration
-
-See [configuration](Configuration.md) for more information.
 
 
