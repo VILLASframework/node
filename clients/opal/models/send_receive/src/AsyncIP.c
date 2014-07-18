@@ -101,8 +101,8 @@ static void *SendToIPPort(void *arg)
 			msg.length = mdldata_size / sizeof(double);
 
 			for (i = 0; i < msg.length; i++)
-				msg.data[i] = (float) mdldata[i];
-			
+				msg.data[i] = htonf((float) mdldata[i]);
+
 			msg_size = 4 * (msg.length + 1);
 /**********************************************************************/
 
@@ -209,7 +209,7 @@ static void *RecvFromIPPort(void *arg)
 			}
 
 			for (i = 0; i < msg.length; i++)
-				mdldata[i] = (double) msg.data[i];
+				mdldata[i] = (double) ntohf(msg.data[i]);
 /************************************************************************/
 
 			OpalSetAsyncRecvIconData(mdldata, mdldata_size, RecvID);
@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
 
 	pthread_t tid_send, tid_recv;
 	pthread_attr_t attr_send, attr_recv;
-	
+
 	OpalPrint("%s: This is a S2SS client\n", PROGNAME);
 
 	/* Check for the proper arguments to the program */
