@@ -41,14 +41,8 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	struct node n = {
-		.name = "node"
-	};
-	struct msg m = {
-		.version = MSG_VERSION,
-		.type = MSG_TYPE_DATA,
-		.length = atoi(argv[1])
-	};
+	struct node n = NODE_INIT("remote");
+	struct msg  m = MSG_INIT(atoi(argv[1]));
 
 	/* Setup signals */
 	struct sigaction sa_quit = {

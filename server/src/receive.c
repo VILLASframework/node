@@ -31,11 +31,6 @@ void quit(int sig, siginfo_t *si, void *ptr)
 
 int main(int argc, char *argv[])
 {
-	struct node n = {
-		.name ="node"
-	};
-	struct msg m;
-
 	if (argc != 2) {
 		printf("Usage: %s LOCAL\n", argv[0]);
 		printf("  LOCAL   is a IP:PORT combination of the local host\n\n");
@@ -43,6 +38,9 @@ int main(int argc, char *argv[])
 		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
 		exit(EXIT_FAILURE);
 	}
+
+	struct node n = NODE_INIT("remote");
+	struct msg m;
 
 	/* Setup signals */
 	struct sigaction sa_quit = {

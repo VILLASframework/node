@@ -28,10 +28,6 @@ void quit(int sig, siginfo_t *si, void *ptr)
 
 int main(int argc, char *argv[])
 {
-	struct node n;
-
-	memset(&n, 0, sizeof(struct node));
-
 	if (argc != 4) {
 		printf("Usage: %s TEST LOCAL REMOTE\n", argv[0]);
 		printf("  TEST     has to be 'latency' for now\n");
@@ -41,6 +37,8 @@ int main(int argc, char *argv[])
 		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
 		exit(EXIT_FAILURE);
 	}
+
+	struct node n = NODE_INIT("remote");
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -65,9 +63,7 @@ int main(int argc, char *argv[])
 	debug(1, "We sent to %s:%u", inet_ntoa(n.remote.sin_addr), ntohs(n.remote.sin_port));
 
 	if (!strcmp(argv[1], "latency")) {
-		struct msg m = {
-			.sequence = 0
-		};
+		struct msg m = MSG_INIT(sizeof(struct timespec) / sizeof(float));
 		struct timespec *ts1 = (struct timespec *) &m.data;
 		struct timespec *ts2 = malloc(sizeof(struct timespec));
 

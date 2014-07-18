@@ -21,6 +21,12 @@
 #include "msg.h"
 #include "tc.h"
 
+/** Static node initialization */
+#define NODE_INIT(n)	{ \
+	.sd = -1, \
+	.name = n \
+}
+
 /** The datastructure for a node.
  *
  * Every entity which exchanges messages is represented by a node.

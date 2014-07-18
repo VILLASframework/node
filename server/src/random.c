@@ -41,11 +41,7 @@ int main(int argc, char *argv[])
 	}
 
 	int rate = atoi(argv[2]);
-	struct msg msg = {
-		.length = atoi(argv[1]),
-		.sequence = 0,
-		.data = { 0 }
-	};
+	struct msg m = MSG_INIT(atoi(argv[1]));
 
 	/* Setup signals */
 	struct sigaction sa_tick = {
@@ -61,7 +57,7 @@ int main(int argc, char *argv[])
 	struct sigevent sev = {
 		.sigev_notify = SIGEV_SIGNAL,
 		.sigev_signo = SIG,
-		.sigev_value.sival_ptr = &msg
+		.sigev_value.sival_ptr = &m
 	};
 
 	double period = 1.0 / rate;
