@@ -65,26 +65,29 @@ static void * path_send(void *arg)
 static void * path_run(void *arg)
 {
 	struct path *p = (struct path *) arg;
-	struct msg m;
+	struct msg  *m = malloc(sizeof(struct msg));
+
+	if (!m)
+		error("Failed to allocate memory!");
 
 	/* Main thread loop */
 	while (1) {
-		msg_recv(&m, p->in); /* Receive message */
+		msg_recv(m, p->in); /* Receive message */
 		p->received++;
 
 		/** Check header fields */
-		if (m.version != MSG_VERSION) {
+		if (m->version != MSG_VERSION) {
 			p->invalid++;
 			continue;
 		}
 
-		if (m.type != MSG_TYPE_DATA) {
+		if (m->type != MSG_TYPE_DATA) {
 			p->invalid++;
 			continue;
 		}
 
 		/* Check sequence number */
-		if (m.sequence <= 1) {
+		if (m->sequence <= 1) {
 			path_stats(p);
 			info("Simulation started");
 
@@ -96,29 +99,31 @@ static void * path_run(void *arg)
 			p->duplicated	= 0;
 			p->invalid	= 0;
 		}
-		else if (m.sequence < p->sequence) {
+		else if (m->sequence < p->sequence) {
 			p->delayed++;
 			continue;
 		}
-		else if (m.sequence == p->sequence) {
+		else if (m->sequence == p->sequence) {
 			p->duplicated++;
 			continue;
 		}
 
-		if (p->hook && p->hook(&m)) {
+		if (p->hook && p->hook(m)) {
 			p->skipped++;
 			continue;
 		}
 
 		/* At fixed rate mode, messages are send by another thread */
 		if (p->rate)
-			p->last = &m;
+			p->last = m;
 		else
-			msg_send(&m, p->out);
+			msg_send(m, p->out);
 
-		p->sequence = m.sequence;
+		p->sequence = m->sequence;
 		p->sent++;
 	}
+
+	free(m);
 
 	return NULL;
 }
