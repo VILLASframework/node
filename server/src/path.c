@@ -87,7 +87,7 @@ static void * path_run(void *arg)
 		}
 
 		/* Check sequence number */
-		if (m->sequence <= 1) {
+		if (m->sequence == 0) {
 			path_stats(p);
 			info("Simulation started");
 
