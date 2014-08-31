@@ -1,7 +1,5 @@
 # OPAL-RT {#opal}
 
-@defgroup opal OPAL-RT
-
 The communication between OPAL-RT models and the S2SS is established by using ansychronous programs.
 Asynchronous programs are are a feature of RT-LAB. They are used to exchange data between Simulink models and custom C programs.
 

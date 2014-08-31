@@ -1,7 +1,5 @@
 # GTFPGA {#gtfpga}
 
-@defgroup gtfpga GTFPGA
-
 The GTFPGA card is an extension card for simulator racks from RTDS.
 The manufacturer provides a VHDL module to exchange data via fiber optics between the GTFPGA and GPC cards.
 
