@@ -36,7 +36,7 @@
 #endif
 
 /** The total length of a message */
-#define MSG_LEN(values)	(4 * (values + 1))
+#define MSG_LEN(values)		(4 * (values + 1))
 
 /** Initialize a message */
 #define MSG_INIT(i)	{ \
@@ -53,17 +53,11 @@
  **/
 struct msg
 {
-#if BYTE_ORDER == BIG_ENDIAN
 	unsigned version: 4; /**< Specifies the format of the remaining message (see MGS_VERSION) */
 	unsigned type	: 2; /**< Data or control message (see MSG_TYPE_*) */
 	unsigned endian	: 1; /**< Specifies the byteorder of the message (see MSG_ENDIAN_*) */
 	unsigned 	: 1; /**< Reserved padding bits */
-#else
-	unsigned 	: 1; /**< Reserved padding bits */
-	unsigned endian	: 1; /**< Specifies the byteorder of the message (see MSG_ENDIAN_*) */
-	unsigned type	: 2; /**< Data or control message (see MSG_TYPE_*) */
-	unsigned version: 4; /**< Specifies the format of the remaining message (see MGS_VERSION) */
-#endif
+
 	/** Number of valid dword values in msg::data[] */
 	uint8_t length;
 	/** The sequence number gets incremented by one for consecutive messages */

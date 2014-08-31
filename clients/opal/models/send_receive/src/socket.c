@@ -26,8 +26,8 @@
 #include "OpalPrint.h"
 #include "AsyncApi.h"
 
-#include "Config.h"
-#include "Socket.h"
+#include "config.h"
+#include "socket.h"
 
 /* Globals variables */
 struct sockaddr_in send_ad;	/* Send address */

@@ -1,4 +1,4 @@
-/** AsyncIP
+/** Main
  *
  *  Code example of an asynchronous program.  This program is started
  *  by the asynchronous controller and demonstrates how to send and 
@@ -38,10 +38,10 @@
 #include "AsyncApi.h"
 
 /* This is the message format */
-#include "Config.h"
-#include "MsgFormat.h"
-#include "Socket.h"
-#include "Interface.h"
+#include "config.h"
+#include "msg_format.h"
+#include "socket.h"
+#include "interface.h"
 
 /* This is just for initializing the shared memory access to communicate
  * with the RT-LAB model. It's easier to remember the arguments like this */

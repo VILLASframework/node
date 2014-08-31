@@ -5,8 +5,8 @@
  * @file
  */
 
-#include "Config.h"
-#include "Interface.h"
+#include "config.h"
+#include "interface.h"
 
 int if_setup(const char *op, const char *iface, const char *addr)
 {

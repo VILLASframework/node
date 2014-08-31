@@ -14,8 +14,8 @@
 #define RTLAB
 #include "OpalPrint.h"
 
-#include "Config.h"
-#include "Sched.h"
+#include "config.h"
+#include "sched.h"
 
 #if defined(__QNXNTO__)
 #       include <process.h>
