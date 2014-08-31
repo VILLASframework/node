@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
 	if (stat("/sys/kernel/realtime", &st))
 		warn("Use a RT-preempt patched Linux for lower latencies!");
 	else
-		debug(3, "This is a realtime patched kernel");
+		info("Server is running on a realtime patched kernel");
 
 	/* Use FIFO scheduler with realtime priority */
 	if (settings.priority) {

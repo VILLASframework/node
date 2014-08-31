@@ -76,7 +76,6 @@ int msg_send(struct msg *m, struct node *n)
 		perror("Failed sendto");
 
 	debug(10, "Message sent to node '%s'", n->name);
-	if (V >= 10) msg_fprint(stdout, m);
 
 	return 0;
 }
@@ -94,7 +93,6 @@ int msg_recv(struct msg *m, struct node *n)
 		msg_swap(m);
 
 	debug(10, "Message received from node '%s'", n->name);
-	if (V >= 10) msg_fprint(stdout, m);
 
 	return 0;
 }

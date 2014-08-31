@@ -75,8 +75,7 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 int config_parse_path(config_setting_t *cfg,
 	struct path **paths, struct node **nodes)
 {
-	const char *in_str = NULL;
-	const char *out_str = NULL;
+	const char *in, *out, *hook;
 	int enabled = 1;
 	int reverse = 0;
 
@@ -87,24 +86,25 @@ int config_parse_path(config_setting_t *cfg,
 		memset(path, 0, sizeof(struct path));
 
 	/* Required settings */
-	if (!config_setting_lookup_string(cfg, "in", &in_str))
+	if (!config_setting_lookup_string(cfg, "in", &in))
 		cerror(cfg, "Missing input node for path");
 
-	if (!config_setting_lookup_string(cfg, "out", &out_str))
+	if (!config_setting_lookup_string(cfg, "out", &out))
 		cerror(cfg, "Missing output node for path");
 
-	path->in = node_lookup_name(in_str, *nodes);
+	path->in = node_lookup_name(in, *nodes);
 	if (!path->in)
 		cerror(cfg, "Invalid input node '%s'");
 
-	path->out = node_lookup_name(out_str, *nodes);
+	path->out = node_lookup_name(out, *nodes);
 	if (!path->out)
-		cerror(cfg, "Invalid output node '%s'", out_str);
+		cerror(cfg, "Invalid output node '%s'", out);
 
 	/* Optional settings */
 	config_setting_lookup_bool(cfg, "enabled", &enabled);
 	config_setting_lookup_bool(cfg, "reverse", &reverse);
 	config_setting_lookup_float(cfg, "rate", &path->rate);
+
 	path->cfg = cfg;
 
 	if (enabled) {
@@ -133,10 +133,9 @@ int config_parse_path(config_setting_t *cfg,
 
 int config_parse_node(config_setting_t *cfg, struct node **nodes)
 {
-	const char *remote_str = NULL;
-	const char *local_str = NULL;
-
 	struct node *node;
+	const char *remote, *local, *key;
+
 
 	/* Allocate memory */
 	node = (struct node *) malloc(sizeof(struct node));
@@ -150,18 +149,18 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	if (!node->name)
 		cerror(cfg, "Missing node name");
 
-	if (!config_setting_lookup_string(cfg, "remote", &remote_str))
+	if (!config_setting_lookup_string(cfg, "remote", &remote))
 		cerror(cfg, "Missing remote address for node '%s'", node->name);
 
-	if (!config_setting_lookup_string(cfg, "local", &local_str))
+	if (!config_setting_lookup_string(cfg, "local", &local))
 		cerror(cfg, "Missing local address for node '%s'", node->name);
 
 
-	if (resolve_addr(local_str, &node->local, AI_PASSIVE))
-		cerror(cfg, "Failed to resolve local address '%s' of node '%s'", local_str, node->name);
+	if (resolve_addr(local, &node->local, AI_PASSIVE))
+		cerror(cfg, "Failed to resolve local address '%s' of node '%s'", local, node->name);
 
-	if (resolve_addr(remote_str, &node->remote, 0))
-		cerror(cfg, "Failed to resolve remote address '%s' of node '%s'", remote_str, node->name);
+	if (resolve_addr(remote, &node->remote, 0))
+		cerror(cfg, "Failed to resolve remote address '%s' of node '%s'", remote, node->name);
 
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {

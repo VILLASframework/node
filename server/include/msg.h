@@ -30,7 +30,7 @@ void msg_swap(struct msg *m);
 /** Print a raw UDP message in human readable form.
  *
  * @param f The file stream
- * @param msg A pointer to the message
+ * @param m A pointer to the message
  * @return
  *  - 0 on success
  *  - otherwise an error occured

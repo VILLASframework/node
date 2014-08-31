@@ -15,8 +15,10 @@
  #include <endian.h>
 #endif
 
+#include "config.h"
+
 /** Maximum number of dword values in a message */
-#define MSG_VALUES		16
+#define MSG_VALUES		MAX_VALUES
 
 /** The current version number for the message format */
 #define MSG_VERSION		0
@@ -68,6 +70,7 @@ struct msg
 	uint8_t length;
 	/** The sequence number gets incremented by one for consecutive messages */
 	uint16_t sequence;
+
 	/** The message payload */
 	union {
 		float f;
