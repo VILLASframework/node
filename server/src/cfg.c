@@ -17,6 +17,7 @@
 #include "node.h"
 #include "path.h"
 #include "utils.h"
+#include "hooks.h"
 
 int config_parse(const char *filename, config_t *cfg, struct settings *set,
 	struct node **nodes, struct path **paths)
@@ -101,6 +102,13 @@ int config_parse_path(config_setting_t *cfg,
 		cerror(cfg, "Invalid output node '%s'", out);
 
 	/* Optional settings */
+	if (config_setting_lookup_string(cfg, "hook", &hook)) {
+		path->hook = hook_lookup(hook);
+		
+		if (!path->hook)
+			cerror(cfg, "Failed to lookup hook function. Not registred?");
+	}
+	
 	config_setting_lookup_bool(cfg, "enabled", &enabled);
 	config_setting_lookup_bool(cfg, "reverse", &reverse);
 	config_setting_lookup_float(cfg, "rate", &path->rate);

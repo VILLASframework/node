@@ -108,7 +108,7 @@ static void * path_run(void *arg)
 			continue;
 		}
 
-		if (p->hook && p->hook(m)) {
+		if (p->hook && p->hook(m, p)) {
 			p->skipped++;
 			continue;
 		}

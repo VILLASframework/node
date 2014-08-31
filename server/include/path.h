@@ -14,6 +14,7 @@
 #include "config.h"
 #include "node.h"
 #include "msg.h"
+#include "hooks.h"
 
 /** The datastructure for a path.
  *
@@ -26,12 +27,8 @@ struct path
 	/** Pointer to the outgoing node */
 	struct node *out;
 
-	/** If non NULL this function is called for every received message.
-	 *
-	 * This hook can be used to filter messages on a user-defined criteria.
-	 * If the function has a non-zero return value the message will be dropped.
-	 */
-	int (*hook)(struct msg *m);
+	/** Function pointer of the hook */
+	hook_cb_t hook;
 
 	/** Send messages with a fixed rate over this path */
 	double rate;
