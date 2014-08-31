@@ -142,7 +142,7 @@ int config_parse_path(config_setting_t *cfg,
 int config_parse_node(config_setting_t *cfg, struct node **nodes)
 {
 	struct node *node;
-	const char *remote, *local, *key;
+	const char *remote, *local;
 
 
 	/* Allocate memory */
