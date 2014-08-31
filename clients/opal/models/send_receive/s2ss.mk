@@ -51,7 +51,7 @@ INCLUDES = -I.
 LIBPATH  = -L. 
 CC_OPTS =
 LD_OPTS = 
-OBJS = ${PROGRAM}.o Sched.o Interface.o Socket.o
+OBJS = s2ss.o msg.o sched.o socket.o
 
 ADDLIB = -lOpalCore -lOpalUtils
 LIBS   = -lOpalAsyncApiCore $(ADDLIB) $(TARGET_LIB)

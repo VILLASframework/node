@@ -41,7 +41,6 @@
 #include "config.h"
 #include "msg.h"
 #include "socket.h"
-#include "interface.h"
 
 /* This is just for initializing the shared memory access to communicate
  * with the RT-LAB model. It's easier to remember the arguments like this */
