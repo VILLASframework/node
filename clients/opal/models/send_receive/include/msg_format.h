@@ -15,8 +15,10 @@
  #include <endian.h>
 #endif
 
+#include "config.h"
+
 /** Maximum number of dword values in a message */
-#define MSG_VALUES		16
+#define MSG_VALUES		MAX_VALUES
 
 /** The current version number for the message format */
 #define MSG_VERSION		0
@@ -56,16 +58,17 @@ struct msg
 	unsigned version: 4; /**< Specifies the format of the remaining message (see MGS_VERSION) */
 	unsigned type	: 2; /**< Data or control message (see MSG_TYPE_*) */
 	unsigned endian	: 1; /**< Specifies the byteorder of the message (see MSG_ENDIAN_*) */
-	unsigned 	: 1; /**< Reserved padding bits */
+	unsigned	: 1; /**< Reserved padding bits */
 
 	/** Number of valid dword values in msg::data[] */
 	uint8_t length;
 	/** The sequence number gets incremented by one for consecutive messages */
 	uint16_t sequence;
+
 	/** The message payload */
 	union {
-		float f;
-		uint32_t i;
+		float f;	/**< Floating point values (note msg::endian) */
+		uint32_t i;	/**< Integer values (note msg::endian) */
 	} data[MSG_VALUES];
 } __attribute__((packed));
 

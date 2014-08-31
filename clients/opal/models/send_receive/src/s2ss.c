@@ -39,7 +39,7 @@
 
 /* This is the message format */
 #include "config.h"
-#include "msg_format.h"
+#include "msg.h"
 #include "socket.h"
 #include "interface.h"
 
@@ -51,10 +51,11 @@
 
 static void *SendToIPPort(void *arg)
 {
-	unsigned SendID = 1;
-	unsigned i, n;
+	unsigned int SendID = 1;
+	unsigned int ModelState;
+	unsigned int i, n;
+	unsigned short seq = 0;
 	int nbSend = 0;
-	unsigned ModelState;
 
 	/* Data from OPAL-RT model */
 	double mdldata[MSG_VALUES];
@@ -97,13 +98,13 @@ static void *SendToIPPort(void *arg)
 
 /******* FORMAT TO SPECIFIC PROTOCOL HERE *****************************/
 			// msg.dev_id = SendID; /* Use the SendID as a device ID here */
-			msg.sequence++;
+			msg.sequence = htons(seq++);
 			msg.length = mdldata_size / sizeof(double);
 
 			for (i = 0; i < msg.length; i++)
-				msg.data[i] = htonf((float) mdldata[i]);
+				msg.data[i] = (float) mdldata[i].f;
 
-			msg_size = 4 * (msg.length + 1);
+			msg_size = MSG_LEN(msg.length);
 /**********************************************************************/
 
 			/* Perform the actual write to the ip port */
@@ -159,6 +160,8 @@ static void *RecvFromIPPort(void *arg)
 			msg_size = sizeof(msg);
 			n  = RecvPacket((char *) &msg, msg_size, 1.0);
 
+			/** @todo: Check and ntohs() sequence number! */
+
 			if (msg.version != MSG_VERSION) {
 				OpalPrint("%s: Received message with unknown version. Skipping..\n", PROGNAME);
 				continue;
@@ -169,7 +172,7 @@ static void *RecvFromIPPort(void *arg)
 				continue;
 			}
 
-			msg_size =  4 * (msg.length + 1);
+			msg_size =  MSG_LEN(msg.length);
 /***********************************************************************/
 
 			if (n < 1) {
@@ -208,8 +211,11 @@ static void *RecvFromIPPort(void *arg)
 					PROGNAME, RecvID, mdldata_size / sizeof(double), msg.length);
 			}
 
+			if (msg.endian != MSG_ENDIAN_HOST)
+				msg_swap(&msg);
+
 			for (i = 0; i < msg.length; i++)
-				mdldata[i] = (double) ntohf(msg.data[i]);
+				mdldata[i] = (double) msg.data[i].f;
 /************************************************************************/
 
 			OpalSetAsyncRecvIconData(mdldata, mdldata_size, RecvID);

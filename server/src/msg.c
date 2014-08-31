@@ -18,8 +18,6 @@ void msg_swap(struct msg *m)
 {
 	uint32_t *data = (uint32_t *) m->data;
 
-	/* Swap sequence number */
-	m->sequence = bswap_16(m->sequence);
 
 	/* Swap data */
 	for (int i = 0; i < m->length; i++)
@@ -58,19 +56,19 @@ int msg_fscan(FILE *f, struct msg *m)
 
 void msg_random(struct msg *m)
 {
-	assert(m->endian == MSG_ENDIAN_HOST);
-
 	for (int i = 0; i < m->length; i++)
 		m->data[i].f += (float) random() / RAND_MAX - .5;
 
+	m->endian = MSG_ENDIAN_HOST;
 	m->sequence++;
 }
 
 int msg_send(struct msg *m, struct node *n)
 {
-	/* We dont care about the endianess of outgoing messages */
+	/* Convert headers to network byte order */
+	m->sequence = ntohs(m->sequence);
 
-	if (sendto(n->sd, m, (m->length+1) * 4, 0,
+	if (sendto(n->sd, m, MSG_LEN(m->length), 0,
 	    (struct sockaddr *) &n->remote,
 	    sizeof(struct sockaddr_in)) < 0)
 		perror("Failed sendto");
@@ -87,6 +85,9 @@ int msg_recv(struct msg *m, struct node *n)
 	/* Receive message from socket */
 	if (recv(n->sd, m, sizeof(struct msg), 0) < 0)
 		perror("Failed recv");
+
+	/* Convert headers to host byte order */
+	m->sequence = htons(m->sequence);
 
 	/* Convert message to host endianess */
 	if (m->endian != MSG_ENDIAN_HOST)

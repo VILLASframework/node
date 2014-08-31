@@ -40,11 +40,13 @@ INTERNAL_LIBRARY3=-lOpalAsyncApiCore
 s2ss.mk=Ascii
 include\config.h=Ascii
 include\interface.h=Ascii
+include\msg.h=Ascii
 include\msg_format.h=Ascii
 include\sched.h=Ascii
 include\socket.h=Ascii
 src\s2ss.c=Ascii
 src\interface.c=Ascii
+src\msg.c=Ascii
 src\sched.c=Ascii
 src\socket.c=Ascii
 [ExtraPutFilesComp_1_RT_LAB]
