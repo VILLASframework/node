@@ -6,11 +6,27 @@
 
 ## Compilation
 
+### Prerequisites
+
 Install libraries including developement headers for:
 
- - libconfig
+ - _libconfig_ for parsing the config file
+ - _libsodium_ for message authentification and signing
 
-Start the compilation with:
+	$ sudo apt-get install iproute2 libconfig-dev libsodium-dev
+or:
+
+	$ sudo yum install iproute2 libconfig-devel libsodium-devel
+
+**Important:** Please note that the server requires the
+[iproute2](http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2)
+tools to setup the network emulation and interfaces.
+
+### Compilation
+
+Checkout the `Makefile` and `include/config.h` for some config options which have to be specified by compile time.
+
+Afterwards, start the compilation with:
 
 	$ make
 
@@ -24,19 +40,3 @@ Install the server by executing:
 
 Add `PREFIX=/usr/local/` to specify a non-standard installation destination.
 
-**Important:** Please note that the server requires the
-[iproute2](http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2)
-tools to setup the network emulation and interfaces.
-
-Install these via:
-
-	$ sudo yum install iproute2
-or:
-
-	$ sudo apt-get install iproute2
-
-## Configuration
-
-See [configuration](Configuration.md) for more information.
-
-@todo Move documentation from Mainpage to Server.
