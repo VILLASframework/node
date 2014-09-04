@@ -45,21 +45,19 @@ int if_getegress(struct sockaddr_in *sa)
 int if_getirqs(struct interface *i)
 {
 	char dirname[NAME_MAX];
-	DIR *dir;
 
 	snprintf(dirname, sizeof(dirname), "/sys/class/net/%s/device/msi_irqs/", i->name);
-	dir = opendir(dirname);
+	DIR *dir = opendir(dirname);
 	if (!dir)
-		return -1;
+		error("Cannot open IRQs for interface '%s'", i->name);
 
 	memset(&i->irqs, 0, sizeof(char) * IF_IRQ_MAX);
 
-	int n = 0;
+	int irq, n = 0;
 	struct dirent *entry;
 	while ((entry = readdir(dir)) && n < IF_IRQ_MAX) {
-		if (entry->d_type & DT_REG) {
-			i->irqs[n++] = atoi(entry->d_name);
-		}
+		if ((irq = atoi(entry->d_name)))
+			i->irqs[n++] = irq;
 	}
 
 	debug(7, "Found %u interrupts for interface '%s'", n, i->name);
@@ -84,6 +82,8 @@ int if_setaffinity(struct interface *i, int affinity)
 			fclose(file);
 			debug(5, "Set affinity of IRQ %u for interface '%s' to %#x", i->irqs[n], i->name, affinity);
 		}
+		else
+			error("Failed to set affinity for interface '%s'", i->name);
 	}
 
 	return 0;
