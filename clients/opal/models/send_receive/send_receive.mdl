@@ -7,7 +7,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.443"
+    ComputedModelVersion    "1.445"
     NumModelReferences	    0
     NumTestPointedSignals   0
   }
@@ -28,9 +28,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "ACS"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Thu Sep 04 11:03:30 2014"
-  RTWModifiedTimeStamp	  331729408
-  ModelVersionFormat	  "1.%<AutoIncrement:443>"
+  LastModifiedDate	  "Thu Sep 04 16:25:19 2014"
+  RTWModifiedTimeStamp	  331748717
+  ModelVersionFormat	  "1.%<AutoIncrement:445>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -571,7 +571,7 @@ Model {
       }
       Name		      "Configuration"
       CurrentDlgPage	      "Solver"
-      ConfigPrmDlgPosition     [ 400, 210, 1280, 840 ] 
+      ConfigPrmDlgPosition     [ 326, 217, 1222, 885 ] 
     }
     PropName		    "ConfigurationSets"
   }
@@ -763,7 +763,7 @@ Model {
   }
   System {
     Name		    "send_receive"
-    Location		    [611, 495, 1431, 1394]
+    Location		    [826, 82, 1646, 981]
     Open		    on
     ModelBrowserVisibility  off
     ModelBrowserWidth	    247
@@ -1269,13 +1269,13 @@ Model {
 	}
 	Block {
 	  BlockType		  DiscretePulseGenerator
-	  Name			  "data ready ? kHz"
+	  Name			  "data ready 2 kHz"
 	  SID			  "20"
 	  Ports			  [0, 1]
 	  Position		  [290, 131, 335, 149]
 	  NamePlacement		  "alternate"
 	  Period		  "10"
-	  SampleTime		  "0.1"
+	  SampleTime		  "0.00005"
 	}
 	Block {
 	  BlockType		  Reference
@@ -1430,7 +1430,7 @@ Model {
 	  }
 	}
 	Line {
-	  SrcBlock		  "data ready ? kHz"
+	  SrcBlock		  "data ready 2 kHz"
 	  SrcPort		  1
 	  DstBlock		  "send message 1"
 	  DstPort		  1
