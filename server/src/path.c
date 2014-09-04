@@ -80,8 +80,7 @@ static void * path_run(void *arg)
 			p->invalid++;
 			continue;
 		}
-
-		if (m->type != MSG_TYPE_DATA) {
+		else if (m->type != MSG_TYPE_DATA) {
 			p->invalid++;
 			continue;
 		}
@@ -114,13 +113,14 @@ static void * path_run(void *arg)
 		}
 
 		/* At fixed rate mode, messages are send by another thread */
-		if (p->rate)
-			p->last = m;
-		else
+//		if (p->rate)
+//			p->last = m;
+//		else {
 			msg_send(m, p->out);
+			p->sent++;
+//		}
 
 		p->sequence = m->sequence;
-		p->sent++;
 	}
 
 	free(m);
