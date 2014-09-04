@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
 		info("---------------------------------------------------------------------------");
 
 		while (1) {
-			sleep(5);
+			sleep(1);
 			path_stats(p);
 
 			p = (p->next) ? p->next : paths;
