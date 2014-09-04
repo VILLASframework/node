@@ -10,8 +10,9 @@
 
 #ifdef __linux__
  #include <byteswap.h>
-#elif defined(__powerpc__)
+#elif defined(__PPC__) /* Xilinx toolchain */
  #include <xil_io.h>
+ #define bswap_32(x)	Xil_EndianSwap32(x)
 #endif
 
 #include "msg.h"
@@ -20,13 +21,9 @@
 
 void msg_swap(struct msg *m)
 {
-	for (int i = 0; i < m->length; i++) {
-#ifdef __linux__
+	int i;
+	for (i = 0; i < m->length; i++)
 		m->data[i].i = bswap_32(m->data[i].i);
-#elif defined(__powerpc__)
-		m->data[i].i = Xil_EndianSwap32(m->data[i].i);
-#endif
-	}
 
 	m->endian ^= 1;
 }

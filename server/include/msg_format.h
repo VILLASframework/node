@@ -13,8 +13,8 @@
 #ifdef __linux__
  #define _BSD_SOURCE    	1
  #include <endian.h>
-#elif !defined(BYTE_ORDER)
- #error "Please define BYTE_ORDER"
+#elif defined(__PPC__) /* Xilinx toolchain */
+  #include <lwip/arch.h>
 #endif
 
 #include "config.h"
@@ -37,6 +37,8 @@
  #define MSG_ENDIAN_HOST        MSG_ENDIAN_LITTLE
 #elif BYTE_ORDER == BIG_ENDIAN
  #define MSG_ENDIAN_HOST        MSG_ENDIAN_BIG
+#else
+ #error "Unknown byte order!"
 #endif
 
 /** The total length of a message */
