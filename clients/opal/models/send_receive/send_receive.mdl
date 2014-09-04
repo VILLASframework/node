@@ -7,7 +7,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.435"
+    ComputedModelVersion    "1.443"
     NumModelReferences	    0
     NumTestPointedSignals   0
   }
@@ -28,9 +28,9 @@ Model {
   ModifiedByFormat	  "%<Auto>"
   LastModifiedBy	  "ACS"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Mon Jul 14 21:00:08 2014"
-  RTWModifiedTimeStamp	  327272401
-  ModelVersionFormat	  "1.%<AutoIncrement:435>"
+  LastModifiedDate	  "Thu Sep 04 11:03:30 2014"
+  RTWModifiedTimeStamp	  331729408
+  ModelVersionFormat	  "1.%<AutoIncrement:443>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -795,7 +795,7 @@ Model {
       System {
 	Name			"sc_console"
 	Location		[-17, 82, 1626, 997]
-	Open			on
+	Open			off
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
 	ScreenColor		"white"
@@ -868,7 +868,7 @@ Model {
 	  Name			  "Mux"
 	  SID			  "34"
 	  Ports			  [2, 1]
-	  Position		  [465, 246, 470, 284]
+	  Position		  [465, 236, 470, 274]
 	  ShowName		  off
 	  Inputs		  "2"
 	  DisplayOption		  "bar"
@@ -878,7 +878,7 @@ Model {
 	  Name			  "OpComm"
 	  SID			  "9"
 	  Ports			  [3, 3]
-	  Position		  [225, 138, 265, 212]
+	  Position		  [225, 135, 255, 215]
 	  LibraryVersion	  "1.348"
 	  SourceBlock		  "rtlab/OpComm"
 	  SourceType		  "RT-LAB OpComm"
@@ -915,7 +915,7 @@ Model {
 	  Name			  "errors"
 	  SID			  "10"
 	  Ports			  [1]
-	  Position		  [385, 82, 455, 128]
+	  Position		  [385, 72, 455, 118]
 	  BackgroundColor	  "yellow"
 	  FontName		  "Arial"
 	  FontSize		  8
@@ -927,7 +927,7 @@ Model {
 	  Name			  "message 1"
 	  SID			  "40"
 	  Ports			  [1]
-	  Position		  [590, 169, 620, 201]
+	  Position		  [590, 159, 620, 191]
 	  BackgroundColor	  "yellow"
 	  Floating		  off
 	  Location		  [826, 517, 1334, 952]
@@ -958,7 +958,7 @@ Model {
 	  Name			  "message 2"
 	  SID			  "33"
 	  Ports			  [1]
-	  Position		  [590, 249, 620, 281]
+	  Position		  [590, 239, 620, 271]
 	  BackgroundColor	  "yellow"
 	  Floating		  off
 	  Location		  [826, 517, 1334, 952]
@@ -1050,7 +1050,7 @@ Model {
 	  Name			  "reception status"
 	  SID			  "12"
 	  Ports			  [1]
-	  Position		  [390, 148, 450, 172]
+	  Position		  [390, 133, 450, 157]
 	  BackgroundColor	  "yellow"
 	  FontName		  "Arial"
 	  FontSize		  8
@@ -1067,14 +1067,14 @@ Model {
 	Line {
 	  SrcBlock		  "OpComm"
 	  SrcPort		  2
-	  Points		  [35, 0; 0, 80]
+	  Points		  [45, 0; 0, 80]
 	  Branch {
 	    Labels		    [1, 0]
 	    DstBlock		    "Demux1"
 	    DstPort		    1
 	  }
 	  Branch {
-	    Points		    [0, -70]
+	    Points		    [0, -80]
 	    DstBlock		    "message 1"
 	    DstPort		    1
 	  }
@@ -1088,20 +1088,20 @@ Model {
 	Line {
 	  SrcBlock		  "OpComm"
 	  SrcPort		  1
+	  Points		  [10, 0]
 	  DstBlock		  "Demux"
 	  DstPort		  1
 	}
 	Line {
 	  SrcBlock		  "Demux"
 	  SrcPort		  1
-	  Points		  [45, 0; 0, -20]
+	  Points		  [45, 0; 0, -30]
 	  DstBlock		  "errors"
 	  DstPort		  1
 	}
 	Line {
 	  SrcBlock		  "Demux"
 	  SrcPort		  2
-	  Points		  [45, 0; 0, 15]
 	  DstBlock		  "reception status"
 	  DstPort		  1
 	}
@@ -1122,7 +1122,7 @@ Model {
 	Line {
 	  SrcBlock		  "OpComm"
 	  SrcPort		  3
-	  Points		  [15, 0; 0, 150]
+	  Points		  [25, 0; 0, 150]
 	  Branch {
 	    Points		    [0, 0]
 	    DstBlock		    "Demux2"
@@ -1141,37 +1141,37 @@ Model {
 	  DstPort		  1
 	}
 	Line {
-	  Labels		  [1, 0]
-	  SrcBlock		  "Demux1"
+	  SrcBlock		  "Demux2"
 	  SrcPort		  5
-	  Points		  [20, 0; 0, -30]
+	  Points		  [40, 0; 0, -45]
 	  Branch {
+	    Points		    [0, -70]
 	    DstBlock		    "Mux"
-	    DstPort		    1
+	    DstPort		    2
 	  }
 	  Branch {
-	    Points		    [0, 65]
 	    DstBlock		    "Subtract"
-	    DstPort		    1
+	    DstPort		    2
 	  }
 	}
 	Line {
-	  SrcBlock		  "Demux2"
+	  SrcBlock		  "Demux1"
 	  SrcPort		  5
-	  Points		  [35, 0; 0, -45]
+	  Points		  [25, 0]
 	  Branch {
-	    Points		    [0, -60]
+	    Points		    [0, -40]
 	    DstBlock		    "Mux"
-	    DstPort		    2
+	    DstPort		    1
 	  }
 	  Branch {
+	    Points		    [0, 35]
 	    DstBlock		    "Subtract"
-	    DstPort		    2
+	    DstPort		    1
 	  }
 	}
 	Annotation {
 	  Name			  "Simple analysis of round trip time"
-	  Position		  [293, 52]
+	  Position		  [273, 42]
 	  FontName		  "Verdana"
 	  FontSize		  14
 	  FontWeight		  "bold"
@@ -1195,7 +1195,7 @@ Model {
       System {
 	Name			"sm_model"
 	Location		[2, 82, 1662, 980]
-	Open			off
+	Open			on
 	ModelBrowserVisibility	off
 	ModelBrowserWidth	200
 	ScreenColor		"white"
@@ -1239,9 +1239,9 @@ Model {
 	  SourceType		  "OpAsyncIPCtrl"
 	  ctl_id		  "1"
 	  proto			  "UDP/IP"
-	  ip_addr_remote	  "134.130.169.31"
-	  ip_port_remote	  "10200"
-	  ip_port_local		  "10201"
+	  ip_addr_remote	  "10.10.10.1"
+	  ip_port_remote	  "12000"
+	  ip_port_local		  "12001"
 	  ip_addr_mcast		  "0.0.0.0"
 	  exe_name		  "AsyncIP"
 	}
@@ -1269,12 +1269,13 @@ Model {
 	}
 	Block {
 	  BlockType		  DiscretePulseGenerator
-	  Name			  "data ready 1 kHz"
+	  Name			  "data ready ? kHz"
 	  SID			  "20"
 	  Ports			  [0, 1]
 	  Position		  [290, 131, 335, 149]
 	  NamePlacement		  "alternate"
-	  SampleTime		  "0.001"
+	  Period		  "10"
+	  SampleTime		  "0.1"
 	}
 	Block {
 	  BlockType		  Reference
@@ -1429,7 +1430,7 @@ Model {
 	  }
 	}
 	Line {
-	  SrcBlock		  "data ready 1 kHz"
+	  SrcBlock		  "data ready ? kHz"
 	  SrcPort		  1
 	  DstBlock		  "send message 1"
 	  DstPort		  1

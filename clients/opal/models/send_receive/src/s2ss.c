@@ -101,7 +101,7 @@ static void *SendToIPPort(void *arg)
 			msg.length = mdldata_size / sizeof(double);
 
 			for (i = 0; i < msg.length; i++)
-				msg.data[i] = (float) mdldata[i].f;
+				msg.data[i].f = (float) mdldata[i];
 
 			msg_size = MSG_LEN(msg.length);
 /**********************************************************************/
@@ -156,8 +156,7 @@ static void *RecvFromIPPort(void *arg)
 		do {
 
 /******* FORMAT TO SPECIFIC PROTOCOL HERE ******************************/
-			msg_size = sizeof(msg);
-			n  = RecvPacket((char *) &msg, msg_size, 1.0);
+			n  = RecvPacket((char *) &msg, sizeof(msg), 1.0);
 
 			/** @todo: Check and ntohs() sequence number! */
 
@@ -172,6 +171,11 @@ static void *RecvFromIPPort(void *arg)
 			}
 
 			msg_size =  MSG_LEN(msg.length);
+			
+			msg.sequence = ntohs(msg.sequence);
+			
+			if (msg.endian != MSG_ENDIAN_HOST)
+				msg_swap(&msg);
 /***********************************************************************/
 
 			if (n < 1) {
@@ -209,9 +213,6 @@ static void *RecvFromIPPort(void *arg)
 				OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds what was received (%d)\n",
 					PROGNAME, RecvID, mdldata_size / sizeof(double), msg.length);
 			}
-
-			if (msg.endian != MSG_ENDIAN_HOST)
-				msg_swap(&msg);
 
 			for (i = 0; i < msg.length; i++)
 				mdldata[i] = (double) msg.data[i].f;

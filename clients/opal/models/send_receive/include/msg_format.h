@@ -57,10 +57,17 @@
  **/
 struct msg
 {
+#if BYTE_ORDER == BIG_ENDIAN
 	unsigned version: 4; /**< Specifies the format of the remaining message (see MGS_VERSION) */
 	unsigned type	: 2; /**< Data or control message (see MSG_TYPE_*) */
 	unsigned endian	: 1; /**< Specifies the byteorder of the message (see MSG_ENDIAN_*) */
 	unsigned	: 1; /**< Reserved padding bits */
+#elif BYTE_ORDER == LITTLE_ENDIAN
+	unsigned	: 1; /**< Reserved padding bits */
+	unsigned endian	: 1; /**< Specifies the byteorder of the message (see MSG_ENDIAN_*) */
+	unsigned type	: 2; /**< Data or control message (see MSG_TYPE_*) */
+	unsigned version: 4; /**< Specifies the format of the remaining message (see MGS_VERSION) */
+#endif
 
 	/** Number of valid dword values in msg::data[] */
 	uint8_t length;

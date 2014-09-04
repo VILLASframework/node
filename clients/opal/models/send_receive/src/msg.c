@@ -14,11 +14,12 @@
 
 void msg_swap(struct msg *m)
 {
-	for (int i = 0; i < m->length; i++) {
+	int i;
+	for (i = 0; i < m->length; i++) {
 #ifdef __linux__
-		data[i] = bswap_32(m->data[i].i);
+		m->data[i].i = bswap_32(m->data[i].i);
 #elif defined(__powerpc__)
-		data[i] = Xil_EndianSwap32(m->data[i].i);
+		m->data[i].i = Xil_EndianSwap32(m->data[i].i);
 #endif
 	}
 

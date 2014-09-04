@@ -15,7 +15,7 @@
 #include "OpalPrint.h"
 
 #include "config.h"
-#include "sched.h"
+#include "utils.h"
 
 #if defined(__QNXNTO__)
 #       include <process.h>
