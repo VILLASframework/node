@@ -164,18 +164,19 @@ static void *RecvFromIPPort(void *arg)
 				OpalPrint("%s: Received message with unknown version. Skipping..\n", PROGNAME);
 				continue;
 			}
-
-			if (msg.type != MSG_TYPE_DATA) {
+			else if (msg.type != MSG_TYPE_DATA) {
 				OpalPrint("%s: Received no data. Skipping..\n", PROGNAME);
 				continue;
 			}
-
-			msg_size =  MSG_LEN(msg.length);
 			
+			/** @todo: We may check the sequence number here. */
+
 			msg.sequence = ntohs(msg.sequence);
 			
 			if (msg.endian != MSG_ENDIAN_HOST)
 				msg_swap(&msg);
+			
+			msg_size =  MSG_LEN(msg.length);
 /***********************************************************************/
 
 			if (n < 1) {
