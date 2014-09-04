@@ -15,7 +15,7 @@
 #define VERSION		__GIT_TAG__ "-" __GIT_REV__
 
 /** Maximum number of double values in a struct msg */
-#define MAX_VALUES	6
+#define MAX_VALUES	16
 
 /** Maximum number of registrable hook functions per path */
 #define MAX_HOOKS	5

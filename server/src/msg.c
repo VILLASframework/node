@@ -68,7 +68,7 @@ void msg_random(struct msg *m)
 int msg_send(struct msg *m, struct node *n)
 {
 	/* Convert headers to network byte order */
-	m->sequence = ntohs(m->sequence);
+	m->sequence = htons(m->sequence);
 
 	if (sendto(n->sd, m, MSG_LEN(m->length), 0,
 	    (struct sockaddr *) &n->remote,
@@ -89,13 +89,14 @@ int msg_recv(struct msg *m, struct node *n)
 		perror("Failed recv");
 
 	/* Convert headers to host byte order */
-	m->sequence = htons(m->sequence);
+	m->sequence = ntohs(m->sequence);
 
 	/* Convert message to host endianess */
 	if (m->endian != MSG_ENDIAN_HOST)
 		msg_swap(m);
 
-	debug(10, "Message received from node '%s'", n->name);
+	debug(10, "Message received from node '%s': version=%u, type=%u, endian=%u, length=%u, sequence=%u",
+		n->name, m->version, m->type, m->endian, m->length, m->sequence);
 
 	return 0;
 }
