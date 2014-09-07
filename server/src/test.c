@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 		printf("  TEST     has to be 'latency' for now\n");
 		printf("  LOCAL    is a IP:PORT combination of the local host\n");
 		printf("  REMOTE   is a IP:PORT combination of the remote host\n\n");
-		printf("s2ss Simulator2Simulator Server v%s\n", VERSION);
+		printf("Simulator2Simulator Server %s (built on %s %s)\n", BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
 		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
 		exit(EXIT_FAILURE);
 	}

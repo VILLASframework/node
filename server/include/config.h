@@ -12,7 +12,7 @@
 #define _CONFIG_H_
 
 /** The version number of the s2ss server */
-#define VERSION		__GIT_TAG__ "-" __GIT_REV__
+#define VERSION		"v0.4" __GIT_REV__
 
 /** Maximum number of double values in a struct msg */
 #define MAX_VALUES	16
