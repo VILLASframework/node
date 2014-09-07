@@ -48,8 +48,10 @@ int if_getirqs(struct interface *i)
 
 	snprintf(dirname, sizeof(dirname), "/sys/class/net/%s/device/msi_irqs/", i->name);
 	DIR *dir = opendir(dirname);
-	if (!dir)
-		error("Cannot open IRQs for interface '%s'", i->name);
+	if (!dir) {
+		warn("Cannot open IRQs for interface '%s'", i->name);
+		return -ENOENT;
+	}
 
 	memset(&i->irqs, 0, sizeof(char) * IF_IRQ_MAX);
 
