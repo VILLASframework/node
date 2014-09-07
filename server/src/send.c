@@ -31,18 +31,17 @@ void quit(int sig, siginfo_t *si, void *ptr)
 
 int main(int argc, char *argv[])
 {
-	if (argc != 3 && argc != 4) {
-		printf("Usage: %s VALUES REMOTE [LOCAL]\n", argv[0]);
+	if (argc != 2 && argc != 3) {
+		printf("Usage: %s REMOTE [LOCAL]\n", argv[0]);
 		printf("  REMOTE   is a IP:PORT combination of the remote host\n");
 		printf("  LOCAL    is an optional IP:PORT combination of the local host\n");
-		printf("  VALUES   is the number of values to be read from stdin\n\n");
 		printf("Simulator2Simulator Server %s (built on %s %s)\n", BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
 		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
 		exit(EXIT_FAILURE);
 	}
 
 	struct node n = NODE_INIT("remote");
-	struct msg  m = MSG_INIT(atoi(argv[1]));
+	struct msg  m = MSG_INIT(0);
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -55,11 +54,11 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	/* Resolve addresses */
-	if (resolve_addr(argv[2], &n.remote, 0))
-		error("Failed to resolve remote address: %s", argv[2]);
+	if (resolve_addr(argv[1], &n.remote, 0))
+		error("Failed to resolve remote address: %s", argv[1]);
 
-	if (argc == 4 && resolve_addr(argv[3], &n.local, 0))
-		error("Failed to resolve local address: %s", argv[3]);
+	if (argc == 3 && resolve_addr(argv[2], &n.local, 0))
+		error("Failed to resolve local address: %s", argv[2]);
 	else {
 		n.local.sin_family = AF_INET;
 		n.local.sin_addr.s_addr = INADDR_ANY;
@@ -71,15 +70,15 @@ int main(int argc, char *argv[])
 
 	while (!feof(stdin)) {
 		msg_fscan(stdin, &m);
-		msg_send(&m, &n);
 
-#if 1
+#if 1 /* Preprend timestamp */
 		struct timespec ts;
 		clock_gettime(CLOCK_REALTIME, &ts);
-		fprintf(stdout, "%17.6f", ts.tv_sec + ts.tv_nsec / 1e9);
+		fprintf(stdout, "%17.3f\t", ts.tv_sec + ts.tv_nsec / 1e9);
 #endif
 
 		msg_fprint(stdout, &m);
+		msg_send(&m, &n);	
 	}
 
 	return 0;

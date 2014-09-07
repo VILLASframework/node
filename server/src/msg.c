@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 
 #ifdef __linux__
  #include <byteswap.h>
@@ -33,10 +34,10 @@ int msg_fprint(FILE *f, struct msg *m)
 	if (m->endian != MSG_ENDIAN_HOST)
 		msg_swap(m);
 
-	fprintf(f, "%-8hu", m->sequence);
+	fprintf(f, "%hu", m->sequence);
 
 	for (int i = 0; i < m->length; i++)
-		fprintf(f, "%-12.6f ", m->data[i].f);
+		fprintf(f, "\t%.6f", m->data[i].f);
 
 	fprintf(f, "\n");
 
@@ -45,16 +46,28 @@ int msg_fprint(FILE *f, struct msg *m)
 
 int msg_fscan(FILE *f, struct msg *m)
 {
-	fscanf(f, "%8hu ", &m->sequence);
+	char line[MSG_VALUES * 16];
+	char *ptr = line;
 
-	for (int i = 0; i < m->length; i++)
-		fscanf(f, "%12f ", &m->data[i].f);
+	if (!fgets(line, sizeof(line), f))
+		return 0;
 
-	fscanf(f, "\n");
+	m->sequence = (uint16_t) strtol(ptr, &ptr, 10);
 
+	int i;
+	for (i = 0; i <= MSG_VALUES; i++) {
+		while(isblank(*ptr++));
+		if (*ptr == '\n' || *ptr == '\0')
+			break;
+
+		m->data[i].f = strtod(ptr, &ptr);
+		info("read value %u => %f", i, m->data[i].f);
+	}
+
+	m->length = i;
 	m->endian = MSG_ENDIAN_HOST;
-
-	return 0;
+	
+	return m->length;
 }
 
 void msg_random(struct msg *m)
