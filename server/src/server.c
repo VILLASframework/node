@@ -194,20 +194,19 @@ int main(int argc, char *argv[])
 	/* Connect all nodes and start one thread per path */
 	start();
 
-	if (V >= 5) {
+	if (settings.stats > 0) {
 		struct path *p = paths;
 
-		info("");
 		info("Runtime Statistics:");
 		info("%12s " MAG("=>") " %-12s:   %-8s %-8s %-8s %-8s %-8s",
 			"Source", "Destination", "#Sent", "#Recv", "#Delay", "#Dupl", "#Inval");
 		info("---------------------------------------------------------------------------");
 
 		while (1) {
-			sleep(1);
+			usleep(settings.stats * 1e6);
 			path_stats(p);
 
-			p = (p->next) ? p->next : paths;
+			p = (p->next) ? p->next : paths; 
 		}
 	}
 	else

@@ -28,6 +28,8 @@ struct settings {
 	int affinity;
 	/** Debug log level */
 	int debug;
+	/** Interval for path statistics. Set to 0 to disable themo disable them. */
+	double stats;
 
 	/** A libconfig object pointing to the root of the config file */
 	config_setting_t *cfg;

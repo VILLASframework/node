@@ -68,6 +68,7 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 	config_setting_lookup_int(cfg, "affinity", &set->affinity);
 	config_setting_lookup_int(cfg, "priority", &set->priority);
 	config_setting_lookup_int(cfg, "debug", &set->debug);
+	config_setting_lookup_float(cfg, "stats", &set->stats);
 
 	debug = set->debug;
 
