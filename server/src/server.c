@@ -144,13 +144,8 @@ int main(int argc, char *argv[])
 	}
 
 	info("This is %s %s", BLU("s2ss"), BLU(VERSION));
-	debug(1, "Running with debug level: %u", V);
 
-	/* Check priviledges */
-	if (getuid() != 0)
-		error("The server requires superuser privileges!");
-
-	/* Setup signals */
+	/* Setup exit handler */
 	struct sigaction sa_quit = {
 		.sa_flags = SA_SIGINFO,
 		.sa_sigaction = quit
@@ -164,6 +159,12 @@ int main(int argc, char *argv[])
 	/* Parse configuration file */
 	config_init(&config);
 	config_parse(argv[1], &config, &settings, &nodes, &paths);
+
+	debug(1, "Running with debug level: %u", settings.debug);
+
+	/* Check priviledges */
+	if (getuid() != 0)
+		error("The server requires superuser privileges!");
 
 	/* Check for realtime kernel patch */
 	struct stat st;

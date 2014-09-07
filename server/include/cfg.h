@@ -26,6 +26,8 @@ struct settings {
 	int priority;
 	/** Process affinity of the server and all created threads */
 	int affinity;
+	/** Debug log level */
+	int debug;
 
 	/** A libconfig object pointing to the root of the config file */
 	config_setting_t *cfg;

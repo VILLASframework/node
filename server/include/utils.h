@@ -38,6 +38,8 @@ struct settings;
 struct sockaddr_in;
 struct sockaddr;
 
+extern int debug;
+
 /** Logs variadic messages to stdout.
  *
  * @param lvl The log level
@@ -84,7 +86,7 @@ struct timespec timespec_rate(double rate);
 
 /** Printf alike debug message with level. */
 #define debug(lvl, msg, ...) do { \
-	if (lvl <= V) \
+	if (lvl <= debug) \
 		print(DEBUG, msg, ##__VA_ARGS__); \
 	} while (0)
 

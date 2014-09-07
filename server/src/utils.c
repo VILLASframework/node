@@ -21,6 +21,9 @@
 #include "cfg.h"
 #include "utils.h"
 
+/* This global variable contains the debug level for debug() and assert() macros */
+int debug = V;
+
 void print(enum log_level lvl, const char *fmt, ...)
 {
 	struct timespec ts;
