@@ -17,9 +17,6 @@
 /** Maximum number of double values in a struct msg */
 #define MAX_VALUES	16
 
-/** Maximum number of registrable hook functions per path */
-#define MAX_HOOKS	5
-
 /** Socket priority */
 #define SOCKET_PRIO	7
 
