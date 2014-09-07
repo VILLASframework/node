@@ -30,7 +30,8 @@ void msg_swap(struct msg *m)
 
 int msg_fprint(FILE *f, struct msg *m)
 {
-	assert(m->endian == MSG_ENDIAN_HOST);
+	if (m->endian != MSG_ENDIAN_HOST)
+		msg_swap(m);
 
 	fprintf(f, "%-8hu", m->sequence);
 
