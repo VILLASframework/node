@@ -18,7 +18,7 @@
 #ifdef __GNUC__
  #define EXPECT(x, v)	__builtin_expect(x, v)
 #else
- #define EXPECT(x)	(x)
+ #define EXPECT(x, v)	(x)
 #endif
 
 /* Some color escape codes for pretty log messages */
@@ -76,7 +76,7 @@ struct timespec timespec_rate(double rate);
 
 /** Check assertion and exit if failed. */
 #define assert(exp) do { \
-	if (EXPECT(exp, 0)) { \
+	if (EXPECT(!exp, 0)) { \
 		print(ERROR, "Assertion failed: '%s' in %s, %s:%d", \
 			#exp, __FUNCTION__, __BASE_FILE__, __LINE__); \
 		exit(EXIT_FAILURE); \
