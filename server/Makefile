@@ -24,22 +24,18 @@ V ?= 2
 GIT_TAG = $(shell git describe --tags --abbrev=0)
 GIT_REV = $(shell git rev-parse --short HEAD)
 
-# Compiler and Linker flags
+# Compiler and linker flags
 LDFLAGS = -pthread -lrt -lm -lconfig
 CFLAGS = -g -std=c99 -Iinclude/ -MMD -Wall
 CFLAGS += -D_XOPEN_SOURCE=500 -D_GNU_SOURCE -DV=$(V)
 CFLAGS += -D__GIT_REV__='"$(GIT_REV)"' -D__GIT_TAG__='"$(GIT_TAG)"'
-CFLAGS += -fdiagnostics-color=auto
 
 .PHONY: all clean doc
+.PHONY: all clean
 
 clean:
 	$(RM) *~ *.o *.d
 	$(RM) $(TARGETS)
-
-doc:
-	$(DOXY)
-	$(MAKE) -C doc/latex
 
 # Include auto-generated dependencies
 -include $(wildcard *.d)
