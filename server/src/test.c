@@ -20,6 +20,8 @@
 
 int sd;
 
+#define CLOCK_ID	CLOCK_MONOTONIC_RAW
+
 void quit(int sig, siginfo_t *si, void *ptr)
 {
 	close(sd);
@@ -67,20 +69,25 @@ int main(int argc, char *argv[])
 		struct timespec *ts1 = (struct timespec *) &m.data;
 		struct timespec *ts2 = malloc(sizeof(struct timespec));
 
-		double rtt, rtt_max = LLONG_MIN, rtt_min = LLONG_MAX, avg = 0;
+		double rtt;
+		double rtt_max = LLONG_MIN;
+		double rtt_min = LLONG_MAX;
+		double avg = 0;
 		int run = 0;
 
 
 #if 1		/* Print header */
 		fprintf(stdout, "%17s", "timestamp");
 #endif
-		fprintf(stdout, "%10s%10s%10s%10s\n", "rtt", "min", "max", "avg");
+		fprintf(stdout, "%5s%10s%10s%10s%10s\n", "seq", "rtt", "min", "max", "avg");
 
 		while (1) {
-			clock_gettime(CLOCK_REALTIME, ts1);
+			m.sequence++;
+
+			clock_gettime(CLOCK_ID, ts1);
 			msg_send(&m, &n);
 			msg_recv(&m, &n);
-			clock_gettime(CLOCK_REALTIME, ts2);
+			clock_gettime(CLOCK_ID, ts2);
 
 			rtt = timespec_delta(ts1, ts2);
 
@@ -97,9 +104,7 @@ int main(int argc, char *argv[])
 			fprintf(stdout, "%17.6f", ts.tv_sec + ts.tv_nsec / 1e9);
 #endif
 
-			fprintf(stdout, "%10.3f%10.3f%10.3f%10.3f\n", 1e3 * rtt, 1e3 * rtt_min, 1e3 * rtt_max, 1e3 * avg / run);
-
-			m.sequence++;
+			fprintf(stdout, "%5u%10.3f%10.3f%10.3f%10.3f\n", m.sequence, 1e3 * rtt, 1e3 * rtt_min, 1e3 * rtt_max, 1e3 * avg / run);
 		}
 
 		free(ts2);
