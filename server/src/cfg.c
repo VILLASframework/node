@@ -99,7 +99,7 @@ int config_parse_path(config_setting_t *cfg,
 
 	path->in = node_lookup_name(in, *nodes);
 	if (!path->in)
-		cerror(cfg, "Invalid input node '%s'");
+		cerror(cfg, "Invalid input node '%s'", in);
 
 	path->out = node_lookup_name(out, *nodes);
 	if (!path->out)

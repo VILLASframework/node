@@ -112,6 +112,8 @@ static void * path_run(void *arg)
 			continue;
 		}
 
+		p->sequence = m->sequence;
+
 		/* At fixed rate mode, messages are send by another thread */
 //		if (p->rate)
 //			p->last = m;
@@ -119,8 +121,6 @@ static void * path_run(void *arg)
 			msg_send(m, p->out);
 			p->sent++;
 //		}
-
-		p->sequence = m->sequence;
 	}
 
 	free(m);
