@@ -122,6 +122,28 @@ struct timespec timespec_rate(double rate)
 	return ts;
 }
 
+void hist_print(unsigned *hist, int length)
+{
+	char buf[HIST_HEIGHT + 8];
+	int max = 0;
+
+	/* Get max */
+	for (int i = 0; i < length; i++) {
+		if (hist[i] > hist[max])
+			max = i;
+
+	}
+
+	/* Print plot */
+	for (int i = 0; i < length; i++) {
+		memset(buf, 0, sizeof(buf));
+		for (int j = 0; j < HIST_HEIGHT * (float) hist[i] / hist[max]; j++)
+			strcat(buf, "#");
+
+		info("%2u: %s", i, buf);
+	}
+}
+
 void hist_dump(unsigned *hist, int length)
 {
 	char tok[16];

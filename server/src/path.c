@@ -149,6 +149,7 @@ int path_stop(struct path *p)
 
 	if (p->received) {
 		path_stats(p);
+		hist_print(p->histogram, HIST_SEQ);
 		hist_dump(p->histogram, HIST_SEQ);
 	}
 

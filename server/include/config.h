@@ -21,6 +21,7 @@
 #define SOCKET_PRIO	7
 
 /* Some parameters for histogram statistics */
-#define HIST_SEQ	33
+#define HIST_HEIGHT	50
+#define HIST_SEQ	17
 
 #endif /* _CONFIG_H_ */
