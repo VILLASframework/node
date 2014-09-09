@@ -93,7 +93,7 @@ static void start()
 	for (struct path *p = paths; p; p = p->next) {
 		path_start(p);
 
-		info("Starting path: %12s " GRN("=>") " %-12s",
+		info("Path started: %12s " GRN("=>") " %-12s",
 			p->in->name, p->out->name);
 	}
 }
@@ -104,7 +104,7 @@ static void stop()
 	for (struct path *p = paths; p; p = p->next) {
 		path_stop(p);
 
-		info("Stopping path: %12s " RED("=>") " %-12s",
+		info("Path stopped: %12s " RED("=>") " %-12s",
 			p->in->name, p->out->name);
 	}
 
