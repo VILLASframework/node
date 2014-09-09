@@ -81,7 +81,8 @@ int tc_mark(struct interface *i, tc_hdl_t flowid, int mark)
 		"tc filter add dev %s protocol ip handle %u fw flowid %u:%u",
 		i->name, mark, TC_HDL_MAJ(flowid), TC_HDL_MIN(flowid));
 
-	debug(7, "Add traffic filter to interface '%s': fwmark %u => flowid %u", i->name, mark, flowid);
+	debug(7, "Add traffic filter to interface '%s': fwmark %u => flowid %u:%u",
+		i->name, mark, TC_HDL_MAJ(flowid), TC_HDL_MIN(flowid));
 	debug(8, "System: %s", cmd);
 
 	return system(cmd);
