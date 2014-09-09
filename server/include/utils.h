@@ -29,6 +29,7 @@
 #define MAG(str)	"\x1B[35m" str "\x1B[0m" /**< Print str in magenta */
 #define CYN(str)	"\x1B[36m" str "\x1B[0m" /**< Print str in cyan */
 #define WHT(str)	"\x1B[37m" str "\x1B[0m" /**< Print str in white */
+#define BLD(str)	"\x1B[1m"  str "\x1B[0m" /**< Print str in bold */ 
 
 /** The log level which is passed as first argument to print() */
 enum log_level { DEBUG, INFO, WARN, ERROR };
