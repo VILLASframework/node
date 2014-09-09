@@ -121,3 +121,18 @@ struct timespec timespec_rate(double rate)
 
 	return ts;
 }
+
+void hist_dump(unsigned *hist, int length)
+{
+	char tok[16];
+	char buf[length * sizeof(tok)];
+	memset(buf, 0, sizeof(buf));
+
+	/* Print in Matlab vector format */
+	for (int i = 0; i < length; i++) {
+		snprintf(tok, sizeof(tok), "%u ", hist[i]);
+		strncat(buf, tok, sizeof(buf)-strlen(buf));
+	}
+
+	info("hist = [ %s]", buf);
+}

@@ -49,6 +49,8 @@ struct path
 	unsigned int skipped;
 	/** Counter for dropped messages due to reordering */
 	unsigned int dropped;
+	/** Counter for received messages according to their sequence no displacement */
+	unsigned int histogram[HIST_SEQ];
 
 	/** The thread id for this path */
 	pthread_t recv_tid;

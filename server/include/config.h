@@ -20,4 +20,7 @@
 /** Socket priority */
 #define SOCKET_PRIO	7
 
+/* Some parameters for histogram statistics */
+#define HIST_SEQ	33
+
 #endif /* _CONFIG_H_ */

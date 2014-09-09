@@ -70,6 +70,9 @@ double timespec_delta(struct timespec *start, struct timespec *end);
 /** Get period as timespec from rate */
 struct timespec timespec_rate(double rate);
 
+/** Dump histogram data in Matlab format */
+void hist_dump(unsigned *hist, int length);
+
 /** Append an element to a single linked list */
 #define list_add(list, elm) do { \
 		elm->next = list; \

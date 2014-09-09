@@ -79,6 +79,13 @@ static void * path_run(void *arg)
 
 		p->received++;
 
+		if      (HIST_SEQ/2 + lag >= HIST_SEQ)
+			p->histogram[HIST_SEQ-1]++;
+		else if (HIST_SEQ/2 + lag < 0)
+			p->histogram[0]++;
+		else
+			p->histogram[HIST_SEQ/2 + lag]++;
+
 		/** Check header fields */
 		if (m->version != MSG_VERSION ||
 		    m->type    != MSG_TYPE_DATA) {
@@ -142,6 +149,11 @@ int path_stop(struct path *p)
 	if (p->rate) {
 		pthread_cancel(p->sent_tid);
 		pthread_join(p->sent_tid, NULL);
+	}
+
+	if (p->received) {
+		path_stats(p);
+		hist_dump(p->histogram, HIST_SEQ);
 	}
 
 	return 0;
