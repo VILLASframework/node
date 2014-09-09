@@ -79,11 +79,7 @@ static void * path_run(void *arg)
 
 		p->received++;
 
-		if      (HIST_SEQ/2 + lag >= HIST_SEQ)
-			p->histogram[HIST_SEQ-1]++;
-		else if (HIST_SEQ/2 + lag < 0)
-			p->histogram[0]++;
-		else
+		if (HIST_SEQ/2 + lag < HIST_SEQ && HIST_SEQ/2 + lag >= 0)
 			p->histogram[HIST_SEQ/2 + lag]++;
 
 		/** Check header fields */
