@@ -61,7 +61,6 @@ int msg_fscan(FILE *f, struct msg *m)
 			break;
 
 		m->data[i].f = strtod(ptr, &ptr);
-		info("read value %u => %f", i, m->data[i].f);
 	}
 
 	m->length = i;
