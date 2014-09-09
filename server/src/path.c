@@ -64,6 +64,7 @@ static void * path_send(void *arg)
 /** Receive messages */
 static void * path_run(void *arg)
 {
+	int lag;
 	struct path *p = (struct path *) arg;
 	struct msg  *m = malloc(sizeof(struct msg));
 
@@ -73,37 +74,21 @@ static void * path_run(void *arg)
 	/* Main thread loop */
 	while (1) {
 		msg_recv(m, p->in); /* Receive message */
+
+		lag = m->sequence - p->sequence;
+
 		p->received++;
 
 		/** Check header fields */
-		if (m->version != MSG_VERSION) {
-			p->invalid++;
-			continue;
-		}
-		else if (m->type != MSG_TYPE_DATA) {
+		if (m->version != MSG_VERSION ||
+		    m->type    != MSG_TYPE_DATA) {
 			p->invalid++;
 			continue;
 		}
 
-		/* Check sequence number */
-		if (m->sequence == 0) {
-			path_stats(p);
-			info("Simulation started");
-
-			p->sequence	= 0;
-			p->received	= 1;
-			p->sent		= 0;
-			p->skipped	= 0;
-			p->delayed	= 0;
-			p->duplicated	= 0;
-			p->invalid	= 0;
-		}
-		else if (m->sequence < p->sequence) {
-			p->delayed++;
-			continue;
-		}
-		else if (m->sequence == p->sequence) {
-			p->duplicated++;
+		/* Sequence no. is lower than expected */
+		if (lag <= 0) {
+			p->dropped++;
 			continue;
 		}
 
@@ -112,15 +97,27 @@ static void * path_run(void *arg)
 			continue;
 		}
 
+		/* Check sequence number */
+		if (m->sequence == 0) {
+			path_stats(p);
+			info("Simulation started");
+
+			p->sent		= 0;
+			p->received	= 0;
+			p->invalid	= 0;
+			p->skipped	= 0;
+			p->dropped	= 0;
+		}
+
+		/* Update last known sequence number */
 		p->sequence = m->sequence;
+		p->last = m;
 
 		/* At fixed rate mode, messages are send by another thread */
-//		if (p->rate)
-//			p->last = m;
-//		else {
+		if (!p->rate) {
 			msg_send(m, p->out);
 			p->sent++;
-//		}
+		}
 	}
 
 	free(m);
@@ -154,7 +151,6 @@ void path_stats(struct path *p)
 {
 	info("%12s " MAG("=>") " %-12s:   %-8u %-8u %-8u %-8u %-8u",
 		p->in->name, p->out->name,
-		p->sent, p->received, p->delayed,
-		p->duplicated, p->invalid
+		p->sent, p->received, p->dropped, p->skipped, p->invalid
 	);
 }

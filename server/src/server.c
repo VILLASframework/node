@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
 
 		info("Runtime Statistics:");
 		info("%12s " MAG("=>") " %-12s:   %-8s %-8s %-8s %-8s %-8s",
-			"Source", "Destination", "#Sent", "#Recv", "#Delay", "#Dupl", "#Inval");
+			"Source", "Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Inval");
 		info("---------------------------------------------------------------------------");
 
 		while (1) {

@@ -39,18 +39,16 @@ struct path
 	/** Last known message number */
 	unsigned int sequence;
 
-	/** Counter for sent messages */
-	unsigned long sent;
-	/** Counter for received messages */
-	unsigned long received;
-	/** Counter for messages which arrived reordered */
-	unsigned long delayed;
-	/** Counter for messages which arrived multiple times */
-	unsigned long duplicated;
-	/** Counter for received messages with invalid version or type */
-	unsigned long invalid;
-	/** Counter for skipped or filtered messages by hook */
-	unsigned long skipped;
+	/** Counter for sent messages to all outgoing nodes*/
+	unsigned int sent;
+	/** Counter for received messages from all incoming nodes */
+	unsigned int received;
+	/** Counter for invalid messages */
+	unsigned int invalid;
+	/** Counter for skipped messages due to hooks */
+	unsigned int skipped;
+	/** Counter for dropped messages due to reordering */
+	unsigned int dropped;
 
 	/** The thread id for this path */
 	pthread_t recv_tid;
