@@ -122,7 +122,7 @@ struct timespec timespec_rate(double rate)
 	return ts;
 }
 
-void hist_print(unsigned *hist, int length)
+void hist_plot(unsigned *hist, int length)
 {
 	char buf[HIST_HEIGHT + 32];
 	int bar;

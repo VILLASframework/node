@@ -72,7 +72,7 @@ double timespec_delta(struct timespec *start, struct timespec *end);
 struct timespec timespec_rate(double rate);
 
 /** Print ASCII style plot of histogram */
-void hist_print(unsigned *hist, int length);
+void hist_plot(unsigned *hist, int length);
 
 /** Dump histogram data in Matlab format */
 void hist_dump(unsigned *hist, int length);
