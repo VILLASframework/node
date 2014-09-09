@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #include "config.h"
 #include "utils.h"
@@ -57,13 +58,18 @@ int main(int argc, char *argv[])
 	if (resolve_addr(argv[1], &n.remote, 0))
 		error("Failed to resolve remote address: %s", argv[1]);
 
-	if (argc == 3 && resolve_addr(argv[2], &n.local, 0))
-		error("Failed to resolve local address: %s", argv[2]);
+	if (argc == 3) {
+		if (resolve_addr(argv[2], &n.local, AI_PASSIVE))
+			error("Failed to resolve local address: %s", argv[2]);
+	}
 	else {
 		n.local.sin_family = AF_INET;
 		n.local.sin_addr.s_addr = INADDR_ANY;
-		n.local.sin_port = 0;
+		n.local.sin_port = 0; /* random port */
 	}
+
+	debug(1, "We listen at %s:%u", inet_ntoa(n.local.sin_addr), ntohs(n.local.sin_port));
+	debug(1, "We sent to %s:%u", inet_ntoa(n.remote.sin_addr), ntohs(n.remote.sin_port));
 
 	if (node_connect(&n))
 		error("Failed to connect node");
