@@ -125,6 +125,7 @@ int main(int argc, char *argv[])
 		free(ts2);
 
 		hist_plot(hist, RTT_HIST);
+		hist_dump(hist, RTT_HIST);
 	}
 
 	close(sd);
