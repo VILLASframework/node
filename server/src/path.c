@@ -75,6 +75,18 @@ static void * path_run(void *arg)
 	while (1) {
 		msg_recv(m, p->in); /* Receive message */
 
+		/* Check sequence number */
+		if (m->sequence == 0) {
+			path_stats(p);
+			info("Simulation started");
+
+			p->sent		= 0;
+			p->received	= 0;
+			p->invalid	= 0;
+			p->skipped	= 0;
+			p->dropped	= 0;
+		}
+
 		lag = m->sequence - p->sequence;
 
 		p->received++;
@@ -82,7 +94,7 @@ static void * path_run(void *arg)
 		if (HIST_SEQ/2 + lag < HIST_SEQ && HIST_SEQ/2 + lag >= 0)
 			p->histogram[HIST_SEQ/2 + lag]++;
 
-		/** Check header fields */
+		/* Check header fields */
 		if (m->version != MSG_VERSION ||
 		    m->type    != MSG_TYPE_DATA) {
 			p->invalid++;
@@ -98,18 +110,6 @@ static void * path_run(void *arg)
 		if (p->hook && p->hook(m, p)) {
 			p->skipped++;
 			continue;
-		}
-
-		/* Check sequence number */
-		if (m->sequence == 0) {
-			path_stats(p);
-			info("Simulation started");
-
-			p->sent		= 0;
-			p->received	= 0;
-			p->invalid	= 0;
-			p->skipped	= 0;
-			p->dropped	= 0;
 		}
 
 		/* Update last known sequence number */
