@@ -53,9 +53,9 @@ struct path
 	unsigned long skipped;
 
 	/** The thread id for this path */
-	pthread_t tid;
+	pthread_t recv_tid;
 	/** A second thread id for fixed rate sending thread */
-	pthread_t tid2;
+	pthread_t sent_tid;
 	/** A pointer to the libconfig object which instantiated this path */
 	config_setting_t *cfg;
 

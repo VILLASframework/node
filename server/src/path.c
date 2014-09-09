@@ -132,19 +132,19 @@ int path_start(struct path *p)
 {
 	/* At fixed rate mode, we start another thread for sending */
 	if (p->rate)
-		pthread_create(&p->tid2, NULL, &path_send, (void *) p);
+		pthread_create(&p->sent_tid, NULL, &path_send, (void *) p);
 
-	return pthread_create(&p->tid, NULL, &path_run, (void *) p);
+	return  pthread_create(&p->recv_tid, NULL, &path_run,  (void *) p);
 }
 
 int path_stop(struct path *p)
 {
-	pthread_cancel(p->tid);
-	pthread_join(p->tid, NULL);
+	pthread_cancel(p->recv_tid);
+	pthread_join(p->recv_tid, NULL);
 
 	if (p->rate) {
-		pthread_cancel(p->tid2);
-		pthread_join(p->tid2, NULL);
+		pthread_cancel(p->sent_tid);
+		pthread_join(p->sent_tid, NULL);
 	}
 
 	return 0;
