@@ -80,11 +80,17 @@ static void * path_run(void *arg)
 			path_stats(p);
 			info("Simulation started");
 
+			/* Reset counters */
 			p->sent		= 0;
 			p->received	= 0;
 			p->invalid	= 0;
 			p->skipped	= 0;
 			p->dropped	= 0;
+
+			/* Reset sequence no tracking */
+			p->sequence	= -1;
+			memset(p->histogram, 0, sizeof(p->histogram));
+
 		}
 
 		lag = m->sequence - p->sequence;
