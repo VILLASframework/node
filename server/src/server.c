@@ -127,7 +127,8 @@ int main(int argc, char *argv[])
 	if (argc != 2) {
 		printf("Usage: %s CONFIG\n", argv[0]);
 		printf("  CONFIG is a required path to a configuration file\n\n");
-		printf("Simulator2Simulator Server %s (built on %s, %s)\n", BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
+		printf("Simulator2Simulator Server %s (built on %s, %s)\n",
+			BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
 		printf(" Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
 		printf("   Steffen Vogel <stvogel@eonerc.rwth-aachen.de>\n");
 		exit(EXIT_FAILURE);

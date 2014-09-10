@@ -36,7 +36,8 @@ int main(int argc, char *argv[])
 		printf("Usage: %s REMOTE [LOCAL]\n", argv[0]);
 		printf("  REMOTE   is a IP:PORT combination of the remote host\n");
 		printf("  LOCAL    is an optional IP:PORT combination of the local host\n");
-		printf("Simulator2Simulator Server %s (built on %s %s)\n", BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
+		printf("Simulator2Simulator Server %s (built on %s %s)\n",
+			BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
 		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
 		exit(EXIT_FAILURE);
 	}
