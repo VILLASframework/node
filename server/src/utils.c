@@ -139,10 +139,10 @@ void hist_plot(unsigned *hist, int length)
 	memset(buf, '#', sizeof(buf));
 	for (int i = 0; i < length; i++) {
 		bar = HIST_HEIGHT * (float) hist[i] / hist[max];
-		if      (hist[i] == hist[max])
-			info("%2u | " RED("%5u") " | " BLD("%.*s"), i, hist[i], bar, buf);
-		else if (hist[i] == 0)
+		if (hist[i] == 0)
 			info("%2u | " GRN("%5u") " | "           ,  i, hist[i]);
+		else if (hist[i] == hist[max])
+			info("%2u | " RED("%5u") " | " BLD("%.*s"), i, hist[i], bar, buf);
 		else
 			info("%2u | "     "%5u"  " | "     "%.*s",  i, hist[i], bar, buf);
 	}
