@@ -11,6 +11,6 @@
 #define PROGNAME	"S2SS"
 #define VERSION		"0.1"
 
-#define MAX_VALUES	16
+#define MAX_VALUES	64
 
 #endif /* _CONFIG_H_ */
