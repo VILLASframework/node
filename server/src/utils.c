@@ -51,8 +51,6 @@ void print(enum log_level lvl, const char *fmt, ...)
 
 int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags)
 {
-	int ret;
-
 	/* Split string */
 	char *tmp = strdup(addr);
 	char *node = strtok(tmp, ":");
@@ -73,16 +71,15 @@ int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags)
 		.ai_protocol = 0
 	};
 
-	ret = getaddrinfo(node, service, &hint, &result);
-	if (ret)
-		error("Failed to lookup address '%s': %s", addr, gai_strerror(ret));
-
-	memcpy(sa, result->ai_addr, result->ai_addrlen);
+	int ret = getaddrinfo(node, service, &hint, &result);
+	if (!ret) {
+		memcpy(sa, result->ai_addr, result->ai_addrlen);
+		freeaddrinfo(result);
+	}
 
 	free(tmp);
-	freeaddrinfo(result);
 
-	return 0;
+	return ret;
 }
 
 cpu_set_t to_cpu_set(int set)

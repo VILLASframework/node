@@ -11,10 +11,10 @@
 #include <errno.h>
 #include <signal.h>
 #include <time.h>
-
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #include "config.h"
 #include "utils.h"
@@ -54,8 +54,9 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	/* Resolve addresses */
-	if (resolve_addr(argv[1], &n.local, 0))
-		error("Failed to resolve local address: %s", argv[1]);
+	int ret = resolve_addr(argv[1], &n.local, 0);
+	if (ret)
+		error("Failed to resolve local address '%s': %s", argv[1], gai_strerror(ret));
 
 	node_connect(&n);
 

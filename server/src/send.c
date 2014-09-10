@@ -56,16 +56,18 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	/* Resolve addresses */
-	if (resolve_addr(argv[1], &n.remote, 0))
-		error("Failed to resolve remote address: %s", argv[1]);
+	int ret = resolve_addr(argv[1], &n.remote, 0);
+	if (ret)
+		error("Failed to resolve remote address '%s': %s", argv[1], gai_strerror(ret));
 
 	if (argc == 3) {
-		if (resolve_addr(argv[2], &n.local, AI_PASSIVE))
-			error("Failed to resolve local address: %s", argv[2]);
+		ret = resolve_addr(argv[2], &n.local, AI_PASSIVE);
+		if (ret)
+			error("Failed to resolve local address '%s': %s", argv[2], gai_strerror(ret));
 	}
 	else {
 		n.local.sin_family = AF_INET;
-		n.local.sin_addr.s_addr = INADDR_ANY;
+		n.local.sin_addr.s_addr = INADDR_ANY; /* all local interfaces */
 		n.local.sin_port = 0; /* random port */
 	}
 

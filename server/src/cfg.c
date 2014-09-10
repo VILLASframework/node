@@ -147,7 +147,7 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 {
 	struct node *node;
 	const char *remote, *local;
-
+	int ret;
 
 	/* Allocate memory */
 	node = (struct node *) malloc(sizeof(struct node));
@@ -167,12 +167,15 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	if (!config_setting_lookup_string(cfg, "local", &local))
 		cerror(cfg, "Missing local address for node '%s'", node->name);
 
+	ret = resolve_addr(local, &node->local, AI_PASSIVE);
+	if (ret)
+		cerror(cfg, "Failed to resolve local address '%s' of node '%s': %s",
+			local, node->name, gai_strerror(ret));
 
-	if (resolve_addr(local, &node->local, AI_PASSIVE))
-		cerror(cfg, "Failed to resolve local address '%s' of node '%s'", local, node->name);
-
-	if (resolve_addr(remote, &node->remote, 0))
-		cerror(cfg, "Failed to resolve remote address '%s' of node '%s'", remote, node->name);
+	ret = resolve_addr(remote, &node->remote, 0);
+	if (ret)
+		cerror(cfg, "Failed to resolve remote address '%s' of node '%s': %s",
+			remote, node->name, gai_strerror(ret));
 
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {

@@ -12,6 +12,7 @@
 #include <string.h>
 #include <limits.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #include "config.h"
 #include "msg.h"
@@ -59,11 +60,13 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	/* Resolve addresses */
-	if (resolve_addr(argv[2], &n.local, 0))
-		error("Failed to resolve local address: %s", argv[2]);
+	int ret = resolve_addr(argv[2], &n.local, AI_PASSIVE);
+	if (ret)
+		error("Failed to resolve local address '%s': %s", argv[1], gai_strerror(ret));
 
-	if (resolve_addr(argv[3], &n.remote, 0))
-		error("Failed to resolve remote address: %s", argv[3]);
+	ret = resolve_addr(argv[3], &n.remote, 0);
+	if (ret)
+		error("Failed to resolve remote address '%s': %s", argv[1], gai_strerror(ret));	
 
 	node_connect(&n);
 
