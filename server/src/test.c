@@ -66,9 +66,6 @@ int main(int argc, char *argv[])
 
 	node_connect(&n);
 
-	debug(1, "We listen at %s:%u", inet_ntoa(n.local.sin_addr), ntohs(n.local.sin_port));
-	debug(1, "We sent to %s:%u", inet_ntoa(n.remote.sin_addr), ntohs(n.remote.sin_port));
-
 	if (!strcmp(argv[1], "rtt")) {
 		struct msg m = MSG_INIT(sizeof(struct timespec) / sizeof(float));
 		struct timespec *ts1 = (struct timespec *) &m.data;

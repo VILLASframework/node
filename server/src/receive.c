@@ -56,10 +56,10 @@ int main(int argc, char *argv[])
 	if (resolve_addr(argv[1], &n.local, 0))
 		error("Failed to resolve local address: %s", argv[1]);
 
+	node_connect(&n);
+
 	/* Print header */
 	fprintf(stderr, "# %-6s %-8s %-12s\n", "dev_id", "seq_no", "data");
-
-	node_connect(&n);
 
 	while (1) {
 		msg_recv(&m, &n);

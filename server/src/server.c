@@ -6,14 +6,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <error.h>
 
 #include <sched.h>
 #include <signal.h>
 #include <unistd.h>
-#include <arpa/inet.h>
-#include <sys/mman.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 
 #include "config.h"
@@ -81,12 +77,6 @@ static void start()
 
 		node_connect(n);
 
-		debug(1, "  We listen for node '%s' at %s:%u",
-			n->name, inet_ntoa(n->local.sin_addr),
-			ntohs(n->local.sin_port));
-		debug(1, "  We sent to node '%s' at %s:%u",
-			n->name, inet_ntoa(n->remote.sin_addr),
-			ntohs(n->remote.sin_port));
 	}
 
 	/* Start on thread per path for asynchronous processing */

@@ -68,11 +68,7 @@ int main(int argc, char *argv[])
 		n.local.sin_port = 0; /* random port */
 	}
 
-	debug(1, "We listen at %s:%u", inet_ntoa(n.local.sin_addr), ntohs(n.local.sin_port));
-	debug(1, "We sent to %s:%u", inet_ntoa(n.remote.sin_addr), ntohs(n.remote.sin_port));
-
-	if (node_connect(&n))
-		error("Failed to connect node");
+	node_connect(&n);
 
 	while (!feof(stdin)) {
 		msg_fscan(stdin, &m);

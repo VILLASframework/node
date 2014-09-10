@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 
 #include "config.h"
 #include "cfg.h"
@@ -38,6 +39,13 @@ int node_connect(struct node *n)
 	/* Bind socket for receiving */
 	if (bind(n->sd, (struct sockaddr *) &n->local, sizeof(struct sockaddr_in)))
 		perror("Failed to bind to socket");
+
+	debug(1, "  We listen for node '%s' at %s:%u",
+		n->name, inet_ntoa(n->local.sin_addr),
+		ntohs(n->local.sin_port));
+	debug(1, "  We sent to node '%s' at %s:%u",
+		n->name, inet_ntoa(n->remote.sin_addr),
+		ntohs(n->remote.sin_port));
 
 	return 0;
 }
