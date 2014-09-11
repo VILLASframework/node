@@ -88,7 +88,8 @@ int msg_send(struct msg *m, struct node *n)
 	    sizeof(struct sockaddr_in)) < 0)
 		perror("Failed sendto");
 
-	debug(10, "Message sent to node '%s'", n->name);
+	debug(10, "Message sent to node '%s': version=%u, type=%u, endian=%u, length=%u, sequence=%u",
+		n->name, m->version, m->type, m->endian, m->length, ntohs(m->sequence));
 
 	return 0;
 }
