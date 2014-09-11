@@ -67,16 +67,45 @@ static void start()
 			list_add(interfaces, n->interface);
 		}
 
-		n->mark = 1 + n->interface->refcnt++;
-
-		/* Create queueing discipline */
-		if (n->netem && n->mark) {
-			tc_mark(n->interface, TC_HDL(4000, n->mark), n->mark);
-			tc_netem(n->interface, TC_HDL(4000, n->mark), n->netem);
-		}
-
 		node_connect(n);
 
+		/* Set fwmark for outgoing packets */
+		if (n->netem) {
+			n->mark = 1 + n->interface->refcnt++;
+
+			if (setsockopt(n->sd, SOL_SOCKET, SO_MARK, &n->mark, sizeof(n->mark)))
+				perror("Failed to set fwmark for outgoing packets");
+			else
+				debug(4, "Set fwmark of outgoing packets of node '%s' to %u",
+					n->name, n->mark);
+		}
+
+#if 0		/* Set QoS or TOS IP options */
+		int prio = SOCKET_PRIO;	
+		if (setsockopt(n->sd, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio)))
+			perror("Failed to set socket priority");
+		else
+			debug(4, "Set socket priority for node '%s' to %u", n->name, prio);
+#else
+		int tos = IPTOS_LOWDELAY;
+		if (setsockopt(n->sd, IPPROTO_IP, IP_TOS, &tos, sizeof(tos)))
+			perror("Failed to set type of service (QoS)");
+		else
+			debug(4, "Set QoS/TOS IP option for node '%s' to %#x", n->name, tos);
+#endif
+	}
+
+	/* Setup network emulation */
+	for (struct interface *i = interfaces; i; i = i->next) {
+		if (i->refcnt)
+			tc_prio(i, TC_HDL(4000, 0), i->refcnt);
+	}
+
+	for (struct node *n = nodes; n; n = n->next) {
+		if (n->netem) {
+			tc_mark(n->interface,  TC_HDL(4000, n->mark), n->mark);
+			tc_netem(n->interface, TC_HDL(4000, n->mark), n->netem);
+		}
 	}
 
 	/* Start on thread per path for asynchronous processing */
