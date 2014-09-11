@@ -98,8 +98,12 @@ int msg_recv(struct msg *m, struct node *n)
 	/** @todo Fix this for multiple paths calling msg_recv. */
 
 	/* Receive message from socket */
-	if (recv(n->sd, m, sizeof(struct msg), 0) < 0)
+	if (recv(n->sd, m, sizeof(struct msg), 0) < 0) {
+		if (errno == EINTR)
+			return -EINTR;
+
 		perror("Failed recv");
+	}
 
 	/* Convert headers to host byte order */
 	m->sequence = ntohs(m->sequence);
