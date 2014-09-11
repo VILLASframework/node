@@ -92,7 +92,7 @@ static void * path_run(void *arg)
 			p->histogram[idx]++;
 
 		/* Handle simulation restart */
-		if (m->sequence == 0 && abs(dist) > 64) {
+		if (m->sequence == 0 && abs(dist) > 16) {
 			path_stats(p);
 			warn("Simulation for path %s " MAG("=>") " %s "
 			     "restarted (p->seq=%u, m->seq=%u, dist=%d)",
