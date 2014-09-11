@@ -101,7 +101,7 @@ static void * path_run(void *arg)
 
 			/* Reset counters */
 			p->sent		= 0;
-			p->received	= 0;
+			p->received	= 1;
 			p->invalid	= 0;
 			p->skipped	= 0;
 			p->dropped	= 0;
