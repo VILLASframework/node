@@ -119,19 +119,25 @@ int config_parse_path(config_setting_t *cfg,
 	p->cfg = cfg;
 
 	if (enabled) {
+		p->in->refcnt++;
+		p->out->refcnt++;
+
 		list_add(*paths, p);
 
 		if (reverse) {
-			struct path *prev = (struct path *) malloc(sizeof(struct path));
-			if (!prev)
+			struct path *rev = (struct path *) malloc(sizeof(struct path));
+			if (!rev)
 				error("Failed to allocate memory for path");
 			else
-				memcpy(prev, path, sizeof(struct path));
+				memcpy(rev, p, sizeof(struct path));
 
-			prev->in  = p->out; /* Swap in/out */
-			prev->out = p->in;
+			rev->in  = p->out; /* Swap in/out */
+			rev->out = p->in;
 
-			list_add(*paths, prev);
+			rev->in->refcnt++;
+			rev->out->refcnt++;
+
+			list_add(*paths, rev);
 		}
 	}
 	else {

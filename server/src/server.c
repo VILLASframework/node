@@ -36,6 +36,8 @@ static void start()
 {
 	/* Connect and bind nodes to their sockets, set socket options */
 	for (struct node *n = nodes; n; n = n->next) {
+		if (!n->refcnt) continue;
+
 		/* Determine outgoing interface */
 		int index = if_getegress(&n->remote);
 		if (index < 0)
@@ -97,8 +99,9 @@ static void start()
 
 	/* Setup network emulation */
 	for (struct interface *i = interfaces; i; i = i->next) {
-		if (i->refcnt)
-			tc_prio(i, TC_HDL(4000, 0), i->refcnt);
+		if (!i->refcnt) continue;
+
+		tc_prio(i, TC_HDL(4000, 0), i->refcnt);
 	}
 
 	for (struct node *n = nodes; n; n = n->next) {

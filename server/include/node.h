@@ -35,6 +35,10 @@ struct node
 {
 	/** The socket descriptor */
 	int sd;
+	/** How many paths  are sending / receiving from this node? */
+	int refcnt;
+	/** Socket mark for netem, routing and filtering */
+	int mark;
 
 	/** A short identifier of the node, only used for configuration and logging */
 	const char *name;
@@ -46,12 +50,8 @@ struct node
 
 	/** The egress interface */
 	struct interface *interface;
-
 	/** Network emulator settings */
 	struct netem *netem;
-
-	/** Socket mark for netem, routing and filtering */
-	int mark;
 
 	/** A pointer to the libconfig object which instantiated this node */
 	config_setting_t *cfg;
