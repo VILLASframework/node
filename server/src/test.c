@@ -79,7 +79,6 @@ int main(int argc, char *argv[])
 		double rtt_max = LLONG_MIN;
 		double rtt_min = LLONG_MAX;
 		double avg = 0;
-		int run = 0;
 		int bar;
 		unsigned hist[RTT_HIST];
 
@@ -92,8 +91,6 @@ int main(int argc, char *argv[])
 		fprintf(stdout, "%5s%10s%10s%10s%10s\n", "seq", "rtt", "min", "max", "avg");
 
 		while (running) {
-			m.sequence++;
-			run++;
 
 			clock_gettime(CLOCK_ID, ts1);
 			msg_send(&m, &n);
@@ -118,9 +115,10 @@ int main(int argc, char *argv[])
 			clock_gettime(CLOCK_REALTIME, &ts);
 			fprintf(stdout, "%17.6f", ts.tv_sec + ts.tv_nsec / 1e9);
 #endif
+			m.sequence++;
 
 			fprintf(stdout, "%5u%10.3f%10.3f%10.3f%10.3f\n", m.sequence,
-				1e3 * rtt, 1e3 * rtt_min, 1e3 * rtt_max, 1e3 * avg / run);
+				1e3 * rtt, 1e3 * rtt_min, 1e3 * rtt_max, 1e3 * avg / m.sequence);
 		}
 
 		free(ts2);
