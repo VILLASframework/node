@@ -64,7 +64,6 @@ static void * path_send(void *arg)
 /** Receive messages */
 static void * path_run(void *arg)
 {
-	int lag;
 	struct path *p = (struct path *) arg;
 	struct msg  *m = malloc(sizeof(struct msg));
 
@@ -74,11 +73,31 @@ static void * path_run(void *arg)
 	/* Main thread loop */
 	while (1) {
 		msg_recv(m, p->in); /* Receive message */
+		p->received++;
 
-		/* Check sequence number */
-		if (m->sequence == 0) {
+		/* Check header fields */
+		if (m->version != MSG_VERSION ||
+		    m->type    != MSG_TYPE_DATA) {
+			p->invalid++;
+			continue;
+		}
+
+		/* Update histogram */
+		int dist = (UINT16_MAX + m->sequence - p->sequence) % UINT16_MAX;
+		if (dist > UINT16_MAX / 2)
+			dist -= UINT16_MAX;
+
+		int idx = HIST_SEQ / 2 + dist;
+		if (idx < HIST_SEQ && idx >= 0)
+			p->histogram[idx]++;
+
+		/* Handle simulation restart */
+		if (m->sequence == 0 && abs(dist) > 64) {
 			path_stats(p);
-			info("Simulation started");
+			warn("Simulation for path %s " MAG("=>") " %s "
+			     "restarted (p->seq=%u, m->seq=%u, dist=%d)",
+			     	p->in->name, p->out->name,
+				p->sequence, m->sequence, dist);
 
 			/* Reset counters */
 			p->sent		= 0;
@@ -88,31 +107,14 @@ static void * path_run(void *arg)
 			p->dropped	= 0;
 
 			/* Reset sequence no tracking */
-			p->sequence	= -1;
 			memset(p->histogram, 0, sizeof(p->histogram));
-
 		}
-
-		lag = m->sequence - p->sequence;
-
-		p->received++;
-
-		if (HIST_SEQ/2 + lag < HIST_SEQ && HIST_SEQ/2 + lag >= 0)
-			p->histogram[HIST_SEQ/2 + lag]++;
-
-		/* Check header fields */
-		if (m->version != MSG_VERSION ||
-		    m->type    != MSG_TYPE_DATA) {
-			p->invalid++;
-			continue;
-		}
-
-		/* Sequence no. is lower than expected */
-		if (lag <= 0) {
+		else if (dist <= 0 && p->received > 1) {
 			p->dropped++;
 			continue;
 		}
 
+		/* Call hook callbacks */
 		if (p->hook && p->hook(m, p)) {
 			p->skipped++;
 			continue;
