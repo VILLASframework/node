@@ -27,6 +27,8 @@ void tick(int sig, siginfo_t *si, void *ptr)
 	msg_random(m);
 	msg_fprint(stdout, m);
 	fflush(stdout);
+
+	m->sequence++;
 }
 
 int main(int argc, char *argv[])

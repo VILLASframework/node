@@ -75,7 +75,6 @@ void msg_random(struct msg *m)
 		m->data[i].f += (float) random() / RAND_MAX - .5;
 
 	m->endian = MSG_ENDIAN_HOST;
-	m->sequence++;
 }
 
 int msg_send(struct msg *m, struct node *n)
