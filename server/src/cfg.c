@@ -26,8 +26,7 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 
 	if (!config_read_file(cfg, filename)) {
 		error("Failed to parse configuration: %s in %s:%d",
-			config_error_text(cfg),
-			config_error_file(cfg),
+			config_error_text(cfg), filename,
 			config_error_line(cfg)
 		);
 	}
