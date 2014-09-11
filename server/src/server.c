@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <netinet/ip.h>
 
 #include "config.h"
 #include "cfg.h"
@@ -44,27 +45,26 @@ static void start()
 
 		/* Create new interface */
 		if (!n->interface) {
-			n->interface = malloc(sizeof(struct interface));
-			if (!n->interface)
+			struct interface *i = malloc(sizeof(struct interface));
+			if (!i)
 				error("Failed to allocate memory for interface");
 			else
-				memset(n->interface, 0, sizeof(struct interface));
+				memset(i, 0, sizeof(struct interface));
 
-			n->interface->index = index;
-			if_indextoname(index, n->interface->name);
+			i->index = index;
+			if_indextoname(index, i->name);
 
-			debug(3, "Setup interface '%s'", n->interface->name,
-				n->interface->index, n->interface->refcnt);
+			debug(3, "Setup interface '%s'", i->name,
+				i->index, i->refcnt);
 
-			if (settings.affinity) {
-				if_getirqs(n->interface);
-				if_setaffinity(n->interface, settings.affinity);
+			/* Set affinity for network interfaces */
+			if (settings.affinity && i->index) {
+				if_getirqs(i);
+				if_setaffinity(i, settings.affinity);
 			}
 
-			/* Create priority queuing discipline */
-			tc_prio(n->interface, TC_HDL(4000, 0), n->interface->refcnt);
-
-			list_add(interfaces, n->interface);
+			list_add(interfaces, i);
+			n->interface = i;
 		}
 
 		node_connect(n);

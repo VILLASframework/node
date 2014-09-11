@@ -83,11 +83,11 @@ int config_parse_path(config_setting_t *cfg,
 	int enabled = 1;
 	int reverse = 0;
 
-	struct path *path = (struct path *) malloc(sizeof(struct path));
-	if (!path)
+	struct path *p = (struct path *) malloc(sizeof(struct path));
+	if (!p)
 		error("Failed to allocate memory for path");
 	else
-		memset(path, 0, sizeof(struct path));
+		memset(p, 0, sizeof(struct path));
 
 	/* Required settings */
 	if (!config_setting_lookup_string(cfg, "in", &in))
@@ -96,46 +96,46 @@ int config_parse_path(config_setting_t *cfg,
 	if (!config_setting_lookup_string(cfg, "out", &out))
 		cerror(cfg, "Missing output node for path");
 
-	path->in = node_lookup_name(in, *nodes);
-	if (!path->in)
+	p->in = node_lookup_name(in, *nodes);
+	if (!p->in)
 		cerror(cfg, "Invalid input node '%s'", in);
 
-	path->out = node_lookup_name(out, *nodes);
-	if (!path->out)
+	p->out = node_lookup_name(out, *nodes);
+	if (!p->out)
 		cerror(cfg, "Invalid output node '%s'", out);
 
 	/* Optional settings */
 	if (config_setting_lookup_string(cfg, "hook", &hook)) {
-		path->hook = hook_lookup(hook);
+		p->hook = hook_lookup(hook);
 		
-		if (!path->hook)
+		if (!p->hook)
 			cerror(cfg, "Failed to lookup hook function. Not registred?");
 	}
 	
 	config_setting_lookup_bool(cfg, "enabled", &enabled);
 	config_setting_lookup_bool(cfg, "reverse", &reverse);
-	config_setting_lookup_float(cfg, "rate", &path->rate);
+	config_setting_lookup_float(cfg, "rate", &p->rate);
 
-	path->cfg = cfg;
+	p->cfg = cfg;
 
 	if (enabled) {
-		list_add(*paths, path);
+		list_add(*paths, p);
 
 		if (reverse) {
-			struct path *path_rev = (struct path *) malloc(sizeof(struct path));
-			if (!path_rev)
+			struct path *prev = (struct path *) malloc(sizeof(struct path));
+			if (!prev)
 				error("Failed to allocate memory for path");
 			else
-				memcpy(path_rev, path, sizeof(struct path));
+				memcpy(prev, path, sizeof(struct path));
 
-			path_rev->in = path->out; /* Swap in/out */
-			path_rev->out = path->in;
+			prev->in  = p->out; /* Swap in/out */
+			prev->out = p->in;
 
-			list_add(*paths, path_rev);
+			list_add(*paths, prev);
 		}
 	}
 	else {
-		free(path);
+		free(p);
 		warn("  Path is not enabled");
 	}
 
@@ -144,47 +144,46 @@ int config_parse_path(config_setting_t *cfg,
 
 int config_parse_node(config_setting_t *cfg, struct node **nodes)
 {
-	struct node *node;
 	const char *remote, *local;
 	int ret;
 
 	/* Allocate memory */
-	node = (struct node *) malloc(sizeof(struct node));
-	if (!node)
+	struct node *n = (struct node *) malloc(sizeof(struct node));
+	if (!n)
 		error("Failed to allocate memory for node");
 	else
-		memset(node, 0, sizeof(struct node));
+		memset(n, 0, sizeof(struct node));
 
 	/* Required settings */
-	node->name = config_setting_name(cfg);
-	if (!node->name)
+	n->name = config_setting_name(cfg);
+	if (!n->name)
 		cerror(cfg, "Missing node name");
 
 	if (!config_setting_lookup_string(cfg, "remote", &remote))
-		cerror(cfg, "Missing remote address for node '%s'", node->name);
+		cerror(cfg, "Missing remote address for node '%s'", n->name);
 
 	if (!config_setting_lookup_string(cfg, "local", &local))
-		cerror(cfg, "Missing local address for node '%s'", node->name);
+		cerror(cfg, "Missing local address for node '%s'", n->name);
 
-	ret = resolve_addr(local, &node->local, AI_PASSIVE);
+	ret = resolve_addr(local, &n->local, AI_PASSIVE);
 	if (ret)
 		cerror(cfg, "Failed to resolve local address '%s' of node '%s': %s",
-			local, node->name, gai_strerror(ret));
+			local, n->name, gai_strerror(ret));
 
-	ret = resolve_addr(remote, &node->remote, 0);
+	ret = resolve_addr(remote, &n->remote, 0);
 	if (ret)
 		cerror(cfg, "Failed to resolve remote address '%s' of node '%s': %s",
-			remote, node->name, gai_strerror(ret));
+			remote, n->name, gai_strerror(ret));
 
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
-		node->netem = (struct netem *) malloc(sizeof(struct netem));
-		config_parse_netem(cfg_netem, node->netem);
+		n->netem = (struct netem *) malloc(sizeof(struct netem));
+		config_parse_netem(cfg_netem, n->netem);
 	}
 
-	node->cfg = cfg;
+	n->cfg = cfg;
 
-	list_add(*nodes, node);
+	list_add(*nodes, n);
 
 	return 0;
 }
