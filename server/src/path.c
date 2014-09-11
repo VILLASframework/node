@@ -69,7 +69,7 @@ static void * path_run(void *arg)
 	struct msg  *m = malloc(sizeof(struct msg));
 
 	if (!m)
-		error("Failed to allocate memory!");
+		error("Failed to allocate memory for message!");
 
 	/* Main thread loop */
 	while (1) {
