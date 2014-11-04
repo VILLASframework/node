@@ -21,6 +21,8 @@
 #include <sys/wait.h>
 #include <termios.h>
 #include <unistd.h>
+#include <signal.h>
+#include <time.h>
 
 #if defined(__QNXNTO__)
 #       include <process.h>
@@ -48,6 +50,10 @@
 #define ASYNC_SHMEM_SIZE	atoi(argv[2])
 #define PRINT_SHMEM_NAME	argv[3]
 
+#ifdef DEBUG // TODO: workaround
+struct msg *msg_send = NULL;
+#endif /* DEBUG */
+
 static void *SendToIPPort(void *arg)
 {
 	unsigned int SendID = 1;
@@ -63,6 +69,10 @@ static void *SendToIPPort(void *arg)
 	/* Data from the S2SS server */
 	struct msg msg = MSG_INIT(0);
 	int msg_size;
+
+#ifdef DEBUG // TODO: workaround
+	msg_send = &msg;
+#endif /* DEBUG */
 
 	OpalPrint("%s: SendToIPPort thread started\n", PROGNAME);
 
@@ -235,6 +245,23 @@ static void *RecvFromIPPort(void *arg)
 	return NULL;
 }
 
+void Tick(int sig, siginfo_t *si, void *ptr)
+{
+	Opal_GenAsyncParam_Ctrl *IconCtrlStruct;
+	unsigned long long CpuTime;
+	double ModelTime;
+
+	if (!msg_send)
+		return;
+
+	IconCtrlStruct = (Opal_GenAsyncParam_Ctrl*) si->si_value.sival_ptr;
+
+	OpalGetAsyncModelTime(IconCtrlStruct, &CpuTime, &ModelTime)
+
+	OpalPrint("%s: TICK! CpuTime: %llu\tModelTime: %f\tSequence: %hu\tValue: %f\n",
+		PROGNAME, CpuTime, ModelTime, msg_send->sequence, msg_send->data[0].f);
+}
+
 int main(int argc, char *argv[])
 {
 	int err;
@@ -275,10 +302,38 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	/* Initialize socket */
 	if (InitSocket(IconCtrlStruct) != EOK) {
 		OpalPrint("%s: ERROR: Initialization failed.\n", PROGNAME);
 		exit(EXIT_FAILURE);
 	}
+
+#ifdef DEBUG
+	/* Setup signals */
+	struct sigaction sa_tick = {
+		.sa_flags = SA_SIGINFO,
+		.sa_sigaction = Tick
+	};
+
+	sigemptyset(&sa_tick.sa_mask);
+	sigaction(SIG, &sa_tick, NULL);
+
+	/* Setup timer */
+	timer_t t;
+	struct sigevent sev = {
+		.sigev_notify = SIGEV_SIGNAL,
+		.sigev_signo = SIG,
+		.sigev_value.sival_ptr = &IconCtrlStruct
+	};
+
+	struct itimerspec its = {
+		.it_interval = { 1, 0 },
+		.it_value = { 0, 1 }
+	};
+
+	timer_create(CLOCK_REALTIME, &sev, &t);
+	timer_settime(t, 0, &its, NULL);
+#endif /* DEBUG */
 
 	/* Start send/receive threads */
 	if ((pthread_create(&tid_send, NULL, SendToIPPort, NULL)) == -1)
@@ -296,6 +351,10 @@ int main(int argc, char *argv[])
 	CloseSocket(IconCtrlStruct);
 	OpalCloseAsyncMem (ASYNC_SHMEM_SIZE, ASYNC_SHMEM_NAME);
 	OpalSystemCtrl_UnRegister(PRINT_SHMEM_NAME);
+
+#ifdef DEBUG
+	timer_delete(t);
+#endif /* DEBUG */
 
 	return 0;
 }
