@@ -49,7 +49,36 @@ void print(enum log_level lvl, const char *fmt, ...)
 	va_end(ap);
 }
 
-int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags)
+int print_addr(struct sockaddr *sa, char *buf, size_t len)
+{
+	if (!sa)
+		return -1;
+
+	switch (sa->sa_family) {
+		case AF_INET: {
+			struct sockaddr_in *sin = (struct sockaddr_in *) sa;
+			inet_ntop(sa->sa_family, sa, buf, len);
+			snprintf(buf+strlen(buf), len-strlen(buf), ":%hu", ntohs(sin->sin_port))
+			break;
+		}
+
+		case AF_PACKET: {
+			struct sockaddr_ll *sll = (struct sockaddr_ll *) sa;
+			char ifname[IF_NAMESIZE];
+
+			snprintf("%#x:%#x:%#x:%#x:%#x:%#x:%hu (%s)",
+				sll->sll_addr[0], sll->sll_addr[1], sll->sll_addr[2],
+				sll->sll_addr[3], sll->sll_addr[4], sll->sll_addr[5],
+				ntohs(sll->sll_protocol), if_indextoname(sll->sll_ifindex, ifname));
+			break;
+		}
+
+		default:
+			error("Unsupported address family");
+	}
+}
+
+int parse_addr(const char *addr, struct sockaddr_in *sa, int flags)
 {
 	/* Split string */
 	char *tmp = strdup(addr);
