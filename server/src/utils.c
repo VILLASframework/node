@@ -4,6 +4,7 @@
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -143,4 +144,31 @@ void hist_dump(unsigned *hist, int length)
 	}
 
 	info("Matlab: hist = [ %s]", buf);
+}
+
+/** @todo: Proper way: create additional pipe for stderr in child process */
+int system2(const char *cmd, ...)
+{
+	char buf[1024];
+	
+	va_list ap;
+	va_start(ap, cmd);
+
+		vsnprintf(buf, sizeof(buf), cmd, ap);
+		strncat(buf, " 2>&1", sizeof(buf));
+	
+	va_end(ap);
+	
+	debug(1, "System: %s", buf);
+
+	FILE *f = popen(buf, "r");
+	if (f == NULL)
+		perror("Failed to execute: '%s'", cmd);
+
+	while (!feof(f) && fgets(buf, sizeof(buf), f) != NULL) { INDENT
+		strtok(buf, "\n"); /* strip trailing newline */
+		info(buf);
+	}
+
+	return pclose(f);
 }
