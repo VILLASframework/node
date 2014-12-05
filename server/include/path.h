@@ -68,18 +68,16 @@ struct path
  * Start a new pthread for receiving/sending messages over this path.
  *
  * @param p A pointer to the path struct
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int path_start(struct path *p);
 
 /** Stop a path.
  *
  * @param p A pointer to the path struct
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int path_stop(struct path *p);
 

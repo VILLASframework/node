@@ -38,8 +38,8 @@ struct interface {
  * the interface which sends the data to a certain socket
  * address.
  *
- * @param sa A destination address for outgoing packets
- * @return The interface index
+ * @param sa A destination address for outgoing packets.
+ * @return The interface index.
  */
 int if_getegress(struct sockaddr_in *sa);
 
@@ -49,9 +49,8 @@ int if_getegress(struct sockaddr_in *sa);
  *  /sys/class/net/{ifname}/device/msi_irqs/
  *
  * @param i A pointer to the interface structure
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int if_getirqs(struct interface *i);
 
@@ -59,17 +58,17 @@ int if_getirqs(struct interface *i);
  *
  * @param i A pointer to the interface structure
  * @param affinity A mask specifying which cores should handle this interrupt.
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int if_setaffinity(struct interface *i, int affinity);
 
-/** Search list of interface for a index.
+/** Search the list of interfaces for a given index.
  *
  * @param index The interface index to search for
  * @param interfaces A linked list of all interfaces
- * @return A pointer to the node or NULL if not found
+ * @retval NULL if no interface with index was found.
+ * @retval >0 Success. A pointer to the interface.
  */
 struct interface* if_lookup_index(int index, struct interface *interfaces);
 

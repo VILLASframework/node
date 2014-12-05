@@ -31,9 +31,8 @@ void msg_swap(struct msg *m);
  *
  * @param f The file stream
  * @param m A pointer to the message
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int msg_fprint(FILE *f, struct msg *m);
 
@@ -41,9 +40,8 @@ int msg_fprint(FILE *f, struct msg *m);
  *
  * @param f The file stream
  * @param m A pointer to the message
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int msg_fscan(FILE *f, struct msg *m);
 

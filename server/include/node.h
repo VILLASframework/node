@@ -63,18 +63,16 @@ struct node
 /** Connect and bind the UDP socket of this node.
  *
  * @param n A pointer to the node structure
- * @return
- *  - 0 on success
- *  - otherwise on error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int node_connect(struct node *n);
 
 /** Disconnect the UDP socket of this node.
  *
  * @param n A pointer to the node structure
- * @return
- *  - 0 on success
- *  - otherwise on error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int node_disconnect(struct node *n);
 

@@ -72,9 +72,8 @@ int config_parse_path(config_setting_t *cfg,
  *
  * @param cfg A libconfig object pointing to the node
  * @param nodes Add new nodes to this linked list
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int config_parse_node(config_setting_t *cfg,
 	struct node **nodes);
@@ -83,9 +82,8 @@ int config_parse_node(config_setting_t *cfg,
  *
  * @param cfg A libconfig object containing the settings
  * @param em A pointer to the settings
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int config_parse_netem(config_setting_t *cfg, struct netem *em);
 
