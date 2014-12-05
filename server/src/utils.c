@@ -22,7 +22,20 @@
 #include "utils.h"
 
 /* This global variable contains the debug level for debug() and assert() macros */
-int debug = V;
+int _debug = V;
+int _indent = 0;
+
+struct timespec epoch;
+
+void outdent(int *old)
+{
+	_indent = *old;
+}
+
+void epoch_reset()
+{
+	clock_gettime(CLOCK_REALTIME, &epoch);
+}
 
 void print(enum log_level lvl, const char *fmt, ...)
 {
@@ -31,23 +44,20 @@ void print(enum log_level lvl, const char *fmt, ...)
 	va_list ap;
 	va_start(ap, fmt);
 
-	clock_gettime(CLOCK_REALTIME, &ts);
-
 	/* Timestamp */
-	printf("%15.4f", ts.tv_sec + ts.tv_nsec / 1e9);
+	clock_gettime(CLOCK_REALTIME, &ts);
+	fprintf(stderr, "%8.3f ", timespec_delta(&epoch, &ts));
 
 	switch (lvl) {
-		case DEBUG: printf(" [" BLU("Debug") "] "); break;
-		case INFO:  printf(" [" WHT("Info ") "] "); break;
-		case WARN:  printf(" [" YEL("Warn ") "] "); break;
-		case ERROR: printf(" [" RED("Error") "] "); break;
+		case DEBUG: fprintf(stderr, BLD("%-5s "), GRY("Debug")); break;
+		case INFO:  fprintf(stderr, BLD("%-5s "),     "     " ); break;
+		case WARN:  fprintf(stderr, BLD("%-5s "), YEL(" Warn")); break;
+		case ERROR: fprintf(stderr, BLD("%-5s "), RED("Error")); break;
 	}
 
-	vprintf(fmt, ap);
-	printf("\n");
-
-	va_end(ap);
-}
+	if (_indent) {
+		for (int i = 0; i < _indent-1; i++)
+			fprintf(stderr, GFX("\x78") " ");
 
 int print_addr(struct sockaddr *sa, char *buf, size_t len)
 {
@@ -75,6 +85,7 @@ int print_addr(struct sockaddr *sa, char *buf, size_t len)
 
 		default:
 			error("Unsupported address family");
+		fprintf(stderr, GFX("\x74") " ");
 	}
 }
 
@@ -107,8 +118,11 @@ int parse_addr(const char *addr, struct sockaddr_in *sa, int flags)
 	}
 
 	free(tmp);
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
 
 	return ret;
+	va_end(ap);
 }
 
 cpu_set_t to_cpu_set(int set)
@@ -159,7 +173,6 @@ void hist_plot(unsigned *hist, int length)
 		if (hist[i] > hist[max])
 			max = i;
 	}
-
 
 	/* Print header */
 	info("%2s | %5s | %s", "Id", "Value", "Histogram Plot:");
