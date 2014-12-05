@@ -14,9 +14,6 @@
 #include <time.h>
 #include <math.h>
 
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include "config.h"
 #include "cfg.h"
 #include "utils.h"
@@ -59,69 +56,12 @@ void print(enum log_level lvl, const char *fmt, ...)
 		for (int i = 0; i < _indent-1; i++)
 			fprintf(stderr, GFX("\x78") " ");
 
-int print_addr(struct sockaddr *sa, char *buf, size_t len)
-{
-	if (!sa)
-		return -1;
-
-	switch (sa->sa_family) {
-		case AF_INET: {
-			struct sockaddr_in *sin = (struct sockaddr_in *) sa;
-			inet_ntop(sa->sa_family, sa, buf, len);
-			snprintf(buf+strlen(buf), len-strlen(buf), ":%hu", ntohs(sin->sin_port))
-			break;
-		}
-
-		case AF_PACKET: {
-			struct sockaddr_ll *sll = (struct sockaddr_ll *) sa;
-			char ifname[IF_NAMESIZE];
-
-			snprintf("%#x:%#x:%#x:%#x:%#x:%#x:%hu (%s)",
-				sll->sll_addr[0], sll->sll_addr[1], sll->sll_addr[2],
-				sll->sll_addr[3], sll->sll_addr[4], sll->sll_addr[5],
-				ntohs(sll->sll_protocol), if_indextoname(sll->sll_ifindex, ifname));
-			break;
-		}
-
-		default:
-			error("Unsupported address family");
 		fprintf(stderr, GFX("\x74") " ");
 	}
-}
 
-int parse_addr(const char *addr, struct sockaddr_in *sa, int flags)
-{
-	/* Split string */
-	char *tmp = strdup(addr);
-	char *node = strtok(tmp, ":");
-	char *service = strtok(NULL, ":");
-
-	if (node && !strcmp(node, "*"))
-		node = NULL;
-
-	if (service && !strcmp(service, "*"))
-		service = NULL;
-
-	/* Get IP */
-	struct addrinfo *result;
-	struct addrinfo hint = {
-		.ai_flags = flags,
-		.ai_family = AF_INET,
-		.ai_socktype = SOCK_DGRAM,
-		.ai_protocol = 0
-	};
-
-	int ret = getaddrinfo(node, service, &hint, &result);
-	if (!ret) {
-		memcpy(sa, result->ai_addr, result->ai_addrlen);
-		freeaddrinfo(result);
-	}
-
-	free(tmp);
 	vfprintf(stderr, fmt, ap);
 	fprintf(stderr, "\n");
 
-	return ret;
 	va_end(ap);
 }
 

@@ -9,10 +9,7 @@
 #define _UTILS_H_
 
 #include <stdlib.h>
-#include <stdarg.h>
 #include <errno.h>
-#include <string.h>
-
 #include <sched.h>
 
 #ifdef __GNUC__
@@ -43,8 +40,6 @@ enum log_level { DEBUG, INFO, WARN, ERROR };
 
 /* Forward declarations */
 struct settings;
-struct sockaddr_in;
-struct sockaddr;
 struct timespec;
 
 /* These global variables allow changing the output style and verbosity */
@@ -68,16 +63,6 @@ void epoch_reset();
  * @param fmt The format string (printf alike)
  */
 void print(enum log_level lvl, const char *fmt, ...);
-
-/** Resolve host/service name by local databases and/or nameservers.
- *
- * @param addr A string containing the hostname/ip and port seperated by a colon
- * @param sa A pointer to the resolved address
- * @param flags Flags for gai
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
- */
-int resolve_addr(const char *addr, struct sockaddr_in *sa, int flags);
 
 /** Convert integer to cpu_set_t.
  *

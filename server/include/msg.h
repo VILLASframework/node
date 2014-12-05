@@ -51,24 +51,4 @@ int msg_fscan(FILE *f, struct msg *m);
  */
 void msg_random(struct msg *m);
 
-/** Send a message to a node.
- *
- * @param m A pointer to the message
- * @param n A pointer to the node
- * @return
- *  - 0 on success
- *  - otherwise an error occured
- */
-int msg_send(struct msg *m, struct node *n);
-
-/** Receive a message from a node.
- *
- * @param m A pointer to the message
- * @param n A pointer to the node
- * @return
- *  - 0 on success
- *  - otherwise an error occured
- */
-int msg_recv(struct msg *m, struct node *n);
-
 #endif /* _MSG_H_ */

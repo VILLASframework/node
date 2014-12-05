@@ -24,4 +24,8 @@
 #define HIST_HEIGHT	50
 #define HIST_SEQ	17
 
+/* Protocol numbers */
+#define IPPROTO_S2SS	137
+#define ETH_P_S2SS	0xBABE
+
 #endif /* _CONFIG_H_ */

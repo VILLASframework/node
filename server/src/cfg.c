@@ -5,11 +5,8 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <grp.h>
-#include <pwd.h>
 
 #include "if.h"
 #include "tc.h"
@@ -18,6 +15,10 @@
 #include "path.h"
 #include "utils.h"
 #include "hooks.h"
+
+#include "socket.h"
+#include "gtfpga.h"
+#include "opal.h"
 
 int config_parse(const char *filename, config_t *cfg, struct settings *set,
 	struct node **nodes, struct path **paths)
@@ -165,33 +166,56 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	if (!n->name)
 		cerror(cfg, "Missing node name");
 
+
+/** @todo Implement */
+int config_parse_opal(config_setting_t *cfg, struct node *n)
+{
+	return 0;
+}
+
+/** @todo Implement */
+int config_parse_gtfpga(config_setting_t *cfg, struct node *n)
+{
+	return 0;
+}
+
+int config_parse_socket(config_setting_t *cfg, struct node *n)
+{
+	const char *local, *remote;
+	int ret;
+	
+	struct socket *s  = (struct socket *) malloc(sizeof(struct socket));
+	if (!s)
+		perror("Failed to allocate memory");
+
+	memset(s, 0, sizeof(struct socket));
+
 	if (!config_setting_lookup_string(cfg, "remote", &remote))
 		cerror(cfg, "Missing remote address for node '%s'", n->name);
 
 	if (!config_setting_lookup_string(cfg, "local", &local))
 		cerror(cfg, "Missing local address for node '%s'", n->name);
 
-	ret = resolve_addr(local, &n->local, AI_PASSIVE);
+	ret = socket_parse_addr(local, (struct sockaddr *) &s->local, node_type(n), AI_PASSIVE);
 	if (ret)
 		cerror(cfg, "Failed to resolve local address '%s' of node '%s': %s",
 			local, n->name, gai_strerror(ret));
 
-	ret = resolve_addr(remote, &n->remote, 0);
+	ret = socket_parse_addr(remote, (struct sockaddr *) &s->remote, node_type(n), 0);
 	if (ret)
 		cerror(cfg, "Failed to resolve remote address '%s' of node '%s': %s",
 			remote, n->name, gai_strerror(ret));
 
+	/** @todo Netem settings are not usable AF_UNIX */
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
-		n->netem = (struct netem *) malloc(sizeof(struct netem));
-		config_parse_netem(cfg_netem, n->netem);
+		s->netem = (struct netem *) malloc(sizeof(struct netem));
+		config_parse_netem(cfg_netem, s->netem);
 	}
+	
+	n->socket = s;
 
-	n->cfg = cfg;
-
-	list_add(*nodes, n);
-
-	return 0;
+	return CONFIG_TRUE;
 }
 
 int config_parse_netem(config_setting_t *cfg, struct netem *em)
