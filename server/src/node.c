@@ -4,53 +4,106 @@
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
  */
 
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
 
-#include "config.h"
+#include "node.h"
 #include "cfg.h"
 #include "utils.h"
-#include "msg.h"
-#include "node.h"
-#include "if.h"
 
-int node_connect(struct node *n)
-{
-	/* Create socket */
-	n->sd = socket(AF_INET, SOCK_DGRAM, 0);
-	if (n->sd < 0)
-		perror("Failed to create socket");
+/* Node types */
+#include "socket.h"
+#include "gtfpga.h"
+#include "opal.h"
 
-	/* Bind socket for receiving */
-	if (bind(n->sd, (struct sockaddr *) &n->local, sizeof(struct sockaddr_in)))
-		perror("Failed to bind to socket");
+#define VTABLE(type, name, fnc) { type, name, config_parse_ ## fnc, \
+				  fnc ## _print, \
+				  fnc ## _open, \
+				  fnc ## _close, \
+				  fnc ## _read, \
+				  fnc ## _write }
 
-	debug(1, "  We listen for node '%s' at %s:%u",
-		n->name, inet_ntoa(n->local.sin_addr),
-		ntohs(n->local.sin_port));
-	debug(1, "  We sent to node '%s' at %s:%u",
-		n->name, inet_ntoa(n->remote.sin_addr),
-		ntohs(n->remote.sin_port));
+/** Vtable for virtual node sub types */
+static const struct node_vtable vtables[] = {
+	VTABLE(IEEE_802_3, "ieee802.3",	socket),
+	VTABLE(IP,	   "ip",	socket),
+	VTABLE(UDP,	   "udp",	socket),
+	VTABLE(TCP,	   "tcp",	socket),
+	VTABLE(TCPD,	   "tcpd",	socket),
+	//VTABLE(OPAL,	   "opal",	opal  ),
+	//VTABLE(GTFPGA,   "gtfpga",	gtfpga),
+};
 
-	return 0;
-}
+/** Linked list of nodes */
+struct node *nodes;
 
-int node_disconnect(struct node *n)
-{
-	close(n->sd);
-
-	return 0;
-}
-
-struct node* node_lookup_name(const char *str, struct node *nodes)
+struct node * node_lookup_name(const char *str, struct node *nodes)
 {
 	for (struct node *n = nodes; n; n = n->next) {
-		if (!strcmp(str, n->name)) {
+		if (!strcmp(str, n->name))
 			return n;
-		}
 	}
 
 	return NULL;
+}
+
+struct node_vtable const * node_lookup_vtable(const char *str)
+{
+	for (int i = 0; i < ARRAY_LEN(vtables); i++) {
+		if (!strcmp(vtables[i].name, str))
+			return &vtables[i];
+	}
+
+	return NULL;
+}
+
+int node_start(struct node *n)
+{
+	int ret;
+
+	char str[256];
+	node_print(n, str, sizeof(str));
+	
+	debug(1, "Starting node '%s' of type '%s' (%s)", n->name, n->vt->name, str);
+
+	{ INDENT
+		if (!n->refcnt)
+			warn("Node '%s' is not used by an active path", n->name);
+
+		ret = n->vt->open(n);
+	}
+	
+	return ret;
+}
+
+int node_start_defer(struct node *n)
+{
+	switch (node_type(n)) {
+		case TCPD:
+			info("Wait for incoming TCP connection from node '%s'...", n->name);
+			listen(n->socket->sd, 1);
+			n->socket->sd = accept(n->socket->sd, NULL, NULL);
+			break;
+	
+		case TCP:
+			info("Connect with TCP to remote node '%s'", n->name);
+			connect(n->socket->sd, (struct sockaddr *) &n->socket->remote, sizeof(n->socket->remote));
+			break;
+
+		default:
+			break;
+	}
+	
+	return 0;
+}
+
+int node_stop(struct node *n)
+{
+	int ret;
+	info("Stopping node '%s'", n->name);
+	
+	{ INDENT
+		ret = n->vt->close(n);
+	}
+	
+	return ret;
 }

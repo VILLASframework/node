@@ -31,9 +31,8 @@ void msg_swap(struct msg *m);
  *
  * @param f The file stream
  * @param m A pointer to the message
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int msg_fprint(FILE *f, struct msg *m);
 
@@ -41,9 +40,8 @@ int msg_fprint(FILE *f, struct msg *m);
  *
  * @param f The file stream
  * @param m A pointer to the message
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int msg_fscan(FILE *f, struct msg *m);
 
@@ -52,25 +50,5 @@ int msg_fscan(FILE *f, struct msg *m);
  * @param m A pointer to the message whose values will be updated
  */
 void msg_random(struct msg *m);
-
-/** Send a message to a node.
- *
- * @param m A pointer to the message
- * @param n A pointer to the node
- * @return
- *  - 0 on success
- *  - otherwise an error occured
- */
-int msg_send(struct msg *m, struct node *n);
-
-/** Receive a message from a node.
- *
- * @param m A pointer to the message
- * @param n A pointer to the node
- * @return
- *  - 0 on success
- *  - otherwise an error occured
- */
-int msg_recv(struct msg *m, struct node *n);
 
 #endif /* _MSG_H_ */

@@ -5,11 +5,8 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <netdb.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <grp.h>
-#include <pwd.h>
 
 #include "if.h"
 #include "tc.h"
@@ -19,44 +16,53 @@
 #include "utils.h"
 #include "hooks.h"
 
+#include "socket.h"
+#include "gtfpga.h"
+#include "opal.h"
+
 int config_parse(const char *filename, config_t *cfg, struct settings *set,
 	struct node **nodes, struct path **paths)
 {
 	config_set_auto_convert(cfg, 1);
 
-	if (!config_read_file(cfg, filename)) {
+	if (!config_read_file(cfg, filename))
 		error("Failed to parse configuration: %s in %s:%d",
 			config_error_text(cfg), filename,
 			config_error_line(cfg)
 		);
-	}
 
-	/* Get and check config sections */
 	config_setting_t *cfg_root = config_root_setting(cfg);
-	if (!cfg_root || !config_setting_is_group(cfg_root))
-		error("Missing global section in config file: %s", filename);
-
-	config_setting_t *cfg_nodes = config_setting_get_member(cfg_root, "nodes");
-	if (!cfg_nodes || !config_setting_is_group(cfg_nodes))
-		error("Missing node section in config file: %s", filename);
-
-	config_setting_t *cfg_paths = config_setting_get_member(cfg_root, "paths");
-	if (!cfg_paths || !config_setting_is_list(cfg_paths))
-		error("Missing path section in config file: %s", filename);
 
 	/* Parse global settings */
-	config_parse_global(cfg_root, set);
+	if (set) {
+		if (!cfg_root || !config_setting_is_group(cfg_root))
+			error("Missing global section in config file: %s", filename);
 
+		config_parse_global(cfg_root, set);
+	}
+	
 	/* Parse nodes */
-	for (int i = 0; i < config_setting_length(cfg_nodes); i++) {
-		config_setting_t *cfg_node = config_setting_get_elem(cfg_nodes, i);
-		config_parse_node(cfg_node, nodes);
+	if (nodes) {
+		config_setting_t *cfg_nodes = config_setting_get_member(cfg_root, "nodes");
+		if (!cfg_nodes || !config_setting_is_group(cfg_nodes))
+			error("Missing node section in config file: %s", filename);
+		
+		for (int i = 0; i < config_setting_length(cfg_nodes); i++) {
+			config_setting_t *cfg_node = config_setting_get_elem(cfg_nodes, i);
+			config_parse_node(cfg_node, nodes);
+		}
 	}
 
 	/* Parse paths */
-	for (int i = 0; i < config_setting_length(cfg_paths); i++) {
-		config_setting_t *cfg_path = config_setting_get_elem(cfg_paths, i);
-		config_parse_path(cfg_path, paths, nodes);
+	if (paths) {
+		config_setting_t *cfg_paths = config_setting_get_member(cfg_root, "paths");
+		if (!cfg_paths || !config_setting_is_list(cfg_paths))
+			error("Missing path section in config file: %s", filename);
+
+		for (int i = 0; i < config_setting_length(cfg_paths); i++) {
+			config_setting_t *cfg_path = config_setting_get_elem(cfg_paths, i);
+			config_parse_path(cfg_path, paths, nodes);
+		}
 	}
 
 	return CONFIG_TRUE;
@@ -69,7 +75,7 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 	config_setting_lookup_int(cfg, "debug", &set->debug);
 	config_setting_lookup_float(cfg, "stats", &set->stats);
 
-	debug = set->debug;
+	_debug = set->debug;
 
 	set->cfg = cfg;
 
@@ -141,8 +147,8 @@ int config_parse_path(config_setting_t *cfg,
 		}
 	}
 	else {
+		warn("Path '%s' => '%s' is not enabled", p->in->name, p->out->name);
 		free(p);
-		warn("  Path is not enabled");
 	}
 
 	return 0;
@@ -150,7 +156,7 @@ int config_parse_path(config_setting_t *cfg,
 
 int config_parse_node(config_setting_t *cfg, struct node **nodes)
 {
-	const char *remote, *local;
+	const char *type;
 	int ret;
 
 	/* Allocate memory */
@@ -161,9 +167,47 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 		memset(n, 0, sizeof(struct node));
 
 	/* Required settings */
+	n->cfg = cfg;
 	n->name = config_setting_name(cfg);
 	if (!n->name)
 		cerror(cfg, "Missing node name");
+
+	if (!config_setting_lookup_string(cfg, "type", &type))
+		cerror(cfg, "Missing node type");
+
+	n->vt = node_lookup_vtable(type);
+	if (!n->vt)
+		cerror(cfg, "Invalid node type");
+
+	ret = n->vt->parse(cfg, n);
+
+	list_add(*nodes, n);
+
+	return ret;
+}
+
+/** @todo Implement */
+int config_parse_opal(config_setting_t *cfg, struct node *n)
+{
+	return 0;
+}
+
+/** @todo Implement */
+int config_parse_gtfpga(config_setting_t *cfg, struct node *n)
+{
+	return 0;
+}
+
+int config_parse_socket(config_setting_t *cfg, struct node *n)
+{
+	const char *local, *remote;
+	int ret;
+	
+	struct socket *s  = (struct socket *) malloc(sizeof(struct socket));
+	if (!s)
+		perror("Failed to allocate memory");
+
+	memset(s, 0, sizeof(struct socket));
 
 	if (!config_setting_lookup_string(cfg, "remote", &remote))
 		cerror(cfg, "Missing remote address for node '%s'", n->name);
@@ -171,27 +215,26 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	if (!config_setting_lookup_string(cfg, "local", &local))
 		cerror(cfg, "Missing local address for node '%s'", n->name);
 
-	ret = resolve_addr(local, &n->local, AI_PASSIVE);
+	ret = socket_parse_addr(local, (struct sockaddr *) &s->local, node_type(n), AI_PASSIVE);
 	if (ret)
 		cerror(cfg, "Failed to resolve local address '%s' of node '%s': %s",
 			local, n->name, gai_strerror(ret));
 
-	ret = resolve_addr(remote, &n->remote, 0);
+	ret = socket_parse_addr(remote, (struct sockaddr *) &s->remote, node_type(n), 0);
 	if (ret)
 		cerror(cfg, "Failed to resolve remote address '%s' of node '%s': %s",
 			remote, n->name, gai_strerror(ret));
 
+	/** @todo Netem settings are not usable AF_UNIX */
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
-		n->netem = (struct netem *) malloc(sizeof(struct netem));
-		config_parse_netem(cfg_netem, n->netem);
+		s->netem = (struct netem *) malloc(sizeof(struct netem));
+		config_parse_netem(cfg_netem, s->netem);
 	}
+	
+	n->socket = s;
 
-	n->cfg = cfg;
-
-	list_add(*nodes, n);
-
-	return 0;
+	return CONFIG_TRUE;
 }
 
 int config_parse_netem(config_setting_t *cfg, struct netem *em)
@@ -211,7 +254,7 @@ int config_parse_netem(config_setting_t *cfg, struct netem *em)
 	if (config_setting_lookup_int(cfg, "corrupt", &em->corrupt))
 		em->valid |= TC_NETEM_CORRUPT;
 
-	/** @todo Check netem config values */
+	/** @todo Validate netem config values */
 
 	return CONFIG_TRUE;
 }

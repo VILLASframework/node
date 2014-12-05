@@ -67,9 +67,8 @@ struct netem {
 /** Remove all queuing disciplines and filters.
  *
  * @param i The interface
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int tc_reset(struct interface *i);
 
@@ -78,9 +77,8 @@ int tc_reset(struct interface *i);
  * @param i The interface
  * @param handle The handle for the new qdisc
  * @param bands The number of classes for this new qdisc
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int tc_prio(struct interface *i, tc_hdl_t handle, int bands);
 
@@ -89,9 +87,8 @@ int tc_prio(struct interface *i, tc_hdl_t handle, int bands);
  * @param i The interface
  * @param parent Make this qdisc a child of
  * @param em The netem settings
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int tc_netem(struct interface *i, tc_hdl_t parent, struct netem *em);
 
@@ -100,9 +97,8 @@ int tc_netem(struct interface *i, tc_hdl_t parent, struct netem *em);
  * @param i The interface
  * @param flowid The destination class for matched traffic
  * @param mark The netfilter firewall mark (sometime called 'fwmark')
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
 */
 int tc_mark(struct interface *i, tc_hdl_t flowid, int mark);
 

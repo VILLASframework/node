@@ -15,11 +15,15 @@
 #include <netdb.h>
 
 #include "config.h"
+#include "cfg.h"
 #include "msg.h"
 #include "node.h"
 #include "utils.h"
 
-int sd;
+static struct settings set;
+static struct node *node;
+extern struct node *nodes;
+
 int running = 1;
 
 #define CLOCK_ID	CLOCK_MONOTONIC_RAW
@@ -36,18 +40,18 @@ void quit(int sig, siginfo_t *si, void *ptr)
 
 int main(int argc, char *argv[])
 {
+	config_t config;
+
 	if (argc != 4) {
-		printf("Usage: %s TEST LOCAL REMOTE\n", argv[0]);
-		printf("  TEST     has to be 'rtt' for now\n");
-		printf("  LOCAL    is a IP:PORT combination of the local host\n");
-		printf("  REMOTE   is a IP:PORT combination of the remote host\n\n");
+		printf("Usage: %s CONFIG NODE\n", argv[0]);
+		printf("  CONFIG  path to a configuration file\n");
+		printf("  NODE    name of the node which shoud be used\n\n");
 		printf("Simulator2Simulator Server %s (built on %s %s)\n",
 			BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
+		printf(" Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
+		printf("   Steffen Vogel <stvogel@eonerc.rwth-aachen.de>\n");
 		exit(EXIT_FAILURE);
 	}
-
-	struct node n = NODE_INIT("remote");
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -59,16 +63,15 @@ int main(int argc, char *argv[])
 	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT, &sa_quit, NULL);
 
-	/* Resolve addresses */
-	int ret = resolve_addr(argv[2], &n.local, AI_PASSIVE);
-	if (ret)
-		error("Failed to resolve local address '%s': %s", argv[1], gai_strerror(ret));
+	config_init(&config);
+	config_parse(argv[1], &config, &set, &nodes, NULL);
+	
+	node = node_lookup_name(argv[2], nodes);
+	if (!node)
+		error("There's no node with the name '%s'", argv[2]);
 
-	ret = resolve_addr(argv[3], &n.remote, 0);
-	if (ret)
-		error("Failed to resolve remote address '%s': %s", argv[1], gai_strerror(ret));	
-
-	node_connect(&n);
+	node_start(node);
+	node_start_defer(node);
 
 	if (!strcmp(argv[1], "rtt")) {
 		struct msg m = MSG_INIT(sizeof(struct timespec) / sizeof(float));
@@ -91,10 +94,9 @@ int main(int argc, char *argv[])
 		fprintf(stdout, "%5s%10s%10s%10s%10s\n", "seq", "rtt", "min", "max", "avg");
 
 		while (running) {
-
 			clock_gettime(CLOCK_ID, ts1);
-			msg_send(&m, &n);
-			msg_recv(&m, &n);
+			node_write(node, &m);
+			node_read(node, &m);
 			clock_gettime(CLOCK_ID, ts2);
 
 			rtt = timespec_delta(ts1, ts2);
@@ -127,7 +129,7 @@ int main(int argc, char *argv[])
 		hist_dump(hist, RTT_HIST);
 	}
 
-	close(sd);
+	node_stop(node);
 
 	return 0;
 }

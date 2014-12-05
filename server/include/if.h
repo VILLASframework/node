@@ -17,6 +17,8 @@
 #define IF_NAME_MAX	IFNAMSIZ /**< Maximum length of an interface name */
 #define IF_IRQ_MAX	3	 /**< Maxmimal number of IRQs of an interface */
 
+struct socket;
+
 /** Interface data structure */
 struct interface {
 	/** The index used by the kernel to reference this interface */
@@ -28,20 +30,57 @@ struct interface {
 	/** List of IRQs of the NIC */
 	char irqs[IF_IRQ_MAX];
 
+	/** Linked list of associated sockets */
+	struct socket *sockets;
 	/** Linked list pointer */
 	struct interface *next;
 };
 
+/** Add a new interface to the global list and lookup name, irqs...
+ *
+ * @param index The interface index of the OS
+ * @retval >0 Success. A pointer to the new interface.
+ * @retval 0 Error. The creation failed.
+ */
+struct interface * if_create(int index);
+
+/** Start interface.
+ *
+ * This setups traffic controls queue discs, network emulation and
+ * maps interface IRQs according to affinity.
+ *
+ * @param i A pointer to the interface structure.
+ * @param affinity Set the IRQ affinity of this interface.
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
+ */
+int if_start(struct interface *i, int affinity);
+
+/** Stop interface
+ *
+ * This resets traffic qdiscs ant network emulation
+ * and maps interface IRQs to all CPUs.
+ *
+ * @param i A pointer to the interface structure.
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
+ */
+int if_stop(struct interface *i);
+
 /** Get outgoing interface.
  *
- * Does a lookup in the kernel routing table to determine
- * the interface which sends the data to a certain socket
- * address.
+ * Depending on the address family of the socker address,
+ * this function tries to determine outgoing interface
+ * which is used to send packages to a remote host with the specified
+ * socket address.
  *
- * @param sa A destination address for outgoing packets
- * @return The interface index
+ * For AF_INET the fnuction performs a lookup in the kernel routing table.
+ * For AF_PACKET the function uses the existing sll_ifindex field of the socket address.
+ *
+ * @param sa A destination address for outgoing packets.
+ * @return The interface index.
  */
-int if_getegress(struct sockaddr_in *sa);
+int if_getegress(struct sockaddr *sa);
 
 /** Get all IRQs for this interface.
  *
@@ -49,9 +88,8 @@ int if_getegress(struct sockaddr_in *sa);
  *  /sys/class/net/{ifname}/device/msi_irqs/
  *
  * @param i A pointer to the interface structure
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int if_getirqs(struct interface *i);
 
@@ -59,18 +97,18 @@ int if_getirqs(struct interface *i);
  *
  * @param i A pointer to the interface structure
  * @param affinity A mask specifying which cores should handle this interrupt.
- * @return
- *  - 0 on success
- *  - otherwise an error occured
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int if_setaffinity(struct interface *i, int affinity);
 
-/** Search list of interface for a index.
+/** Search the list of interfaces for a given index.
  *
  * @param index The interface index to search for
  * @param interfaces A linked list of all interfaces
- * @return A pointer to the node or NULL if not found
+ * @retval NULL if no interface with index was found.
+ * @retval >0 Success. A pointer to the interface.
  */
-struct interface* if_lookup_index(int index, struct interface *interfaces);
+struct interface * if_lookup_index(int index);
 
 #endif /* _IF_H_ */
