@@ -17,31 +17,36 @@
 #include <netdb.h>
 
 #include "config.h"
+#include "cfg.h"
 #include "utils.h"
 #include "node.h"
 #include "msg.h"
 
-int sd;
+static struct settings set;
+static struct msg msg = MSG_INIT(0);
+extern struct node *nodes;
+static struct node *node;
 
 void quit(int sig, siginfo_t *si, void *ptr)
 {
-	close(sd);
+	node_stop(node);
 	exit(EXIT_SUCCESS);
 }
 
 int main(int argc, char *argv[])
 {
+	struct config_t config;
+
 	if (argc != 2) {
-		printf("Usage: %s LOCAL\n", argv[0]);
-		printf("  LOCAL   is a IP:PORT combination of the local host\n\n");
+		printf("Usage: %s CONFIG NODE\n", argv[0]);
+		printf("  CONFIG  path to a configuration file\n");
+		printf("  NODE    name of the node which shoud be used\n\n");
 		printf("Simulator2Simulator Server %s (built on %s %s)\n",
 			BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-		printf("Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
+		printf(" Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
+		printf("   Steffen Vogel <stvogel@eonerc.rwth-aachen.de>\n");
 		exit(EXIT_FAILURE);
 	}
-
-	struct node n = NODE_INIT("remote");
-	struct msg m;
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -53,22 +58,25 @@ int main(int argc, char *argv[])
 	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT, &sa_quit, NULL);
 
-	/* Resolve addresses */
-	int ret = resolve_addr(argv[1], &n.local, 0);
-	if (ret)
-		error("Failed to resolve local address '%s': %s", argv[1], gai_strerror(ret));
+	config_init(&config);
+	config_parse(argv[1], &config, &set, &nodes, NULL);
+	
+	node = node_lookup_name(argv[2], nodes);
+	if (!node)
+		error("There's no node with the name '%s'", argv[2]);
 
-	node_connect(&n);
+	node_start(node);
+	node_start_defer(node);
 
 	/* Print header */
 	fprintf(stderr, "# %-6s %-8s %-12s\n", "dev_id", "seq_no", "data");
 
 	while (1) {
-		msg_recv(&m, &n);
+		node_read(node, &msg);
 
-		if (m.version != MSG_VERSION)
+		if (msg.version != MSG_VERSION)
 			continue;
-		if (m.type != MSG_TYPE_DATA)
+		if (msg.type != MSG_TYPE_DATA)
 			continue;
 
 #if 1
@@ -77,7 +85,7 @@ int main(int argc, char *argv[])
 		fprintf(stdout, "%17.6f", ts.tv_sec + ts.tv_nsec / 1e9);
 #endif
 
-		msg_fprint(stdout, &m);
+		msg_fprint(stdout, &msg);
 	}
 
 	return 0;
