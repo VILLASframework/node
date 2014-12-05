@@ -9,6 +9,7 @@
 #define _UTILS_H_
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <errno.h>
 #include <sched.h>
 
@@ -34,6 +35,8 @@
 #define DOWN(n)	 	"\e[" ## n ## "B"
 #define RIGHT(n)	"\e[" ## n ## "C"
 #define LEFT(n)	 	"\e[" ## n ## "D"
+
+#define ARRAY_LEN(a)	( sizeof a / sizeof a[0] )
 
 /** The log level which is passed as first argument to print() */
 enum log_level { DEBUG, INFO, WARN, ERROR };
@@ -82,6 +85,9 @@ void hist_plot(unsigned *hist, int length);
 
 /** Dump histogram data in Matlab format */
 void hist_dump(unsigned *hist, int length);
+
+/** A system(2) emulator with popen/pclose(2) and proper output handling */
+int system2(const char* cmd, ...);
 
 /** Append an element to a single linked list */
 #define list_add(list, elm) do { \

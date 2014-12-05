@@ -15,56 +15,138 @@
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <net/if.h>
+#include <linux/if_packet.h>
 
 #include "if.h"
+#include "tc.h"
+#include "socket.h"
 #include "utils.h"
 
-int if_getegress(struct sockaddr_in *sa)
-{
-	char cmd[128];
-	char token[32];
+/** Linked list of interfaces */
+struct interface *interfaces;
 
-	snprintf(cmd, sizeof(cmd), "ip route get %s", inet_ntoa(sa->sin_addr));
+struct interface * if_create(int index) {
+	struct interface *i = malloc(sizeof(struct interface));
+	if (!i)
+		error("Failed to allocate memory for interface");
+	else
+		memset(i, 0, sizeof(struct interface));
 
-	debug(8, "System: %s", cmd);
+	i->index = index;
+	if_indextoname(index, i->name);
 
-	FILE *p = popen(cmd, "r");
-	if (!p)
+	debug(3, "Created interface '%s'", i->name, i->index, i->refcnt);
+
+	list_add(interfaces, i);
+
+	return i;
+}
+
+int if_start(struct interface *i, int affinity)
+{ INDENT
+	if (!i->refcnt) {
+		warn("Interface '%s' is not used by an active node", i->name);
 		return -1;
-
-	while (!feof(p) && fscanf(p, "%31s", token)) {
-		if (!strcmp(token, "dev")) {
-			fscanf(p, "%31s", token);
-			break;
+	}
+	else
+		info("Starting interface '%s'", i->name);
+	
+	{ INDENT
+		int mark = 0;
+		for (struct socket *s = i->sockets; s; s = s->next) {
+			if (s->netem) {
+				s->mark = 1 + mark++;
+		
+				/* Set fwmark for outgoing packets */
+				if (setsockopt(s->sd, SOL_SOCKET, SO_MARK, &s->mark, sizeof(s->mark)))
+					perror("Failed to set fwmark for outgoing packets");
+				else
+					debug(4, "Set fwmark for socket->sd = %u to %u", s->sd, s->mark);
+		
+				tc_mark(i,  TC_HDL(4000, s->mark), s->mark);
+				tc_netem(i, TC_HDL(4000, s->mark), s->netem);
+			}
 		}
+
+		/* Create priority qdisc */
+		if (mark)
+			tc_prio(i, TC_HDL(4000, 0), mark);
+
+		/* Set affinity for network interfaces (skip _loopback_ dev) */
+		if_getirqs(i);
+		if_setaffinity(i, affinity);
 	}
 
-	return (WEXITSTATUS(fclose(p))) ? -1 : if_nametoindex(token);
+	return 0;
+}
+
+int if_stop(struct interface *i)
+{ INDENT
+	info("Stopping  interface '%s'", i->name);
+
+	{ INDENT
+		if_setaffinity(i, -1L);
+		tc_reset(i);
+	}
+
+	return 0;
+}
+
+int if_getegress(struct sockaddr *sa)
+{
+	switch (sa->sa_family) {
+		case AF_INET: {
+			struct sockaddr_in *sin = (struct sockaddr_in *) sa;
+			char cmd[128];
+			char token[32];
+
+			snprintf(cmd, sizeof(cmd), "ip route get %s", inet_ntoa(sin->sin_addr));
+
+			debug(8, "System: %s", cmd);
+
+			FILE *p = popen(cmd, "r");
+			if (!p)
+				return -1;
+
+			while (!feof(p) && fscanf(p, "%31s", token)) {
+				if (!strcmp(token, "dev")) {
+					fscanf(p, "%31s", token);
+					break;
+				}
+			}
+
+			return (WEXITSTATUS(fclose(p))) ? -1 : if_nametoindex(token);
+		}
+
+		case AF_PACKET: {
+			struct sockaddr_ll *sll = (struct sockaddr_ll *) sa;
+			return sll->sll_ifindex;
+		}
+		
+		default:
+			return -1;
+	}
 }
 
 int if_getirqs(struct interface *i)
 {
 	char dirname[NAME_MAX];
+	int irq, n = 0;
 
 	snprintf(dirname, sizeof(dirname), "/sys/class/net/%s/device/msi_irqs/", i->name);
 	DIR *dir = opendir(dirname);
-	if (!dir) {
-		warn("Cannot open IRQs for interface '%s'", i->name);
-		return -ENOENT;
+	if (dir) {
+		memset(&i->irqs, 0, sizeof(char) * IF_IRQ_MAX);
+
+		struct dirent *entry;
+		while ((entry = readdir(dir)) && n < IF_IRQ_MAX) {
+			if ((irq = atoi(entry->d_name)))
+				i->irqs[n++] = irq;
+		}
+
+		closedir(dir);
 	}
 
-	memset(&i->irqs, 0, sizeof(char) * IF_IRQ_MAX);
-
-	int irq, n = 0;
-	struct dirent *entry;
-	while ((entry = readdir(dir)) && n < IF_IRQ_MAX) {
-		if ((irq = atoi(entry->d_name)))
-			i->irqs[n++] = irq;
-	}
-
-	debug(7, "Found %u interrupts for interface '%s'", n, i->name);
-
-	closedir(dir);
 	return 0;
 }
 
@@ -91,7 +173,7 @@ int if_setaffinity(struct interface *i, int affinity)
 	return 0;
 }
 
-struct interface* if_lookup_index(int index, struct interface *interfaces)
+struct interface * if_lookup_index(int index)
 {
 	for (struct interface *i = interfaces; i; i = i->next) {
 		if (i->index == index) {
@@ -101,3 +183,4 @@ struct interface* if_lookup_index(int index, struct interface *interfaces)
 
 	return NULL;
 }
+

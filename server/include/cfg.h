@@ -18,6 +18,9 @@ struct node;
 struct path;
 struct interface;
 
+struct socket;
+struct opal;
+struct gtfpga;
 struct netem;
 
 /** Global configuration */
@@ -77,6 +80,30 @@ int config_parse_path(config_setting_t *cfg,
  */
 int config_parse_node(config_setting_t *cfg,
 	struct node **nodes);
+
+/** Parse node connection details for OPAL type
+ *
+ * @param cfg A libconfig object pointing to the node
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
+ */
+int config_parse_opal(config_setting_t *cfg, struct node *n);
+
+/** Parse node connection details for GTFPGA type
+ *
+ * @param cfg A libconfig object pointing to the node
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
+ */
+int config_parse_gtfpga(config_setting_t *cfg, struct node *n);
+
+/** Parse node connection details for SOCKET type
+ *
+ * @param cfg A libconfig object pointing to the node
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
+ */
+int config_parse_socket(config_setting_t *cfg, struct node *n);
 
 /** Parse network emulator (netem) settings.
  *

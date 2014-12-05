@@ -13,11 +13,13 @@
 
 #include <sys/syscall.h>
 
-#include "cfg.h"
 #include "utils.h"
 #include "path.h"
 
 #define sigev_notify_thread_id   _sigev_un._tid
+
+/** Linked list of paths */
+struct path *paths;
 
 /** Send messages */
 static void * path_send(void *arg)
@@ -50,9 +52,9 @@ static void * path_send(void *arg)
 		perror("Failed to start timer");
 
 	while (1) {
-		sigwait(&set, &sig);
+		sigwait(&set, &sig); /* blocking wait for next timer tick */
 		if (p->last) {
-			msg_send(p->last, p->out);
+			node_write(p->out, p->last);
 			p->last = NULL;
 			p->sent++;
 		}
@@ -66,13 +68,17 @@ static void * path_run(void *arg)
 {
 	struct path *p = (struct path *) arg;
 	struct msg  *m = malloc(sizeof(struct msg));
-
 	if (!m)
 		error("Failed to allocate memory for message!");
+	
+	/* Open deferred TCP connection */
+	node_start_defer(p->in);
+	node_start_defer(p->out);
 
 	/* Main thread loop */
 	while (1) {
-		msg_recv(m, p->in); /* Receive message */
+		node_read(p->in, m); /* Receive message */
+		
 		p->received++;
 
 		/* Check header fields */
@@ -126,7 +132,7 @@ static void * path_run(void *arg)
 
 		/* At fixed rate mode, messages are send by another thread */
 		if (!p->rate) {
-			msg_send(m, p->out);
+			node_write(p->out, m); /* Send message */
 			p->sent++;
 		}
 	}
@@ -137,7 +143,9 @@ static void * path_run(void *arg)
 }
 
 int path_start(struct path *p)
-{
+{ INDENT
+	info("Starting path: %12s " GRN("=>") " %-12s", p->in->name, p->out->name);
+
 	/* At fixed rate mode, we start another thread for sending */
 	if (p->rate)
 		pthread_create(&p->sent_tid, NULL, &path_send, (void *) p);
@@ -146,7 +154,9 @@ int path_start(struct path *p)
 }
 
 int path_stop(struct path *p)
-{
+{ INDENT
+	info("Stopping path: %12s " RED("=>") " %-12s", p->in->name, p->out->name);
+
 	pthread_cancel(p->recv_tid);
 	pthread_join(p->recv_tid, NULL);
 
