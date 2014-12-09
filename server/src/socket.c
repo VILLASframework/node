@@ -121,15 +121,11 @@ int socket_close(struct node *n)
 {
 	struct socket *s = n->socket;
 	
-	if (s->sd >= 0) {
-		debug(5, "closing sd = %u", s->sd);
+	if (s->sd >= 0)
 		close(s->sd);
-	}
 	
-	if (s->sd2 >= 0) {
-		debug(5, "closing sd2 = %u", s->sd2);
+	if (s->sd2 >= 0)
 		close(s->sd2);
-	}
 	
 	return 0;
 }
