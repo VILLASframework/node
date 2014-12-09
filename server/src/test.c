@@ -39,8 +39,9 @@ int main(int argc, char *argv[])
 	config_t config;
 
 	if (argc != 4) {
-		printf("Usage: %s CONFIG NODE\n", argv[0]);
+		printf("Usage: %s CONFIG TEST NODE\n", argv[0]);
 		printf("  CONFIG  path to a configuration file\n");
+		printf("  TEST    the name of the test to execute: 'rtt'\n");
 		printf("  NODE    name of the node which shoud be used\n\n");
 		printf("Simulator2Simulator Server %s (built on %s %s)\n",
 			BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
@@ -62,14 +63,14 @@ int main(int argc, char *argv[])
 	config_init(&config);
 	config_parse(argv[1], &config, &set, &nodes, NULL);
 	
-	node = node_lookup_name(argv[2], nodes);
+	node = node_lookup_name(argv[3], nodes);
 	if (!node)
-		error("There's no node with the name '%s'", argv[2]);
+		error("There's no node with the name '%s'", argv[3]);
 
 	node_start(node);
 	node_start_defer(node);
 
-	if (!strcmp(argv[1], "rtt")) {
+	if (!strcmp(argv[2], "rtt")) {
 		struct msg m = MSG_INIT(sizeof(struct timespec) / sizeof(float));
 		struct timespec *ts1 = (struct timespec *) &m.data;
 		struct timespec *ts2 = malloc(sizeof(struct timespec));
