@@ -59,7 +59,7 @@ int if_start(struct interface *i, int affinity)
 		
 				/* Set fwmark for outgoing packets */
 				if (setsockopt(s->sd, SOL_SOCKET, SO_MARK, &s->mark, sizeof(s->mark)))
-					perror("Failed to set fwmark for outgoing packets");
+					serror("Failed to set fwmark for outgoing packets");
 				else
 					debug(4, "Set fwmark for socket->sd = %u to %u", s->sd, s->mark);
 		

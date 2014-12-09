@@ -12,6 +12,7 @@
 #include <stdarg.h>
 #include <errno.h>
 #include <sched.h>
+#include <string.h>
 
 #ifdef __GNUC__
  #define EXPECT(x, v)	__builtin_expect(x, v)
@@ -126,7 +127,7 @@ int system2(const char* cmd, ...);
 	} while (0)
 
 /** Print error and strerror(errno). */
-#define perror(msg, ...) do { \
+#define serror(msg, ...) do { \
 		print(ERROR, msg ": %s", ##__VA_ARGS__, \
 			strerror(errno)); \
 		exit(EXIT_FAILURE); \

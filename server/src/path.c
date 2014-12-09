@@ -43,13 +43,13 @@ static void * path_send(void *arg)
 	sigemptyset(&set);
 	sigaddset(&set, SIGALRM);
 	if(pthread_sigmask(SIG_BLOCK, &set, NULL))
-		perror("Set signal mask");
+		serror("Set signal mask");
 
 	if (timer_create(CLOCK_REALTIME, &sev, &tmr))
-		perror("Failed to create timer");
+		serror("Failed to create timer");
 
 	if (timer_settime(tmr, 0, &its, NULL))
-		perror("Failed to start timer");
+		serror("Failed to start timer");
 
 	while (1) {
 		sigwait(&set, &sig); /* blocking wait for next timer tick */

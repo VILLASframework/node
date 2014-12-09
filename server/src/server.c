@@ -70,7 +70,7 @@ void realtime_init()
 	if (settings.priority) {
 		struct sched_param param = { .sched_priority = settings.priority };
 		if (sched_setscheduler(0, SCHED_FIFO, &param))
-			perror("Failed to set realtime priority");
+			serror("Failed to set realtime priority");
 		else
 			debug(3, "Set task priority to %u", settings.priority);
 	}
@@ -79,7 +79,7 @@ void realtime_init()
 	if (settings.affinity) {
 		cpu_set_t cset = to_cpu_set(settings.affinity);
 		if (sched_setaffinity(0, sizeof(cset), &cset))
-			perror("Failed to set CPU affinity to '%#x'", settings.affinity);
+			serror("Failed to set CPU affinity to '%#x'", settings.affinity);
 		else
 			debug(3, "Set affinity to %#x", settings.affinity);
 	}

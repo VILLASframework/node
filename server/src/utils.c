@@ -163,7 +163,7 @@ int system2(const char *cmd, ...)
 
 	FILE *f = popen(buf, "r");
 	if (f == NULL)
-		perror("Failed to execute: '%s'", cmd);
+		serror("Failed to execute: '%s'", cmd);
 
 	while (!feof(f) && fgets(buf, sizeof(buf), f) != NULL) { INDENT
 		strtok(buf, "\n"); /* strip trailing newline */

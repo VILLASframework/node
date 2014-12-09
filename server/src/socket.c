@@ -57,11 +57,11 @@ int socket_open(struct node *n)
 	}
 	
 	if (s->sd < 0)
-		perror("Failed to create socket");
+		serror("Failed to create socket");
 	
 	/* Bind socket for receiving */
 	if (bind(s->sd, (struct sockaddr *) &s->local, sizeof(s->local)))
-		perror("Failed to bind to socket");
+		serror("Failed to bind socket");
 
 	/* Determine outgoing interface */
 	int index = if_getegress((struct sockaddr *) &s->remote);
@@ -84,7 +84,7 @@ int socket_open(struct node *n)
 		case IP:
 			prio = IPTOS_LOWDELAY;
 			if (setsockopt(s->sd, IPPROTO_IP, IP_TOS, &prio, sizeof(prio)))
-				perror("Failed to set type of service (QoS)");
+				serror("Failed to set type of service (QoS)");
 			else
 				debug(4, "Set QoS/TOS IP option for node '%s' to %#x", n->name, prio);
 			break;
@@ -92,7 +92,7 @@ int socket_open(struct node *n)
 		default:
 			prio = SOCKET_PRIO;
 			if (setsockopt(s->sd, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio)))
-				perror("Failed to set socket priority");
+				serror("Failed to set socket priority");
 			else
 				debug(4, "Set socket priority for node '%s' to %u", n->name, prio);
 			break;
@@ -115,8 +115,8 @@ int socket_read(struct node* n, struct msg *m)
 		if (errno == EINTR)
 			return -EINTR;
 
-		perror("Failed recv");
 	}
+		serror("Failed recv");
 
 	/* Convert headers to host byte order */
 	m->sequence = ntohs(m->sequence);
@@ -139,7 +139,7 @@ int socket_write(struct node* n, struct msg *m)
 	if (sendto(n->socket->sd, m, MSG_LEN(m->length), 0,
 		(struct sockaddr *) &n->socket->remote,
 		sizeof(struct sockaddr_in)) < 0)
-		perror("Failed sendto");
+		serror("Failed sendto");
 
 	debug(10, "Message sent to node '%s': version=%u, type=%u, endian=%u, length=%u, sequence=%u",
 		n->name, m->version, m->type, m->endian, m->length, ntohs(m->sequence));
@@ -167,7 +167,7 @@ int socket_print_addr(char *buf, int len, struct sockaddr *sa)
 		}
 
 		default:
-			error("Unsupported address family");
+			error("Unsupported address family: %u", sa->sa_family);
 	}
 	
 	return 0;

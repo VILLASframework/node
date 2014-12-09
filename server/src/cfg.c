@@ -205,7 +205,7 @@ int config_parse_socket(config_setting_t *cfg, struct node *n)
 	
 	struct socket *s  = (struct socket *) malloc(sizeof(struct socket));
 	if (!s)
-		perror("Failed to allocate memory");
+		serror("Failed to allocate memory");
 
 	memset(s, 0, sizeof(struct socket));
 
