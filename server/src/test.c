@@ -19,6 +19,7 @@
 #include "msg.h"
 #include "node.h"
 #include "utils.h"
+#include "hist.h"
 
 static struct settings set;
 static struct node *node;
@@ -27,11 +28,6 @@ extern struct node *nodes;
 int running = 1;
 
 #define CLOCK_ID	CLOCK_MONOTONIC_RAW
-
-#define RTT_MIN		20
-#define RTT_MAX		100
-#define RTT_RESOLUTION  2
-#define RTT_HIST	(int) ((RTT_MAX - RTT_MIN) / RTT_RESOLUTION)
 
 void quit(int sig, siginfo_t *si, void *ptr)
 {
@@ -82,11 +78,9 @@ int main(int argc, char *argv[])
 		double rtt_max = LLONG_MIN;
 		double rtt_min = LLONG_MAX;
 		double avg = 0;
-		int bar;
-		unsigned hist[RTT_HIST];
-
-
-		memset(hist, 0, RTT_HIST * sizeof(unsigned));
+		
+		struct hist histogram;
+		hist_init(&histogram, 0, 2e-4, 1e-5);
 
 #if 1		/* Print header */
 		fprintf(stdout, "%17s", "timestamp");
@@ -106,11 +100,8 @@ int main(int argc, char *argv[])
 			if (rtt < rtt_min) rtt_min = rtt;
 
 			avg += rtt;
-
-			/* Update histogram */
-			bar = (rtt * 1000 / RTT_RESOLUTION) - (RTT_MIN / RTT_RESOLUTION);
-			if (bar < RTT_HIST)
-				hist[bar]++;
+			
+			hist_put(&histogram, rtt);
 
 #if 1
 			struct timespec ts;
@@ -125,8 +116,9 @@ int main(int argc, char *argv[])
 
 		free(ts2);
 
-		hist_plot(hist, RTT_HIST);
-		hist_dump(hist, RTT_HIST);
+		hist_plot(&histogram);
+		hist_dump(&histogram);
+		hist_free(&histogram);
 	}
 
 	node_stop(node);

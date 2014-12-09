@@ -1,5 +1,5 @@
 TARGETS = server send random receive test
-SRCS = server.c send.c receive.c random.c node.c path.c utils.c socket.c msg.c cfg.c if.c tc.c
+SRCS = server.c send.c receive.c random.c node.c path.c utils.c socket.c msg.c cfg.c if.c tc.c hist.c
 
 # Default target: build everything
 all: $(TARGETS)
@@ -7,11 +7,11 @@ all: $(TARGETS)
 COMMON = socket.o if.o utils.o msg.o node.o cfg.o tc.o hooks.o
 
 # Dependencies for individual binaries
-server: $(COMMON) path.o
+server: $(COMMON) path.o hist.o
 send: $(COMMON)
 receive: $(COMMON)
 random: utils.o msg.o
-test: $(COMMON)
+test: $(COMMON) hist.o
 
 VPATH = src
 

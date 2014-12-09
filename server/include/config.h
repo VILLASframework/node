@@ -20,10 +20,6 @@
 /** Socket priority */
 #define SOCKET_PRIO	7
 
-/* Some parameters for histogram statistics */
-#define HIST_HEIGHT	50
-#define HIST_SEQ	17
-
 /* Protocol numbers */
 #define IPPROTO_S2SS	137
 #define ETH_P_S2SS	0xBABE

@@ -12,6 +12,7 @@
 #include <libconfig.h>
 
 #include "config.h"
+#include "hist.h"
 #include "node.h"
 #include "msg.h"
 #include "hooks.h"
@@ -35,6 +36,9 @@ struct path
 
 	/** A pointer to the last received message */
 	struct msg *last;
+	
+	/** Counter for received messages according to their sequence no displacement */
+	struct hist histogram;
 
 	/** Last known message number */
 	unsigned int sequence;
@@ -49,8 +53,6 @@ struct path
 	unsigned int skipped;
 	/** Counter for dropped messages due to reordering */
 	unsigned int dropped;
-	/** Counter for received messages according to their sequence no displacement */
-	unsigned int histogram[HIST_SEQ];
 
 	/** The thread id for this path */
 	pthread_t recv_tid;

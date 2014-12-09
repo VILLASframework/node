@@ -81,12 +81,6 @@ double timespec_delta(struct timespec *start, struct timespec *end);
 /** Get period as timespec from rate */
 struct timespec timespec_rate(double rate);
 
-/** Print ASCII style plot of histogram */
-void hist_plot(unsigned *hist, int length);
-
-/** Dump histogram data in Matlab format */
-void hist_dump(unsigned *hist, int length);
-
 /** A system(2) emulator with popen/pclose(2) and proper output handling */
 int system2(const char* cmd, ...);
 

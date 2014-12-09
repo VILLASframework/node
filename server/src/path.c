@@ -93,9 +93,7 @@ static void * path_run(void *arg)
 		if (dist > UINT16_MAX / 2)
 			dist -= UINT16_MAX;
 
-		int idx = HIST_SEQ / 2 + dist;
-		if (idx < HIST_SEQ && idx >= 0)
-			p->histogram[idx]++;
+		hist_put(&p->histogram, dist);
 
 		/* Handle simulation restart */
 		if (m->sequence == 0 && abs(dist) > 16) {
@@ -112,8 +110,7 @@ static void * path_run(void *arg)
 			p->skipped	= 0;
 			p->dropped	= 0;
 
-			/* Reset sequence no tracking */
-			memset(p->histogram, 0, sizeof(p->histogram));
+			hist_reset(&p->histogram);
 		}
 		else if (dist <= 0 && p->received > 1) {
 			p->dropped++;
@@ -146,6 +143,8 @@ int path_start(struct path *p)
 { INDENT
 	info("Starting path: %12s " GRN("=>") " %-12s", p->in->name, p->out->name);
 
+	hist_init(&p->histogram, -HIST_SEQ, +HIST_SEQ, 1);
+
 	/* At fixed rate mode, we start another thread for sending */
 	if (p->rate)
 		pthread_create(&p->sent_tid, NULL, &path_send, (void *) p);
@@ -165,11 +164,10 @@ int path_stop(struct path *p)
 		pthread_join(p->sent_tid, NULL);
 	}
 
-	if (p->received) {
-		path_stats(p);
-		hist_plot(p->histogram, HIST_SEQ);
-		hist_dump(p->histogram, HIST_SEQ);
-	}
+	path_stats(p);
+	hist_plot(&p->histogram);
+	hist_dump(&p->histogram);
+	hist_free(&p->histogram);
 
 	return 0;
 }

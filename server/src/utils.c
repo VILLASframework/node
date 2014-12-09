@@ -103,49 +103,6 @@ struct timespec timespec_rate(double rate)
 	return ts;
 }
 
-void hist_plot(unsigned *hist, int length)
-{
-	char buf[HIST_HEIGHT + 32];
-	int bar;
-	int max = 0;
-
-	/* Get max, first & last */
-	for (int i = 0; i < length; i++) {
-		if (hist[i] > hist[max])
-			max = i;
-	}
-
-	/* Print header */
-	info("%2s | %5s | %s", "Id", "Value", "Histogram Plot:");
-
-	/* Print plot */
-	memset(buf, '#', sizeof(buf));
-	for (int i = 0; i < length; i++) {
-		bar = HIST_HEIGHT * (float) hist[i] / hist[max];
-		if (hist[i] == 0)
-			info("%2u | " GRN("%5u") " | "           ,  i, hist[i]);
-		else if (hist[i] == hist[max])
-			info("%2u | " RED("%5u") " | " BLD("%.*s"), i, hist[i], bar, buf);
-		else
-			info("%2u | "     "%5u"  " | "     "%.*s",  i, hist[i], bar, buf);
-	}
-}
-
-void hist_dump(unsigned *hist, int length)
-{
-	char tok[16];
-	char buf[length * sizeof(tok)];
-	memset(buf, 0, sizeof(buf));
-
-	/* Print in Matlab vector format */
-	for (int i = 0; i < length; i++) {
-		snprintf(tok, sizeof(tok), "%u ", hist[i]);
-		strncat(buf, tok, sizeof(buf)-strlen(buf));
-	}
-
-	info("Matlab: hist = [ %s]", buf);
-}
-
 /** @todo: Proper way: create additional pipe for stderr in child process */
 int system2(const char *cmd, ...)
 {
