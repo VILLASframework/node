@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 {
 	struct config_t config;
 
-	if (argc != 2) {
+	if (argc != 3) {
 		printf("Usage: %s CONFIG NODE\n", argv[0]);
 		printf("  CONFIG  path to a configuration file\n");
 		printf("  NODE    name of the node which shoud be used\n\n");
