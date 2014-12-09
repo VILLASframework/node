@@ -11,12 +11,24 @@
 #define HIST_SEQ	17
 
 /** Histogram structure */
+typedef unsigned hist_cnt_t;
+
 struct hist {
-	double start;
-	double end;
 	double resolution;
+	
+	double high;
+	double low;
+	
+	double highest;
+	double lowest;
+	
 	int length;
-	unsigned *data;
+
+	hist_cnt_t total;
+	hist_cnt_t higher;
+	hist_cnt_t lower;
+
+	hist_cnt_t *data;
 };
 
 void hist_init(struct hist *h, double start, double end, double resolution);
@@ -26,6 +38,14 @@ void hist_free(struct hist *h);
 void hist_reset(struct hist *h);
 
 void hist_put(struct hist *h, double value);
+
+double hist_var(struct hist *h);
+
+double hist_mean(struct hist *h);
+
+double hist_stddev(struct hist *h);
+
+void hist_print(struct hist *h);
 
 /** Print ASCII style plot of histogram */
 void hist_plot(struct hist *h);

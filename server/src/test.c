@@ -117,8 +117,7 @@ int main(int argc, char *argv[])
 
 		free(ts2);
 
-		hist_plot(&histogram);
-		hist_dump(&histogram);
+		hist_print(&histogram);
 		hist_free(&histogram);
 	}
 

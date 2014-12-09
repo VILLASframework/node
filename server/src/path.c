@@ -110,6 +110,7 @@ static void * path_run(void *arg)
 			p->skipped	= 0;
 			p->dropped	= 0;
 
+			hist_print(&p->histogram);
 			hist_reset(&p->histogram);
 		}
 		else if (dist <= 0 && p->received > 1) {
@@ -165,8 +166,7 @@ int path_stop(struct path *p)
 	}
 
 	path_stats(p);
-	hist_plot(&p->histogram);
-	hist_dump(&p->histogram);
+	hist_print(&p->histogram);
 	hist_free(&p->histogram);
 
 	return 0;
