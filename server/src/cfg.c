@@ -4,6 +4,7 @@
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <netdb.h>
@@ -25,11 +26,18 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 {
 	config_set_auto_convert(cfg, 1);
 
-	if (!config_read_file(cfg, filename))
+	FILE *file = (strcmp("-", filename)) ? fopen(filename, "r") : stdin;
+	if (!file)
+		error("Failed to open configuration file: %s", filename);
+
+	if (!config_read(cfg, file))
 		error("Failed to parse configuration: %s in %s:%d",
 			config_error_text(cfg), filename,
 			config_error_line(cfg)
 		);
+
+	if (file != stdin)
+		fclose(file);
 
 	config_setting_t *cfg_root = config_root_setting(cfg);
 
@@ -177,7 +185,7 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 
 	n->vt = node_lookup_vtable(type);
 	if (!n->vt)
-		cerror(cfg, "Invalid node type");
+		cerror(cfg, "Invalid type for node '%s'", n->name);
 
 	ret = n->vt->parse(cfg, n);
 

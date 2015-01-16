@@ -130,7 +130,8 @@ int system2(const char* cmd, ...);
 /** Print configuration error and exit. */
 #define cerror(c, msg, ...) do { \
 		print(ERROR, msg " in %s:%u", ##__VA_ARGS__, \
-			config_setting_source_file(c), \
+			(config_setting_source_file(c)) ? \
+			 config_setting_source_file(c) : "(stdio)", \
 			config_setting_source_line(c)); \
 		exit(EXIT_FAILURE); \
 	} while (0)
