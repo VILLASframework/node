@@ -25,7 +25,25 @@ static struct settings set;
 static struct node *node;
 extern struct node *nodes;
 
+/* Test options */
 int running = 1;
+
+/** Amount of messages which should be sent (default: -1 for unlimited) */
+int count =  -1;
+
+/** File descriptor for Matlab results.
+ * This allows you to write Matlab results in a seperate log file:
+ *
+ *    ./test etc/example.conf rtt -f 3 3>> measurement_results.m
+ */
+int fd = STDOUT_FILENO;
+
+/** Lowest value in histogram. */
+double low = 0;
+/** Highest value in histogram. */
+double high = 2e-4;
+/** Histogram resolution. */
+double res = 1e-5;
 
 #define CLOCK_ID	CLOCK_MONOTONIC_RAW
 
@@ -38,8 +56,8 @@ int main(int argc, char *argv[])
 {
 	config_t config;
 
-	if (argc != 4) {
-		printf("Usage: %s CONFIG TEST NODE\n", argv[0]);
+	if (argc < 4) {
+		printf("Usage: %s CONFIG TEST NODE [ARGS]\n", argv[0]);
 		printf("  CONFIG  path to a configuration file\n");
 		printf("  TEST    the name of the test to execute: 'rtt'\n");
 		printf("  NODE    name of the node which shoud be used\n\n");
@@ -69,6 +87,44 @@ int main(int argc, char *argv[])
 
 	node_start(node);
 	node_start_defer(node);
+	
+	/* Parse Arguments */
+	char c;
+	char *endptr;
+	while ((c = getopt (argc-3, argv+3, "l:h:r:f:c:")) != -1) {
+		switch (c) {
+			case 'c':
+				count = strtoul(optarg, &endptr, 10);
+				goto check;
+			case 'f':
+				fd = strtoul(optarg, &endptr, 10);
+				goto check;
+			case 'l':
+				low = strtod(optarg, &endptr);
+				goto check;
+			case 'h':
+				high = strtod(optarg, &endptr);
+				goto check;
+			case 'r':
+				res = strtod(optarg, &endptr);
+				goto check;
+			case '?':
+				if (optopt == 'c')
+					error("Option -%c requires an argument.", optopt);
+				else if (isprint (optopt))
+					error("Unknown option `-%c'.", optopt);
+				else
+					error("Unknown option character `\\x%x'.", optopt);
+				exit(1);
+			default:
+				abort ();
+		}
+		
+		continue;
+check:
+		if (optarg == endptr)
+			error("Failed to parse parse option argument -%c %s", c, optarg);
+	}
 
 	if (!strcmp(argv[2], "rtt")) {
 		struct msg m = MSG_INIT(sizeof(struct timespec) / sizeof(float));
@@ -81,18 +137,18 @@ int main(int argc, char *argv[])
 		double avg = 0;
 		
 		struct hist histogram;
-		hist_init(&histogram, 0, 2e-4, 1e-5);
+	hist_init(&histogram, low, high, res);
 
 #if 1		/* Print header */
 		fprintf(stdout, "%17s", "timestamp");
 #endif
 		fprintf(stdout, "%5s%10s%10s%10s%10s\n", "seq", "rtt", "min", "max", "avg");
 
-		while (running) {
 			clock_gettime(CLOCK_ID, ts1);
 			node_write(node, &m);
 			node_read(node, &m);
 			clock_gettime(CLOCK_ID, ts2);
+	while (running && (count < 0 || count--)) {
 
 			rtt = timespec_delta(ts1, ts2);
 
