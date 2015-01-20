@@ -180,12 +180,13 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	if (!n->name)
 		cerror(cfg, "Missing node name");
 
-	if (!config_setting_lookup_string(cfg, "type", &type))
-		cerror(cfg, "Missing node type");
-
-	n->vt = node_lookup_vtable(type);
-	if (!n->vt)
-		cerror(cfg, "Invalid type for node '%s'", n->name);
+	if (config_setting_lookup_string(cfg, "type", &type)) {
+		n->vt = node_lookup_vtable(type);
+		if (!n->vt)
+			cerror(cfg, "Invalid type for node '%s'", n->name);
+	}
+	else
+		n->vt = node_lookup_vtable("udp");
 
 	ret = n->vt->parse(cfg, n);
 
