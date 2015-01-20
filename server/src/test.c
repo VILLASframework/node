@@ -47,6 +47,9 @@ double res = 1e-5;
 
 #define CLOCK_ID	CLOCK_MONOTONIC_RAW
 
+/* Prototypes */
+void test_rtt();
+
 void quit(int sig, siginfo_t *si, void *ptr)
 {
 	running = 0;
@@ -126,59 +129,65 @@ check:
 			error("Failed to parse parse option argument -%c %s", c, optarg);
 	}
 
-	if (!strcmp(argv[2], "rtt")) {
-		struct msg m = MSG_INIT(sizeof(struct timespec) / sizeof(float));
-		struct timespec *ts1 = (struct timespec *) &m.data;
-		struct timespec *ts2 = malloc(sizeof(struct timespec));
-
-		double rtt;
-		double rtt_max = LLONG_MIN;
-		double rtt_min = LLONG_MAX;
-		double avg = 0;
-		
-		struct hist histogram;
-	hist_init(&histogram, low, high, res);
-
-#if 1		/* Print header */
-		fprintf(stdout, "%17s", "timestamp");
-#endif
-		fprintf(stdout, "%5s%10s%10s%10s%10s\n", "seq", "rtt", "min", "max", "avg");
-
-			clock_gettime(CLOCK_ID, ts1);
-			node_write(node, &m);
-			node_read(node, &m);
-			clock_gettime(CLOCK_ID, ts2);
-	while (running && (count < 0 || count--)) {
-
-			rtt = timespec_delta(ts1, ts2);
-
-			if (rtt < 0) continue;
-			if (rtt > rtt_max) rtt_max = rtt;
-			if (rtt < rtt_min) rtt_min = rtt;
-
-			avg += rtt;
-			
-			hist_put(&histogram, rtt);
-
-#if 1
-			struct timespec ts;
-			clock_gettime(CLOCK_REALTIME, &ts);
-			fprintf(stdout, "%17.6f", ts.tv_sec + ts.tv_nsec / 1e9);
-#endif
-			m.sequence++;
-
-			fprintf(stdout, "%5u%10.3f%10.3f%10.3f%10.3f\n", m.sequence,
-				1e3 * rtt, 1e3 * rtt_min, 1e3 * rtt_max, 1e3 * avg / m.sequence);
-		}
-
-		free(ts2);
-
-		hist_print(&histogram);
-		hist_free(&histogram);
-	}
+	if (!strcmp(argv[2], "rtt"))
+		test_rtt();
+	else
+		error("Unknown test: '%s'", argv[2]);
 
 	node_stop(node);
 	config_destroy(&config);
 
 	return 0;
+}
+
+void test_rtt() {
+	struct msg m = MSG_INIT(sizeof(struct timespec) / sizeof(float));
+	struct timespec *ts1 = (struct timespec *) &m.data;
+	struct timespec *ts2 = malloc(sizeof(struct timespec));
+
+	double rtt;
+	double rtt_max = LLONG_MIN;
+	double rtt_min = LLONG_MAX;
+	double avg = 0;
+
+	struct hist histogram;
+	hist_init(&histogram, low, high, res);
+
+#if 1	/* Print header */
+	fprintf(stdout, "%17s", "timestamp");
+#endif
+	fprintf(stdout, "%5s%10s%10s%10s%10s\n", "seq", "rtt", "min", "max", "avg");
+
+	while (running && (count < 0 || count--)) {
+		clock_gettime(CLOCK_ID, ts1);
+		node_write(node, &m);
+		node_read(node, &m);
+		clock_gettime(CLOCK_ID, ts2);
+
+		rtt = timespec_delta(ts1, ts2);
+
+		if (rtt < 0) continue;
+		if (rtt > rtt_max) rtt_max = rtt;
+		if (rtt < rtt_min) rtt_min = rtt;
+
+		avg += rtt;
+	
+		hist_put(&histogram, rtt);
+
+#if 1
+		struct timespec ts;
+		clock_gettime(CLOCK_REALTIME, &ts);
+		fprintf(stdout, "%17.6f", ts.tv_sec + ts.tv_nsec / 1e9);
+#endif
+		m.sequence++;
+
+		fprintf(stdout, "%5u%10.3f%10.3f%10.3f%10.3f\n", m.sequence,
+			1e3 * rtt, 1e3 * rtt_min, 1e3 * rtt_max, 1e3 * avg / m.sequence);
+	}
+
+	free(ts2);
+
+	hist_print(&histogram);
+	
+	hist_free(&histogram);
 }
