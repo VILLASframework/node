@@ -91,6 +91,7 @@ int main(int argc, char *argv[])
 	if (!node)
 		error("There's no node with the name '%s'", argv[3]);
 
+	node->refcnt++;
 	node_start(node);
 	node_start_defer(node);
 	
