@@ -100,8 +100,8 @@ int config_parse_path(config_setting_t *cfg,
 	struct path *p = (struct path *) malloc(sizeof(struct path));
 	if (!p)
 		error("Failed to allocate memory for path");
-	else
-		memset(p, 0, sizeof(struct path));
+
+	memset(p, 0, sizeof(struct path));
 
 	/* Required settings */
 	if (!config_setting_lookup_string(cfg, "in", &in))
@@ -142,8 +142,8 @@ int config_parse_path(config_setting_t *cfg,
 			struct path *rev = (struct path *) malloc(sizeof(struct path));
 			if (!rev)
 				error("Failed to allocate memory for path");
-			else
-				memcpy(rev, p, sizeof(struct path));
+
+			memcpy(rev, p, sizeof(struct path));
 
 			rev->in  = p->out; /* Swap in/out */
 			rev->out = p->in;
@@ -171,8 +171,8 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	struct node *n = (struct node *) malloc(sizeof(struct node));
 	if (!n)
 		error("Failed to allocate memory for node");
-	else
-		memset(n, 0, sizeof(struct node));
+
+	memset(n, 0, sizeof(struct node));
 
 	/* Required settings */
 	n->cfg = cfg;
@@ -214,7 +214,7 @@ int config_parse_socket(config_setting_t *cfg, struct node *n)
 	
 	struct socket *s  = (struct socket *) malloc(sizeof(struct socket));
 	if (!s)
-		serror("Failed to allocate memory");
+		serror("Failed to allocate memory for socket");
 
 	memset(s, 0, sizeof(struct socket));
 
@@ -238,6 +238,11 @@ int config_parse_socket(config_setting_t *cfg, struct node *n)
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
 		s->netem = (struct netem *) malloc(sizeof(struct netem));
+		if (!s->netem)
+			error("Failed to allocate memory for netem");
+		
+		memset(s->netem, 0, sizeof(struct netem));
+			
 		config_parse_netem(cfg_netem, s->netem);
 	}
 	

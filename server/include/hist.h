@@ -37,7 +37,7 @@ struct hist {
 	/** The number of values which are lower than #low. */
 	hist_cnt_t lower;
 
-	/** Pointer to dynamically allocated array of bucket counters. */
+	/** Pointer to dynamically allocated array of size length. */
 	hist_cnt_t *data;
 };
 

@@ -134,7 +134,6 @@ int main(int argc, char *argv[])
 	/* Parse configuration and create nodes/paths */
 	config_parse(argv[1], &config, &settings, &nodes, &paths);
 
-
 	/* Connect all nodes and start one thread per path */
 	info("Starting nodes:");
 	for (struct node *n = nodes; n; n = n->next) { INDENT

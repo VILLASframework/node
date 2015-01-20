@@ -130,7 +130,7 @@ int socket_close(struct node *n)
 	return 0;
 }
 
-int socket_read(struct node* n, struct msg *m)
+int socket_read(struct node *n, struct msg *m)
 {
 	/* Receive message from socket */
 	int ret = recv(n->socket->sd, m, sizeof(struct msg), 0);
@@ -152,7 +152,7 @@ int socket_read(struct node* n, struct msg *m)
 	return 0;
 }
 
-int socket_write(struct node* n, struct msg *m)
+int socket_write(struct node *n, struct msg *m)
 {
 	struct socket *s = n->socket;
 	int ret;

@@ -122,6 +122,7 @@ int main(int argc, char *argv[])
 	}
 
 	node_stop(node);
+	config_destroy(&config);
 
 	return 0;
 }
