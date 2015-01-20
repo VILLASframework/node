@@ -165,9 +165,11 @@ int path_stop(struct path *p)
 		pthread_join(p->sent_tid, NULL);
 	}
 
-	path_stats(p);
-	hist_print(&p->histogram);
-	hist_free(&p->histogram);
+	if (p->sent || p->received) {
+		path_stats(p);
+		hist_print(&p->histogram);
+		hist_free(&p->histogram);
+	}
 
 	return 0;
 }
