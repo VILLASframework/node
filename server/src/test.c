@@ -13,6 +13,9 @@
 #include <limits.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "config.h"
 #include "cfg.h"
@@ -188,6 +191,14 @@ void test_rtt() {
 	free(ts2);
 
 	hist_print(&histogram);
+	
+	struct stat st;
+	if (!fstat(fd, &st)) {
+		FILE *f = fdopen(fd, "w");
+		hist_matlab(&histogram, f);
+	}
+	else
+		error("Invalid file descriptor: %u", fd);
 	
 	hist_free(&histogram);
 }

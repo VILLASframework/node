@@ -58,7 +58,8 @@ struct node_vtable const * node_lookup_vtable(const char *str)
 
 int node_start(struct node *n)
 {
-	int ret;
+	if (!n->refcnt)
+		return -1;
 
 	char str[256];
 	node_print(n, str, sizeof(str));
@@ -66,13 +67,8 @@ int node_start(struct node *n)
 	debug(1, "Starting node '%s' of type '%s' (%s)", n->name, n->vt->name, str);
 
 	{ INDENT
-		if (!n->refcnt)
-			warn("Node '%s' is not used by an active path", n->name);
-
-		ret = n->vt->open(n);
+		return n->vt->open(n);
 	}
-	
-	return ret;
 }
 
 int node_start_defer(struct node *n)

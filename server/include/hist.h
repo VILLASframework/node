@@ -7,6 +7,8 @@
 #ifndef _HIST_H_
 #define _HIST_H_
 
+#include <stdio.h>
+
 #define HIST_HEIGHT	50
 #define HIST_SEQ	17
 
@@ -68,7 +70,10 @@ void hist_print(struct hist *h);
 /** Print ASCII style plot of histogram */
 void hist_plot(struct hist *h);
 
-/** Dump histogram data in Matlab format to stdout */
-void hist_dump(struct hist *h);
+/** Dump histogram data in Matlab format to buf */
+void hist_dump(struct hist *h, char *buf, int len);
+
+/** Prints Matlab struct containing all infos to file. */
+void hist_matlab(struct hist *h, FILE *f);
 
 #endif /* _HIST_H_ */
