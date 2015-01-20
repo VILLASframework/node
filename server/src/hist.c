@@ -43,9 +43,9 @@ void hist_put(struct hist *h, double value)
 		h->lowest = value;
 	
 	/* Check bounds and increment */
-	if      (value >= h->length)
+	if      (idx >= h->length)
 		h->higher++;
-	else if (value < 0)
+	else if (idx < 0)
 		h->lower++;
 	else {		
 		h->total++;
