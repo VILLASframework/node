@@ -118,10 +118,10 @@ int main(int argc, char *argv[])
 			case '?':
 				if (optopt == 'c')
 					error("Option -%c requires an argument.", optopt);
-				else if (isprint (optopt))
-					error("Unknown option `-%c'.", optopt);
+				else if (isprint(optopt))
+					error("Unknown option '-%c'.", optopt);
 				else
-					error("Unknown option character `\\x%x'.", optopt);
+					error("Unknown option character '\\x%x'.", optopt);
 				exit(1);
 			default:
 				abort ();
@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
 		continue;
 check:
 		if (optarg == endptr)
-			error("Failed to parse parse option argument -%c %s", c, optarg);
+			error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
 
 	if (!strcmp(argv[2], "rtt"))
