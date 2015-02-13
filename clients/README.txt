@@ -14,7 +14,7 @@ Date: Mid 2014 - End 2015
     This is a WIP and should allow improve the latency of by directly accessing RTDS
     registers through the S2SS server which runs on the same machine.
     
-- ml507_gtfpga_ppc440_udp
+- ml507_ppc440_udp
     A Xilinx XPS 12.4 project which allows access to the RTDS registers via S2SS's
     UDP protocol over the ML507 Ethernet interface.
     This is working!
