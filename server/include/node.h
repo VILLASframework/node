@@ -39,7 +39,7 @@ enum node_type {
 	UDP,		/* BSD socket: AF_INET   SOCK_DGRAM  */
 	TCPD,		/* BSD socket: AF_INET   SOCK_STREAM bind + listen + accept */
 	TCP,		/* BSD socket: AF_INET   SOCK_STREAM bind + connect */
-//	OPAL_ASYNC,	/* OPAL-RT AsyncApi */
+	OPAL_ASYNC,	/* OPAL-RT AsyncApi */
 //	GTFPGA,		/* Xilinx ML507 GTFPGA card */
 	INVALID
 };
@@ -118,10 +118,14 @@ int node_stop(struct node *n);
 
 /** Lookup string representation of socket type
  *
- * @param type A string describing the socket type. This must be one of: tcp, tcpd, udp, ip, ieee802.3
- * @return An enumeration value or INVALID (0)
+ * You can either provide a node type in string or enum representation.
+ * Set str to NULL, to use the enum type.
+ *
+ * @param str A string describing the socket type. This must be one of: tcp, tcpd, udp, ip, ieee802.3
+ * @param enu The enum type of the socket.
+ * @return A pointer to the vtable, or NULL if there is no socket type / vtable with this id.
  */
-struct node_vtable const * node_lookup_vtable(const char *str);
+struct node_vtable const * node_lookup_vtable(const char *str, struct node_type enu);
 
 /** Search list of nodes for a name.
  *

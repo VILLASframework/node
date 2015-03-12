@@ -73,25 +73,27 @@ int config_parse_path(config_setting_t *cfg,
 
 /** Parse a single node and add it to the global configuration.
  *
- * @param cfg A libconfig object pointing to the node
- * @param nodes Add new nodes to this linked list
+ * @param cfg A libconfig object pointing to the node.
+ * @param nodes Add new nodes to this linked list.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int config_parse_node(config_setting_t *cfg,
-	struct node **nodes);
+int config_parse_node(config_setting_t *cfg, struct node **nodes);
 
 /** Parse node connection details for OPAL type
  *
- * @param cfg A libconfig object pointing to the node
+ * @param argc The CLI argument count as used in main().
+ * @param argv The CLI argument list as used in main(), containing shmem parameters.
+ * @param n A pointer to the node structure which should be parsed.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int config_parse_opal(config_setting_t *cfg, struct node *n);
+int config_parse_opal(int argc, char *argv[], struct node *n);
 
 /** Parse node connection details for GTFPGA type
  *
- * @param cfg A libconfig object pointing to the node
+ * @param cfg A libconfig object pointing to the node.
+ * @param n A pointer to the node structure which should be parsed.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
@@ -99,7 +101,8 @@ int config_parse_gtfpga(config_setting_t *cfg, struct node *n);
 
 /** Parse node connection details for SOCKET type
  *
- * @param cfg A libconfig object pointing to the node
+ * @param cfg A libconfig object pointing to the node.
+ * @param n A pointer to the node structure which should be parsed.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
@@ -107,8 +110,8 @@ int config_parse_socket(config_setting_t *cfg, struct node *n);
 
 /** Parse network emulator (netem) settings.
  *
- * @param cfg A libconfig object containing the settings
- * @param em A pointer to the settings
+ * @param cfg A libconfig object containing the settings.
+ * @param em A pointer to the netem settings structure (part of the path structure).
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */

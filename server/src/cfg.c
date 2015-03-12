@@ -184,6 +184,9 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 		n->vt = node_lookup_vtable(type);
 		if (!n->vt)
 			cerror(cfg, "Invalid type for node '%s'", n->name);
+
+		if (!n->vt->parse)
+			cerror(cfg, "Node type '%s' is not allowed in the config", type);
 	}
 	else
 		n->vt = node_lookup_vtable("udp");
@@ -196,8 +199,29 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 }
 
 /** @todo Implement */
-int config_parse_opal(config_setting_t *cfg, struct node *n)
+int config_parse_opal(int argc, char *argv[], struct node *n)
 {
+	n->cfg = NULL;
+	n->name = "opal";
+	n->type = OPAL_ASYNC;
+	n->vt = node_lookup_table(NULL, n->type);
+
+	struct opal *o = (struct opal *) malloc(sizeof(struct opal));
+	if (!o)
+		error("Failed to allocate memory for opal settings");
+
+	memset(o, 0, sizeof(opal));
+
+	o->async_shmem_name = OPAL_ASYNC_SHMEM_NAME;
+	o->async_shmem_size = OPAL_ASYNC_SHMEM_SIZE;
+	o->print_shmem_name = OPAL_PRINT_SHMEM_NAME;
+
+	int err;
+	if ((err = OpalGetAsyncCtrlParameters(&o->icon_ctrl, sizeof(IconCtrlStruct))) != EOK)
+		error("Could not get controller parameters (%d).\n", PROGNAME, err);
+
+	n->opal = o;
+
 	return 0;
 }
 
@@ -214,7 +238,7 @@ int config_parse_socket(config_setting_t *cfg, struct node *n)
 	
 	struct socket *s  = (struct socket *) malloc(sizeof(struct socket));
 	if (!s)
-		serror("Failed to allocate memory for socket");
+		serror("Failed to allocate memory for socket settings");
 
 	memset(s, 0, sizeof(struct socket));
 

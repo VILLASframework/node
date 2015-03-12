@@ -116,8 +116,14 @@ int main(int argc, char *argv[])
 		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
 	/* Check arguments */
+#ifndef ENABLE_OPAL_ASYNC
 	if (argc != 2)
+#else
+	if (argc != 2 || argc != 4)
+#endif
 		usage(argv[0]);
+
+	char *configfile = argv[1];
 
 	/* Check priviledges */
 	if (getuid() != 0)
@@ -131,8 +137,28 @@ int main(int argc, char *argv[])
 	info("Parsing configuration:");
 	config_init(&config);
 
+#ifdef ENABLE_OPAL_ASYNC
+	/* Check if called as asynchronous process from RT-LAB */
+	if (argc == 4) {
+		/* Allocate memory */
+		struct node *n = (struct node *) malloc(sizeof(struct node));
+		if (!n)
+			error("Failed to allocate memory for node");
+
+		memset(n, 0, sizeof(struct node));
+
+		config_parse_node_opal(argc, argv, n);
+
+		configfile = n->opal->icon_ctrl.StringParam[0];
+		if (configfile && strlen(configfile))
+			info("Found config file supplied by Opal Async process: '%s'", configfile);
+
+		list_add(*nodes, n);
+	}
+#endif
+
 	/* Parse configuration and create nodes/paths */
-	config_parse(argv[1], &config, &settings, &nodes, &paths);
+	config_parse(configfile, &config, &settings, &nodes, &paths);
 
 	/* Connect all nodes and start one thread per path */
 	info("Starting nodes:");

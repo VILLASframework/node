@@ -24,13 +24,14 @@
 
 /** Vtable for virtual node sub types */
 static const struct node_vtable vtables[] = {
+#ifdef ENABLE_OPAL_ASYNC
+	{ OPAL_ASYNC, "opal", NULL, opal_print, opal_open, opal_close, opal_read, opal_write },
+#endif
 	VTABLE(IEEE_802_3, "ieee802.3",	socket),
 	VTABLE(IP,	   "ip",	socket),
 	VTABLE(UDP,	   "udp",	socket),
 	VTABLE(TCP,	   "tcp",	socket),
-	VTABLE(TCPD,	   "tcpd",	socket),
-	//VTABLE(OPAL,	   "opal",	opal  ),
-	//VTABLE(GTFPGA,   "gtfpga",	gtfpga),
+	VTABLE(TCPD,	   "tcpd",	socket)
 };
 
 /** Linked list of nodes */
@@ -46,11 +47,17 @@ struct node * node_lookup_name(const char *str, struct node *nodes)
 	return NULL;
 }
 
-struct node_vtable const * node_lookup_vtable(const char *str)
+struct node_vtable const * node_lookup_vtable(const char *str, struct node_type enu)
 {
 	for (int i = 0; i < ARRAY_LEN(vtables); i++) {
-		if (!strcmp(vtables[i].name, str))
-			return &vtables[i];
+		if (str) {
+			if (!strcmp(vtables[i].name, str))
+				return &vtables[i];
+		}
+		else {
+			if (vtables[i].type == enu)
+				return &vtables[i];
+		}
 	}
 
 	return NULL;
