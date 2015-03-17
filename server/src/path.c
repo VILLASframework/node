@@ -67,7 +67,7 @@ static void * path_send(void *arg)
 static void * path_run(void *arg)
 {
 	struct path *p = (struct path *) arg;
-	struct msg  *m = malloc(sizeof(struct msg));
+	struct msg  *m = alloc(sizeof(struct msg));
 	if (!m)
 		error("Failed to allocate memory for message!");
 	

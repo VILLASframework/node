@@ -147,7 +147,7 @@ check:
 void test_rtt() {
 	struct msg m = MSG_INIT(sizeof(struct timespec) / sizeof(float));
 	struct timespec *ts1 = (struct timespec *) &m.data;
-	struct timespec *ts2 = malloc(sizeof(struct timespec));
+	struct timespec *ts2 = alloc(sizeof(struct timespec));
 
 	double rtt;
 	double rtt_max = LLONG_MIN;

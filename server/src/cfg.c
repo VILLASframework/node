@@ -97,11 +97,7 @@ int config_parse_path(config_setting_t *cfg,
 	int enabled = 1;
 	int reverse = 0;
 
-	struct path *p = (struct path *) malloc(sizeof(struct path));
-	if (!p)
-		error("Failed to allocate memory for path");
-
-	memset(p, 0, sizeof(struct path));
+	struct path *p = alloc(sizeof(struct path));
 
 	/* Required settings */
 	if (!config_setting_lookup_string(cfg, "in", &in))
@@ -139,11 +135,7 @@ int config_parse_path(config_setting_t *cfg,
 		list_add(*paths, p);
 
 		if (reverse) {
-			struct path *rev = (struct path *) malloc(sizeof(struct path));
-			if (!rev)
-				error("Failed to allocate memory for path");
-
-			memcpy(rev, p, sizeof(struct path));
+			struct path *rev = alloc(sizeof(struct path));
 
 			rev->in  = p->out; /* Swap in/out */
 			rev->out = p->in;
@@ -167,12 +159,7 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	const char *type;
 	int ret;
 
-	/* Allocate memory */
-	struct node *n = (struct node *) malloc(sizeof(struct node));
-	if (!n)
-		error("Failed to allocate memory for node");
-
-	memset(n, 0, sizeof(struct node));
+	struct node *n = alloc(sizeof(struct node));
 
 	/* Required settings */
 	n->cfg = cfg;
@@ -212,11 +199,7 @@ int config_parse_socket(config_setting_t *cfg, struct node *n)
 	const char *local, *remote;
 	int ret;
 	
-	struct socket *s  = (struct socket *) malloc(sizeof(struct socket));
-	if (!s)
-		serror("Failed to allocate memory for socket");
-
-	memset(s, 0, sizeof(struct socket));
+	struct socket *s = (struct socket *) alloc(sizeof(struct socket));
 
 	if (!config_setting_lookup_string(cfg, "remote", &remote))
 		cerror(cfg, "Missing remote address for node '%s'", n->name);
@@ -237,11 +220,7 @@ int config_parse_socket(config_setting_t *cfg, struct node *n)
 	/** @todo Netem settings are not usable AF_UNIX */
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
-		s->netem = (struct netem *) malloc(sizeof(struct netem));
-		if (!s->netem)
-			error("Failed to allocate memory for netem");
-		
-		memset(s->netem, 0, sizeof(struct netem));
+		s->netem = (struct netem *) alloc(sizeof(struct netem));
 			
 		config_parse_netem(cfg_netem, s->netem);
 	}
