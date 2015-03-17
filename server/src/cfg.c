@@ -199,7 +199,7 @@ int config_parse_socket(config_setting_t *cfg, struct node *n)
 	const char *local, *remote;
 	int ret;
 	
-	struct socket *s = (struct socket *) alloc(sizeof(struct socket));
+	struct socket *s = alloc(sizeof(struct socket));
 
 	if (!config_setting_lookup_string(cfg, "remote", &remote))
 		cerror(cfg, "Missing remote address for node '%s'", n->name);
