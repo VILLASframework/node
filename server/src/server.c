@@ -22,6 +22,10 @@
 #include "path.h"
 #include "node.h"
 
+#ifdef ENABLE_OPAL_ASYNC
+#include "opal.h"
+#endif
+
 /** Linked list of nodes */
 extern struct node *nodes;
 /** Linked list of paths */
@@ -103,6 +107,11 @@ void usage(const char *name)
 {
 	printf("Usage: %s CONFIG\n", name);
 	printf("  CONFIG is a required path to a configuration file\n\n");
+#ifdef ENABLE_OPAL_ASYNC
+	printf("Usage: %s OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME\n", name);
+	printf("  This type of invocation is used by OPAL-RT Asynchronous processes.\n");
+	printf("  See in the RT-LAB User Guide for more information.\n\n");
+#endif
 	printf("Simulator2Simulator Server %s (built on %s, %s)\n",
 		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
 	
@@ -116,10 +125,10 @@ int main(int argc, char *argv[])
 		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
 	/* Check arguments */
-#ifndef ENABLE_OPAL_ASYNC
-	if (argc != 2)
+#ifdef ENABLE_OPAL_ASYNC
+	if (argc != 2 && argc != 4)
 #else
-	if (argc != 2 || argc != 4)
+	if (argc != 2)
 #endif
 		usage(argv[0]);
 
@@ -139,22 +148,7 @@ int main(int argc, char *argv[])
 
 #ifdef ENABLE_OPAL_ASYNC
 	/* Check if called as asynchronous process from RT-LAB */
-	if (argc == 4) {
-		/* Allocate memory */
-		struct node *n = (struct node *) malloc(sizeof(struct node));
-		if (!n)
-			error("Failed to allocate memory for node");
-
-		memset(n, 0, sizeof(struct node));
-
-		config_parse_node_opal(argc, argv, n);
-
-		configfile = n->opal->icon_ctrl.StringParam[0];
-		if (configfile && strlen(configfile))
-			info("Found config file supplied by Opal Async process: '%s'", configfile);
-
-		list_add(*nodes, n);
-	}
+	opal_init(argc, argv);
 #endif
 
 	/* Parse configuration and create nodes/paths */

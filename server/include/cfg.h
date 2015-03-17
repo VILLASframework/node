@@ -82,13 +82,12 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes);
 
 /** Parse node connection details for OPAL type
  *
- * @param argc The CLI argument count as used in main().
- * @param argv The CLI argument list as used in main(), containing shmem parameters.
- * @param n A pointer to the node structure which should be parsed.
+ * @param cfg A libconfig object pointing to the node.
+ * @param nodes Add new nodes to this linked list.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int config_parse_opal(int argc, char *argv[], struct node *n);
+int config_parse_opal(config_setting_t *cfg, struct node *n);
 
 /** Parse node connection details for GTFPGA type
  *

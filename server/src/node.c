@@ -25,7 +25,7 @@
 /** Vtable for virtual node sub types */
 static const struct node_vtable vtables[] = {
 #ifdef ENABLE_OPAL_ASYNC
-	{ OPAL_ASYNC, "opal", NULL, opal_print, opal_open, opal_close, opal_read, opal_write },
+	VTABLE(OPAL_ASYNC, "opal",	opal),
 #endif
 	VTABLE(IEEE_802_3, "ieee802.3",	socket),
 	VTABLE(IP,	   "ip",	socket),
