@@ -47,17 +47,11 @@ struct node * node_lookup_name(const char *str, struct node *nodes)
 	return NULL;
 }
 
-struct node_vtable const * node_lookup_vtable(const char *str, struct node_type enu)
+struct node_vtable const * node_lookup_vtable(const char *str)
 {
 	for (int i = 0; i < ARRAY_LEN(vtables); i++) {
-		if (str) {
-			if (!strcmp(vtables[i].name, str))
-				return &vtables[i];
-		}
-		else {
-			if (vtables[i].type == enu)
-				return &vtables[i];
-		}
+		if (!strcmp(vtables[i].name, str))
+			return &vtables[i];
 	}
 
 	return NULL;
