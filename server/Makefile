@@ -1,9 +1,9 @@
 TARGETS = server send random receive test
-SRCS = server.c send.c receive.c random.c node.c path.c utils.c socket.c msg.c cfg.c if.c tc.c hist.c
 
 # Default target: build everything
 all: $(TARGETS)
 
+# Common dependencies for all binaries
 COMMON = socket.o if.o utils.o msg.o node.o cfg.o tc.o hooks.o
 
 # Dependencies for individual binaries
@@ -13,12 +13,11 @@ receive: $(COMMON)
 random: utils.o msg.o
 test: $(COMMON) hist.o
 
+# Search path for source files
 VPATH = src
 
 # Default debug level
 V ?= 2
-
-# Some details about the compiled version
 
 # Compiler and linker flags
 LDFLAGS = -pthread -lrt -lm -lconfig
@@ -28,7 +27,7 @@ CFLAGS += -D__GIT_REV__='"-$(shell git rev-parse --short HEAD)"'
 
 # Conditional flags
 ifdef DEBUG
-	CFLAGS += -g
+	CFLAGS += -O0 -g
 else
 	CFLAGS += -O3
 endif

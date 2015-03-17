@@ -111,13 +111,13 @@ void usage(const char *name)
 
 int main(int argc, char *argv[])
 {
-	epoch_reset();
-	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s)",
-		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
-
 	/* Check arguments */
 	if (argc != 2)
 		usage(argv[0]);
+	
+	epoch_reset();
+	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s)",
+		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
 	/* Check priviledges */
 	if (getuid() != 0)
