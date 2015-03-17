@@ -39,12 +39,12 @@ enum node_type {
 	UDP,		/* BSD socket: AF_INET   SOCK_DGRAM  */
 	TCPD,		/* BSD socket: AF_INET   SOCK_STREAM bind + listen + accept */
 	TCP,		/* BSD socket: AF_INET   SOCK_STREAM bind + connect */
-//	OPAL_ASYNC,	/* OPAL-RT AsyncApi */
+	OPAL_ASYNC,	/* OPAL-RT Asynchronous Process Api */
 //	GTFPGA,		/* Xilinx ML507 GTFPGA card */
 	INVALID
 };
 
-/** C++ like vtable construct for socket_types */
+/** C++ like vtable construct for node_types */
 struct node_vtable {
 	enum node_type type;
 	const char *name;
@@ -75,7 +75,7 @@ struct node
 	/** Virtual data (used by vtable functions) */
 	union {
 		struct socket *socket;
-		struct opal *opal;
+		struct opal   *opal;
 		struct gtfpga *gtfpga;
 	};
 
