@@ -48,7 +48,7 @@ int opal_init(int argc, char *argv[])
 	/* Get list of Send and RecvIDs */
 	if ((err = OpalGetNbAsyncSendIcon(&g->send_icons)) != EOK)
 		error("Failed to get number of send blocks (%d)", err);
-	if ((err = OpalGetNbAsyncRecvIcon(&g->recv_icons) != EOK);
+	if ((err = OpalGetNbAsyncRecvIcon(&g->recv_icons)) != EOK);
 		error("Failed to get number of recv blocks (%d)", err);
 	
 	g->send_ids = (int *) malloc(g->send_icons * sizeof(int));
@@ -71,6 +71,8 @@ int opal_init(int argc, char *argv[])
 
 int opal_deinit()
 {
+	int err;
+
 	if (og) {
 		if ((err = OpalCloseAsyncMem(og->async_shmem_size, og->async_shmem_name)) != EOK)
 			error("Failed to close shared memory area (%d)", err);
