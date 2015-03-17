@@ -75,6 +75,9 @@ void print(enum log_level lvl, const char *fmt, ...);
  */
 cpu_set_t to_cpu_set(int set);
 
+/** Allocate and initialize memory. */
+void * alloc(size_t bytes);
+
 /** Get delta between two timespec structs */
 double timespec_delta(struct timespec *start, struct timespec *end);
 

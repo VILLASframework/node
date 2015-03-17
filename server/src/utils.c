@@ -80,6 +80,17 @@ cpu_set_t to_cpu_set(int set)
 	return cset;
 }
 
+void * alloc(size_t bytes)
+{
+	void *p = malloc(bytes);
+	if (!p)
+		error("Failed to allocate memory");
+
+	memset(p, 0, bytes);
+	
+	return p;
+}
+
 double timespec_delta(struct timespec *start, struct timespec *end)
 {
 	double sec  = end->tv_sec - start->tv_sec;
