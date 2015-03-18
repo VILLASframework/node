@@ -7,6 +7,7 @@
  * @file
  */
 
+#include "utils.h"
 #include "list.h"
 
 void list_init(struct list *l)
@@ -33,26 +34,34 @@ void list_destroy(struct list *l)
 	pthread_mutex_destroy(&l->lock);
 }
 
-void list_push(struct list *l, void *d)
+void list_push(struct list *l, void *p)
 {
 	struct list_elm *e = alloc(sizeof(struct list_elm));
 	
 	pthread_mutex_lock(&l->lock);
 	
-	e->data = d;
+	e->ptr = p;
 	e->prev = l->tail;
 	e->next = NULL;
 	
-	l->tail->next = e;
+	if (l->tail)
+		l->tail->next = e;
+	if (l->head)
+		l->head->prev = e;
+	else
+		l->head = e;
+
 	l->tail = e;
 	
+	l->count++;
+
 	pthread_mutex_unlock(&l->lock);
 }
 
 struct list_elm * list_search(struct list *l, int (*cmp)(void *))
 {	
-	foreach(l, it) {
-		if (!cmp(it->data))
+	FOREACH(l, it) {
+		if (!cmp(it->ptr))
 			return it;
 	}
 
