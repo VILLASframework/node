@@ -66,6 +66,7 @@ static void * path_send(void *arg)
 /** Receive messages */
 static void * path_run(void *arg)
 {
+	char buf[33];
 	struct path *p = arg;
 	struct msg  *m = alloc(sizeof(struct msg));
 	if (!m)
@@ -202,6 +203,14 @@ int path_print(struct path *p, char *buf, int len)
 	}
 	else
 		strap(buf, len, "%s " MAG("=>") " %s", p->in->name, p->out->name);
+	
+	return 0;
+}
+
+int path_destroy(struct path *p)
+{
+	list_destroy(&p->destinations);
+	list_destroy(&p->hooks);
 	
 	return 0;
 }

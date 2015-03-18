@@ -38,6 +38,7 @@ static void quit()
 	info("Stopping paths:");
 	for (struct path *p = paths; p; p = p->next) { INDENT
 		path_stop(p);
+		path_destroy(p);
 	}
 
 	info("Stopping nodes:");
@@ -50,7 +51,7 @@ static void quit()
 		if_stop(i);
 	}
 
-	/** @todo Free nodes and paths */
+	/** @todo Free nodes */
 
 	config_destroy(&config);
 
@@ -155,8 +156,8 @@ int main(int argc, char *argv[])
 		struct path *p = paths;
 
 		info("Runtime Statistics:");
-		info("%12s " MAG("=>") " %-12s:   %-8s %-8s %-8s %-8s %-8s",
-			"Source", "Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Inval");
+		info("%-32s :   %-8s %-8s %-8s %-8s %-8s",
+			"Source " MAG("=>") " Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Inval");
 		info("---------------------------------------------------------------------------");
 
 		while (1) {

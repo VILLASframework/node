@@ -147,11 +147,11 @@ int config_parse_path(config_setting_t *cfg,
 		}
 	}
 	else {
-		free(p);
 		char buf[33];
 		path_print(p, buf, sizeof(buf));
 		
 		warn("Path %s is not enabled", buf);
+		path_destroy(p);
 	}
 
 	return 0;

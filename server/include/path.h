@@ -91,4 +91,6 @@ void path_stats(struct path *p);
 
 int path_print(struct path *p, char *buf, int len);
 
+int path_destroy(struct path *p);
+
 #endif /* _PATH_H_ */
