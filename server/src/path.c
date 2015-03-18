@@ -97,11 +97,11 @@ static void * path_run(void *arg)
 
 		/* Handle simulation restart */
 		if (m->sequence == 0 && abs(dist) >= 1) {
+			path_print(p, buf, sizeof(buf));
 			path_stats(p);
-			warn("Simulation for path %s " MAG("=>") " %s "
-			     "restarted (p->seq=%u, m->seq=%u, dist=%d)",
-			     	p->in->name, p->out->name,
-				p->sequence, m->sequence, dist);
+			
+			warn("Simulation for path %s restarted (p->seq=%u, m->seq=%u, dist=%d)",
+				buf, p->sequence, m->sequence, dist);
 
 			/* Reset counters */
 			p->sent		= 0;
@@ -142,7 +142,10 @@ static void * path_run(void *arg)
 
 int path_start(struct path *p)
 { INDENT
-	info("Starting path: %12s " GRN("=>") " %-12s", p->in->name, p->out->name);
+	char buf[33];
+	path_print(p, buf, sizeof(buf));
+	
+	info("Starting path: %s", buf);
 
 	hist_init(&p->histogram, -HIST_SEQ, +HIST_SEQ, 1);
 
@@ -155,7 +158,10 @@ int path_start(struct path *p)
 
 int path_stop(struct path *p)
 { INDENT
-	info("Stopping path: %12s " RED("=>") " %-12s", p->in->name, p->out->name);
+	char buf[33];
+	path_print(p, buf, sizeof(buf));
+	
+	info("Stopping path: %s", buf);
 
 	pthread_cancel(p->recv_tid);
 	pthread_join(p->recv_tid, NULL);
@@ -176,8 +182,26 @@ int path_stop(struct path *p)
 
 void path_stats(struct path *p)
 {
-	info("%12s " MAG("=>") " %-12s:   %-8u %-8u %-8u %-8u %-8u",
-		p->in->name, p->out->name,
-		p->sent, p->received, p->dropped, p->skipped, p->invalid
+	char buf[33];
+	path_print(p, buf, sizeof(buf));
+	
+	info("%-32s :   %-8u %-8u %-8u %-8u %-8u",
+		buf, p->sent, p->received, p->dropped, p->skipped, p->invalid
 	);
+}
+
+int path_print(struct path *p, char *buf, int len)
+{
+	*buf = 0;
+	
+	if (list_length(&p->destinations) > 1) {
+		strap(buf, len, "%s " MAG("=>") " [", p->in->name);
+		FOREACH(&p->destinations, it)
+			strap(buf, len, " %s", it->node->name);
+		strap(buf, len, " ]");
+	}
+	else
+		strap(buf, len, "%s " MAG("=>") " %s", p->in->name, p->out->name);
+	
+	return 0;
 }

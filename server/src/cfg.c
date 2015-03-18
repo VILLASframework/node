@@ -147,8 +147,11 @@ int config_parse_path(config_setting_t *cfg,
 		}
 	}
 	else {
-		warn("Path '%s' => '%s' is not enabled", p->in->name, p->out->name);
 		free(p);
+		char buf[33];
+		path_print(p, buf, sizeof(buf));
+		
+		warn("Path %s is not enabled", buf);
 	}
 
 	return 0;

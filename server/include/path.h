@@ -89,4 +89,6 @@ int path_stop(struct path *p);
  */
 void path_stats(struct path *p);
 
+int path_print(struct path *p, char *buf, int len);
+
 #endif /* _PATH_H_ */
