@@ -48,13 +48,28 @@ hook_cb_t hook_lookup(const char *name);
 /** Example hook: Print the message. */
 int hook_print(struct msg *m, struct path *p);
 
-/** Example hook: Filter the message on some criteria. */
-int hook_filter(struct msg *m, struct path *p);
+/** Example hook: Log messages to a logfile in /tmp */
+int hook_log(struct msg *m, struct path *p);
+
+#define HOOK_LOG_MODE "w+"
+#define HOOK_LOG_TEMPLATE "logs/s2ss-%Y_%m_%d-%H_%M_%S.log"
+
+/** Example hook: Drop messages. */
+int hook_decimate(struct msg *m, struct path *p);
+
+#define HOOK_DECIMATE_RATIO 10
 
 /** Example hook: Convert the message values to fixed precision. */
 int hook_tofixed(struct msg *m, struct path *p);
 
-/** Example hook: Chain multiple hooks */
-int hook_multiple(struct msg *m, struct path *p);
+/** Example hook: add timestamp to message. */
+int hook_ts(struct msg *m, struct path *p);
+
+#define HOOK_TS_INDEX	-1 // last message
+
+/** Example hook: Finite-Impulse-Response (FIR) filter. */
+int hook_fir(struct msg *m, struct path *p);
+
+#define HOOK_FIR_INDEX	1
 
 #endif /* _HOOKS_H_ */

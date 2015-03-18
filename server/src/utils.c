@@ -35,6 +35,25 @@ void epoch_reset()
 	clock_gettime(CLOCK_REALTIME, &epoch);
 }
 
+int strap(char *dest, size_t size, const char *fmt,  ...)
+{
+	int ret;
+	
+	va_list ap;
+	va_start(ap, fmt);
+	ret = vstrap(dest, size, fmt, ap);
+	va_end(ap);
+	
+	return ret;
+}
+
+int vstrap(char *dest, size_t size, const char *fmt, va_list ap)
+{
+	int len = strlen(dest);
+
+	return vsnprintf(dest + len, size - len, fmt, ap);
+}
+
 void print(enum log_level lvl, const char *fmt, ...)
 {
 	struct timespec ts;

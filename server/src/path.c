@@ -21,7 +21,7 @@
 /** Linked list of paths */
 struct path *paths;
 
-/** Send messages */
+/** Send messages asynchronously */
 static void * path_send(void *arg)
 {
 	int sig;
@@ -53,9 +53,12 @@ static void * path_send(void *arg)
 
 	while (1) {
 		sigwait(&set, &sig); /* blocking wait for next timer tick */
-		if (p->last) {
-			node_write(p->out, p->last);
-			p->last = NULL;
+		
+		if (p->received) {
+			FOREACH(&p->destinations, it) {
+				node_write(it->node, p->last);
+			}
+			
 			p->sent++;
 		}
 	}
@@ -66,6 +69,7 @@ static void * path_send(void *arg)
 /** Receive messages */
 static void * path_run(void *arg)
 {
+	char buf[33];
 	struct path *p = arg;
 	struct msg  *m = alloc(sizeof(struct msg));
 	if (!m)
@@ -73,7 +77,7 @@ static void * path_run(void *arg)
 	
 	/* Open deferred TCP connection */
 	node_start_defer(p->in);
-	node_start_defer(p->out);
+	// FIXME: node_start_defer(p->out);
 
 	/* Main thread loop */
 	while (1) {
@@ -97,11 +101,11 @@ static void * path_run(void *arg)
 
 		/* Handle simulation restart */
 		if (m->sequence == 0 && abs(dist) >= 1) {
+			path_print(p, buf, sizeof(buf));
 			path_stats(p);
-			warn("Simulation for path %s " MAG("=>") " %s "
-			     "restarted (p->seq=%u, m->seq=%u, dist=%d)",
-			     	p->in->name, p->out->name,
-				p->sequence, m->sequence, dist);
+			
+			warn("Simulation for path %s restarted (p->seq=%u, m->seq=%u, dist=%d)",
+				buf, p->sequence, m->sequence, dist);
 
 			/* Reset counters */
 			p->sent		= 0;
@@ -119,9 +123,11 @@ static void * path_run(void *arg)
 		}
 
 		/* Call hook callbacks */
-		if (p->hook && p->hook(m, p)) {
-			p->skipped++;
-			continue;
+		FOREACH(&p->hooks, it) {
+			if (it->hook(m, p)) {
+				p->skipped++;
+				continue;
+			}
 		}
 
 		/* Update last known sequence number */
@@ -130,7 +136,10 @@ static void * path_run(void *arg)
 
 		/* At fixed rate mode, messages are send by another thread */
 		if (!p->rate) {
-			node_write(p->out, m); /* Send message */
+			FOREACH(&p->destinations, it) {
+				node_write(it->node, m);
+			}
+			
 			p->sent++;
 		}
 	}
@@ -142,7 +151,10 @@ static void * path_run(void *arg)
 
 int path_start(struct path *p)
 { INDENT
-	info("Starting path: %12s " GRN("=>") " %-12s", p->in->name, p->out->name);
+	char buf[33];
+	path_print(p, buf, sizeof(buf));
+	
+	info("Starting path: %s", buf);
 
 	hist_init(&p->histogram, -HIST_SEQ, +HIST_SEQ, 1);
 
@@ -155,7 +167,10 @@ int path_start(struct path *p)
 
 int path_stop(struct path *p)
 { INDENT
-	info("Stopping path: %12s " RED("=>") " %-12s", p->in->name, p->out->name);
+	char buf[33];
+	path_print(p, buf, sizeof(buf));
+	
+	info("Stopping path: %s", buf);
 
 	pthread_cancel(p->recv_tid);
 	pthread_join(p->recv_tid, NULL);
@@ -176,8 +191,34 @@ int path_stop(struct path *p)
 
 void path_stats(struct path *p)
 {
-	info("%12s " MAG("=>") " %-12s:   %-8u %-8u %-8u %-8u %-8u",
-		p->in->name, p->out->name,
-		p->sent, p->received, p->dropped, p->skipped, p->invalid
+	char buf[33];
+	path_print(p, buf, sizeof(buf));
+	
+	info("%-32s :   %-8u %-8u %-8u %-8u %-8u",
+		buf, p->sent, p->received, p->dropped, p->skipped, p->invalid
 	);
+}
+
+int path_print(struct path *p, char *buf, int len)
+{
+	*buf = 0;
+	
+	if (list_length(&p->destinations) > 1) {
+		strap(buf, len, "%s " MAG("=>") " [", p->in->name);
+		FOREACH(&p->destinations, it)
+			strap(buf, len, " %s", it->node->name);
+		strap(buf, len, " ]");
+	}
+	else
+		strap(buf, len, "%s " MAG("=>") " %s", p->in->name, p->out->name);
+	
+	return 0;
+}
+
+int path_destroy(struct path *p)
+{
+	list_destroy(&p->destinations);
+	list_destroy(&p->hooks);
+	
+	return 0;
 }

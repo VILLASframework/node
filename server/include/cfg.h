@@ -14,6 +14,8 @@
 
 #include <libconfig.h>
 
+/* Forward declarations */
+struct list;
 struct node;
 struct path;
 struct interface;
@@ -70,6 +72,11 @@ int config_parse_global(config_setting_t *cfg, struct settings *set);
  */
 int config_parse_path(config_setting_t *cfg,
 	struct path **paths, struct node **nodes);
+	
+int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct node **all);
+
+
+int config_parse_hooks(config_setting_t *cfg, struct list *hooks);
 
 /** Parse a single node and add it to the global configuration.
  *
@@ -78,8 +85,7 @@ int config_parse_path(config_setting_t *cfg,
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int config_parse_node(config_setting_t *cfg,
-	struct node **nodes);
+int config_parse_node(config_setting_t *cfg, struct node **nodes);
 
 /** Parse node connection details for OPAL type
  *
