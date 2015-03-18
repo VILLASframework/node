@@ -58,8 +58,10 @@ struct node_vtable const * node_lookup_vtable(const char *str)
 
 int node_start(struct node *n)
 {
-	if (!n->refcnt)
+	if (!n->refcnt) {
+		warn("Node '%s' is unused. Skipping...", n->name);
 		return -1;
+	}
 
 	char str[256];
 	node_print(n, str, sizeof(str));
