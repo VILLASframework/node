@@ -35,20 +35,36 @@ void quit(int sig, siginfo_t *si, void *ptr)
 	exit(EXIT_SUCCESS);
 }
 
+void usage(char *name)
+{
+	printf("Usage: %s [-r] CONFIG NODE\n", name);
+	printf("  -r      swap local / remote address of socket based nodes)\n");
+	printf("  CONFIG  path to a configuration file\n");
+	printf("  NODE    name of the node which shoud be used\n");
+	printf("Simulator2Simulator Server %s (built on %s %s)\n",
+		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
+	printf(" Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
+	printf("   Steffen Vogel <stvogel@eonerc.rwth-aachen.de>\n");
+	exit(EXIT_FAILURE);
+}
+
 int main(int argc, char *argv[])
 {
+	char c;
+	int reverse = 0;
+
 	struct config_t config;
-	
-	if (argc != 3) {
-		printf("Usage: %s CONFIG NODE\n", argv[0]);
-		printf("  CONFIG  path to a configuration file\n");
-		printf("  NODE    name of the node which shoud be used\n\n");
-		printf("Simulator2Simulator Server %s (built on %s %s)\n",
-			BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-		printf(" Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
-		printf("   Steffen Vogel <stvogel@eonerc.rwth-aachen.de>\n");
-		exit(EXIT_FAILURE);
+
+	while ((c = getopt(argc, argv, "hr")) != -1) {
+		switch (c) {
+			case 'r': reverse = 1; break;
+			case 'h':
+			case '?': usage(argv[0]);
+		}
 	}
+	
+	if (argc - optind != 2)
+		usage(argv[0]);
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -61,11 +77,16 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	config_init(&config);
-	config_parse(argv[1], &config, &set, &nodes, NULL);
+	config_parse(argv[optind], &config, &set, &nodes, NULL);
 	
-	node = node_lookup_name(argv[2], nodes);
+	node = node_lookup_name(argv[optind+1], nodes);
 	if (!node)
-		error("There's no node with the name '%s'", argv[2]);
+		error("There's no node with the name '%s'", argv[optind+1]);
+	
+	node->refcnt++;
+	
+	if (reverse)
+		node_reverse(node);
 
 	node_start(node);
 	node_start_defer(node);

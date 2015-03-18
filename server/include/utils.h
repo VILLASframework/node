@@ -39,6 +39,12 @@
 
 #define ARRAY_LEN(a)	( sizeof a / sizeof a[0] )
 
+#define SWAP(a, b)	do { \
+	 			__typeof__(a) tmp = a; \
+				a = b; \
+				b = tmp; \
+			} while(0)
+
 /** The log level which is passed as first argument to print() */
 enum log_level { DEBUG, INFO, WARN, ERROR };
 

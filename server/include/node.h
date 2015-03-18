@@ -131,4 +131,10 @@ struct node_vtable const * node_lookup_vtable(const char *str);
  */
 struct node* node_lookup_name(const char *str, struct node *nodes);
 
+/** Reverse local and remote socket address.
+ * This is usefull for the helper programs: send, receive, test
+ * because they usually use the same configuration file as the
+ * server and therefore the direction needs to be swapped. */
+int node_reverse(struct node *n);
+
 #endif /* _NODE_H_ */

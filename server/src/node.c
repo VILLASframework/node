@@ -105,3 +105,17 @@ int node_stop(struct node *n)
 	
 	return ret;
 }
+
+int node_reverse(struct node *n)
+{
+	switch (n->vt->type) {
+		case IEEE_802_3:
+		case IP:
+		case UDP:
+		case TCP:
+			SWAP(n->socket->remote, n->socket->local);
+			break;
+		default: { }
+	}
+	return n->vt->open == socket_open;
+}
