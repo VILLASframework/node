@@ -4,14 +4,14 @@ TARGETS = server send random receive test
 all: $(TARGETS)
 
 # Common dependencies for all binaries
-COMMON = socket.o if.o utils.o msg.o node.o cfg.o tc.o hooks.o
+OBJS = socket.o if.o utils.o msg.o node.o cfg.o tc.o hooks.o list.o path.o hist.o
 
 # Dependencies for individual binaries
-server: $(COMMON) path.o hist.o
-send: $(COMMON)
-receive: $(COMMON)
-random: utils.o msg.o
-test: $(COMMON) hist.o
+server: server.o $(OBJS) 
+send: send.o $(OBJS)
+receive: receive.o $(OBJS)
+random: random.o $(OBJS)
+test: test.o $(OBJS)
 
 # Search path for source files
 VPATH = src
