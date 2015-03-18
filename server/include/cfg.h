@@ -14,6 +14,8 @@
 
 #include <libconfig.h>
 
+/* Forward declarations */
+struct list;
 struct node;
 struct path;
 struct interface;
@@ -70,6 +72,9 @@ int config_parse_global(config_setting_t *cfg, struct settings *set);
  */
 int config_parse_path(config_setting_t *cfg,
 	struct path **paths, struct node **nodes);
+	
+int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct node **all);
+
 
 /** Parse a single node and add it to the global configuration.
  *

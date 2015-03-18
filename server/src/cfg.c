@@ -9,12 +9,13 @@
 #include <string.h>
 #include <netdb.h>
 
+#include "utils.h"
+#include "list.h"
 #include "if.h"
 #include "tc.h"
 #include "cfg.h"
 #include "node.h"
 #include "path.h"
-#include "utils.h"
 #include "hooks.h"
 
 #include "socket.h"
@@ -93,26 +94,31 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 int config_parse_path(config_setting_t *cfg,
 	struct path **paths, struct node **nodes)
 {
-	const char *in, *out, *hook;
+	const char *in;
 	int enabled = 1;
 	int reverse = 0;
-
+	
 	struct path *p = alloc(sizeof(struct path));
 
-	/* Required settings */
-	if (!config_setting_lookup_string(cfg, "in", &in))
-		cerror(cfg, "Missing input node for path");
-
-	if (!config_setting_lookup_string(cfg, "out", &out))
-		cerror(cfg, "Missing output node for path");
-
+	/* Input node */
+	struct config_setting_t *cfg_in = config_setting_get_member(cfg, "in");
+	if (!cfg_in || config_setting_type(cfg_in) != CONFIG_TYPE_STRING)
+		cerror(cfg, "Invalid input node for path");
+	
+	in = config_setting_get_string(cfg_in);
 	p->in = node_lookup_name(in, *nodes);
 	if (!p->in)
-		cerror(cfg, "Invalid input node '%s'", in);
+		cerror(cfg_in, "Invalid input node '%s", in);
 
-	p->out = node_lookup_name(out, *nodes);
-	if (!p->out)
-		cerror(cfg, "Invalid output node '%s'", out);
+	/* Output node(s) */
+	struct config_setting_t *cfg_out = config_setting_get_member(cfg, "out");
+	if (cfg_out)
+		config_parse_nodelist(cfg_out, &p->destinations, nodes);
+
+	if (list_length(&p->destinations) >= 1)
+		p->out = list_first(&p->destinations)->node;
+	else
+		cerror(cfg, "Missing output node for path");
 
 	/* Optional settings */
 	if (config_setting_lookup_string(cfg, "hook", &hook)) {
@@ -130,21 +136,28 @@ int config_parse_path(config_setting_t *cfg,
 
 	if (enabled) {
 		p->in->refcnt++;
-		p->out->refcnt++;
-
-		list_add(*paths, p);
-
+		FOREACH(&p->destinations, it)
+			it->node->refcnt++;
+		
 		if (reverse) {
-			struct path *rev = alloc(sizeof(struct path));
+			if (list_length(&p->destinations) > 1)
+				warn("Using first destination '%s' as source for reverse path. "
+					"Ignoring remaining nodes", p->out->name);
 
-			rev->in  = p->out; /* Swap in/out */
-			rev->out = p->in;
+			struct path *r = alloc(sizeof(struct path));
 
-			rev->in->refcnt++;
-			rev->out->refcnt++;
+			r->in  = p->out; /* Swap in/out */
+			r->out = p->in;
+			
+			list_push(&r->destinations, r->out);
 
-			list_add(*paths, rev);
+			r->in->refcnt++;
+			r->out->refcnt++;
+
+			list_add(*paths, r);
 		}
+		
+		list_add(*paths, p);
 	}
 	else {
 		char buf[33];
@@ -154,6 +167,38 @@ int config_parse_path(config_setting_t *cfg,
 		path_destroy(p);
 	}
 
+	return 0;
+}
+
+int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct node **all) {
+	const char *str;
+	struct node *node;
+	
+	switch (config_setting_type(cfg)) {
+		case CONFIG_TYPE_STRING:
+			str = config_setting_get_string(cfg);
+			node = node_lookup_name(str, *all);
+			if (!node)
+				cerror(cfg, "Invalid outgoing node '%s'", str);
+				
+			list_push(nodes, node);
+			break;
+		
+		case CONFIG_TYPE_ARRAY:
+			for (int i=0; i<config_setting_length(cfg); i++) {
+				str = config_setting_get_string_elem(cfg, i);
+				node = node_lookup_name(str, *all);
+				if (!node)
+					cerror(config_setting_get_elem(cfg, i), "Invalid outgoing node '%s'", str);
+				
+				list_push(nodes, node);
+			}
+			break;
+		
+		default:
+			cerror(cfg, "Invalid output node(s)");
+	}
+	
 	return 0;
 }
 
