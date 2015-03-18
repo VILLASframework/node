@@ -123,9 +123,11 @@ static void * path_run(void *arg)
 		}
 
 		/* Call hook callbacks */
-		if (p->hook && p->hook(m, p)) {
-			p->skipped++;
-			continue;
+		FOREACH(&p->hooks, it) {
+			if (it->hook(m, p)) {
+				p->skipped++;
+				continue;
+			}
 		}
 
 		/* Update last known sequence number */

@@ -121,12 +121,9 @@ int config_parse_path(config_setting_t *cfg,
 		cerror(cfg, "Missing output node for path");
 
 	/* Optional settings */
-	if (config_setting_lookup_string(cfg, "hook", &hook)) {
-		p->hook = hook_lookup(hook);
-		
-		if (!p->hook)
-			cerror(cfg, "Failed to lookup hook function. Not registred?");
-	}
+	struct config_setting_t *cfg_hook = config_setting_get_member(cfg, "hook");
+	if (cfg_hook)
+		config_parse_hooks(cfg_hook, &p->hooks);
 	
 	config_setting_lookup_bool(cfg, "enabled", &enabled);
 	config_setting_lookup_bool(cfg, "reverse", &reverse);
@@ -197,6 +194,38 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct node
 		
 		default:
 			cerror(cfg, "Invalid output node(s)");
+	}
+	
+	return 0;
+}
+
+int config_parse_hooks(config_setting_t *cfg, struct list *hooks) {
+	const char *str;
+	hook_cb_t hook;
+	
+	switch (config_setting_type(cfg)) {
+		case CONFIG_TYPE_STRING:
+			str = config_setting_get_string(cfg);
+			hook = hook_lookup(str);
+			if (!hook)
+				cerror(cfg, "Invalid hook function '%s'", str);
+				
+			list_push(hooks, hook);
+			break;
+		
+		case CONFIG_TYPE_ARRAY:
+			for (int i=0; i<config_setting_length(cfg); i++) {
+				str = config_setting_get_string_elem(cfg, i);
+				hook = hook_lookup(str);
+				if (!hook)
+					cerror(config_setting_get_elem(cfg, i), "Invalid hook function '%s'", str);
+				
+				list_push(hooks, hook);
+			}
+			break;
+		
+		default:
+			cerror(cfg, "Invalid hook functions");
 	}
 	
 	return 0;
