@@ -248,6 +248,9 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 		n->vt = node_lookup_vtable(type);
 		if (!n->vt)
 			cerror(cfg, "Invalid type for node '%s'", n->name);
+
+		if (!n->vt->parse)
+			cerror(cfg, "Node type '%s' is not allowed in the config", type);
 	}
 	else
 		n->vt = node_lookup_vtable("udp");
@@ -259,9 +262,42 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	return ret;
 }
 
-/** @todo Implement */
+/** @todo: Remove this global variable. */
+extern struct opal_global *og;
+
 int config_parse_opal(config_setting_t *cfg, struct node *n)
-{
+{	
+	if (!og) {
+		warn("Skipping this node, because this server is not running as an OPAL Async process!");
+		return -1;
+	}
+	
+	struct opal *o = (struct opal *) malloc(sizeof(struct opal));
+	if (!o)
+		error("Failed to allocate memory for opal settings");
+	
+	memset(o, 0, sizeof(struct opal));
+	
+	config_setting_lookup_int(cfg, "send_id", &o->send_id);
+	config_setting_lookup_int(cfg, "recv_id", &o->send_id);
+	config_setting_lookup_bool(cfg, "reply", &o->reply);
+		
+	/* Search for valid send and recv ids */
+	int sfound = 0, rfound = 0;
+	for (int i=0; i<og->send_icons; i++)
+		sfound += og->send_ids[i] == o->send_id;
+	for (int i=0; i<og->send_icons; i++)
+		rfound += og->send_ids[i] == o->send_id;
+	
+	if (!sfound)
+		cerror(config_setting_get_member(cfg, "send_id"), "Invalid send_id '%u' for node '%s'", o->send_id, n->name);
+	if (!rfound)
+		cerror(config_setting_get_member(cfg, "send_id"), "Invalid send_id '%u' for node '%s'", o->send_id, n->name);
+
+	n->opal = o;
+	n->opal->global = og;
+	n->cfg = cfg;
+
 	return 0;
 }
 

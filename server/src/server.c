@@ -22,6 +22,10 @@
 #include "path.h"
 #include "node.h"
 
+#ifdef ENABLE_OPAL_ASYNC
+#include "opal.h"
+#endif
+
 /** Linked list of nodes */
 extern struct node *nodes;
 /** Linked list of paths */
@@ -104,6 +108,11 @@ void usage(const char *name)
 {
 	printf("Usage: %s CONFIG\n", name);
 	printf("  CONFIG is a required path to a configuration file\n\n");
+#ifdef ENABLE_OPAL_ASYNC
+	printf("Usage: %s OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME\n", name);
+	printf("  This type of invocation is used by OPAL-RT Asynchronous processes.\n");
+	printf("  See in the RT-LAB User Guide for more information.\n\n");
+#endif
 	printf("Simulator2Simulator Server %s (built on %s, %s)\n",
 		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
 	
@@ -113,12 +122,18 @@ void usage(const char *name)
 int main(int argc, char *argv[])
 {
 	/* Check arguments */
+#ifdef ENABLE_OPAL_ASYNC
+	if (argc != 2 && argc != 4)
+#else
 	if (argc != 2)
+#endif
 		usage(argv[0]);
 	
 	epoch_reset();
 	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s)",
 		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
+
+	char *configfile = argv[1];
 
 	/* Check priviledges */
 	if (getuid() != 0)
@@ -132,8 +147,13 @@ int main(int argc, char *argv[])
 	info("Parsing configuration:");
 	config_init(&config);
 
+#ifdef ENABLE_OPAL_ASYNC
+	/* Check if called as asynchronous process from RT-LAB */
+	opal_init(argc, argv);
+#endif
+
 	/* Parse configuration and create nodes/paths */
-	config_parse(argv[1], &config, &settings, &nodes, &paths);
+	config_parse(configfile, &config, &settings, &nodes, &paths);
 
 	/* Connect all nodes and start one thread per path */
 	info("Starting nodes:");

@@ -118,8 +118,8 @@ int node_stop(struct node *n);
 
 /** Lookup string representation of socket type
  *
- * @param type A string describing the socket type. This must be one of: tcp, tcpd, udp, ip, ieee802.3
- * @return An enumeration value or INVALID (0)
+ * @param str A string describing the socket type. This must be one of: tcp, tcpd, udp, ip, ieee802.3 or opal
+ * @return A pointer to the vtable, or NULL if there is no socket type / vtable with this id.
  */
 struct node_vtable const * node_lookup_vtable(const char *str);
 
