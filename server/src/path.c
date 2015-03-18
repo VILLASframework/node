@@ -21,7 +21,7 @@
 /** Linked list of paths */
 struct path *paths;
 
-/** Send messages */
+/** Send messages asynchronously */
 static void * path_send(void *arg)
 {
 	int sig;
@@ -53,9 +53,12 @@ static void * path_send(void *arg)
 
 	while (1) {
 		sigwait(&set, &sig); /* blocking wait for next timer tick */
-		if (p->last) {
-			node_write(p->out, p->last);
-			p->last = NULL;
+		
+		if (p->received) {
+			FOREACH(&p->destinations, it) {
+				node_write(it->node, p->last);
+			}
+			
 			p->sent++;
 		}
 	}
@@ -74,7 +77,7 @@ static void * path_run(void *arg)
 	
 	/* Open deferred TCP connection */
 	node_start_defer(p->in);
-	node_start_defer(p->out);
+	// FIXME: node_start_defer(p->out);
 
 	/* Main thread loop */
 	while (1) {
@@ -131,7 +134,10 @@ static void * path_run(void *arg)
 
 		/* At fixed rate mode, messages are send by another thread */
 		if (!p->rate) {
-			node_write(p->out, m); /* Send message */
+			FOREACH(&p->destinations, it) {
+				node_write(it->node, m);
+			}
+			
 			p->sent++;
 		}
 	}

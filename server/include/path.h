@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include <libconfig.h>
 
+#include "list.h"
 #include "config.h"
 #include "hist.h"
 #include "node.h"
@@ -25,11 +26,14 @@ struct path
 {
 	/** Pointer to the incoming node */
 	struct node *in;
-	/** Pointer to the outgoing node */
+	/** Pointer to the first outgoing node.
+	 * Usually this is only a pointer to the first list element of path::destinations. */
 	struct node *out;
-
-	/** Function pointer of the hook */
-	hook_cb_t hook;
+	
+	/** List of all outgoing nodes */
+	struct list destinations;
+	/** List of function pointers to hooks */
+	struct list hooks;
 
 	/** Send messages with a fixed rate over this path */
 	double rate;
@@ -43,7 +47,7 @@ struct path
 	/** Last known message number */
 	unsigned int sequence;
 
-	/** Counter for sent messages to all outgoing nodes*/
+	/** Counter for sent messages to all outgoing nodes */
 	unsigned int sent;
 	/** Counter for received messages from all incoming nodes */
 	unsigned int received;
