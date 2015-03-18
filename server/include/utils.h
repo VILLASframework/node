@@ -68,6 +68,15 @@ void epoch_reset();
  */
 void print(enum log_level lvl, const char *fmt, ...);
 
+/** Safely append a format string to an existing string.
+ *
+ * This function is similar to strlcat() from BSD.
+ */
+int strap(char *dest, size_t size, const char *fmt,  ...);
+
+/** Variable arguments (stdarg) version of strap() */
+int vstrap(char *dest, size_t size, const char *fmt, va_list va);
+
 /** Convert integer to cpu_set_t.
  *
  * @param set A cpu bitmask
