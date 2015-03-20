@@ -56,6 +56,10 @@ static void quit()
 	}
 
 	/** @todo Free nodes */
+	
+#ifdef ENABLE_OPAL_ASYNC
+	opal_deinit();
+#endif
 
 	config_destroy(&config);
 
@@ -71,11 +75,11 @@ void realtime_init()
 	else
 		info("Server is running on a realtime patched kernel");
 
-	/* Use FIFO scheduler with realtime priority */
+	/* Use FIFO scheduler with real time priority */
 	if (settings.priority) {
 		struct sched_param param = { .sched_priority = settings.priority };
 		if (sched_setscheduler(0, SCHED_FIFO, &param))
-			serror("Failed to set realtime priority");
+			serror("Failed to set real time priority");
 		else
 			debug(3, "Set task priority to %u", settings.priority);
 	}
@@ -130,10 +134,8 @@ int main(int argc, char *argv[])
 		usage(argv[0]);
 	
 	epoch_reset();
-	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s)",
-		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
-
-	char *configfile = argv[1];
+	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s, debug=%d)",
+		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)), _debug);
 
 	/* Check priviledges */
 	if (getuid() != 0)
@@ -150,6 +152,11 @@ int main(int argc, char *argv[])
 #ifdef ENABLE_OPAL_ASYNC
 	/* Check if called as asynchronous process from RT-LAB */
 	opal_init(argc, argv);
+	
+	char *configfile = "opal-shmem.conf";
+#else
+	
+	char *configfile = argv[1];
 #endif
 
 	/* Parse configuration and create nodes/paths */

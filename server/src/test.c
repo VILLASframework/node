@@ -48,7 +48,7 @@ double high = 2e-4;
 /** Histogram resolution. */
 double res = 1e-5;
 
-#define CLOCK_ID	CLOCK_MONOTONIC_RAW
+#define CLOCK_ID	CLOCK_MONOTONIC
 
 /* Prototypes */
 void test_rtt();

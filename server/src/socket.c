@@ -230,7 +230,7 @@ int socket_parse_addr(const char *addr, struct sockaddr *sa, enum node_type type
 	else {	/* Format: "192.168.0.10:12001" */
 		struct addrinfo hint = {
 			.ai_flags = flags,
-			.ai_family = AF_UNSPEC
+			.ai_family = AF_INET
 		};
 		
 		/* Split string */

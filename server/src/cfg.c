@@ -27,19 +27,16 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 {
 	config_set_auto_convert(cfg, 1);
 
-	FILE *file = (strcmp("-", filename)) ? fopen(filename, "r") : stdin;
-	if (!file)
-		error("Failed to open configuration file: %s", filename);
+	int  ret = strcmp("-", filename) ? config_read_file(cfg, filename)
+					 : config_read(cfg, stdin);
 
-	if (!config_read(cfg, file))
+	if (ret != CONFIG_TRUE)
 		error("Failed to parse configuration: %s in %s:%d",
-			config_error_text(cfg), filename,
+			config_error_text(cfg),
+			config_error_file(cfg) ? config_error_file(cfg) : filename,
 			config_error_line(cfg)
 		);
-
-	if (file != stdin)
-		fclose(file);
-
+	
 	config_setting_t *cfg_root = config_root_setting(cfg);
 
 	/* Parse global settings */
@@ -74,7 +71,7 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 		}
 	}
 
-	return CONFIG_TRUE;
+	return 0;
 }
 
 int config_parse_global(config_setting_t *cfg, struct settings *set)
@@ -88,7 +85,7 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 
 	set->cfg = cfg;
 
-	return CONFIG_TRUE;
+	return 0;
 }
 
 int config_parse_path(config_setting_t *cfg,
@@ -108,7 +105,7 @@ int config_parse_path(config_setting_t *cfg,
 	in = config_setting_get_string(cfg_in);
 	p->in = node_lookup_name(in, *nodes);
 	if (!p->in)
-		cerror(cfg_in, "Invalid input node '%s", in);
+		cerror(cfg_in, "Invalid input node '%s'", in);
 
 	/* Output node(s) */
 	struct config_setting_t *cfg_out = config_setting_get_member(cfg, "out");
@@ -257,7 +254,8 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 
 	ret = n->vt->parse(cfg, n);
 
-	list_add(*nodes, n);
+	if (!ret)
+		list_add(*nodes, n);
 
 	return ret;
 }
@@ -268,7 +266,7 @@ extern struct opal_global *og;
 int config_parse_opal(config_setting_t *cfg, struct node *n)
 {	
 	if (!og) {
-		warn("Skipping this node, because this server is not running as an OPAL Async process!");
+		warn("Skipping node '%s', because this server is not running as an OPAL Async process!", n->name);
 		return -1;
 	}
 	
@@ -279,7 +277,7 @@ int config_parse_opal(config_setting_t *cfg, struct node *n)
 	memset(o, 0, sizeof(struct opal));
 	
 	config_setting_lookup_int(cfg, "send_id", &o->send_id);
-	config_setting_lookup_int(cfg, "recv_id", &o->send_id);
+	config_setting_lookup_int(cfg, "recv_id", &o->recv_id);
 	config_setting_lookup_bool(cfg, "reply", &o->reply);
 		
 	/* Search for valid send and recv ids */
@@ -292,7 +290,7 @@ int config_parse_opal(config_setting_t *cfg, struct node *n)
 	if (!sfound)
 		cerror(config_setting_get_member(cfg, "send_id"), "Invalid send_id '%u' for node '%s'", o->send_id, n->name);
 	if (!rfound)
-		cerror(config_setting_get_member(cfg, "send_id"), "Invalid send_id '%u' for node '%s'", o->send_id, n->name);
+		cerror(config_setting_get_member(cfg, "recv_id"), "Invalid recv_id '%u' for node '%s'", o->recv_id, n->name);
 
 	n->opal = o;
 	n->opal->global = og;
@@ -340,7 +338,7 @@ int config_parse_socket(config_setting_t *cfg, struct node *n)
 	
 	n->socket = s;
 
-	return CONFIG_TRUE;
+	return 0;
 }
 
 int config_parse_netem(config_setting_t *cfg, struct netem *em)
@@ -362,5 +360,5 @@ int config_parse_netem(config_setting_t *cfg, struct netem *em)
 
 	/** @todo Validate netem config values */
 
-	return CONFIG_TRUE;
+	return 0;
 }

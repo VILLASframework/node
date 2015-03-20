@@ -16,6 +16,7 @@
 #include <math.h>
 
 #ifdef ENABLE_OPAL_ASYNC
+#define RTLAB
 #include <OpalPrint.h>
 #endif
 
@@ -89,10 +90,9 @@ void print(enum log_level lvl, const char *fmt, ...)
 	
 	/* Output */
 #ifdef ENABLE_OPAL_ASYNC
-	OpalPrint("%s\n", buf);
-#else
-	fprintf(stderr, "%s\n", buf);
+	OpalPrint("S2SS: %s\n", buf);
 #endif
+	fprintf(stderr, "%s\n", buf);
 }
 
 cpu_set_t to_cpu_set(int set)
