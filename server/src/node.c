@@ -24,13 +24,14 @@
 
 /** Vtable for virtual node sub types */
 static const struct node_vtable vtables[] = {
+#ifdef ENABLE_OPAL_ASYNC
+	VTABLE(OPAL_ASYNC, "opal",	opal),
+#endif
 	VTABLE(IEEE_802_3, "ieee802.3",	socket),
 	VTABLE(IP,	   "ip",	socket),
 	VTABLE(UDP,	   "udp",	socket),
 	VTABLE(TCP,	   "tcp",	socket),
-	VTABLE(TCPD,	   "tcpd",	socket),
-	//VTABLE(OPAL,	   "opal",	opal  ),
-	//VTABLE(GTFPGA,   "gtfpga",	gtfpga),
+	VTABLE(TCPD,	   "tcpd",	socket)
 };
 
 /** Linked list of nodes */
@@ -58,8 +59,10 @@ struct node_vtable const * node_lookup_vtable(const char *str)
 
 int node_start(struct node *n)
 {
-	if (!n->refcnt)
+	if (!n->refcnt) {
+		warn("Node '%s' is unused. Skipping...", n->name);
 		return -1;
+	}
 
 	char str[256];
 	node_print(n, str, sizeof(str));
@@ -102,4 +105,18 @@ int node_stop(struct node *n)
 	}
 	
 	return ret;
+}
+
+int node_reverse(struct node *n)
+{
+	switch (n->vt->type) {
+		case IEEE_802_3:
+		case IP:
+		case UDP:
+		case TCP:
+			SWAP(n->socket->remote, n->socket->local);
+			break;
+		default: { }
+	}
+	return n->vt->open == socket_open;
 }

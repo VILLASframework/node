@@ -15,6 +15,10 @@
 #include <time.h>
 #include <math.h>
 
+#ifdef ENABLE_OPAL_ASYNC
+#include <OpalPrint.h>
+#endif
+
 #include "config.h"
 #include "cfg.h"
 #include "utils.h"
@@ -35,35 +39,60 @@ void epoch_reset()
 	clock_gettime(CLOCK_REALTIME, &epoch);
 }
 
+int strap(char *dest, size_t size, const char *fmt,  ...)
+{
+	int ret;
+	
+	va_list ap;
+	va_start(ap, fmt);
+	ret = vstrap(dest, size, fmt, ap);
+	va_end(ap);
+	
+	return ret;
+}
+
+int vstrap(char *dest, size_t size, const char *fmt, va_list ap)
+{
+	int len = strlen(dest);
+
+	return vsnprintf(dest + len, size - len, fmt, ap);
+}
+
 void print(enum log_level lvl, const char *fmt, ...)
 {
 	struct timespec ts;
+	char buf[512] = "";
 
 	va_list ap;
-	va_start(ap, fmt);
 
 	/* Timestamp */
 	clock_gettime(CLOCK_REALTIME, &ts);
-	fprintf(stderr, "%8.3f ", timespec_delta(&epoch, &ts));
+	strap(buf, sizeof(buf), "%8.3f ", timespec_delta(&epoch, &ts));
 
+	/* Severity */
 	switch (lvl) {
-		case DEBUG: fprintf(stderr, BLD("%-5s "), GRY("Debug")); break;
-		case INFO:  fprintf(stderr, BLD("%-5s "),     "     " ); break;
-		case WARN:  fprintf(stderr, BLD("%-5s "), YEL(" Warn")); break;
-		case ERROR: fprintf(stderr, BLD("%-5s "), RED("Error")); break;
+		case DEBUG: strap(buf, sizeof(buf), BLD("%-5s "), GRY("Debug")); break;
+		case INFO:  strap(buf, sizeof(buf), BLD("%-5s "),     "     " ); break;
+		case WARN:  strap(buf, sizeof(buf), BLD("%-5s "), YEL(" Warn")); break;
+		case ERROR: strap(buf, sizeof(buf), BLD("%-5s "), RED("Error")); break;
 	}
 
-	if (_indent) {
-		for (int i = 0; i < _indent-1; i++)
-			fprintf(stderr, GFX("\x78") " ");
+	/* Indention */
+	for (int i = 0; i < _indent-1; i++)
+		strap(buf, sizeof(buf), GFX("\x78") " ");
+	strap(buf, sizeof(buf), GFX("\x74") " ");
 
-		fprintf(stderr, GFX("\x74") " ");
-	}
-
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "\n");
-
+	/* Format String */
+	va_start(ap, fmt);
+	vstrap(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
+	
+	/* Output */
+#ifdef ENABLE_OPAL_ASYNC
+	OpalPrint("%s\n", buf);
+#else
+	fprintf(stderr, "%s\n", buf);
+#endif
 }
 
 cpu_set_t to_cpu_set(int set)
@@ -78,6 +107,17 @@ cpu_set_t to_cpu_set(int set)
 	}
 
 	return cset;
+}
+
+void * alloc(size_t bytes)
+{
+	void *p = malloc(bytes);
+	if (!p)
+		error("Failed to allocate memory");
+
+	memset(p, 0, bytes);
+	
+	return p;
 }
 
 double timespec_delta(struct timespec *start, struct timespec *end)

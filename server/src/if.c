@@ -26,11 +26,7 @@
 struct interface *interfaces;
 
 struct interface * if_create(int index) {
-	struct interface *i = malloc(sizeof(struct interface));
-	if (!i)
-		error("Failed to allocate memory for interface");
-	else
-		memset(i, 0, sizeof(struct interface));
+	struct interface *i = alloc(sizeof(struct interface));
 
 	i->index = index;
 	if_indextoname(index, i->name);

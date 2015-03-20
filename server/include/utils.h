@@ -39,6 +39,12 @@
 
 #define ARRAY_LEN(a)	( sizeof a / sizeof a[0] )
 
+#define SWAP(a, b)	do { \
+	 			__typeof__(a) tmp = a; \
+				a = b; \
+				b = tmp; \
+			} while(0)
+
 /** The log level which is passed as first argument to print() */
 enum log_level { DEBUG, INFO, WARN, ERROR };
 
@@ -68,12 +74,24 @@ void epoch_reset();
  */
 void print(enum log_level lvl, const char *fmt, ...);
 
+/** Safely append a format string to an existing string.
+ *
+ * This function is similar to strlcat() from BSD.
+ */
+int strap(char *dest, size_t size, const char *fmt,  ...);
+
+/** Variable arguments (stdarg) version of strap() */
+int vstrap(char *dest, size_t size, const char *fmt, va_list va);
+
 /** Convert integer to cpu_set_t.
  *
  * @param set A cpu bitmask
  * @return The opaque cpu_set_t datatype
  */
 cpu_set_t to_cpu_set(int set);
+
+/** Allocate and initialize memory. */
+void * alloc(size_t bytes);
 
 /** Get delta between two timespec structs */
 double timespec_delta(struct timespec *start, struct timespec *end);

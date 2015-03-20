@@ -46,9 +46,7 @@ int socket_open(struct node *n)
 	struct sockaddr_in *sin = (struct sockaddr_in *) &s->local;
 	struct sockaddr_ll *sll = (struct sockaddr_ll *) &s->local;
 	int ret;
-	
-	s->sd = s->sd2 = -1;
-	
+		
 	/* Create socket */
 	switch (node_type(n)) {
 		case TCPD:
@@ -166,7 +164,7 @@ int socket_write(struct node *n, struct msg *m)
 		ret = send(s->sd, m, MSG_LEN(m->length), 0);
 
 	if (ret < 0)
-		serror("Failed sendto");
+		serror("Failed send(to)");
 
 	debug(10, "Message sent to node '%s': version=%u, type=%u, endian=%u, length=%u, sequence=%u",
 		n->name, m->version, m->type, m->endian, m->length, ntohs(m->sequence));

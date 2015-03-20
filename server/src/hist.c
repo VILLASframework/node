@@ -23,7 +23,7 @@ void hist_init(struct hist *h, double low, double high, double resolution)
 	h->high = high;
 	h->resolution = resolution;
 	h->length = (high - low) / resolution;
-	h->data = malloc(h->length * sizeof(unsigned));
+	h->data = alloc(h->length * sizeof(unsigned));
 	
 	hist_reset(h);
 }

@@ -9,12 +9,13 @@
 #include <string.h>
 #include <netdb.h>
 
+#include "utils.h"
+#include "list.h"
 #include "if.h"
 #include "tc.h"
 #include "cfg.h"
 #include "node.h"
 #include "path.h"
-#include "utils.h"
 #include "hooks.h"
 
 #include "socket.h"
@@ -93,38 +94,36 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 int config_parse_path(config_setting_t *cfg,
 	struct path **paths, struct node **nodes)
 {
-	const char *in, *out, *hook;
+	const char *in;
 	int enabled = 1;
 	int reverse = 0;
+	
+	struct path *p = alloc(sizeof(struct path));
 
-	struct path *p = (struct path *) malloc(sizeof(struct path));
-	if (!p)
-		error("Failed to allocate memory for path");
-
-	memset(p, 0, sizeof(struct path));
-
-	/* Required settings */
-	if (!config_setting_lookup_string(cfg, "in", &in))
-		cerror(cfg, "Missing input node for path");
-
-	if (!config_setting_lookup_string(cfg, "out", &out))
-		cerror(cfg, "Missing output node for path");
-
+	/* Input node */
+	struct config_setting_t *cfg_in = config_setting_get_member(cfg, "in");
+	if (!cfg_in || config_setting_type(cfg_in) != CONFIG_TYPE_STRING)
+		cerror(cfg, "Invalid input node for path");
+	
+	in = config_setting_get_string(cfg_in);
 	p->in = node_lookup_name(in, *nodes);
 	if (!p->in)
-		cerror(cfg, "Invalid input node '%s'", in);
+		cerror(cfg_in, "Invalid input node '%s", in);
 
-	p->out = node_lookup_name(out, *nodes);
-	if (!p->out)
-		cerror(cfg, "Invalid output node '%s'", out);
+	/* Output node(s) */
+	struct config_setting_t *cfg_out = config_setting_get_member(cfg, "out");
+	if (cfg_out)
+		config_parse_nodelist(cfg_out, &p->destinations, nodes);
+
+	if (list_length(&p->destinations) >= 1)
+		p->out = list_first(&p->destinations)->node;
+	else
+		cerror(cfg, "Missing output node for path");
 
 	/* Optional settings */
-	if (config_setting_lookup_string(cfg, "hook", &hook)) {
-		p->hook = hook_lookup(hook);
-		
-		if (!p->hook)
-			cerror(cfg, "Failed to lookup hook function. Not registred?");
-	}
+	struct config_setting_t *cfg_hook = config_setting_get_member(cfg, "hook");
+	if (cfg_hook)
+		config_parse_hooks(cfg_hook, &p->hooks);
 	
 	config_setting_lookup_bool(cfg, "enabled", &enabled);
 	config_setting_lookup_bool(cfg, "reverse", &reverse);
@@ -134,31 +133,101 @@ int config_parse_path(config_setting_t *cfg,
 
 	if (enabled) {
 		p->in->refcnt++;
-		p->out->refcnt++;
-
-		list_add(*paths, p);
-
+		FOREACH(&p->destinations, it)
+			it->node->refcnt++;
+		
 		if (reverse) {
-			struct path *rev = (struct path *) malloc(sizeof(struct path));
-			if (!rev)
-				error("Failed to allocate memory for path");
+			if (list_length(&p->destinations) > 1)
+				warn("Using first destination '%s' as source for reverse path. "
+					"Ignoring remaining nodes", p->out->name);
 
-			memcpy(rev, p, sizeof(struct path));
+			struct path *r = alloc(sizeof(struct path));
 
-			rev->in  = p->out; /* Swap in/out */
-			rev->out = p->in;
+			r->in  = p->out; /* Swap in/out */
+			r->out = p->in;
+			
+			list_push(&r->destinations, r->out);
 
-			rev->in->refcnt++;
-			rev->out->refcnt++;
+			r->in->refcnt++;
+			r->out->refcnt++;
 
-			list_add(*paths, rev);
+			list_add(*paths, r);
 		}
+		
+		list_add(*paths, p);
 	}
 	else {
-		warn("Path '%s' => '%s' is not enabled", p->in->name, p->out->name);
-		free(p);
+		char buf[33];
+		path_print(p, buf, sizeof(buf));
+		
+		warn("Path %s is not enabled", buf);
+		path_destroy(p);
 	}
 
+	return 0;
+}
+
+int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct node **all) {
+	const char *str;
+	struct node *node;
+	
+	switch (config_setting_type(cfg)) {
+		case CONFIG_TYPE_STRING:
+			str = config_setting_get_string(cfg);
+			node = node_lookup_name(str, *all);
+			if (!node)
+				cerror(cfg, "Invalid outgoing node '%s'", str);
+				
+			list_push(nodes, node);
+			break;
+		
+		case CONFIG_TYPE_ARRAY:
+			for (int i=0; i<config_setting_length(cfg); i++) {
+				str = config_setting_get_string_elem(cfg, i);
+				node = node_lookup_name(str, *all);
+				if (!node)
+					cerror(config_setting_get_elem(cfg, i), "Invalid outgoing node '%s'", str);
+				
+				list_push(nodes, node);
+			}
+			break;
+		
+		default:
+			cerror(cfg, "Invalid output node(s)");
+	}
+	
+	return 0;
+}
+
+int config_parse_hooks(config_setting_t *cfg, struct list *hooks) {
+	const char *str;
+	hook_cb_t hook;
+	
+	switch (config_setting_type(cfg)) {
+		case CONFIG_TYPE_STRING:
+			str = config_setting_get_string(cfg);
+			hook = hook_lookup(str);
+			if (!hook)
+				cerror(cfg, "Invalid hook function '%s'", str);
+				
+			list_push(hooks, hook);
+			break;
+		
+		case CONFIG_TYPE_ARRAY:
+			for (int i=0; i<config_setting_length(cfg); i++) {
+				str = config_setting_get_string_elem(cfg, i);
+				hook = hook_lookup(str);
+				if (!hook)
+					cerror(config_setting_get_elem(cfg, i), "Invalid hook function '%s'", str);
+				
+				list_push(hooks, hook);
+			}
+			break;
+		
+		default:
+			cerror(cfg, "Invalid hook functions");
+	}
+	
 	return 0;
 }
 
@@ -167,12 +236,7 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	const char *type;
 	int ret;
 
-	/* Allocate memory */
-	struct node *n = (struct node *) malloc(sizeof(struct node));
-	if (!n)
-		error("Failed to allocate memory for node");
-
-	memset(n, 0, sizeof(struct node));
+	struct node *n = alloc(sizeof(struct node));
 
 	/* Required settings */
 	n->cfg = cfg;
@@ -184,6 +248,9 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 		n->vt = node_lookup_vtable(type);
 		if (!n->vt)
 			cerror(cfg, "Invalid type for node '%s'", n->name);
+
+		if (!n->vt->parse)
+			cerror(cfg, "Node type '%s' is not allowed in the config", type);
 	}
 	else
 		n->vt = node_lookup_vtable("udp");
@@ -195,9 +262,42 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	return ret;
 }
 
-/** @todo Implement */
+/** @todo: Remove this global variable. */
+extern struct opal_global *og;
+
 int config_parse_opal(config_setting_t *cfg, struct node *n)
-{
+{	
+	if (!og) {
+		warn("Skipping this node, because this server is not running as an OPAL Async process!");
+		return -1;
+	}
+	
+	struct opal *o = (struct opal *) malloc(sizeof(struct opal));
+	if (!o)
+		error("Failed to allocate memory for opal settings");
+	
+	memset(o, 0, sizeof(struct opal));
+	
+	config_setting_lookup_int(cfg, "send_id", &o->send_id);
+	config_setting_lookup_int(cfg, "recv_id", &o->send_id);
+	config_setting_lookup_bool(cfg, "reply", &o->reply);
+		
+	/* Search for valid send and recv ids */
+	int sfound = 0, rfound = 0;
+	for (int i=0; i<og->send_icons; i++)
+		sfound += og->send_ids[i] == o->send_id;
+	for (int i=0; i<og->send_icons; i++)
+		rfound += og->send_ids[i] == o->send_id;
+	
+	if (!sfound)
+		cerror(config_setting_get_member(cfg, "send_id"), "Invalid send_id '%u' for node '%s'", o->send_id, n->name);
+	if (!rfound)
+		cerror(config_setting_get_member(cfg, "send_id"), "Invalid send_id '%u' for node '%s'", o->send_id, n->name);
+
+	n->opal = o;
+	n->opal->global = og;
+	n->cfg = cfg;
+
 	return 0;
 }
 
@@ -212,11 +312,7 @@ int config_parse_socket(config_setting_t *cfg, struct node *n)
 	const char *local, *remote;
 	int ret;
 	
-	struct socket *s  = (struct socket *) malloc(sizeof(struct socket));
-	if (!s)
-		serror("Failed to allocate memory for socket");
-
-	memset(s, 0, sizeof(struct socket));
+	struct socket *s = alloc(sizeof(struct socket));
 
 	if (!config_setting_lookup_string(cfg, "remote", &remote))
 		cerror(cfg, "Missing remote address for node '%s'", n->name);
@@ -237,11 +333,7 @@ int config_parse_socket(config_setting_t *cfg, struct node *n)
 	/** @todo Netem settings are not usable AF_UNIX */
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
-		s->netem = (struct netem *) malloc(sizeof(struct netem));
-		if (!s->netem)
-			error("Failed to allocate memory for netem");
-		
-		memset(s->netem, 0, sizeof(struct netem));
+		s->netem = (struct netem *) alloc(sizeof(struct netem));
 			
 		config_parse_netem(cfg_netem, s->netem);
 	}

@@ -39,12 +39,12 @@ enum node_type {
 	UDP,		/* BSD socket: AF_INET   SOCK_DGRAM  */
 	TCPD,		/* BSD socket: AF_INET   SOCK_STREAM bind + listen + accept */
 	TCP,		/* BSD socket: AF_INET   SOCK_STREAM bind + connect */
-//	OPAL_ASYNC,	/* OPAL-RT AsyncApi */
+	OPAL_ASYNC,	/* OPAL-RT Asynchronous Process Api */
 //	GTFPGA,		/* Xilinx ML507 GTFPGA card */
 	INVALID
 };
 
-/** C++ like vtable construct for socket_types */
+/** C++ like vtable construct for node_types */
 struct node_vtable {
 	enum node_type type;
 	const char *name;
@@ -75,7 +75,7 @@ struct node
 	/** Virtual data (used by vtable functions) */
 	union {
 		struct socket *socket;
-		struct opal *opal;
+		struct opal   *opal;
 		struct gtfpga *gtfpga;
 	};
 
@@ -118,8 +118,8 @@ int node_stop(struct node *n);
 
 /** Lookup string representation of socket type
  *
- * @param type A string describing the socket type. This must be one of: tcp, tcpd, udp, ip, ieee802.3
- * @return An enumeration value or INVALID (0)
+ * @param str A string describing the socket type. This must be one of: tcp, tcpd, udp, ip, ieee802.3 or opal
+ * @return A pointer to the vtable, or NULL if there is no socket type / vtable with this id.
  */
 struct node_vtable const * node_lookup_vtable(const char *str);
 
@@ -130,5 +130,11 @@ struct node_vtable const * node_lookup_vtable(const char *str);
  * @return A pointer to the node or NULL if not found
  */
 struct node* node_lookup_name(const char *str, struct node *nodes);
+
+/** Reverse local and remote socket address.
+ * This is usefull for the helper programs: send, receive, test
+ * because they usually use the same configuration file as the
+ * server and therefore the direction needs to be swapped. */
+int node_reverse(struct node *n);
 
 #endif /* _NODE_H_ */
