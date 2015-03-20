@@ -23,7 +23,7 @@ ssh -f -N -R $PORT:localhost:22 $USER@$SERVER
 sendmail "$RECIPIENTS" <<EOF
 Subject: New S2SS node alive: $IP ($HOSTNAME)
 From: Simulator2Simulator Server <acs@0l.de>
-To: $(RECIPIENTS)
+To: $RECIPIENTS
 
 There's a new host with the S2SS LiveUSB Image running:
 
