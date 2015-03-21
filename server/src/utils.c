@@ -28,7 +28,7 @@ pthread_t _mtid;
 
 void die()
 {
-	pthread_kill(_mtid, SIGTERM);
+	pthread_kill(_mtid, SIGINT);
 }
 
 int strap(char *dest, size_t size, const char *fmt,  ...)
