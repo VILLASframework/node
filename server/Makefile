@@ -12,9 +12,11 @@ V ?= 2
 LDLIBS = -pthread -lrt -lm -lconfig
 CFLAGS  = -std=c99 -Iinclude/ -MMD -Wall
 CFLAGS += -D_XOPEN_SOURCE=500 -D_GNU_SOURCE -DV=$(V)
-CFLAGS += -D__GIT_REV__='"-$(shell git rev-parse --short HEAD)"'
 
-# Conditional flags
+# Add git commit hash
+ifneq (,$(shell which git))
+	CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
+endif
 ifdef DEBUG
 	CFLAGS += -O0 -g
 else

@@ -55,8 +55,14 @@
  #define LEFT(n)	""
 #endif
 
+/* CPP stringification */
+#define XSTR(x)		STR(x)
+#define  STR(x)		#x
+
+/** Calculate the number of elements in an array. */
 #define ARRAY_LEN(a)	( sizeof (a) / sizeof (a)[0] )
 
+/** Swap two values by using a local third one. */
 #define SWAP(a, b)	do { \
 	 			__typeof__(a) tmp = a; \
 				a = b; \
