@@ -79,7 +79,7 @@ void print(enum log_level lvl, const char *fmt, ...)
 	}
 
 	/* Indention */
-	for (int i = 0; i < _indent-1; i++)
+	for (int i = 0; i < _indent; i++)
 		strap(buf, sizeof(buf), GFX("\x78") " ");
 	strap(buf, sizeof(buf), GFX("\x74") " ");
 
