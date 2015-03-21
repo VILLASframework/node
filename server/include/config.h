@@ -19,7 +19,7 @@
 #define VERSION		"v0.4-" _GIT_REV
 
 /** Maximum number of double values in a struct msg */
-#define MAX_VALUES	64
+#define MAX_VALUES	16
 
 /** Socket priority */
 #define SOCKET_PRIO	7
