@@ -243,19 +243,14 @@ int config_parse_node(config_setting_t *cfg, struct list *nodes)
 	if (!n->name)
 		cerror(cfg, "Missing node name");
 
-	if (config_setting_lookup_string(cfg, "type", &type)) {
-		n->vt = node_lookup_vtable(type);
-		if (!n->vt)
-			cerror(cfg, "Invalid type for node '%s'", n->name);
-
-		if (!n->vt->parse)
-			cerror(cfg, "Node type '%s' is not allowed in the config", type);
-	}
-	else
-		n->vt = node_lookup_vtable("udp");
+	if (!config_setting_lookup_string(cfg, "type", &type))
+		cerror(cfg, "Missing node name");
+		
+	n->vt = node_lookup_vtable(type);
+	if (!n->vt)
+		cerror(cfg, "Invalid type for node '%s'", n->name);
 
 	ret = n->vt->parse(cfg, n);
-
 	if (!ret)
 		list_push(nodes, n);
 
@@ -273,7 +268,7 @@ int config_parse_opal(config_setting_t *cfg, struct node *n)
 		return -1;
 	}
 	
-	struct opal *o = (struct opal *) alloc(sizeof(struct opal));
+	struct opal *o = alloc(sizeof(struct opal));
 	
 	config_setting_lookup_int(cfg, "send_id", &o->send_id);
 	config_setting_lookup_int(cfg, "recv_id", &o->recv_id);
@@ -334,7 +329,7 @@ int config_parse_socket(config_setting_t *cfg, struct node *n)
 	/** @todo Netem settings are not usable AF_UNIX */
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
-		s->netem = (struct netem *) alloc(sizeof(struct netem));
+		s->netem = alloc(sizeof(struct netem));
 			
 		config_parse_netem(cfg_netem, s->netem);
 	}

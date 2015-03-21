@@ -34,8 +34,8 @@ int socket_print(struct node *n, char *buf, int len)
 	char local[INET6_ADDRSTRLEN + 16];
 	char remote[INET6_ADDRSTRLEN + 16];
 	
-	socket_print_addr(local, sizeof(local), (struct sockaddr*) &s->local);
-	socket_print_addr(remote, sizeof(remote), (struct sockaddr*) &s->remote);
+	socket_print_addr(local, sizeof(local), (struct sockaddr *) &s->local);
+	socket_print_addr(remote, sizeof(remote), (struct sockaddr *) &s->remote);
 
 	return snprintf(buf, len, "local=%s, remote=%s", local, remote);
 }

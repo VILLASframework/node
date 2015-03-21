@@ -22,7 +22,7 @@ int opal_init(int argc, char *argv[])
 	if (argc != 4)
 		return -1;
 
-	struct opal_global *g = (struct opal_global *) alloc(sizeof(struct opal_global));
+	struct opal_global *g = alloc(sizeof(struct opal_global));
 	
 	pthread_mutex_init(&g->lock, NULL);
 	

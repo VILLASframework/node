@@ -71,7 +71,7 @@ int hook_log(struct msg *m, struct path *p)
 		if (file)
 			debug(5, "Opened log file for path %s: %s", pstr, fstr);
 		
-		pthread_key_create(&pkey, (void (*)(void *)) fclose);
+		pthread_key_create(&pkey, (dtor_cb_t) fclose);
 		pthread_setspecific(pkey, file);
 	}
 	
@@ -128,7 +128,6 @@ int hook_fir(struct msg *m, struct path *p)
 	/* Create thread local storage for circular history buffer */
 	if (!history) {
 		history = alloc(len * sizeof(float));
-		
 		pthread_key_create(&pkey, free);
 		pthread_setspecific(pkey, history);
 	}

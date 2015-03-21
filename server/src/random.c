@@ -22,7 +22,7 @@
 
 void tick(int sig, siginfo_t *si, void *ptr)
 {
-	struct msg *m = (struct msg*) si->si_value.sival_ptr;
+	struct msg *m = (struct msg *) si->si_value.sival_ptr;
 
 	msg_random(m);
 	msg_fprint(stdout, m);

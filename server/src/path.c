@@ -16,7 +16,9 @@
 #include "utils.h"
 #include "path.h"
 
-#define sigev_notify_thread_id   _sigev_un._tid
+#ifndef sigev_notify_thread_id
+ #define sigev_notify_thread_id   _sigev_un._tid
+#endif
 
 /** Linked list of paths. */
 struct list paths;

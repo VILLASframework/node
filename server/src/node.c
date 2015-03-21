@@ -60,7 +60,7 @@ struct node_vtable const * node_lookup_vtable(const char *str)
 }
 
 int node_start(struct node *n)
-{
+{ INDENT
 	if (!n->refcnt) {
 		warn("Node '%s' is unused. Skipping...", n->name);
 		return -1;
@@ -98,7 +98,7 @@ int node_start_defer(struct node *n)
 }
 
 int node_stop(struct node *n)
-{
+{ INDENT
 	int ret;
 	info("Stopping node '%s'", n->name);
 	
@@ -109,7 +109,7 @@ int node_stop(struct node *n)
 	return ret;
 }
 
-int node_reverse(struct node *n)
+void node_reverse(struct node *n)
 {
 	switch (n->vt->type) {
 		case IEEE_802_3:
@@ -120,7 +120,7 @@ int node_reverse(struct node *n)
 			break;
 		default: { }
 	}
-	return n->vt->open == socket_open;
+}
 
 struct node * node_create()
 {

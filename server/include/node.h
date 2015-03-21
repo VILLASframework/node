@@ -133,7 +133,7 @@ struct node * node_lookup_name(const char *str, struct list *nodes);
  * This is usefull for the helper programs: send, receive, test
  * because they usually use the same configuration file as the
  * server and therefore the direction needs to be swapped. */
-int node_reverse(struct node *n);
+void node_reverse(struct node *n);
 
 /** Create a node by allocating dynamic memory. */
 struct node * node_create();

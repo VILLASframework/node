@@ -150,16 +150,17 @@ int main(int argc, char *argv[])
 
 	info("Setup signals:");
 	signals_init();
+
 	info("Parsing configuration:");
 	config_init(&config);
 
 #ifdef ENABLE_OPAL_ASYNC
-	/* Check if called as asynchronous process from RT-LAB */
+	/* Check if called we are called as an asynchronous process from RT-LAB. */
 	opal_init(argc, argv);
-	
+
+	/* @todo: look in predefined locations for a file */
 	char *configfile = "opal-shmem.conf";
 #else
-	
 	char *configfile = argv[1];
 #endif
 

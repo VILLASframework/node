@@ -60,6 +60,7 @@ int if_start(struct interface *i, int affinity)
 		int mark = 0;
 		FOREACH(&i->sockets, it) {
 			struct socket *s = it->socket;
+
 			if (s->netem) {
 				s->mark = 1 + mark++;
 		
@@ -88,7 +89,7 @@ int if_start(struct interface *i, int affinity)
 
 int if_stop(struct interface *i)
 { INDENT
-	info("Stopping  interface '%s'", i->name);
+	info("Stopping interface '%s'", i->name);
 
 	{ INDENT
 		if_setaffinity(i, -1L);
