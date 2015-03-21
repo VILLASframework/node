@@ -25,7 +25,7 @@
 #endif
 
 int config_parse(const char *filename, config_t *cfg, struct settings *set,
-	struct node **nodes, struct path **paths)
+	struct list *nodes, struct list *paths)
 {
 	config_set_auto_convert(cfg, 1);
 
@@ -91,7 +91,7 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 }
 
 int config_parse_path(config_setting_t *cfg,
-	struct path **paths, struct node **nodes)
+	struct list *paths, struct list *nodes)
 {
 	const char *in;
 	int enabled = 1;
@@ -105,7 +105,7 @@ int config_parse_path(config_setting_t *cfg,
 		cerror(cfg, "Invalid input node for path");
 	
 	in = config_setting_get_string(cfg_in);
-	p->in = node_lookup_name(in, *nodes);
+	p->in = node_lookup_name(in, nodes);
 	if (!p->in)
 		cerror(cfg_in, "Invalid input node '%s'", in);
 
@@ -150,10 +150,10 @@ int config_parse_path(config_setting_t *cfg,
 			r->in->refcnt++;
 			r->out->refcnt++;
 
-			list_add(*paths, r);
+			list_push(paths, r);
 		}
 		
-		list_add(*paths, p);
+		list_push(paths, p);
 	}
 	else {
 		char buf[33];
@@ -166,14 +166,14 @@ int config_parse_path(config_setting_t *cfg,
 	return 0;
 }
 
-int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct node **all) {
+int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct list *all) {
 	const char *str;
 	struct node *node;
 	
 	switch (config_setting_type(cfg)) {
 		case CONFIG_TYPE_STRING:
 			str = config_setting_get_string(cfg);
-			node = node_lookup_name(str, *all);
+			node = node_lookup_name(str, all);
 			if (!node)
 				cerror(cfg, "Invalid outgoing node '%s'", str);
 				
@@ -183,7 +183,7 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct node
 		case CONFIG_TYPE_ARRAY:
 			for (int i=0; i<config_setting_length(cfg); i++) {
 				str = config_setting_get_string_elem(cfg, i);
-				node = node_lookup_name(str, *all);
+				node = node_lookup_name(str, all);
 				if (!node)
 					cerror(config_setting_get_elem(cfg, i), "Invalid outgoing node '%s'", str);
 				
@@ -230,7 +230,7 @@ int config_parse_hooks(config_setting_t *cfg, struct list *hooks) {
 	return 0;
 }
 
-int config_parse_node(config_setting_t *cfg, struct node **nodes)
+int config_parse_node(config_setting_t *cfg, struct list *nodes)
 {
 	const char *type;
 	int ret;
@@ -257,7 +257,7 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	ret = n->vt->parse(cfg, n);
 
 	if (!ret)
-		list_add(*nodes, n);
+		list_push(nodes, n);
 
 	return ret;
 }

@@ -18,8 +18,8 @@
 
 #define sigev_notify_thread_id   _sigev_un._tid
 
-/** Linked list of paths */
-struct path *paths;
+/** Linked list of paths. */
+struct list paths;
 
 /** Send messages asynchronously */
 static void * path_send(void *arg)

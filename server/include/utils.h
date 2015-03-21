@@ -126,12 +126,6 @@ struct timespec timespec_rate(double rate);
 /** A system(2) emulator with popen/pclose(2) and proper output handling */
 int system2(const char* cmd, ...);
 
-/** Append an element to a single linked list */
-#define list_add(list, elm) do { \
-		elm->next = list; \
-		list = elm; \
-	} while (0)
-
 /** Check assertion and exit if failed. */
 #define assert(exp) do { \
 	if (EXPECT(!exp, 0)) { \
@@ -179,3 +173,4 @@ int system2(const char* cmd, ...);
 	} while (0)
 
 #endif /* _UTILS_H_ */
+

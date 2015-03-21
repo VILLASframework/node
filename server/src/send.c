@@ -27,7 +27,7 @@
 static struct settings set;
 static struct msg  msg = MSG_INIT(0);
 static struct node *node;
-extern struct node *nodes;
+extern struct list nodes;
 
 void quit(int sig, siginfo_t *si, void *ptr)
 {
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 	config_init(&config);
 	config_parse(argv[optind], &config, &set, &nodes, NULL);
 	
-	node = node_lookup_name(argv[optind+1], nodes);
+	node = node_lookup_name(argv[optind+1], &nodes);
 	if (!node)
 		error("There's no node with the name '%s'", argv[optind+1]);
 	

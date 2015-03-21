@@ -86,7 +86,7 @@ int socket_open(struct node *n)
 	if (!i)
 		i = if_create(index);
 
-	list_add(i->sockets, s);
+	list_push(&i->sockets, s);
 	i->refcnt++;
 
 	/* Set socket priority, QoS or TOS IP options */

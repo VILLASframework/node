@@ -27,11 +27,11 @@
 #endif
 
 /** Linked list of nodes */
-extern struct node *nodes;
+extern struct list nodes;
 /** Linked list of paths */
-extern struct path *paths;
+extern struct list paths;
 /** Linked list of interfaces */
-extern struct interface *interfaces;
+extern struct list interfaces;
 
 /** The global configuration */
 struct settings settings;
@@ -40,27 +40,25 @@ config_t config;
 static void quit()
 { _indent = 0;
 	info("Stopping paths:");
-	for (struct path *p = paths; p; p = p->next) { INDENT
-		path_stop(p);
-		path_destroy(p);
-	}
+	FOREACH(&paths, it)
+		path_stop(it->path);
 
 	info("Stopping nodes:");
-	for (struct node *n = nodes; n; n = n->next) { INDENT
-		node_stop(n);
-	}
+	FOREACH(&nodes, it)
+		node_stop(it->node);
 
 	info("Stopping interfaces:");
-	for (struct interface *i = interfaces; i; i = i->next) { INDENT
-		if_stop(i);
-	}
+	FOREACH(&interfaces, it)
+		if_stop(it->interface);
 
-	/** @todo Free nodes */
-	
 #ifdef ENABLE_OPAL_ASYNC
 	opal_deinit();
 #endif
 
+	/* Freeing dynamically allocated memory */
+	list_destroy(&paths);
+	list_destroy(&nodes);
+	list_destroy(&interfaces);
 	config_destroy(&config);
 
 	_exit(EXIT_SUCCESS);
@@ -164,35 +162,29 @@ int main(int argc, char *argv[])
 
 	/* Connect all nodes and start one thread per path */
 	info("Starting nodes:");
-	for (struct node *n = nodes; n; n = n->next) { INDENT
-		node_start(n);
-	}
+	FOREACH(&nodes, it)
+		node_start(it->node);
 
 	info("Starting interfaces:");
-	for (struct interface *i = interfaces; i; i = i->next) { INDENT
-		if_start(i, settings.affinity);
-	}
+	FOREACH(&interfaces, it)
+		if_start(it->interface, settings.affinity);
 
-	info("Starting pathes:");
-	for (struct path *p = paths; p; p = p->next) { INDENT
-		path_start(p);
-	}
+	info("Starting paths:");
+	FOREACH(&paths, it)
+		path_start(it->path);
 
 	/* Run! */
 	if (settings.stats > 0) {
-		struct path *p = paths;
-
 		info("Runtime Statistics:");
 		info("%-32s :   %-8s %-8s %-8s %-8s %-8s",
 			"Source " MAG("=>") " Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Inval");
 		info("---------------------------------------------------------------------------");
 
-		while (1) {
+		do { FOREACH(&paths, it) {
 			usleep(settings.stats * 1e6);
-			path_stats(p);
+			path_print_stats(it->path);
+		} } while (1);
 
-			p = (p->next) ? p->next : paths; 
-		}
 	}
 	else
 		pause();

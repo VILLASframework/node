@@ -36,14 +36,14 @@ static const struct node_vtable vtables[] = {
 	VTABLE(TCPD,	   "tcpd",	socket)
 };
 
-/** Linked list of nodes */
-struct node *nodes;
+/** Linked list of nodes. */
+struct list nodes;
 
-struct node * node_lookup_name(const char *str, struct node *nodes)
+struct node * node_lookup_name(const char *str, struct list *nodes)
 {
-	for (struct node *n = nodes; n; n = n->next) {
-		if (!strcmp(str, n->name))
-			return n;
+	FOREACH(nodes, it) {
+		if (!strcmp(str, it->node->name))
+			return it->node;
 	}
 
 	return NULL;

@@ -53,8 +53,9 @@ struct list_elm {
 		struct node *node;
 		struct path *path;
 		struct interface *interface;
+		struct socket *socket;
 		hook_cb_t hook;
-	};
+	} /* anonymous */;
 
 	struct list_elm *prev, *next;
 };

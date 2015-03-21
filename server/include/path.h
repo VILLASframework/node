@@ -64,9 +64,6 @@ struct path
 	pthread_t sent_tid;
 	/** A pointer to the libconfig object which instantiated this path */
 	config_setting_t *cfg;
-
-	/** Linked list pointer */
-	struct path *next;
 };
 
 /** Start a path.

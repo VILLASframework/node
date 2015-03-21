@@ -22,8 +22,8 @@
 #include "socket.h"
 #include "utils.h"
 
-/** Linked list of interfaces */
-struct interface *interfaces;
+/** Linked list of interfaces. */
+struct list interfaces;
 
 struct interface * if_create(int index) {
 	struct interface *i = alloc(sizeof(struct interface));
@@ -33,7 +33,7 @@ struct interface * if_create(int index) {
 
 	debug(3, "Created interface '%s'", i->name, i->index, i->refcnt);
 
-	list_add(interfaces, i);
+	list_push(&interfaces, i);
 
 	return i;
 }
@@ -49,7 +49,8 @@ int if_start(struct interface *i, int affinity)
 	
 	{ INDENT
 		int mark = 0;
-		for (struct socket *s = i->sockets; s; s = s->next) {
+		FOREACH(&i->sockets, it) {
+			struct socket *s = it->socket;
 			if (s->netem) {
 				s->mark = 1 + mark++;
 		
@@ -171,10 +172,9 @@ int if_setaffinity(struct interface *i, int affinity)
 
 struct interface * if_lookup_index(int index)
 {
-	for (struct interface *i = interfaces; i; i = i->next) {
-		if (i->index == index) {
-			return i;
-		}
+	FOREACH(&interfaces, it) {
+		if (it->interface->index == index)
+			return it->interface;
 	}
 
 	return NULL;

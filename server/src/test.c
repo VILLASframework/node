@@ -26,7 +26,7 @@
 
 static struct settings set;
 static struct node *node;
-extern struct node *nodes;
+extern struct list nodes;
 
 /* Test options */
 int running = 1;
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 	config_init(&config);
 	config_parse(argv[1], &config, &set, &nodes, NULL);
 	
-	node = node_lookup_name(argv[3], nodes);
+	node = node_lookup_name(argv[3], &nodes);
 	if (!node)
 		error("There's no node with the name '%s'", argv[3]);
 
