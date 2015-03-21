@@ -38,7 +38,7 @@ struct settings settings;
 config_t config;
 
 static void quit()
-{ _indent = 0;
+{
 	info("Stopping paths:");
 	FOREACH(&paths, it)
 		path_stop(it->path);
@@ -103,7 +103,6 @@ void signals_init()
 	sigemptyset(&sa_quit.sa_mask);
 	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT, &sa_quit, NULL);
-	atexit(&quit);
 }
 
 void usage(const char *name)
@@ -118,11 +117,13 @@ void usage(const char *name)
 	printf("Simulator2Simulator Server %s (built on %s, %s)\n",
 		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
 	
-	exit(EXIT_FAILURE);
+	die();
 }
 
 int main(int argc, char *argv[])
 {
+	_mtid = pthread_self();
+
 	/* Check arguments */
 #ifdef ENABLE_OPAL_ASYNC
 	if (argc != 2 && argc != 4)
@@ -130,8 +131,7 @@ int main(int argc, char *argv[])
 	if (argc != 2)
 #endif
 		usage(argv[0]);
-	
-	epoch_reset();
+
 	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s, debug=%d)",
 		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)), _debug);
 
@@ -196,7 +196,7 @@ int main(int argc, char *argv[])
 	else
 		pause();
 
-	/* Note: quit() is called by exit handler! */
+	quit();
 
 	return 0;
 }

@@ -39,13 +39,12 @@ struct path
 	double rate;
 
 	/** A pointer to the last received message */
-	struct msg *last;
+	struct msg *current;
+	/** A pointer to the previously received message */
+	struct msg *previous;
 	
 	/** Counter for received messages according to their sequence no displacement */
 	struct hist histogram;
-
-	/** Last known message number */
-	unsigned int sequence;
 
 	/** Counter for sent messages to all outgoing nodes */
 	unsigned int sent;

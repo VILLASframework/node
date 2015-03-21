@@ -153,7 +153,7 @@ int opal_read(struct node *n, struct msg *m)
 			state = OpalGetAsyncModelState();
 			if ((state == STATE_RESET) || (state == STATE_STOP)) {
 				info("OpalGetAsyncModelState(): Model stopped or resetted!");
-				exit(0);
+				die();
 			}
 
 			return -1; // FIXME: correct return value
@@ -195,7 +195,7 @@ int opal_read(struct node *n, struct msg *m)
 	state = OpalGetAsyncModelState();
 	if ((state == STATE_RESET) || (state == STATE_STOP)) {
 		info("OpalGetAsyncModelState(): Model stopped or resetted!");
-		exit(0);
+		die();
 	}
 
 	return 0;
@@ -213,7 +213,7 @@ int opal_write(struct node *n, struct msg *m)
 	state = OpalGetAsyncModelState();
 	if ((state == STATE_RESET) || (state == STATE_STOP)) {
 		info("OpalGetAsyncModelState(): Model stopped or resetted!");
-		exit(0);
+		die();
 	}
 
 	OpalSetAsyncRecvIconStatus(m->sequence, o->recv_id);	/* Set the Status to the message ID */
