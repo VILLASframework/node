@@ -33,9 +33,18 @@ struct interface * if_create(int index) {
 
 	debug(3, "Created interface '%s'", i->name, i->index, i->refcnt);
 
+	list_init(&i->sockets, NULL);
 	list_push(&interfaces, i);
 
 	return i;
+}
+
+void if_destroy(struct interface *i)
+{
+	/* List members are freed by their belonging nodes. */
+	list_destroy(&i->sockets);
+
+	free(i);
 }
 
 int if_start(struct interface *i, int affinity)

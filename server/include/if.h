@@ -48,6 +48,13 @@ struct interface {
  */
 struct interface * if_create(int index);
 
+
+/** Destroy interface by freeing dynamically allocated memory.
+ *
+ * @param i A pointer to the interface structure.
+ */
+void if_destroy(struct interface *i);
+
 /** Start interface.
  *
  * This setups traffic controls queue discs, network emulation and

@@ -139,9 +139,15 @@ int main(int argc, char *argv[])
 	if (getuid() != 0)
 		error("The server requires superuser privileges!");
 
+	/* Initialize lists */
+	list_init(&nodes, (dtor_cb_t) node_destroy);
+	list_init(&paths, (dtor_cb_t) path_destroy);
+	list_init(&interfaces, (dtor_cb_t) if_destroy);
+
 	/* Start initialization */
 	info("Initialize realtime system:");
 	realtime_init();
+
 	info("Setup signals:");
 	signals_init();
 	info("Parsing configuration:");

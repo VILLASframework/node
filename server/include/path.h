@@ -66,6 +66,15 @@ struct path
 	config_setting_t *cfg;
 };
 
+/** Create a path by allocating dynamic memory. */
+struct path * path_create();
+
+/** Destroy path by freeing dynamically allocated memory.
+ *
+ * @param i A pointer to the path structure.
+ */
+void path_destroy(struct path *p);
+
 /** Start a path.
  *
  * Start a new pthread for receiving/sending messages over this path.

@@ -140,7 +140,7 @@ int config_parse_path(config_setting_t *cfg,
 				warn("Using first destination '%s' as source for reverse path. "
 					"Ignoring remaining nodes", p->out->name);
 
-			struct path *r = alloc(sizeof(struct path));
+			struct path *r = path_create();
 
 			r->in  = p->out; /* Swap in/out */
 			r->out = p->in;
@@ -235,7 +235,7 @@ int config_parse_node(config_setting_t *cfg, struct list *nodes)
 	const char *type;
 	int ret;
 
-	struct node *n = alloc(sizeof(struct node));
+	struct node *n = node_create();
 
 	/* Required settings */
 	n->cfg = cfg;

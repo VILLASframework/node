@@ -135,4 +135,13 @@ struct node * node_lookup_name(const char *str, struct list *nodes);
  * server and therefore the direction needs to be swapped. */
 int node_reverse(struct node *n);
 
+/** Create a node by allocating dynamic memory. */
+struct node * node_create();
+
+/** Destroy node by freeing dynamically allocated memory.
+ *
+ * @param i A pointer to the interface structure.
+ */
+void node_destroy(struct node *n);
+
 #endif /* _NODE_H_ */

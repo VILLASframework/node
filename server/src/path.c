@@ -215,10 +215,25 @@ int path_print(struct path *p, char *buf, int len)
 	return 0;
 }
 
-int path_destroy(struct path *p)
+struct path * path_create()
+{
+	struct path *p = alloc(sizeof(struct path));
+
+	list_init(&p->destinations, NULL);
+	list_init(&p->hooks, NULL);
+
+	hist_create(&p->histogram, -HIST_SEQ, +HIST_SEQ, 1);
+
+	return p;
+}
+
+void path_destroy(struct path *p)
 {
 	list_destroy(&p->destinations);
 	list_destroy(&p->hooks);
+	hist_destroy(&p->histogram);
 	
-	return 0;
+	free(p->current);
+	free(p->previous);
+	free(p);
 }

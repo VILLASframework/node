@@ -40,10 +40,17 @@ struct interface;
 #define list_last(list)		((list)->head)
 #define list_length(list)	((list)->count)
 
+/** Callback to destroy list elements.
+ *
+ * @param data A pointer to the data which should be freed.
+ */
+typedef void (*dtor_cb_t)(void *data);
+
 struct list {
 	struct list_elm *head, *tail;
 	int count;
 
+	dtor_cb_t destructor;
 	pthread_mutex_t lock;
 };
 
@@ -60,7 +67,7 @@ struct list_elm {
 	struct list_elm *prev, *next;
 };
 
-void list_init(struct list *l);
+void list_init(struct list *l, dtor_cb_t dtor);
 
 void list_destroy(struct list *l);
 

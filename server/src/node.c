@@ -121,4 +121,23 @@ int node_reverse(struct node *n)
 		default: { }
 	}
 	return n->vt->open == socket_open;
+
+struct node * node_create()
+{
+	return alloc(sizeof(struct node));
+}
+
+void node_destroy(struct node *n)
+{
+	switch (n->vt->type) {
+		case IEEE_802_3:
+		case IP:
+		case UDP:
+		case TCP:
+			free(n->socket->netem);
+		default: { }
+	}
+
+	free(n->socket);
+	free(n);
 }
