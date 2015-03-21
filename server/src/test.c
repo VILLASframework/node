@@ -155,7 +155,7 @@ void test_rtt() {
 	double avg = 0;
 
 	struct hist histogram;
-	hist_init(&histogram, low, high, res);
+	hist_create(&histogram, low, high, res);
 
 #if 1	/* Print header */
 	fprintf(stdout, "%17s", "timestamp");
@@ -201,5 +201,5 @@ void test_rtt() {
 	else
 		error("Invalid file descriptor: %u", fd);
 	
-	hist_free(&histogram);
+	hist_destroy(&histogram);
 }

@@ -156,8 +156,6 @@ int path_start(struct path *p)
 	
 	info("Starting path: %s", buf);
 
-	hist_init(&p->histogram, -HIST_SEQ, +HIST_SEQ, 1);
-
 	/* At fixed rate mode, we start another thread for sending */
 	if (p->rate)
 		pthread_create(&p->sent_tid, NULL, &path_send, (void *) p);
@@ -183,7 +181,6 @@ int path_stop(struct path *p)
 	if (p->sent || p->received) {
 		path_stats(p);
 		hist_print(&p->histogram);
-		hist_free(&p->histogram);
 	}
 
 	return 0;
