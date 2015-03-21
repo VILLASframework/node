@@ -58,6 +58,8 @@ struct path
 	/** Counter for dropped messages due to reordering */
 	unsigned int dropped;
 
+	/** A timer used for fixed rate transmission. */
+	timer_t timer;
 	/** The thread id for this path */
 	pthread_t recv_tid;
 	/** A second thread id for fixed rate sending thread */

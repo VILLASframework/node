@@ -26,9 +26,9 @@ struct list paths;
 /** Send messages asynchronously */
 static void * path_send(void *arg)
 {
+	struct path *p = arg;
+
 	int sig;
-	struct path *p = (struct path *) arg;
-	timer_t tmr;
 	sigset_t set;
 
 	struct sigevent sev = {
@@ -47,10 +47,10 @@ static void * path_send(void *arg)
 	if(pthread_sigmask(SIG_BLOCK, &set, NULL))
 		serror("Set signal mask");
 
-	if (timer_create(CLOCK_REALTIME, &sev, &tmr))
+	if (timer_create(CLOCK_REALTIME, &sev, &p->timer))
 		serror("Failed to create timer");
 
-	if (timer_settime(tmr, 0, &its, NULL))
+	if (timer_settime(p->timer, 0, &its, NULL))
 		serror("Failed to start timer");
 
 	while (1) {
@@ -178,6 +178,8 @@ int path_stop(struct path *p)
 	if (p->rate) {
 		pthread_cancel(p->sent_tid);
 		pthread_join(p->sent_tid, NULL);
+
+		timer_delete(p->timer);
 	}
 
 	if (p->sent || p->received) {
