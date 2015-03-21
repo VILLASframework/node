@@ -31,7 +31,7 @@ struct interface * if_create(int index) {
 	i->index = index;
 	if_indextoname(index, i->name);
 
-	debug(3, "Created interface '%s'", i->name, i->index, i->refcnt);
+	debug(3, "Created interface '%s' (index=%u)", i->name, i->index);
 
 	list_init(&i->sockets, NULL);
 	list_push(&interfaces, i);

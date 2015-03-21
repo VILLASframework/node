@@ -122,9 +122,9 @@ int main(int argc, char *argv[])
 					error("Unknown option '-%c'.", optopt);
 				else
 					error("Unknown option character '\\x%x'.", optopt);
-				exit(1);
+				exit(EXIT_FAILURE);
 			default:
-				abort ();
+				abort();
 		}
 		
 		continue;

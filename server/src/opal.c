@@ -152,7 +152,7 @@ int opal_read(struct node *n, struct msg *m)
 		if ((ret = OpalWaitForAsyncSendRequest(&id)) != EOK) {
 			state = OpalGetAsyncModelState();
 			if ((state == STATE_RESET) || (state == STATE_STOP)) {
-				info("OpalGetAsyncModelState(): Model stopped or resetted!");
+				warn("OpalGetAsyncModelState(): Model stopped or resetted!");
 				die();
 			}
 
@@ -194,7 +194,7 @@ int opal_read(struct node *n, struct msg *m)
 	 * has not been stopped. If it has, we quit. */
 	state = OpalGetAsyncModelState();
 	if ((state == STATE_RESET) || (state == STATE_STOP)) {
-		info("OpalGetAsyncModelState(): Model stopped or resetted!");
+		warn("OpalGetAsyncModelState(): Model stopped or resetted!");
 		die();
 	}
 
@@ -212,7 +212,7 @@ int opal_write(struct node *n, struct msg *m)
 	
 	state = OpalGetAsyncModelState();
 	if ((state == STATE_RESET) || (state == STATE_STOP)) {
-		info("OpalGetAsyncModelState(): Model stopped or resetted!");
+		warn("OpalGetAsyncModelState(): Model stopped or resetted!");
 		die();
 	}
 

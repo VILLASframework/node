@@ -34,8 +34,8 @@ extern struct list paths;
 extern struct list interfaces;
 
 /** The global configuration */
-struct settings settings;
-config_t config;
+static struct settings settings;
+static config_t config;
 
 static void quit()
 {
@@ -61,18 +61,13 @@ static void quit()
 	list_destroy(&interfaces);
 	config_destroy(&config);
 
+	info("Goodbye!");
+
 	_exit(EXIT_SUCCESS);
 }
 
 void realtime_init()
 { INDENT
-	/* Check for realtime kernel patch */
-	struct stat st;
-	if (stat("/sys/kernel/realtime", &st))
-		warn("Use a RT-preempt patched Linux for lower latencies!");
-	else
-		info("Server is running on a realtime patched kernel");
-
 	/* Use FIFO scheduler with real time priority */
 	if (settings.priority) {
 		struct sched_param param = { .sched_priority = settings.priority };
@@ -144,7 +139,7 @@ int main(int argc, char *argv[])
 	list_init(&paths, (dtor_cb_t) path_destroy);
 	list_init(&interfaces, (dtor_cb_t) if_destroy);
 
-	/* Start initialization */
+
 	info("Initialize realtime system:");
 	realtime_init();
 
