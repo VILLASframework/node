@@ -31,6 +31,7 @@ void list_destroy(struct list *l)
 		elm = elm->next;
 	}
 	
+	pthread_mutex_unlock(&l->lock);
 	pthread_mutex_destroy(&l->lock);
 }
 
