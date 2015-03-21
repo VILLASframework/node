@@ -96,6 +96,7 @@ void signals_init()
 	};
 
 	sigemptyset(&sa_quit.sa_mask);
+	sigaction(SIGQUIT, &sa_quit, NULL);
 	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT, &sa_quit, NULL);
 }
@@ -109,10 +110,12 @@ void usage(const char *name)
 	printf("  This type of invocation is used by OPAL-RT Asynchronous processes.\n");
 	printf("  See in the RT-LAB User Guide for more information.\n\n");
 #endif
-	printf("Simulator2Simulator Server %s (built on %s, %s)\n",
+	printf("Simulator2Simulator Server %s (built on %s %s)\n",
 		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-	
-	die();
+	printf(" Copyright 2015, Institute for Automation of Complex Power Systems, EONERC\n");
+	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
+
+	exit(EXIT_FAILURE);
 }
 
 int main(int argc, char *argv[])
