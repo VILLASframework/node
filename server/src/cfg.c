@@ -20,7 +20,9 @@
 
 #include "socket.h"
 #include "gtfpga.h"
+#ifdef ENABLE_OPAL_ASYNC
 #include "opal.h"
+#endif
 
 int config_parse(const char *filename, config_t *cfg, struct settings *set,
 	struct node **nodes, struct path **paths)
@@ -260,6 +262,7 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	return ret;
 }
 
+#ifdef ENABLE_OPAL_ASYNC
 /** @todo: Remove this global variable. */
 extern struct opal_global *og;
 
@@ -298,12 +301,16 @@ int config_parse_opal(config_setting_t *cfg, struct node *n)
 
 	return 0;
 }
+#endif /* ENABLE_OPAL_ASYNC */
 
+
+#ifdef ENABLE_GTFPGA
 /** @todo Implement */
 int config_parse_gtfpga(config_setting_t *cfg, struct node *n)
 {
 	return 0;
 }
+#endif /* ENABLE_GTFPGA */
 
 int config_parse_socket(config_setting_t *cfg, struct node *n)
 {

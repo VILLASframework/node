@@ -13,7 +13,9 @@
 /* Node types */
 #include "socket.h"
 #include "gtfpga.h"
+#ifdef ENABLE_OPAL_ASYNC
 #include "opal.h"
+#endif
 
 #define VTABLE(type, name, fnc) { type, name, config_parse_ ## fnc, \
 				  fnc ## _print, \
