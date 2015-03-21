@@ -127,7 +127,7 @@ int hook_fir(struct msg *m, struct path *p)
 		
 	/* Create thread local storage for circular history buffer */
 	if (!history) {
-		history = malloc(len * sizeof(float));
+		history = alloc(len * sizeof(float));
 		
 		pthread_key_create(&pkey, free);
 		pthread_setspecific(pkey, history);

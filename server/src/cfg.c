@@ -273,11 +273,7 @@ int config_parse_opal(config_setting_t *cfg, struct node *n)
 		return -1;
 	}
 	
-	struct opal *o = (struct opal *) malloc(sizeof(struct opal));
-	if (!o)
-		error("Failed to allocate memory for opal settings");
-	
-	memset(o, 0, sizeof(struct opal));
+	struct opal *o = (struct opal *) alloc(sizeof(struct opal));
 	
 	config_setting_lookup_int(cfg, "send_id", &o->send_id);
 	config_setting_lookup_int(cfg, "recv_id", &o->recv_id);
