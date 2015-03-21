@@ -74,8 +74,6 @@ static void * path_run(void *arg)
 	char buf[33];
 	struct path *p = arg;
 	struct msg  *m = alloc(sizeof(struct msg));
-	if (!m)
-		error("Failed to allocate memory for message!");
 	
 	/* Open deferred TCP connection */
 	node_start_defer(p->in);
@@ -160,9 +158,9 @@ int path_start(struct path *p)
 
 	/* At fixed rate mode, we start another thread for sending */
 	if (p->rate)
-		pthread_create(&p->sent_tid, NULL, &path_send, (void *) p);
+		pthread_create(&p->sent_tid, NULL, &path_send, p);
 
-	return  pthread_create(&p->recv_tid, NULL, &path_run,  (void *) p);
+	return  pthread_create(&p->recv_tid, NULL, &path_run,  p);
 }
 
 int path_stop(struct path *p)
@@ -183,21 +181,20 @@ int path_stop(struct path *p)
 	}
 
 	if (p->sent || p->received) {
-		path_stats(p);
+		path_print_stats(p);
 		hist_print(&p->histogram);
 	}
 
 	return 0;
 }
 
-void path_stats(struct path *p)
+void path_print_stats(struct path *p)
 {
 	char buf[33];
 	path_print(p, buf, sizeof(buf));
 	
-	info("%-32s :   %-8u %-8u %-8u %-8u %-8u",
-		buf, p->sent, p->received, p->dropped, p->skipped, p->invalid
-	);
+	info("%-32s :   %-8u %-8u %-8u %-8u %-8u", buf,
+		p->sent, p->received, p->dropped, p->skipped, p->invalid);
 }
 
 int path_print(struct path *p, char *buf, int len)

@@ -81,7 +81,7 @@ void path_destroy(struct path *p);
  *
  * Start a new pthread for receiving/sending messages over this path.
  *
- * @param p A pointer to the path struct
+ * @param p A pointer to the path structure.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
@@ -89,7 +89,7 @@ int path_start(struct path *p);
 
 /** Stop a path.
  *
- * @param p A pointer to the path struct
+ * @param p A pointer to the path structure.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
@@ -97,12 +97,18 @@ int path_stop(struct path *p);
 
 /** Show some basic statistics for a path.
  *
- * @param p A pointer to the path struct
+ * @param p A pointer to the path structure.
  */
-void path_stats(struct path *p);
+void path_print_stats(struct path *p);
 
+/** Fills the provided buffer with a string representation of the path.
+ *
+ * Format: source => [ dest1 dest2 dest3 ]
+ *
+ * @param p A pointer to the path structure.
+ * @param buf A pointer to the buffer which should be filled.
+ * @param len The length of buf in bytes.
+ */
 int path_print(struct path *p, char *buf, int len);
-
-int path_destroy(struct path *p);
 
 #endif /* _PATH_H_ */
