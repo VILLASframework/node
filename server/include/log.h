@@ -1,4 +1,11 @@
-#ifndef _LOG_H_
+/** Logging and debugging routines
+ *
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
+ * @file
+ */
+ 
+ #ifndef _LOG_H_
 #define _LOG_H_
 
 #ifdef __GNUC__

@@ -1,4 +1,10 @@
-#include <stdio.h>
+/** Logging and debugging routines
+ *
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
+ */
+
+ #include <stdio.h>
 #include <time.h>
 
 #include "log.h"
