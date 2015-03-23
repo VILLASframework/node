@@ -9,18 +9,26 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
  */
- 
+
+#include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <pthread.h>
+#include <time.h>
 
 #include "msg.h"
 #include "hooks.h"
+#include "path.h"
+#include "utils.h"
 
 /** @todo Make const */
 static struct hook_id hook_list[] = {
 	{ hook_print, "print" },
-	{ hook_filter, "filter" },
+	{ hook_log, "log" },
+	{ hook_decimate, "decimate" },
 	{ hook_tofixed, "tofixed" },
-	{ hook_multiple, "multiple" },
+	{ hook_ts, "ts" },
+	{ hook_fir, "fir" },
 	{ NULL }
 };
 
@@ -43,13 +51,39 @@ int hook_print(struct msg *m, struct path *p)
 	return 0;
 }
 
-int hook_filter(struct msg *m, struct path *p)
+int hook_log(struct msg *m, struct path *p)
 {
-	/* Drop every 10th message */
-	if (m->sequence % 10 == 0)
-		return -1;
-	else
-		return 0;
+	static pthread_key_t pkey;
+	FILE *file = pthread_getspecific(pkey);
+	
+	if (!file) {
+		char fstr[64], pstr[33];
+		path_print(p, pstr, sizeof(pstr));
+		
+		struct tm tm;
+		time_t ts = time(NULL);
+		localtime_r(&ts, &tm);
+		strftime(fstr, sizeof(fstr), HOOK_LOG_TEMPLATE, &tm);
+		
+		
+		
+		file = fopen(fstr, HOOK_LOG_MODE);
+		if (file)
+			debug(5, "Opened log file for path %s: %s", pstr, fstr);
+		
+		pthread_key_create(&pkey, (dtor_cb_t) fclose);
+		pthread_setspecific(pkey, file);
+	}
+	
+	msg_fprint(file, m);
+	
+	return 0;
+}
+
+int hook_decimate(struct msg *m, struct path *p)
+{
+	/* Drop every HOOK_DECIMATE_RATIO'th message */
+	return (m->sequence % HOOK_DECIMATE_RATIO == 0) ? -1 : 0;
 }
 
 int hook_tofixed(struct msg *m, struct path *p)
@@ -61,12 +95,50 @@ int hook_tofixed(struct msg *m, struct path *p)
 	return 0;
 }
 
-int hook_multiple(struct msg *m, struct path *p)
+int hook_ts(struct msg *m, struct path *p)
 {
-	if (hook_print(m, p))
-		return -1;
-	else if (hook_tofixed(m, p))
-		return -1;
-	else
-		return 0;
+	struct timespec *ts = (struct timespec *) &m->data[HOOK_TS_INDEX];
+	
+	clock_gettime(CLOCK_REALTIME, ts);
+	
+	return 0;
+}
+
+/** Simple FIR-LP: F_s = 1kHz, F_pass = 100 Hz, F_block = 300
+ * Tip: Use MATLAB's filter design tool and export coefficients
+ *      with the integrated C-Header export */ 
+static const double hook_fir_coeffs[] = { -0.003658148158728, -0.008882653268281, 0.008001024183003,
+					   0.08090485991761,    0.2035239551043,   0.3040703593515,
+					   0.3040703593515,     0.2035239551043,   0.08090485991761,
+					   0.008001024183003,  -0.008882653268281,-0.003658148158728 };
+
+/** @todo: test */
+int hook_fir(struct msg *m, struct path *p)
+{
+	static pthread_key_t pkey;
+	float *history = pthread_getspecific(pkey);
+	
+	/** Length of impulse response */
+	int len = ARRAY_LEN(hook_fir_coeffs);
+	/** Current index in circular history buffer */
+	int cur = m->sequence % len;
+	/* Accumulator */
+	double sum = 0;
+		
+	/* Create thread local storage for circular history buffer */
+	if (!history) {
+		history = alloc(len * sizeof(float));
+		pthread_key_create(&pkey, free);
+		pthread_setspecific(pkey, history);
+	}
+	
+	/* Update circular buffer */
+	history[cur] = m->data[HOOK_FIR_INDEX].f;
+	
+	for (int i=0; i<len; i++)
+		sum += hook_fir_coeffs[(cur+len-i)%len] * history[(cur+i)%len];
+
+	m->data[HOOK_FIR_INDEX].f = sum;
+
+	return 0;
 }

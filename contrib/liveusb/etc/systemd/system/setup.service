@@ -1,0 +1,17 @@
+[Unit]
+Description=S2SS LiveUSB Image setup
+Requires=dhclient.service network.service
+After=dhclient.service
+
+[Service]
+Type=simple
+ExecStart=/s2ss/contrib/liveusb/setup.sh
+RemainAfterExit=yes
+
+TimeoutSec=120
+
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

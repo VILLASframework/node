@@ -50,9 +50,28 @@
 #define ASYNC_SHMEM_SIZE	atoi(argv[2])
 #define PRINT_SHMEM_NAME	argv[3]
 
-#ifdef DEBUG // TODO: workaround
+#ifdef _DEBUG // TODO: workaround
+#define CPU_TICKS 3466948000
 struct msg *msg_send = NULL;
-#endif /* DEBUG */
+
+void Tick(int sig, siginfo_t *si, void *ptr)
+{
+	Opal_GenAsyncParam_Ctrl *IconCtrlStruct;
+	unsigned long long CpuTime, CpuTimeStart;
+	double ModelTime;
+
+	if (!msg_send)
+		return;
+
+	IconCtrlStruct = (Opal_GenAsyncParam_Ctrl*) si->si_value.sival_ptr;
+
+	OpalGetAsyncStartExecCpuTime(IconCtrlStruct, &CpuTimeStart);
+	OpalGetAsyncModelTime(IconCtrlStruct, &CpuTime, &ModelTime);
+
+	OpalPrint("%s: CpuTime: %llu\tModelTime: %.3f\tSequence: %hu\tValue: %.2f\n",
+		PROGNAME, (CpuTime - CpuTimeStart) / CPU_TICKS, ModelTime, ntohs(msg_send->sequence), msg_send->data[0].f);
+}
+#endif /* _DEBUG */
 
 static void *SendToIPPort(void *arg)
 {
@@ -70,9 +89,9 @@ static void *SendToIPPort(void *arg)
 	struct msg msg = MSG_INIT(0);
 	int msg_size;
 
-#ifdef DEBUG // TODO: workaround
+#ifdef _DEBUG // TODO: workaround
 	msg_send = &msg;
-#endif /* DEBUG */
+#endif /* _DEBUG */
 
 	OpalPrint("%s: SendToIPPort thread started\n", PROGNAME);
 
@@ -245,23 +264,6 @@ static void *RecvFromIPPort(void *arg)
 	return NULL;
 }
 
-void Tick(int sig, siginfo_t *si, void *ptr)
-{
-	Opal_GenAsyncParam_Ctrl *IconCtrlStruct;
-	unsigned long long CpuTime;
-	double ModelTime;
-
-	if (!msg_send)
-		return;
-
-	IconCtrlStruct = (Opal_GenAsyncParam_Ctrl*) si->si_value.sival_ptr;
-
-	OpalGetAsyncModelTime(IconCtrlStruct, &CpuTime, &ModelTime)
-
-	OpalPrint("%s: TICK! CpuTime: %llu\tModelTime: %f\tSequence: %hu\tValue: %f\n",
-		PROGNAME, CpuTime, ModelTime, msg_send->sequence, msg_send->data[0].f);
-}
-
 int main(int argc, char *argv[])
 {
 	int err;
@@ -308,7 +310,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-#ifdef DEBUG
+#ifdef _DEBUG
 	/* Setup signals */
 	struct sigaction sa_tick = {
 		.sa_flags = SA_SIGINFO,
@@ -316,13 +318,13 @@ int main(int argc, char *argv[])
 	};
 
 	sigemptyset(&sa_tick.sa_mask);
-	sigaction(SIG, &sa_tick, NULL);
+	sigaction(SIGUSR1, &sa_tick, NULL);
 
 	/* Setup timer */
 	timer_t t;
 	struct sigevent sev = {
 		.sigev_notify = SIGEV_SIGNAL,
-		.sigev_signo = SIG,
+		.sigev_signo = SIGUSR1,
 		.sigev_value.sival_ptr = &IconCtrlStruct
 	};
 
@@ -333,7 +335,7 @@ int main(int argc, char *argv[])
 
 	timer_create(CLOCK_REALTIME, &sev, &t);
 	timer_settime(t, 0, &its, NULL);
-#endif /* DEBUG */
+#endif /* _DEBUG */
 
 	/* Start send/receive threads */
 	if ((pthread_create(&tid_send, NULL, SendToIPPort, NULL)) == -1)
@@ -352,9 +354,9 @@ int main(int argc, char *argv[])
 	OpalCloseAsyncMem (ASYNC_SHMEM_SIZE, ASYNC_SHMEM_NAME);
 	OpalSystemCtrl_UnRegister(PRINT_SHMEM_NAME);
 
-#ifdef DEBUG
+#ifdef _DEBUG
 	timer_delete(t);
-#endif /* DEBUG */
+#endif /* _DEBUG */
 
 	return 0;
 }

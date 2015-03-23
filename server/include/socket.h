@@ -16,6 +16,8 @@
 struct socket {
 	/** The socket descriptor */
 	int sd;
+	/** The socket descriptor for an established TCP connection */
+	int sd2;
 	/** Socket mark for netem, routing and filtering */
 	int mark;
 

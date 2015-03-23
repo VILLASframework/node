@@ -12,58 +12,42 @@
 #include <errno.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <time.h>
 #include <math.h>
+#include <signal.h>
+
+#ifdef ENABLE_OPAL_ASYNC
+#define RTLAB
+#include <OpalPrint.h>
+#endif
 
 #include "config.h"
 #include "cfg.h"
 #include "utils.h"
 
-/* This global variable contains the debug level for debug() and assert() macros */
-int _debug = V;
-int _indent = 0;
+pthread_t _mtid;
 
-struct timespec epoch;
-
-void outdent(int *old)
+void die()
 {
-	_indent = *old;
+	pthread_kill(_mtid, SIGINT);
 }
 
-void epoch_reset()
+int strap(char *dest, size_t size, const char *fmt,  ...)
 {
-	clock_gettime(CLOCK_REALTIME, &epoch);
-}
-
-void print(enum log_level lvl, const char *fmt, ...)
-{
-	struct timespec ts;
-
+	int ret;
+	
 	va_list ap;
 	va_start(ap, fmt);
-
-	/* Timestamp */
-	clock_gettime(CLOCK_REALTIME, &ts);
-	fprintf(stderr, "%8.3f ", timespec_delta(&epoch, &ts));
-
-	switch (lvl) {
-		case DEBUG: fprintf(stderr, BLD("%-5s "), GRY("Debug")); break;
-		case INFO:  fprintf(stderr, BLD("%-5s "),     "     " ); break;
-		case WARN:  fprintf(stderr, BLD("%-5s "), YEL(" Warn")); break;
-		case ERROR: fprintf(stderr, BLD("%-5s "), RED("Error")); break;
-	}
-
-	if (_indent) {
-		for (int i = 0; i < _indent-1; i++)
-			fprintf(stderr, GFX("\x78") " ");
-
-		fprintf(stderr, GFX("\x74") " ");
-	}
-
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "\n");
-
+	ret = vstrap(dest, size, fmt, ap);
 	va_end(ap);
+	
+	return ret;
+}
+
+int vstrap(char *dest, size_t size, const char *fmt, va_list ap)
+{
+	int len = strlen(dest);
+
+	return vsnprintf(dest + len, size - len, fmt, ap);
 }
 
 cpu_set_t to_cpu_set(int set)
@@ -78,6 +62,17 @@ cpu_set_t to_cpu_set(int set)
 	}
 
 	return cset;
+}
+
+void * alloc(size_t bytes)
+{
+	void *p = malloc(bytes);
+	if (!p)
+		error("Failed to allocate memory");
+
+	memset(p, 0, bytes);
+	
+	return p;
 }
 
 double timespec_delta(struct timespec *start, struct timespec *end)
@@ -103,49 +98,6 @@ struct timespec timespec_rate(double rate)
 	return ts;
 }
 
-void hist_plot(unsigned *hist, int length)
-{
-	char buf[HIST_HEIGHT + 32];
-	int bar;
-	int max = 0;
-
-	/* Get max, first & last */
-	for (int i = 0; i < length; i++) {
-		if (hist[i] > hist[max])
-			max = i;
-	}
-
-	/* Print header */
-	info("%2s | %5s | %s", "Id", "Value", "Histogram Plot:");
-
-	/* Print plot */
-	memset(buf, '#', sizeof(buf));
-	for (int i = 0; i < length; i++) {
-		bar = HIST_HEIGHT * (float) hist[i] / hist[max];
-		if (hist[i] == 0)
-			info("%2u | " GRN("%5u") " | "           ,  i, hist[i]);
-		else if (hist[i] == hist[max])
-			info("%2u | " RED("%5u") " | " BLD("%.*s"), i, hist[i], bar, buf);
-		else
-			info("%2u | "     "%5u"  " | "     "%.*s",  i, hist[i], bar, buf);
-	}
-}
-
-void hist_dump(unsigned *hist, int length)
-{
-	char tok[16];
-	char buf[length * sizeof(tok)];
-	memset(buf, 0, sizeof(buf));
-
-	/* Print in Matlab vector format */
-	for (int i = 0; i < length; i++) {
-		snprintf(tok, sizeof(tok), "%u ", hist[i]);
-		strncat(buf, tok, sizeof(buf)-strlen(buf));
-	}
-
-	info("Matlab: hist = [ %s]", buf);
-}
-
 /** @todo: Proper way: create additional pipe for stderr in child process */
 int system2(const char *cmd, ...)
 {
@@ -163,7 +115,7 @@ int system2(const char *cmd, ...)
 
 	FILE *f = popen(buf, "r");
 	if (f == NULL)
-		perror("Failed to execute: '%s'", cmd);
+		serror("Failed to execute: '%s'", cmd);
 
 	while (!feof(f) && fgets(buf, sizeof(buf), f) != NULL) { INDENT
 		strtok(buf, "\n"); /* strip trailing newline */

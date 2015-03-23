@@ -34,8 +34,8 @@ int socket_print(struct node *n, char *buf, int len)
 	char local[INET6_ADDRSTRLEN + 16];
 	char remote[INET6_ADDRSTRLEN + 16];
 	
-	socket_print_addr(local, sizeof(local), (struct sockaddr*) &s->local);
-	socket_print_addr(remote, sizeof(remote), (struct sockaddr*) &s->remote);
+	socket_print_addr(local, sizeof(local), (struct sockaddr *) &s->local);
+	socket_print_addr(remote, sizeof(remote), (struct sockaddr *) &s->remote);
 
 	return snprintf(buf, len, "local=%s, remote=%s", local, remote);
 }
@@ -43,25 +43,39 @@ int socket_print(struct node *n, char *buf, int len)
 int socket_open(struct node *n)
 {
 	struct socket *s = n->socket;
-	int af = s->local.ss_family;
-
+	struct sockaddr_in *sin = (struct sockaddr_in *) &s->local;
+	struct sockaddr_ll *sll = (struct sockaddr_ll *) &s->local;
+	int ret;
+		
 	/* Create socket */
 	switch (node_type(n)) {
 		case TCPD:
-		case TCP:	s->sd = socket(af, SOCK_STREAM, 0); break;
-		case UDP:	s->sd = socket(af, SOCK_DGRAM,  0); break;
-		case IP:	s->sd = socket(af, SOCK_RAW,    IPPROTO_S2SS); break;
-		case IEEE_802_3:s->sd = socket(af, SOCK_DGRAM,	ETH_P_S2SS); break;
+		case TCP:	s->sd = socket(sin->sin_family, SOCK_STREAM,	IPPROTO_TCP); break;
+		case UDP:	s->sd = socket(sin->sin_family, SOCK_DGRAM,	IPPROTO_UDP); break;
+		case IP:	s->sd = socket(sin->sin_family, SOCK_RAW,	ntohs(sin->sin_port)); break;
+		case IEEE_802_3:s->sd = socket(sin->sin_family, SOCK_DGRAM,	sll->sll_protocol); break;
 		default:
 			error("Invalid socket type!");
 	}
 	
 	if (s->sd < 0)
-		perror("Failed to create socket");
+		serror("Failed to create socket");
 	
 	/* Bind socket for receiving */
-	if (bind(s->sd, (struct sockaddr *) &s->local, sizeof(s->local)))
-		perror("Failed to bind to socket");
+	ret = bind(s->sd, (struct sockaddr *) &s->local, sizeof(s->local));
+	if (ret < 0)
+		serror("Failed to bind socket");
+	
+	/* Connect socket for sending */
+	if (node_type(n) == TCPD) {
+		/* Listening TCP sockets will be connected later by calling accept() */
+		s->sd2 = s->sd;
+	}
+	else if (node_type(n) != IEEE_802_3) {
+		ret = connect(s->sd, (struct sockaddr *) &s->remote, sizeof(s->remote));
+		if (ret < 0)
+			serror("Failed to connect socket");
+	}
 
 	/* Determine outgoing interface */
 	int index = if_getegress((struct sockaddr *) &s->remote);
@@ -72,7 +86,7 @@ int socket_open(struct node *n)
 	if (!i)
 		i = if_create(index);
 
-	list_add(i->sockets, s);
+	list_push(&i->sockets, s);
 	i->refcnt++;
 
 	/* Set socket priority, QoS or TOS IP options */
@@ -84,7 +98,7 @@ int socket_open(struct node *n)
 		case IP:
 			prio = IPTOS_LOWDELAY;
 			if (setsockopt(s->sd, IPPROTO_IP, IP_TOS, &prio, sizeof(prio)))
-				perror("Failed to set type of service (QoS)");
+				serror("Failed to set type of service (QoS)");
 			else
 				debug(4, "Set QoS/TOS IP option for node '%s' to %#x", n->name, prio);
 			break;
@@ -92,7 +106,7 @@ int socket_open(struct node *n)
 		default:
 			prio = SOCKET_PRIO;
 			if (setsockopt(s->sd, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio)))
-				perror("Failed to set socket priority");
+				serror("Failed to set socket priority");
 			else
 				debug(4, "Set socket priority for node '%s' to %u", n->name, prio);
 			break;
@@ -103,20 +117,25 @@ int socket_open(struct node *n)
 
 int socket_close(struct node *n)
 {
-	return close(n->socket->sd);
+	struct socket *s = n->socket;
+	
+	if (s->sd >= 0)
+		close(s->sd);
+	
+	if (s->sd2 >= 0)
+		close(s->sd2);
+	
+	return 0;
 }
 
-int socket_read(struct node* n, struct msg *m)
+int socket_read(struct node *n, struct msg *m)
 {
-	/** @todo Fix this for multiple paths calling msg_recv. */
-
 	/* Receive message from socket */
-	if (recv(n->socket->sd, m, sizeof(struct msg), 0) < 0) {
-		if (errno == EINTR)
-			return -EINTR;
-
-		perror("Failed recv");
-	}
+	int ret = recv(n->socket->sd, m, sizeof(struct msg), 0);
+	if (ret == 0)
+		error("Remote node '%s' closed the connection", n->name);
+	else if (ret < 0)
+		serror("Failed recv");
 
 	/* Convert headers to host byte order */
 	m->sequence = ntohs(m->sequence);
@@ -131,15 +150,21 @@ int socket_read(struct node* n, struct msg *m)
 	return 0;
 }
 
-int socket_write(struct node* n, struct msg *m)
+int socket_write(struct node *n, struct msg *m)
 {
+	struct socket *s = n->socket;
+	int ret;
+
 	/* Convert headers to network byte order */
 	m->sequence = htons(m->sequence);
 
-	if (sendto(n->socket->sd, m, MSG_LEN(m->length), 0,
-		(struct sockaddr *) &n->socket->remote,
-		sizeof(struct sockaddr_in)) < 0)
-		perror("Failed sendto");
+	if (node_type(n) == IEEE_802_3)
+		ret = sendto(s->sd, m, MSG_LEN(m->length), 0, (struct sockaddr *) &s->remote, sizeof(s->remote));
+	else
+		ret = send(s->sd, m, MSG_LEN(m->length), 0);
+
+	if (ret < 0)
+		serror("Failed send(to)");
 
 	debug(10, "Message sent to node '%s': version=%u, type=%u, endian=%u, length=%u, sequence=%u",
 		n->name, m->version, m->type, m->endian, m->length, ntohs(m->sequence));
@@ -160,14 +185,14 @@ int socket_print_addr(char *buf, int len, struct sockaddr *sa)
 			struct sockaddr_ll *sll = (struct sockaddr_ll *) sa;
 			char ifname[IF_NAMESIZE];
 
-			return snprintf(buf, len, "%s%%%s:%hu", 
+			return snprintf(buf, len, "%s%%%s:%#hx", 
 				ether_ntoa((struct ether_addr *) &sll->sll_addr),
 				if_indextoname(sll->sll_ifindex, ifname),
 				ntohs(sll->sll_protocol));
 		}
 
 		default:
-			error("Unsupported address family");
+			error("Unsupported address family: %u", sa->sa_family);
 	}
 	
 	return 0;
@@ -185,7 +210,8 @@ int socket_parse_addr(const char *addr, struct sockaddr *sa, enum node_type type
 
 		/* Split string */
 		char *node = strtok(copy, "%");
-		char *ifname = strtok(NULL, "\0");
+		char *ifname = strtok(NULL, ":");
+		char *proto = strtok(NULL, "\0");
 
 		/* Parse link layer (MAC) address */
 		struct ether_addr *mac = ether_aton(node);
@@ -194,18 +220,17 @@ int socket_parse_addr(const char *addr, struct sockaddr *sa, enum node_type type
 
 		memcpy(&sll->sll_addr, &mac->ether_addr_octet, 6);
 
-		sll->sll_protocol = ETH_P_S2SS;
+		sll->sll_protocol = htons((proto) ? strtol(proto, NULL, 0) : ETH_P_S2SS);
 		sll->sll_halen = 6;
 		sll->sll_family = AF_PACKET;
 		sll->sll_ifindex = if_nametoindex(ifname);
 
 		ret = 0;
 	}
-	else {
-		//struct sockaddr_in *sin = (struct sockaddr_in *) sa;
+	else {	/* Format: "192.168.0.10:12001" */
 		struct addrinfo hint = {
 			.ai_flags = flags,
-			.ai_family = AF_UNSPEC
+			.ai_family = AF_INET
 		};
 		
 		/* Split string */
@@ -220,8 +245,9 @@ int socket_parse_addr(const char *addr, struct sockaddr *sa, enum node_type type
 
 		switch (type) {
 			case IP:
-				hint.ai_socktype = 0;
-				hint.ai_protocol = IPPROTO_S2SS;
+				hint.ai_socktype = SOCK_RAW;
+				hint.ai_protocol = (service) ? strtol(service, NULL, 0) : IPPROTO_S2SS;
+				hint.ai_flags |= AI_NUMERICSERV;
 				break;
 
 			case TCPD:
@@ -235,16 +261,23 @@ int socket_parse_addr(const char *addr, struct sockaddr *sa, enum node_type type
 				hint.ai_protocol = IPPROTO_UDP;
 				break;
 
-			case INVALID:
 			default:
 				error("Invalid address type");
 		}
 
 		/* Lookup address */
 		struct addrinfo *result;
-		ret = getaddrinfo(node, service, &hint, &result);
+		ret = getaddrinfo(node, (type == IP) ? NULL : service, &hint, &result);
 		if (!ret) {
-			memcpy(sa, result->ai_addr, result->ai_addrlen);
+			
+			if (type == IP) {
+				/* We mis-use the sin_port field to store the IP protocol number on RAW sockets */
+				struct sockaddr_in *sin = (struct sockaddr_in *) result->ai_addr;
+				sin->sin_port = htons(result->ai_protocol);
+			}
+						
+			memcpy(sa, result->ai_addr, result->ai_addrlen);				
+			
 			freeaddrinfo(result);
 		}
 	}

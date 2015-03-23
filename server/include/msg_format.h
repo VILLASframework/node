@@ -14,7 +14,7 @@
  #define _BSD_SOURCE    	1
  #include <endian.h>
 #elif defined(__PPC__) /* Xilinx toolchain */
-  #include <lwip/arch.h>
+ #include <lwip/arch.h>
 #endif
 
 #include "config.h"
@@ -30,8 +30,8 @@
 #define MSG_TYPE_START		1 /**< Message marks the beginning of a new simulation case */
 #define MSG_TYPE_STOP		2 /**< Message marks the end of a simulation case */
 
-#define MSG_ENDIAN_LITTLE       0 /**< Message values are in little endian format (float too!) */
-#define MSG_ENDIAN_BIG          1 /**< Message values are in bit endian format */
+#define MSG_ENDIAN_LITTLE	0 /**< Message values are in little endian format (float too!) */
+#define MSG_ENDIAN_BIG		1 /**< Message values are in bit endian format */
 
 #if BYTE_ORDER == LITTLE_ENDIAN
  #define MSG_ENDIAN_HOST        MSG_ENDIAN_LITTLE

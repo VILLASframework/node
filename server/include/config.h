@@ -11,18 +11,18 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
+#ifndef _GIT_REV
+ #define _GIT_REV	"nogit"
+#endif
+
 /** The version number of the s2ss server */
-#define VERSION		"v0.4" __GIT_REV__
+#define VERSION		"v0.4-" _GIT_REV
 
 /** Maximum number of double values in a struct msg */
-#define MAX_VALUES	64
+#define MAX_VALUES	16
 
 /** Socket priority */
 #define SOCKET_PRIO	7
-
-/* Some parameters for histogram statistics */
-#define HIST_HEIGHT	50
-#define HIST_SEQ	17
 
 /* Protocol numbers */
 #define IPPROTO_S2SS	137
