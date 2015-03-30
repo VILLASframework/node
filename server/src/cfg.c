@@ -282,9 +282,11 @@ int config_parse_opal(config_setting_t *cfg, struct node *n)
 		rfound += og->send_ids[i] == o->send_id;
 	
 	if (!sfound)
-		cerror(config_setting_get_member(cfg, "send_id"), "Invalid send_id '%u' for node '%s'", o->send_id, n->name);
+		cerror(config_setting_get_member(cfg, "send_id"),
+			"Invalid send_id '%u' for node '%s'", o->send_id, n->name);
 	if (!rfound)
-		cerror(config_setting_get_member(cfg, "recv_id"), "Invalid recv_id '%u' for node '%s'", o->recv_id, n->name);
+		cerror(config_setting_get_member(cfg, "recv_id"),
+			"Invalid recv_id '%u' for node '%s'", o->recv_id, n->name);
 
 	n->opal = o;
 	n->opal->global = og;
@@ -299,6 +301,31 @@ int config_parse_opal(config_setting_t *cfg, struct node *n)
 /** @todo Implement */
 int config_parse_gtfpga(config_setting_t *cfg, struct node *n)
 {
+	char *slot, *id;
+	config_setting_t *cfg_slot, *cfg_id;
+	struct gtfpga *g = alloc(sizeof(struct gtfpga));
+
+	pci_filter_init(NULL, &g->filter);
+
+	if (cfg_slot = config_setting_get_member(cfg, "slot")) {
+		if (slot = config_setting_get_string(cfg_slot)) {
+			if ((err = pci_filter_parse_slot(&g->filter, slot))
+				cerror(cfg_slot, "%s", err);
+		}
+		else
+			cerror(cfg_slot, "Invalid slot format");
+	}
+
+	if (cfg_id = config_setting_get_member(cfg, "id")) {
+		if (id = config_setting_get_string(cfg_id)) {
+			if ((err = pci_filter_parse_id(&g->filter, id))
+				cerror(cfg_id, "%s", err);
+		}
+		else
+			cerror(cfg_slot, "Invalid id format");
+	}
+
+
 	return 0;
 }
 #endif /* ENABLE_GTFPGA */
