@@ -118,20 +118,18 @@ int node_start(struct node *n)
 
 int node_start_defer(struct node *n)
 {
-	int ret;
+	struct socket *s = n->socket;
 
 	if (node_type(n) == TCPD) {
 		info("Wait for incoming TCP connection from node '%s'...", n->name);
 
-		ret = listen(n->socket->sd2, 1);
-		if (ret < 0)
+		s->sd = listen(s->sd2, 1);
+		if (s->sd < 0)
 			serror("Failed to listen on socket for node '%s'", n->name);
 			
-		ret = accept(n->socket->sd2, NULL, NULL);
-		if (ret < 0)
+		s->sd = accept(s->sd2, NULL, NULL);
+		if (s->sd < 0)
 			serror("Failed to accept on socket for node '%s'", n->name);
-			
-		n->socket->sd = ret;	
 	}
 	
 	return 0;

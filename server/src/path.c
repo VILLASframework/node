@@ -67,7 +67,9 @@ static void * path_run(void *arg)
 
 	/* Open deferred TCP connection */
 	node_start_defer(p->in);
-	// FIXME: node_start_defer(p->out);
+
+	FOREACH(&p->destinations, it)
+		node_start_defer(it->path->out);
 
 
 	/* Main thread loop */

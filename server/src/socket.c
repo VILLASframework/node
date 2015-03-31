@@ -67,11 +67,8 @@ int socket_open(struct node *n)
 		serror("Failed to bind socket");
 	
 	/* Connect socket for sending */
-	if (node_type(n) == TCPD) {
-		/* Listening TCP sockets will be connected later by calling accept() */
+	if (node_type(n) == TCP) {
 		s->sd2 = s->sd;
-	}
-	else if (node_type(n) != IEEE_802_3) {
 		ret = connect(s->sd, (struct sockaddr *) &s->remote, sizeof(s->remote));
 		if (ret < 0)
 			serror("Failed to connect socket");
@@ -153,18 +150,27 @@ int socket_read(struct node *n, struct msg *m)
 int socket_write(struct node *n, struct msg *m)
 {
 	struct socket *s = n->socket;
-	int ret;
+	int ret = -1;
 
 	/* Convert headers to network byte order */
 	m->sequence = htons(m->sequence);
 
-	if (node_type(n) == IEEE_802_3)
-		ret = sendto(s->sd, m, MSG_LEN(m->length), 0, (struct sockaddr *) &s->remote, sizeof(s->remote));
-	else
-		ret = send(s->sd, m, MSG_LEN(m->length), 0);
+	switch (node_type(n)) {
+		case IEEE_802_3:/* Connection-less protocols */
+		case IP:
+		case UDP:
+			ret = sendto(s->sd, m, MSG_LEN(m->length), 0, (struct sockaddr *) &s->remote, sizeof(s->remote));
+			break;
+
+		case TCP:	/* Connection-oriented protocols */
+		case TCPD:
+			ret = send(s->sd, m, MSG_LEN(m->length), 0);
+			break;
+		default: { }
+	}
 
 	if (ret < 0)
-		serror("Failed send(to)");
+		serror("Failed send");
 
 	debug(10, "Message sent to node '%s': version=%u, type=%u, endian=%u, length=%u, sequence=%u",
 		n->name, m->version, m->type, m->endian, m->length, ntohs(m->sequence));
