@@ -197,14 +197,16 @@ int path_print(struct path *p, char *buf, int len)
 {
 	*buf = 0;
 	
+	strap(buf, len, "%s " MAG("=>"), p->in->name);
+		
 	if (list_length(&p->destinations) > 1) {
-		strap(buf, len, "%s " MAG("=>") " [", p->in->name);
+		strap(buf, len " [");
 		FOREACH(&p->destinations, it)
 			strap(buf, len, " %s", it->node->name);
 		strap(buf, len, " ]");
 	}
 	else
-		strap(buf, len, "%s " MAG("=>") " %s", p->in->name, p->out->name);
+		strap(buf, len, " %s", p->out->name);
 	
 	return 0;
 }
