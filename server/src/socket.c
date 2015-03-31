@@ -53,7 +53,7 @@ int socket_open(struct node *n)
 		case TCP:	s->sd = socket(sin->sin_family, SOCK_STREAM,	IPPROTO_TCP); break;
 		case UDP:	s->sd = socket(sin->sin_family, SOCK_DGRAM,	IPPROTO_UDP); break;
 		case IP:	s->sd = socket(sin->sin_family, SOCK_RAW,	ntohs(sin->sin_port)); break;
-		case IEEE_802_3:s->sd = socket(sin->sin_family, SOCK_DGRAM,	sll->sll_protocol); break;
+		case IEEE_802_3:s->sd = socket(sll->sll_family, SOCK_DGRAM,	sll->sll_protocol); break;
 		default:
 			error("Invalid socket type!");
 	}
