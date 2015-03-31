@@ -142,7 +142,7 @@ void serror(const char *fmt, ...)
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 	
-	log_print(ERROR, "%s: %s", buf, strerror(errno));
+	log_print(ERROR, "%s: %m (%u)", buf, errno);
 	die();
 }
 

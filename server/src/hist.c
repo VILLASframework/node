@@ -125,7 +125,7 @@ void hist_plot(struct hist *h)
 	}
 	
 	/* Print plot */
-	info("%9s | %5s | %s", "Value", "Occur", "Histogram Plot:");
+	info("%9s | %5s | %s", "Value", "Occur", "Plot");
 	line();
 
 	for (int i = 0; i < h->length; i++) {

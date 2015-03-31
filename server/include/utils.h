@@ -36,9 +36,8 @@
 
 /* Alternate character set */
 #define ACS(chr)	"\e(0" chr "\e(B"
-#define ACS_VERTICAL	"|"
 #define ACS_HORIZONTAL	ACS("\x71")
-//#define ACS_VERTICAL	ACS("\x78")
+#define ACS_VERTICAL	ACS("\x78")
 #define ACS_VERTRIGHT	ACS("\x74")
 
 /* UTF-8 Line drawing characters */
@@ -77,7 +76,7 @@ extern pthread_t _mtid;
  */
 int strap(char *dest, size_t size, const char *fmt,  ...);
 
-/** Variable arguments (stdarg) version of strap() */
+/** Variadic version of strap() */
 int vstrap(char *dest, size_t size, const char *fmt, va_list va);
 
 /** Convert integer to cpu_set_t.
@@ -105,9 +104,8 @@ void die();
 /** Check assertion and exit if failed. */
 #define assert(exp) do { \
 	if (EXPECT(!exp, 0)) { \
-		print(ERROR, "Assertion failed: '%s' in %s, %s:%d", \
+		error, "Assertion failed: '%s' in %s, %s:%d", \
 			#exp, __FUNCTION__, __BASE_FILE__, __LINE__); \
-		exit(EXIT_FAILURE); \
 	} } while (0)
 
 #endif /* _UTILS_H_ */
