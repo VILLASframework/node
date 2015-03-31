@@ -14,6 +14,28 @@
 #include "if.h"
 #include "tc.h"
 
+int tc_parse(config_setting_t *cfg, struct netem *em)
+{
+	em->valid = 0;
+
+	if (config_setting_lookup_string(cfg, "distribution", &em->distribution))
+		em->valid |= TC_NETEM_DISTR;
+	if (config_setting_lookup_int(cfg, "delay", &em->delay))
+		em->valid |= TC_NETEM_DELAY;
+	if (config_setting_lookup_int(cfg, "jitter", &em->jitter))
+		em->valid |= TC_NETEM_JITTER;
+	if (config_setting_lookup_int(cfg, "loss", &em->loss))
+		em->valid |= TC_NETEM_LOSS;
+	if (config_setting_lookup_int(cfg, "duplicate", &em->duplicate))
+		em->valid |= TC_NETEM_DUPL;
+	if (config_setting_lookup_int(cfg, "corrupt", &em->corrupt))
+		em->valid |= TC_NETEM_CORRUPT;
+
+	/** @todo Validate netem config values */
+
+	return 0;
+}
+
 int tc_reset(struct interface *i)
 {
 	char cmd[128];

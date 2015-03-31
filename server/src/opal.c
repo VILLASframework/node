@@ -12,8 +12,7 @@
 #include "opal.h"
 #include "utils.h"
 
-/** @todo: delcare statice */
-struct opal_global *og = NULL;
+static struct opal_global *og = NULL;
 
 int opal_init(int argc, char *argv[])
 {	
@@ -109,6 +108,40 @@ int opal_print_global(struct opal_global *g)
 	for (int i=0; i<GENASYNC_NB_STRING_PARAM; i++)
 		debug(2, "StringParam[%u] = %s", i, g->params.StringParam[i]);
 	
+	return 0;
+}
+
+int opal_parse(config_setting_t *cfg, struct node *n)
+{	
+	if (!og) {
+		warn("Skipping node '%s', because this server is not running as an OPAL Async process!", n->name);
+		return -1;
+	}
+	
+	struct opal *o = alloc(sizeof(struct opal));
+	
+	config_setting_lookup_int(cfg, "send_id", &o->send_id);
+	config_setting_lookup_int(cfg, "recv_id", &o->recv_id);
+	config_setting_lookup_bool(cfg, "reply", &o->reply);
+		
+	/* Search for valid send and recv ids */
+	int sfound = 0, rfound = 0;
+	for (int i=0; i<og->send_icons; i++)
+		sfound += og->send_ids[i] == o->send_id;
+	for (int i=0; i<og->send_icons; i++)
+		rfound += og->send_ids[i] == o->send_id;
+	
+	if (!sfound)
+		cerror(config_setting_get_member(cfg, "send_id"),
+			"Invalid send_id '%u' for node '%s'", o->send_id, n->name);
+	if (!rfound)
+		cerror(config_setting_get_member(cfg, "recv_id"),
+			"Invalid recv_id '%u' for node '%s'", o->recv_id, n->name);
+
+	n->opal = o;
+	n->opal->global = og;
+	n->cfg = cfg;
+
 	return 0;
 }
 

@@ -14,6 +14,7 @@
 #define _TC_H_
 
 #include <stdint.h>
+#include <libconfig.h>
 
 /** A type alias for TC handles.
  *
@@ -63,6 +64,15 @@ struct netem {
 	/** Packet duplication probability (%) */
 	int duplicate;
 };
+
+/** Parse network emulator (netem) settings.
+ *
+ * @param cfg A libconfig object containing the settings.
+ * @param em A pointer to the netem settings structure (part of the path structure).
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
+ */
+int tc_parse(config_setting_t *cfg, struct netem *em);
 
 /** Remove all queuing disciplines and filters.
  *

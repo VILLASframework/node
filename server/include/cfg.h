@@ -72,10 +72,25 @@ int config_parse_global(config_setting_t *cfg, struct settings *set);
  */
 int config_parse_path(config_setting_t *cfg,
 	struct list *paths, struct list *nodes);
-	
+
+/** Parse an array or single node and checks if they exist in the "nodes" section.
+ *
+ * Examples:
+ *     out = [ "sintef", "scedu" ]
+ *     out = "acs"
+ *
+ * @param cfg The libconfig object handle for "out".
+ * @param nodes The nodes will be added to this list.
+ * @param all This list contains all valid nodes.
+ */
 int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct list *all);
 
-
+/** Parse an array or single hook function.
+ *
+ * Examples:
+ *     hooks = [ "print", "fir" ]
+ *     hooks = "log"
+ **/
 int config_parse_hooks(config_setting_t *cfg, struct list *hooks);
 
 /** Parse a single node and add it to the global configuration.
@@ -86,41 +101,5 @@ int config_parse_hooks(config_setting_t *cfg, struct list *hooks);
  * @retval <0 Error. Something went wrong.
  */
 int config_parse_node(config_setting_t *cfg, struct list *nodes);
-
-/** Parse node connection details for OPAL type
- *
- * @param cfg A libconfig object pointing to the node.
- * @param nodes Add new nodes to this linked list.
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
- */
-int config_parse_opal(config_setting_t *cfg, struct node *n);
-
-/** Parse node connection details for GTFPGA type
- *
- * @param cfg A libconfig object pointing to the node.
- * @param n A pointer to the node structure which should be parsed.
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
- */
-int config_parse_gtfpga(config_setting_t *cfg, struct node *n);
-
-/** Parse node connection details for SOCKET type
- *
- * @param cfg A libconfig object pointing to the node.
- * @param n A pointer to the node structure which should be parsed.
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
- */
-int config_parse_socket(config_setting_t *cfg, struct node *n);
-
-/** Parse network emulator (netem) settings.
- *
- * @param cfg A libconfig object containing the settings.
- * @param em A pointer to the netem settings structure (part of the path structure).
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
- */
-int config_parse_netem(config_setting_t *cfg, struct netem *em);
 
 #endif /* _CFG_H_ */
