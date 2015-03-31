@@ -45,9 +45,11 @@ enum node_type {
 	INVALID
 };
 
-/** C++ like vtable construct for node_types */
+/** C++ like vtable construct for node_types
+ * @todo Add comments
+ */
 struct node_vtable {
-	enum node_type type;
+	const enum node_type type;
 	const char *name;
 
 	int (*parse)(config_setting_t *cfg, struct node *n);
@@ -57,6 +59,11 @@ struct node_vtable {
 	int (*close)(struct node *n);
 	int (*read)(struct node *n, struct msg *m);
 	int (*write)(struct node *n, struct msg *m);
+	
+	int (*init)(int argc, char *argv[]);
+	int (*deinit)();
+	
+	int refcnt;
 };
 
 /** The data structure for a node.
@@ -72,7 +79,7 @@ struct node
 	const char *name;
 
 	/** C++ like virtual function call table */
-	struct node_vtable const *vt;
+	struct node_vtable *vt;
 	/** Virtual data (used by vtable functions) */
 	union {
 		struct socket *socket;
@@ -83,6 +90,20 @@ struct node
 	/** A pointer to the libconfig object which instantiated this node */
 	config_setting_t *cfg;
 };
+
+/** Initialize node type subsystems.
+ *
+ * These routines are only called once per type (not node).
+ * See node_vtable::init
+ */
+int node_init(int argc, char *argv[]);
+
+/** De-initialize node type subsystems.
+ *
+ * These routines are only called once per type (not node).
+ * See node_vtable::deinit
+ */
+int node_deinit();
 
 /** Connect and bind the UDP socket of this node.
  *
@@ -119,7 +140,7 @@ int node_stop(struct node *n);
  * @param str A string describing the socket type. This must be one of: tcp, tcpd, udp, ip, ieee802.3 or opal
  * @return A pointer to the vtable, or NULL if there is no socket type / vtable with this id.
  */
-struct node_vtable const * node_lookup_vtable(const char *str);
+struct node_vtable * node_lookup_vtable(const char *str);
 
 /** Search list of nodes for a name.
  *

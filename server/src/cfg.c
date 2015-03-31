@@ -132,8 +132,12 @@ int config_parse_path(config_setting_t *cfg,
 
 	if (enabled) {
 		p->in->refcnt++;
-		FOREACH(&p->destinations, it)
+		p->in->vt->refcnt++;
+				
+		FOREACH(&p->destinations, it) {
 			it->node->refcnt++;
+			it->node->vt->refcnt++;
+		}
 		
 		if (reverse) {
 			if (list_length(&p->destinations) > 1)
@@ -149,6 +153,8 @@ int config_parse_path(config_setting_t *cfg,
 
 			r->in->refcnt++;
 			r->out->refcnt++;
+			r->in->vt->refcnt++;
+			r->out->vt->refcnt++;
 
 			list_push(paths, r);
 		}
