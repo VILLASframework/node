@@ -8,9 +8,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <signal.h>
-#include <time.h>
 
+#include <sys/timerfd.h>
 #include <sys/syscall.h>
 
 #include "utils.h"
@@ -28,33 +27,24 @@ static void * path_send(void *arg)
 {
 	struct path *p = arg;
 
-	int sig;
-	sigset_t set;
-
-	struct sigevent sev = {
-		.sigev_notify = SIGEV_THREAD_ID,
-		.sigev_signo = SIGALRM,
-		.sigev_notify_thread_id = syscall(SYS_gettid)
-	};
+	int ret;
+	uint64_t runs;
 
 	struct itimerspec its = {
 		.it_interval = timespec_rate(p->rate),
 		.it_value = { 1, 0 }
 	};
 
-	sigemptyset(&set);
-	sigaddset(&set, SIGALRM);
-	if(pthread_sigmask(SIG_BLOCK, &set, NULL))
-		serror("Set signal mask");
-
-	if (timer_create(CLOCK_REALTIME, &sev, &p->timer))
+	p->tfd = timerfd_create(CLOCK_REALTIME, 0);
+	if (p->tfd < 0)
 		serror("Failed to create timer");
 
-	if (timer_settime(p->timer, 0, &its, NULL))
+	ret = timerfd_settime(p->tfd, 0, &its, NULL);
+	if (ret)
 		serror("Failed to start timer");
 
 	while (1) {
-		sigwait(&set, &sig); /* blocking wait for next timer tick */
+		read(p->tfd, &runs, sizeof(runs));
 		
 		FOREACH(&p->destinations, it)
 			node_write(it->node, p->current);
@@ -175,7 +165,7 @@ int path_stop(struct path *p)
 		pthread_cancel(p->sent_tid);
 		pthread_join(p->sent_tid, NULL);
 
-		timer_delete(p->timer);
+		close(p->tfd);
 	}
 
 	if (p->received)
@@ -200,7 +190,7 @@ int path_print(struct path *p, char *buf, int len)
 	strap(buf, len, "%s " MAG("=>"), p->in->name);
 		
 	if (list_length(&p->destinations) > 1) {
-		strap(buf, len " [");
+		strap(buf, len, " [");
 		FOREACH(&p->destinations, it)
 			strap(buf, len, " %s", it->node->name);
 		strap(buf, len, " ]");
