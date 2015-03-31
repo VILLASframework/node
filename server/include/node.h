@@ -41,7 +41,7 @@ enum node_type {
 	TCPD,		/* BSD socket: AF_INET   SOCK_STREAM bind + listen + accept */
 	TCP,		/* BSD socket: AF_INET   SOCK_STREAM bind + connect */
 	OPAL_ASYNC,	/* OPAL-RT Asynchronous Process Api */
-//	GTFPGA,		/* Xilinx ML507 GTFPGA card */
+	GTFPGA,		/* Xilinx ML507 GTFPGA card */
 	INVALID
 };
 

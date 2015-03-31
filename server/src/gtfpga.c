@@ -10,26 +10,100 @@
 
 #define SYSFS_PATH "/sys/bus/pci"
 
-static int gtfpga_load_driver(struct node *n)
-{
+static pci_access *pacc;
 
+int gtfpga_init(int argc, char *argv[])
+{
+	pacc = pci_alloc();		/* Get the pci_access structure */
+	pci_init(pacc);			/* Initialize the PCI library */
+	
+	pacc->error = error;		/* Replace logging and debug functions */
+	pacc->warning = warn;
+	pacc->debug = debug;
+	
+	pci_scan_bus(pacc);		/* We want to get the list of devices */
 }
 
-static struct pci_dev * gtfpga_find_device(struct node *n)
+int gtfpga_deinit()
 {
-	struct gtfpga *g = n->gtfpga;
+	pci_cleanup(pacc);
+}
 
-	struct pci_dev *dev;
+int gtfpga_parse(config_setting_t *cfg, struct node *n)
+{
+	char *slot, *id;
+	config_setting_t *cfg_slot, *cfg_id;
+	struct gtfpga *g = alloc(sizeof(struct gtfpga));
 
-	pacc = pci_alloc();		/* Get the pci_access structure */
+	pci_filter_init(NULL, &g->filter);
 
-	pci_init(pacc);			/* Initialize the PCI library */
-	pci_scan_bus(pacc);		/* We want to get the list of devices */
+	if (cfg_slot = config_setting_get_member(cfg, "slot")) {
+		if (slot = config_setting_get_string(cfg_slot)) {
+			if ((err = pci_filter_parse_slot(&g->filter, slot))
+				cerror(cfg_slot, "%s", err);
+		}
+		else
+			cerror(cfg_slot, "Invalid slot format");
+	}
+
+	if (cfg_id = config_setting_get_member(cfg, "id")) {
+		if (id = config_setting_get_string(cfg_id)) {
+			if ((err = pci_filter_parse_id(&g->filter, id))
+				cerror(cfg_id, "%s", err);
+		}
+		else
+			cerror(cfg_slot, "Invalid id format");
+	}
+
+
+	return 0;
+}
+
+int gtfpga_print(struct node *n, char *buf, int len)
+{
+	
+}
+
+static int gtfpga_load_driver(struct pci_dev *d)
+{
+	FILE *f;
+	char slot[16];
+	int ret;
+	
+	/* Prepare slot identifier */
+	snprintf(slot, sizeof(slot), "%04x:%02x:%02x.%x",
+		d->domain, d->bus, d->slot, d->func);
+		
+	/* Load uio_pci_generic module */
+	ret = system2("modprobe uio_pci_generic");
+	if (ret)
+		serror("Failed to load module");
+	
+	/* Add new ID to uio_pci_generic */
+	f = fopen(SYSFS_PATH "/drivers/uio_pci_generic/new_id", "w");
+	if (!f)
+		serror("Failed to add PCI id to uio_pci_generic driver");
+	
+	fprintf(f, "%04x %04x", d->vendor_id, d->device_id);
+	fclose(f);
+	
+	/* Bind to uio_pci_generic */
+	f = fopen(SYSFS_PATH "/drivers/uio_pci_generic/bind", "w");
+	if (!f)
+		serror("Failed to add PCI id to uio_pci_generic driver");
+	
+	fprintf(f, "%s\n", slot);
+	fclose(f);
+}
+
+static struct pci_dev * gtfpga_find_device(struct pci_filter *f)
+{
+	struct pci_dev *d;
 
 	/* Iterate over all devices */
-	for (dev = pacc->devices; dev; dev = dev->next) {
-		if (pci_filter_match(&filter, dev))
-			return dev;
+	for (d = pacc->devices; d; d = d->next) {
+		if (pci_filter_match(&f, d))
+			return d;
 	}
 
 	return NULL;
@@ -90,7 +164,8 @@ int gtfpga_close(struct node *n)
 {
 	struct gtfpga *g = n->gtfpga;
 
-	munmap(g->map, g->dev->size[GTFPGA_BAR]);
+	if (g->map)
+		munmap(g->map, g->dev->size[GTFPGA_BAR]);
 
 	close(g->fd_mmap);
 	close(g->fd_uio);
@@ -98,6 +173,7 @@ int gtfpga_close(struct node *n)
 	return 0;
 }
 
+/** @todo implement */
 int gtfpga_read(struct node *n, struct msg *m)
 {
 	struct gtfpga *g = n->gtfpga;
@@ -105,6 +181,7 @@ int gtfpga_read(struct node *n, struct msg *m)
 	return 0;
 }
 
+/** @todo implement */
 int gtfpga_write(struct node *n, struct msg *m)
 {
 	struct gtfpga *g = n->gtfpga;
