@@ -19,9 +19,12 @@
 #include "hooks.h"
 
 #include "socket.h"
-#include "gtfpga.h"
+
+#ifdef ENABLE_GTFPGA
+ #include "gtfpga.h"
+#endif
 #ifdef ENABLE_OPAL_ASYNC
-#include "opal.h"
+ #include "opal.h"
 #endif
 
 int config_parse(const char *filename, config_t *cfg, struct settings *set,
@@ -139,8 +142,7 @@ int config_parse_path(config_setting_t *cfg,
 		
 		if (reverse) {
 			if (list_length(&p->destinations) > 1)
-				warn("Using first destination '%s' as source for reverse path. "
-					"Ignoring remaining nodes", p->out->name);
+				error("Can't reverse path with multiple destination nodes");
 
 			struct path *r = path_create();
 

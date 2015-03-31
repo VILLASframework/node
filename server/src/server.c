@@ -87,7 +87,7 @@ void realtime_init()
 
 /* Setup exit handler */
 void signals_init()
-{ INDENT
+{
 	struct sigaction sa_quit = {
 		.sa_flags = SA_SIGINFO,
 		.sa_sigaction = quit
@@ -142,12 +142,11 @@ int main(int argc, char *argv[])
 	list_init(&nodes, (dtor_cb_t) node_destroy);
 	list_init(&paths, (dtor_cb_t) path_destroy);
 	list_init(&interfaces, (dtor_cb_t) if_destroy);
-
-
-	info("Initialize realtime system:");
+	
+	info("Initialize real-time system:");
 	realtime_init();
 
-	info("Setup signals:");
+	info("Initialize signals:");
 	signals_init();
 
 	info("Initialize node types:");
@@ -155,8 +154,6 @@ int main(int argc, char *argv[])
 
 	info("Parsing configuration:");
 	config_init(&config);
-
-	/* Parse configuration and create nodes/paths */
 	config_parse(configfile, &config, &settings, &nodes, &paths);
 
 	/* Connect all nodes and start one thread per path */
