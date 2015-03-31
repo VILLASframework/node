@@ -139,17 +139,14 @@ void hist_plot(struct hist *h)
 
 void hist_dump(struct hist *h, char *buf, int len)
 {
-	char tok[8];
-	memset(buf, 0, len);
+	*buf = 0;
 
-	strncat(buf, "[ ", len);
+	strap(buf, len, "[ ");
 
-	for (int i = 0; i < h->length; i++) {
-		snprintf(tok, sizeof(tok), "%u ", h->data[i]);
-		strncat(buf, tok, len - strlen(buf));
-	}
-	
-	strncat(buf, "]", len - strlen(buf));
+	for (int i = 0; i < h->length; i++)
+		strap(buf, len, "%u ", h->data[i]);
+
+	strap(buf, len, "]");
 }
 
 void hist_matlab(struct hist *h, FILE *f)
