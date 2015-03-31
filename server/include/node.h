@@ -34,6 +34,7 @@
 
 /** Node type: layer, protocol, listen/connect */
 enum node_type {
+	LOG_FILE,	/* File IO */
 	IEEE_802_3,	/* BSD socket: AF_PACKET SOCK_DGRAM  */
 	IP,		/* BSD socket: AF_INET   SOCK_RAW    */
 	UDP,		/* BSD socket: AF_INET   SOCK_DGRAM  */
@@ -77,6 +78,7 @@ struct node
 		struct socket *socket;
 		struct opal   *opal;
 		struct gtfpga *gtfpga;
+		struct file   *file;
 	};
 
 	/** A pointer to the libconfig object which instantiated this node */

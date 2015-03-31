@@ -27,6 +27,7 @@ static const struct node_vtable vtables[] = {
 #ifdef ENABLE_OPAL_ASYNC
 	VTABLE(OPAL_ASYNC, "opal",	opal),
 #endif
+	VTABLE(LOG_FILE),  "file",	file),
 	VTABLE(IEEE_802_3, "ieee802.3",	socket),
 	VTABLE(IP,	   "ip",	socket),
 	VTABLE(UDP,	   "udp",	socket),

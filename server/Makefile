@@ -1,7 +1,7 @@
 TARGETS = server send random receive test
 
 # Common dependencies for all binaries
-OBJS = socket.o if.o utils.o msg.o node.o cfg.o tc.o hooks.o list.o path.o hist.o
+OBJS = if.o utils.o msg.o node.o cfg.o tc.o hooks.o list.o path.o hist.o socket.o file.o 
 
 VPATH = src
 
