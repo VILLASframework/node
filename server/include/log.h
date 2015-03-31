@@ -16,12 +16,14 @@
  #define INDENT		;
 #endif
 
-/** The log level which is passed as first argument to print() */
+/** Width of log output in characters */
+#define LOG_WIDTH	100
 
-#define DEBUG	GRY("Debug")
-#define INFO	    "" 
-#define WARN	YEL("Warn")
-#define ERROR	RED("Error")
+/* The log level which is passed as first argument to print() */
+#define DEBUG		GRY("Debug")
+#define INFO		    "" 
+#define WARN		YEL("Warn")
+#define ERROR		RED("Error")
 
 /** Change log indention  for current thread.
  *
@@ -64,6 +66,10 @@ void log_vprint(const char *lvl, const char *fmt, va_list va);
 /** Printf alike debug message with level. */
 void debug(int lvl, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
+
+
+/** Print a horizontal line. */
+void line();
 
 /** Printf alike info message. */
 void info(const char *fmt, ...)

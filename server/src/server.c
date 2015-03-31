@@ -174,8 +174,8 @@ int main(int argc, char *argv[])
 		info("Runtime Statistics:");
 		info("%-32s :   %-8s %-8s %-8s %-8s %-8s",
 			"Source " MAG("=>") " Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Inval");
-		info("---------------------------------------------------------------------------");
-
+		line();
+			
 		do { FOREACH(&paths, it) {
 			usleep(settings.stats * 1e6);
 			path_print_stats(it->path);

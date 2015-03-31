@@ -36,9 +36,11 @@
 
 /* Alternate character set */
 #define ACS(chr)	"\e(0" chr "\e(B"
-#define ACS_VERTICAL	ACS("\x78")
-#define ACS_VERTRIGHT	ACS("\x74s")
-s
+#define ACS_VERTICAL	"|"
+#define ACS_HORIZONTAL	ACS("\x71")
+//#define ACS_VERTICAL	ACS("\x78")
+#define ACS_VERTRIGHT	ACS("\x74")
+
 /* UTF-8 Line drawing characters */
 #define UTF8_BOX	"\xE2\x96\x88"
 #define UTF8_VERTICAL	"\xE2\x94\x82"

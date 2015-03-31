@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 
-#define HIST_HEIGHT	50
+#define HIST_HEIGHT	75
 #define HIST_SEQ	17
 
 typedef unsigned hist_cnt_t;

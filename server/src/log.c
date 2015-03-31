@@ -85,7 +85,14 @@ void log_vprint(const char *lvl, const char *fmt, va_list ap)
 	fprintf(stderr, "\r%s\n", buf);
 }
 
-/** Printf alike debug message with level. */
+void line()
+{
+	char buf[LOG_WIDTH];
+	memset(buf, 0x71, sizeof(buf));
+	
+	log_print("", "\b" ACS("%.*s"), LOG_WIDTH, buf);
+}
+
 void debug(int lvl, const char *fmt, ...)
 {
 	va_list ap;
@@ -97,7 +104,6 @@ void debug(int lvl, const char *fmt, ...)
 	}
 }
 
-/** Printf alike info message. */
 void info(const char *fmt, ...)
 {
 	va_list ap;
@@ -107,7 +113,6 @@ void info(const char *fmt, ...)
 	va_end(ap);
 }
 
-/** Printf alike warning message. */
 void warn(const char *fmt, ...)
 {
 	va_list ap;
@@ -117,7 +122,6 @@ void warn(const char *fmt, ...)
 	va_end(ap);
 }
 	
-/** Print error and exit. */
 void error(const char *fmt, ...)
 {
 	va_list ap;
@@ -129,7 +133,6 @@ void error(const char *fmt, ...)
 	die();
 }
 
-/** Print error and strerror(errno). */
 void serror(const char *fmt, ...)
 {
 	va_list ap;
@@ -143,7 +146,6 @@ void serror(const char *fmt, ...)
 	die();
 }
 
-/** Print configuration error and exit. */
 void cerror(config_setting_t *cfg, const char *fmt, ...)
 {
 	va_list ap;

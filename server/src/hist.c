@@ -111,7 +111,9 @@ void hist_print(struct hist *h)
 
 void hist_plot(struct hist *h)
 {
-	char buf[HIST_HEIGHT] = { '#' };
+	char buf[HIST_HEIGHT];
+	memset(buf, '#', sizeof(buf));
+	
 	unsigned int min = UINT_MAX, max = 0;
 
 	/* Get max, first & last */
@@ -124,6 +126,8 @@ void hist_plot(struct hist *h)
 	
 	/* Print plot */
 	info("%9s | %5s | %s", "Value", "Occur", "Histogram Plot:");
+	line();
+
 	for (int i = 0; i < h->length; i++) {
 		int bar = HIST_HEIGHT * ((double) h->data[i] / max);
 
