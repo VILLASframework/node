@@ -22,8 +22,8 @@
 #include "socket.h"
 #include "utils.h"
 
-/** Linked list of interfaces */
-struct interface *interfaces;
+/** Linked list of interfaces. */
+struct list interfaces;
 
 struct interface * if_create(int index) {
 	struct interface *i = alloc(sizeof(struct interface));
@@ -31,11 +31,20 @@ struct interface * if_create(int index) {
 	i->index = index;
 	if_indextoname(index, i->name);
 
-	debug(3, "Created interface '%s'", i->name, i->index, i->refcnt);
+	debug(3, "Created interface '%s' (index=%u)", i->name, i->index);
 
-	list_add(interfaces, i);
+	list_init(&i->sockets, NULL);
+	list_push(&interfaces, i);
 
 	return i;
+}
+
+void if_destroy(struct interface *i)
+{
+	/* List members are freed by their belonging nodes. */
+	list_destroy(&i->sockets);
+
+	free(i);
 }
 
 int if_start(struct interface *i, int affinity)
@@ -49,7 +58,9 @@ int if_start(struct interface *i, int affinity)
 	
 	{ INDENT
 		int mark = 0;
-		for (struct socket *s = i->sockets; s; s = s->next) {
+		FOREACH(&i->sockets, it) {
+			struct socket *s = it->socket;
+
 			if (s->netem) {
 				s->mark = 1 + mark++;
 		
@@ -78,7 +89,7 @@ int if_start(struct interface *i, int affinity)
 
 int if_stop(struct interface *i)
 { INDENT
-	info("Stopping  interface '%s'", i->name);
+	info("Stopping interface '%s'", i->name);
 
 	{ INDENT
 		if_setaffinity(i, -1L);
@@ -171,10 +182,9 @@ int if_setaffinity(struct interface *i, int affinity)
 
 struct interface * if_lookup_index(int index)
 {
-	for (struct interface *i = interfaces; i; i = i->next) {
-		if (i->index == index) {
-			return i;
-		}
+	FOREACH(&interfaces, it) {
+		if (it->interface->index == index)
+			return it->interface;
 	}
 
 	return NULL;

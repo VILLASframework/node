@@ -1,0 +1,10 @@
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+# Orchestrator
+
+# ACS hosts
+134.130.169.31	acs-s2ss
+134.130.169.32	acs-gtfpga
+137.226.160.69	acs-opal
+137.226.160.115	acs-workstation

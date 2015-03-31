@@ -14,8 +14,14 @@
 #include <sys/types.h>
 #include <net/if.h>
 
+#include "list.h"
+
 #define IF_NAME_MAX	IFNAMSIZ /**< Maximum length of an interface name */
 #define IF_IRQ_MAX	3	 /**< Maxmimal number of IRQs of an interface */
+
+#ifndef SO_MARK
+ #define SO_MARK	36	/**< Workaround: add missing constant for OPAL-RT Redhawk target */
+#endif
 
 struct socket;
 
@@ -31,9 +37,7 @@ struct interface {
 	char irqs[IF_IRQ_MAX];
 
 	/** Linked list of associated sockets */
-	struct socket *sockets;
-	/** Linked list pointer */
-	struct interface *next;
+	struct list sockets;
 };
 
 /** Add a new interface to the global list and lookup name, irqs...
@@ -43,6 +47,13 @@ struct interface {
  * @retval 0 Error. The creation failed.
  */
 struct interface * if_create(int index);
+
+
+/** Destroy interface by freeing dynamically allocated memory.
+ *
+ * @param i A pointer to the interface structure.
+ */
+void if_destroy(struct interface *i);
 
 /** Start interface.
  *
@@ -102,7 +113,7 @@ int if_getirqs(struct interface *i);
  */
 int if_setaffinity(struct interface *i, int affinity);
 
-/** Search the list of interfaces for a given index.
+/** Search the global list of interfaces for a given index.
  *
  * @param index The interface index to search for
  * @param interfaces A linked list of all interfaces

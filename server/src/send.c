@@ -27,7 +27,7 @@
 static struct settings set;
 static struct msg  msg = MSG_INIT(0);
 static struct node *node;
-extern struct node *nodes;
+extern struct list nodes;
 
 void quit(int sig, siginfo_t *si, void *ptr)
 {
@@ -38,13 +38,15 @@ void quit(int sig, siginfo_t *si, void *ptr)
 void usage(char *name)
 {
 	printf("Usage: %s [-r] CONFIG NODE\n", name);
-	printf("  -r      swap local / remote address of socket based nodes)\n");
+	printf("  -r      swap local / remote address of socket based nodes)\n\n");
 	printf("  CONFIG  path to a configuration file\n");
 	printf("  NODE    name of the node which shoud be used\n");
+
 	printf("Simulator2Simulator Server %s (built on %s %s)\n",
 		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-	printf(" Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
-	printf("   Steffen Vogel <stvogel@eonerc.rwth-aachen.de>\n");
+	printf(" Copyright 2015, Institute for Automation of Complex Power Systems, EONERC\n");
+	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
+
 	exit(EXIT_FAILURE);
 }
 
@@ -79,7 +81,7 @@ int main(int argc, char *argv[])
 	config_init(&config);
 	config_parse(argv[optind], &config, &set, &nodes, NULL);
 	
-	node = node_lookup_name(argv[optind+1], nodes);
+	node = node_lookup_name(argv[optind+1], &nodes);
 	if (!node)
 		error("There's no node with the name '%s'", argv[optind+1]);
 	

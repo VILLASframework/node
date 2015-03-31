@@ -20,6 +20,7 @@
 
 #include "msg.h"
 #include "tc.h"
+#include "list.h"
 
 /** Static node initialization */
 #define NODE_INIT(n)	{ \
@@ -83,9 +84,6 @@ struct node
 
 	/** A pointer to the libconfig object which instantiated this node */
 	config_setting_t *cfg;
-
-	/** Linked list pointer */
-	struct node *next;
 };
 
 /** Connect and bind the UDP socket of this node.
@@ -131,12 +129,21 @@ struct node_vtable const * node_lookup_vtable(const char *str);
  * @param nodes A linked list of all nodes
  * @return A pointer to the node or NULL if not found
  */
-struct node* node_lookup_name(const char *str, struct node *nodes);
+struct node * node_lookup_name(const char *str, struct list *nodes);
 
 /** Reverse local and remote socket address.
  * This is usefull for the helper programs: send, receive, test
  * because they usually use the same configuration file as the
  * server and therefore the direction needs to be swapped. */
-int node_reverse(struct node *n);
+void node_reverse(struct node *n);
+
+/** Create a node by allocating dynamic memory. */
+struct node * node_create();
+
+/** Destroy node by freeing dynamically allocated memory.
+ *
+ * @param i A pointer to the interface structure.
+ */
+void node_destroy(struct node *n);
 
 #endif /* _NODE_H_ */

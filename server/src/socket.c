@@ -34,8 +34,8 @@ int socket_print(struct node *n, char *buf, int len)
 	char local[INET6_ADDRSTRLEN + 16];
 	char remote[INET6_ADDRSTRLEN + 16];
 	
-	socket_print_addr(local, sizeof(local), (struct sockaddr*) &s->local);
-	socket_print_addr(remote, sizeof(remote), (struct sockaddr*) &s->remote);
+	socket_print_addr(local, sizeof(local), (struct sockaddr *) &s->local);
+	socket_print_addr(remote, sizeof(remote), (struct sockaddr *) &s->remote);
 
 	return snprintf(buf, len, "local=%s, remote=%s", local, remote);
 }
@@ -86,7 +86,7 @@ int socket_open(struct node *n)
 	if (!i)
 		i = if_create(index);
 
-	list_add(i->sockets, s);
+	list_push(&i->sockets, s);
 	i->refcnt++;
 
 	/* Set socket priority, QoS or TOS IP options */
@@ -230,7 +230,7 @@ int socket_parse_addr(const char *addr, struct sockaddr *sa, enum node_type type
 	else {	/* Format: "192.168.0.10:12001" */
 		struct addrinfo hint = {
 			.ai_flags = flags,
-			.ai_family = AF_UNSPEC
+			.ai_family = AF_INET
 		};
 		
 		/* Split string */

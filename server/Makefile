@@ -1,7 +1,7 @@
 TARGETS = server send random receive test
 
 # Common dependencies for all binaries
-OBJS = if.o utils.o msg.o node.o cfg.o tc.o hooks.o list.o path.o hist.o socket.o file.o 
+OBJS = socket.o if.o utils.o msg.o node.o cfg.o tc.o hooks.o list.o path.o hist.o log.o socket.o file.o
 
 VPATH = src
 
@@ -10,11 +10,15 @@ V ?= 2
 
 # Compiler and linker flags
 LDLIBS = -pthread -lrt -lm -lconfig
-CFLAGS  = -std=c99 -Iinclude/ -MMD -Wall
+CFLAGS  = -std=gnu99 -Iinclude/ -MMD -Wall
 CFLAGS += -D_XOPEN_SOURCE=500 -D_GNU_SOURCE -DV=$(V)
-CFLAGS += -D__GIT_REV__='"-$(shell git rev-parse --short HEAD)"'
 
-# Conditional flags
+# Add git commit hash
+ifneq (,$(shell which git))
+	CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
+endif
+
+# Conditional debug flags
 ifdef DEBUG
 	CFLAGS += -O0 -g
 else
@@ -22,13 +26,13 @@ else
 endif
 
 # Enable OPAL-RT Asynchronous Process support
-#OPALDIR = /usr/opalrt/common
-OPALDIR = ../opal
+OPALDIR = /usr/opalrt/common
+#OPALDIR = ../opal
 ifneq (,$(wildcard $(OPALDIR)/include_target/AsyncApi.h))
 	CFLAGS  += -m32 -DENABLE_OPAL_ASYNC -I$(OPALDIR)/include_target
 	LDFLAGS += -m32
 	LDLIBS  += $(addprefix $(OPALDIR)/lib/redhawk/, libOpalAsyncApiCore.a libOpalCore.a libOpalUtils.a libirc.a)
-	COMMON  += opal.o
+	OBJS    += opal.o
 endif
 
 .PHONY: all clean

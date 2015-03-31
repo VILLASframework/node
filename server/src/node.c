@@ -13,7 +13,9 @@
 /* Node types */
 #include "socket.h"
 #include "gtfpga.h"
+#ifdef ENABLE_OPAL_ASYNC
 #include "opal.h"
+#endif
 
 #define VTABLE(type, name, fnc) { type, name, config_parse_ ## fnc, \
 				  fnc ## _print, \
@@ -35,14 +37,14 @@ static const struct node_vtable vtables[] = {
 	VTABLE(TCPD,	   "tcpd",	socket)
 };
 
-/** Linked list of nodes */
-struct node *nodes;
+/** Linked list of nodes. */
+struct list nodes;
 
-struct node * node_lookup_name(const char *str, struct node *nodes)
+struct node * node_lookup_name(const char *str, struct list *nodes)
 {
-	for (struct node *n = nodes; n; n = n->next) {
-		if (!strcmp(str, n->name))
-			return n;
+	FOREACH(nodes, it) {
+		if (!strcmp(str, it->node->name))
+			return it->node;
 	}
 
 	return NULL;
@@ -59,7 +61,7 @@ struct node_vtable const * node_lookup_vtable(const char *str)
 }
 
 int node_start(struct node *n)
-{
+{ INDENT
 	if (!n->refcnt) {
 		warn("Node '%s' is unused. Skipping...", n->name);
 		return -1;
@@ -97,7 +99,7 @@ int node_start_defer(struct node *n)
 }
 
 int node_stop(struct node *n)
-{
+{ INDENT
 	int ret;
 	info("Stopping node '%s'", n->name);
 	
@@ -108,7 +110,7 @@ int node_stop(struct node *n)
 	return ret;
 }
 
-int node_reverse(struct node *n)
+void node_reverse(struct node *n)
 {
 	switch (n->vt->type) {
 		case IEEE_802_3:
@@ -119,5 +121,24 @@ int node_reverse(struct node *n)
 			break;
 		default: { }
 	}
-	return n->vt->open == socket_open;
+}
+
+struct node * node_create()
+{
+	return alloc(sizeof(struct node));
+}
+
+void node_destroy(struct node *n)
+{
+	switch (n->vt->type) {
+		case IEEE_802_3:
+		case IP:
+		case UDP:
+		case TCP:
+			free(n->socket->netem);
+		default: { }
+	}
+
+	free(n->socket);
+	free(n);
 }

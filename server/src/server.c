@@ -27,55 +27,52 @@
 #endif
 
 /** Linked list of nodes */
-extern struct node *nodes;
+extern struct list nodes;
 /** Linked list of paths */
-extern struct path *paths;
+extern struct list paths;
 /** Linked list of interfaces */
-extern struct interface *interfaces;
+extern struct list interfaces;
 
 /** The global configuration */
-struct settings settings;
-config_t config;
+static struct settings settings;
+static config_t config;
 
 static void quit()
-{ _indent = 0;
+{
 	info("Stopping paths:");
-	for (struct path *p = paths; p; p = p->next) { INDENT
-		path_stop(p);
-		path_destroy(p);
-	}
+	FOREACH(&paths, it)
+		path_stop(it->path);
 
 	info("Stopping nodes:");
-	for (struct node *n = nodes; n; n = n->next) { INDENT
-		node_stop(n);
-	}
+	FOREACH(&nodes, it)
+		node_stop(it->node);
 
 	info("Stopping interfaces:");
-	for (struct interface *i = interfaces; i; i = i->next) { INDENT
-		if_stop(i);
-	}
+	FOREACH(&interfaces, it)
+		if_stop(it->interface);
 
-	/** @todo Free nodes */
+#ifdef ENABLE_OPAL_ASYNC
+	opal_deinit();
+#endif
 
+	/* Freeing dynamically allocated memory */
+	list_destroy(&paths);
+	list_destroy(&nodes);
+	list_destroy(&interfaces);
 	config_destroy(&config);
+
+	info("Goodbye!");
 
 	_exit(EXIT_SUCCESS);
 }
 
 void realtime_init()
 { INDENT
-	/* Check for realtime kernel patch */
-	struct stat st;
-	if (stat("/sys/kernel/realtime", &st))
-		warn("Use a RT-preempt patched Linux for lower latencies!");
-	else
-		info("Server is running on a realtime patched kernel");
-
-	/* Use FIFO scheduler with realtime priority */
+	/* Use FIFO scheduler with real time priority */
 	if (settings.priority) {
 		struct sched_param param = { .sched_priority = settings.priority };
 		if (sched_setscheduler(0, SCHED_FIFO, &param))
-			serror("Failed to set realtime priority");
+			serror("Failed to set real time priority");
 		else
 			debug(3, "Set task priority to %u", settings.priority);
 	}
@@ -99,9 +96,9 @@ void signals_init()
 	};
 
 	sigemptyset(&sa_quit.sa_mask);
+	sigaction(SIGQUIT, &sa_quit, NULL);
 	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT, &sa_quit, NULL);
-	atexit(&quit);
 }
 
 void usage(const char *name)
@@ -113,14 +110,18 @@ void usage(const char *name)
 	printf("  This type of invocation is used by OPAL-RT Asynchronous processes.\n");
 	printf("  See in the RT-LAB User Guide for more information.\n\n");
 #endif
-	printf("Simulator2Simulator Server %s (built on %s, %s)\n",
+	printf("Simulator2Simulator Server %s (built on %s %s)\n",
 		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-	
+	printf(" Copyright 2015, Institute for Automation of Complex Power Systems, EONERC\n");
+	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
+
 	exit(EXIT_FAILURE);
 }
 
 int main(int argc, char *argv[])
 {
+	_mtid = pthread_self();
+
 	/* Check arguments */
 #ifdef ENABLE_OPAL_ASYNC
 	if (argc != 2 && argc != 4)
@@ -128,28 +129,37 @@ int main(int argc, char *argv[])
 	if (argc != 2)
 #endif
 		usage(argv[0]);
-	
-	epoch_reset();
-	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s)",
-		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
-	char *configfile = argv[1];
+	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s, debug=%d)",
+		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)), _debug);
 
 	/* Check priviledges */
 	if (getuid() != 0)
 		error("The server requires superuser privileges!");
 
-	/* Start initialization */
+	/* Initialize lists */
+	list_init(&nodes, (dtor_cb_t) node_destroy);
+	list_init(&paths, (dtor_cb_t) path_destroy);
+	list_init(&interfaces, (dtor_cb_t) if_destroy);
+
+
 	info("Initialize realtime system:");
 	realtime_init();
+
 	info("Setup signals:");
 	signals_init();
+
 	info("Parsing configuration:");
 	config_init(&config);
 
 #ifdef ENABLE_OPAL_ASYNC
-	/* Check if called as asynchronous process from RT-LAB */
+	/* Check if called we are called as an asynchronous process from RT-LAB. */
 	opal_init(argc, argv);
+
+	/* @todo: look in predefined locations for a file */
+	char *configfile = "opal-shmem.conf";
+#else
+	char *configfile = argv[1];
 #endif
 
 	/* Parse configuration and create nodes/paths */
@@ -157,40 +167,34 @@ int main(int argc, char *argv[])
 
 	/* Connect all nodes and start one thread per path */
 	info("Starting nodes:");
-	for (struct node *n = nodes; n; n = n->next) { INDENT
-		node_start(n);
-	}
+	FOREACH(&nodes, it)
+		node_start(it->node);
 
 	info("Starting interfaces:");
-	for (struct interface *i = interfaces; i; i = i->next) { INDENT
-		if_start(i, settings.affinity);
-	}
+	FOREACH(&interfaces, it)
+		if_start(it->interface, settings.affinity);
 
-	info("Starting pathes:");
-	for (struct path *p = paths; p; p = p->next) { INDENT
-		path_start(p);
-	}
+	info("Starting paths:");
+	FOREACH(&paths, it)
+		path_start(it->path);
 
 	/* Run! */
 	if (settings.stats > 0) {
-		struct path *p = paths;
-
 		info("Runtime Statistics:");
 		info("%-32s :   %-8s %-8s %-8s %-8s %-8s",
 			"Source " MAG("=>") " Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Inval");
 		info("---------------------------------------------------------------------------");
 
-		while (1) {
+		do { FOREACH(&paths, it) {
 			usleep(settings.stats * 1e6);
-			path_stats(p);
+			path_print_stats(it->path);
+		} } while (1);
 
-			p = (p->next) ? p->next : paths; 
-		}
 	}
 	else
 		pause();
 
-	/* Note: quit() is called by exit handler! */
+	quit();
 
 	return 0;
 }

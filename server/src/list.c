@@ -10,10 +10,11 @@
 #include "utils.h"
 #include "list.h"
 
-void list_init(struct list *l)
+void list_init(struct list *l, dtor_cb_t dtor)
 {
 	pthread_mutex_init(&l->lock, NULL);
 	
+	l->destructor = dtor;
 	l->count = 0;
 	l->head = NULL;
 	l->tail = NULL;
@@ -26,11 +27,15 @@ void list_destroy(struct list *l)
 	struct list_elm *elm = l->head;
 	while (elm) {
 		struct list_elm *tmp = elm;
-		free(tmp);
-
 		elm = elm->next;
+
+		if (l->destructor)
+			l->destructor(tmp->ptr);
+
+		free(tmp);
 	}
 	
+	pthread_mutex_unlock(&l->lock);
 	pthread_mutex_destroy(&l->lock);
 }
 

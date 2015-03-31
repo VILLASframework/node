@@ -20,26 +20,25 @@
 
 #include "socket.h"
 #include "gtfpga.h"
+#ifdef ENABLE_OPAL_ASYNC
 #include "opal.h"
+#endif
 
 int config_parse(const char *filename, config_t *cfg, struct settings *set,
-	struct node **nodes, struct path **paths)
+	struct list *nodes, struct list *paths)
 {
 	config_set_auto_convert(cfg, 1);
 
-	FILE *file = (strcmp("-", filename)) ? fopen(filename, "r") : stdin;
-	if (!file)
-		error("Failed to open configuration file: %s", filename);
+	int  ret = strcmp("-", filename) ? config_read_file(cfg, filename)
+					 : config_read(cfg, stdin);
 
-	if (!config_read(cfg, file))
+	if (ret != CONFIG_TRUE)
 		error("Failed to parse configuration: %s in %s:%d",
-			config_error_text(cfg), filename,
+			config_error_text(cfg),
+			config_error_file(cfg) ? config_error_file(cfg) : filename,
 			config_error_line(cfg)
 		);
-
-	if (file != stdin)
-		fclose(file);
-
+	
 	config_setting_t *cfg_root = config_root_setting(cfg);
 
 	/* Parse global settings */
@@ -74,7 +73,7 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 		}
 	}
 
-	return CONFIG_TRUE;
+	return 0;
 }
 
 int config_parse_global(config_setting_t *cfg, struct settings *set)
@@ -88,11 +87,11 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 
 	set->cfg = cfg;
 
-	return CONFIG_TRUE;
+	return 0;
 }
 
 int config_parse_path(config_setting_t *cfg,
-	struct path **paths, struct node **nodes)
+	struct list *paths, struct list *nodes)
 {
 	const char *in;
 	int enabled = 1;
@@ -106,9 +105,9 @@ int config_parse_path(config_setting_t *cfg,
 		cerror(cfg, "Invalid input node for path");
 	
 	in = config_setting_get_string(cfg_in);
-	p->in = node_lookup_name(in, *nodes);
+	p->in = node_lookup_name(in, nodes);
 	if (!p->in)
-		cerror(cfg_in, "Invalid input node '%s", in);
+		cerror(cfg_in, "Invalid input node '%s'", in);
 
 	/* Output node(s) */
 	struct config_setting_t *cfg_out = config_setting_get_member(cfg, "out");
@@ -141,7 +140,7 @@ int config_parse_path(config_setting_t *cfg,
 				warn("Using first destination '%s' as source for reverse path. "
 					"Ignoring remaining nodes", p->out->name);
 
-			struct path *r = alloc(sizeof(struct path));
+			struct path *r = path_create();
 
 			r->in  = p->out; /* Swap in/out */
 			r->out = p->in;
@@ -151,10 +150,10 @@ int config_parse_path(config_setting_t *cfg,
 			r->in->refcnt++;
 			r->out->refcnt++;
 
-			list_add(*paths, r);
+			list_push(paths, r);
 		}
 		
-		list_add(*paths, p);
+		list_push(paths, p);
 	}
 	else {
 		char buf[33];
@@ -167,14 +166,14 @@ int config_parse_path(config_setting_t *cfg,
 	return 0;
 }
 
-int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct node **all) {
+int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct list *all) {
 	const char *str;
 	struct node *node;
 	
 	switch (config_setting_type(cfg)) {
 		case CONFIG_TYPE_STRING:
 			str = config_setting_get_string(cfg);
-			node = node_lookup_name(str, *all);
+			node = node_lookup_name(str, all);
 			if (!node)
 				cerror(cfg, "Invalid outgoing node '%s'", str);
 				
@@ -184,7 +183,7 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct node
 		case CONFIG_TYPE_ARRAY:
 			for (int i=0; i<config_setting_length(cfg); i++) {
 				str = config_setting_get_string_elem(cfg, i);
-				node = node_lookup_name(str, *all);
+				node = node_lookup_name(str, all);
 				if (!node)
 					cerror(config_setting_get_elem(cfg, i), "Invalid outgoing node '%s'", str);
 				
@@ -231,12 +230,12 @@ int config_parse_hooks(config_setting_t *cfg, struct list *hooks) {
 	return 0;
 }
 
-int config_parse_node(config_setting_t *cfg, struct node **nodes)
+int config_parse_node(config_setting_t *cfg, struct list *nodes)
 {
 	const char *type;
 	int ret;
 
-	struct node *n = alloc(sizeof(struct node));
+	struct node *n = node_create();
 
 	/* Required settings */
 	n->cfg = cfg;
@@ -244,42 +243,35 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	if (!n->name)
 		cerror(cfg, "Missing node name");
 
-	if (config_setting_lookup_string(cfg, "type", &type)) {
-		n->vt = node_lookup_vtable(type);
-		if (!n->vt)
-			cerror(cfg, "Invalid type for node '%s'", n->name);
-
-		if (!n->vt->parse)
-			cerror(cfg, "Node type '%s' is not allowed in the config", type);
-	}
-	else
-		n->vt = node_lookup_vtable("udp");
+	if (!config_setting_lookup_string(cfg, "type", &type))
+		cerror(cfg, "Missing node name");
+		
+	n->vt = node_lookup_vtable(type);
+	if (!n->vt)
+		cerror(cfg, "Invalid type for node '%s'", n->name);
 
 	ret = n->vt->parse(cfg, n);
-
-	list_add(*nodes, n);
+	if (!ret)
+		list_push(nodes, n);
 
 	return ret;
 }
 
+#ifdef ENABLE_OPAL_ASYNC
 /** @todo: Remove this global variable. */
 extern struct opal_global *og;
 
 int config_parse_opal(config_setting_t *cfg, struct node *n)
 {	
 	if (!og) {
-		warn("Skipping this node, because this server is not running as an OPAL Async process!");
+		warn("Skipping node '%s', because this server is not running as an OPAL Async process!", n->name);
 		return -1;
 	}
 	
-	struct opal *o = (struct opal *) malloc(sizeof(struct opal));
-	if (!o)
-		error("Failed to allocate memory for opal settings");
-	
-	memset(o, 0, sizeof(struct opal));
+	struct opal *o = alloc(sizeof(struct opal));
 	
 	config_setting_lookup_int(cfg, "send_id", &o->send_id);
-	config_setting_lookup_int(cfg, "recv_id", &o->send_id);
+	config_setting_lookup_int(cfg, "recv_id", &o->recv_id);
 	config_setting_lookup_bool(cfg, "reply", &o->reply);
 		
 	/* Search for valid send and recv ids */
@@ -292,7 +284,7 @@ int config_parse_opal(config_setting_t *cfg, struct node *n)
 	if (!sfound)
 		cerror(config_setting_get_member(cfg, "send_id"), "Invalid send_id '%u' for node '%s'", o->send_id, n->name);
 	if (!rfound)
-		cerror(config_setting_get_member(cfg, "send_id"), "Invalid send_id '%u' for node '%s'", o->send_id, n->name);
+		cerror(config_setting_get_member(cfg, "recv_id"), "Invalid recv_id '%u' for node '%s'", o->recv_id, n->name);
 
 	n->opal = o;
 	n->opal->global = og;
@@ -300,12 +292,16 @@ int config_parse_opal(config_setting_t *cfg, struct node *n)
 
 	return 0;
 }
+#endif /* ENABLE_OPAL_ASYNC */
 
+
+#ifdef ENABLE_GTFPGA
 /** @todo Implement */
 int config_parse_gtfpga(config_setting_t *cfg, struct node *n)
 {
 	return 0;
 }
+#endif /* ENABLE_GTFPGA */
 
 int config_parse_socket(config_setting_t *cfg, struct node *n)
 {
@@ -333,14 +329,14 @@ int config_parse_socket(config_setting_t *cfg, struct node *n)
 	/** @todo Netem settings are not usable AF_UNIX */
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
-		s->netem = (struct netem *) alloc(sizeof(struct netem));
+		s->netem = alloc(sizeof(struct netem));
 			
 		config_parse_netem(cfg_netem, s->netem);
 	}
 	
 	n->socket = s;
 
-	return CONFIG_TRUE;
+	return 0;
 }
 
 int config_parse_netem(config_setting_t *cfg, struct netem *em)
@@ -362,5 +358,5 @@ int config_parse_netem(config_setting_t *cfg, struct netem *em)
 
 	/** @todo Validate netem config values */
 
-	return CONFIG_TRUE;
+	return 0;
 }
