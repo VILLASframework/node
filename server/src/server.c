@@ -130,8 +130,9 @@ int main(int argc, char *argv[])
 		
 	char *configfile = (argc == 2) ? argv[1] : "opal-shmem.conf";
 
-	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s, debug=%d)",
-		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)), _debug);
+	log_reset();
+	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s)",
+		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
 	/* Check priviledges */
 	if (getuid() != 0)
