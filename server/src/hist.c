@@ -95,7 +95,7 @@ double hist_stddev(struct hist *h)
 
 void hist_print(struct hist *h)
 { INDENT
-	char buf[h->length * 8];
+	char buf[(h->length + 1) * 8];
 	hist_dump(h, buf, sizeof(buf));
 
 	info("Total: %u values between %f and %f", h->total, h->low, h->high);
