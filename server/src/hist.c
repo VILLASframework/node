@@ -95,25 +95,24 @@ double hist_stddev(struct hist *h)
 
 void hist_print(struct hist *h)
 { INDENT
+	char buf[h->length * 8];
+	hist_dump(h, buf, sizeof(buf));
+
 	info("Total: %u values between %f and %f", h->total, h->low, h->high);
 	info("Missed:  %u (above), %u (below) ", h->higher, h->lower);
 	info("Highest value: %f, lowest %f", h->highest, h->lowest);
 	info("Mean: %f", hist_mean(h));
 	info("Variance: %f", hist_var(h));
 	info("Standard derivation: %f", hist_stddev(h));
-		
+	
 	hist_plot(h);
-	
-	char buf[h->length * 8];
-	hist_dump(h, buf, sizeof(buf));
-	
-	info("hist = %s", buf);
+	info(buf);
 }
 
 void hist_plot(struct hist *h)
 {
-	unsigned min = UINT_MAX;
-	unsigned max = 0;
+	char buf[HIST_HEIGHT] = { '#' };
+	unsigned int min = UINT_MAX, max = 0;
 
 	/* Get max, first & last */
 	for (int i = 0; i < h->length; i++) {
@@ -123,9 +122,6 @@ void hist_plot(struct hist *h)
 			min = h->data[i];
 	}
 	
-	char buf[HIST_HEIGHT];
-	memset(buf, '#', HIST_HEIGHT);
-
 	/* Print plot */
 	info("%9s | %5s | %s", "Value", "Occur", "Histogram Plot:");
 	for (int i = 0; i < h->length; i++) {
@@ -139,17 +135,14 @@ void hist_plot(struct hist *h)
 
 void hist_dump(struct hist *h, char *buf, int len)
 {
-	char tok[8];
-	memset(buf, 0, len);
+	*buf = 0;
 
-	strncat(buf, "[ ", len);
+	strap(buf, len, "[ ");
 
-	for (int i = 0; i < h->length; i++) {
-		snprintf(tok, sizeof(tok), "%u ", h->data[i]);
-		strncat(buf, tok, len - strlen(buf));
-	}
-	
-	strncat(buf, "]", len - strlen(buf));
+	for (int i = 0; i < h->length; i++)
+		strap(buf, len, "%u ", h->data[i]);
+
+	strap(buf, len, "]");
 }
 
 void hist_matlab(struct hist *h, FILE *f)

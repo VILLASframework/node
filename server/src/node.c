@@ -18,17 +18,24 @@
 #include "opal.h"
 #endif
 
-#define VTABLE(type, name, fnc) { type, name, config_parse_ ## fnc, \
-				  fnc ## _print, \
-				  fnc ## _open, \
-				  fnc ## _close, \
-				  fnc ## _read, \
-				  fnc ## _write }
+#define VTABLE(type, name, fnc) { type, name, \
+				  fnc ## _parse, fnc ## _print, \
+				  fnc ## _open,  fnc ## _close, \
+				  fnc ## _read,  fnc ## _write }
+
+#define VTABLE2(type, name, fnc) { type, name, \
+				  fnc ## _parse, fnc ## _print, \
+				  fnc ## _open,  fnc ## _close, \
+				  fnc ## _read,  fnc ## _write, \
+				  fnc ## _init,  fnc ## _deinit }
 
 /** Vtable for virtual node sub types */
-static const struct node_vtable vtables[] = {
+struct node_vtable vtables[] = {
 #ifdef ENABLE_OPAL_ASYNC
-	VTABLE(OPAL_ASYNC, "opal",	opal),
+	VTABLE2(OPAL_ASYNC, "opal",	opal),
+#endif
+#ifdef ENABLE_GTFPGA
+	VTABLE2(GTFPGA,	   "gtfpga",	gtfpga),
 #endif
 	VTABLE(LOG_FILE,   "file",	file),
 	VTABLE(IEEE_802_3, "ieee802.3",	socket),
@@ -41,6 +48,37 @@ static const struct node_vtable vtables[] = {
 /** Linked list of nodes. */
 struct list nodes;
 
+int node_init(int argc, char *argv[])
+{ INDENT
+	for (int i=0; i<ARRAY_LEN(vtables); i++) {
+		const struct node_vtable *vt = &vtables[i];
+		if (vt->refcnt && vt->init) {
+			if (vt->init(argc, argv))
+				error("Failed to initialize '%s' node type", vt->name);
+			else
+				info("Initializing '%s' node type", vt->name);
+		}
+	}
+	
+	return 0;
+}
+
+int node_deinit()
+{ INDENT
+	/* De-initialize node types */
+	for (int i=0; i<ARRAY_LEN(vtables); i++) {
+		struct node_vtable *vt = &vtables[i];
+		if (vt->refcnt && vt->deinit) {
+			if (vt->deinit())
+				error("Failed to de-initialize '%s' node type", vt->name);
+			else	
+				info("De-initializing '%s' node type", vt->name);
+			
+		}
+	}
+	return 0;
+}
+
 struct node * node_lookup_name(const char *str, struct list *nodes)
 {
 	FOREACH(nodes, it) {
@@ -51,7 +89,7 @@ struct node * node_lookup_name(const char *str, struct list *nodes)
 	return NULL;
 }
 
-struct node_vtable const * node_lookup_vtable(const char *str)
+struct node_vtable * node_lookup_vtable(const char *str)
 {
 	for (int i = 0; i < ARRAY_LEN(vtables); i++) {
 		if (!strcmp(vtables[i].name, str))

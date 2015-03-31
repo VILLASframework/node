@@ -4,20 +4,25 @@
  * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
  */
 
- #include <stdio.h>
+#include <stdio.h>
 #include <time.h>
 
 #include "log.h"
 #include "utils.h"
 
-int _debug = V;
+/** Debug level used by the debug() macro.
+ * It defaults to V (defined by the Makefile) and can be
+ * overwritten by the 'debug' setting in the configuration file.
+ */
+static int level = V;
 
+/** A global clock used to prefix the log messages. */
 static struct timespec epoch;
 
 #ifdef __GNUC__
+/** The current log indention level (per thread!). */
 static __thread int indent = 0;
 
-/** Get thread-specific pointer to indent level */
 int log_indent(int levels)
 {
 	int old = indent;
@@ -31,45 +36,127 @@ void log_outdent(int *old)
 }
 #endif
 
+void log_setlevel(int lvl)
+{
+	level = lvl;
+	debug(10, "Switched to debug level %u", level);
+}
+
 void log_reset()
 {
 	clock_gettime(CLOCK_REALTIME, &epoch);
+	debug(10, "Debug clock resetted");
 }
 
-void log_print(enum log_level lvl, const char *fmt, ...)
+void log_print(const char *lvl, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	log_vprint(lvl, fmt, ap);
+	va_end(ap);
+}
+
+void log_vprint(const char *lvl, const char *fmt, va_list ap)
 {
 	struct timespec ts;
 	char buf[512] = "";
 
-	va_list ap;
-
 	/* Timestamp */
 	clock_gettime(CLOCK_REALTIME, &ts);
-	strap(buf, sizeof(buf), "%8.3f ", timespec_delta(&epoch, &ts));
+	strap(buf, sizeof(buf), "%10.3f ", timespec_delta(&epoch, &ts));
 
 	/* Severity */
-	switch (lvl) {
-		case DEBUG: strap(buf, sizeof(buf), BLD("%-5s "), GRY("Debug")); break;
-		case INFO:  strap(buf, sizeof(buf), BLD("%-5s "),     "     " ); break;
-		case WARN:  strap(buf, sizeof(buf), BLD("%-5s "), YEL(" Warn")); break;
-		case ERROR: strap(buf, sizeof(buf), BLD("%-5s "), RED("Error")); break;
-	}
-
+	strap(buf, sizeof(buf), BLD("%-5s "), lvl);
+	
 	/* Indention */
 #ifdef __GNUC__
 	for (int i = 0; i < indent; i++)
-		strap(buf, sizeof(buf), GFX("\x78") " ");
-	strap(buf, sizeof(buf), GFX("\x74") " ");
+		strap(buf, sizeof(buf), ACS_VERTICAL " ");
+	strap(buf, sizeof(buf), ACS_VERTRIGHT " ");
 #endif
 
 	/* Format String */
-	va_start(ap, fmt);
 	vstrap(buf, sizeof(buf), fmt, ap);
-	va_end(ap);
 	
 	/* Output */
 #ifdef ENABLE_OPAL_ASYNC
 	OpalPrint("S2SS: %s\n", buf);
 #endif
 	fprintf(stderr, "\r%s\n", buf);
+}
+
+/** Printf alike debug message with level. */
+void debug(int lvl, const char *fmt, ...)
+{
+	va_list ap;
+
+	if (lvl <= level) {
+		va_start(ap, fmt);
+		log_vprint(DEBUG, fmt, ap);
+		va_end(ap);
+	}
+}
+
+/** Printf alike info message. */
+void info(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	log_vprint(INFO, fmt, ap);
+	va_end(ap);
+}
+
+/** Printf alike warning message. */
+void warn(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	log_vprint(WARN, fmt, ap);
+	va_end(ap);
+}
+	
+/** Print error and exit. */
+void error(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	log_vprint(ERROR, fmt, ap);
+	va_end(ap);
+
+	die();
+}
+
+/** Print error and strerror(errno). */
+void serror(const char *fmt, ...)
+{
+	va_list ap;
+	char buf[1024];
+	
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	
+	log_print(ERROR, "%s: %s", buf, strerror(errno));
+	die();
+}
+
+/** Print configuration error and exit. */
+void cerror(config_setting_t *cfg, const char *fmt, ...)
+{
+	va_list ap;
+	char buf[1024];
+	
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	
+	log_print(ERROR, "%s in %s:%u", buf,
+		config_setting_source_file(cfg)
+		   ? config_setting_source_file(cfg)
+		   : "(stdio)", 
+		config_setting_source_line(cfg)); 
+	die();
 }

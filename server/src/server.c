@@ -51,15 +51,13 @@ static void quit()
 	FOREACH(&interfaces, it)
 		if_stop(it->interface);
 
-#ifdef ENABLE_OPAL_ASYNC
-	opal_deinit();
-#endif
-
 	/* Freeing dynamically allocated memory */
 	list_destroy(&paths);
 	list_destroy(&nodes);
 	list_destroy(&interfaces);
 	config_destroy(&config);
+	
+	node_deinit();
 
 	info("Goodbye!");
 
@@ -89,7 +87,7 @@ void realtime_init()
 
 /* Setup exit handler */
 void signals_init()
-{ INDENT
+{
 	struct sigaction sa_quit = {
 		.sa_flags = SA_SIGINFO,
 		.sa_sigaction = quit
@@ -129,9 +127,12 @@ int main(int argc, char *argv[])
 	if (argc != 2)
 #endif
 		usage(argv[0]);
+		
+	char *configfile = (argc == 2) ? argv[1] : "opal-shmem.conf";
 
-	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s, debug=%d)",
-		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)), _debug);
+	log_reset();
+	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s)",
+		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
 	/* Check priviledges */
 	if (getuid() != 0)
@@ -141,28 +142,18 @@ int main(int argc, char *argv[])
 	list_init(&nodes, (dtor_cb_t) node_destroy);
 	list_init(&paths, (dtor_cb_t) path_destroy);
 	list_init(&interfaces, (dtor_cb_t) if_destroy);
-
-
-	info("Initialize realtime system:");
+	
+	info("Initialize real-time system:");
 	realtime_init();
 
-	info("Setup signals:");
+	info("Initialize signals:");
 	signals_init();
+
+	info("Initialize node types:");
+	node_init(argc, argv);
 
 	info("Parsing configuration:");
 	config_init(&config);
-
-#ifdef ENABLE_OPAL_ASYNC
-	/* Check if called we are called as an asynchronous process from RT-LAB. */
-	opal_init(argc, argv);
-
-	/* @todo: look in predefined locations for a file */
-	char *configfile = "opal-shmem.conf";
-#else
-	char *configfile = argv[1];
-#endif
-
-	/* Parse configuration and create nodes/paths */
 	config_parse(configfile, &config, &settings, &nodes, &paths);
 
 	/* Connect all nodes and start one thread per path */

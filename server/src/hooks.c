@@ -65,8 +65,6 @@ int hook_log(struct msg *m, struct path *p)
 		localtime_r(&ts, &tm);
 		strftime(fstr, sizeof(fstr), HOOK_LOG_TEMPLATE, &tm);
 		
-		
-		
 		file = fopen(fstr, HOOK_LOG_MODE);
 		if (file)
 			debug(5, "Opened log file for path %s: %s", pstr, fstr);

@@ -101,16 +101,15 @@ struct timespec timespec_rate(double rate)
 /** @todo: Proper way: create additional pipe for stderr in child process */
 int system2(const char *cmd, ...)
 {
+	va_list ap;
 	char buf[1024];
 	
-	va_list ap;
 	va_start(ap, cmd);
-
-		vsnprintf(buf, sizeof(buf), cmd, ap);
-		strncat(buf, " 2>&1", sizeof(buf));
-	
+	vsnprintf(buf, sizeof(buf), cmd, ap);
 	va_end(ap);
 	
+	strap(buf, sizeof(buf), " 2>&1", sizeof(buf)); /* redirect stderr to stdout */
+		
 	debug(1, "System: %s", buf);
 
 	FILE *f = popen(buf, "r");

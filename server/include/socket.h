@@ -67,6 +67,15 @@ int socket_write(struct node *n, struct msg *m);
  */
 int socket_read(struct node *n, struct msg *m);
 
+/** Parse node connection details for SOCKET type
+ *
+ * @param cfg A libconfig object pointing to the node.
+ * @param n A pointer to the node structure which should be parsed.
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
+ */
+int socket_parse(config_setting_t *cfg, struct node *n);
+
 /** Print details of socket connection
  *
  * @param n A pointer to the node structure

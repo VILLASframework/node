@@ -71,6 +71,15 @@ int opal_init(int argc, char *argv[]);
  */
 int opal_deinit();
 
+/** Parse node connection details for OPAL type
+ *
+ * @param cfg A libconfig object pointing to the node.
+ * @param nodes Add new nodes to this linked list.
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
+ */
+int opal_parse(config_setting_t *cfg, struct node *n);
+
 int opal_print(struct node *n, char *buf, int len);
 
 int opal_print_global(struct opal_global *g);

@@ -172,6 +172,42 @@ int socket_write(struct node *n, struct msg *m)
 	return 0;
 }
 
+int socket_parse(config_setting_t *cfg, struct node *n)
+{
+	const char *local, *remote;
+	int ret;
+	
+	struct socket *s = alloc(sizeof(struct socket));
+
+	if (!config_setting_lookup_string(cfg, "remote", &remote))
+		cerror(cfg, "Missing remote address for node '%s'", n->name);
+
+	if (!config_setting_lookup_string(cfg, "local", &local))
+		cerror(cfg, "Missing local address for node '%s'", n->name);
+
+	ret = socket_parse_addr(local, (struct sockaddr *) &s->local, node_type(n), AI_PASSIVE);
+	if (ret)
+		cerror(cfg, "Failed to resolve local address '%s' of node '%s': %s",
+			local, n->name, gai_strerror(ret));
+
+	ret = socket_parse_addr(remote, (struct sockaddr *) &s->remote, node_type(n), 0);
+	if (ret)
+		cerror(cfg, "Failed to resolve remote address '%s' of node '%s': %s",
+			remote, n->name, gai_strerror(ret));
+
+	/** @todo Netem settings are not usable AF_UNIX */
+	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
+	if (cfg_netem) {
+		s->netem = alloc(sizeof(struct netem));
+			
+		tc_parse(cfg_netem, s->netem);
+	}
+	
+	n->socket = s;
+
+	return 0;
+}
+
 int socket_print_addr(char *buf, int len, struct sockaddr *sa)
 {
 	switch (sa->sa_family) {
