@@ -27,6 +27,9 @@ static struct hook_id hook_list[] = {
 	{ hook_tofixed, "tofixed" },
 	{ hook_ts, "ts" },
 	{ hook_fir, "fir" },
+	{ hook_dft, "dft"},
+	{ hook_multiplex, "multiplex" },
+	{ hook_demultiplex, "demultiplex" },
 };
 
 hook_cb_t hook_lookup(const char *name)
@@ -45,12 +48,6 @@ int hook_print(struct msg *m, struct path *p)
 	msg_fprint(stdout, m);
 
 	return 0;
-}
-
-int hook_decimate(struct msg *m, struct path *p)
-{
-	/* Drop every HOOK_DECIMATE_RATIO'th message */
-	return (m->sequence % HOOK_DECIMATE_RATIO == 0) ? -1 : 0;
 }
 
 int hook_tofixed(struct msg *m, struct path *p)
@@ -97,4 +94,42 @@ int hook_fir(struct msg *m, struct path *p)
 	m->data[HOOK_FIR_INDEX].f = sum;
 
 	return 0;
+}
+
+int hook_decimate(struct msg *m, struct path *p)
+{
+	/* Drop every HOOK_DECIMATE_RATIO'th message */
+	return (m->sequence % HOOK_DECIMATE_RATIO == 0) ? -1 : 0;
+}
+
+int hook_multiplex(struct msg *m, struct path *p)
+{
+	/* Every HOOK_MULTIPLEX_RATIO'th message contains the collection of the previous ones */
+	if (p->received % HOOK_MULTIPLEX_RATIO == 0) {
+		struct msg *c = p->current; /* Current message */
+
+		for (int i=1; i<HOOK_MULTIPLEX_RATIO && c->length<MSG_VALUES; i++) {
+			struct msg *m = p->history[p->received-i];
+			
+			/* Trim amount of values to actual size of msg buffer */
+			int len = MIN(m->length, MSG_VALUES - c->length);
+			
+			memcpy(c->data + c->length, m->data, len * sizeof(m->data[0]));
+			c->length += len; 
+		}
+		
+		return 0;
+	}
+	else
+		return -1; /* Message will be dropped */
+}
+
+int hook_demultiplex(struct msg *m, struct path *p)
+{
+	
+}
+
+int hook_dft(struct msg *m, struct path *p)
+{
+	/** @todo Implement */
 }

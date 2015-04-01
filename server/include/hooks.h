@@ -19,10 +19,9 @@ struct path;
 
 /** Callback type of hook function
  *
- * @todo Add a way to pass custom data to the hooks
- * @param m The message which is forwarded
+ * @param m The last message which has been received
  * @param p The path which is processing this message.
- * @retval 0 Success. Continue processing the message.
+ * @retval 0 Success. Continue processing and forwarding the message.
  * @retval <0 Error. Drop the message.
  */
 typedef int (*hook_cb_t)(struct msg *m, struct path *p);
@@ -65,5 +64,21 @@ int hook_ts(struct msg *m, struct path *p);
 int hook_fir(struct msg *m, struct path *p);
 
 #define HOOK_FIR_INDEX	1
+
+/** Example hook: collect previous messages to send them at once */
+int hook_multiplex(struct msg *m, struct path *p);
+
+/** Example hook: inverse multiplex operation */
+int hook_demultiplex(struct msg *m, struct path *p);
+
+#define HOOK_MULTIPLEX_RATIO	10
+
+/* Plausability checks */
+#if HOOK_MULTIPLEX_RATIO > POOL_SIZE
+ #error "POOL_SIZE is too small for given HOOK_MULTIPLEX_RATIO"
+#endif
+
+/** Example hook: Discrete Fourier Transform */
+int hook_dft(struct msg *m, struct path *p);
 
 #endif /* _HOOKS_H_ */
