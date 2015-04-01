@@ -65,7 +65,7 @@ int hook_tofixed(struct msg *m, struct path *p);
 /** Example hook: add timestamp to message. */
 int hook_ts(struct msg *m, struct path *p);
 
-#define HOOK_TS_INDEX	-1 // last message
+#define HOOK_TS_INDEX	-1 /* last message */
 
 /** Example hook: Finite-Impulse-Response (FIR) filter. */
 int hook_fir(struct msg *m, struct path *p);

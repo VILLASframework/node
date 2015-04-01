@@ -60,6 +60,16 @@
 				b = tmp; \
 			} while(0)
 
+/* Return the bigger value */
+#define MAX(a, b)	({ __typeof__ (a) _a = (a); \
+			   __typeof__ (b) _b = (b); \
+			   _a > _b ? _a : _b; })
+
+/* Return the smaller value */
+#define MIN(a, b)	({ __typeof__ (a) _a = (a); \
+			   __typeof__ (b) _b = (b); \
+			   _a < _b ? _a : _b; })
+
 /* Forward declarations */
 struct settings;
 struct timespec;

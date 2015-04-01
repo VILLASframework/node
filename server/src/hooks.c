@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <pthread.h>
 #include <time.h>
 
 #include "msg.h"
@@ -102,39 +101,28 @@ int hook_ts(struct msg *m, struct path *p)
 	return 0;
 }
 
-/** Simple FIR-LP: F_s = 1kHz, F_pass = 100 Hz, F_block = 300
- * Tip: Use MATLAB's filter design tool and export coefficients
- *      with the integrated C-Header export */ 
-static const double hook_fir_coeffs[] = { -0.003658148158728, -0.008882653268281, 0.008001024183003,
-					   0.08090485991761,    0.2035239551043,   0.3040703593515,
-					   0.3040703593515,     0.2035239551043,   0.08090485991761,
-					   0.008001024183003,  -0.008882653268281,-0.003658148158728 };
-
-/** @todo: test */
 int hook_fir(struct msg *m, struct path *p)
 {
-	static pthread_key_t pkey;
-	float *history = pthread_getspecific(pkey);
+	/** Simple FIR-LP: F_s = 1kHz, F_pass = 100 Hz, F_block = 300
+	 * Tip: Use MATLAB's filter design tool and export coefficients
+	 *      with the integrated C-Header export */ 
+	static const double coeffs[] = {
+		-0.003658148158728, -0.008882653268281, 0.008001024183003,
+		0.08090485991761,    0.2035239551043,   0.3040703593515,
+		0.3040703593515,     0.2035239551043,   0.08090485991761,
+		0.008001024183003,  -0.008882653268281,-0.003658148158728 };
 	
-	/** Length of impulse response */
-	int len = ARRAY_LEN(hook_fir_coeffs);
-	/** Current index in circular history buffer */
-	int cur = m->sequence % len;
 	/* Accumulator */
 	double sum = 0;
+	
+	/** Trim FIR length to length of history buffer */
+	int len = MIN(ARRAY_LEN(coeffs), POOL_SIZE);
+
+	for (int i=0; i<len; i++) {
+		struct msg *old = &p->history[(POOL_SIZE+p->received-i) % POOL_SIZE];
 		
-	/* Create thread local storage for circular history buffer */
-	if (!history) {
-		history = alloc(len * sizeof(float));
-		pthread_key_create(&pkey, free);
-		pthread_setspecific(pkey, history);
+		sum += coeffs[i] * old->data[HOOK_FIR_INDEX].f;
 	}
-	
-	/* Update circular buffer */
-	history[cur] = m->data[HOOK_FIR_INDEX].f;
-	
-	for (int i=0; i<len; i++)
-		sum += hook_fir_coeffs[(cur+len-i)%len] * history[(cur+i)%len];
 
 	m->data[HOOK_FIR_INDEX].f = sum;
 
