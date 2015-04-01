@@ -42,6 +42,8 @@ struct path
 	struct msg *current;
 	/** A pointer to the previously received message */
 	struct msg *previous;
+	/** A circular buffer of past messages */
+	struct msg *history;
 	
 	/** Counter for received messages according to their sequence no displacement */
 	struct hist histogram;
@@ -93,6 +95,15 @@ int path_start(struct path *p);
  * @retval <0 Error. Something went wrong.
  */
 int path_stop(struct path *p);
+
+
+/** Reset internal counters and histogram of a path.
+ *
+ * @param p A pointer to the path structure.
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
+ */
+int path_reset(struct path *p);
 
 /** Show some basic statistics for a path.
  *

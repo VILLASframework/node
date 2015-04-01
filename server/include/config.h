@@ -18,8 +18,14 @@
 /** The version number of the s2ss server */
 #define VERSION		"v0.4-" _GIT_REV
 
-/** Maximum number of double values in a struct msg */
+/** Maximum number of float values in a message */
 #define MAX_VALUES	16
+
+/** Maximum number of messages in the circular history buffer */
+#define POOL_SIZE	16
+
+/** Width of log output in characters */
+#define LOG_WIDTH	100
 
 /** Socket priority */
 #define SOCKET_PRIO	7

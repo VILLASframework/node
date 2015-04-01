@@ -16,9 +16,6 @@
  #define INDENT		;
 #endif
 
-/** Width of log output in characters */
-#define LOG_WIDTH	100
-
 /* The log level which is passed as first argument to print() */
 #define DEBUG		GRY("Debug")
 #define INFO		    "" 

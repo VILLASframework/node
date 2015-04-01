@@ -69,10 +69,6 @@ static void * path_send(void *arg)
 static void * path_run(void *arg)
 {
 	struct path *p = arg;
-
-	p->previous = alloc(sizeof(struct msg));
-	p->current  = alloc(sizeof(struct msg));
-	
 	char buf[33];
 
 	/* Open deferred TCP connection */
@@ -81,7 +77,11 @@ static void * path_run(void *arg)
 
 	/* Main thread loop */
 	while (1) {
-		node_read(p->in, p->current); /* Receive message */
+		/* Receive message */
+		p->previous = &p->history[(p->received-1) % POOL_SIZE];
+		p->current  = &p->history[ p->received    % POOL_SIZE];
+		
+		node_read(p->in, p->current);
 		
 		p->received++;
 
@@ -125,8 +125,6 @@ static void * path_run(void *arg)
 
 			p->sent++;
 		}
-
-		SWAP(p->previous, p->current);
 	}
 
 	return NULL;
@@ -212,6 +210,8 @@ int path_print(struct path *p, char *buf, int len)
 struct path * path_create()
 {
 	struct path *p = alloc(sizeof(struct path));
+	
+	p->history = alloc(POOL_SIZE * sizeof(struct msg));
 
 	list_init(&p->destinations, NULL);
 	list_init(&p->hooks, NULL);
@@ -227,7 +227,6 @@ void path_destroy(struct path *p)
 	list_destroy(&p->hooks);
 	hist_destroy(&p->histogram);
 	
-	free(p->current);
-	free(p->previous);
+	free(p->history);
 	free(p);
 }

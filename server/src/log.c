@@ -9,6 +9,7 @@
 
 #include "log.h"
 #include "utils.h"
+#include "config.h"
 
 /** Debug level used by the debug() macro.
  * It defaults to V (defined by the Makefile) and can be
