@@ -27,15 +27,13 @@ static struct hook_id hook_list[] = {
 	{ hook_tofixed, "tofixed" },
 	{ hook_ts, "ts" },
 	{ hook_fir, "fir" },
-	{ NULL }
 };
 
 hook_cb_t hook_lookup(const char *name)
 {
-	for (struct hook_id *hid = hook_list; hid->cb; hid++) {
-		if (!strcmp(name, hid->name)) {
-			return hid->cb;
-		}
+	for (int i=0; i<ARRAY_LEN(hook_list); i++) {
+		if (!strcmp(name, hook_list[i].name))
+			return hook_list[i].cb;
 	}
 
 	return NULL; /* No matching hook was found */
