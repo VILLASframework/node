@@ -79,7 +79,6 @@ static void * path_run(void *arg)
 	node_start_defer(p->in);
 	// FIXME: node_start_defer(p->out);
 
-
 	/* Main thread loop */
 	while (1) {
 		node_read(p->in, p->current); /* Receive message */
@@ -87,13 +86,12 @@ static void * path_run(void *arg)
 		p->received++;
 
 		/* Check header fields */
-		if (p->current->version != MSG_VERSION ||
-		    p->current->type    != MSG_TYPE_DATA) {
+		if (msg_verify(p->current)) {
 			p->invalid++;
-			continue;
+			continue; /* Drop message */
 		}
 
-		/* Update histogram */
+		/* Update histogram and handle wrap-around */
 		int dist = (UINT16_MAX + p->current->sequence - p->previous->sequence) % UINT16_MAX;
 		if (dist > UINT16_MAX / 2)
 			dist -= UINT16_MAX;
@@ -102,23 +100,10 @@ static void * path_run(void *arg)
 
 		/* Handle simulation restart */
 		if (p->current->sequence == 0 && abs(dist) >= 1) {
-			if (p->received) {
-				path_print_stats(p);
-				hist_print(&p->histogram);
-			}
-
-			path_print(p, buf, sizeof(buf));			
 			warn("Simulation for path %s restarted (prev->seq=%u, current->seq=%u, dist=%d)",
 				buf, p->previous->sequence, p->current->sequence, dist);
 
-			/* Reset counters */
-			p->sent		= 0;
-			p->received	= 1;
-			p->invalid	= 0;
-			p->skipped	= 0;
-			p->dropped	= 0;
-
-			hist_reset(&p->histogram);
+			path_reset(p);
 		}
 		else if (dist <= 0 && p->received > 1) {
 			p->dropped++;
@@ -184,6 +169,19 @@ int path_stop(struct path *p)
 	return 0;
 }
 
+int path_reset(struct path *p)
+{
+	p->sent		= 0;
+	p->received	= 1;
+	p->invalid	= 0;
+	p->skipped	= 0;
+	p->dropped	= 0;
+
+	hist_reset(&p->histogram);
+	
+	return 0;
+}
+
 void path_print_stats(struct path *p)
 {
 	char buf[33];
@@ -200,7 +198,7 @@ int path_print(struct path *p, char *buf, int len)
 	strap(buf, len, "%s " MAG("=>"), p->in->name);
 		
 	if (list_length(&p->destinations) > 1) {
-		strap(buf, len " [");
+		strap(buf, len, " [");
 		FOREACH(&p->destinations, it)
 			strap(buf, len, " %s", it->node->name);
 		strap(buf, len, " ]");

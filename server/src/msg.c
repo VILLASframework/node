@@ -29,6 +29,14 @@ void msg_swap(struct msg *m)
 	m->endian ^= 1;
 }
 
+int msg_verify(struct msg *m)
+{
+	return ((m->version == MSG_VERSION) &&
+		(m->type    == MSG_TYPE_DATA))
+	   ?  0
+	   : -1;
+}
+
 int msg_fprint(FILE *f, struct msg *m)
 {
 	if (m->endian != MSG_ENDIAN_HOST)
