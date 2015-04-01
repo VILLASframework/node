@@ -39,15 +39,15 @@ static config_t config;
 
 static void quit()
 {
-	info("Stopping paths:");
+	info("Stopping paths");
 	FOREACH(&paths, it)
 		path_stop(it->path);
 
-	info("Stopping nodes:");
+	info("Stopping nodes");
 	FOREACH(&nodes, it)
 		node_stop(it->node);
 
-	info("Stopping interfaces:");
+	info("Stopping interfaces");
 	FOREACH(&interfaces, it)
 		if_stop(it->interface);
 
@@ -143,35 +143,34 @@ int main(int argc, char *argv[])
 	list_init(&paths, (dtor_cb_t) path_destroy);
 	list_init(&interfaces, (dtor_cb_t) if_destroy);
 	
-	info("Initialize real-time system:");
+	info("Initialize real-time system");
 	realtime_init();
 
-	info("Initialize signals:");
+	info("Initialize signals");
 	signals_init();
 
-	info("Initialize node types:");
+	info("Initialize node types");
 	node_init(argc, argv);
 
-	info("Parsing configuration:");
+	info("Parsing configuration");
 	config_init(&config);
 	config_parse(configfile, &config, &settings, &nodes, &paths);
 
 	/* Connect all nodes and start one thread per path */
-	info("Starting nodes:");
+	info("Starting nodes");
 	FOREACH(&nodes, it)
 		node_start(it->node);
 
-	info("Starting interfaces:");
+	info("Starting interfaces");
 	FOREACH(&interfaces, it)
 		if_start(it->interface, settings.affinity);
 
-	info("Starting paths:");
+	info("Starting paths");
 	FOREACH(&paths, it)
 		path_start(it->path);
 
 	/* Run! */
 	if (settings.stats > 0) {
-		info("Runtime Statistics:");
 		info("%-32s :   %-8s %-8s %-8s %-8s %-8s",
 			"Source " MAG("=>") " Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Inval");
 		line();

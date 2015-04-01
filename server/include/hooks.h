@@ -48,12 +48,6 @@ hook_cb_t hook_lookup(const char *name);
 /** Example hook: Print the message. */
 int hook_print(struct msg *m, struct path *p);
 
-/** Example hook: Log messages to a logfile in /tmp */
-int hook_log(struct msg *m, struct path *p);
-
-#define HOOK_LOG_MODE "w+"
-#define HOOK_LOG_TEMPLATE "logs/s2ss-%Y_%m_%d-%H_%M_%S.log"
-
 /** Example hook: Drop messages. */
 int hook_decimate(struct msg *m, struct path *p);
 

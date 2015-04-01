@@ -23,7 +23,6 @@
 /** @todo Make const */
 static struct hook_id hook_list[] = {
 	{ hook_print, "print" },
-	{ hook_log, "log" },
 	{ hook_decimate, "decimate" },
 	{ hook_tofixed, "tofixed" },
 	{ hook_ts, "ts" },
@@ -47,33 +46,6 @@ int hook_print(struct msg *m, struct path *p)
 	/* Print every message once to stdout */
 	msg_fprint(stdout, m);
 
-	return 0;
-}
-
-int hook_log(struct msg *m, struct path *p)
-{
-	static pthread_key_t pkey;
-	FILE *file = pthread_getspecific(pkey);
-	
-	if (!file) {
-		char fstr[64], pstr[33];
-		path_print(p, pstr, sizeof(pstr));
-		
-		struct tm tm;
-		time_t ts = time(NULL);
-		localtime_r(&ts, &tm);
-		strftime(fstr, sizeof(fstr), HOOK_LOG_TEMPLATE, &tm);
-		
-		file = fopen(fstr, HOOK_LOG_MODE);
-		if (file)
-			debug(5, "Opened log file for path %s: %s", pstr, fstr);
-		
-		pthread_key_create(&pkey, (dtor_cb_t) fclose);
-		pthread_setspecific(pkey, file);
-	}
-	
-	msg_fprint(file, m);
-	
 	return 0;
 }
 
