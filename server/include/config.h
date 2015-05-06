@@ -34,6 +34,8 @@
 #define IPPROTO_S2SS		137
 #define ETH_P_S2SS		0xBABE
 
+#define TOOLS_USE_TIMESTAMP	1
+
 /* Hook function configuration */
 #define HOOK_FIR_INDEX		 1 /**< The first value of message should be filtered. */
 #define HOOK_TS_INDEX		-1 /**< The last value of message should be overwritten by a timestamp. */

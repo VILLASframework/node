@@ -100,11 +100,12 @@ int main(int argc, char *argv[])
 		node_reverse(node);
 	
 	node->refcnt++;
-	pool = alloc(sizeof(struct msg) * node->combine);
 
 	node_init(argc-optind, argv+optind, &set);
 	node_start(node);
 	node_start_defer(node);
+
+	pool = alloc(sizeof(struct msg) * node->combine);
 
 	/* Print header */
 	fprintf(stderr, "# %-6s %-8s %-12s\n", "dev_id", "seq_no", "data");
@@ -116,7 +117,7 @@ int main(int argc, char *argv[])
 			if (msg_verify(&pool[i]))
 				warn("Failed to verify message");
 
-#if 1
+#if TOOLS_USE_TIMESTAMP
 			struct timespec ts;
 			clock_gettime(CLOCK_REALTIME, &ts);
 			fprintf(stdout, "%17.6f\t", ts.tv_sec + ts.tv_nsec / 1e9);
