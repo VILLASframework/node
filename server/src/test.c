@@ -100,8 +100,7 @@ int main(int argc, char *argv[])
 	node_start_defer(node);
 	
 	/* Parse Arguments */
-	char c;
-	char *endptr;
+	char c, *endptr;
 	while ((c = getopt (argc-3, argv+3, "l:h:r:f:c:")) != -1) {
 		switch (c) {
 			case 'c':
@@ -168,8 +167,8 @@ void test_rtt() {
 
 	while (running && (count < 0 || count--)) {
 		clock_gettime(CLOCK_ID, ts1);
-		node_write(node, &m);
-		node_read(node, &m);
+		node_write_single(node, &m); /* Ping */
+		node_read_single(node, &m);  /* Pong */
 		clock_gettime(CLOCK_ID, ts2);
 
 		rtt = timespec_delta(ts1, ts2);

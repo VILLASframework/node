@@ -32,7 +32,9 @@ void msg_swap(struct msg *m)
 int msg_verify(struct msg *m)
 {
 	return ((m->version == MSG_VERSION) &&
-		(m->type    == MSG_TYPE_DATA))
+		(m->type    == MSG_TYPE_DATA) &&
+		(m->length  > 0) &&
+		(m->length  <= MSG_VALUES))
 	   ?  0
 	   : -1;
 }

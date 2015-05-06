@@ -95,10 +95,10 @@ int config_parse_path(config_setting_t *cfg,
 	struct list *paths, struct list *nodes)
 {
 	const char *in;
-	int enabled = 1;
-	int reverse = 0;
+	int enabled;
+	int reverse;
 	
-	struct path *p = alloc(sizeof(struct path));
+	struct path *p = path_create();
 
 	/* Input node */
 	struct config_setting_t *cfg_in = config_setting_get_member(cfg, "in");
@@ -125,9 +125,14 @@ int config_parse_path(config_setting_t *cfg,
 	if (cfg_hook)
 		config_parse_hooks(cfg_hook, &p->hooks);
 	
-	config_setting_lookup_bool(cfg, "enabled", &enabled);
-	config_setting_lookup_bool(cfg, "reverse", &reverse);
-	config_setting_lookup_float(cfg, "rate", &p->rate);
+	if (!config_setting_lookup_bool(cfg, "enabled", &enabled))
+		enabled = 1;
+	if (!config_setting_lookup_bool(cfg, "reverse", &reverse))
+		reverse = 0;
+	if (!config_setting_lookup_float(cfg, "rate", &p->rate))
+		p->rate = 0; /* disabled */
+	if (!config_setting_lookup_int(cfg, "poolsize", &p->poolsize))
+		p->poolsize = DEFAULT_POOLSIZE;
 
 	p->cfg = cfg;
 
@@ -250,7 +255,10 @@ int config_parse_node(config_setting_t *cfg, struct list *nodes)
 		cerror(cfg, "Missing node name");
 
 	if (!config_setting_lookup_string(cfg, "type", &type))
-		cerror(cfg, "Missing node name");
+		cerror(cfg, "Missing node type");
+	
+	if (!config_setting_lookup_int(cfg, "combine", &n->combine))
+		n->combine = 1;
 		
 	n->vt = node_lookup_vtable(type);
 	if (!n->vt)

@@ -48,13 +48,13 @@ void if_destroy(struct interface *i)
 }
 
 int if_start(struct interface *i, int affinity)
-{ INDENT
+{
 	if (!i->refcnt) {
 		warn("Interface '%s' is not used by an active node", i->name);
 		return -1;
 	}
 	else
-		info("Starting interface '%s'", i->name);
+		info("Starting interface '%s' (index=%u)", i->name, i->index);
 	
 	{ INDENT
 		int mark = 0;
@@ -68,7 +68,7 @@ int if_start(struct interface *i, int affinity)
 				if (setsockopt(s->sd, SOL_SOCKET, SO_MARK, &s->mark, sizeof(s->mark)))
 					serror("Failed to set fwmark for outgoing packets");
 				else
-					debug(4, "Set fwmark for socket->sd = %u to %u", s->sd, s->mark);
+					debug(4, "Set fwmark for socket (sd=%u) to %u", s->sd, s->mark);
 		
 				tc_mark(i,  TC_HDL(4000, s->mark), s->mark);
 				tc_netem(i, TC_HDL(4000, s->mark), s->netem);
@@ -88,8 +88,8 @@ int if_start(struct interface *i, int affinity)
 }
 
 int if_stop(struct interface *i)
-{ INDENT
-	info("Stopping interface '%s'", i->name);
+{
+	info("Stopping interface '%s' (index=%u)", i->name, i->index);
 
 	{ INDENT
 		if_setaffinity(i, -1L);

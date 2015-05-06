@@ -12,6 +12,17 @@
 #include "file.h"
 #include "utils.h"
 
+
+int file_init(int argc, char *argv[], struct settings *set)
+{ INDENT
+	return 0; /* nothing todo here */
+}
+
+int file_deinit()
+{ INDENT
+	return 0; /* nothing todo here */
+}
+
 int file_print(struct node *n, char *buf, int len)
 {
 	struct file *f = n->file;
@@ -83,25 +94,41 @@ int file_close(struct node *n)
 	return 0;
 }
 
-int file_read(struct node *n, struct msg *m)
+int file_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
+	int i = 0;
 	struct file *f = n->file;
 	uint64_t runs;
 	
-	if (!f->in)
-		error("Can't read from file node!");
+	if (f->in) {
+		read(f->tfd, &runs, sizeof(runs)); /* blocking for 1/f->rate seconds */
 	
-	read(f->tfd, &runs, sizeof(runs)); /* blocking for 1/f->rate seconds */
+		for (i=0; i<cnt; i++) {
+			struct msg *m = &pool[(first+i) % poolsize];
+
+			msg_fscan(f->in, m);
+		}
+	}
+	else
+		warn("Can not read from node '%s'", n->name);
 	
-	return msg_fscan(f->in, m);
+	return i;
 }
 
-int file_write(struct node *n, struct msg *m)
+int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
+	int i = 0;
 	struct file *f = n->file;
 	
-	if (!f->out)
-		error("Can't write to file node!");
+	if (f->out) {	
+		for (i=0; i<cnt; i++) {
+			struct msg *m = &pool[(first+i) % poolsize];
+
+			msg_fprint(f->out, m);
+		}
+	}
+	else
+		warn("Can not write to node '%s", n->name);
 	
-	return msg_fprint(f->out, m);
+	return i;
 }

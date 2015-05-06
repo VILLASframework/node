@@ -39,13 +39,16 @@ struct path
 	int tfd;
 	/** Send messages with a fixed rate over this path */
 	double rate;
+	
+	/** Size of the history buffer in number of messages */
+	int poolsize;
+	/** A circular buffer of past messages */
+	struct msg *pool;
 
 	/** A pointer to the last received message */
 	struct msg *current;
 	/** A pointer to the previously received message */
 	struct msg *previous;
-	/** A circular buffer of past messages */
-	struct msg *history;
 	
 	/** Counter for received messages according to their sequence no displacement */
 	struct hist histogram;

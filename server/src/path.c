@@ -14,6 +14,7 @@
 
 #include "utils.h"
 #include "path.h"
+#include "socket.h"
 
 #ifndef sigev_notify_thread_id
  #define sigev_notify_thread_id   _sigev_un._tid
@@ -44,12 +45,13 @@ static void * path_send(void *arg)
 		serror("Failed to start timer");
 
 	while (1) {
+		/* Block until 1/p->rate seconds elapsed */
 		read(p->tfd, &runs, sizeof(runs));
 		
 		FOREACH(&p->destinations, it)
-			node_write(it->node, p->current);
-
-		p->sent++;
+			p->sent += node_write(p->in, p->pool, p->poolsize, p->received, p->in->combine);
+		
+		debug(10, "Sent %u messages to %u destination nodes", p->in->combine, p->destinations.length);
 	}
 
 	return NULL;
@@ -59,61 +61,70 @@ static void * path_send(void *arg)
 static void * path_run(void *arg)
 {
 	struct path *p = arg;
-	char buf[33];
+	
+	/* Allocate memory for message pool */
+	p->pool = alloc(p->poolsize * sizeof(struct msg));
 
-	/* Open deferred TCP connection */
+	/* Open deferred TCP connection
 	node_start_defer(p->in);
 
 	FOREACH(&p->destinations, it)
-		node_start_defer(it->path->out);
+		node_start_defer(it->node); */
 
 	/* Main thread loop */
-	while (1) {
+skip:	while (1) {
 		/* Receive message */
-		p->previous = &p->history[(p->received-1) % POOL_SIZE];
-		p->current  = &p->history[ p->received    % POOL_SIZE];
+		int recv = node_read(p->in, p->pool, p->poolsize, p->received, p->in->combine);
 		
-		node_read(p->in, p->current);
+		debug(10, "Received %u messages from node '%s'", recv, p->in->name);
 		
-		p->received++;
+		/* For each received message... */
+		for (int i=0; i<recv; i++) {
+			p->previous = &p->pool[(p->received-1) % p->poolsize];
+			p->current  = &p->pool[ p->received    % p->poolsize];
+			
+			p->received++;
+			
+			/* Check header fields */
+			if (msg_verify(p->current)) {
+				p->invalid++;
+				goto skip; /* Drop message */
+			}
 
-		/* Check header fields */
-		if (msg_verify(p->current)) {
-			p->invalid++;
-			continue; /* Drop message */
+			/* Update histogram and handle wrap-around of sequence number */
+			int dist = (UINT16_MAX + p->current->sequence - p->previous->sequence) % UINT16_MAX;
+			if (dist > UINT16_MAX / 2)
+				dist -= UINT16_MAX;
+
+			hist_put(&p->histogram, dist);
+
+			/* Handle simulation restart */
+			if (p->current->sequence == 0 && abs(dist) >= 1) {
+				char buf[33];
+				path_print(p, buf, sizeof(buf));
+				warn("Simulation for path %s restarted (prev->seq=%u, current->seq=%u, dist=%d)",
+					buf, p->previous->sequence, p->current->sequence, dist);
+
+				path_reset(p);
+			}
+			else if (dist <= 0 && p->received > 1) {
+				p->dropped++;
+				goto skip;
+			}
 		}
-
-		/* Update histogram and handle wrap-around */
-		int dist = (UINT16_MAX + p->current->sequence - p->previous->sequence) % UINT16_MAX;
-		if (dist > UINT16_MAX / 2)
-			dist -= UINT16_MAX;
-
-		hist_put(&p->histogram, dist);
-
-		/* Handle simulation restart */
-		if (p->current->sequence == 0 && abs(dist) >= 1) {
-			warn("Simulation for path %s restarted (prev->seq=%u, current->seq=%u, dist=%d)",
-				buf, p->previous->sequence, p->current->sequence, dist);
-
-			path_reset(p);
-		}
-		else if (dist <= 0 && p->received > 1) {
-			p->dropped++;
-			continue;
-		}
-
+		
 		/* Call hook callbacks */
 		FOREACH(&p->hooks, it) {
 			if (it->hook(p->current, p)) {
 				p->skipped++;
-				continue;
+				goto skip;
 			}
 		}
-
+		
 		/* At fixed rate mode, messages are send by another thread */
 		if (!p->rate) {
 			FOREACH(&p->destinations, it)
-				node_write(it->node, p->current);
+				node_write(p->in, p->pool, p->poolsize, p->received, p->in->combine);
 
 			p->sent++;
 		}
@@ -127,7 +138,7 @@ int path_start(struct path *p)
 	char buf[33];
 	path_print(p, buf, sizeof(buf));
 	
-	info("Starting path: %s", buf);
+	info("Starting path: %s (poolsize = %u)", buf, p->poolsize);
 
 	/* At fixed rate mode, we start another thread for sending */
 	if (p->rate)
@@ -202,8 +213,6 @@ int path_print(struct path *p, char *buf, int len)
 struct path * path_create()
 {
 	struct path *p = alloc(sizeof(struct path));
-	
-	p->history = alloc(POOL_SIZE * sizeof(struct msg));
 
 	list_init(&p->destinations, NULL);
 	list_init(&p->hooks, NULL);
@@ -219,6 +228,6 @@ void path_destroy(struct path *p)
 	list_destroy(&p->hooks);
 	hist_destroy(&p->histogram);
 	
-	free(p->history);
+	free(p->pool);
 	free(p);
 }

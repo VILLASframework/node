@@ -12,10 +12,8 @@
 #include <signal.h>
 #include <unistd.h>
 #include <sys/stat.h>
-#include <netinet/ip.h>
 
 #include "config.h"
-#include "if.h"
 #include "utils.h"
 #include "cfg.h"
 #include "path.h"
@@ -29,8 +27,6 @@
 extern struct list nodes;
 /** Linked list of paths */
 extern struct list paths;
-/** Linked list of interfaces */
-extern struct list interfaces;
 
 /** The global configuration */
 static struct settings settings;
@@ -46,18 +42,13 @@ static void quit()
 	FOREACH(&nodes, it)
 		node_stop(it->node);
 
-	info("Stopping interfaces");
-	FOREACH(&interfaces, it)
-		if_stop(it->interface);
+	node_deinit();
 
 	/* Freeing dynamically allocated memory */
 	list_destroy(&paths);
 	list_destroy(&nodes);
-	list_destroy(&interfaces);
 	config_destroy(&config);
 	
-	node_deinit();
-
 	info("Goodbye!");
 
 	_exit(EXIT_SUCCESS);
@@ -140,7 +131,6 @@ int main(int argc, char *argv[])
 	/* Initialize lists */
 	list_init(&nodes, (dtor_cb_t) node_destroy);
 	list_init(&paths, (dtor_cb_t) path_destroy);
-	list_init(&interfaces, (dtor_cb_t) if_destroy);
 	
 	info("Initialize real-time system");
 	realtime_init();
@@ -148,21 +138,17 @@ int main(int argc, char *argv[])
 	info("Initialize signals");
 	signals_init();
 
-	info("Initialize node types");
-	node_init(argc, argv);
-
 	info("Parsing configuration");
 	config_init(&config);
 	config_parse(configfile, &config, &settings, &nodes, &paths);
+	
+	info("Initialize node types");
+	node_init(argc, argv, &settings);
 
 	/* Connect all nodes and start one thread per path */
 	info("Starting nodes");
 	FOREACH(&nodes, it)
 		node_start(it->node);
-
-	info("Starting interfaces");
-	FOREACH(&interfaces, it)
-		if_start(it->interface, settings.affinity);
 
 	info("Starting paths");
 	FOREACH(&paths, it)
