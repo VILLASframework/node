@@ -214,7 +214,7 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 	if (bytes != 0)
 		error("Packet length does not match message header length!");
 
-	return 0;
+	return cnt;
 }
 
 int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
@@ -254,7 +254,7 @@ int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 	if (ret < 0)
 		serror("Failed send");
 
-	return 0;
+	return cnt;
 }
 
 int socket_parse(config_setting_t *cfg, struct node *n)

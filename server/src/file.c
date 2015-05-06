@@ -98,15 +98,15 @@ int file_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 {
 	int i = 0;
 	struct file *f = n->file;
-	uint64_t runs;
 	
 	if (f->in) {
-		read(f->tfd, &runs, sizeof(runs)); /* blocking for 1/f->rate seconds */
-	
-		for (i=0; i<cnt; i++) {
-			struct msg *m = &pool[(first+i) % poolsize];
+		/* Blocking for 1/f->rate seconds */
+		if (timerfd_wait(f->tfd)) {
+			for (i=0; i<cnt; i++) {
+				struct msg *m = &pool[(first+i) % poolsize];
 
-			msg_fscan(f->in, m);
+				msg_fscan(f->in, m);
+			}
 		}
 	}
 	else

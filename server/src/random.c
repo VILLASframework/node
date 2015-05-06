@@ -33,7 +33,6 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	uint64_t runs;
 	int rate = atoi(argv[2]);
 	struct msg m = MSG_INIT(atoi(argv[1]));
 
@@ -53,16 +52,12 @@ int main(int argc, char *argv[])
 	/* Print header */
 	fprintf(stderr, "# %-6s%-12s\n", "seq", "data");
 
-	while (1) {
-		/* Block until 1/p->rate seconds elapsed */
-		read(tfd, &runs, sizeof(runs));
-		
+	/* Block until 1/p->rate seconds elapsed */
+	while ((m.sequence = timerfd_wait(tfd))) {
 		msg_random(&m);
 		msg_fprint(stdout, &m);
 		
 		fflush(stdout);
-
-		m.sequence++;
 	}
 
 	close(tfd);

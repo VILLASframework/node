@@ -27,10 +27,6 @@ struct list paths;
 static void * path_send(void *arg)
 {
 	struct path *p = arg;
-
-	int ret;
-	uint64_t runs;
-
 	struct itimerspec its = {
 		.it_interval = timespec_rate(p->rate),
 		.it_value = { 1, 0 }
@@ -40,19 +36,17 @@ static void * path_send(void *arg)
 	if (p->tfd < 0)
 		serror("Failed to create timer");
 
-	ret = timerfd_settime(p->tfd, 0, &its, NULL);
-	if (ret)
+	if (timerfd_settime(p->tfd, 0, &its, NULL))
 		serror("Failed to start timer");
 
-	while (1) {
-		/* Block until 1/p->rate seconds elapsed */
-		read(p->tfd, &runs, sizeof(runs));
 		
 		FOREACH(&p->destinations, it)
 			p->sent += node_write(p->in, p->pool, p->poolsize, p->received, p->in->combine);
 		
 		debug(10, "Sent %u messages to %u destination nodes", p->in->combine, p->destinations.length);
 	}
+	/* Block until 1/p->rate seconds elapsed */
+	while (timerfd_wait(p->tfd))	
 
 	return NULL;
 }

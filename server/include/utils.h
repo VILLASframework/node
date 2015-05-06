@@ -10,6 +10,7 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <errno.h>
 #include <sched.h>
 #include <string.h>
@@ -98,6 +99,13 @@ cpu_set_t to_cpu_set(int set);
 
 /** Allocate and initialize memory. */
 void * alloc(size_t bytes);
+
+/** Wait until timer elapsed
+ *
+ * @retval 0 An error occured. Maybe the timer was stopped.
+ * @retval >0 The nummer of runs this timer already fired.
+ */
+uint64_t timerfd_wait(int fd);
 
 /** Get delta between two timespec structs */
 double timespec_delta(struct timespec *start, struct timespec *end);

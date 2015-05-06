@@ -79,6 +79,13 @@ void * alloc(size_t bytes)
 	return p;
 }
 
+uint64_t timerfd_wait(int fd)
+{
+	uint64_t runs;
+	
+	return read(fd, &runs, sizeof(runs)) < 0 ? 0 : runs;
+}
+
 double timespec_delta(struct timespec *start, struct timespec *end)
 {
 	double sec  = end->tv_sec - start->tv_sec;
