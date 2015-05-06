@@ -81,6 +81,6 @@ struct msg
 		float f;	/**< Floating point values (note msg::endian) */
 		uint32_t i;	/**< Integer values (note msg::endian) */
 	} data[MSG_VALUES];
-} __attribute__((aligned(4), packed));
+} __attribute__((aligned(64), packed));
 
 #endif /* _MSG_FORMAT_H_ */
