@@ -14,7 +14,7 @@ void list_init(struct list *l, dtor_cb_t dtor)
 	pthread_mutex_init(&l->lock, NULL);
 	
 	l->destructor = dtor;
-	l->count = 0;
+	l->length = 0;
 	l->head = NULL;
 	l->tail = NULL;
 }
@@ -57,7 +57,7 @@ void list_push(struct list *l, void *p)
 
 	l->tail = e;
 	
-	l->count++;
+	l->length++;
 
 	pthread_mutex_unlock(&l->lock);
 }
