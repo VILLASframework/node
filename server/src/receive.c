@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 	while (1) {
 		int recv = node_read(node, pool, node->combine, 0, node->combine);
 
-		for (int i=0; i<recv; i++) {
+		for (int i = 0; i < recv; i++) {
 			if (msg_verify(&pool[i]))
 				warn("Failed to verify message");
 

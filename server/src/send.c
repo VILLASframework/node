@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 	node_start_defer(node);
 
 	while (!feof(stdin)) {
-		for (int i=0; i<node->combine; i++) {
+		for (int i = 0; i < node->combine; i++) {
 			msg_fscan(stdin, &pool[i]);
 
 #if TOOLS_USE_TIMESTAMP

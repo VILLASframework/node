@@ -39,7 +39,7 @@
 /* Hook function configuration */
 #define HOOK_FIR_INDEX		 1 /**< The first value of message should be filtered. */
 #define HOOK_TS_INDEX		-1 /**< The last value of message should be overwritten by a timestamp. */
-#define HOOK_DECIMATE_RATIO 	30 /**< Only forward every 10th message to the destination nodes. */
+#define HOOK_DECIMATE_RATIO 	30 /**< Only forward every 30th message to the destination nodes. */
 
 /** Global configuration */
 struct settings {
