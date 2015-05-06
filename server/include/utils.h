@@ -113,10 +113,10 @@ void die();
 
 /** Check assertion and exit if failed. */
 #define assert(exp) do { \
-	if (EXPECT(!exp, 0)) { \
-		error, "Assertion failed: '%s' in %s, %s:%d", \
-			#exp, __FUNCTION__, __BASE_FILE__, __LINE__); \
-	} } while (0)
+	if (!EXPECT(exp, 0)) \
+		error("Assertion failed: '%s' in %s(), %s:%d", \
+			XSTR(exp), __FUNCTION__, __BASE_FILE__, __LINE__); \
+	} while (0)
 
 #endif /* _UTILS_H_ */
 
