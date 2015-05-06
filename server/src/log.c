@@ -67,7 +67,7 @@ void log_vprint(const char *lvl, const char *fmt, va_list ap)
 	strap(buf, sizeof(buf), "%10.3f ", timespec_delta(&epoch, &ts));
 
 	/* Severity */
-	strap(buf, sizeof(buf), BLD("%-5s "), lvl);
+	strap(buf, sizeof(buf), BLD("%5s "), lvl);
 	
 	/* Indention */
 #ifdef __GNUC__

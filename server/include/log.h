@@ -19,7 +19,7 @@
 /* The log level which is passed as first argument to print() */
 #define DEBUG		GRY("Debug")
 #define INFO		    "" 
-#define WARN		YEL("Warn")
+#define WARN		YEL("Warn ")
 #define ERROR		RED("Error")
 
 /** Change log indention  for current thread.
