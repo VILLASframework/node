@@ -15,10 +15,18 @@
 #include <string.h>
 #include <time.h>
 
+#include "config.h"
 #include "msg.h"
 #include "hooks.h"
 #include "path.h"
 #include "utils.h"
+
+/* The configuration of hook parameters is done in "config.h" */
+
+/* Plausability checks */
+#if HOOK_MULTIPLEX_RATIO > POOL_SIZE
+ #error "POOL_SIZE is too small for given HOOK_MULTIPLEX_RATIO"
+#endif
 
 /** @todo Make const */
 static struct hook_id hook_list[] = {
@@ -27,9 +35,7 @@ static struct hook_id hook_list[] = {
 	{ hook_tofixed, "tofixed" },
 	{ hook_ts, "ts" },
 	{ hook_fir, "fir" },
-	{ hook_dft, "dft"},
-	{ hook_multiplex, "multiplex" },
-	{ hook_demultiplex, "demultiplex" },
+	{ hook_dft, "dft"}
 };
 
 hook_cb_t hook_lookup(const char *name)
@@ -83,10 +89,10 @@ int hook_fir(struct msg *m, struct path *p)
 	double sum = 0;
 	
 	/** Trim FIR length to length of history buffer */
-	int len = MIN(ARRAY_LEN(coeffs), POOL_SIZE);
+	int len = MIN(ARRAY_LEN(coeffs), p->poolsize);
 
 	for (int i=0; i<len; i++) {
-		struct msg *old = &p->history[(POOL_SIZE+p->received-i) % POOL_SIZE];
+		struct msg *old = &p->pool[(p->poolsize+p->received-i) % p->poolsize];
 		
 		sum += coeffs[i] * old->data[HOOK_FIR_INDEX].f;
 	}
@@ -102,34 +108,8 @@ int hook_decimate(struct msg *m, struct path *p)
 	return (m->sequence % HOOK_DECIMATE_RATIO == 0) ? -1 : 0;
 }
 
-int hook_multiplex(struct msg *m, struct path *p)
-{
-	/* Every HOOK_MULTIPLEX_RATIO'th message contains the collection of the previous ones */
-	if (p->received % HOOK_MULTIPLEX_RATIO == 0) {
-		struct msg *c = p->current; /* Current message */
-
-		for (int i=1; i<HOOK_MULTIPLEX_RATIO && c->length<MSG_VALUES; i++) {
-			struct msg *m = p->history[p->received-i];
-			
-			/* Trim amount of values to actual size of msg buffer */
-			int len = MIN(m->length, MSG_VALUES - c->length);
-			
-			memcpy(c->data + c->length, m->data, len * sizeof(m->data[0]));
-			c->length += len; 
-		}
-		
-		return 0;
-	}
-	else
-		return -1; /* Message will be dropped */
-}
-
-int hook_demultiplex(struct msg *m, struct path *p)
-{
-	
-}
-
+/** @todo Implement */
 int hook_dft(struct msg *m, struct path *p)
 {
-	/** @todo Implement */
+	return 0;
 }

@@ -63,21 +63,6 @@ int hook_ts(struct msg *m, struct path *p);
 /** Example hook: Finite-Impulse-Response (FIR) filter. */
 int hook_fir(struct msg *m, struct path *p);
 
-#define HOOK_FIR_INDEX	1
-
-/** Example hook: collect previous messages to send them at once */
-int hook_multiplex(struct msg *m, struct path *p);
-
-/** Example hook: inverse multiplex operation */
-int hook_demultiplex(struct msg *m, struct path *p);
-
-#define HOOK_MULTIPLEX_RATIO	10
-
-/* Plausability checks */
-#if HOOK_MULTIPLEX_RATIO > POOL_SIZE
- #error "POOL_SIZE is too small for given HOOK_MULTIPLEX_RATIO"
-#endif
-
 /** Example hook: Discrete Fourier Transform */
 int hook_dft(struct msg *m, struct path *p);
 
