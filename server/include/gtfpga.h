@@ -3,7 +3,10 @@
  * This file implements the gtfpga subtype for nodes.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
+ * @file
+ * @addtogroup gtfpga RTDS - PCIexpress Fiber interface node type
+ * @{
  */
 
 #ifndef _GTFPGA_H_
@@ -30,26 +33,27 @@ struct gtfpga {
 };
 
 int gtfpga_init(int argc, char * argv[]);
+/** @see node_vtable::init */
 
+/** @see node_vtable::deinit */
 int gtfpga_deinit();
 
-/** Parse node connection details for GTFPGA type
- *
- * @param cfg A libconfig object pointing to the node.
- * @param n A pointer to the node structure which should be parsed.
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
- */
+/** @see node_vtable::parse */
 int gtfpga_parse(config_setting_t *cfg, struct node *n);
 
+/** @see node_vtable::print */
 int gtfpga_print(struct node *n, char *buf, int len);
 
+/** @see node_vtable::open */
 int gtfpga_open(struct node *n);
 
+/** @see node_vtable::close */
 int gtfpga_close(struct node *n);
 
+/** @see node_vtable::read */
 int gtfpga_read(struct node *n, struct msg *m);
 
+/** @see node_vtable::write */
 int gtfpga_write(struct node *n, struct msg *m);
 
-#endif /* _GTFPGA_H_ */
+#endif /** _GTFPGA_H_ @} */

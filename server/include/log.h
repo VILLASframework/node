@@ -64,7 +64,6 @@ void log_vprint(const char *lvl, const char *fmt, va_list va);
 void debug(int lvl, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
 
-
 /** Print a horizontal line. */
 void line();
 

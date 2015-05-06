@@ -4,7 +4,6 @@
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
- * @file
  */
 
 #include "utils.h"

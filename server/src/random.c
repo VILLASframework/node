@@ -1,7 +1,10 @@
 /** Generate random packages on stdout.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
+ * @file
+ * @addtogroup tools Test and debug tools
+ * @{
  */
 
 #include <stdlib.h>
@@ -87,3 +90,5 @@ int main(int argc, char *argv[])
 
 	return 0;
 }
+
+/** @} */

@@ -7,7 +7,7 @@
  *  - workstations
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
  * @file
  */
 
@@ -53,10 +53,38 @@ struct node_vtable {
 	const enum node_type type;
 	const char *name;
 
+	/** Parse node connection details for SOCKET type
+	 *
+	 * @param cfg	A libconfig object pointing to the node.
+	 * @param n	A pointer to the node structure which should be parsed.
+	 * @retval 0 	Success. Everything went well.
+	 * @retval <0	Error. Something went wrong.
+	 */
 	int (*parse)(config_setting_t *cfg, struct node *n);
+	
+	/** Print details of socket connection
+	 *
+	 * @param n	A pointer to the node structure
+	 * @param buf	The character buffer to be filled.
+	 * @param len	The length of the supplied buffer.
+	 * @return The	length of the address.
+	 */
 	int (*print)(struct node *n, char *buf, int len);
 
-	int (*open)(struct node *n);
+	/** Create new socket and connect(), bind(), accept().
+	 *
+	 * @param n	A pointer to the node.
+	 * @retval 0	Success. Everything went well.
+	 * @retval <0	Error. Something went wrong.
+	 */
+	int (*open) (struct node *n);
+	
+	/** Close the socket.
+	 *
+	 * @param n	A pointer to the node.
+	 * @retval 0	Success. Everything went well.
+	 * @retval <0	Error. Something went wrong.
+	 */
 	int (*close)(struct node *n);
 	int (*read)(struct node *n, struct msg *m);
 	int (*write)(struct node *n, struct msg *m);
@@ -95,14 +123,14 @@ struct node
 
 /** Initialize node type subsystems.
  *
- * These routines are only called once per type (not node).
+ * These routines are only called once per type (not per node instance).
  * See node_vtable::init
  */
-int node_init(int argc, char *argv[]);
+int node_init(int argc, char *argv[], struct settings *set);
 
 /** De-initialize node type subsystems.
  *
- * These routines are only called once per type (not node).
+ * These routines are only called once per type (not per node instance).
  * See node_vtable::deinit
  */
 int node_deinit();

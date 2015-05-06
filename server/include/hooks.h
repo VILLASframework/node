@@ -7,12 +7,16 @@
  * This file includes some examples.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
  * @file
+ * @addtogroup hooks User-defined hook functions
+ * @{
  */
  
 #ifndef _HOOKS_H_
 #define _HOOKS_H_
+
+/* The configuration of hook parameters is done in "config.h" */
 
 struct msg;
 struct path;
@@ -50,15 +54,11 @@ int hook_print(struct msg *m, struct path *p);
 /** Example hook: Drop messages. */
 int hook_decimate(struct msg *m, struct path *p);
 
-#define HOOK_DECIMATE_RATIO 10
-
 /** Example hook: Convert the message values to fixed precision. */
 int hook_tofixed(struct msg *m, struct path *p);
 
 /** Example hook: add timestamp to message. */
 int hook_ts(struct msg *m, struct path *p);
-
-#define HOOK_TS_INDEX	-1 /* last message */
 
 /** Example hook: Finite-Impulse-Response (FIR) filter. */
 int hook_fir(struct msg *m, struct path *p);
@@ -81,4 +81,4 @@ int hook_demultiplex(struct msg *m, struct path *p);
 /** Example hook: Discrete Fourier Transform */
 int hook_dft(struct msg *m, struct path *p);
 
-#endif /* _HOOKS_H_ */
+#endif /** _HOOKS_H_ @} */
