@@ -185,7 +185,7 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 	
 	for (int i = 0; i < cnt; i++) {
 		/* All messages of a packet must have equal length! */
-		iov[i].iov_base = &pool[(first+poolsize-i) % poolsize];
+		iov[i].iov_base = &pool[(first+poolsize+i) % poolsize];
 		iov[i].iov_len  = bytes / cnt;
 	}
 	
@@ -197,7 +197,7 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 		serror("Failed recv");
 
 	for (int i = 0; i < cnt; i++) {
-		struct msg *n = &pool[(first+poolsize-i) % poolsize];
+		struct msg *n = &pool[(first+poolsize+i) % poolsize];
 
 		/* Check integrity of packet */
 		bytes -= MSG_LEN(n->length);
