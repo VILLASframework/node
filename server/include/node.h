@@ -28,22 +28,27 @@
 }
 
 /* Helper macros for virtual node type */
-#define node_type(n)		((n)->vt->type)
-#define node_print(n, b, l)	((n)->vt->print(n, b, l))
-#define node_read(n, m)		((n)->vt->read(n, m))
-#define node_write(n, m)	((n)->vt->write(n, m))
+#define node_type(n)			((n)->vt->type)
+#define node_print(n, b, l)		((n)->vt->print(n, b, l))
+
+#define node_read(n, p, ps, f, c)	((n)->vt->read(n, p, ps, f, c))
+#define node_write(n, p, ps, f, c)	((n)->vt->write(n, p, ps, f, c))
+
+#define node_read_single(n, m)		((n)->vt->read(n, m, 1, 0, 1))
+#define node_write_single(n, m)		((n)->vt->write(n, m, 1, 0, 1))
 
 /** Node type: layer, protocol, listen/connect */
 enum node_type {
-	LOG_FILE,	/* File IO */
-	IEEE_802_3,	/* BSD socket: AF_PACKET SOCK_DGRAM  */
-	IP,		/* BSD socket: AF_INET   SOCK_RAW    */
-	UDP,		/* BSD socket: AF_INET   SOCK_DGRAM  */
-	TCPD,		/* BSD socket: AF_INET   SOCK_STREAM bind + listen + accept */
-	TCP,		/* BSD socket: AF_INET   SOCK_STREAM bind + connect */
-	OPAL_ASYNC,	/* OPAL-RT Asynchronous Process Api */
-	GTFPGA,		/* Xilinx ML507 GTFPGA card */
-	INVALID
+	LOG_FILE,		/**< File IO */
+	OPAL_ASYNC,		/**< OPAL-RT Asynchronous Process Api */
+	GTFPGA,			/**< Xilinx ML507 GTFPGA card */
+	IEEE_802_3 = 0x10,	/**< BSD socket: AF_PACKET SOCK_DGRAM  */
+	IP,			/**< BSD socket: AF_INET   SOCK_RAW    */
+	UDP,			/**< BSD socket: AF_INET   SOCK_DGRAM  */
+	TCPD,			/**< BSD socket: AF_INET   SOCK_STREAM bind + listen + accept */
+	TCP,			/**< BSD socket: AF_INET   SOCK_STREAM bind + connect */
+
+	SOCKET = 0xF0		/**< Mask for BSD socket types */
 };
 
 /** C++ like vtable construct for node_types
@@ -86,10 +91,40 @@ struct node_vtable {
 	 * @retval <0	Error. Something went wrong.
 	 */
 	int (*close)(struct node *n);
-	int (*read)(struct node *n, struct msg *m);
-	int (*write)(struct node *n, struct msg *m);
 	
-	int (*init)(int argc, char *argv[]);
+	/** Receive multiple messages from single datagram / packet.
+	 *
+	 * Messages are received with a single recvmsg() syscall by
+	 * using gathering techniques (struct iovec).
+	 * The messages will be stored in a circular buffer / array @p m.
+	 * Indexes used to address @p m will wrap around after len messages.
+	 *
+	 * @param n 		A pointer to the node where the messages should be sent to.
+	 * @param pool 		A pointer to an array of messages which should be sent.
+	 * @param poolsize 	The length of the message array.
+	 * @param first		The index of the first message which should be sent.
+	 * @param cnt		The number of messages which should be sent.
+	 * @return		The number of messages actually received.
+	 */
+	int (*read) (struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+	
+	/** Send multiple messages in a single datagram / packet.
+	 *
+	 * Messages are sent with a single sendmsg() syscall by
+	 * using gathering techniques (struct iovec).
+	 * The messages have to be stored in a circular buffer / array m.
+	 * So the indexes will wrap around after len.
+	 *
+	 * @param n		A pointer to the node where the messages should be sent to.
+	 * @param pool		A pointer to an array of messages which should be sent.
+	 * @param poolsize	The length of the message array.
+	 * @param first		The index of the first message which should be sent.
+	 * @param cnt		The number of messages which should be sent.
+	 * @return		The number of messages actually sent.
+	 */
+	int (*write)(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+	
+	int (*init)(int argc, char *argv[], struct settings *set);
 	int (*deinit)();
 	
 	int refcnt;
@@ -104,6 +139,8 @@ struct node
 {
 	/** How many paths  are sending / receiving from this node? */
 	int refcnt;
+	/** Number of messages to send / recv at once (scatter / gather) */
+	int combine;
 	/** A short identifier of the node, only used for configuration and logging */
 	const char *name;
 

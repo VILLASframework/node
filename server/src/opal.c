@@ -13,15 +13,16 @@
 #include "utils.h"
 
 static struct opal_global *og = NULL;
+static struct list opals;
 
-int opal_init(int argc, char *argv[])
-{	
+int opal_init(int argc, char *argv[], struct settings *set)
+{ INDENT
 	int err;
 		
 	if (argc != 4)
 		return -1;
 
-	struct opal_global *g = alloc(sizeof(struct opal_global));
+	og = alloc(sizeof(struct opal_global));
 	
 	pthread_mutex_init(&g->lock, NULL);
 	
@@ -57,15 +58,13 @@ int opal_init(int argc, char *argv[])
 	info("Started as OPAL Asynchronous process");
 	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s, debug=%d)",
 		VERSION, __DATE__, __TIME__, _debug);
-	opal_print_global(g);
-	
-	og = g;
-	
+	opal_print_global(og);
+
 	return 0;
 }
 
 int opal_deinit()
-{
+{ INDENT
 	int err;
 
 	if (!og)
@@ -112,35 +111,17 @@ int opal_print_global(struct opal_global *g)
 }
 
 int opal_parse(config_setting_t *cfg, struct node *n)
-{	
-	if (!og) {
-		warn("Skipping node '%s', because this server is not running as an OPAL Async process!", n->name);
-		return -1;
-	}
-	
+{
 	struct opal *o = alloc(sizeof(struct opal));
 	
 	config_setting_lookup_int(cfg, "send_id", &o->send_id);
 	config_setting_lookup_int(cfg, "recv_id", &o->recv_id);
 	config_setting_lookup_bool(cfg, "reply", &o->reply);
-		
-	/* Search for valid send and recv ids */
-	int sfound = 0, rfound = 0;
-	for (int i=0; i<og->send_icons; i++)
-		sfound += og->send_ids[i] == o->send_id;
-	for (int i=0; i<og->send_icons; i++)
-		rfound += og->send_ids[i] == o->send_id;
-	
-	if (!sfound)
-		cerror(config_setting_get_member(cfg, "send_id"),
-			"Invalid send_id '%u' for node '%s'", o->send_id, n->name);
-	if (!rfound)
-		cerror(config_setting_get_member(cfg, "recv_id"),
-			"Invalid recv_id '%u' for node '%s'", o->recv_id, n->name);
 
 	n->opal = o;
-	n->opal->global = og;
 	n->cfg = cfg;
+	
+	list_push(&opals, o);
 
 	return 0;
 }
@@ -159,6 +140,19 @@ int opal_open(struct node *n)
 {
 	struct opal *o = n->opal;
 	
+	/* Search for valid send and recv ids */
+	int sfound = 0, rfound = 0;
+	for (int i=0; i<og->send_icons; i++)
+		sfound += og->send_ids[i] == o->send_id;
+	for (int i=0; i<og->send_icons; i++)
+		rfound += og->send_ids[i] == o->send_id;
+	
+	if (!sfound)
+		error("Invalid send_id '%u' for node '%s'", o->send_id, n->name);
+	if (!rfound)
+		error("Invalid recv_id '%u' for node '%s'", o->recv_id, n->name);
+	
+	/* Get some more informations and paramters from OPAL-RT */
 	OpalGetAsyncSendIconMode(&o->mode, o->send_id);
 	OpalGetAsyncSendParameters(&o->send_params, sizeof(Opal_SendAsyncParam), o->send_id);
 	OpalGetAsyncRecvParameters(&o->recv_params, sizeof(Opal_RecvAsyncParam), o->recv_id);

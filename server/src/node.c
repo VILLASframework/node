@@ -21,21 +21,16 @@
 #define VTABLE(type, name, fnc) { type, name, \
 				  fnc ## _parse, fnc ## _print, \
 				  fnc ## _open,  fnc ## _close, \
-				  fnc ## _read,  fnc ## _write }
-
-#define VTABLE2(type, name, fnc) { type, name, \
-				  fnc ## _parse, fnc ## _print, \
-				  fnc ## _open,  fnc ## _close, \
 				  fnc ## _read,  fnc ## _write, \
 				  fnc ## _init,  fnc ## _deinit }
 
 /** Vtable for virtual node sub types */
 struct node_vtable vtables[] = {
 #ifdef ENABLE_OPAL_ASYNC
-	VTABLE2(OPAL_ASYNC, "opal",	opal),
+	VTABLE(OPAL_ASYNC, "opal",	opal),
 #endif
 #ifdef ENABLE_GTFPGA
-	VTABLE2(GTFPGA,	   "gtfpga",	gtfpga),
+	VTABLE(GTFPGA,	   "gtfpga",	gtfpga),
 #endif
 	VTABLE(LOG_FILE,   "file",	file),
 	VTABLE(IEEE_802_3, "ieee802.3",	socket),
@@ -48,15 +43,13 @@ struct node_vtable vtables[] = {
 /** Linked list of nodes. */
 struct list nodes;
 
-int node_init(int argc, char *argv[])
+int node_init(int argc, char *argv[], struct settings *set)
 { INDENT
 	for (int i=0; i<ARRAY_LEN(vtables); i++) {
 		const struct node_vtable *vt = &vtables[i];
-		if (vt->refcnt && vt->init) {
-			if (vt->init(argc, argv))
-				error("Failed to initialize '%s' node type", vt->name);
-			else
-				info("Initializing '%s' node type", vt->name);
+		if (vt->refcnt) {
+			info("Initializing '%s' node type", vt->name);
+			vt->init(argc, argv, set);
 		}
 	}
 	
@@ -68,12 +61,9 @@ int node_deinit()
 	/* De-initialize node types */
 	for (int i=0; i<ARRAY_LEN(vtables); i++) {
 		struct node_vtable *vt = &vtables[i];
-		if (vt->refcnt && vt->deinit) {
-			if (vt->deinit())
-				error("Failed to de-initialize '%s' node type", vt->name);
-			else	
-				info("De-initializing '%s' node type", vt->name);
-			
+		if (vt->refcnt) {
+			info("De-initializing '%s' node type", vt->name);
+			vt->deinit();
 		}
 	}
 	return 0;

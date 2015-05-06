@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 
 #include <linux/if_packet.h>
 #include <net/if.h>
@@ -20,12 +21,59 @@
 #include <netinet/ether.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <netdb.h>
 
 #include "config.h"
 #include "utils.h"
 #include "socket.h"
 #include "if.h"
+
+/** Linked list of interfaces */
+extern struct list interfaces;
+
+/** Linked list of sockets */
+struct list sockets;
+
+int socket_init(int argc, char * argv[], struct settings *set)
+{ INDENT
+	list_init(&interfaces, (dtor_cb_t) if_destroy);
+	
+	/* Gather list of used network interfaces */
+	FOREACH(&sockets, it) {
+		struct socket *s = it->socket;
+
+		/* Determine outgoing interface */
+		int index = if_getegress((struct sockaddr *) &s->remote);
+		if (index < 0) {
+			char buf[128];
+			socket_print_addr(buf, sizeof(buf), (struct sockaddr *) &s->remote);
+			error("Failed to get interface for socket address '%s'", buf);
+		}
+
+		struct interface *i = if_lookup_index(index);
+		if (!i)
+			i = if_create(index);
+
+		list_push(&i->sockets, s);
+		i->refcnt++;
+	}
+	
+	FOREACH(&interfaces, it)
+		if_start(it->interface, set->affinity);
+	
+	return 0;
+}
+
+int socket_deinit()
+{ INDENT
+	FOREACH(&interfaces, it)
+		if_stop(it->interface);
+	
+	list_destroy(&interfaces);
+	
+	return 0;
+}
 
 int socket_print(struct node *n, char *buf, int len)
 {
@@ -74,18 +122,6 @@ int socket_open(struct node *n)
 			serror("Failed to connect socket");
 	}
 
-	/* Determine outgoing interface */
-	int index = if_getegress((struct sockaddr *) &s->remote);
-	if (index < 0)
-		error("Failed to get egress interface for node '%s'", n->name);
-
-	struct interface *i = if_lookup_index(index);
-	if (!i)
-		i = if_create(index);
-
-	list_push(&i->sockets, s);
-	i->refcnt++;
-
 	/* Set socket priority, QoS or TOS IP options */
 	int prio;
 	switch (node_type(n)) {
@@ -125,55 +161,98 @@ int socket_close(struct node *n)
 	return 0;
 }
 
-int socket_read(struct node *n, struct msg *m)
+int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
+	struct socket *s = n->socket;
+
+	int bytes;
+	struct iovec iov[cnt];
+	struct msghdr mhdr = {
+		.msg_iov = iov,
+		.msg_iovlen = ARRAY_LEN(iov)
+	};
+	
+	/* Wait until next packet received */
+	poll(&(struct pollfd) { .fd = s->sd, .events = POLLIN }, 1, -1);
+	/* Get size of received packet in bytes */
+	ioctl(s->sd, FIONREAD, &bytes);	
+	
+	/* Check packet integrity */
+	if (bytes % (cnt * 4) != 0)
+		error("Packet length not dividable by 4!");
+	if (bytes / cnt > sizeof(struct msg))
+		error("Packet length is too large!");
+	
+	for (int i = 0; i < cnt; i++) {
+		/* All messages of a packet must have equal length! */
+		iov[i].iov_base = &pool[(first+poolsize-i) % poolsize];
+		iov[i].iov_len  = bytes / cnt;
+	}
+	
 	/* Receive message from socket */
-	int ret = recv(n->socket->sd, m, sizeof(struct msg), 0);
+	int ret = recvmsg(s->sd, &mhdr, 0);
 	if (ret == 0)
 		error("Remote node '%s' closed the connection", n->name);
 	else if (ret < 0)
 		serror("Failed recv");
 
-	/* Convert headers to host byte order */
-	m->sequence = ntohs(m->sequence);
+	for (int i = 0; i < cnt; i++) {
+		struct msg *n = &pool[(first+poolsize-i) % poolsize];
 
-	/* Convert message to host endianess */
-	if (m->endian != MSG_ENDIAN_HOST)
-		msg_swap(m);
+		/* Check integrity of packet */
+		bytes -= MSG_LEN(n->length);
+		
+		/* Convert headers to host byte order */
+		n->sequence = ntohs(n->sequence);
+		
+		/* Convert message to host endianess */
+		if (n->endian != MSG_ENDIAN_HOST)
+			msg_swap(n);
+	}
 
-	debug(10, "Message received from node '%s': version=%u, type=%u, endian=%u, length=%u, sequence=%u",
-		n->name, m->version, m->type, m->endian, m->length, m->sequence);
+	/* Check packet integrity */
+	if (bytes != 0)
+		error("Packet length does not match message header length!");
 
 	return 0;
 }
 
-int socket_write(struct node *n, struct msg *m)
+int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
 	struct socket *s = n->socket;
 	int ret = -1;
-
-	/* Convert headers to network byte order */
-	m->sequence = htons(m->sequence);
-
-	switch (node_type(n)) {
-		case IEEE_802_3:/* Connection-less protocols */
-		case IP:
-		case UDP:
-			ret = sendto(s->sd, m, MSG_LEN(m->length), 0, (struct sockaddr *) &s->remote, sizeof(s->remote));
-			break;
-
-		case TCP:	/* Connection-oriented protocols */
-		case TCPD:
-			ret = send(s->sd, m, MSG_LEN(m->length), 0);
-			break;
-		default: { }
+	
+	struct iovec iov[cnt];
+	struct msghdr mhdr = {
+		.msg_iov = iov,
+		.msg_iovlen = ARRAY_LEN(iov)
+	};
+	
+	for (int i = 0; i < cnt; i++) {
+		struct msg *n = &pool[(first+poolsize+i) % poolsize];
+		
+		/* Convert headers to host byte order */
+		n->sequence = htons(n->sequence);
+		
+		iov[i].iov_base = n;
+		iov[i].iov_len  = MSG_LEN(n->length);
 	}
 
+	/* Specify destination address for connection-less procotols */
+	switch (node_type(n)) {
+		case IEEE_802_3:
+		case IP:
+		case UDP:
+			mhdr.msg_name = (struct sockaddr *) &s->remote;
+			mhdr.msg_namelen = sizeof(s->remote);
+			break;
+		default:
+			break;
+	}
+	
+	ret = sendmsg(s->sd, &mhdr, 0);
 	if (ret < 0)
 		serror("Failed send");
-
-	debug(10, "Message sent to node '%s': version=%u, type=%u, endian=%u, length=%u, sequence=%u",
-		n->name, m->version, m->type, m->endian, m->length, ntohs(m->sequence));
 
 	return 0;
 }
@@ -210,6 +289,8 @@ int socket_parse(config_setting_t *cfg, struct node *n)
 	}
 	
 	n->socket = s;
+	
+	list_push(&sockets, s);
 
 	return 0;
 }
@@ -234,7 +315,7 @@ int socket_print_addr(char *buf, int len, struct sockaddr *sa)
 		}
 
 		default:
-			error("Unsupported address family: %u", sa->sa_family);
+			return snprintf(buf, len, "address family: %u", sa->sa_family);
 	}
 	
 	return 0;

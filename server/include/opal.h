@@ -51,8 +51,6 @@ struct opal {
 	int recv_id;
 
 	int seq_no;
-		
-	struct opal_global *global;
 	
 	Opal_SendAsyncParam send_params;
 	Opal_RecvAsyncParam recv_params;
@@ -62,7 +60,7 @@ struct opal {
  *
  * @see node_vtable::init
  */
-int opal_init(int argc, char *argv[]);
+int opal_init(int argc, char *argv[], struct settings *set);
 
 /** Free global OPAL settings and unmaps shared memory regions.
  *

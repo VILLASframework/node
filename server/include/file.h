@@ -30,6 +30,12 @@ struct file {
 };
 
 /** @see node_vtable::init */
+int file_init(int argc, char *argv[], struct settings *set);
+
+/** @see node_vtable::deinit */
+int file_deinit();
+
+/** @see node_vtable::print */
 int file_print(struct node *n, char *buf, int len);
 
 /** @see node_vtable::parse */
@@ -41,10 +47,10 @@ int file_open(struct node *n);
 /** @see node_vtable::close */
 int file_close(struct node *n);
 
-int file_read(struct node *n, struct msg *m);
 /** @see node_vtable::read */
+int file_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
 
-int file_write(struct node *n, struct msg *m);
 /** @see node_vtable::write */
+int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
 
 #endif /** _FILE_H_ @} */

@@ -36,19 +36,24 @@ struct socket {
 	struct socket *next;
 };
 
-/** Create new socket and connect(), bind(), accept().
- *
- * @param n A pointer to the node.
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
- */
+
+/** @see node_vtable::init */
+int socket_init(int argc, char *argv[], struct settings *set);
+
+/** @see node_vtable::deinit */
+int socket_deinit();
+
+/** @see node_vtable::open */
 int socket_open(struct node *n);
 
 /** @see node_vtable::close */
+int socket_close(struct node *n);	
 
 /** @see node_vtable::write */
+int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
 
 /** @see node_vtable::read */
+int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
 
 /** @see node_vtable::parse */
 int socket_parse(config_setting_t *cfg, struct node *n);

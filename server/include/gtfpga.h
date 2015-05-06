@@ -32,8 +32,8 @@ struct gtfpga {
 	struct pci_dev *dev;
 };
 
-int gtfpga_init(int argc, char * argv[]);
 /** @see node_vtable::init */
+int gtfpga_init(int argc, char * argv[], struct settings *set);
 
 /** @see node_vtable::deinit */
 int gtfpga_deinit();
