@@ -86,7 +86,7 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 	config_setting_lookup_int(cfg, "debug", &set->debug);
 	config_setting_lookup_float(cfg, "stats", &set->stats);
 
-	set->cfg = cfg;
+	log_setlevel(set->debug);
 
 	return 0;
 }

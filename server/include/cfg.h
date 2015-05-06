@@ -24,21 +24,7 @@ struct socket;
 struct opal;
 struct gtfpga;
 struct netem;
-
-/** Global configuration */
-struct settings {
-	/** Process priority (lower is better) */
-	int priority;
-	/** Process affinity of the server and all created threads */
-	int affinity;
-	/** Debug log level */
-	int debug;
-	/** Interval for path statistics. Set to 0 to disable themo disable them. */
-	double stats;
-
-	/** A libconfig object pointing to the root of the config file */
-	config_setting_t *cfg;
-};
+struct settings;
 
 /** Parse config file and store settings in supplied struct settings.
  *

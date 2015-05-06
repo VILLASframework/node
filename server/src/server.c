@@ -15,10 +15,9 @@
 #include <netinet/ip.h>
 
 #include "config.h"
-#include "cfg.h"
 #include "if.h"
-#include "msg.h"
 #include "utils.h"
+#include "cfg.h"
 #include "path.h"
 #include "node.h"
 
