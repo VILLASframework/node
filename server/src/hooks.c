@@ -104,8 +104,8 @@ int hook_fir(struct msg *m, struct path *p)
 
 int hook_decimate(struct msg *m, struct path *p)
 {
-	/* Drop every HOOK_DECIMATE_RATIO'th message */
-	return (m->sequence % HOOK_DECIMATE_RATIO == 0) ? -1 : 0;
+	/* Only sent every HOOK_DECIMATE_RATIO'th message */
+	return m->sequence % HOOK_DECIMATE_RATIO;
 }
 
 /** @todo Implement */
