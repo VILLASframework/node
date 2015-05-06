@@ -54,6 +54,8 @@ int main(int argc, char *argv[])
 {
 	char c;
 	int reverse = 0;
+	
+	_mtid = pthread_self();
 
 	struct config_t config;
 

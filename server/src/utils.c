@@ -14,6 +14,7 @@
 #include <netdb.h>
 #include <math.h>
 #include <signal.h>
+#include <pthread.h>
 
 #ifdef ENABLE_OPAL_ASYNC
 #define RTLAB
@@ -28,7 +29,10 @@ pthread_t _mtid;
 
 void die()
 {
-	pthread_kill(_mtid, SIGINT);
+	if (pthread_equal(_mtid, pthread_self()))
+		exit(EXIT_FAILURE);
+	else
+		pthread_kill(_mtid, SIGINT);
 }
 
 int strap(char *dest, size_t size, const char *fmt,  ...)

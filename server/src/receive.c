@@ -55,6 +55,8 @@ int main(int argc, char *argv[])
 	
 	struct config_t config;
 	
+	_mtid = pthread_self();
+	
 	while ((c = getopt(argc, argv, "hr")) != -1) {
 		switch (c) {
 			case 'r': reverse = 1; break;

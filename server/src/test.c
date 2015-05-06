@@ -61,6 +61,8 @@ void quit(int sig, siginfo_t *si, void *ptr)
 int main(int argc, char *argv[])
 {
 	config_t config;
+	
+	_mtid = pthread_self();
 
 	if (argc < 4) {
 		printf("Usage: %s CONFIG TEST NODE [ARGS]\n", argv[0]);
