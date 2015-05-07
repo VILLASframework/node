@@ -29,9 +29,9 @@ endif
 
 # Enabled GTFPGA support when libpci is available
 ifneq (,$(wildcard /usr/include/pci/pci.h))
-	CFLAGS  += -DENABLE_GTFPGA
-	LDFLAGS += -lpci
-	OBJS    += gtfpga.o
+	CFLAGS += -DENABLE_GTFPGA
+	LDLIBS += -lpci
+	OBJS   += gtfpga.o
 endif
 
 # Enable OPAL-RT Asynchronous Process support
@@ -39,7 +39,7 @@ OPALDIR = /usr/opalrt/common
 #OPALDIR = ../opal
 ifneq (,$(wildcard $(OPALDIR)/include_target/AsyncApi.h))
 	CFLAGS  += -m32 -DENABLE_OPAL_ASYNC -I$(OPALDIR)/include_target
-	LDFLAGS += -m32
+	LDFLAGS += -m32 -Wl,-L/lib/i386-linux-gnu/
 	LDLIBS  += $(addprefix $(OPALDIR)/lib/redhawk/, libOpalAsyncApiCore.a libOpalCore.a libOpalUtils.a libirc.a)
 	OBJS    += opal.o
 endif

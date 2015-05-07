@@ -83,9 +83,9 @@ int opal_open(struct node *n);
 int opal_close(struct node *n);
 
 /** @see node_vtable::read */
-int opal_read(struct node *n, struct msg *m);
+int opal_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
 
 /** @see node_vtable::write */
-int opal_write(struct node *n, struct msg *m);
+int opal_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
 
 #endif /** _OPAL_H_ @} */
