@@ -35,6 +35,12 @@ int gtfpga_parse(config_setting_t *cfg, struct node *n)
 	config_setting_t *cfg_slot, *cfg_id;
 	struct gtfpga *g = alloc(sizeof(struct gtfpga));
 
+	/* Checks */
+	if (n->combine != 1) {
+		config_setting_t *cfg_combine = config_setting_get_member(cfg, "combine");
+		cerror(cfg_combine, "The GTFPGA node type does not support combining!");
+	}
+
 	pci_filter_init(NULL, &g->filter);
 
 	if (cfg_slot = config_setting_get_member(cfg, "slot")) {

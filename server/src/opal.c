@@ -114,6 +114,12 @@ int opal_parse(config_setting_t *cfg, struct node *n)
 {
 	struct opal *o = alloc(sizeof(struct opal));
 	
+	/* Checks */
+	if (n->combine != 1) {
+		config_setting_t *cfg_combine = config_setting_get_member(cfg, "combine");
+		cerror(cfg_combine, "The OPAL-RT node type does not support combining!");
+	}
+	
 	config_setting_lookup_int(cfg, "send_id", &o->send_id);
 	config_setting_lookup_int(cfg, "recv_id", &o->recv_id);
 	config_setting_lookup_bool(cfg, "reply", &o->reply);
