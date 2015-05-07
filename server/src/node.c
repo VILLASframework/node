@@ -13,7 +13,9 @@
 /* Node types */
 #include "file.h"
 #include "socket.h"
+#ifdef ENABLE_GTFPGA
 #include "gtfpga.h"
+#endif
 #ifdef ENABLE_OPAL_ASYNC
 #include "opal.h"
 #endif

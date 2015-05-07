@@ -1,7 +1,9 @@
 TARGETS = server send random receive test
 
 # Common dependencies for all binaries
-OBJS = socket.o if.o utils.o msg.o node.o cfg.o tc.o hooks.o list.o path.o hist.o log.o socket.o file.o
+OBJS  = if.o utils.o msg.o node.o cfg.o tc.o hooks.o list.o path.o hist.o log.o
+# Node types
+OBJS += socket.o file.o
 
 VPATH = src
 
@@ -23,6 +25,13 @@ ifdef DEBUG
 	CFLAGS += -O0 -g
 else
 	CFLAGS += -O3
+endif
+
+# Enabled GTFPGA support when libpci is available
+ifneq (,$(wildcard /usr/include/pci/pci.h))
+	CFLAGS  += -DENABLE_GTFPGA
+	LDFLAGS += -lpci
+	OBJS    += gtfpga.o
 endif
 
 # Enable OPAL-RT Asynchronous Process support
