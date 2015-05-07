@@ -18,6 +18,7 @@
 #include "cfg.h"
 #include "path.h"
 #include "node.h"
+#include "license.h"
 
 #ifdef ENABLE_OPAL_ASYNC
 #include "opal.h"
@@ -127,6 +128,9 @@ int main(int argc, char *argv[])
 	/* Check priviledges */
 	if (getuid() != 0)
 		error("The server requires superuser privileges!");
+
+	if (check_license())
+		error("You're not allowed to use this software!");
 
 	/* Initialize lists */
 	list_init(&nodes, (dtor_cb_t) node_destroy);
