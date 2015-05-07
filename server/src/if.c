@@ -64,12 +64,6 @@ int if_start(struct interface *i, int affinity)
 			if (s->netem) {
 				s->mark = 1 + mark++;
 		
-				/* Set fwmark for outgoing packets */
-				if (setsockopt(s->sd, SOL_SOCKET, SO_MARK, &s->mark, sizeof(s->mark)))
-					serror("Failed to set fwmark for outgoing packets");
-				else
-					debug(4, "Set fwmark for socket (sd=%u) to %u", s->sd, s->mark);
-		
 				tc_mark(i,  TC_HDL(4000, s->mark), s->mark);
 				tc_netem(i, TC_HDL(4000, s->mark), s->netem);
 			}

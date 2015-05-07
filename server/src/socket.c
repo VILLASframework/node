@@ -121,6 +121,12 @@ int socket_open(struct node *n)
 		if (ret < 0)
 			serror("Failed to connect socket");
 	}
+	
+	/* Set fwmark for outgoing packets */
+	if (setsockopt(s->sd, SOL_SOCKET, SO_MARK, &s->mark, sizeof(s->mark)))
+		serror("Failed to set fwmark for outgoing packets");
+	else
+		debug(4, "Set fwmark for socket (sd=%u) to %u", s->sd, s->mark);
 
 	/* Set socket priority, QoS or TOS IP options */
 	int prio;
