@@ -1,6 +1,9 @@
 /** Node type: GTFPGA (Xilinx ML507)
  *
  * This file implements the gtfpga subtype for nodes.
+ * It's based on the uio_pci_generic kernel module.
+ * A detailed description of that module is available here:
+ * http://www.hep.by/gnu/kernel/uio-howto/uio_pci_generic.html
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
@@ -14,23 +17,33 @@
 
 #include <pci/pci.h>
 
-#define GTFPGA_BAR	0  /**< The Base Address Register which is mmap()ed to the User Space */
+#include "node.h"
 
-#define GTFPGA_MAX_TX	64 /**< The amount of values which is supported by the GTFPGA card */
-#define GTFPGA_MAX_RX	64 /**< The amount of values which is supported by the GTFPGA card */
+#define GTFPGA_BAR	0	/**< The Base Address Register which is mmap()ed to the User Space */
 
-#define GTFPGA_VID 0x10ee  /**< The default vendor ID of the GTFPGA card */
-#define GTFPGA_DID 0x0007  /**< The default device ID of the GTFPGA card */
+#define GTFPGA_MAX_TX	64	/**< The amount of values which is supported by the GTFPGA card */
+#define GTFPGA_MAX_RX	64	/**< The amount of values which is supported by the GTFPGA card */
 
+#define GTFPGA_VID	0x10ee	/**< The default vendor ID of the GTFPGA card */
+#define GTFPGA_DID	0x0007	/**< The default device ID of the GTFPGA card */
 
 struct gtfpga {
 	struct pci_filter filter;
 
-	int fd_mmap, fd_uio;
+	int fd_mmap;		/**< File descriptor for the memory mapped PCI BAR */
 	void *map;
+		
+	/* The following descriptor is blocking as long no interrupt was received
+	 * or the timer has not elapsed */
+	int fd_irq;		/**< File descriptor for the timer */
+	
+	char *name;
+	double rate;
 
 	struct pci_dev *dev;
 };
+
+typedef void(*log_cb_t)(char *, ...);
 
 /** @see node_vtable::init */
 int gtfpga_init(int argc, char * argv[], struct settings *set);
@@ -51,9 +64,9 @@ int gtfpga_open(struct node *n);
 int gtfpga_close(struct node *n);
 
 /** @see node_vtable::read */
-int gtfpga_read(struct node *n, struct msg *m);
+int gtfpga_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
 
 /** @see node_vtable::write */
-int gtfpga_write(struct node *n, struct msg *m);
+int gtfpga_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
 
 #endif /** _GTFPGA_H_ @} */
