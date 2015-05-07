@@ -69,8 +69,10 @@ static void * path_run(void *arg)
 	
 	/* Allocate memory for message pool */
 	p->pool = alloc(p->poolsize * sizeof(struct msg));
+	p->previous = p->current = p->pool;
 
 	/* Open deferred TCP connection
+	   TODO: fix this
 	node_start_defer(p->in);
 
 	FOREACH(&p->destinations, it)

@@ -27,7 +27,7 @@ int file_print(struct node *n, char *buf, int len)
 {
 	struct file *f = n->file;
 	
-	return snprintf(buf, len, "in=%s, out=%s, mode=%s, rate=%f",
+	return snprintf(buf, len, "in=%s, out=%s, mode=%s, rate=%.1f",
 		f->path_in, f->path_out, f->mode, f->rate);
 }
 
@@ -102,7 +102,7 @@ int file_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 	if (f->in) {
 		/* Blocking for 1/f->rate seconds */
 		if (timerfd_wait(f->tfd)) {
-			for (i=0; i<cnt; i++) {
+			for (i = 0; i < cnt; i++) {
 				struct msg *m = &pool[(first+i) % poolsize];
 
 				msg_fscan(f->in, m);
@@ -121,7 +121,7 @@ int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 	struct file *f = n->file;
 	
 	if (f->out) {	
-		for (i=0; i<cnt; i++) {
+		for (i = 0; i < cnt; i++) {
 			struct msg *m = &pool[(first+i) % poolsize];
 
 			msg_fprint(f->out, m);
