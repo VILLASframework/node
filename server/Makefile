@@ -12,7 +12,7 @@ V ?= 2
 
 # Compiler and linker flags
 LDLIBS = -pthread -lrt -lm -lconfig
-CFLAGS  = -std=gnu99 -Iinclude/ -MMD -Wall
+CFLAGS  = -std=gnu99 -Iinclude/ -MMD -Wall -O3
 CFLAGS += -D_XOPEN_SOURCE=500 -D_GNU_SOURCE -DV=$(V)
 
 # Add git commit hash
@@ -23,8 +23,6 @@ endif
 # Conditional debug flags
 ifdef DEBUG
 	CFLAGS += -O0 -g
-else
-	CFLAGS += -O3
 endif
 
 # Enabled GTFPGA support when libpci is available
@@ -38,10 +36,10 @@ endif
 OPALDIR = /usr/opalrt/common
 #OPALDIR = ../opal
 ifneq (,$(wildcard $(OPALDIR)/include_target/AsyncApi.h))
-	CFLAGS  += -m32 -DENABLE_OPAL_ASYNC -I$(OPALDIR)/include_target
-	LDFLAGS += -m32 -Wl,-L/lib/i386-linux-gnu/
-	LDLIBS  += $(addprefix $(OPALDIR)/lib/redhawk/, libOpalAsyncApiCore.a libOpalCore.a libOpalUtils.a libirc.a)
-	OBJS    += opal.o
+	override CFLAGS  += -m32 -DENABLE_OPAL_ASYNC -I$(OPALDIR)/include_target
+	override LDFLAGS += -m32 -Wl,-L/lib/i386-linux-gnu/
+	override LDLIBS  += $(addprefix $(OPALDIR)/lib/redhawk/, libOpalAsyncApiCore.a libOpalCore.a libOpalUtils.a libirc.a)
+	override OBJS    += opal.o
 endif
 
 .PHONY: all clean
@@ -55,6 +53,13 @@ send: send.o $(OBJS)
 receive: receive.o $(OBJS)
 random: random.o $(OBJS)
 test: test.o $(OBJS)
+
+strip: $(TARGETS)
+	strip	--remove-section=.comment \
+		--remove-section=.note \
+		--strip-unneeded \
+		$(TARGETS) 
+	
 
 clean:
 	$(RM) *~ *.o *.d
