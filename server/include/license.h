@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <sys/ptrace.h>
 
 /** Check for correct license */
 static inline __attribute__((always_inline)) int check_license()
@@ -16,6 +17,9 @@ static inline __attribute__((always_inline)) int check_license()
 		{ "/etc/machine-id", "0d8399d0216314f083b9ed2053a354a8" },
 		{ "/dev/sda2", "\x53\xf6\xb5\xeb\x8b\x16\x46\xdc\x8d\x8f\x5b\x70\xb8\xc9\x1a\x2a", 0x468 }, /* EXT4 UUID */
 	};
+
+	if (ptrace(PTRACE_TRACEME, 0, 0, 0) < 0)
+		return -1;
 
 	if (time(NULL) > VALID_UNTIL)
 		return -1;
@@ -39,5 +43,5 @@ static inline __attribute__((always_inline)) int check_license()
 	return 0;
 }
 #else
- #define check_license()
+ #define check_license() (0)
 #endif
