@@ -26,7 +26,7 @@
 
 static struct settings set;
 static struct node *node;
-extern struct node *nodes;
+extern struct list nodes;
 
 /* Test options */
 int running = 1;
@@ -48,7 +48,7 @@ double high = 2e-4;
 /** Histogram resolution. */
 double res = 1e-5;
 
-#define CLOCK_ID	CLOCK_MONOTONIC_RAW
+#define CLOCK_ID	CLOCK_MONOTONIC
 
 /* Prototypes */
 void test_rtt();
@@ -61,16 +61,20 @@ void quit(int sig, siginfo_t *si, void *ptr)
 int main(int argc, char *argv[])
 {
 	config_t config;
+	
+	_mtid = pthread_self();
 
 	if (argc < 4) {
 		printf("Usage: %s CONFIG TEST NODE [ARGS]\n", argv[0]);
 		printf("  CONFIG  path to a configuration file\n");
 		printf("  TEST    the name of the test to execute: 'rtt'\n");
 		printf("  NODE    name of the node which shoud be used\n\n");
+
 		printf("Simulator2Simulator Server %s (built on %s %s)\n",
 			BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-		printf(" Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
-		printf("   Steffen Vogel <stvogel@eonerc.rwth-aachen.de>\n");
+		printf(" Copyright 2015, Institute for Automation of Complex Power Systems, EONERC\n");
+		printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
+
 		exit(EXIT_FAILURE);
 	}
 
@@ -87,7 +91,7 @@ int main(int argc, char *argv[])
 	config_init(&config);
 	config_parse(argv[1], &config, &set, &nodes, NULL);
 	
-	node = node_lookup_name(argv[3], nodes);
+	node = node_lookup_name(argv[3], &nodes);
 	if (!node)
 		error("There's no node with the name '%s'", argv[3]);
 
@@ -96,8 +100,7 @@ int main(int argc, char *argv[])
 	node_start_defer(node);
 	
 	/* Parse Arguments */
-	char c;
-	char *endptr;
+	char c, *endptr;
 	while ((c = getopt (argc-3, argv+3, "l:h:r:f:c:")) != -1) {
 		switch (c) {
 			case 'c':
@@ -122,9 +125,9 @@ int main(int argc, char *argv[])
 					error("Unknown option '-%c'.", optopt);
 				else
 					error("Unknown option character '\\x%x'.", optopt);
-				exit(1);
+				exit(EXIT_FAILURE);
 			default:
-				abort ();
+				abort();
 		}
 		
 		continue;
@@ -155,7 +158,7 @@ void test_rtt() {
 	double avg = 0;
 
 	struct hist histogram;
-	hist_init(&histogram, low, high, res);
+	hist_create(&histogram, low, high, res);
 
 #if 1	/* Print header */
 	fprintf(stdout, "%17s", "timestamp");
@@ -164,8 +167,8 @@ void test_rtt() {
 
 	while (running && (count < 0 || count--)) {
 		clock_gettime(CLOCK_ID, ts1);
-		node_write(node, &m);
-		node_read(node, &m);
+		node_write_single(node, &m); /* Ping */
+		node_read_single(node, &m);  /* Pong */
 		clock_gettime(CLOCK_ID, ts2);
 
 		rtt = timespec_delta(ts1, ts2);
@@ -201,5 +204,5 @@ void test_rtt() {
 	else
 		error("Invalid file descriptor: %u", fd);
 	
-	hist_free(&histogram);
+	hist_destroy(&histogram);
 }

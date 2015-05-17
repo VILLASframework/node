@@ -8,14 +8,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <errno.h>
 #include <unistd.h>
 #include <netdb.h>
-#include <time.h>
 #include <math.h>
+#include <signal.h>
+#include <pthread.h>
+#include <fstab.h>
 
 #ifdef ENABLE_OPAL_ASYNC
+#define RTLAB
 #include <OpalPrint.h>
 #endif
 
@@ -23,20 +25,14 @@
 #include "cfg.h"
 #include "utils.h"
 
-/* This global variable contains the debug level for debug() and assert() macros */
-int _debug = V;
-int _indent = 0;
+pthread_t _mtid;
 
-struct timespec epoch;
-
-void outdent(int *old)
+void die()
 {
-	_indent = *old;
-}
-
-void epoch_reset()
-{
-	clock_gettime(CLOCK_REALTIME, &epoch);
+	if (pthread_equal(_mtid, pthread_self()))
+		exit(EXIT_FAILURE);
+	else
+		pthread_kill(_mtid, SIGINT);
 }
 
 int strap(char *dest, size_t size, const char *fmt,  ...)
@@ -56,43 +52,6 @@ int vstrap(char *dest, size_t size, const char *fmt, va_list ap)
 	int len = strlen(dest);
 
 	return vsnprintf(dest + len, size - len, fmt, ap);
-}
-
-void print(enum log_level lvl, const char *fmt, ...)
-{
-	struct timespec ts;
-	char buf[512] = "";
-
-	va_list ap;
-
-	/* Timestamp */
-	clock_gettime(CLOCK_REALTIME, &ts);
-	strap(buf, sizeof(buf), "%8.3f ", timespec_delta(&epoch, &ts));
-
-	/* Severity */
-	switch (lvl) {
-		case DEBUG: strap(buf, sizeof(buf), BLD("%-5s "), GRY("Debug")); break;
-		case INFO:  strap(buf, sizeof(buf), BLD("%-5s "),     "     " ); break;
-		case WARN:  strap(buf, sizeof(buf), BLD("%-5s "), YEL(" Warn")); break;
-		case ERROR: strap(buf, sizeof(buf), BLD("%-5s "), RED("Error")); break;
-	}
-
-	/* Indention */
-	for (int i = 0; i < _indent-1; i++)
-		strap(buf, sizeof(buf), GFX("\x78") " ");
-	strap(buf, sizeof(buf), GFX("\x74") " ");
-
-	/* Format String */
-	va_start(ap, fmt);
-	vstrap(buf, sizeof(buf), fmt, ap);
-	va_end(ap);
-	
-	/* Output */
-#ifdef ENABLE_OPAL_ASYNC
-	OpalPrint("%s\n", buf);
-#else
-	fprintf(stderr, "%s\n", buf);
-#endif
 }
 
 cpu_set_t to_cpu_set(int set)
@@ -118,6 +77,13 @@ void * alloc(size_t bytes)
 	memset(p, 0, bytes);
 	
 	return p;
+}
+
+uint64_t timerfd_wait(int fd)
+{
+	uint64_t runs;
+	
+	return read(fd, &runs, sizeof(runs)) < 0 ? 0 : runs;
 }
 
 double timespec_delta(struct timespec *start, struct timespec *end)
@@ -146,16 +112,15 @@ struct timespec timespec_rate(double rate)
 /** @todo: Proper way: create additional pipe for stderr in child process */
 int system2(const char *cmd, ...)
 {
+	va_list ap;
 	char buf[1024];
 	
-	va_list ap;
 	va_start(ap, cmd);
-
-		vsnprintf(buf, sizeof(buf), cmd, ap);
-		strncat(buf, " 2>&1", sizeof(buf));
-	
+	vsnprintf(buf, sizeof(buf), cmd, ap);
 	va_end(ap);
 	
+	strap(buf, sizeof(buf), " 2>&1", sizeof(buf)); /* redirect stderr to stdout */
+		
 	debug(1, "System: %s", buf);
 
 	FILE *f = popen(buf, "r");

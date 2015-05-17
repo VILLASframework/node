@@ -1,7 +1,8 @@
 /** Histogram functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
+ * @file
  */
 
 #ifndef _HIST_H_
@@ -9,7 +10,7 @@
 
 #include <stdio.h>
 
-#define HIST_HEIGHT	50
+#define HIST_HEIGHT	75
 #define HIST_SEQ	17
 
 typedef unsigned hist_cnt_t;
@@ -44,10 +45,10 @@ struct hist {
 };
 
 /** Initialize struct hist with supplied values and allocate memory for buckets. */
-void hist_init(struct hist *h, double start, double end, double resolution);
+void hist_create(struct hist *h, double start, double end, double resolution);
 
 /** Free the dynamically allocated memory. */
-void hist_free(struct hist *h);
+void hist_destroy(struct hist *h);
 
 /** Reset all counters and values back to zero. */
 void hist_reset(struct hist *h);

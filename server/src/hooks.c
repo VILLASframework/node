@@ -7,37 +7,42 @@
  * This file includes some examples.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
  */
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <pthread.h>
 #include <time.h>
 
+#include "config.h"
 #include "msg.h"
 #include "hooks.h"
 #include "path.h"
 #include "utils.h"
 
+/* The configuration of hook parameters is done in "config.h" */
+
+/* Plausability checks */
+#if HOOK_MULTIPLEX_RATIO > POOL_SIZE
+ #error "POOL_SIZE is too small for given HOOK_MULTIPLEX_RATIO"
+#endif
+
 /** @todo Make const */
 static struct hook_id hook_list[] = {
 	{ hook_print, "print" },
-	{ hook_log, "log" },
 	{ hook_decimate, "decimate" },
 	{ hook_tofixed, "tofixed" },
 	{ hook_ts, "ts" },
 	{ hook_fir, "fir" },
-	{ NULL }
+	{ hook_dft, "dft"}
 };
 
 hook_cb_t hook_lookup(const char *name)
 {
-	for (struct hook_id *hid = hook_list; hid->cb; hid++) {
-		if (!strcmp(name, hid->name)) {
-			return hid->cb;
-		}
+	for (int i=0; i<ARRAY_LEN(hook_list); i++) {
+		if (!strcmp(name, hook_list[i].name))
+			return hook_list[i].cb;
 	}
 
 	return NULL; /* No matching hook was found */
@@ -49,41 +54,6 @@ int hook_print(struct msg *m, struct path *p)
 	msg_fprint(stdout, m);
 
 	return 0;
-}
-
-int hook_log(struct msg *m, struct path *p)
-{
-	static pthread_key_t pkey;
-	FILE *file = pthread_getspecific(pkey);
-	
-	if (!file) {
-		char fstr[64], pstr[33];
-		path_print(p, pstr, sizeof(pstr));
-		
-		struct tm tm;
-		time_t ts = time(NULL);
-		localtime_r(&ts, &tm);
-		strftime(fstr, sizeof(fstr), HOOK_LOG_TEMPLATE, &tm);
-		
-		
-		
-		file = fopen(fstr, HOOK_LOG_MODE);
-		if (file)
-			debug(5, "Opened log file for path %s: %s", pstr, fstr);
-		
-		pthread_key_create(&pkey, (void (*)(void *)) fclose);
-		pthread_setspecific(pkey, file);
-	}
-	
-	msg_fprint(file, m);
-	
-	return 0;
-}
-
-int hook_decimate(struct msg *m, struct path *p)
-{
-	/* Drop every HOOK_DECIMATE_RATIO'th message */
-	return (m->sequence % HOOK_DECIMATE_RATIO == 0) ? -1 : 0;
 }
 
 int hook_tofixed(struct msg *m, struct path *p)
@@ -104,42 +74,42 @@ int hook_ts(struct msg *m, struct path *p)
 	return 0;
 }
 
-/** Simple FIR-LP: F_s = 1kHz, F_pass = 100 Hz, F_block = 300
- * Tip: Use MATLAB's filter design tool and export coefficients
- *      with the integrated C-Header export */ 
-static const double hook_fir_coeffs[] = { -0.003658148158728, -0.008882653268281, 0.008001024183003,
-					   0.08090485991761,    0.2035239551043,   0.3040703593515,
-					   0.3040703593515,     0.2035239551043,   0.08090485991761,
-					   0.008001024183003,  -0.008882653268281,-0.003658148158728 };
-
-/** @todo: test */
 int hook_fir(struct msg *m, struct path *p)
 {
-	static pthread_key_t pkey;
-	float *history = pthread_getspecific(pkey);
+	/** Simple FIR-LP: F_s = 1kHz, F_pass = 100 Hz, F_block = 300
+	 * Tip: Use MATLAB's filter design tool and export coefficients
+	 *      with the integrated C-Header export */ 
+	static const double coeffs[] = {
+		-0.003658148158728, -0.008882653268281, 0.008001024183003,
+		0.08090485991761,    0.2035239551043,   0.3040703593515,
+		0.3040703593515,     0.2035239551043,   0.08090485991761,
+		0.008001024183003,  -0.008882653268281,-0.003658148158728 };
 	
-	/** Length of impulse response */
-	int len = ARRAY_LEN(hook_fir_coeffs);
-	/** Current index in circular history buffer */
-	int cur = m->sequence % len;
 	/* Accumulator */
 	double sum = 0;
+	
+	/** Trim FIR length to length of history buffer */
+	int len = MIN(ARRAY_LEN(coeffs), p->poolsize);
+
+	for (int i=0; i<len; i++) {
+		struct msg *old = &p->pool[(p->poolsize+p->received-i) % p->poolsize];
 		
-	/* Create thread local storage for circular history buffer */
-	if (!history) {
-		history = malloc(len * sizeof(float));
-		
-		pthread_key_create(&pkey, free);
-		pthread_setspecific(pkey, history);
+		sum += coeffs[i] * old->data[HOOK_FIR_INDEX].f;
 	}
-	
-	/* Update circular buffer */
-	history[cur] = m->data[HOOK_FIR_INDEX].f;
-	
-	for (int i=0; i<len; i++)
-		sum += hook_fir_coeffs[(cur+len-i)%len] * history[(cur+i)%len];
 
 	m->data[HOOK_FIR_INDEX].f = sum;
 
+	return 0;
+}
+
+int hook_decimate(struct msg *m, struct path *p)
+{
+	/* Only sent every HOOK_DECIMATE_RATIO'th message */
+	return m->sequence % HOOK_DECIMATE_RATIO;
+}
+
+/** @todo Implement */
+int hook_dft(struct msg *m, struct path *p)
+{
 	return 0;
 }

@@ -19,11 +19,6 @@ Date: Mid 2014 - End 2015
     UDP protocol over the ML507 Ethernet interface.
     This is working!
     
-- ml507_ppc440_plbv46_pcie
-   An unsuccessful attempt to use the RTDS PLB interface used by "ml507_gtfpga_ppc440_udp"
-   with the Xilinx PLBv46_PCIe bridge to allow direct PCIe access to the RTDS registers.
-   This does NOT work!
-   
 - opal
    Contains the implementation of an asynchronous process block for RT-LAB.
    This block allows exchanging messages with an S2SS server over UDP/TCP.

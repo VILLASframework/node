@@ -1,7 +1,7 @@
 /** Message format
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
  * @file
  */
 
@@ -14,7 +14,7 @@
  #define _BSD_SOURCE    	1
  #include <endian.h>
 #elif defined(__PPC__) /* Xilinx toolchain */
-  #include <lwip/arch.h>
+ #include <lwip/arch.h>
 #endif
 
 #include "config.h"
@@ -30,8 +30,8 @@
 #define MSG_TYPE_START		1 /**< Message marks the beginning of a new simulation case */
 #define MSG_TYPE_STOP		2 /**< Message marks the end of a simulation case */
 
-#define MSG_ENDIAN_LITTLE       0 /**< Message values are in little endian format (float too!) */
-#define MSG_ENDIAN_BIG          1 /**< Message values are in bit endian format */
+#define MSG_ENDIAN_LITTLE	0 /**< Message values are in little endian format (float too!) */
+#define MSG_ENDIAN_BIG		1 /**< Message values are in bit endian format */
 
 #if BYTE_ORDER == LITTLE_ENDIAN
  #define MSG_ENDIAN_HOST        MSG_ENDIAN_LITTLE
@@ -81,6 +81,6 @@ struct msg
 		float f;	/**< Floating point values (note msg::endian) */
 		uint32_t i;	/**< Integer values (note msg::endian) */
 	} data[MSG_VALUES];
-} __attribute__((aligned(4), packed));
+} __attribute__((aligned(64), packed));
 
 #endif /* _MSG_FORMAT_H_ */

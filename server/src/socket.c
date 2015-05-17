@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 
 #include <linux/if_packet.h>
 #include <net/if.h>
@@ -20,12 +21,59 @@
 #include <netinet/ether.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
 #include <netdb.h>
 
 #include "config.h"
 #include "utils.h"
 #include "socket.h"
 #include "if.h"
+
+/** Linked list of interfaces */
+extern struct list interfaces;
+
+/** Linked list of sockets */
+struct list sockets;
+
+int socket_init(int argc, char * argv[], struct settings *set)
+{ INDENT
+	list_init(&interfaces, (dtor_cb_t) if_destroy);
+	
+	/* Gather list of used network interfaces */
+	FOREACH(&sockets, it) {
+		struct socket *s = it->socket;
+
+		/* Determine outgoing interface */
+		int index = if_getegress((struct sockaddr *) &s->remote);
+		if (index < 0) {
+			char buf[128];
+			socket_print_addr(buf, sizeof(buf), (struct sockaddr *) &s->remote);
+			error("Failed to get interface for socket address '%s'", buf);
+		}
+
+		struct interface *i = if_lookup_index(index);
+		if (!i)
+			i = if_create(index);
+
+		list_push(&i->sockets, s);
+		i->refcnt++;
+	}
+	
+	FOREACH(&interfaces, it)
+		if_start(it->interface, set->affinity);
+	
+	return 0;
+}
+
+int socket_deinit()
+{ INDENT
+	FOREACH(&interfaces, it)
+		if_stop(it->interface);
+	
+	list_destroy(&interfaces);
+	
+	return 0;
+}
 
 int socket_print(struct node *n, char *buf, int len)
 {
@@ -34,8 +82,8 @@ int socket_print(struct node *n, char *buf, int len)
 	char local[INET6_ADDRSTRLEN + 16];
 	char remote[INET6_ADDRSTRLEN + 16];
 	
-	socket_print_addr(local, sizeof(local), (struct sockaddr*) &s->local);
-	socket_print_addr(remote, sizeof(remote), (struct sockaddr*) &s->remote);
+	socket_print_addr(local, sizeof(local), (struct sockaddr *) &s->local);
+	socket_print_addr(remote, sizeof(remote), (struct sockaddr *) &s->remote);
 
 	return snprintf(buf, len, "local=%s, remote=%s", local, remote);
 }
@@ -53,7 +101,7 @@ int socket_open(struct node *n)
 		case TCP:	s->sd = socket(sin->sin_family, SOCK_STREAM,	IPPROTO_TCP); break;
 		case UDP:	s->sd = socket(sin->sin_family, SOCK_DGRAM,	IPPROTO_UDP); break;
 		case IP:	s->sd = socket(sin->sin_family, SOCK_RAW,	ntohs(sin->sin_port)); break;
-		case IEEE_802_3:s->sd = socket(sin->sin_family, SOCK_DGRAM,	sll->sll_protocol); break;
+		case IEEE_802_3:s->sd = socket(sll->sll_family, SOCK_DGRAM,	sll->sll_protocol); break;
 		default:
 			error("Invalid socket type!");
 	}
@@ -67,27 +115,18 @@ int socket_open(struct node *n)
 		serror("Failed to bind socket");
 	
 	/* Connect socket for sending */
-	if (node_type(n) == TCPD) {
-		/* Listening TCP sockets will be connected later by calling accept() */
+	if (node_type(n) == TCP) {
 		s->sd2 = s->sd;
-	}
-	else if (node_type(n) != IEEE_802_3) {
 		ret = connect(s->sd, (struct sockaddr *) &s->remote, sizeof(s->remote));
 		if (ret < 0)
 			serror("Failed to connect socket");
 	}
-
-	/* Determine outgoing interface */
-	int index = if_getegress((struct sockaddr *) &s->remote);
-	if (index < 0)
-		error("Failed to get egress interface for node '%s'", n->name);
-
-	struct interface *i = if_lookup_index(index);
-	if (!i)
-		i = if_create(index);
-
-	list_add(i->sockets, s);
-	i->refcnt++;
+	
+	/* Set fwmark for outgoing packets */
+	if (setsockopt(s->sd, SOL_SOCKET, SO_MARK, &s->mark, sizeof(s->mark)))
+		serror("Failed to set fwmark for outgoing packets");
+	else
+		debug(4, "Set fwmark for socket (sd=%u) to %u", s->sd, s->mark);
 
 	/* Set socket priority, QoS or TOS IP options */
 	int prio;
@@ -128,46 +167,136 @@ int socket_close(struct node *n)
 	return 0;
 }
 
-int socket_read(struct node *n, struct msg *m)
+int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
+	struct socket *s = n->socket;
+
+	int bytes;
+	struct iovec iov[cnt];
+	struct msghdr mhdr = {
+		.msg_iov = iov,
+		.msg_iovlen = ARRAY_LEN(iov)
+	};
+	
+	/* Wait until next packet received */
+	poll(&(struct pollfd) { .fd = s->sd, .events = POLLIN }, 1, -1);
+	/* Get size of received packet in bytes */
+	ioctl(s->sd, FIONREAD, &bytes);	
+	
+	/* Check packet integrity */
+	if (bytes % (cnt * 4) != 0)
+		error("Packet length not dividable by 4!");
+	if (bytes / cnt > sizeof(struct msg))
+		error("Packet length is too large!");
+	
+	for (int i = 0; i < cnt; i++) {
+		/* All messages of a packet must have equal length! */
+		iov[i].iov_base = &pool[(first+poolsize+i) % poolsize];
+		iov[i].iov_len  = bytes / cnt;
+	}
+	
 	/* Receive message from socket */
-	int ret = recv(n->socket->sd, m, sizeof(struct msg), 0);
+	int ret = recvmsg(s->sd, &mhdr, 0);
 	if (ret == 0)
 		error("Remote node '%s' closed the connection", n->name);
 	else if (ret < 0)
 		serror("Failed recv");
 
-	/* Convert headers to host byte order */
-	m->sequence = ntohs(m->sequence);
+	for (int i = 0; i < cnt; i++) {
+		struct msg *n = &pool[(first+poolsize+i) % poolsize];
 
-	/* Convert message to host endianess */
-	if (m->endian != MSG_ENDIAN_HOST)
-		msg_swap(m);
+		/* Check integrity of packet */
+		bytes -= MSG_LEN(n->length);
+		
+		/* Convert headers to host byte order */
+		n->sequence = ntohs(n->sequence);
+		
+		/* Convert message to host endianess */
+		if (n->endian != MSG_ENDIAN_HOST)
+			msg_swap(n);
+	}
 
-	debug(10, "Message received from node '%s': version=%u, type=%u, endian=%u, length=%u, sequence=%u",
-		n->name, m->version, m->type, m->endian, m->length, m->sequence);
+	/* Check packet integrity */
+	if (bytes != 0)
+		error("Packet length does not match message header length!");
 
-	return 0;
+	return cnt;
 }
 
-int socket_write(struct node *n, struct msg *m)
+int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
 	struct socket *s = n->socket;
-	int ret;
+	int ret = -1;
+	
+	struct iovec iov[cnt];
+	struct msghdr mhdr = {
+		.msg_iov = iov,
+		.msg_iovlen = ARRAY_LEN(iov)
+	};
+	
+	for (int i = 0; i < cnt; i++) {
+		struct msg *n = &pool[(first+poolsize+i) % poolsize];
+		
+		/* Convert headers to host byte order */
+		n->sequence = htons(n->sequence);
+		
+		iov[i].iov_base = n;
+		iov[i].iov_len  = MSG_LEN(n->length);
+	}
 
-	/* Convert headers to network byte order */
-	m->sequence = htons(m->sequence);
-
-	if (node_type(n) == IEEE_802_3)
-		ret = sendto(s->sd, m, MSG_LEN(m->length), 0, (struct sockaddr *) &s->remote, sizeof(s->remote));
-	else
-		ret = send(s->sd, m, MSG_LEN(m->length), 0);
-
+	/* Specify destination address for connection-less procotols */
+	switch (node_type(n)) {
+		case IEEE_802_3:
+		case IP:
+		case UDP:
+			mhdr.msg_name = (struct sockaddr *) &s->remote;
+			mhdr.msg_namelen = sizeof(s->remote);
+			break;
+		default:
+			break;
+	}
+	
+	ret = sendmsg(s->sd, &mhdr, 0);
 	if (ret < 0)
-		serror("Failed send(to)");
+		serror("Failed send");
 
-	debug(10, "Message sent to node '%s': version=%u, type=%u, endian=%u, length=%u, sequence=%u",
-		n->name, m->version, m->type, m->endian, m->length, ntohs(m->sequence));
+	return cnt;
+}
+
+int socket_parse(config_setting_t *cfg, struct node *n)
+{
+	const char *local, *remote;
+	int ret;
+	
+	struct socket *s = alloc(sizeof(struct socket));
+
+	if (!config_setting_lookup_string(cfg, "remote", &remote))
+		cerror(cfg, "Missing remote address for node '%s'", n->name);
+
+	if (!config_setting_lookup_string(cfg, "local", &local))
+		cerror(cfg, "Missing local address for node '%s'", n->name);
+
+	ret = socket_parse_addr(local, (struct sockaddr *) &s->local, node_type(n), AI_PASSIVE);
+	if (ret)
+		cerror(cfg, "Failed to resolve local address '%s' of node '%s': %s",
+			local, n->name, gai_strerror(ret));
+
+	ret = socket_parse_addr(remote, (struct sockaddr *) &s->remote, node_type(n), 0);
+	if (ret)
+		cerror(cfg, "Failed to resolve remote address '%s' of node '%s': %s",
+			remote, n->name, gai_strerror(ret));
+
+	/** @todo Netem settings are not usable AF_UNIX */
+	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
+	if (cfg_netem) {
+		s->netem = alloc(sizeof(struct netem));
+			
+		tc_parse(cfg_netem, s->netem);
+	}
+	
+	n->socket = s;
+	
+	list_push(&sockets, s);
 
 	return 0;
 }
@@ -192,7 +321,7 @@ int socket_print_addr(char *buf, int len, struct sockaddr *sa)
 		}
 
 		default:
-			error("Unsupported address family: %u", sa->sa_family);
+			return snprintf(buf, len, "address family: %u", sa->sa_family);
 	}
 	
 	return 0;
@@ -230,7 +359,7 @@ int socket_parse_addr(const char *addr, struct sockaddr *sa, enum node_type type
 	else {	/* Format: "192.168.0.10:12001" */
 		struct addrinfo hint = {
 			.ai_flags = flags,
-			.ai_family = AF_UNSPEC
+			.ai_family = AF_INET
 		};
 		
 		/* Split string */

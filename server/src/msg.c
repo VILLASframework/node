@@ -1,7 +1,7 @@
 /** Message related functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
  */
 
 #include <stdlib.h>
@@ -27,6 +27,16 @@ void msg_swap(struct msg *m)
 		m->data[i].i = bswap_32(m->data[i].i);
 
 	m->endian ^= 1;
+}
+
+int msg_verify(struct msg *m)
+{
+	return ((m->version == MSG_VERSION) &&
+		(m->type    == MSG_TYPE_DATA) &&
+		(m->length  > 0) &&
+		(m->length  <= MSG_VALUES))
+	   ?  0
+	   : -1;
 }
 
 int msg_fprint(FILE *f, struct msg *m)

@@ -7,22 +7,25 @@
  * This file includes some examples.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
  * @file
+ * @addtogroup hooks User-defined hook functions
+ * @{
  */
  
 #ifndef _HOOKS_H_
 #define _HOOKS_H_
+
+/* The configuration of hook parameters is done in "config.h" */
 
 struct msg;
 struct path;
 
 /** Callback type of hook function
  *
- * @todo Add a way to pass custom data to the hooks
- * @param m The message which is forwarded
+ * @param m The last message which has been received
  * @param p The path which is processing this message.
- * @retval 0 Success. Continue processing the message.
+ * @retval 0 Success. Continue processing and forwarding the message.
  * @retval <0 Error. Drop the message.
  */
 typedef int (*hook_cb_t)(struct msg *m, struct path *p);
@@ -48,16 +51,8 @@ hook_cb_t hook_lookup(const char *name);
 /** Example hook: Print the message. */
 int hook_print(struct msg *m, struct path *p);
 
-/** Example hook: Log messages to a logfile in /tmp */
-int hook_log(struct msg *m, struct path *p);
-
-#define HOOK_LOG_MODE "w+"
-#define HOOK_LOG_TEMPLATE "logs/s2ss-%Y_%m_%d-%H_%M_%S.log"
-
 /** Example hook: Drop messages. */
 int hook_decimate(struct msg *m, struct path *p);
-
-#define HOOK_DECIMATE_RATIO 10
 
 /** Example hook: Convert the message values to fixed precision. */
 int hook_tofixed(struct msg *m, struct path *p);
@@ -65,11 +60,10 @@ int hook_tofixed(struct msg *m, struct path *p);
 /** Example hook: add timestamp to message. */
 int hook_ts(struct msg *m, struct path *p);
 
-#define HOOK_TS_INDEX	-1 // last message
-
 /** Example hook: Finite-Impulse-Response (FIR) filter. */
 int hook_fir(struct msg *m, struct path *p);
 
-#define HOOK_FIR_INDEX	1
+/** Example hook: Discrete Fourier Transform */
+int hook_dft(struct msg *m, struct path *p);
 
-#endif /* _HOOKS_H_ */
+#endif /** _HOOKS_H_ @} */

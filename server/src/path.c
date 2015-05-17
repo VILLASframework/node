@@ -8,60 +8,56 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
-#include <signal.h>
-#include <time.h>
 
+#include <sys/timerfd.h>
 #include <sys/syscall.h>
 
 #include "utils.h"
 #include "path.h"
+#include "socket.h"
 
-#define sigev_notify_thread_id   _sigev_un._tid
+#ifndef sigev_notify_thread_id
+ #define sigev_notify_thread_id   _sigev_un._tid
+#endif
 
-/** Linked list of paths */
-struct path *paths;
+/** Linked list of paths. */
+struct list paths;
+
+static void path_write(struct path *p)
+{
+	FOREACH(&p->destinations, it) {
+		int sent = node_write(
+			it->node,			/* Destination node */
+			p->pool,			/* Pool of received messages */
+			p->poolsize,			/* Size of the pool */
+			p->received-it->node->combine,	/* Index of the first message which should be sent */
+			it->node->combine		/* Number of messages which should be sent */
+		);
+
+		debug(1, "Sent %u  messages to node '%s'", sent, it->node->name);
+		p->sent += sent;
+	}
+}
 
 /** Send messages asynchronously */
-static void * path_send(void *arg)
+static void * path_run_async(void *arg)
 {
-	int sig;
-	struct path *p = (struct path *) arg;
-	timer_t tmr;
-	sigset_t set;
-
-	struct sigevent sev = {
-		.sigev_notify = SIGEV_THREAD_ID,
-		.sigev_signo = SIGALRM,
-		.sigev_notify_thread_id = syscall(SYS_gettid)
-	};
-
+	struct path *p = arg;
 	struct itimerspec its = {
 		.it_interval = timespec_rate(p->rate),
 		.it_value = { 1, 0 }
 	};
 
-	sigemptyset(&set);
-	sigaddset(&set, SIGALRM);
-	if(pthread_sigmask(SIG_BLOCK, &set, NULL))
-		serror("Set signal mask");
-
-	if (timer_create(CLOCK_REALTIME, &sev, &tmr))
+	p->tfd = timerfd_create(CLOCK_REALTIME, 0);
+	if (p->tfd < 0)
 		serror("Failed to create timer");
 
-	if (timer_settime(tmr, 0, &its, NULL))
+	if (timerfd_settime(p->tfd, 0, &its, NULL))
 		serror("Failed to start timer");
 
-	while (1) {
-		sigwait(&set, &sig); /* blocking wait for next timer tick */
-		
-		if (p->received) {
-			FOREACH(&p->destinations, it) {
-				node_write(it->node, p->last);
-			}
-			
-			p->sent++;
-		}
-	}
+	/* Block until 1/p->rate seconds elapsed */
+	while (timerfd_wait(p->tfd))	
+		path_write(p);
 
 	return NULL;
 }
@@ -69,82 +65,73 @@ static void * path_send(void *arg)
 /** Receive messages */
 static void * path_run(void *arg)
 {
-	char buf[33];
 	struct path *p = arg;
-	struct msg  *m = alloc(sizeof(struct msg));
-	if (!m)
-		error("Failed to allocate memory for message!");
 	
-	/* Open deferred TCP connection */
+	/* Allocate memory for message pool */
+	p->pool = alloc(p->poolsize * sizeof(struct msg));
+	p->previous = p->current = p->pool;
+
+	/* Open deferred TCP connection
+	   TODO: fix this
 	node_start_defer(p->in);
-	// FIXME: node_start_defer(p->out);
+
+	FOREACH(&p->destinations, it)
+		node_start_defer(it->node); */
 
 	/* Main thread loop */
-	while (1) {
-		node_read(p->in, m); /* Receive message */
+skip:	while (1) {
+		/* Receive message */
+		int recv = node_read(p->in, p->pool, p->poolsize, p->received, p->in->combine);
 		
-		p->received++;
-
-		/* Check header fields */
-		if (m->version != MSG_VERSION ||
-		    m->type    != MSG_TYPE_DATA) {
-			p->invalid++;
-			continue;
-		}
-
-		/* Update histogram */
-		int dist = (UINT16_MAX + m->sequence - p->sequence) % UINT16_MAX;
-		if (dist > UINT16_MAX / 2)
-			dist -= UINT16_MAX;
-
-		hist_put(&p->histogram, dist);
-
-		/* Handle simulation restart */
-		if (m->sequence == 0 && abs(dist) >= 1) {
-			path_print(p, buf, sizeof(buf));
-			path_stats(p);
+		debug(10, "Received %u messages from node '%s'", recv, p->in->name);
+		
+		/* For each received message... */
+		for (int i=0; i<recv; i++) {
+			p->previous = &p->pool[(p->received-1) % p->poolsize];
+			p->current  = &p->pool[ p->received    % p->poolsize];
 			
-			warn("Simulation for path %s restarted (p->seq=%u, m->seq=%u, dist=%d)",
-				buf, p->sequence, m->sequence, dist);
+			p->received++;
+			
+			/* Check header fields */
+			if (msg_verify(p->current)) {
+				p->invalid++;
+				goto skip; /* Drop message */
+			}
 
-			/* Reset counters */
-			p->sent		= 0;
-			p->received	= 1;
-			p->invalid	= 0;
-			p->skipped	= 0;
-			p->dropped	= 0;
+			/* Update histogram and handle wrap-around of sequence number */
+			int dist = (UINT16_MAX + p->current->sequence - p->previous->sequence) % UINT16_MAX;
+			if (dist > UINT16_MAX / 2)
+				dist -= UINT16_MAX;
 
-			hist_print(&p->histogram);
-			hist_reset(&p->histogram);
+			hist_put(&p->histogram, dist);
+
+			/* Handle simulation restart */
+			if (p->current->sequence == 0 && abs(dist) >= 1) {
+				char buf[33];
+				path_print(p, buf, sizeof(buf));
+				warn("Simulation for path %s restarted (prev->seq=%u, current->seq=%u, dist=%d)",
+					buf, p->previous->sequence, p->current->sequence, dist);
+
+				path_reset(p);
+			}
+			else if (dist <= 0 && p->received > 1) {
+				p->dropped++;
+				goto skip;
+			}
 		}
-		else if (dist <= 0 && p->received > 1) {
-			p->dropped++;
-			continue;
-		}
-
+		
 		/* Call hook callbacks */
 		FOREACH(&p->hooks, it) {
-			if (it->hook(m, p)) {
+			if (it->hook(p->current, p)) {
 				p->skipped++;
-				continue;
+				goto skip;
 			}
 		}
-
-		/* Update last known sequence number */
-		p->sequence = m->sequence;
-		p->last = m;
-
+		
 		/* At fixed rate mode, messages are send by another thread */
-		if (!p->rate) {
-			FOREACH(&p->destinations, it) {
-				node_write(it->node, m);
-			}
-			
-			p->sent++;
-		}
+		if (!p->rate)
+			path_write(p);
 	}
-
-	free(m);
 
 	return NULL;
 }
@@ -154,15 +141,13 @@ int path_start(struct path *p)
 	char buf[33];
 	path_print(p, buf, sizeof(buf));
 	
-	info("Starting path: %s", buf);
-
-	hist_init(&p->histogram, -HIST_SEQ, +HIST_SEQ, 1);
+	info("Starting path: %s (poolsize = %u)", buf, p->poolsize);
 
 	/* At fixed rate mode, we start another thread for sending */
 	if (p->rate)
-		pthread_create(&p->sent_tid, NULL, &path_send, (void *) p);
+		pthread_create(&p->sent_tid, NULL, &path_run_async, p);
 
-	return  pthread_create(&p->recv_tid, NULL, &path_run,  (void *) p);
+	return  pthread_create(&p->recv_tid, NULL, &path_run,  p);
 }
 
 int path_stop(struct path *p)
@@ -178,47 +163,74 @@ int path_stop(struct path *p)
 	if (p->rate) {
 		pthread_cancel(p->sent_tid);
 		pthread_join(p->sent_tid, NULL);
+
+		close(p->tfd);
 	}
 
-	if (p->sent || p->received) {
-		path_stats(p);
+	if (p->received)
 		hist_print(&p->histogram);
-		hist_free(&p->histogram);
-	}
 
 	return 0;
 }
 
-void path_stats(struct path *p)
+int path_reset(struct path *p)
+{
+	p->sent		= 0;
+	p->received	= 1;
+	p->invalid	= 0;
+	p->skipped	= 0;
+	p->dropped	= 0;
+
+	hist_reset(&p->histogram);
+	
+	return 0;
+}
+
+void path_print_stats(struct path *p)
 {
 	char buf[33];
 	path_print(p, buf, sizeof(buf));
 	
-	info("%-32s :   %-8u %-8u %-8u %-8u %-8u",
-		buf, p->sent, p->received, p->dropped, p->skipped, p->invalid
-	);
+	info("%-32s :   %-8u %-8u %-8u %-8u %-8u", buf,
+		p->sent, p->received, p->dropped, p->skipped, p->invalid);
 }
 
 int path_print(struct path *p, char *buf, int len)
 {
 	*buf = 0;
 	
+	strap(buf, len, "%s " MAG("=>"), p->in->name);
+		
 	if (list_length(&p->destinations) > 1) {
-		strap(buf, len, "%s " MAG("=>") " [", p->in->name);
+		strap(buf, len, " [");
 		FOREACH(&p->destinations, it)
 			strap(buf, len, " %s", it->node->name);
 		strap(buf, len, " ]");
 	}
 	else
-		strap(buf, len, "%s " MAG("=>") " %s", p->in->name, p->out->name);
+		strap(buf, len, " %s", p->out->name);
 	
 	return 0;
 }
 
-int path_destroy(struct path *p)
+struct path * path_create()
+{
+	struct path *p = alloc(sizeof(struct path));
+
+	list_init(&p->destinations, NULL);
+	list_init(&p->hooks, NULL);
+
+	hist_create(&p->histogram, -HIST_SEQ, +HIST_SEQ, 1);
+
+	return p;
+}
+
+void path_destroy(struct path *p)
 {
 	list_destroy(&p->destinations);
 	list_destroy(&p->hooks);
+	hist_destroy(&p->histogram);
 	
-	return 0;
+	free(p->pool);
+	free(p);
 }

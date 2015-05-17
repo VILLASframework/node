@@ -1,7 +1,10 @@
 /** Send messages from stdin to server.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
+ * @file
+ * @addtogroup tools Test and debug tools
+ * @{
  */
 
 #include <stdlib.h>
@@ -24,37 +27,47 @@
 #include "msg.h"
 #include "socket.h"
 
+static struct config_t config;
 static struct settings set;
-static struct msg  msg = MSG_INIT(0);
+static struct msg *pool;
 static struct node *node;
-extern struct node *nodes;
+
+extern struct list nodes;
 
 void quit(int sig, siginfo_t *si, void *ptr)
 {
 	node_stop(node);
+	node_deinit();
+	
+	list_destroy(&nodes);
+	config_destroy(&config);
+	free(pool);
+	
 	exit(EXIT_SUCCESS);
 }
 
 void usage(char *name)
 {
 	printf("Usage: %s [-r] CONFIG NODE\n", name);
-	printf("  -r      swap local / remote address of socket based nodes)\n");
+	printf("  -r      swap local / remote address of socket based nodes)\n\n");
 	printf("  CONFIG  path to a configuration file\n");
 	printf("  NODE    name of the node which shoud be used\n");
+
 	printf("Simulator2Simulator Server %s (built on %s %s)\n",
 		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-	printf(" Copyright 2014, Institute for Automation of Complex Power Systems, EONERC\n");
-	printf("   Steffen Vogel <stvogel@eonerc.rwth-aachen.de>\n");
+	printf(" Copyright 2015, Institute for Automation of Complex Power Systems, EONERC\n");
+	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
+
 	exit(EXIT_FAILURE);
 }
 
 int main(int argc, char *argv[])
 {
-	char c;
 	int reverse = 0;
+	
+	_mtid = pthread_self();
 
-	struct config_t config;
-
+	char c;
 	while ((c = getopt(argc, argv, "hr")) != -1) {
 		switch (c) {
 			case 'r': reverse = 1; break;
@@ -76,33 +89,41 @@ int main(int argc, char *argv[])
 	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT, &sa_quit, NULL);
 
+	list_init(&nodes, (dtor_cb_t) node_destroy);
 	config_init(&config);
 	config_parse(argv[optind], &config, &set, &nodes, NULL);
 	
-	node = node_lookup_name(argv[optind+1], nodes);
+	node = node_lookup_name(argv[optind+1], &nodes);
 	if (!node)
 		error("There's no node with the name '%s'", argv[optind+1]);
-	
-	node->refcnt++;
-	
+
 	if (reverse)
 		node_reverse(node);
+	
+	node->refcnt++;
+	pool = alloc(sizeof(struct msg) * node->combine);
 
+	node_init(argc-optind, argv+optind, &set);
 	node_start(node);
 	node_start_defer(node);
 
 	while (!feof(stdin)) {
-		msg_fscan(stdin, &msg);
+		for (int i = 0; i < node->combine; i++) {
+			msg_fscan(stdin, &pool[i]);
 
-#if 1 /* Preprend timestamp */
-		struct timespec ts;
-		clock_gettime(CLOCK_REALTIME, &ts);
-		fprintf(stdout, "%17.3f\t", ts.tv_sec + ts.tv_nsec / 1e9);
+#if TOOLS_USE_TIMESTAMP
+			struct timespec ts;
+			clock_gettime(CLOCK_REALTIME, &ts);
+			fprintf(stdout, "%17.6f\t", ts.tv_sec + ts.tv_nsec / 1e9);
 #endif
 
-		msg_fprint(stdout, &msg);
-		node_write(node, &msg);	
+			msg_fprint(stdout, &pool[i]);
+		}
+		
+		node_write(node, pool, node->combine, 0, node->combine);
 	}
 
 	return 0;
 }
+
+/** @} */

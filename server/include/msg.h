@@ -1,7 +1,7 @@
 /** Message related functions
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
  * @file
  */
 
@@ -26,6 +26,16 @@ struct node;
  * @param m A pointer to the message
  */
 void msg_swap(struct msg *m);
+
+/** Check the consistency of a message.
+ *
+ * The functions checks the header fields of a message.
+ *
+ * @param m A pointer to the message
+ * @retval 0 The message header is valid.
+ * @retval <0 The message header is invalid.
+ */
+int msg_verify(struct msg *m);
 
 /** Print a raw UDP message in human readable form.
  *

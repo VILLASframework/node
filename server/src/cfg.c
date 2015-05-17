@@ -1,7 +1,7 @@
 /** Configuration parser.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
  */
 
 #include <stdio.h>
@@ -19,27 +19,29 @@
 #include "hooks.h"
 
 #include "socket.h"
-#include "gtfpga.h"
-#include "opal.h"
+
+#ifdef ENABLE_GTFPGA
+ #include "gtfpga.h"
+#endif
+#ifdef ENABLE_OPAL_ASYNC
+ #include "opal.h"
+#endif
 
 int config_parse(const char *filename, config_t *cfg, struct settings *set,
-	struct node **nodes, struct path **paths)
+	struct list *nodes, struct list *paths)
 {
 	config_set_auto_convert(cfg, 1);
 
-	FILE *file = (strcmp("-", filename)) ? fopen(filename, "r") : stdin;
-	if (!file)
-		error("Failed to open configuration file: %s", filename);
+	int  ret = strcmp("-", filename) ? config_read_file(cfg, filename)
+					 : config_read(cfg, stdin);
 
-	if (!config_read(cfg, file))
+	if (ret != CONFIG_TRUE)
 		error("Failed to parse configuration: %s in %s:%d",
-			config_error_text(cfg), filename,
+			config_error_text(cfg),
+			config_error_file(cfg) ? config_error_file(cfg) : filename,
 			config_error_line(cfg)
 		);
-
-	if (file != stdin)
-		fclose(file);
-
+	
 	config_setting_t *cfg_root = config_root_setting(cfg);
 
 	/* Parse global settings */
@@ -74,7 +76,7 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 		}
 	}
 
-	return CONFIG_TRUE;
+	return 0;
 }
 
 int config_parse_global(config_setting_t *cfg, struct settings *set)
@@ -84,21 +86,19 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 	config_setting_lookup_int(cfg, "debug", &set->debug);
 	config_setting_lookup_float(cfg, "stats", &set->stats);
 
-	_debug = set->debug;
+	log_setlevel(set->debug);
 
-	set->cfg = cfg;
-
-	return CONFIG_TRUE;
+	return 0;
 }
 
 int config_parse_path(config_setting_t *cfg,
-	struct path **paths, struct node **nodes)
+	struct list *paths, struct list *nodes)
 {
 	const char *in;
-	int enabled = 1;
-	int reverse = 0;
+	int enabled;
+	int reverse;
 	
-	struct path *p = alloc(sizeof(struct path));
+	struct path *p = path_create();
 
 	/* Input node */
 	struct config_setting_t *cfg_in = config_setting_get_member(cfg, "in");
@@ -106,9 +106,9 @@ int config_parse_path(config_setting_t *cfg,
 		cerror(cfg, "Invalid input node for path");
 	
 	in = config_setting_get_string(cfg_in);
-	p->in = node_lookup_name(in, *nodes);
+	p->in = node_lookup_name(in, nodes);
 	if (!p->in)
-		cerror(cfg_in, "Invalid input node '%s", in);
+		cerror(cfg_in, "Invalid input node '%s'", in);
 
 	/* Output node(s) */
 	struct config_setting_t *cfg_out = config_setting_get_member(cfg, "out");
@@ -125,23 +125,31 @@ int config_parse_path(config_setting_t *cfg,
 	if (cfg_hook)
 		config_parse_hooks(cfg_hook, &p->hooks);
 	
-	config_setting_lookup_bool(cfg, "enabled", &enabled);
-	config_setting_lookup_bool(cfg, "reverse", &reverse);
-	config_setting_lookup_float(cfg, "rate", &p->rate);
+	if (!config_setting_lookup_bool(cfg, "enabled", &enabled))
+		enabled = 1;
+	if (!config_setting_lookup_bool(cfg, "reverse", &reverse))
+		reverse = 0;
+	if (!config_setting_lookup_float(cfg, "rate", &p->rate))
+		p->rate = 0; /* disabled */
+	if (!config_setting_lookup_int(cfg, "poolsize", &p->poolsize))
+		p->poolsize = DEFAULT_POOLSIZE;
 
 	p->cfg = cfg;
 
 	if (enabled) {
 		p->in->refcnt++;
-		FOREACH(&p->destinations, it)
+		p->in->vt->refcnt++;
+				
+		FOREACH(&p->destinations, it) {
 			it->node->refcnt++;
+			it->node->vt->refcnt++;
+		}
 		
 		if (reverse) {
 			if (list_length(&p->destinations) > 1)
-				warn("Using first destination '%s' as source for reverse path. "
-					"Ignoring remaining nodes", p->out->name);
+				error("Can't reverse path with multiple destination nodes");
 
-			struct path *r = alloc(sizeof(struct path));
+			struct path *r = path_create();
 
 			r->in  = p->out; /* Swap in/out */
 			r->out = p->in;
@@ -150,14 +158,16 @@ int config_parse_path(config_setting_t *cfg,
 
 			r->in->refcnt++;
 			r->out->refcnt++;
+			r->in->vt->refcnt++;
+			r->out->vt->refcnt++;
 
-			list_add(*paths, r);
+			list_push(paths, r);
 		}
 		
-		list_add(*paths, p);
+		list_push(paths, p);
 	}
 	else {
-		char buf[33];
+		char buf[128];
 		path_print(p, buf, sizeof(buf));
 		
 		warn("Path %s is not enabled", buf);
@@ -167,14 +177,14 @@ int config_parse_path(config_setting_t *cfg,
 	return 0;
 }
 
-int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct node **all) {
+int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct list *all) {
 	const char *str;
 	struct node *node;
 	
 	switch (config_setting_type(cfg)) {
 		case CONFIG_TYPE_STRING:
 			str = config_setting_get_string(cfg);
-			node = node_lookup_name(str, *all);
+			node = node_lookup_name(str, all);
 			if (!node)
 				cerror(cfg, "Invalid outgoing node '%s'", str);
 				
@@ -184,7 +194,7 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct node
 		case CONFIG_TYPE_ARRAY:
 			for (int i=0; i<config_setting_length(cfg); i++) {
 				str = config_setting_get_string_elem(cfg, i);
-				node = node_lookup_name(str, *all);
+				node = node_lookup_name(str, all);
 				if (!node)
 					cerror(config_setting_get_elem(cfg, i), "Invalid outgoing node '%s'", str);
 				
@@ -231,12 +241,12 @@ int config_parse_hooks(config_setting_t *cfg, struct list *hooks) {
 	return 0;
 }
 
-int config_parse_node(config_setting_t *cfg, struct node **nodes)
+int config_parse_node(config_setting_t *cfg, struct list *nodes)
 {
 	const char *type;
 	int ret;
 
-	struct node *n = alloc(sizeof(struct node));
+	struct node *n = node_create();
 
 	/* Required settings */
 	n->cfg = cfg;
@@ -244,123 +254,20 @@ int config_parse_node(config_setting_t *cfg, struct node **nodes)
 	if (!n->name)
 		cerror(cfg, "Missing node name");
 
-	if (config_setting_lookup_string(cfg, "type", &type)) {
-		n->vt = node_lookup_vtable(type);
-		if (!n->vt)
-			cerror(cfg, "Invalid type for node '%s'", n->name);
-
-		if (!n->vt->parse)
-			cerror(cfg, "Node type '%s' is not allowed in the config", type);
-	}
-	else
-		n->vt = node_lookup_vtable("udp");
+	if (!config_setting_lookup_string(cfg, "type", &type))
+		cerror(cfg, "Missing node type");
+	
+	if (!config_setting_lookup_int(cfg, "combine", &n->combine))
+		n->combine = 1;
+		
+	n->vt = node_lookup_vtable(type);
+	if (!n->vt)
+		cerror(cfg, "Invalid type for node '%s'", n->name);
 
 	ret = n->vt->parse(cfg, n);
-
-	list_add(*nodes, n);
+	if (!ret)
+		list_push(nodes, n);
 
 	return ret;
 }
 
-/** @todo: Remove this global variable. */
-extern struct opal_global *og;
-
-int config_parse_opal(config_setting_t *cfg, struct node *n)
-{	
-	if (!og) {
-		warn("Skipping this node, because this server is not running as an OPAL Async process!");
-		return -1;
-	}
-	
-	struct opal *o = (struct opal *) malloc(sizeof(struct opal));
-	if (!o)
-		error("Failed to allocate memory for opal settings");
-	
-	memset(o, 0, sizeof(struct opal));
-	
-	config_setting_lookup_int(cfg, "send_id", &o->send_id);
-	config_setting_lookup_int(cfg, "recv_id", &o->send_id);
-	config_setting_lookup_bool(cfg, "reply", &o->reply);
-		
-	/* Search for valid send and recv ids */
-	int sfound = 0, rfound = 0;
-	for (int i=0; i<og->send_icons; i++)
-		sfound += og->send_ids[i] == o->send_id;
-	for (int i=0; i<og->send_icons; i++)
-		rfound += og->send_ids[i] == o->send_id;
-	
-	if (!sfound)
-		cerror(config_setting_get_member(cfg, "send_id"), "Invalid send_id '%u' for node '%s'", o->send_id, n->name);
-	if (!rfound)
-		cerror(config_setting_get_member(cfg, "send_id"), "Invalid send_id '%u' for node '%s'", o->send_id, n->name);
-
-	n->opal = o;
-	n->opal->global = og;
-	n->cfg = cfg;
-
-	return 0;
-}
-
-/** @todo Implement */
-int config_parse_gtfpga(config_setting_t *cfg, struct node *n)
-{
-	return 0;
-}
-
-int config_parse_socket(config_setting_t *cfg, struct node *n)
-{
-	const char *local, *remote;
-	int ret;
-	
-	struct socket *s = alloc(sizeof(struct socket));
-
-	if (!config_setting_lookup_string(cfg, "remote", &remote))
-		cerror(cfg, "Missing remote address for node '%s'", n->name);
-
-	if (!config_setting_lookup_string(cfg, "local", &local))
-		cerror(cfg, "Missing local address for node '%s'", n->name);
-
-	ret = socket_parse_addr(local, (struct sockaddr *) &s->local, node_type(n), AI_PASSIVE);
-	if (ret)
-		cerror(cfg, "Failed to resolve local address '%s' of node '%s': %s",
-			local, n->name, gai_strerror(ret));
-
-	ret = socket_parse_addr(remote, (struct sockaddr *) &s->remote, node_type(n), 0);
-	if (ret)
-		cerror(cfg, "Failed to resolve remote address '%s' of node '%s': %s",
-			remote, n->name, gai_strerror(ret));
-
-	/** @todo Netem settings are not usable AF_UNIX */
-	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
-	if (cfg_netem) {
-		s->netem = (struct netem *) alloc(sizeof(struct netem));
-			
-		config_parse_netem(cfg_netem, s->netem);
-	}
-	
-	n->socket = s;
-
-	return CONFIG_TRUE;
-}
-
-int config_parse_netem(config_setting_t *cfg, struct netem *em)
-{
-	em->valid = 0;
-
-	if (config_setting_lookup_string(cfg, "distribution", &em->distribution))
-		em->valid |= TC_NETEM_DISTR;
-	if (config_setting_lookup_int(cfg, "delay", &em->delay))
-		em->valid |= TC_NETEM_DELAY;
-	if (config_setting_lookup_int(cfg, "jitter", &em->jitter))
-		em->valid |= TC_NETEM_JITTER;
-	if (config_setting_lookup_int(cfg, "loss", &em->loss))
-		em->valid |= TC_NETEM_LOSS;
-	if (config_setting_lookup_int(cfg, "duplicate", &em->duplicate))
-		em->valid |= TC_NETEM_DUPL;
-	if (config_setting_lookup_int(cfg, "corrupt", &em->corrupt))
-		em->valid |= TC_NETEM_CORRUPT;
-
-	/** @todo Validate netem config values */
-
-	return CONFIG_TRUE;
-}

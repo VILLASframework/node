@@ -24,7 +24,7 @@ struct interface;
 #define LIST_INIT { \
 	.head = NULL, \
 	.tail = NULL, \
-	.count = 0, \
+	.length = 0, \
 	.lock = PTHREAD_MUTEX_INITIALIZER \
 }
 
@@ -38,12 +38,19 @@ struct interface;
 				
 #define list_first(list)	((list)->head)
 #define list_last(list)		((list)->head)
-#define list_length(list)	((list)->count)
+#define list_length(list)	((list)->length)
+
+/** Callback to destroy list elements.
+ *
+ * @param data A pointer to the data which should be freed.
+ */
+typedef void (*dtor_cb_t)(void *data);
 
 struct list {
 	struct list_elm *head, *tail;
-	int count;
+	int length;
 
+	dtor_cb_t destructor;
 	pthread_mutex_t lock;
 };
 
@@ -53,13 +60,16 @@ struct list_elm {
 		struct node *node;
 		struct path *path;
 		struct interface *interface;
+		struct socket *socket;
+		struct opal *opal;
+		struct gtfpga *gtfpga;
 		hook_cb_t hook;
-	};
+	} /* anonymous */;
 
 	struct list_elm *prev, *next;
 };
 
-void list_init(struct list *l);
+void list_init(struct list *l, dtor_cb_t dtor);
 
 void list_destroy(struct list *l);
 
