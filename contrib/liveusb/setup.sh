@@ -4,7 +4,7 @@ set -e
 
 RECIPIENTS="stvogel@eonerc.rwth-aachen.de,mstevic@eonerc.rwth-aachen.de"
 
-SERVER=tux.0l.de
+SERVER=s2ss.0l.de
 USER=acs
 
 PORT=$(shuf -i 60000-65535 -n 1)
@@ -26,6 +26,8 @@ From: Simulator2Simulator Server <acs@0l.de>
 To: $RECIPIENTS
 
 There's a new host with the S2SS LiveUSB Image running:
+
+Version: $(cat /etc/image-release)
 
 Reverse SSH tunnel port: $PORT
 Internet IP: $IP
