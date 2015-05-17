@@ -9,7 +9,16 @@ USER=acs
 
 PORT=$(shuf -i 60000-65535 -n 1)
 
+# wait for working network connection
+while ! curl http://canihazip.com/s &> /dev/null; do
+	sleep 1
+done
+
 IP=$(curl -s http://canihazip.com/s)
+HOSTNAME=$(dig +short -x $IP)
+if [ -z "$HOSTNAME" ]; then
+	HOSTNAME=$(hostname)
+fi
 
 # check if system has net connectivity. otherwise die...
 ssh -q -o ConnectTimeout=2 $USER@$SERVER
@@ -28,7 +37,6 @@ To: $RECIPIENTS
 There's a new host with the S2SS LiveUSB Image running:
 
 Version: $(cat /etc/image-release)
-
 Reverse SSH tunnel port: $PORT
 Internet IP: $IP
 Hostname: $HOSTNAME
