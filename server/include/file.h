@@ -14,17 +14,20 @@
 
 #include "node.h"
 
+#define FILE_MAX_PATHLEN 128
+
 struct file {
 	FILE *in;
 	FILE *out;
 
 	const char *path_in;
-	const char *path_out;
+	char *path_out;
 
 	const char *mode;	/**< The mode for fopen() which is used for the out file. */
 	
 	double rate;		/**< The sending rate. */
 	int tfd;		/**< Timer file descriptor. Blocks until 1/rate seconds are elapsed. */
+	int timestamp;		/**< Bolean flag, prepend timestamp in front of message */
 };
 
 /** @see node_vtable::init */

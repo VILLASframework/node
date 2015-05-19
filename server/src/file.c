@@ -53,6 +53,9 @@ int file_parse(config_setting_t *cfg, struct node *n)
 	if (!config_setting_lookup_float(cfg, "rate", &f->rate))
 		f->rate = 1;
 	
+	if (!config_setting_lookup_bool(cfg, "timestamp", &f->timestamp))
+		f->timestamp = 0;
+	
 	n->file = f;
 	
 	return 0;
@@ -100,6 +103,8 @@ int file_close(struct node *n)
 	if (f->out)
 		fclose(f->out);
 	
+	free(f->path_out);
+	
 	return 0;
 }
 
@@ -133,6 +138,12 @@ int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 		for (i = 0; i < cnt; i++) {
 			struct msg *m = &pool[(first+i) % poolsize];
 
+			if (f->timestamp) {
+				struct timespec ts;
+				clock_gettime(CLOCK_REALTIME, &ts);
+				fprintf(f->out, "%lu.%06lu\t", ts.tv_sec, (long) (ts.tv_nsec / 1e3));
+			}
+			
 			msg_fprint(f->out, m);
 		}
 	}
