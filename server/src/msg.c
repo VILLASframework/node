@@ -82,7 +82,7 @@ int msg_fscan(FILE *f, struct msg *m)
 void msg_random(struct msg *m)
 {
 	for (int i = 0; i < m->length; i++)
-		m->data[i].f += (float) random() / RAND_MAX - .5;
+		m->data[i].f += box_muller(0, 1);
 
 	m->endian = MSG_ENDIAN_HOST;
 }
