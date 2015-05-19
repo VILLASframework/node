@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <sched.h>
 #include <string.h>
+#include <time.h>
 #include <sys/types.h>
 
 #include "log.h"

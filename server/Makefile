@@ -15,14 +15,12 @@ LDLIBS = -pthread -lrt -lm -lconfig
 CFLAGS  = -std=gnu99 -Iinclude/ -MMD -Wall -O3
 CFLAGS += -D_XOPEN_SOURCE=500 -D_GNU_SOURCE -DV=$(V)
 
-# Add git commit hash
-ifneq (,$(shell which git))
-	CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
-endif
-
-# Conditional debug flags
+# Add more compiler flags
 ifdef DEBUG
 	CFLAGS += -O0 -g
+endif
+ifneq (,$(shell which git))
+	CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
 endif
 
 # Enabled GTFPGA support when libpci is available
@@ -42,7 +40,7 @@ ifneq (,$(wildcard $(OPALDIR)/include_target/AsyncApi.h))
 	override OBJS    += opal.o
 endif
 
-.PHONY: all clean
+.PHONY: all clean strip protected
 
 # Default target: build everything
 all: $(TARGETS)
@@ -54,10 +52,14 @@ receive: receive.o $(OBJS)
 random: random.o $(OBJS)
 test: test.o $(OBJS)
 
+protected: CFLAGS += -DPROTECT -DVALID_UNTIL=$(shell date -d "now +5months" +%s) -s -O3 -fvisibility=hidden
+protected: clean strip
+
 strip: $(TARGETS)
 	strip	--remove-section=.comment \
 		--remove-section=.note \
-		--strip-unneeded \
+		--strip-debug \
+		--strip-all \
 		$(TARGETS) 
 	
 

@@ -1,0 +1,34 @@
+*filter
+:INPUT ACCEPT
+:FORWARD ACCEPT
+:OUTPUT ACCEPT
+
+# Allow loopback traffic
+-A INPUT -i lo -j ACCEPT
+
+# Allow established connections, and those not coming from the outside
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+# Allow HTTP
+-A INPUT -p tcp --dport http -m conntrack --ctstate NEW -j ACCEPT
+
+# Allow VPN
+-A INPUT -s 10.0.0.0/8 -j ACCEPT
+
+# Allow SSH
+-A INPUT -p tcp --dport ssh -m conntrack --ctstate NEW -j ACCEPT
+
+# Allow Tinc
+-A INPUT -p udp --dport tinc -j ACCEPT
+-A INPUT -p tcp --dport tinc -j ACCEPT
+
+# Accept Pings
+-A INPUT -p icmp -j ACCEPT
+
+# Reject everything else
+-A INPUT -j REJECT
+
+# We wont act as a router
+-A FORWARD -j REJECT
+
+COMMIT
