@@ -81,6 +81,17 @@ struct timespec;
  */
 extern pthread_t _mtid;
 
+/** Normal random variate generator using the Box-Muller method
+ *
+ * @param m Mean
+ * @param s Standard deviation
+ * @return Normal variate random variable (Gaussian)
+ */
+double box_muller(float m, float s);
+
+/** Double precission uniform random variable */
+double randf();
+
 /** Safely append a format string to an existing string.
  *
  * This function is similar to strlcat() from BSD.

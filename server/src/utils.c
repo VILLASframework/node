@@ -27,6 +27,38 @@
 
 pthread_t _mtid;
 
+double box_muller(float m, float s)
+{
+	double x1, x2, y1;
+	static double y2;
+	static int use_last = 0;
+
+	if (use_last) {		/* use value from previous call */
+		y1 = y2;
+		use_last = 0;
+	}
+	else {
+		double w;
+		do {
+			x1 = 2.0 * randf() - 1.0;
+			x2 = 2.0 * randf() - 1.0;
+			w = x1*x1 + x2*x2;
+		} while (w >= 1.0);
+
+		w = sqrt(-2.0 * log(w) / w);
+		y1 = x1 * w;
+		y2 = x2 * w;
+		use_last = 1;
+	}
+
+	return m + y1 * s;
+}
+
+double randf()
+{
+	return (double) random() / RAND_MAX;
+}
+
 void die()
 {
 	if (pthread_equal(_mtid, pthread_self()))
