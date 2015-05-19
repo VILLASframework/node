@@ -35,8 +35,17 @@ int file_parse(config_setting_t *cfg, struct node *n)
 {
 	struct file *f = alloc(sizeof(struct file));
 	
+	const char *out;
+	if (config_setting_lookup_string(cfg, "out", &out)) {
+		time_t t = time(NULL);
+		struct tm *tm = localtime(&t);
+		
+		f->path_out = alloc(FILE_MAX_PATHLEN);
+		if (strftime(f->path_out, FILE_MAX_PATHLEN, out, tm) == 0)
+			cerror(cfg, "Invalid path for output");
+			
+	}
 	config_setting_lookup_string(cfg, "in",  &f->path_in);
-	config_setting_lookup_string(cfg, "out", &f->path_out);
 	
 	if (!config_setting_lookup_string(cfg, "mode", &f->mode))
 		f->mode = "w+";
