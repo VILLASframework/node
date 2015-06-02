@@ -33,12 +33,16 @@ void msg_swap(struct msg *m)
 
 int msg_verify(struct msg *m)
 {
-	return ((m->version == MSG_VERSION) &&
-		(m->type    == MSG_TYPE_DATA) &&
-		(m->length  > 0) &&
-		(m->length  <= MSG_VALUES))
-	   ?  0
-	   : -1;
+	if      (m->version != MSG_VERSION)
+		return -1;
+	else if (m->type    != MSG_TYPE_DATA)
+		return -2;
+	else if ((m->length <= 0) || (m->length > MSG_VALUES))
+		return -3;
+	else if ((m->rsvd1 != 0)  || (m->rsvd2 != 0))
+		return -4;
+	else
+		return 0;
 }
 
 int msg_fprint(FILE *f, struct msg *m)
