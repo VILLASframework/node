@@ -50,10 +50,26 @@ void hist_put(struct hist *h, double value)
 		h->higher++;
 	else if (idx < 0)
 		h->lower++;
-	else {		
-		h->total++;
+	else
 		h->data[idx]++;
+	
+	h->total++;
+	
+	/* Online / running calculation of variance and mean
+	 *  by Donald Knuth’s Art of Computer Programming, Vol 2, page 232, 3rd edition */
+	if (h->total == 1) {
+		h->_m[1] = h->_m[0] = value;
+		h->_s[1] = 0.0;
 	}
+	else {
+		h->_m[0] = h->_m[1] + (value - h->_m[1]) / h->total;
+		h->_s[0] = h->_s[1] + (value - h->_m[1]) * (value - h->_m[0]);
+   
+		// set up for next iteration
+		h->_m[1] = h->_m[0]; 
+		h->_s[1] = h->_s[0];
+	}
+	
 }
 
 void hist_reset(struct hist *h)
@@ -70,24 +86,12 @@ void hist_reset(struct hist *h)
 
 double hist_mean(struct hist *h)
 {
-	double mean = 0;
-
-	for (int i = 0; i < h->length; i++)
-		mean += VAL(h, i) * h->data[i];
-	
-	return mean / h->total;
+	return (h->total > 0) ? h->_m[0] : 0.0;
 }
 
 double hist_var(struct hist *h)
 {
-	double mean_x2 = 0;
-	double mean = hist_mean(h);
-	
-	for (int i = 0; i < h->length; i++)
-		mean_x2 += pow(VAL(h, i), 2) * h->data[i];
-	
-	/* Var[X] = E[X^2] - E^2[X] */
-	return mean_x2 / h->total - pow(mean, 2);
+	return (h->total > 1) ? h->_s[0] / (h->total - 1) : 0.0;
 }
 
 double hist_stddev(struct hist *h)
@@ -100,12 +104,16 @@ void hist_print(struct hist *h)
 	char buf[(h->length + 1) * 8];
 	hist_dump(h, buf, sizeof(buf));
 
-	info("Total: %u values between %f and %f", h->total, h->low, h->high);
-	info("Missed:  %u (above), %u (below) ", h->higher, h->lower);
-	info("Highest value: %f, lowest %f", h->highest, h->lowest);
+	info("Total: %u values", h->total);
+	info("Highest value: %f", h->highest);
+	info("Lowest  value: %f", h->lowest);
 	info("Mean: %f", hist_mean(h));
 	info("Variance: %f", hist_var(h));
 	info("Standard derivation: %f", hist_stddev(h));
+	if (h->higher > 0)
+		warn("Missed:  %u values above %f", h->higher, h->high);
+	if (h->lower > 0)
+		warn("Missed:  %u values below %f", h->lower,  h->low);
 	
 	hist_plot(h);
 	info(buf);
@@ -116,26 +124,22 @@ void hist_plot(struct hist *h)
 	char buf[HIST_HEIGHT];
 	memset(buf, '#', sizeof(buf));
 	
-	unsigned int min = UINT_MAX, max = 0;
+	double max = 0;
 
-	/* Get max, first & last */
+	/* Get highest bar */
 	for (int i = 0; i < h->length; i++) {
 		if (h->data[i] > max)
 			max = h->data[i];
-		if (h->data[i] < min)
-			min = h->data[i];
 	}
 	
 	/* Print plot */
-	info("%9s | %5s | %s", "Value", "Occur", "Plot");
+	info("%3s | %9s | %5s | %s", "#", "Value", "Occur", "Plot");
 	line();
 
 	for (int i = 0; i < h->length; i++) {
-		int bar = HIST_HEIGHT * ((double) h->data[i] / max);
-
-		if      (h->data[i] == min) info("%+5.2e | " GRN("%5u") " | %.*s", VAL(h, i), h->data[i], bar, buf);
-		else if (h->data[i] == max) info("%+5.2e | " RED("%5u") " | %.*s", VAL(h, i), h->data[i], bar, buf);
-		else			    info("%+5.2e | "     "%5u"  " | %.*s", VAL(h, i), h->data[i], bar, buf);
+		int bar = HIST_HEIGHT * (h->data[i] / max);
+		
+		info("%3u | %+5.2e | "     "%5u"  " | %.*s", i, VAL(h, i), h->data[i], bar, buf);
 	}
 }
 

@@ -45,6 +45,9 @@ struct hist {
 
 	/** Pointer to dynamically allocated array of size length. */
 	hist_cnt_t *data;
+	
+	/** Private variables for online variance calculation */
+	double _m[2], _s[2];
 };
 
 /** Initialize struct hist with supplied values and allocate memory for buckets. */
