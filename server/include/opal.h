@@ -2,12 +2,15 @@
  *
  * This file implements the opal subtype for nodes.
  *
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
  * @file
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
+ *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+ *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *
  * @addtogroup opal OPAL-RT Asyc Process node type
  * @{
- */
+ **********************************************************************************/
 
 #ifndef _OPAL_H_
 #define _OPAL_H_

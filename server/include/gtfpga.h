@@ -5,12 +5,15 @@
  * A detailed description of that module is available here:
  * http://www.hep.by/gnu/kernel/uio-howto/uio_pci_generic.html
  *
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
  * @file
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
+ *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+ *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *
  * @addtogroup gtfpga RTDS - PCIexpress Fiber interface node type
  * @{
- */
+ *********************************************************************************/
 
 #ifndef _GTFPGA_H_
 #define _GTFPGA_H_

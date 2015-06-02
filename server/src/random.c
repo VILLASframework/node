@@ -1,11 +1,14 @@
 /** Generate random packages on stdout.
  *
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2015, Institute for Automation of Complex Power Systems, EONERC
  * @file
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
+ *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+ *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *
  * @addtogroup tools Test and debug tools
  * @{
- */
+ **********************************************************************************/
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -27,7 +30,7 @@ int main(int argc, char *argv[])
 
 		printf("Simulator2Simulator Server %s (built on %s %s)\n",
 			BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-		printf(" Copyright 2015, Institute for Automation of Complex Power Systems, EONERC\n");
+		printf(" copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC\n");
 		printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
 
 		exit(EXIT_FAILURE);

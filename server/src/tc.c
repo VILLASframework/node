@@ -3,8 +3,10 @@
  * S2SS uses these functions to setup the network emulation feature.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
- */
+ * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
+ *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+ *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *********************************************************************************/
 
 #include <stdlib.h>
 #include <stdio.h>
