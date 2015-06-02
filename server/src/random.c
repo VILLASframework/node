@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	int rate = atoi(argv[2]);
+	double rate = strtod(argv[2], NULL);
 	struct msg m = MSG_INIT(atoi(argv[1]));
 
 	/* Setup timer */
