@@ -23,8 +23,7 @@
 
 /** Debug level used by the debug() macro.
  * It defaults to V (defined by the Makefile) and can be
- * overwritten by the 'debug' setting in the configuration file.
- */
+ * overwritten by the 'debug' setting in the configuration file. */
 static int level = V;
 
 /** A global clock used to prefix the log messages. */

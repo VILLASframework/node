@@ -82,7 +82,7 @@ static void * path_run(void *arg)
 		node_start_defer(it->node); */
 
 	/* Main thread loop */
-skip:	while (1) {
+skip:	for(;;) {
 		/* Receive message */
 		int recv = node_read(p->in, p->pool, p->poolsize, p->received, p->in->combine);
 		

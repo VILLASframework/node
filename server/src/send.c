@@ -108,12 +108,19 @@ int main(int argc, char *argv[])
 		node_reverse(node);
 	
 	node->refcnt++;
-	pool = alloc(sizeof(struct msg) * node->combine);
 	node->vt->refcnt++;
 
+	info("Initialize node types");
 	node_init(argc-optind, argv+optind, &set);
+
+	info("Start node");
 	node_start(node);
 	node_start_defer(node);
+
+	pool = alloc(sizeof(struct msg) * node->combine);
+	
+	/* Print header */
+	fprintf(stderr, "# %-20s\t%s\t%s\n", "timestamp", "seqno", "data[]");
 
 	while (!feof(stdin)) {
 		for (int i = 0; i < node->combine; i++) {

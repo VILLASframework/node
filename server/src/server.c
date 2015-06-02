@@ -150,7 +150,6 @@ int main(int argc, char *argv[])
 	info("Initialize node types");
 	node_init(argc, argv, &settings);
 
-	/* Connect all nodes and start one thread per path */
 	info("Starting nodes");
 	FOREACH(&nodes, it)
 		node_start(it->node);

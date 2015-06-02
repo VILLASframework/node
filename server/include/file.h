@@ -23,7 +23,7 @@
 struct file {
 	FILE *in;
 	FILE *out;
-
+	
 	const char *path_in;
 	char *path_out;
 

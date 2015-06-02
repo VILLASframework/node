@@ -14,7 +14,15 @@
 #include <time.h>
 #include <sys/ptrace.h>
 
-/** Check for correct license */
+/** Simple copy protection.
+ *
+ * This function does:
+ *   - checks several machine IDs for predefined values.
+ *   - checks if program is debugged / traced
+ *
+ * This function shall be executed during program startup to
+ * check if this host is allowed to execute S2SS.
+ */
 static inline __attribute__((always_inline)) int check_license()
 {
 	const struct {

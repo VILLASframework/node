@@ -39,7 +39,7 @@ static struct settings set;
 static struct msg *pool;
 static struct node *node;
 
-static void quit(int sig, siginfo_t *si, void *ptr)
+static void quit()
 {
 	node_stop(node);
 	node_deinit();
