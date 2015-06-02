@@ -129,6 +129,8 @@ int main(int argc, char *argv[])
 		
 		node_write(node, pool, node->combine, 0, node->combine);
 	}
+	
+	quit();
 
 	return 0;
 }

@@ -57,9 +57,9 @@ int main(int argc, char *argv[])
 	fprintf(stderr, "# %-6s%-12s\n", "seq", "data");
 
 	/* Block until 1/p->rate seconds elapsed */
-	while (1) {
 		m.sequence += (uint16_t) timerfd_wait(tfd);
 		
+	for (;;) {
 		msg_random(&m);
 		msg_fprint(stdout, &m);
 		

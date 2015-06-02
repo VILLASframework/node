@@ -87,9 +87,8 @@ static void signals_init()
 	};
 
 	sigemptyset(&sa_quit.sa_mask);
-	sigaction(SIGQUIT, &sa_quit, NULL);
-	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT, &sa_quit, NULL);
+	sigaction(SIGTERM, &sa_quit, NULL);
 }
 
 static void usage(const char *name)
@@ -166,16 +165,14 @@ int main(int argc, char *argv[])
 			"Source " MAG("=>") " Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Inval");
 		line();
 			
-		do { FOREACH(&paths, it) {
+		for (;;) FOREACH(&paths, it) {
 			usleep(settings.stats * 1e6);
 			path_print_stats(it->path);
-		} } while (1);
+		}
 
 	}
 	else
 		pause();
-
-	quit();
 
 	return 0;
 }

@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
 	/* Print header */
 	fprintf(stderr, "# %-6s %-8s %-12s\n", "dev_id", "seq_no", "data");
 
-	while (1) {
+	for (;;) {
 		int recv = node_read(node, pool, node->combine, 0, node->combine);
 
 		for (int i = 0; i < recv; i++) {
