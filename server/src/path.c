@@ -86,6 +86,9 @@ skip:	for(;;) {
 		/* Receive message */
 		int recv = node_read(p->in, p->pool, p->poolsize, p->received, p->in->combine);
 		
+		struct timespec now;
+		clock_gettime(CLOCK_REALTIME, &now);
+		
 		debug(10, "Received %u messages from node '%s'", recv, p->in->name);
 		
 		/* For each received message... */
@@ -110,7 +113,8 @@ skip:	for(;;) {
 			if (dist > UINT16_MAX / 2)
 				dist -= UINT16_MAX;
 
-			hist_put(&p->histogram, dist);
+			/* Update sequence histogram */
+			hist_put(&p->hist_seq, dist);
 
 			/* Handle simulation restart */
 			if (p->current->sequence == 0 && abs(dist) >= 1) {
@@ -125,6 +129,10 @@ skip:	for(;;) {
 				p->dropped++;
 				goto skip;
 			}
+			
+			/* Update delay histogram */
+			struct timespec sent = MSG_TS(p->current);
+			hist_put(&p->hist_delay, time_delta(&sent, &now));
 		}
 		
 		/* Call hook callbacks */
@@ -174,8 +182,12 @@ int path_stop(struct path *p)
 		close(p->tfd);
 	}
 
-	if (p->received)
-		hist_print(&p->histogram);
+	if (p->received) {
+		info("Delay distribution:");
+		  hist_print(&p->hist_delay);
+		info("Sequence number displacement:");
+		  hist_print(&p->hist_seq);	
+	}
 
 	return 0;
 }
@@ -188,7 +200,8 @@ int path_reset(struct path *p)
 	p->skipped	= 0;
 	p->dropped	= 0;
 
-	hist_reset(&p->histogram);
+	hist_reset(&p->hist_seq);
+	hist_reset(&p->hist_delay);
 	
 	return 0;
 }
@@ -227,7 +240,8 @@ struct path * path_create()
 	list_init(&p->destinations, NULL);
 	list_init(&p->hooks, NULL);
 
-	hist_create(&p->histogram, -HIST_SEQ, +HIST_SEQ, 1);
+	hist_create(&p->hist_seq, -HIST_SEQ, +HIST_SEQ, 1);
+	hist_create(&p->hist_delay, 0, 2, 100e-3);
 
 	return p;
 }
@@ -236,7 +250,8 @@ void path_destroy(struct path *p)
 {
 	list_destroy(&p->destinations);
 	list_destroy(&p->hooks);
-	hist_destroy(&p->histogram);
+	hist_destroy(&p->hist_seq);
+	hist_destroy(&p->hist_delay);
 	
 	free(p->pool);
 	free(p);

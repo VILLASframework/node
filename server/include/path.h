@@ -52,8 +52,10 @@ struct path
 	/** A pointer to the previously received message */
 	struct msg *previous;
 	
-	/** Counter for received messages according to their sequence no displacement */
-	struct hist histogram;
+	/** Histogram of sequence number displacement of received messages */
+	struct hist hist_seq;
+	/** Histogram for delay of received messages */
+	struct hist hist_delay;
 
 	/** Counter for sent messages to all outgoing nodes */
 	unsigned int sent;
