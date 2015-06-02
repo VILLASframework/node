@@ -17,6 +17,7 @@
 #include "utils.h"
 #include "path.h"
 #include "socket.h"
+#include "timing.h"
 
 #ifndef sigev_notify_thread_id
  #define sigev_notify_thread_id   _sigev_un._tid
@@ -46,7 +47,7 @@ static void * path_run_async(void *arg)
 {
 	struct path *p = arg;
 	struct itimerspec its = {
-		.it_interval = timespec_rate(p->rate),
+		.it_interval = time_from_double(1 / p->rate),
 		.it_value = { 1, 0 }
 	};
 

@@ -211,7 +211,7 @@ int gtfpga_open(struct node *n)
 			serror("Failed to create timer");
 	
 		struct itimerspec its = {
-			.it_interval = timespec_rate(g->rate),
+			.it_interval = time_from_double(1 / g->rate),
 			.it_value = { 1, 0 }
 		};
 		ret = timerfd_settime(g->fd_irq, 0, &its, NULL);

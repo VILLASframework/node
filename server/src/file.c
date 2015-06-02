@@ -13,7 +13,7 @@
 
 #include "file.h"
 #include "utils.h"
-
+#include "timing.h"
 
 int file_init(int argc, char *argv[], struct settings *set)
 { INDENT
@@ -53,10 +53,7 @@ int file_parse(config_setting_t *cfg, struct node *n)
 		f->mode = "w+";
 	
 	if (!config_setting_lookup_float(cfg, "rate", &f->rate))
-		f->rate = 1;
-	
-	if (!config_setting_lookup_bool(cfg, "timestamp", &f->timestamp))
-		f->timestamp = 0;
+		f->rate = 0;
 	
 	n->file = f;
 	
@@ -76,10 +73,19 @@ int file_open(struct node *n)
 		if (f->tfd < 0)
 			serror("Failed to create timer");
 		
-		struct itimerspec its = {
-			.it_interval = timespec_rate(f->rate),
-			.it_value = { 1, 0 }
-		};
+		/* Arm the timer */
+		struct itimerspec its;
+		if (f->rate) {
+			/* Send with fixed rate */
+			its.it_interval = time_from_double(1 / f->rate);
+			its.it_value = (struct timespec) { 1, 0 };
+		}
+		else {
+			/* Read timestamp from first line to get an epoch offset */
+			time_fscan(f->in, &f->offset);
+			rewind(f->in);
+		}
+		
 		int ret = timerfd_settime(f->tfd, 0, &its, NULL);
 		if (ret)
 			serror("Failed to start timer");
@@ -116,14 +122,16 @@ int file_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 	struct file *f = n->file;
 	
 	if (f->in) {
-		/* Blocking for 1/f->rate seconds */
-		if (timerfd_wait(f->tfd)) {
-			for (i = 0; i < cnt; i++) {
-				struct msg *m = &pool[(first+i) % poolsize];
+		struct timespec ts;
 
-				msg_fscan(f->in, m);
-			}
-		}
+		for (i = 0; i < cnt; i++)
+			msg_fscan(f->in, &pool[(first+i) % poolsize]);
+		
+		if (f->rate)
+			timerfd_wait(f->tfd);
+		else
+			timerfd_wait_until(f->tfd, &ts);
+		
 	}
 	else
 		warn("Can not read from node '%s'", n->name);
@@ -136,18 +144,12 @@ int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 	int i = 0;
 	struct file *f = n->file;
 	
-	if (f->out) {	
-		for (i = 0; i < cnt; i++) {
-			struct msg *m = &pool[(first+i) % poolsize];
+	if (f->out) {
+		struct timespec ts;
+		clock_gettime(CLOCK_REALTIME, &ts);
 
-			if (f->timestamp) {
-				struct timespec ts;
-				clock_gettime(CLOCK_REALTIME, &ts);
-				fprintf(f->out, "%lu.%06lu\t", ts.tv_sec, (long) (ts.tv_nsec / 1e3));
-			}
-			
-			msg_fprint(f->out, m);
-		}
+		for (i = 0; i < cnt; i++)
+			msg_fprint(f->out, &pool[(first+i) % poolsize]);
 	}
 	else
 		warn("Can not write to node '%s", n->name);

@@ -113,36 +113,6 @@ void * alloc(size_t bytes)
 	return p;
 }
 
-uint64_t timerfd_wait(int fd)
-{
-	uint64_t runs;
-	
-	return read(fd, &runs, sizeof(runs)) < 0 ? 0 : runs;
-}
-
-double timespec_delta(struct timespec *start, struct timespec *end)
-{
-	double sec  = end->tv_sec - start->tv_sec;
-	double nsec = end->tv_nsec - start->tv_nsec;
-
-	if (nsec < 0) {
-		sec  -= 1;
-		nsec += 1e9;
-	}
-
-	return sec + nsec * 1e-9;
-}
-
-struct timespec timespec_rate(double rate)
-{
-	struct timespec ts;
-
-	ts.tv_sec  = 1 / rate;
-	ts.tv_nsec = 1.0e9 * (1 / rate - ts.tv_sec);
-
-	return ts;
-}
-
 /** @todo: Proper way: create additional pipe for stderr in child process */
 int system2(const char *cmd, ...)
 {

@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 
 	/* Setup timer */
 	struct itimerspec its = {
-		.it_interval = timespec_rate(rate),
+		.it_interval = time_from_double(1 / rate),
 		.it_value = { 1, 0 }
 	};
 

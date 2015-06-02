@@ -173,7 +173,7 @@ void test_rtt() {
 		node_read_single(node, &m);  /* Pong */
 		clock_gettime(CLOCK_ID, ts2);
 
-		rtt = timespec_delta(ts1, ts2);
+		rtt = time_delta(ts1, ts2);
 
 		if (rtt < 0) continue;
 		if (rtt > rtt_max) rtt_max = rtt;
