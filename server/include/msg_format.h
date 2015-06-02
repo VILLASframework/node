@@ -25,7 +25,7 @@
 #define MSG_VALUES		MAX_VALUES
 
 /** The current version number for the message format */
-#define MSG_VERSION		0
+#define MSG_VERSION		1
 
 /** @todo Implement more message types */
 #define MSG_TYPE_DATA		0 /**< Message contains float values */
@@ -36,23 +36,29 @@
 #define MSG_ENDIAN_BIG		1 /**< Message values are in bit endian format */
 
 #if BYTE_ORDER == LITTLE_ENDIAN
- #define MSG_ENDIAN_HOST        MSG_ENDIAN_LITTLE
+ #define MSG_ENDIAN_HOST	MSG_ENDIAN_LITTLE
 #elif BYTE_ORDER == BIG_ENDIAN
- #define MSG_ENDIAN_HOST        MSG_ENDIAN_BIG
+ #define MSG_ENDIAN_HOST	MSG_ENDIAN_BIG
 #else
  #error "Unknown byte order!"
 #endif
 
 /** The total length of a message */
-#define MSG_LEN(values)		(4 * (values + 1))
+#define MSG_LEN(msg)		(4 * ((msg)->length + 4))
+
+#define MSG_TS(msg) (struct timespec) {	\
+	.tv_sec  = (msg)->ts.sec,	\
+	.tv_nsec = (msg)->ts.nsec	\
+}
 
 /** Initialize a message */
-#define MSG_INIT(i)	{ \
-	.version = MSG_VERSION, \
-	.type = MSG_TYPE_DATA, \
-	.endian = MSG_ENDIAN_HOST, \
-	.length = i, \
-	.sequence = 0 \
+#define MSG_INIT(i) (struct msg) {	\
+	.version = MSG_VERSION,		\
+	.type = MSG_TYPE_DATA,		\
+	.endian = MSG_ENDIAN_HOST,	\
+	.length = i,			\
+	.sequence = 0,			\
+	.rsvd1 = 0, .rsvd2 = 0		\
 }
 
 /** This message format is used by all clients
@@ -62,25 +68,32 @@
 struct msg
 {
 #if BYTE_ORDER == BIG_ENDIAN
-	unsigned version: 4; /**< Specifies the format of the remaining message (see MGS_VERSION) */
-	unsigned type	: 2; /**< Data or control message (see MSG_TYPE_*) */
-	unsigned endian	: 1; /**< Specifies the byteorder of the message (see MSG_ENDIAN_*) */
-	unsigned	: 1; /**< Reserved padding bits */
+	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
+	unsigned type	: 2;	/**< Data or control message (see MSG_TYPE_*) */
+	unsigned endian	: 1;	/**< Specifies the byteorder of the message (see MSG_ENDIAN_*) */
+	unsigned rsvd1	: 1;	/**< Reserved bits */
 #elif BYTE_ORDER == LITTLE_ENDIAN
-	unsigned	: 1; /**< Reserved padding bits */
-	unsigned endian	: 1; /**< Specifies the byteorder of the message (see MSG_ENDIAN_*) */
-	unsigned type	: 2; /**< Data or control message (see MSG_TYPE_*) */
-	unsigned version: 4; /**< Specifies the format of the remaining message (see MGS_VERSION) */
+	unsigned rsvd1	: 1;	/**< Reserved bits */
+	unsigned endian	: 1;	/**< Specifies the byteorder of the message (see MSG_ENDIAN_*) */
+	unsigned type	: 2;	/**< Data or control message (see MSG_TYPE_*) */
+	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
 #endif
+	unsigned rsvd2	: 8;	/**< Reserved bits */
+	
+	/** The number of values in msg::data[] */
+	uint16_t length;
 
-	/** Number of valid dword values in msg::data[] */
-	uint8_t length;
-	/** The sequence number gets incremented by one for consecutive messages */
-	uint16_t sequence;
+	uint32_t sequence;	/**< The sequence number is incremented by one for consecutive messages */
+	
+	/** A timestamp per message */
+	struct {
+		uint32_t sec;	/**< Seconds     since 1970-01-01 00:00:00 */
+		uint32_t nsec;	/**< Nanoseconds since 1970-01-01 00:00:00 */
+	} ts;
 
 	/** The message payload */
 	union {
-		float f;	/**< Floating point values (note msg::endian) */
+		float    f;	/**< Floating point values (note msg::endian) */
 		uint32_t i;	/**< Integer values (note msg::endian) */
 	} data[MSG_VALUES];
 } __attribute__((aligned(64), packed));

@@ -46,7 +46,7 @@ int msg_fprint(FILE *f, struct msg *m)
 	if (m->endian != MSG_ENDIAN_HOST)
 		msg_swap(m);
 
-	fprintf(f, "%hu", m->sequence);
+	fprintf(f, "%10u.%09u\t%hu", m->ts.sec, m->ts.nsec, m->sequence);
 
 	for (int i = 0; i < m->length; i++)
 		fprintf(f, "\t%.6f", m->data[i].f);
@@ -56,27 +56,34 @@ int msg_fprint(FILE *f, struct msg *m)
 	return 0;
 }
 
+/** @todo Currently only floating point values are supported */
 int msg_fscan(FILE *f, struct msg *m)
 {
 	char line[MSG_VALUES * 16];
-	char *ptr = line;
+	char *next, *ptr = line;
 
 	if (!fgets(line, sizeof(line), f))
 		return 0;
+	
+	m->ts.sec   = (uint32_t) strtoul(ptr, &ptr, 10); ptr++;
+	m->ts.nsec  = (uint32_t) strtoul(ptr, &ptr, 10);
+	m->sequence = (uint16_t) strtoul(ptr, &ptr, 10);
 
-	m->sequence = (uint16_t) strtol(ptr, &ptr, 10);
+	m->version = MSG_VERSION;
+	m->endian  = MSG_ENDIAN_HOST;
+	m->length  = 0;
+	m->rsvd1   = 0;
+	m->rsvd2   = 0;
 
-	int i;
-	for (i = 0; i <= MSG_VALUES; i++) {
-		while(isblank(*ptr++));
-		if (*ptr == '\n' || *ptr == '\0')
+	while (m->length < MSG_VALUES) {
+		m->data[m->length].f = strtod(ptr, &next);
+		
+		if (next == ptr)
 			break;
 
-		m->data[i].f = strtod(ptr, &ptr);
+		ptr = next;
+		m->length++;
 	}
-
-	m->length = i;
-	m->endian = MSG_ENDIAN_HOST;
 	
 	return m->length;
 }
