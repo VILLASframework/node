@@ -39,9 +39,7 @@ struct node_vtable vtables[] = {
 	VTABLE(LOG_FILE,   "file",	file),
 	VTABLE(IEEE_802_3, "ieee802.3",	socket),
 	VTABLE(IP,	   "ip",	socket),
-	VTABLE(UDP,	   "udp",	socket),
-	VTABLE(TCP,	   "tcp",	socket),
-	VTABLE(TCPD,	   "tcpd",	socket)
+	VTABLE(UDP,	   "udp",	socket)
 };
 
 int node_init(int argc, char *argv[], struct settings *set)
@@ -107,25 +105,6 @@ int node_start(struct node *n)
 	}
 }
 
-int node_start_defer(struct node *n)
-{
-	struct socket *s = n->socket;
-
-	if (node_type(n) == TCPD) {
-		info("Wait for incoming TCP connection from node '%s'...", n->name);
-
-		s->sd = listen(s->sd2, 1);
-		if (s->sd < 0)
-			serror("Failed to listen on socket for node '%s'", n->name);
-			
-		s->sd = accept(s->sd2, NULL, NULL);
-		if (s->sd < 0)
-			serror("Failed to accept on socket for node '%s'", n->name);
-	}
-	
-	return 0;
-}
-
 int node_stop(struct node *n)
 { INDENT
 	int ret;
@@ -144,7 +123,6 @@ void node_reverse(struct node *n)
 		case IEEE_802_3:
 		case IP:
 		case UDP:
-		case TCP:
 			SWAP(n->socket->remote, n->socket->local);
 			break;
 		default: { }
@@ -162,7 +140,6 @@ void node_destroy(struct node *n)
 		case IEEE_802_3:
 		case IP:
 		case UDP:
-		case TCP:
 			free(n->socket->netem);
 		default: { }
 	}

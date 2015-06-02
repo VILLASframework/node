@@ -115,7 +115,6 @@ int main(int argc, char *argv[])
 
 	info("Start node");
 	node_start(node);
-	node_start_defer(node);
 
 	pool = alloc(sizeof(struct msg) * node->combine);
 	

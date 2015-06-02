@@ -99,8 +99,6 @@ int socket_open(struct node *n)
 		
 	/* Create socket */
 	switch (node_type(n)) {
-		case TCPD:
-		case TCP:	s->sd = socket(sin->sin_family, SOCK_STREAM,	IPPROTO_TCP); break;
 		case UDP:	s->sd = socket(sin->sin_family, SOCK_DGRAM,	IPPROTO_UDP); break;
 		case IP:	s->sd = socket(sin->sin_family, SOCK_RAW,	ntohs(sin->sin_port)); break;
 		case IEEE_802_3:s->sd = socket(sll->sll_family, SOCK_DGRAM,	sll->sll_protocol); break;
@@ -116,14 +114,6 @@ int socket_open(struct node *n)
 	if (ret < 0)
 		serror("Failed to bind socket");
 	
-	/* Connect socket for sending */
-	if (node_type(n) == TCP) {
-		s->sd2 = s->sd;
-		ret = connect(s->sd, (struct sockaddr *) &s->remote, sizeof(s->remote));
-		if (ret < 0)
-			serror("Failed to connect socket");
-	}
-	
 	/* Set fwmark for outgoing packets */
 	if (setsockopt(s->sd, SOL_SOCKET, SO_MARK, &s->mark, sizeof(s->mark)))
 		serror("Failed to set fwmark for outgoing packets");
@@ -133,8 +123,6 @@ int socket_open(struct node *n)
 	/* Set socket priority, QoS or TOS IP options */
 	int prio;
 	switch (node_type(n)) {
-		case TCPD:
-		case TCP:
 		case UDP:
 		case IP:
 			prio = IPTOS_LOWDELAY;
@@ -379,12 +367,6 @@ int socket_parse_addr(const char *addr, struct sockaddr *sa, enum node_type type
 				hint.ai_socktype = SOCK_RAW;
 				hint.ai_protocol = (service) ? strtol(service, NULL, 0) : IPPROTO_S2SS;
 				hint.ai_flags |= AI_NUMERICSERV;
-				break;
-
-			case TCPD:
-			case TCP:
-				hint.ai_socktype = SOCK_STREAM;
-				hint.ai_protocol = IPPROTO_TCP;
 				break;
 
 			case UDP:

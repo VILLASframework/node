@@ -105,7 +105,6 @@ int main(int argc, char *argv[])
 	node->vt->refcnt++;
 
 	node_start(node);
-	node_start_defer(node);
 	
 	/* Parse Arguments */
 	char c, *endptr;
