@@ -125,13 +125,6 @@ int main(int argc, char *argv[])
 	while (!feof(stdin)) {
 		for (int i = 0; i < node->combine; i++) {
 			msg_fscan(stdin, &pool[i]);
-
-#if TOOLS_USE_TIMESTAMP
-			struct timespec ts;
-			clock_gettime(CLOCK_REALTIME, &ts);
-			fprintf(stdout, "%17.6f\t", ts.tv_sec + ts.tv_nsec / 1e9);
-#endif
-
 			msg_fprint(stdout, &pool[i]);
 		}
 		
