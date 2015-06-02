@@ -288,7 +288,7 @@ int socket_parse(config_setting_t *cfg, struct node *n)
 		cerror(cfg, "Failed to resolve remote address '%s' of node '%s': %s",
 			remote, n->name, gai_strerror(ret));
 
-	/** @todo Netem settings are not usable AF_UNIX */
+	/** @todo Netem settings are not usable with AF_UNIX */
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
 		s->netem = alloc(sizeof(struct netem));

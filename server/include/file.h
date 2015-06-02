@@ -29,9 +29,9 @@ struct file {
 
 	const char *mode;	/**< The mode for fopen() which is used for the out file. */
 	
+	struct timespec offset;	/**< An offset between the timestamp in the input file and the current time */
 	double rate;		/**< The sending rate. */
 	int tfd;		/**< Timer file descriptor. Blocks until 1/rate seconds are elapsed. */
-	int timestamp;		/**< Bolean flag, prepend timestamp in front of message */
 };
 
 /** @see node_vtable::init */

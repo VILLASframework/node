@@ -19,8 +19,8 @@
 #include <fstab.h>
 
 #ifdef ENABLE_OPAL_ASYNC
-#define RTLAB
-#include <OpalPrint.h>
+ #define RTLAB
+ #include <OpalPrint.h>
 #endif
 
 #include "config.h"

@@ -93,15 +93,19 @@ skip:	for(;;) {
 			p->previous = &p->pool[(p->received-1) % p->poolsize];
 			p->current  = &p->pool[ p->received    % p->poolsize];
 			
+			if (settings.debug >= 10)
+				msg_fprint(stdout, p->current);
+			
 			p->received++;
 			
 			/* Check header fields */
 			if (msg_verify(p->current)) {
 				p->invalid++;
+				warn("Received invalid message!");
 				goto skip; /* Drop message */
 			}
 
-			/* Update histogram and handle wrap-around of sequence number */
+			/* Handle wrap-around of sequence number */
 			int dist = (UINT16_MAX + p->current->sequence - p->previous->sequence) % UINT16_MAX;
 			if (dist > UINT16_MAX / 2)
 				dist -= UINT16_MAX;

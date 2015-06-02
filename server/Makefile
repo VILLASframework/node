@@ -1,9 +1,11 @@
 TARGETS = server send random receive test
 
-# Common dependencies for all binaries
-OBJS  = if.o utils.o msg.o node.o cfg.o tc.o hooks.o list.o path.o hist.o log.o
+# Common objs
+OBJS  = msg.o cfg.o path.o node.o hooks.o
+# Helper libs
+OBJS += utils.o list.o hist.o log.o timing.o
 # Node types
-OBJS += socket.o file.o
+OBJS += file.o socket.o if.o tc.o
 
 VPATH = src
 
@@ -46,12 +48,12 @@ endif
 all: $(TARGETS)
 
 # Dependencies for individual binaries
-server: server.o $(OBJS) 
-send: send.o $(OBJS)
+server:  server.o  $(OBJS)
+send:    send.o    $(OBJS)
 receive: receive.o $(OBJS)
-random: random.o $(OBJS)
-test: test.o $(OBJS)
-
+test:    test.o    $(OBJS)
+random:  random.o  $(OBJS)
+	
 protected: CFLAGS += -DPROTECT -DVALID_UNTIL=$(shell date -d "now +5months" +%s) -s -O3 -fvisibility=hidden
 protected: clean strip
 
