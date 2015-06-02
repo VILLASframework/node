@@ -102,6 +102,8 @@ int main(int argc, char *argv[])
 		error("There's no node with the name '%s'", argv[3]);
 
 	node->refcnt++;
+	node->vt->refcnt++;
+
 	node_start(node);
 	node_start_defer(node);
 	

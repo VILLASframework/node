@@ -108,6 +108,7 @@ int main(int argc, char *argv[])
 		node_reverse(node);
 	
 	node->refcnt++;
+	node->vt->refcnt++;
 
 	node_init(argc-optind, argv+optind, &set);
 	node_start(node);

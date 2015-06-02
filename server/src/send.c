@@ -109,6 +109,7 @@ int main(int argc, char *argv[])
 	
 	node->refcnt++;
 	pool = alloc(sizeof(struct msg) * node->combine);
+	node->vt->refcnt++;
 
 	node_init(argc-optind, argv+optind, &set);
 	node_start(node);
