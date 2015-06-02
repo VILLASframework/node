@@ -12,6 +12,7 @@
 #include "log.h"
 #include "utils.h"
 #include "config.h"
+#include "timing.h"
 
 #ifdef ENABLE_OPAL_ASYNC
 /* Define RTLAB before including OpalPrint.h for messages to be sent
@@ -73,7 +74,7 @@ void log_vprint(const char *lvl, const char *fmt, va_list ap)
 
 	/* Timestamp */
 	clock_gettime(CLOCK_REALTIME, &ts);
-	strap(buf, sizeof(buf), "%10.3f ", timespec_delta(&epoch, &ts));
+	strap(buf, sizeof(buf), "%10.3f ", time_delta(&epoch, &ts));
 
 	/* Severity */
 	strap(buf, sizeof(buf), BLD("%5s "), lvl);

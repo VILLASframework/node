@@ -18,6 +18,7 @@
 #include "config.h"
 #include "utils.h"
 #include "msg.h"
+#include "timing.h"
 
 #define CLOCKID	CLOCK_REALTIME
 

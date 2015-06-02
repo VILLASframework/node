@@ -29,6 +29,7 @@
 #include "node.h"
 #include "msg.h"
 #include "socket.h"
+#include "timing.h"
 
 /** Linked list of nodes */
 struct list nodes;

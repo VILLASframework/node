@@ -16,7 +16,6 @@
 #include <errno.h>
 #include <sched.h>
 #include <string.h>
-#include <time.h>
 #include <sys/types.h>
 
 #include "log.h"
@@ -113,19 +112,6 @@ cpu_set_t to_cpu_set(int set);
 
 /** Allocate and initialize memory. */
 void * alloc(size_t bytes);
-
-/** Wait until timer elapsed
- *
- * @retval 0 An error occured. Maybe the timer was stopped.
- * @retval >0 The nummer of runs this timer already fired.
- */
-uint64_t timerfd_wait(int fd);
-
-/** Get delta between two timespec structs */
-double timespec_delta(struct timespec *start, struct timespec *end);
-
-/** Get period as timespec from rate */
-struct timespec timespec_rate(double rate);
 
 /** A system(2) emulator with popen / pclose(2) and proper output handling */
 int system2(const char* cmd, ...);

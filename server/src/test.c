@@ -25,6 +25,8 @@
 #include "node.h"
 #include "utils.h"
 #include "hist.h"
+#include "timing.h"
+
 /** Linked list of nodes */
 struct list nodes;
 /** The global configuration */
