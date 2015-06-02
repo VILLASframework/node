@@ -208,7 +208,7 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 		struct msg *n = &pool[(first+poolsize+i) % poolsize];
 
 		/* Check integrity of packet */
-		bytes -= MSG_LEN(n->length);
+		bytes -= MSG_LEN(n);
 		
 		/* Convert headers to host byte order */
 		n->sequence = ntohs(n->sequence);
@@ -243,7 +243,7 @@ int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 		n->sequence = htons(n->sequence);
 		
 		iov[i].iov_base = n;
-		iov[i].iov_len  = MSG_LEN(n->length);
+		iov[i].iov_len  = MSG_LEN(n);
 	}
 
 	/* Specify destination address for connection-less procotols */

@@ -157,21 +157,17 @@ check:
 
 void test_rtt() {
 	struct msg m = MSG_INIT(sizeof(struct timespec) / sizeof(float));
+	
+	struct timespec ts;
 	struct timespec *ts1 = (struct timespec *) &m.data;
 	struct timespec *ts2 = alloc(sizeof(struct timespec));
 
 	double rtt;
-	double rtt_max = LLONG_MIN;
-	double rtt_min = LLONG_MAX;
-	double avg = 0;
+	struct hist hist;
+	hist_create(&hist, low, high, res);
 
-	struct hist histogram;
-	hist_create(&histogram, low, high, res);
-
-#if 1	/* Print header */
-	fprintf(stdout, "%17s", "timestamp");
-#endif
-	fprintf(stdout, "%5s%10s%10s%10s%10s\n", "seq", "rtt", "min", "max", "avg");
+	/* Print header */
+	fprintf(stdout, "%17s%5s%10s%10s%10s%10s%10s\n", "timestamp", "seq", "rtt", "min", "max", "mean", "stddev");
 
 	while (running && (count < 0 || count--)) {
 		clock_gettime(CLOCK_ID, ts1);
@@ -181,36 +177,32 @@ void test_rtt() {
 
 		rtt = time_delta(ts1, ts2);
 
-		if (rtt < 0) continue;
-		if (rtt > rtt_max) rtt_max = rtt;
-		if (rtt < rtt_min) rtt_min = rtt;
-
-		avg += rtt;
+		if (rtt < 0)
+			warn("Negative RTT: %f", rtt);
 	
-		hist_put(&histogram, rtt);
+		hist_put(&hist, rtt);
 
-#if 1
-		struct timespec ts;
 		clock_gettime(CLOCK_REALTIME, &ts);
-		fprintf(stdout, "%17.6f", ts.tv_sec + ts.tv_nsec / 1e9);
-#endif
+		time_fprint(stdout, &ts);
+
 		m.sequence++;
 
-		fprintf(stdout, "%5u%10.3f%10.3f%10.3f%10.3f\n", m.sequence,
-			1e3 * rtt, 1e3 * rtt_min, 1e3 * rtt_max, 1e3 * avg / m.sequence);
+		fprintf(stdout, "%5u%10.3f%10.3f%10.3f%10.3f%10.3f\n", m.sequence,
+			1e3 * rtt, 1e3 * hist.lowest, 1e3 * hist.highest,
+			1e3 * hist_mean(&hist), 1e3 * hist_stddev(&hist));
 	}
 
 	free(ts2);
 
-	hist_print(&histogram);
+	hist_print(&hist);
 	
 	struct stat st;
 	if (!fstat(fd, &st)) {
 		FILE *f = fdopen(fd, "w");
-		hist_matlab(&histogram, f);
+		hist_matlab(&hist, f);
 	}
 	else
 		error("Invalid file descriptor: %u", fd);
 	
-	hist_destroy(&histogram);
+	hist_destroy(&hist);
 }

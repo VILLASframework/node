@@ -86,7 +86,6 @@ int main(int argc, char *argv[])
 		usage(argv[0]);
 
 	/* Setup signals */
-	struct timespec ts;
 	struct sigaction sa_quit = {
 		.sa_flags = SA_SIGINFO,
 		.sa_sigaction = quit
@@ -117,14 +116,14 @@ int main(int argc, char *argv[])
 	pool = alloc(sizeof(struct msg) * node->combine);
 
 	/* Print header */
-	fprintf(stderr, "# %-6s %-8s %-12s\n", "dev_id", "seq_no", "data");
+	fprintf(stderr, "# %-20s\t%s\t%s\n", "timestamp", "seqno", "data[]");
 
 	for (;;) {
 		int recv = node_read(node, pool, node->combine, 0, node->combine);
-
 		for (int i = 0; i < recv; i++) {
-			if (msg_verify(&pool[i]))
-				warn("Failed to verify message");
+			int ret = msg_verify(&pool[i]);
+			if (ret)
+				warn("Failed to verify message: %d", ret);
 
 			msg_fprint(stdout, &pool[i]);
 		}

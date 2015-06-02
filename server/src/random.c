@@ -54,12 +54,17 @@ int main(int argc, char *argv[])
 		serror("Failed to start timer");
 
 	/* Print header */
-	fprintf(stderr, "# %-6s%-12s\n", "seq", "data");
+	fprintf(stderr, "# %-20s\t%s\t%s\n", "timestamp", "seqno", "data[]");
 
 	/* Block until 1/p->rate seconds elapsed */
-		m.sequence += (uint16_t) timerfd_wait(tfd);
-		
 	for (;;) {
+		struct timespec ts;
+		clock_gettime(CLOCK_REALTIME, &ts);
+
+		m.sequence += timerfd_wait(tfd);
+		m.ts.sec    = ts.tv_sec;
+		m.ts.nsec   = ts.tv_nsec;
+
 		msg_random(&m);
 		msg_fprint(stdout, &m);
 		
