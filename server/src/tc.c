@@ -45,7 +45,10 @@ int tc_reset(struct interface *i)
 
 	debug(6, "Reset traffic control for interface '%s'", i->name);
 
-	return system2(cmd);
+	if (system2(cmd))
+		error("Failed to add reset traffic control for interface '%s'", i->name);
+	
+	return 0;
 }
 
 int tc_prio(struct interface *i, tc_hdl_t handle, int bands)
@@ -55,7 +58,7 @@ int tc_prio(struct interface *i, tc_hdl_t handle, int bands)
 	int priomap[] = { 1, 2, 2, 2, 1, 2, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1 };
 
 	len += snprintf(cmd+len, sizeof(cmd)-len,
-		"tc qdisc add dev %s root handle %u prio bands %u priomap",
+		"tc qdisc replace dev %s root handle %u prio bands %u priomap",
 		i->name, TC_HDL_MAJ(handle), bands + 3);
 
 	for (int i = 0; i < 16; i++)
@@ -63,7 +66,10 @@ int tc_prio(struct interface *i, tc_hdl_t handle, int bands)
 
 	debug(6, "Replace master qdisc for interface '%s'", i->name);
 
-	return system2(cmd);
+	if (system2(cmd))
+		error("Failed to add prio qdisc for interface '%s'", i->name);
+	
+	return 0;
 }
 
 int tc_netem(struct interface *i, tc_hdl_t parent, struct netem *em)
@@ -71,7 +77,7 @@ int tc_netem(struct interface *i, tc_hdl_t parent, struct netem *em)
 	int len = 0;
 	char cmd[256];
 	len += snprintf(cmd+len, sizeof(cmd)-len,
-		"tc qdisc add dev %s parent %u:%u netem",
+		"tc qdisc replace dev %s parent %u:%u netem",
 		i->name, TC_HDL_MAJ(parent), TC_HDL_MIN(parent));
 
 	if (em->valid & TC_NETEM_DELAY) {
@@ -92,19 +98,24 @@ int tc_netem(struct interface *i, tc_hdl_t parent, struct netem *em)
 
 	debug(6, "Setup netem qdisc for interface '%s'", i->name);
 
-	return system2(cmd);
+	if (system2(cmd))
+		error("Failed to add netem qdisc for interface '%s'", i->name);
+
+	return 0;
 }
 
 int tc_mark(struct interface *i, tc_hdl_t flowid, int mark)
 {
 	char cmd[128];
 	snprintf(cmd, sizeof(cmd),
-		"tc filter add dev %s protocol ip handle %u fw flowid %u:%u",
+		"tc filter replace dev %s protocol ip handle %u fw flowid %u:%u",
 		i->name, mark, TC_HDL_MAJ(flowid), TC_HDL_MIN(flowid));
 
 	debug(7, "Add traffic filter to interface '%s': fwmark %u => flowid %u:%u",
 		i->name, mark, TC_HDL_MAJ(flowid), TC_HDL_MIN(flowid));
 
-	return system2(cmd);
+	if (system2(cmd))
+		error("Failed to add fw_mark classifier for interface '%s'", i->name);
 
+	return 0;
 }

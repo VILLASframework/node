@@ -58,21 +58,29 @@ int if_start(struct interface *i, int affinity)
 		info("Starting interface '%s' (index=%u)", i->name, i->index);
 	
 	{ INDENT
+		/* Assign fwmark's to socket nodes which have netem options */
 		int mark = 0;
 		FOREACH(&i->sockets, it) {
 			struct socket *s = it->socket;
-
-			if (s->netem) {
+			if (s->netem)
 				s->mark = 1 + mark++;
+		}
 		
+		/* Abort if no node is using netem */
+		if (mark == 0)
+			return 0;
+
+		/* Replace root qdisc */
+		tc_prio(i, TC_HDL(4000, 0), mark);
+		
+		/* Create netem qdisks and appropriate filter per netem node */
+		FOREACH(&i->sockets, it) {
+			struct socket *s = it->socket;
+			if (s->netem) {
 				tc_mark(i,  TC_HDL(4000, s->mark), s->mark);
 				tc_netem(i, TC_HDL(4000, s->mark), s->netem);
 			}
 		}
-
-		/* Create priority qdisc */
-		if (mark)
-			tc_prio(i, TC_HDL(4000, 0), mark);
 
 		/* Set affinity for network interfaces (skip _loopback_ dev) */
 		if_getirqs(i);
