@@ -27,12 +27,12 @@
 #endif
 
 /** Linked list of nodes */
-extern struct list nodes;
+struct list nodes;
 /** Linked list of paths */
-extern struct list paths;
-
+struct list paths;
 /** The global configuration */
-static struct settings settings;
+struct settings settings;
+/** libconfig handle */
 static config_t config;
 
 static void quit()
@@ -57,7 +57,7 @@ static void quit()
 	_exit(EXIT_SUCCESS);
 }
 
-void realtime_init()
+static void realtime_init()
 { INDENT
 	/* Use FIFO scheduler with real time priority */
 	if (settings.priority) {
@@ -79,7 +79,7 @@ void realtime_init()
 }
 
 /* Setup exit handler */
-void signals_init()
+static void signals_init()
 {
 	struct sigaction sa_quit = {
 		.sa_flags = SA_SIGINFO,
@@ -92,7 +92,7 @@ void signals_init()
 	sigaction(SIGINT, &sa_quit, NULL);
 }
 
-void usage(const char *name)
+static void usage(const char *name)
 {
 	printf("Usage: %s CONFIG\n", name);
 	printf("  CONFIG is a required path to a configuration file\n\n");

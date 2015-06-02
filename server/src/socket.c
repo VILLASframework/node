@@ -34,8 +34,8 @@
 /** Linked list of interfaces */
 extern struct list interfaces;
 
-/** Linked list of sockets */
-struct list sockets;
+/** Linked list of all sockets nodes */
+static struct list sockets;
 
 int socket_init(int argc, char * argv[], struct settings *set)
 { INDENT

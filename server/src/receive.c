@@ -29,13 +29,16 @@
 #include "msg.h"
 #include "socket.h"
 
+/** Linked list of nodes */
+struct list nodes;
+/** The global configuration */
+struct settings settings;
+
 static struct settings set;
 static struct msg *pool;
 static struct node *node;
 
-extern struct list nodes;
-
-void quit(int sig, siginfo_t *si, void *ptr)
+static void quit(int sig, siginfo_t *si, void *ptr)
 {
 	node_stop(node);
 	node_deinit();
@@ -46,7 +49,7 @@ void quit(int sig, siginfo_t *si, void *ptr)
 	exit(EXIT_SUCCESS);
 }
 
-void usage(char *name)
+static void usage(char *name)
 {
 	printf("Usage: %s [-r] CONFIG NODE\n", name);
 	printf("  -r      swap local / remote address of socket based nodes)\n\n");
@@ -82,6 +85,7 @@ int main(int argc, char *argv[])
 		usage(argv[0]);
 
 	/* Setup signals */
+	struct timespec ts;
 	struct sigaction sa_quit = {
 		.sa_flags = SA_SIGINFO,
 		.sa_sigaction = quit

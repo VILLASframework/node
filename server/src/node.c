@@ -44,9 +44,6 @@ struct node_vtable vtables[] = {
 	VTABLE(TCPD,	   "tcpd",	socket)
 };
 
-/** Linked list of nodes. */
-struct list nodes;
-
 int node_init(int argc, char *argv[], struct settings *set)
 { INDENT
 	for (int i=0; i<ARRAY_LEN(vtables); i++) {

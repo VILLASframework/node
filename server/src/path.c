@@ -18,13 +18,13 @@
 #include "path.h"
 #include "socket.h"
 #include "timing.h"
+#include "config.h"
 
 #ifndef sigev_notify_thread_id
  #define sigev_notify_thread_id   _sigev_un._tid
 #endif
 
-/** Linked list of paths. */
-struct list paths;
+extern struct settings settings;
 
 static void path_write(struct path *p)
 {

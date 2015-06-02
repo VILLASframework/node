@@ -25,30 +25,32 @@
 #include "node.h"
 #include "utils.h"
 #include "hist.h"
+/** Linked list of nodes */
+struct list nodes;
+/** The global configuration */
+struct settings settings;
 
-static struct settings set;
 static struct node *node;
-extern struct list nodes;
 
 /* Test options */
-int running = 1;
+static int running = 1;
 
 /** Amount of messages which should be sent (default: -1 for unlimited) */
-int count =  -1;
+static int count =  -1;
 
 /** File descriptor for Matlab results.
  * This allows you to write Matlab results in a seperate log file:
  *
  *    ./test etc/example.conf rtt -f 3 3>> measurement_results.m
  */
-int fd = STDOUT_FILENO;
+static int fd = STDOUT_FILENO;
 
 /** Lowest value in histogram. */
-double low = 0;
+static double low = 0;
 /** Highest value in histogram. */
-double high = 2e-4;
+static double high = 2e-4;
 /** Histogram resolution. */
-double res = 1e-5;
+static double res = 1e-5;
 
 #define CLOCK_ID	CLOCK_MONOTONIC
 
@@ -91,7 +93,7 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	config_init(&config);
-	config_parse(argv[1], &config, &set, &nodes, NULL);
+	config_parse(argv[1], &config, &settings, &nodes, NULL);
 	
 	node = node_lookup_name(argv[3], &nodes);
 	if (!node)
