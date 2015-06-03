@@ -11,12 +11,7 @@
 #define _UTILS_H_
 
 #include <stdlib.h>
-#include <stdarg.h>
-#include <stdint.h>
-#include <errno.h>
 #include <sched.h>
-#include <string.h>
-#include <sys/types.h>
 
 #include "log.h"
 

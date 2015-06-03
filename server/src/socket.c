@@ -10,21 +10,22 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <poll.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 
 #include <linux/if_packet.h>
 #include <net/if.h>
 #include <net/ethernet.h>
-#include <arpa/inet.h>
+
 #include <netinet/ip.h>
 #include <netinet/ether.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <netdb.h>
 
 #include "config.h"
 #include "utils.h"

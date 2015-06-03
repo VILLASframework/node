@@ -8,10 +8,6 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-
 #include "utils.h"
 #include "if.h"
 #include "tc.h"

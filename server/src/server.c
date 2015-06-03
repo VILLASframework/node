@@ -7,13 +7,11 @@
  *********************************************************************************/
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 #include <sched.h>
 #include <signal.h>
 #include <unistd.h>
-#include <sys/stat.h>
 
 #include "config.h"
 #include "utils.h"

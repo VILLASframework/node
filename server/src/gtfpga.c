@@ -8,11 +8,11 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
+#include <stdio.h>
 #include <inttypes.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
-#include <sys/timerfd.h>
 
 #include "gtfpga.h"
 #include "utils.h"

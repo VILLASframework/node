@@ -10,9 +10,11 @@
 #ifndef _TIME_H_
 #define _TIME_H_
 
-#include <time.h>
 #include <stdio.h>
 #include <stdint.h>
+	
+#include <time.h>
+#include <sys/timerfd.h>
 
 /** Wait until timer elapsed
  *

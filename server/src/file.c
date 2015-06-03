@@ -9,7 +9,6 @@
  *********************************************************************************/
 
 #include <unistd.h>
-#include <sys/timerfd.h>
 
 #include "file.h"
 #include "utils.h"

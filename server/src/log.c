@@ -7,7 +7,9 @@
  *********************************************************************************/
 
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
+#include <errno.h>
 
 #include "log.h"
 #include "utils.h"

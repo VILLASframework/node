@@ -10,18 +10,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <unistd.h>
-#include <netdb.h>
 #include <math.h>
 #include <signal.h>
 #include <pthread.h>
-#include <fstab.h>
-
-#ifdef ENABLE_OPAL_ASYNC
- #define RTLAB
- #include <OpalPrint.h>
-#endif
 
 #include "config.h"
 #include "cfg.h"

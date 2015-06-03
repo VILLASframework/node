@@ -6,13 +6,8 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <errno.h>
-
-#include <sys/timerfd.h>
-#include <sys/syscall.h>
 
 #include "utils.h"
 #include "path.h"

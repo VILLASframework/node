@@ -10,10 +10,7 @@
  * @{
  **********************************************************************************/
 
-#include <stdlib.h>
 #include <unistd.h>
-#include <time.h>
-#include <sys/timerfd.h>
 
 #include "config.h"
 #include "utils.h"

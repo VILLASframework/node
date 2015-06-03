@@ -12,8 +12,6 @@
 #include <dirent.h>
 
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/ip.h>
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <linux/if_packet.h>

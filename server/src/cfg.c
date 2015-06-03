@@ -6,10 +6,8 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <netdb.h>
 
 #include "utils.h"
 #include "list.h"
@@ -21,7 +19,7 @@
 #include "hooks.h"
 
 #include "socket.h"
-
+#include "file.h"
 #ifdef ENABLE_GTFPGA
  #include "gtfpga.h"
 #endif

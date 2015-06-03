@@ -7,16 +7,10 @@
  *********************************************************************************/
 
 #include <stdlib.h>
-#include <signal.h>
-#include <time.h>
-#include <unistd.h>
-#include <errno.h>
 #include <string.h>
-#include <limits.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+#include <signal.h>
+#include <unistd.h>
 #include <ctype.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 
 #include "config.h"

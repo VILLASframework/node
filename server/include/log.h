@@ -10,6 +10,7 @@
 #ifndef _LOG_H_
 #define _LOG_H_
 
+#include <stdarg.h>
 #include <libconfig.h>
 
 #ifdef __GNUC__

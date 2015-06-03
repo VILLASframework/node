@@ -11,17 +11,9 @@
  *********************************************************************************/
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <string.h>
-#include <errno.h>
 #include <signal.h>
-#include <time.h>
-
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 
 #include "config.h"
 #include "cfg.h"

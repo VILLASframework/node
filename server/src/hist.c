@@ -8,7 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
+#include <string.h>
 #include <float.h>
 #include <math.h>
 #include <time.h>
