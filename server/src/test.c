@@ -98,6 +98,7 @@ int main(int argc, char *argv[])
 	node->refcnt++;
 	node->vt->refcnt++;
 
+	node_init(argc-3, argv+3, &settings);
 	node_start(node);
 	
 	/* Parse Arguments */
@@ -143,6 +144,7 @@ check:
 		error("Unknown test: '%s'", argv[2]);
 
 	node_stop(node);
+	node_deinit();
 	config_destroy(&config);
 
 	return 0;
