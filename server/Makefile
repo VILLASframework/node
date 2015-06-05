@@ -34,7 +34,7 @@ endif
 
 # Enable OPAL-RT Asynchronous Process support
 OPALDIR = /usr/opalrt/common
-#OPALDIR = ../opal
+#OPALDIR = ../contrib/opal
 ifneq (,$(wildcard $(OPALDIR)/include_target/AsyncApi.h))
 	override CFLAGS  += -m32 -DENABLE_OPAL_ASYNC -I$(OPALDIR)/include_target
 	override LDFLAGS += -m32 -Wl,-L/lib/i386-linux-gnu/
