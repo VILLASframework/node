@@ -5,12 +5,14 @@
  *  receive data to and from the asynchronous icons and a UDP or TCP
  *  port.
  *
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @author Mathieu Dubé-Dallaire
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
- * @copyright 2003, OPAL-RT Technologies inc
  * @file
- */
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Mathieu DubÃ©-Dallaire
+ * @copyright 2003, OPAL-RT Technologies inc
+ * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
+ *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+ *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *********************************************************************************/
 
 /* Standard ANSI C headers needed for this program */
 #include <errno.h>
@@ -25,12 +27,12 @@
 #include <time.h>
 
 #if defined(__QNXNTO__)
-#       include <process.h>
-#       include <pthread.h>
-#       include <devctl.h>
-#       include <sys/dcmd_chr.h>
+ #include <process.h>
+ #include <pthread.h>
+ #include <devctl.h>
+ #include <sys/dcmd_chr.h>
 #elif defined(__linux__)
-#       define _GNU_SOURCE   1
+ #define _GNU_SOURCE   1
 #endif
 
 /* Define RTLAB before including OpalPrint.h for messages to be sent
@@ -51,7 +53,7 @@
 #define PRINT_SHMEM_NAME	argv[3]
 
 #ifdef _DEBUG // TODO: workaround
-#define CPU_TICKS 3466948000
+ #define CPU_TICKS 3466948000
 struct msg *msg_send = NULL;
 
 void Tick(int sig, siginfo_t *si, void *ptr)
@@ -87,7 +89,7 @@ static void *SendToIPPort(void *arg)
 
 	/* Data from the S2SS server */
 	struct msg msg = MSG_INIT(0);
-	int msg_size;
+	int len;
 
 #ifdef _DEBUG // TODO: workaround
 	msg_send = &msg;
@@ -124,19 +126,16 @@ static void *SendToIPPort(void *arg)
 			/* Read data from the model */
 			OpalGetAsyncSendIconData(mdldata, mdldata_size, SendID);
 
-/******* FORMAT TO SPECIFIC PROTOCOL HERE *****************************/
-			// msg.dev_id = SendID; /* Use the SendID as a device ID here */
 			msg.sequence = htons(seq++);
 			msg.length = mdldata_size / sizeof(double);
 
 			for (i = 0; i < msg.length; i++)
 				msg.data[i].f = (float) mdldata[i];
 
-			msg_size = MSG_LEN(&msg);
-/**********************************************************************/
+			len = MSG_LEN(&msg);
 
 			/* Perform the actual write to the ip port */
-			if (SendPacket((char *) &msg, msg_size) < 0)
+			if (SendPacket((char *) &msg, len) < 0)
 				OpalSetAsyncSendIconError(errno, SendID);
 			else
 				OpalSetAsyncSendIconError(0, SendID);
@@ -176,15 +175,13 @@ static void *RecvFromIPPort(void *arg)
 
 	/* Data from the S2SS server */
 	struct msg msg = MSG_INIT(0);
-	unsigned msg_size;
+	int len;
 
 	OpalPrint("%s: RecvFromIPPort thread started\n", PROGNAME);
 
 	OpalGetNbAsyncRecvIcon(&nbRecv);
 	if (nbRecv >= 1) {
 		do {
-
-/******* FORMAT TO SPECIFIC PROTOCOL HERE ******************************/
 			n  = RecvPacket((char *) &msg, sizeof(msg), 1.0);
 
 			int ret = msg_verify(m);
@@ -194,14 +191,12 @@ static void *RecvFromIPPort(void *arg)
 			}
 			
 			/** @todo: We may check the sequence number here. */
-
 			msg.sequence = ntohs(msg.sequence);
 			
 			if (msg.endian != MSG_ENDIAN_HOST)
 				msg_swap(&msg);
 			
-			msg_size =  MSG_LEN(&msg);
-/***********************************************************************/
+			len =  MSG_LEN(&msg);
 
 			if (n < 1) {
 				ModelState = OpalGetAsyncModelState();
@@ -216,12 +211,11 @@ static void *RecvFromIPPort(void *arg)
 				}
 				break;
 			}
-			else if (n != msg_size) {
-				OpalPrint("%s: Received incoherent packet (size: %d, complete: %d)\n", PROGNAME, n, msg_size);
+			else if (n != len) {
+				OpalPrint("%s: Received incoherent packet (size: %d, complete: %d)\n", PROGNAME, n, len);
 				continue;
 			}
 
-/******* FORMAT TO SPECIFIC PROTOCOL HERE *******************************/
 			OpalSetAsyncRecvIconStatus(msg.sequence, RecvID);	/* Set the Status to the message ID */
 			OpalSetAsyncRecvIconError(0, RecvID);			/* Set the Error to 0 */
 
@@ -241,7 +235,6 @@ static void *RecvFromIPPort(void *arg)
 
 			for (i = 0; i < msg.length; i++)
 				mdldata[i] = (double) msg.data[i].f;
-/************************************************************************/
 
 			OpalSetAsyncRecvIconData(mdldata, mdldata_size, RecvID);
 

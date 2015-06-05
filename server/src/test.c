@@ -53,7 +53,7 @@ static double res = 1e-5;
 /* Prototypes */
 void test_rtt();
 
-void quit(int sig, siginfo_t *si, void *ptr)
+void quit()
 {
 	running = 0;
 }
@@ -187,6 +187,7 @@ void test_rtt() {
 			1e3 * hist_mean(&hist), 1e3 * hist_stddev(&hist));
 	}
 
+	/* Housekeeping */
 	free(ts2);
 
 	hist_print(&hist);

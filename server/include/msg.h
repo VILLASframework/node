@@ -39,7 +39,7 @@ void msg_swap(struct msg *m);
  */
 int msg_verify(struct msg *m);
 
-/** Print a raw UDP message in human readable form.
+/** Print a raw message in human readable form to a file stream.
  *
  * @param f The file stream
  * @param m A pointer to the message

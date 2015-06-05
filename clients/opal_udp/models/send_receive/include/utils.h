@@ -9,11 +9,11 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _SCHED_H_
-#define _SCHED_H_
+#ifndef _UTILS_H_
+#define _UTILS_H_
 
 #define EOK	0
 
 int AssignProcToCpu0(void);
 
-#endif /* _SCHED_H_ */
+#endif /* _UTILS_H_ */

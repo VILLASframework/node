@@ -1,4 +1,4 @@
-/** Some helper functions.
+/** General purpose helper functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
@@ -18,8 +18,6 @@
 #include "config.h"
 #include "cfg.h"
 #include "utils.h"
-
-pthread_t _mtid;
 
 double box_muller(float m, float s)
 {
@@ -52,6 +50,11 @@ double randf()
 {
 	return (double) random() / RAND_MAX;
 }
+
+/** This global variable holds the main thread ID.
+ * Its used by die().
+ */
+pthread_t _mtid;
 
 void die()
 {
