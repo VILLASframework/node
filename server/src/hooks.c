@@ -48,7 +48,7 @@ hook_cb_t hook_lookup(const char *name)
 	return NULL; /* No matching hook was found */
 }
  
-int hook_print(struct msg *m, struct path *p)
+int hook_print(struct msg *m, struct path *p, struct timespec *ts)
 {
 	/* Print every message once to stdout */
 	msg_fprint(stdout, m);
@@ -56,7 +56,7 @@ int hook_print(struct msg *m, struct path *p)
 	return 0;
 }
 
-int hook_tofixed(struct msg *m, struct path *p)
+int hook_tofixed(struct msg *m, struct path *p, struct timespec *ts)
 {
 	for (int i=0; i<m->length; i++) {
 		m->data[i].i = m->data[i].f * 1e3; 
@@ -65,7 +65,7 @@ int hook_tofixed(struct msg *m, struct path *p)
 	return 0;
 }
 
-int hook_ts(struct msg *m, struct path *p)
+int hook_ts(struct msg *m, struct path *p, struct timespec *ts)
 {
 	struct timespec *ts = (struct timespec *) &m->data[HOOK_TS_INDEX];
 	
@@ -74,7 +74,7 @@ int hook_ts(struct msg *m, struct path *p)
 	return 0;
 }
 
-int hook_fir(struct msg *m, struct path *p)
+int hook_fir(struct msg *m, struct path *p, struct timespec *ts)
 {
 	/** Simple FIR-LP: F_s = 1kHz, F_pass = 100 Hz, F_block = 300
 	 * Tip: Use MATLAB's filter design tool and export coefficients
@@ -102,14 +102,14 @@ int hook_fir(struct msg *m, struct path *p)
 	return 0;
 }
 
-int hook_decimate(struct msg *m, struct path *p)
+int hook_decimate(struct msg *m, struct path *p, struct timespec *ts)
 {
 	/* Only sent every HOOK_DECIMATE_RATIO'th message */
 	return m->sequence % HOOK_DECIMATE_RATIO;
 }
 
 /** @todo Implement */
-int hook_dft(struct msg *m, struct path *p)
+int hook_dft(struct msg *m, struct path *p, struct timespec *ts)
 {
 	return 0;
 }

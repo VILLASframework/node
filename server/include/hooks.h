@@ -19,6 +19,8 @@
 #ifndef _HOOKS_H_
 #define _HOOKS_H_
 
+#include <time.h>
+
 /* The configuration of hook parameters is done in "config.h" */
 
 struct msg;
@@ -28,10 +30,11 @@ struct path;
  *
  * @param m The last message which has been received
  * @param p The path which is processing this message.
+ * @param ts The timestamp when the message(s) were received.
  * @retval 0 Success. Continue processing and forwarding the message.
  * @retval <0 Error. Drop the message.
  */
-typedef int (*hook_cb_t)(struct msg *m, struct path *p);
+typedef int (*hook_cb_t)(struct msg *m, struct path *p, struct timespec *ts);
 
 /** This is a static list of available hooks.
  *
@@ -52,21 +55,21 @@ struct hook_id {
 hook_cb_t hook_lookup(const char *name);
 
 /** Example hook: Print the message. */
-int hook_print(struct msg *m, struct path *p);
+int hook_print(struct msg *m, struct path *p, struct timespec *ts);
 
 /** Example hook: Drop messages. */
-int hook_decimate(struct msg *m, struct path *p);
+int hook_decimate(struct msg *m, struct path *p, struct timespec *ts);
 
 /** Example hook: Convert the message values to fixed precision. */
-int hook_tofixed(struct msg *m, struct path *p);
+int hook_tofixed(struct msg *m, struct path *p, struct timespec *ts);
 
-/** Example hook: add timestamp to message. */
-int hook_ts(struct msg *m, struct path *p);
+/** Example hook: overwrite timestamp of message. */
+int hook_ts(struct msg *m, struct path *p, struct timespec *ts);
 
 /** Example hook: Finite-Impulse-Response (FIR) filter. */
-int hook_fir(struct msg *m, struct path *p);
+int hook_fir(struct msg *m, struct path *p, struct timespec *ts);
 
 /** Example hook: Discrete Fourier Transform */
-int hook_dft(struct msg *m, struct path *p);
+int hook_dft(struct msg *m, struct path *p, struct timespec *ts);
 
 #endif /** _HOOKS_H_ @} */
