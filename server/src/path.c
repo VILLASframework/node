@@ -97,9 +97,9 @@ skip:	for(;;) {
 			}
 
 			/* Handle wrap-around of sequence number */
-			int dist = (UINT16_MAX + p->current->sequence - p->previous->sequence) % UINT16_MAX;
-			if (dist > UINT16_MAX / 2)
-				dist -= UINT16_MAX;
+			int dist = (UINT32_MAX + p->current->sequence - p->previous->sequence) % UINT32_MAX;
+			if (dist > UINT32_MAX / 2)
+				dist -= UINT32_MAX;
 
 			/* Update sequence histogram */
 			hist_put(&p->hist_seq, dist);
