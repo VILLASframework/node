@@ -132,7 +132,7 @@ static void *SendToIPPort(void *arg)
 			for (i = 0; i < msg.length; i++)
 				msg.data[i].f = (float) mdldata[i];
 
-			msg_size = MSG_LEN(msg.length);
+			msg_size = MSG_LEN(&msg);
 /**********************************************************************/
 
 			/* Perform the actual write to the ip port */
@@ -205,7 +205,7 @@ static void *RecvFromIPPort(void *arg)
 			if (msg.endian != MSG_ENDIAN_HOST)
 				msg_swap(&msg);
 			
-			msg_size =  MSG_LEN(msg.length);
+			msg_size =  MSG_LEN(&msg);
 /***********************************************************************/
 
 			if (n < 1) {
