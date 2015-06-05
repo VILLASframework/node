@@ -4,7 +4,7 @@
  *  Copyright (C) 2003. All rights reserved.
  *
  *  File name =         AsyncSerial.c
- *  Last modified by =  Mathieu Dubé-Dallaire
+ *  Last modified by =  Mathieu DubÃ©-Dallaire
  *
  *  Code example of an asynchronous program.  This program is started
  *  by the asynchronous controller and demonstrates how to send and 
