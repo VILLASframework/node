@@ -67,9 +67,8 @@ int hook_tofixed(struct msg *m, struct path *p, struct timespec *ts)
 
 int hook_ts(struct msg *m, struct path *p, struct timespec *ts)
 {
-	struct timespec *ts = (struct timespec *) &m->data[HOOK_TS_INDEX];
-	
-	clock_gettime(CLOCK_REALTIME, ts);
+	m->ts.sec = ts->tv_sec;
+	m->ts.nsec = ts->tv_nsec;
 	
 	return 0;
 }
