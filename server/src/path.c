@@ -74,8 +74,9 @@ skip:	for(;;) {
 		/* Receive message */
 		int recv = node_read(p->in, p->pool, p->poolsize, p->received, p->in->combine);
 		
-		struct timespec now;
-		clock_gettime(CLOCK_REALTIME, &now);
+		/** @todo Replace this timestamp by hardware timestamping */
+		struct timespec ts;
+		clock_gettime(CLOCK_REALTIME, &ts);
 		
 		debug(10, "Received %u messages from node '%s'", recv, p->in->name);
 		
@@ -106,7 +107,7 @@ skip:	for(;;) {
 			
 			/* Update delay histogram */
 			struct timespec sent = MSG_TS(p->current);
-			hist_put(&p->hist_delay, time_delta(&sent, &now));
+			hist_put(&p->hist_delay, time_delta(&sent, &ts));
 
 			/* Handle simulation restart */
 			if (p->current->sequence == 0 && abs(dist) >= 1) {
@@ -125,7 +126,7 @@ skip:	for(;;) {
 		
 		/* Call hook callbacks */
 		FOREACH(&p->hooks, it) {
-			if (it->hook(p->current, p)) {
+			if (it->hook(p->current, p, &ts)) {
 				p->skipped++;
 				goto skip;
 			}
