@@ -187,15 +187,10 @@ static void *RecvFromIPPort(void *arg)
 /******* FORMAT TO SPECIFIC PROTOCOL HERE ******************************/
 			n  = RecvPacket((char *) &msg, sizeof(msg), 1.0);
 
-			/** @todo: Check and ntohs() sequence number! */
-
-			if (msg.version != MSG_VERSION) {
-				OpalPrint("%s: Received message with unknown version. Skipping..\n", PROGNAME);
-				continue;
-			}
-			else if (msg.type != MSG_TYPE_DATA) {
-				OpalPrint("%s: Received no data. Skipping..\n", PROGNAME);
-				continue;
+			int ret = msg_verify(m);
+			if (ret) {
+				printf("Dropping invalid message (reason=%d)\r\n", ret);
+				goto out;
 			}
 			
 			/** @todo: We may check the sequence number here. */
