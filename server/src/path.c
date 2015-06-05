@@ -103,6 +103,10 @@ skip:	for(;;) {
 
 			/* Update sequence histogram */
 			hist_put(&p->hist_seq, dist);
+			
+			/* Update delay histogram */
+			struct timespec sent = MSG_TS(p->current);
+			hist_put(&p->hist_delay, time_delta(&sent, &now));
 
 			/* Handle simulation restart */
 			if (p->current->sequence == 0 && abs(dist) >= 1) {
@@ -117,10 +121,6 @@ skip:	for(;;) {
 				p->dropped++;
 				goto skip;
 			}
-			
-			/* Update delay histogram */
-			struct timespec sent = MSG_TS(p->current);
-			hist_put(&p->hist_delay, time_delta(&sent, &now));
 		}
 		
 		/* Call hook callbacks */
