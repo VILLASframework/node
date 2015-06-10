@@ -94,7 +94,14 @@ int if_stop(struct interface *i)
 
 	{ INDENT
 		if_setaffinity(i, -1L);
-		tc_reset(i);
+		
+		/* Only reset tc if it was initialized before */
+		FOREACH(&i->sockets, it) {
+			if (it->socket->netem) {
+				tc_reset(i);
+				break;
+			}
+		}
 	}
 
 	return 0;
