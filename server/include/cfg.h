@@ -79,7 +79,7 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct list
  *     hooks = [ "print", "fir" ]
  *     hooks = "log"
  **/
-int config_parse_hooks(config_setting_t *cfg, struct list *hooks);
+int config_parse_hooklist(config_setting_t *cfg, struct list *hooks);
 
 /** Parse a single node and add it to the global configuration.
  *

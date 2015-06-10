@@ -123,7 +123,7 @@ int config_parse_path(config_setting_t *cfg,
 	/* Optional settings */
 	struct config_setting_t *cfg_hook = config_setting_get_member(cfg, "hook");
 	if (cfg_hook)
-		config_parse_hooks(cfg_hook, &p->hooks);
+		config_parse_hooklist(cfg_hook, p->hooks);
 	
 	if (!config_setting_lookup_bool(cfg, "enabled", &enabled))
 		enabled = 1;
@@ -209,7 +209,7 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct list
 	return 0;
 }
 
-int config_parse_hooks(config_setting_t *cfg, struct list *hooks) {
+int config_parse_hooklist(config_setting_t *cfg, struct list *hooks) {
 	const char *str;
 	hook_cb_t hook;
 	
