@@ -13,8 +13,8 @@
  *********************************************************************************/
 
 #include <string.h>
-#include <time.h>
 
+#include "timing.h"
 #include "config.h"
 #include "msg.h"
 #include "hooks.h"
@@ -50,7 +50,10 @@ hook_cb_t hook_lookup(const char *name)
  
 int hook_print(struct msg *m, struct path *p, struct timespec *ts)
 {
-	/* Print every message once to stdout */
+	struct msg *m = p->current;
+	struct timespec ts = MSG_TS(m);
+		
+	fprintf(stdout, "%.3e+", time_delta(&ts, &p->ts_recv)); /* Print delay */
 	msg_fprint(stdout, m);
 
 	return 0;
@@ -67,8 +70,10 @@ int hook_tofixed(struct msg *m, struct path *p, struct timespec *ts)
 
 int hook_ts(struct msg *m, struct path *p, struct timespec *ts)
 {
-	m->ts.sec = ts->tv_sec;
-	m->ts.nsec = ts->tv_nsec;
+	struct msg *m = p->current;
+
+	m->ts.sec = p->ts_recv.tv_sec;
+	m->ts.nsec = p->ts_recv.tv_nsec;
 	
 	return 0;
 }

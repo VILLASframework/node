@@ -51,11 +51,23 @@ struct path
 	struct msg *current;
 	/** A pointer to the previously received message */
 	struct msg *previous;
+
+	/** The thread id for this path */
+	pthread_t recv_tid;
+	/** A second thread id for fixed rate sending thread */
+	pthread_t sent_tid;
+	/** A pointer to the libconfig object which instantiated this path */
+	config_setting_t *cfg;
 	
 	/** Histogram of sequence number displacement of received messages */
 	struct hist hist_seq;
 	/** Histogram for delay of received messages */
 	struct hist hist_delay;
+	
+	/** Last message received */
+	struct timespec ts_recv;
+	/** Last message sent */
+	struct timespec ts_sent;
 
 	/** Counter for sent messages to all outgoing nodes */
 	unsigned int sent;
@@ -67,13 +79,6 @@ struct path
 	unsigned int skipped;
 	/** Counter for dropped messages due to reordering */
 	unsigned int dropped;
-
-	/** The thread id for this path */
-	pthread_t recv_tid;
-	/** A second thread id for fixed rate sending thread */
-	pthread_t sent_tid;
-	/** A pointer to the libconfig object which instantiated this path */
-	config_setting_t *cfg;
 };
 
 /** Create a path by allocating dynamic memory. */
@@ -117,6 +122,7 @@ int path_reset(struct path *p);
  * @param p A pointer to the path structure.
  */
 void path_print_stats(struct path *p);
+
 
 /** Fills the provided buffer with a string representation of the path.
  *

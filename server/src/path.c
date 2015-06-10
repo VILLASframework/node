@@ -34,6 +34,8 @@ static void path_write(struct path *p)
 
 		debug(1, "Sent %u  messages to node '%s'", sent, it->node->name);
 		p->sent += sent;
+		
+		clock_gettime(CLOCK_REALTIME, &p->ts_sent);
 	}
 }
 
@@ -75,8 +77,7 @@ skip:	for(;;) {
 		int recv = node_read(p->in, p->pool, p->poolsize, p->received, p->in->combine);
 		
 		/** @todo Replace this timestamp by hardware timestamping */
-		struct timespec ts;
-		clock_gettime(CLOCK_REALTIME, &ts);
+		clock_gettime(CLOCK_REALTIME, &p->ts_recv);
 		
 		debug(10, "Received %u messages from node '%s'", recv, p->in->name);
 		
@@ -104,10 +105,6 @@ skip:	for(;;) {
 
 			/* Update sequence histogram */
 			hist_put(&p->hist_seq, dist);
-			
-			/* Update delay histogram */
-			struct timespec sent = MSG_TS(p->current);
-			hist_put(&p->hist_delay, time_delta(&sent, &ts));
 
 			/* Handle simulation restart */
 			if (p->current->sequence == 0 && abs(dist) >= 1) {
