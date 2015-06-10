@@ -101,9 +101,6 @@ double hist_stddev(struct hist *h)
 
 void hist_print(struct hist *h)
 { INDENT
-	char buf[(h->length + 1) * 8];
-	hist_dump(h, buf, sizeof(buf));
-
 	info("Total: %u values", h->total);
 	info("Highest value: %f", h->highest);
 	info("Lowest  value: %f", h->lowest);
@@ -115,8 +112,13 @@ void hist_print(struct hist *h)
 	if (h->lower > 0)
 		warn("Missed:  %u values below %f", h->lower,  h->low);
 	
-	hist_plot(h);
-	info(buf);
+	if (h->total - h->higher - h->lower > 0) {
+		hist_plot(h);
+		
+		char buf[(h->length + 1) * 8];
+		hist_dump(h, buf, sizeof(buf));
+		info(buf);
+	}
 }
 
 void hist_plot(struct hist *h)
@@ -124,7 +126,7 @@ void hist_plot(struct hist *h)
 	char buf[HIST_HEIGHT];
 	memset(buf, '#', sizeof(buf));
 	
-	double max = 0;
+	hist_cnt_t max = 1;
 
 	/* Get highest bar */
 	for (int i = 0; i < h->length; i++) {
