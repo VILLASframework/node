@@ -31,8 +31,6 @@ struct socket;
 struct interface {
 	/** The index used by the kernel to reference this interface */
 	int index;
-	/** How many nodes use this interface for outgoing packets */
-	int refcnt;
 	/** Human readable name of this interface */
 	char name[IF_NAME_MAX];
 	/** List of IRQs of the NIC */

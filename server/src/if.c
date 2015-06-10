@@ -48,12 +48,7 @@ void if_destroy(struct interface *i)
 
 int if_start(struct interface *i, int affinity)
 {
-	if (!i->refcnt) {
-		warn("Interface '%s' is not used by an active node", i->name);
-		return -1;
-	}
-	else
-		info("Starting interface '%s' (index=%u)", i->name, i->index);
+	info("Starting interface '%s' (index=%u)", i->name, i->index);
 	
 	{ INDENT
 		/* Assign fwmark's to socket nodes which have netem options */
