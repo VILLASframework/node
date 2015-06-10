@@ -62,9 +62,11 @@ struct path
 	/* The following fields are mostly managed by hook_ functions */
 	
 	/** Histogram of sequence number displacement of received messages */
-	struct hist hist_seq;
+	struct hist hist_sequence;
 	/** Histogram for delay of received messages */
 	struct hist hist_delay;
+	/** Histogram for inter message delay (time between received messages) */
+	struct hist hist_gap;
 	
 	/** Last message received */
 	struct timespec ts_recv;

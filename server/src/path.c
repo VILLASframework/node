@@ -11,7 +11,6 @@
 
 #include "utils.h"
 #include "path.h"
-#include "socket.h"
 #include "timing.h"
 #include "config.h"
 #include "stats.h"
@@ -44,17 +43,6 @@ static void path_write(struct path *p)
 static void * path_run_async(void *arg)
 {
 	struct path *p = arg;
-	struct itimerspec its = {
-		.it_interval = time_from_double(1 / p->rate),
-		.it_value = { 1, 0 }
-	};
-
-	p->tfd = timerfd_create(CLOCK_REALTIME, 0);
-	if (p->tfd < 0)
-		serror("Failed to create timer");
-
-	if (timerfd_settime(p->tfd, 0, &its, NULL))
-		serror("Failed to start timer");
 
 	/* Block until 1/p->rate seconds elapsed */
 	while (timerfd_wait(p->tfd))	
@@ -93,9 +81,6 @@ static void * path_run(void *arg)
 			p->previous = &p->pool[(p->received-1) % p->poolsize];
 			p->current  = &p->pool[ p->received    % p->poolsize];
 			
-			if (settings.debug >= 10)
-				msg_fprint(stdout, p->current);
-			
 			p->received++;
 			
 			/* Run hooks for filtering, stats collection and manipulation */
@@ -130,8 +115,21 @@ int path_start(struct path *p)
 		return -1;
 
 	/* At fixed rate mode, we start another thread for sending */
-	if (p->rate)
+	if (p->rate) {
+		struct itimerspec its = {
+			.it_interval = time_from_double(1 / p->rate),
+			.it_value = { 1, 0 }
+		};
+
+		p->tfd = timerfd_create(CLOCK_REALTIME, 0);
+		if (p->tfd < 0)
+			serror("Failed to create timer");
+
+		if (timerfd_settime(p->tfd, 0, &its, NULL))
+			serror("Failed to start timer");
+
 		pthread_create(&p->sent_tid, NULL, &path_run_async, p);
+	}
 
 	return  pthread_create(&p->recv_tid, NULL, &path_run,  p);
 }
@@ -142,7 +140,7 @@ int path_stop(struct path *p)
 	path_print(p, buf, sizeof(buf));
 	
 	info("Stopping path: %s", buf);
-
+	
 	pthread_cancel(p->recv_tid);
 	pthread_join(p->recv_tid, NULL);
 

@@ -59,7 +59,6 @@ int socket_init(int argc, char * argv[], struct settings *set)
 			i = if_create(index);
 
 		list_push(&i->sockets, s);
-		i->refcnt++;
 	}
 	
 	FOREACH(&interfaces, it)
