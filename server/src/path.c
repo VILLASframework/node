@@ -14,6 +14,7 @@
 #include "socket.h"
 #include "timing.h"
 #include "config.h"
+#include "stats.h"
 
 #ifndef sigev_notify_thread_id
  #define sigev_notify_thread_id   _sigev_un._tid
@@ -204,6 +205,18 @@ struct path * path_create()
 	hook_add(HOOK_MSG,		1,	hook_verify);
 	hook_add(HOOK_MSG,		2,	hook_restart);
 	hook_add(HOOK_MSG,		3,	hook_drop);
+	hook_add(HOOK_MSG,		4,	stats_collect);
+	
+	hook_add(HOOK_PATH_START,	1,	stats_start);
+	
+	hook_add(HOOK_PATH_STOP,	1,	stats_line);
+	hook_add(HOOK_PATH_STOP,	2,	stats_show);
+	hook_add(HOOK_PATH_STOP,	3,	stats_stop);
+	
+	hook_add(HOOK_PATH_RESTART,	1,	stats_line);
+	hook_add(HOOK_PATH_RESTART,	3,	stats_reset);
+	
+	hook_add(HOOK_PERIODIC,		1,	stats_line);
 
 	return p;
 }
