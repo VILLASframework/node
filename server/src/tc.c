@@ -37,7 +37,7 @@ int tc_parse(config_setting_t *cfg, struct netem *em)
 int tc_reset(struct interface *i)
 {
 	char cmd[128];
-	snprintf(cmd, sizeof(cmd), "tc qdisc del dev %s root", i->name);
+	snprintf(cmd, sizeof(cmd), "tc qdisc replace dev %s root pfifo_fast", i->name);
 
 	debug(6, "Reset traffic control for interface '%s'", i->name);
 
