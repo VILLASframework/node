@@ -55,10 +55,11 @@ int main(int argc, char *argv[])
 
 	/* Block until 1/p->rate seconds elapsed */
 	for (;;) {
+		m.sequence += timerfd_wait(tfd);
+		
 		struct timespec ts;
 		clock_gettime(CLOCK_REALTIME, &ts);
-
-		m.sequence += timerfd_wait(tfd);
+		
 		m.ts.sec    = ts.tv_sec;
 		m.ts.nsec   = ts.tv_nsec;
 
