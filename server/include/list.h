@@ -14,20 +14,22 @@
 
 #include <pthread.h>
 
-#include "hooks.h"
-
 /* Forward declarations */
 struct list_elm;
 struct node;
 struct path;
 struct interface;
+struct socket;
+struct gtfpga;
+struct opal;
 
 /** Static list initialization */
-#define LIST_INIT { \
+#define LIST_INIT(dtor) (struct list) { \
 	.head = NULL, \
 	.tail = NULL, \
 	.length = 0, \
-	.lock = PTHREAD_MUTEX_INITIALIZER \
+	.lock = PTHREAD_MUTEX_INITIALIZER, \
+	.destructor = dtor \
 }
 
 #define FOREACH(list, elm) \
@@ -65,9 +67,9 @@ struct list_elm {
 		struct socket *socket;
 		struct opal *opal;
 		struct gtfpga *gtfpga;
-		hook_cb_t hook;
 	} /* anonymous */;
 
+	int priority;
 	struct list_elm *prev, *next;
 };
 
@@ -76,6 +78,8 @@ void list_init(struct list *l, dtor_cb_t dtor);
 void list_destroy(struct list *l);
 
 void list_push(struct list *l, void *p);
+
+void list_insert(struct list *l, int prio, void *p);
 
 struct list_elm * list_search(struct list *l, int (*cmp)(void *));
 

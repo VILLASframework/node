@@ -58,9 +58,48 @@ void list_push(struct list *l, void *p)
 		l->head = e;
 
 	l->tail = e;
-	
 	l->length++;
 
+	pthread_mutex_unlock(&l->lock);
+}
+
+void list_insert(struct list *l, int prio, void *p)
+{
+	struct list_elm *d;
+	struct list_elm *e = alloc(sizeof(struct list_elm));
+	
+	e->priority = prio;
+	e->ptr = p;
+		
+	pthread_mutex_lock(&l->lock);
+
+	/* Search for first entry with higher priority */
+	for (d = l->head; d && d->priority < prio; d = d->next);
+	
+	/* Insert new element in front of d */
+	e->next = d;
+	
+	if (d) { /* Between or Head */
+		e->prev = d->prev;
+
+		if (d == l->head) /* Head */
+			l->head = e;
+		else /* Between */
+			d->prev = e;
+	}
+	else { /* Tail or Head */
+		e->prev = l->tail;
+		
+		if (l->length == 0) /* List was empty */
+			l->head = e;
+		else
+			l->tail->next = e;
+
+		l->tail = e;
+	}
+	
+	l->length++;
+		
 	pthread_mutex_unlock(&l->lock);
 }
 
