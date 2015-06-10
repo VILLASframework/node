@@ -211,16 +211,18 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct list
 
 int config_parse_hooklist(config_setting_t *cfg, struct list *hooks) {
 	const char *str;
-	hook_cb_t hook;
-	
+	const struct hook *hook;
+
 	switch (config_setting_type(cfg)) {
 		case CONFIG_TYPE_STRING:
 			str = config_setting_get_string(cfg);
 			hook = hook_lookup(str);
 			if (!hook)
 				cerror(cfg, "Invalid hook function '%s'", str);
-				
-			list_push(hooks, hook);
+			
+			debug(10, "Adding hook %s to chain %u with prio %u", hook->name, hook->type, hook->priority);
+			
+			list_insert(&hooks[hook->type], hook->priority, hook->callback);
 			break;
 		
 		case CONFIG_TYPE_ARRAY:
@@ -230,7 +232,7 @@ int config_parse_hooklist(config_setting_t *cfg, struct list *hooks) {
 				if (!hook)
 					cerror(config_setting_get_elem(cfg, i), "Invalid hook function '%s'", str);
 				
-				list_push(hooks, hook);
+				list_insert(&hooks[hook->type], hook->priority, hook->callback);
 			}
 			break;
 		

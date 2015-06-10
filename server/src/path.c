@@ -72,7 +72,7 @@ static void * path_run(void *arg)
 	p->previous = p->current = p->pool;
 
 	/* Main thread loop */
-skip:	for(;;) {
+	for(;;) {
 		/* Receive message */
 		int recv = node_read(p->in, p->pool, p->poolsize, p->received, p->in->combine);
 		
@@ -81,8 +81,14 @@ skip:	for(;;) {
 		
 		debug(10, "Received %u messages from node '%s'", recv, p->in->name);
 		
+		/* Run preprocessing hooks */
+		if (hook_run(p, HOOK_PRE)) {
+			p->skipped += recv;
+			continue;
+		}
+		
 		/* For each received message... */
-		for (int i=0; i<recv; i++) {
+		for (int i = 0; i < recv; i++) {
 			p->previous = &p->pool[(p->received-1) % p->poolsize];
 			p->current  = &p->pool[ p->received    % p->poolsize];
 			
@@ -91,42 +97,17 @@ skip:	for(;;) {
 			
 			p->received++;
 			
-			/* Check header fields */
-			if (msg_verify(p->current)) {
-				p->invalid++;
-				warn("Received invalid message!");
-				goto skip; /* Drop message */
-			}
-
-			/* Handle wrap-around of sequence number */
-			int dist = (UINT32_MAX + p->current->sequence - p->previous->sequence) % UINT32_MAX;
-			if (dist > UINT32_MAX / 2)
-				dist -= UINT32_MAX;
-
-			/* Update sequence histogram */
-			hist_put(&p->hist_seq, dist);
-
-			/* Handle simulation restart */
-			if (p->current->sequence == 0 && abs(dist) >= 1) {
-				char buf[33];
-				path_print(p, buf, sizeof(buf));
-				warn("Simulation for path %s restarted (prev->seq=%u, current->seq=%u, dist=%d)",
-					buf, p->previous->sequence, p->current->sequence, dist);
-
-				path_reset(p);
-			}
-			else if (dist <= 0 && p->received > 1) {
-				p->dropped++;
-				goto skip;
+			/* Run hooks for filtering, stats collection and manipulation */
+			if (hook_run(p, HOOK_MSG)) {
+				p->skipped++;
+				continue;
 			}
 		}
 		
-		/* Call hook callbacks */
-		FOREACH(&p->hooks, it) {
-			if (it->hook(p->current, p, &ts)) {
-				p->skipped++;
-				goto skip;
-			}
+		/* Run post processing hooks */
+		if (hook_run(p, HOOK_POST)) {
+			p->skipped += recv;
+			continue;
 		}
 		
 		/* At fixed rate mode, messages are send by another thread */
@@ -143,6 +124,9 @@ int path_start(struct path *p)
 	path_print(p, buf, sizeof(buf));
 	
 	info("Starting path: %s (poolsize = %u)", buf, p->poolsize);
+	
+	if (hook_run(p, HOOK_PATH_START))
+		return -1;
 
 	/* At fixed rate mode, we start another thread for sending */
 	if (p->rate)
@@ -167,38 +151,11 @@ int path_stop(struct path *p)
 
 		close(p->tfd);
 	}
-
-	if (p->received) {
-		info("Delay distribution:");
-		  hist_print(&p->hist_delay);
-		info("Sequence number displacement:");
-		  hist_print(&p->hist_seq);	
-	}
+	
+	if (hook_run(p, HOOK_PATH_STOP))
+		return -1;
 
 	return 0;
-}
-
-int path_reset(struct path *p)
-{
-	p->sent		= 0;
-	p->received	= 1;
-	p->invalid	= 0;
-	p->skipped	= 0;
-	p->dropped	= 0;
-
-	hist_reset(&p->hist_seq);
-	hist_reset(&p->hist_delay);
-	
-	return 0;
-}
-
-void path_print_stats(struct path *p)
-{
-	char buf[33];
-	path_print(p, buf, sizeof(buf));
-	
-	info("%-32s :   %-8u %-8u %-8u %-8u %-8u", buf,
-		p->sent, p->received, p->dropped, p->skipped, p->invalid);
 }
 
 int path_print(struct path *p, char *buf, int len)
@@ -219,15 +176,34 @@ int path_print(struct path *p, char *buf, int len)
 	return 0;
 }
 
+int path_reset(struct path *p)
+{
+	if (hook_run(p, HOOK_PATH_RESTART))
+		return -1;
+
+	p->sent	    =
+	p->received =
+	p->invalid  =
+	p->skipped  =
+	p->dropped  = 0;
+		
+	return 0;
+}
+
 struct path * path_create()
 {
 	struct path *p = alloc(sizeof(struct path));
 
 	list_init(&p->destinations, NULL);
-	list_init(&p->hooks, NULL);
+	
+	for (int i = 0; i < HOOK_MAX; i++)
+		list_init(&p->hooks[i], NULL);
 
-	hist_create(&p->hist_seq, -HIST_SEQ, +HIST_SEQ, 1);
-	hist_create(&p->hist_delay, 0, 2, 100e-3);
+#define hook_add(type, priority, cb) list_insert(&p->hooks[type], priority, cb)
+	
+	hook_add(HOOK_MSG,		1,	hook_verify);
+	hook_add(HOOK_MSG,		2,	hook_restart);
+	hook_add(HOOK_MSG,		3,	hook_drop);
 
 	return p;
 }
@@ -235,10 +211,10 @@ struct path * path_create()
 void path_destroy(struct path *p)
 {
 	list_destroy(&p->destinations);
-	list_destroy(&p->hooks);
-	hist_destroy(&p->hist_seq);
-	hist_destroy(&p->hist_delay);
 	
+	for (int i = 0; i < HOOK_MAX; i++)
+		list_destroy(&p->hooks[i]);
+		
 	free(p->pool);
 	free(p);
 }

@@ -1,8 +1,8 @@
 /** Hook funktions
  *
- * Every path can register a hook function which is called for every received
- * message. This can be used to debug the data flow, get statistics
- * or alter the message.
+ * Every path can register hook functions which are called at specific events.
+ * A list of supported events is described by enum hook_flags.
+ * Please note that there are several hook callbacks which are hard coded into path_create().
  *
  * This file includes some examples.
  *
@@ -21,34 +21,44 @@
 #include "path.h"
 #include "utils.h"
 
-/* The configuration of hook parameters is done in "config.h" */
+/* Some hooks can be configured by constants in te file "config.h" */
 
-/* Plausability checks */
-#if HOOK_MULTIPLEX_RATIO > POOL_SIZE
- #error "POOL_SIZE is too small for given HOOK_MULTIPLEX_RATIO"
-#endif
-
-/** @todo Make const */
-static struct hook_id hook_list[] = {
-	{ hook_print, "print" },
-	{ hook_decimate, "decimate" },
-	{ hook_tofixed, "tofixed" },
-	{ hook_ts, "ts" },
-	{ hook_fir, "fir" },
-	{ hook_dft, "dft"}
+/** This is a static list of available hooks.
+ *
+ * It's used by hook_lookup to parse hook identfiers from the configuration file.
+ * The list must be terminated by NULL pointers!
+ */ 
+static const struct hook hook_list[] = {
+/*  Priority,	Callback,	Name,		Type		*/
+	{ 99, 	hook_print,	"print",	HOOK_MSG },
+	{ 99,	hook_decimate,	"decimate",	HOOK_POST },
+	{ 99,	hook_tofixed,	"tofixed",	HOOK_MSG },
+	{ 99,	hook_ts,	"ts",		HOOK_MSG },
+	{ 99,	hook_fir,	"fir",		HOOK_POST },
+	{ 99,	hook_dft,	"dft",		HOOK_POST }
 };
 
-hook_cb_t hook_lookup(const char *name)
+const struct hook* hook_lookup(const char *name)
 {
 	for (int i=0; i<ARRAY_LEN(hook_list); i++) {
 		if (!strcmp(name, hook_list[i].name))
-			return hook_list[i].cb;
+			return &hook_list[i];
 	}
 
 	return NULL; /* No matching hook was found */
 }
+
+int hook_run(struct path *p, enum hook_type t)
+{
+	int ret = 0;
+	
+	FOREACH(&p->hooks[t], it)
+		ret += ((hook_cb_t) it->ptr)(p);
+	
+	return ret;
+}
  
-int hook_print(struct msg *m, struct path *p, struct timespec *ts)
+int hook_print(struct path *p)
 {
 	struct msg *m = p->current;
 	struct timespec ts = MSG_TS(m);
@@ -59,16 +69,17 @@ int hook_print(struct msg *m, struct path *p, struct timespec *ts)
 	return 0;
 }
 
-int hook_tofixed(struct msg *m, struct path *p, struct timespec *ts)
+int hook_tofixed(struct path *p)
 {
-	for (int i=0; i<m->length; i++) {
+	struct msg *m = p->current;
+
+	for (int i=0; i<m->length; i++)
 		m->data[i].i = m->data[i].f * 1e3; 
-	}
 	
 	return 0;
 }
 
-int hook_ts(struct msg *m, struct path *p, struct timespec *ts)
+int hook_ts(struct path *p)
 {
 	struct msg *m = p->current;
 
@@ -78,7 +89,7 @@ int hook_ts(struct msg *m, struct path *p, struct timespec *ts)
 	return 0;
 }
 
-int hook_fir(struct msg *m, struct path *p, struct timespec *ts)
+int hook_fir(struct path *p)
 {
 	/** Simple FIR-LP: F_s = 1kHz, F_pass = 100 Hz, F_block = 300
 	 * Tip: Use MATLAB's filter design tool and export coefficients
@@ -101,19 +112,60 @@ int hook_fir(struct msg *m, struct path *p, struct timespec *ts)
 		sum += coeffs[i] * old->data[HOOK_FIR_INDEX].f;
 	}
 
-	m->data[HOOK_FIR_INDEX].f = sum;
+	p->current->data[HOOK_FIR_INDEX].f = sum;
 
 	return 0;
 }
 
-int hook_decimate(struct msg *m, struct path *p, struct timespec *ts)
+int hook_decimate(struct path *p)
 {
 	/* Only sent every HOOK_DECIMATE_RATIO'th message */
-	return m->sequence % HOOK_DECIMATE_RATIO;
+	return p->received % HOOK_DECIMATE_RATIO;
 }
 
 /** @todo Implement */
-int hook_dft(struct msg *m, struct path *p, struct timespec *ts)
+int hook_dft(struct path *p)
 {
 	return 0;
+}
+
+/** System hooks */
+
+int hook_restart(struct path *p)
+{
+	if (p->current->sequence  == 0 &&
+	    p->previous->sequence <= UINT32_MAX - 32) {
+		char buf[33];
+		path_print(p, buf, sizeof(buf));
+		warn("Simulation for path %s restarted (prev->seq=%u, current->seq=%u)",
+			buf, p->previous->sequence, p->current->sequence);
+
+			path_reset(p);
+	}
+	
+	return 0;
+}
+
+int hook_verify(struct path *p)
+{
+	int reason = msg_verify(p->current);
+	if (reason) {
+		p->invalid++;
+		warn("Received invalid message (reason=%d)", reason);
+
+		return -1;
+	}
+	
+	return 0;
+}
+
+int hook_drop(struct path *p)
+{
+	int dist = p->current->sequence - (int32_t) p->previous->sequence;
+	if (dist <= 0 && p->received > 1) {
+		p->dropped++;
+		return -1;
+	}
+	else
+		return 0;
 }

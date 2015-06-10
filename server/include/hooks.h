@@ -23,27 +23,37 @@
 
 /* The configuration of hook parameters is done in "config.h" */
 
-struct msg;
+/* Forward declarations */
 struct path;
 
 /** Callback type of hook function
  *
- * @param m The last message which has been received
  * @param p The path which is processing this message.
- * @param ts The timestamp when the message(s) were received.
  * @retval 0 Success. Continue processing and forwarding the message.
  * @retval <0 Error. Drop the message.
  */
-typedef int (*hook_cb_t)(struct msg *m, struct path *p, struct timespec *ts);
+typedef int (*hook_cb_t)(struct path *p);
 
-/** This is a static list of available hooks.
- *
- * It's used by hook_lookup to parse hook identfiers from the configuration file.
- * The list must be terminated by NULL pointers!
- */ 
-struct hook_id {
-	hook_cb_t cb;
+enum hook_type {
+	HOOK_PATH_START,	/**< Called whenever a path is started; before threads are created. */
+	HOOK_PATH_STOP,		/**< Called whenever a path is stopped; after threads are destoyed. */
+	HOOK_PATH_RESTART,	/**< Called whenever a new simulation case is started. This is detected by a sequence no equal to zero. */
+
+	HOOK_PRE,		/**< Called when a new packet of messages (samples) was received. */
+	HOOK_POST,		/**< Called after each message (sample) of a packet was processed. */
+	HOOK_MSG,		/**< Called for each message (sample) in a packet. */
+	
+	HOOK_PERIODIC,		/**< Called periodically. Period is set by global 'stats' option in the configuration file. */
+
+	HOOK_MAX
+};
+
+/** Descriptor for user defined hooks. See hook_list[]. */
+struct hook {
+	int priority;
+	hook_cb_t callback;
 	const char *name;
+	enum hook_type type;
 };
 
 /** Get a function pointer of a hook function by its name
@@ -52,24 +62,47 @@ struct hook_id {
  * @retval NULL There is no hook registred with name.
  * @retval >0 A function pointer to the requested hook_cb_t hook.
  */
-hook_cb_t hook_lookup(const char *name);
+const struct hook * hook_lookup(const char *name);
+
+/** Conditionally execute the hooks
+ *
+ * @param p A pointer to the path structure.
+ * @param t Which type of hooks should be executed?
+ * @retval 0 All registred hooks for the specified type have been executed successfully. 
+ * @retval <0 On of the hook functions signalized, that the processing should be aborted; message should be skipped.
+ */
+int hook_run(struct path *p, enum hook_type t);
+
+
+/* The following prototypes are example hooks */
 
 /** Example hook: Print the message. */
-int hook_print(struct msg *m, struct path *p, struct timespec *ts);
+int hook_print(struct path *p);
 
 /** Example hook: Drop messages. */
-int hook_decimate(struct msg *m, struct path *p, struct timespec *ts);
+int hook_decimate(struct path *p);
 
 /** Example hook: Convert the message values to fixed precision. */
-int hook_tofixed(struct msg *m, struct path *p, struct timespec *ts);
+int hook_tofixed(struct path *p);
 
 /** Example hook: overwrite timestamp of message. */
-int hook_ts(struct msg *m, struct path *p, struct timespec *ts);
+int hook_ts(struct path *p);
 
 /** Example hook: Finite-Impulse-Response (FIR) filter. */
-int hook_fir(struct msg *m, struct path *p, struct timespec *ts);
+int hook_fir(struct path *p);
 
 /** Example hook: Discrete Fourier Transform */
-int hook_dft(struct msg *m, struct path *p, struct timespec *ts);
+int hook_dft(struct path *p);
+
+/* The following prototypes are core hook functions */
+
+/** Core hook: verify message headers. Invalid messages will be dropped. */
+int hook_verify(struct path *p);
+
+/** Core hook: reset the path in case a new simulation was started. */
+int hook_restart(struct path *p);
+
+/** Core hook: check if sequence number is correct. Otherwise message will be dropped */
+int hook_drop(struct path *p);
 
 #endif /** _HOOKS_H_ @} */

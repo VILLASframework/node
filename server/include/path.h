@@ -35,7 +35,7 @@ struct path
 	/** List of all outgoing nodes */
 	struct list destinations;
 	/** List of function pointers to hooks */
-	struct list hooks;
+	struct list hooks[HOOK_MAX];
 
 	/** Timer file descriptor for fixed rate sending */
 	int tfd;
@@ -58,6 +58,8 @@ struct path
 	pthread_t sent_tid;
 	/** A pointer to the libconfig object which instantiated this path */
 	config_setting_t *cfg;
+	
+	/* The following fields are mostly managed by hook_ functions */
 	
 	/** Histogram of sequence number displacement of received messages */
 	struct hist hist_seq;

@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 			
 		for (;;) FOREACH(&paths, it) {
 			usleep(settings.stats * 1e6);
-			path_print_stats(it->path);
+			hook_run(it->path, HOOK_PERIODIC);
 		}
 
 	}
