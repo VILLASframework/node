@@ -5,6 +5,13 @@ Asynchronous programs are are a feature of RT-LAB. They are used to exchange dat
 
 For this purpose the C program handels IP/UDP communication via BSD sockets.
 
+## Configuration
+
+`send_id`
+
+`recv_id`
+
+`reply`
 
 ## Arguments for OPAL-RT block
 

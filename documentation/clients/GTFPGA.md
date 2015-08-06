@@ -8,6 +8,14 @@ This board consists of a Virtex 5 FPGA, Ethernet and Fiberoptic MACs and an inte
 
 The PowerPC core is used to forward values between RTDS and the S2SS server.
 
+## Configuration
+
+`slot`
+
+`id`
+
+`rate`
+
 ## Source Code
 
 The source code for the PowerPC is located at:
