@@ -3,7 +3,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include <stdlib.h>
@@ -49,7 +49,7 @@ static void quit()
 	list_destroy(&paths);
 	list_destroy(&nodes);
 	config_destroy(&config);
-	
+
 	info("Goodbye!");
 
 	_exit(EXIT_SUCCESS);
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 	if (argc != 2)
 #endif
 		usage(argv[0]);
-		
+
 	char *configfile = (argc == 2) ? argv[1] : "opal-shmem.conf";
 
 	log_reset();
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 	/* Initialize lists */
 	list_init(&nodes, (dtor_cb_t) node_destroy);
 	list_init(&paths, (dtor_cb_t) path_destroy);
-	
+
 	info("Initialize real-time system");
 	realtime_init();
 
@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 	info("Parsing configuration");
 	config_init(&config);
 	config_parse(configfile, &config, &settings, &nodes, &paths);
-	
+
 	info("Initialize node types");
 	node_init(argc, argv, &settings);
 
@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
 		info("%-32s :   %-8s %-8s %-8s %-8s %-8s",
 			"Source " MAG("=>") " Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Inval");
 		line();
-			
+
 		for (;;) FOREACH(&paths, it) {
 			usleep(settings.stats * 1e6);
 			hook_run(it->path, HOOK_PERIODIC);

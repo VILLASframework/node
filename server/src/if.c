@@ -3,7 +3,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include <stdio.h>
@@ -49,7 +49,7 @@ void if_destroy(struct interface *i)
 int if_start(struct interface *i, int affinity)
 {
 	info("Starting interface '%s' (index=%u)", i->name, i->index);
-	
+
 	{ INDENT
 		/* Assign fwmark's to socket nodes which have netem options */
 		int mark = 0;
@@ -58,14 +58,14 @@ int if_start(struct interface *i, int affinity)
 			if (s->netem)
 				s->mark = 1 + mark++;
 		}
-		
+
 		/* Abort if no node is using netem */
 		if (mark == 0)
 			return 0;
 
 		/* Replace root qdisc */
 		tc_prio(i, TC_HDL(4000, 0), mark);
-		
+
 		/* Create netem qdisks and appropriate filter per netem node */
 		FOREACH(&i->sockets, it) {
 			struct socket *s = it->socket;
@@ -89,7 +89,7 @@ int if_stop(struct interface *i)
 
 	{ INDENT
 		if_setaffinity(i, -1L);
-		
+
 		/* Only reset tc if it was initialized before */
 		FOREACH(&i->sockets, it) {
 			if (it->socket->netem) {
@@ -132,7 +132,7 @@ int if_getegress(struct sockaddr *sa)
 			struct sockaddr_ll *sll = (struct sockaddr_ll *) sa;
 			return sll->sll_ifindex;
 		}
-		
+
 		default:
 			return -1;
 	}

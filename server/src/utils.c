@@ -3,7 +3,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include <stdarg.h>
@@ -67,12 +67,12 @@ void die()
 int strap(char *dest, size_t size, const char *fmt,  ...)
 {
 	int ret;
-	
+
 	va_list ap;
 	va_start(ap, fmt);
 	ret = vstrap(dest, size, fmt, ap);
 	va_end(ap);
-	
+
 	return ret;
 }
 
@@ -104,7 +104,7 @@ void * alloc(size_t bytes)
 		error("Failed to allocate memory");
 
 	memset(p, 0, bytes);
-	
+
 	return p;
 }
 
@@ -113,13 +113,13 @@ int system2(const char *cmd, ...)
 {
 	va_list ap;
 	char buf[1024];
-	
+
 	va_start(ap, cmd);
 	vsnprintf(buf, sizeof(buf), cmd, ap);
 	va_end(ap);
-	
+
 	strap(buf, sizeof(buf), " 2>&1", sizeof(buf)); /* redirect stderr to stdout */
-		
+
 	debug(1, "System: %s", buf);
 
 	FILE *f = popen(buf, "r");

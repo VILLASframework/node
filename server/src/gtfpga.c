@@ -5,7 +5,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include <stdio.h>
@@ -34,13 +34,13 @@ int gtfpga_init(int argc, char * argv[], struct settings *set)
 {
 	pacc = pci_alloc();		/* Get the pci_access structure */
 	pci_init(pacc);			/* Initialize the PCI library */
-	
+
 	pacc->error = (log_cb_t) error;	/* Replace logging and debug functions */
 	pacc->warning = (log_cb_t) warn;
 	pacc->debug = gtfpga_debug;
-	
+
 	pci_scan_bus(pacc);		/* We want to get the list of devices */
-	
+
 	return 0;
 }
 
@@ -57,7 +57,7 @@ int gtfpga_parse(config_setting_t *cfg, struct node *n)
 
 	const char *slot, *id, *err;
 	config_setting_t *cfg_slot, *cfg_id;
-	
+
 	/* Checks */
 	if (n->combine != 1) {
 		config_setting_t *cfg_combine = config_setting_get_member(cfg, "combine");
@@ -89,10 +89,10 @@ int gtfpga_parse(config_setting_t *cfg, struct node *n)
 		else
 			cerror(cfg_slot, "Invalid id format");
 	}
-	
+
 	if (!config_setting_lookup_float(cfg, "rate", &g->rate))
 		g->rate = 0;
-	
+
 	n->gtfpga = g;
 
 	return 0;
@@ -120,34 +120,34 @@ static int gtfpga_load_driver(struct pci_dev *d)
 	FILE *f;
 	char slot[16];
 	int ret;
-	
+
 	/* Prepare slot identifier */
 	snprintf(slot, sizeof(slot), "%04x:%02x:%02x.%x",
 		d->domain, d->bus, d->dev, d->func);
-		
+
 	/* Load uio_pci_generic module */
 	ret = system2("modprobe uio_pci_generic");
 	if (ret)
 		serror("Failed to load module");
-	
+
 	/* Add new ID to uio_pci_generic */
 	f = fopen(SYSFS_PATH "/drivers/uio_pci_generic/new_id", "w");
 	if (!f)
 		serror("Failed to add PCI id to uio_pci_generic driver");
-	
+
 	debug(5, "Adding ID to uio_pci_generic module: %04x %04x", d->vendor_id, d->device_id);
 	fprintf(f, "%04x %04x", d->vendor_id, d->device_id);
 	fclose(f);
-	
+
 	/* Bind to uio_pci_generic */
 	f = fopen(SYSFS_PATH "/drivers/uio_pci_generic/bind", "w");
 	if (!f)
 		serror("Failed to add PCI id to uio_pci_generic driver");
-	
+
 	debug(5, "Bind slot to uio_pci_generic module: %s", slot);
 	fprintf(f, "%s\n", slot);
 	fclose(f);
-	
+
 	return 0;
 }
 
@@ -178,7 +178,7 @@ static int gtfpga_mmap(struct gtfpga *g)
 	void *map = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, addr);
 	if (map == MAP_FAILED)
 		serror("Failed mmap()");
-	
+
 	return 0;
 }
 
@@ -201,15 +201,15 @@ int gtfpga_open(struct node *n)
 
 	/* Show some debug infos */
 	pci_fill_info(dev, PCI_FILL_IDENT | PCI_FILL_BASES | PCI_FILL_CLASS);	/* Fill in header info we need */
-	
+
 	g->name = pci_lookup_name(pacc, g->name, 512, PCI_LOOKUP_DEVICE, dev->vendor_id, dev->device_id);
-	
+
 	/* Setup timer */
 	if (g->rate) {
 		g->fd_irq = timerfd_create(CLOCK_MONOTONIC, 0);
 		if (g->fd_irq < 0)
 			serror("Failed to create timer");
-	
+
 		struct itimerspec its = {
 			.it_interval = time_from_double(1 / g->rate),
 			.it_value = { 1, 0 }
@@ -221,11 +221,11 @@ int gtfpga_open(struct node *n)
 	else
 		/** @todo implement UIO interrupts */
 		error("UIO irq not implemented yet. Use 'rate' setting");
-	
+
 	char buf[1024];
 	gtfpga_print(n, buf, sizeof(buf));
 	debug(5, "Found GTFPGA card: %s", buf);
-	
+
 	return 0;
 }
 
@@ -247,14 +247,14 @@ int gtfpga_close(struct node *n)
 int gtfpga_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
 	struct gtfpga *g = n->gtfpga;
-	
+
 	struct msg *m = &pool[first % poolsize];
-	
+
 	uint64_t runs;
 	read(g->fd_irq, &runs, sizeof(runs));
-	
+
 	static int seq;
-	
+
 	m->sequence = seq++;
 
 	return 0;
@@ -264,7 +264,7 @@ int gtfpga_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 int gtfpga_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
 	// struct gtfpga *g = n->gtfpga;
-	
+
 	// struct msg *m = &pool[first % poolsize];
 
 	return 0;

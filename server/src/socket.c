@@ -7,7 +7,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include <string.h>
@@ -41,7 +41,7 @@ static struct list sockets;
 int socket_init(int argc, char * argv[], struct settings *set)
 { INDENT
 	list_init(&interfaces, (dtor_cb_t) if_destroy);
-	
+
 	/* Gather list of used network interfaces */
 	FOREACH(&sockets, it) {
 		struct socket *s = it->socket;
@@ -60,10 +60,10 @@ int socket_init(int argc, char * argv[], struct settings *set)
 
 		list_push(&i->sockets, s);
 	}
-	
+
 	FOREACH(&interfaces, it)
 		if_start(it->interface, set->affinity);
-	
+
 	return 0;
 }
 
@@ -71,9 +71,9 @@ int socket_deinit()
 { INDENT
 	FOREACH(&interfaces, it)
 		if_stop(it->interface);
-	
+
 	list_destroy(&interfaces);
-	
+
 	return 0;
 }
 
@@ -83,7 +83,7 @@ int socket_print(struct node *n, char *buf, int len)
 
 	char local[INET6_ADDRSTRLEN + 16];
 	char remote[INET6_ADDRSTRLEN + 16];
-	
+
 	socket_print_addr(local, sizeof(local), (struct sockaddr *) &s->local);
 	socket_print_addr(remote, sizeof(remote), (struct sockaddr *) &s->remote);
 
@@ -96,7 +96,7 @@ int socket_open(struct node *n)
 	struct sockaddr_in *sin = (struct sockaddr_in *) &s->local;
 	struct sockaddr_ll *sll = (struct sockaddr_ll *) &s->local;
 	int ret;
-		
+
 	/* Create socket */
 	switch (node_type(n)) {
 		case UDP:	s->sd = socket(sin->sin_family, SOCK_DGRAM,	IPPROTO_UDP); break;
@@ -105,15 +105,15 @@ int socket_open(struct node *n)
 		default:
 			error("Invalid socket type!");
 	}
-	
+
 	if (s->sd < 0)
 		serror("Failed to create socket");
-	
+
 	/* Bind socket for receiving */
 	ret = bind(s->sd, (struct sockaddr *) &s->local, sizeof(s->local));
 	if (ret < 0)
 		serror("Failed to bind socket");
-	
+
 	/* Set fwmark for outgoing packets */
 	if (setsockopt(s->sd, SOL_SOCKET, SO_MARK, &s->mark, sizeof(s->mark)))
 		serror("Failed to set fwmark for outgoing packets");
@@ -140,14 +140,14 @@ int socket_open(struct node *n)
 				debug(4, "Set socket priority for node '%s' to %u", n->name, prio);
 			break;
 	}
-	
+
 	return 0;
 }
 
 int socket_close(struct node *n)
 {
 	struct socket *s = n->socket;
-	
+
 	if (s->sd >= 0)
 		close(s->sd);
 	
@@ -167,24 +167,24 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 		.msg_iov = iov,
 		.msg_iovlen = ARRAY_LEN(iov)
 	};
-	
+
 	/* Wait until next packet received */
 	poll(&(struct pollfd) { .fd = s->sd, .events = POLLIN }, 1, -1);
 	/* Get size of received packet in bytes */
-	ioctl(s->sd, FIONREAD, &bytes);	
-	
+	ioctl(s->sd, FIONREAD, &bytes);
+
 	/* Check packet integrity */
 	if (bytes % (cnt * 4) != 0)
 		error("Packet length not dividable by 4!");
 	if (bytes / cnt > sizeof(struct msg))
 		error("Packet length is too large!");
-	
+
 	for (int i = 0; i < cnt; i++) {
 		/* All messages of a packet must have equal length! */
 		iov[i].iov_base = &pool[(first+poolsize+i) % poolsize];
 		iov[i].iov_len  = bytes / cnt;
 	}
-	
+
 	/* Receive message from socket */
 	int ret = recvmsg(s->sd, &mhdr, 0);
 	if (ret == 0)
@@ -197,10 +197,10 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 
 		/* Check integrity of packet */
 		bytes -= MSG_LEN(n);
-		
+
 		/* Convert headers to host byte order */
 		n->sequence = ntohs(n->sequence);
-		
+
 		/* Convert message to host endianess */
 		if (n->endian != MSG_ENDIAN_HOST)
 			msg_swap(n);
@@ -245,7 +245,7 @@ int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 		default:
 			break;
 	}
-	
+
 	ret = sendmsg(s->sd, &mhdr, 0);
 	if (ret < 0)
 		serror("Failed send");
@@ -257,7 +257,7 @@ int socket_parse(config_setting_t *cfg, struct node *n)
 {
 	const char *local, *remote;
 	int ret;
-	
+
 	struct socket *s = alloc(sizeof(struct socket));
 
 	if (!config_setting_lookup_string(cfg, "remote", &remote))
@@ -280,12 +280,12 @@ int socket_parse(config_setting_t *cfg, struct node *n)
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
 		s->netem = alloc(sizeof(struct netem));
-			
+
 		tc_parse(cfg_netem, s->netem);
 	}
-	
+
 	n->socket = s;
-	
+
 	list_push(&sockets, s);
 
 	return 0;
@@ -304,7 +304,7 @@ int socket_print_addr(char *buf, int len, struct sockaddr *sa)
 			struct sockaddr_ll *sll = (struct sockaddr_ll *) sa;
 			char ifname[IF_NAMESIZE];
 
-			return snprintf(buf, len, "%s%%%s:%#hx", 
+			return snprintf(buf, len, "%s%%%s:%#hx",
 				ether_ntoa((struct ether_addr *) &sll->sll_addr),
 				if_indextoname(sll->sll_ifindex, ifname),
 				ntohs(sll->sll_protocol));
@@ -313,7 +313,7 @@ int socket_print_addr(char *buf, int len, struct sockaddr *sa)
 		default:
 			return snprintf(buf, len, "address family: %u", sa->sa_family);
 	}
-	
+
 	return 0;
 }
 
@@ -323,8 +323,8 @@ int socket_parse_addr(const char *addr, struct sockaddr *sa, enum node_type type
 
 	char *copy = strdup(addr);
 	int ret;
-	
-	if (type == IEEE_802_3) { /* Format: "ab:cd:ef:12:34:56%ifname:protocol" */
+
+	if (layer == LAYER_ETH) { /* Format: "ab:cd:ef:12:34:56%ifname:protocol" */
 		struct sockaddr_ll *sll = (struct sockaddr_ll *) sa;
 
 		/* Split string */
@@ -351,7 +351,7 @@ int socket_parse_addr(const char *addr, struct sockaddr *sa, enum node_type type
 			.ai_flags = flags,
 			.ai_family = AF_INET
 		};
-		
+
 		/* Split string */
 		char *node = strtok(copy, ":");
 		char *service = strtok(NULL, "\0");
@@ -388,13 +388,13 @@ int socket_parse_addr(const char *addr, struct sockaddr *sa, enum node_type type
 				struct sockaddr_in *sin = (struct sockaddr_in *) result->ai_addr;
 				sin->sin_port = htons(result->ai_protocol);
 			}
-						
-			memcpy(sa, result->ai_addr, result->ai_addrlen);				
-			
+
+			memcpy(sa, result->ai_addr, result->ai_addrlen);
+
 			freeaddrinfo(result);
 		}
 	}
-	
+
 	free(copy);
 
 	return ret;

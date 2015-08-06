@@ -3,7 +3,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include <stdio.h>
@@ -79,7 +79,7 @@ void log_vprint(const char *lvl, const char *fmt, va_list ap)
 
 	/* Severity */
 	strap(buf, sizeof(buf), BLD("%5s "), lvl);
-	
+
 	/* Indention */
 #ifdef __GNUC__
 	for (int i = 0; i < indent; i++)
@@ -89,7 +89,7 @@ void log_vprint(const char *lvl, const char *fmt, va_list ap)
 
 	/* Format String */
 	vstrap(buf, sizeof(buf), fmt, ap);
-	
+
 	/* Output */
 #ifdef ENABLE_OPAL_ASYNC
 	OpalPrint("S2SS: %s\n", buf);
@@ -101,7 +101,7 @@ void line()
 {
 	char buf[LOG_WIDTH];
 	memset(buf, 0x71, sizeof(buf));
-	
+
 	log_print("", "\b" ACS("%.*s"), LOG_WIDTH, buf);
 }
 
@@ -133,7 +133,7 @@ void warn(const char *fmt, ...)
 	log_vprint(WARN, fmt, ap);
 	va_end(ap);
 }
-	
+
 void error(const char *fmt, ...)
 {
 	va_list ap;
@@ -149,11 +149,11 @@ void serror(const char *fmt, ...)
 {
 	va_list ap;
 	char buf[1024];
-	
+
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	
+
 	log_print(ERROR, "%s: %m (%u)", buf, errno);
 	die();
 }
@@ -162,15 +162,15 @@ void cerror(config_setting_t *cfg, const char *fmt, ...)
 {
 	va_list ap;
 	char buf[1024];
-	
+
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	
+
 	log_print(ERROR, "%s in %s:%u", buf,
 		config_setting_source_file(cfg)
 		   ? config_setting_source_file(cfg)
-		   : "(stdio)", 
-		config_setting_source_line(cfg)); 
+		   : "(stdio)",
+		config_setting_source_line(cfg));
 	die();
 }

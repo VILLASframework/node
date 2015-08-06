@@ -3,7 +3,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include <stdlib.h>
@@ -61,7 +61,7 @@ void quit()
 int main(int argc, char *argv[])
 {
 	config_t config;
-	
+
 	_mtid = pthread_self();
 
 	if (argc < 4) {
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 
 	config_init(&config);
 	config_parse(argv[1], &config, &settings, &nodes, NULL);
-	
+
 	node = node_lookup_name(argv[3], &nodes);
 	if (!node)
 		error("There's no node with the name '%s'", argv[3]);
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 
 	node_init(argc-3, argv+3, &settings);
 	node_start(node);
-	
+
 	/* Parse Arguments */
 	char c, *endptr;
 	while ((c = getopt (argc-3, argv+3, "l:h:r:f:c:")) != -1) {
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
 			default:
 				abort();
 		}
-		
+
 		continue;
 check:
 		if (optarg == endptr)
@@ -152,7 +152,7 @@ check:
 
 void test_rtt() {
 	struct msg m = MSG_INIT(sizeof(struct timespec) / sizeof(float));
-	
+
 	struct timespec ts;
 	struct timespec *ts1 = (struct timespec *) &m.data;
 	struct timespec *ts2 = alloc(sizeof(struct timespec));
@@ -174,7 +174,7 @@ void test_rtt() {
 
 		if (rtt < 0)
 			warn("Negative RTT: %f", rtt);
-	
+
 		hist_put(&hist, rtt);
 
 		clock_gettime(CLOCK_REALTIME, &ts);
@@ -191,7 +191,7 @@ void test_rtt() {
 	free(ts2);
 
 	hist_print(&hist);
-	
+
 	struct stat st;
 	if (!fstat(fd, &st)) {
 		FILE *f = fdopen(fd, "w");
@@ -199,6 +199,6 @@ void test_rtt() {
 	}
 	else
 		error("Invalid file descriptor: %u", fd);
-	
+
 	hist_destroy(&hist);
 }

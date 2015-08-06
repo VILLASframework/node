@@ -10,7 +10,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #ifndef _NODE_H_
@@ -68,7 +68,7 @@ struct node_vtable {
 	 * @retval <0	Error. Something went wrong.
 	 */
 	int (*parse)(config_setting_t *cfg, struct node *n);
-	
+
 	/** Print details of socket connection
 	 *
 	 * @param n	A pointer to the node structure
@@ -85,7 +85,7 @@ struct node_vtable {
 	 * @retval <0	Error. Something went wrong.
 	 */
 	int (*open) (struct node *n);
-	
+
 	/** Close the socket.
 	 *
 	 * @param n	A pointer to the node.
@@ -93,7 +93,7 @@ struct node_vtable {
 	 * @retval <0	Error. Something went wrong.
 	 */
 	int (*close)(struct node *n);
-	
+
 	/** Receive multiple messages from single datagram / packet.
 	 *
 	 * Messages are received with a single recvmsg() syscall by
@@ -109,7 +109,7 @@ struct node_vtable {
 	 * @return		The number of messages actually received.
 	 */
 	int (*read) (struct node *n, struct msg *pool, int poolsize, int first, int cnt);
-	
+
 	/** Send multiple messages in a single datagram / packet.
 	 *
 	 * Messages are sent with a single sendmsg() syscall by
@@ -125,10 +125,10 @@ struct node_vtable {
 	 * @return		The number of messages actually sent.
 	 */
 	int (*write)(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
-	
+
 	int (*init)(int argc, char *argv[], struct settings *set);
 	int (*deinit)();
-	
+
 	int refcnt;
 };
 

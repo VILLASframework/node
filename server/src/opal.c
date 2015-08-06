@@ -5,7 +5,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include <stdlib.h>
@@ -22,43 +22,43 @@ static struct list opals;
 int opal_init(int argc, char *argv[], struct settings *set)
 { INDENT
 	int err;
-		
+
 	if (argc != 4)
 		return -1;
 
 	og = alloc(sizeof(struct opal_global));
-	
+
 	pthread_mutex_init(&og->lock, NULL);
-	
+
 	og->async_shmem_name = argv[1];
 	og->async_shmem_size = atoi(argv[2]);
 	og->print_shmem_name = argv[3];
-	
+
 	/* Enable the OpalPrint function. This prints to the OpalDisplay. */
 	if ((err = OpalSystemCtrl_Register(og->print_shmem_name)) != EOK)
 		error("OpalPrint() access not available (%d)", err);
-	
+
 	/* Open Share Memory created by the model. */
 	if ((err = OpalOpenAsyncMem(og->async_shmem_size, og->async_shmem_name)) != EOK)
 		error("Model shared memory not available (%d)", err);
 
 	if ((err = OpalGetAsyncCtrlParameters(&og->params, sizeof(Opal_GenAsyncParam_Ctrl))) != EOK)
 		error("Could not get OPAL controller parameters (%d)", err);
-	
+
 	/* Get list of Send and RecvIDs */
 	if ((err = OpalGetNbAsyncSendIcon(&og->send_icons)) != EOK)
 		error("Failed to get number of send blocks (%d)", err);
 	if ((err = OpalGetNbAsyncRecvIcon(&og->recv_icons)) != EOK)
 		error("Failed to get number of recv blocks (%d)", err);
-	
+
 	og->send_ids = alloc(og->send_icons * sizeof(int));
 	og->recv_ids = alloc(og->recv_icons * sizeof(int));
-	
+
 	if ((err = OpalGetAsyncSendIDList(og->send_ids, og->send_icons * sizeof(int))) != EOK)
 		error("Failed to get list of send ids (%d)", err);
 	if ((err = OpalGetAsyncRecvIDList(og->recv_ids, og->recv_icons * sizeof(int))) != EOK)
 		error("Failed to get list of recv ids (%d)", err);
-	
+
 	info("Started as OPAL Asynchronous process");
 	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s)",
 		VERSION, __DATE__, __TIME__);
@@ -73,23 +73,23 @@ int opal_deinit()
 
 	if (!og)
 		return 0;
-	
+
 	if ((err = OpalCloseAsyncMem(og->async_shmem_size, og->async_shmem_name)) != EOK)
 		error("Failed to close shared memory area (%d)", err);
-	
+
 	debug(4, "Closing OPAL shared memory mapping");
-	
+
 	if ((err = OpalSystemCtrl_UnRegister(og->print_shmem_name)) != EOK)
 		error("Failed to close shared memory for system control (%d)", err);
-	
+
 	pthread_mutex_destroy(&og->lock);
-	
+
 	free(og->send_ids);
 	free(og->recv_ids);
 	free(og);
 
 	og = NULL;
-	
+
 	return 0;
 }
 
@@ -97,12 +97,12 @@ int opal_print_global(struct opal_global *g)
 { INDENT
 	char sbuf[512] = "";
 	char rbuf[512] = "";
-	
+
 	for (int i = 0; i < og->send_icons; i++)
 		strap(sbuf, sizeof(sbuf), "%u ", og->send_ids[i]);
 	for (int i = 0; i < og->recv_icons; i++)
 		strap(rbuf, sizeof(rbuf), "%u ", og->recv_ids[i]);
-	
+
 	debug(2, "Controller ID: %u", og->params.controllerID);
 	debug(2, "Send Blocks: %s",    sbuf);
 	debug(2, "Receive Blocks: %s", rbuf);
@@ -112,27 +112,27 @@ int opal_print_global(struct opal_global *g)
 		debug(2, "FloatParam[]%u] = %f", i, og->params.FloatParam[i]);
 	for (int i=0; i<GENASYNC_NB_STRING_PARAM; i++)
 		debug(2, "StringParam[%u] = %s", i, og->params.StringParam[i]);
-	
+
 	return 0;
 }
 
 int opal_parse(config_setting_t *cfg, struct node *n)
 {
 	struct opal *o = alloc(sizeof(struct opal));
-	
+
 	/* Checks */
 	if (n->combine != 1) {
 		config_setting_t *cfg_combine = config_setting_get_member(cfg, "combine");
 		cerror(cfg_combine, "The OPAL-RT node type does not support combining!");
 	}
-	
+
 	config_setting_lookup_int(cfg, "send_id", &o->send_id);
 	config_setting_lookup_int(cfg, "recv_id", &o->recv_id);
 	config_setting_lookup_bool(cfg, "reply", &o->reply);
 
 	n->opal = o;
 	n->cfg = cfg;
-	
+
 	list_push(&opals, o);
 
 	return 0;
@@ -141,9 +141,9 @@ int opal_parse(config_setting_t *cfg, struct node *n)
 int opal_print(struct node *n, char *buf, int len)
 {
 	struct opal *o = n->opal;
-	
+
 	/** @todo: Print send_params, recv_params */
-	
+
 	return snprintf(buf, len, "send_id=%u, recv_id=%u, reply=%u",
 		o->send_id, o->recv_id, o->reply);
 }
@@ -151,22 +151,22 @@ int opal_print(struct node *n, char *buf, int len)
 int opal_open(struct node *n)
 {
 	struct opal *o = n->opal;
-	
+
 	if (!og)
 		error("The server was not started as an OPAL asynchronous process!");
-	
+
 	/* Search for valid send and recv ids */
 	int sfound = 0, rfound = 0;
 	for (int i = 0; i < og->send_icons; i++)
 		sfound += og->send_ids[i] == o->send_id;
 	for (int i = 0; i<og->send_icons; i++)
 		rfound += og->send_ids[i] == o->send_id;
-	
+
 	if (!sfound)
 		error("Invalid send_id '%u' for node '%s'", o->send_id, n->name);
 	if (!rfound)
 		error("Invalid recv_id '%u' for node '%s'", o->recv_id, n->name);
-	
+
 	/* Get some more informations and paramters from OPAL-RT */
 	OpalGetAsyncSendIconMode(&o->mode, o->send_id);
 	OpalGetAsyncSendParameters(&o->send_params, sizeof(Opal_SendAsyncParam), o->send_id);
@@ -183,14 +183,14 @@ int opal_close(struct node *n)
 int opal_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
 	struct opal *o = n->opal;
-	
+
 	int state, len, ret;
 	unsigned id;
-	
+
 	struct msg *m = &pool[first % poolsize];
-	
-	double data[MSG_VALUES];		
-	
+
+	double data[MSG_VALUES];
+
 	/* This call unblocks when the 'Data Ready' line of a send icon is asserted. */
 	do {
 		if ((ret = OpalWaitForAsyncSendRequest(&id)) != EOK) {
@@ -244,13 +244,13 @@ int opal_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 int opal_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
 	struct opal *o = n->opal;
-	
+
 	struct msg *m = &pool[first % poolsize];
-	
+
 	int state;
 	int len;
 	double data[m->length];
-	
+
 	state = OpalGetAsyncModelState();
 	if ((state == STATE_RESET) || (state == STATE_STOP))
 		error("OpalGetAsyncModelState(): Model stopped or resetted!");
@@ -263,11 +263,11 @@ int opal_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 	if (len > sizeof(data))
 		warn("OPAL node '%s' is expecting more signals (%u) than values in message (%u)",
 			n->name, len / sizeof(double), m->length);
-		
+
 	for (int i = 0; i < m->length; i++)
 		data[i] = (double) m->data[i].f; /* OPAL expects double precission */
 
 	OpalSetAsyncRecvIconData(data, m->length * sizeof(double), o->recv_id);
-	
+
 	return 1;
 }

@@ -4,8 +4,8 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
- * 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
+ *
  * @addtogroup tools Test and debug tools
  * @{
  *********************************************************************************/
@@ -37,11 +37,11 @@ static void quit()
 {
 	node_stop(node);
 	node_deinit();
-	
+
 	list_destroy(&nodes);
 	config_destroy(&config);
 	free(pool);
-	
+
 	exit(EXIT_SUCCESS);
 }
 
@@ -63,7 +63,7 @@ static void usage(char *name)
 int main(int argc, char *argv[])
 {
 	int reverse = 0;
-	
+
 	_mtid = pthread_self();
 
 	char c;
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 			case '?': usage(argv[0]);
 		}
 	}
-	
+
 	if (argc - optind != 2)
 		usage(argv[0]);
 
@@ -91,14 +91,14 @@ int main(int argc, char *argv[])
 	list_init(&nodes, (dtor_cb_t) node_destroy);
 	config_init(&config);
 	config_parse(argv[optind], &config, &set, &nodes, NULL);
-	
+
 	node = node_lookup_name(argv[optind+1], &nodes);
 	if (!node)
 		error("There's no node with the name '%s'", argv[optind+1]);
 
 	if (reverse)
 		node_reverse(node);
-	
+
 	node->refcnt++;
 	node->vt->refcnt++;
 
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 	node_start(node);
 
 	pool = alloc(sizeof(struct msg) * node->combine);
-	
+
 	/* Print header */
 	fprintf(stderr, "# %-20s\t%s\t%s\n", "timestamp", "seqno", "data[]");
 
@@ -118,10 +118,10 @@ int main(int argc, char *argv[])
 			msg_fscan(stdin, &pool[i]);
 			msg_fprint(stdout, &pool[i]);
 		}
-		
+
 		node_write(node, pool, node->combine, 0, node->combine);
 	}
-	
+
 	quit();
 
 	return 0;

@@ -3,7 +3,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include <stdlib.h>
@@ -41,7 +41,7 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 			config_error_file(cfg) ? config_error_file(cfg) : filename,
 			config_error_line(cfg)
 		);
-	
+
 	config_setting_t *cfg_root = config_root_setting(cfg);
 
 	/* Parse global settings */
@@ -51,13 +51,13 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 
 		config_parse_global(cfg_root, set);
 	}
-	
+
 	/* Parse nodes */
 	if (nodes) {
 		config_setting_t *cfg_nodes = config_setting_get_member(cfg_root, "nodes");
 		if (!cfg_nodes || !config_setting_is_group(cfg_nodes))
 			error("Missing node section in config file: %s", filename);
-		
+
 		for (int i = 0; i < config_setting_length(cfg_nodes); i++) {
 			config_setting_t *cfg_node = config_setting_get_elem(cfg_nodes, i);
 			config_parse_node(cfg_node, nodes);
@@ -97,14 +97,14 @@ int config_parse_path(config_setting_t *cfg,
 	const char *in;
 	int enabled;
 	int reverse;
-	
+
 	struct path *p = path_create();
 
 	/* Input node */
 	struct config_setting_t *cfg_in = config_setting_get_member(cfg, "in");
 	if (!cfg_in || config_setting_type(cfg_in) != CONFIG_TYPE_STRING)
 		cerror(cfg, "Invalid input node for path");
-	
+
 	in = config_setting_get_string(cfg_in);
 	p->in = node_lookup_name(in, nodes);
 	if (!p->in)
@@ -124,7 +124,7 @@ int config_parse_path(config_setting_t *cfg,
 	struct config_setting_t *cfg_hook = config_setting_get_member(cfg, "hook");
 	if (cfg_hook)
 		config_parse_hooklist(cfg_hook, p->hooks);
-	
+
 	if (!config_setting_lookup_bool(cfg, "enabled", &enabled))
 		enabled = 1;
 	if (!config_setting_lookup_bool(cfg, "reverse", &reverse))
@@ -139,12 +139,12 @@ int config_parse_path(config_setting_t *cfg,
 	if (enabled) {
 		p->in->refcnt++;
 		p->in->vt->refcnt++;
-				
+
 		FOREACH(&p->destinations, it) {
 			it->node->refcnt++;
 			it->node->vt->refcnt++;
 		}
-		
+
 		if (reverse) {
 			if (list_length(&p->destinations) > 1)
 				error("Can't reverse path with multiple destination nodes");
@@ -153,7 +153,7 @@ int config_parse_path(config_setting_t *cfg,
 
 			r->in  = p->out; /* Swap in/out */
 			r->out = p->in;
-			
+
 			list_push(&r->destinations, r->out);
 
 			r->in->refcnt++;
@@ -163,13 +163,13 @@ int config_parse_path(config_setting_t *cfg,
 
 			list_push(paths, r);
 		}
-		
+
 		list_push(paths, p);
 	}
 	else {
 		char buf[128];
 		path_print(p, buf, sizeof(buf));
-		
+
 		warn("Path %s is not enabled", buf);
 		path_destroy(p);
 	}
@@ -180,32 +180,32 @@ int config_parse_path(config_setting_t *cfg,
 int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct list *all) {
 	const char *str;
 	struct node *node;
-	
+
 	switch (config_setting_type(cfg)) {
 		case CONFIG_TYPE_STRING:
 			str = config_setting_get_string(cfg);
 			node = node_lookup_name(str, all);
 			if (!node)
 				cerror(cfg, "Invalid outgoing node '%s'", str);
-				
+
 			list_push(nodes, node);
 			break;
-		
+
 		case CONFIG_TYPE_ARRAY:
 			for (int i=0; i<config_setting_length(cfg); i++) {
 				str = config_setting_get_string_elem(cfg, i);
 				node = node_lookup_name(str, all);
 				if (!node)
 					cerror(config_setting_get_elem(cfg, i), "Invalid outgoing node '%s'", str);
-				
+
 				list_push(nodes, node);
 			}
 			break;
-		
+
 		default:
 			cerror(cfg, "Invalid output node(s)");
 	}
-	
+
 	return 0;
 }
 
@@ -219,27 +219,27 @@ int config_parse_hooklist(config_setting_t *cfg, struct list *hooks) {
 			hook = hook_lookup(str);
 			if (!hook)
 				cerror(cfg, "Invalid hook function '%s'", str);
-			
+
 			debug(10, "Adding hook %s to chain %u with prio %u", hook->name, hook->type, hook->priority);
-			
+
 			list_insert(&hooks[hook->type], hook->priority, hook->callback);
 			break;
-		
+
 		case CONFIG_TYPE_ARRAY:
 			for (int i=0; i<config_setting_length(cfg); i++) {
 				str = config_setting_get_string_elem(cfg, i);
 				hook = hook_lookup(str);
 				if (!hook)
 					cerror(config_setting_get_elem(cfg, i), "Invalid hook function '%s'", str);
-				
+
 				list_insert(&hooks[hook->type], hook->priority, hook->callback);
 			}
 			break;
-		
+
 		default:
 			cerror(cfg, "Invalid hook functions");
 	}
-	
+
 	return 0;
 }
 
@@ -258,10 +258,10 @@ int config_parse_node(config_setting_t *cfg, struct list *nodes)
 
 	if (!config_setting_lookup_string(cfg, "type", &type))
 		cerror(cfg, "Missing node type");
-	
+
 	if (!config_setting_lookup_int(cfg, "combine", &n->combine))
 		n->combine = 1;
-		
+
 	n->vt = node_lookup_vtable(type);
 	if (!n->vt)
 		cerror(cfg, "Invalid type for node '%s'", n->name);

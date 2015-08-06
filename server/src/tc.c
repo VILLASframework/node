@@ -5,7 +5,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include "utils.h"
@@ -43,7 +43,7 @@ int tc_reset(struct interface *i)
 
 	if (system2(cmd))
 		error("Failed to add reset traffic control for interface '%s'", i->name);
-	
+
 	return 0;
 }
 
@@ -64,7 +64,7 @@ int tc_prio(struct interface *i, tc_hdl_t handle, int bands)
 
 	if (system2(cmd))
 		error("Failed to add prio qdisc for interface '%s'", i->name);
-	
+
 	return 0;
 }
 

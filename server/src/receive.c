@@ -4,7 +4,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *
  * @addtogroup tools Test and debug tools
  * @{
@@ -36,7 +36,7 @@ static void quit()
 {
 	node_stop(node);
 	node_deinit();
-	
+
 	list_destroy(&nodes);
 	free(pool);
 
@@ -61,11 +61,11 @@ static void usage(char *name)
 int main(int argc, char *argv[])
 {
 	int reverse = 0;
-	
+
 	struct config_t config;
-	
+
 	_mtid = pthread_self();
-	
+
 	char c;
 	while ((c = getopt(argc, argv, "hr")) != -1) {
 		switch (c) {
@@ -91,14 +91,14 @@ int main(int argc, char *argv[])
 	list_init(&nodes, (dtor_cb_t) node_destroy);
 	config_init(&config);
 	config_parse(argv[optind], &config, &set, &nodes, NULL);
-	
+
 	node = node_lookup_name(argv[optind+1], &nodes);
 	if (!node)
 		error("There's no node with the name '%s'", argv[optind+1]);
-	
+
 	if (reverse)
 		node_reverse(node);
-	
+
 	node->refcnt++;
 	node->vt->refcnt++;
 

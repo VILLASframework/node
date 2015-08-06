@@ -3,7 +3,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include <unistd.h>
@@ -14,7 +14,7 @@
 uint64_t timerfd_wait(int fd)
 {
 	uint64_t runs;
-	
+
 	return read(fd, &runs, sizeof(runs)) < 0 ? 0 : runs;
 }
 
@@ -23,7 +23,7 @@ uint64_t timerfd_wait_until(int fd, struct timespec *until)
 	struct itimerspec its = {
 		.it_value = *until
 	};
-		
+
 	if (timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, NULL))
 		return 0;
 	else
@@ -41,7 +41,7 @@ struct timespec time_add(struct timespec *start, struct timespec *end)
 		sum.tv_sec  += 1;
 		sum.tv_nsec -= 1000000000;
 	}
-	
+
 	return sum;
 }
 
@@ -56,14 +56,14 @@ struct timespec time_diff(struct timespec *start, struct timespec *end)
 		diff.tv_sec  -= 1;
 		diff.tv_nsec += 1000000000;
 	}
-	
+
 	return diff;
 }
 
 struct timespec time_from_double(double secs)
 {
 	struct timespec ts;
-	
+
 	ts.tv_sec  = secs;
 	ts.tv_nsec = 1.0e9 * (secs - ts.tv_sec);
 
@@ -78,7 +78,7 @@ double time_to_double(struct timespec *ts)
 double time_delta(struct timespec *start, struct timespec *end)
 {
 	struct timespec diff = time_diff(start, end);
-	
+
 	return time_to_double(&diff);
 }
 

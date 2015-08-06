@@ -3,7 +3,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include <stdio.h>
@@ -26,7 +26,7 @@ void hist_create(struct hist *h, double low, double high, double resolution)
 	h->resolution = resolution;
 	h->length = (high - low) / resolution;
 	h->data = alloc(h->length * sizeof(unsigned));
-	
+
 	hist_reset(h);
 }
 
@@ -38,13 +38,13 @@ void hist_destroy(struct hist *h)
 void hist_put(struct hist *h, double value)
 {
 	int idx = INDEX(h, value);
-	
+
 	/* Update min/max */
 	if (value > h->highest)
 		h->highest = value;
 	if (value < h->lowest)
 		h->lowest = value;
-	
+
 	/* Check bounds and increment */
 	if      (idx >= h->length)
 		h->higher++;
@@ -52,9 +52,9 @@ void hist_put(struct hist *h, double value)
 		h->lower++;
 	else
 		h->data[idx]++;
-	
+
 	h->total++;
-	
+
 	/* Online / running calculation of variance and mean
 	 *  by Donald Knuth’s Art of Computer Programming, Vol 2, page 232, 3rd edition */
 	if (h->total == 1) {
@@ -64,12 +64,12 @@ void hist_put(struct hist *h, double value)
 	else {
 		h->_m[0] = h->_m[1] + (value - h->_m[1]) / h->total;
 		h->_s[0] = h->_s[1] + (value - h->_m[1]) * (value - h->_m[0]);
-   
+
 		// set up for next iteration
-		h->_m[1] = h->_m[0]; 
+		h->_m[1] = h->_m[0];
 		h->_s[1] = h->_s[0];
 	}
-	
+
 }
 
 void hist_reset(struct hist *h)
@@ -77,10 +77,10 @@ void hist_reset(struct hist *h)
 	h->total = 0;
 	h->higher = 0;
 	h->lower = 0;
-	
+
 	h->highest = DBL_MIN;
 	h->lowest = DBL_MAX;
-	
+
 	memset(h->data, 0, h->length * sizeof(unsigned));
 }
 
@@ -111,10 +111,10 @@ void hist_print(struct hist *h)
 		warn("Missed:  %u values above %f", h->higher, h->high);
 	if (h->lower > 0)
 		warn("Missed:  %u values below %f", h->lower,  h->low);
-	
+
 	if (h->total - h->higher - h->lower > 0) {
 		hist_plot(h);
-		
+
 		char buf[(h->length + 1) * 8];
 		hist_dump(h, buf, sizeof(buf));
 		info(buf);
@@ -125,7 +125,7 @@ void hist_plot(struct hist *h)
 {
 	char buf[HIST_HEIGHT];
 	memset(buf, '#', sizeof(buf));
-	
+
 	hist_cnt_t max = 1;
 
 	/* Get highest bar */
@@ -133,14 +133,14 @@ void hist_plot(struct hist *h)
 		if (h->data[i] > max)
 			max = h->data[i];
 	}
-	
+
 	/* Print plot */
 	info("%3s | %9s | %5s | %s", "#", "Value", "Occur", "Plot");
 	line();
 
 	for (int i = 0; i < h->length; i++) {
 		int bar = HIST_HEIGHT * ((double) h->data[i] / max);
-		
+
 		info("%3u | %+5.2e | "     "%5u"  " | %.*s", i, VAL(h, i), h->data[i], bar, buf);
 	}
 }
@@ -161,7 +161,7 @@ void hist_matlab(struct hist *h, FILE *f)
 {
 	char buf[h->length * 8];
 	hist_dump(h, buf, sizeof(buf));
-	
+
 	fprintf(f, "%lu = struct( ", time(NULL));
 	fprintf(f, "'min', %f, 'max', %f, ", h->low, h->high);
 	fprintf(f, "'ok', %u, too_high', %u, 'too_low', %u, ", h->total, h->higher, h->lower);

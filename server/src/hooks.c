@@ -9,7 +9,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include <string.h>
@@ -27,7 +27,7 @@
  *
  * It's used by hook_lookup to parse hook identfiers from the configuration file.
  * The list must be terminated by NULL pointers!
- */ 
+ */
 static const struct hook hook_list[] = {
 /*  Priority,	Callback,	Name,		Type		*/
 	{ 99, 	hook_print,	"print",	HOOK_MSG },
@@ -51,18 +51,18 @@ const struct hook* hook_lookup(const char *name)
 int hook_run(struct path *p, enum hook_type t)
 {
 	int ret = 0;
-	
+
 	FOREACH(&p->hooks[t], it)
 		ret += ((hook_cb_t) it->ptr)(p);
-	
+
 	return ret;
 }
- 
+
 int hook_print(struct path *p)
 {
 	struct msg *m = p->current;
 	struct timespec ts = MSG_TS(m);
-		
+
 	fprintf(stdout, "%.3e+", time_delta(&ts, &p->ts_recv)); /* Print delay */
 	msg_fprint(stdout, m);
 
@@ -74,8 +74,8 @@ int hook_tofixed(struct path *p)
 	struct msg *m = p->current;
 
 	for (int i=0; i<m->length; i++)
-		m->data[i].i = m->data[i].f * 1e3; 
-	
+		m->data[i].i = m->data[i].f * 1e3;
+
 	return 0;
 }
 
@@ -85,7 +85,7 @@ int hook_ts(struct path *p)
 
 	m->ts.sec = p->ts_recv.tv_sec;
 	m->ts.nsec = p->ts_recv.tv_nsec;
-	
+
 	return 0;
 }
 
@@ -93,22 +93,22 @@ int hook_fir(struct path *p)
 {
 	/** Simple FIR-LP: F_s = 1kHz, F_pass = 100 Hz, F_block = 300
 	 * Tip: Use MATLAB's filter design tool and export coefficients
-	 *      with the integrated C-Header export */ 
+	 *      with the integrated C-Header export */
 	static const double coeffs[] = {
 		-0.003658148158728, -0.008882653268281, 0.008001024183003,
 		0.08090485991761,    0.2035239551043,   0.3040703593515,
 		0.3040703593515,     0.2035239551043,   0.08090485991761,
 		0.008001024183003,  -0.008882653268281,-0.003658148158728 };
-	
+
 	/* Accumulator */
 	double sum = 0;
-	
+
 	/** Trim FIR length to length of history buffer */
 	int len = MIN(ARRAY_LEN(coeffs), p->poolsize);
 
 	for (int i=0; i<len; i++) {
 		struct msg *old = &p->pool[(p->poolsize+p->received-i) % p->poolsize];
-		
+
 		sum += coeffs[i] * old->data[HOOK_FIR_INDEX].f;
 	}
 
@@ -142,7 +142,7 @@ int hook_restart(struct path *p)
 
 			path_reset(p);
 	}
-	
+
 	return 0;
 }
 
@@ -155,7 +155,7 @@ int hook_verify(struct path *p)
 
 		return -1;
 	}
-	
+
 	return 0;
 }
 

@@ -3,7 +3,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include <stdlib.h>
@@ -67,7 +67,7 @@ int msg_fscan(FILE *f, struct msg *m)
 
 	if (!fgets(line, sizeof(line), f))
 		return 0;
-	
+
 	m->ts.sec   = (uint32_t) strtoul(ptr, &ptr, 10); ptr++;
 	m->ts.nsec  = (uint32_t) strtoul(ptr, &ptr, 10);
 	m->sequence = (uint16_t) strtoul(ptr, &ptr, 10);
@@ -80,14 +80,14 @@ int msg_fscan(FILE *f, struct msg *m)
 
 	while (m->length < MSG_VALUES) {
 		m->data[m->length].f = strtod(ptr, &next);
-		
+
 		if (next == ptr)
 			break;
 
 		ptr = next;
 		m->length++;
 	}
-	
+
 	return m->length;
 }
 

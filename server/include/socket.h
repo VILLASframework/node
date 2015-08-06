@@ -6,7 +6,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *
  * @addtogroup socket BSD Socket Node Type
  * @{
@@ -50,7 +50,7 @@ int socket_deinit();
 int socket_open(struct node *n);
 
 /** @see node_vtable::close */
-int socket_close(struct node *n);	
+int socket_close(struct node *n);
 
 /** @see node_vtable::write */
 int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt);

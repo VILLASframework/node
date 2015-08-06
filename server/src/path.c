@@ -3,7 +3,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
 #include <stdlib.h>
@@ -34,7 +34,7 @@ static void path_write(struct path *p)
 
 		debug(1, "Sent %u  messages to node '%s'", sent, it->node->name);
 		p->sent += sent;
-		
+
 		clock_gettime(CLOCK_REALTIME, &p->ts_sent);
 	}
 }
@@ -45,7 +45,7 @@ static void * path_run_async(void *arg)
 	struct path *p = arg;
 
 	/* Block until 1/p->rate seconds elapsed */
-	while (timerfd_wait(p->tfd))	
+	while (timerfd_wait(p->tfd))
 		path_write(p);
 
 	return NULL;
@@ -55,7 +55,7 @@ static void * path_run_async(void *arg)
 static void * path_run(void *arg)
 {
 	struct path *p = arg;
-	
+
 	/* Allocate memory for message pool */
 	p->pool = alloc(p->poolsize * sizeof(struct msg));
 	p->previous = p->current = p->pool;
@@ -64,38 +64,38 @@ static void * path_run(void *arg)
 	for(;;) {
 		/* Receive message */
 		int recv = node_read(p->in, p->pool, p->poolsize, p->received, p->in->combine);
-		
+
 		/** @todo Replace this timestamp by hardware timestamping */
 		clock_gettime(CLOCK_REALTIME, &p->ts_recv);
-		
+
 		debug(10, "Received %u messages from node '%s'", recv, p->in->name);
-		
+
 		/* Run preprocessing hooks */
 		if (hook_run(p, HOOK_PRE)) {
 			p->skipped += recv;
 			continue;
 		}
-		
+
 		/* For each received message... */
 		for (int i = 0; i < recv; i++) {
-			p->previous = &p->pool[(p->received-1) % p->poolsize];
-			p->current  = &p->pool[ p->received    % p->poolsize];
-			
+			p->previous = p->current;
+			p->current  = &p->pool[ p->received % p->poolsize];
+
 			p->received++;
-			
+
 			/* Run hooks for filtering, stats collection and manipulation */
 			if (hook_run(p, HOOK_MSG)) {
 				p->skipped++;
 				continue;
 			}
 		}
-		
+
 		/* Run post processing hooks */
 		if (hook_run(p, HOOK_POST)) {
 			p->skipped += recv;
 			continue;
 		}
-		
+
 		/* At fixed rate mode, messages are send by another thread */
 		if (!p->rate)
 			path_write(p);
@@ -108,9 +108,9 @@ int path_start(struct path *p)
 { INDENT
 	char buf[33];
 	path_print(p, buf, sizeof(buf));
-	
+
 	info("Starting path: %s (poolsize = %u)", buf, p->poolsize);
-	
+
 	if (hook_run(p, HOOK_PATH_START))
 		return -1;
 
@@ -138,9 +138,9 @@ int path_stop(struct path *p)
 { INDENT
 	char buf[33];
 	path_print(p, buf, sizeof(buf));
-	
+
 	info("Stopping path: %s", buf);
-	
+
 	pthread_cancel(p->recv_tid);
 	pthread_join(p->recv_tid, NULL);
 
@@ -150,7 +150,7 @@ int path_stop(struct path *p)
 
 		close(p->tfd);
 	}
-	
+
 	if (hook_run(p, HOOK_PATH_STOP))
 		return -1;
 
@@ -160,9 +160,9 @@ int path_stop(struct path *p)
 int path_print(struct path *p, char *buf, int len)
 {
 	*buf = 0;
-	
+
 	strap(buf, len, "%s " MAG("=>"), p->in->name);
-		
+
 	if (list_length(&p->destinations) > 1) {
 		strap(buf, len, " [");
 		FOREACH(&p->destinations, it)
@@ -171,7 +171,7 @@ int path_print(struct path *p, char *buf, int len)
 	}
 	else
 		strap(buf, len, " %s", p->out->name);
-	
+
 	return 0;
 }
 
@@ -185,7 +185,7 @@ int path_reset(struct path *p)
 	p->invalid  =
 	p->skipped  =
 	p->dropped  = 0;
-		
+
 	return 0;
 }
 
@@ -194,26 +194,26 @@ struct path * path_create()
 	struct path *p = alloc(sizeof(struct path));
 
 	list_init(&p->destinations, NULL);
-	
+
 	for (int i = 0; i < HOOK_MAX; i++)
 		list_init(&p->hooks[i], NULL);
 
 #define hook_add(type, priority, cb) list_insert(&p->hooks[type], priority, cb)
-	
+
 	hook_add(HOOK_MSG,		1,	hook_verify);
 	hook_add(HOOK_MSG,		2,	hook_restart);
 	hook_add(HOOK_MSG,		3,	hook_drop);
 	hook_add(HOOK_MSG,		4,	stats_collect);
-	
+
 	hook_add(HOOK_PATH_START,	1,	stats_start);
-	
+
 	hook_add(HOOK_PATH_STOP,	1,	stats_line);
 	hook_add(HOOK_PATH_STOP,	2,	stats_show);
 	hook_add(HOOK_PATH_STOP,	3,	stats_stop);
-	
+
 	hook_add(HOOK_PATH_RESTART,	1,	stats_line);
 	hook_add(HOOK_PATH_RESTART,	3,	stats_reset);
-	
+
 	hook_add(HOOK_PERIODIC,		1,	stats_line);
 
 	return p;
@@ -222,10 +222,10 @@ struct path * path_create()
 void path_destroy(struct path *p)
 {
 	list_destroy(&p->destinations);
-	
+
 	for (int i = 0; i < HOOK_MAX; i++)
 		list_destroy(&p->hooks[i]);
-		
+
 	free(p->pool);
 	free(p);
 }
