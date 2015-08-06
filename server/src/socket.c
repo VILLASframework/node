@@ -172,9 +172,9 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 
 	/* Check packet integrity */
 	if (bytes % (cnt * 4) != 0)
-		error("Packet length not dividable by 4!");
+		error("Packet length not dividable by 4: received=%u, cnt=%u", bytes, cnt);
 	if (bytes / cnt > sizeof(struct msg))
-		error("Packet length is too large!");
+		error("Packet length is too large: received=%u, cnt=%u, max=%lu", bytes, cnt, sizeof(struct msg));
 
 	for (int i = 0; i < cnt; i++) {
 		/* All messages of a packet must have equal length! */
@@ -183,11 +183,13 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 	}
 
 	/* Receive message from socket */
-	int ret = recvmsg(s->sd, &mhdr, 0);
-	if (ret == 0)
+	bytes = recvmsg(s->sd, &mhdr, 0);
+	if (bytes == 0)
 		error("Remote node '%s' closed the connection", n->name);
-	else if (ret < 0)
+	else if (bytes < 0)
 		serror("Failed recv");
+	
+	debug(10, "Received packet of %u bytes: %u samples a %u values per sample", bytes, cnt, (bytes / cnt) / 4 - 4);
 
 	for (int i = 0; i < cnt; i++) {
 		struct msg *n = &pool[(first+poolsize+i) % poolsize];
@@ -205,7 +207,7 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 
 	/* Check packet integrity */
 	if (bytes != 0)
-		error("Packet length does not match message header length!");
+		error("Packet length does not match message header length! %u bytes left over.", bytes);
 
 	return cnt;
 }
@@ -213,7 +215,9 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
 	struct socket *s = n->socket;
-	int ret = -1, sent = 0;
+	int bytes, sent = 0;
+	
+	@todo: we should check the MTU
 
 	struct iovec iov[cnt];
 	for (int i = 0; i < cnt; i++) {
@@ -246,9 +250,11 @@ int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 			break;
 	}
 
-	ret = sendmsg(s->sd, &mhdr, 0);
-	if (ret < 0)
+	bytes = sendmsg(s->sd, &mhdr, 0);
+	if (bytes < 0)
 		serror("Failed send");
+	
+	debug(10, "Sent packet of %u bytes: %u samples a %u values per sample", bytes, cnt, (bytes / cnt) / 4 - 4);
 
 	return sent;
 }
