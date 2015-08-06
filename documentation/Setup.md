@@ -11,7 +11,6 @@
 Install libraries including developement headers for:
 
  - _libconfig_ for parsing the config file
- - _libsodium_ for message authentification and signing
 
 	$ sudo apt-get install iproute2 libconfig-dev libsodium-dev
 or:
