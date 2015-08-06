@@ -297,9 +297,12 @@ int socket_parse(config_setting_t *cfg, struct node *n)
 	/** @todo Netem settings are not usable with AF_UNIX */
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
-		s->netem = alloc(sizeof(struct netem));
+		int enabled = 1;
 
-		tc_parse(cfg_netem, s->netem);
+		if (!config_setting_lookup_bool(cfg_netem, "enabled", &enabled) || enabled) {
+			s->netem = alloc(sizeof(struct netem));
+			tc_parse(cfg_netem, s->netem);
+		}
 	}
 
 	n->socket = s;
