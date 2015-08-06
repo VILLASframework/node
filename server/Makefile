@@ -13,7 +13,7 @@ VPATH = src
 V ?= 2
 
 # Compiler and linker flags
-LDLIBS = -pthread -lrt -lm -lconfig
+LDLIBS  = -pthread -lrt -lm -lconfig
 CFLAGS  = -std=gnu99 -Iinclude/ -MMD -Wall -O3
 CFLAGS += -D_XOPEN_SOURCE=500 -D_GNU_SOURCE -DV=$(V)
 
@@ -63,7 +63,6 @@ strip: $(TARGETS)
 		--strip-debug \
 		--strip-all \
 		$(TARGETS) 
-	
 
 clean:
 	$(RM) *~ *.o *.d
