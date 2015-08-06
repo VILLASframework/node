@@ -41,16 +41,10 @@
 
 /** Node type: layer, protocol, listen/connect */
 enum node_type {
+	BSD_SOCKET,		/**< BSD Socket API */
 	LOG_FILE,		/**< File IO */
 	OPAL_ASYNC,		/**< OPAL-RT Asynchronous Process Api */
-	GTFPGA,			/**< Xilinx ML507 GTFPGA card */
-	IEEE_802_3 = 0x10,	/**< BSD socket: AF_PACKET SOCK_DGRAM  */
-	IP,			/**< BSD socket: AF_INET   SOCK_RAW    */
-	UDP,			/**< BSD socket: AF_INET   SOCK_DGRAM  */
-	TCPD,			/**< BSD socket: AF_INET   SOCK_STREAM bind + listen + accept */
-	TCP,			/**< BSD socket: AF_INET   SOCK_STREAM bind + connect */
-
-	SOCKET = 0xF0		/**< Mask for BSD socket types */
+	GTFPGA			/**< Xilinx ML507 GTFPGA card */
 };
 
 /** C++ like vtable construct for node_types

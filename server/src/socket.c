@@ -98,10 +98,10 @@ int socket_open(struct node *n)
 	int ret;
 
 	/* Create socket */
-	switch (node_type(n)) {
-		case UDP:	s->sd = socket(sin->sin_family, SOCK_DGRAM,	IPPROTO_UDP); break;
-		case IP:	s->sd = socket(sin->sin_family, SOCK_RAW,	ntohs(sin->sin_port)); break;
-		case IEEE_802_3:s->sd = socket(sll->sll_family, SOCK_DGRAM,	sll->sll_protocol); break;
+	switch (s->layer) {
+		case LAYER_UDP:	s->sd = socket(sin->sin_family, SOCK_DGRAM,	IPPROTO_UDP); break;
+		case LAYER_IP:	s->sd = socket(sin->sin_family, SOCK_RAW,	ntohs(sin->sin_port)); break;
+		case LAYER_ETH:	s->sd = socket(sll->sll_family, SOCK_DGRAM,	sll->sll_protocol); break;
 		default:
 			error("Invalid socket type!");
 	}
@@ -122,9 +122,9 @@ int socket_open(struct node *n)
 
 	/* Set socket priority, QoS or TOS IP options */
 	int prio;
-	switch (node_type(n)) {
-		case UDP:
-		case IP:
+	switch (s->layer) {
+		case LAYER_UDP:
+		case LAYER_IP:
 			prio = IPTOS_LOWDELAY;
 			if (setsockopt(s->sd, IPPROTO_IP, IP_TOS, &prio, sizeof(prio)))
 				serror("Failed to set type of service (QoS)");
@@ -150,10 +150,7 @@ int socket_close(struct node *n)
 
 	if (s->sd >= 0)
 		close(s->sd);
-	
-	if (s->sd2 >= 0)
-		close(s->sd2);
-	
+
 	return 0;
 }
 
@@ -216,33 +213,36 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
 	struct socket *s = n->socket;
-	int ret = -1;
-	
+	int ret = -1, sent = 0;
+
 	struct iovec iov[cnt];
-	struct msghdr mhdr = {
-		.msg_iov = iov,
-		.msg_iovlen = ARRAY_LEN(iov)
-	};
-	
 	for (int i = 0; i < cnt; i++) {
-		struct msg *n = &pool[(first+poolsize+i) % poolsize];
-		
-		/* Convert headers to host byte order */
+		struct msg *n = &pool[(first+i) % poolsize];
+
+		if (n->type == MSG_TYPE_EMPTY)
+			continue;
+
+		/* Convert headers to network byte order */
 		n->sequence = htons(n->sequence);
-		
-		iov[i].iov_base = n;
-		iov[i].iov_len  = MSG_LEN(n);
+
+		iov[sent].iov_base = n;
+		iov[sent].iov_len  = MSG_LEN(n);
+
+		sent++;
 	}
 
+	struct msghdr mhdr = {
+		.msg_iov = iov,
+		.msg_iovlen = sent
+	};
+
 	/* Specify destination address for connection-less procotols */
-	switch (node_type(n)) {
-		case IEEE_802_3:
-		case IP:
-		case UDP:
+	switch (s->layer) {
+		case LAYER_UDP:
+		case LAYER_IP:
+		case LAYER_ETH:
 			mhdr.msg_name = (struct sockaddr *) &s->remote;
 			mhdr.msg_namelen = sizeof(s->remote);
-			break;
-		default:
 			break;
 	}
 
@@ -250,15 +250,27 @@ int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 	if (ret < 0)
 		serror("Failed send");
 
-	return cnt;
+	return sent;
 }
 
 int socket_parse(config_setting_t *cfg, struct node *n)
 {
-	const char *local, *remote;
+	const char *local, *remote, *layer;
 	int ret;
 
 	struct socket *s = alloc(sizeof(struct socket));
+
+	if (!config_setting_lookup_string(cfg, "layer", &layer))
+		cerror(cfg, "Missing layer setting for node '%s'", n->name);
+
+	if (!strcmp(layer, "eth"))
+		s->layer = LAYER_ETH;
+	else if (!strcmp(layer, "ip"))
+		s->layer = LAYER_IP;
+	else if (!strcmp(layer, "udp"))
+		s->layer = LAYER_UDP;
+	else
+		cerror(cfg, "Invalid layer '%s' for node '%s'", layer, n->name);
 
 	if (!config_setting_lookup_string(cfg, "remote", &remote))
 		cerror(cfg, "Missing remote address for node '%s'", n->name);
@@ -266,12 +278,12 @@ int socket_parse(config_setting_t *cfg, struct node *n)
 	if (!config_setting_lookup_string(cfg, "local", &local))
 		cerror(cfg, "Missing local address for node '%s'", n->name);
 
-	ret = socket_parse_addr(local, (struct sockaddr *) &s->local, node_type(n), AI_PASSIVE);
+	ret = socket_parse_addr(local, (struct sockaddr *) &s->local, s->layer, AI_PASSIVE);
 	if (ret)
 		cerror(cfg, "Failed to resolve local address '%s' of node '%s': %s",
 			local, n->name, gai_strerror(ret));
 
-	ret = socket_parse_addr(remote, (struct sockaddr *) &s->remote, node_type(n), 0);
+	ret = socket_parse_addr(remote, (struct sockaddr *) &s->remote, s->layer, 0);
 	if (ret)
 		cerror(cfg, "Failed to resolve remote address '%s' of node '%s': %s",
 			remote, n->name, gai_strerror(ret));
@@ -317,7 +329,7 @@ int socket_print_addr(char *buf, int len, struct sockaddr *sa)
 	return 0;
 }
 
-int socket_parse_addr(const char *addr, struct sockaddr *sa, enum node_type type, int flags)
+int socket_parse_addr(const char *addr, struct sockaddr *sa, enum socket_layer layer, int flags)
 {
 	/** @todo: Add support for IPv6 */
 
@@ -362,14 +374,14 @@ int socket_parse_addr(const char *addr, struct sockaddr *sa, enum node_type type
 		if (service && !strcmp(service, "*"))
 			service = NULL;
 
-		switch (type) {
-			case IP:
+		switch (layer) {
+			case LAYER_IP:
 				hint.ai_socktype = SOCK_RAW;
 				hint.ai_protocol = (service) ? strtol(service, NULL, 0) : IPPROTO_S2SS;
 				hint.ai_flags |= AI_NUMERICSERV;
 				break;
 
-			case UDP:
+			case LAYER_UDP:
 				hint.ai_socktype = SOCK_DGRAM;
 				hint.ai_protocol = IPPROTO_UDP;
 				break;
@@ -380,10 +392,10 @@ int socket_parse_addr(const char *addr, struct sockaddr *sa, enum node_type type
 
 		/* Lookup address */
 		struct addrinfo *result;
-		ret = getaddrinfo(node, (type == IP) ? NULL : service, &hint, &result);
+		ret = getaddrinfo(node, (layer == LAYER_IP) ? NULL : service, &hint, &result);
 		if (!ret) {
-			
-			if (type == IP) {
+
+			if (layer == LAYER_IP) {
 				/* We mis-use the sin_port field to store the IP protocol number on RAW sockets */
 				struct sockaddr_in *sin = (struct sockaddr_in *) result->ai_addr;
 				sin->sin_port = htons(result->ai_protocol);

@@ -19,13 +19,20 @@
 
 #include "node.h"
 
+enum socket_layer {
+	LAYER_ETH,
+	LAYER_IP,
+	LAYER_UDP
+};
+
 struct socket {
 	/** The socket descriptor */
 	int sd;
-	/** The socket descriptor for an established TCP connection */
-	int sd2;
 	/** Socket mark for netem, routing and filtering */
 	int mark;
+
+	/** The OSI / IP layer which should be used for this socket */
+	enum socket_layer layer;
 
 	/** Local address of the socket */
 	struct sockaddr_storage local;
@@ -85,11 +92,11 @@ int socket_print_addr(char *buf, int len, struct sockaddr *sa);
  *
  * @param str	A string specifiying the socket address. See description for allowed formats.
  * @param sa	A pointer to the resolved address
- * @param type	Specifies the address type in which the addr is given
+ * @param layer Specifies the address type in which the addr is given
  * @param flags	Flags for getaddrinfo(2)
  * @retval 0	Success. Everything went well.
  * @retval <0	Error. Something went wrong.
  */
-int socket_parse_addr(const char *str, struct sockaddr *sa, enum node_type type, int flags);
+int socket_parse_addr(const char *str, struct sockaddr *sa, enum socket_layer layer, int flags);
 
 #endif /** _SOCKET_H_ @} */

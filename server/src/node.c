@@ -36,10 +36,8 @@ struct node_vtable vtables[] = {
 #ifdef ENABLE_GTFPGA
 	VTABLE(GTFPGA,	   "gtfpga",	gtfpga),
 #endif
-	VTABLE(LOG_FILE,   "file",	file),
-	VTABLE(IEEE_802_3, "ieee802.3",	socket),
-	VTABLE(IP,	   "ip",	socket),
-	VTABLE(UDP,	   "udp",	socket)
+	VTABLE(BSD_SOCKET, "socket",	socket),
+	VTABLE(LOG_FILE,   "file",	file)
 };
 
 int node_init(int argc, char *argv[], struct settings *set)
@@ -120,9 +118,7 @@ int node_stop(struct node *n)
 void node_reverse(struct node *n)
 {
 	switch (n->vt->type) {
-		case IEEE_802_3:
-		case IP:
-		case UDP:
+		case BSD_SOCKET:
 			SWAP(n->socket->remote, n->socket->local);
 			break;
 		default: { }
@@ -137,10 +133,9 @@ struct node * node_create()
 void node_destroy(struct node *n)
 {
 	switch (n->vt->type) {
-		case IEEE_802_3:
-		case IP:
-		case UDP:
+		case BSD_SOCKET:
 			free(n->socket->netem);
+			break;
 		default: { }
 	}
 
