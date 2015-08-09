@@ -188,7 +188,7 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 		error("Remote node '%s' closed the connection", n->name);
 	else if (bytes < 0)
 		serror("Failed recv");
-	
+
 	debug(10, "Received packet of %u bytes: %u samples a %u values per sample", bytes, cnt, (bytes / cnt) / 4 - 4);
 
 	for (int i = 0; i < cnt; i++) {
@@ -216,8 +216,8 @@ int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 {
 	struct socket *s = n->socket;
 	int bytes, sent = 0;
-	
-	@todo: we should check the MTU
+
+	/** @todo we should check the MTU */
 
 	struct iovec iov[cnt];
 	for (int i = 0; i < cnt; i++) {
@@ -253,7 +253,7 @@ int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 	bytes = sendmsg(s->sd, &mhdr, 0);
 	if (bytes < 0)
 		serror("Failed send");
-	
+
 	debug(10, "Sent packet of %u bytes: %u samples a %u values per sample", bytes, cnt, (bytes / cnt) / 4 - 4);
 
 	return sent;
