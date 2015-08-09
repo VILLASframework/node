@@ -121,6 +121,9 @@ void node_reverse(struct node *n)
 		case BSD_SOCKET:
 			SWAP(n->socket->remote, n->socket->local);
 			break;
+		case LOG_FILE:
+			SWAP(n->file->path_in, n->file->path_out);
+			break;
 		default: { }
 	}
 }
@@ -135,6 +138,10 @@ void node_destroy(struct node *n)
 	switch (n->vt->type) {
 		case BSD_SOCKET:
 			free(n->socket->netem);
+			break;
+		case LOG_FILE:
+			free(n->file->path_in);
+			free(n->file->path_out);
 			break;
 		default: { }
 	}

@@ -6,12 +6,12 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *
  * @addtogroup file File-IO node type
  * @{
  *********************************************************************************/
- 
+
 
 #ifndef _FILE_H_
 #define _FILE_H_
@@ -23,13 +23,22 @@
 struct file {
 	FILE *in;
 	FILE *out;
-	
-	const char *path_in;
+
+	char *path_in;
 	char *path_out;
 
-	const char *mode;	/**< The mode for fopen() which is used for the out file. */
-	
+	const char *file_mode;	/**< The mode for fopen() which is used for the out file. */
+
+	enum epoch_mode {
+		EPOCH_NOW,
+		EPOCH_RELATIVE,
+		EPOCH_ABSOLUTE
+	} epoch_mode;		/**< Specifies how file::offset is calculated. */
+
+	struct timespec start;	/**< The first timestamp of the input file. */
+	struct timespec epoch;	/**< The epoch timestamp from the configuration. */
 	struct timespec offset;	/**< An offset between the timestamp in the input file and the current time */
+
 	double rate;		/**< The sending rate. */
 	int tfd;		/**< Timer file descriptor. Blocks until 1/rate seconds are elapsed. */
 };

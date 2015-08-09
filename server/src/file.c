@@ -9,7 +9,9 @@
  *********************************************************************************/
 
 #include <unistd.h>
+#include <string.h>
 
+#include "msg.h"
 #include "file.h"
 #include "utils.h"
 #include "timing.h"
@@ -28,15 +30,18 @@ int file_print(struct node *n, char *buf, int len)
 {
 	struct file *f = n->file;
 
-	return snprintf(buf, len, "in=%s, out=%s, mode=%s, rate=%.1f",
-		f->path_in, f->path_out, f->mode, f->rate);
+	return snprintf(buf, len, "in=%s, out=%s, mode=%s, rate=%.1f, epoch_mode=%u, epoch=%.0f",
+		f->path_in, f->path_out, f->file_mode, f->rate, f->epoch_mode, time_to_double(&f->epoch));
 }
 
 int file_parse(config_setting_t *cfg, struct node *n)
 {
 	struct file *f = alloc(sizeof(struct file));
 
-	const char *out;
+	const char *out, *in;
+	const char *epoch_mode;
+	double epoch_flt;
+
 	if (config_setting_lookup_string(cfg, "out", &out)) {
 		time_t t = time(NULL);
 		struct tm *tm = localtime(&t);
@@ -46,13 +51,29 @@ int file_parse(config_setting_t *cfg, struct node *n)
 			cerror(cfg, "Invalid path for output");
 
 	}
-	config_setting_lookup_string(cfg, "in",  &f->path_in);
+	if (config_setting_lookup_string(cfg, "in", &in))
+		f->path_in = strdup(in);
 
-	if (!config_setting_lookup_string(cfg, "mode", &f->mode))
-		f->mode = "w+";
+	if (!config_setting_lookup_string(cfg, "mode", &f->file_mode))
+		f->file_mode = "w+";
 
 	if (!config_setting_lookup_float(cfg, "rate", &f->rate))
-		f->rate = 0;
+		f->rate = 0; /* Disable fixed rate sending. Using timestamps of file instead */
+
+	if (config_setting_lookup_float(n->cfg, "epoch", &epoch_flt))
+		f->epoch = time_from_double(epoch_flt);
+
+	if (!config_setting_lookup_string(n->cfg, "epoch_mode", &epoch_mode))
+		epoch_mode = "now";
+
+	if (!strcmp(epoch_mode, "now"))
+		f->epoch_mode = EPOCH_NOW;
+	else if (!strcmp(epoch_mode, "relative"))
+		f->epoch_mode = EPOCH_RELATIVE;
+	else if (!strcmp(epoch_mode, "absolute"))
+		f->epoch_mode = EPOCH_ABSOLUTE;
+	else
+		cerror(n->cfg, "Invalid value '%s' for setting 'epoch_mode'", epoch_mode);
 
 	n->file = f;
 
@@ -68,30 +89,58 @@ int file_open(struct node *n)
 		if (!f->in)
 			serror("Failed to open file for reading: '%s'", f->path_in);
 
-		f->tfd = timerfd_create(CLOCK_MONOTONIC, 0);
+		f->tfd = timerfd_create(CLOCK_REALTIME, 0);
 		if (f->tfd < 0)
 			serror("Failed to create timer");
 
 		/* Arm the timer */
-		struct itimerspec its;
 		if (f->rate) {
 			/* Send with fixed rate */
-			its.it_interval = time_from_double(1 / f->rate);
-			its.it_value = (struct timespec) { 1, 0 };
+			struct itimerspec its = {
+				.it_interval = time_from_double(1 / f->rate),
+				.it_value = { 1, 0 },
+			};
+
+			int ret = timerfd_settime(f->tfd, 0, &its, NULL);
+			if (ret)
+				serror("Failed to start timer");
 		}
 		else {
-			/* Read timestamp from first line to get an epoch offset */
-			time_fscan(f->in, &f->offset);
-			rewind(f->in);
-		}
+			/* Get current time */
+			struct timespec now, tmp;
+			clock_gettime(CLOCK_REALTIME, &now);
 
-		int ret = timerfd_settime(f->tfd, 0, &its, NULL);
-		if (ret)
-			serror("Failed to start timer");
+			/* Get timestamp of first sample */
+			time_fscan(f->in, &f->start); rewind(f->in);
+
+			/* Set offset depending on epoch_mode */
+			switch (f->epoch_mode) {
+				case EPOCH_NOW: /* read first value at f->now + f->epoch */
+					tmp = time_diff(&f->start, &now);
+					f->offset = time_add(&tmp, &f->epoch);
+					break;
+				case EPOCH_RELATIVE: /* read first value at f->start + f->epoch */
+					f->offset = f->epoch;
+					break;
+				case EPOCH_ABSOLUTE: /* read first value at f->epoch */
+					f->offset = time_diff(&f->start, &f->epoch);
+					break;
+			}
+
+			tmp = time_add(&f->start, &f->offset);
+			tmp = time_diff(&now, &tmp);
+
+			debug(5, "Opened file '%s' as input for node '%s': start=%.2f, offset=%.2f, eta=%.2f",
+				f->path_in, n->name,
+				time_to_double(&f->start),
+				time_to_double(&f->offset),
+				time_to_double(&tmp)
+			);
+		}
 	}
 
 	if (f->path_out) {
-		f->out = fopen(f->path_out, f->mode);
+		f->out = fopen(f->path_out, f->file_mode);
 		if (!f->out)
 			serror("Failed to open file for writing: '%s'", f->path_out);
 	}
@@ -110,8 +159,6 @@ int file_close(struct node *n)
 	if (f->out)
 		fclose(f->out);
 
-	free(f->path_out);
-
 	return 0;
 }
 
@@ -121,18 +168,23 @@ int file_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 	struct file *f = n->file;
 
 	if (f->in) {
-		struct timespec ts;
+		for (i = 0; i < cnt; i++) {
+			struct msg *cur = &pool[(first+i) % poolsize];
+			msg_fscan(f->in, cur);
 
-		for (i = 0; i < cnt; i++)
-			msg_fscan(f->in, &pool[(first+i) % poolsize]);
-
-		if (f->rate)
-			timerfd_wait(f->tfd);
-		else
-			timerfd_wait_until(f->tfd, &ts);
+			if (f->rate) {
+				if (timerfd_wait(f->tfd) < 0)
+					serror("Failed to wait for timer");
+			}
+			else {
+				struct timespec until = time_add(&MSG_TS(cur), &f->offset);
+				if (timerfd_wait_until(f->tfd, &until) < 0)
+					serror("Failed to wait for timer");
+			}
+		}
 	}
 	else
-		warn("Can not read from node '%s'", n->name);
+		error("Can not read from node '%s'", n->name);
 
 	return i;
 }
@@ -150,7 +202,7 @@ int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 			msg_fprint(f->out, &pool[(first+i) % poolsize]);
 	}
 	else
-		warn("Can not write to node '%s", n->name);
+		error("Can not write to node '%s", n->name);
 
 	return i;
 }

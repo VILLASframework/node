@@ -65,8 +65,12 @@ int msg_fscan(FILE *f, struct msg *m)
 	char line[MSG_VALUES * 16];
 	char *next, *ptr = line;
 
-	if (!fgets(line, sizeof(line), f))
-		return 0;
+retry:	if (fgets(line, sizeof(line), f) == NULL) {
+		if (feof(f))
+			goto retry;
+		else
+			return -1; /* An error occured */
+	}
 
 	m->ts.sec   = (uint32_t) strtoul(ptr, &ptr, 10); ptr++;
 	m->ts.nsec  = (uint32_t) strtoul(ptr, &ptr, 10);
