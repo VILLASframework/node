@@ -21,7 +21,8 @@ uint64_t timerfd_wait(int fd)
 uint64_t timerfd_wait_until(int fd, struct timespec *until)
 {
 	struct itimerspec its = {
-		.it_value = *until
+		.it_value = *until,
+		.it_interval = { 0, 0 }
 	};
 
 	if (timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, NULL))
