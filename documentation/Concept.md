@@ -21,52 +21,25 @@ Possible types of nodes are:
 
 ## Paths
 
-A path is a **unidirectional** connection between incoming and outgoing nodes.
+A path is a **uni-directional** connection between incoming and outgoing nodes.
 
-A path simply forwards messages from the incoming node to the outgoing node.
-By default the server does not alter message contents.
-It only checks if the message headers are valid (sequence number, cryptographic signature..)
-However every path supports optional callback function which allow user-defined operations on the message contents.
+It forwards messages from a single incoming node to multiple outgoing nodes.
+Therefore it represents a 1-to-n relation between nodes.
 
 For bidirectional communication a corresponding path in the reverse direction must be added.
-
-The server is designed to allow multiple outgoing and incoming nodes per path as an extension.
-@todo This has **not** been implemented at the moment but will come in future versions.
+ 
+By default, message contents are not altered.
+The server only performs checks for valid message headers (sequence number, cryptographic signature..).
+However every path supports optional hook/callback functions which allow user-defined operations on the message contents.
 
 @diafile path_simple.dia
 
 @see path for implementation details.
 
-## Message
-
-A message contains a variable number of values.
-Usually a a simulator sends one message per timestep.
-
-Simulation data is encapsulated in UDP packages in sent over IP networks like the internet.
-We designed a lightweight message format (or protocol) to facilitate a fast transmission.
-
-@diafile msg_format.dia
-
-### Protocol details
-
-There are several types of messages:
-
-  * **Data**: contains simulation data.
-  * **Control**: start/stops a new simulation case.
-  * **Config**: used to pass settings between nodes.
-  * **Sync**: used to syncrhonize the clocks between nodes.
-
-For now, only the first type (data) is implemented.
-Therefore the complete protocol is **stateless**.
-Later we might want to support more complex simulation scenarios which require some kind of controlling.
-
-Except for the simulation data, all values are sent in **network byte order** (big endian)!
-The endianess of the simulation data is indicated by a single bit in the message header.
-This allows us to reduce the amount of conversions during one transfer.
-
-@see msg for implementation details.
-
 ## Interface
+
+Interfaces are used to represent physical network ports on the server.
+They are only used by the [Socket](socket) type of nodes.
 
 @todo Add documentation
 

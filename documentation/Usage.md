@@ -1,4 +1,4 @@
-# Usage Instructions {#usage}
+# Usage {#usage}
 
 The S2SS server (`server`) expects the path to a configuration file as a single argument.
 
@@ -35,11 +35,11 @@ The server requires root privileges for:
 
 3. Go to S2SS directory
 
-	$ cd /home/acs-admin/msv/s2ss/server/
+    $ cd /home/acs-admin/msv/s2ss/server/
 
 4. Edit configuration file
 
-	$ nano etc/opal-test.conf
+    $ nano etc/opal-test.conf
 
  - Take a look at the examples and documentation for a detailed description
  - Move with: cursor keys
@@ -47,7 +47,7 @@ The server requires root privileges for:
 
 5. Start server
 
-	$ sudo ./server etc/opal-test.conf
+    $ sudo ./server etc/opal-test.conf
 
  - `sudo` starts the server with super user priviledges
 
@@ -55,26 +55,4 @@ The server requires root privileges for:
 
 7. Logout
 
-	$ exit
-
-## Examples
-
- 1. Start server:
-
-	$ ./server etc/example.conf
-
- 2. Receive/dump data to file
-
-	$ ./receive *:10200 > dump.csv
-
- 3. Replay recorded data:
-
-	$ ./send 4 192.168.1.12:10200 < dump.csv
-
- 4. Send random generated values:
-
-	$ ./random 1 4 100 | ./send 4 192.168.1.12:10200
-
- 5. Test ping/pong latency:
-
-	$ ./test latency 192.168.1.12:10200
+    $ exit

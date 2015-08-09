@@ -2,6 +2,8 @@
 
 @subpage gtfpga
 @subpage opal
+@subpage file
+@subpage socket
 
 Every server needs clients which act as sinks / sources for simulation data. In case of S2SS these clients are called _nodes_.
 

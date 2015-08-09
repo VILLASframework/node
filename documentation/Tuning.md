@@ -1,24 +1,6 @@
-# Configuration {#configuration}
+# Tuning {#tuning}
 
-## File
-
-The server gets exclusively configured by its configuration file.
-
-The following sections describes the available options.
-Take a look in the 'Examples' section for some examples.
-
-### Global
-
-- *name*:
-- *affinity*
-
-### Nodes
-
-### Paths
-
-## Tuning
-
-### Operating System and Kernel
+## Operating System and Kernel
 
 For minimum latency several kernel and driver settings can be optimized.
 A [RT-preemp patched Linux](https://rt.wiki.kernel.org/index.php/Main_Page) kernel is recommended.
@@ -39,7 +21,7 @@ Precompiled kernels for Fedora can be found here: http://ccrma.stanford.edu/plan
 	# https://www.kernel.org/doc/Documentation/networking/e1000e.txt
 	option e1000e InterruptThrottleRate=
 
-### Hardware
+## Hardware
 
 This are some proposals for the selection of appropriate server hardware:
 

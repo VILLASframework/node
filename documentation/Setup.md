@@ -1,8 +1,4 @@
-# Server
-
-@subpage configuration
-@subpage usage
-@subpage netem
+# Setup
 
 ## Compilation
 
@@ -10,12 +6,16 @@
 
 Install libraries including developement headers for:
 
- - _libconfig_ for parsing the config file
+ - [libconfig](http://www.hyperrealm.com/libconfig/) for parsing the config file
+ - [libnl3](http://www.infradead.org/~tgr/libnl/) for the network emulation support
+ 
+Use the following command to install the dependencies under Debian-based distributions:
 
-	$ sudo apt-get install iproute2 libconfig-dev libsodium-dev
-or:
+    $ sudo apt-get install iproute2 libconfig-dev linbl-3-dev
 
-	$ sudo yum install iproute2 libconfig-devel libsodium-devel
+or the following line for Fedora / CentOS / Redhat systems:
+
+    $ sudo yum install iproute2 libconfig-devel libnl3-devel
 
 **Important:** Please note that the server requires the
 [iproute2](http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2)

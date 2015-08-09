@@ -10,16 +10,13 @@ The PowerPC core is used to forward values between RTDS and the S2SS server.
 
 ## Configuration
 
-`slot`
+#### `slot`
 
-`id`
+#### `id`
 
-`rate`
+#### `rate`
 
-## Source Code
+### Example
 
-The source code for the PowerPC is located at:
+@todo Add excerpt from example.conf
 
-	/clients/gtfpga/s2ss/
-
-@todo Add documentation for GTFPGA card.
