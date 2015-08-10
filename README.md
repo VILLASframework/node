@@ -11,6 +11,8 @@ Alternatively, you can build the documentation yourself by calling `doxygen` in 
 
 ## Contact
 
- - Institute for Automation of Complex Power Systems (ACS)
- - EON Energy Research Center (EONERC)
- - RWTH University Aachen, Germany
+<img src="documentation/pictures/eonerc_logo.png" />
+
+Institute for Automation of Complex Power Systems (ACS)  
+EON Energy Research Center (EONERC)  
+RWTH University Aachen, Germany  
