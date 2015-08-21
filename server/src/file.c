@@ -54,10 +54,10 @@ int file_parse(config_setting_t *cfg, struct node *n)
 	if (config_setting_lookup_string(cfg, "in", &in))
 		f->path_in = strdup(in);
 
-	if (!config_setting_lookup_string(cfg, "mode", &f->file_mode))
+	if (!config_setting_lookup_string(cfg, "file_mode", &f->file_mode))
 		f->file_mode = "w+";
 
-	if (!config_setting_lookup_float(cfg, "rate", &f->rate))
+	if (!config_setting_lookup_float(cfg, "send_rate", &f->rate))
 		f->rate = 0; /* Disable fixed rate sending. Using timestamps of file instead */
 
 	if (config_setting_lookup_float(n->cfg, "epoch", &epoch_flt))
@@ -170,14 +170,30 @@ int file_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 	if (f->in) {
 		for (i = 0; i < cnt; i++) {
 			struct msg *cur = &pool[(first+i) % poolsize];
-			msg_fscan(f->in, cur);
-
+			
 			if (f->rate) {
-				if (timerfd_wait(f->tfd) < 0)
-					serror("Failed to wait for timer");
+				/* Wait until epoch for the first time only */
+				if (ftell(f->in) == 0) {
+					struct timespec until = time_add(&f->start, &f->offset);
+					if (timerfd_wait_until(f->tfd, &until))
+						serror("Failed to wait for timer");
+				}
+				/* Wait with fixed rate delay */
+				else {
+					if (timerfd_wait(f->tfd) < 0)
+						serror("Failed to wait for timer");
+				}
+
+				msg_fscan(f->in, cur);
 			}
 			else {
-				struct timespec until = time_add(&MSG_TS(cur), &f->offset);
+				struct timespec until;
+			
+				/* Get message and timestamp */
+				msg_fscan(f->in, cur);
+
+				/* Wait for next message / sampe */
+				until = time_add(&MSG_TS(cur), &f->offset);
 				if (timerfd_wait_until(f->tfd, &until) < 0)
 					serror("Failed to wait for timer");
 			}
