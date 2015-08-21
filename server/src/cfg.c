@@ -21,10 +21,10 @@
 #include "socket.h"
 #include "file.h"
 #ifdef ENABLE_GTFPGA
- #include "gtfpga.h"
+  #include "gtfpga.h"
 #endif
 #ifdef ENABLE_OPAL_ASYNC
- #include "opal.h"
+  #include "opal.h"
 #endif
 
 int config_parse(const char *filename, config_t *cfg, struct settings *set,

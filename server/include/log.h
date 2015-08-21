@@ -14,9 +14,9 @@
 #include <libconfig.h>
 
 #ifdef __GNUC__
- #define INDENT		int __attribute__ ((__cleanup__(log_outdent), unused)) _old_indent = log_indent(1);
+  #define INDENT		int __attribute__ ((__cleanup__(log_outdent), unused)) _old_indent = log_indent(1);
 #else
- #define INDENT		;
+  #define INDENT		;
 #endif
 
 /* The log level which is passed as first argument to print() */

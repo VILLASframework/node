@@ -21,7 +21,7 @@
 #include "license.h"
 
 #ifdef ENABLE_OPAL_ASYNC
-#include "opal.h"
+  #include "opal.h"
 #endif
 
 /** Linked list of nodes */

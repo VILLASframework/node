@@ -15,11 +15,12 @@
 /* Node types */
 #include "file.h"
 #include "socket.h"
+
 #ifdef ENABLE_GTFPGA
-#include "gtfpga.h"
+  #include "gtfpga.h"
 #endif
 #ifdef ENABLE_OPAL_ASYNC
-#include "opal.h"
+  #include "opal.h"
 #endif
 
 #define VTABLE(type, name, fnc) { type, name, \
