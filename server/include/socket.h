@@ -16,6 +16,7 @@
 #define _SOCKET_H_
 
 #include <sys/socket.h>
+#include <linux/if_packet.h>
 
 #include "node.h"
 
@@ -23,6 +24,13 @@ enum socket_layer {
 	LAYER_ETH,
 	LAYER_IP,
 	LAYER_UDP
+};
+
+union sockaddr_union {
+	struct sockaddr sa;
+	struct sockaddr_in sin;
+	struct sockaddr_in6 sin6;
+	struct sockaddr_ll sll;
 };
 
 struct socket {
@@ -35,12 +43,14 @@ struct socket {
 	enum socket_layer layer;
 
 	/** Local address of the socket */
-	struct sockaddr_storage local;
+	union sockaddr_union local;
 	/** Remote address of the socket */
-	struct sockaddr_storage remote;
+	union sockaddr_union remote;
 
-	/** Network emulator settings */
-	struct netem *netem;
+	/** libnl3: Network emulator queuing discipline */
+	struct rtnl_qdisc *tc_qdisc;
+	/** libnl3: Firewall mark classifier */
+	struct rtnl_cls *tc_classifier;
 
 	/* Linked list _per_interface_ */
 	struct socket *next;

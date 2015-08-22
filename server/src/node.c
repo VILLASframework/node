@@ -14,13 +14,17 @@
 
 /* Node types */
 #include "file.h"
-#include "socket.h"
-
 #ifdef ENABLE_GTFPGA
   #include "gtfpga.h"
 #endif
 #ifdef ENABLE_OPAL_ASYNC
   #include "opal.h"
+#endif
+#ifdef ENABLE_SOCKET
+  #include "socket.h"
+
+  #include <netlink/route/qdisc.h>
+  #include <netlink/route/classifier.h>
 #endif
 
 #define VTABLE(type, name, fnc) { type, name, \
@@ -37,7 +41,9 @@ struct node_vtable vtables[] = {
 #ifdef ENABLE_GTFPGA
 	VTABLE(GTFPGA,	   "gtfpga",	gtfpga),
 #endif
+#ifdef ENABLE_SOCKET
 	VTABLE(BSD_SOCKET, "socket",	socket),
+#endif
 	VTABLE(LOG_FILE,   "file",	file)
 };
 
@@ -137,9 +143,12 @@ struct node * node_create()
 void node_destroy(struct node *n)
 {
 	switch (n->vt->type) {
+#ifdef ENABLE_SOCKET
 		case BSD_SOCKET:
-			free(n->socket->netem);
+			rtnl_qdisc_put(n->socket->tc_qdisc);
+			rtnl_cls_put(n->socket->tc_classifier);
 			break;
+#endif
 		case LOG_FILE:
 			free(n->file->path_in);
 			free(n->file->path_out);
