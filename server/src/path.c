@@ -207,7 +207,6 @@ struct path * path_create()
 
 	hook_add(HOOK_PATH_START,	1,	stats_start);
 
-	hook_add(HOOK_PATH_STOP,	1,	stats_line);
 	hook_add(HOOK_PATH_STOP,	2,	stats_show);
 	hook_add(HOOK_PATH_STOP,	3,	stats_stop);
 

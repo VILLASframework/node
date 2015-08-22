@@ -6,18 +6,21 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
+
 #include <stdlib.h>
 #include <string.h>
 
-#include <sched.h>
 #include <signal.h>
 #include <unistd.h>
+
+#include <sched.h>
 
 #include "config.h"
 #include "utils.h"
 #include "cfg.h"
 #include "path.h"
 #include "node.h"
+#include "stats.h"
 #include "license.h"
 
 #ifdef ENABLE_OPAL_ASYNC
@@ -43,6 +46,7 @@ static void quit()
 	FOREACH(&nodes, it)
 		node_stop(it->node);
 
+	info("De-initializing node types");
 	node_deinit();
 
 	/* Freeing dynamically allocated memory */
@@ -59,7 +63,10 @@ static void realtime_init()
 { INDENT
 	/* Use FIFO scheduler with real time priority */
 	if (settings.priority) {
-		struct sched_param param = { .sched_priority = settings.priority };
+		struct sched_param param = {
+			.sched_priority = settings.priority
+		};
+
 		if (sched_setscheduler(0, SCHED_FIFO, &param))
 			serror("Failed to set real time priority");
 		else
@@ -98,6 +105,17 @@ static void usage(const char *name)
 	printf("  This type of invocation is used by OPAL-RT Asynchronous processes.\n");
 	printf("  See in the RT-LAB User Guide for more information.\n\n");
 #endif
+	printf("Supported features:\n");
+#ifdef ENABLE_PCI
+	printf(" - libpci: GTFPGA PCIe card\n");
+#endif
+#ifdef ENABLE_SOCKET
+	printf(" - libnl3: Network Emulation\n");
+#endif
+#ifdef ENABLE_OPAL_ASYNC
+	printf(" - libOpalAsyncApi: run as OPAL Asynchronous Process\n");
+#endif
+	printf("\n");
 	printf("Simulator2Simulator Server %s (built on %s %s)\n",
 		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
 	printf(" copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC\n");

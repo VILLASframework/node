@@ -21,7 +21,6 @@
 #include <libconfig.h>
 
 #include "msg.h"
-#include "tc.h"
 #include "list.h"
 
 /** Static node initialization */
