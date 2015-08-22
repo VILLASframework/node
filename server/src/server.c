@@ -158,15 +158,12 @@ int main(int argc, char *argv[])
 
 	/* Run! */
 	if (settings.stats > 0) {
-		info("%-32s :   %-8s %-8s %-8s %-8s %-8s",
-			"Source " MAG("=>") " Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Inval");
-		line();
+		stats_header();
 
 		for (;;) FOREACH(&paths, it) {
 			usleep(settings.stats * 1e6);
 			hook_run(it->path, HOOK_PERIODIC);
 		}
-
 	}
 	else
 		pause();

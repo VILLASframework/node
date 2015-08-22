@@ -12,6 +12,13 @@
 #include "timing.h"
 #include "utils.h"
 
+void stats_header()
+{
+	info("%-32s :   %-8s %-8s %-8s %-8s %-8s",
+		"Source " MAG("=>") " Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Invalid");
+	line();
+}
+
 int stats_line(struct path *p)
 {
 	char buf[33];
