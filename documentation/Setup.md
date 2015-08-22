@@ -7,11 +7,12 @@
 Install libraries including developement headers for:
 
  - [libconfig](http://www.hyperrealm.com/libconfig/) for parsing the config file
- - [libnl3](http://www.infradead.org/~tgr/libnl/) for the network emulation support
+ - [libnl3](http://www.infradead.org/~tgr/libnl/) for the network communication & emulation support
+ - libOpal{AsyncApi,Core,Utils} for running the S2SS server as an Asynchronous process inside your RT-LAB model 
  
 Use the following command to install the dependencies under Debian-based distributions:
 
-    $ sudo apt-get install iproute2 libconfig-dev linbl-3-dev
+    $ sudo apt-get install libconfig-dev libnl-3-dev libnl-route-3-dev
 
 or the following line for Fedora / CentOS / Redhat systems:
 
@@ -23,19 +24,12 @@ tools to setup the network emulation and interfaces.
 
 ### Compilation
 
-Checkout the `Makefile` and `include/config.h` for some config options which have to be specified by compile time.
+Checkout the `Makefile` and `include/config.h` for some options which have to be specified at compile time.
 
 Afterwards, start the compilation with:
 
 	$ make
 
-Add `V=5` for a more verbose debugging output.
+Append `V=5` to `make` for a more verbose debugging output.
 
-## Installation
-
-Install the server by executing:
-
-	$ sudo make install
-
-Add `PREFIX=/usr/local/` to specify a non-standard installation destination.
-
+Append `DEBUG=1` to `make` to add debug symbols.
