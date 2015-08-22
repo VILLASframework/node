@@ -35,7 +35,7 @@ struct hist {
 	/** The number of buckets in #data. */
 	int length;
 
-	/** Total number of counted values between #low and #high. */
+	/** Total number of counted values. */
 	hist_cnt_t total;
 	/** The number of values which are higher than #high. */ 
 	hist_cnt_t higher;
