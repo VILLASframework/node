@@ -1,4 +1,4 @@
-/** 
+/** Netlink related functions.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -14,27 +14,17 @@
 #include <netlink/route/route.h>
 #include <netlink/route/link.h>
 
-/** Get libnl3 link object from interface name
+/** Get index of outgoing interface for given destination address.
  *
- * @param dev The name of the interface
- * @retval 0 Error. Something went wrong.
- * @retval >0 A pointer to the libnl3 link object.
+ * @retval >=0 Interface index of outgoing interface.
+ * @retval <0 Error. Something went wrong.
  */
-struct rtnl_link * nl_get_link(int ifindex, const char *dev);
+int nl_get_egress(struct nl_addr *addr);	
 
-/**
- *
- */
-int nl_get_nexthop(struct nl_addr *addr, struct rtnl_nexthop **nexthop);	
-
-/**
- *
- */
+/** Get or create global netlink socket. */
 struct nl_sock * nl_init();
 
-/**
- *
- */
+/** Close and free global netlink socket. */
 void nl_shutdown();
 
 #endif

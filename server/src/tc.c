@@ -19,11 +19,15 @@
 #include "tc.h"
 #include "nl.h"
 
-int tc_parse(config_setting_t *cfg, struct rtnl_qdisc *ne)
+int tc_parse(config_setting_t *cfg, struct rtnl_qdisc **netem)
 {
 	const char *str;
 	int val;
 	
+	struct rtnl_qdisc *ne = rtnl_qdisc_alloc();
+	if (!ne)
+		error("Failed to allocated memory!");
+
 	rtnl_tc_set_kind(TC_CAST(ne), "netem");
 
 	if (config_setting_lookup_string(cfg, "distribution", &str)) {
@@ -75,11 +79,15 @@ int tc_parse(config_setting_t *cfg, struct rtnl_qdisc *ne)
 		rtnl_netem_set_corruption_probability(ne, val);
 	}
 
+	*netem = ne;
+
 	return 0;
 }
 
 int tc_print(char *buf, size_t len, struct rtnl_qdisc *ne)
-{	
+{
+	*buf = 0; /* start from the beginning */
+
 	if (rtnl_netem_get_limit(ne) > 0)
 		strap(buf, len, "limit %upkts", rtnl_netem_get_limit(ne));
 
@@ -87,7 +95,7 @@ int tc_print(char *buf, size_t len, struct rtnl_qdisc *ne)
 		strap(buf, len, "delay %.2fms ", rtnl_netem_get_delay(ne) / 1000.0);
 		
 		if (rtnl_netem_get_jitter(ne) > 0) {
-			strap(buf, len, "jitter %f.2ms ", rtnl_netem_get_jitter(ne) / 1000.0);
+			strap(buf, len, "jitter %.2fms ", rtnl_netem_get_jitter(ne) / 1000.0);
 			
 			if (rtnl_netem_get_delay_correlation(ne) > 0)
 				strap(buf, len, "%u%% ", rtnl_netem_get_delay_correlation(ne));
@@ -125,26 +133,26 @@ int tc_print(char *buf, size_t len, struct rtnl_qdisc *ne)
 	return 0;
 }
 
-int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, int bands)
+int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent, int bands)
 {
 	struct nl_sock *sock = nl_init();
 	struct rtnl_qdisc *q = rtnl_qdisc_alloc();
 
 	/* This is the default priomap used by the tc-prio qdisc
 	 * We will use the first 'bands' bands internally */
-	uint8_t map[] = { 1, 2, 2, 2, 1, 2, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1 };
+	uint8_t map[] = QDISC_PRIO_DEFAULT_PRIOMAP;
 	for (int i = 0; i < ARRAY_LEN(map); i++)
 		map[i] += bands;
 
 	rtnl_tc_set_link(TC_CAST(q), i->nl_link);
-	rtnl_tc_set_parent(TC_CAST(q), TC_H_ROOT);
+	rtnl_tc_set_parent(TC_CAST(q), parent);
 	rtnl_tc_set_handle(TC_CAST(q), handle);
 	rtnl_tc_set_kind(TC_CAST(q), "prio"); 
 
 	rtnl_qdisc_prio_set_bands(q, bands + 3);
-	rtnl_qdisc_prio_set_priomap(q, map, ARRAY_LEN(map));
+	rtnl_qdisc_prio_set_priomap(q, map, sizeof(map));
 
-	int ret = rtnl_qdisc_add(sock, q, NLM_F_CREATE);
+	int ret = rtnl_qdisc_add(sock, q, NLM_F_CREATE | NLM_F_REPLACE);
 
 	*qd = q;
 	
@@ -159,8 +167,9 @@ int tc_netem(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hd
 	rtnl_tc_set_link(TC_CAST(q), i->nl_link);
 	rtnl_tc_set_parent(TC_CAST(q), parent);
 	rtnl_tc_set_handle(TC_CAST(q), handle);
+	//rtnl_tc_set_kind(TC_CAST(q), "netem");
 
-	int ret = rtnl_qdisc_add(sock, q, NLM_F_REPLACE);
+	int ret = rtnl_qdisc_add(sock, q, NLM_F_CREATE);
 
 	*qd = q;
 	

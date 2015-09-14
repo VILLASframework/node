@@ -56,8 +56,11 @@ int if_start(struct interface *i, int affinity)
 	info("Starting interface '%s' which is used by %u sockets", rtnl_link_get_name(i->nl_link), list_length(&i->sockets));
 
 	{ INDENT
+		/* Set affinity for network interfaces (skip _loopback_ dev) */
+		if_set_affinity(i, affinity);
+		
 		/* Assign fwmark's to socket nodes which have netem options */
-		int mark = 0;
+		int ret, mark = 0;
 		FOREACH(&i->sockets, it) {
 			struct socket *s = it->socket;
 			if (s->tc_qdisc)
@@ -69,24 +72,25 @@ int if_start(struct interface *i, int affinity)
 			return 0;
 
 		/* Replace root qdisc */
-		tc_prio(i, &i->tc_qdisc, TC_HANDLE(4000, 0), mark);
+		if ((ret = tc_prio(i, &i->tc_qdisc, TC_HANDLE(1, 0), TC_H_ROOT, mark)))
+			;//error("Failed to setup priority queuing discipline: %s", nl_geterror(ret));
 
 		/* Create netem qdisks and appropriate filter per netem node */
 		FOREACH(&i->sockets, it) {
 			struct socket *s = it->socket;
 			if (s->tc_qdisc) {
-				tc_mark(i,  &s->tc_classifier, TC_HANDLE(4000, s->mark), s->mark);
-				tc_netem(i, &s->tc_qdisc, TC_HANDLE(8000, s->mark), TC_HANDLE(4000, s->mark));
+				if ((ret = tc_mark(i,  &s->tc_classifier, TC_HANDLE(1, s->mark), s->mark)))
+					error("Failed to setup FW mark classifier: %s", nl_geterror(ret));
 				
 				char buf[256];
 				tc_print(buf, sizeof(buf), s->tc_qdisc);
 				debug(5, "Starting network emulation on interface '%s' for FW mark %u: %s",
 					rtnl_link_get_name(i->nl_link), s->mark, buf);
+
+				if ((ret = tc_netem(i, &s->tc_qdisc, TC_HANDLE(0x1000+s->mark, 0), TC_HANDLE(1, s->mark))))
+					error("Failed to setup netem qdisc: %s", nl_geterror(ret));
 			}
 		}
-
-		/* Set affinity for network interfaces (skip _loopback_ dev) */
-		if_set_affinity(i, affinity);
 	}
 
 	return 0;
@@ -108,6 +112,8 @@ int if_stop(struct interface *i)
 
 int if_get_egress(struct sockaddr *sa, struct rtnl_link **link)
 {
+	int ifindex = -1;
+
 	switch (sa->sa_family) {
 		case AF_INET:
 		case AF_INET6: {
@@ -118,22 +124,24 @@ int if_get_egress(struct sockaddr *sa, struct rtnl_link **link)
 				? nl_addr_build(sin->sin_family, &sin->sin_addr.s_addr, sizeof(sin->sin_addr.s_addr))
 				: nl_addr_build(sin6->sin6_family, sin6->sin6_addr.s6_addr, sizeof(sin6->sin6_addr));
 			
-			struct rtnl_nexthop *nh;
-			if (nl_get_nexthop(addr, &nh))
-				return -1;
-
-			*link = nl_get_link(rtnl_route_nh_get_ifindex(nh), NULL);
-			
-			rtnl_route_nh_free(nh);
+			ifindex = nl_get_egress(addr);
+			if (ifindex < 0)
+				error("Netlink error: %s", nl_geterror(ifindex));
+			break;
 		}
 		
 		case AF_PACKET: {
 			struct sockaddr_ll *sll = (struct sockaddr_ll *) sa;
 			
-			*link = nl_get_link(sll->sll_ifindex, NULL);
+			ifindex = sll->sll_ifindex;
+			break;
 		}
 	}
-
+	
+	struct nl_cache *cache = nl_cache_mngt_require("route/link");
+	if (!(*link = rtnl_link_get(cache, ifindex)))
+		return -1;
+	
 	return 0;
 }
 

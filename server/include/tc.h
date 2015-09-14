@@ -29,11 +29,11 @@ struct interface;
 /** Parse network emulator (netem) settings.
  *
  * @param cfg A libconfig object containing the settings.
- * @param ne A pointer to a libnl3 qdisc object where setting will be written to.
+ * @param[out] ne A pointer to a libnl3 qdisc object where setting will be written to.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int tc_parse(config_setting_t *cfg, struct rtnl_qdisc *ne);
+int tc_parse(config_setting_t *cfg, struct rtnl_qdisc **ne);
 
 /** Print network emulator (netem) setting into buffer.
  *
@@ -58,11 +58,12 @@ int tc_reset(struct interface *i);
  * @param i[in] The interface
  * @param qd[in,out] The libnl3 object of the new prio qdisc.
  * @param handle[in] The handle for the new qdisc
+ * @param parent[in] Make this qdisc a child of this class
  * @param bands[in] The number of classes for this new qdisc
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, int bands);
+int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t, int bands);
 
 /** Add a new network emulator (netem) discipline.
  *

@@ -39,6 +39,7 @@ static struct list sockets;
 
 int socket_init(int argc, char * argv[], struct settings *set)
 { INDENT
+	nl_init(); /* Fill link cache */
 	list_init(&interfaces, (dtor_cb_t) if_destroy);
 
 	/* Gather list of used network interfaces */
@@ -47,14 +48,14 @@ int socket_init(int argc, char * argv[], struct settings *set)
 		struct rtnl_link *link;
 
 		/* Determine outgoing interface */
-		if (if_get_egress((struct sockaddr *) &s->remote, &link) || !link) {
+		if (if_get_egress((struct sockaddr *) &s->remote, &link)) {
 			char buf[128];
 			socket_print_addr(buf, sizeof(buf), (struct sockaddr *) &s->remote);
 			error("Failed to get interface for socket address '%s'", buf);
 		}
 
-		int index = rtnl_link_get_ifindex(link);
-		struct interface *i = if_lookup_index(index);
+		int ifindex = rtnl_link_get_ifindex(link);
+		struct interface *i = if_lookup_index(ifindex);
 		if (!i)
 			i = if_create(link);
 
@@ -307,13 +308,8 @@ int socket_parse(config_setting_t *cfg, struct node *n)
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
 		int enabled = 1;
-		if (!config_setting_lookup_bool(cfg_netem, "enabled", &enabled) || enabled) {
-			s->tc_qdisc = rtnl_qdisc_alloc();
-			if (!s->tc_qdisc)
-				error("Failed to allocated memory!");
-
-			tc_parse(cfg_netem, s->tc_qdisc);
-		}
+		if (!config_setting_lookup_bool(cfg_netem, "enabled", &enabled) || enabled)
+			tc_parse(cfg_netem, &s->tc_qdisc);
 	}
 
 	n->socket = s;
@@ -355,7 +351,8 @@ int socket_print_addr(char *buf, int len, struct sockaddr *saddr)
 			break;
 
 		case AF_PACKET: {
-			struct rtnl_link *link = nl_get_link(sa->sll.sll_ifindex, NULL);
+			struct nl_cache *cache = nl_cache_mngt_require("route/link");
+			struct rtnl_link *link = rtnl_link_get(cache, sa->sll.sll_ifindex);
 			if (!link)
 				error("Failed to get interface for index: %u", sa->sll.sll_ifindex);
 			
@@ -390,7 +387,8 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 		memcpy(&sa->sll.sll_addr, &mac->ether_addr_octet, 6);
 		
 		/* Get interface index from name */
-		struct rtnl_link *link = nl_get_link(0, ifname);
+		struct nl_cache *cache = nl_cache_mngt_require("route/link");
+		struct rtnl_link *link = rtnl_link_get_by_name(cache, ifname);
 		if (!link)
 			error("Failed to get network interface: '%s'", ifname);
 
