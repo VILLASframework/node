@@ -1,0 +1,10 @@
+language: c
+
+install:
+  - make dependencies
+script:
+  - make build
+  - make test
+deploy:
+  - make doc
+  - make deploy
