@@ -125,9 +125,11 @@ int node_stop(struct node *n)
 void node_reverse(struct node *n)
 {
 	switch (n->vt->type) {
+#ifdef ENABLE_SOCKET
 		case BSD_SOCKET:
 			SWAP(n->socket->remote, n->socket->local);
 			break;
+#endif
 		case LOG_FILE:
 			SWAP(n->file->path_in, n->file->path_out);
 			break;

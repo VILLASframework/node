@@ -31,7 +31,10 @@ libnl3: dirs
 
 # Compile S2SS server
 build:
-	make -C server CFLAGS=-I$(PREFIX)/usr/include/ LDFLAGS=-Wl,-L$(PREFIX)/usr/lib/
+	CFLAGS=-I$(PREFIX)/usr/include/ \
+	LDFLAGS=-Wl,-L$(PREFIX)/usr/lib/ \
+	NLDIR=$(PREFIX)/usr/include/libnl3/ \
+	make -C server
 
 # Test S2SS server by running it for 3 secs
 test:

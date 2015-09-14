@@ -31,6 +31,7 @@
 #define MSG_TYPE_DATA		0 /**< Message contains float values */
 #define MSG_TYPE_START		1 /**< Message marks the beginning of a new simulation case */
 #define MSG_TYPE_STOP		2 /**< Message marks the end of a simulation case */
+#define MSG_TYPE_EMPTY		3 /**< Message does not carry useful data */
 
 #define MSG_ENDIAN_LITTLE	0 /**< Message values are in little endian format (float too!) */
 #define MSG_ENDIAN_BIG		1 /**< Message values are in bit endian format */

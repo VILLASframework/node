@@ -1,10 +1,15 @@
 language: c
+compiler: gcc
+
+cache:
+  directories:
+    - thirdparty
 
 install:
   - make dependencies
 script:
   - make build
+after_success:
   - make test
-deploy:
   - make doc
   - make deploy

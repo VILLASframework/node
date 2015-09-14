@@ -12,14 +12,15 @@
 #include "utils.h"
 #include "list.h"
 #include "if.h"
-#include "tc.h"
 #include "cfg.h"
 #include "node.h"
 #include "path.h"
 #include "hooks.h"
 
-#include "socket.h"
 #include "file.h"
+#ifdef ENABLE_SOCKET
+ #include "socket.h"
+#endif
 #ifdef ENABLE_GTFPGA
   #include "gtfpga.h"
 #endif
