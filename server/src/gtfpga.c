@@ -33,6 +33,9 @@ static void gtfpga_debug(char *msg, ...) {
 int gtfpga_init(int argc, char * argv[], struct settings *set)
 {
 	pacc = pci_alloc();		/* Get the pci_access structure */
+	if (!pacc)
+		error("Failed to allocate PCI access structure");
+
 	pci_init(pacc);			/* Initialize the PCI library */
 
 	pacc->error = (log_cb_t) error;	/* Replace logging and debug functions */

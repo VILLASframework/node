@@ -11,10 +11,10 @@
 #include <ctype.h>
 
 #ifdef __linux__
- #include <byteswap.h>
+  #include <byteswap.h>
 #elif defined(__PPC__) /* Xilinx toolchain */
- #include <xil_io.h>
- #define bswap_32(x)	Xil_EndianSwap32(x)
+  #include <xil_io.h>
+  #define bswap_32(x)	Xil_EndianSwap32(x)
 #endif
 
 #include "msg.h"

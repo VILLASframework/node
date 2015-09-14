@@ -16,65 +16,34 @@
 #define _TC_H_
 
 #include <stdint.h>
+
+#include <netlink/route/qdisc.h>
+#include <netlink/route/classifier.h>
+
 #include <libconfig.h>
 
-/** A type alias for TC handles.
- *
- * TC handles are used to construct a tree
- * of classes, qdiscs and filters.
- */
 typedef uint32_t tc_hdl_t;
 
-/** Concatenate 16 bit minor and majar parts to a 32 bit tc handle */
-#define TC_HDL(maj, min)	((maj & 0xFFFF) << 16 | (min & 0xFFFF))
-/** Get the major part of a tc handle */
-#define TC_HDL_MAJ(h)		((h >> 16) & 0xFFFF)
-/** Get the minor part of a tc handle */
-#define TC_HDL_MIN(h)		((h >>  0) & 0xFFFF)
-/** The root handle */
-#define TC_HDL_ROOT		(0xFFFFFFFFU)
-
-/* Bitfield for valid fields in struct netem */
-#define TC_NETEM_DELAY		(1 << 0) /**< netem::delay is valid @see netem::valid */
-#define TC_NETEM_JITTER		(1 << 1) /**< netem::jitter is valid @see netem::valid */
-#define TC_NETEM_DISTR		(1 << 2) /**< netem::distribution is valid @see netem::valid */
-#define TC_NETEM_LOSS		(1 << 3) /**< netem::loss is valid @see netem::valid */
-#define TC_NETEM_CORRUPT	(1 << 4) /**< netem::corrupt is valid @see netem::valid */
-#define TC_NETEM_DUPL		(1 << 5) /**< netem::duplicate is valid @see netem::valid */
-
 struct interface;
-
-/** Netem configuration settings.
- *
- * This struct is used to pass the netem configuration
- * from config_parse_netem() to tc_netem()
- */
-struct netem {
-	/** Which fields of this struct contain valid data (TC_NETEM_*). */
-	char valid;
-
-	/** Delay distribution: uniform, normal, pareto, paretonormal */
-	const char *distribution;
-	/** Added delay (uS) */
-	int delay;
-	/** Delay jitter (uS) */
-	int jitter;
-	/** Random loss probability (%) */
-	int loss;
-	/** Packet corruption probability (%) */
-	int corrupt;
-	/** Packet duplication probability (%) */
-	int duplicate;
-};
 
 /** Parse network emulator (netem) settings.
  *
  * @param cfg A libconfig object containing the settings.
- * @param em A pointer to the netem settings structure (part of the path structure).
+ * @param[out] ne A pointer to a libnl3 qdisc object where setting will be written to.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int tc_parse(config_setting_t *cfg, struct netem *em);
+int tc_parse(config_setting_t *cfg, struct rtnl_qdisc **ne);
+
+/** Print network emulator (netem) setting into buffer.
+ *
+ * @param buf A character buffer to write to.
+ * @param len The length of the supplied buffer.
+ * @param tc A pointer to the libnl3 qdisc object where settings will be read from.
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
+ */
+int tc_print(char *buf, size_t len, struct rtnl_qdisc *ne);
 
 /** Remove all queuing disciplines and filters.
  *
@@ -86,32 +55,36 @@ int tc_reset(struct interface *i);
 
 /** Create a priority (prio) queueing discipline.
  *
- * @param i The interface
- * @param handle The handle for the new qdisc
- * @param bands The number of classes for this new qdisc
+ * @param i[in] The interface
+ * @param qd[in,out] The libnl3 object of the new prio qdisc.
+ * @param handle[in] The handle for the new qdisc
+ * @param parent[in] Make this qdisc a child of this class
+ * @param bands[in] The number of classes for this new qdisc
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int tc_prio(struct interface *i, tc_hdl_t handle, int bands);
+int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t, int bands);
 
 /** Add a new network emulator (netem) discipline.
  *
- * @param i The interface
- * @param parent Make this qdisc a child of
- * @param em The netem settings
+ * @param i[in] The interface to which this qdisc will be added.
+ * @param qd[in,out] The libnl3 object of the new prio qdisc.
+ * @param handle[in] The handle of the new qdisc.
+ * @param parent[in] Make this qdisc a child of this class
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int tc_netem(struct interface *i, tc_hdl_t parent, struct netem *em);
+int tc_netem(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent);
 
 /** Add a new filter based on the netfilter mark.
  *
- * @param i The interface
+ * @param i The interface to which this classifier is applied to.
+ * @param cls[in,out] The libnl3 object of the new prio qdisc.
  * @param flowid The destination class for matched traffic
  * @param mark The netfilter firewall mark (sometime called 'fwmark')
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
 */
-int tc_mark(struct interface *i, tc_hdl_t flowid, int mark);
+int tc_mark(struct interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_t mark);
 
 #endif /* _TC_H_ */

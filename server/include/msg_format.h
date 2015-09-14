@@ -13,10 +13,10 @@
 #include <stdint.h>
 
 #ifdef __linux__
- #define _BSD_SOURCE    	1
- #include <endian.h>
+  #define _BSD_SOURCE    	1
+  #include <endian.h>
 #elif defined(__PPC__) /* Xilinx toolchain */
- #include <lwip/arch.h>
+  #include <lwip/arch.h>
 #endif
 
 #include "config.h"

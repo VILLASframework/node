@@ -19,8 +19,8 @@
 #ifdef ENABLE_OPAL_ASYNC
 /* Define RTLAB before including OpalPrint.h for messages to be sent
  * to the OpalDisplay. Otherwise stdout will be used. */
- #define RTLAB
- #include "OpalPrint.h"
+  #define RTLAB
+  #include "OpalPrint.h"
 #endif
 
 /** Debug level used by the debug() macro.

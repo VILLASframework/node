@@ -12,6 +12,13 @@
 #include "timing.h"
 #include "utils.h"
 
+void stats_header()
+{
+	info("%-32s :   %-8s %-8s %-8s %-8s %-8s",
+		"Source " MAG("=>") " Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Invalid");
+	line();
+}
+
 int stats_line(struct path *p)
 {
 	char buf[33];
@@ -25,9 +32,9 @@ int stats_line(struct path *p)
 
 int stats_show(struct path *p)
 {
-	if (p->hist_delay.length)    { info("One-way delay:");        hist_print(&p->hist_delay); }
-	if (p->hist_gap.length)      { info("Message gap time:");     hist_print(&p->hist_gap);   }
-	if (p->hist_sequence.length) { info("Sequence number gaps:"); hist_print(&p->hist_sequence);   }
+	if (p->hist_delay.total)    { info("One-way delay:");        hist_print(&p->hist_delay); }
+	if (p->hist_gap.total)      { info("Message gap time:");     hist_print(&p->hist_gap);   }
+	if (p->hist_sequence.total) { info("Sequence number gaps:"); hist_print(&p->hist_sequence);   }
 
 	return 0;
 }

@@ -10,27 +10,30 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
-
-#include <sys/types.h>
 #include <arpa/inet.h>
-#include <net/if.h>
 #include <linux/if_packet.h>
+
+#include <netlink/route/link.h>
+#include <netlink/route/route.h>
 
 #include "if.h"
 #include "tc.h"
+#include "nl.h"
 #include "socket.h"
 #include "utils.h"
 
 /** Linked list of interfaces. */
 struct list interfaces;
 
-struct interface * if_create(int index) {
+struct interface * if_create(struct rtnl_link *link)
+{
 	struct interface *i = alloc(sizeof(struct interface));
+	
+	i->nl_link = link;
 
-	i->index = index;
-	if_indextoname(index, i->name);
+	debug(3, "Created interface '%s'", rtnl_link_get_name(i->nl_link));
 
-	debug(3, "Created interface '%s' (index=%u)", i->name, i->index);
+	if_get_irqs(i);
 
 	list_init(&i->sockets, NULL);
 	list_push(&interfaces, i);
@@ -40,22 +43,27 @@ struct interface * if_create(int index) {
 
 void if_destroy(struct interface *i)
 {
-	/* List members are freed by their belonging nodes. */
+	/* List members are freed by the nodes they belong to. */
 	list_destroy(&i->sockets);
+	
+	rtnl_qdisc_put(i->tc_qdisc);
 
 	free(i);
 }
 
 int if_start(struct interface *i, int affinity)
 {
-	info("Starting interface '%s' (index=%u)", i->name, i->index);
+	info("Starting interface '%s' which is used by %u sockets", rtnl_link_get_name(i->nl_link), list_length(&i->sockets));
 
 	{ INDENT
+		/* Set affinity for network interfaces (skip _loopback_ dev) */
+		if_set_affinity(i, affinity);
+		
 		/* Assign fwmark's to socket nodes which have netem options */
-		int mark = 0;
+		int ret, mark = 0;
 		FOREACH(&i->sockets, it) {
 			struct socket *s = it->socket;
-			if (s->netem)
+			if (s->tc_qdisc)
 				s->mark = 1 + mark++;
 		}
 
@@ -64,20 +72,25 @@ int if_start(struct interface *i, int affinity)
 			return 0;
 
 		/* Replace root qdisc */
-		tc_prio(i, TC_HDL(4000, 0), mark);
+		if ((ret = tc_prio(i, &i->tc_qdisc, TC_HANDLE(1, 0), TC_H_ROOT, mark)))
+			;//error("Failed to setup priority queuing discipline: %s", nl_geterror(ret));
 
 		/* Create netem qdisks and appropriate filter per netem node */
 		FOREACH(&i->sockets, it) {
 			struct socket *s = it->socket;
-			if (s->netem) {
-				tc_mark(i,  TC_HDL(4000, s->mark), s->mark);
-				tc_netem(i, TC_HDL(4000, s->mark), s->netem);
+			if (s->tc_qdisc) {
+				if ((ret = tc_mark(i,  &s->tc_classifier, TC_HANDLE(1, s->mark), s->mark)))
+					error("Failed to setup FW mark classifier: %s", nl_geterror(ret));
+				
+				char buf[256];
+				tc_print(buf, sizeof(buf), s->tc_qdisc);
+				debug(5, "Starting network emulation on interface '%s' for FW mark %u: %s",
+					rtnl_link_get_name(i->nl_link), s->mark, buf);
+
+				if ((ret = tc_netem(i, &s->tc_qdisc, TC_HANDLE(0x1000+s->mark, 0), TC_HANDLE(1, s->mark))))
+					error("Failed to setup netem qdisc: %s", nl_geterror(ret));
 			}
 		}
-
-		/* Set affinity for network interfaces (skip _loopback_ dev) */
-		if_getirqs(i);
-		if_setaffinity(i, affinity);
 	}
 
 	return 0;
@@ -85,65 +98,59 @@ int if_start(struct interface *i, int affinity)
 
 int if_stop(struct interface *i)
 {
-	info("Stopping interface '%s' (index=%u)", i->name, i->index);
+	info("Stopping interface '%s'", rtnl_link_get_name(i->nl_link));
 
 	{ INDENT
-		if_setaffinity(i, -1L);
+		if_set_affinity(i, -1L);
 
-		/* Only reset tc if it was initialized before */
-		FOREACH(&i->sockets, it) {
-			if (it->socket->netem) {
-				tc_reset(i);
-				break;
-			}
-		}
+		if (i->tc_qdisc)
+			tc_reset(i);
 	}
 
 	return 0;
 }
 
-int if_getegress(struct sockaddr *sa)
+int if_get_egress(struct sockaddr *sa, struct rtnl_link **link)
 {
+	int ifindex = -1;
+
 	switch (sa->sa_family) {
-		case AF_INET: {
+		case AF_INET:
+		case AF_INET6: {
 			struct sockaddr_in *sin = (struct sockaddr_in *) sa;
-			char cmd[128];
-			char token[32];
-
-			snprintf(cmd, sizeof(cmd), "ip route get %s", inet_ntoa(sin->sin_addr));
-
-			debug(8, "System: %s", cmd);
-
-			FILE *p = popen(cmd, "r");
-			if (!p)
-				return -1;
-
-			while (!feof(p) && fscanf(p, "%31s", token)) {
-				if (!strcmp(token, "dev")) {
-					fscanf(p, "%31s", token);
-					break;
-				}
-			}
-
-			return (WEXITSTATUS(fclose(p))) ? -1 : if_nametoindex(token);
+			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) sa;
+			
+			struct nl_addr *addr = (sa->sa_family == AF_INET)
+				? nl_addr_build(sin->sin_family, &sin->sin_addr.s_addr, sizeof(sin->sin_addr.s_addr))
+				: nl_addr_build(sin6->sin6_family, sin6->sin6_addr.s6_addr, sizeof(sin6->sin6_addr));
+			
+			ifindex = nl_get_egress(addr);
+			if (ifindex < 0)
+				error("Netlink error: %s", nl_geterror(ifindex));
+			break;
 		}
-
+		
 		case AF_PACKET: {
 			struct sockaddr_ll *sll = (struct sockaddr_ll *) sa;
-			return sll->sll_ifindex;
+			
+			ifindex = sll->sll_ifindex;
+			break;
 		}
-
-		default:
-			return -1;
 	}
+	
+	struct nl_cache *cache = nl_cache_mngt_require("route/link");
+	if (!(*link = rtnl_link_get(cache, ifindex)))
+		return -1;
+	
+	return 0;
 }
 
-int if_getirqs(struct interface *i)
+int if_get_irqs(struct interface *i)
 {
 	char dirname[NAME_MAX];
 	int irq, n = 0;
 
-	snprintf(dirname, sizeof(dirname), "/sys/class/net/%s/device/msi_irqs/", i->name);
+	snprintf(dirname, sizeof(dirname), "/sys/class/net/%s/device/msi_irqs/", rtnl_link_get_name(i->nl_link));
 	DIR *dir = opendir(dirname);
 	if (dir) {
 		memset(&i->irqs, 0, sizeof(char) * IF_IRQ_MAX);
@@ -156,11 +163,13 @@ int if_getirqs(struct interface *i)
 
 		closedir(dir);
 	}
+	
+	debug(6, "Found %u IRQs for interface '%s'", n, rtnl_link_get_name(i->nl_link));
 
 	return 0;
 }
 
-int if_setaffinity(struct interface *i, int affinity)
+int if_set_affinity(struct interface *i, int affinity)
 {
 	char filename[NAME_MAX];
 	FILE *file;
@@ -174,10 +183,10 @@ int if_setaffinity(struct interface *i, int affinity)
 				error("Failed to set affinity for IRQ %u", i->irqs[n]);
 
 			fclose(file);
-			debug(5, "Set affinity of IRQ %u for interface '%s' to %#x", i->irqs[n], i->name, affinity);
+			debug(5, "Set affinity of IRQ %u for interface '%s' to %#x", i->irqs[n], rtnl_link_get_name(i->nl_link), affinity);
 		}
 		else
-			error("Failed to set affinity for interface '%s'", i->name);
+			error("Failed to set affinity for interface '%s'", rtnl_link_get_name(i->nl_link));
 	}
 
 	return 0;
@@ -186,7 +195,7 @@ int if_setaffinity(struct interface *i, int affinity)
 struct interface * if_lookup_index(int index)
 {
 	FOREACH(&interfaces, it) {
-		if (it->interface->index == index)
+		if (rtnl_link_get_ifindex(it->interface->nl_link) == index)
 			return it->interface;
 	}
 

@@ -8,110 +8,199 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
+#include <netlink/route/cls/fw.h>
+#include <netlink/route/qdisc/netem.h>
+#include <netlink/route/qdisc/prio.h>
+
+#include <linux/if_ether.h>
+
 #include "utils.h"
 #include "if.h"
 #include "tc.h"
+#include "nl.h"
 
-int tc_parse(config_setting_t *cfg, struct netem *em)
+int tc_parse(config_setting_t *cfg, struct rtnl_qdisc **netem)
 {
-	em->valid = 0;
+	const char *str;
+	int val;
+	
+	struct rtnl_qdisc *ne = rtnl_qdisc_alloc();
+	if (!ne)
+		error("Failed to allocated memory!");
 
-	if (config_setting_lookup_string(cfg, "distribution", &em->distribution))
-		em->valid |= TC_NETEM_DISTR;
-	if (config_setting_lookup_int(cfg, "delay", &em->delay))
-		em->valid |= TC_NETEM_DELAY;
-	if (config_setting_lookup_int(cfg, "jitter", &em->jitter))
-		em->valid |= TC_NETEM_JITTER;
-	if (config_setting_lookup_int(cfg, "loss", &em->loss))
-		em->valid |= TC_NETEM_LOSS;
-	if (config_setting_lookup_int(cfg, "duplicate", &em->duplicate))
-		em->valid |= TC_NETEM_DUPL;
-	if (config_setting_lookup_int(cfg, "corrupt", &em->corrupt))
-		em->valid |= TC_NETEM_CORRUPT;
+	rtnl_tc_set_kind(TC_CAST(ne), "netem");
 
-	/** @todo Validate netem config values */
+	if (config_setting_lookup_string(cfg, "distribution", &str)) {
+		if (rtnl_netem_set_delay_distribution(ne, str))
+			cerror(cfg, "Invalid delay distribution '%s' in netem config", str);
+	}
+	
+	if (config_setting_lookup_int(cfg, "limit", &val)) {
+		if (val <= 0)
+			cerror(cfg, "Invalid value '%d' for limit setting", val);
+
+		rtnl_netem_set_limit(ne, val);
+	}
+	else
+		rtnl_netem_set_limit(ne, 0);
+
+	if (config_setting_lookup_int(cfg, "delay", &val)) {
+		if (val <= 0)
+			cerror(cfg, "Invalid value '%d' for delay setting", val);
+
+		rtnl_netem_set_delay(ne, val);
+	}
+
+	if (config_setting_lookup_int(cfg, "jitter", &val)) {
+		if (val <= 0)
+			cerror(cfg, "Invalid value '%d' for jitter setting", val);
+
+		rtnl_netem_set_jitter(ne, val);
+	}
+
+	if (config_setting_lookup_int(cfg, "loss", &val)) {
+		if (val < 0 || val > 100)
+			cerror(cfg, "Invalid percentage value '%d' for loss setting", val);
+		
+		rtnl_netem_set_loss(ne, val);
+	}
+
+	if (config_setting_lookup_int(cfg, "duplicate", &val)) {
+		if (val < 0 || val > 100)
+			cerror(cfg, "Invalid percentage value '%d' for duplicate setting", val);
+
+		rtnl_netem_set_duplicate(ne, val);
+	}
+
+	if (config_setting_lookup_int(cfg, "corruption", &val)) {
+		if (val < 0 || val > 100)
+			cerror(cfg, "Invalid percentage value '%d' for corruption setting", val);
+		
+		rtnl_netem_set_corruption_probability(ne, val);
+	}
+
+	*netem = ne;
 
 	return 0;
+}
+
+int tc_print(char *buf, size_t len, struct rtnl_qdisc *ne)
+{
+	*buf = 0; /* start from the beginning */
+
+	if (rtnl_netem_get_limit(ne) > 0)
+		strap(buf, len, "limit %upkts", rtnl_netem_get_limit(ne));
+
+	if (rtnl_netem_get_delay(ne) > 0) {
+		strap(buf, len, "delay %.2fms ", rtnl_netem_get_delay(ne) / 1000.0);
+		
+		if (rtnl_netem_get_jitter(ne) > 0) {
+			strap(buf, len, "jitter %.2fms ", rtnl_netem_get_jitter(ne) / 1000.0);
+			
+			if (rtnl_netem_get_delay_correlation(ne) > 0)
+				strap(buf, len, "%u%% ", rtnl_netem_get_delay_correlation(ne));
+		}
+	}
+	
+	if (rtnl_netem_get_loss(ne) > 0) {
+		strap(buf, len, "loss %u%% ", rtnl_netem_get_loss(ne));
+	
+		if (rtnl_netem_get_loss_correlation(ne) > 0)
+			strap(buf, len, "%u%% ", rtnl_netem_get_loss_correlation(ne));
+	}
+	
+	if (rtnl_netem_get_reorder_probability(ne) > 0) {
+		strap(buf, len, " reorder%u%% ", rtnl_netem_get_reorder_probability(ne));
+	
+		if (rtnl_netem_get_reorder_correlation(ne) > 0)
+			strap(buf, len, "%u%% ", rtnl_netem_get_reorder_correlation(ne));
+	}
+	
+	if (rtnl_netem_get_corruption_probability(ne) > 0) {
+		strap(buf, len, "corruption %u%% ", rtnl_netem_get_corruption_probability(ne));
+	
+		if (rtnl_netem_get_corruption_correlation(ne) > 0)
+			strap(buf, len, "%u%% ", rtnl_netem_get_corruption_correlation(ne));
+	}
+	
+	if (rtnl_netem_get_duplicate(ne) > 0) {
+		strap(buf, len, "duplication %u%% ", rtnl_netem_get_duplicate(ne));
+	
+		if (rtnl_netem_get_duplicate_correlation(ne) > 0)
+			strap(buf, len, "%u%% ", rtnl_netem_get_duplicate_correlation(ne));
+	}
+	
+	return 0;
+}
+
+int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent, int bands)
+{
+	struct nl_sock *sock = nl_init();
+	struct rtnl_qdisc *q = rtnl_qdisc_alloc();
+
+	/* This is the default priomap used by the tc-prio qdisc
+	 * We will use the first 'bands' bands internally */
+	uint8_t map[] = QDISC_PRIO_DEFAULT_PRIOMAP;
+	for (int i = 0; i < ARRAY_LEN(map); i++)
+		map[i] += bands;
+
+	rtnl_tc_set_link(TC_CAST(q), i->nl_link);
+	rtnl_tc_set_parent(TC_CAST(q), parent);
+	rtnl_tc_set_handle(TC_CAST(q), handle);
+	rtnl_tc_set_kind(TC_CAST(q), "prio"); 
+
+	rtnl_qdisc_prio_set_bands(q, bands + 3);
+	rtnl_qdisc_prio_set_priomap(q, map, sizeof(map));
+
+	int ret = rtnl_qdisc_add(sock, q, NLM_F_CREATE | NLM_F_REPLACE);
+
+	*qd = q;
+	
+	return ret;
+}
+
+int tc_netem(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent)
+{
+	struct nl_sock *sock = nl_init();
+	struct rtnl_qdisc *q = *qd;
+
+	rtnl_tc_set_link(TC_CAST(q), i->nl_link);
+	rtnl_tc_set_parent(TC_CAST(q), parent);
+	rtnl_tc_set_handle(TC_CAST(q), handle);
+	//rtnl_tc_set_kind(TC_CAST(q), "netem");
+
+	int ret = rtnl_qdisc_add(sock, q, NLM_F_CREATE);
+
+	*qd = q;
+	
+	return ret;
+}
+
+int tc_mark(struct interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_t mark)
+{
+	struct nl_sock *sock = nl_init();
+	struct rtnl_cls *c = rtnl_cls_alloc();
+
+	rtnl_tc_set_link(TC_CAST(c), i->nl_link);
+	rtnl_tc_set_handle(TC_CAST(c), mark);
+	rtnl_tc_set_kind(TC_CAST(c), "fw");
+
+	rtnl_cls_set_protocol(c, ETH_P_ALL);
+	
+	rtnl_fw_set_classid(c, flowid);
+	rtnl_fw_set_mask(c, 0xFFFFFFFF);
+
+	int ret = rtnl_cls_add(sock, c, NLM_F_CREATE);
+
+	*cls = c;
+	
+	return ret;
 }
 
 int tc_reset(struct interface *i)
 {
-	char cmd[128];
-	snprintf(cmd, sizeof(cmd), "tc qdisc replace dev %s root pfifo_fast", i->name);
+	struct nl_sock *sock = nl_init();
 
-	debug(6, "Reset traffic control for interface '%s'", i->name);
-
-	if (system2(cmd))
-		error("Failed to add reset traffic control for interface '%s'", i->name);
-
-	return 0;
-}
-
-int tc_prio(struct interface *i, tc_hdl_t handle, int bands)
-{
-	char cmd[128];
-	int len = 0;
-	int priomap[] = { 1, 2, 2, 2, 1, 2, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1 };
-
-	len += snprintf(cmd+len, sizeof(cmd)-len,
-		"tc qdisc replace dev %s root handle %u prio bands %u priomap",
-		i->name, TC_HDL_MAJ(handle), bands + 3);
-
-	for (int i = 0; i < 16; i++)
-		len += snprintf(cmd+len, sizeof(cmd)-len, " %u", priomap[i] + bands);
-
-	debug(6, "Replace master qdisc for interface '%s'", i->name);
-
-	if (system2(cmd))
-		error("Failed to add prio qdisc for interface '%s'", i->name);
-
-	return 0;
-}
-
-int tc_netem(struct interface *i, tc_hdl_t parent, struct netem *em)
-{
-	int len = 0;
-	char cmd[256];
-	len += snprintf(cmd+len, sizeof(cmd)-len,
-		"tc qdisc replace dev %s parent %u:%u netem",
-		i->name, TC_HDL_MAJ(parent), TC_HDL_MIN(parent));
-
-	if (em->valid & TC_NETEM_DELAY) {
-		len += snprintf(cmd+len, sizeof(cmd)-len, " delay %u", em->delay);
-
-		if (em->valid & TC_NETEM_JITTER)
-			len += snprintf(cmd+len, sizeof(cmd)-len, " %u", em->jitter);
-		if (em->valid & TC_NETEM_DISTR)
-			len += snprintf(cmd+len, sizeof(cmd)-len, " distribution %s", em->distribution);
-	}
-
-	if (em->valid & TC_NETEM_LOSS)
-		len += snprintf(cmd+len, sizeof(cmd)-len, " loss random %u", em->loss);
-	if (em->valid & TC_NETEM_DUPL)
-		len += snprintf(cmd+len, sizeof(cmd)-len, " duplicate %u", em->duplicate);
-	if (em->valid & TC_NETEM_CORRUPT)
-		len += snprintf(cmd+len, sizeof(cmd)-len, " corrupt %u", em->corrupt);
-
-	debug(6, "Setup netem qdisc for interface '%s'", i->name);
-
-	if (system2(cmd))
-		error("Failed to add netem qdisc for interface '%s'", i->name);
-
-	return 0;
-}
-
-int tc_mark(struct interface *i, tc_hdl_t flowid, int mark)
-{
-	char cmd[128];
-	snprintf(cmd, sizeof(cmd),
-		"tc filter replace dev %s protocol ip handle %u fw flowid %u:%u",
-		i->name, mark, TC_HDL_MAJ(flowid), TC_HDL_MIN(flowid));
-
-	debug(7, "Add traffic filter to interface '%s': fwmark %u => flowid %u:%u",
-		i->name, mark, TC_HDL_MAJ(flowid), TC_HDL_MIN(flowid));
-
-	if (system2(cmd))
-		error("Failed to add fw_mark classifier for interface '%s'", i->name);
-
-	return 0;
+	/* We restore the default pfifo_fast qdisc, by deleting ours */
+	return rtnl_qdisc_delete(sock, i->tc_qdisc); 
 }

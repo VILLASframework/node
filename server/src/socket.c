@@ -13,24 +13,23 @@
 #include <string.h>
 #include <unistd.h>
 #include <poll.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-
-#include <linux/if_packet.h>
-#include <net/if.h>
-#include <net/ethernet.h>
-
-#include <netinet/ip.h>
-#include <netinet/ether.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/un.h>
 
+#include <netinet/ether.h>
+#include <netinet/ip.h>
+#include <linux/if_packet.h>
+#include <arpa/inet.h>
+
+#include "if.h"
+#include "nl.h"
+#include "tc.h"
 #include "config.h"
 #include "utils.h"
 #include "socket.h"
-#include "if.h"
 
 /** Linked list of interfaces */
 extern struct list interfaces;
@@ -40,27 +39,30 @@ static struct list sockets;
 
 int socket_init(int argc, char * argv[], struct settings *set)
 { INDENT
+	nl_init(); /* Fill link cache */
 	list_init(&interfaces, (dtor_cb_t) if_destroy);
 
 	/* Gather list of used network interfaces */
 	FOREACH(&sockets, it) {
 		struct socket *s = it->socket;
+		struct rtnl_link *link;
 
 		/* Determine outgoing interface */
-		int index = if_getegress((struct sockaddr *) &s->remote);
-		if (index < 0) {
+		if (if_get_egress((struct sockaddr *) &s->remote, &link)) {
 			char buf[128];
 			socket_print_addr(buf, sizeof(buf), (struct sockaddr *) &s->remote);
 			error("Failed to get interface for socket address '%s'", buf);
 		}
 
-		struct interface *i = if_lookup_index(index);
+		int ifindex = rtnl_link_get_ifindex(link);
+		struct interface *i = if_lookup_index(ifindex);
 		if (!i)
-			i = if_create(index);
+			i = if_create(link);
 
 		list_push(&i->sockets, s);
 	}
 
+	/** @todo Improve mapping of NIC IRQs per path */
 	FOREACH(&interfaces, it)
 		if_start(it->interface, set->affinity);
 
@@ -83,11 +85,18 @@ int socket_print(struct node *n, char *buf, int len)
 
 	char local[INET6_ADDRSTRLEN + 16];
 	char remote[INET6_ADDRSTRLEN + 16];
+	char *layer = NULL;
+	
+	switch (s->layer) {
+		case LAYER_UDP: layer = "udp"; break;
+		case LAYER_IP:	layer = "ip"; break;
+		case LAYER_ETH:	layer = "eth"; break;
+	}
 
 	socket_print_addr(local, sizeof(local), (struct sockaddr *) &s->local);
 	socket_print_addr(remote, sizeof(remote), (struct sockaddr *) &s->remote);
 
-	return snprintf(buf, len, "local=%s, remote=%s", local, remote);
+	return snprintf(buf, len, "layer=%s, local=%s, remote=%s", layer, local, remote);
 }
 
 int socket_open(struct node *n)
@@ -116,9 +125,9 @@ int socket_open(struct node *n)
 
 	/* Set fwmark for outgoing packets */
 	if (setsockopt(s->sd, SOL_SOCKET, SO_MARK, &s->mark, sizeof(s->mark)))
-		serror("Failed to set fwmark for outgoing packets");
+		serror("Failed to set FW mark for outgoing packets");
 	else
-		debug(4, "Set fwmark for socket (sd=%u) to %u", s->sd, s->mark);
+		debug(4, "Set FW mark for socket (sd=%u) to %u", s->sd, s->mark);
 
 	/* Set socket priority, QoS or TOS IP options */
 	int prio;
@@ -170,11 +179,11 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 	/* Get size of received packet in bytes */
 	ioctl(s->sd, FIONREAD, &bytes);
 
-	/* Check packet integrity */
+	/* Check if packet length is correct */
 	if (bytes % (cnt * 4) != 0)
 		error("Packet length not dividable by 4: received=%u, cnt=%u", bytes, cnt);
 	if (bytes / cnt > sizeof(struct msg))
-		error("Packet length is too large: received=%u, cnt=%u, max=%lu", bytes, cnt, sizeof(struct msg));
+		error("Packet length is too large: received=%u, cnt=%u, max=%zu", bytes, cnt, sizeof(struct msg));
 
 	for (int i = 0; i < cnt; i++) {
 		/* All messages of a packet must have equal length! */
@@ -283,26 +292,24 @@ int socket_parse(config_setting_t *cfg, struct node *n)
 
 	if (!config_setting_lookup_string(cfg, "local", &local))
 		cerror(cfg, "Missing local address for node '%s'", n->name);
-
+	
 	ret = socket_parse_addr(local, (struct sockaddr *) &s->local, s->layer, AI_PASSIVE);
-	if (ret)
+	if (ret) {
 		cerror(cfg, "Failed to resolve local address '%s' of node '%s': %s",
 			local, n->name, gai_strerror(ret));
+	}
 
 	ret = socket_parse_addr(remote, (struct sockaddr *) &s->remote, s->layer, 0);
-	if (ret)
+	if (ret) {
 		cerror(cfg, "Failed to resolve remote address '%s' of node '%s': %s",
 			remote, n->name, gai_strerror(ret));
+	}
 
-	/** @todo Netem settings are not usable with AF_UNIX */
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
 		int enabled = 1;
-
-		if (!config_setting_lookup_bool(cfg_netem, "enabled", &enabled) || enabled) {
-			s->netem = alloc(sizeof(struct netem));
-			tc_parse(cfg_netem, s->netem);
-		}
+		if (!config_setting_lookup_bool(cfg_netem, "enabled", &enabled) || enabled)
+			tc_parse(cfg_netem, &s->tc_qdisc);
 	}
 
 	n->socket = s;
@@ -312,42 +319,61 @@ int socket_parse(config_setting_t *cfg, struct node *n)
 	return 0;
 }
 
-int socket_print_addr(char *buf, int len, struct sockaddr *sa)
+int socket_print_addr(char *buf, int len, struct sockaddr *saddr)
 {
-	switch (sa->sa_family) {
-		case AF_INET: {
-			struct sockaddr_in *sin = (struct sockaddr_in *) sa;
-			inet_ntop(sin->sin_family, &sin->sin_addr, buf, len);
-			return snprintf(buf+strlen(buf), len-strlen(buf), ":%hu", ntohs(sin->sin_port));
-		}
+	union sockaddr_union *sa = (union sockaddr_union *) saddr;
+	
+	/* Address */
+	switch (sa->sa.sa_family) {
+		case AF_INET6:
+			inet_ntop(AF_INET6, &sa->sin6.sin6_addr, buf, len);
+			break;
 
-		case AF_PACKET: {
-			struct sockaddr_ll *sll = (struct sockaddr_ll *) sa;
-			char ifname[IF_NAMESIZE];
-
-			return snprintf(buf, len, "%s%%%s:%#hx",
-				ether_ntoa((struct ether_addr *) &sll->sll_addr),
-				if_indextoname(sll->sll_ifindex, ifname),
-				ntohs(sll->sll_protocol));
-		}
+		case AF_INET:
+			inet_ntop(AF_INET, &sa->sin.sin_addr, buf, len);
+			break;
+			
+		case AF_PACKET:
+			snprintf(buf, len, "%02x", sa->sll.sll_addr[0]);
+			for (int i = 1; i < sa->sll.sll_halen; i++)
+				strap(buf, len, ":%02x", sa->sll.sll_addr[i]);
+			break;
 
 		default:
-			return snprintf(buf, len, "address family: %u", sa->sa_family);
+			error("Unknown address family: '%u'", sa->sa.sa_family);
+	}
+	
+	/* Port  / Interface */
+	switch (sa->sa.sa_family) {
+		case AF_INET6:
+		case AF_INET:
+			strap(buf, len, ":%hu", ntohs(sa->sin.sin_port));
+			break;
+
+		case AF_PACKET: {
+			struct nl_cache *cache = nl_cache_mngt_require("route/link");
+			struct rtnl_link *link = rtnl_link_get(cache, sa->sll.sll_ifindex);
+			if (!link)
+				error("Failed to get interface for index: %u", sa->sll.sll_ifindex);
+			
+			strap(buf, len, "%%%s", rtnl_link_get_name(link));
+			strap(buf, len, ":%hu", ntohs(sa->sll.sll_protocol));
+			break;
+		}
 	}
 
 	return 0;
 }
 
-int socket_parse_addr(const char *addr, struct sockaddr *sa, enum socket_layer layer, int flags)
+int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_layer layer, int flags)
 {
 	/** @todo: Add support for IPv6 */
+	union sockaddr_union *sa = (union sockaddr_union *) saddr;
 
 	char *copy = strdup(addr);
 	int ret;
 
 	if (layer == LAYER_ETH) { /* Format: "ab:cd:ef:12:34:56%ifname:protocol" */
-		struct sockaddr_ll *sll = (struct sockaddr_ll *) sa;
-
 		/* Split string */
 		char *node = strtok(copy, "%");
 		char *ifname = strtok(NULL, ":");
@@ -356,21 +382,27 @@ int socket_parse_addr(const char *addr, struct sockaddr *sa, enum socket_layer l
 		/* Parse link layer (MAC) address */
 		struct ether_addr *mac = ether_aton(node);
 		if (!mac)
-			error("Failed to parse mac address: %s", node);
+			error("Failed to parse MAC address: %s", node);
 
-		memcpy(&sll->sll_addr, &mac->ether_addr_octet, 6);
+		memcpy(&sa->sll.sll_addr, &mac->ether_addr_octet, 6);
+		
+		/* Get interface index from name */
+		struct nl_cache *cache = nl_cache_mngt_require("route/link");
+		struct rtnl_link *link = rtnl_link_get_by_name(cache, ifname);
+		if (!link)
+			error("Failed to get network interface: '%s'", ifname);
 
-		sll->sll_protocol = htons((proto) ? strtol(proto, NULL, 0) : ETH_P_S2SS);
-		sll->sll_halen = 6;
-		sll->sll_family = AF_PACKET;
-		sll->sll_ifindex = if_nametoindex(ifname);
+		sa->sll.sll_protocol = htons((proto) ? strtol(proto, NULL, 0) : ETH_P_S2SS);
+		sa->sll.sll_halen = 6;
+		sa->sll.sll_family = AF_PACKET;
+		sa->sll.sll_ifindex = rtnl_link_get_ifindex(link);
 
 		ret = 0;
 	}
 	else {	/* Format: "192.168.0.10:12001" */
 		struct addrinfo hint = {
 			.ai_flags = flags,
-			.ai_family = AF_INET
+			.ai_family = AF_UNSPEC
 		};
 
 		/* Split string */

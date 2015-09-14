@@ -16,9 +16,9 @@
 #include "log.h"
 
 #ifdef __GNUC__
- #define EXPECT(x, v)	__builtin_expect(x, v)
+  #define EXPECT(x, v)	__builtin_expect(x, v)
 #else
- #define EXPECT(x, v)	(x)
+  #define EXPECT(x, v)	(x)
 #endif
 
 /* Some color escape codes for pretty log messages */

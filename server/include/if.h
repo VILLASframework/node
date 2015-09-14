@@ -14,11 +14,10 @@
 #define _IF_H_
 
 #include <sys/types.h>
-#include <net/if.h>
+#include <sys/socket.h>
 
 #include "list.h"
 
-#define IF_NAME_MAX	IFNAMSIZ /**< Maximum length of an interface name */
 #define IF_IRQ_MAX	3	 /**< Maxmimal number of IRQs of an interface */
 
 #ifndef SO_MARK
@@ -26,13 +25,16 @@
 #endif
 
 struct socket;
+struct nl_addr;
+struct rtnl_link;
 
 /** Interface data structure */
 struct interface {
-	/** The index used by the kernel to reference this interface */
-	int index;
-	/** Human readable name of this interface */
-	char name[IF_NAME_MAX];
+	/** libnl3: Handle of interface */
+	struct rtnl_link *nl_link;
+	/** libnl3: Root prio qdisc */
+	struct rtnl_qdisc *tc_qdisc;
+
 	/** List of IRQs of the NIC */
 	char irqs[IF_IRQ_MAX];
 
@@ -42,11 +44,11 @@ struct interface {
 
 /** Add a new interface to the global list and lookup name, irqs...
  *
- * @param index The interface index of the OS
+ * @param link The libnl3 link handle
  * @retval >0 Success. A pointer to the new interface.
  * @retval 0 Error. The creation failed.
  */
-struct interface * if_create(int index);
+struct interface * if_create(struct rtnl_link *link);
 
 
 /** Destroy interface by freeing dynamically allocated memory.
@@ -78,20 +80,15 @@ int if_start(struct interface *i, int affinity);
  */
 int if_stop(struct interface *i);
 
-/** Get outgoing interface.
+/** Lookup routing tables to get the interface on which packets for a certain destination
+ *  will leave the system.
  *
- * Depending on the address family of the socker address,
- * this function tries to determine outgoing interface
- * which is used to send packages to a remote host with the specified
- * socket address.
- *
- * For AF_INET the fnuction performs a lookup in the kernel routing table.
- * For AF_PACKET the function uses the existing sll_ifindex field of the socket address.
- *
- * @param sa A destination address for outgoing packets.
- * @return The interface index.
+ * @param[in] sa The destination address for outgoing packets.
+ * @param[out] link The egress interface.
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
-int if_getegress(struct sockaddr *sa);
+int if_get_egress(struct sockaddr *sa, struct rtnl_link **link);
 
 /** Get all IRQs for this interface.
  *
@@ -102,7 +99,7 @@ int if_getegress(struct sockaddr *sa);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int if_getirqs(struct interface *i);
+int if_get_irqs(struct interface *i);
 
 /** Change the SMP affinity of NIC interrupts.
  *
@@ -111,7 +108,7 @@ int if_getirqs(struct interface *i);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int if_setaffinity(struct interface *i, int affinity);
+int if_set_affinity(struct interface *i, int affinity);
 
 /** Search the global list of interfaces for a given index.
  *

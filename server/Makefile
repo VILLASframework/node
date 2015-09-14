@@ -5,7 +5,7 @@ OBJS  = path.o node.o hooks.o msg.o cfg.o stats.o
 # Helper libs
 OBJS += utils.o list.o hist.o log.o timing.o
 # Node types
-OBJS += file.o socket.o if.o tc.o
+OBJS += file.o
 
 VPATH = src
 
@@ -13,33 +13,45 @@ VPATH = src
 V ?= 2
 
 # Compiler and linker flags
+CC = gcc
 LDLIBS  = -pthread -lrt -lm -lconfig
-CFLAGS  = -std=gnu99 -Iinclude/ -MMD -Wall -O3
-CFLAGS += -D_XOPEN_SOURCE=500 -D_GNU_SOURCE -DV=$(V)
+override CFLAGS += -std=gnu99 -Iinclude/ -MMD -Wall -O3
+override CFLAGS += -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
+
+# Default include paths for third-party libs
+PCIDIR  ?= /usr/include
+NLDIR   ?= /usr/include/libnl3
+OPALDIR ?= /usr/opalrt/common
+#OPALDIR ?= ../contrib/opal
 
 # Add more compiler flags
 ifdef DEBUG
-	CFLAGS += -O0 -g
+	override CFLAGS += -O0 -g
 endif
 ifneq (,$(shell which git))
-	CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
+	override CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
 endif
 
-# Enabled GTFPGA support when libpci is available
-ifneq (,$(wildcard /usr/include/pci/pci.h))
-	CFLAGS += -DENABLE_GTFPGA
+# Enable Socket node type when libnl3 is available
+ifneq (,$(wildcard $(NLDIR)/netlink/netlink.h))
+	override CFLAGS += -DENABLE_SOCKET -I$(NLDIR)
+	LDLIBS += -lnl-3 -lnl-route-3
+	OBJS   += nl.o tc.o if.o socket.o
+endif
+
+# Enable GTFPGA support when libpci is available
+ifneq (,$(wildcard $(PCIDIR)/pci/pci.h))
+	override CFLAGS += -DENABLE_GTFPGA -I$(PCIDIR)
 	LDLIBS += -lpci
 	OBJS   += gtfpga.o
 endif
 
-# Enable OPAL-RT Asynchronous Process support
-OPALDIR = /usr/opalrt/common
-#OPALDIR = ../contrib/opal
+# Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
 ifneq (,$(wildcard $(OPALDIR)/include_target/AsyncApi.h))
-	override CFLAGS  += -m32 -DENABLE_OPAL_ASYNC -I$(OPALDIR)/include_target
-	override LDFLAGS += -m32 -Wl,-L/lib/i386-linux-gnu/
-	override LDLIBS  += $(addprefix $(OPALDIR)/lib/redhawk/, libOpalAsyncApiCore.a libOpalCore.a libOpalUtils.a libirc.a)
-	override OBJS    += opal.o
+	override CFLAGS += -m32 -DENABLE_OPAL_ASYNC -I$(OPALDIR)/include_target
+	LDFLAGS += -m32 -Wl,-L/lib/i386-linux-gnu/,-L/usr/lib/i386-linux-gnu/
+	LDLIBS  += $(addprefix $(OPALDIR)/lib/redhawk/, libOpalAsyncApiCore.a libOpalCore.a libOpalUtils.a libirc.a)
+	OBJS    += opal.o
 endif
 
 .PHONY: all clean strip protected
