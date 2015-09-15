@@ -2,6 +2,8 @@
 
 PREFIX=$(PWD)/thirdparty
 
+COMMIT=$(shell git rev-parse --short HEAD)
+
 .PHONY: dependencies build deploy test doc clean libnl3 libconfig
 
 clean:
@@ -44,4 +46,7 @@ test:
 
 # Deploy
 deploy:
-	echo "Nothing to do here yet"
+	tar czf s2ss-$(COMMIT)-docs.tar.gz documentation/html/
+	tar czf s2ss-$(COMMIT).tar.gz server/server server/test server/send server/receive server/random server/etc/
+	rsync *.tar.gz $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/
+	rsync --archive --delete documentation/html/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/doc/

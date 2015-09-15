@@ -8,6 +8,7 @@ addons:
       - graphviz
 
 cache:
+  apt: true
   directories:
     - thirdparty
 
