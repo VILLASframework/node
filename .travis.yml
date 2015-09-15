@@ -19,7 +19,6 @@ install:
 
 script:
   - make build
-  - make test
 
 after_success:
   - echo -e "Host ${DEPLOY_HOST}\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config

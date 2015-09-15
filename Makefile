@@ -43,7 +43,7 @@ build: dependencies
 # Test S2SS server by running it for 3 secs
 test: build
 	LD_LIBRARY_PATH=$(PREFIX)/usr/lib/ \
-	timeout --signal INT 3s \
+	timeout --signal INT --preserve-status 3s \
 	server/server server/etc/loopback.conf || true
 
 # Deploy
@@ -54,6 +54,6 @@ deploy: build
 	rsync --archive --delete documentation/html/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/doc/
 
 # Generate documentation
-doc: doxygen-1.8.10
+doc: $(PREFIX)/doxygen-1.8.10
 	PATH=$(PREFIX)/doxygen-1.8.10/bin/:$(PATH) \
 	doxygen
