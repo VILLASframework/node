@@ -6,7 +6,7 @@ This is S2SS, a gateway to forward and process simulation data between real time
 
 The docuementation for this software is available at [documentation/Mainpage](documentation/Mainpage.md).
 
-Inside the EONERC network, you can access the prebuild documentation at: https://134.130.169.2/doc/s2ss/.
+You can access the prebuild documentation at: https://46.101.131.212/s2ss/doc/.
 Alternatively, you can build the documentation yourself by calling `doxygen` in this directory.
 
 ## Contact
