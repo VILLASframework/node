@@ -4,8 +4,8 @@ compiler: gcc
 addons:
   apt:
     packages:
-      - doxygen
       - graphviz
+      - texlive-font-utils
 
 cache:
   apt: true
@@ -13,14 +13,15 @@ cache:
     - thirdparty
 
 install:
-  - if ! [ -d thirdparty ]; then
+  - if ! [ -d thirdparty/libconfig-1.5/ ]; then
       make dependencies;
     fi
 
 script:
   - make build
-after_success:
   - make test
+
+after_success:
   - echo -e "Host ${DEPLOY_HOST}\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
   - make doc
   - make deploy
