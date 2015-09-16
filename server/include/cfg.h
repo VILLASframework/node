@@ -55,11 +55,12 @@ int config_parse_global(config_setting_t *cfg, struct settings *set);
  * @param cfg A libconfig object pointing to the path
  * @param paths Add new paths to this linked list
  * @param nodes A linked list of all existing nodes
+ * @param set The global configuration structure
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
 int config_parse_path(config_setting_t *cfg,
-	struct list *paths, struct list *nodes);
+	struct list *paths, struct list *nodes, struct settings *set);
 
 /** Parse an array or single node and checks if they exist in the "nodes" section.
  *
@@ -85,9 +86,10 @@ int config_parse_hooklist(config_setting_t *cfg, struct list *hooks);
  *
  * @param cfg A libconfig object pointing to the node.
  * @param nodes Add new nodes to this linked list.
+ * @param set The global configuration structure
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int config_parse_node(config_setting_t *cfg, struct list *nodes);
+int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set);
 
 #endif /* _CFG_H_ */

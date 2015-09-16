@@ -136,6 +136,8 @@ struct node
 	int refcnt;
 	/** Number of messages to send / recv at once (scatter / gather) */
 	int combine;
+	/** CPU Affinity of this node */
+	int affinity;
 	/** A short identifier of the node, only used for configuration and logging */
 	const char *name;
 

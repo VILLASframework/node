@@ -61,7 +61,7 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 
 		for (int i = 0; i < config_setting_length(cfg_nodes); i++) {
 			config_setting_t *cfg_node = config_setting_get_elem(cfg_nodes, i);
-			config_parse_node(cfg_node, nodes);
+			config_parse_node(cfg_node, nodes, set);
 		}
 	}
 
@@ -73,7 +73,7 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 
 		for (int i = 0; i < config_setting_length(cfg_paths); i++) {
 			config_setting_t *cfg_path = config_setting_get_elem(cfg_paths, i);
-			config_parse_path(cfg_path, paths, nodes);
+			config_parse_path(cfg_path, paths, nodes, set);
 		}
 	}
 
@@ -93,7 +93,7 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 }
 
 int config_parse_path(config_setting_t *cfg,
-	struct list *paths, struct list *nodes)
+	struct list *paths, struct list *nodes, struct settings *set)
 {
 	const char *in;
 	int enabled;
@@ -244,7 +244,7 @@ int config_parse_hooklist(config_setting_t *cfg, struct list *hooks) {
 	return 0;
 }
 
-int config_parse_node(config_setting_t *cfg, struct list *nodes)
+int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set)
 {
 	const char *type;
 	int ret;
@@ -262,6 +262,9 @@ int config_parse_node(config_setting_t *cfg, struct list *nodes)
 
 	if (!config_setting_lookup_int(cfg, "combine", &n->combine))
 		n->combine = 1;
+
+	if (!config_setting_lookup_int(cfg, "affinity", &n->combine))
+		n->affinity = set->affinity;
 
 	n->vt = node_lookup_vtable(type);
 	if (!n->vt)
