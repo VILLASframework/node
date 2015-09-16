@@ -42,6 +42,7 @@ build: dependencies
 	CFLAGS=-I$(PREFIX)/usr/include/ \
 	LDFLAGS=-Wl,-L$(PREFIX)/usr/lib/ \
 	NLDIR=$(PREFIX)/usr/include/libnl3/ \
+	PCIDIR=$(PREFIX)/usr/include \
 	make -C server
 
 # Test S2SS server by running it for 3 secs

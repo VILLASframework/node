@@ -27,7 +27,7 @@
 #define DEFAULT_POOLSIZE	32
 
 /** Width of log output in characters */
-#define LOG_WIDTH		100
+#define LOG_WIDTH		74
 
 /** Socket priority */
 #define SOCKET_PRIO		7
@@ -40,6 +40,9 @@
 #define KERNEL_VERSION_MAJ	3
 #define KERNEL_VERSION_MIN	4
 
+#ifndef LICENSE_VALID
+ #define LICENSE_VALID 0
+#endif
 #define LICENSE_CHECKS \
 	{ { "/sys/class/dmi/id/product_uuid", "5002E503-4904-EB05-7406-0C0700080009" }, \
 	  { "/sys/class/net/eth0/address" , "50:e5:49:eb:74:0c" }, \
