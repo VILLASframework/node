@@ -6,7 +6,6 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -21,7 +20,7 @@
 #include "path.h"
 #include "node.h"
 #include "stats.h"
-#include "license.h"
+#include "checks.h"
 
 #ifdef ENABLE_OPAL_ASYNC
   #include "opal.h"
@@ -142,12 +141,23 @@ int main(int argc, char *argv[])
 	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s)",
 		BLD(YEL(VERSION)), BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
-	/* Check priviledges */
-	if (getuid() != 0)
+	/* Checks system requirements*/
+	if (check_root())
 		error("The server requires superuser privileges!");
-
-	if (check_license())
-		error("You're not allowed to use this software!");
+#ifdef LICENSE
+	if (check_license_trace())
+		error("This software should not be traced!");
+	if (check_license_time())
+		error("Your license expired");
+	if (check_license_ids())
+		error("This version is compiled for a different machine!");
+#endif
+	if (check_kernel_version())
+		error("Your kernel version is to old: required >= %u.%u", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
+	if (check_kernel_cmdline())
+		warn("You should reserve some cores for the server (see 'isolcpus')");
+	if (check_kernel_rtpreempt())
+		warn("We recommend to use an RT_PREEMPT patched kernel!");
 
 	/* Initialize lists */
 	list_init(&nodes, (dtor_cb_t) node_destroy);

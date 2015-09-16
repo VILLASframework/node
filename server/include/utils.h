@@ -114,6 +114,18 @@ int system2(const char* cmd, ...);
 /** Call quit() in the main thread. */
 void die();
 
+/** Used by version_parse(), version_compare() */
+struct version {
+	int major;
+	int minor;
+};
+
+/** Compare two versions. */
+int version_compare(struct version *a, struct version *b);
+
+/** Parse a dotted version string. */
+int version_parse(const char *s, struct version *v);
+
 /** Check assertion and exit if failed. */
 #define assert(exp) do { \
 	if (!EXPECT(exp, 0)) \

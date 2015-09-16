@@ -19,6 +19,18 @@
 #include "cfg.h"
 #include "utils.h"
 
+int version_parse(const char *s, struct version *v)
+{
+	return sscanf(s, "%u.%u", &v->major, &v->minor) != 2;
+}
+
+int version_compare(struct version *a, struct version *b) {
+	int major = a->major - b->major;
+	int minor = a->minor - b->minor;
+
+	return major ? major : minor;
+}
+
 double box_muller(float m, float s)
 {
 	double x1, x2, y1;

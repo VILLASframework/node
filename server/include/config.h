@@ -36,6 +36,16 @@
 #define IPPROTO_S2SS		137
 #define ETH_P_S2SS		0xBABE
 
+/* Checks */
+#define KERNEL_VERSION_MAJ	3
+#define KERNEL_VERSION_MIN	4
+
+#define LICENSE_CHECKS \
+	{ { "/sys/class/dmi/id/product_uuid", "5002E503-4904-EB05-7406-0C0700080009" }, \
+	  { "/sys/class/net/eth0/address" , "50:e5:49:eb:74:0c" }, \
+	  { "/etc/machine-id", "0d8399d0216314f083b9ed2053a354a8" }, \
+	  { "/dev/sda2", "\x53\xf6\xb5\xeb\x8b\x16\x46\xdc\x8d\x8f\x5b\x70\xb8\xc9\x1a\x2a", 0x468 } }
+
 /* Hook function configuration */
 #define HOOK_FIR_INDEX		 1 /**< The first value of message should be filtered. */
 #define HOOK_TS_INDEX		-1 /**< The last value of message should be overwritten by a timestamp. */

@@ -3,7 +3,7 @@ TARGETS = server send random receive test
 # Common objs
 OBJS  = path.o node.o hooks.o msg.o cfg.o stats.o
 # Helper libs
-OBJS += utils.o list.o hist.o log.o timing.o
+OBJS += utils.o list.o hist.o log.o timing.o checks.o
 # Node types
 OBJS += file.o
 
@@ -66,7 +66,7 @@ receive: receive.o $(OBJS)
 test:    test.o    $(OBJS)
 random:  random.o  msg.o utils.o timing.o log.o
 
-protected: CFLAGS += -DPROTECT -DVALID_UNTIL=$(shell date -d "now +5months" +%s) -s -O3 -fvisibility=hidden
+protected: CFLAGS += -DLICENSE -DLICENSE_VALID=$(shell date -d "now +5months" +%s) -s -O3 -fvisibility=hidden
 protected: clean strip
 
 strip: $(TARGETS)
