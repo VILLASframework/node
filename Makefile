@@ -12,7 +12,7 @@ clean:
 	rm -rf documentation/{html,latex}
 
 # Install dependencies
-dependencies: $(PREFIX)/libconfig-1.5 $(PREFIX)/libnl-3.2.25 $(PREFIX)/doxygen-1.8.10
+dependencies: $(PREFIX)/libconfig-1.5 $(PREFIX)/libnl-3.2.25 $(PREFIX)/doxygen-1.8.10 $(PREFIX)/pciutils-3.4.0
 
 # Download latest doxygen
 $(PREFIX)/doxygen-1.8.10:
@@ -23,15 +23,19 @@ $(PREFIX)/doxygen-1.8.10:
 $(PREFIX)/libconfig-1.5:
 	mkdir -p $(PREFIX)/usr/
 	wget -O- http://www.hyperrealm.com/libconfig/libconfig-1.5.tar.gz | tar -xzC $(PREFIX)
-	cd $(PREFIX)/libconfig-1.5 && ./configure --prefix=$(PREFIX)/usr/ --disable-examples
-	make -C $(PREFIX)/libconfig-1.5 install
+	cd $(PREFIX)/libconfig-1.5 && ./configure --prefix=$(PREFIX)/usr/ --disable-examples && make install
 
 # Install & compile libnl3 dependency
 $(PREFIX)/libnl-3.2.25:
 	mkdir -p $(PREFIX)/usr/
 	wget -O- http://www.infradead.org/~tgr/libnl/files/libnl-3.2.25.tar.gz | tar -xzC $(PREFIX)
-	cd $(PREFIX)/libnl-3.2.25 && ./configure --prefix=$(PREFIX)/usr/ --disable-cli
-	make -C $(PREFIX)/libnl-3.2.25 install
+	cd $(PREFIX)/libnl-3.2.25 && ./configure --prefix=$(PREFIX)/usr/ --disable-cli && make install
+
+# Install & compile libpci dependency
+$(PREFIX)/pciutils-3.4.0:
+	mkdir -p $(PREFIX)/usr/
+	wget -O- ftp://atrey.karlin.mff.cuni.cz/pub/linux/pci/pciutils-3.4.0.tar.gz | tar -xzC $(PREFIX)
+	cd $(PREFIX)/pciutils-3.4.0 && make && make install-lib PREFIX=$(PREFIX)/usr/
 
 # Compile S2SS server
 build: dependencies
