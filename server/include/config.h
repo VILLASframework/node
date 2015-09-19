@@ -14,7 +14,7 @@
 #define _CONFIG_H_
 
 #ifndef _GIT_REV
- #define _GIT_REV		"nogit"
+  #define _GIT_REV		"nogit"
 #endif
 
 /** The version number of the s2ss server */

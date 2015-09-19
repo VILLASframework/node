@@ -33,4 +33,4 @@ int stats_stop(struct path *p);
 /** Reset all statistic counters to zero */
 int stats_reset(struct path *p);
 
-#endif
+#endif /* _STATS_H_ */

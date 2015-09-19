@@ -21,7 +21,7 @@
 #define IF_IRQ_MAX	3	 /**< Maxmimal number of IRQs of an interface */
 
 #ifndef SO_MARK
- #define SO_MARK	36	/**< Workaround: add missing constant for OPAL-RT Redhawk target */
+  #define SO_MARK	36	/**< Workaround: add missing constant for OPAL-RT Redhawk target */
 #endif
 
 struct socket;

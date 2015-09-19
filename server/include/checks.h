@@ -63,4 +63,4 @@ int check_license_time();
 
 int check_license_trace();
 
-#endif
+#endif /* _CHECKS_H_ */

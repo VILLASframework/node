@@ -54,4 +54,4 @@ int time_fscan(FILE *f, struct timespec *ts);
 /** Write a timestamp to a file with the format: "secs.nanosecs\t" */
 int time_fprint(FILE *f, struct timespec *ts);
 
-#endif
+#endif /* _TIMING_H_ */

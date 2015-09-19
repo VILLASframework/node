@@ -16,7 +16,7 @@
 #include "stats.h"
 
 #ifndef sigev_notify_thread_id
- #define sigev_notify_thread_id   _sigev_un._tid
+  #define sigev_notify_thread_id   _sigev_un._tid
 #endif
 
 extern struct settings settings;

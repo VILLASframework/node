@@ -37,11 +37,11 @@
 #define MSG_ENDIAN_BIG		1 /**< Message values are in bit endian format */
 
 #if BYTE_ORDER == LITTLE_ENDIAN
- #define MSG_ENDIAN_HOST	MSG_ENDIAN_LITTLE
+  #define MSG_ENDIAN_HOST	MSG_ENDIAN_LITTLE
 #elif BYTE_ORDER == BIG_ENDIAN
- #define MSG_ENDIAN_HOST	MSG_ENDIAN_BIG
+  #define MSG_ENDIAN_HOST	MSG_ENDIAN_BIG
 #else
- #error "Unknown byte order!"
+  #error "Unknown byte order!"
 #endif
 
 /** The total length of a message */

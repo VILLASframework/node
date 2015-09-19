@@ -64,7 +64,7 @@ int hook_tofixed(struct path *p)
 {
 	struct msg *m = p->current;
 
-	for (int i=0; i<m->length; i++)
+	for (int i = 0; i < m->length; i++)
 		m->data[i].i = m->data[i].f * 1e3;
 
 	return 0;
@@ -97,7 +97,7 @@ int hook_fir(struct path *p)
 	/** Trim FIR length to length of history buffer */
 	int len = MIN(ARRAY_LEN(coeffs), p->poolsize);
 
-	for (int i=0; i<len; i++) {
+	for (int i = 0; i < len; i++) {
 		struct msg *old = &p->pool[(p->poolsize+p->received-i) % p->poolsize];
 
 		sum += coeffs[i] * old->data[HOOK_FIR_INDEX].f;
@@ -114,10 +114,9 @@ int hook_decimate(struct path *p)
 	return p->received % HOOK_DECIMATE_RATIO;
 }
 
-/** @todo Implement */
 int hook_dft(struct path *p)
 {
-	return 0;
+	return 0; /** @todo Implement */
 }
 
 /** System hooks */

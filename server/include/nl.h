@@ -27,4 +27,4 @@ struct nl_sock * nl_init();
 /** Close and free global netlink socket. */
 void nl_shutdown();
 
-#endif
+#endif /* _NL_H_ */
