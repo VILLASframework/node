@@ -141,23 +141,24 @@ struct node_type {
  */
 struct node
 {
+	/** A short identifier of the node, only used for configuration and logging */
+	char *name;
 	/** How many paths  are sending / receiving from this node? */
 	int refcnt;
 	/** Number of messages to send / recv at once (scatter / gather) */
 	int combine;
 	/** CPU Affinity of this node */
 	int affinity;
-	/** A short identifier of the node, only used for configuration and logging */
-	const char *name;
 
 	/** C++ like virtual function call table */
-	struct node_vtable *vt;
+	struct node_type * vt;
 	/** Virtual data (used by vtable functions) */
 	union {
 		struct socket *socket;
 		struct opal   *opal;
 		struct gtfpga *gtfpga;
 		struct file   *file;
+		struct ngsi   *ngsi;
 	};
 
 	/** A pointer to the libconfig object which instantiated this node */
@@ -207,21 +208,6 @@ int node_start_defer(struct node *n);
  * @retval <0 Error. Something went wrong.
  */
 int node_stop(struct node *n);
-
-/** Lookup string representation of socket type
- *
- * @param str A string describing the socket type. This must be one of: tcp, tcpd, udp, ip, ieee802.3 or opal
- * @return A pointer to the vtable, or NULL if there is no socket type / vtable with this id.
- */
-struct node_vtable * node_lookup_vtable(const char *str);
-
-/** Search list of nodes for a name.
- *
- * @param str The name of the wanted node
- * @param nodes A linked list of all nodes
- * @return A pointer to the node or NULL if not found
- */
-struct node * node_lookup_name(const char *str, struct list *nodes);
 
 /** Reverse local and remote socket address.
  * This is usefull for the helper programs: send, receive, test

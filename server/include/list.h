@@ -24,7 +24,7 @@ struct gtfpga;
 struct opal;
 
 /** Static list initialization */
-#define LIST_INIT(dtor) (struct list) { \
+#define LIST_INIT(dtor) { \
 	.head = NULL, \
 	.tail = NULL, \
 	.length = 0, \

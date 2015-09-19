@@ -186,7 +186,7 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *list, struct list 
 		case CONFIG_TYPE_STRING:
 			str = config_setting_get_string(cfg);
 			if (str) {
-				node = list_lookup(all, str)
+				node = list_lookup(all, str);
 				if (node)
 					list_push(list, node);
 				else
