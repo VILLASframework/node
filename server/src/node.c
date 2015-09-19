@@ -108,6 +108,11 @@ struct node * node_create()
 void node_destroy(struct node *n)
 {
 	switch (n->vt->type) {
+#ifdef ENABLE_NGSI
+		case NGSI:
+			list_destroy(n->ngsi->entities);
+		break;
+#endif
 #ifdef ENABLE_SOCKET
 		case BSD_SOCKET:
 			rtnl_qdisc_put(n->socket->tc_qdisc);
