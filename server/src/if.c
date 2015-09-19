@@ -81,14 +81,16 @@ int if_start(struct interface *i, int affinity)
 			error("Missing kernel module: cls_fw");
 
 		/* Replace root qdisc */
-		if ((ret = tc_prio(i, &i->tc_qdisc, TC_HANDLE(1, 0), TC_H_ROOT, mark)))
-			;//error("Failed to setup priority queuing discipline: %s", nl_geterror(ret));
+		ret = tc_prio(i, &i->tc_qdisc, TC_HANDLE(1, 0), TC_H_ROOT, mark);
+		if (ret)
+			error("Failed to setup priority queuing discipline: %s", nl_geterror(ret));
 
 		/* Create netem qdisks and appropriate filter per netem node */
 		FOREACH(&i->sockets, it) {
 			struct socket *s = it->socket;
 			if (s->tc_qdisc) {
-				if ((ret = tc_mark(i,  &s->tc_classifier, TC_HANDLE(1, s->mark), s->mark)))
+				ret = tc_mark(i,  &s->tc_classifier, TC_HANDLE(1, s->mark), s->mark);
+				if (ret)
 					error("Failed to setup FW mark classifier: %s", nl_geterror(ret));
 				
 				char buf[256];
@@ -96,7 +98,8 @@ int if_start(struct interface *i, int affinity)
 				debug(5, "Starting network emulation on interface '%s' for FW mark %u: %s",
 					rtnl_link_get_name(i->nl_link), s->mark, buf);
 
-				if ((ret = tc_netem(i, &s->tc_qdisc, TC_HANDLE(0x1000+s->mark, 0), TC_HANDLE(1, s->mark))))
+				ret = tc_netem(i, &s->tc_qdisc, TC_HANDLE(0x1000+s->mark, 0), TC_HANDLE(1, s->mark));
+				if (ret)
 					error("Failed to setup netem qdisc: %s", nl_geterror(ret));
 			}
 		}
@@ -148,7 +151,8 @@ int if_get_egress(struct sockaddr *sa, struct rtnl_link **link)
 	}
 	
 	struct nl_cache *cache = nl_cache_mngt_require("route/link");
-	if (!(*link = rtnl_link_get(cache, ifindex)))
+	*link = rtnl_link_get(cache, ifindex);
+	if (!*link)
 		return -1;
 	
 	return 0;
@@ -166,7 +170,8 @@ int if_get_irqs(struct interface *i)
 
 		struct dirent *entry;
 		while ((entry = readdir(dir)) && n < IF_IRQ_MAX) {
-			if ((irq = atoi(entry->d_name)))
+			irq = atoi(entry->d_name);
+			if (irq)
 				i->irqs[n++] = irq;
 		}
 

@@ -60,7 +60,8 @@ int check_kernel_module(char *module)
 	char *line = NULL;
 	size_t len = 0;
 
-	if (!(f = fopen(PROCFS_PATH "/modules", "r")))
+	f = fopen(PROCFS_PATH "/modules", "r");
+	if (!f)
 		return -1;
 
 	while (getline(&line, &len, f) >= 0) {

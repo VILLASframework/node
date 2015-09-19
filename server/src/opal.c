@@ -35,28 +35,35 @@ int opal_init(int argc, char *argv[], struct settings *set)
 	og->print_shmem_name = argv[3];
 
 	/* Enable the OpalPrint function. This prints to the OpalDisplay. */
-	if ((err = OpalSystemCtrl_Register(og->print_shmem_name)) != EOK)
+	err = OpalSystemCtrl_Register(og->print_shmem_name);
+	if (err != EOK)
 		error("OpalPrint() access not available (%d)", err);
 
 	/* Open Share Memory created by the model. */
-	if ((err = OpalOpenAsyncMem(og->async_shmem_size, og->async_shmem_name)) != EOK)
+	err = OpalOpenAsyncMem(og->async_shmem_size, og->async_shmem_name);
+	if (err != EOK)
 		error("Model shared memory not available (%d)", err);
 
-	if ((err = OpalGetAsyncCtrlParameters(&og->params, sizeof(Opal_GenAsyncParam_Ctrl))) != EOK)
+	err = OpalGetAsyncCtrlParameters(&og->params, sizeof(Opal_GenAsyncParam_Ctrl));
+	if (err != EOK)
 		error("Could not get OPAL controller parameters (%d)", err);
 
 	/* Get list of Send and RecvIDs */
-	if ((err = OpalGetNbAsyncSendIcon(&og->send_icons)) != EOK)
+	err = OpalGetNbAsyncSendIcon(&og->send_icons);
+	if (err != EOK)
 		error("Failed to get number of send blocks (%d)", err);
-	if ((err = OpalGetNbAsyncRecvIcon(&og->recv_icons)) != EOK)
+	err = OpalGetNbAsyncRecvIcon(&og->recv_icons);
+	if (err != EOK)
 		error("Failed to get number of recv blocks (%d)", err);
 
 	og->send_ids = alloc(og->send_icons * sizeof(int));
 	og->recv_ids = alloc(og->recv_icons * sizeof(int));
 
-	if ((err = OpalGetAsyncSendIDList(og->send_ids, og->send_icons * sizeof(int))) != EOK)
+	err = OpalGetAsyncSendIDList(og->send_ids, og->send_icons * sizeof(int));
+	if (err != EOK)
 		error("Failed to get list of send ids (%d)", err);
-	if ((err = OpalGetAsyncRecvIDList(og->recv_ids, og->recv_icons * sizeof(int))) != EOK)
+	err = OpalGetAsyncRecvIDList(og->recv_ids, og->recv_icons * sizeof(int));
+	if (err != EOK)
 		error("Failed to get list of recv ids (%d)", err);
 
 	info("Started as OPAL Asynchronous process");
@@ -74,12 +81,14 @@ int opal_deinit()
 	if (!og)
 		return 0;
 
-	if ((err = OpalCloseAsyncMem(og->async_shmem_size, og->async_shmem_name)) != EOK)
+	err = OpalCloseAsyncMem(og->async_shmem_size, og->async_shmem_name);
+	if (err != EOK)
 		error("Failed to close shared memory area (%d)", err);
 
 	debug(4, "Closing OPAL shared memory mapping");
 
-	if ((err = OpalSystemCtrl_UnRegister(og->print_shmem_name)) != EOK)
+	err = OpalSystemCtrl_UnRegister(og->print_shmem_name);
+	if (err != EOK)
 		error("Failed to close shared memory for system control (%d)", err);
 
 	pthread_mutex_destroy(&og->lock);
@@ -193,7 +202,8 @@ int opal_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 
 	/* This call unblocks when the 'Data Ready' line of a send icon is asserted. */
 	do {
-		if ((ret = OpalWaitForAsyncSendRequest(&id)) != EOK) {
+		ret = OpalWaitForAsyncSendRequest(&id);
+		if (ret != EOK) {
 			state = OpalGetAsyncModelState();
 			if ((state == STATE_RESET) || (state == STATE_STOP))
 				error("OpalGetAsyncModelState(): Model stopped or resetted!");

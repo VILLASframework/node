@@ -29,12 +29,14 @@ struct nl_sock * nl_init()
 		if (!sock)
 			error("Failed to allocate memory");
 
-		if ((ret = nl_connect(sock, NETLINK_ROUTE)))
+		ret = nl_connect(sock, NETLINK_ROUTE);
+		if (ret)
 			error("Failed to connect to kernel: %s", nl_geterror(ret));
 		
 		/* Fill some caches */
 		struct nl_cache *cache;
-		if ((ret = rtnl_link_alloc_cache(sock, AF_UNSPEC, &cache)))
+		ret = rtnl_link_alloc_cache(sock, AF_UNSPEC, &cache);
+		if (ret)
 			error("Failed to get list of interfaces: %s", nl_geterror(ret));
 
 		nl_cache_mngt_provide(cache);
@@ -72,10 +74,12 @@ int nl_get_egress(struct nl_addr *addr)
 		.rtm_family = nl_addr_get_family(addr),
 		.rtm_dst_len = nl_addr_get_prefixlen(addr),
 	};
-		
-	if ((ret = nlmsg_append(msg, &rmsg, sizeof(rmsg), NLMSG_ALIGNTO)))
+	
+	ret = nlmsg_append(msg, &rmsg, sizeof(rmsg), NLMSG_ALIGNTO);
+	if (ret)
 		return ret;
-	if ((ret = nla_put_addr(msg, RTA_DST, addr)))
+	ret = nla_put_addr(msg, RTA_DST, addr);
+	if (ret)
 		return ret;
 
 	/* Send message */

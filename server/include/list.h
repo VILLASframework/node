@@ -32,12 +32,12 @@ struct opal;
 	.destructor = dtor \
 }
 
-#define FOREACH(list, elm) \
-	for ( struct list_elm *elm = (list)->head; \
+#define FOREACH(list, elm)				\
+	for ( struct list_elm *elm = (list)->head;	\
 		elm; elm = elm->next )
 			
-#define FOREACH_R(list, elm) \
-	for ( struct list_elm *elm = (list)->tail; \
+#define FOREACH_R(list, elm)				\
+	for ( struct list_elm *elm = (list)->tail;	\
 		elm; elm = elm->prev )
 				
 #define list_first(list)	((list)->head)

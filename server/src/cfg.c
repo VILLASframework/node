@@ -178,28 +178,38 @@ int config_parse_path(config_setting_t *cfg,
 	return 0;
 }
 
-int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct list *all) {
+int config_parse_nodelist(config_setting_t *cfg, struct list *list, struct list *all) {
 	const char *str;
 	struct node *node;
 
 	switch (config_setting_type(cfg)) {
 		case CONFIG_TYPE_STRING:
 			str = config_setting_get_string(cfg);
-			node = node_lookup_name(str, all);
-			if (!node)
-				cerror(cfg, "Invalid outgoing node '%s'", str);
-
-			list_push(nodes, node);
+			if (str) {
+				node = list_lookup(all, str)
+				if (node)
+					list_push(list, node);
+				else
+					cerror(cfg, "Unknown outgoing node '%s'", str);
+			}
+			else
+				cerror(cfg, "Invalid outgoing node");
 			break;
 
 		case CONFIG_TYPE_ARRAY:
-			for (int i=0; i<config_setting_length(cfg); i++) {
-				str = config_setting_get_string_elem(cfg, i);
-				node = node_lookup_name(str, all);
-				if (!node)
-					cerror(config_setting_get_elem(cfg, i), "Invalid outgoing node '%s'", str);
-
-				list_push(nodes, node);
+			for (int i = 0; i < config_setting_length(cfg); i++) {
+				config_setting_t *elm = config_setting_get_elem(cfg, i);
+				
+				str = config_setting_get_string(elm);
+				if (str) {
+					node = list_lookup(all, str);
+					if (node)
+						list_push(list, node);
+					else
+						cerror(elm, "Unknown outgoing node '%s'", str);
+				}
+				else
+					cerror(cfg, "Invalid outgoing node");
 			}
 			break;
 
@@ -210,30 +220,38 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct list
 	return 0;
 }
 
-int config_parse_hooklist(config_setting_t *cfg, struct list *hooks) {
+int config_parse_hooklist(config_setting_t *cfg, struct list *list) {
 	const char *str;
 	const struct hook *hook;
 
 	switch (config_setting_type(cfg)) {
 		case CONFIG_TYPE_STRING:
 			str = config_setting_get_string(cfg);
-			hook = hook_lookup(str);
-			if (!hook)
-				cerror(cfg, "Invalid hook function '%s'", str);
-
-			debug(10, "Adding hook %s to chain %u with prio %u", hook->name, hook->type, hook->priority);
-
-			list_insert(&hooks[hook->type], hook->priority, hook->callback);
+			if (str) {
+				hook = list_lookup(&hooks, str);
+				if (hook)
+					list_insert(&list[hook->type], hook->priority, hook->callback);	
+				else
+					cerror(cfg, "Unknown hook function '%s'", str);
+			}
+			else
+				cerror(cfg, "Invalid hook function");
 			break;
 
 		case CONFIG_TYPE_ARRAY:
-			for (int i=0; i<config_setting_length(cfg); i++) {
-				str = config_setting_get_string_elem(cfg, i);
-				hook = hook_lookup(str);
-				if (!hook)
-					cerror(config_setting_get_elem(cfg, i), "Invalid hook function '%s'", str);
-
-				list_insert(&hooks[hook->type], hook->priority, hook->callback);
+			for (int i = 0; i<config_setting_length(cfg); i++) {
+				config_setting_t *elm = config_setting_get_elem(cfg, i);
+				
+				str = config_setting_get_string(elm);
+				if (str) {
+					hook = list_lookup(&hooks, str);
+					if (hook)
+						list_insert(&list[hook->type], hook->priority, hook->callback);
+					else
+						cerror(elm, "Invalid hook function '%s'", str);
+				}
+				else
+					cerror(cfg, "Invalid hook function");
 			}
 			break;
 
@@ -266,7 +284,7 @@ int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings
 	if (!config_setting_lookup_int(cfg, "affinity", &n->combine))
 		n->affinity = set->affinity;
 
-	n->vt = node_lookup_vtable(type);
+	n->vt = list_lookup(&node_types, type);
 	if (!n->vt)
 		cerror(cfg, "Invalid type for node '%s'", n->name);
 

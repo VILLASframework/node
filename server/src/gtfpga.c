@@ -130,7 +130,8 @@ static int gtfpga_load_driver(struct pci_dev *d)
 		d->domain, d->bus, d->dev, d->func);
 
 	/* Add new ID to uio_pci_generic */
-	if (!(f = fopen(SYSFS_PATH "/bus/pci/drivers/uio_pci_generic/new_id", "w")))
+	f = fopen(SYSFS_PATH "/bus/pci/drivers/uio_pci_generic/new_id", "w");
+	if (!f)
 		serror("Failed to add PCI id to uio_pci_generic driver");
 
 	debug(5, "Adding ID to uio_pci_generic module: %04x %04x", d->vendor_id, d->device_id);
