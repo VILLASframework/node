@@ -64,15 +64,6 @@ struct hook {
  */
 const struct hook * hook_lookup(const char *name);
 
-/** Conditionally execute the hooks
- *
- * @param p A pointer to the path structure.
- * @param t Which type of hooks should be executed?
- * @retval 0 All registred hooks for the specified type have been executed successfully. 
- * @retval <0 On of the hook functions signalized, that the processing should be aborted; message should be skipped.
- */
-int hook_run(struct path *p, enum hook_type t);
-
 
 /* The following prototypes are example hooks */
 

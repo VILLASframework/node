@@ -48,15 +48,6 @@ const struct hook* hook_lookup(const char *name)
 	return NULL; /* No matching hook was found */
 }
 
-int hook_run(struct path *p, enum hook_type t)
-{
-	int ret = 0;
-
-	FOREACH(&p->hooks[t], it)
-		ret += ((hook_cb_t) it->ptr)(p);
-
-	return ret;
-}
 
 int hook_print(struct path *p)
 {

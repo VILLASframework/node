@@ -138,4 +138,13 @@ void path_print_stats(struct path *p);
  */
 int path_print(struct path *p, char *buf, int len);
 
+/** Conditionally execute the hooks
+ *
+ * @param p A pointer to the path structure.
+ * @param t Which type of hooks should be executed?
+ * @retval 0 All registred hooks for the specified type have been executed successfully. 
+ * @retval <0 On of the hook functions signalized, that the processing should be aborted; message should be skipped.
+ */
+int path_run_hook(struct path *p, enum hook_type t);
+
 #endif /* _PATH_H_ */

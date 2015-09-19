@@ -39,6 +39,15 @@ static void path_write(struct path *p)
 	}
 }
 
+int path_run_hook(struct path *p, enum hook_type t)
+{
+	int ret = 0;
+	FOREACH(&p->hooks[t], it)
+		ret += ((hook_cb_t) it->ptr)(p);
+
+	return ret;
+}
+
 /** Send messages asynchronously */
 static void * path_run_async(void *arg)
 {
@@ -71,7 +80,7 @@ static void * path_run(void *arg)
 		debug(10, "Received %u messages from node '%s'", recv, p->in->name);
 
 		/* Run preprocessing hooks */
-		if (hook_run(p, HOOK_PRE)) {
+		if (path_run_hook(p, HOOK_PRE)) {
 			p->skipped += recv;
 			continue;
 		}
@@ -84,14 +93,14 @@ static void * path_run(void *arg)
 			p->received++;
 
 			/* Run hooks for filtering, stats collection and manipulation */
-			if (hook_run(p, HOOK_MSG)) {
+			if (path_run_hook(p, HOOK_MSG)) {
 				p->skipped++;
 				continue;
 			}
 		}
 
 		/* Run post processing hooks */
-		if (hook_run(p, HOOK_POST)) {
+		if (path_run_hook(p, HOOK_POST)) {
 			p->skipped += recv;
 			continue;
 		}
@@ -111,7 +120,7 @@ int path_start(struct path *p)
 
 	info("Starting path: %s (poolsize = %u)", buf, p->poolsize);
 
-	if (hook_run(p, HOOK_PATH_START))
+	if (path_run_hook(p, HOOK_PATH_START))
 		return -1;
 
 	/* At fixed rate mode, we start another thread for sending */
@@ -151,7 +160,7 @@ int path_stop(struct path *p)
 		close(p->tfd);
 	}
 
-	if (hook_run(p, HOOK_PATH_STOP))
+	if (path_run_hook(p, HOOK_PATH_STOP))
 		return -1;
 
 	return 0;
@@ -177,7 +186,7 @@ int path_print(struct path *p, char *buf, int len)
 
 int path_reset(struct path *p)
 {
-	if (hook_run(p, HOOK_PATH_RESTART))
+	if (path_run_hook(p, HOOK_PATH_RESTART))
 		return -1;
 
 	p->sent	    =
