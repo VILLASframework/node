@@ -17,8 +17,7 @@
 #include "gtfpga.h"
 #include "utils.h"
 #include "timing.h"
-
-#define SYSFS_PATH "/sys/bus/pci"
+#include "checks.h"
 
 static struct pci_access *pacc;
 
@@ -122,20 +121,16 @@ static int gtfpga_load_driver(struct pci_dev *d)
 {
 	FILE *f;
 	char slot[16];
-	int ret;
+
+	if (check_kernel_module("uio_pci_generic"))
+		error("Missing kernel module: uio_pci_generic");
 
 	/* Prepare slot identifier */
 	snprintf(slot, sizeof(slot), "%04x:%02x:%02x.%x",
 		d->domain, d->bus, d->dev, d->func);
 
-	/* Load uio_pci_generic module */
-	ret = system2("modprobe uio_pci_generic");
-	if (ret)
-		serror("Failed to load module");
-
 	/* Add new ID to uio_pci_generic */
-	f = fopen(SYSFS_PATH "/drivers/uio_pci_generic/new_id", "w");
-	if (!f)
+	if (!(f = fopen(SYSFS_PATH "/bus/pci/drivers/uio_pci_generic/new_id", "w")))
 		serror("Failed to add PCI id to uio_pci_generic driver");
 
 	debug(5, "Adding ID to uio_pci_generic module: %04x %04x", d->vendor_id, d->device_id);

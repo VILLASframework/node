@@ -36,14 +36,14 @@ int check_kernel_version()
 
 int check_kernel_rtpreempt()
 {
-	return access("/sys/kernel/realtime", R_OK);
+	return access(SYSFS_PATH "/kernel/realtime", R_OK);
 }
 
 int check_kernel_cmdline()
 {
 	char cmd[512];
 
-	FILE *f = fopen("/proc/cmdline", "r");
+	FILE *f = fopen(PROCFS_PATH "/cmdline", "r");
 	if (!f)
 		return -1;
 
@@ -51,6 +51,29 @@ int check_kernel_cmdline()
 		return -1;
 
 	return strstr(cmd, "isolcpus=") ? 0 : -1;
+}
+
+int check_kernel_module(char *module)
+{
+	FILE *f;
+	int ret = -1;
+	char *line = NULL;
+	size_t len = 0;
+
+	if (!(f = fopen(PROCFS_PATH "/modules", "r")))
+		return -1;
+
+	while (getline(&line, &len, f) >= 0) {
+		if (strstr(line, module) == line) {
+			ret = 0;
+			break;
+		}
+	}
+
+	free(line);
+	fclose(f);
+
+	return ret;
 }
 
 int check_root()

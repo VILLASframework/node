@@ -103,9 +103,6 @@ cpu_set_t to_cpu_set(int set);
 /** Allocate and initialize memory. */
 void * alloc(size_t bytes);
 
-/** A system(2) emulator with popen / pclose(2) and proper output handling */
-int system2(const char* cmd, ...);
-
 /** Call quit() in the main thread. */
 void die();
 

@@ -119,29 +119,3 @@ void * alloc(size_t bytes)
 
 	return p;
 }
-
-/** @todo: Proper way: create additional pipe for stderr in child process */
-int system2(const char *cmd, ...)
-{
-	va_list ap;
-	char buf[1024];
-
-	va_start(ap, cmd);
-	vsnprintf(buf, sizeof(buf), cmd, ap);
-	va_end(ap);
-
-	strap(buf, sizeof(buf), " 2>&1", sizeof(buf)); /* redirect stderr to stdout */
-
-	debug(1, "System: %s", buf);
-
-	FILE *f = popen(buf, "r");
-	if (f == NULL)
-		serror("Failed to execute: '%s'", cmd);
-
-	while (!feof(f) && fgets(buf, sizeof(buf), f) != NULL) { INDENT
-		strtok(buf, "\n"); /* strip trailing newline */
-		info(buf);
-	}
-
-	return pclose(f);
-}

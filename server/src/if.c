@@ -21,6 +21,7 @@
 #include "nl.h"
 #include "socket.h"
 #include "utils.h"
+#include "checks.h"
 
 /** Linked list of interfaces. */
 struct list interfaces;
@@ -70,6 +71,14 @@ int if_start(struct interface *i, int affinity)
 		/* Abort if no node is using netem */
 		if (mark == 0)
 			return 0;
+
+		/* Check if all kernel modules are loaded */
+		if (check_kernel_module("sch_prio"))
+			error("Missing kernel module: sch_prio");
+		if (check_kernel_module("sch_netem"))
+			error("Missing kernel module: sch_netem");		
+		if (check_kernel_module("cls_fw"))
+			error("Missing kernel module: cls_fw");
 
 		/* Replace root qdisc */
 		if ((ret = tc_prio(i, &i->tc_qdisc, TC_HANDLE(1, 0), TC_H_ROOT, mark)))

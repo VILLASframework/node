@@ -34,6 +34,14 @@ int check_kernel_cmdline();
  */
 int check_kernel_version();
 
+/** Checks if a kernel module is loaded
+ *
+ * @param module the name of the module
+ * @retval 0 Module is loaded.
+ * @reval <>0 Module is not loaded.
+ */
+int check_kernel_module(char *module);
+
 /** Check if program is running with super user (root) privileges.
  *
  *

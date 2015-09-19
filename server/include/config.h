@@ -36,12 +36,15 @@
 #define IPPROTO_S2SS		137
 #define ETH_P_S2SS		0xBABE
 
+#define SYSFS_PATH		"/sys"
+#define PROCFS_PATH		"/proc"
+
 /* Checks */
 #define KERNEL_VERSION_MAJ	3
 #define KERNEL_VERSION_MIN	4
 
 #ifndef LICENSE_VALID
- #define LICENSE_VALID 0
+  #define LICENSE_VALID 0
 #endif
 #define LICENSE_CHECKS \
 	{ { "/sys/class/dmi/id/product_uuid", "5002E503-4904-EB05-7406-0C0700080009" }, \
