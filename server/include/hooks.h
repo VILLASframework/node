@@ -11,8 +11,10 @@
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
- *
+ */
+/**
  * @addtogroup hooks User-defined hook functions
+ * @ingroup path
  * @{
  *********************************************************************************/
  
@@ -32,6 +34,7 @@ __attribute__((constructor)) void __register_ ## fnc () {	\
 /* Forward declarations */
 struct path;
 
+/** This is a list of hooks which can be used in the configuration file. */
 extern struct list hooks;
 
 /** Callback type of hook function
@@ -42,6 +45,7 @@ extern struct list hooks;
  */
 typedef int (*hook_cb_t)(struct path *p);
 
+/** The type of a hook defines when a hook will be exectuted. */
 enum hook_type {
 	HOOK_PATH_START,	/**< Called whenever a path is started; before threads are created. */
 	HOOK_PATH_STOP,		/**< Called whenever a path is stopped; after threads are destoyed. */
@@ -56,7 +60,7 @@ enum hook_type {
 	HOOK_MAX
 };
 
-/** Descriptor for user defined hooks. See hook_list[]. */
+/** Descriptor for user defined hooks. See hooks[]. */
 struct hook {
 	/** The unique name of this hook. This must be the first member! */
 	const char *name;
@@ -65,13 +69,13 @@ struct hook {
 	enum hook_type type;
 };
 
-struct hook * hook_lookup(const char *name);
-
-/* The following prototypes are example hooks */
-
-/** Example hook: Print the message.
- * @example
+/** The following prototypes are example hooks
+ *
+ * @addtogroup hooks_examples Examples for hook functions
+ * @{
  */
+
+/** Example hook: Print the message. */
 int hook_print(struct path *p);
 
 /** Example hook: Drop messages. */
@@ -100,4 +104,4 @@ int hook_restart(struct path *p);
 /** Core hook: check if sequence number is correct. Otherwise message will be dropped */
 int hook_drop(struct path *p);
 
-#endif /** _HOOKS_H_ @} */
+#endif /** _HOOKS_H_ @} @} */

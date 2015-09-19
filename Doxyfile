@@ -771,7 +771,7 @@ INPUT                  = server/ \
                          clients/ml507_ppc440_udp/pcores/ \
                          clients/ml507_ppc440_udp/s2ss/ \
                          clients/ml507_gtfpga_pcie/code/ \
-                         clients/opal_udp/models/AsyncIP_sl/s2ss/
+                         clients/opal_udp/models/send_receive/src/
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses

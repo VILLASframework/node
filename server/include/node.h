@@ -11,6 +11,9 @@
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
+ *
+ * @addtogroup node Node
+ * @{
  *********************************************************************************/
 
 #ifndef _NODE_H_
@@ -224,4 +227,4 @@ struct node * node_create();
  */
 void node_destroy(struct node *n);
 
-#endif /* _NODE_H_ */
+#endif /** _NODE_H_ @} */

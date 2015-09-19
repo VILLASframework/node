@@ -23,7 +23,6 @@
 
 /* Some hooks can be configured by constants in te file "config.h" */
 
-/** This is a static list of available hooks. */
 struct list hooks;
 
 REGISTER_HOOK("print", 99, hook_print, HOOK_MSG)

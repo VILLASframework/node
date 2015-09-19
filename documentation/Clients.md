@@ -9,8 +9,9 @@ Every server needs clients which act as sinks / sources for simulation data. In 
 
 Take a look at the `clients/` directory for them:
 
- - RTDS UDP Network Card ?
- - RTDS via GTFPGA
- - OPAL
- - Labview
- - Simulink
+ - RTDS via GTFPGA and UDP
+ - RTDS via GTFPGA and PCIexpress
+ - OPAL via Asynchronous Process and UDP
+ - OPAL via Asynchronous Process and Shared memory
+ - Labview (*planned*)
+ - Simulink (*planned*)
