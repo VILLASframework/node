@@ -8,6 +8,8 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
+#include <string.h>
+
 #include "utils.h"
 #include "list.h"
 
@@ -103,11 +105,21 @@ void list_insert(struct list *l, int prio, void *p)
 	pthread_mutex_unlock(&l->lock);
 }
 
-struct list_elm * list_search(struct list *l, int (*cmp)(void *))
+void * list_lookup(const struct list *l, const char *name)
 {
 	FOREACH(l, it) {
-		if (!cmp(it->ptr))
-			return it;
+		if (!strcmp(*(char **) it->ptr, name))
+			return it->ptr;
+	}
+
+	return NULL;
+}
+
+void * list_search(const struct list *l, cmp_cb_t cmp, void *ctx)
+{
+	FOREACH(l, it) {
+		if (!cmp(it->ptr, ctx))
+			return it->ptr;
 	}
 
 	return NULL;

@@ -49,6 +49,8 @@ struct opal;
  * @param data A pointer to the data which should be freed.
  */
 typedef void (*dtor_cb_t)(void *data);
+	
+typedef int (*cmp_cb_t)(void *, void *);
 
 struct list {
 	struct list_elm *head, *tail;
@@ -62,11 +64,13 @@ struct list_elm {
 	union {
 		void *ptr;
 		struct node *node;
+		struct node_type *type;
 		struct path *path;
 		struct interface *interface;
 		struct socket *socket;
 		struct opal *opal;
 		struct gtfpga *gtfpga;
+		struct hook *hook;
 	} /* anonymous */;
 
 	int priority;
@@ -81,6 +85,12 @@ void list_push(struct list *l, void *p);
 
 void list_insert(struct list *l, int prio, void *p);
 
-struct list_elm * list_search(struct list *l, int (*cmp)(void *));
+/** Search the list for an element whose first element is a character array which matches name.
+ *
+ * @see Only possible because of §1424 of http://c0x.coding-guidelines.com/6.7.2.1.html
+ */
+void * list_lookup(const struct list *l, const char *name);
+
+void * list_search(const struct list *l, cmp_cb_t cmp, void *ctx);
 
 #endif /* _LIST_H_ */

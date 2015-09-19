@@ -107,7 +107,7 @@ int config_parse_path(config_setting_t *cfg,
 		cerror(cfg, "Invalid input node for path");
 
 	in = config_setting_get_string(cfg_in);
-	p->in = node_lookup_name(in, nodes);
+	p->in = list_lookup(nodes, in);
 	if (!p->in)
 		cerror(cfg_in, "Invalid input node '%s'", in);
 

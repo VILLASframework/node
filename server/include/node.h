@@ -23,11 +23,6 @@
 #include "msg.h"
 #include "list.h"
 
-/** Static node initialization */
-#define NODE_INIT(n)	{ \
-	.name = n \
-}
-
 /* Helper macros for virtual node type */
 #define node_type(n)			((n)->vt->type)
 #define node_print(n, b, l)		((n)->vt->print(n, b, l))
@@ -38,20 +33,34 @@
 #define node_read_single(n, m)		((n)->vt->read(n, m, 1, 0, 1))
 #define node_write_single(n, m)		((n)->vt->write(n, m, 1, 0, 1))
 
-/** Node type: layer, protocol, listen/connect */
-enum node_type {
-	BSD_SOCKET,		/**< BSD Socket API */
-	LOG_FILE,		/**< File IO */
-	OPAL_ASYNC,		/**< OPAL-RT Asynchronous Process Api */
-	GTFPGA			/**< Xilinx ML507 GTFPGA card */
-};
+
+#define REGISTER_NODE_TYPE(type, name, fnc)				\
+__attribute__((constructor)) void __register_node_ ## fnc () {		\
+	static struct node_type t = { name, type,			\
+					fnc ## _parse, fnc ## _print,	\
+					fnc ## _open,  fnc ## _close,	\
+					fnc ## _read,  fnc ## _write,	\
+					fnc ## _init,  fnc ## _deinit };\
+	list_push(&node_types, &t);					\
+}
+
+extern struct list node_types;
 
 /** C++ like vtable construct for node_types
  * @todo Add comments
  */
-struct node_vtable {
-	const enum node_type type;
-	const char *name;
+struct node_type {
+	/** The unique name of this node. This must be the first member! */
+	char *name;
+	
+	/** Node type: layer, protocol, listen/connect */
+	enum {
+		BSD_SOCKET,		/**< BSD Socket API */
+		LOG_FILE,		/**< File IO */
+		OPAL_ASYNC,		/**< OPAL-RT Asynchronous Process Api */
+		GTFPGA,			/**< Xilinx ML507 GTFPGA card */
+		NGSI			/**< NGSI 9/10 HTTP RESTful API (FIRWARE ContextBroker) */
+	} type;
 
 	/** Parse node connection details for SOCKET type
 	 *

@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 	config_init(&config);
 	config_parse(argv[1], &config, &settings, &nodes, NULL);
 
-	node = node_lookup_name(argv[3], &nodes);
+	node = list_lookup(&nodes, argv[3]);
 	if (!node)
 		error("There's no node with the name '%s'", argv[3]);
 

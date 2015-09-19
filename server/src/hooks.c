@@ -23,32 +23,10 @@
 
 /* Some hooks can be configured by constants in te file "config.h" */
 
-/** This is a static list of available hooks.
- *
- * It's used by hook_lookup to parse hook identfiers from the configuration file.
- * The list must be terminated by NULL pointers!
- */
-static const struct hook hook_list[] = {
-/*  Priority,	Callback,	Name,		Type		*/
-	{ 99, 	hook_print,	"print",	HOOK_MSG },
-	{ 99,	hook_decimate,	"decimate",	HOOK_POST },
-	{ 99,	hook_tofixed,	"tofixed",	HOOK_MSG },
-	{ 99,	hook_ts,	"ts",		HOOK_MSG },
-	{ 99,	hook_fir,	"fir",		HOOK_POST },
-	{ 99,	hook_dft,	"dft",		HOOK_POST }
-};
+/** This is a static list of available hooks. */
+struct list hooks;
 
-const struct hook* hook_lookup(const char *name)
-{
-	for (int i=0; i<ARRAY_LEN(hook_list); i++) {
-		if (!strcmp(name, hook_list[i].name))
-			return &hook_list[i];
-	}
-
-	return NULL; /* No matching hook was found */
-}
-
-
+REGISTER_HOOK("print", 99, hook_print, HOOK_MSG)
 int hook_print(struct path *p)
 {
 	struct msg *m = p->current;
@@ -60,6 +38,7 @@ int hook_print(struct path *p)
 	return 0;
 }
 
+REGISTER_HOOK("tofixed", 99, hook_tofixed, HOOK_MSG)
 int hook_tofixed(struct path *p)
 {
 	struct msg *m = p->current;
@@ -70,6 +49,7 @@ int hook_tofixed(struct path *p)
 	return 0;
 }
 
+REGISTER_HOOK("ts", 99,	hook_ts, HOOK_MSG)
 int hook_ts(struct path *p)
 {
 	struct msg *m = p->current;
@@ -80,6 +60,7 @@ int hook_ts(struct path *p)
 	return 0;
 }
 
+REGISTER_HOOK("fir", 99, hook_fir, HOOK_POST)
 int hook_fir(struct path *p)
 {
 	/** Simple FIR-LP: F_s = 1kHz, F_pass = 100 Hz, F_block = 300
@@ -108,12 +89,14 @@ int hook_fir(struct path *p)
 	return 0;
 }
 
+REGISTER_HOOK("decimate", 99, hook_decimate, HOOK_POST)
 int hook_decimate(struct path *p)
 {
 	/* Only sent every HOOK_DECIMATE_RATIO'th message */
 	return p->received % HOOK_DECIMATE_RATIO;
 }
 
+REGISTER_HOOK("dft", 99, hook_dft, HOOK_POST)
 int hook_dft(struct path *p)
 {
 	return 0; /** @todo Implement */

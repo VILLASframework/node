@@ -268,3 +268,4 @@ int gtfpga_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 	return 0;
 }
 
+REGISTER_NODE_TYPE(GTFPGA, "gtfpga", gtfpga)

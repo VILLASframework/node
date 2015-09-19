@@ -222,3 +222,5 @@ int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 
 	return i;
 }
+
+REGISTER_NODE_TYPE(LOG_FILE, "file", file)

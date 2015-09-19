@@ -271,3 +271,5 @@ int opal_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 
 	return 1;
 }
+
+REGISTER_NODE_TYPE(OPAL_ASYNC, "opal", opal)

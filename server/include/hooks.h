@@ -21,10 +21,18 @@
 
 #include <time.h>
 
+#define REGISTER_HOOK(name, prio, fnc, type)			\
+__attribute__((constructor)) void __register_ ## fnc () {	\
+	static struct hook h = { name, prio, fnc, type };	\
+	list_push(&hooks, &h);					\
+}
+
 /* The configuration of hook parameters is done in "config.h" */
 
 /* Forward declarations */
 struct path;
+
+extern struct list hooks;
 
 /** Callback type of hook function
  *
@@ -50,24 +58,20 @@ enum hook_type {
 
 /** Descriptor for user defined hooks. See hook_list[]. */
 struct hook {
+	/** The unique name of this hook. This must be the first member! */
+	const char *name;
 	int priority;
 	hook_cb_t callback;
-	const char *name;
 	enum hook_type type;
 };
 
-/** Get a function pointer of a hook function by its name
- *
- * @param name The name of the requested hook
- * @retval NULL There is no hook registred with name.
- * @retval >0 A function pointer to the requested hook_cb_t hook.
- */
-const struct hook * hook_lookup(const char *name);
-
+struct hook * hook_lookup(const char *name);
 
 /* The following prototypes are example hooks */
 
-/** Example hook: Print the message. */
+/** Example hook: Print the message.
+ * @example
+ */
 int hook_print(struct path *p);
 
 /** Example hook: Drop messages. */

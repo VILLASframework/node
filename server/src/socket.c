@@ -452,3 +452,5 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 
 	return ret;
 }
+
+REGISTER_NODE_TYPE(BSD_SOCKET, "socket", socket)
