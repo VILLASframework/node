@@ -1,8 +1,11 @@
-/** Node type: NGSI 9/10 (FIWARE context broker)
+/** Node type: OMA Next Generation Services Interface 10 (NGSI) (FIWARE context broker)
  *
- * This file implements the NGSI protocol as a node type.
+ * This file implements the NGSI context interface. NGSI is RESTful HTTP is specified by
+ * the Open Mobile Alliance (OMA).
+ * It uses the standard operations of the NGSI 10 context information standard.
  *
  * @see https://forge.fiware.org/plugins/mediawiki/wiki/fiware/index.php/FI-WARE_NGSI-10_Open_RESTful_API_Specification
+ * @see http://technical.openmobilealliance.org/Technical/Release_Program/docs/NGSI/V1_0-20120529-A/OMA-TS-NGSI_Context_Management-V1_0-20120529-A.pdf
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
@@ -19,6 +22,7 @@
 #define _NGSI_H_
 
 #include <curl/curl.h>
+#include <jansson.h>
 
 #include "list.h"
 #include "config.h"
@@ -28,29 +32,22 @@
 
 struct node;
 
-struct ngsi_attribute {
-	char *name;
-	char *type;
-	
-	int index;
-};
-
-struct ngsi_entity {
-	char *name;
-	char *type;
-
-	struct list attributes;
-	struct list metadata;
-};
-
 struct ngsi {
-	char *endpoint;
-	char *token;
-	
-	struct list entities;
+	const char *endpoint;
+	const char *token;
+	double timeout;
+
+	enum ngsi_structure {
+		NGSI_FLAT,
+		NGSI_CHILDREN
+	} structure;
 	
 	struct curl_slist *headers;	
 	CURL *curl;
+
+	json_t *context;
+	json_t **context_map;
+	int context_len;
 };
 
 /** Initialize global NGSI settings and maps shared memory regions.

@@ -22,9 +22,12 @@
 #endif
 #ifdef ENABLE_SOCKET
   #include "socket.h"
-
   #include <netlink/route/qdisc.h>
   #include <netlink/route/classifier.h>
+#endif
+#ifdef ENABLE_NGSI
+  #include "ngsi.h"
+  #include <jansson.h>
 #endif
 
 /** Vtable for virtual node sub types */
@@ -110,7 +113,8 @@ void node_destroy(struct node *n)
 	switch (n->vt->type) {
 #ifdef ENABLE_NGSI
 		case NGSI:
-			list_destroy(n->ngsi->entities);
+			json_decref(n->ngsi->context);
+			free(n->ngsi->context_map);
 		break;
 #endif
 #ifdef ENABLE_SOCKET
