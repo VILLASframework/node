@@ -12,7 +12,9 @@
 
 #include <stdio.h>
 
-#define HIST_HEIGHT	75
+#include "config.h"
+
+#define HIST_HEIGHT	(LOG_WIDTH - 55)
 #define HIST_SEQ	17
 
 typedef unsigned hist_cnt_t;
