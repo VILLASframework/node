@@ -21,10 +21,11 @@
 
 int main(int argc, char *argv[])
 {
-	if (argc != 3) {
-		printf("Usage: %s VALUES RATE\n", argv[0]);
+	if (argc <= 3 || argc > 4) {
+		printf("Usage: %s VALUES RATE [LIMIT]\n", argv[0]);
 		printf("  VALUES is the number of values a message contains\n");
-		printf("  RATE   how many messages per second\n\n");
+		printf("  RATE   how many messages per second\n");
+		printf("  LIMIT  only send LIMIT messages\n\n");
 
 		printf("Simulator2Simulator Server %s (built on %s %s)\n",
 			BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
@@ -34,6 +35,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	int limit = argc >= 4 ? atoi(argv[3]) : 0;
 	double rate = strtod(argv[2], NULL);
 	struct msg m = MSG_INIT(atoi(argv[1]));
 
@@ -67,6 +69,9 @@ int main(int argc, char *argv[])
 		msg_fprint(stdout, &m);
 
 		fflush(stdout);
+		
+		if (limit && --limit == 0)
+			break;
 	}
 
 	close(tfd);
