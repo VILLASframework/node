@@ -104,15 +104,21 @@ static void usage(const char *name)
 	printf("  This type of invocation is used by OPAL-RT Asynchronous processes.\n");
 	printf("  See in the RT-LAB User Guide for more information.\n\n");
 #endif
-	printf("Supported features:\n");
-#ifdef ENABLE_PCI
-	printf(" - libpci: GTFPGA PCIe card\n");
+	printf("Supported node types:\n");
+#ifdef ENABLE_FILE
+	printf(" - file: support for file log / replay node type\n");
 #endif
 #ifdef ENABLE_SOCKET
-	printf(" - libnl3: Network Emulation\n");
+	printf(" - socket: Network socket (libnl3)\n");
+#endif
+#ifdef ENABLE_PCI
+	printf(" - gtfpga: GTFPGA PCIe card (libpci)\n");
 #endif
 #ifdef ENABLE_OPAL_ASYNC
-	printf(" - libOpalAsyncApi: run as OPAL Asynchronous Process\n");
+	printf(" - opal: run as OPAL Asynchronous Process (libOpalAsyncApi)\n");
+#endif
+#ifdef ENABLE_NGSI
+	printf(" - ngsi: OMA Next Generation Services Interface 10 (libcurl, libjansson, libuuid)\n");
 #endif
 	printf("\n");
 	printf("Simulator2Simulator Server %s (built on %s %s)\n",
