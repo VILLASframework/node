@@ -54,8 +54,12 @@ static void * path_run_async(void *arg)
 	struct path *p = arg;
 
 	/* Block until 1/p->rate seconds elapsed */
-	while (timerfd_wait(p->tfd))
+	while (timerfd_wait(p->tfd)) {
+		if (path_run_hook(p, HOOK_ASYNC))
+			continue;
+
 		path_write(p);
+	}
 
 	return NULL;
 }

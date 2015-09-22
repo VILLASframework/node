@@ -54,6 +54,7 @@ enum hook_type {
 	HOOK_PRE,		/**< Called when a new packet of messages (samples) was received. */
 	HOOK_POST,		/**< Called after each message (sample) of a packet was processed. */
 	HOOK_MSG,		/**< Called for each message (sample) in a packet. */
+	HOOK_ASYNC,		/**< Called asynchronously with fixed rate (see path::rate). */
 	
 	HOOK_PERIODIC,		/**< Called periodically. Period is set by global 'stats' option in the configuration file. */
 
