@@ -31,6 +31,16 @@ int version_compare(struct version *a, struct version *b) {
 	return major ? major : minor;
 }
 
+int strftimespec(char *s, uint max, const char *format, struct timespec *ts)
+{
+	struct tm t;
+
+	if (localtime_r(&(ts->tv_sec), &t) == NULL)
+	    return -1;
+
+	return strftime(s, max, format, &t);
+}
+
 double box_muller(float m, float s)
 {
 	double x1, x2, y1;

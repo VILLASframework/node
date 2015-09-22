@@ -126,6 +126,10 @@ int version_compare(struct version *a, struct version *b);
 /** Parse a dotted version string. */
 int version_parse(const char *s, struct version *v);
 
+/** Format a struct timespec date similar to strftime() */
+int strftimespec(char *s, uint max, const char *format, struct timespec *ts)
+	__attribute__ ((format(strftime, 3, 0)));
+
 /** Check assertion and exit if failed. */
 #define assert(exp) do { \
 	if (!EXPECT(exp, 0)) \

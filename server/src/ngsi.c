@@ -25,12 +25,27 @@ static json_t * json_uuid()
 	uuid_t uuid;
 	
 	uuid_generate_time(uuid);
-	uuid_unparse(uuid, eid);
+	uuid_unparse_lower(uuid, eid);
 
 	return json_string(eid);
 }
 
-static json_t * json_lookup(json_t *array, const char *key, const char *needle)
+static json_t * json_date(struct timespec *ts)
+{
+	struct timespec tsp;
+	if (!ts) {
+		clock_gettime(CLOCK_REALTIME, &tsp);
+		ts = &tsp;
+	}
+	
+	// Example: 2015-09-21T11:42:25+02:00
+	char date[64];
+	strftimespec(date, sizeof(date), "%FT%T%z", ts);
+	
+	return json_string(date);
+}
+
+static json_t * json_lookup(json_t *array, char *key, char *needle)
 {
 	size_t ind;
 	json_t *obj;
@@ -78,11 +93,15 @@ static int ngsi_request(CURL *handle, json_t *content, json_t **response)
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, strlen(post));
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDS, post);
 	
+	debug(20, "Request to context broker:\n%s", post);
+	
 	CURLcode ret = curl_easy_perform(handle);
 	if (ret)
 		error("HTTP request failed: %s", curl_easy_strerror(ret));
 
 	curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &code);
+	
+	debug(20, "Response from context broker (code=%ld):\n%s", code, chunk.data);
 	
 	json_error_t err;
 	json_t *resp = json_loads(chunk.data, 0, &err);
@@ -117,8 +136,7 @@ static json_t * ngsi_build_context(struct node *n, config_setting_t *mapping)
 		if (!stoken)
 			cerror(mapping, "Invalid token");
 
-		char eid[64], etype[64];	/* Entity */
-		char aname[64], atype[64];	/* Attribute */
+		char eid[64], etype[64], aname[64], atype[64];
 		if (sscanf(stoken, "%63[^().](%63[^().]).%63[^().](%63[^().])", eid, etype, aname, atype) != 4)
 			cerror(ctoken, "Invalid token: '%s'", stoken);
 		
@@ -138,26 +156,26 @@ static json_t * ngsi_build_context(struct node *n, config_setting_t *mapping)
 			json_object_set(entity, "attributes", attributes);
 			json_array_append(elements, entity);
 		}
-		else
+		else {
+			if (i->structure == NGSI_CHILDREN)
+				cerror(ctoken, "Duplicate mapping for index %u", j);
+
 			attributes = json_object_get(entity, "attributes");
+		}
 
 		/* Create attribute */
 		if (json_lookup(attributes, "name", aname))
 			cerror(ctoken, "Duplicated attribute '%s' in NGSI mapping of node '%s'", aname, n->name);
 			
 		json_t *metadatas;
-		json_t *attribute = json_pack("{ s: s, s: s }",
+		json_t *attribute = json_pack("{ s: s, s: s, s: s }",
 			"name",		aname,
-			"type",		atype
+			"type",		atype,
+			"value",	"0"
 		);
 
 		metadatas = json_array();
 		json_object_set(attribute, "metadatas", metadatas);
-		
-		if      (!strcmp(atype, "float"))
-			json_object_set(attribute, "value", json_real(0));
-		else if (!strcmp(atype, "integer"))
-			json_object_set(attribute, "value", json_integer(0));
 			
 		/* Metadata */
 		json_array_append(metadatas, json_pack("{ s: s, s: s, s: s }",
@@ -170,18 +188,29 @@ static json_t * ngsi_build_context(struct node *n, config_setting_t *mapping)
 			"type", "integer",
 			"value", j
 		));
-		
-		json_array_append(attributes, attribute);
-		
+
 		if (i->structure == NGSI_CHILDREN) {
 			json_array_append(attributes, json_pack("{ s: s, s: s, s: s }",
 				"name", "parentId",
-				"type", "UUID",
+				"type", "uuid",
 				"value", eid
+			));
+				
+			json_array_append(attributes, json_pack("{ s: s, s: s, s: s }",
+				"name", "source",
+				"type", "string",
+				"value", "measurement"
+			));
+			
+			json_array_append(attributes, json_pack("{ s: s, s: s, s: o }",
+				"name", "timestamp",
+				"type",	"date",
+				"value", json_date(NULL)
 			));
 		}
 
-		i->context_map[j] = json_object_get(attribute, "value");
+		json_array_append(attributes, attribute);
+		i->context_map[j] = attribute;
 	}
 	
 	return root;
@@ -263,6 +292,7 @@ int ngsi_open(struct node *n)
 	
 	snprintf(buf, sizeof(buf), "%s/v1/updateContext", i->endpoint);
 	curl_easy_setopt(i->curl, CURLOPT_URL, buf);
+	
 	curl_easy_setopt(i->curl, CURLOPT_TIMEOUT_MS, i->timeout * 1e3);
 	curl_easy_setopt(i->curl, CURLOPT_HTTPHEADER, i->headers);
 	
@@ -295,12 +325,20 @@ int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 	
 	/* Update context */
 	for (int j = 0; j < i->context_len; j++) {
-		json_t *value = i->context_map[j];
+		json_t *attribute = i->context_map[j];
+		json_t *value = json_object_get(attribute, "value");
+		json_t *metadatas = json_object_get(attribute, "metadatas");
 		
-		if	(json_is_integer(value))
-			json_integer_set(value, m->data[j].i);
-		else if	(json_is_real(value))
-			json_real_set(value, m->data[j].f);
+		json_t *timestamp = json_lookup(metadatas, "name", "timestamp");
+		json_object_update(timestamp, json_pack("{ s: s, s: s, s: o }",
+			"name", "timestamp",
+			"type",	"date",
+			"value", json_date(&MSG_TS(m))
+		));
+		
+		char new[64];
+		snprintf(new, sizeof(new), "%f", m->data[j].f); /** @todo for now we only support floating point values */
+		json_string_set(value, new);
 	}
 	
 	/* Update UUIDs for children structure */
@@ -309,9 +347,11 @@ int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 		size_t ind;
 		json_array_foreach(elements, ind, entity)
 			json_object_set(entity, "id", json_uuid());
+		
+		json_object_set(i->context, "updateAction", json_string("APPEND"));
 	}
-
-	json_object_set(i->context, "updateAction", json_string("UPDATE"));
+	else
+		json_object_set(i->context, "updateAction", json_string("UPDATE"));
 
 	json_t *response;
 	int code = ngsi_request(i->curl, i->context, &response);
