@@ -4,7 +4,7 @@ The `file` node-type can be used to log or replay samples to / from disk.
 
 ## Configuration
 
-Every `file` node supports the following settings:
+Every `file` node supports the following special settings:
 
 #### `in` *(string: filesystem path)*
 

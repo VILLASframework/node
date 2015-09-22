@@ -15,13 +15,15 @@ The implementation supports multiple protocols / OSI layers:
 
 ## Configuration
 
-#### `local`
+Every `socket` node supports the following special settings:
 
-#### `remote`
+#### `local` *("ip:port" | "mac:protocol")*
 
-#### `netem`
+#### `remote` *("ip:port" | "mac:protocol")*
 
-#### `layer`
+#### `netem` *(dictionary)*
+
+#### `layer` *("udp" | "ip" | "eth")*
 
 ### Example
 

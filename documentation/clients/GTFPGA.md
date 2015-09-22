@@ -10,6 +10,8 @@ The PowerPC core is used to forward values between RTDS and the S2SS server.
 
 ## Configuration
 
+Every `gtfpga` node support the following special settings:
+
 #### `slot`
 
 #### `id`

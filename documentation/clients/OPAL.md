@@ -1,4 +1,4 @@
-# OPAL-RT {#opal}
+# OPAL-RT Asynchronous Process {#opal}
 
 The communication between OPAL-RT models and the S2SS is established by using ansychronous programs.
 Asynchronous programs are are a feature of RT-LAB. They are used to exchange data between Simulink models and custom C programs.
@@ -7,11 +7,13 @@ For this purpose the C program handels IP/UDP communication via BSD sockets.
 
 ## Configuration
 
-`send_id`
+Every `opal` node supports the following special settings:
 
-`recv_id`
+#### `send_id` *(integer)*
 
-`reply`
+#### `recv_id` *(integer)*
+
+#### `reply` *(boolean)*
 
 ## Arguments for OPAL-RT block
 
