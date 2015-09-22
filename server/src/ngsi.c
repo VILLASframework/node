@@ -1,8 +1,11 @@
-/** Node type: FIWARE NGSI 9/10
+/** Node type: OMA Next Generation Services Interface 10 (NGSI) (FIWARE context broker)
  *
- * This file implements the NGSI protocol as a node type.
+ * This file implements the NGSI context interface. NGSI is RESTful HTTP is specified by
+ * the Open Mobile Alliance (OMA).
+ * It uses the standard operations of the NGSI 10 context information standard.
  *
  * @see https://forge.fiware.org/plugins/mediawiki/wiki/fiware/index.php/FI-WARE_NGSI-10_Open_RESTful_API_Specification
+ * @see http://technical.openmobilealliance.org/Technical/Release_Program/docs/NGSI/V1_0-20120529-A/OMA-TS-NGSI_Context_Management-V1_0-20120529-A.pdf
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
@@ -117,14 +120,14 @@ static int ngsi_request(CURL *handle, json_t *content, json_t **response)
 	return code;
 }
 
-static json_t * ngsi_build_context(struct node *n, config_setting_t *mapping)
+void ngsi_prepare_context(struct node *n, config_setting_t *mapping)
 {	
 	struct ngsi *i = n->ngsi;
 
-	json_t *root = json_object();
+	i->context = json_object();
 	json_t *elements = json_array();
 	
-	json_object_set(root, "contextElements", elements);
+	json_object_set(i->context, "contextElements", elements);
 	
 	i->context_len = config_setting_length(mapping);
 	i->context_map = alloc(i->context_len * sizeof(json_t *));
@@ -139,8 +142,6 @@ static json_t * ngsi_build_context(struct node *n, config_setting_t *mapping)
 		char eid[64], etype[64], aname[64], atype[64];
 		if (sscanf(stoken, "%63[^().](%63[^().]).%63[^().](%63[^().])", eid, etype, aname, atype) != 4)
 			cerror(ctoken, "Invalid token: '%s'", stoken);
-		
-		debug(3, "Processing mapping token: %s", stoken);
 
 		/* Create entity */
 		json_t *attributes;
@@ -212,8 +213,6 @@ static json_t * ngsi_build_context(struct node *n, config_setting_t *mapping)
 		json_array_append(attributes, attribute);
 		i->context_map[j] = attribute;
 	}
-	
-	return root;
 }
 
 int ngsi_init(int argc, char *argv[], struct settings *set)
@@ -232,19 +231,19 @@ int ngsi_parse(config_setting_t *cfg, struct node *n)
 {
 	struct ngsi *i = alloc(sizeof(struct ngsi));
 
-	const char *structure;
-	
-	config_setting_lookup_string(cfg, "token", &i->token); /* optional */
-	
+	if (!config_setting_lookup_string(cfg, "token", &i->token))
+		i->token = NULL; /* disabled by default */
+
 	if (!config_setting_lookup_string(cfg, "endpoint", &i->endpoint))
 		cerror(cfg, "Missing NGSI endpoint for node '%s'", n->name);
-	
+
 	if (!config_setting_lookup_bool(cfg, "ssl_verify", &i->ssl_verify))
 		i->ssl_verify = 1; /* verify by default */
-	
+
 	if (!config_setting_lookup_float(cfg, "timeout", &i->timeout))
 		i->timeout = 1; /* default value */
-	
+
+	const char *structure;
 	if (!config_setting_lookup_string(cfg, "structure", &structure))
 		i->structure = NGSI_FLAT;
 	else {
@@ -261,8 +260,8 @@ int ngsi_parse(config_setting_t *cfg, struct node *n)
 	config_setting_t *mapping = config_setting_get_member(cfg, "mapping");
 	if (!mapping || !config_setting_is_array(mapping))
 		cerror(cfg, "Missing mapping for node '%s", n->name);
-	else
-		i->context = ngsi_build_context(n, mapping);
+
+	ngsi_prepare_context(n, mapping);
 	
 	return 0;
 }
@@ -289,8 +288,8 @@ int ngsi_open(struct node *n)
 		i->headers = curl_slist_append(i->headers, buf);
 	}
 	
-	i->headers = curl_slist_append(i->headers, "Accept: application/json");
 	i->headers = curl_slist_append(i->headers, "User-Agent: S2SS " VERSION);
+	i->headers = curl_slist_append(i->headers, "Accept: application/json");
 	i->headers = curl_slist_append(i->headers, "Content-Type: application/json");
 	
 	snprintf(buf, sizeof(buf), "%s/v1/updateContext", i->endpoint);
@@ -302,19 +301,21 @@ int ngsi_open(struct node *n)
 	
 	/* Create entity and atributes */
 	json_object_set(i->context, "updateAction", json_string("APPEND"));
-
-	int code = ngsi_request(i->curl, i->context, NULL);
-	return code == 200 ? 0 : -1;
+	return ngsi_request(i->curl, i->context, NULL) == 200 ? 0 : -1;
 }
 
 int ngsi_close(struct node *n)
 {
 	struct ngsi *i = n->ngsi;
 	
+	/* Delete attributes */
+	json_object_set(i->context, "updateAction", json_string("DELETE"));
+	int code = ngsi_request(i->curl, i->context, NULL) == 200 ? 0 : -1;
+	
 	curl_easy_cleanup(i->curl);
 	curl_slist_free_all(i->headers);
 	
-	return 0;
+	return code == 200 ? 0 : -1;
 }
 
 int ngsi_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
@@ -359,11 +360,10 @@ int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 
 	json_t *response;
 	int code = ngsi_request(i->curl, i->context, &response);
-	
 	if (code != 200)
 		error("Failed to NGSI update Context request:\n%s", json_dumps(response, JSON_INDENT(4)));
 
-	return code == 200 ? 1 : 0;
+	return 1;
 }
 
 REGISTER_NODE_TYPE(NGSI, "ngsi", ngsi)

@@ -28,7 +28,7 @@ static void path_write(struct path *p)
 			it->node,			/* Destination node */
 			p->pool,			/* Pool of received messages */
 			p->poolsize,			/* Size of the pool */
-			p->received-it->node->combine,	/* Index of the first message which should be sent */
+			p->received - it->node->combine,/* Index of the first message which should be sent */
 			it->node->combine		/* Number of messages which should be sent */
 		);
 
