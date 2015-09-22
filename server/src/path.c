@@ -58,7 +58,8 @@ static void * path_run_async(void *arg)
 		if (path_run_hook(p, HOOK_ASYNC))
 			continue;
 
-		path_write(p);
+		if (p->received > 0)
+			path_write(p);
 	}
 
 	return NULL;
