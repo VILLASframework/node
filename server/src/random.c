@@ -21,7 +21,7 @@
 
 int main(int argc, char *argv[])
 {
-	if (argc <= 3 || argc > 4) {
+	if (argc < 3 || argc > 4) {
 		printf("Usage: %s VALUES RATE [LIMIT]\n", argv[0]);
 		printf("  VALUES is the number of values a message contains\n");
 		printf("  RATE   how many messages per second\n");
@@ -35,9 +35,9 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	int limit = argc >= 4 ? atoi(argv[3]) : 0;
-	double rate = strtod(argv[2], NULL);
 	struct msg m = MSG_INIT(atoi(argv[1]));
+	double rate = atof(argv[2]);
+	int limit = argc >= 4 ? atoi(argv[3]) : -1;
 
 	/* Setup timer */
 	struct itimerspec its = {
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 	fprintf(stderr, "# %-20s\t%s\t%s\n", "timestamp", "seqno", "data[]");
 
 	/* Block until 1/p->rate seconds elapsed */
-	for (;;) {
+	while (limit-- > 0 || argc < 4) {
 		m.sequence += timerfd_wait(tfd);
 
 		struct timespec ts;
@@ -69,9 +69,6 @@ int main(int argc, char *argv[])
 		msg_fprint(stdout, &m);
 
 		fflush(stdout);
-		
-		if (limit && --limit == 0)
-			break;
 	}
 
 	close(tfd);

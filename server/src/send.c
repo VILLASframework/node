@@ -113,16 +113,19 @@ int main(int argc, char *argv[])
 	/* Print header */
 	fprintf(stderr, "# %-20s\t%s\t%s\n", "timestamp", "seqno", "data[]");
 
-	while (!feof(stdin)) {
-		for (int i = 0; i < node->combine; i++) {
-			msg_fscan(stdin, &pool[i]);
-			msg_fprint(stdout, &pool[i]);
+	for (;;) {
+		int i = 0;
+		while (i < node->combine) {
+			if (msg_fscan(stdin, &pool[i]) > 0)
+				msg_fprint(stdout, &pool[i++]);
+			else if (feof(stdin))
+				goto out;
 		}
 
 		node_write(node, pool, node->combine, 0, node->combine);
 	}
 
-	quit();
+out:	quit();
 
 	return 0;
 }
