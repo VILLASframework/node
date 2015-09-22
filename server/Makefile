@@ -13,18 +13,14 @@ V ?= 2
 # Compiler and linker flags
 CC = gcc
 LDLIBS  = -pthread -lrt -lm -lconfig
-override CFLAGS += -std=gnu99 -Iinclude/ -MMD -Wall -O3
+override CFLAGS += -std=gnu99 -Iinclude/ -MMD -Wall
 override CFLAGS += -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
-
-# Default include paths for third-party libs
-PCIDIR  ?= /usr/include
-NLDIR   ?= /usr/include/libnl3
-OPALDIR ?= /usr/opalrt/common
-#OPALDIR ?= ../contrib/opal
 
 # Add more compiler flags
 ifdef DEBUG
 	override CFLAGS += -O0 -g
+else
+	override CFLAGS += -O3
 endif
 ifneq (,$(shell which git))
 	override CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
