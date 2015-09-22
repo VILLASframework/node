@@ -69,6 +69,7 @@ int opal_init(int argc, char *argv[], struct settings *set)
 	info("Started as OPAL Asynchronous process");
 	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s)",
 		VERSION, __DATE__, __TIME__);
+
 	opal_print_global(og);
 
 	return 0;

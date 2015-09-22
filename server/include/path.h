@@ -132,7 +132,6 @@ int path_reset(struct path *p);
  */
 void path_print_stats(struct path *p);
 
-
 /** Fills the provided buffer with a string representation of the path.
  *
  * Format: source => [ dest1 dest2 dest3 ]

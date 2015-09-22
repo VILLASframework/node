@@ -63,6 +63,7 @@ void log_reset()
 void log_print(const char *lvl, const char *fmt, ...)
 {
 	va_list ap;
+
 	va_start(ap, fmt);
 	log_vprint(lvl, fmt, ap);
 	va_end(ap);

@@ -53,10 +53,10 @@ extern struct list node_types;
  * @todo Add comments
  */
 struct node_type {
-	/** The unique name of this node. This must be the first member! */
+	/** The unique name of this node. This must be allways the first member! */
 	char *name;
 	
-	/** Node type: layer, protocol, listen/connect */
+	/** Node type */
 	enum {
 		BSD_SOCKET,		/**< BSD Socket API */
 		LOG_FILE,		/**< File IO */
@@ -65,7 +65,7 @@ struct node_type {
 		NGSI			/**< NGSI 9/10 HTTP RESTful API (FIRWARE ContextBroker) */
 	} type;
 
-	/** Parse node connection details for SOCKET type
+	/** Parse node connection details.‚
 	 *
 	 * @param cfg	A libconfig object pointing to the node.
 	 * @param n	A pointer to the node structure which should be parsed.
@@ -81,7 +81,7 @@ struct node_type {
 	 */
 	char * (*print)(struct node *n);
 
-	/** Create new socket and connect(), bind(), accept().
+	/** Opens the connection to this node.
 	 *
 	 * @param n	A pointer to the node.
 	 * @retval 0	Success. Everything went well.
@@ -89,7 +89,7 @@ struct node_type {
 	 */
 	int (*open) (struct node *n);
 
-	/** Close the socket.
+	/** Close the connection to this node.
 	 *
 	 * @param n	A pointer to the node.
 	 * @retval 0	Success. Everything went well.
@@ -97,12 +97,13 @@ struct node_type {
 	 */
 	int (*close)(struct node *n);
 
-	/** Receive multiple messages from single datagram / packet.
+	/** Receive multiple messages at once.
 	 *
 	 * Messages are received with a single recvmsg() syscall by
 	 * using gathering techniques (struct iovec).
 	 * The messages will be stored in a circular buffer / array @p m.
 	 * Indexes used to address @p m will wrap around after len messages.
+	 * Some node types might only support to receive one message at a time.
 	 *
 	 * @param n 		A pointer to the node where the messages should be sent to.
 	 * @param pool 		A pointer to an array of messages which should be sent.

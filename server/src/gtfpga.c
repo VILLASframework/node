@@ -218,13 +218,8 @@ int gtfpga_open(struct node *n)
 		if (ret)
 			serror("Failed to start timer");
 	}
-	else
-		/** @todo implement UIO interrupts */
+	else /** @todo implement UIO interrupts */
 		error("UIO irq not implemented yet. Use 'rate' setting");
-
-	char buf[1024];
-	gtfpga_print(n, buf, sizeof(buf));
-	debug(5, "Found GTFPGA card: %s", buf);
 
 	return 0;
 }
