@@ -1,0 +1,4 @@
+[submodule "clients/rtds"]
+	path = clients/rtds
+	url = git@github.com:RWTH-ACS/GTFPGA.git
+	branch = master
