@@ -104,17 +104,21 @@ int opal_deinit()
 
 int opal_print_global(struct opal_global *g)
 { INDENT
-	char sbuf[512] = "";
-	char rbuf[512] = "";
+	debug(2, "Controller ID: %u", og->params.controllerID);
+	
+	char *sbuf = alloc(og->send_icons * 5);
+	char *rbuf = alloc(og->recv_icons * 5);
 
 	for (int i = 0; i < og->send_icons; i++)
-		strap(sbuf, sizeof(sbuf), "%u ", og->send_ids[i]);
+		strcatf(&sbuf, "%u ", og->send_ids[i]);
 	for (int i = 0; i < og->recv_icons; i++)
-		strap(rbuf, sizeof(rbuf), "%u ", og->recv_ids[i]);
+		strcatf(&rbuf, "%u ", og->recv_ids[i]);
 
-	debug(2, "Controller ID: %u", og->params.controllerID);
 	debug(2, "Send Blocks: %s",    sbuf);
 	debug(2, "Receive Blocks: %s", rbuf);
+	
+	free(sbuf);
+	free(rbuf);
 
 	debug(2, "Control Block Parameters:");
 	for (int i=0; i<GENASYNC_NB_FLOAT_PARAM; i++)
@@ -147,13 +151,14 @@ int opal_parse(config_setting_t *cfg, struct node *n)
 	return 0;
 }
 
-int opal_print(struct node *n, char *buf, int len)
+char * opal_print(struct node *n)
 {
 	struct opal *o = n->opal;
+	char *buf = NULL;
 
 	/** @todo: Print send_params, recv_params */
 
-	return snprintf(buf, len, "send_id=%u, recv_id=%u, reply=%u",
+	return strcatf(&buf, "send_id=%u, recv_id=%u, reply=%u",
 		o->send_id, o->recv_id, o->reply);
 }
 

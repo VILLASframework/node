@@ -93,10 +93,10 @@ int if_start(struct interface *i, int affinity)
 				if (ret)
 					error("Failed to setup FW mark classifier: %s", nl_geterror(ret));
 				
-				char buf[256];
-				tc_print(buf, sizeof(buf), s->tc_qdisc);
+				char *buf = tc_print(s->tc_qdisc);
 				debug(5, "Starting network emulation on interface '%s' for FW mark %u: %s",
 					rtnl_link_get_name(i->nl_link), s->mark, buf);
+				free(buf);
 
 				ret = tc_netem(i, &s->tc_qdisc, TC_HANDLE(0x1000+s->mark, 0), TC_HANDLE(1, s->mark));
 				if (ret)

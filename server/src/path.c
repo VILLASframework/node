@@ -115,10 +115,9 @@ static void * path_run(void *arg)
 
 int path_start(struct path *p)
 { INDENT
-	char buf[33];
-	path_print(p, buf, sizeof(buf));
-
+	char *buf = path_print(p);
 	info("Starting path: %s (poolsize = %u)", buf, p->poolsize);
+	free(buf);
 
 	if (path_run_hook(p, HOOK_PATH_START))
 		return -1;
@@ -145,10 +144,9 @@ int path_start(struct path *p)
 
 int path_stop(struct path *p)
 { INDENT
-	char buf[33];
-	path_print(p, buf, sizeof(buf));
-
+	char *buf = path_print(p);
 	info("Stopping path: %s", buf);
+	free(buf);
 
 	pthread_cancel(p->recv_tid);
 	pthread_join(p->recv_tid, NULL);
@@ -166,22 +164,22 @@ int path_stop(struct path *p)
 	return 0;
 }
 
-int path_print(struct path *p, char *buf, int len)
+char * path_print(struct path *p)
 {
-	*buf = 0;
-
-	strap(buf, len, "%s " MAG("=>"), p->in->name);
+	char *buf = alloc(32);
+	
+	strcatf(&buf, "%s " MAG("=>"), p->in->name);
 
 	if (list_length(&p->destinations) > 1) {
-		strap(buf, len, " [");
+		strcatf(&buf, " [");
 		FOREACH(&p->destinations, it)
-			strap(buf, len, " %s", it->node->name);
-		strap(buf, len, " ]");
+			strcatf(&buf, " %s", it->node->name);
+		strcatf(&buf, " ]");
 	}
 	else
-		strap(buf, len, " %s", p->out->name);
+		strcatf(&buf, " %s", p->out->name);
 
-	return 0;
+	return buf;
 }
 
 int path_reset(struct path *p)

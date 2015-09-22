@@ -100,18 +100,19 @@ int gtfpga_parse(config_setting_t *cfg, struct node *n)
 	return 0;
 }
 
-int gtfpga_print(struct node *n, char *buf, int len)
+char * gtfpga_print(struct node *n)
 {
 	struct gtfpga *g = n->gtfpga;
+	char *buf = NULL;
 
 	if (g->dev) {
-		return snprintf(buf, len, "rate=%.1f slot=%04"PRIx16":%02"PRIx8":%02"PRIx8".%"PRIx8
+		return strcatf(&buf, "rate=%.1f slot=%04"PRIx16":%02"PRIx8":%02"PRIx8".%"PRIx8
 			" id=%04"PRIx16":%04"PRIx16" class=%04"PRIx16" irq=%d (%s)", g->rate,
 			g->dev->domain, g->dev->bus, g->dev->dev, g->dev->func, g->dev->vendor_id, g->dev->device_id,
 			g->dev->device_class, g->dev->irq, g->name);
 	}
 	else {
-		return snprintf(buf, len, "rate=%.1f slot=%02"PRIx8":%02"PRIx8".%"PRIx8" id=%04"PRIx16":%04"PRIx16, g->rate,
+		return strcatf(&buf, "rate=%.1f slot=%02"PRIx8":%02"PRIx8".%"PRIx8" id=%04"PRIx16":%04"PRIx16, g->rate,
 			g->filter.bus, g->filter.device, g->filter.func,
 			g->filter.vendor, g->filter.device);
 	}

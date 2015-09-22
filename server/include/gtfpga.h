@@ -60,7 +60,7 @@ int gtfpga_deinit();
 int gtfpga_parse(config_setting_t *cfg, struct node *n);
 
 /** @see node_vtable::print */
-int gtfpga_print(struct node *n, char *buf, int len);
+char * gtfpga_print(struct node *n);
 
 /** @see node_vtable::open */
 int gtfpga_open(struct node *n);

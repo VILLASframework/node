@@ -77,7 +77,7 @@ int opal_deinit();
 int opal_parse(config_setting_t *cfg, struct node *n);
 
 /** @see node_vtable::print */
-int opal_print(struct node *n, char *buf, int len);
+char * opal_print(struct node *n);
 
 int opal_print_global(struct opal_global *g);
 

@@ -37,13 +37,10 @@ int tc_parse(config_setting_t *cfg, struct rtnl_qdisc **ne);
 
 /** Print network emulator (netem) setting into buffer.
  *
- * @param buf A character buffer to write to.
- * @param len The length of the supplied buffer.
  * @param tc A pointer to the libnl3 qdisc object where settings will be read from.
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
+ * @return A pointer to a string which must be freed() by the caller.
  */
-int tc_print(char *buf, size_t len, struct rtnl_qdisc *ne);
+char * tc_print(struct rtnl_qdisc *ne);
 
 /** Remove all queuing disciplines and filters.
  *

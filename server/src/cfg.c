@@ -168,10 +168,10 @@ int config_parse_path(config_setting_t *cfg,
 		list_push(paths, p);
 	}
 	else {
-		char buf[128];
-		path_print(p, buf, sizeof(buf));
-
+		char *buf = path_print(p);
 		warn("Path %s is not enabled", buf);
+		free(buf);
+
 		path_destroy(p);
 	}
 

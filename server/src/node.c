@@ -66,10 +66,9 @@ int node_start(struct node *n)
 		return -1;
 	}
 
-	char str[256];
-	node_print(n, str, sizeof(str));
-
-	debug(1, "Starting node '%s' of type '%s' (%s)", n->name, n->vt->name, str);
+	char *buf = node_print(n);
+	debug(1, "Starting node '%s' of type '%s' (%s)", n->name, n->vt->name, buf);
+	free(buf);
 
 	{ INDENT
 		return n->vt->open(n);

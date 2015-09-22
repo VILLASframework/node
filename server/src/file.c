@@ -26,11 +26,12 @@ int file_deinit()
 	return 0; /* nothing todo here */
 }
 
-int file_print(struct node *n, char *buf, int len)
+char * file_print(struct node *n)
 {
 	struct file *f = n->file;
+	char *buf = NULL;
 
-	return snprintf(buf, len, "in=%s, out=%s, mode=%s, rate=%.1f, epoch_mode=%u, epoch=%.0f",
+	return strcatf(&buf, "in=%s, out=%s, mode=%s, rate=%.1f, epoch_mode=%u, epoch=%.0f",
 		f->path_in, f->path_out, f->file_mode, f->rate, f->epoch_mode, time_to_double(&f->epoch));
 }
 

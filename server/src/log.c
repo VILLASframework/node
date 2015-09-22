@@ -71,30 +71,32 @@ void log_print(const char *lvl, const char *fmt, ...)
 void log_vprint(const char *lvl, const char *fmt, va_list ap)
 {
 	struct timespec ts;
-	char buf[512] = "";
-
+	char *buf = alloc(512);
+	
 	/* Timestamp */
 	clock_gettime(CLOCK_REALTIME, &ts);
-	strap(buf, sizeof(buf), "%10.3f ", time_delta(&epoch, &ts));
+	strcatf(&buf, "%10.3f ", time_delta(&epoch, &ts));
 
 	/* Severity */
-	strap(buf, sizeof(buf), BLD("%5s "), lvl);
+	strcatf(&buf, "%5s ", lvl);
 
 	/* Indention */
 #ifdef __GNUC__
 	for (int i = 0; i < indent; i++)
-		strap(buf, sizeof(buf), ACS_VERTICAL " ");
-	strap(buf, sizeof(buf), ACS_VERTRIGHT " ");
+		strcatf(&buf, ACS_VERTICAL " ");
+
+	strcatf(&buf, ACS_VERTRIGHT " ");
 #endif
 
 	/* Format String */
-	vstrap(buf, sizeof(buf), fmt, ap);
+	vstrcatf(&buf, fmt, ap);
 
 	/* Output */
 #ifdef ENABLE_OPAL_ASYNC
 	OpalPrint("S2SS: %s\n", buf);
 #endif
 	fprintf(stderr, "\r%s\n", buf);
+	free(buf);
 }
 
 void line()
@@ -148,23 +150,25 @@ void error(const char *fmt, ...)
 void serror(const char *fmt, ...)
 {
 	va_list ap;
-	char buf[1024];
+	char *buf = NULL;
 
 	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
+	vstrcatf(&buf, fmt, ap);
 	va_end(ap);
 
 	log_print(ERROR, "%s: %m (%u)", buf, errno);
+	
+	free(buf);
 	die();
 }
 
 void cerror(config_setting_t *cfg, const char *fmt, ...)
 {
 	va_list ap;
-	char buf[1024];
+	char *buf = NULL;
 
 	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
+	vstrcatf(&buf, fmt, ap);
 	va_end(ap);
 
 	log_print(ERROR, "%s in %s:%u", buf,
@@ -172,5 +176,7 @@ void cerror(config_setting_t *cfg, const char *fmt, ...)
 		   ? config_setting_source_file(cfg)
 		   : "(stdio)",
 		config_setting_source_line(cfg));
+
+	free(buf);
 	die();
 }

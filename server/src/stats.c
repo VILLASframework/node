@@ -21,11 +21,9 @@ void stats_header()
 
 int stats_line(struct path *p)
 {
-	char buf[33];
-	path_print(p, buf, sizeof(buf));
-
-	info("%-32s :   %-8u %-8u %-8u %-8u %-8u", buf,
-		p->sent, p->received, p->dropped, p->skipped, p->invalid);
+	char *buf = path_print(p);
+	info("%-32s :   %-8u %-8u %-8u %-8u %-8u", buf, p->sent, p->received, p->dropped, p->skipped, p->invalid);
+	free(buf);
 
 	return 0;
 }

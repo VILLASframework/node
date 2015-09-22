@@ -81,19 +81,17 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 int socket_parse(config_setting_t *cfg, struct node *n);
 
 /** @see node_vtable::print */
-int socket_print(struct node *n, char *buf, int len);
+char * socket_print(struct node *n);
 
 /** Generate printable socket address depending on the address family
  *
  * A IPv4 address is formatted as dotted decimals followed by the port/protocol number
  * A link layer address is formatted in hexadecimals digits seperated by colons and the inferface name
  *
- * @param buf	A buffer to be filled.
- * @param len	The length of the supplied buffer.
  * @param sa	A pointer to the socket address.
- * @retur	The length of the address in bytes.
+ * @return	The buffer containing the textual representation of the address. The caller is responsible to free() this buffer!
  */
-int socket_print_addr(char *buf, int len, struct sockaddr *sa);
+char * socket_print_addr(struct sockaddr *saddr);
 
 /** Parse a socket address depending on the address family
  *

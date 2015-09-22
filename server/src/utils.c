@@ -76,23 +76,29 @@ void die()
 		pthread_kill(_mtid, SIGINT);
 }
 
-int strap(char *dest, size_t size, const char *fmt,  ...)
+char * strcatf(char **dest, const char *fmt, ...)
 {
-	int ret;
-
 	va_list ap;
 	va_start(ap, fmt);
-	ret = vstrap(dest, size, fmt, ap);
+	vstrcatf(dest, fmt, ap);
 	va_end(ap);
 
-	return ret;
+	return *dest;
 }
 
-int vstrap(char *dest, size_t size, const char *fmt, va_list ap)
+char * vstrcatf(char **dest, const char *fmt, va_list ap)
 {
-	int len = strlen(dest);
+	char *tmp;
+	int n = *dest ? strlen(*dest) : 0;
+	int i = vasprintf(&tmp, fmt, ap);
 
-	return vsnprintf(dest + len, size - len, fmt, ap);
+	*dest = (char *)(realloc(*dest, n + i + 1));
+	if (*dest != NULL)
+		strncpy(*dest+n, tmp, i + 1);
+	
+	free(tmp);
+
+	return *dest;
 }
 
 cpu_set_t to_cpu_set(int set)

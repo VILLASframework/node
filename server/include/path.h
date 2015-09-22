@@ -138,10 +138,9 @@ void path_print_stats(struct path *p);
  * Format: source => [ dest1 dest2 dest3 ]
  *
  * @param p A pointer to the path structure.
- * @param buf A pointer to the buffer which should be filled.
- * @param len The length of buf in bytes.
+ * @return A pointer to a string containing a textual representation of the path.
  */
-int path_print(struct path *p, char *buf, int len);
+char * path_print(struct path *p);
 
 /** Conditionally execute the hooks
  *

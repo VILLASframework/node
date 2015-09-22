@@ -78,8 +78,11 @@ void hist_print(struct hist *h);
 /** Print ASCII style plot of histogram */
 void hist_plot(struct hist *h);
 
-/** Dump histogram data in Matlab format to buf */
-void hist_dump(struct hist *h, char *buf, int len);
+/** Dump histogram data in Matlab format.
+ *
+ * @return The string containing the dump. The caller is responsible to free() the buffer.
+ */
+char * hist_dump(struct hist *h);
 
 /** Prints Matlab struct containing all infos to file. */
 void hist_matlab(struct hist *h, FILE *f);

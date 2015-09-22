@@ -235,11 +235,12 @@ int ngsi_parse(config_setting_t *cfg, struct node *n)
 	return 0;
 }
 
-int ngsi_print(struct node *n, char *buf, int len)
+char * ngsi_print(struct node *n)
 {
 	struct ngsi *i = n->ngsi;
-	
-	return snprintf(buf, len, "endpoint=%s, timeout=%.3f secs",
+	char *buf = NULL;
+
+	return strcatf(&buf, "endpoint=%s, timeout=%.3f secs",
 		i->endpoint, i->timeout);
 }
 

@@ -84,14 +84,22 @@ double box_muller(float m, float s);
 /** Double precission uniform random variable */
 double randf();
 
-/** Safely append a format string to an existing string.
+/** Concat formatted string to an existing string.
  *
- * This function is similar to strlcat() from BSD.
+ * This function uses realloc() to resize the destination.
+ * Please make sure to only on dynamic allocated destionations!!!
+ *
+ * @param dest A pointer to a malloc() allocated memory region
+ * @param fmt A format string like for printf()
+ * @param ... Optional parameters like for printf()
+ * @retval The the new value of the dest buffer.
  */
-int strap(char *dest, size_t size, const char *fmt,  ...);
+char * strcatf(char **dest, const char *fmt, ...)
+	__attribute__ ((format(printf, 2, 3)));
 
-/** Variadic version of strap() */
-int vstrap(char *dest, size_t size, const char *fmt, va_list va);
+/** Variadic version of strcatv() */
+char * vstrcatf(char **dest, const char *fmt, va_list va)
+	__attribute__ ((format(printf, 2, 0)));
 
 /** Convert integer to cpu_set_t.
  *

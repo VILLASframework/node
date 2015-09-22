@@ -49,9 +49,9 @@ int socket_init(int argc, char * argv[], struct settings *set)
 
 		/* Determine outgoing interface */
 		if (if_get_egress((struct sockaddr *) &s->remote, &link)) {
-			char buf[128];
-			socket_print_addr(buf, sizeof(buf), (struct sockaddr *) &s->remote);
+			char *buf = socket_print_addr((struct sockaddr *) &s->remote);
 			error("Failed to get interface for socket address '%s'", buf);
+			free(buf);
 		}
 
 		int ifindex = rtnl_link_get_ifindex(link);
@@ -79,24 +79,26 @@ int socket_deinit()
 	return 0;
 }
 
-int socket_print(struct node *n, char *buf, int len)
+char * socket_print(struct node *n)
 {
 	struct socket *s = n->socket;
-
-	char local[INET6_ADDRSTRLEN + 16];
-	char remote[INET6_ADDRSTRLEN + 16];
-	char *layer = NULL;
+	char *layer = NULL, *buf = NULL;
 	
 	switch (s->layer) {
-		case LAYER_UDP: layer = "udp"; break;
-		case LAYER_IP:	layer = "ip"; break;
-		case LAYER_ETH:	layer = "eth"; break;
+		case LAYER_UDP: layer = "udp";	break;
+		case LAYER_IP:	layer = "ip";	break;
+		case LAYER_ETH:	layer = "eth";	break;
 	}
 
-	socket_print_addr(local, sizeof(local), (struct sockaddr *) &s->local);
-	socket_print_addr(remote, sizeof(remote), (struct sockaddr *) &s->remote);
+	char *local = socket_print_addr((struct sockaddr *) &s->local);
+	char *remote = socket_print_addr((struct sockaddr *) &s->remote);
 
-	return snprintf(buf, len, "layer=%s, local=%s, remote=%s", layer, local, remote);
+	strcatf(&buf, "layer=%s, local=%s, remote=%s", layer, local, remote);
+	
+	free(local);
+	free(remote);
+	
+	return buf;
 }
 
 int socket_open(struct node *n)
@@ -319,24 +321,25 @@ int socket_parse(config_setting_t *cfg, struct node *n)
 	return 0;
 }
 
-int socket_print_addr(char *buf, int len, struct sockaddr *saddr)
+char * socket_print_addr(struct sockaddr *saddr)
 {
 	union sockaddr_union *sa = (union sockaddr_union *) saddr;
+	char *buf = alloc(64);
 	
 	/* Address */
 	switch (sa->sa.sa_family) {
 		case AF_INET6:
-			inet_ntop(AF_INET6, &sa->sin6.sin6_addr, buf, len);
+			inet_ntop(AF_INET6, &sa->sin6.sin6_addr, buf, 64);
 			break;
 
 		case AF_INET:
-			inet_ntop(AF_INET, &sa->sin.sin_addr, buf, len);
+			inet_ntop(AF_INET, &sa->sin.sin_addr, buf, 64);
 			break;
 			
 		case AF_PACKET:
-			snprintf(buf, len, "%02x", sa->sll.sll_addr[0]);
+			strcatf(&buf, "%02x", sa->sll.sll_addr[0]);
 			for (int i = 1; i < sa->sll.sll_halen; i++)
-				strap(buf, len, ":%02x", sa->sll.sll_addr[i]);
+				strcatf(&buf, ":%02x", sa->sll.sll_addr[i]);
 			break;
 
 		default:
@@ -347,7 +350,7 @@ int socket_print_addr(char *buf, int len, struct sockaddr *saddr)
 	switch (sa->sa.sa_family) {
 		case AF_INET6:
 		case AF_INET:
-			strap(buf, len, ":%hu", ntohs(sa->sin.sin_port));
+			strcatf(&buf, ":%hu", ntohs(sa->sin.sin_port));
 			break;
 
 		case AF_PACKET: {
@@ -356,13 +359,13 @@ int socket_print_addr(char *buf, int len, struct sockaddr *saddr)
 			if (!link)
 				error("Failed to get interface for index: %u", sa->sll.sll_ifindex);
 			
-			strap(buf, len, "%%%s", rtnl_link_get_name(link));
-			strap(buf, len, ":%hu", ntohs(sa->sll.sll_protocol));
+			strcatf(&buf, "%%%s", rtnl_link_get_name(link));
+			strcatf(&buf, ":%hu", ntohs(sa->sll.sll_protocol));
 			break;
 		}
 	}
 
-	return 0;
+	return buf;
 }
 
 int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_layer layer, int flags)

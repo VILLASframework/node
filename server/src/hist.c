@@ -115,9 +115,9 @@ void hist_print(struct hist *h)
 	if (h->total - h->higher - h->lower > 0) {
 		hist_plot(h);
 
-		char buf[(h->length + 1) * 8];
-		hist_dump(h, buf, sizeof(buf));
+		char *buf = hist_dump(h);
 		info(buf);
+		free(buf);
 	}
 }
 
@@ -145,22 +145,23 @@ void hist_plot(struct hist *h)
 	}
 }
 
-void hist_dump(struct hist *h, char *buf, int len)
+char * hist_dump(struct hist *h)
 {
-	*buf = 0;
-
-	strap(buf, len, "[ ");
+	char *buf = alloc(128);
+	
+	strcatf(&buf, "[ ");
 
 	for (int i = 0; i < h->length; i++)
-		strap(buf, len, "%u ", h->data[i]);
+		strcatf(&buf, "%u ", h->data[i]);
 
-	strap(buf, len, "]");
+	strcatf(&buf, "]");
+	
+	return buf;
 }
 
 void hist_matlab(struct hist *h, FILE *f)
 {
-	char buf[h->length * 8];
-	hist_dump(h, buf, sizeof(buf));
+	char *buf = hist_dump(h);
 
 	fprintf(f, "%lu = struct( ", time(NULL));
 	fprintf(f, "'min', %f, 'max', %f, ", h->low, h->high);
@@ -171,4 +172,6 @@ void hist_matlab(struct hist *h, FILE *f)
 	fprintf(f, "'stddev', %f, ", hist_stddev(h));
 	fprintf(f, "'hist', %s ", buf);
 	fprintf(f, "),\n");
+	
+	free(buf);
 }

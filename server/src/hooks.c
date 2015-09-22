@@ -107,12 +107,12 @@ int hook_restart(struct path *p)
 {
 	if (p->current->sequence  == 0 &&
 	    p->previous->sequence <= UINT32_MAX - 32) {
-		char buf[33];
-		path_print(p, buf, sizeof(buf));
+		char *buf = path_print(p);
 		warn("Simulation for path %s restarted (prev->seq=%u, current->seq=%u)",
 			buf, p->previous->sequence, p->current->sequence);
+		free(buf);
 
-			path_reset(p);
+		path_reset(p);
 	}
 
 	return 0;

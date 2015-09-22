@@ -28,7 +28,7 @@
 
 /* Helper macros for virtual node type */
 #define node_type(n)			((n)->vt->type)
-#define node_print(n, b, l)		((n)->vt->print(n, b, l))
+#define node_print(n)			((n)->vt->print(n))
 
 #define node_read(n, p, ps, f, c)	((n)->vt->read(n, p, ps, f, c))
 #define node_write(n, p, ps, f, c)	((n)->vt->write(n, p, ps, f, c))
@@ -74,14 +74,12 @@ struct node_type {
 	 */
 	int (*parse)(config_setting_t *cfg, struct node *n);
 
-	/** Print details of socket connection
+	/** Returns a string with a textual represenation of this node.
 	 *
 	 * @param n	A pointer to the node structure
-	 * @param buf	The character buffer to be filled.
-	 * @param len	The length of the supplied buffer.
-	 * @return The	length of the address.
+	 * @return	A pointer to a dynamically allocated string. Must be freed().
 	 */
-	int (*print)(struct node *n, char *buf, int len);
+	char * (*print)(struct node *n);
 
 	/** Create new socket and connect(), bind(), accept().
 	 *

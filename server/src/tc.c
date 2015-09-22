@@ -84,53 +84,53 @@ int tc_parse(config_setting_t *cfg, struct rtnl_qdisc **netem)
 	return 0;
 }
 
-int tc_print(char *buf, size_t len, struct rtnl_qdisc *ne)
+char * tc_print(struct rtnl_qdisc *ne)
 {
-	*buf = 0; /* start from the beginning */
-
+	char *buf = NULL;
+	
 	if (rtnl_netem_get_limit(ne) > 0)
-		strap(buf, len, "limit %upkts", rtnl_netem_get_limit(ne));
+		strcatf(&buf, "limit %upkts", rtnl_netem_get_limit(ne));
 
 	if (rtnl_netem_get_delay(ne) > 0) {
-		strap(buf, len, "delay %.2fms ", rtnl_netem_get_delay(ne) / 1000.0);
+		strcatf(&buf, "delay %.2fms ", rtnl_netem_get_delay(ne) / 1000.0);
 		
 		if (rtnl_netem_get_jitter(ne) > 0) {
-			strap(buf, len, "jitter %.2fms ", rtnl_netem_get_jitter(ne) / 1000.0);
+			strcatf(&buf, "jitter %.2fms ", rtnl_netem_get_jitter(ne) / 1000.0);
 			
 			if (rtnl_netem_get_delay_correlation(ne) > 0)
-				strap(buf, len, "%u%% ", rtnl_netem_get_delay_correlation(ne));
+				strcatf(&buf, "%u%% ", rtnl_netem_get_delay_correlation(ne));
 		}
 	}
 	
 	if (rtnl_netem_get_loss(ne) > 0) {
-		strap(buf, len, "loss %u%% ", rtnl_netem_get_loss(ne));
+		strcatf(&buf, "loss %u%% ", rtnl_netem_get_loss(ne));
 	
 		if (rtnl_netem_get_loss_correlation(ne) > 0)
-			strap(buf, len, "%u%% ", rtnl_netem_get_loss_correlation(ne));
+			strcatf(&buf, "%u%% ", rtnl_netem_get_loss_correlation(ne));
 	}
 	
 	if (rtnl_netem_get_reorder_probability(ne) > 0) {
-		strap(buf, len, " reorder%u%% ", rtnl_netem_get_reorder_probability(ne));
+		strcatf(&buf, " reorder%u%% ", rtnl_netem_get_reorder_probability(ne));
 	
 		if (rtnl_netem_get_reorder_correlation(ne) > 0)
-			strap(buf, len, "%u%% ", rtnl_netem_get_reorder_correlation(ne));
+			strcatf(&buf, "%u%% ", rtnl_netem_get_reorder_correlation(ne));
 	}
 	
 	if (rtnl_netem_get_corruption_probability(ne) > 0) {
-		strap(buf, len, "corruption %u%% ", rtnl_netem_get_corruption_probability(ne));
+		strcatf(&buf, "corruption %u%% ", rtnl_netem_get_corruption_probability(ne));
 	
 		if (rtnl_netem_get_corruption_correlation(ne) > 0)
-			strap(buf, len, "%u%% ", rtnl_netem_get_corruption_correlation(ne));
+			strcatf(&buf, "%u%% ", rtnl_netem_get_corruption_correlation(ne));
 	}
 	
 	if (rtnl_netem_get_duplicate(ne) > 0) {
-		strap(buf, len, "duplication %u%% ", rtnl_netem_get_duplicate(ne));
+		strcatf(&buf, "duplication %u%% ", rtnl_netem_get_duplicate(ne));
 	
 		if (rtnl_netem_get_duplicate_correlation(ne) > 0)
-			strap(buf, len, "%u%% ", rtnl_netem_get_duplicate_correlation(ne));
+			strcatf(&buf, "%u%% ", rtnl_netem_get_duplicate_correlation(ne));
 	}
 	
-	return 0;
+	return buf;
 }
 
 int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent, int bands)

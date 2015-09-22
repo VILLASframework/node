@@ -52,7 +52,7 @@ int file_init(int argc, char *argv[], struct settings *set);
 int file_deinit();
 
 /** @see node_vtable::print */
-int file_print(struct node *n, char *buf, int len);
+char * file_print(struct node *n);
 
 /** @see node_vtable::parse */
 int file_parse(config_setting_t *cfg, struct node *n);
