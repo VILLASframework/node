@@ -35,7 +35,9 @@ struct node;
 struct ngsi {
 	const char *endpoint;
 	const char *token;
+
 	double timeout;
+	int ssl_verify;
 
 	enum ngsi_structure {
 		NGSI_FLAT,

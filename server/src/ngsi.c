@@ -239,6 +239,9 @@ int ngsi_parse(config_setting_t *cfg, struct node *n)
 	if (!config_setting_lookup_string(cfg, "endpoint", &i->endpoint))
 		cerror(cfg, "Missing NGSI endpoint for node '%s'", n->name);
 	
+	if (!config_setting_lookup_bool(cfg, "ssl_verify", &i->ssl_verify))
+		i->ssl_verify = 1; /* verify by default */
+	
 	if (!config_setting_lookup_float(cfg, "timeout", &i->timeout))
 		i->timeout = 1; /* default value */
 	
@@ -293,6 +296,7 @@ int ngsi_open(struct node *n)
 	snprintf(buf, sizeof(buf), "%s/v1/updateContext", i->endpoint);
 	curl_easy_setopt(i->curl, CURLOPT_URL, buf);
 	
+	curl_easy_setopt(i->curl, CURLOPT_SSL_VERIFYPEER, i->ssl_verify);
 	curl_easy_setopt(i->curl, CURLOPT_TIMEOUT_MS, i->timeout * 1e3);
 	curl_easy_setopt(i->curl, CURLOPT_HTTPHEADER, i->headers);
 	
