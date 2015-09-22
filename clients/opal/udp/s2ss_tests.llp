@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<Project>
+    <General>
+        <att_name>s2ss_tests</att_name>
+        <att_description>This is a project!</att_description>
+        <att_autosave>ON</att_autosave>
+        <att_filename>D:\msv\svo\opal\s2ss_tests\s2ss_tests.llp</att_filename>
+    </General>
+    <Models>
+        <Model>
+            <Path>
+                <Relative>models\send_receive\send_receive.mdl</Relative>
+                <Absolute>D:\msv\svo\opal\s2ss_tests\models\send_receive\send_receive.mdl</Absolute>
+                <UNC>D:\msv\svo\opal\s2ss_tests\models\send_receive\send_receive.mdl</UNC>
+            </Path>
+        </Model>
+    </Models>
+</Project>
