@@ -178,6 +178,7 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 
 	/* Wait until next packet received */
 	poll(&(struct pollfd) { .fd = s->sd, .events = POLLIN }, 1, -1);
+
 	/* Get size of received packet in bytes */
 	ioctl(s->sd, FIONREAD, &bytes);
 
@@ -203,17 +204,21 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 	debug(10, "Received packet of %u bytes: %u samples a %u values per sample", bytes, cnt, (bytes / cnt) / 4 - 4);
 
 	for (int i = 0; i < cnt; i++) {
-		struct msg *n = &pool[(first+poolsize+i) % poolsize];
-
-		/* Check integrity of packet */
-		bytes -= MSG_LEN(n);
+		struct msg *m = &pool[(first+poolsize+i) % poolsize];
 
 		/* Convert headers to host byte order */
-		n->sequence = ntohs(n->sequence);
+		m->sequence = ntohl(m->sequence);
+		m->length = ntohs(m->length);
+
+		/* Check integrity of packet */
+		if (bytes / cnt != MSG_LEN(m))
+			error("Invalid message len: %u for node '%s'", MSG_LEN(m), n->name);
+
+		bytes -= MSG_LEN(m);
 
 		/* Convert message to host endianess */
-		if (n->endian != MSG_ENDIAN_HOST)
-			msg_swap(n);
+		if (m->endian != MSG_ENDIAN_HOST)
+			msg_swap(m);
 	}
 
 	/* Check packet integrity */
