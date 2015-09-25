@@ -87,7 +87,6 @@ static void *SendToIPPort(void *arg)
 
 	/* Data from the S2SS server */
 	struct msg msg = MSG_INIT(0);
-	int msg_size;
 
 #ifdef _DEBUG // TODO: workaround
 	msg_send = &msg;
@@ -96,69 +95,65 @@ static void *SendToIPPort(void *arg)
 	OpalPrint("%s: SendToIPPort thread started\n", PROGNAME);
 
 	OpalGetNbAsyncSendIcon(&nbSend);
-	if (nbSend >= 1) {
-		do {
-			/* This call unblocks when the 'Data Ready' line of a send icon is asserted. */
-			if ((n = OpalWaitForAsyncSendRequest(&SendID)) != EOK) {
-				ModelState = OpalGetAsyncModelState();
-				if ((ModelState != STATE_RESET) && (ModelState != STATE_STOP)) {
-					OpalSetAsyncSendIconError(n, SendID);
-					OpalPrint("%s: OpalWaitForAsyncSendRequest(), errno %d\n", PROGNAME, n);
-				}
-
-				continue;
+	if (nbSend < 1) {
+		OpalPrint("%s: SendToIPPort: No transimission block for this controller. Stopping thread.\n", PROGNAME);
+		return NULL;
+	}
+	
+	do {
+		/* This call unblocks when the 'Data Ready' line of a send icon is asserted. */
+		if ((n = OpalWaitForAsyncSendRequest(&SendID)) != EOK) {
+			ModelState = OpalGetAsyncModelState();
+			if ((ModelState != STATE_RESET) && (ModelState != STATE_STOP)) {
+				OpalSetAsyncSendIconError(n, SendID);
+				OpalPrint("%s: OpalWaitForAsyncSendRequest(), errno %d\n", PROGNAME, n);
 			}
 
-			/* No errors encountered yet */
+			continue;
+		}
+
+		/* No errors encountered yet */
+		OpalSetAsyncSendIconError(0, SendID);
+
+		/* Get the size of the data being sent by the unblocking SendID */
+		OpalGetAsyncSendIconDataLength(&mdldata_size, SendID);
+		if (mdldata_size / sizeof(double) > MSG_VALUES) {
+			OpalPrint("%s: Number of signals for SendID=%d exceeds allowed maximum (%d)\n",
+				PROGNAME, SendID, MSG_VALUES);
+			return NULL;
+		}
+
+		/* Read data from the model */
+		OpalGetAsyncSendIconData(mdldata, mdldata_size, SendID);
+		
+		msg.length = mdldata_size / sizeof(double);
+		for (i = 0; i < msg.length; i++)
+			msg.data[i].f = (float) mdldata[i];
+
+		/* Convert to network byte order */
+		msg.sequence = htonl(seq++);
+		msg.length = htons(msg.length);
+
+		/* Perform the actual write to the ip port */
+		if (SendPacket((char *) &msg, MSG_LEN(&msg)) < 0)
+			OpalSetAsyncSendIconError(errno, SendID);
+		else
 			OpalSetAsyncSendIconError(0, SendID);
 
-			/* Get the size of the data being sent by the unblocking SendID */
-			OpalGetAsyncSendIconDataLength(&mdldata_size, SendID);
-			if (mdldata_size / sizeof(double) > MSG_VALUES) {
-				OpalPrint("%s: Number of signals for SendID=%d exceeds allowed maximum (%d)\n",
-					PROGNAME, SendID, MSG_VALUES);
+		/* This next call allows the execution of the "asynchronous" process
+		 * to actually be synchronous with the model. To achieve this, you
+		 * should set the "Sending Mode" in the Async_Send block to
+		 * NEED_REPLY_BEFORE_NEXT_SEND or NEED_REPLY_NOW. This will force
+		 * the model to wait for this process to call this
+		* OpalAsyncSendRequestDone function before continuing. */
+		OpalAsyncSendRequestDone(SendID);
 
-				return NULL;
-			}
+		/* Before continuing, we make sure that the real-time model
+		 * has not been stopped. If it has, we quit. */
+		ModelState = OpalGetAsyncModelState();
+	} while ((ModelState != STATE_RESET) && (ModelState != STATE_STOP));
 
-			/* Read data from the model */
-			OpalGetAsyncSendIconData(mdldata, mdldata_size, SendID);
-
-/******* FORMAT TO SPECIFIC PROTOCOL HERE *****************************/
-			// msg.dev_id = SendID; /* Use the SendID as a device ID here */
-			msg.sequence = htons(seq++);
-			msg.length = mdldata_size / sizeof(double);
-
-			for (i = 0; i < msg.length; i++)
-				msg.data[i].f = (float) mdldata[i];
-
-			msg_size = MSG_LEN(&msg);
-/**********************************************************************/
-
-			/* Perform the actual write to the ip port */
-			if (SendPacket((char *) &msg, msg_size) < 0)
-				OpalSetAsyncSendIconError(errno, SendID);
-			else
-				OpalSetAsyncSendIconError(0, SendID);
-
-			/* This next call allows the execution of the "asynchronous" process
-			 * to actually be synchronous with the model. To achieve this, you
-			 * should set the "Sending Mode" in the Async_Send block to
-			 * NEED_REPLY_BEFORE_NEXT_SEND or NEED_REPLY_NOW. This will force
-			 * the model to wait for this process to call this
-			 * OpalAsyncSendRequestDone function before continuing. */
-			OpalAsyncSendRequestDone(SendID);
-
-			/* Before continuing, we make sure that the real-time model
-			 * has not been stopped. If it has, we quit. */
-			ModelState = OpalGetAsyncModelState();
-		} while ((ModelState != STATE_RESET) && (ModelState != STATE_STOP));
-
-		OpalPrint("%s: SendToIPPort: Finished\n", PROGNAME);
-	}
-	else {
-		OpalPrint("%s: SendToIPPort: No transimission block for this controller. Stopping thread.\n", PROGNAME);
-	}
+	OpalPrint("%s: SendToIPPort: Finished\n", PROGNAME);
 
 	return NULL;
 }
@@ -176,90 +171,81 @@ static void *RecvFromIPPort(void *arg)
 
 	/* Data from the S2SS server */
 	struct msg msg = MSG_INIT(0);
-	unsigned msg_size;
 
 	OpalPrint("%s: RecvFromIPPort thread started\n", PROGNAME);
 
 	OpalGetNbAsyncRecvIcon(&nbRecv);
-	if (nbRecv >= 1) {
-		do {
-
-/******* FORMAT TO SPECIFIC PROTOCOL HERE ******************************/
-			n  = RecvPacket((char *) &msg, sizeof(msg), 1.0);
-
-			/** @todo: Check and ntohs() sequence number! */
-
-			if (msg.version != MSG_VERSION) {
-				OpalPrint("%s: Received message with unknown version. Skipping..\n", PROGNAME);
-				continue;
-			}
-			else if (msg.type != MSG_TYPE_DATA) {
-				OpalPrint("%s: Received no data. Skipping..\n", PROGNAME);
-				continue;
-			}
-			
-			/** @todo: We may check the sequence number here. */
-
-			msg.sequence = ntohs(msg.sequence);
-			
-			if (msg.endian != MSG_ENDIAN_HOST)
-				msg_swap(&msg);
-			
-			msg_size =  MSG_LEN(&msg);
-/***********************************************************************/
-
-			if (n < 1) {
-				ModelState = OpalGetAsyncModelState();
-				if ((ModelState != STATE_RESET) && (ModelState != STATE_STOP)) {
-					// n ==  0 means timeout, so we continue silently
-					//if (n == 0)
-					//	OpalPrint("%s: Timeout while waiting for data\n", PROGNAME, errno);
-					// n == -1 means a more serious error, so we print it
-					if (n == -1)
-						OpalPrint("%s: Error %d while waiting for data\n", PROGNAME, errno);
-					continue;
-				}
-				break;
-			}
-			else if (n != msg_size) {
-				OpalPrint("%s: Received incoherent packet (size: %d, complete: %d)\n", PROGNAME, n, msg_size);
-				continue;
-			}
-
-/******* FORMAT TO SPECIFIC PROTOCOL HERE *******************************/
-			OpalSetAsyncRecvIconStatus(msg.sequence, RecvID);	/* Set the Status to the message ID */
-			OpalSetAsyncRecvIconError(0, RecvID);			/* Set the Error to 0 */
-
-			/* Get the number of signals to send back to the model */
-			OpalGetAsyncRecvIconDataLength(&mdldata_size, RecvID);
-
-			if (mdldata_size / sizeof(double) > MSG_VALUES) {
-				OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds allowed maximum (%d)\n",
-					PROGNAME, RecvID, mdldata_size / sizeof(double), MSG_VALUES);
-				return NULL;
-			}
-
-			if (mdldata_size / sizeof(double) > msg.length) {
-				OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds what was received (%d)\n",
-					PROGNAME, RecvID, mdldata_size / sizeof(double), msg.length);
-			}
-
-			for (i = 0; i < msg.length; i++)
-				mdldata[i] = (double) msg.data[i].f;
-/************************************************************************/
-
-			OpalSetAsyncRecvIconData(mdldata, mdldata_size, RecvID);
-
-			/* Before continuing, we make sure that the real-time model
-			 * has not been stopped. If it has, we quit. */
-			ModelState = OpalGetAsyncModelState();
-		} while ((ModelState != STATE_RESET) && (ModelState != STATE_STOP));
-
-		OpalPrint("%s: RecvFromIPPort: Finished\n", PROGNAME);
-	}
-	else {
+	if (nbRecv < 1) {
 		OpalPrint("%s: RecvFromIPPort: No reception block for this controller. Stopping thread.\n", PROGNAME);
+		return NULL;
 	}
+
+	do {
+		/* Receive message */
+		n  = RecvPacket((char *) &msg, sizeof(msg), 1.0);
+		if (n < 1) {
+			ModelState = OpalGetAsyncModelState();
+			if ((ModelState != STATE_RESET) && (ModelState != STATE_STOP)) {
+				if (n ==  0) /* timeout, so we continue silently */
+					OpalPrint("%s: Timeout while waiting for data\n", PROGNAME, errno);
+				if (n == -1) /* a more serious error, so we print it */
+					OpalPrint("%s: Error %d while waiting for data\n", PROGNAME, errno);
+					
+				continue;
+			}
+			break;
+		}
+
+		/* Check message contents */
+		if (msg.version != MSG_VERSION) {
+			OpalPrint("%s: Received message with unknown version. Skipping..\n", PROGNAME);
+			continue;
+		}
+		
+		if (msg.type != MSG_TYPE_DATA) {
+			OpalPrint("%s: Received no data. Skipping..\n", PROGNAME);
+			continue;
+		}
+			
+		/* Convert to host byte order */
+		msg.sequence = ntohl(msg.sequence);
+		msg.length = ntohs(msg.length);
+		
+		if (n != MSG_LEN(&msg)) {
+			OpalPrint("%s: Received incoherent packet (size: %d, complete: %d)\n", PROGNAME, n, MSG_LEN(&msg));
+			continue;
+		}
+			
+		if (msg.endian != MSG_ENDIAN_HOST)
+			msg_swap(&msg);
+
+		/* Update OPAL model */
+		OpalSetAsyncRecvIconStatus(msg.sequence, RecvID);	/* Set the Status to the message ID */
+		OpalSetAsyncRecvIconError(0, RecvID);			/* Set the Error to 0 */
+
+		/* Get the number of signals to send back to the model */
+		OpalGetAsyncRecvIconDataLength(&mdldata_size, RecvID);
+		if (mdldata_size / sizeof(double) > MSG_VALUES) {
+			OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds allowed maximum (%d)\n",
+				PROGNAME, RecvID, mdldata_size / sizeof(double), MSG_VALUES);
+			return NULL;
+		}
+
+		if (mdldata_size / sizeof(double) > msg.length)
+			OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds what was received (%d)\n",
+				PROGNAME, RecvID, mdldata_size / sizeof(double), msg.length);
+
+		for (i = 0; i < msg.length; i++)
+			mdldata[i] = (double) msg.data[i].f;
+
+		OpalSetAsyncRecvIconData(mdldata, mdldata_size, RecvID);
+
+		/* Before continuing, we make sure that the real-time model
+		 * has not been stopped. If it has, we quit. */
+		ModelState = OpalGetAsyncModelState();
+	} while ((ModelState != STATE_RESET) && (ModelState != STATE_STOP));
+
+	OpalPrint("%s: RecvFromIPPort: Finished\n", PROGNAME);
 
 	return NULL;
 }
