@@ -111,7 +111,7 @@ static void usage(const char *name)
 #ifdef ENABLE_SOCKET
 	printf(" - socket: Network socket (libnl3)\n");
 #endif
-#ifdef ENABLE_PCI
+#ifdef ENABLE_GTFPGA
 	printf(" - gtfpga: GTFPGA PCIe card (libpci)\n");
 #endif
 #ifdef ENABLE_OPAL_ASYNC
