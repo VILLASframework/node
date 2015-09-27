@@ -12,11 +12,11 @@ Install libraries including developement headers for:
  
 Use the following command to install the dependencies under Debian-based distributions:
 
-    $ sudo apt-get install libconfig-dev libnl-3-dev libnl-route-3-dev
+    $ sudo apt-get install build-essential pkg-config libconfig-dev libnl-3-dev libnl-route-3-dev libpci-deb libjansson-dev libcurl4-openssl-dev uuid-dev
 
 or the following line for Fedora / CentOS / Redhat systems:
 
-    $ sudo yum install iproute2 libconfig-devel libnl3-devel
+    $ sudo yum install pkgconfig gcc make libconfig-devel libnl3-devel pciutils-devel libcurl-devel jansson-devel libuuid-devel
 
 **Important:** Please note that the server requires the
 [iproute2](http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2)
