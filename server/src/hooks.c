@@ -13,6 +13,7 @@
  *********************************************************************************/
 
 #include <string.h>
+#include <math.h>
 
 #include "timing.h"
 #include "config.h"
@@ -24,6 +25,33 @@
 /* Some hooks can be configured by constants in te file "config.h" */
 
 struct list hooks;
+
+REGISTER_HOOK("deduplicate", 99, hook_deduplicate, HOOK_DEDUP_TYPE)
+int hook_deduplicate(struct path *p)
+{
+	int ret = 0;
+#if HOOK_DEDUP_TYPE == HOOK_ASYNC
+	/** Thread local storage (TLS) is used to maintain a copy of the last run of the hook */
+	static __thread struct msg previous = MSG_INIT(0);
+	struct msg *prev = &previous;
+#else
+	struct msg *prev = p->previous;
+#endif
+	struct msg *cur = p->current;
+	
+	for (int i = 0; i < MIN(cur->length, prev->length); i++) {
+		if (fabs(cur->data[i].f - prev->data[i].f) > HOOK_DEDUP_TRESH)
+			goto out;
+	}
+	
+	ret = -1; /* no appreciable change in values, we will drop the packet */
+
+out:
+#if HOOK_DEDUP_TYPE == HOOK_ASYNC
+	memcpy(prev, cur, sizeof(struct msg)); /* save current message for next run */
+#endif
+	return ret;
+}
 
 REGISTER_HOOK("print", 99, hook_print, HOOK_MSG)
 int hook_print(struct path *p)
