@@ -87,31 +87,39 @@ int hook_ts(struct path *p)
 	return 0;
 }
 
-REGISTER_HOOK("fir", 99, hook_fir, HOOK_POST)
+REGISTER_HOOK("fir", 99, hook_fir, HOOK_MSG)
 int hook_fir(struct path *p)
 {
-	/** Simple FIR-LP: F_s = 1kHz, F_pass = 100 Hz, F_block = 300
+	/** Coefficients for simple FIR-LowPass:
+	 *   F_s = 1kHz, F_pass = 100 Hz, F_block = 300
+	 *
 	 * Tip: Use MATLAB's filter design tool and export coefficients
-	 *      with the integrated C-Header export */
-	static const double coeffs[] = {
-		-0.003658148158728, -0.008882653268281, 0.008001024183003,
-		0.08090485991761,    0.2035239551043,   0.3040703593515,
-		0.3040703593515,     0.2035239551043,   0.08090485991761,
-		0.008001024183003,  -0.008882653268281,-0.003658148158728 };
+	 *      with the integrated C-Header export
+	 */
+	static const double coeffs[] = HOOK_FIR_COEFFS;
+	
+	/** Per path thread local storage for unfiltered sample values.
+	 * The message ringbuffer (p->pool & p->current) will contain filtered data!
+	 */
+	static __thread double *past = NULL;
+	
+	/** @todo Avoid dynamic allocation at runtime */
+	if (!past)
+		alloc(p->poolsize * sizeof(double));
+	
+	
+	/* Current value of interest */
+	float *cur = &p->current->data[HOOK_FIR_INDEX].f;
+	
+	/* Save last sample, unfiltered */
+	past[p->received % p->poolsize] = *cur;
 
-	/* Accumulator */
-	double sum = 0;
-
-	/** Trim FIR length to length of history buffer */
-	int len = MIN(ARRAY_LEN(coeffs), p->poolsize);
-
-	for (int i = 0; i < len; i++) {
-		struct msg *old = &p->pool[(p->poolsize+p->received-i) % p->poolsize];
-
-		sum += coeffs[i] * old->data[HOOK_FIR_INDEX].f;
-	}
-
-	p->current->data[HOOK_FIR_INDEX].f = sum;
+	/* Reset accumulator */
+	*cur = 0;
+	
+	/* FIR loop */
+	for (int i = 0; i < MIN(ARRAY_LEN(coeffs), p->poolsize); i++)
+		*cur += coeffs[i] * past[p->received+p->poolsize-i];
 
 	return 0;
 }
