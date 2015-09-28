@@ -89,7 +89,7 @@ static size_t ngsi_request_writer(void *contents, size_t size, size_t nmemb, voi
 static int ngsi_request(CURL *handle, json_t *content, json_t **response)
 {
 	struct ngsi_response chunk = { 0 };
-	long code;
+
 	char *post = json_dumps(content, JSON_INDENT(4));
 
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, ngsi_request_writer);
@@ -103,8 +103,12 @@ static int ngsi_request(CURL *handle, json_t *content, json_t **response)
 	if (ret)
 		error("HTTP request failed: %s", curl_easy_strerror(ret));
 
+	long code;
+	double time;
+	curl_easy_getinfo(handle, CURLINFO_TOTAL_TIME, &time);
 	curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &code);
 	
+	debug(3, "Request to context broker completed in %.4f seconds", time);
 	debug(20, "Response from context broker (code=%ld):\n%s", code, chunk.data);
 	
 	json_error_t err;
