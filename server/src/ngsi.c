@@ -1,3 +1,4 @@
+
 /** Node type: OMA Next Generation Services Interface 10 (NGSI) (FIWARE context broker)
  *
  * This file implements the NGSI context interface. NGSI is RESTful HTTP is specified by
@@ -328,10 +329,13 @@ int ngsi_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
 	struct ngsi *i = n->ngsi;
-	struct msg *m = &pool[first];
-	
+	struct msg *m = &pool[first % poolsize];
+
+	if (cnt > 1)
+		error("NGSI nodes only can send a single message at once");
+
 	/* Update context */
-	for (int j = 0; j < i->context_len; j++) {
+	for (int j = 0; j < MIN(i->context_len, m->length); j++) {
 		json_t *attribute = i->context_map[j];
 		json_t *value = json_object_get(attribute, "value");
 		json_t *metadatas = json_object_get(attribute, "metadatas");
