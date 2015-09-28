@@ -76,6 +76,9 @@ struct hook {
  * @{
  */
 
+/** Example hook: Drop messages whose values are similiar to the previous ones */
+int hook_deduplicate(struct path *);
+
 /** Example hook: Print the message. */
 int hook_print(struct path *p);
 

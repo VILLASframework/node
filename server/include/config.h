@@ -53,10 +53,12 @@
 	  { "/dev/sda2", "\x53\xf6\xb5\xeb\x8b\x16\x46\xdc\x8d\x8f\x5b\x70\xb8\xc9\x1a\x2a", 0x468 } }
 
 /* Hook function configuration */
-#define HOOK_FIR_INDEX		 1 /**< The first value of message should be filtered. */
-#define HOOK_TS_INDEX		-1 /**< The last value of message should be overwritten by a timestamp. */
-#define HOOK_DECIMATE_RATIO 	30 /**< Only forward every 30th message to the destination nodes. */
+#define HOOK_FIR_INDEX		 1	/**< The first value of message should be filtered. */
+#define HOOK_TS_INDEX		-1	/**< The last value of message should be overwritten by a timestamp. */
+#define HOOK_DECIMATE_RATIO 	30	/**< Only forward every 30th message to the destination nodes. */
 
+#define HOOK_DEDUP_TYPE		HOOK_ASYNC
+#define HOOK_DEDUP_TRESH	1e-3	/**< Do not send messages when difference of values to last message is smaller than this threshold */
 /** Global configuration */
 struct settings {
 	/** Process priority (lower is better) */
