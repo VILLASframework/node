@@ -154,11 +154,8 @@ check:
 void test_rtt() {
 	struct msg m = MSG_INIT(sizeof(struct timespec) / sizeof(float));
 
-	struct timespec ts;
-	struct timespec *ts1 = (struct timespec *) &m.data;
-	struct timespec *ts2 = alloc(sizeof(struct timespec));
+	struct timespec sent, recv;
 
-	double rtt;
 	struct hist hist;
 	hist_create(&hist, low, high, res);
 
@@ -166,32 +163,29 @@ void test_rtt() {
 	fprintf(stdout, "%17s%5s%10s%10s%10s%10s%10s\n", "timestamp", "seq", "rtt", "min", "max", "mean", "stddev");
 
 	while (running && (count < 0 || count--)) {
-		clock_gettime(CLOCK_ID, ts1);
+		clock_gettime(CLOCK_ID, &sent);
+		m.ts.sec = sent.tv_sec;
+		m.ts.nsec = sent.tv_nsec;
+
 		node_write_single(node, &m); /* Ping */
 		node_read_single(node, &m);  /* Pong */
-		clock_gettime(CLOCK_ID, ts2);
+		
+		clock_gettime(CLOCK_ID, &recv);
 
-		rtt = time_delta(ts1, ts2);
+		double rtt = time_delta(&recv, &sent);
 
 		if (rtt < 0)
 			warn("Negative RTT: %f", rtt);
 
 		hist_put(&hist, rtt);
 
-		clock_gettime(CLOCK_REALTIME, &ts);
-		time_fprint(stdout, &ts);
-
 		m.sequence++;
 
-		fprintf(stdout, "%5u%10.3f%10.3f%10.3f%10.3f%10.3f\n", m.sequence,
+		fprintf(stdout, "%10lu.%06lu%5u%10.3f%10.3f%10.3f%10.3f%10.3f\n", 
+			recv.tv_sec, recv.tv_nsec / 1000, m.sequence,
 			1e3 * rtt, 1e3 * hist.lowest, 1e3 * hist.highest,
 			1e3 * hist_mean(&hist), 1e3 * hist_stddev(&hist));
 	}
-
-	/* Housekeeping */
-	free(ts2);
-
-	hist_print(&hist);
 
 	struct stat st;
 	if (!fstat(fd, &st)) {
@@ -201,5 +195,6 @@ void test_rtt() {
 	else
 		error("Invalid file descriptor: %u", fd);
 
+	hist_print(&hist);
 	hist_destroy(&hist);
 }
