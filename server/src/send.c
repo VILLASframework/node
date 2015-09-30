@@ -89,6 +89,8 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	list_init(&nodes, (dtor_cb_t) node_destroy);
+	
+	log_reset();
 	config_init(&config);
 	config_parse(argv[optind], &config, &set, &nodes, NULL);
 

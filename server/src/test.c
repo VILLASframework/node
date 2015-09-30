@@ -88,6 +88,7 @@ int main(int argc, char *argv[])
 	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT, &sa_quit, NULL);
 
+	log_reset();
 	config_init(&config);
 	config_parse(argv[1], &config, &settings, &nodes, NULL);
 
