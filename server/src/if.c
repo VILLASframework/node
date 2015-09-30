@@ -34,7 +34,11 @@ struct interface * if_create(struct rtnl_link *link)
 
 	debug(3, "Created interface '%s'", rtnl_link_get_name(i->nl_link));
 
-	if_get_irqs(i);
+	int  n = if_get_irqs(i);
+	if (n > 0)
+		debug(6, "Found %u IRQs for interface '%s'", n, rtnl_link_get_name(i->nl_link));
+	else
+		warn("Did not found any interrupts for interface '%s'", rtnl_link_get_name(i->nl_link));
 
 	list_init(&i->sockets, NULL);
 	list_push(&interfaces, i);
@@ -177,8 +181,6 @@ int if_get_irqs(struct interface *i)
 
 		closedir(dir);
 	}
-	
-	debug(6, "Found %u IRQs for interface '%s'", n, rtnl_link_get_name(i->nl_link));
 
 	return 0;
 }

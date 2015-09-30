@@ -31,6 +31,9 @@ static void gtfpga_debug(char *msg, ...) {
 
 int gtfpga_init(int argc, char * argv[], struct settings *set)
 {
+	if (check_root())
+		error("The gtfpga node-type requires superuser privileges!");
+
 	pacc = pci_alloc();		/* Get the pci_access structure */
 	if (!pacc)
 		error("Failed to allocate PCI access structure");

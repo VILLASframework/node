@@ -60,6 +60,11 @@ static void quit()
 
 static void realtime_init()
 { INDENT
+	if (check_kernel_cmdline())
+		warn("You should reserve some cores for the server (see 'isolcpus')");
+	if (check_kernel_rtpreempt())
+		warn("We recommend to use an RT_PREEMPT patched kernel!");
+	
 	/* Use FIFO scheduler with real time priority */
 	if (settings.priority) {
 		struct sched_param param = {
@@ -68,18 +73,20 @@ static void realtime_init()
 
 		if (sched_setscheduler(0, SCHED_FIFO, &param))
 			serror("Failed to set real time priority");
-		else
-			debug(3, "Set task priority to %u", settings.priority);
+
+		debug(3, "Set task priority to %u", settings.priority);
 	}
+	warn("Use setting 'priority' to enable real-time scheduling!");
 
 	/* Pin threads to CPUs by setting the affinity */
 	if (settings.affinity) {
 		cpu_set_t cset = to_cpu_set(settings.affinity);
 		if (sched_setaffinity(0, sizeof(cset), &cset))
 			serror("Failed to set CPU affinity to '%#x'", settings.affinity);
-		else
-			debug(3, "Set affinity to %#x", settings.affinity);
+
+		debug(3, "Set affinity to %#x", settings.affinity);
 	}
+	warn("Use setting 'affinity' to pin process to isolated CPU cores!");
 }
 
 /* Setup exit handler */
@@ -149,8 +156,6 @@ int main(int argc, char *argv[])
 		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
 	/* Checks system requirements*/
-	if (check_root())
-		error("The server requires superuser privileges!");
 #ifdef LICENSE
 	if (check_license_trace())
 		error("This software should not be traced!");
@@ -161,10 +166,6 @@ int main(int argc, char *argv[])
 #endif
 	if (check_kernel_version())
 		error("Your kernel version is to old: required >= %u.%u", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
-	if (check_kernel_cmdline())
-		warn("You should reserve some cores for the server (see 'isolcpus')");
-	if (check_kernel_rtpreempt())
-		warn("We recommend to use an RT_PREEMPT patched kernel!");
 
 	/* Initialize lists */
 	list_init(&nodes, (dtor_cb_t) node_destroy);
