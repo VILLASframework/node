@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 {
 	int reverse = 0;
 
-	struct config_t config;
+	config_t config;
 
 	_mtid = pthread_self();
 

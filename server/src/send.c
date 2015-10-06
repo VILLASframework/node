@@ -28,7 +28,7 @@ struct list nodes;
 /** The global configuration */
 struct settings settings;
 
-static struct config_t config;
+static config_t config;
 static struct settings set;
 static struct msg *pool;
 static struct node *node;

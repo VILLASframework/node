@@ -102,7 +102,7 @@ int config_parse_path(config_setting_t *cfg,
 	struct path *p = path_create();
 
 	/* Input node */
-	struct config_setting_t *cfg_in = config_setting_get_member(cfg, "in");
+	config_setting_t *cfg_in = config_setting_get_member(cfg, "in");
 	if (!cfg_in || config_setting_type(cfg_in) != CONFIG_TYPE_STRING)
 		cerror(cfg, "Invalid input node for path");
 
@@ -112,7 +112,7 @@ int config_parse_path(config_setting_t *cfg,
 		cerror(cfg_in, "Invalid input node '%s'", in);
 
 	/* Output node(s) */
-	struct config_setting_t *cfg_out = config_setting_get_member(cfg, "out");
+	config_setting_t *cfg_out = config_setting_get_member(cfg, "out");
 	if (cfg_out)
 		config_parse_nodelist(cfg_out, &p->destinations, nodes);
 
@@ -122,7 +122,7 @@ int config_parse_path(config_setting_t *cfg,
 		cerror(cfg, "Missing output node for path");
 
 	/* Optional settings */
-	struct config_setting_t *cfg_hook = config_setting_get_member(cfg, "hook");
+	config_setting_t *cfg_hook = config_setting_get_member(cfg, "hook");
 	if (cfg_hook)
 		config_parse_hooklist(cfg_hook, p->hooks);
 
