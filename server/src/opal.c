@@ -122,9 +122,9 @@ int opal_print_global(struct opal_global *g)
 	free(rbuf);
 
 	debug(2, "Control Block Parameters:");
-	for (int i=0; i<GENASYNC_NB_FLOAT_PARAM; i++)
+	for (int i = 0; i < GENASYNC_NB_FLOAT_PARAM; i++)
 		debug(2, "FloatParam[]%u] = %f", i, og->params.FloatParam[i]);
-	for (int i=0; i<GENASYNC_NB_STRING_PARAM; i++)
+	for (int i = 0; i < GENASYNC_NB_STRING_PARAM; i++)
 		debug(2, "StringParam[%u] = %s", i, og->params.StringParam[i]);
 
 	return 0;
@@ -174,7 +174,7 @@ int opal_open(struct node *n)
 	int sfound = 0, rfound = 0;
 	for (int i = 0; i < og->send_icons; i++)
 		sfound += og->send_ids[i] == o->send_id;
-	for (int i = 0; i<og->send_icons; i++)
+	for (int i = 0; i < og->send_icons; i++)
 		rfound += og->send_ids[i] == o->send_id;
 
 	if (!sfound)
