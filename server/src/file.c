@@ -185,13 +185,13 @@ int file_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 						serror("Failed to wait for timer");
 				}
 
-				msg_fscan(f->in, cur);
+				msg_fscan(f->in, cur, NULL, NULL);
 			}
 			else {
 				struct timespec until;
 			
 				/* Get message and timestamp */
-				msg_fscan(f->in, cur);
+				msg_fscan(f->in, cur, NULL, NULL);
 
 				/* Wait for next message / sampe */
 				until = time_add(&MSG_TS(cur), &f->offset);
@@ -215,8 +215,10 @@ int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 		struct timespec ts;
 		clock_gettime(CLOCK_REALTIME, &ts);
 
-		for (i = 0; i < cnt; i++)
-			msg_fprint(f->out, &pool[(first+i) % poolsize]);
+		for (i = 0; i < cnt; i++) {
+			struct msg *m = &pool[(first+i) % poolsize];
+			msg_fprint(f->out, m, MSG_PRINT_ALL & ~MSG_PRINT_OFFSET, 0);
+		}
 	}
 	else
 		error("Can not write to node '%s", n->name);

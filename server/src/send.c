@@ -113,15 +113,24 @@ int main(int argc, char *argv[])
 	pool = alloc(sizeof(struct msg) * node->combine);
 
 	/* Print header */
-	fprintf(stderr, "# %-20s\t%s\t%s\n", "timestamp", "seqno", "data[]");
+	fprintf(stderr, "# %-20s\t\t%s\n", "sec.nsec+offset(seq)", "data[]");
 
 	for (;;) {
-		int i = 0;
-		while (i < node->combine) {
-			if (msg_fscan(stdin, &pool[i]) > 0)
-				msg_fprint(stdout, &pool[i++]);
-			else if (feof(stdin))
-				goto out;
+		for (int i = 0; i < node->combine; i++) {
+			struct msg *m = &pool[i];
+			int reason;
+			
+retry:			reason = msg_fscan(stdin, m, NULL, NULL);
+			if (reason < 0) {
+				if (feof(stdin))
+					goto out;
+				else {
+					warn("Skipped invalid message message: reason=%d", reason);
+					goto retry;
+				}
+			}
+			else
+				msg_fprint(stdout, m, MSG_PRINT_ALL, 0);
 		}
 
 		node_write(node, pool, node->combine, 0, node->combine);

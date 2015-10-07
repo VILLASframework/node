@@ -59,8 +59,7 @@ int hook_print(struct path *p)
 	struct msg *m = p->current;
 	struct timespec ts = MSG_TS(m);
 
-	fprintf(stdout, "%.3e+", time_delta(&ts, &p->ts_recv)); /* Print delay */
-	msg_fprint(stdout, m);
+	msg_fprint(stdout, m, MSG_PRINT_ALL, time_delta(&ts, &p->ts_recv));
 
 	return 0;
 }

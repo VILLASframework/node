@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 		serror("Failed to start timer");
 
 	/* Print header */
-	fprintf(stderr, "# %-20s\t%s\t%s\n", "timestamp", "seqno", "data[]");
+	fprintf(stderr, "# %-20s\t\t%s\n", "sec.nsec(seq)", "data[]");
 
 	/* Block until 1/p->rate seconds elapsed */
 	while (limit-- > 0 || argc < 4) {
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 		m.ts.nsec   = ts.tv_nsec;
 
 		msg_random(&m);
-		msg_fprint(stdout, &m);
+		msg_fprint(stdout, &m, MSG_PRINT_ALL & ~MSG_PRINT_OFFSET, 0);
 
 		fflush(stdout);
 	}
