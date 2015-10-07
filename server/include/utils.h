@@ -111,6 +111,9 @@ cpu_set_t to_cpu_set(int set);
 /** Allocate and initialize memory. */
 void * alloc(size_t bytes);
 
+/** Allocate and copy memory. */
+void * memdup(const void *src, size_t bytes);
+
 /** Call quit() in the main thread. */
 void die();
 

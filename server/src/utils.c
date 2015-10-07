@@ -135,3 +135,12 @@ void * alloc(size_t bytes)
 
 	return p;
 }
+
+void * memdup(const void *src, size_t bytes)
+{
+	void *dst = alloc(bytes);
+	
+	memcpy(dst, src, bytes);
+	
+	return dst;
+}
