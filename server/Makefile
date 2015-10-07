@@ -31,7 +31,7 @@ endif
 # Enable file node type support
 ifndef DISABLE_FILE
 	override CFLAGS += -DENABLE_FILE
-	OBJS   += ngsi.o
+	OBJS   += file.o
 endif
 
 # Enable Socket node type when libnl3 is available

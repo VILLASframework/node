@@ -118,6 +118,8 @@ static int ngsi_request(CURL *handle, json_t *content, json_t **response)
 	
 	if (response)
 		*response = resp;
+	else
+		json_decref(resp);
 	
 	free(post);
 	free(chunk.data);
@@ -129,27 +131,27 @@ void ngsi_prepare_context(struct node *n, config_setting_t *mapping)
 {	
 	struct ngsi *i = n->ngsi;
 
-	i->context = json_object();
-	json_t *elements = json_array();
-	
-	json_object_set(i->context, "contextElements", elements);
-	
+	i->context     = json_object();
 	i->context_len = config_setting_length(mapping);
 	i->context_map = alloc(i->context_len * sizeof(json_t *));
+
+	json_t *elements = json_array();
 	
 	for (int j = 0; j < i->context_len; j++) {
+		/* Get token */
 		config_setting_t *ctoken = config_setting_get_elem(mapping, j);
-
 		const char *stoken = config_setting_get_string(ctoken);
 		if (!stoken)
 			cerror(mapping, "Invalid token");
 
+		/* Parse token */
 		char eid[64], etype[64], aname[64], atype[64];
 		if (sscanf(stoken, "%63[^().](%63[^().]).%63[^().](%63[^().])", eid, etype, aname, atype) != 4)
 			cerror(ctoken, "Invalid token: '%s'", stoken);
 
 		/* Create entity */
-		json_t *attributes;
+		json_t *attributes; /* borrowed reference */
+
 		json_t *entity = json_lookup(elements, "id", eid);
 		if (!entity) {
 			entity = json_pack("{ s: s, s: s, s: b }",
@@ -157,10 +159,10 @@ void ngsi_prepare_context(struct node *n, config_setting_t *mapping)
 				"type",		etype,
 				"isPattern", 	0
 			);
+			json_array_append_new(elements, entity);
 		
 			attributes = json_array();
-			json_object_set(entity, "attributes", attributes);
-			json_array_append(elements, entity);
+			json_object_set_new(entity, "attributes", attributes);
 		}
 		else {
 			if (i->structure == NGSI_CHILDREN)
@@ -169,27 +171,19 @@ void ngsi_prepare_context(struct node *n, config_setting_t *mapping)
 			attributes = json_object_get(entity, "attributes");
 		}
 
-		/* Create attribute */
+		/* Create attribute for entity */
 		if (json_lookup(attributes, "name", aname))
 			cerror(ctoken, "Duplicated attribute '%s' in NGSI mapping of node '%s'", aname, n->name);
 			
-		json_t *metadatas;
-		json_t *attribute = json_pack("{ s: s, s: s, s: s }",
-			"name",		aname,
-			"type",		atype,
-			"value",	"0"
-		);
+		/* Create Metadata for attribute */
+		json_t *metadatas = json_array();
 
-		metadatas = json_array();
-		json_object_set(attribute, "metadatas", metadatas);
-			
-		/* Metadata */
-		json_array_append(metadatas, json_pack("{ s: s, s: s, s: s }",
+		json_array_append_new(metadatas, json_pack("{ s: s, s: s, s: s }",
 			"name", "source",
 			"type", "string",
 			"value", "s2ss"
 		));
-		json_array_append(metadatas, json_pack("{ s: s, s: s, s: i }",
+		json_array_append_new(metadatas, json_pack("{ s: s, s: s, s: i }",
 			"name", "index",
 			"type", "integer",
 			"value", j
@@ -201,28 +195,36 @@ void ngsi_prepare_context(struct node *n, config_setting_t *mapping)
 		));		
 
 		if (i->structure == NGSI_CHILDREN) {
-			json_array_append(attributes, json_pack("{ s: s, s: s, s: s }",
+			json_array_append_new(attributes, json_pack("{ s: s, s: s, s: s }",
 				"name", "parentId",
 				"type", "uuid",
 				"value", eid
 			));
 				
-			json_array_append(attributes, json_pack("{ s: s, s: s, s: s }",
+			json_array_append_new(attributes, json_pack("{ s: s, s: s, s: s }",
 				"name", "source",
 				"type", "string",
 				"value", "measurement"
 			));
 			
-			json_array_append(attributes, json_pack("{ s: s, s: s, s: o }",
+			json_array_append_new(attributes, json_pack("{ s: s, s: s, s: o }",
 				"name", "timestamp",
 				"type",	"date",
 				"value", json_date(NULL)
 			));
 		}
 
-		json_array_append(attributes, attribute);
-		i->context_map[j] = attribute;
+		json_t *attribute = i->context_map[j] = json_pack("{ s: s, s: s, s: s }",
+			"name",		aname,
+			"type",		atype,
+			"value",	"0"
+		);
+		
+		json_object_set_new(attribute, "metadatas", metadatas);
+		json_array_append_new(attributes, attribute);
 	}
+	
+	json_object_set_new(i->context, "contextElements", elements);
 }
 
 int ngsi_init(int argc, char *argv[], struct settings *set)
@@ -310,7 +312,7 @@ int ngsi_open(struct node *n)
 	curl_easy_setopt(i->curl, CURLOPT_HTTPHEADER, i->headers);
 	
 	/* Create entity and atributes */
-	json_object_set(i->context, "updateAction", json_string("APPEND"));
+	json_object_set_new(i->context, "updateAction", json_string("APPEND"));
 	return ngsi_request(i->curl, i->context, NULL) == 200 ? 0 : -1;
 }
 
@@ -319,7 +321,7 @@ int ngsi_close(struct node *n)
 	struct ngsi *i = n->ngsi;
 	
 	/* Delete attributes */
-	json_object_set(i->context, "updateAction", json_string("DELETE"));
+	json_object_set_new(i->context, "updateAction", json_string("DELETE"));
 	int code = ngsi_request(i->curl, i->context, NULL) == 200 ? 0 : -1;
 	
 	curl_easy_cleanup(i->curl);
@@ -363,12 +365,12 @@ int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 		json_t *entity, *elements = json_object_get(i->context, "contextElements");
 		size_t ind;
 		json_array_foreach(elements, ind, entity)
-			json_object_set(entity, "id", json_uuid());
+			json_object_set_new(entity, "id", json_uuid());
 		
-		json_object_set(i->context, "updateAction", json_string("APPEND"));
+		json_object_set_new(i->context, "updateAction", json_string("APPEND"));
 	}
 	else
-		json_object_set(i->context, "updateAction", json_string("UPDATE"));
+		json_object_set_new(i->context, "updateAction", json_string("UPDATE"));
 
 	json_t *response;
 	int code = ngsi_request(i->curl, i->context, &response);

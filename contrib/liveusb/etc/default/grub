@@ -1,7 +1,0 @@
-GRUB_TIMEOUT=5
-GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
-GRUB_DEFAULT=1
-GRUB_DISABLE_SUBMENU=false
-GRUB_TERMINAL_OUTPUT="console"
-GRUB_CMDLINE_LINUX="isolcpus=6,7 selinux=0 audit=0"
-GRUB_DISABLE_RECOVERY=true
