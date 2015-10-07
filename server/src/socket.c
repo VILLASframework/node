@@ -241,16 +241,16 @@ int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 
 	struct iovec iov[cnt];
 	for (int i = 0; i < cnt; i++) {
-		struct msg *n = &pool[(first+i) % poolsize];
-
-		if (n->type == MSG_TYPE_EMPTY)
+		struct msg *m = &pool[(first+i) % poolsize];
+		
+		if (m->type == MSG_TYPE_EMPTY)
 			continue;
 
 		/* Convert headers to network byte order */
 		n->sequence = htons(n->sequence);
 
-		iov[sent].iov_base = n;
-		iov[sent].iov_len  = MSG_LEN(n);
+		iov[sent].iov_base = m;
+		iov[sent].iov_len  = MSG_LEN(m);
 
 		sent++;
 	}

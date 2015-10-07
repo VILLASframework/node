@@ -109,7 +109,7 @@ int file_open(struct node *n)
 		else {
 			struct msg m;
 			/* Get current time */
-			struct timespec now, tmp;
+			struct timespec now, first, eta;
 			clock_gettime(CLOCK_REALTIME, &now);
 
 			/* Get timestamp of first sample */
@@ -119,8 +119,8 @@ int file_open(struct node *n)
 			/* Set offset depending on epoch_mode */
 			switch (f->epoch_mode) {
 				case EPOCH_NOW: /* read first value at f->now + f->epoch */
-					tmp = time_diff(&f->start, &now);
-					f->offset = time_add(&tmp, &f->epoch);
+					first = time_diff(&f->start, &now);
+					f->offset = time_add(&first, &f->epoch);
 					break;
 				case EPOCH_RELATIVE: /* read first value at f->start + f->epoch */
 					f->offset = f->epoch;
@@ -130,14 +130,14 @@ int file_open(struct node *n)
 					break;
 			}
 
-			tmp = time_add(&f->start, &f->offset);
-			tmp = time_diff(&now, &tmp);
+			eta = time_add(&f->start, &f->offset);
+			eta = time_diff(&now, &eta);
 
-			debug(5, "Opened file '%s' as input for node '%s': start=%.2f, offset=%.2f, eta=%.2f",
+			debug(5, "Opened file '%s' as input for node '%s': start=%.2f, offset=%.2f, eta=%.2f sec",
 				f->path_in, n->name,
 				time_to_double(&f->start),
 				time_to_double(&f->offset),
-				time_to_double(&tmp)
+				time_to_double(&eta)
 			);
 		}
 	}
