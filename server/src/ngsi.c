@@ -194,6 +194,11 @@ void ngsi_prepare_context(struct node *n, config_setting_t *mapping)
 			"type", "integer",
 			"value", j
 		));
+		json_array_append(metadatas, json_pack("{ s: s, s: s, s: o }",
+			"name", "timestamp",
+			"type", "date",
+			"value", json_date(NULL)
+		));		
 
 		if (i->structure == NGSI_CHILDREN) {
 			json_array_append(attributes, json_pack("{ s: s, s: s, s: s }",
@@ -339,18 +344,17 @@ int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 	/* Update context */
 	for (int j = 0; j < MIN(i->context_len, m->length); j++) {
 		json_t *attribute = i->context_map[j];
-		json_t *value = json_object_get(attribute, "value");
 		json_t *metadatas = json_object_get(attribute, "metadatas");
+
+		/* Update timestamp */		
+		json_t *metadata_ts = json_lookup(metadatas, "name", "timestamp");
+		json_object_set(metadata_ts, "value", json_date(&MSG_TS(m)));
 		
-		json_t *timestamp = json_lookup(metadatas, "name", "timestamp");
-		json_object_update(timestamp, json_pack("{ s: s, s: s, s: o }",
-			"name", "timestamp",
-			"type",	"date",
-			"value", json_date(&MSG_TS(m))
-		));
-		
+		/* Update value */
 		char new[64];
 		snprintf(new, sizeof(new), "%f", m->data[j].f); /** @todo for now we only support floating point values */
+
+		json_t *value = json_object_get(attribute, "value");
 		json_string_set(value, new);
 	}
 	
