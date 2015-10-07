@@ -82,13 +82,3 @@ double time_delta(struct timespec *start, struct timespec *end)
 
 	return time_to_double(&diff);
 }
-
-int time_fscan(FILE *f, struct timespec *ts)
-{
-	return fscanf(f, "%lu.%lu", &ts->tv_sec, &ts->tv_nsec);
-}
-
-int time_fprint(FILE *f, struct timespec *ts)
-{
-	return fprintf(f, "%lu.%09lu\t", ts->tv_sec, ts->tv_nsec);
-}

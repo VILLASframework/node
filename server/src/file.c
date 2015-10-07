@@ -107,12 +107,14 @@ int file_open(struct node *n)
 				serror("Failed to start timer");
 		}
 		else {
+			struct msg m;
 			/* Get current time */
 			struct timespec now, tmp;
 			clock_gettime(CLOCK_REALTIME, &now);
 
 			/* Get timestamp of first sample */
-			time_fscan(f->in, &f->start); rewind(f->in);
+			msg_fscan(f->in, &m, NULL, NULL);
+			first = MSG_TS(&m);
 
 			/* Set offset depending on epoch_mode */
 			switch (f->epoch_mode) {
