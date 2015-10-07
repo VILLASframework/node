@@ -52,11 +52,18 @@
 	  { "/etc/machine-id", "0d8399d0216314f083b9ed2053a354a8" }, \
 	  { "/dev/sda2", "\x53\xf6\xb5\xeb\x8b\x16\x46\xdc\x8d\x8f\x5b\x70\xb8\xc9\x1a\x2a", 0x468 } }
 
-/* Hook function configuration */
-#define HOOK_FIR_INDEX		 1 /**< The first value of message should be filtered. */
-#define HOOK_TS_INDEX		-1 /**< The last value of message should be overwritten by a timestamp. */
-#define HOOK_DECIMATE_RATIO 	30 /**< Only forward every 30th message to the destination nodes. */
+/* Hard coded configuration of hook functions */
+#define HOOK_FIR_INDEX		0	/**< Which value inside a message should be filtered? */
+#define HOOK_FIR_COEFFS		{ -0.003658148158728, -0.008882653268281, 0.008001024183003,	\
+				  0.08090485991761,    0.2035239551043,   0.3040703593515,	\
+				  0.3040703593515,     0.2035239551043,   0.08090485991761,	\
+				  0.008001024183003,  -0.008882653268281,-0.003658148158728 }
+	
+#define HOOK_TS_INDEX		-1	/**< The last value of message should be overwritten by a timestamp. */
+#define HOOK_DECIMATE_RATIO 	30	/**< Only forward every 30th message to the destination nodes. */
 
+#define HOOK_DEDUP_TYPE		HOOK_ASYNC
+#define HOOK_DEDUP_TRESH	1e-3	/**< Do not send messages when difference of values to last message is smaller than this threshold */
 /** Global configuration */
 struct settings {
 	/** Process priority (lower is better) */

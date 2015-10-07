@@ -53,7 +53,7 @@
 }
 
 /** Initialize a message */
-#define MSG_INIT(i) (struct msg) {	\
+#define MSG_INIT(i) {	\
 	.version = MSG_VERSION,		\
 	.type = MSG_TYPE_DATA,		\
 	.endian = MSG_ENDIAN_HOST,	\
