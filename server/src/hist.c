@@ -38,6 +38,8 @@ void hist_destroy(struct hist *h)
 void hist_put(struct hist *h, double value)
 {
 	int idx = INDEX(h, value);
+	
+	h->last = value;
 
 	/* Update min/max */
 	if (value > h->highest)

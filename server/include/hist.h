@@ -33,6 +33,8 @@ struct hist {
 	double highest;
 	/** The lowest value observed (may be lower than #low). */
 	double lowest;
+	/** The last value which has been put into the buckets */
+	double last;
 	
 	/** The number of buckets in #data. */
 	int length;
