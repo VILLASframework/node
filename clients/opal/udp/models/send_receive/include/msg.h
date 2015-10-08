@@ -12,11 +12,11 @@
 
 #include "msg_format.h"
 
-/** Swap a message to host byte order.
+/** Swaps message contents byte-order.
  *
  * Message can either be transmitted in little or big endian
  * format. The actual endianess for a message is defined by the
- * msg::byteorder field.
+ * msg::endian field. This covers msg::length, msg::sequence, msg::data and msg::ts fields.
  * Received message are usally converted to the endianess of the host.
  * This is required for further sanity checks of the sequence number
  * or parsing of the data.

@@ -81,18 +81,16 @@ struct msg
 #endif
 	unsigned rsvd2	: 8;	/**< Reserved bits */
 	
-	/** The number of values in msg::data[] */
-	uint16_t length;
-
-	uint32_t sequence;	/**< The sequence number is incremented by one for consecutive messages */
+	uint16_t length;	/**< The number of values in msg::data[]. Endianess is specified in msg::endian. */
+	uint32_t sequence;	/**< The sequence number is incremented by one for consecutive messages. Endianess is specified in msg::endian. */
 	
-	/** A timestamp per message */
+	/** A timestamp per message. Endianess is specified in msg::endian. */
 	struct {
 		uint32_t sec;	/**< Seconds     since 1970-01-01 00:00:00 */
-		uint32_t nsec;	/**< Nanoseconds since 1970-01-01 00:00:00 */
+		uint32_t nsec;	/**< Nanoseconds of the current second. */
 	} ts;
 
-	/** The message payload */
+	/** The message payload. Endianess is specified in msg::endian. */
 	union {
 		float    f;	/**< Floating point values (note msg::endian) */
 		uint32_t i;	/**< Integer values (note msg::endian) */

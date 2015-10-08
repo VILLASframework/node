@@ -210,19 +210,15 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 	for (int i = 0; i < cnt; i++) {
 		struct msg *m = &pool[(first+poolsize+i) % poolsize];
 
-		/* Convert headers to host byte order */
-		m->sequence = ntohl(m->sequence);
-		m->length = ntohs(m->length);
+		/* Convert message to host endianess */
+		if (m->endian != MSG_ENDIAN_HOST)
+			msg_swap(m);
 
 		/* Check integrity of packet */
 		if (bytes / cnt != MSG_LEN(m))
 			error("Invalid message len: %u for node '%s'", MSG_LEN(m), n->name);
 
 		bytes -= MSG_LEN(m);
-
-		/* Convert message to host endianess */
-		if (m->endian != MSG_ENDIAN_HOST)
-			msg_swap(m);
 	}
 
 	/* Check packet integrity */
@@ -245,9 +241,6 @@ int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 		
 		if (m->type == MSG_TYPE_EMPTY)
 			continue;
-
-		/* Convert headers to network byte order */
-		n->sequence = htons(n->sequence);
 
 		iov[sent].iov_base = m;
 		iov[sent].iov_len  = MSG_LEN(m);

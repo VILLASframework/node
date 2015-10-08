@@ -69,7 +69,7 @@ void Tick(int sig, siginfo_t *si, void *ptr)
 	OpalGetAsyncModelTime(IconCtrlStruct, &CpuTime, &ModelTime);
 
 	OpalPrint("%s: CpuTime: %llu\tModelTime: %.3f\tSequence: %hu\tValue: %.2f\n",
-		PROGNAME, (CpuTime - CpuTimeStart) / CPU_TICKS, ModelTime, ntohs(msg_send->sequence), msg_send->data[0].f);
+		PROGNAME, (CpuTime - CpuTimeStart) / CPU_TICKS, ModelTime, msg_send->sequence, msg_send->data[0].f);
 }
 #endif /* _DEBUG */
 
@@ -131,8 +131,8 @@ static void *SendToIPPort(void *arg)
 			msg.data[i].f = (float) mdldata[i];
 
 		/* Convert to network byte order */
-		msg.sequence = htonl(seq++);
-		msg.length = htons(msg.length);
+		msg.sequence = seq++;
+		msg.length = msg.length;
 
 		/* Perform the actual write to the ip port */
 		if (SendPacket((char *) &msg, MSG_LEN(&msg)) < 0)
@@ -206,18 +206,15 @@ static void *RecvFromIPPort(void *arg)
 			OpalPrint("%s: Received no data. Skipping..\n", PROGNAME);
 			continue;
 		}
-			
-		/* Convert to host byte order */
-		msg.sequence = ntohl(msg.sequence);
-		msg.length = ntohs(msg.length);
+		
+		/* Convert message to host endianess */
+		if (msg.endian != MSG_ENDIAN_HOST)
+			msg_swap(&msg);
 		
 		if (n != MSG_LEN(&msg)) {
 			OpalPrint("%s: Received incoherent packet (size: %d, complete: %d)\n", PROGNAME, n, MSG_LEN(&msg));
 			continue;
 		}
-			
-		if (msg.endian != MSG_ENDIAN_HOST)
-			msg_swap(&msg);
 
 		/* Update OPAL model */
 		OpalSetAsyncRecvIconStatus(msg.sequence, RecvID);	/* Set the Status to the message ID */
