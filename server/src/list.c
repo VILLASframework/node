@@ -30,8 +30,8 @@ void list_destroy(struct list *l)
 	pthread_mutex_lock(&l->lock);
 
 	if (l->destructor) {
-		for (void *e = l->start; e != l->end; e++)
-			l->destructor(e);
+		list_foreach(void *p, l) 
+			l->destructor(p);
 	}
 	
 	free(l->start);
