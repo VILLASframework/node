@@ -116,10 +116,10 @@ int config_parse_path(config_setting_t *cfg,
 	if (cfg_out)
 		config_parse_nodelist(cfg_out, &p->destinations, nodes);
 
-	if (list_length(&p->destinations) >= 1)
-		p->out = (struct node *) list_first(&p->destinations);
-	else
+	if (list_length(&p->destinations) < 1)
 		cerror(cfg, "Missing output node for path");
+	
+	p->out = (struct node *) list_first(&p->destinations);	
 
 	/* Optional settings */
 	config_setting_t *cfg_hook = config_setting_get_member(cfg, "hook");
@@ -150,6 +150,8 @@ int config_parse_path(config_setting_t *cfg,
 			node->refcnt++;
 			node->vt->refcnt++;
 		}
+		
+		list_push(paths, p);
 
 		if (reverse) {
 			if (list_length(&p->destinations) > 1)
@@ -157,20 +159,30 @@ int config_parse_path(config_setting_t *cfg,
 
 			struct path *r = path_create();
 
-			r->in  = p->out; /* Swap in/out */
+			/* Swap in/out */
+			r->in  = p->out;
 			r->out = p->in;
-
+			
 			list_push(&r->destinations, r->out);
-
+			
+			/* Increment reference counters */
 			r->in->refcnt++;
-			r->out->refcnt++;
 			r->in->vt->refcnt++;
+			r->out->refcnt++;
 			r->out->vt->refcnt++;
+			
+			if (cfg_hook)
+				config_parse_hooklist(cfg_hook, &r->hooks);
+			
+			/* Initialize hooks and their private data / parameters */
+			path_run_hook(p, HOOK_INIT);
+			
+			r->rate = p->rate;
+			r->poolsize = p->poolsize;
+			r->msgsize = p->msgsize;
 
 			list_push(paths, r);
 		}
-
-		list_push(paths, p);
 	}
 	else {
 		char *buf = path_print(p);
