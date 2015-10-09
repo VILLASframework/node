@@ -47,6 +47,8 @@ struct path
 	/** Send messages with a fixed rate over this path */
 	double rate;
 	
+	/** Maximum number of values per message for this path */
+	int msgsize;
 	/** Size of the history buffer in number of messages */
 	int poolsize;
 	/** A circular buffer of past messages */

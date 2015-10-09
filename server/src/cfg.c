@@ -134,6 +134,8 @@ int config_parse_path(config_setting_t *cfg,
 		p->rate = 0; /* disabled */
 	if (!config_setting_lookup_int(cfg, "poolsize", &p->poolsize))
 		p->poolsize = DEFAULT_POOLSIZE;
+	if (!config_setting_lookup_int(cfg, "msgsize", &p->msgsize))
+		p->msgsize = MAX_VALUES;
 
 	p->cfg = cfg;
 

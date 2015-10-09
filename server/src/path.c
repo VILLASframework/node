@@ -122,7 +122,7 @@ static void * path_run(void *arg)
 int path_start(struct path *p)
 { INDENT
 	char *buf = path_print(p);
-	info("Starting path: %s (poolsize = %u)", buf, p->poolsize);
+	info("Starting path: %s (poolsize = %u, msgsize = %u, #hooks = %zu)", buf, p->poolsize, p->msgsize, list_length(&p->hooks));
 	free(buf);
 
 	if (path_run_hook(p, HOOK_PATH_START))
