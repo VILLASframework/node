@@ -13,7 +13,6 @@
 #include "path.h"
 #include "timing.h"
 #include "config.h"
-#include "stats.h"
 
 #ifndef sigev_notify_thread_id
   #define sigev_notify_thread_id   _sigev_un._tid
@@ -42,8 +41,9 @@ static void path_write(struct path *p)
 int path_run_hook(struct path *p, enum hook_type t)
 {
 	int ret = 0;
-		ret += ((hook_cb_t) it->ptr)(p);
 	list_foreach(struct hook *h, &p->hooks) {
+		if (h->type & t)
+			ret += ((hook_cb_t) h->cb)(p, h, t);
 	}
 
 	return ret;
@@ -124,6 +124,12 @@ int path_start(struct path *p)
 	char *buf = path_print(p);
 	info("Starting path: %s (poolsize = %u, msgsize = %u, #hooks = %zu)", buf, p->poolsize, p->msgsize, list_length(&p->hooks));
 	free(buf);
+	
+	/* We sort the hooks according to their priority before starting the path */
+	int hook_cmp(const void *a, const void *b) {
+		return ((struct hook *) a)->priority - ((struct hook *) b)->priority;
+	}
+	list_sort(&p->hooks, hook_cmp);
 
 	if (path_run_hook(p, HOOK_PATH_START))
 		return -1;
@@ -188,55 +194,27 @@ char * path_print(struct path *p)
 	return buf;
 }
 
-int path_reset(struct path *p)
-{
-	if (path_run_hook(p, HOOK_PATH_RESTART))
-		return -1;
-
-	p->sent	    =
-	p->received =
-	p->invalid  =
-	p->skipped  =
-	p->dropped  = 0;
-
-	return 0;
-}
-
 struct path * path_create()
 {
 	struct path *p = alloc(sizeof(struct path));
 
 	list_init(&p->destinations, NULL);
+	list_init(&p->hooks, free);
 
-	for (int i = 0; i < HOOK_MAX; i++)
-		list_init(&p->hooks[i], NULL);
-
-#define hook_add(type, priority, cb) list_insert(&p->hooks[type], priority, cb)
-
-	hook_add(HOOK_MSG,		1,	hook_verify);
-	hook_add(HOOK_MSG,		2,	hook_restart);
-	hook_add(HOOK_MSG,		3,	hook_drop);
-	hook_add(HOOK_MSG,		4,	stats_collect);
-
-	hook_add(HOOK_PATH_START,	1,	stats_start);
-
-	hook_add(HOOK_PATH_STOP,	2,	stats_show);
-	hook_add(HOOK_PATH_STOP,	3,	stats_stop);
-
-	hook_add(HOOK_PATH_RESTART,	1,	stats_line);
-	hook_add(HOOK_PATH_RESTART,	3,	stats_reset);
-
-	hook_add(HOOK_PERIODIC,		1,	stats_line);
+	list_foreach(struct hook *h, &hooks) {
+		if (h->type & HOOK_INTERNAL)
+			list_push(&p->hooks, memdup(h, sizeof(*h)));
+	}
 
 	return p;
 }
 
 void path_destroy(struct path *p)
 {
+	path_run_hook(p, HOOK_DEINIT);
+	
 	list_destroy(&p->destinations);
-
-	for (int i = 0; i < HOOK_MAX; i++)
-		list_destroy(&p->hooks[i]);
+	list_destroy(&p->hooks);
 
 	free(p->pool);
 	free(p);

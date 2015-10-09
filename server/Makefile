@@ -1,7 +1,7 @@
 TARGETS = server send random receive test
 
 # Common objs
-OBJS  = path.o node.o hooks.o msg.o cfg.o stats.o
+OBJS  = path.o node.o hooks.o msg.o cfg.o
 # Helper libs
 OBJS += utils.o list.o hist.o log.o timing.o checks.o
 

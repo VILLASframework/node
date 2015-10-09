@@ -19,7 +19,6 @@
 #include "cfg.h"
 #include "path.h"
 #include "node.h"
-#include "stats.h"
 #include "checks.h"
 
 #ifdef ENABLE_OPAL_ASYNC
@@ -194,7 +193,9 @@ int main(int argc, char *argv[])
 
 	/* Run! */
 	if (settings.stats > 0) {
-		stats_header();
+		info("%-32s :   %-8s %-8s %-8s %-8s %-8s",
+			"Source " MAG("=>") " Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Invalid");
+		line();
 
 		do list_foreach(struct path *p, &paths) {
 			usleep(settings.stats * 1e6);

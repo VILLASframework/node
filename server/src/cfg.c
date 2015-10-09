@@ -124,7 +124,10 @@ int config_parse_path(config_setting_t *cfg,
 	/* Optional settings */
 	config_setting_t *cfg_hook = config_setting_get_member(cfg, "hook");
 	if (cfg_hook)
-		config_parse_hooklist(cfg_hook, p->hooks);
+		config_parse_hooklist(cfg_hook, &p->hooks);
+	
+	/* Initialize hooks and their private data / parameters */
+	path_run_hook(p, HOOK_INIT);
 
 	if (!config_setting_lookup_bool(cfg, "enabled", &enabled))
 		enabled = 1;
@@ -223,43 +226,44 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *list, struct list 
 }
 
 int config_parse_hooklist(config_setting_t *cfg, struct list *list) {
-	const char *str;
-	const struct hook *hook;
-
 	switch (config_setting_type(cfg)) {
 		case CONFIG_TYPE_STRING:
-			str = config_setting_get_string(cfg);
-			if (str) {
-				hook = list_lookup(&hooks, str);
-				if (hook)
-					list_insert(&list[hook->type], hook->priority, hook->callback);	
-				else
-					cerror(cfg, "Unknown hook function '%s'", str);
-			}
-			else
-				cerror(cfg, "Invalid hook function");
+			config_parse_hook(cfg, list);
 			break;
 
 		case CONFIG_TYPE_ARRAY:
-			for (int i = 0; i<config_setting_length(cfg); i++) {
-				config_setting_t *elm = config_setting_get_elem(cfg, i);
-				
-				str = config_setting_get_string(elm);
-				if (str) {
-					hook = list_lookup(&hooks, str);
-					if (hook)
-						list_insert(&list[hook->type], hook->priority, hook->callback);
-					else
-						cerror(elm, "Invalid hook function '%s'", str);
-				}
-				else
-					cerror(cfg, "Invalid hook function");
-			}
+			for (int i = 0; i < config_setting_length(cfg); i++)
+				config_parse_hook(config_setting_get_elem(cfg, i), list);
 			break;
 
 		default:
 			cerror(cfg, "Invalid hook functions");
 	}
+
+	return 0;
+}
+
+int config_parse_hook(config_setting_t *cfg, struct list *list)
+{
+	struct hook *hook, *copy;
+	const char *name = config_setting_get_string(cfg);
+	if (!name)
+		cerror(cfg, "Invalid hook function");
+	
+	char *param = strchr(name, ':');
+	if (param) { /* Split hook line */
+		*param = '\0';
+		param++;
+	}
+	
+	hook = list_lookup(&hooks, name);
+	if (!hook)
+		cerror(cfg, "Unknown hook function '%s'", name);
+		
+	copy = memdup(hook, sizeof(struct hook));
+	copy->parameter = param;
+	
+	list_push(list, copy);
 
 	return 0;
 }

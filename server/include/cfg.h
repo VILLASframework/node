@@ -82,6 +82,15 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct list
  **/
 int config_parse_hooklist(config_setting_t *cfg, struct list *hooks);
 
+/** Parse a single hook and append it to the list.
+ * A hook definition is composed of the hook name and optional parameters
+ * seperated by a colon.
+ *
+ * Examples:
+ *   "print:stdout"
+ */
+int config_parse_hook(config_setting_t *cfg, struct list *list);
+
 /** Parse a single node and add it to the global configuration.
  *
  * @param cfg A libconfig object pointing to the node.

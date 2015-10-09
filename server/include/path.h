@@ -40,7 +40,7 @@ struct path
 	/** List of all outgoing nodes */
 	struct list destinations;
 	/** List of function pointers to hooks */
-	struct list hooks[HOOK_MAX];
+	struct list hooks;
 
 	/** Timer file descriptor for fixed rate sending */
 	int tfd;
@@ -118,15 +118,6 @@ int path_start(struct path *p);
  * @retval <0 Error. Something went wrong.
  */
 int path_stop(struct path *p);
-
-
-/** Reset internal counters and histogram of a path.
- *
- * @param p A pointer to the path structure.
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
- */
-int path_reset(struct path *p);
 
 /** Show some basic statistics for a path.
  *
