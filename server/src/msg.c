@@ -93,7 +93,9 @@ int msg_fscan(FILE *f, struct msg *m, int *fl, double *off)
 skip:	if (fgets(line, sizeof(line), f) == NULL)
 		return -1; /* An error occured */
 
-	if (line[0] == '#')
+	/* Skip whitespaces, empty and comment lines */
+	for (ptr = line; isblank(*ptr); ptr++);
+	if (*ptr == '\0' || *ptr == '#')
 		goto skip;
 
 	/* Mandatory: seconds */
