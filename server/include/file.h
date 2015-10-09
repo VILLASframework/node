@@ -42,7 +42,7 @@ struct file {
 	struct timespec offset;	/**< An offset between the timestamp in the input file and the current time */
 
 	double rate;		/**< The sending rate. */
-	int tfd;		/**< Timer file descriptor. Blocks until 1/rate seconds are elapsed. */
+	int tfd;		/**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
 };
 
 /** @see node_vtable::init */

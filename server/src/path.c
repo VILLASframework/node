@@ -94,7 +94,7 @@ static void * path_run(void *arg)
 		/* For each received message... */
 		for (int i = 0; i < recv; i++) {
 			p->previous = p->current;
-			p->current  = &p->pool[ p->received % p->poolsize];
+			p->current  = &p->pool[p->received % p->poolsize];
 
 			p->received++;
 

@@ -54,6 +54,7 @@ int node_deinit()
 			vt->deinit();
 		}
 	}
+
 	return 0;
 }
 

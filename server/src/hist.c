@@ -118,7 +118,7 @@ void hist_print(struct hist *h)
 		hist_plot(h);
 
 		char *buf = hist_dump(h);
-		info(buf);
+		info("Matlab: %s", buf);
 		free(buf);
 	}
 }

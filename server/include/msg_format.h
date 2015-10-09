@@ -44,9 +44,10 @@
   #error "Unknown byte order!"
 #endif
 
-/** The total length of a message */
+/** The total size in bytes of a message */
 #define MSG_LEN(msg)		(4 * ((msg)->length + 4))
 
+/** The timestamp of a message in struct timespec format */
 #define MSG_TS(msg) (struct timespec) {	\
 	.tv_sec  = (msg)->ts.sec,	\
 	.tv_nsec = (msg)->ts.nsec	\
