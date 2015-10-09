@@ -35,8 +35,7 @@ struct list node_types = LIST_INIT(NULL);
 
 int node_init(int argc, char *argv[], struct settings *set)
 { INDENT
-	FOREACH(&node_types, it) {
-		const struct node_type *vt = it->type;
+	list_foreach(const struct node_type *vt, &node_types) {
 		if (vt->refcnt) {
 			info("Initializing '%s' node type", vt->name);
 			vt->init(argc, argv, set);
@@ -49,8 +48,7 @@ int node_init(int argc, char *argv[], struct settings *set)
 int node_deinit()
 { INDENT
 	/* De-initialize node types */
-	FOREACH(&node_types, it) {
-		struct node_type *vt = it->type;
+	list_foreach(const struct node_type *vt, &node_types) {
 		if (vt->refcnt) {
 			info("De-initializing '%s' node type", vt->name);
 			vt->deinit();

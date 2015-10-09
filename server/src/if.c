@@ -58,7 +58,7 @@ void if_destroy(struct interface *i)
 
 int if_start(struct interface *i, int affinity)
 {
-	info("Starting interface '%s' which is used by %u sockets", rtnl_link_get_name(i->nl_link), list_length(&i->sockets));
+	info("Starting interface '%s' which is used by %zu sockets", rtnl_link_get_name(i->nl_link), list_length(&i->sockets));
 
 	{ INDENT
 		/* Set affinity for network interfaces (skip _loopback_ dev) */
@@ -66,8 +66,7 @@ int if_start(struct interface *i, int affinity)
 		
 		/* Assign fwmark's to socket nodes which have netem options */
 		int ret, mark = 0;
-		FOREACH(&i->sockets, it) {
-			struct socket *s = it->socket;
+		list_foreach(struct socket *s, &i->sockets) {
 			if (s->tc_qdisc)
 				s->mark = 1 + mark++;
 		}
@@ -90,8 +89,7 @@ int if_start(struct interface *i, int affinity)
 			error("Failed to setup priority queuing discipline: %s", nl_geterror(ret));
 
 		/* Create netem qdisks and appropriate filter per netem node */
-		FOREACH(&i->sockets, it) {
-			struct socket *s = it->socket;
+		list_foreach(struct socket *s, &i->sockets) {
 			if (s->tc_qdisc) {
 				ret = tc_mark(i,  &s->tc_classifier, TC_HANDLE(1, s->mark), s->mark);
 				if (ret)
@@ -210,9 +208,9 @@ int if_set_affinity(struct interface *i, int affinity)
 
 struct interface * if_lookup_index(int index)
 {
-	FOREACH(&interfaces, it) {
-		if (rtnl_link_get_ifindex(it->interface->nl_link) == index)
-			return it->interface;
+	list_foreach(struct interface *i, &interfaces) {
+		if (rtnl_link_get_ifindex(i->nl_link) == index)
+			return i;
 	}
 
 	return NULL;

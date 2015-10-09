@@ -47,8 +47,7 @@ int socket_init(int argc, char * argv[], struct settings *set)
 	list_init(&interfaces, (dtor_cb_t) if_destroy);
 
 	/* Gather list of used network interfaces */
-	FOREACH(&sockets, it) {
-		struct socket *s = it->socket;
+	list_foreach(struct socket *s, &sockets) {
 		struct rtnl_link *link;
 
 		/* Determine outgoing interface */
@@ -67,16 +66,16 @@ int socket_init(int argc, char * argv[], struct settings *set)
 	}
 
 	/** @todo Improve mapping of NIC IRQs per path */
-	FOREACH(&interfaces, it)
-		if_start(it->interface, set->affinity);
+	list_foreach(struct interface *i, &interfaces)
+		if_start(i, set->affinity);
 
 	return 0;
 }
 
 int socket_deinit()
 { INDENT
-	FOREACH(&interfaces, it)
-		if_stop(it->interface);
+	list_foreach(struct interface *i, &interfaces)
+		if_stop(i);
 
 	list_destroy(&interfaces);
 

@@ -38,12 +38,12 @@ static config_t config;
 static void quit()
 {
 	info("Stopping paths");
-	FOREACH(&paths, it)
-		path_stop(it->path);
+	list_foreach(struct path *p, &paths)
+		path_stop(p);
 
 	info("Stopping nodes");
-	FOREACH(&nodes, it)
-		node_stop(it->node);
+	list_foreach(struct node *n, &nodes)
+		node_stop(n);
 
 	info("De-initializing node types");
 	node_deinit();
@@ -185,21 +185,21 @@ int main(int argc, char *argv[])
 	node_init(argc, argv, &settings);
 
 	info("Starting nodes");
-	FOREACH(&nodes, it)
-		node_start(it->node);
+	list_foreach(struct node *n, &nodes)
+		node_start(n);
 
 	info("Starting paths");
-	FOREACH(&paths, it)
-		path_start(it->path);
+	list_foreach(struct path *p, &paths)
+		path_start(p);
 
 	/* Run! */
 	if (settings.stats > 0) {
 		stats_header();
 
-		for (;;) FOREACH(&paths, it) {
+		do list_foreach(struct path *p, &paths) {
 			usleep(settings.stats * 1e6);
-			path_run_hook(it->path, HOOK_PERIODIC);
-		}
+			path_run_hook(p, HOOK_PERIODIC);
+		} while (1);
 	}
 	else
 		pause();

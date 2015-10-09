@@ -23,16 +23,16 @@ extern struct settings settings;
 
 static void path_write(struct path *p)
 {
-	FOREACH(&p->destinations, it) {
+	list_foreach(struct node *n, &p->destinations) {
 		int sent = node_write(
-			it->node,			/* Destination node */
-			p->pool,			/* Pool of received messages */
-			p->poolsize,			/* Size of the pool */
-			p->received - it->node->combine,/* Index of the first message which should be sent */
-			it->node->combine		/* Number of messages which should be sent */
+			n,			/* Destination node */
+			p->pool,		/* Pool of received messages */
+			p->poolsize,		/* Size of the pool */
+			p->received - n->combine,/* Index of the first message which should be sent */
+			n->combine		/* Number of messages which should be sent */
 		);
 
-		debug(1, "Sent %u  messages to node '%s'", sent, it->node->name);
+		debug(1, "Sent %u  messages to node '%s'", sent, n->name);
 		p->sent += sent;
 
 		clock_gettime(CLOCK_REALTIME, &p->ts_sent);
@@ -42,8 +42,9 @@ static void path_write(struct path *p)
 int path_run_hook(struct path *p, enum hook_type t)
 {
 	int ret = 0;
-	FOREACH(&p->hooks[t], it)
 		ret += ((hook_cb_t) it->ptr)(p);
+	list_foreach(struct hook *h, &p->hooks) {
+	}
 
 	return ret;
 }
@@ -177,8 +178,8 @@ char * path_print(struct path *p)
 
 	if (list_length(&p->destinations) > 1) {
 		strcatf(&buf, " [");
-		FOREACH(&p->destinations, it)
-			strcatf(&buf, " %s", it->node->name);
+		list_foreach(struct node *n, &p->destinations)
+			strcatf(&buf, " %s", n->name);
 		strcatf(&buf, " ]");
 	}
 	else

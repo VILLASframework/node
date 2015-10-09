@@ -117,7 +117,7 @@ int config_parse_path(config_setting_t *cfg,
 		config_parse_nodelist(cfg_out, &p->destinations, nodes);
 
 	if (list_length(&p->destinations) >= 1)
-		p->out = list_first(&p->destinations)->node;
+		p->out = (struct node *) list_first(&p->destinations);
 	else
 		cerror(cfg, "Missing output node for path");
 
@@ -141,9 +141,9 @@ int config_parse_path(config_setting_t *cfg,
 		p->in->refcnt++;
 		p->in->vt->refcnt++;
 
-		FOREACH(&p->destinations, it) {
-			it->node->refcnt++;
-			it->node->vt->refcnt++;
+		list_foreach(struct node *node, &p->destinations) {
+			node->refcnt++;
+			node->vt->refcnt++;
 		}
 
 		if (reverse) {
