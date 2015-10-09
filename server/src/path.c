@@ -79,6 +79,10 @@ static void * path_run(void *arg)
 	for(;;) {
 		/* Receive message */
 		int recv = node_read(p->in, p->pool, p->poolsize, p->received, p->in->combine);
+		if (recv < 0)
+			error("Failed to receive message from node '%s'", p->in->name);
+		else if (recv == 0)
+			continue;
 
 		/** @todo Replace this timestamp by hardware timestamping */
 		clock_gettime(CLOCK_REALTIME, &p->ts_recv);
