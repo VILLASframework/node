@@ -86,12 +86,15 @@ static size_t ngsi_request_writer(void *contents, size_t size, size_t nmemb, voi
 	return realsize;
 }
 
-static int ngsi_request(CURL *handle, json_t *content, json_t **response)
+static int ngsi_request(CURL *handle, const char *endpoint, const char *operation, json_t *content, json_t **response)
 {
 	struct ngsi_response chunk = { 0 };
-
 	char *post = json_dumps(content, JSON_INDENT(4));
 
+	char url[128];
+	snprintf(url, sizeof(url), "%s/v1/%s", endpoint, operation);
+	
+	curl_easy_setopt(handle, CURLOPT_URL, url);
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, ngsi_request_writer);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, (void *) &chunk);	
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, strlen(post));
@@ -304,16 +307,14 @@ int ngsi_open(struct node *n)
 	i->headers = curl_slist_append(i->headers, "Accept: application/json");
 	i->headers = curl_slist_append(i->headers, "Content-Type: application/json");
 	
-	snprintf(buf, sizeof(buf), "%s/v1/updateContext", i->endpoint);
-	curl_easy_setopt(i->curl, CURLOPT_URL, buf);
-	
 	curl_easy_setopt(i->curl, CURLOPT_SSL_VERIFYPEER, i->ssl_verify);
 	curl_easy_setopt(i->curl, CURLOPT_TIMEOUT_MS, i->timeout * 1e3);
 	curl_easy_setopt(i->curl, CURLOPT_HTTPHEADER, i->headers);
 	
 	/* Create entity and atributes */
 	json_object_set_new(i->context, "updateAction", json_string("APPEND"));
-	return ngsi_request(i->curl, i->context, NULL) == 200 ? 0 : -1;
+
+	return ngsi_request(i->curl, i->endpoint, "updateContext", i->context, NULL) == 200 ? 0 : -1;
 }
 
 int ngsi_close(struct node *n)
@@ -322,7 +323,7 @@ int ngsi_close(struct node *n)
 	
 	/* Delete attributes */
 	json_object_set_new(i->context, "updateAction", json_string("DELETE"));
-	int code = ngsi_request(i->curl, i->context, NULL) == 200 ? 0 : -1;
+	int code = ngsi_request(i->curl, i->endpoint, "updateContext", i->context, NULL) == 200 ? 0 : -1;
 	
 	curl_easy_cleanup(i->curl);
 	curl_slist_free_all(i->headers);
@@ -373,7 +374,7 @@ int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 		json_object_set_new(i->context, "updateAction", json_string("UPDATE"));
 
 	json_t *response;
-	int code = ngsi_request(i->curl, i->context, &response);
+	int code = ngsi_request(i->curl, i->endpoint, "updateContext", i->context, &response);
 	if (code != 200)
 		error("Failed to NGSI update Context request:\n%s", json_dumps(response, JSON_INDENT(4)));
 
