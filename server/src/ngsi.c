@@ -89,7 +89,7 @@ static size_t ngsi_request_writer(void *contents, size_t size, size_t nmemb, voi
 static int ngsi_request(CURL *handle, json_t *content, json_t **response)
 {
 	struct ngsi_response chunk = { 0 };
-	long code;
+
 	char *post = json_dumps(content, JSON_INDENT(4));
 
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, ngsi_request_writer);
@@ -103,8 +103,12 @@ static int ngsi_request(CURL *handle, json_t *content, json_t **response)
 	if (ret)
 		error("HTTP request failed: %s", curl_easy_strerror(ret));
 
+	long code;
+	double time;
+	curl_easy_getinfo(handle, CURLINFO_TOTAL_TIME, &time);
 	curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &code);
 	
+	debug(20, "Request to context broker completed in %.4f seconds", time);
 	debug(20, "Response from context broker (code=%ld):\n%s", code, chunk.data);
 	
 	json_error_t err;
@@ -184,6 +188,11 @@ void ngsi_prepare_context(struct node *n, config_setting_t *mapping)
 			"type", "integer",
 			"value", j
 		));
+		json_array_append(metadatas, json_pack("{ s: s, s: s, s: o }",
+			"name", "timestamp",
+			"type", "date",
+			"value", json_date(NULL)
+		));		
 
 		if (i->structure == NGSI_CHILDREN) {
 			json_array_append_new(attributes, json_pack("{ s: s, s: s, s: s }",
@@ -337,18 +346,17 @@ int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 	/* Update context */
 	for (int j = 0; j < MIN(i->context_len, m->length); j++) {
 		json_t *attribute = i->context_map[j];
-		json_t *value = json_object_get(attribute, "value");
 		json_t *metadatas = json_object_get(attribute, "metadatas");
+
+		/* Update timestamp */		
+		json_t *metadata_ts = json_lookup(metadatas, "name", "timestamp");
+		json_object_set(metadata_ts, "value", json_date(&MSG_TS(m)));
 		
-		json_t *timestamp = json_lookup(metadatas, "name", "timestamp");
-		json_object_update(timestamp, json_pack("{ s: s, s: s, s: o }",
-			"name", "timestamp",
-			"type",	"date",
-			"value", json_date(&MSG_TS(m))
-		));
-		
+		/* Update value */
 		char new[64];
 		snprintf(new, sizeof(new), "%f", m->data[j].f); /** @todo for now we only support floating point values */
+
+		json_t *value = json_object_get(attribute, "value");
 		json_string_set(value, new);
 	}
 	
