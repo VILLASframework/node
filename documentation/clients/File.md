@@ -31,16 +31,31 @@ Specifies the mode which should be used to open the output file.
 See [open(2)](http://man7.org/linux/man-pages/man2/open.2.html) for an explanation of allowed values.
 The default value is `w+` which will start writing at the beginning of the file and create it in case it does not exist yet.
 
-#### `epoch_mode` *("now"|"relative"|"absolute")*
+#### `epoch_mode` *("direct"|"wait" | "relative"|"absolute")*
 
+The *epoch* describes the point in time when the first message will be read from the file.
 This setting allows to select the behaviour of the following `epoch` setting.
 It can be used to adjust the point in time when the first value should be read.
 
 The behaviour of `epoch` is depending on the value of `epoch_mode`.
 
- - `epoch_mode = now`: The first value is read at *now* + `epoch` seconds.
- - `epoch_mode = relative`: The first value is read at *start* + `epoch` seconds.
- - `epoch_mode = absolute`: The first value is read at `epoch` seconds after 1970-01-01 00:00:00.
+To facilitate the following description of supported `epoch_mode`'s, we will introduce some intermediate variables (timestamps).
+Those variables will also been displayed during the startup phase of the server to simplify debugging.
+
+- `epoch` is the value of the `epoch` setting.
+- `first` is the timestamp of the first message / line in the input file.
+- `offset` will be added to the timestamps in the file to obtain the real time when the message will be sent.
+- `start` is the point in time when the first message will be sent (`first + offset`).
+- `eta` the time to wait until the first message will be send (`start - now`)
+
+The supported values for `epoch_mode`:
+ 
+ | `epoch_mode` | `offset`              | `start = first + offset` |
+ | -----------: | :-------------------: | :----------------------: |
+ | `direct`     | `now - first + epoch` | `now + epoch`            |
+ | `wait`       | `now + epoch`         | `now + first`            | 
+ | `relative`   | `epoch`               | `first + epoch`          |
+ | `absolute`   | `epoch - first`       | `epoch`                  |
 
 #### `send_rate` *(float)*
 
@@ -60,8 +75,9 @@ If this setting has a non-zero value, the default behaviour is overwritten with 
 		in	= "logs/file_input.log",	# These options specify the path prefix where the the files are stored
 		out	= "logs/file_output_%F_%T.log"	# The output path accepts all format tokens of (see strftime(3))
 
-		epoch_mode = "now"			# One of:
-							#  now 		(default)
+		epoch_mode = "direct"			# One of:
+							#  direct		(default)
+							#  wait
 							#  relative
 							#  absolute
 

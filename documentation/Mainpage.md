@@ -13,6 +13,8 @@ S2SS is used in distributed- and co-simulation scenarios and developed for the f
 
 The project consists of a server daemon and several client modules which are documented here.
 
+[TOC]
+
 ### Server
 
 The server simply acts as a gateway to forward simulation data from one client to another.

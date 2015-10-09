@@ -32,17 +32,19 @@ struct file {
 	const char *file_mode;	/**< The mode for fopen() which is used for the out file. */
 
 	enum epoch_mode {
-		EPOCH_NOW,
+		EPOCH_DIRECT,
+		EPOCH_WAIT,
 		EPOCH_RELATIVE,
 		EPOCH_ABSOLUTE
 	} epoch_mode;		/**< Specifies how file::offset is calculated. */
 
-	struct timespec start;	/**< The first timestamp of the input file. */
+	struct timespec first;	/**< The first timestamp in the file file::path_in */
 	struct timespec epoch;	/**< The epoch timestamp from the configuration. */
 	struct timespec offset;	/**< An offset between the timestamp in the input file and the current time */
 
 	double rate;		/**< The sending rate. */
 	int tfd;		/**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
+	int sequence;		/**< Last sequence of this node */
 };
 
 /** @see node_vtable::init */
