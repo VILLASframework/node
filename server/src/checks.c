@@ -34,7 +34,7 @@ int check_kernel_version()
 	return version_compare(&current, &required) < 0;
 }
 
-int check_kernel_rtpreempt()
+int check_kernel_rt()
 {
 	return access(SYSFS_PATH "/kernel/realtime", R_OK);
 }

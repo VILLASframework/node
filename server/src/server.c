@@ -61,8 +61,8 @@ static void realtime_init()
 { INDENT
 	if (check_kernel_cmdline())
 		warn("You should reserve some cores for the server (see 'isolcpus')");
-	if (check_kernel_rtpreempt())
-		warn("We recommend to use an RT_PREEMPT patched kernel!");
+	if (check_kernel_rt())
+		warn("We recommend to use an PREEMPT_RT patched kernel!");
 	
 	/* Use FIFO scheduler with real time priority */
 	if (settings.priority) {
