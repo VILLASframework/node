@@ -8,6 +8,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 #include "utils.h"
 #include "path.h"
@@ -60,7 +61,7 @@ static void * path_run_async(void *arg)
 		uint64_t expir = timerfd_wait(p->tfd);
 		if (expir > 1) {
 			p->overrun += expir;
-			warn("Overrun detected for path: overruns=%llu", expir);
+			warn("Overrun detected for path: overruns=%" PRIu64, expir);
 		}
 
 		if (path_run_hook(p, HOOK_ASYNC))
