@@ -94,7 +94,7 @@ skip:	if (fgets(line, sizeof(line), f) == NULL)
 		return -1; /* An error occured */
 
 	/* Skip whitespaces, empty and comment lines */
-	for (ptr = line; isblank(*ptr); ptr++);
+	for (ptr = line; isspace(*ptr); ptr++);
 	if (*ptr == '\0' || *ptr == '#')
 		goto skip;
 

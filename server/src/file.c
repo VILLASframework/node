@@ -231,7 +231,7 @@ int file_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 			values = msg_fscan(f->in, cur, &flags, NULL);
 			if (values < 0) {
 				if (!feof(f->in))
-					warn("Failed to parse file of node '%s", n->name);
+					warn("Failed to parse file of node '%s': reason=%d", n->name, values);
 
 				return 0;
 			}
