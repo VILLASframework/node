@@ -193,8 +193,8 @@ int main(int argc, char *argv[])
 
 	/* Run! */
 	if (settings.stats > 0) {
-		info("%-32s :   %-8s %-8s %-8s %-8s %-8s",
-			"Source " MAG("=>") " Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Invalid");
+		info("%-32s :   %-8s %-8s %-8s %-8s %-8s %-8s",
+			"Source " MAG("=>") " Destination", "#Sent", "#Recv", "#Drop", "#Skip", "#Invalid", "#Overuns");
 		line();
 
 		do list_foreach(struct path *p, &paths) {

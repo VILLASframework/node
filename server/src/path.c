@@ -55,7 +55,14 @@ static void * path_run_async(void *arg)
 	struct path *p = arg;
 
 	/* Block until 1/p->rate seconds elapsed */
-	while (timerfd_wait(p->tfd)) {
+	for (;;) {
+		/* Check for overruns */
+		uint64_t expir = timerfd_wait(p->tfd);
+		if (expir > 1) {
+			p->overrun += expir;
+			warn("Overrun detected for path: overruns=%llu", expir);
+		}
+
 		if (path_run_hook(p, HOOK_ASYNC))
 			continue;
 
@@ -76,7 +83,7 @@ static void * path_run(void *arg)
 	p->previous = p->current = p->pool;
 
 	/* Main thread loop */
-	for(;;) {
+	for (;;) {
 		/* Receive message */
 		int recv = node_read(p->in, p->pool, p->poolsize, p->received, p->in->combine);
 		if (recv < 0)

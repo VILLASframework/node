@@ -360,7 +360,7 @@ int hook_stats(struct path *p, struct hook *h, int when)
 			
 		case HOOK_PERIODIC: {
 			char *buf = path_print(p);
-			info("%-32s :   %-8u %-8u %-8u %-8u %-8u", buf, p->sent, p->received, p->dropped, p->skipped, p->invalid);
+			info("%-32s :   %-8u %-8u %-8u %-8u %-8u %-8u", buf, p->sent, p->received, p->dropped, p->skipped, p->invalid, p->overrun);
 			free(buf);
 			break;
 		}
