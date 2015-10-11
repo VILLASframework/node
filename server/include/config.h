@@ -65,10 +65,11 @@
 	
 /** Global configuration */
 struct settings {
-	int priority;	/**< Process priority (lower is better) */
-	int affinity;	/**< Process affinity of the server and all created threads */
-	int debug;	/**< Debug log level */
-	double stats;	/**< Interval for path statistics. Set to 0 to disable themo disable them. */
+	int priority;		/**< Process priority (lower is better) */
+	int affinity;		/**< Process affinity of the server and all created threads */
+	int debug;		/**< Debug log level */
+	double stats;		/**< Interval for path statistics. Set to 0 to disable themo disable them. */
+	const char *name;	/**< Name of the S2SS instance */
 };
 
 #endif /* _CONFIG_H_ */

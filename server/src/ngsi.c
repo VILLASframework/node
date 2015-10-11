@@ -23,6 +23,8 @@
 #include "ngsi.h"
 #include "utils.h"
 
+extern struct settings settings;
+
 static json_t * json_uuid()
 {
 	char eid[37];
@@ -181,10 +183,10 @@ void ngsi_prepare_context(struct node *n, config_setting_t *mapping)
 		/* Create Metadata for attribute */
 		json_t *metadatas = json_array();
 
-		json_array_append_new(metadatas, json_pack("{ s: s, s: s, s: s }",
-			"name", "source",
-			"type", "string",
-			"value", "s2ss"
+		json_array_append_new(metadatas, json_pack("{ s: s, s: s, s: s+ }",
+			"name",  "source",
+			"type",  "string",
+			"value", "s2ss:", settings.name
 		));
 		json_array_append_new(metadatas, json_pack("{ s: s, s: s, s: i }",
 			"name", "index",

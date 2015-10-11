@@ -35,6 +35,12 @@ This technique, also called 'pinning', improves the determinism of the server by
 The `priority` setting allows to adjust the scheduling priority of the deamon processes.
 By default, the daemon uses a real-time optimized FIFO scheduling algorithm.
 
+#### `name` *(integer)*
+
+By default the `name` of a S2SS instance is equalt to the hostname of the machine it is running on.
+Some node types are using this name to identify themselves agains their remotes.
+An example is the `ngsi` node type which adds a metadata attribute `source` to its updates.
+
 ## Nodes
 
 The node section is a **directory** of nodes (clients) which are connected to the S2SS instance.
