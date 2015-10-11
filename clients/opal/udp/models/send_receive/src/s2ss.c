@@ -79,8 +79,8 @@ static void *SendToIPPort(void *arg)
 	unsigned int SendID = 1;
 	unsigned int ModelState;
 	unsigned int i, n;
-	unsigned short seq = 0;
 	int nbSend = 0;
+	uint32_t seq = 0;
 
 	/* Data from OPAL-RT model */
 	double mdldata[MSG_VALUES];
