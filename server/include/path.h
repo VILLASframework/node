@@ -90,6 +90,8 @@ struct path
 	unsigned int skipped;
 	/** Counter for dropped messages due to reordering */
 	unsigned int dropped;
+	/** Counter of overruns for fixed-rate sending */
+	unsigned int overrun;
 };
 
 /** Create a path by allocating dynamic memory. */
