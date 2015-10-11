@@ -175,7 +175,7 @@ int config_parse_path(config_setting_t *cfg,
 				config_parse_hooklist(cfg_hook, &r->hooks);
 			
 			/* Initialize hooks and their private data / parameters */
-			path_run_hook(p, HOOK_INIT);
+			path_run_hook(r, HOOK_INIT);
 			
 			r->rate = p->rate;
 			r->poolsize = p->poolsize;
