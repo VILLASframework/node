@@ -65,8 +65,7 @@ char * file_print(struct node *n)
 	
 	if ((f->first.tv_sec || f->first.tv_nsec) &&
 	    (f->offset.tv_sec || f->offset.tv_nsec)) {
-    		struct timespec eta, now;
-		clock_gettime(CLOCK_REALTIME, &now);
+    		struct timespec eta, now = time_now();
 
     		eta = time_add(&f->first, &f->offset);
     		eta = time_diff(&now, &eta);
@@ -145,8 +144,7 @@ int file_open(struct node *n)
 			serror("Failed to create timer");
 		
 		/* Get current time */
-		struct timespec now, eta;
-		clock_gettime(CLOCK_REALTIME, &now);
+		struct timespec now = time_now();
 
 		/* Get timestamp of first line */
 		struct msg m;

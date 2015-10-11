@@ -31,6 +31,15 @@ uint64_t timerfd_wait_until(int fd, struct timespec *until)
 		return timerfd_wait(fd);
 }
 
+struct timespec time_now()
+{
+	struct timespec ts;
+
+	clock_gettime(CLOCK_REALTIME, &ts);
+	
+	return ts;
+}
+
 struct timespec time_add(struct timespec *start, struct timespec *end)
 {
 	struct timespec sum = {

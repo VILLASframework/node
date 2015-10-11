@@ -39,6 +39,9 @@ struct timespec time_diff(struct timespec *start, struct timespec *end);
 /** Get sum of two timespec structs */
 struct timespec time_add(struct timespec *start, struct timespec *end);
 
+/** Return current time as a struct timespec. */
+struct timespec time_now();
+
 /** Return the diffrence off two timestamps as double value in seconds. */
 double time_delta(struct timespec *start, struct timespec *end);
 
