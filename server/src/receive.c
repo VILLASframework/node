@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 
 	list_init(&nodes, (dtor_cb_t) node_destroy);
 	
-	log_reset();
+	log_init();
 	config_init(&config);
 	config_parse(argv[optind], &config, &set, &nodes, NULL);
 

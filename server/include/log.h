@@ -45,7 +45,7 @@ void log_outdent(int *);
 void log_setlevel(int lvl);
 
 /** Reset the wallclock of debug messages. */
-void log_reset();
+void log_init();
 
 /** Logs variadic messages to stdout.
  *

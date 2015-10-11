@@ -54,7 +54,7 @@ void log_setlevel(int lvl)
 	debug(10, "Switched to debug level %u", level);
 }
 
-void log_reset()
+void log_init()
 {
 	clock_gettime(CLOCK_REALTIME, &epoch);
 	debug(10, "Debug clock resetted");
