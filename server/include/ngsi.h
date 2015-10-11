@@ -33,33 +33,29 @@
 struct node;
 
 struct ngsi {
-	/** The NGSI context broker endpoint URL. */
-	const char *endpoint;
-	/** An optional authentication token which will be sent as HTTP header. */
-	const char *token;
+	const char *endpoint;		/**< The NGSI context broker endpoint URL. */
+	const char *token;		/**< An optional authentication token which will be sent as HTTP header. */
 
-	/** HTTP timeout in seconds */
-	double timeout;
-	/** Boolean flag whether SSL server certificates should be verified or not. */ 
-	int ssl_verify;
+	double timeout;			/**< HTTP timeout in seconds */
 
-	/** Structure of published entitites */
+	int ssl_verify;			/**< Boolean flag whether SSL server certificates should be verified or not. */ 
+
+
 	enum ngsi_structure {
 		NGSI_FLAT,
 		NGSI_CHILDREN
-	} structure;
+	} structure;			/**< Structure of published entitites */
 	
-	/** List of HTTP request headers for libcurl */
-	struct curl_slist *headers;
-	/** libcurl handle */
-	CURL *curl;
 
-	/** The complete JSON tree which will be used for contextUpdate requests */
-	json_t *context;
 	/** A mapping between indices of the S2SS messages and the attributes in ngsi::context */
 	json_t **context_map;
 	/** The number of mappings in ngsi::context_map */
 	int context_len;
+	struct curl_slist *headers;	/**< List of HTTP request headers for libcurl */
+
+	CURL *curl;			/**< libcurl: handle */
+
+	json_t *context;		/**< The complete JSON tree which will be used for contextUpdate requests */
 };
 
 /** Initialize global NGSI settings and maps shared memory regions.

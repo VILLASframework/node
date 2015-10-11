@@ -130,10 +130,28 @@ struct node_type {
 	 */
 	int (*write)(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
 
+	/** Global initialization per node type.
+	 *
+	 * This callback is invoked once per node-type.
+	 *
+	 * @param argc	Number of arguments passed to the server executable (see main()).
+	 * @param argv	Array of arguments  passed to the server executable (see main()).
+	 * @param set	Global settings.
+	 * @retval 0	Success. Everything went well.
+	 * @retval <0	Error. Something went wrong.
+	 */
 	int (*init)(int argc, char *argv[], struct settings *set);
+	
+	/** Global de-initialization per node type.
+	 *
+	 * This callback is invoked once per node-type.
+	 *
+	 * @retval 0	Success. Everything went well.
+	 * @retval <0	Error. Something went wrong.
+	 */
 	int (*deinit)();
 
-	int refcnt;
+	int refcnt;	/**< Reference counter: how many nodes are using this node-type? */
 };
 
 /** The data structure for a node.
@@ -143,28 +161,22 @@ struct node_type {
  */
 struct node
 {
-	/** A short identifier of the node, only used for configuration and logging */
-	char *name;
-	/** How many paths  are sending / receiving from this node? */
-	int refcnt;
-	/** Number of messages to send / recv at once (scatter / gather) */
-	int combine;
-	/** CPU Affinity of this node */
-	int affinity;
+	char *name;		/**< A short identifier of the node, only used for configuration and logging */
+	int refcnt;		/**< How many paths  are sending / receiving from this node? */
+	int combine;		/**< Number of messages to send / recv at once (scatter / gather) */
+	int affinity;		/**< CPU Affinity of this node */
 
-	/** C++ like virtual function call table */
-	struct node_type * vt;
-	/** Virtual data (used by vtable functions) */
+	struct node_type *vt;	/**< C++ like virtual function call table */
+
 	union {
 		struct socket *socket;
 		struct opal   *opal;
 		struct gtfpga *gtfpga;
 		struct file   *file;
 		struct ngsi   *ngsi;
-	};
+	};	/** Virtual data (used by vtable functions) */
 
-	/** A pointer to the libconfig object which instantiated this node */
-	config_setting_t *cfg;
+	config_setting_t *cfg;	/**< A pointer to the libconfig object which instantiated this node */
 };
 
 /** Initialize node type subsystems.

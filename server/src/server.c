@@ -25,14 +25,10 @@
   #include "opal.h"
 #endif
 
-/** Linked list of nodes */
-struct list nodes;
-/** Linked list of paths */
-struct list paths;
-/** The global configuration */
-struct settings settings;
-/** libconfig handle */
-static config_t config;
+struct list nodes;		/**< Linked list of nodes */
+struct list paths;		/**< Linked list of paths */
+struct settings settings;	/**< The global configuration */
+static config_t config;		/**< libconfig handle */
 
 static void quit()
 {

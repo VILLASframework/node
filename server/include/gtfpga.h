@@ -38,9 +38,7 @@ struct gtfpga {
 	int fd_mmap;		/**< File descriptor for the memory mapped PCI BAR */
 	void *map;
 		
-	/* The following descriptor is blocking as long no interrupt was received
-	 * or the timer has not elapsed */
-	int fd_irq;		/**< File descriptor for the timer */
+	int fd_irq;		/**< File descriptor for the timer. This is blocking when read(2) until a new IRQ / timer expiration. */
 	
 	char *name;
 	double rate;

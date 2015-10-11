@@ -65,14 +65,10 @@
 	
 /** Global configuration */
 struct settings {
-	/** Process priority (lower is better) */
-	int priority;
-	/** Process affinity of the server and all created threads */
-	int affinity;
-	/** Debug log level */
-	int debug;
-	/** Interval for path statistics. Set to 0 to disable themo disable them. */
-	double stats;
+	int priority;	/**< Process priority (lower is better) */
+	int affinity;	/**< Process affinity of the server and all created threads */
+	int debug;	/**< Debug log level */
+	double stats;	/**< Interval for path statistics. Set to 0 to disable themo disable them. */
 };
 
 #endif /* _CONFIG_H_ */
