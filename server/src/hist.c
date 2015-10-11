@@ -143,7 +143,7 @@ void hist_plot(struct hist *h)
 	for (int i = 0; i < h->length; i++) {
 		int bar = HIST_HEIGHT * ((double) h->data[i] / max);
 
-		info("%3u | %+5.2e | "     "%5u"  " | %.*s", i, VAL(h, i), h->data[i], bar, buf);
+		info("%3u | %+9g | "     "%5u"  " | %.*s", i, VAL(h, i), h->data[i], bar, buf);
 	}
 }
 
