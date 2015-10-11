@@ -43,6 +43,7 @@
 #include "config.h"
 #include "msg.h"
 #include "socket.h"
+#include "utils.h"
 
 /* This is just for initializing the shared memory access to communicate
  * with the RT-LAB model. It's easier to remember the arguments like this */
@@ -256,7 +257,7 @@ int main(int argc, char *argv[])
 	pthread_t tid_send, tid_recv;
 	pthread_attr_t attr_send, attr_recv;
 
-	OpalPrint("%s: This is a S2SS client\n", PROGNAME);
+	OpalPrint("%s: This is %s client version %s\n", PROGNAME, PROGNAME, VERSION);
 
 	/* Check for the proper arguments to the program */
 	if (argc < 4) {
