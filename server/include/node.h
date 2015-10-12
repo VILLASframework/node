@@ -28,11 +28,14 @@
 
 /* Helper macros for virtual node type */
 #define node_type(n)			((n)->_vt->type)
+#define node_parse(n, cfg)		((n)->_vt->parse(n, cfg))
 #define node_print(n)			((n)->_vt->print(n))
 
 #define node_read(n, p, ps, f, c)	((n)->_vt->read(n, p, ps, f, c))
 #define node_write(n, p, ps, f, c)	((n)->_vt->write(n, p, ps, f, c))
 
+#define node_open(n)			((n)->_vt->open(n))
+#define node_close(n)			((n)->_vt->close(n))
 #define node_read_single(n, m)		((n)->_vt->read(n, m, 1, 0, 1))
 #define node_write_single(n, m)		((n)->_vt->write(n, m, 1, 0, 1))
 
