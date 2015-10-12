@@ -34,18 +34,13 @@ struct node;
 
 struct ngsi {
 	const char *endpoint;		/**< The NGSI context broker endpoint URL. */
-	const char *token;		/**< An optional authentication token which will be sent as HTTP header. */
+	const char *entity_id;		/**< The context broker entity id related to this node */
+	const char *entity_type;	/**< The type of the entity */
+	const char *access_token;	/**< An optional authentication token which will be sent as HTTP header. */
 
 	double timeout;			/**< HTTP timeout in seconds */
 
-	int ssl_verify;			/**< Boolean flag whether SSL server certificates should be verified or not. */ 
-
-
-	enum ngsi_structure {
-		NGSI_FLAT,
-		NGSI_CHILDREN
-	} structure;			/**< Structure of published entitites */
-	
+	int ssl_verify;			/**< Boolean flag whether SSL server certificates should be verified or not. */
 
 	struct curl_slist *headers;	/**< List of HTTP request headers for libcurl */
 
