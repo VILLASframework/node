@@ -66,11 +66,11 @@ int node_start(struct node *n)
 	}
 
 	char *buf = node_print(n);
-	debug(1, "Starting node '%s' of type '%s' (%s)", n->name, n->vt->name, buf);
+	debug(1, "Starting node '%s' of type '%s' (%s)", n->name, n->_vt->name, buf);
 	free(buf);
 
 	{ INDENT
-		return n->vt->open(n);
+		return n->_vt->open(n);
 	}
 }
 
@@ -80,7 +80,7 @@ int node_stop(struct node *n)
 	info("Stopping node '%s'", n->name);
 
 	{ INDENT
-		ret = n->vt->close(n);
+		ret = n->_vt->close(n);
 	}
 
 	return ret;
@@ -88,7 +88,7 @@ int node_stop(struct node *n)
 
 void node_reverse(struct node *n)
 {
-	switch (n->vt->type) {
+	switch (n->_vt->type) {
 #ifdef ENABLE_SOCKET
 		case BSD_SOCKET:
 			SWAP(n->socket->remote, n->socket->local);
@@ -108,7 +108,7 @@ struct node * node_create()
 
 void node_destroy(struct node *n)
 {
-	switch (n->vt->type) {
+	switch (n->_vt->type) {
 #ifdef ENABLE_NGSI
 		case NGSI:
 			json_decref(n->ngsi->context);

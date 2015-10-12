@@ -150,11 +150,11 @@ int config_parse_path(config_setting_t *cfg,
 
 	if (enabled) {
 		p->in->refcnt++;
-		p->in->vt->refcnt++;
+		p->in->_vt->refcnt++;
 
 		list_foreach(struct node *node, &p->destinations) {
 			node->refcnt++;
-			node->vt->refcnt++;
+			node->_vt->refcnt++;
 		}
 		
 		list_push(paths, p);
@@ -173,9 +173,9 @@ int config_parse_path(config_setting_t *cfg,
 			
 			/* Increment reference counters */
 			r->in->refcnt++;
-			r->in->vt->refcnt++;
+			r->in->_vt->refcnt++;
 			r->out->refcnt++;
-			r->out->vt->refcnt++;
+			r->out->_vt->refcnt++;
 			
 			if (cfg_hook)
 				config_parse_hooklist(cfg_hook, &r->hooks);
@@ -265,11 +265,11 @@ int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings
 	if (!config_setting_lookup_int(cfg, "affinity", &n->combine))
 		n->affinity = set->affinity;
 
-	n->vt = list_lookup(&node_types, type);
-	if (!n->vt)
+	n->_vt = list_lookup(&node_types, type);
+	if (!n->_vt)
 		cerror(cfg, "Invalid type for node '%s'", n->name);
 
-	ret = n->vt->parse(cfg, n);
+	ret = n->_vt->parse(cfg, n);
 	if (!ret)
 		list_push(nodes, n);
 

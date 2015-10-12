@@ -27,14 +27,14 @@
 #include "list.h"
 
 /* Helper macros for virtual node type */
-#define node_type(n)			((n)->vt->type)
-#define node_print(n)			((n)->vt->print(n))
+#define node_type(n)			((n)->_vt->type)
+#define node_print(n)			((n)->_vt->print(n))
 
-#define node_read(n, p, ps, f, c)	((n)->vt->read(n, p, ps, f, c))
-#define node_write(n, p, ps, f, c)	((n)->vt->write(n, p, ps, f, c))
+#define node_read(n, p, ps, f, c)	((n)->_vt->read(n, p, ps, f, c))
+#define node_write(n, p, ps, f, c)	((n)->_vt->write(n, p, ps, f, c))
 
-#define node_read_single(n, m)		((n)->vt->read(n, m, 1, 0, 1))
-#define node_write_single(n, m)		((n)->vt->write(n, m, 1, 0, 1))
+#define node_read_single(n, m)		((n)->_vt->read(n, m, 1, 0, 1))
+#define node_write_single(n, m)		((n)->_vt->write(n, m, 1, 0, 1))
 
 
 #define REGISTER_NODE_TYPE(type, name, fnc)				\
@@ -49,9 +49,7 @@ __attribute__((constructor)) void __register_node_ ## fnc () {		\
 
 extern struct list node_types;
 
-/** C++ like vtable construct for node_types
- * @todo Add comments
- */
+/** C++ like vtable construct for node_types */
 struct node_type {
 	/** The unique name of this node. This must be allways the first member! */
 	char *name;
@@ -166,7 +164,7 @@ struct node
 	int combine;		/**< Number of messages to send / recv at once (scatter / gather) */
 	int affinity;		/**< CPU Affinity of this node */
 
-	struct node_type *vt;	/**< C++ like virtual function call table */
+	struct node_type *_vt;	/**< C++ like virtual function call table */
 
 	union {
 		struct socket *socket;
@@ -174,7 +172,7 @@ struct node
 		struct gtfpga *gtfpga;
 		struct file   *file;
 		struct ngsi   *ngsi;
-	};	/** Virtual data (used by vtable functions) */
+	};	/** Virtual data (used by struct node::_vt functions) */
 
 	config_setting_t *cfg;	/**< A pointer to the libconfig object which instantiated this node */
 };
