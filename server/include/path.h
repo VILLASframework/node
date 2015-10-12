@@ -31,71 +31,47 @@
  */
 struct path
 {
-	/** Pointer to the incoming node */
-	struct node *in;
-	/** Pointer to the first outgoing node.
-	 * Usually this is only a pointer to the first list element of path::destinations. */
-	struct node *out;
+	struct node *in;		/**< Pointer to the incoming node */
+	struct node *out;		/**< Pointer to the first outgoing node ( path::out == list_first(path::destinations) */
 	
-	/** List of all outgoing nodes */
-	struct list destinations;
-	/** List of function pointers to hooks */
-	struct list hooks;
+	struct list destinations;	/**< List of all outgoing nodes */
+	struct list hooks;		/**< List of function pointers to hooks */
 
-	/** Timer file descriptor for fixed rate sending */
-	int tfd;
-	/** Send messages with a fixed rate over this path */
-	double rate;
+	int tfd;			/**< Timer file descriptor for fixed rate sending */
+	double rate;			/**< Send messages with a fixed rate over this path */
 	
-	/** Maximum number of values per message for this path */
-	int msgsize;
-	/** Size of the history buffer in number of messages */
-	int poolsize;
-	/** A circular buffer of past messages */
-	struct msg *pool;
-
-	/** A pointer to the last received message */
-	struct msg *current;
-	/** A pointer to the previously received message */
-	struct msg *previous;
-
-	/** The thread id for this path */
-	pthread_t recv_tid;
-	/** A second thread id for fixed rate sending thread */
-	pthread_t sent_tid;
-	/** A pointer to the libconfig object which instantiated this path */
-	config_setting_t *cfg;
+	int msgsize;			/**< Maximum number of values per message for this path */
+	int poolsize;			/**< Size of the history buffer in number of messages */
 	
-	/* The following fields are mostly managed by hook_ functions */
+	struct msg *pool;		/**< A circular buffer of past messages */
+
+	struct msg *current;		/**< A pointer to the last received message */
+	struct msg *previous;		/**< A pointer to the previously received message */
+
+	pthread_t recv_tid;		/**< The thread id for this path */
+	pthread_t sent_tid;		/**< A second thread id for fixed rate sending thread */
+
+	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path */
 	
-	/** Histogram for one-way-delay (OWD) of received messages */
-	struct hist hist_owd;
-	/** Histogram for inter message timestamps (as sent by remote) */
-	struct hist hist_gap_msg;
-	/** Histogram for inter message arrival time (as seen by this instance) */
-	struct hist hist_gap_recv;
-	/** Histogram of sequence number displacement of received messages */
-	struct hist hist_gap_seq;
+	/** The following fields are mostly managed by hook_ functions @{ */
+	
+	struct hist hist_owd;		/**< Histogram for one-way-delay (OWD) of received messages */
+	struct hist hist_gap_msg;	/**< Histogram for inter message timestamps (as sent by remote) */
+	struct hist hist_gap_recv;	/**< Histogram for inter message arrival time (as seen by this instance) */
+	struct hist hist_gap_seq;	/**< Histogram of sequence number displacement of received messages */
 
-	/** Last message received */
-	struct timespec ts_recv;
-	/** Last message sent */
-	struct timespec ts_sent;
-	/** Previous message received (old value of path::ts_recv) */
-	struct timespec ts_last;
+	struct timespec ts_recv;	/**< Last message received */
+	struct timespec ts_sent;	/**< Last message sent */
+	struct timespec ts_last;	/**< Previous message received (old value of path::ts_recv) */
 
-	/** Counter for sent messages to all outgoing nodes */
-	unsigned int sent;
-	/** Counter for received messages from all incoming nodes */
-	unsigned int received;
-	/** Counter for invalid messages */
-	unsigned int invalid;
-	/** Counter for skipped messages due to hooks */
-	unsigned int skipped;
-	/** Counter for dropped messages due to reordering */
-	unsigned int dropped;
-	/** Counter of overruns for fixed-rate sending */
-	unsigned int overrun;
+	unsigned int sent;		/**< Counter for sent messages to all outgoing nodes */
+	unsigned int received;		/**< Counter for received messages from all incoming nodes */
+	unsigned int invalid;		/**< Counter for invalid messages */
+	unsigned int skipped;		/**< Counter for skipped messages due to hooks */
+	unsigned int dropped;		/**< Counter for dropped messages due to reordering */
+	unsigned int overrun;		/**< Counter of overruns for fixed-rate sending */
+	
+	/** @} */
 };
 
 /** Create a path by allocating dynamic memory. */
