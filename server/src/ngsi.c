@@ -131,12 +131,12 @@ void ngsi_prepare_context(struct node *n, config_setting_t *mapping)
 	struct ngsi *i = n->ngsi;
 
 	i->context     = json_object();
-	i->context_len = config_setting_length(mapping);
-	i->context_map = alloc(i->context_len * sizeof(json_t *));
+
+	list_init(&i->mapping, NULL);
 
 	json_t *elements = json_array();
 	
-	for (int j = 0; j < i->context_len; j++) {
+	for (int j = 0; j < config_setting_length(mapping); j++) {
 		/* Get token */
 		config_setting_t *ctoken = config_setting_get_elem(mapping, j);
 		const char *stoken = config_setting_get_string(ctoken);
@@ -213,11 +213,13 @@ void ngsi_prepare_context(struct node *n, config_setting_t *mapping)
 			));
 		}
 
-		json_t *attribute = i->context_map[j] = json_pack("{ s: s, s: s, s: s }",
+		json_t *attribute = json_pack("{ s: s, s: s, s: [ ] }",
 			"name",		aname,
 			"type",		atype,
-			"value",	"0"
+			"value"
 		);
+
+		list_push(&i->mapping, attribute);
 		
 		json_object_set_new(attribute, "metadatas", metadatas);
 		json_array_append_new(attributes, attribute);
@@ -341,8 +343,9 @@ int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 		error("NGSI nodes only can send a single message at once");
 
 	/* Update context */
-	for (int j = 0; j < MIN(i->context_len, m->length); j++) {
-		json_t *attribute = i->context_map[j];
+	for (int j = 0; j < MIN(i->mapping.length, m->length); j++) {
+		json_t *attribute = list_at(&i->mapping, j);
+		json_t *values = json_object_get(attribute, "value");
 		json_t *metadatas = json_object_get(attribute, "metadatas");
 
 		/* Update timestamp */		
@@ -350,11 +353,8 @@ int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 		json_object_set(metadata_ts, "value", json_date(&MSG_TS(m)));
 		
 		/* Update value */
-		char new[64];
-		snprintf(new, sizeof(new), "%f", m->data[j].f); /** @todo for now we only support floating point values */
-
-		json_t *value = json_object_get(attribute, "value");
-		json_string_set(value, new);
+		json_array_clear(values);
+		json_array_append_new(values, json_real(m->data[j].f));
 	}
 	
 	/* Update UUIDs for children structure */

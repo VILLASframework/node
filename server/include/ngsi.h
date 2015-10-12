@@ -47,15 +47,12 @@ struct ngsi {
 	} structure;			/**< Structure of published entitites */
 	
 
-	/** A mapping between indices of the S2SS messages and the attributes in ngsi::context */
-	json_t **context_map;
-	/** The number of mappings in ngsi::context_map */
-	int context_len;
 	struct curl_slist *headers;	/**< List of HTTP request headers for libcurl */
 
 	CURL *curl;			/**< libcurl: handle */
 
 	json_t *context;		/**< The complete JSON tree which will be used for contextUpdate requests */
+	struct list mapping;		/**< A mapping between indices of the S2SS messages and the attributes in ngsi::context */
 };
 
 /** Initialize global NGSI settings and maps shared memory regions.
