@@ -101,6 +101,10 @@ char * strcatf(char **dest, const char *fmt, ...)
 char * vstrcatf(char **dest, const char *fmt, va_list va)
 	__attribute__ ((format(printf, 2, 0)));
 
+/** Format a struct timespec date similar to strftime() */
+int strftimespec(char *s, size_t max, const char *format, struct timespec *ts)
+	__attribute__ ((format(strftime, 3, 0)));
+
 /** Convert integer to cpu_set_t.
  *
  * @param set A cpu bitmask
@@ -128,10 +132,6 @@ int version_compare(struct version *a, struct version *b);
 
 /** Parse a dotted version string. */
 int version_parse(const char *s, struct version *v);
-
-/** Format a struct timespec date similar to strftime() */
-int strftimespec(char *s, uint max, const char *format, struct timespec *ts)
-	__attribute__ ((format(strftime, 3, 0)));
 
 /** Check assertion and exit if failed. */
 #define assert(exp) do { \

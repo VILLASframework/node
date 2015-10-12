@@ -38,15 +38,9 @@ static json_t * json_uuid()
 
 static json_t * json_date(struct timespec *ts)
 {
-	struct timespec tsp;
-	if (!ts) {
-		clock_gettime(CLOCK_REALTIME, &tsp);
-		ts = &tsp;
-	}
-	
 	// Example: 2015-09-21T11:42:25+02:00
 	char date[64];
-	strftimespec(date, sizeof(date), "%FT%T%z", ts);
+	strftimespec(date, sizeof(date), "%FT%T.%u%z", ts);
 	
 	return json_string(date);
 }
@@ -193,10 +187,10 @@ void ngsi_prepare_context(struct node *n, config_setting_t *mapping)
 			"type", "integer",
 			"value", j
 		));
-		json_array_append(metadatas, json_pack("{ s: s, s: s, s: o }",
+		json_array_append(metadatas, json_pack("{ s: s, s: s, s: s }",
 			"name", "timestamp",
 			"type", "date",
-			"value", json_date(NULL)
+			"value", ""
 		));		
 
 		if (i->structure == NGSI_CHILDREN) {
