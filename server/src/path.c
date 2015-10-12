@@ -93,6 +93,7 @@ static void * path_run(void *arg)
 			continue;
 
 		/** @todo Replace this timestamp by hardware timestamping */
+		p->ts_last = p->ts_recv;
 		p->ts_recv = time_now();
 			
 		debug(15, "Received %u messages from node '%s'", recv, p->in->name);

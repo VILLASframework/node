@@ -322,40 +322,55 @@ int hook_stats(struct path *p, struct hook *h, int when)
 	switch (when) {
 		case HOOK_INIT:
 			/** @todo Allow configurable bounds for histograms */
-			hist_create(&p->hist_sequence, -HIST_SEQ, +HIST_SEQ, 1);
-			hist_create(&p->hist_delay, 0, 2, 100e-3);
-			hist_create(&p->hist_gap, 0, 40e-3, 1e-3);
+			hist_create(&p->hist_gap_seq, -HIST_SEQ, +HIST_SEQ, 1);
+			hist_create(&p->hist_owd, 0, 1, 100e-3);
+			hist_create(&p->hist_gap_msg,  90e-3, 110e-3, 1e-3);
+			hist_create(&p->hist_gap_recv, 90e-3, 110e-3, 1e-3);
 			break;
 		
 		case HOOK_DEINIT:
-			hist_destroy(&p->hist_sequence);
-			hist_destroy(&p->hist_delay);
-			hist_destroy(&p->hist_gap);
+			hist_destroy(&p->hist_gap_seq);
+			hist_destroy(&p->hist_owd);
+			hist_destroy(&p->hist_gap_msg);
+			hist_destroy(&p->hist_gap_recv);
 			break;
+			
+		case HOOK_PRE:
+			/* Exclude first message from statistics */
+			if (p->received > 0) {
+				double gap = time_delta(&p->ts_last, &p->ts_recv);
+				
+				hist_put(&p->hist_gap_recv, gap);
+			}
 
 		case HOOK_MSG: {
 			struct msg *prev = p->previous, *cur = p->current;
-			
-			int dist = cur->sequence - (int32_t) prev->sequence;
-			double delay = time_delta(&p->ts_recv, &MSG_TS(cur));
-			double gap   = time_delta(&MSG_TS(prev), &MSG_TS(cur));
 
-			hist_put(&p->hist_sequence, dist);
-			hist_put(&p->hist_delay, delay);
-			hist_put(&p->hist_gap, gap);
+			/* Exclude first message from statistics */
+			if (p->received > 0) {			
+				int dist     = cur->sequence - (int32_t) prev->sequence;
+				double delay = time_delta(&MSG_TS(cur), &p->ts_recv);
+				double gap   = time_delta(&MSG_TS(prev), &MSG_TS(cur));
+				
+				hist_put(&p->hist_gap_msg, gap);
+				hist_put(&p->hist_gap_seq, dist);
+				hist_put(&p->hist_owd, delay);
+			}
 			break;
 		}
 		
 		case HOOK_PATH_STOP:
-			if (p->hist_delay.total)    { info("One-way delay (received):");        hist_print(&p->hist_delay); }
-			if (p->hist_gap.total)      { info("Message gap time (received):");     hist_print(&p->hist_gap);   }
-			if (p->hist_sequence.total) { info("Sequence number gaps (received):"); hist_print(&p->hist_sequence); }
+			if (p->hist_owd.total)     { info("One-way delay:"); hist_print(&p->hist_owd); }
+			if (p->hist_gap_recv.total){ info("Inter-message arrival time:"); hist_print(&p->hist_gap_recv); }
+			if (p->hist_gap_msg.total) { info("Inter-message ts gap:"); hist_print(&p->hist_gap_msg); }
+			if (p->hist_gap_seq.total) { info("Inter-message sequence number gaps:"); hist_print(&p->hist_gap_seq); }
 			break;
 
 		case HOOK_PATH_RESTART:
-			hist_reset(&p->hist_sequence);
-			hist_reset(&p->hist_delay);
-			hist_reset(&p->hist_gap);
+			hist_reset(&p->hist_owd);
+			hist_reset(&p->hist_gap_seq);
+			hist_reset(&p->hist_gap_msg);
+			hist_reset(&p->hist_gap_recv);
 			break;
 			
 		case HOOK_PERIODIC: {
@@ -363,7 +378,7 @@ int hook_stats(struct path *p, struct hook *h, int when)
 			
 			if (p->received > 0)
 				log_print(STATS, "%-40s|%10.2g|%10.2f|%10u|%10u|%10u|%10u|%10u|%10u|%10u|", buf,
-					hist_mean(&p->hist_delay), 1 / hist_mean(&p->hist_gap),
+					p->hist_owd.last, 1 / p->hist_gap_msg.last,
 					p->sent, p->received, p->dropped, p->skipped, p->invalid, p->overrun, p->current->length
 				);
 			else
@@ -429,8 +444,9 @@ int hook_stats_send(struct path *p, struct hook *h, int when)
 			m.data[m.length++].f = p->invalid;
 			m.data[m.length++].f = p->skipped;
 			m.data[m.length++].f = p->dropped;
-			m.data[m.length++].f = p->hist_delay.last,
-			m.data[m.length++].f = p->hist_gap.last;
+			m.data[m.length++].f = p->hist_owd.last,
+			m.data[m.length++].f = p->hist_gap_msg.last;
+			m.data[m.length++].f = p->hist_gap_recv.last;
 			
 			/* Send single message with statistics to destination node */
 			node_write_single(private->dest, &m);

@@ -72,7 +72,7 @@ enum hook_type {
 	/** All path related actions */
 	HOOK_PATH		= HOOK_PATH_START | HOOK_PATH_STOP | HOOK_PATH_RESTART,
 	/** Hooks which are used to collect statistics. */
-	HOOK_STATS		= HOOK_INTERNAL | HOOK_PRIVATE | HOOK_PATH | HOOK_MSG | HOOK_PERIODIC,
+	HOOK_STATS		= HOOK_INTERNAL | HOOK_PRIVATE | HOOK_PATH | HOOK_MSG | HOOK_PRE | HOOK_PERIODIC,
 	/** All hooks */
 	HOOK_ALL		= HOOK_INTERNAL - 1
 	/** @} */
