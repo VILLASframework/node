@@ -56,7 +56,7 @@ void log_setlevel(int lvl)
 
 void log_init()
 {
-	clock_gettime(CLOCK_REALTIME, &epoch);
+	epoch = time_now();
 	debug(10, "Debug clock resetted");
 }
 
@@ -71,11 +71,10 @@ void log_print(const char *lvl, const char *fmt, ...)
 
 void log_vprint(const char *lvl, const char *fmt, va_list ap)
 {
-	struct timespec ts;
+	struct timespec ts = time_now();
 	char *buf = alloc(512);
 	
 	/* Timestamp */
-	clock_gettime(CLOCK_REALTIME, &ts);
 	strcatf(&buf, "%10.3f ", time_delta(&epoch, &ts));
 
 	/* Severity */

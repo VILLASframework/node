@@ -113,8 +113,7 @@ int main(int argc, char *argv[])
 	fprintf(stderr, "# %-20s\t\t%s\n", "sec.nsec+offset(seq)", "data[]");
 
 	for (;;) {
-		struct timespec ts;
-		clock_gettime(CLOCK_REALTIME, &ts);
+		struct timespec ts = time_now();
 		
 		int recv = node_read(node, pool, node->combine, 0, node->combine);
 		for (int i = 0; i < recv; i++) {

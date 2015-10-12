@@ -254,7 +254,7 @@ int hook_skip_first(struct path *p, struct hook *h, int when)
 			break;
 
 		case HOOK_PATH_START:
-			clock_gettime(CLOCK_REALTIME, &private->started);
+			private->started = time_now();
 			break;
 			 
 		case HOOK_POST: {

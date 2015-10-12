@@ -59,8 +59,7 @@ int main(int argc, char *argv[])
 	while (limit-- > 0 || argc < 4) {
 		m.sequence += timerfd_wait(tfd);
 
-		struct timespec ts;
-		clock_gettime(CLOCK_REALTIME, &ts);
+		struct timespec ts = time_now();
 
 		m.ts.sec    = ts.tv_sec;
 		m.ts.nsec   = ts.tv_nsec;

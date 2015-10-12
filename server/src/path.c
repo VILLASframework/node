@@ -35,7 +35,7 @@ static void path_write(struct path *p)
 		debug(15, "Sent %u  messages to node '%s'", sent, n->name);
 		p->sent += sent;
 
-		clock_gettime(CLOCK_REALTIME, &p->ts_sent);
+		p->ts_sent = time_now(); /** @todo use hardware timestamps for socket node type */
 	}
 }
 
@@ -93,8 +93,8 @@ static void * path_run(void *arg)
 			continue;
 
 		/** @todo Replace this timestamp by hardware timestamping */
-		clock_gettime(CLOCK_REALTIME, &p->ts_recv);
-
+		p->ts_recv = time_now();
+			
 		debug(15, "Received %u messages from node '%s'", recv, p->in->name);
 
 		/* Run preprocessing hooks */
