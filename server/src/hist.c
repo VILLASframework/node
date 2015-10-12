@@ -167,7 +167,7 @@ void hist_matlab(struct hist *h, FILE *f)
 
 	fprintf(f, "%lu = struct( ", time(NULL));
 	fprintf(f, "'min', %f, 'max', %f, ", h->low, h->high);
-	fprintf(f, "'ok', %u, too_high', %u, 'too_low', %u, ", h->total, h->higher, h->lower);
+	fprintf(f, "'total', %u, higher', %u, 'lower', %u, ", h->total, h->higher, h->lower);
 	fprintf(f, "'highest', %f, 'lowest', %f, ", h->highest, h->lowest);
 	fprintf(f, "'mean', %f, ", hist_mean(h));
 	fprintf(f, "'var', %f, ", hist_var(h));
