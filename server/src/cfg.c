@@ -243,6 +243,39 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *list, struct list 
 	return 0;
 }
 
+int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set)
+{
+	const char *type;
+	int ret;
+
+	struct node *n = node_create();
+
+	/* Required settings */
+	n->cfg = cfg;
+	n->name = config_setting_name(cfg);
+	if (!n->name)
+		cerror(cfg, "Missing node name");
+
+	if (!config_setting_lookup_string(cfg, "type", &type))
+		cerror(cfg, "Missing node type");
+
+	if (!config_setting_lookup_int(cfg, "combine", &n->combine))
+		n->combine = 1;
+
+	if (!config_setting_lookup_int(cfg, "affinity", &n->combine))
+		n->affinity = set->affinity;
+
+	n->vt = list_lookup(&node_types, type);
+	if (!n->vt)
+		cerror(cfg, "Invalid type for node '%s'", n->name);
+
+	ret = n->vt->parse(cfg, n);
+	if (!ret)
+		list_push(nodes, n);
+
+	return ret;
+}
+
 int config_parse_hooklist(config_setting_t *cfg, struct list *list) {
 	switch (config_setting_type(cfg)) {
 		case CONFIG_TYPE_STRING:
@@ -285,37 +318,3 @@ int config_parse_hook(config_setting_t *cfg, struct list *list)
 
 	return 0;
 }
-
-int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set)
-{
-	const char *type;
-	int ret;
-
-	struct node *n = node_create();
-
-	/* Required settings */
-	n->cfg = cfg;
-	n->name = config_setting_name(cfg);
-	if (!n->name)
-		cerror(cfg, "Missing node name");
-
-	if (!config_setting_lookup_string(cfg, "type", &type))
-		cerror(cfg, "Missing node type");
-
-	if (!config_setting_lookup_int(cfg, "combine", &n->combine))
-		n->combine = 1;
-
-	if (!config_setting_lookup_int(cfg, "affinity", &n->combine))
-		n->affinity = set->affinity;
-
-	n->vt = list_lookup(&node_types, type);
-	if (!n->vt)
-		cerror(cfg, "Invalid type for node '%s'", n->name);
-
-	ret = n->vt->parse(cfg, n);
-	if (!ret)
-		list_push(nodes, n);
-
-	return ret;
-}
-
