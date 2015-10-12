@@ -24,6 +24,7 @@
 #define INFO		    "" 
 #define WARN		YEL("Warn ")
 #define ERROR		RED("Error")
+#define STATS		MAG("Stats")
 
 /** Change log indention  for current thread.
  *

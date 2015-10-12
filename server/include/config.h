@@ -27,7 +27,7 @@
 #define DEFAULT_POOLSIZE	32
 
 /** Width of log output in characters */
-#define LOG_WIDTH		74
+#define LOG_WIDTH		132
 
 /** Socket priority */
 #define SOCKET_PRIO		7

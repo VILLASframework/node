@@ -132,4 +132,7 @@ int hook_stats(struct path *p, struct hook *h, int when);
 /** Core hook: send path statistics to another node */
 int hook_stats_send(struct path *p, struct hook *h, int when);
 
+/** Not a hook: just prints header for periodic statistics */
+void hook_stats_header();
+
 #endif /** _HOOKS_H_ @} @} */

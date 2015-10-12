@@ -32,7 +32,7 @@ static void path_write(struct path *p)
 			n->combine		/* Number of messages which should be sent */
 		);
 
-		debug(1, "Sent %u  messages to node '%s'", sent, n->name);
+		debug(15, "Sent %u  messages to node '%s'", sent, n->name);
 		p->sent += sent;
 
 		clock_gettime(CLOCK_REALTIME, &p->ts_sent);
@@ -95,7 +95,7 @@ static void * path_run(void *arg)
 		/** @todo Replace this timestamp by hardware timestamping */
 		clock_gettime(CLOCK_REALTIME, &p->ts_recv);
 
-		debug(10, "Received %u messages from node '%s'", recv, p->in->name);
+		debug(15, "Received %u messages from node '%s'", recv, p->in->name);
 
 		/* Run preprocessing hooks */
 		if (path_run_hook(p, HOOK_PRE)) {
@@ -134,7 +134,8 @@ static void * path_run(void *arg)
 int path_start(struct path *p)
 { INDENT
 	char *buf = path_print(p);
-	info("Starting path: %s (poolsize = %u, msgsize = %u, #hooks = %zu)", buf, p->poolsize, p->msgsize, list_length(&p->hooks));
+	info("Starting path: %s (poolsize = %u, msgsize = %u, #hooks = %zu, rate = %.1f)",
+		buf, p->poolsize, p->msgsize, list_length(&p->hooks), p->rate);
 	free(buf);
 	
 	/* We sort the hooks according to their priority before starting the path */

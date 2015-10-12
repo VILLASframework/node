@@ -107,8 +107,8 @@ static int ngsi_request(CURL *handle, const char *endpoint, const char *operatio
 	curl_easy_getinfo(handle, CURLINFO_TOTAL_TIME, &time);
 	curl_easy_getinfo(handle, CURLINFO_RESPONSE_CODE, &code);
 	
-	debug(10, "Request to context broker completed in %.4f seconds", time);
-	debug(20, "Response from context broker (code=%ld):\n%s", code, chunk.data);
+	debug(16, "Request to context broker completed in %.4f seconds", time);
+	debug(17, "Response from context broker (code=%ld):\n%s", code, chunk.data);
 	
 	json_error_t err;
 	json_t *resp = json_loads(chunk.data, 0, &err);

@@ -347,9 +347,9 @@ int hook_stats(struct path *p, struct hook *h, int when)
 		}
 		
 		case HOOK_PATH_STOP:
-			if (p->hist_delay.total)    { info("One-way delay (received):"); hist_print(&p->hist_delay); }
-			if (p->hist_gap.total)      { info("Message gap time:");         hist_print(&p->hist_gap);   }
-			if (p->hist_sequence.total) { info("Sequence number gaps:");     hist_print(&p->hist_sequence); }
+			if (p->hist_delay.total)    { info("One-way delay (received):");        hist_print(&p->hist_delay); }
+			if (p->hist_gap.total)      { info("Message gap time (received):");     hist_print(&p->hist_gap);   }
+			if (p->hist_sequence.total) { info("Sequence number gaps (received):"); hist_print(&p->hist_sequence); }
 			break;
 
 		case HOOK_PATH_RESTART:
@@ -360,13 +360,41 @@ int hook_stats(struct path *p, struct hook *h, int when)
 			
 		case HOOK_PERIODIC: {
 			char *buf = path_print(p);
-			info("%-32s :   %-8u %-8u %-8u %-8u %-8u %-8u", buf, p->sent, p->received, p->dropped, p->skipped, p->invalid, p->overrun);
+			
+			if (p->received > 0)
+				log_print(STATS, "%-40s|%10.2g|%10.2f|%10u|%10u|%10u|%10u|%10u|%10u|%10u|", buf,
+					hist_mean(&p->hist_delay), 1 / hist_mean(&p->hist_gap),
+					p->sent, p->received, p->dropped, p->skipped, p->invalid, p->overrun, p->current->length
+				);
+			else
+				log_print(STATS, "%-40s|%10s|%10s|%10u|%10u|%10u|%10u|%10u|%10u|%10s|", buf, "", "", 
+					p->sent, p->received, p->dropped, p->skipped, p->invalid, p->overrun, ""
+				);
+			
 			free(buf);
 			break;
 		}
 	}
 	
 	return 0;
+}
+
+void hook_stats_header()
+{
+#define UNIT(u)	"(" YEL(u) ")"
+
+	log_print(STATS, "%-40s|%19s|%19s|%19s|%19s|%19s|%19s|%19s|%10s|%10s|", "Source " MAG("=>") " Destination",
+		"OWD"	UNIT("S") " ",
+		"Rate"	UNIT("p/S") " ",
+		"Sent"	UNIT("p") " ",
+		"Recv"	UNIT("p") " ",
+		"Drop"	UNIT("p") " ",
+		"Skip"	UNIT("p") " ",
+		"Inval" UNIT("p") " ",
+		"Overuns ",
+		"Values "
+	);
+	line();
 }
 
 REGISTER_HOOK("stats_send", 99, hook_stats_send, HOOK_PRIVATE | HOOK_MSG)
