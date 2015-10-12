@@ -204,7 +204,7 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 	else if (bytes < 0)
 		serror("Failed recv");
 
-	debug(10, "Received packet of %u bytes: %u samples a %u values per sample", bytes, cnt, (bytes / cnt) / 4 - 4);
+	debug(17, "Received packet of %u bytes: %u samples a %u values per sample", bytes, cnt, (bytes / cnt) / 4 - 4);
 
 	for (int i = 0; i < cnt; i++) {
 		struct msg *m = &pool[(first+poolsize+i) % poolsize];
