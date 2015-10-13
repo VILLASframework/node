@@ -77,6 +77,10 @@ int node_start(struct node *n)
 int node_stop(struct node *n)
 { INDENT
 	int ret;
+	
+	if (!n->refcnt) /* Unused and not started. No reason to stop.. */
+		return -1;
+	
 	info("Stopping node '%s'", n->name);
 
 	{ INDENT
