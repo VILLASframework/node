@@ -101,9 +101,13 @@ void node_reverse(struct node *n)
 	}
 }
 
-struct node * node_create()
+struct node * node_create(struct node_type *vt)
 {
-	return alloc(sizeof(struct node));
+	struct node *n = alloc(sizeof(struct node));
+	
+	n->_vt = vt;
+	
+	return n;
 }
 
 void node_destroy(struct node *n)

@@ -56,7 +56,7 @@ extern struct list node_types;
 /** C++ like vtable construct for node_types */
 struct node_type {
 	/** The unique name of this node. This must be allways the first member! */
-	char *name;
+	const char *name;
 
 	enum {
 		BSD_SOCKET,		/**< BSD Socket API */
@@ -162,7 +162,8 @@ struct node_type {
  */
 struct node
 {
-	char *name;		/**< A short identifier of the node, only used for configuration and logging */
+	const char *name;	/**< A short identifier of the node, only used for configuration and logging */
+
 	int refcnt;		/**< How many paths  are sending / receiving from this node? */
 	int combine;		/**< Number of messages to send / recv at once (scatter / gather) */
 	int affinity;		/**< CPU Affinity of this node */
@@ -231,7 +232,7 @@ int node_stop(struct node *n);
 void node_reverse(struct node *n);
 
 /** Create a node by allocating dynamic memory. */
-struct node * node_create();
+struct node * node_create(struct node_type *vt);
 
 /** Destroy node by freeing dynamically allocated memory.
  *
