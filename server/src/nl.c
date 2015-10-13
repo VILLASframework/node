@@ -67,7 +67,9 @@ int nl_get_egress(struct nl_addr *addr)
 {
 	int ret;
 	struct nl_sock *sock = nl_init();
+	struct nl_cb *cb;
 	struct nl_msg *msg = nlmsg_alloc_simple(RTM_GETROUTE, 0);
+	struct rtnl_route *route = NULL;
 	
 	/* Build message */	
 	struct rtmsg rmsg = {
@@ -77,32 +79,37 @@ int nl_get_egress(struct nl_addr *addr)
 	
 	ret = nlmsg_append(msg, &rmsg, sizeof(rmsg), NLMSG_ALIGNTO);
 	if (ret)
-		return ret;
+		goto out;
+
 	ret = nla_put_addr(msg, RTA_DST, addr);
 	if (ret)
-		return ret;
+		goto out;
 
 	/* Send message */
 	ret = nl_send_auto(sock, msg);
-	nlmsg_free(msg);
 	if (ret < 0)
-		return ret;
+		goto out;
 	
 	/* Hook into receive chain */
-	struct rtnl_route *route = NULL;
-	struct nl_cb *cb = nl_cb_alloc(NL_CB_VALID);
+	cb = nl_cb_alloc(NL_CB_VALID);
 	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM, egress_cb, &route);
 	
 	/* Receive message */
 	nl_recvmsgs_report(sock, cb);
 	nl_wait_for_ack(sock);
-	nl_cb_put(cb);
 	
 	/* Check result */
-	if (route && (1 <= rtnl_route_get_nnexthops(route))) {
-		struct rtnl_nexthop *nh = rtnl_route_nexthop_n(route, 0);
-		return rtnl_route_nh_get_ifindex(nh);
+	if (!route || rtnl_route_get_nnexthops(route) != 1) {
+		ret = -1;
+		goto out2;
 	}
-	else
-		return -1;
+		
+	ret = rtnl_route_nh_get_ifindex(rtnl_route_nexthop_n(route, 0));
+
+	rtnl_route_put(route);
+
+out2:	nl_cb_put(cb);	
+out:	nlmsg_free(msg);
+
+	return ret;
 }

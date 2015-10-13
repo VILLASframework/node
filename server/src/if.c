@@ -138,7 +138,7 @@ int if_get_egress(struct sockaddr *sa, struct rtnl_link **link)
 				? nl_addr_build(sin->sin_family, &sin->sin_addr.s_addr, sizeof(sin->sin_addr.s_addr))
 				: nl_addr_build(sin6->sin6_family, sin6->sin6_addr.s6_addr, sizeof(sin6->sin6_addr));
 			
-			ifindex = nl_get_egress(addr);
+			ifindex = nl_get_egress(addr); nl_addr_put(addr);
 			if (ifindex < 0)
 				error("Netlink error: %s", nl_geterror(ifindex));
 			break;
