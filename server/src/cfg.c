@@ -101,7 +101,7 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 int config_parse_path(config_setting_t *cfg,
 	struct list *paths, struct list *nodes, struct settings *set)
 {
-	config_setting_t *cfg_in, *cfg_out, *cfg_hook;
+	config_setting_t *cfg_out, *cfg_hook;
 	const char *in;
 	int enabled, reverse;
 
@@ -113,7 +113,7 @@ int config_parse_path(config_setting_t *cfg,
 
 	p->in = list_lookup(nodes, in);
 	if (!p->in)
-		cerror(cfg_in, "Invalid input node '%s'", in);
+		error("Invalid input node '%s'", in);
 
 	/* Output node(s) */
 	cfg_out = config_setting_get_member(cfg, "out");
