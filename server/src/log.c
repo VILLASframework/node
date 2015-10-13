@@ -136,6 +136,15 @@ void warn(const char *fmt, ...)
 	va_end(ap);
 }
 
+void stats(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	log_vprint(STATS, fmt, ap);
+	va_end(ap);
+}
+
 void error(const char *fmt, ...)
 {
 	va_list ap;

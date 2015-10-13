@@ -78,7 +78,11 @@ void info(const char *fmt, ...)
 /** Printf alike warning message. */
 void warn(const char *fmt, ...)
 	__attribute__ ((format(printf, 1, 2)));
-	
+
+/** Printf alike statistics message. */
+void stats(const char *fmt, ...)
+	__attribute__ ((format(printf, 1, 2)));
+
 /** Print error and exit. */
 void error(const char *fmt, ...)
 	__attribute__ ((format(printf, 1, 2)));

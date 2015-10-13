@@ -266,7 +266,7 @@ int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 	if (bytes < 0)
 		serror("Failed send");
 
-	debug(10, "Sent packet of %u bytes: %u samples a %u values per sample", bytes, cnt, (bytes / cnt) / 4 - 4);
+	debug(17, "Sent packet of %u bytes: %u samples a %u values per sample", bytes, cnt, (bytes / cnt) / 4 - 4);
 
 	return sent;
 }
