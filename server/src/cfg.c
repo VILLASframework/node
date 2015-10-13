@@ -268,7 +268,7 @@ int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings
 	if (!config_setting_lookup_int(cfg, "combine", &n->combine))
 		n->combine = 1;
 
-	if (!config_setting_lookup_int(cfg, "affinity", &n->combine))
+	if (!config_setting_lookup_int(cfg, "affinity", &n->affinity))
 		n->affinity = set->affinity;
 	
 	list_push(nodes, n);
