@@ -48,7 +48,7 @@ static void quit()
 	list_destroy(&nodes);
 	config_destroy(&config);
 
-	info("Goodbye!");
+	info(GRN("Goodbye!"));
 
 	_exit(EXIT_SUCCESS);
 }

@@ -19,6 +19,7 @@
 #include <curl/curl.h>
 #include <uuid/uuid.h>
 #include <jansson.h>
+#include <pthread.h>
 
 #include "ngsi.h"
 #include "utils.h"
@@ -96,9 +97,13 @@ static int ngsi_request(CURL *handle, const char *endpoint, const char *operatio
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, strlen(post));
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDS, post);
 	
-	debug(20, "Request to context broker:\n%s", post);
-	
+	debug(18, "Request to context broker: %s\n%s", url, post);
+
+	int old; /* We don't want to leave the CUrl handle in an invalid state */
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &old);
 	CURLcode ret = curl_easy_perform(handle);
+	pthread_setcancelstate(old, NULL);
+
 	if (ret)
 		error("HTTP request failed: %s", curl_easy_strerror(ret));
 
