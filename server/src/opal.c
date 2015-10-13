@@ -135,12 +135,6 @@ int opal_parse(config_setting_t *cfg, struct node *n)
 {
 	struct opal *o = alloc(sizeof(struct opal));
 
-	/* Checks */
-	if (n->combine != 1) {
-		config_setting_t *cfg_combine = config_setting_get_member(cfg, "combine");
-		cerror(cfg_combine, "The OPAL-RT node type does not support combining!");
-	}
-
 	config_setting_lookup_int(cfg, "send_id", &o->send_id);
 	config_setting_lookup_int(cfg, "recv_id", &o->recv_id);
 	config_setting_lookup_bool(cfg, "reply", &o->reply);
@@ -206,6 +200,9 @@ int opal_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 	struct msg *m = &pool[first % poolsize];
 
 	double data[MSG_VALUES];
+	
+	if (cnt != 1)
+		error("The OPAL-RT node type does not support combining!");
 
 	/* This call unblocks when the 'Data Ready' line of a send icon is asserted. */
 	do {
@@ -267,6 +264,9 @@ int opal_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 	int state;
 	int len;
 	double data[m->length];
+	
+	if (cnt != 1)
+		error("The OPAL-RT node type does not support combining!");
 
 	state = OpalGetAsyncModelState();
 	if ((state == STATE_RESET) || (state == STATE_STOP))
