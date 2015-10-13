@@ -128,13 +128,17 @@ static void *SendToIPPort(void *arg)
 		/* Read data from the model */
 		OpalGetAsyncSendIconData(mdldata, mdldata_size, SendID);
 		
+		/* Get current time */
+		struct timespec now;
+		clock_gettime(CLOCK_REALTIME, &now);
+
 		msg.length = mdldata_size / sizeof(double);
 		for (i = 0; i < msg.length; i++)
 			msg.data[i].f = (float) mdldata[i];
 
-		/* Convert to network byte order */
 		msg.sequence = seq++;
-		msg.length = msg.length;
+		msg.ts.sec = now.tv_sec;
+		msg.ts.nsec = now.tc_nsec;
 
 		/* Perform the actual write to the ip port */
 		if (SendPacket((char *) &msg, MSG_LEN(&msg)) < 0)
