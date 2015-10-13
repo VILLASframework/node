@@ -32,7 +32,7 @@ static void path_write(struct path *p)
 			n->combine		/* Number of messages which should be sent */
 		);
 
-		debug(15, "Sent %u  messages to node '%s'", sent, n->name);
+		debug(15, "Sent %u messages to node '%s'", sent, n->name);
 		p->sent += sent;
 
 		p->ts_sent = time_now(); /** @todo use hardware timestamps for socket node type */
@@ -140,10 +140,9 @@ int path_start(struct path *p)
 	free(buf);
 	
 	/* We sort the hooks according to their priority before starting the path */
-	int hook_cmp(const void *a, const void *b) {
+	list_sort(&p->hooks, ({int cmp(const void *a, const void *b) {
 		return ((struct hook *) a)->priority - ((struct hook *) b)->priority;
-	}
-	list_sort(&p->hooks, hook_cmp);
+	}; &cmp; }));
 
 	if (path_run_hook(p, HOOK_PATH_START))
 		return -1;
