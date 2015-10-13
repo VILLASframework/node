@@ -25,12 +25,13 @@
 #include <time.h>
 
 #if defined(__QNXNTO__)
-#       include <process.h>
-#       include <pthread.h>
-#       include <devctl.h>
-#       include <sys/dcmd_chr.h>
+  #include <process.h>
+  #include <pthread.h>
+  #include <devctl.h>
+  #include <sys/dcmd_chr.h>
 #elif defined(__linux__)
-#       define _GNU_SOURCE   1
+  #define _GNU_SOURCE   1
+  #include <time.h>
 #endif
 
 /* Define RTLAB before including OpalPrint.h for messages to be sent
