@@ -28,7 +28,7 @@
 
 /* Helper macros for virtual node type */
 #define node_type(n)			((n)->_vt->type)
-#define node_parse(n, cfg)		((n)->_vt->parse(n, cfg))
+#define node_parse(n, cfg)		((n)->_vt->parse(cfg, n))
 #define node_print(n)			((n)->_vt->print(n))
 
 #define node_read(n, p, ps, f, c)	((n)->_vt->read(n, p, ps, f, c))
@@ -36,6 +36,7 @@
 
 #define node_open(n)			((n)->_vt->open(n))
 #define node_close(n)			((n)->_vt->close(n))
+
 #define node_read_single(n, m)		((n)->_vt->read(n, m, 1, 0, 1))
 #define node_write_single(n, m)		((n)->_vt->write(n, m, 1, 0, 1))
 
@@ -56,15 +57,14 @@ extern struct list node_types;
 struct node_type {
 	/** The unique name of this node. This must be allways the first member! */
 	char *name;
-	
-	/** Node type */
+
 	enum {
 		BSD_SOCKET,		/**< BSD Socket API */
 		LOG_FILE,		/**< File IO */
 		OPAL_ASYNC,		/**< OPAL-RT Asynchronous Process Api */
 		GTFPGA,			/**< Xilinx ML507 GTFPGA card */
 		NGSI			/**< NGSI 9/10 HTTP RESTful API (FIRWARE ContextBroker) */
-	} type;
+	} type;				/**< Node type */
 
 	/** Parse node connection details.‚
 	 *

@@ -379,7 +379,7 @@ int hook_stats(struct path *p, struct hook *h, int when)
 			if (p->received > 0)
 				log_print(STATS, "%-40s|%10.2g|%10.2f|%10u|%10u|%10u|%10u|%10u|%10u|%10u|", buf,
 					p->hist_owd.last, 1 / p->hist_gap_msg.last,
-					p->sent, p->received, p->dropped, p->skipped, p->invalid, p->overrun, p->current->length
+					p->sent, p->received, p->dropped, p->skipped, p->invalid, p->overrun, list_length(p->current)
 				);
 			else
 				log_print(STATS, "%-40s|%10s|%10s|%10u|%10u|%10u|%10u|%10u|%10u|%10s|", buf, "", "", 

@@ -14,6 +14,7 @@
 #include "opal.h"
 #include "utils.h"
 
+/** Global OPAL specific settings */
 static struct opal_global *og = NULL;
 
 /** List of all opal nodes */
