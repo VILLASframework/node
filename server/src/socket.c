@@ -41,7 +41,7 @@ static struct list sockets;
 int socket_init(int argc, char * argv[], struct settings *set)
 { INDENT
 	if (check_root())
-		error("The socket node-type requires superuser privileges!");
+		error("The 'socket' node-type requires superuser privileges!");
 	
 	nl_init(); /* Fill link cache */
 	list_init(&interfaces, (dtor_cb_t) if_destroy);
