@@ -57,8 +57,6 @@ int main(int argc, char *argv[])
 
 	/* Block until 1/p->rate seconds elapsed */
 	while (limit-- > 0 || argc < 4) {
-		m.sequence += timerfd_wait(tfd);
-
 		struct timespec ts = time_now();
 
 		m.ts.sec    = ts.tv_sec;
@@ -66,8 +64,9 @@ int main(int argc, char *argv[])
 
 		msg_random(&m);
 		msg_fprint(stdout, &m, MSG_PRINT_ALL & ~MSG_PRINT_OFFSET, 0);
-
 		fflush(stdout);
+		
+		m.sequence += timerfd_wait(tfd);
 	}
 
 	close(tfd);
