@@ -42,9 +42,14 @@ static void path_write(struct path *p)
 int path_run_hook(struct path *p, enum hook_type t)
 {
 	int ret = 0;
+
 	list_foreach(struct hook *h, &p->hooks) {
-		if (h->type & t)
-			ret += ((hook_cb_t) h->cb)(p, h, t);
+		if (h->type & t) {
+			ret = ((hook_cb_t) h->cb)(p, h, t);
+			debug(22, "Running hook when=%u '%s' prio=%u ret=%d", t, h->name, h->priority, ret);
+			if (ret)
+				return ret;
+		}
 	}
 
 	return ret;
