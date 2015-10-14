@@ -209,7 +209,7 @@ int gtfpga_open(struct node *n)
 
 		struct itimerspec its = {
 			.it_interval = time_from_double(1 / g->rate),
-			.it_value = { 1, 0 }
+			.it_value = { 0, 1 }
 		};
 		ret = timerfd_settime(g->fd_irq, 0, &its, NULL);
 		if (ret)

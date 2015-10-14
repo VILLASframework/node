@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 	/* Setup timer */
 	struct itimerspec its = {
 		.it_interval = time_from_double(1 / rate),
-		.it_value = { 1, 0 }
+		.it_value = { 0, 1 }
 	};
 
 	int tfd = timerfd_create(CLOCK_REALTIME, 0);
