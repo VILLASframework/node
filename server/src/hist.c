@@ -134,11 +134,12 @@ void hist_plot(struct hist *h)
 	line();
 
 	for (int i = 0; i < h->length; i++) {
-		int bar = HIST_HEIGHT * ((double) h->data[i] / max);
-		if (bar == 0)
-			continue;
+		double value = VAL(h, i);
+		int cnt = h->data[i];
+		int bar = HIST_HEIGHT * ((double) cnt / max);
 
-		stats("%+9g | "     "%5u"  " | %.*s", VAL(h, i), h->data[i], bar, buf);
+		if (value > h->lowest || value < h->highest)
+			stats("%+9g | "     "%5u"  " | %.*s", value, cnt, bar, buf);
 	}
 }
 
