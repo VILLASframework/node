@@ -20,31 +20,40 @@
 
 #include "node.h"
 
-#define FILE_MAX_PATHLEN 128
+#define FILE_MAX_PATHLEN	512
+
+enum {
+	FILE_READ,
+	FILE_WRITE
+};
 
 struct file {
-	FILE *in;
-	FILE *out;
+	struct file_direction {
+		FILE *handle;		/**< libc: stdio file handle */
 
-	char *path_in;
-	char *path_out;
+		const char *mode;	/**< libc: fopen() mode */
+		const char *fmt;	/**< Format string for file name. */
 
-	const char *file_mode;	/**< The mode for fopen() which is used for the out file. */
+		char *path;		/**< Real file name */
+		
+		int chunk;		/**< Current chunk number. */
+		int split;		/**< Split file every file::split mega bytes. */
+	} read, write;
 
-	enum epoch_mode {
+	enum read_epoch_mode {
 		EPOCH_DIRECT,
 		EPOCH_WAIT,
 		EPOCH_RELATIVE,
 		EPOCH_ABSOLUTE
-	} epoch_mode;		/**< Specifies how file::offset is calculated. */
+	} read_epoch_mode;		/**< Specifies how file::offset is calculated. */
 
-	struct timespec first;	/**< The first timestamp in the file file::path_in */
-	struct timespec epoch;	/**< The epoch timestamp from the configuration. */
-	struct timespec offset;	/**< An offset between the timestamp in the input file and the current time */
+	struct timespec read_first;	/**< The first timestamp in the file file::path_in */
+	struct timespec read_epoch;	/**< The epoch timestamp from the configuration. */
+	struct timespec read_offset;	/**< An offset between the timestamp in the input file and the current time */
 
-	double rate;		/**< The sending rate. */
-	int tfd;		/**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
-	int sequence;		/**< Last sequence of this node */
+	int read_sequence;		/**< Sequence number of last message which has been written to file::path_out */
+	int read_timer;			/**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
+	double read_rate;		/**< The read rate. */
 };
 
 /** @see node_vtable::init */

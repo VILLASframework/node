@@ -99,7 +99,7 @@ void node_reverse(struct node *n)
 			break;
 #endif
 		case LOG_FILE:
-			SWAP(n->file->path_in, n->file->path_out);
+			SWAP(n->file->read, n->file->write);
 			break;
 		default: { }
 	}
@@ -129,10 +129,6 @@ void node_destroy(struct node *n)
 			rtnl_cls_put(n->socket->tc_classifier);
 			break;
 #endif
-		case LOG_FILE:
-			free(n->file->path_in);
-			free(n->file->path_out);
-			break;
 		default: { }
 	}
 
