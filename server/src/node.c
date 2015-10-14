@@ -119,8 +119,7 @@ void node_destroy(struct node *n)
 	switch (node_type(n)) {
 #ifdef ENABLE_NGSI
 		case NGSI:
-			json_decref(n->ngsi->context);
-			free(n->ngsi->context_map);
+			list_destroy(&n->ngsi->mapping);
 		break;
 #endif
 #ifdef ENABLE_SOCKET

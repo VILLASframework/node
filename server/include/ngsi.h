@@ -32,6 +32,13 @@
 
 struct node;
 
+struct ngsi_mapping {
+	char *name;
+	char *type;
+
+	int index;
+};
+
 struct ngsi {
 	const char *endpoint;		/**< The NGSI context broker endpoint URL. */
 	const char *entity_id;		/**< The context broker entity id related to this node */
@@ -39,14 +46,15 @@ struct ngsi {
 	const char *access_token;	/**< An optional authentication token which will be sent as HTTP header. */
 
 	double timeout;			/**< HTTP timeout in seconds */
+	double rate;			/**< Rate used for polling. */
 
+	int tfd;			/**< Timer */
 	int ssl_verify;			/**< Boolean flag whether SSL server certificates should be verified or not. */
 
 	struct curl_slist *headers;	/**< List of HTTP request headers for libcurl */
 
 	CURL *curl;			/**< libcurl: handle */
 
-	json_t *context;		/**< The complete JSON tree which will be used for contextUpdate requests */
 	struct list mapping;		/**< A mapping between indices of the S2SS messages and the attributes in ngsi::context */
 };
 
