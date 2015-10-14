@@ -198,12 +198,10 @@ char * path_print(struct path *p)
 {
 	char *buf = alloc(32);
 	
-	strcatf(&buf, "%s " MAG("=>") " [", p->in->name);
+	strcatf(&buf, "%s " MAG("=>"), p->in->name);
 
 	list_foreach(struct node *n, &p->destinations)
 		strcatf(&buf, " %s", n->name);
-
-	strcatf(&buf, " ]");
 
 	return buf;
 }

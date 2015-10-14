@@ -191,10 +191,11 @@ int main(int argc, char *argv[])
 	if (settings.stats > 0) {
 		hook_stats_header();
 
-		do list_foreach(struct path *p, &paths) {
+		for (;;) {
+			list_foreach(struct path *p, &paths)
+				path_run_hook(p, HOOK_PERIODIC);
 			usleep(settings.stats * 1e6);
-			path_run_hook(p, HOOK_PERIODIC);
-		} while (1);
+		}
 	}
 	else
 		pause();
