@@ -272,7 +272,6 @@ int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings
 		n->affinity = set->affinity;
 	
 	list_push(nodes, n);
-	list_push(&vt->nodes, n);
 
 	return ret;
 }
