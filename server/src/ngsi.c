@@ -282,7 +282,7 @@ static int ngsi_parse_context_response(json_t *response, int *code, char **reaso
 	int ret;
 	char *codestr;
 	 
-	ret = json_unpack(response, "{ s: [ { s: o, s: { s: s, s: s } } ] }",
+	ret = json_unpack(response, "{ s: [ { s: O, s: { s: s, s: s } } ] }",
 		"contextResponses",
 			"contextElement", rentity,
 			"statusCode",
@@ -299,7 +299,7 @@ static int ngsi_parse_context_response(json_t *response, int *code, char **reaso
 	if (*code != 200)
 		warn("NGSI response: %s %s", codestr, *reason);
 
-	return 0;
+	return ret;
 }
 
 static size_t ngsi_request_writer(void *contents, size_t size, size_t nmemb, void *userp)
@@ -359,7 +359,7 @@ static int ngsi_request(CURL *handle, const char *endpoint, const char *operatio
 out:	free(post);
 	free(chunk.data);
 
-	return 0;
+	return ret;
 }
 
 static int ngsi_request_context_query(CURL *handle, const char *endpoint, json_t *entity, json_t **rentity)
@@ -371,7 +371,7 @@ static int ngsi_request_context_query(CURL *handle, const char *endpoint, json_t
 	json_t *request = json_pack("{ s: [ o ] }", "entities", entity);
 
 	ret = ngsi_request(handle, endpoint, "queryContext", request, &response);
-	if (ret < 0)
+	if (ret)
 		goto out;
 	
 	ret = ngsi_parse_context_response(response, &code, &reason, rentity);
@@ -557,10 +557,10 @@ int ngsi_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 	if (ret)
 		goto out2;
 	
-out2:	json_decref(entity);
-out:	json_decref(rentity);
+out2:	json_decref(rentity);
+out:	json_decref(entity);
 
-	return ret ? 0 : cnt;
+	return ret;
 }
 
 int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
