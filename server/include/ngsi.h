@@ -32,11 +32,12 @@
 
 struct node;
 
-struct ngsi_mapping {
+struct ngsi_attribute {
 	char *name;
 	char *type;
 
 	int index;
+	struct list metadata;
 };
 
 struct ngsi {
