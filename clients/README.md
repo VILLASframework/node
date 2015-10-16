@@ -9,3 +9,7 @@ Date: Mid 2014 - End 2015
 - opal/udp
    Contains the implementation of an asynchronous process block for RT-LAB.
    This block allows exchanging messages with an S2SS server over UDP/TCP.
+
+- rtds
+   This is a seperate Git repository which can be included as a submodule.
+   See: https://github.com/RWTH-ACS/GTFPGA
