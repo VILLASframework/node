@@ -65,9 +65,7 @@ int node_start(struct node *n)
 		return -1;
 	}
 
-	char *buf = node_print(n);
-	debug(1, "Starting node '%s' of type '%s' (%s)", n->name, n->_vt->name, buf);
-	free(buf);
+	debug(1, "Starting node '%s' of type '%s' (%s)", n->name, n->_vt->name, node_print(n));
 
 	{ INDENT
 		return node_open(n);
@@ -88,6 +86,14 @@ int node_stop(struct node *n)
 	}
 
 	return ret;
+}
+
+char * node_print(struct node *n)
+{
+	if (!n->_print)
+		n->_print = n->_vt->print(n);
+
+	return n->_print;
 }
 
 void node_reverse(struct node *n)
@@ -131,6 +137,7 @@ void node_destroy(struct node *n)
 		default: { }
 	}
 
+	free(n->_print);
 	free(n->socket);
 	free(n);
 }

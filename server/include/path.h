@@ -53,6 +53,8 @@ struct path
 
 	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path */
 	
+	char *_print;			/**< A string which is used to print this path to screen. */
+	
 	/** The following fields are mostly managed by hook_ functions @{ */
 	
 	struct hist hist_owd;		/**< Histogram for one-way-delay (OWD) of received messages */

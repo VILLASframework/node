@@ -139,10 +139,8 @@ static void * path_run(void *arg)
 
 int path_start(struct path *p)
 { INDENT
-	char *buf = path_print(p);
 	info("Starting path: %s (poolsize=%u, msgsize=%u, #hooks=%zu, rate=%.1f)",
-		buf, p->poolsize, p->msgsize, list_length(&p->hooks), p->rate);
-	free(buf);
+		path_print(p), p->poolsize, p->msgsize, list_length(&p->hooks), p->rate);
 	
 	/* We sort the hooks according to their priority before starting the path */
 	list_sort(&p->hooks, ({int cmp(const void *a, const void *b) {
@@ -174,9 +172,7 @@ int path_start(struct path *p)
 
 int path_stop(struct path *p)
 { INDENT
-	char *buf = path_print(p);
-	info("Stopping path: %s", buf);
-	free(buf);
+	info("Stopping path: %s", path_print(p));
 
 	pthread_cancel(p->recv_tid);
 	pthread_join(p->recv_tid, NULL);
@@ -196,14 +192,16 @@ int path_stop(struct path *p)
 
 char * path_print(struct path *p)
 {
-	char *buf = alloc(32);
+	if (!p->_print) {
+		char *buf = alloc(64);
 	
-	strcatf(&buf, "%s " MAG("=>"), p->in->name);
+		strcatf(&buf, "%s " MAG("=>"), p->in->name);
 
-	list_foreach(struct node *n, &p->destinations)
-		strcatf(&buf, " %s", n->name);
+		list_foreach(struct node *n, &p->destinations)
+			strcatf(&buf, " %s", n->name);
+	}
 
-	return buf;
+	return p->_print;
 }
 
 struct path * path_create()
@@ -228,6 +226,7 @@ void path_destroy(struct path *p)
 	list_destroy(&p->destinations);
 	list_destroy(&p->hooks);
 
+	free(p->_print);
 	free(p->pool);
 	free(p);
 }

@@ -29,7 +29,6 @@
 /* Helper macros for virtual node type */
 #define node_type(n)			((n)->_vt->type)
 #define node_parse(n, cfg)		((n)->_vt->parse(cfg, n))
-#define node_print(n)			((n)->_vt->print(n))
 
 #define node_read(n, p, ps, f, c)	((n)->_vt->read(n, p, ps, f, c))
 #define node_write(n, p, ps, f, c)	((n)->_vt->write(n, p, ps, f, c))
@@ -163,6 +162,7 @@ struct node_type {
 struct node
 {
 	const char *name;	/**< A short identifier of the node, only used for configuration and logging */
+	char *_print;		/**< A string used to print to screen. */
 
 	int refcnt;		/**< How many paths  are sending / receiving from this node? */
 	int combine;		/**< Number of messages to send / recv at once (scatter / gather) */
@@ -206,13 +206,8 @@ int node_deinit();
  */
 int node_start(struct node *n);
 
-/** Deferred TCP connection setup
- *
- * @todo Dirty hack!
- *  We should check the address of the connecting node!
- *  We should preserve the original socket for proper shutdown.
- */
-int node_start_defer(struct node *n);
+/** Return a pointer to a string which should be used to print this node */
+char * node_print(struct node *n);
 
 /** Stops a node.
  *
