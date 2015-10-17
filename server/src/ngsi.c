@@ -103,7 +103,7 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct msg *pool, int poolsize,
 			if (flags & NGSI_ENTITY_VALUES) { /* Build value vector */
 				json_t *values = json_array();
 				for (int k = 0; k < cnt; k++) {
-					struct msg *m = &pool[(first + k) % poolsize];
+					struct msg *m = &pool[(first + poolsize + k) % poolsize];
 
 					json_array_append_new(values, json_pack("[ f, f, i ]",
 						time_to_double(&MSG_TS(m)),
