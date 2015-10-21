@@ -375,7 +375,6 @@ int hook_stats(struct path *p, struct hook *h, int when)
 			char *buf = path_print(p);
 			
 			if (p->received > 1)
-				stats("%-40.40s|%10.2g|%10.2f|%10u|%10u|%10u|%10u|%10u|%10u|%10u|", buf,
 				stats("%-40.40s|%10.2g|%10.2f|%10u|%10u|%10u|%10u|%10u|%10u|%10u|", path_print(p),
 					p->hist_owd.last, 1 / p->hist_gap_msg.last,
 					p->sent, p->received, p->dropped, p->skipped, p->invalid, p->overrun, list_length(p->current)
