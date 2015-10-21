@@ -18,7 +18,7 @@ class Message:
 		return Message(t, v, source)
 
 	def __str__(self):
-		return '%s %s' % (self.ts, self.values)
+		return '%s %s' % (self.ts, " ".join(map(str, self.values)))
 
 	def __cmp__(self, other):
 		return cmp(self.ts, other.ts)
