@@ -177,7 +177,7 @@ int hook_fir(struct path *p, struct hook *h, int when)
 			private->history = alloc(sizeof(coeffs));
 
 			private->index = strtol(h->parameter, &end, 10);
-			if (errno == EINVAL || errno == ERANGE)
+			if (h->parameter == end)
 				error("Invalid parameter '%s' for hook 'fir'", h->parameter);
 			break;
 
@@ -332,17 +332,17 @@ int hook_stats(struct path *p, struct hook *h, int when)
 	switch (when) {
 		case HOOK_INIT:
 			/** @todo Allow configurable bounds for histograms */
-			hist_create(&p->hist_gap_seq, -HIST_SEQ, +HIST_SEQ, 1);
-			hist_create(&p->hist_owd, 0, 1, 100e-3);
-			hist_create(&p->hist_gap_msg,  90e-3, 110e-3, 1e-3);
-			hist_create(&p->hist_gap_recv, 90e-3, 110e-3, 1e-3);
+			hist_create(&p->hist.owd, 0, 1, 100e-3);
+			hist_create(&p->hist.gap_msg,  90e-3, 110e-3, 1e-3);
+			hist_create(&p->hist.gap_recv, 90e-3, 110e-3, 1e-3);
+			hist_create(&p->hist.gap_seq, -HIST_SEQ, +HIST_SEQ, 1);
 			break;
 		
 		case HOOK_DEINIT:
-			hist_destroy(&p->hist_gap_seq);
-			hist_destroy(&p->hist_owd);
-			hist_destroy(&p->hist_gap_msg);
-			hist_destroy(&p->hist_gap_recv);
+			hist_destroy(&p->hist.owd);
+			hist_destroy(&p->hist.gap_msg);
+			hist_destroy(&p->hist.gap_recv);
+			hist_destroy(&p->hist.gap_seq);
 			break;
 			
 		case HOOK_PRE:
@@ -350,7 +350,7 @@ int hook_stats(struct path *p, struct hook *h, int when)
 			if (p->received > 0) {
 				double gap = time_delta(&p->ts.last, &p->ts.recv);
 				
-				hist_put(&p->hist_gap_recv, gap);
+				hist_put(&p->hist.gap_recv, gap);
 			}
 
 		case HOOK_MSG: {
@@ -362,31 +362,31 @@ int hook_stats(struct path *p, struct hook *h, int when)
 				double delay = time_delta(&MSG_TS(cur), &p->ts.recv);
 				double gap   = time_delta(&MSG_TS(prev), &MSG_TS(cur));
 				
-				hist_put(&p->hist_gap_msg, gap);
-				hist_put(&p->hist_gap_seq, dist);
-				hist_put(&p->hist_owd, delay);
+				hist_put(&p->hist.gap_msg, gap);
+				hist_put(&p->hist.gap_seq, dist);
+				hist_put(&p->hist.owd, delay);
 			}
 			break;
 		}
 		
 		case HOOK_PATH_STOP:
-			if (p->hist_owd.total)     { info("One-way delay:"); hist_print(&p->hist_owd); }
-			if (p->hist_gap_recv.total){ info("Inter-message arrival time:"); hist_print(&p->hist_gap_recv); }
-			if (p->hist_gap_msg.total) { info("Inter-message ts gap:"); hist_print(&p->hist_gap_msg); }
-			if (p->hist_gap_seq.total) { info("Inter-message sequence number gaps:"); hist_print(&p->hist_gap_seq); }
+			if (p->hist.owd.total)     { info("One-way delay:"); hist_print(&p->hist.owd); }
+			if (p->hist.gap_recv.total){ info("Inter-message arrival time:"); hist_print(&p->hist.gap_recv); }
+			if (p->hist.gap_msg.total) { info("Inter-message ts gap:"); hist_print(&p->hist.gap_msg); }
+			if (p->hist.gap_seq.total) { info("Inter-message sequence number gaps:"); hist_print(&p->hist.gap_seq); }
 			break;
 
 		case HOOK_PATH_RESTART:
-			hist_reset(&p->hist_owd);
-			hist_reset(&p->hist_gap_seq);
-			hist_reset(&p->hist_gap_msg);
-			hist_reset(&p->hist_gap_recv);
+			hist_reset(&p->hist.owd);
+			hist_reset(&p->hist.gap_seq);
+			hist_reset(&p->hist.gap_msg);
+			hist_reset(&p->hist.gap_recv);
 			break;
 			
 		case HOOK_PERIODIC: {
 			if (p->received > 1)
 				stats("%-40.40s|%10.2g|%10.2f|%10u|%10u|%10u|%10u|%10u|%10u|%10u|", path_name(p),
-					p->hist_owd.last, 1 / p->hist_gap_msg.last,
+					p->hist.owd.last, 1 / p->hist.gap_msg.last,
 					p->sent, p->received, p->dropped, p->skipped, p->invalid, p->overrun, list_length(p->current)
 				);
 			else
@@ -450,9 +450,10 @@ int hook_stats_send(struct path *p, struct hook *h, int when)
 			m.data[m.length++].f = p->invalid;
 			m.data[m.length++].f = p->skipped;
 			m.data[m.length++].f = p->dropped;
-			m.data[m.length++].f = p->hist_owd.last,
-			m.data[m.length++].f = p->hist_gap_msg.last;
-			m.data[m.length++].f = p->hist_gap_recv.last;
+
+			m.data[m.length++].f = p->hist.owd.last,
+			m.data[m.length++].f = p->hist.gap_msg.last;
+			m.data[m.length++].f = p->hist.gap_recv.last;
 			
 			/* Send single message with statistics to destination node */
 			node_write(private->dest, &m, 1, 0, 1);

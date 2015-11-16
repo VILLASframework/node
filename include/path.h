@@ -65,10 +65,12 @@ struct path
 	
 	/** The following fields are mostly managed by hook_ functions @{ */
 	
-	struct hist hist_owd;		/**< Histogram for one-way-delay (OWD) of received messages */
-	struct hist hist_gap_msg;	/**< Histogram for inter message timestamps (as sent by remote) */
-	struct hist hist_gap_recv;	/**< Histogram for inter message arrival time (as seen by this instance) */
-	struct hist hist_gap_seq;	/**< Histogram of sequence number displacement of received messages */
+	struct {
+		struct hist owd;	/**< Histogram for one-way-delay (OWD) of received messages */
+		struct hist gap_msg;	/**< Histogram for inter message timestamps (as sent by remote) */
+		struct hist gap_recv;	/**< Histogram for inter message arrival time (as seen by this instance) */
+		struct hist gap_seq;	/**< Histogram of sequence number displacement of received messages */
+	} hist;
 
 	struct {
 		struct timespec recv;	/**< Last message received */
