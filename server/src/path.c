@@ -166,8 +166,10 @@ int path_start(struct path *p)
 
 		pthread_create(&p->sent_tid, NULL, &path_run_async, p);
 	}
+	
+	p->state = PATH_RUNNING;
 
-	return  pthread_create(&p->recv_tid, NULL, &path_run,  p);
+	return pthread_create(&p->recv_tid, NULL, &path_run,  p);
 }
 
 int path_stop(struct path *p)
@@ -183,6 +185,8 @@ int path_stop(struct path *p)
 
 		close(p->tfd);
 	}
+	
+	p->state = PATH_STOPPED;
 
 	if (path_run_hook(p, HOOK_PATH_STOP))
 		return -1;
@@ -215,6 +219,8 @@ struct path * path_create()
 		if (h->type & HOOK_INTERNAL)
 			list_push(&p->hooks, memdup(h, sizeof(*h)));
 	}
+	
+	p->state = PATH_CREATED;
 
 	return p;
 }

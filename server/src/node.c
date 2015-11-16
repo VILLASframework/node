@@ -70,20 +70,33 @@ int node_deinit()
 
 int node_start(struct node *n)
 { INDENT
-	info("Starting node '%s' of type '%s' (%s)", n->name, n->_vt->name, node_print(n));
+	int ret;
 
+	info("Starting node '%s' of type '%s' (%s)", n->name, n->_vt->name, node_print(n));
 	{ INDENT
-		return node_open(n);
+		ret = node_open(n);
 	}
+	
+	if (ret == 0)
+		n->state = NODE_RUNNING;
+	
+	return ret;
 }
 
 int node_stop(struct node *n)
 { INDENT
+	int ret;
+
 	info("Stopping node '%s'", n->name);
 
 	{ INDENT
-		return node_close(n);
+		ret = node_close(n);
 	}
+	
+	if (ret == 0)
+		n->state = NODE_STOPPED;
+
+	return ret;
 }
 
 char * node_print(struct node *n)
@@ -106,6 +119,7 @@ struct node * node_create(struct node_type *vt)
 	list_push(&vt->instances, n);
 	
 	n->_vt = vt;
+	n->state = NODE_CREATED;
 	
 	return n;
 }
