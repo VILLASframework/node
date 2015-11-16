@@ -53,6 +53,18 @@ int hook_ts(struct path *p, struct hook *h, int when)
 	return 0;
 }
 
+REGISTER_HOOK("fix_ts", 0, hook_fix_ts, HOOK_INTERNAL | HOOK_MSG)
+int hook_fix_ts(struct path *p, struct hook *h, int when)
+{
+	struct msg *m = p->current;
+
+	if ((m->ts.sec ==  0 && m->ts.nsec ==  0) ||
+	    (m->ts.sec == -1 && m->ts.nsec == -1))
+		    hook_ts(p, h, when);
+
+	return 0;
+}
+
 REGISTER_HOOK("skip_unchanged", 99, hook_skip_unchanged, HOOK_PRIVATE | HOOK_ASYNC)
 int hook_skip_unchanged(struct path *p, struct hook *h, int when)
 {	
