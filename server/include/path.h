@@ -31,6 +31,13 @@
  */
 struct path
 {
+	enum {
+		PATH_INVALID,		/**< */
+		PATH_CREATED,		/**< */
+		PATH_RUNNING,		/**< */
+		PATH_STOPPED		/**< */
+	} state;			/**< Path state */
+	
 	struct node *in;		/**< Pointer to the incoming node */
 	struct node *out;		/**< Pointer to the first outgoing node ( path::out == list_first(path::destinations) */
 	
