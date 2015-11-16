@@ -63,9 +63,11 @@ struct path
 	struct hist hist_gap_recv;	/**< Histogram for inter message arrival time (as seen by this instance) */
 	struct hist hist_gap_seq;	/**< Histogram of sequence number displacement of received messages */
 
-	struct timespec ts_recv;	/**< Last message received */
-	struct timespec ts_sent;	/**< Last message sent */
-	struct timespec ts_last;	/**< Previous message received (old value of path::ts_recv) */
+	struct {
+		struct timespec recv;	/**< Last message received */
+		struct timespec sent;	/**< Last message sent */
+		struct timespec last;	/**< Previous message received (old value of path::ts__recv) */
+	} ts;
 
 	unsigned int sent;		/**< Counter for sent messages to all outgoing nodes */
 	unsigned int received;		/**< Counter for received messages from all incoming nodes */
