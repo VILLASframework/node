@@ -27,14 +27,9 @@
 #include "list.h"
 
 /* Helper macros for virtual node type */
-#define REGISTER_NODE_TYPE(type, name, fnc)				\
-__attribute__((constructor)) void __register_node_ ## fnc () {		\
-	static struct node_type t = { name, type,			\
-					fnc ## _parse, fnc ## _print,	\
-					fnc ## _open,  fnc ## _close,	\
-					fnc ## _read,  fnc ## _write,	\
-					fnc ## _init,  fnc ## _deinit };\
-	list_push(&node_types, &t);					\
+#define REGISTER_NODE_TYPE(vt)				\
+__attribute__((constructor)) static void __register() {	\
+	list_push(&node_types, vt);			\
 }
 
 extern struct list node_types;
@@ -43,6 +38,8 @@ extern struct list node_types;
 struct node_type {
 	/** The unique name of this node. This must be allways the first member! */
 	const char *name;
+	/** A short description of this node type. Will be shown in help text. */
+	const char *description;
 	/** A list of all existing nodes of this type. */
 	struct list instances;
 	
@@ -58,13 +55,6 @@ struct node_type {
 	 */
 	int (*init)(int argc, char *argv[], struct settings *set);
 
-	enum {
-		BSD_SOCKET,		/**< BSD Socket API */
-		LOG_FILE,		/**< File IO */
-		OPAL_ASYNC,		/**< OPAL-RT Asynchronous Process Api */
-		GTFPGA,			/**< Xilinx ML507 GTFPGA card */
-		NGSI			/**< NGSI 9/10 HTTP RESTful API (FIRWARE ContextBroker) */
-	} type;				/**< Node type */
 	/** Global de-initialization per node type.
 	 *
 	 * This callback is invoked once per node-type.

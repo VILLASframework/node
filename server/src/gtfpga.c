@@ -267,4 +267,17 @@ int gtfpga_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 	return 0;
 }
 
-REGISTER_NODE_TYPE(GTFPGA, "gtfpga", gtfpga)
+static struct node_type vt = {
+	.name		= "gtfpga",
+	.description	= "GTFPGA PCIe card (libpci)",
+	.parse		= gtfpga_parse,
+	.print		= gtfpga_print,
+	.open		= gtfpga_open,
+	.close		= gtfpga_close,
+	.read		= gtfpga_read,
+	.write		= gtfpga_write,
+	.init		= gtfpga_init,
+	.deinit		= gtfpga_deinit
+};
+
+REGISTER_NODE_TYPE(&vt)

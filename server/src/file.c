@@ -371,4 +371,16 @@ int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 	return i;
 }
 
-REGISTER_NODE_TYPE(LOG_FILE, "file", file)
+static struct node_type vt = {
+	.name		= "file",
+	.description	= "support for file log / replay node type",
+	.reverse	= file_reverse,
+	.parse		= file_parse,
+	.print		= file_print,
+	.open		= file_open,
+	.close		= file_close,
+	.read		= file_read,
+	.write		= file_write
+};
+
+REGISTER_NODE_TYPE(&vt)

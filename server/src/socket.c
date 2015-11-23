@@ -35,6 +35,8 @@
 /** Linked list of interfaces */
 extern struct list interfaces;
 
+/* Forward declartions */
+static struct node_type vt;
 
 int socket_init(int argc, char * argv[], struct settings *set)
 { INDENT
@@ -473,4 +475,19 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 	return ret;
 }
 
-REGISTER_NODE_TYPE(BSD_SOCKET, "socket", socket)
+static struct node_type vt = {
+	.name		= "socket",
+	.description	= "Network socket (libnl3)",
+	.destroy	= socket_destroy,
+	.reverse	= socket_reverse,
+	.parse		= socket_parse,
+	.print		= socket_print,
+	.open		= socket_open,
+	.close		= socket_close,
+	.read		= socket_read,
+	.write		= socket_write,
+	.init		= socket_init,
+	.deinit		= socket_deinit
+};
+
+REGISTER_NODE_TYPE(&vt)

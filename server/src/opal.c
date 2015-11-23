@@ -284,4 +284,17 @@ int opal_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 	return 1;
 }
 
-REGISTER_NODE_TYPE(OPAL_ASYNC, "opal", opal)
+static struct node_type vt = {
+	.name		= "opal",
+	.description	= "run as OPAL Asynchronous Process (libOpalAsyncApi)",
+	.parse		= opal_parse,
+	.print		= opal_print,
+	.open		= opal_open,
+	.close		= opal_close,
+	.read		= opal_read,
+	.write		= opal_write,
+	.init		= opal_init,
+	.deinit		= opal_deinit
+};
+
+REGISTER_NODE_TYPE(&vt)

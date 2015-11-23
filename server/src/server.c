@@ -107,21 +107,8 @@ static void usage(const char *name)
 	printf("  See in the RT-LAB User Guide for more information.\n\n");
 #endif
 	printf("Supported node types:\n");
-#ifdef ENABLE_FILE
-	printf(" - file: support for file log / replay node type\n");
-#endif
-#ifdef ENABLE_SOCKET
-	printf(" - socket: Network socket (libnl3)\n");
-#endif
-#ifdef ENABLE_GTFPGA
-	printf(" - gtfpga: GTFPGA PCIe card (libpci)\n");
-#endif
-#ifdef ENABLE_OPAL_ASYNC
-	printf(" - opal: run as OPAL Asynchronous Process (libOpalAsyncApi)\n");
-#endif
-#ifdef ENABLE_NGSI
-	printf(" - ngsi: OMA Next Generation Services Interface 10 (libcurl, libjansson, libuuid)\n");
-#endif
+	list_foreach(struct node_type *vt, &node_types)
+		printf(" - %s: %s\n", vt->name, vt->description);
 	printf("\n");
 	printf("Simulator2Simulator Server %s (built on %s %s)\n",
 		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));

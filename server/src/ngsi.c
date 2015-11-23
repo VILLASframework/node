@@ -586,4 +586,17 @@ int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 	return ret ? 0 : cnt;
 }
 
-REGISTER_NODE_TYPE(NGSI, "ngsi", ngsi)
+static struct node_type vt = {
+	.name		= "ngsi",
+	.description	= "OMA Next Generation Services Interface 10 (libcurl, libjansson, libuuid)",
+	.parse		= ngsi_parse,
+	.print		= ngsi_print,
+	.open		= ngsi_open,
+	.close		= ngsi_close,
+	.read		= ngsi_read,
+	.write		= ngsi_write,
+	.init		= ngsi_init,
+	.deinit		= ngsi_deinit
+};
+
+REGISTER_NODE_TYPE(&vt)
