@@ -92,6 +92,15 @@ libs2ss.so: CFLAGS += -fPIC $(LIB_CFLAGS)
 libs2ss.so: $(LIB_OBJS)
 	$(CC) $(LIB_LDFLAGS) $(LIB_LDLIBS) -shared -o $@ $^
 
+# Common targets
+install: $(TARGETS)
+	install -m 0644 libs2ss.so $(PREFIX)/lib
+	install -m 0755 server -T $(PREFIX)/bin/s2ss
+	install -m 0755 send $(PREFIX)/bin/s2ss-send
+	install -m 0755 receive $(PREFIX)/bin/s2ss-receive
+	install -m 0755 random $(PREFIX)/bin/s2ss-random
+	install -m 0755 test $(PREFIX)/bin/s2ss-test
+
 clean:
 	$(RM) *~ *.o *.d *.so
 	$(RM) $(TARGETS)
