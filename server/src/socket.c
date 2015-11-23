@@ -35,8 +35,6 @@
 /** Linked list of interfaces */
 extern struct list interfaces;
 
-/** Linked list of all sockets nodes */
-static struct list sockets;
 
 int socket_init(int argc, char * argv[], struct settings *set)
 { INDENT
@@ -47,7 +45,8 @@ int socket_init(int argc, char * argv[], struct settings *set)
 	list_init(&interfaces, (dtor_cb_t) if_destroy);
 
 	/* Gather list of used network interfaces */
-	list_foreach(struct socket *s, &sockets) {
+	list_foreach(struct node *n, &vt.instances) {
+		struct socket *s = n->socket;
 		struct rtnl_link *link;
 
 		/* Determine outgoing interface */
@@ -316,8 +315,6 @@ int socket_parse(config_setting_t *cfg, struct node *n)
 	}
 
 	n->socket = s;
-
-	list_push(&sockets, s);
 
 	return 0;
 }

@@ -37,6 +37,7 @@ struct path
 	struct list destinations;	/**< List of all outgoing nodes */
 	struct list hooks;		/**< List of function pointers to hooks */
 
+	int enabled;			/**< Is this path enabled */
 	int tfd;			/**< Timer file descriptor for fixed rate sending */
 	double rate;			/**< Send messages with a fixed rate over this path */
 	

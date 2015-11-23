@@ -56,6 +56,8 @@ extern struct list node_types;
 struct node_type {
 	/** The unique name of this node. This must be allways the first member! */
 	const char *name;
+	/** A list of all existing nodes of this type. */
+	struct list instances;
 
 	enum {
 		BSD_SOCKET,		/**< BSD Socket API */
@@ -164,7 +166,6 @@ struct node
 	const char *name;	/**< A short identifier of the node, only used for configuration and logging */
 	char *_print;		/**< A string used to print to screen. */
 
-	int refcnt;		/**< How many paths  are sending / receiving from this node? */
 	int combine;		/**< Number of messages to send / recv at once (scatter / gather) */
 	int affinity;		/**< CPU Affinity of this node */
 

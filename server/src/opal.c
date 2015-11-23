@@ -17,9 +17,6 @@
 /** Global OPAL specific settings */
 static struct opal_global *og = NULL;
 
-/** List of all opal nodes */
-static struct list opals;
-
 int opal_init(int argc, char *argv[], struct settings *set)
 { INDENT
 	int err;
@@ -141,8 +138,6 @@ int opal_parse(config_setting_t *cfg, struct node *n)
 
 	n->opal = o;
 	n->cfg = cfg;
-
-	list_push(&opals, o);
 
 	return 0;
 }

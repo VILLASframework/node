@@ -103,7 +103,7 @@ int config_parse_path(config_setting_t *cfg,
 {
 	config_setting_t *cfg_out, *cfg_hook;
 	const char *in;
-	int enabled, reverse;
+	int reverse;
 
 	struct path *p = path_create();
 
@@ -130,8 +130,8 @@ int config_parse_path(config_setting_t *cfg,
 	/* Initialize hooks and their private data / parameters */
 	path_run_hook(p, HOOK_INIT);
 
-	if (!config_setting_lookup_bool(cfg, "enabled", &enabled))
-		enabled = 1;
+	if (!config_setting_lookup_bool(cfg, "enabled", &p->enabled))
+		p->enabled = 1;
 	if (!config_setting_lookup_bool(cfg, "reverse", &reverse))
 		reverse = 0;
 	if (!config_setting_lookup_float(cfg, "rate", &p->rate))
@@ -143,52 +143,31 @@ int config_parse_path(config_setting_t *cfg,
 
 	p->cfg = cfg;
 
-	if (enabled) {
-		p->in->refcnt++;
-		p->in->_vt->refcnt++;
+	list_push(paths, p);
 
-		list_foreach(struct node *node, &p->destinations) {
-			node->refcnt++;
-			node->_vt->refcnt++;
-		}
-		
-		list_push(paths, p);
+	if (reverse) {
+		if (list_length(&p->destinations) > 1)
+			error("Can't reverse path with multiple destination nodes");
 
-		if (reverse) {
-			if (list_length(&p->destinations) > 1)
-				error("Can't reverse path with multiple destination nodes");
+		struct path *r = path_create();
 
-			struct path *r = path_create();
-
-			/* Swap in/out */
-			r->in  = p->out;
-			r->out = p->in;
+		/* Swap in/out */
+		r->in  = p->out;
+		r->out = p->in;
 			
-			list_push(&r->destinations, r->out);
+		list_push(&r->destinations, r->out);
 			
-			/* Increment reference counters */
-			r->in->refcnt++;
-			r->in->_vt->refcnt++;
-			r->out->refcnt++;
-			r->out->_vt->refcnt++;
+		if (cfg_hook)
+			config_parse_hooklist(cfg_hook, &r->hooks);
 			
-			if (cfg_hook)
-				config_parse_hooklist(cfg_hook, &r->hooks);
+		/* Initialize hooks and their private data / parameters */
+		path_run_hook(r, HOOK_INIT);
 			
-			/* Initialize hooks and their private data / parameters */
-			path_run_hook(r, HOOK_INIT);
-			
-			r->rate = p->rate;
-			r->poolsize = p->poolsize;
-			r->msgsize = p->msgsize;
+		r->rate = p->rate;
+		r->poolsize = p->poolsize;
+		r->msgsize = p->msgsize;
 
-			list_push(paths, r);
-		}
-	}
-	else {
-		warn("Path %s is not enabled", path_print(p));
-
-		path_destroy(p);
+		list_push(paths, r);
 	}
 
 	return 0;

@@ -96,9 +96,6 @@ int main(int argc, char *argv[])
 	if (!node)
 		error("There's no node with the name '%s'", argv[3]);
 
-	node->refcnt++;
-	node->_vt->refcnt++;
-
 	node_init(argc-3, argv+3, &settings);
 	node_start(node);
 

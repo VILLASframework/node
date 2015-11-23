@@ -72,6 +72,32 @@ void * list_lookup(struct list *l, const char *name)
 	return list_search(l, cmp, (void *) name);
 }
 
+int list_count(struct list *l, cmp_cb_t cmp, void *ctx)
+{
+	int c = 0;
+
+	pthread_mutex_lock(&l->lock);
+	
+	void *e;
+	list_foreach(e, l) {
+		if (!cmp(e, ctx))
+			c++;
+	}
+
+	pthread_mutex_unlock(&l->lock);
+
+	return c;
+}
+
+int list_contains(struct list *l, void *p)
+{
+	int cmp(const void *a, const void *b) {
+		return a == b;
+	}
+	
+	return list_count(l, cmp, p);
+}
+
 void * list_search(struct list *l, cmp_cb_t cmp, void *ctx)
 {
 	pthread_mutex_lock(&l->lock);

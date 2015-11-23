@@ -180,12 +180,25 @@ int main(int argc, char *argv[])
 	node_init(argc, argv, &settings);
 
 	info("Starting nodes");
-	list_foreach(struct node *n, &nodes)
-		node_start(n);
+	list_foreach(struct node *n, &nodes) {
+		int used_by_path(struct path *p, struct node *n) {
+			return (p->in == n) || list_contains(&p->destinations, n);
+		}
+	
+		int refs = list_count(&paths, (cmp_cb_t) used_by_path, n);
+		if (refs)
+			node_start(n);
+		else
+			warn("Node '%s' is unused. Skipping...", n->name);
+	}
 
 	info("Starting paths");
-	list_foreach(struct path *p, &paths)
-		path_start(p);
+	list_foreach(struct path *p, &paths) {
+		if (p->enabled)
+			path_start(p);
+		else
+			warn("Path %s is disabled. Skipping...", path_print(p));
+	}
 
 	/* Run! */
 	if (settings.stats > 0) {

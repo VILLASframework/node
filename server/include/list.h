@@ -67,7 +67,14 @@ void list_push(struct list *l, void *p);
  */
 void * list_lookup(struct list *l, const char *name);
 
+/** Return the first element of the list for which cmp returns zero */
 void * list_search(struct list *l, cmp_cb_t cmp, void *ctx);
+
+/** Returns the number of occurences for which cmp returns zero when called on all list elements. */
+int list_count(struct list *l, cmp_cb_t cmp, void *ctx);
+
+/** Return 0 if list contains pointer p */
+int list_contains(struct list *l, void *p);
 
 /** Sort the list using the quicksort algorithm of libc */
 void list_sort(struct list *l, cmp_cb_t cmp);

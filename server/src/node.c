@@ -36,10 +36,14 @@ struct list node_types = LIST_INIT(NULL);
 int node_init(int argc, char *argv[], struct settings *set)
 { INDENT
 	list_foreach(const struct node_type *vt, &node_types) {
-		if (vt->refcnt) {
+		if (list_length(&vt->instances) > 0) {
 			info("Initializing '%s' node type", vt->name);
-			vt->init(argc, argv, set);
+			
+			if (vt->init)
+				vt->init(argc, argv, set);
 		}
+		else
+			warn("No node is using the '%s' type. Skipping...", vt->name);
 	}
 
 	return 0;
@@ -49,7 +53,7 @@ int node_deinit()
 { INDENT
 	/* De-initialize node types */
 	list_foreach(const struct node_type *vt, &node_types) {
-		if (vt->refcnt) {
+		if (list_length(&vt->instances) > 0) {
 			info("De-initializing '%s' node type", vt->name);
 			vt->deinit();
 		}
@@ -60,12 +64,7 @@ int node_deinit()
 
 int node_start(struct node *n)
 { INDENT
-	if (!n->refcnt) {
-		warn("Node '%s' is unused. Skipping...", n->name);
-		return -1;
-	}
-
-	debug(1, "Starting node '%s' of type '%s' (%s)", n->name, n->_vt->name, node_print(n));
+	info("Starting node '%s' of type '%s' (%s)", n->name, n->_vt->name, node_print(n));
 
 	{ INDENT
 		return node_open(n);
@@ -74,18 +73,11 @@ int node_start(struct node *n)
 
 int node_stop(struct node *n)
 { INDENT
-	int ret;
-	
-	if (!n->refcnt) /* Unused and not started. No reason to stop.. */
-		return -1;
-	
 	info("Stopping node '%s'", n->name);
 
 	{ INDENT
-		ret = node_close(n);
+		return node_close(n);
 	}
-
-	return ret;
 }
 
 char * node_print(struct node *n)
@@ -114,6 +106,8 @@ void node_reverse(struct node *n)
 struct node * node_create(struct node_type *vt)
 {
 	struct node *n = alloc(sizeof(struct node));
+	
+	list_push(&vt->instances, n);
 	
 	n->_vt = vt;
 	
