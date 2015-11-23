@@ -164,8 +164,8 @@ void test_rtt() {
 		m.ts.sec = sent.tv_sec;
 		m.ts.nsec = sent.tv_nsec;
 
-		node_write_single(node, &m); /* Ping */
-		node_read_single(node, &m);  /* Pong */
+		node_write(node, &m, 1, 0, 1); /* Ping */
+		node_read(node, &m, 1, 0, 1);  /* Pong */
 		
 		clock_gettime(CLOCK_ID, &recv);
 

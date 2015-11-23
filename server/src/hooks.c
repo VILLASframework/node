@@ -447,7 +447,7 @@ int hook_stats_send(struct path *p, struct hook *h, int when)
 			m.data[m.length++].f = p->hist_gap_recv.last;
 			
 			/* Send single message with statistics to destination node */
-			node_write_single(private->dest, &m);
+			node_write(private->dest, &m, 1, 0, 1);
 			
 			break;
 		}

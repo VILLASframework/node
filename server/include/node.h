@@ -36,9 +36,6 @@
 #define node_open(n)			((n)->_vt->open(n))
 #define node_close(n)			((n)->_vt->close(n))
 
-#define node_read_single(n, m)		((n)->_vt->read(n, m, 1, 0, 1))
-#define node_write_single(n, m)		((n)->_vt->write(n, m, 1, 0, 1))
-
 
 #define REGISTER_NODE_TYPE(type, name, fnc)				\
 __attribute__((constructor)) void __register_node_ ## fnc () {		\
