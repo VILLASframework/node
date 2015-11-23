@@ -157,6 +157,15 @@ int socket_open(struct node *n)
 	return 0;
 }
 
+int socket_reverse(struct node *n)
+{
+	struct socket *s = n->socket;
+	
+	SWAP(s->remote, s->local);
+	
+	return 0;
+}
+
 int socket_close(struct node *n)
 {
 	struct socket *s = n->socket;
@@ -164,6 +173,16 @@ int socket_close(struct node *n)
 	if (s->sd >= 0)
 		close(s->sd);
 
+	return 0;
+}
+
+int socket_destroy(struct node *n)
+{
+	struct socket *s = n->socket;
+	
+	rtnl_qdisc_put(s->tc_qdisc);
+	rtnl_cls_put(s->tc_classifier);
+	
 	return 0;
 }
 
@@ -270,7 +289,7 @@ int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 	return sent;
 }
 
-int socket_parse(config_setting_t *cfg, struct node *n)
+int socket_parse(struct node *n, config_setting_t *cfg)
 {
 	const char *local, *remote, *layer;
 	int ret;

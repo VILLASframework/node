@@ -78,7 +78,7 @@ int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
 
 /** @see node_vtable::parse */
-int socket_parse(config_setting_t *cfg, struct node *n);
+int socket_parse(struct node *n, config_setting_t *cfg);
 
 /** @see node_vtable::print */
 char * socket_print(struct node *n);

@@ -12,26 +12,32 @@
 #include "cfg.h"
 #include "utils.h"
 
-/* Node types */
-#include "file.h"
-#ifdef ENABLE_GTFPGA
-  #include "gtfpga.h"
-#endif
-#ifdef ENABLE_OPAL_ASYNC
-  #include "opal.h"
-#endif
-#ifdef ENABLE_SOCKET
-  #include "socket.h"
-  #include <netlink/route/qdisc.h>
-  #include <netlink/route/classifier.h>
-#endif
-#ifdef ENABLE_NGSI
-  #include "ngsi.h"
-  #include <jansson.h>
-#endif
-
 /** Vtable for virtual node sub types */
 struct list node_types = LIST_INIT(NULL);
+
+int node_parse(struct node *n, config_setting_t *cfg)
+{
+	return n->_vt->parse ? n->_vt->parse(n, cfg) : -1;	
+}
+
+int node_read(struct node *n, struct msg *p, int ps, int f, int c)
+{
+	return n->_vt->read ? n->_vt->read(n, p, ps, f, c) : -1;
+}
+
+int node_write(struct node *n, struct msg *p, int ps, int f, int c)
+{
+	return n->_vt->write ? n->_vt->write(n, p, ps, f, c) : -1;
+}
+
+int node_open(struct node *n)
+{
+	return n->_vt->open ? n->_vt->open(n) : -1;
+}	
+int node_close(struct node *n)
+{
+	return n->_vt->close ? n->_vt->close(n) : -1;
+}	
 
 int node_init(int argc, char *argv[], struct settings *set)
 { INDENT
@@ -88,19 +94,9 @@ char * node_print(struct node *n)
 	return n->_print;
 }
 
-void node_reverse(struct node *n)
+int node_reverse(struct node *n)
 {
-	switch (node_type(n)) {
-#ifdef ENABLE_SOCKET
-		case BSD_SOCKET:
-			SWAP(n->socket->remote, n->socket->local);
-			break;
-#endif
-		case LOG_FILE:
-			SWAP(n->file->read, n->file->write);
-			break;
-		default: { }
-	}
+	return n->_vt->reverse ? n->_vt->reverse(n) : -1;
 }
 
 struct node * node_create(struct node_type *vt)
@@ -116,20 +112,8 @@ struct node * node_create(struct node_type *vt)
 
 void node_destroy(struct node *n)
 {
-	switch (node_type(n)) {
-#ifdef ENABLE_NGSI
-		case NGSI:
-			list_destroy(&n->ngsi->mapping);
-		break;
-#endif
-#ifdef ENABLE_SOCKET
-		case BSD_SOCKET:
-			rtnl_qdisc_put(n->socket->tc_qdisc);
-			rtnl_cls_put(n->socket->tc_classifier);
-			break;
-#endif
-		default: { }
-	}
+	if (n->_vt->destroy)
+		n->_vt->destroy(n);
 
 	free(n->_print);
 	free(n->socket);

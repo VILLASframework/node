@@ -223,7 +223,7 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct msg *pool, i
 	return cnt;
 }
 
-static int ngsi_parse_mapping(config_setting_t *cfg, struct list *mapping)
+static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 {
 	if (!config_setting_is_array(cfg))
 		return -1;
@@ -423,7 +423,7 @@ int ngsi_deinit()
 	return 0;
 }
 
-int ngsi_parse(config_setting_t *cfg, struct node *n)
+int ngsi_parse(struct node *n, config_setting_t *cfg)
 {
 	struct ngsi *i = alloc(sizeof(struct ngsi));
 
@@ -452,7 +452,7 @@ int ngsi_parse(config_setting_t *cfg, struct node *n)
 	if (!cfg_mapping)
 		cerror(cfg, "Missing mapping for node '%s", n->name);
 
-	if (ngsi_parse_mapping(cfg_mapping, &i->mapping))
+	if (ngsi_parse_mapping(&i->mapping, cfg_mapping))
 		cerror(cfg_mapping, "Invalid mapping for NGSI node '%s'", n->name);
 
 	n->ngsi = i;
@@ -467,6 +467,15 @@ char * ngsi_print(struct node *n)
 
 	return strcatf(&buf, "endpoint=%s, timeout=%.3f secs, #mappings=%zu",
 		i->endpoint, i->timeout, list_length(&i->mapping));
+}
+
+int ngsi_destroy(struct node *n)
+{
+	struct ngsi *i = n->ngsi;
+	
+	list_destroy(&i->mapping);
+	
+	return 0;
 }
 
 int ngsi_open(struct node *n)

@@ -18,17 +18,6 @@
 #include "path.h"
 #include "hooks.h"
 
-#include "file.h"
-#ifdef ENABLE_SOCKET
- #include "socket.h"
-#endif
-#ifdef ENABLE_GTFPGA
-  #include "gtfpga.h"
-#endif
-#ifdef ENABLE_OPAL_ASYNC
-  #include "opal.h"
-#endif
-
 int config_parse(const char *filename, config_t *cfg, struct settings *set,
 	struct list *nodes, struct list *paths)
 {

@@ -56,7 +56,7 @@ int gtfpga_deinit()
 	return 0;
 }
 
-int gtfpga_parse(config_setting_t *cfg, struct node *n)
+int gtfpga_parse(struct node *n, config_setting_t *cfg)
 {
 	struct gtfpga *g = alloc(sizeof(struct gtfpga));
 

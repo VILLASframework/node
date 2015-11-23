@@ -128,7 +128,7 @@ int opal_print_global(struct opal_global *g)
 	return 0;
 }
 
-int opal_parse(config_setting_t *cfg, struct node *n)
+int opal_parse(struct node *n, config_setting_t *cfg)
 {
 	struct opal *o = alloc(sizeof(struct opal));
 

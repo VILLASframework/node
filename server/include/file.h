@@ -66,7 +66,7 @@ int file_deinit();
 char * file_print(struct node *n);
 
 /** @see node_vtable::parse */
-int file_parse(config_setting_t *cfg, struct node *n);
+int file_parse(struct node *n, config_setting_t *cfg);
 
 /** @see node_vtable::open */
 int file_open(struct node *n);

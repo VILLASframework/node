@@ -55,7 +55,7 @@ int gtfpga_init(int argc, char * argv[], struct settings *set);
 int gtfpga_deinit();
 
 /** @see node_vtable::parse */
-int gtfpga_parse(config_setting_t *cfg, struct node *n);
+int gtfpga_parse(struct node *n, config_setting_t *cfg);
 
 /** @see node_vtable::print */
 char * gtfpga_print(struct node *n);

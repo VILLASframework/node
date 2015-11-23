@@ -72,7 +72,7 @@ int ngsi_init(int argc, char *argv[], struct settings *set);
 int ngsi_deinit();
 
 /** @see node_vtable::parse */
-int ngsi_parse(config_setting_t *cfg, struct node *n);
+int ngsi_parse(struct node *n, config_setting_t *cfg);
 
 /** @see node_vtable::print */
 char * ngsi_print(struct node *n);

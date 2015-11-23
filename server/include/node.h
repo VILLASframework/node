@@ -27,16 +27,6 @@
 #include "list.h"
 
 /* Helper macros for virtual node type */
-#define node_type(n)			((n)->_vt->type)
-#define node_parse(n, cfg)		((n)->_vt->parse(cfg, n))
-
-#define node_read(n, p, ps, f, c)	((n)->_vt->read(n, p, ps, f, c))
-#define node_write(n, p, ps, f, c)	((n)->_vt->write(n, p, ps, f, c))
-
-#define node_open(n)			((n)->_vt->open(n))
-#define node_close(n)			((n)->_vt->close(n))
-
-
 #define REGISTER_NODE_TYPE(type, name, fnc)				\
 __attribute__((constructor)) void __register_node_ ## fnc () {		\
 	static struct node_type t = { name, type,			\
@@ -55,6 +45,18 @@ struct node_type {
 	const char *name;
 	/** A list of all existing nodes of this type. */
 	struct list instances;
+	
+	/** Global initialization per node type.
+	 *
+	 * This callback is invoked once per node-type.
+	 *
+	 * @param argc	Number of arguments passed to the server executable (see main()).
+	 * @param argv	Array of arguments  passed to the server executable (see main()).
+	 * @param set	Global settings.
+	 * @retval 0	Success. Everything went well.
+	 * @retval <0	Error. Something went wrong.
+	 */
+	int (*init)(int argc, char *argv[], struct settings *set);
 
 	enum {
 		BSD_SOCKET,		/**< BSD Socket API */
@@ -63,26 +65,46 @@ struct node_type {
 		GTFPGA,			/**< Xilinx ML507 GTFPGA card */
 		NGSI			/**< NGSI 9/10 HTTP RESTful API (FIRWARE ContextBroker) */
 	} type;				/**< Node type */
+	/** Global de-initialization per node type.
+	 *
+	 * This callback is invoked once per node-type.
+	 *
+	 * @retval 0	Success. Everything went well.
+	 * @retval <0	Error. Something went wrong.
+	 */
+	int (*deinit)();
+	
+	/** Allocate memory for an instance of this type. 
+	 *
+	 * @return A pointer to the node-type specific private data.
+	 */
+	void * (*create)();
+	
+	/** Free memory of an instance of this type.
+	 *
+	 * @param n	A pointer to the node object.
+	 */
+	int (*destroy)(struct node *n);
 
 	/** Parse node connection details.‚
 	 *
+	 * @param n	A pointer to the node object.
 	 * @param cfg	A libconfig object pointing to the node.
-	 * @param n	A pointer to the node structure which should be parsed.
 	 * @retval 0 	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*parse)(config_setting_t *cfg, struct node *n);
+	int (*parse)(struct node *n, config_setting_t *cfg);
 
 	/** Returns a string with a textual represenation of this node.
 	 *
-	 * @param n	A pointer to the node structure
+	 * @param n	A pointer to the node object.
 	 * @return	A pointer to a dynamically allocated string. Must be freed().
 	 */
 	char * (*print)(struct node *n);
 
 	/** Opens the connection to this node.
 	 *
-	 * @param n	A pointer to the node.
+	 * @param n	A pointer to the node object.
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
@@ -90,7 +112,7 @@ struct node_type {
 
 	/** Close the connection to this node.
 	 *
-	 * @param n	A pointer to the node.
+	 * @param n	A pointer to the node object.
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
@@ -104,7 +126,7 @@ struct node_type {
 	 * Indexes used to address @p m will wrap around after len messages.
 	 * Some node types might only support to receive one message at a time.
 	 *
-	 * @param n 		A pointer to the node where the messages should be sent to.
+	 * @param n		A pointer to the node object.
 	 * @param pool 		A pointer to an array of messages which should be sent.
 	 * @param poolsize 	The length of the message array.
 	 * @param first		The index of the first message which should be sent.
@@ -120,7 +142,7 @@ struct node_type {
 	 * The messages have to be stored in a circular buffer / array m.
 	 * So the indexes will wrap around after len.
 	 *
-	 * @param n		A pointer to the node where the messages should be sent to.
+	 * @param n		A pointer to the node object.
 	 * @param pool		A pointer to an array of messages which should be sent.
 	 * @param poolsize	The length of the message array.
 	 * @param first		The index of the first message which should be sent.
@@ -128,29 +150,14 @@ struct node_type {
 	 * @return		The number of messages actually sent.
 	 */
 	int (*write)(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
-
-	/** Global initialization per node type.
-	 *
-	 * This callback is invoked once per node-type.
-	 *
-	 * @param argc	Number of arguments passed to the server executable (see main()).
-	 * @param argv	Array of arguments  passed to the server executable (see main()).
-	 * @param set	Global settings.
-	 * @retval 0	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
-	 */
-	int (*init)(int argc, char *argv[], struct settings *set);
 	
-	/** Global de-initialization per node type.
+	/** Reverse source and destination of a node.
 	 *
-	 * This callback is invoked once per node-type.
+	 * This is not supported by all node types!
 	 *
-	 * @retval 0	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
+	 * @param n		A pointer to the node object.
 	 */
-	int (*deinit)();
-
-	int refcnt;	/**< Reference counter: how many nodes are using this node-type? */
+	int (*reverse)(struct node *n);
 };
 
 /** The data structure for a node.
@@ -179,58 +186,72 @@ struct node
 	config_setting_t *cfg;	/**< A pointer to the libconfig object which instantiated this node */
 };
 
-/** Initialize node type subsystems.
+/** Initialize all registered node type subsystems.
  *
- * These routines are only called once per type (not per node instance).
- * See node_vtable::init
+ * @see node_type::init
  */
 int node_init(int argc, char *argv[], struct settings *set);
 
 /** De-initialize node type subsystems.
  *
- * These routines are only called once per type (not per node instance).
- * See node_vtable::deinit
+ * @see node_type::deinit
  */
 int node_deinit();
 
-/** Connect and bind the UDP socket of this node.
+/** Create a node by allocating dynamic memory.
  *
- * Depending on the type (vtable) of this node,
- *  a socket is opened, shmem region registred...
- *
- * @param n A pointer to the node structure
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
+ * @see node_type::create
+ * @param vt A pointer to the node-type table of virtual functions.
  */
-int node_start(struct node *n);
-
-/** Return a pointer to a string which should be used to print this node */
-char * node_print(struct node *n);
-
-/** Stops a node.
- *
- * Depending on the type (vtable) of this node,
- *  a socket is closed, shmem region released...
- *
- * @param n A pointer to the node structure
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
- */
-int node_stop(struct node *n);
-
-/** Reverse local and remote socket address.
- * This is usefull for the helper programs: send, receive, test
- * because they usually use the same configuration file as the
- * server and therefore the direction needs to be swapped. */
-void node_reverse(struct node *n);
-
-/** Create a node by allocating dynamic memory. */
 struct node * node_create(struct node_type *vt);
 
 /** Destroy node by freeing dynamically allocated memory.
  *
- * @param i A pointer to the interface structure.
+ * @see node_type::destroy
  */
 void node_destroy(struct node *n);
+
+/** Start operation of a node.
+ *
+ * @see node_type::open
+ */
+int node_start(struct node *n);
+
+/** Stops operation of a node.
+ *
+ * @see node_type::close
+ */
+int node_stop(struct node *n);
+
+/** Parse node connection details.
+ *
+ * @see node_type::parse
+ */
+int node_parse(struct node *n, config_setting_t *cfg);
+
+/** Return a pointer to a string which should be used to print this node
+ *
+ * @see node_type::print
+ * @param i A pointer to the interface structure.
+ */
+char * node_print(struct node *n);
+
+/** Receive multiple messages at once.
+ *
+ * @see node_type::read
+ */
+int node_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+
+/** Send multiple messages in a single datagram / packet.
+ *
+ * @see node_type::write
+ */
+int node_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+
+/** Reverse local and remote socket address.
+ *
+ * @see node_type::reverse
+ */
+int node_reverse(struct node *n);
 
 #endif /** _NODE_H_ @} */

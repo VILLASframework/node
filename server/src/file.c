@@ -26,6 +26,15 @@ int file_deinit()
 	return 0; /* nothing todo here */
 }
 
+int file_reverse(struct node *n)
+{
+	struct file *f = n->file;
+
+	SWAP(f->read, f->write);
+
+	return 0;
+}
+
 static char * file_format_name(const char *format, struct timespec *ts)
 {
 	struct tm tm;
@@ -69,7 +78,7 @@ static int file_parse_direction(config_setting_t *cfg, struct file *f, int d)
 	return 0;
 }
 
-int file_parse(config_setting_t *cfg, struct node *n)
+int file_parse(struct node *n, config_setting_t *cfg)
 {
 	struct file *f = alloc(sizeof(struct file));
 	
