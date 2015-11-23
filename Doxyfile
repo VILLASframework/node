@@ -51,14 +51,14 @@ PROJECT_BRIEF          = "Connecting real-time power grid simulation equipment"
 # pixels and the maximum width should not exceed 200 pixels. Doxygen will copy
 # the logo to the output directory.
 
-PROJECT_LOGO           = documentation/pictures/eonerc_logo.png
+PROJECT_LOGO           = doc/pictures/eonerc_logo.png
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) path
 # into which the generated documentation will be written. If a relative path is
 # entered, it will be relative to the location where doxygen was started. If
 # left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = documentation/
+OUTPUT_DIRECTORY       = doc/
 
 # If the CREATE_SUBDIRS tag is set to YES then doxygen will create 4096 sub-
 # directories (in 2 levels) under the output directory of each output format and
@@ -684,7 +684,7 @@ FILE_VERSION_FILTER    =
 # DoxygenLayout.xml, doxygen will parse it automatically even if the LAYOUT_FILE
 # tag is left empty.
 
-LAYOUT_FILE            = documentation/theme/layout.xml
+LAYOUT_FILE            = doc/theme/layout.xml
 
 # The CITE_BIB_FILES tag can be used to specify one or more bib files containing
 # the reference definitions. This must be a list of .bib files. The .bib
@@ -753,7 +753,7 @@ WARN_FORMAT            = "$file:$line: $text"
 # messages should be written. If left blank the output is written to standard
 # error (stderr).
 
-WARN_LOGFILE           = documentation/warnings.log
+WARN_LOGFILE           = doc/warnings.log
 
 #---------------------------------------------------------------------------
 # Configuration options related to the input files
@@ -766,7 +766,7 @@ WARN_LOGFILE           = documentation/warnings.log
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = server/ \
-                         documentation/ \
+                         doc/ \
                          clients/ml50x_cpld/ \
                          clients/ml507_ppc440_udp/pcores/ \
                          clients/ml507_ppc440_udp/s2ss/ \
@@ -864,7 +864,7 @@ EXAMPLE_RECURSIVE      = YES
 # that contain images that are to be included in the documentation (see the
 # \image command).
 
-IMAGE_PATH             = documentation/figures/
+IMAGE_PATH             = doc/figures/
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should
 # invoke to filter for each input file. Doxygen will invoke the filter program
@@ -912,7 +912,7 @@ FILTER_SOURCE_PATTERNS =
 # (index.html). This can be useful if you have a project on for instance GitHub
 # and want to reuse the introduction page also for the doxygen output.
 
-USE_MDFILE_AS_MAINPAGE = documentation/Mainpage.md
+USE_MDFILE_AS_MAINPAGE = doc/Mainpage.md
 
 #---------------------------------------------------------------------------
 # Configuration options related to source browsing
@@ -1087,7 +1087,7 @@ HTML_FILE_EXTENSION    = .html
 # of the possible markers and block names see the documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_HEADER            = documentation/theme/header.html
+HTML_HEADER            = doc/theme/header.html
 
 # The HTML_FOOTER tag can be used to specify a user-defined HTML footer for each
 # generated HTML page. If the tag is left blank doxygen will generate a standard
@@ -1122,7 +1122,7 @@ HTML_STYLESHEET        =
 # list). For an example see the documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_STYLESHEET  = documentation/theme/style.css
+HTML_EXTRA_STYLESHEET  = doc/theme/style.css
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note
@@ -2333,7 +2333,7 @@ MSCFILE_DIRS           =
 # contain dia files that are included in the documentation (see the \diafile
 # command).
 
-DIAFILE_DIRS           = documentation/figures/
+DIAFILE_DIRS           = doc/figures/
 
 # When using plantuml, the PLANTUML_JAR_PATH tag should be used to specify the
 # path where java can find the plantuml.jar file. If left blank, it is assumed
