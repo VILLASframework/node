@@ -26,7 +26,8 @@
 #include "utils.h"
 #include "timing.h"
 
-extern struct settings settings;
+/* Some global settings */
+static char *name = NULL;
 
 #if 0 /* unused at the moment */
 static json_t * json_uuid()
@@ -259,7 +260,7 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 		struct ngsi_metadata source = {
 			.name = "source",
 			.type = "string",
-			.value = (char *) settings.name,
+			.value = name,
 		};
 		
 		struct ngsi_metadata index = {
@@ -413,11 +414,15 @@ out:	json_decref(request);
 
 int ngsi_init(int argc, char *argv[], struct settings *set)
 {
+	name = strdup(set->name);
+
 	return curl_global_init(CURL_GLOBAL_ALL);
 }
 
 int ngsi_deinit()
 {
+	free(name);
+
 	curl_global_cleanup();
 
 	return 0;
