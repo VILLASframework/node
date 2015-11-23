@@ -1,2 +1,10 @@
+*.o
+*.d
+*.so
 *~
-thirdparty
+
+server
+send
+receive
+test
+random
