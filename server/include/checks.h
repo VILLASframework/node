@@ -50,17 +50,4 @@ int check_kernel_module(char *module);
  */
 int check_root();
 
-/** Simple copy protection.
- *
- * This function checks several machine IDs for predefined values.
- *
- * @retval 0 The machine is allowed to run this program.
- * @reval <>0 The machine is not allowed to run this program.
- */
-int check_license_ids();
-
-int check_license_time();
-
-int check_license_trace();
-
 #endif /* _CHECKS_H_ */

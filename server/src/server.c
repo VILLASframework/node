@@ -151,14 +151,6 @@ int main(int argc, char *argv[])
 		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
 	/* Checks system requirements*/
-#ifdef LICENSE
-	if (check_license_trace())
-		error("This software should not be traced!");
-	if (check_license_time())
-		error("Your license expired");
-	if (check_license_ids())
-		error("This version is compiled for a different machine!");
-#endif
 	if (check_kernel_version())
 		error("Your kernel version is to old: required >= %u.%u", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
 

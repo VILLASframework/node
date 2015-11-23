@@ -75,15 +75,6 @@ receive: receive.o $(OBJS)
 test:    test.o    $(OBJS)
 random:  random.o  msg.o utils.o timing.o log.o
 
-protected: CFLAGS += -DLICENSE -DLICENSE_VALID=$(shell date -d "now +5months" +%s) -s -O3 -fvisibility=hidden
-protected: clean strip
-
-strip: $(TARGETS)
-	strip	--remove-section=.comment \
-		--remove-section=.note \
-		--strip-debug \
-		--strip-all \
-		$(TARGETS) 
 
 clean:
 	$(RM) *~ *.o *.d
