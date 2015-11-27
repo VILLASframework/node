@@ -70,7 +70,7 @@ endif
 
 ######## Targets ########
 
-.PHONY: all clean install release
+.PHONY: all clean install release docker
 
 # Default target: build everything
 all: $(LIBS) $(TARGETS)
@@ -106,6 +106,10 @@ clean:
 	$(RM) *~ *.o *.d *.so
 	$(RM) $(TARGETS)
 	$(RM) -rf doc/{html,latex}
+
+docker:
+	docker build -t s2ss .
+	docker run -itv $(PWD):/s2ss s2ss
 
 # Include auto-generated dependencies
 -include $(wildcard *.d)
