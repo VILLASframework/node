@@ -66,13 +66,6 @@
 struct settings;
 struct timespec;
 
-/** The main thread id.
- * This is used to notify the main thread about
- * the program termination.
- * See error() macros.
- */
-extern pthread_t _mtid;
-
 /** Normal random variate generator using the Box-Muller method
  *
  * @param m Mean

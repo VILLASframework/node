@@ -62,8 +62,6 @@ int main(int argc, char *argv[])
 {
 	config_t config;
 
-	_mtid = pthread_self();
-
 	if (argc < 4) {
 		printf("Usage: %s CONFIG TEST NODE [ARGS]\n", argv[0]);
 		printf("  CONFIG  path to a configuration file\n");

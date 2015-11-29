@@ -92,17 +92,11 @@ double randf()
 	return (double) random() / RAND_MAX;
 }
 
-/** This global variable holds the main thread ID.
- * Its used by die().
- */
-pthread_t _mtid;
-
 void die()
 {
-	if (pthread_equal(_mtid, pthread_self()))
-		exit(EXIT_FAILURE);
-	else
-		pthread_kill(_mtid, SIGINT);
+	int zero = 0;
+	log_outdent(&zero);
+	abort();
 }
 
 char * strcatf(char **dest, const char *fmt, ...)

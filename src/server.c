@@ -120,8 +120,6 @@ static void usage(const char *name)
 
 int main(int argc, char *argv[])
 {
-	_mtid = pthread_self();
-
 	/* Check arguments */
 #ifdef ENABLE_OPAL_ASYNC
 	if (argc != 2 && argc != 4)
