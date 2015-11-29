@@ -1,5 +1,5 @@
 # Executables
-TARGETS = server send random receive test
+TARGETS = server pipe random test
 
 # Libraries
 LIBS = libs2ss.so
