@@ -130,14 +130,11 @@ int opal_print_global(struct opal_global *g)
 
 int opal_parse(struct node *n, config_setting_t *cfg)
 {
-	struct opal *o = alloc(sizeof(struct opal));
+	struct opal *o = n->_vd;
 
 	config_setting_lookup_int(cfg, "send_id", &o->send_id);
 	config_setting_lookup_int(cfg, "recv_id", &o->recv_id);
 	config_setting_lookup_bool(cfg, "reply", &o->reply);
-
-	n->opal = o;
-	n->cfg = cfg;
 
 	return 0;
 }
@@ -155,7 +152,7 @@ char * opal_print(struct node *n)
 
 int opal_open(struct node *n)
 {
-	struct opal *o = n->opal;
+	struct opal *o = n->_vd;
 
 	if (!og)
 		error("The server was not started as an OPAL asynchronous process!");
@@ -187,7 +184,7 @@ int opal_close(struct node *n)
 
 int opal_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
-	struct opal *o = n->opal;
+	struct opal *o = n->_vd;
 
 	int state, len, ret;
 	unsigned id;
@@ -252,7 +249,7 @@ int opal_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 
 int opal_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
-	struct opal *o = n->opal;
+	struct opal *o = n->_vd;
 
 	struct msg *m = &pool[first % poolsize];
 
@@ -286,6 +283,7 @@ int opal_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 static struct node_type vt = {
 	.name		= "opal",
 	.description	= "run as OPAL Asynchronous Process (libOpalAsyncApi)",
+	.size		= sizeof(struct opal),
 	.parse		= opal_parse,
 	.print		= opal_print,
 	.open		= opal_open,

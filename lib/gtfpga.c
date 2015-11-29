@@ -58,7 +58,7 @@ int gtfpga_deinit()
 
 int gtfpga_parse(struct node *n, config_setting_t *cfg)
 {
-	struct gtfpga *g = alloc(sizeof(struct gtfpga));
+	struct gtfpga *g = n->_vd;
 
 	const char *slot, *id, *err;
 	config_setting_t *cfg_slot, *cfg_id;
@@ -92,14 +92,12 @@ int gtfpga_parse(struct node *n, config_setting_t *cfg)
 	if (!config_setting_lookup_float(cfg, "rate", &g->rate))
 		g->rate = 0;
 
-	n->gtfpga = g;
-
 	return 0;
 }
 
 char * gtfpga_print(struct node *n)
 {
-	struct gtfpga *g = n->gtfpga;
+	struct gtfpga *g = n->_vd;
 	char *buf = NULL;
 
 	if (g->dev) {
@@ -181,7 +179,7 @@ static int gtfpga_mmap(struct gtfpga *g)
 
 int gtfpga_open(struct node *n)
 {
-	struct gtfpga *g = n->gtfpga;
+	struct gtfpga *g = n->_vd;
 	struct pci_dev *dev;
 
 	int ret;
@@ -223,7 +221,7 @@ int gtfpga_open(struct node *n)
 
 int gtfpga_close(struct node *n)
 {
-	struct gtfpga *g = n->gtfpga;
+	struct gtfpga *g = n->_vd;
 
 	if (g->map)
 		munmap(g->map, g->dev->size[GTFPGA_BAR]);
@@ -238,7 +236,7 @@ int gtfpga_close(struct node *n)
 /** @todo implement */
 int gtfpga_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
-	struct gtfpga *g = n->gtfpga;
+	struct gtfpga *g = n->_vd;
 
 	struct msg *m = &pool[first % poolsize];
 	
@@ -258,7 +256,7 @@ int gtfpga_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 /** @todo implement */
 int gtfpga_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
-	// struct gtfpga *g = n->gtfpga;
+	// struct gtfpga *g = n->_vd;
 	// struct msg *m = &pool[first % poolsize];
 	
 	if (cnt != 1)

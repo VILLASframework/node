@@ -430,7 +430,7 @@ int ngsi_deinit()
 
 int ngsi_parse(struct node *n, config_setting_t *cfg)
 {
-	struct ngsi *i = alloc(sizeof(struct ngsi));
+	struct ngsi *i = n->_vd;
 
 	if (!config_setting_lookup_string(cfg, "access_token", &i->access_token))
 		i->access_token = NULL; /* disabled by default */
@@ -458,8 +458,6 @@ int ngsi_parse(struct node *n, config_setting_t *cfg)
 		cerror(cfg, "Missing mapping for node %s", node_name(n));
 
 	if (ngsi_parse_mapping(&i->mapping, cfg_mapping))
-
-	n->ngsi = i;
 		cerror(cfg_mapping, "Invalid mapping for node %s", node_name(n));
 	
 	return 0;
@@ -467,7 +465,7 @@ int ngsi_parse(struct node *n, config_setting_t *cfg)
 
 char * ngsi_print(struct node *n)
 {
-	struct ngsi *i = n->ngsi;
+	struct ngsi *i = n->_vd;
 	char *buf = NULL;
 
 	return strcatf(&buf, "endpoint=%s, timeout=%.3f secs, #mappings=%zu",
@@ -476,7 +474,7 @@ char * ngsi_print(struct node *n)
 
 int ngsi_destroy(struct node *n)
 {
-	struct ngsi *i = n->ngsi;
+	struct ngsi *i = n->_vd;
 	
 	list_destroy(&i->mapping);
 	
@@ -485,7 +483,7 @@ int ngsi_destroy(struct node *n)
 
 int ngsi_open(struct node *n)
 {
-	struct ngsi *i = n->ngsi;
+	struct ngsi *i = n->_vd;
 	int ret;
 	
 	i->curl = curl_easy_init();
@@ -537,7 +535,7 @@ int ngsi_open(struct node *n)
 
 int ngsi_close(struct node *n)
 {
-	struct ngsi *i = n->ngsi;
+	struct ngsi *i = n->_vd;
 	int ret;
 	
 	/* Delete complete entity (not just attributes) */
@@ -555,7 +553,7 @@ int ngsi_close(struct node *n)
 
 int ngsi_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
-	struct ngsi *i = n->ngsi;
+	struct ngsi *i = n->_vd;
 	int ret;
 	
 	timerfd_wait(i->tfd);
@@ -579,7 +577,7 @@ out:	json_decref(entity);
 
 int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
-	struct ngsi *i = n->ngsi;
+	struct ngsi *i = n->_vd;
 	int ret;
 	
 	json_t *entity = ngsi_build_entity(i, pool, poolsize, first, cnt, NGSI_ENTITY_VALUES);
@@ -594,6 +592,7 @@ int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 static struct node_type vt = {
 	.name		= "ngsi",
 	.description	= "OMA Next Generation Services Interface 10 (libcurl, libjansson, libuuid)",
+	.size		= sizeof(struct ngsi),
 	.parse		= ngsi_parse,
 	.print		= ngsi_print,
 	.open		= ngsi_open,

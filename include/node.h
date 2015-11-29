@@ -171,15 +171,8 @@ struct node
 		NODE_STOPPED	/**< Node was running, but has been stopped by calling node_close() */
 	} state;		/**< Node state */
 
-	struct node_type *_vt;	/**< C++ like virtual function call table */
-
-	union {
-		struct socket *socket;
-		struct opal   *opal;
-		struct gtfpga *gtfpga;
-		struct file   *file;
-		struct ngsi   *ngsi;
-	};	/** Virtual data (used by struct node::_vt functions) */
+	struct node_type *_vt;	/**< Virtual functions (C++ OOP style) */
+	void *_vd;		/**< Virtual data (used by struct node::_vt functions) */
 
 	config_setting_t *cfg;	/**< A pointer to the libconfig object which instantiated this node */
 };

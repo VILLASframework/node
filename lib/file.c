@@ -18,7 +18,7 @@
 
 int file_reverse(struct node *n)
 {
-	struct file *f = n->file;
+	struct file *f = n->_vd;
 
 	SWAP(f->read, f->write);
 
@@ -70,7 +70,7 @@ static int file_parse_direction(config_setting_t *cfg, struct file *f, int d)
 
 int file_parse(struct node *n, config_setting_t *cfg)
 {
-	struct file *f = alloc(sizeof(struct file));
+	struct file *f = n->_vd;
 	
 	config_setting_t *cfg_in, *cfg_out;
 	
@@ -117,14 +117,14 @@ int file_parse(struct node *n, config_setting_t *cfg)
 			cerror(cfg_in, "Invalid value '%s' for setting 'epoch_mode'", epoch_mode);
 	}
 
-	n->file = f;
+	n->_vd = f;
 
 	return 0;
 }
 
 char * file_print(struct node *n)
 {
-	struct file *f = n->file;
+	struct file *f = n->_vd;
 	char *buf = NULL;
 	
 	if (f->read.fmt) {
@@ -178,7 +178,7 @@ char * file_print(struct node *n)
 
 int file_open(struct node *n)
 {
-	struct file *f = n->file;
+	struct file *f = n->_vd;
 	
 	struct timespec now = time_now();
 
@@ -258,7 +258,7 @@ int file_open(struct node *n)
 
 int file_close(struct node *n)
 {
-	struct file *f = n->file;
+	struct file *f = n->_vd;
 	
 	free(f->read.path);
 	free(f->write.path);
@@ -275,8 +275,8 @@ int file_close(struct node *n)
 
 int file_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
+	struct file *f = n->_vd;
 	int values, flags, i = 0;
-	struct file *f = n->file;
 
 	if (f->read.handle) {
 		for (i = 0; i < cnt; i++) {
@@ -338,7 +338,7 @@ retry:			values = msg_fscan(f->read.handle, cur, &flags, NULL);
 int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
 	int i = 0;
-	struct file *f = n->file;
+	struct file *f = n->_vd;
 
 	if (f->write.handle) {
 		for (i = 0; i < cnt; i++) {
@@ -364,6 +364,7 @@ int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 static struct node_type vt = {
 	.name		= "file",
 	.description	= "support for file log / replay node type",
+	.size		= sizeof(struct file),
 	.reverse	= file_reverse,
 	.parse		= file_parse,
 	.print		= file_print,

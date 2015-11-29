@@ -48,7 +48,7 @@ int socket_init(int argc, char * argv[], struct settings *set)
 
 	/* Gather list of used network interfaces */
 	list_foreach(struct node *n, &vt.instances) {
-		struct socket *s = n->socket;
+		struct socket *s = n->_vd;
 		struct rtnl_link *link;
 
 		/* Determine outgoing interface */
@@ -85,7 +85,7 @@ int socket_deinit()
 
 char * socket_print(struct node *n)
 {
-	struct socket *s = n->socket;
+	struct socket *s = n->_vd;
 	char *layer = NULL, *buf = NULL;
 	
 	switch (s->layer) {
@@ -107,7 +107,7 @@ char * socket_print(struct node *n)
 
 int socket_open(struct node *n)
 {
-	struct socket *s = n->socket;
+	struct socket *s = n->_vd;
 	struct sockaddr_in *sin = (struct sockaddr_in *) &s->local;
 	struct sockaddr_ll *sll = (struct sockaddr_ll *) &s->local;
 	int ret;
@@ -161,7 +161,7 @@ int socket_open(struct node *n)
 
 int socket_reverse(struct node *n)
 {
-	struct socket *s = n->socket;
+	struct socket *s = n->_vd;
 	
 	SWAP(s->remote, s->local);
 	
@@ -170,7 +170,7 @@ int socket_reverse(struct node *n)
 
 int socket_close(struct node *n)
 {
-	struct socket *s = n->socket;
+	struct socket *s = n->_vd;
 
 	if (s->sd >= 0)
 		close(s->sd);
@@ -180,7 +180,7 @@ int socket_close(struct node *n)
 
 int socket_destroy(struct node *n)
 {
-	struct socket *s = n->socket;
+	struct socket *s = n->_vd;
 	
 	rtnl_qdisc_put(s->tc_qdisc);
 	rtnl_cls_put(s->tc_classifier);
@@ -190,7 +190,7 @@ int socket_destroy(struct node *n)
 
 int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
-	struct socket *s = n->socket;
+	struct socket *s = n->_vd;
 
 	int bytes;
 	struct iovec iov[cnt];
@@ -249,7 +249,7 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 
 int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
-	struct socket *s = n->socket;
+	struct socket *s = n->_vd;
 	int bytes, sent = 0;
 
 	/** @todo we should check the MTU */
@@ -296,7 +296,7 @@ int socket_parse(struct node *n, config_setting_t *cfg)
 	const char *local, *remote, *layer;
 	int ret;
 
-	struct socket *s = alloc(sizeof(struct socket));
+	struct socket *s = n->_vd;
 
 	if (!config_setting_lookup_string(cfg, "layer", &layer))
 		cerror(cfg, "Missing layer for node %s", node_name(n));
@@ -334,8 +334,6 @@ int socket_parse(struct node *n, config_setting_t *cfg)
 		if (!config_setting_lookup_bool(cfg_netem, "enabled", &enabled) || enabled)
 			tc_parse(cfg_netem, &s->tc_qdisc);
 	}
-
-	n->socket = s;
 
 	return 0;
 }
@@ -478,6 +476,7 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 static struct node_type vt = {
 	.name		= "socket",
 	.description	= "Network socket (libnl3)",
+	.size		= sizeof(struct socket),
 	.destroy	= socket_destroy,
 	.reverse	= socket_reverse,
 	.parse		= socket_parse,

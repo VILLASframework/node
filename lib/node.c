@@ -130,6 +130,11 @@ struct node * node_create(struct node_type *vt)
 	list_push(&vt->instances, n);
 	
 	n->_vt = vt;
+	n->_vd = alloc(n->_vt->size);
+	
+	if (n->_vt->create)
+		n->_vt->create(n);
+
 	n->state = NODE_CREATED;
 	
 	return n;
@@ -140,7 +145,7 @@ void node_destroy(struct node *n)
 	if (n->_vt->destroy)
 		n->_vt->destroy(n);
 
-	free(n->socket);
+	free(n->_vd);
 	free(n->_name);
 	free(n);
 }
