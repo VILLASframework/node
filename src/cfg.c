@@ -229,7 +229,7 @@ int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings
 
 	ret = node_parse(n, cfg);
 	if (ret)
-		cerror(cfg, "Failed to parse node '%s'", n->name);
+		cerror(cfg, "Failed to parse node '%s'", node_name(n));
 
 	if (!config_setting_lookup_int(cfg, "combine", &n->combine))
 		n->combine = 1;

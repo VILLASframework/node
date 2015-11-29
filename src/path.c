@@ -32,7 +32,7 @@ static void path_write(struct path *p)
 			n->combine		/* Number of messages which should be sent */
 		);
 
-		debug(15, "Sent %u messages to node '%s'", sent, n->name);
+		debug(15, "Sent %u messages to node %s", sent, node_name(n));
 		p->sent += sent;
 
 		p->ts_sent = time_now(); /** @todo use hardware timestamps for socket node type */
@@ -93,7 +93,7 @@ static void * path_run(void *arg)
 		/* Receive message */
 		int recv = node_read(p->in, p->pool, p->poolsize, p->received, p->in->combine);
 		if (recv < 0)
-			error("Failed to receive message from node '%s'", p->in->name);
+			error("Failed to receive message from node %s", node_name(p->in));
 		else if (recv == 0)
 			continue;
 
@@ -101,7 +101,7 @@ static void * path_run(void *arg)
 		p->ts_last = p->ts_recv;
 		p->ts_recv = time_now();
 			
-		debug(15, "Received %u messages from node '%s'", recv, p->in->name);
+		debug(15, "Received %u messages from node %s", recv, node_name(p->in));
 
 		/* Run preprocessing hooks */
 		if (path_run_hook(p, HOOK_PRE)) {
@@ -140,7 +140,7 @@ static void * path_run(void *arg)
 int path_start(struct path *p)
 { INDENT
 	info("Starting path: %s (poolsize=%u, msgsize=%u, #hooks=%zu, rate=%.1f)",
-		path_print(p), p->poolsize, p->msgsize, list_length(&p->hooks), p->rate);
+		path_name(p), p->poolsize, p->msgsize, list_length(&p->hooks), p->rate);
 	
 	/* We sort the hooks according to their priority before starting the path */
 	list_sort(&p->hooks, ({int cmp(const void *a, const void *b) {
@@ -174,7 +174,7 @@ int path_start(struct path *p)
 
 int path_stop(struct path *p)
 { INDENT
-	info("Stopping path: %s", path_print(p));
+	info("Stopping path: %s", path_name(p));
 
 	pthread_cancel(p->recv_tid);
 	pthread_join(p->recv_tid, NULL);
@@ -194,18 +194,17 @@ int path_stop(struct path *p)
 	return 0;
 }
 
-char * path_print(struct path *p)
+const char * path_name(struct path *p)
 {
-	if (!p->_print) {
-		char *buf = alloc(64);
-	
-		strcatf(&buf, "%s " MAG("=>"), p->in->name);
+	if (!p->_name) {	
+		strcatf(&p->_name, "%s " MAG("=>"), p->in->name);
 
-		list_foreach(struct node *n, &p->destinations)
-			strcatf(&buf, " %s", n->name);
+		list_foreach(struct node *n, &p->destinations) {
+			strcatf(&p->_name, " %s", n->name);
+		}
 	}
 
-	return p->_print;
+	return p->_name;
 }
 
 struct path * path_create()
@@ -232,7 +231,7 @@ void path_destroy(struct path *p)
 	list_destroy(&p->destinations);
 	list_destroy(&p->hooks);
 
-	free(p->_print);
+	free(p->_name);
 	free(p->pool);
 	free(p);
 }

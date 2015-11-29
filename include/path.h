@@ -61,7 +61,7 @@ struct path
 
 	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path */
 	
-	char *_print;			/**< A string which is used to print this path to screen. */
+	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
 	
 	/** The following fields are mostly managed by hook_ functions @{ */
 	
@@ -124,7 +124,7 @@ void path_print_stats(struct path *p);
  * @param p A pointer to the path structure.
  * @return A pointer to a string containing a textual representation of the path.
  */
-char * path_print(struct path *p);
+const char * path_name(struct path *p);
 
 /** Conditionally execute the hooks
  *

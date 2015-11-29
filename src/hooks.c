@@ -274,7 +274,7 @@ int hook_restart(struct path *p, struct hook *h, int when)
 	if (p->current->sequence  == 0 &&
 	    p->previous->sequence <= UINT32_MAX - 32) {
 		warn("Simulation for path %s restarted (prev->seq=%u, current->seq=%u)",
-			path_print(p), p->previous->sequence, p->current->sequence);
+			path_name(p), p->previous->sequence, p->current->sequence);
 
 		p->sent	    =
 		p->invalid  =
@@ -372,19 +372,15 @@ int hook_stats(struct path *p, struct hook *h, int when)
 			break;
 			
 		case HOOK_PERIODIC: {
-			char *buf = path_print(p);
-			
 			if (p->received > 1)
-				stats("%-40.40s|%10.2g|%10.2f|%10u|%10u|%10u|%10u|%10u|%10u|%10u|", path_print(p),
+				stats("%-40.40s|%10.2g|%10.2f|%10u|%10u|%10u|%10u|%10u|%10u|%10u|", path_name(p),
 					p->hist_owd.last, 1 / p->hist_gap_msg.last,
 					p->sent, p->received, p->dropped, p->skipped, p->invalid, p->overrun, list_length(p->current)
 				);
 			else
-				stats("%-40.40s|%10s|%10s|%10u|%10u|%10u|%10u|%10u|%10u|%10s|", buf, "", "", 
+				stats("%-40.40s|%10s|%10s|%10u|%10u|%10u|%10u|%10u|%10u|%10s|", path_name(p), "", "", 
 					p->sent, p->received, p->dropped, p->skipped, p->invalid, p->overrun, ""
 				);
-			
-			free(buf);
 			break;
 		}
 	}

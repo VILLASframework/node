@@ -168,9 +168,9 @@ int opal_open(struct node *n)
 		rfound += og->send_ids[i] == o->send_id;
 
 	if (!sfound)
-		error("Invalid send_id '%u' for node '%s'", o->send_id, n->name);
+		error("Invalid send_id '%u' for node %s", o->send_id, node_name(n));
 	if (!rfound)
-		error("Invalid recv_id '%u' for node '%s'", o->recv_id, n->name);
+		error("Invalid recv_id '%u' for node %s", o->recv_id, node_name(n));
 
 	/* Get some more informations and paramters from OPAL-RT */
 	OpalGetAsyncSendIconMode(&o->mode, o->send_id);
@@ -217,8 +217,8 @@ int opal_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 	/* Get the size of the data being sent by the unblocking SendID */
 	OpalGetAsyncSendIconDataLength(&len, o->send_id);
 	if (len > sizeof(data)) {
-		warn("Ignoring the last %u of %u values for OPAL node '%s' (send_id=%u).",
-		len / sizeof(double) - MSG_VALUES, len / sizeof(double), n->name, o->send_id);
+		warn("Ignoring the last %u of %u values for OPAL node %s (send_id=%u).",
+		len / sizeof(double) - MSG_VALUES, len / sizeof(double), node_name(n), o->send_id);
 
 		len = sizeof(data);
 	}
@@ -273,8 +273,7 @@ int opal_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 	/* Get the number of signals to send back to the model */
 	OpalGetAsyncRecvIconDataLength(&len, o->recv_id);
 	if (len > sizeof(data))
-		warn("OPAL node '%s' is expecting more signals (%u) than values in message (%u)",
-			n->name, len / sizeof(double), m->length);
+		warn("Node %s is expecting more signals (%u) than values in message (%u)", node_name(n), len / sizeof(double), m->length);
 
 	for (int i = 0; i < m->length; i++)
 		data[i] = (double) m->data[i].f; /* OPAL expects double precission */

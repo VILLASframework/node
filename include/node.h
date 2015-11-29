@@ -36,12 +36,11 @@ extern struct list node_types;
 
 /** C++ like vtable construct for node_types */
 struct node_type {
-	/** The unique name of this node. This must be allways the first member! */
-	const char *name;
-	/** A short description of this node type. Will be shown in help text. */
-	const char *description;
-	/** A list of all existing nodes of this type. */
-	struct list instances;
+	const char *name;		/**< The unique name of this node. This must be allways the first member! */
+	const char *description;	/**< A short description of this node type. Will be shown in help text. */
+
+	struct list instances;		/**< A list of all existing nodes of this type. */
+	size_t size;			/**< Size of private data bock. @see node::_vd */
 	
 	/** Global initialization per node type.
 	 *
@@ -158,7 +157,9 @@ struct node_type {
 struct node
 {
 	const char *name;	/**< A short identifier of the node, only used for configuration and logging */
-	char *_print;		/**< A string used to print to screen. */
+
+	char *_name;		/**< Singleton: A string used to print to screen. */
+	char *_name_long;	/**< Singleton: A string used to print to screen. */
 
 	int combine;		/**< Number of messages to send / recv at once (scatter / gather) */
 	int affinity;		/**< CPU Affinity of this node */
@@ -228,10 +229,18 @@ int node_parse(struct node *n, config_setting_t *cfg);
 
 /** Return a pointer to a string which should be used to print this node
  *
- * @see node_type::print
- * @param i A pointer to the interface structure.
+ * @see node::_name‚
+ * @param n A pointer to the node structure.
  */
-char * node_print(struct node *n);
+const char * node_name(struct node *n);
+
+/** Return a pointer to a string which should be used to print this node
+ *
+ * @see node::_name_short
+ * @see node_type::print
+ * @param n A pointer to the node structure.
+ */
+const char * node_name_long(struct node *n);
 
 /** Receive multiple messages at once.
  *

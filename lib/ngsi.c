@@ -436,13 +436,13 @@ int ngsi_parse(struct node *n, config_setting_t *cfg)
 		i->access_token = NULL; /* disabled by default */
 
 	if (!config_setting_lookup_string(cfg, "endpoint", &i->endpoint))
-		cerror(cfg, "Missing NGSI endpoint for node '%s'", n->name);
+		cerror(cfg, "Missing NGSI endpoint for node %s", node_name(n));
 	
 	if (!config_setting_lookup_string(cfg, "entity_id", &i->entity_id))
-		cerror(cfg, "Missing NGSI entity ID for node '%s'", n->name);
+		cerror(cfg, "Missing NGSI entity ID for node %s", node_name(n));
 	
 	if (!config_setting_lookup_string(cfg, "entity_type", &i->entity_type))
-		cerror(cfg, "Missing NGSI entity type for node '%s'", n->name);
+		cerror(cfg, "Missing NGSI entity type for node %s", node_name(n));
 
 	if (!config_setting_lookup_bool(cfg, "ssl_verify", &i->ssl_verify))
 		i->ssl_verify = 1; /* verify by default */
@@ -455,12 +455,12 @@ int ngsi_parse(struct node *n, config_setting_t *cfg)
 
 	config_setting_t *cfg_mapping = config_setting_get_member(cfg, "mapping");
 	if (!cfg_mapping)
-		cerror(cfg, "Missing mapping for node '%s", n->name);
+		cerror(cfg, "Missing mapping for node %s", node_name(n));
 
 	if (ngsi_parse_mapping(&i->mapping, cfg_mapping))
-		cerror(cfg_mapping, "Invalid mapping for NGSI node '%s'", n->name);
 
 	n->ngsi = i;
+		cerror(cfg_mapping, "Invalid mapping for node %s", node_name(n));
 	
 	return 0;
 }
@@ -528,7 +528,7 @@ int ngsi_open(struct node *n)
 	
 	ret = ngsi_request_context_update(i->curl, i->endpoint, "APPEND", entity);
 	if (ret)
-		error("Failed to create NGSI context for node '%s'", n->name);
+		error("Failed to create NGSI context for node %s", node_name(n));
 	
 	json_decref(entity);
 	

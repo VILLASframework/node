@@ -72,7 +72,7 @@ int node_start(struct node *n)
 { INDENT
 	int ret;
 
-	info("Starting node '%s' of type '%s' (%s)", n->name, n->_vt->name, node_print(n));
+	info("Starting node %s", node_name_long(n));
 	{ INDENT
 		ret = node_open(n);
 	}
@@ -87,7 +87,10 @@ int node_stop(struct node *n)
 { INDENT
 	int ret;
 
-	info("Stopping node '%s'", n->name);
+	if (n->state != NODE_RUNNING)
+		return -1;
+
+	info("Stopping node %s", node_name(n));
 
 	{ INDENT
 		ret = node_close(n);
@@ -99,12 +102,20 @@ int node_stop(struct node *n)
 	return ret;
 }
 
-char * node_print(struct node *n)
+const char * node_name(struct node *n)
 {
-	if (!n->_print)
-		n->_print = n->_vt->print(n);
+	if (!n->_name)
+		strcatf(&n->_name, YEL("%s") GRY("(%s)"), n->name, n->_vt->name);
+		
+	return n->_name;
+}
 
-	return n->_print;
+const char * node_name_long(struct node *n)
+{
+	if (!n->_name_long)
+		n->_name_long = n->_vt->print(n);
+		
+	return n->_name_long;
 }
 
 int node_reverse(struct node *n)
@@ -129,7 +140,7 @@ void node_destroy(struct node *n)
 	if (n->_vt->destroy)
 		n->_vt->destroy(n);
 
-	free(n->_print);
 	free(n->socket);
+	free(n->_name);
 	free(n);
 }

@@ -144,7 +144,7 @@ int socket_open(struct node *n)
 			if (setsockopt(s->sd, IPPROTO_IP, IP_TOS, &prio, sizeof(prio)))
 				serror("Failed to set type of service (QoS)");
 			else
-				debug(4, "Set QoS/TOS IP option for node '%s' to %#x", n->name, prio);
+				debug(4, "Set QoS/TOS IP option for node %s to %#x", node_name(n), prio);
 			break;
 
 		default:
@@ -152,7 +152,7 @@ int socket_open(struct node *n)
 			if (setsockopt(s->sd, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio)))
 				serror("Failed to set socket priority");
 			else
-				debug(4, "Set socket priority for node '%s' to %u", n->name, prio);
+				debug(4, "Set socket priority for node %s to %d", node_name(n), prio);
 			break;
 	}
 
@@ -220,7 +220,7 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 	/* Receive message from socket */
 	bytes = recvmsg(s->sd, &mhdr, 0);
 	if (bytes == 0)
-		error("Remote node '%s' closed the connection", n->name);
+		error("Remote node %s closed the cnode_name", node_name(n));
 	else if (bytes < 0)
 		serror("Failed recv");
 
@@ -235,7 +235,7 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 
 		/* Check integrity of packet */
 		if (bytes / cnt != MSG_LEN(m))
-			error("Invalid message len: %u for node '%s'", MSG_LEN(m), n->name);
+			error("Invalid message len: %u for node %s", MSG_LEN(m), node_name(n));
 
 		bytes -= MSG_LEN(m);
 	}
@@ -299,7 +299,7 @@ int socket_parse(struct node *n, config_setting_t *cfg)
 	struct socket *s = alloc(sizeof(struct socket));
 
 	if (!config_setting_lookup_string(cfg, "layer", &layer))
-		cerror(cfg, "Missing layer setting for node '%s'", n->name);
+		cerror(cfg, "Missing layer for node %s", node_name(n));
 
 	if (!strcmp(layer, "eth"))
 		s->layer = LAYER_ETH;
@@ -308,24 +308,24 @@ int socket_parse(struct node *n, config_setting_t *cfg)
 	else if (!strcmp(layer, "udp"))
 		s->layer = LAYER_UDP;
 	else
-		cerror(cfg, "Invalid layer '%s' for node '%s'", layer, n->name);
+		cerror(cfg, "Invalid layer '%s' for node %s", layer, node_name(n));
 
 	if (!config_setting_lookup_string(cfg, "remote", &remote))
-		cerror(cfg, "Missing remote address for node '%s'", n->name);
+		cerror(cfg, "Missing remote address for node %s", node_name(n));
 
 	if (!config_setting_lookup_string(cfg, "local", &local))
-		cerror(cfg, "Missing local address for node '%s'", n->name);
+		cerror(cfg, "Missing local address for node %s", node_name(n));
 	
 	ret = socket_parse_addr(local, (struct sockaddr *) &s->local, s->layer, AI_PASSIVE);
 	if (ret) {
-		cerror(cfg, "Failed to resolve local address '%s' of node '%s': %s",
-			local, n->name, gai_strerror(ret));
+		cerror(cfg, "Failed to resolve local address '%s' of node %s: %s",
+			local, node_name(n), gai_strerror(ret));
 	}
 
 	ret = socket_parse_addr(remote, (struct sockaddr *) &s->remote, s->layer, 0);
 	if (ret) {
-		cerror(cfg, "Failed to resolve remote address '%s' of node '%s': %s",
-			remote, n->name, gai_strerror(ret));
+		cerror(cfg, "Failed to resolve remote address '%s' of node %s: %s",
+			remote, node_name(n), gai_strerror(ret));
 	}
 
 	config_setting_t *cfg_netem = config_setting_get_member(cfg, "netem");

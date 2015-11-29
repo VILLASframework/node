@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
 		if (refs)
 			node_start(n);
 		else
-			warn("Node '%s' is unused. Skipping...", n->name);
+			warn("Node %s is unused. Skipping...", node_name(n));
 	}
 
 	info("Starting paths");
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
 		if (p->enabled)
 			path_start(p);
 		else
-			warn("Path %s is disabled. Skipping...", path_print(p));
+			warn("Path %s is disabled. Skipping...", path_name(p));
 	}
 
 	/* Run! */

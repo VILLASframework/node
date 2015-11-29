@@ -77,7 +77,7 @@ int file_parse(struct node *n, config_setting_t *cfg)
 	cfg_out = config_setting_get_member(cfg, "out"); 
 	if (cfg_out) {
 		if (file_parse_direction(cfg_out, f, FILE_WRITE))
-			cerror(cfg_out, "Failed to parse output file for node '%s'", n->name);
+			cerror(cfg_out, "Failed to parse output file for node %s", node_name(n));
 
 		/* More write specific settings */
 		if (!config_setting_lookup_int(cfg_out, "split", &f->write.split))
@@ -87,7 +87,7 @@ int file_parse(struct node *n, config_setting_t *cfg)
 	cfg_in = config_setting_get_member(cfg, "in");
 	if (cfg_in) {
 		if (file_parse_direction(cfg_in, f, FILE_READ))
-			cerror(cfg_in, "Failed to parse input file for node '%s'", n->name);
+			cerror(cfg_in, "Failed to parse input file for node %s", node_name(n));
 
 		/* More read specific settings */
 		if (!config_setting_lookup_bool(cfg_in, "splitted", &f->read.split))
