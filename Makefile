@@ -5,10 +5,10 @@ TARGETS = server pipe random test
 LIBS = libs2ss.so
 
 # Common objs
-OBJS = path.o hooks.o cfg.o utils.o list.o hist.o log.o timing.o
+OBJS = path.o hooks.o cfg.o hist.o timing.o
 
 # Object files for libs2ss
-LIB_OBJS = msg.o node.o checks.o list.o
+LIB_OBJS = msg.o node.o checks.o list.o log.o utils.o
 
 # Source directories
 VPATH = src lib
@@ -76,11 +76,10 @@ endif
 all: $(LIBS) $(TARGETS)
 
 # Dependencies for individual binaries
-server:  server.o  $(OBJS)
-send:    send.o    $(OBJS)
-receive: receive.o $(OBJS)
-test:    test.o    $(OBJS)
-random:  random.o  msg.o utils.o timing.o log.o
+server:  server.o $(OBJS) libs2ss.so
+pipe:    pipe.o   $(OBJS) libs2ss.so
+test:    test.o   $(OBJS) libs2ss.so
+random:  random.o msg.o utils.o timing.o log.o
 
 # Libraries
 libs2ss.so: CFLAGS += -fPIC $(LIB_CFLAGS)
