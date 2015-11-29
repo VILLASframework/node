@@ -56,12 +56,6 @@ struct file {
 	double read_rate;		/**< The read rate. */
 };
 
-/** @see node_vtable::init */
-int file_init(int argc, char *argv[], struct settings *set);
-
-/** @see node_vtable::deinit */
-int file_deinit();
-
 /** @see node_vtable::print */
 char * file_print(struct node *n);
 

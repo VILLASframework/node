@@ -16,16 +16,6 @@
 #include "utils.h"
 #include "timing.h"
 
-int file_init(int argc, char *argv[], struct settings *set)
-{ INDENT
-	return 0; /* nothing todo here */
-}
-
-int file_deinit()
-{ INDENT
-	return 0; /* nothing todo here */
-}
-
 int file_reverse(struct node *n)
 {
 	struct file *f = n->file;
