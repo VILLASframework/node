@@ -216,7 +216,7 @@ int file_open(struct node *n)
 		struct msg m;
 		int ret = msg_fscan(f->read.handle, &m, NULL, NULL); rewind(f->read.handle);
 		if (ret < 0)
-			error("Failed to read first timestamp of node '%s'", n->name);
+			error("Failed to read first timestamp of node %s", node_name(n));
 		
 		f->read_first = MSG_TS(&m);
 
@@ -292,16 +292,16 @@ retry:			values = msg_fscan(f->read.handle, cur, &flags, NULL);
 						if (!f->read.handle)
 							return 0;
 						
-						info("Open new input chunk of node '%s': chunk=%u", n->name, f->read.chunk);
+						info("Open new input chunk of node %s: %d", node_name(n), f->read.chunk);
 					}
 					else {
-						info("Rewind input file of node '%s'", n->name);
+						info("Rewind input file of node %s", node_name(n));
 						rewind(f->read.handle);
 						goto retry;
 					}
 				}
 				else
-					warn("Failed to read messages from node '%s': reason=%d", n->name, values);
+					warn("Failed to read messages from node %s: reason=%d", node_name(n), values);
 
 				return 0;
 			}
@@ -330,7 +330,7 @@ retry:			values = msg_fscan(f->read.handle, cur, &flags, NULL);
 		}
 	}
 	else
-		error("Can not read from node '%s'", n->name);
+		error("Can not read from node %s", node_name(n));
 
 	return i;
 }
@@ -347,7 +347,7 @@ int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 				f->write.chunk++;
 				f->write.handle = file_reopen(&f->write);
 				
-				info("Splitted output file for node '%s': chunk=%u", n->name, f->write.chunk);
+				info("Splitted output node %s: chunk=%u", node_name(n), f->write.chunk);
 			}
 			
 			struct msg *m = &pool[(first+i) % poolsize];
@@ -356,7 +356,7 @@ int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 		fflush(f->write.handle);
 	}
 	else
-		error("Can not write to node '%s'", n->name);
+		error("Can not write to node %s", node_name(n));
 
 	return i;
 }

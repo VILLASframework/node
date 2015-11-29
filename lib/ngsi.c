@@ -244,16 +244,13 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 			cerror(cfg, "Invalid mapping token: '%s'", token);
 
 		token += bytes;		
-		debug(13, "Attribute: %u: %s(%s)", map.index, map.name, map.type);
 
 		/* MetadataName(MetadataType)=MetadataValue */
 		list_init(&map.metadata, NULL);
 		struct ngsi_metadata meta;
 		while (sscanf(token, " %m[^(](%m[^)])=%ms%n", &meta.name, &meta.type, &meta.value, &bytes) == 3) { INDENT
 			list_push(&map.metadata, memdup(&meta, sizeof(struct ngsi_metadata)));
-			
 			token += bytes;
-			debug(13, "Metadata: %s(%s)=%s", meta.name, meta.type, meta.value);
 		}
 		
 		/* Static metadata */

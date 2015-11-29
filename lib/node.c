@@ -61,7 +61,9 @@ int node_deinit()
 	list_foreach(const struct node_type *vt, &node_types) {
 		if (list_length(&vt->instances) > 0) {
 			info("De-initializing '%s' node type", vt->name);
-			vt->deinit();
+
+			if (vt->deinit)
+				vt->deinit();
 		}
 	}
 
