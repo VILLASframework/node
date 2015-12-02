@@ -71,10 +71,4 @@ int msg_fprint(FILE *f, struct msg *m, int flags, double offset);
  */
 int msg_fscan(FILE *f, struct msg *m, int *flags, double *offset);
 
-/** Change the values of an existing message in a random fashion.
- *
- * @param m A pointer to the message whose values will be updated
- */
-void msg_random(struct msg *m);
-
 #endif /* _MSG_H_ */

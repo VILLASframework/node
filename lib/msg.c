@@ -165,11 +165,3 @@ skip:	if (fgets(line, sizeof(line), f) == NULL)
 
 	return m->length;
 }
-
-void msg_random(struct msg *m)
-{
-	for (int i = 0; i < m->length; i++)
-		m->data[i].f += box_muller(0, 1);
-
-	m->endian = MSG_ENDIAN_HOST;
-}

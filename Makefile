@@ -1,5 +1,5 @@
 # Executables
-TARGETS = server pipe random test
+TARGETS = server pipe signal test
 
 # Libraries
 LIBS = libs2ss.so
@@ -79,7 +79,7 @@ all: $(LIBS) $(TARGETS)
 server:  server.o $(OBJS) libs2ss.so
 pipe:    pipe.o   $(OBJS) libs2ss.so
 test:    test.o   $(OBJS) libs2ss.so
-random:  random.o msg.o utils.o timing.o log.o
+signal:  signal.o msg.o utils.o timing.o log.o
 
 # Libraries
 libs2ss.so: CFLAGS += -fPIC $(LIB_CFLAGS)
@@ -90,14 +90,13 @@ libs2ss.so: $(LIB_OBJS)
 install: $(TARGETS)
 	install -m 0644 libs2ss.so $(PREFIX)/lib
 	install -m 0755 server -T $(PREFIX)/bin/s2ss
-	install -m 0755 send $(PREFIX)/bin/s2ss-send
-	install -m 0755 receive $(PREFIX)/bin/s2ss-receive
-	install -m 0755 random $(PREFIX)/bin/s2ss-random
+	install -m 0755 pipe $(PREFIX)/bin/s2ss-pipe
+	install -m 0755 signal $(PREFIX)/bin/s2ss-signal
 	install -m 0755 test $(PREFIX)/bin/s2ss-test
 
 release: all
 	tar czf s2ss-$(COMMIT)-docs.tar.gz documentation/html/
-	tar czf s2ss-$(COMMIT).tar.gz server/server server/test server/send server/receive server/random server/etc/
+	tar czf s2ss-$(COMMIT).tar.gz server/server server/test server/pipe server/signal server/etc/
 	rsync *.tar.gz $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/
 	rsync --archive --delete documentation/html/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/doc/
 
