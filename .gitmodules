@@ -2,3 +2,6 @@
 	path = clients/rtds
 	url = git@github.com:RWTH-ACS/GTFPGA.git
 	branch = master
+[submodule "contrib/websocket/flot"]
+	path = contrib/websocket/flot
+	url = https://github.com/flot/flot.git
