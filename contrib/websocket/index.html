@@ -20,31 +20,41 @@
 				<h1>S2SS / WebSocket Mockup</h1>
 			</div>
 			<div id="container">
+				<ul class="node-selector"></ul>
+				
 				<div class="plot-container">	
 					<div id="placeholder" class="plot-placeholder"></div>
 				</div>
-
-
-				<p>
-					Status: <span id="connectionStatus"></span>
-					<button id="pause" onclick="disconnect()">Pause</button>
-					<button id="pause" onclick="connect()">Play</button>
-				</p>
 				
-				<p>
-					<span>Trigger:</span>
-					<button onclick="onButtonClick(1)">On</button>
-					<button onclick="onButtonClick(0)">Off</button>
-				</p>
+				<div class="controls">
+					<p>
+						<span>Trigger:</span>
+						<button onclick="onButtonClick(1)">On</button>
+						<button onclick="onButtonClick(0)">Off</button>
+					</p>
 				
-				<p>
-					<span>Slider:</span>
-					<div id="slider"></div>
-				</p>
+					<p>
+						<span>Slider:</span>
+						<div id="slider"></div>
+					</p>
+					
+					<p>
+						<span>Value:</span>
+						<input type="text" onchange="onTextChange()" />
+					</p>
+				</div>
+				
+				<div class="connection">
+					<span>Status:</span> <span id="connectionStatus"></span>
+					<button id="pause" onclick="wsDisconnect()">Pause</button>
+					<button id="pause" onclick="wsConnect()">Play</button>
+				</div>
 			</div>
 			<div id="footer">
-				<p>Copyright 2015: Institute for Automation of Complex Power Systems, EON Energy Research Center, RWTH Aachen University, Germany</p>
-				<p>Authors: <a href="mailto:mgrigul@eonerc.rwth-aachen.de">Markus Grigul</a>, <a href="mailto:stvogel@eonerc.rwth-aachen.de">Steffen Vogel</a></p>
+				<p>Copyright 2015: Institute for Automation of Complex Power Systems,
+					EON Energy Research Center, RWTH Aachen University, Germany</p>
+				<p>Authors: <a href="mailto:mgrigul@eonerc.rwth-aachen.de">Markus Grigul</a>,
+					<a href="mailto:stvogel@eonerc.rwth-aachen.de">Steffen Vogel</a></p>
 			</div>
 		</div>
 	</body>

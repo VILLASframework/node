@@ -2,7 +2,10 @@
 var connection;
 var timer;
 
-var url = 'ws://134.130.169.31/test';
+var seq = 0;
+
+var node = 'websocket'
+var url = 'ws://10.211.55.6:8080/' + node;
 var protocol = ['live'];
 
 var plotData = [];
@@ -15,9 +18,15 @@ var plotOptions = {
 	}
 };
 
-var xDelta = 3*1000;
+var xDelta = 10*1000;
 
 $(document).on('ready', function() {
+	$.getJSON('/nodes.json', function(data) {
+		$(data).each(function(index, node) {
+			$(".node-selector").append($("<li>").text(node));
+		});
+	});
+	
 	$('#slider').slider({
 		min : 0,
 		max : 100,
@@ -26,20 +35,19 @@ $(document).on('ready', function() {
 		}
 	});
 	
-	connect();
+	wsConnect();
 });
 
-$(window).on('beforeunload', disconnect);
+$(window).on('beforeunload', wsDisconnect);
 
-// update plot
-function update() {
+function plotUpdate() {
 	var data = [];
 
 	// add data to arrays
 	for (var i = 0; i < plotData.length; i++) {
 		// remove old values
-		while (plotData[i][0][0] < (Date.now() - xDelta))
-			plotData[i].shift()
+		//while (plotData[i].length > 0 && plotData[i][0][0] < (Date.now() - xDelta))
+		//	plotData[i].shift()
 		
 		data[i] = {
 			data : plotData[i],
@@ -58,11 +66,11 @@ function update() {
 		}
 	}
 
-	// update plot
+	/* update plot */
 	$.plot('#placeholder', data, $.extend(true, options, plotOptions));
 }
 
-function disconnect() {
+function wsDisconnect() {
 	connection.close();
 	
 	$('#connectionStatus')
@@ -73,7 +81,7 @@ function disconnect() {
 	clearInterval(timer);
 }
 
-function connect() {
+function wsConnect() {
 	connection = new WebSocket(url, protocol);
 	
 	connection.onopen = function() {
@@ -81,13 +89,13 @@ function connect() {
 			.text('Connected')
 			.css('color', 'green');
 		
-		timer = setInterval(update, 1.0 / 25);
+		timer = setInterval(plotUpdate, 1.0 / 25);
 	};
 
 	connection.onclose = function() {
-		disconnect();
+		wsDisconnect();
 		
-		setTimeout(connect, 3000); // retry
+		setTimeout(wsConnect, 3000); // retry
 	};
 
 	connection.onerror = function(error) {
@@ -97,10 +105,11 @@ function connect() {
 	};
 
 	connection.onmessage = function(e) {
+		console.log(e.data);
+		
 		var res = e.data.split(/\s+/).map(Number);
 		var timestamp = res[0] * 1000;
 		var values = res.slice(1)
-		var data = [];
 
 		// add empty arrays for data
 		while (plotData.length < values.length)
@@ -113,10 +122,28 @@ function connect() {
 };
 
 function sendMsg(ts, values) {
-	connection.send(ts / 1000 + " " + values.join(" "));
+	connection.send(ts / 1000 + "(" + seq + ") " + values.join(" "));
+	
+	seq += 1;
 }
 
+/* Control event handlers */
 function onButtonClick(value) {
-	sendMsg(Date.now, [ value ])
-};
+	sendMsg(Date.now(), [ value ]);
+}
+
+function onTextChange() {
+	sendMsg(Date.now(), [ 1 ]);
+}
+
+/* Helpers */
+function wsUrl(endpoint) {
+	var l = window.location;
+	
+	var protocol = (l.protocol === "https:") ? "wss://" : "ws://";
+	var port     = ((l.port != 80) && (l.port != 443)) ? ":" + l.port : "";
+
+	return protocol + l.hostname + port + endpoint;
+}
+
 
