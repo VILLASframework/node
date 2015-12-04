@@ -21,8 +21,7 @@ void list_init(struct list *l, dtor_cb_t dtor)
 	l->length = 0;
 	l->capacity = 0;
 
-	l->start = NULL;
-	l->end = NULL;
+	l->array = NULL;
 }
 
 void list_destroy(struct list *l)
@@ -34,10 +33,9 @@ void list_destroy(struct list *l)
 			l->destructor(p);
 	}
 	
-	free(l->start);
+	free(l->array);
 	
-	l->start =
-	l->end = NULL;
+	l->array = NULL;
 
 	l->length =
 	l->capacity = 0;
@@ -51,36 +49,51 @@ void list_push(struct list *l, void *p)
 	pthread_mutex_lock(&l->lock);
 	
 	/* Resize array if out of capacity */
-	if (l->end == l->start + l->capacity) {
+	if (l->length >= l->capacity) {
 		l->capacity += LIST_CHUNKSIZE;
-		l->start = realloc(l->start, l->capacity * sizeof(void *));
+		l->array = realloc(l->array, l->capacity * sizeof(void *));
 	}
 	
-	l->start[l->length] = p;
+	l->array[l->length] = p;
 	l->length++;
-	l->end = &l->start[l->length];
 
 	pthread_mutex_unlock(&l->lock);
 }
 
-void * list_lookup(struct list *l, const char *needle)
+void list_remove(struct list *l, void *p)
 {
-	int cmp(const void *elm, const void *needle) {
-		char *name = * (char **) elm; /* Ugly hack: the lookup key (name) must be the first element in the list element struct */
-		
-		return strcmp(name, needle);
+	int removed = 0;
+
+	pthread_mutex_lock(&l->lock);
+
+	for (int i = 0; i < l->length; i++) {
+		if (l->array[i] == p)
+			removed++;
+		else
+			l->array[i - removed] = l->array[i];
+	}
+	
+	l->length -= removed;
+
+	pthread_mutex_unlock(&l->lock);
+}
+
+void * list_lookup(struct list *l, const char *name)
+{
+	int cmp_helper(const void *a, const void *b) {
+		return strcmp(* (char **) a, b);
 	}
 
-	return list_search(l, cmp, (void *) needle);
+	return list_search(l, cmp_helper, (void *) name);
 }
 
 int list_contains(struct list *l, void *p)
 {
-	int cmp(const void *a, const void *b) {
+	int cmp_helper(const void *a, const void *b) {
 		return a == b;
 	}
 	
-	return list_count(l, cmp, p);
+	return list_count(l, cmp_helper, p);
 }
 
 int list_count(struct list *l, cmp_cb_t cmp, void *ctx)
@@ -123,6 +136,8 @@ void list_sort(struct list *l, cmp_cb_t cmp)
 	}
 
 	pthread_mutex_lock(&l->lock);
-	qsort(l->start, l->length, sizeof(void *), cmp_helper);
+
+	qsort(l->array, l->length, sizeof(void *), cmp_helper);
+
 	pthread_mutex_unlock(&l->lock);
 }
