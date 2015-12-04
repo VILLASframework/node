@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
 		}
 	
 		int refs = list_count(&paths, (cmp_cb_t) used_by_path, n);
-		if (refs)
+		if (refs > 0)
 			node_start(n);
 		else
 			warn("Node %s is unused. Skipping...", node_name(n));

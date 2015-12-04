@@ -63,30 +63,15 @@ void list_push(struct list *l, void *p)
 	pthread_mutex_unlock(&l->lock);
 }
 
-void * list_lookup(struct list *l, const char *name)
+void * list_lookup(struct list *l, const char *needle)
 {
-	int cmp(const void *a, const void *b) {
-		return strcmp(*(char **) a, b);
+	int cmp(const void *elm, const void *needle) {
+		char *name = * (char **) elm; /* Ugly hack: the lookup key (name) must be the first element in the list element struct */
+		
+		return strcmp(name, needle);
 	}
 
-	return list_search(l, cmp, (void *) name);
-}
-
-int list_count(struct list *l, cmp_cb_t cmp, void *ctx)
-{
-	int c = 0;
-
-	pthread_mutex_lock(&l->lock);
-	
-	void *e;
-	list_foreach(e, l) {
-		if (!cmp(e, ctx))
-			c++;
-	}
-
-	pthread_mutex_unlock(&l->lock);
-
-	return c;
+	return list_search(l, cmp, (void *) needle);
 }
 
 int list_contains(struct list *l, void *p)
@@ -96,6 +81,22 @@ int list_contains(struct list *l, void *p)
 	}
 	
 	return list_count(l, cmp, p);
+}
+
+int list_count(struct list *l, cmp_cb_t cmp, void *ctx)
+{
+	int c = 0;
+
+	pthread_mutex_lock(&l->lock);
+
+	list_foreach(void *e, l) {
+		if (!cmp(e, ctx))
+			c++;
+	}
+
+	pthread_mutex_unlock(&l->lock);
+
+	return c;
 }
 
 void * list_search(struct list *l, cmp_cb_t cmp, void *ctx)

@@ -110,6 +110,7 @@ void * recv_loop(void *ctx)
 			/** @todo should we drop reordered / delayed packets here? */
 
 			msg_fprint(stdout, m, MSG_PRINT_ALL, time_delta(&MSG_TS(m), &ts));
+			fflush(stdout);
 		}
 	}
 	

@@ -11,7 +11,9 @@
 FROM stv0g/dotfiles
 #FROM debian:jessie
 
-MAINTAINER "Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+MAINTAINER Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+
+EXPOSE 80
 
 # Update package manager
 RUN apt-get update
@@ -21,6 +23,7 @@ RUN apt-get -y install \
         gcc \
 	gdb \
 	make \
+	cmake \
 	libc6-dev \
         pkg-config
 
@@ -32,6 +35,7 @@ RUN apt-get -y install \
         libpci-dev \
         libjansson-dev \
         libcurl4-openssl-dev \
+	libssl-dev \
         uuid-dev
 
 # Install dependencies for 32bit x86 arch (required for 32bit libOpalAsync)

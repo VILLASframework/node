@@ -28,28 +28,19 @@ int node_read(struct node *n, struct msg *p, int ps, int f, int c)
 int node_write(struct node *n, struct msg *p, int ps, int f, int c)
 {
 	return n->_vt->write ? n->_vt->write(n, p, ps, f, c) : -1;
-}
-
-int node_open(struct node *n)
-{
-	return n->_vt->open ? n->_vt->open(n) : -1;
-}	
-int node_close(struct node *n)
-{
-	return n->_vt->close ? n->_vt->close(n) : -1;
 }	
 
 int node_init(int argc, char *argv[], struct settings *set)
 { INDENT
 	list_foreach(const struct node_type *vt, &node_types) {
 		if (list_length(&vt->instances) > 0) {
-			info("Initializing '%s' node type", vt->name);
+			info("Initializing " YEL("%s") " node type", vt->name);
 			
 			if (vt->init)
 				vt->init(argc, argv, set);
 		}
 		else
-			warn("No node is using the '%s' type. Skipping...", vt->name);
+			warn("No node is using the " YEL("%s") " node type. Skipping...", vt->name);
 	}
 
 	return 0;
@@ -60,7 +51,7 @@ int node_deinit()
 	/* De-initialize node types */
 	list_foreach(const struct node_type *vt, &node_types) {
 		if (list_length(&vt->instances) > 0) {
-			info("De-initializing '%s' node type", vt->name);
+			info("De-initializing " YEL("%s") " node type", vt->name);
 
 			if (vt->deinit)
 				vt->deinit();
@@ -76,7 +67,7 @@ int node_start(struct node *n)
 
 	info("Starting node %s", node_name_long(n));
 	{ INDENT
-		ret = node_open(n);
+		ret = n->_vt->open ? n->_vt->open(n) : -1;
 	}
 	
 	if (ret == 0)
@@ -95,7 +86,7 @@ int node_stop(struct node *n)
 	info("Stopping node %s", node_name(n));
 
 	{ INDENT
-		ret = node_close(n);
+		ret = n->_vt->close ? n->_vt->close(n) : -1;
 	}
 	
 	if (ret == 0)
@@ -107,7 +98,7 @@ int node_stop(struct node *n)
 const char * node_name(struct node *n)
 {
 	if (!n->_name)
-		strcatf(&n->_name, YEL("%s") GRY("(%s)"), n->name, n->_vt->name);
+		strcatf(&n->_name, RED("%s") "(" YEL("%s") ")", n->name, n->_vt->name);
 		
 	return n->_name;
 }
