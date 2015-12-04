@@ -60,6 +60,13 @@ ifeq ($(shell pkg-config libcurl jansson uuid; echo $$?),0)
 	LIB_LDLIBS += $(shell pkg-config --libs libcurl jansson uuid)
 endif
 
+# Enable WebSocket support
+ifeq ($(shell pkg-config libwebsockets; echo $$?),0)
+	LIB_OBJS   += websocket.o
+	LIB_CFLAGS += $(shell pkg-config --cflags libwebsockets)
+	LIB_LDLIBS += $(shell pkg-config --libs libwebsockets)
+endif
+
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
 ifneq (,$(wildcard $(OPALDIR)/include_target/AsyncApi.h))
 	LIB_OBJS    += opal.o
