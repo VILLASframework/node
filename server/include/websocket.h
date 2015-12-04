@@ -19,20 +19,20 @@
 #ifndef _WEBSOCKET_H_
 #define _WEBSOCKET_H_
 
-/* Forward declarations */
-struct node;
-struct msg;
-struct settings;
+#include "node.h"
 
-struct websocket {
-	uint16_t port;
-	char *ssl_cert;
-	char *ssl_private_key;
-	char *htdocs;
+/* Forward declarations */
+struct msg;
+struct libwebsocket_context;
+
+struct websocket {	
+	struct {
+		pthread_cond_t cond;
+		pthread_mutex_t mutex;
+		struct msg *m;
+	} read, write;
 	
-	struct libwebsocket_context *context;
-	
-	pthread_t thread;
+	struct list connections; /**< List of struct libwebsockets sockets */
 };
 
 /** @see node_vtable::init */
