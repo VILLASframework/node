@@ -120,7 +120,7 @@ void * recv_loop(void *ctx)
 int main(int argc, char *argv[])
 {
 	/* Parse command line arguments */
-	if (argc < 2)
+	if (argc < 3)
 		usage(argv[0]);
 	
 	char c;

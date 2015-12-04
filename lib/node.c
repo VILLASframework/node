@@ -17,7 +17,7 @@ struct list node_types = LIST_INIT(NULL);
 
 int node_parse(struct node *n, config_setting_t *cfg)
 {
-	return n->_vt->parse ? n->_vt->parse(n, cfg) : -1;	
+	return n->_vt->parse ? n->_vt->parse(n, cfg) : 0;	
 }
 
 int node_read(struct node *n, struct msg *p, int ps, int f, int c)
@@ -106,7 +106,7 @@ const char * node_name(struct node *n)
 const char * node_name_long(struct node *n)
 {
 	if (!n->_name_long)
-		n->_name_long = n->_vt->print(n);
+		n->_name_long = n->_vt->print ? n->_vt->print(n) : "";
 		
 	return n->_name_long;
 }
