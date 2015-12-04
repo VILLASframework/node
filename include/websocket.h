@@ -41,12 +41,6 @@ int websocket_init(int argc, char * argv[], struct settings *set);
 /** @see node_vtable::deinit */
 int websocket_deinit();
 
-/** @see node_vtable::parse */
-int websocket_parse(config_setting_t *cfg, struct node *n);
-
-/** @see node_vtable::print */
-char * websocket_print(struct node *n);
-
 /** @see node_vtable::open */
 int websocket_open(struct node *n);
 

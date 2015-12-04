@@ -24,13 +24,13 @@
 #include "msg.h"
 
 /* Forward declarations */
-static int protocol_cb_http(struct libwebsocket_context *, struct libwebsocket *, enum libwebsocket_callback_reasons, void *, void *, size_t);
-static int protocol_cb_live(struct libwebsocket_context *, struct libwebsocket *, enum libwebsocket_callback_reasons, void *, void *, size_t);
+static int protocol_cb_http(struct lws_context *, struct lws *, enum lws_callback_reasons, void *, void *, size_t);
+static int protocol_cb_live(struct lws_context *, struct lws *, enum lws_callback_reasons, void *, void *, size_t);
 
 /* Static storage */
 static struct websocket_global {
 	pthread_t thread;			/**< All nodes are served by a single websocket server. This server is running in a dedicated thread. */
-	struct libwebsocket_context *context;	/**< The libwebsockets server context. */
+	struct lws_context *context;		/**< The libwebsockets server context. */
 	
 	struct list nodes;			/**< List of websocket node instances. */
 
@@ -41,7 +41,7 @@ static struct websocket_global {
 	const char *htdocs;			/**< Path to the directory which should be served by build in HTTP server */
 } global;
 
-static struct libwebsocket_protocols protocols[] = {
+static struct lws_protocols protocols[] = {
 	{ "http-only",	protocol_cb_http, 0, 0 },
 	{ "live",	protocol_cb_live, sizeof(struct node *), 10 },
 	{ 0 } /* terminator */
@@ -70,19 +70,19 @@ static char * get_mimetype(const char *resource_path)
 		return "text/plain";
 }
 
-static int protocol_cb_http(struct libwebsocket_context *context, struct libwebsocket *wsi, enum libwebsocket_callback_reasons reason, void *user, void *in, size_t len)
+static int protocol_cb_http(struct lws_context *context, struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
-	struct websocket_global *global = libwebsocket_context_user(context);
+	struct websocket_global *global = lws_context_user(context);
 
 	switch (reason) {
 		case LWS_CALLBACK_HTTP:			
 			if (!global->htdocs) {
-				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_SERVICE_UNAVAILABLE, NULL);
+				lws_return_http_status(context, wsi, HTTP_STATUS_SERVICE_UNAVAILABLE, NULL);
 				goto try_to_reuse;
 			}
 
 			if (len < 1) {
-				libwebsockets_return_http_status(context, wsi, HTTP_STATUS_BAD_REQUEST, NULL);
+				lws_return_http_status(context, wsi, HTTP_STATUS_BAD_REQUEST, NULL);
 				goto try_to_reuse;
 			}
 
@@ -97,7 +97,7 @@ static int protocol_cb_http(struct libwebsocket_context *context, struct libwebs
 						 "Location: /index.html\r\n"
 						 "\r\n";
 			
-				libwebsocket_write(wsi, (void *) response, strlen(response), LWS_WRITE_HTTP);
+				lws_write(wsi, (void *) response, strlen(response), LWS_WRITE_HTTP);
 			
 				goto try_to_reuse;
 			}
@@ -115,7 +115,7 @@ static int protocol_cb_http(struct libwebsocket_context *context, struct libwebs
 					"\r\n"
 					"[ %.*s ]", (int) strlen(body) - 2, body);
 				
-				libwebsocket_write(wsi, (void *) response, strlen(response), LWS_WRITE_HTTP);
+				lws_write(wsi, (void *) response, strlen(response), LWS_WRITE_HTTP);
 				free(body);
 				
 				return -1;
@@ -128,11 +128,11 @@ static int protocol_cb_http(struct libwebsocket_context *context, struct libwebs
 				char *mimetype = get_mimetype(path);
 				if (!mimetype) {
 					warn("HTTP: Unknown mimetype for %s", path);
-					libwebsockets_return_http_status(context, wsi, HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE, NULL);
+					lws_return_http_status(context, wsi, HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE, NULL);
 					return -1;
 				}
 
-				int n = libwebsockets_serve_http_file(context, wsi, path, mimetype, NULL, 0);
+				int n = lws_serve_http_file(context, wsi, path, mimetype, NULL, 0);
 				if      (n < 0)
 					return -1;
 				else if (n == 0)
@@ -154,11 +154,11 @@ try_to_reuse:
 	return 0;
 }
 
-static int protocol_cb_live(struct libwebsocket_context *context, struct libwebsocket *wsi, enum libwebsocket_callback_reasons reason, void *user, void *in, size_t len)
+static int protocol_cb_live(struct lws_context *context, struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
 	struct node *n;
 	struct websocket *w;
-	struct websocket_global *global = libwebsocket_context_user(context);
+	struct websocket_global *global = lws_context_user(context);
 
 	char *buf, uri[1024];
 	
@@ -177,7 +177,7 @@ static int protocol_cb_live(struct libwebsocket_context *context, struct libwebs
 			return -1;
 
 found:			* (void **) user = n;
-			w = n->websocket;
+			w = n->_vd;
 			
 			list_push(&w->connections, wsi);
 				
@@ -187,7 +187,7 @@ found:			* (void **) user = n;
 		
 		case LWS_CALLBACK_CLOSED:
 			n = * (struct node **) user;
-			w = n->websocket;
+			w = n->_vd;
 				
 			list_remove(&w->connections, wsi);
 			
@@ -197,7 +197,12 @@ found:			* (void **) user = n;
 		
 		case LWS_CALLBACK_SERVER_WRITEABLE:
 			n = * (struct node **) user;
-			w = n->websocket;
+			if (!n)
+				return 0;
+			
+			w = n->_vd;
+			if (!w->write.m)
+				return 0;
 			
 			buf = malloc(LWS_SEND_BUFFER_PRE_PADDING + LWS_SEND_BUFFER_POST_PADDING + 4096);
 			
@@ -207,13 +212,13 @@ found:			* (void **) user = n;
 
 			pthread_mutex_unlock(&w->write.mutex);
 			
-			libwebsocket_write(wsi, (unsigned char *) (buf + LWS_SEND_BUFFER_PRE_PADDING), len, LWS_WRITE_TEXT);
+			lws_write(wsi, (unsigned char *) (buf + LWS_SEND_BUFFER_PRE_PADDING), len, LWS_WRITE_TEXT);
 
 			return 0;
 
 		case LWS_CALLBACK_RECEIVE:
 			n = * (struct node **) user;
-			w = n->websocket;
+			w = n->_vd;
 
 			pthread_mutex_lock(&w->read.mutex);
 			
@@ -246,7 +251,7 @@ static void * server_thread(void *ctx)
 {
 	debug(3, "WebSocket: Started server thread");
 	
-	while (libwebsocket_service(global.context, 10) >= 0);
+	while (lws_service(global.context, 10) >= 0);
 	
 	return NULL;
 }
@@ -276,7 +281,7 @@ int websocket_init(int argc, char * argv[], struct settings *set)
 	struct lws_context_creation_info info = {
 		.port = global.port,
 		.protocols = protocols,
-		.extensions = libwebsocket_get_internal_extensions(),
+		.extensions = lws_get_internal_extensions(),
 		.ssl_cert_filepath = global.ssl_cert,
 		.ssl_private_key_filepath = global.ssl_private_key,
 		.gid = -1,
@@ -284,7 +289,7 @@ int websocket_init(int argc, char * argv[], struct settings *set)
 		.user = &global
 	};
 
-	global.context = libwebsocket_create_context(&info);
+	global.context = lws_create_context(&info);
 	if (global.context == NULL)
 		error("WebSocket: failed to initialize server");
 	
@@ -297,29 +302,17 @@ int websocket_deinit()
 {
 	pthread_join(global.thread, NULL);
 
-	libwebsocket_cancel_service(global.context);
-	libwebsocket_context_destroy(global.context);
+	lws_cancel_service(global.context);
+	lws_context_destroy(global.context);
 	
 	list_destroy(&global.nodes);
 
 	return 0;
 }
 
-int websocket_parse(config_setting_t *cfg, struct node *n)
-{
-	n->websocket = alloc(sizeof(struct websocket));
-	
-	return 0;
-}
-
-char * websocket_print(struct node *n)
-{
-	return "";
-}
-
 int websocket_open(struct node *n)
 {
-	struct websocket *w = n->websocket;
+	struct websocket *w = n->_vd;
 
 	list_init(&w->connections, NULL);
 	list_push(&global.nodes, n);
@@ -336,7 +329,7 @@ int websocket_open(struct node *n)
 
 int websocket_close(struct node *n)
 {
-	struct websocket *w = n->websocket;
+	struct websocket *w = n->_vd;
 	
 	list_remove(&global.nodes, n);
 
@@ -349,7 +342,7 @@ int websocket_close(struct node *n)
 
 int websocket_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
-	struct websocket *w = n->websocket;
+	struct websocket *w = n->_vd;
 	struct msg *m = pool + (first % poolsize);
 	
 	w->read.m = m;
@@ -361,7 +354,7 @@ int websocket_read(struct node *n, struct msg *pool, int poolsize, int first, in
 
 int websocket_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
-	struct websocket *w = n->websocket;
+	struct websocket *w = n->_vd;
 	struct msg *m = pool + (first % poolsize);
 
 	pthread_mutex_lock(&w->write.mutex);
@@ -369,8 +362,8 @@ int websocket_write(struct node *n, struct msg *pool, int poolsize, int first, i
 	w->write.m = m;
 	
 	/* Notify all active websocket connections to send new data */
-	list_foreach(struct libwebsocket *wsi, &w->connections) {
-		libwebsocket_callback_on_writable(global.context, wsi);
+	list_foreach(struct lws *wsi, &w->connections) {
+		lws_callback_on_writable(global.context, wsi);
 	}
 	
 	pthread_mutex_unlock(&w->write.mutex);
@@ -378,4 +371,16 @@ int websocket_write(struct node *n, struct msg *pool, int poolsize, int first, i
 	return 0;
 }
 
-REGISTER_NODE_TYPE(WEBSOCKET, "websocket", websocket)
+static struct node_type vt = {
+	.name		= "websocket",
+	.description	= "Send and receive samples of a WebSocket connection (libwebsockets)",
+	.size		= sizeof(struct websocket),
+	.open		= websocket_open,
+	.close		= websocket_close,
+	.read		= websocket_read,
+	.write		= websocket_write,
+	.init		= websocket_init,
+	.deinit		= websocket_deinit
+};
+
+REGISTER_NODE_TYPE(&vt)
