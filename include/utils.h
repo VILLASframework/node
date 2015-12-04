@@ -127,11 +127,13 @@ int version_compare(struct version *a, struct version *b);
 int version_parse(const char *s, struct version *v);
 
 /** Check assertion and exit if failed. */
-#define assert(exp) do { \
+#ifndef assert
+  #define assert(exp) do { \
 	if (!EXPECT(exp, 0)) \
 		error("Assertion failed: '%s' in %s(), %s:%d", \
 			XSTR(exp), __FUNCTION__, __BASE_FILE__, __LINE__); \
 	} while (0)
+#endif
 
 #endif /* _UTILS_H_ */
 
