@@ -40,10 +40,10 @@ ifndef DISABLE_FILE
 endif
 
 # Enable Socket node type when libnl3 is available
-ifeq ($(shell pkg-config libnl-3.0; echo $$?),0)
+ifeq ($(shell pkg-config libnl-route-3.0; echo $$?),0)
 	LIB_OBJS   += socket.o nl.o tc.o if.o
-	LIB_CFLAGS += $(shell pkg-config --cflags libnl-3.0)
-	LIB_LDLIBS += -lnl-3 -lnl-route-3 
+	LIB_CFLAGS += $(shell pkg-config --cflags libnl-route-3.0)
+	LIB_LDLIBS += $(shell pkg-config --libs libnl-route-3.0)
 endif
 
 # Enable GTFPGA support when libpci is available
