@@ -55,12 +55,11 @@ int msg_verify(struct msg *m);
  * @param m A pointer to the message.
  * @param flags See msg_flags.
  * @param offset A optional offset in seconds. Only used if flags contains MSG_PRINT_OFFSET.
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
+ * @return Number of bytes written to buf.
  */
-int msg_fprint(FILE *f, struct msg *m, int flags, double offset);
+int msg_print(char *buf, size_t len, struct msg *m, int flags, double offset);
 
-/** Read a message from a file stream.
+/** Read a message from a character buffer.
  *
  * @param f The file handle from fopen() or stdin.
  * @param m A pointer to the message.
@@ -68,6 +67,18 @@ int msg_fprint(FILE *f, struct msg *m, int flags, double offset);
  * @param offset Write offset to this pointer if not NULL.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
+ */
+int msg_scan(const char *line, struct msg *m, int *fl, double *off);
+
+/** Print a raw message in human readable form to a file stream.
+ *
+ * @see msg_print()
+ */
+int msg_fprint(FILE *f, struct msg *m, int flags, double offset);
+
+/** Read a message from a file stream.
+ *
+ * @see msg_scan()
  */
 int msg_fscan(FILE *f, struct msg *m, int *flags, double *offset);
 

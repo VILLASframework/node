@@ -18,8 +18,7 @@
 
 /** Static list initialization */
 #define LIST_INIT(dtor) {			\
-	.start = NULL,				\
-	.end = NULL,				\
+	.array = NULL,				\
 	.length = 0,				\
 	.capacity = 0,				\
 	.lock = PTHREAD_MUTEX_INITIALIZER,	\
@@ -27,12 +26,12 @@
 }
 				
 #define list_length(list)	((list)->length)
-#define list_at(list, index)	((list)->length > index ? (list)->start[index] : NULL)
+#define list_at(list, index)	((list)->length > index ? (list)->array[index] : NULL)
 
 #define list_first(list)	list_at(list, 0)
 #define list_last(list)		list_at(list, (list)->length-1)
 #define list_foreach(ptr, list)	for (int _i = 0, _p; _p = 1, _i < (list)->length; _i++) \
-					for (ptr = (list)->start[_i]; _p--; )
+					for (ptr = (list)->array[_i]; _p--; )
 
 /** Callback to destroy list elements.
  *
@@ -44,10 +43,9 @@ typedef void (*dtor_cb_t)(void *);
 typedef int (*cmp_cb_t)(const void *, const void *);
 
 struct list {
-	void **start;		/**< Array of pointers to list elements */
-	void **end;		/**< Array of pointers to list elements */
-	size_t capacity;	/**< Size of list::start in elements */
-	size_t length;		/**< Number of elements of list::start which are in use */
+	void **array;		/**< Array of pointers to list elements */
+	size_t capacity;	/**< Size of list::array in elements */
+	size_t length;		/**< Number of elements of list::array which are in use */
 	dtor_cb_t destructor;	/**< A destructor which gets called for every list elements during list_destroy() */
 	pthread_mutex_t lock;	/**< A mutex to allow thread-safe accesses */
 };
@@ -60,6 +58,9 @@ void list_destroy(struct list *l);
 
 /** Append an element to the end of the list */
 void list_push(struct list *l, void *p);
+
+/** Remove all occurences of a list item */
+void list_remove(struct list *l, void *p);
 
 /** Search the list for an element whose first element is a character array which matches name.
  *

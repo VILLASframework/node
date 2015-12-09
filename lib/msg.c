@@ -49,34 +49,34 @@ int msg_verify(struct msg *m)
 		return 0;
 }
 
-int msg_fprint(FILE *f, struct msg *m, int flags, double offset)
+int msg_print(char *buf, size_t len, struct msg *m, int flags, double offset)
 {
-	fprintf(f, "%u", m->ts.sec);
+	size_t off = snprintf(buf, len, "%u", m->ts.sec);
 	
 	if (flags & MSG_PRINT_NANOSECONDS)
-		fprintf(f, ".%09u", m->ts.nsec);
+		off += snprintf(buf + off, len - off, ".%09u", m->ts.nsec);
 	
 	if (flags & MSG_PRINT_OFFSET)
-		fprintf(f, "%+g", offset);
+		off += snprintf(buf + off, len - off, "%+g", offset);
 	
 	if (flags & MSG_PRINT_SEQUENCE)
-		fprintf(f, "(%u)", m->sequence);
+		off += snprintf(buf + off, len - off, "(%u)", m->sequence);
 
 	if (flags & MSG_PRINT_VALUES) {
 		for (int i = 0; i < m->length; i++)
-			fprintf(f, "\t%.6f", m->data[i].f);
+			off += snprintf(buf + off, len - off, "\t%.6f", m->data[i].f);
 	}
 
-	fprintf(f, "\n");
+	off += snprintf(buf + off, len - off, "\n");
 
-	return 0;
+	return off + 1; /* trailing '\0' */
 }
 
-/** @todo Currently only floating point values are supported */
-int msg_fscan(FILE *f, struct msg *m, int *fl, double *off)
+int msg_scan(const char *line, struct msg *m, int *fl, double *off)
 {
-	char line[MSG_VALUES * 16];
-	char *end, *ptr = line;
+	char *end;
+	const char *ptr = line;
+
 	int flags = 0;
 	double offset;
 	
@@ -89,14 +89,6 @@ int msg_fscan(FILE *f, struct msg *m, int *fl, double *off)
 	 *
 	 * Please note that only the seconds and at least one value are mandatory
 	 */
-
-skip:	if (fgets(line, sizeof(line), f) == NULL)
-		return -1; /* An error occured */
-
-	/* Skip whitespaces, empty and comment lines */
-	for (ptr = line; isspace(*ptr); ptr++);
-	if (*ptr == '\0' || *ptr == '#')
-		goto skip;
 
 	/* Mandatory: seconds */
 	m->ts.sec = (uint32_t) strtoul(ptr, &end, 10);
@@ -164,4 +156,30 @@ skip:	if (fgets(line, sizeof(line), f) == NULL)
 		*off = offset;
 
 	return m->length;
+}
+
+int msg_fprint(FILE *f, struct msg *m, int flags, double offset)
+{
+	char line[4096];
+
+	int len = msg_print(line, sizeof(line), m, flags, offset);
+	
+	fputs(line, f);
+	
+	return len;
+}
+
+int msg_fscan(FILE *f, struct msg *m, int *fl, double *off)
+{
+	char *ptr, line[4096];
+	
+skip:	if (fgets(line, sizeof(line), f) == NULL)
+		return -1; /* An error occured */
+
+	/* Skip whitespaces, empty and comment lines */
+	for (ptr = line; isspace(*ptr); ptr++);
+	if (*ptr == '\0' || *ptr == '#')
+		goto skip;
+	
+	return msg_scan(line, m, fl, off);
 }
