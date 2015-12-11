@@ -107,8 +107,15 @@ const char * node_name(struct node *n)
 
 const char * node_name_long(struct node *n)
 {
-	if (!n->_name_long)
-		n->_name_long = n->_vt->print ? n->_vt->print(n) : node_name(n);
+	if (!n->_name_long) {
+		if (n->_vt->print) {
+			char *name_long = n->_vt->print(n);
+			strcatf(&n->_name_long, "%s: %s", node_name(n), name_long);
+			free(name_long);
+		}
+		else
+			n->_name_long = node_name(n);		
+	}
 		
 	return n->_name_long;
 }
