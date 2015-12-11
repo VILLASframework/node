@@ -302,6 +302,7 @@ int websocket_init(int argc, char * argv[], config_setting_t *cfg)
 
 int websocket_deinit()
 {
+	pthread_cancel(global.thread);
 	pthread_join(global.thread, NULL);
 
 	lws_cancel_service(global.context);
