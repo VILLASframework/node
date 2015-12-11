@@ -97,7 +97,7 @@ libs2ss.so: $(LIB_OBJS)
 install: $(TARGETS) $(LIBS)
 	install -m 0644 libs2ss.so $(PREFIX)/lib
 	install -m 0755 server -T $(PREFIX)/bin/s2ss-server
-	install -m 0755 random $(PREFIX)/bin/s2ss-random
+	install -m 0755 signal $(PREFIX)/bin/s2ss-signal
 	install -m 0755 pipe $(PREFIX)/bin/s2ss-pipe
 	install -m 0755 test $(PREFIX)/bin/s2ss-test
 	install -m 0755 tools/s2ss.sh $(PREFIX)/bin/s2ss
