@@ -64,6 +64,13 @@ void list_remove(struct list *l, void *p);
 
 /** Search the list for an element whose first element is a character array which matches name.
  *
+ * List elements should be of the following form:
+ *
+ * struct obj {
+ *    char *name;
+ *    // more members
+ * }
+ *
  * @see Only possible because of §1424 of http://c0x.coding-guidelines.com/6.7.2.1.html
  */
 void * list_lookup(struct list *l, const char *name);
