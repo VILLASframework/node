@@ -81,7 +81,11 @@ void list_remove(struct list *l, void *p)
 void * list_lookup(struct list *l, const char *name)
 {
 	int cmp_helper(const void *a, const void *b) {
-		return strcmp(* (char **) a, b);
+		const struct {
+			char *name;
+		} *obj = a;
+		
+		return strcmp(obj->name, b);
 	}
 
 	return list_search(l, cmp_helper, (void *) name);
@@ -90,7 +94,7 @@ void * list_lookup(struct list *l, const char *name)
 int list_contains(struct list *l, void *p)
 {
 	int cmp_helper(const void *a, const void *b) {
-		return a == b;
+		return a == b ? 0 : 1;
 	}
 	
 	return list_count(l, cmp_helper, p);
@@ -103,7 +107,7 @@ int list_count(struct list *l, cmp_cb_t cmp, void *ctx)
 	pthread_mutex_lock(&l->lock);
 
 	list_foreach(void *e, l) {
-		if (!cmp(e, ctx))
+		if (cmp(e, ctx) == 0)
 			c++;
 	}
 

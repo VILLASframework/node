@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
 	info("Starting nodes");
 	list_foreach(struct node *n, &nodes) { INDENT
 		int used_by_path(struct path *p, struct node *n) {
-			return (p->in == n) || list_contains(&p->destinations, n);
+			return (p->in == n) || list_contains(&p->destinations, n) ? 0 : 1;
 		}
 	
 		int refs = list_count(&paths, (cmp_cb_t) used_by_path, n);
