@@ -42,15 +42,6 @@
 /* Checks */
 #define KERNEL_VERSION_MAJ	3
 #define KERNEL_VERSION_MIN	4
-
-#ifndef LICENSE_VALID
-  #define LICENSE_VALID 0
-#endif
-#define LICENSE_CHECKS \
-	{ { "/sys/class/dmi/id/product_uuid", "5002E503-4904-EB05-7406-0C0700080009" }, \
-	  { "/sys/class/net/eth0/address" , "50:e5:49:eb:74:0c" }, \
-	  { "/etc/machine-id", "0d8399d0216314f083b9ed2053a354a8" }, \
-	  { "/dev/sda2", "\x53\xf6\xb5\xeb\x8b\x16\x46\xdc\x8d\x8f\x5b\x70\xb8\xc9\x1a\x2a", 0x468 } }
 	
 /** Coefficients for simple FIR-LowPass:
  *   F_s = 1kHz, F_pass = 100 Hz, F_block = 300
@@ -69,7 +60,6 @@ struct settings {
 	int affinity;		/**< Process affinity of the server and all created threads */
 	int debug;		/**< Debug log level */
 	double stats;		/**< Interval for path statistics. Set to 0 to disable themo disable them. */
-	const char *name;	/**< Name of the S2SS instance */
 };
 
 #endif /* _CONFIG_H_ */
