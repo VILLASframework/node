@@ -63,7 +63,7 @@ struct ngsi {
  *
  * @see node_vtable::init
  */
-int ngsi_init(int argc, char *argv[], struct settings *set);
+int ngsi_init(int argc, char *argv[], config_setting_t *cfg);
 
 /** Free global NGSI settings and unmaps shared memory regions.
  *

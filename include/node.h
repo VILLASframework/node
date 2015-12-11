@@ -34,6 +34,9 @@ __attribute__((constructor)) static void __register() {	\
 
 extern struct list node_types;
 
+/* Forward declarations */
+struct config_setting_t *cfg;
+
 /** C++ like vtable construct for node_types */
 struct node_type {
 	const char *name;		/**< The unique name of this node. This must be allways the first member! */
@@ -48,11 +51,11 @@ struct node_type {
 	 *
 	 * @param argc	Number of arguments passed to the server executable (see main()).
 	 * @param argv	Array of arguments  passed to the server executable (see main()).
-	 * @param set	Global settings.
+	 * @param cfg	Root libconfig object of global configuration file.
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*init)(int argc, char *argv[], struct settings *set);
+	int (*init)(int argc, char * argv[], config_setting_t *cfg);
 
 	/** Global de-initialization per node type.
 	 *
@@ -181,7 +184,7 @@ struct node
  *
  * @see node_type::init
  */
-int node_init(int argc, char *argv[], struct settings *set);
+int node_init(int argc, char *argv[], config_setting_t *cfg);
 
 /** De-initialize node type subsystems.
  *

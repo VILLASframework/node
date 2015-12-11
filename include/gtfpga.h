@@ -49,7 +49,7 @@ struct gtfpga {
 typedef void(*log_cb_t)(char *, ...);
 
 /** @see node_vtable::init */
-int gtfpga_init(int argc, char * argv[], struct settings *set);
+int gtfpga_init(int argc, char * argv[], config_setting_t *cfg);
 
 /** @see node_vtable::deinit */
 int gtfpga_deinit();

@@ -65,10 +65,14 @@ int socket_init(int argc, char * argv[], struct settings *set)
 
 		list_push(&i->sockets, s);
 	}
-
+	
 	/** @todo Improve mapping of NIC IRQs per path */
+	int affinity;
+	if (!config_setting_lookup_int(cfg, "affinity", &affinity))
+		affinity = -1;
+
 	list_foreach(struct interface *i, &interfaces)
-		if_start(i, set->affinity);
+		if_start(i, affinity);
 
 	return 0;
 }

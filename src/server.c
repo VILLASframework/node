@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 	config_parse(configfile, &config, &settings, &nodes, &paths);
 
 	info("Initialize node types");
-	node_init(argc, argv, &settings);
+		node_init(argc, argv, config_root_setting(&config));
 
 	info("Starting nodes");
 	list_foreach(struct node *n, &nodes) {

@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 	if (!node)
 		error("There's no node with the name '%s'", argv[3]);
 
-	node_init(argc-3, argv+3, &settings);
+	node_init(argc-3, argv+3, config_root_setting(&config));
 	node_start(node);
 
 	/* Parse Arguments */

@@ -36,7 +36,7 @@ struct websocket {
 };
 
 /** @see node_vtable::init */
-int websocket_init(int argc, char * argv[], struct settings *set);
+int websocket_init(int argc, char * argv[], config_setting_t *cfg);
 
 /** @see node_vtable::deinit */
 int websocket_deinit();

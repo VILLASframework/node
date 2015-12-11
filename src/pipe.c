@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 	if (!node)
 		error("Node '%s' does not exist!", argv[2]);
 
-	node_init(argc-optind, argv+optind, &settings);
+	node_init(argc-optind, argv+optind, config_root_setting(&config));	
 	
 	recv_pool = alloc(sizeof(struct msg) * node->combine);
 	send_pool = alloc(sizeof(struct msg) * node->combine);

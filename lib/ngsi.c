@@ -21,6 +21,7 @@
 #include <jansson.h>
 #include <math.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include "ngsi.h"
 #include "utils.h"
@@ -409,10 +410,17 @@ out:	json_decref(request);
 	return ret;
 }
 
-int ngsi_init(int argc, char *argv[], struct settings *set)
+int ngsi_init(int argc, char *argv[], config_setting_t *cfg)
 {
-	name = strdup(set->name);
-
+	const char *tname;
+	if (config_setting_lookup_string(cfg, "name", &tname)) {
+		name = strdup(tname);
+	}
+	else {
+		name = alloc(128); /** @todo missing free */
+		gethostname((char *) name, 128);
+	}
+	
 	return curl_global_init(CURL_GLOBAL_ALL);
 }
 

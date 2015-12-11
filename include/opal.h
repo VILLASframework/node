@@ -65,7 +65,7 @@ struct opal {
  *
  * @see node_vtable::init
  */
-int opal_init(int argc, char *argv[], struct settings *set);
+int opal_init(int argc, char *argv[], config_setting_t *cfg);
 
 /** Free global OPAL settings and unmaps shared memory regions.
  *

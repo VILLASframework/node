@@ -8,7 +8,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "utils.h"
 #include "list.h"
@@ -76,11 +75,6 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 	config_setting_lookup_int(cfg, "priority", &set->priority);
 	config_setting_lookup_int(cfg, "debug", &set->debug);
 	config_setting_lookup_float(cfg, "stats", &set->stats);
-
-	if (!config_setting_lookup_string(cfg, "name", &set->name)) {
-		set->name = alloc(128); /** @todo missing free */
-		gethostname((char *) set->name, 128);
-	}
 
 	log_setlevel(set->debug);
 

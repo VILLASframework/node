@@ -29,7 +29,7 @@ static void gtfpga_debug(char *msg, ...) {
 	va_end(ap);
 }
 
-int gtfpga_init(int argc, char * argv[], struct settings *set)
+int gtfpga_init(int argc, char * argv[], config_setting_t *cfg)
 {
 	if (check_root())
 		error("The gtfpga node-type requires superuser privileges!");

@@ -14,9 +14,8 @@
 #include <string.h>
 
 #include <signal.h>
-
 #include <libwebsockets.h>
-#include <config.h>
+#include <libconfig.h>
 
 #include "websocket.h"
 #include "timing.h"
@@ -256,23 +255,26 @@ static void * server_thread(void *ctx)
 	return NULL;
 }
 
-int websocket_init(int argc, char * argv[], struct settings *set)
+int websocket_init(int argc, char * argv[], config_setting_t *cfg)
 {
+	config_setting_t *cfg_http;
+
 	lws_set_log_level((1 << LLL_COUNT) - 1, logger);
 	
 	/* Parse global config */
-	/*	
-	config_setting_lookup_string(cfg, "ssl_cert", &global.ssl_cert);
-	config_setting_lookup_string(cfg, "ssl_private_key", &global.ssl_private_key);
-	config_setting_lookup_string(cfg, "htdocs", &global.htdocs);
-	
-	if (!config_setting_lookup_int(cfg, "port", &global.port))
-		port = 80;
-	*/
-	
-	/* @todo Fake settings */
-	global.port = 8080;
-	global.htdocs = "/s2ss/contrib/websocket";
+	cfg_http = config_lookup_from(cfg, "http");
+	if (cfg_http) {
+		config_setting_lookup_string(cfg_http, "ssl_cert", &global.ssl_cert);
+		config_setting_lookup_string(cfg_http, "ssl_private_key", &global.ssl_private_key);
+		config_setting_lookup_string(cfg_http, "htdocs", &global.htdocs);
+		config_setting_lookup_int(cfg_http, "port", &global.port);
+	}
+
+	/* Default settings */
+	if (!global.port)
+		global.port = 80;
+	if (!global.htdocs)
+		global.htdocs = "/s2ss/contrib/websocket";
 	
 	/* Initialize list of nodes */
 	list_init(&global.nodes, NULL);
