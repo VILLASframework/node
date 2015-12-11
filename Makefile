@@ -77,10 +77,10 @@ endif
 
 ######## Targets ########
 
-.PHONY: all clean install release docker
+.PHONY: all clean install release docker doc
 
 # Default target: build everything
-all: $(LIBS) $(TARGETS)
+all: $(LIBS) $(TARGETS) doc
 
 # Dependencies for individual binaries
 server:  server.o $(OBJS) libs2ss.so
@@ -116,6 +116,9 @@ clean:
 docker:
 	docker build -t s2ss .
 	docker run -itv $(PWD):/s2ss s2ss
+
+doc:
+	doxygen
 
 # Include auto-generated dependencies
 -include $(wildcard *.d)

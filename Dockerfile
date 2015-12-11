@@ -25,7 +25,10 @@ RUN apt-get -y install \
 	make \
 	cmake \
 	libc6-dev \
-        pkg-config
+        pkg-config \
+	doxygen \
+	dia \
+	graphviz
 
 # Install dependencies for native arch
 RUN apt-get -y install \
