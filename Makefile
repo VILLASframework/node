@@ -103,10 +103,10 @@ install: $(TARGETS) $(LIBS)
 	install -m 0755 tools/s2ss.sh $(PREFIX)/bin/s2ss
 
 release: all
-	tar czf s2ss-$(COMMIT)-docs.tar.gz documentation/html/
-	tar czf s2ss-$(COMMIT).tar.gz server/server server/test server/pipe server/signal server/etc/
+	tar czf s2ss-$(COMMIT)-doc.tar.gz doc/html/
+	tar czf s2ss-$(COMMIT).tar.gz server test pipe signal etc/
 	rsync *.tar.gz $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/
-	rsync --archive --delete documentation/html/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/doc/
+	rsync --archive --delete doc/html/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/doc/
 
 clean:
 	$(RM) *~ *.o *.d *.so
