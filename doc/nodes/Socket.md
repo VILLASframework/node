@@ -27,22 +27,24 @@ Every `socket` node supports the following special settings:
 
 ### Example
 
-	udp_node = {					# The dictionary is indexed by the name of the node.
-		type	= "socket",			# Type can be one of: socket, opal, file, gtfpga, ngsi
-							# Start the server without arguments for a list of supported node types.
+	nodes = {
+		udp_node = {					# The dictionary is indexed by the name of the node.
+			type	= "socket",			# Type can be one of: socket, opal, file, gtfpga, ngsi
+								# Start the server without arguments for a list of supported node types.
 		
-	### The following settings are specific to the socket node-type!! ###
-
-		layer	= "udp"				# Layer can be one of:
-							#   udp		Send / recv UDP packets
-							#   ip		Send / recv IP packets
-							#   eth		Send / recv raw Ethernet frames (IEEE802.3)
-
+		### The following settings are specific to the socket node-type!! ###
+	
+			layer	= "udp"				# Layer can be one of:
+								#   udp		Send / recv UDP packets
+								#   ip		Send / recv IP packets
+								#   eth		Send / recv raw Ethernet frames (IEEE802.3)
+	
 							
-		local	= "127.0.0.1:12001",		# This node only received messages on this IP:Port pair
-		remote	= "127.0.0.1:12000"		# This node sents outgoing messages to this IP:Port pair
+			local	= "127.0.0.1:12001",		# This node only received messages on this IP:Port pair
+			remote	= "127.0.0.1:12000"		# This node sents outgoing messages to this IP:Port pair
 		
-		combine = 30				# Receive and sent 30 samples per message (multiplexing).
+			combine = 30				# Receive and sent 30 samples per message (multiplexing).
+		}
 	}
 
 ## Packet Format

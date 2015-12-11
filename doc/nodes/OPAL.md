@@ -17,14 +17,16 @@ Every `opal` node supports the following special settings:
 
 ### Example
 
-	opal_node = {					# The server can be started as an Asynchronous process
-		type	= "opal",			# from within an OPAL-RT model.
-		
-	### The following settings are specific to the opal node-type!! ###
-
-		send_id	= 1,				# It's possible to have multiple send / recv Icons per model
-		recv_id	= 1,				# Specify the ID here.
-		reply = true
+	nodes = {
+		opal_node = {					# The server can be started as an Asynchronous process
+			type	= "opal",			# from within an OPAL-RT model.
+	
+		### The following settings are specific to the opal node-type!! ###
+	
+			send_id	= 1,				# It's possible to have multiple send / recv Icons per model
+			recv_id	= 1,				# Specify the ID here.
+			reply = true
+		}
 	}
 
 ## Arguments for OPAL-RT block

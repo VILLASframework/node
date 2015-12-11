@@ -77,30 +77,32 @@ Expects the input data in splitted format.
 
 ### Example
 
-	file_node = {
-		type	= "file",
+	nodes = {
+		file_node = {
+			type	= "file",
 		
-	### The following settings are specific to the file node-type!! ###
-
-		in = {
-			path = "logs/input.log",	# These options specify the path prefix where the the files are stored
-			mode = "w+",			# The mode in which files should be opened (see open(2))
+		### The following settings are specific to the file node-type!! ###
+	
+			in = {
+				path = "logs/input.log",	# These options specify the path prefix where the the files are stored
+				mode = "w+",			# The mode in which files should be opened (see open(2))
 							
-			epoch_mode = "direct"		# One of: direct (default), wait, relative, absolute
-			epoch = 10			# The interpretation of this value depends on epoch_mode (default is 0).
-							# Consult the documentation of a full explanation
-
-			rate = 2.0			# A constant rate at which the lines of the input files should be read
-							# A missing or zero value will use the timestamp in the first column
-							# of the file to determine the pause between consecutive lines.
+				epoch_mode = "direct"		# One of: direct (default), wait, relative, absolute
+				epoch = 10			# The interpretation of this value depends on epoch_mode (default is 0).
+								# Consult the documentation of a full explanation
+	
+				rate = 2.0			# A constant rate at which the lines of the input files should be read
+								# A missing or zero value will use the timestamp in the first column
+								# of the file to determine the pause between consecutive lines.
 			
-			splitted = false
-		},
-		out = {
-			path = "logs/output_%F_%T.log"	# The output path accepts all format tokens of (see strftime(3))
-			mode = "a+"			# You might want to use "a+" to append to a file
-
-			split	= 100,			# Split output file every 100 MB
+				splitted = false
+			},
+			out = {
+				path = "logs/output_%F_%T.log"	# The output path accepts all format tokens of (see strftime(3))
+				mode = "a+"			# You might want to use "a+" to append to a file
+	
+				split	= 100,			# Split output file every 100 MB
+			}
 		}
 	}
 
