@@ -138,7 +138,7 @@ static void * path_run(void *arg)
 }
 
 int path_start(struct path *p)
-{ INDENT
+{
 	info("Starting path: %s (poolsize=%u, msgsize=%u, #hooks=%zu, rate=%.1f)",
 		path_name(p), p->poolsize, p->msgsize, list_length(&p->hooks), p->rate);
 	
@@ -173,7 +173,7 @@ int path_start(struct path *p)
 }
 
 int path_stop(struct path *p)
-{ INDENT
+{
 	info("Stopping path: %s", path_name(p));
 
 	pthread_cancel(p->recv_tid);

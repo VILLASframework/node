@@ -17,8 +17,8 @@
 /** Global OPAL specific settings */
 static struct opal_global *og = NULL;
 
-int opal_init(int argc, char *argv[], struct settings *set)
-{ INDENT
+int opal_init(int argc, char *argv[], config_setting_t *cfg)
+{
 	int err;
 
 	if (argc != 4)
@@ -74,7 +74,7 @@ int opal_init(int argc, char *argv[], struct settings *set)
 }
 
 int opal_deinit()
-{ INDENT
+{
 	int err;
 
 	if (!og)
@@ -102,7 +102,7 @@ int opal_deinit()
 }
 
 int opal_print_global(struct opal_global *g)
-{ INDENT
+{
 	debug(2, "Controller ID: %u", og->params.controllerID);
 	
 	char *sbuf = alloc(og->send_icons * 5);

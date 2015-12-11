@@ -38,8 +38,8 @@ extern struct list interfaces;
 /* Forward declartions */
 static struct node_type vt;
 
-int socket_init(int argc, char * argv[], struct settings *set)
-{ INDENT
+int socket_init(int argc, char * argv[], config_setting_t *cfg)
+{
 	if (check_root())
 		error("The 'socket' node-type requires superuser privileges!");
 	
@@ -78,7 +78,7 @@ int socket_init(int argc, char * argv[], struct settings *set)
 }
 
 int socket_deinit()
-{ INDENT
+{
 	list_foreach(struct interface *i, &interfaces)
 		if_stop(i);
 

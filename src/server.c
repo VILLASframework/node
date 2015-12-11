@@ -33,15 +33,19 @@ static config_t config;		/**< libconfig handle */
 static void quit()
 {
 	info("Stopping paths");
-	list_foreach(struct path *p, &paths)
+	list_foreach(struct path *p, &paths) { INDENT
 		path_stop(p);
+	}
 
 	info("Stopping nodes");
-	list_foreach(struct node *n, &nodes)
+	list_foreach(struct node *n, &nodes) { INDENT
 		node_stop(n);
+	}
 
 	info("De-initializing node types");
-	node_deinit();
+	{ INDENT
+		node_deinit();
+	}
 
 	/* Freeing dynamically allocated memory */
 	list_destroy(&paths);
@@ -54,7 +58,7 @@ static void quit()
 }
 
 static void realtime_init()
-{ INDENT
+{
 	if (check_kernel_cmdline())
 		warn("You should reserve some cores for the server (see 'isolcpus')");
 	if (check_kernel_rt())
@@ -143,20 +147,28 @@ int main(int argc, char *argv[])
 	list_init(&paths, (dtor_cb_t) path_destroy);
 
 	info("Initialize real-time system");
-	realtime_init();
+	{ INDENT
+		realtime_init();
+	}
 
 	info("Initialize signals");
-	signals_init();
+	{ INDENT 
+		signals_init();
+	}
 
 	info("Parsing configuration");
-	config_init(&config);
-	config_parse(configfile, &config, &settings, &nodes, &paths);
+	{ INDENT
+		config_init(&config);
+		config_parse(configfile, &config, &settings, &nodes, &paths);
+	}
 
 	info("Initialize node types");
+	{ INDENT
 		node_init(argc, argv, config_root_setting(&config));
+	}
 
 	info("Starting nodes");
-	list_foreach(struct node *n, &nodes) {
+	list_foreach(struct node *n, &nodes) { INDENT
 		int used_by_path(struct path *p, struct node *n) {
 			return (p->in == n) || list_contains(&p->destinations, n);
 		}
@@ -165,11 +177,11 @@ int main(int argc, char *argv[])
 		if (refs > 0)
 			node_start(n);
 		else
-			warn("Node %s is unused. Skipping...", node_name(n));
+			warn("No path is using the node %s. Skipping...", node_name(n));
 	}
 
 	info("Starting paths");
-	list_foreach(struct path *p, &paths) {
+	list_foreach(struct path *p, &paths) { INDENT
 		if (p->enabled)
 			path_start(p);
 		else

@@ -30,14 +30,15 @@ int node_write(struct node *n, struct msg *p, int ps, int f, int c)
 	return n->_vt->write ? n->_vt->write(n, p, ps, f, c) : -1;
 }	
 
-int node_init(int argc, char *argv[], struct settings *set)
-{ INDENT
+int node_init(int argc, char *argv[], config_setting_t *cfg)
+{
 	list_foreach(const struct node_type *vt, &node_types) {
 		if (list_length(&vt->instances) > 0) {
 			info("Initializing " YEL("%s") " node type", vt->name);
 			
-			if (vt->init)
-				vt->init(argc, argv, set);
+			if (vt->init) { INDENT
+				vt->init(argc, argv, cfg);
+			}
 		}
 		else
 			warn("No node is using the " YEL("%s") " node type. Skipping...", vt->name);
@@ -47,14 +48,15 @@ int node_init(int argc, char *argv[], struct settings *set)
 }
 
 int node_deinit()
-{ INDENT
+{
 	/* De-initialize node types */
 	list_foreach(const struct node_type *vt, &node_types) {
 		if (list_length(&vt->instances) > 0) {
 			info("De-initializing " YEL("%s") " node type", vt->name);
 
-			if (vt->deinit)
+			if (vt->deinit) { INDENT
 				vt->deinit();
+			}
 		}
 	}
 
@@ -62,7 +64,7 @@ int node_deinit()
 }
 
 int node_start(struct node *n)
-{ INDENT
+{
 	int ret;
 
 	info("Starting node %s", node_name_long(n));
@@ -77,7 +79,7 @@ int node_start(struct node *n)
 }
 
 int node_stop(struct node *n)
-{ INDENT
+{
 	int ret;
 
 	if (n->state != NODE_RUNNING)
@@ -106,7 +108,7 @@ const char * node_name(struct node *n)
 const char * node_name_long(struct node *n)
 {
 	if (!n->_name_long)
-		n->_name_long = n->_vt->print ? n->_vt->print(n) : "";
+		n->_name_long = n->_vt->print ? n->_vt->print(n) : node_name(n);
 		
 	return n->_name_long;
 }
