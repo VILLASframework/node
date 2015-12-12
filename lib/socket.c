@@ -32,11 +32,11 @@
 #include "socket.h"
 #include "checks.h"
 
-/** Linked list of interfaces */
-extern struct list interfaces;
-
 /* Forward declartions */
 static struct node_type vt;
+
+/* Private static storage */
+struct list interfaces;
 
 int socket_init(int argc, char * argv[], config_setting_t *cfg)
 {
@@ -58,12 +58,18 @@ int socket_init(int argc, char * argv[], config_setting_t *cfg)
 			free(buf);
 		}
 
-		int ifindex = rtnl_link_get_ifindex(link);
-		struct interface *i = if_lookup_index(ifindex);
-		if (!i)
-			i = if_create(link);
+		/* Search of existing interface with correct ifindex */
+		struct interface *i;
+		list_foreach(i, &interfaces) {
+			if (rtnl_link_get_ifindex(i->nl_link) == rtnl_link_get_ifindex(link))
+				goto found;
+		}
+		
+		/* If not found, create a new interface */
+		i = if_create(link);
+		list_push(&interfaces, i);
 
-		list_push(&i->sockets, s);
+found:		list_push(&i->sockets, s);
 	}
 	
 	/** @todo Improve mapping of NIC IRQs per path */

@@ -23,9 +23,6 @@
 #include "utils.h"
 #include "checks.h"
 
-/** Linked list of interfaces. */
-struct list interfaces;
-
 struct interface * if_create(struct rtnl_link *link)
 {
 	struct interface *i = alloc(sizeof(struct interface));
@@ -41,7 +38,6 @@ struct interface * if_create(struct rtnl_link *link)
 		warn("Did not found any interrupts for interface '%s'", rtnl_link_get_name(i->nl_link));
 
 	list_init(&i->sockets, NULL);
-	list_push(&interfaces, i);
 
 	return i;
 }
@@ -205,14 +201,3 @@ int if_set_affinity(struct interface *i, int affinity)
 
 	return 0;
 }
-
-struct interface * if_lookup_index(int index)
-{
-	list_foreach(struct interface *i, &interfaces) {
-		if (rtnl_link_get_ifindex(i->nl_link) == index)
-			return i;
-	}
-
-	return NULL;
-}
-

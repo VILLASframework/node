@@ -25,7 +25,6 @@
   #include "opal.h"
 #endif
 
-struct list nodes;		/**< Linked list of nodes */
 struct list paths;		/**< Linked list of paths */
 struct settings settings;	/**< The global configuration */
 static config_t config;		/**< libconfig handle */
@@ -143,7 +142,6 @@ int main(int argc, char *argv[])
 		error("Your kernel version is to old: required >= %u.%u", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
 
 	/* Initialize lists */
-	list_init(&nodes, (dtor_cb_t) node_destroy);
 	list_init(&paths, (dtor_cb_t) path_destroy);
 
 	info("Initialize real-time system");

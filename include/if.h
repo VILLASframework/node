@@ -106,13 +106,4 @@ int if_get_irqs(struct interface *i);
  */
 int if_set_affinity(struct interface *i, int affinity);
 
-/** Search the global list of interfaces for a given index.
- *
- * @param index The interface index to search for
- * @param interfaces A linked list of all interfaces
- * @retval NULL if no interface with index was found.
- * @retval >0 Success. A pointer to the interface.
- */
-struct interface * if_lookup_index(int index);
-
 #endif /* _IF_H_ */

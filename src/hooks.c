@@ -21,8 +21,7 @@
 #include "hooks.h"
 #include "path.h"
 #include "utils.h"
-
-extern struct list nodes;
+#include "node.h"
 
 struct list hooks;
 
