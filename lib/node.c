@@ -97,7 +97,7 @@ int node_stop(struct node *n)
 	return ret;
 }
 
-const char * node_name(struct node *n)
+char * node_name(struct node *n)
 {
 	if (!n->_name)
 		strcatf(&n->_name, RED("%s") "(" YEL("%s") ")", n->name, n->_vt->name);
@@ -105,7 +105,7 @@ const char * node_name(struct node *n)
 	return n->_name;
 }
 
-const char * node_name_long(struct node *n)
+char * node_name_long(struct node *n)
 {
 	if (!n->_name_long) {
 		if (n->_vt->print) {

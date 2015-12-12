@@ -162,7 +162,7 @@ struct node
 	const char *name;	/**< A short identifier of the node, only used for configuration and logging */
 
 	char *_name;		/**< Singleton: A string used to print to screen. */
-	const char *_name_long;	/**< Singleton: A string used to print to screen. */
+	char *_name_long;	/**< Singleton: A string used to print to screen. */
 
 	int combine;		/**< Number of messages to send / recv at once (scatter / gather) */
 	int affinity;		/**< CPU Affinity of this node */
@@ -228,7 +228,7 @@ int node_parse(struct node *n, config_setting_t *cfg);
  * @see node::_name‚
  * @param n A pointer to the node structure.
  */
-const char * node_name(struct node *n);
+char * node_name(struct node *n);
 
 /** Return a pointer to a string which should be used to print this node
  *
@@ -236,7 +236,7 @@ const char * node_name(struct node *n);
  * @see node_type::print
  * @param n A pointer to the node structure.
  */
-const char * node_name_long(struct node *n);
+char * node_name_long(struct node *n);
 
 /** Receive multiple messages at once.
  *
