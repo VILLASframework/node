@@ -103,7 +103,15 @@ int strftimespec(char *s, size_t max, const char *format, struct timespec *ts)
  * @param set A cpu bitmask
  * @return The opaque cpu_set_t datatype
  */
-cpu_set_t to_cpu_set(int set);
+cpu_set_t integer_to_cpuset(int set);
+
+#ifdef WITH_JANSSON
+  #include <jansson.h>
+
+/* Convert a libconfig object to a libjansson object */
+json_t * config_to_json(config_setting_t *cfg);
+
+#endif
 
 /** Allocate and initialize memory. */
 void * alloc(size_t bytes);

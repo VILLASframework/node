@@ -78,7 +78,7 @@ static void realtime_init()
 
 	/* Pin threads to CPUs by setting the affinity */
 	if (settings.affinity) {
-		cpu_set_t cset = to_cpu_set(settings.affinity);
+		cpu_set_t cset = integer_to_cpuset(settings.affinity);
 		if (sched_setaffinity(0, sizeof(cset), &cset))
 			serror("Failed to set CPU affinity to '%#x'", settings.affinity);
 

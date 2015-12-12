@@ -124,7 +124,7 @@ char * vstrcatf(char **dest, const char *fmt, va_list ap)
 	return *dest;
 }
 
-cpu_set_t to_cpu_set(int set)
+cpu_set_t integer_to_cpuset(int set)
 {
 	cpu_set_t cset;
 
@@ -137,6 +137,44 @@ cpu_set_t to_cpu_set(int set)
 
 	return cset;
 }
+
+#ifdef WITH_JANSSON
+json_t * config_to_json(config_setting_t *cfg)
+{
+	switch (config_setting_type(cfg)) {
+		case CONFIG_TYPE_INT:	 return json_integer(config_setting_get_int(cfg));
+		case CONFIG_TYPE_INT64:	 return json_integer(config_setting_get_int64(cfg));
+		case CONFIG_TYPE_FLOAT:  return json_real(config_setting_get_float(cfg));
+		case CONFIG_TYPE_STRING: return json_string(config_setting_get_string(cfg));
+		case CONFIG_TYPE_BOOL:	 return json_boolean(config_setting_get_bool(cfg));
+
+		case CONFIG_TYPE_ARRAY:
+		case CONFIG_TYPE_LIST: {
+			json_t *json = json_array();
+			
+			for (int i = 0; i < config_setting_length(cfg); i++)
+				json_array_append_new(json, config_to_json(config_setting_get_elem(cfg, i)));
+			
+			return json;
+		}
+		
+		case CONFIG_TYPE_GROUP: {
+			json_t *json = json_object();
+			
+			for (int i = 0; i < config_setting_length(cfg); i++)
+				json_object_set_new(json,
+					config_setting_name(config_setting_get_elem(cfg, i)),
+					config_to_json(config_setting_get_elem(cfg, i))
+				);
+			
+			return json;
+		}
+		
+		default:
+			return json_object();
+	}
+}
+#endif
 
 void * alloc(size_t bytes)
 {
