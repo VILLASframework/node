@@ -51,7 +51,8 @@ int msg_verify(struct msg *m);
 
 /** Print a raw message in human readable form to a file stream.
  *
- * @param f The file handle from fopen() or stdout, stderr.
+ * @param buf A character buffer of len bytes.
+ * @param len The size of buf.
  * @param m A pointer to the message.
  * @param flags See msg_flags.
  * @param offset A optional offset in seconds. Only used if flags contains MSG_PRINT_OFFSET.
@@ -61,7 +62,7 @@ int msg_print(char *buf, size_t len, struct msg *m, int flags, double offset);
 
 /** Read a message from a character buffer.
  *
- * @param f The file handle from fopen() or stdin.
+ * @param line A string which should be parsed.
  * @param m A pointer to the message.
  * @param flags et MSG_PRINT_* flags for each component found in sample if not NULL. See msg_flags.
  * @param offset Write offset to this pointer if not NULL.
@@ -73,12 +74,18 @@ int msg_scan(const char *line, struct msg *m, int *fl, double *off);
 /** Print a raw message in human readable form to a file stream.
  *
  * @see msg_print()
+ * @param f The file handle from fopen() or stdout, stderr.
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int msg_fprint(FILE *f, struct msg *m, int flags, double offset);
 
 /** Read a message from a file stream.
  *
  * @see msg_scan()
+ * @param f The file handle from fopen() or stdin.
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
 int msg_fscan(FILE *f, struct msg *m, int *flags, double *offset);
 

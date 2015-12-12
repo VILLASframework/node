@@ -1,6 +1,10 @@
-/** A generic linked list
+/** A generic list implementation.
  *
- * Linked lists a used for several data structures in the code.
+ * This is a generic implementation of a list which can store void pointers to
+ * arbitrary data. The data itself is not stored or managed by the list.
+ *
+ * Internally, an array of pointers is used to store the pointers.
+ * If needed, this array will grow by realloc().
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -42,6 +46,7 @@ typedef void (*dtor_cb_t)(void *);
 /** Callback to search or sort a list. */	
 typedef int (*cmp_cb_t)(const void *, const void *);
 
+/* The list data structure. */
 struct list {
 	void **array;		/**< Array of pointers to list elements */
 	size_t capacity;	/**< Size of list::array in elements */
@@ -50,7 +55,11 @@ struct list {
 	pthread_mutex_t lock;	/**< A mutex to allow thread-safe accesses */
 };
 
-/** Initialize a list */
+/** Initialize a list.
+ *
+ * @param l A pointer to the list data structure.
+ * @param dtor A function pointer to a desctructor which will be called for every list item when the list is destroyed.
+ */
 void list_init(struct list *l, dtor_cb_t dtor);
 
 /** Destroy a list and call destructors for all list elements */
@@ -62,9 +71,9 @@ void list_push(struct list *l, void *p);
 /** Remove all occurences of a list item */
 void list_remove(struct list *l, void *p);
 
-/** Search the list for an element whose first element is a character array which matches name.
+/** Return the first list element which is identified by a string in its first member variable.
  *
- * List elements should be of the following form:
+ * List elements are pointers to structures of the following form:
  *
  * struct obj {
  *    char *name;

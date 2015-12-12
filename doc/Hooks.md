@@ -21,39 +21,39 @@ Example applications for hooks might be:
 Each path is allowed to have multiple active hooks.
 Those can be configured in the path section using the `hooks` setting:
 
-```
-paths = [
-  {
-    in = "input_node",
-    out = "output_node",
-    hooks = [ "fir", "print" ]
-#   hooks = "decimate"    // alternative syntax for a single hook
-  }
-]
-```
+	paths = [
+		{
+			in = "input_node",
+			out = "output_node",
+			hooks = [ "fir", "print" ]
+	#		hooks = "decimate"    // alternative syntax for a single hook
+		}
+	]
 
 **Please note:** the hooks will be executed in the order they are given in the configuration file!
 
 ## API
 
-The interface for user-defined hook functions is defined in (server/include/hooks.h):
+The interface for user-defined hook functions is defined in (`server/include/hooks.h`):
 
-```c
-typedef int (*hook_cb_t)(struct path *p);
+```
+typedef int (*hook_cb_t)(struct path *p, struct hook *h, int when);
 ```
 
 There are several occasions when a hook can be executed in the program flow (@see hook_type).
-There is a dedicated queue for each occasion:
+There is a dedicated queue for each occasion.
 
-| Queue               | Desciption                                                     |
-| ------------------- | -------------------------------------------------------------- |
-| `HOOK_PATH_START`   | Called whenever a path is started; before threads are created. |
-| `HOOK_PATH_STOP`		| Called whenever a path is stopped; after threads are destoyed. |
+The queue for which a hook can be called is encoded as a mask and specified during registration of that hook. 
+
+| Queue			| Desciption								|
+| --------------------- | --------------------------------------------------------------------- |
+| `HOOK_PATH_START`	| Called whenever a path is started; before threads are created.	|
+| `HOOK_PATH_STOP`	| Called whenever a path is stopped; after threads are destoyed.	|
 | `HOOK_PATH_RESTART`	| Called whenever a new simulation case is started. This is detected by a sequence no equal to zero. |
-| `HOOK_PRE`		      | Called when a new packet of messages (samples) was received.   |
-| `HOOK_POST`		      | Called after each message (sample) of a packet was processed.  |
-| `HOOK_MSG`          | Called for each message (sample) in a packet. |
-| `HOOK_PERIODIC`     | Called periodically. Period is set by global 'stats' option in the configuration file. |
+| `HOOK_PRE`		| Called when a new packet of messages (samples) was received.		|
+| `HOOK_POST`		| Called after each message (sample) of a packet was processed.		|
+| `HOOK_MSG`		| Called for each message (sample) in a packet.				|
+| `HOOK_PERIODIC`	| Called periodically. Period is set by global 'stats' option in the configuration file. |
 
 ## Examples
 
@@ -62,11 +62,9 @@ Use one of those as a starting point for your own hook.
 
 A typical hook function might look like this one:
 
-```c
-int my_super_hook_function(struct path *p)
-{
-  struct msg *last_received_msg = p->current;
-  
-  printf("The last message contained %u values\n", last_received_msg->length);
-}
-```
+	int my_super_hook_function(struct path *p, struct hook *h, int when)
+	{
+		struct msg *last_received_msg = p->current;
+	
+		printf("The last message contained %u values\n", last_received_msg->length);
+	}
