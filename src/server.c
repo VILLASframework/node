@@ -25,7 +25,7 @@
   #include "opal.h"
 #endif
 
-struct list paths;		/**< Linked list of paths */
+struct list paths;		/**< List of paths */
 struct settings settings;	/**< The global configuration */
 static config_t config;		/**< libconfig handle */
 

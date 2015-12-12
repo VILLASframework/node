@@ -21,16 +21,13 @@
 #include "hist.h"
 #include "timing.h"
 
-/** The global configuration */
-struct settings settings;
+struct settings settings; /** <The global configuration */
 
 static struct node *node;
 
 /* Test options */
-static int running = 1;
-
-/** Amount of messages which should be sent (default: -1 for unlimited) */
-static int count =  -1;
+static int running = 1; /**< Initiate shutdown if zero */
+static int count =  -1;	/**< Amount of messages which should be sent (default: -1 for unlimited) */
 
 /** File descriptor for Matlab results.
  * This allows you to write Matlab results in a seperate log file:
@@ -39,12 +36,10 @@ static int count =  -1;
  */
 static int fd = STDOUT_FILENO;
 
-/** Lowest value in histogram. */
-static double low = 0;
-/** Highest value in histogram. */
-static double high = 2e-4;
-/** Histogram resolution. */
-static double res = 1e-5;
+/* Histogram */
+static double low = 0;		/**< Lowest value in histogram. */
+static double high = 2e-4;	/**< Highest value in histogram. */
+static double res = 1e-5;	/**< Histogram resolution. */
 
 #define CLOCK_ID	CLOCK_MONOTONIC
 

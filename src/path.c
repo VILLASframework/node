@@ -15,12 +15,6 @@
 #include "timing.h"
 #include "config.h"
 
-#ifndef sigev_notify_thread_id
-  #define sigev_notify_thread_id   _sigev_un._tid
-#endif
-
-extern struct settings settings;
-
 static void path_write(struct path *p)
 {
 	list_foreach(struct node *n, &p->destinations) {

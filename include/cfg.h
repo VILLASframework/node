@@ -18,14 +18,6 @@
 
 /* Forward declarations */
 struct list;
-struct node;
-struct path;
-struct interface;
-
-struct socket;
-struct opal;
-struct gtfpga;
-struct netem;
 struct settings;
 
 /** Parse config file and store settings in supplied struct settings.

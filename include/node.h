@@ -224,14 +224,14 @@ int node_stop(struct node *n);
  */
 int node_parse(struct node *n, config_setting_t *cfg);
 
-/** Return a pointer to a string which should be used to print this node
+/** Return a pointer to a string which should be used to print this node.
  *
  * @see node::_name‚
  * @param n A pointer to the node structure.
  */
 char * node_name(struct node *n);
 
-/** Return a pointer to a string which should be used to print this node
+/** Return a pointer to a string which should be used to print this node.
  *
  * @see node::_name_short
  * @see node_type::print
