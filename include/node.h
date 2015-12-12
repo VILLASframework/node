@@ -185,13 +185,13 @@ struct node
  *
  * @see node_type::init
  */
-int node_init(int argc, char *argv[], config_setting_t *cfg);
+int node_init(struct node_type *vt, int argc, char *argv[], config_setting_t *cfg);
 
 /** De-initialize node type subsystems.
  *
  * @see node_type::deinit
  */
-int node_deinit();
+int node_deinit(struct node_type *vt);
 
 /** Create a node by allocating dynamic memory.
  *

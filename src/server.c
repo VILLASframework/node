@@ -42,8 +42,8 @@ static void quit()
 	}
 
 	info("De-initializing node types");
-	{ INDENT
-		node_deinit();
+	list_foreach(struct node_type *vt, &node_types) { INDENT
+		node_deinit(vt);
 	}
 
 	/* Freeing dynamically allocated memory */
@@ -161,8 +161,8 @@ int main(int argc, char *argv[])
 	}
 
 	info("Initialize node types");
-	{ INDENT
-		node_init(argc, argv, config_root_setting(&config));
+	list_foreach(struct node_type *vt, &node_types) { INDENT
+		node_init(vt, argc, argv, config_root_setting(&config));
 	}
 
 	info("Starting nodes");

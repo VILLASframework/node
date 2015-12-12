@@ -41,7 +41,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	pthread_join(send_thread, NULL);
 		
 	node_stop(node);
-	node_deinit();
+	node_deinit(node->_vt);
 		
 	free(recv_pool);
 	free(send_pool);
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 	if (!node)
 		error("Node '%s' does not exist!", argv[2]);
 
-	node_init(argc-optind, argv+optind, config_root_setting(&config));	
+	node_init(node->_vt, argc-optind, argv+optind, config_root_setting(&config));	
 	
 	recv_pool = alloc(sizeof(struct msg) * node->combine);
 	send_pool = alloc(sizeof(struct msg) * node->combine);
