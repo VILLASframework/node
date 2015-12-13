@@ -107,6 +107,7 @@ install: $(TARGETS) $(LIBS)
 	install -m 0755 pipe $(PREFIX)/bin/s2ss-pipe
 	install -m 0755 test $(PREFIX)/bin/s2ss-test
 	install -m 0755 tools/s2ss.sh $(PREFIX)/bin/s2ss
+	ldconfig
 
 release: all
 	tar czf s2ss-$(COMMIT)-doc.tar.gz doc/html/
