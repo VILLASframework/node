@@ -12,33 +12,37 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-
 #include <signal.h>
+
 #include <libwebsockets.h>
 #include <libconfig.h>
+
+#ifdef WITH_JANSSON
+  #include <jansson.h>
+#endif
 
 #include "websocket.h"
 #include "timing.h"
 #include "utils.h"
 #include "msg.h"
+#include "cfg.h"
 
 /* Forward declarations */
+static struct node_type vt;
+
 static int protocol_cb_http(struct lws_context *, struct lws *, enum lws_callback_reasons, void *, void *, size_t);
 static int protocol_cb_live(struct lws_context *, struct lws *, enum lws_callback_reasons, void *, void *, size_t);
 
-/* Static storage */
-static struct websocket_global {
-	pthread_t thread;			/**< All nodes are served by a single websocket server. This server is running in a dedicated thread. */
-	struct lws_context *context;		/**< The libwebsockets server context. */
-	
-	struct list nodes;			/**< List of websocket node instances. */
+/* Private static storage */
+static config_setting_t *cfg_root;		/**< Root config */
+static pthread_t thread;			/**< All nodes are served by a single websocket server. This server is running in a dedicated thread. */
+static struct lws_context *context;		/**< The libwebsockets server context. */
 
-	int port;				/**< Port of the build in HTTP / WebSocket server */
+static int port;				/**< Port of the build in HTTP / WebSocket server */
 
-	const char *ssl_cert;			/**< Path to the SSL certitifcate for HTTPS / WSS */
-	const char *ssl_private_key;		/**< Path to the SSL private key for HTTPS / WSS */
-	const char *htdocs;			/**< Path to the directory which should be served by build in HTTP server */
-} global;
+static const char *ssl_cert;			/**< Path to the SSL certitifcate for HTTPS / WSS */
+static const char *ssl_private_key;		/**< Path to the SSL private key for HTTPS / WSS */
+static const char *htdocs;			/**< Path to the directory which should be served by build in HTTP server */
 
 static struct lws_protocols protocols[] = {
 	{ "http-only",	protocol_cb_http, 0, 0 },
@@ -71,11 +75,9 @@ static char * get_mimetype(const char *resource_path)
 
 static int protocol_cb_http(struct lws_context *context, struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
-	struct websocket_global *global = lws_context_user(context);
-
 	switch (reason) {
 		case LWS_CALLBACK_HTTP:			
-			if (!global->htdocs) {
+			if (!htdocs) {
 				lws_return_http_status(context, wsi, HTTP_STATUS_SERVICE_UNAVAILABLE, NULL);
 				goto try_to_reuse;
 			}
@@ -100,28 +102,65 @@ static int protocol_cb_http(struct lws_context *context, struct lws *wsi, enum l
 			
 				goto try_to_reuse;
 			}
+#ifdef WITH_JANSSON
 			/* Return list of websocket nodes */
 			else if (!strcmp(requested_uri, "/nodes.json")) {
-				char response[4096];
-				char *body = NULL;
+				json_t *json_body = json_array();
+								
+				list_foreach(struct node *n, &vt.instances) {
+					struct websocket *w = n->_vd;
+					
+					debug(2, "Found node: %s", node_name(n));
+
+					config_setting_t *cfg_meta = config_lookup_from(n->cfg, "meta");
+					json_t *json_meta = cfg_meta ? config_to_json(cfg_meta) : json_object();
+					json_t *json_node = json_pack("{ s: s, s: s, s: i, s: i, s: i, s: i, s: o }",
+						"name",		node_name_short(n),
+						"type",		node_name_type(n),
+						"connections",	list_length(&w->connections),
+						"state",	n->state,
+						"combine",	n->combine,
+						"affinity",	n->affinity,
+						"meta",		json_meta
+					);
+					
+					json_array_append_new(json_body, json_node);
+				}
 				
-				list_foreach(struct node *n, &global->nodes)
-					strcatf(&body, "'%s', ", n->name);
+				char *body = json_dumps(json_body, JSON_INDENT(4));
+					
+				char *header =  "HTTP/1.1 200 OK\r\n"
+						"Connection: close\r\n"
+       						"Content-Type: application/json\r\n"
+						"\r\n";
 				
-				snprintf(response, sizeof(response),
-					"HTTP/1.1 200 OK\r\n"
-					"Connection: close\r\n"
-					"\r\n"
-					"[ %.*s ]", (int) strlen(body) - 2, body);
+				lws_write(wsi, (void *) header, strlen(header), LWS_WRITE_HTTP);
+				lws_write(wsi, (void *) body,   strlen(body),   LWS_WRITE_HTTP);
+
+				free(body);
+				json_decref(json_body);
 				
-				lws_write(wsi, (void *) response, strlen(response), LWS_WRITE_HTTP);
+				return -1;
+			}
+			else if (!strcmp(requested_uri, "/config.json")) {
+				char *body = json_dumps(config_to_json(cfg_root), JSON_INDENT(4));
+					
+				char *header =  "HTTP/1.1 200 OK\r\n"
+						"Connection: close\r\n"
+       						"Content-Type: application/json\r\n"
+						"\r\n";
+				
+				lws_write(wsi, (void *) header, strlen(header), LWS_WRITE_HTTP);
+				lws_write(wsi, (void *) body,   strlen(body),   LWS_WRITE_HTTP);
+
 				free(body);
 				
 				return -1;
 			}
+#endif
 			else {
 				char path[4069];
-				snprintf(path, sizeof(path), "%s%s", global->htdocs, requested_uri);
+				snprintf(path, sizeof(path), "%s%s", htdocs, requested_uri);
 
 				/* refuse to serve files we don't understand */
 				char *mimetype = get_mimetype(path);
@@ -157,7 +196,6 @@ static int protocol_cb_live(struct lws_context *context, struct lws *wsi, enum l
 {
 	struct node *n;
 	struct websocket *w;
-	struct websocket_global *global = lws_context_user(context);
 
 	char *buf, uri[1024];
 	
@@ -166,7 +204,7 @@ static int protocol_cb_live(struct lws_context *context, struct lws *wsi, enum l
 			lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_GET_URI); /* The path component of the*/
 			
 			/* Search for node which matches uri */
-			list_foreach(n, &global->nodes) {
+			list_foreach(n, &vt.instances) {
 				if (!strcmp(n->name, uri + 1)) /* we skip leading '/' */
 					goto found;
 			}
@@ -250,7 +288,7 @@ static void * server_thread(void *ctx)
 {
 	debug(3, "WebSocket: Started server thread");
 	
-	while (lws_service(global.context, 10) >= 0);
+	while (lws_service(context, 10) >= 0);
 	
 	return NULL;
 }
@@ -264,52 +302,49 @@ int websocket_init(int argc, char * argv[], config_setting_t *cfg)
 	/* Parse global config */
 	cfg_http = config_lookup_from(cfg, "http");
 	if (cfg_http) {
-		config_setting_lookup_string(cfg_http, "ssl_cert", &global.ssl_cert);
-		config_setting_lookup_string(cfg_http, "ssl_private_key", &global.ssl_private_key);
-		config_setting_lookup_string(cfg_http, "htdocs", &global.htdocs);
-		config_setting_lookup_int(cfg_http, "port", &global.port);
+		config_setting_lookup_string(cfg_http, "ssl_cert", &ssl_cert);
+		config_setting_lookup_string(cfg_http, "ssl_private_key", &ssl_private_key);
+		config_setting_lookup_string(cfg_http, "htdocs", &htdocs);
+		config_setting_lookup_int(cfg_http, "port", &port);
 	}
 
 	/* Default settings */
-	if (!global.port)
-		global.port = 80;
-	if (!global.htdocs)
-		global.htdocs = "/s2ss/contrib/websocket";
-	
-	/* Initialize list of nodes */
-	list_init(&global.nodes, NULL);
+	if (!port)
+		port = 80;
+	if (!htdocs)
+		htdocs = "/s2ss/contrib/websocket";
 	
 	/* Start server */
 	struct lws_context_creation_info info = {
-		.port = global.port,
+		.port = port,
 		.protocols = protocols,
 		.extensions = lws_get_internal_extensions(),
-		.ssl_cert_filepath = global.ssl_cert,
-		.ssl_private_key_filepath = global.ssl_private_key,
+		.ssl_cert_filepath = ssl_cert,
+		.ssl_private_key_filepath = ssl_private_key,
 		.gid = -1,
-		.uid = -1,
-		.user = &global
+		.uid = -1
 	};
 
-	global.context = lws_create_context(&info);
-	if (global.context == NULL)
+	context = lws_create_context(&info);
+	if (context == NULL)
 		error("WebSocket: failed to initialize server");
 	
-	pthread_create(&global.thread, NULL, server_thread, NULL);
+	/* Save root config for GET /config.json request */
+	cfg_root = cfg;
+	
+	pthread_create(&thread, NULL, server_thread, NULL);
 
 	return 0;
 }
 
 int websocket_deinit()
 {
-	pthread_cancel(global.thread);
-	pthread_join(global.thread, NULL);
+	pthread_cancel(thread);
+	pthread_join(thread, NULL);
 
-	lws_cancel_service(global.context);
-	lws_context_destroy(global.context);
+	lws_cancel_service(context);
+	lws_context_destroy(context);
 	
-	list_destroy(&global.nodes);
-
 	return 0;
 }
 
@@ -318,7 +353,6 @@ int websocket_open(struct node *n)
 	struct websocket *w = n->_vd;
 
 	list_init(&w->connections, NULL);
-	list_push(&global.nodes, n);
 	
 	pthread_mutex_init(&w->read.mutex, NULL);
 	pthread_mutex_init(&w->write.mutex, NULL);
@@ -333,8 +367,6 @@ int websocket_open(struct node *n)
 int websocket_close(struct node *n)
 {
 	struct websocket *w = n->_vd;
-	
-	list_remove(&global.nodes, n);
 
 	pthread_mutex_destroy(&w->read.mutex);
 	pthread_mutex_destroy(&w->write.mutex);
@@ -366,7 +398,7 @@ int websocket_write(struct node *n, struct msg *pool, int poolsize, int first, i
 	
 	/* Notify all active websocket connections to send new data */
 	list_foreach(struct lws *wsi, &w->connections) {
-		lws_callback_on_writable(global.context, wsi);
+		lws_callback_on_writable(context, wsi);
 	}
 	
 	pthread_mutex_unlock(&w->write.mutex);
