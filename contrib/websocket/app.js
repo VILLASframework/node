@@ -1,12 +1,12 @@
 // global variables
 var connection;
-var timer;
 
 var seq = 0;
 
-var node = 'websocket'
-var url = 'ws://10.211.55.6:8080/' + node;
+var node = getParameterByName("node") || "ws";
+var url = wsUrl(node);
 var protocol = ['live'];
+var updateRate = 1.0 / 25;
 
 var plotData = [];
 var plotOptions = {
@@ -18,24 +18,44 @@ var plotOptions = {
 	}
 };
 
-var xDelta = 10*1000;
+var msg = new Msg();
+
+var xPast  = 10*1000;
+var xFuture = 5*1000;
 
 $(document).on('ready', function() {
 	$.getJSON('/nodes.json', function(data) {
-		$(data).each(function(index, node) {
-			$(".node-selector").append($("<li>").text(node));
+		$(data).each(function(index, n) {
+			var title = n.description ? n.description : n.name;
+			
+			if (n.unit)
+				title += " [" + n.unit + "]";
+			
+			$(".node-selector").append(
+				$("<li>").append(
+					$("<a>", {
+						text: title,
+						title: n.name,
+						href: "?node=" + n.name
+					})
+				).addClass(n.name == node ? 'active' : '')
+			);
 		});
 	});
 	
 	$('#slider').slider({
 		min : 0,
 		max : 100,
-		slide : function(event, ui) {
-			sendMsg(Date.now(), [ ui.value ]);
-		}
+		slide : onSliderMoved
+	});
+	
+	$('#controls .buttons button').each(function(button) {
+		$(button).addClass('on');
 	});
 	
 	wsConnect();
+	
+	setInterval(plotUpdate, updateRate);
 });
 
 $(window).on('beforeunload', wsDisconnect);
@@ -61,13 +81,18 @@ function plotUpdate() {
 	
 	var options = {
 		xaxis: {
-			min: Date.now() - xDelta,
-			max: Date.now()
+			min: Date.now() - xPast,
+			max: Date.now() + xFuture
+		},
+		grid: {
+			markings: [
+				{ xaxis: { from: Date.now(), to: Date.now() }, color: "#ff0000" }
+			]
 		}
 	}
 
 	/* update plot */
-	$.plot('#placeholder', data, $.extend(true, options, plotOptions));
+	$.plot('.plot-container div', data, $.extend(true, options, plotOptions));
 }
 
 function wsDisconnect() {
@@ -78,7 +103,6 @@ function wsDisconnect() {
 		.css('color', 'red');
 
 	plotData = [];
-	clearInterval(timer);
 }
 
 function wsConnect() {
@@ -88,8 +112,6 @@ function wsConnect() {
 		$('#connectionStatus')
 			.text('Connected')
 			.css('color', 'green');
-		
-		timer = setInterval(plotUpdate, 1.0 / 25);
 	};
 
 	connection.onclose = function() {
@@ -105,45 +127,130 @@ function wsConnect() {
 	};
 
 	connection.onmessage = function(e) {
-		console.log(e.data);
+		var msg = new Msg();
 		
-		var res = e.data.split(/\s+/).map(Number);
-		var timestamp = res[0] * 1000;
-		var values = res.slice(1)
+		msg.parse(e.data);
 
 		// add empty arrays for data
-		while (plotData.length < values.length)
+		while (plotData.length < msg.values.length)
 			plotData.push([]);
 
 		// add data to arrays
-		for (var i = 0; i < values.length; i++)
-			plotData[i].push([timestamp, values[i]]);
+		for (var i = 0; i < msg.values.length; i++)
+			plotData[i].push([msg.ts, msg.values[i]]);
 	};	
 };
-
-function sendMsg(ts, values) {
-	connection.send(ts / 1000 + "(" + seq + ") " + values.join(" "));
-	
-	seq += 1;
-}
-
-/* Control event handlers */
-function onButtonClick(value) {
-	sendMsg(Date.now(), [ value ]);
-}
-
-function onTextChange() {
-	sendMsg(Date.now(), [ 1 ]);
-}
 
 /* Helpers */
 function wsUrl(endpoint) {
 	var l = window.location;
-	
-	var protocol = (l.protocol === "https:") ? "wss://" : "ws://";
-	var port     = ((l.port != 80) && (l.port != 443)) ? ":" + l.port : "";
+	var url = "";
 
-	return protocol + l.hostname + port + endpoint;
+	if (l.protocol === "https:")
+		url += "wss://";
+	else
+		url += "ws://";
+	
+	url += l.hostname;
+	
+	if ((l.port) && (l.port != 80) && (l.port != 443))
+		url += ":" + l.port;
+
+	url += "/" + endpoint;
+	
+	return url;
 }
 
+function fileStart(e) {
+	var file = e.target.files[0];
+	var reader = new FileReader();
+	
+	var start;
+	var msgs = [ ]
+	var position = 0;
 
+	reader.onload = function(e) {
+		var lines = e.target.result.split(/[\r\n]+/g); // tolerate both Windows and Unix linebreaks
+
+		for (var i = 0; i < lines.length; i++) {
+			var msg = new Msg();
+			msg.parse(lines[i]);
+			msgs.push(msg);
+		}
+
+		console.log("Read " + msgs.length + " samples from file");
+
+		if (msgs.length > 0) {
+			var offset = Date.now() - msgs[0].ts;
+			var data = [];
+			
+			for (var i = 0; i < msgs.length; i++)
+				data.push(msgs[i].ts + offset, msgs[i].values[0]);
+		
+			plotData.push(data);
+		}
+		else {
+			
+		}
+	};
+
+	reader.readAsText(file);
+}
+
+/* Control event handlers */
+function onButtonClick(value) {
+	msg.values = [ value ];
+	msg.ts = Date.now();
+	msg.seq++;
+	
+	msg.send(connection);
+}
+
+function onTextChange(e) {
+	msg.values = [ e.target.text ];
+	msg.ts = Date.now();
+	msg.seq++;
+	
+	msg.send(connection);
+}
+
+function onSliderMoved(e, ui) {
+	msg.values = [ ui.value  ];
+	msg.ts = Date.now();
+	msg.seq++;
+	
+	msg.send(connection);
+}
+
+/* Some helpers */
+function getParameterByName(name) {
+	var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+	return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+/* Class for parsing and printing a message / sample */
+function Msg(ts, values, seq) {
+	this.ts = ts;
+	this.values = values;
+	this.seq = seq;
+	
+	if (this.seq == undefined)
+		this.seq = 0;
+	
+	this.parse = function(line) {
+		var res = line.split(/\s+/).map(Number);
+		
+		this.ts = res[0] * 1000;
+		this.values = res.slice(1)
+	};
+	
+	this.print = function() {
+		return (this.ts / 1000).toFixed(9) + "(" + this.seq + ") " + this.values.join(" ");
+	}
+	
+	this.send = function(connection) {
+		var line = this.print();
+
+		connection.send(line);
+	}
+}

@@ -27,21 +27,25 @@
 				</div>
 				
 				<div class="controls">
-					<p>
-						<span>Trigger:</span>
-						<button onclick="onButtonClick(1)">On</button>
-						<button onclick="onButtonClick(0)">Off</button>
-					</p>
-				
-					<p>
-						<span>Slider:</span>
-						<div id="slider"></div>
-					</p>
+					<dl>
+						<dt><label for="buttons">Buttons</label></dt>
+						<dd>
+							<button>1</button>
+							<button>2</button>
+							<button>3</button>
+							<button>4</button>
+							<button>5</button>
+						</dd>
+						
+						<dt><label for="slider">Slider</label></dt>
+						<dd><div id="slider"></div></dd>
 					
-					<p>
-						<span>Value:</span>
-						<input type="text" onchange="onTextChange()" />
-					</p>
+						<dt><label for="text">Text</label></dt>
+						<dd><input type="text" id="text" /></dd>
+					
+						<dt><label for="file">File</label></dt>
+						<dd><input type="file" onchange="fileStart(event)" /></dd>
+					</dl>
 				</div>
 				
 				<div class="connection">
