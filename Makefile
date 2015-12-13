@@ -13,6 +13,9 @@ LIB_OBJS = msg.o node.o checks.o list.o log.o utils.o
 # Source directories
 VPATH = src lib
 
+# Default prefix for installation
+PREFIX ?= /usr/local
+
 # Default debug level
 V ?= 2
 
