@@ -29,25 +29,6 @@
 #include "AsyncApi.h"
 #include "OpalGenAsyncParamCtrl.h"
 
-/** This global structure holds libOpalAsync related information.
- *  It's only used once in the code. */
-struct opal_global {
-	/** Shared Memory identifiers and size, provided via argv. */
-	char *async_shmem_name, *print_shmem_name;
-	int async_shmem_size;
-	
-	/** Number of send blocks used in the running OPAL model. */
-	int send_icons, recv_icons;
-	/** A dynamically allocated array of SendIDs. */
-	int *send_ids, *recv_ids;
-	
-	/** String and Float parameters, provided by the OPAL AsyncProcess block. */
-	Opal_GenAsyncParam_Ctrl params;
-	
-	/** Big Global Lock for libOpalAsync API */
-	pthread_mutex_t lock;
-};
-
 struct opal {
 	int reply;
 	int mode;
@@ -79,7 +60,8 @@ int opal_parse(struct node *n, config_setting_t *cfg);
 /** @see node_vtable::print */
 char * opal_print(struct node *n);
 
-int opal_print_global(struct opal_global *g);
+/** Print global settings of the OPAL node type. */
+int opal_print_global();
 
 /** @see node_vtable::open */
 int opal_open(struct node *n);

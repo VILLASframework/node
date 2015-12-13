@@ -14,8 +14,17 @@
 #include "opal.h"
 #include "utils.h"
 
-/** Global OPAL specific settings */
-static struct opal_global *og = NULL;
+/* Private static storage */
+static char *async_shmem_name;		/**< Shared Memory identifiers and size, provided via argv. */
+static char *print_shmem_name;		/**< Shared Memory identifiers and size, provided via argv. */
+static int async_shmem_size;		/**< Shared Memory identifiers and size, provided via argv. */
+	
+static int send_icons, recv_icons;	/** Number of send blocks used in the running OPAL model. */
+static int *send_ids, *recv_ids;	/** A dynamically allocated array of SendIDs. */
+
+static Opal_GenAsyncParam_Ctrl params;	/** String and Float parameters, provided by the OPAL AsyncProcess block. */
+	
+static pthread_mutex_t lock;		/** Big Global Lock for libOpalAsync API */
 
 int opal_init(int argc, char *argv[], config_setting_t *cfg)
 {
@@ -24,43 +33,41 @@ int opal_init(int argc, char *argv[], config_setting_t *cfg)
 	if (argc != 4)
 		return -1;
 
-	og = alloc(sizeof(struct opal_global));
+	pthread_mutex_init(&lock, NULL);
 
-	pthread_mutex_init(&og->lock, NULL);
-
-	og->async_shmem_name = argv[1];
-	og->async_shmem_size = atoi(argv[2]);
-	og->print_shmem_name = argv[3];
+	async_shmem_name = argv[1];
+	async_shmem_size = atoi(argv[2]);
+	print_shmem_name = argv[3];
 
 	/* Enable the OpalPrint function. This prints to the OpalDisplay. */
-	err = OpalSystemCtrl_Register(og->print_shmem_name);
+	err = OpalSystemCtrl_Register(print_shmem_name);
 	if (err != EOK)
 		error("OpalPrint() access not available (%d)", err);
 
 	/* Open Share Memory created by the model. */
-	err = OpalOpenAsyncMem(og->async_shmem_size, og->async_shmem_name);
+	err = OpalOpenAsyncMem(async_shmem_size, async_shmem_name);
 	if (err != EOK)
 		error("Model shared memory not available (%d)", err);
 
-	err = OpalGetAsyncCtrlParameters(&og->params, sizeof(Opal_GenAsyncParam_Ctrl));
+	err = OpalGetAsyncCtrlParameters(&params, sizeof(Opal_GenAsyncParam_Ctrl));
 	if (err != EOK)
 		error("Could not get OPAL controller parameters (%d)", err);
 
 	/* Get list of Send and RecvIDs */
-	err = OpalGetNbAsyncSendIcon(&og->send_icons);
+	err = OpalGetNbAsyncSendIcon(&send_icons);
 	if (err != EOK)
 		error("Failed to get number of send blocks (%d)", err);
-	err = OpalGetNbAsyncRecvIcon(&og->recv_icons);
+	err = OpalGetNbAsyncRecvIcon(&recv_icons);
 	if (err != EOK)
 		error("Failed to get number of recv blocks (%d)", err);
 
-	og->send_ids = alloc(og->send_icons * sizeof(int));
-	og->recv_ids = alloc(og->recv_icons * sizeof(int));
+	send_ids = alloc(send_icons * sizeof(int));
+	recv_ids = alloc(recv_icons * sizeof(int));
 
-	err = OpalGetAsyncSendIDList(og->send_ids, og->send_icons * sizeof(int));
+	err = OpalGetAsyncSendIDList(send_ids, send_icons * sizeof(int));
 	if (err != EOK)
 		error("Failed to get list of send ids (%d)", err);
-	err = OpalGetAsyncRecvIDList(og->recv_ids, og->recv_icons * sizeof(int));
+	err = OpalGetAsyncRecvIDList(recv_ids, recv_icons * sizeof(int));
 	if (err != EOK)
 		error("Failed to get list of recv ids (%d)", err);
 
@@ -68,7 +75,7 @@ int opal_init(int argc, char *argv[], config_setting_t *cfg)
 	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s)",
 		VERSION, __DATE__, __TIME__);
 
-	opal_print_global(og);
+	opal_print_global();
 
 	return 0;
 }
@@ -77,41 +84,35 @@ int opal_deinit()
 {
 	int err;
 
-	if (!og)
-		return 0;
-
-	err = OpalCloseAsyncMem(og->async_shmem_size, og->async_shmem_name);
+	err = OpalCloseAsyncMem(async_shmem_size, async_shmem_name);
 	if (err != EOK)
 		error("Failed to close shared memory area (%d)", err);
 
 	debug(4, "Closing OPAL shared memory mapping");
 
-	err = OpalSystemCtrl_UnRegister(og->print_shmem_name);
+	err = OpalSystemCtrl_UnRegister(print_shmem_name);
 	if (err != EOK)
 		error("Failed to close shared memory for system control (%d)", err);
 
-	pthread_mutex_destroy(&og->lock);
+	pthread_mutex_destroy(&lock);
 
-	free(og->send_ids);
-	free(og->recv_ids);
-	free(og);
-
-	og = NULL;
+	free(send_ids);
+	free(recv_ids);
 
 	return 0;
 }
 
-int opal_print_global(struct opal_global *g)
+int opal_print_global()
 {
-	debug(2, "Controller ID: %u", og->params.controllerID);
+	debug(2, "Controller ID: %u", params.controllerID);
 	
-	char *sbuf = alloc(og->send_icons * 5);
-	char *rbuf = alloc(og->recv_icons * 5);
+	char *sbuf = alloc(send_icons * 5);
+	char *rbuf = alloc(recv_icons * 5);
 
-	for (int i = 0; i < og->send_icons; i++)
-		strcatf(&sbuf, "%u ", og->send_ids[i]);
-	for (int i = 0; i < og->recv_icons; i++)
-		strcatf(&rbuf, "%u ", og->recv_ids[i]);
+	for (int i = 0; i < send_icons; i++)
+		strcatf(&sbuf, "%u ", send_ids[i]);
+	for (int i = 0; i < recv_icons; i++)
+		strcatf(&rbuf, "%u ", recv_ids[i]);
 
 	debug(2, "Send Blocks: %s",    sbuf);
 	debug(2, "Receive Blocks: %s", rbuf);
@@ -121,9 +122,9 @@ int opal_print_global(struct opal_global *g)
 
 	debug(2, "Control Block Parameters:");
 	for (int i = 0; i < GENASYNC_NB_FLOAT_PARAM; i++)
-		debug(2, "FloatParam[]%u] = %f", i, og->params.FloatParam[i]);
+		debug(2, "FloatParam[]%u] = %f", i, params.FloatParam[i]);
 	for (int i = 0; i < GENASYNC_NB_STRING_PARAM; i++)
-		debug(2, "StringParam[%u] = %s", i, og->params.StringParam[i]);
+		debug(2, "StringParam[%u] = %s", i, params.StringParam[i]);
 
 	return 0;
 }
@@ -141,7 +142,7 @@ int opal_parse(struct node *n, config_setting_t *cfg)
 
 char * opal_print(struct node *n)
 {
-	struct opal *o = n->opal;
+	struct opal *o = n->_vd;
 	char *buf = NULL;
 
 	/** @todo: Print send_params, recv_params */
@@ -154,15 +155,12 @@ int opal_open(struct node *n)
 {
 	struct opal *o = n->_vd;
 
-	if (!og)
-		error("The server was not started as an OPAL asynchronous process!");
-
 	/* Search for valid send and recv ids */
 	int sfound = 0, rfound = 0;
-	for (int i = 0; i < og->send_icons; i++)
-		sfound += og->send_ids[i] == o->send_id;
-	for (int i = 0; i < og->send_icons; i++)
-		rfound += og->send_ids[i] == o->send_id;
+	for (int i = 0; i < send_icons; i++)
+		sfound += send_ids[i] == o->send_id;
+	for (int i = 0; i < send_icons; i++)
+		rfound += send_ids[i] == o->send_id;
 
 	if (!sfound)
 		error("Invalid send_id '%u' for node %s", o->send_id, node_name(n));
