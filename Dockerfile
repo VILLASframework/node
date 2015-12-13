@@ -28,7 +28,9 @@ RUN apt-get -y install \
         pkg-config \
 	doxygen \
 	dia \
-	graphviz
+	graphviz \
+	wget \
+	vim
 
 # Install dependencies for native arch
 RUN apt-get -y install \
