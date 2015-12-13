@@ -28,6 +28,9 @@ LDLIBS  = -pthread -lrt -lm -lconfig -ls2ss
 CFLAGS += -std=gnu99 -Iinclude/ -I. -MMD -Wall -D_GIT_REV='"$(GIT_REV)"' -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
 LDFLAGS += -Wl,-L.,-rpath,'$$ORIGIN'
 
+# pkg-config dependencies
+PKGS = libconfig
+
 # Add more compiler flags
 ifdef DEBUG
 	CFLAGS += -O0 -g
@@ -45,29 +48,25 @@ endif
 # Enable Socket node type when libnl3 is available
 ifeq ($(shell pkg-config libnl-route-3.0; echo $$?),0)
 	LIB_OBJS   += socket.o nl.o tc.o if.o
-	LIB_CFLAGS += $(shell pkg-config --cflags libnl-route-3.0)
-	LIB_LDLIBS += $(shell pkg-config --libs libnl-route-3.0)
+	PKGS       += libnl-route-3.0
 endif
 
 # Enable GTFPGA support when libpci is available
 ifeq ($(shell pkg-config libpci; echo $$?),0)
 	LIB_OBJS   += gtfpga.o
-	LIB_CFLAGS += $(shell pkg-config --cflags libpci)
-	LIB_LDLIBS += $(shell pkg-config --libs libpci)
+	PKGS       += libpci
 endif
 
 # Enable NGSI support
 ifeq ($(shell pkg-config libcurl jansson uuid; echo $$?),0)
 	LIB_OBJS   += ngsi.o
-	LIB_CFLAGS += $(shell pkg-config --cflags libcurl jansson uuid)
-	LIB_LDLIBS += $(shell pkg-config --libs libcurl jansson uuid)
+	PKGS       += libcurl jansson uuid
 endif
 
 # Enable WebSocket support
-ifeq ($(shell pkg-config libwebsockets; echo $$?),0)
+ifeq ($(shell pkg-config libwebsockets jansson; echo $$?),0)
 	LIB_OBJS   += websocket.o
-	LIB_CFLAGS += $(shell pkg-config --cflags libwebsockets)
-	LIB_LDLIBS += $(shell pkg-config --libs libwebsockets)
+	PKGS       += libwebsockets jansson
 endif
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
@@ -77,6 +76,11 @@ ifneq (,$(wildcard $(OPALDIR)/include_target/AsyncApi.h))
 	LIB_LDFLAGS += -m32 -Wl,-L/lib/i386-linux-gnu/,-L/usr/lib/i386-linux-gnu/,-L$(OPALDIR)/lib/redhawk/
 	LIB_LDLIBS  += -lOpalAsyncApiCore -lOpalCore -lOpalUtils -lirc
 endif
+
+# Add flags by pkg-config
+LIB_CFLAGS += $(addprefix -DWITH_, $(shell echo ${PKGS} | tr a-z- A-Z_ | tr -dc ' A-Z0-9_' ))
+LIB_CFLAGS += $(shell pkg-config --cflags ${PKGS})
+LIB_LDLIBS += $(shell pkg-config --libs ${PKGS})
 
 ######## Targets ########
 
