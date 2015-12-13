@@ -1,9 +1,11 @@
-.PHONY: dependencies
+DEPS = libconfig-1.5 libnl-3.2.25 doxygen-1.8.10 pciutils-3.4.0 libwebsockets-master
+
+.PHONY: $(DEPS) all
 
 PREFIX=$(shell pwd)
 
-# Install dependencies
-dependencies: libconfig-1.5 libnl-3.2.25 doxygen-1.8.10 pciutils-3.4.0 libwebsockets-master
+# Install all dependencies
+all: $(DEPS)
 
 # Download latest doxygen
 doxygen-1.8.10:
