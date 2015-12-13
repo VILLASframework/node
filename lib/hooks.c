@@ -146,6 +146,7 @@ int hook_fir(struct path *p, struct hook *h, int when)
 {
 	/** @todo make this configurable via hook parameters */
 	const static double coeffs[] = HOOK_FIR_COEFFS;
+	char *end;
 
 	struct private {
 		double *coeffs;
@@ -163,8 +164,8 @@ int hook_fir(struct path *p, struct hook *h, int when)
 			private->coeffs = memdup(coeffs, sizeof(coeffs));
 			private->history = alloc(sizeof(coeffs));
 
-			private->index = strtol(h->parameter, NULL, 10);
-			if (!private->index)
+			private->index = strtol(h->parameter, &end, 10);
+			if (errno == EINVAL || errno == ERANGE)
 				error("Invalid parameter '%s' for hook 'fir'", h->parameter);
 			break;
 
