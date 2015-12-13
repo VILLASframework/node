@@ -26,7 +26,7 @@ CC = gcc
 LDLIBS  = -pthread -lrt -lm -lconfig -ls2ss
 
 CFLAGS += -std=gnu99 -Iinclude/ -I. -MMD -Wall -D_GIT_REV='"$(GIT_REV)"' -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
-LDFLAGS += -Wl,-L.,-rpath,'$$ORIGIN'
+LDFLAGS += -L. -Wl,-rpath,'$$ORIGIN'
 
 # pkg-config dependencies
 PKGS = libconfig
@@ -73,7 +73,7 @@ endif
 ifneq (,$(wildcard $(OPALDIR)/include_target/AsyncApi.h))
 	LIB_OBJS    += opal.o
 	LIB_CFLAGS  += -m32 -I$(OPALDIR)/include_target
-	LIB_LDFLAGS += -m32 -Wl,-L/lib/i386-linux-gnu/,-L/usr/lib/i386-linux-gnu/,-L$(OPALDIR)/lib/redhawk/
+	LIB_LDFLAGS += -m32 -L/lib/i386-linux-gnu/ -L/usr/lib/i386-linux-gnu/ -L$(OPALDIR)/lib/redhawk/
 	LIB_LDLIBS  += -lOpalAsyncApiCore -lOpalCore -lOpalUtils -lirc
 endif
 
