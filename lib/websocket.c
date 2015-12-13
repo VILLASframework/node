@@ -89,7 +89,7 @@ static int protocol_cb_http(struct lws_context *context, struct lws *wsi, enum l
 
 			char *requested_uri = (char *) in;
 			
-			debug(3, "Got new lws HTTP request: %s", requested_uri);
+			debug(3, "WebSocket: New HTTP request: %s", requested_uri);
 
 			/* Handle default path */
 			if      (!strcmp(requested_uri, "/")) {
@@ -109,20 +109,18 @@ static int protocol_cb_http(struct lws_context *context, struct lws *wsi, enum l
 								
 				list_foreach(struct node *n, &vt.instances) {
 					struct websocket *w = n->_vd;
-					
-					debug(2, "Found node: %s", node_name(n));
 
-					config_setting_t *cfg_meta = config_lookup_from(n->cfg, "meta");
-					json_t *json_meta = cfg_meta ? config_to_json(cfg_meta) : json_object();
-					json_t *json_node = json_pack("{ s: s, s: s, s: i, s: i, s: i, s: i, s: o }",
+					json_t *json_node = json_pack("{ s: s, s: i, s: i, s: i, s: i }",
 						"name",		node_name_short(n),
-						"type",		node_name_type(n),
 						"connections",	list_length(&w->connections),
 						"state",	n->state,
 						"combine",	n->combine,
-						"affinity",	n->affinity,
-						"meta",		json_meta
+						"affinity",	n->affinity
 					);
+					
+					/* Add all additional fields of node here.
+					 * This can be used for metadata */	
+					json_object_update(json_node, config_to_json(n->cfg));
 					
 					json_array_append_new(json_body, json_node);
 				}
@@ -235,7 +233,7 @@ found:			* (void **) user = n;
 		case LWS_CALLBACK_SERVER_WRITEABLE:
 			n = * (struct node **) user;
 			if (!n)
-				return 0;
+				return -1;
 			
 			w = n->_vd;
 			if (!w->write.m)
@@ -255,7 +253,13 @@ found:			* (void **) user = n;
 
 		case LWS_CALLBACK_RECEIVE:
 			n = * (struct node **) user;
+			if (!n)
+				return -1;
+
 			w = n->_vd;
+			
+			if (!w->read.m)
+				return 0;
 
 			pthread_mutex_lock(&w->read.mutex);
 			
