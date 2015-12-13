@@ -229,6 +229,9 @@ int node_parse(struct node *n, config_setting_t *cfg);
  * @see node::_name‚
  * @param n A pointer to the node structure.
  */
+const char * node_name_short(struct node *n);
+
+/** Return a pointer to a string which should be used to print this node. */
 char * node_name(struct node *n);
 
 /** Return a pointer to a string which should be used to print this node.
@@ -238,6 +241,9 @@ char * node_name(struct node *n);
  * @param n A pointer to the node structure.
  */
 char * node_name_long(struct node *n);
+
+/** Return a pointer to a string which describes the node type */
+const char * node_name_type(struct node *n);
 
 /** Receive multiple messages at once.
  *

@@ -115,6 +115,16 @@ char * node_name_long(struct node *n)
 	return n->_name_long;
 }
 
+const char * node_name_short(struct node *n)
+{
+	return n->name;
+}
+
+const char * node_name_type(struct node *n)
+{
+	return n->_vt->name;
+}
+
 int node_reverse(struct node *n)
 {
 	return n->_vt->reverse ? n->_vt->reverse(n) : -1;
