@@ -4,11 +4,8 @@ TARGETS = server pipe signal test
 # Libraries
 LIBS = libs2ss.so
 
-# Common objs
-OBJS = path.o hooks.o cfg.o hist.o timing.o
-
 # Object files for libs2ss
-LIB_OBJS = msg.o node.o checks.o list.o log.o utils.o
+LIB_OBJS = msg.o node.o checks.o list.o log.o utils.o cfg.o path.o hooks.o hist.o timing.o
 
 # Source directories
 VPATH = src lib
@@ -72,6 +69,8 @@ endif
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
 ifneq (,$(wildcard $(OPALDIR)/include_target/AsyncApi.h))
 	LIB_OBJS    += opal.o
+	CFLAGS      += -m32
+	LDFLAGS     += -m32
 	LIB_CFLAGS  += -m32 -I$(OPALDIR)/include_target
 	LIB_LDFLAGS += -m32 -L/lib/i386-linux-gnu/ -L/usr/lib/i386-linux-gnu/ -L$(OPALDIR)/lib/redhawk/
 	LIB_LDLIBS  += -lOpalAsyncApiCore -lOpalCore -lOpalUtils -lirc
@@ -87,18 +86,18 @@ LIB_LDLIBS += $(shell pkg-config --libs ${PKGS})
 .PHONY: all clean install release docker doc
 
 # Default target: build everything
-all: $(LIBS) $(TARGETS) doc
+all: $(LIBS) $(TARGETS)
 
 # Dependencies for individual binaries
-server:  server.o $(OBJS) libs2ss.so
-pipe:    pipe.o   $(OBJS) libs2ss.so
-test:    test.o   $(OBJS) libs2ss.so
-signal:  signal.o msg.o utils.o timing.o log.o
+server:  server.o $(LIBS)
+pipe:    pipe.o   $(LIBS)
+test:    test.o   $(LIBS)
+signal:  signal.o $(LIBS)
 
 # Libraries
-libs2ss.so: CFLAGS += -fPIC $(LIB_CFLAGS)
-libs2ss.so: $(LIB_OBJS)
-	$(CC) $(LIB_LDFLAGS) $(LIB_LDLIBS) -shared -o $@ $^
+$(LIBS): CFLAGS += -fPIC $(LIB_CFLAGS)
+$(LIBS): $(LIB_OBJS)
+	$(CC) $(LIB_LDFLAGS) -shared -o $@ $^ $(LIB_LDLIBS)
 
 # Common targets
 install: $(TARGETS) $(LIBS)
