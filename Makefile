@@ -115,7 +115,7 @@ clean:
 
 docker:
 	docker build -t s2ss .
-	docker run -itv $(PWD):/s2ss s2ss
+	docker run -it -p 80:80 -p 443:443 -v $(PWD):/s2ss s2ss
 
 doc:
 	doxygen
