@@ -106,6 +106,9 @@ int hook_convert(struct path *p, struct hook *h, int when);
 /** Example hook: overwrite timestamp of message. */
 int hook_ts(struct path *p, struct hook *h, int when);
 
+/** Internal hook: add missing timestamps for node types which do not include a valid TS (ex. GTFPGA) */
+int hook_fix_ts(struct path *p, struct hook *h, int when);
+
 /** Example hook: Finite-Impulse-Response (FIR) filter. */
 int hook_fir(struct path *p, struct hook *h, int when);
 

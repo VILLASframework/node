@@ -29,7 +29,7 @@ REGISTER_HOOK("print", 99, hook_print, HOOK_MSG)
 int hook_print(struct path *p, struct hook *h, int when)
 {
 	struct msg *m = p->current;
-	double offset = time_delta(&MSG_TS(m), &p->ts_recv);
+	double offset = time_delta(&MSG_TS(m), &p->ts.recv);
 	int flags = MSG_PRINT_ALL;
 
 	/* We dont show the offset if its to large */
@@ -46,8 +46,20 @@ int hook_ts(struct path *p, struct hook *h, int when)
 {
 	struct msg *m = p->current;
 
-	m->ts.sec = p->ts_recv.tv_sec;
-	m->ts.nsec = p->ts_recv.tv_nsec;
+	m->ts.sec = p->ts.recv.tv_sec;
+	m->ts.nsec = p->ts.recv.tv_nsec;
+
+	return 0;
+}
+
+REGISTER_HOOK("fix_ts", 0, hook_fix_ts, HOOK_INTERNAL | HOOK_MSG)
+int hook_fix_ts(struct path *p, struct hook *h, int when)
+{
+	struct msg *m = p->current;
+
+	if ((m->ts.sec ==  0 && m->ts.nsec ==  0) ||
+	    (m->ts.sec == -1 && m->ts.nsec == -1))
+		    hook_ts(p, h, when);
 
 	return 0;
 }
@@ -250,7 +262,7 @@ int hook_skip_first(struct path *p, struct hook *h, int when)
 			break;
 
 		case HOOK_PATH_RESTART:
-			private->started = p->ts_recv;
+			private->started = p->ts.recv;
 			break;
 
 		case HOOK_PATH_START:
@@ -258,7 +270,7 @@ int hook_skip_first(struct path *p, struct hook *h, int when)
 			break;
 			 
 		case HOOK_POST: {
-			double delta = time_delta(&private->started, &p->ts_recv);
+			double delta = time_delta(&private->started, &p->ts.recv);
 			return delta < private->wait
 				? -1 /* skip */
 				: 0; /* send */
@@ -336,7 +348,7 @@ int hook_stats(struct path *p, struct hook *h, int when)
 		case HOOK_PRE:
 			/* Exclude first message from statistics */
 			if (p->received > 0) {
-				double gap = time_delta(&p->ts_last, &p->ts_recv);
+				double gap = time_delta(&p->ts.last, &p->ts.recv);
 				
 				hist_put(&p->hist_gap_recv, gap);
 			}
@@ -347,7 +359,7 @@ int hook_stats(struct path *p, struct hook *h, int when)
 			/* Exclude first message from statistics */
 			if (p->received > 0) {			
 				int dist     = cur->sequence - (int32_t) prev->sequence;
-				double delay = time_delta(&MSG_TS(cur), &p->ts_recv);
+				double delay = time_delta(&MSG_TS(cur), &p->ts.recv);
 				double gap   = time_delta(&MSG_TS(prev), &MSG_TS(cur));
 				
 				hist_put(&p->hist_gap_msg, gap);

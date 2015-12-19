@@ -29,7 +29,7 @@ static void path_write(struct path *p)
 		debug(15, "Sent %u messages to node %s", sent, node_name(n));
 		p->sent += sent;
 
-		p->ts_sent = time_now(); /** @todo use hardware timestamps for socket node type */
+		p->ts.sent = time_now(); /** @todo use hardware timestamps for socket node type */
 	}
 }
 
@@ -94,8 +94,8 @@ static void * path_run(void *arg)
 			continue;
 
 		/** @todo Replace this timestamp by hardware timestamping */
-		p->ts_last = p->ts_recv;
-		p->ts_recv = time_now();
+		p->ts.last = p->ts.recv;
+		p->ts.recv = time_now();
 			
 		debug(15, "Received %u messages from node %s", recv, node_name(p->in));
 
