@@ -43,7 +43,7 @@ Every `socket` node supports the following special settings:
 			local	= "127.0.0.1:12001",		# This node only received messages on this IP:Port pair
 			remote	= "127.0.0.1:12000"		# This node sents outgoing messages to this IP:Port pair
 		
-			combine = 30				# Receive and sent 30 samples per message (multiplexing).
+			vectorize = 30				# Receive and sent 30 samples per message (multiplexing).
 		}
 	}
 

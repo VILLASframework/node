@@ -225,8 +225,8 @@ int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings
 	if (ret)
 		cerror(cfg, "Failed to parse node '%s'", node_name(n));
 
-	if (!config_setting_lookup_int(cfg, "combine", &n->combine))
-		n->combine = 1;
+	if (!config_setting_lookup_int(cfg, "vectorize", &n->vectorize))
+		n->vectorize = 1;
 
 	if (!config_setting_lookup_int(cfg, "affinity", &n->affinity))
 		n->affinity = set->affinity;

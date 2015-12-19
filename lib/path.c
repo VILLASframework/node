@@ -22,8 +22,8 @@ static void path_write(struct path *p)
 			n,			/* Destination node */
 			p->pool,		/* Pool of received messages */
 			p->poolsize,		/* Size of the pool */
-			p->received - n->combine,/* Index of the first message which should be sent */
-			n->combine		/* Number of messages which should be sent */
+			p->received - n->vectorize,/* Index of the first message which should be sent */
+			n->vectorize		/* Number of messages which should be sent */
 		);
 
 		debug(15, "Sent %u messages to node %s", sent, node_name(n));
@@ -87,7 +87,7 @@ static void * path_run(void *arg)
 	/* Main thread loop */
 	for (;;) {
 		/* Receive message */
-		int recv = node_read(p->in, p->pool, p->poolsize, p->received, p->in->combine);
+		int recv = node_read(p->in, p->pool, p->poolsize, p->received, p->in->vectorize);
 		if (recv < 0)
 			error("Failed to receive message from node %s", node_name(p->in));
 		else if (recv == 0)

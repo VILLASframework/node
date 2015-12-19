@@ -77,7 +77,7 @@ The path section consists of a **list** of paths:
             reverse = false,
             poolsize = 32,
             msgsize = 16,
-            combine = 4,
+            vectorize = 4,
             hook = [ "print", "ts" ]
         }
     ]
@@ -102,7 +102,7 @@ By default, the path is unidirectional. Meaning, that it only forwards samples f
 Sometimes a bidirectional path is needed.
 This can be accomplished by setting `reverse` to `true`.
 
-##### `combine` *(integer)*
+##### `vectorize` *(integer)*
 
 This setting allows to send multiple samples in a single message to the destination nodes. Currently this is only supported by the `file` and `socket` node-types.
 
@@ -115,7 +115,7 @@ The value of this setting determines how many samples will be combined into one 
 A non-zero value for this setting will change this path to an asynchronous mode.
 In this mode S2SS will send with a fixed rate to all destination nodes.
 It will always send the latest value it received, possible skipping values which have been received in between.
-If `combine` is larger than 1, it will send the last `combine` samples at once.
+If `vectorize` is larger than 1, it will send the last `vectorize` samples at once.
 
 **Important:** Please note that there is no correlation between the time of arrival and time of departure in this mode. It might increase the latency of this path by up to `1 / rate` seconds!
 
@@ -123,7 +123,7 @@ If `combine` is larger than 1, it will send the last `combine` samples at once.
 
 Every path manages a circular buffer to keep a history of past samples. This setting specifies the size of this circular buffer.
 
-**Important:** There are some hook functions (or the `combine` setting) which require a minimum poolsize (for example the finite-impulse-response `fir` hook).
+**Important:** There are some hook functions (or the `vectorize` setting) which require a minimum poolsize (for example the finite-impulse-response `fir` hook).
 
 ##### `hook` *(list of strings)*
 

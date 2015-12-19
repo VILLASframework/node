@@ -114,7 +114,7 @@ static int protocol_cb_http(struct lws_context *context, struct lws *wsi, enum l
 						"name",		node_name_short(n),
 						"connections",	list_length(&w->connections),
 						"state",	n->state,
-						"combine",	n->combine,
+						"vectorize",	n->vectorize,
 						"affinity",	n->affinity
 					);
 					

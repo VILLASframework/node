@@ -70,7 +70,7 @@ static void usage(char *name)
 void * send_loop(void *ctx)
 {	
 	for (;;) {
-		for (int i = 0; i < node->combine; i++) {
+		for (int i = 0; i < node->vectorize; i++) {
 			struct msg *m = &send_pool[i];
 			int reason;
 
@@ -85,7 +85,7 @@ retry:			reason = msg_fscan(stdin, m, NULL, NULL);
 			}
 		}
 
-		node_write(node, send_pool, node->combine, 0, node->combine);
+		node_write(node, send_pool, node->vectorize, 0, node->vectorize);
 	}
 
 	return NULL;
@@ -99,7 +99,7 @@ void * recv_loop(void *ctx)
 	for (;;) {
 		struct timespec ts = time_now();
 		
-		int recv = node_read(node, recv_pool, node->combine, 0, node->combine);
+		int recv = node_read(node, recv_pool, node->vectorize, 0, node->vectorize);
 		for (int i = 0; i < recv; i++) {
 			struct msg *m = &recv_pool[i];
 			
@@ -160,8 +160,8 @@ int main(int argc, char *argv[])
 
 	node_init(node->_vt, argc-optind, argv+optind, config_root_setting(&config));	
 	
-	recv_pool = alloc(sizeof(struct msg) * node->combine);
-	send_pool = alloc(sizeof(struct msg) * node->combine);
+	recv_pool = alloc(sizeof(struct msg) * node->vectorize);
+	send_pool = alloc(sizeof(struct msg) * node->vectorize);
 	
 	if (reverse)
 		node_reverse(node);

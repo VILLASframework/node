@@ -8,7 +8,7 @@ It's using `libcurl` and `libjansson` to communicate with the context broker ove
 
 ## Configuration
 
-You can use the `combine` setting to send multiple samples in a vector.
+You can use the `vectorize` setting to send multiple samples in a vector.
 
 Every `ngsi` node supports the following special settings:
 
