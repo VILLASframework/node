@@ -407,7 +407,7 @@ int websocket_write(struct node *n, struct msg *pool, int poolsize, int first, i
 	
 	pthread_mutex_unlock(&w->write.mutex);
 		
-	return 0;
+	return 1;
 }
 
 static struct node_type vt = {

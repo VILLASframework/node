@@ -62,12 +62,14 @@ static void * path_run_async(void *arg)
 			p->overrun += expir;
 			warn("Overrun detected for path: overruns=%" PRIu64, expir);
 		}
+		
+		if (p->received == 0)
+			continue;
 
 		if (path_run_hook(p, HOOK_ASYNC))
 			continue;
 
-		if (p->received > 0)
-			path_write(p);
+		path_write(p);
 	}
 
 	return NULL;
