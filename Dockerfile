@@ -13,7 +13,9 @@ FROM stv0g/dotfiles
 
 MAINTAINER Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 
+# Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
+EXPOSE 443
 
 # Update package manager
 RUN apt-get update
