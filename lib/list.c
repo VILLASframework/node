@@ -13,6 +13,25 @@
 
 #include "list.h"
 
+/* Compare functions */
+static int cmp_lookup(const void *a, const void *b) {
+	const struct {
+		char *name;
+	} *obj = a;
+		
+	return strcmp(obj->name, b);
+}
+
+int cmp_contains(const void *a, const void *b) {
+	return a == b ? 0 : 1;
+}
+
+int cmp_sort(const void *a, const void *b, void *thunk) {
+	cmp_cb_t cmp = (cmp_cb_t) thunk;
+
+	return cmp(*(void **) a, *(void **) b);
+}
+
 void list_init(struct list *l, dtor_cb_t dtor)
 {
 	pthread_mutex_init(&l->lock, NULL);
@@ -80,24 +99,12 @@ void list_remove(struct list *l, void *p)
 
 void * list_lookup(struct list *l, const char *name)
 {
-	int cmp_helper(const void *a, const void *b) {
-		const struct {
-			char *name;
-		} *obj = a;
-		
-		return strcmp(obj->name, b);
-	}
-
-	return list_search(l, cmp_helper, (void *) name);
+	return list_search(l, cmp_lookup, (void *) name);
 }
 
 int list_contains(struct list *l, void *p)
-{
-	int cmp_helper(const void *a, const void *b) {
-		return a == b ? 0 : 1;
-	}
-	
-	return list_count(l, cmp_helper, p);
+{	
+	return list_count(l, cmp_contains, p);
 }
 
 int list_count(struct list *l, cmp_cb_t cmp, void *ctx)
@@ -118,9 +125,10 @@ int list_count(struct list *l, cmp_cb_t cmp, void *ctx)
 
 void * list_search(struct list *l, cmp_cb_t cmp, void *ctx)
 {
+	void *e;
+
 	pthread_mutex_lock(&l->lock);
 	
-	void *e;
 	list_foreach(e, l) {
 		if (!cmp(e, ctx))
 			goto out;
@@ -135,13 +143,9 @@ out:	pthread_mutex_unlock(&l->lock);
 
 void list_sort(struct list *l, cmp_cb_t cmp)
 {
-	int cmp_helper(const void *a, const void *b) {
-		return cmp(*(void **) a, *(void **) b);
-	}
-
 	pthread_mutex_lock(&l->lock);
 
-	qsort(l->array, l->length, sizeof(void *), cmp_helper);
+	qsort_r(l->array, l->length, sizeof(void *), cmp_sort, (void *) cmp);
 
 	pthread_mutex_unlock(&l->lock);
 }

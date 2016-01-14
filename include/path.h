@@ -134,4 +134,7 @@ const char * path_name(struct path *p);
  */
 int path_run_hook(struct path *p, enum hook_type t);
 
+/** Check if node is used as source or destination of a path. */
+int path_uses_node(struct path *p, struct node *n);
+
 #endif /** _PATH_H_ @} */

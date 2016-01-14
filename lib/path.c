@@ -134,9 +134,7 @@ int path_start(struct path *p)
 		path_name(p), pool_length(&p->pool), pool_stride(&p->pool), list_length(&p->hooks), p->rate);
 	
 	/* We sort the hooks according to their priority before starting the path */
-	list_sort(&p->hooks, ({int cmp(const void *a, const void *b) {
-		return ((struct hook *) a)->priority - ((struct hook *) b)->priority;
-	}; &cmp; }));
+	list_sort(&p->hooks, hooks_sort_priority);
 
 	if (path_run_hook(p, HOOK_PATH_START))
 		return -1;
@@ -226,4 +224,8 @@ void path_destroy(struct path *p)
 
 	free(p->_name);
 	free(p);
+}
+
+int path_uses_node(struct path *p, struct node *n) {
+	return (p->in == n) || list_contains(&p->destinations, n) ? 0 : 1;
 }
