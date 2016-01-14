@@ -227,30 +227,3 @@ function getParameterByName(name) {
 	var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
 	return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
 }
-
-/* Class for parsing and printing a message / sample */
-function Msg(ts, values, seq) {
-	this.ts = ts;
-	this.values = values;
-	this.seq = seq;
-	
-	if (this.seq == undefined)
-		this.seq = 0;
-	
-	this.parse = function(line) {
-		var res = line.split(/\s+/).map(Number);
-		
-		this.ts = res[0] * 1000;
-		this.values = res.slice(1)
-	};
-	
-	this.print = function() {
-		return (this.ts / 1000).toFixed(9) + "(" + this.seq + ") " + this.values.join(" ");
-	}
-	
-	this.send = function(connection) {
-		var line = this.print();
-
-		connection.send(line);
-	}
-}
