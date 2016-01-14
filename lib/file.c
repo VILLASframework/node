@@ -366,6 +366,7 @@ int file_write(struct node *n, struct pool *pool, int cnt)
 static struct node_type vt = {
 	.name		= "file",
 	.description	= "support for file log / replay node type",
+	.vectorize	= 0, /* unlimited */
 	.size		= sizeof(struct file),
 	.reverse	= file_reverse,
 	.parse		= file_parse,

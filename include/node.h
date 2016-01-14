@@ -43,6 +43,7 @@ struct config_setting_t *cfg;
 struct node_type {
 	const char *name;		/**< The unique name of this node. This must be allways the first member! */
 	const char *description;	/**< A short description of this node type. Will be shown in help text. */
+	int vectorize;			/**< Maximal vector length supported by this node type. Zero is unlimited. */
 
 	struct list instances;		/**< A list of all existing nodes of this type. */
 	size_t size;			/**< Size of private data bock. @see node::_vd */

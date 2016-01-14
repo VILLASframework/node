@@ -484,6 +484,7 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 static struct node_type vt = {
 	.name		= "socket",
 	.description	= "Network socket (libnl3)",
+	.vectorize	= 0, /* unlimited */
 	.size		= sizeof(struct socket),
 	.destroy	= socket_destroy,
 	.reverse	= socket_reverse,

@@ -598,6 +598,7 @@ int ngsi_write(struct node *n, struct pool *pool, int cnt)
 static struct node_type vt = {
 	.name		= "ngsi",
 	.description	= "OMA Next Generation Services Interface 10 (libcurl, libjansson, libuuid)",
+	.vectorize	= 0, /* unlimited */
 	.size		= sizeof(struct ngsi),
 	.parse		= ngsi_parse,
 	.print		= ngsi_print,

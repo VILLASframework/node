@@ -268,6 +268,7 @@ int gtfpga_write(struct node *n, struct pool *pool, int cnt)
 static struct node_type vt = {
 	.name		= "gtfpga",
 	.description	= "GTFPGA PCIe card (libpci)",
+	.vectorize	= 1,
 	.parse		= gtfpga_parse,
 	.print		= gtfpga_print,
 	.open		= gtfpga_open,

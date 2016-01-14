@@ -281,6 +281,7 @@ int opal_write(struct node *n, struct pool *pool, int cnt)
 static struct node_type vt = {
 	.name		= "opal",
 	.description	= "run as OPAL Asynchronous Process (libOpalAsyncApi)",
+	.vectoroize	= 1,
 	.size		= sizeof(struct opal),
 	.parse		= opal_parse,
 	.print		= opal_print,

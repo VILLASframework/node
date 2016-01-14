@@ -413,6 +413,7 @@ int websocket_write(struct node *n, struct msg *pool, int poolsize, int first, i
 static struct node_type vt = {
 	.name		= "websocket",
 	.description	= "Send and receive samples of a WebSocket connection (libwebsockets)",
+	.vectoroize	= 0, /* unlimited */
 	.size		= sizeof(struct websocket),
 	.open		= websocket_open,
 	.close		= websocket_close,
