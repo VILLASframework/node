@@ -16,6 +16,9 @@
 #include <time.h>
 #include <sys/timerfd.h>
 
+/** Create a new timer with the given rate. */
+int timerfd_create_rate(double rate);
+
 /** Wait until timer elapsed
  *
  * @param fd A file descriptor which was created by timerfd_create(3).

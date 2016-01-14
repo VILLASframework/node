@@ -6,7 +6,6 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
-#include <stdlib.h>
 #include <unistd.h>
 #include <inttypes.h>
 
@@ -58,7 +57,9 @@ static void * path_run_async(void *arg)
 	for (;;) {
 		/* Check for overruns */
 		uint64_t expir = timerfd_wait(p->tfd);
-		if (expir > 1) {
+		if (expir == 0)
+			perror("Failed to wait for timer");
+		else if (expir > 1) {
 			p->overrun += expir;
 			warn("Overrun detected for path: overruns=%" PRIu64, expir);
 		}
@@ -146,17 +147,9 @@ int path_start(struct path *p)
 
 	/* At fixed rate mode, we start another thread for sending */
 	if (p->rate) {
-		struct itimerspec its = {
-			.it_interval = time_from_double(1 / p->rate),
-			.it_value = { 0, 1 }
-		};
-
-		p->tfd = timerfd_create(CLOCK_REALTIME, 0);
+		p->tfd = timerfd_create_rate(p->rate);
 		if (p->tfd < 0)
 			serror("Failed to create timer");
-
-		if (timerfd_settime(p->tfd, 0, &its, NULL))
-			serror("Failed to start timer");
 
 		pthread_create(&p->sent_tid, NULL, &path_run_async, p);
 	}

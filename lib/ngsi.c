@@ -501,22 +501,12 @@ int ngsi_open(struct node *n)
 	}
 	
 	/* Create timer */
-	i->tfd = timerfd_create(CLOCK_MONOTONIC, 0);
-	if (i->tfd < 0)
-		serror("Failed to create timer");
-	
-	/* Arm the timer with a fixed rate */
-	struct itimerspec its = {
-		.it_interval = time_from_double(1 / i->rate),
-		.it_value = { 0, 1 },
-	};
-	
 	if (i->timeout > 1 / i->rate)
 		warn("Timeout is to large for given rate: %f", i->rate);
 
-	ret = timerfd_settime(i->tfd, 0, &its, NULL);
-	if (ret)
-		serror("Failed to start timer");
+	i->tfd = timerfd_create_rate(i->rate);
+	if (i->tfd < 0)
+		serror("Failed to create timer");
 	
 	i->headers = curl_slist_append(i->headers, "User-Agent: S2SS " VERSION);
 	i->headers = curl_slist_append(i->headers, "Accept: application/json");
@@ -561,7 +551,8 @@ int ngsi_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 	struct ngsi *i = n->_vd;
 	int ret;
 	
-	timerfd_wait(i->tfd);
+	if (timerfd_wait(i->tfd) == 0)
+		perror("Failed to wait for timer");
 	
 	json_t *rentity;
 	json_t  *entity = ngsi_build_entity(i, NULL, 0, 0, 0, 0);

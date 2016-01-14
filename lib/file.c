@@ -193,21 +193,11 @@ int file_open(struct node *n)
 			serror("Failed to open file for reading: '%s'", f->read.path);
 
 		/* Create timer */
-		f->read_timer = timerfd_create(CLOCK_REALTIME, 0);
+		f->read_timer = (f->read_rate)
+			? timerfd_create_rate(f->read_rate)
+			: timerfd_create(CLOCK_REALTIME, 0);
 		if (f->read_timer < 0)
 			serror("Failed to create timer");
-		
-		/* Arm the timer with a fixed rate */
-		if (f->read_rate) {
-			struct itimerspec its = {
-				.it_interval = time_from_double(1 / f->read_rate),
-				.it_value = { 0, 1 },
-			};
-
-			int ret = timerfd_settime(f->read_timer, 0, &its, NULL);
-			if (ret)
-				serror("Failed to start timer");
-		}
 		
 		/* Get current time */
 		struct timespec now = time_now();
@@ -311,7 +301,7 @@ retry:			values = msg_fscan(f->read.handle, cur, &flags, NULL);
 			
 			if (!f->read_rate || ftell(f->read.handle) == 0) {
 				struct timespec until = time_add(&MSG_TS(cur), &f->read_offset);
-				if (timerfd_wait_until(f->read_timer, &until) < 0)
+				if (timerfd_wait_until(f->read_timer, &until) == 0)
 					serror("Failed to wait for timer");
 			
 				/* Update timestamp */
@@ -319,7 +309,7 @@ retry:			values = msg_fscan(f->read.handle, cur, &flags, NULL);
 				cur->ts.nsec = until.tv_nsec;
 			}
 			else { /* Wait with fixed rate delay */
-				if (timerfd_wait(f->read_timer) < 0)
+				if (timerfd_wait(f->read_timer) == 0)
 					serror("Failed to wait for timer");
 			
 				/* Update timestamp */

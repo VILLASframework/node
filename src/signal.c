@@ -64,17 +64,9 @@ int main(int argc, char *argv[])
 		type = TYPE_MIXED;
 
 	/* Setup timer */
-	struct itimerspec its = {
-		.it_interval = time_from_double(1 / rate),
-		.it_value = { 0, 1 }
-	};
-
-	int tfd = timerfd_create(CLOCK_REALTIME, 0);
+	int tfd = timerfd_create_rate(rate);
 	if (tfd < 0)
 		serror("Failed to create timer");
-
-	if (timerfd_settime(tfd, 0, &its, NULL))
-		serror("Failed to start timer");
 
 	/* Print header */
 	fprintf(stderr, "# %-20s\t\t%s\n", "sec.nsec(seq)", "data[]");

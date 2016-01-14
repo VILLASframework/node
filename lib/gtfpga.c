@@ -201,17 +201,9 @@ int gtfpga_open(struct node *n)
 
 	/* Setup timer */
 	if (g->rate) {
-		g->fd_irq = timerfd_create(CLOCK_MONOTONIC, 0);
+		g->fd_irq = timerfd_create_rate(g->rate);
 		if (g->fd_irq < 0)
 			serror("Failed to create timer");
-
-		struct itimerspec its = {
-			.it_interval = time_from_double(1 / g->rate),
-			.it_value = { 0, 1 }
-		};
-		ret = timerfd_settime(g->fd_irq, 0, &its, NULL);
-		if (ret)
-			serror("Failed to start timer");
 	}
 	else /** @todo implement UIO interrupts */
 		error("UIO irq not implemented yet. Use 'rate' setting");

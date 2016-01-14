@@ -11,6 +11,25 @@
 
 #include "timing.h"
 
+int timerfd_create_rate(double rate)
+{
+	int fd, ret;
+	struct itimerspec its = {
+		.it_interval = time_from_double(1 / rate),
+		.it_value = { 0, 1 }
+	};
+
+	fd = timerfd_create(CLOCK_MONOTONIC, 0);
+	if (fd < 0)
+		return fd;
+
+	ret = timerfd_settime(fd, 0, &its, NULL);
+	if (ret)
+		return ret;
+	
+	return fd;
+}
+
 uint64_t timerfd_wait(int fd)
 {
 	uint64_t runs;
@@ -20,15 +39,17 @@ uint64_t timerfd_wait(int fd)
 
 uint64_t timerfd_wait_until(int fd, struct timespec *until)
 {
+	int ret;
 	struct itimerspec its = {
 		.it_value = *until,
 		.it_interval = { 0, 0 }
 	};
 
-	if (timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, NULL))
+	ret = timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, NULL);
+	if (ret)
 		return 0;
-	else
-		return timerfd_wait(fd);
+	
+	return timerfd_wait(fd);
 }
 
 struct timespec time_now()
