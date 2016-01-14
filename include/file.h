@@ -69,9 +69,9 @@ int file_open(struct node *n);
 int file_close(struct node *n);
 
 /** @see node_vtable::read */
-int file_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+int file_read(struct node *n, struct pool *pool, int cnt);
 
 /** @see node_vtable::write */
-int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+int file_write(struct node *n, struct pool *pool, int cnt);
 
 #endif /** _FILE_H_ @} */

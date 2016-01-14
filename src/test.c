@@ -20,6 +20,7 @@
 #include "utils.h"
 #include "hist.h"
 #include "timing.h"
+#include "pool.h"
 
 struct settings settings; /** <The global configuration */
 
@@ -140,23 +141,24 @@ check:
 }
 
 void test_rtt() {
-	struct msg m = MSG_INIT(sizeof(struct timespec) / sizeof(float));
-
 	struct timespec sent, recv;
 
 	struct hist hist;
+	struct msg *m;
+
+	m = msg_create(0);
 	hist_create(&hist, low, high, res);
 
 	/* Print header */
 	fprintf(stdout, "%17s%5s%10s%10s%10s%10s%10s\n", "timestamp", "seq", "rtt", "min", "max", "mean", "stddev");
 
-	while (running && (count < 0 || count--)) {
+	while (running && (count < 0 || count--)) {		
 		clock_gettime(CLOCK_ID, &sent);
-		m.ts.sec = sent.tv_sec;
-		m.ts.nsec = sent.tv_nsec;
+		m->ts.sec = sent.tv_sec;
+		m->ts.nsec = sent.tv_nsec;
 
-		node_write(node, &m, 1, 0, 1); /* Ping */
-		node_read(node, &m, 1, 0, 1);  /* Pong */
+		node_write_single(node, m); /* Ping */
+		node_read_single(node, m);  /* Pong */
 		
 		clock_gettime(CLOCK_ID, &recv);
 
@@ -167,10 +169,10 @@ void test_rtt() {
 
 		hist_put(&hist, rtt);
 
-		m.sequence++;
+		m->sequence++;
 
 		fprintf(stdout, "%10lu.%06lu%5u%10.3f%10.3f%10.3f%10.3f%10.3f\n", 
-			recv.tv_sec, recv.tv_nsec / 1000, m.sequence,
+			recv.tv_sec, recv.tv_nsec / 1000, m->sequence,
 			1e3 * rtt, 1e3 * hist.lowest, 1e3 * hist.highest,
 			1e3 * hist_mean(&hist), 1e3 * hist_stddev(&hist));
 	}
@@ -184,5 +186,6 @@ void test_rtt() {
 		error("Invalid file descriptor: %u", fd);
 
 	hist_print(&hist);
+
 	hist_destroy(&hist);
 }

@@ -234,11 +234,11 @@ int gtfpga_close(struct node *n)
 }
 
 /** @todo implement */
-int gtfpga_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
+int gtfpga_read(struct node *n, struct pool *pool, int cnt)
 {
 	struct gtfpga *g = n->_vd;
+	//struct msg *m = pool_getrel(pool, 0);
 
-	struct msg *m = &pool[first % poolsize];
 	
 	if (cnt != 1)
 		error("The GTFPGA node type does not support combining!");
@@ -254,10 +254,10 @@ int gtfpga_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 }
 
 /** @todo implement */
-int gtfpga_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
+int gtfpga_write(struct node *n, struct pool *pool, int cnt)
 {
 	// struct gtfpga *g = n->_vd;
-	// struct msg *m = &pool[first % poolsize];
+	// struct msg *m = pool_getrel(pool, 0);
 	
 	if (cnt != 1)
 		error("The GTFPGA node type does not support combining!");

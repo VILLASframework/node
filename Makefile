@@ -5,7 +5,7 @@ TARGETS = server pipe signal test
 LIBS = libs2ss.so
 
 # Object files for libs2ss
-LIB_OBJS = msg.o node.o checks.o list.o log.o utils.o cfg.o path.o hooks.o hist.o timing.o
+LIB_OBJS = msg.o node.o checks.o list.o log.o utils.o cfg.o path.o hooks.o hist.o timing.o pool.o
 
 # Source directories
 VPATH = src lib

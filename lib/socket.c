@@ -31,6 +31,7 @@
 #include "utils.h"
 #include "socket.h"
 #include "checks.h"
+#include "pool.h"
 
 /* Forward declartions */
 static struct node_type vt;
@@ -198,7 +199,7 @@ int socket_destroy(struct node *n)
 	return 0;
 }
 
-int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
+int socket_read(struct node *n, struct pool *pool, int cnt)
 {
 	struct socket *s = n->_vd;
 
@@ -218,12 +219,12 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 	/* Check if packet length is correct */
 	if (bytes % (cnt * 4) != 0)
 		error("Packet length not dividable by 4: received=%u, cnt=%u", bytes, cnt);
-	if (bytes / cnt > sizeof(struct msg))
-		error("Packet length is too large: received=%u, cnt=%u, max=%zu", bytes, cnt, sizeof(struct msg));
+	if (bytes / cnt > pool->stride)
+		error("Packet length is too large: received=%u, cnt=%u, max=%zu", bytes, cnt, pool->stride);
 
 	for (int i = 0; i < cnt; i++) {
 		/* All messages of a packet must have equal length! */
-		iov[i].iov_base = &pool[(first+poolsize+i) % poolsize];
+		iov[i].iov_base = pool_getrel(pool, i);
 		iov[i].iov_len  = bytes / cnt;
 	}
 
@@ -237,17 +238,17 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 	debug(17, "Received packet of %u bytes: %u samples a %u values per sample", bytes, cnt, (bytes / cnt) / 4 - 4);
 
 	for (int i = 0; i < cnt; i++) {
-		struct msg *m = &pool[(first+poolsize+i) % poolsize];
+		struct msg *m = pool_getrel(pool, i);
 
 		/* Convert message to host endianess */
 		if (m->endian != MSG_ENDIAN_HOST)
 			msg_swap(m);
 
 		/* Check integrity of packet */
-		if (bytes / cnt != MSG_LEN(m))
-			error("Invalid message len: %u for node %s", MSG_LEN(m), node_name(n));
+		if (bytes / cnt != MSG_LEN(m->values))
+			error("Invalid message len: %u for node %s", MSG_LEN(m->values), node_name(n));
 
-		bytes -= MSG_LEN(m);
+		bytes -= MSG_LEN(m->values);
 	}
 
 	/* Check packet integrity */
@@ -257,7 +258,7 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 	return cnt;
 }
 
-int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
+int socket_write(struct node *n, struct pool *pool, int cnt)
 {
 	struct socket *s = n->_vd;
 	int bytes, sent = 0;
@@ -266,13 +267,10 @@ int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int 
 
 	struct iovec iov[cnt];
 	for (int i = 0; i < cnt; i++) {
-		struct msg *m = &pool[(first+i) % poolsize];
-		
-		if (m->type == MSG_TYPE_EMPTY)
-			continue;
+		struct msg *m = pool_getrel(pool, i);
 
 		iov[sent].iov_base = m;
-		iov[sent].iov_len  = MSG_LEN(m);
+		iov[sent].iov_len  = MSG_LEN(m->values);
 
 		sent++;
 	}

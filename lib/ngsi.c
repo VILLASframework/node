@@ -26,6 +26,7 @@
 #include "ngsi.h"
 #include "utils.h"
 #include "timing.h"
+#include "pool.h"
 
 /* Some global settings */
 static char *name = NULL;
@@ -86,7 +87,7 @@ struct ngsi_response {
 	size_t len;
 };
 
-static json_t* ngsi_build_entity(struct ngsi *i, struct msg *pool, int poolsize, int first, int cnt, int flags)
+static json_t* ngsi_build_entity(struct ngsi *i, struct pool *pool, int cnt, int flags)
 {
 	json_t *entity = json_pack("{ s: s, s: s, s: b }",
 		"id",		i->entity_id,
@@ -105,7 +106,7 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct msg *pool, int poolsize,
 			if (flags & NGSI_ENTITY_VALUES) { /* Build value vector */
 				json_t *values = json_array();
 				for (int k = 0; k < cnt; k++) {
-					struct msg *m = &pool[(first + poolsize + k) % poolsize];
+					struct msg *m = pool_getrel(pool, k);
 
 					json_array_append_new(values, json_pack("[ f, f, i ]",
 						time_to_double(&MSG_TS(m)),
@@ -139,7 +140,7 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct msg *pool, int poolsize,
 	return entity;
 }
 
-static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct msg *pool, int poolsize, int first, int cnt)
+static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct pool *pool, int cnt)
 {
 	int ret;
 	const char *id, *name, *type;
@@ -159,10 +160,10 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct msg *pool, i
 		return -2;
 	
 	for (int j = 0; j < cnt; j++) {
-		struct msg *m = &pool[(first + j) % poolsize];
+		struct msg *m = pool_getrel(pool, j);
 		
 		m->version = MSG_VERSION;
-		m->length = json_array_size(attributes);
+		m->values = json_array_size(attributes);
 		m->endian = MSG_ENDIAN_HOST;
 	}
 
@@ -195,7 +196,7 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct msg *pool, i
 
 		size_t index2;
 		json_array_foreach(values, index2, tuple) {
-			struct msg *m = &pool[(first + index2) % poolsize];
+			struct msg *m = pool_getrel(pool, index2);
 			
 			/* Check sample format */
 			if (!json_is_array(tuple) || json_array_size(tuple) != 3)
@@ -527,7 +528,7 @@ int ngsi_open(struct node *n)
 	curl_easy_setopt(i->curl, CURLOPT_HTTPHEADER, i->headers);
 		
 	/* Create entity and atributes */
-	json_t *entity = ngsi_build_entity(i, NULL, 0, 0, 0, NGSI_ENTITY_METADATA);	
+	json_t *entity = ngsi_build_entity(i, NULL, 0, NGSI_ENTITY_METADATA);	
 	
 	ret = ngsi_request_context_update(i->curl, i->endpoint, "APPEND", entity);
 	if (ret)
@@ -544,7 +545,7 @@ int ngsi_close(struct node *n)
 	int ret;
 	
 	/* Delete complete entity (not just attributes) */
-	json_t *entity = ngsi_build_entity(i, NULL, 0, 0, 0, 0);
+	json_t *entity = ngsi_build_entity(i, NULL, 0, 0);
 
 	ret = ngsi_request_context_update(i->curl, i->endpoint, "DELETE", entity);
 		
@@ -556,7 +557,7 @@ int ngsi_close(struct node *n)
 	return ret;
 }
 
-int ngsi_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
+int ngsi_read(struct node *n, struct pool *pool, int cnt)
 {
 	struct ngsi *i = n->_vd;
 	int ret;
@@ -564,13 +565,13 @@ int ngsi_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 	timerfd_wait(i->tfd);
 	
 	json_t *rentity;
-	json_t  *entity = ngsi_build_entity(i, NULL, 0, 0, 0, 0);
+	json_t  *entity = ngsi_build_entity(i, NULL, 0, 0);
 
 	ret = ngsi_request_context_query(i->curl, i->endpoint, entity, &rentity);
 	if (ret)
 		goto out;
 	
-	ret = ngsi_parse_entity(rentity, i, pool, poolsize, first, cnt);
+	ret = ngsi_parse_entity(rentity, i, pool, cnt);
 	if (ret)
 		goto out2;
 	
@@ -580,12 +581,12 @@ out:	json_decref(entity);
 	return ret;
 }
 
-int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
+int ngsi_write(struct node *n, struct pool *pool, int cnt)
 {
 	struct ngsi *i = n->_vd;
 	int ret;
 	
-	json_t *entity = ngsi_build_entity(i, pool, poolsize, first, cnt, NGSI_ENTITY_VALUES);
+	json_t *entity = ngsi_build_entity(i, pool, cnt, NGSI_ENTITY_VALUES);
 
 	ret = ngsi_request_context_update(i->curl, i->endpoint, "UPDATE", entity);
 	

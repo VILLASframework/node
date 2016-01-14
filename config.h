@@ -20,8 +20,8 @@
 /** The version number of the s2ss server */
 #define VERSION			"v0.5-" _GIT_REV
 
-/** Maximum number of float values in a message */
-#define MAX_VALUES		64
+/** Default number of values in a message */
+#define DEFAULT_MSGVALUES	64
 
 /** Maximum number of messages in the circular history buffer */
 #define DEFAULT_POOLSIZE	32

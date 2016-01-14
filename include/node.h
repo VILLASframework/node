@@ -25,6 +25,7 @@
 
 #include "msg.h"
 #include "list.h"
+#include "pool.h"
 
 /* Helper macros for virtual node type */
 #define REGISTER_NODE_TYPE(vt)				\
@@ -120,13 +121,11 @@ struct node_type {
 	 * Some node types might only support to receive one message at a time.
 	 *
 	 * @param n		A pointer to the node object.
-	 * @param pool 		A pointer to an array of messages which should be sent.
-	 * @param poolsize 	The length of the message array.
-	 * @param first		The index of the first message which should be sent.
+	 * @param pool 		A pointer to circular buffer containing the messages.
 	 * @param cnt		The number of messages which should be sent.
 	 * @return		The number of messages actually received.
 	 */
-	int (*read) (struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+	int (*read) (struct node *n, struct pool *pool, int cnt);
 
 	/** Send multiple messages in a single datagram / packet.
 	 *
@@ -136,13 +135,11 @@ struct node_type {
 	 * So the indexes will wrap around after len.
 	 *
 	 * @param n		A pointer to the node object.
-	 * @param pool		A pointer to an array of messages which should be sent.
-	 * @param poolsize	The length of the message array.
-	 * @param first		The index of the first message which should be sent.
+	 * @param pool 		A pointer to circular buffer containing the messages.
 	 * @param cnt		The number of messages which should be sent.
 	 * @return		The number of messages actually sent.
 	 */
-	int (*write)(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+	int (*write)(struct node *n, struct pool *pool, int cnt);
 	
 	/** Reverse source and destination of a node.
 	 *
@@ -249,13 +246,19 @@ const char * node_name_type(struct node *n);
  *
  * @see node_type::read
  */
-int node_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+int node_read(struct node *n, struct pool *pool, int cnt);
 
 /** Send multiple messages in a single datagram / packet.
  *
  * @see node_type::write
  */
-int node_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+int node_write(struct node *n, struct pool *pool, int cnt);
+
+/** Read a single message without using a message pool. */
+int node_read_single(struct node *n, struct msg *m);
+
+/** Send a single message without using a message pool. */
+int node_write_single(struct node *n, struct msg *m);
 
 /** Reverse local and remote socket address.
  *

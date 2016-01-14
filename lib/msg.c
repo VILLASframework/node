@@ -22,14 +22,32 @@
 #include "node.h"
 #include "utils.h"
 
+struct msg * msg_create(size_t values) {
+	struct msg m = {
+		.version = MSG_VERSION,
+		.type = MSG_TYPE_DATA,
+		.endian = MSG_ENDIAN_HOST,
+		.values = values,
+		.sequence = 0,
+		.rsvd1 = 0, .rsvd2 = 0
+	};
+	
+	return memdup(&m, sizeof(struct msg) + sizeof(float) * values);
+}
+
+void msg_destroy(struct msg *m)
+{
+	free(m);
+}
+
 void msg_swap(struct msg *m)
 {
-	m->length   = bswap_16(m->length);
+	m->values   = bswap_16(m->values);
 	m->sequence = bswap_32(m->sequence);
 	m->ts.sec   = bswap_32(m->ts.sec);
 	m->ts.nsec  = bswap_32(m->ts.nsec);
 	
-	for (int i = 0; i < m->length; i++)
+	for (int i = 0; i < m->values; i++)
 		m->data[i].i = bswap_32(m->data[i].i);
 
 	m->endian ^= 1;
@@ -41,10 +59,8 @@ int msg_verify(struct msg *m)
 		return -1;
 	else if (m->type    != MSG_TYPE_DATA)
 		return -2;
-	else if ((m->length <= 0) || (m->length > MSG_VALUES))
-		return -3;
 	else if ((m->rsvd1 != 0)  || (m->rsvd2 != 0))
-		return -4;
+		return -3;
 	else
 		return 0;
 }
@@ -63,7 +79,7 @@ int msg_print(char *buf, size_t len, struct msg *m, int flags, double offset)
 		off += snprintf(buf + off, len - off, "(%u)", m->sequence);
 
 	if (flags & MSG_PRINT_VALUES) {
-		for (int i = 0; i < m->length; i++)
+		for (int i = 0; i < m->values; i++)
 			off += snprintf(buf + off, len - off, "\t%.6f", m->data[i].f);
 	}
 
@@ -126,28 +142,25 @@ int msg_scan(const char *line, struct msg *m, int *fl, double *off)
 		m->sequence = (uint16_t) strtoul(ptr, &end, 10);
 		if (ptr != end && *end == ')')
 			flags |= MSG_PRINT_SEQUENCE;
-		else {
-			info(end);
+		else
 			return -5;
-		}
 		
 		end = end + 1;
 	}
 	else
 		m->sequence = 0;
 
-	for ( m->length = 0,          ptr  = end;
-	      m->length < MSG_VALUES;
-	      m->length++,            ptr = end) {
+	for (m->values = 0, ptr  = end; ;
+	     m->values++,   ptr = end) {
 
 		/** @todo We only support floating point values at the moment */
-		m->data[m->length].f = strtod(ptr, &end);
+		m->data[m->values].f = strtod(ptr, &end);
 
 		if (end == ptr) /* there are no valid FP values anymore */
 			break;
 	}
 	
-	if (m->length > 0)
+	if (m->values > 0)
 		flags |= MSG_PRINT_VALUES;
 	
 	if (fl)
@@ -155,7 +168,7 @@ int msg_scan(const char *line, struct msg *m, int *fl, double *off)
 	if (off && (flags & MSG_PRINT_OFFSET))
 		*off = offset;
 
-	return m->length;
+	return m->values;
 }
 
 int msg_fprint(FILE *f, struct msg *m, int flags, double offset)

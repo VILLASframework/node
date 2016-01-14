@@ -29,7 +29,8 @@ struct websocket {
 	struct {
 		pthread_cond_t cond;
 		pthread_mutex_t mutex;
-		struct msg *m;
+		struct pool *pool;
+		size_t cnt;
 	} read, write;
 	
 	struct list connections; /**< List of struct libwebsockets sockets */
@@ -48,9 +49,9 @@ int websocket_open(struct node *n);
 int websocket_close(struct node *n);
 
 /** @see node_vtable::read */
-int websocket_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+int websocket_read(struct node *n, struct pool *pool, int cnt);
 
 /** @see node_vtable::write */
-int websocket_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+int websocket_write(struct node *n, struct pool *pool, int cnt);
 
 #endif /* _WEBSOCKET_H_ */

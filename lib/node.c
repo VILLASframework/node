@@ -20,15 +20,41 @@ int node_parse(struct node *n, config_setting_t *cfg)
 	return n->_vt->parse ? n->_vt->parse(n, cfg) : 0;	
 }
 
-int node_read(struct node *n, struct msg *p, int ps, int f, int c)
+int node_read(struct node *n, struct pool *p, int c)
 {
-	return n->_vt->read ? n->_vt->read(n, p, ps, f, c) : -1;
+	return n->_vt->read ? n->_vt->read(n, p, c) : -1;
 }
 
-int node_write(struct node *n, struct msg *p, int ps, int f, int c)
+int node_write(struct node *n, struct pool *p, int c)
 {
-	return n->_vt->write ? n->_vt->write(n, p, ps, f, c) : -1;
-}	
+	return n->_vt->write ? n->_vt->write(n, p, c) : -1;
+}
+
+int node_read_single(struct node *n, struct msg *m)
+{
+	struct pool p = {
+		.buffer = m,
+		.previous = -1,
+		.last = 0,
+		.length = 1,
+		.stride = MSG_LEN(m->values)
+	};
+	
+	return node_read(n, &p, 1);
+}
+
+int node_write_single(struct node *n, struct msg *m)
+{
+	struct pool p = {
+		.buffer = m,
+		.previous = -1,
+		.last = 0,
+		.length = 1,
+		.stride = MSG_LEN(m->values)
+	};
+	
+	return node_write(n, &p, 1);
+}
 
 int node_init(struct node_type *vt, int argc, char *argv[], config_setting_t *cfg)
 {

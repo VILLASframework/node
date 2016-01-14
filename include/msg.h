@@ -26,6 +26,12 @@ enum msg_flags {
 	MSG_PRINT_ALL		= 0xFF
 };
 
+/** Allocate and initialize memory of a sinle message. */
+struct msg * msg_create(size_t values);
+
+/** Release memory allocated by msg_create(). */
+void msg_destroy(struct msg *m);
+
 /** Swaps message contents byte-order.
  *
  * Message can either be transmitted in little or big endian
