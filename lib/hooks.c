@@ -25,10 +25,17 @@
 
 struct list hooks;
 
+int hooks_sort_priority(const void *a, const void *b) {
+	struct hook *ha = (struct hook *) a;
+	struct hook *hb = (struct hook *) b;
+	
+	return ha->priority - hb->priority;
+}
+
 REGISTER_HOOK("print", 99, hook_print, HOOK_MSG)
 int hook_print(struct path *p, struct hook *h, int when)
 {
-	struct msg *m = p->current;
+	struct msg *m = pool_current(&p->pool);
 	double offset = time_delta(&MSG_TS(m), &p->ts.recv);
 	int flags = MSG_PRINT_ALL;
 
@@ -44,7 +51,7 @@ int hook_print(struct path *p, struct hook *h, int when)
 REGISTER_HOOK("ts", 99,	hook_ts, HOOK_MSG)
 int hook_ts(struct path *p, struct hook *h, int when)
 {
-	struct msg *m = p->current;
+	struct msg *m = pool_current(&p->pool);
 
 	m->ts.sec = p->ts.recv.tv_sec;
 	m->ts.nsec = p->ts.recv.tv_nsec;
@@ -55,7 +62,7 @@ int hook_ts(struct path *p, struct hook *h, int when)
 REGISTER_HOOK("fix_ts", 0, hook_fix_ts, HOOK_INTERNAL | HOOK_MSG)
 int hook_fix_ts(struct path *p, struct hook *h, int when)
 {
-	struct msg *m = p->current;
+	struct msg *m = pool_current(&p->pool);
 
 	if ((m->ts.sec ==  0 && m->ts.nsec ==  0) ||
 	    (m->ts.sec == -1 && m->ts.nsec == -1))
@@ -70,32 +77,32 @@ int hook_skip_unchanged(struct path *p, struct hook *h, int when)
 	struct private {
 		double threshold;
 		struct msg previous;
-	} *private = h->private;	
+	} *x = h->private;	
 	
 	switch (when) {
 		case HOOK_INIT:
-			private = h->private = alloc(sizeof(struct private));
+			x = h->private = alloc(sizeof(struct private));
 		
 			if (!h->parameter)
 				error("Missing parameter for hook 'deduplication'");
 
-			private->threshold = strtof(h->parameter, NULL);
-			if (!private->threshold)
+			x->threshold = strtof(h->parameter, NULL);
+			if (!x->threshold)
 				error("Failed to parse parameter '%s' for hook 'deduplication'", h->parameter);
 			break;
 			
 		case HOOK_DEINIT:
-			free(private);
+			free(x);
 			break;
 			
 		case HOOK_ASYNC: {
 			int ret = 0;
 
-			struct msg *prev = &private->previous;
-			struct msg *cur = p->current;
+			struct msg *prev = &x->previous;
+			struct msg *cur = pool_current(&p->pool);
 	
-			for (int i = 0; i < MIN(cur->length, prev->length); i++) {
-				if (fabs(cur->data[i].f - prev->data[i].f) > private->threshold)
+			for (int i = 0; i < MIN(cur->values, prev->values); i++) {
+				if (fabs(cur->data[i].f - prev->data[i].f) > x->threshold)
 					goto out;
 			}
 	
@@ -115,32 +122,32 @@ int hook_convert(struct path *p, struct hook *h, int when)
 {
 	struct private {
 		enum { TO_FIXED, TO_FLOAT } mode;
-	} *private = h->private;
+	} *x = h->private;
 	
 	switch (when) {
 		case HOOK_INIT:
-			private = h->private = alloc(sizeof(struct private));
+			x = h->private = alloc(sizeof(struct private));
 		
 			if (!h->parameter)
 				error("Missing parameter for hook 'deduplication'");
 			
 			if      (!strcmp(h->parameter, "fixed"))
-				private->mode = TO_FIXED;
+				x->mode = TO_FIXED;
 			else if (!strcmp(h->parameter, "float"))
-				private->mode = TO_FLOAT;
+				x->mode = TO_FLOAT;
 			else
 				error("Invalid parameter '%s' for hook 'convert'", h->parameter);
 			break;
 			
 		case HOOK_DEINIT:
-			free(private);
+			free(x);
 			break;
 			
 		case HOOK_MSG: {
-			struct msg *m = p->current;
+			struct msg *m = pool_current(&p->pool);
 
-			for (int i = 0; i < m->length; i++) {
-				switch (private->mode) {
+			for (int i = 0; i < m->values; i++) {
+				switch (x->mode) {
 					/** @todo allow precission to be configured via parameter */
 					case TO_FIXED: m->data[i].i = m->data[i].f * 1e3; break;
 					case TO_FLOAT: m->data[i].f = m->data[i].i; break;
@@ -161,45 +168,56 @@ int hook_fir(struct path *p, struct hook *h, int when)
 	char *end;
 
 	struct private {
-		double *coeffs;
-		double *history;
+		struct pool coeffs;
+		struct pool history;
 		int index;
-	} *private = h->private;
+	} *x = h->private;
 	
 	switch (when) {
 		case HOOK_INIT:
 			if (!h->parameter)
 				error("Missing parameter for hook 'fir'");
 
-			private = h->private = alloc(sizeof(struct private));
+			x = h->private = alloc(sizeof(struct private));
 		
-			private->coeffs = memdup(coeffs, sizeof(coeffs));
-			private->history = alloc(sizeof(coeffs));
+			pool_create(&x->coeffs,  ARRAY_LEN(coeffs), sizeof(double));
+			pool_create(&x->history, ARRAY_LEN(coeffs), sizeof(double));
 
-			private->index = strtol(h->parameter, &end, 10);
+			/** Fill with static coefficients */
+			memcpy(x->coeffs.buffer, coeffs, sizeof(coeffs));
+
+			x->index = strtol(h->parameter, &end, 10);
 			if (h->parameter == end)
 				error("Invalid parameter '%s' for hook 'fir'", h->parameter);
 			break;
 
 		case HOOK_DEINIT:
-			free(private->coeffs);
-			free(private->history);
-			free(private);
+			pool_destroy(&x->coeffs);
+			pool_destroy(&x->history);
+
+			free(x);
 			break;
 
 		case HOOK_MSG: {
 			/* Current value of interest */
-			float *cur = &p->current->data[private->index].f;
+			struct msg *m = pool_current(&p->pool);
+			float  *value = &m->data[x->index].f;
+			double *history = pool_current(&x->history);
 	
 			/* Save last sample, unfiltered */
-			private->history[p->received % p->poolsize] = *cur;
+			*history = *value;
 
 			/* Reset accumulator */
-			*cur = 0;
+			*value = 0;
 	
 			/* FIR loop */
-			for (int i = 0; i < MIN(ARRAY_LEN(coeffs), p->poolsize); i++)
-				*cur += private->coeffs[i] * private->history[p->received+p->poolsize-i];
+			for (int i = 0; i < pool_length(&x->coeffs); i++) {
+				double *coeff = pool_get(&x->coeffs, i);
+				double *hist  = pool_getrel(&x->history, -i);
+				
+				*value += *coeff * *hist;
+			}
+	
 			break;
 		}
 	}
@@ -212,26 +230,26 @@ int hook_decimate(struct path *p, struct hook *h, int when)
 {
 	struct private {
 		long ratio;
-	} *private = h->private;
+	} *x = h->private;
 	
 	switch (when) {
 		case HOOK_INIT:
 			if (!h->parameter)
 				error("Missing parameter for hook 'decimate'");
 		
-			private = h->private = alloc(sizeof(struct private));
+			x = h->private = alloc(sizeof(struct private));
 		
-			private->ratio = strtol(h->parameter, NULL, 10);
-			if (!private->ratio)
+			x->ratio = strtol(h->parameter, NULL, 10);
+			if (!x->ratio)
 				error("Invalid parameter '%s' for hook 'decimate'", h->parameter);
 			break;
 			
 		case HOOK_DEINIT:
-			free(private);
+			free(x);
 			break;
 			
 		case HOOK_POST:
-			return p->received % private->ratio;	
+			return p->received % x->ratio;	
 	}
 
 	return 0;
@@ -243,35 +261,35 @@ int hook_skip_first(struct path *p, struct hook *h, int when)
 	struct private {
 		double wait;			/**< Number of seconds to wait until first message is not skipped */
 		struct timespec started;	/**< Timestamp of last simulation restart */
-	} *private = h->private;
+	} *x = h->private;
 	
 	switch (when) {
 		case HOOK_INIT:
 			if (!h->parameter)
 				error("Missing parameter for hook 'skip_first'");
 
-			private = h->private = alloc(sizeof(struct private));
+			x = h->private = alloc(sizeof(struct private));
 		
-			private->wait = strtof(h->parameter, NULL);
-			if (!private->wait)
+			x->wait = strtof(h->parameter, NULL);
+			if (!x->wait)
 				error("Invalid parameter '%s' for hook 'skip_first'", h->parameter);
 			break;
 			
 		case HOOK_DEINIT:
-			free(private);
+			free(x);
 			break;
 
 		case HOOK_PATH_RESTART:
-			private->started = p->ts.recv;
+			x->started = p->ts.recv;
 			break;
 
 		case HOOK_PATH_START:
-			private->started = time_now();
+			x->started = time_now();
 			break;
 			 
 		case HOOK_POST: {
-			double delta = time_delta(&private->started, &p->ts.recv);
-			return delta < private->wait
+			double delta = time_delta(&x->started, &p->ts.recv);
+			return delta < x->wait
 				? -1 /* skip */
 				: 0; /* send */
 		}
@@ -283,10 +301,13 @@ int hook_skip_first(struct path *p, struct hook *h, int when)
 REGISTER_HOOK("restart", 1, hook_restart, HOOK_INTERNAL | HOOK_MSG)
 int hook_restart(struct path *p, struct hook *h, int when)
 {
-	if (p->current->sequence  == 0 &&
-	    p->previous->sequence <= UINT32_MAX - 32) {
+	struct msg *cur  = pool_current(&p->pool);
+	struct msg *prev = pool_previous(&p->pool);
+
+	if (cur->sequence  == 0 &&
+	    prev->sequence <= UINT32_MAX - 32) {
 		warn("Simulation for path %s restarted (prev->seq=%u, current->seq=%u)",
-			path_name(p), p->previous->sequence, p->current->sequence);
+			path_name(p), prev->sequence, cur->sequence);
 
 		p->sent	    =
 		p->invalid  =
@@ -304,7 +325,9 @@ int hook_restart(struct path *p, struct hook *h, int when)
 REGISTER_HOOK("verify", 2, hook_verify, HOOK_INTERNAL | HOOK_MSG)
 int hook_verify(struct path *p, struct hook *h, int when)
 {
-	int reason = msg_verify(p->current);
+	struct msg *cur  = pool_current(&p->pool);
+
+	int reason = msg_verify(cur);
 	if (reason) {
 		p->invalid++;
 		warn("Received invalid message (reason = %d)", reason);
@@ -317,7 +340,10 @@ int hook_verify(struct path *p, struct hook *h, int when)
 REGISTER_HOOK("drop", 3, hook_drop, HOOK_INTERNAL | HOOK_MSG)
 int hook_drop(struct path *p, struct hook *h, int when)
 {
-	int dist = p->current->sequence - (int32_t) p->previous->sequence;
+	struct msg *cur  = pool_current(&p->pool);
+	struct msg *prev = pool_previous(&p->pool);
+	
+	int dist = cur->sequence - (int32_t) prev->sequence;
 	if (dist <= 0 && p->received > 1) {
 		p->dropped++;
 		return -1;
@@ -354,7 +380,8 @@ int hook_stats(struct path *p, struct hook *h, int when)
 			}
 
 		case HOOK_MSG: {
-			struct msg *prev = p->previous, *cur = p->current;
+			struct msg *cur  = pool_current(&p->pool);
+			struct msg *prev = pool_previous(&p->pool);
 
 			/* Exclude first message from statistics */
 			if (p->received > 0) {			
@@ -384,11 +411,14 @@ int hook_stats(struct path *p, struct hook *h, int when)
 			break;
 			
 		case HOOK_PERIODIC: {
-			if (p->received > 1)
+			if (p->received > 1) {
+				struct msg *cur = pool_current(&p->pool);
+
 				stats("%-40.40s|%10.2g|%10.2f|%10u|%10u|%10u|%10u|%10u|%10u|%10u|", path_name(p),
 					p->hist.owd.last, 1 / p->hist.gap_msg.last,
-					p->sent, p->received, p->dropped, p->skipped, p->invalid, p->overrun, list_length(p->current)
+					p->sent, p->received, p->dropped, p->skipped, p->invalid, p->overrun, cur->values
 				);
+			}
 			else
 				stats("%-40.40s|%10s|%10s|%10u|%10u|%10u|%10u|%10u|%10u|%10s|", path_name(p), "", "", 
 					p->sent, p->received, p->dropped, p->skipped, p->invalid, p->overrun, ""
@@ -402,7 +432,7 @@ int hook_stats(struct path *p, struct hook *h, int when)
 
 void hook_stats_header()
 {
-#define UNIT(u)	"(" YEL(u) ")"
+	#define UNIT(u)	"(" YEL(u) ")"
 
 	stats("%-40s|%19s|%19s|%19s|%19s|%19s|%19s|%19s|%10s|%10s|", "Source " MAG("=>") " Destination",
 		"OWD"	UNIT("S") " ",
@@ -418,48 +448,46 @@ void hook_stats_header()
 	line();
 }
 
-REGISTER_HOOK("stats_send", 99, hook_stats_send, HOOK_PRIVATE | HOOK_MSG)
+REGISTER_HOOK("stats_send", 99, hook_stats_send, HOOK_PRIVATE | HOOK_PERIODIC)
 int hook_stats_send(struct path *p, struct hook *h, int when)
 {
 	struct private {
 		struct node *dest;
+		struct msg *msg;
 		int ratio;
-	} *private = h->private;
+	} *x = h->private;
 	
 	switch (when) {
 		case HOOK_INIT:
 			if (!h->parameter)
 				error("Missing parameter for hook 'stats_send'");
 			
-			private = h->private = alloc(sizeof(struct private));
+			x = h->private = alloc(sizeof(struct private));
 		
-			private->dest = list_lookup(&nodes, h->parameter);
-			if (!private->dest)
+			x->msg = msg_create(9);
+			x->dest = list_lookup(&nodes, h->parameter);
+			if (!x->dest)
 				error("Invalid destination node '%s' for hook 'stats_send'", h->parameter);
 			break;
 
 		case HOOK_DEINIT:
-			free(private);
+			free(x->msg);
+			free(x);
 			break;
 
-		case HOOK_MSG: {
-			struct msg m = MSG_INIT(0);
-			
-			m.data[m.length++].f = p->sent;
-			m.data[m.length++].f = p->received;
-			m.data[m.length++].f = p->invalid;
-			m.data[m.length++].f = p->skipped;
-			m.data[m.length++].f = p->dropped;
+		case HOOK_PERIODIC:	
+			x->msg->data[0].f = p->sent;
+			x->msg->data[1].f = p->received;
+			x->msg->data[2].f = p->invalid;
+			x->msg->data[3].f = p->skipped;
+			x->msg->data[4].f = p->dropped;
 
-			m.data[m.length++].f = p->hist.owd.last,
-			m.data[m.length++].f = p->hist.gap_msg.last;
-			m.data[m.length++].f = p->hist.gap_recv.last;
+			x->msg->data[5].f = p->hist.owd.last,
+			x->msg->data[6].f = p->hist.gap_msg.last;
+			x->msg->data[7].f = p->hist.gap_recv.last;
 			
-			/* Send single message with statistics to destination node */
-			node_write(private->dest, &m, 1, 0, 1);
-			
+			node_write_single(x->dest, x->msg); /* Send single message with statistics to destination node */
 			break;
-		}
 	}
 	
 	return 0;

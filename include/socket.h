@@ -72,10 +72,10 @@ int socket_open(struct node *n);
 int socket_close(struct node *n);
 
 /** @see node_vtable::write */
-int socket_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+int socket_write(struct node *n, struct pool *pool, int cnt);
 
 /** @see node_vtable::read */
-int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+int socket_read(struct node *n, struct pool *pool, int cnt);
 
 /** @see node_vtable::parse */
 int socket_parse(struct node *n, config_setting_t *cfg);

@@ -114,7 +114,7 @@ static int protocol_cb_http(struct lws_context *context, struct lws *wsi, enum l
 						"name",		node_name_short(n),
 						"connections",	list_length(&w->connections),
 						"state",	n->state,
-						"combine",	n->combine,
+						"vectorize",	n->vectorize,
 						"affinity",	n->affinity
 					);
 					
@@ -258,12 +258,27 @@ found:			* (void **) user = n;
 
 			w = n->_vd;
 			
-			if (!w->read.m)
+			if (!w->read.cnt)
 				return 0;
 
 			pthread_mutex_lock(&w->read.mutex);
-			
-			msg_scan(in, w->read.m, NULL, NULL);
+
+			size_t offset = 0;
+			for (int i = 0; i < w->read.cnt; i++) {
+				struct msg *dst = pool_get_relative(w->read.pool, i);
+#if 1
+				struct msg *src = (char *) in + offset;
+
+				memcpy(dst, src, MSG_LEN(src->values));
+
+				offset += MSG_LEN(src->values);
+				if (offset >= len)
+					break;
+#else
+				/** @todo untested */
+				msg_scan(in, dst, NULL, NULL);
+#endif
+			}
 
 			pthread_mutex_unlock(&w->read.mutex);			
 			pthread_cond_broadcast(&w->read.cond);
@@ -379,31 +394,31 @@ int websocket_close(struct node *n)
 	return 0;
 }
 
-int websocket_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
+int websocket_read(struct node *n, struct pool *pool, int cnt)
 {
 	struct websocket *w = n->_vd;
-	struct msg *m = pool + (first % poolsize);
 	
-	w->read.m = m;
+	w->read.pool = pool;
+	w->read.cnt = cnt;
 	
 	pthread_cond_wait(&w->read.cond, &w->read.mutex);
 	
 	return 1;
 }
 
-int websocket_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
+int websocket_write(struct node *n, struct pool *pool, int cnt)
 {
 	struct websocket *w = n->_vd;
 	struct msg *m = pool + (first % poolsize);
 
 	pthread_mutex_lock(&w->write.mutex);
 
-	w->write.m = m;
+	w->write.pool = pool;
+	w->write.cnt = cnt;
 	
 	/* Notify all active websocket connections to send new data */
-	list_foreach(struct lws *wsi, &w->connections) {
+	list_foreach(struct lws *wsi, &w->connections)
 		lws_callback_on_writable(context, wsi);
-	}
 	
 	pthread_mutex_unlock(&w->write.mutex);
 		
@@ -413,6 +428,7 @@ int websocket_write(struct node *n, struct msg *pool, int poolsize, int first, i
 static struct node_type vt = {
 	.name		= "websocket",
 	.description	= "Send and receive samples of a WebSocket connection (libwebsockets)",
+	.vectoroize	= 0, /* unlimited */
 	.size		= sizeof(struct websocket),
 	.open		= websocket_open,
 	.close		= websocket_close,

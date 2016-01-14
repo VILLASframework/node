@@ -15,6 +15,7 @@
 #include "file.h"
 #include "utils.h"
 #include "timing.h"
+#include "pool.h"
 
 int file_reverse(struct node *n)
 {
@@ -263,14 +264,14 @@ int file_close(struct node *n)
 	return 0;
 }
 
-int file_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
+int file_read(struct node *n, struct pool *pool, int cnt)
 {
 	struct file *f = n->_vd;
 	int values, flags, i = 0;
 
 	if (f->read.handle) {
 		for (i = 0; i < cnt; i++) {
-			struct msg *cur = &pool[(first+i) % poolsize];
+			struct msg *cur = pool_getrel(pool, i);
 			
 			/* Get message and timestamp */
 retry:			values = msg_fscan(f->read.handle, cur, &flags, NULL);
@@ -325,13 +326,15 @@ retry:			values = msg_fscan(f->read.handle, cur, &flags, NULL);
 	return i;
 }
 
-int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
+int file_write(struct node *n, struct pool *pool, int cnt)
 {
 	int i = 0;
 	struct file *f = n->_vd;
 
 	if (f->write.handle) {
 		for (i = 0; i < cnt; i++) {
+			struct msg *m = pool_getrel(pool, i);
+
 			/* Split file if requested */
 			if ((f->write.split > 0) && ftell(f->write.handle) > f->write.split * (1 << 20)) {
 				f->write.chunk++;
@@ -340,7 +343,6 @@ int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 				info("Splitted output node %s: chunk=%u", node_name(n), f->write.chunk);
 			}
 			
-			struct msg *m = &pool[(first+i) % poolsize];
 			msg_fprint(f->write.handle, m, MSG_PRINT_ALL & ~MSG_PRINT_OFFSET, 0);
 		}
 		fflush(f->write.handle);
@@ -354,6 +356,7 @@ int file_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 static struct node_type vt = {
 	.name		= "file",
 	.description	= "support for file log / replay node type",
+	.vectorize	= 0, /* unlimited */
 	.size		= sizeof(struct file),
 	.reverse	= file_reverse,
 	.parse		= file_parse,

@@ -24,6 +24,7 @@
 #include "node.h"
 #include "msg.h"
 #include "hooks.h"
+#include "pool.h"
 
 /** The datastructure for a path.
  *
@@ -48,13 +49,7 @@ struct path
 	int tfd;			/**< Timer file descriptor for fixed rate sending */
 	double rate;			/**< Send messages with a fixed rate over this path */
 	
-	int msgsize;			/**< Maximum number of values per message for this path */
-	int poolsize;			/**< Size of the history buffer in number of messages */
-	
-	struct msg *pool;		/**< A circular buffer of past messages */
-
-	struct msg *current;		/**< A pointer to the last received message */
-	struct msg *previous;		/**< A pointer to the previously received message */
+	struct pool pool;		/**< A circular buffer of past messages */
 
 	pthread_t recv_tid;		/**< The thread id for this path */
 	pthread_t sent_tid;		/**< A second thread id for fixed rate sending thread */
@@ -90,7 +85,7 @@ struct path
 };
 
 /** Create a path by allocating dynamic memory. */
-struct path * path_create();
+struct path * path_create(size_t poolsize, size_t values);
 
 /** Destroy path by freeing dynamically allocated memory.
  *

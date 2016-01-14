@@ -19,11 +19,6 @@
   #include <lwip/arch.h>
 #endif
 
-#include "config.h"
-
-/** Maximum number of dword values in a message */
-#define MSG_VALUES		MAX_VALUES
-
 /** The current version number for the message format */
 #define MSG_VERSION		1
 
@@ -31,7 +26,6 @@
 #define MSG_TYPE_DATA		0 /**< Message contains float values */
 #define MSG_TYPE_START		1 /**< Message marks the beginning of a new simulation case */
 #define MSG_TYPE_STOP		2 /**< Message marks the end of a simulation case */
-#define MSG_TYPE_EMPTY		3 /**< Message does not carry useful data */
 
 #define MSG_ENDIAN_LITTLE	0 /**< Message values are in little endian format (float too!) */
 #define MSG_ENDIAN_BIG		1 /**< Message values are in bit endian format */
@@ -45,22 +39,12 @@
 #endif
 
 /** The total size in bytes of a message */
-#define MSG_LEN(msg)		(4 * ((msg)->length + 4))
+#define MSG_LEN(values)		(4 * (values) + 16 /* header */)
 
 /** The timestamp of a message in struct timespec format */
 #define MSG_TS(msg) (struct timespec) {	\
 	.tv_sec  = (msg)->ts.sec,	\
 	.tv_nsec = (msg)->ts.nsec	\
-}
-
-/** Initialize a message */
-#define MSG_INIT(i) {	\
-	.version = MSG_VERSION,		\
-	.type = MSG_TYPE_DATA,		\
-	.endian = MSG_ENDIAN_HOST,	\
-	.length = i,			\
-	.sequence = 0,			\
-	.rsvd1 = 0, .rsvd2 = 0		\
 }
 
 /** This message format is used by all clients
@@ -82,7 +66,7 @@ struct msg
 #endif
 	unsigned rsvd2	: 8;	/**< Reserved bits */
 	
-	uint16_t length;	/**< The number of values in msg::data[]. Endianess is specified in msg::endian. */
+	uint16_t values;	/**< The number of values in msg::data[]. Endianess is specified in msg::endian. */
 	uint32_t sequence;	/**< The sequence number is incremented by one for consecutive messages. Endianess is specified in msg::endian. */
 	
 	/** A timestamp per message. Endianess is specified in msg::endian. */
@@ -95,7 +79,7 @@ struct msg
 	union {
 		float    f;	/**< Floating point values (note msg::endian) */
 		uint32_t i;	/**< Integer values (note msg::endian) */
-	} data[MSG_VALUES];
+	} data[];
 } __attribute__((aligned(64), packed));
 
 #endif /* _MSG_FORMAT_H_ */

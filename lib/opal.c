@@ -180,7 +180,7 @@ int opal_close(struct node *n)
 	return 0;
 }
 
-int opal_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
+int opal_read(struct node *n, struct pool *pool, int cnt)
 {
 	struct opal *o = n->_vd;
 
@@ -245,7 +245,7 @@ int opal_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt
 	return 1;
 }
 
-int opal_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
+int opal_write(struct node *n, struct pool *pool, int cnt)
 {
 	struct opal *o = n->_vd;
 
@@ -281,6 +281,7 @@ int opal_write(struct node *n, struct msg *pool, int poolsize, int first, int cn
 static struct node_type vt = {
 	.name		= "opal",
 	.description	= "run as OPAL Asynchronous Process (libOpalAsyncApi)",
+	.vectoroize	= 1,
 	.size		= sizeof(struct opal),
 	.parse		= opal_parse,
 	.print		= opal_print,

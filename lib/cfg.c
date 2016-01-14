@@ -86,9 +86,15 @@ int config_parse_path(config_setting_t *cfg,
 {
 	config_setting_t *cfg_out, *cfg_hook;
 	const char *in;
-	int reverse;
+	int reverse,  poolsize, values;
+	
+	/* Pool settings */
+	if (!config_setting_lookup_int(cfg, "poolsize", &poolsize))
+		poolsize = DEFAULT_POOLSIZE;
+	if (!config_setting_lookup_int(cfg, "values", &values))
+		values = DEFAULT_MSGVALUES;
 
-	struct path *p = path_create();
+	struct path *p = path_create(poolsize, values);
 
 	/* Input node */
 	if (!config_setting_lookup_string(cfg, "in", &in))
@@ -113,16 +119,12 @@ int config_parse_path(config_setting_t *cfg,
 	/* Initialize hooks and their private data / parameters */
 	path_run_hook(p, HOOK_INIT);
 
-	if (!config_setting_lookup_bool(cfg, "enabled", &p->enabled))
-		p->enabled = 1;
 	if (!config_setting_lookup_bool(cfg, "reverse", &reverse))
 		reverse = 0;
+	if (!config_setting_lookup_bool(cfg, "enabled", &p->enabled))
+		p->enabled = 1;
 	if (!config_setting_lookup_float(cfg, "rate", &p->rate))
 		p->rate = 0; /* disabled */
-	if (!config_setting_lookup_int(cfg, "poolsize", &p->poolsize))
-		p->poolsize = DEFAULT_POOLSIZE;
-	if (!config_setting_lookup_int(cfg, "msgsize", &p->msgsize))
-		p->msgsize = MAX_VALUES;
 
 	p->cfg = cfg;
 
@@ -132,11 +134,11 @@ int config_parse_path(config_setting_t *cfg,
 		if (list_length(&p->destinations) > 1)
 			error("Can't reverse path with multiple destination nodes");
 
-		struct path *r = path_create();
+		struct path *r = path_create(poolsize, values);
 
-		/* Swap in/out */
-		r->in  = p->out;
+		r->in  = p->out; /* Swap in/out */
 		r->out = p->in;
+		r->rate = p->rate;
 			
 		list_push(&r->destinations, r->out);
 			
@@ -145,10 +147,6 @@ int config_parse_path(config_setting_t *cfg,
 			
 		/* Initialize hooks and their private data / parameters */
 		path_run_hook(r, HOOK_INIT);
-			
-		r->rate = p->rate;
-		r->poolsize = p->poolsize;
-		r->msgsize = p->msgsize;
 
 		list_push(paths, r);
 	}
@@ -225,8 +223,17 @@ int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings
 	if (ret)
 		cerror(cfg, "Failed to parse node '%s'", node_name(n));
 
-	if (!config_setting_lookup_int(cfg, "combine", &n->combine))
-		n->combine = 1;
+	if (config_setting_lookup_int(cfg, "vectorize", &n->vectorize)) {
+		config_setting_t *cfg_vectorize = config_lookup_from(cfg, "vectorize");
+		
+		if (n->vectorize <= 0)
+			cerror(cfg_vectorize, "Invalid value for `vectorize`. Must be natural number!");
+		if (vt->vectorize && vt->vectorize < n->vectorize)
+			cerror(cfg_vectorize, "Invalid value for `vectorize`. Node type %s requires a number smaller than %d!",
+				node_name_type(n), vt->vectorize);
+	}
+	else
+		n->vectorize = 1;
 
 	if (!config_setting_lookup_int(cfg, "affinity", &n->affinity))
 		n->affinity = set->affinity;

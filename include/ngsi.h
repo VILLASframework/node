@@ -84,9 +84,9 @@ int ngsi_open(struct node *n);
 int ngsi_close(struct node *n);
 
 /** @see node_vtable::read */
-int ngsi_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+int ngsi_read(struct node *n, struct pool *pool, int cnt);
 
 /** @see node_vtable::write */
-int ngsi_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+int ngsi_write(struct node *n, struct pool *pool, int cnt);
 
 #endif /** _NGSI_H_ @} */

@@ -7,7 +7,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2015-2016, Steffen Vogel
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  */
@@ -67,9 +67,9 @@ int gtfpga_open(struct node *n);
 int gtfpga_close(struct node *n);
 
 /** @see node_vtable::read */
-int gtfpga_read(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+int gtfpga_read(struct node *n, struct pool *pool, int cnt);
 
 /** @see node_vtable::write */
-int gtfpga_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
+int gtfpga_write(struct node *n, struct pool *pool, int cnt);
 
 #endif /** _GTFPGA_H_ @} */

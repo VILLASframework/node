@@ -22,6 +22,7 @@
 #include "node.h"
 #include "msg.h"
 #include "timing.h"
+#include "pool.h"
 
 /** Linked list of nodes */
 struct list nodes = LIST_INIT((dtor_cb_t) node_destroy);
@@ -29,7 +30,7 @@ struct list nodes = LIST_INIT((dtor_cb_t) node_destroy);
 /** The global configuration */
 struct settings settings;
 
-struct msg *recv_pool,  *send_pool;
+struct pool recv_pool,   send_pool;
 pthread_t   recv_thread, send_thread;
 
 struct node *node;
@@ -42,9 +43,9 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 		
 	node_stop(node);
 	node_deinit(node->_vt);
-		
-	free(recv_pool);
-	free(send_pool);
+	
+	pool_destroy(&recv_pool);
+	pool_destroy(&send_pool);
 	
 	list_destroy(&nodes);
 	
@@ -70,8 +71,8 @@ static void usage(char *name)
 void * send_loop(void *ctx)
 {	
 	for (;;) {
-		for (int i = 0; i < node->combine; i++) {
-			struct msg *m = &send_pool[i];
+		for (int i = 0; i < node->vectorize; i++) {
+			struct msg *m = pool_getrel(&send_pool, i);
 			int reason;
 
 retry:			reason = msg_fscan(stdin, m, NULL, NULL);
@@ -85,7 +86,7 @@ retry:			reason = msg_fscan(stdin, m, NULL, NULL);
 			}
 		}
 
-		node_write(node, send_pool, node->combine, 0, node->combine);
+		node_write(node, &send_pool, node->vectorize);
 	}
 
 	return NULL;
@@ -99,9 +100,9 @@ void * recv_loop(void *ctx)
 	for (;;) {
 		struct timespec ts = time_now();
 		
-		int recv = node_read(node, recv_pool, node->combine, 0, node->combine);
+		int recv = node_read(node, &recv_pool, node->vectorize);
 		for (int i = 0; i < recv; i++) {
-			struct msg *m = &recv_pool[i];
+			struct msg *m = pool_getrel(&recv_pool, i);
 			
 			int ret = msg_verify(m);
 			if (ret)
@@ -159,10 +160,9 @@ int main(int argc, char *argv[])
 		error("Node '%s' does not exist!", argv[2]);
 
 	node_init(node->_vt, argc-optind, argv+optind, config_root_setting(&config));	
-	
-	recv_pool = alloc(sizeof(struct msg) * node->combine);
-	send_pool = alloc(sizeof(struct msg) * node->combine);
-	
+	pool_create(&recv_pool, node->vectorize, sizeof(struct msg));
+	pool_create(&send_pool, node->vectorize, sizeof(struct msg));
+
 	if (reverse)
 		node_reverse(node);
 	
