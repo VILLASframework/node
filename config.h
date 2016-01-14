@@ -39,7 +39,7 @@
 #define SYSFS_PATH		"/sys"
 #define PROCFS_PATH		"/proc"
 
-/* Checks */
+/* Required kernel version */
 #define KERNEL_VERSION_MAJ	3
 #define KERNEL_VERSION_MIN	4
 	

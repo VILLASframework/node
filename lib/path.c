@@ -93,7 +93,7 @@ static void * path_run(void *arg)
 		else if (recv == 0)
 			continue;
 
-		/** @todo Replace this timestamp by hardware timestamping */
+		/** @todo Replace this timestamp by hardware timestamping for node type which support it. */
 		p->ts.last = p->ts.recv;
 		p->ts.recv = time_now();
 			
@@ -125,7 +125,7 @@ static void * path_run(void *arg)
 			continue;
 		}
 
-		/* At fixed rate mode, messages are send by another thread */
+		/* At fixed rate mode, messages are send by another (asynchronous) thread */
 		if (!p->rate)
 			path_write(p);
 	}

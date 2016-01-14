@@ -19,7 +19,7 @@ V ?= 2
 GIT_REV=$(shell git rev-parse --short HEAD)
 
 # Compiler and linker flags
-CC = gcc
+CC ?= gcc
 LDLIBS  = -pthread -lrt -lm -lconfig -ls2ss
 
 CFLAGS += -std=gnu99 -Iinclude/ -I. -MMD -Wall -D_GIT_REV='"$(GIT_REV)"' -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)

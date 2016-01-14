@@ -230,7 +230,7 @@ int socket_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 	/* Receive message from socket */
 	bytes = recvmsg(s->sd, &mhdr, 0);
 	if (bytes == 0)
-		error("Remote node %s closed the cnode_name", node_name(n));
+		error("Remote node %s closed the connection", node_name(n));
 	else if (bytes < 0)
 		serror("Failed recv");
 

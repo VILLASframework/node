@@ -32,10 +32,10 @@
 struct path
 {
 	enum {
-		PATH_INVALID,		/**< */
-		PATH_CREATED,		/**< */
-		PATH_RUNNING,		/**< */
-		PATH_STOPPED		/**< */
+		PATH_INVALID,		/**< Path is invalid. */
+		PATH_CREATED,		/**< Path has been created. */
+		PATH_RUNNING,		/**< Path is currently running. */
+		PATH_STOPPED		/**< Path has been stopped. */
 	} state;			/**< Path state */
 	
 	struct node *in;		/**< Pointer to the incoming node */
@@ -78,6 +78,7 @@ struct path
 		struct timespec last;	/**< Previous message received (old value of path::ts__recv) */
 	} ts;
 
+	/* Statistics */
 	unsigned int sent;		/**< Counter for sent messages to all outgoing nodes */
 	unsigned int received;		/**< Counter for received messages from all incoming nodes */
 	unsigned int invalid;		/**< Counter for invalid messages */
