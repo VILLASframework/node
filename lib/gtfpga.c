@@ -3,7 +3,7 @@
  * This file implements the gtfpga subtype for nodes.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2015-2016, Steffen Vogel
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
@@ -15,6 +15,7 @@
 #include <sys/mman.h>
 
 #include "gtfpga.h"
+#include "config.h"
 #include "utils.h"
 #include "timing.h"
 #include "checks.h"
@@ -182,8 +183,6 @@ int gtfpga_open(struct node *n)
 	struct gtfpga *g = n->_vd;
 	struct pci_dev *dev;
 
-	int ret;
-
 	dev = gtfpga_find_device(&g->filter);
 	if (!dev)
 		error("No GTFPGA card found");
@@ -237,18 +236,14 @@ int gtfpga_close(struct node *n)
 int gtfpga_read(struct node *n, struct pool *pool, int cnt)
 {
 	struct gtfpga *g = n->_vd;
-	//struct msg *m = pool_getrel(pool, 0);
+	// struct msg *m = pool_getrel(pool, 0);
 
-	
-	if (cnt != 1)
-		error("The GTFPGA node type does not support combining!");
+	/* Wait for IRQ */
+	uint64_t fired;
+	read(g->fd_irq, &fired, sizeof(fired));
 
-	uint64_t runs;
-	read(g->fd_irq, &runs, sizeof(runs));
-
-	static int seq;
-
-	m->sequence = seq++;
+	/* Copy memory mapped data */
+	/** @todo */
 
 	return 0;
 }
@@ -259,8 +254,8 @@ int gtfpga_write(struct node *n, struct pool *pool, int cnt)
 	// struct gtfpga *g = n->_vd;
 	// struct msg *m = pool_getrel(pool, 0);
 	
-	if (cnt != 1)
-		error("The GTFPGA node type does not support combining!");
+	/* Copy memory mapped data */
+	/** @todo */
 
 	return 0;
 }
