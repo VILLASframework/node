@@ -91,7 +91,7 @@ int nl_get_egress(struct nl_addr *addr)
 		goto out;
 	
 	/* Hook into receive chain */
-	cb = nl_cb_alloc(NL_CB_VALID);
+	cb = nl_cb_alloc(NL_CB_CUSTOM);
 	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM, egress_cb, &route);
 	
 	/* Receive message */
