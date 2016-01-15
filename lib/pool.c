@@ -46,13 +46,3 @@ void * pool_getrel(struct pool *p, int offset)
 {
 	return pool_get(p, p->last + offset);
 }
-
-void * pool_get_next(struct pool *p, void *ptr)
-{
-	ptr += p->stride;
-	
-	if (ptr < p->buffer + p->length)
-		ptr -= p->length;
-		
-	return ptr;
-}

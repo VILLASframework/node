@@ -23,9 +23,8 @@
 #define pool_previous(pool)	pool_getrel(pool, -1)
 
 /** Iterate through the circuluar buffer. */
-#define pool_foreach(it, pool, start, end) for (it  = pool_get(pool, start);	\
-						it != pool_get(pool, end);	\
-						it  = pool_get_next(pool, it))
+#define pool_foreach(ptr, pool, start, end) for (int _i = start, _p; _p = 1, _i < end; _i++) \
+					for (ptr = pool_get(pool, _i); _p--; )
 
 /** Return the number of elements in the pool. */
 #define pool_length(pool)	((pool)->length)
@@ -61,12 +60,5 @@ void * pool_get(struct pool *p, int index);
 
 /** Return pointer relative to last inserted element. */
 void * pool_getrel(struct pool *p, int offset);
-
-/** Return next element after ptr */
-void * pool_get_next(struct pool *p, void *ptr);
-
-/** Return element before ptr */
-void * pool_get_previous(struct pool *p, void *ptr);
-
 
 #endif /* _POOL_H_ */
