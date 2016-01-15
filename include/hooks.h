@@ -61,14 +61,11 @@ enum hook_type {
 	
 	HOOK_PERIODIC		= 1 << 7, /**< Called periodically. Period is set by global 'stats' option in the configuration file. */
 	
-	HOOK_INIT		= 1 << 8, /**< Called to allocate and init hook-private data */
-	HOOK_DEINIT		= 1 << 9, /**< Called to free hook-private data */
-	
 	/** @{ Classes of hooks */
 	/** Internal hooks are mandatory. */
 	HOOK_INTERNAL		= 1 << 16,
 	/** Hooks which are using private data must allocate and free them propery. */	
-	HOOK_PRIVATE		= HOOK_INIT | HOOK_DEINIT,
+	HOOK_PRIVATE		= HOOK_PATH_START | HOOK_PATH_STOP,
 	/** All path related actions */
 	HOOK_PATH		= HOOK_PATH_START | HOOK_PATH_STOP | HOOK_PATH_RESTART,
 	/** Hooks which are used to collect statistics. */

@@ -37,8 +37,9 @@ int path_run_hook(struct path *p, enum hook_type t)
 
 	list_foreach(struct hook *h, &p->hooks) {
 		if (h->type & t) {
-			ret = ((hook_cb_t) h->cb)(p, h, t);
 			debug(22, "Running hook when=%u '%s' prio=%u ret=%d", t, h->name, h->priority, ret);
+
+			ret = ((hook_cb_t) h->cb)(p, h, t);
 			if (ret)
 				return ret;
 		}
@@ -195,6 +196,7 @@ struct path * path_create(size_t poolsize, size_t values)
 
 	list_init(&p->destinations, NULL);
 	list_init(&p->hooks, free);
+
 	pool_create(&p->pool, poolsize, 16 + values * sizeof(float)); /** @todo */
 
 	list_foreach(struct hook *h, &hooks) {
@@ -208,9 +210,7 @@ struct path * path_create(size_t poolsize, size_t values)
 }
 
 void path_destroy(struct path *p)
-{
-	path_run_hook(p, HOOK_DEINIT);
-	
+{	
 	list_destroy(&p->destinations);
 	list_destroy(&p->hooks);
 	pool_destroy(&p->pool);

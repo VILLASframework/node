@@ -92,7 +92,7 @@ int hook_skip_unchanged(struct path *p, struct hook *h, int when)
 	} *x = h->private;	
 	
 	switch (when) {
-		case HOOK_INIT:
+		case HOOK_PATH_START:
 			x = h->private = alloc(sizeof(struct private));
 		
 			if (!h->parameter)
@@ -103,7 +103,7 @@ int hook_skip_unchanged(struct path *p, struct hook *h, int when)
 				error("Failed to parse parameter '%s' for hook 'deduplication'", h->parameter);
 			break;
 			
-		case HOOK_DEINIT:
+		case HOOK_PATH_STOP:
 			free(x);
 			break;
 			
@@ -137,7 +137,7 @@ int hook_convert(struct path *p, struct hook *h, int when)
 	} *x = h->private;
 	
 	switch (when) {
-		case HOOK_INIT:
+		case HOOK_PATH_START:
 			x = h->private = alloc(sizeof(struct private));
 		
 			if (!h->parameter)
@@ -151,7 +151,7 @@ int hook_convert(struct path *p, struct hook *h, int when)
 				error("Invalid parameter '%s' for hook 'convert'", h->parameter);
 			break;
 			
-		case HOOK_DEINIT:
+		case HOOK_PATH_STOP:
 			free(x);
 			break;
 			
@@ -186,7 +186,7 @@ int hook_fir(struct path *p, struct hook *h, int when)
 	} *x = h->private;
 	
 	switch (when) {
-		case HOOK_INIT:
+		case HOOK_PATH_START:
 			if (!h->parameter)
 				error("Missing parameter for hook 'fir'");
 
@@ -203,7 +203,7 @@ int hook_fir(struct path *p, struct hook *h, int when)
 				error("Invalid parameter '%s' for hook 'fir'", h->parameter);
 			break;
 
-		case HOOK_DEINIT:
+		case HOOK_PATH_STOP:
 			pool_destroy(&x->coeffs);
 			pool_destroy(&x->history);
 
@@ -245,7 +245,7 @@ int hook_decimate(struct path *p, struct hook *h, int when)
 	} *x = h->private;
 	
 	switch (when) {
-		case HOOK_INIT:
+		case HOOK_PATH_START:
 			if (!h->parameter)
 				error("Missing parameter for hook 'decimate'");
 		
@@ -256,7 +256,7 @@ int hook_decimate(struct path *p, struct hook *h, int when)
 				error("Invalid parameter '%s' for hook 'decimate'", h->parameter);
 			break;
 			
-		case HOOK_DEINIT:
+		case HOOK_PATH_STOP:
 			free(x);
 			break;
 			
@@ -276,18 +276,19 @@ int hook_skip_first(struct path *p, struct hook *h, int when)
 	} *x = h->private;
 	
 	switch (when) {
-		case HOOK_INIT:
+		case HOOK_PATH_START:
 			if (!h->parameter)
 				error("Missing parameter for hook 'skip_first'");
 
 			x = h->private = alloc(sizeof(struct private));
 		
+			x->started = time_now();
 			x->wait = strtof(h->parameter, NULL);
 			if (!x->wait)
 				error("Invalid parameter '%s' for hook 'skip_first'", h->parameter);
 			break;
 			
-		case HOOK_DEINIT:
+		case HOOK_PATH_STOP:
 			free(x);
 			break;
 
@@ -295,10 +296,6 @@ int hook_skip_first(struct path *p, struct hook *h, int when)
 			x->started = p->ts.recv;
 			break;
 
-		case HOOK_PATH_START:
-			x->started = time_now();
-			break;
-			 
 		case HOOK_POST: {
 			double delta = time_delta(&x->started, &p->ts.recv);
 			return delta < x->wait
@@ -368,7 +365,7 @@ REGISTER_HOOK("stats", 2, hook_stats, HOOK_STATS)
 int hook_stats(struct path *p, struct hook *h, int when)
 {
 	switch (when) {
-		case HOOK_INIT:
+		case HOOK_PATH_START:
 			/** @todo Allow configurable bounds for histograms */
 			hist_create(&p->hist.owd, 0, 1, 100e-3);
 			hist_create(&p->hist.gap_msg,  90e-3, 110e-3, 1e-3);
@@ -376,13 +373,6 @@ int hook_stats(struct path *p, struct hook *h, int when)
 			hist_create(&p->hist.gap_seq, -HIST_SEQ, +HIST_SEQ, 1);
 			break;
 		
-		case HOOK_DEINIT:
-			hist_destroy(&p->hist.owd);
-			hist_destroy(&p->hist.gap_msg);
-			hist_destroy(&p->hist.gap_recv);
-			hist_destroy(&p->hist.gap_seq);
-			break;
-			
 		case HOOK_PRE:
 			/* Exclude first message from statistics */
 			if (p->received > 0) {
@@ -413,6 +403,11 @@ int hook_stats(struct path *p, struct hook *h, int when)
 			if (p->hist.gap_recv.total){ info("Inter-message arrival time:"); hist_print(&p->hist.gap_recv); }
 			if (p->hist.gap_msg.total) { info("Inter-message ts gap:"); hist_print(&p->hist.gap_msg); }
 			if (p->hist.gap_seq.total) { info("Inter-message sequence number gaps:"); hist_print(&p->hist.gap_seq); }
+			
+			hist_destroy(&p->hist.owd);
+			hist_destroy(&p->hist.gap_msg);
+			hist_destroy(&p->hist.gap_recv);
+			hist_destroy(&p->hist.gap_seq);
 			break;
 
 		case HOOK_PATH_RESTART:
@@ -473,7 +468,7 @@ int hook_stats_send(struct path *p, struct hook *h, int when)
 	} *x = h->private;
 	
 	switch (when) {
-		case HOOK_INIT:
+		case HOOK_PATH_START:
 			if (!h->parameter)
 				error("Missing parameter for hook 'stats_send'");
 			
@@ -488,7 +483,7 @@ int hook_stats_send(struct path *p, struct hook *h, int when)
 				error("Invalid destination node '%s' for hook 'stats_send'", h->parameter);
 			break;
 
-		case HOOK_DEINIT:
+		case HOOK_PATH_STOP:
 			free(x->msg);
 			free(x);
 			break;

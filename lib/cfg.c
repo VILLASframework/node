@@ -115,9 +115,6 @@ int config_parse_path(config_setting_t *cfg,
 	cfg_hook = config_setting_get_member(cfg, "hook");
 	if (cfg_hook)
 		config_parse_hooklist(cfg_hook, &p->hooks);
-	
-	/* Initialize hooks and their private data / parameters */
-	path_run_hook(p, HOOK_INIT);
 
 	if (!config_setting_lookup_bool(cfg, "reverse", &reverse))
 		reverse = 0;
@@ -144,9 +141,6 @@ int config_parse_path(config_setting_t *cfg,
 			
 		if (cfg_hook)
 			config_parse_hooklist(cfg_hook, &r->hooks);
-			
-		/* Initialize hooks and their private data / parameters */
-		path_run_hook(r, HOOK_INIT);
 
 		list_push(paths, r);
 	}
