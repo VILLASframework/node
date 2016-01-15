@@ -25,6 +25,18 @@
 
 struct list hooks;
 
+/* Those references can be used inside the hook callbacks after initializing them with hook_init() */
+static struct list *hook_nodes = NULL;
+static struct list *hook_paths = NULL;
+static struct settings *hook_settings = NULL;
+
+void hook_init(struct list *nodes, struct list *paths, struct settings *set)
+{
+	hook_nodes = nodes;
+	hook_paths = paths;
+	hook_settings = set;
+}
+
 int hooks_sort_priority(const void *a, const void *b) {
 	struct hook *ha = (struct hook *) a;
 	struct hook *hb = (struct hook *) b;
@@ -448,6 +460,9 @@ void hook_stats_header()
 	line();
 }
 
+/** @todo Come up with a better solution for this ugly workaround */
+struct list *hook_nodes = NULL;
+
 REGISTER_HOOK("stats_send", 99, hook_stats_send, HOOK_PRIVATE | HOOK_PERIODIC)
 int hook_stats_send(struct path *p, struct hook *h, int when)
 {
@@ -462,10 +477,13 @@ int hook_stats_send(struct path *p, struct hook *h, int when)
 			if (!h->parameter)
 				error("Missing parameter for hook 'stats_send'");
 			
+			if (!hook_nodes)
+				error("stats_send() hook has no reference to node list");
+			
 			x = h->private = alloc(sizeof(struct private));
 		
 			x->msg = msg_create(9);
-			x->dest = list_lookup(&nodes, h->parameter);
+			x->dest = list_lookup(hook_nodes, h->parameter);
 			if (!x->dest)
 				error("Invalid destination node '%s' for hook 'stats_send'", h->parameter);
 			break;
@@ -481,10 +499,10 @@ int hook_stats_send(struct path *p, struct hook *h, int when)
 			x->msg->data[2].f = p->invalid;
 			x->msg->data[3].f = p->skipped;
 			x->msg->data[4].f = p->dropped;
-
-			x->msg->data[5].f = p->hist.owd.last,
-			x->msg->data[6].f = p->hist.gap_msg.last;
-			x->msg->data[7].f = p->hist.gap_recv.last;
+			x->msg->data[5].f = p->overrun;
+			x->msg->data[6].f = p->hist.owd.last,
+			x->msg->data[7].f = 1.0 / p->hist.gap_msg.last;
+			x->msg->data[8].f = 1.0 / p->hist.gap_recv.last;
 			
 			node_write_single(x->dest, x->msg); /* Send single message with statistics to destination node */
 			break;

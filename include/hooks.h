@@ -88,6 +88,9 @@ struct hook {
 	hook_cb_t cb;		/**< The hook callback function as a function pointer. */
 };
 
+/** Save references to global nodes, paths and settings */
+void hook_init(struct list *nodes, struct list *paths, struct settings *set);
+
 /** Sort hook list according to the their priority. See hook::priority. */
 int hooks_sort_priority(const void *a, const void *b);
 

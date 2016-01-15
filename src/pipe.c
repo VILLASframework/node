@@ -24,11 +24,9 @@
 #include "timing.h"
 #include "pool.h"
 
-/** Linked list of nodes */
-struct list nodes = LIST_INIT((dtor_cb_t) node_destroy);
 
-/** The global configuration */
-struct settings settings;
+struct list nodes;		/**< List of all nodes */
+struct settings settings;	/**< The global configuration */
 
 struct pool recv_pool,   send_pool;
 pthread_t   recv_thread, send_thread;
@@ -38,6 +36,9 @@ int reverse;
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
+	pthread_cancel(recv_thread);
+	pthread_cancel(send_thread);
+	
 	pthread_join(recv_thread, NULL);
 	pthread_join(send_thread, NULL);
 		
@@ -146,6 +147,9 @@ int main(int argc, char *argv[])
 		
 	/* Initialize log, configuration.. */
 	config_t config;
+	
+	/* Create lists */
+	list_init(&nodes, (dtor_cb_t) node_destroy);
 
 	log_init();
 	config_init(&config);
@@ -157,6 +161,7 @@ int main(int argc, char *argv[])
 		error("Node '%s' does not exist!", argv[2]);
 
 	node_init(node->_vt, argc-optind, argv+optind, config_root_setting(&config));	
+
 	pool_create(&recv_pool, node->vectorize, sizeof(struct msg));
 	pool_create(&send_pool, node->vectorize, sizeof(struct msg));
 

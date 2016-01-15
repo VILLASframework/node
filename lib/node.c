@@ -12,7 +12,6 @@
 #include "cfg.h"
 #include "utils.h"
 
-struct list nodes = LIST_INIT((dtor_cb_t) node_destroy);	/**< List of all nodes */
 struct list node_types = LIST_INIT(NULL);			/**< Vtable for virtual node sub types */
 
 int node_parse(struct node *n, config_setting_t *cfg)
@@ -160,7 +159,6 @@ struct node * node_create(struct node_type *vt)
 {
 	struct node *n = alloc(sizeof(struct node));
 	
-	list_push(&nodes, n);
 	list_push(&vt->instances, n);
 	
 	n->_vt = vt;
@@ -179,7 +177,6 @@ void node_destroy(struct node *n)
 	if (n->_vt->destroy)
 		n->_vt->destroy(n);
 	
-	list_remove(&nodes, n);
 	list_remove(&n->_vt->instances, n);
 
 	free(n->_vd);

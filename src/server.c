@@ -26,6 +26,8 @@
 #endif
 
 struct list paths;		/**< List of paths */
+struct list nodes;		/**< List of nodes */
+
 struct settings settings;	/**< The global configuration */
 static config_t config;		/**< libconfig handle */
 
@@ -57,7 +59,7 @@ static void quit()
 }
 
 static void realtime_init()
-{
+{ INDENT
 	if (check_kernel_cmdline())
 		warn("You should reserve some cores for the server (see 'isolcpus')");
 	if (check_kernel_rt())
@@ -89,7 +91,7 @@ static void realtime_init()
 
 /* Setup exit handler */
 static void signals_init()
-{
+{ INDENT
 	struct sigaction sa_quit = {
 		.sa_flags = SA_SIGINFO,
 		.sa_sigaction = quit
@@ -141,22 +143,22 @@ int main(int argc, char *argv[])
 
 	/* Initialize lists */
 	list_init(&paths, (dtor_cb_t) path_destroy);
-
-	info("Initialize real-time system");
-	{ INDENT
-		realtime_init();
-	}
-
-	info("Initialize signals");
-	{ INDENT 
-		signals_init();
-	}
+	list_init(&nodes, (dtor_cb_t) node_destroy);
 
 	info("Parsing configuration");
 	{ INDENT
 		config_init(&config);
 		config_parse(configfile, &config, &settings, &nodes, &paths);
 	}
+	
+	info("Initialize real-time system");
+	realtime_init();
+
+	info("Initialize signals");
+	signals_init();
+
+	info("Initialize hook sub-system");
+	hook_init(&nodes, &paths, &settings);
 
 	info("Initialize node types");
 	list_foreach(struct node_type *vt, &node_types) { INDENT
@@ -171,6 +173,9 @@ int main(int argc, char *argv[])
 		else
 			warn("No path is using the node %s. Skipping...", node_name(n));
 	}
+	
+	/** @todo This is a ugly workaround to get a reference to the node list inside the stats_send() hook */
+	extern struct list *hook_nodes = &nodes;
 
 	info("Starting paths");
 	list_foreach(struct path *p, &paths) { INDENT

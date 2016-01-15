@@ -33,7 +33,6 @@ __attribute__((constructor)) static void __register() {	\
 	list_push(&node_types, vt);			\
 }
 
-extern struct list nodes;	/**< List of all nodes */
 extern struct list node_types;	/**< Vtable for virtual node sub types */
 
 /* Forward declarations */

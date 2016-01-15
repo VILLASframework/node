@@ -23,6 +23,7 @@
 #include "pool.h"
 
 struct settings settings; /** <The global configuration */
+struct list nodes;		
 
 static struct node *node;
 
@@ -132,6 +133,8 @@ check:
 
 	node_stop(node);
 	node_deinit(node->_vt);
+	
+	list_destroy(&nodes);
 	config_destroy(&config);
 
 	return 0;
