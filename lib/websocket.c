@@ -30,8 +30,8 @@
 /* Forward declarations */
 static struct node_type vt;
 
-static int protocol_cb_http(struct lws_context *, struct lws *, enum lws_callback_reasons, void *, void *, size_t);
-static int protocol_cb_live(struct lws_context *, struct lws *, enum lws_callback_reasons, void *, void *, size_t);
+static int protocol_cb_http(struct lws *, enum lws_callback_reasons, void *, void *, size_t);
+static int protocol_cb_live(struct lws *, enum lws_callback_reasons, void *, void *, size_t);
 
 /* Private static storage */
 static config_setting_t *cfg_root;		/**< Root config */
@@ -73,17 +73,17 @@ static char * get_mimetype(const char *resource_path)
 		return "text/plain";
 }
 
-static int protocol_cb_http(struct lws_context *context, struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
+static int protocol_cb_http(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
 	switch (reason) {
 		case LWS_CALLBACK_HTTP:			
 			if (!htdocs) {
-				lws_return_http_status(context, wsi, HTTP_STATUS_SERVICE_UNAVAILABLE, NULL);
+				lws_return_http_status(wsi, HTTP_STATUS_SERVICE_UNAVAILABLE, NULL);
 				goto try_to_reuse;
 			}
 
 			if (len < 1) {
-				lws_return_http_status(context, wsi, HTTP_STATUS_BAD_REQUEST, NULL);
+				lws_return_http_status(wsi, HTTP_STATUS_BAD_REQUEST, NULL);
 				goto try_to_reuse;
 			}
 
@@ -164,11 +164,11 @@ static int protocol_cb_http(struct lws_context *context, struct lws *wsi, enum l
 				char *mimetype = get_mimetype(path);
 				if (!mimetype) {
 					warn("HTTP: Unknown mimetype for %s", path);
-					lws_return_http_status(context, wsi, HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE, NULL);
+					lws_return_http_status(wsi, HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE, NULL);
 					return -1;
 				}
 
-				int n = lws_serve_http_file(context, wsi, path, mimetype, NULL, 0);
+				int n = lws_serve_http_file(wsi, path, mimetype, NULL, 0);
 				if      (n < 0)
 					return -1;
 				else if (n == 0)
@@ -190,7 +190,7 @@ try_to_reuse:
 	return 0;
 }
 
-static int protocol_cb_live(struct lws_context *context, struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
+static int protocol_cb_live(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
 	struct node *n;
 	struct websocket *w;
@@ -247,7 +247,7 @@ found:			* (void **) user = n;
 
 			pthread_mutex_unlock(&w->write.mutex);
 			
-			lws_write(wsi, (unsigned char *) (buf + LWS_SEND_BUFFER_PRE_PADDING), len, LWS_WRITE_TEXT);
+			lws_write(wsi, (unsigned char *) (buf + LWS_SEND_BUFFER_PRE_PADDING), len, LWS_WRITE_BINARY);
 
 			return 0;
 
@@ -418,7 +418,7 @@ int websocket_write(struct node *n, struct pool *pool, int cnt)
 	
 	/* Notify all active websocket connections to send new data */
 	list_foreach(struct lws *wsi, &w->connections)
-		lws_callback_on_writable(context, wsi);
+		lws_callback_on_writable(wsi);
 	
 	pthread_mutex_unlock(&w->write.mutex);
 		
