@@ -62,10 +62,7 @@ int main(int argc, char *argv[])
 		printf("  TEST    the name of the test to execute: 'rtt'\n");
 		printf("  NODE    name of the node which shoud be used\n\n");
 
-		printf("Simulator2Simulator Server %s (built on %s %s)\n",
-			BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-		printf(" copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC\n");
-		printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
+		print_copyright();
 
 		exit(EXIT_FAILURE);
 	}

@@ -60,10 +60,7 @@ static void usage(char *name)
 	printf("  NODE    the name of the node to which samples are sent and received from\n");
 	printf("  -r      swap read / write endpoints)\n\n");
 
-	printf("Simulator2Simulator Server %s (built on %s %s)\n",
-		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-	printf(" copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC\n");
-	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
+	print_copyright();
 
 	exit(EXIT_FAILURE);
 }

@@ -66,6 +66,9 @@
 struct settings;
 struct timespec;
 
+/** Print copyright message to screen. */
+void print_copyright();
+
 /** Normal random variate generator using the Box-Muller method
  *
  * @param m Mean

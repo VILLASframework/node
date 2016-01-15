@@ -38,10 +38,7 @@ int main(int argc, char *argv[])
 		printf("  RATE   how many messages per second\n");
 		printf("  LIMIT  only send LIMIT messages\n\n");
 
-		printf("Simulator2Simulator Server %s (built on %s %s)\n",
-			BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-		printf(" copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC\n");
-		printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
+		print_copyright();
 
 		exit(EXIT_FAILURE);
 	}

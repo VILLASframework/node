@@ -19,6 +19,14 @@
 #include "cfg.h"
 #include "utils.h"
 
+void print_copyright()
+{
+	printf("Simulator2Simulator Server %s (built on %s %s)\n",
+		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
+	printf(" copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC\n");
+	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
+}
+
 int version_parse(const char *s, struct version *v)
 {
 	return sscanf(s, "%u.%u", &v->major, &v->minor) != 2;

@@ -113,10 +113,8 @@ static void usage(const char *name)
 	list_foreach(struct node_type *vt, &node_types)
 		printf(" - %s: %s\n", vt->name, vt->description);
 	printf("\n");
-	printf("Simulator2Simulator Server %s (built on %s %s)\n",
-		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-	printf(" copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC\n");
-	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
+
+	print_copyright();
 
 	exit(EXIT_FAILURE);
 }
