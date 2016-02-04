@@ -8,6 +8,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <libgen.h>
 
 #include "utils.h"
 #include "list.h"
@@ -20,17 +21,23 @@
 int config_parse(const char *filename, config_t *cfg, struct settings *set,
 	struct list *nodes, struct list *paths)
 {
+	char *filename_cpy = strdup(filename);
+	char *include_dir = dirname(filename_cpy);
+
+	/* Setup libconfig */
 	config_set_auto_convert(cfg, 1);
+	config_set_include_dir(cfg, include_dir);
 
-	int  ret = strcmp("-", filename) ? config_read_file(cfg, filename)
-					 : config_read(cfg, stdin);
+	free(filename_cpy);
 
-	if (ret != CONFIG_TRUE)
+	int ret = strcmp("-", filename) ? config_read_file(cfg, filename) : config_read(cfg, stdin);
+	if (ret != CONFIG_TRUE) {
 		error("Failed to parse configuration: %s in %s:%d",
 			config_error_text(cfg),
 			config_error_file(cfg) ? config_error_file(cfg) : filename,
 			config_error_line(cfg)
 		);
+	}
 
 	config_setting_t *cfg_root = config_root_setting(cfg);
 
