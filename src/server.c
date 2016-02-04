@@ -173,9 +173,6 @@ int main(int argc, char *argv[])
 		else
 			warn("No path is using the node %s. Skipping...", node_name(n));
 	}
-	
-	/** @todo This is a ugly workaround to get a reference to the node list inside the stats_send() hook */
-	extern struct list *hook_nodes = &nodes;
 
 	info("Starting paths");
 	list_foreach(struct path *p, &paths) { INDENT

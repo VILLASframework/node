@@ -455,9 +455,6 @@ void hook_stats_header()
 	line();
 }
 
-/** @todo Come up with a better solution for this ugly workaround */
-struct list *hook_nodes = NULL;
-
 REGISTER_HOOK("stats_send", 99, hook_stats_send, HOOK_PRIVATE | HOOK_PERIODIC)
 int hook_stats_send(struct path *p, struct hook *h, int when)
 {
