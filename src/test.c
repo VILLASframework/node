@@ -28,8 +28,8 @@ struct list nodes;
 static struct node *node;
 
 /* Test options */
-static int running = 1; /**< Initiate shutdown if zero */
-static int count =  -1;	/**< Amount of messages which should be sent (default: -1 for unlimited) */
+static int running = 1; 	/**< Initiate shutdown if zero */
+static int count =  -1;		/**< Amount of messages which should be sent (default: -1 for unlimited) */
 
 /** File descriptor for Matlab results.
  * This allows you to write Matlab results in a seperate log file:
