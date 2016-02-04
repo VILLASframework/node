@@ -218,7 +218,7 @@ int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings
 		cerror(cfg, "Failed to parse node '%s'", node_name(n));
 
 	if (config_setting_lookup_int(cfg, "vectorize", &n->vectorize)) {
-		config_setting_t *cfg_vectorize = config_lookup_from(cfg, "vectorize");
+		config_setting_t *cfg_vectorize = config_setting_lookup(cfg, "vectorize");
 		
 		if (n->vectorize <= 0)
 			cerror(cfg_vectorize, "Invalid value for `vectorize`. Must be natural number!");

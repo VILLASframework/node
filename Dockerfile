@@ -17,13 +17,15 @@ MAINTAINER Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 EXPOSE 80
 EXPOSE 443
 
-# Update package manager
-RUN apt-get update
-
 # Install development environement
-RUN apt-get -y install \
+RUN apt-get update && \
+    apt-get -y install \
         gcc \
+	g++ \
+	clang \
 	gdb \
+	bison \
+	flex \
 	make \
 	cmake \
 	libc6-dev \
@@ -35,7 +37,8 @@ RUN apt-get -y install \
 	vim
 
 # Install dependencies for native arch
-RUN apt-get -y install \
+RUN apt-get update && \
+    apt-get -y install \
         libconfig-dev \
         libnl-3-dev \
         libnl-route-3-dev \

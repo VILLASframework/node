@@ -20,6 +20,11 @@
 struct list;
 struct settings;
 
+/* Compatibility with libconfig < 1.5 */
+#if (LIBCONFIG_VER_MAJOR <= 1) && (LIBCONFIG_VER_MINOR < 5)
+  #define config_setting_lookup config_lookup_from
+#endif
+
 /** Parse config file and store settings in supplied struct settings.
  *
  * @param filename The path to the configration file (relative or absolute)

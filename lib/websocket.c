@@ -331,7 +331,7 @@ int websocket_init(int argc, char * argv[], config_setting_t *cfg)
 	lws_set_log_level((1 << LLL_COUNT) - 1, logger);
 	
 	/* Parse global config */
-	cfg_http = config_lookup_from(cfg, "http");
+	cfg_http = config_setting_lookup(cfg, "http");
 	if (cfg_http) {
 		config_setting_lookup_string(cfg_http, "ssl_cert", &ssl_cert);
 		config_setting_lookup_string(cfg_http, "ssl_private_key", &ssl_private_key);

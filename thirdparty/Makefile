@@ -1,34 +1,35 @@
-DEPS = libconfig-1.5 libnl-3.2.25 doxygen-1.8.10 pciutils-3.4.0 libwebsockets-master
+DEPS = libconfig-1.5 libnl-3.2.25 doxygen-1.8.10 pciutils-3.4.1 libwebsockets-1.6.2
 
 .PHONY: $(DEPS) all
 
-PREFIX=$(shell pwd)
+TMPDIR ?= $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+PREFIX ?= /usr/local
 
 # Install all dependencies
 all: $(DEPS)
 
 # Download latest doxygen
 doxygen-1.8.10:
-	wget -O- http://ftp.stack.nl/pub/users/dimitri/doxygen-1.8.10.linux.bin.tar.gz | tar xzC $(PREFIX)
+	wget -O- http://ftp.stack.nl/pub/users/dimitri/doxygen-1.8.10.linux.bin.tar.gz | tar xzC $(TMPDIR)
 
 # Install & compile libconfig dependency
 libconfig-1.5:
-	wget -O- http://www.hyperrealm.com/libconfig/libconfig-1.5.tar.gz | tar -xzC $(PREFIX)
-	cd $@ && ./configure --prefix=$(PWD)/usr/ --disable-examples && make install
+	wget -O- http://www.hyperrealm.com/libconfig/libconfig-1.5.tar.gz | tar -xzC $(TMPDIR)
+	cd $@ && ./configure --prefix=$(PREFIX) --disable-examples && make install
 
 # Install & compile libnl3 dependency
 libnl-3.2.25:
-	wget -O- http://www.infradead.org/~tgr/libnl/files/libnl-3.2.25.tar.gz | tar -xzC $(PREFIX)
-	cd $@ && ./configure --prefix=$(PWD)/usr/ --disable-cli && make install
+	wget -O- http://www.infradead.org/~tgr/libnl/files/libnl-3.2.25.tar.gz | tar -xzC $(TMPDIR)
+	cd $@ && ./configure --prefix=$(PREFIX) --disable-cli && make install
 
 # Install & compile libpci dependency
-pciutils-3.4.0:
-	wget -O- ftp://atrey.karlin.mff.cuni.cz/pub/linux/pci/pciutils-3.4.0.tar.gz | tar -xzC $(PREFIX)
-	cd $@ && make && make install-lib PREFIX=$(PREFIX)
+pciutils-3.4.1:
+	wget -O- ftp://atrey.karlin.mff.cuni.cz/pub/linux/pci/pciutils-3.4.1.tar.gz | tar -xzC $(TMPDIR)
+	cd $@ && make clean && make SHARED=yes && make install-lib PREFIX=$(PREFIX)
+	ln -s $(PREFIX)/lib/libpci.so.3.4.1 $(PREFIX)/lib/libpci.so
 
 # Install & compile libwebsockets dependency
-# @todo maybe we should use a static ref here..
-libwebsockets-master:
+libwebsockets-1.6.2:
 	mkdir -p $@/build
-	wget -O- https://api.github.com/repos/warmcat/libwebsockets/tarball | tar --strip-components=1 -xzC $(PREFIX)/$@
-	cd $@/build && cmake .. && make && make install
+	wget -O- https://github.com/warmcat/libwebsockets/archive/v1.6.2.tar.gz | tar -xzC $(TMPDIR)
+	cd $@/build && cmake -DCMAKE_INSTALL_PREFIX:PATH=$(PREFIX) .. && make install
