@@ -220,6 +220,9 @@ static int protocol_cb_live(struct lws *wsi, enum lws_callback_reasons reason, v
 found:			* (void **) user = n;
 			w = n->_vd;
 			
+			if (w->shutdown)
+				goto shutdown;
+			
 			list_push(&w->connections, wsi);
 				
 			info("WebSocket: New Connection for node: %s from %s (%s)", node_name(n), client_name, client_ip);
@@ -242,6 +245,8 @@ found:			* (void **) user = n;
 				return -1;
 			
 			w = n->_vd;
+			if (w->shutdown)
+				goto shutdown;
 			
 			if (!w->write.pool)
 				return 0; /* no samples available to send */
@@ -308,6 +313,16 @@ found:			* (void **) user = n;
 		default:
 			return 0;
 	}
+
+shutdown:
+	warn("Dropping connection: node is currently shutting down");
+
+#if LWS_LIBRARY_VERSION_NUMBER > 1006002
+	char *bye = "S2SS is shutting down. Bye";
+	lws_close_reason(wsi, LWS_CLOSE_STATUS_GOINGAWAY, (unsigned char *) bye, strlen(bye));
+#endif
+	
+	return -1;
 }
 
 static void logger(int level, const char *msg) {
@@ -384,11 +399,11 @@ int websocket_init(int argc, char * argv[], config_setting_t *cfg)
 
 int websocket_deinit()
 {
-	pthread_cancel(thread);
-	pthread_join(thread, NULL);
-
 	lws_cancel_service(context);
 	lws_context_destroy(context);
+
+	pthread_cancel(thread);
+	pthread_join(thread, NULL);
 	
 	return 0;
 }
@@ -410,6 +425,18 @@ int websocket_open(struct node *n)
 }
 
 int websocket_close(struct node *n)
+{
+	struct websocket *w = n->_vd;
+	
+	w->shutdown = 1;
+	
+	list_foreach(struct lws *wsi, &w->connections)
+		lws_callback_on_writable(wsi);
+		
+	return 0;
+}
+
+int websocket_destroy(struct node *n)
 {
 	struct websocket *w = n->_vd;
 
@@ -457,6 +484,7 @@ static struct node_type vt = {
 	.size		= sizeof(struct websocket),
 	.open		= websocket_open,
 	.close		= websocket_close,
+	.destroy	= websocket_destroy,
 	.read		= websocket_read,
 	.write		= websocket_write,
 	.init		= websocket_init,

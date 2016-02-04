@@ -33,6 +33,7 @@ struct websocket {
 		size_t cnt;
 	} read, write;
 	
+	int shutdown;
 	struct list connections; /**< List of struct libwebsockets sockets */
 };
 
@@ -47,6 +48,9 @@ int websocket_open(struct node *n);
 
 /** @see node_vtable::close */
 int websocket_close(struct node *n);
+
+/** @see node_vtable::close */
+int websocket_destroy(struct node *n);
 
 /** @see node_vtable::read */
 int websocket_read(struct node *n, struct pool *pool, int cnt);
