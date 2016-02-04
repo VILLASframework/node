@@ -196,6 +196,12 @@ static int protocol_cb_live(struct lws *wsi, enum lws_callback_reasons reason, v
 	struct websocket *w;
 
 	char *buf, uri[1024];
+	char client_name[128], client_ip[128];
+
+	lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi),
+		client_name, sizeof(client_name), 
+		client_ip, sizeof(client_ip)
+	);
 	
 	switch (reason) {
 		case LWS_CALLBACK_ESTABLISHED:
@@ -207,7 +213,7 @@ static int protocol_cb_live(struct lws *wsi, enum lws_callback_reasons reason, v
 					goto found;
 			}
 
-			warn("WebSocket: New Connection for non-exsitent node: %s", uri + 1);
+			warn("WebSocket: Closing Connection for non-existent node: %s", uri + 1);
 
 			return -1;
 
@@ -216,7 +222,7 @@ found:			* (void **) user = n;
 			
 			list_push(&w->connections, wsi);
 				
-			info("WebSocket: New Connection for node: %s", n->name);
+			info("WebSocket: New Connection for node: %s from %s (%s)", node_name(n), client_name, client_ip);
 
 			return 0;
 		
@@ -226,7 +232,7 @@ found:			* (void **) user = n;
 				
 			list_remove(&w->connections, wsi);
 			
-			info("WebSocket: Connection closed for node: %s", n->name);
+			info("WebSocket: Connection closed for node: %s", node_name(n));
 
 			return 0;
 		
@@ -294,6 +300,10 @@ static void logger(int level, const char *msg) {
 	int len = strlen(msg);
 	if (strchr(msg, '\n'))
 		len -= 1;
+	
+	/* Decrease severity for some errors. */
+	if (strstr(msg, "Unable to open") == msg)
+		level = LLL_WARN;
 		
 	switch (level) {
 		case LLL_ERR:  error("WebSocket: %.*s", len, msg); break;
@@ -308,6 +318,8 @@ static void * server_thread(void *ctx)
 	debug(3, "WebSocket: Started server thread");
 	
 	while (lws_service(context, 10) >= 0);
+	
+	debug(3, "WebSocket: shutdown voluntarily");
 	
 	return NULL;
 }
