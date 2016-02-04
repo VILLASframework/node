@@ -18,10 +18,6 @@ or the following line for Fedora / CentOS / Redhat systems:
 
     $ sudo yum install pkgconfig gcc make libconfig-devel libnl3-devel pciutils-devel libcurl-devel jansson-devel libuuid-devel
 
-**Important:** Please note that the server requires the
-[iproute2](http://www.linuxfoundation.org/collaborate/workgroups/networking/iproute2)
-tools to setup the network emulation and interfaces.
-
 ### Compilation
 
 Checkout the `Makefile` and `include/config.h` for some options which have to be specified at compile time.
