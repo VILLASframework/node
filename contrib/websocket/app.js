@@ -41,9 +41,9 @@ $(document).on('ready', function() {
 					})
 				).addClass(node.name == currentNode.name ? 'active' : '')
 			);
-
-			wsConnect(wsUrl(currentNode.name), ["live"]);
 		});
+		
+		wsConnect(wsUrl(currentNode.name), ["live"]);
 	});
 	
 	$('#slider').slider({
