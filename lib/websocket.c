@@ -248,7 +248,7 @@ found:			* (void **) user = n;
 			if (w->shutdown)
 				goto shutdown;
 			
-			if (!w->write.pool)
+			if (w->write.pool == NULL || w->write.cnt == 0)
 				return 0; /* no samples available to send */
 			
 			pthread_mutex_lock(&w->write.mutex);
@@ -274,6 +274,10 @@ found:			* (void **) user = n;
 				
 				memcpy(dst, src, bytes);
 			}
+			
+			/* We've done our work here. Do not send again.. */
+			w->write.pool = NULL;
+			w->write.pool = 0;
 
 			pthread_mutex_unlock(&w->write.mutex);
 			
