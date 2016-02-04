@@ -3,9 +3,8 @@ var connection;
 
 var seq = 0;
 
-var node = getParameterByName("node") || "ws";
-var url = wsUrl(node);
-var protocol = ['live'];
+var currentNode;
+var nodes = [ ];
 var updateRate = 1.0 / 25;
 
 var plotData = [];
@@ -18,28 +17,32 @@ var plotOptions = {
 	}
 };
 
-var msg = new Msg();
-
 var xPast  = 10*1000;
 var xFuture = 5*1000;
 
 $(document).on('ready', function() {
 	$.getJSON('/nodes.json', function(data) {
-		$(data).each(function(index, n) {
-			var title = n.description ? n.description : n.name;
-			
-			if (n.unit)
-				title += " [" + n.unit + "]";
-			
+		nodes = data;
+		
+		for (var i = 0; i < nodes.length; i++)
+			if (nodes[i].name == getParameterByName("node"))
+				currentNode = nodes[i];
+		
+		if (currentNode === undefined)
+			currentNode = nodes[0];
+		
+		nodes.forEach(function(node, index) {
 			$(".node-selector").append(
 				$("<li>").append(
 					$("<a>", {
-						text: title,
-						title: n.name,
-						href: "?node=" + n.name
+						text: node.description ? node.description : node.name,
+						title: node.name,
+						href: "?node=" + node.name
 					})
-				).addClass(n.name == node ? 'active' : '')
+				).addClass(node.name == currentNode.name ? 'active' : '')
 			);
+
+			wsConnect(wsUrl(currentNode.name), ["live"]);
 		});
 	});
 	
@@ -53,8 +56,6 @@ $(document).on('ready', function() {
 		$(button).addClass('on');
 	});
 	
-	wsConnect();
-	
 	setInterval(plotUpdate, updateRate);
 });
 
@@ -66,8 +67,10 @@ function plotUpdate() {
 	// add data to arrays
 	for (var i = 0; i < plotData.length; i++) {
 		// remove old values
-		//while (plotData[i].length > 0 && plotData[i][0][0] < (Date.now() - xDelta))
-		//	plotData[i].shift()
+		while (plotData[i].length > 0 && plotData[i][0][0] < (Date.now() - xPast))
+			plotData[i].shift()
+			
+		var seriesOptions = nodes
 		
 		data[i] = {
 			data : plotData[i],
@@ -77,6 +80,9 @@ function plotUpdate() {
 				lineWidth: 2
 			}
 		}
+		
+		if (currentNode.series !== undefined && currentNode.series[i] !== undefined)
+			$.extend(true, data[i], currentNode.series[i]);
 	}
 	
 	var options = {
@@ -105,8 +111,10 @@ function wsDisconnect() {
 	plotData = [];
 }
 
-function wsConnect() {
+function wsConnect(url, protocol) {
 	connection = new WebSocket(url, protocol);
+	connection.binaryType = 'arraybuffer';
+	
 	
 	connection.onopen = function() {
 		$('#connectionStatus')
@@ -127,17 +135,21 @@ function wsConnect() {
 	};
 
 	connection.onmessage = function(e) {
-		var msg = new Msg();
-		
-		msg.parse(e.data);
+		var msgs = Msg.fromArrayBufferVector(e.data);
 
-		// add empty arrays for data
-		while (plotData.length < msg.values.length)
-			plotData.push([]);
+		for (var j = 0; j < msgs.length; j++) {
+			var msg = msgs[j];
 
-		// add data to arrays
-		for (var i = 0; i < msg.values.length; i++)
-			plotData[i].push([msg.ts, msg.values[i]]);
+			// add empty arrays for data
+			while (plotData.length < msg.values)
+				plotData.push([]);
+
+			// add data to arrays
+			for (var i = 0; i < msg.values; i++) {
+				plotData[i].push([msg.timestamp, msg.data[i]]);
+				console.log([msg.timestamp, msg.data[i]]);
+			}
+		}
 	};	
 };
 

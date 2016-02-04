@@ -12,23 +12,7 @@
  * @{
  **********************************************************************************/
 
-var S2SS = S2SS || {};
-
-/* Some constants for the binary protocol */
-const Msg.VERSION		= 1;
-
-const Msg.TYPE_DATA		= 0; /**< Message contains float values */
-const Msg.TYPE_START		= 1; /**< Message marks the beginning of a new simulation case */
-const Msg.TYPE_STOP		= 2; /**< Message marks the end of a simulation case */
-const Msg.TYPE_EMPTY		= 3; /**< Message does not carry useful data */
-
-const Msg.ENDIAN_LITTLE		= 0; /**< Message values are in little endian format (float too!) */
-const Msg.ENDIAN_BIG		= 1; /**< Message values are in bit endian format */
-
-/* Some offsets in the binary message */
-const Msg.OFFSET_ENDIAN		= 1;
-const Msg.OFFSET_TYPE		= 2;
-const Msg.OFFSET_VERSION	= 4;
+//var S2SS = S2SS || {};
 
 /* Class for parsing and printing a message / sample */
 function Msg(members) {
@@ -36,57 +20,73 @@ function Msg(members) {
 		this[k] = members[k];
 }
 
-Msg.prototype.length = function() {
-	return this.length * 4 + 16;
+/* Some constants for the binary protocol */
+Msg.prototype.VERSION		= 1;
+
+Msg.prototype.TYPE_DATA		= 0; /**< Message contains float values */
+Msg.prototype.TYPE_START	= 1; /**< Message marks the beginning of a new simulation case */
+Msg.prototype.TYPE_STOP		= 2; /**< Message marks the end of a simulation case */
+
+Msg.prototype.ENDIAN_LITTLE	= 0; /**< Message values are in little endian format (float too!) */
+Msg.prototype.ENDIAN_BIG	= 1; /**< Message values are in bit endian format */
+
+/* Some offsets in the binary message */
+Msg.prototype.OFFSET_ENDIAN	= 1;
+Msg.prototype.OFFSET_TYPE	= 2;
+Msg.prototype.OFFSET_VERSION	= 4;
+
+Msg.prototype.values = function() {
+	return this.values * 4 + 16;
 }
 
 Msg.prototype.toArrayBuffer = function() {
-	var blob = new ArrayBuffer(this.length());
+	var blob = new ArrayBuffer(this.values());
 	
 	return blob;
 }
 
-Msg.prototype.fromArrayBuffer = function(blob) {
-	var hdr = new UInt32Array(blob, 0, 16);
-	var hdr16 = new UInt16Array(blob, 0, 16);
+Msg.fromArrayBuffer = function(data) {
+	var bits = data.getUint8(0);
+	var endian = (bits >> Msg.OFFSET_ENDIAN) & 0x1 ? 0 : 1;
 
 	var msg = new Msg({
-		endian:  (hdr[0] >> MSG_OFFSET_ENDIAN) & 0x1,
-		version: (hdr[0] >> MSG_OFFSET_VERSION) & 0xF,
-		type:    (hdr[0] >> MSG_OFFSET_TYPE) & 0x3,
-		length:   hdr16[1],
-		sequence: hdr[1],
-		timestamp: 1e3 * (hdr[2] + hdr[3]), // in milliseconds
-		blob : blob
+		endian:  (bits >> Msg.OFFSET_ENDIAN) & 0x1,
+		version: (bits >> Msg.OFFSET_VERSION) & 0xF,
+		type:    (bits >> Msg.OFFSET_TYPE) & 0x3,
+		values:    data.getUint16(0x02, endian),
+		sequence:  data.getUint32(0x04, endian),
+		timestamp: data.getUint32(0x08, endian) * 1e3 +
+		           data.getUint32(0x0C, endian) * 1e-6,
 	});
+	
+	msg.blob = new DataView(    data.buffer, data.byteOffset + 0x00, (msg.values + 4) * 4);
+	msg.data = new Float32Array(data.buffer, data.byteOffset + 0x10, msg.values);
 
-	if (msg.endian == MSG_ENDIAN_BIG) {
-		console.warn("Unsupported endianness. Skipping message!");
-		continue;
+	if (msg.endian != host_endianess()) {
+		console.warn("Message is not given in host endianess!");
 
-		/* @todo not working yet
-		hdr = hdr.map(swap32);
-		values = values.map(swap32);
-		*/
+		var data = new Uint32Array(msg.blob, 0x10);
+		for (var i = 0; i < data.length; i++)
+			data[i] = swap32(data[i]);
 	}
 	
-	
-	msg.values = new Float32Array(msg, offset + 16, length * 4); // values reinterpreted as floats with 16byte offset in msg
+	return msg;
 }
 
-Msg.prototype.fromArrayBufferVector = function(blob) {
+Msg.fromArrayBufferVector = function(blob) {
 	/* some local variables for parsing */
 	var offset = 0;
 	var msgs = [];
 
 	/* for every msg in vector */
-	while (offset < msg.byteLength) {
-		var msg = Msg.fromArrayBuffer(ArrayBuffer(blob, offset));
+	while (offset < blob.byteLength) {
+		var msg = Msg.fromArrayBuffer(new DataView(blob, offset));
 		
-		if (msg != undefined)
+		if (msg != undefined) {
 			msgs.push(msg);
 
-		offset += msg.blobLength;
+			offset += msg.blob.byteLength;
+		}
 	}
 
 	return msgs;
@@ -104,5 +104,11 @@ function swap32(val) {
            | ((val >> 8) & 0xFF00)
            | ((val >> 24) & 0xFF);
 }
+
+function host_endianess() {
+	var buffer = new ArrayBuffer(2);
+	new DataView(buffer).setInt16(0, 256, true /* littleEndian */);
+	return new Int16Array(buffer)[0] === 256 ? 0 : 1; // Int16Array uses the platform's endianness.
+};
 
 /** @} */
