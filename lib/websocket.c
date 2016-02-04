@@ -196,12 +196,6 @@ static int protocol_cb_live(struct lws *wsi, enum lws_callback_reasons reason, v
 	struct websocket *w;
 
 	char *buf, uri[1024];
-	char client_name[128], client_ip[128];
-
-	lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi),
-		client_name, sizeof(client_name), 
-		client_ip, sizeof(client_ip)
-	);
 	
 	switch (reason) {
 		case LWS_CALLBACK_ESTABLISHED:
@@ -224,7 +218,14 @@ found:			* (void **) user = n;
 				goto shutdown;
 			
 			list_push(&w->connections, wsi);
-				
+			
+			/* Get peer information */
+			char client_name[128], client_ip[128];
+			lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi),
+				client_name, sizeof(client_name), 
+				client_ip, sizeof(client_ip)
+			);
+
 			info("WebSocket: New Connection for node: %s from %s (%s)", node_name(n), client_name, client_ip);
 
 			return 0;
@@ -245,17 +246,19 @@ found:			* (void **) user = n;
 				return -1;
 			
 			w = n->_vd;
+			if (!w)
+				return -1;
+
 			if (w->shutdown)
 				goto shutdown;
+			
+			pthread_mutex_lock(&w->write.mutex);
 			
 			if (w->write.pool == NULL || w->write.cnt == 0)
 				return 0; /* no samples available to send */
 			
-			pthread_mutex_lock(&w->write.mutex);
-			
-			size_t bytes = 0;
-			
 			/* Calculate required buffer size */
+			size_t bytes = 0;
 			for (int i = 0; i < w->write.cnt; i++) {
 				struct msg *src = pool_getrel(w->write.pool, i);
 				bytes += MSG_LEN(src->values);
@@ -292,7 +295,7 @@ found:			* (void **) user = n;
 
 			w = n->_vd;
 			
-			if (!w->read.cnt)
+			if (w->read.pool == NULL || w->read.cnt == 0)
 				return 0;
 
 			pthread_mutex_lock(&w->read.mutex);
@@ -310,7 +313,7 @@ found:			* (void **) user = n;
 			}
 
 			pthread_mutex_unlock(&w->read.mutex);			
-			pthread_cond_broadcast(&w->read.cond);
+			pthread_cond_broadcast(&w->read.cond); /* new data available, wake-up websocket_read() */
 
 			return 0;
 			
