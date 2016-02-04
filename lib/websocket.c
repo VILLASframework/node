@@ -242,14 +242,33 @@ found:			* (void **) user = n;
 				return -1;
 			
 			w = n->_vd;
-			if (!w->write.m)
-				return 0;
 			
-			buf = malloc(LWS_SEND_BUFFER_PRE_PADDING + LWS_SEND_BUFFER_POST_PADDING + 4096);
+			if (!w->write.pool)
+				return 0; /* no samples available to send */
 			
 			pthread_mutex_lock(&w->write.mutex);
+			
+			size_t bytes = 0;
+			
+			/* Calculate required buffer size */
+			for (int i = 0; i < w->write.cnt; i++) {
+				struct msg *src = pool_getrel(w->write.pool, i);
+				bytes += MSG_LEN(src->values);
+			}
+			
+			/* Allocate buffer */
+			buf = malloc(LWS_SEND_BUFFER_PRE_PADDING + bytes);
 
-			len = msg_print(buf + LWS_SEND_BUFFER_PRE_PADDING, 4096, w->write.m, MSG_PRINT_NANOSECONDS | MSG_PRINT_VALUES, 0);
+			/* Fill buffer */
+			for (int i = 0; i < w->write.cnt; i++) {
+				struct msg *src = pool_getrel(w->write.pool, i);
+				struct msg *dst = (struct msg *) (buf + len + LWS_SEND_BUFFER_PRE_PADDING);
+
+				size_t bytes = MSG_LEN(src->values);
+				len += bytes;
+				
+				memcpy(dst, src, bytes);
+			}
 
 			pthread_mutex_unlock(&w->write.mutex);
 			
@@ -271,19 +290,14 @@ found:			* (void **) user = n;
 
 			size_t offset = 0;
 			for (int i = 0; i < w->read.cnt; i++) {
-				struct msg *dst = pool_get_relative(w->read.pool, i);
-#if 1
-				struct msg *src = (char *) in + offset;
+				struct msg *dst = pool_getrel(w->read.pool, i);
+				struct msg *src = (struct msg *) in + offset;
 
 				memcpy(dst, src, MSG_LEN(src->values));
 
 				offset += MSG_LEN(src->values);
 				if (offset >= len)
 					break;
-#else
-				/** @todo untested */
-				msg_scan(in, dst, NULL, NULL);
-#endif
 			}
 
 			pthread_mutex_unlock(&w->read.mutex);			
@@ -421,7 +435,6 @@ int websocket_read(struct node *n, struct pool *pool, int cnt)
 int websocket_write(struct node *n, struct pool *pool, int cnt)
 {
 	struct websocket *w = n->_vd;
-	struct msg *m = pool + (first % poolsize);
 
 	pthread_mutex_lock(&w->write.mutex);
 
@@ -440,7 +453,7 @@ int websocket_write(struct node *n, struct pool *pool, int cnt)
 static struct node_type vt = {
 	.name		= "websocket",
 	.description	= "Send and receive samples of a WebSocket connection (libwebsockets)",
-	.vectoroize	= 0, /* unlimited */
+	.vectorize	= 0, /* unlimited */
 	.size		= sizeof(struct websocket),
 	.open		= websocket_open,
 	.close		= websocket_close,
