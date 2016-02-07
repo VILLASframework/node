@@ -89,9 +89,6 @@ static void * path_run(void *arg)
 			error("Failed to receive message from node %s", node_name(p->in));
 		else if (recv == 0)
 			continue;
-		
-		/* Update tail pointer of message pool by the amount of actually received messages. */
-		pool_push(&p->pool, recv);
 
 		/** @todo Replace this timestamp by hardware timestamping for node type which support it. */
 		p->ts.last = p->ts.recv;
@@ -107,6 +104,9 @@ static void * path_run(void *arg)
 
 		/* For each received message... */
 		for (int i = 0; i < recv; i++) {
+			/* Update tail pointer of message pool by the amount of actually received messages. */
+			pool_push(&p->pool, 1);
+			
 			p->received++;
 
 			/* Run hooks for filtering, stats collection and manipulation */

@@ -17,10 +17,10 @@
 #define pool_end(pool)		pool_get(pool, pool->lenght)
 
 /** Return pointer to last element which has been inserted. */
-#define pool_current(pool)	pool_getrel(pool,  0)
+#define pool_current(pool)	pool_getrel(pool, -1)
 
 /** Return pointer to the element before the previously added one. */
-#define pool_previous(pool)	pool_getrel(pool, -1)
+#define pool_previous(pool)	pool_getrel(pool, -2)
 
 /** Iterate through the circuluar buffer. */
 #define pool_foreach(ptr, pool, start, end) for (int _i = start, _p; _p = 1, _i < end; _i++) \
