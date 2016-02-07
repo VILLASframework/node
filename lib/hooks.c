@@ -44,6 +44,23 @@ int hooks_sort_priority(const void *a, const void *b) {
 	return ha->priority - hb->priority;
 }
 
+int hook_run(struct path *p, enum hook_type t)
+{
+	int ret = 0;
+
+	list_foreach(struct hook *h, &p->hooks) {
+		if (h->type & t) {
+			debug(22, "Running hook when=%u '%s' prio=%u", t, h->name, h->priority);
+
+			ret = ((hook_cb_t) h->cb)(p, h, t);
+			if (ret)
+				return ret;
+		}
+	}
+
+	return ret;
+}
+
 REGISTER_HOOK("print", 99, hook_print, HOOK_MSG)
 int hook_print(struct path *p, struct hook *h, int when)
 {
@@ -324,7 +341,7 @@ int hook_restart(struct path *p, struct hook *h, int when)
 		p->dropped  = 0;
 		p->received = 1;
 
-		if (path_run_hook(p, HOOK_PATH_RESTART))
+		if (hook_run(p, HOOK_PATH_RESTART))
 			return -1;
 	}
 

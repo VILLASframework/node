@@ -126,15 +126,6 @@ void path_print_stats(struct path *p);
  */
 const char * path_name(struct path *p);
 
-/** Conditionally execute the hooks
- *
- * @param p A pointer to the path structure.
- * @param t Which type of hooks should be executed?
- * @retval 0 All registred hooks for the specified type have been executed successfully. 
- * @retval <0 On of the hook functions signalized, that the processing should be aborted; message should be skipped.
- */
-int path_run_hook(struct path *p, enum hook_type t);
-
 /** Check if node is used as source or destination of a path. */
 int path_uses_node(struct path *p, struct node *n);
 

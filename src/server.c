@@ -188,7 +188,7 @@ int main(int argc, char *argv[])
 
 		for (;;) {
 			list_foreach(struct path *p, &paths)
-				path_run_hook(p, HOOK_PERIODIC);
+				hook_run(p, HOOK_PERIODIC);
 			usleep(settings.stats * 1e6);
 		}
 	}

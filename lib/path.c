@@ -31,23 +31,6 @@ static void path_write(struct path *p)
 	}
 }
 
-int path_run_hook(struct path *p, enum hook_type t)
-{
-	int ret = 0;
-
-	list_foreach(struct hook *h, &p->hooks) {
-		if (h->type & t) {
-			debug(22, "Running hook when=%u '%s' prio=%u", t, h->name, h->priority);
-
-			ret = ((hook_cb_t) h->cb)(p, h, t);
-			if (ret)
-				return ret;
-		}
-	}
-
-	return ret;
-}
-
 /** Send messages asynchronously */
 static void * path_run_async(void *arg)
 {
@@ -67,7 +50,7 @@ static void * path_run_async(void *arg)
 		if (p->received == 0)
 			continue;
 
-		if (path_run_hook(p, HOOK_ASYNC))
+		if (hook_run(p, HOOK_ASYNC))
 			continue;
 
 		path_write(p);
@@ -97,7 +80,7 @@ static void * path_run(void *arg)
 		debug(15, "Received %u messages from node %s", recv, node_name(p->in));
 
 		/* Run preprocessing hooks */
-		if (path_run_hook(p, HOOK_PRE)) {
+		if (hook_run(p, HOOK_PRE)) {
 			p->skipped += recv;
 			continue;
 		}
@@ -110,14 +93,14 @@ static void * path_run(void *arg)
 			p->received++;
 
 			/* Run hooks for filtering, stats collection and manipulation */
-			if (path_run_hook(p, HOOK_MSG)) {
+			if (hook_run(p, HOOK_MSG)) {
 				p->skipped++;
 				continue;
 			}
 		}
 
 		/* Run post processing hooks */
-		if (path_run_hook(p, HOOK_POST)) {
+		if (hook_run(p, HOOK_POST)) {
 			p->skipped += recv;
 			continue;
 		}
@@ -138,7 +121,7 @@ int path_start(struct path *p)
 	/* We sort the hooks according to their priority before starting the path */
 	list_sort(&p->hooks, hooks_sort_priority);
 
-	if (path_run_hook(p, HOOK_PATH_START))
+	if (hook_run(p, HOOK_PATH_START))
 		return -1;
 
 	/* At fixed rate mode, we start another thread for sending */
@@ -171,7 +154,7 @@ int path_stop(struct path *p)
 	
 	p->state = PATH_STOPPED;
 
-	if (path_run_hook(p, HOOK_PATH_STOP))
+	if (hook_run(p, HOOK_PATH_STOP))
 		return -1;
 
 	return 0;
