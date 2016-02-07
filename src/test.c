@@ -53,18 +53,22 @@ void quit()
 	running = 0;
 }
 
+void usage(char *name)
+{
+	printf("Usage: %s CONFIG TEST NODE [ARGS]\n", name);
+	printf("  CONFIG  path to a configuration file\n");
+	printf("  TEST    the name of the test to execute: 'rtt'\n");
+	printf("  NODE    name of the node which shoud be used\n\n");
+
+	print_copyright();
+}
+
 int main(int argc, char *argv[])
 {
 	config_t config;
 
 	if (argc < 4) {
-		printf("Usage: %s CONFIG TEST NODE [ARGS]\n", argv[0]);
-		printf("  CONFIG  path to a configuration file\n");
-		printf("  TEST    the name of the test to execute: 'rtt'\n");
-		printf("  NODE    name of the node which shoud be used\n\n");
-
-		print_copyright();
-
+		usage(argv[0]);
 		exit(EXIT_FAILURE);
 	}
 
@@ -121,8 +125,8 @@ int main(int argc, char *argv[])
 		}
 
 		continue;
-check:
-		if (optarg == endptr)
+
+check:		if (optarg == endptr)
 			error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
 

@@ -30,28 +30,38 @@ enum SIGNAL_TYPE {
 	TYPE_MIXED
 };
 
+void usage(char *name)
+{
+	printf("Usage: %s SIGNAL [OPTIONS]\n", name);
+	printf("  SIGNAL   is on of: 'mixed', 'random', 'sine', 'triangle', 'square', 'ramp'\n");
+	printf("  -v NUM   specifies how many values a message should contain\n");
+	printf("  -r HZ    how many messages per second\n");
+	printf("  -f HZ    the frequency of the signal\n");
+	printf("  -a FLT   the amplitude\n");
+	printf("  -d FLT   the standard deviation for 'random' signals\n");
+	printf("  -l NUM   only send LIMIT messages and stop\n\n");
+
+	print_copyright();
+}
+
 int main(int argc, char *argv[])
 {
-	if (argc < 4 || argc > 5) {
-		printf("Usage: %s SIGNAL VALUES RATE [LIMIT]\n", argv[0]);
-		printf("  SIGNAL is on of: mixed random sine triangle square ramp\n");
-		printf("  VALUES is the number of values a message contains\n");
-		printf("  RATE   how many messages per second\n");
-		printf("  LIMIT  only send LIMIT messages\n\n");
+	/* Some default values */
+	double rate = 10;
+	double freq = 1;
+	double ampl = 1;
+	double stddev = 0.02;
+	int type = TYPE_MIXED;
+	int values = 1;
+	int limit = -1;	
 
-		print_copyright();
+	int counter = 0;
 
+	if (argc < 2) {
+		usage(argv[0]);
 		exit(EXIT_FAILURE);
 	}
-
-	double rate = atof(argv[3]);
-	int type = TYPE_MIXED;
-	int values = atoi(argv[2]);
-	int limit = argc >= 5 ? atoi(argv[4]) : -1;
-	int counter = 0;
-	
-	struct msg *m = msg_create(values);
-	
+		
 	/* Parse signal type */
 	if      (!strcmp(argv[1], "random"))
 		type = TYPE_RANDOM;
@@ -65,10 +75,47 @@ int main(int argc, char *argv[])
 		type = TYPE_RAMP;
 	else if (!strcmp(argv[1], "mixed"))
 		type = TYPE_MIXED;
+	
+	/* Parse optional command line arguments */
+	char c, *endptr;
+	while ((c = getopt(argc-1, argv+1, "hv:r:f:l:a:d:")) != -1) {
+		switch (c) {
+			case 'l':
+				limit = strtoul(optarg, &endptr, 10);
+				goto check;
+			case 'v':
+				values = strtoul(optarg, &endptr, 10);
+				goto check;
+			case 'r':
+				rate   = strtof(optarg, &endptr);
+				goto check;
+			case 'f':
+				freq   = strtof(optarg, &endptr);
+				goto check;
+			case 'a':
+				ampl   = strtof(optarg, &endptr);
+				goto check;
+			case 'd':
+				stddev = strtof(optarg, &endptr);
+				goto check;
+			case 'h':
+			case '?':
+				usage(argv[0]);
+		}
+		
+		continue;
+		
+check:		if (optarg == endptr)
+			error("Failed to parse parse option argument '-%c %s'", c, optarg);
+	}
+	
+	/* Allocate memory for message buffer */
+	struct msg *m = msg_create(values);
 
 	/* Print header */
-	fprintf(stderr, "# %-20s\t\t%s\n", "sec.nsec(seq)", "data[]");
-
+	printf("# S2SS signal params: type=%s, values=%u, rate=%f, limit=%u, amplitude=%f, freq=%f\n",
+		argv[1], values, rate, limit, ampl, freq);
+	printf("# %-20s\t\t%s\n", "sec.nsec(seq)", "data[]");
 
 	/* Setup timer */
 	int tfd = timerfd_create_rate(rate);
@@ -77,7 +124,7 @@ int main(int argc, char *argv[])
 
 	struct timespec start = time_now();
 
-	while (counter < limit || argc < 5) {
+	while (limit < 0 || counter < limit) {
 		struct timespec now = time_now();
 		double running = time_delta(&start, &now);
 
@@ -86,16 +133,13 @@ int main(int argc, char *argv[])
 		m->sequence  = counter;
 
 		for (int i = 0; i < m->values; i++) {
-			int rtype   = (type != TYPE_MIXED) ? type : i % 4;
-			double ampl = i+1;
-			double freq = i+1;
-
+			int rtype = (type != TYPE_MIXED) ? type : i % 4;			
 			switch (rtype) {
-				case TYPE_RANDOM:   m->data[i].f += box_muller(0, 0.02); 					break;
-				case TYPE_SINE:	    m->data[i].f = ampl *        sin(running * freq * M_PI);			break;
+				case TYPE_RANDOM:   m->data[i].f += box_muller(0, stddev); 					break;
+				case TYPE_SINE:	    m->data[i].f = ampl *        sin(running * freq * 2 * M_PI);		break;
 				case TYPE_TRIANGLE: m->data[i].f = ampl * (fabs(fmod(running * freq, 1) - .5) - 0.25) * 4;	break;
 				case TYPE_SQUARE:   m->data[i].f = ampl * (    (fmod(running * freq, 1) < .5) ? -1 : 1);	break;
-				case TYPE_RAMP:     m->data[i].f = counter; /** @todo send as integer? */			break;
+				case TYPE_RAMP:     m->data[i].f = fmod(counter, rate / freq); /** @todo send as integer? */	break;
 			}
 		}
 			
