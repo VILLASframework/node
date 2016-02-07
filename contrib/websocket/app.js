@@ -145,10 +145,8 @@ function wsConnect(url, protocol) {
 				plotData.push([]);
 
 			// add data to arrays
-			for (var i = 0; i < msg.values; i++) {
+			for (var i = 0; i < msg.values; i++)
 				plotData[i].push([msg.timestamp, msg.data[i]]);
-				console.log([msg.timestamp, msg.data[i]]);
-			}
 		}
 	};	
 };

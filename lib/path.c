@@ -37,7 +37,7 @@ int path_run_hook(struct path *p, enum hook_type t)
 
 	list_foreach(struct hook *h, &p->hooks) {
 		if (h->type & t) {
-			debug(22, "Running hook when=%u '%s' prio=%u ret=%d", t, h->name, h->priority, ret);
+			debug(22, "Running hook when=%u '%s' prio=%u", t, h->name, h->priority);
 
 			ret = ((hook_cb_t) h->cb)(p, h, t);
 			if (ret)

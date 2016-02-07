@@ -375,11 +375,9 @@ int hook_stats(struct path *p, struct hook *h, int when)
 		
 		case HOOK_PRE:
 			/* Exclude first message from statistics */
-			if (p->received > 0) {
-				double gap = time_delta(&p->ts.last, &p->ts.recv);
-				
-				hist_put(&p->hist.gap_recv, gap);
-			}
+			if (p->received > 0)				
+				hist_put(&p->hist.gap_recv, time_delta(&p->ts.last, &p->ts.recv));
+			break;
 
 		case HOOK_MSG: {
 			struct msg *cur  = pool_current(&p->pool);
