@@ -14,9 +14,12 @@
 int timerfd_create_rate(double rate)
 {
 	int fd, ret;
+	
+	struct timespec ts = time_from_double(1 / rate);
+	
 	struct itimerspec its = {
-		.it_interval = time_from_double(1 / rate),
-		.it_value = { 0, 1 }
+		.it_interval = ts,
+		.it_value = ts
 	};
 
 	fd = timerfd_create(CLOCK_MONOTONIC, 0);
