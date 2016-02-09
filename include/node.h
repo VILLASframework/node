@@ -168,7 +168,9 @@ struct node
 	enum node_state {
 		NODE_INVALID,	/**< This node object is not in a valid state. */
 		NODE_CREATED,	/**< This node has been parsed from the configuration. */
+		NODE_STARTING,	/**< This node is currently being started. */
 		NODE_RUNNING,	/**< This node has been started by calling node_open() */
+		NODE_STOPPING,	/**< This node is currently shutting down. */
 		NODE_STOPPED	/**< Node was running, but has been stopped by calling node_close() */
 	} state;		/**< Node state */
 

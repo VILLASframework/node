@@ -86,6 +86,11 @@ int node_deinit(struct node_type *vt)
 int node_start(struct node *n)
 {
 	int ret;
+	
+	if (n->state != NODE_CREATED && n->state != NODE_STOPPED)
+		return -1;
+	
+	n->state = NODE_STARTING;
 
 	info("Starting node %s", node_name_long(n));
 	{ INDENT
@@ -104,6 +109,8 @@ int node_stop(struct node *n)
 
 	if (n->state != NODE_RUNNING)
 		return -1;
+	
+	n->state = NODE_STOPPING;
 
 	info("Stopping node %s", node_name(n));
 
