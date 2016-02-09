@@ -8,7 +8,7 @@
  * @see http://technical.openmobilealliance.org/Technical/Release_Program/docs/NGSI/V1_0-20120529-A/OMA-TS-NGSI_Context_Management-V1_0-20120529-A.pdf
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  */
