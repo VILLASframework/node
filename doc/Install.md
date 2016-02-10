@@ -29,7 +29,7 @@ Checkout the `Makefile` and `include/config.h` for some options which have to be
 
 Afterwards, start the compilation with:
 
-	$ make
+    $ make
 
 Append `V=5` to `make` for a more verbose debugging output.
 Append `DEBUG=1` to `make` to add debug symbols.
@@ -38,7 +38,7 @@ Append `DEBUG=1` to `make` to add debug symbols.
 
 Install the files to your search path:
 
-	$ make install
+    $ make install
 
 Append `PREFIX=/opt/local` to change the installation destination.
 
@@ -46,6 +46,6 @@ Append `PREFIX=/opt/local` to change the installation destination.
 
 Verify everything is working and required node-types are compiled-in:
 
-	$ s2ss server
+    $ s2ss server
 
 Will show you the current version of the server including a list of all supported node-types.
