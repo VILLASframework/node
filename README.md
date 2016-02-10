@@ -6,7 +6,7 @@ This is S2SS, a gateway to forward and process simulation data between real time
 
 The docuementation for this software is available at [documentation/Mainpage](documentation/Mainpage.md).
 
-You can access the prebuild documentation at: http://46.101.131.212/s2ss/doc/.
+You can access the prebuild documentation at: http://s2ss.0l.de (User: `s2ss`, Pass: `Nie4di5e`).
 Alternatively, you can build the documentation yourself by calling `doxygen` in this directory.
 
 ## Contact
