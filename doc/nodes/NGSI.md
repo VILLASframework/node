@@ -1,4 +1,4 @@
-# OMA Next Generation Services Interface 10 {#ngsi}
+# OMA Next Generation Services Interface {#ngsi}
 
 The `ngsi` node type implements an interface to FIWARE context brokers following the NGSI 10 RESTful HTTP API.
 
@@ -24,7 +24,7 @@ Every `ngsi` node supports the following special settings:
 
 #### `mapping` *(array of strings)*
 
-Format `AttributeName(AttributeType)`
+Example: `AttributeName(AttributeType) MetadataName1(MetadataType1)=MetadataValue1 MetadataName2(MetadataType2)=MetadataValue2 ...`
 
 ### Example
 
@@ -42,9 +42,10 @@ Format `AttributeName(AttributeType)`
 			timeout = 5,				# Timeout of HTTP request in seconds (default is 1)
 			verify_ssl = false,			# Verification of SSL server certificates (default is true)
 	
-			mapping = [				# Format: "AttributeName(AttributeType)"
-				PTotalLosses(MW)",
-				"QTotalLosses(Mvar)"
+			mapping = [
+				"PTotalLosses(MW)",
+				"QTotalLosses(Mvar)",
+				"Phase(rad) min(rad)=0 max(rad)=3.141"
 			]
 		}
 	}

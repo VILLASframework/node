@@ -1,4 +1,4 @@
-# Socket {#socket}
+# Berkely BSD Sockets {#socket}
 
 The socket node-type is the most comprehensive and complex one.
 It allows to send and receive simulation data over the network.
@@ -22,6 +22,19 @@ Every `socket` node supports the following special settings:
 #### `remote` *("ip:port" | "mac:protocol")*
 
 #### `netem` *(dictionary)*
+
+Enables and configures the network emulation qeueing discipline.
+See below for a more detailed description of this feature.
+
+	netem = {				# Network emulation settings
+						# Those settings can be specified for each node invidually!
+		delay		= 100000,	# Additional latency in microseconds
+		jitter		= 30000,	# Jitter in uS
+		distribution	= "normal",	# Distribution of delay: uniform, normal, pareto, paretonormal
+		loss		= 10		# Packet loss in percent
+		duplicate	= 10,		# Duplication in percent
+		corrupt 	= 10		# Corruption in percent
+	}
 
 #### `layer` *("udp" | "ip" | "eth")*
 
@@ -87,7 +100,7 @@ This allows us to reduce the amount of conversions during one transfer.
 
 S2SS supports the emulation of wide-area network characterisics.
 
-This emulation can be configured on a per-node basis for **outgoing** / **egress** data only.
+This emulation can be configured on a per-node basis for **outgoing** (egress) data only.
 Incoming data is not processed by the network emulation!
 
 This network emulation is handled by Linux' [netem queuing discipline](http://www.linuxfoundation.org/collaborate/workgroups/networking/netem) which is part of the traffic control subsystem.

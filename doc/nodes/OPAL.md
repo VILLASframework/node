@@ -1,9 +1,15 @@
 # OPAL-RT Asynchronous Process {#opal}
 
-The communication between OPAL-RT models and the S2SS is established by using ansychronous programs.
+The communication between OPAL-RT models and the S2SS is established by using asynchronous programs.
 Asynchronous programs are are a feature of RT-LAB. They are used to exchange data between Simulink models and custom C programs.
+There are two ways to exchange sample values with an OPAL-RT simulator:
 
-For this purpose the C program handels IP/UDP communication via BSD sockets.
+1. Use our adapted version of OPAL-RT's AsyncIP example for asynchronous processes (see `clients/opal`)
+   In this mode, OPAL will send sample data via UDP to S2SS. S2SS has to use the `socket` node-type.
+2. Run S2SS as an asynchronous process itself. This is a highly experimental feature and implemented in the node-type `opal`.
+   It requires a 32-bit version of the `s2ss-server`. Data exchange is then handled using OPAL-RT's libAsyncApi.
+
+The following description applies only to the `opal` node-type:
 
 ## Configuration
 
