@@ -6,27 +6,39 @@ For minimum latency several kernel and driver settings can be optimized.
 A [PREEMPT_RT patched Linux](https://rt.wiki.kernel.org/index.php/Main_Page) kernel is recommended.
 Precompiled kernels for Fedora can be found here: http://ccrma.stanford.edu/planetccrma/software/
 
-- Install `tuned` package and activate the `realtime` profile. This profile will:
-  - Reserve some CPU cores solely for VILLASnode (Kernel cmdline: `isolcpus=[cpu_numbers]`)
-  - Activate sub-profiles:
-     - `network-latency`
-     - `latency-performance`
-  - See `/etc/tuned/realtime-variables.conf`
-  - See `/usr/lib/tuned/realtime/`
+1. **Important:** Tune overall system performance for real-time:
 
-- VILLASnode configuration:
-  - `affinity`: Maps network card IRQs and threads to isolated cores
-  - `priority`: Increases priority of network packets and threads
+```bash
+$ dnf install tuned-profiles-realtime
+$ echo "realtime" > /etc/tuned/active_profile
+$ echo "isolated_cpucores=6-7" >> /etc/tuned/realtime-variables.conf
+$ systemctl enable tuned && systemctl start tuned
+```
+    
+  This enables the following `tuned` profiles:
+    - latency-performance
+      - network-latency
+        - realtime
 
-- Configure NIC interrupt coalescence with `ethtool`:
+2. Map NIC IRQs	=> see setting `affinity`
+3. Map Tasks	=> see setting `affinity`
 
-    $ ethtool -C|--coalesce devname [adaptive-rx on|off] [adaptive-tx on|off] ...
+4. Increase priority of server task (nice(2)) => see setting `priority`
+5. Increase BSD socket priority => see setting `priority` and node-type `socket`
 
-- Configure NIC kernel driver in `/etc/modprobe.d/e1000e.conf`:
+6. Configure NIC interrupt coalescence with `ethtool`:
 
-    # More conservative interrupt throttling for better latency
-    # https://www.kernel.org/doc/Documentation/networking/e1000e.txt
-    option e1000e InterruptThrottleRate=
+```bash
+$ ethtool -C|--coalesce devname [adaptive-rx on|off] [adaptive-tx on|off] ...
+```
+
+7. Configure NIC kernel driver in `/etc/modprobe.d/e1000e.conf`:
+
+```
+# More conservative interrupt throttling for better latency
+# https://www.kernel.org/doc/Documentation/networking/e1000e.txt
+option e1000e InterruptThrottleRate=
+```
 
 ## Hardware
 
