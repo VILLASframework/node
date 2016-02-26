@@ -6,24 +6,27 @@ For minimum latency several kernel and driver settings can be optimized.
 A [PREEMPT_RT patched Linux](https://rt.wiki.kernel.org/index.php/Main_Page) kernel is recommended.
 Precompiled kernels for Fedora can be found here: http://ccrma.stanford.edu/planetccrma/software/
 
-- Map NIC IRQs	=> see setting `affinity`
+- Install `tuned` package and activate the `realtime` profile. This profile will:
+  - Reserve some CPU cores solely for S2SS (Kernel cmdline: `isolcpus=[cpu_numbers]`)
+  - Activate sub-profiles:
+     - `network-latency`
+     - `latency-performance`
+  - See `/etc/tuned/realtime-variables.conf`
+  - See `/usr/lib/tuned/realtime/`
 
-- Map Tasks	=> see setting `affinity`
-  - Kernel command line: isolcpus=[cpu_number]
-
-- Increase priority of server task (nice(2)) => see setting `priority`
-
-- Increase socket priority
+- S2SS configuration:
+  - `affinity`: Maps network card IRQs and threads to isolated cores
+  - `priority`: Increases priority of network packets and threads
 
 - Configure NIC interrupt coalescence with `ethtool`:
 
-	$ ethtool -C|--coalesce devname [adaptive-rx on|off] [adaptive-tx on|off] ...
+    $ ethtool -C|--coalesce devname [adaptive-rx on|off] [adaptive-tx on|off] ...
 
 - Configure NIC kernel driver in `/etc/modprobe.d/e1000e.conf`:
 
-	# More conservative interrupt throttling for better latency
-	# https://www.kernel.org/doc/Documentation/networking/e1000e.txt
-	option e1000e InterruptThrottleRate=
+    # More conservative interrupt throttling for better latency
+    # https://www.kernel.org/doc/Documentation/networking/e1000e.txt
+    option e1000e InterruptThrottleRate=
 
 ## Hardware
 
