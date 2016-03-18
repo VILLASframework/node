@@ -21,7 +21,7 @@
 #include "nl.h"
 #include "socket.h"
 #include "utils.h"
-#include "checks.h"
+#include "linux.h"
 
 struct interface * if_create(struct rtnl_link *link)
 {
@@ -72,11 +72,11 @@ int if_start(struct interface *i, int affinity)
 			return 0;
 
 		/* Check if all kernel modules are loaded */
-		if (check_kernel_module("sch_prio"))
+		if (kernel_module_load("sch_prio"))
 			error("Missing kernel module: sch_prio");
-		if (check_kernel_module("sch_netem"))
+		if (kernel_module_load("sch_netem"))
 			error("Missing kernel module: sch_netem");		
-		if (check_kernel_module("cls_fw"))
+		if (kernel_module_load("cls_fw"))
 			error("Missing kernel module: cls_fw");
 
 		/* Replace root qdisc */
