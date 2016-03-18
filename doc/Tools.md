@@ -31,11 +31,14 @@ The `pipe` subcommand allows to read and write samples to `stdin` / `stdout`.
 The `signal` subcommand is a signal generator which writes samples to `stdout`.
 This command can be combined with the `pipe` subcommand.
 
-    Usage: s2ss-signal SIGNAL VALUES RATE [LIMIT]
-      SIGNAL is on of: mixed random sine triangle square
-      VALUES is the number of values a message contains
-      RATE   how many messages per second
-      LIMIT  only send LIMIT messages
+    Usage: s2ss-signal SIGNAL [OPTIONS]
+      SIGNAL   is on of: 'mixed', 'random', 'sine', 'triangle', 'square', 'ramp'
+      -v NUM   specifies how many values a message should contain
+      -r HZ    how many messages per second
+      -f HZ    the frequency of the signal
+      -a FLT   the amplitude
+      -d FLT   the standard deviation for 'random' signals
+      -l NUM   only send LIMIT messages and stop
 
 ### `s2ss test`
 
