@@ -5,7 +5,7 @@ TARGETS = server pipe signal test
 LIBS = libs2ss.so
 
 # Object files for libs2ss
-LIB_OBJS = msg.o node.o checks.o list.o log.o utils.o cfg.o path.o hooks.o hist.o timing.o pool.o
+LIB_OBJS = msg.o node.o linux.o list.o log.o linux.o utils.o cfg.o path.o hooks.o hist.o timing.o pool.o
 
 # Source directories
 VPATH = src lib
@@ -107,6 +107,8 @@ install: $(TARGETS) $(LIBS)
 	install -m 0755 pipe $(PREFIX)/bin/s2ss-pipe
 	install -m 0755 test $(PREFIX)/bin/s2ss-test
 	install -m 0755 tools/s2ss.sh $(PREFIX)/bin/s2ss
+	install -m 0755 -d $(PREFIX)/include/s2ss/
+	install -m 0644 include/*.h $(PREFIX)/include/s2ss/
 	ldconfig
 
 release: all

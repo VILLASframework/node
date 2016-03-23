@@ -30,7 +30,6 @@
 #include "config.h"
 #include "utils.h"
 #include "socket.h"
-#include "checks.h"
 #include "pool.h"
 
 /* Forward declartions */
@@ -41,7 +40,7 @@ struct list interfaces;
 
 int socket_init(int argc, char * argv[], config_setting_t *cfg)
 {
-	if (check_root())
+	if (getuid() != 0)
 		error("The 'socket' node-type requires superuser privileges!");
 	
 	nl_init(); /* Fill link cache */

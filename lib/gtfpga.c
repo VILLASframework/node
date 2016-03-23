@@ -18,7 +18,8 @@
 #include "config.h"
 #include "utils.h"
 #include "timing.h"
-#include "checks.h"
+#include "utils.h"
+#include "linux.h"
 
 static struct pci_access *pacc;
 
@@ -32,7 +33,7 @@ static void gtfpga_debug(char *msg, ...) {
 
 int gtfpga_init(int argc, char * argv[], config_setting_t *cfg)
 {
-	if (check_root())
+	if (getuid() != 0)
 		error("The gtfpga node-type requires superuser privileges!");
 
 	pacc = pci_alloc();		/* Get the pci_access structure */
@@ -119,7 +120,7 @@ static int gtfpga_load_driver(struct pci_dev *d)
 	FILE *f;
 	char slot[16];
 
-	if (check_kernel_module("uio_pci_generic"))
+	if (kernel_module_load("uio_pci_generic"))
 		error("Missing kernel module: uio_pci_generic");
 
 	/* Prepare slot identifier */
@@ -127,7 +128,7 @@ static int gtfpga_load_driver(struct pci_dev *d)
 		d->domain, d->bus, d->dev, d->func);
 
 	/* Add new ID to uio_pci_generic */
-	f = fopen(SYSFS_PATH "/bus/pci/drivers/uio_pci_generic/new_id", "w");
+	f = fopen(SYSFS_PATH "/drivers/uio_pci_generic/new_id", "w");
 	if (!f)
 		serror("Failed to add PCI id to uio_pci_generic driver");
 

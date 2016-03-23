@@ -1,4 +1,4 @@
-/** Check system requirements.
+/** Linux kernel related procedures
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
@@ -6,8 +6,8 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
-#ifndef _CHECKS_H_
-#define _CHECKS_H_
+#ifndef _LINUX_H_
+#define _LINUX_H_
 
 /** Checks for realtime (PREEMPT_RT) patched kernel.
  *
@@ -16,7 +16,7 @@
  * @retval 0 Kernel is patched.
  * @reval <>0 Kernel is not patched.
  */
-int check_kernel_rt();
+int kernel_is_rt();
 
 /** Check if kernel command line contains "isolcpus=" option.
  *
@@ -25,14 +25,14 @@ int check_kernel_rt();
  * @retval 0 Kernel has isolated cores.
  * @reval <>0 Kernel has no isolated cores.
  */
-int check_kernel_cmdline();
+int kernel_has_cmdline(const char *substr);
 
 /** Check if kernel is version is sufficient
  *
  * @retval 0 Kernel version is sufficient.
  * @reval <>0 Kernel version is not sufficient.
  */
-int check_kernel_version();
+int kernel_has_version(int maj, int min);
 
 /** Checks if a kernel module is loaded
  *
@@ -40,14 +40,12 @@ int check_kernel_version();
  * @retval 0 Module is loaded.
  * @reval <>0 Module is not loaded.
  */
-int check_kernel_module(char *module);
+int kernel_module_loaded(const char *module);
 
-/** Check if program is running with super user (root) privileges.
- *
- *
- * @retval 0 Permissions are sufficient.
- * @reval <>0 Permissions are not sufficient.
- */
-int check_root();
+/** Load kernel module via modprobe */
+int kernel_module_load(const char *module);
 
-#endif /* _CHECKS_H_ */
+/** Set parameter of loaded kernel module */
+int kernel_module_set_param(const char *module, const char *param, const char *value);
+
+#endif /* _LINUX_H_ */

@@ -19,7 +19,7 @@
 #include "cfg.h"
 #include "path.h"
 #include "node.h"
-#include "checks.h"
+#include "linux.h"
 
 #ifdef ENABLE_OPAL_ASYNC
   #include "opal.h"
@@ -60,9 +60,9 @@ static void quit()
 
 static void realtime_init()
 { INDENT
-	if (check_kernel_cmdline())
+	if (kernel_has_cmdline("isolcpus"))
 		warn("You should reserve some cores for the server (see 'isolcpus')");
-	if (check_kernel_rt())
+	if (kernel_is_rt())
 		warn("We recommend to use an PREEMPT_RT patched kernel!");
 	
 	/* Use FIFO scheduler with real time priority */
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
 	/* Checks system requirements*/
-	if (check_kernel_version())
+	if (kernel_has_version(KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN))
 		error("Your kernel version is to old: required >= %u.%u", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
 
 	/* Initialize lists */
