@@ -22,11 +22,11 @@ static int cmp_lookup(const void *a, const void *b) {
 	return strcmp(obj->name, b);
 }
 
-int cmp_contains(const void *a, const void *b) {
+static int cmp_contains(const void *a, const void *b) {
 	return a == b ? 0 : 1;
 }
 
-int cmp_sort(const void *a, const void *b, void *thunk) {
+static int cmp_sort(const void *a, const void *b, void *thunk) {
 	cmp_cb_t cmp = (cmp_cb_t) thunk;
 
 	return cmp(*(void **) a, *(void **) b);
