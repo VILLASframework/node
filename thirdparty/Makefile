@@ -1,4 +1,4 @@
-DEPS = libconfig-1.5 libnl-3.2.25 doxygen-1.8.10 pciutils-3.4.1 libwebsockets-1.6.2
+DEPS = libconfig-1.5 libnl-3.2.25 doxygen-1.8.10 pciutils-3.4.1 libwebsockets-1.7.5
 
 .PHONY: $(DEPS) all
 
@@ -29,7 +29,7 @@ pciutils-3.4.1:
 	ln -s $(PREFIX)/lib/libpci.so.3.4.1 $(PREFIX)/lib/libpci.so
 
 # Install & compile libwebsockets dependency
-libwebsockets-1.6.2:
+libwebsockets-1.7.5:
 	mkdir -p $@/build
-	wget -O- https://github.com/warmcat/libwebsockets/archive/v1.6.2.tar.gz | tar -xzC $(TMPDIR)
+	wget -O- https://github.com/warmcat/libwebsockets/archive/v1.7.5.tar.gz | tar -xzC $(TMPDIR)
 	cd $@/build && cmake -DCMAKE_INSTALL_PREFIX:PATH=$(PREFIX) .. && make install
