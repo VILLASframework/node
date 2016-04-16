@@ -37,7 +37,7 @@ struct interface * if_create(struct rtnl_link *link)
 	else
 		warn("Did not found any interrupts for interface '%s'", rtnl_link_get_name(i->nl_link));
 
-	list_init(&i->sockets, NULL);
+	list_init(&i->sockets);
 
 	return i;
 }
@@ -45,7 +45,7 @@ struct interface * if_create(struct rtnl_link *link)
 void if_destroy(struct interface *i)
 {
 	/* List members are freed by the nodes they belong to. */
-	list_destroy(&i->sockets);
+	list_destroy(&i->sockets, NULL, false);
 	
 	rtnl_qdisc_put(i->tc_qdisc);
 

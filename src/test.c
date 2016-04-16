@@ -81,6 +81,8 @@ int main(int argc, char *argv[])
 	sigemptyset(&sa_quit.sa_mask);
 	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT, &sa_quit, NULL);
+	
+	list_init(&nodes);
 
 	log_init();
 	config_init(&config);
@@ -138,7 +140,7 @@ check:		if (optarg == endptr)
 	node_stop(node);
 	node_deinit(node->_vt);
 	
-	list_destroy(&nodes);
+	list_destroy(&nodes, node_destroy, false);
 	config_destroy(&config);
 
 	return 0;

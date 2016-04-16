@@ -16,17 +16,17 @@
 #ifndef _LIST_H_
 #define _LIST_H_
 
+#include <stdbool.h>
 #include <pthread.h>
 
 #define LIST_CHUNKSIZE		16
 
 /** Static list initialization */
-#define LIST_INIT(dtor) {			\
+#define LIST_INIT() {				\
 	.array = NULL,				\
 	.length = 0,				\
 	.capacity = 0,				\
-	.lock = PTHREAD_MUTEX_INITIALIZER,	\
-	.destructor = dtor			\
+	.lock = PTHREAD_MUTEX_INITIALIZER	\
 }
 				
 #define list_length(list)	((list)->length)
@@ -51,19 +51,22 @@ struct list {
 	void **array;		/**< Array of pointers to list elements */
 	size_t capacity;	/**< Size of list::array in elements */
 	size_t length;		/**< Number of elements of list::array which are in use */
-	dtor_cb_t destructor;	/**< A destructor which gets called for every list elements during list_destroy() */
 	pthread_mutex_t lock;	/**< A mutex to allow thread-safe accesses */
 };
 
 /** Initialize a list.
  *
  * @param l A pointer to the list data structure.
- * @param dtor A function pointer to a desctructor which will be called for every list item when the list is destroyed.
  */
-void list_init(struct list *l, dtor_cb_t dtor);
+void list_init(struct list *l);
 
-/** Destroy a list and call destructors for all list elements */
-void list_destroy(struct list *l);
+/** Destroy a list and call destructors for all list elements
+ *
+ * @param free free() all list members during when calling list_destroy()
+ * @param dtor A function pointer to a desctructor which will be called for every list item when the list is destroyed.
+ * @param l A pointer to the list data structure.
+ */
+void list_destroy(struct list *l, dtor_cb_t dtor, bool free);
 
 /** Append an element to the end of the list */
 void list_push(struct list *l, void *p);

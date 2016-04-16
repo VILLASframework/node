@@ -49,8 +49,8 @@ static void quit()
 	}
 
 	/* Freeing dynamically allocated memory */
-	list_destroy(&paths);
-	list_destroy(&nodes);
+	list_destroy(&paths, (dtor_cb_t) path_destroy, false);
+	list_destroy(&nodes, (dtor_cb_t) node_destroy, false);
 	config_destroy(&config);
 
 	info(GRN("Goodbye!"));
@@ -142,8 +142,8 @@ int main(int argc, char *argv[])
 		error("Your kernel version is to old: required >= %u.%u", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
 
 	/* Initialize lists */
-	list_init(&paths, (dtor_cb_t) path_destroy);
-	list_init(&nodes, (dtor_cb_t) node_destroy);
+	list_init(&paths);
+	list_init(&nodes);
 
 	info("Parsing configuration");
 	{ INDENT

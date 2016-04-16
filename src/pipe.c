@@ -48,7 +48,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	pool_destroy(&recv_pool);
 	pool_destroy(&send_pool);
 	
-	list_destroy(&nodes);
+	list_destroy(&nodes, (dtor_cb_t) node_destroy, false);
 	
 	info(GRN("Goodbye!"));
 	exit(EXIT_SUCCESS);
@@ -149,7 +149,7 @@ int main(int argc, char *argv[])
 	config_t config;
 	
 	/* Create lists */
-	list_init(&nodes, (dtor_cb_t) node_destroy);
+	list_init(&nodes);
 
 	log_init();
 	config_init(&config);

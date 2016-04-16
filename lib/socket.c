@@ -44,7 +44,7 @@ int socket_init(int argc, char * argv[], config_setting_t *cfg)
 		error("The 'socket' node-type requires superuser privileges!");
 	
 	nl_init(); /* Fill link cache */
-	list_init(&interfaces, (dtor_cb_t) if_destroy);
+	list_init(&interfaces);
 
 	/* Gather list of used network interfaces */
 	list_foreach(struct node *n, &vt.instances) {
@@ -88,7 +88,7 @@ int socket_deinit()
 	list_foreach(struct interface *i, &interfaces)
 		if_stop(i);
 
-	list_destroy(&interfaces);
+	list_destroy(&interfaces, (dtor_cb_t) if_destroy, false);
 
 	return 0;
 }

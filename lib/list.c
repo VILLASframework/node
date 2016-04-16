@@ -32,24 +32,25 @@ static int cmp_sort(const void *a, const void *b, void *thunk) {
 	return cmp(*(void **) a, *(void **) b);
 }
 
-void list_init(struct list *l, dtor_cb_t dtor)
+void list_init(struct list *l)
 {
 	pthread_mutex_init(&l->lock, NULL);
 
-	l->destructor = dtor;
 	l->length = 0;
 	l->capacity = 0;
 
 	l->array = NULL;
 }
 
-void list_destroy(struct list *l)
+void list_destroy(struct list *l, dtor_cb_t destructor, bool release)
 {
 	pthread_mutex_lock(&l->lock);
 
-	if (l->destructor) {
-		list_foreach(void *p, l) 
-			l->destructor(p);
+	list_foreach(void *p, l) {
+		if (destructor)
+			destructor(p);
+		if (release)
+			free(p);
 	}
 	
 	free(l->array);
