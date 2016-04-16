@@ -143,11 +143,10 @@ int opal_parse(struct node *n, config_setting_t *cfg)
 char * opal_print(struct node *n)
 {
 	struct opal *o = n->_vd;
-	char *buf = NULL;
 
 	/** @todo: Print send_params, recv_params */
 
-	return strcatf(&buf, "send_id=%u, recv_id=%u, reply=%u",
+	return strf("send_id=%u, recv_id=%u, reply=%u",
 		o->send_id, o->recv_id, o->reply);
 }
 

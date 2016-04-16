@@ -472,9 +472,8 @@ int ngsi_parse(struct node *n, config_setting_t *cfg)
 char * ngsi_print(struct node *n)
 {
 	struct ngsi *i = n->_vd;
-	char *buf = NULL;
 
-	return strcatf(&buf, "endpoint=%s, timeout=%.3f secs, #mappings=%zu",
+	return strf("endpoint=%s, timeout=%.3f secs, #mappings=%zu",
 		i->endpoint, i->timeout, list_length(&i->mapping));
 }
 

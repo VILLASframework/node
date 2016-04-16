@@ -93,9 +93,12 @@ double randf();
 char * strcatf(char **dest, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
 
-/** Variadic version of strcatv() */
+/** Variadic version of strcatf() */
 char * vstrcatf(char **dest, const char *fmt, va_list va)
 	__attribute__ ((format(printf, 2, 0)));
+
+/** Format string like strcatf() just starting with empty string */
+#define strf(fmt, ...) strcatf(&(void *) { NULL }, fmt, ##__VA_ARGS__)
 
 /** Format a struct timespec date similar to strftime() */
 int strftimespec(char *s, size_t max, const char *format, struct timespec *ts)

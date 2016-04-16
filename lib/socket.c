@@ -96,7 +96,7 @@ int socket_deinit()
 char * socket_print(struct node *n)
 {
 	struct socket *s = n->_vd;
-	char *layer = NULL, *buf = NULL;
+	char *layer = NULL, *buf;
 	
 	switch (s->layer) {
 		case LAYER_UDP: layer = "udp";	break;
@@ -107,7 +107,7 @@ char * socket_print(struct node *n)
 	char *local = socket_print_addr((struct sockaddr *) &s->local);
 	char *remote = socket_print_addr((struct sockaddr *) &s->remote);
 
-	strcatf(&buf, "layer=%s, local=%s, remote=%s", layer, local, remote);
+	buf = strf("layer=%s, local=%s, remote=%s", layer, local, remote);
 	
 	free(local);
 	free(remote);
