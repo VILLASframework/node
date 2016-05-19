@@ -35,8 +35,7 @@ struct list node_types = LIST_INIT(NULL);
 
 int node_init(int argc, char *argv[], struct settings *set)
 { INDENT
-	FOREACH(&node_types, it) {
-		const struct node_type *vt = it->type;
+	list_foreach(const struct node_type *vt, &node_types) {
 		if (vt->refcnt) {
 			info("Initializing '%s' node type", vt->name);
 			vt->init(argc, argv, set);
@@ -49,13 +48,13 @@ int node_init(int argc, char *argv[], struct settings *set)
 int node_deinit()
 { INDENT
 	/* De-initialize node types */
-	FOREACH(&node_types, it) {
-		struct node_type *vt = it->type;
+	list_foreach(const struct node_type *vt, &node_types) {
 		if (vt->refcnt) {
 			info("De-initializing '%s' node type", vt->name);
 			vt->deinit();
 		}
 	}
+
 	return 0;
 }
 
@@ -67,21 +66,25 @@ int node_start(struct node *n)
 	}
 
 	char *buf = node_print(n);
-	debug(1, "Starting node '%s' of type '%s' (%s)", n->name, n->vt->name, buf);
+	debug(1, "Starting node '%s' of type '%s' (%s)", n->name, n->_vt->name, buf);
 	free(buf);
 
 	{ INDENT
-		return n->vt->open(n);
+		return node_open(n);
 	}
 }
 
 int node_stop(struct node *n)
 { INDENT
 	int ret;
+	
+	if (!n->refcnt) /* Unused and not started. No reason to stop.. */
+		return -1;
+	
 	info("Stopping node '%s'", n->name);
 
 	{ INDENT
-		ret = n->vt->close(n);
+		ret = node_close(n);
 	}
 
 	return ret;
@@ -89,31 +92,34 @@ int node_stop(struct node *n)
 
 void node_reverse(struct node *n)
 {
-	switch (n->vt->type) {
+	switch (node_type(n)) {
 #ifdef ENABLE_SOCKET
 		case BSD_SOCKET:
 			SWAP(n->socket->remote, n->socket->local);
 			break;
 #endif
 		case LOG_FILE:
-			SWAP(n->file->path_in, n->file->path_out);
+			SWAP(n->file->read, n->file->write);
 			break;
 		default: { }
 	}
 }
 
-struct node * node_create()
+struct node * node_create(struct node_type *vt)
 {
-	return alloc(sizeof(struct node));
+	struct node *n = alloc(sizeof(struct node));
+	
+	n->_vt = vt;
+	
+	return n;
 }
 
 void node_destroy(struct node *n)
 {
-	switch (n->vt->type) {
+	switch (node_type(n)) {
 #ifdef ENABLE_NGSI
 		case NGSI:
-			json_decref(n->ngsi->context);
-			free(n->ngsi->context_map);
+			list_destroy(&n->ngsi->mapping);
 		break;
 #endif
 #ifdef ENABLE_SOCKET
@@ -122,10 +128,6 @@ void node_destroy(struct node *n)
 			rtnl_cls_put(n->socket->tc_classifier);
 			break;
 #endif
-		case LOG_FILE:
-			free(n->file->path_in);
-			free(n->file->path_out);
-			break;
 		default: { }
 	}
 

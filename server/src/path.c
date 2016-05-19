@@ -8,12 +8,12 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <inttypes.h>
 
 #include "utils.h"
 #include "path.h"
 #include "timing.h"
 #include "config.h"
-#include "stats.h"
 
 #ifndef sigev_notify_thread_id
   #define sigev_notify_thread_id   _sigev_un._tid
@@ -23,27 +23,34 @@ extern struct settings settings;
 
 static void path_write(struct path *p)
 {
-	FOREACH(&p->destinations, it) {
+	list_foreach(struct node *n, &p->destinations) {
 		int sent = node_write(
-			it->node,			/* Destination node */
-			p->pool,			/* Pool of received messages */
-			p->poolsize,			/* Size of the pool */
-			p->received - it->node->combine,/* Index of the first message which should be sent */
-			it->node->combine		/* Number of messages which should be sent */
+			n,			/* Destination node */
+			p->pool,		/* Pool of received messages */
+			p->poolsize,		/* Size of the pool */
+			p->received - n->combine,/* Index of the first message which should be sent */
+			n->combine		/* Number of messages which should be sent */
 		);
 
-		debug(1, "Sent %u  messages to node '%s'", sent, it->node->name);
+		debug(15, "Sent %u messages to node '%s'", sent, n->name);
 		p->sent += sent;
 
-		clock_gettime(CLOCK_REALTIME, &p->ts_sent);
+		p->ts_sent = time_now(); /** @todo use hardware timestamps for socket node type */
 	}
 }
 
 int path_run_hook(struct path *p, enum hook_type t)
 {
 	int ret = 0;
-	FOREACH(&p->hooks[t], it)
-		ret += ((hook_cb_t) it->ptr)(p);
+
+	list_foreach(struct hook *h, &p->hooks) {
+		if (h->type & t) {
+			ret = ((hook_cb_t) h->cb)(p, h, t);
+			debug(22, "Running hook when=%u '%s' prio=%u ret=%d", t, h->name, h->priority, ret);
+			if (ret)
+				return ret;
+		}
+	}
 
 	return ret;
 }
@@ -54,7 +61,14 @@ static void * path_run_async(void *arg)
 	struct path *p = arg;
 
 	/* Block until 1/p->rate seconds elapsed */
-	while (timerfd_wait(p->tfd)) {
+	for (;;) {
+		/* Check for overruns */
+		uint64_t expir = timerfd_wait(p->tfd);
+		if (expir > 1) {
+			p->overrun += expir;
+			warn("Overrun detected for path: overruns=%" PRIu64, expir);
+		}
+
 		if (path_run_hook(p, HOOK_ASYNC))
 			continue;
 
@@ -75,14 +89,19 @@ static void * path_run(void *arg)
 	p->previous = p->current = p->pool;
 
 	/* Main thread loop */
-	for(;;) {
+	for (;;) {
 		/* Receive message */
 		int recv = node_read(p->in, p->pool, p->poolsize, p->received, p->in->combine);
+		if (recv < 0)
+			error("Failed to receive message from node '%s'", p->in->name);
+		else if (recv == 0)
+			continue;
 
 		/** @todo Replace this timestamp by hardware timestamping */
-		clock_gettime(CLOCK_REALTIME, &p->ts_recv);
-
-		debug(10, "Received %u messages from node '%s'", recv, p->in->name);
+		p->ts_last = p->ts_recv;
+		p->ts_recv = time_now();
+			
+		debug(15, "Received %u messages from node '%s'", recv, p->in->name);
 
 		/* Run preprocessing hooks */
 		if (path_run_hook(p, HOOK_PRE)) {
@@ -93,7 +112,7 @@ static void * path_run(void *arg)
 		/* For each received message... */
 		for (int i = 0; i < recv; i++) {
 			p->previous = p->current;
-			p->current  = &p->pool[ p->received % p->poolsize];
+			p->current  = &p->pool[p->received % p->poolsize];
 
 			p->received++;
 
@@ -121,8 +140,14 @@ static void * path_run(void *arg)
 int path_start(struct path *p)
 { INDENT
 	char *buf = path_print(p);
-	info("Starting path: %s (poolsize = %u)", buf, p->poolsize);
+	info("Starting path: %s (poolsize=%u, msgsize=%u, #hooks=%zu, rate=%.1f)",
+		buf, p->poolsize, p->msgsize, list_length(&p->hooks), p->rate);
 	free(buf);
+	
+	/* We sort the hooks according to their priority before starting the path */
+	list_sort(&p->hooks, ({int cmp(const void *a, const void *b) {
+		return ((struct hook *) a)->priority - ((struct hook *) b)->priority;
+	}; &cmp; }));
 
 	if (path_run_hook(p, HOOK_PATH_START))
 		return -1;
@@ -131,7 +156,7 @@ int path_start(struct path *p)
 	if (p->rate) {
 		struct itimerspec its = {
 			.it_interval = time_from_double(1 / p->rate),
-			.it_value = { 1, 0 }
+			.it_value = { 0, 1 }
 		};
 
 		p->tfd = timerfd_create(CLOCK_REALTIME, 0);
@@ -173,32 +198,14 @@ char * path_print(struct path *p)
 {
 	char *buf = alloc(32);
 	
-	strcatf(&buf, "%s " MAG("=>"), p->in->name);
+	strcatf(&buf, "%s " MAG("=>") " [", p->in->name);
 
-	if (list_length(&p->destinations) > 1) {
-		strcatf(&buf, " [");
-		FOREACH(&p->destinations, it)
-			strcatf(&buf, " %s", it->node->name);
-		strcatf(&buf, " ]");
-	}
-	else
-		strcatf(&buf, " %s", p->out->name);
+	list_foreach(struct node *n, &p->destinations)
+		strcatf(&buf, " %s", n->name);
+
+	strcatf(&buf, " ]");
 
 	return buf;
-}
-
-int path_reset(struct path *p)
-{
-	if (path_run_hook(p, HOOK_PATH_RESTART))
-		return -1;
-
-	p->sent	    =
-	p->received =
-	p->invalid  =
-	p->skipped  =
-	p->dropped  = 0;
-
-	return 0;
 }
 
 struct path * path_create()
@@ -206,36 +213,22 @@ struct path * path_create()
 	struct path *p = alloc(sizeof(struct path));
 
 	list_init(&p->destinations, NULL);
+	list_init(&p->hooks, free);
 
-	for (int i = 0; i < HOOK_MAX; i++)
-		list_init(&p->hooks[i], NULL);
-
-#define hook_add(type, priority, cb) list_insert(&p->hooks[type], priority, cb)
-
-	hook_add(HOOK_MSG,		1,	hook_verify);
-	hook_add(HOOK_MSG,		2,	hook_restart);
-	hook_add(HOOK_MSG,		3,	hook_drop);
-	hook_add(HOOK_MSG,		4,	stats_collect);
-
-	hook_add(HOOK_PATH_START,	1,	stats_start);
-
-	hook_add(HOOK_PATH_STOP,	2,	stats_show);
-	hook_add(HOOK_PATH_STOP,	3,	stats_stop);
-
-	hook_add(HOOK_PATH_RESTART,	1,	stats_line);
-	hook_add(HOOK_PATH_RESTART,	3,	stats_reset);
-
-	hook_add(HOOK_PERIODIC,		1,	stats_line);
+	list_foreach(struct hook *h, &hooks) {
+		if (h->type & HOOK_INTERNAL)
+			list_push(&p->hooks, memdup(h, sizeof(*h)));
+	}
 
 	return p;
 }
 
 void path_destroy(struct path *p)
 {
+	path_run_hook(p, HOOK_DEINIT);
+	
 	list_destroy(&p->destinations);
-
-	for (int i = 0; i < HOOK_MAX; i++)
-		list_destroy(&p->hooks[i]);
+	list_destroy(&p->hooks);
 
 	free(p->pool);
 	free(p);

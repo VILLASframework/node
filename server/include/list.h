@@ -14,83 +14,62 @@
 
 #include <pthread.h>
 
-/* Forward declarations */
-struct list_elm;
-struct node;
-struct path;
-struct interface;
-struct socket;
-struct gtfpga;
-struct opal;
+#define LIST_CHUNKSIZE		16
 
 /** Static list initialization */
-#define LIST_INIT(dtor) { \
-	.head = NULL, \
-	.tail = NULL, \
-	.length = 0, \
-	.lock = PTHREAD_MUTEX_INITIALIZER, \
-	.destructor = dtor \
+#define LIST_INIT(dtor) {			\
+	.start = NULL,				\
+	.end = NULL,				\
+	.length = 0,				\
+	.capacity = 0,				\
+	.lock = PTHREAD_MUTEX_INITIALIZER,	\
+	.destructor = dtor			\
 }
-
-#define FOREACH(list, elm)				\
-	for ( struct list_elm *elm = (list)->head;	\
-		elm; elm = elm->next )
-			
-#define FOREACH_R(list, elm)				\
-	for ( struct list_elm *elm = (list)->tail;	\
-		elm; elm = elm->prev )
 				
-#define list_first(list)	((list)->head)
-#define list_last(list)		((list)->head)
 #define list_length(list)	((list)->length)
+#define list_at(list, index)	((list)->length > index ? (list)->start[index] : NULL)
+
+#define list_first(list)	list_at(list, 0)
+#define list_last(list)		list_at(list, (list)->length-1)
+#define list_foreach(ptr, list)	for (int _i = 0, _p; _p = 1, _i < (list)->length; _i++) \
+					for (ptr = (list)->start[_i]; _p--; )
 
 /** Callback to destroy list elements.
  *
  * @param data A pointer to the data which should be freed.
  */
-typedef void (*dtor_cb_t)(void *data);
-	
-typedef int (*cmp_cb_t)(void *, void *);
+typedef void (*dtor_cb_t)(void *);
+
+/** Callback to search or sort a list. */	
+typedef int (*cmp_cb_t)(const void *, const void *);
 
 struct list {
-	struct list_elm *head, *tail;
-	int length;
-
-	dtor_cb_t destructor;
-	pthread_mutex_t lock;
+	void **start;		/**< Array of pointers to list elements */
+	void **end;		/**< Array of pointers to list elements */
+	size_t capacity;	/**< Size of list::start in elements */
+	size_t length;		/**< Number of elements of list::start which are in use */
+	dtor_cb_t destructor;	/**< A destructor which gets called for every list elements during list_destroy() */
+	pthread_mutex_t lock;	/**< A mutex to allow thread-safe accesses */
 };
 
-struct list_elm {
-	union {
-		void *ptr;
-		struct node *node;
-		struct node_type *type;
-		struct path *path;
-		struct interface *interface;
-		struct socket *socket;
-		struct opal *opal;
-		struct gtfpga *gtfpga;
-		struct hook *hook;
-	} /* anonymous */;
-
-	int priority;
-	struct list_elm *prev, *next;
-};
-
+/** Initialize a list */
 void list_init(struct list *l, dtor_cb_t dtor);
 
+/** Destroy a list and call destructors for all list elements */
 void list_destroy(struct list *l);
 
+/** Append an element to the end of the list */
 void list_push(struct list *l, void *p);
-
-void list_insert(struct list *l, int prio, void *p);
 
 /** Search the list for an element whose first element is a character array which matches name.
  *
  * @see Only possible because of §1424 of http://c0x.coding-guidelines.com/6.7.2.1.html
  */
-void * list_lookup(const struct list *l, const char *name);
+void * list_lookup(struct list *l, const char *name);
 
-void * list_search(const struct list *l, cmp_cb_t cmp, void *ctx);
+void * list_search(struct list *l, cmp_cb_t cmp, void *ctx);
+
+/** Sort the list using the quicksort algorithm of libc */
+void list_sort(struct list *l, cmp_cb_t cmp);
 
 #endif /* _LIST_H_ */

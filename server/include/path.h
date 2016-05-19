@@ -31,63 +31,47 @@
  */
 struct path
 {
-	/** Pointer to the incoming node */
-	struct node *in;
-	/** Pointer to the first outgoing node.
-	 * Usually this is only a pointer to the first list element of path::destinations. */
-	struct node *out;
+	struct node *in;		/**< Pointer to the incoming node */
+	struct node *out;		/**< Pointer to the first outgoing node ( path::out == list_first(path::destinations) */
 	
-	/** List of all outgoing nodes */
-	struct list destinations;
-	/** List of function pointers to hooks */
-	struct list hooks[HOOK_MAX];
+	struct list destinations;	/**< List of all outgoing nodes */
+	struct list hooks;		/**< List of function pointers to hooks */
 
-	/** Timer file descriptor for fixed rate sending */
-	int tfd;
-	/** Send messages with a fixed rate over this path */
-	double rate;
+	int tfd;			/**< Timer file descriptor for fixed rate sending */
+	double rate;			/**< Send messages with a fixed rate over this path */
 	
-	/** Size of the history buffer in number of messages */
-	int poolsize;
-	/** A circular buffer of past messages */
-	struct msg *pool;
+	int msgsize;			/**< Maximum number of values per message for this path */
+	int poolsize;			/**< Size of the history buffer in number of messages */
+	
+	struct msg *pool;		/**< A circular buffer of past messages */
 
-	/** A pointer to the last received message */
-	struct msg *current;
-	/** A pointer to the previously received message */
-	struct msg *previous;
+	struct msg *current;		/**< A pointer to the last received message */
+	struct msg *previous;		/**< A pointer to the previously received message */
 
-	/** The thread id for this path */
-	pthread_t recv_tid;
-	/** A second thread id for fixed rate sending thread */
-	pthread_t sent_tid;
-	/** A pointer to the libconfig object which instantiated this path */
-	config_setting_t *cfg;
-	
-	/* The following fields are mostly managed by hook_ functions */
-	
-	/** Histogram of sequence number displacement of received messages */
-	struct hist hist_sequence;
-	/** Histogram for delay of received messages */
-	struct hist hist_delay;
-	/** Histogram for inter message delay (time between received messages) */
-	struct hist hist_gap;
-	
-	/** Last message received */
-	struct timespec ts_recv;
-	/** Last message sent */
-	struct timespec ts_sent;
+	pthread_t recv_tid;		/**< The thread id for this path */
+	pthread_t sent_tid;		/**< A second thread id for fixed rate sending thread */
 
-	/** Counter for sent messages to all outgoing nodes */
-	unsigned int sent;
-	/** Counter for received messages from all incoming nodes */
-	unsigned int received;
-	/** Counter for invalid messages */
-	unsigned int invalid;
-	/** Counter for skipped messages due to hooks */
-	unsigned int skipped;
-	/** Counter for dropped messages due to reordering */
-	unsigned int dropped;
+	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path */
+	
+	/** The following fields are mostly managed by hook_ functions @{ */
+	
+	struct hist hist_owd;		/**< Histogram for one-way-delay (OWD) of received messages */
+	struct hist hist_gap_msg;	/**< Histogram for inter message timestamps (as sent by remote) */
+	struct hist hist_gap_recv;	/**< Histogram for inter message arrival time (as seen by this instance) */
+	struct hist hist_gap_seq;	/**< Histogram of sequence number displacement of received messages */
+
+	struct timespec ts_recv;	/**< Last message received */
+	struct timespec ts_sent;	/**< Last message sent */
+	struct timespec ts_last;	/**< Previous message received (old value of path::ts_recv) */
+
+	unsigned int sent;		/**< Counter for sent messages to all outgoing nodes */
+	unsigned int received;		/**< Counter for received messages from all incoming nodes */
+	unsigned int invalid;		/**< Counter for invalid messages */
+	unsigned int skipped;		/**< Counter for skipped messages due to hooks */
+	unsigned int dropped;		/**< Counter for dropped messages due to reordering */
+	unsigned int overrun;		/**< Counter of overruns for fixed-rate sending */
+	
+	/** @} */
 };
 
 /** Create a path by allocating dynamic memory. */
@@ -116,15 +100,6 @@ int path_start(struct path *p);
  * @retval <0 Error. Something went wrong.
  */
 int path_stop(struct path *p);
-
-
-/** Reset internal counters and histogram of a path.
- *
- * @param p A pointer to the path structure.
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
- */
-int path_reset(struct path *p);
 
 /** Show some basic statistics for a path.
  *

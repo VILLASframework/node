@@ -19,31 +19,26 @@
 #include "cfg.h"
 #include "path.h"
 #include "node.h"
-#include "stats.h"
 #include "checks.h"
 
 #ifdef ENABLE_OPAL_ASYNC
   #include "opal.h"
 #endif
 
-/** Linked list of nodes */
-struct list nodes;
-/** Linked list of paths */
-struct list paths;
-/** The global configuration */
-struct settings settings;
-/** libconfig handle */
-static config_t config;
+struct list nodes;		/**< Linked list of nodes */
+struct list paths;		/**< Linked list of paths */
+struct settings settings;	/**< The global configuration */
+static config_t config;		/**< libconfig handle */
 
 static void quit()
 {
 	info("Stopping paths");
-	FOREACH(&paths, it)
-		path_stop(it->path);
+	list_foreach(struct path *p, &paths)
+		path_stop(p);
 
 	info("Stopping nodes");
-	FOREACH(&nodes, it)
-		node_stop(it->node);
+	list_foreach(struct node *n, &nodes)
+		node_stop(n);
 
 	info("De-initializing node types");
 	node_deinit();
@@ -53,13 +48,18 @@ static void quit()
 	list_destroy(&nodes);
 	config_destroy(&config);
 
-	info("Goodbye!");
+	info(GRN("Goodbye!"));
 
 	_exit(EXIT_SUCCESS);
 }
 
 static void realtime_init()
 { INDENT
+	if (check_kernel_cmdline())
+		warn("You should reserve some cores for the server (see 'isolcpus')");
+	if (check_kernel_rt())
+		warn("We recommend to use an PREEMPT_RT patched kernel!");
+	
 	/* Use FIFO scheduler with real time priority */
 	if (settings.priority) {
 		struct sched_param param = {
@@ -68,18 +68,20 @@ static void realtime_init()
 
 		if (sched_setscheduler(0, SCHED_FIFO, &param))
 			serror("Failed to set real time priority");
-		else
-			debug(3, "Set task priority to %u", settings.priority);
+
+		debug(3, "Set task priority to %u", settings.priority);
 	}
+	warn("Use setting 'priority' to enable real-time scheduling!");
 
 	/* Pin threads to CPUs by setting the affinity */
 	if (settings.affinity) {
 		cpu_set_t cset = to_cpu_set(settings.affinity);
 		if (sched_setaffinity(0, sizeof(cset), &cset))
 			serror("Failed to set CPU affinity to '%#x'", settings.affinity);
-		else
-			debug(3, "Set affinity to %#x", settings.affinity);
+
+		debug(3, "Set affinity to %#x", settings.affinity);
 	}
+	warn("Use setting 'affinity' to pin process to isolated CPU cores!");
 }
 
 /* Setup exit handler */
@@ -143,14 +145,12 @@ int main(int argc, char *argv[])
 
 	char *configfile = (argc == 2) ? argv[1] : "opal-shmem.conf";
 
-	log_reset();
+	log_init();
 	info("This is Simulator2Simulator Server (S2SS)");
 	info ("  Version: %s (built on %s, %s)", BLD(YEL(VERSION)),
 		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
 	/* Checks system requirements*/
-	if (check_root())
-		error("The server requires superuser privileges!");
 #ifdef LICENSE
 	if (check_license_trace())
 		error("This software should not be traced!");
@@ -161,10 +161,6 @@ int main(int argc, char *argv[])
 #endif
 	if (check_kernel_version())
 		error("Your kernel version is to old: required >= %u.%u", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
-	if (check_kernel_cmdline())
-		warn("You should reserve some cores for the server (see 'isolcpus')");
-	if (check_kernel_rtpreempt())
-		warn("We recommend to use an RT_PREEMPT patched kernel!");
 
 	/* Initialize lists */
 	list_init(&nodes, (dtor_cb_t) node_destroy);
@@ -184,21 +180,21 @@ int main(int argc, char *argv[])
 	node_init(argc, argv, &settings);
 
 	info("Starting nodes");
-	FOREACH(&nodes, it)
-		node_start(it->node);
+	list_foreach(struct node *n, &nodes)
+		node_start(n);
 
 	info("Starting paths");
-	FOREACH(&paths, it)
-		path_start(it->path);
+	list_foreach(struct path *p, &paths)
+		path_start(p);
 
 	/* Run! */
 	if (settings.stats > 0) {
-		stats_header();
+		hook_stats_header();
 
-		for (;;) FOREACH(&paths, it) {
+		do list_foreach(struct path *p, &paths) {
 			usleep(settings.stats * 1e6);
-			path_run_hook(it->path, HOOK_PERIODIC);
-		}
+			path_run_hook(p, HOOK_PERIODIC);
+		} while (1);
 	}
 	else
 		pause();

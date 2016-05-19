@@ -32,34 +32,30 @@
 
 struct node;
 
+struct ngsi_mapping {
+	char *name;
+	char *type;
+
+	int index;
+};
+
 struct ngsi {
-	/** The NGSI context broker endpoint URL. */
-	const char *endpoint;
-	/** An optional authentication token which will be sent as HTTP header. */
-	const char *token;
+	const char *endpoint;		/**< The NGSI context broker endpoint URL. */
+	const char *entity_id;		/**< The context broker entity id related to this node */
+	const char *entity_type;	/**< The type of the entity */
+	const char *access_token;	/**< An optional authentication token which will be sent as HTTP header. */
 
-	/** HTTP timeout in seconds */
-	double timeout;
-	/** Boolean flag whether SSL server certificates should be verified or not. */ 
-	int ssl_verify;
+	double timeout;			/**< HTTP timeout in seconds */
+	double rate;			/**< Rate used for polling. */
 
-	/** Structure of published entitites */
-	enum ngsi_structure {
-		NGSI_FLAT,
-		NGSI_CHILDREN
-	} structure;
-	
-	/** List of HTTP request headers for libcurl */
-	struct curl_slist *headers;
-	/** libcurl handle */
-	CURL *curl;
+	int tfd;			/**< Timer */
+	int ssl_verify;			/**< Boolean flag whether SSL server certificates should be verified or not. */
 
-	/** The complete JSON tree which will be used for contextUpdate requests */
-	json_t *context;
-	/** A mapping between indices of the S2SS messages and the attributes in ngsi::context */
-	json_t **context_map;
-	/** The number of mappings in ngsi::context_map */
-	int context_len;
+	struct curl_slist *headers;	/**< List of HTTP request headers for libcurl */
+
+	CURL *curl;			/**< libcurl: handle */
+
+	struct list mapping;		/**< A mapping between indices of the S2SS messages and the attributes in ngsi::context */
 };
 
 /** Initialize global NGSI settings and maps shared memory regions.

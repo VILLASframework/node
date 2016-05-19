@@ -8,8 +8,8 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define PROGNAME	"S2SS"
-#define VERSION		"0.1"
+#define PROGNAME	"S2SS-OPAL-UDP"
+#define VERSION		"0.5"
 
 #define MAX_VALUES	64
 

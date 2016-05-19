@@ -27,14 +27,18 @@
 #include "list.h"
 
 /* Helper macros for virtual node type */
-#define node_type(n)			((n)->vt->type)
-#define node_print(n)			((n)->vt->print(n))
+#define node_type(n)			((n)->_vt->type)
+#define node_parse(n, cfg)		((n)->_vt->parse(cfg, n))
+#define node_print(n)			((n)->_vt->print(n))
 
-#define node_read(n, p, ps, f, c)	((n)->vt->read(n, p, ps, f, c))
-#define node_write(n, p, ps, f, c)	((n)->vt->write(n, p, ps, f, c))
+#define node_read(n, p, ps, f, c)	((n)->_vt->read(n, p, ps, f, c))
+#define node_write(n, p, ps, f, c)	((n)->_vt->write(n, p, ps, f, c))
 
-#define node_read_single(n, m)		((n)->vt->read(n, m, 1, 0, 1))
-#define node_write_single(n, m)		((n)->vt->write(n, m, 1, 0, 1))
+#define node_open(n)			((n)->_vt->open(n))
+#define node_close(n)			((n)->_vt->close(n))
+
+#define node_read_single(n, m)		((n)->_vt->read(n, m, 1, 0, 1))
+#define node_write_single(n, m)		((n)->_vt->write(n, m, 1, 0, 1))
 
 
 #define REGISTER_NODE_TYPE(type, name, fnc)				\
@@ -49,21 +53,18 @@ __attribute__((constructor)) void __register_node_ ## fnc () {		\
 
 extern struct list node_types;
 
-/** C++ like vtable construct for node_types
- * @todo Add comments
- */
+/** C++ like vtable construct for node_types */
 struct node_type {
 	/** The unique name of this node. This must be allways the first member! */
-	char *name;
-	
-	/** Node type */
+	const char *name;
+
 	enum {
 		BSD_SOCKET,		/**< BSD Socket API */
 		LOG_FILE,		/**< File IO */
 		OPAL_ASYNC,		/**< OPAL-RT Asynchronous Process Api */
 		GTFPGA,			/**< Xilinx ML507 GTFPGA card */
 		NGSI			/**< NGSI 9/10 HTTP RESTful API (FIRWARE ContextBroker) */
-	} type;
+	} type;				/**< Node type */
 
 	/** Parse node connection details.‚
 	 *
@@ -130,10 +131,28 @@ struct node_type {
 	 */
 	int (*write)(struct node *n, struct msg *pool, int poolsize, int first, int cnt);
 
+	/** Global initialization per node type.
+	 *
+	 * This callback is invoked once per node-type.
+	 *
+	 * @param argc	Number of arguments passed to the server executable (see main()).
+	 * @param argv	Array of arguments  passed to the server executable (see main()).
+	 * @param set	Global settings.
+	 * @retval 0	Success. Everything went well.
+	 * @retval <0	Error. Something went wrong.
+	 */
 	int (*init)(int argc, char *argv[], struct settings *set);
+	
+	/** Global de-initialization per node type.
+	 *
+	 * This callback is invoked once per node-type.
+	 *
+	 * @retval 0	Success. Everything went well.
+	 * @retval <0	Error. Something went wrong.
+	 */
 	int (*deinit)();
 
-	int refcnt;
+	int refcnt;	/**< Reference counter: how many nodes are using this node-type? */
 };
 
 /** The data structure for a node.
@@ -143,28 +162,23 @@ struct node_type {
  */
 struct node
 {
-	/** A short identifier of the node, only used for configuration and logging */
-	char *name;
-	/** How many paths  are sending / receiving from this node? */
-	int refcnt;
-	/** Number of messages to send / recv at once (scatter / gather) */
-	int combine;
-	/** CPU Affinity of this node */
-	int affinity;
+	const char *name;	/**< A short identifier of the node, only used for configuration and logging */
 
-	/** C++ like virtual function call table */
-	struct node_type * vt;
-	/** Virtual data (used by vtable functions) */
+	int refcnt;		/**< How many paths  are sending / receiving from this node? */
+	int combine;		/**< Number of messages to send / recv at once (scatter / gather) */
+	int affinity;		/**< CPU Affinity of this node */
+
+	struct node_type *_vt;	/**< C++ like virtual function call table */
+
 	union {
 		struct socket *socket;
 		struct opal   *opal;
 		struct gtfpga *gtfpga;
 		struct file   *file;
 		struct ngsi   *ngsi;
-	};
+	};	/** Virtual data (used by struct node::_vt functions) */
 
-	/** A pointer to the libconfig object which instantiated this node */
-	config_setting_t *cfg;
+	config_setting_t *cfg;	/**< A pointer to the libconfig object which instantiated this node */
 };
 
 /** Initialize node type subsystems.
@@ -218,7 +232,7 @@ int node_stop(struct node *n);
 void node_reverse(struct node *n);
 
 /** Create a node by allocating dynamic memory. */
-struct node * node_create();
+struct node * node_create(struct node_type *vt);
 
 /** Destroy node by freeing dynamically allocated memory.
  *

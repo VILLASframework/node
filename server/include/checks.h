@@ -9,14 +9,14 @@
 #ifndef _CHECKS_H_
 #define _CHECKS_H_
 
-/** Checks for realtime (RT_PREEMPT) patched kernel.
+/** Checks for realtime (PREEMPT_RT) patched kernel.
  *
  * See https://rt.wiki.kernel.org
  *
  * @retval 0 Kernel is patched.
  * @reval <>0 Kernel is not patched.
  */
-int check_kernel_rtpreempt();
+int check_kernel_rt();
 
 /** Check if kernel command line contains "isolcpus=" option.
  *

@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 {
 	int reverse = 0;
 
-	struct config_t config;
+	config_t config;
 
 	_mtid = pthread_self();
 
@@ -89,6 +89,8 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	list_init(&nodes, (dtor_cb_t) node_destroy);
+	
+	log_init();
 	config_init(&config);
 	config_parse(argv[optind], &config, &set, &nodes, NULL);
 
@@ -100,7 +102,7 @@ int main(int argc, char *argv[])
 		node_reverse(node);
 
 	node->refcnt++;
-	node->vt->refcnt++;
+	node->_vt->refcnt++;
 
 	node_init(argc-optind, argv+optind, &set);
 	node_start(node);
@@ -108,16 +110,22 @@ int main(int argc, char *argv[])
 	pool = alloc(sizeof(struct msg) * node->combine);
 
 	/* Print header */
-	fprintf(stderr, "# %-20s\t%s\t%s\n", "timestamp", "seqno", "data[]");
+	fprintf(stderr, "# %-20s\t\t%s\n", "sec.nsec+offset(seq)", "data[]");
 
 	for (;;) {
+		struct timespec ts = time_now();
+		
 		int recv = node_read(node, pool, node->combine, 0, node->combine);
 		for (int i = 0; i < recv; i++) {
-			int ret = msg_verify(&pool[i]);
+			struct msg *m = &pool[i];
+			
+			int ret = msg_verify(m);
 			if (ret)
 				warn("Failed to verify message: %d", ret);
+			
+			/** @todo should we drop reordered / delayed packets here? */
 
-			msg_fprint(stdout, &pool[i]);
+			msg_fprint(stdout, &pool[i], MSG_PRINT_ALL, time_delta(&MSG_TS(m), &ts));
 		}
 	}
 

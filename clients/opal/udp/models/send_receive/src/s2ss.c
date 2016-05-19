@@ -25,12 +25,13 @@
 #include <time.h>
 
 #if defined(__QNXNTO__)
-#       include <process.h>
-#       include <pthread.h>
-#       include <devctl.h>
-#       include <sys/dcmd_chr.h>
+  #include <process.h>
+  #include <pthread.h>
+  #include <devctl.h>
+  #include <sys/dcmd_chr.h>
 #elif defined(__linux__)
-#       define _GNU_SOURCE   1
+  #define _GNU_SOURCE   1
+  #include <time.h>
 #endif
 
 /* Define RTLAB before including OpalPrint.h for messages to be sent
@@ -43,6 +44,7 @@
 #include "config.h"
 #include "msg.h"
 #include "socket.h"
+#include "utils.h"
 
 /* This is just for initializing the shared memory access to communicate
  * with the RT-LAB model. It's easier to remember the arguments like this */
@@ -69,7 +71,7 @@ void Tick(int sig, siginfo_t *si, void *ptr)
 	OpalGetAsyncModelTime(IconCtrlStruct, &CpuTime, &ModelTime);
 
 	OpalPrint("%s: CpuTime: %llu\tModelTime: %.3f\tSequence: %hu\tValue: %.2f\n",
-		PROGNAME, (CpuTime - CpuTimeStart) / CPU_TICKS, ModelTime, ntohs(msg_send->sequence), msg_send->data[0].f);
+		PROGNAME, (CpuTime - CpuTimeStart) / CPU_TICKS, ModelTime, msg_send->sequence, msg_send->data[0].f);
 }
 #endif /* _DEBUG */
 
@@ -78,8 +80,8 @@ static void *SendToIPPort(void *arg)
 	unsigned int SendID = 1;
 	unsigned int ModelState;
 	unsigned int i, n;
-	unsigned short seq = 0;
 	int nbSend = 0;
+	uint32_t seq = 0;
 
 	/* Data from OPAL-RT model */
 	double mdldata[MSG_VALUES];
@@ -126,13 +128,17 @@ static void *SendToIPPort(void *arg)
 		/* Read data from the model */
 		OpalGetAsyncSendIconData(mdldata, mdldata_size, SendID);
 		
+		/* Get current time */
+		struct timespec now;
+		clock_gettime(CLOCK_REALTIME, &now);
+
 		msg.length = mdldata_size / sizeof(double);
 		for (i = 0; i < msg.length; i++)
 			msg.data[i].f = (float) mdldata[i];
 
-		/* Convert to network byte order */
-		msg.sequence = htonl(seq++);
-		msg.length = htons(msg.length);
+		msg.sequence = seq++;
+		msg.ts.sec = now.tv_sec;
+		msg.ts.nsec = now.tc_nsec;
 
 		/* Perform the actual write to the ip port */
 		if (SendPacket((char *) &msg, MSG_LEN(&msg)) < 0)
@@ -206,18 +212,15 @@ static void *RecvFromIPPort(void *arg)
 			OpalPrint("%s: Received no data. Skipping..\n", PROGNAME);
 			continue;
 		}
-			
-		/* Convert to host byte order */
-		msg.sequence = ntohl(msg.sequence);
-		msg.length = ntohs(msg.length);
+		
+		/* Convert message to host endianess */
+		if (msg.endian != MSG_ENDIAN_HOST)
+			msg_swap(&msg);
 		
 		if (n != MSG_LEN(&msg)) {
 			OpalPrint("%s: Received incoherent packet (size: %d, complete: %d)\n", PROGNAME, n, MSG_LEN(&msg));
 			continue;
 		}
-			
-		if (msg.endian != MSG_ENDIAN_HOST)
-			msg_swap(&msg);
 
 		/* Update OPAL model */
 		OpalSetAsyncRecvIconStatus(msg.sequence, RecvID);	/* Set the Status to the message ID */
@@ -259,7 +262,7 @@ int main(int argc, char *argv[])
 	pthread_t tid_send, tid_recv;
 	pthread_attr_t attr_send, attr_recv;
 
-	OpalPrint("%s: This is a S2SS client\n", PROGNAME);
+	OpalPrint("%s: This is %s client version %s\n", PROGNAME, PROGNAME, VERSION);
 
 	/* Check for the proper arguments to the program */
 	if (argc < 4) {

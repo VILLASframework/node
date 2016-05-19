@@ -30,16 +30,12 @@ struct rtnl_link;
 
 /** Interface data structure */
 struct interface {
-	/** libnl3: Handle of interface */
-	struct rtnl_link *nl_link;
-	/** libnl3: Root prio qdisc */
-	struct rtnl_qdisc *tc_qdisc;
+	struct rtnl_link *nl_link;	/**< libnl3: Handle of interface. */
+	struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Root priority queuing discipline (qdisc). */
 
-	/** List of IRQs of the NIC */
-	char irqs[IF_IRQ_MAX];
+	char irqs[IF_IRQ_MAX];		/**< List of IRQs of the NIC. */
 
-	/** Linked list of associated sockets */
-	struct list sockets;
+	struct list sockets;		/**< Linked list of associated sockets. */
 };
 
 /** Add a new interface to the global list and lookup name, irqs...

@@ -24,6 +24,7 @@
 #define INFO		    "" 
 #define WARN		YEL("Warn ")
 #define ERROR		RED("Error")
+#define STATS		MAG("Stats")
 
 /** Change log indention  for current thread.
  *
@@ -45,7 +46,7 @@ void log_outdent(int *);
 void log_setlevel(int lvl);
 
 /** Reset the wallclock of debug messages. */
-void log_reset();
+void log_init();
 
 /** Logs variadic messages to stdout.
  *
@@ -77,7 +78,11 @@ void info(const char *fmt, ...)
 /** Printf alike warning message. */
 void warn(const char *fmt, ...)
 	__attribute__ ((format(printf, 1, 2)));
-	
+
+/** Printf alike statistics message. */
+void stats(const char *fmt, ...)
+	__attribute__ ((format(printf, 1, 2)));
+
 /** Print error and exit. */
 void error(const char *fmt, ...)
 	__attribute__ ((format(printf, 1, 2)));

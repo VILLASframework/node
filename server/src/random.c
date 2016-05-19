@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 	/* Setup timer */
 	struct itimerspec its = {
 		.it_interval = time_from_double(1 / rate),
-		.it_value = { 1, 0 }
+		.it_value = { 0, 1 }
 	};
 
 	int tfd = timerfd_create(CLOCK_REALTIME, 0);
@@ -53,22 +53,20 @@ int main(int argc, char *argv[])
 		serror("Failed to start timer");
 
 	/* Print header */
-	fprintf(stderr, "# %-20s\t%s\t%s\n", "timestamp", "seqno", "data[]");
+	fprintf(stderr, "# %-20s\t\t%s\n", "sec.nsec(seq)", "data[]");
 
 	/* Block until 1/p->rate seconds elapsed */
 	while (limit-- > 0 || argc < 4) {
-		m.sequence += timerfd_wait(tfd);
-
-		struct timespec ts;
-		clock_gettime(CLOCK_REALTIME, &ts);
+		struct timespec ts = time_now();
 
 		m.ts.sec    = ts.tv_sec;
 		m.ts.nsec   = ts.tv_nsec;
 
 		msg_random(&m);
-		msg_fprint(stdout, &m);
-
+		msg_fprint(stdout, &m, MSG_PRINT_ALL & ~MSG_PRINT_OFFSET, 0);
 		fflush(stdout);
+		
+		m.sequence += timerfd_wait(tfd);
 	}
 
 	close(tfd);

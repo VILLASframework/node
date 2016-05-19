@@ -8,6 +8,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "utils.h"
 #include "list.h"
@@ -87,6 +88,11 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 	config_setting_lookup_int(cfg, "debug", &set->debug);
 	config_setting_lookup_float(cfg, "stats", &set->stats);
 
+	if (!config_setting_lookup_string(cfg, "name", &set->name)) {
+		set->name = alloc(128); /** @todo missing free */
+		gethostname((char *) set->name, 128);
+	}
+
 	log_setlevel(set->debug);
 
 	return 0;
@@ -95,36 +101,34 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 int config_parse_path(config_setting_t *cfg,
 	struct list *paths, struct list *nodes, struct settings *set)
 {
+	config_setting_t *cfg_out, *cfg_hook;
 	const char *in;
-	int enabled;
-	int reverse;
+	int enabled, reverse;
 
 	struct path *p = path_create();
 
 	/* Input node */
-	struct config_setting_t *cfg_in = config_setting_get_member(cfg, "in");
-	if (!cfg_in || config_setting_type(cfg_in) != CONFIG_TYPE_STRING)
-		cerror(cfg, "Invalid input node for path");
+	if (!config_setting_lookup_string(cfg, "in", &in))
+		cerror(cfg, "Missing input node for path");
 
-	in = config_setting_get_string(cfg_in);
 	p->in = list_lookup(nodes, in);
 	if (!p->in)
-		cerror(cfg_in, "Invalid input node '%s'", in);
+		error("Invalid input node '%s'", in);
 
 	/* Output node(s) */
-	struct config_setting_t *cfg_out = config_setting_get_member(cfg, "out");
+	cfg_out = config_setting_get_member(cfg, "out");
 	if (cfg_out)
 		config_parse_nodelist(cfg_out, &p->destinations, nodes);
-
-	if (list_length(&p->destinations) >= 1)
-		p->out = list_first(&p->destinations)->node;
-	else
-		cerror(cfg, "Missing output node for path");
+	
+	p->out = (struct node *) list_first(&p->destinations);	
 
 	/* Optional settings */
-	struct config_setting_t *cfg_hook = config_setting_get_member(cfg, "hook");
+	cfg_hook = config_setting_get_member(cfg, "hook");
 	if (cfg_hook)
-		config_parse_hooklist(cfg_hook, p->hooks);
+		config_parse_hooklist(cfg_hook, &p->hooks);
+	
+	/* Initialize hooks and their private data / parameters */
+	path_run_hook(p, HOOK_INIT);
 
 	if (!config_setting_lookup_bool(cfg, "enabled", &enabled))
 		enabled = 1;
@@ -134,17 +138,21 @@ int config_parse_path(config_setting_t *cfg,
 		p->rate = 0; /* disabled */
 	if (!config_setting_lookup_int(cfg, "poolsize", &p->poolsize))
 		p->poolsize = DEFAULT_POOLSIZE;
+	if (!config_setting_lookup_int(cfg, "msgsize", &p->msgsize))
+		p->msgsize = MAX_VALUES;
 
 	p->cfg = cfg;
 
 	if (enabled) {
 		p->in->refcnt++;
-		p->in->vt->refcnt++;
+		p->in->_vt->refcnt++;
 
-		FOREACH(&p->destinations, it) {
-			it->node->refcnt++;
-			it->node->vt->refcnt++;
+		list_foreach(struct node *node, &p->destinations) {
+			node->refcnt++;
+			node->_vt->refcnt++;
 		}
+		
+		list_push(paths, p);
 
 		if (reverse) {
 			if (list_length(&p->destinations) > 1)
@@ -152,20 +160,30 @@ int config_parse_path(config_setting_t *cfg,
 
 			struct path *r = path_create();
 
-			r->in  = p->out; /* Swap in/out */
+			/* Swap in/out */
+			r->in  = p->out;
 			r->out = p->in;
-
+			
 			list_push(&r->destinations, r->out);
-
+			
+			/* Increment reference counters */
 			r->in->refcnt++;
+			r->in->_vt->refcnt++;
 			r->out->refcnt++;
-			r->in->vt->refcnt++;
-			r->out->vt->refcnt++;
+			r->out->_vt->refcnt++;
+			
+			if (cfg_hook)
+				config_parse_hooklist(cfg_hook, &r->hooks);
+			
+			/* Initialize hooks and their private data / parameters */
+			path_run_hook(r, HOOK_INIT);
+			
+			r->rate = p->rate;
+			r->poolsize = p->poolsize;
+			r->msgsize = p->msgsize;
 
 			list_push(paths, r);
 		}
-
-		list_push(paths, p);
 	}
 	else {
 		char *buf = path_print(p);
@@ -220,39 +238,54 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *list, struct list 
 	return 0;
 }
 
-int config_parse_hooklist(config_setting_t *cfg, struct list *list) {
-	const char *str;
-	const struct hook *hook;
+int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set)
+{
+	const char *type, *name;
+	int ret;
 
+	struct node *n;
+	struct node_type *vt;
+
+	/* Required settings */
+	if (!config_setting_lookup_string(cfg, "type", &type))
+		cerror(cfg, "Missing node type");
+	
+	name = config_setting_name(cfg);
+
+	vt = list_lookup(&node_types, type);
+	if (!vt)
+		cerror(cfg, "Invalid type for node '%s'", config_setting_name(cfg));
+	
+	n = node_create(vt);
+	
+	n->name = name;
+	n->cfg = cfg;
+
+	ret = node_parse(n, cfg);
+	if (ret)
+		cerror(cfg, "Failed to parse node '%s'", n->name);
+
+	if (!config_setting_lookup_int(cfg, "combine", &n->combine))
+		n->combine = 1;
+
+	if (!config_setting_lookup_int(cfg, "affinity", &n->affinity))
+		n->affinity = set->affinity;
+	
+	list_push(nodes, n);
+	list_push(&vt->nodes, n);
+
+	return ret;
+}
+
+int config_parse_hooklist(config_setting_t *cfg, struct list *list) {
 	switch (config_setting_type(cfg)) {
 		case CONFIG_TYPE_STRING:
-			str = config_setting_get_string(cfg);
-			if (str) {
-				hook = list_lookup(&hooks, str);
-				if (hook)
-					list_insert(&list[hook->type], hook->priority, hook->callback);	
-				else
-					cerror(cfg, "Unknown hook function '%s'", str);
-			}
-			else
-				cerror(cfg, "Invalid hook function");
+			config_parse_hook(cfg, list);
 			break;
 
 		case CONFIG_TYPE_ARRAY:
-			for (int i = 0; i<config_setting_length(cfg); i++) {
-				config_setting_t *elm = config_setting_get_elem(cfg, i);
-				
-				str = config_setting_get_string(elm);
-				if (str) {
-					hook = list_lookup(&hooks, str);
-					if (hook)
-						list_insert(&list[hook->type], hook->priority, hook->callback);
-					else
-						cerror(elm, "Invalid hook function '%s'", str);
-				}
-				else
-					cerror(cfg, "Invalid hook function");
-			}
+			for (int i = 0; i < config_setting_length(cfg); i++)
+				config_parse_hook(config_setting_get_elem(cfg, i), list);
 			break;
 
 		default:
@@ -262,36 +295,27 @@ int config_parse_hooklist(config_setting_t *cfg, struct list *list) {
 	return 0;
 }
 
-int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set)
+int config_parse_hook(config_setting_t *cfg, struct list *list)
 {
-	const char *type;
-	int ret;
+	struct hook *hook, *copy;
+	const char *name = config_setting_get_string(cfg);
+	if (!name)
+		cerror(cfg, "Invalid hook function");
+	
+	char *param = strchr(name, ':');
+	if (param) { /* Split hook line */
+		*param = '\0';
+		param++;
+	}
+	
+	hook = list_lookup(&hooks, name);
+	if (!hook)
+		cerror(cfg, "Unknown hook function '%s'", name);
+		
+	copy = memdup(hook, sizeof(struct hook));
+	copy->parameter = param;
+	
+	list_push(list, copy);
 
-	struct node *n = node_create();
-
-	/* Required settings */
-	n->cfg = cfg;
-	n->name = config_setting_name(cfg);
-	if (!n->name)
-		cerror(cfg, "Missing node name");
-
-	if (!config_setting_lookup_string(cfg, "type", &type))
-		cerror(cfg, "Missing node type");
-
-	if (!config_setting_lookup_int(cfg, "combine", &n->combine))
-		n->combine = 1;
-
-	if (!config_setting_lookup_int(cfg, "affinity", &n->combine))
-		n->affinity = set->affinity;
-
-	n->vt = list_lookup(&node_types, type);
-	if (!n->vt)
-		cerror(cfg, "Invalid type for node '%s'", n->name);
-
-	ret = n->vt->parse(cfg, n);
-	if (!ret)
-		list_push(nodes, n);
-
-	return ret;
+	return 0;
 }
-

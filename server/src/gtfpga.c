@@ -31,6 +31,9 @@ static void gtfpga_debug(char *msg, ...) {
 
 int gtfpga_init(int argc, char * argv[], struct settings *set)
 {
+	if (check_root())
+		error("The gtfpga node-type requires superuser privileges!");
+
 	pacc = pci_alloc();		/* Get the pci_access structure */
 	if (!pacc)
 		error("Failed to allocate PCI access structure");
@@ -59,12 +62,6 @@ int gtfpga_parse(config_setting_t *cfg, struct node *n)
 
 	const char *slot, *id, *err;
 	config_setting_t *cfg_slot, *cfg_id;
-
-	/* Checks */
-	if (n->combine != 1) {
-		config_setting_t *cfg_combine = config_setting_get_member(cfg, "combine");
-		cerror(cfg_combine, "The GTFPGA node type does not support combining!");
-	}
 
 	pci_filter_init(NULL, &g->filter);
 
@@ -212,7 +209,7 @@ int gtfpga_open(struct node *n)
 
 		struct itimerspec its = {
 			.it_interval = time_from_double(1 / g->rate),
-			.it_value = { 1, 0 }
+			.it_value = { 0, 1 }
 		};
 		ret = timerfd_settime(g->fd_irq, 0, &its, NULL);
 		if (ret)
@@ -244,6 +241,9 @@ int gtfpga_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 	struct gtfpga *g = n->gtfpga;
 
 	struct msg *m = &pool[first % poolsize];
+	
+	if (cnt != 1)
+		error("The GTFPGA node type does not support combining!");
 
 	uint64_t runs;
 	read(g->fd_irq, &runs, sizeof(runs));
@@ -259,8 +259,10 @@ int gtfpga_read(struct node *n, struct msg *pool, int poolsize, int first, int c
 int gtfpga_write(struct node *n, struct msg *pool, int poolsize, int first, int cnt)
 {
 	// struct gtfpga *g = n->gtfpga;
-
 	// struct msg *m = &pool[first % poolsize];
+	
+	if (cnt != 1)
+		error("The GTFPGA node type does not support combining!");
 
 	return 0;
 }

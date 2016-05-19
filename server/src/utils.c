@@ -31,14 +31,33 @@ int version_compare(struct version *a, struct version *b) {
 	return major ? major : minor;
 }
 
-int strftimespec(char *s, uint max, const char *format, struct timespec *ts)
+int strftimespec(char *dst, size_t max, const char *fmt, struct timespec *ts)
 {
-	struct tm t;
+	int s, d;
+	char fmt2[64], dst2[64];
 
-	if (localtime_r(&(ts->tv_sec), &t) == NULL)
-	    return -1;
+	for (s=0, d=0; fmt[s] && d < 64;) {
+		char c = fmt2[d++] = fmt[s++];
+		if (c == '%') {
+			char n = fmt[s];
+			if (n == 'u') {
+				fmt2[d++] = '0';
+				fmt2[d++] = '3';
+			}
+			else
+				fmt2[d++] = '%';
+		}
+	}
+	
+	/* Print sub-second part to format string */
+	snprintf(dst2, sizeof(dst2), fmt2, ts->tv_nsec / 1000000);
 
-	return strftime(s, max, format, &t);
+	/* Print timestamp */
+	struct tm tm;
+	if (localtime_r(&(ts->tv_sec), &tm) == NULL)
+		return -1;
+
+	return strftime(dst, max, dst2, &tm);
 }
 
 double box_muller(float m, float s)
@@ -134,4 +153,13 @@ void * alloc(size_t bytes)
 	memset(p, 0, bytes);
 
 	return p;
+}
+
+void * memdup(const void *src, size_t bytes)
+{
+	void *dst = alloc(bytes);
+	
+	memcpy(dst, src, bytes);
+	
+	return dst;
 }

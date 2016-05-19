@@ -31,6 +31,15 @@ uint64_t timerfd_wait_until(int fd, struct timespec *until)
 		return timerfd_wait(fd);
 }
 
+struct timespec time_now()
+{
+	struct timespec ts;
+
+	clock_gettime(CLOCK_REALTIME, &ts);
+	
+	return ts;
+}
+
 struct timespec time_add(struct timespec *start, struct timespec *end)
 {
 	struct timespec sum = {
@@ -81,14 +90,4 @@ double time_delta(struct timespec *start, struct timespec *end)
 	struct timespec diff = time_diff(start, end);
 
 	return time_to_double(&diff);
-}
-
-int time_fscan(FILE *f, struct timespec *ts)
-{
-	return fscanf(f, "%lu.%lu", &ts->tv_sec, &ts->tv_nsec);
-}
-
-int time_fprint(FILE *f, struct timespec *ts)
-{
-	return fprintf(f, "%lu.%09lu\t", ts->tv_sec, ts->tv_nsec);
 }

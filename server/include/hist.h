@@ -21,34 +21,24 @@ typedef unsigned hist_cnt_t;
 
 /** Histogram structure used to collect statistics. */
 struct hist {
-	/** The distance between two adjacent buckets. */
-	double resolution;
+	double resolution;	/**< The distance between two adjacent buckets. */
 	
-	/** The value of the highest bucket. */
-	double high;
-	/** The value of the lowest bucket. */
-	double low;
+	double high;		/**< The value of the highest bucket. */
+	double low;		/**< The value of the lowest bucket. */
 	
-	/** The highest value observed (may be higher than #high). */
-	double highest;
-	/** The lowest value observed (may be lower than #low). */
-	double lowest;
+	double highest;		/**< The highest value observed (may be higher than #high). */
+	double lowest;		/**< The lowest value observed (may be lower than #low). */
+	double last;		/**< The last value which has been put into the buckets */
 	
-	/** The number of buckets in #data. */
-	int length;
+	int length;		/**< The number of buckets in #data. */
 
-	/** Total number of counted values. */
-	hist_cnt_t total;
-	/** The number of values which are higher than #high. */ 
-	hist_cnt_t higher;
-	/** The number of values which are lower than #low. */
-	hist_cnt_t lower;
+	hist_cnt_t total;	/**< Total number of counted values. */
+	hist_cnt_t higher;	/**< The number of values which are higher than #high. */ 
+	hist_cnt_t lower;	/**< The number of values which are lower than #low. */
 
-	/** Pointer to dynamically allocated array of size length. */
-	hist_cnt_t *data;
+	hist_cnt_t *data;	/**< Pointer to dynamically allocated array of size length. */
 	
-	/** Private variables for online variance calculation */
-	double _m[2], _s[2];
+	double _m[2], _s[2];	/**< Private variables for online variance calculation */
 };
 
 /** Initialize struct hist with supplied values and allocate memory for buckets. */

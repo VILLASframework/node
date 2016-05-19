@@ -38,6 +38,8 @@ void hist_destroy(struct hist *h)
 void hist_put(struct hist *h, double value)
 {
 	int idx = INDEX(h, value);
+	
+	h->last = value;
 
 	/* Update min/max */
 	if (value > h->highest)
@@ -101,23 +103,16 @@ double hist_stddev(struct hist *h)
 
 void hist_print(struct hist *h)
 { INDENT
-	info("Total: %u values", h->total);
-	info("Highest value: %f", h->highest);
-	info("Lowest  value: %f", h->lowest);
-	info("Mean: %f", hist_mean(h));
-	info("Variance: %f", hist_var(h));
-	info("Standard derivation: %f", hist_stddev(h));
-	if (h->higher > 0)
-		warn("Missed:  %u values above %f", h->higher, h->high);
-	if (h->lower > 0)
-		warn("Missed:  %u values below %f", h->lower,  h->low);
+	stats("Counted values: %u (%u between %f and %f)", h->total, h->total-h->higher-h->lower, h->high, h->low);
+	stats("Highest: %f Lowest: %f", h->highest, h->lowest);
+	stats("Mu: %f Sigma2: %f Sigma: %f", hist_mean(h), hist_var(h), hist_stddev(h));
 
 	if (h->total - h->higher - h->lower > 0) {
-		hist_plot(h);
-
 		char *buf = hist_dump(h);
-		info(buf);
+		stats("Matlab: %s", buf);
 		free(buf);
+
+		hist_plot(h);
 	}
 }
 
@@ -135,13 +130,16 @@ void hist_plot(struct hist *h)
 	}
 
 	/* Print plot */
-	info("%3s | %9s | %5s | %s", "#", "Value", "Occur", "Plot");
+	stats("%9s | %5s | %s", "Value", "Count", "Plot");
 	line();
 
 	for (int i = 0; i < h->length; i++) {
-		int bar = HIST_HEIGHT * ((double) h->data[i] / max);
+		double value = VAL(h, i);
+		int cnt = h->data[i];
+		int bar = HIST_HEIGHT * ((double) cnt / max);
 
-		info("%3u | %+5.2e | "     "%5u"  " | %.*s", i, VAL(h, i), h->data[i], bar, buf);
+		if (value > h->lowest || value < h->highest)
+			stats("%+9g | "     "%5u"  " | %.*s", value, cnt, bar, buf);
 	}
 }
 
@@ -165,7 +163,7 @@ void hist_matlab(struct hist *h, FILE *f)
 
 	fprintf(f, "%lu = struct( ", time(NULL));
 	fprintf(f, "'min', %f, 'max', %f, ", h->low, h->high);
-	fprintf(f, "'ok', %u, too_high', %u, 'too_low', %u, ", h->total, h->higher, h->lower);
+	fprintf(f, "'total', %u, higher', %u, 'lower', %u, ", h->total, h->higher, h->lower);
 	fprintf(f, "'highest', %f, 'lowest', %f, ", h->highest, h->lowest);
 	fprintf(f, "'mean', %f, ", hist_mean(h));
 	fprintf(f, "'var', %f, ", hist_var(h));

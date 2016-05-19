@@ -3,7 +3,7 @@
 ## Operating System and Kernel
 
 For minimum latency several kernel and driver settings can be optimized.
-A [RT-preempt patched Linux](https://rt.wiki.kernel.org/index.php/Main_Page) kernel is recommended.
+A [PREEMPT_RT patched Linux](https://rt.wiki.kernel.org/index.php/Main_Page) kernel is recommended.
 Precompiled kernels for Fedora can be found here: http://ccrma.stanford.edu/planetccrma/software/
 
 - Map NIC IRQs	=> see setting `affinity`

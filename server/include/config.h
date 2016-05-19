@@ -18,16 +18,16 @@
 #endif
 
 /** The version number of the s2ss server */
-#define VERSION			"v0.4-" _GIT_REV
+#define VERSION			"v0.5-" _GIT_REV
 
 /** Maximum number of float values in a message */
-#define MAX_VALUES		16
+#define MAX_VALUES		64
 
 /** Maximum number of messages in the circular history buffer */
 #define DEFAULT_POOLSIZE	32
 
 /** Width of log output in characters */
-#define LOG_WIDTH		74
+#define LOG_WIDTH		132
 
 /** Socket priority */
 #define SOCKET_PRIO		7
@@ -51,29 +51,25 @@
 	  { "/sys/class/net/eth0/address" , "50:e5:49:eb:74:0c" }, \
 	  { "/etc/machine-id", "0d8399d0216314f083b9ed2053a354a8" }, \
 	  { "/dev/sda2", "\x53\xf6\xb5\xeb\x8b\x16\x46\xdc\x8d\x8f\x5b\x70\xb8\xc9\x1a\x2a", 0x468 } }
-
-/* Hard coded configuration of hook functions */
-#define HOOK_FIR_INDEX		0	/**< Which value inside a message should be filtered? */
+	
+/** Coefficients for simple FIR-LowPass:
+ *   F_s = 1kHz, F_pass = 100 Hz, F_block = 300
+ *
+ * Tip: Use MATLAB's filter design tool and export coefficients
+ *      with the integrated C-Header export
+ */
 #define HOOK_FIR_COEFFS		{ -0.003658148158728, -0.008882653268281, 0.008001024183003,	\
 				  0.08090485991761,    0.2035239551043,   0.3040703593515,	\
 				  0.3040703593515,     0.2035239551043,   0.08090485991761,	\
 				  0.008001024183003,  -0.008882653268281,-0.003658148158728 }
 	
-#define HOOK_TS_INDEX		-1	/**< The last value of message should be overwritten by a timestamp. */
-#define HOOK_DECIMATE_RATIO 	30	/**< Only forward every 30th message to the destination nodes. */
-
-#define HOOK_DEDUP_TYPE		HOOK_ASYNC
-#define HOOK_DEDUP_TRESH	1e-3	/**< Do not send messages when difference of values to last message is smaller than this threshold */
 /** Global configuration */
 struct settings {
-	/** Process priority (lower is better) */
-	int priority;
-	/** Process affinity of the server and all created threads */
-	int affinity;
-	/** Debug log level */
-	int debug;
-	/** Interval for path statistics. Set to 0 to disable themo disable them. */
-	double stats;
+	int priority;		/**< Process priority (lower is better) */
+	int affinity;		/**< Process affinity of the server and all created threads */
+	int debug;		/**< Debug log level */
+	double stats;		/**< Interval for path statistics. Set to 0 to disable themo disable them. */
+	const char *name;	/**< Name of the S2SS instance */
 };
 
 #endif /* _CONFIG_H_ */

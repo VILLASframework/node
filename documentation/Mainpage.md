@@ -13,6 +13,8 @@ S2SS is used in distributed- and co-simulation scenarios and developed for the f
 
 The project consists of a server daemon and several client modules which are documented here.
 
+[TOC]
+
 ### Server
 
 The server simply acts as a gateway to forward simulation data from one client to another.
@@ -21,7 +23,7 @@ Furthermore, it collects statistics, monitors the quality of service and handles
 For optimal performance the server is implemented in low-level C and makes use of several Linux-specific realtime features.
 The primary design goal was to make the behaviour of the system as deterministic as possible.
 
-Therefore, it's advisable to run the server component on a [RT_PREEMPT](https://rt.wiki.kernel.org/index.php/CONFIG_PREEMPT_RT_Patch) patched version of Linux. In our environment, we use Fedora-based distribution which has been stripped to the bare minimum (no GUI, only a few background processes).
+Therefore, it's advisable to run the server component on a [PREEMPT_RT](https://rt.wiki.kernel.org/index.php/CONFIG_PREEMPT_RT_Patch) patched version of Linux. In our environment, we use Fedora-based distribution which has been stripped to the bare minimum (no GUI, only a few background processes).
 
 The server is a multi-threaded application.
 

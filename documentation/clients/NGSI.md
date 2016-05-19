@@ -8,28 +8,44 @@ It's using `libcurl` and `libjansson` to communicate with the context broker ove
 
 ## Configuration
 
+You can use the `combine` setting to send multiple samples in a vector.
+
 Every `ngsi` node supports the following special settings:
 
 #### `endpoint` *(string: URL)*
+
+#### `entity_id` *(string)*
+
+#### `entity_type` *(string)*
 
 #### `ssl_verify` *(boolean)*
 
 #### `timeout` *(float: seconds)*
 
-#### `structure` *("flat" | "children")*
-
-  - `flat`:
-  - `children`:
-
 #### `mapping` *(array of strings)*
 
-Format for `structure = flat`: `"entityId(entityType).attributeName(attributeType)"`
-
-Format for `structure = children`: `"parentId(entityType).value(attributeType)"`
+Format `AttributeName(AttributeType)`
 
 ### Example
 
-@todo add example from example.conf
+	ngsi_node = {
+		type = "ngsi",
+		
+	### The following settings are specific to the ngsi node-type!! ###
+
+		endpoint = "http://46.101.131.212:1026",# The HTTP REST API endpoint of the FIRWARE context broker
+		
+		entity_id = "S3_ElectricalGrid",	
+		entity_type = "ElectricalGridMonitoring",
+		
+		timeout = 5,				# Timeout of HTTP request in seconds (default is 1)
+		verify_ssl = false,			# Verification of SSL server certificates (default is true)
+
+		mapping = [				# Format: "AttributeName(AttributeType)"
+			PTotalLosses(MW)",
+			"QTotalLosses(Mvar)"
+		]
+	}
 
 ## Further reading
 

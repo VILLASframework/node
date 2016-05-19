@@ -20,5 +20,13 @@ Every `gtfpga` node support the following special settings:
 
 ### Example
 
-@todo Add excerpt from example.conf
+	gtfpga_node = {
+		type = "gtfpga",
+		
+	### The following settings are specific to the gtfpga node-type!! ###
 
+		slot = "01:00.0",			# The PCIe slot location (see first column in 'lspci' output)
+		id = "1ab8:4005",			# The PCIe vendor:device ID (see third column in 'lspci -n' output)
+		
+		rate = 1
+	}
