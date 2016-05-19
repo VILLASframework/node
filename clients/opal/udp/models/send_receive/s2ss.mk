@@ -1,17 +1,26 @@
+# ----------------------------------------------------------------------------#
 # Specify program name
-PROGRAM = AsyncIP
+PROGRAM = s2ss
 
+# ----------------------------------------------------------------------------#
 # Specify default values if we are not compiling from RT-LAB
+#
+# ----------------------------------------------------------------------------#
 TARGET_OPALRT_ROOT = /usr/opalrt
 
+# ----------------------------------------------------------------------------#
 # QNX v6.x
+#
 ifeq "$(SYSNAME)" "nto"
 	CC = gcc
 	LD = $(CC)
 	TARGET_LIB = -lsocket
 endif
+# ----------------------------------------------------------------------------#
 
+# ----------------------------------------------------------------------------#
 # RedHawk Linux
+#
 ifeq "$(shell uname)" "Linux"
 	RTLAB_INTEL_COMPILER ?= 1
 
@@ -37,6 +46,7 @@ ifeq "$(shell uname)" "Linux"
 
 	TARGET_LIB = -lpthread -lm -ldl -lutil -lrt $(RH_LIBS) $(INTEL_LIBS)
 endif
+# ----------------------------------------------------------------------------#
 
 # Support for debugging symbols
 ifeq ($(DEBUG),1)
@@ -48,16 +58,16 @@ else
 endif
 
 INCLUDES = -I. 
-LIBPATH  = -L. 
-CC_OPTS = -std=c99
-LD_OPTS = 
-OBJS = s2ss.o msg.o utils.o socket.o
+LIBPATH  = -L. $(OPAL_LIBPATH)
+CC_OPTS  = -std=c99
+LD_OPTS  = 
+OBJS     = s2ss.o msg.o utils.o socket.o
 
-ADDLIB = -lOpalCore -lOpalUtils
-LIBS   = -lOpalAsyncApiCore $(ADDLIB) $(TARGET_LIB)
+ADDLIB   = -lOpalCore -lOpalUtils
+LIBS     = -lOpalAsyncApiCore $(ADDLIB) $(TARGET_LIB) $(OPAL_LIBS)
 
-CFLAGS  = -c $(CC_OPTS) $(CC_DEBUG_OPTS) $(RH_FLAGS) $(INCLUDES)
-LDFLAGS = $(LD_OPTS) $(LD_DEBUG_OPTS) $(LIBPATH)
+CFLAGS   = -c $(CC_OPTS) $(CC_DEBUG_OPTS) $(RH_FLAGS) $(INCLUDES)
+LDFLAGS  = $(LD_OPTS) $(LD_DEBUG_OPTS) $(LIBPATH)
 
 all: $(PROGRAM)
 

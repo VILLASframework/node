@@ -23,10 +23,10 @@
 #include <unistd.h>
 #include <signal.h>
 #include <time.h>
+#include <pthread.h>
 
 #if defined(__QNXNTO__)
   #include <process.h>
-  #include <pthread.h>
   #include <devctl.h>
   #include <sys/dcmd_chr.h>
 #elif defined(__linux__)
@@ -138,7 +138,7 @@ static void *SendToIPPort(void *arg)
 
 		msg.sequence = seq++;
 		msg.ts.sec = now.tv_sec;
-		msg.ts.nsec = now.tc_nsec;
+		msg.ts.nsec = now.tv_nsec;
 
 		/* Perform the actual write to the ip port */
 		if (SendPacket((char *) &msg, MSG_LEN(&msg)) < 0)
