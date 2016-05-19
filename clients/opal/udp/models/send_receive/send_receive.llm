@@ -21,10 +21,10 @@ MONITORING=ON
 MONITORING_BLOCK=OFF
 MONITORING_DISPLAY=NEVER
 MSG_PRECISION_FACTOR=0
-MaxDynamicSignals=2/0/100/24/42/
+MaxDynamicSignals=2/0/100/24/100/
 NB_STEP_WITHOUT_OVERRUNS=10
 OPAL_DEBUG=OFF
-OP_MATLABR2011B=1
+OP_MATLABR2013A=1
 OS_COMPILE_RELEASE=2.6.29.6-opalrt-5
 PRINT_LOG_LEVEL=ALWAYS
 RESET_IO_MISSING=ON
@@ -34,8 +34,10 @@ USER_SRCS=
 WATCHDOG_TIMEOUT=5000
 [EnvVars_REDHAWK_DYN_1]
 INTERNAL_IGN_SOURCE_FILE=sfun_gen_async_ctrl.c sfun_recv_async.c sfun_send_async.c
-INTERNAL_LIBRARY2=-lOpalAsyncApiR2011b
+INTERNAL_LIBRARY2=-lOpalAsyncApiR2013a
 INTERNAL_LIBRARY3=-lOpalAsyncApiCore
+[ExtraGetFilesComp_1_RT_LAB]
+s2ss=Binary|Async_Proc
 [ExtraPutFilesComp]
 include\config.h=Ascii
 include\msg.h=Ascii
@@ -48,30 +50,33 @@ src\s2ss.c=Ascii
 src\socket.c=Ascii
 src\utils.c=Ascii
 [ExtraPutFilesComp_1_RT_LAB]
-C:\OPAL-RT\RT-LAB\v10.5.9.356\common\lib\redhawk\libOpalAsyncApiCore.a=Binary
+C:\OPAL-RT\RT-LAB\v11.0.2.410\common\lib\redhawk\libOpalAsyncApiCore.a=Binary|Other
+[ExtraPutFilesLoad_1_RT_LAB]
+.\send_receive_sm_model\OpREDHAWKtarget\s2ss=Binary|Async_Proc
 [General]
-ATT_CHECKSUM1=703418586
-ATT_CHECKSUM2=799511679
-ATT_CHECKSUM3=2136361860
-ATT_CHECKSUM4=3725771660
+ATT_CHECKSUM1=1967915764
+ATT_CHECKSUM2=1071010712
+ATT_CHECKSUM3=752104040
+ATT_CHECKSUM4=1738184673
 ATT_CREATED_BY=jwu
 ATT_CREATED_ON=Thu Apr 15 08:21:54 1999
 ATT_ENABLE_PTA=OFF
 ATT_HANDLE_CONSOLE=ON
 ATT_LAST_SAVED_BY=ACS
-ATT_LAST_SAVED_ON=Thu Sep 04 16:25:19 2014
-ATT_REVISION=1.445
+ATT_LAST_SAVED_ON=Thu May 19 14:14:01 2016
+ATT_REFERENCE_MDL_PATHS=
+ATT_REVISION=1.446
 AutoRetrieveFiles=ON
 AutoRetrieveRtlab=ON
 CompilerVersion=AUTOMATIC
 DESCRIPTION=
 DinamoFlag=OFF
-FILENAME=D:\msv\02_msv-svo\opal\s2ss_tests\models\send_receive\send_receive.mdl
+FILENAME=D:\svo\s2ss\clients\opal\udp\models\send_receive\send_receive.mdl
 FORCE_RECOMPILE=0
 IMPORTED_GLOBAL_VARIABLES=1
-LastCompileRtlabVersion=v10.5.9.356
-LastMatlabUsed=21
-LastMatlabUsedName=v7.13
+LastCompileRtlabVersion=v11.0.2.410
+LastMatlabUsed=24
+LastMatlabUsedName=v8.1
 MATLAB_USED_IN_MODEL=21
 Name=send_receive
 PRINT_CYCLE=OFF
@@ -94,6 +99,8 @@ TimeStep=0.000050000000000
 sc_consoleTimeStep=-1.000000000000000
 sm_modelTimeStep=0.000049999998737
 sm_send_receiveTimeStep=0.000049999998737
+[General_1]
+TargetPreCompileCmd=make -f /usr/opalrt/common/bin/opalmodelmk
 [NodeMapping]
 sm_model=ACS_OPAL_RT
 sm_model_CORE_ASSIGNATION=1
