@@ -35,6 +35,9 @@ Development tab -> Compiler -> Compiler Command (makefile) add the following com
 /usr/bin/make -f /usr/opalrt/common/bin/opalmodelmk
 
 --------------------------------------------------
+Note that the name of the asynchronous process has changed as of May 2016. The name of the executable was ‚AsyncIP‘ and now is ‚s2ss‘. You have to change that in the AsyncCtrl block.
+
+--------------------------------------------------
 
 max umber of values in UDP packets:
 there’s a „#define“ inside the implementation which must be changed accordingly.
