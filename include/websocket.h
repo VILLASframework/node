@@ -21,20 +21,19 @@
 
 #include "node.h"
 
-/* Forward declarations */
-struct msg;
-struct libwebsocket_context;
-
-struct websocket {	
-	struct {
-		pthread_cond_t cond;
-		pthread_mutex_t mutex;
-		struct pool *pool;
-		size_t cnt;
-	} read, write;
+/** Internal data per websocket node */
+struct websocket {
+	struct list connections;	/**< List of active libwebsocket connections (struct websocket_connection) */
+	struct list destinations;	/**< List of struct lws_client_connect_info to connect to. */
 	
-	int shutdown;
-	struct list connections; /**< List of struct libwebsockets sockets */
+	struct websocket_connection *writer;
+};
+
+struct websocket_connection {
+	struct node *node;
+	struct path *path;
+	
+	qptr_t received;
 };
 
 /** @see node_vtable::init */
@@ -53,9 +52,9 @@ int websocket_close(struct node *n);
 int websocket_destroy(struct node *n);
 
 /** @see node_vtable::read */
-int websocket_read(struct node *n, struct pool *pool, int cnt);
+int websocket_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_vtable::write */
-int websocket_write(struct node *n, struct pool *pool, int cnt);
+int websocket_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 #endif /* _WEBSOCKET_H_ */

@@ -1,7 +1,5 @@
 /** Node type: Websockets (libwebsockets)
  *
- * This file implements the weboscket subtype for nodes.
- *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
@@ -89,7 +87,7 @@ static int protocol_cb_http(struct lws *wsi, enum lws_callback_reasons reason, v
 
 			char *requested_uri = (char *) in;
 			
-			debug(3, "WebSocket: New HTTP request: %s", requested_uri);
+			debug(DBG_WEBSOCKET | 3, "WebSocket: New HTTP request: %s", requested_uri);
 
 			/* Handle default path */
 			if      (!strcmp(requested_uri, "/")) {
@@ -345,17 +343,17 @@ static void logger(int level, const char *msg) {
 		case LLL_ERR:  error("WebSocket: %.*s", len, msg); break;
 		case LLL_WARN:	warn("WebSocket: %.*s", len, msg); break;
 		case LLL_INFO:	info("WebSocket: %.*s", len, msg); break;
-		default:    debug(1, "WebSocket: %.*s", len, msg); break;
+		default:    debug(DBG_WEBSOCKET | 1, "WebSocket: %.*s", len, msg); break;
 	}
 }
 
 static void * server_thread(void *ctx)
 {
-	debug(3, "WebSocket: Started server thread");
+	debug(DBG_WEBSOCKET | 3, "WebSocket: Started server thread");
 	
 	while (lws_service(context, 10) >= 0);
 	
-	debug(3, "WebSocket: shutdown voluntarily");
+	debug(DBG_WEBSOCKET | 3, "WebSocket: shutdown voluntarily");
 	
 	return NULL;
 }
@@ -419,14 +417,8 @@ int websocket_open(struct node *n)
 {
 	struct websocket *w = n->_vd;
 
-	list_init(&w->connections, NULL);
-	
-	pthread_mutex_init(&w->read.mutex, NULL);
-	pthread_mutex_init(&w->write.mutex, NULL);
-	pthread_cond_init(&w->read.cond, NULL);
-	
-	/* pthread_cond_wait() expects the mutex to be already locked */
-	pthread_mutex_lock(&w->read.mutex);
+	list_init(&w->connections);
+	list_init(&w->destinations);
 	
 	return 0;
 }
@@ -439,6 +431,9 @@ int websocket_close(struct node *n)
 	
 	list_foreach(struct lws *wsi, &w->connections)
 		lws_callback_on_writable(wsi);
+	
+	/** @todo Is is safe? */
+	list_destroy(&w->connections);
 		
 	return 0;
 }
@@ -447,40 +442,27 @@ int websocket_destroy(struct node *n)
 {
 	struct websocket *w = n->_vd;
 
-	pthread_mutex_destroy(&w->read.mutex);
-	pthread_mutex_destroy(&w->write.mutex);
-	pthread_cond_destroy(&w->read.cond);
-
 	return 0;
 }
 
-int websocket_read(struct node *n, struct pool *pool, int cnt)
+int websocket_read(struct node *n, struct pool *pool, unsigned cnt)
 {
 	struct websocket *w = n->_vd;
-	
-	w->read.pool = pool;
-	w->read.cnt = cnt;
-	
-	pthread_cond_wait(&w->read.cond, &w->read.mutex);
-	
-	return 1;
+
+	/* Check for new websocket connections and more readers to queue */
+	list_foreach(struct)
+
+	return cnt;
 }
 
-int websocket_write(struct node *n, struct pool *pool, int cnt)
+int websocket_write(struct node *n, struct pool *pool, unsigned cnt)
 {
 	struct websocket *w = n->_vd;
-
-	pthread_mutex_lock(&w->write.mutex);
-
-	w->write.pool = pool;
-	w->write.cnt = cnt;
 	
 	/* Notify all active websocket connections to send new data */
 	list_foreach(struct lws *wsi, &w->connections)
 		lws_callback_on_writable(wsi);
-	
-	pthread_mutex_unlock(&w->write.mutex);
-		
+
 	return 1;
 }
 
