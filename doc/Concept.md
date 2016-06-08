@@ -12,7 +12,7 @@ All communication partners are represented by nodes.
 
 Possible types of nodes are:
   * Simulators (OPAL, RTDS)
-  * Servers (S2SS instances)
+  * Servers (VILLASnode instances)
   * Workstations (Simulink, Labview, ...)
   * Data Loggers
   * etc..

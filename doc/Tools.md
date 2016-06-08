@@ -1,13 +1,13 @@
 # Tools {#tools}
 
-S2SS comes with a couple of tools to test and debug connectivity and configurations.
-All S2SS tools are available as subcommands to the `s2ss` wrapper:
+VILLASnode comes with a couple of tools to test and debug connectivity and configurations.
+All VILLASnode tools are available as subcommands to the `villas` wrapper:
  
-### `s2ss server`
+### `villas node`
 
 Starts the simulator to simulator server. The server acts as a central gateway to forward simulation data.
 
-    Usage: s2ss-server CONFIG
+    Usage: villas-node CONFIG
       CONFIG is a required path to a configuration file
     
     Supported node types:
@@ -17,21 +17,21 @@ Starts the simulator to simulator server. The server acts as a central gateway t
      - ngsi: OMA Next Generation Services Interface 10 (libcurl, libjansson, libuuid)
      - websocket: Send and receive samples of a WebSocket connection (libwebsockets)
 
-### `s2ss pipe`
+### `villas pipe`
 
 The `pipe` subcommand allows to read and write samples to `stdin` / `stdout`.
 
-    Usage: s2ss-pipe CONFIG [-r] NODE
+    Usage: villas-pipe CONFIG [-r] NODE
       CONFIG  path to a configuration file
       NODE    the name of the node to which samples are sent and received from
       -r      swap read / write endpoints)
 
-### `s2ss signal`
+### `villas signal`
 
 The `signal` subcommand is a signal generator which writes samples to `stdout`.
 This command can be combined with the `pipe` subcommand.
 
-    Usage: s2ss-signal SIGNAL [OPTIONS]
+    Usage: villas-signal SIGNAL [OPTIONS]
       SIGNAL   is on of: 'mixed', 'random', 'sine', 'triangle', 'square', 'ramp'
       -v NUM   specifies how many values a message should contain
       -r HZ    how many messages per second
@@ -40,9 +40,9 @@ This command can be combined with the `pipe` subcommand.
       -d FLT   the standard deviation for 'random' signals
       -l NUM   only send LIMIT messages and stop
 
-### `s2ss test`
+### `villas test`
 
-    Usage: s2ss-test CONFIG TEST NODE [ARGS]
+    Usage: villas-test CONFIG TEST NODE [ARGS]
       CONFIG  path to a configuration file
       TEST    the name of the test to execute: 'rtt'
       NODE    name of the node which shoud be used
@@ -51,20 +51,20 @@ This command can be combined with the `pipe` subcommand.
 
  1. Start server:
 
-    $ s2ss server etc/example.conf
+    $ villas node etc/example.conf
 
  2. Receive/dump data to file
 
-    $ s2ss pipe etc/example.conf node_name > dump.csv
+    $ villas pipe etc/example.conf node_name > dump.csv
 
  3. Replay recorded data:
 
-    $ s2ss pipe etc/example.conf -r node_name < dump.csv
+    $ villas pipe etc/example.conf -r node_name < dump.csv
 
  4. Send random generated values:
 
-    $ s2ss signal random 4 100 | s2ss pipe etc/example.conf destination_node
+    $ villas signal random 4 100 | villas pipe etc/example.conf destination_node
 
  5. Test ping/pong latency:
 
-    $ s2ss test latency etc/example.conf test_node
+    $ villas test latency etc/example.conf test_node

@@ -3,7 +3,7 @@
 *.so
 *~
 
-server
+node
 pipe
 test
 signal

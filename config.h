@@ -6,7 +6,7 @@
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
- *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+ *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
@@ -17,7 +17,7 @@
   #define _GIT_REV		"nogit"
 #endif
 
-/** The version number of the s2ss server */
+/** The version number of VILLASnode */
 #define VERSION			"v0.5-" _GIT_REV
 
 /** Default number of values in a message */
@@ -31,8 +31,8 @@
 #define SOCKET_PRIO		7
 
 /* Protocol numbers */
-#define IPPROTO_S2SS		137
-#define ETH_P_S2SS		0xBABE
+#define IPPROTO_VILLAS		137
+#define ETH_P_VILLAS		0xBABE
 
 #define SYSFS_PATH		"/sys"
 #define PROCFS_PATH		"/proc"

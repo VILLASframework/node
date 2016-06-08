@@ -1,7 +1,7 @@
 import re
 
 class Timestamp:
-	"""Parsing the S2SS timestamp format"""
+	"""Parsing the VILLASnode human-readable timestamp format"""
 
 	def __init__(self, seconds = 0, nanoseconds = None, offset = None, sequence = None):
 		self.seconds = seconds

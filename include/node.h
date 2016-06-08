@@ -1,15 +1,9 @@
 /** Nodes
  *
- * The S2SS server connects multiple nodes.
- * There are multiple types of nodes:
- *  - simulators
- *  - servers
- *  - workstations
- *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
- *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+ *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *
  * @addtogroup node Node

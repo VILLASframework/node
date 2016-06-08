@@ -1,6 +1,6 @@
 # Configuration
 
-The S2SS configuration is completly contained in a single file.
+The VILLASnode configuration is completly contained in a single file.
 Take a look at the example configuration: `server/etc/example.conf`.
 
 The configuration file consists of three sections:
@@ -37,13 +37,13 @@ By default, the daemon uses a real-time optimized FIFO scheduling algorithm.
 
 #### `name` *(integer)*
 
-By default the `name` of a S2SS instance is equalt to the hostname of the machine it is running on.
+By default the `name` of a VILLASnode instance is equalt to the hostname of the machine it is running on.
 Some node types are using this name to identify themselves agains their remotes.
 An example is the `ngsi` node type which adds a metadata attribute `source` to its updates.
 
 ## Nodes
 
-The node section is a **directory** of nodes (clients) which are connected to the S2SS instance.
+The node section is a **directory** of nodes (clients) which are connected to the VILLASnode instance.
 The directory is indexed by the name of the node:
 
     nodes = {
@@ -113,7 +113,7 @@ The value of this setting determines how many samples will be combined into one 
 ##### `rate` *(float)*
 
 A non-zero value for this setting will change this path to an asynchronous mode.
-In this mode S2SS will send with a fixed rate to all destination nodes.
+In this mode VILLASnode will send with a fixed rate to all destination nodes.
 It will always send the latest value it received, possible skipping values which have been received in between.
 If `vectorize` is larger than 1, it will send the last `vectorize` samples at once.
 

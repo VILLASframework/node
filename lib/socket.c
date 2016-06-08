@@ -2,7 +2,7 @@
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
- *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+ *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
@@ -451,7 +451,7 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 		if (!link)
 			error("Failed to get network interface: '%s'", ifname);
 
-		sa->sll.sll_protocol = htons((proto) ? strtol(proto, NULL, 0) : ETH_P_S2SS);
+		sa->sll.sll_protocol = htons((proto) ? strtol(proto, NULL, 0) : ETH_P_VILLAS);
 		sa->sll.sll_halen = 6;
 		sa->sll.sll_family = AF_PACKET;
 		sa->sll.sll_ifindex = rtnl_link_get_ifindex(link);
@@ -477,7 +477,7 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 		switch (layer) {
 			case LAYER_IP:
 				hint.ai_socktype = SOCK_RAW;
-				hint.ai_protocol = (service) ? strtol(service, NULL, 0) : IPPROTO_S2SS;
+				hint.ai_protocol = (service) ? strtol(service, NULL, 0) : IPPROTO_VILLAS;
 				hint.ai_flags |= AI_NUMERICSERV;
 				break;
 

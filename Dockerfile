@@ -1,10 +1,10 @@
-# Dockerfile for S2SS development and testing
+# Dockerfile for VILLASnode development and testing
 #
 # Use this Dockerfile running:
 #    $ make docker
 #
 # @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
-#   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+#   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
 #   Unauthorized copying of this file, via any medium is strictly prohibited. 
 ###################################################################################
 
@@ -20,7 +20,7 @@ EXPOSE 443
 # Install development environement
 RUN apt-get update && \
     apt-get -y install \
-        gcc \
+	gcc \
 	g++ \
 	clang \
 	gdb \
@@ -29,7 +29,7 @@ RUN apt-get update && \
 	make \
 	cmake \
 	libc6-dev \
-        pkg-config \
+	pkg-config \
 	doxygen \
 	dia \
 	graphviz \
@@ -39,14 +39,14 @@ RUN apt-get update && \
 # Install dependencies for native arch
 RUN apt-get update && \
     apt-get -y install \
-        libconfig-dev \
-        libnl-3-dev \
-        libnl-route-3-dev \
-        libpci-dev \
-        libjansson-dev \
-        libcurl4-openssl-dev \
+	libconfig-dev \
+	libnl-3-dev \
+	libnl-route-3-dev \
+	libpci-dev \
+	libjansson-dev \
+	libcurl4-openssl-dev \
 	libssl-dev \
-        uuid-dev
+	uuid-dev
 
 # Install dependencies for 32bit x86 arch (required for 32bit libOpalAsync)
 #  (64 bit header files are used)
@@ -55,20 +55,20 @@ RUN dpkg --add-architecture i386 && \
     apt-get -y install \
 	libc6-dev-i386 \
 	lib32gcc-4.9-dev \
-        libconfig9:i386 \
-        libnl-3-200:i386 \
-        libnl-route-3-200:i386 \
-        libpci3:i386 \
-        libjansson4:i386 \
-        libcurl3:i386 \
-        libuuid1:i386
+	libconfig9:i386 \
+	libnl-3-200:i386 \
+	libnl-route-3-200:i386 \
+	libpci3:i386 \
+	libjansson4:i386 \
+	libcurl3:i386 \
+	libuuid1:i386
 
 # Checkout source code from GitHub
-#RUN git clone git@github.com:RWTH-ACS/S2SS.git /s2ss
+#RUN git clone git@github.com:RWTH-ACS/VILLASnode.git /villas
 
-WORKDIR /s2ss
+WORKDIR /villas
 
 # Compile
-#RUN make -C /s2ss
+#RUN make -C /villas
 
 ENTRYPOINT /bin/bash

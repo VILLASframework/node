@@ -1,7 +1,7 @@
 from . import ts
 
 class Message:
-	"""Parsing a S2SS from a file (not a UDP package!!)"""
+	"""Parsing a VILLASnode sample from a file (not a UDP package!!)"""
 
 	def __init__(self, ts, values, source = None):
 		self.source = source

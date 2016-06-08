@@ -1442,7 +1442,7 @@ Model {
 	  DstPort		  2
 	}
 	Annotation {
-	  Name			  "Simple S2SS to OPAL test using UDP messages"
+	  Name			  "Simple VILLASnode to OPAL test using UDP messages"
 	  Position		  [288, 52]
 	  FontName		  "Verdana"
 	  FontSize		  14

@@ -1,11 +1,11 @@
 # Usage {#usage}
 
-The S2SS server (`s2ss server`) expects the path to a configuration file as a single argument.
+VILLASnode (`villas node`) expects the path to a configuration file as a single argument.
 
-    Usage: ./s2ss-server CONFIG
+    Usage: ./villas-node CONFIG
       CONFIG is a required path to a configuration file
      
-    Simulator2Simulator Server 0.1-d7de19c (Jun  4 2014 02:50:13)
+    VILLASnode 0.1-d7de19c (Jun  4 2014 02:50:13)
       Copyright 2015, Institute for Automation of Complex Power Systems, EONERC
         Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 
@@ -24,7 +24,7 @@ The server requires root privileges for:
   - Or load .exe from this website (no installation required)
 	    http://the.earth.li/~sgtatham/putty/latest/x86/putty.exe
 
-2. Connect to S2SS server
+2. Connect to VILLASnode
 
 | Setting  | Value           |
 | :------- | :-------------- |
@@ -34,9 +34,9 @@ The server requires root privileges for:
 | User     | root            |
 | Password | *please ask msv |
 
-3. Go to S2SS directory
+3. Go to VILLASnode directory
 
-    $ cd /s2ss/
+    $ cd /villas/
 
 4. Edit configuration file
 
@@ -48,7 +48,7 @@ The server requires root privileges for:
 
 5. Start server
 
-    $ s2ss server etc/opal-test.conf
+    $ villas node etc/opal-test.conf
 
 6. Terminate server by pressing Ctrl+C
 

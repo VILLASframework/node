@@ -14,9 +14,9 @@ LOCAL_PORT=12001
 REMOTE_IP=127.0.0.1
 REMOTE_PORT=12002
 
-#LOCAL_DIR=/s2ss/server/
-#REMOTE_DIR=/s2ss/server/
-LOCAL_DIR=/home/stv0g/workspace/rwth/acs/s2ss/server
+#LOCAL_DIR=/villas/server/
+#REMOTE_DIR=/villas/server/
+LOCAL_DIR=/home/stv0g/workspace/rwth/acs/villas/server
 REMOTE_DIR=$LOCAL_DIR
 ######################### End of Configuration ################################
 # There's no need to change something below this line

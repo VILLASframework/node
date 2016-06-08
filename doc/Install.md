@@ -8,7 +8,7 @@ Install libraries and developement headers for:
 
  - [libconfig](http://www.hyperrealm.com/libconfig/) for parsing the configuration file.
  - [libnl3](http://www.infradead.org/~tgr/libnl/) for the network communication & emulation support of the `socket` node-type.
- - libOpal{AsyncApi,Core,Utils} for running the S2SS server as an Asynchronous process inside your RT-LAB model.
+ - libOpal{AsyncApi,Core,Utils} for running VILLASnode as an Asynchronous process inside your RT-LAB model.
  - [pciuitils](http://mj.ucw.cz/sw/pciutils/) for enumerating PCI devices. Required by `gtfpga` node-type.
  - [libjansson](http://www.digip.org/jansson/) JSON parser for `websocket` and `ngsi` node-types.
  - [libwebsockets](http://libwebsockets.org) for the `websocket` node-type.
@@ -46,6 +46,6 @@ Append `PREFIX=/opt/local` to change the installation destination.
 
 Verify everything is working and required node-types are compiled-in:
 
-    $ s2ss server
+    $ villas server
 
 Will show you the current version of the server including a list of all supported node-types.

@@ -98,7 +98,7 @@ This allows us to reduce the amount of conversions during one transfer.
 
 ## Network Emulation {#netem}
 
-S2SS supports the emulation of wide-area network characterisics.
+VILLASnode supports the emulation of wide-area network characterisics.
 
 This emulation can be configured on a per-node basis for **outgoing** (egress) data only.
 Incoming data is not processed by the network emulation!
@@ -106,7 +106,7 @@ Incoming data is not processed by the network emulation!
 This network emulation is handled by Linux' [netem queuing discipline](http://www.linuxfoundation.org/collaborate/workgroups/networking/netem) which is part of the traffic control subsystem.
 Take a look at the following manual page for supported metrics: [tc-netem(8)](http://man7.org/linux/man-pages/man8/tc-netem.8.html).
 
-S2SS only takes care of setup and initalizing the netem queuing discipline inside the kernel.
+VILLASnode only takes care of setup and initalizing the netem queuing discipline inside the kernel.
 For this the iproute2 software package (`ip` & `tc` commands) must be installed.
 The configuration is done via the config file.
 Look at `etc/example.conf` for a section called `netem` or `tc-netem(8)` for more details.

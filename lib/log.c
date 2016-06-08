@@ -2,7 +2,7 @@
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
- *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+ *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
@@ -96,7 +96,7 @@ void log_vprint(const char *lvl, const char *fmt, va_list ap)
 
 	/* Output */
 #ifdef ENABLE_OPAL_ASYNC
-	OpalPrint("S2SS: %s\n", buf);
+	OpalPrint("VILLASnode: %s\n", buf);
 #endif
 	fprintf(stderr, "\r%s\n", buf);
 	free(buf);

@@ -1,15 +1,15 @@
 # Development
 
-Developement is currently coordinated by Steffen Vogel <stvogel@eonerc.rwth-aachen.de> using [GitHub](http://github.com/RWTH-ACS/S2SS).
+Developement is currently coordinated by Steffen Vogel <stvogel@eonerc.rwth-aachen.de> using [GitHub](http://github.com/RWTH-ACS/VILLASnode).
 Please feel free to submit pull requests or bug reports.
 
-## Shared library: libs2ss
+## Shared library: libvillas
 
-S2SS is split into a shared library called libs2ss and a couple of executables (`s2ss-server`, `s2ss-pipe`, `s2ss-test`, `s2ss-signal`) which are linked agains the library.
+VILLASnode is split into a shared library called libvillas and a couple of executables (`villas-server`, `villas-pipe`, `villas-test`, `villas-signal`) which are linked agains the library.
 
 ## Extensibilty
 
-There are two main places where S2SS can easily extended:
+There are two main places where VILLASnode can easily extended:
 
 #### New node-type
 

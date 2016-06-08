@@ -7,14 +7,14 @@ A [PREEMPT_RT patched Linux](https://rt.wiki.kernel.org/index.php/Main_Page) ker
 Precompiled kernels for Fedora can be found here: http://ccrma.stanford.edu/planetccrma/software/
 
 - Install `tuned` package and activate the `realtime` profile. This profile will:
-  - Reserve some CPU cores solely for S2SS (Kernel cmdline: `isolcpus=[cpu_numbers]`)
+  - Reserve some CPU cores solely for VILLASnode (Kernel cmdline: `isolcpus=[cpu_numbers]`)
   - Activate sub-profiles:
      - `network-latency`
      - `latency-performance`
   - See `/etc/tuned/realtime-variables.conf`
   - See `/usr/lib/tuned/realtime/`
 
-- S2SS configuration:
+- VILLASnode configuration:
   - `affinity`: Maps network card IRQs and threads to isolated cores
   - `priority`: Increases priority of network packets and threads
 

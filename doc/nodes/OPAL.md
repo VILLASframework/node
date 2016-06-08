@@ -1,13 +1,13 @@
 # OPAL-RT Asynchronous Process {#opal}
 
-The communication between OPAL-RT models and the S2SS is established by using asynchronous programs.
+The communication between OPAL-RT models and VILLASnode is established by using asynchronous programs.
 Asynchronous programs are are a feature of RT-LAB. They are used to exchange data between Simulink models and custom C programs.
 There are two ways to exchange sample values with an OPAL-RT simulator:
 
 1. Use our adapted version of OPAL-RT's AsyncIP example for asynchronous processes (see `clients/opal/` directory)
-   In this mode, OPAL will send sample data via UDP to S2SS. S2SS has to use the `socket` node-type.
-2. Run S2SS as an asynchronous process itself. This is a highly experimental feature and implemented in the node-type `opal`.
-   It requires a 32-bit version of the `s2ss-server`. Data exchange is then handled using OPAL-RT's libOpalAsyncApi.
+   In this mode, OPAL will send sample data via UDP to VILLASnode. VILLASnode has to use the `socket` node-type.
+2. Run VILLASnode as an asynchronous process itself. This is a highly experimental feature and implemented in the node-type `opal`.
+   It requires a 32-bit version of the `villas-node`. Data exchange is then handled using OPAL-RT's libOpalAsyncApi.
 
 The following description applies only to the `opal` node-type:
 

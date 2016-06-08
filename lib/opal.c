@@ -4,7 +4,7 @@
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
- *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+ *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
@@ -72,7 +72,7 @@ int opal_init(int argc, char *argv[], config_setting_t *cfg)
 		error("Failed to get list of recv ids (%d)", err);
 
 	info("Started as OPAL Asynchronous process");
-	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s)",
+	info("This is VILLASnode %s (built on %s, %s)",
 		VERSION, __DATE__, __TIME__);
 
 	opal_print_global();

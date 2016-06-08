@@ -16,7 +16,7 @@ There is no node specific configuration.
 	
 	http = {
 		port = 8080;
-		htdocs = "/opt/s2ss/contrib/websocket/";
+		htdocs = "/villas/contrib/websocket/";
 		ssl_cert = "/etc/ssl/certs/mycert.pem";
 		ssl_private_key= "/etc/ssl/private/mykey.pem";
 	}

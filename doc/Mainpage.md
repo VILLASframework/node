@@ -1,4 +1,4 @@
-S2SS is a client/server application to connect simulation equipment and software such as:
+VILLASnode is a client/server application to connect simulation equipment and software such as:
 
  - OPAL-RT eMegaSim,
  - RTDS GTFPGA cards,
@@ -7,7 +7,7 @@ S2SS is a client/server application to connect simulation equipment and software
  - and FPGA models.
 
 It's designed with a focus on very low latency to achieve almost realtime exchange of simulation data.
-S2SS is used in distributed- and co-simulation scenarios and developed for the field of power grid simulation at the EON Energy Research Center in Aachen, Germany.
+VILLASnode is used in distributed- and co-simulation scenarios and developed for the field of power grid simulation at the EON Energy Research Center in Aachen, Germany.
 
 ## Overview
 
@@ -37,10 +37,10 @@ There are two types of clients:
     An example for such a node is the 'gtfpga' type which directly fetches and pushes data to a PCIe card.
     Or the 'file' type which logs or replays simulation data from the harddisk.
 
-2. An other way to connect simulation equipment is by using a client-application which itself sends the data over the network to the S2SS server.
-   In this scenario, the S2SS server uses the 'socket' node-type to communicate with the client-application.
+2. An other way to connect simulation equipment is by using a client-application which itself sends the data over the network to VILLASnode.
+   In this scenario, VILLASnode uses the 'socket' node-type to communicate with the client-application.
 
-Usually, new clients / equipemnt should be implemented as a new node-type as part of the S2SS server.
+Usually, new clients / equipemnt should be implemented as a new node-type as part of VILLASnode.
 Using a dedicated client-application which communicates via the 'socket' type is deprecated because it leads to code duplication.
 
 ## Contact

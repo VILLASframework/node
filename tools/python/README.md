@@ -1,6 +1,6 @@
 # Python tools
 
-These python scripts are intended to manipulate measurements recorded by S2SS's `file` node-type.
+These python scripts are intended to manipulate measurements recorded by VILLASnode's `file` node-type.
 
 ## Exampples
 

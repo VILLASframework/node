@@ -87,7 +87,7 @@ static void *SendToIPPort(void *arg)
 	double mdldata[MSG_VALUES];
 	int mdldata_size;
 
-	/* Data from the S2SS server */
+	/* Data from VILLASnode */
 	struct msg msg = MSG_INIT(0);
 
 #ifdef _DEBUG // TODO: workaround
@@ -175,7 +175,7 @@ static void *RecvFromIPPort(void *arg)
 	double mdldata[MSG_VALUES];
 	int mdldata_size;
 
-	/* Data from the S2SS server */
+	/* Data from VILLASnode */
 	struct msg msg = MSG_INIT(0);
 
 	OpalPrint("%s: RecvFromIPPort thread started\n", PROGNAME);

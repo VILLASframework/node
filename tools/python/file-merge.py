@@ -2,8 +2,8 @@
 
 import sys
 
-import s2ss
-from s2ss import *
+import villas
+from villas import *
 
 def main():
 	files = sys.argv[1:]
@@ -16,10 +16,10 @@ def main():
 
 		msgs = [ ]
 		for line in handle.xreadlines():
-			msgs.append(s2ss.Message.parse(line, file))
+			msgs.append(villas.Message.parse(line, file))
 		
 		all += msgs
-		last[file] = s2ss.Message(s2ss.Timestamp(), [0] * len(msgs[0].values), file)
+		last[file] = villas.Message(villas.Timestamp(), [0] * len(msgs[0].values), file)
 
 	all.sort()
 	for msg in all:
@@ -29,7 +29,7 @@ def main():
 		for file in files:
 			values += last[file].values
 			
-		print s2ss.Message(msg.ts, values, "")
+		print villas.Message(msg.ts, values, "")
 
 if __name__ == "__main__":
 	main()

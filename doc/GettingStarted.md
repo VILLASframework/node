@@ -13,13 +13,13 @@ We prepared a image which you can download and run out of the box:
 
 2. After installing the toolbox, open the "Docker Quickstart Terminal"
 
-3. Start the latest S2SS container by running:
+3. Start the latest VILLASnode container by running:
 
-    $ docker run rwthacs/s2ss
+    $ docker run rwthacs/villas
 
 ### To be added
 
-S2SS ...
+VILLASnode ...
 
 - is written in object-oriented C11
 - is compiled with Clang / LLVM or GCC
@@ -28,4 +28,4 @@ S2SS ...
 - is extensible with new node types
 - heavily multi-threaded
 - follows the Unix philosophy
-- is separated into a library (libs2ss) and a few binaries (server, pipe, test, signal) which link against the lib.
+- is separated into a library (libvillas) and a few binaries (server, pipe, test, signal) which link against the lib.

@@ -1,7 +1,7 @@
 # Node-types {#nodes}
 
-Every server needs clients which act as sinks / sources for simulation data. In case of S2SS these clients are called _nodes_.
-Every node is an instance of a node-type. S2SS currently supports the following node-types:
+Every server needs clients which act as sinks / sources for simulation data. In case of VILLASnode these clients are called _nodes_.
+Every node is an instance of a node-type. VILLASnode currently supports the following node-types:
 
 #### @subpage gtfpga
  - RTDS via GTFPGA and PCIexpress (Linux vfio, uio)

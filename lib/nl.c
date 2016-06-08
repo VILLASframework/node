@@ -1,10 +1,10 @@
 /** Netlink related functions.
  *
- * S2SS uses libnl3 to talk to the Linux kernel to gather networking related information
+ * VILLASnode uses libnl3 to talk to the Linux kernel to gather networking related information
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
- *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+ *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 

@@ -2,7 +2,7 @@
 To "models" folder of OPAL project folder copy:
 folder: include
 folder: src
-file: s2ss.mk
+file: villas.mk
 
 ----------------------------------------------
 
@@ -16,9 +16,9 @@ include\msg.h=Ascii
 include\msg_format.h=Ascii
 include\socket.h=Ascii
 include\utils.h=Ascii
-s2ss.mk=Ascii
+villas.mk=Ascii
 src\msg.c=Ascii
-src\s2ss.c=Ascii
+src\villas.c=Ascii
 src\socket.c=Ascii
 src\utils.c=Ascii
 

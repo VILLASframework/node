@@ -2,7 +2,7 @@
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
- *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+ *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
@@ -21,9 +21,9 @@
 
 void print_copyright()
 {
-	printf("Simulator2Simulator Server %s (built on %s %s)\n",
+	printf("VILLASnode %s (built on %s %s)\n",
 		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-	printf(" copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC\n");
+	printf(" copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC\n");
 	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
 }
 

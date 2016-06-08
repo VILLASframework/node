@@ -2,7 +2,7 @@
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
- *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+ *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
 	char *configfile = (argc == 2) ? argv[1] : "opal-shmem.conf";
 
 	log_init();
-	info("This is Simulator2Simulator Server (S2SS) %s (built on %s, %s)", BLD(YEL(VERSION)),
+	info("This is VILLASnode %s (built on %s, %s)", BLD(YEL(VERSION)),
 		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
 	/* Checks system requirements*/

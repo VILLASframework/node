@@ -3,7 +3,7 @@
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
- *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
+ *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *
  * @addtogroup tools Test and debug tools
@@ -112,7 +112,7 @@ check:		if (optarg == endptr)
 	struct sample *s = alloc(SAMPLE_LEN(values));
 
 	/* Print header */
-	printf("# S2SS signal params: type=%s, values=%u, rate=%f, limit=%d, amplitude=%f, freq=%f\n",
+	printf("# VILLASnode signal params: type=%s, values=%u, rate=%f, limit=%d, amplitude=%f, freq=%f\n",
 		argv[1], values, rate, limit, ampl, freq);
 	printf("# %-20s\t\t%s\n", "sec.nsec(seq)", "data[]");
 

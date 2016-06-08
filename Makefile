@@ -1,12 +1,12 @@
 # Executables
-TARGETS = server pipe signal test
+TARGETS = node pipe signal test
 
 # Libraries
-LIBS = libs2ss.so
+LIBS = libvillas.so
 
 DEBUG = 1
 
-# Object files for libs2ss
+# Object files for libvillas
 LIB_OBJS = sample.o path.o node.o \
 	   kernel.o \
 	   list.o pool.o queue.o lstack.o \
@@ -30,7 +30,7 @@ GIT_REV=$(shell git rev-parse --short HEAD)
 
 # Compiler and linker flags
 CC ?= gcc
-LDLIBS  = -pthread -lrt -lm -lconfig -ls2ss
+LDLIBS  = -pthread -lrt -lm -lconfig -lvillas
 
 CFLAGS += -std=c11 -Iinclude/ -I. -MMD -mcx16
 CFLAGS += -Wall -fdiagnostics-color=auto
@@ -104,10 +104,10 @@ LIB_LDLIBS += $(shell pkg-config --libs ${PKGS})
 all: $(LIBS) $(TARGETS)
 
 # Dependencies for individual binaries
-server:  server.o $(LIBS)
-pipe:    pipe.o   $(LIBS)
-test:    test.o   $(LIBS)
-signal:  signal.o $(LIBS)
+node:   server.o $(LIBS)
+pipe:   pipe.o   $(LIBS)
+test:   test.o   $(LIBS)
+signal: signal.o $(LIBS)
 
 # Libraries
 $(LIBS): CFLAGS += -fPIC $(LIB_CFLAGS)
@@ -117,18 +117,18 @@ $(LIBS): $(LIB_OBJS)
 # Common targets
 install: $(TARGETS) $(LIBS)
 	install -m 0644 $(LIBS) $(PREFIX)/lib
-	install -m 0755 server -T $(PREFIX)/bin/s2ss-server
-	install -m 0755 signal $(PREFIX)/bin/s2ss-signal
-	install -m 0755 pipe $(PREFIX)/bin/s2ss-pipe
-	install -m 0755 test $(PREFIX)/bin/s2ss-test
-	install -m 0755 tools/s2ss.sh $(PREFIX)/bin/s2ss
-	install -m 0755 -d $(PREFIX)/include/s2ss/
-	install -m 0644 include/*.h $(PREFIX)/include/s2ss/
+	install -m 0755 node -T $(PREFIX)/bin/villas-node
+	install -m 0755 signal $(PREFIX)/bin/villas-signal
+	install -m 0755 pipe $(PREFIX)/bin/villas-pipe
+	install -m 0755 test $(PREFIX)/bin/villas-test
+	install -m 0755 tools/villas.sh $(PREFIX)/bin/villas
+	install -m 0755 -d $(PREFIX)/include/villas/
+	install -m 0644 include/*.h $(PREFIX)/include/villas/
 	ldconfig
 
 release: all
-	tar czf s2ss-$(COMMIT)-doc.tar.gz doc/html/
-	tar czf s2ss-$(COMMIT).tar.gz server test pipe signal etc/
+	tar czf villas-$(COMMIT)-doc.tar.gz doc/html/
+	tar czf villas-$(COMMIT).tar.gz node test pipe signal etc/
 	rsync *.tar.gz $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/
 	rsync --archive --delete doc/html/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/doc/
 
@@ -138,8 +138,8 @@ clean:
 	$(RM) -rf doc/{html,latex}
 
 docker:
-	docker build -t s2ss .
-	docker run -it $(DOCKEROPTS) -v $(PWD):/s2ss s2ss
+	docker build -t villas .
+	docker run -it $(DOCKEROPTS) -v $(PWD):/villas villas
 
 doc:
 	doxygen
