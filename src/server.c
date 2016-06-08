@@ -19,7 +19,7 @@
 #include "cfg.h"
 #include "path.h"
 #include "node.h"
-#include "linux.h"
+#include "kernel.h"
 
 #ifdef ENABLE_OPAL_ASYNC
   #include "opal.h"
