@@ -1,7 +1,5 @@
 /** Node type: File
  *
- * This file implements the file type for nodes.
- *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.

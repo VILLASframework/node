@@ -18,7 +18,7 @@
 
 #include "list.h"
 
-#define IF_IRQ_MAX	3	 /**< Maxmimal number of IRQs of an interface */
+#define IF_IRQ_MAX	3	/**< Maxmimal number of IRQs of an interface */
 
 #ifndef SO_MARK
   #define SO_MARK	36	/**< Workaround: add missing constant for OPAL-RT Redhawk target */

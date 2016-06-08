@@ -1,4 +1,4 @@
-/** kernel related procedures.
+/** Linux kernel related functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
@@ -124,6 +124,7 @@ int kernel_has_cmdline(const char *substr)
 
 	return strstr(cmd, substr) ? 0 : -1;
 }
+
 int kernel_get_cacheline_size()
 {
 	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);

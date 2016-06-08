@@ -54,8 +54,7 @@ int main(int argc, char *argv[])
 	int type = TYPE_MIXED;
 	int values = 1;
 	int limit = -1;	
-
-	int counter = 0;
+	int counter;
 
 	if (argc < 2) {
 		usage(argv[0]);
@@ -124,6 +123,7 @@ check:		if (optarg == endptr)
 
 	struct timespec start = time_now();
 
+	counter = 0;
 	while (limit < 0 || counter < limit) {
 		struct timespec now = time_now();
 		double running = time_delta(&start, &now);

@@ -113,7 +113,6 @@ int node_stop(struct node *n)
 	n->state = NODE_STOPPING;
 
 	info("Stopping node %s", node_name(n));
-
 	{ INDENT
 		ret = n->_vt->close ? n->_vt->close(n) : -1;
 	}

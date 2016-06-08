@@ -60,9 +60,14 @@ static void quit()
 
 static void realtime_init()
 { INDENT
-	if (kernel_has_cmdline("isolcpus"))
+	int ret;
+
+	ret = kernel_has_cmdline("isolcpus");
+	if (ret)
 		warn("You should reserve some cores for the server (see 'isolcpus')");
-	if (kernel_is_rt())
+
+	ret = kernel_is_rt();
+	if (ret)
 		warn("We recommend to use an PREEMPT_RT patched kernel!");
 	
 	/* Use FIFO scheduler with real time priority */

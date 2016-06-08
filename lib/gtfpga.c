@@ -1,7 +1,5 @@
 /** Node type: GTFPGA (Xilinx ML507)
  *
- * This file implements the gtfpga subtype for nodes.
- *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2015-2016, Steffen Vogel
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
