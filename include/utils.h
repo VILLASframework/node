@@ -12,6 +12,7 @@
 
 #include <stdlib.h>
 #include <sched.h>
+#include <assert.h>
 
 #include "log.h"
 
