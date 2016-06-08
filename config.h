@@ -21,10 +21,8 @@
 #define VERSION			"v0.5-" _GIT_REV
 
 /** Default number of values in a message */
-#define DEFAULT_MSGVALUES	64
-
-/** Maximum number of messages in the circular history buffer */
-#define DEFAULT_POOLSIZE	32
+#define DEFAULT_VALUES		64
+#define DEFAULT_QUEUELEN	1024
 
 /** Width of log output in characters */
 #define LOG_WIDTH		132
