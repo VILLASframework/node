@@ -99,7 +99,7 @@ char * vstrcatf(char **dest, const char *fmt, va_list va)
 	__attribute__ ((format(printf, 2, 0)));
 
 /** Format string like strcatf() just starting with empty string */
-#define strf(fmt, ...) strcatf(&(void *) { NULL }, fmt, ##__VA_ARGS__)
+#define strf(fmt, ...) strcatf(&(char *) { NULL }, fmt, ##__VA_ARGS__)
 
 /** Format a struct timespec date similar to strftime() */
 int strftimespec(char *s, size_t max, const char *format, struct timespec *ts)
