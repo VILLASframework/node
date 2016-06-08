@@ -124,3 +124,7 @@ int kernel_has_cmdline(const char *substr)
 
 	return strstr(cmd, substr) ? 0 : -1;
 }
+int kernel_get_cacheline_size()
+{
+	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
+}

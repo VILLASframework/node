@@ -48,4 +48,7 @@ int kernel_module_load(const char *module);
 /** Set parameter of loaded kernel module */
 int kernel_module_set_param(const char *module, const char *param, const char *value);
 
+/** Get cacheline size in bytes */
+int kernel_get_cacheline_size();
+
 #endif /* _LINUX_H_ */
