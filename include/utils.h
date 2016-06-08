@@ -54,13 +54,6 @@
 /** Calculate the number of elements in an array. */
 #define ARRAY_LEN(a)	( sizeof (a) / sizeof (a)[0] )
 
-/** Swap two values by using a local third one. */
-#define SWAP(a, b)	do { \
-	 			__typeof__(a) tmp = a; \
-				a = b; \
-				b = tmp; \
-			} while(0)
-
 /* Return the bigger value */
 #define MAX(a, b)	({ __typeof__ (a) _a = (a); \
 			   __typeof__ (b) _b = (b); \
