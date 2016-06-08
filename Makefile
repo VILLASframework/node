@@ -54,27 +54,27 @@ endif
 
 # Enable Socket node type when libnl3 is available
 ifeq ($(shell pkg-config libnl-route-3.0; echo $$?),0)
-	LIB_OBJS   += socket.o nl.o tc.o if.o
+	LIB_OBJS   += socket.o nl.o tc.o if.o msg.o
 	PKGS       += libnl-route-3.0
 endif
 
-# Enable GTFPGA support when libpci is available
-ifeq ($(shell pkg-config libpci; echo $$?),0)
-	LIB_OBJS   += gtfpga.o
-	PKGS       += libpci
-endif
-
-# Enable NGSI support
-ifeq ($(shell pkg-config libcurl jansson uuid; echo $$?),0)
-	LIB_OBJS   += ngsi.o
-	PKGS       += libcurl jansson uuid
-endif
-
-# Enable WebSocket support
-ifeq ($(shell pkg-config libwebsockets jansson; echo $$?),0)
-	LIB_OBJS   += websocket.o
-	PKGS       += libwebsockets jansson
-endif
+## Enable GTFPGA support when libpci is available
+#ifeq ($(shell pkg-config libpci; echo $$?),0)
+#	LIB_OBJS   += gtfpga.o
+#	PKGS       += libpci
+#endif
+#
+## Enable NGSI support
+#ifeq ($(shell pkg-config libcurl jansson uuid; echo $$?),0)
+#	LIB_OBJS   += ngsi.o
+#	PKGS       += libcurl jansson uuid
+#endif
+#
+## Enable WebSocket support
+#ifeq ($(shell pkg-config libwebsockets jansson; echo $$?),0)
+#	LIB_OBJS   += websocket.o websocket-live.o websocket-http.o
+#	PKGS       += libwebsockets jansson
+#endif
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
 ifneq (,$(wildcard $(OPALDIR)/include_target/AsyncApi.h))
