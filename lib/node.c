@@ -8,79 +8,92 @@
 
 #include <string.h>
 
+#include "sample.h"
 #include "node.h"
 #include "cfg.h"
 #include "utils.h"
 
-struct list node_types = LIST_INIT(NULL);			/**< Vtable for virtual node sub types */
+/** List of registered node-types */
+struct list node_types = LIST_INIT();
 
 int node_parse(struct node *n, config_setting_t *cfg)
 {
 	return n->_vt->parse ? n->_vt->parse(n, cfg) : 0;	
 }
 
-int node_read(struct node *n, struct pool *p, int c)
+int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	return n->_vt->read ? n->_vt->read(n, p, c) : -1;
-}
+	int nread = 0;
 
-int node_write(struct node *n, struct pool *p, int c)
-{
-	return n->_vt->write ? n->_vt->write(n, p, c) : -1;
-}
+	if (!n->_vt->read)
+		return -1;
 
-int node_read_single(struct node *n, struct msg *m)
-{
-	struct pool p = {
-		.buffer = m,
-		.previous = -1,
-		.last = 0,
-		.length = 1,
-		.stride = MSG_LEN(m->values)
-	};
+	/* Send in parts if vector not supported */
+	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
+		while (cnt - nread > 0) {
+			nread += n->_vt->read(n, &smps[nread], MIN(cnt - nread, n->_vt->vectorize));
+		}
+	}
+	else {
+		nread = n->_vt->read(n, smps, cnt);
+	}
 	
-	return node_read(n, &p, 1);
+	return nread;
 }
 
-int node_write_single(struct node *n, struct msg *m)
+int node_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct pool p = {
-		.buffer = m,
-		.previous = -1,
-		.last = 0,
-		.length = 1,
-		.stride = MSG_LEN(m->values)
-	};
+	int nsent = 0;
+
+	if (!n->_vt->write)
+		return -1;
+
+	/* Send in parts if vector not supported */
+	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
+		while (cnt - nsent > 0)
+			nsent += n->_vt->write(n, &smps[nsent], MIN(cnt - nsent, n->_vt->vectorize));
+	}
+	else {
+		nsent = n->_vt->write(n, smps, cnt);
+	}
 	
-	return node_write(n, &p, 1);
+	return nsent;
 }
 
 int node_init(struct node_type *vt, int argc, char *argv[], config_setting_t *cfg)
 {
-	if (list_length(&vt->instances) > 0) {
-		info("Initializing " YEL("%s") " node type", vt->name);
-			
-		if (vt->init) { INDENT
-			vt->init(argc, argv, cfg);
-		}
-	}
-	else
-		warn("No node is using the " YEL("%s") " node type. Skipping...", vt->name);
+	int ret;
+	
+	if (vt->state != NODE_TYPE_UNINITIALIZED)
+		return -1;
 
-	return 0;
+	info("Initializing " YEL("%s") " node type", vt->name);
+	{ INDENT
+		ret = vt->init ? vt->init(argc, argv, cfg) : -1;
+	}	
+
+	if (ret == 0)
+		vt->state = NODE_TYPE_INITIALIZED;
+
+	return ret;
 }
 
 int node_deinit(struct node_type *vt)
 {
-	if (list_length(&vt->instances) > 0) {
-		info("De-initializing " YEL("%s") " node type", vt->name);
+	int ret;
+	
+	if (vt->state != NODE_TYPE_INITIALIZED)
+		return -1;
 
-		if (vt->deinit) { INDENT
-			vt->deinit();
-		}
+	info("De-initializing " YEL("%s") " node type", vt->name);
+	{ INDENT
+		ret = vt->deinit ? vt->deinit() : -1;
 	}
+	
+	if (ret == 0)
+		vt->state = NODE_TYPE_UNINITIALIZED;
 
-	return 0;
+	return ret;
 }
 
 int node_start(struct node *n)

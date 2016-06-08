@@ -140,45 +140,44 @@ check:		if (optarg == endptr)
 	node_stop(node);
 	node_deinit(node->_vt);
 	
-	list_destroy(&nodes, node_destroy, false);
+	list_destroy(&nodes, (dtor_cb_t) node_destroy, false);
 	config_destroy(&config);
 
 	return 0;
 }
 
 void test_rtt() {
-	struct timespec sent, recv;
-
 	struct hist hist;
-	struct msg *m;
+	
+	struct timespec send, recv;
 
-	m = msg_create(0);
+	struct sample *smp_send = alloc(SAMPLE_LEN(2));
+	struct sample *smp_recv = alloc(SAMPLE_LEN(2));
+	
 	hist_create(&hist, low, high, res);
 
 	/* Print header */
 	fprintf(stdout, "%17s%5s%10s%10s%10s%10s%10s\n", "timestamp", "seq", "rtt", "min", "max", "mean", "stddev");
 
 	while (running && (count < 0 || count--)) {		
-		clock_gettime(CLOCK_ID, &sent);
-		m->ts.sec = sent.tv_sec;
-		m->ts.nsec = sent.tv_nsec;
+		clock_gettime(CLOCK_ID, &send);
 
-		node_write_single(node, m); /* Ping */
-		node_read_single(node, m);  /* Pong */
+		node_write(node, &smp_send, 1); /* Ping */
+		node_read(node,  &smp_recv, 1); /* Pong */
 		
 		clock_gettime(CLOCK_ID, &recv);
 
-		double rtt = time_delta(&recv, &sent);
+		double rtt = time_delta(&recv, &send);
 
 		if (rtt < 0)
 			warn("Negative RTT: %f", rtt);
 
 		hist_put(&hist, rtt);
 
-		m->sequence++;
+		smp_send->sequence++;
 
 		fprintf(stdout, "%10lu.%06lu%5u%10.3f%10.3f%10.3f%10.3f%10.3f\n", 
-			recv.tv_sec, recv.tv_nsec / 1000, m->sequence,
+			recv.tv_sec, recv.tv_nsec / 1000, smp_send->sequence,
 			1e3 * rtt, 1e3 * hist.lowest, 1e3 * hist.highest,
 			1e3 * hist_mean(&hist), 1e3 * hist_stddev(&hist));
 	}

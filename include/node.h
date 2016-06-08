@@ -23,9 +23,9 @@
 #include <netinet/in.h>
 #include <libconfig.h>
 
-#include "msg.h"
+#include "sample.h"
 #include "list.h"
-#include "pool.h"
+#include "queue.h"
 
 /* Helper macros for virtual node type */
 #define REGISTER_NODE_TYPE(vt)				\
@@ -36,7 +36,41 @@ __attribute__((constructor)) static void __register() {	\
 extern struct list node_types;	/**< Vtable for virtual node sub types */
 
 /* Forward declarations */
-struct config_setting_t *cfg;
+struct config_setting_t cfg;
+struct node_type;
+
+/** The data structure for a node.
+ *
+ * Every entity which exchanges messages is represented by a node.
+ * Nodes can be remote machines and simulators or locally running processes.
+ */
+struct node
+{
+	const char *name;	/**< A short identifier of the node, only used for configuration and logging */
+
+	char *_name;		/**< Singleton: A string used to print to screen. */
+	char *_name_long;	/**< Singleton: A string used to print to screen. */
+
+	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
+	int affinity;		/**< CPU Affinity of this node */
+
+	qptr_t sent;		/**< Number of samples sent / written to this node. */
+	qptr_t received;	/**< Number of samples received / read from this node. */
+
+	enum node_state {
+		NODE_INVALID,	/**< This node object is not in a valid state. */
+		NODE_CREATED,	/**< This node has been parsed from the configuration. */
+		NODE_STARTING,	/**< This node is currently being started. */
+		NODE_RUNNING,	/**< This node has been started by calling node_open() */
+		NODE_STOPPING,	/**< This node is currently shutting down. */
+		NODE_STOPPED	/**< Node was running, but has been stopped by calling node_close() */
+	} state;		/**< Node state */
+
+	struct node_type *_vt;	/**< Virtual functions (C++ OOP style) */
+	void *_vd;		/**< Virtual data (used by struct node::_vt functions) */
+
+	config_setting_t *cfg;	/**< A pointer to the libconfig object which instantiated this node */
+};
 
 /** C++ like vtable construct for node_types */
 struct node_type {
@@ -46,6 +80,11 @@ struct node_type {
 
 	struct list instances;		/**< A list of all existing nodes of this type. */
 	size_t size;			/**< Size of private data bock. @see node::_vd */
+	
+	enum node_type_state {
+		NODE_TYPE_UNINITIALIZED = 0,
+		NODE_TYPE_INITIALIZED
+	} state;
 	
 	/** Global initialization per node type.
 	 *
@@ -121,11 +160,11 @@ struct node_type {
 	 * Some node types might only support to receive one message at a time.
 	 *
 	 * @param n		A pointer to the node object.
-	 * @param pool 		A pointer to circular buffer containing the messages.
-	 * @param cnt		The number of messages which should be sent.
+	 * @param smps		An array of pointers to memory blocks where the function should store received samples.
+	 * @param cnt		The number of messages which should be received.
 	 * @return		The number of messages actually received.
 	 */
-	int (*read) (struct node *n, struct pool *pool, int cnt);
+	int (*read) (struct node *n, struct sample *smps[], unsigned cnt);
 
 	/** Send multiple messages in a single datagram / packet.
 	 *
@@ -135,11 +174,11 @@ struct node_type {
 	 * So the indexes will wrap around after len.
 	 *
 	 * @param n		A pointer to the node object.
-	 * @param pool 		A pointer to circular buffer containing the messages.
+	 * @param smps		An array of pointers to memory blocks where samples read from.
 	 * @param cnt		The number of messages which should be sent.
 	 * @return		The number of messages actually sent.
 	 */
-	int (*write)(struct node *n, struct pool *pool, int cnt);
+	int (*write)(struct node *n, struct sample *smps[], unsigned cnt);
 	
 	/** Reverse source and destination of a node.
 	 *
@@ -148,36 +187,6 @@ struct node_type {
 	 * @param n		A pointer to the node object.
 	 */
 	int (*reverse)(struct node *n);
-};
-
-/** The data structure for a node.
- *
- * Every entity which exchanges messages is represented by a node.
- * Nodes can be remote machines and simulators or locally running processes.
- */
-struct node
-{
-	const char *name;	/**< A short identifier of the node, only used for configuration and logging */
-
-	char *_name;		/**< Singleton: A string used to print to screen. */
-	char *_name_long;	/**< Singleton: A string used to print to screen. */
-
-	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
-	int affinity;		/**< CPU Affinity of this node */
-
-	enum node_state {
-		NODE_INVALID,	/**< This node object is not in a valid state. */
-		NODE_CREATED,	/**< This node has been parsed from the configuration. */
-		NODE_STARTING,	/**< This node is currently being started. */
-		NODE_RUNNING,	/**< This node has been started by calling node_open() */
-		NODE_STOPPING,	/**< This node is currently shutting down. */
-		NODE_STOPPED	/**< Node was running, but has been stopped by calling node_close() */
-	} state;		/**< Node state */
-
-	struct node_type *_vt;	/**< Virtual functions (C++ OOP style) */
-	void *_vd;		/**< Virtual data (used by struct node::_vt functions) */
-
-	config_setting_t *cfg;	/**< A pointer to the libconfig object which instantiated this node */
 };
 
 /** Initialize all registered node type subsystems.
@@ -244,28 +253,14 @@ char * node_name_long(struct node *n);
 /** Return a pointer to a string which describes the node type */
 const char * node_name_type(struct node *n);
 
-/** Receive multiple messages at once.
- *
- * @see node_type::read
- */
-int node_read(struct node *n, struct pool *pool, int cnt);
-
-/** Send multiple messages in a single datagram / packet.
- *
- * @see node_type::write
- */
-int node_write(struct node *n, struct pool *pool, int cnt);
-
-/** Read a single message without using a message pool. */
-int node_read_single(struct node *n, struct msg *m);
-
-/** Send a single message without using a message pool. */
-int node_write_single(struct node *n, struct msg *m);
-
 /** Reverse local and remote socket address.
  *
  * @see node_type::reverse
  */
 int node_reverse(struct node *n);
+
+int node_read(struct node *n, struct sample *smps[], unsigned cnt);
+
+int node_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 #endif /** _NODE_H_ @} */

@@ -24,6 +24,7 @@
 #include "node.h"
 #include "msg.h"
 #include "hooks.h"
+#include "queue.h"
 #include "pool.h"
 
 /** The datastructure for a path.
@@ -40,16 +41,18 @@ struct path
 	} state;			/**< Path state */
 	
 	struct node *in;		/**< Pointer to the incoming node */
-	struct node *out;		/**< Pointer to the first outgoing node ( path::out == list_first(path::destinations) */
 	
+	struct queue queue;		/**< A ring buffer for all received messages (unmodified) */
+	struct pool pool;		/**< Memory pool for messages / samples. */
+
 	struct list destinations;	/**< List of all outgoing nodes */
 	struct list hooks;		/**< List of function pointers to hooks */
 
+	int values;			/**< Maximum number of values per sample for this path. */
+	int queuelen;			/**< Size of sample queue for this path. */
 	int enabled;			/**< Is this path enabled */
 	int tfd;			/**< Timer file descriptor for fixed rate sending */
 	double rate;			/**< Send messages with a fixed rate over this path */
-	
-	struct pool pool;		/**< A circular buffer of past messages */
 
 	pthread_t recv_tid;		/**< The thread id for this path */
 	pthread_t sent_tid;		/**< A second thread id for fixed rate sending thread */
@@ -67,31 +70,29 @@ struct path
 		struct hist gap_seq;	/**< Histogram of sequence number displacement of received messages */
 	} hist;
 
-	struct {
-		struct timespec recv;	/**< Last message received */
-		struct timespec sent;	/**< Last message sent */
-		struct timespec last;	/**< Previous message received (old value of path::ts__recv) */
-	} ts;
-
-	/* Statistics */
-	unsigned int sent;		/**< Counter for sent messages to all outgoing nodes */
-	unsigned int received;		/**< Counter for received messages from all incoming nodes */
-	unsigned int invalid;		/**< Counter for invalid messages */
-	unsigned int skipped;		/**< Counter for skipped messages due to hooks */
-	unsigned int dropped;		/**< Counter for dropped messages due to reordering */
-	unsigned int overrun;		/**< Counter of overruns for fixed-rate sending */
+	/* Statistic counters */
+	uintmax_t invalid;		/**< Counter for invalid messages */
+	uintmax_t skipped;		/**< Counter for skipped messages due to hooks */
+	uintmax_t dropped;		/**< Counter for dropped messages due to reordering */
+	uintmax_t overrun;		/**< Counter of overruns for fixed-rate sending */
 	
 	/** @} */
 };
 
 /** Create a path by allocating dynamic memory. */
-struct path * path_create(size_t poolsize, size_t values);
+void path_init(struct path *p);
 
 /** Destroy path by freeing dynamically allocated memory.
  *
  * @param i A pointer to the path structure.
  */
 void path_destroy(struct path *p);
+
+/** Initialize  pool queue and hooks.
+ *
+ * Should be called after path_init() and before path_start().
+ */
+int path_prepare(struct path *p);
 
 /** Start a path.
  *

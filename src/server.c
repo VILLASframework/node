@@ -120,6 +120,11 @@ static void usage(const char *name)
 	list_foreach(struct node_type *vt, &node_types)
 		printf(" - %s: %s\n", vt->name, vt->description);
 	printf("\n");
+	
+	printf("Supported hooks:\n");
+	list_foreach(struct hook *h, &hooks)
+		printf(" - %s: %s\n", h->name, h->description);
+	printf("\n");
 
 	print_copyright();
 
@@ -167,7 +172,9 @@ int main(int argc, char *argv[])
 
 	info("Initialize node types");
 	list_foreach(struct node_type *vt, &node_types) { INDENT
-		node_init(vt, argc, argv, config_root_setting(&config));
+		int refs = list_length(&vt->instances);
+		if (refs > 0)
+			node_init(vt, argc, argv, config_root_setting(&config));
 	}
 
 	info("Starting nodes");
@@ -181,8 +188,10 @@ int main(int argc, char *argv[])
 
 	info("Starting paths");
 	list_foreach(struct path *p, &paths) { INDENT
-		if (p->enabled)
+		if (p->enabled) {
+			path_prepare(p);
 			path_start(p);
+		}
 		else
 			warn("Path %s is disabled. Skipping...", path_name(p));
 	}
@@ -193,7 +202,7 @@ int main(int argc, char *argv[])
 
 		for (;;) {
 			list_foreach(struct path *p, &paths)
-				hook_run(p, HOOK_PERIODIC);
+				hook_run(p, NULL, 0, HOOK_PERIODIC);
 			usleep(settings.stats * 1e6);
 		}
 	}

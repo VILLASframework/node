@@ -11,6 +11,7 @@
  *********************************************************************************/
 
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
 #include <signal.h>
@@ -32,7 +33,6 @@ struct pool recv_pool,   send_pool;
 pthread_t   recv_thread, send_thread;
 
 struct node *node;
-int reverse;
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
@@ -59,7 +59,10 @@ static void usage(char *name)
 	printf("Usage: %s CONFIG [-r] NODE\n", name);
 	printf("  CONFIG  path to a configuration file\n");
 	printf("  NODE    the name of the node to which samples are sent and received from\n");
-	printf("  -r      swap read / write endpoints)\n\n");
+	printf("  -d LVL  set debug log level to LVL\n");
+	printf("  -x      swap read / write endpoints\n");
+	printf("  -s      only read data from stdin and send it to node\n");
+	printf("  -r      only read data from node and write it to stdout\n\n");
 
 	print_copyright();
 
@@ -67,13 +70,25 @@ static void usage(char *name)
 }
 
 void * send_loop(void *ctx)
-{	
+{
+	int ret;
+	struct sample *smps[node->vectorize];
+	
+	/* Initialize memory */
+	ret = pool_init_mmap(&send_pool, SAMPLE_LEN(DEFAULT_VALUES), node->vectorize);
+	if (ret < 0)
+		error("Failed to allocate memory for receive pool.");
+	
+	ret = pool_get_many(&send_pool, (void **) smps, node->vectorize);
+	if (ret < 0)
+		error("Failed to get %u samples out of send pool (%d).", node->vectorize, ret);
+
 	for (;;) {
 		for (int i = 0; i < node->vectorize; i++) {
-			struct msg *m = pool_getrel(&send_pool, i);
+			struct sample *s = smps[i];
 			int reason;
 
-retry:			reason = msg_fscan(stdin, m, NULL, NULL);
+retry:			reason = sample_fscan(stdin, s, NULL);
 			if (reason < 0) {
 				if (feof(stdin))
 					return NULL;
@@ -84,7 +99,7 @@ retry:			reason = msg_fscan(stdin, m, NULL, NULL);
 			}
 		}
 
-		node_write(node, &send_pool, node->vectorize);
+		node_write(node, smps, node->vectorize);
 	}
 
 	return NULL;
@@ -92,23 +107,27 @@ retry:			reason = msg_fscan(stdin, m, NULL, NULL);
 
 void * recv_loop(void *ctx)
 {
+	int ret;
+	struct sample *smps[node->vectorize];
+	
+	/* Initialize memory */
+	ret = pool_init_mmap(&recv_pool, SAMPLE_LEN(DEFAULT_VALUES), node->vectorize);
+	if (ret < 0)
+		error("Failed to allocate memory for receive pool.");
+	
+	ret = pool_get_many(&recv_pool, (void **) smps, node->vectorize);
+	if (ret < 0)
+		error("Failed to get %u samples out of receive pool (%d).", node->vectorize, ret);
+	
 	/* Print header */
-	fprintf(stdout, "# %-20s\t\t%s\n", "sec.nsec+offset(seq)", "data[]");
+	fprintf(stdout, "# %-20s\t\t%s\n", "sec.nsec+offset", "data[]");
 
 	for (;;) {
-		struct timespec ts = time_now();
-		
-		int recv = node_read(node, &recv_pool, node->vectorize);
+		int recv = node_read(node, smps, node->vectorize);
 		for (int i = 0; i < recv; i++) {
-			struct msg *m = pool_getrel(&recv_pool, i);
-			
-			int ret = msg_verify(m);
-			if (ret)
-				warn("Failed to verify message: %d", ret);
-			
-			/** @todo should we drop reordered / delayed packets here? */
+			struct sample *s = smps[i];
 
-			msg_fprint(stdout, m, MSG_PRINT_ALL, time_delta(&MSG_TS(m), &ts));
+			sample_fprint(stdout, s, SAMPLE_ALL);
 			fflush(stdout);
 		}
 	}
@@ -118,17 +137,29 @@ void * recv_loop(void *ctx)
 
 int main(int argc, char *argv[])
 {
+	bool send = true, recv = true, reverse = false;
+	
 	/* Parse command line arguments */
 	if (argc < 3)
 		usage(argv[0]);
 	
+	log_init();
+	
 	char c;
-	while ((c = getopt(argc-2, argv+2, "hr")) != -1) {
+	while ((c = getopt(argc-2, argv+2, "hxrsd:")) != -1) {
 		switch (c) {
-			case 'r':
-				reverse = 1;
+			case 'x':
+				reverse = true;
 				break;
-			
+			case 's':
+				recv = false;
+				break;
+			case 'r':
+				send = false;
+				break;
+			case 'd':
+				log_setlevel(atoi(optarg), -1);
+				break;
 			case 'h':
 			case '?':
 				usage(argv[0]);
@@ -151,7 +182,6 @@ int main(int argc, char *argv[])
 	/* Create lists */
 	list_init(&nodes);
 
-	log_init();
 	config_init(&config);
 	config_parse(argv[1], &config, &settings, &nodes, NULL);
 	
@@ -159,22 +189,22 @@ int main(int argc, char *argv[])
 	node = list_lookup(&nodes, argv[2]);
 	if (!node)
 		error("Node '%s' does not exist!", argv[2]);
-
-	node_init(node->_vt, argc-optind, argv+optind, config_root_setting(&config));	
-
-	pool_create(&recv_pool, node->vectorize, sizeof(struct msg));
-	pool_create(&send_pool, node->vectorize, sizeof(struct msg));
-
+	
 	if (reverse)
 		node_reverse(node);
+
+	node_init(node->_vt, argc-optind, argv+optind, config_root_setting(&config));	
 	
 	node_start(node);
-	
+
 	/* Start threads */
-	pthread_create(&recv_thread, NULL, recv_loop, NULL);
-	pthread_create(&send_thread, NULL, send_loop, NULL);
+	if (recv)
+		pthread_create(&recv_thread, NULL, recv_loop, NULL);
+	if (send)
+		pthread_create(&send_thread, NULL, send_loop, NULL);
 	
-	for (;;) pause();
+	for (;;)
+		pause();
 
 	return 0;
 }

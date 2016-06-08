@@ -93,15 +93,12 @@ int config_parse_path(config_setting_t *cfg,
 {
 	config_setting_t *cfg_out, *cfg_hook;
 	const char *in;
-	int reverse,  poolsize, values;
+	int ret, reverse;
+	struct path *p;
 	
-	/* Pool settings */
-	if (!config_setting_lookup_int(cfg, "poolsize", &poolsize))
-		poolsize = DEFAULT_POOLSIZE;
-	if (!config_setting_lookup_int(cfg, "values", &values))
-		values = DEFAULT_MSGVALUES;
-
-	struct path *p = path_create(poolsize, values);
+	/* Allocate memory and intialize path structure */
+	p = alloc(sizeof(struct path));
+	path_init(p);
 
 	/* Input node */
 	if (!config_setting_lookup_string(cfg, "in", &in))
@@ -109,20 +106,35 @@ int config_parse_path(config_setting_t *cfg,
 
 	p->in = list_lookup(nodes, in);
 	if (!p->in)
-		error("Invalid input node '%s'", in);
+		cerror(cfg, "Invalid input node '%s'", in);
 
 	/* Output node(s) */
 	cfg_out = config_setting_get_member(cfg, "out");
-	if (cfg_out)
-		config_parse_nodelist(cfg_out, &p->destinations, nodes);
+	if (!cfg_out)
+		cerror(cfg, "Missing output nodes for path");
 	
-	p->out = (struct node *) list_first(&p->destinations);	
+	ret = config_parse_nodelist(cfg_out, &p->destinations, nodes);
+	if (ret <= 0)
+		cerror(cfg_out, "Invalid output nodes");
+	
+	/* Check if nodes are suitable */
+	if (p->in->_vt->read == NULL)
+		cerror(cfg, "Input node '%s' is not supported as a source.", node_name(p->in));
+	
+	list_foreach(struct node *n, &p->destinations) {
+		if (n->_vt->write == NULL)
+			cerror(cfg_out, "Output node '%s' is not supported as a destination.", node_name(n));
+	}
 
 	/* Optional settings */
 	cfg_hook = config_setting_get_member(cfg, "hook");
 	if (cfg_hook)
 		config_parse_hooklist(cfg_hook, &p->hooks);
 
+	if (!config_setting_lookup_int(cfg, "values", &p->values))
+		p->values = DEFAULT_VALUES;
+	if (!config_setting_lookup_int(cfg, "queuelen", &p->queuelen))
+		p->queuelen = DEFAULT_QUEUELEN;
 	if (!config_setting_lookup_bool(cfg, "reverse", &reverse))
 		reverse = 0;
 	if (!config_setting_lookup_bool(cfg, "enabled", &p->enabled))
@@ -136,15 +148,14 @@ int config_parse_path(config_setting_t *cfg,
 
 	if (reverse) {
 		if (list_length(&p->destinations) > 1)
-			error("Can't reverse path with multiple destination nodes");
+			cerror(cfg, "Can't reverse path with multiple destination nodes");
 
-		struct path *r = path_create(poolsize, values);
+		struct path *r = memdup(p, sizeof(struct path));
+		path_init(r);
 
-		r->in  = p->out; /* Swap in/out */
-		r->out = p->in;
-		r->rate = p->rate;
-			
-		list_push(&r->destinations, r->out);
+		/* Swap source and destination node */
+		r->in = list_first(&p->destinations);
+		list_push(&r->destinations, p->in);
 			
 		if (cfg_hook)
 			config_parse_hooklist(cfg_hook, &r->hooks);
@@ -180,10 +191,12 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *list, struct list 
 				str = config_setting_get_string(elm);
 				if (str) {
 					node = list_lookup(all, str);
-					if (node)
-						list_push(list, node);
-					else
+					if (!node)
 						cerror(elm, "Unknown outgoing node '%s'", str);
+					else if (node->_vt->write == NULL)
+						cerror(cfg, "Output node '%s' is not supported as a sink.", node_name(node));
+
+					list_push(list, node);
 				}
 				else
 					cerror(cfg, "Invalid outgoing node");
@@ -194,7 +207,7 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *list, struct list 
 			cerror(cfg, "Invalid output node(s)");
 	}
 
-	return 0;
+	return list_length(list);
 }
 
 int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set)
@@ -259,7 +272,7 @@ int config_parse_hooklist(config_setting_t *cfg, struct list *list) {
 			cerror(cfg, "Invalid hook functions");
 	}
 
-	return 0;
+	return list_length(list);
 }
 
 int config_parse_hook(config_setting_t *cfg, struct list *list)

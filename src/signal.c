@@ -16,7 +16,7 @@
 
 #include "config.h"
 #include "utils.h"
-#include "msg.h"
+#include "sample.h"
 #include "timing.h"
 
 #define CLOCKID	CLOCK_REALTIME
@@ -109,10 +109,10 @@ check:		if (optarg == endptr)
 	}
 	
 	/* Allocate memory for message buffer */
-	struct msg *m = msg_create(values);
+	struct sample *s = alloc(SAMPLE_LEN(values));
 
 	/* Print header */
-	printf("# S2SS signal params: type=%s, values=%u, rate=%f, limit=%u, amplitude=%f, freq=%f\n",
+	printf("# S2SS signal params: type=%s, values=%u, rate=%f, limit=%d, amplitude=%f, freq=%f\n",
 		argv[1], values, rate, limit, ampl, freq);
 	printf("# %-20s\t\t%s\n", "sec.nsec(seq)", "data[]");
 
@@ -128,30 +128,35 @@ check:		if (optarg == endptr)
 		struct timespec now = time_now();
 		double running = time_delta(&start, &now);
 
-		m->ts.sec    = now.tv_sec;
-		m->ts.nsec   = now.tv_nsec;
-		m->sequence  = counter;
+		s->ts.origin = now;
+		s->sequence  = counter;
+		s->length    = values;
 
-		for (int i = 0; i < m->values; i++) {
+		for (int i = 0; i < values; i++) {
 			int rtype = (type != TYPE_MIXED) ? type : i % 4;			
 			switch (rtype) {
-				case TYPE_RANDOM:   m->data[i].f += box_muller(0, stddev); 					break;
-				case TYPE_SINE:	    m->data[i].f = ampl *        sin(running * freq * 2 * M_PI);		break;
-				case TYPE_TRIANGLE: m->data[i].f = ampl * (fabs(fmod(running * freq, 1) - .5) - 0.25) * 4;	break;
-				case TYPE_SQUARE:   m->data[i].f = ampl * (    (fmod(running * freq, 1) < .5) ? -1 : 1);	break;
-				case TYPE_RAMP:     m->data[i].f = fmod(counter, rate / freq); /** @todo send as integer? */	break;
+				case TYPE_RANDOM:   s->values[i].f += box_muller(0, stddev); 					break;
+				case TYPE_SINE:	    s->values[i].f = ampl *        sin(running * freq * 2 * M_PI);		break;
+				case TYPE_TRIANGLE: s->values[i].f = ampl * (fabs(fmod(running * freq, 1) - .5) - 0.25) * 4;	break;
+				case TYPE_SQUARE:   s->values[i].f = ampl * (    (fmod(running * freq, 1) < .5) ? -1 : 1);	break;
+				case TYPE_RAMP:     s->values[i].f = fmod(counter, rate / freq); /** @todo send as integer? */	break;
 			}
 		}
 			
-		msg_fprint(stdout, m, MSG_PRINT_ALL & ~MSG_PRINT_OFFSET, 0);
+		sample_fprint(stdout, s, SAMPLE_ALL & ~SAMPLE_OFFSET);
 		fflush(stdout);
 		
 		/* Block until 1/p->rate seconds elapsed */
-		counter += timerfd_wait(tfd);
+		int steps = timerfd_wait(tfd);
+		
+		if (steps > 1)
+			warn("Missed steps: %u", steps);
+			
+		counter += steps;
 	}
 
 	close(tfd);
-	free(m);
+	free(s);
 
 	return 0;
 }

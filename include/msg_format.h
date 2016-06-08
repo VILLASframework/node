@@ -39,7 +39,22 @@
 #endif
 
 /** The total size in bytes of a message */
-#define MSG_LEN(values)		(4 * (values) + 16 /* header */)
+#define MSG_LEN(values)		(sizeof(struct msg) + MSG_DATA_LEN(values))
+
+/** The length of \p values values in bytes. */
+#define MSG_DATA_LEN(values)	(sizeof(float) * (values))
+
+/** The offset to the first data value in a message. */
+#define MSG_DATA_OFFSET(msg)	((char *) (msg) + offsetof(struct msg, data))
+
+/** Initialize a message with default values */
+#define MSG_INIT(val, seq) (struct msg) {\
+	.version = MSG_VERSION,		\
+	.type = MSG_TYPE_DATA,		\
+	.endian = MSG_ENDIAN_HOST,	\
+	.values = val,	 		\
+	.sequence = seq			\
+}
 
 /** The timestamp of a message in struct timespec format */
 #define MSG_TS(msg) (struct timespec) {	\
@@ -71,7 +86,7 @@ struct msg
 	
 	/** A timestamp per message. Endianess is specified in msg::endian. */
 	struct {
-		uint32_t sec;	/**< Seconds     since 1970-01-01 00:00:00 */
+		uint32_t sec;	/**< Seconds since 1970-01-01 00:00:00 */
 		uint32_t nsec;	/**< Nanoseconds of the current second. */
 	} ts;
 
@@ -80,6 +95,6 @@ struct msg
 		float    f;	/**< Floating point values (note msg::endian) */
 		uint32_t i;	/**< Integer values (note msg::endian) */
 	} data[];
-} __attribute__((aligned(64), packed));
+} __attribute__((packed));
 
 #endif /* _MSG_FORMAT_H_ */
