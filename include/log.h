@@ -26,6 +26,27 @@
 #define ERROR		RED("Error")
 #define STATS		MAG("Stats")
 
+/** Debug facilities.
+ *
+ * To be or-ed with the debug level
+ */
+enum debug_facilities {
+	DBG_POOL =	(1 <<  8),
+	DBG_QUEUE =	(1 <<  9),
+	DBG_CONFIG =	(1 << 10),
+	DBG_HOOK =	(1 << 11),
+	DBG_PATH =	(1 << 12),
+	
+	/* Node-types */
+	DBG_SOCKET =	(1 << 16),
+	DBG_FILE =	(1 << 17),
+	DBG_GTFPGA =	(1 << 18),
+	DBG_NGSI =	(1 << 19),
+	DBG_WEBSOCKET =	(1 << 20),
+	DBG_OPAL =	(1 << 21),
+	DBG_NODE =   (0xFF << 16)
+};
+
 /** Change log indention  for current thread.
  *
  * The argument level can be negative!
@@ -42,8 +63,9 @@ void log_outdent(int *);
 /** Set the verbosity level of debug messages.
  *
  * @param lvl The new debug level.
+ * @param fac The new mask for debug facilities.
  */
-void log_setlevel(int lvl);
+void log_setlevel(int lvl, int fac);
 
 /** Reset the wallclock of debug messages. */
 void log_init();

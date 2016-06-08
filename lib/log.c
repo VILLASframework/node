@@ -26,7 +26,10 @@
 /** Debug level used by the debug() macro.
  * It defaults to V (defined by the Makefile) and can be
  * overwritten by the 'debug' setting in the configuration file. */
-static int level = V;
+static unsigned level = V;
+
+/** Debug facilities used by the debug() macro. */
+static unsigned facilities = ~0;
 
 /** A global clock used to prefix the log messages. */
 static struct timespec epoch;
@@ -48,7 +51,7 @@ void log_outdent(int *old)
 }
 #endif
 
-void log_setlevel(int lvl)
+void log_setlevel(int lvl, int fac)
 {
 	level = lvl;
 	debug(10, "Switched to debug level %u", level);
@@ -107,11 +110,14 @@ void line()
 	log_print("", "\b" ACS("%.*s"), LOG_WIDTH, buf);
 }
 
-void debug(int lvl, const char *fmt, ...)
+void debug(int class, const char *fmt, ...)
 {
 	va_list ap;
+	
+	int lvl = class &  0xFF;
+	int fac = class & ~0xFF;
 
-	if (lvl <= level) {
+	if (((fac == 0) || (fac & facilities)) && (lvl <= level)) {
 		va_start(ap, fmt);
 		log_vprint(DEBUG, fmt, ap);
 		va_end(ap);
