@@ -4,6 +4,8 @@ TARGETS = server pipe signal test
 # Libraries
 LIBS = libs2ss.so
 
+DEBUG = 1
+
 # Object files for libs2ss
 LIB_OBJS = sample.o path.o node.o \
 	   kernel.o \
@@ -37,6 +39,9 @@ LDFLAGS += -L. -Wl,-rpath,'$$ORIGIN'
 
 # pkg-config dependencies
 PKGS = libconfig
+
+#DOCKEROPTS = -p 80:80 -p 443:443 --ulimit memlock=1073741824 --security-opt seccomp:unconfined
+DOCKEROPTS = -p 1234 --ulimit memlock=1073741824 --security-opt seccomp:unconfined
 
 # Add more compiler flags
 ifdef DEBUG
@@ -111,7 +116,7 @@ $(LIBS): $(LIB_OBJS)
 
 # Common targets
 install: $(TARGETS) $(LIBS)
-	install -m 0644 libs2ss.so $(PREFIX)/lib
+	install -m 0644 $(LIBS) $(PREFIX)/lib
 	install -m 0755 server -T $(PREFIX)/bin/s2ss-server
 	install -m 0755 signal $(PREFIX)/bin/s2ss-signal
 	install -m 0755 pipe $(PREFIX)/bin/s2ss-pipe
@@ -134,7 +139,7 @@ clean:
 
 docker:
 	docker build -t s2ss .
-	docker run -it -p 80:80 -p 443:443 -v $(PWD):/s2ss s2ss
+	docker run -it $(DOCKEROPTS) -v $(PWD):/s2ss s2ss
 
 doc:
 	doxygen
