@@ -32,14 +32,6 @@
 
 struct node;
 
-struct ngsi_attribute {
-	char *name;
-	char *type;
-
-	int index;
-	struct list metadata;
-};
-
 struct ngsi {
 	const char *endpoint;		/**< The NGSI context broker endpoint URL. */
 	const char *entity_id;		/**< The context broker entity id related to this node */
@@ -56,7 +48,7 @@ struct ngsi {
 
 	CURL *curl;			/**< libcurl: handle */
 
-	struct list mapping;		/**< A mapping between indices of the S2SS messages and the attributes in ngsi::context */
+	struct list mapping;		/**< A mapping between indices of the VILLASnode samples and the attributes in ngsi::context */
 };
 
 /** Initialize global NGSI settings and maps shared memory regions.
@@ -84,9 +76,9 @@ int ngsi_open(struct node *n);
 int ngsi_close(struct node *n);
 
 /** @see node_vtable::read */
-int ngsi_read(struct node *n, struct pool *pool, int cnt);
+int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_vtable::write */
-int ngsi_write(struct node *n, struct pool *pool, int cnt);
+int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 #endif /** _NGSI_H_ @} */

@@ -68,13 +68,13 @@ endif
 #	LIB_OBJS   += gtfpga.o
 #	PKGS       += libpci
 #endif
-#
-## Enable NGSI support
-#ifeq ($(shell pkg-config libcurl jansson uuid; echo $$?),0)
-#	LIB_OBJS   += ngsi.o
-#	PKGS       += libcurl jansson uuid
-#endif
-#
+
+# Enable NGSI support
+ifeq ($(shell pkg-config libcurl jansson uuid; echo $$?),0)
+	LIB_OBJS   += ngsi.o
+	PKGS       += libcurl jansson uuid
+endif
+
 ## Enable WebSocket support
 #ifeq ($(shell pkg-config libwebsockets jansson; echo $$?),0)
 #	LIB_OBJS   += websocket.o websocket-live.o websocket-http.o
