@@ -16,22 +16,6 @@
 
 struct node;
 
-/** These flags define the format which is used by msg_fscan() and msg_fprint(). */
-enum msg_flags {
-	MSG_PRINT_NANOSECONDS	= 1,
-	MSG_PRINT_OFFSET	= 2,
-	MSG_PRINT_SEQUENCE	= 4,
-	MSG_PRINT_VALUES	= 8,
-
-	MSG_PRINT_ALL		= 0xFF
-};
-
-/** Allocate and initialize memory of a sinle message. */
-struct msg * msg_create(size_t values);
-
-/** Release memory allocated by msg_create(). */
-void msg_destroy(struct msg *m);
-
 /** Swaps message contents byte-order.
  *
  * Message can either be transmitted in little or big endian
@@ -54,45 +38,5 @@ void msg_swap(struct msg *m);
  * @retval <0 The message header is invalid.
  */
 int msg_verify(struct msg *m);
-
-/** Print a raw message in human readable form to a file stream.
- *
- * @param buf A character buffer of len bytes.
- * @param len The size of buf.
- * @param m A pointer to the message.
- * @param flags See msg_flags.
- * @param offset A optional offset in seconds. Only used if flags contains MSG_PRINT_OFFSET.
- * @return Number of bytes written to buf.
- */
-int msg_print(char *buf, size_t len, struct msg *m, int flags, double offset);
-
-/** Read a message from a character buffer.
- *
- * @param line A string which should be parsed.
- * @param m A pointer to the message.
- * @param flags et MSG_PRINT_* flags for each component found in sample if not NULL. See msg_flags.
- * @param offset Write offset to this pointer if not NULL.
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
- */
-int msg_scan(const char *line, struct msg *m, int *fl, double *off);
-
-/** Print a raw message in human readable form to a file stream.
- *
- * @see msg_print()
- * @param f The file handle from fopen() or stdout, stderr.
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
- */
-int msg_fprint(FILE *f, struct msg *m, int flags, double offset);
-
-/** Read a message from a file stream.
- *
- * @see msg_scan()
- * @param f The file handle from fopen() or stdin.
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
- */
-int msg_fscan(FILE *f, struct msg *m, int *flags, double *offset);
 
 #endif /* _MSG_H_ */
