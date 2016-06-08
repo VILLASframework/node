@@ -1,48 +1,57 @@
-/** Circular buffer
- *
- * Every path uses a circular buffer to save past messages.
+/** Memory pool for fixed size objects.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  */
 
-#include <stddef.h>
+#include <sys/mman.h>
 
 #include "utils.h"
+
 #include "pool.h"
+#include "linux.h"
 
-void pool_create(struct pool *p, size_t length, size_t stride)
+int pool_init_mmap(struct pool *p, size_t blocksz, size_t cnt)
 {
-	p->buffer = alloc(length * stride);
+	void *addr;
+	int flags;
+	size_t len, alignedsz, align;
 	
-	p->last = 0;
+	align = kernel_get_cacheline_size();
+	alignedsz = blocksz * CEIL(blocksz, align);
+	len = cnt * alignedsz;
 	
-	p->length = length;
-	p->stride = stride;
+	debug(DBG_POOL | 4, "Allocating %#zx bytes for memory pool", len);
+	
+	flags = MAP_LOCKED | MAP_PRIVATE | MAP_ANONYMOUS; // MAP_HUGETLB
+	/** @todo Use hugepages */
+
+	/* addr is allways aligned to pagesize boundary */
+	addr = mmap(NULL, len, PROT_READ | PROT_WRITE, flags, -1, 0);
+	if (addr == MAP_FAILED)
+		serror("Failed to allocate memory for sample pool");
+ 
+	return pool_init(p, blocksz, align, addr, len);
 }
 
-void pool_destroy(struct pool *p)
+int pool_init(struct pool *p, size_t blocksz, size_t align, void *buf, size_t len)
 {
-	free(p->buffer);
-
-	p->length =
-	p->stride = 0;
-}
-
-void pool_push(struct pool *p, int blocks)
-{
-	p->previous = p->last;
-	p->last += blocks;
-}
-
-void * pool_get(struct pool *p, int index)
-{
-	return (char *) p->buffer + p->stride * (index % p->length);
-}
-
-void * pool_getrel(struct pool *p, int offset)
-{
-	return pool_get(p, p->last + offset);
+	size_t alignedsz, cnt;
+	
+	assert(IS_ALIGNED(buf, align)); /* buf has to be aligned */
+	
+	p->blocksz = blocksz;
+	p->alignment = align;
+	
+	alignedsz = blocksz * CEIL(blocksz, align);
+	cnt = len / alignedsz;
+	
+	lstack_init(&p->stack, cnt);
+	
+	for (int i = 0; i < cnt; i++)
+		lstack_push(&p->stack, buf + i * alignedsz);
+	
+	return 0;
 }

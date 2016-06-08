@@ -1,64 +1,62 @@
-/** Circular buffer
+/** Memory pool for fixed size objects.
  *
- * Every path uses a circular buffer to save past messages.
+ * This datastructure is based on a lock-less stack (lstack).
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  */
 
 #ifndef _POOL_H_
 #define _POOL_H_
 
-#define pool_start(pool)	pool_get(pool, 0)
+#include "lstack.h"
 
-#define pool_end(pool)		pool_get(pool, pool->lenght)
+struct pool_block;
 
-/** Return pointer to last element which has been inserted. */
-#define pool_current(pool)	pool_getrel(pool, -1)
-
-/** Return pointer to the element before the previously added one. */
-#define pool_previous(pool)	pool_getrel(pool, -2)
-
-/** Iterate through the circuluar buffer. */
-#define pool_foreach(ptr, pool, start, end) for (int _i = start, _p; _p = 1, _i < end; _i++) \
-					for (ptr = pool_get(pool, _i); _p--; )
-
-/** Return the number of elements in the pool. */
-#define pool_length(pool)	((pool)->length)
-
-/** Return the stride between two consecutive elemements in the pool. */
-#define pool_stride(pool)	((pool)->stride)
-
-/** The data structure for a message pool.
- *
- * A message pool is a circular buffer used to store messages (samples)
- */
 struct pool {
-	void *buffer;		/**< Heap allocated memory of the circular buffer. */
+	size_t blocksz;
+	size_t alignment;
 	
-	int last;		/**< Index of the message which has been added last. */
-	int previous;		/**< Previous value of pool::last. */
-	
-	size_t length;		/**< Number of messages in the circular buffer */
-	size_t stride;		/**< Size per block in bytes. */
+	struct lstack stack;
 };
 
-/** Initiliaze a new pool and allocate memory. */
-void pool_create(struct pool *p, size_t len, size_t blocklen);
+/** Initiazlize a pool */
+int pool_init(struct pool *p, size_t blocksz, size_t alignment, void *buf, size_t len);
 
-/** Release memory of pool. */
-void pool_destroy(struct pool *p);
+/** Allocate hugepages for the pool and initialize it */
+int pool_init_mmap(struct pool *p, size_t blocksz, size_t cnt);
 
-/** Advance the internal pointer of the pool. */
-void pool_push(struct pool *p, int blocks);
+/** Destroy and release memory used by pool. */
+static inline __attribute__((unused)) void pool_destroy(struct pool *p)
+{
+	lstack_destroy(&p->stack);
+}
 
-/** Return pointer to pool element. */
-void * pool_get(struct pool *p, int index);
+/** Pop cnt values from the stack an place them in the array blocks */
+static inline __attribute__((unused)) ssize_t pool_get_many(struct pool *p, void *blocks[], size_t cnt)
+{
+	return lstack_pop_many(&p->stack, blocks, cnt);
+}
 
-/** Return pointer relative to last inserted element. */
-void * pool_getrel(struct pool *p, int offset);
+/** Push cnt values which are giving by the array values to the stack. */
+static inline __attribute__((unused)) ssize_t pool_put_many(struct pool *p, void *blocks[], size_t cnt)
+{
+	return lstack_push_many(&p->stack, blocks, cnt);
+}
+
+/** Get a free memory block from pool. */
+static inline __attribute__((unused)) void * pool_get(struct pool *p)
+{
+	return lstack_pop(&p->stack);
+}
+
+/** Release a memory block back to the pool. */
+static inline __attribute__((unused)) int pool_put(struct pool *p, void *buf)
+{
+	return lstack_push(&p->stack, buf);
+}
 
 #endif /* _POOL_H_ */
