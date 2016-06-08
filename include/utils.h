@@ -43,6 +43,12 @@
 #define XSTR(x)		STR(x)
 #define  STR(x)		#x
 
+#define ALIGN(x, a)	 ALIGN_MASK(x, (uintptr_t) (a) - 1)
+#define ALIGN_MASK(x, m) (((uintptr_t) (x) + (m)) & ~(m))
+#define IS_ALIGNED(x, a) (ALIGN(x, a) == (uintptr_t) x)
+
+#define CEIL(x, y)	((x + y - 1) / y)
+
 /** Calculate the number of elements in an array. */
 #define ARRAY_LEN(a)	( sizeof (a) / sizeof (a)[0] )
 
