@@ -51,7 +51,6 @@ struct file {
 	struct timespec read_epoch;	/**< The epoch timestamp from the configuration. */
 	struct timespec read_offset;	/**< An offset between the timestamp in the input file and the current time */
 
-	int read_sequence;		/**< Sequence number of last message which has been written to file::path_out */
 	int read_timer;			/**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
 	double read_rate;		/**< The read rate. */
 };
@@ -69,9 +68,9 @@ int file_open(struct node *n);
 int file_close(struct node *n);
 
 /** @see node_vtable::read */
-int file_read(struct node *n, struct pool *pool, int cnt);
+int file_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_vtable::write */
-int file_write(struct node *n, struct pool *pool, int cnt);
+int file_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 #endif /** _FILE_H_ @} */

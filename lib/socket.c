@@ -1,9 +1,5 @@
 /** Various socket related functions
  *
- * Parse and print addresses, connect, close, etc...
- *
- * S2SS uses these functions to setup the network emulation feature.
- *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
@@ -12,7 +8,6 @@
 
 #include <string.h>
 #include <unistd.h>
-#include <poll.h>
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -24,13 +19,16 @@
 #include <linux/if_packet.h>
 #include <arpa/inet.h>
 
+#include "socket.h"
+#include "config.h"
+#include "utils.h"
+
 #include "if.h"
 #include "nl.h"
 #include "tc.h"
-#include "config.h"
-#include "utils.h"
-#include "socket.h"
-#include "pool.h"
+#include "msg.h"
+#include "sample.h"
+#include "queue.h"
 
 /* Forward declartions */
 static struct node_type vt;
@@ -139,11 +137,14 @@ int socket_open(struct node *n)
 	if (ret < 0)
 		serror("Failed to bind socket");
 
-	/* Set fwmark for outgoing packets */
-	if (setsockopt(s->sd, SOL_SOCKET, SO_MARK, &s->mark, sizeof(s->mark)))
-		serror("Failed to set FW mark for outgoing packets");
-	else
-		debug(4, "Set FW mark for socket (sd=%u) to %u", s->sd, s->mark);
+	/* Set fwmark for outgoing packets if netem is enabled for this node */
+	if (s->mark) {
+		ret = setsockopt(s->sd, SOL_SOCKET, SO_MARK, &s->mark, sizeof(s->mark));
+		if (ret)
+			serror("Failed to set FW mark for outgoing packets");
+		else
+			debug(DBG_SOCKET | 4, "Set FW mark for socket (sd=%u) to %u", s->sd, s->mark);
+	}
 
 	/* Set socket priority, QoS or TOS IP options */
 	int prio;
@@ -154,7 +155,7 @@ int socket_open(struct node *n)
 			if (setsockopt(s->sd, IPPROTO_IP, IP_TOS, &prio, sizeof(prio)))
 				serror("Failed to set type of service (QoS)");
 			else
-				debug(4, "Set QoS/TOS IP option for node %s to %#x", node_name(n), prio);
+				debug(DBG_SOCKET | 4, "Set QoS/TOS IP option for node %s to %#x", node_name(n), prio);
 			break;
 
 		default:
@@ -162,7 +163,7 @@ int socket_open(struct node *n)
 			if (setsockopt(s->sd, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio)))
 				serror("Failed to set socket priority");
 			else
-				debug(4, "Set socket priority for node %s to %d", node_name(n), prio);
+				debug(DBG_SOCKET | 4, "Set socket priority for node %s to %d", node_name(n), prio);
 			break;
 	}
 
@@ -172,8 +173,11 @@ int socket_open(struct node *n)
 int socket_reverse(struct node *n)
 {
 	struct socket *s = n->_vd;
+	union sockaddr_union tmp;
 	
-	SWAP(s->remote, s->local);
+	tmp = s->local;
+	s->local = s->remote;
+	s->remote = tmp;
 	
 	return 0;
 }
@@ -198,33 +202,54 @@ int socket_destroy(struct node *n)
 	return 0;
 }
 
-int socket_read(struct node *n, struct pool *pool, int cnt)
+int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct socket *s = n->_vd;
+	
+	int samples, ret, received;
+	ssize_t bytes;
 
-	int bytes;
-	struct iovec iov[cnt];
+	struct msg msgs[cnt];
+	struct msg hdr;
+
+	struct iovec iov[2*cnt];
 	struct msghdr mhdr = {
-		.msg_iov = iov,
-		.msg_iovlen = ARRAY_LEN(iov)
+		.msg_iov = iov
 	};
+	
+	/* Peak into message header of the first sample and to get total packet size. */
+	bytes = recv(s->sd, &hdr, sizeof(struct msg), MSG_PEEK | MSG_TRUNC);
+	if (bytes < sizeof(struct msg) || bytes % 4 != 0) {
+		warn("Packet size is invalid");
+		return -1;
+	}
 
-	/* Wait until next packet received */
-	poll(&(struct pollfd) { .fd = s->sd, .events = POLLIN }, 1, -1);
+	ret = msg_verify(&hdr);
+	if (ret) {
+		warn("Invalid message received: reason=%d, bytes=%zd", ret, bytes);
+		return -1;
+	}
+	
+	/* Convert message to host endianess */
+	if (hdr.endian != MSG_ENDIAN_HOST)
+		msg_swap(&hdr);
+	
+	samples = bytes / MSG_LEN(hdr.values);
+	
+	if (samples > cnt) {
+		warn("Received more samples than supported. Dropping %u samples", samples - cnt);
+		samples = cnt;
+	}
 
-	/* Get size of received packet in bytes */
-	ioctl(s->sd, FIONREAD, &bytes);
-
-	/* Check if packet length is correct */
-	if (bytes % (cnt * 4) != 0)
-		error("Packet length not dividable by 4: received=%u, cnt=%u", bytes, cnt);
-	if (bytes / cnt > pool->stride)
-		error("Packet length is too large: received=%u, cnt=%u, max=%zu", bytes, cnt, pool->stride);
-
-	for (int i = 0; i < cnt; i++) {
-		/* All messages of a packet must have equal length! */
-		iov[i].iov_base = pool_getrel(pool, i);
-		iov[i].iov_len  = bytes / cnt;
+	/* We expect that all received samples have the same amount of values! */
+	for (int i = 0; i < samples; i++) {
+		iov[2*i+0].iov_base = &msgs[i];
+		iov[2*i+0].iov_len = MSG_LEN(0);
+		
+		iov[2*i+1].iov_base = SAMPLE_DATA_OFFSET(smps[i]);
+		iov[2*i+1].iov_len  = SAMPLE_DATA_LEN(hdr.values);
+		
+		mhdr.msg_iovlen += 2;
 	}
 
 	/* Receive message from socket */
@@ -232,52 +257,58 @@ int socket_read(struct node *n, struct pool *pool, int cnt)
 	if (bytes == 0)
 		error("Remote node %s closed the connection", node_name(n));
 	else if (bytes < 0)
-		serror("Failed recv");
+		serror("Failed recv from node %s", node_name(n));
 
-	debug(17, "Received packet of %u bytes: %u samples a %u values per sample", bytes, cnt, (bytes / cnt) / 4 - 4);
-
-	for (int i = 0; i < cnt; i++) {
-		struct msg *m = pool_getrel(pool, i);
+	for (received = 0; received < samples; received++) {
+		struct msg *m = &msgs[received];
+		struct sample *s = smps[received];
+		
+		ret = msg_verify(m);
+		if (ret)
+			break;
+		
+		if (m->values != hdr.values)
+			break;
 
 		/* Convert message to host endianess */
 		if (m->endian != MSG_ENDIAN_HOST)
 			msg_swap(m);
 
-		/* Check integrity of packet */
-		if (bytes / cnt != MSG_LEN(m->values))
-			error("Invalid message len: %u for node %s", MSG_LEN(m->values), node_name(n));
-
-		bytes -= MSG_LEN(m->values);
+		s->length = m->values;
+		s->sequence = m->sequence;
+		s->ts.origin = MSG_TS(m);
 	}
+	
+	debug(DBG_SOCKET | 17, "Received message of %zd bytes: %u samples", bytes, received);
 
-	/* Check packet integrity */
-	if (bytes != 0)
-		error("Packet length does not match message header length! %u bytes left over.", bytes);
-
-	return cnt;
+	return received;
 }
 
-int socket_write(struct node *n, struct pool *pool, int cnt)
+int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct socket *s = n->_vd;
-	int bytes, sent = 0;
+	ssize_t bytes;
 
-	/** @todo we should check the MTU */
-
-	struct iovec iov[cnt];
-	for (int i = 0; i < cnt; i++) {
-		struct msg *m = pool_getrel(pool, i);
-
-		iov[sent].iov_base = m;
-		iov[sent].iov_len  = MSG_LEN(m->values);
-
-		sent++;
-	}
-
+	struct msg msgs[cnt];
+	struct iovec iov[2*cnt];
 	struct msghdr mhdr = {
 		.msg_iov = iov,
-		.msg_iovlen = sent
+		.msg_iovlen = ARRAY_LEN(iov)
 	};
+
+	/* Construct iovecs */
+	for (int i = 0; i < cnt; i++) {
+		msgs[i] = MSG_INIT(smps[i]->length, smps[i]->sequence);
+		
+		msgs[i].ts.sec  = smps[i]->ts.origin.tv_sec;
+		msgs[i].ts.nsec = smps[i]->ts.origin.tv_nsec;
+		
+		iov[i*2+0].iov_base = &msgs[i];
+		iov[i*2+0].iov_len  = MSG_LEN(0);
+
+		iov[i*2+1].iov_base = SAMPLE_DATA_OFFSET(smps[i]);
+		iov[i*2+1].iov_len  = SAMPLE_DATA_LEN(smps[i]->length);
+	}
 
 	/* Specify destination address for connection-less procotols */
 	switch (s->layer) {
@@ -289,13 +320,14 @@ int socket_write(struct node *n, struct pool *pool, int cnt)
 			break;
 	}
 
+	/* Send message */
 	bytes = sendmsg(s->sd, &mhdr, 0);
 	if (bytes < 0)
-		serror("Failed send");
+		serror("Failed send to node %s", node_name(n));
 
-	debug(17, "Sent packet of %u bytes: %u samples a %u values per sample", bytes, cnt, (bytes / cnt) / 4 - 4);
+	debug(DBG_SOCKET | 17, "Sent packet of %zd bytes with %u samples", bytes, cnt);
 
-	return sent;
+	return cnt;
 }
 
 int socket_parse(struct node *n, config_setting_t *cfg)
@@ -482,7 +514,7 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 
 static struct node_type vt = {
 	.name		= "socket",
-	.description	= "Network socket (libnl3)",
+	.description	= "BSD network sockets",
 	.vectorize	= 0, /* unlimited */
 	.size		= sizeof(struct socket),
 	.destroy	= socket_destroy,
