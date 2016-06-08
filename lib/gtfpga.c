@@ -17,7 +17,7 @@
 #include "utils.h"
 #include "timing.h"
 #include "utils.h"
-#include "linux.h"
+#include "kernel.h"
 
 static struct pci_access *pacc;
 

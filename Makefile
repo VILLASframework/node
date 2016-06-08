@@ -6,7 +6,7 @@ LIBS = libs2ss.so
 
 # Object files for libs2ss
 LIB_OBJS = sample.o path.o node.o \
-	   linux.o \
+	   kernel.o \
 	   list.o pool.o queue.o lstack.o \
 	   log.o \
 	   utils.o \

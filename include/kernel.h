@@ -10,6 +10,15 @@
 #ifndef _LINUX_H_
 #define _LINUX_H_
 
+//#include <sys/capability.h>
+
+/** Check if current process has capability \p cap.
+ *
+ * @retval 0 If capabilty is present.
+ * @retval <0 If capability is not present.
+ */
+//int kernel_check_cap(cap_value_t cap):
+
 /** Checks for realtime (PREEMPT_RT) patched kernel.
  *
  * See https://rt.wiki.kernel.org

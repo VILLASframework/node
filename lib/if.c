@@ -21,7 +21,7 @@
 #include "nl.h"
 #include "socket.h"
 #include "utils.h"
-#include "linux.h"
+#include "kernel.h"
 
 struct interface * if_create(struct rtnl_link *link)
 {

@@ -20,7 +20,7 @@
 
 #include "utils.h"
 #include "config.h"
-#include "linux.h"
+#include "kernel.h"
 
 int kernel_module_set_param(const char *module, const char *param, const char *value)
 {
@@ -30,7 +30,7 @@ int kernel_module_set_param(const char *module, const char *param, const char *v
 	snprintf(fn, sizeof(fn), "%s/module/%s/parameters/%s", SYSFS_PATH, module, param);
 	f = fopen(fn, "w");
 	if (f) {
-		debug(5, "Set parameter %s of kernel module %s to %s", module, param, value);
+		debug(DBG_SOCKET | 5, "Set parameter %s of kernel module %s to %s", module, param, value);
 		fprintf(f, "%s", value);
 		fclose(f);
 	}
@@ -121,6 +121,8 @@ int kernel_has_cmdline(const char *substr)
 
 	if (!fgets(cmd, sizeof(cmd), f))
 		return -1;
+	
+	fclose(f);
 
 	return strstr(cmd, substr) ? 0 : -1;
 }
@@ -129,3 +131,31 @@ int kernel_get_cacheline_size()
 {
 	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
 }
+
+#if 0
+int kernel_check_cap(cap_value_t cap)
+{
+	int ret;
+
+	cap_t caps;
+	cap_flag_value_t value;
+	
+	caps = cap_get_proc();
+	if (caps == NULL)
+		return -1;
+
+	ret = cap_get_proc(caps);
+	if (ret == -1)
+		return -1;
+	
+	ret = cap_get_flag(caps, cap, CAP_EFFECTIVE, &value);
+	if (ret == -1)
+		return -1;
+	
+	ret = cap_free(caps);	
+	if (ret)
+		return -1;
+	
+	return value == CAP_SET ? 0 : -1;
+}
+#endif
