@@ -5,7 +5,15 @@ TARGETS = server pipe signal test
 LIBS = libs2ss.so
 
 # Object files for libs2ss
-LIB_OBJS = msg.o node.o linux.o list.o log.o linux.o utils.o cfg.o path.o hooks.o hist.o timing.o pool.o
+LIB_OBJS = sample.o path.o node.o \
+	   linux.o \
+	   list.o pool.o queue.o lstack.o \
+	   log.o \
+	   utils.o \
+	   cfg.o \
+	   hooks.o hooks-other.o hooks-internal.o hooks-stats.o \
+	   hist.o \
+	   timing.o
 
 # Source directories
 VPATH = src lib
@@ -22,7 +30,9 @@ GIT_REV=$(shell git rev-parse --short HEAD)
 CC ?= gcc
 LDLIBS  = -pthread -lrt -lm -lconfig -ls2ss
 
-CFLAGS += -std=gnu99 -Iinclude/ -I. -MMD -Wall -D_GIT_REV='"$(GIT_REV)"' -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
+CFLAGS += -std=c11 -Iinclude/ -I. -MMD -mcx16
+CFLAGS += -Wall -fdiagnostics-color=auto
+CFLAGS += -D_GIT_REV='"$(GIT_REV)"' -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
 LDFLAGS += -L. -Wl,-rpath,'$$ORIGIN'
 
 # pkg-config dependencies
