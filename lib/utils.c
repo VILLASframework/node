@@ -132,7 +132,7 @@ char * vstrcatf(char **dest, const char *fmt, va_list ap)
 	return *dest;
 }
 
-cpu_set_t integer_to_cpuset(int set)
+cpu_set_t integer_to_cpuset(uintmax_t set)
 {
 	cpu_set_t cset;
 

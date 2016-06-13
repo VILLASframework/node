@@ -11,6 +11,7 @@
 #define _UTILS_H_
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <sched.h>
 #include <assert.h>
 
@@ -121,7 +122,7 @@ int strftimespec(char *s, size_t max, const char *format, struct timespec *ts)
  * @param set A cpu bitmask
  * @return The opaque cpu_set_t datatype
  */
-cpu_set_t integer_to_cpuset(int set);
+cpu_set_t integer_to_cpuset(uintmax_t set);
 
 #ifdef WITH_JANSSON
   #include <jansson.h>
