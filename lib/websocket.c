@@ -310,7 +310,7 @@ found:			* (void **) user = n;
 					break;
 			}
 
-			pthread_mutex_unlock(&w->read.mutex);			
+			pthread_mutex_unlock(&w->read.mutex);
 			pthread_cond_broadcast(&w->read.cond); /* new data available, wake-up websocket_read() */
 
 			return 0;
