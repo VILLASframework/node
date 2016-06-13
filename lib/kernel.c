@@ -159,3 +159,23 @@ int kernel_check_cap(cap_value_t cap)
 	return value == CAP_SET ? 0 : -1;
 }
 #endif
+
+int kernel_irq_setaffinity(unsigned irq, uintmax_t new, uintmax_t *old)
+{
+	char fn[64];
+	FILE *f;
+	
+	snprintf(fn, sizeof(fn), "/proc/irq/%u/smp_affinity", irq);
+	
+	f = fopen(fn, "w+");
+	if (!f)
+		return -1; /* IRQ does not exist */
+
+	if (old)
+		fscanf(f, "%jx", old);
+
+	fprintf(f, "%jx", new);
+	fclose(f);
+
+	return 0;
+}

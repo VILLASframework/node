@@ -10,6 +10,8 @@
 #ifndef _LINUX_H_
 #define _LINUX_H_
 
+#include <stdint.h>
+
 //#include <sys/capability.h>
 
 /** Check if current process has capability \p cap.
@@ -60,5 +62,8 @@ int kernel_module_set_param(const char *module, const char *param, const char *v
 
 /** Get cacheline size in bytes */
 int kernel_get_cacheline_size();
+
+/** Set SMP affinity of IRQ */
+int kernel_irq_setaffinity(unsigned irq, uintmax_t new, uintmax_t *old);
 
 #endif /* _LINUX_H_ */
