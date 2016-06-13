@@ -129,7 +129,7 @@ static int gtfpga_load_driver(struct pci_dev *d)
 	if (!f)
 		serror("Failed to add PCI id to uio_pci_generic driver");
 
-	debug(5, "Adding ID to uio_pci_generic module: %04x %04x", d->vendor_id, d->device_id);
+	debug(DBG_GTFPGA | 5, "Adding ID to uio_pci_generic module: %04x %04x", d->vendor_id, d->device_id);
 	fprintf(f, "%04x %04x", d->vendor_id, d->device_id);
 	fclose(f);
 
@@ -138,7 +138,7 @@ static int gtfpga_load_driver(struct pci_dev *d)
 	if (!f)
 		serror("Failed to add PCI id to uio_pci_generic driver");
 
-	debug(5, "Bind slot to uio_pci_generic module: %s", slot);
+	debug(DBG_GTFPGA | 5, "Bind slot to uio_pci_generic module: %s", slot);
 	fprintf(f, "%s\n", slot);
 	fclose(f);
 
@@ -168,7 +168,7 @@ static int gtfpga_mmap(struct gtfpga *g)
 	int size = g->dev->size[GTFPGA_BAR];
 
 	/* mmap() first BAR */
-	debug(5, "Setup mapping: mmap(NULL, %#x, PROT_READ | PROT_WRITE, MAP_SHARED, %u, %#lx)", size, fd, addr);
+	debug(DBG_GTFPGA | 5, "Setup mapping: mmap(NULL, %#x, PROT_READ | PROT_WRITE, MAP_SHARED, %u, %#lx)", size, fd, addr);
 	void *map = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, addr);
 	if (map == MAP_FAILED)
 		serror("Failed mmap()");
