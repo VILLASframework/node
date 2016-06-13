@@ -13,7 +13,7 @@ Alternatively, you can build the documentation yourself by calling `doxygen` in 
 
 ## Contact
 
-[![EONERC ACS Logo](documentation/pictures/eonerc_logo.png)](http://www.acs.eonerc.rwth-aachen.de)
+[![EONERC ACS Logo](doc/pictures/eonerc_logo.png)](http://www.acs.eonerc.rwth-aachen.de)
 
 Institute for Automation of Complex Power Systems (ACS)  
 EON Energy Research Center (EONERC)  
