@@ -119,7 +119,7 @@ void debug(int class, const char *fmt, ...)
 
 	if (((fac == 0) || (fac & facilities)) && (lvl <= level)) {
 		va_start(ap, fmt);
-		log_vprint(DEBUG, fmt, ap);
+		log_vprint(LOG_LVL_DEBUG, fmt, ap);
 		va_end(ap);
 	}
 }
@@ -129,7 +129,7 @@ void info(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	log_vprint(INFO, fmt, ap);
+	log_vprint(LOG_LVL_INFO, fmt, ap);
 	va_end(ap);
 }
 
@@ -138,7 +138,7 @@ void warn(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	log_vprint(WARN, fmt, ap);
+	log_vprint(LOG_LVL_WARN, fmt, ap);
 	va_end(ap);
 }
 
@@ -147,7 +147,7 @@ void stats(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	log_vprint(STATS, fmt, ap);
+	log_vprint(LOG_LVL_STATS, fmt, ap);
 	va_end(ap);
 }
 
@@ -156,7 +156,7 @@ void error(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	log_vprint(ERROR, fmt, ap);
+	log_vprint(LOG_LVL_ERROR, fmt, ap);
 	va_end(ap);
 
 	die();
@@ -171,7 +171,7 @@ void serror(const char *fmt, ...)
 	vstrcatf(&buf, fmt, ap);
 	va_end(ap);
 
-	log_print(ERROR, "%s: %m (%u)", buf, errno);
+	log_print(LOG_LVL_ERROR, "%s: %m (%u)", buf, errno);
 	
 	free(buf);
 	die();
@@ -186,7 +186,7 @@ void cerror(config_setting_t *cfg, const char *fmt, ...)
 	vstrcatf(&buf, fmt, ap);
 	va_end(ap);
 
-	log_print(ERROR, "%s in %s:%u", buf,
+	log_print(LOG_LVL_ERROR, "%s in %s:%u", buf,
 		config_setting_source_file(cfg)
 		   ? config_setting_source_file(cfg)
 		   : "(stdio)",

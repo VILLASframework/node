@@ -20,11 +20,11 @@
 #endif
 
 /* The log level which is passed as first argument to print() */
-#define DEBUG		GRY("Debug")
-#define INFO		    "" 
-#define WARN		YEL("Warn ")
-#define ERROR		RED("Error")
-#define STATS		MAG("Stats")
+#define LOG_LVL_DEBUG	GRY("Debug")
+#define LOG_LVL_INFO	    "" 
+#define LOG_LVL_WARN	YEL("Warn ")
+#define LOG_LVL_ERROR	RED("Error")
+#define LOG_LVL_STATS	MAG("Stats")
 
 /** Debug facilities.
  *
