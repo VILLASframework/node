@@ -13,8 +13,9 @@
 #include <netlink/route/route.h>
 #include <netlink/route/link.h>
 
+#include "kernel/nl.h"
+
 #include "utils.h"
-#include "nl.h"
 
 /** Singleton for global netlink socket */
 static struct nl_sock *sock = NULL;

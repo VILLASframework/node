@@ -35,8 +35,6 @@ struct opal {
 
 	int send_id;
 	int recv_id;
-
-	int seq_no;
 	
 	Opal_SendAsyncParam send_params;
 	Opal_RecvAsyncParam recv_params;
@@ -70,9 +68,9 @@ int opal_open(struct node *n);
 int opal_close(struct node *n);
 
 /** @see node_vtable::read */
-int opal_read(struct node *n, struct pool *pool, int cnt);
+int opal_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_vtable::write */
-int opal_write(struct node *n, struct pool *pool, int cnt);
+int opal_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 #endif /** _OPAL_H_ @} */

@@ -12,7 +12,6 @@
 
 #include "utils.h"
 #include "list.h"
-#include "if.h"
 #include "cfg.h"
 #include "node.h"
 #include "path.h"

@@ -14,10 +14,11 @@
 
 #include <linux/if_ether.h>
 
+#include "kernel/if.h"
+#include "kernel/tc.h"
+#include "kernel/nl.h"
+
 #include "utils.h"
-#include "if.h"
-#include "tc.h"
-#include "nl.h"
 
 int tc_parse(config_setting_t *cfg, struct rtnl_qdisc **netem)
 {

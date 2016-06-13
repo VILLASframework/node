@@ -20,7 +20,7 @@
 
 #include "utils.h"
 #include "config.h"
-#include "kernel.h"
+#include "kernel/kernel.h"
 
 int kernel_module_set_param(const char *module, const char *param, const char *value)
 {

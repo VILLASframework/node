@@ -9,8 +9,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "msg.h"
-#include "file.h"
+#include "nodes/file.h"
 #include "utils.h"
 #include "timing.h"
 #include "queue.h"

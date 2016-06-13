@@ -16,12 +16,14 @@
 #include <netlink/route/link.h>
 #include <netlink/route/route.h>
 
-#include "if.h"
-#include "tc.h"
-#include "nl.h"
-#include "socket.h"
+#include "kernel/if.h"
+#include "kernel/tc.h"
+#include "kernel/nl.h"
+#include "kernel/kernel.h"
+
+#include "nodes/socket.h"
+
 #include "utils.h"
-#include "kernel.h"
 
 struct interface * if_create(struct rtnl_link *link)
 {

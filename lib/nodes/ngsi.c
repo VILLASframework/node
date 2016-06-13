@@ -16,10 +16,10 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include "ngsi.h"
+#include "nodes/ngsi.h"
+
 #include "utils.h"
 #include "timing.h"
-#include "pool.h"
 
 /* Some global settings */
 static char *name = NULL;

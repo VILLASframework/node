@@ -2,7 +2,7 @@
 TARGETS = node pipe signal test
 
 # Libraries
-LIBS = libvillas.so
+LIBS = libvillas.so thirdparty/xilinx/libxil.so
 
 DEBUG = 1
 
@@ -18,7 +18,7 @@ LIB_OBJS = sample.o path.o node.o \
 	   timing.o
 
 # Source directories
-VPATH = src lib
+VPATH = src lib lib/kernel lib/nodes lib/hooks lib/fpga
 
 # Default prefix for installation
 PREFIX ?= /usr/local
@@ -29,13 +29,14 @@ V ?= 2
 GIT_REV=$(shell git rev-parse --short HEAD)
 
 # Compiler and linker flags
-CC ?= gcc
 LDLIBS  = -pthread -lrt -lm -lconfig -lvillas
 
-CFLAGS += -std=c11 -Iinclude/ -I. -MMD -mcx16
+LIB_LDFLAGS = -shared
+
+CFLAGS += -std=c11 -Iinclude -Iinclude/villas -I. -MMD -mcx16
 CFLAGS += -Wall -fdiagnostics-color=auto
 CFLAGS += -D_GIT_REV='"$(GIT_REV)"' -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
-LDFLAGS += -L. -Wl,-rpath,'$$ORIGIN'
+LDFLAGS += -pthread -L. -Wl,-rpath,'$$ORIGIN'
 
 # pkg-config dependencies
 PKGS = libconfig
@@ -52,27 +53,29 @@ endif
 
 ######## Node types ########
 
-# Enable file node type support
-ifndef DISABLE_FILE
-	LIB_OBJS += file.o
-endif
+# file node-type is always supported
+LIB_OBJS += file.o
 
 # Enable Socket node type when libnl3 is available
 ifeq ($(shell pkg-config libnl-route-3.0; echo $$?),0)
-	LIB_OBJS   += socket.o nl.o tc.o if.o msg.o
-	PKGS       += libnl-route-3.0
+	LIB_OBJS    += socket.o nl.o tc.o if.o msg.o
+	PKGS        += libnl-route-3.0
 endif
 
-## Enable GTFPGA support when libpci is available
-#ifeq ($(shell pkg-config libpci; echo $$?),0)
-#	LIB_OBJS   += gtfpga.o
-#	PKGS       += libpci
-#endif
+# Enable VILLASfpga support when libpci is available
+ifeq ($(shell pkg-config libpci; echo $$?),0)
+	LIB_OBJS    += vfpga.o pci.o dma.o model.o fifo.o xsg.o vfio.o switch.o rtds_axis.o
+	LDLIBS      += -lxil
+	LDFLAGS     += -Lthirdparty/xilinx -Wl,-rpath-link,'$$ORIGIN/thirdparty/xilinx'
+	CFLAGS      += -Ithirdparty/xilinx/include
+	PKGS        += libpci
+	TARGETS     += fpga
+endif
 
 # Enable NGSI support
 ifeq ($(shell pkg-config libcurl jansson uuid; echo $$?),0)
-	LIB_OBJS   += ngsi.o
-	PKGS       += libcurl jansson uuid
+	LIB_OBJS    += ngsi.o
+	PKGS        += libcurl jansson uuid
 endif
 
 ## Enable WebSocket support
@@ -82,13 +85,15 @@ endif
 #endif
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
-ifneq (,$(wildcard $(OPALDIR)/include_target/AsyncApi.h))
+ifdef WITH_OPAL
+ifneq (,$(wildcard thirdparty/opal/include/AsyncApi.h))
 	LIB_OBJS    += opal.o
 	CFLAGS      += -m32
 	LDFLAGS     += -m32
-	LIB_CFLAGS  += -m32 -I$(OPALDIR)/include_target
-	LIB_LDFLAGS += -m32 -L/lib/i386-linux-gnu/ -L/usr/lib/i386-linux-gnu/ -L$(OPALDIR)/lib/redhawk/
+	LIB_CFLAGS  += -m32 -I thirdparty/opal/include
+	LIB_LDFLAGS += -m32 -L/lib/i386-linux-gnu/ -L/usr/lib/i386-linux-gnu/ -Lthirdparty/opal/lib/redhawk/
 	LIB_LDLIBS  += -lOpalAsyncApiCore -lOpalCore -lOpalUtils -lirc
+endif
 endif
 
 # Add flags by pkg-config
@@ -104,20 +109,27 @@ LIB_LDLIBS += $(shell pkg-config --libs ${PKGS})
 all: $(LIBS) $(TARGETS)
 
 # Dependencies for individual binaries
-node:   server.o $(LIBS)
-pipe:   pipe.o   $(LIBS)
-test:   test.o   $(LIBS)
-signal: signal.o $(LIBS)
+fpga: LDLIBS += -lpci -lxil
+
+node:   server.o
+fpga:   fpga.o fpga-tests.o
+pipe:   pipe.o
+test:   test.o
+signal: signal.o
 
 # Libraries
-$(LIBS): CFLAGS += -fPIC $(LIB_CFLAGS)
-$(LIBS): $(LIB_OBJS)
-	$(CC) $(LIB_LDFLAGS) -shared -o $@ $^ $(LIB_LDLIBS)
+$(LIB_OBJS): CFLAGS += -fPIC $(LIB_CFLAGS)
+libvillas.so: $(LIB_OBJS)
+	$(CC) $(LIB_LDFLAGS) -o $@ $^ $(LIB_LDLIBS)
+
+thirdparty/xilinx/libxil.so:
+	$(MAKE) -C thirdparty/xilinx libxil.so
 
 # Common targets
 install: $(TARGETS) $(LIBS)
 	install -m 0644 $(LIBS) $(PREFIX)/lib
 	install -m 0755 node -T $(PREFIX)/bin/villas-node
+	install -m 0755 fpga $(PREFIX)/bin/villas-fpga
 	install -m 0755 signal $(PREFIX)/bin/villas-signal
 	install -m 0755 pipe $(PREFIX)/bin/villas-pipe
 	install -m 0755 test $(PREFIX)/bin/villas-test

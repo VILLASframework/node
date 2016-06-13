@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <sched.h>
 #include <assert.h>
+#include <sys/types.h>
 
 #include "log.h"
 
@@ -74,6 +75,12 @@
 					  (type *) ( (char *) __mptr - offsetof(type, member) ); \
 					})
 #endif
+
+#define BITS_PER_LONGLONG	(sizeof(long long) * 8)
+
+/* Some helper macros */
+#define BITMASK(h, l)		(((~0ULL) << (l)) & (~0ULL >> (BITS_PER_LONGLONG - 1 - (h))))
+#define BIT(nr)			(1UL << (nr))
 
 /* Forward declarations */
 struct settings;
@@ -162,5 +169,34 @@ int version_parse(const char *s, struct version *v);
 	} while (0)
 #endif
 
-#endif /* _UTILS_H_ */
+/** Wait on eventfd */
+uint64_t wait_irq(int irq);
 
+/** Fill buffer with random data */
+int read_random(char *buf, size_t len);
+
+/** Hexdump bytes */
+void printb(void *mem, size_t len);
+
+/** Hexdump 32-bit dwords */
+void printdw(void *mem, size_t len);
+
+/** Get CPU timestep counter */
+__attribute__((always_inline)) static inline uint64_t rdtscp()
+{
+	uint64_t tsc;
+
+	__asm__ ("rdtscp;"
+		 "shl $32, %%rdx;"
+		 "or %%rdx,%%rax"
+		: "=a" (tsc)
+		:
+		: "%rcx", "%rdx", "memory");
+
+	return tsc;
+}
+
+/** Sleep with rdtsc */
+void rdtsc_sleep(uint64_t nanosecs, uint64_t start);
+
+#endif /* _UTILS_H_ */

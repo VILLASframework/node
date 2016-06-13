@@ -323,7 +323,7 @@ shutdown:
 	warn("Dropping connection: node is currently shutting down");
 
 #if LWS_LIBRARY_VERSION_NUMBER > 1006002
-	char *bye = "S2SS is shutting down. Bye";
+	char *bye = "VILLASnode is shutting down. Bye";
 	lws_close_reason(wsi, LWS_CLOSE_STATUS_GOINGAWAY, (unsigned char *) bye, strlen(bye));
 #endif
 	
@@ -377,7 +377,7 @@ int websocket_init(int argc, char * argv[], config_setting_t *cfg)
 	if (!port)
 		port = 80;
 	if (!htdocs)
-		htdocs = "/s2ss/contrib/websocket";
+		htdocs = "/villas/contrib/websocket";
 	
 	/* Start server */
 	struct lws_context_creation_info info = {

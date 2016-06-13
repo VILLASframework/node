@@ -19,13 +19,14 @@
 #include <linux/if_packet.h>
 #include <arpa/inet.h>
 
-#include "socket.h"
+#include "nodes/socket.h"
+
+#include "kernel/if.h"
+#include "kernel/nl.h"
+#include "kernel/tc.h"
+
 #include "config.h"
 #include "utils.h"
-
-#include "if.h"
-#include "nl.h"
-#include "tc.h"
 #include "msg.h"
 #include "sample.h"
 #include "queue.h"

@@ -11,7 +11,7 @@
 #include "utils.h"
 
 #include "pool.h"
-#include "kernel.h"
+#include "kernel/kernel.h"
 
 int pool_init_mmap(struct pool *p, size_t blocksz, size_t cnt)
 {
