@@ -29,13 +29,12 @@ int kernel_module_set_param(const char *module, const char *param, const char *v
 
 	snprintf(fn, sizeof(fn), "%s/module/%s/parameters/%s", SYSFS_PATH, module, param);
 	f = fopen(fn, "w");
-	if (f) {
-		debug(DBG_SOCKET | 5, "Set parameter %s of kernel module %s to %s", module, param, value);
-		fprintf(f, "%s", value);
-		fclose(f);
-	}
-	else
+	if (!f)
 		serror("Failed set parameter %s for kernel module %s to %s", module, param, value);
+	
+	debug(5, "Set parameter %s of kernel module %s to %s", module, param, value);
+	fprintf(f, "%s", value);
+	fclose(f);
 
 	return 0;
 }
