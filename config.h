@@ -39,7 +39,7 @@
 
 /* Required kernel version */
 #define KERNEL_VERSION_MAJ	3
-#define KERNEL_VERSION_MIN	4
+#define KERNEL_VERSION_MIN	6
 	
 /** Coefficients for simple FIR-LowPass:
  *   F_s = 1kHz, F_pass = 100 Hz, F_block = 300

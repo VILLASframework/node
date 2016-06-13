@@ -7,5 +7,6 @@ node
 pipe
 test
 signal
+fpga
 
 thirdparty/

@@ -203,3 +203,93 @@ void * memdup(const void *src, size_t bytes)
 	
 	return dst;
 }
+
+#include <stdio.h>
+#include <stdint.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <ctype.h>
+
+#include "utils.h"
+
+uint64_t wait_irq(int irq)
+{
+	ssize_t ret;
+	uint64_t cnt;
+
+	ret = read(irq, &cnt, sizeof(cnt));
+	if (ret != sizeof(cnt))
+		return 0;
+
+	return cnt;
+}
+
+int read_random(char *buf, size_t len)
+{
+	int ret, fd;
+	
+	fd = open("/dev/urandom", O_RDONLY);
+	if (fd < 0)
+		return -1;
+	
+	ret = read(fd, buf, len);
+	if (ret != len)
+		ret = -1;
+	else
+		ret = 0;
+
+	close(fd);
+
+	return ret;
+}
+
+void printb(void *mem, size_t len)
+{
+	uint8_t *mem8 = (uint8_t *) mem;
+
+	for (int i = 0; i < len; i++) {
+		printf("%02hx ", mem8[i]);
+
+		if (i % 16 == 15)
+			printf("\n");
+	}
+}
+
+void printdw(void *mem, size_t len)
+{
+	int columns = 4;
+
+	uint32_t *mem32 = (uint32_t *) mem;
+
+	for (int i = 0; i < len; i++) {
+		if (i % columns == 0)
+			printf("%#x: ", i * 4);
+
+		printf("%08x ", mem32[i]);
+		
+		char *memc = (char *) &mem32[i];
+		printf("%c%c%c%c ",
+			isprint(memc[0]) ? memc[0] : ' ',
+			isprint(memc[1]) ? memc[1] : ' ',
+			isprint(memc[2]) ? memc[2] : ' ',
+			isprint(memc[3]) ? memc[3] : ' '
+		);
+
+		if ((i+1) % columns == 0)
+			printf("\n");
+	}
+}
+
+void rdtsc_sleep(uint64_t nanosecs, uint64_t start)
+{
+	uint64_t cycles;
+
+	cycles = (double) nanosecs / (1e9 / 3392389000);
+	
+	if (start == 0)
+		start = rdtscp();
+	
+	do {
+		__asm__("nop");
+	} while (rdtscp() - start < cycles);
+}

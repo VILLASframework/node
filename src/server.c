@@ -8,18 +8,17 @@
 
 #include <stdlib.h>
 #include <string.h>
-
 #include <signal.h>
 #include <unistd.h>
-
 #include <sched.h>
 
 #include "config.h"
-#include "utils.h"
-#include "cfg.h"
-#include "path.h"
-#include "node.h"
-#include "kernel.h"
+
+#include <villas/utils.h>
+#include <villas/cfg.h>
+#include <villas/path.h>
+#include <villas/node.h>
+#include <villas/kernel/kernel.h>
 
 #ifdef ENABLE_OPAL_ASYNC
   #include "opal.h"
