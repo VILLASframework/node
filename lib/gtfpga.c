@@ -25,7 +25,7 @@ static void gtfpga_debug(char *msg, ...) {
 	va_list ap;
 
 	va_start(ap, msg);
-	log_vprint(DEBUG, msg, ap);
+	log_vprint(LOG_LVL_DEBUG, msg, ap);
 	va_end(ap);
 }
 
@@ -112,39 +112,6 @@ char * gtfpga_print(struct node *n)
 	}
 }
 
-static int gtfpga_load_driver(struct pci_dev *d)
-{
-	FILE *f;
-	char slot[16];
-
-	if (kernel_module_load("uio_pci_generic"))
-		error("Missing kernel module: uio_pci_generic");
-
-	/* Prepare slot identifier */
-	snprintf(slot, sizeof(slot), "%04x:%02x:%02x.%x",
-		d->domain, d->bus, d->dev, d->func);
-
-	/* Add new ID to uio_pci_generic */
-	f = fopen(SYSFS_PATH "/drivers/uio_pci_generic/new_id", "w");
-	if (!f)
-		serror("Failed to add PCI id to uio_pci_generic driver");
-
-	debug(5, "Adding ID to uio_pci_generic module: %04x %04x", d->vendor_id, d->device_id);
-	fprintf(f, "%04x %04x", d->vendor_id, d->device_id);
-	fclose(f);
-
-	/* Bind to uio_pci_generic */
-	f = fopen(SYSFS_PATH "/drivers/uio_pci_generic/bind", "w");
-	if (!f)
-		serror("Failed to add PCI id to uio_pci_generic driver");
-
-	debug(5, "Bind slot to uio_pci_generic module: %s", slot);
-	fprintf(f, "%s\n", slot);
-	fclose(f);
-
-	return 0;
-}
-
 static struct pci_dev * gtfpga_find_device(struct pci_filter *f)
 {
 	struct pci_dev *d;
@@ -158,24 +125,6 @@ static struct pci_dev * gtfpga_find_device(struct pci_filter *f)
 	return NULL;
 }
 
-static int gtfpga_mmap(struct gtfpga *g)
-{
-	int fd = open("/dev/mem", O_RDWR | O_SYNC);
-	if (!fd)
-		serror("Failed open()");
-
-	long int addr = g->dev->base_addr[GTFPGA_BAR] & ~0xfff;
-	int size = g->dev->size[GTFPGA_BAR];
-
-	/* mmap() first BAR */
-	debug(5, "Setup mapping: mmap(NULL, %#x, PROT_READ | PROT_WRITE, MAP_SHARED, %u, %#lx)", size, fd, addr);
-	void *map = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, addr);
-	if (map == MAP_FAILED)
-		serror("Failed mmap()");
-
-	return 0;
-}
-
 int gtfpga_open(struct node *n)
 {
 	struct gtfpga *g = n->_vd;
@@ -186,24 +135,8 @@ int gtfpga_open(struct node *n)
 		error("No GTFPGA card found");
 
 	g->dev = dev;
-	g->name = alloc(512);
 
-	gtfpga_load_driver(dev);
-	gtfpga_mmap(g);
-
-	/* Show some debug infos */
-	pci_fill_info(dev, PCI_FILL_IDENT | PCI_FILL_BASES | PCI_FILL_CLASS);	/* Fill in header info we need */
-
-	g->name = pci_lookup_name(pacc, g->name, 512, PCI_LOOKUP_DEVICE, dev->vendor_id, dev->device_id);
-
-	/* Setup timer */
-	if (g->rate) {
-		g->fd_irq = timerfd_create_rate(g->rate);
-		if (g->fd_irq < 0)
-			serror("Failed to create timer");
-	}
-	else /** @todo implement UIO interrupts */
-		error("UIO irq not implemented yet. Use 'rate' setting");
+	/* @todo VFIO */
 
 	return 0;
 }
@@ -212,21 +145,14 @@ int gtfpga_close(struct node *n)
 {
 	struct gtfpga *g = n->_vd;
 
-	if (g->map)
-		munmap(g->map, g->dev->size[GTFPGA_BAR]);
-
-	close(g->fd_mmap);
-	close(g->fd_irq);
-	free(g->name);
+	/* @todo VFIO */
 
 	return 0;
 }
 
-/** @todo implement */
 int gtfpga_read(struct node *n, struct pool *pool, int cnt)
 {
 	struct gtfpga *g = n->_vd;
-	// struct msg *m = pool_getrel(pool, 0);
 
 	/* Wait for IRQ */
 	uint64_t fired;
@@ -241,9 +167,8 @@ int gtfpga_read(struct node *n, struct pool *pool, int cnt)
 /** @todo implement */
 int gtfpga_write(struct node *n, struct pool *pool, int cnt)
 {
-	// struct gtfpga *g = n->_vd;
-	// struct msg *m = pool_getrel(pool, 0);
-	
+	struct gtfpga *g = n->_vd;
+
 	/* Copy memory mapped data */
 	/** @todo */
 
@@ -253,7 +178,7 @@ int gtfpga_write(struct node *n, struct pool *pool, int cnt)
 static struct node_type vt = {
 	.name		= "gtfpga",
 	.description	= "GTFPGA PCIe card (libpci)",
-	.vectorize	= 1,
+	.vectorize	= 0,
 	.parse		= gtfpga_parse,
 	.print		= gtfpga_print,
 	.open		= gtfpga_open,

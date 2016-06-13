@@ -35,11 +35,15 @@
 struct gtfpga {
 	struct pci_filter filter;
 
-	int fd_mmap;		/**< File descriptor for the memory mapped PCI BAR */
-	void *map;
-		
 	int fd_irq;		/**< File descriptor for the timer. This is blocking when read(2) until a new IRQ / timer expiration. */
+
+	char *map_bar0;		/**< Memory-mapped address of BAR0 */
 	
+	enum {
+		GTFPGA_MODE_FIFO,
+		GTFPGA_MODE_DMA
+	} mode;
+
 	char *name;
 	double rate;
 
