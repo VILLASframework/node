@@ -31,7 +31,7 @@ enum benchmarks {
 	MAX_BENCHS
 };
 
-static int bench_run(struct vfpga *f, int polling, int bench)
+int fpga_bench(struct vfpga *f, int polling, int bench)
 {
 	struct hist hist;
 	uint64_t start, stop;
@@ -87,7 +87,7 @@ static int bench_run(struct vfpga *f, int polling, int bench)
 	hist_destroy(&hist);
 }
 
-int bench_dm(struct vfpga *f)
+int fpga_bench_dm(struct vfpga *f)
 {
 	int irq_fifo, irq_dma_mm2s, irq_dma_s2mm;
 	int polling = true;
@@ -106,7 +106,7 @@ int bench_dm(struct vfpga *f)
 	return 0;
 }
 
-int bench_memcpy(struct vfpga *f)
+int fpga_bench_memcpy(struct vfpga *f)
 {
 	uint64_t start, end, total = 0;
 

@@ -7,7 +7,7 @@
  *********************************************************************************/
 
 #include <stdio.h>
-#include <inttypes.h>
+#include <stdint.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
@@ -17,28 +17,202 @@
 
 #include "nodes/vfpga.h"
 
-#include "config.h"
+#include "fpga/ip.h"
+
 #include "config-fpga.h"
 #include "utils.h"
 #include "timing.h"
 
+struct vfpga fpga;
+struct vfio_container vc;
 static struct pci_access *pacc;
 
 typedef void(*log_cb_t)(char *, ...);
 
-int vfpga_init2(struct vfpga *f, struct vfio_container *vc, struct pci_dev *pdev)
+int vfpga_reset(struct vfpga *f)
 {
 	int ret;
+	char state[4096];
 
-	list_init(&f->models);
+	/* Save current state of PCI configuration space */
+	ret = pread(f->vd.fd, state, sizeof(state), (off_t) VFIO_PCI_CONFIG_REGION_INDEX << 40);
+	if (ret != sizeof(state))
+		return -1;
+
+	uint32_t *rst_reg = (uint32_t *) (f->map + f->baseaddr.reset);
+
+	info("Reset fpga");
+	rst_reg[0] = 1;
+
+	usleep(100000);
+
+	/* Restore previous state of PCI configuration space */
+	ret = pwrite(f->vd.fd, state, sizeof(state), (off_t) VFIO_PCI_CONFIG_REGION_INDEX << 40);
+	if (ret != sizeof(state))
+		return -1;
+
+	info("Reset status = %#x", *rst_reg);
+
+	return 0;
+}
+
+void vfpga_dump(struct vfpga *f)
+{
+	char namebuf[128];
+	char *name;
+
+	name = pci_lookup_name(pacc, namebuf, sizeof(namebuf), PCI_LOOKUP_DEVICE, fpga.vd.pdev->vendor_id, fpga.vd.pdev->device_id);
+	pci_fill_info(fpga.vd.pdev, PCI_FILL_IDENT | PCI_FILL_BASES | PCI_FILL_CLASS);	/* Fill in header info we need */
+
+	info("VILLASfpga card: %s", name);
+	{ INDENT
+		info("Slot: %04x:%02x:%02x.%d", fpga.vd.pdev->domain, fpga.vd.pdev->bus, fpga.vd.pdev->dev, fpga.vd.pdev->func);
+		info("Vendor ID: %04x", fpga.vd.pdev->vendor_id);
+		info("Device ID: %04x", fpga.vd.pdev->device_id);
+		info("Class  ID: %04x", fpga.vd.pdev->device_class);
+
+		info("BAR0 mapped at %p", fpga.map);
+		info("DMA mapped at %p", fpga.dma);
+		
+		info("IP blocks:");
+		list_foreach(struct ip *i, &f->ips) { INDENT
+			ip_dump(i);
+		}
+	}
+
+	vfio_dump(fpga.vd.group->container);
+}
+
+struct vfpga * vfpga_get()
+{
+	return &fpga;
+}
+
+static void vfpga_debug(char *msg, ...) {
+	va_list ap;
+
+	va_start(ap, msg);
+	log_vprint(LOG_LVL_DEBUG, msg, ap);
+	va_end(ap);
+}
+
+int vfpga_parse(struct vfpga *v, int argc, char * argv[], config_setting_t *cfg)
+{
+	int ret;
+	const char *slot, *id, *err;
+	config_setting_t *cfg_fpga, *cfg_ips, *cfg_slot, *cfg_id;
+
+	/* Default values */
+	v->filter.vendor = PCI_VID_XILINX;
+	v->filter.device = PCI_PID_VFPGA;
+	v->reset = false;
+
+	cfg_fpga = config_setting_get_member(cfg, "fpga");
+	if (!cfg_fpga)
+		cerror(cfg, "Config file is missing VILLASfpga configuration");
+
+	config_setting_lookup_bool(cfg_fpga, "reset", &v->reset);
+
+	cfg_slot = config_setting_get_member(cfg_fpga, "slot");
+	if (cfg_slot) {
+		slot = config_setting_get_string(cfg_slot);
+		if (slot) {
+			err = pci_filter_parse_slot(&v->filter, (char*) slot);
+			if (err)
+				cerror(cfg_slot, "%s", err);
+		}
+		else
+			cerror(cfg_slot, "Invalid slot format");
+	}
+
+	cfg_id = config_setting_get_member(cfg_fpga, "id");
+	if (cfg_id) {
+		id = config_setting_get_string(cfg_id);
+		if (id) {
+			err = pci_filter_parse_id(&v->filter, (char*) id);
+			if (err)
+				cerror(cfg_id, "%s", err);
+		}
+		else
+			cerror(cfg_slot, "Invalid id format");
+	}
 	
-	f->features = 0;
+	cfg_ips = config_setting_get_member(cfg_fpga, "ips");
+	if (!cfg_ips)
+		cerror(cfg_fpga, "FPGA configuration is missing ips section");
+
+	for (int i = 0; i < config_setting_length(cfg_ips); i++) {
+		struct ip ip;
+		config_setting_t *cfg_ip = config_setting_get_elem(cfg_ips, i);
+
+		ret = ip_parse(&ip, cfg_ip);
+		if (ret)
+			cerror(cfg_ip, "Failed to parse VILLASfpga ip");
+
+		list_push(&v->ips, memdup(&ip, sizeof(struct ip)));
+	}
+
+	return 0;
+}
+
+struct pci_access * vfpga_init_pci()
+{
+	struct pci_access *pacc;
+
+	pacc = pci_alloc();		/* Get the pci_access structure */
+	if (!pacc)
+		error("Failed to allocate PCI access structure");
+
+	pci_init(pacc);			/* Initialize the PCI library */
+	pci_scan_bus(pacc);		/* We want to get the list of devices */
+
+	pacc->error = (log_cb_t) error;	/* Replace logging and debug functions */
+	pacc->warning = (log_cb_t) warn;
+	pacc->debug = vfpga_debug;
+
+	pci_scan_bus(pacc);		/* We want to get the list of devices */
+
+	return pacc;
+}
+
+int vfpga_init(int argc, char * argv[], config_setting_t *cfg)
+{
+	int ret;
+	struct pci_access *pacc;
+	struct pci_dev *pdev;
+	struct vfpga *f;
+
+	/* For now we only support a single VILALSfpga card */
+	f = vfpga_get();
+
+	/* Some hardcoded addresses for internal IP blocks */
+	f->baseaddr.reset = 0x2000;
+	f->baseaddr.intc  = 0x5000;
+
+	pacc = vfpga_init_pci();
+
+	pci_filter_init(pacc, &f->filter);
+	list_init(&f->ips);
+
+	ret = vfpga_parse(f, argc, argv, cfg);
+	if (ret)
+		cerror(cfg, "Failed to parse VILLASfpga config");
+
+	/* Search for fpga card */
+	pdev = pci_find_device(pacc, &f->filter);
+	if (!pdev)
+		error("Failed to find PCI device");
 
 	if (pdev->vendor_id != PCI_VID_XILINX)
 		error("This is not a Xilinx FPGA board!");
 
+	/* Get VFIO handles and details */
+	ret = vfio_init(&vc);
+	if (ret)
+		serror("Failed to initialize VFIO");
+
 	/* Attach PCIe card to VFIO container */
-	ret = vfio_pci_attach(&f->vd, vc, pdev);
+	ret = vfio_pci_attach(&f->vd, &vc, pdev);
 	if (ret)
 		error("Failed to attach VFIO device");
 
@@ -64,223 +238,44 @@ int vfpga_init2(struct vfpga *f, struct vfio_container *vc, struct pci_dev *pdev
 	if (ret)
 		serror("Failed to enable PCI device");
 	
-#if 1
 	/* Trigger internal reset of fpga card / PCIe endpoint */
-	ret = vfpga_reset(f);
-	if (ret)
-		serror("Failed to reset fpga card");
-#endif
-
-	/* Reset / detect PCI device */
-	ret = vfio_pci_reset(&f->vd);
-	if (ret)
-		serror("Failed to reset PCI device");
-
-	/* Initialize Interrupt controller */
-	XIntc_Out32((uintptr_t) f->map + BASEADDR_INTC + XIN_IMR_OFFSET, 0);
-	XIntc_Out32((uintptr_t) f->map + BASEADDR_INTC + XIN_IAR_OFFSET, 0xFFFFFFFF); /* Acknowlege all pending IRQs */
-	usleep(1000);
-
-	/* Setup Vectors */
-	for (int i = 0; i < 16; i++)
-		XIntc_Out32((uintptr_t) f->map + BASEADDR_INTC + XIN_IVAR_OFFSET + i * sizeof(uint32_t), i);
-
-	XIntc_Out32((uintptr_t) f->map + BASEADDR_INTC + XIN_IMR_OFFSET, 0xFFFFFFFF); /* Use fast acknowlegement for all IRQs */
-	XIntc_Out32((uintptr_t) f->map + BASEADDR_INTC + XIN_IER_OFFSET, 0x00000000);
-	XIntc_Out32((uintptr_t) f->map + BASEADDR_INTC + XIN_MER_OFFSET, XIN_INT_HARDWARE_ENABLE_MASK | XIN_INT_MASTER_ENABLE_MASK);
-
-#ifdef HAS_SWITCH
-	/* Initialize AXI4-Sream crossbar switch */
-	ret = switch_init(&f->sw, f->map + BASEADDR_SWITCH, AXI_SWITCH_NUM, AXI_SWITCH_NUM);
-	if (ret)
-		error("Failed to initialize switch");
-#endif
-
-#ifdef HAS_XSG
-	/* Initialize System Generator model */
-	struct model *m = alloc(sizeof(struct model));
-	m->baseaddr = f->map + BASEADDR_XSG;
-	m->type = MODEL_TYPE_XSG;
-
-	ret = model_init(m, NULL);
-	if (ret)
-		error("Failed to init model: %d", ret);
-
-	ret = xsg_init_from_map(m);
-	if (ret)
-		error("Failed to init XSG model: %d", ret);
-	
-	list_push(&f->models, m);
-#endif
-
-#ifdef HAS_FIFO_MM
-	/* Initialize AXI4-Stream Memory Mapped FIFO */
-	ret = fifo_init(&f->fifo, f->map + BASEADDR_FIFO_MM, f->map + BASEADDR_FIFO_MM_AXI4);
-	if (ret)
-		error("Failed to initialize FIFO");
-#endif
-
-#ifdef HAS_DMA_SG
-	/* Initialize Scatter Gather DMA controller */
-	struct dma_mem bd = {
-		.base_virt = (uintptr_t) f->map + BASEADDR_BRAM,
-		.base_phys = BASEADDR_BRAM,
-		.len = 0x2000
-	};
-	struct dma_mem rx = {
-		.base_virt = (uintptr_t) f->dma,
-		.base_phys = BASEADDR_HOST,
-		.len = 0x10000
-	};
-
-	ret = dma_init(&f->dma_sg, f->map + BASEADDR_DMA_SG, DMA_MODE_SG, &bd, &rx, sizeof(uint32_t) * 64);
-	if (ret)
-		return -1;
-#endif
-
-#ifdef HAS_DMA_SIMPLE
-	/* Initialize Simple DMA controller */
-	ret = dma_init(&f->dma_simple, f->map + BASEADDR_DMA_SIMPLE, DMA_MODE_SIMPLE, 0, 0, 0);
-	if (ret)
-		return -1;
-#endif
-
-#ifdef HAS_TIMER
-	/* Initialize timer */
-	XTmrCtr_Config tmr_cfg = {
-		.BaseAddress = (uintptr_t) f->map + BASEADDR_TIMER,
-		.SysClockFreqHz = AXI_HZ
-	};
-
-	XTmrCtr_CfgInitialize(&f->tmr, &tmr_cfg, (uintptr_t) f->map + BASEADDR_TIMER);
-	XTmrCtr_InitHw(&f->tmr);
-#endif
-
-	return 0;
-}
-
-int vfpga_deinit2(struct vfpga *f)
-{
-	list_destroy(&f->models, (dtor_cb_t) model_destroy, true);
-
-	return 0;
-}
-
-int vfpga_reset(struct vfpga *f)
-{
-	int ret;
-	char state[4096];
-
-	/* Save current state of PCI configuration space */
-	ret = pread(f->vd.fd, state, sizeof(state), (off_t) VFIO_PCI_CONFIG_REGION_INDEX << 40);
-	if (ret != sizeof(state))
-		return -1;
-
-	uint32_t *rst_reg = (uint32_t *) (f->map + BASEADDR_RESET);
-
-	info("Reset fpga");
-	rst_reg[0] = 1;
-
-	usleep(100000);
-
-	/* Restore previous state of PCI configuration space */
-	ret = pwrite(f->vd.fd, state, sizeof(state), (off_t) VFIO_PCI_CONFIG_REGION_INDEX << 40);
-	if (ret != sizeof(state))
-		return -1;
-
-	info("Reset status = %#x", *rst_reg);
-
-	return 0;
-}
-
-/* Dump some details about the fpga card */
-void vfpga_dump(struct vfpga *f)
-{
-	char namebuf[128];
-	char *name;
-
-	name = pci_lookup_name(pacc, namebuf, sizeof(namebuf), PCI_LOOKUP_DEVICE, f->vd.pdev->vendor_id, f->vd.pdev->device_id);
-	pci_fill_info(f->vd.pdev, PCI_FILL_IDENT | PCI_FILL_BASES | PCI_FILL_CLASS);	/* Fill in header info we need */
-
-	info("Found fpga card: %s", name);
-	{ INDENT
-		info("slot=%04x:%02x:%02x.%d", f->vd.pdev->domain, f->vd.pdev->bus, f->vd.pdev->dev, f->vd.pdev->func);
-		info("vendor=%04x", f->vd.pdev->vendor_id);
-		info("device=%04x", f->vd.pdev->device_id);
-		info("class=%04x", f->vd.pdev->device_class);
+	if (f->reset) {
+		ret = vfpga_reset(f);
+		if (ret)
+			serror("Failed to reset fpga card");
+		
+		/* Reset / detect PCI device */
+		ret = vfio_pci_reset(&f->vd);
+		if (ret)
+			serror("Failed to reset PCI device");
 	}
-	info("BAR0 mapped at %p", f->map);
 
-	vfio_dump(f->vd.group->container);
-}
-
-static void vfpga_debug(char *msg, ...) {
-	va_list ap;
-
-	va_start(ap, msg);
-	log_vprint(LOG_LVL_DEBUG, msg, ap);
-	va_end(ap);
-}
-
-int vfpga_init(int argc, char * argv[], config_setting_t *cfg)
-{
-	if (getuid() != 0)
-		error("The vfpga node-type requires superuser privileges!");
-
-	pacc = pci_alloc();		/* Get the pci_access structure */
-	if (!pacc)
-		error("Failed to allocate PCI access structure");
-
-	pci_init(pacc);			/* Initialize the PCI library */
-
-	pacc->error = (log_cb_t) error;	/* Replace logging and debug functions */
-	pacc->warning = (log_cb_t) warn;
-	pacc->debug = vfpga_debug;
-
-	pci_scan_bus(pacc);		/* We want to get the list of devices */
+	list_foreach(struct ip *c, &f->ips) {
+		c->card = f;
+		ip_init(c);
+	}
 
 	return 0;
 }
 
 int vfpga_deinit()
 {
+	int ret;
+
+	list_destroy(&fpga.ips, (dtor_cb_t) ip_destroy, true);
+
 	pci_cleanup(pacc);
+
+	ret = vfio_destroy(&vc);
+	if (ret)
+		error("Failed to deinitialize VFIO module");
 
 	return 0;
 }
 
-int vfpga_parse(struct node *n, config_setting_t *cfg)
+int vfpga_parse_node(struct node *n, config_setting_t *cfg)
 {
-	struct vfpga *v = n->_vd;
-
-	const char *slot, *id, *err;
-	config_setting_t *cfg_slot, *cfg_id;
-
-	pci_filter_init(NULL, &v->filter);
-
-	cfg_slot = config_setting_get_member(cfg, "slot");
-	if (cfg_slot) {
-		slot = config_setting_get_string(cfg_slot);
-		if (slot) {
-			err = pci_filter_parse_slot(&v->filter, (char*) slot);
-			if (err)
-				cerror(cfg_slot, "%s", err);
-		}
-		else
-			cerror(cfg_slot, "Invalid slot format");
-	}
-
-	cfg_id = config_setting_get_member(cfg, "id");
-	if (cfg_id) {
-		id = config_setting_get_string(cfg_id);
-		if (id) {
-			err = pci_filter_parse_id(&v->filter, (char*) id);
-			if (err)
-				cerror(cfg_id, "%s", err);
-		}
-		else
-			cerror(cfg_slot, "Invalid id format");
-	}
+//	struct vfpga *v = n->_vd;
 
 	return 0;
 }
@@ -339,8 +334,8 @@ int vfpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 static struct node_type vt = {
 	.name		= "vfpga",
 	.description	= "VILLASfpga PCIe card (libpci)",
-	.vectorize	= 0,
-	.parse		= vfpga_parse,
+	.vectorize	= 1,
+	.parse		= vfpga_parse_node,
 	.print		= vfpga_print,
 	.open		= vfpga_open,
 	.close		= vfpga_close,

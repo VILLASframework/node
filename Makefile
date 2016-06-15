@@ -64,7 +64,8 @@ endif
 
 # Enable VILLASfpga support when libpci is available
 ifeq ($(shell pkg-config libpci; echo $$?),0)
-	LIB_OBJS    += vfpga.o pci.o dma.o model.o fifo.o xsg.o vfio.o switch.o rtds_axis.o
+	LIB_OBJS    += vfpga.o pci.o ip.o vfio.o
+	LIB_OBJS    += dma.o model.o fifo.o switch.o rtds_axis.o
 	LDLIBS      += -lxil
 	LDFLAGS     += -Lthirdparty/xilinx -Wl,-rpath-link,'$$ORIGIN/thirdparty/xilinx'
 	CFLAGS      += -Ithirdparty/xilinx/include

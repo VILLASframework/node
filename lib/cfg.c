@@ -20,16 +20,18 @@
 int config_parse(const char *filename, config_t *cfg, struct settings *set,
 	struct list *nodes, struct list *paths)
 {
-	char *filename_cpy = strdup(filename);
-	char *include_dir = dirname(filename_cpy);
+	int ret;
+	char *filename_cpy, include_dir;
+
+	filename_cpy = strdup(filename);
+	include_dir = dirname(filename_cpy);
+	free(filename_cpy);
 
 	/* Setup libconfig */
 	config_set_auto_convert(cfg, 1);
 	config_set_include_dir(cfg, include_dir);
 
-	free(filename_cpy);
-
-	int ret = strcmp("-", filename) ? config_read_file(cfg, filename) : config_read(cfg, stdin);
+	ret = strcmp("-", filename) ? config_read_file(cfg, filename) : config_read(cfg, stdin);
 	if (ret != CONFIG_TRUE) {
 		error("Failed to parse configuration: %s in %s:%d",
 			config_error_text(cfg),

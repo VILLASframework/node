@@ -17,19 +17,7 @@
 #ifndef _VFPGA_H_
 #define _VFPGA_H_
 
-#include <xilinx/xtmrctr.h>
-#include <xilinx/xintc.h>
-#include <xilinx/xllfifo.h>
-#include <xilinx/xaxis_switch.h>
-#include <xilinx/xaxidma.h>
-
 #include "kernel/vfio.h"
-
-#include "fpga/switch.h"
-#include "fpga/model.h"
-#include "fpga/dma.h"
-#include "fpga/fifo.h"
-#include "fpga/rtds_axis.h"
 
 #include <pci/pci.h>
 
@@ -37,33 +25,28 @@
 #include "node.h"
 #include "list.h"
 
+#define BASEADDR_HOST		0x8000000
 #define VFPGA_BAR		0	/**< The Base Address Register which is mmap()ed to the User Space */
 
 struct vfpga {
-	struct pci_filter filter;
-
-	enum {
-		vfpga_MODE_FIFO,
-		vfpga_MODE_DMA
-	} mode;
-
-	int features;
-
-	struct list models;		/**< List of XSG and HLS model blocks on FPGA. */
+	struct pci_filter filter;	/**< Filter for libpci with device id & slot */
 	struct vfio_dev vd;		/**< VFIO device handle. */
 
-	/* Xilinx IP blocks */
-	XTmrCtr tmr;
-	XLlFifo fifo;
-	XAxiDma dma_simple;
-	XAxiDma dma_sg;
-	XAxis_Switch sw;
+	int reset;			/**< Reset VILLASfpga during startup? */
+
+	struct list ips;		/**< List of IP components on FPGA. */
 
 	char *map;			/**< PCI BAR0 mapping for register access */
 	char *dma;			/**< DMA mapped memory */
-	
+
 	size_t maplen;
 	size_t dmalen;
+
+	/** Base addresses for internal IP blocks */
+	struct {
+		uintptr_t reset;
+		uintptr_t intc;
+	} baseaddr;
 };
 
 /** @see node_vtable::init */
@@ -73,7 +56,9 @@ int vfpga_init(int argc, char * argv[], config_setting_t *cfg);
 int vfpga_deinit();
 
 /** @see node_vtable::parse */
-int vfpga_parse(struct node *n, config_setting_t *cfg);
+int vfpga_parse_node(struct node *n, config_setting_t *cfg);
+
+int vfpga_parse(struct vfpga *v, int argc, char * argv[], config_setting_t *cfg);
 
 /** @see node_vtable::print */
 char * vfpga_print(struct node *n);
@@ -90,14 +75,13 @@ int vfpga_read(struct node *n, struct sample *smps[], unsigned cnt);
 /** @see node_vtable::write */
 int vfpga_write(struct node *n, struct sample *smps[], unsigned cnt);
 
-//////////
+/** Get pointer to internal VILLASfpga datastructure */
+struct vfpga * vfpga_get();
 
-int vfpga_init2(struct vfpga *f, struct vfio_container *vc, struct pci_dev *pdev);
-
-int vfpga_deinit2(struct vfpga *f);
-
+/** Reset VILLASfpga */
 int vfpga_reset(struct vfpga *f);
 
+/** Dump some details about the fpga card */
 void vfpga_dump(struct vfpga *f);
 
 #endif /** _VFPGA_H_ @} */
