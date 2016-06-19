@@ -54,7 +54,7 @@ endif
 ######## Node types ########
 
 # file node-type is always supported
-LIB_OBJS += file.o
+LIB_OBJS += file.o cbuilder.o
 
 # Enable Socket node type when libnl3 is available
 ifeq ($(shell pkg-config libnl-route-3.0; echo $$?),0)
@@ -64,8 +64,8 @@ endif
 
 # Enable VILLASfpga support when libpci is available
 ifeq ($(shell pkg-config libpci; echo $$?),0)
-	LIB_OBJS    += vfpga.o pci.o ip.o vfio.o
-	LIB_OBJS    += dma.o model.o fifo.o switch.o rtds_axis.o
+	LIB_OBJS    += fpga.o pci.o ip.o vfio.o
+	LIB_OBJS    += dma.o model.o fifo.o switch.o rtds_axis.o intc.o
 	LDLIBS      += -lxil
 	LDFLAGS     += -Lthirdparty/xilinx -Wl,-rpath-link,'$$ORIGIN/thirdparty/xilinx'
 	CFLAGS      += -Ithirdparty/xilinx/include
@@ -113,7 +113,7 @@ all: $(LIBS) $(TARGETS)
 fpga: LDLIBS += -lpci -lxil
 
 node:   server.o
-fpga:   fpga.o fpga-tests.o
+fpga:   fpga-main.o fpga-tests.o
 pipe:   pipe.o
 test:   test.o
 signal: signal.o

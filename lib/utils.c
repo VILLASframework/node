@@ -6,14 +6,17 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
-#include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
 #include <signal.h>
 #include <pthread.h>
+#include <fcntl.h>
+#include <ctype.h>
 
 #include "config.h"
 #include "cfg.h"
@@ -202,26 +205,6 @@ void * memdup(const void *src, size_t bytes)
 	memcpy(dst, src, bytes);
 	
 	return dst;
-}
-
-#include <stdio.h>
-#include <stdint.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <ctype.h>
-
-#include "utils.h"
-
-uint64_t wait_irq(int irq)
-{
-	ssize_t ret;
-	uint64_t cnt;
-
-	ret = read(irq, &cnt, sizeof(cnt));
-	if (ret != sizeof(cnt))
-		return 0;
-
-	return cnt;
 }
 
 int read_random(char *buf, size_t len)

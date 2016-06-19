@@ -11,11 +11,15 @@
 #define _MODEL_H_
 
 #include <stdlib.h>
-#include <inttypes.h>
+#include <stdint.h>
 
 #include "list.h"
 
+#define XSG_MAPLEN		0x1000
 #define XSG_MAGIC		0xDEADBABE
+
+/* Forward declaration */
+struct ip;
 
 enum model_type {
 	MODEL_TYPE_HLS,
@@ -49,18 +53,15 @@ union model_param_value {
 };
 
 struct model {
-	char *xml;			/**< Path to a XML file which describes this model */
-	enum model_type type;
+	enum model_type type;		/**< Either HLS or XSG model */
+	char *xml;			/**< An optional path to a XML file which describes this model */
 	struct list parameters;		/**< List of model parameters. */
-	struct list infos;
-
-	char *map;
-	size_t maplen;
+	struct list infos;		/**< A list of key / value pairs with model details */
 
 	union {
 		struct xsg_model {
-			char *map;
-			size_t maplen;
+			uint32_t *map;
+			ssize_t maplen;
 		} xsg;			/**< XSG specific model data */
 		struct hls_model {
 
@@ -84,20 +85,23 @@ struct model_param {
 
 	union model_param_value default_value;
 
-	struct model *model;			/**< A pointer to the model structure to which this parameters belongs to. */
+	struct ip *ip;				/**< A pointer to the model structure to which this parameters belongs to. */
 };
 
-int model_init(struct model *m, uintptr_t baseaddr);
+/** Initialize a model */
+int model_init(struct ip *c);
 
-int model_init_from_xsg_map(struct model *m, uintptr_t baseaddr);
+/** Destroy a model */
+void model_destroy(struct ip *c);
 
-int model_init_from_xml(struct model *m);
+/** Print detailed information about the model to the screen. */
+void model_dump(struct ip *c);
 
-void model_destroy(struct model *m);
+/** Add a new parameter to the model */
+void model_param_add(struct ip *c, const char *name, enum model_param_direction dir, enum model_param_type type);
 
-void model_dump(struct model *m);
-
-void model_param_add(struct model *m, const char *name, enum model_param_direction dir, enum model_param_type type);
+/** Remove an existing parameter by its name */
+int model_param_remove(struct ip *c, const char *name);
 
 /** Read a model parameter.
  *
@@ -113,11 +117,5 @@ int model_param_read(struct model_param *p, double *v);
  * GatewayIn/Out block.
  */
 int model_param_write(struct model_param *p, double v);
-
-/** Read the XSG model information from ROM */
-int model_xsg_map_read(void *offset, void *dst, size_t len);
-
-/** Parse binary model information from ROM */
-int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameters, struct list *infos);
 
 #endif /* _MODEL_H_ */

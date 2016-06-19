@@ -3,10 +3,10 @@
 *.so
 *~
 
-node
-pipe
-test
-signal
-fpga
+/node
+/pipe
+/test
+/signal
+/fpga
 
 thirdparty/

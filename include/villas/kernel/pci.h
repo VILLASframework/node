@@ -12,6 +12,10 @@
 
 #include <pci/pci.h>
 
+struct pci_access * pci_get_handle();
+
+void pci_release_handle();
+
 struct pci_dev * pci_find_device(struct pci_access *pacc, struct pci_filter *f);
 
 int pci_attach_driver(struct pci_dev *d, const char *driver);

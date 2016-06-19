@@ -20,23 +20,34 @@
 
 #define XAXIDMA_SR_SGINCL_MASK	0x00000008
 
-enum dma_mode {
-	DMA_MODE_SIMPLE,
-	DMA_MODE_SG
-};
-
 struct dma_mem {
 	uint32_t base_virt;
 	uint32_t base_phys;
 	size_t len;
 };
 
-int dma_init(XAxiDma *xdma, char *baseaddr, enum dma_mode mode, struct dma_mem *bd, struct dma_mem *rx, size_t maxlen);
+struct ip;
 
-ssize_t dma_write(XAxiDma *xdma, char *buf, size_t len, int irq);
+int dma_write(struct ip *c, char *buf, size_t len);
+int dma_read(struct ip *c, char *buf, size_t len);
+int dma_read_complete(struct ip *c, char **buf, size_t *len);
+int dma_write_complete(struct ip *c, char **buf, size_t *len);
 
-ssize_t dma_read(XAxiDma *xdma, char *buf, size_t len, int irq);
+int dma_sg_write(struct ip *c, char *buf, size_t len);
+int dma_sg_read(struct ip *c, char *buf, size_t len);
 
-ssize_t dma_ping_pong(XAxiDma *xdma, char *src, char *dst, size_t len, int s2mm_irq);
+int dma_sg_write_complete(struct ip *c, char **buf, size_t *len);
+int dma_sg_read_complete(struct ip *c, char **buf, size_t *len);
+
+int dma_simple_read(struct ip *c, char *buf, size_t len);
+int dma_simple_write(struct ip *c, char *buf, size_t len);
+
+int dma_simple_read_complete(struct ip *c, char **buf, size_t *len);
+int dma_simple_write_complete(struct ip *c, char **buf, size_t *len);
+
+int dma_ping_pong(struct ip *c, char *src, char *dst, size_t len);
+
+int dma_init(struct ip *c);
+int dma_init_rings(struct ip *c, struct dma_mem *bd);
 
 #endif /* _DMA_H_ */

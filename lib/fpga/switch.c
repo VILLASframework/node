@@ -9,19 +9,21 @@
  **********************************************************************************/
 
 #include "fpga/switch.h"
+#include "fpga/ip.h"
 
-int switch_init(XAxis_Switch *sw, char *baseaddr, int micnt, int sicnt)
+int switch_init(struct ip *c)
 {
+	XAxis_Switch *sw = &c->sw;
 	int ret;
 
 	/* Setup AXI-stream switch */
 	XAxis_Switch_Config sw_cfg = {
-		.BaseAddress = (uintptr_t) baseaddr,
-		.MaxNumMI = micnt,
-		.MaxNumSI = sicnt
+		.BaseAddress = (uintptr_t) c->card->map + c->baseaddr,
+		.MaxNumMI = sw->Config.MaxNumMI,
+		.MaxNumSI = sw->Config.MaxNumSI
 	};
 	
-	ret = XAxisScr_CfgInitialize(sw, &sw_cfg, (uintptr_t) baseaddr);
+	ret = XAxisScr_CfgInitialize(sw, &sw_cfg, (uintptr_t) c->card->map + c->baseaddr);
 	if (ret != XST_SUCCESS)
 		return -1;
 
@@ -39,10 +41,12 @@ int switch_init(XAxis_Switch *sw, char *baseaddr, int micnt, int sicnt)
 	return 0;
 }
 
-int switch_connect(XAxis_Switch *sw, int mi, int si)
+int switch_connect(struct ip *c, struct ip *mi, struct ip *si)
 {
+	XAxis_Switch *sw = &c->sw;
+
 	XAxisScr_RegUpdateDisable(sw);
-	XAxisScr_MiPortEnable(sw, mi, si);
+	XAxisScr_MiPortEnable(sw, mi->port, si->port);
 	XAxisScr_RegUpdateEnable(sw);
 
 	return 0;

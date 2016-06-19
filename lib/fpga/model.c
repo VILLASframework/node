@@ -14,23 +14,8 @@
 #include <villas/utils.h>
 #include <villas/log.h>
 
+#include "fpga/ip.h"
 #include "fpga/model.h"
-
-int model_init(struct model *m, uintptr_t baseaddr)
-{
-	int ret;
-
-	/** @todo: Currently only XSG models are supported */
-
-	list_init(&m->parameters);
-	list_init(&m->infos);
-
-	ret = model_init_from_xsg_map(m, baseaddr);
-	if (ret)
-		error("Failed to init XSG model: %d", ret);
-
-	return 0;
-}
 
 static void model_param_destroy(struct model_param *p)
 {
@@ -43,146 +28,24 @@ static void model_info_destroy(struct model_info *i)
 	free(i->value);
 }
 
-void model_destroy(struct model *m)
-{
-	list_destroy(&m->parameters, (dtor_cb_t) model_param_destroy, true);
-	list_destroy(&m->infos, (dtor_cb_t) model_info_destroy, true);
-
-	free(m->map);
-}
-
-void model_dump(struct model *m)
-{
-	const char *param_type[] = { "UFix", "Fix", "Float", "Boolean" };
-	const char *model_types[] = { "HLS", "XSG" };
-	const char *parameter_dirs[] = { "In", "Out", "In/Out" };
-
-	info("Model: (type=%s)", model_types[m->type]);
-	
-	{ INDENT
-		info("Parameters:");
-		list_foreach(struct model_param *p, &m->parameters) { INDENT
-			if (p->direction == MODEL_PARAM_IN)
-				info("%#jx: %s (%s) = %.3f %s %u",
-					p->offset,
-					p->name,
-					parameter_dirs[p->direction],
-					p->default_value.flt,
-					param_type[p->type],
-					p->binpt
-				);
-			else if (p->direction == MODEL_PARAM_OUT)
-				info("%#jx: %s (%s)",
-					p->offset,
-					p->name,
-					parameter_dirs[p->direction]
-				);
-		}
-
-		info("Infos:");
-		list_foreach(struct model_info *i, &m->infos) { INDENT
-			info("%s: %s", i->field, i->value);
-		}
-	}
-}
-
-int model_param_read(struct model_param *p, double *v)
-{
-	union model_param_value *ptr = p->offset;// TODO: + p->model->baseaddr;
-
-	switch (p->type) {
-		case MODEL_PARAM_TYPE_UFIX:
-			*v = (double) ptr->ufix / (1 << p->binpt);
-			break;
-
-		case MODEL_PARAM_TYPE_FIX:
-			*v = (double) ptr->fix / (1 << p->binpt);
-			break;
-
-		case MODEL_PARAM_TYPE_FLOAT:
-			*v = (double) ptr->flt;
-			break;
-			
-		case MODEL_PARAM_TYPE_BOOLEAN:
-			*v = (double) ptr->ufix ? 1 : 0;
-	}
-
-	return 0;
-}
-
-int model_param_write(struct model_param *p, double v)
-{
-	union model_param_value *ptr = p->offset;// TODO: + p->model->baseaddr;
-
-	switch (p->type) {
-		case MODEL_PARAM_TYPE_UFIX:
-			ptr->ufix = (uint32_t) (v * (1 << p->binpt));
-			break;
-
-		case MODEL_PARAM_TYPE_FIX:
-			ptr->fix = (int32_t) (v * (1 << p->binpt));
-			break;
-
-		case MODEL_PARAM_TYPE_FLOAT:
-			ptr->flt = (float) v;
-			break;
-			
-		case MODEL_PARAM_TYPE_BOOLEAN:
-			ptr->bol = (bool) v;
-			break;
-	}
-
-	return 0;
-}
-
-void model_param_add(struct model *m, const char *name, enum model_param_direction dir, enum model_param_type type)
-{
-	struct model_param *p = alloc(sizeof(struct model_param));
-	
-	p->name = strdup(name);
-	p->type = type;
-	p->direction = dir;
-	
-	list_push(&m->parameters, p);
-}
-
-int model_init_from_xsg_map(struct model *m, uintptr_t baseaddr)
-{
-	int ret;
-
-	list_init(&m->infos);
-
-	m->map = alloc(1024);
-	m->maplen = model_xsg_map_read(baseaddr, m->map, 1024 / 4);
-	if (m->maplen < 0)
-		return -1;
-
-	debug(5, "XSG: memory map length = %#zx", m->maplen);
-
-	ret = model_xsg_map_parse((uint32_t *) m->map, m->maplen, &m->parameters, &m->infos);
-	if (ret)
-		return -2;
-
-	return 0;
-}
-
 static uint32_t model_xsg_map_checksum(uint32_t *map, size_t len)
 {
 	uint32_t chks = 0;
+
 	for (int i = 2; i < len-1; i++)
 		chks += map[i];
 
 	return chks; /* moduluo 2^32 because of overflow */
 }
 
-int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameters, struct list *infos)
+static int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameters, struct list *infos)
 {
 #define copy_string(off) strndup((char *) (data + (off)), (length - (off)) * 4);
-
+	int j;
 	struct model_param *p;
 	struct model_info *i;
-	int j;
-	
+
+	/* Check magic */
 	if (map[0] != XSG_MAGIC)
 		error("Invalid magic: %#x", map[0]);
 
@@ -224,40 +87,232 @@ int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameters, stru
 		
 		j += length + 1;
 	}
-	
-	if (model_xsg_map_checksum(map, len) != map[j])
-		error("XSG: Invalid checksum");
 
 	return 0;
 
 #undef copy_string
 }
 
-int model_xsg_map_read(void *baseaddr, void *dst, size_t len)
+static uint32_t model_xsg_map_read_word(uint32_t offset, void *baseaddr)
 {
-#define get_word(a) ({ *addr = a; *data; })
-
 	volatile uint32_t *addr = baseaddr + 0x00;
 	volatile uint32_t *data = baseaddr + 0x04;
 
-	uint32_t *map = dst;
-	uint32_t  maplen, magic;
+	*addr = offset; /* Update addr reg */
 
-	/* Check start DW */
-	magic = get_word(0);
+	return *data; /* Read data reg */
+}
+
+static int model_xsg_map_read(uint32_t *map, size_t len, void *baseaddr)
+{
+	size_t maplen;
+	uint32_t magic;
+
+	/* Check magic */
+	magic = model_xsg_map_read_word(0, baseaddr);
 	if (magic != XSG_MAGIC)
 		return -1;
 
-	maplen = get_word(1);
+	maplen = model_xsg_map_read_word(1, baseaddr);
 	if (maplen < 3)
 		return -2;
 
 	/* Read Data */
 	int i;
 	for (i = 0; i < MIN(maplen, len); i++)
-		map[i] = get_word(i);
+		map[i] = model_xsg_map_read_word(i, baseaddr);
 
 	return i;
+}
 
-#undef get_word
+static int model_init_from_xml(struct ip *c)
+{
+	//struct model *m = &c->model;
+	
+	/** @todo Implement */
+	
+	return -1;
+}
+
+static int model_init_from_xsg_map(struct model *m, void *baseaddr)
+{
+	int ret, chks;
+
+	if (baseaddr == (void *) -1)
+		return -1;
+
+	m->xsg.map = alloc(XSG_MAPLEN);
+	m->xsg.maplen = model_xsg_map_read(m->xsg.map, XSG_MAPLEN, baseaddr);
+	if (m->xsg.maplen < 0)
+		return -1;
+
+	debug(5, "XSG: memory map length = %#zx", m->xsg.maplen);
+
+	chks = m->xsg.map[m->xsg.maplen - 1];
+	if (chks != model_xsg_map_checksum(m->xsg.map, m->xsg.maplen))
+		return -2;
+
+	ret = model_xsg_map_parse(m->xsg.map, m->xsg.maplen, &m->parameters, &m->infos);
+	if (ret)
+		return -3;
+
+	debug(5, "XSG: Parsed %zu parameters and %zu model infos", list_length(&m->parameters), list_length(&m->infos));
+
+	return 0;
+}
+
+int model_init(struct ip *c)
+{
+	int ret;
+	struct model *m = &c->model;
+
+	list_init(&m->parameters);
+	list_init(&m->infos);
+
+	if (m->xml)
+		ret = model_init_from_xml(c);
+	else if (ip_vlnv_match(c, NULL, "sysgen", NULL, NULL))
+		ret = model_init_from_xsg_map(m, c->card->map + c->baseaddr);
+	else
+		ret = 0;
+	
+	list_foreach(struct model_param *p, &m->parameters)
+		p->ip = c;
+		
+	/* Set default values for parameters */
+	list_foreach(struct model_param *p, &m->parameters) {
+		if (p->direction == MODEL_PARAM_IN) {
+			model_param_write(p, p->default_value.flt);
+			info("Set parameter '%s' updated to default value: %f", p->name, p->default_value.flt);
+		}
+	}
+
+	if (ret)
+		error("Failed to init XSG model: %d", ret);
+
+	return 0;
+}
+
+void model_destroy(struct ip *c)
+{
+	struct model *m = &c->model;
+
+	list_destroy(&m->parameters, (dtor_cb_t) model_param_destroy, true);
+	list_destroy(&m->infos, (dtor_cb_t) model_info_destroy, true);
+
+	if (m->xsg.map != NULL)
+		free(m->xsg.map);
+}
+
+void model_dump(struct ip *c)
+{
+	struct model *m = &c->model;
+
+	const char *param_type[] = { "UFix", "Fix", "Float", "Boolean" };
+	const char *parameter_dirs[] = { "In", "Out", "In/Out" };
+
+	{ INDENT
+		info("Parameters:");
+		list_foreach(struct model_param *p, &m->parameters) { INDENT
+			if (p->direction == MODEL_PARAM_IN)
+				info("%#jx: %s (%s) = %.3f %s %u",
+					p->offset,
+					p->name,
+					parameter_dirs[p->direction],
+					p->default_value.flt,
+					param_type[p->type],
+					p->binpt
+				);
+			else if (p->direction == MODEL_PARAM_OUT)
+				info("%#jx: %s (%s)",
+					p->offset,
+					p->name,
+					parameter_dirs[p->direction]
+				);
+		}
+
+		info("Infos:");
+		list_foreach(struct model_info *i, &m->infos) { INDENT
+			info("%s: %s", i->field, i->value);
+		}
+	}
+}
+
+int model_param_read(struct model_param *p, double *v)
+{
+	struct ip *c = p->ip;
+
+	union model_param_value *ptr = (union model_param_value *) (c->card->map + c->baseaddr + p->offset);
+
+	switch (p->type) {
+		case MODEL_PARAM_TYPE_UFIX:
+			*v = (double) ptr->ufix / (1 << p->binpt);
+			break;
+
+		case MODEL_PARAM_TYPE_FIX:
+			*v = (double) ptr->fix / (1 << p->binpt);
+			break;
+
+		case MODEL_PARAM_TYPE_FLOAT:
+			*v = (double) ptr->flt;
+			break;
+			
+		case MODEL_PARAM_TYPE_BOOLEAN:
+			*v = (double) ptr->ufix ? 1 : 0;
+	}
+
+	return 0;
+}
+
+int model_param_write(struct model_param *p, double v)
+{
+	struct ip *c = p->ip;
+
+	union model_param_value *ptr = (union model_param_value *) (c->card->map + c->baseaddr + p->offset);
+
+	switch (p->type) {
+		case MODEL_PARAM_TYPE_UFIX:
+			ptr->ufix = (uint32_t) (v * (1 << p->binpt));
+			break;
+
+		case MODEL_PARAM_TYPE_FIX:
+			ptr->fix = (int32_t) (v * (1 << p->binpt));
+			break;
+
+		case MODEL_PARAM_TYPE_FLOAT:
+			ptr->flt = (float) v;
+			break;
+			
+		case MODEL_PARAM_TYPE_BOOLEAN:
+			ptr->bol = (bool) v;
+			break;
+	}
+
+	return 0;
+}
+
+void model_param_add(struct ip *c, const char *name, enum model_param_direction dir, enum model_param_type type)
+{
+	struct model *m = &c->model;
+	struct model_param *p = alloc(sizeof(struct model_param));
+	
+	p->name = strdup(name);
+	p->type = type;
+	p->direction = dir;
+	
+	list_push(&m->parameters, p);
+}
+
+int model_param_remove(struct ip *c, const char *name)
+{
+	struct model *m = &c->model;
+	struct model_param *p;
+	
+	p = list_lookup(&m->parameters, name);
+	if (!p)
+		return -1;
+	
+	list_remove(&m->parameters, p);
+	
+	return 0;
 }

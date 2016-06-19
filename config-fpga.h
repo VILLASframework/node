@@ -24,10 +24,6 @@
  * except RTDS AXI Stream bridge which runs at RTDS_HZ (100 Mhz) */
 #define AXI_HZ			125000000 // 125 MHz
 
-#define virt_to_axi(virt, map) ((char *) ((char *) virt - map))
-#define virt_to_dma(virt, dma) ((char *) ((char *) virt - dma) + BASEADDR_HOST)
-#define dma_to_virt(addr, dma) ((char *) ((char *) addr - BASEADDR_HOST) + dma)
-
 #define PCI_VID_XILINX		0x10ee
 #define PCI_PID_VFPGA		0x7022
 

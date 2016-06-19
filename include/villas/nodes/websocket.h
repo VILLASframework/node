@@ -57,4 +57,4 @@ int websocket_read(struct node *n, struct sample *smps[], unsigned cnt);
 /** @see node_vtable::write */
 int websocket_write(struct node *n, struct sample *smps[], unsigned cnt);
 
-#endif /* _WEBSOCKET_H_ */
+#endif /** _WEBSOCKET_H_ @} */

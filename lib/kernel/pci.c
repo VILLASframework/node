@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <libgen.h> 
 #include <unistd.h>
 
@@ -15,6 +16,49 @@
 
 #include "kernel/pci.h"
 #include "config.h"
+
+static struct pci_access *pacc;
+
+static void pci_log(char *msg, ...)
+{
+	char *tmp = strdup(msg);
+
+	va_list ap;
+	va_start(ap, msg);
+	log_vprint("PCI  ", strtok(tmp, "\n"), ap);
+	va_end(ap);
+	free(tmp);
+}
+
+struct pci_access * pci_get_handle()
+{
+	if (pacc)
+		return pacc; /* Singleton */
+
+	pacc = pci_alloc();		/* Get the pci_access structure */
+	if (!pacc)
+		error("Failed to allocate PCI access structure");
+
+	pci_init(pacc);			/* Initialize the PCI library */
+	pci_scan_bus(pacc);		/* We want to get the list of devices */
+
+	pacc->error = pci_log;	/* Replace logging and debug functions */
+	pacc->warning = pci_log;
+	pacc->debug = pci_log;
+	pacc->debugging = 1;
+
+	pci_scan_bus(pacc);		/* We want to get the list of devices */
+
+	return pacc;
+}
+
+void pci_release_handle()
+{
+	if (pacc) {
+		//pci_cleanup(pacc);
+		//pacc = NULL;
+	}
+}
 
 struct pci_dev * pci_find_device(struct pci_access *pacc, struct pci_filter *f)
 {

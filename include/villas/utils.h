@@ -119,6 +119,7 @@ char * vstrcatf(char **dest, const char *fmt, va_list va)
 
 /** Format string like strcatf() just starting with empty string */
 #define strf(fmt, ...) strcatf(&(char *) { NULL }, fmt, ##__VA_ARGS__)
+#define vstrf(fmt, va) vstrcatf(&(char *) { NULL }, fmt, va)
 
 /** Format a struct timespec date similar to strftime() */
 int strftimespec(char *s, size_t max, const char *format, struct timespec *ts)
@@ -168,9 +169,6 @@ int version_parse(const char *s, struct version *v);
 			XSTR(exp), __FUNCTION__, __BASE_FILE__, __LINE__); \
 	} while (0)
 #endif
-
-/** Wait on eventfd */
-uint64_t wait_irq(int irq);
 
 /** Fill buffer with random data */
 int read_random(char *buf, size_t len);

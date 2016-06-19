@@ -17,10 +17,13 @@
 #include <xilinx/xstatus.h>
 #include <xilinx/xllfifo.h>
 
-int fifo_init(XLlFifo *fifo, char *baseaddr, char *axi_baseaddr);
+/* Forward declaration */
+struct ip;
 
-ssize_t fifo_write(XLlFifo *fifo, char *buf, size_t len, int irq);
+int fifo_init(struct ip *c);
 
-ssize_t fifo_read(XLlFifo *fifo, char *buf, size_t len, int irq);
+ssize_t fifo_write(struct ip *c, char *buf, size_t len);
+
+ssize_t fifo_read(struct ip *c, char *buf, size_t len);
 
 #endif /* _FIFO_H_ */

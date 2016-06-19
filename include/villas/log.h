@@ -13,6 +13,8 @@
 #include <stdarg.h>
 #include <libconfig.h>
 
+#include "utils.h"
+
 #ifdef __GNUC__
   #define INDENT	int __attribute__ ((__cleanup__(log_outdent), unused)) _old_indent = log_indent(1);
 #else
@@ -21,7 +23,7 @@
 
 /* The log level which is passed as first argument to print() */
 #define LOG_LVL_DEBUG	GRY("Debug")
-#define LOG_LVL_INFO	    "" 
+#define LOG_LVL_INFO	WHT("Info ") 
 #define LOG_LVL_WARN	YEL("Warn ")
 #define LOG_LVL_ERROR	RED("Error")
 #define LOG_LVL_STATS	MAG("Stats")
@@ -40,7 +42,7 @@ enum debug_facilities {
 	/* Node-types */
 	DBG_SOCKET =	(1 << 16),
 	DBG_FILE =	(1 << 17),
-	DBG_GTFPGA =	(1 << 18),
+	DBG_FPGA =	(1 << 18),
 	DBG_NGSI =	(1 << 19),
 	DBG_WEBSOCKET =	(1 << 20),
 	DBG_OPAL =	(1 << 21),

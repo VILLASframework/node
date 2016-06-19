@@ -21,7 +21,7 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 	struct list *nodes, struct list *paths)
 {
 	int ret;
-	char *filename_cpy, include_dir;
+	char *filename_cpy, *include_dir;
 
 	filename_cpy = strdup(filename);
 	include_dir = dirname(filename_cpy);

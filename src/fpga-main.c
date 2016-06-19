@@ -17,7 +17,7 @@
 #include <villas/log.h>
 #include <villas/timing.h>
 #include <villas/utils.h>
-#include <villas/nodes/vfpga.h>
+#include <villas/nodes/fpga.h>
 #include <villas/kernel/pci.h>
 #include <villas/kernel/kernel.h>
 
@@ -25,8 +25,8 @@
 #include "config-fpga.h"
 
 /* Declarations */
-int fpga_bench(struct vfpga *f);
-int fpga_tests(struct vfpga *f);
+int fpga_bench(struct fpga *f);
+int fpga_tests(struct fpga *f);
 
 void usage(char *name)
 {
@@ -45,7 +45,7 @@ void usage(char *name)
 int main(int argc, char *argv[])
 {
 	int ret;
-	struct vfpga *fpga;
+	struct fpga *fpga;
 	enum {
 		FPGA_TESTS,
 		FPGA_BENCH
@@ -89,13 +89,13 @@ int main(int argc, char *argv[])
 
 	/* Initialize VILLASfpga card */
 	config_setting_t *cfg_root = config_root_setting(&config);
-	ret = vfpga_init(argc, argv, cfg_root);
+	ret = fpga_init(argc, argv, cfg_root);
 	if (ret)
 		error("Failed to initialize fpga card");
 	
-	fpga = vfpga_get();
+	fpga = fpga_get();
 
-	vfpga_dump(fpga);
+	fpga_dump(fpga);
 
 	/* Setup scheduler */
 	cpu_set_t set = integer_to_cpuset(AFFINITY);
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Shutdown */
-	ret = vfpga_deinit(&fpga);
+	ret = fpga_deinit(&fpga);
 	if (ret)
 		error("Failed to de-initialize fpga card");
 
