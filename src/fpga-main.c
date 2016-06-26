@@ -15,6 +15,7 @@
 #include <sched.h>
 
 #include <villas/log.h>
+#include <villas/cfg.h>
 #include <villas/timing.h>
 #include <villas/utils.h>
 #include <villas/nodes/fpga.h>
@@ -26,15 +27,17 @@
 #include "config-fpga.h"
 
 /* Declarations */
-int fpga_bench(struct fpga *f);
-int fpga_tests(struct fpga *f);
+int fpga_benchmarks(int argc, char *argv[], struct fpga *f);
+int fpga_tests(int argc, char *argv[], struct fpga *f);
+
+struct settings settings;
 
 void usage(char *name)
 {
 	printf("Usage: %s CONFIGFILE CMD [OPTIONS]\n", name);
 	printf("   Commands:\n");
-	printf("      tests    Test functionality of VILLASfpga card\n");
-	printf("      bench    Do benchmarks\n\n");
+	printf("      tests      Test functionality of VILLASfpga card\n");
+	printf("      benchmarks Do benchmarks\n\n");
 	printf("   Options:\n");
 	printf("      -d    Set log level\n\n");
 
@@ -47,36 +50,25 @@ int main(int argc, char *argv[])
 {
 	int ret;
 	struct fpga *fpga;
+	config_t config;
+
 	enum {
 		FPGA_TESTS,
 		FPGA_BENCH
 	} subcommand;
-	config_t config;
-	
+
 	if (argc < 3)
 		usage(argv[0]);
-
 	if      (strcmp(argv[2], "tests") == 0)
 		subcommand = FPGA_TESTS;
-	else if (strcmp(argv[2], "bench") == 0)
+	else if (strcmp(argv[2], "benchmarks") == 0)
 		subcommand = FPGA_BENCH;
 	else
 		usage(argv[0]);
 
-	/* Setup libconfig */
-	config_init(&config);
-	ret = config_read_file(&config, argv[1]);
-	if (ret != CONFIG_TRUE) {
-		error("Failed to parse configuration: %s in %s:%d",
-			config_error_text(&config),
-			config_error_file(&config) ? config_error_file(&config) : argv[1],
-			config_error_line(&config)
-		);
-	}
-
 	/* Parse arguments */
 	char c, *endptr;
-	while ((c = getopt (argc-1, argv+1, "d:")) != -1) {
+	while ((c = getopt(argc-1, argv+1, "d:")) != -1) {
 		switch (c) {
 			case 'd':
 				log_setlevel(strtoul(optarg, &endptr, 10), ~0);
@@ -88,6 +80,12 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	info("Parsing configuration");
+	{ INDENT
+		config_init(&config);
+		config_parse(argv[1], &config, &settings, NULL, NULL);
+	}
+	
 	info("Initialize real-time system");
 	rt_init(settings.affinity, settings.priority);
 
@@ -95,33 +93,15 @@ int main(int argc, char *argv[])
 	config_setting_t *cfg_root = config_root_setting(&config);
 	ret = fpga_init(argc, argv, cfg_root);
 	if (ret)
-		error("Failed to initialize fpga card");
+		error("Failed to initialize FPGA card");
 	
 	fpga = fpga_get();
-
 	fpga_dump(fpga);
-
-	/* Setup scheduler */
-	cpu_set_t set = integer_to_cpuset(AFFINITY);
-
-	ret = sched_setaffinity(0, sizeof(set), &set);
-	if (ret)
-		serror("Failed to pin thread");
-
-	ret = sched_setscheduler(0, SCHED_FIFO, &(struct sched_param) { .sched_priority = PRIORITY });
-	if (ret)
-		serror("Failed to change scheduler");
-
-	for (int i = 0; i < fpga->vd.irqs[VFIO_PCI_MSI_IRQ_INDEX].count; i++) {
-		ret = kernel_irq_setaffinity(fpga->vd.msi_irqs[i], AFFINITY, NULL);
-		if (ret)
-			serror("Failed to change affinity of VFIO-MSI interrupt");
-	}
 
 	/* Start subcommand */
 	switch (subcommand) {
-		case FPGA_TESTS: fpga_tests(fpga); break;
-		case FPGA_BENCH: /*fpga_bench(fpga);*/ break;
+		case FPGA_TESTS: fpga_tests(argc-optind-1, argv+optind+1, fpga);      break;
+		case FPGA_BENCH: fpga_benchmarks(argc-optind-1, argv+optind+1, fpga); break;
 	}
 
 	/* Shutdown */
