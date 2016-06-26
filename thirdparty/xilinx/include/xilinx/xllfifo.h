@@ -576,7 +576,7 @@ extern u32 _xllfifo_ipis_value;
 * XLlFifo_TxVacancy returns the number of unused 32 bit words available
 * (vacancy) in the send channel of the FIFO specified by <i>InstancePtr</i>.
 *
-* The xps_ll_fifo core uses tXLLF_he same fifo to store data values and frame length
+* The xps_ll_fifo core uses the same fifo to store data values and frame length
 * values. Upon initialization, the XLlFifo_TxVacancy will give the value of
 * FIFO_WIDTH - 1, which means one length value used (a reserved fifo location)
 * and no data values yet present.
