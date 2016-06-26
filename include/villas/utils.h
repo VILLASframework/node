@@ -47,6 +47,10 @@
 #define XSTR(x)		STR(x)
 #define  STR(x)		#x
 
+#define CONCAT_DETAIL(x, y)	x##y
+#define CONCAT(x, y)		CONCAT_DETAIL(x, y)
+#define UNIQUE(x)		CONCAT(x, __COUNTER__)
+
 #define ALIGN(x, a)	 ALIGN_MASK(x, (uintptr_t) (a) - 1)
 #define ALIGN_MASK(x, m) (((uintptr_t) (x) + (m)) & ~(m))
 #define IS_ALIGNED(x, a) (ALIGN(x, a) == (uintptr_t) x)
@@ -127,10 +131,30 @@ int strftimespec(char *s, size_t max, const char *format, struct timespec *ts)
 
 /** Convert integer to cpu_set_t.
  *
- * @param set A cpu bitmask
- * @return The opaque cpu_set_t datatype
+ * @param set An integer number which is used as the mask
+ * @param cset A pointer to the cpu_set_t datastructure
  */
-cpu_set_t integer_to_cpuset(uintmax_t set);
+void cpuset_from_integer(uintmax_t set, cpu_set_t *cset);
+
+/** Parses string with list of CPU ranges.
+ *
+ * From: https://github.com/mmalecki/util-linux/blob/master/lib/cpuset.c
+ *
+ * @retval 0 On success.
+ * @retval 1 On error.
+ * @retval 2 If fail is set and a cpu number passed in the list doesn't fit
+ * into the cpu_set. If fail is not set cpu numbers that do not fit are
+ * ignored and 0 is returned instead.
+ */
+int cpulist_parse(const char *str, cpu_set_t *set, int fail);
+
+/** Returns human readable representation of the cpuset.
+ *
+ * From: https://github.com/mmalecki/util-linux/blob/master/lib/cpuset.c
+ *
+ * The output format is a list of CPUs with ranges (for example, "0,1,3-9").
+ */
+char * cpulist_create(char *str, size_t len, cpu_set_t *set);
 
 #ifdef WITH_JANSSON
   #include <jansson.h>

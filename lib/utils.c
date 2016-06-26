@@ -135,18 +135,113 @@ char * vstrcatf(char **dest, const char *fmt, va_list ap)
 	return *dest;
 }
 
-cpu_set_t integer_to_cpuset(uintmax_t set)
+void cpuset_from_integer(uintmax_t set, cpu_set_t *cset)
 {
-	cpu_set_t cset;
-
-	CPU_ZERO(&cset);
-
-	for (int i = 0; i < sizeof(set) * 8; i++) {
+	CPU_ZERO(cset);
+	for (int i = 0; i < MIN(sizeof(set), CPU_SETSIZE) * 8; i++) {
 		if (set & (1L << i))
-			CPU_SET(i, &cset);
+			CPU_SET(i, cset);
+	}
+}
+
+/* From: https://github.com/mmalecki/util-linux/blob/master/lib/cpuset.c */
+static const char *nexttoken(const char *q,  int sep)
+{
+	if (q)
+		q = strchr(q, sep);
+	if (q)
+		q++;
+	return q;
+}
+
+int cpulist_parse(const char *str, cpu_set_t *set, int fail)
+{
+	const char *p, *q;
+	int r = 0;
+
+	q = str;
+	CPU_ZERO(set);
+
+	while (p = q, q = nexttoken(q, ','), p) {
+		unsigned int a;	/* beginning of range */
+		unsigned int b;	/* end of range */
+		unsigned int s;	/* stride */
+		const char *c1, *c2;
+		char c;
+
+		if ((r = sscanf(p, "%u%c", &a, &c)) < 1)
+			return 1;
+		b = a;
+		s = 1;
+
+		c1 = nexttoken(p, '-');
+		c2 = nexttoken(p, ',');
+		if (c1 != NULL && (c2 == NULL || c1 < c2)) {
+			if ((r = sscanf(c1, "%u%c", &b, &c)) < 1)
+				return 1;
+			c1 = nexttoken(c1, ':');
+			if (c1 != NULL && (c2 == NULL || c1 < c2)) {
+				if ((r = sscanf(c1, "%u%c", &s, &c)) < 1)
+					return 1;
+				if (s == 0)
+					return 1;
+			}
+		}
+
+		if (!(a <= b))
+			return 1;
+		while (a <= b) {
+			if (fail && (a >= CPU_SETSIZE))
+				return 2;
+			CPU_SET(a, set);
+			a += s;
+		}
 	}
 
-	return cset;
+	if (r == 2)
+		return 1;
+	return 0;
+}
+
+char *cpulist_create(char *str, size_t len, cpu_set_t *set)
+{
+	size_t i;
+	char *ptr = str;
+	int entry_made = 0;
+
+	for (i = 0; i < CPU_SETSIZE; i++) {
+		if (CPU_ISSET(i, set)) {
+			int rlen;
+			size_t j, run = 0;
+			entry_made = 1;
+			for (j = i + 1; j < CPU_SETSIZE; j++) {
+				if (CPU_ISSET(j, set))
+					run++;
+				else
+					break;
+			}
+			if (!run)
+				rlen = snprintf(ptr, len, "%zd,", i);
+			else if (run == 1) {
+				rlen = snprintf(ptr, len, "%zd,%zd,", i, i + 1);
+				i++;
+			} else {
+				rlen = snprintf(ptr, len, "%zd-%zd,", i, i + run);
+				i += run;
+			}
+			if (rlen < 0 || (size_t) rlen + 1 > len)
+				return NULL;
+			ptr += rlen;
+			if (rlen > 0 && len > (size_t) rlen)
+				len -= rlen;
+			else
+				len = 0;
+		}
+	}
+	ptr -= entry_made;
+	*ptr = '\0';
+
+	return str;
 }
 
 #ifdef WITH_JANSSON
