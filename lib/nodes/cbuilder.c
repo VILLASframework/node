@@ -7,64 +7,109 @@
  **********************************************************************************/
 
 #include "node.h"
- 
-/* Constants from RSCAD */
-#define PI        3.1415926535897932384626433832795   // definition of PI
-#define TWOPI     6.283185307179586476925286766559    // definition of 2.0*PI
-#define E         2.71828182845904523536028747135266  // definition of E
-#define EINV      0.36787944117144232159552377016147  // definition of E Inverse (1/E)
-#define RT2       1.4142135623730950488016887242097   // definition of square root 2.0
-#define RT3       1.7320508075688772935274463415059   // definition of square root 3.0
-#define INV_ROOT2 0.70710678118654752440084436210485
+#include "log.h"
+#include "nodes/cbuilder.h"
 
-double TimeStep;
+struct list cbmodels;	/**< Table of existing CBuilder models */
 
-/* Add your inputs and outputs here */
-double IntfIn;
-double IntfOut;
+int cbuilder_parse(struct node *n, config_setting_t *cfg)
+{
+	struct cbuilder *cb = n->_vd;
+	config_setting_t *cfg_params;
 
-/* Add your parameters here */
-double R2; // Resistor [Ohm] in SS2
-double C2; // Capacitance [F] in SS2
- 
-#include "cbuilder/static.h"
-#include "cbuilder/ram_functions.h"
+	const char *model;
 
-static double getTimeStep() {
-	return TimeStep;
+	if (!config_setting_lookup_float(cfg, "timestep", &cb->timestep))
+		cerror(cfg, "CBuilder model requires 'timestep' setting");
+	
+	if (!config_setting_lookup_string(cfg, "model", &model))
+		cerror(cfg, "CBuilder model requires 'model' setting");
+	
+	cb->model = list_lookup(&cbmodels, model);
+	if (!cb->model)
+		cerror(cfg, "Unknown model '%s'", model);
+	
+	cfg_params = config_setting_get_member(cfg, "parameters");
+	if (cfg_params) {
+		if (!config_setting_is_array(cfg_params))
+			cerror(cfg_params, "Model parameters must be an array of numbers!");
+
+		cb->paramlen = config_setting_length(cfg_params);
+		cb->params = alloc(cb->paramlen * sizeof(double));
+		
+		for (int i = 0; i < cb->paramlen; i++)
+			cb->params[i] = config_setting_get_float_elem(cfg_params, i);
+	}
+
+	return 0;
 }
 
 int cbuilder_open(struct node *n)
 {
-	/* Initialize parameters */
-	R2 = 1;		/**< R2 = 1 Ohm */
-	C2 = 0.001;	/**< C2 = 1000 uF */
+	int ret;
+	struct cbuilder *cb = n->_vd;
 
-	TimeStep = 50e-6;
+	/* Initialize mutex and cv */
+	pthread_mutex_init(&cb->mtx, NULL);
+	pthread_cond_init(&cb->cv, NULL);
 
-	#include "cbuilder/ram.h"
+	/* Currently only a single timestep per model / instance is supported */
+	cb->step = 0;
+	cb->read = 0;
+
+	ret = cb->model->init(cb);
+	if (ret)
+		error("Failed to intialize CBuilder model %s", node_name(n));
+
+	cb->model->ram();
+
+	return 0;
+}
+
+int cbuilder_close(struct node *n)
+{
+	struct cbuilder *cb = n->_vd;
+	
+	pthread_mutex_destroy(&cb->mtx);
+	pthread_cond_destroy(&cb->cv);
 
 	return 0;
 }
 
 int cbuilder_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
+	struct cbuilder *cb = n->_vd;
 	struct sample *smp = smps[0];
 
-	smp->values[0].f = IntfOut;
+	/* Wait for completion of step */
+	pthread_mutex_lock(&cb->mtx);
+	while (cb->read >= cb->step)
+		pthread_cond_wait(&cb->cv, &cb->mtx);
+
+	smp->length = cb->model->read(&smp->values[0].f, 16);
+	smp->sequence = cb->step;
+
+	cb->read = cb->step;
+
+	pthread_mutex_unlock(&cb->mtx);
 
 	return 1;
 }
 
 int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
+	struct cbuilder *cb = n->_vd;
 	struct sample *smp = smps[0];
+	
+	pthread_mutex_lock(&cb->mtx);
 
-	/* Update inputs */
-	IntfIn = smp->values[0].f;
+	cb->model->write(&smp->values[0].f, smp->length);
+	cb->model->code();
 
-	/* Start calculation of 1 step */
-	#include "cbuilder/code.h"
+	cb->step++;
+
+	pthread_cond_signal(&cb->cv);
+	pthread_mutex_unlock(&cb->mtx);
 
 	return 1;
 }
@@ -73,8 +118,10 @@ static struct node_type vt = {
 	.name		= "cbuilder",
 	.description	= "RTDS CBuilder model",
 	.vectorize	= 1,
-	.size		= 0,
+	.size		= sizeof(struct cbuilder),
+	.parse		= cbuilder_parse,
 	.open		= cbuilder_open,
+	.close		= cbuilder_close,
 	.read		= cbuilder_read,
 	.write		= cbuilder_write,
 };

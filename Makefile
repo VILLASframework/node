@@ -104,10 +104,10 @@ LIB_LDLIBS += $(shell pkg-config --libs ${PKGS})
 
 ######## Targets ########
 
-.PHONY: all clean install release docker doc
+.PHONY: all clean install release docker doc models
 
 # Default target: build everything
-all: $(LIBS) $(TARGETS)
+all: $(LIBS) $(TARGETS) models
 
 # Dependencies for individual binaries
 fpga: LDLIBS += -lpci -lxil
@@ -156,6 +156,9 @@ docker:
 
 doc:
 	doxygen
+
+models:
+	$(MAKE) -C lib/cbmodels
 
 # Include auto-generated dependencies
 -include $(wildcard *.d)
