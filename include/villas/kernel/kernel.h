@@ -30,14 +30,17 @@
  */
 int kernel_is_rt();
 
-/** Check if kernel command line contains "isolcpus=" option.
+/** Get kernel cmdline parameter
  *
  * See https://www.kernel.org/doc/Documentation/kernel-parameters.txt
  *
- * @retval 0 Kernel has isolated cores.
- * @reval <>0 Kernel has no isolated cores.
+ * @param param The cmdline parameter to look for.
+ * @param buf The string buffer to which the parameter value will be copied to.
+ * @param len The length of the buffer \p value
+ * @retval 0 Parameter \p key was found and value was copied to \p value
+ * @reval <>0 Kernel was not booted with parameter \p key
  */
-int kernel_has_cmdline(const char *substr);
+int kernel_get_cmdline_param(const char *param, char *buf, size_t len);
 
 /** Check if kernel is version is sufficient
  *

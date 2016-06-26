@@ -89,7 +89,6 @@ int kernel_module_loaded(const char *module)
 	return ret;
 }
 
-
 int kernel_has_version(int maj, int min)
 {
 	struct utsname uts;
@@ -110,20 +109,42 @@ int kernel_is_rt()
 	return access(SYSFS_PATH "/kernel/realtime", R_OK);
 }
 
-int kernel_has_cmdline(const char *substr)
+int kernel_get_cmdline_param(const char *param, char *buf, size_t len)
 {
-	char cmd[512];
+	int ret;
+	char cmdline[512];
 
 	FILE *f = fopen(PROCFS_PATH "/cmdline", "r");
 	if (!f)
 		return -1;
-
-	if (!fgets(cmd, sizeof(cmd), f))
-		return -1;
 	
+	if (!fgets(cmdline, sizeof(cmdline), f))
+		goto out;
+
+	char *tok = strtok(cmdline, " \t");
+	do {
+		char key[128], value[128];
+
+		ret = sscanf(tok, "%127[^=]=%127s", key, value);
+		if (ret >= 1) {
+			if (ret >= 2)
+				debug(30, "Found kernel param: %s=%s", key, value);
+			else
+				debug(30, "Found kernel param: %s", key);
+
+			if (strcmp(param, key) == 0) {
+				if (ret >= 2 && buf)
+					strncpy(buf, value, len);
+
+				return 0; /* found */
+			}
+		}
+	} while((tok = strtok(NULL, " \t")));
+
+out:
 	fclose(f);
 
-	return strstr(cmd, substr) ? 0 : -1;
+	return -1; /* not found or error */
 }
 
 int kernel_get_cacheline_size()

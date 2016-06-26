@@ -568,9 +568,6 @@ void * vfio_map_dma(struct vfio_container *c, size_t size, size_t pgsize, uint64
 
 	pgbits = 8 * sizeof(unsigned long long) - __builtin_clzll((unsigned long long) pgsize) - 1;
 
-	debug(3, "pgsize = %#zx", pgsize);
-	debug(3, "defpgsize = %#zx", defpgsize);
-
 	flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT;
 	if (pgsize != defpgsize) /* Map as Hugepages */
 		flags |= MAP_HUGETLB | (pgbits << MAP_HUGE_SHIFT);
