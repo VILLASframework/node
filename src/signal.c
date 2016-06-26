@@ -55,6 +55,8 @@ int main(int argc, char *argv[])
 	int values = 1;
 	int limit = -1;	
 	int counter;
+	
+	log_init();
 
 	if (argc < 2) {
 		usage(argv[0]);
