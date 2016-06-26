@@ -19,6 +19,7 @@
 #include <villas/path.h>
 #include <villas/node.h>
 #include <villas/kernel/kernel.h>
+#include <villas/kernel/rt.h>
 
 #ifdef ENABLE_OPAL_ASYNC
   #include "opal.h"
@@ -27,8 +28,8 @@
 struct list paths;		/**< List of paths */
 struct list nodes;		/**< List of nodes */
 
-struct settings settings;	/**< The global configuration */
 static config_t config;		/**< libconfig handle */
+struct settings settings;	/**< The global configuration */
 
 static void quit()
 {
@@ -55,42 +56,6 @@ static void quit()
 	info(GRN("Goodbye!"));
 
 	_exit(EXIT_SUCCESS);
-}
-
-static void realtime_init()
-{ INDENT
-	int ret;
-
-	ret = kernel_has_cmdline("isolcpus");
-	if (ret)
-		warn("You should reserve some cores for the server (see 'isolcpus')");
-
-	ret = kernel_is_rt();
-	if (ret)
-		warn("We recommend to use an PREEMPT_RT patched kernel!");
-	
-	/* Use FIFO scheduler with real time priority */
-	if (settings.priority) {
-		struct sched_param param = {
-			.sched_priority = settings.priority
-		};
-
-		if (sched_setscheduler(0, SCHED_FIFO, &param))
-			serror("Failed to set real time priority");
-
-		debug(3, "Set task priority to %u", settings.priority);
-	}
-	warn("Use setting 'priority' to enable real-time scheduling!");
-
-	/* Pin threads to CPUs by setting the affinity */
-	if (settings.affinity) {
-		cpu_set_t cset = integer_to_cpuset(settings.affinity);
-		if (sched_setaffinity(0, sizeof(cset), &cset))
-			serror("Failed to set CPU affinity to '%#x'", settings.affinity);
-
-		debug(3, "Set affinity to %#x", settings.affinity);
-	}
-	warn("Use setting 'affinity' to pin process to isolated CPU cores!");
 }
 
 /* Setup exit handler */
@@ -161,7 +126,7 @@ int main(int argc, char *argv[])
 	}
 	
 	info("Initialize real-time system");
-	realtime_init();
+	rt_init(settings.affinity, settings.priority);
 
 	info("Initialize signals");
 	signals_init();

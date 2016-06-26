@@ -8,7 +8,7 @@ DEBUG = 1
 
 # Object files for libvillas
 LIB_OBJS = sample.o path.o node.o \
-	   kernel.o \
+	   kernel.o rt.o \
 	   list.o pool.o queue.o lstack.o \
 	   log.o \
 	   utils.o \

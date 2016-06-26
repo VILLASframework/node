@@ -18,6 +18,7 @@
 #include <villas/timing.h>
 #include <villas/utils.h>
 #include <villas/nodes/fpga.h>
+#include <villas/kernel/rt.h>
 #include <villas/kernel/pci.h>
 #include <villas/kernel/kernel.h>
 
@@ -86,6 +87,9 @@ int main(int argc, char *argv[])
 				usage(argv[0]);
 		}
 	}
+
+	info("Initialize real-time system");
+	rt_init(settings.affinity, settings.priority);
 
 	/* Initialize VILLASfpga card */
 	config_setting_t *cfg_root = config_root_setting(&config);
