@@ -29,7 +29,7 @@ V ?= 2
 GIT_REV=$(shell git rev-parse --short HEAD)
 
 # Compiler and linker flags
-LDLIBS  = -pthread -lrt -lm -lconfig -lvillas
+LDLIBS  = -pthread -lrt -lm -lconfig -lvillas -ldl
 
 LIB_LDFLAGS = -shared
 

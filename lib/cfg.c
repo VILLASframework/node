@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <libgen.h>
+#include <dlfcn.h>
 
 #include "utils.h"
 #include "list.h"
@@ -83,6 +84,26 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 	config_setting_lookup_int(cfg, "priority", &set->priority);
 	config_setting_lookup_int(cfg, "debug", &set->debug);
 	config_setting_lookup_float(cfg, "stats", &set->stats);
+	
+	/* Load plugins */
+	cfg_plugins = config_setting_get_member(cfg, "plugins");
+	if (cfg) {
+		if (!config_setting_is_array(cfg_plugins))
+			cerror(cfg_plugins, "Setting 'plugings' must be a list of strings");
+
+		for (int i = 0; i < config_setting_length(cfg_plugins); i++) {
+			void *handle;
+			const char *path;
+
+			path = config_setting_get_string_elem(cfg_plugins, i);
+			if (!path)
+				cerror(cfg_plugins, "Setting 'plugings' must be a list of strings");
+			
+			handle = dlopen(path, RTLD_NOW);
+			if (!handle)
+				error("Failed to load plugin %s", dlerror());
+		}
+	}
 
 	log_setlevel(set->debug, -1);
 
