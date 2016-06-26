@@ -14,10 +14,33 @@
 
 #include <xilinx/xaxis_switch.h>
 
+#include "list.h"
+
+/* Forward declaration */
+struct ip;
+
+struct sw_path {
+	const char *in;
+	const char *out;
+};
+
+struct sw {
+	XAxis_Switch inst;
+
+	int num_ports;
+	struct list paths;
+};
+
 struct ip;
 
 int switch_init(struct ip *c);
 
+void switch_destroy(struct ip *c);
+
+int switch_parse(struct ip *c);
+
 int switch_connect(struct ip *c, struct ip *mi, struct ip *si);
+
+int switch_disconnect(struct ip *c, struct ip *mi, struct ip *si);
 
 #endif /* _SWITCH_H_ */

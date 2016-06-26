@@ -20,6 +20,10 @@
 
 #define XAXIDMA_SR_SGINCL_MASK	0x00000008
 
+struct dma {
+	XAxiDma inst;
+};
+
 struct dma_mem {
 	uint32_t base_virt;
 	uint32_t base_phys;

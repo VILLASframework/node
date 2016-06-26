@@ -9,45 +9,69 @@
 #include <xilinx/xaxis_switch.h>
 #include <xilinx/xaxidma.h>
 
+#include "utils.h"
 #include "fpga/dma.h"
 #include "fpga/switch.h"
 #include "fpga/fifo.h"
 #include "fpga/rtds_axis.h"
+#include "fpga/timer.h"
 #include "fpga/model.h"
+#include "fpga/dft.h"
 #include "nodes/fpga.h"
+
+#define REGISTER_IP_TYPE(ip)			\
+__attribute__((constructor)) static		\
+void UNIQUE(__register_)() {		\
+	list_push(&ip_types, ip);		\
+}
+
+extern struct list ip_types;	/**< Table of existing FPGA IP core drivers */
 
 enum ip_state {
 	IP_STATE_UNKNOWN,
 	IP_STATE_INITIALIZED
 };
 
+struct ip_vlnv {
+	char *vendor;
+	char *library;
+	char *name;
+	char *version;
+};
+
+struct ip_type {
+	struct ip_vlnv vlnv;
+
+	int (*parse)(struct ip *c);
+	int (*init)(struct ip *c);
+	void (*dump)(struct ip *c);
+	void (*destroy)(struct ip *c);
+};
+
 struct ip {
 	char *name;
-	
-	struct {
-		char *vendor;
-		char *library;
-		char *name;
-		char *version;
-	} vlnv;
+
+	struct ip_vlnv vlnv;
 
 	uintptr_t baseaddr;
 	uintptr_t baseaddr_axi4;
-	int irq;
-	int port;
+
+	int port, irq;
 
 	enum ip_state state;
 
+	struct ip_type *_vt;
+
 	union {
 		struct model model;
-		struct bram {
+		struct {
 			int size;
 		} bram;
-
-		XTmrCtr timer;
-		XLlFifo fifo_mm;
-		XAxiDma dma;
-		XAxis_Switch sw;
+		struct timer timer;
+		struct fifo fifo;
+		struct dma dma;
+		struct sw sw;
+		struct dft dft;
 	};
 	
 	struct fpga *card;

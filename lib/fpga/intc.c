@@ -8,8 +8,6 @@
 
 #include <unistd.h>
  
-#include <xilinx/xintc.h>
-
 #include "log.h"
 #include "nodes/fpga.h"
 #include "kernel/vfio.h" 
@@ -20,6 +18,9 @@ int intc_init(struct ip *c)
 {
 	struct fpga *f = c->card;
 	int ret;
+
+	if (c != f->intc)
+		error("There can be only one interrupt controller per FPGA");
 
 	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
 
@@ -40,38 +41,78 @@ int intc_init(struct ip *c)
 	XIntc_Out32(base + XIN_IER_OFFSET, 0x00000000); /* Disable all IRQs by default */
 	XIntc_Out32(base + XIN_MER_OFFSET, XIN_INT_HARDWARE_ENABLE_MASK | XIN_INT_MASTER_ENABLE_MASK);
 
+	debug(4, "FPGA: enabled interrupts");
+	
 	return 0;
 }
 
-uint32_t intc_enable(struct ip *c, uint32_t mask)
+int intc_enable(struct ip *c, uint32_t mask, int poll)
 {
 	struct fpga *f = c->card;
 
+	uint32_t ier, imr;
 	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
-	uint32_t ier = XIntc_In32(base + XIN_IER_OFFSET);
 
-	XIntc_Out32(base + XIN_IER_OFFSET, ier | mask);
+	/* Current state of INTC */
+	ier = XIntc_In32(base + XIN_IER_OFFSET);
+	imr = XIntc_In32(base + XIN_IMR_OFFSET);
 
-	return ier;
+	/* Clear pending IRQs */
+	XIntc_Out32(base + XIN_IAR_OFFSET, mask);
+	
+	if (poll)
+		XIntc_Out32(base + XIN_IMR_OFFSET, imr & ~mask);
+	else
+		XIntc_Out32(base + XIN_IER_OFFSET, ier | mask);
+
+	debug(8, "FPGA: Interupt enabled: %#x", mask);
+
+	return 0;
 }
 
-void intc_disable(struct ip *c, uint32_t mask)
+int intc_disable(struct ip *c, uint32_t mask)
 {
 	struct fpga *f = c->card;
 
 	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
 
 	XIntc_Out32(base + XIN_IER_OFFSET, XIntc_In32(base + XIN_IER_OFFSET) & ~mask);
+
+	return 0;
 }
 
-uint64_t intc_wait(struct fpga *f, int irq)
+uint64_t intc_wait(struct ip *c, int irq, int poll)
 {
-	ssize_t ret;
-	uint64_t cnt;
+	struct fpga *f = c->card;
 
-	ret = read(f->vd.msi_efds[irq], &cnt, sizeof(cnt));
-	if (ret != sizeof(cnt))
-		return 0;
+	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
+	uint64_t cnt;
+	
+	if (poll) {
+		uint32_t mask = 1 << irq;
+		uint32_t isr;
+
+		do { /* Wait for IRQ to occur */
+			isr = XIntc_In32(base + XIN_ISR_OFFSET);
+		} while (!(isr & mask));
+
+		/* Acknowlege */
+		XIntc_Out32(base + XIN_IAR_OFFSET, mask);
+		
+		cnt = 1;
+	}
+	else {
+		ssize_t ret = read(f->vd.msi_efds[irq], &cnt, sizeof(cnt));
+		if (ret != sizeof(cnt))
+			return 0;
+	}
 
 	return cnt;
 }
+
+static struct ip_type ip = {
+	.vlnv = { "acs.eonerc.rwth-aachen.de", "user", "axi_pcie_intc", NULL },
+	.init = intc_init
+};
+
+REGISTER_IP_TYPE(&ip)

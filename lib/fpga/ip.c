@@ -12,6 +12,8 @@
 
 #include "config-fpga.h"
 
+struct list ip_types;	/**< Table of existing FPGA IP core drivers */
+
 struct ip * ip_vlnv_lookup(struct list *l, const char *vendor, const char *library, const char *name, const char *version)
 {
 	list_foreach(struct ip *c, l) {
@@ -46,60 +48,24 @@ int ip_vlnv_parse(struct ip *c, const char *vlnv)
 
 int ip_init(struct ip *c)
 {
-	struct fpga *f = c->card;
 	int ret;
 
-	if      (ip_vlnv_match(c, "xilinx.com", "ip", "axis_interconnect", NULL)) {
-		if (c != f->sw)
-			error("There can be only one AXI4-Stream interconnect per FPGA");
-
-		ret = switch_init(c);
-	}
-	else if (ip_vlnv_match(c, "xilinx.com", "ip", "axi_fifo_mm_s", NULL)) {
-		ret = fifo_init(c);
-	}
-	else if (ip_vlnv_match(c, "xilinx.com", "ip", "axi_dma", NULL)) {
-		ret = dma_init(c);
-	}
-	else if (ip_vlnv_match(c, "xilinx.com", "ip", "axi_timer", NULL)) {
-		XTmrCtr_Config tmr_cfg = {
-			.BaseAddress = (uintptr_t) c->card->map + c->baseaddr,
-			.SysClockFreqHz = AXI_HZ
-		};
-
-		XTmrCtr_CfgInitialize(&c->timer, &tmr_cfg, (uintptr_t) c->card->map + c->baseaddr);
-		XTmrCtr_InitHw(&c->timer);
-	}
-	else if (ip_vlnv_match(c, "xilinx.com", "ip", "axi_gpio", NULL)) {
-		if (strstr(c->name, "reset")) {
-			if (f->reset)
-				error("There can be only one reset controller per FPGA");
-			
-			f->reset = c;
-		}
-	}
-	else if (ip_vlnv_match(c, "acs.eonerc.rwth-aachen.de", "user", "axi_pcie_intc", NULL)) {
-		if (c != f->intc)
-			error("There can be only one interrupt controller per FPGA");
-
-		ret = intc_init(c);
-	}
-	else if (ip_vlnv_match(c, NULL, "hls", NULL, NULL) ||
-		 ip_vlnv_match(c, NULL, "sysgen", NULL, NULL)) {
-		ret = model_init(c);
-	}
+	ret = c->_vt && c->_vt->init ? c->_vt->init(c) : 0;
+	if (ret)
+		error("Failed to intialize IP core: %s", c->name);
 
 	if (ret == 0)
 		c->state = IP_STATE_INITIALIZED;
+	
+	debug(8, "IP Core %s initalized (%u)", c->name, ret);
 
 	return ret;
 }
 
 void ip_destroy(struct ip *c)
 {
-	if (ip_vlnv_match(c, NULL, "hls", NULL, NULL) ||
-	    ip_vlnv_match(c, NULL, "sysgen", NULL, NULL))
-		model_destroy(c);
+	if (c->_vt && c->_vt->destroy)
+		c->_vt->destroy(c);
 
 	free(c->vlnv.vendor);
 	free(c->vlnv.library);
@@ -113,15 +79,17 @@ void ip_dump(struct ip *c)
 		c->name, c->vlnv.vendor, c->vlnv.library, c->vlnv.name, c->vlnv.version, 
 		c->baseaddr, c->irq, c->port);
 
-	if (ip_vlnv_match(c, NULL, "hls", NULL, NULL) ||
-	    ip_vlnv_match(c, NULL, "sysgen", NULL, NULL))
-		model_dump(c);
+	if (c->_vt && c->_vt->dump)
+		c->_vt->dump(c);
 }
 
 int ip_parse(struct ip *c, config_setting_t *cfg)
 {
+	int ret;
 	const char *vlnv;
 	long long baseaddr;
+
+	c->cfg = cfg;
 
 	c->name = config_setting_name(cfg);
 	if (!c->name)
@@ -130,38 +98,16 @@ int ip_parse(struct ip *c, config_setting_t *cfg)
 	if (!config_setting_lookup_string(cfg, "vlnv", &vlnv))
 		cerror(cfg, "IP %s is missing the VLNV identifier", c->name);
 
-	ip_vlnv_parse(c, vlnv);
-	
-	if      (ip_vlnv_match(c, "xilinx.com", "ip", "axis_interconnect", NULL)) {
-		int numports;
+	ret = ip_vlnv_parse(c, vlnv);
+	if (ret)
+		cerror(cfg, "Failed to parse VLNV identifier");
 
-		if (!config_setting_lookup_int(cfg, "numports", &numports))
-			cerror(cfg, "Switch IP '%s' requires 'numports' option", c->name);
-		
-		c->sw.Config.MaxNumSI = c->sw.Config.MaxNumMI = numports;
-	}
-	else if (ip_vlnv_match(c, "xilinx.com", "ip", "axi_bram_ctrl", NULL)) {
-		if (!config_setting_lookup_int(cfg, "size", &c->bram.size))
-			cerror(cfg, "Block RAM requires 'size' option");
-	}
-	else if (ip_vlnv_match(c, "xilinx.com", "ip", "axi_fifo_mm_s", NULL)) {
-		if (config_setting_lookup_int64(cfg, "baseaddr_axi4", &baseaddr))
-			c->baseaddr_axi4 = baseaddr;
-		else
-			c->baseaddr_axi4 = -1;
-	}
-	else if (ip_vlnv_match(c, NULL, "hls", NULL, NULL) ||
-		 ip_vlnv_match(c, NULL, "sysgen", NULL, NULL)) {
-
-		if      (strcmp(c->vlnv.library, "hls") == 0)
-			c->model.type = MODEL_TYPE_HLS;
-		else if (strcmp(c->vlnv.library, "sysgen") == 0)
-			c->model.type = MODEL_TYPE_XSG;
-		else
-			cerror(cfg, "Invalid model type: %s", c->vlnv.library);
-
-		if (!config_setting_lookup_string(cfg, "xml", (const char **) &c->model.xml))
-			c->model.xml = NULL;
+	/* Try to find matching IP type */
+	list_foreach(struct ip_type *t, &ip_types) {
+		if (ip_vlnv_match(c, t->vlnv.vendor, t->vlnv.library, t->vlnv.name, t->vlnv.version)) {
+			c->_vt = t;
+			break;
+		}
 	}
 
 	/* Common settings */
@@ -175,7 +121,10 @@ int ip_parse(struct ip *c, config_setting_t *cfg)
 	if (!config_setting_lookup_int(cfg, "port", &c->port))
 		c->port = -1;
 
-	c->cfg = cfg;
+	/* Type sepecific settings */
+	ret = c->_vt && c->_vt->parse ? c->_vt->parse(c) : 0;
+	if (ret)
+		error("Failed to parse settings for IP core '%s'", c->name);
 
 	return 0;
 }

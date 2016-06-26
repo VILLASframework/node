@@ -10,6 +10,7 @@
 
 #include <sys/types.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include <villas/log.h>
 
@@ -42,7 +43,7 @@ int dma_ping_pong(struct ip *c, char *src, char *dst, size_t len)
 
 int dma_write(struct ip *c, char *buf, size_t len)
 {
-	XAxiDma *xdma = &c->dma;
+	XAxiDma *xdma = &c->dma.inst;
 
 	return xdma->HasSg
 		? dma_sg_write(c, buf, len)
@@ -51,7 +52,7 @@ int dma_write(struct ip *c, char *buf, size_t len)
 
 int dma_read(struct ip *c, char *buf, size_t len)
 {
-	XAxiDma *xdma = &c->dma;
+	XAxiDma *xdma = &c->dma.inst;
 
 	return xdma->HasSg
 		? dma_sg_read(c, buf, len)
@@ -60,7 +61,7 @@ int dma_read(struct ip *c, char *buf, size_t len)
 
 int dma_read_complete(struct ip *c, char **buf, size_t *len)
 {
-	XAxiDma *xdma = &c->dma;
+	XAxiDma *xdma = &c->dma.inst;
 
 	return xdma->HasSg
 		? dma_sg_read_complete(c, buf, len)
@@ -69,7 +70,7 @@ int dma_read_complete(struct ip *c, char **buf, size_t *len)
 
 int dma_write_complete(struct ip *c, char **buf, size_t *len)
 {
-	XAxiDma *xdma = &c->dma;
+	XAxiDma *xdma = &c->dma.inst;
 
 	return xdma->HasSg
 		? dma_sg_write_complete(c, buf, len)
@@ -78,7 +79,7 @@ int dma_write_complete(struct ip *c, char **buf, size_t *len)
 
 int dma_sg_write(struct ip *c, char *buf, size_t len)
 {
-	XAxiDma *xdma = &c->dma;
+	XAxiDma *xdma = &c->dma.inst;
 	XAxiDma_BdRing *ring = XAxiDma_GetTxRing(xdma);
 	XAxiDma_Bd *bd;
 
@@ -129,7 +130,7 @@ int dma_sg_write(struct ip *c, char *buf, size_t len)
 
 int dma_sg_read(struct ip *c, char *buf, size_t len)
 {
-	XAxiDma *xdma = &c->dma;
+	XAxiDma *xdma = &c->dma.inst;
 	XAxiDma_BdRing *ring = XAxiDma_GetRxRing(xdma);
 	XAxiDma_Bd *bd;
 
@@ -180,22 +181,22 @@ int dma_sg_read(struct ip *c, char *buf, size_t len)
 
 int dma_sg_write_complete(struct ip *c, char **buf, size_t *len)
 {
-	XAxiDma *xdma = &c->dma;
+	XAxiDma *xdma = &c->dma.inst;
 	XAxiDma_BdRing *ring = XAxiDma_GetTxRing(xdma);
 	XAxiDma_Bd *bd;
 
 	int processed, ret;
 
-	
 	/* Wait until the one BD TX transaction is done */
-	while ((processed = XAxiDma_BdRingFromHw(ring, XAXIDMA_ALL_BDS, &bd)) == 0) {
-//		if (c->irq >= 0) {
-//			intc_wait(c->card, c->irq);
-//			XAxiDma_IntrAckIrq(xmda, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
-//		}
-//		else
-			__asm__ ("nop");
-	}
+	while ((processed = XAxiDma_BdRingFromHw(ring, XAXIDMA_ALL_BDS, &bd)) == 0)
+		pthread_testcancel();
+	XAxiDma_IntrAckIrq(xdma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
+	
+	if (len != NULL)
+		*len = XAxiDma_BdGetActualLength(bd, XAXIDMA_MAX_TRANSFER_LEN);
+
+	if (buf != NULL)
+		*buf = (char *) (uintptr_t) XAxiDma_BdGetBufAddr(bd);
 
 	/* Free all processed TX BDs for future transmission */
 	ret = XAxiDma_BdRingFree(ring, processed, bd);
@@ -209,7 +210,7 @@ int dma_sg_write_complete(struct ip *c, char **buf, size_t *len)
 
 int dma_sg_read_complete(struct ip *c, char **buf, size_t *len)
 {
-	XAxiDma *xdma = &c->dma;
+	XAxiDma *xdma = &c->dma.inst;
 	XAxiDma_BdRing *ring = XAxiDma_GetRxRing(xdma);
 	XAxiDma_Bd *bd;
 
@@ -218,14 +219,9 @@ int dma_sg_read_complete(struct ip *c, char **buf, size_t *len)
 	if (!xdma->HasSg)
 		return -1;
 
-	while (XAxiDma_BdRingFromHw(ring, 1, &bd) == 0) {
-//		if (irq >= 0) {
-//			intc_wait(c->card, c->irq + 1);
-//			XAxiDma_IntrAckIrq(xdma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
-//		}
-//		else
-			__asm__("nop");
-	}
+	while (XAxiDma_BdRingFromHw(ring, 1, &bd) == 0)
+		pthread_testcancel();
+	XAxiDma_IntrAckIrq(xdma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
 
 	if (len != NULL)
 		*len = XAxiDma_BdGetActualLength(bd, XAXIDMA_MAX_TRANSFER_LEN);
@@ -243,7 +239,7 @@ int dma_sg_read_complete(struct ip *c, char **buf, size_t *len)
 
 int dma_simple_read(struct ip *c, char *buf, size_t len)
 {
-	XAxiDma *xdma = &c->dma;
+	XAxiDma *xdma = &c->dma.inst;
 	XAxiDma_BdRing *ring = XAxiDma_GetRxRing(xdma);
 
 	buf = virt_to_dma(buf, c->card->dma);
@@ -263,7 +259,7 @@ int dma_simple_read(struct ip *c, char *buf, size_t len)
 		if ((uintptr_t) buf & mask)
 			return -4;
 	}
-
+	
 	if(!(XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_SR_OFFSET) & XAXIDMA_HALTED_MASK)) {
 		if (XAxiDma_Busy(xdma, XAXIDMA_DEVICE_TO_DMA))
 			return -5;
@@ -281,7 +277,7 @@ int dma_simple_read(struct ip *c, char *buf, size_t len)
 
 int dma_simple_write(struct ip *c, char *buf, size_t len)
 {
-	XAxiDma *xdma = &c->dma;
+	XAxiDma *xdma = &c->dma.inst;
 	XAxiDma_BdRing *ring = XAxiDma_GetTxRing(xdma);
 
 	buf = virt_to_dma(buf, c->card->dma);
@@ -320,25 +316,42 @@ int dma_simple_write(struct ip *c, char *buf, size_t len)
 
 int dma_simple_read_complete(struct ip *c, char **buf, size_t *len)
 {
-	XAxiDma *xdma = &c->dma;
+	XAxiDma *xdma = &c->dma.inst;
 	XAxiDma_BdRing *ring = XAxiDma_GetRxRing(xdma);
 
-	while (!(XAxiDma_IntrGetIrq(xdma, XAXIDMA_DEVICE_TO_DMA) & XAXIDMA_IRQ_IOC_MASK));
-	
-//	if(!(XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_SR_OFFSET) & XAXIDMA_HALTED_MASK)) {
-//		if (XAxiDma_Busy(xdma, XAXIDMA_DMA_TO_DEVICE))
-//			return -5;
-//	}
+	while (!(XAxiDma_IntrGetIrq(xdma, XAXIDMA_DEVICE_TO_DMA) & XAXIDMA_IRQ_IOC_MASK))
+		pthread_testcancel();
+	XAxiDma_IntrAckIrq(xdma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
+
+	if (len)
+		*len = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET);
+
+	if (buf) {
+		*buf = (char *) (uintptr_t) XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_DESTADDR_OFFSET);
+		if (xdma->AddrWidth > 32)
+			*buf += XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_DESTADDR_MSB_OFFSET);
+	}
 
 	return 0;
 }
 
 int dma_simple_write_complete(struct ip *c, char **buf, size_t *len)
 {
-	XAxiDma *xdma = &c->dma;
-	XAxiDma_BdRing *ring = XAxiDma_GetRxRing(xdma);
+	XAxiDma *xdma = &c->dma.inst;
+	XAxiDma_BdRing *ring = XAxiDma_GetTxRing(xdma);
 
-	while (!(XAxiDma_IntrGetIrq(xdma, XAXIDMA_DEVICE_TO_DMA) & XAXIDMA_IRQ_IOC_MASK));
+	while (!(XAxiDma_IntrGetIrq(xdma, XAXIDMA_DMA_TO_DEVICE) & XAXIDMA_IRQ_IOC_MASK))
+		pthread_testcancel();
+	XAxiDma_IntrAckIrq(xdma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
+
+	if (len)
+		*len = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET);
+
+	if (buf) {
+		*buf = (char *) (uintptr_t) XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_SRCADDR_OFFSET);
+		if (xdma->AddrWidth > 32)
+			*buf += XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_SRCADDR_MSB_OFFSET);
+	}
 
 	return 0;
 }
@@ -362,7 +375,7 @@ static int dma_setup_ring(XAxiDma_BdRing *ring, struct dma_mem *bdbuf)
 
 	ret = XAxiDma_BdRingCreate(ring, bdbuf->base_phys, bdbuf->base_virt, XAXIDMA_BD_MINIMUM_ALIGNMENT, cnt);
 	if (ret != XST_SUCCESS) {
-		info("RX create BD ring failed %d", ret);
+		info("RX create BD ring failed (%d)", ret);
 		return XST_FAILURE;
 	}
 
@@ -386,8 +399,7 @@ static int dma_setup_ring(XAxiDma_BdRing *ring, struct dma_mem *bdbuf)
 int dma_init_rings(struct ip *c, struct dma_mem *bd)
 {
 	int ret;
-	XAxiDma *xdma = &c->dma;
-
+	XAxiDma *xdma = &c->dma.inst;
 
 	/* Split BD memory equally between Rx and Tx rings */
 	struct dma_mem bd_rx = {
@@ -415,7 +427,7 @@ int dma_init_rings(struct ip *c, struct dma_mem *bd)
 int dma_init(struct ip *c)
 {
 	int ret, sg;
-	XAxiDma *xdma = &c->dma;
+	XAxiDma *xdma = &c->dma.inst;
 	
 	/* Guess DMA type */
 	sg = (XAxiDma_In32((uintptr_t) c->card->map + c->baseaddr + XAXIDMA_TX_OFFSET+ XAXIDMA_SR_OFFSET) &
@@ -458,3 +470,10 @@ int dma_init(struct ip *c)
 
 	return 0;
 }
+
+static struct ip_type ip = {
+	.vlnv = { "xilinx.com", "ip", "axi_dma", NULL },
+	.init = dma_init
+};
+
+REGISTER_IP_TYPE(&ip)

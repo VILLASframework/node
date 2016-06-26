@@ -42,7 +42,7 @@ static int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameter
 {
 #define copy_string(off) strndup((char *) (data + (off)), (length - (off)) * 4);
 	int j;
-	struct model_param *p;
+	struct model_param p, *e;
 	struct model_info *i;
 
 	/* Check magic */
@@ -59,17 +59,21 @@ static int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameter
 			case XSG_BLOCK_GATEWAY_OUT:
 				if (length < 4)
 					break; /* block is to small to describe a gateway */
-			
-				p = alloc(sizeof(*p));
 
-				p->name          =  copy_string(3);
-				p->default_value.flt =  *((float *) &data[1]);
-				p->offset        = data[2];
-				p->direction     = type & 0x1;
-				p->type          = (data[0] >> 0) & 0xFF;
-				p->binpt         = (data[0] >> 8) & 0xFF;
+				memset(&p, 0, sizeof(p));
 
-				list_push(parameters, p);
+				p.name          =  copy_string(3);
+				p.default_value.flt =  *((float *) &data[1]);
+				p.offset        = data[2];
+				p.direction     = type & 0x1;
+				p.type          = (data[0] >> 0) & 0xFF;
+				p.binpt         = (data[0] >> 8) & 0xFF;
+				
+				e = list_lookup(parameters, p.name);
+				if (e)
+					model_param_update(e, &p);
+				else
+					list_push(parameters, memdup(&p, sizeof(p)));
 				break;
 
 			case XSG_BLOCK_INFO:
@@ -125,13 +129,35 @@ static int model_xsg_map_read(uint32_t *map, size_t len, void *baseaddr)
 	return i;
 }
 
-static int model_init_from_xml(struct ip *c)
+int model_parse(struct ip *c)
 {
-	//struct model *m = &c->model;
+	struct model *m = &c->model;
+	struct model_param p;
+
+	config_setting_t *cfg_params, *cfg_param;
 	
-	/** @todo Implement */
-	
-	return -1;
+	if      (strcmp(c->vlnv.library, "hls") == 0)
+		c->model.type = MODEL_TYPE_HLS;
+	else if (strcmp(c->vlnv.library, "sysgen") == 0)
+		c->model.type = MODEL_TYPE_XSG;
+	else
+		cerror(c->cfg, "Invalid model type: %s", c->vlnv.library);
+
+	cfg_params = config_setting_get_member(c->cfg, "parameters");
+	if (cfg_params) {
+		for (int i = 0; i < config_setting_length(cfg_params); i++) {
+			cfg_param = config_setting_get_elem(cfg_params, i);
+
+			memset(&p, 0, sizeof(p));
+
+			p.name = config_setting_name(cfg_param);
+			p.default_value.flt = config_setting_get_float(cfg_param);
+
+			list_push(&m->parameters, memdup(&p, sizeof(p)));
+		}
+	}
+
+	return 0;
 }
 
 static int model_init_from_xsg_map(struct model *m, void *baseaddr)
@@ -169,18 +195,15 @@ int model_init(struct ip *c)
 	list_init(&m->parameters);
 	list_init(&m->infos);
 
-	if (m->xml)
-		ret = model_init_from_xml(c);
-	else if (ip_vlnv_match(c, NULL, "sysgen", NULL, NULL))
+	if (ip_vlnv_match(c, NULL, "sysgen", NULL, NULL))
 		ret = model_init_from_xsg_map(m, c->card->map + c->baseaddr);
 	else
 		ret = 0;
-	
-	list_foreach(struct model_param *p, &m->parameters)
-		p->ip = c;
-		
+
 	/* Set default values for parameters */
 	list_foreach(struct model_param *p, &m->parameters) {
+		p->ip = c;
+
 		if (p->direction == MODEL_PARAM_IN) {
 			model_param_write(p, p->default_value.flt);
 			info("Set parameter '%s' updated to default value: %f", p->name, p->default_value.flt);
@@ -316,3 +339,35 @@ int model_param_remove(struct ip *c, const char *name)
 	
 	return 0;
 }
+
+int model_param_update(struct model_param *p, struct model_param *u)
+{
+	if (strcmp(p->name, u->name) != 0)
+		return -1;
+
+	p->direction = u->direction;
+	p->type = u->type;
+	p->binpt = u->binpt;
+	p->offset = u->offset;
+
+	return 0;
+}
+
+static struct ip_type ip_hls = {
+	.vlnv = { NULL, "hls", NULL, NULL },
+	.init = model_init,
+	.destroy = model_destroy,
+	.dump = model_dump,
+	.parse = model_parse
+};
+
+static struct ip_type ip_xsg = {
+	.vlnv = { NULL, "sysgen", NULL, NULL },
+	.init = model_init,
+	.destroy = model_destroy,
+	.dump = model_dump,
+	.parse = model_parse
+};
+
+REGISTER_IP_TYPE(&ip_hls)
+REGISTER_IP_TYPE(&ip_xsg)

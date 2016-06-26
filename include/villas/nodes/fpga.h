@@ -50,12 +50,15 @@ struct fpga {
 	struct ip *intc;
 	struct ip *reset;
 	struct ip *sw;
+	
+	config_setting_t *cfg;
 };
 
 struct fpga_dm {
 	struct ip *ip;
+	const char *ip_name;
 
-	bool use_irqs;
+	int use_irqs;
 
 	enum {
 		FPGA_DM_DMA,

@@ -17,6 +17,12 @@
 #include <xilinx/xstatus.h>
 #include <xilinx/xllfifo.h>
 
+struct fifo {
+	XLlFifo inst;
+	
+	uint32_t baseaddr_axi4;
+};
+
 /* Forward declaration */
 struct ip;
 

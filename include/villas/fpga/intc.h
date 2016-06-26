@@ -9,12 +9,14 @@
 #ifndef _INTC_H_
 #define _INTC_H_
 
+#include <xilinx/xintc.h>
+
 int intc_init(struct ip *c);
 
-uint32_t intc_enable(struct ip *c, uint32_t mask);
+int intc_enable(struct ip *c, uint32_t mask, int poll);
 
-void intc_disable(struct ip *c, uint32_t mask);
+int intc_disable(struct ip *c, uint32_t mask);
 
-uint64_t intc_wait(struct fpga *f, int irq);
+uint64_t intc_wait(struct ip *c, int irq, int poll);
 
 #endif /* _INTC_H_ */

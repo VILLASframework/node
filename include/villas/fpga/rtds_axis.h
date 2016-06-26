@@ -10,6 +10,9 @@
 #ifndef _RTDS_AXIS_H_
 #define _RTDS_AXIS_H_
 
+/* Forward declaration */
+struct ip;
+
 #define RTDS_HZ				100000000 // 100 MHz
 
 #define RTDS_AXIS_MAX_TX		64	/**< The amount of values which is supported by the vfpga card */
@@ -23,8 +26,7 @@
 #define RTDS_AXIS_TS_PERIOD_OFFSET	0x10	/**< Period in clock cycles of previous timestep (read-only). */
 #define RTDS_AXIS_COALESC_OFFSET	0x14	/**< IRQ Coalescing register (read/write). */
 #define RTDS_AXIS_VERSION_OFFSET	0x18	/**< 16 bit version field passed back to the rack for version reporting (visible from “status” command, read/write). */
-#define RTDS_AXIS_MRATE_RTDS2AXIS	0x1C	/**< */
-#define RTDS_AXIS_MRATE_AXIS2RTDS	0x20	/**< */
+#define RTDS_AXIS_MRATE			0x1C	/**< Multi-rate register */
 
 /* Status register bits */
 #define RTDS_AXIS_SR_CARDDETECTED	(1 << 0)/**< ‘1’ when RTDS software has detected and configured card. */
@@ -36,8 +38,8 @@
 /* Control register bits */
 #define RTDS_AXIS_CR_DISABLE_LINK	0	/**< Disable SFP TX when set */
 
-void rtds_axis_dump(char *baseaddr);
+void rtds_axis_dump(struct ip *c);
 
-double rtds_axis_dt(char *baseaddr);
+double rtds_axis_dt(struct ip *c);
 
 #endif /* _RTDS_AXIS_H_ */

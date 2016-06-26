@@ -12,4 +12,8 @@
 #ifndef _TIMER_H_
 #define _TIMER_H_
 
+struct timer {
+	XTmrCtr inst;
+};
+
 #endif

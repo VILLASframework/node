@@ -54,7 +54,7 @@ union model_param_value {
 
 struct model {
 	enum model_type type;		/**< Either HLS or XSG model */
-	char *xml;			/**< An optional path to a XML file which describes this model */
+
 	struct list parameters;		/**< List of model parameters. */
 	struct list infos;		/**< A list of key / value pairs with model details */
 
@@ -91,6 +91,9 @@ struct model_param {
 /** Initialize a model */
 int model_init(struct ip *c);
 
+/** Parse model */
+int model_parse(struct ip *c);
+
 /** Destroy a model */
 void model_destroy(struct ip *c);
 
@@ -117,5 +120,7 @@ int model_param_read(struct model_param *p, double *v);
  * GatewayIn/Out block.
  */
 int model_param_write(struct model_param *p, double v);
+
+int model_param_update(struct model_param *p, struct model_param *u);
 
 #endif /* _MODEL_H_ */

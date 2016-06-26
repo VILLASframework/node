@@ -18,6 +18,7 @@
 #include "nodes/fpga.h"
 
 #include "fpga/ip.h"
+#include "fpga/intc.h"
 
 #include "config-fpga.h"
 #include "utils.h"
@@ -38,7 +39,7 @@ int fpga_reset(struct fpga *f)
 
 	uint32_t *rst_reg = (uint32_t *) (f->map + f->reset->baseaddr);
 
-	info("Reset fpga");
+	debug(3, "FPGA: reset");
 	rst_reg[0] = 1;
 
 	usleep(100000);
@@ -48,9 +49,7 @@ int fpga_reset(struct fpga *f)
 	if (ret != sizeof(state))
 		return -1;
 
-	info("Reset status = %#x", *rst_reg);
-
-	return 0;
+	return  rst_reg[0];
 }
 
 void fpga_dump(struct fpga *f)
@@ -88,27 +87,27 @@ struct fpga * fpga_get()
 	return &fpga;
 }
 
-int fpga_parse_card(struct fpga *v, int argc, char * argv[], config_setting_t *cfg)
+int fpga_parse_card(struct fpga *f, int argc, char * argv[], config_setting_t *cfg)
 {
 	int ret;
 	const char *slot, *id, *err;
-	config_setting_t *cfg_fpga, *cfg_ips, *cfg_slot, *cfg_id;
+	config_setting_t *cfg_ips, *cfg_slot, *cfg_id;
 
 	/* Default values */
-	v->filter.vendor = PCI_VID_XILINX;
-	v->filter.device = PCI_PID_VFPGA;
+	f->filter.vendor = PCI_VID_XILINX;
+	f->filter.device = PCI_PID_VFPGA;
 
-	cfg_fpga = config_setting_get_member(cfg, "fpga");
-	if (!cfg_fpga)
+	f->cfg = config_setting_get_member(cfg, "fpga");
+	if (!f->cfg)
 		cerror(cfg, "Config file is missing VILLASfpga configuration");
 
-	config_setting_lookup_bool(cfg_fpga, "do_reset", &v->do_reset);
+	config_setting_lookup_bool(f->cfg, "do_reset", &f->do_reset);
 
-	cfg_slot = config_setting_get_member(cfg_fpga, "slot");
+	cfg_slot = config_setting_get_member(f->cfg, "slot");
 	if (cfg_slot) {
 		slot = config_setting_get_string(cfg_slot);
 		if (slot) {
-			err = pci_filter_parse_slot(&v->filter, (char*) slot);
+			err = pci_filter_parse_slot(&f->filter, (char*) slot);
 			if (err)
 				cerror(cfg_slot, "%s", err);
 		}
@@ -116,11 +115,11 @@ int fpga_parse_card(struct fpga *v, int argc, char * argv[], config_setting_t *c
 			cerror(cfg_slot, "Invalid slot format");
 	}
 
-	cfg_id = config_setting_get_member(cfg_fpga, "id");
+	cfg_id = config_setting_get_member(f->cfg, "id");
 	if (cfg_id) {
 		id = config_setting_get_string(cfg_id);
 		if (id) {
-			err = pci_filter_parse_id(&v->filter, (char*) id);
+			err = pci_filter_parse_id(&f->filter, (char*) id);
 			if (err)
 				cerror(cfg_id, "%s", err);
 		}
@@ -128,22 +127,22 @@ int fpga_parse_card(struct fpga *v, int argc, char * argv[], config_setting_t *c
 			cerror(cfg_slot, "Invalid id format");
 	}
 	
-	cfg_ips = config_setting_get_member(cfg_fpga, "ips");
+	cfg_ips = config_setting_get_member(f->cfg, "ips");
 	if (!cfg_ips)
-		cerror(cfg_fpga, "FPGA configuration is missing ips section");
+		cerror(f->cfg, "FPGA configuration is missing ips section");
 
 	for (int i = 0; i < config_setting_length(cfg_ips); i++) {
-		struct ip *ip;
 		config_setting_t *cfg_ip = config_setting_get_elem(cfg_ips, i);
 
-		ip = alloc(sizeof(struct ip));
-		ret = ip_parse(ip, cfg_ip);
-		if (ret) {
-			free(ip);
-			cerror(cfg_ip, "Failed to parse VILLASfpga ip");
-		}
+		struct ip ip = {
+			.card = f
+		};
+	
+		ret = ip_parse(&ip, cfg_ip);
+		if (ret)
+			cerror(cfg_ip, "Failed to parse VILLASfpga IP core");
 
-		list_push(&v->ips, ip);
+		list_push(&f->ips, memdup(&ip, sizeof(ip)));
 	}
 
 	return 0;
@@ -158,13 +157,22 @@ int fpga_init(int argc, char * argv[], config_setting_t *cfg)
 
 	/* For now we only support a single VILALSfpga card */
 	f = fpga_get();
+	list_init(&f->ips);
+
+	pacc = pci_get_handle();
+	pci_filter_init(pacc, &f->filter);
+
+	/* Parse FPGA configuration */
+	ret = fpga_parse_card(f, argc, argv, cfg);
+	if (ret)
+		cerror(cfg, "Failed to parse VILLASfpga config");
 	
 	/* Check FPGA configuration */
 	f->reset = ip_vlnv_lookup(&f->ips, "xilinx.com", "ip", "axi_gpio", NULL);
-	if (!reset)
+	if (!f->reset)
 		error("FPGA is missing a reset controller");
 
-	f->intc = ip_vlnv_lookup(&f->ips, "xilinx.com", "ip", "axi_pcie_intc", NULL);
+	f->intc = ip_vlnv_lookup(&f->ips, "acs.eonerc.rwth-aachen.de", "user", "axi_pcie_intc", NULL);
 	if (!f->intc)
 		error("FPGA is missing a interrupt controller");
 
@@ -172,21 +180,10 @@ int fpga_init(int argc, char * argv[], config_setting_t *cfg)
 	if (!f->sw)
 		warn("FPGA is missing an AXI4-Stream switch");
 
-	pacc = pci_get_handle();
-	pci_filter_init(pacc, &f->filter);
-	list_init(&f->ips);
-
-	ret = fpga_parse_card(f, argc, argv, cfg);
-	if (ret)
-		cerror(cfg, "Failed to parse VILLASfpga config");
-
-	/* Search for fpga card */
+	/* Search for FPGA card */
 	pdev = pci_find_device(pacc, &f->filter);
 	if (!pdev)
 		error("Failed to find PCI device");
-
-	if (pdev->vendor_id != PCI_VID_XILINX)
-		error("This is not a Xilinx FPGA board!");
 
 	/* Get VFIO handles and details */
 	ret = vfio_init(&vc);
@@ -204,7 +201,7 @@ int fpga_init(int argc, char * argv[], config_setting_t *cfg)
 		serror("Failed to mmap() BAR0");
 	
 	/* Map DMA accessible memory */
-	f->dma = vfio_map_dma(f->vd.group->container, 0x10000, 0x1000, 0x0);
+	f->dma = vfio_map_dma(f->vd.group->container, 16 << 20, 0x1000, 0x0);
 	if (f->dma == MAP_FAILED)
 		serror("Failed to mmap() DMA");
 
@@ -217,7 +214,7 @@ int fpga_init(int argc, char * argv[], config_setting_t *cfg)
 	if (f->do_reset) {
 		ret = fpga_reset(f);
 		if (ret)
-			serror("Failed to reset fpga card");
+			error("Failed to reset FGPA card");
 		
 		/* Reset / detect PCI device */
 		ret = vfio_pci_reset(&f->vd);
@@ -227,8 +224,9 @@ int fpga_init(int argc, char * argv[], config_setting_t *cfg)
 
 	/* Initialize IP cores */
 	list_foreach(struct ip *c, &f->ips) {
-		c->card = f;
-		ip_init(c);
+		ret = ip_init(c);
+		if (ret)
+			error("Failed to initalize IP core: %s (%u)", c->name, ret);
 	}
 
 	return 0;
@@ -256,21 +254,11 @@ int fpga_parse(struct node *n, config_setting_t *cfg)
 	/* There is currently only support for a single FPGA card */
 	d->card = fpga_get();
 
-	const char *dm;
-
-	if (!config_setting_lookup_string(cfg, "datamover", &dm))
+	if (!config_setting_lookup_string(cfg, "datamover", &d->ip_name))
 		cerror(cfg, "Node '%s' is missing the 'datamover' setting", node_name(n));
 
-	d->ip = list_lookup(&d->card->ips, dm);
-	if (!d->ip)
-		cerror(cfg, "Datamover '%s' is unknown. Please specify it in the fpga.ips section", dm);
-
-	if      (ip_vlnv_match(d->ip, "xilinx.com", "ip", "axi_dma", NULL))
-		d->type = FPGA_DM_DMA;
-	else if (ip_vlnv_match(d->ip, "xilinx.com", "ip", "axi_fifo_mm", NULL))
-		d->type = FPGA_DM_FIFO;
-	else
-		cerror(cfg, "IP '%s' is not a supported datamover", dm);
+	if (!config_setting_lookup_bool(cfg, "use_irqs", &d->use_irqs))
+		d->use_irqs = false;
 
 	return 0;
 }
@@ -279,27 +267,92 @@ char * fpga_print(struct node *n)
 {
 	struct fpga_dm *d = n->_vd;
 	struct fpga *f = d->card;
+	
+	if (d->ip)
+		return strf("dm=%s (%s:%s:%s:%s) baseaddr=%#jx port=%u slot=%02"PRIx8":%02"PRIx8".%"PRIx8" id=%04"PRIx16":%04"PRIx16,
+			d->ip->name, d->ip->vlnv.vendor, d->ip->vlnv.library, d->ip->vlnv.name, d->ip->vlnv.version, d->ip->baseaddr, d->ip->port,
+			f->filter.bus, f->filter.device, f->filter.func,
+			f->filter.vendor, f->filter.device);
+	else
+		return strf("dm=%s", d->ip_name);
+}
 
-	return strf("dm=%s (%s:%s:%s:%s) baseaddr=%#jx port=%u slot=%02"PRIx8":%02"PRIx8".%"PRIx8" id=%04"PRIx16":%04"PRIx16,
-		d->ip->name, d->ip->vlnv.vendor, d->ip->vlnv.library, d->ip->vlnv.name, d->ip->vlnv.version, d->ip->baseaddr, d->ip->port,
-		f->filter.bus, f->filter.device, f->filter.func,
-		f->filter.vendor, f->filter.device);
+int fpga_get_type(struct ip *c)
+{
+	if      (ip_vlnv_match(c, "xilinx.com", "ip", "axi_dma", NULL))
+		return FPGA_DM_DMA;
+	else if (ip_vlnv_match(c, "xilinx.com", "ip", "axi_fifo_mm_s", NULL))
+		return FPGA_DM_FIFO;
+	else
+		return -1;
 }
 
 int fpga_open(struct node *n)
 {
-//	struct fpga *v = n->_vd;
+	int ret;
+	struct fpga_dm *d = n->_vd;
+	struct fpga *f = d->card;
 
-	/** @todo Implement */
+	d->ip = list_lookup(&d->card->ips, d->ip_name);
+	if (!d->ip)
+		cerror(n->cfg, "Datamover '%s' is unknown. Please specify it in the fpga.ips section", d->ip_name);
+
+	d->type = fpga_get_type(d->ip);
+	if (d->type < 0)
+		cerror(n->cfg, "IP '%s' is not a supported datamover", d->ip->name);
+
+	switch (d->type) {
+		case FPGA_DM_DMA:
+			XAxiDma_Reset(&d->ip->dma.inst);
+
+			if (d->ip->dma.inst.HasSg) {
+				struct ip *bram = ip_vlnv_lookup(&f->ips, "xilinx.com", "ip", "axi_bram_ctrl", NULL);
+				if (!bram)
+					return -3;
+
+				/* Memory for buffer descriptors */
+				struct dma_mem bd = {
+					.base_virt = (uintptr_t) f->map + bram->baseaddr,
+					.base_phys = bram->baseaddr,
+					.len = bram->bram.size
+				};
+
+				ret = dma_init_rings(d->ip, &bd);
+				if (ret)
+					return -4;
+			}
+			
+			intc_enable(f->intc, (1 <<  d->ip->irq),      !d->use_irqs); /* MM2S */
+			intc_enable(f->intc, (1 << (d->ip->irq + 1)), !d->use_irqs); /* S2MM */
+			break;
+
+		case FPGA_DM_FIFO:
+			XLlFifo_Reset(&d->ip->fifo.inst);
+
+			intc_enable(f->intc, (1 << d->ip->irq),      !d->use_irqs);	/* MM2S & S2MM */
+			break;
+	}
+	
 
 	return 0;
 }
 
 int fpga_close(struct node *n)
 {
-//	struct fpga *v = n->_vd;
-
-	/** @todo Implement */
+	struct fpga_dm *d = n->_vd;
+	struct fpga *f = d->card;
+	
+	switch (d->type) {
+		case FPGA_DM_DMA:
+			if (d->use_irqs) {
+				intc_disable(f->intc, d->ip->irq);	/* MM2S */
+				intc_disable(f->intc, d->ip->irq + 1);	/* S2MM */
+			}
+		
+		case FPGA_DM_FIFO:
+			if (d->use_irqs)
+				intc_disable(f->intc, d->ip->irq);	/* MM2S & S2MM */
+	}
 
 	return 0;
 }
@@ -307,23 +360,39 @@ int fpga_close(struct node *n)
 int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct fpga_dm *d = n->_vd;
+	struct fpga *f = d->card;
 	struct sample *smp = smps[0];
 
-	char *addr = (char *) smp->values;
-	size_t len = smp->length * sizeof(smp->values[0]);
+	int ret;
+	char *tmp = f->dma, *addr = (char *) smp->values;
+	size_t recvlen;
+	//size_t len = smp->length * sizeof(smp->values[0]);
+	size_t len = 64 * sizeof(smp->values[0]);
+	
+	/* We dont get a sequence no from the FPGA. Lets fake it */
+	smp->sequence = n->received;
+	smp->ts.origin = time_now();
 
 	/* Read data from RTDS */
 	switch (d->type) {
 		case FPGA_DM_DMA:
-			if (d->ip->dma.HasSg)
-				return -1; /* Currently not supported */
-			else {
-				len = dma_read(d->ip, addr, len);
-				XAxiDma_IntrAckIrq(&d->ip->dma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
-				return 1;
-			}
+			ret = dma_read(d->ip, tmp, len);
+			if (ret)
+				return ret;
+			
+			ret = dma_read_complete(d->ip, NULL, &recvlen);
+			if (ret)
+				return ret;
+
+			memcpy(addr, tmp, recvlen);
+
+			smp->length = recvlen / 4;
+			return 1;
 		case FPGA_DM_FIFO:
-			break;
+			recvlen = fifo_read(d->ip, addr, len);
+			
+			smp->length = recvlen / 4;
+			return 1;
 	}
 
 	return -1;
@@ -331,18 +400,41 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
+	int ret;
 	struct fpga_dm *d = n->_vd;
+	struct fpga *f = d->card;
 	struct sample *smp = smps[0];
 
+	char *tmp = f->dma + 0x1000;
 	char *addr = (char *) smp->values;
+	size_t sentlen;
 	size_t len = smp->length * sizeof(smp->values[0]);
+
+	//intc_wait(f->intc, 5, 1);
+	
+	//if (n->received % 40000 == 0) {
+	//	struct timespec now = time_now();
+	//	info("proc time = %f", time_delta(&smp->ts.origin, &now));
+	//}
 
 	/* Send data to RTDS */
 	switch (d->type) {
 		case FPGA_DM_DMA:
-			len = dma_write(d->ip, addr, len);
+			memcpy(tmp, addr, len);
+
+			ret = dma_write(d->ip, tmp, len);
+			if (ret)
+				return ret;
+			
+			ret = dma_write_complete(d->ip, NULL, &sentlen);
+			if (ret)
+				return ret;
+
+			//info("Sent %u bytes to FPGA", sentlen);
+
 			return 1;
 		case FPGA_DM_FIFO:
+			sentlen = fifo_write(d->ip, addr, len);
 			break;
 	}
 	
@@ -352,6 +444,7 @@ int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 static struct node_type vt = {
 	.name		= "fpga",
 	.description	= "VILLASfpga PCIe card (libpci)",
+	.size		= sizeof(struct fpga_dm),
 	.vectorize	= 1,
 	.parse		= fpga_parse,
 	.print		= fpga_print,
