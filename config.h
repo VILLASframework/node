@@ -20,7 +20,10 @@
 /** The version number of VILLASnode */
 #define VERSION			"v0.5-" _GIT_REV
 
-/** Default number of values in a message */
+#define DEFAULT_PRIORITY	80
+#define DEFAULT_AFFINITY	-1
+
+/** Default number of values in a sample */
 #define DEFAULT_VALUES		64
 #define DEFAULT_QUEUELEN	1024
 

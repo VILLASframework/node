@@ -26,11 +26,12 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 
 	filename_cpy = strdup(filename);
 	include_dir = dirname(filename_cpy);
-	free(filename_cpy);
 
 	/* Setup libconfig */
 	config_set_auto_convert(cfg, 1);
 	config_set_include_dir(cfg, include_dir);
+
+	free(filename_cpy);
 
 	ret = strcmp("-", filename) ? config_read_file(cfg, filename) : config_read(cfg, stdin);
 	if (ret != CONFIG_TRUE) {
@@ -80,8 +81,14 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 
 int config_parse_global(config_setting_t *cfg, struct settings *set)
 {
-	config_setting_lookup_int(cfg, "affinity", &set->affinity);
-	config_setting_lookup_int(cfg, "priority", &set->priority);
+	config_setting_t *cfg_plugins;
+
+	if (!config_setting_lookup_int(cfg, "affinity", &set->affinity))
+		set->affinity = DEFAULT_AFFINITY;
+
+	if (!config_setting_lookup_int(cfg, "priority", &set->priority))
+		set->priority = DEFAULT_PRIORITY;
+
 	config_setting_lookup_int(cfg, "debug", &set->debug);
 	config_setting_lookup_float(cfg, "stats", &set->stats);
 	
@@ -123,7 +130,10 @@ int config_parse_path(config_setting_t *cfg,
 	path_init(p);
 
 	/* Input node */
-	if (!config_setting_lookup_string(cfg, "in", &in))
+	if (!config_setting_lookup_string(cfg, "in", &in) &&
+	    !config_setting_lookup_string(cfg, "from", &in) &&
+	    !config_setting_lookup_string(cfg, "src", &in) &&
+	    !config_setting_lookup_string(cfg, "source", &in))
 		cerror(cfg, "Missing input node for path");
 
 	p->in = list_lookup(nodes, in);
@@ -131,8 +141,11 @@ int config_parse_path(config_setting_t *cfg,
 		cerror(cfg, "Invalid input node '%s'", in);
 
 	/* Output node(s) */
-	cfg_out = config_setting_get_member(cfg, "out");
-	if (!cfg_out)
+	if (!(cfg_out = config_setting_get_member(cfg, "out")) &&
+	    !(cfg_out = config_setting_get_member(cfg, "to")) &&
+	    !(cfg_out = config_setting_get_member(cfg, "dst")) &&
+	    !(cfg_out = config_setting_get_member(cfg, "dest")) &&
+	    !(cfg_out = config_setting_get_member(cfg, "sink")))
 		cerror(cfg, "Missing output nodes for path");
 	
 	ret = config_parse_nodelist(cfg_out, &p->destinations, nodes);
