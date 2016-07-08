@@ -10,15 +10,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <fcntl.h>
-#include <poll.h>
 #include <time.h>
 #include <unistd.h>
 
 #include <xilinx/xtmrctr.h>
-#include <xilinx/xintc.h>
-#include <xilinx/xllfifo.h>
-#include <xilinx/xaxis_switch.h>
-#include <xilinx/xaxidma.h>
 
 #include <villas/utils.h>
 #include <villas/nodes/fpga.h>
@@ -59,12 +54,6 @@ int fpga_tests(int argc, char *argv[], struct fpga *f)
 		{ "RTDS: tight rtt",		fpga_test_rtds_rtt }
 	};
 
-	/* We need to overwrite the AXI4-Stream switch configuration from the
-	 * config file. Therefore we first disable everything here. */
-	XAxisScr_RegUpdateDisable(&f->sw->sw.inst);
-	XAxisScr_MiPortDisableAll(&f->sw->sw.inst);
-	XAxisScr_RegUpdateEnable(&f->sw->sw.inst);
-
 	for (int i = 0; i < ARRAY_LEN(tests); i++) {
 		ret = tests[i].func(f);
 
@@ -91,7 +80,7 @@ int fpga_test_intc(struct fpga *f)
 
 	/* Wait for 8 SW triggered IRQs */
 	for (int i = 0; i < 8; i++)
-		intc_wait(f->intc, i+8, 0);
+		intc_wait(f->intc, i+8);
 
 	/* Check ISR if all SW IRQs have been deliverd */
 	isr = XIntc_In32((uintptr_t) f->map + f->intc->baseaddr + XIN_ISR_OFFSET);
@@ -105,10 +94,12 @@ int fpga_test_intc(struct fpga *f)
 
 int fpga_test_xsg(struct fpga *f)
 {
-	struct ip *xsg, *dma;
-	struct model_param *p;
 	int ret;
 	double factor, err = 0;
+
+	struct ip *xsg, *dma;
+	struct model_param *p;
+	struct dma_mem mem;
 
 	xsg = ip_vlnv_lookup(&f->ips, NULL, "sysgen", "xsg_multiply", NULL);
 	dma = ip_vlnv_lookup(&f->ips, "xilinx.com", "ip", "axi_dma", NULL);
@@ -134,8 +125,12 @@ int fpga_test_xsg(struct fpga *f)
 	if (ret)
 		error("Failed to configure switch");
 
-	float *src = (float *) f->dma;
-	float *dst = (float *) f->dma + TEST_LEN;
+	ret = dma_alloc(dma, &mem, 0x1000, 0);
+	if (ret)
+		error("Failed to allocate DMA memory");
+	
+	float *src = (float *) mem.base_virt;
+	float *dst = (float *) mem.base_virt + 0x800;
 
 	for (int i = 0; i < 6; i++)
 		src[i] = 1.1 * (i+1);
@@ -155,6 +150,10 @@ int fpga_test_xsg(struct fpga *f)
 	ret = switch_disconnect(f->sw, xsg, dma);
 	if (ret)
 		error("Failed to configure switch");
+
+	ret = dma_free(dma, &mem);
+	if (ret)
+		error("Failed to release DMA memory");
 
 	return err > 1e-3;
 }
@@ -260,21 +259,29 @@ int fpga_test_fifo(struct fpga *f)
 
 int fpga_test_dma(struct fpga *f)
 {
-	struct ip *bram;
-	ssize_t len = 0x100;
 	int ret;
-
-	char *src = (char *) f->dma;
-	char *dst = (char *) f->dma + len;
+	struct dma_mem mem, src, dst;
 
 	list_foreach(struct ip *dma, &f->ips) { INDENT
 		if (!ip_vlnv_match(dma, "xilinx.com", "ip", "axi_dma", NULL))
 			continue; /* skip non DMA IP cores */
+		
+		/* Simple DMA can only transfer up to 4 kb due to
+		 * PCIe page size burst limitation */
+		ssize_t len = dma->dma.inst.HasSg ? 64 << 20 : 1 << 2;
+
+		ret = dma_alloc(dma, &mem, 2 * len, 0);
+		if (ret)
+			return -1;
+
+		ret = dma_mem_split(&mem, &src, &dst);
+		if (ret)
+			return -1;
 
 		/* Get new random data */
-		ret = read_random(src, len);
+		ret = read_random(src.base_virt, len);
 		if (ret)
-			error("Failed to get random data");
+			serror("Failed to get random data");
 
 		int irq_mm2s = dma->irq;
 		int irq_s2mm = dma->irq + 1;
@@ -287,47 +294,12 @@ int fpga_test_dma(struct fpga *f)
 		if (ret)
 			error("Failed to configure switch");
 		
-		XAxiDma_Reset(&dma->dma.inst);
-
-		if (dma->dma.inst.HasSg) {
-			/* Init BD rings */
-			bram = ip_vlnv_lookup(&f->ips, "xilinx.com", "ip", "axi_bram_ctrl", NULL);
-			if (!bram)
-				return -3;
-
-			/* Memory for buffer descriptors */
-			struct dma_mem bd = {
-				.base_virt = (uintptr_t) f->map + bram->baseaddr,
-				.base_phys = bram->baseaddr,
-				.len = bram->bram.size
-			};
-
-			ret = dma_init_rings(dma, &bd);
-			if (ret)
-				return -4;
-		}
-
 		/* Start transfer */
-		ret = dma_read(dma, dst, len);
+		ret = dma_ping_pong(dma, src.base_phys, dst.base_phys, dst.len);
 		if (ret)
-			error("Failed to start DMA read: %d", ret);
+			error("DMA ping pong failed");
 
-		ret = dma_write(dma, src, len);
-		if (ret)
-			error("Failed to start DMA write: %d", ret);
-	
-		size_t recvlen;
-		ret = dma_read_complete(dma, NULL, &recvlen);
-		if (ret)
-			error("Failed to complete DMA read");
-
-		ret = dma_write_complete(dma, NULL, NULL);
-		if (ret)
-			error("Failed to complete DMA write");
-
-		info("recvlen = %#zx", recvlen);
-		
-		ret = memcmp(src, dst, len);
+		ret = memcmp(src.base_virt, dst.base_virt, src.len);
 
 		info("DMA %s (%s): %s", dma->name, dma->dma.inst.HasSg ? "scatter-gather" : "simple", ret ? RED("failed") : GRN("passed"));
 
@@ -338,6 +310,10 @@ int fpga_test_dma(struct fpga *f)
 		ret = intc_disable(f->intc, (1 << irq_mm2s) | (1 << irq_s2mm));
 		if (ret)
 			error("Failed to disable interrupt");
+		
+		ret = dma_free(dma, &mem);
+		if (ret)
+			error("Failed to release DMA memory");
 	}
 
 	return ret;
@@ -362,22 +338,13 @@ int fpga_test_timer(struct fpga *f)
 	XTmrCtr_SetResetValue(xtmr, 0, AXI_HZ / 125);
 	XTmrCtr_Start(xtmr, 0);
 
-	struct pollfd pfd = {
-		.fd = f->vd.msi_efds[tmr->irq],
-		.events = POLLIN
-	};
+	uint64_t counter = intc_wait(f->intc, tmr->irq);
+	info("Got IRQ: counter = %ju", counter);
 
-	ret = poll(&pfd, 1, 1000);
-	if (ret == 1) {
-		uint64_t counter = intc_wait(f->intc, tmr->irq, 0);
-
-		info("Got IRQ: counter = %ju", counter);
-
-		if (counter == 1)
-			return 0;
-		else
-			warn("Counter was not 1");
-	}
+	if (counter == 1)
+		return 0;
+	else
+		warn("Counter was not 1");
 
 	intc_disable(f->intc, (1 << tmr->irq));
 	if (ret)
@@ -390,7 +357,10 @@ int fpga_test_rtds_rtt(struct fpga *f)
 {
 	int ret;
 	struct ip *dma, *rtds;
+	struct dma_mem buf;
+	size_t recvlen;
 
+	/* Get IP cores */
 	rtds = ip_vlnv_lookup(&f->ips, "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL);
 	dma = list_lookup(&f->ips, "dma_1");
 
@@ -405,13 +375,13 @@ int fpga_test_rtds_rtt(struct fpga *f)
 	if (ret)
 		error("Failed to configure switch");
 
-	size_t len = 0x100;
-	size_t recvlen;
-	char *buf = f->dma;
+	ret = dma_alloc(dma, &buf, 0x100, 0);
+	if (ret)
+		error("Failed to allocate DMA memory");
 
 	while (1) {
 		
-		ret = dma_read(dma, buf, len);
+		ret = dma_read(dma, buf.base_phys, buf.len);
 		if (ret)
 			error("Failed to start DMA read: %d", ret);
 
@@ -419,7 +389,7 @@ int fpga_test_rtds_rtt(struct fpga *f)
 		if (ret)
 			error("Failed to complete DMA read: %d", ret);
 
-		ret = dma_write(dma, buf, recvlen);
+		ret = dma_write(dma, buf.base_phys, recvlen);
 		if (ret)
 			error("Failed to start DMA write: %d", ret);
 		
@@ -434,6 +404,10 @@ int fpga_test_rtds_rtt(struct fpga *f)
 	ret = switch_disconnect(f->sw, dma, rtds);
 	if (ret)
 		error("Failed to configure switch");
+	
+	ret = dma_free(dma, &buf);
+	if (ret)
+		error("Failed to release DMA memory");
 
 	return 0;
 }
