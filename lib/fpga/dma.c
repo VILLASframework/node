@@ -11,12 +11,67 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <sys/mman.h>
 
 #include <villas/log.h>
 
 #include "utils.h"
 #include "fpga/dma.h"
 #include "fpga/ip.h"
+
+int dma_mem_split(struct dma_mem *o, struct dma_mem *a, struct dma_mem *b)
+{
+	int split = o->len / 2;
+
+	a->base_virt = o->base_virt;
+	a->base_phys = o->base_phys;
+
+	b->base_virt = a->base_virt + split;
+	b->base_phys = a->base_phys + split;
+
+	a->len = split;
+	b->len = o->len - split;
+
+	return 0;
+}
+
+int dma_alloc(struct ip *c, struct dma_mem *mem, size_t len, int flags)
+{
+	int ret;
+
+	/* Align to next bigger page size chunk */
+	if (len & 0xFFF) {
+		len += 0x1000;
+		len &= ~0xFFF;
+	}
+
+	mem->len = len;
+	mem->base_phys = -1; /* find free */
+	mem->base_virt = mmap(0, mem->len, PROT_READ | PROT_WRITE, flags | MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT, 0, 0);
+	if (mem->base_virt == MAP_FAILED)
+		return -1;
+
+	ret = vfio_map_dma(c->card->vd.group->container, mem);
+	if (ret)
+		return -2;
+
+	return 0;
+}
+
+int dma_free(struct ip *c, struct dma_mem *mem)
+{
+	int ret;
+	
+	ret = vfio_unmap_dma(c->card->vd.group->container, mem);
+	if (ret)
+		return ret;
+	
+	ret = munmap(mem->base_virt, mem->len);
+	if (ret)
+		return ret;
+	
+	return 0;
+}
 
 int dma_ping_pong(struct ip *c, char *src, char *dst, size_t len)
 {

@@ -18,19 +18,31 @@
 
 #include <xilinx/xaxidma.h>
 
+#define FPGA_DMA_BASEADDR	0x00000000
+#define FPGA_DMA_BOUNDARY	0x1000
+#define FPGA_DMA_BD_OFFSET	0xC0000000
+#define FPGA_DMA_BD_SIZE	(32 << 20) // 32 MB
+
 #define XAXIDMA_SR_SGINCL_MASK	0x00000008
 
-struct dma {
-	XAxiDma inst;
-};
-
 struct dma_mem {
-	uint32_t base_virt;
-	uint32_t base_phys;
+	char *base_virt;
+	char *base_phys;
 	size_t len;
 };
 
+struct dma {
+	XAxiDma inst;
+
+	struct dma_mem bd;
+};
+
 struct ip;
+
+int dma_mem_split(struct dma_mem *o, struct dma_mem *a, struct dma_mem *b);
+
+int dma_alloc(struct ip *c, struct dma_mem *mem, size_t len, int flags);
+int dma_free(struct ip *c, struct dma_mem *mem);
 
 int dma_write(struct ip *c, char *buf, size_t len);
 int dma_read(struct ip *c, char *buf, size_t len);
