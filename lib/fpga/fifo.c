@@ -59,10 +59,10 @@ ssize_t fifo_read(struct ip *c, char *buf, size_t len)
 	XLlFifo *fifo = &c->fifo.inst;
 
 	size_t nextlen = 0;
-	uint32_t rdfo, rxlen;
+	uint32_t rxlen;
 
-	while (!(rdfo = XLlFifo_RxOccupancy(fifo)))
-		pthread_testcancel();
+	while (!XLlFifo_IsRxDone(fifo))
+		intc_wait(c->card->intc, c->irq);
 	XLlFifo_IntClear(fifo, XLLF_INT_RC_MASK);
 
 	/* Get length of next frame */
@@ -89,10 +89,18 @@ int fifo_parse(struct ip *c)
 	return 0;
 }
 
+int fifo_reset(struct ip *c)
+{
+	XLlFifo_Reset(&c->fifo.inst);
+
+	return 0;
+}
+
 static struct ip_type ip = {
 	.vlnv = { "xilinx.com", "ip", "axi_fifo_mm_s", NULL },
 	.init = fifo_init,
-	.parse = fifo_parse
+	.parse = fifo_parse,
+	.reset = fifo_reset
 };
 
 REGISTER_IP_TYPE(&ip)

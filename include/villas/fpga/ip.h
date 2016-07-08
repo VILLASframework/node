@@ -17,6 +17,7 @@
 #include "fpga/timer.h"
 #include "fpga/model.h"
 #include "fpga/dft.h"
+#include "fpga/intc.h"
 #include "nodes/fpga.h"
 
 #define REGISTER_IP_TYPE(ip)			\
@@ -44,6 +45,7 @@ struct ip_type {
 
 	int (*parse)(struct ip *c);
 	int (*init)(struct ip *c);
+	int (*reset)(struct ip *c);
 	void (*dump)(struct ip *c);
 	void (*destroy)(struct ip *c);
 };
@@ -64,14 +66,12 @@ struct ip {
 
 	union {
 		struct model model;
-		struct {
-			int size;
-		} bram;
 		struct timer timer;
 		struct fifo fifo;
 		struct dma dma;
 		struct sw sw;
 		struct dft dft;
+		struct intc intc;
 	};
 	
 	struct fpga *card;
@@ -93,6 +93,8 @@ int ip_init(struct ip *c);
 void ip_destroy(struct ip *c);
 
 void ip_dump(struct ip *c);
+
+int ip_reset(struct ip *c);
 
 int ip_parse(struct ip *c, config_setting_t *cfg);
 

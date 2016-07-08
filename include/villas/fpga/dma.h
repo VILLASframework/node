@@ -64,6 +64,5 @@ int dma_simple_write_complete(struct ip *c, char **buf, size_t *len);
 int dma_ping_pong(struct ip *c, char *src, char *dst, size_t len);
 
 int dma_init(struct ip *c);
-int dma_init_rings(struct ip *c, struct dma_mem *bd);
 
 #endif /* _DMA_H_ */

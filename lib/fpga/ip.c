@@ -62,6 +62,13 @@ int ip_init(struct ip *c)
 	return ret;
 }
 
+int ip_reset(struct ip *c)
+{
+	debug(3, "Reset IP core: %s", c->name);
+
+	return c->_vt && c->_vt->reset ? c->_vt->reset(c) : 0;
+}
+
 void ip_destroy(struct ip *c)
 {
 	if (c->_vt && c->_vt->destroy)

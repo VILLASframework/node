@@ -12,13 +12,17 @@
 
 #include <stdbool.h>
 #include <pci/pci.h>
+#include <sys/mman.h>
 
 #include <linux/vfio.h>
 #include <linux/pci_regs.h>
 
-#include <villas/list.h>
+#include "list.h"
 
 #define VFIO_DEV(x)	"/dev/vfio/" x
+
+/* Forward declaration */
+struct dma_mem;
 
 struct vfio_group {
 	int fd;						/**< VFIO group file descriptor */
@@ -38,11 +42,8 @@ struct vfio_dev {
 	struct vfio_device_info info;
 	struct vfio_irq_info *irqs;
 	struct vfio_region_info *regions;
-	
+
 	void **mappings;
-	
-	int *msi_efds;				/**< Array of assigned eventfs for MSI handling */
-	int *msi_irqs;				/**< Linux assigned IRQ number for MSI (see /proc/interrupts) */
 
 	struct pci_dev *pdev;			/**< libpci handle of the device */
 	struct vfio_group *group;		/**< The VFIO group this device belongs to */
@@ -52,6 +53,8 @@ struct vfio_container {
 	int fd;
 	int version;
 	int extensions;
+
+	uint64_t iova_next;			/**< Next free IOVA address */
 
 	struct list groups;
 };
@@ -71,8 +74,11 @@ int vfio_pci_attach(struct vfio_dev *d, struct vfio_container *c, struct pci_dev
 /** Hot resets a VFIO-PCI device */
 int vfio_pci_reset(struct vfio_dev *d);
 
-/** Create a new eventfd and binds it to the MSI irqs of the device */
-int vfio_pci_msi_fd(struct vfio_dev *d, uint32_t mask);
+int vfio_pci_msi_init(struct vfio_dev *d, int efds[32]);
+
+int vfio_pci_msi_deinit(struct vfio_dev *d, int efds[32]);
+
+int vfio_pci_msi_find(struct vfio_dev *d, int nos[32]);
 
 /** Enable memory accesses and bus mastering for PCI device */
 int vfio_pci_enable(struct vfio_dev *d);
@@ -95,8 +101,11 @@ void vfio_dump(struct vfio_container *c);
 /** Map a device memory region to the application address space (e.g. PCI BARs) */
 void * vfio_map_region(struct vfio_dev *d, int idx);
 
-/** Allocate a virtual memory region and map it for DMA access from the devices */
-void * vfio_map_dma(struct vfio_container *c, size_t size, size_t pgsize, uint64_t phyaddr);
+/** Map VM to an IOVA, which is accessible by devices in the container */
+int vfio_map_dma(struct vfio_container *c, struct dma_mem *mem);
+
+/** Unmap DMA memory */
+int vfio_unmap_dma(struct vfio_container *c, struct dma_mem *mem);
 
 /** munmap() a region which has been mapped by vfio_map_region() */
 int vfio_unmap_region(struct vfio_dev *d, int idx);

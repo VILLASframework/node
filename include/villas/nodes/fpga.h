@@ -21,16 +21,10 @@
 
 #include <pci/pci.h>
 
+#include "fpga/dma.h"
 #include "nodes/fpga.h"
 #include "node.h"
 #include "list.h"
-
-#define BASEADDR_HOST		0x80000000
-#define FPGA_BAR		0	/**< The Base Address Register which is mmap()ed to the User Space */
-
-#define virt_to_axi(virt, map) ((char *) ((char *) virt - map))
-#define virt_to_dma(virt, dma) ((char *) ((char *) virt - dma) + BASEADDR_HOST)
-#define dma_to_virt(addr, dma) ((char *) ((char *) addr - BASEADDR_HOST) + dma)
 
 struct fpga {
 	struct pci_filter filter;	/**< Filter for libpci with device id & slot */
@@ -41,7 +35,6 @@ struct fpga {
 	struct list ips;		/**< List of IP components on FPGA. */
 
 	char *map;			/**< PCI BAR0 mapping for register access */
-	char *dma;			/**< DMA mapped memory */
 
 	size_t maplen;
 	size_t dmalen;
@@ -59,6 +52,8 @@ struct fpga_dm {
 	const char *ip_name;
 
 	int use_irqs;
+
+	struct dma_mem dma;
 
 	enum {
 		FPGA_DM_DMA,

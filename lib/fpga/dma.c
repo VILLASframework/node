@@ -85,20 +85,22 @@ int dma_ping_pong(struct ip *c, char *src, char *dst, size_t len)
 	if (ret)
 		return ret;
 	
-	ret = dma_read_complete(c, NULL, NULL);
-	if (ret)
-		return ret;
-
 	ret = dma_write_complete(c, NULL, NULL);
 	if (ret)
 		return ret;
 	
+	ret = dma_read_complete(c, NULL, NULL);
+	if (ret)
+		return ret;
+
 	return 0;
 }
 
 int dma_write(struct ip *c, char *buf, size_t len)
 {
 	XAxiDma *xdma = &c->dma.inst;
+
+	debug(25, "DMA write: dmac=%s buf=%p len=%#x", c->name, buf, len);
 
 	return xdma->HasSg
 		? dma_sg_write(c, buf, len)
@@ -108,6 +110,8 @@ int dma_write(struct ip *c, char *buf, size_t len)
 int dma_read(struct ip *c, char *buf, size_t len)
 {
 	XAxiDma *xdma = &c->dma.inst;
+	
+	debug(25, "DMA read: dmac=%s buf=%p len=%#x", c->name, buf, len);
 
 	return xdma->HasSg
 		? dma_sg_read(c, buf, len)
@@ -117,6 +121,8 @@ int dma_read(struct ip *c, char *buf, size_t len)
 int dma_read_complete(struct ip *c, char **buf, size_t *len)
 {
 	XAxiDma *xdma = &c->dma.inst;
+	
+	debug(25, "DMA read complete: dmac=%s", c->name);
 
 	return xdma->HasSg
 		? dma_sg_read_complete(c, buf, len)
@@ -126,6 +132,8 @@ int dma_read_complete(struct ip *c, char **buf, size_t *len)
 int dma_write_complete(struct ip *c, char **buf, size_t *len)
 {
 	XAxiDma *xdma = &c->dma.inst;
+	
+	debug(25, "DMA write complete: dmac=%s", c->name);
 
 	return xdma->HasSg
 		? dma_sg_write_complete(c, buf, len)
@@ -134,19 +142,19 @@ int dma_write_complete(struct ip *c, char **buf, size_t *len)
 
 int dma_sg_write(struct ip *c, char *buf, size_t len)
 {
+	int ret, bdcnt;
+
 	XAxiDma *xdma = &c->dma.inst;
 	XAxiDma_BdRing *ring = XAxiDma_GetTxRing(xdma);
-	XAxiDma_Bd *bd;
+	XAxiDma_Bd *bds, *bd;
 
-	int ret;
-	
-	buf = virt_to_dma(buf, c->card->dma);
+	uint32_t remaining, bdlen, bdbuf, cr;
 
 	/* Checks */
 	if (!xdma->HasSg)
 		return -1;
 
-	if ((len < 1) || (len > ring->MaxTransferLen))
+	if (len < 1)
 		return -2;
 
 	if (!xdma->HasMm2S)
@@ -158,47 +166,70 @@ int dma_sg_write(struct ip *c, char *buf, size_t len)
 			return -4;
 	}
 
-	ret = XAxiDma_BdRingAlloc(ring, 1, &bd);
+	bdcnt = CEIL(len, FPGA_DMA_BOUNDARY);
+	ret = XAxiDma_BdRingAlloc(ring, bdcnt, &bds);
 	if (ret != XST_SUCCESS)
 		return -5;
 
-	/* Set up the BD using the information of the packet to transmit */
-	ret = XAxiDma_BdSetBufAddr(bd, (uintptr_t) buf);
-	if (ret != XST_SUCCESS)
-		return -6;
+	remaining = len;
+	bdbuf = (uint32_t) buf;
+	bd = bds;
+	for (int i = 0; i < bdcnt; i++) {
+		bdlen = MIN(remaining, FPGA_DMA_BOUNDARY);
 
-	ret = XAxiDma_BdSetLength(bd, len, ring->MaxTransferLen);
-	if (ret != XST_SUCCESS)
-		return -7;
+		ret = XAxiDma_BdSetBufAddr(bd, bdbuf);
+		if (ret != XST_SUCCESS)
+			goto out;
 
-	/* Set SOF / EOF / ID */
-	XAxiDma_BdSetCtrl(bd, XAXIDMA_BD_CTRL_TXEOF_MASK | XAXIDMA_BD_CTRL_TXSOF_MASK);
-	XAxiDma_BdSetId(bd, (uintptr_t) buf);
+		ret = XAxiDma_BdSetLength(bd, bdlen, ring->MaxTransferLen);
+		if (ret != XST_SUCCESS)
+			goto out;
+
+		/* Set SOF / EOF / ID */
+		cr = 0;
+		if (i == 0)
+			cr |= XAXIDMA_BD_CTRL_TXSOF_MASK;
+		if (i == bdcnt - 1)
+			cr |= XAXIDMA_BD_CTRL_TXEOF_MASK;
+	
+		XAxiDma_BdSetCtrl(bd, cr);
+		XAxiDma_BdSetId(bd, (uintptr_t) buf);
+
+		remaining -= bdlen;
+		bdbuf += bdlen;
+		bd = (XAxiDma_Bd *) XAxiDma_BdRingNext(ring, bd);
+	}
 
 	/* Give the BD to DMA to kick off the transmission. */
-	ret = XAxiDma_BdRingToHw(ring, 1, bd);
+	ret = XAxiDma_BdRingToHw(ring, bdcnt, bds);
 	if (ret != XST_SUCCESS)
 		return -8;
 
 	return 0;
+
+out:
+	ret = XAxiDma_BdRingUnAlloc(ring, bdcnt, bds);
+	if (ret != XST_SUCCESS)
+		return -6;
+
+	return -5;
 }
 
 int dma_sg_read(struct ip *c, char *buf, size_t len)
 {
+	int ret, bdcnt;
+
 	XAxiDma *xdma = &c->dma.inst;
 	XAxiDma_BdRing *ring = XAxiDma_GetRxRing(xdma);
-	XAxiDma_Bd *bd;
+	XAxiDma_Bd *bds, *bd;
 
-	int ret;
-	
-	buf = virt_to_dma(buf, c->card->dma);
-
+	uint32_t remaining, bdlen, bdbuf;
 
 	/* Checks */
 	if (!xdma->HasSg)
 		return -1;
 
-	if ((len < 1) || (len > ring->MaxTransferLen))
+	if (len < 1)
 		return -2;
 
 	if (!xdma->HasS2Mm)
@@ -210,56 +241,74 @@ int dma_sg_read(struct ip *c, char *buf, size_t len)
 			return -4;
 	}
 
-	ret = XAxiDma_BdRingAlloc(ring, 1, &bd);
+	bdcnt = CEIL(len, FPGA_DMA_BOUNDARY);
+	ret = XAxiDma_BdRingAlloc(ring, bdcnt, &bds);
 	if (ret != XST_SUCCESS)
 		return -5;
 
-	ret = XAxiDma_BdSetBufAddr(bd, (uintptr_t) buf);
-	if (ret != XST_SUCCESS)
-		return -6;
+	bdbuf = (uint32_t) buf;
+	remaining = len;
+	bd = bds;
+	for (int i = 0; i < bdcnt; i++) {
+		bdlen = MIN(remaining, FPGA_DMA_BOUNDARY);
+		ret = XAxiDma_BdSetLength(bd, bdlen, ring->MaxTransferLen);
+		if (ret != XST_SUCCESS)
+			goto out;
 
-	ret = XAxiDma_BdSetLength(bd, len, ring->MaxTransferLen);
-	if (ret != XST_SUCCESS)
-		return -7;
+		ret = XAxiDma_BdSetBufAddr(bd, bdbuf);
+		if (ret != XST_SUCCESS)
+			goto out;
 
-	/* Receive BDs do not need to set anything for the control
-	 * The hardware will set the SOF/EOF bits per stream ret */
-	XAxiDma_BdSetCtrl(bd, 0);
-	XAxiDma_BdSetId(bd, (uintptr_t) buf);
+		/* Receive BDs do not need to set anything for the control
+		* The hardware will set the SOF/EOF bits per stream ret */
+		XAxiDma_BdSetCtrl(bd, 0);
+		XAxiDma_BdSetId(bd, (uintptr_t) buf);
 
-	ret = XAxiDma_BdRingToHw(ring, 1, bd);
+		remaining -= bdlen;
+		bdbuf += bdlen;
+		bd = (XAxiDma_Bd *) XAxiDma_BdRingNext(ring, bd);
+	}
+
+	ret = XAxiDma_BdRingToHw(ring, bdcnt, bds);
 	if (ret != XST_SUCCESS)
 		return -8;
 
 	return 0;
+
+out:
+	ret = XAxiDma_BdRingUnAlloc(ring, bdcnt, bds);
+	if (ret != XST_SUCCESS)
+		return -6;
+
+	return -5;
 }
 
 int dma_sg_write_complete(struct ip *c, char **buf, size_t *len)
 {
 	XAxiDma *xdma = &c->dma.inst;
 	XAxiDma_BdRing *ring = XAxiDma_GetTxRing(xdma);
-	XAxiDma_Bd *bd;
+	XAxiDma_Bd *bds;
 
 	int processed, ret;
 
 	/* Wait until the one BD TX transaction is done */
-	while ((processed = XAxiDma_BdRingFromHw(ring, XAXIDMA_ALL_BDS, &bd)) == 0)
-		pthread_testcancel();
+	while (!(XAxiDma_IntrGetIrq(xdma, XAXIDMA_DMA_TO_DEVICE) & XAXIDMA_IRQ_IOC_MASK))
+		intc_wait(c->card->intc, c->irq);
 	XAxiDma_IntrAckIrq(xdma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
 	
+	processed = XAxiDma_BdRingFromHw(ring, XAXIDMA_ALL_BDS, &bds);
+	
 	if (len != NULL)
-		*len = XAxiDma_BdGetActualLength(bd, XAXIDMA_MAX_TRANSFER_LEN);
+		*len = XAxiDma_BdGetActualLength(bds, XAXIDMA_MAX_TRANSFER_LEN);
 
 	if (buf != NULL)
-		*buf = (char *) (uintptr_t) XAxiDma_BdGetBufAddr(bd);
+		*buf = (char *) (uintptr_t) XAxiDma_BdGetId(bds);
 
 	/* Free all processed TX BDs for future transmission */
-	ret = XAxiDma_BdRingFree(ring, processed, bd);
-	if (ret != XST_SUCCESS) {
-		info("Failed to free %d tx BDs %d", processed, ret);
+	ret = XAxiDma_BdRingFree(ring, processed, bds);
+	if (ret != XST_SUCCESS)
 		return -1;
-	}
-	
+
 	return 0;
 }
 
@@ -267,25 +316,48 @@ int dma_sg_read_complete(struct ip *c, char **buf, size_t *len)
 {
 	XAxiDma *xdma = &c->dma.inst;
 	XAxiDma_BdRing *ring = XAxiDma_GetRxRing(xdma);
-	XAxiDma_Bd *bd;
+	XAxiDma_Bd *bds, *bd;
 
-	int ret;
+	int ret, bdcnt;
+	uint32_t recvlen, sr;
+	uintptr_t recvbuf;
 
 	if (!xdma->HasSg)
 		return -1;
 
-	while (XAxiDma_BdRingFromHw(ring, 1, &bd) == 0)
-		pthread_testcancel();
+	while (!(XAxiDma_IntrGetIrq(xdma, XAXIDMA_DEVICE_TO_DMA) & XAXIDMA_IRQ_IOC_MASK))
+		intc_wait(c->card->intc, c->irq + 1);
 	XAxiDma_IntrAckIrq(xdma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
 
-	if (len != NULL)
-		*len = XAxiDma_BdGetActualLength(bd, XAXIDMA_MAX_TRANSFER_LEN);
+	bdcnt = XAxiDma_BdRingFromHw(ring, XAXIDMA_ALL_BDS, &bds);
+
+	recvlen = 0;
+
+	bd = bds;
+	for (int i = 0; i < bdcnt; i++) {
+		recvlen += XAxiDma_BdGetActualLength(bd, ring->MaxTransferLen);
+		
+		sr = XAxiDma_BdGetSts(bd);
+		if (sr & XAXIDMA_BD_STS_RXSOF_MASK)
+			if (i != 0)
+				warn("sof not first");
+		
+		if (sr & XAXIDMA_BD_STS_RXEOF_MASK)
+			if (i != bdcnt - 1)
+				warn("eof not last");
+
+		recvbuf = XAxiDma_BdGetId(bd);
+
+ 		bd = (XAxiDma_Bd *) XAxiDma_BdRingNext(ring, bd);
+	}
 	
+	if (len != NULL)
+		*len = recvlen;
 	if (buf != NULL)
-		*buf = (char *) (uintptr_t) XAxiDma_BdGetBufAddr(bd);
+		*buf = (char *) recvbuf;
 
 	/* Free all processed RX BDs for future transmission */
-	ret = XAxiDma_BdRingFree(ring, 1, bd);
+	ret = XAxiDma_BdRingFree(ring, bdcnt, bds);
 	if (ret != XST_SUCCESS)
 		return -3;
 	
@@ -297,13 +369,11 @@ int dma_simple_read(struct ip *c, char *buf, size_t len)
 	XAxiDma *xdma = &c->dma.inst;
 	XAxiDma_BdRing *ring = XAxiDma_GetRxRing(xdma);
 
-	buf = virt_to_dma(buf, c->card->dma);
-
 	/* Checks */
 	if (xdma->HasSg)
 		return -1;
 
-	if ((len < 1) || (len > ring->MaxTransferLen))
+	if ((len < 1) || (len > FPGA_DMA_BOUNDARY))
 		return -2;
 
 	if (!xdma->HasS2Mm)
@@ -335,13 +405,11 @@ int dma_simple_write(struct ip *c, char *buf, size_t len)
 	XAxiDma *xdma = &c->dma.inst;
 	XAxiDma_BdRing *ring = XAxiDma_GetTxRing(xdma);
 
-	buf = virt_to_dma(buf, c->card->dma);
-
 	/* Checks */
 	if (xdma->HasSg)
 		return -1;
 
-	if ((len < 1) || (len > ring->MaxTransferLen))
+	if ((len < 1) || (len > FPGA_DMA_BOUNDARY))
 		return -2;
 
 	if (!xdma->HasMm2S)
@@ -375,7 +443,7 @@ int dma_simple_read_complete(struct ip *c, char **buf, size_t *len)
 	XAxiDma_BdRing *ring = XAxiDma_GetRxRing(xdma);
 
 	while (!(XAxiDma_IntrGetIrq(xdma, XAXIDMA_DEVICE_TO_DMA) & XAXIDMA_IRQ_IOC_MASK))
-		pthread_testcancel();
+		intc_wait(c->card->intc, c->irq + 1);
 	XAxiDma_IntrAckIrq(xdma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
 
 	if (len)
@@ -396,7 +464,7 @@ int dma_simple_write_complete(struct ip *c, char **buf, size_t *len)
 	XAxiDma_BdRing *ring = XAxiDma_GetTxRing(xdma);
 
 	while (!(XAxiDma_IntrGetIrq(xdma, XAXIDMA_DMA_TO_DEVICE) & XAXIDMA_IRQ_IOC_MASK))
-		pthread_testcancel();
+		intc_wait(c->card->intc, c->irq);
 	XAxiDma_IntrAckIrq(xdma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
 
 	if (len)
@@ -428,53 +496,40 @@ static int dma_setup_ring(XAxiDma_BdRing *ring, struct dma_mem *bdbuf)
 	/* Setup Rx BD space */
 	cnt = XAxiDma_BdRingCntCalc(XAXIDMA_BD_MINIMUM_ALIGNMENT, bdbuf->len);
 
-	ret = XAxiDma_BdRingCreate(ring, bdbuf->base_phys, bdbuf->base_virt, XAXIDMA_BD_MINIMUM_ALIGNMENT, cnt);
-	if (ret != XST_SUCCESS) {
-		info("RX create BD ring failed (%d)", ret);
-		return XST_FAILURE;
-	}
+	ret = XAxiDma_BdRingCreate(ring, (uintptr_t) bdbuf->base_phys, (uintptr_t) bdbuf->base_virt, XAXIDMA_BD_MINIMUM_ALIGNMENT, cnt);
+	if (ret != XST_SUCCESS)
+		return -1;
 
 	XAxiDma_BdClear(&clearbd);
 	ret = XAxiDma_BdRingClone(ring, &clearbd);
-	if (ret != XST_SUCCESS) {
-		info("RX clone BD failed %d", ret);
-		return XST_FAILURE;
-	}
-	
+	if (ret != XST_SUCCESS)
+		return -2;
+
 	/* Start the channel */
 	ret = XAxiDma_BdRingStart(ring);
-	if (ret != XST_SUCCESS) {
-		info("failed start bdring txsetup %d", ret);
-		return XST_FAILURE;
-	}
-	
+	if (ret != XST_SUCCESS)
+		return -3;
+
 	return XST_SUCCESS;
 }
 
-int dma_init_rings(struct ip *c, struct dma_mem *bd)
+static int dma_init_rings(XAxiDma *xdma, struct dma_mem *bd)
 {
 	int ret;
-	XAxiDma *xdma = &c->dma.inst;
 
-	/* Split BD memory equally between Rx and Tx rings */
-	struct dma_mem bd_rx = {
-		.base_virt = bd->base_virt,
-		.base_phys = bd->base_phys,
-		.len = bd->len / 2
-	};
-	struct dma_mem bd_tx = {
-		.base_virt = bd->base_virt + bd_rx.len,
-		.base_phys = bd->base_phys + bd_rx.len,
-		.len = bd->len - bd_rx.len
-	};
+	struct dma_mem bd_rx, bd_tx;
+
+	ret = dma_mem_split(bd, &bd_rx, &bd_tx);
+	if (ret)
+		return -1;
 
 	ret = dma_setup_ring(XAxiDma_GetRxRing(xdma), &bd_rx);
 	if (ret != XST_SUCCESS)
-		return -1;
+		return -2;
 
 	ret = dma_setup_ring(XAxiDma_GetTxRing(xdma), &bd_tx);
 	if (ret != XST_SUCCESS)
-		return -1;
+		return -3;
 
 	return 0;
 }
@@ -482,7 +537,8 @@ int dma_init_rings(struct ip *c, struct dma_mem *bd)
 int dma_init(struct ip *c)
 {
 	int ret, sg;
-	XAxiDma *xdma = &c->dma.inst;
+	struct dma *dma = &c->dma;
+	XAxiDma *xdma = &dma->inst;
 	
 	/* Guess DMA type */
 	sg = (XAxiDma_In32((uintptr_t) c->card->map + c->baseaddr + XAXIDMA_TX_OFFSET+ XAXIDMA_SR_OFFSET) &
@@ -507,16 +563,23 @@ int dma_init(struct ip *c)
 	};
 	
 	ret = XAxiDma_CfgInitialize(xdma, &xdma_cfg);
-	if (ret != XST_SUCCESS) {
-		info("Initialization failed %d", ret);
+	if (ret != XST_SUCCESS)
 		return -1;
-	}
 
 	/* Perform selftest */
 	ret = XAxiDma_Selftest(xdma);
-	if (ret != XST_SUCCESS) {
-		info("DMA selftest failed");
-		return -1;
+	if (ret != XST_SUCCESS)
+		return -2;
+	
+	/* Map buffer descriptors */
+	if (xdma->HasSg) {
+		ret = dma_alloc(c, &dma->bd, FPGA_DMA_BD_SIZE, 0);
+		if (ret)
+			return -3;
+
+		ret = dma_init_rings(xdma, &dma->bd);
+		if (ret)
+			return -4;
 	}
 
 	/* Enable completion interrupts for both channels */
@@ -526,9 +589,17 @@ int dma_init(struct ip *c)
 	return 0;
 }
 
+int dma_reset(struct ip *c)
+{
+	XAxiDma_Reset(&c->dma.inst);
+
+	return 0;
+}
+
 static struct ip_type ip = {
 	.vlnv = { "xilinx.com", "ip", "axi_dma", NULL },
-	.init = dma_init
+	.init = dma_init,
+	.reset = dma_reset
 };
 
 REGISTER_IP_TYPE(&ip)
