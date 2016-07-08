@@ -304,21 +304,29 @@ void * memdup(const void *src, size_t bytes)
 
 int read_random(char *buf, size_t len)
 {
-	int ret, fd;
+	int fd;
 	
 	fd = open("/dev/urandom", O_RDONLY);
 	if (fd < 0)
 		return -1;
 	
-	ret = read(fd, buf, len);
-	if (ret != len)
-		ret = -1;
-	else
-		ret = 0;
+	ssize_t bytes, total = 0;
+	
+	while (total < len) {
+		bytes = read(fd, buf + total, len - total);
+		if (bytes < 0)
+			goto out;
 
+		total += bytes;
+	}
+	
+	close(fd);
+	
+	return 0;
+out:
 	close(fd);
 
-	return ret;
+	return -1;
 }
 
 void printb(void *mem, size_t len)
