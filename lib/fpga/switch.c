@@ -19,10 +19,11 @@ int switch_init(struct ip *c)
 	struct sw *sw = &c->sw;
 	struct fpga *f = c->card;
 
+	XAxis_Switch *xsw = &sw->inst;
+
 	if (c != f->sw)
 		error("There can be only one AXI4-Stream interconnect per FPGA");
 
-	XAxis_Switch *xsw = &sw->inst;
 
 	/* Setup AXI-stream switch */
 	XAxis_Switch_Config sw_cfg = {
@@ -39,8 +40,19 @@ int switch_init(struct ip *c)
 	XAxisScr_RegUpdateDisable(xsw);
 	XAxisScr_MiPortDisableAll(xsw);
 	XAxisScr_RegUpdateEnable(xsw);
-	
-	debug(8, "FPGA: Switch disabled all");
+
+	return 0;
+}
+
+int switch_init_paths(struct ip *c)
+{
+	int ret;
+	struct sw *sw = &c->sw;
+
+	XAxis_Switch *xsw = &sw->inst;
+
+	XAxisScr_RegUpdateDisable(xsw);
+	XAxisScr_MiPortDisableAll(xsw);
 	
 	list_foreach(struct sw_path *p, &sw->paths) {
 		struct ip *mi, *si;
@@ -56,6 +68,8 @@ int switch_init(struct ip *c)
 			error("Failed to configure switch");
 	}
 
+	XAxisScr_RegUpdateEnable(xsw);
+
 	return 0;
 }
 
@@ -69,11 +83,11 @@ void switch_destroy(struct ip *c)
 int switch_parse(struct ip *c)
 {
 	struct sw *sw = &c->sw;
-	
+
 	list_init(&sw->paths);
 
 	config_setting_t *cfg_sw, *cfg_path;
-	
+
 	if (!config_setting_lookup_int(c->cfg, "num_ports", &sw->num_ports))
 		cerror(c->cfg, "Switch IP '%s' requires 'num_ports' option", c->name);
 
@@ -85,6 +99,11 @@ int switch_parse(struct ip *c)
 		cfg_path = config_setting_get_elem(cfg_sw, i);
 
 		struct sw_path path;
+		int reverse;
+		
+		if (!config_setting_lookup_bool(cfg_path, "reverse", &reverse))
+			reverse = 0;
+
 		if (!config_setting_lookup_string(cfg_path, "in", &path.in) &&
 		    !config_setting_lookup_string(cfg_path, "from", &path.in) &&
 		    !config_setting_lookup_string(cfg_path, "src", &path.in) &&
@@ -99,6 +118,14 @@ int switch_parse(struct ip *c)
 			cerror(cfg_path, "Path is missing 'out' setting");
 
 		list_push(&sw->paths, memdup(&path, sizeof(path)));
+
+		if (reverse) {
+			const char *tmp = path.in;
+			path.in = path.out;
+			path.out = tmp;
+			
+			list_push(&sw->paths, memdup(&path, sizeof(path)));
+		}
 	}
 	
 	return 0;
@@ -109,9 +136,31 @@ int switch_connect(struct ip *c, struct ip *mi, struct ip *si)
 	struct sw *sw = &c->sw;
 	XAxis_Switch *xsw = &sw->inst;
 	
+	uint32_t mux, port;
+
+	/* Check if theres already something connected */
+	for (int i = 0; i < sw->num_ports; i++) {
+		mux = XAxisScr_ReadReg(xsw->Config.BaseAddress, XAXIS_SCR_MI_MUX_START_OFFSET + i * 4);
+		if (!(mux & XAXIS_SCR_MI_X_DISABLE_MASK)) {
+			port = mux & ~XAXIS_SCR_MI_X_DISABLE_MASK;
+
+			if (port == si->port) {
+				warn("Switch: Slave port %s (%u) has been connected already to port %u. Disconnecting...", si->name, si->port, i);
+				XAxisScr_RegUpdateDisable(xsw);
+				XAxisScr_MiPortDisable(xsw, i);
+				XAxisScr_RegUpdateEnable(xsw);
+			}
+		}
+	}
+
+	/* Reconfigure switch */
 	XAxisScr_RegUpdateDisable(xsw);
 	XAxisScr_MiPortEnable(xsw, mi->port, si->port);
 	XAxisScr_RegUpdateEnable(xsw);
+	
+	/* Reset IPs */
+	/*ip_reset(mi);
+	ip_reset(si);*/
 	
 	debug(8, "FPGA: Switch connected %s (%u) to %s (%u)", mi->name, mi->port, si->name, si->port);
 

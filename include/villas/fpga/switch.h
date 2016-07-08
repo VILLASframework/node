@@ -35,6 +35,9 @@ struct ip;
 
 int switch_init(struct ip *c);
 
+/** Initialize paths which have been parsed by switch_parse() */
+int switch_init_paths(struct ip *c);
+
 void switch_destroy(struct ip *c);
 
 int switch_parse(struct ip *c);
