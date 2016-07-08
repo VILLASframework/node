@@ -110,7 +110,7 @@ LIB_LDLIBS += $(shell pkg-config --libs ${PKGS})
 all: $(LIBS) $(TARGETS) models
 
 # Dependencies for individual binaries
-fpga: LDLIBS += -lpci -lxil
+fpga: LDLIBS += -lpci -lxil -lblas -llapack
 
 node:   server.o
 fpga:   fpga-main.o fpga-tests.o fpga-bench.o

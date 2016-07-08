@@ -13,8 +13,8 @@
 #include <sys/utsname.h>
 
 #include <villas/utils.h>
-#include <villas/hist.h>
 #include <villas/log.h>
+#include <villas/timing.h>
 #include <villas/nodes/fpga.h>
 #include <villas/fpga/intc.h>
 #include <villas/fpga/ip.h>
@@ -24,22 +24,26 @@
 #include "config.h"
 #include "config-fpga.h"
 
-#define BENCH_EXP_MIN	2	// 1 << 2 = 4 Bytes
-#define BENCH_EXP_MAX	17	// 1 << 17 = 128 MiB
+/* Some hard-coded configuration for the benchmarks */
 
-#define BENCH_ROUNDS	10000
-#define BENCH_WARMUP	2000
+#define BENCH_DM		3
+// 1 FIFO
+// 2 DMA SG
+// 3 DMA Simple
+
+#define BENCH_RUNS		3000000
+#define BENCH_WARMUP		100
+#define BENCH_DM_EXP_MIN	0
+#define BENCH_DM_EXP_MAX	20
 
 int fpga_benchmark_datamover(struct fpga *f);
 int fpga_benchmark_jitter(struct fpga *f);
 int fpga_benchmark_memcpy(struct fpga *f);
-int fpga_benchmark_overflows(struct fpga *f);
+int fpga_benchmark_overruns(struct fpga *f);
 int fpga_benchmark_latency(struct fpga *f);
 
-enum { POLLING, IRQ } mode;
-enum { READ, WRITE } rw = READ;
-
-struct utsname uts;
+static int intc_flags = 0;
+static struct utsname uts;
 
 int fpga_benchmarks(int argc, char *argv[], struct fpga *f)
 {
@@ -51,7 +55,7 @@ int fpga_benchmarks(int argc, char *argv[], struct fpga *f)
 		{ "datamover",	fpga_benchmark_datamover },
 		{ "jitter",	fpga_benchmark_jitter },
 		{ "memcpy",	fpga_benchmark_memcpy },
-		{ "overflows",	fpga_benchmark_overflows },
+		{ "overruns",	fpga_benchmark_overruns },
 		{ "latency",	fpga_benchmark_latency }
 	};
 	
@@ -73,80 +77,151 @@ int fpga_benchmarks(int argc, char *argv[], struct fpga *f)
 	if (ret)
 		return -1;
 
-	for (int j = 0; j < 2; j++) {
-		mode = j;
+again:	ret = bench->func(f);
+	if (ret)
+		error("Benchmark %s failed", bench->name);
 
-		ret = bench->func(f);
-		if (ret)
-			error("Benchmark %s failed", bench->name);
+	/* Rerun test with polling */
+	if (intc_flags == 0) {
+		intc_flags |= INTC_POLLING;
+		getchar();
+		goto again;
 	}
 
 	return -1;
 }
 
-int fpga_benchmark_overflows(struct fpga *f)
-{
-	struct ip *tmr;
+extern int dgemm_(char *transa, char *transb, int *m, int *n, int *k, double *alpha, double *a, int *lda, double *b, int *ldb, double *beta, double *c, int *ldc);
+extern int dgetrf_(int *m, int *n, double *a, int *lda, int *ipiv, int *info);
+extern int dgetri_(int *n, double *a, int *lda, int *ipiv, double *work, int *lwork, int *info);
 
-	tmr = list_lookup(&f->ips, "timer_0");
-	if (!tmr || !f->intc)
+static int lapack_generate_workload(int N, double *C)
+{
+	double *A = alloc(N * N * sizeof(double));
+
+	srand(time(NULL));
+
+	for (int i = 0; i < N * N; i++)
+		A[i] = 100 * (double) rand() / RAND_MAX + 1;
+
+	char transA = 'T';
+	char transB = 'N';
+	double alpha = 1;
+	double beta = 1;
+
+	/* C = A' * A, to get an invertible matrix */
+	dgemm_(&transA, &transB, &N, &N, &N, &alpha, A, &N, A, &N, &beta, C, &N);
+
+	free(A);
+
+	return 0;
+}
+
+static int lapack_workload(int N, double *A)
+{
+	int info = 0; 
+	int lworkspace = N;
+	int ipiv[N]; 
+	double workspace[N]; 
+
+	dgetrf_(&N, &N, A, &N, ipiv, &info);
+	if (info > 0)
+		error("Failed to pivot matrix");
+	
+	dgetri_(&N, A, &N, ipiv, workspace, &lworkspace, &info);
+	if (info > 0)
+		error("Failed to LU factorized matrix");
+
+	return 0;
+}
+
+int fpga_benchmark_overruns(struct fpga *f)
+{
+	struct ip *rtds, *dm;
+
+	dm = list_lookup(&f->ips, "dma_1");
+	rtds = list_lookup(&f->ips, "rtds_axis_0");
+	if (!rtds || !f->intc)
 		return -1;
 
-	XTmrCtr *xtmr = &tmr->timer.inst;
-
-	if (mode == IRQ)
-		intc_enable(f->intc, (1 << tmr->irq), 0);
-
+	int ret;
 	float period = 50e-6;
-	int times = period * 1.5 * 1e6; // in uS
 	int runs = 1.0 / period;
-	int overflows[times];
+	int overruns;
+	
+	info("runs = %u", runs);
 
-	XTmrCtr_SetOptions(xtmr, 0, XTC_INT_MODE_OPTION | XTC_EXT_COMPARE_OPTION | XTC_DOWN_COUNT_OPTION | XTC_AUTO_RELOAD_OPTION);
-	XTmrCtr_SetResetValue(xtmr, 0, period * AXI_HZ);
-	XTmrCtr_Start(xtmr, 0);
+	switch_connect(f->sw, dm, rtds);
+	switch_connect(f->sw, rtds, dm);
 
-	for (int p = 0; p < times; p++) {
-		overflows[p] = 0;
-
-		for (int i = 0; i < runs; i++) {
-			uint32_t tcsr;
-			if ((tcsr = XTmrCtr_ReadReg((uintptr_t) f->map + tmr->baseaddr, 0, XTC_TCSR_OFFSET)) & XTC_CSR_INT_OCCURED_MASK)
-				overflows[p]++;
-
-			if (mode == IRQ)
-				intc_wait(f->intc, tmr->irq, 0);
-			else {
-				while (!((tcsr = XTmrCtr_ReadReg((uintptr_t) f->map + tmr->baseaddr, 0, XTC_TCSR_OFFSET)) & XTC_CSR_INT_OCCURED_MASK)) __asm__("nop");
-			}
-			tcsr = XTmrCtr_ReadReg((uintptr_t) f->map + tmr->baseaddr, 0, XTC_TCSR_OFFSET);
-			XTmrCtr_WriteReg((uintptr_t) f->map + tmr->baseaddr, 0, XTC_TCSR_OFFSET, tcsr);
-
-			/* Processing */
-			rdtsc_sleep(p * 1000, 0);
-		}
-	}
-
-	XTmrCtr_Stop(xtmr, 0);
+	intc_enable(f->intc, (1 << (dm->irq + 1  )), intc_flags);
 
 	/* Dump results */
 	char fn[256];
-	snprintf(fn, sizeof(fn), "results/overflows_%s_%s.dat", mode == IRQ ? "irq" : "polling", uts.release);
+	snprintf(fn, sizeof(fn), "results/overruns_lu_rtds_axis_%s_%s.dat", intc_flags & INTC_POLLING ? "polling" : "irq", uts.release);
 	FILE *g = fopen(fn, "w");
 	fprintf(g, "# period = %f\n", period);
 	fprintf(g, "# runs = %u\n", runs);
-	for (int i = 0; i < times; i++)
-		fprintf(g, "%u\n", overflows[i]);
-	fclose(g);
-
-	if (mode == IRQ)
-		intc_disable(f->intc, (1 << tmr->irq));
 	
+	struct dma_mem mem;
+	ret = dma_alloc(dm, &mem, 0x1000, 0);
+	if (ret)
+		error("Failed to allocate DMA memory");
+
+	uint32_t *data_rx = (uint32_t *) mem.base_virt;
+	uint32_t *data_tx = (uint32_t *) mem.base_virt + 0x200;
+	uint64_t total, start, stop;
+	for (int p = 3; p < 45; p++) {
+		double *A = alloc(p*p*sizeof(double));
+
+		lapack_generate_workload(p, A);
+
+		overruns = 0;
+		total = 0;
+		
+		for (int i = 0; i < 2000; i++) {
+			dma_read(dm, mem.base_phys, 0x200);
+			dma_read_complete(dm, NULL, NULL);
+		}
+
+		for (int i = 0; i < runs + BENCH_WARMUP; i++) {
+			dma_read(dm, mem.base_phys, 0x200);
+
+			start = rdtscp();
+			lapack_workload(p, A);
+			stop = rdtscp();
+
+			dma_read_complete(dm, NULL, NULL);
+
+			/* Send data to rtds */
+			data_tx[0] = i;
+			dma_write(dm, mem.base_phys + 0x200, 64 * sizeof(data_tx[0]));
+
+			if (i < BENCH_WARMUP)
+				continue;
+
+			if (i - data_rx[0] > 2)
+				overruns++;
+			total += stop - start;
+		}
+
+		free(A);
+
+		info("iter = %u clks = %ju overruns = %u", p, total / runs, overruns);
+		fprintf(g, "%u %ju %u\n", p, total / runs, overruns);
+		
+		if (overruns >= runs)
+			break;
+	}
+
+	fclose(g);
 	return 0;
 }
 
 int fpga_benchmark_jitter(struct fpga *f)
 {
+	int ret;
+
 	struct ip *tmr;
 
 	tmr = list_lookup(&f->ips, "timer_0");
@@ -155,13 +230,14 @@ int fpga_benchmark_jitter(struct fpga *f)
 
 	XTmrCtr *xtmr = &tmr->timer.inst;
 
-	if (mode == IRQ)
-		intc_enable(f->intc, (1 << tmr->irq), 0);
+	ret = intc_enable(f->intc, (1 << tmr->irq), intc_flags);
+	if (ret)
+		error("Failed to enable interrupt");
 	
 	float period = 50e-6;
 	int runs = 300.0 / period;
 	
-	int *hist = (int *) f->dma;
+	int *hist = alloc(8 << 20);
 
 	XTmrCtr_SetOptions(xtmr, 0, XTC_INT_MODE_OPTION | XTC_EXT_COMPARE_OPTION | XTC_DOWN_COUNT_OPTION | XTC_AUTO_RELOAD_OPTION);
 	XTmrCtr_SetResetValue(xtmr, 0, period * AXI_HZ);
@@ -169,16 +245,12 @@ int fpga_benchmark_jitter(struct fpga *f)
 
 	uint64_t end, start = rdtscp();
 	for (int i = 0; i < runs; i++) {
-		if (mode == IRQ) {
-			uint64_t cnt = intc_wait(f->intc, tmr->irq, 0);
-			if (cnt != 1)
-				warn("fail");
-		}
-		else {
-			uint32_t tcsr;
-			while (!((tcsr = XTmrCtr_ReadReg((uintptr_t) f->map + tmr->baseaddr, 0, XTC_TCSR_OFFSET)) & XTC_CSR_INT_OCCURED_MASK)) __asm__("nop");
-			XTmrCtr_WriteReg((uintptr_t) f->map + tmr->baseaddr, 0, XTC_TCSR_OFFSET, tcsr | XTC_CSR_INT_OCCURED_MASK);
-		}
+		uint64_t cnt = intc_wait(f->intc, tmr->irq);
+		if (cnt != 1)
+			warn("fail");
+		
+		/* Ackowledge IRQ */
+		XTmrCtr_WriteReg((uintptr_t) f->map + tmr->baseaddr, 0, XTC_TCSR_OFFSET, XTmrCtr_ReadReg((uintptr_t) f->map + tmr->baseaddr, 0, XTC_TCSR_OFFSET));
 
 		end = rdtscp();
 		hist[i] = end - start;
@@ -188,7 +260,7 @@ int fpga_benchmark_jitter(struct fpga *f)
 	XTmrCtr_Stop(xtmr, 0);
 
 	char fn[256];
-	snprintf(fn, sizeof(fn), "results/jitter_%s_%s.dat", mode == IRQ ? "irq" : "polling", uts.release);
+	snprintf(fn, sizeof(fn), "results/jitter_%s_%s.dat", intc_flags & INTC_POLLING ? "polling" : "irq", uts.release);
 	FILE *g = fopen(fn, "w");
 	for (int i = 0; i < runs; i++)
 		fprintf(g, "%u\n", hist[i]);
@@ -196,13 +268,17 @@ int fpga_benchmark_jitter(struct fpga *f)
 
 	free(hist);
 	
-	if (mode == IRQ)
-		intc_disable(f->intc, (1 << tmr->irq));
+	ret = intc_disable(f->intc, (1 << tmr->irq));
+	if (ret)
+		error("Failed to disable interrupt");
+
 	return 0;
 }
 
 int fpga_benchmark_latency(struct fpga *f)
 {
+	int ret;
+
 	uint64_t start, end;
 
 	if (!f->intc)
@@ -211,119 +287,174 @@ int fpga_benchmark_latency(struct fpga *f)
 	int runs = 1000000;
 	int hist[runs];
 
-	intc_enable(f->intc, 0x100, mode == POLLING ? 1 : 0);
+	ret = intc_enable(f->intc, 0x100, intc_flags);
+	if (ret)
+		error("Failed to enable interrupts");
 
 	for (int i = 0; i < runs; i++) {
 		start = rdtscp();
 		XIntc_Out32((uintptr_t) f->map + f->intc->baseaddr + XIN_ISR_OFFSET, 0x100);
 
-		intc_wait(f->intc, 8, mode == POLLING ? 1 : 0);
+		intc_wait(f->intc, 8);
 		end = rdtscp();
-		
+
 		hist[i] = end - start;
 	}
 
 	char fn[256];
-	snprintf(fn, sizeof(fn), "results/latency_%s_%s.dat", mode == IRQ ? "irq" : "polling", uts.release);
+	snprintf(fn, sizeof(fn), "results/latency_%s_%s.dat", intc_flags & INTC_POLLING ? "polling" : "irq", uts.release);
 	FILE *g = fopen(fn, "w");
 	for (int i = 0; i < runs; i++)
 		fprintf(g, "%u\n", hist[i]);
 	fclose(g);
 
-	intc_disable(f->intc, 0x100);
+	ret = intc_disable(f->intc, 0x100);
+	if (ret)
+		error("Failed to disable interrupt");
 
 	return 0;
 }
 
 int fpga_benchmark_datamover(struct fpga *f)
 {
-#if 0
-	uint64_t start, stop;
+	int ret;
 
-	char *src, *dst;
-	size_t len;
+	struct ip *dm;
+	struct dma_mem mem, src, dst;
 
-	for (int exp = BENCH_EXP_MIN; exp < BENCH_EXP_MAX; exp++) {
-		size_t sz = 1 << exp;
+#if BENCH_DM == 1
+	char *dm_name = "fifo_mm_s_0";
+#elif BENCH_DM == 2
+	char *dm_name = "dma_0";
+#elif BENCH_DM == 3
+	char *dm_name = "dma_1";
+#endif
+
+	dm = list_lookup(&f->ips, dm_name);
+	if (!dm)
+		error("Unknown datamover");
 	
-		read_random(src, len);
-		memset(dst, 0, len);
+	ret = switch_connect(f->sw, dm, dm);
+	if (ret)
+		error("Failed to configure switch");
+	
+	ret = intc_enable(f->intc, (1 << dm->irq) | (1 << (dm->irq + 1)), intc_flags);
+	if (ret)
+		error("Failed to enable interrupt");
 
-		info("Running bench with size: %#zx", sz);
+	/* Allocate DMA memory */
+	ret = dma_alloc(dm, &mem, 2 * (1 << BENCH_DM_EXP_MAX), 0);
+	if (ret)
+		error("Failed to allocate DMA memory");
 
-		for (int i = 0; i < BENCH_ROUNDS + BENCH_WARMUP; i++) {
+	ret = dma_mem_split(&mem, &src, &dst);
+	if (ret)
+		return -1;
+
+	/* Open file for results */
+	char fn[256];
+	snprintf(fn, sizeof(fn), "results/datamover_%s_%s_%s.dat", dm_name, intc_flags & INTC_POLLING ? "polling" : "irq", uts.release);
+	FILE *g = fopen(fn, "w");
+
+	for (int exp = BENCH_DM_EXP_MIN; exp <= BENCH_DM_EXP_MAX; exp++) {
+		uint64_t start, stop, total = 0, len = 1 << exp;
+		
+#if BENCH_DM == 1
+		if (exp > 11)
+			break; /* FIFO and Simple DMA are limited to 4kb */
+#elif BENCH_DM == 3
+		if (exp >= 12)
+			break; /* FIFO and Simple DMA are limited to 4kb */
+#endif
+
+		read_random(src.base_virt, len);
+		memset(dst.base_virt, 0, len);
+
+		info("Start DM bench: len=%#jx", len);
+
+		uint64_t runs = BENCH_RUNS >> exp;
+		for (int i = 0; i < runs + BENCH_WARMUP; i++) {
 			start = rdtscp();
+#if BENCH_DM == 1
+			ssize_t ret;
 
-			switch (bench) {
-				case BENCH_FIFO:
-					fifo_write(&f->fifo, src, len, irq_fifo);
-					fifo_read(&f->fifo, src, len, irq_fifo);
-					break;
-				case BENCH_DMA_SG:
-					dma_write(&f->dma_sg, src, len, irq_dma_mm2s);
-					dma_read(&f->dma_sg, src, len, irq_dma_s2mm);
-					break;
-				case BENCH_DMA_SIMPLE:
-					dma_write(&f->dma_simple, src, len, irq_dma_mm2s);
-					dma_read(&f->dma_simple, src, len, irq_dma_s2mm);
-					break;
-			}
+			ret = fifo_write(dm, src.base_virt, len);
+			if (ret < 0)
+				error("Failed write to FIFO with len = %zu", len);
 			
+			ret = fifo_read(dm, dst.base_virt, dst.len);
+			if (ret < 0)
+				error("Failed read from FIFO with len = %zu", len);
+#else
+			ret = dma_ping_pong(dm, src.base_phys, dst.base_phys, len);
+			if (ret)
+				error("DMA ping pong failed");
+#endif
 			stop = rdtscp();
 
-			if (memcmp(src, dst, len))
+			if (memcmp(src.base_virt, dst.base_virt, len))
 				warn("Compare failed");
 
 			if (i > BENCH_WARMUP)
-				hist_put(&hist, stop - start);
+				total += stop - start;
 		}
+		
+		info("exp %u avg %lu", exp, total / runs);
+		fprintf(g, "%lu %lu\n", len, total / runs);
 	}
-#endif
+
+	fclose(g);
+	
+	ret = switch_disconnect(f->sw, dm, dm);
+	if (ret)
+		error("Failed to configure switch");
+	
+	ret = dma_free(dm, &mem);
+	if (ret)
+		error("Failed to release DMA memory");
+	
+	ret = intc_disable(f->intc, (1 << dm->irq) | (1 << (dm->irq + 1)));
+	if (ret)
+		error("Failed to enable interrupt");
+
+
 	return 0;
 }
 
 int fpga_benchmark_memcpy(struct fpga *f)
 {
-#if 1
-	char *src = f->map;
-	char *dst = alloc(1 << 16);
-#else
-	char *dst = f->map;
-	char *src = alloc(1 << 16);
-#endif
+	char *map = f->map + 0x200000;
+	uint32_t *mapi = (uint32_t *) map;
 
-	int runs = 10000;
-	
 	char fn[256];
-	snprintf(fn, sizeof(fn), "results/bar0_%s_%s.dat", mode == IRQ ? "irq" : "polling", uts.release);
+	snprintf(fn, sizeof(fn), "results/bar0_%s_%s.dat", intc_flags & INTC_POLLING ? "polling" : "irq", uts.release);
 	FILE *g = fopen(fn, "w");
-	fprintf(g, "# runs = %u\n", runs);
 	fprintf(g, "# bytes cycles\n");
 
-	size_t len = 1;
-	for (int i = 0; i < 16; i++) {
-		len = 1 << i;
-
+	uint32_t dummy = 0;
+	
+	for (int exp = BENCH_DM_EXP_MIN; exp <= BENCH_DM_EXP_MAX; exp++) {
+		uint64_t len = 1 << exp;
 		uint64_t start, end, total = 0;
-		for (int i = 0; i < runs; i++) {
-			/* Clear cache */
-//			for (char *p = src; p < src + len; p += 64)
-//				__builtin_ia32_clflush(p);
-//			for (char *p = dst; p < dst + len; p += 64)
-//				__builtin_ia32_clflush(p);
+		uint64_t runs = (BENCH_RUNS << 2) >> exp;
 
-			/* Start measurement */
+		for (int i = 0; i < runs + BENCH_WARMUP; i++) {
 			start = rdtscp();
-			memcpy(dst, src, len);
+			
+			for (int j = 0; j < len / 4; j++)
+//				mapi[j] = j;		// write
+				dummy += mapi[j];	// read
+
 			end = rdtscp();
 		
-			total += end - start;
+			if (i > BENCH_WARMUP)
+				total += end - start;
 		}
-		
-		fprintf(g, "%zu %lu\n", len, total / runs);
-		usleep(100000);
+
+		info("exp = %u\truns = %ju\ttotal = %ju\tavg = %ju\tavgw = %ju", exp, runs, total, total / runs, total / (runs * len));
+		fprintf(g, "%zu %lu %ju\n", len, total / runs, runs);
 	}
-	
+
 	fclose(g);
 
 	return 0;
