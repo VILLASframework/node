@@ -49,7 +49,11 @@ int fpga_reset(struct fpga *f)
 	if (ret != sizeof(state))
 		return -1;
 
-	return  rst_reg[0];
+	/* After reset the value should be zero again */
+	if (rst_reg[0])
+		return -2;
+
+	return 0;
 }
 
 void fpga_dump(struct fpga *f)
@@ -71,7 +75,6 @@ void fpga_dump(struct fpga *f)
 		info("Class  ID: %04x", fpga.vd.pdev->device_class);
 
 		info("BAR0 mapped at %p", fpga.map);
-		info("DMA mapped at %p", fpga.dma);
 
 		info("IP blocks:");
 		list_foreach(struct ip *i, &f->ips) { INDENT
@@ -166,7 +169,7 @@ int fpga_init(int argc, char * argv[], config_setting_t *cfg)
 	ret = fpga_parse_card(f, argc, argv, cfg);
 	if (ret)
 		cerror(cfg, "Failed to parse VILLASfpga config");
-	
+
 	/* Check FPGA configuration */
 	f->reset = ip_vlnv_lookup(&f->ips, "xilinx.com", "ip", "axi_gpio", NULL);
 	if (!f->reset)
@@ -199,27 +202,22 @@ int fpga_init(int argc, char * argv[], config_setting_t *cfg)
 	f->map = vfio_map_region(&f->vd, VFIO_PCI_BAR0_REGION_INDEX);
 	if (f->map == MAP_FAILED)
 		serror("Failed to mmap() BAR0");
-	
-	/* Map DMA accessible memory */
-	f->dma = vfio_map_dma(f->vd.group->container, 16 << 20, 0x1000, 0x0);
-	if (f->dma == MAP_FAILED)
-		serror("Failed to mmap() DMA");
 
 	/* Enable memory access and PCI bus mastering for DMA */
 	ret = vfio_pci_enable(&f->vd);
 	if (ret)
 		serror("Failed to enable PCI device");
 	
-	/* Reset system ? */
+	/* Reset system? */
 	if (f->do_reset) {
-		ret = fpga_reset(f);
-		if (ret)
-			error("Failed to reset FGPA card");
-		
 		/* Reset / detect PCI device */
 		ret = vfio_pci_reset(&f->vd);
 		if (ret)
 			serror("Failed to reset PCI device");
+
+		ret = fpga_reset(f);
+		if (ret)
+			error("Failed to reset FGPA card");
 	}
 
 	/* Initialize IP cores */
@@ -290,6 +288,7 @@ int fpga_get_type(struct ip *c)
 int fpga_open(struct node *n)
 {
 	int ret;
+
 	struct fpga_dm *d = n->_vd;
 	struct fpga *f = d->card;
 
@@ -301,35 +300,25 @@ int fpga_open(struct node *n)
 	if (d->type < 0)
 		cerror(n->cfg, "IP '%s' is not a supported datamover", d->ip->name);
 
+	switch_init_paths(f->sw);
+
+	int flags = 0;
+	if (!d->use_irqs)
+		flags |= INTC_POLLING;
+
 	switch (d->type) {
 		case FPGA_DM_DMA:
-			XAxiDma_Reset(&d->ip->dma.inst);
+			/* Map DMA accessible memory */
+			ret = dma_alloc(d->ip, &d->dma, 0x1000, 0);
+			if (ret)
+				return ret;
 
-			if (d->ip->dma.inst.HasSg) {
-				struct ip *bram = ip_vlnv_lookup(&f->ips, "xilinx.com", "ip", "axi_bram_ctrl", NULL);
-				if (!bram)
-					return -3;
-
-				/* Memory for buffer descriptors */
-				struct dma_mem bd = {
-					.base_virt = (uintptr_t) f->map + bram->baseaddr,
-					.base_phys = bram->baseaddr,
-					.len = bram->bram.size
-				};
-
-				ret = dma_init_rings(d->ip, &bd);
-				if (ret)
-					return -4;
-			}
-			
-			intc_enable(f->intc, (1 <<  d->ip->irq),      !d->use_irqs); /* MM2S */
-			intc_enable(f->intc, (1 << (d->ip->irq + 1)), !d->use_irqs); /* S2MM */
+			intc_enable(f->intc, (1 << (d->ip->irq    )), flags); /* MM2S */
+			intc_enable(f->intc, (1 << (d->ip->irq + 1)), flags); /* S2MM */
 			break;
 
 		case FPGA_DM_FIFO:
-			XLlFifo_Reset(&d->ip->fifo.inst);
-
-			intc_enable(f->intc, (1 << d->ip->irq),      !d->use_irqs);	/* MM2S & S2MM */
+			intc_enable(f->intc, (1 << d->ip->irq),      flags);	/* MM2S & S2MM */
 			break;
 	}
 	
@@ -339,16 +328,20 @@ int fpga_open(struct node *n)
 
 int fpga_close(struct node *n)
 {
+	int ret;
+
 	struct fpga_dm *d = n->_vd;
 	struct fpga *f = d->card;
-	
+
 	switch (d->type) {
 		case FPGA_DM_DMA:
-			if (d->use_irqs) {
-				intc_disable(f->intc, d->ip->irq);	/* MM2S */
-				intc_disable(f->intc, d->ip->irq + 1);	/* S2MM */
-			}
-		
+			intc_disable(f->intc, d->ip->irq);	/* MM2S */
+			intc_disable(f->intc, d->ip->irq + 1);	/* S2MM */
+
+			ret = dma_free(d->ip, &d->dma);
+			if (ret)
+				return ret;
+
 		case FPGA_DM_FIFO:
 			if (d->use_irqs)
 				intc_disable(f->intc, d->ip->irq);	/* MM2S & S2MM */
@@ -359,13 +352,13 @@ int fpga_close(struct node *n)
 
 int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
+	int ret;
+
 	struct fpga_dm *d = n->_vd;
-	struct fpga *f = d->card;
 	struct sample *smp = smps[0];
 
-	int ret;
-	char *tmp = f->dma, *addr = (char *) smp->values;
 	size_t recvlen;
+
 	//size_t len = smp->length * sizeof(smp->values[0]);
 	size_t len = 64 * sizeof(smp->values[0]);
 	
@@ -376,7 +369,7 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 	/* Read data from RTDS */
 	switch (d->type) {
 		case FPGA_DM_DMA:
-			ret = dma_read(d->ip, tmp, len);
+			ret = dma_read(d->ip, d->dma.base_phys + 0x800, len);
 			if (ret)
 				return ret;
 			
@@ -384,12 +377,12 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 			if (ret)
 				return ret;
 
-			memcpy(addr, tmp, recvlen);
+			memcpy(smp->values, d->dma.base_virt + 0x800, recvlen);
 
 			smp->length = recvlen / 4;
 			return 1;
 		case FPGA_DM_FIFO:
-			recvlen = fifo_read(d->ip, addr, len);
+			recvlen = fifo_read(d->ip, (char *) smp->values, len);
 			
 			smp->length = recvlen / 4;
 			return 1;
@@ -402,11 +395,8 @@ int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 	struct fpga_dm *d = n->_vd;
-	struct fpga *f = d->card;
 	struct sample *smp = smps[0];
 
-	char *tmp = f->dma + 0x1000;
-	char *addr = (char *) smp->values;
 	size_t sentlen;
 	size_t len = smp->length * sizeof(smp->values[0]);
 
@@ -420,9 +410,9 @@ int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 	/* Send data to RTDS */
 	switch (d->type) {
 		case FPGA_DM_DMA:
-			memcpy(tmp, addr, len);
+			memcpy(d->dma.base_virt, smp->values, len);
 
-			ret = dma_write(d->ip, tmp, len);
+			ret = dma_write(d->ip, d->dma.base_phys, len);
 			if (ret)
 				return ret;
 			
@@ -434,7 +424,8 @@ int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 			return 1;
 		case FPGA_DM_FIFO:
-			sentlen = fifo_write(d->ip, addr, len);
+			sentlen = fifo_write(d->ip, (char *) smp->values, len);
+			return sentlen / sizeof(smp->values[0]);
 			break;
 	}
 	

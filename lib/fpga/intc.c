@@ -7,32 +7,44 @@
  **********************************************************************************/
 
 #include <unistd.h>
- 
+
+#include "config.h" 
 #include "log.h"
 #include "nodes/fpga.h"
 #include "kernel/vfio.h" 
+#include "kernel/kernel.h" 
 #include "fpga/ip.h"
 #include "fpga/intc.h"
 
 int intc_init(struct ip *c)
 {
-	struct fpga *f = c->card;
 	int ret;
+
+	struct fpga *f = c->card;
+	struct intc *intc = &c->intc;
+
+	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
 
 	if (c != f->intc)
 		error("There can be only one interrupt controller per FPGA");
 
-	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
+	intc->num_irqs = vfio_pci_msi_init(&f->vd, intc->efds);
+	if (intc->num_irqs < 0)
+		return -1;
 
-	/* Setup IRQs */
-	for (int i = 0; i < f->vd.irqs[VFIO_PCI_MSI_IRQ_INDEX].count; i++) {
+	ret = vfio_pci_msi_find(&f->vd, intc->nos);
+	if (ret)
+		return -2;
+
+	/* For each IRQ */
+	for (int i = 0; i < intc->num_irqs; i++) {
+		/* Pin to core */
+		ret = kernel_irq_setaffinity(intc->nos[i], DEFAULT_AFFINITY, NULL);
+		if (ret)
+			serror("Failed to change affinity of VFIO-MSI interrupt");
+
 		/* Setup vector */
 		XIntc_Out32(base + XIN_IVAR_OFFSET + i * 4, i);
-		
-		/* Register eventfd with VFIO */
-		ret = vfio_pci_msi_fd(&f->vd, (1 << i));
-		if (ret < 0)
-			serror("Failed to create eventfd for IRQ: ret=%d", f->vd.msi_efds[i]);
 	}
 
 	XIntc_Out32(base + XIN_IMR_OFFSET, 0);		/* Use manual acknowlegement for all IRQs */
@@ -46,8 +58,17 @@ int intc_init(struct ip *c)
 	return 0;
 }
 
-int intc_enable(struct ip *c, uint32_t mask, int poll)
+void intc_destroy(struct ip *c)
 {
+	struct fpga *f = c->card;
+	struct intc *intc = &c->intc;
+
+	vfio_pci_msi_deinit(&f->vd, intc->efds);
+}
+
+int intc_enable(struct ip *c, uint32_t mask, int flags)
+{
+	struct intc *intc = &c->intc;
 	struct fpga *f = c->card;
 
 	uint32_t ier, imr;
@@ -60,12 +81,25 @@ int intc_enable(struct ip *c, uint32_t mask, int poll)
 	/* Clear pending IRQs */
 	XIntc_Out32(base + XIN_IAR_OFFSET, mask);
 	
-	if (poll)
-		XIntc_Out32(base + XIN_IMR_OFFSET, imr & ~mask);
-	else
-		XIntc_Out32(base + XIN_IER_OFFSET, ier | mask);
+	for (int i = 0; i < intc->num_irqs; i++) {
+		if (mask & (1 << i))
+			intc->flags[i] = flags;
+	}
 
-	debug(8, "FPGA: Interupt enabled: %#x", mask);
+	if (flags & INTC_POLLING) {
+		XIntc_Out32(base + XIN_IMR_OFFSET, imr & ~mask);
+		XIntc_Out32(base + XIN_IER_OFFSET, ier & ~mask);
+	}
+	else {
+		XIntc_Out32(base + XIN_IER_OFFSET, ier | mask);
+		XIntc_Out32(base + XIN_IMR_OFFSET, imr | mask);
+	}
+
+	debug(3, "New ier = %#x", XIntc_In32(base + XIN_IER_OFFSET));
+	debug(3, "New imr = %#x", XIntc_In32(base + XIN_IMR_OFFSET));
+	debug(3, "New isr = %#x", XIntc_In32(base + XIN_ISR_OFFSET));
+
+	debug(8, "FPGA: Interupt enabled: mask=%#x flags=%#x", mask, flags);
 
 	return 0;
 }
@@ -75,44 +109,46 @@ int intc_disable(struct ip *c, uint32_t mask)
 	struct fpga *f = c->card;
 
 	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
+	uint32_t ier = XIntc_In32(base + XIN_IER_OFFSET);
 
-	XIntc_Out32(base + XIN_IER_OFFSET, XIntc_In32(base + XIN_IER_OFFSET) & ~mask);
+	XIntc_Out32(base + XIN_IER_OFFSET, ier & ~mask);
 
 	return 0;
 }
 
-uint64_t intc_wait(struct ip *c, int irq, int poll)
+uint64_t intc_wait(struct ip *c, int irq)
 {
+	struct intc *intc = &c->intc;
 	struct fpga *f = c->card;
 
 	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
-	uint64_t cnt;
-	
-	if (poll) {
-		uint32_t mask = 1 << irq;
-		uint32_t isr;
 
-		do { /* Wait for IRQ to occur */
+	if (intc->flags[irq] & INTC_POLLING) {
+		uint32_t isr, mask = 1 << irq;
+
+		do {
 			isr = XIntc_In32(base + XIN_ISR_OFFSET);
-		} while (!(isr & mask));
+			pthread_testcancel();
+		} while ((isr & mask) != mask);
 
-		/* Acknowlege */
 		XIntc_Out32(base + XIN_IAR_OFFSET, mask);
-		
-		cnt = 1;
+
+		return 1;
 	}
 	else {
-		ssize_t ret = read(f->vd.msi_efds[irq], &cnt, sizeof(cnt));
+		uint64_t cnt;
+		ssize_t ret = read(intc->efds[irq], &cnt, sizeof(cnt));
 		if (ret != sizeof(cnt))
 			return 0;
+		
+		return cnt;
 	}
-
-	return cnt;
 }
 
 static struct ip_type ip = {
 	.vlnv = { "acs.eonerc.rwth-aachen.de", "user", "axi_pcie_intc", NULL },
-	.init = intc_init
+	.init = intc_init,
+	.destroy = intc_destroy
 };
 
 REGISTER_IP_TYPE(&ip)

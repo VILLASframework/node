@@ -16,9 +16,7 @@
 #include <string.h>
 
 #include <sys/ioctl.h>
-#include <sys/mman.h>
 #include <sys/eventfd.h>
-
 
 #include "utils.h"
 #include "log.h"
@@ -28,6 +26,8 @@
 #include "kernel/kernel.h"
 #include "kernel/vfio.h"
 #include "kernel/pci.h"
+
+#include "fpga/dma.h"
 
 static const char *vfio_pci_region_names[] = {
 	"PCI_BAR0",		// VFIO_PCI_BAR0_REGION_INDEX,
@@ -116,14 +116,6 @@ void vfio_dev_destroy(struct vfio_dev *d)
 
 	for (int i = 0; i < d->info.num_regions; i++)
 		vfio_unmap_region(d, i);
-
-	/* Check if this is really a vfio-pci device */
-	if (d->info.flags & VFIO_DEVICE_FLAGS_PCI) {
-		for (int i = 0; i < d->irqs[VFIO_PCI_MSI_IRQ_INDEX].count; i++)
-			close(d->msi_efds[i]);
-
-		free(d->msi_efds);
-	}
 
 	ret = close(d->fd);
 	if (ret)
@@ -247,14 +239,6 @@ int vfio_pci_attach(struct vfio_dev *d, struct vfio_container *c, struct pci_dev
 
 	d->pdev = pdev;
 
-	/* Initialize MSI irqs */
-	d->msi_efds = alloc(sizeof(int) * d->irqs[VFIO_PCI_MSI_IRQ_INDEX].count);
-	d->msi_irqs = alloc(sizeof(int) * d->irqs[VFIO_PCI_MSI_IRQ_INDEX].count);
-	for (int i = 0; i < d->irqs[VFIO_PCI_MSI_IRQ_INDEX].count; i++) {
-		d->msi_efds[i] = -1;
-		d->msi_irqs[i] = -1;
-	}
-
 	return 0;
 }
 
@@ -368,24 +352,25 @@ int vfio_pci_reset(struct vfio_dev *d)
 	return ret;
 }
 
-int vfio_pci_msi_findirqs(struct vfio_dev *d)
+int vfio_pci_msi_find(struct vfio_dev *d, int nos[32])
 {
+	int ret, idx, irq;
+	char *end, *col, *last, line[1024], name[13];
 	FILE *f;
-	char *end, *col, *last, line[1024];
-	int ret, vector;
-	
+
 	f = fopen("/proc/interrupts", "r");
 	if (!f)
 		return -1;
 
-	/* Ignore header line */
-	fgets(line, sizeof(line), f);
+	for (int i = 0; i < 32; i++)
+		nos[i] = -1;
 
+	/* For each line in /proc/interruipts */
 	while (fgets(line, sizeof(line), f)) {
 		col = strtok(line, " ");
 
 		/* IRQ number is in first column */
-		int irq = strtol(col, &end, 10);
+		irq = strtol(col, &end, 10);
 		if (col == end)
 			continue;
 
@@ -393,79 +378,85 @@ int vfio_pci_msi_findirqs(struct vfio_dev *d)
 		while ((col = strtok(NULL, " ")))
 			last = col;
 
-		char name[13];
-		ret = sscanf(last, "vfio-msi[%u](%12[0-9:])", &vector, name);
-		if (ret == 2) { /* match was successful */
-			if (strstr(d->name, name) == d->name) /* device matches */
-				d->msi_irqs[vector] = irq;
+		ret = sscanf(last, "vfio-msi[%u](%12[0-9:])", &idx, name);
+		if (ret == 2) {
+			if (strstr(d->name, name) == d->name)
+				nos[idx] = irq;
 		}
 	}
-	
+
 	fclose(f);
 
 	return 0;
 }
 
-int vfio_pci_msi_fd(struct vfio_dev *d, uint32_t mask)
+int vfio_pci_msi_deinit(struct vfio_dev *d, int efds[32])
 {
-	int efd, ret;
-	struct vfio_irq_info *msi_irqs = &d->irqs[VFIO_PCI_MSI_IRQ_INDEX];
+	int ret, irq_setlen, irq_count = d->irqs[VFIO_PCI_MSI_IRQ_INDEX].count; 
 	struct vfio_irq_set *irq_set;
-	size_t irq_setlen;
-	
+
 	/* Check if this is really a vfio-pci device */
 	if (!(d->info.flags & VFIO_DEVICE_FLAGS_PCI))
 		return -1;
 
-	/* Check if already assigned */
-	for (int i = 0; i < MIN(sizeof(mask) * 8, msi_irqs->count); i++) {
-		if ((mask & (1 << i)) && (d->msi_efds[i] >= 0))
-			return -1;
-	}
-
-	/* Create new eventfd */
-	efd = eventfd(0, 0);
-	if (efd < 0)
-		return -3;
-
-	/* Assign new efd */
-	for (int i = 0; i < MIN(sizeof(mask) * 8, msi_irqs->count); i++) {
-		if (mask & (1 << i))
-			d->msi_efds[i] = efd;
-	}
-
-	irq_setlen = sizeof(struct vfio_irq_set) + msi_irqs->count * (sizeof(d->msi_efds[0]));
+	irq_setlen = sizeof(struct vfio_irq_set) + sizeof(int) * irq_count;
 	irq_set = alloc(irq_setlen);
 
 	irq_set->argsz = irq_setlen;
 	irq_set->flags = VFIO_IRQ_SET_DATA_EVENTFD | VFIO_IRQ_SET_ACTION_TRIGGER;
 	irq_set->index = VFIO_PCI_MSI_IRQ_INDEX;
-	irq_set->count = msi_irqs->count;
+	irq_set->count = irq_count;
 	irq_set->start = 0;
-	
-	/* We need to disable the complete MSI index first before adding new ones */
-	if (msi_irqs->flags & VFIO_IRQ_INFO_NORESIZE) {
-		memset(&irq_set->data[0], 0xFF, msi_irqs->count * sizeof(d->msi_efds[0]));
 
-		ret = ioctl(d->fd, VFIO_DEVICE_SET_IRQS, irq_set);
-		if (ret)
-			return -4;
+	for (int i = 0; i < irq_count; i++) {
+		close(efds[i]);
+		efds[i] = -1;
 	}
 
-	memcpy(&irq_set->data[0], d->msi_efds, msi_irqs->count * sizeof(d->msi_efds[0]));
+	memcpy(irq_set->data, efds, sizeof(int) * irq_count);
 
 	ret = ioctl(d->fd, VFIO_DEVICE_SET_IRQS, irq_set);
 	if (ret)
 		return -4;
 
-	/* Find corresponding Linux IRQ numbers */
-	ret = vfio_pci_msi_findirqs(d);
+	free(irq_set);
+
+	return irq_count;
+}
+
+int vfio_pci_msi_init(struct vfio_dev *d, int efds[32])
+{
+	int ret, irq_setlen, irq_count = d->irqs[VFIO_PCI_MSI_IRQ_INDEX].count; 
+	struct vfio_irq_set *irq_set;
+	
+	/* Check if this is really a vfio-pci device */
+	if (!(d->info.flags & VFIO_DEVICE_FLAGS_PCI))
+		return -1;
+
+	irq_setlen = sizeof(struct vfio_irq_set) + sizeof(int) * irq_count;
+	irq_set = alloc(irq_setlen);
+
+	irq_set->argsz = irq_setlen;
+	irq_set->flags = VFIO_IRQ_SET_DATA_EVENTFD | VFIO_IRQ_SET_ACTION_TRIGGER;
+	irq_set->index = VFIO_PCI_MSI_IRQ_INDEX;
+	irq_set->start = 0;
+	irq_set->count = irq_count;
+
+	/* Now set the new eventfds */
+	for (int i = 0; i < irq_count; i++) {
+		efds[i] = eventfd(0, 0);
+		if (efds[i] < 0)
+			return -3;
+	}
+	memcpy(irq_set->data, efds, sizeof(int) * irq_count);
+
+	ret = ioctl(d->fd, VFIO_DEVICE_SET_IRQS, irq_set);
 	if (ret)
-		return -5;
+		return -4;
 
 	free(irq_set);
 
-	return efd;
+	return irq_count;
 }
 
 int vfio_pci_enable(struct vfio_dev *d)
@@ -556,33 +547,44 @@ void * vfio_map_region(struct vfio_dev *d, int idx)
 	return d->mappings[idx];
 }
 
-void * vfio_map_dma(struct vfio_container *c, size_t size, size_t pgsize, uint64_t phyaddr)
+int vfio_unmap_region(struct vfio_dev *d, int idx)
 {
-	void *vaddr;
-	int ret, pgbits, flags;
-	size_t defpgsize;
-
-	defpgsize = sysconf(_SC_PAGESIZE);
-	if (!pgsize)
-		pgsize = defpgsize;
-
-	pgbits = 8 * sizeof(unsigned long long) - __builtin_clzll((unsigned long long) pgsize) - 1;
-
-	flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT;
-	if (pgsize != defpgsize) /* Map as Hugepages */
-		flags |= MAP_HUGETLB | (pgbits << MAP_HUGE_SHIFT);
-
-	vaddr = mmap(0, size, PROT_READ | PROT_WRITE, flags, 0, 0);
-	if (vaddr == MAP_FAILED)
-		return MAP_FAILED;
-
-	debug(3, "Allocated VM for DMA mapping at: %p", vaddr);
+	int ret;
+	struct vfio_region_info *r = &d->regions[idx];
 	
+	if (!d->mappings[idx])
+		return -1; /* was not mapped */
+	
+	debug(3, "VFIO: unmap region %u from device", idx);
+	
+	ret = munmap(d->mappings[idx], r->size);
+	if (ret)
+		return -2;
+	
+	d->mappings[idx] = NULL;
+
+	return 0;
+}
+
+int vfio_map_dma(struct vfio_container *c, struct dma_mem *mem)
+{
+	int ret;
+	
+	if (mem->len & 0xFFF) {
+		mem->len += 0x1000;
+		mem->len &= ~0xFFF;
+	}
+	
+	if (mem->base_phys == -1) {
+		mem->base_phys = c->iova_next;
+		c->iova_next += mem->len;
+	}
+
 	struct vfio_iommu_type1_dma_map dma_map = {
 		.argsz = sizeof(struct vfio_iommu_type1_dma_map),
-		.vaddr = (uint64_t) vaddr,
-		.size = size,
-		.iova = phyaddr,
+		.vaddr = (uint64_t) mem->base_virt,
+		.iova  = (uint64_t) mem->base_phys,
+		.size  = mem->len,
 		.flags = VFIO_DMA_MAP_FLAG_READ | VFIO_DMA_MAP_FLAG_WRITE
 	};
 
@@ -592,31 +594,23 @@ void * vfio_map_dma(struct vfio_container *c, size_t size, size_t pgsize, uint64
 
 	info("DMA map size=%#llx, iova=%#llx, vaddr=%#llx", dma_map.size, dma_map.iova, dma_map.vaddr);
 
-	return vaddr;
+	return 0;
 }
 
-int vfio_unmap_region(struct vfio_dev *d, int idx)
+int vfio_unmap_dma(struct vfio_container *c, struct dma_mem *mem)
 {
-	struct vfio_region_info *r = &d->regions[idx];
+	int ret;
 	
-	if (!d->mappings[idx])
-		return -1; /* was not mapped */
-	
-	debug(3, "VFIO: unmap region %u from device", idx);
-	
-	return munmap(d->mappings[idx], r->size);
-}
-
-int vfio_unmap_dma(struct vfio_container *c)
-{
 	struct vfio_iommu_type1_dma_unmap dma_unmap = {
 		.argsz = sizeof(struct vfio_iommu_type1_dma_unmap),
 		.flags = 0,
-		.iova = 0, /* IO virtual address */
-		.size = 0  /* Size of mapping (bytes) */
+		.iova  = (uint64_t) mem->base_phys,
+		.size  = mem->len,
 	};
-
-	debug(3, "VFIO: unmap DMA region from device");
 	
-	return ioctl(c->fd, VFIO_IOMMU_UNMAP_DMA, &dma_unmap);
+	ret = ioctl(c->fd, VFIO_IOMMU_UNMAP_DMA, &dma_unmap);
+	if (ret)
+		serror("Failed to unmap DMA mapping");
+	
+	return 0;
 }

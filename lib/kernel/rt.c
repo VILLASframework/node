@@ -17,14 +17,6 @@ int rt_init(int affinity, int priority)
 	char isolcpus[255];
 	int is_isol, is_rt, ret;
 
-	/* Pin interrupts to our core */
-/*	for (int i = 0; i < fpga->vd.irqs[VFIO_PCI_MSI_IRQ_INDEX].count; i++) {
-		ret = kernel_irq_setaffinity(fpga->vd.msi_irqs[i], AFFINITY, NULL);
-		if (ret)
-			serror("Failed to change affinity of VFIO-MSI interrupt");
-	}
-*/
-
 	/* Use FIFO scheduler with real time priority */
 	is_rt = kernel_is_rt();
 	if (is_rt)
