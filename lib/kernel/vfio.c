@@ -575,7 +575,7 @@ int vfio_map_dma(struct vfio_container *c, struct dma_mem *mem)
 		mem->len &= ~0xFFF;
 	}
 	
-	if (mem->base_phys == -1) {
+	if (mem->base_phys == (void *) -1) {
 		mem->base_phys = c->iova_next;
 		c->iova_next += mem->len;
 	}

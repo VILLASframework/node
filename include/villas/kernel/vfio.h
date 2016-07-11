@@ -54,7 +54,7 @@ struct vfio_container {
 	int version;
 	int extensions;
 
-	uint64_t iova_next;			/**< Next free IOVA address */
+	void *iova_next;			/**< Next free IOVA address */
 
 	struct list groups;
 };

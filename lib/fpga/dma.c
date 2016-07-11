@@ -46,7 +46,7 @@ int dma_alloc(struct ip *c, struct dma_mem *mem, size_t len, int flags)
 	}
 
 	mem->len = len;
-	mem->base_phys = -1; /* find free */
+	mem->base_phys = (void *) -1; /* find free */
 	mem->base_virt = mmap(0, mem->len, PROT_READ | PROT_WRITE, flags | MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT, 0, 0);
 	if (mem->base_virt == MAP_FAILED)
 		return -1;
@@ -100,7 +100,7 @@ int dma_write(struct ip *c, char *buf, size_t len)
 {
 	XAxiDma *xdma = &c->dma.inst;
 
-	debug(25, "DMA write: dmac=%s buf=%p len=%#x", c->name, buf, len);
+	debug(25, "DMA write: dmac=%s buf=%p len=%#zx", c->name, buf, len);
 
 	return xdma->HasSg
 		? dma_sg_write(c, buf, len)
@@ -111,7 +111,7 @@ int dma_read(struct ip *c, char *buf, size_t len)
 {
 	XAxiDma *xdma = &c->dma.inst;
 	
-	debug(25, "DMA read: dmac=%s buf=%p len=%#x", c->name, buf, len);
+	debug(25, "DMA read: dmac=%s buf=%p len=%#zx", c->name, buf, len);
 
 	return xdma->HasSg
 		? dma_sg_read(c, buf, len)
@@ -172,7 +172,7 @@ int dma_sg_write(struct ip *c, char *buf, size_t len)
 		return -5;
 
 	remaining = len;
-	bdbuf = (uint32_t) buf;
+	bdbuf = (uintptr_t) buf;
 	bd = bds;
 	for (int i = 0; i < bdcnt; i++) {
 		bdlen = MIN(remaining, FPGA_DMA_BOUNDARY);
@@ -246,7 +246,7 @@ int dma_sg_read(struct ip *c, char *buf, size_t len)
 	if (ret != XST_SUCCESS)
 		return -5;
 
-	bdbuf = (uint32_t) buf;
+	bdbuf = (uintptr_t) buf;
 	remaining = len;
 	bd = bds;
 	for (int i = 0; i < bdcnt; i++) {
