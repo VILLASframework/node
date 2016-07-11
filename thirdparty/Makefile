@@ -29,7 +29,7 @@ pciutils-3.4.1:
 	ln -s $(PREFIX)/lib/libpci.so.3.4.1 $(PREFIX)/lib/libpci.so
 
 # Install & compile libwebsockets dependency
-libwebsockets-1.7.5:
+libwebsockets-2.0.2:
 	mkdir -p $@/build
-	wget -O- https://github.com/warmcat/libwebsockets/archive/v1.7.5.tar.gz | tar -xzC $(TMPDIR)
+	wget -O- https://github.com/warmcat/libwebsockets/archive/v2.0.2.tar.gz | tar -xzC $(TMPDIR)
 	cd $@/build && cmake -DCMAKE_INSTALL_PREFIX:PATH=$(PREFIX) .. && make install
