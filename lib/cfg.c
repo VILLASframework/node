@@ -10,6 +10,7 @@
 #include <string.h>
 #include <libgen.h>
 #include <dlfcn.h>
+#include <unistd.h>
 
 #include "utils.h"
 #include "list.h"
@@ -32,8 +33,14 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 	config_set_include_dir(cfg, include_dir);
 
 	free(filename_cpy);
+	
+	if (strcmp("-", filename) == 0)
+		ret = config_read(cfg, stdin);
+	else if (access(filename, F_OK) != -1)
+		ret = config_read_file(cfg, filename);
+	else
+		error("Invalid configuration file name: %s", filename);
 
-	ret = strcmp("-", filename) ? config_read_file(cfg, filename) : config_read(cfg, stdin);
 	if (ret != CONFIG_TRUE) {
 		error("Failed to parse configuration: %s in %s:%d",
 			config_error_text(cfg),
