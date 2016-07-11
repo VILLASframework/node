@@ -8,7 +8,7 @@
 		<link rel="stylesheet" href="jquery-ui/jquery-ui.structure.css" />
 		
 		<script src="jquery/jquery.js"></script>
- 	        <script src="jquery-ui/jquery-ui.js"></script>		
+		<script src="jquery-ui/jquery-ui.js"></script>
 		<script src="flot/jquery.flot.js"></script>
 		<script src="flot/jquery.flot.time.js"></script>
 		<script src="msg.js"></script>
@@ -17,7 +17,7 @@
 	<body>
 		<div id="wrapper">
 			<div id="header">
-				<img class="logo" alt="EONERC" src="eonerc_logo.png" />
+				<img class="logo" alt="EONERC" src="logo.svg" />
 				<h1>VILALSnode / WebSocket Mockup</h1>
 			</div>
 			<div id="container">
@@ -29,7 +29,7 @@
 				
 				<div class="controls">
 					<dl>
-						<dt><label for="buttons">Buttons</label></dt>
+						<dt><label>Buttons</label></dt>
 						<dd>
 							<button>1</button>
 							<button>2</button>
@@ -49,10 +49,22 @@
 					</dl>
 				</div>
 				
+				<div class="plot-controls">
+					<dl>
+						<dt><label for="timespan">Plot timespan</label></dt>
+						<dd><div id="timespan"></div></dd>
+					</dl>
+				</div>
+				
 				<div class="connection">
-					<span>Status:</span> <span id="connectionStatus"></span>
-					<button id="pause" onclick="wsDisconnect()">Pause</button>
-					<button id="pause" onclick="wsConnect()">Play</button>
+					<dl>
+						<dt><label>Status</label></dt>
+						<dd>
+							<button id="pause">Pause</button>
+							<button id="play">Play</button>
+							<span id="connectionStatus"></span>
+						</dd>
+					</dl>
 				</div>
 			</div>
 			<div id="footer">

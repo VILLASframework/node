@@ -30,7 +30,7 @@ body {
 	padding: 20px;
 }
 
-#slider {
+.ui-slider {
 	width: 300px;
 	display: inline-block;
 }
@@ -64,4 +64,17 @@ li.active {
 
 .on {
 	background-color: green;
+}
+
+/* Definition lists */
+dt {
+	float: left;
+	clear: left;
+	width: 8em;
+	font-weight: bold;
+}
+
+dd {
+	margin-top: 0.7em;
+	margin-left: 0px;
 }

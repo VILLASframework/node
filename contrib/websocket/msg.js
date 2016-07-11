@@ -12,18 +12,10 @@
  * @{
  **********************************************************************************/
 
-/* Class for parsing and printing a message / sample */
-function Msg(members) {
-	for(var k in members)
-		this[k] = members[k];
-}
-
 /* Some constants for the binary protocol */
 Msg.prototype.VERSION		= 1;
 
 Msg.prototype.TYPE_DATA		= 0; /**< Message contains float values */
-Msg.prototype.TYPE_START	= 1; /**< Message marks the beginning of a new simulation case */
-Msg.prototype.TYPE_STOP		= 2; /**< Message marks the end of a simulation case */
 
 Msg.prototype.ENDIAN_LITTLE	= 0; /**< Message values are in little endian format (float too!) */
 Msg.prototype.ENDIAN_BIG	= 1; /**< Message values are in bit endian format */
@@ -33,17 +25,29 @@ Msg.prototype.OFFSET_ENDIAN	= 1;
 Msg.prototype.OFFSET_TYPE	= 2;
 Msg.prototype.OFFSET_VERSION	= 4;
 
-Msg.prototype.values = function() {
-	return this.values * 4 + 16;
-}
-
-Msg.prototype.toArrayBuffer = function() {
-	var blob = new ArrayBuffer(this.values());
+/* Class for parsing and printing a message */
+function Msg(c, d)
+{
+	this.sequence  = c.sequence  || 0;
+	this.length    = c.length    || 0;
+	this.endian    = c.endian    || Msg.ENDIAN_LITTLE;
+	this.version   = c.version   || Msg.VERSION;
+	this.type      = c.type      || Msg.TYPE_DATA;
+	this.timestamp = c.timestamp || Date.now();
 	
-	return blob;
+	if (Array.isArray(d)) {
+		this.length = d.length;
+		this.data   = d
+	}
 }
 
-Msg.fromArrayBuffer = function(data) {
+Msg.bytes = function(len)
+{
+	return len * 4 + 16;
+}
+
+Msg.fromArrayBuffer = function(data)
+{
 	var bits = data.getUint8(0);
 	var endian = (bits >> Msg.OFFSET_ENDIAN) & 0x1 ? 0 : 1;
 
@@ -51,14 +55,14 @@ Msg.fromArrayBuffer = function(data) {
 		endian:  (bits >> Msg.OFFSET_ENDIAN) & 0x1,
 		version: (bits >> Msg.OFFSET_VERSION) & 0xF,
 		type:    (bits >> Msg.OFFSET_TYPE) & 0x3,
-		values:    data.getUint16(0x02, endian),
+		length:    data.getUint16(0x02, endian),
 		sequence:  data.getUint32(0x04, endian),
 		timestamp: data.getUint32(0x08, endian) * 1e3 +
 		           data.getUint32(0x0C, endian) * 1e-6,
 	});
 	
-	msg.blob = new DataView(    data.buffer, data.byteOffset + 0x00, (msg.values + 4) * 4);
-	msg.data = new Float32Array(data.buffer, data.byteOffset + 0x10, msg.values);
+	msg.blob = new DataView(    data.buffer, data.byteOffset + 0x00, Msg.bytes(msg.length));
+	msg.data = new Float32Array(data.buffer, data.byteOffset + 0x10, msg.length);
 
 	if (msg.endian != host_endianess()) {
 		console.warn("Message is not given in host endianess!");
@@ -71,7 +75,8 @@ Msg.fromArrayBuffer = function(data) {
 	return msg;
 }
 
-Msg.fromArrayBufferVector = function(blob) {
+Msg.fromArrayBufferVector = function(blob)
+{
 	/* some local variables for parsing */
 	var offset = 0;
 	var msgs = [];
@@ -90,8 +95,34 @@ Msg.fromArrayBufferVector = function(blob) {
 	return msgs;
 }
 
+Msg.prototype.toArrayBuffer = function()
+{
+	buffer = new ArrayBuffer(Msg.bytes(this.length))
+	view   = new DataView(buffer);
+	
+	var bits = 0;
+	bits |= (this.endian  & 0x1) << Msg.OFFSET_ENDIAN;
+	bits |= (this.version & 0xF) << Msg.OFFSET_VERSION;
+	bits |= (this.type    & 0x3) << Msg.OFFSET_TYPE;
+	
+	var sec  = Math.floor(this.timestamp / 1e3);
+	var nsec = (this.timestamp - sec * 1e3) * 1e3;
+	
+	view.setUint8( 0x00, bits, true);
+	view.setUint16(0x02, this.length, true);
+	view.setUint32(0x04, this.sequence, true);
+	view.setUint32(0x08, sec, true);
+	view.setUint32(0x0C, nsec, true);
+	
+	data = new Float32Array(buffer, 0x10, this.length);
+	data.set(this.data);
+
+	return buffer;
+}
+
 /** @todo parsing of big endian messages not yet supported */
-function swap16(val) {
+function swap16(val)
+{
     return ((val & 0xFF) << 8)
            | ((val >> 8) & 0xFF);
 }

@@ -1,11 +1,11 @@
 // global variables
 var connection;
+var timer;
 
 var seq = 0;
 
 var currentNode;
 var nodes = [ ];
-var updateRate = 1.0 / 25;
 
 var plotData = [];
 var plotOptions = {
@@ -17,8 +17,9 @@ var plotOptions = {
 	}
 };
 
-var xPast  = 10*1000;
-var xFuture = 5*1000;
+var xDelta   = 0.5*1000;
+var xPast   = xDelta*0.9;
+var xFuture = xDelta*0.1;
 
 $(document).on('ready', function() {
 	$.getJSON('/nodes.json', function(data) {
@@ -46,30 +47,69 @@ $(document).on('ready', function() {
 		wsConnect(wsUrl(currentNode.name), ["live"]);
 	});
 	
+	$('#play').click(function(e, ui) {
+		wsConnect(wsUrl(currentNode.name), ["live"]);
+	});
+	
+	$('#pause').click(function(e, ui) {
+		connection.close();
+	});
+
 	$('#slider').slider({
 		min : 0,
 		max : 100,
-		slide : onSliderMoved
+		slide : function(e, ui) {
+			var msg = new Msg({
+				timestamp : Date.now(),
+				sequence  : seq++
+			}, [ ui.value ]);
+	
+	
+			var blob = msg.toArrayBuffer()
+			connection.send(blob);
+		}
+	});
+	
+	$('#timespan').slider({
+		min : 200,
+		max : 10000,
+		value : xDelta,
+		slide : function(e, ui) {
+			plotUpdateWindow(ui.value);
+		}
 	});
 	
 	$('#controls .buttons button').each(function(button) {
 		$(button).addClass('on');
+		
+		$(button).onClick(function(value) {
+			var msg = new Msg({
+				timestamp : Date.now(),
+				sequence  : seq++
+			}, [ value ]);
+	
+			connection.send(msg.toArrayBuffer());
+		});
 	});
 	
-	setInterval(plotUpdate, updateRate);
+	plotUpdateWindow(10*1000); /* start plot refresh timer for 10sec window */
 });
 
-$(window).on('beforeunload', wsDisconnect);
+$(window).on('beforeunload', function() {
+	connection.close();
+});
+
+function plotUpdateWindow(delta) {
+	xDelta  = delta
+	xPast   = xDelta*0.9;
+	xFuture = xDelta*0.1;
+}
 
 function plotUpdate() {
 	var data = [];
 
 	// add data to arrays
 	for (var i = 0; i < plotData.length; i++) {
-		// remove old values
-		while (plotData[i].length > 0 && plotData[i][0][0] < (Date.now() - xPast))
-			plotData[i].shift()
-			
 		var seriesOptions = nodes
 		
 		data[i] = {
@@ -101,31 +141,28 @@ function plotUpdate() {
 	$.plot('.plot-container div', data, $.extend(true, options, plotOptions));
 }
 
-function wsDisconnect() {
-	connection.close();
-	
-	$('#connectionStatus')
-		.text('Disconnected')
-		.css('color', 'red');
-
-	plotData = [];
-}
-
 function wsConnect(url, protocol) {
 	connection = new WebSocket(url, protocol);
 	connection.binaryType = 'arraybuffer';
-	
 	
 	connection.onopen = function() {
 		$('#connectionStatus')
 			.text('Connected')
 			.css('color', 'green');
+			
+		timer = setInterval(plotUpdate, 1000.0 / 25);
 	};
 
 	connection.onclose = function() {
-		wsDisconnect();
+		$('#connectionStatus')
+			.text('Disconnected')
+			.css('color', 'red');
+
+		clearInterval(timer);
 		
-		setTimeout(wsConnect, 3000); // retry
+		setTimeout(function() {
+			wsConnect(wsUrl(currentNode.name), ["live"]);
+		}, 1000); // retry
 	};
 
 	connection.onerror = function(error) {
@@ -136,11 +173,19 @@ function wsConnect(url, protocol) {
 
 	connection.onmessage = function(e) {
 		var msgs = Msg.fromArrayBufferVector(e.data);
+		
+		console.log('Received ' + msgs.length + ' messages with ' + msgs[0].data.length + ' values: ' + msgs[0].timestamp);
+
+		for (var j = 0; j < plotData.length; j++) {
+			// remove old values
+			while (plotData[j].length > 0 && plotData[j][0][0] < (Date.now() - xPast))
+				plotData[j].shift()
+		}
 
 		for (var j = 0; j < msgs.length; j++) {
 			var msg = msgs[j];
 
-			// add empty arrays for data
+			// add empty arrays for data series
 			while (plotData.length < msg.values)
 				plotData.push([]);
 
@@ -205,31 +250,6 @@ function fileStart(e) {
 	};
 
 	reader.readAsText(file);
-}
-
-/* Control event handlers */
-function onButtonClick(value) {
-	msg.values = [ value ];
-	msg.ts = Date.now();
-	msg.seq++;
-	
-	msg.send(connection);
-}
-
-function onTextChange(e) {
-	msg.values = [ e.target.text ];
-	msg.ts = Date.now();
-	msg.seq++;
-	
-	msg.send(connection);
-}
-
-function onSliderMoved(e, ui) {
-	msg.values = [ ui.value  ];
-	msg.ts = Date.now();
-	msg.seq++;
-	
-	msg.send(connection);
 }
 
 /* Some helpers */
