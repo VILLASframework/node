@@ -39,7 +39,7 @@ int intc_init(struct ip *c)
 	/* For each IRQ */
 	for (int i = 0; i < intc->num_irqs; i++) {
 		/* Pin to core */
-		ret = kernel_irq_setaffinity(intc->nos[i], DEFAULT_AFFINITY, NULL);
+		ret = kernel_irq_setaffinity(intc->nos[i], f->affinity, NULL);
 		if (ret)
 			serror("Failed to change affinity of VFIO-MSI interrupt");
 

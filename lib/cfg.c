@@ -79,38 +79,46 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 	return 0;
 }
 
+int config_parse_plugins(config_setting_t *cfg)
+{
+	if (!config_setting_is_array(cfg))
+		cerror(cfg, "Setting 'plugins' must be a list of strings");
+
+	for (int i = 0; i < config_setting_length(cfg); i++) {
+		void *handle;
+		const char *path;
+
+		path = config_setting_get_string_elem(cfg, i);
+		if (!path)
+			cerror(cfg, "Setting 'plugins' must be a list of strings");
+		
+		handle = dlopen(path, RTLD_NOW);
+		if (!handle)
+			error("Failed to load plugin %s", dlerror());
+	}
+
+	return 0;
+}
+
 int config_parse_global(config_setting_t *cfg, struct settings *set)
 {
 	config_setting_t *cfg_plugins;
 
 	if (!config_setting_lookup_int(cfg, "affinity", &set->affinity))
-		set->affinity = DEFAULT_AFFINITY;
+		set->affinity = 0;
 
 	if (!config_setting_lookup_int(cfg, "priority", &set->priority))
-		set->priority = DEFAULT_PRIORITY;
+		set->priority = 0;
 
-	config_setting_lookup_int(cfg, "debug", &set->debug);
-	config_setting_lookup_float(cfg, "stats", &set->stats);
+	if (!config_setting_lookup_int(cfg, "debug", &set->debug))
+		set->debug = V;
+
+	if (!config_setting_lookup_float(cfg, "stats", &set->stats))
+		set->stats = 0;
 	
-	/* Load plugins */
 	cfg_plugins = config_setting_get_member(cfg, "plugins");
-	if (cfg) {
-		if (!config_setting_is_array(cfg_plugins))
-			cerror(cfg_plugins, "Setting 'plugings' must be a list of strings");
-
-		for (int i = 0; i < config_setting_length(cfg_plugins); i++) {
-			void *handle;
-			const char *path;
-
-			path = config_setting_get_string_elem(cfg_plugins, i);
-			if (!path)
-				cerror(cfg_plugins, "Setting 'plugings' must be a list of strings");
-			
-			handle = dlopen(path, RTLD_NOW);
-			if (!handle)
-				error("Failed to load plugin %s", dlerror());
-		}
-	}
+	if (cfg_plugins)
+		config_parse_plugins(cfg_plugins);
 
 	log_setlevel(set->debug, -1);
 

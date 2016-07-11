@@ -18,10 +18,7 @@
 #endif
 
 /** The version number of VILLASnode */
-#define VERSION			"v0.5-" _GIT_REV
-
-#define DEFAULT_PRIORITY	80
-#define DEFAULT_AFFINITY	-1
+#define VERSION			"v0.6-" _GIT_REV
 
 /** Default number of values in a sample */
 #define DEFAULT_VALUES		64
@@ -54,18 +51,7 @@
 #define BENCH_WARMUP		100
 #define BENCH_DM_EXP_MIN	0
 #define BENCH_DM_EXP_MAX	20
-	
-/** Coefficients for simple FIR-LowPass:
- *   F_s = 1kHz, F_pass = 100 Hz, F_block = 300
- *
- * Tip: Use MATLAB's filter design tool and export coefficients
- *      with the integrated C-Header export
- */
-#define HOOK_FIR_COEFFS		{ -0.003658148158728, -0.008882653268281, 0.008001024183003,	\
-				  0.08090485991761,    0.2035239551043,   0.3040703593515,	\
-				  0.3040703593515,     0.2035239551043,   0.08090485991761,	\
-				  0.008001024183003,  -0.008882653268281,-0.003658148158728 }
-	
+
 /** Global configuration */
 struct settings {
 	int priority;		/**< Process priority (lower is better) */
