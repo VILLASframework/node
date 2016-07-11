@@ -119,6 +119,7 @@ retry:			reason = sample_fscan(stdin, s, NULL);
 		}
 
 		node_write(node, smps, node->vectorize);
+		pthread_testcancel();
 	}
 
 killme: pthread_kill(ptid, SIGINT);
@@ -157,6 +158,7 @@ static void * recv_loop(void *ctx)
 			sample_fprint(stdout, s, SAMPLE_ALL);
 			fflush(stdout);
 		}
+		pthread_testcancel();
 	}
 	
 	return NULL;
