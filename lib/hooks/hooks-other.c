@@ -61,8 +61,8 @@ int hook_convert(struct path *p, struct hook *h, int when, struct sample *smps[]
 			for (int i = 0; i < cnt; i++) {
 				for (int j = 0; j < smps[0]->length; j++) {
 					switch (private->mode) {
-						case TO_FIXED: smps[i]->values[j].i = smps[i]->values[j].f * 1e3; break;
-						case TO_FLOAT: smps[i]->values[j].f = smps[i]->values[j].i; break;
+						case TO_FIXED: smps[i]->data[j].i = smps[i]->data[j].f * 1e3; break;
+						case TO_FLOAT: smps[i]->data[j].f = smps[i]->data[j].i; break;
 					}
 				}
 			}

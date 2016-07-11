@@ -17,13 +17,13 @@
 #include <sys/types.h>
 
 /** The length of a sample datastructure with \p values values in bytes. */
-#define SAMPLE_LEN(values)	(sizeof(struct sample) + SAMPLE_DATA_LEN(values))
+#define SAMPLE_LEN(len)	(sizeof(struct sample) + SAMPLE_DATA_LEN(len))
 
 /** The length of a sample data portion of a sample datastructure with \p values values in bytes. */
-#define SAMPLE_DATA_LEN(values)	((values) * sizeof(float))
+#define SAMPLE_DATA_LEN(len)	((len) * sizeof(float))
 
 /** The offset to the beginning of the data section. */
-#define SAMPLE_DATA_OFFSET(smp)	((char *) (smp) + offsetof(struct sample, values))
+#define SAMPLE_DATA_OFFSET(smp)	((char *) (smp) + offsetof(struct sample, data))
 
 /** These flags define the format which is used by sample_fscan() and sample_fprint(). */
 enum sample_flags {
@@ -49,7 +49,7 @@ struct sample {
 	union {
 		float    f;	/**< Floating point values (note msg::endian) */
 		uint32_t i;	/**< Integer values (note msg::endian) */
-	} values[];
+	} data[];
 };
 
 /** Print a sample in human readable form to a file stream.

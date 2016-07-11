@@ -255,7 +255,7 @@ int path_prepare(struct path *p)
 		error("Failed to parse arguments for hooks of path: %s", path_name(p));
 
 	/* Initialize queue */
-	ret = pool_init_mmap(&p->pool, SAMPLE_LEN(p->values), p->queuelen);
+	ret = pool_init_mmap(&p->pool, SAMPLE_LEN(p->samplelen), p->queuelen);
 	if (ret)
 		error("Failed to allocate memory pool for path");
 	

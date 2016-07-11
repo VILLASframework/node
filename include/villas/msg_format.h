@@ -48,11 +48,11 @@
 #define MSG_DATA_OFFSET(msg)	((char *) (msg) + offsetof(struct msg, data))
 
 /** Initialize a message with default values */
-#define MSG_INIT(val, seq) (struct msg) {\
-	.version = MSG_VERSION,		\
-	.type = MSG_TYPE_DATA,		\
-	.endian = MSG_ENDIAN_HOST,	\
-	.values = val,	 		\
+#define MSG_INIT(len, seq) (struct msg) {\
+	.version  = MSG_VERSION,	\
+	.type     = MSG_TYPE_DATA,	\
+	.endian   = MSG_ENDIAN_HOST,	\
+	.length   = len,	 	\
 	.sequence = seq			\
 }
 
@@ -81,7 +81,7 @@ struct msg
 #endif
 	unsigned rsvd2	: 8;	/**< Reserved bits */
 	
-	uint16_t values;	/**< The number of values in msg::data[]. Endianess is specified in msg::endian. */
+	uint16_t length;	/**< The number of values in msg::data[]. Endianess is specified in msg::endian. */
 	uint32_t sequence;	/**< The sequence number is incremented by one for consecutive messages. Endianess is specified in msg::endian. */
 	
 	/** A timestamp per message. Endianess is specified in msg::endian. */

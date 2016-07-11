@@ -48,7 +48,7 @@ struct path
 	struct list destinations;	/**< List of all outgoing nodes */
 	struct list hooks;		/**< List of function pointers to hooks */
 
-	int values;			/**< Maximum number of values per sample for this path. */
+	int samplelen;			/**< Maximum number of values per sample for this path. */
 	int queuelen;			/**< Size of sample queue for this path. */
 	int enabled;			/**< Is this path enabled */
 	int tfd;			/**< Timer file descriptor for fixed rate sending */

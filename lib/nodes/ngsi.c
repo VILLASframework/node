@@ -109,7 +109,7 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct sample *smps[], unsigned
 				for (int k = 0; k < cnt; k++) {
 					json_array_append_new(values, json_pack("[ f, f, i ]",
 						time_to_double(&smps[k]->ts.origin),
-						smps[k]->values[map->index].f,
+						smps[k]->data[map->index].f,
 						smps[k]->sequence
 					));
 				}
@@ -207,7 +207,7 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 				return -9;
 
 			smps[k]->ts.origin = tss;
-			smps[k]->values[map->index].f = strtof(value, &end);
+			smps[k]->data[map->index].f = strtof(value, &end);
 			if (value == end)
 				return -10;
 		}

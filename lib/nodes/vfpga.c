@@ -367,8 +367,7 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 	size_t recvlen;
 
-	//size_t len = smp->length * sizeof(smp->values[0]);
-	size_t len = 64 * sizeof(smp->values[0]);
+	size_t len = SAMPLE_DATA_LEN(64);
 	
 	/* We dont get a sequence no from the FPGA. Lets fake it */
 	smp->sequence = n->received;
@@ -385,12 +384,12 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 			if (ret)
 				return ret;
 
-			memcpy(smp->values, d->dma.base_virt + 0x800, recvlen);
+			memcpy(smp->data, d->dma.base_virt + 0x800, recvlen);
 
 			smp->length = recvlen / 4;
 			return 1;
 		case FPGA_DM_FIFO:
-			recvlen = fifo_read(d->ip, (char *) smp->values, len);
+			recvlen = fifo_read(d->ip, (char *) smp->data, len);
 			
 			smp->length = recvlen / 4;
 			return 1;
@@ -406,7 +405,7 @@ int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 	struct sample *smp = smps[0];
 
 	size_t sentlen;
-	size_t len = smp->length * sizeof(smp->values[0]);
+	size_t len = smp->length * sizeof(smp->data[0]);
 
 	//intc_wait(f->intc, 5, 1);
 	
@@ -418,7 +417,7 @@ int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 	/* Send data to RTDS */
 	switch (d->type) {
 		case FPGA_DM_DMA:
-			memcpy(d->dma.base_virt, smp->values, len);
+			memcpy(d->dma.base_virt, smp->data, len);
 
 			ret = dma_write(d->ip, d->dma.base_phys, len);
 			if (ret)
@@ -432,8 +431,8 @@ int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 			return 1;
 		case FPGA_DM_FIFO:
-			sentlen = fifo_write(d->ip, (char *) smp->values, len);
-			return sentlen / sizeof(smp->values[0]);
+			sentlen = fifo_write(d->ip, (char *) smp->data, len);
+			return sentlen / sizeof(smp->data[0]);
 			break;
 	}
 	

@@ -181,8 +181,8 @@ int config_parse_path(config_setting_t *cfg,
 	if (cfg_hook)
 		config_parse_hooklist(cfg_hook, &p->hooks);
 
-	if (!config_setting_lookup_int(cfg, "values", &p->values))
-		p->values = DEFAULT_VALUES;
+	if (!config_setting_lookup_int(cfg, "values", &p->samplelen))
+		p->samplelen = DEFAULT_VALUES;
 	if (!config_setting_lookup_int(cfg, "queuelen", &p->queuelen))
 		p->queuelen = DEFAULT_QUEUELEN;
 	if (!config_setting_lookup_bool(cfg, "reverse", &reverse))

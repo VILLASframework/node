@@ -235,7 +235,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (hdr.endian != MSG_ENDIAN_HOST)
 		msg_swap(&hdr);
 	
-	samples = bytes / MSG_LEN(hdr.values);
+	samples = bytes / MSG_LEN(hdr.length);
 	
 	if (samples > cnt) {
 		warn("Received more samples than supported. Dropping %u samples", samples - cnt);
@@ -248,7 +248,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		iov[2*i+0].iov_len = MSG_LEN(0);
 		
 		iov[2*i+1].iov_base = SAMPLE_DATA_OFFSET(smps[i]);
-		iov[2*i+1].iov_len  = SAMPLE_DATA_LEN(hdr.values);
+		iov[2*i+1].iov_len  = SAMPLE_DATA_LEN(hdr.length);
 		
 		mhdr.msg_iovlen += 2;
 	}
@@ -268,14 +268,14 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		if (ret)
 			break;
 		
-		if (m->values != hdr.values)
+		if (m->length != hdr.length)
 			break;
 
 		/* Convert message to host endianess */
 		if (m->endian != MSG_ENDIAN_HOST)
 			msg_swap(m);
 
-		s->length = m->values;
+		s->length = m->length;
 		s->sequence = m->sequence;
 		s->ts.origin = MSG_TS(m);
 	}

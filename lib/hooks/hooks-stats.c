@@ -127,15 +127,15 @@ int hook_stats_send(struct path *p, struct hook *h, int when, struct sample *smp
 			else
 				length =  -1;
 			
-			smp->values[0].f = p->in->received;
-			smp->values[1].f = length;
-			smp->values[2].f = p->invalid;
-			smp->values[3].f = p->skipped;
-			smp->values[4].f = p->dropped;
-			smp->values[5].f = p->overrun;
-			smp->values[6].f =       p->hist.owd.last,
-			smp->values[7].f = 1.0 / p->hist.gap_msg.last;
-			smp->values[8].f = 1.0 / p->hist.gap_recv.last;
+			smp->data[0].f = p->in->received;
+			smp->data[1].f = length;
+			smp->data[2].f = p->invalid;
+			smp->data[3].f = p->skipped;
+			smp->data[4].f = p->dropped;
+			smp->data[5].f = p->overrun;
+			smp->data[6].f =       p->hist.owd.last,
+			smp->data[7].f = 1.0 / p->hist.gap_msg.last;
+			smp->data[8].f = 1.0 / p->hist.gap_recv.last;
 			smp->length = 9;
 			
 			node_write(private->dest, &smp, 1); /* Send single message with statistics to destination node */

@@ -33,6 +33,7 @@ struct fpga {
 	struct vfio_dev vd;		/**< VFIO device handle. */
 
 	int do_reset;			/**< Reset VILLASfpga during startup? */
+	int affinity;			/**< Affinity for MSI interrupts */
 
 	struct list ips;		/**< List of IP components on FPGA. */
 

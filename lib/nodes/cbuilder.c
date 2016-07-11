@@ -86,7 +86,7 @@ int cbuilder_read(struct node *n, struct sample *smps[], unsigned cnt)
 	while (cb->read >= cb->step)
 		pthread_cond_wait(&cb->cv, &cb->mtx);
 
-	smp->length = cb->model->read(&smp->values[0].f, 16);
+	smp->length = cb->model->read(&smp->data[0].f, 16);
 	smp->sequence = cb->step;
 
 	cb->read = cb->step;
@@ -103,7 +103,7 @@ int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt)
 	
 	pthread_mutex_lock(&cb->mtx);
 
-	cb->model->write(&smp->values[0].f, smp->length);
+	cb->model->write(&smp->data[0].f, smp->length);
 	cb->model->code();
 
 	cb->step++;

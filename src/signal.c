@@ -137,11 +137,11 @@ check:		if (optarg == endptr)
 		for (int i = 0; i < values; i++) {
 			int rtype = (type != TYPE_MIXED) ? type : i % 4;			
 			switch (rtype) {
-				case TYPE_RANDOM:   s->values[i].f += box_muller(0, stddev); 					break;
-				case TYPE_SINE:	    s->values[i].f = ampl *        sin(running * freq * 2 * M_PI);		break;
-				case TYPE_TRIANGLE: s->values[i].f = ampl * (fabs(fmod(running * freq, 1) - .5) - 0.25) * 4;	break;
-				case TYPE_SQUARE:   s->values[i].f = ampl * (    (fmod(running * freq, 1) < .5) ? -1 : 1);	break;
-				case TYPE_RAMP:     s->values[i].f = fmod(counter, rate / freq); /** @todo send as integer? */	break;
+				case TYPE_RANDOM:   s->data[i].f += box_muller(0, stddev); 					break;
+				case TYPE_SINE:	    s->data[i].f = ampl *        sin(running * freq * 2 * M_PI);		break;
+				case TYPE_TRIANGLE: s->data[i].f = ampl * (fabs(fmod(running * freq, 1) - .5) - 0.25) * 4;	break;
+				case TYPE_SQUARE:   s->data[i].f = ampl * (    (fmod(running * freq, 1) < .5) ? -1 : 1);	break;
+				case TYPE_RAMP:     s->data[i].f = fmod(counter, rate / freq); /** @todo send as integer? */	break;
 			}
 		}
 			

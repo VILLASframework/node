@@ -26,7 +26,7 @@ int sample_print(char *buf, size_t len, struct sample *s, int flags)
 
 	if (flags & SAMPLE_VALUES) {
 		for (int i = 0; i < s->length; i++)
-			off += snprintf(buf + off, len - off, "\t%.6f", s->values[i].f);
+			off += snprintf(buf + off, len - off, "\t%.6f", s->data[i].f);
 	}
 
 	off += snprintf(buf + off, len - off, "\n");
@@ -95,7 +95,7 @@ int sample_scan(const char *line, struct sample *s, int *fl)
 	     s->length++,   ptr = end) {
 
 		/** @todo We only support floating point values at the moment */
-		s->values[s->length].f = strtod(ptr, &end);
+		s->data[s->length].f = strtod(ptr, &end);
 
 		if (end == ptr) /* there are no valid FP values anymore */
 			break;
