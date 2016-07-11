@@ -17,9 +17,6 @@
 
 #include "nodes/fpga.h"
 
-#include "fpga/ip.h"
-#include "fpga/intc.h"
-
 #include "config-fpga.h"
 #include "utils.h"
 #include "timing.h"

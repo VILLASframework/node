@@ -22,7 +22,9 @@
 #include <pci/pci.h>
 
 #include "fpga/dma.h"
-#include "nodes/fpga.h"
+#include "fpga/ip.h"
+#include "fpga/intc.h"
+
 #include "node.h"
 #include "list.h"
 

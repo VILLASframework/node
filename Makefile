@@ -64,7 +64,7 @@ endif
 
 # Enable VILLASfpga support when libpci is available
 ifeq ($(shell pkg-config libpci; echo $$?),0)
-	LIB_OBJS    += fpga.o pci.o ip.o vfio.o
+	LIB_OBJS    += vfpga.o pci.o ip.o vfio.o
 	LIB_OBJS    += dma.o model.o fifo.o switch.o rtds_axis.o intc.o dft.o timer.o
 	LDLIBS      += -lxil
 	LDFLAGS     += -Lthirdparty/xilinx -Wl,-rpath-link,'$$ORIGIN/thirdparty/xilinx'
@@ -110,13 +110,11 @@ LIB_LDLIBS += $(shell pkg-config --libs ${PKGS})
 all: $(LIBS) $(TARGETS) models
 
 # Dependencies for individual binaries
-fpga: LDLIBS += -lpci -lxil -lblas -llapack
-
 node:   server.o
-fpga:   fpga-main.o fpga-tests.o fpga-bench.o
 pipe:   pipe.o
 test:   test.o
 signal: signal.o
+fpga:   fpga-main.o fpga-tests.o fpga-bench.o $(BENCH_OBJS)
 
 # Libraries
 $(LIB_OBJS): CFLAGS += -fPIC $(LIB_CFLAGS)
