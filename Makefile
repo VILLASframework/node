@@ -41,8 +41,7 @@ LDFLAGS += -pthread -L. -Wl,-rpath,'$$ORIGIN'
 # pkg-config dependencies
 PKGS = libconfig
 
-#DOCKEROPTS = -p 80:80 -p 443:443 --ulimit memlock=1073741824 --security-opt seccomp:unconfined
-DOCKEROPTS = -p 1234 --ulimit memlock=1073741824 --security-opt seccomp:unconfined
+DOCKEROPTS = -p 80:80 -p 443:443 -p 1234:1234 --ulimit memlock=1073741824 --security-opt seccomp:unconfined
 
 # Add more compiler flags
 ifdef DEBUG
@@ -79,11 +78,11 @@ ifeq ($(shell pkg-config libcurl jansson uuid; echo $$?),0)
 	PKGS        += libcurl jansson uuid
 endif
 
-## Enable WebSocket support
-#ifeq ($(shell pkg-config libwebsockets jansson; echo $$?),0)
-#	LIB_OBJS   += websocket.o websocket-live.o websocket-http.o
-#	PKGS       += libwebsockets jansson
-#endif
+# Enable WebSocket support
+ifeq ($(shell pkg-config libwebsockets jansson; echo $$?),0)
+	LIB_OBJS   += websocket.o
+	PKGS       += libwebsockets jansson
+endif
 
 ## Add support for LAPACK / BLAS benchmarks / solvers
 ifeq ($(shell pkg-config blas lapack; echo $$?),0)
