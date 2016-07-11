@@ -38,9 +38,11 @@ int rt_init(int affinity, int priority)
 		/* Pin threads to CPUs by setting the affinity */
 		cpu_set_t cset_pin, cset_isol, cset_non_isol;
 
+		cpuset_from_integer(affinity, &cset_pin);
+
 		is_isol = kernel_get_cmdline_param("isolcpus", isolcpus, sizeof(isolcpus));
 		if (is_isol) {
-			warn("You should reserve some cores for the server (see 'isolcpus')");
+			warn("You should reserve some cores for VILLASnode (see 'isolcpus')");
 
 			CPU_ZERO(&cset_isol);
 		}
@@ -48,18 +50,16 @@ int rt_init(int affinity, int priority)
 			ret = cpulist_parse(isolcpus, &cset_isol, 0);
 			if (ret)
 				error("Invalid isolcpus cmdline parameter: %s", isolcpus);
-		}
 
-		cpuset_from_integer(affinity, &cset_pin);
-
-		CPU_XOR(&cset_non_isol, &cset_isol, &cset_pin);
-		if (CPU_COUNT(&cset_non_isol) > 0) {
-			char isol[128], pin[128];
+			CPU_XOR(&cset_non_isol, &cset_isol, &cset_pin);
+			if (CPU_COUNT(&cset_non_isol) > 0) {
+				char isol[128], pin[128];
 		
-			cpulist_create(isol, sizeof(isol), &cset_isol);
-			cpulist_create(pin, sizeof(pin), &cset_pin);
+				cpulist_create(isol, sizeof(isol), &cset_isol);
+				cpulist_create(pin, sizeof(pin), &cset_pin);
 
-			warn("Affinity setting includes cores which are not isolated: affinity=%s isolcpus=%s", pin, isol);
+				warn("Affinity setting includes cores which are not isolated: affinity=%s isolcpus=%s", pin, isol);
+			}
 		}
 
 		char list[128];
