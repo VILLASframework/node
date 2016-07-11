@@ -91,15 +91,26 @@ int fpga_parse_card(struct fpga *f, int argc, char * argv[], config_setting_t *c
 {
 	int ret;
 	const char *slot, *id, *err;
-	config_setting_t *cfg_ips, *cfg_slot, *cfg_id;
+	config_setting_t *cfg_ips, *cfg_slot, *cfg_id, *cfg_fpgas;
 
 	/* Default values */
 	f->filter.vendor = PCI_VID_XILINX;
 	f->filter.device = PCI_PID_VFPGA;
 
-	f->cfg = config_setting_get_member(cfg, "fpga");
-	if (!f->cfg)
-		cerror(cfg, "Config file is missing VILLASfpga configuration");
+	cfg_fpgas = config_setting_get_member(cfg, "fpga");
+	if (!cfg_fpgas)
+		cerror(cfg, "Config file is missing 'fpgas' section");
+	
+	if (!config_setting_is_group(cfg_fpgas))
+		cerror(cfg_fpgas, "FPGA configuration section must be a group");
+	
+	if (config_setting_length(cfg_fpgas) != 1)
+		cerror(cfg_fpgas, "Currently, only a single FPGA is currently supported.");
+	
+	f->cfg = config_setting_get_elem(cfg_fpgas, 0);
+
+	if (!config_setting_lookup_int(cfg, "affinity", &f->affinity))
+		f->affinity = 0;
 
 	config_setting_lookup_bool(f->cfg, "do_reset", &f->do_reset);
 
