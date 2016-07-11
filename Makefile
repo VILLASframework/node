@@ -85,6 +85,12 @@ endif
 #	PKGS       += libwebsockets jansson
 #endif
 
+## Add support for LAPACK / BLAS benchmarks / solvers
+ifeq ($(shell pkg-config blas lapack; echo $$?),0)
+	PKGS        += blas lapack
+	BENCH_OBJS  += fpga-bench-overruns.o
+endif
+
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
 ifdef WITH_OPAL
 ifneq (,$(wildcard thirdparty/opal/include/AsyncApi.h))

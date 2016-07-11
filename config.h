@@ -43,6 +43,17 @@
 /* Required kernel version */
 #define KERNEL_VERSION_MAJ	3
 #define KERNEL_VERSION_MIN	6
+
+/* Some hard-coded configuration for the FPGA benchmarks */
+#define BENCH_DM		3
+// 1 FIFO
+// 2 DMA SG
+// 3 DMA Simple
+
+#define BENCH_RUNS		3000000
+#define BENCH_WARMUP		100
+#define BENCH_DM_EXP_MIN	0
+#define BENCH_DM_EXP_MAX	20
 	
 /** Coefficients for simple FIR-LowPass:
  *   F_s = 1kHz, F_pass = 100 Hz, F_block = 300
