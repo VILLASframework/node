@@ -8,13 +8,17 @@ body {
 	font-family: 'Helvetica Neue', sans-serif;
 }
 
+a {
+	color: black;
+}
+
 #wrapper {
 
 }
 
 #header {
 	padding: 20px;
-	border-bottom: 2px solid gray;
+	border-bottom: 1.5px solid gray;
 }
 
 #header h1 {
@@ -22,8 +26,8 @@ body {
 }
 
 #footer {
-	padding: 1em;
-	border-top: 2px solid gray;
+	padding: 0 20px;
+	border-top: 1.5px solid gray;
 }
 
 #container {
@@ -37,6 +41,7 @@ body {
 
 .logo {
 	float: right;
+	height: 2.5em;
 }
 
 .plot-container {
@@ -49,13 +54,18 @@ body {
 	height: 100%;
 }
 
-.node-selector li {
-	display:inline;
-	padding: 0 0.5em;
+ul.node-selector {
+	padding: 0;
 }
 
-li.active {
+.node-selector li {
+	display: inline;
+	padding: 0.5em;
+}
+
+.node-selector li.active {
 	font-weight: bold;
+	background-color: #FFC7C7;
 }
 
 .off {
@@ -65,6 +75,12 @@ li.active {
 .on {
 	background-color: green;
 }
+
+.right, .left {
+	float: left;
+	width: 50%;
+}
+
 
 /* Definition lists */
 dt {

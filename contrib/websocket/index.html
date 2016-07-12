@@ -18,7 +18,7 @@
 		<div id="wrapper">
 			<div id="header">
 				<img class="logo" alt="EONERC" src="logo.svg" />
-				<h1>VILALSnode / WebSocket Mockup</h1>
+				<h1>VILLASnode / WebSocket Mockup</h1>
 			</div>
 			<div id="container">
 				<ul class="node-selector"></ul>
@@ -28,50 +28,59 @@
 				</div>
 				
 				<div class="controls">
-					<dl>
-						<dt><label>Buttons</label></dt>
-						<dd>
-							<button>1</button>
-							<button>2</button>
-							<button>3</button>
-							<button>4</button>
-							<button>5</button>
-						</dd>
+					<div class="left">
+						<div class="inputs">
+							<dl>
+								<dt><label>Buttons</label></dt>
+								<dd>
+									<button>1</button>
+									<button>2</button>
+									<button>3</button>
+									<button>4</button>
+									<button>5</button>
+								</dd>
 						
-						<dt><label for="slider">Slider</label></dt>
-						<dd><div id="slider"></div></dd>
+								<dt><label for="slider">Slider</label></dt>
+								<dd><div id="slider"></div></dd>
 					
-						<dt><label for="text">Text</label></dt>
-						<dd><input type="text" id="text" /></dd>
+								<dt><label for="text">Text</label></dt>
+								<dd><input type="text" id="text" /></dd>
 					
-						<dt><label for="file">File</label></dt>
-						<dd><input type="file" onchange="fileStart(event)" /></dd>
-					</dl>
-				</div>
+								<dt><label for="file">File</label></dt>
+								<dd><input type="file" onchange="fileStart(event)" /></dd>
+							</dl>
+						</div>
+					</div>
+					<div class="right">
+						<div class="plot-controls">
+							<dl>
+								<dt><label for="timespan">Plot timespan</label></dt>
+								<dd><div id="timespan"></div></dd>
+							</dl>
+						</div>
 				
-				<div class="plot-controls">
-					<dl>
-						<dt><label for="timespan">Plot timespan</label></dt>
-						<dd><div id="timespan"></div></dd>
-					</dl>
-				</div>
-				
-				<div class="connection">
-					<dl>
-						<dt><label>Status</label></dt>
-						<dd>
-							<button id="pause">Pause</button>
-							<button id="play">Play</button>
-							<span id="connectionStatus"></span>
-						</dd>
-					</dl>
+						<div class="connection">
+							<dl>
+								<dt><label>Status</label></dt>
+								<dd>
+									<button id="pause">Pause</button>
+									<button id="play">Play</button>
+									<span id="connectionStatus"></span>
+								</dd>
+							</dl>
+						</div>
+					</div>
+					<br style="clear: left;" />
 				</div>
 			</div>
 			<div id="footer">
-				<p>Copyright 2015: Institute for Automation of Complex Power Systems,
-					EON Energy Research Center, RWTH Aachen University, Germany</p>
-				<p>Authors: <a href="mailto:mgrigul@eonerc.rwth-aachen.de">Markus Grigul</a>,
-					<a href="mailto:stvogel@eonerc.rwth-aachen.de">Steffen Vogel</a></p>
+				<div class="left">
+					<p>Copyright 2016: Institute for Automation of Complex Power Systems, </br>EON Energy Research Center, RWTH Aachen University, Germany</p>
+					<p>Authors: <a href="mailto:mgrigul@eonerc.rwth-aachen.de">Markus Grigul</a>, <a href="mailto:stvogel@eonerc.rwth-aachen.de">Steffen Vogel</a></p>
+				</div>
+				<div class="right">
+					<p><a style="font-size: 1.5em" href="/doc/index.html" style="float: right">Documentation</a></p>
+				</div>
 			</div>
 		</div>
 	</body>
