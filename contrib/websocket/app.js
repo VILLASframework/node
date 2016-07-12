@@ -177,7 +177,7 @@ function wsConnect(url, protocol) {
 		console.log('Received ' + msgs.length + ' messages with ' + msgs[0].data.length + ' values: ' + msgs[0].timestamp);
 
 		for (var j = 0; j < plotData.length; j++) {
-			// remove old values
+			// remove old
 			while (plotData[j].length > 0 && plotData[j][0][0] < (Date.now() - xPast))
 				plotData[j].shift()
 		}
@@ -186,11 +186,11 @@ function wsConnect(url, protocol) {
 			var msg = msgs[j];
 
 			// add empty arrays for data series
-			while (plotData.length < msg.values)
+			while (plotData.length < msg.length)
 				plotData.push([]);
 
 			// add data to arrays
-			for (var i = 0; i < msg.values; i++)
+			for (var i = 0; i < msg.length; i++)
 				plotData[i].push([msg.timestamp, msg.data[i]]);
 		}
 	};	
@@ -240,7 +240,7 @@ function fileStart(e) {
 			var data = [];
 			
 			for (var i = 0; i < msgs.length; i++)
-				data.push(msgs[i].ts + offset, msgs[i].values[0]);
+				data.push(msgs[i].ts + offset, msgs[i].data[0]);
 		
 			plotData.push(data);
 		}

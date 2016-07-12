@@ -12,6 +12,22 @@
  * @{
  **********************************************************************************/
 
+/* Class for parsing and printing a message */
+function Msg(c, d)
+{
+	this.sequence  = typeof c.sequence  === 'undefined' ? 0                           : c.sequence;
+	this.length    = typeof c.length    === 'undefined' ? 0                           : c.length;
+	this.endian    = typeof c.endian    === 'undefined' ? Msg.prototype.ENDIAN_LITTLE : c.endian;
+	this.version   = typeof c.version   === 'undefined' ? Msg.prototype.VERSION       : c.version;
+	this.type      = typeof c.type      === 'undefined' ? Msg.prototype.TYPE_DATA     : c.type;
+	this.timestamp = typeof c.timestamp === 'undefined' ? Date.now()                  : c.timestamp;
+	
+	if (Array.isArray(d)) {
+		this.length = d.length;
+		this.data   = d
+	}
+}
+
 /* Some constants for the binary protocol */
 Msg.prototype.VERSION		= 1;
 
@@ -25,22 +41,6 @@ Msg.prototype.OFFSET_ENDIAN	= 1;
 Msg.prototype.OFFSET_TYPE	= 2;
 Msg.prototype.OFFSET_VERSION	= 4;
 
-/* Class for parsing and printing a message */
-function Msg(c, d)
-{
-	this.sequence  = c.sequence  || 0;
-	this.length    = c.length    || 0;
-	this.endian    = c.endian    || Msg.ENDIAN_LITTLE;
-	this.version   = c.version   || Msg.VERSION;
-	this.type      = c.type      || Msg.TYPE_DATA;
-	this.timestamp = c.timestamp || Date.now();
-	
-	if (Array.isArray(d)) {
-		this.length = d.length;
-		this.data   = d
-	}
-}
-
 Msg.bytes = function(len)
 {
 	return len * 4 + 16;
@@ -49,12 +49,12 @@ Msg.bytes = function(len)
 Msg.fromArrayBuffer = function(data)
 {
 	var bits = data.getUint8(0);
-	var endian = (bits >> Msg.OFFSET_ENDIAN) & 0x1 ? 0 : 1;
+	var endian = (bits >> Msg.prototype.OFFSET_ENDIAN) & 0x1 ? 0 : 1;
 
 	var msg = new Msg({
-		endian:  (bits >> Msg.OFFSET_ENDIAN) & 0x1,
-		version: (bits >> Msg.OFFSET_VERSION) & 0xF,
-		type:    (bits >> Msg.OFFSET_TYPE) & 0x3,
+		endian:  (bits >> Msg.prototype.OFFSET_ENDIAN) & 0x1,
+		version: (bits >> Msg.prototype.OFFSET_VERSION) & 0xF,
+		type:    (bits >> Msg.prototype.OFFSET_TYPE) & 0x3,
 		length:    data.getUint16(0x02, endian),
 		sequence:  data.getUint32(0x04, endian),
 		timestamp: data.getUint32(0x08, endian) * 1e3 +
@@ -101,12 +101,12 @@ Msg.prototype.toArrayBuffer = function()
 	view   = new DataView(buffer);
 	
 	var bits = 0;
-	bits |= (this.endian  & 0x1) << Msg.OFFSET_ENDIAN;
-	bits |= (this.version & 0xF) << Msg.OFFSET_VERSION;
-	bits |= (this.type    & 0x3) << Msg.OFFSET_TYPE;
+	bits |= (this.endian  & 0x1) << Msg.prototype.OFFSET_ENDIAN;
+	bits |= (this.version & 0xF) << Msg.prototype.OFFSET_VERSION;
+	bits |= (this.type    & 0x3) << Msg.prototype.OFFSET_TYPE;
 	
 	var sec  = Math.floor(this.timestamp / 1e3);
-	var nsec = (this.timestamp - sec * 1e3) * 1e3;
+	var nsec = (this.timestamp - sec * 1e3) * 1e6;
 	
 	view.setUint8( 0x00, bits, true);
 	view.setUint16(0x02, this.length, true);
