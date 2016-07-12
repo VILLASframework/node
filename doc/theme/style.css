@@ -3,5 +3,8 @@
 }
 
 #projectlogo img {
-	margin: 8px;
+	height: 3em;
+	position: absolute;
+	right: 0.5em;
+	top: 0.5em;
 }
