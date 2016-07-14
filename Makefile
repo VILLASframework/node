@@ -2,40 +2,35 @@
 TARGETS = node pipe signal test
 
 # Libraries
-LIBS = libvillas.so thirdparty/xilinx/libxil.so
-
-DEBUG = 1
+LIBS = libvillas.so
 
 # Object files for libvillas
-LIB_OBJS = sample.o path.o node.o \
-	   kernel.o rt.o \
-	   list.o pool.o queue.o lstack.o \
-	   log.o \
-	   utils.o \
-	   cfg.o \
-	   hooks.o hooks-other.o hooks-internal.o hooks-stats.o \
-	   hist.o \
-	   timing.o
+LIB_SRCS = $(wildcard lib/hooks/*.c)			\
+           $(addprefix lib/kernel/, kernel.c rt.c)	\
+	   $(addprefix lib/,				\
+              sample.c path.c node.c hooks.c		\
+              log.c utils.c cfg.c hist.c timing.c	\
+              pool.c list.c queue.c lstack.c		\
+           )						\
 
-# Source directories
-VPATH = src lib lib/kernel lib/nodes lib/hooks lib/fpga
-
-# Default prefix for installation
+# Default prefix for install target
 PREFIX ?= /usr/local
 
 # Default debug level
+DEBUG ?= 1
 V ?= 2
 
-GIT_REV=$(shell git rev-parse --short HEAD)
+GIT_REV  = $(shell git rev-parse --short HEAD)
 
 # Compiler and linker flags
-LDLIBS  = -pthread -lrt -lm -lconfig -lvillas -ldl
+LDLIBS   = -pthread -lrt -lm -lconfig -lvillas -ldl
 
+LIB_CFLAGS  = -fPIC
 LIB_LDFLAGS = -shared
 
-CFLAGS += -std=c11 -Iinclude -Iinclude/villas -I. -MMD -mcx16
-CFLAGS += -Wall -fdiagnostics-color=auto
-CFLAGS += -D_GIT_REV='"$(GIT_REV)"' -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
+CFLAGS  += -std=c11 -Iinclude -Iinclude/villas -I. -MMD -mcx16
+CFLAGS  += -Wall -fdiagnostics-color=auto
+CFLAGS  += -D_GIT_REV='"$(GIT_REV)"' -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
 LDFLAGS += -pthread -L. -Wl,-rpath,'$$ORIGIN'
 
 # pkg-config dependencies
@@ -53,18 +48,21 @@ endif
 ######## Node types ########
 
 # file node-type is always supported
-LIB_OBJS += file.o cbuilder.o
+LIB_SRCS += $(addprefix lib/nodes/, file.c cbuilder.c)
 
 # Enable Socket node type when libnl3 is available
 ifeq ($(shell pkg-config libnl-route-3.0; echo $$?),0)
-	LIB_OBJS    += socket.o nl.o tc.o if.o msg.o
+	LIB_SRCS    += $(addprefix lib/nodes/, socket.c)
+	LIB_SRCS    += $(addprefix lib/kernel/, nl.c tc.c if.c)
+	LIB_SRCS    += $(addprefix lib/, msg.c)
 	PKGS        += libnl-route-3.0
 endif
 
 # Enable VILLASfpga support when libpci is available
 ifeq ($(shell pkg-config libpci; echo $$?),0)
-	LIB_OBJS    += vfpga.o pci.o ip.o vfio.o
-	LIB_OBJS    += dma.o model.o fifo.o switch.o rtds_axis.o intc.o dft.o timer.o
+	LIB_SRCS    += $(addprefix lib/nodes/, fpga.c)
+	LIB_SRCS    += $(addprefix lib/kernel/, pci.c vfio.c)
+	LIB_SRCS    += $(wildcard  lib/fpga/*.c)
 	LDLIBS      += -lxil
 	LDFLAGS     += -Lthirdparty/xilinx -Wl,-rpath-link,'$$ORIGIN/thirdparty/xilinx'
 	CFLAGS      += -Ithirdparty/xilinx/include
@@ -107,51 +105,61 @@ LIB_CFLAGS += $(addprefix -DWITH_, $(shell echo ${PKGS} | tr a-z- A-Z_ | tr -dc 
 LIB_CFLAGS += $(shell pkg-config --cflags ${PKGS})
 LIB_LDLIBS += $(shell pkg-config --libs ${PKGS})
 
+LIB_OBJS = $(patsubst lib/%.c, obj/lib/%.o, $(LIB_SRCS))
+
 ######## Targets ########
 
-.PHONY: all clean install release docker doc models
+.PHONY: all clean install docker doc models
+.SECONDARY:
+.SECONDEXPANSION:
 
 # Default target: build everything
-all: $(LIBS) $(TARGETS) models
+all: $(LIBS) $(TARGETS) $(MODELS)
 
 # Dependencies for individual binaries
-node:   server.o
-pipe:   pipe.o
-test:   test.o
-signal: signal.o
-fpga:   fpga-main.o fpga-tests.o fpga-bench.o $(BENCH_OBJS)
+fpga:   $(addprefix obj/src/,fpga.o fpga-tests.o fpga-bench.o $(BENCH_OBJS))
+node:   $(addprefix obj/src/,node.o)
+pipe:   $(addprefix obj/src/,pipe.o)
+test:   $(addprefix obj/src/,test.o)
+signal: $(addprefix obj/src/,signal.o)
+
+# Create directories
+%/:
+	mkdir -p $@
+
+# Link target executables
+$(TARGETS): $$(addprefix obj/src/,$$@.o)
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+
+# Compile executable objects
+obj/src/%.o: src/%.c | $$(dir $$@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Compile library objects
+obj/lib/%.o: lib/%.c | $$(dir $$@)
+	$(CC) $(CFLAGS) $(LIB_CFLAGS) -c $< -o $@
 
 # Libraries
-$(LIB_OBJS): CFLAGS += -fPIC $(LIB_CFLAGS)
 libvillas.so: $(LIB_OBJS)
 	$(CC) $(LIB_LDFLAGS) -o $@ $^ $(LIB_LDLIBS)
-
-thirdparty/xilinx/libxil.so:
-	$(MAKE) -C thirdparty/xilinx libxil.so
 
 # Common targets
 install: $(TARGETS) $(LIBS)
 	install -m 0644 $(LIBS) $(PREFIX)/lib
-	install -m 0755 node -T $(PREFIX)/bin/villas-node
-	install -m 0755 fpga $(PREFIX)/bin/villas-fpga
-	install -m 0755 signal $(PREFIX)/bin/villas-signal
-	install -m 0755 pipe $(PREFIX)/bin/villas-pipe
-	install -m 0755 test $(PREFIX)/bin/villas-test
-	install -m 0755 tools/villas.sh $(PREFIX)/bin/villas
-	install -m 0755 -d $(PREFIX)/include/villas/
+	install -m 0755 node	-T $(PREFIX)/bin/villas-node
+	install -m 0755 fpga	-T $(PREFIX)/bin/villas-fpga
+	install -m 0755 signal	-T $(PREFIX)/bin/villas-signal
+	install -m 0755 pipe	-T $(PREFIX)/bin/villas-pipe
+	install -m 0755 test	-T $(PREFIX)/bin/villas-test
+	install -m 0755		-d $(PREFIX)/include/villas/
 	install -m 0644 include/*.h $(PREFIX)/include/villas/
+	install -m 0755 tools/villas.sh $(PREFIX)/bin/villas
 	ldconfig
 
-release: all
-	tar czf villas-$(COMMIT)-doc.tar.gz doc/html/
-	tar czf villas-$(COMMIT).tar.gz node test pipe signal etc/
-	rsync *.tar.gz $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/
-	rsync --archive --delete doc/html/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/doc/
-
 clean:
-	$(RM) *~ *.o *.d *.so
-	$(RM) $(TARGETS)
-	$(RM) -rf doc/{html,latex}
+	$(RM) $(LIBS) $(TARGETS)
+	$(RM) -rf obj/ doc/{html,latex}
+	$(MAKE) -C models clean
 
 docker:
 	docker build -t villas .
@@ -161,7 +169,7 @@ doc:
 	doxygen
 
 models:
-	$(MAKE) -C lib/cbmodels
+	$(MAKE) -C models
 
 # Include auto-generated dependencies
--include $(wildcard *.d)
+-include $(wildcard obj/**/*.d)

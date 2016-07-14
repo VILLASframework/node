@@ -97,7 +97,7 @@ int fpga_parse_card(struct fpga *f, int argc, char * argv[], config_setting_t *c
 	f->filter.vendor = PCI_VID_XILINX;
 	f->filter.device = PCI_PID_VFPGA;
 
-	cfg_fpgas = config_setting_get_member(cfg, "fpga");
+	cfg_fpgas = config_setting_get_member(cfg, "fpgas");
 	if (!cfg_fpgas)
 		cerror(cfg, "Config file is missing 'fpgas' section");
 	
