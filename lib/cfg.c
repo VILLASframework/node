@@ -19,11 +19,23 @@
 #include "path.h"
 #include "hooks.h"
 
-int config_parse(const char *filename, config_t *cfg, struct settings *set,
+void cfg_init(config_t *cfg)
+{
+	config_init(cfg);
+}
+
+void cfg_destroy(config_t *cfg)
+{
+	config_destroy(cfg);
+}
+
+int cfg_parse(const char *filename, config_t *cfg, struct settings *set,
 	struct list *nodes, struct list *paths)
 {
 	int ret;
 	char *filename_cpy, *include_dir;
+
+	config_init(cfg);
 
 	filename_cpy = strdup(filename);
 	include_dir = dirname(filename_cpy);
@@ -56,7 +68,7 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 		if (!cfg_root || !config_setting_is_group(cfg_root))
 			error("Missing global section in config file: %s", filename);
 
-		config_parse_global(cfg_root, set);
+		cfg_parse_global(cfg_root, set);
 	}
 
 	/* Parse nodes */
@@ -67,7 +79,7 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 
 		for (int i = 0; i < config_setting_length(cfg_nodes); i++) {
 			config_setting_t *cfg_node = config_setting_get_elem(cfg_nodes, i);
-			config_parse_node(cfg_node, nodes, set);
+			cfg_parse_node(cfg_node, nodes, set);
 		}
 	}
 
@@ -79,14 +91,14 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
 
 		for (int i = 0; i < config_setting_length(cfg_paths); i++) {
 			config_setting_t *cfg_path = config_setting_get_elem(cfg_paths, i);
-			config_parse_path(cfg_path, paths, nodes, set);
+			cfg_parse_path(cfg_path, paths, nodes, set);
 		}
 	}
 
 	return 0;
 }
 
-int config_parse_plugins(config_setting_t *cfg)
+int cfg_parse_plugins(config_setting_t *cfg)
 {
 	if (!config_setting_is_array(cfg))
 		cerror(cfg, "Setting 'plugins' must be a list of strings");
@@ -107,7 +119,7 @@ int config_parse_plugins(config_setting_t *cfg)
 	return 0;
 }
 
-int config_parse_global(config_setting_t *cfg, struct settings *set)
+int cfg_parse_global(config_setting_t *cfg, struct settings *set)
 {
 	config_setting_t *cfg_plugins;
 
@@ -125,14 +137,14 @@ int config_parse_global(config_setting_t *cfg, struct settings *set)
 	
 	cfg_plugins = config_setting_get_member(cfg, "plugins");
 	if (cfg_plugins)
-		config_parse_plugins(cfg_plugins);
+		cfg_parse_plugins(cfg_plugins);
 
 	log_setlevel(set->debug, -1);
 
 	return 0;
 }
 
-int config_parse_path(config_setting_t *cfg,
+int cfg_parse_path(config_setting_t *cfg,
 	struct list *paths, struct list *nodes, struct settings *set)
 {
 	config_setting_t *cfg_out, *cfg_hook;
@@ -163,7 +175,7 @@ int config_parse_path(config_setting_t *cfg,
 	    !(cfg_out = config_setting_get_member(cfg, "sink")))
 		cerror(cfg, "Missing output nodes for path");
 	
-	ret = config_parse_nodelist(cfg_out, &p->destinations, nodes);
+	ret = cfg_parse_nodelist(cfg_out, &p->destinations, nodes);
 	if (ret <= 0)
 		cerror(cfg_out, "Invalid output nodes");
 	
@@ -179,7 +191,7 @@ int config_parse_path(config_setting_t *cfg,
 	/* Optional settings */
 	cfg_hook = config_setting_get_member(cfg, "hook");
 	if (cfg_hook)
-		config_parse_hooklist(cfg_hook, &p->hooks);
+		cfg_parse_hooklist(cfg_hook, &p->hooks);
 
 	if (!config_setting_lookup_int(cfg, "values", &p->samplelen))
 		p->samplelen = DEFAULT_VALUES;
@@ -208,7 +220,7 @@ int config_parse_path(config_setting_t *cfg,
 		list_push(&r->destinations, p->in);
 			
 		if (cfg_hook)
-			config_parse_hooklist(cfg_hook, &r->hooks);
+			cfg_parse_hooklist(cfg_hook, &r->hooks);
 
 		list_push(paths, r);
 	}
@@ -216,7 +228,7 @@ int config_parse_path(config_setting_t *cfg,
 	return 0;
 }
 
-int config_parse_nodelist(config_setting_t *cfg, struct list *list, struct list *all) {
+int cfg_parse_nodelist(config_setting_t *cfg, struct list *list, struct list *all) {
 	const char *str;
 	struct node *node;
 
@@ -260,7 +272,7 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *list, struct list 
 	return list_length(list);
 }
 
-int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set)
+int cfg_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set)
 {
 	const char *type, *name;
 	int ret;
@@ -307,15 +319,15 @@ int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings
 	return ret;
 }
 
-int config_parse_hooklist(config_setting_t *cfg, struct list *list) {
+int cfg_parse_hooklist(config_setting_t *cfg, struct list *list) {
 	switch (config_setting_type(cfg)) {
 		case CONFIG_TYPE_STRING:
-			config_parse_hook(cfg, list);
+			cfg_parse_hook(cfg, list);
 			break;
 
 		case CONFIG_TYPE_ARRAY:
 			for (int i = 0; i < config_setting_length(cfg); i++)
-				config_parse_hook(config_setting_get_elem(cfg, i), list);
+				cfg_parse_hook(config_setting_get_elem(cfg, i), list);
 			break;
 
 		default:
@@ -325,7 +337,7 @@ int config_parse_hooklist(config_setting_t *cfg, struct list *list) {
 	return list_length(list);
 }
 
-int config_parse_hook(config_setting_t *cfg, struct list *list)
+int cfg_parse_hook(config_setting_t *cfg, struct list *list)
 {
 	struct hook *hook, *copy;
 	const char *name = config_setting_get_string(cfg);

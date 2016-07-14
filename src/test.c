@@ -85,8 +85,7 @@ int main(int argc, char *argv[])
 	list_init(&nodes);
 
 	log_init();
-	config_init(&config);
-	config_parse(argv[1], &config, &settings, &nodes, NULL);
+	cfg_parse(argv[1], &config, &settings, &nodes, NULL);
 
 	node = list_lookup(&nodes, argv[3]);
 	if (!node)
@@ -141,7 +140,7 @@ check:		if (optarg == endptr)
 	node_deinit(node->_vt);
 	
 	list_destroy(&nodes, (dtor_cb_t) node_destroy, false);
-	config_destroy(&config);
+	cfg_destroy(&config);
 
 	return 0;
 }

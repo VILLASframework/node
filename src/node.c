@@ -51,7 +51,7 @@ static void quit()
 	/* Freeing dynamically allocated memory */
 	list_destroy(&paths, (dtor_cb_t) path_destroy, false);
 	list_destroy(&nodes, (dtor_cb_t) node_destroy, false);
-	config_destroy(&config);
+	cfg_destroy(&config);
 
 	info(GRN("Goodbye!"));
 
@@ -120,11 +120,8 @@ int main(int argc, char *argv[])
 	list_init(&nodes);
 
 	info("Parsing configuration");
-	{ INDENT
-		config_init(&config);
-		config_parse(configfile, &config, &settings, &nodes, &paths);
-	}
-	
+	cfg_parse(configfile, &config, &settings, &nodes, &paths);
+
 	info("Initialize real-time system");
 	rt_init(settings.affinity, settings.priority);
 

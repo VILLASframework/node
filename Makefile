@@ -23,10 +23,11 @@ V ?= 2
 GIT_REV  = $(shell git rev-parse --short HEAD)
 
 # Compiler and linker flags
-LDLIBS   = -pthread -lrt -lm -lconfig -lvillas -ldl
+LDLIBS   = -pthread -lm -lvillas
 
 LIB_CFLAGS  = -fPIC
 LIB_LDFLAGS = -shared
+LIB_LDLIBS  = -ldl -lrt
 
 CFLAGS  += -std=c11 -Iinclude -Iinclude/villas -I. -MMD -mcx16
 CFLAGS  += -Wall -fdiagnostics-color=auto

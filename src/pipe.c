@@ -27,8 +27,9 @@
 
 #include "config.h"
 
-struct list nodes;		/**< List of all nodes */
-struct settings settings;	/**< The global configuration */
+static struct list nodes;		/**< List of all nodes */
+static struct settings settings;	/**< The global configuration */
+static config_t config;
 
 struct dir {
 	struct pool pool;
@@ -62,6 +63,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	node_deinit(node->_vt);
 
 	list_destroy(&nodes, (dtor_cb_t) node_destroy, false);
+	cfg_destroy(&config);
 
 	info(GRN("Goodbye!"));
 	exit(EXIT_SUCCESS);
@@ -169,8 +171,6 @@ int main(int argc, char *argv[])
 	int ret;
 	char c;
 
-	config_t config;
-
 	ptid = pthread_self();
 	log_init();
 
@@ -216,11 +216,8 @@ int main(int argc, char *argv[])
 	list_init(&nodes);
 
 	info("Parsing configuration");
-	{ INDENT
-		config_init(&config);
-		config_parse(argv[1], &config, &settings, &nodes, NULL);
-	}
-	
+	cfg_parse(argv[1], &config, &settings, &nodes, NULL);
+
 	info("Initialize real-time system");
 	rt_init(settings.affinity, settings.priority);
 	

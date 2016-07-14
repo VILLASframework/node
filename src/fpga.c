@@ -81,10 +81,7 @@ int main(int argc, char *argv[])
 	}
 
 	info("Parsing configuration");
-	{ INDENT
-		config_init(&config);
-		config_parse(argv[1], &config, &settings, NULL, NULL);
-	}
+	cfg_parse(argv[1], &config, &settings, NULL, NULL);
 	
 	info("Initialize real-time system");
 	rt_init(settings.affinity, settings.priority);
@@ -108,6 +105,8 @@ int main(int argc, char *argv[])
 	ret = fpga_deinit(&fpga);
 	if (ret)
 		error("Failed to de-initialize fpga card");
+	
+	cfg_destroy(&config);
 
 	return 0;
 }

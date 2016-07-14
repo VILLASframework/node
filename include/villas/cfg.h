@@ -25,6 +25,16 @@ struct settings;
   #define config_setting_lookup config_lookup_from
 #endif
 
+/** Simple wrapper around libconfig's config_init()
+  *
+  * This allows us to avoid an additional library dependency to libconfig
+  * for the excuctables. They only have to depend on libvillas.
+  */
+void cfg_init(config_t *cfg);
+
+/** Simple wrapper around libconfig's config_init() */
+void cfg_destroy(config_t *cfg);
+
 /** Parse config file and store settings in supplied struct settings.
  *
  * @param filename The path to the configration file (relative or absolute)
@@ -35,7 +45,7 @@ struct settings;
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int config_parse(const char *filename, config_t *cfg, struct settings *set,
+int cfg_parse(const char *filename, config_t *cfg, struct settings *set,
 	struct list *nodes, struct list *paths);
 
 /** Parse the global section of a configuration file.
@@ -45,7 +55,7 @@ int config_parse(const char *filename, config_t *cfg, struct settings *set,
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int config_parse_global(config_setting_t *cfg, struct settings *set);
+int cfg_parse_global(config_setting_t *cfg, struct settings *set);
 
 /** Parse a single path and add it to the global configuration.
  *
@@ -56,7 +66,7 @@ int config_parse_global(config_setting_t *cfg, struct settings *set);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int config_parse_path(config_setting_t *cfg,
+int cfg_parse_path(config_setting_t *cfg,
 	struct list *paths, struct list *nodes, struct settings *set);
 
 /** Parse an array or single node and checks if they exist in the "nodes" section.
@@ -69,7 +79,7 @@ int config_parse_path(config_setting_t *cfg,
  * @param nodes The nodes will be added to this list.
  * @param all This list contains all valid nodes.
  */
-int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct list *all);
+int cfg_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct list *all);
 
 /** Parse an array or single hook function.
  *
@@ -77,7 +87,7 @@ int config_parse_nodelist(config_setting_t *cfg, struct list *nodes, struct list
  *     hooks = [ "print", "fir" ]
  *     hooks = "log"
  **/
-int config_parse_hooklist(config_setting_t *cfg, struct list *hooks);
+int cfg_parse_hooklist(config_setting_t *cfg, struct list *hooks);
 
 /** Parse a single hook and append it to the list.
  * A hook definition is composed of the hook name and optional parameters
@@ -86,7 +96,7 @@ int config_parse_hooklist(config_setting_t *cfg, struct list *hooks);
  * Examples:
  *   "print:stdout"
  */
-int config_parse_hook(config_setting_t *cfg, struct list *list);
+int cfg_parse_hook(config_setting_t *cfg, struct list *list);
 
 /** Parse a single node and add it to the global configuration.
  *
@@ -96,6 +106,6 @@ int config_parse_hook(config_setting_t *cfg, struct list *list);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int config_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set);
+int cfg_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set);
 
 #endif /* _CFG_H_ */
