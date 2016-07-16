@@ -28,6 +28,12 @@ enum socket_layer {
 	LAYER_UDP
 };
 
+enum app_hdr_type {
+	APP_HDR_NONE,			/** No header in the payload */
+	APP_HDR_GTSKT,			/** No header in the payload, same as HDR_NONE*/
+	APP_HDR_DEFAULT			/** Default header in the payload, (see msg_format.h) */
+};
+
 union sockaddr_union {
 	struct sockaddr sa;
 	struct sockaddr_in sin;
@@ -48,6 +54,8 @@ struct socket {
 	union sockaddr_union local;
 	/** Remote address of the socket */
 	union sockaddr_union remote;
+	/** Payload header type */
+	enum app_hdr_type app_hdr;
 
 	/** libnl3: Network emulator queuing discipline */
 	struct rtnl_qdisc *tc_qdisc;

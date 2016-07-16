@@ -86,17 +86,20 @@ void * send_loop(void *ctx)
 	for (;;) {
 		for (int i = 0; i < node->vectorize; i++) {
 			struct sample *s = smps[i];
-			int reason;
+			int reason, retry;
 
-retry:			reason = sample_fscan(stdin, s, NULL);
-			if (reason < 0) {
-				if (feof(stdin))
-					return NULL;
-				else {
-					warn("Skipped invalid message message: reason=%d", reason);
-					goto retry;
+			do {
+				retry = 0;
+				reason = sample_fscan(stdin, s, NULL);
+				if (reason < 0) {
+					if (feof(stdin))
+						return NULL;
+					else {
+						warn("Skipped invalid message message: reason=%d", reason);
+						retry = 1;
+					}
 				}
-			}
+			} while (retry);
 		}
 
 		node_write(node, smps, node->vectorize);
