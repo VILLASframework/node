@@ -480,10 +480,6 @@ int websocket_read(struct node *n, struct sample *smps[], unsigned cnt)
 	int got;
 	
 	got = queue_pull_many(&w->queue_rx, (void **) msgs, cnt, &w->received);
-	
-	if (got)
-	info("got %u", got);
-	
 	for (int i = 0; i < got; i++) {
 		smps[i]->sequence  = msgs[i]->sequence;
 		smps[i]->length    = msgs[i]->length;
