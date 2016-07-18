@@ -24,7 +24,6 @@
 #include <villas/kernel/kernel.h>
 
 #include "config.h"
-#include "config-fpga.h"
 
 /* Declarations */
 int fpga_benchmarks(int argc, char *argv[], struct fpga *f);

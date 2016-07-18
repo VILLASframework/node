@@ -10,7 +10,7 @@
 #include "fpga/fifo.h"
 #include "nodes/fpga.h"
 
-#include "config-fpga.h"
+#include "config.h"
 
 struct list ip_types;	/**< Table of existing FPGA IP core drivers */
 

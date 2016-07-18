@@ -22,7 +22,6 @@
 #include <villas/fpga/intc.h>
 
 #include "config.h"
-#include "config-fpga.h"
 
 #define TEST_LEN 0x1000
 
@@ -335,7 +334,7 @@ int fpga_test_timer(struct fpga *f)
 		error("Failed to enable interrupt");
 
 	XTmrCtr_SetOptions(xtmr, 0, XTC_EXT_COMPARE_OPTION | XTC_DOWN_COUNT_OPTION);
-	XTmrCtr_SetResetValue(xtmr, 0, AXI_HZ / 125);
+	XTmrCtr_SetResetValue(xtmr, 0, FPGA_AXI_HZ / 125);
 	XTmrCtr_Start(xtmr, 0);
 
 	uint64_t counter = intc_wait(f->intc, tmr->irq);

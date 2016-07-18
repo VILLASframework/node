@@ -9,7 +9,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  **********************************************************************************/
 
-#include "config-fpga.h"
+#include "config.h"
 
 #include "fpga/ip.h"
 #include "fpga/timer.h"
@@ -22,7 +22,7 @@ int timer_init(struct ip *c)
 	XTmrCtr *xtmr = &tmr->inst;
 	XTmrCtr_Config xtmr_cfg = {
 		.BaseAddress = (uintptr_t) f->map + c->baseaddr,
-		.SysClockFreqHz = AXI_HZ
+		.SysClockFreqHz = FPGA_AXI_HZ
 	};
 
 	XTmrCtr_CfgInitialize(xtmr, &xtmr_cfg, (uintptr_t) f->map + c->baseaddr);

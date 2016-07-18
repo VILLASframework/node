@@ -22,7 +22,6 @@
 #include <xilinx/xtmrctr_l.h>
 
 #include "config.h"
-#include "config-fpga.h"
 
 int fpga_benchmark_datamover(struct fpga *f);
 int fpga_benchmark_jitter(struct fpga *f);
@@ -106,7 +105,7 @@ int fpga_benchmark_jitter(struct fpga *f)
 	int *hist = alloc(8 << 20);
 
 	XTmrCtr_SetOptions(xtmr, 0, XTC_INT_MODE_OPTION | XTC_EXT_COMPARE_OPTION | XTC_DOWN_COUNT_OPTION | XTC_AUTO_RELOAD_OPTION);
-	XTmrCtr_SetResetValue(xtmr, 0, period * AXI_HZ);
+	XTmrCtr_SetResetValue(xtmr, 0, period * FPGA_AXI_HZ);
 	XTmrCtr_Start(xtmr, 0);
 
 	uint64_t end, start = rdtscp();

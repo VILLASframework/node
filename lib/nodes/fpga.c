@@ -17,7 +17,7 @@
 
 #include "nodes/fpga.h"
 
-#include "config-fpga.h"
+#include "config.h"
 #include "utils.h"
 #include "timing.h"
 
@@ -94,8 +94,8 @@ int fpga_parse_card(struct fpga *f, int argc, char * argv[], config_setting_t *c
 	config_setting_t *cfg_ips, *cfg_slot, *cfg_id, *cfg_fpgas;
 
 	/* Default values */
-	f->filter.vendor = PCI_VID_XILINX;
-	f->filter.device = PCI_PID_VFPGA;
+	f->filter.vendor = FPGA_PCI_VID_XILINX;
+	f->filter.device = FPGA_PCI_PID_VFPGA;
 
 	cfg_fpgas = config_setting_get_member(cfg, "fpgas");
 	if (!cfg_fpgas)
