@@ -17,7 +17,6 @@ LIB_SRCS = $(wildcard lib/hooks/*.c)			\
 PREFIX ?= /usr/local
 
 # Default debug level
-DEBUG ?= 1
 V ?= 2
 
 GIT_REV  = $(shell git rev-parse --short HEAD)
@@ -65,7 +64,7 @@ ifeq ($(shell pkg-config libpci; echo $$?),0)
 	LIB_SRCS    += $(addprefix lib/kernel/, pci.c vfio.c)
 	LIB_SRCS    += $(wildcard  lib/fpga/*.c)
 	LDLIBS      += -lxil
-	LDFLAGS     += -Lthirdparty/xilinx -Wl,-rpath-link,'$$ORIGIN/thirdparty/xilinx'
+	LDFLAGS     += -Lthirdparty/xilinx -Wl,-rpath,'$$ORIGIN/thirdparty/xilinx'
 	CFLAGS      += -Ithirdparty/xilinx/include
 	PKGS        += libpci
 	TARGETS     += fpga
@@ -73,13 +72,13 @@ endif
 
 # Enable NGSI support
 ifeq ($(shell pkg-config libcurl jansson uuid; echo $$?),0)
-	LIB_OBJS    += ngsi.o
+	LIB_SRCS    += lib/nodes/ngsi.c
 	PKGS        += libcurl jansson uuid
 endif
 
 # Enable WebSocket support
 ifeq ($(shell pkg-config libwebsockets jansson; echo $$?),0)
-	LIB_OBJS   += websocket.o
+	LIB_SRCS   += lib/nodes/websocket.c
 	PKGS       += libwebsockets jansson
 endif
 
@@ -153,7 +152,7 @@ install: $(TARGETS) $(LIBS)
 	install -m 0755 pipe	-T $(PREFIX)/bin/villas-pipe
 	install -m 0755 test	-T $(PREFIX)/bin/villas-test
 	install -m 0755		-d $(PREFIX)/include/villas/
-	install -m 0644 include/*.h $(PREFIX)/include/villas/
+	install -m 0644 include/villas/*.h $(PREFIX)/include/villas/
 	install -m 0755 tools/villas.sh $(PREFIX)/bin/villas
 	ldconfig
 
