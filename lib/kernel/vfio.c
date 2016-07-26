@@ -375,8 +375,10 @@ int vfio_pci_msi_find(struct vfio_dev *d, int nos[32])
 			continue;
 
 		/* Find last column of line */
-		while ((col = strtok(NULL, " ")))
+		do {
 			last = col;
+		} while ((col = strtok(NULL, " ")));
+			
 
 		ret = sscanf(last, "vfio-msi[%u](%12[0-9:])", &idx, name);
 		if (ret == 2) {

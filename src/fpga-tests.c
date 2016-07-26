@@ -258,7 +258,7 @@ int fpga_test_fifo(struct fpga *f)
 
 int fpga_test_dma(struct fpga *f)
 {
-	int ret;
+	int ret = -1;
 	struct dma_mem mem, src, dst;
 
 	list_foreach(struct ip *dma, &f->ips) { INDENT

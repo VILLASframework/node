@@ -320,7 +320,7 @@ int dma_sg_read_complete(struct ip *c, char **buf, size_t *len)
 
 	int ret, bdcnt;
 	uint32_t recvlen, sr;
-	uintptr_t recvbuf;
+	uintptr_t recvbuf = NULL;
 
 	if (!xdma->HasSg)
 		return -1;

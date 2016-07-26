@@ -32,7 +32,7 @@ void cfg_destroy(config_t *cfg)
 int cfg_parse(const char *filename, config_t *cfg, struct settings *set,
 	struct list *nodes, struct list *paths)
 {
-	int ret;
+	int ret = CONFIG_FALSE;
 	char *filename_cpy, *include_dir;
 
 	config_init(cfg);
