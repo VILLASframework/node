@@ -1,19 +1,18 @@
-# Simulator to Simulator Server
+# VILLASnode
 
-[![Travis-CI](https://magnum.travis-ci.com/RWTH-ACS/VILLASnode.svg?token=9zFzh6dGWonz6LyBspW3&branch=master)](https://magnum.travis-ci.com/RWTH-ACS/VILLASnode)
-
-This is VILLASnode, a gateway to forward and process simulation data between real time simulators.
+This is VILLASnode, a gateway for processing and forwardning simulation data between real-time simulators.
 
 ## Documentation
 
 The documentation for this software is available at [doc/Mainpage](doc/Mainpage.md).
-
-You can access the prebuild documentation at: http://s2ss:Nie4di5e@s2ss.0l.de (User: `s2ss`, Pass: `Nie4di5e`).
-Alternatively, you can build the documentation yourself by calling `doxygen` in this directory.
+The full documentation is available at [doc/html/index.html](doc/html/index.html) after running `doxygen` in this directory.
 
 ## Contact
 
 [![EONERC ACS Logo](doc/pictures/eonerc_logo.png)](http://www.acs.eonerc.rwth-aachen.de)
+
+- Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+- Marija Stevic <mstevic@eonerc.rwth-aachen.de>
 
 Institute for Automation of Complex Power Systems (ACS)  
 EON Energy Research Center (EONERC)  
