@@ -4,6 +4,9 @@ TARGETS = node pipe signal test
 # Libraries
 LIBS = libvillas.so
 
+# Plugins
+PLUGINS = simple_circuit.so example_hook.so
+
 # Object files for libvillas
 LIB_SRCS = $(wildcard lib/hooks/*.c)			\
            $(addprefix lib/kernel/, kernel.c rt.c)	\
@@ -24,6 +27,8 @@ GIT_REV  = $(shell git rev-parse --short HEAD)
 # Compiler and linker flags
 LDLIBS   = -pthread -lm -lvillas
 
+PLUGIN_CFLAGS = -fPIC -DVILLAS -I../include/villas
+
 LIB_CFLAGS  = -fPIC
 LIB_LDFLAGS = -shared
 LIB_LDLIBS  = -ldl -lrt
@@ -36,7 +41,7 @@ LDFLAGS += -pthread -L. -Wl,-rpath,'$$ORIGIN'
 # pkg-config dependencies
 PKGS = libconfig
 
-DOCKEROPTS = -p 80:80 -p 443:443 -p 1234:1234 --ulimit memlock=1073741824 --security-opt seccomp:unconfined
+DOCKEROPTS = -p 80:80 -p 443:443 -p 1234:1234 --privileged --cap-add sys_nic --ulimit memlock=1073741824 --security-opt seccomp:unconfined
 
 # Add more compiler flags
 ifdef DEBUG
@@ -109,12 +114,12 @@ LIB_OBJS = $(patsubst lib/%.c, obj/lib/%.o, $(LIB_SRCS))
 
 ######## Targets ########
 
-.PHONY: all clean install docker doc models
+.PHONY: all clean install docker doc
 .SECONDARY:
 .SECONDEXPANSION:
 
 # Default target: build everything
-all: $(LIBS) $(TARGETS) $(MODELS)
+all: $(LIBS) $(TARGETS) $(PLUGINS)
 
 # Dependencies for individual binaries
 fpga:   $(addprefix obj/src/,fpga.o fpga-tests.o fpga-bench.o $(BENCH_OBJS))
@@ -123,13 +128,15 @@ pipe:   $(addprefix obj/src/,pipe.o)
 test:   $(addprefix obj/src/,test.o)
 signal: $(addprefix obj/src/,signal.o)
 
+# Dependencies for plugins
+example_hook.so:   obj/plugins/hooks/example_hook.o
+simple_circuit.so: obj/plugins/models/simple_circuit.o
+
+libvillas.so: $(LIB_OBJS)
+
 # Create directories
 %/:
 	mkdir -p $@
-
-# Link target executables
-$(TARGETS): $$(addprefix obj/src/,$$@.o)
-	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 # Compile executable objects
 obj/src/%.o: src/%.c | $$(dir $$@)
@@ -138,9 +145,16 @@ obj/src/%.o: src/%.c | $$(dir $$@)
 # Compile library objects
 obj/lib/%.o: lib/%.c | $$(dir $$@)
 	$(CC) $(CFLAGS) $(LIB_CFLAGS) -c $< -o $@
+	
+obj/plugins/%.o: plugins/%.c | $$(dir $$@)
+	$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) -c $< -o $@
 
-# Libraries
-libvillas.so: $(LIB_OBJS)
+# Link target executables
+$(TARGETS):
+	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
+	
+# Link Libraries & Plugins
+$(LIBS) $(PLUGINS):
 	$(CC) $(LIB_LDFLAGS) -o $@ $^ $(LIB_LDLIBS)
 
 # Common targets
@@ -157,9 +171,8 @@ install: $(TARGETS) $(LIBS)
 	ldconfig
 
 clean:
-	$(RM) $(LIBS) $(TARGETS)
+	$(RM) $(LIBS) $(PLUGINS) $(TARGETS)
 	$(RM) -rf obj/ doc/{html,latex}
-	$(MAKE) -C models clean
 
 docker:
 	docker build -t villas .
@@ -167,9 +180,6 @@ docker:
 
 doc:
 	doxygen
-
-models:
-	$(MAKE) -C models
 
 # Include auto-generated dependencies
 -include $(wildcard obj/**/*.d)
