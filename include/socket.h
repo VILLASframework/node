@@ -29,9 +29,8 @@ enum socket_layer {
 };
 
 enum app_hdr_type {
-	APP_HDR_NONE,			/** No header in the payload */
-	APP_HDR_GTSKT,			/** No header in the payload, same as HDR_NONE*/
-	APP_HDR_DEFAULT			/** Default header in the payload, (see msg_format.h) */
+	SOCKET_HDR_GTSKT,			/** No header in the payload, same as HDR_NONE*/
+	SOCKET_HDR_DEFAULT			/** Default header in the payload, (see msg_format.h) */
 };
 
 union sockaddr_union {

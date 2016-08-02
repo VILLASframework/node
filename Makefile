@@ -35,7 +35,7 @@ LDLIBS  = -pthread -lrt -lm -lconfig -lvillas
 CFLAGS += -std=c11 -Iinclude/ -I. -MMD -mcx16
 CFLAGS += -Wall -fdiagnostics-color=auto
 CFLAGS += -D_GIT_REV='"$(GIT_REV)"' -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
-#CFLAGS += -std=c99 -pedantic -ansi
+#CFLAGS += -pedantic -std=c11
 LDFLAGS += -L. -Wl,-rpath,'$$ORIGIN'
 
 # pkg-config dependencies

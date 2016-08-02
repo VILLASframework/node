@@ -36,8 +36,6 @@ static struct node_type vt;
 /* Private static storage */
 struct list interfaces;
 
-uint8_t vector_length = 0;			//TODO intialize vectorize option in socket with constant value
-
 int socket_init(int argc, char * argv[], config_setting_t *cfg)
 {
 	if (getuid() != 0)
@@ -93,22 +91,28 @@ int socket_deinit()
 	return 0;
 }
 
-//TODO: Add app_header printing
 char * socket_print(struct node *n)
 {
 	struct socket *s = n->_vd;
-	char *layer = NULL, *buf;
+	char *layer = NULL, *app_hdr = NULL, *buf;
 	
 	switch (s->layer) {
 		case LAYER_UDP: layer = "udp";	break;
 		case LAYER_IP:	layer = "ip";	break;
 		case LAYER_ETH:	layer = "eth";	break;
 	}
+	
+	switch (s->app_hdr) {
+		case SOCKET_HDR_GTSKT: app_hdr = "GTNET-Socket-v2"; break;
+		case SOCKET_HDR_DEFAULT: 
+		default:
+		app_hdr = "Default"; break;
+	}
 
 	char *local = socket_print_addr((struct sockaddr *) &s->local);
 	char *remote = socket_print_addr((struct sockaddr *) &s->remote);
 
-	buf = strf("layer=%s, local=%s, remote=%s", layer, local, remote);
+	buf = strf("layer=%s, header=%s, local=%s, remote=%s", layer, app_hdr, local, remote);
 	
 	free(local);
 	free(remote);
@@ -207,25 +211,26 @@ int socket_destroy(struct node *n)
 
 int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	//TODO Vectorize setting...for gtskt set to 0--?
-	
 	struct socket *s = n->_vd;
 	
-	int samples, ret, received, smp_count, values_per_sample = 1;
+	int samples, ret, received, smp_count;
 	ssize_t bytes;
 	
-	if(s->app_hdr == APP_HDR_NONE || s->app_hdr == APP_HDR_GTSKT)
+	if(s->app_hdr == SOCKET_HDR_GTSKT)
 		smp_count = cnt;
 	else 				/** Default case if(s->app_hdr == HDR_DEFAULT)*/
 		smp_count = 2*cnt;
 	
+	struct msg msgs[cnt];
+	struct msg hdr;
+		
 	float sample_value;
 	struct iovec iov[smp_count];
 	struct msghdr mhdr = {
 		.msg_iov = iov
 	};
 	
-	if(s->app_hdr == APP_HDR_NONE || s->app_hdr == APP_HDR_GTSKT) {
+	if(s->app_hdr == SOCKET_HDR_GTSKT) {
 		bytes = recv(s->sd, &sample_value, SAMPLE_DATA_LEN(1), MSG_PEEK | MSG_TRUNC);
 		if (bytes < sizeof(float) || bytes % 4 != 0) {
 			warn("Packet size is invalid");
@@ -241,7 +246,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		/* We add one value per sample */
 		for (int i = 0; i < samples; i++) {
 			iov[i].iov_base = SAMPLE_DATA_OFFSET(smps[i]);
-			iov[i].iov_len  = SAMPLE_DATA_LEN(values_per_sample);			//TODO add logic for number of values per sample
+			iov[i].iov_len  = SAMPLE_DATA_LEN(1);			/** values per sample is 1 while reading */
 			mhdr.msg_iovlen += 1;
 		}
 		/* Receive message from socket */
@@ -253,26 +258,25 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		
 		for (received = 0; received < samples; received++) {
 			struct sample *smp = smps[received];
-			smp->length = values_per_sample;
-			//TODO see if s->sequence value is needed
-			//TODO see if s->ts.origin and smp->ts.received value is needed, essentially requiring a header
+			smp->length = 1;
+			/** @todo see if s->sequence value is needed */
+			/** @todo see if s->ts.origin and smp->ts.received value is needed, essentially requiring a header */
 		}
 	}
 	
-	else {		//if(s->app_hdr == APP_HDR_DEFAULT)
-		struct msg msgs[cnt];
-		struct msg hdr;
-		
+	else {		//if(s->app_hdr == SOCKET_HDR_DEFAULT)
 		/* Peak into message header of the first sample and to get total packet size. */
 		bytes = recv(s->sd, &hdr, sizeof(struct msg), MSG_PEEK | MSG_TRUNC);
 		if (bytes < sizeof(struct msg) || bytes % 4 != 0) {
 			warn("Packet size is invalid");
+			recv(s->sd, &hdr, sizeof(struct msg), 0);
 			return -1;
 		}
 
 		ret = msg_verify(&hdr);
 		if (ret) {
 			warn("Invalid message received: reason=%d, bytes=%zd", ret, bytes);
+			recv(s->sd, &hdr, sizeof(struct msg), 0);
 			return -1;
 		}
 		
@@ -336,13 +340,14 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 	struct socket *s = n->_vd;
 	ssize_t bytes;
 	
-	int smp_count, values_per_sample = 1;
+	unsigned smp_count;
 	
-	if(s->app_hdr == APP_HDR_NONE || s->app_hdr == APP_HDR_GTSKT)
+	if(s->app_hdr == SOCKET_HDR_GTSKT)
 		smp_count = cnt;
-	else 				/** Default case if(s->app_hdr == APP_HDR_DEFAULT)*/
+	else 				/** Default case if(s->app_hdr == SOCKET_HDR_DEFAULT)*/
 		smp_count = 2*cnt;
 	
+	struct msg msgs[cnt];
 	struct iovec iov[smp_count];
 	struct msghdr mhdr = {
 		.msg_iov = iov,
@@ -350,14 +355,13 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 	};
 	
 	/* Construct iovecs */
-	if(s->app_hdr == APP_HDR_NONE || s->app_hdr == APP_HDR_GTSKT) {
+	if(s->app_hdr == SOCKET_HDR_GTSKT) {
 		for (int i = 0; i < cnt; i++) {
 			iov[i].iov_base = SAMPLE_DATA_OFFSET(smps[i]);
-			iov[i].iov_len  = SAMPLE_DATA_LEN(values_per_sample);
+			iov[i].iov_len  = SAMPLE_DATA_LEN(1);
 		}
 	}
-	else { 		//if(s->app_hdr == APP_HDR_DEFAULT
-		struct msg msgs[cnt];
+	else { 		/** if(s->app_hdr == SOCKET_HDR_DEFAULT */
 		for (int i = 0; i < cnt; i++) {
 			
 				msgs[i] = MSG_INIT(smps[i]->length, smps[i]->sequence);
@@ -390,12 +394,12 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	debug(DBG_SOCKET | 17, "Sent packet of %zd bytes with %u samples", bytes, cnt);
 
-	return cnt;
+	return cnt;	
 }
 
 int socket_parse(struct node *n, config_setting_t *cfg)
 {
-	const char *local, *remote, *layer, *app_hdr, *vectorize;
+	const char *local, *remote, *layer, *app_hdr;
 	int ret;
 
 	struct socket *s = n->_vd;
@@ -419,22 +423,18 @@ int socket_parse(struct node *n, config_setting_t *cfg)
 		cerror(cfg, "Missing local address for node %s", node_name(n));
 	
 	if (!config_setting_lookup_string(cfg, "app_hdr", &app_hdr))
-		cerror(cfg, "Missing application header config for node %s", node_name(n));
-
-	if(!strcmp(app_hdr, "gtskt"))
-			s->app_hdr = APP_HDR_GTSKT;
-	else if(!strcmp(app_hdr, "none"))
-			s->app_hdr = APP_HDR_NONE;
-	else if(!strcmp(app_hdr, "default"))
-			s->app_hdr = APP_HDR_DEFAULT;
-	else
-		cerror(cfg, "Invalid application header type '%s' for node %s", app_hdr, node_name(n));
-	
-	if (!config_setting_lookup_string(cfg, "vectorize", &vectorize)) {
-		info("Setting vectorize value to %d", vector_length);
-		vector_length = 0;
+		s->app_hdr = SOCKET_HDR_DEFAULT;
+	else {
+		if(!strcmp(app_hdr, "gtskt"))
+			s->app_hdr = SOCKET_HDR_GTSKT;
+		else if(!strcmp(app_hdr, "default"))
+			s->app_hdr = SOCKET_HDR_DEFAULT;
+		else
+			cerror(cfg, "Invalid application header type '%s' for node %s", app_hdr, node_name(n));
 	}
-	vector_length = strtol(vectorize, NULL, 0);
+	
+	/** if (!config_setting_lookup_int(cfg, "vectorize", &n->vectorize))
+		n->vectorize = 1; */
 	
 	ret = socket_parse_addr(local, (struct sockaddr *) &s->local, s->layer, AI_PASSIVE);
 	if (ret) {
@@ -596,7 +596,6 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 static struct node_type vt = {
 	.name		= "socket",
 	.description	= "BSD network sockets",
-	//.vectorize	= vector_length, 			////TODO intialize vectorize option in socket with constant value
 	.vectorize	= 0,
 	.size		= sizeof(struct socket),
 	.destroy	= socket_destroy,
