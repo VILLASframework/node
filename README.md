@@ -1,4 +1,4 @@
-# Simulator to Simulator Server
+# VILLASnode
 
 [![Travis-CI](https://magnum.travis-ci.com/RWTH-ACS/VILLASnode.svg?token=9zFzh6dGWonz6LyBspW3&branch=master)](https://magnum.travis-ci.com/RWTH-ACS/VILLASnode)
 
