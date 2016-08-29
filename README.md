@@ -14,6 +14,6 @@ The full documentation is available at [doc/html/index.html](doc/html/index.html
 - Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 - Marija Stevic <mstevic@eonerc.rwth-aachen.de>
 
-Institute for Automation of Complex Power Systems (ACS)  
-EON Energy Research Center (EONERC)  
-RWTH University Aachen, Germany  
+Institute for Automation of Complex Power Systems (ACS) 
+EON Energy Research Center (EONERC)
+RWTH University Aachen, Germany
