@@ -25,6 +25,22 @@ int sample_get_many(struct pool *p, struct sample *smps[], int cnt) {
 	return ret;
 }
 
+int sample_get(struct sample *s)
+{
+	return atomic_fetch_add(&s->refcnt, 1) + 1;
+}
+
+int sample_put(struct sample *s)
+{
+	int prev = atomic_fetch_sub(&s->refcnt, 1);
+	
+	/* Did we had the last refernce? */
+	if (prev == 1)
+		pool_put(s->pool, s);
+	
+	return prev - 1;
+}
+
 int sample_print(char *buf, size_t len, struct sample *s, int flags)
 {
 	size_t off = snprintf(buf, len, "%llu", (unsigned long long) s->ts.origin.tv_sec);

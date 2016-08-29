@@ -41,6 +41,9 @@ struct sample {
 	int sequence;		/**< The sequence number of this sample. */
 	int length;		/**< The number of values in sample::values which are valid. */
 	int capacity;		/**< The number of values in sample::values for which memory is reserved. */
+	
+	atomic_int_t refcnt;	/**< Reference counter. */
+	struct pool *pool;	/**< This sample is belong to this memory pool. */
 
 	/** All timestamps are seconds / nano seconds after 1.1.1970 UTC */
 	struct {
@@ -58,6 +61,12 @@ struct sample {
 
 /** Request \p cnt samples from memory pool \p p and initialize them. */
 int sample_get_many(struct pool *p, struct sample *smps[], int cnt);
+
+/** Increase reference count of sample */
+int sample_get(struct sample *s);
+
+/** Decrease reference count and release memory if last reference was held. */
+int sample_put(struct sample *s);
 
 /** Print a sample in human readable form to a file stream.
  *
