@@ -46,6 +46,16 @@ This command can be combined with the `pipe` subcommand.
       CONFIG  path to a configuration file
       TEST    the name of the test to execute: 'rtt'
       NODE    name of the node which shoud be used
+ 
+### `villas fpga`
+
+    Usage: ./fpga CONFIGFILE CMD [OPTIONS]
+       Commands:
+          tests      Test functionality of VILLASfpga card
+          benchmarks Do benchmarks
+    
+       Options:
+          -d    Set log level
 
 ## Examples
 
