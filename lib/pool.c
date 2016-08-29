@@ -6,52 +6,43 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  */
 
-#include <sys/mman.h>
-
 #include "utils.h"
 
 #include "pool.h"
+#include "memory.h"
 #include "kernel/kernel.h"
 
-int pool_init_mmap(struct pool *p, size_t blocksz, size_t cnt)
+int pool_init(struct pool *p, size_t blocksz, size_t cnt, const struct memtype *m)
 {
 	void *addr;
-	int flags;
-	size_t len, alignedsz, align;
+	int flags, prot;
+	size_t len, alignedsz, alignment;
 	
-	align = kernel_get_cacheline_size();
-	alignedsz = blocksz * CEIL(blocksz, align);
+	/* Make sure that we use a block size that is aligned to the size of a cache line */
+	alignment = kernel_get_cacheline_size();
+	alignedsz = blocksz * CEIL(blocksz, );
 	len = cnt * alignedsz;
-	
-	debug(DBG_POOL | 4, "Allocating %#zx bytes for memory pool", len);
-	
-	flags = MAP_LOCKED | MAP_PRIVATE | MAP_ANONYMOUS; // MAP_HUGETLB
-	/** @todo Use hugepages */
 
-	/* addr is allways aligned to pagesize boundary */
-	addr = mmap(NULL, len, PROT_READ | PROT_WRITE, flags, -1, 0);
-	if (addr == MAP_FAILED)
-		serror("Failed to allocate memory for sample pool");
- 
-	return pool_init(p, blocksz, align, addr, len);
-}
-
-int pool_init(struct pool *p, size_t blocksz, size_t align, void *buf, size_t len)
-{
-	size_t alignedsz, cnt;
-	
-	assert(IS_ALIGNED(buf, align)); /* buf has to be aligned */
+	addr = memory_alloc_align(m, len, aligment);
+	if (!addr)
+		serror("Failed to allocate memory for memory pool");
+	else
+		debug(DBG_POOL | 4, "Allocated %#zx bytes for memory pool", len);
 	
 	p->blocksz = blocksz;
-	p->alignment = align;
+	p->alignment = alignment;
 	
-	alignedsz = blocksz * CEIL(blocksz, align);
-	cnt = len / alignedsz;
-	
-	lstack_init(&p->stack, cnt);
+	mpmc_queue_init(&p->queue, cnt, m);
 	
 	for (int i = 0; i < cnt; i++)
 		lstack_push(&p->stack, buf + i * alignedsz);
 	
 	return 0;
+}
+
+int pool_destroy(struct pool *p)
+{
+	mpmc_queue_destroy(&p->queue);
+	
+	memory_dealloc(p->buffer, p->len);
 }
