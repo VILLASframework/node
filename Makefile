@@ -22,8 +22,6 @@ PREFIX ?= /usr/local
 # Default debug level
 V ?= 2
 
-GIT_REV  = $(shell git rev-parse --short HEAD)
-
 # Compiler and linker flags
 LDLIBS   = -pthread -lm -lvillas
 
@@ -35,8 +33,14 @@ LIB_LDLIBS  = -ldl -lrt
 
 CFLAGS  += -std=c11 -Iinclude -Iinclude/villas -I. -MMD -mcx16
 CFLAGS  += -Wall -fdiagnostics-color=auto
-CFLAGS  += -D_GIT_REV='"$(GIT_REV)"' -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
+CFLAGS  += -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
 LDFLAGS += -pthread -L. -Wl,-rpath,'$$ORIGIN'
+
+ifdef CI
+	CFLAGS += -D_GIT_REV='"${CI_BUILD_REF:0:7}~ci"'
+else ifdef GIT
+	CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
+endif
 
 # pkg-config dependencies
 PKGS = libconfig

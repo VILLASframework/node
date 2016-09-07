@@ -1,0 +1,86 @@
+image: acs-public:5000/villas:latest
+
+variables:
+  # This registry is a linked docker container running on the same host
+  # and configured in gitlab-ci-runner config.toml as a linked service
+  DOCKER_REGISTRY: acs-public:5000
+  DOCKER_IMAGE: villas:latest
+
+stages:
+  - prepare
+  - dependencies
+  - build
+  - deploy
+
+# Build docker image which is used to build & test VILLASnode
+docker-image:
+  stage: prepare
+  image: stackbrew/docker:1.8.2
+  before_script:
+    - docker info
+  script:
+    - docker build -t $DOCKER_REGISTRY/$DOCKER_IMAGE .
+    - docker push $DOCKER_REGISTRY/$DOCKER_IMAGE
+
+libwebsockets:
+  stage: dependencies
+  script:
+    - make -C thirdparty libwebsockets-2.0.2
+  artifacts:
+    paths:
+    - thirdparty/libwebsockets-2.0.2/
+
+libxil:
+  stage: dependencies
+  script:
+    - make -C thirdparty/xilinx
+  artifacts:
+    paths:
+    - thirdparty/xilinx/libxil.so
+
+build:
+  stage: build
+  variables:
+    PKG_CONFIG_PATH: /usr/local/lib/pkgconfig/
+  before_script:
+    - make -C thirdparty/libwebsockets-2.0.2/build install
+    - make -C thirdparty/xilinx install
+  script:
+    - make
+  artifacts:
+    name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
+    paths:
+      - libvillas.so
+      - fpga
+      - node
+      - pipe
+      - signal
+      - test    
+     
+docs:
+  stage: build
+  artifacts:
+    name: "${CI_PROJECT_NAME}-doc-${CI_BUILD_REF}"
+    paths:
+      - doc/html/
+  script:
+    - make doc
+
+.ssh: &ssh
+  before_script:
+    - mkdir -p $HOME/.ssh
+    - echo -e "$SSH_SECRET_KEY" > $HOME/.ssh/id_rsa
+    - chmod 600 $HOME/.ssh/id_rsa
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > $HOME/.ssh/config
+    - ssh-keyscan -H $DEPLOY_DOC_HOST >> $HOME/.ssh/known_hosts
+
+deploy-docs:
+  stage: deploy
+  <<: *ssh
+  script:
+    - scp -vpr doc/html/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
+  only:
+    - develop
+  dependencies:
+   - docs
+
