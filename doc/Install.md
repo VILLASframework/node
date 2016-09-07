@@ -17,11 +17,11 @@ Install libraries and developement headers for:
  
 Use the following command to install the dependencies under Debian-based distributions:
 
-    $ sudo apt-get install build-essential pkg-config libconfig-dev libnl-3-dev libnl-route-3-dev libpci-deb libjansson-dev libcurl4-openssl-dev uuid-dev
+    $ sudo apt-get install build-essential pkg-config wget tar cmake doxygen dia graphviz libconfig-dev libnl-3-dev libnl-route-3-dev libpci-deb libjansson-dev libcurl4-openssl-dev uuid-dev
 
 or the following line for Fedora / CentOS / Redhat systems:
 
-    $ sudo yum install pkgconfig gcc make libconfig-devel libnl3-devel pciutils-devel libcurl-devel jansson-devel libuuid-devel
+    $ sudo yum install gcc pkgconfig make wget tar cmake openssl-devel doxygen dia graphviz libconfig-devel libnl3-devel pciutils-devel libcurl-devel jansson-devel libuuid-devel
 
 ### Compilation
 
