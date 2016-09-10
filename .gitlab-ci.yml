@@ -74,11 +74,11 @@ docs:
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > $HOME/.ssh/config
     - ssh-keyscan -H $DEPLOY_HOST >> $HOME/.ssh/known_hosts
 
-deploy-docs:
+deliver:
   stage: deploy
   <<: *ssh
   script:
-    - scp -pr web/landing.html $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/index.html
+    - [ "$CI_BUILD_REF_NAME" == "develop" ] && scp -pr web/landing.html $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/index.html
     - scp -pr doc/html/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
   only:
     - develop
