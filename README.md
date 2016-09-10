@@ -9,7 +9,7 @@ The documentation for this software is available at [doc/Mainpage](doc/Mainpage.
 
 The full documentation is available at [doc/html/index.html](doc/html/index.html) after running `doxygen` in this directory.
 
-You can access the prebuild documentation at: http://134.130.169.32/villasnode/ (available only from *Office network* and *ACS Simulation Network*).
+You can access the prebuild documentation at: http://134.130.169.32/villas/node/ (available only from ACS *Office network* and *Simulation Network*).
 
 ## Contact
 
