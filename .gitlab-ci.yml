@@ -55,8 +55,8 @@ build:
       - node
       - pipe
       - signal
-      - test    
-     
+      - test
+
 docs:
   stage: build
   artifacts:
@@ -78,7 +78,8 @@ deploy-docs:
   stage: deploy
   <<: *ssh
   script:
-    - scp -vpr doc/html/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
+    - scp -pr web/landing.html $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/index.html
+    - scp -pr doc/html/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
   only:
     - develop
   dependencies:
