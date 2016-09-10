@@ -1,3 +1,0 @@
-[submodule "contrib/websocket/flot"]
-	path = contrib/websocket/flot
-	url = https://github.com/flot/flot.git
