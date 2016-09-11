@@ -329,29 +329,33 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct socket *s = n->_vd;
 	ssize_t bytes;
-
-	unsigned smp_count;
-
-	if (s->header == SOCKET_HEADER_GTNET_SKT)
-		smp_count = cnt;
-	else
-		smp_count = 2*cnt;
-
-	struct msg msgs[cnt];
-	struct iovec iov[smp_count];
-	struct msghdr mhdr = {
-		.msg_iov = iov,
-		.msg_iovlen = ARRAY_LEN(iov)
-	};
+	int sent = 0;
 
 	/* Construct iovecs */
 	if (s->header == SOCKET_HEADER_GTNET_SKT) {
+		if (cnt < 1)
+			return 0;
+
 		for (int i = 0; i < cnt; i++) {
-			iov[i].iov_base = SAMPLE_DATA_OFFSET(smps[i]);
-			iov[i].iov_len  = SAMPLE_DATA_LEN(1);
+			bytes = sendto(s->sd, &smps[i]->values, SAMPLE_DATA_LEN(smps[i]->length), 0, (struct sockaddr *) &s->remote, sizeof(s->remote));
+			if (bytes < 0)
+				serror("Failed send to node %s", node_name(n));
+
+			sent++;
+
+			debug(DBG_SOCKET | 17, "Sent packet of %zd bytes with 1 sample", bytes);
 		}
 	}
 	else {
+		struct msg msgs[cnt];
+		struct iovec iov[2*cnt];
+		struct msghdr mhdr = {
+			.msg_iov = iov,
+			.msg_iovlen = ARRAY_LEN(iov),
+			.msg_name = (struct sockaddr *) &s->remote,
+			.msg_namelen = sizeof(s->remote)
+		};
+
 		for (int i = 0; i < cnt; i++) {
 
 			msgs[i] = MSG_INIT(smps[i]->length, smps[i]->sequence);
@@ -359,32 +363,24 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 			msgs[i].ts.sec  = smps[i]->ts.origin.tv_sec;
 			msgs[i].ts.nsec = smps[i]->ts.origin.tv_nsec;
 
-				iov[i*2+0].iov_base = &msgs[i];
-				iov[i*2+0].iov_len  = MSG_LEN(0);
+			iov[i*2+0].iov_base = &msgs[i];
+			iov[i*2+0].iov_len  = MSG_LEN(0);
 
-				iov[i*2+1].iov_base = SAMPLE_DATA_OFFSET(smps[i]);
-				iov[i*2+1].iov_len  = SAMPLE_DATA_LEN(smps[i]->length);
+			iov[i*2+1].iov_base = SAMPLE_DATA_OFFSET(smps[i]);
+			iov[i*2+1].iov_len  = SAMPLE_DATA_LEN(smps[i]->length);
 		}
+
+		/* Send message */
+		bytes = sendmsg(s->sd, &mhdr, 0);
+		if (bytes < 0)
+			serror("Failed send to node %s", node_name(n));
+
+		sent = cnt; /** @todo Find better way to determine how many values we actually sent */
+
+		debug(DBG_SOCKET | 17, "Sent packet of %zd bytes with %u samples", bytes, cnt);
 	}
 
-	/* Specify destination address for connection-less procotols */
-	switch (s->layer) {
-		case SOCKET_LAYER_UDP:
-		case SOCKET_LAYER_IP:
-		case SOCKET_LAYER_ETH:
-			mhdr.msg_name = (struct sockaddr *) &s->remote;
-			mhdr.msg_namelen = sizeof(s->remote);
-			break;
-	}
-
-	/* Send message */
-	bytes = sendmsg(s->sd, &mhdr, 0);
-	if (bytes < 0)
-		serror("Failed send to node %s", node_name(n));
-
-	debug(DBG_SOCKET | 17, "Sent packet of %zd bytes with %u samples", bytes, cnt);
-
-	return cnt;
+	return sent;
 }
 
 int socket_parse(struct node *n, config_setting_t *cfg)
