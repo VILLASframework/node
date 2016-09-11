@@ -38,18 +38,18 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
 	pthread_cancel(recv_thread);
 	pthread_cancel(send_thread);
-	
+
 	pthread_join(recv_thread, NULL);
 	pthread_join(send_thread, NULL);
-		
+
 	node_stop(node);
 	node_deinit(node->_vt);
-	
+
 	pool_destroy(&recv_pool);
 	pool_destroy(&send_pool);
-	
+
 	list_destroy(&nodes, (dtor_cb_t) node_destroy, false);
-	
+
 	info(GRN("Goodbye!"));
 	exit(EXIT_SUCCESS);
 }
@@ -73,12 +73,12 @@ void * send_loop(void *ctx)
 {
 	int ret;
 	struct sample *smps[node->vectorize];
-	
+
 	/* Initialize memory */
 	ret = pool_init_mmap(&send_pool, SAMPLE_LEN(DEFAULT_VALUES), node->vectorize);
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
-	
+
 	ret = sample_get_many(&send_pool, smps, node->vectorize);
 	if (ret < 0)
 		error("Failed to get %u samples out of send pool (%d).", node->vectorize, ret);
@@ -95,7 +95,7 @@ void * send_loop(void *ctx)
 					if (feof(stdin))
 						return NULL;
 					else {
-						warn("Skipped invalid message message: reason=%d", reason);
+						warn("Skipped invalid message message from stdin: reason=%d", reason);
 						retry = 1;
 					}
 				}
@@ -112,16 +112,16 @@ void * recv_loop(void *ctx)
 {
 	int ret;
 	struct sample *smps[node->vectorize];
-	
+
 	/* Initialize memory */
 	ret = pool_init_mmap(&recv_pool, SAMPLE_LEN(DEFAULT_VALUES), node->vectorize);
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
-	
+
 	ret = sample_get_many(&recv_pool, smps, node->vectorize);
-	if (ret < 0)
+	if (ret  < 0)
 		error("Failed to get %u samples out of receive pool (%d).", node->vectorize, ret);
-	
+
 	/* Print header */
 	fprintf(stdout, "# %-20s\t\t%s\n", "sec.nsec+offset", "data[]");
 
@@ -134,20 +134,20 @@ void * recv_loop(void *ctx)
 			fflush(stdout);
 		}
 	}
-	
+
 	return NULL;
 }
 
 int main(int argc, char *argv[])
 {
 	bool send = true, recv = true, reverse = false;
-	
+
 	/* Parse command line arguments */
 	if (argc < 3)
 		usage(argv[0]);
-	
+
 	log_init();
-	
+
 	char c;
 	while ((c = getopt(argc-2, argv+2, "hxrsd:")) != -1) {
 		switch (c) {
@@ -168,7 +168,7 @@ int main(int argc, char *argv[])
 				usage(argv[0]);
 		}
 	}
-	
+
 	/* Setup signals */
 	struct sigaction sa_quit = {
 		.sa_flags = SA_SIGINFO,
@@ -178,26 +178,26 @@ int main(int argc, char *argv[])
 	sigemptyset(&sa_quit.sa_mask);
 	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT,  &sa_quit, NULL);
-		
+
 	/* Initialize log, configuration.. */
 	config_t config;
-	
+
 	/* Create lists */
 	list_init(&nodes);
 
 	config_init(&config);
 	config_parse(argv[1], &config, &settings, &nodes, NULL);
-	
+
 	/* Initialize node */
 	node = list_lookup(&nodes, argv[2]);
 	if (!node)
 		error("Node '%s' does not exist!", argv[2]);
-	
+
 	if (reverse)
 		node_reverse(node);
 
-	node_init(node->_vt, argc-optind, argv+optind, config_root_setting(&config));	
-	
+	node_init(node->_vt, argc-optind, argv+optind, config_root_setting(&config));
+
 	node_start(node);
 
 	/* Start threads */
@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
 		pthread_create(&recv_thread, NULL, recv_loop, NULL);
 	if (send)
 		pthread_create(&send_thread, NULL, send_loop, NULL);
-	
+
 	for (;;)
 		pause();
 
