@@ -23,14 +23,14 @@
 #include "node.h"
 
 enum socket_layer {
-	LAYER_ETH,
-	LAYER_IP,
-	LAYER_UDP
+	SOCKET_LAYER_ETH,
+	SOCKET_LAYER_IP,
+	SOCKET_LAYER_UDP
 };
 
-enum app_hdr_type {
-	SOCKET_HDR_GTSKT,			/** No header in the payload, same as HDR_NONE*/
-	SOCKET_HDR_DEFAULT			/** Default header in the payload, (see msg_format.h) */
+enum socket_header {
+	SOCKET_HEADER_DEFAULT,		/**> Default header in the payload, (see msg_format.h) */
+	SOCKET_HEADER_GTNET_SKT		/**> No header in the payload, same as HDR_NONE*/
 };
 
 union sockaddr_union {
@@ -49,12 +49,13 @@ struct socket {
 	/** The OSI / IP layer which should be used for this socket */
 	enum socket_layer layer;
 
+	/** Payload header type */
+	enum socket_header header;
+
 	/** Local address of the socket */
 	union sockaddr_union local;
 	/** Remote address of the socket */
 	union sockaddr_union remote;
-	/** Payload header type */
-	enum app_hdr_type app_hdr;
 
 	/** libnl3: Network emulator queuing discipline */
 	struct rtnl_qdisc *tc_qdisc;

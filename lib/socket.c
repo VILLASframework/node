@@ -40,7 +40,7 @@ int socket_init(int argc, char * argv[], config_setting_t *cfg)
 {
 	if (getuid() != 0)
 		error("The 'socket' node-type requires superuser privileges!");
-	
+
 	nl_init(); /* Fill link cache */
 	list_init(&interfaces);
 
@@ -62,14 +62,14 @@ int socket_init(int argc, char * argv[], config_setting_t *cfg)
 			if (rtnl_link_get_ifindex(i->nl_link) == rtnl_link_get_ifindex(link))
 				goto found;
 		}
-		
+
 		/* If not found, create a new interface */
 		i = if_create(link);
 		list_push(&interfaces, i);
 
 found:		list_push(&i->sockets, s);
 	}
-	
+
 	/** @todo Improve mapping of NIC IRQs per path */
 	int affinity;
 	if (!config_setting_lookup_int(cfg, "affinity", &affinity))
@@ -94,29 +94,28 @@ int socket_deinit()
 char * socket_print(struct node *n)
 {
 	struct socket *s = n->_vd;
-	char *layer = NULL, *app_hdr = NULL, *buf;
-	
+	char *layer = NULL, *hdr = NULL, *buf;
+
 	switch (s->layer) {
-		case LAYER_UDP: layer = "udp";	break;
-		case LAYER_IP:	layer = "ip";	break;
-		case LAYER_ETH:	layer = "eth";	break;
+		case SOCKET_LAYER_UDP: layer = "udp";	break;
+		case SOCKET_LAYER_IP:	layer = "ip";	break;
+		case SOCKET_LAYER_ETH:	layer = "eth";	break;
 	}
-	
-	switch (s->app_hdr) {
-		case SOCKET_HDR_GTSKT: app_hdr = "GTNET-Socket-v2"; break;
-		case SOCKET_HDR_DEFAULT: 
-		default:
-		app_hdr = "Default"; break;
+
+	switch (s->header) {
+		case SOCKET_HEADER_GTNET_SKT: hdr = "RTDS GTNETv2-SKT"; break;
+		case SOCKET_HEADER_DEFAULT:
+		default:                   hdr = "VILLASnode"; break;
 	}
 
 	char *local = socket_print_addr((struct sockaddr *) &s->local);
 	char *remote = socket_print_addr((struct sockaddr *) &s->remote);
 
-	buf = strf("layer=%s, header=%s, local=%s, remote=%s", layer, app_hdr, local, remote);
-	
+	buf = strf("layer=%s, header=%s, local=%s, remote=%s", layer, hdr, local, remote);
+
 	free(local);
 	free(remote);
-	
+
 	return buf;
 }
 
@@ -129,9 +128,9 @@ int socket_open(struct node *n)
 
 	/* Create socket */
 	switch (s->layer) {
-		case LAYER_UDP:	s->sd = socket(sin->sin_family, SOCK_DGRAM,	IPPROTO_UDP); break;
-		case LAYER_IP:	s->sd = socket(sin->sin_family, SOCK_RAW,	ntohs(sin->sin_port)); break;
-		case LAYER_ETH:	s->sd = socket(sll->sll_family, SOCK_DGRAM,	sll->sll_protocol); break;
+		case SOCKET_LAYER_UDP:	s->sd = socket(sin->sin_family, SOCK_DGRAM,	IPPROTO_UDP); break;
+		case SOCKET_LAYER_IP:	s->sd = socket(sin->sin_family, SOCK_RAW,	ntohs(sin->sin_port)); break;
+		case SOCKET_LAYER_ETH:	s->sd = socket(sll->sll_family, SOCK_DGRAM,	sll->sll_protocol); break;
 		default:
 			error("Invalid socket type!");
 	}
@@ -156,8 +155,8 @@ int socket_open(struct node *n)
 	/* Set socket priority, QoS or TOS IP options */
 	int prio;
 	switch (s->layer) {
-		case LAYER_UDP:
-		case LAYER_IP:
+		case SOCKET_LAYER_UDP:
+		case SOCKET_LAYER_IP:
 			prio = IPTOS_LOWDELAY;
 			if (setsockopt(s->sd, IPPROTO_IP, IP_TOS, &prio, sizeof(prio)))
 				serror("Failed to set type of service (QoS)");
@@ -181,11 +180,11 @@ int socket_reverse(struct node *n)
 {
 	struct socket *s = n->_vd;
 	union sockaddr_union tmp;
-	
+
 	tmp = s->local;
 	s->local = s->remote;
 	s->remote = tmp;
-	
+
 	return 0;
 }
 
@@ -202,43 +201,43 @@ int socket_close(struct node *n)
 int socket_destroy(struct node *n)
 {
 	struct socket *s = n->_vd;
-	
+
 	rtnl_qdisc_put(s->tc_qdisc);
 	rtnl_cls_put(s->tc_classifier);
-	
+
 	return 0;
 }
 
 int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct socket *s = n->_vd;
-	
+
 	int samples, ret, received, smp_count;
 	ssize_t bytes;
-	
-	if(s->app_hdr == SOCKET_HDR_GTSKT)
+
+	if (s->header == SOCKET_HEADER_GTNET_SKT)
 		smp_count = cnt;
-	else 				/** Default case if(s->app_hdr == HDR_DEFAULT)*/
+	else
 		smp_count = 2*cnt;
-	
+
 	struct msg msgs[cnt];
 	struct msg hdr;
-		
+
 	float sample_value;
 	struct iovec iov[smp_count];
 	struct msghdr mhdr = {
 		.msg_iov = iov
 	};
-	
-	if(s->app_hdr == SOCKET_HDR_GTSKT) {
+
+	if (s->header == SOCKET_HEADER_GTNET_SKT) {
 		bytes = recv(s->sd, &sample_value, SAMPLE_DATA_LEN(1), MSG_PEEK | MSG_TRUNC);
 		if (bytes < sizeof(float) || bytes % 4 != 0) {
 			warn("Packet size is invalid");
 			return -1;
 		}
-		
+
 		samples = bytes / sizeof(sample_value);
-		
+
 		if (samples > cnt) {
 			warn("Received more samples than supported. Dropping %u samples", samples - cnt);
 			samples = cnt;
@@ -255,7 +254,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 			error("Remote node %s closed the connection", node_name(n));
 		else if (bytes < 0)
 			serror("Failed recv from node %s", node_name(n));
-		
+
 		for (received = 0; received < samples; received++) {
 			struct sample *smp = smps[received];
 			smp->length = 1;
@@ -263,8 +262,8 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 			/** @todo see if s->ts.origin and smp->ts.received value is needed, essentially requiring a header */
 		}
 	}
-	
-	else {		//if(s->app_hdr == SOCKET_HDR_DEFAULT)
+
+	else {
 		/* Peak into message header of the first sample and to get total packet size. */
 		bytes = recv(s->sd, &hdr, sizeof(struct msg), MSG_PEEK | MSG_TRUNC);
 		if (bytes < sizeof(struct msg) || bytes % 4 != 0) {
@@ -279,15 +278,15 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 			recv(s->sd, &hdr, sizeof(struct msg), 0);
 			return -1;
 		}
-		
+
 		/* Convert message to host endianess */
 		if (hdr.endian != MSG_ENDIAN_HOST)
 			msg_swap(&hdr);
-		
+
 		samples = bytes / MSG_LEN(hdr.values);
-		
+
 		if (samples > cnt) {
-			warn("Received more samples than supported. Dropping %u samples", samples - cnt);
+			warn("Node %s received more samples than supported. Dropping %u samples", node_name(n), samples - cnt);
 			samples = cnt;
 		}
 
@@ -295,10 +294,10 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		for (int i = 0; i < samples; i++) {
 			iov[2*i+0].iov_base = &msgs[i];
 			iov[2*i+0].iov_len = MSG_LEN(0);
-			
+
 			iov[2*i+1].iov_base = SAMPLE_DATA_OFFSET(smps[i]);
 			iov[2*i+1].iov_len  = SAMPLE_DATA_LEN(hdr.values);
-			
+
 			mhdr.msg_iovlen += 2;
 		}
 
@@ -312,11 +311,11 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		for (received = 0; received < samples; received++) {
 			struct msg *m = &msgs[received];
 			struct sample *smp = smps[received];
-			
+
 			ret = msg_verify(m);
 			if (ret)
 				break;
-			
+
 			if (m->values != hdr.values)
 				break;
 
@@ -329,7 +328,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 			smp->ts.origin = MSG_TS(m);
 		}
 	}
-	
+
 	debug(DBG_SOCKET | 17, "Received message of %zd bytes: %u samples", bytes, received);
 
 	return received;
@@ -339,36 +338,36 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct socket *s = n->_vd;
 	ssize_t bytes;
-	
+
 	unsigned smp_count;
-	
-	if(s->app_hdr == SOCKET_HDR_GTSKT)
+
+	if (s->header == SOCKET_HEADER_GTNET_SKT)
 		smp_count = cnt;
-	else 				/** Default case if(s->app_hdr == SOCKET_HDR_DEFAULT)*/
+	else
 		smp_count = 2*cnt;
-	
+
 	struct msg msgs[cnt];
 	struct iovec iov[smp_count];
 	struct msghdr mhdr = {
 		.msg_iov = iov,
 		.msg_iovlen = ARRAY_LEN(iov)
 	};
-	
+
 	/* Construct iovecs */
-	if(s->app_hdr == SOCKET_HDR_GTSKT) {
+	if (s->header == SOCKET_HEADER_GTNET_SKT) {
 		for (int i = 0; i < cnt; i++) {
 			iov[i].iov_base = SAMPLE_DATA_OFFSET(smps[i]);
 			iov[i].iov_len  = SAMPLE_DATA_LEN(1);
 		}
 	}
-	else { 		/** if(s->app_hdr == SOCKET_HDR_DEFAULT */
+	else {
 		for (int i = 0; i < cnt; i++) {
-			
-				msgs[i] = MSG_INIT(smps[i]->length, smps[i]->sequence);
-				
-				msgs[i].ts.sec  = smps[i]->ts.origin.tv_sec;
-				msgs[i].ts.nsec = smps[i]->ts.origin.tv_nsec;
-				
+
+			msgs[i] = MSG_INIT(smps[i]->length, smps[i]->sequence);
+
+			msgs[i].ts.sec  = smps[i]->ts.origin.tv_sec;
+			msgs[i].ts.nsec = smps[i]->ts.origin.tv_nsec;
+
 				iov[i*2+0].iov_base = &msgs[i];
 				iov[i*2+0].iov_len  = MSG_LEN(0);
 
@@ -376,12 +375,12 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 				iov[i*2+1].iov_len  = SAMPLE_DATA_LEN(smps[i]->length);
 		}
 	}
-	
+
 	/* Specify destination address for connection-less procotols */
 	switch (s->layer) {
-		case LAYER_UDP:
-		case LAYER_IP:
-		case LAYER_ETH:
+		case SOCKET_LAYER_UDP:
+		case SOCKET_LAYER_IP:
+		case SOCKET_LAYER_ETH:
 			mhdr.msg_name = (struct sockaddr *) &s->remote;
 			mhdr.msg_namelen = sizeof(s->remote);
 			break;
@@ -394,48 +393,48 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	debug(DBG_SOCKET | 17, "Sent packet of %zd bytes with %u samples", bytes, cnt);
 
-	return cnt;	
+	return cnt;
 }
 
 int socket_parse(struct node *n, config_setting_t *cfg)
 {
-	const char *local, *remote, *layer, *app_hdr;
+	const char *local, *remote, *layer, *hdr;
 	int ret;
 
 	struct socket *s = n->_vd;
 
+	/* IP layer */
 	if (!config_setting_lookup_string(cfg, "layer", &layer))
-		cerror(cfg, "Missing layer for node %s", node_name(n));
+		s->layer = SOCKET_LAYER_UDP;
+	else {
+		if (!strcmp(layer, "eth"))
+			s->layer = SOCKET_LAYER_ETH;
+		else if (!strcmp(layer, "ip"))
+			s->layer = SOCKET_LAYER_IP;
+		else if (!strcmp(layer, "udp"))
+			s->layer = SOCKET_LAYER_UDP;
+		else
+			cerror(cfg, "Invalid layer '%s' for node %s", layer, node_name(n));
+	}
 
-	if (!strcmp(layer, "eth"))
-		s->layer = LAYER_ETH;
-	else if (!strcmp(layer, "ip"))
-		s->layer = LAYER_IP;
-	else if (!strcmp(layer, "udp"))
-		s->layer = LAYER_UDP;
-	else
-		cerror(cfg, "Invalid layer '%s' for node %s", layer, node_name(n));
+	/* Application header */
+	if (!config_setting_lookup_string(cfg, "header", &hdr))
+		s->header = SOCKET_HEADER_DEFAULT;
+	else {
+		if (!strcmp(hdr, "gtnet-skt"))
+			s->header = SOCKET_HEADER_GTNET_SKT;
+		else if (!strcmp(hdr, "default"))
+			s->header = SOCKET_HEADER_DEFAULT;
+		else
+			cerror(cfg, "Invalid application header type '%s' for node %s", hdr, node_name(n));
+	}
 
 	if (!config_setting_lookup_string(cfg, "remote", &remote))
 		cerror(cfg, "Missing remote address for node %s", node_name(n));
 
 	if (!config_setting_lookup_string(cfg, "local", &local))
 		cerror(cfg, "Missing local address for node %s", node_name(n));
-	
-	if (!config_setting_lookup_string(cfg, "app_hdr", &app_hdr))
-		s->app_hdr = SOCKET_HDR_DEFAULT;
-	else {
-		if(!strcmp(app_hdr, "gtskt"))
-			s->app_hdr = SOCKET_HDR_GTSKT;
-		else if(!strcmp(app_hdr, "default"))
-			s->app_hdr = SOCKET_HDR_DEFAULT;
-		else
-			cerror(cfg, "Invalid application header type '%s' for node %s", app_hdr, node_name(n));
-	}
-	
-	/** if (!config_setting_lookup_int(cfg, "vectorize", &n->vectorize))
-		n->vectorize = 1; */
-	
+
 	ret = socket_parse_addr(local, (struct sockaddr *) &s->local, s->layer, AI_PASSIVE);
 	if (ret) {
 		cerror(cfg, "Failed to resolve local address '%s' of node %s: %s",
@@ -462,7 +461,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 {
 	union sockaddr_union *sa = (union sockaddr_union *) saddr;
 	char *buf = alloc(64);
-	
+
 	/* Address */
 	switch (sa->sa.sa_family) {
 		case AF_INET6:
@@ -472,7 +471,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 		case AF_INET:
 			inet_ntop(AF_INET, &sa->sin.sin_addr, buf, 64);
 			break;
-			
+
 		case AF_PACKET:
 			strcatf(&buf, "%02x", sa->sll.sll_addr[0]);
 			for (int i = 1; i < sa->sll.sll_halen; i++)
@@ -482,7 +481,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 		default:
 			error("Unknown address family: '%u'", sa->sa.sa_family);
 	}
-	
+
 	/* Port  / Interface */
 	switch (sa->sa.sa_family) {
 		case AF_INET6:
@@ -495,7 +494,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 			struct rtnl_link *link = rtnl_link_get(cache, sa->sll.sll_ifindex);
 			if (!link)
 				error("Failed to get interface for index: %u", sa->sll.sll_ifindex);
-			
+
 			strcatf(&buf, "%%%s", rtnl_link_get_name(link));
 			strcatf(&buf, ":%hu", ntohs(sa->sll.sll_protocol));
 			break;
@@ -513,7 +512,7 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 	char *copy = strdup(addr);
 	int ret;
 
-	if (layer == LAYER_ETH) { /* Format: "ab:cd:ef:12:34:56%ifname:protocol" */
+	if (layer == SOCKET_LAYER_ETH) { /* Format: "ab:cd:ef:12:34:56%ifname:protocol" */
 		/* Split string */
 		char *node = strtok(copy, "%");
 		char *ifname = strtok(NULL, ":");
@@ -525,7 +524,7 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 			error("Failed to parse MAC address: %s", node);
 
 		memcpy(&sa->sll.sll_addr, &mac->ether_addr_octet, 6);
-		
+
 		/* Get interface index from name */
 		struct nl_cache *cache = nl_cache_mngt_require("route/link");
 		struct rtnl_link *link = rtnl_link_get_by_name(cache, ifname);
@@ -556,13 +555,13 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 			service = NULL;
 
 		switch (layer) {
-			case LAYER_IP:
+			case SOCKET_LAYER_IP:
 				hint.ai_socktype = SOCK_RAW;
 				hint.ai_protocol = (service) ? strtol(service, NULL, 0) : IPPROTO_VILLAS;
 				hint.ai_flags |= AI_NUMERICSERV;
 				break;
 
-			case LAYER_UDP:
+			case SOCKET_LAYER_UDP:
 				hint.ai_socktype = SOCK_DGRAM;
 				hint.ai_protocol = IPPROTO_UDP;
 				break;
@@ -573,17 +572,15 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 
 		/* Lookup address */
 		struct addrinfo *result;
-		ret = getaddrinfo(node, (layer == LAYER_IP) ? NULL : service, &hint, &result);
+		ret = getaddrinfo(node, (layer == SOCKET_LAYER_IP) ? NULL : service, &hint, &result);
 		if (!ret) {
-
-			if (layer == LAYER_IP) {
+			if (layer == SOCKET_LAYER_IP) {
 				/* We mis-use the sin_port field to store the IP protocol number on RAW sockets */
 				struct sockaddr_in *sin = (struct sockaddr_in *) result->ai_addr;
 				sin->sin_port = htons(result->ai_protocol);
 			}
 
 			memcpy(sa, result->ai_addr, result->ai_addrlen);
-
 			freeaddrinfo(result);
 		}
 	}
