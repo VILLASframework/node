@@ -23,9 +23,14 @@
 #include "node.h"
 
 enum socket_layer {
-	LAYER_ETH,
-	LAYER_IP,
-	LAYER_UDP
+	SOCKET_LAYER_ETH,
+	SOCKET_LAYER_IP,
+	SOCKET_LAYER_UDP
+};
+
+enum socket_header {
+	SOCKET_HEADER_DEFAULT,		/**> Default header in the payload, (see msg_format.h) */
+	SOCKET_HEADER_GTNET_SKT		/**> No header in the payload, same as HDR_NONE*/
 };
 
 union sockaddr_union {
@@ -43,6 +48,9 @@ struct socket {
 
 	/** The OSI / IP layer which should be used for this socket */
 	enum socket_layer layer;
+
+	/** Payload header type */
+	enum socket_header header;
 
 	/** Local address of the socket */
 	union sockaddr_union local;

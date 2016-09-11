@@ -303,7 +303,7 @@ int cfg_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *s
 		config_setting_t *cfg_vectorize = config_setting_lookup(cfg, "vectorize");
 		
 		if (n->vectorize <= 0)
-			cerror(cfg_vectorize, "Invalid value for `vectorize`. Must be natural number!");
+			cerror(cfg_vectorize, "Invalid value for `vectorize` %d. Must be natural number!", n->vectorize);
 		if (vt->vectorize && vt->vectorize < n->vectorize)
 			cerror(cfg_vectorize, "Invalid value for `vectorize`. Node type %s requires a number smaller than %d!",
 				node_name_type(n), vt->vectorize);

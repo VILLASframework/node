@@ -28,7 +28,7 @@ static void path_write(struct path *p, bool resend)
 
 		/* The first message in the chunk which we want to send */
 		if (resend)
-			base = p->in->received - cnt; /* we simply resent the last vector of samples */
+			base = p->in->received - cnt; /* we simply resend the last vector of samples */
 		else {
 			base = n->sent;
 		}

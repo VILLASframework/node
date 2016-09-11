@@ -100,7 +100,7 @@ static void * send_loop(void *ctx)
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 	
-	ret = pool_get_many(&sendd.pool, (void **) smps, node->vectorize);
+	ret = sample_get_many(&sendd.pool, smps, node->vectorize);
 	if (ret < 0)
 		error("Failed to get %u samples out of send pool (%d).", node->vectorize, ret);
 
@@ -144,10 +144,10 @@ static void * recv_loop(void *ctx)
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 	
-	ret = pool_get_many(&recvv.pool, (void **) smps, node->vectorize);
-	if (ret < 0)
+	ret = sample_get_many(&recvv.pool, smps, node->vectorize);
+	if (ret  < 0)
 		error("Failed to get %u samples out of receive pool (%d).", node->vectorize, ret);
-	
+
 	/* Print header */
 	fprintf(stdout, "# %-20s\t\t%s\n", "sec.nsec+offset", "data[]");
 	fflush(stdout);
@@ -162,7 +162,7 @@ static void * recv_loop(void *ctx)
 		}
 		pthread_testcancel();
 	}
-	
+
 	return NULL;
 }
 
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
 				usage(argv[0]);
 		}
 	}
-	
+
 	/* Setup signals */
 	struct sigaction sa_quit = {
 		.sa_flags = SA_SIGINFO,
@@ -211,7 +211,7 @@ int main(int argc, char *argv[])
 	sigemptyset(&sa_quit.sa_mask);
 	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT,  &sa_quit, NULL);
-		
+
 	/* Initialize log, configuration.. */
 	list_init(&nodes);
 
@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
 	node = list_lookup(&nodes, argv[2]);
 	if (!node)
 		error("Node '%s' does not exist!", argv[2]);
-	
+
 	if (reverse)
 		node_reverse(node);
 
