@@ -94,24 +94,23 @@ int socket_deinit()
 char * socket_print(struct node *n)
 {
 	struct socket *s = n->_vd;
-	char *layer = NULL, *hdr = NULL, *buf;
+	char *layer = NULL, *header = NULL, *buf;
 
 	switch (s->layer) {
-		case SOCKET_LAYER_UDP: layer = "udp";	break;
+		case SOCKET_LAYER_UDP:	layer = "udp";	break;
 		case SOCKET_LAYER_IP:	layer = "ip";	break;
 		case SOCKET_LAYER_ETH:	layer = "eth";	break;
 	}
 
 	switch (s->header) {
-		case SOCKET_HEADER_GTNET_SKT: hdr = "RTDS GTNETv2-SKT"; break;
-		case SOCKET_HEADER_DEFAULT:
-		default:                   hdr = "VILLASnode"; break;
+		case SOCKET_HEADER_GTNET_SKT:	header = "gtnet-skt";	break;
+		case SOCKET_HEADER_DEFAULT:	header = "villas";	break;
 	}
 
 	char *local = socket_print_addr((struct sockaddr *) &s->local);
 	char *remote = socket_print_addr((struct sockaddr *) &s->remote);
 
-	buf = strf("layer=%s, header=%s, local=%s, remote=%s", layer, hdr, local, remote);
+	buf = strf("layer=%s, header=%s, local=%s, remote=%s", layer, header, local, remote);
 
 	free(local);
 	free(remote);
@@ -212,7 +211,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct socket *s = n->_vd;
 
-	int samples, ret, received;
+	int samples, ret, received, length;
 	ssize_t bytes;
 
 	if (s->header == SOCKET_HEADER_GTNET_SKT) {
@@ -224,28 +223,32 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		struct sample *smp = smps[0];
 
 		/* Receive next sample */
-		bytes = recv(s->sd, &smp->values[0], SAMPLE_DATA_LEN(smp->length), MSG_PEEK | MSG_TRUNC);
+		bytes = recv(s->sd, &smp->values[0], SAMPLE_DATA_LEN(smp->capacity), MSG_TRUNC);
 		if (bytes == 0)
 			error("Remote node %s closed the connection", node_name(n)); /** @todo Should we really hard fail here? */
 		else if (bytes < 0)
 			serror("Failed recv from node %s", node_name(n));
 		else if (bytes % 4 != 0) {
-			warn("Packet size is invalid. Must be multiple of 4 bytes.");
+			warn("Packet size is invalid: %zd Must be multiple of 4 bytes.", bytes);
 			recv(s->sd, NULL, 0, 0); /* empty receive buffer */
 			return -1;
 		}
 
-		received = bytes / sizeof(smp->values[0]);
-		if (received > smp->length) {
-			warn("Node %s received more samples than supported. Dropping %u samples", node_name(n), received - smp->length);
-			received = smp->length;
+		debug(3, "Received %zd bytes", bytes);
+
+		length = bytes / SAMPLE_DATA_LEN(1);
+		if (length > smp->capacity) {
+			warn("Node %s received more values than supported. Dropping %u values", node_name(n), length - smp->capacity);
+			length = smp->capacity;
 		}
 
 		/** @todo Should we generate sequence no here manually?
 		 *        Or maybe optinally use the first data value as a sequence?
 		 *        However this would require the RTDS model to be changed. */
 		smp->sequence = 0;
-		smp->length = received;
+		smp->length = length;
+
+		received = 1; /* GTNET-SKT sends every sample in a single packet */
 	}
 	else {
 		struct msg msgs[cnt];
@@ -258,8 +261,8 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		/* Peak into message header of the first sample and to get total packet size. */
 		bytes = recv(s->sd, &hdr, sizeof(struct msg), MSG_PEEK | MSG_TRUNC);
 		if (bytes < sizeof(struct msg) || bytes % 4 != 0) {
-			warn("Packet size is invalid. Must be multiple of 4 bytes.");
-			recv(s->sd, &hdr, sizeof(struct msg), 0); /* empty receive buffer */
+			warn("Packet size is invalid: %zd Must be multiple of 4 bytes.", bytes);
+			recv(s->sd, NULL, 0, 0); /* empty receive buffer */
 			return -1;
 		}
 
@@ -275,7 +278,6 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 			msg_swap(&hdr);
 
 		samples = bytes / MSG_LEN(hdr.values);
-
 		if (samples > cnt) {
 			warn("Node %s received more samples than supported. Dropping %u samples", node_name(n), samples - cnt);
 			samples = cnt;
@@ -290,6 +292,9 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 			iov[2*i+1].iov_len  = SAMPLE_DATA_LEN(hdr.values);
 
 			mhdr.msg_iovlen += 2;
+
+			if (hdr.values > smps[i]->capacity)
+				error("Node %s received more values than supported. Dropping %d values.", node_name(n), hdr.values - smps[i]->capacity);
 		}
 
 		/* Receive message from socket */

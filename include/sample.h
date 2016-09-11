@@ -4,7 +4,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
  *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  */
 
 #ifndef _SAMPLE_H_
@@ -15,6 +15,9 @@
 #include <stdint.h>
 #include <time.h>
 #include <sys/types.h>
+
+/* Forward declarations */
+struct pool;
 
 /** The length of a sample datastructure with \p values values in bytes. */
 #define SAMPLE_LEN(values)	(sizeof(struct sample) + SAMPLE_DATA_LEN(values))
@@ -35,8 +38,9 @@ enum sample_flags {
 };
 
 struct sample {
-	int length;		/**< The number of values in sample::values. */
 	int sequence;		/**< The sequence number of this sample. */
+	int length;		/**< The number of values in sample::values which are valid. */
+	int capacity;		/**< The number of values in sample::values for which memory is reserved. */
 
 	/** All timestamps are seconds / nano seconds after 1.1.1970 UTC */
 	struct {
@@ -44,13 +48,16 @@ struct sample {
 		struct timespec received;	/**< The point in time when this data was received. */
 		struct timespec sent;		/**< The point in time this data was send for the last time. */
 	} ts;
-	
+
 	/** The values. */
 	union {
 		float    f;	/**< Floating point values (note msg::endian) */
 		uint32_t i;	/**< Integer values (note msg::endian) */
 	} values[];
 };
+
+/** Request \p cnt samples from memory pool \p p and initialize them. */
+int sample_get_many(struct pool *p, struct sample *smps[], int cnt);
 
 /** Print a sample in human readable form to a file stream.
  *

@@ -8,8 +8,22 @@
 
 #include <ctype.h>
 
+#include "pool.h"
 #include "sample.h"
 #include "timing.h"
+
+int sample_get_many(struct pool *p, struct sample *smps[], int cnt) {
+	int ret;
+
+	ret = pool_get_many(p, (void **) smps, cnt);
+	if (ret < 0)
+		return ret;
+
+	for (int i = 0; i < ret; i++)
+		smps[i]->capacity = (p->blocksz - sizeof(**smps)) / sizeof(smps[0]->values[0]);
+
+	return ret;
+}
 
 int sample_print(char *buf, size_t len, struct sample *s, int flags)
 {
@@ -91,11 +105,11 @@ int sample_scan(const char *line, struct sample *s, int *fl)
 			end++;
 	}
 
-	for (s->length = 0, ptr  = end; ;
-	     s->length++,   ptr = end) {
+	for (ptr  = end, s->length = 0;
+	                 s->length < s->capacity;
+	     ptr  = end, s->length++) {
 
-		/** @todo We only support floating point values at the moment */
-		s->values[s->length].f = strtod(ptr, &end);
+		s->values[s->length].f = strtod(ptr, &end); /** @todo We only support floating point values at the moment */
 
 		if (end == ptr) /* there are no valid FP values anymore */
 			break;
