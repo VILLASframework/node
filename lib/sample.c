@@ -33,7 +33,7 @@ int sample_print(char *buf, size_t len, struct sample *s, int flags)
 		off += snprintf(buf + off, len - off, ".%09llu", (unsigned long long) s->ts.origin.tv_nsec);
 	
 	if (flags & SAMPLE_OFFSET)
-		off += snprintf(buf + off, len - off, "%+g", time_delta(&s->ts.received, &s->ts.origin));
+		off += snprintf(buf + off, len - off, "%+e", time_delta(&s->ts.origin, &s->ts.received));
 	
 	if (flags & SAMPLE_SEQUENCE)
 		off += snprintf(buf + off, len - off, "(%u)", s->sequence);
