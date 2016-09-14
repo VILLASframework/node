@@ -154,8 +154,12 @@ static void * recv_loop(void *ctx)
 
 	for (;;) {
 		int recv = node_read(node, smps, node->vectorize);
+		struct timespec now = time_now();
 		for (int i = 0; i < recv; i++) {
 			struct sample *s = smps[i];
+
+			if (s->ts.received.tv_sec == -1 || s->ts.received.tv_sec == 0)
+				s->ts.received = now;
 
 			sample_fprint(stdout, s, SAMPLE_ALL);
 			fflush(stdout);
