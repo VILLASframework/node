@@ -69,13 +69,9 @@ int lstack_init(struct lstack *lstack, size_t maxsz)
 		lstack->node_buffer[i-1].next = &lstack->node_buffer[i];
 	lstack->node_buffer[maxsz - 1].next = NULL;
 
-	/* List of unused elements */
-	lstack->free.aba  = ATOMIC_VAR_INIT(0);
-	lstack->free.node = ATOMIC_VAR_INIT(lstack->node_buffer);
 
-	/* List of stack elements */
-	lstack->head.aba  = ATOMIC_VAR_INIT(0);
-	lstack->head.node = ATOMIC_VAR_INIT(NULL);
+	lstack->free = ATOMIC_VAR_INIT(((struct lstack_head) { 0, lstack->node_buffer }));
+	lstack->head = ATOMIC_VAR_INIT(((struct lstack_head) { 0, NULL }));
 
 	lstack->size = ATOMIC_VAR_INIT(0);
 	lstack->avail = ATOMIC_VAR_INIT(maxsz);

@@ -32,7 +32,7 @@ LIB_LDFLAGS = -shared
 LIB_LDLIBS  = -ldl -lrt
 
 CFLAGS  += -std=c11 -Iinclude -Iinclude/villas -I. -MMD -mcx16
-CFLAGS  += -Wall -fdiagnostics-color=auto
+CFLAGS  += -Wall -Werror -fdiagnostics-color=auto
 CFLAGS  += -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
 LDFLAGS += -pthread -L. -Wl,-rpath,'$$ORIGIN'
 

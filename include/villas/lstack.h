@@ -32,7 +32,8 @@ struct lstack_head {
 
 struct lstack {
 	struct lstack_node *node_buffer;
-	_Atomic struct lstack_head head, free;
+	_Atomic struct lstack_head head; /**> List of stack elements */
+	_Atomic struct lstack_head free; /**> List of unused elements */
 	_Atomic size_t size, avail;
 };
 
