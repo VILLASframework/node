@@ -34,7 +34,7 @@ enum sample_flags {
 	SAMPLE_OFFSET		= 2,
 	SAMPLE_SEQUENCE		= 4,
 	SAMPLE_VALUES		= 8,
-	SAMPLE_ALL			= 16-1
+	SAMPLE_ALL		= 16-1
 };
 
 struct sample {
