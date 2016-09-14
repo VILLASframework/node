@@ -340,16 +340,16 @@ int cfg_parse_hooklist(config_setting_t *cfg, struct list *list) {
 int cfg_parse_hook(config_setting_t *cfg, struct list *list)
 {
 	struct hook *hook, *copy;
-	const char *name = config_setting_get_string(cfg);
-	if (!name)
+	char *name, *param;
+	const char *hookline = config_setting_get_string(cfg);
+	if (!hookline)
 		cerror(cfg, "Invalid hook function");
 	
-	char *param = strchr(name, ':');
-	if (param) { /* Split hook line */
-		*param = '\0';
-		param++;
-	}
-	
+	name  = strtok((char *) hookline, ":");
+	param = strtok(NULL, "");
+
+	debug(3, "Hook: %s => %s", name, param);
+
 	hook = list_lookup(&hooks, name);
 	if (!hook)
 		cerror(cfg, "Unknown hook function '%s'", name);
