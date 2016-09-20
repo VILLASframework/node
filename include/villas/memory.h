@@ -1,12 +1,19 @@
-/** 
+/** Memory allocators.
  *
+ * @file
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
+ *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  */
+
+#include <stddef.h>
 
 #ifndef _MEMORY_H_
 #define _MEMORY_H_
 
-typedef void *(*memzone_allocator_t)(size_t);
-typedef int (*memzone_deallocator_t)(void *, size_t);
+typedef void *(*memzone_allocator_t)(size_t len);
+typedef int (*memzone_deallocator_t)(void *ptr, size_t len);
 
 enum memtype_flags {
 	MEMORY_MMAP	= (1 << 0),
@@ -22,7 +29,7 @@ struct memtype {
 	size_t alignment;
 	
 	memzone_allocator_t alloc;
-	memzone_deallocator_t dealloc;
+	memzone_deallocator_t free;
 };
 
 /** @todo Unused for now */
@@ -35,6 +42,9 @@ struct memzone {
 };
 
 void * memory_alloc(const struct memtype *m, size_t len);
+
+void * memory_aligned_alloc(const struct memtype *m, size_t len, size_t alignment);
+
 int memory_free(const struct memtype *m, void *ptr, size_t len);
 
 extern const struct memtype memtype_heap;

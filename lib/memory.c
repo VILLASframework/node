@@ -1,5 +1,9 @@
-/** 
+/** Memory allocators.
  *
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
+ *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
+ *   Unauthorized copying of this file, via any medium is strictly prohibited.
  */
 
 #include <stdlib.h>
@@ -10,6 +14,7 @@
   #include <mach/vm_statistics.h>
 #endif
 
+#include "log.h"
 #include "memory.h"
 
 void * memory_alloc(const struct memtype *m, size_t len)
@@ -17,9 +22,15 @@ void * memory_alloc(const struct memtype *m, size_t len)
 	return m->alloc(len);
 }
 
+void * memory_aligned_alloc(const struct memtype *m, size_t len, size_t align)
+{
+	warn("memory_aligned_alloc: not implemented yet. Falling back to unaligned version.");
+	return memory_alloc(m, len);
+}
+
 int memory_free(const struct memtype *m, void *ptr, size_t len)
 {
-	return m->dealloc(ptr, len);
+	return m->free(ptr, len);
 }
 
 static void * memory_heap_alloc(size_t len)
@@ -27,7 +38,7 @@ static void * memory_heap_alloc(size_t len)
 	return malloc(len);
 }
 
-int memory_heap_dealloc(void *ptr, size_t len)
+int memory_heap_free(void *ptr, size_t len)
 {
 	free(ptr);
 	
@@ -49,7 +60,7 @@ static void * memory_hugepage_alloc(size_t len)
 	return mmap(NULL, len, prot, flags, -1, 0);
 }
 
-static int memory_hugepage_dealloc(void *ptr, size_t len)
+static int memory_hugepage_free(void *ptr, size_t len)
 {
 	return munmap(ptr, len);
 }
@@ -59,7 +70,7 @@ const struct memtype memtype_heap = {
 	.name = "heap",
 	.flags = MEMORY_HEAP,
 	.alloc = memory_heap_alloc,
-	.dealloc = memory_heap_dealloc,
+	.free = memory_heap_free,
 	.alignment = 1
 };
 
@@ -67,7 +78,7 @@ const struct memtype memtype_hugepage = {
 	.name = "mmap_hugepages",
 	.flags = MEMORY_MMAP | MEMORY_HUGEPAGE,
 	.alloc = memory_hugepage_alloc,
-	.dealloc = memory_hugepage_dealloc,
+	.free = memory_hugepage_free,
 	.alignment = 1 << 21  /* 2 MiB hugepage */
 };
 
@@ -75,6 +86,6 @@ const struct memtype memtype_hugepage = {
 const struct memtype memtype_dma = {
 	.name = "dma",
 	.flags = MEMORY_DMA | MEMORY_MMAP,
-	.alloc = NULL, .dealloc = NULL,
+	.alloc = NULL, .free = NULL,
 	.alignment = 1 << 12
 };
