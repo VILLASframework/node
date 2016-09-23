@@ -46,4 +46,18 @@ RUN dnf -y update && \
 	rpmdevtools \
 	rpm-build
 
+# Tools to build dependencies
+RUN dnf -y update && \
+    dnf -y install \
+	git \
+	gcc-c++ \
+	autoconf \
+	automake \
+	autogen \
+	libtool \
+	flex \
+	bison \
+	texinfo
+	
+
 ENTRYPOINT /bin/bash
