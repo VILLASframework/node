@@ -13,7 +13,7 @@ LIB_SRCS = $(wildcard lib/hooks/*.c)			\
 	   $(addprefix lib/,				\
               sample.c path.c node.c hooks.c		\
               log.c utils.c cfg.c hist.c timing.c	\
-              pool.c list.c queue.c lstack.c		\
+              pool.c list.c queue.c memory.c		\
            )						\
 
 # Default prefix for install target
@@ -73,8 +73,6 @@ ifeq ($(shell pkg-config libpci; echo $$?),0)
 	LIB_SRCS    += $(addprefix lib/kernel/, pci.c vfio.c)
 	LIB_SRCS    += $(wildcard  lib/fpga/*.c)
 	LDLIBS      += -lxil
-	LDFLAGS     += -Lthirdparty/xilinx -Wl,-rpath,'$$ORIGIN/thirdparty/xilinx'
-	CFLAGS      += -Ithirdparty/xilinx/include
 	PKGS        += libpci
 	TARGETS     += fpga
 endif

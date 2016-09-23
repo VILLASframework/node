@@ -12,9 +12,17 @@
 #ifndef _POOL_H_
 #define _POOL_H_
 
+#include <sys/types.h>
+
+#include "queue.h"
+
+struct memtype;
+
 /** A thread-safe memory pool */
 struct pool {
 	void *buffer;		/**< Address of the underlying memory area */
+	const struct memtype *mem;
+	
 	size_t len;		/**< Length of the underlying memory area */
 	
 	size_t blocksz;		/**< Length of a block in bytes */

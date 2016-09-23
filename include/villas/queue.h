@@ -39,21 +39,27 @@
 
 #include "memory.h"
 
-static size_t const cacheline_size = 64;
-typedef char cacheline_pad_t[cacheline_size];
+#define CACHELINE_SIZE 64
+typedef char cacheline_pad_t[CACHELINE_SIZE];
 
 struct mpmc_queue {
 	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
+
 	struct memtype const * mem;
 	size_t buffer_mask;
 	struct mpmc_queue_cell {
 		atomic_size_t sequence;
 		void *data;
 	} *buffer;
+
 	cacheline_pad_t	_pad1;	/**> Producer area: only producers read & write */
+
 	atomic_size_t	tail;	/**> Queue tail pointer */
+
 	cacheline_pad_t	_pad2;	/**> Consumer area: only consumers read & write */
+
 	atomic_size_t	head;	/**> Queue head pointer */
+
 	cacheline_pad_t	_pad3;	/**> @todo Why needed? */
 };
 
@@ -76,6 +82,6 @@ int mpmc_queue_pull(struct mpmc_queue *q, void **ptr);
 
 int mpmc_queue_push_many(struct mpmc_queue *q, void *ptr[], size_t cnt);
 
-int mpmc_queue_pull_many(struct mpmc_queue *q, void **ptr[], size_t cnt);
+int mpmc_queue_pull_many(struct mpmc_queue *q, void *ptr[], size_t cnt);
 
 #endif /* _MPMC_QUEUE_H_ */

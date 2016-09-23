@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdatomic.h>
 #include <time.h>
 #include <sys/types.h>
 
@@ -42,7 +43,7 @@ struct sample {
 	int length;		/**< The number of values in sample::values which are valid. */
 	int capacity;		/**< The number of values in sample::values for which memory is reserved. */
 	
-	atomic_int_t refcnt;	/**< Reference counter. */
+	atomic_int refcnt;	/**< Reference counter. */
 	struct pool *pool;	/**< This sample is belong to this memory pool. */
 
 	/** All timestamps are seconds / nano seconds after 1.1.1970 UTC */

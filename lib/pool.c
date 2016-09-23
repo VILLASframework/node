@@ -14,35 +14,29 @@
 
 int pool_init(struct pool *p, size_t blocksz, size_t cnt, const struct memtype *m)
 {
-	void *addr;
-	int flags, prot;
-	size_t len, alignedsz, alignment;
-	
 	/* Make sure that we use a block size that is aligned to the size of a cache line */
-	alignment = kernel_get_cacheline_size();
-	alignedsz = blocksz * CEIL(blocksz, );
-	len = cnt * alignedsz;
+	p->alignment = kernel_get_cacheline_size();
+	p->blocksz = blocksz * CEIL(blocksz, p->alignment);
+	p->len = cnt * p->blocksz;
+	p->mem = m;
 
-	addr = memory_alloc_align(m, len, aligment);
-	if (!addr)
+	p->buffer = memory_alloc_aligned(m, p->len, p->alignment);
+	if (!p->buffer)
 		serror("Failed to allocate memory for memory pool");
 	else
-		debug(DBG_POOL | 4, "Allocated %#zx bytes for memory pool", len);
-	
-	p->blocksz = blocksz;
-	p->alignment = alignment;
+		debug(DBG_POOL | 4, "Allocated %#zx bytes for memory pool", p->len);
 	
 	mpmc_queue_init(&p->queue, cnt, m);
 	
 	for (int i = 0; i < cnt; i++)
-		lstack_push(&p->stack, buf + i * alignedsz);
+		mpmc_queue_push(&p->queue, (char *) p->buffer + i * p->blocksz);
 	
 	return 0;
 }
 
 int pool_destroy(struct pool *p)
 {
-	mpmc_queue_destroy(&p->queue);
-	
-	memory_dealloc(p->buffer, p->len);
+	mpmc_queue_destroy(&p->queue);	
+
+	return memory_free(p->mem, p->buffer, p->len);
 }

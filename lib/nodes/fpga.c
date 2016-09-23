@@ -370,7 +370,7 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 	size_t len = SAMPLE_DATA_LEN(64);
 	
 	/* We dont get a sequence no from the FPGA. Lets fake it */
-	smp->sequence = n->received;
+	smp->sequence = -1;
 	smp->ts.origin = time_now();
 
 	/* Read data from RTDS */

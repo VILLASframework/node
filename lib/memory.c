@@ -22,6 +22,12 @@ void * memory_alloc(const struct memtype *m, size_t len)
 	return m->alloc(len);
 }
 
+void * memory_alloc_aligned(const struct memtype *m, size_t len, size_t alignment)
+{
+	warn("memory_alloc_aligned: not implemented yet!");
+	return memory_alloc(m, len);
+}
+
 void * memory_aligned_alloc(const struct memtype *m, size_t len, size_t align)
 {
 	warn("memory_aligned_alloc: not implemented yet. Falling back to unaligned version.");

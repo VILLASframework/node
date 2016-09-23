@@ -107,8 +107,6 @@ struct hook {
 
 	struct sample *last;
 	struct sample *prev;
-	
-	qptr_t head;
 
 	hook_cb_t cb;		/**< The hook callback function as a function pointer. */
 };

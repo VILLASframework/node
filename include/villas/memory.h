@@ -43,7 +43,7 @@ struct memzone {
 
 void * memory_alloc(const struct memtype *m, size_t len);
 
-void * memory_aligned_alloc(const struct memtype *m, size_t len, size_t alignment);
+void * memory_alloc_aligned(const struct memtype *m, size_t len, size_t alignment);
 
 int memory_free(const struct memtype *m, void *ptr, size_t len);
 

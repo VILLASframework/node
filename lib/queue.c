@@ -31,7 +31,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "mpmc_queue.h"
+#include "queue.h"
 
 /** Initialize MPMC queue */
 int mpmc_queue_init(struct mpmc_queue *q, size_t size, const struct memtype *mem)
@@ -84,7 +84,7 @@ int mpmc_queue_push(struct mpmc_queue *q, void *ptr)
 		diff = (intptr_t) seq - (intptr_t) pos;
 
 		if (diff == 0) {
-			if (atomic_compare_exchange_weak_explicit(&q->tail, &pos, pos + 1, memory_order_relaxed, memory_order_seq_cst))
+			if (atomic_compare_exchange_weak_explicit(&q->tail, &pos, pos + 1, memory_order_relaxed, memory_order_relaxed))
 				break;
 		}
 		else if (diff < 0)
@@ -113,7 +113,7 @@ int mpmc_queue_pull(struct mpmc_queue *q, void **ptr)
 		diff = (intptr_t) seq - (intptr_t) (pos + 1);
 
 		if (diff == 0) {
-			if (atomic_compare_exchange_weak_explicit(&q->head, &pos, pos + 1, memory_order_relaxed, memory_order_seq_cst))
+			if (atomic_compare_exchange_weak_explicit(&q->head, &pos, pos + 1, memory_order_relaxed, memory_order_relaxed))
 				break;
 		}
 		else if (diff < 0)
@@ -142,13 +142,13 @@ int mpmc_queue_push_many(struct mpmc_queue *q, void *ptr[], size_t cnt)
 	return i;
 }
 
-int mpmc_queue_pull_many(struct mpmc_queue *q, void **ptr[], size_t cnt)
+int mpmc_queue_pull_many(struct mpmc_queue *q, void *ptr[], size_t cnt)
 {
 	int ret;
 	size_t i;
 
 	for (i = 0; i < cnt; i++) {
-		ret = mpmc_queue_pull(q, ptr[i]);
+		ret = mpmc_queue_pull(q, &ptr[i]);
 		if (!ret)
 			break;
 	}
