@@ -42,6 +42,10 @@ else ifdef GIT
 	CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
 endif
 
+ifdef COVERAGE
+	CFLAGS += -fprofile-arcs -ftest-coverage
+endif
+
 # pkg-config dependencies
 PKGS = libconfig
 
