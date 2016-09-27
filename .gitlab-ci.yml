@@ -5,66 +5,24 @@ variables:
   # and configured in gitlab-ci-runner config.toml as a linked service
   DOCKER_REGISTRY: acs-public:5000
   DOCKER_IMAGE: villas:latest
+  PREFIX: /usr/
 
 stages:
   - prepare
   - dependencies
   - build
+  - test
   - deploy
-
-# Build docker image which is used to build & test VILLASnode
-docker-image:
-  stage: prepare
-  image: stackbrew/docker:1.8.2
-  before_script:
-    - docker info
-  script:
-    - docker build -t $DOCKER_REGISTRY/$DOCKER_IMAGE .
-    - docker push $DOCKER_REGISTRY/$DOCKER_IMAGE
-
-libwebsockets:
+  
+# Templates
+##############################################################################
+.dep: &dep
   stage: dependencies
   script:
-    - make -C thirdparty libwebsockets-2.0.2
+    - make -C thirdparty $CI_BUILD_NAME
   artifacts:
     paths:
-    - thirdparty/libwebsockets-2.0.2/
-
-libxil:
-  stage: dependencies
-  script:
-    - make -C thirdparty/xilinx
-  artifacts:
-    paths:
-    - thirdparty/xilinx/libxil.so
-
-build:
-  stage: build
-  variables:
-    PKG_CONFIG_PATH: /usr/local/lib/pkgconfig/
-  before_script:
-    - make -C thirdparty/libwebsockets-2.0.2/build install
-    - make -C thirdparty/xilinx install
-  script:
-    - make
-  artifacts:
-    name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
-    paths:
-      - libvillas.so
-      - fpga
-      - node
-      - pipe
-      - signal
-      - test
-
-docs:
-  stage: build
-  artifacts:
-    name: "${CI_PROJECT_NAME}-doc-${CI_BUILD_REF}"
-    paths:
-      - doc/html/
-  script:
-    - make doc
+      - $PREFIX
 
 .ssh: &ssh
   before_script:
@@ -73,6 +31,79 @@ docs:
     - chmod 600 $HOME/.ssh/id_rsa
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > $HOME/.ssh/config
     - ssh-keyscan -H $DEPLOY_HOST >> $HOME/.ssh/known_hosts
+
+# Stage: prepare
+##############################################################################
+
+# Build docker image which is used to build & test VILLASnode
+docker-image:
+  stage: prepare
+  # Must match the docker version on the build machine!
+  image: stackbrew/docker:1.8.2
+  before_script:
+    - docker info
+  script:
+    - docker build -t $DOCKER_REGISTRY/$DOCKER_IMAGE .
+    - docker push $DOCKER_REGISTRY/$DOCKER_IMAGE
+
+# Stage: dependencies
+##############################################################################
+
+libwebsockets:
+  <<dep: *dep
+
+libxil:
+  <<dep: *dep
+
+libxil:
+  <<dep: *dep
+
+# Stage: build
+##############################################################################
+
+build:
+  stage: build
+  script:
+    - make
+  artifacts:
+    name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
+    paths:
+      - $PREFIX
+  dependencies:
+    - libwebsockets
+    - libxil
+
+docs:
+  stage: build
+  artifacts:
+    name: "${CI_PROJECT_NAME}-doc-${CI_BUILD_REF}"
+    paths:
+      - doc/html/
+      - doc/latex/
+  script:
+    - make doc
+
+# Stage: test
+##############################################################################
+
+unit:
+  stage: test
+  dependencies:
+    - criterion
+    - build
+  script:
+    - test
+
+integration:
+  stage: test
+  dependencies:
+    - build
+  script:
+    # Nothing to do here right now
+    - true
+
+# Stage: deliver
+##############################################################################
 
 deliver:
   stage: deploy
