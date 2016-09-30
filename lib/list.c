@@ -57,7 +57,7 @@ void list_destroy(struct list *l, dtor_cb_t destructor, bool release)
 	
 	l->array = NULL;
 
-	l->length =
+	l->length = -1;
 	l->capacity = 0;
 
 	pthread_mutex_unlock(&l->lock);
