@@ -1,6 +1,8 @@
 *.o
 *.d
 *.so
+*.gcno
+*.gcda
 *~
 
 /node
