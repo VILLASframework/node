@@ -1,12 +1,2 @@
-*.o
-*.d
-*.so
-*.gcno
-*.gcda
+/build/
 *~
-
-/node
-/pipe
-/test
-/signal
-/fpga

@@ -1,40 +1,39 @@
-# Executables
-TARGETS = node pipe signal test
+## Main project Makefile
+#
+# The build system of this project is based on GNU Make and pkg-config
+#
+# To retain maintainability, the project is divided into multiple modules.
+# Each module has its own Makefile which gets included.
+#
+# Please read "Recursive Make Considered Harmful" from Peter Miller
+#  to understand the motivation for this structure.
+#
+# [1] http://aegis.sourceforge.net/auug97.pdf
+#
+# @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+# @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
+#   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
+#   Unauthorized copying of this file, via any medium is strictly prohibited.
+#################################################################################
 
-# Libraries
-LIBS = libvillas.so
-
-# Plugins
-PLUGINS = simple_circuit.so example_hook.so
-
-# Object files for libvillas
-LIB_SRCS = $(wildcard lib/hooks/*.c)			\
-           $(addprefix lib/kernel/, kernel.c rt.c)	\
-	   $(addprefix lib/,				\
-              sample.c path.c node.c hooks.c		\
-              log.c utils.c cfg.c hist.c timing.c	\
-              pool.c list.c queue.c memory.c		\
-           )						\
+# Project modules
+MODULES = lib plugins src tests
 
 # Default prefix for install target
 PREFIX ?= /usr/local
 
-# Default debug level
+# Default out-of-source build path
+BUILDDIR ?= build
+
+# Default debug level for executables
 V ?= 2
 
-# Compiler and linker flags
-LDLIBS   = -pthread -lm -lvillas
-
-PLUGIN_CFLAGS = -fPIC -DVILLAS -I../include/villas
-
-LIB_CFLAGS  = -fPIC
-LIB_LDFLAGS = -shared
-LIB_LDLIBS  = -ldl -lrt
-
+# Common flags
+LDLIBS   =
 CFLAGS  += -std=c11 -Iinclude -Iinclude/villas -I. -MMD -mcx16
 CFLAGS  += -Wall -Werror -fdiagnostics-color=auto
 CFLAGS  += -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
-LDFLAGS += -pthread -L. -Wl,-rpath,'$$ORIGIN'
+LDFLAGS += -L$(BUILDDIR)
 
 ifdef CI
 	CFLAGS += -D_GIT_REV='"${CI_BUILD_REF:0:7}~ci"'
@@ -43,149 +42,69 @@ else ifdef GIT
 endif
 
 ifdef COVERAGE
-	CFLAGS += -fprofile-arcs -ftest-coverage
+	CFLAGS  += -fprofile-arcs -ftest-coverage
+	LDFLAGS += --coverage
+	LDLIBS  += -lgcov
+	
+	LIB_LDFLAGS += --coverage
+	LIB_LDLIBS += -gcov
 endif
 
-# pkg-config dependencies
-PKGS = libconfig
-
-DOCKEROPTS = -p 80:80 -p 443:443 -p 1234:1234 --privileged --cap-add sys_nic --ulimit memlock=1073741824 --security-opt seccomp:unconfined
-
-# Add more compiler flags
-ifdef DEBUG
+# We must compile without optimizations for gcov!
+ifneq ($(or $(DEBUG),$(COVERAGE)),)
 	CFLAGS += -O0 -g
 else
 	CFLAGS += -O3
 endif
 
-######## Node types ########
-
-# file node-type is always supported
-LIB_SRCS += $(addprefix lib/nodes/, file.c cbuilder.c)
-
-# Enable Socket node type when libnl3 is available
-ifeq ($(shell pkg-config libnl-route-3.0; echo $$?),0)
-	LIB_SRCS    += $(addprefix lib/nodes/, socket.c)
-	LIB_SRCS    += $(addprefix lib/kernel/, nl.c tc.c if.c)
-	LIB_SRCS    += $(addprefix lib/, msg.c)
-	PKGS        += libnl-route-3.0
+# Build variant
+ifdef COVERAGE
+	BUILDDIR := $(BUILDDIR)/coverage
+else ifdef DEBUG
+	BUILDDIR := $(BUILDDIR)/debug
+else
+	BUILDDIR := $(BUILDDIR)/release
 endif
 
-# Enable VILLASfpga support when libpci is available
-ifeq ($(shell pkg-config libpci; echo $$?),0)
-	LIB_SRCS    += $(addprefix lib/nodes/, fpga.c)
-	LIB_SRCS    += $(addprefix lib/kernel/, pci.c vfio.c)
-	LIB_SRCS    += $(wildcard  lib/fpga/*.c)
-	LDLIBS      += -lxil
-	PKGS        += libpci
-	TARGETS     += fpga
-endif
-
-# Enable NGSI support
-ifeq ($(shell pkg-config libcurl jansson uuid; echo $$?),0)
-	LIB_SRCS    += lib/nodes/ngsi.c
-	PKGS        += libcurl jansson uuid
-endif
-
-# Enable WebSocket support
-ifeq ($(shell pkg-config libwebsockets jansson; echo $$?),0)
-	LIB_SRCS   += lib/nodes/websocket.c
-	PKGS       += libwebsockets jansson
-endif
-
-## Add support for LAPACK / BLAS benchmarks / solvers
-ifeq ($(shell pkg-config blas lapack; echo $$?),0)
-	PKGS        += blas lapack
-	BENCH_OBJS  += fpga-bench-overruns.o
-endif
-
-# Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
-ifdef WITH_OPAL
-ifneq (,$(wildcard thirdparty/opal/include/AsyncApi.h))
-	LIB_OBJS    += opal.o
-	CFLAGS      += -m32
-	LDFLAGS     += -m32
-	LIB_CFLAGS  += -m32 -I thirdparty/opal/include
-	LIB_LDFLAGS += -m32 -L/lib/i386-linux-gnu/ -L/usr/lib/i386-linux-gnu/ -Lthirdparty/opal/lib/redhawk/
-	LIB_LDLIBS  += -lOpalAsyncApiCore -lOpalCore -lOpalUtils -lirc
-endif
-endif
-
-# Add flags by pkg-config
-LIB_CFLAGS += $(addprefix -DWITH_, $(shell echo ${PKGS} | tr a-z- A-Z_ | tr -dc ' A-Z0-9_' ))
-LIB_CFLAGS += $(shell pkg-config --cflags ${PKGS})
-LIB_LDLIBS += $(shell pkg-config --libs ${PKGS})
-
-LIB_OBJS = $(patsubst lib/%.c, obj/lib/%.o, $(LIB_SRCS))
+# pkg-config dependencies
+PKGS = libconfig
 
 ######## Targets ########
 
-.PHONY: all clean install docker doc
+# Add flags by pkg-config
+CFLAGS += $(addprefix -DWITH_, $(shell echo ${PKGS} | tr a-z- A-Z_ | tr -dc ' A-Z0-9_' ))
+CFLAGS += $(shell pkg-config --cflags ${PKGS})
+LDLIBS += $(shell pkg-config --libs ${PKGS})
+
+# Default target: build everything; no tests, docs
+all: $(MODULES)
+	
+everything:
+	$(MAKE) DEBUG=1
+	$(MAKE) COVERAGE=1
+	$(MAKE) doc
+	$(MAKE) tests
+	
+.PHONY: all clean install docker doc $(MODULES)
 .SECONDARY:
 .SECONDEXPANSION:
 
-# Default target: build everything
-all: $(LIBS) $(TARGETS) $(PLUGINS)
-
-# Dependencies for individual binaries
-fpga:   $(addprefix obj/src/,fpga.o fpga-tests.o fpga-bench.o $(BENCH_OBJS))
-node:   $(addprefix obj/src/,node.o)
-pipe:   $(addprefix obj/src/,pipe.o)
-test:   $(addprefix obj/src/,test.o)
-signal: $(addprefix obj/src/,signal.o)
-
-# Dependencies for plugins
-example_hook.so:   obj/plugins/hooks/example_hook.o
-simple_circuit.so: obj/plugins/models/simple_circuit.o
-
-libvillas.so: $(LIB_OBJS)
-
-# Create directories
-%/:
+# Create non-existent directories in build directory
+$(BUILDDIR)/%/:
 	mkdir -p $@
 
-# Compile executable objects
-obj/src/%.o: src/%.c | $$(dir $$@)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Compile library objects
-obj/lib/%.o: lib/%.c | $$(dir $$@)
-	$(CC) $(CFLAGS) $(LIB_CFLAGS) -c $< -o $@
-	
-obj/plugins/%.o: plugins/%.c | $$(dir $$@)
-	$(CC) $(CFLAGS) $(PLUGIN_CFLAGS) -c $< -o $@
-
-# Link target executables
-$(TARGETS):
-	$(CC) $(LDFLAGS) $^ $(LDLIBS) -o $@
-	
-# Link Libraries & Plugins
-$(LIBS) $(PLUGINS):
-	$(CC) $(LIB_LDFLAGS) -o $@ $^ $(LIB_LDLIBS)
-
-# Common targets
-install: $(TARGETS) $(LIBS)
-	install -m 0644 $(LIBS) $(PREFIX)/lib
-	install -m 0755 node	-T $(PREFIX)/bin/villas-node
-	install -m 0755 fpga	-T $(PREFIX)/bin/villas-fpga
-	install -m 0755 signal	-T $(PREFIX)/bin/villas-signal
-	install -m 0755 pipe	-T $(PREFIX)/bin/villas-pipe
-	install -m 0755 test	-T $(PREFIX)/bin/villas-test
-	install -m 0755		-d $(PREFIX)/include/villas/
-	install -m 0644 include/villas/*.h $(PREFIX)/include/villas/
-	install -m 0755 tools/villas.sh $(PREFIX)/bin/villas
-	ldconfig
+install: $(addprefix install-,$(MODULES))
+	install -m 0755 tools/villas.sh 	   $(PREFIX)/bin/villas
 
 clean:
-	$(RM) $(LIBS) $(PLUGINS) $(TARGETS)
-	$(RM) -rf obj/ doc/{html,latex}
+	rm -rf $(BUILDDIR)
 
 docker:
 	docker build -t villas .
-	docker run -it $(DOCKEROPTS) -v $(PWD):/villas villas
+	docker run -it -p 80:80 -p 443:443 -p 1234:1234 --privileged --cap-add sys_nic --ulimit memlock=1073741824 --security-opt seccomp:unconfined -v $(PWD):/villas villas
 
 doc:
-	doxygen
+	( cat Doxyfile ; echo "OUTPUT_DIRECTORY=$(BUILD)/doc/" ) | doxygen -
 
-# Include auto-generated dependencies
--include $(wildcard obj/**/*.d)
+-include $(wildcard $(BUILDDIR)/**/*.d)
+$(foreach MODULE,$(MODULES),$(eval -include $(MODULE)/Makefile.inc))
