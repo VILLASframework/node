@@ -34,9 +34,9 @@ ifeq ($(shell pkg-config libpci; echo $$?),0)
 endif
 
 # Enable NGSI support
-ifeq ($(shell pkg-config libcurl jansson uuid; echo $$?),0)
+ifeq ($(shell pkg-config libcurl jansson; echo $$?),0)
 	LIB_SRCS    += lib/nodes/ngsi.c
-	LIB_PKGS    += libcurl jansson uuid
+	LIB_PKGS    += libcurl jansson
 endif
 
 # Enable WebSocket support

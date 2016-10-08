@@ -10,7 +10,6 @@
 #include <stdio.h>
 
 #include <curl/curl.h>
-#include <uuid/uuid.h>
 #include <jansson.h>
 #include <math.h>
 #include <pthread.h>
@@ -23,45 +22,6 @@
 
 /* Some global settings */
 static char *name = NULL;
-
-#if 0 /* unused at the moment */
-static json_t * json_uuid()
-{
-	char eid[37];
-	uuid_t uuid;
-	
-	uuid_generate_time(uuid);
-	uuid_unparse_lower(uuid, eid);
-
-	return json_string(eid);
-}
-
-
-static json_t * json_date(struct timespec *ts)
-{
-	// Example: 2015-09-21T11:42:25+02:00
-	char date[64];
-	strftimespec(date, sizeof(date), "%FT%T.%u%z", ts);
-	
-	return json_string(date);
-}
-
-static json_t * json_lookup(json_t *array, char *key, char *needle)
-{
-	size_t ind;
-	json_t *obj;
-
-	json_array_foreach(array, ind, obj) {
-		json_t *value = json_object_get(obj, key);
-		if (value && json_is_string(value)) {
-			if (!strcmp(json_string_value(value), needle))
-				return obj;
-		}
-	}
-	
-	return NULL;
-}
-#endif
 
 enum ngsi_flags {
 	NGSI_ENTITY_ATTRIBUTES = (1 << 0),
@@ -594,7 +554,7 @@ int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 static struct node_type vt = {
 	.name		= "ngsi",
-	.description	= "OMA Next Generation Services Interface 10 (libcurl, libjansson, libuuid)",
+	.description	= "OMA Next Generation Services Interface 10 (libcurl, libjansson)",
 	.vectorize	= 0, /* unlimited */
 	.size		= sizeof(struct ngsi),
 	.parse		= ngsi_parse,
