@@ -22,6 +22,7 @@
 #include "timing.h"
 
 struct fpga fpga;
+struct pci pci;
 struct vfio_container vc;
 
 int fpga_reset(struct fpga *f)
@@ -55,21 +56,12 @@ int fpga_reset(struct fpga *f)
 
 void fpga_dump(struct fpga *f)
 {
-	char namebuf[128];
-	char *name;
-
-	struct pci_access *pacc;
-
-	pacc = pci_get_handle();
-	name = pci_lookup_name(pacc, namebuf, sizeof(namebuf), PCI_LOOKUP_DEVICE, fpga.vd.pdev->vendor_id, fpga.vd.pdev->device_id);
-	pci_fill_info(fpga.vd.pdev, PCI_FILL_IDENT | PCI_FILL_BASES | PCI_FILL_CLASS);	/* Fill in header info we need */
-
-	info("VILLASfpga card: %s", name);
+	info("VILLASfpga card:");
 	{ INDENT
-		info("Slot: %04x:%02x:%02x.%d", fpga.vd.pdev->domain, fpga.vd.pdev->bus, fpga.vd.pdev->dev, fpga.vd.pdev->func);
-		info("Vendor ID: %04x", fpga.vd.pdev->vendor_id);
-		info("Device ID: %04x", fpga.vd.pdev->device_id);
-		info("Class  ID: %04x", fpga.vd.pdev->device_class);
+		info("Slot: %04x:%02x:%02x.%d", fpga.vd.pdev->slot.domain, fpga.vd.pdev->slot.bus, fpga.vd.pdev->slot.device, fpga.vd.pdev->slot.function);
+		info("Vendor ID: %04x", fpga.vd.pdev->id.vendor);
+		info("Device ID: %04x", fpga.vd.pdev->id.device);
+		info("Class  ID: %04x", fpga.vd.pdev->id.class);
 
 		info("BAR0 mapped at %p", fpga.map);
 
@@ -94,8 +86,8 @@ int fpga_parse_card(struct fpga *f, int argc, char * argv[], config_setting_t *c
 	config_setting_t *cfg_ips, *cfg_slot, *cfg_id, *cfg_fpgas;
 
 	/* Default values */
-	f->filter.vendor = FPGA_PCI_VID_XILINX;
-	f->filter.device = FPGA_PCI_PID_VFPGA;
+	f->filter.id.vendor = FPGA_PCI_VID_XILINX;
+	f->filter.id.device = FPGA_PCI_PID_VFPGA;
 
 	cfg_fpgas = config_setting_get_member(cfg, "fpgas");
 	if (!cfg_fpgas)
@@ -118,24 +110,24 @@ int fpga_parse_card(struct fpga *f, int argc, char * argv[], config_setting_t *c
 	if (cfg_slot) {
 		slot = config_setting_get_string(cfg_slot);
 		if (slot) {
-			err = pci_filter_parse_slot(&f->filter, (char*) slot);
-			if (err)
-				cerror(cfg_slot, "%s", err);
+			ret = pci_dev_parse_slot(&f->filter, slot, &err);
+			if (ret)
+				cerror(cfg_slot, "Failed to parse PCI slot: %s", err);
 		}
 		else
-			cerror(cfg_slot, "Invalid slot format");
+			cerror(cfg_slot, "PCI slot must be a string");
 	}
 
 	cfg_id = config_setting_get_member(f->cfg, "id");
 	if (cfg_id) {
 		id = config_setting_get_string(cfg_id);
 		if (id) {
-			err = pci_filter_parse_id(&f->filter, (char*) id);
-			if (err)
-				cerror(cfg_id, "%s", err);
+			ret = pci_dev_parse_id(&f->filter, (char*) id, &err);
+			if (ret)
+				cerror(cfg_id, "Failed to parse PCI id: %s", err);
 		}
 		else
-			cerror(cfg_slot, "Invalid id format");
+			cerror(cfg_slot, "PCI ID must be a string");
 	}
 	
 	cfg_ips = config_setting_get_member(f->cfg, "ips");
@@ -162,16 +154,15 @@ int fpga_parse_card(struct fpga *f, int argc, char * argv[], config_setting_t *c
 int fpga_init(int argc, char * argv[], config_setting_t *cfg)
 {
 	int ret;
-	struct pci_access *pacc;
-	struct pci_dev *pdev;
 	struct fpga *f;
+	struct pci_dev *pdev;
 
 	/* For now we only support a single VILALSfpga card */
 	f = fpga_get();
 	list_init(&f->ips);
 
-	pacc = pci_get_handle();
-	pci_filter_init(pacc, &f->filter);
+	pci_init(&pci);
+	pci_dev_init(&f->filter);
 
 	/* Parse FPGA configuration */
 	ret = fpga_parse_card(f, argc, argv, cfg);
@@ -192,7 +183,7 @@ int fpga_init(int argc, char * argv[], config_setting_t *cfg)
 		warn("FPGA is missing an AXI4-Stream switch");
 
 	/* Search for FPGA card */
-	pdev = pci_find_device(pacc, &f->filter);
+	pdev = pci_lookup_device(&pci, &f->filter);
 	if (!pdev)
 		error("Failed to find PCI device");
 
@@ -243,8 +234,8 @@ int fpga_deinit()
 	int ret;
 
 	list_destroy(&fpga.ips, (dtor_cb_t) ip_destroy, true);
-
-	pci_release_handle();
+	
+	pci_destroy(&pci);
 
 	ret = vfio_destroy(&vc);
 	if (ret)
@@ -276,9 +267,10 @@ char * fpga_print(struct node *n)
 	
 	if (d->ip)
 		return strf("dm=%s (%s:%s:%s:%s) baseaddr=%#jx port=%u slot=%02"PRIx8":%02"PRIx8".%"PRIx8" id=%04"PRIx16":%04"PRIx16,
-			d->ip->name, d->ip->vlnv.vendor, d->ip->vlnv.library, d->ip->vlnv.name, d->ip->vlnv.version, d->ip->baseaddr, d->ip->port,
-			f->filter.bus, f->filter.device, f->filter.func,
-			f->filter.vendor, f->filter.device);
+			d->ip->name, d->ip->vlnv.vendor, d->ip->vlnv.library, d->ip->vlnv.name, d->ip->vlnv.version,
+			d->ip->baseaddr, d->ip->port,
+			f->filter.slot.bus, f->filter.slot.device, f->filter.slot.function,
+			f->filter.id.vendor, f->filter.id.device);
 	else
 		return strf("dm=%s", d->ip_name);
 }

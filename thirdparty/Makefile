@@ -1,4 +1,4 @@
-DEPS = libxil libconfig libnl libwebsockets pciutils criterion
+DEPS = libxil libconfig libnl libwebsockets criterion
 
 .PHONY: $(DEPS) all clean
 
@@ -22,14 +22,6 @@ libnl:
 	./autogen.sh && \
 	./configure --prefix=$(PREFIX) --disable-cli && \
 	make install
-
-# Install & compile libpci dependency
-pciutils:
-	cd $@ && \
-	make clean && \
-	make SHARED=yes && \
-	make install-lib PREFIX=$(PREFIX) && \
-	ln -s $(PREFIX)/lib/libpci.so.* $(PREFIX)/lib/libpci.so
 
 # Install & compile libwebsockets dependency
 libwebsockets:

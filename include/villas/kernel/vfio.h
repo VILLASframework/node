@@ -11,7 +11,6 @@
 #define _VFIO_H_
 
 #include <stdbool.h>
-#include <pci/pci.h>
 #include <sys/mman.h>
 
 #include <linux/vfio.h>
@@ -23,6 +22,7 @@
 
 /* Forward declaration */
 struct dma_mem;
+struct pci_dev;
 
 struct vfio_group {
 	int fd;						/**< VFIO group file descriptor */

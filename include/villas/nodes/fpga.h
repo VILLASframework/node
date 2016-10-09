@@ -18,8 +18,7 @@
 #define _FPGA_H_
 
 #include "kernel/vfio.h"
-
-#include <pci/pci.h>
+#include "kernel/pci.h"
 
 #include "fpga/dma.h"
 #include "fpga/ip.h"
@@ -29,7 +28,7 @@
 #include "list.h"
 
 struct fpga {
-	struct pci_filter filter;	/**< Filter for libpci with device id & slot */
+	struct pci_dev filter;		/**< Filter for PCI device. */
 	struct vfio_dev vd;		/**< VFIO device handle. */
 
 	int do_reset;			/**< Reset VILLASfpga during startup? */
