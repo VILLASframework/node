@@ -17,7 +17,7 @@
 #################################################################################
 
 # Project modules
-MODULES = lib plugins src tests
+MODULES = lib plugins src tests thirdparty
 
 # Default prefix for install target
 PREFIX ?= /usr/local
@@ -41,30 +41,38 @@ else ifdef GIT
 	CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
 endif
 
+# We must compile without optimizations for gcov!
+ifdef DEBUG
+	CFLAGS += -O0 -g
+	VARIANTS += debug
+else
+	CFLAGS += -O3
+	VARIANTS += release
+endif
+
+ifdef PROFILE
+	CFLAGS += -pg
+	LDFLAGS += -pg
+	
+	VARIANTS += profile
+endif
+
 ifdef COVERAGE
 	CFLAGS  += -fprofile-arcs -ftest-coverage
 	LDFLAGS += --coverage
 	LDLIBS  += -lgcov
 	
-	LIB_LDFLAGS += --coverage
+	LIB_LDFLAGS += -coverage
 	LIB_LDLIBS += -gcov
+	
+	VARIANTS += coverage
 endif
 
-# We must compile without optimizations for gcov!
-ifneq ($(or $(DEBUG),$(COVERAGE)),)
-	CFLAGS += -O0 -g
-else
-	CFLAGS += -O3
-endif
+SPACE :=
+SPACE +=
+BUILDDIR := $(BUILDDIR)/$(subst $(SPACE),-,$(strip $(VARIANTS)))
 
-# Build variant
-ifdef COVERAGE
-	BUILDDIR := $(BUILDDIR)/coverage
-else ifdef DEBUG
-	BUILDDIR := $(BUILDDIR)/debug
-else
-	BUILDDIR := $(BUILDDIR)/release
-endif
+SRCDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 # pkg-config dependencies
 PKGS = libconfig
@@ -77,26 +85,21 @@ CFLAGS += $(shell pkg-config --cflags ${PKGS})
 LDLIBS += $(shell pkg-config --libs ${PKGS})
 
 # Default target: build everything; no tests, docs
-all: $(MODULES)
+all: src
 	
 everything:
 	$(MAKE) DEBUG=1
 	$(MAKE) COVERAGE=1
+	$(MAKE) PROFILE=1
 	$(MAKE) doc
 	$(MAKE) tests
 	
 .PHONY: all clean install docker doc $(MODULES)
-.SECONDARY:
-.SECONDEXPANSION:
-
-# Create non-existent directories in build directory
-$(BUILDDIR)/%/:
-	mkdir -p $@
 
 install: $(addprefix install-,$(MODULES))
-	install -m 0755 tools/villas.sh 	   $(PREFIX)/bin/villas
+	install -m 0755 tools/villas.sh $(PREFIX)/bin/villas
 
-clean:
+clean: $(addprefix clean-,$(MODULES))
 	rm -rf $(BUILDDIR)
 
 docker:
@@ -106,5 +109,11 @@ docker:
 doc:
 	( cat Doxyfile ; echo "OUTPUT_DIRECTORY=$(BUILD)/doc/" ) | doxygen -
 
+# Create non-existent directories
+%/:
+	mkdir -p $@
+
+.SECONDEXPANSION:
+
 -include $(wildcard $(BUILDDIR)/**/*.d)
-$(foreach MODULE,$(MODULES),$(eval -include $(MODULE)/Makefile.inc))
+-include $(addsuffix /Makefile.inc,$(MODULES))

@@ -58,6 +58,7 @@ RUN dnf -y update && \
 	flex \
 	bison \
 	texinfo
-	
+
+WORKDIR /villas
 
 ENTRYPOINT /bin/bash
