@@ -184,6 +184,7 @@ int kernel_irq_setaffinity(unsigned irq, uintmax_t new, uintmax_t *old)
 {
 	char fn[64];
 	FILE *f;
+	int ret = 0;
 	
 	snprintf(fn, sizeof(fn), "/proc/irq/%u/smp_affinity", irq);
 	
@@ -192,10 +193,10 @@ int kernel_irq_setaffinity(unsigned irq, uintmax_t new, uintmax_t *old)
 		return -1; /* IRQ does not exist */
 
 	if (old)
-		fscanf(f, "%jx", old);
+		ret = fscanf(f, "%jx", old);
 
 	fprintf(f, "%jx", new);
 	fclose(f);
 
-	return 0;
+	return ret;
 }
