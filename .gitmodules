@@ -13,9 +13,6 @@
 [submodule "thirdparty/libnl"]
 	path = thirdparty/libnl
 	url = https://github.com/thom311/libnl.git
-[submodule "thirdparty/pciutils"]
-	path = thirdparty/pciutils
-	url = https://github.com/pciutils/pciutils.git
 [submodule "thirdparty/jansson"]
 	path = thirdparty/jansson
 	url = https://github.com/akheron/jansson.git
