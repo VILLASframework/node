@@ -22,6 +22,7 @@
 #define _HOOKS_H_
 
 #include <time.h>
+#include <string.h>
 
 #include "queue.h"
 #include "list.h"

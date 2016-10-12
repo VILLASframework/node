@@ -25,7 +25,7 @@
 #define DEFAULT_QUEUELEN	1024
 
 /** Whether or not to send / receive timestamp & sequence number as first values of payload */
-#define GTNET_SKT_HEADER	1
+#define GTNET_SKT_HEADER	0
 
 /** Width of log output in characters */
 #define LOG_WIDTH		132
