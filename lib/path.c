@@ -111,7 +111,7 @@ static void * path_run(void *arg)
 		debug(DBG_PATH | 5, "Current pool status for path %s: used=%zu avail=%zu", path_name(p), p->pool.stack.size, p->pool.stack.avail);
 
 		/* Fill smps[] free sample blocks from the pool */
-		ready += pool_get_many(&p->pool, (void **) smps, cnt - ready);
+		ready += sample_get_many(&p->pool, smps, cnt - ready);
 		if (ready != cnt)
 			warn("Pool underrun for path %s", path_name(p));
 
