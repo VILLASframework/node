@@ -17,7 +17,7 @@
 #################################################################################
 
 # Project modules
-MODULES = lib plugins src tests thirdparty
+MODULES = lib plugins src tests thirdparty tools
 
 # Default prefix for install target
 PREFIX ?= /usr/local
@@ -97,7 +97,6 @@ everything:
 .PHONY: all clean install docker doc $(MODULES)
 
 install: $(addprefix install-,$(MODULES))
-	install -m 0755 tools/villas.sh $(PREFIX)/bin/villas
 
 clean: $(addprefix clean-,$(MODULES))
 	rm -rf $(BUILDDIR)
