@@ -1,12 +1,12 @@
-DEPS_CMAKE = libwebsockets criterion jansson
+DEPS_CMAKE = libxil libwebsockets criterion jansson
 DEPS_AUTOCONF = libnl libconfig libcurl
 
-DEPS = libxil $(DEPS_CMAKE) $(DEPS_AUTOCONF)
+DEPS = $(DEPS_CMAKE) $(DEPS_AUTOCONF)
 
 .PHONY: $(DEPS)
 
 # Install all dependencies
-thirdparty: $(DEPS)
+thirdparty: libxil
 
 # Install & compile autotools based projects
 $(DEPS_AUTOCONF): | $(BUILDDIR)/thirdparty/$$@/
@@ -19,11 +19,6 @@ $(DEPS_CMAKE): | $(BUILDDIR)/thirdparty/$$@/
 	      -H$(SRCDIR)/thirdparty/$@ \
 	      -B$(BUILDDIR)/thirdparty/$@
 	make  -C$(BUILDDIR)/thirdparty/$@ install
-
-# Install & compile Xilinx standalone drivers
-libxil: | $(BUILDDIR)/thirdparty/$$@/
-	make -C$(BUILDDIR)/thirdparty/$@ \
-	     -f$(SRCDIR)/thirdparty/$@/Makefile install
 
 clean-thirdparty:
 	for DEP in $(DEPS); do \
