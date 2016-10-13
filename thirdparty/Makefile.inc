@@ -27,3 +27,9 @@ clean-thirdparty:
 	    git clean -dxf $$DEP . ; \
 	  popd; \
 	done
+
+install-thirdparty: $(addprefix install-,$(DEPS))
+
+clean-thirdparty: $(addprefix clean-,$(DEPS))
+
+.PHONY: $(DEPS) thirdparty clean-thirdparty install-thirdparty

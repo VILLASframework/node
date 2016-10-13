@@ -17,3 +17,11 @@ $(BUILDDIR)/plugins/%.o: plugins/%.c | $$(dir $$@)
 # Link
 $(PLUGINS):
 	$(CC) $(LIB_LDFLAGS) -o $@ $^ $(LIB_LDLIBS)
+
+install-plugins: plugins
+	# Plugins are not installed to the system for now...
+	
+clean-plugins:
+	rm -rf $(BUILDDIR)/plugins $(PLUGINS)
+
+.PHONY: plugins install-plugins clean-plugins

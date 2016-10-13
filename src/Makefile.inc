@@ -17,6 +17,8 @@ ifeq ($(shell pkg-config blas lapack; echo $$?),0)
 	BENCH_OBJS  += fpga-bench-overruns.o
 endif
 
+src: $(TARGETS)
+
 # Dependencies for individual binaries
 $(BUILDDIR)/fpga:   $(addprefix $(BUILDDIR)/src/,fpga.o fpga-tests.o fpga-bench.o $(BENCH_OBJS))
 $(BUILDDIR)/node:   $(BUILDDIR)/src/node.o
@@ -39,3 +41,8 @@ install-src:
 	install -m 0755 $(BUILDDIR)/signal	-T $(PREFIX)/bin/villas-signal
 	install -m 0755 $(BUILDDIR)/pipe	-T $(PREFIX)/bin/villas-pipe
 	install -m 0755 $(BUILDDIR)/test	-T $(PREFIX)/bin/villas-test
+
+clean-src:
+	rm -rf $(BUILDDIR)/src $(TARGETS)
+
+.PHONY: src src-tests src-tests

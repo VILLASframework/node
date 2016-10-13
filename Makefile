@@ -93,13 +93,10 @@ everything:
 	$(MAKE) PROFILE=1
 	$(MAKE) doc
 	$(MAKE) tests
-	
-.PHONY: all clean install docker doc $(MODULES)
 
 install: $(addprefix install-,$(MODULES))
 
 clean: $(addprefix clean-,$(MODULES))
-	rm -rf $(BUILDDIR)
 
 docker:
 	docker build -t villas .
@@ -112,6 +109,7 @@ doc:
 %/:
 	mkdir -p $@
 
+.PHONY: all everything clean install docker doc
 .PRECIOUS: %/
 .SECONDEXPANSION:
 
