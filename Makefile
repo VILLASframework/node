@@ -113,6 +113,7 @@ doc:
 %/:
 	mkdir -p $@
 
+.PRECIOUS: %/
 .SECONDEXPANSION:
 
 -include $(wildcard $(BUILDDIR)/**/*.d)
