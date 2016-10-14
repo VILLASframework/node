@@ -79,4 +79,4 @@ RUN rm -rf /tmp
 
 WORKDIR /villas
 
-ENTRYPOINT /bin/bash
+ENTRYPOINT make clean && make install && villas node; bash

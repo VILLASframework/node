@@ -84,9 +84,8 @@ CFLAGS += $(addprefix -DWITH_, $(shell echo ${PKGS} | tr a-z- A-Z_ | tr -dc ' A-
 CFLAGS += $(shell pkg-config --cflags ${PKGS})
 LDLIBS += $(shell pkg-config --libs ${PKGS})
 
-# Default target: build everything; no tests, docs
-all: src
-	
+all: src plugins | lib
+
 everything:
 	$(MAKE) DEBUG=1
 	$(MAKE) COVERAGE=1

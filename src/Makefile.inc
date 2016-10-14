@@ -1,30 +1,35 @@
 # Executables
-TARGETS = $(BUILDDIR)/node \
-	  $(BUILDDIR)/pipe  \
-	  $(BUILDDIR)/signal \
-	  $(BUILDDIR)/test \
-	  $(BUILDDIR)/fpga
+TARGETS = $(BUILDDIR)/villas-node \
+	  $(BUILDDIR)/villas-pipe  \
+	  $(BUILDDIR)/villas-signal \
+	  $(BUILDDIR)/villas-test
 
-SRC_LDLIBS = $(LDLIBS) -pthread -lm -lvillas -lxil
+SRC_LDLIBS = $(LDLIBS) -pthread -lm -lvillas
 SRC_CFLAGS = $(CFLAGS)
-SRC_LDFLAGS = $(LDFLAGS)
+SRC_LDFLAGS = $(LDFLAGS) -Wl,-rpath,'$$ORIGIN'
 
-src: $(TARGETS)
+# Enable VILLASfpga support when libxil is available
+ifeq ($(shell pkg-config libxil; echo $$?),0)
+	LIB_SRCS    += $(addprefix lib/nodes/, fpga.c)
+	LIB_SRCS    += $(addprefix lib/kernel/, pci.c vfio.c)
+	LIB_SRCS    += $(wildcard  lib/fpga/*.c)
+	TARGETS     += $(BUILDDIR)/villas-fpga
+	PKGS        += libxil
 
-# Add support for LAPACK / BLAS benchmarks / solvers
-ifeq ($(shell pkg-config blas lapack; echo $$?),0)
-	PKGS        += blas lapack
-	BENCH_OBJS  += fpga-bench-overruns.o
+	# Add support for LAPACK / BLAS benchmarks / solvers
+	ifeq ($(shell pkg-config blas lapack; echo $$?),0)
+		PKGS        += blas lapack
+		BENCH_OBJS  += fpga-bench-overruns.o
+	endif
 endif
 
 src: $(TARGETS)
 
-# Dependencies for individual binaries
-$(BUILDDIR)/fpga:   $(addprefix $(BUILDDIR)/src/,fpga.o fpga-tests.o fpga-bench.o $(BENCH_OBJS))
-$(BUILDDIR)/node:   $(BUILDDIR)/src/node.o
-$(BUILDDIR)/pipe:   $(BUILDDIR)/src/pipe.o
-$(BUILDDIR)/signal: $(BUILDDIR)/src/signal.o
-$(BUILDDIR)/test:   $(BUILDDIR)/src/test.o
+$(TARGETS): $(BUILDDIR)/villas-%: $(BUILDDIR)/src/%.o
+
+# Some additional prereqs for individual binaries
+$(BUILDDIR)/villas-fpga: $(addprefix $(BUILDDIR)/src/,fpga-tests.o fpga-bench.o $(BENCH_OBJS))
+
 
 # Compile executable objects
 $(BUILDDIR)/src/%.o: src/%.c | $$(dir $$@)
@@ -35,12 +40,8 @@ $(TARGETS): | $(LIBS)
 	$(CC) $(SRC_LDFLAGS) $^ $(SRC_LDLIBS) -o $@
 
 # Install
-install-src:
-	install -m 0755 $(BUILDDIR)/node	-T $(PREFIX)/bin/villas-node
-	install -m 0755 $(BUILDDIR)/fpga	-T $(PREFIX)/bin/villas-fpga
-	install -m 0755 $(BUILDDIR)/signal	-T $(PREFIX)/bin/villas-signal
-	install -m 0755 $(BUILDDIR)/pipe	-T $(PREFIX)/bin/villas-pipe
-	install -m 0755 $(BUILDDIR)/test	-T $(PREFIX)/bin/villas-test
+install-src: src
+	install -m 0755 $(TARGETS) $(PREFIX)/bin
 
 clean-src:
 	rm -rf $(BUILDDIR)/src $(TARGETS)

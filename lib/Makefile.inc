@@ -24,13 +24,12 @@ ifeq ($(shell pkg-config libnl-route-3.0; echo $$?),0)
 	LIB_PKGS    += libnl-route-3.0
 endif
 
-# Enable VILLASfpga support when libpci is available
-ifeq ($(shell pkg-config libpci; echo $$?),0)
+# Enable VILLASfpga support when libxil is available
+ifeq ($(shell pkg-config libxil; echo $$?),0)
 	LIB_SRCS    += $(addprefix lib/nodes/, fpga.c)
 	LIB_SRCS    += $(addprefix lib/kernel/, pci.c vfio.c)
 	LIB_SRCS    += $(wildcard  lib/fpga/*.c)
-	LIB_PKGS    += libpci
-	LIB_LDLIBS  += -lxil
+	PKGS        += libxil
 endif
 
 # Enable NGSI support
