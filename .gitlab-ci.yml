@@ -9,20 +9,12 @@ variables:
 
 stages:
   - prepare
-  - dependencies
   - build
   - test
   - deploy
   
 # Templates
 ##############################################################################
-.dep: &dep
-  stage: dependencies
-  script:
-    - make -C thirdparty $CI_BUILD_NAME
-  artifacts:
-    paths:
-      - $PREFIX
 
 .ssh: &ssh
   before_script:
@@ -46,18 +38,6 @@ docker-image:
     - docker build -t $DOCKER_REGISTRY/$DOCKER_IMAGE .
     - docker push $DOCKER_REGISTRY/$DOCKER_IMAGE
 
-# Stage: dependencies
-##############################################################################
-
-libwebsockets:
-  <<dep: *dep
-
-libxil:
-  <<dep: *dep
-
-libxil:
-  <<dep: *dep
-
 # Stage: build
 ##############################################################################
 
@@ -69,9 +49,6 @@ build:
     name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
     paths:
       - $PREFIX
-  dependencies:
-    - libwebsockets
-    - libxil
 
 docs:
   stage: build
@@ -88,18 +65,15 @@ docs:
 
 unit:
   stage: test
-  dependencies:
-    - criterion
-    - build
   script:
-    - test
+    - build/release/villas-node
+    - build/release/testsuite
 
 integration:
   stage: test
   dependencies:
     - build
   script:
-    # Nothing to do here right now
     - true
 
 # Stage: deliver
