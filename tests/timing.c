@@ -6,6 +6,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
+#include <unistd.h>
 #include <criterion/criterion.h>
 
 #include "timing.h"
@@ -75,7 +76,32 @@ Test(timing, time_to_from_double)
 	cr_assert_float_eq(dbl, ref, 1e-9); 
 }
 
-Test(timing, timerfd_wait_until) {
+Test(timing, timerfd_create_rate)
+{
+	struct timespec start, end;
+	
+	double rate = 5, waited;
+	
+	int tfd = timerfd_create_rate(rate);
+	
+	cr_assert(tfd > 0);
+	
+	for (int i = 0; i < 10; i++) {
+		start = time_now();
+
+		timerfd_wait(tfd);
+		
+		end = time_now();
+		waited = time_delta(&start, &end);
+		
+		cr_assert_float_eq(waited, 1.0 / rate, 10e-3, "We slept for %f instead of %f secs in round %d", waited, 1.0 / rate, i);
+	}
+	
+	close(tfd);
+}
+
+Test(timing, timerfd_wait_until)
+{
 	int tfd = timerfd_create(CLOCK_REALTIME, 0);
 	
 	cr_assert(tfd > 0);
@@ -92,5 +118,7 @@ Test(timing, timerfd_wait_until) {
 	
 	double waited = time_delta(&start, &end);
 	
-	cr_assert_float_eq(waited, waitfor, 1e-3, "We slept for %f instead of %f secs", waited, waitfor);
+	cr_assert_float_eq(waited, waitfor, 5e-3, "We slept for %f instead of %f secs", waited, waitfor);
+	
+	close(tfd);
 }
