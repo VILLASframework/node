@@ -59,6 +59,9 @@ RUN dnf -y update && \
 	bison \
 	texinfo
 
+ENV PKG_CONFIG_PATH /usr/local/lib/pkgconfig
+ENV LD_LIBRARY_PATH /usr/local/lib
+
 # Build & Install libxil
 COPY thirdparty/libxil /tmp/libxil
 RUN mkdir -p /tmp/libxil/build && cd /tmp/libxil/build && cmake .. && make install
