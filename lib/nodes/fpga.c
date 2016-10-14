@@ -433,7 +433,7 @@ int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 static struct node_type vt = {
 	.name		= "fpga",
-	.description	= "VILLASfpga PCIe card (libpci)",
+	.description	= "VILLASfpga PCIe card (libxil)",
 	.size		= sizeof(struct fpga_dm),
 	.vectorize	= 1,
 	.parse		= fpga_parse,
