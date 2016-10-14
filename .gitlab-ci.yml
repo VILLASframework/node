@@ -31,12 +31,15 @@ stages:
 docker-image:
   stage: prepare
   # Must match the docker version on the build machine!
-  image: stackbrew/docker:1.8.2
   before_script:
+    - git submodule update --init --recursive
     - docker info
   script:
     - docker build -t $DOCKER_REGISTRY/$DOCKER_IMAGE .
     - docker push $DOCKER_REGISTRY/$DOCKER_IMAGE
+  tags:
+    - shell
+    - linux
 
 # Stage: build
 ##############################################################################
@@ -49,6 +52,8 @@ build:
     name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
     paths:
       - $PREFIX
+  tags:
+    - docker
 
 docs:
   stage: build
@@ -59,6 +64,9 @@ docs:
       - doc/latex/
   script:
     - make doc
+  tags:
+    - docker
+
 
 # Stage: test
 ##############################################################################
@@ -68,6 +76,8 @@ unit:
   script:
     - build/release/villas-node
     - build/release/testsuite
+  tags:
+    - docker
 
 integration:
   stage: test
@@ -75,6 +85,9 @@ integration:
     - build
   script:
     - "true"
+  tags:
+    - docker
+
 
 # Stage: deliver
 ##############################################################################
@@ -89,4 +102,6 @@ deliver:
     - develop
   dependencies:
    - docs
+  tags:
+    - docker
 
