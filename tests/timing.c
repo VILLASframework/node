@@ -10,7 +10,8 @@
 
 #include "timing.h"
 
-Test(timing, time_now) {
+Test(timing, time_now)
+{
 	struct timespec now1 = time_now();
 	struct timespec now2 = time_now();
 	
@@ -20,7 +21,8 @@ Test(timing, time_now) {
 	cr_assert_gt(delta, 0, "time_now() was reordered!");
 }
 
-Test(timing, time_diff) {
+Test(timing, time_diff)
+{
 	struct timespec ts1 = { .tv_sec = 0, .tv_nsec = 1}; /* Value doesnt matter */
 	struct timespec ts2 = { .tv_sec = 1, .tv_nsec = 0}; /* Overflow in nano seconds! */
 	
@@ -31,7 +33,8 @@ Test(timing, time_diff) {
 	cr_assert_eq(ts3.tv_nsec, 999999999);
 }
 
-Test(timing, time_add) {
+Test(timing, time_add)
+{
 	struct timespec ts1 = { .tv_sec = 1, .tv_nsec = 999999999}; /* Value doesnt matter */
 	struct timespec ts2 = { .tv_sec = 1, .tv_nsec =         1}; /* Overflow in nano seconds! */
 	
@@ -42,7 +45,8 @@ Test(timing, time_add) {
 	cr_assert_eq(ts3.tv_nsec, 0);
 }
 
-Test(timing, time_delta) {
+Test(timing, time_delta)
+{
 	struct timespec ts1 = { .tv_sec = 1, .tv_nsec = 123}; /* Value doesnt matter */
 	struct timespec ts2 = { .tv_sec = 5, .tv_nsec = 246}; /* Overflow in nano seconds! */
 	
@@ -51,7 +55,8 @@ Test(timing, time_delta) {
 	cr_assert_float_eq(delta, 4 + 123e-9, 1e-9);
 }
 
-Test(timing, time_from_double) {
+Test(timing, time_from_double)
+{
 	double ref = 1234.56789;
 	
 	struct timespec ts = time_from_double(ref);
@@ -60,7 +65,8 @@ Test(timing, time_from_double) {
 	cr_assert_eq(ts.tv_nsec, 567890000);
 }
 
-Test(timing, time_to_from_double) {
+Test(timing, time_to_from_double)
+{
 	double ref = 1234.56789;
 	
 	struct timespec ts = time_from_double(ref);
