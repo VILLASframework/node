@@ -18,8 +18,8 @@ $(BUILDDIR)/plugins/%.o: plugins/%.c | $$(dir $$@)
 $(PLUGINS):
 	$(CC) $(LIB_LDFLAGS) -o $@ $^ $(LIB_LDLIBS)
 
-install-plugins: plugins
-	# Plugins are not installed to the system for now...
+# Plugins are not installed to the system for now...
+install-plugins:
 	
 clean-plugins:
 	rm -rf $(BUILDDIR)/plugins $(PLUGINS)

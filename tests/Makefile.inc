@@ -18,8 +18,9 @@ $(BUILDDIR)/tests: $(TEST_OBJS) | $(LIBS)
 ifdef COVERAGE
 -include Makefile.gcov.inc
 endif
+
+# Tests are not installed
 install-tests:
-	# Tests are not installed
 	
 clean-tests:
 	rm -rf $(BUILDDIR)/tests $(BUILDDIR)/testsuite

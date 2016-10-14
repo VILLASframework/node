@@ -83,8 +83,7 @@ install-lib: lib
 	install -m 0644 $(LIBS) $(PREFIX)/lib
 	install -m 0755				-d $(PREFIX)/include/villas/
 	install -m 0644 include/villas/*.h 	   $(PREFIX)/include/villas/
-	@echo "note: you may need to run 'ldconfig'"
-	@echo "note: make sure $(PREFIX)/lib is in your /etc/ld.so.conf or $$LD_LIBRARY_PATH"
+	ldconfig
 
 clean-lib:
 	rm -rf $(BUILDDIR)/lib $(LIBS)
