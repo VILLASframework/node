@@ -32,4 +32,8 @@ install-thirdparty: $(addprefix install-,$(DEPS))
 
 clean-thirdparty: $(addprefix clean-,$(DEPS))
 
-.PHONY: $(DEPS) thirdparty clean-thirdparty install-thirdparty
+.PHONY: $(DEPS) thirdparty clean-thirdparty install-thirdparty# libconfig's build system is currently broken.
+# This is a workaround for: https://github.com/hyperrealm/libconfig/issues/53
+libconfig: | libconfig-fix
+libconfig-fix:
+	rm -f $(SRCDIR)/thirdparty/libconfig/lib/scanner.[hc]
