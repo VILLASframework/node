@@ -59,6 +59,21 @@ RUN dnf -y update && \
 	bison \
 	texinfo
 
+# Build & Install libxil
+COPY thirdparty/libxil /tmp/libxil
+RUN mkdir -p /tmp/libxil/build && cd /tmp/libxil/build && cmake .. && make install
+
+# Build & Install Criterion
+COPY thirdparty/criterion /tmp/criterion
+RUN mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && cmake .. && make install
+
+# Build & Install libwebsockets
+COPY thirdparty/libwebsockets /tmp/libwebsockets
+RUN mkdir -p /tmp/libwebsockets/build && cd /tmp/libwebsockets/build && cmake .. && make install
+
+# Cleanup intermediate files from builds
+RUN rm -rf /tmp
+
 WORKDIR /villas
 
 ENTRYPOINT /bin/bash
