@@ -1,5 +1,3 @@
-image: acs-public:5000/villas:latest
-
 variables:
   # This registry is a linked docker container running on the same host
   # and configured in gitlab-ci-runner config.toml as a linked service
@@ -12,17 +10,6 @@ stages:
   - build
   - test
   - deploy
-  
-# Templates
-##############################################################################
-
-.ssh: &ssh
-  before_script:
-    - mkdir -p $HOME/.ssh
-    - echo -e "$SSH_SECRET_KEY" > $HOME/.ssh/id_rsa
-    - chmod 600 $HOME/.ssh/id_rsa
-    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > $HOME/.ssh/config
-    - ssh-keyscan -H $DEPLOY_HOST >> $HOME/.ssh/known_hosts
 
 # Stage: prepare
 ##############################################################################
@@ -47,11 +34,12 @@ docker-image:
 build:
   stage: build
   script:
-    - make
+    - make install
   artifacts:
     name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
     paths:
-      - $PREFIX
+      - build/release/
+  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
   tags:
     - docker
 
@@ -60,10 +48,10 @@ docs:
   artifacts:
     name: "${CI_PROJECT_NAME}-doc-${CI_BUILD_REF}"
     paths:
-      - doc/html/
-      - doc/latex/
+      - build/release/doc/
   script:
     - make doc
+  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
   tags:
     - docker
 
@@ -71,11 +59,28 @@ docs:
 # Stage: test
 ##############################################################################
 
-unit:
+coverage:
   stage: test
   script:
-    - build/release/villas-node
+    - make coverage COVERAGE=1
+  artifacts:
+    name: "${CI_PROJECT_NAME}-coverage-${CI_BUILD_REF}"
+    paths:
+      - build/release-coverage/coverage/
+      - build/release-coverage/coverage.txt
+      - build/release-coverage/coverage.xml
+  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
+  tags:
+    - docker
+
+unit:
+  stage: test
+  dependencies:
+    - build
+  script:
+    - make tests
     - build/release/testsuite
+  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
   tags:
     - docker
 
@@ -84,7 +89,8 @@ integration:
   dependencies:
     - build
   script:
-    - "true"
+    - build/release/villas-node
+  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
   tags:
     - docker
 
@@ -94,14 +100,13 @@ integration:
 
 deliver:
   stage: deploy
-  <<: *ssh
   script:
-    - '[ "$CI_BUILD_REF_NAME" == "develop" ] && scp -pr web/landing.html $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/index.html'
-    - scp -pr doc/html/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
+    - rsync    web/landing.html $DEPLOY_PATH/index.html
+    - rsync -r build/doc/html/  $DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
   only:
     - develop
   dependencies:
    - docs
   tags:
-    - docker
+    - villas-deploy
 

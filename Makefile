@@ -101,8 +101,8 @@ docker:
 	docker build -t villas .
 	docker run -it -p 80:80 -p 443:443 -p 1234:1234 --privileged --cap-add sys_nic --ulimit memlock=1073741824 --security-opt seccomp:unconfined -v $(PWD):/villas villas
 
-doc:
-	( cat Doxyfile ; echo "OUTPUT_DIRECTORY=$(BUILD)/doc/" ) | doxygen -
+doc: | $(BUILDDIR)/doc/
+	( cat Doxyfile ; echo "OUTPUT_DIRECTORY=$(BUILDDIR)/doc/" ) | doxygen -
 
 # Create non-existent directories
 %/:

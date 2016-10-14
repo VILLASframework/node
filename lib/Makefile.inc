@@ -17,31 +17,39 @@ LIB_LDLIBS  = $(LDLIBS) -ldl -lrt
 ######## Node types ########
 
 # Enable Socket node type when libnl3 is available
+ifndef WITHOUT_SOCKET
 ifeq ($(shell pkg-config libnl-route-3.0; echo $$?),0)
 	LIB_SRCS    += $(addprefix lib/nodes/, socket.c)
 	LIB_SRCS    += $(addprefix lib/kernel/, nl.c tc.c if.c)
 	LIB_SRCS    += $(addprefix lib/, msg.c)
 	LIB_PKGS    += libnl-route-3.0
 endif
+endif
 
 # Enable VILLASfpga support when libxil is available
+ifndef WITHOUT_FPGA
 ifeq ($(shell pkg-config libxil; echo $$?),0)
 	LIB_SRCS    += $(addprefix lib/nodes/, fpga.c)
 	LIB_SRCS    += $(addprefix lib/kernel/, pci.c vfio.c)
 	LIB_SRCS    += $(wildcard  lib/fpga/*.c)
 	PKGS        += libxil
 endif
+endif
 
 # Enable NGSI support
+ifndef WITHOUT_NGSI
 ifeq ($(shell pkg-config libcurl jansson; echo $$?),0)
 	LIB_SRCS    += lib/nodes/ngsi.c
 	LIB_PKGS    += libcurl jansson
 endif
+endif
 
 # Enable WebSocket support
+ifndef WITHOUT_WEBSOCKETS
 ifeq ($(shell pkg-config libwebsockets jansson; echo $$?),0)
 	LIB_SRCS    += lib/nodes/websocket.c
 	LIB_PKGS    += libwebsockets jansson
+endif
 endif
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
