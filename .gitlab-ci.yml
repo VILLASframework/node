@@ -101,7 +101,7 @@ integration:
 website:
   stage: deploy
   script:
-    - rsync    web/landing.html $DEPLOY_PATH/index.html
+    - rsync web/ $DEPLOY_PATH/
   only:
     - develop
   tags:
