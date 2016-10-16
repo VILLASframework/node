@@ -88,7 +88,7 @@ static void * path_run(void *arg)
 	/* Main thread loop */
 	for (;;) {
 		/* Fill smps[] free sample blocks from the pool */
-		ready += pool_get_many(&p->pool, (void **) smps, cnt - ready);
+		ready += sample_get_many(&p->pool, smps, cnt - ready);
 		if (ready != cnt)
 			warn("Pool underrun for path %s", path_name(p));
 
