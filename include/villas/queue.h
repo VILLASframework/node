@@ -42,12 +42,12 @@
 #define CACHELINE_SIZE 64
 typedef char cacheline_pad_t[CACHELINE_SIZE];
 
-struct mpmc_queue {
+struct queue {
 	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
 
 	struct memtype const * mem;
 	size_t buffer_mask;
-	struct mpmc_queue_cell {
+	struct queue_cell {
 		atomic_size_t sequence;
 		void *data;
 	} *buffer;
@@ -64,24 +64,24 @@ struct mpmc_queue {
 };
 
 /** Initialize MPMC queue */
-int mpmc_queue_init(struct mpmc_queue *q, size_t size, const struct memtype *mem);
+int queue_init(struct queue *q, size_t size, const struct memtype *mem);
 
 /** Desroy MPMC queue and release memory */
-int mpmc_queue_destroy(struct mpmc_queue *q);
+int queue_destroy(struct queue *q);
 
 /** Return estimation of current queue usage.
  *
  * Note: This is only an estimation and not accurate as long other
  *       threads are performing operations.
  */ 
-size_t mpmc_queue_available(struct mpmc_queue *q);
+size_t queue_available(struct queue *q);
 
-int mpmc_queue_push(struct mpmc_queue *q, void *ptr);
+int queue_push(struct queue *q, void *ptr);
 
-int mpmc_queue_pull(struct mpmc_queue *q, void **ptr);
+int queue_pull(struct queue *q, void **ptr);
 
-int mpmc_queue_push_many(struct mpmc_queue *q, void *ptr[], size_t cnt);
+int queue_push_many(struct queue *q, void *ptr[], size_t cnt);
 
-int mpmc_queue_pull_many(struct mpmc_queue *q, void *ptr[], size_t cnt);
+int queue_pull_many(struct queue *q, void *ptr[], size_t cnt);
 
 #endif /* _MPMC_QUEUE_H_ */
