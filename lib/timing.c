@@ -71,7 +71,7 @@ struct timespec time_add(struct timespec *start, struct timespec *end)
 		.tv_nsec = end->tv_nsec + start->tv_nsec
 	};
 
-	if (sum.tv_nsec > 1000000000) {
+	if (sum.tv_nsec >= 1000000000) {
 		sum.tv_sec  += 1;
 		sum.tv_nsec -= 1000000000;
 	}

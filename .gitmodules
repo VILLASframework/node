@@ -1,0 +1,21 @@
+[submodule "web/socket/flot"]
+	path = web/socket/flot
+	url = https://github.com/flot/flot.git
+[submodule "thirdparty/libconfig"]
+	path = thirdparty/libconfig
+	url = https://github.com/hyperrealm/libconfig.git
+[submodule "thirdparty/libwebsockets"]
+	path = thirdparty/libwebsockets
+	url = https://github.com/warmcat/libwebsockets
+[submodule "thirdparty/criterion"]
+	path = thirdparty/criterion
+	url = https://github.com/stv0g/Criterion
+[submodule "thirdparty/libnl"]
+	path = thirdparty/libnl
+	url = https://github.com/thom311/libnl.git
+[submodule "thirdparty/jansson"]
+	path = thirdparty/jansson
+	url = https://github.com/akheron/jansson.git
+[submodule "thirdparty/libcurl"]
+	path = thirdparty/libcurl
+	url = https://github.com/curl/curl.git

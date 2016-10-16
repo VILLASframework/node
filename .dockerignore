@@ -1,1 +1,4 @@
 *
+!thirdparty/libxil/
+!thirdparty/criterion/
+!thirdparty/libwebsockets/

@@ -225,7 +225,7 @@ int vfio_pci_attach(struct vfio_dev *d, struct vfio_container *c, struct pci_dev
 		error("Failed to get IOMMU group of device");
 
 	/* VFIO device name consists of PCI BDF */
-	snprintf(name, sizeof(name), "%04x:%02x:%02x.%x", pdev->domain, pdev->bus, pdev->dev, pdev->func);
+	snprintf(name, sizeof(name), "%04x:%02x:%02x.%x", pdev->slot.domain, pdev->slot.bus, pdev->slot.device, pdev->slot.function);
 
 	ret = vfio_dev_attach(d, c, name, index);
 	if (ret < 0)

@@ -18,10 +18,9 @@ void hook_stats_header()
 {
 	#define UNIT(u)	"(" YEL(u) ")"
 
-	stats("%-40s|%19s|%19s|%19s|%19s|%19s|%19s|%10s|", "Source " MAG("=>") " Destination",
+	stats("%-40s|%19s|%19s|%19s|%19s|%19s|%10s|", "Source " MAG("=>") " Destination",
 		"OWD"	UNIT("S") " ",
 		"Rate"	UNIT("p/S") " ",
-		"Recv"	UNIT("p") " ",
 		"Drop"	UNIT("p") " ",
 		"Skip"	UNIT("p") " ",
 		"Inval" UNIT("p") " ",
@@ -84,8 +83,8 @@ int hook_stats(struct path *p, struct hook *h, int when, struct sample *smps[], 
 			break;
 			
 		case HOOK_PERIODIC:
-			stats("%-40.40s|%10s|%10s|%10ju|%10ju|%10ju|%10ju|%10ju|", path_name(p), "", "", 
-				p->in->received, p->dropped, p->skipped, p->invalid, p->overrun);
+			stats("%-40.40s|%10s|%10s|%10ju|%10ju|%10ju|%10ju|", path_name(p), "", "", 
+				p->dropped, p->skipped, p->invalid, p->overrun);
 			break;
 	}
 	
@@ -117,26 +116,19 @@ int hook_stats_send(struct path *p, struct hook *h, int when, struct sample *smp
 			break;
 
 		case HOOK_PERIODIC: {
-			int ret, length;
-			char buf[SAMPLE_LEN(9)];
-			struct sample *last, *smp = (struct sample *) buf;
+			int i;
+			char buf[SAMPLE_LEN(16)];
+			struct sample *smp = (struct sample *) buf;
 			
-			ret = queue_get(&p->queue, (void **) &last, p->in->received - 1);
-			if (ret == 1)
-				length = last->length;
-			else
-				length =  -1;
-			
-			smp->data[0].f = p->in->received;
-			smp->data[1].f = length;
-			smp->data[2].f = p->invalid;
-			smp->data[3].f = p->skipped;
-			smp->data[4].f = p->dropped;
-			smp->data[5].f = p->overrun;
-			smp->data[6].f =       p->hist.owd.last,
-			smp->data[7].f = 1.0 / p->hist.gap_msg.last;
-			smp->data[8].f = 1.0 / p->hist.gap_recv.last;
-			smp->length = 9;
+			i = 0;
+			smp->data[i++].f = p->invalid;
+			smp->data[i++].f = p->skipped;
+			smp->data[i++].f = p->dropped;
+			smp->data[i++].f = p->overrun;
+			smp->data[i++].f =       p->hist.owd.last,
+			smp->data[i++].f = 1.0 / p->hist.gap_msg.last;
+			smp->data[i++].f = 1.0 / p->hist.gap_recv.last;
+			smp->length = i;
 			
 			node_write(private->dest, &smp, 1); /* Send single message with statistics to destination node */
 			break;

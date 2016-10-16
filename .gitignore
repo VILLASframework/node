@@ -1,10 +1,2 @@
-*.o
-*.d
-*.so
+/build/
 *~
-
-/node
-/pipe
-/test
-/signal
-/fpga

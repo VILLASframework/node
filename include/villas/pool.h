@@ -12,51 +12,56 @@
 #ifndef _POOL_H_
 #define _POOL_H_
 
-#include "lstack.h"
+#include <sys/types.h>
 
-struct pool_block;
+#include "queue.h"
 
+struct memtype;
+
+/** A thread-safe memory pool */
 struct pool {
-	size_t blocksz;
-	size_t alignment;
+	void *buffer;		/**< Address of the underlying memory area */
+	const struct memtype *mem;
 	
-	struct lstack stack;
+	size_t len;		/**< Length of the underlying memory area */
+	
+	size_t blocksz;		/**< Length of a block in bytes */
+	size_t alignment;	/**< Alignment of a block in bytes */
+	
+	struct mpmc_queue queue; /**< The queue which is used to keep track of free blocks */
 };
 
-/** Initiazlize a pool */
-int pool_init(struct pool *p, size_t blocksz, size_t alignment, void *buf, size_t len);
+#define INLINE static inline __attribute__((unused)) 
 
-/** Allocate hugepages for the pool and initialize it */
-int pool_init_mmap(struct pool *p, size_t blocksz, size_t cnt);
+/** Initiazlize a pool */
+int pool_init(struct pool *p, size_t blocksz, size_t alignment, const struct memtype *mem);
 
 /** Destroy and release memory used by pool. */
-static inline __attribute__((unused)) void pool_destroy(struct pool *p)
-{
-	lstack_destroy(&p->stack);
-}
+int pool_destroy(struct pool *p);
 
 /** Pop cnt values from the stack an place them in the array blocks */
-static inline __attribute__((unused)) ssize_t pool_get_many(struct pool *p, void *blocks[], size_t cnt)
+INLINE ssize_t pool_get_many(struct pool *p, void *blocks[], size_t cnt)
 {
-	return lstack_pop_many(&p->stack, blocks, cnt);
+	return mpmc_queue_pull_many(&p->queue, blocks, cnt);
 }
 
 /** Push cnt values which are giving by the array values to the stack. */
-static inline __attribute__((unused)) ssize_t pool_put_many(struct pool *p, void *blocks[], size_t cnt)
+INLINE ssize_t pool_put_many(struct pool *p, void *blocks[], size_t cnt)
 {
-	return lstack_push_many(&p->stack, blocks, cnt);
+	return mpmc_queue_push_many(&p->queue, blocks, cnt);
 }
 
 /** Get a free memory block from pool. */
-static inline __attribute__((unused)) void * pool_get(struct pool *p)
+INLINE void * pool_get(struct pool *p)
 {
-	return lstack_pop(&p->stack);
+	void *ptr;
+	return mpmc_queue_pull(&p->queue, &ptr) == 1 ? ptr : NULL;
 }
 
 /** Release a memory block back to the pool. */
-static inline __attribute__((unused)) int pool_put(struct pool *p, void *buf)
+INLINE int pool_put(struct pool *p, void *buf)
 {
-	return lstack_push(&p->stack, buf);
+	return mpmc_queue_push(&p->queue, buf);
 }
 
 #endif /* _POOL_H_ */

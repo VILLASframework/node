@@ -1,87 +1,120 @@
-image: acs-public:5000/villas:latest
-
 variables:
   # This registry is a linked docker container running on the same host
   # and configured in gitlab-ci-runner config.toml as a linked service
   DOCKER_REGISTRY: acs-public:5000
   DOCKER_IMAGE: villas:latest
+  PREFIX: /usr/
 
 stages:
   - prepare
-  - dependencies
   - build
+  - test
   - deploy
+
+# Stage: prepare
+##############################################################################
 
 # Build docker image which is used to build & test VILLASnode
 docker-image:
   stage: prepare
-  image: stackbrew/docker:1.8.2
+  # Must match the docker version on the build machine!
   before_script:
+    - git submodule update --init --recursive
     - docker info
   script:
     - docker build -t $DOCKER_REGISTRY/$DOCKER_IMAGE .
     - docker push $DOCKER_REGISTRY/$DOCKER_IMAGE
+  tags:
+    - shell
+    - linux
 
-libwebsockets:
-  stage: dependencies
-  script:
-    - make -C thirdparty libwebsockets-2.0.2
-  artifacts:
-    paths:
-    - thirdparty/libwebsockets-2.0.2/
-
-libxil:
-  stage: dependencies
-  script:
-    - make -C thirdparty/xilinx
-  artifacts:
-    paths:
-    - thirdparty/xilinx/libxil.so
+# Stage: build
+##############################################################################
 
 build:
   stage: build
-  variables:
-    PKG_CONFIG_PATH: /usr/local/lib/pkgconfig/
-  before_script:
-    - make -C thirdparty/libwebsockets-2.0.2/build install
-    - make -C thirdparty/xilinx install
   script:
-    - make
+    - make install
   artifacts:
     name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
     paths:
-      - libvillas.so
-      - fpga
-      - node
-      - pipe
-      - signal
-      - test
+      - build/release/
+  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
+  tags:
+    - docker
 
 docs:
   stage: build
   artifacts:
     name: "${CI_PROJECT_NAME}-doc-${CI_BUILD_REF}"
     paths:
-      - doc/html/
+      - build/release/doc/
   script:
     - make doc
+  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
+  tags:
+    - docker
 
-.ssh: &ssh
-  before_script:
-    - mkdir -p $HOME/.ssh
-    - echo -e "$SSH_SECRET_KEY" > $HOME/.ssh/id_rsa
-    - chmod 600 $HOME/.ssh/id_rsa
-    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > $HOME/.ssh/config
-    - ssh-keyscan -H $DEPLOY_HOST >> $HOME/.ssh/known_hosts
+
+# Stage: test
+##############################################################################
+
+coverage:
+  stage: test
+  script:
+    - make coverage COVERAGE=1
+  artifacts:
+    name: "${CI_PROJECT_NAME}-coverage-${CI_BUILD_REF}"
+    paths:
+      - build/release-coverage/coverage/
+      - build/release-coverage/coverage.txt
+      - build/release-coverage/coverage.xml
+  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
+  tags:
+    - docker
+
+unit:
+  stage: test
+  dependencies:
+    - build
+  script:
+    - make tests
+    - build/release/testsuite
+  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
+  tags:
+    - docker
+
+integration:
+  stage: test
+  dependencies:
+    - build
+  script:
+    - "build/release/villas-node || true"
+  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
+  tags:
+    - docker
+
+
+# Stage: deliver
+##############################################################################
+
+website:
+  stage: deploy
+  script:
+    - rsync web/ $DEPLOY_PATH/
+  only:
+    - develop
+  tags:
+    - villas-deploy
 
 deliver:
   stage: deploy
-  <<: *ssh
   script:
-    - '[ "$CI_BUILD_REF_NAME" == "develop" ] && scp -pr web/landing.html $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/index.html'
-    - scp -pr doc/html/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
-  only:
-    - develop
+    - rsync -r build/release/doc/html/ $DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
+    - rsync -r build/release-coverage/coverage/ $DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
   dependencies:
    - docs
+   - coverage
+  tags:
+    - villas-deploy
 
