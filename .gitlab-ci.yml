@@ -98,15 +98,23 @@ integration:
 # Stage: deliver
 ##############################################################################
 
-deliver:
+website:
   stage: deploy
   script:
     - rsync    web/landing.html $DEPLOY_PATH/index.html
-    - rsync -r build/doc/html/  $DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
   only:
     - develop
+  tags:
+    - villas-deploy
+
+deliver:
+  stage: deploy
+  script:
+    - rsync -r build/release/doc/html/ $DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
+    - rsync -r build/release-coverage/coverage/ $DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
   dependencies:
    - docs
+   - coverage
   tags:
     - villas-deploy
 
