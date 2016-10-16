@@ -59,6 +59,13 @@ RUN dnf -y update && \
 	bison \
 	texinfo
 
+# Tools for coverage and profiling
+RUN dnf -y update && \
+    dnf -y install \
+        python-pip && \
+    pip install \
+        gcovr
+
 ENV PKG_CONFIG_PATH /usr/local/lib/pkgconfig
 ENV LD_LIBRARY_PATH /usr/local/lib
 

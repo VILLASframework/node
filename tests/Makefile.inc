@@ -16,7 +16,7 @@ $(BUILDDIR)/testsuite: $(TEST_OBJS) | $(LIBS)
 	$(CC) $(TEST_LDFLAGS) $(TEST_LDLIBS) $^ -o $@
 
 ifdef COVERAGE
--include Makefile.gcov.inc
+-include tests/Makefile.gcov.inc
 endif
 
 # Tests are not installed

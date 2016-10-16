@@ -89,7 +89,7 @@ integration:
   dependencies:
     - build
   script:
-    - build/release/villas-node
+    - "build/release/villas-node || true"
   image: $DOCKER_REGISTRY/$DOCKER_IMAGE
   tags:
     - docker
