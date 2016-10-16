@@ -28,7 +28,7 @@ struct pool {
 	size_t blocksz;		/**< Length of a block in bytes */
 	size_t alignment;	/**< Alignment of a block in bytes */
 	
-	struct mpmc_queue queue; /**< The queue which is used to keep track of free blocks */
+	struct queue queue; /**< The queue which is used to keep track of free blocks */
 };
 
 #define INLINE static inline __attribute__((unused)) 
@@ -42,26 +42,26 @@ int pool_destroy(struct pool *p);
 /** Pop cnt values from the stack an place them in the array blocks */
 INLINE ssize_t pool_get_many(struct pool *p, void *blocks[], size_t cnt)
 {
-	return mpmc_queue_pull_many(&p->queue, blocks, cnt);
+	return queue_pull_many(&p->queue, blocks, cnt);
 }
 
 /** Push cnt values which are giving by the array values to the stack. */
 INLINE ssize_t pool_put_many(struct pool *p, void *blocks[], size_t cnt)
 {
-	return mpmc_queue_push_many(&p->queue, blocks, cnt);
+	return queue_push_many(&p->queue, blocks, cnt);
 }
 
 /** Get a free memory block from pool. */
 INLINE void * pool_get(struct pool *p)
 {
 	void *ptr;
-	return mpmc_queue_pull(&p->queue, &ptr) == 1 ? ptr : NULL;
+	return queue_pull(&p->queue, &ptr) == 1 ? ptr : NULL;
 }
 
 /** Release a memory block back to the pool. */
 INLINE int pool_put(struct pool *p, void *buf)
 {
-	return mpmc_queue_push(&p->queue, buf);
+	return queue_push(&p->queue, buf);
 }
 
 #endif /* _POOL_H_ */

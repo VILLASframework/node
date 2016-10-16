@@ -26,7 +26,7 @@ static void path_write(struct path *p, bool resend)
 		int sent, tosend, available, released;
 		struct sample *smps[n->vectorize];
 
-		available = mpmc_queue_pull_many(&p->queue, (void **) smps, cnt);
+		available = queue_pull_many(&p->queue, (void **) smps, cnt);
 		if (available < cnt)
 			warn("Queue underrun for path %s: available=%u expected=%u", path_name(p), available, cnt);
 		
@@ -108,7 +108,7 @@ static void * path_run(void *arg)
 			p->skipped += recv - enqueue;
 		}
 
-		enqueued = mpmc_queue_push_many(&p->queue, (void **) smps, enqueue);
+		enqueued = queue_push_many(&p->queue, (void **) smps, enqueue);
 		if (enqueue != enqueued)
 			warn("Failed to enqueue %u samples for path %s", enqueue - enqueued, path_name(p));
 
@@ -219,7 +219,7 @@ int path_prepare(struct path *p)
 	if (ret)
 		error("Failed to allocate memory pool for path");
 	
-	ret = mpmc_queue_init(&p->queue, p->queuelen, &memtype_hugepage);
+	ret = queue_init(&p->queue, p->queuelen, &memtype_hugepage);
 	if (ret)
 		error("Failed to initialize queue for path");
 
@@ -233,7 +233,7 @@ void path_destroy(struct path *p)
 	list_destroy(&p->destinations, NULL, false);
 	list_destroy(&p->hooks, NULL, true);
 	
-	mpmc_queue_destroy(&p->queue);
+	queue_destroy(&p->queue);
 	pool_destroy(&p->pool);
 
 	free(p->_name);

@@ -26,17 +26,17 @@ int pool_init(struct pool *p, size_t blocksz, size_t cnt, const struct memtype *
 	else
 		debug(DBG_POOL | 4, "Allocated %#zx bytes for memory pool", p->len);
 	
-	mpmc_queue_init(&p->queue, cnt, m);
+	queue_init(&p->queue, cnt, m);
 	
 	for (int i = 0; i < cnt; i++)
-		mpmc_queue_push(&p->queue, (char *) p->buffer + i * p->blocksz);
+		queue_push(&p->queue, (char *) p->buffer + i * p->blocksz);
 	
 	return 0;
 }
 
 int pool_destroy(struct pool *p)
 {
-	mpmc_queue_destroy(&p->queue);	
+	queue_destroy(&p->queue);	
 
 	return memory_free(p->mem, p->buffer, p->len);
 }
