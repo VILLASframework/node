@@ -67,10 +67,6 @@ int hook_drop(struct path *p, struct hook *h, int when, struct sample *smps[], s
 {
 	int i, ok, dist;
 
-	/** Don't check the sequence number order in case of gtnet-skt without header */
-	if(!strcmp(p->in->_vt->name, "socket") && !GTNET_SKT_HEADER)
-		return cnt;
-
 	for (i = 0, ok = 0; i < cnt; i++) {
 		h->last = smps[i];
 		

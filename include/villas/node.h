@@ -50,6 +50,8 @@ struct node
 
 	qptr_t sent;		/**< Number of samples sent / written to this node. */
 	qptr_t received;	/**< Number of samples received / read from this node. */
+	
+	qptr_t seq_num;		/**< Manual sequence number in case a node doesn't support it. */
 
 	enum node_state {
 		NODE_INVALID,	/**< This node object is not in a valid state. */

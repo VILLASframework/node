@@ -276,7 +276,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		smp->ts.origin.tv_sec  = header[1];
 		smp->ts.origin.tv_nsec = header[2];
 #else
-		smp->sequence = -1;
+		smp->sequence = n->seq_num++;
 		smp->ts.origin.tv_sec = -1;
 		smp->ts.origin.tv_nsec = -1;
 #endif
