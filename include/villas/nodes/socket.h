@@ -41,29 +41,19 @@ union sockaddr_union {
 };
 
 struct socket {
-	/** The socket descriptor */
-	int sd;
-	/** Socket mark for netem, routing and filtering */
-	int mark;
+	int sd;				/**> The socket descriptor */
+	int mark;			/**> Socket mark for netem, routing and filtering */
 
-	/** The OSI / IP layer which should be used for this socket */
-	enum socket_layer layer;
+	enum socket_layer layer;	/**> The OSI / IP layer which should be used for this socket */
+	enum socket_header header;	/**> Payload header type */
 
-	/** Payload header type */
-	enum socket_header header;
+	union sockaddr_union local;	/**> Local address of the socket */
+	union sockaddr_union remote;	/**> Remote address of the socket */
 
-	/** Local address of the socket */
-	union sockaddr_union local;
-	/** Remote address of the socket */
-	union sockaddr_union remote;
+	struct rtnl_qdisc *tc_qdisc;	/**> libnl3: Network emulator queuing discipline */
+	struct rtnl_cls *tc_classifier;	/**> libnl3: Firewall mark classifier */
 
-	/** libnl3: Network emulator queuing discipline */
-	struct rtnl_qdisc *tc_qdisc;
-	/** libnl3: Firewall mark classifier */
-	struct rtnl_cls *tc_classifier;
-
-	/* Linked list _per_interface_ */
-	struct socket *next;
+	struct socket *next;		/* Linked list _per_interface_ */
 };
 
 
