@@ -204,11 +204,11 @@ void printb(void *mem, size_t len);
 void printdw(void *mem, size_t len);
 
 /** Get CPU timestep counter */
-__attribute__((always_inline)) static inline uint64_t rdtscp()
+__attribute__((always_inline)) static inline uint64_t rdtsc()
 {
 	uint64_t tsc;
 
-	__asm__ ("rdtscp;"
+	__asm__ ("rdtsc;"
 		 "shl $32, %%rdx;"
 		 "or %%rdx,%%rax"
 		: "=a" (tsc)
