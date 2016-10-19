@@ -82,7 +82,7 @@ COPY thirdparty/libwebsockets /tmp/libwebsockets
 RUN mkdir -p /tmp/libwebsockets/build && cd /tmp/libwebsockets/build && cmake .. && make install
 
 # Cleanup intermediate files from builds
-RUN rm -rf /tmp
+RUN rm -rf /tmp/*
 
 WORKDIR /villas
 
