@@ -76,7 +76,7 @@ Test(timing, time_to_from_double)
 	cr_assert_float_eq(dbl, ref, 1e-9); 
 }
 
-Test(timing, timerfd_create_rate)
+Test(timing, timerfd_create_rate, .timeout = 20)
 {
 	struct timespec start, end;
 	
@@ -100,7 +100,7 @@ Test(timing, timerfd_create_rate)
 	close(tfd);
 }
 
-Test(timing, timerfd_wait_until)
+Test(timing, timerfd_wait_until, .timeout = 1)
 {
 	int tfd = timerfd_create(CLOCK_REALTIME, 0);
 	
