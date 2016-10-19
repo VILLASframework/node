@@ -19,23 +19,20 @@
 
 void * memory_alloc(const struct memtype *m, size_t len)
 {
+	debug(DBG_MEM | 2, "Allocating %zu byte of %s memory", len, m->name);
 	return m->alloc(len);
 }
 
 void * memory_alloc_aligned(const struct memtype *m, size_t len, size_t alignment)
 {
-	warn("memory_alloc_aligned: not implemented yet!");
-	return memory_alloc(m, len);
-}
-
-void * memory_aligned_alloc(const struct memtype *m, size_t len, size_t align)
-{
-	warn("memory_aligned_alloc: not implemented yet. Falling back to unaligned version.");
+	debug(DBG_MEM | 2, "Allocating %zu byte of %zu-byte-aligned %s memory", len, alignment, m->name);
+	warn("%s: not implemented yet!", __FUNCTION__);
 	return memory_alloc(m, len);
 }
 
 int memory_free(const struct memtype *m, void *ptr, size_t len)
 {
+	debug(DBG_MEM | 2, "Releasing %zu bytes of %s memory", len, m->name);
 	return m->free(ptr, len);
 }
 
@@ -85,7 +82,7 @@ const struct memtype memtype_hugepage = {
 	.flags = MEMORY_MMAP | MEMORY_HUGEPAGE,
 	.alloc = memory_hugepage_alloc,
 	.free = memory_hugepage_free,
-	.alignment = 1 << 21  /* 2 MiB hugepage */
+	.alignment = 21  /* 2 MiB hugepage */
 };
 
 /** @todo */
@@ -93,5 +90,5 @@ const struct memtype memtype_dma = {
 	.name = "dma",
 	.flags = MEMORY_DMA | MEMORY_MMAP,
 	.alloc = NULL, .free = NULL,
-	.alignment = 1 << 12
+	.alignment = 12
 };
