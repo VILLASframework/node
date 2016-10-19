@@ -15,8 +15,7 @@
 #include <sys/types.h>
 
 #include "queue.h"
-
-struct memtype;
+#include "memory.h"
 
 /** A thread-safe memory pool */
 struct pool {
@@ -34,7 +33,7 @@ struct pool {
 #define INLINE static inline __attribute__((unused)) 
 
 /** Initiazlize a pool */
-int pool_init(struct pool *p, size_t blocksz, size_t alignment, const struct memtype *mem);
+int pool_init(struct pool *p, size_t cnt, size_t blocksz, const struct memtype *mem);
 
 /** Destroy and release memory used by pool. */
 int pool_destroy(struct pool *p);
