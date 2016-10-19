@@ -12,8 +12,10 @@
 #include "memory.h"
 #include "kernel/kernel.h"
 
-int pool_init(struct pool *p, size_t blocksz, size_t cnt, const struct memtype *m)
+int pool_init(struct pool *p, size_t cnt, size_t blocksz, const struct memtype *m)
 {
+	int ret;
+
 	/* Make sure that we use a block size that is aligned to the size of a cache line */
 	p->alignment = kernel_get_cacheline_size();
 	p->blocksz = blocksz * CEIL(blocksz, p->alignment);
@@ -25,12 +27,14 @@ int pool_init(struct pool *p, size_t blocksz, size_t cnt, const struct memtype *
 		serror("Failed to allocate memory for memory pool");
 	else
 		debug(DBG_POOL | 4, "Allocated %#zx bytes for memory pool", p->len);
-	
-	queue_init(&p->queue, cnt, m);
+
+	ret = queue_init(&p->queue, cnt, m);
+	if (ret)
+		return ret;
 	
 	for (int i = 0; i < cnt; i++)
 		queue_push(&p->queue, (char *) p->buffer + i * p->blocksz);
-	
+
 	return 0;
 }
 
