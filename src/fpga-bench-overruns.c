@@ -115,9 +115,9 @@ int fpga_benchmark_overruns(struct fpga *f)
 		for (int i = 0; i < runs + BENCH_WARMUP; i++) {
 			dma_read(dm, mem.base_phys, 0x200);
 
-			start = rdtscp();
+			start = rdtsc();
 			lapack_workload(p, A);
-			stop = rdtscp();
+			stop = rdtsc();
 
 			dma_read_complete(dm, NULL, NULL);
 

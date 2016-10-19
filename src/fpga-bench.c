@@ -108,7 +108,7 @@ int fpga_benchmark_jitter(struct fpga *f)
 	XTmrCtr_SetResetValue(xtmr, 0, period * FPGA_AXI_HZ);
 	XTmrCtr_Start(xtmr, 0);
 
-	uint64_t end, start = rdtscp();
+	uint64_t end, start = rdtsc();
 	for (int i = 0; i < runs; i++) {
 		uint64_t cnt = intc_wait(f->intc, tmr->irq);
 		if (cnt != 1)
@@ -117,7 +117,7 @@ int fpga_benchmark_jitter(struct fpga *f)
 		/* Ackowledge IRQ */
 		XTmrCtr_WriteReg((uintptr_t) f->map + tmr->baseaddr, 0, XTC_TCSR_OFFSET, XTmrCtr_ReadReg((uintptr_t) f->map + tmr->baseaddr, 0, XTC_TCSR_OFFSET));
 
-		end = rdtscp();
+		end = rdtsc();
 		hist[i] = end - start;
 		start = end;
 	}
@@ -157,11 +157,11 @@ int fpga_benchmark_latency(struct fpga *f)
 		error("Failed to enable interrupts");
 
 	for (int i = 0; i < runs; i++) {
-		start = rdtscp();
+		start = rdtsc();
 		XIntc_Out32((uintptr_t) f->map + f->intc->baseaddr + XIN_ISR_OFFSET, 0x100);
 
 		intc_wait(f->intc, 8);
-		end = rdtscp();
+		end = rdtsc();
 
 		hist[i] = end - start;
 	}
@@ -239,7 +239,7 @@ int fpga_benchmark_datamover(struct fpga *f)
 
 		uint64_t runs = BENCH_RUNS >> exp;
 		for (int i = 0; i < runs + BENCH_WARMUP; i++) {
-			start = rdtscp();
+			start = rdtsc();
 #if BENCH_DM == 1
 			ssize_t ret;
 
@@ -255,7 +255,7 @@ int fpga_benchmark_datamover(struct fpga *f)
 			if (ret)
 				error("DMA ping pong failed");
 #endif
-			stop = rdtscp();
+			stop = rdtsc();
 
 			if (memcmp(src.base_virt, dst.base_virt, len))
 				warn("Compare failed");
@@ -304,13 +304,13 @@ int fpga_benchmark_memcpy(struct fpga *f)
 		uint64_t runs = (BENCH_RUNS << 2) >> exp;
 
 		for (int i = 0; i < runs + BENCH_WARMUP; i++) {
-			start = rdtscp();
+			start = rdtsc();
 			
 			for (int j = 0; j < len / 4; j++)
 //				mapi[j] = j;		// write
 				dummy += mapi[j];	// read
 
-			end = rdtscp();
+			end = rdtsc();
 		
 			if (i > BENCH_WARMUP)
 				total += end - start;
