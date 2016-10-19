@@ -113,7 +113,7 @@ int node_start(struct node *n)
 	if (ret == 0)
 		n->state = NODE_RUNNING;
 	
-	n->seq_num = 0; /** @todo is it the appropriate place to initialize seq_num? */
+	n->sequence = 0;
 	
 	return ret;
 }
