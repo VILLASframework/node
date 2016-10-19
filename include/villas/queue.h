@@ -1,93 +1,87 @@
-/** Lock-free Single-Producer Single-consumer (SPSC) queue.
+/** Lock-free Multiple-Producer Multiple-consumer (MPMC) queue.
  *
- * This datastructure queues void pointers in a FIFO style.
- * Every queue element has an associated reference count which is
- * used to tell wheater the queue is full or empty.
+ * Based on Dmitry Vyukov#s Bounded MPMC queue:
+ *   http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
  *
- * Queue head and tail pointers are not part of this datastructure.
- * In combination with the reference counting, this enables multiple
- * readers each with its own head pointer.
- * Each reader will read the same data.
- *
- * @file
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
- *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ * @author Steffen Vogel <post@steffenvogel.de>
+ * @copyright 2016 Steffen Vogel
+ * @license BSD 2-Clause License
+ * 
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modiffication, are permitted provided that the following conditions are met:
+ * 
+ * * Redistributions of source code must retain the above copyright notice, this
+ *   list of conditions and the following disclaimer.
+ * 
+ * * Redistributions in binary form must reproduce the above copyright notice,
+ *   this list of conditions and the following disclaimer in the documentation
+ *   and/or other materials provided with the distribution.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _QUEUE_H_
-#define _QUEUE_H_
+#ifndef _MPMC_QUEUE_H_
+#define _MPMC_QUEUE_H_
 
-#include <stddef.h>
 #include <stdint.h>
 #include <stdatomic.h>
 
-typedef uintmax_t qptr_t;
+#include "memory.h"
 
-struct queue {
-	        size_t size;	/**< Number of pointers in queue::array */
-	_Atomic int *refcnts;	/**< Reference counts to blocks in queue::array */
-	_Atomic int  readers;	/**< Initial reference count for pushed blocks */
+#define CACHELINE_SIZE 64
+typedef char cacheline_pad_t[CACHELINE_SIZE];
 
-	void **pointers;	/**< Pointers to queue data */
+struct mpmc_queue {
+	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
+
+	struct memtype const * mem;
+	size_t buffer_mask;
+	struct mpmc_queue_cell {
+		atomic_size_t sequence;
+		void *data;
+	} *buffer;
+
+	cacheline_pad_t	_pad1;	/**> Producer area: only producers read & write */
+
+	atomic_size_t	tail;	/**> Queue tail pointer */
+
+	cacheline_pad_t	_pad2;	/**> Consumer area: only consumers read & write */
+
+	atomic_size_t	head;	/**> Queue head pointer */
+
+	cacheline_pad_t	_pad3;	/**> @todo Why needed? */
 };
 
-/** Initiliaze a new queue and allocate memory. */
-int queue_init(struct queue *q, size_t size);
+/** Initialize MPMC queue */
+int mpmc_queue_init(struct mpmc_queue *q, size_t size, const struct memtype *mem);
 
-/** Release memory of queue. */
-void queue_destroy(struct queue *q);
+/** Desroy MPMC queue and release memory */
+int mpmc_queue_destroy(struct mpmc_queue *q);
 
-/** Increment the number of readers for this queue.
+/** Return estimation of current queue usage.
  *
- * Important: To garuantee thread-safety this function must by called by
- *            the (only) writer which holds \p tail.
- */
-void queue_reader_add(struct queue *q, qptr_t head, qptr_t tail);
+ * Note: This is only an estimation and not accurate as long other
+ *       threads are performing operations.
+ */ 
+size_t mpmc_queue_available(struct mpmc_queue *q);
 
-/** Decrement the number of readers for this queue.
- *
- * Important: To garuantee thread-safety this function must by called by
- *            the (only) writer which holds \p tail.
- */
-void queue_reader_remove(struct queue *q, qptr_t head, qptr_t tail);
+int mpmc_queue_push(struct mpmc_queue *q, void *ptr);
 
-/** Enqueue up to \p cnt elements from \p ptrs[] at the queue tail pointed by \p tail.
- *
- * It may happen that the queue is (nearly) full and there is no more
- * space to enqueue more elments.
- * In this case a call to this function will return a value which is smaller than \p cnt
- * or even zero if the queue was already full.
- *
- * @param q A pointer to the queue datastructure.
- * @param[in] ptrs An array of void-pointers which should be enqueued.
- * @param cnt The length of the pointer array \p ptrs.
- * @param[in,out] tail A pointer to the current tail of the queue. The tail will be updated to new tail after eqeuing.
- * @return The function returns the number of successfully enqueued elements from \p ptrs.
- */
-int queue_push_many(struct queue *q, void *ptrs[], size_t cnt, qptr_t *tail);
+int mpmc_queue_pull(struct mpmc_queue *q, void **ptr);
 
-/** Dequeue up to \p cnt elements from the queue and place them into the array \p ptrs[].
- *
- * @param q A pointer to the queue datastructure.
- * @param[out] ptrs An array with space at least \cnt elements which will receive pointers to the released elements.
- * @param cnt The maximum number of elements which should be dequeued. It defines the size of \p ptrs.
- * @param[in,out] head A pointer to a queue head. The value will be updated to reflect the new head.
- * @return The number of elements which have been dequeued <b>and whose reference counts have reached zero</b>.
- */
-int queue_pull_many(struct queue *q, void *ptrs[], size_t cnt, qptr_t *head);
+int mpmc_queue_push_many(struct mpmc_queue *q, void *ptr[], size_t cnt);
 
-/** Fill \p ptrs with \p cnt elements of the queue starting at entry \p pos. */
-int queue_get_many(struct queue *q, void *ptrs[], size_t cnt, qptr_t pos);
+int mpmc_queue_pull_many(struct mpmc_queue *q, void *ptr[], size_t cnt);
 
-
-int queue_get(struct queue *q, void **ptr, qptr_t pos);
-
-/** Enqueue a new block at the tail of the queue which is given by the qptr_t. */
-int queue_push(struct queue *q, void *ptr, qptr_t *tail);
-
-/** Dequeue the first block at the head of the queue. */
-int queue_pull(struct queue *q, void **ptr, qptr_t *head);
-
-#endif /* _QUEUE_H_ */
+#endif /* _MPMC_QUEUE_H_ */

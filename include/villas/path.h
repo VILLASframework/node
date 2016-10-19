@@ -42,7 +42,7 @@ struct path
 	
 	struct node *in;		/**< Pointer to the incoming node */
 	
-	struct queue queue;		/**< A ring buffer for all received messages (unmodified) */
+	struct mpmc_queue queue;	/**< A ring buffer for all received messages (unmodified) */
 	struct pool pool;		/**< Memory pool for messages / samples. */
 
 	struct list destinations;	/**< List of all outgoing nodes */

@@ -46,4 +46,44 @@ RUN dnf -y update && \
 	rpmdevtools \
 	rpm-build
 
-ENTRYPOINT /bin/bash
+# Tools to build dependencies
+RUN dnf -y update && \
+    dnf -y install \
+	git \
+	gcc-c++ \
+	autoconf \
+	automake \
+	autogen \
+	libtool \
+	flex \
+	bison \
+	texinfo
+
+# Tools for coverage and profiling
+RUN dnf -y update && \
+    dnf -y install \
+        python-pip && \
+    pip install \
+        gcovr
+
+ENV PKG_CONFIG_PATH /usr/local/lib/pkgconfig
+ENV LD_LIBRARY_PATH /usr/local/lib
+
+# Build & Install libxil
+COPY thirdparty/libxil /tmp/libxil
+RUN mkdir -p /tmp/libxil/build && cd /tmp/libxil/build && cmake .. && make install
+
+# Build & Install Criterion
+COPY thirdparty/criterion /tmp/criterion
+RUN mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && cmake .. && make install
+
+# Build & Install libwebsockets
+COPY thirdparty/libwebsockets /tmp/libwebsockets
+RUN mkdir -p /tmp/libwebsockets/build && cd /tmp/libwebsockets/build && cmake .. && make install
+
+# Cleanup intermediate files from builds
+RUN rm -rf /tmp
+
+WORKDIR /villas
+
+ENTRYPOINT make clean && make install && villas node; bash

@@ -23,17 +23,10 @@ static void path_write(struct path *p, bool resend)
 {
 	list_foreach(struct node *n, &p->destinations) {
 		int cnt = n->vectorize;
-		int sent, tosend, base, available, release, released;
+		int sent, tosend, available, released;
 		struct sample *smps[n->vectorize];
 
-		/* The first message in the chunk which we want to send */
-		if (resend)
-			base = p->in->received - cnt; /* we simply resend the last vector of samples */
-		else {
-			base = n->sent;
-		}
-
-		available = queue_get_many(&p->queue, (void **) smps, cnt, base);
+		available = mpmc_queue_pull_many(&p->queue, (void **) smps, cnt);
 		if (available < cnt)
 			warn("Queue underrun for path %s: available=%u expected=%u", path_name(p), available, cnt);
 		
@@ -52,18 +45,9 @@ static void path_write(struct path *p, bool resend)
 
 		debug(DBG_PATH | 15, "Sent %u messages to node %s", sent, node_name(n));
 
-		/* Release samples from queue in case they are not sent periodically. */
-		if (resend)
-			continue;
-		
-		/* Decrement reference count and release samples back to pool if we had the last reference */
-		release = queue_pull_many(&p->queue, (void **) smps, sent, &n->sent);
-		if (release > 0)
-			debug(DBG_PATH | 3, "Releasing %u samples to pool for path %s", release, path_name(p));
-		
-		released = pool_put_many(&p->pool, (void **) smps, release);
-		if (release != released)
-			warn("Failed to release %u samples to pool for path %s", release - released, path_name(p));
+		released = pool_put_many(&p->pool, (void **) smps, sent);
+		if (sent != released)
+			warn("Failed to release %u samples to pool for path %s", sent - released, path_name(p));
 	}
 }
 
@@ -83,9 +67,6 @@ static void * path_run_async(void *arg)
 			warn("Overrun detected for path: overruns=%" PRIu64, expir);
 		}
 		
-		if (p->in->received == 0)
-			continue;
-
 		if (hook_run(p, NULL, 0, HOOK_ASYNC))
 			continue;
 
@@ -106,10 +87,6 @@ static void * path_run(void *arg)
 
 	/* Main thread loop */
 	for (;;) {
-		struct node *out = (struct node *) list_first(&p->destinations);
-		debug(DBG_PATH | 5, "Current queue status for path %s: ready=%u write=%ju read[0]=%ju", path_name(p), ready, p->in->received, out->sent);
-		debug(DBG_PATH | 5, "Current pool status for path %s: used=%zu avail=%zu", path_name(p), p->pool.stack.size, p->pool.stack.avail);
-
 		/* Fill smps[] free sample blocks from the pool */
 		ready += sample_get_many(&p->pool, smps, cnt - ready);
 		if (ready != cnt)
@@ -131,29 +108,12 @@ static void * path_run(void *arg)
 			p->skipped += recv - enqueue;
 		}
 
-		enqueued = queue_push_many(&p->queue, (void **) smps, enqueue, &p->in->received);
+		enqueued = mpmc_queue_push_many(&p->queue, (void **) smps, enqueue);
 		if (enqueue != enqueued)
 			warn("Failed to enqueue %u samples for path %s", enqueue - enqueued, path_name(p));
 
 		ready -= enqueued;
 
-		list_foreach(struct hook *h, &p->hooks) {
-			int pull, release, released;
-			
-			pull = p->in->received - h->head - h->history;
-			if (pull > 0) {
-				struct sample *smps[pull];
-				
-				release = queue_pull_many(&p->queue, (void **) smps, pull, &h->head);
-				if (release > 0)
-					debug(DBG_PATH | 3, "Releasing %u samples from queue of path %s", release, path_name(p));
-				
-				released = pool_put_many(&p->pool, (void **) smps, release);
-				if (release != released)
-					warn("Failed to release %u samples to pool of path %s", release - released, path_name(p));
-			}
-		}
-		
 		debug(DBG_PATH | 3, "Enqueuing %u samples to queue of path %s", enqueue, path_name(p));
 
 		/* At fixed rate mode, messages are send by another (asynchronous) thread */
@@ -255,22 +215,14 @@ int path_prepare(struct path *p)
 		error("Failed to parse arguments for hooks of path: %s", path_name(p));
 
 	/* Initialize queue */
-	ret = pool_init_mmap(&p->pool, SAMPLE_LEN(p->samplelen), p->queuelen);
+	ret = pool_init(&p->pool, SAMPLE_LEN(p->samplelen), p->queuelen, &memtype_hugepage);
 	if (ret)
 		error("Failed to allocate memory pool for path");
 	
-	ret = queue_init(&p->queue, p->queuelen);
+	ret = mpmc_queue_init(&p->queue, p->queuelen, &memtype_hugepage);
 	if (ret)
 		error("Failed to initialize queue for path");
-	
-	/* Add a head pointer for each hook to the queue */
-	list_foreach(struct hook *h, &p->hooks)
-		queue_reader_add(&p->queue, h->head, p->in->received);
 
-	/* Add a head pointer for each destination node to the queue. */
-	list_foreach(struct node *out, &p->destinations)
-		queue_reader_add(&p->queue, out->sent, p->in->received);
-	
 	return 0;
 }
 
@@ -281,7 +233,7 @@ void path_destroy(struct path *p)
 	list_destroy(&p->destinations, NULL, false);
 	list_destroy(&p->hooks, NULL, true);
 	
-	queue_destroy(&p->queue);
+	mpmc_queue_destroy(&p->queue);
 	pool_destroy(&p->pool);
 
 	free(p->_name);
