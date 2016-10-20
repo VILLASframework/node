@@ -35,9 +35,11 @@ struct path
 {
 	enum {
 		PATH_INVALID,		/**< Path is invalid. */
-		PATH_CREATED,		/**< Path has been created. */
+		PATH_CREATED,		/**< Path has been created: lists initialized */
+		PATH_INITIALIZED,	/**< Path queues, memory pools & hook system initialized. */
 		PATH_RUNNING,		/**< Path is currently running. */
-		PATH_STOPPED		/**< Path has been stopped. */
+		PATH_STOPPED,		/**< Path has been stopped. */
+		PATH_DESTROYED		/**< Path is destroyed. */
 	} state;			/**< Path state */
 	
 	struct node *in;		/**< Pointer to the incoming node */

@@ -120,10 +120,10 @@ int path_stop(struct path *p)
 	pthread_cancel(p->recv_tid);
 	pthread_join(p->recv_tid, NULL);
 
-	p->state = PATH_STOPPED;
-
 	if (hook_run(p, NULL, 0, HOOK_PATH_STOP))
 		return -1;
+
+	p->state = PATH_STOPPED;
 
 	return 0;
 }
@@ -179,6 +179,8 @@ int path_prepare(struct path *p)
 	ret = queue_init(&p->queue, p->queuelen, &memtype_hugepage);
 	if (ret)
 		error("Failed to initialize queue for path");
+	
+	p->state = PATH_INITIALIZED;
 
 	return 0;
 }
@@ -192,6 +194,8 @@ void path_destroy(struct path *p)
 	
 	queue_destroy(&p->queue);
 	pool_destroy(&p->pool);
+	
+	p->state = PATH_DESTROYED;
 
 	free(p->_name);
 }
