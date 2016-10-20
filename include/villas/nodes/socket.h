@@ -29,8 +29,9 @@ enum socket_layer {
 };
 
 enum socket_header {
-	SOCKET_HEADER_DEFAULT,		/**> Default header in the payload, (see msg_format.h) */
-	SOCKET_HEADER_GTNET_SKT		/**> No header in the payload, same as HDR_NONE*/
+	SOCKET_HEADER_DEFAULT,	/**> Default header in the payload, (see msg_format.h) */
+	SOCKET_HEADER_NONE,	/**> No header in the payload, same as HDR_NONE*/
+	SOCKET_HEADER_FAKE	/**> Same as SOCKET_HEADER_NONE but using the first three data values as: sequence, seconds & nano-seconds. */
 };
 
 union sockaddr_union {
