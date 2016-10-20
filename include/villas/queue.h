@@ -52,15 +52,15 @@ struct queue {
 		void *data;
 	} *buffer;
 
-	cacheline_pad_t	_pad1;	/**> Producer area: only producers read & write */
+	cacheline_pad_t	_pad1;	/**< Producer area: only producers read & write */
 
-	atomic_size_t	tail;	/**> Queue tail pointer */
+	atomic_size_t	tail;	/**< Queue tail pointer */
 
-	cacheline_pad_t	_pad2;	/**> Consumer area: only consumers read & write */
+	cacheline_pad_t	_pad2;	/**< Consumer area: only consumers read & write */
 
-	atomic_size_t	head;	/**> Queue head pointer */
+	atomic_size_t	head;	/**< Queue head pointer */
 
-	cacheline_pad_t	_pad3;	/**> @todo Why needed? */
+	cacheline_pad_t	_pad3;	/**< @todo Why needed? */
 };
 
 /** Initialize MPMC queue */
