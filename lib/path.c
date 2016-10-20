@@ -51,32 +51,7 @@ static void path_write(struct path *p, bool resend)
 	}
 }
 
-/** Send messages asynchronously */
-static void * path_run_async(void *arg)
-{
-	struct path *p = arg;
-
-	/* Block until 1/p->rate seconds elapsed */
-	for (;;) {
-		/* Check for overruns */
-		uint64_t expir = timerfd_wait(p->tfd);
-		if (expir == 0)
-			perror("Failed to wait for timer");
-		else if (expir > 1) {
-			p->overrun += expir;
-			warn("Overrun detected for path: overruns=%" PRIu64, expir);
-		}
-		
-		if (hook_run(p, NULL, 0, HOOK_ASYNC))
-			continue;
-
-		path_write(p, true);
-	}
-
-	return NULL;
-}
-
-/** Receive messages */
+/** Main thread function per path: receive -> sent messages */
 static void * path_run(void *arg)
 {
 	struct path *p = arg;
@@ -116,9 +91,7 @@ static void * path_run(void *arg)
 
 		debug(DBG_PATH | 3, "Enqueuing %u samples to queue of path %s", enqueue, path_name(p));
 
-		/* At fixed rate mode, messages are send by another (asynchronous) thread */
-		if (p->rate == 0)
-			path_write(p, false);
+		path_write(p);
 	}
 
 	return NULL;
@@ -128,25 +101,16 @@ int path_start(struct path *p)
 {
 	int ret;
 
-	info("Starting path: %s (#hooks=%zu, rate=%.1f)",
-		path_name(p), list_length(&p->hooks), p->rate);
+	info("Starting path: %s (#hooks=%zu)",
+		path_name(p), list_length(&p->hooks));
 
 	ret = hook_run(p, NULL, 0, HOOK_PATH_START);
 	if (ret)
 		return -1;
 
-	/* At fixed rate mode, we start another thread for sending */
-	if (p->rate) {
-		p->tfd = timerfd_create_rate(p->rate);
-		if (p->tfd < 0)
-			serror("Failed to create timer");
-
-		pthread_create(&p->sent_tid, NULL, &path_run_async, p);
-	}
-	
 	p->state = PATH_RUNNING;
 
-	return pthread_create(&p->recv_tid, NULL, &path_run,  p);
+	return pthread_create(&p->tid, NULL, &path_run,  p);
 }
 
 int path_stop(struct path *p)
@@ -156,13 +120,6 @@ int path_stop(struct path *p)
 	pthread_cancel(p->recv_tid);
 	pthread_join(p->recv_tid, NULL);
 
-	if (p->rate) {
-		pthread_cancel(p->sent_tid);
-		pthread_join(p->sent_tid, NULL);
-
-		close(p->tfd);
-	}
-	
 	p->state = PATH_STOPPED;
 
 	if (hook_run(p, NULL, 0, HOOK_PATH_STOP))

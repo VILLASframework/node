@@ -42,7 +42,7 @@ struct path
 	
 	struct node *in;		/**< Pointer to the incoming node */
 	
-	struct queue queue;	/**< A ring buffer for all received messages (unmodified) */
+	struct queue queue;		/**< A ring buffer for all received messages (unmodified) */
 	struct pool pool;		/**< Memory pool for messages / samples. */
 
 	struct list destinations;	/**< List of all outgoing nodes */
@@ -51,11 +51,8 @@ struct path
 	int samplelen;			/**< Maximum number of values per sample for this path. */
 	int queuelen;			/**< Size of sample queue for this path. */
 	int enabled;			/**< Is this path enabled */
-	int tfd;			/**< Timer file descriptor for fixed rate sending */
-	double rate;			/**< Send messages with a fixed rate over this path */
 
-	pthread_t recv_tid;		/**< The thread id for this path */
-	pthread_t sent_tid;		/**< A second thread id for fixed rate sending thread */
+	pthread_t tid;			/**< The thread id for this path */
 
 	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path */
 	
@@ -74,7 +71,6 @@ struct path
 	uintmax_t invalid;		/**< Counter for invalid messages */
 	uintmax_t skipped;		/**< Counter for skipped messages due to hooks */
 	uintmax_t dropped;		/**< Counter for dropped messages due to reordering */
-	uintmax_t overrun;		/**< Counter of overruns for fixed-rate sending */
 	
 	/** @} */
 };

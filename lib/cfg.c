@@ -201,8 +201,6 @@ int cfg_parse_path(config_setting_t *cfg,
 		reverse = 0;
 	if (!config_setting_lookup_bool(cfg, "enabled", &p->enabled))
 		p->enabled = 1;
-	if (!config_setting_lookup_float(cfg, "rate", &p->rate))
-		p->rate = 0; /* disabled */
 
 	p->cfg = cfg;
 
