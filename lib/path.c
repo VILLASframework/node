@@ -112,8 +112,8 @@ int path_stop(struct path *p)
 {
 	info("Stopping path: %s", path_name(p));
 
-	pthread_cancel(p->recv_tid);
-	pthread_join(p->recv_tid, NULL);
+	pthread_cancel(p->tid);
+	pthread_join(p->tid, NULL);
 
 	if (hook_run(p, NULL, 0, HOOK_PATH_STOP))
 		return -1;

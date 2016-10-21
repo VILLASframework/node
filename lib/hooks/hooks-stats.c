@@ -18,13 +18,12 @@ void hook_stats_header()
 {
 	#define UNIT(u)	"(" YEL(u) ")"
 
-	stats("%-40s|%19s|%19s|%19s|%19s|%19s|%10s|", "Source " MAG("=>") " Destination",
+	stats("%-40s|%19s|%19s|%19s|%19s|%19s|", "Source " MAG("=>") " Destination",
 		"OWD"	UNIT("S") " ",
 		"Rate"	UNIT("p/S") " ",
 		"Drop"	UNIT("p") " ",
 		"Skip"	UNIT("p") " ",
-		"Inval" UNIT("p") " ",
-		"Overuns "
+		"Inval" UNIT("p") " "
 	);
 	line();
 }
@@ -83,8 +82,8 @@ int hook_stats(struct path *p, struct hook *h, int when, struct sample *smps[], 
 			break;
 			
 		case HOOK_PERIODIC:
-			stats("%-40.40s|%10s|%10s|%10ju|%10ju|%10ju|%10ju|", path_name(p), "", "", 
-				p->dropped, p->skipped, p->invalid, p->overrun);
+			stats("%-40.40s|%10s|%10s|%10ju|%10ju|%10ju|", path_name(p), "", "", 
+				p->dropped, p->skipped, p->invalid);
 			break;
 	}
 	
@@ -124,7 +123,6 @@ int hook_stats_send(struct path *p, struct hook *h, int when, struct sample *smp
 			smp->data[i++].f = p->invalid;
 			smp->data[i++].f = p->skipped;
 			smp->data[i++].f = p->dropped;
-			smp->data[i++].f = p->overrun;
 			smp->data[i++].f =       p->hist.owd.last,
 			smp->data[i++].f = 1.0 / p->hist.gap_msg.last;
 			smp->data[i++].f = 1.0 / p->hist.gap_recv.last;
