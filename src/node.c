@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 	info("Starting paths");
 	list_foreach(struct path *p, &paths) { INDENT
 		if (p->enabled) {
-			path_prepare(p);
+			path_init(p);
 			path_start(p);
 		}
 		else

@@ -135,28 +135,20 @@ const char * path_name(struct path *p)
 	return p->_name;
 }
 
-void path_init(struct path *p)
-{
-	list_init(&p->destinations);
-	list_init(&p->hooks);
-	
-	/* Initialize hook system */
-	list_foreach(struct hook *h, &hooks) {
-		if (h->type & HOOK_INTERNAL)
-			list_push(&p->hooks, memdup(h, sizeof(*h)));
-	}
-
-	p->state = PATH_CREATED;
-}
-
-int path_prepare(struct path *p)
+int path_init(struct path *p)
 {
 	int ret;
-	
+
+	/* Add internal hooks if they are not already in the list*/
+	list_foreach(struct hook *h, &hooks) {
+		if ((h->type & HOOK_INTERNAL) && (list_lookup(&p->hooks, h->name) == NULL))
+			list_push(&p->hooks, memdup(h, sizeof(struct hook)));
+	}
+
 	/* We sort the hooks according to their priority before starting the path */
 	list_sort(&p->hooks, hooks_sort_priority);
 
-	/* Allocate hook private memory */
+	/* Allocate hook private memory for storing state / parameters */
 	ret = hook_run(p, NULL, 0, HOOK_INIT);
 	if (ret)
 		error("Failed to initialize hooks of path: %s", path_name(p));

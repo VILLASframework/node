@@ -154,7 +154,9 @@ int cfg_parse_path(config_setting_t *cfg,
 	
 	/* Allocate memory and intialize path structure */
 	p = alloc(sizeof(struct path));
-	path_init(p);
+	
+	list_init(&p->destinations);
+	list_init(&p->hooks);
 
 	/* Input node */
 	if (!config_setting_lookup_string(cfg, "in", &in) &&

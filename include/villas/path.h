@@ -77,20 +77,14 @@ struct path
 	/** @} */
 };
 
-/** Create a path by allocating dynamic memory. */
-void path_init(struct path *p);
+/** Initialize internal data structures. */
+int path_init(struct path *p);
 
 /** Destroy path by freeing dynamically allocated memory.
  *
  * @param i A pointer to the path structure.
  */
 void path_destroy(struct path *p);
-
-/** Initialize  pool queue and hooks.
- *
- * Should be called after path_init() and before path_start().
- */
-int path_prepare(struct path *p);
 
 /** Start a path.
  *
