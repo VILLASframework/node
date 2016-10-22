@@ -80,7 +80,8 @@ struct webmsg
 	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
 #endif
 
-	uint8_t src_node;	/**< Reserved bits */
+	uint8_t node_id;	/**< The node index from / to which this sample received / sent to.
+				 *   Corresponds to the index of the node in the http://localhost/nodes.json  array. */
 	
 	uint16_t length;	/**< The number of values in msg::data[]. Endianess is specified in msg::endian. */
 	uint32_t sequence;	/**< The sequence number is incremented by one for consecutive messages. Endianess is specified in msg::endian. */
