@@ -34,7 +34,7 @@
 #include "queue.h"
 
 /** Initialize MPMC queue */
-int mpmc_queue_init(struct mpmc_queue *q, size_t size, const struct memtype *mem)
+int queue_init(struct queue *q, size_t size, const struct memtype *mem)
 {
 	/* Queue size must be 2 exponent */
 	if ((size < 2) || ((size & (size - 1)) != 0))
@@ -55,7 +55,7 @@ int mpmc_queue_init(struct mpmc_queue *q, size_t size, const struct memtype *mem
 	return 0;
 }
 
-int mpmc_queue_destroy(struct mpmc_queue *q)
+int queue_destroy(struct queue *q)
 {
 	return memory_free(q->mem, q->buffer, (q->buffer_mask + 1) * sizeof(sizeof(q->buffer[0])));
 }
@@ -65,15 +65,15 @@ int mpmc_queue_destroy(struct mpmc_queue *q)
  * Note: This is only an estimation and not accurate as long other
  *       threads are performing operations.
  */ 
-size_t mpmc_queue_available(struct mpmc_queue *q)
+size_t queue_available(struct queue *q)
 {
 	return  atomic_load_explicit(&q->tail, memory_order_relaxed) -
 		atomic_load_explicit(&q->head, memory_order_relaxed);
 }
 
-int mpmc_queue_push(struct mpmc_queue *q, void *ptr)
+int queue_push(struct queue *q, void *ptr)
 {
-	struct mpmc_queue_cell *cell;
+	struct queue_cell *cell;
 	size_t pos, seq;
 	intptr_t diff;
 
@@ -99,9 +99,9 @@ int mpmc_queue_push(struct mpmc_queue *q, void *ptr)
 	return 1;
 }
 
-int mpmc_queue_pull(struct mpmc_queue *q, void **ptr)
+int queue_pull(struct queue *q, void **ptr)
 {
-	struct mpmc_queue_cell *cell;
+	struct queue_cell *cell;
 	size_t pos, seq;
 	intptr_t diff;
 	
@@ -128,13 +128,13 @@ int mpmc_queue_pull(struct mpmc_queue *q, void **ptr)
 	return 1;
 }
 
-int mpmc_queue_push_many(struct mpmc_queue *q, void *ptr[], size_t cnt)
+int queue_push_many(struct queue *q, void *ptr[], size_t cnt)
 {
 	int ret;
 	size_t i;
 
 	for (i = 0; i < cnt; i++) {
-		ret = mpmc_queue_push(q, ptr[i]);
+		ret = queue_push(q, ptr[i]);
 		if (!ret)
 			break;
 	}
@@ -142,13 +142,13 @@ int mpmc_queue_push_many(struct mpmc_queue *q, void *ptr[], size_t cnt)
 	return i;
 }
 
-int mpmc_queue_pull_many(struct mpmc_queue *q, void *ptr[], size_t cnt)
+int queue_pull_many(struct queue *q, void *ptr[], size_t cnt)
 {
 	int ret;
 	size_t i;
 
 	for (i = 0; i < cnt; i++) {
-		ret = mpmc_queue_pull(q, &ptr[i]);
+		ret = queue_pull(q, &ptr[i]);
 		if (!ret)
 			break;
 	}

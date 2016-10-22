@@ -29,8 +29,9 @@ enum socket_layer {
 };
 
 enum socket_header {
-	SOCKET_HEADER_DEFAULT,		/**> Default header in the payload, (see msg_format.h) */
-	SOCKET_HEADER_GTNET_SKT		/**> No header in the payload, same as HDR_NONE*/
+	SOCKET_HEADER_DEFAULT,	/**> Default header in the payload, (see msg_format.h) */
+	SOCKET_HEADER_NONE,	/**> No header in the payload, same as HDR_NONE*/
+	SOCKET_HEADER_FAKE	/**> Same as SOCKET_HEADER_NONE but using the first three data values as: sequence, seconds & nano-seconds. */
 };
 
 union sockaddr_union {
@@ -41,29 +42,19 @@ union sockaddr_union {
 };
 
 struct socket {
-	/** The socket descriptor */
-	int sd;
-	/** Socket mark for netem, routing and filtering */
-	int mark;
+	int sd;				/**> The socket descriptor */
+	int mark;			/**> Socket mark for netem, routing and filtering */
 
-	/** The OSI / IP layer which should be used for this socket */
-	enum socket_layer layer;
+	enum socket_layer layer;	/**> The OSI / IP layer which should be used for this socket */
+	enum socket_header header;	/**> Payload header type */
 
-	/** Payload header type */
-	enum socket_header header;
+	union sockaddr_union local;	/**> Local address of the socket */
+	union sockaddr_union remote;	/**> Remote address of the socket */
 
-	/** Local address of the socket */
-	union sockaddr_union local;
-	/** Remote address of the socket */
-	union sockaddr_union remote;
+	struct rtnl_qdisc *tc_qdisc;	/**> libnl3: Network emulator queuing discipline */
+	struct rtnl_cls *tc_classifier;	/**> libnl3: Firewall mark classifier */
 
-	/** libnl3: Network emulator queuing discipline */
-	struct rtnl_qdisc *tc_qdisc;
-	/** libnl3: Firewall mark classifier */
-	struct rtnl_cls *tc_classifier;
-
-	/* Linked list _per_interface_ */
-	struct socket *next;
+	struct socket *next;		/* Linked list _per_interface_ */
 };
 
 

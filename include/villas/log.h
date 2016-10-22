@@ -38,6 +38,7 @@ enum debug_facilities {
 	DBG_CONFIG =	(1 << 10),
 	DBG_HOOK =	(1 << 11),
 	DBG_PATH =	(1 << 12),
+	DBG_MEM =	(1 << 13),
 	
 	/* Node-types */
 	DBG_SOCKET =	(1 << 16),

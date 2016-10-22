@@ -370,12 +370,13 @@ void rdtsc_sleep(uint64_t nanosecs, uint64_t start)
 {
 	uint64_t cycles;
 
+	/** @todo Replace the hard coded CPU clock frequency */
 	cycles = (double) nanosecs / (1e9 / 3392389000);
 	
 	if (start == 0)
-		start = rdtscp();
+		start = rdtsc();
 	
 	do {
 		__asm__("nop");
-	} while (rdtscp() - start < cycles);
+	} while (rdtsc() - start < cycles);
 }
