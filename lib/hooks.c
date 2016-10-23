@@ -19,16 +19,32 @@
 
 struct list hooks;
 
-/* Those references can be used inside the hook callbacks after initializing them with hook_init() */
-struct list *hook_nodes = NULL;
-struct list *hook_paths = NULL;
-struct settings *hook_settings = NULL;
-
-void hook_init(struct list *nodes, struct list *paths, struct settings *set)
+int hook_init(struct hook *h, struct list *nodes, struct list *paths, struct settings *settings)
 {
-	hook_nodes = nodes;
-	hook_paths = paths;
-	hook_settings = set;
+	struct hook_info i = {
+		.paths = paths,
+		.nodes = nodes,
+		.settings = settings
+	};
+	
+	return h->cb(h, HOOK_INIT, &i);
+}
+
+void hook_destroy(struct hook *h)
+{
+	struct hook_info i = { NULL };
+	h->cb(h, HOOK_DESTROY, &i);
+}
+
+int hook_copy(struct hook *h, struct hook *c)
+{
+	memcpy(c, h, sizeof(struct hook));
+	
+	c->_vd = 
+	c->prev = 
+	c->last = NULL;
+	
+	return 0;
 }
 
 int hooks_sort_priority(const void *a, const void *b) {
@@ -40,11 +56,17 @@ int hooks_sort_priority(const void *a, const void *b) {
 
 int hook_run(struct path *p, struct sample *smps[], size_t cnt, int when)
 {
+	struct hook_info i = {
+		.path = p,
+		.smps = smps,
+		.cnt = cnt
+	};
+	
 	list_foreach(struct hook *h, &p->hooks) {
 		if (h->type & when) {
 			debug(DBG_HOOK | 22, "Running hook when=%u '%s' prio=%u, cnt=%zu", when, h->name, h->priority, cnt);
 
-			cnt = h->cb(p, h, when, smps, cnt);
+			cnt = h->cb(h, when, &i);
 			if (cnt == 0)
 				break;
 		}
@@ -60,7 +82,7 @@ void * hook_storage(struct hook *h, int when, size_t len)
 			h->_vd = alloc(len);
 			break;
 			
-		case HOOK_DEINIT:
+		case HOOK_DESTROY:
 			free(h->_vd);
 			h->_vd = NULL;
 			break;

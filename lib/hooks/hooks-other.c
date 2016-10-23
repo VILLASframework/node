@@ -17,25 +17,29 @@
 #include "sample.h"
 
 REGISTER_HOOK("print", "Print the message to stdout", 99, 0, hook_print, HOOK_READ)
-int hook_print(struct path *p, struct hook *h, int when, struct sample *smps[], size_t cnt)
+int hook_print(struct hook *h, int when, struct hook_info *j)
 {
-	for (int i = 0; i < cnt; i++)
-		sample_fprint(stdout, smps[i], SAMPLE_ALL);
+	assert(j->smps);
+	
+	for (int i = 0; i < j->cnt; i++)
+		sample_fprint(stdout, j->smps[i], SAMPLE_ALL);
 
-	return cnt;
+	return j->cnt;
 }
 
 REGISTER_HOOK("ts", "Update timestamp of message with current time", 99, 0, hook_ts, HOOK_READ)
-int hook_ts(struct path *p, struct hook *h, int when, struct sample *smps[], size_t cnt)
+int hook_ts(struct hook *h, int when, struct hook_info *j)
 {
-	for (int i = 0; i < cnt; i++)
-		smps[i]->ts.origin = smps[i]->ts.received;
+	assert(j->smps);
 
-	return cnt;
+	for (int i = 0; i < j->cnt; i++)
+		j->smps[i]->ts.origin = j->smps[i]->ts.received;
+
+	return j->cnt;
 }
 
-REGISTER_HOOK("convert", "Convert message from / to floating-point / integer", 99, 0, hook_convert, HOOK_STORAGE | HOOK_PARSE | HOOK_READ)
-int hook_convert(struct path *p, struct hook *h, int when, struct sample *smps[], size_t cnt)
+REGISTER_HOOK("convert", "Convert message from / to floating-point / integer", 99, 0, hook_convert, HOOK_STORAGE | HOOK_DESTROY | HOOK_READ)
+int hook_convert(struct hook *h, int when, struct hook_info *k)
 {
 	struct {
 		enum {
@@ -45,7 +49,7 @@ int hook_convert(struct path *p, struct hook *h, int when, struct sample *smps[]
 	} *private = hook_storage(h, when, sizeof(*private));
 
 	switch (when) {
-		case HOOK_PARSE:
+		case HOOK_DESTROY:
 			if (!h->parameter)
 				error("Missing parameter for hook: '%s'", h->name);
 
@@ -58,29 +62,28 @@ int hook_convert(struct path *p, struct hook *h, int when, struct sample *smps[]
 			break;
 		
 		case HOOK_READ:
-			for (int i = 0; i < cnt; i++) {
-				for (int j = 0; j < smps[0]->length; j++) {
+			for (int i = 0; i < k->cnt; i++) {
+				for (int j = 0; j < k->smps[0]->length; j++) {
 					switch (private->mode) {
-						case TO_FIXED: smps[i]->data[j].i = smps[i]->data[j].f * 1e3; break;
-						case TO_FLOAT: smps[i]->data[j].f = smps[i]->data[j].i; break;
+						case TO_FIXED: k->smps[i]->data[j].i = k->smps[i]->data[j].f * 1e3; break;
+						case TO_FLOAT: k->smps[i]->data[j].f = k->smps[i]->data[j].i; break;
 					}
 				}
 			}
-			break;
+			
+			return k->cnt;
 	}
 
 	return 0;
 }
 
-REGISTER_HOOK("decimate", "Downsamping by integer factor", 99, 0, hook_decimate, HOOK_STORAGE | HOOK_PARSE | HOOK_READ)
-int hook_decimate(struct path *p, struct hook *h, int when, struct sample *smps[], size_t cnt)
+REGISTER_HOOK("decimate", "Downsamping by integer factor", 99, 0, hook_decimate, HOOK_STORAGE | HOOK_DESTROY | HOOK_READ)
+int hook_decimate(struct hook *h, int when, struct hook_info *j)
 {
 	struct {
 		unsigned ratio;
 		unsigned counter;
 	} *private = hook_storage(h, when, sizeof(*private));
-
-	int ok;
 
 	switch (when) {
 		case HOOK_PARSE:
@@ -95,24 +98,27 @@ int hook_decimate(struct path *p, struct hook *h, int when, struct sample *smps[
 			break;
 		
 		case HOOK_READ:
-			ok = 0;
-			for (int i = 0; i < cnt; i++) {
+			assert(j->smps);
+		
+			int i, ok;
+			for (i = 0, ok = 0; i < j->cnt; i++) {
 				if (private->counter++ % private->ratio == 0) {
 					struct sample *tmp;
 					
-					tmp = smps[ok];
-					smps[ok++] = smps[i];
-					smps[i] = tmp;
+					tmp = j->smps[ok];
+					j->smps[ok++] = j->smps[i];
+					j->smps[i] = tmp;
 				}
 			}
+
 			return ok;
 	}
 
-	return cnt;
+	return 0;
 }
 
 REGISTER_HOOK("skip_first", "Skip the first samples", 99, 0, hook_skip_first, HOOK_STORAGE |  HOOK_PARSE | HOOK_READ | HOOK_PATH)
-int hook_skip_first(struct path *p, struct hook *h, int when, struct sample *smps[], size_t cnt)
+int hook_skip_first(struct hook *h, int when, struct hook_info *j)
 {
 	struct {
 		struct timespec skip;	/**< Time to wait until first message is not skipped */
@@ -121,7 +127,6 @@ int hook_skip_first(struct path *p, struct hook *h, int when, struct sample *smp
 
 	char *endptr;
 	double wait;
-	int i, ok;
 
 	switch (when) {
 		case HOOK_PARSE:
@@ -135,19 +140,22 @@ int hook_skip_first(struct path *p, struct hook *h, int when, struct sample *smp
 			private->skip = time_from_double(wait);
 			break;
 	
+		case HOOK_PATH_START:
 		case HOOK_PATH_RESTART:
-		case HOOK_PATH_STOP:
-			private->until = time_add(&smps[0]->ts.received, &private->skip);
+			private->until = time_add(&j->smps[0]->ts.received, &private->skip);
 			break;
 	
 		case HOOK_READ:
-			for (i = 0, ok = 0; i < cnt; i++) {
-				if (time_delta(&private->until, &smps[i]->ts.received) > 0) {
+			assert(j->smps);
+
+			int i, ok;
+			for (i = 0, ok = 0; i < j->cnt; i++) {
+				if (time_delta(&private->until, &j->smps[i]->ts.received) > 0) {
 					struct sample *tmp;
 
-					tmp = smps[i];
-					smps[i] = smps[ok];
-					smps[ok++] = tmp;
+					tmp = j->smps[i];
+					j->smps[i] = j->smps[ok];
+					j->smps[ok++] = tmp;
 				
 				}
 
