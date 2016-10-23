@@ -157,19 +157,60 @@ char * hist_dump(struct hist *h)
 	return buf;
 }
 
-void hist_matlab(struct hist *h, FILE *f)
+#ifdef WITH_JANSSON
+json_t * hist_json(struct hist *h)
+{
+	json_t *b = json_array();
+	
+	for (int i = 0; i < h->length; i++)
+		json_array_append(b, json_integer(h->data[i]));
+	
+	return json_pack("{ s: f, s: f, s: i, s: i, s: i, s: f, s: f, s: f, s: f, s: f, s: o }",
+		"low", h->low,
+		"high", h->high,
+		"total", h->total,
+		"higher", h->higher,
+		"lower", h->lower,
+		"highest", h->highest,
+		"lowest", h->lowest,
+		"mean", hist_mean(h),
+		"variance", hist_var(h),
+		"stddev", hist_stddev(h),
+		"buckets", b
+	);
+}
+
+int hist_dump_json(struct hist *h, FILE *f)
+{
+	json_t *j = hist_json(h);
+	
+	int ret = json_dumpf(j, f, 0);
+	
+	json_decref(j);
+	
+	return ret;
+}
+#endif /* WITH_JANNSON */
+
+int hist_dump_matlab(struct hist *h, FILE *f)
 {
 	char *buf = hist_dump(h);
 
 	fprintf(f, "%lu = struct( ", time(NULL));
-	fprintf(f, "'min', %f, 'max', %f, ", h->low, h->high);
-	fprintf(f, "'total', %u, higher', %u, 'lower', %u, ", h->total, h->higher, h->lower);
-	fprintf(f, "'highest', %f, 'lowest', %f, ", h->highest, h->lowest);
+	fprintf(f, "'low', %f, ", h->low);
+	fprintf(f, "'high', %f, ", h->high);
+	fprintf(f, "'total', %u, ", h->total);
+	fprintf(f, "'higher', %u, ", h->higher);
+	fprintf(f, "'lower', %u, ", h->lower);
+	fprintf(f, "'highest', %f, ", h->highest);
+	fprintf(f, "'lowest', %f, ", h->lowest);
 	fprintf(f, "'mean', %f, ", hist_mean(h));
-	fprintf(f, "'var', %f, ", hist_var(h));
+	fprintf(f, "'variance', %f, ", hist_var(h));
 	fprintf(f, "'stddev', %f, ", hist_stddev(h));
-	fprintf(f, "'hist', %s ", buf);
+	fprintf(f, "'buckets', %s ", buf);
 	fprintf(f, "),\n");
 	
 	free(buf);
+	
+	return 0;
 }

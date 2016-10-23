@@ -14,6 +14,10 @@
 
 #include "config.h"
 
+#ifdef WITH_JANSSON
+  #include <jansson.h>
+#endif
+
 #define HIST_HEIGHT	(LOG_WIDTH - 55)
 #define HIST_SEQ	17
 
@@ -75,6 +79,12 @@ void hist_plot(struct hist *h);
 char * hist_dump(struct hist *h);
 
 /** Prints Matlab struct containing all infos to file. */
-void hist_matlab(struct hist *h, FILE *f);
+int hist_dump_matlab(struct hist *h, FILE *f);
+
+#ifdef WITH_JANSSON
+int hist_dump_json(struct hist *h, FILE *f);
+
+json_t * hist_json(struct hist *h);
+#endif
 
 #endif /* _HIST_H_ */
