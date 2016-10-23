@@ -128,9 +128,6 @@ int main(int argc, char *argv[])
 	info("Initialize signals");
 	signals_init();
 
-	info("Initialize hook sub-system");
-	hook_init(&nodes, &paths, &settings);
-
 	info("Initialize node types");
 	list_foreach(struct node_type *vt, &node_types) { INDENT
 		int refs = list_length(&vt->instances);
@@ -151,6 +148,10 @@ int main(int argc, char *argv[])
 	list_foreach(struct path *p, &paths) { INDENT
 		if (p->enabled) {
 			path_init(p);
+			
+			list_foreach(struct hook *h, &p->hooks)
+				hook_init(h, &nodes, &paths, &settings);
+			
 			path_start(p);
 		}
 		else
@@ -159,7 +160,7 @@ int main(int argc, char *argv[])
 
 	/* Run! */
 	if (settings.stats > 0) {
-		hook_stats_header();
+		stats_print_header();
 
 		for (;;) {
 			list_foreach(struct path *p, &paths)

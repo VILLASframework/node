@@ -1,7 +1,7 @@
 #include <villas/hooks.h>
 #include <villas/log.h>
 
-static int hook_example(struct path *p, struct hook *h, int when, struct sample *smps[], size_t cnt)
+static int hook_example(struct hook *h, int when, struct hook_info *j)
 {
 	info("Hello world from example hook!");
 	

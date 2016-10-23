@@ -2,7 +2,8 @@
 TARGETS = $(BUILDDIR)/villas-node \
 	  $(BUILDDIR)/villas-pipe  \
 	  $(BUILDDIR)/villas-signal \
-	  $(BUILDDIR)/villas-test
+	  $(BUILDDIR)/villas-test \
+	  $(BUILDDIR)/villas-hook
 
 SRC_LDLIBS = $(LDLIBS) -pthread -lm -lvillas
 SRC_CFLAGS = $(CFLAGS)
