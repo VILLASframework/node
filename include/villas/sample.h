@@ -60,8 +60,13 @@ struct sample {
 	} data[];
 };
 
-/** Request \p cnt samples from memory pool \p p and initialize them. */
-int sample_get_many(struct pool *p, struct sample *smps[], int cnt);
+/** Request \p cnt samples from memory pool \p p and initialize them.
+ *  This will leave the reference count of the sample to zero.
+ *  Use the sample_get() function to increase it. */
+int sample_alloc(struct pool *p, struct sample *smps[], int cnt);
+
+/** Release an array of samples back to their pools */
+void sample_free(struct sample *smps[], int cnt);
 
 /** Increase reference count of sample */
 int sample_get(struct sample *s);
