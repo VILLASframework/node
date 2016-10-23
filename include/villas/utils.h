@@ -197,12 +197,6 @@ int version_parse(const char *s, struct version *v);
 /** Fill buffer with random data */
 int read_random(char *buf, size_t len);
 
-/** Hexdump bytes */
-void printb(void *mem, size_t len);
-
-/** Hexdump 32-bit dwords */
-void printdw(void *mem, size_t len);
-
 /** Get CPU timestep counter */
 __attribute__((always_inline)) static inline uint64_t rdtsc()
 {
