@@ -55,7 +55,11 @@
 #define ALIGN_MASK(x, m) (((uintptr_t) (x) + (m)) & ~(m))
 #define IS_ALIGNED(x, a) (ALIGN(x, a) == (uintptr_t) x)
 
-#define CEIL(x, y)	((x + y - 1) / y)
+/** Round-up integer division */
+#define CEIL(x, y)	(((x) + (y) - 1) / (y))
+
+/** Get nearest up-rounded power of 2 */
+#define LOG2_CEIL(x)	(1 << log2i((x) - 1) + 1)
 
 /** Calculate the number of elements in an array. */
 #define ARRAY_LEN(a)	( sizeof (a) / sizeof (a)[0] )
@@ -216,6 +220,13 @@ __attribute__((always_inline)) static inline uint64_t rdtsc()
 		: "%rcx", "%rdx", "memory");
 
 	return tsc;
+}
+
+/** Get log2 of long long integers */
+static inline int log2i(long long x) {
+	assert(x > 0);
+
+	return sizeof(x) * 8 - __builtin_clzll(x) - 1;
 }
 
 /** Sleep with rdtsc */
