@@ -31,9 +31,9 @@ int fpga_tests(int argc, char *argv[], struct fpga *f);
 
 struct settings settings;
 
-void usage(char *name)
+void usage()
 {
-	printf("Usage: %s CONFIGFILE CMD [OPTIONS]\n", name);
+	printf("Usage: villas-fpga CONFIGFILE CMD [OPTIONS]\n");
 	printf("   Commands:\n");
 	printf("      tests      Test functionality of VILLASfpga card\n");
 	printf("      benchmarks Do benchmarks\n\n");
@@ -57,13 +57,13 @@ int main(int argc, char *argv[])
 	} subcommand;
 
 	if (argc < 3)
-		usage(argv[0]);
+		usage();
 	if      (strcmp(argv[2], "tests") == 0)
 		subcommand = FPGA_TESTS;
 	else if (strcmp(argv[2], "benchmarks") == 0)
 		subcommand = FPGA_BENCH;
 	else
-		usage(argv[0]);
+		usage();
 
 	/* Parse arguments */
 	char c, *endptr;
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
 
 			case '?':
 			default:
-				usage(argv[0]);
+				usage();
 		}
 	}
 

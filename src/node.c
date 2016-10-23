@@ -71,9 +71,9 @@ static void signals_init()
 	sigaction(SIGTERM, &sa_quit, NULL);
 }
 
-static void usage(const char *name)
+static void usage()
 {
-	printf("Usage: %s CONFIG\n", name);
+	printf("Usage: villas-node CONFIG\n");
 	printf("  CONFIG is a required path to a configuration file\n\n");
 #ifdef ENABLE_OPAL_ASYNC
 	printf("Usage: %s OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME\n", name);
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 #else
 	if (argc != 2)
 #endif
-		usage(argv[0]);
+		usage();
 
 	char *configfile = (argc == 2) ? argv[1] : "opal-shmem.conf";
 

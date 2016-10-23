@@ -30,9 +30,9 @@ enum SIGNAL_TYPE {
 	TYPE_MIXED
 };
 
-void usage(char *name)
+void usage()
 {
-	printf("Usage: %s SIGNAL [OPTIONS]\n", name);
+	printf("Usage: villas-signal SIGNAL [OPTIONS]\n");
 	printf("  SIGNAL   is on of: 'mixed', 'random', 'sine', 'triangle', 'square', 'ramp'\n");
 	printf("  -v NUM   specifies how many values a message should contain\n");
 	printf("  -r HZ    how many messages per second\n");
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 	log_init();
 
 	if (argc < 2) {
-		usage(argv[0]);
+		usage();
 		exit(EXIT_FAILURE);
 	}
 		
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 				goto check;
 			case 'h':
 			case '?':
-				usage(argv[0]);
+				usage();
 		}
 		
 		continue;

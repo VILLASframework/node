@@ -53,9 +53,9 @@ void quit()
 	running = 0;
 }
 
-void usage(char *name)
+void usage()
 {
-	printf("Usage: %s CONFIG TEST NODE [ARGS]\n", name);
+	printf("Usage: villas-test CONFIG TEST NODE [ARGS]\n");
 	printf("  CONFIG  path to a configuration file\n");
 	printf("  TEST    the name of the test to execute: 'rtt'\n");
 	printf("  NODE    name of the node which shoud be used\n\n");
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 	config_t config;
 
 	if (argc < 4) {
-		usage(argv[0]);
+		usage();
 		exit(EXIT_FAILURE);
 	}
 
@@ -184,7 +184,7 @@ void test_rtt() {
 	struct stat st;
 	if (!fstat(fd, &st)) {
 		FILE *f = fdopen(fd, "w");
-		hist_matlab(&hist, f);
+		hist_dump_matlab(&hist, f);
 	}
 	else
 		error("Invalid file descriptor: %u", fd);

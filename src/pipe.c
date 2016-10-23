@@ -69,9 +69,9 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	exit(EXIT_SUCCESS);
 }
 
-static void usage(char *name)
+static void usage()
 {
-	printf("Usage: %s CONFIG NODE [OPTIONS]\n", name);
+	printf("Usage: villas-pipe CONFIG NODE [OPTIONS]\n");
 	printf("  CONFIG  path to a configuration file\n");
 	printf("  NODE    the name of the node to which samples are sent and received from\n");
 	printf("  OPTIONS are:\n");
@@ -100,7 +100,7 @@ static void * send_loop(void *ctx)
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 	
-	ret = sample_get_many(&sendd.pool, smps, node->vectorize);
+	ret = sample_alloc(&sendd.pool, smps, node->vectorize);
 	if (ret < 0)
 		error("Failed to get %u samples out of send pool (%d).", node->vectorize, ret);
 
@@ -144,7 +144,7 @@ static void * recv_loop(void *ctx)
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 	
-	ret = sample_get_many(&recvv.pool, smps, node->vectorize);
+	ret = sample_alloc(&recvv.pool, smps, node->vectorize);
 	if (ret  < 0)
 		error("Failed to get %u samples out of receive pool (%d).", node->vectorize, ret);
 
@@ -180,7 +180,7 @@ int main(int argc, char *argv[])
 
 	/* Parse command line arguments */
 	if (argc < 3)
-		usage(argv[0]);
+		usage();
 
 	/* Default values */
 	sendd.enabled = true;
@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
 				break;
 			case 'h':
 			case '?':
-				usage(argv[0]);
+				usage();
 		}
 	}
 
