@@ -275,6 +275,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		smp->ts.received.tv_nsec = -1;
 
 		smp->length = length;
+		smp->endian = n->endian;
 
 		received = 1; /* GTNET-SKT sends every sample in a single packet */
 	}

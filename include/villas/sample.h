@@ -17,6 +17,14 @@
 #include <time.h>
 #include <sys/types.h>
 
+#ifdef __linux__
+  #include <byteswap.h>
+#elif defined(__PPC__) /* Xilinx toolchain */
+  #include <xil_io.h>
+  #define bswap_16(x)	Xil_EndianSwap16(x)
+  #define bswap_32(x)	Xil_EndianSwap32(x)
+#endif
+
 /* Forward declarations */
 struct pool;
 
@@ -45,6 +53,8 @@ struct sample {
 	
 	atomic_int refcnt;	/**< Reference counter. */
 	struct pool *pool;	/**< This sample is belong to this memory pool. */
+	
+	int endian;			/**< Endianess of data in the sample. */
 
 	/** All timestamps are seconds / nano seconds after 1.1.1970 UTC */
 	struct {
