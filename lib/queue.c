@@ -37,9 +37,15 @@
 int queue_init(struct queue *q, size_t size, const struct memtype *mem)
 {
 	/* Queue size must be 2 exponent */
-	if ((size < 2) || ((size & (size - 1)) != 0))
-		return -1;
-
+	/* If that's not the case, round up the size to next power of 2 */
+	if ((size < 2) || ((size & (size - 1)) != 0)) {
+		size_t temp_size = 1;
+		while(temp_size < size)
+			temp_size = temp_size << 1;
+		size = temp_size;
+		//return -1;
+	}
+	
 	q->mem = mem;
 	q->buffer_mask = size - 1;
 	q->buffer = memory_alloc(q->mem, sizeof(q->buffer[0]) * size);
