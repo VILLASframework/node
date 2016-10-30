@@ -180,7 +180,7 @@ struct version {
 };
 
 /** Compare two versions. */
-int version_compare(struct version *a, struct version *b);
+int version_cmp(struct version *a, struct version *b);
 
 /** Parse a dotted version string. */
 int version_parse(const char *s, struct version *v);

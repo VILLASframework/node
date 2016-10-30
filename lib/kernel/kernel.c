@@ -101,7 +101,7 @@ int kernel_has_version(int maj, int min)
 	if (version_parse(uts.release, &current))
 		return -1;
 
-	return version_compare(&current, &required) < 0;
+	return version_cmp(&current, &required) < 0;
 }
 
 int kernel_is_rt()
