@@ -55,14 +55,8 @@ int sample_print(char *buf, size_t len, struct sample *s, int flags)
 		off += snprintf(buf + off, len - off, "(%u)", s->sequence);
 
 	if (flags & SAMPLE_VALUES) {
-		for (int i = 0; i < s->length; i++) {
-			float display_float = s->data[i].f;
-			if(s->endian == BIG_ENDIAN) {
-				uint32_t * temp_int = (uint32_t *) &(display_float);
-				*temp_int = bswap_32(*temp_int);
-			}
-			off += snprintf(buf + off, len - off, "\t%.6f", display_float);
-		}
+		for (int i = 0; i < s->length; i++)
+			off += snprintf(buf + off, len - off, "\t%.6f", s->data[i].f);
 	}
 
 	off += snprintf(buf + off, len - off, "\n");

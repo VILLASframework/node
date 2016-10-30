@@ -279,7 +279,7 @@ int cfg_parse_nodelist(config_setting_t *cfg, struct list *list, struct list *al
 
 int cfg_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set)
 {
-	const char *type, *name, *endian;
+	const char *type, *name;
 	int ret;
 
 	struct node *n;
@@ -318,17 +318,6 @@ int cfg_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *s
 
 	if (!config_setting_lookup_int(cfg, "affinity", &n->affinity))
 		n->affinity = set->affinity;
-	
-	if (!config_setting_lookup_string(cfg, "endian", &endian))
-		n->endian = LITTLE_ENDIAN;
-	else {
-		if(!strcmp(endian, "big"))
-			n->endian = BIG_ENDIAN;
-		else if (!strcmp(endian, "little"))
-			n->endian = LITTLE_ENDIAN;
-		else
-			cerror(cfg, "Invalid endianness type '%s' for node %s", endian, node_name(n));
-	}
 	
 	list_push(nodes, n);
 
