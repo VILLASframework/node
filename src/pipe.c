@@ -96,7 +96,7 @@ static void * send_loop(void *ctx)
 	sendd.started = true;
 	
 	/* Initialize memory */
-	ret = pool_init(&sendd.pool, SAMPLE_LEN(DEFAULT_VALUES), node->vectorize, &memtype_hugepage);
+	ret = pool_init(&sendd.pool, node->vectorize, SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 	
@@ -140,7 +140,7 @@ static void * recv_loop(void *ctx)
 	recvv.started = true;
 	
 	/* Initialize memory */
-	ret = pool_init(&recvv.pool, SAMPLE_LEN(DEFAULT_VALUES), node->vectorize, &memtype_hugepage);
+	ret = pool_init(&recvv.pool, node->vectorize, SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 	
