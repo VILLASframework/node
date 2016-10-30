@@ -27,7 +27,7 @@ ParameterizedTestParameters(pool, basic)
 		{ 1,	4096,	150,	&memtype_heap },
 		{ 1,	128,	8,	&memtype_hugepage },
 		{ 1,	4,	8192,	&memtype_hugepage },
-		{ 1,	1 << 13,4,	&memtype_heap }
+		{ 1,	1 << 13, 4,	&memtype_heap }
 	};
 	
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
@@ -48,10 +48,16 @@ ParameterizedTest(struct param *p, pool, basic)
 	
 	memset(ptr, 1, p->block_size); /* check that we dont get a seg fault */
 	
-	for (int i = 1; i < p->pool_size; i++) {
+	int i;
+	for (i = 1; i < p->pool_size; i++) {
 		ptrs[i] = pool_get(&pool);
-		cr_assert_neq(ptrs[i], NULL);
+
+		if (ptrs[i] == NULL)
+			break;
 	}
+	
+	if (i < p->pool_size)
+		cr_assert_neq(ptrs[i], NULL);
 	
 	ptr = pool_get(&pool);
 	cr_assert_eq(ptr, NULL);
