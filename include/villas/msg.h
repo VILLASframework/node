@@ -16,7 +16,7 @@
 
 struct node;
 
-/** Swaps message contents byte-order.
+/** Swaps the byte order of the header part of struct msg.
  *
  * Message can either be transmitted in little or big endian
  * format. The actual endianess for a message is defined by the
@@ -27,7 +27,7 @@ struct node;
  *
  * @param m A pointer to the message
  */
-void msg_swap(struct msg *m);
+void msg_hdr_swap(struct msg *m);
 
 /** Check the consistency of a message.
  *

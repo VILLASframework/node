@@ -332,7 +332,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 		/* Convert message to host endianess */
 		if (hdr.endian != MSG_ENDIAN_HOST)
-			msg_swap(&hdr);
+			msg_hdr_swap(&hdr);
 
 		samples = bytes / MSG_LEN(hdr.length);
 		if (samples > cnt) {
@@ -373,8 +373,12 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 				break;
 
 			/* Convert message to host endianess */
-			if (m->endian != MSG_ENDIAN_HOST)
-				msg_swap(m);
+			if (m->endian != MSG_ENDIAN_HOST) {
+				msg_hdr_swap(m);
+				
+				for (int i = 0; i < m->length; i++)
+					smp->data[i].i = bswap_32(smp->data[i].i);
+			}
 
 			smp->length = m->length;
 			smp->sequence = m->sequence;
