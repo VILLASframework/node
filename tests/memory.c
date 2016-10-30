@@ -14,8 +14,6 @@
 #include "memory.h"
 #include "utils.h"
 
-#define HUGEPAGESIZE	(1 << 21)
-
 TheoryDataPoints(memory, aligned) = {
 //	DataPoints(size_t, 1, 32, 55, 1 << 10, 1 << 20),
 	DataPoints(size_t, 1<<12),
@@ -31,12 +29,11 @@ Theory((size_t len, size_t align, const struct memtype *m), memory, aligned) {
 	cr_assert_neq(ptr, NULL, "Failed to allocate memory");
 	
 	//cr_assert(IS_ALIGNED(ptr, align));
-	
+
 	if (m == &memtype_hugepage) {
 		cr_assert(IS_ALIGNED(ptr, HUGEPAGESIZE));
-		len = ALIGN(len, HUGEPAGESIZE); /* ugly see: https://lkml.org/lkml/2015/3/27/171 */
 	}
-	
+
 	ret = memory_free(m, ptr, len);
 	cr_assert_eq(ret, 0, "Failed to release memory: ret=%d, ptr=%p, len=%zu: %s", ret, ptr, len, strerror(errno));
 }

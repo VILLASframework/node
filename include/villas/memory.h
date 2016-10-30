@@ -13,6 +13,8 @@
 #ifndef _MEMORY_H_
 #define _MEMORY_H_
 
+#define HUGEPAGESIZE	(1 << 21)
+
 typedef void *(*memzone_allocator_t)(size_t len);
 typedef int (*memzone_deallocator_t)(void *ptr, size_t len);
 
