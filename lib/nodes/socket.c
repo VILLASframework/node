@@ -102,7 +102,7 @@ int socket_deinit()
 char * socket_print(struct node *n)
 {
 	struct socket *s = n->_vd;
-	char *layer = NULL, *header = NULL, *buf;
+	char *layer = NULL, *header = NULL, *endian = NULL, *buf;
 
 	switch (s->layer) {
 		case SOCKET_LAYER_UDP:	layer = "udp";	break;
@@ -115,11 +115,19 @@ char * socket_print(struct node *n)
 		case SOCKET_HEADER_FAKE:	header = "fake";	break;
 		case SOCKET_HEADER_DEFAULT:	header = "default";	break;
 	}
+	
+	if (s->header == SOCKET_HEADER_DEFAULT)
+		endian = "auto";
+	else
+		switch (s->endian) {
+			case MSG_ENDIAN_LITTLE:	endian = "little";	break;
+			case MSG_ENDIAN_BIG:	endian = "big";		break;
+		}
 
 	char *local = socket_print_addr((struct sockaddr *) &s->local);
 	char *remote = socket_print_addr((struct sockaddr *) &s->remote);
 
-	buf = strf("layer=%s, header=%s, local=%s, remote=%s", layer, header, local, remote);
+	buf = strf("layer=%s, header=%s, endian=%s, local=%s, remote=%s", layer, header, endian, local, remote);
 
 	free(local);
 	free(remote);
