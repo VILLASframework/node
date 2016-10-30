@@ -32,6 +32,7 @@
  */
 
 #include "queue.h"
+#include "utils.h"
 
 /** Initialize MPMC queue */
 int queue_init(struct queue *q, size_t size, const struct memtype *mem)
