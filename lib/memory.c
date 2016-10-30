@@ -60,7 +60,14 @@ static void * memory_hugepage_alloc(size_t len)
 	flags |= MAP_HUGETLB | MAP_LOCKED;
 #endif
 	
-	return mmap(NULL, len, prot, flags, -1, 0);
+	void *ret = mmap(NULL, len, prot, flags, -1, 0);
+	
+	if (ret == MAP_FAILED) {
+		info("Failed to allocate huge pages: Check https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt");
+		return NULL;
+	}
+	
+	return ret;
 }
 
 static int memory_hugepage_free(void *ptr, size_t len)
