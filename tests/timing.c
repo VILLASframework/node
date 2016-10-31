@@ -86,6 +86,8 @@ Test(timing, timerfd_create_rate, .timeout = 20)
 	
 	cr_assert(tfd > 0);
 	
+	timerfd_wait(tfd);
+	
 	for (int i = 0; i < 10; i++) {
 		start = time_now();
 
