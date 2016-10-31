@@ -25,10 +25,8 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, const struct memtype *
 	p->buffer = memory_alloc_aligned(m, p->len, p->alignment);
 	if (!p->buffer)
 		serror("Failed to allocate memory for memory pool");
-	else
-		debug(DBG_POOL | 4, "Allocated %#zx bytes for memory pool", p->len);
 
-	ret = queue_init(&p->queue, cnt, m);
+	ret = queue_init(&p->queue, LOG2_CEIL(cnt), m);
 	if (ret)
 		return ret;
 	
