@@ -16,6 +16,9 @@ REGISTER_HOOK("fix_ts", "Update timestamps of sample if not set", 0, 0, hook_fix
 int hook_fix_ts(struct hook *h, int when, struct hook_info *j)
 {
 	struct timespec now = time_now();
+
+	if (when != HOOK_READ)
+		return 0;
 	
 	assert(j->smps);
 
@@ -41,6 +44,9 @@ int hook_fix_ts(struct hook *h, int when, struct hook_info *j)
 REGISTER_HOOK("restart", "Call restart hooks for current path", 1, 1, hook_restart, HOOK_INTERNAL | HOOK_READ)
 int hook_restart(struct hook *h, int when, struct hook_info *j)
 {
+	if (when != HOOK_READ)
+		return 0;
+	
 	assert(j->smps);
 	assert(j->path);
 
@@ -67,6 +73,9 @@ REGISTER_HOOK("drop", "Drop messages with reordered sequence numbers", 3, 1, hoo
 int hook_drop(struct hook *h, int when, struct hook_info *j)
 {
 	int i, ok, dist;
+	
+	if (when != HOOK_READ)
+		return 0;
 	
 	assert(j->smps);
 
