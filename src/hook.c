@@ -53,8 +53,8 @@ int main(int argc, char *argv[])
 				break;
 			case 'h':
 			case '?':
-				usage(argv[0]);
-				exit(EXIT_SUCCESS);
+				usage();
+				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
 	}
 	

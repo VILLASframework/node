@@ -114,15 +114,8 @@ int main(int argc, char *argv[])
 				res = strtod(optarg, &endptr);
 				goto check;
 			case '?':
-				if (optopt == 'c')
-					error("Option -%c requires an argument.", optopt);
-				else if (isprint(optopt))
-					error("Unknown option '-%c'.", optopt);
-				else
-					error("Unknown option character '\\x%x'.", optopt);
-				exit(EXIT_FAILURE);
-			default:
-				abort();
+				usage();
+				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
 
 		continue;

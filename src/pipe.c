@@ -203,6 +203,7 @@ int main(int argc, char *argv[])
 			case 'h':
 			case '?':
 				usage();
+				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
 	}
 
