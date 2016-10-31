@@ -24,15 +24,25 @@ void hist_create(struct hist *h, double low, double high, double resolution)
 	h->low = low;
 	h->high = high;
 	h->resolution = resolution;
-	h->length = (high - low) / resolution;
-	h->data = alloc(h->length * sizeof(unsigned));
+
+	if (resolution > 0) {
+		h->length = (high - low) / resolution;
+		h->data = alloc(h->length * sizeof(unsigned));
+	}
+	else {
+		h->length = 0;
+		h->data = NULL;
+	}
 
 	hist_reset(h);
 }
 
 void hist_destroy(struct hist *h)
 {
-	free(h->data);
+	if (h->data) {
+		free(h->data);
+		h->data = NULL;
+	}
 }
 
 void hist_put(struct hist *h, double value)
@@ -52,7 +62,7 @@ void hist_put(struct hist *h, double value)
 		h->higher++;
 	else if (idx < 0)
 		h->lower++;
-	else
+	else if (h->data != NULL)
 		h->data[idx]++;
 
 	h->total++;
@@ -83,7 +93,8 @@ void hist_reset(struct hist *h)
 	h->highest = DBL_MIN;
 	h->lowest = DBL_MAX;
 
-	memset(h->data, 0, h->length * sizeof(unsigned));
+	if (h->data)
+		memset(h->data, 0, h->length * sizeof(unsigned));
 }
 
 double hist_mean(struct hist *h)
