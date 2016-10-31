@@ -37,8 +37,11 @@ LDFLAGS += -L$(BUILDDIR)
 
 ifdef CI
 	CFLAGS += -D_GIT_REV='"${CI_BUILD_REF:0:7}~ci"'
-else ifdef GIT
-	CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
+else
+	GIT = $(shell type -p git)
+	ifneq ($(GIT),)
+		CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
+	endif
 endif
 
 # We must compile without optimizations for gcov!
