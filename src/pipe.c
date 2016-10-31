@@ -49,15 +49,14 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	if (recvv.started) {
 		pthread_cancel(recvv.thread);
 		pthread_join(recvv.thread, NULL);
+		pool_destroy(&recvv.pool);
 	}
 	
 	if (sendd.started) {
 		pthread_cancel(sendd.thread);
 		pthread_join(sendd.thread, NULL);
+		pool_destroy(&sendd.pool);
 	}
-	
-	pool_destroy(&recvv.pool);
-	pool_destroy(&sendd.pool);
 
 	node_stop(node);
 	node_deinit(node->_vt);
@@ -96,7 +95,7 @@ static void * send_loop(void *ctx)
 	sendd.started = true;
 	
 	/* Initialize memory */
-	ret = pool_init(&sendd.pool, node->vectorize, SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
+	ret = pool_init(&sendd.pool, LOG2_CEIL(node->vectorize), SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 	
@@ -140,7 +139,7 @@ static void * recv_loop(void *ctx)
 	recvv.started = true;
 	
 	/* Initialize memory */
-	ret = pool_init(&recvv.pool, node->vectorize, SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
+	ret = pool_init(&recvv.pool, LOG2_CEIL(node->vectorize), SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 	
