@@ -9,7 +9,7 @@
 	url = https://github.com/warmcat/libwebsockets
 [submodule "thirdparty/criterion"]
 	path = thirdparty/criterion
-	url = https://github.com/stv0g/Criterion
+	url = https://github.com/Snaipe/Criterion
 [submodule "thirdparty/libnl"]
 	path = thirdparty/libnl
 	url = https://github.com/thom311/libnl.git
