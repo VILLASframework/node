@@ -74,6 +74,15 @@ struct hook_info {
  */
 typedef int (*hook_cb_t)(struct hook *h, int when, struct hook_info *i);
 
+/** Destructor callback for hook_storage()
+ *
+ * @param data A pointer to the data which should be destroyed.
+ */
+typedef void (*dtor_cb_t)(void *);
+
+/** Constructor callback for hook_storage() */
+typedef int (*ctor_cb_t)(void *);
+
 enum hook_state {
 	HOOK_DESTROYED,
 	HOOK_INITIALIZED
@@ -157,7 +166,7 @@ int hook_run(struct path *p, struct sample *smps[], size_t cnt, int when);
  * @param len The size of hook prvate memory allocation.
  * @return A pointer to the allocated memory region or NULL after it was released.
  */
-void * hook_storage(struct hook *h, int when, size_t len);
+void * hook_storage(struct hook *h, int when, size_t len, ctor_cb_t ctor, dtor_cb_t dtor);
 
 int hook_print(struct hook *h, int when, struct hook_info *j);
 int hook_ts(struct hook *h, int when, struct hook_info *j);

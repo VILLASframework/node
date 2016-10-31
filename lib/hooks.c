@@ -75,14 +75,21 @@ int hook_run(struct path *p, struct sample *smps[], size_t cnt, int when)
 	return cnt;
 }
 
-void * hook_storage(struct hook *h, int when, size_t len)
+void * hook_storage(struct hook *h, int when, size_t len, ctor_cb_t ctor, dtor_cb_t dtor)
 {
 	switch (when) {
 		case HOOK_INIT:
 			h->_vd = alloc(len);
+			
+			if (ctor)
+				ctor(h->_vd);
+			
 			break;
 			
 		case HOOK_DESTROY:
+			if (dtor)
+				dtor(h->_vd);
+		
 			free(h->_vd);
 			h->_vd = NULL;
 			break;

@@ -17,13 +17,9 @@ extern struct list *hook_nodes;
 REGISTER_HOOK("stats", "Collect statistics for the current path", 2, 1, hook_stats, HOOK_STATS)
 int hook_stats(struct hook *h, int when, struct hook_info *j)
 {
-	struct stats *s = hook_storage(h, when, sizeof(struct stats));
+	struct stats *s = hook_storage(h, when, sizeof(struct stats), (ctor_cb_t) stats_init, (dtor_cb_t) stats_destroy);
 	
 	switch (when) {
-		case HOOK_INIT:
-			stats_init(s);
-			break;
-
 		case HOOK_READ:
 			assert(j->smps);
 		
@@ -31,11 +27,7 @@ int hook_stats(struct hook *h, int when, struct hook_info *j)
 			break;
 
 		case HOOK_PATH_STOP:
-			stats_print(s);
-			break;
-		
-		case HOOK_DESTROY:
-			stats_destroy(s);
+			stats_print(s, 1);
 			break;
 
 		case HOOK_PATH_RESTART:

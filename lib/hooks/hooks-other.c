@@ -46,10 +46,10 @@ int hook_convert(struct hook *h, int when, struct hook_info *k)
 			TO_FIXED,
 			TO_FLOAT
 		} mode;
-	} *private = hook_storage(h, when, sizeof(*private));
+	} *private = hook_storage(h, when, sizeof(*private), NULL, NULL);
 
 	switch (when) {
-		case HOOK_DESTROY:
+		case HOOK_PARSE:
 			if (!h->parameter)
 				error("Missing parameter for hook: '%s'", h->name);
 
@@ -83,7 +83,7 @@ int hook_decimate(struct hook *h, int when, struct hook_info *j)
 	struct {
 		unsigned ratio;
 		unsigned counter;
-	} *private = hook_storage(h, when, sizeof(*private));
+	} *private = hook_storage(h, when, sizeof(*private), NULL, NULL);
 
 	switch (when) {
 		case HOOK_PARSE:
@@ -123,7 +123,7 @@ int hook_skip_first(struct hook *h, int when, struct hook_info *j)
 	struct {
 		struct timespec skip;	/**< Time to wait until first message is not skipped */
 		struct timespec until;	/**< Absolute point in time from where we accept samples. */
-	} *private = hook_storage(h, when, sizeof(*private));
+	} *private = hook_storage(h, when, sizeof(*private), NULL, NULL);
 
 	char *endptr;
 	double wait;
