@@ -47,7 +47,7 @@ struct node
 
 	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
 	int affinity;		/**< CPU Affinity of this node */
-	
+
 	unsigned long sequence;	/**< This is a counter of received samples, in case the node-type does not generate sequence numbers itself. */
 
 	enum node_state {

@@ -38,6 +38,24 @@ See below for a more detailed description of this feature.
 
 #### `layer` *("udp" | "ip" | "eth")*
 
+Select the network layer which should be used for the socket. Please note that `eth` can only be used locally in a LAN as it contains no routing information for the internet.
+
+#### `header` *("default" | "none" | "fake")*
+
+The socket node-type supports multiple protocols:
+
+- The `default` VILLASnode header includes a couple of fields like the origin timestamp, number of values and the endianess of the transported data. The packet format is described in the following section called "Packet Format".
+- It is also possible to just send raw data by omitting the header completely (`none`). Each value is expected to take 4 bytes. It can be either a single precission floating point number (`float`) or a 32 bit unsigned integer (`uint32_t`). This protocol is used by RTDS' GTNET-SKT card.
+- The `fake` setting is very similar to the `none` setting. Only the first three values will have a special interpretation:
+   - Sequence no. (`uint32_t`)
+   - Timestamp seconds (Unix epoch, `uint32_t`)
+   - Timestamp nano-seconds  (Unix epoch, `uint32_t`)
+
+####  `endian` *("big" | "network" | "little")*
+
+This setting is only valid for the `none` and `fake` protocols.
+It select the endianes which is used for outgoing and incoming data.
+
 ### Example
 
 	nodes = {
@@ -52,7 +70,17 @@ See below for a more detailed description of this feature.
 								#   ip		Send / recv IP packets
 								#   eth		Send / recv raw Ethernet frames (IEEE802.3)
 	
-							
+			header	= "gtnet-skt:fake",		# Header can be one of:
+								#   default | villas       Use VILLASnode protocol (see struct msg) (default)
+								#   none | gtnet-skt       Use no header, send raw data as used by RTDS GTNETv2-SKT
+								#   fake | gtnet-skt:fake  Same as 'none', but use first three data values as
+								#                             sequence, seconds & nanoseconds timestamp
+								#                             In this mode values are uint32_t not floats!
+								
+			endian = "network",			# Endianess of header and data:
+								#   big | network          Use big endianess. Also know as network byte order (default)
+								#   little                 Use little endianess.
+								
 			local	= "127.0.0.1:12001",		# This node only received messages on this IP:Port pair
 			remote	= "127.0.0.1:12000"		# This node sents outgoing messages to this IP:Port pair
 		

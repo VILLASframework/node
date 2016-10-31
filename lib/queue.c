@@ -32,14 +32,16 @@
  */
 
 #include "queue.h"
+#include "utils.h"
 
 /** Initialize MPMC queue */
 int queue_init(struct queue *q, size_t size, const struct memtype *mem)
 {
+	
 	/* Queue size must be 2 exponent */
-	if ((size < 2) || ((size & (size - 1)) != 0))
+	if (!IS_POW2(size))
 		return -1;
-
+	
 	q->mem = mem;
 	q->buffer_mask = size - 1;
 	q->buffer = memory_alloc(q->mem, sizeof(q->buffer[0]) * size);
@@ -57,7 +59,7 @@ int queue_init(struct queue *q, size_t size, const struct memtype *mem)
 
 int queue_destroy(struct queue *q)
 {
-	return memory_free(q->mem, q->buffer, (q->buffer_mask + 1) * sizeof(sizeof(q->buffer[0])));
+	return memory_free(q->mem, q->buffer, (q->buffer_mask + 1) * sizeof(q->buffer[0]));
 }
 
 /** Return estimation of current queue usage.
@@ -108,7 +110,6 @@ int queue_pull(struct queue *q, void **ptr)
 	pos = atomic_load_explicit(&q->head, memory_order_relaxed);
 	for (;;) {
 		cell = &q->buffer[pos & q->buffer_mask];
-		
 		seq = atomic_load_explicit(&cell->sequence, memory_order_acquire);
 		diff = (intptr_t) seq - (intptr_t) (pos + 1);
 

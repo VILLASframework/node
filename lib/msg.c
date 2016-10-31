@@ -22,15 +22,12 @@
 #include "node.h"
 #include "utils.h"
 
-void msg_swap(struct msg *m)
+void msg_hdr_swap(struct msg *m)
 {
 	m->length   = bswap_16(m->length);
 	m->sequence = bswap_32(m->sequence);
 	m->ts.sec   = bswap_32(m->ts.sec);
 	m->ts.nsec  = bswap_32(m->ts.nsec);
-	
-	for (int i = 0; i < m->length; i++)
-		m->data[i].i = bswap_32(m->data[i].i);
 
 	m->endian ^= 1;
 }
