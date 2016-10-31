@@ -7,6 +7,7 @@
  *********************************************************************************/
 
 #include <unistd.h>
+#include <math.h>
 #include <criterion/criterion.h>
 
 #include "timing.h"
@@ -86,7 +87,10 @@ Test(timing, timerfd_create_rate, .timeout = 20)
 	
 	cr_assert(tfd > 0);
 	
-	for (int i = 0; i < 10; i++) {
+	timerfd_wait(tfd);
+	
+	int i;
+	for (i = 0; i < 10; i++) {
 		start = time_now();
 
 		timerfd_wait(tfd);
@@ -94,8 +98,12 @@ Test(timing, timerfd_create_rate, .timeout = 20)
 		end = time_now();
 		waited = time_delta(&start, &end);
 		
-		cr_assert_float_eq(waited, 1.0 / rate, 10e-3, "We slept for %f instead of %f secs in round %d", waited, 1.0 / rate, i);
+		if (fabs(waited - 1.0 / rate) > 10e-3)
+			break;
 	}
+	
+	if (i < 10)
+		cr_assert_float_eq(waited, 1.0 / rate, 10e-3, "We slept for %f instead of %f secs in round %d", waited, 1.0 / rate, i);
 	
 	close(tfd);
 }

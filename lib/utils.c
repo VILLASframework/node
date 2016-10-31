@@ -35,7 +35,7 @@ int version_parse(const char *s, struct version *v)
 	return sscanf(s, "%u.%u", &v->major, &v->minor) != 2;
 }
 
-int version_compare(struct version *a, struct version *b) {
+int version_cmp(struct version *a, struct version *b) {
 	int major = a->major - b->major;
 	int minor = a->minor - b->minor;
 
