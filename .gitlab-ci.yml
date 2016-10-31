@@ -79,8 +79,7 @@ unit:
   dependencies:
     - build
   script:
-    - make tests
-    - build/release/testsuite
+    - make run-tests
   image: $DOCKER_REGISTRY/$DOCKER_IMAGE
   tags:
     - docker
