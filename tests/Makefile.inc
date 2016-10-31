@@ -7,6 +7,10 @@ TEST_LDLIBS = $(LDLIBS) -lcriterion -lvillas -pthread
 
 tests: $(BUILDDIR)/testsuite
 
+run-tests: tests
+	echo 25 > /proc/sys/vm/nr_hugepages
+	$(BUILDDIR)/testsuite
+
 # Compile
 $(BUILDDIR)/tests/%.o: tests/%.c | $$(dir $$@)
 	$(CC) $(TEST_CFLAGS) -c $< -o $@
@@ -25,4 +29,4 @@ install-tests:
 clean-tests:
 	rm -rf $(BUILDDIR)/tests $(BUILDDIR)/testsuite
 
-.PHONY: tests install-tests clean-tests
+.PHONY: tests install-tests clean-tests run-tests

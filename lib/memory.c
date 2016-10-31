@@ -65,6 +65,8 @@ static void * memory_hugepage_alloc(size_t len)
 
 static int memory_hugepage_free(void *ptr, size_t len)
 {
+	len = ALIGN(len, HUGEPAGESIZE); /* ugly see: https://lkml.org/lkml/2015/3/27/171 */
+
 	return munmap(ptr, len);
 }
 

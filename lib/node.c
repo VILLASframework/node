@@ -113,6 +113,8 @@ int node_start(struct node *n)
 	if (ret == 0)
 		n->state = NODE_RUNNING;
 	
+	n->sequence = 0;
+	
 	return ret;
 }
 
