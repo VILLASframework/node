@@ -103,7 +103,7 @@ double hist_stddev(struct hist *h)
 
 void hist_print(struct hist *h)
 { INDENT
-	stats("Counted values: %u (%u between %f and %f)", h->total, h->total-h->higher-h->lower, h->high, h->low);
+	stats("Counted values: %ju (%ju between %f and %f)", h->total, h->total-h->higher-h->lower, h->high, h->low);
 	stats("Highest: %f Lowest: %f", h->highest, h->lowest);
 	stats("Mu: %f Sigma2: %f Sigma: %f", hist_mean(h), hist_var(h), hist_stddev(h));
 
@@ -135,11 +135,11 @@ void hist_plot(struct hist *h)
 
 	for (int i = 0; i < h->length; i++) {
 		double value = VAL(h, i);
-		int cnt = h->data[i];
+		hist_cnt_t cnt = h->data[i];
 		int bar = HIST_HEIGHT * ((double) cnt / max);
 
 		if (value > h->lowest || value < h->highest)
-			stats("%+9g | "     "%5u"  " | %.*s", value, cnt, bar, buf);
+			stats("%+9g | %5ju | %.*s", value, cnt, bar, buf);
 	}
 }
 
@@ -150,7 +150,7 @@ char * hist_dump(struct hist *h)
 	strcatf(&buf, "[ ");
 
 	for (int i = 0; i < h->length; i++)
-		strcatf(&buf, "%u ", h->data[i]);
+		strcatf(&buf, "%ju ", h->data[i]);
 
 	strcatf(&buf, "]");
 	
@@ -199,9 +199,9 @@ int hist_dump_matlab(struct hist *h, FILE *f)
 	fprintf(f, "%lu = struct( ", time(NULL));
 	fprintf(f, "'low', %f, ", h->low);
 	fprintf(f, "'high', %f, ", h->high);
-	fprintf(f, "'total', %u, ", h->total);
-	fprintf(f, "'higher', %u, ", h->higher);
-	fprintf(f, "'lower', %u, ", h->lower);
+	fprintf(f, "'total', %ju, ", h->total);
+	fprintf(f, "'higher', %ju, ", h->higher);
+	fprintf(f, "'lower', %ju, ", h->lower);
 	fprintf(f, "'highest', %f, ", h->highest);
 	fprintf(f, "'lowest', %f, ", h->lowest);
 	fprintf(f, "'mean', %f, ", hist_mean(h));

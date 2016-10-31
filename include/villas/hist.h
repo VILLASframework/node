@@ -21,7 +21,7 @@
 #define HIST_HEIGHT	(LOG_WIDTH - 55)
 #define HIST_SEQ	17
 
-typedef unsigned hist_cnt_t;
+typedef uintmax_t hist_cnt_t;
 
 /** Histogram structure used to collect statistics. */
 struct hist {
