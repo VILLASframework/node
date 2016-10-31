@@ -182,7 +182,7 @@ void test_rtt() {
 	else
 		error("Invalid file descriptor: %u", fd);
 
-	hist_print(&hist);
+	hist_print(&hist, 1);
 
 	hist_destroy(&hist);
 }

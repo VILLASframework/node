@@ -67,7 +67,7 @@ double hist_mean(struct hist *h);
 double hist_stddev(struct hist *h);
 
 /** Print all statistical properties of distribution including a graphilcal plot of the histogram. */
-void hist_print(struct hist *h);
+void hist_print(struct hist *h, int details);
 
 /** Print ASCII style plot of histogram */
 void hist_plot(struct hist *h);

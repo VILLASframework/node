@@ -112,13 +112,13 @@ double hist_stddev(struct hist *h)
 	return sqrt(hist_var(h));
 }
 
-void hist_print(struct hist *h)
+void hist_print(struct hist *h, int details)
 { INDENT
 	stats("Counted values: %ju (%ju between %f and %f)", h->total, h->total-h->higher-h->lower, h->high, h->low);
 	stats("Highest: %f Lowest: %f", h->highest, h->lowest);
 	stats("Mu: %f Sigma2: %f Sigma: %f", hist_mean(h), hist_var(h), hist_stddev(h));
 
-	if (h->total - h->higher - h->lower > 0) {
+	if (details > 0 && h->total - h->higher - h->lower > 0) {
 		char *buf = hist_dump(h);
 		stats("Matlab: %s", buf);
 		free(buf);
