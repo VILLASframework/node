@@ -45,6 +45,8 @@ struct sample {
 	
 	atomic_int refcnt;	/**< Reference counter. */
 	struct pool *pool;	/**< This sample is belong to this memory pool. */
+	
+	int endian;			/**< Endianess of data in the sample. */
 
 	/** All timestamps are seconds / nano seconds after 1.1.1970 UTC */
 	struct {

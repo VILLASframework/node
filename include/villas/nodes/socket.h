@@ -44,6 +44,7 @@ union sockaddr_union {
 struct socket {
 	int sd;				/**> The socket descriptor */
 	int mark;			/**> Socket mark for netem, routing and filtering */
+	int endian;			/** Endianness of the data sent/received by the node */
 
 	enum socket_layer layer;	/**> The OSI / IP layer which should be used for this socket */
 	enum socket_header header;	/**> Payload header type */

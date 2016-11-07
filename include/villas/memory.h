@@ -44,6 +44,11 @@ struct memzone {
 	size_t len; 
 };
 
+/** Allocate \p len bytes memory of type \p m.
+ *
+ * @retval NULL If allocation failed.
+ * @retval <>0  If allocation was successful.
+ */
 void * memory_alloc(const struct memtype *m, size_t len);
 
 void * memory_alloc_aligned(const struct memtype *m, size_t len, size_t alignment);

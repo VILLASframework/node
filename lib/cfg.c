@@ -204,6 +204,11 @@ int cfg_parse_path(config_setting_t *cfg,
 	if (!config_setting_lookup_float(cfg, "rate", &p->rate))
 		p->rate = 0; /* disabled */
 
+	if (!IS_POW2(p->queuelen)) {
+		p->queuelen = LOG2_CEIL(p->queuelen);
+		warn("Queue length should always be a power of 2. Adjusting to %d", p->queuelen);
+	}
+
 	p->cfg = cfg;
 
 	list_push(paths, p);

@@ -19,20 +19,20 @@
 
 void * memory_alloc(const struct memtype *m, size_t len)
 {
-	debug(DBG_MEM | 2, "Allocating %zu byte of %s memory", len, m->name);
+	debug(DBG_MEM | 2, "Allocating %#zx bytes of %s memory", len, m->name);
 	return m->alloc(len);
 }
 
 void * memory_alloc_aligned(const struct memtype *m, size_t len, size_t alignment)
 {
-	debug(DBG_MEM | 2, "Allocating %zu byte of %zu-byte-aligned %s memory", len, alignment, m->name);
+	debug(DBG_MEM | 2, "Allocating %#zx bytes of %#zx-byte-aligned %s memory", len, alignment, m->name);
 	warn("%s: not implemented yet!", __FUNCTION__);
 	return memory_alloc(m, len);
 }
 
 int memory_free(const struct memtype *m, void *ptr, size_t len)
 {
-	debug(DBG_MEM | 2, "Releasing %zu bytes of %s memory", len, m->name);
+	debug(DBG_MEM | 2, "Releasing %#zx bytes of %s memory", len, m->name);
 	return m->free(ptr, len);
 }
 
@@ -60,7 +60,14 @@ static void * memory_hugepage_alloc(size_t len)
 	flags |= MAP_HUGETLB | MAP_LOCKED;
 #endif
 	
-	return mmap(NULL, len, prot, flags, -1, 0);
+	void *ret = mmap(NULL, len, prot, flags, -1, 0);
+	
+	if (ret == MAP_FAILED) {
+		info("Failed to allocate huge pages: Check https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt");
+		return NULL;
+	}
+	
+	return ret;
 }
 
 static int memory_hugepage_free(void *ptr, size_t len)

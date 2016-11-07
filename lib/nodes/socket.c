@@ -19,6 +19,14 @@
 #include <linux/if_packet.h>
 #include <arpa/inet.h>
 
+#ifdef __linux__
+  #include <byteswap.h>
+#elif defined(__PPC__) /* Xilinx toolchain */
+  #include <xil_io.h>
+  #define bswap_16(x)	Xil_EndianSwap16(x)
+  #define bswap_32(x)	Xil_EndianSwap32(x)
+#endif
+
 #include "nodes/socket.h"
 #include "config.h"
 #include "utils.h"
@@ -94,7 +102,7 @@ int socket_deinit()
 char * socket_print(struct node *n)
 {
 	struct socket *s = n->_vd;
-	char *layer = NULL, *header = NULL, *buf;
+	char *layer = NULL, *header = NULL, *endian = NULL, *buf;
 
 	switch (s->layer) {
 		case SOCKET_LAYER_UDP:	layer = "udp";	break;
@@ -107,11 +115,19 @@ char * socket_print(struct node *n)
 		case SOCKET_HEADER_FAKE:	header = "fake";	break;
 		case SOCKET_HEADER_DEFAULT:	header = "default";	break;
 	}
+	
+	if (s->header == SOCKET_HEADER_DEFAULT)
+		endian = "auto";
+	else
+		switch (s->endian) {
+			case MSG_ENDIAN_LITTLE:	endian = "little";	break;
+			case MSG_ENDIAN_BIG:	endian = "big";		break;
+		}
 
 	char *local = socket_print_addr((struct sockaddr *) &s->local);
 	char *remote = socket_print_addr((struct sockaddr *) &s->remote);
 
-	buf = strf("layer=%s, header=%s, local=%s, remote=%s", layer, header, local, remote);
+	buf = strf("layer=%s, header=%s, endian=%s, local=%s, remote=%s", layer, header, endian, local, remote);
 
 	free(local);
 	free(remote);
@@ -253,8 +269,21 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 			recv(s->sd, NULL, 0, 0); /* empty receive buffer */
 			return -1;
 		}
+		
+		/* Convert message to host endianess */
+		if (s->endian != MSG_ENDIAN_HOST) {
+			for (int i = 0; i < ARRAY_LEN(header); i++)
+				header[i] = bswap_32(header[i]);
+			
+			for (int i = 0; i < bytes / SAMPLE_DATA_LEN(1); i++)
+				smp->data[i].i = bswap_32(smp->data[i].i);
+		}
 
-		length = (s->header == SOCKET_HEADER_FAKE ? bytes - sizeof(header) : bytes) / SAMPLE_DATA_LEN(1);
+		if (s->header == SOCKET_HEADER_FAKE)
+			length = (bytes - sizeof(header)) / SAMPLE_DATA_LEN(1);
+		else
+			length = bytes / SAMPLE_DATA_LEN(1);
+		
 		if (length > smp->capacity) {
 			warn("Node %s received more values than supported. Dropping %u values", node_name(n), length - smp->capacity);
 			length = smp->capacity;
@@ -303,7 +332,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 		/* Convert message to host endianess */
 		if (hdr.endian != MSG_ENDIAN_HOST)
-			msg_swap(&hdr);
+			msg_hdr_swap(&hdr);
 
 		samples = bytes / MSG_LEN(hdr.length);
 		if (samples > cnt) {
@@ -344,8 +373,12 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 				break;
 
 			/* Convert message to host endianess */
-			if (m->endian != MSG_ENDIAN_HOST)
-				msg_swap(m);
+			if (m->endian != MSG_ENDIAN_HOST) {
+				msg_hdr_swap(m);
+				
+				for (int i = 0; i < m->length; i++)
+					smp->data[i].i = bswap_32(smp->data[i].i);
+			}
 
 			smp->length = m->length;
 			smp->sequence = m->sequence;
@@ -371,33 +404,27 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 		if (cnt < 1)
 			return 0;
 
-		for (int i = 0; i < cnt; i++) {			
-			int iov_len = s->header == SOCKET_HEADER_FAKE ? 2 : 1;
-			struct iovec iov[iov_len];
-			
+		for (int i = 0; i < cnt; i++) {
+			int off = s->header == SOCKET_HEADER_FAKE ? 3 : 0;
+			int len = smps[i]->length + off;
+			uint32_t data[len];
+
 			/* First three values are sequence, seconds and nano-seconds timestamps */
-			uint32_t header[3];	
 			if (s->header == SOCKET_HEADER_FAKE) {
-				header[0] = smps[i]->sequence;
-				header[1] = smps[i]->ts.origin.tv_sec;
-				header[2] = smps[i]->ts.origin.tv_nsec;
-				
-				iov[0].iov_base = header;
-				iov[0].iov_len = sizeof(header);
+				data[0] = smps[i]->sequence;
+				data[1] = smps[i]->ts.origin.tv_sec;
+				data[2] = smps[i]->ts.origin.tv_nsec;
 			}
 			
-			/* Remaining values are payload */
-			iov[iov_len-1].iov_base = &smps[i]->data;
-			iov[iov_len-1].iov_len = SAMPLE_DATA_LEN(smps[i]->length);
-			
-			struct msghdr mhdr = {
-				.msg_iov = iov,
-				.msg_iovlen = iov_len,
-				.msg_name = (struct sockaddr *) &s->remote,
-				.msg_namelen = sizeof(s->remote)
-			};
+			for (int j = 0; j < smps[i]->length; j++) {
+				if (s->endian == MSG_ENDIAN_HOST)
+					data[off + j] = smps[i]->data[j].i;
+				else
+					data[off + j] = bswap_32(smps[i]->data[j].i);
+			}
 
-			bytes = sendmsg(s->sd, &mhdr, 0);
+			bytes = sendto(s->sd, data, len * sizeof(data[0]), 0,
+				(struct sockaddr *) &s->remote, sizeof(s->remote));
 			if (bytes < 0)
 				serror("Failed send to node %s", node_name(n));
 
@@ -445,7 +472,7 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 int socket_parse(struct node *n, config_setting_t *cfg)
 {
-	const char *local, *remote, *layer, *hdr;
+	const char *local, *remote, *layer, *hdr, *endian;
 	int ret;
 
 	struct socket *s = n->_vd;
@@ -476,6 +503,17 @@ int socket_parse(struct node *n, config_setting_t *cfg)
 			s->header = SOCKET_HEADER_DEFAULT;
 		else
 			cerror(cfg, "Invalid application header type '%s' for node %s", hdr, node_name(n));
+	}
+	
+	if (!config_setting_lookup_string(cfg, "endian", &endian))
+		s->endian = MSG_ENDIAN_BIG;
+	else {
+		if      (!strcmp(endian, "big") || !strcmp(endian, "network"))
+			s->endian = MSG_ENDIAN_BIG;
+		else if (!strcmp(endian, "little"))
+			s->endian = MSG_ENDIAN_LITTLE;
+		else
+			cerror(cfg, "Invalid endianness type '%s' for node %s", endian, node_name(n));
 	}
 
 	if (!config_setting_lookup_string(cfg, "remote", &remote))
