@@ -19,6 +19,8 @@
 #ifndef _WEBSOCKET_H_
 #define _WEBSOCKET_H_
 
+#include <libwebsockets.h>
+
 #include "node.h"
 #include "pool.h"
 #include "queue.h"
@@ -28,36 +30,13 @@ struct lws;
 
 /** Internal data per websocket node */
 struct websocket {
-	struct list connections;		/**< List of active libwebsocket connections in server mode (struct websocket_connection) */
-
-	struct list destinations;		/**< List of struct lws_client_connect_info to connect to in client mode. */
+	struct list connections;		/**< List of active libwebsocket connections in server mode (struct websocket_connection). */
+	struct list destinations;		/**< List of websocket servers connect to in client mode (struct websocket_destination). */
 	
 	struct pool pool;
-	
 	struct queue queue;			/**< For samples which are received from WebSockets a */
 	
 	int id;					/**< The index of this node */
-};
-
-struct websocket_connection {
-	enum {
-		WEBSOCKET_ESTABLISHED,
-		WEBSOCKET_ACTIVE,
-		WEBSOCKET_SHUTDOWN,
-		WEBSOCKET_CLOSED
-	} state;
-	
-	struct node *node;
-	struct path *path;
-	
-	struct queue queue;			/**< For samples which are sent to the WebSocket */
-	
-	struct lws *wsi;
-	
-	struct {
-		char name[64];
-		char ip[64];
-	} peer;
 };
 
 /** @see node_vtable::init */
