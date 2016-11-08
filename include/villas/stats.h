@@ -24,7 +24,6 @@ struct path;
 struct node;
 
 enum stats_id {
-	STATS_INVALID,		/**< Counter for invalid messages */
 	STATS_SKIPPED,		/**< Counter for skipped messages due to hooks */
 	STATS_DROPPED,		/**< Counter for dropped messages due to reordering */
 	STATS_GAP_SEQUENCE,	/**< Histogram of sequence number displacement of received messages */

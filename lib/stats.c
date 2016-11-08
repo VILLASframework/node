@@ -23,7 +23,6 @@ static struct stats_desc {
 		double resolution;
 	} hist;
 } stats_table[] = {
-	{ "invalid",	  "",	"invalid messages",							{0,	0,	-1,	}},
 	{ "skipped",	  "",	"skipped messages by hooks",						{0,	0,	-1,	}},
 	{ "dropped",	  "",	"dropped messages because of reordering",				{0,	0,	-1,	}},
 	{ "gap_sequence", "",	"sequence number displacement of received messages",			{-10,	10, 20,		}},
@@ -127,24 +126,22 @@ void stats_print_header()
 {
 	#define UNIT(u)	"(" YEL(u) ")"
 
-	stats("%-40s|%19s|%19s|%19s|%19s|%19s|", "Source " MAG("=>") " Destination",
+	stats("%-40s|%19s|%19s|%19s|%19s|", "Source " MAG("=>") " Destination",
 		"OWD"	UNIT("S") " ",
 		"Rate"	UNIT("p/S") " ",
 		"Drop"	UNIT("p") " ",
-		"Skip"	UNIT("p") " ",
-		"Inval" UNIT("p") " "
+		"Skip"	UNIT("p") " "
 	);
 	line();
 }
 
 void stats_print_periodic(struct stats *s, struct path *p)
 {
-	stats("%-40.40s|%10f|%10f|%10ju|%10ju|%10ju|", path_name(p),
+	stats("%-40.40s|%10f|%10f|%10ju|%10ju|", path_name(p),
 		s->histograms[STATS_OWD].last,
 		1.0 / s->histograms[STATS_GAP_SAMPLE].last,
 		s->histograms[STATS_DROPPED].total,
-		s->histograms[STATS_SKIPPED].total,
-		s->histograms[STATS_INVALID].total
+		s->histograms[STATS_SKIPPED].total
 	);
 }
 
