@@ -45,6 +45,7 @@ struct sample {
 	
 	atomic_int refcnt;	/**< Reference counter. */
 	struct pool *pool;	/**< This sample is belong to this memory pool. */
+	struct node *source;	/**< The node from which this sample originates. */
 
 	/** All timestamps are seconds / nano seconds after 1.1.1970 UTC */
 	struct {

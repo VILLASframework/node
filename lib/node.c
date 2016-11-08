@@ -38,6 +38,9 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 		nread = n->_vt->read(n, smps, cnt);
 	}
 	
+	for (int i = 0; i < nread; i++)
+		smps[i]->source = n;
+	
 	return nread;
 }
 
