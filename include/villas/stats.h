@@ -23,20 +23,24 @@ struct sample;
 struct path;
 struct node;
 
-struct stats {
-	struct {
-		uintmax_t invalid;	/**< Counter for invalid messages */
-		uintmax_t skipped;	/**< Counter for skipped messages due to hooks */
-		uintmax_t dropped;	/**< Counter for dropped messages due to reordering */
-	} counter;
+enum stats_id {
+	STATS_INVALID,		/**< Counter for invalid messages */
+	STATS_SKIPPED,		/**< Counter for skipped messages due to hooks */
+	STATS_DROPPED,		/**< Counter for dropped messages due to reordering */
+	STATS_GAP_SEQUENCE,	/**< Histogram of sequence number displacement of received messages */
+	STATS_GAP_SAMPLE,	/**< Histogram for inter message timestamps (as sent by remote) */
+	STATS_GAP_RECEIVED,	/**< Histogram for inter message arrival time (as seen by this instance) */
+	STATS_OWD,		/**< Histogram for one-way-delay (OWD) of received messages */
+	STATS_COUNT		/**< Just here to have an updated number of statistics */
+};
 
-	struct {
-		struct hist owd;	/**< Histogram for one-way-delay (OWD) of received messages */
-		struct hist gap_msg;	/**< Histogram for inter message timestamps (as sent by remote) */
-		struct hist gap_recv;	/**< Histogram for inter message arrival time (as seen by this instance) */
-		struct hist gap_seq;	/**< Histogram of sequence number displacement of received messages */
-	} histogram;
-	
+struct stats_delta {
+	double vals[STATS_COUNT];
+};
+
+struct stats {
+	struct hist histograms[STATS_COUNT];	
+
 	struct sample *last;
 };
 
@@ -44,7 +48,13 @@ int stats_init(struct stats *s);
 
 void stats_destroy(struct stats *s);
 
+void stats_update(struct stats *s, enum stats_id id, double val);
+
+int stats_commit(struct stats *s, struct stats_delta *d);
+
 void stats_collect(struct stats *s, struct sample *smps[], size_t cnt);
+
+void stats_decollect(struct stats *s, struct sample *smps[], size_t cnt);
 
 #ifdef WITH_JANSSON
 json_t * stats_json(struct stats *s);
@@ -56,7 +66,7 @@ void stats_print_header();
 
 void stats_print_periodic(struct stats *s, struct path *p);
 
-void stats_print(struct stats *s);
+void stats_print(struct stats *s, int details);
 
 void stats_send(struct stats *s, struct node *n);
 
