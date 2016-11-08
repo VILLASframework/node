@@ -49,9 +49,9 @@
 
 /** Initialize a message with default values */
 #define WEBMSG_INIT(len, seq) (struct msg) {\
-	.version  = MSG_VERSION,	\
-	.type     = MSG_TYPE_DATA,	\
-	.endian   = MSG_ENDIAN_HOST,	\
+	.version  = WEBMSG_VERSION,	\
+	.type     = WEBMSG_TYPE_DATA,	\
+	.endian   = WEBMSG_ENDIAN_HOST,	\
 	.length   = len,	 	\
 	.sequence = seq			\
 }
@@ -80,7 +80,7 @@ struct webmsg
 	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
 #endif
 
-	uint8_t node_id;	/**< The node index from / to which this sample received / sent to.
+	uint8_t id;	/**< The node index from / to which this sample received / sent to.
 				 *   Corresponds to the index of the node in the http://localhost/nodes.json  array. */
 	
 	uint16_t length;	/**< The number of values in msg::data[]. Endianess is specified in msg::endian. */

@@ -20,6 +20,7 @@ function Msg(c, d)
 	this.endian    = typeof c.endian    === 'undefined' ? Msg.prototype.ENDIAN_LITTLE : c.endian;
 	this.version   = typeof c.version   === 'undefined' ? Msg.prototype.VERSION       : c.version;
 	this.type      = typeof c.type      === 'undefined' ? Msg.prototype.TYPE_DATA     : c.type;
+	this.id        = typeof c.id        === 'undefined' ? -1                          : c.id;
 	this.timestamp = typeof c.timestamp === 'undefined' ? Date.now()                  : c.timestamp;
 	
 	if (Array.isArray(d)) {
@@ -55,6 +56,7 @@ Msg.fromArrayBuffer = function(data)
 		endian:  (bits >> Msg.prototype.OFFSET_ENDIAN) & 0x1,
 		version: (bits >> Msg.prototype.OFFSET_VERSION) & 0xF,
 		type:    (bits >> Msg.prototype.OFFSET_TYPE) & 0x3,
+		id:        data.getUint8( 0x01, endian),
 		length:    data.getUint16(0x02, endian),
 		sequence:  data.getUint32(0x04, endian),
 		timestamp: data.getUint32(0x08, endian) * 1e3 +
@@ -109,6 +111,7 @@ Msg.prototype.toArrayBuffer = function()
 	var nsec = (this.timestamp - sec * 1e3) * 1e6;
 	
 	view.setUint8( 0x00, bits, true);
+	view.setUint8( 0x01, this.id, true);
 	view.setUint16(0x02, this.length, true);
 	view.setUint32(0x04, this.sequence, true);
 	view.setUint32(0x08, sec, true);

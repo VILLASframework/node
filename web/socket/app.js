@@ -174,7 +174,7 @@ function wsConnect(url, protocol) {
 	connection.onmessage = function(e) {
 		var msgs = Msg.fromArrayBufferVector(e.data);
 		
-		console.log('Received ' + msgs.length + ' messages with ' + msgs[0].data.length + ' values: ' + msgs[0].timestamp);
+		console.log('Received ' + msgs.length + ' messages with ' + msgs[0].data.length + ' values from id ' + msgs[0].id + ' with timestamp ' + msgs[0].timestamp);
 
 		for (var j = 0; j < plotData.length; j++) {
 			// remove old
