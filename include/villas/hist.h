@@ -11,6 +11,7 @@
 #define _HIST_H_
 
 #include <stdio.h>
+#include <stdint.h>
 
 #include "config.h"
 
@@ -46,7 +47,7 @@ struct hist {
 };
 
 /** Initialize struct hist with supplied values and allocate memory for buckets. */
-void hist_create(struct hist *h, double start, double end, double resolution);
+int hist_create(struct hist *h, double start, double end, double resolution);
 
 /** Free the dynamically allocated memory. */
 void hist_destroy(struct hist *h);

@@ -19,7 +19,7 @@
 #define VAL(h, i)	((h)->low + (i) * (h)->resolution)
 #define INDEX(h, v)	round((v - (h)->low) / (h)->resolution)
 
-void hist_create(struct hist *h, double low, double high, double resolution)
+int hist_create(struct hist *h, double low, double high, double resolution)
 {
 	h->low = low;
 	h->high = high;
@@ -27,7 +27,7 @@ void hist_create(struct hist *h, double low, double high, double resolution)
 
 	if (resolution > 0) {
 		h->length = (high - low) / resolution;
-		h->data = alloc(h->length * sizeof(unsigned));
+		h->data = alloc(h->length * sizeof(hist_cnt_t));
 	}
 	else {
 		h->length = 0;
@@ -35,6 +35,8 @@ void hist_create(struct hist *h, double low, double high, double resolution)
 	}
 
 	hist_reset(h);
+	
+	return 0;
 }
 
 void hist_destroy(struct hist *h)
