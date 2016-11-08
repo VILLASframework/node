@@ -103,7 +103,7 @@ enum hook_type {
 	HOOK_INIT		= 1 << 9,  /**< Called before path is started to parseHOOK_DESTROYs. */
 	HOOK_DESTROY		= 1 << 10, /**< Called after path has been stopped to release memory allocated by HOOK_INIT */	
 
-	HOOK_INTERNAL		= 1 << 11,  /**< Internal hooks are added to every path implicitely. */
+	HOOK_AUTO		= 1 << 11,  /**< Internal hooks are added to every path implicitely. */
 	HOOK_PARSE		= 1 << 12, /**< Called for parsing hook arguments. */
 
 	/** @{ Classes of hooks */
@@ -113,9 +113,6 @@ enum hook_type {
 	HOOK_PATH		= HOOK_PATH_START | HOOK_PATH_STOP | HOOK_PATH_RESTART,
 	/** Hooks which are used to collect statistics. */
 	HOOK_STATS		= HOOK_INTERNAL | HOOK_STORAGE | HOOK_PATH | HOOK_READ | HOOK_PERIODIC,
-
-	/** All hooks */
-	HOOK_ALL		= HOOK_INTERNAL - 1
 	/** @} */
 };
 

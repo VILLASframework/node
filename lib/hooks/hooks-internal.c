@@ -12,14 +12,11 @@
 #include "path.h"
 #include "utils.h"
 
-REGISTER_HOOK("fix_ts", "Update timestamps of sample if not set", 0, 0, hook_fix_ts, HOOK_INTERNAL | HOOK_READ)
+REGISTER_HOOK("fix_ts", "Update timestamps of sample if not set", 0, 0, hook_fix_ts, HOOK_AUTO | HOOK_READ)
 int hook_fix_ts(struct hook *h, int when, struct hook_info *j)
 {
 	struct timespec now = time_now();
 
-	if (when != HOOK_READ)
-		return 0;
-	
 	assert(j->smps);
 
 	for (int i = 0; i < j->cnt; i++) {
@@ -41,12 +38,9 @@ int hook_fix_ts(struct hook *h, int when, struct hook_info *j)
 	return j->cnt;
 }
 
-REGISTER_HOOK("restart", "Call restart hooks for current path", 1, 1, hook_restart, HOOK_INTERNAL | HOOK_READ)
+REGISTER_HOOK("restart", "Call restart hooks for current path", 1, 1, hook_restart, HOOK_AUTO | HOOK_READ)
 int hook_restart(struct hook *h, int when, struct hook_info *j)
 {
-	if (when != HOOK_READ)
-		return 0;
-	
 	assert(j->smps);
 	assert(j->path);
 
@@ -69,13 +63,10 @@ int hook_restart(struct hook *h, int when, struct hook_info *j)
 	return j->cnt;
 }
 
-REGISTER_HOOK("drop", "Drop messages with reordered sequence numbers", 3, 1, hook_drop, HOOK_INTERNAL | HOOK_READ)
+REGISTER_HOOK("drop", "Drop messages with reordered sequence numbers", 3, 1, hook_drop, HOOK_AUTO | HOOK_READ)
 int hook_drop(struct hook *h, int when, struct hook_info *j)
 {
 	int i, ok, dist;
-	
-	if (when != HOOK_READ)
-		return 0;
 	
 	assert(j->smps);
 

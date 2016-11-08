@@ -171,7 +171,7 @@ int path_init(struct path *p)
 	/* Add internal hooks if they are not already in the list*/
 	list_foreach(struct hook *h, &hooks) {
 		if (
-			(h->type & HOOK_INTERNAL) && 			/* is internal hook? */
+			(h->type & HOOK_AUTO) && 			/* should this hook be added implicitely? */
 			(list_lookup(&p->hooks, h->name) == NULL)	/* is not already in list? */
 		)
 			list_push(&p->hooks, memdup(h, sizeof(struct hook)));
