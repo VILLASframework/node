@@ -45,8 +45,6 @@ struct sample {
 	
 	atomic_int refcnt;	/**< Reference counter. */
 	struct pool *pool;	/**< This sample is belong to this memory pool. */
-	
-	int endian;			/**< Endianess of data in the sample. */
 
 	/** All timestamps are seconds / nano seconds after 1.1.1970 UTC */
 	struct {
@@ -57,9 +55,9 @@ struct sample {
 
 	/** The values. */
 	union {
-		float    f;	/**< Floating point values (note msg::endian) */
-		uint32_t i;	/**< Integer values (note msg::endian) */
-	} data[];
+		float    f;	/**< Floating point values. */
+		uint32_t i;	/**< Integer values. */
+	} data[];		/**< Data is in host endianess! */
 };
 
 /** Request \p cnt samples from memory pool \p p and initialize them.
