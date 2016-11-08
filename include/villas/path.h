@@ -67,7 +67,7 @@ struct path
 	
 	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
 	
-	struct stats *stats;	/**< Statistic counters. This is a pointer to the statistic hooks private data. */
+	struct stats_delta *stats;	/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 	
 	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path */
 };

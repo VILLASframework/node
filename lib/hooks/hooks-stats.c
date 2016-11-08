@@ -22,8 +22,9 @@ int hook_stats(struct hook *h, int when, struct hook_info *j)
 	switch (when) {
 		case HOOK_READ:
 			assert(j->smps);
+			assert(j->path);
 		
-			stats_collect(s, j->smps, j->cnt);
+			stats_collect(j->path->stats, j->smps, j->cnt);
 			break;
 
 		case HOOK_PATH_STOP:

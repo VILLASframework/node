@@ -48,54 +48,42 @@ void stats_destroy(struct stats *s)
 	}
 }
 
-void stats_update(struct stats *s, enum stats_id id, double val)
+void stats_update(struct stats_delta *d, enum stats_id id, double val)
 {
-	if (!s)
-		return;
-	
-	hist_put(&s->histograms[id], val);
+	if (d && id >= 0 && id < STATS_COUNT)
+		d->values[id] = val;
 }
-
-#if 0
-int stats_delta(struct stats_delta *d, struct sample *s, struct sample *p)
-{
-	d->histogram.owd      = time_delta(&smps[i]->ts.origin,   &smps[i]->ts.received);
-	d->histogram.gap      = time_delta(&s->last->ts.origin,   &smps[i]->ts.origin);
-	d->histogram.gap_seq  = s->sequence - (int32_t) p->sequence;
-	d->histogram.gap_recv = time_delta(&s->last->ts.received, &smps[i]->ts.received);
-	
-	d->counter.dropped    = d->histogram.gap_seq <= 0 ? 1 : 0;
-	d->counter.invalid    = 0;
-	
-	return 0;
-}
-#endif
 
 int stats_commit(struct stats *s, struct stats_delta *d)
 {
 	for (int i = 0; i < STATS_COUNT; i++) {
-		hist_put(&s->histograms[i], d->vals[i]);
+		hist_put(&s->histograms[i], d->values[i]);
 	}
 	
 	return 0;
 }
 
-void stats_collect(struct stats *s, struct sample *smps[], size_t cnt)
+void stats_collect(struct stats_delta *s, struct sample *smps[], size_t cnt)
 {
-	for (int i = 0; i < cnt; i++) {
-		if (s->last) {
-//			struct stats_delta d;
-//			stats_get_delta(&d, smps[i], s->last);
-//			stats_commit(s, &d);
+	struct sample *previous = s->last;
+	
+	if (previous) {
+		sample_put(previous);
+		
+		for (int i = 0; i < cnt; i++) {
+			stats_update(s, STATS_GAP_RECEIVED, time_delta(&previous->ts.received, &smps[i]->ts.received));
+			stats_update(s, STATS_GAP_SAMPLE,   time_delta(&previous->ts.origin,   &smps[i]->ts.origin));
+			stats_update(s, STATS_OWD,          time_delta(&smps[i]->ts.origin,    &smps[i]->ts.received));
+			stats_update(s, STATS_GAP_SEQUENCE, smps[i]->sequence - (int32_t) previous->sequence);
+		
+			/* Make sure there is always a reference to the previous sample */
+
+			previous = smps[i];
 		}
-
-		if (i == 0 && s->last)
-			sample_put(s->last);
-		if (i == cnt - 1)
-			sample_get(smps[i]);
-
-		s->last = smps[i];
 	}
+
+	sample_get(previous);
+	s->last = previous;
 }
 
 #ifdef WITH_JANSSON

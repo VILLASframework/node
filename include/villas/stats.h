@@ -34,7 +34,9 @@ enum stats_id {
 };
 
 struct stats_delta {
-	double vals[STATS_COUNT];
+	double values[STATS_COUNT];
+	
+	struct sample *last;
 };
 
 struct stats {
@@ -47,13 +49,11 @@ int stats_init(struct stats *s);
 
 void stats_destroy(struct stats *s);
 
-void stats_update(struct stats *s, enum stats_id id, double val);
+void stats_update(struct stats_delta *s, enum stats_id id, double val);
+
+void stats_collect(struct stats_delta *s, struct sample *smps[], size_t cnt);
 
 int stats_commit(struct stats *s, struct stats_delta *d);
-
-void stats_collect(struct stats *s, struct sample *smps[], size_t cnt);
-
-void stats_decollect(struct stats *s, struct sample *smps[], size_t cnt);
 
 #ifdef WITH_JANSSON
 json_t * stats_json(struct stats *s);
