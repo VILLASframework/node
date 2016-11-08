@@ -149,14 +149,14 @@ int cfg_parse_path(config_setting_t *cfg,
 {
 	config_setting_t *cfg_out, *cfg_hook;
 	const char *in;
-	int ret, reverse;
+	int ret, reverse, samplelen, queuelen;
 	struct path *p;
+
+	struct node *source;
+	struct list destinations;
 	
 	/* Allocate memory and intialize path structure */
 	p = alloc(sizeof(struct path));
-	
-	list_init(&p->destinations);
-	list_init(&p->hooks);
 
 	/* Input node */
 	if (!config_setting_lookup_string(cfg, "in", &in) &&
@@ -165,8 +165,8 @@ int cfg_parse_path(config_setting_t *cfg,
 	    !config_setting_lookup_string(cfg, "source", &in))
 		cerror(cfg, "Missing input node for path");
 
-	p->in = list_lookup(nodes, in);
-	if (!p->in)
+	source = list_lookup(nodes, in);
+	if (!source)
 		cerror(cfg, "Invalid input node '%s'", in);
 
 	/* Output node(s) */
@@ -177,58 +177,66 @@ int cfg_parse_path(config_setting_t *cfg,
 	    !(cfg_out = config_setting_get_member(cfg, "sink")))
 		cerror(cfg, "Missing output nodes for path");
 	
-	ret = cfg_parse_nodelist(cfg_out, &p->destinations, nodes);
+	list_init(&destinations);
+	ret = cfg_parse_nodelist(cfg_out, &destinations, nodes);
 	if (ret <= 0)
 		cerror(cfg_out, "Invalid output nodes");
-	
-	/* Check if nodes are suitable */
-	if (p->in->_vt->read == NULL)
-		cerror(cfg, "Input node '%s' is not supported as a source.", node_name(p->in));
-	
-	list_foreach(struct node *n, &p->destinations) {
-		if (n->_vt->write == NULL)
-			cerror(cfg_out, "Output node '%s' is not supported as a destination.", node_name(n));
-	}
 
 	/* Optional settings */
+	list_init(&p->hooks);
 	cfg_hook = config_setting_get_member(cfg, "hook");
 	if (cfg_hook)
 		cfg_parse_hooklist(cfg_hook, &p->hooks);
 
-	if (!config_setting_lookup_int(cfg, "values", &p->samplelen))
-		p->samplelen = DEFAULT_VALUES;
-	if (!config_setting_lookup_int(cfg, "queuelen", &p->queuelen))
-		p->queuelen = DEFAULT_QUEUELEN;
 	if (!config_setting_lookup_bool(cfg, "reverse", &reverse))
 		reverse = 0;
 	if (!config_setting_lookup_bool(cfg, "enabled", &p->enabled))
 		p->enabled = 1;
+	if (!config_setting_lookup_int(cfg, "values", &samplelen))
+		samplelen = DEFAULT_VALUES;
+	if (!config_setting_lookup_int(cfg, "queuelen", &queuelen))
+		queuelen = DEFAULT_QUEUELEN;
 
-	if (!IS_POW2(p->queuelen)) {
-		p->queuelen = LOG2_CEIL(p->queuelen);
-		warn("Queue length should always be a power of 2. Adjusting to %d", p->queuelen);
+	if (!IS_POW2(queuelen)) {
+		queuelen = LOG2_CEIL(queuelen);
+		warn("Queue length should always be a power of 2. Adjusting to %d", queuelen);
 	}
 
 	p->cfg = cfg;
+	
+	/* Check if nodes are suitable */
+	if (source->_vt->read == NULL)
+		cerror(cfg, "Input node '%s' is not supported as a source.", node_name(source));
+
+	p->source = alloc(sizeof(struct path_source));
+	p->source->node = source;
+	p->source->samplelen = samplelen;
+
+	list_foreach(struct node *n, &destinations) {
+		if (n->_vt->write == NULL)
+			cerror(cfg_out, "Output node '%s' is not supported as a destination.", node_name(n));
+		
+		struct path_destination *pd = alloc(sizeof(struct path_destination));
+		
+		pd->node = n;
+		pd->queuelen = queuelen;
+		
+		list_push(&p->destinations, pd);
+	}
 
 	list_push(paths, p);
 
 	if (reverse) {
-		if (list_length(&p->destinations) > 1)
-			cerror(cfg, "Can't reverse path with multiple destination nodes");
-
-		struct path *r = memdup(p, sizeof(struct path));
-		path_init(r);
-
-		/* Swap source and destination node */
-		r->in = list_first(&p->destinations);
-		list_push(&r->destinations, p->in);
-			
-		if (cfg_hook)
-			cfg_parse_hooklist(cfg_hook, &r->hooks);
+		struct path *r = alloc(sizeof(struct path));
+		
+		ret = path_reverse(p, r);
+		if (ret)
+			cerror(cfg, "Failed to reverse path %s", path_name(p));
 
 		list_push(paths, r);
 	}
+	
+	list_destroy(&destinations, NULL, false);
 
 	return 0;
 }

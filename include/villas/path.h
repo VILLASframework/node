@@ -26,55 +26,50 @@
 #include "hooks.h"
 #include "queue.h"
 #include "pool.h"
+#include "stats.h"
 
-/** The datastructure for a path.
- *
- * @todo Add support for multiple outgoing nodes
- */
+struct path_source
+{
+	struct node *node;
+	struct pool pool;
+	int samplelen;
+	pthread_t tid;	
+};
+
+struct path_destination
+{
+	struct node *node;
+	struct queue queue;
+	int queuelen;
+	pthread_t tid;
+};
+
+/** The datastructure for a path. */
 struct path
 {
 	enum {
 		PATH_INVALID,		/**< Path is invalid. */
-		PATH_CREATED,		/**< Path has been created: lists initialized */
 		PATH_INITIALIZED,	/**< Path queues, memory pools & hook system initialized. */
 		PATH_RUNNING,		/**< Path is currently running. */
 		PATH_STOPPED,		/**< Path has been stopped. */
 		PATH_DESTROYED		/**< Path is destroyed. */
 	} state;			/**< Path state */
 	
-	struct node *in;		/**< Pointer to the incoming node */
-	
-	struct queue queue;		/**< A ring buffer for all received messages (unmodified) */
-	struct pool pool;		/**< Memory pool for messages / samples. */
+	/* Each path has a single source and multiple destinations */
+	struct path_source *source;	/**< Pointer to the incoming node */
+	struct list destinations;	/**< List of all outgoing nodes (struct path_destination). */
 
-	struct list destinations;	/**< List of all outgoing nodes */
 	struct list hooks;		/**< List of function pointers to hooks */
 
-	int samplelen;			/**< Maximum number of values per sample for this path. */
-	int queuelen;			/**< Size of sample queue for this path. */
 	int enabled;			/**< Is this path enabled */
 
 	pthread_t tid;			/**< The thread id for this path */
-
-	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path */
 	
 	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
 	
-	/** The following fields are mostly managed by hook_ functions @{ */
+	struct stats *stats;	/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 	
-	struct {
-		struct hist owd;	/**< Histogram for one-way-delay (OWD) of received messages */
-		struct hist gap_msg;	/**< Histogram for inter message timestamps (as sent by remote) */
-		struct hist gap_recv;	/**< Histogram for inter message arrival time (as seen by this instance) */
-		struct hist gap_seq;	/**< Histogram of sequence number displacement of received messages */
-	} hist;
-
-	/* Statistic counters */
-	uintmax_t invalid;		/**< Counter for invalid messages */
-	uintmax_t skipped;		/**< Counter for skipped messages due to hooks */
-	uintmax_t dropped;		/**< Counter for dropped messages due to reordering */
-	
-	/** @} */
+	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path */
 };
 
 /** Initialize internal data structures. */
@@ -118,6 +113,9 @@ void path_print_stats(struct path *p);
  * @return A pointer to a string containing a textual representation of the path.
  */
 const char * path_name(struct path *p);
+
+/** Reverse a path */
+int path_reverse(struct path *p, struct path *r);
 
 /** Check if node is used as source or destination of a path. */
 int path_uses_node(struct path *p, struct node *n);
