@@ -23,7 +23,6 @@
 #include "hist.h"
 #include "node.h"
 #include "msg.h"
-#include "hooks.h"
 #include "queue.h"
 #include "pool.h"
 #include "stats.h"

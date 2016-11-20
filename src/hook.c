@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 #include <villas/sample.h>
-#include <villas/hooks.h>
+#include <villas/hook.h>
 #include <villas/utils.h>
 #include <villas/pool.h>
 #include <villas/log.h>

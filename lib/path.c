@@ -19,6 +19,7 @@
 #include "timing.h"
 #include "pool.h"
 #include "queue.h"
+#include "hook.h"
 
 static void path_read(struct path *p)
 {
@@ -198,10 +199,6 @@ int path_init(struct path *p)
 	
 	/* We sort the hooks according to their priority before starting the path */
 	list_sort(&p->hooks, hooks_sort_priority);
-
-	ret = hook_run(p, NULL, 0, HOOK_INIT);
-	if (ret)
-		error("Failed to initialize hooks of path: %s", path_name(p));
 
 	/* Parse hook arguments */
 	ret = hook_run(p, NULL, 0, HOOK_PARSE);

@@ -17,7 +17,7 @@
 #include "cfg.h"
 #include "node.h"
 #include "path.h"
-#include "hooks.h"
+#include "hook.h"
 
 static int cfg_parse_log(config_setting_t *cfg, struct settings *set)
 {

@@ -19,6 +19,7 @@
 #include <villas/node.h>
 #include <villas/kernel/kernel.h>
 #include <villas/kernel/rt.h>
+#include <villas/hook.h>
 
 #ifdef ENABLE_OPAL_ASYNC
   #include <villas/nodes/opal.h>

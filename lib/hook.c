@@ -13,7 +13,7 @@
 #include "timing.h"
 #include "config.h"
 #include "msg.h"
-#include "hooks.h"
+#include "hook.h"
 #include "path.h"
 #include "utils.h"
 #include "node.h"

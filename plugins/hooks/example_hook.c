@@ -1,4 +1,4 @@
-#include <villas/hooks.h>
+#include <villas/hook.h>
 #include <villas/log.h>
 
 static int hook_example(struct hook *h, int when, struct hook_info *j)

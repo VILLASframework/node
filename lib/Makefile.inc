@@ -4,7 +4,7 @@ LIBS = $(BUILDDIR)/libvillas.so
 # Object files for libvillas
 LIB_SRCS = $(addprefix lib/nodes/, file.c cbuilder.c) 		\
            $(addprefix lib/kernel/, kernel.c rt.c)		\
-	   $(addprefix lib/, sample.c path.c node.c hooks.c	\
+	   $(addprefix lib/, sample.c path.c node.c hook.c	\
               log.c utils.c cfg.c hist.c timing.c pool.c list.c \
               queue.c memory.c stats.c				\
            )							\

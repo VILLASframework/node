@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "hooks.h"
+#include "hook.h"
 #include "timing.h"
 #include "utils.h"
 #include "sample.h"
