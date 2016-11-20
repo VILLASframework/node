@@ -14,7 +14,7 @@
 
 extern struct list *hook_nodes;
 
-REGISTER_HOOK("stats", "Collect statistics for the current path", 2, 1, hook_stats, HOOK_STATS)
+REGISTER_HOOK("stats", "Collect statistics for the current path", 2, 1, hook_stats, HOOK_STORAGE | HOOK_PATH | HOOK_READ | HOOK_PERIODIC)
 int hook_stats(struct hook *h, int when, struct hook_info *j)
 {
 	struct stats *s = hook_storage(h, when, sizeof(struct stats), (ctor_cb_t) stats_init, (dtor_cb_t) stats_destroy);

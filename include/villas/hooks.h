@@ -110,9 +110,7 @@ enum hook_type {
 	/** Hooks which are using private data must allocate and free them propery. */	
 	HOOK_STORAGE		= HOOK_INIT | HOOK_DESTROY,
 	/** All path related actions */
-	HOOK_PATH		= HOOK_PATH_START | HOOK_PATH_STOP | HOOK_PATH_RESTART,
-	/** Hooks which are used to collect statistics. */
-	HOOK_STATS		= HOOK_STORAGE | HOOK_PATH | HOOK_READ | HOOK_PERIODIC,
+	HOOK_PATH		= HOOK_PATH_START | HOOK_PATH_STOP | HOOK_PATH_RESTART
 	/** @} */
 };
 
