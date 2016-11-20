@@ -15,7 +15,7 @@
 
 #define HUGEPAGESIZE	(1 << 21)
 
-typedef void *(*memzone_allocator_t)(size_t len);
+typedef void *(*memzone_allocator_t)(size_t len, size_t alignment);
 typedef int (*memzone_deallocator_t)(void *ptr, size_t len);
 
 enum memtype_flags {
