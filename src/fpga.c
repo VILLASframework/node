@@ -87,6 +87,9 @@ int main(int argc, char *argv[])
 
 	info("Initialize real-time system");
 	rt_init(settings.affinity, settings.priority);
+	
+	info("Initialize memory system");
+	memory_init();
 
 	/* Initialize VILLASfpga card */
 	config_setting_t *cfg_root = config_root_setting(&config);

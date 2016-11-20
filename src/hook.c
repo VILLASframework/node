@@ -18,6 +18,7 @@
 #include <villas/utils.h>
 #include <villas/pool.h>
 #include <villas/log.h>
+#include <villas/kernel/rt.h>
 
 #include "config.h"
 
@@ -86,6 +87,12 @@ int main(int argc, char *argv[])
 
 	info("Initialize logging system");
 	log_init(level, -1, NULL);
+
+	info("Initialize real-time system");
+	rt_init(-1, 50);
+	
+	info("Initialize memory system");
+	memory_init();
 	
 	ret = pool_init(&pool, 10 * cnt, SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
 	if (ret)
