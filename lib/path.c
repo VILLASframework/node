@@ -52,7 +52,7 @@ static void path_read(struct path *p)
 	if (enqueue != recv) {
 		info("Hooks skipped %u out of %u samples for path %s", recv - enqueue, recv, path_name(p));
 		
-		stats_update(p->stats, STATS_SKIPPED, recv - enqueue);
+		stats_update(p->stats->delta, STATS_SKIPPED, recv - enqueue);
 	}
 
 	list_foreach(struct path_destination *pd, &p->destinations) {
@@ -84,7 +84,7 @@ static void path_write(struct path *p)
 			if (available == 0)
 				break;
 			else if (available < cnt) 
-				warn("Queue underrun for path %s: available=%u expected=%u", path_name(p), available, cnt);
+				debug(DBG_PATH | 5, "Queue underrun for path %s: available=%u expected=%u", path_name(p), available, cnt);
 			
 			debug(DBG_PATH | 15, "Dequeued %u samples from queue of node %s which is part of path %s", available, node_name(pd->node), path_name(p));
 

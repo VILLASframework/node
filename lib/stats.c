@@ -37,6 +37,8 @@ int stats_init(struct stats *s)
 		struct stats_desc *desc = &stats_table[i];
 		hist_create(&s->histograms[i], desc->hist.min, desc->hist.max, desc->hist.resolution);
 	}
+	
+	s->delta = alloc(sizeof(struct stats_delta));
 
 	return 0;
 }
@@ -46,18 +48,23 @@ void stats_destroy(struct stats *s)
 	for (int i = 0; i < STATS_COUNT; i++) {
 		hist_destroy(&s->histograms[i]);
 	}
+	
+	free(s->delta);
 }
 
 void stats_update(struct stats_delta *d, enum stats_id id, double val)
 {
-	if (d && id >= 0 && id < STATS_COUNT)
-		d->values[id] = val;
+	assert(id >= 0 && id < STATS_COUNT);
+		
+	d->values[id] = val;
+	d->update |= 1 << id;
 }
 
 int stats_commit(struct stats *s, struct stats_delta *d)
 {
 	for (int i = 0; i < STATS_COUNT; i++) {
-		hist_put(&s->histograms[i], d->values[i]);
+		if (d->update & 1 << i)
+			hist_put(&s->histograms[i], d->values[i]);
 	}
 	
 	return 0;
@@ -67,22 +74,23 @@ void stats_collect(struct stats_delta *s, struct sample *smps[], size_t cnt)
 {
 	struct sample *previous = s->last;
 	
-	if (previous) {
-		sample_put(previous);
-		
-		for (int i = 0; i < cnt; i++) {
+	for (int i = 0; i < cnt; i++) {
+		if (previous) {
 			stats_update(s, STATS_GAP_RECEIVED, time_delta(&previous->ts.received, &smps[i]->ts.received));
 			stats_update(s, STATS_GAP_SAMPLE,   time_delta(&previous->ts.origin,   &smps[i]->ts.origin));
 			stats_update(s, STATS_OWD,          time_delta(&smps[i]->ts.origin,    &smps[i]->ts.received));
 			stats_update(s, STATS_GAP_SEQUENCE, smps[i]->sequence - (int32_t) previous->sequence);
-		
-			/* Make sure there is always a reference to the previous sample */
-
-			previous = smps[i];
 		}
+	
+		previous = smps[i];
 	}
 
-	sample_get(previous);
+	if (s->last)
+		sample_put(s->last);
+
+	if (previous)
+		sample_get(previous);
+
 	s->last = previous;
 }
 

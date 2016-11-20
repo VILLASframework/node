@@ -77,8 +77,8 @@ int hook_drop(struct hook *h, int when, struct hook_info *j)
 			dist = h->last->sequence - (int32_t) h->prev->sequence;
 			if (dist <= 0) {
 				warn("Dropped sample: dist = %d, i = %d", dist, i);
-				if (j->path)
-					stats_update(j->path->stats, STATS_DROPPED, dist);
+				if (j->path && j->path->stats)
+					stats_update(j->path->stats->delta, STATS_DROPPED, dist);
 			}
 			else {
 				struct sample *tmp;

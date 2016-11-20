@@ -70,9 +70,10 @@ int hook_run(struct path *p, struct sample *smps[], size_t cnt, int when)
 	
 	list_foreach(struct hook *h, &p->hooks) {
 		if (h->type & when) {
-			debug(DBG_HOOK | 22, "Running hook when=%u '%s' prio=%u, cnt=%zu", when, h->name, h->priority, cnt);
-
 			cnt = h->cb(h, when, &i);
+			
+			debug(DBG_HOOK | 22, "Ran hook '%s' when=%u prio=%u, cnt=%zu", h->name, when, h->priority, cnt);
+			
 			if (cnt == 0)
 				break;
 		}

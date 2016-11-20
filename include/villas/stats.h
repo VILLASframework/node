@@ -36,13 +36,14 @@ enum stats_id {
 struct stats_delta {
 	double values[STATS_COUNT];
 	
+	int update;		/**< Bitmask of stats_id. Only those which are masked will be updated */
 	struct sample *last;
 };
 
 struct stats {
 	struct hist histograms[STATS_COUNT];	
 
-	struct sample *last;
+	struct stats_delta *delta;
 };
 
 int stats_init(struct stats *s);
