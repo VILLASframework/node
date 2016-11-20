@@ -13,14 +13,15 @@
 #include <ctype.h>
 #include <sys/stat.h>
 
+#include <villas/cfg.h>
+#include <villas/node.h>
+#include <villas/utils.h>
+#include <villas/hist.h>
+#include <villas/timing.h>
+#include <villas/pool.h>
+#include <villas/kernel/rt.h>
+
 #include "config.h"
-#include "cfg.h"
-#include "msg.h"
-#include "node.h"
-#include "utils.h"
-#include "hist.h"
-#include "timing.h"
-#include "pool.h"
 
 struct settings settings; /** <The global configuration */
 struct list nodes;		
@@ -85,8 +86,13 @@ int main(int argc, char *argv[])
 	list_init(&nodes);
 
 	log_init();
+	
+	info("Parsing configuration");
 	cfg_parse(argv[1], &config, &settings, &nodes, NULL);
 
+	info("Initialize real-time system");
+	rt_init(settings.affinity, settings.priority);
+	
 	info("Initialize memory system");
 	memory_init();
 

@@ -14,10 +14,11 @@
 #include <math.h>
 #include <string.h>
 
+#include <villas/utils.h>
+#include <villas/sample.h>
+#include <villas/timing.h>
+
 #include "config.h"
-#include "utils.h"
-#include "sample.h"
-#include "timing.h"
 
 #define CLOCKID	CLOCK_REALTIME
 

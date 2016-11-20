@@ -18,7 +18,8 @@
 #include <villas/utils.h>
 #include <villas/pool.h>
 #include <villas/log.h>
-#include <config.h>
+
+#include "config.h"
 
 static void usage()
 {

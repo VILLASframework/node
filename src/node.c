@@ -12,8 +12,6 @@
 #include <unistd.h>
 #include <sched.h>
 
-#include "config.h"
-
 #include <villas/utils.h>
 #include <villas/cfg.h>
 #include <villas/path.h>
@@ -23,8 +21,10 @@
 #include <villas/kernel/rt.h>
 
 #ifdef ENABLE_OPAL_ASYNC
-  #include "opal.h"
+  #include <villas/nodes/opal.h>
 #endif
+
+#include "config.h"
 
 struct list paths;		/**< List of paths */
 struct list nodes;		/**< List of nodes */
