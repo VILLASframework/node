@@ -44,6 +44,9 @@ struct memzone {
 	size_t len; 
 };
 
+/** Initilialize memory subsystem */
+int memory_init();
+
 /** Allocate \p len bytes memory of type \p m.
  *
  * @retval NULL If allocation failed.

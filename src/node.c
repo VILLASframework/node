@@ -17,6 +17,7 @@
 #include <villas/utils.h>
 #include <villas/cfg.h>
 #include <villas/path.h>
+#include <villas/memory.h>
 #include <villas/node.h>
 #include <villas/kernel/kernel.h>
 #include <villas/kernel/rt.h>
@@ -124,6 +125,9 @@ int main(int argc, char *argv[])
 
 	info("Initialize real-time system");
 	rt_init(settings.affinity, settings.priority);
+	
+	info("Initialize memory system");
+	memory_init();
 
 	info("Initialize signals");
 	signals_init();

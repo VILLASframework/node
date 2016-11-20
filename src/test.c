@@ -87,6 +87,9 @@ int main(int argc, char *argv[])
 	log_init();
 	cfg_parse(argv[1], &config, &settings, &nodes, NULL);
 
+	info("Initialize memory system");
+	memory_init();
+
 	node = list_lookup(&nodes, argv[3]);
 	if (!node)
 		error("There's no node with the name '%s'", argv[3]);

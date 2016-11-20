@@ -8,7 +8,6 @@ TEST_LDLIBS = $(LDLIBS) -lcriterion -lvillas -pthread
 tests: $(BUILDDIR)/testsuite
 
 run-tests: tests
-	echo 25 > /proc/sys/vm/nr_hugepages
 	$(BUILDDIR)/testsuite
 
 # Compile

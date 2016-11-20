@@ -225,6 +225,9 @@ int main(int argc, char *argv[])
 	info("Initialize real-time system");
 	rt_init(settings.affinity, settings.priority);
 	
+	info("Initialize memory system");
+	memory_init();
+	
 	/* Initialize node */
 	node = list_lookup(&nodes, argv[2]);
 	if (!node)

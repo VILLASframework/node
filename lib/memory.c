@@ -12,10 +12,25 @@
 /* Required to allocate hugepages on Apple OS X */
 #ifdef __MACH__
   #include <mach/vm_statistics.h>
+#elif defined(__linux__)
+  #include "kernel/kernel.h"
 #endif
 
 #include "log.h"
 #include "memory.h"
+
+int memory_init()
+{
+#ifdef __linux__
+	int nr = kernel_get_nr_hugepages();
+	
+	debug(DBG_MEM | 2, "System has %d reserved hugepages", nr);
+	
+	if (nr < DEFAULT_NR_HUGEPAGES)
+		kernel_set_nr_hugepages(DEFAULT_NR_HUGEPAGES);
+#endif
+	return 0;
+}
 
 void * memory_alloc(const struct memtype *m, size_t len)
 {
