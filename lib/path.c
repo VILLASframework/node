@@ -100,8 +100,10 @@ static void path_write(struct path *p)
 			debug(DBG_PATH | 15, "Sent %u messages to node %s", sent, node_name(pd->node));
 
 			released = 0;
-			for (int i = 0; i < sent; i++)
-				released += sample_put(smps[i]);
+			for (int i = 0; i < sent; i++) {
+				if (sample_put(smps[i]) == 0)
+					released++; /* we had the last reference (0 remaining) */
+			}
 	
 			debug(DBG_PATH | 15, "Released %d samples back to memory pool", released);
 		}
