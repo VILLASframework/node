@@ -69,8 +69,13 @@
 struct settings {
 	int priority;		/**< Process priority (lower is better) */
 	int affinity;		/**< Process affinity of the server and all created threads */
-	int debug;		/**< Debug log level */
 	double stats;		/**< Interval for path statistics. Set to 0 to disable themo disable them. */
+	
+	struct {
+		int level;		/**< Log level */
+		int facilities;		/**< Debug facilities */
+		const char *file;	/**< Log file */
+	} log;
 };
 
 #endif /* _CONFIG_H_ */

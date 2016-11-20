@@ -42,12 +42,12 @@ enum debug_facilities {
 	
 	/* Node-types */
 	DBG_SOCKET =	(1 << 16),
-	DBG_FILE =	(1 << 17),
-	DBG_FPGA =	(1 << 18),
-	DBG_NGSI =	(1 << 19),
-	DBG_WEBSOCKET =	(1 << 20),
+	DBG_WEBSOCKET = (1 << 17),
+	DBG_FILE =	(1 << 18),
+	DBG_FPGA =	(1 << 19),
+	DBG_NGSI =	(1 << 20),
 	DBG_OPAL =	(1 << 21),
-	DBG_NODE =   (0xFF << 16)
+	DBG_NODES =  (0xFF << 16)
 };
 
 /** Change log indention  for current thread.
@@ -63,15 +63,14 @@ int log_indent(int levels);
  */
 void log_outdent(int *);
 
-/** Set the verbosity level of debug messages.
+/** Reset the wallclock of debug messages.
  *
  * @param lvl The new debug level.
  * @param fac The new mask for debug facilities.
  */
-void log_setlevel(int lvl, int fac);
+void log_init(int lvl, int fac, const char *path);
 
-/** Reset the wallclock of debug messages. */
-void log_init();
+int log_lookup_facility(const char *facility_name);
 
 /** Logs variadic messages to stdout.
  *

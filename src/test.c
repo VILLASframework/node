@@ -84,11 +84,12 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 	
 	list_init(&nodes);
-
-	log_init();
 	
 	info("Parsing configuration");
 	cfg_parse(argv[1], &config, &settings, &nodes, NULL);
+	
+	info("Initialize logging system");
+	log_init(settings.log.level, settings.log.facilities, settings.log.file);
 
 	info("Initialize real-time system");
 	rt_init(settings.affinity, settings.priority);

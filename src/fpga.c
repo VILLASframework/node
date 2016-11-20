@@ -47,7 +47,7 @@ void usage()
 
 int main(int argc, char *argv[])
 {
-	int ret;
+	int ret, level = -1;
 	struct fpga *fpga;
 	config_t config;
 
@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 	while ((c = getopt(argc-1, argv+1, "d:")) != -1) {
 		switch (c) {
 			case 'd':
-				log_setlevel(strtoul(optarg, &endptr, 10), ~0);
+				level = strtoul(optarg, &endptr, 10);
 				break;	
 
 			case '?':
@@ -82,6 +82,9 @@ int main(int argc, char *argv[])
 	info("Parsing configuration");
 	cfg_parse(argv[1], &config, &settings, NULL, NULL);
 	
+	info("Initialize logging system");
+	log_init(level > 0 ? level : settings.log.level, settings.log.facilities, settings.log.file);
+
 	info("Initialize real-time system");
 	rt_init(settings.affinity, settings.priority);
 

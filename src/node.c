@@ -108,7 +108,6 @@ int main(int argc, char *argv[])
 
 	char *configfile = (argc == 2) ? argv[1] : "opal-shmem.conf";
 
-	log_init();
 	info("This is VILLASnode %s (built on %s, %s)", BLD(YEL(VERSION)),
 		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
@@ -122,6 +121,9 @@ int main(int argc, char *argv[])
 
 	info("Parsing configuration");
 	cfg_parse(configfile, &config, &settings, &nodes, &paths);
+	
+	info("Initialize logging system");
+	log_init(settings.log.level, settings.log.facilities, settings.log.file);
 
 	info("Initialize real-time system");
 	rt_init(settings.affinity, settings.priority);

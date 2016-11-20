@@ -34,6 +34,27 @@ static unsigned facilities = ~0;
 /** A global clock used to prefix the log messages. */
 static struct timespec epoch;
 
+/** Handle to log file */
+static FILE *file;
+
+static const char *facility_names[] = {
+	"pool",		// DBG_POOL
+	"queue",	// DBG_QUEUE
+	"config", 	// DBG_CONFIG
+	"hook",		// DBG_HOOK
+	"path",		// DBG_PATH
+	"mem",		// DBG_MEM
+	
+	/* Node-types */
+	"socket",	// DBG_SOCKET
+	"websocket",	// DBG_WEBSOCKET
+	"file",		// DBG_FILE
+	"fpga",		// DBG_FPGA
+	"ngsi",		// DBG_NGSI
+	"opal",		// DBG_OPAL
+	NULL
+};
+
 #ifdef __GNUC__
 /** The current log indention level (per thread!). */
 static __thread int indent = 0;
@@ -51,16 +72,29 @@ void log_outdent(int *old)
 }
 #endif
 
-void log_setlevel(int lvl, int fac)
+void log_init(int lvl, int fac, const char *path)
 {
+	char *fac_str = NULL;
+
+	/* Initialize global variables */
+	epoch = time_now();
 	level = lvl;
-	debug(10, "Switched to debug level %u", level);
+	facilities = fac;
+	
+	if (path)
+		file = fopen(path, "a");
+
+	debug(10, "Started logging: level = %u, faciltities = %s", level, fac_str);
 }
 
-void log_init()
+int log_lookup_facility(const char *facility_name)
 {
-	epoch = time_now();
-	debug(10, "Debug clock resetted");
+	for (int i = 0; facility_names[i]; i++) {
+		if (!strcmp(facility_name, facility_names[i]))
+			return 1 << i;
+	}
+	
+	return 0;
 }
 
 void log_print(const char *lvl, const char *fmt, ...)
@@ -99,6 +133,10 @@ void log_vprint(const char *lvl, const char *fmt, va_list ap)
 	OpalPrint("VILLASnode: %s\n", buf);
 #endif
 	fprintf(stderr, "\r%s\n", buf);
+	
+	if (file)
+		fprintf(file, "%s\n", buf);
+	
 	free(buf);
 }
 

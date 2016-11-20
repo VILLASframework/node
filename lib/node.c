@@ -7,19 +7,17 @@
  *********************************************************************************/
 
 #include <string.h>
+#include <libconfig.h>
+
 
 #include "sample.h"
 #include "node.h"
 #include "cfg.h"
 #include "utils.h"
+#include "config.h"
 
 /** List of registered node-types */
 struct list node_types = LIST_INIT();
-
-int node_parse(struct node *n, config_setting_t *cfg)
-{
-	return n->_vt->parse ? n->_vt->parse(n, cfg) : 0;	
-}
 
 int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
@@ -207,3 +205,98 @@ void node_destroy(struct node *n)
 	free(n->_name);
 	free(n);
 }
+
+/** Parse an array or single node and checks if they exist in the "nodes" section.
+ *
+ * Examples:
+ *     out = [ "sintef", "scedu" ]
+ *     out = "acs"
+ *
+ * @param cfg The libconfig object handle for "out".
+ * @param nodes The nodes will be added to this list.
+ * @param all This list contains all valid nodes.
+ */
+int node_parse_list(struct list *list, config_setting_t *cfg, struct list *all) {
+	const char *str;
+	struct node *node;
+
+	switch (config_setting_type(cfg)) {
+		case CONFIG_TYPE_STRING:
+			str = config_setting_get_string(cfg);
+			if (str) {
+				node = list_lookup(all, str);
+				if (node)
+					list_push(list, node);
+				else
+					cerror(cfg, "Unknown outgoing node '%s'", str);
+			}
+			else
+				cerror(cfg, "Invalid outgoing node");
+			break;
+
+		case CONFIG_TYPE_ARRAY:
+			for (int i = 0; i < config_setting_length(cfg); i++) {
+				config_setting_t *elm = config_setting_get_elem(cfg, i);
+				
+				str = config_setting_get_string(elm);
+				if (str) {
+					node = list_lookup(all, str);
+					if (!node)
+						cerror(elm, "Unknown outgoing node '%s'", str);
+					else if (node->_vt->write == NULL)
+						cerror(cfg, "Output node '%s' is not supported as a sink.", node_name(node));
+
+					list_push(list, node);
+				}
+				else
+					cerror(cfg, "Invalid outgoing node");
+			}
+			break;
+
+		default:
+			cerror(cfg, "Invalid output node(s)");
+	}
+
+	return list_length(list);
+}
+
+int node_parse(struct node *n, config_setting_t *cfg, struct settings *set)
+{
+	struct node_type *vt;
+	const char *type, *name;
+	int ret;
+
+	name = config_setting_name(cfg);
+	
+	if (!config_setting_lookup_string(cfg, "type", &type))
+		cerror(cfg, "Missing node type");
+	
+	vt = list_lookup(&node_types, type);
+	if (!vt)
+		cerror(cfg, "Invalid type for node '%s'", config_setting_name(cfg));
+
+	n->name = name;
+	n->cfg = cfg;
+
+	ret = n->_vt->parse ? n->_vt->parse(n, cfg) : 0;
+	if (ret)
+		cerror(cfg, "Failed to parse node '%s'", node_name(n));
+
+	if (config_setting_lookup_int(cfg, "vectorize", &n->vectorize)) {
+		config_setting_t *cfg_vectorize = config_setting_lookup(cfg, "vectorize");
+		
+		if (n->vectorize <= 0)
+			cerror(cfg_vectorize, "Invalid value for `vectorize` %d. Must be natural number!", n->vectorize);
+		if (vt->vectorize && vt->vectorize < n->vectorize)
+			cerror(cfg_vectorize, "Invalid value for `vectorize`. Node type %s requires a number smaller than %d!",
+				node_name_type(n), vt->vectorize);
+	}
+	else
+		n->vectorize = 1;
+
+	if (!config_setting_lookup_int(cfg, "affinity", &n->affinity))
+		n->affinity = set->affinity;
+
+	return ret;
+}
+

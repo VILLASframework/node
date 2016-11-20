@@ -19,6 +19,88 @@
 #include "path.h"
 #include "hooks.h"
 
+static int cfg_parse_log(config_setting_t *cfg, struct settings *set)
+{
+	config_setting_t *cfg_facilities;
+	
+	if (!config_setting_lookup_int(cfg, "level", &set->log.level))
+		set->log.level = V;
+	
+	if (!config_setting_lookup_string(cfg, "file", &set->log.file))
+		set->log.file = NULL;
+	
+	cfg_facilities = config_setting_get_member(cfg, "facilities");
+	if (cfg_facilities) {
+		set->log.facilities = 0;
+		
+		for (int i = 0; i < config_setting_length(cfg); i++) {
+			int facility;
+			const char *str;
+			config_setting_t *elm = config_setting_get_elem(cfg, i);
+			
+			str = config_setting_get_string(elm);
+			if (!str)
+				cerror(elm, "Facilties must be configured as an array of strings");
+			
+			facility = log_lookup_facility(str);
+			if (!facility)
+				cerror(elm, "%s is an unknown debug facility", str);
+			
+			set->log.facilities |= facility;
+		}
+	}
+	else /* By default we enable all faciltities */
+		set->log.facilities = ~0;
+	
+	return 0;
+}
+
+static int cfg_parse_plugins(config_setting_t *cfg)
+{
+	if (!config_setting_is_array(cfg))
+		cerror(cfg, "Setting 'plugins' must be a list of strings");
+
+	for (int i = 0; i < config_setting_length(cfg); i++) {
+		void *handle;
+		const char *path;
+
+		path = config_setting_get_string_elem(cfg, i);
+		if (!path)
+			cerror(cfg, "Setting 'plugins' must be a list of strings");
+		
+		handle = dlopen(path, RTLD_NOW);
+		if (!handle)
+			error("Failed to load plugin %s", dlerror());
+	}
+
+	return 0;
+}
+
+static int cfg_parse_global(config_setting_t *cfg, struct settings *set)
+{
+	config_setting_t *cfg_plugins, *cfg_log;
+
+	if (!config_setting_lookup_int(cfg, "affinity", &set->affinity))
+		set->affinity = 0;
+
+	if (!config_setting_lookup_int(cfg, "priority", &set->priority))
+		set->priority = 0;
+
+	if (!config_setting_lookup_float(cfg, "stats", &set->stats))
+		set->stats = 0;
+	
+	
+	cfg_log = config_setting_get_member(cfg, "log");
+	if (cfg_log)
+		cfg_parse_log(cfg_log, set);
+	
+	cfg_plugins = config_setting_get_member(cfg, "plugins");
+	if (cfg_plugins)
+		cfg_parse_plugins(cfg_plugins);
+
+	return 0;
+}
+
 void cfg_init(config_t *cfg)
 {
 	config_init(cfg);
@@ -79,7 +161,25 @@ int cfg_parse(const char *filename, config_t *cfg, struct settings *set,
 
 		for (int i = 0; i < config_setting_length(cfg_nodes); i++) {
 			config_setting_t *cfg_node = config_setting_get_elem(cfg_nodes, i);
-			cfg_parse_node(cfg_node, nodes, set);
+			
+			struct node_type *vt;
+			const char *type;
+
+			/* Required settings */
+			if (!config_setting_lookup_string(cfg_node, "type", &type))
+				cerror(cfg_node, "Missing node type");
+			
+			vt = list_lookup(&node_types, type);
+			if (!vt)
+				cerror(cfg_node, "Invalid node type: %s", type);
+			
+			struct node *n = node_create(vt);
+
+			ret = node_parse(n, cfg_node, set);
+			if (ret)
+				cerror(cfg_node, "Failed to parse node");
+			
+			list_push(nodes, n);
 		}
 	}
 
@@ -91,286 +191,26 @@ int cfg_parse(const char *filename, config_t *cfg, struct settings *set,
 
 		for (int i = 0; i < config_setting_length(cfg_paths); i++) {
 			config_setting_t *cfg_path = config_setting_get_elem(cfg_paths, i);
-			cfg_parse_path(cfg_path, paths, nodes, set);
+			
+			struct path *p = path_create();
+			
+			ret = path_parse(p, cfg_path, nodes, set);
+			if (ret)
+				cerror(cfg_path, "Failed to parse path");
+			
+			list_push(paths, p);
+
+			if (p->reverse) {
+				struct path *r = path_create();
+		
+				ret = path_reverse(p, r);
+				if (ret)
+					cerror(cfg_path, "Failed to reverse path %s", path_name(p));
+
+				list_push(paths, r);
+			}
 		}
 	}
-
-	return 0;
-}
-
-int cfg_parse_plugins(config_setting_t *cfg)
-{
-	if (!config_setting_is_array(cfg))
-		cerror(cfg, "Setting 'plugins' must be a list of strings");
-
-	for (int i = 0; i < config_setting_length(cfg); i++) {
-		void *handle;
-		const char *path;
-
-		path = config_setting_get_string_elem(cfg, i);
-		if (!path)
-			cerror(cfg, "Setting 'plugins' must be a list of strings");
-		
-		handle = dlopen(path, RTLD_NOW);
-		if (!handle)
-			error("Failed to load plugin %s", dlerror());
-	}
-
-	return 0;
-}
-
-int cfg_parse_global(config_setting_t *cfg, struct settings *set)
-{
-	config_setting_t *cfg_plugins;
-
-	if (!config_setting_lookup_int(cfg, "affinity", &set->affinity))
-		set->affinity = 0;
-
-	if (!config_setting_lookup_int(cfg, "priority", &set->priority))
-		set->priority = 0;
-
-	if (!config_setting_lookup_int(cfg, "debug", &set->debug))
-		set->debug = V;
-
-	if (!config_setting_lookup_float(cfg, "stats", &set->stats))
-		set->stats = 0;
-	
-	cfg_plugins = config_setting_get_member(cfg, "plugins");
-	if (cfg_plugins)
-		cfg_parse_plugins(cfg_plugins);
-
-	log_setlevel(set->debug, -1);
-
-	return 0;
-}
-
-int cfg_parse_path(config_setting_t *cfg,
-	struct list *paths, struct list *nodes, struct settings *set)
-{
-	config_setting_t *cfg_out, *cfg_hook;
-	const char *in;
-	int ret, reverse, samplelen, queuelen;
-	struct path *p;
-
-	struct node *source;
-	struct list destinations;
-	
-	/* Allocate memory and intialize path structure */
-	p = alloc(sizeof(struct path));
-
-	/* Input node */
-	if (!config_setting_lookup_string(cfg, "in", &in) &&
-	    !config_setting_lookup_string(cfg, "from", &in) &&
-	    !config_setting_lookup_string(cfg, "src", &in) &&
-	    !config_setting_lookup_string(cfg, "source", &in))
-		cerror(cfg, "Missing input node for path");
-
-	source = list_lookup(nodes, in);
-	if (!source)
-		cerror(cfg, "Invalid input node '%s'", in);
-
-	/* Output node(s) */
-	if (!(cfg_out = config_setting_get_member(cfg, "out")) &&
-	    !(cfg_out = config_setting_get_member(cfg, "to")) &&
-	    !(cfg_out = config_setting_get_member(cfg, "dst")) &&
-	    !(cfg_out = config_setting_get_member(cfg, "dest")) &&
-	    !(cfg_out = config_setting_get_member(cfg, "sink")))
-		cerror(cfg, "Missing output nodes for path");
-	
-	list_init(&destinations);
-	ret = cfg_parse_nodelist(cfg_out, &destinations, nodes);
-	if (ret <= 0)
-		cerror(cfg_out, "Invalid output nodes");
-
-	/* Optional settings */
-	list_init(&p->hooks);
-	cfg_hook = config_setting_get_member(cfg, "hook");
-	if (cfg_hook)
-		cfg_parse_hooklist(cfg_hook, &p->hooks);
-
-	if (!config_setting_lookup_bool(cfg, "reverse", &reverse))
-		reverse = 0;
-	if (!config_setting_lookup_bool(cfg, "enabled", &p->enabled))
-		p->enabled = 1;
-	if (!config_setting_lookup_int(cfg, "values", &samplelen))
-		samplelen = DEFAULT_VALUES;
-	if (!config_setting_lookup_int(cfg, "queuelen", &queuelen))
-		queuelen = DEFAULT_QUEUELEN;
-
-	if (!IS_POW2(queuelen)) {
-		queuelen = LOG2_CEIL(queuelen);
-		warn("Queue length should always be a power of 2. Adjusting to %d", queuelen);
-	}
-
-	p->cfg = cfg;
-	
-	/* Check if nodes are suitable */
-	if (source->_vt->read == NULL)
-		cerror(cfg, "Input node '%s' is not supported as a source.", node_name(source));
-
-	p->source = alloc(sizeof(struct path_source));
-	p->source->node = source;
-	p->source->samplelen = samplelen;
-
-	list_foreach(struct node *n, &destinations) {
-		if (n->_vt->write == NULL)
-			cerror(cfg_out, "Output node '%s' is not supported as a destination.", node_name(n));
-		
-		struct path_destination *pd = alloc(sizeof(struct path_destination));
-		
-		pd->node = n;
-		pd->queuelen = queuelen;
-		
-		list_push(&p->destinations, pd);
-	}
-
-	list_push(paths, p);
-
-	if (reverse) {
-		struct path *r = alloc(sizeof(struct path));
-		
-		ret = path_reverse(p, r);
-		if (ret)
-			cerror(cfg, "Failed to reverse path %s", path_name(p));
-
-		list_push(paths, r);
-	}
-	
-	list_destroy(&destinations, NULL, false);
-
-	return 0;
-}
-
-int cfg_parse_nodelist(config_setting_t *cfg, struct list *list, struct list *all) {
-	const char *str;
-	struct node *node;
-
-	switch (config_setting_type(cfg)) {
-		case CONFIG_TYPE_STRING:
-			str = config_setting_get_string(cfg);
-			if (str) {
-				node = list_lookup(all, str);
-				if (node)
-					list_push(list, node);
-				else
-					cerror(cfg, "Unknown outgoing node '%s'", str);
-			}
-			else
-				cerror(cfg, "Invalid outgoing node");
-			break;
-
-		case CONFIG_TYPE_ARRAY:
-			for (int i = 0; i < config_setting_length(cfg); i++) {
-				config_setting_t *elm = config_setting_get_elem(cfg, i);
-				
-				str = config_setting_get_string(elm);
-				if (str) {
-					node = list_lookup(all, str);
-					if (!node)
-						cerror(elm, "Unknown outgoing node '%s'", str);
-					else if (node->_vt->write == NULL)
-						cerror(cfg, "Output node '%s' is not supported as a sink.", node_name(node));
-
-					list_push(list, node);
-				}
-				else
-					cerror(cfg, "Invalid outgoing node");
-			}
-			break;
-
-		default:
-			cerror(cfg, "Invalid output node(s)");
-	}
-
-	return list_length(list);
-}
-
-int cfg_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set)
-{
-	const char *type, *name;
-	int ret;
-
-	struct node *n;
-	struct node_type *vt;
-
-	/* Required settings */
-	if (!config_setting_lookup_string(cfg, "type", &type))
-		cerror(cfg, "Missing node type");
-	
-	name = config_setting_name(cfg);
-
-	vt = list_lookup(&node_types, type);
-	if (!vt)
-		cerror(cfg, "Invalid type for node '%s'", config_setting_name(cfg));
-	
-	n = node_create(vt);
-	
-	n->name = name;
-	n->cfg = cfg;
-
-	ret = node_parse(n, cfg);
-	if (ret)
-		cerror(cfg, "Failed to parse node '%s'", node_name(n));
-
-	if (config_setting_lookup_int(cfg, "vectorize", &n->vectorize)) {
-		config_setting_t *cfg_vectorize = config_setting_lookup(cfg, "vectorize");
-		
-		if (n->vectorize <= 0)
-			cerror(cfg_vectorize, "Invalid value for `vectorize` %d. Must be natural number!", n->vectorize);
-		if (vt->vectorize && vt->vectorize < n->vectorize)
-			cerror(cfg_vectorize, "Invalid value for `vectorize`. Node type %s requires a number smaller than %d!",
-				node_name_type(n), vt->vectorize);
-	}
-	else
-		n->vectorize = 1;
-
-	if (!config_setting_lookup_int(cfg, "affinity", &n->affinity))
-		n->affinity = set->affinity;
-	
-	list_push(nodes, n);
-
-	return ret;
-}
-
-int cfg_parse_hooklist(config_setting_t *cfg, struct list *list) {
-	switch (config_setting_type(cfg)) {
-		case CONFIG_TYPE_STRING:
-			cfg_parse_hook(cfg, list);
-			break;
-
-		case CONFIG_TYPE_ARRAY:
-			for (int i = 0; i < config_setting_length(cfg); i++)
-				cfg_parse_hook(config_setting_get_elem(cfg, i), list);
-			break;
-
-		default:
-			cerror(cfg, "Invalid hook functions");
-	}
-
-	return list_length(list);
-}
-
-int cfg_parse_hook(config_setting_t *cfg, struct list *list)
-{
-	struct hook *hook, *copy;
-	char *name, *param;
-	const char *hookline = config_setting_get_string(cfg);
-	if (!hookline)
-		cerror(cfg, "Invalid hook function");
-	
-	name  = strtok((char *) hookline, ":");
-	param = strtok(NULL, "");
-
-	debug(3, "Hook: %s => %s", name, param);
-
-	hook = list_lookup(&hooks, name);
-	if (!hook)
-		cerror(cfg, "Unknown hook function '%s'", name);
-		
-	copy = memdup(hook, sizeof(struct hook));
-	copy->parameter = param;
-	
-	list_push(list, copy);
 
 	return 0;
 }

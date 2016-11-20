@@ -8,6 +8,7 @@
 
 #include <string.h>
 #include <math.h>
+#include <libconfig.h>
 
 #include "timing.h"
 #include "config.h"
@@ -101,4 +102,53 @@ void * hook_storage(struct hook *h, int when, size_t len, ctor_cb_t ctor, dtor_c
 	}
 	
 	return h->_vd;
+}
+
+/** Parse an array or single hook function.
+ *
+ * Examples:
+ *     hooks = [ "print", "fir" ]
+ *     hooks = "log"
+ */
+int hook_parse_list(struct list *list, config_setting_t *cfg) {
+	switch (config_setting_type(cfg)) {
+		case CONFIG_TYPE_STRING:
+			hook_parse(cfg, list);
+			break;
+
+		case CONFIG_TYPE_ARRAY:
+			for (int i = 0; i < config_setting_length(cfg); i++)
+				hook_parse(config_setting_get_elem(cfg, i), list);
+			break;
+
+		default:
+			cerror(cfg, "Invalid hook functions");
+	}
+
+	return list_length(list);
+}
+
+int hook_parse(config_setting_t *cfg, struct list *list)
+{
+	struct hook *hook, *copy;
+	char *name, *param;
+	const char *hookline = config_setting_get_string(cfg);
+	if (!hookline)
+		cerror(cfg, "Invalid hook function");
+	
+	name  = strtok((char *) hookline, ":");
+	param = strtok(NULL, "");
+
+	debug(3, "Hook: %s => %s", name, param);
+
+	hook = list_lookup(&hooks, name);
+	if (!hook)
+		cerror(cfg, "Unknown hook function '%s'", name);
+		
+	copy = memdup(hook, sizeof(struct hook));
+	copy->parameter = param;
+	
+	list_push(list, copy);
+
+	return 0;
 }

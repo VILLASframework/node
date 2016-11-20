@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <inttypes.h>
+#include <libconfig.h>
 
 #include "config.h"
 #include "utils.h"
@@ -177,6 +178,11 @@ const char * path_name(struct path *p)
 	return p->_name;
 }
 
+struct path * path_create()
+{
+	return (struct path *) alloc(sizeof(struct path));
+}
+
 int path_init(struct path *p)
 {
 	int ret, max_queuelen = 0;
@@ -294,5 +300,85 @@ int path_reverse(struct path *p, struct path *r)
 		list_push(&r->hooks, hc);
 	}
 	
+	return 0;
+}
+
+int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes, struct settings *set)
+{
+	config_setting_t *cfg_out, *cfg_hook;
+	const char *in;
+	int ret, samplelen, queuelen;
+
+	struct node *source;
+	struct list destinations;
+
+	/* Input node */
+	if (!config_setting_lookup_string(cfg, "in", &in) &&
+	    !config_setting_lookup_string(cfg, "from", &in) &&
+	    !config_setting_lookup_string(cfg, "src", &in) &&
+	    !config_setting_lookup_string(cfg, "source", &in))
+		cerror(cfg, "Missing input node for path");
+
+	source = list_lookup(nodes, in);
+	if (!source)
+		cerror(cfg, "Invalid input node '%s'", in);
+
+	/* Output node(s) */
+	if (!(cfg_out = config_setting_get_member(cfg, "out")) &&
+	    !(cfg_out = config_setting_get_member(cfg, "to")) &&
+	    !(cfg_out = config_setting_get_member(cfg, "dst")) &&
+	    !(cfg_out = config_setting_get_member(cfg, "dest")) &&
+	    !(cfg_out = config_setting_get_member(cfg, "sink")))
+		cerror(cfg, "Missing output nodes for path");
+	
+	list_init(&destinations);
+	ret = node_parse_list(&destinations, cfg_out, nodes);
+	if (ret <= 0)
+		cerror(cfg_out, "Invalid output nodes");
+
+	/* Optional settings */
+	list_init(&p->hooks);
+	cfg_hook = config_setting_get_member(cfg, "hook");
+	if (cfg_hook)
+		hook_parse_list(&p->hooks, cfg_hook);
+
+	if (!config_setting_lookup_bool(cfg, "reverse", &p->reverse))
+		p->reverse = 0;
+	if (!config_setting_lookup_bool(cfg, "enabled", &p->enabled))
+		p->enabled = 1;
+	if (!config_setting_lookup_int(cfg, "values", &samplelen))
+		samplelen = DEFAULT_VALUES;
+	if (!config_setting_lookup_int(cfg, "queuelen", &queuelen))
+		queuelen = DEFAULT_QUEUELEN;
+
+	if (!IS_POW2(queuelen)) {
+		queuelen = LOG2_CEIL(queuelen);
+		warn("Queue length should always be a power of 2. Adjusting to %d", queuelen);
+	}
+
+	p->cfg = cfg;
+	
+	/* Check if nodes are suitable */
+	if (source->_vt->read == NULL)
+		cerror(cfg, "Input node '%s' is not supported as a source.", node_name(source));
+
+	p->source = alloc(sizeof(struct path_source));
+	p->source->node = source;
+	p->source->samplelen = samplelen;
+
+	list_foreach(struct node *n, &destinations) {
+		if (n->_vt->write == NULL)
+			cerror(cfg_out, "Output node '%s' is not supported as a destination.", node_name(n));
+		
+		struct path_destination *pd = alloc(sizeof(struct path_destination));
+		
+		pd->node = n;
+		pd->queuelen = queuelen;
+		
+		list_push(&p->destinations, pd);
+	}
+
+	list_destroy(&destinations, NULL, false);
+
 	return 0;
 }

@@ -171,11 +171,10 @@ static void * recv_loop(void *ctx)
 
 int main(int argc, char *argv[])
 {
-	int ret;
+	int ret, level = -1;
 	char c;
 
 	ptid = pthread_self();
-	log_init();
 
 	/* Parse command line arguments */
 	if (argc < 3)
@@ -197,7 +196,7 @@ int main(int argc, char *argv[])
 				sendd.enabled = false; // receive only
 				break;
 			case 'd':
-				log_setlevel(atoi(optarg), -1);
+				level = atoi(optarg);
 				break;
 			case 'h':
 			case '?':
@@ -221,6 +220,9 @@ int main(int argc, char *argv[])
 
 	info("Parsing configuration");
 	cfg_parse(argv[1], &config, &settings, &nodes, NULL);
+	
+	info("Initialize logging system");
+	log_init(level > 0 ? level : settings.log.level, settings.log.facilities, settings.log.file);
 
 	info("Initialize real-time system");
 	rt_init(settings.affinity, settings.priority);

@@ -36,7 +36,7 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	int j, ret, cnt = 1;
+	int j, ret, cnt = 1, level = -1;
 	
 	char *name, *parameter;
 	
@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
 				cnt = atoi(optarg);
 				break;
 			case 'd':
-				log_setlevel(atoi(optarg), -1);
+				level = atoi(optarg);
 				break;
 			case 'h':
 			case '?':
@@ -83,6 +83,9 @@ int main(int argc, char *argv[])
 	
 	struct pool pool;
 	struct sample *smps[cnt];
+
+	info("Initialize logging system");
+	log_init(level, -1, NULL);
 	
 	ret = pool_init(&pool, 10 * cnt, SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
 	if (ret)

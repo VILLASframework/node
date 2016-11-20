@@ -47,6 +47,7 @@ struct path;
 struct hook;
 struct sample;
 struct settings;
+typedef struct config_setting_t config_setting_t;
 
 /** This is a list of hooks which can be used in the configuration file. */
 extern struct list hooks;
@@ -175,5 +176,22 @@ int hook_stats(struct hook *h, int when, struct hook_info *j);
 int hook_fix_ts(struct hook *h, int when, struct hook_info *j);
 int hook_restart(struct hook *h, int when, struct hook_info *j);
 int hook_drop(struct hook *h, int when, struct hook_info *j);
+
+/** Parse an array or single hook function.
+ *
+ * Examples:
+ *     hooks = [ "print", "fir" ]
+ *     hooks = "log"
+ */
+int hook_parse_list(struct list *list, config_setting_t *cfg);
+
+/** Parse a single hook and append it to the list.
+ * A hook definition is composed of the hook name and optional parameters
+ * seperated by a colon.
+ *
+ * Examples:
+ *   "print:stdout"
+ */
+int hook_parse(config_setting_t *cfg, struct list *list);
 
 #endif /** _HOOKS_H_ @} */

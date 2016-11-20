@@ -56,8 +56,6 @@ int main(int argc, char *argv[])
 	int values = 1;
 	int limit = -1;	
 	int counter;
-	
-	log_init();
 
 	if (argc < 2) {
 		usage();
@@ -111,7 +109,7 @@ int main(int argc, char *argv[])
 check:		if (optarg == endptr)
 			error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
-	
+
 	/* Allocate memory for message buffer */
 	struct sample *s = alloc(SAMPLE_LEN(values));
 
