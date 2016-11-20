@@ -36,7 +36,9 @@ int hook_init(struct hook *h, struct list *nodes, struct list *paths, struct set
 void hook_destroy(struct hook *h)
 {
 	struct hook_info i = { NULL };
-	h->cb(h, HOOK_DESTROY, &i);
+	
+	if (h->type & HOOK_DESTROY)
+		h->cb(h, HOOK_DESTROY, &i);
 }
 
 int hook_copy(struct hook *h, struct hook *c)
