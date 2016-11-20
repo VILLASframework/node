@@ -27,7 +27,10 @@ int hook_init(struct hook *h, struct list *nodes, struct list *paths, struct set
 		.settings = settings
 	};
 	
-	return h->cb(h, HOOK_INIT, &i);
+	if (h->type & HOOK_INIT)
+		return h->cb(h, HOOK_INIT, &i);
+	else
+		return 0;
 }
 
 void hook_destroy(struct hook *h)
