@@ -62,7 +62,7 @@ static void path_read(struct path *p)
 		for (int i = 0; i < enqueued; i++)
 			sample_get(smps[i]); /* increase reference count */
 
-		debug(DBG_PATH | 15, "Enqueued %u samples to queue of path %s", enqueued, path_name(p));
+		debug(DBG_PATH | 15, "Enqueued %u samples from %s to queue of %s", enqueued, node_name(ps->node), node_name(pd->node));
 	}
 }
 
@@ -154,11 +154,22 @@ int path_stop(struct path *p)
 
 const char * path_name(struct path *p)
 {
-	if (!p->_name) {	
-		strcatf(&p->_name, "%s " MAG("=>"), node_name_short(p->source->node));
-
-		list_foreach(struct path_destination *pd, &p->destinations)
-			strcatf(&p->_name, " %s", node_name_short(pd->node));
+	if (!p->_name) {
+		if (list_length(&p->destinations) == 1) {
+			struct path_destination *pd = (struct path_destination *) list_first(&p->destinations);
+			
+			strcatf(&p->_name, "%s " MAG("=>") " %s",
+				node_name_short(p->source->node),
+				node_name_short(pd->node));
+		}
+		else {
+			strcatf(&p->_name, "%s " MAG("=>") " [", node_name_short(p->source->node));
+			
+			list_foreach(struct path_destination *pd, &p->destinations)
+				strcatf(&p->_name, " %s", node_name_short(pd->node));
+			
+			strcatf(&p->_name, " ]");
+		}
 	}
 
 	return p->_name;
