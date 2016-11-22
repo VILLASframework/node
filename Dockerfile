@@ -27,10 +27,8 @@ RUN dnf -y update && \
 	openssl-devel \
 	libconfig-devel \
 	libnl3-devel \
-	pciutils-devel \
 	libcurl-devel \
-	jansson-devel \
-	libuuid-devel
+	jansson-devel
 
 # Tools for documentation
 RUN dnf -y update && \
