@@ -1,0 +1,5 @@
+POINT0	int
+CRTSECD	int
+CRTNSEC	int
+POINT3	int
+POINT4	float
