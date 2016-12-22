@@ -62,12 +62,6 @@
 /** Check if the number is a power of 2 */
 #define IS_POW2(x)	(((x) != 0) && !((x) & ((x) - 1)))
 
-/** Get nearest up-rounded power of 2 */
-#define LOG2_CEIL(x)	(1 << (log2i((x) - 1) + 1))
-
-/** Check if the number is a power of 2 */
-#define IS_POW2(x)	(((x) != 0) && !((x) & ((x) - 1)))
-
 /** Calculate the number of elements in an array. */
 #define ARRAY_LEN(a)	( sizeof (a) / sizeof (a)[0] )
 
