@@ -23,6 +23,8 @@ ifeq ($(shell pkg-config libnl-route-3.0; echo $$?),0)
 	LIB_SRCS    += $(addprefix lib/kernel/, nl.c tc.c if.c)
 	LIB_SRCS    += $(addprefix lib/, msg.c)
 	LIB_PKGS    += libnl-route-3.0
+else
+	$(error Missing dependecy: libnl-3)
 endif
 endif
 
@@ -33,6 +35,8 @@ ifeq ($(shell pkg-config libxil; echo $$?),0)
 	LIB_SRCS    += $(addprefix lib/kernel/, pci.c vfio.c)
 	LIB_SRCS    += $(wildcard  lib/fpga/*.c)
 	PKGS        += libxil
+else
+	$(error Missing dependecy: libxil)
 endif
 endif
 
@@ -41,6 +45,8 @@ ifndef WITHOUT_NGSI
 ifeq ($(shell pkg-config libcurl jansson; echo $$?),0)
 	LIB_SRCS    += lib/nodes/ngsi.c
 	LIB_PKGS    += libcurl jansson
+else
+	$(error Missing dependecies: libjansson)
 endif
 endif
 
@@ -49,6 +55,8 @@ ifndef WITHOUT_WEBSOCKETS
 ifeq ($(shell pkg-config libwebsockets jansson; echo $$?),0)
 	LIB_SRCS    += lib/nodes/websocket.c
 	LIB_PKGS    += libwebsockets jansson
+else
+	$(error Missing dependecies: libwebsockets or libjansson)
 endif
 endif
 
@@ -65,6 +73,8 @@ ifneq (,$(wildcard thirdparty/opal/include/AsyncApi.h))
 	CFLAGS      += -m32
 	LDFLAGS     += -m32
 	BUILDDIR    := $(BUILDDIR)32
+else
+	$(error Missing dependecy: libOpalUtils libOpalAsyncApiCore)
 endif
 endif
 
