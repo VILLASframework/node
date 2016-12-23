@@ -27,7 +27,6 @@
 
 /* Declarations */
 int fpga_benchmarks(int argc, char *argv[], struct fpga *f);
-int fpga_tests(int argc, char *argv[], struct fpga *f);
 
 struct settings settings;
 
@@ -35,7 +34,6 @@ void usage(char *name)
 {
 	printf("Usage: %s CONFIGFILE CMD [OPTIONS]\n", name);
 	printf("   Commands:\n");
-	printf("      tests      Test functionality of VILLASfpga card\n");
 	printf("      benchmarks Do benchmarks\n\n");
 	printf("   Options:\n");
 	printf("      -d    Set log level\n\n");
@@ -58,9 +56,7 @@ int main(int argc, char *argv[])
 
 	if (argc < 3)
 		usage(argv[0]);
-	if      (strcmp(argv[2], "tests") == 0)
-		subcommand = FPGA_TESTS;
-	else if (strcmp(argv[2], "benchmarks") == 0)
+	if (strcmp(argv[2], "benchmarks") == 0)
 		subcommand = FPGA_BENCH;
 	else
 		usage(argv[0]);
@@ -96,7 +92,6 @@ int main(int argc, char *argv[])
 
 	/* Start subcommand */
 	switch (subcommand) {
-		case FPGA_TESTS: fpga_tests(argc-optind-1, argv+optind+1, fpga);      break;
 		case FPGA_BENCH: fpga_benchmarks(argc-optind-1, argv+optind+1, fpga); break;
 	}
 
