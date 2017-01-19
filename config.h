@@ -37,6 +37,8 @@
 #define SYSFS_PATH		"/sys"
 #define PROCFS_PATH		"/proc"
 
+#define USER_AGENT		"VILLASnode " VERSION
+
 /* Required kernel version */
 #define KERNEL_VERSION_MAJ	3
 #define KERNEL_VERSION_MIN	6

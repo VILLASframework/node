@@ -475,13 +475,13 @@ int ngsi_open(struct node *n)
 	if (i->tfd < 0)
 		serror("Failed to create timer");
 	
-	i->headers = curl_slist_append(i->headers, "User-Agent: VILLASnode " VERSION);
 	i->headers = curl_slist_append(i->headers, "Accept: application/json");
 	i->headers = curl_slist_append(i->headers, "Content-Type: application/json");
 	
 	curl_easy_setopt(i->curl, CURLOPT_SSL_VERIFYPEER, i->ssl_verify);
 	curl_easy_setopt(i->curl, CURLOPT_TIMEOUT_MS, i->timeout * 1e3);
 	curl_easy_setopt(i->curl, CURLOPT_HTTPHEADER, i->headers);
+	curl_easy_setopt(i->curl, CURLOPT_USERAGENT, USER_AGENT);
 		
 	/* Create entity and atributes */
 	json_t *entity = ngsi_build_entity(i, NULL, 0, NGSI_ENTITY_METADATA);	
