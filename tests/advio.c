@@ -1,6 +1,7 @@
 #include <criterion/criterion.h>
 #include <criterion/logging.h>
 
+#include <villas/utils.h>
 #include <villas/advio.h>
 
 #include <errno.h>
@@ -42,10 +43,7 @@ Test(advio, upload)
 	char buffer[128];
 	
 	/* Get some random bytes */
-	FILE *r = fopen("/dev/urandom", "r");
-	cr_assert(r);
-	
-	len1 = fread(rnd, 1, sizeof(rnd), r);
+	len1 = read_random(rnd, sizeof(rnd));
 
 	/* Open file for writing */
 	af = afopen(uri, "w+");

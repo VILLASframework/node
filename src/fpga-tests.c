@@ -232,8 +232,8 @@ int fpga_test_fifo(struct fpga *f)
 
 	/* Get some random data to compare */
 	memset(dst, 0, sizeof(dst));
-	ret = read_random((char *) src, sizeof(src));
-	if (ret)
+	len = read_random((char *) src, sizeof(src));
+	if (len != sizeof(src))
 		error("Failed to get random data");
 
 	len = fifo_write(fifo, (char *) src, sizeof(src));
@@ -267,7 +267,7 @@ int fpga_test_dma(struct fpga *f)
 		
 		/* Simple DMA can only transfer up to 4 kb due to
 		 * PCIe page size burst limitation */
-		ssize_t len = dma->dma.inst.HasSg ? 64 << 20 : 1 << 2;
+		ssize_t len2, len = dma->dma.inst.HasSg ? 64 << 20 : 1 << 2;
 
 		ret = dma_alloc(dma, &mem, 2 * len, 0);
 		if (ret)
@@ -278,8 +278,8 @@ int fpga_test_dma(struct fpga *f)
 			return -1;
 
 		/* Get new random data */
-		ret = read_random(src.base_virt, len);
-		if (ret)
+		len2 = read_random(src.base_virt, len);
+		if (len2 != len)
 			serror("Failed to get random data");
 
 		int irq_mm2s = dma->irq;

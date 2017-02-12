@@ -208,7 +208,7 @@ int version_parse(const char *s, struct version *v);
 #endif
 
 /** Fill buffer with random data */
-int read_random(char *buf, size_t len);
+ssize_t read_random(char *buf, size_t len);
 
 /** Hexdump bytes */
 void printb(void *mem, size_t len);
