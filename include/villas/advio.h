@@ -20,11 +20,11 @@ struct advio {
 	CURL *curl;
 	FILE *file;
 	
-	const char *url;
 	/* For use with ADVIO_MODE_MEM */
 	char *buf;
 	size_t size;
 	
+	const char *uri;
 };
 
 typedef struct advio AFILE;

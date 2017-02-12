@@ -53,7 +53,7 @@ AFILE *afopen(const char *uri, const char *mode, int flags)
 	curl_easy_setopt(af->curl, CURLOPT_FOLLOWLOCATION, 1L);
 	curl_easy_setopt(af->curl, CURLOPT_UPLOAD, 0L);
 	curl_easy_setopt(af->curl, CURLOPT_USERAGENT, USER_AGENT);
-	curl_easy_setopt(af->curl, CURLOPT_URL, url);
+	curl_easy_setopt(af->curl, CURLOPT_URL, uri);
 	curl_easy_setopt(af->curl, CURLOPT_WRITEDATA, af->file);
 	
 	res = curl_easy_perform(af->curl);
@@ -83,15 +83,12 @@ AFILE *afopen(const char *uri, const char *mode, int flags)
 			goto out0;	/* no please fail here */
 	}
 	
-	af->url = strdup(url);
-
+	af->uri = strdup(uri);
 	af->flags = flags & ~ADVIO_DIRTY;
+	
 	return af;
 
 out0:	curl_easy_cleanup(af->curl);
-
-	printf("Failed to download file (%d): %s\n", res, curl_easy_strerror(res));
-
 out1:	fclose(af->file);
 out2:	free(af);
 
@@ -103,11 +100,8 @@ int afclose(AFILE *af)
 	int ret;
 	
 	ret = afflush(af);
-	
 	curl_easy_cleanup(af->curl);
-	
 	fclose(af->file);
-	
 	free(af);
 	
 	return ret;
@@ -122,9 +116,6 @@ int afflush(AFILE *af)
 		CURLcode res;
 		long pos;
 		
-		/* Remember old stream pointer */
-		pos = ftell(af->file);
-		fseek(af->file, 0, SEEK_SET);
 		/* Flushing a memory backed stream is sensless */
 		if (!(af->flags & ADVIO_MEM)) {
 			ret = fflush(af->file);
@@ -135,10 +126,12 @@ int afflush(AFILE *af)
 		curl_easy_setopt(af->curl, CURLOPT_UPLOAD, 1L);
 		curl_easy_setopt(af->curl, CURLOPT_READDATA, af->file);
 
+		pos = ftell(af->file); /* Remember old stream pointer */
+		fseek(af->file, 0, SEEK_SET);
+
 		res = curl_easy_perform(af->curl);
 		
-		/* Restore old stream pointer */
-		fseek(af->file, pos, SEEK_SET);
+		fseek(af->file, pos, SEEK_SET); /* Restore old stream pointer */
 		
 		if (res != CURLE_OK)
 			return -1;
@@ -149,16 +142,16 @@ int afflush(AFILE *af)
 	return 0;
 }
 
-size_t afread(void *restrict ptr, size_t size, size_t nitems, AFILE *restrict stream)
+size_t afread(void *restrict ptr, size_t size, size_t nitems, AFILE *restrict af)
 {
-	return fread(ptr, size, nitems, stream->file);
+	return fread(ptr, size, nitems, af->file);
 }
 
-size_t afwrite(const void *restrict ptr, size_t size, size_t nitems, AFILE *restrict stream)
+size_t afwrite(const void *restrict ptr, size_t size, size_t nitems, AFILE *restrict af)
 {
 	size_t ret;
 	
-	ret = fwrite(ptr, size, nitems, stream->file);
+	ret = fwrite(ptr, size, nitems, af->file);
 	
 	if (ret > 0)
 		af->flags |= ADVIO_DIRTY;
