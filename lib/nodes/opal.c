@@ -88,7 +88,7 @@ int opal_deinit()
 	if (err != EOK)
 		error("Failed to close shared memory area (%d)", err);
 
-	debug(DBG_OPAL | 4, "Closing OPAL shared memory mapping");
+	debug(LOG_OPAL | 4, "Closing OPAL shared memory mapping");
 
 	err = OpalSystemCtrl_UnRegister(print_shmem_name);
 	if (err != EOK)
@@ -104,7 +104,7 @@ int opal_deinit()
 
 int opal_print_global()
 {
-	debug(DBG_OPAL | 2, "Controller ID: %u", params.controllerID);
+	debug(LOG_OPAL | 2, "Controller ID: %u", params.controllerID);
 	
 	char *sbuf = alloc(send_icons * 5);
 	char *rbuf = alloc(recv_icons * 5);
@@ -114,17 +114,17 @@ int opal_print_global()
 	for (int i = 0; i < recv_icons; i++)
 		strcatf(&rbuf, "%u ", recv_ids[i]);
 
-	debug(DBG_OPAL | 2, "Send Blocks: %s",    sbuf);
-	debug(DBG_OPAL | 2, "Receive Blocks: %s", rbuf);
+	debug(LOG_OPAL | 2, "Send Blocks: %s",    sbuf);
+	debug(LOG_OPAL | 2, "Receive Blocks: %s", rbuf);
 	
 	free(sbuf);
 	free(rbuf);
 
-	debug(DBG_OPAL | 2, "Control Block Parameters:");
+	debug(LOG_OPAL | 2, "Control Block Parameters:");
 	for (int i = 0; i < GENASYNC_NB_FLOAT_PARAM; i++)
-		debug(DBG_OPAL | 2, "FloatParam[]%u] = %f", i, params.FloatParam[i]);
+		debug(LOG_OPAL | 2, "FloatParam[]%u] = %f", i, params.FloatParam[i]);
 	for (int i = 0; i < GENASYNC_NB_STRING_PARAM; i++)
-		debug(DBG_OPAL | 2, "StringParam[%u] = %s", i, params.StringParam[i]);
+		debug(LOG_OPAL | 2, "StringParam[%u] = %s", i, params.StringParam[i]);
 
 	return 0;
 }

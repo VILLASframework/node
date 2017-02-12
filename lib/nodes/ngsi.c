@@ -287,7 +287,7 @@ static int ngsi_request(CURL *handle, const char *endpoint, const char *operatio
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, strlen(post));
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDS, post);
 	
-	debug(DBG_NGSI | 18, "Request to context broker: %s\n%s", url, post);
+	debug(LOG_NGSI | 18, "Request to context broker: %s\n%s", url, post);
 
 	/* We don't want to leave the handle in an invalid state */
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &old);
@@ -301,8 +301,8 @@ static int ngsi_request(CURL *handle, const char *endpoint, const char *operatio
 
 	curl_easy_getinfo(handle, CURLINFO_TOTAL_TIME, &time);
 	
-	debug(DBG_NGSI | 16, "Request to context broker completed in %.4f seconds", time);
-	debug(DBG_NGSI | 17, "Response from context broker:\n%s", chunk.data);
+	debug(LOG_NGSI | 16, "Request to context broker completed in %.4f seconds", time);
+	debug(LOG_NGSI | 17, "Response from context broker:\n%s", chunk.data);
 	
 	*response = json_loads(chunk.data, 0, &err);
 	if (!*response)

@@ -43,7 +43,7 @@ static void path_write(struct path *p, bool resend)
 		else if (sent < tosend)
 			warn("Partial write to node %s", node_name(n));
 
-		debug(DBG_PATH | 15, "Sent %u messages to node %s", sent, node_name(n));
+		debug(LOG_PATH | 15, "Sent %u messages to node %s", sent, node_name(n));
 
 		released = pool_put_many(&p->pool, (void **) smps, sent);
 		if (sent != released)
@@ -99,7 +99,7 @@ static void * path_run(void *arg)
 		else if (recv < ready)
 			warn("Partial read for path %s: read=%u expected=%u", path_name(p), recv, ready);
 
-		debug(DBG_PATH | 15, "Received %u messages from node %s", recv, node_name(p->in));
+		debug(LOG_PATH | 15, "Received %u messages from node %s", recv, node_name(p->in));
 
 		/* Run preprocessing hooks for vector of samples */
 		enqueue = hook_run(p, smps, recv, HOOK_READ);
@@ -114,7 +114,7 @@ static void * path_run(void *arg)
 
 		ready -= enqueued;
 
-		debug(DBG_PATH | 3, "Enqueuing %u samples to queue of path %s", enqueue, path_name(p));
+		debug(LOG_PATH | 3, "Enqueuing %u samples to queue of path %s", enqueue, path_name(p));
 
 		/* At fixed rate mode, messages are send by another (asynchronous) thread */
 		if (p->rate == 0)

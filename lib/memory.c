@@ -19,20 +19,20 @@
 
 void * memory_alloc(const struct memtype *m, size_t len)
 {
-	debug(DBG_MEM | 2, "Allocating %#zx bytes of %s memory", len, m->name);
+	debug(LOG_MEM | 2, "Allocating %#zx bytes of %s memory", len, m->name);
 	return m->alloc(len);
 }
 
 void * memory_alloc_aligned(const struct memtype *m, size_t len, size_t alignment)
 {
-	debug(DBG_MEM | 2, "Allocating %#zx bytes of %#zx-byte-aligned %s memory", len, alignment, m->name);
+	debug(LOG_MEM | 2, "Allocating %#zx bytes of %#zx-byte-aligned %s memory", len, alignment, m->name);
 	warn("%s: not implemented yet!", __FUNCTION__);
 	return memory_alloc(m, len);
 }
 
 int memory_free(const struct memtype *m, void *ptr, size_t len)
 {
-	debug(DBG_MEM | 2, "Releasing %#zx bytes of %s memory", len, m->name);
+	debug(LOG_MEM | 2, "Releasing %#zx bytes of %s memory", len, m->name);
 	return m->free(ptr, len);
 }
 

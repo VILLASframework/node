@@ -32,22 +32,25 @@
  *
  * To be or-ed with the debug level
  */
-enum debug_facilities {
-	DBG_POOL =	(1 <<  8),
-	DBG_QUEUE =	(1 <<  9),
-	DBG_CONFIG =	(1 << 10),
-	DBG_HOOK =	(1 << 11),
-	DBG_PATH =	(1 << 12),
-	DBG_MEM =	(1 << 13),
+enum log_facilities {
+	LOG_POOL =	(1 <<  8),
+	LOG_QUEUE =	(1 <<  9),
+	LOG_CONFIG =	(1 << 10),
+	LOG_HOOK =	(1 << 11),
+	LOG_PATH =	(1 << 12),
+	LOG_MEM =	(1 << 13),
 	
 	/* Node-types */
-	DBG_SOCKET =	(1 << 16),
-	DBG_FILE =	(1 << 17),
-	DBG_FPGA =	(1 << 18),
-	DBG_NGSI =	(1 << 19),
-	DBG_WEBSOCKET =	(1 << 20),
-	DBG_OPAL =	(1 << 21),
-	DBG_NODE =   (0xFF << 16)
+	LOG_SOCKET =	(1 << 16),
+	LOG_FILE =	(1 << 17),
+	LOG_FPGA =	(1 << 18),
+	LOG_NGSI =	(1 << 19),
+	LOG_WEBSOCKET =	(1 << 20),
+	LOG_OPAL =	(1 << 21),
+	
+	/* Classes */
+	LOG_NODE =   (0xFF << 16),
+	LOG_ALL =    ~0xFF 
 };
 
 /** Change log indention  for current thread.

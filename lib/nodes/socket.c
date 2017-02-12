@@ -165,7 +165,7 @@ int socket_open(struct node *n)
 		if (ret)
 			serror("Failed to set FW mark for outgoing packets");
 		else
-			debug(DBG_SOCKET | 4, "Set FW mark for socket (sd=%u) to %u", s->sd, s->mark);
+			debug(LOG_SOCKET | 4, "Set FW mark for socket (sd=%u) to %u", s->sd, s->mark);
 	}
 
 	/* Set socket priority, QoS or TOS IP options */
@@ -177,7 +177,7 @@ int socket_open(struct node *n)
 			if (setsockopt(s->sd, IPPROTO_IP, IP_TOS, &prio, sizeof(prio)))
 				serror("Failed to set type of service (QoS)");
 			else
-				debug(DBG_SOCKET | 4, "Set QoS/TOS IP option for node %s to %#x", node_name(n), prio);
+				debug(LOG_SOCKET | 4, "Set QoS/TOS IP option for node %s to %#x", node_name(n), prio);
 			break;
 
 		default:
@@ -185,7 +185,7 @@ int socket_open(struct node *n)
 			if (setsockopt(s->sd, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio)))
 				serror("Failed to set socket priority");
 			else
-				debug(DBG_SOCKET | 4, "Set socket priority for node %s to %d", node_name(n), prio);
+				debug(LOG_SOCKET | 4, "Set socket priority for node %s to %d", node_name(n), prio);
 			break;
 	}
 
@@ -388,7 +388,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		}
 	}
 
-	debug(DBG_SOCKET | 17, "Received message of %zd bytes: %u samples", bytes, received);
+	debug(LOG_SOCKET | 17, "Received message of %zd bytes: %u samples", bytes, received);
 
 	return received;
 }
@@ -430,7 +430,7 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 			sent++;
 
-			debug(DBG_SOCKET | 17, "Sent packet of %zd bytes with 1 sample", bytes);
+			debug(LOG_SOCKET | 17, "Sent packet of %zd bytes with 1 sample", bytes);
 		}
 	}
 	else {
@@ -464,7 +464,7 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 		sent = cnt; /** @todo Find better way to determine how many values we actually sent */
 
-		debug(DBG_SOCKET | 17, "Sent packet of %zd bytes with %u samples", bytes, cnt);
+		debug(LOG_SOCKET | 17, "Sent packet of %zd bytes with %u samples", bytes, cnt);
 	}
 
 	return sent;
