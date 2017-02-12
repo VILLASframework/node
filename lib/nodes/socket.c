@@ -37,6 +37,7 @@
 #include "msg.h"
 #include "sample.h"
 #include "queue.h"
+#include "plugin.h"
 
 /* Forward declartions */
 static struct node_type vt;
@@ -677,21 +678,24 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 	return ret;
 }
 
-static struct node_type vt = {
+static struct plugin p = {
 	.name		= "socket",
 	.description	= "BSD network sockets",
-	.vectorize	= 0,
-	.size		= sizeof(struct socket),
-	.destroy	= socket_destroy,
-	.reverse	= socket_reverse,
-	.parse		= socket_parse,
-	.print		= socket_print,
-	.open		= socket_open,
-	.close		= socket_close,
-	.read		= socket_read,
-	.write		= socket_write,
-	.init		= socket_init,
-	.deinit		= socket_deinit
+	.type		= PLUGIN_TYPE_NODE,
+	.node		= {
+		.vectorize	= 0,
+		.size		= sizeof(struct socket),
+		.destroy	= socket_destroy,
+		.reverse	= socket_reverse,
+		.parse		= socket_parse,
+		.print		= socket_print,
+		.open		= socket_open,
+		.close		= socket_close,
+		.read		= socket_read,
+		.write		= socket_write,
+		.init		= socket_init,
+		.deinit		= socket_deinit
+	}
 };
 
-REGISTER_NODE_TYPE(&vt)
+REGISTER_PLUGIN(&p)

@@ -11,8 +11,9 @@
 #include <string.h>
 #include <math.h>
 
-#include <villas/utils.h>
-#include <villas/log.h>
+#include "utils.h"
+#include "log.h"
+#include "plugin.h"
 
 #include "fpga/ip.h"
 #include "fpga/model.h"
@@ -353,21 +354,32 @@ int model_param_update(struct model_param *p, struct model_param *u)
 	return 0;
 }
 
-static struct ip_type ip_hls = {
-	.vlnv = { NULL, "hls", NULL, NULL },
-	.init = model_init,
-	.destroy = model_destroy,
-	.dump = model_dump,
-	.parse = model_parse
+static struct plugin p_hls = {
+	.name		= "Xilinx High Level Synthesis (HLS) model",
+	.description	= "",
+	.type		= PLUGIN_TYPE_FPGA_IP,
+	.ip		= {
+		.vlnv = { NULL, "hls", NULL, NULL },
+		.init = model_init,
+		.destroy = model_destroy,
+		.dump = model_dump,
+		.parse = model_parse
+	}
 };
 
-static struct ip_type ip_xsg = {
-	.vlnv = { NULL, "sysgen", NULL, NULL },
-	.init = model_init,
-	.destroy = model_destroy,
-	.dump = model_dump,
-	.parse = model_parse
+REGISTER_PLUGIN(&p_hls)
+
+static struct plugin p_sysgen = {
+	.name		= "Xilinx System Generator for DSP (XSG) model",
+	.description	= "",
+	.type		= PLUGIN_TYPE_FPGA_IP,
+	.ip		= {
+		.vlnv = { NULL, "sysgen", NULL, NULL },
+		.init = model_init,
+		.destroy = model_destroy,
+		.dump = model_dump,
+		.parse = model_parse
+	}
 };
 
-REGISTER_IP_TYPE(&ip_hls)
-REGISTER_IP_TYPE(&ip_xsg)
+REGISTER_PLUGIN(&p_sysgen)

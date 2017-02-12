@@ -13,6 +13,7 @@
 #include "utils.h"
 #include "timing.h"
 #include "queue.h"
+#include "plugin.h"
 
 int file_reverse(struct node *n)
 {
@@ -336,18 +337,21 @@ int file_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return 1;
 }
 
-static struct node_type vt = {
+static struct plugin p = {
 	.name		= "file",
 	.description	= "support for file log / replay node type",
-	.vectorize	= 1,
-	.size		= sizeof(struct file),
-	.reverse	= file_reverse,
-	.parse		= file_parse,
-	.print		= file_print,
-	.open		= file_open,
-	.close		= file_close,
-	.read		= file_read,
-	.write		= file_write
+	.type		= PLUGIN_TYPE_NODE,
+	.node		= {
+		.vectorize	= 1,
+		.size		= sizeof(struct file),
+		.reverse	= file_reverse,
+		.parse		= file_parse,
+		.print		= file_print,
+		.open		= file_open,
+		.close		= file_close,
+		.read		= file_read,
+		.write		= file_write
+	}
 };
 
-REGISTER_NODE_TYPE(&vt)
+REGISTER_PLUGIN(&p)

@@ -27,19 +27,6 @@
 #include "queue.h"
 #include "list.h"
 
-#define REGISTER_HOOK(nam, desc, prio, hist, fnc, typ)		\
-__attribute__((constructor)) void __register_ ## fnc () {	\
-	static struct hook h = {				\
-		.name = nam,					\
-		.description = desc,				\
-		.priority = prio,				\
-		.history = hist,				\
-		.type = typ,					\
-		.cb = fnc					\
-	};							\
-	list_push(&hooks, &h);					\
-}
-
 /* The configuration of hook parameters is done in "config.h" */
 
 /* Forward declarations */

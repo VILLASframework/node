@@ -13,9 +13,10 @@
 #include <pthread.h>
 #include <sys/mman.h>
 
-#include <villas/log.h>
-
+#include "log.h"
+#include "plugin.h"
 #include "utils.h"
+
 #include "fpga/dma.h"
 #include "fpga/ip.h"
 
@@ -596,10 +597,15 @@ int dma_reset(struct ip *c)
 	return 0;
 }
 
-static struct ip_type ip = {
-	.vlnv = { "xilinx.com", "ip", "axi_dma", NULL },
-	.init = dma_init,
-	.reset = dma_reset
+static struct plugin p = {
+	.name		= "Xilinx's AXI4 Direct Memory Access Controller",
+	.description	= "Transfer data streams between VILLASnode and VILLASfpga",
+	.type		= PLUGIN_TYPE_FPGA_IP,
+	.ip		= {
+		.vlnv = { "xilinx.com", "ip", "axi_dma", NULL },
+		.init = dma_init,
+		.reset = dma_reset
+	}
 };
 
-REGISTER_IP_TYPE(&ip)
+REGISTER_PLUGIN(&p)

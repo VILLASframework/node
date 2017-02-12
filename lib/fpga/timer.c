@@ -10,6 +10,7 @@
  **********************************************************************************/
 
 #include "config.h"
+#include "plugin.h"
 
 #include "fpga/ip.h"
 #include "fpga/timer.h"
@@ -31,9 +32,14 @@ int timer_init(struct ip *c)
 	return 0;
 }
 
-static struct ip_type ip = {
-	.vlnv = { "xilinx.com", "ip", "axi_timer", NULL },
-	.init = timer_init
+static struct plugin p = {
+	.name		= "Xilinx's programmable timer / counter",
+	.description	= "",
+	.type		= PLUGIN_TYPE_FPGA_IP,
+	.ip		= {
+		.vlnv = { "xilinx.com", "ip", "axi_timer", NULL },
+		.init = timer_init
+	}
 };
 
-REGISTER_IP_TYPE(&ip)
+REGISTER_PLUGIN(&p)

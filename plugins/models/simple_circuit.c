@@ -111,7 +111,8 @@ void simple_circuit_code() {
 // -----------------------------------------------   
 #if defined(VILLAS)
 
-#include "nodes/cbuilder.h"
+#include <villas/nodes/cbuilder.h>
+#include <villas/plugin.h>
 
 double getTimeStep()
 {
@@ -161,15 +162,19 @@ int simple_circuit_write(float inputs[], int len)
 	return 0;
 }
 
-static struct cbmodel cb = {
-	.name  = "simple_circuit",
-	.code  = simple_circuit_code,
-	.init  = simple_circuit_init,
-	.read  = simple_circuit_read,
-	.write = simple_circuit_write,
-	.ram   = simple_circuit_ram
+static struct plugin p = {
+	.name		= "simple_circuit",
+	.description	= "A simple CBuilder model",
+	.type		= LOADABLE_TYPE_MODEL_CBUILDER,
+	.cb 		= {
+		.code  = simple_circuit_code,
+		.init  = simple_circuit_init,
+		.read  = simple_circuit_read,
+		.write = simple_circuit_write,
+		.ram   = simple_circuit_ram
+	}
 };
 
-REGISTER_CBMODEL(&cb);
+REGISTER_PLUGIN(&p)
 
 #endif

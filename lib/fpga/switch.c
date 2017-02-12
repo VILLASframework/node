@@ -10,6 +10,8 @@
 
 #include "list.h"
 #include "log.h"
+#include "plugin.h"
+
 #include "fpga/switch.h"
 #include "fpga/ip.h"
 
@@ -180,11 +182,16 @@ int switch_disconnect(struct ip *c, struct ip *mi, struct ip *si)
 	return 0;
 }
 
-static struct ip_type ip = {
-	.vlnv = { "xilinx.com", "ip", "axis_interconnect", NULL },
-	.init = switch_init,
-	.destroy = switch_destroy,
-	.parse = switch_parse
+static struct plugin p = {
+	.name		= "Xilinx's AXI4-Stream switch",
+	.description	= "",
+	.type		= PLUGIN_TYPE_FPGA_IP,
+	.ip		= {
+		.vlnv = { "xilinx.com", "ip", "axis_interconnect", NULL },
+		.init = switch_init,
+		.destroy = switch_destroy,
+		.parse = switch_parse
+	}
 };
 
-REGISTER_IP_TYPE(&ip)
+REGISTER_PLUGIN(&p)

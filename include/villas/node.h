@@ -21,12 +21,6 @@
 #include "list.h"
 #include "queue.h"
 
-/* Helper macros for virtual node type */
-#define REGISTER_NODE_TYPE(vt)				\
-__attribute__((constructor)) static void __register() {	\
-	list_push(&node_types, vt);			\
-}
-
 extern struct list node_types;	/**< Vtable for virtual node sub types */
 
 /* Forward declarations */

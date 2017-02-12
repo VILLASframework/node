@@ -10,9 +10,13 @@
 
 #include "config.h" 
 #include "log.h"
+#include "plugin.h"
+
 #include "nodes/fpga.h"
+
 #include "kernel/vfio.h" 
 #include "kernel/kernel.h" 
+
 #include "fpga/ip.h"
 #include "fpga/intc.h"
 
@@ -145,10 +149,15 @@ uint64_t intc_wait(struct ip *c, int irq)
 	}
 }
 
-static struct ip_type ip = {
-	.vlnv = { "acs.eonerc.rwth-aachen.de", "user", "axi_pcie_intc", NULL },
-	.init = intc_init,
-	.destroy = intc_destroy
+static struct plugin p = {
+	.name		= "Xilinx's programmable interrupt controller",
+	.description	= "",
+	.type		= PLUGIN_TYPE_FPGA_IP,
+	.ip		= {
+		.vlnv = { "acs.eonerc.rwth-aachen.de", "user", "axi_pcie_intc", NULL },
+		.init = intc_init,
+		.destroy = intc_destroy
+	}
 };
 
-REGISTER_IP_TYPE(&ip)
+REGISTER_PLUGIN(&p)

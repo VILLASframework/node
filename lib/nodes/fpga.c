@@ -20,6 +20,7 @@
 #include "config.h"
 #include "utils.h"
 #include "timing.h"
+#include "plugin.h"
 
 struct fpga fpga;
 struct pci pci;
@@ -431,19 +432,22 @@ int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return -1;
 }
 
-static struct node_type vt = {
+static struct plugin p = {
 	.name		= "fpga",
 	.description	= "VILLASfpga PCIe card (libxil)",
-	.size		= sizeof(struct fpga_dm),
-	.vectorize	= 1,
-	.parse		= fpga_parse,
-	.print		= fpga_print,
-	.open		= fpga_open,
-	.close		= fpga_close,
-	.read		= fpga_read,
-	.write		= fpga_write,
-	.init		= fpga_init,
-	.deinit		= fpga_deinit
+	.type		= PLUGIN_TYPE_NODE,
+	.node		= {
+		.size		= sizeof(struct fpga_dm),
+		.vectorize	= 1,
+		.parse		= fpga_parse,
+		.print		= fpga_print,
+		.open		= fpga_open,
+		.close		= fpga_close,
+		.read		= fpga_read,
+		.write		= fpga_write,
+		.init		= fpga_init,
+		.deinit		= fpga_deinit
+	}
 };
 
-REGISTER_NODE_TYPE(&vt)
+REGISTER_PLUGIN(&p)

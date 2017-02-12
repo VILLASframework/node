@@ -19,6 +19,7 @@
 
 #include "utils.h"
 #include "timing.h"
+#include "plugin.h"
 
 /* Some global settings */
 static char *name = NULL;
@@ -552,19 +553,22 @@ int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return ret ? 0 : cnt;
 }
 
-static struct node_type vt = {
+static struct plugin p = {
 	.name		= "ngsi",
 	.description	= "OMA Next Generation Services Interface 10 (libcurl, libjansson)",
-	.vectorize	= 0, /* unlimited */
-	.size		= sizeof(struct ngsi),
-	.parse		= ngsi_parse,
-	.print		= ngsi_print,
-	.open		= ngsi_open,
-	.close		= ngsi_close,
-	.read		= ngsi_read,
-	.write		= ngsi_write,
-	.init		= ngsi_init,
-	.deinit		= ngsi_deinit
+	.type		= PLUGIN_TYPE_NODE,
+	.node		= {
+		.vectorize	= 0, /* unlimited */
+		.size		= sizeof(struct ngsi),
+		.parse		= ngsi_parse,
+		.print		= ngsi_print,
+		.open		= ngsi_open,
+		.close		= ngsi_close,
+		.read		= ngsi_read,
+		.write		= ngsi_write,
+		.init		= ngsi_init,
+		.deinit		= ngsi_deinit
+	}
 };
 
-REGISTER_NODE_TYPE(&vt)
+REGISTER_PLUGIN(&p)

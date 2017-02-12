@@ -13,6 +13,7 @@
 
 #include "opal.h"
 #include "utils.h"
+#incude "plugin.h"
 
 /* Private static storage */
 static char *async_shmem_name;		/**< Shared Memory identifiers and size, provided via argv. */
@@ -277,19 +278,22 @@ int opal_write(struct node *n, struct pool *pool, unsigned cnt)
 	return 1;
 }
 
-static struct node_type vt = {
+static struct plugin p = {
 	.name		= "opal",
 	.description	= "run as OPAL Asynchronous Process (libOpalAsyncApi)",
-	.vectoroize	= 1,
-	.size		= sizeof(struct opal),
-	.parse		= opal_parse,
-	.print		= opal_print,
-	.open		= opal_open,
-	.close		= opal_close,
-	.read		= opal_read,
-	.write		= opal_write,
-	.init		= opal_init,
-	.deinit		= opal_deinit
+	.type		= PLUGIN_TYPE_NODE,
+	.node		= {
+		.vectoroize	= 1,
+		.size		= sizeof(struct opal),
+		.parse		= opal_parse,
+		.print		= opal_print,
+		.open		= opal_open,
+		.close		= opal_close,
+		.read		= opal_read,
+		.write		= opal_write,
+		.init		= opal_init,
+		.deinit		= opal_deinit
+	}
 };
 
-REGISTER_NODE_TYPE(&vt)
+REGISTER_PLUGIN(&p)

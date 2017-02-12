@@ -1,5 +1,6 @@
 #include <villas/hooks.h>
 #include <villas/log.h>
+#include <villas/plugin.>
 
 static int hook_example(struct path *p, struct hook *h, int when, struct sample *smps[], size_t cnt)
 {
@@ -8,4 +9,16 @@ static int hook_example(struct path *p, struct hook *h, int when, struct sample 
 	return 0;
 }
 
-REGISTER_HOOK("example", "This is just a simple example hook", 99, 0, hook_example, HOOK_PATH_START)
+static struct plugin p = {
+	.name		= "example",
+	.description	= "This is just a simple example hook",
+	.type		= LOADABLE_TYPE_HOOK,
+	.hook		= {
+		.priority = 99,
+		.history = 0,
+		.cb	= hook_example,
+		.type	= HOOK_PATH_START
+	}
+};
+
+REGISTER_PLUGIN(&p)

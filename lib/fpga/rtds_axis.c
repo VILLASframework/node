@@ -10,6 +10,7 @@
 
 #include "log.h"
 #include "utils.h"
+#include "plugin.h"
 
 #include "fpga/ip.h"
 #include "fpga/rtds_axis.h"
@@ -49,9 +50,14 @@ double rtds_axis_dt(struct ip *c)
 	return (dt == 0xFFFF) ? -1.0 : (double) dt / RTDS_HZ;
 }
 
-static struct ip_type ip = {
-	.vlnv = { "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL },
-	.dump = rtds_axis_dump
+static struct plugin p = {
+	.name		= "RTDS's AXI4-Stream - GTFPGA interface",
+	.description	= "",
+	.type		= PLUGIN_TYPE_FPGA_IP,
+	.ip		= {
+		.vlnv = { "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL },
+		.dump = rtds_axis_dump
+	}
 };
 
-REGISTER_IP_TYPE(&ip)
+REGISTER_PLUGIN(&p)

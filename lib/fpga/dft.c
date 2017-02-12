@@ -8,6 +8,8 @@
  **********************************************************************************/
 
 #include "log.h"
+#include "plugin.h"
+
 #include "fpga/ip.h"
 #include "fpga/dft.h"
 
@@ -85,11 +87,16 @@ void dft_destroy(struct ip *c)
 	}
 }
 
-static struct ip_type ip = {
-	.vlnv = { "acs.eonerc.rwth-aachen.de", "hls", "hls_dft", NULL },
-	.init = dft_init,
-	.destroy = dft_destroy,
-	.parse = dft_parse
+static struct plugin p = {
+	.name		= "Discrete Fourier Transform",
+	.description	= "Perfom Discrete Fourier Transforms with variable number of harmonics on the FPGA",
+	.type		= PLUGIN_TYPE_FPGA_IP,
+	.ip		= {
+		.vlnv = { "acs.eonerc.rwth-aachen.de", "hls", "hls_dft", NULL },
+		.init = dft_init,
+		.destroy = dft_destroy,
+		.parse = dft_parse
+	}
 };
 
-REGISTER_IP_TYPE(&ip)
+REGISTER_PLUGIN(&p)

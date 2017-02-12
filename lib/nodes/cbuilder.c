@@ -8,6 +8,8 @@
 
 #include "node.h"
 #include "log.h"
+#include "plugin.h"
+
 #include "nodes/cbuilder.h"
 
 struct list cbmodels;	/**< Table of existing CBuilder models */
@@ -114,16 +116,19 @@ int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return 1;
 }
 
-static struct node_type vt = {
+static struct plugin p = {
 	.name		= "cbuilder",
 	.description	= "RTDS CBuilder model",
-	.vectorize	= 1,
-	.size		= sizeof(struct cbuilder),
-	.parse		= cbuilder_parse,
-	.open		= cbuilder_open,
-	.close		= cbuilder_close,
-	.read		= cbuilder_read,
-	.write		= cbuilder_write,
+	.type		= PLUGIN_TYPE_NODE,
+	.node		= {
+		.vectorize	= 1,
+		.size		= sizeof(struct cbuilder),
+		.parse		= cbuilder_parse,
+		.open		= cbuilder_open,
+		.close		= cbuilder_close,
+		.read		= cbuilder_read,
+		.write		= cbuilder_write,
+	}
 };
 
-REGISTER_NODE_TYPE(&vt)
+REGISTER_PLUGIN(&p)

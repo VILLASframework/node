@@ -10,9 +10,9 @@
 
 #include <unistd.h>
 
-#include <villas/utils.h>
-
 #include "utils.h"
+#include "plugin.h"
+
 #include "fpga/ip.h"
 #include "fpga/fifo.h"
 #include "fpga/intc.h"
@@ -96,11 +96,16 @@ int fifo_reset(struct ip *c)
 	return 0;
 }
 
-static struct ip_type ip = {
-	.vlnv = { "xilinx.com", "ip", "axi_fifo_mm_s", NULL },
-	.init = fifo_init,
-	.parse = fifo_parse,
-	.reset = fifo_reset
+static struct plugin p = {
+	.name		= "Xilinx's AXI4 FIFO data mover",
+	.description	= "",
+	.type		= PLUGIN_TYPE_FPGA_IP,
+	.ip		= {
+		.vlnv = { "xilinx.com", "ip", "axi_fifo_mm_s", NULL },
+		.init = fifo_init,
+		.parse = fifo_parse,
+		.reset = fifo_reset
+	}
 };
 
-REGISTER_IP_TYPE(&ip)
+REGISTER_PLUGIN(&p)
