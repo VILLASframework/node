@@ -32,7 +32,7 @@
 #include "config.h"
 #include "advio.h"
 
-AFILE *afopen(const char *url, const char *mode)
+AFILE *afopen(const char *uri, const char *mode, int flags)
 {
 	CURLcode res;
 
@@ -80,8 +80,8 @@ AFILE *afopen(const char *url, const char *mode)
 	}
 	
 	af->url = strdup(url);
-	af->dirty = false;
 
+	af->flags = flags & ~ADVIO_DIRTY;
 	return af;
 
 out0:	curl_easy_cleanup(af->curl);
@@ -118,7 +118,7 @@ int afflush(AFILE *af)
 		return ret;
 	
 	/* Only upload file if it was changed */
-	if (af->dirty) {
+	if (af->flags & ADVIO_DIRTY) {
 		CURLcode res;
 		long pos;
 		
@@ -137,7 +137,7 @@ int afflush(AFILE *af)
 		if (res != CURLE_OK)
 			return -1;
 		
-		af->dirty = false;
+		af->flags &= ADVIO_DIRTY;
 	}
 
 	return 0;
@@ -155,7 +155,7 @@ size_t afwrite(const void *restrict ptr, size_t size, size_t nitems, AFILE *rest
 	ret = fwrite(ptr, size, nitems, stream->file);
 	
 	if (ret > 0)
-		stream->dirty = true;
+		af->flags |= ADVIO_DIRTY;
 	
 	return ret;
 }

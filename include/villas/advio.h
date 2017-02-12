@@ -9,18 +9,24 @@
 
 #include <curl/curl.h>
 
+enum advio_flags {
+	ADVIO_MEM	= (1 << 0),	/**< Instead of a real file, a memory backed stdio stream is used. */
+	ADVIO_DIRTY	= (1 << 1)	/**< The file contents have been modified. We need to upload. */
+};
+
 struct advio {
+	int flags;
+
 	CURL *curl;
 	FILE *file;
 	
 	const char *url;
 	
-	bool dirty;		/**< The file contents have been modified. We need to upload */
 };
 
 typedef struct advio AFILE;
 
-AFILE *afopen(const char *url, const char *mode);
+AFILE *afopen(const char *url, const char *mode, int flags);
 
 int afclose(AFILE *file);
 

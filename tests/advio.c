@@ -16,7 +16,7 @@ Test(advio, download)
 	
 	const char *url = "http://www.textfiles.com/100/angela.art";
 
-	af = afopen(url, "r");
+	af = afopen(url, "r", 0);
 	cr_assert(af, "Failed to download file");
 	cr_log_info("Opened file %s", url);
 
@@ -46,7 +46,7 @@ Test(advio, upload)
 	len1 = read_random(rnd, sizeof(rnd));
 
 	/* Open file for writing */
-	af = afopen(uri, "w+");
+	af = afopen(uri, "w+", 0);
 	cr_assert(af, "Failed to download file");
 	
 	len2 = afwrite(rnd, 1, len1, af);
@@ -56,7 +56,7 @@ Test(advio, upload)
 	cr_assert_eq(ret, 0, "Failed to close/upload file");
 	
 	/* Open for reading and comparison */
-	af = afopen(uri, "r");
+	af = afopen(uri, "r", 0);
 	cr_assert(af, "Failed to download file");
 	
 	len2 = afread(buffer, 1, len1, af);
