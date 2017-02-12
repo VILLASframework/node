@@ -9,8 +9,8 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  **********************************************************************************/
 
-#ifndef _DMA_H_
-#define _DMA_H_
+#ifndef _FPGA_DMA_H_
+#define _FPGA_DMA_H_
  
 #include <stdlib.h>
 #include <stdint.h>
@@ -65,4 +65,4 @@ int dma_ping_pong(struct ip *c, char *src, char *dst, size_t len);
 
 int dma_init(struct ip *c);
 
-#endif /* _DMA_H_ */
+#endif /* _FPGA_DMA_H_ */

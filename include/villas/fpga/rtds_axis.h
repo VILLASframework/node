@@ -7,8 +7,8 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  **********************************************************************************/
 
-#ifndef _RTDS_AXIS_H_
-#define _RTDS_AXIS_H_
+#ifndef _FPGA_RTDS_AXIS_H_
+#define _FPGA_RTDS_AXIS_H_
 
 /* Forward declaration */
 struct ip;
@@ -42,4 +42,4 @@ void rtds_axis_dump(struct ip *c);
 
 double rtds_axis_dt(struct ip *c);
 
-#endif /* _RTDS_AXIS_H_ */
+#endif /* _FPGA_RTDS_AXIS_H_ */

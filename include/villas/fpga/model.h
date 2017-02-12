@@ -7,8 +7,8 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
  
-#ifndef _MODEL_H_
-#define _MODEL_H_
+#ifndef _FPGA_MODEL_H_
+#define _FPGA_MODEL_H_
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -123,4 +123,4 @@ int model_param_write(struct model_param *p, double v);
 
 int model_param_update(struct model_param *p, struct model_param *u);
 
-#endif /* _MODEL_H_ */
+#endif /* _FPGA_MODEL_H_ */

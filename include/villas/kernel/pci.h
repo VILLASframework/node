@@ -7,8 +7,8 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  **********************************************************************************/
 
-#ifndef _PCI_H_
-#define _PCI_H_
+#ifndef _KERNEL_PCI_H_
+#define _KERNEL_PCI_H_
 
 #include "list.h"
 
@@ -64,4 +64,4 @@ int pci_attach_driver(struct pci_dev *d, const char *driver);
 /** Return the IOMMU group of this PCI device or -1 if the device is not in a group. */
 int pci_get_iommu_group(struct pci_dev *d);
 
-#endif /* _PCI_H_ */
+#endif /* _KERNEL_PCI_H_ */

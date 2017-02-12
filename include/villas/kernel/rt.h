@@ -7,9 +7,9 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _RT_H_
-#define _RT_H_
+#ifndef _KERNEL_RT_H_
+#define _KERNEL_RT_H_
 
 int rt_init(int affinity, int priority);
 
-#endif /* _RT_H_ */
+#endif /* _KERNEL_RT_H_ */

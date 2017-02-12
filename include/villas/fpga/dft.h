@@ -7,8 +7,8 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  **********************************************************************************/
  
-#ifndef _DFT_H_
-#define _DFT_H_
+#ifndef _FPGA_DFT_H_
+#define _FPGA_DFT_H_
 
 #include <xilinx/xhls_dft.h>
 
@@ -31,4 +31,4 @@ int dft_init(struct ip *c);
 void dft_destroy(struct ip *c);
 
 
-#endif /* _DFT_H_ */
+#endif /* _FPGA_DFT_H_ */

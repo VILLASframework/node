@@ -12,8 +12,8 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _TC_H_
-#define _TC_H_
+#ifndef _KERNEL_TC_H_
+#define _KERNEL_TC_H_
 
 #include <stdint.h>
 

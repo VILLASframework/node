@@ -5,10 +5,15 @@
  * @copyright 2015-2016, Steffen Vogel
  *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
- **********************************************************************************/
+ */
+/**
+ * @addtogroup cbuilder RTDS CBuilder model node
+ * @ingroup node
+ * @{
+ *********************************************************************************/
  
-#ifndef _CBUILDER_H_
-#define _CBUILDER_H_
+#ifndef _NODES_CBUILDER_H_
+#define _NODES_CBUILDER_H_
 
 #include <pthread.h>
 
@@ -52,4 +57,4 @@ struct cbmodel {
 	int (*write)(float outputs[], int len);
 };
 
-#endif /* _CBUILDER_H_ */
+#endif /** _NODES_CBUILDER_H_ @} */

@@ -9,8 +9,8 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  **********************************************************************************/
 
-#ifndef _SWITCH_H_
-#define _SWITCH_H_
+#ifndef _FPGA_SWITCH_H_
+#define _FPGA_SWITCH_H_
 
 #include <xilinx/xaxis_switch.h>
 
@@ -46,4 +46,4 @@ int switch_connect(struct ip *c, struct ip *mi, struct ip *si);
 
 int switch_disconnect(struct ip *c, struct ip *mi, struct ip *si);
 
-#endif /* _SWITCH_H_ */
+#endif /* _FPGA_SWITCH_H_ */

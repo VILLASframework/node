@@ -9,11 +9,11 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  **********************************************************************************/
 
-#ifndef _TIMER_H_
-#define _TIMER_H_
+#ifndef _FPGA_TIMER_H_
+#define _FPGA_TIMER_H_
 
 struct timer {
 	XTmrCtr inst;
 };
 
-#endif
+#endif /* _FPGA_TIMER_H_ */

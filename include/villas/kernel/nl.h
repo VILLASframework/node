@@ -7,8 +7,8 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _NL_H_
-#define _NL_H_
+#ifndef _KERNEL_NL_H_
+#define _KERNEL_NL_H_
 
 #include <netlink/netlink.h>
 #include <netlink/route/route.h>
@@ -27,4 +27,4 @@ struct nl_sock * nl_init();
 /** Close and free global netlink socket. */
 void nl_shutdown();
 
-#endif /* _NL_H_ */
+#endif /* _KERNEL_NL_H_ */

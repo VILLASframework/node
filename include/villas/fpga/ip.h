@@ -1,5 +1,5 @@
-#ifndef _IP_H_
-#define _IP_H_
+#ifndef _FPGA_IP_H_
+#define _FPGA_IP_H_
 
 #include <stdint.h>
 
@@ -98,4 +98,4 @@ int ip_reset(struct ip *c);
 
 int ip_parse(struct ip *c, config_setting_t *cfg);
 
-#endif
+#endif /* _FPGA_IP_H_ */

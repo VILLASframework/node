@@ -9,13 +9,13 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  */
 /**
- * @addtogroup fpga VILLASnode
+ * @addtogroup fpga VILLASfpga
  * @ingroup node
  * @{
  *********************************************************************************/
 
-#ifndef _FPGA_H_
-#define _FPGA_H_
+#ifndef _NODES_FPGA_H_
+#define _NODES_FPGA_H_
 
 #include "kernel/vfio.h"
 #include "kernel/pci.h"
@@ -101,4 +101,4 @@ int fpga_reset(struct fpga *f);
 /** Dump some details about the fpga card */
 void fpga_dump(struct fpga *f);
 
-#endif /** _FPGA_H_ @} */
+#endif /** _NODES_FPGA_H_ @} */

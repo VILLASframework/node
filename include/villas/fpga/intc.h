@@ -6,8 +6,8 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  **********************************************************************************/
 
-#ifndef _INTC_H_
-#define _INTC_H_
+#ifndef _FPGA_INTC_H_
+#define _FPGA_INTC_H_
 
 #include <xilinx/xintc.h>
 
@@ -35,4 +35,4 @@ int intc_disable(struct ip *c, uint32_t mask);
 
 uint64_t intc_wait(struct ip *c, int irq);
 
-#endif /* _INTC_H_ */
+#endif /* _FPGA_INTC_H_ */
