@@ -38,7 +38,11 @@ AFILE *afopen(const char *uri, const char *mode, int flags)
 
 	AFILE *af = alloc(sizeof(AFILE));
 	
-	af->file = tmpfile();
+	if (flags & ADVIO_MEM)
+		af->file = open_memstream(&af->buf, &af->size);
+	else
+		af->file = tmpfile();
+
 	if (!af->file)
 		goto out2;
 	
@@ -113,10 +117,6 @@ int afflush(AFILE *af)
 {
 	int ret;
 	
-	ret = fflush(af->file);
-	if (ret)
-		return ret;
-	
 	/* Only upload file if it was changed */
 	if (af->flags & ADVIO_DIRTY) {
 		CURLcode res;
@@ -125,6 +125,12 @@ int afflush(AFILE *af)
 		/* Remember old stream pointer */
 		pos = ftell(af->file);
 		fseek(af->file, 0, SEEK_SET);
+		/* Flushing a memory backed stream is sensless */
+		if (!(af->flags & ADVIO_MEM)) {
+			ret = fflush(af->file);
+			if (ret)
+				return ret;
+		}
 
 		curl_easy_setopt(af->curl, CURLOPT_UPLOAD, 1L);
 		curl_easy_setopt(af->curl, CURLOPT_READDATA, af->file);
