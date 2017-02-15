@@ -19,14 +19,25 @@
 
 #include "list.h"
 
+/* Forward declaration */
+struct cbuilder;
 
-extern struct list cbmodels;	/**< Table of existing CBuilder models */
+struct cbuilder_model {
+	char *name;
+
+	void (*code)();
+	void (*ram)();
+	
+	int (*init)(struct cbuilder *cb);
+	int (*read)(float inputs[], int len);
+	int (*write)(float outputs[], int len);
+};
 
 struct cbuilder {
 	unsigned long step, read;
 	double timestep;
 
-	struct cbmodel *model;
+	struct cbuilder_model *model;
 	
 	float *params;
 	int paramlen;
@@ -39,17 +50,6 @@ struct cbuilder {
 	 */
 	pthread_mutex_t mtx;
 	pthread_cond_t cv;
-};
-
-struct cbmodel {
-	char *name;
-
-	void (*code)();
-	void (*ram)();
-	
-	int (*init)(struct cbuilder *cb);
-	int (*read)(float inputs[], int len);
-	int (*write)(float outputs[], int len);
 };
 
 #endif /** _NODES_CBUILDER_H_ @} */
