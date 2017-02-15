@@ -1,0 +1,1 @@
+LIB_SRCS += $(wildcard lib/hooks/*.c)
