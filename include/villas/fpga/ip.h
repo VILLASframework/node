@@ -20,12 +20,6 @@
 #include "fpga/intc.h"
 #include "nodes/fpga.h"
 
-#define REGISTER_IP_TYPE(ip)			\
-__attribute__((constructor)) static		\
-void UNIQUE(__register_)() {		\
-	list_push(&ip_types, ip);		\
-}
-
 extern struct list ip_types;	/**< Table of existing FPGA IP core drivers */
 
 enum ip_state {

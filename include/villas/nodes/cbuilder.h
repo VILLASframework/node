@@ -19,11 +19,6 @@
 
 #include "list.h"
 
-/* Helper macros for registering new models */
-#define REGISTER_CBMODEL(cb)				\
-__attribute__((constructor)) static void __register() {	\
-	list_push(&cbmodels, cb);			\
-}
 
 extern struct list cbmodels;	/**< Table of existing CBuilder models */
 
