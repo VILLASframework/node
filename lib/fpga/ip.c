@@ -12,38 +12,34 @@
 
 #include "config.h"
 
-struct list ip_types;	/**< Table of existing FPGA IP core drivers */
-
-struct ip * ip_vlnv_lookup(struct list *l, const char *vendor, const char *library, const char *name, const char *version)
+int ip_vlnv_cmp(struct ip_vlnv *a, struct ip_vlnv *b)
 {
-	list_foreach(struct ip *c, l) {
-		if (ip_vlnv_match(c, vendor, library, name, version))
-			return c;
-	}
-
-	return NULL;
+	return ((!a->vendor  || !b->vendor  || !strcmp(a->vendor,  b->vendor ))	&&
+		(!a->library || !b->library || !strcmp(a->library, b->library))	&&
+		(!a->name    || !b->name    || !strcmp(a->name,    b->name   ))	&&
+		(!a->version || !b->version || !strcmp(a->version, b->version))) ? 0 : 1;
 }
 
-int ip_vlnv_match(struct ip *c, const char *vendor, const char *library, const char *name, const char *version)
-{
-	return ((vendor  && strcmp(c->vlnv.vendor, vendor))	||
-		(library && strcmp(c->vlnv.library, library))	||
-		(name    && strcmp(c->vlnv.name, name))		||
-		(version && strcmp(c->vlnv.version, version))) ? 0 : 1;
-}
-
-int ip_vlnv_parse(struct ip *c, const char *vlnv)
+int ip_vlnv_parse(struct ip_vlnv *c, const char *vlnv)
 {
 	char *tmp = strdup(vlnv);
 
-	c->vlnv.vendor  = strdup(strtok(tmp, ":"));
-	c->vlnv.library = strdup(strtok(NULL, ":"));
-	c->vlnv.name    = strdup(strtok(NULL, ":"));
-	c->vlnv.version = strdup(strtok(NULL, ":"));
+	c->vendor  = strdup(strtok(tmp, ":"));
+	c->library = strdup(strtok(NULL, ":"));
+	c->name    = strdup(strtok(NULL, ":"));
+	c->version = strdup(strtok(NULL, ":"));
 	
 	free(tmp);
 
 	return 0;
+}
+
+void ip_vlnv_destroy(struct ip_vlnv *v)
+{
+	free(c->vendor);
+	free(c->library);
+	free(c->name);
+	free(c->version);
 }
 
 int ip_init(struct ip *c)
@@ -74,10 +70,7 @@ void ip_destroy(struct ip *c)
 	if (c->_vt && c->_vt->destroy)
 		c->_vt->destroy(c);
 
-	free(c->vlnv.vendor);
-	free(c->vlnv.library);
-	free(c->vlnv.name);
-	free(c->vlnv.version);
+	ip_vlnv_destroy(c->vlnv);
 }
 
 void ip_dump(struct ip *c)
@@ -105,13 +98,14 @@ int ip_parse(struct ip *c, config_setting_t *cfg)
 	if (!config_setting_lookup_string(cfg, "vlnv", &vlnv))
 		cerror(cfg, "IP %s is missing the VLNV identifier", c->name);
 
-	ret = ip_vlnv_parse(c, vlnv);
+	ret = ip_vlnv_parse(&c->vlnv, vlnv);
 	if (ret)
 		cerror(cfg, "Failed to parse VLNV identifier");
 
 	/* Try to find matching IP type */
-	list_foreach(struct ip_type *t, &ip_types) {
-		if (ip_vlnv_match(c, t->vlnv.vendor, t->vlnv.library, t->vlnv.name, t->vlnv.version)) {
+	list_foreach(struct plugin *l, &plugins) {
+		if (l->type == PLUGIN_TYPE_FPGA_IP &&
+		    !ip_vlnv_match(&c->ip.vlnv, &l->ip.vlnv)) {
 			c->_vt = t;
 			break;
 		}

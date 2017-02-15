@@ -77,10 +77,13 @@ struct ip {
 struct ip * ip_vlnv_lookup(struct list *l, const char *vendor, const char *library, const char *name, const char *version);
 
 /** Check if IP block \p c matched VLNV. */
-int ip_vlnv_match(struct ip *c, const char *vendor, const char *library, const char *name, const char *version);
+int ip_vlnv_cmp(struct ip_vlnv *a, struct ip_vlnv *b);
 
 /** Tokenizes VLNV \p vlnv and stores it into \p c */
-int ip_vlnv_parse(struct ip *c, const char *vlnv);
+int ip_vlnv_parse(struct ip_vlnv *c, const char *vlnv);
+
+/** Release memory allocated by ip_vlnv_parse(). */
+void ip_vlnv_destroy(struct ip_vlnv *v);
 
 int ip_init(struct ip *c);
 
