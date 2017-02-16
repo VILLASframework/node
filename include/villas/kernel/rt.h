@@ -9,8 +9,11 @@
 
 #pragma once
 
-int rt_init(int affinity, int priority);
+int rt_init(struct cfg *cfg);
 
+int rt_set_affinity(int affinity);
+
+int rt_set_priority(int priority);
 
 /** Checks for realtime (PREEMPT_RT) patched kernel.
  *

@@ -19,7 +19,7 @@
 
 #define VFIO_DEV(x)	"/dev/vfio/" x
 
-/* Forward declaration */
+/* Forward declarations */
 struct pci_dev;
 
 struct vfio_group {
