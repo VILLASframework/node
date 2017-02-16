@@ -110,7 +110,7 @@ void line()
 	log_print("", "\b" ACS("%.*s"), LOG_WIDTH, buf);
 }
 
-void debug(int class, const char *fmt, ...)
+void debug(long class, const char *fmt, ...)
 {
 	va_list ap;
 	

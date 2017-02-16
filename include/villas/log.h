@@ -32,23 +32,27 @@
  * To be or-ed with the debug level
  */
 enum log_facilities {
-	LOG_POOL =	(1 <<  8),
-	LOG_QUEUE =	(1 <<  9),
-	LOG_CONFIG =	(1 << 10),
-	LOG_HOOK =	(1 << 11),
-	LOG_PATH =	(1 << 12),
-	LOG_MEM =	(1 << 13),
+	LOG_POOL =	(1L <<  8),
+	LOG_QUEUE =	(1L <<  9),
+	LOG_CONFIG =	(1L << 10),
+	LOG_HOOK =	(1L << 11),
+	LOG_PATH =	(1L << 12),
+	LOG_MEM =	(1L << 13),
+	LOG_WEB =	(1L << 14),
+	LOG_API =	(1L << 15),
+	LOG_LOG =	(1L << 16),
+	LOG_KERNEL =	(1L << 17),
 	
 	/* Node-types */
-	LOG_SOCKET =	(1 << 16),
-	LOG_FILE =	(1 << 17),
-	LOG_FPGA =	(1 << 18),
-	LOG_NGSI =	(1 << 19),
-	LOG_WEBSOCKET =	(1 << 20),
-	LOG_OPAL =	(1 << 21),
+	LOG_SOCKET =	(1L << 32),
+	LOG_FILE =	(1L << 33),
+	LOG_FPGA =	(1L << 34),
+	LOG_NGSI =	(1L << 35),
+	LOG_WEBSOCKET =	(1L << 36),
+	LOG_OPAL =	(1L << 37),
 	
 	/* Classes */
-	LOG_NODE =   (0xFF << 16),
+	LOG_NODE =   (0xFFL << 32),
 	LOG_ALL =    ~0xFF 
 };
 
@@ -92,7 +96,7 @@ void log_print(const char *lvl, const char *fmt, ...)
 void log_vprint(const char *lvl, const char *fmt, va_list va);
 
 /** Printf alike debug message with level. */
-void debug(int lvl, const char *fmt, ...)
+void debug(long lvl, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
 
 /** Print a horizontal line. */
