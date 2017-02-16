@@ -18,7 +18,7 @@ int rt_init(int affinity, int priority)
 	int is_isol, is_rt, ret;
 
 	/* Use FIFO scheduler with real time priority */
-	is_rt = kernel_is_rt();
+	is_rt = rt_is_preemptible();
 	if (is_rt)
 		warn("We recommend to use an PREEMPT_RT patched kernel!");
 
@@ -75,4 +75,9 @@ int rt_init(int affinity, int priority)
 		warn("You should use the 'affinity' setting to pin VILLASnode to dedicate CPU cores");
 
 	return 0;
+}
+
+int rt_is_preemptible()
+{
+	return access(SYSFS_PATH "/kernel/realtime", R_OK);
 }

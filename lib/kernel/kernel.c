@@ -104,11 +104,6 @@ int kernel_has_version(int maj, int min)
 	return version_cmp(&current, &required) < 0;
 }
 
-int kernel_is_rt()
-{
-	return access(SYSFS_PATH "/kernel/realtime", R_OK);
-}
-
 int kernel_get_cmdline_param(const char *param, char *buf, size_t len)
 {
 	int ret;

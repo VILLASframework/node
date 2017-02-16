@@ -20,15 +20,6 @@
  */
 //int kernel_check_cap(cap_value_t cap):
 
-/** Checks for realtime (PREEMPT_RT) patched kernel.
- *
- * See https://rt.wiki.kernel.org
- *
- * @retval 0 Kernel is patched.
- * @reval <>0 Kernel is not patched.
- */
-int kernel_is_rt();
-
 /** Get kernel cmdline parameter
  *
  * See https://www.kernel.org/doc/Documentation/kernel-parameters.txt

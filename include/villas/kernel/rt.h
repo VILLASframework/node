@@ -11,3 +11,12 @@
 
 int rt_init(int affinity, int priority);
 
+
+/** Checks for realtime (PREEMPT_RT) patched kernel.
+ *
+ * See https://rt.wiki.kernel.org
+ *
+ * @retval 0 Kernel is patched.
+ * @reval <>0 Kernel is not patched.
+ */
+int rt_is_preemptible();
