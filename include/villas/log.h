@@ -56,6 +56,24 @@ enum log_facilities {
 	LOG_ALL =    ~0xFF 
 };
 
+struct log {
+	struct timespec epoch;	/**< A global clock used to prefix the log messages. */
+
+	/** Debug level used by the debug() macro.
+	 * It defaults to V (defined by the Makefile) and can be
+	 * overwritten by the 'debug' setting in the configuration file. */
+	int level;
+
+	/** Debug facilities used by the debug() macro. */
+	int facilities;
+};
+
+/** Initialize log object */
+int log_init(struct log *l);
+
+/** Destroy log object */
+int log_destroy(struct log *l);
+
 /** Change log indention  for current thread.
  *
  * The argument level can be negative!
@@ -69,23 +87,30 @@ int log_indent(int levels);
  */
 void log_outdent(int *);
 
-/** Set the verbosity level of debug messages.
+/** Set logging facilities based on expression.
  *
- * @param lvl The new debug level.
- * @param fac The new mask for debug facilities.
+ * Currently we support two types of expressions:
+ *  1. A comma seperated list of logging facilities
+ *  2. A comma seperated list of logging facilities which is prefixes with an exclamation mark '!'
+ *
+ * The first case enables only faciltities which are in the list.
+ * The second case enables all faciltities with exception of those which are in the list.
+ * 
+ * @param expression The expression
+ * @return The new facilties mask (see enum log_faciltities)
  */
-void log_setlevel(int lvl, int fac);
+int log_set_facility_expression(struct log *l, const char *expression);
 
-/** Reset the wallclock of debug messages. */
-void log_init();
+/** Parse logging configuration. */
+int log_parse(struct log *l, config_setting_t *cfg);
 
 /** Logs variadic messages to stdout.
  *
  * @param lvl The log level
  * @param fmt The format string (printf alike)
  */
-void log_print(const char *lvl, const char *fmt, ...)
-	__attribute__ ((format(printf, 2, 3)));
+void log_print(struct log *l, const char *lvl, const char *fmt, ...)
+	__attribute__ ((format(printf, 3, 4)));
 
 /** Logs variadic messages to stdout.
  *
@@ -93,7 +118,7 @@ void log_print(const char *lvl, const char *fmt, ...)
  * @param fmt The format string (printf alike)
  * @param va The variadic argument list (see stdarg.h)
  */	
-void log_vprint(const char *lvl, const char *fmt, va_list va);
+void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list va);
 
 /** Printf alike debug message with level. */
 void debug(long lvl, const char *fmt, ...)
