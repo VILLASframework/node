@@ -15,9 +15,7 @@
  * @{
  *********************************************************************************/
 
-
-#ifndef _NODES_WEBSOCKET_H_
-#define _NODES_WEBSOCKET_H_
+#pragma once
 
 #include "node.h"
 #include "pool.h"
@@ -63,6 +61,8 @@ struct websocket_connection {
 	qptr_t received;
 };
 
+int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+
 /** @see node_vtable::init */
 int websocket_init(int argc, char * argv[], config_setting_t *cfg);
 
@@ -84,4 +84,4 @@ int websocket_read(struct node *n, struct sample *smps[], unsigned cnt);
 /** @see node_vtable::write */
 int websocket_write(struct node *n, struct sample *smps[], unsigned cnt);
 
-#endif /** _NODES_WEBSOCKET_H_ @} */
+/** @} */

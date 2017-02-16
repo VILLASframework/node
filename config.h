@@ -10,8 +10,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _CONFIG_H_
-#define _CONFIG_H_
+#pragma once
 
 #ifndef _GIT_REV
   #define _GIT_REV		"nogit"
@@ -70,5 +69,3 @@ struct settings {
 	int debug;		/**< Debug log level */
 	double stats;		/**< Interval for path statistics. Set to 0 to disable themo disable them. */
 };
-
-#endif /* _CONFIG_H_ */

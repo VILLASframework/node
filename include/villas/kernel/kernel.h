@@ -7,8 +7,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
-#ifndef _KERNEL_KERNEL_H_
-#define _KERNEL_KERNEL_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -68,5 +67,3 @@ int kernel_get_cacheline_size();
 
 /** Set SMP affinity of IRQ */
 int kernel_irq_setaffinity(unsigned irq, uintmax_t new, uintmax_t *old);
-
-#endif /* _KERNEL_KERNEL_H_ */

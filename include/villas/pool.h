@@ -9,8 +9,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  */
 
-#ifndef _POOL_H_
-#define _POOL_H_
+#pragma once
 
 #include <sys/types.h>
 
@@ -62,5 +61,3 @@ INLINE int pool_put(struct pool *p, void *buf)
 {
 	return queue_push(&p->queue, buf);
 }
-
-#endif /* _POOL_H_ */

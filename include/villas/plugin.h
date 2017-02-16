@@ -7,8 +7,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
-#ifndef _PLUGIN_H_
-#define _PLUGIN_H_
+#pragma once
 
 #include "hooks.h"
 #include "api.h"
@@ -67,5 +66,3 @@ int plugin_load(struct plugin *p);
 int plugin_unload(struct plugin *p);
 
 int plugin_destroy(struct plugin *p);
-
-#endif /* _PLUGIN_H_ */

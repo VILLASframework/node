@@ -13,8 +13,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _LIST_H_
-#define _LIST_H_
+#pragma once
 
 #include <stdbool.h>
 #include <pthread.h>
@@ -98,5 +97,3 @@ int list_contains(struct list *l, void *p);
 
 /** Sort the list using the quicksort algorithm of libc */
 void list_sort(struct list *l, cmp_cb_t cmp);
-
-#endif /* _LIST_H_ */

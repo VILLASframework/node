@@ -7,8 +7,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _TIME_H_
-#define _TIME_H_
+#pragma once
 
 #include <stdio.h>
 #include <stdint.h>
@@ -53,5 +52,3 @@ double time_to_double(struct timespec *ts);
 
 /** Convert double containing seconds after 1970 to timespec. */
 struct timespec time_from_double(double secs);
-
-#endif /* _TIMING_H_ */

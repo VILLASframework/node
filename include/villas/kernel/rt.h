@@ -7,9 +7,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _KERNEL_RT_H_
-#define _KERNEL_RT_H_
+#pragma once
 
 int rt_init(int affinity, int priority);
 
-#endif /* _KERNEL_RT_H_ */

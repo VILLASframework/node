@@ -11,8 +11,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _CFG_H_
-#define _CFG_H_
+#pragma once
 
 #include <libconfig.h>
 
@@ -106,6 +105,4 @@ int cfg_parse_hook(config_setting_t *cfg, struct list *list);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int cfg_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set);
-
-#endif /* _CFG_H_ */
+int cfg_parse_node(config_setting_t *cfg, struct list *nodes, struct cfg *set);

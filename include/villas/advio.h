@@ -2,8 +2,7 @@
  *
  */
 
-#ifndef _ADVIO_H_
-#define _ADVIO_H_
+#pragma once
 
 #include <stdio.h>
 
@@ -41,5 +40,3 @@ int afflush(AFILE *file);
 
 size_t afread(void *restrict ptr, size_t size, size_t nitems, AFILE *restrict stream);
 size_t afwrite(const void *restrict ptr, size_t size, size_t nitems, AFILE *restrict stream);
-
-#endif /* _ADVIO_H_ */

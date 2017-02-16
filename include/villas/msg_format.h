@@ -7,8 +7,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _MSG_FORMAT_H_
-#define _MSG_FORMAT_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -96,5 +95,3 @@ struct msg
 		uint32_t i;	/**< Integer values (note msg::endian) */
 	} data[];
 } __attribute__((packed));
-
-#endif /* _MSG_FORMAT_H_ */

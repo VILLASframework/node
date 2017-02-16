@@ -12,8 +12,7 @@
  * @{
  *********************************************************************************/
 
-#ifndef _PATH_H_
-#define _PATH_H_
+#pragma once
 
 #include <pthread.h>
 #include <libconfig.h>
@@ -130,4 +129,4 @@ const char * path_name(struct path *p);
 /** Check if node is used as source or destination of a path. */
 int path_uses_node(struct path *p, struct node *n);
 
-#endif /** _PATH_H_ @} */
+/** @} */

@@ -7,8 +7,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  */
 
-#ifndef _SAMPLE_H_
-#define _SAMPLE_H_
+#pragma once
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -110,5 +109,3 @@ int sample_fprint(FILE *f, struct sample *s, int flags);
  * @retval <0 Error. Something went wrong.
  */
 int sample_fscan(FILE *f, struct sample *s, int *flags);
-
-#endif /* _SAMPLE_H_ */

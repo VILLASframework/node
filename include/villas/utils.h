@@ -7,8 +7,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _UTILS_H_
-#define _UTILS_H_
+#pragma once
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -240,5 +239,3 @@ static inline int log2i(long long x) {
 
 /** Sleep with rdtsc */
 void rdtsc_sleep(uint64_t nanosecs, uint64_t start);
-
-#endif /* _UTILS_H_ */

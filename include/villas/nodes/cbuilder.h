@@ -12,8 +12,7 @@
  * @{
  *********************************************************************************/
  
-#ifndef _NODES_CBUILDER_H_
-#define _NODES_CBUILDER_H_
+#pragma once
 
 #include <pthread.h>
 
@@ -52,4 +51,4 @@ struct cbuilder {
 	pthread_cond_t cv;
 };
 
-#endif /** _NODES_CBUILDER_H_ @} */
+/** @} */

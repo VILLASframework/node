@@ -7,8 +7,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
-#ifndef _KERNEL_VFIO_H_
-#define _KERNEL_VFIO_H_
+#pragma once
 
 #include <stdbool.h>
 #include <sys/mman.h>
@@ -109,5 +108,3 @@ int vfio_unmap_dma(struct vfio_container *c, struct dma_mem *mem);
 
 /** munmap() a region which has been mapped by vfio_map_region() */
 int vfio_unmap_region(struct vfio_dev *d, int idx);
-
-#endif /* _KERNEL_VFIO_H_ */

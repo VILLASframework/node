@@ -10,8 +10,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _KERNEL_IF_H_
-#define _KERNEL_IF_H_
+#pragma once
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -105,5 +104,3 @@ int if_get_irqs(struct interface *i);
  * @retval <0 Error. Something went wrong.
  */
 int if_set_affinity(struct interface *i, int affinity);
-
-#endif /* _KERNEL_IF_H_ */

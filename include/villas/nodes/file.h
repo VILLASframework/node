@@ -15,8 +15,7 @@
  *********************************************************************************/
 
 
-#ifndef _NODES_FILE_H_
-#define _NODES_FILE_H_
+#pragma once
 
 #include "node.h"
 
@@ -73,4 +72,4 @@ int file_read(struct node *n, struct sample *smps[], unsigned cnt);
 /** @see node_vtable::write */
 int file_write(struct node *n, struct sample *smps[], unsigned cnt);
 
-#endif /** _NODES_FILE_H_ @} */
+/** @} */

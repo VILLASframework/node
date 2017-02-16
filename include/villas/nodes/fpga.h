@@ -14,44 +14,22 @@
  * @{
  *********************************************************************************/
 
-#ifndef _NODES_FPGA_H_
-#define _NODES_FPGA_H_
+#pragma once
 
 #include "kernel/vfio.h"
 #include "kernel/pci.h"
 
-#include "fpga/dma.h"
-#include "fpga/ip.h"
-#include "fpga/intc.h"
+#include "fpga/ips/dma.h"
 
 #include "node.h"
 #include "list.h"
 
+/* Forward declarations */
+struct fpga_ip;
+
+/** The node type */
 struct fpga {
-	struct pci_dev filter;		/**< Filter for PCI device. */
-	struct vfio_dev vd;		/**< VFIO device handle. */
-
-	int do_reset;			/**< Reset VILLASfpga during startup? */
-	int affinity;			/**< Affinity for MSI interrupts */
-
-	struct list ips;		/**< List of IP components on FPGA. */
-
-	char *map;			/**< PCI BAR0 mapping for register access */
-
-	size_t maplen;
-	size_t dmalen;
-
-	/* Some IP cores are special and referenced here */
-	struct ip *intc;
-	struct ip *reset;
-	struct ip *sw;
-	
-	config_setting_t *cfg;
-};
-
-struct fpga_dm {
-	struct ip *ip;
-	const char *ip_name;
+	struct fpga_ip *ip;
 
 	int use_irqs;
 
@@ -61,8 +39,6 @@ struct fpga_dm {
 		FPGA_DM_DMA,
 		FPGA_DM_FIFO
 	} type;
-
-	struct fpga *card;
 };
 
 /** @see node_vtable::init */
@@ -75,7 +51,7 @@ int fpga_deinit();
 int fpga_parse(struct node *n, config_setting_t *cfg);
 
 /** Parse the 'fpga' section in the configuration file */
-int fpga_parse_card(struct fpga *v, int argc, char * argv[], config_setting_t *cfg);
+int fpga_parse_cards(config_setting_t *cfg);
 
 /** @see node_vtable::print */
 char * fpga_print(struct node *n);
@@ -101,4 +77,4 @@ int fpga_reset(struct fpga *f);
 /** Dump some details about the fpga card */
 void fpga_dump(struct fpga *f);
 
-#endif /** _NODES_FPGA_H_ @} */
+/** @} */

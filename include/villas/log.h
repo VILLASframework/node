@@ -7,8 +7,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
  
-#ifndef _LOG_H_
-#define _LOG_H_
+#pragma once
 
 #include <stdarg.h>
 #include <libconfig.h>
@@ -122,6 +121,3 @@ void serror(const char *fmt, ...)
 /** Print configuration error and exit. */
 void cerror(config_setting_t *cfg, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
-
-#endif /* _LOG_H_ */
-

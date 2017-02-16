@@ -7,8 +7,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _HIST_H_
-#define _HIST_H_
+#pragma once
 
 #include <stdio.h>
 
@@ -76,5 +75,3 @@ char * hist_dump(struct hist *h);
 
 /** Prints Matlab struct containing all infos to file. */
 void hist_matlab(struct hist *h, FILE *f);
-
-#endif /* _HIST_H_ */

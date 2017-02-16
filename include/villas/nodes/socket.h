@@ -14,8 +14,7 @@
  * @{
  *********************************************************************************/
 
-#ifndef _NODES_SOCKET_H_
-#define _NODES_SOCKET_H_
+#pragma once
 
 #include <sys/socket.h>
 #include <linux/if_packet.h>
@@ -109,4 +108,4 @@ char * socket_print_addr(struct sockaddr *saddr);
  */
 int socket_parse_addr(const char *str, struct sockaddr *sa, enum socket_layer layer, int flags);
 
-#endif /** _NODES_SOCKET_H_ @} */
+/** @} */

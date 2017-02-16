@@ -10,8 +10,7 @@
  * @{
  *********************************************************************************/
 
-#ifndef _NODE_H_
-#define _NODE_H_
+#pragma once
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -250,4 +249,4 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 int node_write(struct node *n, struct sample *smps[], unsigned cnt);
 
-#endif /** _NODE_H_ @} */
+/** @} */

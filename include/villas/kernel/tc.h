@@ -12,8 +12,7 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _KERNEL_TC_H_
-#define _KERNEL_TC_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -83,5 +82,3 @@ int tc_netem(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hd
  * @retval <0 Error. Something went wrong.
 */
 int tc_mark(struct interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_t mark);
-
-#endif /* _TC_H_ */

@@ -14,8 +14,7 @@
  * @{
  **********************************************************************************/
 
-#ifndef _NODES_OPAL_H_
-#define _NODES_OPAL_H_
+#pragma once
 
 #include <pthread.h>
 
@@ -73,4 +72,4 @@ int opal_read(struct node *n, struct sample *smps[], unsigned cnt);
 /** @see node_vtable::write */
 int opal_write(struct node *n, struct sample *smps[], unsigned cnt);
 
-#endif /** _NODES_OPAL_H_ @} */
+/** @} */

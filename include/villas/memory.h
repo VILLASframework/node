@@ -10,8 +10,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#ifndef _MEMORY_H_
-#define _MEMORY_H_
+#pragma once
 
 #define HUGEPAGESIZE	(1 << 21)
 
@@ -57,5 +56,3 @@ int memory_free(const struct memtype *m, void *ptr, size_t len);
 
 extern const struct memtype memtype_heap;
 extern const struct memtype memtype_hugepage;
-
-#endif /* _MEMORY_H_ */

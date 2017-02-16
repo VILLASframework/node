@@ -31,9 +31,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MPMC_QUEUE_H_
-#define _MPMC_QUEUE_H_
-
 #include <stdint.h>
 #include <stdatomic.h>
 
@@ -83,5 +80,3 @@ int queue_pull(struct queue *q, void **ptr);
 int queue_push_many(struct queue *q, void *ptr[], size_t cnt);
 
 int queue_pull_many(struct queue *q, void *ptr[], size_t cnt);
-
-#endif /* _MPMC_QUEUE_H_ */

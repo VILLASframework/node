@@ -18,8 +18,7 @@
  * @{
  **********************************************************************************/
 
-#ifndef _NODES_NGSI_H_
-#define _NODES_NGSI_H_
+#pragma once
 
 #include <curl/curl.h>
 #include <jansson.h>
@@ -81,4 +80,4 @@ int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt);
 /** @see node_vtable::write */
 int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt);
 
-#endif /** _NODES_NGSI_H_ @} */
+/** @} */
