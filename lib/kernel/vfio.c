@@ -27,8 +27,6 @@
 #include "kernel/vfio.h"
 #include "kernel/pci.h"
 
-#include "fpga/dma.h"
-
 static const char *vfio_pci_region_names[] = {
 	"PCI_BAR0",		// VFIO_PCI_BAR0_REGION_INDEX,
 	"PCI_BAR1",		// VFIO_PCI_BAR1_REGION_INDEX,
@@ -568,25 +566,26 @@ int vfio_unmap_region(struct vfio_dev *d, int idx)
 	return 0;
 }
 
-int vfio_map_dma(struct vfio_container *c, struct dma_mem *mem)
+int vfio_map_dma(struct vfio_container *c, uint64_t virt, uint64_t phys, size_t len)
 {
 	int ret;
 	
-	if (mem->len & 0xFFF) {
-		mem->len += 0x1000;
-		mem->len &= ~0xFFF;
+	if (len & 0xFFF) {
+		len += 0x1000;
+		len &= ~0xFFF;
 	}
 	
-	if (mem->base_phys == (void *) -1) {
-		mem->base_phys = c->iova_next;
-		c->iova_next += mem->len;
+	/* Super stupid allocator */
+	if (phys == -1) {
+		phys = c->iova_next;
+		c->iova_next += len;
 	}
 
 	struct vfio_iommu_type1_dma_map dma_map = {
 		.argsz = sizeof(struct vfio_iommu_type1_dma_map),
-		.vaddr = (uint64_t) mem->base_virt,
-		.iova  = (uint64_t) mem->base_phys,
-		.size  = mem->len,
+		.vaddr = virt,
+		.iova  = phys,
+		.size  = len,
 		.flags = VFIO_DMA_MAP_FLAG_READ | VFIO_DMA_MAP_FLAG_WRITE
 	};
 
@@ -599,15 +598,15 @@ int vfio_map_dma(struct vfio_container *c, struct dma_mem *mem)
 	return 0;
 }
 
-int vfio_unmap_dma(struct vfio_container *c, struct dma_mem *mem)
+int vfio_unmap_dma(struct vfio_container *c, uint64_t virt, uint64_t phys, size_t len)
 {
 	int ret;
 	
 	struct vfio_iommu_type1_dma_unmap dma_unmap = {
 		.argsz = sizeof(struct vfio_iommu_type1_dma_unmap),
 		.flags = 0,
-		.iova  = (uint64_t) mem->base_phys,
-		.size  = mem->len,
+		.iova  = phys,
+		.size  = len,
 	};
 	
 	ret = ioctl(c->fd, VFIO_IOMMU_UNMAP_DMA, &dma_unmap);

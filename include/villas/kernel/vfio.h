@@ -20,7 +20,6 @@
 #define VFIO_DEV(x)	"/dev/vfio/" x
 
 /* Forward declaration */
-struct dma_mem;
 struct pci_dev;
 
 struct vfio_group {
@@ -53,7 +52,7 @@ struct vfio_container {
 	int version;
 	int extensions;
 
-	void *iova_next;			/**< Next free IOVA address */
+	uint64_t iova_next;			/**< Next free IOVA address */
 
 	struct list groups;
 };
@@ -101,10 +100,10 @@ void vfio_dump(struct vfio_container *c);
 void * vfio_map_region(struct vfio_dev *d, int idx);
 
 /** Map VM to an IOVA, which is accessible by devices in the container */
-int vfio_map_dma(struct vfio_container *c, struct dma_mem *mem);
+int vfio_map_dma(struct vfio_container *c, uint64_t virt, uint64_t phys, size_t len);
 
 /** Unmap DMA memory */
-int vfio_unmap_dma(struct vfio_container *c, struct dma_mem *mem);
+int vfio_unmap_dma(struct vfio_container *c, uint64_t virt, uint64_t phys, size_t len);
 
 /** munmap() a region which has been mapped by vfio_map_region() */
 int vfio_unmap_region(struct vfio_dev *d, int idx);
