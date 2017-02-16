@@ -7,7 +7,9 @@
  *********************************************************************************/
 
 #include <sched.h>
+#include <unistd.h>
 
+#include "config.h"
 #include "utils.h"
 #include "cfg.h"
 

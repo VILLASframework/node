@@ -8,11 +8,8 @@
  
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
-#include <errno.h>
 #include <getopt.h>
-#include <sched.h>
 
 #include <villas/log.h>
 #include <villas/cfg.h>

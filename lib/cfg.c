@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <libgen.h>
-#include <dlfcn.h>
 #include <unistd.h>
 
 #include "utils.h"

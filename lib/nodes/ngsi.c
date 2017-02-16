@@ -11,7 +11,6 @@
 
 #include <curl/curl.h>
 #include <jansson.h>
-#include <math.h>
 #include <pthread.h>
 #include <unistd.h>
 

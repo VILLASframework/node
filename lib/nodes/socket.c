@@ -6,18 +6,9 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
-#include <string.h>
 #include <unistd.h>
-
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <sys/un.h>
-
-#include <netinet/ether.h>
 #include <netinet/ip.h>
-#include <linux/if_packet.h>
-#include <arpa/inet.h>
 
 #ifdef __linux__
   #include <byteswap.h>

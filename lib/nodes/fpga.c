@@ -8,9 +8,6 @@
 
 #include <stdio.h>
 #include <inttypes.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/mman.h>
 
 #include "kernel/kernel.h"
 #include "kernel/pci.h"

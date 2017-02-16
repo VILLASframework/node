@@ -12,10 +12,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <string.h>
 
-#include <sys/ioctl.h>
 #include <sys/eventfd.h>
 
 #include "utils.h"

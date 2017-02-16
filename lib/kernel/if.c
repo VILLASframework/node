@@ -8,13 +8,10 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <dirent.h>
-#include <arpa/inet.h>
 #include <linux/if_packet.h>
 
 #include <netlink/route/link.h>
-#include <netlink/route/route.h>
 
 #include "kernel/if.h"
 #include "kernel/tc.h"

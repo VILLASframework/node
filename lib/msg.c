@@ -6,10 +6,6 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
-
 #ifdef __linux__
   #include <byteswap.h>
 #elif defined(__PPC__) /* Xilinx toolchain */

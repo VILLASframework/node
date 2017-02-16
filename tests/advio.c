@@ -5,7 +5,6 @@
 #include <villas/advio.h>
 
 #include <errno.h>
-#include <error.h>
 
 Test(advio, download)
 {
