@@ -3,9 +3,8 @@
 # Use this Dockerfile running:
 #    $ make docker
 #
-# @copyright 2014-2015, Institute for Automation of Complex Power Systems, EONERC
-#   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
-#   Unauthorized copying of this file, via any medium is strictly prohibited. 
+# @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+# @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
 ###################################################################################
 
 FROM fedora:latest

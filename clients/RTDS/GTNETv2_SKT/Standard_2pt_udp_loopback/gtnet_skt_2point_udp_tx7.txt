@@ -1,0 +1,31 @@
+
+  Subsystem Number 1 
+  ********************
+  ********************
+
+       Flag T3
+       *******
+
+       Flag T0
+       *******
+
+       Flag T1
+       *******
+
+       Flag T2
+       *******
+        0  100   local_used     SS1  named_signal_wif    0      "POINT4" from      wif   0  xrack_src_idx =   -1  
+        1  101   local_used     SS1  named_signal_wif    1      "POINT3" from      wif   0  xrack_src_idx =   -1  
+        2  102   local_used     SS1  named_signal_wif    2      "POINT1" from      wif   0  xrack_src_idx =   -1  
+        3  103   local_used     SS1  named_signal_wif    3      "POINT2" from      wif   0  xrack_src_idx =   -1  
+        4  104 local_unused     SS1  named_signal_prc    0    "SendData" from ppc_main   2  xrack_src_idx =   -1  
+        5  105 local_unused     SS1  named_signal_prc    1       "txCnt" from ppc_main   2  xrack_src_idx =   -1  
+        6  106 local_unused     SS1  named_signal_prc    2      "POINT5" from ppc_main   2  xrack_src_idx =   -1  
+        7  107 local_unused     SS1  named_signal_prc    3      "POINT0" from ppc_main   2  xrack_src_idx =   -1  
+        8  108 local_unused     SS1  named_signal_prc    4       "rxCnt" from ppc_main   2  xrack_src_idx =   -1  
+        9  109 local_unused     SS1  named_signal_prc    5  "readyToSen" from ppc_main   2  xrack_src_idx =   -1  
+       10  10A local_unused     SS1  named_signal_prc    6    "POINTIn0" from ppc_main   2  xrack_src_idx =   -1  
+       11  10B local_unused     SS1  named_signal_prc    7    "POINTin1" from ppc_main   2  xrack_src_idx =   -1  
+       12  10C local_unused     SS1  named_signal_prc    8    "POINTin2" from ppc_main   2  xrack_src_idx =   -1  
+       13  10D local_unused     SS1  named_signal_prc    9    "POINTin3" from ppc_main   2  xrack_src_idx =   -1  
+       14  10E local_unused     SS1  named_signal_prc   10    "POINTin4" from ppc_main   2  xrack_src_idx =   -1  
