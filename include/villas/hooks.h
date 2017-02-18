@@ -18,8 +18,7 @@
  * @{
  *********************************************************************************/
  
-#ifndef _HOOKS_H_
-#define _HOOKS_H_
+#pragma once
 
 #include <time.h>
 #include <string.h>
