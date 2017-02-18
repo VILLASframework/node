@@ -41,7 +41,7 @@ struct interface * if_create(struct rtnl_link *link)
 	return i;
 }
 
-void if_destroy(struct interface *i)
+int if_destroy(struct interface *i)
 {
 	/* List members are freed by the nodes they belong to. */
 	list_destroy(&i->sockets, NULL, false);
@@ -49,6 +49,8 @@ void if_destroy(struct interface *i)
 	rtnl_qdisc_put(i->tc_qdisc);
 
 	free(i);
+	
+	return 0;
 }
 
 int if_start(struct interface *i, int affinity)

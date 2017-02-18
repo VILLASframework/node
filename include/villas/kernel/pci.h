@@ -43,11 +43,7 @@ struct pci {
 int pci_init(struct pci *p);
 
 /** Destroy handle. */
-void pci_destroy(struct pci *p);
-
-int pci_dev_init(struct pci_dev *d);
-
-void pci_dev_destroy(struct pci_dev *d);
+int pci_destroy(struct pci *p);
 
 int pci_dev_parse_slot(struct pci_dev *f, const char *str, const char **error);
 

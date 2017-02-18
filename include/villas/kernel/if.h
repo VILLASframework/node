@@ -50,7 +50,7 @@ struct interface * if_create(struct rtnl_link *link);
  *
  * @param i A pointer to the interface structure.
  */
-void if_destroy(struct interface *i);
+int if_destroy(struct interface *i);
 
 /** Start interface.
  *

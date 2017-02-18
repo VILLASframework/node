@@ -87,7 +87,7 @@ int vfio_destroy(struct vfio_container *v)
 	return 0;
 }
 
-void vfio_group_destroy(struct vfio_group *g)
+int vfio_group_destroy(struct vfio_group *g)
 {
 	int ret;
 
@@ -104,9 +104,11 @@ void vfio_group_destroy(struct vfio_group *g)
 		return;
 
 	debug(5, "VFIO: closed group: group=%u, fd=%d", g->index, g->fd);
+	
+	return 0;
 }
 
-void vfio_dev_destroy(struct vfio_dev *d)
+int vfio_dev_destroy(struct vfio_dev *d)
 {
 	int ret;
 
@@ -121,6 +123,8 @@ void vfio_dev_destroy(struct vfio_dev *d)
 	
 	free(d->mappings);
 	free(d->name);
+	
+	return 0;
 }
 
 /* Constructors */

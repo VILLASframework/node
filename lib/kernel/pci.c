@@ -65,19 +65,11 @@ int pci_init(struct pci *p)
 	return 0;
 }
 
-void pci_destroy(struct pci *p)
+int pci_destroy(struct pci *p)
 {
 	list_destroy(&p->devices, NULL, true);
-}
-
-int pci_dev_init(struct pci_dev *d)
-{
+	
 	return 0;
-}
-
-void pci_dev_destroy(struct pci_dev *d)
-{
-
 }
 
 int pci_dev_parse_slot(struct pci_dev *f, const char *s, const char **error)

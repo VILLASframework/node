@@ -88,10 +88,10 @@ int vfio_dev_reset(struct vfio_dev *d);
 int vfio_destroy(struct vfio_container *c);
 
 /** Release memory of group */
-void vfio_group_destroy(struct vfio_group *g);
+int vfio_group_destroy(struct vfio_group *g);
 
 /** Release memory of device */
-void vfio_dev_destroy(struct vfio_dev *g);
+int vfio_dev_destroy(struct vfio_dev *g);
 
 /** Print a dump of all attached groups and their devices including regions and IRQs */
 void vfio_dump(struct vfio_container *c);

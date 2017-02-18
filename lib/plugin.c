@@ -50,6 +50,8 @@ int plugin_destroy(struct plugin *p)
 	
 	free(p->name);
 	free(p->path);
+	
+	return 0;
 }
 
 int plugin_parse(struct plugin *p, config_setting_t *lcs)
