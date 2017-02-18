@@ -158,7 +158,7 @@ int simple_circuit_write(float inputs[], int len)
 static struct plugin p = {
 	.name		= "simple_circuit",
 	.description	= "A simple CBuilder model",
-	.type		= LOADABLE_TYPE_MODEL_CBUILDER,
+	.type		= PLUGIN_TYPE_MODEL_CBUILDER,
 	.cb 		= {
 		.code  = simple_circuit_code,
 		.init  = simple_circuit_init,

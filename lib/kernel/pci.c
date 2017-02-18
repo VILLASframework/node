@@ -58,6 +58,8 @@ int pci_init(struct pci *p)
 		ret = sscanf(entry->d_name, "%4x:%2x:%2x.%u", &d.slot.domain, &d.slot.bus, &d.slot.device, &d.slot.function);
 		if (ret != 4)
 			error("Failed to parse PCI slot number: %s", entry->d_name);
+		
+		list_push(&p->devices, memdup(&d, sizeof(d)));
 	}
 
 	closedir(dp);

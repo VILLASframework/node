@@ -16,8 +16,14 @@
 #include <villas/cfg.h>
 #include <villas/path.h>
 #include <villas/node.h>
+#include <villas/api.h>
+#include <villas/web.h>
+#include <villas/timing.h>
 #include <villas/kernel/kernel.h>
 #include <villas/kernel/rt.h>
+
+/* Forward declarations */
+void hook_stats_header();
 
 #ifdef ENABLE_OPAL_ASYNC
   #include "opal.h"
@@ -60,8 +66,10 @@ static void signals_init()
 
 static void usage(const char *name)
 {
-	printf("Usage: %s CONFIG\n", name);
-	printf("  CONFIG is a required path to a configuration file\n\n");
+	printf("Usage: %s [CONFIG]\n", name);
+	printf("  CONFIG is the path to an optional configuration file\n");
+	printf("         if omitted, VILLASnode will start without a configuration\n");
+	printf("         and wait for provisioning over the web interface.\n\n");
 #ifdef ENABLE_OPAL_ASYNC
 	printf("Usage: %s OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME\n", name);
 	printf("  This type of invocation is used by OPAL-RT Asynchronous processes.\n");
@@ -76,6 +84,11 @@ static void usage(const char *name)
 	list_foreach(struct hook *h, &hooks)
 		printf(" - %s: %s\n", h->name, h->description);
 	printf("\n");
+	
+	printf("Supported API commands:\n");
+	list_foreach(struct api_ressource *r, &apis)
+		printf(" - %s: %s\n", r->name, r->description);
+	printf("\n");
 
 	print_copyright();
 
@@ -86,11 +99,16 @@ int main(int argc, char *argv[])
 {
 	/* Check arguments */
 #ifdef ENABLE_OPAL_ASYNC
-	if (argc != 2 && argc != 4)
-#else
-	if (argc != 2)
-#endif
+	if (argc != 4)
 		usage(argv[0]);
+	
+	char *uri = "opal-shmem.conf";
+#else
+	if (argc > 2)
+		usage(argv[0]);
+	
+	char *uri = (argc == 2) ? argv[1] : NULL;
+#endif
 
 	info("This is VILLASnode %s (built on %s, %s)", BLD(YEL(VERSION)),
 		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
@@ -138,14 +156,21 @@ int main(int argc, char *argv[])
 	if (config.stats > 0)
 		hook_stats_header();
 
-		for (;;) {
-			list_foreach(struct path *p, &paths)
+	struct timespec now, last = time_now();
+
+	/* Run! Until signal handler is invoked */
+	while (1) {
+		now = time_now();
+		if (config.stats > 0 && time_delta(&last, &now) > config.stats) {
+			list_foreach(struct path *p, &config.paths) {
 				hook_run(p, NULL, 0, HOOK_PERIODIC);
-			usleep(settings.stats * 1e6);
+			}
+
+			last = time_now();
 		}
+
+		web_service(&config.web); /** @todo Maybe we should move this to another thread */
 	}
-	else
-		pause();
 
 	return 0;
 }

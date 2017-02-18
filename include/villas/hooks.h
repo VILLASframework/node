@@ -151,5 +151,3 @@ void hook_stats_header();
 int hook_fix_ts(struct path *p, struct hook *h, int when, struct sample *smps[], size_t cnt);
 int hook_restart(struct path *p, struct hook *h, int when, struct sample *smps[], size_t cnt);
 int hook_drop(struct path *p, struct hook *h, int when, struct sample *smps[], size_t cnt);
-
-#endif /** _HOOKS_H_ @} */

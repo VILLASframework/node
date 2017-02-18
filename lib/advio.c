@@ -50,6 +50,7 @@ AFILE *afopen(const char *uri, const char *mode, int flags)
 	if (!af->curl)
 		goto out1;
 	
+	curl_easy_setopt(af->curl, CURLOPT_DEFAULT_PROTOCOL, "file");
 	curl_easy_setopt(af->curl, CURLOPT_FOLLOWLOCATION, 1L);
 	curl_easy_setopt(af->curl, CURLOPT_UPLOAD, 0L);
 	curl_easy_setopt(af->curl, CURLOPT_USERAGENT, USER_AGENT);
@@ -59,16 +60,10 @@ AFILE *afopen(const char *uri, const char *mode, int flags)
 	res = curl_easy_perform(af->curl);
 	switch (res) {
 		case CURLE_OK:
-			switch (mode[0]) {
-				case 'w':
-				case 'r':
-					fseek(af->file, 0, SEEK_SET);
-					break;
-				
-				case 'a':
-					fseek(af->file, 0, SEEK_END);
-					break;
-			}
+			if (mode[0] == 'a')
+				fseek(af->file, 0, SEEK_END);
+			else if (mode[0] == 'r' || mode[0] == 'w')
+				fseek(af->file, 0, SEEK_SET);
 			break;
 
 		/* The following error codes indicate that the file does not exist
@@ -79,7 +74,14 @@ AFILE *afopen(const char *uri, const char *mode, int flags)
 			if (mode[0] == 'a' || (mode[0] == 'w' && mode[1] == '+'))
 				break;	/* its okay */
 
+		/* If libcurl does not know the protocol, we will try it with the stdio */
+		case CURLE_UNSUPPORTED_PROTOCOL:
+			af->file = fopen(uri, mode);
+			if (!af->file)
+				goto out2;
+		
 		default:
+		printf("avdio: %s\n", curl_easy_strerror(res));
 			goto out0;	/* no please fail here */
 	}
 	

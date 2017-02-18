@@ -212,6 +212,19 @@ int path_destroy(struct path *p)
 	return 0;
 }
 
+int path_check(struct path *p)
+{
+	list_foreach (struct node *n, &p->destinations) {
+		if (!n->_vt->write)
+			error("Destiation node '%s' is not supported as a sink for path '%s'", node_name(n), path_name(p));
+	}
+
+	if (!p->in->_vt->read)
+		error("Source node '%s' is not supported as source for path '%s'", node_name(p->in), path_name(p));
+	
+	return 0;
+}
+
 int path_prepare(struct path *p)
 {
 	int ret;
