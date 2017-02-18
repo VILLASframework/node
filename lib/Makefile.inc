@@ -6,8 +6,8 @@ LIB_SRCS = $(addprefix lib/nodes/, file.c cbuilder.c) 		\
            $(addprefix lib/kernel/, kernel.c rt.c)		\
            $(addprefix lib/, sample.c path.c node.c hooks.c	\
               log.c utils.c cfg.c hist.c timing.c pool.c list.c \
-              queue.c memory.c advio.c					\
-           )							\
+              queue.c memory.c advio.c web.c api.c		\
+           )
 
 LIB_CFLAGS  = $(CFLAGS) -fPIC
 LIB_LDFLAGS = -shared
@@ -47,12 +47,12 @@ endif
 endif
 
 # Enable WebSocket support
-ifndef WITHOUT_WEBSOCKETS
+#ifndef WITHOUT_WEBSOCKETS
 ifeq ($(shell pkg-config libwebsockets jansson; echo $$?),0)
-	LIB_SRCS    += lib/nodes/websocket.c
+#	LIB_SRCS    += lib/nodes/websocket.c
 	LIB_PKGS    += libwebsockets jansson
 endif
-endif
+#endif
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
 ifdef WITH_OPAL
