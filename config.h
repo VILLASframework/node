@@ -61,11 +61,3 @@
 /** AXI Bus frequency for all components
  * except RTDS AXI Stream bridge which runs at RTDS_HZ (100 Mhz) */
 #define FPGA_AXI_HZ		125000000 // 125 MHz
-
-/** Global configuration */
-struct settings {
-	int priority;		/**< Process priority (lower is better) */
-	int affinity;		/**< Process affinity of the server and all created threads */
-	int debug;		/**< Debug log level */
-	double stats;		/**< Interval for path statistics. Set to 0 to disable themo disable them. */
-};

@@ -17,134 +17,208 @@
 #include "node.h"
 #include "path.h"
 #include "hooks.h"
+#include "advio.h"
+#include "web.h"
+#include "log.h"
+#include "api.h"
+#include "plugin.h"
 
-void cfg_init(config_t *cfg)
+#include "kernel/rt.h"
+
+int cfg_init_pre(struct cfg *cfg)
 {
-	config_init(cfg);
-}
-
-void cfg_destroy(config_t *cfg)
-{
-	config_destroy(cfg);
-}
-
-int cfg_parse(const char *filename, config_t *cfg, struct settings *set,
-	struct list *nodes, struct list *paths)
-{
-	int ret = CONFIG_FALSE;
-	char *filename_cpy, *include_dir;
-
-	config_init(cfg);
-
-	filename_cpy = strdup(filename);
-	include_dir = dirname(filename_cpy);
-
-	/* Setup libconfig */
-	config_set_auto_convert(cfg, 1);
-	config_set_include_dir(cfg, include_dir);
-
-	free(filename_cpy);
+	config_init(cfg->cfg);
 	
-	if (strcmp("-", filename) == 0)
-		ret = config_read(cfg, stdin);
-	else if (access(filename, F_OK) != -1)
-		ret = config_read_file(cfg, filename);
-	else
-		error("Invalid configuration file name: %s", filename);
+	info("Inititliaze logging sub-system");
+	log_init(&cfg->log);
 
-	if (ret != CONFIG_TRUE) {
-		error("Failed to parse configuration: %s in %s:%d",
-			config_error_text(cfg),
-			config_error_file(cfg) ? config_error_file(cfg) : filename,
-			config_error_line(cfg)
-		);
+	list_init(&cfg->nodes);
+	list_init(&cfg->paths);
+	list_init(&cfg->plugins);
+
+	return 0;
+}
+
+int cfg_init_post(struct cfg *cfg)
+{
+	info("Initialize real-time sub-system");
+	rt_init(cfg);
+
+	info("Initialize hook sub-system");
+	hook_init(cfg);
+	
+	info("Initialize API sub-system");
+	api_init(&cfg->api, cfg);
+	
+	info("Initialize web sub-system");
+	web_init(&cfg->web, &cfg->api);
+	
+	return 0;
+}
+
+int cfg_deinit(struct cfg *cfg)
+{
+	info("De-initializing node types");
+	list_foreach(struct node_type *vt, &node_types) { INDENT
+		node_deinit(vt);
 	}
+	
+	info("De-initializing web interface");
+	web_deinit(&cfg->web);
+	
+	info("De-initialize API");
+	api_deinit(&cfg->api);
+	
+	return 0;
+}
 
-	config_setting_t *cfg_root = config_root_setting(cfg);
+int cfg_destroy(struct cfg *cfg)
+{
+	config_destroy(cfg->cfg);
+
+	web_destroy(&cfg->web);
+	log_destroy(&cfg->log);
+	api_destroy(&cfg->api);
+
+	list_destroy(&cfg->plugins, (dtor_cb_t) plugin_destroy, false);
+	list_destroy(&cfg->paths,   (dtor_cb_t) path_destroy, true);
+	list_destroy(&cfg->nodes,   (dtor_cb_t) node_destroy, true);
+	
+	return 0;
+}
+
+int cfg_parse(struct cfg *cfg, const char *uri)
+{
+	config_setting_t *cfg_root, *cfg_nodes, *cfg_paths, *cfg_plugins, *cfg_logging;
+
+	int ret = CONFIG_FALSE;
+
+	if (uri) {
+		/* Setup libconfig */
+		config_set_auto_convert(cfg->cfg, 1);
+
+		FILE *f;
+		AFILE *af;
+	
+		/* Via stdin */
+		if (strcmp("-", uri) == 0) {
+			af = NULL;
+			f = stdin;
+		}
+		/* Local file? */
+		else if (access(uri, F_OK) != -1) {
+			/* Setup libconfig include path.
+			 * This is only supported for local files */
+			char *uri_cpy = strdup(uri);
+			char *include_dir = dirname(uri_cpy);
+
+			config_set_include_dir(cfg->cfg, include_dir);
+				
+			free(uri_cpy);
+
+			af = NULL;
+			f = fopen(uri, "r");
+		}
+		/* Use advio (libcurl) to fetch the config from a remote */
+		else {
+			af = afopen(uri, "r", ADVIO_MEM);
+			f = af ? af->file : NULL;
+		}
+
+		/* Check if file could be loaded / opened */
+		if (!f)
+			error("Failed to open configuration from: %s", uri);
+		
+		/* Parse config */
+		ret = config_read(cfg->cfg, f);
+		if (ret != CONFIG_TRUE)
+			error("Failed to parse configuration: %s in %s:%d", config_error_text(cfg->cfg), uri, config_error_line(cfg->cfg));
+
+		/* Close configuration file */
+		if (af)
+			afclose(af);
+		else
+			fclose(f);
+	}
+	else
+		warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
 	/* Parse global settings */
-	if (set) {
-		if (!cfg_root || !config_setting_is_group(cfg_root))
-			error("Missing global section in config file: %s", filename);
+	cfg_root = config_root_setting(cfg->cfg);
+	if (cfg_root) {
+		if (!config_setting_is_group(cfg_root))
+			warn("Missing global section in config file.");
 
-		cfg_parse_global(cfg_root, set);
+		cfg_parse_global(cfg_root, cfg);
+	}
+
+	/* Parse logging settings */
+	cfg_logging = config_setting_get_member(cfg_root, "logging");
+	if (cfg_logging) {
+		if (!config_setting_is_group(cfg_logging))
+			cerror(cfg_logging, "Setting 'logging' must be a group.");
+		
+		log_parse(&cfg->log, cfg_logging);
+	}
+
+	/* Parse plugins */
+	cfg_plugins = config_setting_get_member(cfg_root, "plugins");
+	if (cfg_plugins) {
+		if (!config_setting_is_array(cfg_plugins))
+			cerror(cfg_plugins, "Setting 'plugins' must be a list of strings");
+
+		for (int i = 0; i < config_setting_length(cfg_plugins); i++) {
+			struct config_setting_t *cfg_plugin = config_setting_get_elem(cfg_plugins, i);
+			
+			struct plugin plugin;
+			
+			plugin_parse(&plugin, cfg_plugin);
+		}
 	}
 
 	/* Parse nodes */
-	if (nodes) {
-		config_setting_t *cfg_nodes = config_setting_get_member(cfg_root, "nodes");
-		if (!cfg_nodes || !config_setting_is_group(cfg_nodes))
-			error("Missing node section in config file: %s", filename);
+	cfg_nodes = config_setting_get_member(cfg_root, "nodes");
+	if (cfg_nodes) {
+		if (!config_setting_is_group(cfg_nodes))
+			warn("Setting 'nodes' must be a group with node name => group mappings.");
 
 		for (int i = 0; i < config_setting_length(cfg_nodes); i++) {
 			config_setting_t *cfg_node = config_setting_get_elem(cfg_nodes, i);
-			cfg_parse_node(cfg_node, nodes, set);
+			cfg_parse_node(cfg_node, &cfg->nodes, cfg);
 		}
 	}
 
 	/* Parse paths */
-	if (paths) {
-		config_setting_t *cfg_paths = config_setting_get_member(cfg_root, "paths");
-		if (!cfg_paths || !config_setting_is_list(cfg_paths))
-			error("Missing path section in config file: %s", filename);
+	cfg_paths = config_setting_get_member(cfg_root, "paths");
+	if (cfg_paths) {
+		if (!config_setting_is_list(cfg_paths))
+			warn("Setting 'paths' must be a list.");
 
 		for (int i = 0; i < config_setting_length(cfg_paths); i++) {
 			config_setting_t *cfg_path = config_setting_get_elem(cfg_paths, i);
-			cfg_parse_path(cfg_path, paths, nodes, set);
+			cfg_parse_path(cfg_path, &cfg->paths, &cfg->nodes, cfg);
 		}
 	}
 
 	return 0;
 }
 
-int cfg_parse_plugins(config_setting_t *cfg)
+int cfg_parse_global(config_setting_t *cfg, struct cfg *set)
 {
-	if (!config_setting_is_array(cfg))
-		cerror(cfg, "Setting 'plugins' must be a list of strings");
-
-	for (int i = 0; i < config_setting_length(cfg); i++) {
-		void *handle;
-		const char *path;
-
-		path = config_setting_get_string_elem(cfg, i);
-		if (!path)
-			cerror(cfg, "Setting 'plugins' must be a list of strings");
-		
-		handle = dlopen(path, RTLD_NOW);
-		if (!handle)
-			error("Failed to load plugin %s", dlerror());
-	}
-
-	return 0;
-}
-
-int cfg_parse_global(config_setting_t *cfg, struct settings *set)
-{
-	config_setting_t *cfg_plugins;
-
 	if (!config_setting_lookup_int(cfg, "affinity", &set->affinity))
 		set->affinity = 0;
 
 	if (!config_setting_lookup_int(cfg, "priority", &set->priority))
 		set->priority = 0;
 
-	if (!config_setting_lookup_int(cfg, "debug", &set->debug))
-		set->debug = V;
-
 	if (!config_setting_lookup_float(cfg, "stats", &set->stats))
 		set->stats = 0;
-	
-	cfg_plugins = config_setting_get_member(cfg, "plugins");
-	if (cfg_plugins)
-		cfg_parse_plugins(cfg_plugins);
-
-	log_setlevel(set->debug, -1);
 
 	return 0;
 }
 
 int cfg_parse_path(config_setting_t *cfg,
-	struct list *paths, struct list *nodes, struct settings *set)
+	struct list *paths, struct list *nodes, struct cfg *set)
 {
 	config_setting_t *cfg_out, *cfg_hook;
 	const char *in;
@@ -202,11 +276,6 @@ int cfg_parse_path(config_setting_t *cfg,
 		p->enabled = 1;
 	if (!config_setting_lookup_float(cfg, "rate", &p->rate))
 		p->rate = 0; /* disabled */
-
-	if (!IS_POW2(p->queuelen)) {
-		p->queuelen = LOG2_CEIL(p->queuelen);
-		warn("Queue length should always be a power of 2. Adjusting to %d", p->queuelen);
-	}
 
 	p->cfg = cfg;
 
@@ -276,9 +345,9 @@ int cfg_parse_nodelist(config_setting_t *cfg, struct list *list, struct list *al
 	return list_length(list);
 }
 
-int cfg_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *set)
+int cfg_parse_node(config_setting_t *cfg, struct list *nodes, struct cfg *set)
 {
-	const char *type, *name;
+	const char *type;
 	int ret;
 
 	struct node *n;
@@ -287,16 +356,14 @@ int cfg_parse_node(config_setting_t *cfg, struct list *nodes, struct settings *s
 	/* Required settings */
 	if (!config_setting_lookup_string(cfg, "type", &type))
 		cerror(cfg, "Missing node type");
-	
-	name = config_setting_name(cfg);
 
 	vt = list_lookup(&node_types, type);
 	if (!vt)
 		cerror(cfg, "Invalid type for node '%s'", config_setting_name(cfg));
 	
 	n = node_create(vt);
-	
-	n->name = name;
+
+	n->name = config_setting_name(cfg);
 	n->cfg = cfg;
 
 	ret = node_parse(n, cfg);

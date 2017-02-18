@@ -23,32 +23,21 @@
   #include "opal.h"
 #endif
 
-struct list paths;		/**< List of paths */
-struct list nodes;		/**< List of nodes */
-
-static config_t config;		/**< libconfig handle */
-struct settings settings;	/**< The global configuration */
+struct cfg config;
 
 static void quit()
 {
 	info("Stopping paths");
-	list_foreach(struct path *p, &paths) { INDENT
+	list_foreach(struct path *p, &config.paths) { INDENT
 		path_stop(p);
 	}
 
 	info("Stopping nodes");
-	list_foreach(struct node *n, &nodes) { INDENT
+	list_foreach(struct node *n, &config.nodes) { INDENT
 		node_stop(n);
 	}
 
-	info("De-initializing node types");
-	list_foreach(struct node_type *vt, &node_types) { INDENT
-		node_deinit(vt);
-	}
-
-	/* Freeing dynamically allocated memory */
-	list_destroy(&paths, (dtor_cb_t) path_destroy, false);
-	list_destroy(&nodes, (dtor_cb_t) node_destroy, false);
+	cfg_deinit(&config);
 	cfg_destroy(&config);
 
 	info(GRN("Goodbye!"));
@@ -103,9 +92,6 @@ int main(int argc, char *argv[])
 #endif
 		usage(argv[0]);
 
-	char *configfile = (argc == 2) ? argv[1] : "opal-shmem.conf";
-
-	log_init();
 	info("This is VILLASnode %s (built on %s, %s)", BLD(YEL(VERSION)),
 		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
@@ -113,32 +99,26 @@ int main(int argc, char *argv[])
 	if (kernel_has_version(KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN))
 		error("Your kernel version is to old: required >= %u.%u", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
 
-	/* Initialize lists */
-	list_init(&paths);
-	list_init(&nodes);
-
-	info("Parsing configuration");
-	cfg_parse(configfile, &config, &settings, &nodes, &paths);
-
-	info("Initialize real-time system");
-	rt_init(settings.affinity, settings.priority);
-
 	info("Initialize signals");
 	signals_init();
 
-	info("Initialize hook sub-system");
-	hook_init(&nodes, &paths, &settings);
+	info("Parsing configuration");
+	cfg_init_pre(&config);
+	
+	cfg_parse(&config, uri);
+
+	cfg_init_post(&config);
 
 	info("Initialize node types");
 	list_foreach(struct node_type *vt, &node_types) { INDENT
 		int refs = list_length(&vt->instances);
 		if (refs > 0)
-			node_init(vt, argc, argv, config_root_setting(&config));
+			node_init(vt, argc, argv, config_root_setting(config.cfg));
 	}
 
 	info("Starting nodes");
-	list_foreach(struct node *n, &nodes) { INDENT
-		int refs = list_count(&paths, (cmp_cb_t) path_uses_node, n);
+	list_foreach(struct node *n, &config.nodes) { INDENT
+		int refs = list_count(&config.paths, (cmp_cb_t) path_uses_node, n);
 		if (refs > 0)
 			node_start(n);
 		else
@@ -146,7 +126,7 @@ int main(int argc, char *argv[])
 	}
 
 	info("Starting paths");
-	list_foreach(struct path *p, &paths) { INDENT
+	list_foreach(struct path *p, &config.paths) { INDENT
 		if (p->enabled) {
 			path_prepare(p);
 			path_start(p);
@@ -154,9 +134,8 @@ int main(int argc, char *argv[])
 		else
 			warn("Path %s is disabled. Skipping...", path_name(p));
 	}
-
-	/* Run! */
-	if (settings.stats > 0) {
+	
+	if (config.stats > 0)
 		hook_stats_header();
 
 		for (;;) {

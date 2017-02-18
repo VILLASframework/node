@@ -27,7 +27,7 @@
 #include "config.h"
 
 static struct list nodes;		/**< List of all nodes */
-static struct settings settings;	/**< The global configuration */
+static struct cfg settings;	/**< The global configuration */
 static config_t config;
 
 struct dir {

@@ -22,7 +22,7 @@
 #include "timing.h"
 #include "pool.h"
 
-struct settings settings; /** <The global configuration */
+struct cfg settings; /** <The global configuration */
 struct list nodes;		
 
 static struct node *node;

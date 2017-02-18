@@ -26,7 +26,7 @@
 int fpga_benchmarks(int argc, char *argv[], struct fpga *f);
 int fpga_tests(int argc, char *argv[], struct fpga *f);
 
-struct settings settings;
+struct cfg settings;
 
 void usage(char *name)
 {
