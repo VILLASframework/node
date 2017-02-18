@@ -7,11 +7,7 @@
  *********************************************************************************/
 
 #include <stdlib.h>
-#include <stdint.h>
 #include <stdbool.h>
-#include <fcntl.h>
-#include <time.h>
-#include <unistd.h>
 
 #include <xilinx/xtmrctr.h>
 
@@ -96,12 +92,12 @@ int fpga_test_xsg(struct fpga *f)
 	int ret;
 	double factor, err = 0;
 
-	struct ip *xsg, *dma;
+	struct fpga_ip *xsg, *dma;
 	struct model_param *p;
 	struct dma_mem mem;
 
-	xsg = ip_vlnv_lookup(&f->ips, NULL, "sysgen", "xsg_multiply", NULL);
-	dma = ip_vlnv_lookup(&f->ips, "xilinx.com", "ip", "axi_dma", NULL);
+	xsg = fpga_vlnv_lookup(&f->ips, &(struct fpga_vlnv) { NULL, "sysgen", "xsg_multiply", NULL });
+	dma = fpga_vlnv_lookup(&f->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_dma", NULL });
 
 	/* Check if required IP is available on FPGA */
 	if (!dma || !xsg || !dma)
@@ -160,10 +156,10 @@ int fpga_test_xsg(struct fpga *f)
 int fpga_test_hls_dft(struct fpga *f)
 {
 	int ret;
-	struct ip *hls, *rtds;
+	struct fpga_ip *hls, *rtds;
 	
-	rtds = ip_vlnv_lookup(&f->ips, "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL);
-	hls = ip_vlnv_lookup(&f->ips, NULL, "hls", "hls_dft", NULL);
+	rtds = fpga_vlnv_lookup(&f->ips, &(struct fpga_vlnv) { "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL });
+	hls = fpga_vlnv_lookup(&f->ips, &(struct fpga_vlnv) { NULL, "hls", "hls_dft", NULL });
 
 	/* Check if required IP is available on FPGA */
 	if (!hls || !rtds)
@@ -216,9 +212,9 @@ int fpga_test_fifo(struct fpga *f)
 	int ret;
 	ssize_t len;
 	char src[255], dst[255];
-	struct ip *fifo;
+	struct fpga_ip *fifo;
 
-	fifo = ip_vlnv_lookup(&f->ips, "xilinx.com", "ip", "axi_fifo_mm_s", NULL);
+	fifo = fpga_vlnv_lookup(&f->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_fifo_mm_s", NULL });
 	if (!fifo)
 		return -1;
 
@@ -261,8 +257,8 @@ int fpga_test_dma(struct fpga *f)
 	int ret = -1;
 	struct dma_mem mem, src, dst;
 
-	list_foreach(struct ip *dma, &f->ips) { INDENT
-		if (!ip_vlnv_match(dma, "xilinx.com", "ip", "axi_dma", NULL))
+	list_foreach(struct fpga_ip *dma, &f->ips) { INDENT
+		if (!fpga_vlnv_match(dma, "xilinx.com", "ip", "axi_dma", NULL))
 			continue; /* skip non DMA IP cores */
 		
 		/* Simple DMA can only transfer up to 4 kb due to
@@ -321,9 +317,9 @@ int fpga_test_dma(struct fpga *f)
 int fpga_test_timer(struct fpga *f)
 {
 	int ret;
-	struct ip *tmr;
+	struct fpga_ip *tmr;
 
-	tmr = ip_vlnv_lookup(&f->ips, "xilinx.com", "ip", "axi_timer", NULL);
+	tmr = fpga_vlnv_lookup(&f->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_timer", NULL });
 	if (!tmr)
 		return -1;
 	
@@ -355,12 +351,12 @@ int fpga_test_timer(struct fpga *f)
 int fpga_test_rtds_rtt(struct fpga *f)
 {
 	int ret;
-	struct ip *dma, *rtds;
+	struct fpga_ip *dma, *rtds;
 	struct dma_mem buf;
 	size_t recvlen;
 
 	/* Get IP cores */
-	rtds = ip_vlnv_lookup(&f->ips, "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL);
+	rtds = fpga_vlnv_lookup(&f->ips, &(struct fpga_vlnv) { "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL });
 	dma = list_lookup(&f->ips, "dma_1");
 
 	/* Check if required IP is available on FPGA */

@@ -5,12 +5,15 @@
  * @copyright 2015-2016, Steffen Vogel
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
- **********************************************************************************/
+ */
+/**
+ * @addtogroup fpga VILLASfpga
+ * @{
+ */
 
-#ifndef _FPGA_RTDS_AXIS_H_
-#define _FPGA_RTDS_AXIS_H_
+#pragma once
 
-/* Forward declaration */
+/* Forward declarations */
 struct ip;
 
 #define RTDS_HZ				100000000 // 100 MHz
@@ -38,8 +41,8 @@ struct ip;
 /* Control register bits */
 #define RTDS_AXIS_CR_DISABLE_LINK	0	/**< Disable SFP TX when set */
 
-void rtds_axis_dump(struct ip *c);
+void rtds_axis_dump(struct fpga_ip *c);
 
-double rtds_axis_dt(struct ip *c);
+double rtds_axis_dt(struct fpga_ip *c);
 
-#endif /* _FPGA_RTDS_AXIS_H_ */
+/** @} */

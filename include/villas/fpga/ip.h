@@ -1,62 +1,73 @@
-#ifndef _FPGA_IP_H_
-#define _FPGA_IP_H_
+/** Interlectual Property component.
+ *
+ * This class represents a module within the FPGA.
+ *
+ * @file
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2015-2016, Steffen Vogel
+ *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
+ *   Unauthorized copying of this file, via any medium is strictly prohibited. 
+ */
+/**
+ * @addtogroup fpga VILLASfpga
+ * @{
+ */
+
+#pragma once
 
 #include <stdint.h>
 
-#include <xilinx/xtmrctr.h>
-#include <xilinx/xintc.h>
-#include <xilinx/xllfifo.h>
-#include <xilinx/xaxis_switch.h>
-#include <xilinx/xaxidma.h>
-
 #include "utils.h"
-#include "fpga/dma.h"
-#include "fpga/switch.h"
-#include "fpga/fifo.h"
-#include "fpga/rtds_axis.h"
-#include "fpga/timer.h"
-#include "fpga/model.h"
-#include "fpga/dft.h"
-#include "fpga/intc.h"
+
 #include "nodes/fpga.h"
 
-extern struct list ip_types;	/**< Table of existing FPGA IP core drivers */
+#include "fpga/vlnv.h"
 
-enum ip_state {
+#include "fpga/ips/dma.h"
+#include "fpga/ips/switch.h"
+#include "fpga/ips/fifo.h"
+#include "fpga/ips/rtds_axis.h"
+#include "fpga/ips/timer.h"
+#include "fpga/ips/model.h"
+#include "fpga/ips/dft.h"
+#include "fpga/ips/intc.h"
+
+enum fpga_ip_state {
 	IP_STATE_UNKNOWN,
 	IP_STATE_INITIALIZED
 };
 
-struct ip_vlnv {
-	char *vendor;
-	char *library;
-	char *name;
-	char *version;
+struct fpga_ip_type {
+	struct fpga_vlnv vlnv;
+
+	enum {
+		FPGA_IP_TYPE_DATAMOVER,	/**< A datamover IP exchanges streaming data between the FPGA and the CPU. */
+		FPGA_IP_TYPE_MODEL,	/**< A model IP simulates a system on the FPGA. */
+		FPGA_IP_TYPE_MATH,	/**< A math IP performs some kind of mathematical operation on the streaming data */
+		FPGA_IP_TYPE_MISC,	/**< Other IP components like timer, counters, interrupt conctrollers or routing. */
+		FPGA_IP_TYPE_INTERFACE	/**< A interface IP connects the FPGA to another system or controller. */
+	} type;
+
+	int (*parse)(struct fpga_ip *c);
+	int (*init)(struct fpga_ip *c);
+	int (*reset)(struct fpga_ip *c);
+	void (*dump)(struct fpga_ip *c);
+	void (*destroy)(struct fpga_ip *c);
 };
 
-struct ip_type {
-	struct ip_vlnv vlnv;
+struct fpga_ip {
+	char *name;			/**< Name of the FPGA IP component. */
+	struct fpga_vlnv vlnv;		/**< The Vendor, Library, Name, Version tag of the FPGA IP component. */
 
-	int (*parse)(struct ip *c);
-	int (*init)(struct ip *c);
-	int (*reset)(struct ip *c);
-	void (*dump)(struct ip *c);
-	void (*destroy)(struct ip *c);
-};
+	enum fpga_ip_state state;	/**< The current state of the FPGA IP component. */
 
-struct ip {
-	char *name;
+	struct fpga_ip_type *_vt;	/**< Vtable containing FPGA IP type function pointers. */
 
-	struct ip_vlnv vlnv;
+	uintptr_t baseaddr;		/**< The baseadress of this FPGA IP component */
+	uintptr_t baseaddr_axi4;	/**< Used by AXI4 FIFO DM */
 
-	uintptr_t baseaddr;
-	uintptr_t baseaddr_axi4;
-
-	int port, irq;
-
-	enum ip_state state;
-
-	struct ip_type *_vt;
+	int port;			/**< The port of the AXI4-Stream switch to which this FPGA IP component is connected. */
+	int irq;			/**< The interrupt number of the FPGA IP component. */
 
 	union {
 		struct model model;
@@ -66,33 +77,26 @@ struct ip {
 		struct sw sw;
 		struct dft dft;
 		struct intc intc;
-	};
+	};				/**< Specific private date per FPGA IP type. Depends on fpga_ip::_vt */
 	
-	struct fpga *card;
+	struct fpga_card *card;		/**< The FPGA to which this IP instance belongs to. */
 
 	config_setting_t *cfg;
 };
 
-/** Return the first IP block in list \p l which matches the VLNV */
-struct ip * ip_vlnv_lookup(struct list *l, const char *vendor, const char *library, const char *name, const char *version);
+/** Initialize IP instance. */
+int fpga_ip_init(struct fpga_ip *c);
 
-/** Check if IP block \p c matched VLNV. */
-int ip_vlnv_cmp(struct ip_vlnv *a, struct ip_vlnv *b);
+/** Release dynamic memory allocated by this IP instance. */
+int fpga_ip_destroy(struct fpga_ip *c);
 
-/** Tokenizes VLNV \p vlnv and stores it into \p c */
-int ip_vlnv_parse(struct ip_vlnv *c, const char *vlnv);
+/** Dump details about this IP instance to stdout. */
+void fpga_ip_dump(struct fpga_ip *c);
 
-/** Release memory allocated by ip_vlnv_parse(). */
-void ip_vlnv_destroy(struct ip_vlnv *v);
+/** Reset IP component to its initial state. */
+int fpga_ip_reset(struct fpga_ip *c);
 
-int ip_init(struct ip *c);
+/** Parse IP configuration from configuration file */
+int fpga_ip_parse(struct fpga_ip *c, config_setting_t *cfg);
 
-void ip_destroy(struct ip *c);
-
-void ip_dump(struct ip *c);
-
-int ip_reset(struct ip *c);
-
-int ip_parse(struct ip *c, config_setting_t *cfg);
-
-#endif /* _FPGA_IP_H_ */
+/** @} */

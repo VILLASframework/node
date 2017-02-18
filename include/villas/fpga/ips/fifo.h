@@ -7,10 +7,13 @@
  * @copyright 2015-2016, Steffen Vogel
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
- **********************************************************************************/
+ */
+/**
+ * @addtogroup fpga VILLASfpga
+ * @{
+ */
 
-#ifndef _FPGA_FIFO_H_
-#define _FPGA_FIFO_H_
+#pragma once
 
 #include <sys/types.h>
 
@@ -26,10 +29,10 @@ struct fifo {
 /* Forward declaration */
 struct ip;
 
-int fifo_init(struct ip *c);
+int fifo_init(struct fpga_ip *c);
 
-ssize_t fifo_write(struct ip *c, char *buf, size_t len);
+ssize_t fifo_write(struct fpga_ip *c, char *buf, size_t len);
 
-ssize_t fifo_read(struct ip *c, char *buf, size_t len);
+ssize_t fifo_read(struct fpga_ip *c, char *buf, size_t len);
 
-#endif /* _FPGA_FIFO_H_ */
+/** @} */

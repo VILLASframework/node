@@ -12,14 +12,16 @@
 #include "log.h"
 #include "plugin.h"
 
-#include "fpga/switch.h"
 #include "fpga/ip.h"
+#include "fpga/card.h"
+#include "fpga/ips/switch.h"
 
-int switch_init(struct ip *c)
+int switch_init(struct fpga_ip *c)
 {
 	int ret;
+	
+	struct fpga_card *f = c->card;
 	struct sw *sw = &c->sw;
-	struct fpga *f = c->card;
 
 	XAxis_Switch *xsw = &sw->inst;
 
@@ -29,7 +31,7 @@ int switch_init(struct ip *c)
 
 	/* Setup AXI-stream switch */
 	XAxis_Switch_Config sw_cfg = {
-		.BaseAddress = (uintptr_t) c->card->map + c->baseaddr,
+		.BaseAddress = (uintptr_t) f->map + c->baseaddr,
 		.MaxNumMI = sw->num_ports,
 		.MaxNumSI = sw->num_ports
 	};
@@ -42,11 +44,13 @@ int switch_init(struct ip *c)
 	XAxisScr_RegUpdateDisable(xsw);
 	XAxisScr_MiPortDisableAll(xsw);
 	XAxisScr_RegUpdateEnable(xsw);
+	
+	switch_init_paths(c);
 
 	return 0;
 }
 
-int switch_init_paths(struct ip *c)
+int switch_init_paths(struct fpga_ip *c)
 {
 	int ret;
 	struct sw *sw = &c->sw;
@@ -57,7 +61,7 @@ int switch_init_paths(struct ip *c)
 	XAxisScr_MiPortDisableAll(xsw);
 	
 	list_foreach(struct sw_path *p, &sw->paths) {
-		struct ip *mi, *si;
+		struct fpga_ip *mi, *si;
 		
 		mi = list_lookup(&c->card->ips, p->out);
 		si = list_lookup(&c->card->ips, p->in);
@@ -75,15 +79,18 @@ int switch_init_paths(struct ip *c)
 	return 0;
 }
 
-void switch_destroy(struct ip *c)
+int switch_destroy(struct fpga_ip *c)
 {
 	struct sw *sw = &c->sw;
 
 	list_destroy(&sw->paths, NULL, true);
+	
+	return 0;
 }
 
-int switch_parse(struct ip *c)
+int switch_parse(struct fpga_ip *c)
 {
+	struct fpga_card *f = c->card;
 	struct sw *sw = &c->sw;
 
 	list_init(&sw->paths);
@@ -93,7 +100,7 @@ int switch_parse(struct ip *c)
 	if (!config_setting_lookup_int(c->cfg, "num_ports", &sw->num_ports))
 		cerror(c->cfg, "Switch IP '%s' requires 'num_ports' option", c->name);
 
-	cfg_sw = config_setting_get_member(c->card->cfg, "paths");
+	cfg_sw = config_setting_get_member(f->cfg, "paths");
 	if (!cfg_sw)
 		return 0; /* no switch config available */
 	
@@ -133,7 +140,7 @@ int switch_parse(struct ip *c)
 	return 0;
 }
 
-int switch_connect(struct ip *c, struct ip *mi, struct ip *si)
+int switch_connect(struct fpga_ip *c, struct fpga_ip *mi, struct fpga_ip *si)
 {
 	struct sw *sw = &c->sw;
 	XAxis_Switch *xsw = &sw->inst;
@@ -169,7 +176,7 @@ int switch_connect(struct ip *c, struct ip *mi, struct ip *si)
 	return 0;
 }
 
-int switch_disconnect(struct ip *c, struct ip *mi, struct ip *si)
+int switch_disconnect(struct fpga_ip *c, struct fpga_ip *mi, struct fpga_ip *si)
 {
 	struct sw *sw = &c->sw;
 	XAxis_Switch *xsw = &sw->inst;
@@ -187,10 +194,11 @@ static struct plugin p = {
 	.description	= "",
 	.type		= PLUGIN_TYPE_FPGA_IP,
 	.ip		= {
-		.vlnv = { "xilinx.com", "ip", "axis_interconnect", NULL },
-		.init = switch_init,
+		.vlnv	= { "xilinx.com", "ip", "axis_interconnect", NULL },
+		.type	= FPGA_IP_TYPE_MISC,
+		.init	= switch_init,
 		.destroy = switch_destroy,
-		.parse = switch_parse
+		.parse	= switch_parse
 	}
 };
 

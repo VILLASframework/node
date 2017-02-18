@@ -16,17 +16,22 @@
 #include "plugin.h"
 
 #include "fpga/ip.h"
-#include "fpga/model.h"
+#include "fpga/card.h"
+#include "fpga/ips/model.h"
 
-static void model_param_destroy(struct model_param *p)
+static int model_param_destroy(struct model_param *p)
 {
 	free(p->name);
+
+	return 0;
 }
 
-static void model_info_destroy(struct model_info *i)
+static int model_info_destroy(struct model_info *i)
 {
 	free(i->field);
 	free(i->value);
+	
+	return 0;
 }
 
 static uint32_t model_xsg_map_checksum(uint32_t *map, size_t len)
@@ -130,7 +135,7 @@ static int model_xsg_map_read(uint32_t *map, size_t len, void *baseaddr)
 	return i;
 }
 
-int model_parse(struct ip *c)
+int model_parse(struct fpga_ip *c)
 {
 	struct model *m = &c->model;
 	struct model_param p;
@@ -188,7 +193,7 @@ static int model_init_from_xsg_map(struct model *m, void *baseaddr)
 	return 0;
 }
 
-int model_init(struct ip *c)
+int model_init(struct fpga_ip *c)
 {
 	int ret;
 	struct model *m = &c->model;
@@ -196,7 +201,7 @@ int model_init(struct ip *c)
 	list_init(&m->parameters);
 	list_init(&m->infos);
 
-	if (ip_vlnv_match(c, NULL, "sysgen", NULL, NULL))
+	if (!fpga_vlnv_cmp(&c->vlnv, &(struct fpga_vlnv) { NULL, "sysgen", NULL, NULL }))
 		ret = model_init_from_xsg_map(m, c->card->map + c->baseaddr);
 	else
 		ret = 0;
@@ -217,7 +222,7 @@ int model_init(struct ip *c)
 	return 0;
 }
 
-void model_destroy(struct ip *c)
+int model_destroy(struct fpga_ip *c)
 {
 	struct model *m = &c->model;
 
@@ -226,9 +231,11 @@ void model_destroy(struct ip *c)
 
 	if (m->xsg.map != NULL)
 		free(m->xsg.map);
+	
+	return 0;
 }
 
-void model_dump(struct ip *c)
+void model_dump(struct fpga_ip *c)
 {
 	struct model *m = &c->model;
 
@@ -264,7 +271,7 @@ void model_dump(struct ip *c)
 
 int model_param_read(struct model_param *p, double *v)
 {
-	struct ip *c = p->ip;
+	struct fpga_ip *c = p->ip;
 
 	union model_param_value *ptr = (union model_param_value *) (c->card->map + c->baseaddr + p->offset);
 
@@ -290,7 +297,7 @@ int model_param_read(struct model_param *p, double *v)
 
 int model_param_write(struct model_param *p, double v)
 {
-	struct ip *c = p->ip;
+	struct fpga_ip *c = p->ip;
 
 	union model_param_value *ptr = (union model_param_value *) (c->card->map + c->baseaddr + p->offset);
 
@@ -315,7 +322,7 @@ int model_param_write(struct model_param *p, double v)
 	return 0;
 }
 
-void model_param_add(struct ip *c, const char *name, enum model_param_direction dir, enum model_param_type type)
+void model_param_add(struct fpga_ip *c, const char *name, enum model_param_direction dir, enum model_param_type type)
 {
 	struct model *m = &c->model;
 	struct model_param *p = alloc(sizeof(struct model_param));
@@ -327,7 +334,7 @@ void model_param_add(struct ip *c, const char *name, enum model_param_direction 
 	list_push(&m->parameters, p);
 }
 
-int model_param_remove(struct ip *c, const char *name)
+int model_param_remove(struct fpga_ip *c, const char *name)
 {
 	struct model *m = &c->model;
 	struct model_param *p;
@@ -359,11 +366,12 @@ static struct plugin p_hls = {
 	.description	= "",
 	.type		= PLUGIN_TYPE_FPGA_IP,
 	.ip		= {
-		.vlnv = { NULL, "hls", NULL, NULL },
-		.init = model_init,
+		.vlnv	= { NULL, "hls", NULL, NULL },
+		.type	= FPGA_IP_TYPE_MODEL,
+		.init	= model_init,
 		.destroy = model_destroy,
-		.dump = model_dump,
-		.parse = model_parse
+		.dump	= model_dump,
+		.parse	= model_parse
 	}
 };
 
@@ -374,11 +382,12 @@ static struct plugin p_sysgen = {
 	.description	= "",
 	.type		= PLUGIN_TYPE_FPGA_IP,
 	.ip		= {
-		.vlnv = { NULL, "sysgen", NULL, NULL },
-		.init = model_init,
+		.vlnv	= { NULL, "sysgen", NULL, NULL },
+		.type	= FPGA_IP_TYPE_MODEL,
+		.init	= model_init,
 		.destroy = model_destroy,
-		.dump = model_dump,
-		.parse = model_parse
+		.dump	= model_dump,
+		.parse= model_parse
 	}
 };
 

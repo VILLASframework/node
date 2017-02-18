@@ -7,9 +7,7 @@
  **********************************************************************************/
 
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/utsname.h>
 
 #include <villas/utils.h>
@@ -87,7 +85,7 @@ int fpga_benchmark_jitter(struct fpga *f)
 {
 	int ret;
 
-	struct ip *tmr;
+	struct fpga_ip *tmr;
 
 	tmr = list_lookup(&f->ips, "timer_0");
 	if (!tmr || !f->intc)
@@ -184,7 +182,7 @@ int fpga_benchmark_datamover(struct fpga *f)
 {
 	int ret;
 
-	struct ip *dm;
+	struct fpga_ip *dm;
 	struct dma_mem mem, src, dst;
 
 #if BENCH_DM == 1

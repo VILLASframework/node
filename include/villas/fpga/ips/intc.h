@@ -4,10 +4,13 @@
  * @copyright 2015-2016, Steffen Vogel
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
- **********************************************************************************/
+ */
+/**
+ * @addtogroup fpga VILLASfpga
+ * @{
+ */
 
-#ifndef _FPGA_INTC_H_
-#define _FPGA_INTC_H_
+#pragma once
 
 #include <xilinx/xintc.h>
 
@@ -25,14 +28,14 @@ struct intc {
 	int flags[32];		/**< Mask of intc_flags */
 };
 
-int intc_init(struct ip *c);
+int intc_init(struct fpga_ip *c);
 
-void intc_destroy(struct ip *c);
+int intc_destroy(struct fpga_ip *c);
 
-int intc_enable(struct ip *c, uint32_t mask, int poll);
+int intc_enable(struct fpga_ip *c, uint32_t mask, int poll);
 
-int intc_disable(struct ip *c, uint32_t mask);
+int intc_disable(struct fpga_ip *c, uint32_t mask);
 
-uint64_t intc_wait(struct ip *c, int irq);
+uint64_t intc_wait(struct fpga_ip *c, int irq);
 
-#endif /* _FPGA_INTC_H_ */
+/** @} */

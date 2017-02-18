@@ -5,10 +5,13 @@
  * @copyright 2016, Steffen Vogel
  *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
- *********************************************************************************/
- 
-#ifndef _FPGA_MODEL_H_
-#define _FPGA_MODEL_H_
+ */
+/**
+ * @addtogroup fpga VILLASfpga
+ * @{
+ */
+
+#pragma once
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -85,26 +88,26 @@ struct model_param {
 
 	union model_param_value default_value;
 
-	struct ip *ip;				/**< A pointer to the model structure to which this parameters belongs to. */
+	struct fpga_ip *ip;				/**< A pointer to the model structure to which this parameters belongs to. */
 };
 
 /** Initialize a model */
-int model_init(struct ip *c);
+int model_init(struct fpga_ip *c);
 
 /** Parse model */
-int model_parse(struct ip *c);
+int model_parse(struct fpga_ip *c);
 
 /** Destroy a model */
-void model_destroy(struct ip *c);
+int model_destroy(struct fpga_ip *c);
 
 /** Print detailed information about the model to the screen. */
-void model_dump(struct ip *c);
+void model_dump(struct fpga_ip *c);
 
 /** Add a new parameter to the model */
-void model_param_add(struct ip *c, const char *name, enum model_param_direction dir, enum model_param_type type);
+void model_param_add(struct fpga_ip *c, const char *name, enum model_param_direction dir, enum model_param_type type);
 
 /** Remove an existing parameter by its name */
-int model_param_remove(struct ip *c, const char *name);
+int model_param_remove(struct fpga_ip *c, const char *name);
 
 /** Read a model parameter.
  *
@@ -123,4 +126,4 @@ int model_param_write(struct model_param *p, double v);
 
 int model_param_update(struct model_param *p, struct model_param *u);
 
-#endif /* _FPGA_MODEL_H_ */
+/** @} */

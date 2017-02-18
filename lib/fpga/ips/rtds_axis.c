@@ -13,9 +13,10 @@
 #include "plugin.h"
 
 #include "fpga/ip.h"
-#include "fpga/rtds_axis.h"
+#include "fpga/card.h"
+#include "fpga/ips/rtds_axis.h"
 
-void rtds_axis_dump(struct ip *c)
+void rtds_axis_dump(struct fpga_ip *c)
 {
 	/* Check RTDS_Axis registers */
 	uint32_t *regs = (uint32_t *) (c->card->map + c->baseaddr);
@@ -42,7 +43,7 @@ void rtds_axis_dump(struct ip *c)
 	}
 }
 
-double rtds_axis_dt(struct ip *c)
+double rtds_axis_dt(struct fpga_ip *c)
 {
 	uint32_t *regs = (uint32_t *) (c->card->map + c->baseaddr);
 	uint16_t dt = regs[RTDS_AXIS_TS_PERIOD_OFFSET/4];
@@ -55,8 +56,9 @@ static struct plugin p = {
 	.description	= "",
 	.type		= PLUGIN_TYPE_FPGA_IP,
 	.ip		= {
-		.vlnv = { "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL },
-		.dump = rtds_axis_dump
+		.vlnv	= { "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL },
+		.type	= FPGA_IP_TYPE_INTERFACE,
+		.dump	= rtds_axis_dump
 	}
 };
 

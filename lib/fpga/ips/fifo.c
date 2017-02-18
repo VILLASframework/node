@@ -14,18 +14,20 @@
 #include "plugin.h"
 
 #include "fpga/ip.h"
-#include "fpga/fifo.h"
-#include "fpga/intc.h"
+#include "fpga/card.h"
+#include "fpga/ips/fifo.h"
+#include "fpga/ips/intc.h"
 
-int fifo_init(struct ip *c)
+int fifo_init(struct fpga_ip *c)
 {
-	struct fifo *fifo = &c->fifo;
-	XLlFifo *xfifo = &fifo->inst;
-
 	int ret;
 
+	struct fpga_card *f = c->card;
+	struct fifo *fifo = &c->fifo;
+	
+	XLlFifo *xfifo = &fifo->inst;
 	XLlFifo_Config fifo_cfg = {
-		.BaseAddress = (uintptr_t) c->card->map + c->baseaddr,
+		.BaseAddress = (uintptr_t) f->map + c->baseaddr,
 		.Axi4BaseAddress = (uintptr_t) c->card->map + fifo->baseaddr_axi4,
 		.Datainterface = (fifo->baseaddr_axi4 != -1) ? 1 : 0 /* use AXI4 for Data, AXI4-Lite for control */
 	};
@@ -39,7 +41,7 @@ int fifo_init(struct ip *c)
 	return 0;
 }
 
-ssize_t fifo_write(struct ip *c, char *buf, size_t len)
+ssize_t fifo_write(struct fpga_ip *c, char *buf, size_t len)
 {
 	XLlFifo *fifo = &c->fifo.inst;
 	uint32_t tdfv;
@@ -54,7 +56,7 @@ ssize_t fifo_write(struct ip *c, char *buf, size_t len)
 	return len;
 }
 
-ssize_t fifo_read(struct ip *c, char *buf, size_t len)
+ssize_t fifo_read(struct fpga_ip *c, char *buf, size_t len)
 {
 	XLlFifo *fifo = &c->fifo.inst;
 
@@ -75,7 +77,7 @@ ssize_t fifo_read(struct ip *c, char *buf, size_t len)
 	return nextlen;
 }
 
-int fifo_parse(struct ip *c)
+int fifo_parse(struct fpga_ip *c)
 {
 	struct fifo *fifo = &c->fifo;
 
@@ -89,7 +91,7 @@ int fifo_parse(struct ip *c)
 	return 0;
 }
 
-int fifo_reset(struct ip *c)
+int fifo_reset(struct fpga_ip *c)
 {
 	XLlFifo_Reset(&c->fifo.inst);
 
@@ -101,10 +103,11 @@ static struct plugin p = {
 	.description	= "",
 	.type		= PLUGIN_TYPE_FPGA_IP,
 	.ip		= {
-		.vlnv = { "xilinx.com", "ip", "axi_fifo_mm_s", NULL },
-		.init = fifo_init,
-		.parse = fifo_parse,
-		.reset = fifo_reset
+		.vlnv	= { "xilinx.com", "ip", "axi_fifo_mm_s", NULL },
+		.type	= FPGA_IP_TYPE_DATAMOVER,
+		.init	= fifo_init,
+		.parse	= fifo_parse,
+		.reset	= fifo_reset
 	}
 };
 

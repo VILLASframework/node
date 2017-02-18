@@ -18,13 +18,14 @@
 #include "kernel/kernel.h" 
 
 #include "fpga/ip.h"
-#include "fpga/intc.h"
+#include "fpga/card.h"
+#include "fpga/ips/intc.h"
 
-int intc_init(struct ip *c)
+int intc_init(struct fpga_ip *c)
 {
 	int ret;
 
-	struct fpga *f = c->card;
+	struct fpga_card *f = c->card;
 	struct intc *intc = &c->intc;
 
 	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
@@ -62,18 +63,20 @@ int intc_init(struct ip *c)
 	return 0;
 }
 
-void intc_destroy(struct ip *c)
+int intc_destroy(struct fpga_ip *c)
 {
-	struct fpga *f = c->card;
+	struct fpga_card *f = c->card;
 	struct intc *intc = &c->intc;
 
 	vfio_pci_msi_deinit(&f->vd, intc->efds);
+	
+	return 0;
 }
 
-int intc_enable(struct ip *c, uint32_t mask, int flags)
+int intc_enable(struct fpga_ip *c, uint32_t mask, int flags)
 {
+	struct fpga_card *f = c->card;
 	struct intc *intc = &c->intc;
-	struct fpga *f = c->card;
 
 	uint32_t ier, imr;
 	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
@@ -108,9 +111,9 @@ int intc_enable(struct ip *c, uint32_t mask, int flags)
 	return 0;
 }
 
-int intc_disable(struct ip *c, uint32_t mask)
+int intc_disable(struct fpga_ip *c, uint32_t mask)
 {
-	struct fpga *f = c->card;
+	struct fpga_card *f = c->card;
 
 	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
 	uint32_t ier = XIntc_In32(base + XIN_IER_OFFSET);
@@ -120,10 +123,10 @@ int intc_disable(struct ip *c, uint32_t mask)
 	return 0;
 }
 
-uint64_t intc_wait(struct ip *c, int irq)
+uint64_t intc_wait(struct fpga_ip *c, int irq)
 {
+	struct fpga_card *f = c->card;
 	struct intc *intc = &c->intc;
-	struct fpga *f = c->card;
 
 	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
 
@@ -154,8 +157,9 @@ static struct plugin p = {
 	.description	= "",
 	.type		= PLUGIN_TYPE_FPGA_IP,
 	.ip		= {
-		.vlnv = { "acs.eonerc.rwth-aachen.de", "user", "axi_pcie_intc", NULL },
-		.init = intc_init,
+		.vlnv	= { "acs.eonerc.rwth-aachen.de", "user", "axi_pcie_intc", NULL },
+		.type	= FPGA_IP_TYPE_MISC,
+		.init	= intc_init,
 		.destroy = intc_destroy
 	}
 };

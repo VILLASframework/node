@@ -11,9 +11,10 @@
 #include "plugin.h"
 
 #include "fpga/ip.h"
-#include "fpga/dft.h"
+#include "fpga/card.h"
+#include "fpga/ips/dft.h"
 
-int dft_parse(struct ip *c)
+int dft_parse(struct fpga_ip *c)
 {
 	struct dft *dft = &c->dft;
 
@@ -44,13 +45,16 @@ int dft_parse(struct ip *c)
 	return 0;
 }
 
-int dft_init(struct ip *c)
+int dft_init(struct fpga_ip *c)
 {
 	int ret;
+	
+	struct fpga_card *f = c->card;
 	struct dft *dft = &c->dft;
+
 	XHls_dft *xdft = &dft->inst;
 	XHls_dft_Config xdft_cfg = {
-		.Ctrl_BaseAddress = (uintptr_t) c->card->map + c->baseaddr
+		.Ctrl_BaseAddress = (uintptr_t) f->map + c->baseaddr
 	};
 
 	ret = XHls_dft_CfgInitialize(xdft, &xdft_cfg);
@@ -74,7 +78,7 @@ int dft_init(struct ip *c)
 	return 0;
 }
 
-void dft_destroy(struct ip *c)
+int dft_destroy(struct fpga_ip *c)
 {
 	struct dft *dft = &c->dft;
 	XHls_dft *xdft = &dft->inst;
@@ -85,6 +89,8 @@ void dft_destroy(struct ip *c)
 		free(dft->fharmonics);
 		dft->fharmonics = NULL;
 	}
+	
+	return 0;
 }
 
 static struct plugin p = {
@@ -92,10 +98,11 @@ static struct plugin p = {
 	.description	= "Perfom Discrete Fourier Transforms with variable number of harmonics on the FPGA",
 	.type		= PLUGIN_TYPE_FPGA_IP,
 	.ip		= {
-		.vlnv = { "acs.eonerc.rwth-aachen.de", "hls", "hls_dft", NULL },
-		.init = dft_init,
+		.vlnv	= { "acs.eonerc.rwth-aachen.de", "hls", "hls_dft", NULL },
+		.type	= FPGA_IP_TYPE_MATH,
+		.init	= dft_init,
 		.destroy = dft_destroy,
-		.parse = dft_parse
+		.parse	= dft_parse
 	}
 };
 

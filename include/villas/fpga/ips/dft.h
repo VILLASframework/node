@@ -5,10 +5,13 @@
  * @copyright 2015-2016, Steffen Vogel
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
- **********************************************************************************/
- 
-#ifndef _FPGA_DFT_H_
-#define _FPGA_DFT_H_
+ */
+/**
+ * @addtogroup fpga VILLASfpga
+ * @{
+ */
+
+#pragma once
 
 #include <xilinx/xhls_dft.h>
 
@@ -24,11 +27,10 @@ struct dft {
 	int decimation;
 };
 
-int dft_parse(struct ip *c);
+int dft_parse(struct fpga_ip *c);
 
-int dft_init(struct ip *c);
+int dft_init(struct fpga_ip *c);
 
-void dft_destroy(struct ip *c);
+int dft_destroy(struct fpga_ip *c);
 
-
-#endif /* _FPGA_DFT_H_ */
+/** @} */

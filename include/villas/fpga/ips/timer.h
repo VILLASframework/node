@@ -7,13 +7,18 @@
  * @copyright 2015-2016, Steffen Vogel
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
- **********************************************************************************/
+ */
+/**
+ * @addtogroup fpga VILLASfpga
+ * @{
+ */
 
-#ifndef _FPGA_TIMER_H_
-#define _FPGA_TIMER_H_
+#pragma once
+
+#include <xilinx/xtmrctr.h>
 
 struct timer {
 	XTmrCtr inst;
 };
 
-#endif /* _FPGA_TIMER_H_ */
+/** @} */

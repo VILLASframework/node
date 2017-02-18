@@ -13,12 +13,13 @@
 #include "plugin.h"
 
 #include "fpga/ip.h"
-#include "fpga/timer.h"
+#include "fpga/card.h"
+#include "fpga/ips/timer.h"
 
-int timer_init(struct ip *c)
+int timer_init(struct fpga_ip *c)
 {
+	struct fpga_card *f = c->card;
 	struct timer *tmr = &c->timer;
-	struct fpga *f = c->card;
 
 	XTmrCtr *xtmr = &tmr->inst;
 	XTmrCtr_Config xtmr_cfg = {
@@ -37,8 +38,9 @@ static struct plugin p = {
 	.description	= "",
 	.type		= PLUGIN_TYPE_FPGA_IP,
 	.ip		= {
-		.vlnv = { "xilinx.com", "ip", "axi_timer", NULL },
-		.init = timer_init
+		.vlnv	= { "xilinx.com", "ip", "axi_timer", NULL },
+		.type	= FPGA_IP_TYPE_MISC,
+		.init	= timer_init
 	}
 };
 

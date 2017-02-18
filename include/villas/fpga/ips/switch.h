@@ -7,10 +7,13 @@
  * @copyright 2015-2016, Steffen Vogel
  *   This file is part of S2SS. All Rights Reserved. Proprietary and confidential.
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
- **********************************************************************************/
+ */
+/**
+ * @addtogroup fpga VILLASfpga
+ * @{
+ */
 
-#ifndef _FPGA_SWITCH_H_
-#define _FPGA_SWITCH_H_
+#pragma once
 
 #include <xilinx/xaxis_switch.h>
 
@@ -33,17 +36,17 @@ struct sw {
 
 struct ip;
 
-int switch_init(struct ip *c);
+int switch_init(struct fpga_ip *c);
 
 /** Initialize paths which have been parsed by switch_parse() */
-int switch_init_paths(struct ip *c);
+int switch_init_paths(struct fpga_ip *c);
 
-void switch_destroy(struct ip *c);
+int switch_destroy(struct fpga_ip *c);
 
-int switch_parse(struct ip *c);
+int switch_parse(struct fpga_ip *c);
 
-int switch_connect(struct ip *c, struct ip *mi, struct ip *si);
+int switch_connect(struct fpga_ip *c, struct fpga_ip *mi, struct fpga_ip *si);
 
-int switch_disconnect(struct ip *c, struct ip *mi, struct ip *si);
+int switch_disconnect(struct fpga_ip *c, struct fpga_ip *mi, struct fpga_ip *si);
 
-#endif /* _FPGA_SWITCH_H_ */
+/** @} */

@@ -65,7 +65,7 @@ static int lapack_workload(int N, double *A)
 
 int fpga_benchmark_overruns(struct fpga *f)
 {
-	struct ip *rtds, *dm;
+	struct fpga_ip *rtds, *dm;
 
 	dm = list_lookup(&f->ips, "dma_1");
 	rtds = list_lookup(&f->ips, "rtds_axis_0");
