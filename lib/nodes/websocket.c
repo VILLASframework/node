@@ -546,18 +546,19 @@ int websocket_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return cnt;
 }
 
-static struct node_type vt = {
+static struct plugin p = {
 	.name		= "websocket",
 	.description	= "Send and receive samples of a WebSocket connection (libwebsockets)",
-	.vectorize	= 0, /* unlimited */
-	.size		= sizeof(struct websocket),
-	.open		= websocket_open,
-	.close		= websocket_close,
-	.destroy	= websocket_destroy,
-	.read		= websocket_read,
-	.write		= websocket_write,
-	.init		= websocket_init,
-	.deinit		= websocket_deinit
+	.type		= PLUGIN_TYPE_NODE,
+	.node		= {
+		.vectorize	= 0, /* unlimited */
+		.size		= sizeof(struct websocket),
+		.open		= websocket_open,
+		.close		= websocket_close,
+		.destroy	= websocket_destroy,
+		.read		= websocket_read,
+		.write		= websocket_write,
+	}
 };
 
-REGISTER_NODE_TYPE(&vt)
+REGISTER_PLUGIN(&p)

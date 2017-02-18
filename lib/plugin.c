@@ -54,7 +54,7 @@ int plugin_destroy(struct plugin *p)
 	return 0;
 }
 
-int plugin_parse(struct plugin *p, config_setting_t *lcs)
+int plugin_parse(struct plugin *p, config_setting_t *cfg)
 {
 	const char *path;
 
@@ -62,23 +62,20 @@ int plugin_parse(struct plugin *p, config_setting_t *lcs)
 	if (!path)
 		cerror(cfg, "Setting 'plugin' must be a string.");
 		
-	p->
+	handle = dlopen(path, RTLD_NOW);
+	if (!handle)
+		error("Failed to load plugin %s", dlerror());
 		
-		handle = dlopen(path, RTLD_NOW);
-		if (!handle)
-			error("Failed to load plugin %s", dlerror());
-		
-		list_push_back(&cfg->plugins, handle);
-	}
+	list_push_back(&cfg->plugins, handle);
 
 	return 0;
 }
 
-struct plugin * plugin_lookup(char *name, enum plugin_types type)
+struct plugin * plugin_lookup(enum plugin_types type, const char *name)
 {
 	list_foreach(struct plugin *l, &plugins) {
 		if (l->type == type && strcmp(l->name, name) == 0)
-			return l
+			return l;
 	}
 	
 	return NULL;

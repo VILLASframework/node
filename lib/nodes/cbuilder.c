@@ -12,8 +12,6 @@
 
 #include "nodes/cbuilder.h"
 
-struct list cbmodels;	/**< Table of existing CBuilder models */
-
 int cbuilder_parse(struct node *n, config_setting_t *cfg)
 {
 	struct cbuilder *cb = n->_vd;
@@ -27,7 +25,7 @@ int cbuilder_parse(struct node *n, config_setting_t *cfg)
 	if (!config_setting_lookup_string(cfg, "model", &model))
 		cerror(cfg, "CBuilder model requires 'model' setting");
 	
-	cb->model = list_lookup(&cbmodels, model);
+	cb->model = (struct cbuilder_model *) plugin_lookup(PLUGIN_TYPE_MODEL_CBUILDER, model);
 	if (!cb->model)
 		cerror(cfg, "Unknown model '%s'", model);
 	

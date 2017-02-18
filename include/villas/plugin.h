@@ -11,7 +11,10 @@
 
 #include "hooks.h"
 #include "api.h"
+
 #include "fpga/ip.h"
+
+#include "nodes/cbuilder.h"
 
 #define REGISTER_PLUGIN(p)					\
 __attribute__((constructor)) static void UNIQUE(__ctor)() {	\
@@ -51,18 +54,23 @@ struct plugin {
 	int (*unload)(struct plugin *p);
 	
 	union {
-		struct api_ressource api;
-		struct hook hook;
-		struct node_type node;
+		struct api_ressource	api;
+		struct node_type	node;
+		struct fpga_ip_type	ip;
+		struct hook		hook;
+		struct cbuilder_model	cb;
 	};
 };
 
-struct plugin * plugin_lookup(char *name, enum plugin_types type);
-
 int plugin_init(struct plugin *p, char *name, char *path);
+
+int plugin_destroy(struct plugin *p);
+
+int plugin_parse(struct plugin *p, config_setting_t *cfg);
 
 int plugin_load(struct plugin *p);
 
 int plugin_unload(struct plugin *p);
 
-int plugin_destroy(struct plugin *p);
+/** Find registered and loaded plugin with given name and type. */
+struct plugin * plugin_lookup(enum plugin_types type, const char *name);
