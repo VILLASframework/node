@@ -27,12 +27,14 @@
 #include "list.h"
 
 /* The configuration of hook parameters is done in "config.h" */
+#include "cfg.h"
+
 
 /* Forward declarations */
 struct path;
 struct hook;
 struct sample;
-struct settings;
+struct cfg;
 
 /** This is a list of hooks which can be used in the configuration file. */
 extern struct list hooks;
@@ -99,7 +101,7 @@ struct hook {
 };
 
 /** Save references to global nodes, paths and settings */
-void hook_init(struct list *nodes, struct list *paths, struct settings *set);
+void hook_init(struct cfg *cfg);
 
 /** Sort hook list according to the their priority. See hook::priority. */
 int hooks_sort_priority(const void *a, const void *b);

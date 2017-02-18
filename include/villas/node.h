@@ -23,7 +23,6 @@
 extern struct list node_types;	/**< Vtable for virtual node sub types */
 
 /* Forward declarations */
-struct config_setting_t cfg;
 struct node_type;
 
 /** The data structure for a node.
