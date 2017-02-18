@@ -43,4 +43,6 @@ int pool_destroy(struct pool *p)
 	queue_destroy(&p->queue);	
 
 	return memory_free(p->mem, p->buffer, p->len);
+	
+	return 0;
 }

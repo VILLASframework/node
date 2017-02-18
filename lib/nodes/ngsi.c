@@ -429,26 +429,30 @@ char * ngsi_print(struct node *n)
 		i->endpoint, i->timeout, list_length(&i->mapping));
 }
 
-static void ngsi_destroy_metadata(struct ngsi_metadata *meta)
+static int ngsi_metadata_destroy(struct ngsi_metadata *meta)
 {
 	free(meta->value);
 	free(meta->name);
 	free(meta->type);
+	
+	return 0;
 }
 
-static void ngsi_destroy_attribute(struct ngsi_attribute *attr)
+static int ngsi_attribute_destroy(struct ngsi_attribute *attr)
 {
 	free(attr->name);
 	free(attr->type);
 	
-	list_destroy(&attr->metadata, (dtor_cb_t) ngsi_destroy_metadata, true);
+	list_destroy(&attr->metadata, (dtor_cb_t) ngsi_metadata_destroy, true);
+	
+	return 0;
 }
 
 int ngsi_destroy(struct node *n)
 {
 	struct ngsi *i = n->_vd;
 	
-	list_destroy(&i->mapping, (dtor_cb_t) ngsi_destroy_attribute, true);
+	list_destroy(&i->mapping, (dtor_cb_t) ngsi_attribute_destroy, true);
 	
 	return 0;
 }

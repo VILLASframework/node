@@ -197,6 +197,21 @@ void path_init(struct path *p)
 	p->state = PATH_CREATED;
 }
 
+int path_destroy(struct path *p)
+{
+	hook_run(p, NULL, 0, HOOK_DEINIT); /* Release memory */
+	
+	list_destroy(&p->destinations, NULL, false);
+	list_destroy(&p->hooks, NULL, true);
+	
+	queue_destroy(&p->queue);
+	pool_destroy(&p->pool);
+
+	free(p->_name);
+	
+	return 0;
+}
+
 int path_prepare(struct path *p)
 {
 	int ret;
@@ -224,19 +239,6 @@ int path_prepare(struct path *p)
 		error("Failed to initialize queue for path");
 
 	return 0;
-}
-
-void path_destroy(struct path *p)
-{
-	hook_run(p, NULL, 0, HOOK_DEINIT); /* Release memory */
-	
-	list_destroy(&p->destinations, NULL, false);
-	list_destroy(&p->hooks, NULL, true);
-	
-	queue_destroy(&p->queue);
-	pool_destroy(&p->pool);
-
-	free(p->_name);
 }
 
 int path_uses_node(struct path *p, struct node *n) {

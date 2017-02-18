@@ -44,7 +44,7 @@ struct hist {
 void hist_create(struct hist *h, double start, double end, double resolution);
 
 /** Free the dynamically allocated memory. */
-void hist_destroy(struct hist *h);
+int hist_destroy(struct hist *h);
 
 /** Reset all counters and values back to zero. */
 void hist_reset(struct hist *h);

@@ -30,9 +30,11 @@ void hist_create(struct hist *h, double low, double high, double resolution)
 	hist_reset(h);
 }
 
-void hist_destroy(struct hist *h)
+int hist_destroy(struct hist *h)
 {
 	free(h->data);
+	
+	return 0;
 }
 
 void hist_put(struct hist *h, double value)

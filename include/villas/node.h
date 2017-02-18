@@ -198,7 +198,7 @@ struct node * node_create(struct node_type *vt);
  *
  * @see node_type::destroy
  */
-void node_destroy(struct node *n);
+int node_destroy(struct node *n);
 
 /** Start operation of a node.
  *

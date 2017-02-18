@@ -42,7 +42,7 @@ void list_init(struct list *l)
 	l->array = NULL;
 }
 
-void list_destroy(struct list *l, dtor_cb_t destructor, bool release)
+int list_destroy(struct list *l, dtor_cb_t destructor, bool release)
 {
 	pthread_mutex_lock(&l->lock);
 
@@ -62,6 +62,8 @@ void list_destroy(struct list *l, dtor_cb_t destructor, bool release)
 
 	pthread_mutex_unlock(&l->lock);
 	pthread_mutex_destroy(&l->lock);
+	
+	return 0;
 }
 
 void list_push(struct list *l, void *p)

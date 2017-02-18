@@ -40,7 +40,7 @@
  *
  * @param data A pointer to the data which should be freed.
  */
-typedef void (*dtor_cb_t)(void *);
+typedef int (*dtor_cb_t)(void *);
 
 /** Callback to search or sort a list. */	
 typedef int (*cmp_cb_t)(const void *, const void *);
@@ -65,7 +65,7 @@ void list_init(struct list *l);
  * @param dtor A function pointer to a desctructor which will be called for every list item when the list is destroyed.
  * @param l A pointer to the list data structure.
  */
-void list_destroy(struct list *l, dtor_cb_t dtor, bool free);
+int list_destroy(struct list *l, dtor_cb_t dtor, bool free);
 
 /** Append an element to the end of the list */
 void list_push(struct list *l, void *p);

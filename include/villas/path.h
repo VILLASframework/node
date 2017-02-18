@@ -85,7 +85,7 @@ void path_init(struct path *p);
  *
  * @param i A pointer to the path structure.
  */
-void path_destroy(struct path *p);
+int path_destroy(struct path *p);
 
 /** Initialize  pool queue and hooks.
  *

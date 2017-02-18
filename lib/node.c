@@ -193,7 +193,7 @@ struct node * node_create(struct node_type *vt)
 	return n;
 }
 
-void node_destroy(struct node *n)
+int node_destroy(struct node *n)
 {
 	if (n->_vt->destroy)
 		n->_vt->destroy(n);
@@ -203,4 +203,6 @@ void node_destroy(struct node *n)
 	free(n->_vd);
 	free(n->_name);
 	free(n);
+	
+	return 0;
 }
