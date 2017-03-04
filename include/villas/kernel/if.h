@@ -5,8 +5,10 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
+
+/** @addtogroup fpga Kernel @{ */
 
 #pragma once
 
@@ -102,3 +104,5 @@ int if_get_irqs(struct interface *i);
  * @retval <0 Error. Something went wrong.
  */
 int if_set_affinity(struct interface *i, int affinity);
+
+/** @} */

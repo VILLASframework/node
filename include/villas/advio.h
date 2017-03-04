@@ -1,6 +1,22 @@
-/** Advanced IO
+/** libcurl based remote IO
  *
- */
+ * Implements an fopen() abstraction allowing reading from URLs
+ *
+ * This file introduces a c library buffered I/O interface to
+ * URL reads it supports fopen(), fread(), fgets(), feof(), fclose(),
+ * rewind(). Supported functions have identical prototypes to their normal c
+ * lib namesakes and are preceaded by a .
+ *
+ * Using this code you can replace your program's fopen() with afopen()
+ * and fread() with afread() and it become possible to read remote streams
+ * instead of (only) local files. Local files (ie those that can be directly
+ * fopened) will drop back to using the underlying clib implementations
+ *
+ * This example requires libcurl 7.9.7 or later.
+ *
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
 
 #pragma once
 

@@ -4,7 +4,7 @@
  *   http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
  *
  * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2016 Steffen Vogel
+ * @copyright 2017 Steffen Vogel
  * @license BSD 2-Clause License
  * 
  * All rights reserved.
@@ -29,7 +29,7 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ *********************************************************************************/
 
 #include "queue.h"
 #include "utils.h"

@@ -2,8 +2,10 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
+
+/** @addtogroup fpga Kernel @{ */
 
 #pragma once
 
@@ -56,3 +58,5 @@ int kernel_get_cacheline_size();
 
 /** Set SMP affinity of IRQ */
 int kernel_irq_setaffinity(unsigned irq, uintmax_t new, uintmax_t *old);
+
+/** @} */

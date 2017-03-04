@@ -1,3 +1,9 @@
+/** FPGA card.
+ *
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
+
 #include <unistd.h>
 
 #include "config.h"

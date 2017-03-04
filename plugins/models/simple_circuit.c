@@ -1,7 +1,7 @@
 /** This is c-code for CBuilder component for Subsystem 2
  *   Solver used as in RTDS: Resistive companion (Dommel's algo)
  *   Subsystem 1 is modelled in RSCAD
- *  
+ *
  *  % Circuit topology
  *                                                 %
  *  %            *** Subsystem 1 (SS1) ***         %   *** Subsystem 2 (SS2) ***
@@ -19,8 +19,10 @@
  *  %   |------------------------------------------%------------------
  *                                                 %
  *                                                 %
- */
-
+ *
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
 
 /* Variables declared here may be used as parameters inputs or outputs
  * The have to match with whats in Subsystem.h */

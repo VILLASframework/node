@@ -4,13 +4,14 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
- */
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
+
 /**
  * @addtogroup socket BSD Socket Node Type
  * @ingroup node
  * @{
- *********************************************************************************/
+ */
 
 #pragma once
 

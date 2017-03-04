@@ -2,8 +2,10 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
+
+/** @addtogroup fpga Kernel @{ */
 
 #pragma once
 
@@ -23,3 +25,5 @@ struct nl_sock * nl_init();
 
 /** Close and free global netlink socket. */
 void nl_shutdown();
+
+/** @} */

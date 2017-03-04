@@ -7,8 +7,10 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
+
+/** @addtogroup fpga Kernel @{ */
 
 #pragma once
 
@@ -80,3 +82,5 @@ int tc_netem(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hd
  * @retval <0 Error. Something went wrong.
 */
 int tc_mark(struct interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_t mark);
+
+/** @} */

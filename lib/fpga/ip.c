@@ -1,3 +1,9 @@
+/** FPGA IP component.
+ *
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
+
 #include <libconfig.h>
 
 #include "log.h"

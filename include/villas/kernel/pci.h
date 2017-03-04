@@ -2,8 +2,10 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Steffen Vogel
+ * @copyright 2017, Steffen Vogel
  **********************************************************************************/
+
+/** @addtogroup fpga Kernel @{ */
 
 #pragma once
 
@@ -56,3 +58,5 @@ int pci_attach_driver(struct pci_dev *d, const char *driver);
 
 /** Return the IOMMU group of this PCI device or -1 if the device is not in a group. */
 int pci_get_iommu_group(struct pci_dev *d);
+
+/** @} */

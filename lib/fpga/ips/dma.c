@@ -3,7 +3,7 @@
  * These functions present a simpler interface to Xilinx' DMA driver (XAxiDma_*)
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Steffen Vogel
+ * @copyright 2017, Steffen Vogel
  **********************************************************************************/
 
 #include <sys/types.h>

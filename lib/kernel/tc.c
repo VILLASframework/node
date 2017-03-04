@@ -3,7 +3,7 @@
  * VILLASnode uses these functions to setup the network emulation feature.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
 #include <netlink/route/cls/fw.h>

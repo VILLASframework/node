@@ -1,12 +1,10 @@
 /** AXI-PCIe Interrupt controller
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Steffen Vogel
- */
-/**
- * @addtogroup fpga VILLASfpga
- * @{
+ * @copyright 2017, Steffen Vogel
  **********************************************************************************/
+
+/** @addtogroup fpga VILLASfpga @{ */
 
 #pragma once
 

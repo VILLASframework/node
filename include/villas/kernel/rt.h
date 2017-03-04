@@ -2,8 +2,10 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
+
+/** @addtogroup fpga Kernel @{ */
 
 #pragma once
 
@@ -21,3 +23,5 @@ int rt_set_priority(int priority);
  * @reval <>0 Kernel is not patched.
  */
 int rt_is_preemptible();
+
+/** @} */

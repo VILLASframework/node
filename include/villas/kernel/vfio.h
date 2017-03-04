@@ -2,8 +2,10 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Steffen Vogel
+ * @copyright 2017, Steffen Vogel
  *********************************************************************************/
+
+/** @addtogroup fpga Kernel @{ */
 
 #pragma once
 
@@ -106,3 +108,5 @@ int vfio_unmap_dma(struct vfio_container *c, uint64_t virt, uint64_t phys, size_
 
 /** munmap() a region which has been mapped by vfio_map_region() */
 int vfio_unmap_region(struct vfio_dev *d, int idx);
+
+/** @} */

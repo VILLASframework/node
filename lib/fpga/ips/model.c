@@ -1,7 +1,7 @@
 /** Interface to Xilinx System Generator Models via PCIe
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Steffen Vogel
+ * @copyright 2017, Steffen Vogel
  *********************************************************************************/
 
 #include <stdint.h>

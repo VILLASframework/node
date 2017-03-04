@@ -1,3 +1,9 @@
+/** Unit tests for queue
+ *
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
