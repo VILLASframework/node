@@ -8,6 +8,12 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+#include <criterion/criterion.h>
+#include <criterion/options.h>
+
+#include <xilinx/xtmrctr.h>
+
+#include <villas/cfg.h>
 #include <villas/utils.h>
 #include <villas/nodes/fpga.h>
 
@@ -18,75 +24,82 @@
 
 #include "config.h"
 
+#define TEST_CONFIG "/villas/etc/fpga.conf"
 #define TEST_LEN 0x1000
 
 #define CPU_HZ 3392389000
 
-/* Forward Declarations */
-int fpga_test_intc(struct fpga_card *c);
-int fpga_test_timer(struct fpga_card *c);
-int fpga_test_fifo(struct fpga_card *c);
-int fpga_test_dma(struct fpga_card *c);
-int fpga_test_xsg(struct fpga_card *c);
-int fpga_test_hls_dft(struct fpga_card *c);
-int fpga_test_rtds_rtt(struct fpga_card *c);
+static struct fpga *fpga;
 
-int fpga_tests(int argc, char *argv[], struct fpga_card *c)
+static config_t config;
+static struct settings settings;
+
+static void init()
 {
 	int ret;
+	int argc = 1;
+	char *argv[] =  { "tests" };
+	config_setting_t *cfg_root;
 	
-	struct {
-		const char *name;
-		int (*func)(struct fpga_card *c);
-	} tests[] = {
-		{ "Interrupt Controller",	fpga_test_intc },
-		{ "Timer Counter",		fpga_test_timer },
-		{ "FIFO",			fpga_test_fifo },
-		{ "DMA",			fpga_test_dma },
-		{ "XSG: multiply_add",		fpga_test_xsg },
-		{ "HLS: hls_dft",		fpga_test_hls_dft },
-		{ "RTDS: tight rtt",		fpga_test_rtds_rtt }
-	};
+	cfg_parse(TEST_CONFIG, &config, &settings, NULL, NULL);
 
-	for (int i = 0; i < ARRAY_LEN(tests); i++) {
-		ret = tests[i].func(c);
+	cfg_root = config_root_setting(&config);
 
-		info("%s: %s", tests[i].name, (ret == 0) ? GRN("passed") : RED("failed"));
-	}
+	ret = fpga_init(argc, argv, cfg_root);
+	cr_assert_eq(ret, 0, "Failed to initilize FPGA");
 
-	return 0;
+	fpga = fpga_get();
+
+	if (criterion_options.logging_threshold < CRITERION_IMPORTANT)
+		fpga_dump(fpga);
 }
 
-int fpga_test_intc(struct fpga_card *c)
+static void fini()
+{
+	int ret;
+
+	ret = fpga_deinit(&fpga);
+	cr_assert_eq(ret, 0, "Failed to de-initilize FPGA");
+	
+	cfg_destroy(&config);
+	
+}
+
+
+TestSuite(fpga,
+	.init = init,
+	.fini = fini,
+	.description = "VILLASfpga");
+
+Test(fpga, intc, .description = "Interrupt Controller")
 {
 	int ret;
 	uint32_t isr;
 
-	if (!c->intc)
-		return -1;
+	cr_assert(fpga->intc);
 
-	ret = intc_enable(c->intc, 0xFF00, 0);
+	ret = intc_enable(fpga->intc, 0xFF00, 0);
 	if (ret)
 		error("Failed to enable interrupt");
 
 	/* Fake IRQs in software by writing to ISR */
-	XIntc_Out32((uintptr_t) c->map + c->intc->baseaddr + XIN_ISR_OFFSET, 0xFF00);
+	XIntc_Out32((uintptr_t) fpga->map + fpga->intc->baseaddr + XIN_ISR_OFFSET, 0xFF00);
 
 	/* Wait for 8 SW triggered IRQs */
 	for (int i = 0; i < 8; i++)
-		intc_wait(c->intc, i+8);
+		intc_wait(fpga->intc, i+8);
 
 	/* Check ISR if all SW IRQs have been deliverd */
-	isr = XIntc_In32((uintptr_t) c->map + c->intc->baseaddr + XIN_ISR_OFFSET);
+	isr = XIntc_In32((uintptr_t) fpga->map + fpga->intc->baseaddr + XIN_ISR_OFFSET);
 
-	ret = intc_disable(c->intc, 0xFF00);
+	ret = intc_disable(fpga->intc, 0xFF00);
 	if (ret)
 		error("Failed to disable interrupt");
 
-	return (isr & 0xFF00) ? -1 : 0; /* ISR should get cleared by MSI_Grant_signal */
+	cr_assert_eq(isr & 0xFF00, 0); /* ISR should get cleared by MSI_Grant_signal */
 }
 
-int fpga_test_xsg(struct fpga_card *c)
+Test(fpga, xsg, .description = "XSG: multiply_add")
 {
 	int ret;
 	double factor, err = 0;
@@ -95,12 +108,11 @@ int fpga_test_xsg(struct fpga_card *c)
 	struct model_param *p;
 	struct dma_mem mem;
 
-	xsg = fpga_vlnv_lookup(&c->ips, &(struct fpga_vlnv) { NULL, "sysgen", "xsg_multiply", NULL });
-	dma = fpga_vlnv_lookup(&c->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_dma", NULL });
+	xsg = ip_vlnv_lookup(&fpga->ips, NULL, "sysgen", "xsg_multiply", NULL);
+	dma = ip_vlnv_lookup(&fpga->ips, "xilinx.com", "ip", "axi_dma", NULL);
 
 	/* Check if required IP is available on FPGA */
-	if (!dma || !xsg || !dma)
-		return -1;
+	cr_assert_neq(!dma || !xsg || !dma, 0);
 
 	p = list_lookup(&xsg->model.parameters, "factor");
 	if (!p)
@@ -112,10 +124,10 @@ int fpga_test_xsg(struct fpga_card *c)
 	
 	info("Model param: factor = %f", factor);
 
-	ret = switch_connect(c->sw, dma, xsg);
+	ret = switch_connect(fpga->sw, dma, xsg);
 	if (ret)
 		error("Failed to configure switch");
-	ret = switch_connect(c->sw, xsg, dma);
+	ret = switch_connect(fpga->sw, xsg, dma);
 	if (ret)
 		error("Failed to configure switch");
 
@@ -138,10 +150,10 @@ int fpga_test_xsg(struct fpga_card *c)
 
 	info("Error after FPGA operation: err = %f", err);
 
-	ret = switch_disconnect(c->sw, dma, xsg);
+	ret = switch_disconnect(fpga->sw, dma, xsg);
 	if (ret)
 		error("Failed to configure switch");
-	ret = switch_disconnect(c->sw, xsg, dma);
+	ret = switch_disconnect(fpga->sw, xsg, dma);
 	if (ret)
 		error("Failed to configure switch");
 
@@ -149,29 +161,28 @@ int fpga_test_xsg(struct fpga_card *c)
 	if (ret)
 		error("Failed to release DMA memory");
 
-	return err > 1e-3;
+	cr_assert(err < 1e-3);
 }
 
-int fpga_test_hls_dft(struct fpga_card *c)
+Test(fpga, hls_dft, .description = "HLS: hls_dft")
 {
 	int ret;
 	struct fpga_ip *hls, *rtds;
 	
-	rtds = fpga_vlnv_lookup(&c->ips, &(struct fpga_vlnv) { "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL });
-	hls = fpga_vlnv_lookup(&c->ips, &(struct fpga_vlnv) { NULL, "hls", "hls_dft", NULL });
+	rtds = ip_vlnv_lookup(&fpga->ips, "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL);
+	hls = ip_vlnv_lookup(&fpga->ips, NULL, "hls", "hls_dft", NULL);
 
 	/* Check if required IP is available on FPGA */
-	if (!hls || !rtds)
-		return -1;
+	cr_assert(hls && rtds);
 
-	ret = intc_enable(c->intc, (1 << rtds->irq), 0);
+	ret = intc_enable(fpga->intc, (1 << rtds->irq), 0);
 	if (ret)
 		error("Failed to enable interrupt");
 	
-	ret = switch_connect(c->sw, rtds, hls);
+	ret = switch_connect(fpga->sw, rtds, hls);
 	if (ret)
 		error("Failed to configure switch");
-	ret = switch_connect(c->sw, hls, rtds);
+	ret = switch_connect(fpga->sw, hls, rtds);
 	if (ret)
 		error("Failed to configure switch");
 
@@ -196,32 +207,29 @@ int fpga_test_hls_dft(struct fpga_card *c)
 	}
 #endif
 
-	ret = switch_disconnect(c->sw, rtds, hls);
+	ret = switch_disconnect(fpga->sw, rtds, hls);
 	if (ret)
 		error("Failed to configure switch");
-	ret = switch_disconnect(c->sw, hls, rtds);
+	ret = switch_disconnect(fpga->sw, hls, rtds);
 	if (ret)
 		error("Failed to configure switch");
-
-	return 0;
 }
 
-int fpga_test_fifo(struct fpga_card *c)
+Test(fpga, fifo, .description = "FIFO")
 {
 	int ret;
 	ssize_t len;
 	char src[255], dst[255];
 	struct fpga_ip *fifo;
 
-	fifo = fpga_vlnv_lookup(&c->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_fifo_mm_s", NULL });
-	if (!fifo)
-		return -1;
+	fifo = ip_vlnv_lookup(&fpga->ips, "xilinx.com", "ip", "axi_fifo_mm_s", NULL);
+	cr_assert(fifo);
 
-	ret = intc_enable(c->intc, (1 << fifo->irq), 0);
+	ret = intc_enable(fpga->intc, (1 << fifo->irq), 0);
 	if (ret)
 		error("Failed to enable interrupt");
 
-	ret = switch_connect(c->sw, fifo, fifo);
+	ret = switch_connect(fpga->sw, fifo, fifo);
 	if (ret)
 		error("Failed to configure switch");
 
@@ -239,25 +247,25 @@ int fpga_test_fifo(struct fpga_card *c)
 	if (len != sizeof(dst))
 		error("Failed to read from FIFO");
 
-	ret = intc_disable(c->intc, (1 << fifo->irq));
+	ret = intc_disable(fpga->intc, (1 << fifo->irq));
 	if (ret)
 		error("Failed to disable interrupt");
 
-	ret = switch_disconnect(c->sw, fifo, fifo);
+	ret = switch_disconnect(fpga->sw, fifo, fifo);
 	if (ret)
 		error("Failed to configure switch");
 
 	/* Compare data */
-	return memcmp(src, dst, sizeof(src));
+	cr_assert_eq(memcmp(src, dst, sizeof(src)), 0);
 }
 
-int fpga_test_dma(struct fpga_card *c)
+Test(fpga, dma, .description = "DMA")
 {
 	int ret = -1;
 	struct dma_mem mem, src, dst;
 
-	list_foreach(struct fpga_ip *dma, &c->ips) { INDENT
-		if (!fpga_vlnv_cmp(&dma->vlnv, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_dma", NULL }))
+	list_foreach(struct ip *dma, &fpga->ips) { INDENT
+		if (!ip_vlnv_match(dma, "xilinx.com", "ip", "axi_dma", NULL))
 			continue; /* skip non DMA IP cores */
 		
 		/* Simple DMA can only transfer up to 4 kb due to
@@ -265,12 +273,10 @@ int fpga_test_dma(struct fpga_card *c)
 		ssize_t len2, len = dma->dma.inst.HasSg ? 64 << 20 : 1 << 2;
 
 		ret = dma_alloc(dma, &mem, 2 * len, 0);
-		if (ret)
-			return -1;
+		cr_assert_eq(ret, 0);
 
 		ret = dma_mem_split(&mem, &src, &dst);
-		if (ret)
-			return -1;
+		cr_assert_eq(ret, 0);
 
 		/* Get new random data */
 		len2 = read_random(src.base_virt, len);
@@ -279,12 +285,12 @@ int fpga_test_dma(struct fpga_card *c)
 
 		int irq_mm2s = dma->irq;
 		int irq_s2mm = dma->irq + 1;
-		
-		ret = intc_enable(c->intc, (1 << irq_mm2s) | (1 << irq_s2mm), 0);
+
+		ret = intc_enable(fpga->intc, (1 << irq_mm2s) | (1 << irq_s2mm), 0);
 		if (ret)
 			error("Failed to enable interrupt");
 
-		ret = switch_connect(c->sw, dma, dma);
+		ret = switch_connect(fpga->sw, dma, dma);
 		if (ret)
 			error("Failed to configure switch");
 		
@@ -297,11 +303,11 @@ int fpga_test_dma(struct fpga_card *c)
 
 		info("DMA %s (%s): %s", dma->name, dma->dma.inst.HasSg ? "scatter-gather" : "simple", ret ? RED("failed") : GRN("passed"));
 
-		ret = switch_disconnect(c->sw, dma, dma);
+		ret = switch_disconnect(fpga->sw, dma, dma);
 		if (ret)
 			error("Failed to configure switch");
 
-		ret = intc_disable(c->intc, (1 << irq_mm2s) | (1 << irq_s2mm));
+		ret = intc_disable(fpga->intc, (1 << irq_mm2s) | (1 << irq_s2mm));
 		if (ret)
 			error("Failed to disable interrupt");
 		
@@ -310,21 +316,20 @@ int fpga_test_dma(struct fpga_card *c)
 			error("Failed to release DMA memory");
 	}
 
-	return ret;
+	cr_assert_eq(ret, 0);
 }
 
-int fpga_test_timer(struct fpga_card *c)
+Test(fpga, timer, .description = "Timer Counter")
 {
 	int ret;
 	struct fpga_ip *tmr;
 
-	tmr = fpga_vlnv_lookup(&c->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_timer", NULL });
-	if (!tmr)
-		return -1;
+	tmr = ip_vlnv_lookup(&fpga->ips, "xilinx.com", "ip", "axi_timer", NULL);
+	cr_assert(tmr);
 	
 	XTmrCtr *xtmr = &tmr->timer.inst;
 
-	ret = intc_enable(c->intc, (1 << tmr->irq), 0);
+	ret = intc_enable(fpga->intc, (1 << tmr->irq), 0);
 	if (ret)
 		error("Failed to enable interrupt");
 
@@ -332,22 +337,22 @@ int fpga_test_timer(struct fpga_card *c)
 	XTmrCtr_SetResetValue(xtmr, 0, FPGA_AXI_HZ / 125);
 	XTmrCtr_Start(xtmr, 0);
 
-	uint64_t counter = intc_wait(c->intc, tmr->irq);
+	uint64_t counter = intc_wait(fpga->intc, tmr->irq);
 	info("Got IRQ: counter = %ju", counter);
 
 	if (counter == 1)
-		return 0;
+		return;
 	else
 		warn("Counter was not 1");
 
-	intc_disable(c->intc, (1 << tmr->irq));
+	intc_disable(fpga->intc, (1 << tmr->irq));
 	if (ret)
 		error("Failed to disable interrupt");
 
-	return -1;
+	return;
 }
 
-int fpga_test_rtds_rtt(struct fpga_card *c)
+Test(fpga, rtds_rtt, .description = "RTDS: tight rtt")
 {
 	int ret;
 	struct fpga_ip *dma, *rtds;
@@ -355,17 +360,16 @@ int fpga_test_rtds_rtt(struct fpga_card *c)
 	size_t recvlen;
 
 	/* Get IP cores */
-	rtds = fpga_vlnv_lookup(&c->ips, &(struct fpga_vlnv) { "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL });
-	dma = list_lookup(&c->ips, "dma_1");
+	rtds = ip_vlnv_lookup(&fpga->ips, "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL);
+	dma = list_lookup(&fpga->ips, "dma_1");
 
 	/* Check if required IP is available on FPGA */
-	if (!dma || !rtds)
-		return -1;
+	cr_assert (dma && rtds);
 
-	ret = switch_connect(c->sw, rtds, dma);
+	ret = switch_connect(fpga->sw, rtds, dma);
 	if (ret)
 		error("Failed to configure switch");
-	ret = switch_connect(c->sw, dma, rtds);
+	ret = switch_connect(fpga->sw, dma, rtds);
 	if (ret)
 		error("Failed to configure switch");
 
@@ -392,16 +396,14 @@ int fpga_test_rtds_rtt(struct fpga_card *c)
 			error("Failed to complete DMA write: %d", ret);
 	}
 
-	ret = switch_disconnect(c->sw, rtds, dma);
+	ret = switch_disconnect(fpga->sw, rtds, dma);
 	if (ret)
 		error("Failed to configure switch");
-	ret = switch_disconnect(c->sw, dma, rtds);
+	ret = switch_disconnect(fpga->sw, dma, rtds);
 	if (ret)
 		error("Failed to configure switch");
 	
 	ret = dma_free(dma, &buf);
 	if (ret)
 		error("Failed to release DMA memory");
-
-	return 0;
 }

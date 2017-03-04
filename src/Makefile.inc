@@ -28,7 +28,7 @@ src: $(TARGETS)
 $(TARGETS): $(BUILDDIR)/villas-%: $(BUILDDIR)/src/%.o
 
 # Some additional prereqs for individual binaries
-$(BUILDDIR)/villas-fpga: $(addprefix $(BUILDDIR)/src/,fpga-tests.o fpga-bench.o $(BENCH_OBJS))
+$(BUILDDIR)/villas-fpga: $(addprefix $(BUILDDIR)/src/,fpga-bench.o $(BENCH_OBJS))
 
 
 # Compile executable objects
