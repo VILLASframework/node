@@ -11,6 +11,12 @@
 
 #pragma once
 
+#include <libconfig.h>
+
+/* Forward declarations */
+struct fpga_ip;
+struct vfio_container;
+
 enum fpga_card_state {
 	FPGA_CARD_STATE_UNKOWN,
 	FPGA_CARD_STATE_RESETTED,
@@ -45,8 +51,10 @@ struct fpga_card {
 
 int fpga_card_parse(struct fpga_card *c, config_setting_t *cfg);
 
+void fpga_card_dump(struct fpga_card *c);
+
 /** Initialize FPGA card and its IP components. */
-int fpga_card_init(struct fpga_card *c);
+int fpga_card_init(struct fpga_card *c, struct pci *pci, struct vfio_container *vc);
 
 int fpga_card_destroy(struct fpga_card *c);
 

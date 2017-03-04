@@ -44,6 +44,8 @@ void usage(char *name)
 
 int main(int argc, char *argv[])
 {
+	struct log log;
+	
 	/* Some default values */
 	double rate = 10;
 	double freq = 1;
@@ -54,7 +56,7 @@ int main(int argc, char *argv[])
 	int limit = -1;	
 	int counter;
 	
-	log_init();
+	log_init(&log);
 
 	if (argc < 2) {
 		usage(argv[0]);

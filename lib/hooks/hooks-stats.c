@@ -10,8 +10,6 @@
 #include "utils.h"
 #include "timing.h"
 
-extern struct list *hook_nodes;
-
 void hook_stats_header()
 {
 	#define UNIT(u)	"(" YEL(u) ")"
@@ -101,11 +99,8 @@ int hook_stats_send(struct path *p, struct hook *h, int when, struct sample *smp
 		case HOOK_PARSE:
 			if (!h->parameter)
 				error("Missing parameter for hook '%s'", h->name);
-			
-			if (!hook_nodes)
-				error("Missing reference to node list for hook '%s", h->name);
 
-			private->dest = list_lookup(hook_nodes, h->parameter);
+			private->dest = list_lookup(NULL, h->parameter);
 			if (!private->dest)
 				error("Invalid destination node '%s' for hook '%s'", h->parameter, h->name);
 

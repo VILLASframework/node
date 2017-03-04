@@ -8,17 +8,18 @@
 
 #include <jansson.h>
 
+#include "plugin.h"
 #include "api.h"
 #include "node.h"
 #include "utils.h"
 
 extern struct list nodes;
 
-static int api_nodes(struct api_ressource *r, json_t *args, json_t **resp, struct api_info *i)
+static int api_nodes(struct api_ressource *r, json_t *args, json_t **resp, struct api_session *s)
 {
 	json_t *json_nodes = json_array();
 					
-	list_foreach(struct node *n, i->nodes) {
+	list_foreach(struct node *n, &s->api->cfg->nodes) {
 		json_t *json_node = json_pack("{ s: s, s: i, s: i, s: i, s: i }",
 			"name",		node_name_short(n),
 			"state",	n->state,

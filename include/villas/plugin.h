@@ -26,7 +26,7 @@ __attribute__((destructor)) static void UNIQUE(__dtor)() {	\
 
 extern struct list plugins;
 
-enum plugin_types {
+enum plugin_type {
 	PLUGIN_TYPE_HOOK,
 	PLUGIN_TYPE_NODE,
 	PLUGIN_TYPE_API,
@@ -44,8 +44,9 @@ struct plugin {
 	char *name;
 	char *description;
 	void *handle;
+	char *path;
 	
-	enum plugin_types type;
+	enum plugin_type type;
 	enum plugin_state state;
 	
 	int (*load)(struct plugin *p);
@@ -70,5 +71,7 @@ int plugin_load(struct plugin *p);
 
 int plugin_unload(struct plugin *p);
 
+void plugin_dump(enum plugin_type type);
+
 /** Find registered and loaded plugin with given name and type. */
-struct plugin * plugin_lookup(enum plugin_types type, const char *name);
+struct plugin * plugin_lookup(enum plugin_type type, const char *name);

@@ -6,7 +6,7 @@ LIB_SRCS = $(addprefix lib/nodes/, file.c cbuilder.c) 		\
            $(addprefix lib/kernel/, kernel.c rt.c)		\
            $(addprefix lib/, sample.c path.c node.c hooks.c	\
               log.c utils.c cfg.c hist.c timing.c pool.c list.c \
-              queue.c memory.c advio.c web.c api.c		\
+              queue.c memory.c advio.c web.c api.c plugin.c	\
            )
 
 LIB_CFLAGS  = $(CFLAGS) -fPIC

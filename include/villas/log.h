@@ -69,6 +69,8 @@ struct log {
 /** Initialize log object */
 int log_init(struct log *l);
 
+int log_destroy(struct log *l);
+
 /** Destroy log object */
 int log_destroy(struct log *l);
 

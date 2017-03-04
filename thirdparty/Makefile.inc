@@ -24,9 +24,9 @@ $(addprefix install-,$(DEPS)): install-%: %
 $(addprefix clean-,$(DEPS)):
 	rm -rf $(BUILDDIR)/thirdparty/$(@:clean-%=%)
 
-install-thirdparty:
+install-thirdparty: $(addprefix install-,$(DEPS))
 
-clean-thirdparty:
+clean-thirdparty: $(addprefix clean-,$(DEPS))
 	rm -rf $(BUILDDIR)/thirdparty
 
 .PHONY: $(DEPS) thirdparty clean-thirdparty install-thirdparty

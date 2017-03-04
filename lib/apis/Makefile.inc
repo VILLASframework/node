@@ -1,1 +1,1 @@
-LIB_SRCS += $(wildcard lib/cmds/*.c)
+LIB_SRCS += $(wildcard lib/apis/*.c)

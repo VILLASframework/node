@@ -173,10 +173,16 @@ int web_init(struct web *w, struct api *a)
 	return 0;
 }
 
+int web_destroy(struct web *w)
+{
+	lws_context_destroy(w->context);
+
+	return 0;
+}
+
 int web_deinit(struct web *w)
 {
 	lws_cancel_service(w->context);
-	lws_context_destroy(w->context);
 
 	return 0;
 }

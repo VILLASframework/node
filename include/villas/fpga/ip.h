@@ -46,9 +46,9 @@ struct fpga_ip_type {
 
 	int (*parse)(struct fpga_ip *c);
 	int (*init)(struct fpga_ip *c);
+	int (*destroy)(struct fpga_ip *c);
 	int (*reset)(struct fpga_ip *c);
 	void (*dump)(struct fpga_ip *c);
-	void (*destroy)(struct fpga_ip *c);
 };
 
 struct fpga_ip {

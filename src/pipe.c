@@ -24,9 +24,8 @@
 
 #include "config.h"
 
-static struct list nodes;		/**< List of all nodes */
-static struct cfg settings;	/**< The global configuration */
-static config_t config;
+static struct list nodes;	/**< List of all nodes */
+static struct cfg cfg;		/**< The global configuration */
 
 struct dir {
 	struct pool pool;
@@ -59,8 +58,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	node_stop(node);
 	node_deinit(node->_vt);
 
-	list_destroy(&nodes, (dtor_cb_t) node_destroy, false);
-	cfg_destroy(&config);
+	cfg_destroy(&cfg);
 
 	info(GRN("Goodbye!"));
 	exit(EXIT_SUCCESS);
@@ -173,7 +171,7 @@ int main(int argc, char *argv[])
 	char c;
 
 	ptid = pthread_self();
-	log_init();
+	log_init(&cfg.log);
 
 	/* Parse command line arguments */
 	if (argc < 3)
@@ -195,7 +193,7 @@ int main(int argc, char *argv[])
 				sendd.enabled = false; // receive only
 				break;
 			case 'd':
-				log_setlevel(atoi(optarg), -1);
+				cfg.log.level = atoi(optarg);
 				break;
 			case 'h':
 			case '?':
@@ -214,13 +212,11 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT,  &sa_quit, NULL);
 
 	/* Initialize log, configuration.. */
-	list_init(&nodes);
-
 	info("Parsing configuration");
-	cfg_parse(argv[1], &config, &settings, &nodes, NULL);
+	cfg_parse(&cfg, argv[1]);
 
 	info("Initialize real-time system");
-	rt_init(settings.affinity, settings.priority);
+	rt_init(&cfg);
 	
 	/* Initialize node */
 	node = list_lookup(&nodes, argv[2]);
@@ -230,7 +226,7 @@ int main(int argc, char *argv[])
 	if (reverse)
 		node_reverse(node);
 
-	ret = node_init(node->_vt, argc-optind, argv+optind, config_root_setting(&config));
+	ret = node_init(node->_vt, argc-optind, argv+optind, config_root_setting(cfg.cfg));
 	if (ret)
 		error("Failed to intialize node: %s", node_name(node));
 

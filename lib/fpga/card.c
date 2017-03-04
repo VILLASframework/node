@@ -133,6 +133,26 @@ int fpga_card_parse(struct fpga_card *c, config_setting_t *cfg)
 	return 0;
 }
 
+void fpga_card_dump(struct fpga_card *c)
+{
+	info("VILLASfpga card:");
+	{ INDENT
+		info("Slot: %04x:%02x:%02x.%d", c->vd.pdev->slot.domain, c->vd.pdev->slot.bus, c->vd.pdev->slot.device, c->vd.pdev->slot.function);
+		info("Vendor ID: %04x", c->vd.pdev->id.vendor);
+		info("Device ID: %04x", c->vd.pdev->id.device);
+		info("Class  ID: %04x", c->vd.pdev->id.class);
+
+		info("BAR0 mapped at %p", c->map);
+
+		info("IP blocks:");
+		list_foreach(struct fpga_ip *i, &c->ips) { INDENT
+			fpga_ip_dump(i);
+		}
+	}
+	
+	vfio_dump(c->vd.group->container);
+}
+
 int fpga_card_check(struct fpga_card *c)
 {
 	/* Check FPGA configuration */

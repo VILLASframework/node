@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <string.h>
 
+#include <sys/ioctl.h>
 #include <sys/eventfd.h>
 
 #include "utils.h"
@@ -93,13 +94,13 @@ int vfio_group_destroy(struct vfio_group *g)
 	
 	ret = ioctl(g->fd, VFIO_GROUP_UNSET_CONTAINER);
 	if (ret)
-		return;
+		return ret;
 
 	debug(5, "VFIO: released group from container: group=%u", g->index);
 
 	ret = close(g->fd);
 	if (ret)
-		return;
+		return ret;
 
 	debug(5, "VFIO: closed group: group=%u, fd=%d", g->index, g->fd);
 	
@@ -115,7 +116,7 @@ int vfio_dev_destroy(struct vfio_dev *d)
 
 	ret = close(d->fd);
 	if (ret)
-		return;
+		return ret;
 
 	debug(5, "VFIO: closed device: name=%s, fd=%d", d->name, d->fd);
 	

@@ -7,6 +7,8 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/ip.h>
+#include <netinet/ether.h>
+#include <arpa/inet.h>
 
 #ifdef __linux__
   #include <byteswap.h>

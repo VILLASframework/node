@@ -52,6 +52,8 @@ int fpga_parse(struct node *n, config_setting_t *cfg);
 /** Parse the 'fpga' section in the configuration file */
 int fpga_parse_cards(config_setting_t *cfg);
 
+struct fpga_card * fpga_lookup_card(const char *name);
+
 /** @see node_vtable::print */
 char * fpga_print(struct node *n);
 

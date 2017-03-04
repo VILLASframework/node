@@ -170,7 +170,11 @@ int cfg_parse(struct cfg *cfg, const char *uri)
 			
 			struct plugin plugin;
 			
-			plugin_parse(&plugin, cfg_plugin);
+			ret = plugin_parse(&plugin, cfg_plugin);
+			if (ret)
+				cerror(cfg_plugin, "Failed to parse plugin");
+			
+			list_push(&cfg->plugins, &plugin);
 		}
 	}
 

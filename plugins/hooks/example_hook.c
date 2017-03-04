@@ -22,7 +22,7 @@ static int hook_example(struct path *p, struct hook *h, int when, struct sample 
 static struct plugin p = {
 	.name		= "example",
 	.description	= "This is just a simple example hook",
-	.type		= LOADABLE_TYPE_HOOK,
+	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
 		.history = 0,

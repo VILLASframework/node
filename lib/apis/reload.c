@@ -6,9 +6,11 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
+#include "plugin.h"
 #include "api.h"
 
-static int api_reload(struct api_ressource *h, json_t *args, json_t **resp, struct api_info *i)
+/** @todo not implemented yet */
+static int api_reload(struct api_ressource *h, json_t *args, json_t **resp, struct api_session *s)
 {
 	return -1;
 }

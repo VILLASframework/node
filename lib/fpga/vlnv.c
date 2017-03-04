@@ -8,6 +8,12 @@
 #include <string.h>
 
 #include "fpga/vlnv.h"
+#include "fpga/ip.h"
+
+struct fpga_ip * fpga_vlnv_lookup(struct list *l, struct fpga_vlnv *v)
+{
+	return (struct fpga_ip *) list_search(l, (cmp_cb_t) fpga_vlnv_cmp, v);
+}
 
 int fpga_vlnv_cmp(struct fpga_vlnv *a, struct fpga_vlnv *b)
 {

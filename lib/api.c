@@ -6,6 +6,7 @@
 
 #include <libwebsockets.h>
 
+#include "plugin.h"
 #include "api.h"
 #include "log.h"
 #include "config.h"
@@ -67,7 +68,7 @@ int api_session_run_command(struct api_session *s, json_t *req, json_t **resp)
 {
 	int ret;
 	const char *rstr;
-	struct api_ressource *res;
+	struct plugin *p;
 	
 	json_t *args;
 	
@@ -79,14 +80,14 @@ int api_session_run_command(struct api_session *s, json_t *req, json_t **resp)
 				"error", "invalid request",
 				"code", -1);
 	
-	res = list_lookup(&apis, rstr);
-	if (!res)
+	p = plugin_lookup(PLUGIN_TYPE_API, rstr);
+	if (!p)
 		*resp = json_pack("{ s: s, s: d, s: s }",
 				"error", "command not found",
 				"code", -2,
 				"command", rstr);
 
-	ret = res->cb(res, args, resp, s);
+	ret = p->api.cb(&p->api, args, resp, s);
 	if (ret)
 		*resp = json_pack("{ s: s, s: d }",
 				"error", "command failed",
@@ -223,6 +224,11 @@ int api_init(struct api *a, struct cfg *cfg)
 
 	a->cfg = cfg;
 
+	return 0;
+}
+
+int api_destroy(struct api *a)
+{
 	return 0;
 }
 

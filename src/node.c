@@ -17,6 +17,7 @@
 #include <villas/api.h>
 #include <villas/web.h>
 #include <villas/timing.h>
+#include <villas/plugin.h>
 #include <villas/kernel/kernel.h>
 #include <villas/kernel/rt.h>
 
@@ -74,18 +75,15 @@ static void usage(const char *name)
 	printf("  See in the RT-LAB User Guide for more information.\n\n");
 #endif
 	printf("Supported node types:\n");
-	list_foreach(struct node_type *vt, &node_types)
-		printf(" - %s: %s\n", vt->name, vt->description);
+	plugin_dump(PLUGIN_TYPE_NODE);
 	printf("\n");
 	
 	printf("Supported hooks:\n");
-	list_foreach(struct hook *h, &hooks)
-		printf(" - %s: %s\n", h->name, h->description);
+	plugin_dump(PLUGIN_TYPE_HOOK);
 	printf("\n");
 	
 	printf("Supported API commands:\n");
-	list_foreach(struct api_ressource *r, &apis)
-		printf(" - %s: %s\n", r->name, r->description);
+	plugin_dump(PLUGIN_TYPE_API);
 	printf("\n");
 
 	print_copyright();

@@ -5,4 +5,4 @@ ifeq ($(shell pkg-config libxil; echo $$?),0)
 endif
 endif
 
--include lib/fpga/ip/Makefile.inc
+-include lib/fpga/ips/Makefile.inc

@@ -6,16 +6,18 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited.
  *********************************************************************************/
 
+#include <libconfig.h>
+
 #include "api.h"
 #include "utils.h"
 #include "plugin.h"
 
-static int api_config(struct api_ressource *h, json_t *args, json_t **resp, struct api_info *i)
+static int api_config(struct api_ressource *h, json_t *args, json_t **resp, struct api_session *s)
 {
-	if (!i->settings.config)
+	if (!s->api->cfg->cfg)
 		return -1;
 	
-	*resp = config_to_json(config_setting_root(i->settings.config));
+	*resp = config_to_json(config_root_setting(s->api->cfg->cfg));
 
 	return 0;
 }

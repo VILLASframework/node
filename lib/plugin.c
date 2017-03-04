@@ -4,7 +4,12 @@
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
+#include <dlfcn.h>
+
 #include "plugin.h"
+
+/** Global list of all known plugins */
+struct list plugins;
 
 int plugin_init(struct plugin *p, char *name, char *path)
 {
@@ -12,6 +17,8 @@ int plugin_init(struct plugin *p, char *name, char *path)
 	p->path = strdup(path);
 
 	p->state = PLUGIN_STATE_UNLOADED;
+	
+	return 0;
 }
 
 int plugin_load(struct plugin *p)
@@ -36,7 +43,7 @@ int plugin_unload(struct plugin *p)
 	if (ret)
 		return -1;
 	
-	p->state = UNLOADED;
+	p->state = PLUGIN_STATE_UNLOADED;
 	
 	return 0;
 }
@@ -59,17 +66,11 @@ int plugin_parse(struct plugin *p, config_setting_t *cfg)
 	path = config_setting_get_string(cfg);
 	if (!path)
 		cerror(cfg, "Setting 'plugin' must be a string.");
-		
-	handle = dlopen(path, RTLD_NOW);
-	if (!handle)
-		error("Failed to load plugin %s", dlerror());
-		
-	list_push_back(&cfg->plugins, handle);
 
 	return 0;
 }
 
-struct plugin * plugin_lookup(enum plugin_types type, const char *name)
+struct plugin * plugin_lookup(enum plugin_type type, const char *name)
 {
 	list_foreach(struct plugin *l, &plugins) {
 		if (l->type == type && strcmp(l->name, name) == 0)
@@ -77,4 +78,10 @@ struct plugin * plugin_lookup(enum plugin_types type, const char *name)
 	}
 	
 	return NULL;
+}
+
+void plugin_dump(enum plugin_type type)
+{
+	list_foreach(struct plugin *p, &plugins)
+		printf(" - %s: %s\n", p->name, p->description);
 }

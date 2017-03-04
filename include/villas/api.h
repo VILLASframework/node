@@ -21,8 +21,6 @@ struct api_ressource;
 struct api_buffer;
 struct api_session;
 
-extern struct list apis;
-
 /** Callback type of command function
  *
  * @param[inout] c Command handle

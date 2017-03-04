@@ -20,8 +20,7 @@
 #include "timing.h"
 #include "pool.h"
 
-struct cfg settings; /** <The global configuration */
-struct list nodes;		
+struct cfg cfg; /** <The global configuration */
 
 static struct node *node;
 
@@ -63,8 +62,6 @@ void usage(char *name)
 
 int main(int argc, char *argv[])
 {
-	config_t config;
-
 	if (argc < 4) {
 		usage(argv[0]);
 		exit(EXIT_FAILURE);
@@ -79,17 +76,15 @@ int main(int argc, char *argv[])
 	sigemptyset(&sa_quit.sa_mask);
 	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT, &sa_quit, NULL);
-	
-	list_init(&nodes);
 
-	log_init();
-	cfg_parse(argv[1], &config, &settings, &nodes, NULL);
+	log_init(&cfg.log);
+	cfg_parse(&cfg, argv[1]);
 
-	node = list_lookup(&nodes, argv[3]);
+	node = list_lookup(&cfg.nodes, argv[3]);
 	if (!node)
 		error("There's no node with the name '%s'", argv[3]);
 
-	node_init(node->_vt, argc-3, argv+3, config_root_setting(&config));
+	node_init(node->_vt, argc-3, argv+3, config_root_setting(cfg.cfg));
 	node_start(node);
 
 	/* Parse Arguments */
@@ -137,8 +132,7 @@ check:		if (optarg == endptr)
 	node_stop(node);
 	node_deinit(node->_vt);
 	
-	list_destroy(&nodes, (dtor_cb_t) node_destroy, false);
-	cfg_destroy(&config);
+	cfg_destroy(&cfg);
 
 	return 0;
 }

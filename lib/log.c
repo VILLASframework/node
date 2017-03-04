@@ -116,6 +116,11 @@ int log_init(struct log *l)
 	return 0;
 }
 
+int log_destroy(struct log *l)
+{
+	return 0;
+}
+
 void log_print(struct log *l, const char *lvl, const char *fmt, ...)
 {
 	va_list ap;
