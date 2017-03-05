@@ -18,14 +18,14 @@
 #include "memory.h"
 
 int memory_init()
-{
+{ INDENT
 #ifdef __linux__
 	int nr = kernel_get_nr_hugepages();
 	
-	debug(LOG_MEM | 2, "System has %d reserved hugepages", nr);
-	
-	if (nr < DEFAULT_NR_HUGEPAGES)
+	if (nr < DEFAULT_NR_HUGEPAGES) {
 		kernel_set_nr_hugepages(DEFAULT_NR_HUGEPAGES);
+		debug(LOG_MEM | 2, "Reserve %d hugepages (was %d)", DEFAULT_NR_HUGEPAGES, nr);
+	}
 #endif
 	return 0;
 }
