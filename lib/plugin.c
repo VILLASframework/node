@@ -82,6 +82,8 @@ struct plugin * plugin_lookup(enum plugin_type type, const char *name)
 
 void plugin_dump(enum plugin_type type)
 {
-	list_foreach(struct plugin *p, &plugins)
-		printf(" - %s: %s\n", p->name, p->description);
+	list_foreach(struct plugin *p, &plugins) {
+		if (p->type == type)
+			printf(" - %-12s: %s\n", p->name, p->description);
+	}
 }
