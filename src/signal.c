@@ -35,6 +35,7 @@ void usage()
 	printf("  SIGNAL   is on of: 'mixed', 'random', 'sine', 'triangle', 'square', 'ramp'\n");
 	printf("  -v NUM   specifies how many values a message should contain\n");
 	printf("  -r HZ    how many messages per second\n");
+	printf("  -n       non real-time mode. do not throttle output.\n");
 	printf("  -f HZ    the frequency of the signal\n");
 	printf("  -a FLT   the amplitude\n");
 	printf("  -d FLT   the standard deviation for 'random' signals\n");
@@ -46,17 +47,24 @@ void usage()
 int main(int argc, char *argv[])
 {
 	struct log log;
+	struct timespec start, now;
 	
+	enum {
+		MODE_RT,
+		MODE_NON_RT
+	} mode = MODE_RT;
+
 	/* Some default values */
 	double rate = 10;
 	double freq = 1;
 	double ampl = 1;
 	double stddev = 0.02;
+	double running;
 	int type = TYPE_MIXED;
 	int values = 1;
 	int limit = -1;	
-	int counter;
-	
+	int counter, tfd, steps;
+
 	log_init(&log, V, LOG_ALL);
 
 	if (argc < 2) {
@@ -80,7 +88,7 @@ int main(int argc, char *argv[])
 	
 	/* Parse optional command line arguments */
 	char c, *endptr;
-	while ((c = getopt(argc-1, argv+1, "hv:r:f:l:a:d:")) != -1) {
+	while ((c = getopt(argc-1, argv+1, "hv:r:f:l:a:d:n")) != -1) {
 		switch (c) {
 			case 'l':
 				limit = strtoul(optarg, &endptr, 10);
@@ -100,6 +108,9 @@ int main(int argc, char *argv[])
 			case 'd':
 				stddev = strtof(optarg, &endptr);
 				goto check;
+			case 'n':
+				mode = MODE_NON_RT;
+				break;
 			case 'h':
 			case '?':
 				usage();
@@ -121,16 +132,28 @@ check:		if (optarg == endptr)
 	printf("# %-20s\t\t%s\n", "sec.nsec(seq)", "data[]");
 
 	/* Setup timer */
-	int tfd = timerfd_create_rate(rate);
-	if (tfd < 0)
-		serror("Failed to create timer");
+	if (mode == MODE_RT) {
+		tfd = timerfd_create_rate(rate);
+		if (tfd < 0)
+			serror("Failed to create timer");
+	}
 
-	struct timespec start = time_now();
+	start = time_now();
 
 	counter = 0;
 	while (limit < 0 || counter < limit) {
-		struct timespec now = time_now();
-		double running = time_delta(&start, &now);
+		if (mode == MODE_RT) {
+			now = time_now();
+			running = time_delta(&start, &now);
+		}
+		else {
+			struct timespec offset;
+			
+			running = counter * 1.0 / rate;
+			offset = time_from_double(running);
+			
+			now = time_add(&start, &offset);
+		}
 
 		s->ts.origin = now;
 		s->sequence  = counter;
@@ -150,16 +173,22 @@ check:		if (optarg == endptr)
 		sample_fprint(stdout, s, SAMPLE_ALL & ~SAMPLE_OFFSET);
 		fflush(stdout);
 		
-		/* Block until 1/p->rate seconds elapsed */
-		int steps = timerfd_wait(tfd);
-		
-		if (steps > 1)
-			warn("Missed steps: %u", steps);
+		/* Throttle output if desired */
+		if (mode == MODE_RT) {
+			/* Block until 1/p->rate seconds elapsed */
+			steps = timerfd_wait(tfd);
+			if (steps > 1)
+				warn("Missed steps: %u", steps);
 			
-		counter += steps;
+			counter += steps;
+		}
+		else
+			counter += 1;
 	}
 
-	close(tfd);
+	if (mode == MODE_RT)
+		close(tfd);
+
 	free(s);
 
 	return 0;
