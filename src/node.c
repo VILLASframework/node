@@ -8,11 +8,10 @@
 #include <signal.h>
 #include <unistd.h>
 
-#include "config.h"
-
 #include <villas/utils.h>
 #include <villas/cfg.h>
 #include <villas/path.h>
+#include <villas/memory.h>
 #include <villas/node.h>
 #include <villas/api.h>
 #include <villas/web.h>
@@ -20,30 +19,28 @@
 #include <villas/plugin.h>
 #include <villas/kernel/kernel.h>
 #include <villas/kernel/rt.h>
-
-/* Forward declarations */
-void hook_stats_header();
+#include <villas/hook.h>
 
 #ifdef ENABLE_OPAL_ASYNC
-  #include "opal.h"
+  #include <villas/nodes/opal.h>
 #endif
 
-struct cfg config;
+struct cfg cfg;
 
 static void quit()
 {
 	info("Stopping paths");
-	list_foreach(struct path *p, &config.paths) { INDENT
+	list_foreach(struct path *p, &cfg.paths) { INDENT
 		path_stop(p);
 	}
 
 	info("Stopping nodes");
-	list_foreach(struct node *n, &config.nodes) { INDENT
+	list_foreach(struct node *n, &cfg.nodes) { INDENT
 		node_stop(n);
 	}
 
-	cfg_deinit(&config);
-	cfg_destroy(&config);
+	cfg_deinit(&cfg);
+	cfg_destroy(&cfg);
 
 	info(GRN("Goodbye!"));
 
@@ -63,14 +60,14 @@ static void signals_init()
 	sigaction(SIGTERM, &sa_quit, NULL);
 }
 
-static void usage(const char *name)
+static void usage()
 {
-	printf("Usage: %s [CONFIG]\n", name);
+	printf("Usage: villas-node [CONFIG]\n");
 	printf("  CONFIG is the path to an optional configuration file\n");
 	printf("         if omitted, VILLASnode will start without a configuration\n");
 	printf("         and wait for provisioning over the web interface.\n\n");
 #ifdef ENABLE_OPAL_ASYNC
-	printf("Usage: %s OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME\n", name);
+	printf("Usage: villas-node OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME\n");
 	printf("  This type of invocation is used by OPAL-RT Asynchronous processes.\n");
 	printf("  See in the RT-LAB User Guide for more information.\n\n");
 #endif
@@ -106,6 +103,8 @@ int main(int argc, char *argv[])
 	char *uri = (argc == 2) ? argv[1] : NULL;
 #endif
 
+	log_init(&cfg.log, V, LOG_ALL);
+
 	info("This is VILLASnode %s (built on %s, %s)", BLD(YEL(VERSION)),
 		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
@@ -117,22 +116,22 @@ int main(int argc, char *argv[])
 	signals_init();
 
 	info("Parsing configuration");
-	cfg_init_pre(&config);
+	cfg_init_pre(&cfg);
 	
-	cfg_parse(&config, uri);
+	cfg_parse(&cfg, uri);
 
-	cfg_init_post(&config);
+	cfg_init_post(&cfg);
 
 	info("Initialize node types");
 	list_foreach(struct node_type *vt, &node_types) { INDENT
 		int refs = list_length(&vt->instances);
 		if (refs > 0)
-			node_init(vt, argc, argv, config_root_setting(config.cfg));
+			node_init(vt, argc, argv, config_root_setting(&cfg.cfg));
 	}
 
 	info("Starting nodes");
-	list_foreach(struct node *n, &config.nodes) { INDENT
-		int refs = list_count(&config.paths, (cmp_cb_t) path_uses_node, n);
+	list_foreach(struct node *n, &cfg.nodes) { INDENT
+		int refs = list_count(&cfg.paths, (cmp_cb_t) path_uses_node, n);
 		if (refs > 0)
 			node_start(n);
 		else
@@ -140,32 +139,32 @@ int main(int argc, char *argv[])
 	}
 
 	info("Starting paths");
-	list_foreach(struct path *p, &config.paths) { INDENT
+	list_foreach(struct path *p, &cfg.paths) { INDENT
 		if (p->enabled) {
-			path_prepare(p);
+			path_init(p, &cfg);
 			path_start(p);
 		}
 		else
 			warn("Path %s is disabled. Skipping...", path_name(p));
 	}
-	
-	if (config.stats > 0)
-		hook_stats_header();
+
+	if (cfg.stats > 0)
+		stats_print_header();
 
 	struct timespec now, last = time_now();
 
 	/* Run! Until signal handler is invoked */
 	while (1) {
 		now = time_now();
-		if (config.stats > 0 && time_delta(&last, &now) > config.stats) {
-			list_foreach(struct path *p, &config.paths) {
+		if (cfg.stats > 0 && time_delta(&last, &now) > cfg.stats) {
+			list_foreach(struct path *p, &cfg.paths) {
 				hook_run(p, NULL, 0, HOOK_PERIODIC);
 			}
 
 			last = time_now();
 		}
 
-		web_service(&config.web); /** @todo Maybe we should move this to another thread */
+		web_service(&cfg.web); /** @todo Maybe we should move this to another thread */
 	}
 
 	return 0;

@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <inttypes.h>
+#include <libconfig.h>
 
 #include "config.h"
 #include "utils.h"
@@ -16,107 +17,109 @@
 #include "timing.h"
 #include "pool.h"
 #include "queue.h"
+#include "hook.h"
+#include "plugin.h"
+#include "cfg.h"
 
-static void path_write(struct path *p, bool resend)
+static void path_read(struct path *p)
 {
-	list_foreach(struct node *n, &p->destinations) {
-		int cnt = n->vectorize;
-		int sent, tosend, available, released;
-		struct sample *smps[n->vectorize];
+	int recv;
+	int enqueue;
+	int enqueued;
+	int ready = 0; /**< Number of blocks in smps[] which are allocated and ready to be used by node_read(). */
+	
+	struct path_source *ps = p->source;
+	
+	int cnt = ps->node->vectorize;
 
-		available = queue_pull_many(&p->queue, (void **) smps, cnt);
-		if (available < cnt)
-			warn("Queue underrun for path %s: available=%u expected=%u", path_name(p), available, cnt);
-		
-		if (available == 0)
-			continue;
-		
-		tosend = hook_run(p, smps, available, HOOK_WRITE);
-		if (tosend == 0)
-			continue;
-		
-		sent = node_write(n, smps, tosend);
-		if (sent < 0)
-			error("Failed to sent %u samples to node %s", cnt, node_name(n));
-		else if (sent < tosend)
-			warn("Partial write to node %s", node_name(n));
+	struct sample *smps[cnt];
 
-		debug(LOG_PATH | 15, "Sent %u messages to node %s", sent, node_name(n));
+	/* Fill smps[] free sample blocks from the pool */
+	ready += sample_alloc(&ps->pool, smps, cnt - ready);
+	if (ready != cnt)
+		warn("Pool underrun for path %s", path_name(p));
 
-		released = pool_put_many(&p->pool, (void **) smps, sent);
-		if (sent != released)
-			warn("Failed to release %u samples to pool for path %s", sent - released, path_name(p));
+	/* Read ready samples and store them to blocks pointed by smps[] */
+	recv = node_read(ps->node, smps, ready);
+	if (recv < 0)
+		error("Failed to receive message from node %s", node_name(ps->node));
+	else if (recv < ready)
+		warn("Partial read for path %s: read=%u expected=%u", path_name(p), recv, ready);
+
+	debug(LOG_PATH | 15, "Received %u messages from node %s", recv, node_name(ps->node));
+
+	/* Run preprocessing hooks for vector of samples */
+	enqueue = hook_run(p, smps, recv, HOOK_READ);
+	if (enqueue != recv) {
+		info("Hooks skipped %u out of %u samples for path %s", recv - enqueue, recv, path_name(p));
+		
+		stats_update(p->stats->delta, STATS_SKIPPED, recv - enqueue);
+	}
+
+	list_foreach(struct path_destination *pd, &p->destinations) {
+		enqueued = queue_push_many(&pd->queue, (void **) smps, enqueue);
+		if (enqueue != enqueued)
+			warn("Queue overrun for path %s", path_name(p));
+		
+		for (int i = 0; i < enqueued; i++)
+			sample_get(smps[i]); /* increase reference count */
+
+		debug(LOG_PATH | 15, "Enqueued %u samples from %s to queue of %s", enqueued, node_name(ps->node), node_name(pd->node));
 	}
 }
 
-/** Send messages asynchronously */
-static void * path_run_async(void *arg)
+static void path_write(struct path *p)
 {
-	struct path *p = arg;
+	list_foreach(struct path_destination *pd, &p->destinations) {
+		int cnt = pd->node->vectorize;
+		int sent;
+		int tosend;
+		int available;
+		int released;
 
-	/* Block until 1/p->rate seconds elapsed */
-	for (;;) {
-		/* Check for overruns */
-		uint64_t expir = timerfd_wait(p->tfd);
-		if (expir == 0)
-			perror("Failed to wait for timer");
-		else if (expir > 1) {
-			p->overrun += expir;
-			warn("Overrun detected for path: overruns=%" PRIu64, expir);
+		struct sample *smps[cnt];
+
+		/* As long as there are still samples in the queue */
+		while (1) {
+			available = queue_pull_many(&pd->queue, (void **) smps, cnt);
+			if (available == 0)
+				break;
+			else if (available < cnt) 
+				debug(LOG_PATH | 5, "Queue underrun for path %s: available=%u expected=%u", path_name(p), available, cnt);
+			
+			debug(LOG_PATH | 15, "Dequeued %u samples from queue of node %s which is part of path %s", available, node_name(pd->node), path_name(p));
+
+			tosend = hook_run(p, smps, available, HOOK_WRITE);
+			if (tosend == 0)
+				continue;
+
+			sent = node_write(pd->node, smps, tosend);
+			if (sent < 0)
+				error("Failed to sent %u samples to node %s", cnt, node_name(pd->node));
+			else if (sent < tosend)
+				warn("Partial write to node %s", node_name(pd->node));
+
+			debug(LOG_PATH | 15, "Sent %u messages to node %s", sent, node_name(pd->node));
+
+			released = 0;
+			for (int i = 0; i < sent; i++) {
+				if (sample_put(smps[i]) == 0)
+					released++; /* we had the last reference (0 remaining) */
+			}
+	
+			debug(LOG_PATH | 15, "Released %d samples back to memory pool", released);
 		}
-		
-		if (hook_run(p, NULL, 0, HOOK_ASYNC))
-			continue;
-
-		path_write(p, true);
 	}
-
-	return NULL;
 }
 
-/** Receive messages */
+/** Main thread function per path: receive -> sent messages */
 static void * path_run(void *arg)
 {
 	struct path *p = arg;
-	unsigned cnt = p->in->vectorize;
-	int recv, enqueue, enqueued;
-	int ready = 0; /**< Number of blocks in smps[] which are allocated and ready to be used by node_read(). */
-	struct sample *smps[cnt];
 
-	/* Main thread loop */
 	for (;;) {
-		/* Fill smps[] free sample blocks from the pool */
-		ready += sample_get_many(&p->pool, smps, cnt - ready);
-		if (ready != cnt)
-			warn("Pool underrun for path %s", path_name(p));
-
-		/* Read ready samples and store them to blocks pointed by smps[] */
-		recv = p->in->_vt->read(p->in, smps, ready);
-		if (recv < 0)
-			error("Failed to receive message from node %s", node_name(p->in));
-		else if (recv < ready)
-			warn("Partial read for path %s: read=%u expected=%u", path_name(p), recv, ready);
-
-		debug(LOG_PATH | 15, "Received %u messages from node %s", recv, node_name(p->in));
-
-		/* Run preprocessing hooks for vector of samples */
-		enqueue = hook_run(p, smps, recv, HOOK_READ);
-		if (enqueue != recv) {
-			info("Hooks skipped %u out of %u samples for path %s", recv - enqueue, recv, path_name(p));
-			p->skipped += recv - enqueue;
-		}
-
-		enqueued = queue_push_many(&p->queue, (void **) smps, enqueue);
-		if (enqueue != enqueued)
-			warn("Failed to enqueue %u samples for path %s", enqueue - enqueued, path_name(p));
-
-		ready -= enqueued;
-
-		debug(LOG_PATH | 3, "Enqueuing %u samples to queue of path %s", enqueue, path_name(p));
-
-		/* At fixed rate mode, messages are send by another (asynchronous) thread */
-		if (p->rate == 0)
-			path_write(p, false);
+		path_read(p);
+		path_write(p);
 	}
 
 	return NULL;
@@ -126,86 +129,89 @@ int path_start(struct path *p)
 {
 	int ret;
 
-	info("Starting path: %s (#hooks=%zu, rate=%.1f)",
-		path_name(p), list_length(&p->hooks), p->rate);
+	info("Starting path: %s (#hooks=%zu)",
+		path_name(p), list_length(&p->hooks));
 
 	ret = hook_run(p, NULL, 0, HOOK_PATH_START);
 	if (ret)
 		return -1;
 
-	/* At fixed rate mode, we start another thread for sending */
-	if (p->rate) {
-		p->tfd = timerfd_create_rate(p->rate);
-		if (p->tfd < 0)
-			serror("Failed to create timer");
-
-		pthread_create(&p->sent_tid, NULL, &path_run_async, p);
-	}
-	
 	p->state = PATH_RUNNING;
 
-	return pthread_create(&p->recv_tid, NULL, &path_run,  p);
+	return pthread_create(&p->tid, NULL, &path_run,  p);
 }
 
 int path_stop(struct path *p)
 {
+	int ret;
+
 	info("Stopping path: %s", path_name(p));
 
-	pthread_cancel(p->recv_tid);
-	pthread_join(p->recv_tid, NULL);
+	pthread_cancel(p->tid);
+	pthread_join(p->tid, NULL);
 
-	if (p->rate) {
-		pthread_cancel(p->sent_tid);
-		pthread_join(p->sent_tid, NULL);
-
-		close(p->tfd);
-	}
-	
-	p->state = PATH_STOPPED;
-
-	if (hook_run(p, NULL, 0, HOOK_PATH_STOP))
+	ret = hook_run(p, NULL, 0, HOOK_PATH_STOP);
+	if (ret)
 		return -1;
+
+	p->state = PATH_STOPPED;
 
 	return 0;
 }
 
 const char * path_name(struct path *p)
 {
-	if (!p->_name) {	
-		strcatf(&p->_name, "%s " MAG("=>"), node_name_short(p->in));
-
-		list_foreach(struct node *n, &p->destinations)
-			strcatf(&p->_name, " %s", node_name_short(n));
+	if (!p->_name) {
+		if (list_length(&p->destinations) == 1) {
+			struct path_destination *pd = (struct path_destination *) list_first(&p->destinations);
+			
+			strcatf(&p->_name, "%s " MAG("=>") " %s",
+				node_name_short(p->source->node),
+				node_name_short(pd->node));
+		}
+		else {
+			strcatf(&p->_name, "%s " MAG("=>") " [", node_name_short(p->source->node));
+			
+			list_foreach(struct path_destination *pd, &p->destinations)
+				strcatf(&p->_name, " %s", node_name_short(pd->node));
+			
+			strcatf(&p->_name, " ]");
+		}
 	}
 
 	return p->_name;
 }
 
-void path_init(struct path *p)
+struct path * path_create()
 {
-	list_init(&p->destinations);
-	list_init(&p->hooks);
-	
-	/* Initialize hook system */
-	list_foreach(struct hook *h, &hooks) {
-		if (h->type & HOOK_INTERNAL)
-			list_push(&p->hooks, memdup(h, sizeof(*h)));
-	}
+	return (struct path *) alloc(sizeof(struct path));
+}
 
-	p->state = PATH_CREATED;
+static int path_source_destroy(struct path_source *ps)
+{
+	pool_destroy(&ps->pool);
+	
+	return 0;
+}
+
+static int path_destination_destroy(struct path_destination *pd)
+{
+	queue_destroy(&pd->queue);
+	
+	return 0;
 }
 
 int path_destroy(struct path *p)
 {
-	hook_run(p, NULL, 0, HOOK_DEINIT); /* Release memory */
+	list_destroy(&p->hooks, (dtor_cb_t) hook_destroy, true);
+	list_destroy(&p->destinations, (dtor_cb_t) path_destination_destroy, true);
 	
-	list_destroy(&p->destinations, NULL, false);
-	list_destroy(&p->hooks, NULL, true);
-	
-	queue_destroy(&p->queue);
-	pool_destroy(&p->pool);
+	path_source_destroy(p->source);
 
 	free(p->_name);
+	free(p->source);
+	
+	p->state = PATH_DESTROYED;
 	
 	return 0;
 }
@@ -217,41 +223,186 @@ int path_check(struct path *p)
 			error("Destiation node '%s' is not supported as a sink for path '%s'", node_name(n), path_name(p));
 	}
 
-	if (!p->in->_vt->read)
-		error("Source node '%s' is not supported as source for path '%s'", node_name(p->in), path_name(p));
+	if (!p->source->node->_vt->read)
+		error("Source node '%s' is not supported as source for path '%s'", node_name(p->source->node), path_name(p));
 	
 	return 0;
 }
 
-int path_prepare(struct path *p)
+int path_init(struct path *p, struct cfg *cfg)
 {
-	int ret;
+	int ret, max_queuelen = 0;
+	
+	/* Add internal hooks if they are not already in the list*/
+	list_foreach(struct plugin *pl, &plugins) {
+		if (pl->type == PLUGIN_TYPE_HOOK) {
+			struct hook *h = &pl->hook;
+
+			if ((h->type & HOOK_AUTO) && 			/* should this hook be added implicitely? */
+			    (list_lookup(&p->hooks, h->name) == NULL))	/* is not already in list? */
+				list_push(&p->hooks, memdup(h, sizeof(struct hook)));
+		}
+	}
 	
 	/* We sort the hooks according to their priority before starting the path */
-	list_sort(&p->hooks, hooks_sort_priority);
-
-	/* Allocate hook private memory */
-	ret = hook_run(p, NULL, 0, HOOK_INIT);
-	if (ret)
-		error("Failed to initialize hooks of path: %s", path_name(p));
+	list_sort(&p->hooks, hook_cmp_priority);
+	
+	list_foreach(struct hook *h, &p->hooks)
+		hook_init(h, cfg);
 
 	/* Parse hook arguments */
 	ret = hook_run(p, NULL, 0, HOOK_PARSE);
 	if (ret)
 		error("Failed to parse arguments for hooks of path: %s", path_name(p));
-
-	/* Initialize queue */
-	ret = pool_init(&p->pool, SAMPLE_LEN(p->samplelen), p->queuelen, &memtype_hugepage);
+	
+	/* Initialize destinations */
+	list_foreach(struct path_destination *pd, &p->destinations) {
+		ret = queue_init(&pd->queue, pd->queuelen, &memtype_hugepage);
+		if (ret)
+			error("Failed to initialize queue for path");
+		
+		if (pd->queuelen > max_queuelen)
+			max_queuelen = pd->queuelen;
+	}
+	
+	/* Initialize source */
+	ret = pool_init(&p->source->pool, max_queuelen, SAMPLE_LEN(p->source->samplelen), &memtype_hugepage);
 	if (ret)
 		error("Failed to allocate memory pool for path");
 	
-	ret = queue_init(&p->queue, p->queuelen, &memtype_hugepage);
-	if (ret)
-		error("Failed to initialize queue for path");
+	p->state = PATH_INITIALIZED;
 
 	return 0;
 }
 
 int path_uses_node(struct path *p, struct node *n) {
-	return (p->in == n) || list_contains(&p->destinations, n) ? 0 : 1;
+	list_foreach(struct path_destination *pd, &p->destinations) {
+		if (pd->node == n)
+			return 0;
+	}
+
+	return p->source->node == n ? 0 : -1;
+}
+
+int path_reverse(struct path *p, struct path *r)
+{
+	int ret;
+
+	if (list_length(&p->destinations) > 1)
+		return -1;
+	
+	struct path_destination *first_pd = list_first(&p->destinations);
+
+	list_init(&r->destinations);
+	list_init(&r->hooks);
+	
+	/* General */
+	r->enabled = p->enabled;
+	r->cfg = p->cfg;
+	
+	struct path_destination *pd = alloc(sizeof(struct path_destination));
+	
+	pd->node = p->source->node;
+	pd->queuelen = first_pd->queuelen;
+
+	list_push(&r->destinations, pd);
+	
+	struct path_source *ps = alloc(sizeof(struct path_source));
+
+	ps->node = first_pd->node;
+	ps->samplelen = p->source->samplelen;
+	
+	r->source = ps;
+
+	list_foreach(struct hook *h, &p->hooks) {
+		struct hook *hc = alloc(sizeof(struct hook));
+		
+		ret = hook_copy(h, hc);
+		if (ret)
+			return ret;
+		
+		list_push(&r->hooks, hc);
+	}
+	
+	return 0;
+}
+
+int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
+{
+	config_setting_t *cfg_out, *cfg_hook;
+	const char *in;
+	int ret, samplelen, queuelen;
+
+	struct node *source;
+	struct list destinations;
+
+	/* Input node */
+	if (!config_setting_lookup_string(cfg, "in", &in) &&
+	    !config_setting_lookup_string(cfg, "from", &in) &&
+	    !config_setting_lookup_string(cfg, "src", &in) &&
+	    !config_setting_lookup_string(cfg, "source", &in))
+		cerror(cfg, "Missing input node for path");
+
+	source = list_lookup(nodes, in);
+	if (!source)
+		cerror(cfg, "Invalid input node '%s'", in);
+
+	/* Output node(s) */
+	if (!(cfg_out = config_setting_get_member(cfg, "out")) &&
+	    !(cfg_out = config_setting_get_member(cfg, "to")) &&
+	    !(cfg_out = config_setting_get_member(cfg, "dst")) &&
+	    !(cfg_out = config_setting_get_member(cfg, "dest")) &&
+	    !(cfg_out = config_setting_get_member(cfg, "sink")))
+		cerror(cfg, "Missing output nodes for path");
+	
+	list_init(&destinations);
+	ret = node_parse_list(&destinations, cfg_out, nodes);
+	if (ret <= 0)
+		cerror(cfg_out, "Invalid output nodes");
+
+	/* Optional settings */
+	list_init(&p->hooks);
+	cfg_hook = config_setting_get_member(cfg, "hook");
+	if (cfg_hook)
+		hook_parse_list(&p->hooks, cfg_hook);
+
+	if (!config_setting_lookup_bool(cfg, "reverse", &p->reverse))
+		p->reverse = 0;
+	if (!config_setting_lookup_bool(cfg, "enabled", &p->enabled))
+		p->enabled = 1;
+	if (!config_setting_lookup_int(cfg, "values", &samplelen))
+		samplelen = DEFAULT_VALUES;
+	if (!config_setting_lookup_int(cfg, "queuelen", &queuelen))
+		queuelen = DEFAULT_QUEUELEN;
+
+	if (!IS_POW2(queuelen)) {
+		queuelen = LOG2_CEIL(queuelen);
+		warn("Queue length should always be a power of 2. Adjusting to %d", queuelen);
+	}
+
+	p->cfg = cfg;
+	
+	/* Check if nodes are suitable */
+	if (source->_vt->read == NULL)
+		cerror(cfg, "Input node '%s' is not supported as a source.", node_name(source));
+
+	p->source = alloc(sizeof(struct path_source));
+	p->source->node = source;
+	p->source->samplelen = samplelen;
+
+	list_foreach(struct node *n, &destinations) {
+		if (n->_vt->write == NULL)
+			cerror(cfg_out, "Output node '%s' is not supported as a destination.", node_name(n));
+		
+		struct path_destination *pd = alloc(sizeof(struct path_destination));
+		
+		pd->node = n;
+		pd->queuelen = queuelen;
+		
+		list_push(&p->destinations, pd);
+	}
+
+	list_destroy(&destinations, NULL, false);
+
+	return 0;
 }

@@ -21,6 +21,7 @@
   #include "OpalPrint.h"
 #endif
 
+/** The global log instance. */
 static struct log *log;
 
 /** List of debug facilities as strings */
@@ -102,17 +103,22 @@ int log_set_facility_expression(struct log *l, const char *expression)
 	return l->facilities;
 }
 
-int log_init(struct log *l)
+int log_init(struct log *l, int level, long facilitites)
 {
 	l->epoch = time_now();
-	l->level = V;
-	l->facilities = LOG_ALL;
+	l->level = level;
+	l->facilities = facilitites;
 
-	debug(LOG_LOG | 10, "Log sub-system intialized");
-	
 	/* Register this log instance globally */
 	log = l;
 
+	debug(LOG_LOG | 10, "Log sub-system intialized");
+
+	return 0;
+}
+
+int log_deinit(struct log *l)
+{
 	return 0;
 }
 
@@ -163,6 +169,9 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 int log_parse(struct log *l, config_setting_t *cfg)
 {
 	const char *facilities;
+	
+	if (!config_setting_is_group(cfg))
+		cerror(cfg, "Setting 'logging' must be a group.");
 
 	config_setting_lookup_int(cfg, "level", &l->level);
 

@@ -5,6 +5,8 @@
  *********************************************************************************/
 
 #include <stddef.h>
+
+#include <villas/hook.h>
 #include <villas/log.h>
 #include <villas/plugin.h>
 
@@ -12,7 +14,7 @@ struct hook;
 struct path;
 struct sample;
 
-static int hook_example(struct path *p, struct hook *h, int when, struct sample *smps[], size_t cnt)
+static int hook_example(struct hook *h, int when, struct hook_info *j)
 {
 	info("Hello world from example hook!");
 	

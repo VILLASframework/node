@@ -201,12 +201,6 @@ int version_parse(const char *s, struct version *v);
 /** Fill buffer with random data */
 ssize_t read_random(char *buf, size_t len);
 
-/** Hexdump bytes */
-void printb(void *mem, size_t len);
-
-/** Hexdump 32-bit dwords */
-void printdw(void *mem, size_t len);
-
 /** Get CPU timestep counter */
 __attribute__((always_inline)) static inline uint64_t rdtsc()
 {
@@ -224,7 +218,8 @@ __attribute__((always_inline)) static inline uint64_t rdtsc()
 
 /** Get log2 of long long integers */
 static inline int log2i(long long x) {
-	assert(x > 0);
+	if (x == 0)
+		return 1;
 
 	return sizeof(x) * 8 - __builtin_clzll(x) - 1;
 }

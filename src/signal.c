@@ -12,10 +12,11 @@
 #include <math.h>
 #include <string.h>
 
+#include <villas/utils.h>
+#include <villas/sample.h>
+#include <villas/timing.h>
+
 #include "config.h"
-#include "utils.h"
-#include "sample.h"
-#include "timing.h"
 
 #define CLOCKID	CLOCK_REALTIME
 
@@ -28,9 +29,9 @@ enum SIGNAL_TYPE {
 	TYPE_MIXED
 };
 
-void usage(char *name)
+void usage()
 {
-	printf("Usage: %s SIGNAL [OPTIONS]\n", name);
+	printf("Usage: villas-signal SIGNAL [OPTIONS]\n");
 	printf("  SIGNAL   is on of: 'mixed', 'random', 'sine', 'triangle', 'square', 'ramp'\n");
 	printf("  -v NUM   specifies how many values a message should contain\n");
 	printf("  -r HZ    how many messages per second\n");
@@ -56,10 +57,10 @@ int main(int argc, char *argv[])
 	int limit = -1;	
 	int counter;
 	
-	log_init(&log);
+	log_init(&log, V, LOG_ALL);
 
 	if (argc < 2) {
-		usage(argv[0]);
+		usage();
 		exit(EXIT_FAILURE);
 	}
 		
@@ -101,7 +102,8 @@ int main(int argc, char *argv[])
 				goto check;
 			case 'h':
 			case '?':
-				usage(argv[0]);
+				usage();
+				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
 		
 		continue;
@@ -109,7 +111,7 @@ int main(int argc, char *argv[])
 check:		if (optarg == endptr)
 			error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
-	
+
 	/* Allocate memory for message buffer */
 	struct sample *s = alloc(SAMPLE_LEN(values));
 

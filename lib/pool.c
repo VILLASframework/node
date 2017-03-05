@@ -16,7 +16,7 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, const struct memtype *
 
 	/* Make sure that we use a block size that is aligned to the size of a cache line */
 	p->alignment = kernel_get_cacheline_size();
-	p->blocksz = blocksz * CEIL(blocksz, p->alignment);
+	p->blocksz = p->alignment * CEIL(blocksz, p->alignment);
 	p->len = cnt * p->blocksz;
 	p->mem = m;
 
@@ -26,7 +26,7 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, const struct memtype *
 	else
 		debug(LOG_POOL | 4, "Allocated %#zx bytes for memory pool", p->len);
 
-	ret = queue_init(&p->queue, cnt, m);
+	ret = queue_init(&p->queue, LOG2_CEIL(cnt), m);
 	if (ret)
 		return ret;
 	

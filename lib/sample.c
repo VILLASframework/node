@@ -10,17 +10,25 @@
 #include "sample.h"
 #include "timing.h"
 
-int sample_get_many(struct pool *p, struct sample *smps[], int cnt) {
+int sample_alloc(struct pool *p, struct sample *smps[], int cnt) {
 	int ret;
 
 	ret = pool_get_many(p, (void **) smps, cnt);
 	if (ret < 0)
 		return ret;
 
-	for (int i = 0; i < ret; i++)
+	for (int i = 0; i < ret; i++) {
 		smps[i]->capacity = (p->blocksz - sizeof(**smps)) / sizeof(smps[0]->data[0]);
+		smps[i]->pool = p;
+	}
 
 	return ret;
+}
+
+void sample_free(struct sample *smps[], int cnt)
+{
+	for (int i = 0; i < cnt; i++)
+		pool_put(smps[i]->pool, smps[i]);
 }
 
 int sample_get(struct sample *s)

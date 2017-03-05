@@ -45,15 +45,14 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	if (recvv.started) {
 		pthread_cancel(recvv.thread);
 		pthread_join(recvv.thread, NULL);
+		pool_destroy(&recvv.pool);
 	}
 	
 	if (sendd.started) {
 		pthread_cancel(sendd.thread);
 		pthread_join(sendd.thread, NULL);
+		pool_destroy(&sendd.pool);
 	}
-	
-	pool_destroy(&recvv.pool);
-	pool_destroy(&sendd.pool);
 
 	node_stop(node);
 	node_deinit(node->_vt);
@@ -64,9 +63,9 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	exit(EXIT_SUCCESS);
 }
 
-static void usage(char *name)
+static void usage()
 {
-	printf("Usage: %s CONFIG NODE [OPTIONS]\n", name);
+	printf("Usage: villas-pipe CONFIG NODE [OPTIONS]\n");
 	printf("  CONFIG  path to a configuration file\n");
 	printf("  NODE    the name of the node to which samples are sent and received from\n");
 	printf("  OPTIONS are:\n");
@@ -91,11 +90,11 @@ static void * send_loop(void *ctx)
 	sendd.started = true;
 	
 	/* Initialize memory */
-	ret = pool_init(&sendd.pool, node->vectorize, SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
+	ret = pool_init(&sendd.pool, LOG2_CEIL(node->vectorize), SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 	
-	ret = sample_get_many(&sendd.pool, smps, node->vectorize);
+	ret = sample_alloc(&sendd.pool, smps, node->vectorize);
 	if (ret < 0)
 		error("Failed to get %u samples out of send pool (%d).", node->vectorize, ret);
 
@@ -135,11 +134,11 @@ static void * recv_loop(void *ctx)
 	recvv.started = true;
 	
 	/* Initialize memory */
-	ret = pool_init(&recvv.pool, node->vectorize, SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
+	ret = pool_init(&recvv.pool, LOG2_CEIL(node->vectorize), SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 	
-	ret = sample_get_many(&recvv.pool, smps, node->vectorize);
+	ret = sample_alloc(&recvv.pool, smps, node->vectorize);
 	if (ret  < 0)
 		error("Failed to get %u samples out of receive pool (%d).", node->vectorize, ret);
 
@@ -171,11 +170,10 @@ int main(int argc, char *argv[])
 	char c;
 
 	ptid = pthread_self();
-	log_init(&cfg.log);
 
 	/* Parse command line arguments */
 	if (argc < 3)
-		usage(argv[0]);
+		usage();
 
 	/* Default values */
 	sendd.enabled = true;
@@ -197,9 +195,12 @@ int main(int argc, char *argv[])
 				break;
 			case 'h':
 			case '?':
-				usage(argv[0]);
+				usage();
+				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
 	}
+	
+	log_init(&cfg.log, cfg.log.level, LOG_ALL);
 
 	/* Setup signals */
 	struct sigaction sa_quit = {
@@ -216,7 +217,10 @@ int main(int argc, char *argv[])
 	cfg_parse(&cfg, argv[1]);
 
 	info("Initialize real-time system");
-	rt_init(&cfg);
+	rt_init(cfg.priority, cfg.affinity);
+	
+	info("Initialize memory system");
+	memory_init();
 	
 	/* Initialize node */
 	node = list_lookup(&nodes, argv[2]);
@@ -226,7 +230,7 @@ int main(int argc, char *argv[])
 	if (reverse)
 		node_reverse(node);
 
-	ret = node_init(node->_vt, argc-optind, argv+optind, config_root_setting(cfg.cfg));
+	ret = node_init(node->_vt, argc-optind, argv+optind, config_root_setting(&cfg.cfg));
 	if (ret)
 		error("Failed to intialize node: %s", node_name(node));
 

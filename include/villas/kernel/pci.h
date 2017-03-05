@@ -30,7 +30,7 @@ struct pci_dev {
 };
 
 struct pci {
-	struct list devices; /**> List of available PCI devices in the system (struct pci_dev) */
+	struct list devices; /**< List of available PCI devices in the system (struct pci_dev) */
 };
 
 /** Initialize Linux PCI handle.

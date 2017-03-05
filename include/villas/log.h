@@ -67,9 +67,9 @@ struct log {
 };
 
 /** Initialize log object */
-int log_init(struct log *l);
+int log_init(struct log *l, int level, long faciltities);
 
-int log_destroy(struct log *l);
+int log_deinit(struct log *l);
 
 /** Destroy log object */
 int log_destroy(struct log *l);
@@ -103,6 +103,8 @@ int log_set_facility_expression(struct log *l, const char *expression);
 
 /** Parse logging configuration. */
 int log_parse(struct log *l, config_setting_t *cfg);
+
+int log_lookup_facility(const char *facility_name);
 
 /** Logs variadic messages to stdout.
  *

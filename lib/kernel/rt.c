@@ -14,7 +14,7 @@
 #include "kernel/kernel.h"
 #include "kernel/rt.h"
 
-int rt_init(struct cfg *cfg)
+int rt_init(int priority, int affinity)
 { INDENT
 	int is_rt;
 
@@ -23,13 +23,13 @@ int rt_init(struct cfg *cfg)
 	if (is_rt)
 		warn("We recommend to use an PREEMPT_RT patched kernel!");
 
-	if (cfg->priority)
-		rt_set_priority(cfg->priority);
+	if (priority)
+		rt_set_priority(priority);
 	else
 		warn("You might want to use the 'priority' setting to increase VILLASnode's process priority");
 
-	if (cfg->affinity)
-		rt_set_affinity(cfg->affinity);
+	if (affinity)
+		rt_set_affinity(affinity);
 	else
 		warn("You should use the 'affinity' setting to pin VILLASnode to dedicate CPU cores");
 

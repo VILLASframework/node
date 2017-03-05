@@ -145,6 +145,38 @@ int kernel_get_cacheline_size()
 	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
 }
 
+int kernel_get_nr_hugepages()
+{
+	FILE *f;
+	int nr, ret;
+	
+	f = fopen(PROCFS_PATH "/sys/vm/nr_hugepages", "r");
+	if (!f)
+		serror("Failed to open %s", PROCFS_PATH "/sys/vm/nr_hugepages");
+	
+	ret = fscanf(f, "%d", &nr);
+	if (ret != 1)
+		nr = -1;
+		
+	fclose(f);
+	
+	return nr;
+}
+
+int kernel_set_nr_hugepages(int nr)
+{
+	FILE *f;
+
+	f = fopen(PROCFS_PATH "/sys/vm/nr_hugepages", "w");
+	if (!f)
+		serror("Failed to open %s", PROCFS_PATH "/sys/vm/nr_hugepages");
+	
+	fprintf(f, "%d\n", nr);
+	fclose(f);
+	
+	return 0;
+}
+
 #if 0
 int kernel_check_cap(cap_value_t cap)
 {

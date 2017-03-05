@@ -14,10 +14,9 @@
 
 static int api_config(struct api_ressource *h, json_t *args, json_t **resp, struct api_session *s)
 {
-	if (!s->api->cfg->cfg)
-		return -1;
+	config_setting_t *cfg_root = config_root_setting(&s->api->cfg->cfg);
 	
-	*resp = config_to_json(config_root_setting(s->api->cfg->cfg));
+	*resp = config_to_json(cfg_root);
 
 	return 0;
 }

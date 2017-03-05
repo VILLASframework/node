@@ -9,17 +9,16 @@
 
 #include <linux/limits.h>
 
-#if 0
-  #include "nodes/websocket.h"
-#endif
-
 #include "utils.h"
 #include "log.h"
 #include "web.h"
 #include "api.h"
 
+#include "nodes/websocket.h"
+
 /* Forward declarations */
 lws_callback_function api_protocol_cb;
+lws_callback_function websocket_protocol_cb;
 
 /** Path to the directory which should be served by build in HTTP server */
 static char htdocs[PATH_MAX] = "/usr/local/share/villas/node/htdocs";
@@ -46,7 +45,7 @@ static struct lws_protocols protocols[] = {
 		.per_session_data_size = sizeof(struct api_session),
 		.rx_buffer_size = 0
 	},
-	{ 0  /* terminator */ }
+	{ NULL /* terminator */ }
 };
 
 /** List of libwebsockets mounts. */
@@ -118,23 +117,16 @@ int web_service(struct web *w)
 	return lws_service(w->context, 10);
 }
 
-int web_parse(struct web *w, config_setting_t *lcs)
+int web_parse(struct web *w, config_setting_t *cfg)
 {
-	config_setting_t *lcs_http;
+	if (!config_setting_is_group(cfg))
+		cerror(cfg, "Setting 'http' must be a group.");
 
 	/* Parse global config */
-	lcs_http = config_setting_lookup(lcs, "http");
-	if (lcs_http) {
-		const char *ht;
-
-		config_setting_lookup_string(lcs_http, "ssl_cert", &w->ssl_cert);
-		config_setting_lookup_string(lcs_http, "ssl_private_key", &w->ssl_private_key);
-		config_setting_lookup_int(lcs_http, "port", &w->port);
-		
-		if (config_setting_lookup_string(lcs_http, "htdocs", &w->htdocs)) {
-			strncpy(htdocs, ht, sizeof(htdocs));
-		}
-	}
+	config_setting_lookup_string(cfg, "ssl_cert", &w->ssl_cert);
+	config_setting_lookup_string(cfg, "ssl_private_key", &w->ssl_private_key);
+	config_setting_lookup_int(cfg, "port", &w->port);
+	config_setting_lookup_string(cfg, "htdocs", &w->htdocs);
 	
 	return 0;
 }
@@ -143,11 +135,14 @@ int web_init(struct web *w, struct api *a)
 {
 	w->api = a;
 
+	/** @todo this is a hack */
+	strncpy(htdocs, w->htdocs, sizeof(htdocs));
+
 	lws_set_log_level((1 << LLL_COUNT) - 1, logger);
 
 	/* Start server */
 	struct lws_context_creation_info ctx_info = {
-		.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS,
+		.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS | LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT,
 		.gid = -1,
 		.uid = -1,
 		.user = (void *) w

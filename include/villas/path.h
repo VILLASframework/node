@@ -3,12 +3,13 @@
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
- */
+ *********************************************************************************/
+
 /** A path connects one input node to multiple output nodes (1-to-n).
  *
  * @addtogroup path Path
  * @{
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -20,76 +21,72 @@
 #include "hist.h"
 #include "node.h"
 #include "msg.h"
-#include "hooks.h"
 #include "queue.h"
 #include "pool.h"
+#include "stats.h"
 
-/** The datastructure for a path.
- *
- * @todo Add support for multiple outgoing nodes
- */
+/* Forward declarations */
+struct cfg;
+
+struct path_source
+{
+	struct node *node;
+	struct pool pool;
+	int samplelen;
+	pthread_t tid;	
+};
+
+struct path_destination
+{
+	struct node *node;
+	struct queue queue;
+	int queuelen;
+	pthread_t tid;
+};
+
+/** The datastructure for a path. */
 struct path
 {
 	enum {
 		PATH_INVALID,		/**< Path is invalid. */
-		PATH_CREATED,		/**< Path has been created. */
+		PATH_INITIALIZED,	/**< Path queues, memory pools & hook system initialized. */
 		PATH_RUNNING,		/**< Path is currently running. */
-		PATH_STOPPED		/**< Path has been stopped. */
+		PATH_STOPPED,		/**< Path has been stopped. */
+		PATH_DESTROYED		/**< Path is destroyed. */
 	} state;			/**< Path state */
 	
-	struct node *in;		/**< Pointer to the incoming node */
-	
-	struct queue queue;	/**< A ring buffer for all received messages (unmodified) */
-	struct pool pool;		/**< Memory pool for messages / samples. */
+	/* Each path has a single source and multiple destinations */
+	struct path_source *source;	/**< Pointer to the incoming node */
+	struct list destinations;	/**< List of all outgoing nodes (struct path_destination). */
 
-	struct list destinations;	/**< List of all outgoing nodes */
 	struct list hooks;		/**< List of function pointers to hooks */
 
-	int samplelen;			/**< Maximum number of values per sample for this path. */
-	int queuelen;			/**< Size of sample queue for this path. */
 	int enabled;			/**< Is this path enabled */
-	int tfd;			/**< Timer file descriptor for fixed rate sending */
-	double rate;			/**< Send messages with a fixed rate over this path */
+	int reverse;			/**< This path as a matching reverse path */
 
-	pthread_t recv_tid;		/**< The thread id for this path */
-	pthread_t sent_tid;		/**< A second thread id for fixed rate sending thread */
-
-	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path */
+	pthread_t tid;			/**< The thread id for this path */
 	
 	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
 	
-	/** The following fields are mostly managed by hook_ functions @{ */
+	struct stats *stats;		/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 	
-	struct {
-		struct hist owd;	/**< Histogram for one-way-delay (OWD) of received messages */
-		struct hist gap_msg;	/**< Histogram for inter message timestamps (as sent by remote) */
-		struct hist gap_recv;	/**< Histogram for inter message arrival time (as seen by this instance) */
-		struct hist gap_seq;	/**< Histogram of sequence number displacement of received messages */
-	} hist;
-
-	/* Statistic counters */
-	uintmax_t invalid;		/**< Counter for invalid messages */
-	uintmax_t skipped;		/**< Counter for skipped messages due to hooks */
-	uintmax_t dropped;		/**< Counter for dropped messages due to reordering */
-	uintmax_t overrun;		/**< Counter of overruns for fixed-rate sending */
-	
-	/** @} */
+	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path */
 };
 
-/** Create a path by allocating dynamic memory. */
-void path_init(struct path *p);
+/** Allocate memory for a new path */
+struct path * path_create();
+
+/** Initialize internal data structures. */
+int path_init(struct path *p, struct cfg *cfg);
+
+/** Check if path configuration is proper. */
+int path_check(struct path *p);
 
 /** Destroy path by freeing dynamically allocated memory.
  *
  * @param i A pointer to the path structure.
  */
 int path_destroy(struct path *p);
-
-/** Initialize  pool queue and hooks.
- *
- * Should be called after path_init() and before path_start().
- */
-int path_prepare(struct path *p);
 
 /** Start a path.
  *
@@ -124,7 +121,20 @@ void path_print_stats(struct path *p);
  */
 const char * path_name(struct path *p);
 
+/** Reverse a path */
+int path_reverse(struct path *p, struct path *r);
+
 /** Check if node is used as source or destination of a path. */
 int path_uses_node(struct path *p, struct node *n);
+
+/** Parse a single path and add it to the global configuration.
+ *
+ * @param cfg A libconfig object pointing to the path
+ * @param p Pointer to the allocated memory for this path
+ * @param nodes A linked list of all existing nodes
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
+ */
+int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes);
 
 /** @} */

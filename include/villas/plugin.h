@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "hooks.h"
+#include "hook.h"
 #include "api.h"
 
 #include "fpga/ip.h"
@@ -17,10 +17,8 @@
 #define REGISTER_PLUGIN(p)					\
 __attribute__((constructor)) static void UNIQUE(__ctor)() {	\
 	list_push(&plugins, p);					\
-	(p)->load(p);						\
 }								\
 __attribute__((destructor)) static void UNIQUE(__dtor)() {	\
-	(p)->unload(p);						\
 	list_remove(&plugins, p);				\
 }
 

@@ -11,14 +11,15 @@
 #include <ctype.h>
 #include <sys/stat.h>
 
+#include <villas/cfg.h>
+#include <villas/node.h>
+#include <villas/utils.h>
+#include <villas/hist.h>
+#include <villas/timing.h>
+#include <villas/pool.h>
+#include <villas/kernel/rt.h>
+
 #include "config.h"
-#include "cfg.h"
-#include "msg.h"
-#include "node.h"
-#include "utils.h"
-#include "hist.h"
-#include "timing.h"
-#include "pool.h"
 
 struct cfg cfg; /** <The global configuration */
 
@@ -50,9 +51,9 @@ void quit()
 	running = 0;
 }
 
-void usage(char *name)
+void usage()
 {
-	printf("Usage: %s CONFIG TEST NODE [ARGS]\n", name);
+	printf("Usage: villas-test CONFIG TEST NODE [ARGS]\n");
 	printf("  CONFIG  path to a configuration file\n");
 	printf("  TEST    the name of the test to execute: 'rtt'\n");
 	printf("  NODE    name of the node which shoud be used\n\n");
@@ -63,7 +64,7 @@ void usage(char *name)
 int main(int argc, char *argv[])
 {
 	if (argc < 4) {
-		usage(argv[0]);
+		usage();
 		exit(EXIT_FAILURE);
 	}
 
@@ -77,14 +78,22 @@ int main(int argc, char *argv[])
 	sigaction(SIGTERM, &sa_quit, NULL);
 	sigaction(SIGINT, &sa_quit, NULL);
 
-	log_init(&cfg.log);
+	log_init(&cfg.log, V, LOG_ALL);
+	
+	info("Parsing configuration");
 	cfg_parse(&cfg, argv[1]);
+
+	info("Initialize real-time system");
+	rt_init(cfg.priority, cfg.affinity);
+	
+	info("Initialize memory system");
+	memory_init();
 
 	node = list_lookup(&cfg.nodes, argv[3]);
 	if (!node)
 		error("There's no node with the name '%s'", argv[3]);
 
-	node_init(node->_vt, argc-3, argv+3, config_root_setting(cfg.cfg));
+	node_init(node->_vt, argc-3, argv+3, config_root_setting(&cfg.cfg));
 	node_start(node);
 
 	/* Parse Arguments */
@@ -107,15 +116,8 @@ int main(int argc, char *argv[])
 				res = strtod(optarg, &endptr);
 				goto check;
 			case '?':
-				if (optopt == 'c')
-					error("Option -%c requires an argument.", optopt);
-				else if (isprint(optopt))
-					error("Unknown option '-%c'.", optopt);
-				else
-					error("Unknown option character '\\x%x'.", optopt);
-				exit(EXIT_FAILURE);
-			default:
-				abort();
+				usage();
+				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
 
 		continue;
@@ -176,12 +178,12 @@ void test_rtt() {
 	struct stat st;
 	if (!fstat(fd, &st)) {
 		FILE *f = fdopen(fd, "w");
-		hist_matlab(&hist, f);
+		hist_dump_matlab(&hist, f);
 	}
 	else
 		error("Invalid file descriptor: %u", fd);
 
-	hist_print(&hist);
+	hist_print(&hist, 1);
 
 	hist_destroy(&hist);
 }

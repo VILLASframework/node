@@ -42,8 +42,7 @@ struct sample {
 	
 	atomic_int refcnt;	/**< Reference counter. */
 	struct pool *pool;	/**< This sample is belong to this memory pool. */
-	
-	int endian;			/**< Endianess of data in the sample. */
+	struct node *source;	/**< The node from which this sample originates. */
 
 	/** All timestamps are seconds / nano seconds after 1.1.1970 UTC */
 	struct {
@@ -54,13 +53,18 @@ struct sample {
 
 	/** The values. */
 	union {
-		float    f;	/**< Floating point values (note msg::endian) */
-		uint32_t i;	/**< Integer values (note msg::endian) */
-	} data[];
+		float    f;	/**< Floating point values. */
+		uint32_t i;	/**< Integer values. */
+	} data[];		/**< Data is in host endianess! */
 };
 
-/** Request \p cnt samples from memory pool \p p and initialize them. */
-int sample_get_many(struct pool *p, struct sample *smps[], int cnt);
+/** Request \p cnt samples from memory pool \p p and initialize them.
+ *  This will leave the reference count of the sample to zero.
+ *  Use the sample_get() function to increase it. */
+int sample_alloc(struct pool *p, struct sample *smps[], int cnt);
+
+/** Release an array of samples back to their pools */
+void sample_free(struct sample *smps[], int cnt);
 
 /** Increase reference count of sample */
 int sample_get(struct sample *s);

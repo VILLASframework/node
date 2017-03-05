@@ -16,8 +16,10 @@ const int hist_result[] = {};
 
 Test(hist, simple) {
 	struct hist h;
+	int ret;
 	
-	hist_create(&h, -100, 100, 1);
+	ret = hist_create(&h, -100, 100, 1);
+	cr_assert_eq(ret, 0);
 	
 	for (int i = 0; i < ARRAY_LEN(test_data); i++)
 		hist_put(&h, test_data[i]);

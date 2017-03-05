@@ -22,6 +22,8 @@ extern struct list node_types;	/**< Vtable for virtual node sub types */
 
 /* Forward declarations */
 struct node_type;
+struct settings;
+typedef struct config_setting_t config_setting_t;
 
 /** The data structure for a node.
  *
@@ -209,12 +211,6 @@ int node_start(struct node *n);
  */
 int node_stop(struct node *n);
 
-/** Parse node connection details.
- *
- * @see node_type::parse
- */
-int node_parse(struct node *n, config_setting_t *cfg);
-
 /** Return a pointer to a string which should be used to print this node.
  *
  * @see node::_name‚
@@ -245,5 +241,26 @@ int node_reverse(struct node *n);
 int node_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 int node_write(struct node *n, struct sample *smps[], unsigned cnt);
+
+/** Parse an array or single node and checks if they exist in the "nodes" section.
+ *
+ * Examples:
+ *     out = [ "sintef", "scedu" ]
+ *     out = "acs"
+ *
+ * @param cfg The libconfig object handle for "out".
+ * @param nodes The nodes will be added to this list.
+ * @param all This list contains all valid nodes.
+ */
+int node_parse_list(struct list *list, config_setting_t *cfg, struct list *all);
+
+/** Parse a single node and add it to the global configuration.
+ *
+ * @param cfg A libconfig object pointing to the node.
+ * @param nodes Add new nodes to this linked list.
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
+ */
+int node_parse(struct node *n, config_setting_t *cfg);
 
 /** @} */

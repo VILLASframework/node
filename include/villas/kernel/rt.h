@@ -9,7 +9,7 @@
 
 #pragma once
 
-int rt_init(struct cfg *cfg);
+int rt_init(int priority, int affinity);
 
 int rt_set_affinity(int affinity);
 

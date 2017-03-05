@@ -25,13 +25,9 @@
 /* Declarations */
 int fpga_benchmarks(int argc, char *argv[], struct fpga_card *c);
 
-struct cfg cfg;
-
-void usage(char *name)
+void usage()
 {
-	printf("Usage: %s CONFIGFILE CARD CMD [OPTIONS]\n", name);
-	printf("   Commands:\n");
-	printf("      benchmarks Do benchmarks\n\n");
+	printf("Usage: villas-fpga CONFIGFILE CARD [OPTIONS]\n\n");
 	printf("   Options:\n");
 	printf("      -d    Set log level\n\n");
 
@@ -43,17 +39,11 @@ void usage(char *name)
 int main(int argc, char *argv[])
 {
 	int ret;
+	
+	struct cfg cfg;
 	struct fpga_card *card;
 
-	enum {
-		FPGA_BENCH
-	} subcommand;
-
-	if (argc < 4)
-		usage(argv[0]);
-	if (strcmp(argv[2], "benchmarks") == 0)
-		subcommand = FPGA_BENCH;
-	else
+	if (argc < 3)
 		usage(argv[0]);
 
 	/* Parse arguments */
@@ -66,18 +56,24 @@ int main(int argc, char *argv[])
 
 			case '?':
 			default:
-				usage(argv[0]);
+				usage();
 		}
 	}
 
 	info("Parsing configuration");
 	cfg_parse(&cfg, argv[1]);
 	
+	info("Initialize logging system");
+	log_init(&cfg.log, cfg.log.level, cfg.log.facilities);
+
 	info("Initialize real-time system");
-	rt_init(&cfg);
+	rt_init(cfg.priority, cfg.affinity);
+	
+	info("Initialize memory system");
+	memory_init();
 
 	/* Initialize VILLASfpga card */
-	ret = fpga_init(argc, argv, config_root_setting(cfg.cfg));
+	ret = fpga_init(argc, argv, config_root_setting(&cfg.cfg));
 	if (ret)
 		error("Failed to initialize FPGA card");
 	
@@ -87,10 +83,8 @@ int main(int argc, char *argv[])
 
 	fpga_card_dump(card);
 
-	/* Start subcommand */
-	switch (subcommand) {
-		case FPGA_BENCH: fpga_benchmarks(argc-optind-1, argv+optind+1, card); break;
-	}
+	/* Run benchmarks */
+	fpga_benchmarks(argc-optind-1, argv+optind+1, card);
 
 	/* Shutdown */
 	ret = fpga_deinit();
