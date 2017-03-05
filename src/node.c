@@ -97,8 +97,13 @@ int main(int argc, char *argv[])
 	
 	char *uri = "opal-shmem.conf";
 #else
-	if (argc > 2)
-		usage(argv[0]);
+	if (argc == 2) {
+		if (!strcmp(argv[1], "-h") ||
+		    !strcmp(argv[1], "--help"))
+			    usage();
+	}
+	else if (argc > 2)
+		usage();
 	
 	char *uri = (argc == 2) ? argv[1] : NULL;
 #endif
