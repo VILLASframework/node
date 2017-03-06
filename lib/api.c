@@ -133,12 +133,12 @@ int api_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *use
 			api_session_init(s, w->api, API_MODE_HTTP);
 
 			/* Prepare HTTP response header */
-			s->response.headers.len = 1 + asprintf(&s->response.headers.buf,
-				"HTTP/1.1 200 OK\r\n"
-				"Content-type: application/json\r\n"
-				"User-agent: " USER_AGENT
-				"\r\n"
-			);
+			const char headers[] =	"HTTP/1.1 200 OK\r\n"
+						"Content-type: application/json\r\n"
+						"User-agent: " USER_AGENT
+						"\r\n";
+			
+			api_buffer_append(&s->response.headers, headers, sizeof(headers));
 
 			/* book us a LWS_CALLBACK_HTTP_WRITEABLE callback */
 			lws_callback_on_writable(wsi);
@@ -148,13 +148,8 @@ int api_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *use
 
 		case LWS_CALLBACK_CLIENT_RECEIVE:
 		case LWS_CALLBACK_RECEIVE:
-		case LWS_CALLBACK_HTTP_BODY: {
-			char *newbuf;
-			
-			newbuf = realloc(s->request.body.buf, s->request.body.len + len);
-			
-			s->request.body.buf = memcpy(newbuf + s->request.body.len, in, len);
-			s->request.body.len += len;
+		case LWS_CALLBACK_HTTP_BODY: {			
+			api_buffer_append(&s->request.body, in, len);
 			
 			json_t *req, *resp;
 			while (parse_request(&s->request.body, &req) == 1) {
@@ -176,33 +171,51 @@ int api_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *use
 			break;
 
 		case LWS_CALLBACK_SERVER_WRITEABLE:
-		case LWS_CALLBACK_HTTP_WRITEABLE: {
-			int sent;			
-			if (s->mode == API_MODE_HTTP && s->response.headers.len > 0) {
-				sent = lws_write(wsi, s->response.headers.buf, s->response.headers.len, LWS_WRITE_HTTP_HEADERS);
-				if (sent > 0) {
-					memmove(s->response.headers.buf, s->response.headers.buf + sent, sent);
-					s->response.headers.len -= sent;
-				}
-			}
-			else if (s->response.body.len > 0) {
-				sent = lws_write(wsi, s->response.body.buf, s->response.body.len, LWS_WRITE_HTTP);
-				if (sent > 0) {
-					memmove(s->response.body.buf, s->response.body.buf + sent, sent);
-					s->response.body.len -= sent;
-				}
-			}
+		case LWS_CALLBACK_HTTP_WRITEABLE:
+			/* We send headers only in HTTP mode */
+			if (s->mode == API_MODE_HTTP)
+				api_buffer_send(&s->response.headers, wsi);
+
+			api_buffer_send(&s->response.body, wsi);
 			
 			if (s->completed && s->response.body.len == 0)
 				return -1;
 
 			break;
-		}
 
 		default:
 			return 0;
 	}
 
+	return 0;
+}
+
+int api_buffer_send(struct api_buffer *b, struct lws *w)
+{
+	int sent;
+	
+	if (b->len <= 0)
+		return 0;
+	
+	sent = lws_write(w, (unsigned char *) b->buf, b->len, LWS_WRITE_HTTP_HEADERS);
+	if (sent > 0) {
+		memmove(b->buf, b->buf + sent, sent);
+		b->len -= sent;
+	}
+	
+	return sent;
+}
+
+int api_buffer_append(struct api_buffer *b, const char *in, size_t len)
+{
+	b->buf = realloc(b->buf, b->len + len);
+	if (!b->buf)
+		return -1;
+	
+	memcpy(b->buf + b->len, in, len);
+
+	b->len += len;
+	
 	return 0;
 }
 

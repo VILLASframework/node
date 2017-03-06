@@ -99,5 +99,11 @@ int api_session_destroy(struct api_session *s);
 
 int api_session_run_command(struct api_session *s, json_t *req, json_t **resp);
 
+/** Send contents of buffer over libwebsockets connection */
+int api_buffer_send(struct api_buffer *b, struct lws *w);
+
+/** Append received data to buffer. */
+int api_buffer_append(struct api_buffer *b, const char *in, size_t len);
+
 /** Libwebsockets callback for "api" endpoint */
 int api_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
