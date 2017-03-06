@@ -11,7 +11,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
-#include <signal.h>
 #include <pthread.h>
 #include <fcntl.h>
 #include <ctype.h>
@@ -337,4 +336,19 @@ void rdtsc_sleep(uint64_t nanosecs, uint64_t start)
 	do {
 		__asm__("nop");
 	} while (rdtsc() - start < cycles);
+}
+
+/* Setup exit handler */
+void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
+{
+	info("Initialize signals");
+	
+	struct sigaction sa_quit = {
+		.sa_flags = SA_SIGINFO,
+		.sa_sigaction = cb
+	};
+
+	sigemptyset(&sa_quit.sa_mask);
+	sigaction(SIGINT, &sa_quit, NULL);
+	sigaction(SIGTERM, &sa_quit, NULL);
 }

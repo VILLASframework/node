@@ -201,15 +201,7 @@ int main(int argc, char *argv[])
 	
 	log_init(&cfg.log, cfg.log.level, LOG_ALL);
 
-	/* Setup signals */
-	struct sigaction sa_quit = {
-		.sa_flags = SA_SIGINFO,
-		.sa_sigaction = quit
-	};
-
-	sigemptyset(&sa_quit.sa_mask);
-	sigaction(SIGTERM, &sa_quit, NULL);
-	sigaction(SIGINT,  &sa_quit, NULL);
+	signals_init(quit);
 
 	/* Initialize log, configuration.. */
 	cfg_parse(&cfg, argv[1]);

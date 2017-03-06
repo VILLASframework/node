@@ -46,7 +46,7 @@ static double res = 1e-5;	/**< Histogram resolution. */
 /* Prototypes */
 void test_rtt();
 
-void quit()
+void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
 	running = 0;
 }
@@ -67,16 +67,6 @@ int main(int argc, char *argv[])
 		usage();
 		exit(EXIT_FAILURE);
 	}
-
-	/* Setup signals */
-	struct sigaction sa_quit = {
-		.sa_flags = SA_SIGINFO,
-		.sa_sigaction = quit
-	};
-
-	sigemptyset(&sa_quit.sa_mask);
-	sigaction(SIGTERM, &sa_quit, NULL);
-	sigaction(SIGINT, &sa_quit, NULL);
 
 	log_init(&cfg.log, V, LOG_ALL);
 	cfg_parse(&cfg, argv[1]);

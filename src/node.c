@@ -5,7 +5,6 @@
  *********************************************************************************/
 
 #include <stdlib.h>
-#include <signal.h>
 #include <unistd.h>
 
 #include <villas/utils.h>
@@ -27,7 +26,7 @@
 
 struct cfg cfg;
 
-static void quit()
+static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
 	info("Stopping paths");
 	list_foreach(struct path *p, &cfg.paths) { INDENT
@@ -45,19 +44,6 @@ static void quit()
 	info(GRN("Goodbye!"));
 
 	_exit(EXIT_SUCCESS);
-}
-
-/* Setup exit handler */
-static void signals_init()
-{ INDENT
-	struct sigaction sa_quit = {
-		.sa_flags = SA_SIGINFO,
-		.sa_sigaction = quit
-	};
-
-	sigemptyset(&sa_quit.sa_mask);
-	sigaction(SIGINT, &sa_quit, NULL);
-	sigaction(SIGTERM, &sa_quit, NULL);
 }
 
 static void usage()
