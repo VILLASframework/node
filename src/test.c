@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
 	if (!node)
 		error("There's no node with the name '%s'", argv[3]);
 
-	node_init(node->_vt, argc-3, argv+3, config_root_setting(&cfg.cfg));
+	node_type_init(node->_vt, argc-3, argv+3, config_root_setting(&cfg.cfg));
 	node_start(node);
 
 	/* Parse Arguments */
@@ -132,7 +132,7 @@ check:		if (optarg == endptr)
 		error("Unknown test: '%s'", argv[2]);
 
 	node_stop(node);
-	node_deinit(node->_vt);
+	node_type_deinit(node->_vt);
 	
 	cfg_destroy(&cfg);
 

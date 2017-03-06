@@ -57,42 +57,6 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return nsent;
 }
 
-int node_init(struct node_type *vt, int argc, char *argv[], config_setting_t *cfg)
-{
-	int ret;
-	
-	if (vt->state != NODE_TYPE_UNINITIALIZED)
-		return -1;
-
-	info("Initializing " YEL("%s") " node type", vt->name);
-	{ INDENT
-		ret = vt->init ? vt->init(argc, argv, cfg) : -1;
-	}	
-
-	if (ret == 0)
-		vt->state = NODE_TYPE_INITIALIZED;
-
-	return ret;
-}
-
-int node_deinit(struct node_type *vt)
-{
-	int ret;
-	
-	if (vt->state != NODE_TYPE_INITIALIZED)
-		return -1;
-
-	info("De-initializing " YEL("%s") " node type", vt->name);
-	{ INDENT
-		ret = vt->deinit ? vt->deinit() : -1;
-	}
-	
-	if (ret == 0)
-		vt->state = NODE_TYPE_UNINITIALIZED;
-
-	return ret;
-}
-
 int node_start(struct node *n)
 {
 	int ret;
@@ -161,11 +125,6 @@ char * node_name_long(struct node *n)
 const char * node_name_short(struct node *n)
 {
 	return n->name;
-}
-
-const char * node_name_type(struct node *n)
-{
-	return n->_vt->name;
 }
 
 int node_reverse(struct node *n)
