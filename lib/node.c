@@ -13,9 +13,7 @@
 #include "cfg.h"
 #include "utils.h"
 #include "config.h"
-
-/** List of registered node-types */
-struct list node_types = LIST_INIT();
+#include "plugin.h"
 
 int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
@@ -262,7 +260,7 @@ int node_parse_list(struct list *list, config_setting_t *cfg, struct list *all) 
 
 int node_parse(struct node *n, config_setting_t *cfg)
 {
-	struct node_type *vt;
+	struct plugin *p;
 	const char *type, *name;
 	int ret;
 
@@ -271,9 +269,11 @@ int node_parse(struct node *n, config_setting_t *cfg)
 	if (!config_setting_lookup_string(cfg, "type", &type))
 		cerror(cfg, "Missing node type");
 	
-	vt = list_lookup(&node_types, type);
-	if (!vt)
-		cerror(cfg, "Invalid type for node '%s'", config_setting_name(cfg));
+	p = plugin_lookup(PLUGIN_TYPE_NODE, type);
+	assert(&p->node == n->_vt);
+	
+	if (!config_setting_lookup_int(cfg, "vectorize", &n->vectorize))
+		n->vectorize = 1;
 
 	n->name = name;
 	n->cfg = cfg;

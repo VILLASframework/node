@@ -52,14 +52,22 @@ int cfg_init_post(struct cfg *cfg)
 	info("Initialize web sub-system");
 	web_init(&cfg->web, &cfg->api);
 	
+	info("Initialize node types");
+	list_foreach(struct node *n, &cfg->nodes) { INDENT
+		config_setting_t *cfg_root = config_root_setting(&cfg->cfg);
+		
+		node_type_init(n->_vt, cfg->cli.argc, cfg->cli.argv, cfg_root);
+	}
+	
 	return 0;
 }
 
 int cfg_deinit(struct cfg *cfg)
 {
 	info("De-initializing node types");
-	list_foreach(struct node_type *vt, &node_types) { INDENT
-		node_deinit(vt);
+	list_foreach(struct plugin *p, &plugins) { INDENT
+		if (p->type == PLUGIN_TYPE_NODE)
+			node_type_deinit(&p->node);
 	}
 	
 	info("De-initializing web interface");
@@ -201,19 +209,20 @@ int cfg_parse(struct cfg *cfg, const char *uri)
 
 		for (int i = 0; i < config_setting_length(cfg_nodes); i++) {
 			config_setting_t *cfg_node = config_setting_get_elem(cfg_nodes, i);
-			
-			struct node_type *vt;
+
+			struct plugin *p;
 			const char *type;
 
 			/* Required settings */
 			if (!config_setting_lookup_string(cfg_node, "type", &type))
 				cerror(cfg_node, "Missing node type");
 			
-			vt = list_lookup(&node_types, type);
-			if (!vt)
+			
+			p = plugin_lookup(PLUGIN_TYPE_NODE, type);
+			if (!p)
 				cerror(cfg_node, "Invalid node type: %s", type);
 			
-			struct node *n = node_create(vt);
+			struct node *n = node_create(&p->node);
 
 			ret = node_parse(n, cfg_node);
 			if (ret)

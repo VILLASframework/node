@@ -24,7 +24,6 @@
 
 #include "config.h"
 
-static struct list nodes;	/**< List of all nodes */
 static struct cfg cfg;		/**< The global configuration */
 
 struct dir {
@@ -223,7 +222,7 @@ int main(int argc, char *argv[])
 	memory_init();
 	
 	/* Initialize node */
-	node = list_lookup(&nodes, argv[2]);
+	node = list_lookup(&cfg.nodes, argv[2]);
 	if (!node)
 		error("Node '%s' does not exist!", argv[2]);
 

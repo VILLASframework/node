@@ -127,13 +127,6 @@ int main(int argc, char *argv[])
 
 	cfg_init_post(&cfg);
 
-	info("Initialize node types");
-	list_foreach(struct node_type *vt, &node_types) { INDENT
-		int refs = list_length(&vt->instances);
-		if (refs > 0)
-			node_init(vt, argc, argv, config_root_setting(&cfg.cfg));
-	}
-
 	info("Starting nodes");
 	list_foreach(struct node *n, &cfg.nodes) { INDENT
 		int refs = list_count(&cfg.paths, (cmp_cb_t) path_uses_node, n);
