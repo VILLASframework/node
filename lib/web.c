@@ -31,14 +31,12 @@ static struct lws_protocols protocols[] = {
 		.per_session_data_size = sizeof(struct api_session),
 		.rx_buffer_size = 0
 	},
-#if 0
 	{
 		.name = "live",
 		.callback = websocket_protocol_cb,
 		.per_session_data_size = sizeof(struct websocket_connection),
 		.rx_buffer_size = 0
 	},
-#endif
 	{
 		.name = "api",
 		.callback = api_protocol_cb,

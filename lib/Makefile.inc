@@ -48,12 +48,12 @@ endif
 endif
 
 # Enable WebSocket support
-#ifndef WITHOUT_WEBSOCKETS
+ifndef WITHOUT_WEBSOCKETS
 ifeq ($(shell pkg-config libwebsockets jansson; echo $$?),0)
-#	LIB_SRCS    += lib/nodes/websocket.c
+	LIB_SRCS    += lib/nodes/websocket.c
 	LIB_PKGS    += libwebsockets jansson
 endif
-#endif
+endif
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
 ifdef WITH_OPAL
