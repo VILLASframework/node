@@ -208,8 +208,11 @@ int path_destroy(struct path *p)
 	
 	path_source_destroy(p->source);
 
-	free(p->_name);
-	free(p->source);
+	if (p->_name)
+		free(p->_name);
+
+	if (p->source)
+		free(p->source);
 	
 	p->state = PATH_DESTROYED;
 	

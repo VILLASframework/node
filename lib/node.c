@@ -157,7 +157,6 @@ int node_destroy(struct node *n)
 
 	free(n->_vd);
 	free(n->_name);
-	free(n);
 	
 	return 0;
 }
