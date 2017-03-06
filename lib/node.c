@@ -7,7 +7,6 @@
 #include <string.h>
 #include <libconfig.h>
 
-
 #include "sample.h"
 #include "node.h"
 #include "cfg.h"
@@ -163,16 +162,6 @@ int node_destroy(struct node *n)
 	return 0;
 }
 
-/** Parse an array or single node and checks if they exist in the "nodes" section.
- *
- * Examples:
- *     out = [ "sintef", "scedu" ]
- *     out = "acs"
- *
- * @param cfg The libconfig object handle for "out".
- * @param nodes The nodes will be added to this list.
- * @param all This list contains all valid nodes.
- */
 int node_parse_list(struct list *list, config_setting_t *cfg, struct list *all) {
 	const char *str;
 	struct node *node;
@@ -241,18 +230,17 @@ int node_parse(struct node *n, config_setting_t *cfg)
 	if (ret)
 		cerror(cfg, "Failed to parse node '%s'", node_name(n));
 
-	if (config_setting_lookup_int(cfg, "vectorize", &n->vectorize)) {
-		config_setting_t *cfg_vectorize = config_setting_lookup(cfg, "vectorize");
-		
-		if (n->vectorize <= 0)
-			cerror(cfg_vectorize, "Invalid value for `vectorize` %d. Must be natural number!", n->vectorize);
-		if (vt->vectorize && vt->vectorize < n->vectorize)
-			cerror(cfg_vectorize, "Invalid value for `vectorize`. Node type %s requires a number smaller than %d!",
-				node_name_type(n), vt->vectorize);
-	}
-	else
-		n->vectorize = 1;
-
 	return ret;
 }
 
+int node_check(struct node *n)
+{
+	if (n->vectorize <= 0)
+		error("Invalid `vectorize` value %d for node %s. Must be natural number!", n->vectorize, node_name(n));
+
+	if (n->_vt->vectorize && n->_vt->vectorize < n->vectorize)
+		error("Invalid value for `vectorize`. Node type requires a number smaller than %d!",
+			n->_vt->vectorize);
+
+	return 0;
+}
