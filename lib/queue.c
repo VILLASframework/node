@@ -57,12 +57,21 @@ int queue_init(struct queue *q, size_t size, const struct memtype *mem)
 	atomic_store_explicit(&q->tail, 0, memory_order_relaxed);
 	atomic_store_explicit(&q->head, 0, memory_order_relaxed);
 	
+	q->state = QUEUE_STATE_INITIALIZED;
+	
 	return 0;
 }
 
 int queue_destroy(struct queue *q)
 {
-	return memory_free(q->mem, q->buffer, (q->buffer_mask + 1) * sizeof(q->buffer[0]));
+	int ret = 0;
+
+	if (q->state == QUEUE_STATE_INITIALIZED)
+		ret = memory_free(q->mem, q->buffer, (q->buffer_mask + 1) * sizeof(q->buffer[0]));
+
+	q->state = QUEUE_STATE_DESTROYED;
+	
+	return ret;
 }
 
 /** Return estimation of current queue usage.

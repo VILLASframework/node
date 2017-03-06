@@ -43,6 +43,11 @@ typedef char cacheline_pad_t[CACHELINE_SIZE];
 
 struct queue {
 	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
+	
+	enum {
+		QUEUE_STATE_DESTROYED,
+		QUEUE_STATE_INITIALIZED
+	} state;
 
 	struct memtype const * mem;
 	size_t buffer_mask;

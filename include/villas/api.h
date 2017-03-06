@@ -43,6 +43,11 @@ enum api_mode {
 struct api {
 	struct list sessions;	/**< List of currently active connections */
 	
+	enum {
+		API_STATE_DESTROYED,
+		API_STATE_INITIALIZED
+	} state;
+	
 	struct cfg *cfg;
 };
 

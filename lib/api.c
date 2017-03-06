@@ -224,12 +224,18 @@ int api_init(struct api *a, struct cfg *cfg)
 	list_init(&a->sessions);
 
 	a->cfg = cfg;
+	a->state = API_STATE_INITIALIZED;
 
 	return 0;
 }
 
 int api_destroy(struct api *a)
 {
+	// if (a->state = API_STATE_INITIALIZED)
+	//	do something
+
+	a->state = API_STATE_DESTROYED;
+
 	return 0;
 }
 

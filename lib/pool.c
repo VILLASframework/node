@@ -32,6 +32,8 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, const struct memtype *
 	
 	for (int i = 0; i < cnt; i++)
 		queue_push(&p->queue, (char *) p->buffer + i * p->blocksz);
+	
+	p->state = POOL_STATE_INITIALIZED;
 
 	return 0;
 }
@@ -40,7 +42,10 @@ int pool_destroy(struct pool *p)
 {
 	queue_destroy(&p->queue);	
 
-	return memory_free(p->mem, p->buffer, p->len);
+	if (p->state == POOL_STATE_INITIALIZED)
+		return memory_free(p->mem, p->buffer, p->len);
 	
+	p->state = POOL_STATE_DESTROYED;
+
 	return 0;
 }

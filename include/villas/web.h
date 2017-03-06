@@ -13,6 +13,11 @@ struct api;
 struct web {
 	struct api *api;
 	
+	enum {
+		WEB_STATE_DESTROYED,
+		WEB_STATE_INITIALIZED
+	} state;
+	
 	struct lws_context *context;	/**< The libwebsockets server context. */
 	struct lws_vhost *vhost;	/**< The libwebsockets vhost. */
 

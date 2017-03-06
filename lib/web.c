@@ -162,13 +162,18 @@ int web_init(struct web *w, struct api *a)
 	w->vhost = lws_create_vhost(w->context, &vhost_info);
 	if (w->vhost == NULL)
 		error("WebSocket: failed to initialize server");
+	
+	w->state = WEB_STATE_INITIALIZED;
 
 	return 0;
 }
 
 int web_destroy(struct web *w)
 {
-	lws_context_destroy(w->context);
+	if (w->state == WEB_STATE_INITIALIZED)
+		lws_context_destroy(w->context);
+
+	w->state = WEB_STATE_DESTROYED;
 
 	return 0;
 }
