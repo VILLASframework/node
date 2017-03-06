@@ -1,1 +1,0 @@
-These drivers are taken from https://github.com/Xilinx/embeddedsw/tree/master/XilinxProcessorIPLib/drivers
