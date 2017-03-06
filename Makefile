@@ -33,15 +33,6 @@ CFLAGS  += -Wall -Werror -fdiagnostics-color=auto
 CFLAGS  += -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
 LDFLAGS += -L$(BUILDDIR)
 
-ifdef CI
-	CFLAGS += -D_GIT_REV='"${CI_BUILD_REF:0:7}~ci"'
-else
-	GIT = $(shell type -p git)
-	ifneq ($(GIT),)
-		CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
-	endif
-endif
-
 # We must compile without optimizations for gcov!
 ifdef DEBUG
 	CFLAGS += -O0 -g
@@ -71,9 +62,23 @@ endif
 
 SPACE :=
 SPACE +=
-BUILDDIR := $(BUILDDIR)/$(subst $(SPACE),-,$(strip $(VARIANTS)))
+VARIANT = $(subst $(SPACE),-,$(strip $(VARIANTS)))
 
+BUILDDIR := $(BUILDDIR)/$(VARIANT)
 SRCDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+# Add git revision and build variant defines
+ifdef CI
+	CFLAGS += -D_GIT_REV='"${CI_BUILD_REF:0:7}"'
+	CFLAGS += -D_VARIANT='"-ci-$(VARIANT)"'
+else
+	GIT = $(shell type -p git)
+	GIT_REV = $(shell git rev-parse --short HEAD)
+	ifneq ($(GIT),)
+		CFLAGS += -D_GIT_REV='"$(GIT_REV)"'
+	endif
+	CFLAGS += -D_VARIANT='"-$(VARIANT)"'
+endif
 
 # pkg-config dependencies
 PKGS = libconfig

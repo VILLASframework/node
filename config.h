@@ -15,7 +15,7 @@
 #endif
 
 /** The version number of VILLASnode */
-#define VERSION			"v0.6-" _GIT_REV
+#define VERSION			"v0.7-" _GIT_REV _VARIANT
 
 /** Default number of values in a sample */
 #define DEFAULT_VALUES		64
