@@ -11,6 +11,7 @@
 #include <stdint.h>
 #include <sched.h>
 #include <assert.h>
+#include <signal.h>
 #include <sys/types.h>
 
 #include "log.h"
@@ -226,3 +227,6 @@ static inline int log2i(long long x) {
 
 /** Sleep with rdtsc */
 void rdtsc_sleep(uint64_t nanosecs, uint64_t start);
+
+/** Register a exit callback for program termination (SIGINT / SIGKILL). */
+void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx));
