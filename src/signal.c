@@ -33,12 +33,13 @@ void usage()
 {
 	printf("Usage: villas-signal SIGNAL [OPTIONS]\n");
 	printf("  SIGNAL   is on of: 'mixed', 'random', 'sine', 'triangle', 'square', 'ramp'\n");
+	printf("  -d LVL   set debug level\n");
 	printf("  -v NUM   specifies how many values a message should contain\n");
 	printf("  -r HZ    how many messages per second\n");
 	printf("  -n       non real-time mode. do not throttle output.\n");
 	printf("  -f HZ    the frequency of the signal\n");
 	printf("  -a FLT   the amplitude\n");
-	printf("  -d FLT   the standard deviation for 'random' signals\n");
+	printf("  -D FLT   the standard deviation for 'random' signals\n");
 	printf("  -l NUM   only send LIMIT messages and stop\n\n");
 
 	print_copyright();
@@ -63,9 +64,7 @@ int main(int argc, char *argv[])
 	int type = TYPE_MIXED;
 	int values = 1;
 	int limit = -1;	
-	int counter, tfd, steps;
-
-	log_init(&log, V, LOG_ALL);
+	int counter, tfd, steps, level = V;
 
 	if (argc < 2) {
 		usage();
@@ -88,8 +87,11 @@ int main(int argc, char *argv[])
 	
 	/* Parse optional command line arguments */
 	char c, *endptr;
-	while ((c = getopt(argc-1, argv+1, "hv:r:f:l:a:d:n")) != -1) {
+	while ((c = getopt(argc-1, argv+1, "hv:r:f:l:a:D:d:n")) != -1) {
 		switch (c) {
+			case 'd':
+				level = strtoul(optarg, &endptr, 10);
+				goto check;
 			case 'l':
 				limit = strtoul(optarg, &endptr, 10);
 				goto check;
@@ -105,7 +107,7 @@ int main(int argc, char *argv[])
 			case 'a':
 				ampl   = strtof(optarg, &endptr);
 				goto check;
-			case 'd':
+			case 'D':
 				stddev = strtof(optarg, &endptr);
 				goto check;
 			case 'n':
@@ -122,6 +124,8 @@ int main(int argc, char *argv[])
 check:		if (optarg == endptr)
 			error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
+	
+	log_init(&log, level, LOG_ALL);
 
 	/* Allocate memory for message buffer */
 	struct sample *s = alloc(SAMPLE_LEN(values));

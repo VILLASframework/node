@@ -167,7 +167,7 @@ static void * recv_loop(void *ctx)
 
 int main(int argc, char *argv[])
 {
-	int ret;
+	int ret, level = V;
 	char c;
 
 	ptid = pthread_self();
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
 				sendd.enabled = false; // receive only
 				break;
 			case 'd':
-				cfg.log.level = atoi(optarg);
+				level = atoi(optarg);
 				break;
 			case 'h':
 			case '?':
@@ -200,12 +200,9 @@ int main(int argc, char *argv[])
 				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
 	}
-	
-	log_init(&cfg.log, cfg.log.level, LOG_ALL);
 
+	log_init(&cfg.log, level, LOG_ALL);
 	signals_init(quit);
-
-	/* Initialize log, configuration.. */
 	cfg_parse(&cfg, argv[1]);
 	rt_init(cfg.priority, cfg.affinity);
 	memory_init();
