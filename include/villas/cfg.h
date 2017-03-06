@@ -31,6 +31,11 @@ struct cfg {
 	struct log log;
 	struct api api;
 	struct web web;
+	
+	struct {
+		int argc;
+		char **argv;
+	} cli;
 
 	config_t cfg;		/**< Pointer to configuration file */
 	json_t *json;		/**< JSON representation of the same config. */
@@ -60,3 +65,5 @@ int cfg_destroy(struct cfg *cfg);
  * @retval <0 Error. Something went wrong.
  */
 int cfg_parse(struct cfg *cfg, const char *uri);
+
+int cfg_parse_cli(struct cfg *cfg, int argc, char *argv[]);

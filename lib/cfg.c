@@ -97,6 +97,16 @@ int cfg_destroy(struct cfg *cfg)
 	return 0;
 }
 
+int cfg_parse_cli(struct cfg *cfg, int argc, char *argv[])
+{
+	cfg->cli.argc = argc;
+	cfg->cli.argv = argv;
+	
+	char *uri = (argc == 2) ? argv[1] : NULL;
+	
+	return cfg_parse(cfg, uri);
+}
+
 int cfg_parse(struct cfg *cfg, const char *uri)
 {
 	config_setting_t *cfg_root, *cfg_nodes, *cfg_paths, *cfg_plugins, *cfg_logging, *cfg_web;
