@@ -92,16 +92,11 @@ LDLIBS += $(shell pkg-config --libs ${PKGS})
 
 all: src plugins | lib
 
+# Build everything with different profiles: debug, coverage, ...
 everything:
 	$(MAKE) DEBUG=1
 	$(MAKE) COVERAGE=1
 	$(MAKE) PROFILE=1
-	$(MAKE) doc
-	$(MAKE) tests
-
-install: $(addprefix install-,$(MODULES))
-
-clean: $(addprefix clean-,$(MODULES))
 
 docker:
 	docker build -t villas .
@@ -117,6 +112,9 @@ doc: | $(BUILDDIR)/doc/
 .PHONY: all everything clean install docker doc
 .PRECIOUS: %/
 .SECONDEXPANSION:
+
+install: $(addprefix install-,$(filter-out thirdparty,$(MODULES)))
+clean: $(addprefix clean-,$(filter-out thirdparty,$(MODULES)))
 
 -include $(wildcard $(BUILDDIR)/**/*.d)
 -include $(addsuffix /Makefile.inc,$(MODULES))
