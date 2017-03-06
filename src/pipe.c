@@ -104,8 +104,10 @@ static void * send_loop(void *ctx)
 
 retry:			reason = sample_fscan(stdin, s, NULL);
 			if (reason < 0) {
-				if (feof(stdin))
+				if (feof(stdin)) {
+					info("Reached end-of-file. Terminating...");
 					goto killme;
+				}
 				else {
 					warn("Skipped invalid message message: reason=%d", reason);
 					goto retry;

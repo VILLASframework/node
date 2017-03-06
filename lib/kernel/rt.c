@@ -15,7 +15,11 @@
 #include "kernel/rt.h"
 
 int rt_init(int priority, int affinity)
-{ INDENT
+{
+	info("Initialize real-time sub-system");
+	
+	{ INDENT
+	
 	int is_rt;
 
 	/* Use FIFO scheduler with real time priority */
@@ -32,6 +36,8 @@ int rt_init(int priority, int affinity)
 		rt_set_affinity(affinity);
 	else
 		warn("You should use the 'affinity' setting to pin VILLASnode to dedicate CPU cores");
+	
+	}
 
 	return 0;
 }

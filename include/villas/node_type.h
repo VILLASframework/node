@@ -28,7 +28,7 @@ struct node_type {
 	size_t size;			/**< Size of private data bock. @see node::_vd */
 	
 	enum node_type_state {
-		NODE_TYPE_UNINITIALIZED = 0,
+		NODE_TYPE_DEINITIALIZED = 0,
 		NODE_TYPE_INITIALIZED
 	} state;
 	
