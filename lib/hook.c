@@ -143,8 +143,6 @@ int hook_parse(config_setting_t *cfg, struct list *list)
 	name  = strtok((char *) hookline, ":");
 	param = strtok(NULL, "");
 
-	debug(3, "Hook: %s => %s", name, param);
-
 	plg = plugin_lookup(PLUGIN_TYPE_HOOK, name);
 	if (!plg)
 		cerror(cfg, "Unknown hook function '%s'", name);

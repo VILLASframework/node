@@ -43,13 +43,8 @@ int cfg_init_post(struct cfg *cfg)
 	info("Initialize memory system");
 	memory_init();
 
-	info("Initialize real-time sub-system");
 	rt_init(cfg->priority, cfg->affinity);
-
-	info("Initialize API sub-system");
 	api_init(&cfg->api, cfg);
-	
-	info("Initialize web sub-system");
 	web_init(&cfg->web, &cfg->api);
 	
 	info("Initialize node types");
@@ -110,6 +105,8 @@ int cfg_parse_cli(struct cfg *cfg, int argc, char *argv[])
 int cfg_parse(struct cfg *cfg, const char *uri)
 {
 	config_setting_t *cfg_root, *cfg_nodes, *cfg_paths, *cfg_plugins, *cfg_logging, *cfg_web;
+
+	info("Parsing configuration: uri=%s", uri);
 
 	int ret = CONFIG_FALSE;
 

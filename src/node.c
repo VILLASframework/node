@@ -115,14 +115,10 @@ int main(int argc, char *argv[])
 	if (kernel_has_version(KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN))
 		error("Your kernel version is to old: required >= %u.%u", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
 
-	info("Initialize signals");
-	signals_init();
+	signals_init(quit);
 
-	info("Parsing configuration");
 	cfg_init_pre(&cfg);
-	
 	cfg_parse_cli(&cfg, argc, argv);
-
 	cfg_init_post(&cfg);
 
 	info("Starting nodes");

@@ -79,14 +79,9 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT, &sa_quit, NULL);
 
 	log_init(&cfg.log, V, LOG_ALL);
-	
-	info("Parsing configuration");
 	cfg_parse(&cfg, argv[1]);
-
-	info("Initialize real-time system");
+	signals_init(quit);
 	rt_init(cfg.priority, cfg.affinity);
-	
-	info("Initialize memory system");
 	memory_init();
 
 	node = list_lookup(&cfg.nodes, argv[3]);

@@ -112,7 +112,7 @@ int log_init(struct log *l, int level, long facilitites)
 	/* Register this log instance globally */
 	log = l;
 
-	debug(LOG_LOG | 10, "Log sub-system intialized");
+	debug(LOG_LOG, "Log sub-system intialized: level=%d, faciltities=%#lx", level, facilitites);
 
 	return 0;
 }

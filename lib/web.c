@@ -131,6 +131,8 @@ int web_parse(struct web *w, config_setting_t *cfg)
 
 int web_init(struct web *w, struct api *a)
 {
+	info("Initialize web sub-system");
+
 	w->api = a;
 
 	/** @todo this is a hack */

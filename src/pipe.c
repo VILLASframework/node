@@ -212,13 +212,8 @@ int main(int argc, char *argv[])
 	sigaction(SIGINT,  &sa_quit, NULL);
 
 	/* Initialize log, configuration.. */
-	info("Parsing configuration");
 	cfg_parse(&cfg, argv[1]);
-
-	info("Initialize real-time system");
 	rt_init(cfg.priority, cfg.affinity);
-	
-	info("Initialize memory system");
 	memory_init();
 	
 	/* Initialize node */

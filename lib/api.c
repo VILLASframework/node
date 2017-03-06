@@ -221,6 +221,8 @@ int api_buffer_append(struct api_buffer *b, const char *in, size_t len)
 
 int api_init(struct api *a, struct cfg *cfg)
 {
+	info("Initialize API sub-system");
+
 	list_init(&a->sessions);
 
 	a->cfg = cfg;
