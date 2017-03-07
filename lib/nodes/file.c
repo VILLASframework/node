@@ -41,13 +41,13 @@ static char * file_format_name(const char *format, struct timespec *ts)
 static FILE * file_reopen(struct file_direction *dir)
 {
 	char buf[FILE_MAX_PATHLEN];
-	const char *path = buf;
+	const char *uri = buf;
 
 	/* Append chunk number to filename */
 	if (dir->chunk >= 0)
-		snprintf(buf, FILE_MAX_PATHLEN, "%s_%03u", dir->path, dir->chunk);
+		snprintf(buf, FILE_MAX_PATHLEN, "%s_%03u", dir->uri, dir->chunk);
 	else
-		path = dir->path;
+		uri = dir->uri;
 
 	if (dir->handle)
 		fclose(dir->handle);
@@ -59,7 +59,7 @@ static int file_parse_direction(config_setting_t *cfg, struct file *f, int d)
 {
 	struct file_direction *dir = (d == FILE_READ) ? &f->read : &f->write;
 
-	if (!config_setting_lookup_string(cfg, "path", &dir->fmt))
+	if (!config_setting_lookup_string(cfg, "uri", &dir->fmt))
 		return -1;
 
 	if (!config_setting_lookup_string(cfg, "mode", &dir->mode))
@@ -139,7 +139,7 @@ char * file_print(struct node *n)
 		}
 		
 		strcatf(&buf, "in=%s, epoch_mode=%s, epoch=%.2f, ",
-			f->read.path ? f->read.path : f->read.fmt,
+			f->read.uri ? f->read.uri : f->read.fmt,
 			epoch_str,
 			time_to_double(&f->read_epoch)
 		);
@@ -150,7 +150,7 @@ char * file_print(struct node *n)
 	
 	if (f->write.fmt) {
 		strcatf(&buf, "out=%s, mode=%s, ",
-			f->write.path ? f->write.path : f->write.fmt,
+			f->write.uri ? f->write.uri : f->write.fmt,
 			f->write.mode
 		);
 	}
@@ -187,15 +187,15 @@ int file_open(struct node *n)
 	if (f->read.fmt) {
 		/* Prepare file name */
 		f->read.chunk = f->read.split ? 0 : -1;
-		f->read.path = file_format_name(f->read.fmt, &now);
+		f->read.uri = file_format_name(f->read.fmt, &now);
 		
 		/* Open file */
 		f->read.handle = file_reopen(&f->read);
 		if (!f->read.handle)
-			serror("Failed to open file for reading: '%s'", f->read.path);
+			serror("Failed to open file for reading: '%s'", f->read.uri);
 
 		/* Create timer */
-		f->read_timer = (f->read_rate)
+		f->read_timer = f->read_rate
 			? timerfd_create_rate(f->read_rate)
 			: timerfd_create(CLOCK_REALTIME, 0);
 		if (f->read_timer < 0)
@@ -252,8 +252,8 @@ int file_close(struct node *n)
 {
 	struct file *f = n->_vd;
 	
-	free(f->read.path);
-	free(f->write.path);
+	free(f->read.uri);
+	free(f->write.uri);
 
 	if (f->read_timer)
 		close(f->read_timer);

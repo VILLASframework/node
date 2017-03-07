@@ -31,7 +31,7 @@ struct file {
 		const char *mode;	/**< libc: fopen() mode */
 		const char *fmt;	/**< Format string for file name. */
 
-		char *path;		/**< Real file name */
+		char *uri;		/**< Real file name */
 		
 		int chunk;		/**< Current chunk number. */
 		int split;		/**< Split file every file::split mega bytes. */
@@ -44,7 +44,7 @@ struct file {
 		EPOCH_ABSOLUTE
 	} read_epoch_mode;		/**< Specifies how file::offset is calculated. */
 
-	struct timespec read_first;	/**< The first timestamp in the file file::path_in */
+	struct timespec read_first;	/**< The first timestamp in the file file::{read,write}::uri */
 	struct timespec read_epoch;	/**< The epoch timestamp from the configuration. */
 	struct timespec read_offset;	/**< An offset between the timestamp in the input file and the current time */
 
