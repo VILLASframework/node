@@ -123,7 +123,7 @@ static struct plugin p = {
 		.open		= cbuilder_open,
 		.close		= cbuilder_close,
 		.read		= cbuilder_read,
-		.write		= cbuilder_write,
+		.write		= cbuilder_write
 	}
 };
 

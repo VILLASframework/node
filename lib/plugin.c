@@ -52,9 +52,9 @@ int plugin_destroy(struct plugin *p)
 {
 	if (p->state == PLUGIN_STATE_LOADED)
 		plugin_unload(p);
-	
-	free(p->name);
-	free(p->path);
+
+	if (p->path)
+		free(p->path);
 	
 	return 0;
 }
