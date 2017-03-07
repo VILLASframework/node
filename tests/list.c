@@ -71,11 +71,13 @@ struct content {
 	int destroyed;
 };
 
-static void dtor(void *ptr)
+static int dtor(void *ptr)
 {
 	struct content *elm = (struct content *) ptr;
 	
 	elm->destroyed = 1;
+	
+	return 0;
 }
 
 Test(list, destructor)
