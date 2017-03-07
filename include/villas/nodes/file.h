@@ -15,6 +15,7 @@
 
 #pragma once
 
+#include "advio.h"
 #include "node.h"
 
 #define FILE_MAX_PATHLEN	512
@@ -26,7 +27,7 @@ enum {
 
 struct file {
 	struct file_direction {
-		FILE *handle;		/**< libc: stdio file handle */
+		AFILE *handle;		/**< libc: stdio file handle */
 
 		const char *mode;	/**< libc: fopen() mode */
 		const char *fmt;	/**< Format string for file name. */

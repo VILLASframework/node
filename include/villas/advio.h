@@ -52,7 +52,9 @@ int afflush(AFILE *file);
 
 /* The remaining functions from stdio are just replaced macros */
 
-#define afeof(af)		feof(af->file)
+#define afeof(af)		feof((af)->file)
+#define aftell(af)		ftell((af)->file)
+#define arewind(af)		rewind((af)->file)
 
 size_t afread(void *restrict ptr, size_t size, size_t nitems, AFILE *restrict stream);
 size_t afwrite(const void *restrict ptr, size_t size, size_t nitems, AFILE *restrict stream);
