@@ -242,7 +242,7 @@ int path_init(struct path *p, struct cfg *cfg)
 			struct hook *h = &pl->hook;
 
 			if ((h->type & HOOK_AUTO) && 			/* should this hook be added implicitely? */
-			    (list_lookup(&p->hooks, h->name) == NULL))	/* is not already in list? */
+			    (list_lookup(&p->hooks, pl->name) == NULL))	/* is not already in list? */
 				list_push(&p->hooks, memdup(h, sizeof(struct hook)));
 		}
 	}

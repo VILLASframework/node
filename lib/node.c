@@ -101,7 +101,7 @@ int node_stop(struct node *n)
 char * node_name(struct node *n)
 {
 	if (!n->_name)
-		strcatf(&n->_name, RED("%s") "(" YEL("%s") ")", n->name, n->_vt->name);
+		strcatf(&n->_name, RED("%s") "(" YEL("%s") ")", n->name, plugin_name(n->_vt));
 		
 	return n->_name;
 }

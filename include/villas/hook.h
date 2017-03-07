@@ -94,9 +94,7 @@ enum hook_type {
 
 /** Descriptor for user defined hooks. See hooks[]. */
 struct hook {
-	const char *name;	/**< The unique name of this hook. This must be the first member! */
 	const char *parameter;	/**< A parameter string for this hook. Can be used to configure the hook behaviour. */
-	const char *description;/**< A short description of this hook function. */
 
 	int priority;		/**< A priority to change the order of execution within one type of hook */
 	int history;		/**< How many samples of history this hook requires. */

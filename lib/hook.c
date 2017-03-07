@@ -72,7 +72,7 @@ int hook_run(struct path *p, struct sample *smps[], size_t cnt, int when)
 		if (h->type & when) {
 			cnt = h->cb(h, when, &i);
 			
-			debug(LOG_HOOK | 22, "Ran hook '%s' when=%u prio=%u, cnt=%zu", h->name, when, h->priority, cnt);
+			debug(LOG_HOOK | 22, "Ran hook '%s' when=%u prio=%u, cnt=%zu", plugin_name(h), when, h->priority, cnt);
 			
 			if (cnt == 0)
 				break;

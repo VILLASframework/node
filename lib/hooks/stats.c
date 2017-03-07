@@ -63,11 +63,11 @@ static int hook_stats_send(struct hook *h, int when, struct hook_info *j)
 			assert(j->path);
 		
 			if (!h->parameter)
-				error("Missing parameter for hook '%s'", h->name);
+				error("Missing parameter for hook '%s'", plugin_name(h));
 			
 			private->dest = list_lookup(j->nodes, h->parameter);
 			if (!private->dest)
-				error("Invalid destination node '%s' for hook '%s'", h->parameter, h->name);
+				error("Invalid destination node '%s' for hook '%s'", h->parameter, plugin_name(h));
 			break;
 			
 		case HOOK_PATH_START:

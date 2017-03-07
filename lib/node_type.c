@@ -21,9 +21,9 @@ int node_type_init(struct node_type *vt, int argc, char *argv[], config_setting_
 	if (vt->state != NODE_TYPE_DEINITIALIZED)
 		return -1;
 
-	info("Initializing " YEL("%s") " node type", vt->name);
+	info("Initializing " YEL("%s") " node type", plugin_name(vt));
 	{ INDENT
-		ret = vt->init ? vt->init(argc, argv, cfg) : -1;
+		ret = vt->init ? vt->init(argc, argv, cfg) : 0;
 	}	
 
 	if (ret == 0)
@@ -39,7 +39,7 @@ int node_type_deinit(struct node_type *vt)
 	if (vt->state != NODE_TYPE_INITIALIZED)
 		return -1;
 
-	info("De-initializing " YEL("%s") " node type", vt->name);
+	info("De-initializing " YEL("%s") " node type", plugin_name(vt));
 	{ INDENT
 		ret = vt->deinit ? vt->deinit() : -1;
 	}

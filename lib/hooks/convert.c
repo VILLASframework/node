@@ -23,7 +23,7 @@ static int hook_convert(struct hook *h, int when, struct hook_info *k)
 	switch (when) {
 		case HOOK_PARSE:
 			if (!h->parameter)
-				error("Missing parameter for hook: '%s'", h->name);
+				error("Missing parameter for hook: '%s'", plugin_name(h));
 
 			if      (!strcmp(h->parameter, "fixed"))
 				private->mode = TO_FIXED;
