@@ -35,23 +35,27 @@ enum log_facilities {
 	LOG_CONFIG =	(1L << 10),
 	LOG_HOOK =	(1L << 11),
 	LOG_PATH =	(1L << 12),
-	LOG_MEM =	(1L << 13),
-	LOG_WEB =	(1L << 14),
-	LOG_API =	(1L << 15),
-	LOG_LOG =	(1L << 16),
-	LOG_KERNEL =	(1L << 17),
+	LOG_NODE =	(1L << 13),
+	LOG_MEM =	(1L << 14),
+	LOG_WEB =	(1L << 15),
+	LOG_API =	(1L << 16),
+	LOG_LOG =	(1L << 17),
+	LOG_VFIO =	(1L << 18),
+	LOG_PCI =	(1L << 19),
+	LOG_XIL =	(1L << 20),
 	
 	/* Node-types */
-	LOG_SOCKET =	(1L << 32),
-	LOG_FILE =	(1L << 33),
-	LOG_FPGA =	(1L << 34),
-	LOG_NGSI =	(1L << 35),
-	LOG_WEBSOCKET =	(1L << 36),
-	LOG_OPAL =	(1L << 37),
+	LOG_SOCKET =	(1L << 21),
+	LOG_FILE =	(1L << 22),
+	LOG_FPGA =	(1L << 23),
+	LOG_NGSI =	(1L << 24),
+	LOG_WEBSOCKET =	(1L << 25),
+	LOG_OPAL =	(1L << 26),
 	
 	/* Classes */
-	LOG_NODE =   (0xFFL << 32),
-	LOG_ALL =    ~0xFF 
+	LOG_NODES =	LOG_NODE | LOG_SOCKET | LOG_FILE | LOG_FPGA | LOG_NGSI | LOG_WEBSOCKET | LOG_OPAL,
+	LOG_KERNEL =	LOG_VFIO | LOG_PCI,
+	LOG_ALL =	~0xFF 
 };
 
 struct log {
@@ -103,8 +107,6 @@ int log_set_facility_expression(struct log *l, const char *expression);
 
 /** Parse logging configuration. */
 int log_parse(struct log *l, config_setting_t *cfg);
-
-int log_lookup_facility(const char *facility_name);
 
 /** Logs variadic messages to stdout.
  *
