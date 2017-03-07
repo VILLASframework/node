@@ -21,8 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <stdbool.h>
-#include <errno.h>
+#include <math.h>
 
 #include <curl/curl.h>
 
@@ -30,7 +29,46 @@
 #include "config.h"
 #include "advio.h"
 
-AFILE *afopen(const char *uri, const char *mode, int flags)
+#define BAR_WIDTH 60 /**< How wide you want the progress meter to be. */
+
+static int xferinfo(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
+{
+	struct advio *af = (struct advio *) p;
+	double curtime = 0;
+
+	curl_easy_getinfo(af->curl, CURLINFO_TOTAL_TIME, &curtime);
+
+	// ensure that the file to be downloaded is not empty
+	// because that would cause a division by zero error later on
+	if (dltotal <= 0.0)
+		return 0;
+
+	double frac = dlnow / dltotal;
+
+	// part of the progressmeter that's already "full"
+	int dotz = round(frac * BAR_WIDTH);
+
+	// create the "meter"
+	
+	printf("%3.0f%% in %f s (%" CURL_FORMAT_CURL_OFF_T " / %" CURL_FORMAT_CURL_OFF_T ") [", frac * 100, curtime, dlnow, dltotal);
+
+	// part  that's full already
+	int i = 0;
+	for ( ; i < dotz; i++)
+		printf("=");
+
+	// remaining part (spaces)
+	for ( ; i < BAR_WIDTH; i++)
+		printf(" ");
+
+	// and back to line begin - do not forget the fflush to avoid output buffering problems!
+	printf("]\r");
+	fflush(stdout);
+
+	return 0;
+}
+
+AFILE * afopen(const char *uri, const char *mode, int flags)
 {
 	CURLcode res;
 
@@ -54,6 +92,9 @@ AFILE *afopen(const char *uri, const char *mode, int flags)
 	curl_easy_setopt(af->curl, CURLOPT_USERAGENT, USER_AGENT);
 	curl_easy_setopt(af->curl, CURLOPT_URL, uri);
 	curl_easy_setopt(af->curl, CURLOPT_WRITEDATA, af->file);
+	curl_easy_setopt(af->curl, CURLOPT_XFERINFOFUNCTION, xferinfo);
+	curl_easy_setopt(af->curl, CURLOPT_XFERINFODATA, af);
+	curl_easy_setopt(af->curl, CURLOPT_NOPROGRESS, 0L);
 	
 	res = curl_easy_perform(af->curl);
 	switch (res) {
