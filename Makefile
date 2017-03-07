@@ -94,6 +94,7 @@ all: src plugins | lib
 
 # Build everything with different profiles: debug, coverage, ...
 everything:
+	$(MAKE) RELEASE=1
 	$(MAKE) DEBUG=1
 	$(MAKE) COVERAGE=1
 	$(MAKE) PROFILE=1
