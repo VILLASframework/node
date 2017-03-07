@@ -12,9 +12,11 @@
 #include <villas/memory.h>
 
 int main(int argc, char *argv[]) {
-	struct criterion_test_set *tests = criterion_initialize();
 	
-	info("Initialize memory system");
+	struct criterion_test_set *tests = criterion_initialize();
+	struct log log;
+
+	log_init(&log, V, LOG_ALL);
 	memory_init();
 
 	int result = 0;

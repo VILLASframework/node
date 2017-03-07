@@ -141,6 +141,8 @@ check:		if (optarg == endptr)
 		if (tfd < 0)
 			serror("Failed to create timer");
 	}
+	else
+		tfd = -1;
 
 	start = time_now();
 

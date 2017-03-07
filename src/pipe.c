@@ -59,7 +59,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	cfg_destroy(&cfg);
 
 	info(GRN("Goodbye!"));
-	exit(EXIT_SUCCESS);
+	_exit(EXIT_SUCCESS);
 }
 
 static void usage()
@@ -217,7 +217,7 @@ int main(int argc, char *argv[])
 
 	ret = node_type_init(node->_vt, argc-optind, argv+optind, config_root_setting(&cfg.cfg));
 	if (ret)
-		error("Failed to intialize node: %s", node_name(node));
+		error("Failed to intialize node type: %s", node_name(node));
 
 	ret = node_start(node);
 	if (ret)
