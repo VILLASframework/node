@@ -39,8 +39,11 @@ int queue_init(struct queue *q, size_t size, const struct memtype *mem)
 {
 	
 	/* Queue size must be 2 exponent */
-	if (!IS_POW2(size))
-		return -1;
+	if (!IS_POW2(size)) {
+		size_t old_size = size;
+		size = LOG2_CEIL(size);
+		warn("A queue size was changed from %lu to %lu", old_size, size);
+	}
 	
 	q->mem = mem;
 	q->buffer_mask = size - 1;

@@ -11,10 +11,8 @@
 # [1] http://aegis.sourceforge.net/auug97.pdf
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
-#   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
-#   Unauthorized copying of this file, via any medium is strictly prohibited.
-#################################################################################
+# @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+###################################################################################
 
 # Project modules
 MODULES = lib plugins src tests thirdparty tools
@@ -37,8 +35,11 @@ LDFLAGS += -L$(BUILDDIR)
 
 ifdef CI
 	CFLAGS += -D_GIT_REV='"${CI_BUILD_REF:0:7}~ci"'
-else ifdef GIT
-	CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
+else
+	GIT = $(shell type -p git)
+	ifneq ($(GIT),)
+		CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
+	endif
 endif
 
 # We must compile without optimizations for gcov!

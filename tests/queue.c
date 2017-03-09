@@ -307,9 +307,6 @@ Test(queue, init_destroy)
 	int ret;
 	struct queue q;
 	
-	ret = queue_init(&q, 100, &memtype_heap);
-	cr_assert_eq(ret, -1); /* Should fail as size is not 2^x */
-	
 	ret = queue_init(&q, 1024, &memtype_heap);
 	cr_assert_eq(ret, 0); /* Should succeed */
 	
