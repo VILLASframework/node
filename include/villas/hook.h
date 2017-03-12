@@ -148,11 +148,12 @@ void * hook_storage(struct hook *h, int when, size_t len, ctor_cb_t ctor, dtor_c
  */
 int hook_parse_list(struct list *list, config_setting_t *cfg);
 
-/** Parse a single hook and append it to the list.
+/** Parse a single hook.
+ *
  * A hook definition is composed of the hook name and optional parameters
  * seperated by a colon.
  *
  * Examples:
  *   "print:stdout"
  */
-int hook_parse(config_setting_t *cfg, struct list *list);
+int hook_parse(struct hook *h, config_setting_t *cfg);

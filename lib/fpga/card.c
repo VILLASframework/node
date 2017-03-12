@@ -25,8 +25,7 @@ int fpga_card_init(struct fpga_card *c, struct pci *pci, struct vfio_container *
 
 	fpga_card_check(c);
 	
-	if (c->state == STATE_INITIALIZED)
-		return 0;
+	assert(c->state != STATE_DESTROYED);
 
 	/* Search for FPGA card */
 	pdev = pci_lookup_device(pci, &c->filter);

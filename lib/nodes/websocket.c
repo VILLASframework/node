@@ -12,14 +12,14 @@
 
 #include <libconfig.h>
 
-#include "nodes/websocket.h"
 #include "super_node.h"
 #include "webmsg_format.h"
 #include "timing.h"
 #include "utils.h"
-#include "msg.h"
 #include "config.h"
 #include "plugin.h"
+
+#include "nodes/websocket.h"
 
 /* Internal datastructures */
 struct destination {
@@ -33,7 +33,7 @@ static int id = 0;		/**< Highest assigned ID to websocket nodes. */
 struct list connections;	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
 
 /* Forward declarations */
-static struct node_type vt;
+static struct plugin p;
 
 __attribute__((unused)) static int websocket_connection_init(struct websocket_connection *c)
 {
@@ -143,7 +143,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				char *node = uri + 1;
 			
 				/* Search for node whose name matches the URI. */
-				c->node = list_lookup(&vt.instances, node);
+				c->node = list_lookup(&p.node.instances, node);
 				if (c->node == NULL) {
 					warn("LWS: Closing Connection for non-existent node: %s", uri + 1);
 					return -1;

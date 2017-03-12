@@ -4,7 +4,9 @@
  * @copyright 2017, Steffen Vogel
  **********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga @{ */
+/** @addtogroup fpga VILLASfpga
+ * @{
+ */
 
 #pragma once
 

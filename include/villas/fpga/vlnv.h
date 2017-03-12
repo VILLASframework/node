@@ -5,7 +5,9 @@
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga @{ */
+/** @addtogroup fpga VILLASILLASfpga
+ * @{
+ */
 
 #ifndef _FPGA_VLNV_H_
 #define _FPGA_VLNV_H_

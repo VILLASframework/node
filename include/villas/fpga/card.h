@@ -7,7 +7,9 @@
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
-/** @addtogroup fpga VILLASfpga @{ */
+/** @addtogroup fpga VILLASfpga
+ * @{
+ */
 
 #pragma once
 

@@ -45,11 +45,19 @@ struct node
 	config_setting_t *cfg;	/**< A pointer to the libconfig object which instantiated this node */
 };
 
-/** Destroy node by freeing dynamically allocated memory.
+int node_init(struct node *n, struct node_type *vt);
+
+/** Parse a single node and add it to the global configuration.
  *
- * @see node_type::destroy
+ * @param cfg A libconfig object pointing to the node.
+ * @param nodes Add new nodes to this linked list.
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
-int node_destroy(struct node *n);
+int node_parse(struct node *n, config_setting_t *cfg);
+
+/** Validate node configuration. */
+int node_check(struct node *n);
 
 /** Start operation of a node.
  *
@@ -62,6 +70,12 @@ int node_start(struct node *n);
  * @see node_type::close
  */
 int node_stop(struct node *n);
+
+/** Destroy node by freeing dynamically allocated memory.
+ *
+ * @see node_type::destroy
+ */
+int node_destroy(struct node *n);
 
 /** Return a pointer to a string which should be used to print this node.
  *
@@ -102,17 +116,5 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt);
  * @param all This list contains all valid nodes.
  */
 int node_parse_list(struct list *list, config_setting_t *cfg, struct list *all);
-
-/** Parse a single node and add it to the global configuration.
- *
- * @param cfg A libconfig object pointing to the node.
- * @param nodes Add new nodes to this linked list.
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
- */
-int node_parse(struct node *n, config_setting_t *cfg);
-
-/** Validate node configuration. */
-int node_check(struct node *n);
 
 /** @} */

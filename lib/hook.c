@@ -113,14 +113,21 @@ void * hook_storage(struct hook *h, int when, size_t len, ctor_cb_t ctor, dtor_c
  */
 int hook_parse_list(struct list *list, config_setting_t *cfg)
 {
+	struct hook h;
+	
 	switch (config_setting_type(cfg)) {
 		case CONFIG_TYPE_STRING:
-			hook_parse(cfg, list);
+			hook_parse(&h, cfg);
+			list_push(list, memdup(&h, sizeof(h)));
 			break;
 
 		case CONFIG_TYPE_ARRAY:
-			for (int i = 0; i < config_setting_length(cfg); i++)
-				hook_parse(config_setting_get_elem(cfg, i), list);
+			for (int i = 0; i < config_setting_length(cfg); i++) {
+				config_setting_t *cfg_hook = config_setting_get_elem(cfg, i);
+				
+				hook_parse(&h, cfg_hook);
+				list_push(list, memdup(&h, sizeof(h)));
+			}
 			break;
 
 		default:
@@ -130,27 +137,35 @@ int hook_parse_list(struct list *list, config_setting_t *cfg)
 	return list_length(list);
 }
 
-int hook_parse(config_setting_t *cfg, struct list *list)
+int hook_parse(struct hook *h, config_setting_t *cfg)
 {
-	struct hook *hook;
-	struct plugin *plg;
-
+	int ret;
+	const char *hookline;
 	char *name, *param;
-	const char *hookline = config_setting_get_string(cfg);
+	struct plugin *p;
+	
+	hookline = config_setting_get_string(cfg);
 	if (!hookline)
 		cerror(cfg, "Invalid hook function");
 	
 	name  = strtok((char *) hookline, ":");
 	param = strtok(NULL, "");
 
-	plg = plugin_lookup(PLUGIN_TYPE_HOOK, name);
-	if (!plg)
+	p = plugin_lookup(PLUGIN_TYPE_HOOK, name);
+	if (!p)
 		cerror(cfg, "Unknown hook function '%s'", name);
 	
-	hook = memdup(&plg->hook, sizeof(plg->hook));
-	hook->parameter = param;
+	if (p->hook.type & HOOK_AUTO)
+		cerror(cfg, "Hook '%s' is built-in and can not be added manually.", name);
+
+	hook_copy(&p->hook, h);
+
+	h->parameter = param;
 	
-	list_push(list, hook);
+	/* Parse hook arguments */
+	ret = h->cb(h, HOOK_PARSE, NULL);
+	if (ret)
+		cerror(cfg, "Failed to parse arguments for hook '%s'", name);
 
 	return 0;
 }

@@ -125,6 +125,8 @@ static void logger(int level, const char *msg) {
 int web_init(struct web *w, struct api *a)
 {
 	info("Initialize web sub-system");
+	
+	lws_set_log_level((1 << LLL_COUNT) - 1, logger);
 
 	w->api = a;
 	
@@ -154,11 +156,6 @@ int web_parse(struct web *w, config_setting_t *cfg)
 
 int web_start(struct web *w)
 {
-	/* update web root of mount point */
-	mounts[0].origin = w->htdocs;
-
-	lws_set_log_level((1 << LLL_COUNT) - 1, logger);
-
 	/* Start server */
 	struct lws_context_creation_info ctx_info = {
 		.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS | LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT,
@@ -176,14 +173,21 @@ int web_start(struct web *w)
 		.ssl_private_key_filepath = w->ssl_private_key
 	};
 
-	w->context = lws_create_context(&ctx_info);
-	if (w->context == NULL)
-		error("WebSocket: failed to initialize server");
+	info("Starting web sub-system");
+
+	{ INDENT
+		/* update web root of mount point */
+		mounts[0].origin = w->htdocs;
+
+		w->context = lws_create_context(&ctx_info);
+		if (w->context == NULL)
+			error("WebSocket: failed to initialize server");
 	
-	w->vhost = lws_create_vhost(w->context, &vhost_info);
-	if (w->vhost == NULL)
-		error("WebSocket: failed to initialize server");
-	
+		w->vhost = lws_create_vhost(w->context, &vhost_info);
+		if (w->vhost == NULL)
+			error("WebSocket: failed to initialize server");
+	}
+
 	w->state = STATE_STARTED;
 
 	return 0;

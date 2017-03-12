@@ -35,7 +35,7 @@ static int hook_convert(struct hook *h, int when, struct hook_info *k)
 		
 		case HOOK_READ:
 			for (int i = 0; i < k->cnt; i++) {
-				for (int j = 0; j < k->smps[0]->length; j++) {
+				for (int j = 0; j < k->smps[i]->length; j++) {
 					switch (private->mode) {
 						case TO_FIXED: k->smps[i]->data[j].i = k->smps[i]->data[j].f * 1e3; break;
 						case TO_FLOAT: k->smps[i]->data[j].f = k->smps[i]->data[j].i; break;
@@ -57,7 +57,7 @@ static struct plugin p = {
 		.priority = 99,
 		.history = 0,
 		.cb	= hook_convert,
-		.type	= HOOK_STORAGE | HOOK_DESTROY | HOOK_READ
+		.type	= HOOK_STORAGE | HOOK_READ
 	}
 };
 

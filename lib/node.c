@@ -13,10 +13,15 @@
 #include "config.h"
 #include "plugin.h"
 
-int node_init(struct node *n)
+int node_init(struct node *n, struct node_type *vt)
 {
 	assert(n->state == STATE_DESTROYED);
+
+	n->_vt = vt;
+	n->_vd = alloc(vt->size);
 	
+	list_push(&vt->instances, n);
+
 	n->state = STATE_INITIALIZED;
 
 	return 0;

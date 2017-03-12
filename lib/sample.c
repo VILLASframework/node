@@ -143,8 +143,10 @@ int sample_scan(const char *line, struct sample *s, int *fl)
 		*fl = flags;
 	if (flags & SAMPLE_OFFSET) {
 		struct timespec off = time_from_double(offset);
-		s->ts.received = time_diff(&s->ts.origin, &off);
+		s->ts.received = time_add(&s->ts.origin, &off);
 	}
+	else
+		s->ts.received = s->ts.origin;
 
 	return s->length;
 }

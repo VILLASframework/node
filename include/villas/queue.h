@@ -86,6 +86,17 @@ int queue_push(struct queue *q, void *ptr);
 
 int queue_pull(struct queue *q, void **ptr);
 
+/** Enqueue up to \p cnt pointers of the \p ptr array into the queue.
+ *
+ * @return The number of pointers actually enqueued.
+ *         This number can be smaller then \p cnt in case the queue is filled.
+ */
 int queue_push_many(struct queue *q, void *ptr[], size_t cnt);
 
+/** Dequeue up to \p cnt pointers from the queue and place them into the \p ptr array.
+ *
+ * @return The number of pointers actually dequeued.
+ *         This number can be smaller than \p cnt in case the queue contained less than
+ *         \p cnt elements.
+ */
 int queue_pull_many(struct queue *q, void *ptr[], size_t cnt);

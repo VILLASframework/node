@@ -20,7 +20,7 @@ int node_type_start(struct node_type *vt, int argc, char *argv[], config_setting
 	
 	assert(vt->state != STATE_STARTED);
 
-	info("Initializing " YEL("%s") " node type", plugin_name(vt));
+	info("Initializing " YEL("%s") " node type which is used by %zu nodes", plugin_name(vt), list_length(&vt->instances));
 	{ INDENT
 		ret = vt->init ? vt->init(argc, argv, cfg) : 0;
 	}	
