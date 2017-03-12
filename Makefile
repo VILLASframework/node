@@ -73,7 +73,7 @@ ifdef CI
 	CFLAGS += -D_VARIANT='"-ci-$(VARIANT)"'
 else
 	GIT = $(shell type -p git)
-	GIT_REV = $(shell git rev-parse --short HEAD)
+	GIT_REV = $(shell git describe --tags --dirty)
 	ifneq ($(GIT),)
 		CFLAGS += -D_GIT_REV='"$(GIT_REV)"'
 	endif
