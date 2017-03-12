@@ -290,7 +290,8 @@ static struct plugin p = {
 		.read		= opal_read,
 		.write		= opal_write,
 		.init		= opal_init,
-		.deinit		= opal_deinit
+		.deinit		= opal_deinit,
+		.instances	= LIST_INIT()
 	}
 };
 

@@ -689,7 +689,8 @@ static struct plugin p = {
 		.read		= socket_read,
 		.write		= socket_write,
 		.init		= socket_init,
-		.deinit		= socket_deinit
+		.deinit		= socket_deinit,
+		.instances	= LIST_INIT()
 	}
 };
 

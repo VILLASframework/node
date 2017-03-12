@@ -349,6 +349,7 @@ static struct plugin p = {
 		.stop		= file_stop,
 		.read		= file_read,
 		.write		= file_write,
+		.instances	= LIST_INIT()
 	}
 };
 

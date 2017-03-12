@@ -424,7 +424,8 @@ static struct plugin p = {
 		.read		= websocket_read,
 		.write		= websocket_write,
 		.print		= websocket_print,
-		.parse		= websocket_parse
+		.parse		= websocket_parse,
+		.instances	= LIST_INIT()
 	}
 };
 
