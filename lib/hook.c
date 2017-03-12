@@ -147,7 +147,7 @@ int hook_parse(config_setting_t *cfg, struct list *list)
 	if (!plg)
 		cerror(cfg, "Unknown hook function '%s'", name);
 	
-	hook = memdup(&plg->hook, sizeof(struct hook));
+	hook = memdup(&plg->hook, sizeof(plg->hook));
 	hook->parameter = param;
 	
 	list_push(list, hook);

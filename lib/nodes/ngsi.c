@@ -201,7 +201,7 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 		list_init(&map.metadata);
 		struct ngsi_metadata meta;
 		while (sscanf(token, " %m[^(](%m[^)])=%ms%n", &meta.name, &meta.type, &meta.value, &bytes) == 3) { INDENT
-			list_push(&map.metadata, memdup(&meta, sizeof(struct ngsi_metadata)));
+			list_push(&map.metadata, memdup(&meta, sizeof(meta)));
 			token += bytes;
 		}
 		
@@ -219,10 +219,10 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 		};
 		snprintf(index.value, 8, "%u", j);
 
-		list_push(&map.metadata, memdup(&index, sizeof(struct ngsi_metadata)));		
-		list_push(&map.metadata, memdup(&source, sizeof(struct ngsi_metadata)));
+		list_push(&map.metadata, memdup(&index, sizeof(index)));		
+		list_push(&map.metadata, memdup(&source, sizeof(source)));
 		
-		list_push(mapping, memdup(&map, sizeof(struct ngsi_attribute)));
+		list_push(mapping, memdup(&map, sizeof(map)));
 	}
 
 	return 0;
