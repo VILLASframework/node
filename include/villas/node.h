@@ -18,6 +18,7 @@
 #include "sample.h"
 #include "list.h"
 #include "queue.h"
+#include "common.h"
 
 /** The data structure for a node.
  *
@@ -35,16 +36,9 @@ struct node
 	int affinity;		/**< CPU Affinity of this node */
 
 	unsigned long sequence;	/**< This is a counter of received samples, in case the node-type does not generate sequence numbers itself. */
-
-	enum node_state {
-		NODE_INVALID,	/**< This node object is not in a valid state. */
-		NODE_CREATED,	/**< This node has been parsed from the configuration. */
-		NODE_STARTING,	/**< This node is currently being started. */
-		NODE_RUNNING,	/**< This node has been started by calling node_open() */
-		NODE_STOPPING,	/**< This node is currently shutting down. */
-		NODE_STOPPED	/**< Node was running, but has been stopped by calling node_close() */
-	} state;		/**< Node state */
-
+	
+	enum state state;
+	
 	struct node_type *_vt;	/**< Virtual functions (C++ OOP style) */
 	void *_vd;		/**< Virtual data (used by struct node::_vt functions) */
 

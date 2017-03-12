@@ -54,6 +54,67 @@ static const char *facilities_strs[] = {
 /** The current log indention level (per thread!). */
 static __thread int indent = 0;
 
+int log_init(struct log *l, int level, long facilitites)
+{
+	/* Register this log instance globally */
+	log = l;
+
+	l->level = level;
+	l->facilities = facilitites;
+	
+	debug(LOG_LOG | 5, "Log sub-system intialized: level=%d, faciltities=%#lx", level, facilitites);
+	
+	l->state = STATE_INITIALIZED;
+	
+	return 0;
+}
+
+int log_parse(struct log *l, config_setting_t *cfg)
+{
+	const char *facilities;
+	
+	if (!config_setting_is_group(cfg))
+		cerror(cfg, "Setting 'log' must be a group.");
+
+	config_setting_lookup_int(cfg, "level", &l->level);
+
+	if (config_setting_lookup_string(cfg, "facilities", &facilities))
+		log_set_facility_expression(l, facilities);
+	
+	l->state = STATE_PARSED;
+
+	return 0;
+}
+
+int log_start(struct log *l)
+{
+	l->epoch = time_now();
+	
+	l->state = STATE_STARTED;
+
+	return 0;
+}
+
+int log_stop(struct log *l)
+{
+	if (l->state != STATE_STARTED)
+		return -1;
+	
+	l->state = STATE_STOPPED;
+	
+	return 0;
+}
+
+int log_destroy(struct log *l)
+{
+	if (l->state == STATE_STARTED)
+		return -1;
+	
+	l->state = STATE_DESTROYED;
+	
+	return 0;
+}
+
 int log_indent(int levels)
 {
 	int old = indent;
@@ -117,30 +178,6 @@ found:		if (negate)
 	return l->facilities;
 }
 
-int log_init(struct log *l, int level, long facilitites)
-{
-	l->epoch = time_now();
-	l->level = level;
-	l->facilities = facilitites;
-
-	/* Register this log instance globally */
-	log = l;
-
-	debug(LOG_LOG | 5, "Log sub-system intialized: level=%d, faciltities=%#lx", level, facilitites);
-
-	return 0;
-}
-
-int log_deinit(struct log *l)
-{
-	return 0;
-}
-
-int log_destroy(struct log *l)
-{
-	return 0;
-}
-
 void log_print(struct log *l, const char *lvl, const char *fmt, ...)
 {
 	va_list ap;
@@ -178,21 +215,6 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 #endif
 	fprintf(stderr, "\r%s\n", buf);
 	free(buf);
-}
-
-int log_parse(struct log *l, config_setting_t *cfg)
-{
-	const char *facilities;
-	
-	if (!config_setting_is_group(cfg))
-		cerror(cfg, "Setting 'log' must be a group.");
-
-	config_setting_lookup_int(cfg, "level", &l->level);
-
-	if (config_setting_lookup_string(cfg, "facilities", &facilities))
-		log_set_facility_expression(l, facilities);
-
-	return 0;
 }
 
 void line()

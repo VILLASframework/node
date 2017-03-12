@@ -33,21 +33,23 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdatomic.h>
 
-#include "memory.h"
+#include "common.h"
+
+/* Forward declarations */
+struct memtype;
 
 #define CACHELINE_SIZE 64
 typedef char cacheline_pad_t[CACHELINE_SIZE];
 
+/** A lock-free multiple-producer, multiple-consumer (MPMC) queue. */
 struct queue {
 	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
 	
-	enum {
-		QUEUE_STATE_DESTROYED,
-		QUEUE_STATE_INITIALIZED
-	} state;
+	enum state state;
 
 	struct memtype const * mem;
 	size_t buffer_mask;

@@ -17,30 +17,42 @@
 #include "nodes/websocket.h"
 
 /* Forward declarations */
-lws_callback_function api_protocol_cb;
+lws_callback_function api_ws_protocol_cb;
+lws_callback_function api_http_protocol_cb;
 lws_callback_function websocket_protocol_cb;
-
-/** Path to the directory which should be served by build in HTTP server */
-static char htdocs[PATH_MAX] = "/usr/local/share/villas/node/htdocs";
 
 /** List of libwebsockets protocols. */
 static struct lws_protocols protocols[] = {
 	{
-		.name = "http-only",
-		.callback = api_protocol_cb,
+		.name = "http-api",
+		.callback = api_http_protocol_cb,
 		.per_session_data_size = sizeof(struct api_session),
-		.rx_buffer_size = 0
-	},
-	{
-		.name = "live",
-		.callback = websocket_protocol_cb,
-		.per_session_data_size = sizeof(struct websocket_connection),
 		.rx_buffer_size = 0
 	},
 	{
 		.name = "api",
-		.callback = api_protocol_cb,
+		.callback = api_ws_protocol_cb,
 		.per_session_data_size = sizeof(struct api_session),
+		.rx_buffer_size = 0
+	},
+#if 0 /* not supported yet */
+	{
+		.name = "log",
+		.callback = log_ws_protocol_cb,
+		.per_session_data_size = 0,
+		.rx_buffer_size = 0
+	},
+	{
+		.name = "stats",
+		.callback = stats_ws_protocol_cb,
+		.per_session_data_size = sizeof(struct api_session),
+		.rx_buffer_size = 0
+	},
+#endif
+	{
+		.name = "live",
+		.callback = websocket_protocol_cb,
+		.per_session_data_size = sizeof(struct websocket_connection),
 		.rx_buffer_size = 0
 	},
 	{ NULL /* terminator */ }
@@ -50,22 +62,8 @@ static struct lws_protocols protocols[] = {
 static struct lws_http_mount mounts[] = {
 	{
 		.mount_next = &mounts[1],
-		.mountpoint = "/api/v1/",
-		.origin = "cmd",
-		.def = NULL,
-		.cgienv = NULL,
-		.cgi_timeout = 0,
-		.cache_max_age = 0,
-		.cache_reusable = 0,
-		.cache_revalidate = 0,
-		.cache_intermediaries = 0,
-		.origin_protocol = LWSMPRO_CALLBACK,
-		.mountpoint_len = 8
-	},
-	{
-		.mount_next = NULL,
 		.mountpoint = "/",
-		.origin = htdocs,
+		.origin = NULL,
 		.def = "/index.html",
 		.cgienv = NULL,
 		.cgi_timeout = 0,
@@ -75,6 +73,20 @@ static struct lws_http_mount mounts[] = {
 		.cache_intermediaries = 0,
 		.origin_protocol = LWSMPRO_FILE,
 		.mountpoint_len = 1
+	},
+	{
+		.mount_next = NULL,
+		.mountpoint = "/api/v1/",
+		.origin = "http-api",
+		.def = NULL,
+		.cgienv = NULL,
+		.cgi_timeout = 0,
+		.cache_max_age = 0,
+		.cache_reusable = 0,
+		.cache_revalidate = 0,
+		.cache_intermediaries = 0,
+		.origin_protocol = LWSMPRO_CALLBACK,
+		.mountpoint_len = 8
 	}
 };
 
@@ -110,9 +122,15 @@ static void logger(int level, const char *msg) {
 	}
 }
 
-int web_service(struct web *w)
+int web_init(struct web *w, struct api *a)
 {
-	return lws_service(w->context, 10);
+	info("Initialize web sub-system");
+
+	w->api = a;
+	
+	w->state = STATE_INITIALIZED;
+	
+	return 0;
 }
 
 int web_parse(struct web *w, config_setting_t *cfg)
@@ -120,23 +138,24 @@ int web_parse(struct web *w, config_setting_t *cfg)
 	if (!config_setting_is_group(cfg))
 		cerror(cfg, "Setting 'http' must be a group.");
 
-	/* Parse global config */
 	config_setting_lookup_string(cfg, "ssl_cert", &w->ssl_cert);
 	config_setting_lookup_string(cfg, "ssl_private_key", &w->ssl_private_key);
-	config_setting_lookup_int(cfg, "port", &w->port);
-	config_setting_lookup_string(cfg, "htdocs", &w->htdocs);
 	
+	if (!config_setting_lookup_int(cfg, "port", &w->port))
+		w->port = 80;
+	
+	if (!config_setting_lookup_string(cfg, "htdocs", &w->htdocs))
+		w->htdocs = "/usr/share/villas/htdocs";
+
+	w->state = STATE_PARSED;
+
 	return 0;
 }
 
-int web_init(struct web *w, struct api *a)
+int web_start(struct web *w)
 {
-	info("Initialize web sub-system");
-
-	w->api = a;
-
-	/** @todo this is a hack */
-	strncpy(htdocs, w->htdocs, sizeof(htdocs));
+	/* update web root of mount point */
+	mounts[0].origin = w->htdocs;
 
 	lws_set_log_level((1 << LLL_COUNT) - 1, logger);
 
@@ -165,24 +184,31 @@ int web_init(struct web *w, struct api *a)
 	if (w->vhost == NULL)
 		error("WebSocket: failed to initialize server");
 	
-	w->state = WEB_STATE_INITIALIZED;
+	w->state = STATE_STARTED;
+
+	return 0;
+}
+
+int web_stop(struct web *w)
+{
+	lws_cancel_service(w->context);
 
 	return 0;
 }
 
 int web_destroy(struct web *w)
 {
-	if (w->state == WEB_STATE_INITIALIZED)
-		lws_context_destroy(w->context);
+	if (w->state == STATE_STARTED)
+		return -1;
+	
+	lws_context_destroy(w->context);
 
-	w->state = WEB_STATE_DESTROYED;
+	w->state = STATE_DESTROYED;
 
 	return 0;
 }
 
-int web_deinit(struct web *w)
+int web_service(struct web *w)
 {
-	lws_cancel_service(w->context);
-
-	return 0;
+	return lws_service(w->context, 10);
 }

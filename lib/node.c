@@ -14,6 +14,121 @@
 #include "config.h"
 #include "plugin.h"
 
+int node_init(struct node *n)
+{
+	if (n->state != STATE_DESTROYED)
+		return -1;
+	
+	n->state = STATE_INITIALIZED;
+
+	return 0;
+}
+
+int node_parse(struct node *n, config_setting_t *cfg)
+{
+	struct plugin *p;
+	const char *type, *name;
+	int ret;
+
+	name = config_setting_name(cfg);
+	
+	if (!config_setting_lookup_string(cfg, "type", &type))
+		cerror(cfg, "Missing node type");
+	
+	p = plugin_lookup(PLUGIN_TYPE_NODE, type);
+	assert(&p->node == n->_vt);
+	
+	if (!config_setting_lookup_int(cfg, "vectorize", &n->vectorize))
+		n->vectorize = 1;
+
+	n->name = name;
+	n->cfg = cfg;
+
+	ret = n->_vt->parse ? n->_vt->parse(n, cfg) : 0;
+	if (ret)
+		cerror(cfg, "Failed to parse node '%s'", node_name(n));
+	
+	n->state = STATE_PARSED;
+
+	return ret;
+}
+
+int node_check(struct node *n)
+{
+	if (n->state != STATE_INITIALIZED || n->state != STATE_PARSED)
+		return -1;
+
+	if (n->vectorize <= 0)
+		error("Invalid `vectorize` value %d for node %s. Must be natural number!", n->vectorize, node_name(n));
+
+	if (n->_vt->vectorize && n->_vt->vectorize < n->vectorize)
+		error("Invalid value for `vectorize`. Node type requires a number smaller than %d!",
+			n->_vt->vectorize);
+
+	n->state = STATE_CHECKED;
+
+	return 0;
+}
+
+int node_start(struct node *n)
+{
+	int ret;
+	
+	if (n->state != STATE_CHECKED)
+		return -1;
+
+	info("Starting node %s", node_name_long(n));
+	{ INDENT
+		ret = n->_vt->start ? n->_vt->start(n) : -1;
+	}
+	
+	if (ret == 0)
+		n->state = STATE_STARTED;
+	
+	n->sequence = 0;
+	
+	return ret;
+}
+
+int node_stop(struct node *n)
+{
+	int ret;
+
+	if (n->state != STATE_STARTED)
+		return -1;
+
+	info("Stopping node %s", node_name(n));
+	{ INDENT
+		ret = n->_vt->stop ? n->_vt->stop(n) : -1;
+	}
+	
+	if (ret == 0)
+		n->state = STATE_STOPPED;
+
+	return ret;
+}
+
+int node_destroy(struct node *n)
+{
+	if (n->state == STATE_STARTED)
+		return -1;
+
+	if (n->_vt->destroy)
+		n->_vt->destroy(n);
+	
+	list_remove(&n->_vt->instances, n);
+
+	if (n->_vd)
+		free(n->_vd);
+	
+	if (n->_name)
+		free(n->_name);
+	
+	n->state = STATE_DESTROYED;
+	
+	return 0;
+}
+
 int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int nread = 0;
@@ -56,48 +171,6 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return nsent;
 }
 
-int node_start(struct node *n)
-{
-	int ret;
-	
-	if (n->state != NODE_CREATED && n->state != NODE_STOPPED)
-		return -1;
-	
-	n->state = NODE_STARTING;
-
-	info("Starting node %s", node_name_long(n));
-	{ INDENT
-		ret = n->_vt->open ? n->_vt->open(n) : -1;
-	}
-	
-	if (ret == 0)
-		n->state = NODE_RUNNING;
-	
-	n->sequence = 0;
-	
-	return ret;
-}
-
-int node_stop(struct node *n)
-{
-	int ret;
-
-	if (n->state != NODE_RUNNING)
-		return -1;
-	
-	n->state = NODE_STOPPING;
-
-	info("Stopping node %s", node_name(n));
-	{ INDENT
-		ret = n->_vt->close ? n->_vt->close(n) : -1;
-	}
-	
-	if (ret == 0)
-		n->state = NODE_STOPPED;
-
-	return ret;
-}
-
 char * node_name(struct node *n)
 {
 	if (!n->_name)
@@ -131,21 +204,8 @@ int node_reverse(struct node *n)
 	return n->_vt->reverse ? n->_vt->reverse(n) : -1;
 }
 
+int node_parse_list(struct list *list, config_setting_t *cfg, struct list *all)
 {
-int node_destroy(struct node *n)
-{
-	if (n->_vt->destroy)
-		n->_vt->destroy(n);
-	
-	list_remove(&n->_vt->instances, n);
-
-	free(n->_vd);
-	free(n->_name);
-	
-	return 0;
-}
-
-int node_parse_list(struct list *list, config_setting_t *cfg, struct list *all) {
 	const char *str;
 	struct node *node;
 
@@ -187,43 +247,4 @@ int node_parse_list(struct list *list, config_setting_t *cfg, struct list *all) 
 	}
 
 	return list_length(list);
-}
-
-int node_parse(struct node *n, config_setting_t *cfg)
-{
-	struct plugin *p;
-	const char *type, *name;
-	int ret;
-
-	name = config_setting_name(cfg);
-	
-	if (!config_setting_lookup_string(cfg, "type", &type))
-		cerror(cfg, "Missing node type");
-	
-	p = plugin_lookup(PLUGIN_TYPE_NODE, type);
-	assert(&p->node == n->_vt);
-	
-	if (!config_setting_lookup_int(cfg, "vectorize", &n->vectorize))
-		n->vectorize = 1;
-
-	n->name = name;
-	n->cfg = cfg;
-
-	ret = n->_vt->parse ? n->_vt->parse(n, cfg) : 0;
-	if (ret)
-		cerror(cfg, "Failed to parse node '%s'", node_name(n));
-
-	return ret;
-}
-
-int node_check(struct node *n)
-{
-	if (n->vectorize <= 0)
-		error("Invalid `vectorize` value %d for node %s. Must be natural number!", n->vectorize, node_name(n));
-
-	if (n->_vt->vectorize && n->_vt->vectorize < n->vectorize)
-		error("Invalid value for `vectorize`. Node type requires a number smaller than %d!",
-			n->_vt->vectorize);
-
-	return 0;
 }

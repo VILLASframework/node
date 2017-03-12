@@ -16,7 +16,7 @@ int plugin_init(struct plugin *p, char *name, char *path)
 	p->name = strdup(name);
 	p->path = strdup(path);
 
-	p->state = PLUGIN_STATE_UNLOADED;
+	p->state = STATE_INITIALIZED;
 	
 	return 0;
 }
@@ -27,7 +27,7 @@ int plugin_load(struct plugin *p)
 	if (!p->path)
 		return -1;
 	
-	p->state = PLUGIN_STATE_LOADED;
+	p->state = STATE_LOADED;
 	
 	return 0;
 }
@@ -36,21 +36,21 @@ int plugin_unload(struct plugin *p)
 {
 	int ret;
 	
-	if (p->state != PLUGIN_STATE_LOADED)
+	if (p->state != STATE_LOADED)
 		return -1;
 	
 	ret = dlclose(p->handle);
 	if (ret)
 		return -1;
 	
-	p->state = PLUGIN_STATE_UNLOADED;
+	p->state = STATE_UNLOADED;
 	
 	return 0;
 }
 
 int plugin_destroy(struct plugin *p)
 {
-	if (p->state == PLUGIN_STATE_LOADED)
+	if (p->state == STATE_LOADED)
 		plugin_unload(p);
 
 	if (p->path)

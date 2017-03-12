@@ -7,9 +7,10 @@
 
 #pragma once
 
-#include "list.h"
-
 #include <jansson.h>
+
+#include "list.h"
+#include "common.h"
 
 /* Forward declarations */
 enum lws_callback_reasons;
@@ -43,10 +44,7 @@ enum api_mode {
 struct api {
 	struct list sessions;	/**< List of currently active connections */
 	
-	enum {
-		API_STATE_DESTROYED,
-		API_STATE_INITIALIZED
-	} state;
+	enum state state;
 	
 	struct cfg *cfg;
 };
@@ -94,7 +92,9 @@ int api_init(struct api *a, struct cfg *cfg);
 
 int api_destroy(struct api *a);
 
-int api_deinit(struct api *a);
+int api_start(struct api *a);
+
+int api_stop(struct api *a);
 
 int api_session_init(struct api_session *s, struct api *a, enum api_mode m);
 

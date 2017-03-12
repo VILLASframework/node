@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "log.h"
+#include "utils.h"
 
 #include "kernel/pci.h"
 #include "config.h"

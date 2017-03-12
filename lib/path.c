@@ -20,6 +20,7 @@
 #include "hook.h"
 #include "plugin.h"
 #include "cfg.h"
+#include "memory.h"
 
 static void path_read(struct path *p)
 {
@@ -125,63 +126,6 @@ static void * path_run(void *arg)
 	return NULL;
 }
 
-int path_start(struct path *p)
-{
-	int ret;
-
-	info("Starting path: %s (#hooks=%zu)",
-		path_name(p), list_length(&p->hooks));
-
-	ret = hook_run(p, NULL, 0, HOOK_PATH_START);
-	if (ret)
-		return -1;
-
-	p->state = PATH_RUNNING;
-
-	return pthread_create(&p->tid, NULL, &path_run,  p);
-}
-
-int path_stop(struct path *p)
-{
-	int ret;
-
-	info("Stopping path: %s", path_name(p));
-
-	pthread_cancel(p->tid);
-	pthread_join(p->tid, NULL);
-
-	ret = hook_run(p, NULL, 0, HOOK_PATH_STOP);
-	if (ret)
-		return -1;
-
-	p->state = PATH_STOPPED;
-
-	return 0;
-}
-
-const char * path_name(struct path *p)
-{
-	if (!p->_name) {
-		if (list_length(&p->destinations) == 1) {
-			struct path_destination *pd = (struct path_destination *) list_first(&p->destinations);
-			
-			strcatf(&p->_name, "%s " MAG("=>") " %s",
-				node_name_short(p->source->node),
-				node_name_short(pd->node));
-		}
-		else {
-			strcatf(&p->_name, "%s " MAG("=>") " [", node_name_short(p->source->node));
-			
-			list_foreach(struct path_destination *pd, &p->destinations)
-				strcatf(&p->_name, " %s", node_name_short(pd->node));
-			
-			strcatf(&p->_name, " ]");
-		}
-	}
-
-	return p->_name;
-}
-
 static int path_source_destroy(struct path_source *ps)
 {
 	pool_destroy(&ps->pool);
@@ -196,40 +140,12 @@ static int path_destination_destroy(struct path_destination *pd)
 	return 0;
 }
 
-int path_destroy(struct path *p)
-{
-	list_destroy(&p->hooks, (dtor_cb_t) hook_destroy, true);
-	list_destroy(&p->destinations, (dtor_cb_t) path_destination_destroy, true);
-	
-	path_source_destroy(p->source);
-
-	if (p->_name)
-		free(p->_name);
-
-	if (p->source)
-		free(p->source);
-	
-	p->state = PATH_DESTROYED;
-	
-	return 0;
-}
-
-int path_check(struct path *p)
-{
-	list_foreach (struct node *n, &p->destinations) {
-		if (!n->_vt->write)
-			error("Destiation node '%s' is not supported as a sink for path '%s'", node_name(n), path_name(p));
-	}
-
-	if (!p->source->node->_vt->read)
-		error("Source node '%s' is not supported as source for path '%s'", node_name(p->source->node), path_name(p));
-	
-	return 0;
-}
-
 int path_init(struct path *p, struct cfg *cfg)
 {
 	int ret, max_queuelen = 0;
+	
+	if (p->state != STATE_DESTROYED)
+		return -1;
 	
 	/* Add internal hooks if they are not already in the list*/
 	list_foreach(struct plugin *pl, &plugins) {
@@ -238,7 +154,7 @@ int path_init(struct path *p, struct cfg *cfg)
 
 			if ((h->type & HOOK_AUTO) && 			/* should this hook be added implicitely? */
 			    (list_lookup(&p->hooks, pl->name) == NULL))	/* is not already in list? */
-				list_push(&p->hooks, memdup(h, sizeof(struct hook)));
+				list_push(&p->hooks, memdup(h, sizeof(h)));
 		}
 	}
 	
@@ -268,60 +184,8 @@ int path_init(struct path *p, struct cfg *cfg)
 	if (ret)
 		error("Failed to allocate memory pool for path");
 	
-	p->state = PATH_INITIALIZED;
+	p->state = STATE_INITIALIZED;
 
-	return 0;
-}
-
-int path_uses_node(struct path *p, struct node *n) {
-	list_foreach(struct path_destination *pd, &p->destinations) {
-		if (pd->node == n)
-			return 0;
-	}
-
-	return p->source->node == n ? 0 : -1;
-}
-
-int path_reverse(struct path *p, struct path *r)
-{
-	int ret;
-
-	if (list_length(&p->destinations) > 1)
-		return -1;
-	
-	struct path_destination *first_pd = list_first(&p->destinations);
-
-	list_init(&r->destinations);
-	list_init(&r->hooks);
-	
-	/* General */
-	r->enabled = p->enabled;
-	r->cfg = p->cfg;
-	
-	struct path_destination *pd = alloc(sizeof(struct path_destination));
-	
-	pd->node = p->source->node;
-	pd->queuelen = first_pd->queuelen;
-
-	list_push(&r->destinations, pd);
-	
-	struct path_source *ps = alloc(sizeof(struct path_source));
-
-	ps->node = first_pd->node;
-	ps->samplelen = p->source->samplelen;
-	
-	r->source = ps;
-
-	list_foreach(struct hook *h, &p->hooks) {
-		struct hook *hc = alloc(sizeof(struct hook));
-		
-		ret = hook_copy(h, hc);
-		if (ret)
-			return ret;
-		
-		list_push(&r->hooks, hc);
-	}
-	
 	return 0;
 }
 
@@ -402,5 +266,149 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 
 	list_destroy(&destinations, NULL, false);
 
+	return 0;
+}
+
+int path_check(struct path *p)
+{
+	list_foreach (struct node *n, &p->destinations) {
+		if (!n->_vt->write)
+			error("Destiation node '%s' is not supported as a sink for path '%s'", node_name(n), path_name(p));
+	}
+
+	if (!p->source->node->_vt->read)
+		error("Source node '%s' is not supported as source for path '%s'", node_name(p->source->node), path_name(p));
+	
+	return 0;
+}
+
+int path_start(struct path *p)
+{
+	int ret;
+
+	info("Starting path: %s (#hooks=%zu)",
+		path_name(p), list_length(&p->hooks));
+
+	ret = hook_run(p, NULL, 0, HOOK_PATH_START);
+	if (ret)
+		return ret;
+	
+	ret = pthread_create(&p->tid, NULL, &path_run,  p);
+	if (ret)
+		return ret;
+
+	p->state = STATE_STARTED;
+
+	return 0;
+}
+
+int path_stop(struct path *p)
+{
+	int ret;
+
+	info("Stopping path: %s", path_name(p));
+
+	pthread_cancel(p->tid);
+	pthread_join(p->tid, NULL);
+
+	ret = hook_run(p, NULL, 0, HOOK_PATH_STOP);
+	if (ret)
+		return -1;
+
+	p->state = STATE_STOPPED;
+
+	return 0;
+}
+
+int path_destroy(struct path *p)
+{
+	list_destroy(&p->hooks, (dtor_cb_t) hook_destroy, true);
+	list_destroy(&p->destinations, (dtor_cb_t) path_destination_destroy, true);
+	
+	path_source_destroy(p->source);
+
+	if (p->_name)
+		free(p->_name);
+
+	if (p->source)
+		free(p->source);
+	
+	p->state = STATE_DESTROYED;
+	
+	return 0;
+}
+
+const char * path_name(struct path *p)
+{
+	if (!p->_name) {
+		if (list_length(&p->destinations) == 1) {
+			struct path_destination *pd = (struct path_destination *) list_first(&p->destinations);
+			
+			strcatf(&p->_name, "%s " MAG("=>") " %s",
+				node_name_short(p->source->node),
+				node_name_short(pd->node));
+		}
+		else {
+			strcatf(&p->_name, "%s " MAG("=>") " [", node_name_short(p->source->node));
+			
+			list_foreach(struct path_destination *pd, &p->destinations)
+				strcatf(&p->_name, " %s", node_name_short(pd->node));
+			
+			strcatf(&p->_name, " ]");
+		}
+	}
+
+	return p->_name;
+}
+
+int path_uses_node(struct path *p, struct node *n) {
+	list_foreach(struct path_destination *pd, &p->destinations) {
+		if (pd->node == n)
+			return 0;
+	}
+
+	return p->source->node == n ? 0 : -1;
+}
+
+int path_reverse(struct path *p, struct path *r)
+{
+	int ret;
+
+	if (list_length(&p->destinations) > 1)
+		return -1;
+	
+	struct path_destination *first_pd = list_first(&p->destinations);
+
+	list_init(&r->destinations);
+	list_init(&r->hooks);
+	
+	/* General */
+	r->enabled = p->enabled;
+	r->cfg = p->cfg;
+	
+	struct path_destination *pd = alloc(sizeof(struct path_destination));
+	
+	pd->node = p->source->node;
+	pd->queuelen = first_pd->queuelen;
+
+	list_push(&r->destinations, pd);
+	
+	struct path_source *ps = alloc(sizeof(struct path_source));
+
+	ps->node = first_pd->node;
+	ps->samplelen = p->source->samplelen;
+	
+	r->source = ps;
+
+	list_foreach(struct hook *h, &p->hooks) {
+		struct hook *hc = alloc(sizeof(struct hook));
+		
+		ret = hook_copy(h, hc);
+		if (ret)
+			return ret;
+		
+		list_push(&r->hooks, hc);
+	}
+	
 	return 0;
 }

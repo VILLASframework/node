@@ -18,7 +18,7 @@ int fpga_ip_init(struct fpga_ip *c)
 		error("Failed to intialize IP core: %s", c->name);
 
 	if (ret == 0)
-		c->state = IP_STATE_INITIALIZED;
+		c->state = STATE_INITIALIZED;
 	
 	debug(8, "IP Core %s initalized (%u)", c->name, ret);
 

@@ -7,6 +7,7 @@
 #include "node.h"
 #include "log.h"
 #include "plugin.h"
+#include "utils.h"
 
 #include "nodes/cbuilder.h"
 

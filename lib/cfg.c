@@ -21,72 +21,43 @@
 #include "api.h"
 #include "plugin.h"
 #include "node.h"
+#include "memory.h"
 
 #include "kernel/rt.h"
 
-int cfg_init_pre(struct cfg *cfg)
+static int cfg_parse_global(struct cfg *cfg, config_setting_t *cfg_root)
+{
+	if (!config_setting_is_group(cfg_root))
+		cerror(cfg_root, "Global section must be a dictionary.");
+
+	config_setting_lookup_int(cfg_root, "hugepages", &cfg->hugepages);
+	config_setting_lookup_int(cfg_root, "affinity", &cfg->affinity);
+	config_setting_lookup_int(cfg_root, "priority", &cfg->priority);
+	config_setting_lookup_float(cfg_root, "stats", &cfg->stats);
+
+	return 0;
+}
+
+int cfg_init(struct cfg *cfg)
 {
 	config_init(&cfg->cfg);
-	
-	info("Inititliaze logging sub-system");
+
 	log_init(&cfg->log, V, LOG_ALL);
+	api_init(&cfg->api, cfg);
+	web_init(&cfg->web, &cfg->api);
 
 	list_init(&cfg->nodes);
 	list_init(&cfg->paths);
 	list_init(&cfg->plugins);
+	
+	/* Default values */
+	cfg->affinity = -1;
+	cfg->stats = 0;
+	cfg->priority = 50;
+	cfg->hugepages = DEFAULT_NR_HUGEPAGES;
+	
+	cfg->state = STATE_INITIALIZED;
 
-	return 0;
-}
-
-int cfg_init_post(struct cfg *cfg)
-{
-	memory_init();
-	rt_init(cfg->priority, cfg->affinity);
-	api_init(&cfg->api, cfg);
-	web_init(&cfg->web, &cfg->api);
-	
-	info("Initialize node types");
-	list_foreach(struct node *n, &cfg->nodes) { INDENT
-		config_setting_t *cfg_root = config_root_setting(&cfg->cfg);
-		
-		node_type_init(n->_vt, cfg->cli.argc, cfg->cli.argv, cfg_root);
-	}
-	
-	return 0;
-}
-
-int cfg_deinit(struct cfg *cfg)
-{
-	info("De-initializing node types");
-	list_foreach(struct plugin *p, &plugins) { INDENT
-		if (p->type == PLUGIN_TYPE_NODE)
-			node_type_deinit(&p->node);
-	}
-	
-	info("De-initializing web interface");
-	web_deinit(&cfg->web);
-	
-	info("De-initialize API");
-	api_deinit(&cfg->api);
-	
-	info("De-initialize log sub-system");
-	log_deinit(&cfg->log);
-	
-	return 0;
-}
-
-int cfg_destroy(struct cfg *cfg)
-{
-	config_destroy(&cfg->cfg);
-
-	web_destroy(&cfg->web);
-	log_destroy(&cfg->log);
-	api_destroy(&cfg->api);
-
-	list_destroy(&cfg->plugins, (dtor_cb_t) plugin_destroy, false);
-	list_destroy(&cfg->paths,   (dtor_cb_t) path_destroy, true);
-	list_destroy(&cfg->nodes,   (dtor_cb_t) node_destroy, true);
-	
 	return 0;
 }
 
@@ -164,21 +135,9 @@ int cfg_parse(struct cfg *cfg, const char *uri)
 			cfg->web.htdocs = "/villas/web/socket/";
 		}
 
-		/* Parse global settings */
 		cfg_root = config_root_setting(&cfg->cfg);
-		if (cfg_root) {
-			if (!config_setting_is_group(cfg_root))
-				warn("Missing global section in config file.");
-
-			if (!config_setting_lookup_int(cfg_root, "affinity", &cfg->affinity))
-				cfg->affinity = 0;
-
-			if (!config_setting_lookup_int(cfg_root, "priority", &cfg->priority))
-				cfg->priority = 0;
-
-			if (!config_setting_lookup_float(cfg_root, "stats", &cfg->stats))
-				cfg->stats = 0;
-		}
+		if (cfg_root)
+			cfg_parse_global(cfg, cfg_root);
 	
 		cfg_web = config_setting_get_member(cfg_root, "http");
 		if (cfg_web)

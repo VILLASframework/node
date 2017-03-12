@@ -33,11 +33,14 @@
 
 #include "queue.h"
 #include "utils.h"
+#include "memory.h"
 
 /** Initialize MPMC queue */
 int queue_init(struct queue *q, size_t size, const struct memtype *mem)
 {
-	
+	if (q->state != STATE_DESTROYED)
+		return -1;
+
 	/* Queue size must be 2 exponent */
 	if (!IS_POW2(size)) {
 		size_t old_size = size;
@@ -57,7 +60,7 @@ int queue_init(struct queue *q, size_t size, const struct memtype *mem)
 	atomic_store_explicit(&q->tail, 0, memory_order_relaxed);
 	atomic_store_explicit(&q->head, 0, memory_order_relaxed);
 	
-	q->state = QUEUE_STATE_INITIALIZED;
+	q->state = STATE_INITIALIZED;
 	
 	return 0;
 }
@@ -66,10 +69,13 @@ int queue_destroy(struct queue *q)
 {
 	int ret = 0;
 
-	if (q->state == QUEUE_STATE_INITIALIZED)
-		ret = memory_free(q->mem, q->buffer, (q->buffer_mask + 1) * sizeof(q->buffer[0]));
+	if (q->state != STATE_INITIALIZED)
+		return -1;
+	
+	ret = memory_free(q->mem, q->buffer, (q->buffer_mask + 1) * sizeof(q->buffer[0]));
 
-	q->state = QUEUE_STATE_DESTROYED;
+	if (ret == 0)
+		q->state = STATE_DESTROYED;
 	
 	return ret;
 }

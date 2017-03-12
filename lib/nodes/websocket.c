@@ -150,7 +150,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				}
 				
 				/* Check if node is running */
-				if (c->node->state != NODE_RUNNING)
+				if (c->node->state != STATE_STARTED)
 					return -1;
 			}
 			
@@ -193,7 +193,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 		case LWS_CALLBACK_SERVER_WRITEABLE: {
 			w = (struct websocket *) c->node->_vd;
 
-			if (c->node && c->node->state != NODE_RUNNING)
+			if (c->node && c->node->state != STATE_STARTED)
 				return -1;
 
 			if (c->state == WEBSOCKET_SHUTDOWN) {
@@ -226,7 +226,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 		case LWS_CALLBACK_RECEIVE: {
 			w = (struct websocket *) c->node->_vd;
 
-			if (c->node->state != NODE_RUNNING)
+			if (c->node->state != STATE_STARTED)
 				return -1;
 
 			if (!lws_frame_is_binary(wsi) || len < WEBMSG_LEN(0))

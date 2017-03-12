@@ -226,24 +226,37 @@ int api_init(struct api *a, struct cfg *cfg)
 	list_init(&a->sessions);
 
 	a->cfg = cfg;
-	a->state = API_STATE_INITIALIZED;
+	a->state = STATE_INITIALIZED;
 
 	return 0;
 }
 
 int api_destroy(struct api *a)
 {
-	// if (a->state = API_STATE_INITIALIZED)
-	//	do something
+	if (a->state == STATE_STARTED)
+		return -1;
 
-	a->state = API_STATE_DESTROYED;
+	a->state = STATE_DESTROYED;
 
 	return 0;
 }
 
-int api_deinit(struct api *a)
+int api_start(struct api *a)
 {
+	info("Starting API sub-system");
+
+	a->state = STATE_STARTED;
+
+	return 0;
+}
+
+int api_stop(struct api *a)
+{
+	info("Stopping API sub-system");
+
 	list_destroy(&a->sessions, (dtor_cb_t) api_session_destroy, false);
+	
+	a->state = STATE_STOPPED;
 	
 	return 0;
 }

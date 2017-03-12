@@ -7,16 +7,15 @@
 
 #pragma once
 
+#include "common.h"
+
 /* Forward declarations */
 struct api;
 
 struct web {
 	struct api *api;
 	
-	enum {
-		WEB_STATE_DESTROYED,
-		WEB_STATE_INITIALIZED
-	} state;
+	enum state state;
 	
 	struct lws_context *context;	/**< The libwebsockets server context. */
 	struct lws_vhost *vhost;	/**< The libwebsockets vhost. */
@@ -35,11 +34,12 @@ int web_init(struct web *w, struct api *a);
 
 int web_destroy(struct web *w);
 
+int web_start(struct web *w);
+
+int web_stop(struct web *w);
+
 /** Parse HTTPd and WebSocket related options */
 int web_parse(struct web *w, config_setting_t *lcs);
-
-/** De-initializes the web interface. */
-int web_deinit(struct web *w);
 
 /** libwebsockets service routine. Call periodically */
 int web_service(struct web *w);

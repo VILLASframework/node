@@ -24,6 +24,7 @@
 #include "queue.h"
 #include "pool.h"
 #include "stats.h"
+#include "common.h"
 
 /* Forward declarations */
 struct cfg;
@@ -47,13 +48,7 @@ struct path_destination
 /** The datastructure for a path. */
 struct path
 {
-	enum {
-		PATH_INVALID,		/**< Path is invalid. */
-		PATH_INITIALIZED,	/**< Path queues, memory pools & hook system initialized. */
-		PATH_RUNNING,		/**< Path is currently running. */
-		PATH_STOPPED,		/**< Path has been stopped. */
-		PATH_DESTROYED		/**< Path is destroyed. */
-	} state;			/**< Path state */
+	enum state state;		/**< Path state. */
 	
 	/* Each path has a single source and multiple destinations */
 	struct path_source *source;	/**< Pointer to the incoming node */

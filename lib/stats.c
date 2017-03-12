@@ -11,6 +11,7 @@
 #include "timing.h"
 #include "path.h"
 #include "sample.h"
+#include "utils.h"
 #include "log.h"
 
 static struct stats_desc {

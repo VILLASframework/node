@@ -13,7 +13,7 @@
 
 #include <stdint.h>
 
-#include "utils.h"
+#include "common.h"
 
 #include "nodes/fpga.h"
 
@@ -27,11 +27,6 @@
 #include "fpga/ips/model.h"
 #include "fpga/ips/dft.h"
 #include "fpga/ips/intc.h"
-
-enum fpga_ip_state {
-	IP_STATE_UNKNOWN,
-	IP_STATE_INITIALIZED
-};
 
 struct fpga_ip_type {
 	struct fpga_vlnv vlnv;
@@ -55,7 +50,7 @@ struct fpga_ip {
 	char *name;			/**< Name of the FPGA IP component. */
 	struct fpga_vlnv vlnv;		/**< The Vendor, Library, Name, Version tag of the FPGA IP component. */
 
-	enum fpga_ip_state state;	/**< The current state of the FPGA IP component. */
+	enum state state;		/**< The current state of the FPGA IP component. */
 
 	struct fpga_ip_type *_vt;	/**< Vtable containing FPGA IP type function pointers. */
 

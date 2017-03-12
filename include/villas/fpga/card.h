@@ -13,20 +13,16 @@
 
 #include <libconfig.h>
 
+#include "common.h"
+
 /* Forward declarations */
 struct fpga_ip;
 struct vfio_container;
 
-enum fpga_card_state {
-	FPGA_CARD_STATE_UNKOWN,
-	FPGA_CARD_STATE_RESETTED,
-	FPGA_CARD_STATE_INITIALIZED
-};
-
 struct fpga_card {
 	char *name;			/**< The name of the FPGA card */
 
-	enum fpga_card_state state;	/**< The state of this FPGA card. */
+	enum state state;		/**< The state of this FPGA card. */
 
 	struct pci_dev filter;		/**< Filter for PCI device. */
 	struct vfio_dev vd;		/**< VFIO device handle. */

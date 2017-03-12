@@ -9,9 +9,11 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <sys/types.h>
 
 #include "queue.h"
+#include "common.h"
 #include "memory.h"
 
 /** A thread-safe memory pool */
@@ -19,10 +21,7 @@ struct pool {
 	void *buffer;		/**< Address of the underlying memory area */
 	const struct memtype *mem;
 	
-	enum {
-		POOL_STATE_DESTROYED,
-		POOL_STATE_INITIALIZED
-	} state;
+	enum state state;
 	
 	size_t len;		/**< Length of the underlying memory area */
 	
