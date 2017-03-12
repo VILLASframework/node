@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
 	signals_init(quit);
 	cfg_parse(&cfg, argv[1]);
 	rt_init(cfg.priority, cfg.affinity);
-	memory_init();
+	memory_init(cfg.hugepages);
 	
 	/* Initialize node */
 	node = list_lookup(&cfg.nodes, argv[2]);

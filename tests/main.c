@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
 	struct log log;
 
 	log_init(&log, V, LOG_ALL);
-	memory_init();
+	memory_init(DEFAULT_NR_HUGEPAGES);
 
 	int result = 0;
 	if (criterion_handle_args(argc, argv, true))

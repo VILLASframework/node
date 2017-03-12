@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 	cfg_parse(&cfg, argv[1]);
 	signals_init(quit);
 	rt_init(cfg.priority, cfg.affinity);
-	memory_init();
+	memory_init(cfg.hugepages);
 
 	node = list_lookup(&cfg.nodes, argv[3]);
 	if (!node)

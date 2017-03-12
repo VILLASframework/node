@@ -13,6 +13,7 @@
 #include <villas/cfg.h>
 #include <villas/timing.h>
 #include <villas/utils.h>
+#include <villas/memory.h>
 #include <villas/nodes/fpga.h>
 #include <villas/kernel/rt.h>
 #include <villas/kernel/pci.h>
@@ -70,7 +71,7 @@ int main(int argc, char *argv[])
 	rt_init(cfg.priority, cfg.affinity);
 	
 	info("Initialize memory system");
-	memory_init();
+	memory_init(cfg.hugepages);
 
 	/* Initialize VILLASfpga card */
 	ret = fpga_init(argc, argv, config_root_setting(&cfg.cfg));

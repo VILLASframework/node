@@ -16,17 +16,18 @@
 
 #include "log.h"
 #include "memory.h"
+#include "utils.h"
 
-int memory_init()
+int memory_init(int hugepages)
 {
 #ifdef __linux__
 	info("Initialize memory sub-system");
 	
 	int nr = kernel_get_nr_hugepages();
 	
-	if (nr < DEFAULT_NR_HUGEPAGES) { INDENT
-		kernel_set_nr_hugepages(DEFAULT_NR_HUGEPAGES);
-		debug(LOG_MEM | 2, "Reserve %d hugepages (was %d)", DEFAULT_NR_HUGEPAGES, nr);
+	if (nr < hugepages) { INDENT
+		kernel_set_nr_hugepages(hugepages);
+		debug(LOG_MEM | 2, "Reserved %d hugepages (was %d)", hugepages, nr);
 	}
 #endif
 	return 0;

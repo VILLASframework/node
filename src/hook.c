@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 	rt_init(-1, 50);
 	
 	info("Initialize memory system");
-	memory_init();
+	memory_init(DEFAULT_NR_HUGEPAGES);
 	
 	ret = pool_init(&pool, 10 * cnt, SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
 	if (ret)
