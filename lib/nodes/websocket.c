@@ -397,6 +397,8 @@ char * websocket_print(struct node *n)
 
 	char *buf = NULL;
 	
+	buf = strcatf(&buf, "dests=");
+	
 	list_foreach(struct lws_client_connect_info *in, &w->destinations) {
 		buf = strcatf(&buf, "%s://%s:%d/%s",
 			in->ssl_connection ? "https" : "http",
