@@ -17,7 +17,7 @@
 #define VAL(h, i)	((h)->low + (i) * (h)->resolution)
 #define INDEX(h, v)	round((v - (h)->low) / (h)->resolution)
 
-int hist_create(struct hist *h, double low, double high, double resolution)
+int hist_init(struct hist *h, double low, double high, double resolution)
 {
 	h->low = low;
 	h->high = high;

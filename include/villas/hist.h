@@ -44,7 +44,7 @@ struct hist {
 };
 
 /** Initialize struct hist with supplied values and allocate memory for buckets. */
-int hist_create(struct hist *h, double start, double end, double resolution);
+int hist_init(struct hist *h, double start, double end, double resolution);
 
 /** Free the dynamically allocated memory. */
 int hist_destroy(struct hist *h);
@@ -79,8 +79,6 @@ char * hist_dump(struct hist *h);
 /** Prints Matlab struct containing all infos to file. */
 int hist_dump_matlab(struct hist *h, FILE *f);
 
-#ifdef WITH_JANSSON
 int hist_dump_json(struct hist *h, FILE *f);
 
 json_t * hist_json(struct hist *h);
-#endif

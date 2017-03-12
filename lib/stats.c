@@ -36,7 +36,7 @@ int stats_init(struct stats *s)
 {
 	for (int i = 0; i < STATS_COUNT; i++) {
 		struct stats_desc *desc = &stats_table[i];
-		hist_create(&s->histograms[i], desc->hist.min, desc->hist.max, desc->hist.resolution);
+		hist_init(&s->histograms[i], desc->hist.min, desc->hist.max, desc->hist.resolution);
 	}
 	
 	s->delta = alloc(sizeof(struct stats_delta));
