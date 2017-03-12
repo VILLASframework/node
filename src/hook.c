@@ -31,8 +31,8 @@ static void usage()
 	printf("  PARAM     the name of the node to which samples are sent and received from\n\n");
 	printf("  OPTIONS are:\n");
 	printf("    -h      show this help\n");
-	printf("    -d lvl  set debug level\n");
-	printf("    -v      process multiple samples at once\n\n");
+	printf("    -d LVL  set debug level to LVL\n");
+	printf("    -v CNT  process CNT samples at once\n\n");
 
 	print_copyright();
 }
@@ -44,11 +44,12 @@ int main(int argc, char *argv[])
 	char *name, *parameter;
 	
 	struct log log;
-	struct hook *h;
+	struct pool pool = { .state = STATE_DESTROYED };
+	struct hook_info hi;
 	struct plugin *p;
+	struct hook *h;
+	struct sample *samples[cnt];
 
-	struct hook_info *i = alloc(sizeof(struct hook_info));
-	
 	char c;
 	while ((c = getopt(argc, argv, "hv:d:")) != -1) {
 		switch (c) {
@@ -65,21 +66,17 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-	if (argc <= optind)
-		
-	name      = argc > optind     ? argv[optind  ] : NULL;
-	parameter = argc > optind + 1 ? argv[optind+1] : NULL;
-	
-	if (argc > optind)
-		name = argv[optind];
-	else {
-		usage(argv[0]);
+	log_init(&log, log.level, LOG_ALL);
+	memory_init(DEFAULT_NR_HUGEPAGES);
+
+	if (argc < optind + 2) {
+		usage();
 		exit(EXIT_FAILURE);
 	}
 	
-	if (argc > optind + 1)
-		parameter = argv[optind + 1];
-	
+	name      = argv[optind];
+	parameter = argv[optind + 1];
+		
 	p = plugin_lookup(PLUGIN_TYPE_HOOK, name);
 	if (!p)
 		error("Unknown hook function '%s'", argv[optind]);
@@ -89,50 +86,42 @@ int main(int argc, char *argv[])
 	if (cnt < 1)
 		error("Vectorize option must be greater than 0");
 	
-	struct pool pool;
-	struct sample *smps[cnt];
-
-	info("Initialize logging system");
-	log_init(&log, log.level, LOG_ALL);
-
-	info("Initialize real-time system");
-	rt_init(-1, 50);
-	
-	info("Initialize memory system");
-	memory_init(DEFAULT_NR_HUGEPAGES);
-	
 	ret = pool_init(&pool, 10 * cnt, SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
 	if (ret)
 		error("Failed to initilize memory pool");
 
-	ret = sample_alloc(&pool, smps, cnt);
-	if (ret)
+	ret = sample_alloc(&pool, samples, cnt);
+	if (ret != cnt)
 		error("Failed to allocate %u samples from pool", cnt);
 	
 	h->parameter = parameter;
-	i->smps = smps;
+	hi.smps = samples;
 	
-	h->cb(h, HOOK_INIT, i);
-	h->cb(h, HOOK_PARSE, i);
-	h->cb(h, HOOK_PATH_START, i);
+	h->cb(h, HOOK_INIT, &hi);
+	h->cb(h, HOOK_PARSE, &hi);
+	h->cb(h, HOOK_PATH_START, &hi);
 	
 	while (!feof(stdin)) {
 		for (j = 0; j < cnt && !feof(stdin); j++)
-			sample_fscan(stdin, i->smps[j], NULL);
+			sample_fscan(stdin, hi.smps[j], NULL);
 		
-		i->cnt = j;
-		i->cnt = h->cb(h, HOOK_READ, i);
-		i->cnt = h->cb(h, HOOK_WRITE, i);
+		debug(15, "Read %d samples from stdin", cnt);
 		
-		for (j = 0; j < i->cnt; j++)
-			sample_fprint(stdout, i->smps[j], SAMPLE_ALL);
+		hi.cnt = j;
+		
+		if (h->type & HOOK_READ)
+			hi.cnt = h->cb(h, HOOK_READ, &hi);
+		if (h->type & HOOK_WRITE)
+			hi.cnt = h->cb(h, HOOK_WRITE, &hi);
+		
+		for (j = 0; j < hi.cnt; j++)
+			sample_fprint(stdout, hi.smps[j], SAMPLE_ALL);
 	}
 	
-	h->cb(h, HOOK_PATH_STOP, i);
-	h->cb(h, HOOK_DESTROY, i);
+	h->cb(h, HOOK_PATH_STOP, &hi);
+	h->cb(h, HOOK_DESTROY, &hi);
 	
-	sample_free(smps, cnt);
-	
+	sample_free(samples, cnt);
 	pool_destroy(&pool);
 
 	return 0;
