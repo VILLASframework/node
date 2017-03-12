@@ -32,8 +32,7 @@
 #define CPU_HZ 3392389000
 
 static struct fpga_card *card;
-
-static struct cfg cfg;
+static struct super_node cfg;
 
 static void init()
 {
