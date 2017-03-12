@@ -11,7 +11,27 @@
 #include "log.h"
 #include "config.h"
 
-static int parse_request(struct api_buffer *b, json_t **req)
+#if JANSSON_VERSION_HEX < 0x020A00
+size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags)
+{
+	char *str;
+	size_t len;
+
+	str = json_dumps(json, flags);
+	if (!str)
+		return 0;
+	
+	len = strlen(str) - 1; // not \0 terminated
+	if (buffer && len <= size)
+		memcpy(buffer, str, len);
+
+	//free(str);
+
+	return len;
+}
+#endif
+
+static int api_parse_request(struct api_buffer *b, json_t **req)
 {
 	json_error_t e;
 	
@@ -34,27 +54,7 @@ static int parse_request(struct api_buffer *b, json_t **req)
 	return 1;
 }
 
-#if JANSSON_VERSION_HEX < 0x020A00
-size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags)
-{
-	char *str;
-	size_t len;
-
-	str = json_dumps(json, flags);
-	if (!str)
-		return 0;
-	
-	len = strlen(str) - 1; // not \0 terminated
-	if (buffer && len <= size)
-		memcpy(buffer, str, len);
-
-	//free(str);
-
-	return len;
-}
-#endif
-
-static int unparse_response(struct api_buffer *b, json_t *res)
+static int api_unparse_response(struct api_buffer *b, json_t *res)
 {
 	size_t len;
 
@@ -104,7 +104,19 @@ int api_session_run_command(struct api_session *s, json_t *req, json_t **resp)
 	return 0;
 }
 
-int api_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
+int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
+{
+	//struct api_session *s = (struct api_session *) user;
+
+	switch (reason) {
+		default:
+			break;
+	}
+	
+	return 0;
+}
+
+int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
 	int ret;
 
@@ -152,11 +164,11 @@ int api_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *use
 			api_buffer_append(&s->request.body, in, len);
 			
 			json_t *req, *resp;
-			while (parse_request(&s->request.body, &req) == 1) {
+			while (api_parse_request(&s->request.body, &req) == 1) {
 
 				api_session_run_command(s, req, &resp);
 
-				unparse_response(&s->response.body, resp);
+				api_unparse_response(&s->response.body, resp);
 				
 				debug(LOG_WEB, "Sending response: %s len=%zu", s->response.body.buf, s->response.body.len);
 

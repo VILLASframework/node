@@ -109,4 +109,6 @@ int api_buffer_send(struct api_buffer *b, struct lws *w);
 int api_buffer_append(struct api_buffer *b, const char *in, size_t len);
 
 /** Libwebsockets callback for "api" endpoint */
-int api_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+
+int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
