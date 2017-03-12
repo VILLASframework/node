@@ -15,7 +15,9 @@ We prepared a image which you can download and run out of the box:
 
 3. Start the latest VILLASnode container by running:
 
-    $ docker run rwthacs/villas
+    $ git clone --recursive git@git.rwth-aachen.de:VILLASframework/VILLASnode.git
+    $ cd VILLASnode
+    $ make docker
 
 ### To be added
 
