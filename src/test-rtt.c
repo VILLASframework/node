@@ -1,4 +1,4 @@
-/** Some basic tests.
+/** Measure round-trip time.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
@@ -11,7 +11,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 
-#include <villas/cfg.h>
+#include <villas/super_node.h>
 #include <villas/node.h>
 #include <villas/utils.h>
 #include <villas/hist.h>
@@ -21,7 +21,7 @@
 
 #include "config.h"
 
-struct cfg cfg; /** <The global configuration */
+struct super_node sn; /** <The global configuration */
 
 static struct node *node;
 
@@ -53,10 +53,17 @@ void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 void usage()
 {
-	printf("Usage: villas-test CONFIG TEST NODE [ARGS]\n");
+	printf("Usage: villas-test-rtt CONFIG NODE [ARGS]\n");
 	printf("  CONFIG  path to a configuration file\n");
-	printf("  TEST    the name of the test to execute: 'rtt'\n");
-	printf("  NODE    name of the node which shoud be used\n\n");
+	printf("  NODE    name of the node which shoud be used\n");
+	printf("  ARGS    the following optional options:\n");
+	printf("   -c CNT  send CNT messages\n");
+	printf("   -f FD   use file descriptor FD for result output instead of stdout\n");
+	printf("   -l LOW  smallest value for histogram\n");
+	printf("   -H HIGH largest value for histogram\n");
+	printf("   -r RES  bucket resolution for histogram\n");
+	printf("   -h      show this usage information\n");
+	printf("\n");
 
 	print_copyright();
 }
@@ -68,22 +75,25 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	log_init(&cfg.log, V, LOG_ALL);
-	cfg_parse(&cfg, argv[1]);
+	log_init(&sn.log, V, LOG_ALL);
+	
+	super_node_init(&sn);
+	super_node_parse_uri(&sn, argv[1]);
+	
 	signals_init(quit);
-	rt_init(cfg.priority, cfg.affinity);
-	memory_init(cfg.hugepages);
+	rt_init(sn.priority, sn.affinity);
+	memory_init(sn.hugepages);
 
-	node = list_lookup(&cfg.nodes, argv[3]);
+	node = list_lookup(&sn.nodes, argv[3]);
 	if (!node)
 		error("There's no node with the name '%s'", argv[3]);
 
-	node_type_start(node->_vt, argc-3, argv+3, config_root_setting(&cfg.cfg));
+	node_type_start(node->_vt, argc-3, argv+3, config_root_setting(&sn.cfg));
 	node_start(node);
 
 	/* Parse Arguments */
 	char c, *endptr;
-	while ((c = getopt (argc-3, argv+3, "l:h:r:f:c:")) != -1) {
+	while ((c = getopt (argc-3, argv+3, "l:hH:r:f:c:")) != -1) {
 		switch (c) {
 			case 'c':
 				count = strtoul(optarg, &endptr, 10);
@@ -94,12 +104,13 @@ int main(int argc, char *argv[])
 			case 'l':
 				low = strtod(optarg, &endptr);
 				goto check;
-			case 'h':
+			case 'H':
 				high = strtod(optarg, &endptr);
 				goto check;
 			case 'r':
 				res = strtod(optarg, &endptr);
 				goto check;
+			case 'h':
 			case '?':
 				usage();
 				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
@@ -111,15 +122,12 @@ check:		if (optarg == endptr)
 			error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
 
-	if (!strcmp(argv[2], "rtt"))
-		test_rtt();
-	else
-		error("Unknown test: '%s'", argv[2]);
+	test_rtt();
 
 	node_stop(node);
 	node_type_stop(node->_vt);
 	
-	cfg_destroy(&cfg);
+	super_node_destroy(&sn);
 
 	return 0;
 }
@@ -132,7 +140,7 @@ void test_rtt() {
 	struct sample *smp_send = alloc(SAMPLE_LEN(2));
 	struct sample *smp_recv = alloc(SAMPLE_LEN(2));
 	
-	hist_create(&hist, low, high, res);
+	hist_init(&hist, low, high, res);
 
 	/* Print header */
 	fprintf(stdout, "%17s%5s%10s%10s%10s%10s%10s\n", "timestamp", "seq", "rtt", "min", "max", "mean", "stddev");

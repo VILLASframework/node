@@ -2,7 +2,8 @@
 TARGETS = $(BUILDDIR)/villas-node \
 	  $(BUILDDIR)/villas-pipe  \
 	  $(BUILDDIR)/villas-signal \
-	  $(BUILDDIR)/villas-test \
+	  $(BUILDDIR)/villas-test-rtt \
+	  $(BUILDDIR)/villas-test-cmp \
 	  $(BUILDDIR)/villas-hook
 
 SRC_LDLIBS = $(LDLIBS) -pthread -lm -lvillas
@@ -30,7 +31,6 @@ $(TARGETS): $(BUILDDIR)/villas-%: $(BUILDDIR)/src/%.o
 
 # Some additional prereqs for individual binaries
 $(BUILDDIR)/villas-fpga: $(addprefix $(BUILDDIR)/src/,fpga-bench.o $(BENCH_OBJS))
-
 
 # Compile executable objects
 $(BUILDDIR)/src/%.o: src/%.c | $$(dir $$@)
