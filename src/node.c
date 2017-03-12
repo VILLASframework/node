@@ -8,8 +8,7 @@
 #include <unistd.h>
 
 #include <villas/utils.h>
-#include <villas/cfg.h>
-#include <villas/path.h>
+#include <villas/super_node.h>
 #include <villas/memory.h>
 #include <villas/node.h>
 #include <villas/api.h>
@@ -19,27 +18,18 @@
 #include <villas/kernel/kernel.h>
 #include <villas/kernel/rt.h>
 #include <villas/hook.h>
+#include <villas/stats.h>
 
 #ifdef ENABLE_OPAL_ASYNC
   #include <villas/nodes/opal.h>
 #endif
 
-struct cfg cfg;
+struct super_node sn;
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
-	info("Stopping paths");
-	list_foreach(struct path *p, &cfg.paths) { INDENT
-		path_stop(p);
-	}
-
-	info("Stopping nodes");
-	list_foreach(struct node *n, &cfg.nodes) { INDENT
-		node_stop(n);
-	}
-
-	cfg_deinit(&cfg);
-	cfg_destroy(&cfg);
+	super_node_stop(&sn);
+	super_node_destroy(&sn);
 
 	info(GRN("Goodbye!"));
 
@@ -92,7 +82,7 @@ int main(int argc, char *argv[])
 		usage();
 #endif
 
-	log_init(&cfg.log, V, LOG_ALL);
+	super_node_init(&sn);
 
 	info("This is VILLASnode %s (built on %s, %s)", BLD(YEL(VERSION)),
 		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
@@ -103,30 +93,11 @@ int main(int argc, char *argv[])
 
 	signals_init(quit);
 
-	cfg_init_pre(&cfg);
-	cfg_parse_cli(&cfg, argc, argv);
-	cfg_init_post(&cfg);
+	super_node_parse_cli(&sn, argc, argv);
+	super_node_check(&sn);
+	super_node_start(&sn);
 
-	info("Starting nodes");
-	list_foreach(struct node *n, &cfg.nodes) { INDENT
-		int refs = list_count(&cfg.paths, (cmp_cb_t) path_uses_node, n);
-		if (refs > 0)
-			node_start(n);
-		else
-			warn("No path is using the node %s. Skipping...", node_name(n));
-	}
-
-	info("Starting paths");
-	list_foreach(struct path *p, &cfg.paths) { INDENT
-		if (p->enabled) {
-			path_init(p, &cfg);
-			path_start(p);
-		}
-		else
-			warn("Path %s is disabled. Skipping...", path_name(p));
-	}
-
-	if (cfg.stats > 0)
+	if (sn.stats > 0)
 		stats_print_header();
 
 	struct timespec now, last = time_now();
@@ -134,15 +105,15 @@ int main(int argc, char *argv[])
 	/* Run! Until signal handler is invoked */
 	while (1) {
 		now = time_now();
-		if (cfg.stats > 0 && time_delta(&last, &now) > cfg.stats) {
-			list_foreach(struct path *p, &cfg.paths) {
+		if (sn.stats > 0 && time_delta(&last, &now) > sn.stats) {
+			list_foreach(struct path *p, &sn.paths) {
 				hook_run(p, NULL, 0, HOOK_PERIODIC);
 			}
 
 			last = time_now();
 		}
 
-		web_service(&cfg.web); /** @todo Maybe we should move this to another thread */
+		web_service(&sn.web); /** @todo Maybe we should move this to another thread */
 	}
 
 	return 0;

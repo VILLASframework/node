@@ -23,13 +23,13 @@
 
 #include "queue.h"
 #include "list.h"
-#include "cfg.h"
+#include "super_node.h"
 
 /* Forward declarations */
 struct path;
 struct hook;
 struct sample;
-struct cfg;
+struct super_node;
 
 /** Optional parameters to hook callbacks */
 struct hook_info {
@@ -109,7 +109,7 @@ struct hook {
 };
 
 /** Save references to global nodes, paths and settings */
-int hook_init(struct hook *h, struct cfg *cfg);
+int hook_init(struct hook *h, struct super_node *sn);
 
 int hook_destroy(struct hook *h);
 

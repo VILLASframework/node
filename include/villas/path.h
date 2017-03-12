@@ -27,7 +27,7 @@
 #include "common.h"
 
 /* Forward declarations */
-struct cfg;
+struct super_node;
 
 struct path_source
 {
@@ -65,20 +65,17 @@ struct path
 	
 	struct stats *stats;		/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 	
+	struct super_node *super_node;	/**< The super node this path belongs to. */
 	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path */
 };
 
 /** Initialize internal data structures. */
-int path_init(struct path *p, struct cfg *cfg);
+int path_init(struct path *p, struct super_node *sn);
+
+int path_init2(struct path *p);
 
 /** Check if path configuration is proper. */
 int path_check(struct path *p);
-
-/** Destroy path by freeing dynamically allocated memory.
- *
- * @param i A pointer to the path structure.
- */
-int path_destroy(struct path *p);
 
 /** Start a path.
  *
@@ -97,6 +94,12 @@ int path_start(struct path *p);
  * @retval <0 Error. Something went wrong.
  */
 int path_stop(struct path *p);
+
+/** Destroy path by freeing dynamically allocated memory.
+ *
+ * @param i A pointer to the path structure.
+ */
+int path_destroy(struct path *p);
 
 /** Show some basic statistics for a path.
  *

@@ -16,7 +16,6 @@
 #include <ctype.h>
 
 #include "config.h"
-#include "cfg.h"
 #include "utils.h"
 
 void print_copyright()

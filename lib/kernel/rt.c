@@ -9,7 +9,7 @@
 
 #include "config.h"
 #include "utils.h"
-#include "cfg.h"
+#include "super_node.h"
 
 #include "kernel/kernel.h"
 #include "kernel/rt.h"

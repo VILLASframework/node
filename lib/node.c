@@ -9,7 +9,6 @@
 
 #include "sample.h"
 #include "node.h"
-#include "cfg.h"
 #include "utils.h"
 #include "config.h"
 #include "plugin.h"

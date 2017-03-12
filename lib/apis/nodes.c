@@ -18,8 +18,8 @@ extern struct list nodes;
 static int api_nodes(struct api_ressource *r, json_t *args, json_t **resp, struct api_session *s)
 {
 	json_t *json_nodes = json_array();
-					
-	list_foreach(struct node *n, &s->api->cfg->nodes) {
+
+	list_foreach(struct node *n, &s->api->super_node->nodes) {
 		json_t *json_node = json_pack("{ s: s, s: i, s: i, s: i, s: i }",
 			"name",		node_name_short(n),
 			"state",	n->state,

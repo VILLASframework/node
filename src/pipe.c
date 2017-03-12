@@ -14,7 +14,7 @@
 #include <signal.h>
 #include <pthread.h>
 
-#include <villas/cfg.h>
+#include <villas/super_node.h>
 #include <villas/utils.h>
 #include <villas/node.h>
 #include <villas/msg.h>
@@ -24,7 +24,7 @@
 
 #include "config.h"
 
-static struct cfg cfg;		/**< The global configuration */
+static struct super_node sn = { .state = STATE_DESTROYED };		/**< The global configuration */
 
 struct dir {
 	struct pool pool;
@@ -53,10 +53,11 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 		pool_destroy(&sendd.pool);
 	}
 
+	web_stop(&sn.web);
 	node_stop(node);
 	node_type_stop(node->_vt);
 
-	cfg_destroy(&cfg);
+	super_node_destroy(&sn);
 
 	info(GRN("Goodbye!"));
 	_exit(EXIT_SUCCESS);
@@ -172,15 +173,11 @@ int main(int argc, char *argv[])
 
 	ptid = pthread_self();
 
-	/* Parse command line arguments */
-	if (argc < 3)
-		usage();
-
 	/* Default values */
 	sendd.enabled = true;
 	recvv.enabled = true;
 
-	while ((c = getopt(argc-2, argv+2, "hxrsd:")) != -1) {
+	while ((c = getopt(argc, argv, "hxrsd:")) != -1) {
 		switch (c) {
 			case 'x':
 				reverse = true;
@@ -200,24 +197,40 @@ int main(int argc, char *argv[])
 				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
 	}
+	
+	if (argc < optind + 2) {
+		usage();
+		exit(EXIT_FAILURE);
+	}
 
-	log_init(&cfg.log, level, LOG_ALL);
+	log_init(&sn.log, level, LOG_ALL);
+	log_start(&sn.log);
+	
+	super_node_init(&sn);
+	super_node_parse_uri(&sn, argv[optind]);
+	
+	memory_init(sn.hugepages);
 	signals_init(quit);
-	cfg_parse(&cfg, argv[1]);
-	rt_init(cfg.priority, cfg.affinity);
-	memory_init(cfg.hugepages);
+	rt_init(sn.priority, sn.affinity);
+
+	web_init(&sn.web, NULL); /* API is disabled in villas-pipe */
+	web_start(&sn.web);
 	
 	/* Initialize node */
-	node = list_lookup(&cfg.nodes, argv[2]);
+	node = list_lookup(&sn.nodes, argv[optind+1]);
 	if (!node)
-		error("Node '%s' does not exist!", argv[2]);
+		error("Node '%s' does not exist!", argv[optind+1]);
 
 	if (reverse)
 		node_reverse(node);
 
-	ret = node_type_start(node->_vt, argc-optind, argv+optind, config_root_setting(&cfg.cfg));
+	ret = node_type_start(node->_vt, argc, argv, config_root_setting(&sn.cfg));
 	if (ret)
 		error("Failed to intialize node type: %s", node_name(node));
+	
+	ret = node_check(node);
+	if (ret)
+		error("Invalid node configuration");
 
 	ret = node_start(node);
 	if (ret)
@@ -227,8 +240,9 @@ int main(int argc, char *argv[])
 	pthread_create(&recvv.thread, NULL, recv_loop, NULL);
 	pthread_create(&sendd.thread, NULL, send_loop, NULL);
 
-	for (;;)
-		pause();
+	for (;;) {
+		web_service(&sn.web);
+	}
 
 	return 0;
 }

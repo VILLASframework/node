@@ -20,7 +20,7 @@
 #include "common.h"
 
 /** Global configuration */
-struct cfg {
+struct super_node {
 	int priority;		/**< Process priority (lower is better) */
 	int affinity;		/**< Process affinity of the server and all created threads */
 	int hugepages;		/**< Number of hugepages to reserve. */
@@ -51,23 +51,30 @@ struct cfg {
 #endif
 
 /** Inititalize configuration object before parsing the configuration. */
-int cfg_init(struct cfg *cfg);
+int super_node_init(struct super_node *sn);
 
-/** Initialize after parsing the configuration file. */
-int cfg_start(struct cfg *cfg);
+/** Wrapper for super_node_parse() */
+int super_node_parse_cli(struct super_node *sn, int argc, char *argv[]);
 
-int cfg_stop(struct cfg *cfg);
+/** Wrapper for super_node_parse() */
+int super_node_parse_uri(struct super_node *sn, const char *uri);
 
-/** Desctroy configuration object. */
-int cfg_destroy(struct cfg *cfg);
-
-/** Parse config file and store settings in supplied struct cfg.
+/** Parse super-node configuration.
  *
- * @param cfg A configuration object.
- * @param filename The path to the configration file (relative or absolute)
+ * @param sn The super-node datastructure to fill.
+ * @param cfg A libconfig setting object.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int cfg_parse(struct cfg *cfg, const char *uri);
+int super_node_parse(struct super_node *sn, config_setting_t *cfg);
 
-int cfg_parse_cli(struct cfg *cfg, int argc, char *argv[]);
+/** Check validity of super node configuration. */
+int super_node_check(struct super_node *sn);
+
+/** Initialize after parsing the configuration file. */
+int super_node_start(struct super_node *sn);
+
+int super_node_stop(struct super_node *sn);
+
+/** Desctroy configuration object. */
+int super_node_destroy(struct super_node *sn);

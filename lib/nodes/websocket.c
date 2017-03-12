@@ -13,11 +13,11 @@
 #include <libconfig.h>
 
 #include "nodes/websocket.h"
+#include "super_node.h"
 #include "webmsg_format.h"
 #include "timing.h"
 #include "utils.h"
 #include "msg.h"
-#include "cfg.h"
 #include "config.h"
 #include "plugin.h"
 

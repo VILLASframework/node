@@ -92,7 +92,6 @@
 #define BIT(nr)			(1UL << (nr))
 
 /* Forward declarations */
-struct cfg;
 struct timespec;
 
 /** Print copyright message to screen. */

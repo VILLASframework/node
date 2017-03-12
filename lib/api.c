@@ -231,13 +231,13 @@ int api_buffer_append(struct api_buffer *b, const char *in, size_t len)
 	return 0;
 }
 
-int api_init(struct api *a, struct cfg *cfg)
+int api_init(struct api *a, struct super_node *sn)
 {
 	info("Initialize API sub-system");
 
 	list_init(&a->sessions);
 
-	a->cfg = cfg;
+	a->super_node = sn;
 	a->state = STATE_INITIALIZED;
 
 	return 0;

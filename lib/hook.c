@@ -19,11 +19,11 @@
 #include "node.h"
 #include "plugin.h"
 
-int hook_init(struct hook *h, struct cfg *cfg)
+int hook_init(struct hook *h, struct super_node *sn)
 {
 	struct hook_info i = {
-		.nodes = &cfg->nodes,
-		.paths = &cfg->paths
+		.nodes = &sn->nodes,
+		.paths = &sn->paths
 	};
 	
 	if (h->type & HOOK_INIT)

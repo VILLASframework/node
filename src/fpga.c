@@ -10,7 +10,7 @@
 #include <getopt.h>
 
 #include <villas/log.h>
-#include <villas/cfg.h>
+#include <villas/super_node.h>
 #include <villas/timing.h>
 #include <villas/utils.h>
 #include <villas/memory.h>
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 {
 	int ret;
 	
-	struct cfg cfg;
+	struct super_node sn;
 	struct fpga_card *card;
 
 	if (argc < 3)
@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
 	while ((c = getopt(argc-1, argv+1, "d:")) != -1) {
 		switch (c) {
 			case 'd':
-				cfg.log.level = strtoul(optarg, &endptr, 10);
+				sn.log.level = strtoul(optarg, &endptr, 10);
 				break;	
 
 			case '?':
@@ -61,20 +61,15 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	info("Parsing configuration");
-	cfg_parse(&cfg, argv[1]);
+	super_node_init(&sn);
+	super_node_parse_uri(&sn, argv[1]);
 	
-	info("Initialize logging system");
-	log_init(&cfg.log, cfg.log.level, cfg.log.facilities);
-
-	info("Initialize real-time system");
-	rt_init(cfg.priority, cfg.affinity);
-	
-	info("Initialize memory system");
-	memory_init(cfg.hugepages);
+	log_init(&sn.log, sn.log.level, sn.log.facilities);
+	rt_init(sn.priority, sn.affinity);
+	memory_init(sn.hugepages);
 
 	/* Initialize VILLASfpga card */
-	ret = fpga_init(argc, argv, config_root_setting(&cfg.cfg));
+	ret = fpga_init(argc, argv, config_root_setting(&sn.cfg));
 	if (ret)
 		error("Failed to initialize FPGA card");
 	
@@ -92,7 +87,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to de-initialize FPGA card");
 	
-	cfg_destroy(&cfg);
+	super_node_destroy(&sn);
 
 	return 0;
 }

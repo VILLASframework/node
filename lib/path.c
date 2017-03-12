@@ -19,7 +19,7 @@
 #include "queue.h"
 #include "hook.h"
 #include "plugin.h"
-#include "cfg.h"
+#include "super_node.h"
 #include "memory.h"
 
 static void path_read(struct path *p)
@@ -140,52 +140,17 @@ static int path_destination_destroy(struct path_destination *pd)
 	return 0;
 }
 
-int path_init(struct path *p, struct cfg *cfg)
+int path_init(struct path *p, struct super_node *sn)
 {
-	int ret, max_queuelen = 0;
-	
-	if (p->state != STATE_DESTROYED)
-		return -1;
-	
-	/* Add internal hooks if they are not already in the list*/
-	list_foreach(struct plugin *pl, &plugins) {
-		if (pl->type == PLUGIN_TYPE_HOOK) {
-			struct hook *h = &pl->hook;
+	assert(p->state == STATE_DESTROYED);
 
-			if ((h->type & HOOK_AUTO) && 			/* should this hook be added implicitely? */
-			    (list_lookup(&p->hooks, pl->name) == NULL))	/* is not already in list? */
-				list_push(&p->hooks, memdup(h, sizeof(h)));
-		}
-	}
+	list_init(&p->hooks);
+	list_init(&p->destinations);
 	
-	/* We sort the hooks according to their priority before starting the path */
-	list_sort(&p->hooks, hook_cmp_priority);
-	
-	list_foreach(struct hook *h, &p->hooks)
-		hook_init(h, cfg);
-
-	/* Parse hook arguments */
-	ret = hook_run(p, NULL, 0, HOOK_PARSE);
-	if (ret)
-		error("Failed to parse arguments for hooks of path: %s", path_name(p));
-	
-	/* Initialize destinations */
-	list_foreach(struct path_destination *pd, &p->destinations) {
-		ret = queue_init(&pd->queue, pd->queuelen, &memtype_hugepage);
-		if (ret)
-			error("Failed to initialize queue for path");
-		
-		if (pd->queuelen > max_queuelen)
-			max_queuelen = pd->queuelen;
-	}
-	
-	/* Initialize source */
-	ret = pool_init(&p->source->pool, max_queuelen, SAMPLE_LEN(p->source->samplelen), &memtype_hugepage);
-	if (ret)
-		error("Failed to allocate memory pool for path");
+	p->super_node = sn;
 	
 	p->state = STATE_INITIALIZED;
-
+	
 	return 0;
 }
 
@@ -196,7 +161,9 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 	int ret, samplelen, queuelen;
 
 	struct node *source;
-	struct list destinations;
+	struct list destinations = { .state = STATE_DESTROYED };
+	
+	list_init(&destinations);
 
 	/* Input node */
 	if (!config_setting_lookup_string(cfg, "in", &in) &&
@@ -216,14 +183,12 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 	    !(cfg_out = config_setting_get_member(cfg, "dest")) &&
 	    !(cfg_out = config_setting_get_member(cfg, "sink")))
 		cerror(cfg, "Missing output nodes for path");
-	
-	list_init(&destinations);
+
 	ret = node_parse_list(&destinations, cfg_out, nodes);
 	if (ret <= 0)
 		cerror(cfg_out, "Invalid output nodes");
 
 	/* Optional settings */
-	list_init(&p->hooks);
 	cfg_hook = config_setting_get_member(cfg, "hook");
 	if (cfg_hook)
 		hook_parse_list(&p->hooks, cfg_hook);
@@ -282,9 +247,54 @@ int path_check(struct path *p)
 	return 0;
 }
 
+int path_init2(struct path *p)
+{
+	int ret, max_queuelen = 0;
+
+	assert(p->state == STATE_CHECKED);
+
+	/* Add internal hooks if they are not already in the list*/
+	list_foreach(struct plugin *pl, &plugins) {
+		if (pl->type == PLUGIN_TYPE_HOOK) {
+			struct hook c;
+			struct hook *h = &pl->hook;
+
+			if (h->type & HOOK_AUTO) {
+				hook_copy(h, &c);
+				list_push(&p->hooks, memdup(&c, sizeof(c)));
+			}
+		}
+	}
+	
+	/* We sort the hooks according to their priority before starting the path */
+	list_sort(&p->hooks, hook_cmp_priority);
+	
+	list_foreach(struct hook *h, &p->hooks)
+		hook_init(h, p->super_node);
+	
+	/* Initialize destinations */
+	list_foreach(struct path_destination *pd, &p->destinations) {
+		ret = queue_init(&pd->queue, pd->queuelen, &memtype_hugepage);
+		if (ret)
+			error("Failed to initialize queue for path");
+		
+		if (pd->queuelen > max_queuelen)
+			max_queuelen = pd->queuelen;
+	}
+	
+	/* Initialize source */
+	ret = pool_init(&p->source->pool, max_queuelen, SAMPLE_LEN(p->source->samplelen), &memtype_hugepage);
+	if (ret)
+		error("Failed to allocate memory pool for path");
+	
+	return 0;
+}
+
 int path_start(struct path *p)
 {
 	int ret;
+	
+	assert(p->state == STATE_CHECKED);
 
 	info("Starting path: %s (#hooks=%zu)",
 		path_name(p), list_length(&p->hooks));
@@ -301,6 +311,7 @@ int path_start(struct path *p)
 
 	return 0;
 }
+
 
 int path_stop(struct path *p)
 {
@@ -379,9 +390,6 @@ int path_reverse(struct path *p, struct path *r)
 	
 	struct path_destination *first_pd = list_first(&p->destinations);
 
-	list_init(&r->destinations);
-	list_init(&r->hooks);
-	
 	/* General */
 	r->enabled = p->enabled;
 	r->cfg = p->cfg;
