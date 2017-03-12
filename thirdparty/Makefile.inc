@@ -14,7 +14,7 @@ $(DEPS_AUTOCONF): | $(BUILDDIR)/thirdparty/$$@/
 $(DEPS_CMAKE): | $(BUILDDIR)/thirdparty/$$@/
 	cmake -DCMAKE_INSTALL_PREFIX:PATH=$(PREFIX) \
 	      -H$(SRCDIR)/thirdparty/$@ \
-	      -B$(BUILDDIR)/thirdparty/$@
+	      -B$(BUILDDIR)/thirdparty/$@ $(CMAKE_OPTS)
 	make  -C$(BUILDDIR)/thirdparty/$@
 
 $(addprefix install-,$(DEPS)): install-%: %
@@ -34,5 +34,7 @@ clean-thirdparty: $(addprefix clean-,$(DEPS))
 libconfig: | libconfig-fix
 libconfig-fix:
 	rm -f $(SRCDIR)/thirdparty/libconfig/lib/scanner.[hc]
+
+libwebsockets: CMAKE_OPTS = -DLWS_IPV6=1 -DLWS_WITH_STATIC=0 -DLWS_WITHOUT_TESTAPPS=1 -DLWS_WITH_HTTP2=1
 
 .PHONY: $(DEPS) thirdparty clean-thirdparty install-thirdparty
