@@ -137,12 +137,12 @@ struct node_type {
  *
  * @see node_type::init
  */
-int node_type_init(struct node_type *vt, int argc, char *argv[], config_setting_t *cfg);
+int node_type_start(struct node_type *vt, int argc, char *argv[], config_setting_t *cfg);
 
 /** De-initialize node type subsystems.
  *
  * @see node_type::deinit
  */
-int node_type_deinit(struct node_type *vt);
+int node_type_stop(struct node_type *vt);
 
 /** @} */

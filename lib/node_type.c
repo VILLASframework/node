@@ -14,7 +14,7 @@
 #include "config.h"
 #include "plugin.h"
 
-int node_type_init(struct node_type *vt, int argc, char *argv[], config_setting_t *cfg)
+int node_type_start(struct node_type *vt, int argc, char *argv[], config_setting_t *cfg)
 {
 	int ret;
 	
@@ -32,7 +32,7 @@ int node_type_init(struct node_type *vt, int argc, char *argv[], config_setting_
 	return ret;
 }
 
-int node_type_deinit(struct node_type *vt)
+int node_type_stop(struct node_type *vt)
 {
 	int ret;
 	

@@ -54,7 +54,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	}
 
 	node_stop(node);
-	node_type_deinit(node->_vt);
+	node_type_stop(node->_vt);
 
 	cfg_destroy(&cfg);
 
@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
 	if (reverse)
 		node_reverse(node);
 
-	ret = node_type_init(node->_vt, argc-optind, argv+optind, config_root_setting(&cfg.cfg));
+	ret = node_type_start(node->_vt, argc-optind, argv+optind, config_root_setting(&cfg.cfg));
 	if (ret)
 		error("Failed to intialize node type: %s", node_name(node));
 
