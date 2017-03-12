@@ -51,7 +51,7 @@ PROJECT_BRIEF          = "Connecting real-time power grid simulation equipment"
 # pixels and the maximum width should not exceed 200 pixels. Doxygen will copy
 # the logo to the output directory.
 
-PROJECT_LOGO           = doc/pictures/acs_eonerc_logo.svg
+PROJECT_LOGO           = doc/pictures/villas_node.svg
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) path
 # into which the generated documentation will be written. If a relative path is
@@ -1126,7 +1126,7 @@ HTML_EXTRA_STYLESHEET  = doc/theme/style.css
 # files will be copied as-is; there are no commands or markers available.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_FILES       =
+HTML_EXTRA_FILES       = doc/pictures/acs_eonerc_logo.svg
 
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
 # will adjust the colors in the style sheet and background images according to
