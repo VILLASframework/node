@@ -20,10 +20,8 @@
 
 #include "utils.h"
 
-struct interface * if_create(struct rtnl_link *link)
+int if_init(struct interface *i, struct rtnl_link *link)
 {
-	struct interface *i = alloc(sizeof(struct interface));
-	
 	i->nl_link = link;
 
 	debug(LOG_IF | 3, "Created interface '%s'", rtnl_link_get_name(i->nl_link));
@@ -36,7 +34,7 @@ struct interface * if_create(struct rtnl_link *link)
 
 	list_init(&i->sockets);
 
-	return i;
+	return 0;
 }
 
 int if_destroy(struct interface *i)

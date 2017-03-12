@@ -64,8 +64,12 @@ int socket_init(int argc, char * argv[], config_setting_t *cfg)
 		}
 
 		/* If not found, create a new interface */
-		i = if_create(link);
-		list_push(&interfaces, i);
+		struct interface j;
+		
+		if_init(&j, link);
+		
+		list_push(&interfaces, memdup(&j, sizeof(j)));
+		i = &j;
 
 found:		list_push(&i->sockets, s);
 	}

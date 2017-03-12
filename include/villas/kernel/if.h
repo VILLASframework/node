@@ -43,7 +43,7 @@ struct interface {
  * @retval >0 Success. A pointer to the new interface.
  * @retval 0 Error. The creation failed.
  */
-struct interface * if_create(struct rtnl_link *link);
+int if_init(struct interface * , struct rtnl_link *link);
 
 
 /** Destroy interface by freeing dynamically allocated memory.
