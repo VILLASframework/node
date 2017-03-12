@@ -126,6 +126,9 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 		case LWS_CALLBACK_ESTABLISHED: {
 			struct web *w = (struct web *) lws_context_user(lws_get_context(wsi));
 			
+			if (w->api == NULL)
+				return -1; /** @todo return error message */
+			
 			api_session_init(s, w->api, API_MODE_WS);
 			break;
 		}
@@ -245,8 +248,7 @@ int api_init(struct api *a, struct super_node *sn)
 
 int api_destroy(struct api *a)
 {
-	if (a->state == STATE_STARTED)
-		return -1;
+	assert(a->state != STATE_STARTED);
 
 	a->state = STATE_DESTROYED;
 

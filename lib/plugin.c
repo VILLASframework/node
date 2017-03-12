@@ -9,7 +9,7 @@
 #include "plugin.h"
 
 /** Global list of all known plugins */
-struct list plugins;
+struct list plugins = LIST_INIT();
 
 int plugin_init(struct plugin *p, char *name, char *path)
 {
@@ -36,8 +36,7 @@ int plugin_unload(struct plugin *p)
 {
 	int ret;
 	
-	if (p->state != STATE_LOADED)
-		return -1;
+	assert(p->state == STATE_LOADED);
 	
 	ret = dlclose(p->handle);
 	if (ret)
@@ -50,8 +49,7 @@ int plugin_unload(struct plugin *p)
 
 int plugin_destroy(struct plugin *p)
 {
-	if (p->state == STATE_LOADED)
-		plugin_unload(p);
+	assert(p->state != STATE_DESTROYED && p->state != STATE_LOADED);
 
 	if (p->path)
 		free(p->path);

@@ -16,6 +16,8 @@
 #include <stdbool.h>
 #include <pthread.h>
 
+#include "common.h"
+
 #define LIST_CHUNKSIZE		16
 
 /** Static list initialization */
@@ -23,7 +25,8 @@
 	.array = NULL,				\
 	.length = 0,				\
 	.capacity = 0,				\
-	.lock = PTHREAD_MUTEX_INITIALIZER	\
+	.lock = PTHREAD_MUTEX_INITIALIZER,	\
+	.state = STATE_INITIALIZED		\
 }
 				
 #define list_length(list)	((list)->length)
@@ -49,6 +52,7 @@ struct list {
 	size_t capacity;	/**< Size of list::array in elements */
 	size_t length;		/**< Number of elements of list::array which are in use */
 	pthread_mutex_t lock;	/**< A mutex to allow thread-safe accesses */
+	enum state state;	/**< The state of this list. */
 };
 
 /** Initialize a list.

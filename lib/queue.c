@@ -38,8 +38,7 @@
 /** Initialize MPMC queue */
 int queue_init(struct queue *q, size_t size, const struct memtype *mem)
 {
-	if (q->state != STATE_DESTROYED)
-		return -1;
+	assert(q->state == STATE_DESTROYED);
 
 	/* Queue size must be 2 exponent */
 	if (!IS_POW2(size)) {
@@ -69,9 +68,8 @@ int queue_destroy(struct queue *q)
 {
 	int ret = 0;
 
-	if (q->state != STATE_INITIALIZED)
-		return -1;
-	
+	assert(q->state == STATE_INITIALIZED);
+
 	ret = memory_free(q->mem, q->buffer, (q->buffer_mask + 1) * sizeof(q->buffer[0]));
 
 	if (ret == 0)

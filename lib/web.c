@@ -191,15 +191,18 @@ int web_start(struct web *w)
 
 int web_stop(struct web *w)
 {
+	assert(w->state == STATE_STARTED);
+
 	lws_cancel_service(w->context);
+	
+	w->state = STATE_STOPPED;
 
 	return 0;
 }
 
 int web_destroy(struct web *w)
 {
-	if (w->state == STATE_STARTED)
-		return -1;
+	assert(w->state != STATE_DESTROYED && w->state != STATE_STARTED);
 	
 	lws_context_destroy(w->context);
 
@@ -210,5 +213,7 @@ int web_destroy(struct web *w)
 
 int web_service(struct web *w)
 {
+	assert(w->state == STATE_STARTED);
+
 	return lws_service(w->context, 10);
 }
