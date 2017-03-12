@@ -308,18 +308,21 @@ void cerror(config_setting_t *cfg, const char *fmt, ...)
 {
 	va_list ap;
 	char *buf = NULL;
+	const char *file;
+	int line;
 
 	assert(log != NULL);
 
 	va_start(ap, fmt);
 	vstrcatf(&buf, fmt, ap);
 	va_end(ap);
+	
+	line = config_setting_source_line(cfg);
+	file = config_setting_source_file(cfg);
+	if (!file)
+		file = config_setting_get_hook(config_root_setting(cfg->config));
 
-	log_print(log, LOG_LVL_ERROR, "%s in %s:%u", buf,
-		config_setting_source_file(cfg)
-		   ? config_setting_source_file(cfg)
-		   : "(stdio)",
-		config_setting_source_line(cfg));
+	log_print(log, LOG_LVL_ERROR, "%s in %s:%u", buf, file, line);
 
 	free(buf);
 	die();
