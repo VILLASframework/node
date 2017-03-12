@@ -44,18 +44,20 @@ enum log_facilities {
 	LOG_VFIO =	(1L << 18),
 	LOG_PCI =	(1L << 19),
 	LOG_XIL =	(1L << 20),
+	LOG_TC =	(1L << 21),
+	LOG_IF =	(1L << 22),
 	
 	/* Node-types */
-	LOG_SOCKET =	(1L << 21),
-	LOG_FILE =	(1L << 22),
-	LOG_FPGA =	(1L << 23),
-	LOG_NGSI =	(1L << 24),
-	LOG_WEBSOCKET =	(1L << 25),
-	LOG_OPAL =	(1L << 26),
+	LOG_SOCKET =	(1L << 23),
+	LOG_FILE =	(1L << 24),
+	LOG_FPGA =	(1L << 25),
+	LOG_NGSI =	(1L << 26),
+	LOG_WEBSOCKET =	(1L << 27),
+	LOG_OPAL =	(1L << 28),
 	
 	/* Classes */
 	LOG_NODES =	LOG_NODE | LOG_SOCKET | LOG_FILE | LOG_FPGA | LOG_NGSI | LOG_WEBSOCKET | LOG_OPAL,
-	LOG_KERNEL =	LOG_VFIO | LOG_PCI,
+	LOG_KERNEL =	LOG_VFIO | LOG_PCI | LOG_TC | LOG_IF,
 	LOG_ALL =	~0xFF 
 };
 

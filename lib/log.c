@@ -40,6 +40,8 @@ static const char *facilities_strs[] = {
 	"vfio",		/* LOG_VFIO */
 	"pci",		/* LOG_PCI */
 	"xil",		/* LOG_XIL */
+	"tc",		/* LOG_TC */
+	"if",		/* LOG_IF */
 	
 	/* Node-types */	
 	"socket",	/* LOG_SOCKET */

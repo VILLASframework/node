@@ -26,7 +26,7 @@ struct interface * if_create(struct rtnl_link *link)
 	
 	i->nl_link = link;
 
-	debug(LOG_SOCKET | 3, "Created interface '%s'", rtnl_link_get_name(i->nl_link));
+	debug(LOG_IF | 3, "Created interface '%s'", rtnl_link_get_name(i->nl_link));
 
 	int  n = if_get_irqs(i);
 	if (n > 0)
@@ -91,7 +91,7 @@ int if_start(struct interface *i, int affinity)
 					error("Failed to setup FW mark classifier: %s", nl_geterror(ret));
 				
 				char *buf = tc_print(s->tc_qdisc);
-				debug(LOG_SOCKET | 5, "Starting network emulation on interface '%s' for FW mark %u: %s",
+				debug(LOG_IF | 5, "Starting network emulation on interface '%s' for FW mark %u: %s",
 					rtnl_link_get_name(i->nl_link), s->mark, buf);
 				free(buf);
 
@@ -192,7 +192,7 @@ int if_set_affinity(struct interface *i, int affinity)
 				error("Failed to set affinity for IRQ %u", i->irqs[n]);
 
 			fclose(file);
-			debug(LOG_SOCKET | 5, "Set affinity of IRQ %u for interface '%s' to %#x", i->irqs[n], rtnl_link_get_name(i->nl_link), affinity);
+			debug(LOG_IF | 5, "Set affinity of IRQ %u for interface '%s' to %#x", i->irqs[n], rtnl_link_get_name(i->nl_link), affinity);
 		}
 		else
 			error("Failed to set affinity for interface '%s'", rtnl_link_get_name(i->nl_link));
