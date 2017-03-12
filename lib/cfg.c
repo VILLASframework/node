@@ -229,13 +229,13 @@ int cfg_parse(struct cfg *cfg, const char *uri)
 				if (!p)
 					cerror(cfg_node, "Invalid node type: %s", type);
 			
-				struct node *n = node_create(&p->node);
+				struct node n;
 
-				ret = node_parse(n, cfg_node);
+				ret = node_parse(&n, cfg_node);
 				if (ret)
 					cerror(cfg_node, "Failed to parse node");
 			
-				list_push(&cfg->nodes, n);
+				list_push(&cfg->nodes, memdup(&n, sizeof(n)));
 			}
 		}
 
@@ -248,26 +248,111 @@ int cfg_parse(struct cfg *cfg, const char *uri)
 			for (int i = 0; i < config_setting_length(cfg_paths); i++) {
 				config_setting_t *cfg_path = config_setting_get_elem(cfg_paths, i);
 
-				struct path *p = path_create();
+				struct path p;
 			
-				ret = path_parse(p, cfg_path, &cfg->nodes);
+				ret = path_parse(&p, cfg_path, &cfg->nodes);
 				if (ret)
 					cerror(cfg_path, "Failed to parse path");
 			
-				list_push(&cfg->paths, p);
+				list_push(&cfg->paths, memdup(&p, sizeof(p)));
 
-				if (p->reverse) {
-					struct path *r = path_create();
+				if (p.reverse) {
+					struct path r;
 		
-					ret = path_reverse(p, r);
+					ret = path_reverse(&p, &r);
 					if (ret)
-						cerror(cfg_path, "Failed to reverse path %s", path_name(p));
+						cerror(cfg_path, "Failed to reverse path %s", path_name(&p));
 
-					list_push(&cfg->paths, r);
+					list_push(&cfg->paths, memdup(&r, sizeof(p)));
 				}
 			}
 		}
 	}
+	
+	cfg->state = STATE_PARSED;
 
+	return 0;
+}
+
+int cfg_start(struct cfg *cfg)
+{
+	memory_init(cfg->hugepages);
+	rt_init(cfg->priority, cfg->affinity);
+
+	api_start(&cfg->api);
+	web_start(&cfg->web);
+	
+	info("Start node types");
+	list_foreach(struct node *n, &cfg->nodes) { INDENT
+		config_setting_t *cfg_root = config_root_setting(&cfg->cfg);
+		
+		node_type_start(n->_vt, cfg->cli.argc, cfg->cli.argv, cfg_root);
+	}
+	
+	info("Starting nodes");
+	list_foreach(struct node *n, &cfg->nodes) { INDENT
+		int refs = list_count(&cfg->paths, (cmp_cb_t) path_uses_node, n);
+		if (refs > 0)
+			node_start(n);
+		else
+			warn("No path is using the node %s. Skipping...", node_name(n));
+	}
+
+	info("Starting paths");
+	list_foreach(struct path *p, &cfg->paths) { INDENT
+		if (p->enabled) {
+			path_init(p, cfg);
+			path_start(p);
+		}
+		else
+			warn("Path %s is disabled. Skipping...", path_name(p));
+	}
+	
+	cfg->state = STATE_STARTED;
+	
+	return 0;
+}
+
+int cfg_stop(struct cfg *cfg)
+{
+	info("Stopping paths");
+	list_foreach(struct path *p, &cfg->paths) { INDENT
+		path_stop(p);
+	}
+
+	info("Stopping nodes");
+	list_foreach(struct node *n, &cfg->nodes) { INDENT
+		node_stop(n);
+	}
+
+	info("De-initializing node types");
+	list_foreach(struct plugin *p, &plugins) { INDENT
+		if (p->type == PLUGIN_TYPE_NODE)
+			node_type_stop(&p->node);
+	}
+
+	web_stop(&cfg->web);
+	api_stop(&cfg->api);
+	log_stop(&cfg->log);
+	
+	cfg->state = STATE_STOPPED;
+	
+	return 0;
+}
+
+int cfg_destroy(struct cfg *cfg)
+{
+	config_destroy(&cfg->cfg);
+
+	web_destroy(&cfg->web);
+	log_destroy(&cfg->log);
+	api_destroy(&cfg->api);
+
+	list_destroy(&cfg->plugins, (dtor_cb_t) plugin_destroy, false);
+	list_destroy(&cfg->paths,   (dtor_cb_t) path_destroy, true);
+	list_destroy(&cfg->nodes,   (dtor_cb_t) node_destroy, true);
+	
+	cfg->state = STATE_DESTROYED;
+	
 	return 0;
 }

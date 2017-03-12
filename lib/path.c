@@ -182,11 +182,6 @@ const char * path_name(struct path *p)
 	return p->_name;
 }
 
-struct path * path_create()
-{
-	return (struct path *) alloc(sizeof(struct path));
-}
-
 static int path_source_destroy(struct path_source *ps)
 {
 	pool_destroy(&ps->pool);

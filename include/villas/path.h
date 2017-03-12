@@ -73,9 +73,6 @@ struct path
 	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path */
 };
 
-/** Allocate memory for a new path */
-struct path * path_create();
-
 /** Initialize internal data structures. */
 int path_init(struct path *p, struct cfg *cfg);
 

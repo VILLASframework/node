@@ -51,13 +51,6 @@ struct node
 	config_setting_t *cfg;	/**< A pointer to the libconfig object which instantiated this node */
 };
 
-/** Create a node by allocating dynamic memory.
- *
- * @see node_type::create
- * @param vt A pointer to the node-type table of virtual functions.
- */
-struct node * node_create(struct node_type *vt);
-
 /** Destroy node by freeing dynamically allocated memory.
  *
  * @see node_type::destroy

@@ -131,23 +131,7 @@ int node_reverse(struct node *n)
 	return n->_vt->reverse ? n->_vt->reverse(n) : -1;
 }
 
-struct node * node_create(struct node_type *vt)
 {
-	struct node *n = alloc(sizeof(struct node));
-	
-	list_push(&vt->instances, n);
-	
-	n->_vt = vt;
-	n->_vd = alloc(n->_vt->size);
-	
-	if (n->_vt->create)
-		n->_vt->create(n);
-
-	n->state = NODE_CREATED;
-	
-	return n;
-}
-
 int node_destroy(struct node *n)
 {
 	if (n->_vt->destroy)
