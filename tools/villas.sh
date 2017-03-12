@@ -14,7 +14,7 @@
 PREFIX=villas
 
 # Get a list of all available tools
-TOOLS=$(compgen -c | egrep "^$PREFIX-" | sort | cut -d- -f2 | paste -sd\|)
+TOOLS=$(compgen -c | egrep "^$PREFIX-" | sort | cut -d- -f2- | paste -sd\|)
 
 # First argument to wrapper is the tool which should be started
 TOOL=$1
