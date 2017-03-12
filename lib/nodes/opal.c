@@ -149,7 +149,7 @@ char * opal_print(struct node *n)
 		o->send_id, o->recv_id, o->reply);
 }
 
-int opal_open(struct node *n)
+int opal_start(struct node *n)
 {
 	struct opal *o = n->_vd;
 
@@ -173,7 +173,7 @@ int opal_open(struct node *n)
 	return 0;
 }
 
-int opal_close(struct node *n)
+int opal_stop(struct node *n)
 {
 	return 0;
 }
@@ -285,8 +285,8 @@ static struct plugin p = {
 		.size		= sizeof(struct opal),
 		.parse		= opal_parse,
 		.print		= opal_print,
-		.open		= opal_open,
-		.close		= opal_close,
+		.start		= opal_start,
+		.stop		= opal_stop,
 		.read		= opal_read,
 		.write		= opal_write,
 		.init		= opal_init,

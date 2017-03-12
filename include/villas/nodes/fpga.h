@@ -58,10 +58,10 @@ struct fpga_card * fpga_lookup_card(const char *name);
 char * fpga_print(struct node *n);
 
 /** @see node_vtable::open */
-int fpga_open(struct node *n);
+int fpga_start(struct node *n);
 
 /** @see node_vtable::close */
-int fpga_close(struct node *n);
+int fpga_stop(struct node *n);
 
 /** @see node_vtable::read */
 int fpga_read(struct node *n, struct sample *smps[], unsigned cnt);

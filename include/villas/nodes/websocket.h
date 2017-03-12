@@ -68,10 +68,10 @@ int websocket_init(int argc, char * argv[], config_setting_t *cfg);
 int websocket_deinit();
 
 /** @see node_vtable::open */
-int websocket_open(struct node *n);
+int websocket_start(struct node *n);
 
 /** @see node_vtable::close */
-int websocket_close(struct node *n);
+int websocket_stop(struct node *n);
 
 /** @see node_vtable::close */
 int websocket_destroy(struct node *n);

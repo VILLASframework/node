@@ -60,10 +60,10 @@ char * file_print(struct node *n);
 int file_parse(struct node *n, config_setting_t *cfg);
 
 /** @see node_vtable::open */
-int file_open(struct node *n);
+int file_start(struct node *n);
 
 /** @see node_vtable::close */
-int file_close(struct node *n);
+int file_stop(struct node *n);
 
 /** @see node_vtable::read */
 int file_read(struct node *n, struct sample *smps[], unsigned cnt);

@@ -455,7 +455,7 @@ int ngsi_destroy(struct node *n)
 	return 0;
 }
 
-int ngsi_open(struct node *n)
+int ngsi_start(struct node *n)
 {
 	struct ngsi *i = n->_vd;
 	int ret;
@@ -497,7 +497,7 @@ int ngsi_open(struct node *n)
 	return ret;
 }
 
-int ngsi_close(struct node *n)
+int ngsi_stop(struct node *n)
 {
 	struct ngsi *i = n->_vd;
 	int ret;
@@ -563,8 +563,8 @@ static struct plugin p = {
 		.size		= sizeof(struct ngsi),
 		.parse		= ngsi_parse,
 		.print		= ngsi_print,
-		.open		= ngsi_open,
-		.close		= ngsi_close,
+		.start		= ngsi_start,
+		.stop		= ngsi_stop,
 		.read		= ngsi_read,
 		.write		= ngsi_write,
 		.init		= ngsi_init,

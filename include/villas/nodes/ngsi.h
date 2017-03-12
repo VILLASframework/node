@@ -68,10 +68,10 @@ int ngsi_parse(struct node *n, config_setting_t *cfg);
 char * ngsi_print(struct node *n);
 
 /** @see node_vtable::open */
-int ngsi_open(struct node *n);
+int ngsi_start(struct node *n);
 
 /** @see node_vtable::close */
-int ngsi_close(struct node *n);
+int ngsi_stop(struct node *n);
 
 /** @see node_vtable::read */
 int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt);

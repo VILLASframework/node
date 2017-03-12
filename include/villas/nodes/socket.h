@@ -64,10 +64,10 @@ int socket_init(int argc, char *argv[], config_setting_t *cfg);
 int socket_deinit();
 
 /** @see node_vtable::open */
-int socket_open(struct node *n);
+int socket_start(struct node *n);
 
 /** @see node_vtable::close */
-int socket_close(struct node *n);
+int socket_stop(struct node *n);
 
 /** @see node_vtable::write */
 int socket_write(struct node *n, struct sample *smps[], unsigned cnt);

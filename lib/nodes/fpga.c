@@ -158,7 +158,7 @@ int fpga_get_type(struct fpga_ip *c)
 		return -1;
 }
 
-int fpga_open(struct node *n)
+int fpga_start(struct node *n)
 {
 	int ret;
 
@@ -191,7 +191,7 @@ int fpga_open(struct node *n)
 	return 0;
 }
 
-int fpga_close(struct node *n)
+int fpga_stop(struct node *n)
 {
 	int ret;
 
@@ -303,8 +303,8 @@ static struct plugin p = {
 		.vectorize	= 1,
 		.parse		= fpga_parse,
 		.print		= fpga_print,
-		.open		= fpga_open,
-		.close		= fpga_close,
+		.start		= fpga_start,
+		.stop		= fpga_stop,
 		.read		= fpga_read,
 		.write		= fpga_write,
 		.init		= fpga_init,

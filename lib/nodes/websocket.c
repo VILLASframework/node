@@ -261,7 +261,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 	}
 }
 
-int websocket_open(struct node *n)
+int websocket_start(struct node *n)
 {
 	int ret;
 	struct websocket *w = n->_vd;
@@ -284,7 +284,7 @@ int websocket_open(struct node *n)
 	return 0;
 }
 
-int websocket_close(struct node *n)
+int websocket_stop(struct node *n)
 {
 	struct websocket *w = n->_vd;
 	
@@ -415,8 +415,8 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0, /* unlimited */
 		.size		= sizeof(struct websocket),
-		.open		= websocket_open,
-		.close		= websocket_close,
+		.start		= websocket_start,
+		.stop		= websocket_stop,
 		.destroy	= websocket_destroy,
 		.read		= websocket_read,
 		.write		= websocket_write,

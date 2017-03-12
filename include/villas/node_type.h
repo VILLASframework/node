@@ -79,21 +79,21 @@ struct node_type {
 	 */
 	char * (*print)(struct node *n);
 
-	/** Opens the connection to this node.
+	/** Start this node.
 	 *
 	 * @param n	A pointer to the node object.
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*open) (struct node *n);
+	int (*start) (struct node *n);
 
-	/** Close the connection to this node.
+	/** Stop this node.
 	 *
 	 * @param n	A pointer to the node object.
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*close)(struct node *n);
+	int (*stop)(struct node *n);
 
 	/** Receive multiple messages at once.
 	 *

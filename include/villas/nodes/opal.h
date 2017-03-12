@@ -60,10 +60,10 @@ char * opal_print(struct node *n);
 int opal_print_global();
 
 /** @see node_vtable::open */
-int opal_open(struct node *n);
+int opal_start(struct node *n);
 
 /** @see node_vtable::close */
-int opal_close(struct node *n);
+int opal_stop(struct node *n);
 
 /** @see node_vtable::read */
 int opal_read(struct node *n, struct sample *smps[], unsigned cnt);

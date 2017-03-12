@@ -42,7 +42,7 @@ int cbuilder_parse(struct node *n, config_setting_t *cfg)
 	return 0;
 }
 
-int cbuilder_open(struct node *n)
+int cbuilder_start(struct node *n)
 {
 	int ret;
 	struct cbuilder *cb = n->_vd;
@@ -64,7 +64,7 @@ int cbuilder_open(struct node *n)
 	return 0;
 }
 
-int cbuilder_close(struct node *n)
+int cbuilder_stop(struct node *n)
 {
 	struct cbuilder *cb = n->_vd;
 	
@@ -120,8 +120,8 @@ static struct plugin p = {
 		.vectorize	= 1,
 		.size		= sizeof(struct cbuilder),
 		.parse		= cbuilder_parse,
-		.open		= cbuilder_open,
-		.close		= cbuilder_close,
+		.start		= cbuilder_start,
+		.stop		= cbuilder_stop,
 		.read		= cbuilder_read,
 		.write		= cbuilder_write
 	}
