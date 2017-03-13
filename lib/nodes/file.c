@@ -52,7 +52,7 @@ static AFILE * file_reopen(struct file_direction *dir)
 	if (dir->handle)
 		afclose(dir->handle);
 
-	return afopen(uri, dir->mode, /* ADVIO_MEM */ 0);
+	return afopen(uri, dir->mode, 0);
 }
 
 static int file_parse_direction(config_setting_t *cfg, struct file *f, int d)
