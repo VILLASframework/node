@@ -11,6 +11,8 @@
 #include <villas/log.h>
 #include <villas/memory.h>
 
+#include "config.h"
+
 int main(int argc, char *argv[]) {
 	
 	struct criterion_test_set *tests = criterion_initialize();

@@ -13,7 +13,7 @@
 
 #include <xilinx/xtmrctr.h>
 
-#include <villas/cfg.h>
+#include <villas/super_node.h>
 #include <villas/utils.h>
 #include <villas/nodes/fpga.h>
 
@@ -32,7 +32,7 @@
 #define CPU_HZ 3392389000
 
 static struct fpga_card *card;
-static struct super_node cfg;
+static struct super_node sn;
 
 static void init()
 {
@@ -41,9 +41,9 @@ static void init()
 	char *argv[] =  { "tests" };
 	config_setting_t *cfg_root;
 	
-	cfg_parse(&cfg, TEST_CONFIG);
+	super_node_parse_uri(&sn, TEST_CONFIG);
 
-	cfg_root = config_root_setting(&cfg.cfg);
+	cfg_root = config_root_setting(&sn.cfg);
 
 	ret = fpga_init(argc, argv, cfg_root);
 	cr_assert_eq(ret, 0, "Failed to initilize FPGA");
@@ -61,9 +61,8 @@ static void fini()
 	ret = fpga_card_destroy(card);
 	cr_assert_eq(ret, 0, "Failed to de-initilize FPGA");
 	
-	cfg_destroy(&cfg);
+	super_node_destroy(&sn);
 }
-
 
 TestSuite(fpga,
 	.init = init,
