@@ -25,8 +25,7 @@
 #include <curl/curl.h>
 
 enum advio_flags {
-	ADVIO_MEM	= (1 << 0),	/**< Instead of a real file, a memory backed stdio stream is used. */
-	ADVIO_DIRTY	= (1 << 1)	/**< The file contents have been modified. We need to upload. */
+	ADVIO_DIRTY	= (1 << 0)	/**< The file contents have been modified. We need to upload. */
 };
 
 struct advio {
@@ -34,11 +33,7 @@ struct advio {
 
 	CURL *curl;
 	FILE *file;
-	
-	/* For use with ADVIO_MODE_MEM */
-	char *buf;
-	size_t size;
-	
+
 	const char *uri;
 };
 

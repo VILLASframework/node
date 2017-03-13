@@ -49,7 +49,6 @@ static int xferinfo(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ul
 	int dotz = round(frac * BAR_WIDTH);
 
 	// create the "meter"
-	
 	printf("%3.0f%% in %f s (%" CURL_FORMAT_CURL_OFF_T " / %" CURL_FORMAT_CURL_OFF_T ") [", frac * 100, curtime, dlnow, dltotal);
 
 	// part  that's full already
@@ -71,14 +70,11 @@ static int xferinfo(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ul
 AFILE * afopen(const char *uri, const char *mode, int flags)
 {
 	CURLcode res;
+	long code;
 
 	AFILE *af = alloc(sizeof(AFILE));
 	
-	if (flags & ADVIO_MEM)
-		af->file = open_memstream(&af->buf, &af->size);
-	else
-		af->file = tmpfile();
-
+	af->file = tmpfile();
 	if (!af->file)
 		goto out2;
 	
@@ -157,12 +153,9 @@ int afflush(AFILE *af)
 		CURLcode res;
 		long pos;
 		
-		/* Flushing a memory backed stream is sensless */
-		if (!(af->flags & ADVIO_MEM)) {
-			ret = fflush(af->file);
-			if (ret)
-				return ret;
-		}
+		ret = fflush(af->file);
+		if (ret)
+			return ret;
 
 		curl_easy_setopt(af->curl, CURLOPT_UPLOAD, 1L);
 		curl_easy_setopt(af->curl, CURLOPT_READDATA, af->file);
