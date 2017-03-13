@@ -12,26 +12,29 @@
 
 #include <errno.h>
 
+/** This URI points to a Sciebo share which contains some test files.
+ * The Sciebo share is read/write accessible via WebDAV. */
+#define BASE_URI "https://1Nrd46fZX8HbggT:badpass@rwth-aachen.sciebo.de/public.php/webdav/node/tests"
+
+#define TEST_DATA_DOWNLOAD	"ook4iekohC2Teegoghu6ayoo1OThooregheebaet8Zod1angah0che7quai4ID7A"
+#define TEST_DATA_UPLOAD	"jaeke4quei3oongeebuchahz9aabahkie8oor3Gaejem1AhSeph5Ahch9ohz3eeh"
+#define TEST_DATA_APPEND1	"xa5gieTohlei9iu1uVaePae6Iboh3eeheeme5iejue5sheshae4uzisha9Faesei"
+#define TEST_DATA_APPEND2	"bitheeRae7igee2miepahJaefoGad1Ooxeif0Mooch4eojoumueYahn4ohc9poo2"
+
 Test(advio, download)
 {
 	AFILE *af;
-	size_t len;
 	int ret;
-	char buffer[1024];
-	
-	const char *url = "http://www.textfiles.com/100/angela.art";
+	size_t len;
+	char buffer[64];
 
-	af = afopen(url, "r", 0);
+	af = afopen(BASE_URI "/download" , "r", 0);
 	cr_assert(af, "Failed to download file");
-	cr_log_info("Opened file %s", url);
 
-	while (!afeof(af)) {
-		errno = 0;
-		len = afread(buffer, 1, sizeof(buffer), af);
-		cr_log_info("Read %zu bytes", len);
-
-		fwrite(buffer, 1, len, stdout);
-	}
+	len = afread(buffer, 1, sizeof(buffer), af);
+	
+	cr_assert_gt(len, 0);
+	cr_assert_arr_eq(buffer, TEST_DATA_DOWNLOAD, strlen(TEST_DATA_DOWNLOAD));
 	
 	ret = afclose(af);
 	cr_assert_eq(ret, 0, "Failed to close/upload file");
@@ -40,33 +43,77 @@ Test(advio, download)
 Test(advio, upload)
 {
 	AFILE *af;
-	size_t len1, len2;
 	int ret;
 	
-	const char *uri = "file:///tmp/test.txt";
-	char rnd[128];
-	char buffer[128];
+	size_t len;
+	size_t tlen = strlen(TEST_DATA_UPLOAD);
 	
-	/* Get some random bytes */
-	len1 = read_random(rnd, sizeof(rnd));
-
+	char buffer[tlen];
+	
 	/* Open file for writing */
-	af = afopen(uri, "w+", 0);
+	af = afopen(BASE_URI "/upload", "w+", 0);
 	cr_assert(af, "Failed to download file");
 	
-	len2 = afwrite(rnd, 1, len1, af);
-	cr_assert_eq(len1, len2);
+	len = afwrite(TEST_DATA_UPLOAD, 1, strlen(TEST_DATA_UPLOAD), af);
+	cr_assert_eq(len, strlen(TEST_DATA_UPLOAD));
 	
 	ret = afclose(af);
 	cr_assert_eq(ret, 0, "Failed to close/upload file");
 	
 	/* Open for reading and comparison */
-	af = afopen(uri, "r", 0);
+	af = afopen(BASE_URI "/upload", "r", 0);
 	cr_assert(af, "Failed to download file");
 	
-	len2 = afread(buffer, 1, len1, af);
-	cr_assert_arr_eq(rnd, buffer, len2);
+	len = afread(buffer, 1, strlen(TEST_DATA_UPLOAD), af);
+	cr_assert_eq(len, strlen(TEST_DATA_UPLOAD));
+	
+	cr_assert_arr_eq(buffer, TEST_DATA_UPLOAD, len);
 	
 	ret = afclose(af);
 	cr_assert(ret == 0, "Failed to close file");
+}
+
+Test(advio, append)
+{
+	AFILE *af;
+	
+	int ret;
+
+	size_t len;
+	size_t tlen = strlen(TEST_DATA_APPEND1) + strlen(TEST_DATA_APPEND2);
+
+	char buffer[tlen];
+
+	/* Open file for writing first chunk */
+	af = afopen(BASE_URI "/append", "w+", 0);
+	cr_assert(af, "Failed to download file");
+
+	len = afwrite(TEST_DATA_APPEND1, 1, strlen(TEST_DATA_APPEND1), af);
+	cr_assert_eq(len, strlen(TEST_DATA_APPEND1));
+
+	ret = afclose(af);
+	cr_assert_eq(ret, 0, "Failed to close/upload file");
+
+	/* Open file for writing second chunk */
+	af = afopen(BASE_URI "/append", "a", 0);
+	cr_assert(af, "Failed to download file");
+	
+	len = afwrite(TEST_DATA_APPEND1, 1, strlen(TEST_DATA_APPEND2), af);
+	cr_assert_eq(len, strlen(TEST_DATA_APPEND2));
+	
+	ret = afclose(af);
+	cr_assert_eq(ret, 0, "Failed to close/upload file");
+	
+	/* Open for reading and comparison */
+	af = afopen(BASE_URI "/append", "r", 0);
+	cr_assert(af, "Failed to download file");
+	
+	len = afread(buffer, 1, tlen, af);
+	cr_assert_eq(len, tlen);
+	
+	ret = afclose(af);
+	cr_assert(ret == 0, "Failed to close file");
+
+	cr_assert_arr_eq(buffer,                             TEST_DATA_APPEND1, strlen(TEST_DATA_APPEND1));
+	cr_assert_arr_eq(buffer + strlen(TEST_DATA_APPEND1), TEST_DATA_APPEND2, strlen(TEST_DATA_APPEND2));
 }

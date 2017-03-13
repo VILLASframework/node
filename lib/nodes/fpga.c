@@ -57,7 +57,7 @@ int fpga_parse_cards(config_setting_t *cfg)
 	return 0;
 }
 
-int fpga_init(int argc, char * argv[], config_setting_t *cfg)
+int fpga_init(int argc, char *argv[], config_setting_t *cfg)
 {
 	int ret;
 	

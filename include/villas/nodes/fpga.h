@@ -41,7 +41,7 @@ struct fpga {
 };
 
 /** @see node_vtable::init */
-int fpga_init(int argc, char * argv[], config_setting_t *cfg);
+int fpga_init(int argc, char *argv[], config_setting_t *cfg);
 
 /** @see node_vtable::deinit */
 int fpga_deinit();

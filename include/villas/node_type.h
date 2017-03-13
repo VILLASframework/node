@@ -38,7 +38,7 @@ struct node_type {
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*init)(int argc, char * argv[], config_setting_t *cfg);
+	int (*init)(int argc, char *argv[], config_setting_t *cfg);
 
 	/** Global de-initialization per node type.
 	 *
