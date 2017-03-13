@@ -26,8 +26,7 @@ VILLASnode ...
 - is written in object-oriented C11
 - is compiled with Clang / LLVM or GCC
 - is fully based on open source software
-- stands for Simulator-to-Simulator-Server
-- is extensible with new node types
-- heavily multi-threaded
+- is extensible with new node types & hooks
+- is heavily multi-threaded
 - follows the Unix philosophy
-- is separated into a library (libvillas) and a few binaries (server, pipe, test, signal) which link against the lib.
+- is separated into a library (libvillas) and a few binaries (villas-server, villas-pipe, villas-test-*, villas-signal, villas-hook) which link against the lib.

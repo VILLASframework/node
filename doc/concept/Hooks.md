@@ -1,4 +1,4 @@
-# Hooks
+# Hooks {#hook}
 
 Hooks are simple callback functions which are called whenever a message is processed by a path.
 
