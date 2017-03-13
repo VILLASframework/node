@@ -67,7 +67,7 @@ static int hook_shift(struct hook *h, int when, struct hook_info *k)
 		
 		case HOOK_READ:
 			for (int i = 0; i < k->cnt; i++) {
-				struct timespec *ts;
+				struct timespec *ts = NULL;
 				
 				switch (private->mode) {
 					case TS_ORIGIN:   ts = &k->smps[i]->ts.origin; break;
@@ -75,7 +75,8 @@ static int hook_shift(struct hook *h, int when, struct hook_info *k)
 					case TS_SENT:     ts = &k->smps[i]->ts.sent; break;
 				}
 				
-				*ts = time_add(ts, &private->offset);
+				if (ts)
+					*ts = time_add(ts, &private->offset);
 			}
 
 			return k->cnt;
