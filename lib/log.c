@@ -79,10 +79,11 @@ int log_parse(struct log *l, config_setting_t *cfg)
 		cerror(cfg, "Setting 'log' must be a group.");
 
 	config_setting_lookup_int(cfg, "level", &l->level);
+	config_setting_lookup_string(cfg, "file", &l->path);
 
 	if (config_setting_lookup_string(cfg, "facilities", &facilities))
 		log_set_facility_expression(l, facilities);
-	
+
 	l->state = STATE_PARSED;
 
 	return 0;
@@ -91,7 +92,13 @@ int log_parse(struct log *l, config_setting_t *cfg)
 int log_start(struct log *l)
 {
 	l->epoch = time_now();
-	
+
+	l->file = l->path ? fopen(l->path, "a+") : stderr;
+	if (!l->file) {
+		l->file = stderr;
+		error("Failed to open log file '%s'", l->path);
+	}
+
 	l->state = STATE_STARTED;
 
 	return 0;
@@ -100,6 +107,9 @@ int log_start(struct log *l)
 int log_stop(struct log *l)
 {
 	assert(l->state == STATE_STARTED);
+	
+	if (l->file != stderr && l->file != stdout)
+		fclose(l->file);
 	
 	l->state = STATE_STOPPED;
 	
@@ -213,7 +223,7 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 #ifdef ENABLE_OPAL_ASYNC
 	OpalPrint("VILLASnode: %s\n", buf);
 #endif
-	fprintf(stderr, "\r%s\n", buf);
+	fprintf(l->file, "\r%s\n", buf);
 	free(buf);
 }
 

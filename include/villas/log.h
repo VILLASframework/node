@@ -74,6 +74,11 @@ struct log {
 	/** Debug facilities used by the debug() macro. */
 	long facilities;
 	
+	/** Path of the log file */
+	const char *path;
+	
+	/** Send all log output to this file / stdout / stderr */
+	FILE *file;
 };
 
 /** Initialize log object */
