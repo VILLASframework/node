@@ -94,10 +94,6 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to initilize memory pool");
 
-	ret = sample_alloc(&pool, samples, cnt);
-	if (ret != cnt)
-		error("Failed to allocate %u samples from pool", cnt);
-	
 	h->parameter = parameter;
 	
 	if (h->type & HOOK_INIT)
@@ -108,6 +104,10 @@ int main(int argc, char *argv[])
 		h->cb(h, HOOK_PATH_START, &hi);
 	
 	while (!feof(stdin)) {
+		ret = sample_alloc(&pool, samples, cnt);
+		if (ret != cnt)
+			error("Failed to allocate %u samples from pool", cnt);
+
 		for (j = 0; j < cnt && !feof(stdin); j++)
 			sample_fscan(stdin, hi.smps[j], NULL);
 		
@@ -122,6 +122,8 @@ int main(int argc, char *argv[])
 		
 		for (j = 0; j < hi.cnt; j++)
 			sample_fprint(stdout, hi.smps[j], SAMPLE_ALL);
+		
+		sample_free(samples, cnt);
 	}
 	
 	if (h->type & HOOK_PATH_STOP)
