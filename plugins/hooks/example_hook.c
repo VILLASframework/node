@@ -27,7 +27,6 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
-		.history = 0,
 		.cb	= hook_example,
 		.type	= HOOK_PATH_START
 	}
