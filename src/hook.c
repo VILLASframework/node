@@ -43,12 +43,12 @@ int main(int argc, char *argv[])
 	
 	char *name, *parameter;
 	
+	struct sample *samples[cnt];
 	struct log log;
 	struct pool pool = { .state = STATE_DESTROYED };
-	struct hook_info hi;
+	struct hook_info hi = { .smps = samples };
 	struct plugin *p;
 	struct hook *h;
-	struct sample *samples[cnt];
 
 	char c;
 	while ((c = getopt(argc, argv, "hv:d:")) != -1) {
@@ -95,7 +95,6 @@ int main(int argc, char *argv[])
 		error("Failed to allocate %u samples from pool", cnt);
 	
 	h->parameter = parameter;
-	hi.smps = samples;
 	
 	if (h->type & HOOK_INIT)
 		h->cb(h, HOOK_INIT, &hi);
