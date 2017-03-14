@@ -81,10 +81,11 @@ int node_start(struct node *n)
 	info("Starting node %s", node_name_long(n));
 	{ INDENT
 		ret = n->_vt->start ? n->_vt->start(n) : -1;
+		if (ret)
+			return ret;
 	}
-	
-	if (ret == 0)
-		n->state = STATE_STARTED;
+
+	n->state = STATE_STARTED;
 	
 	n->sequence = 0;
 	

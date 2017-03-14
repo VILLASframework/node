@@ -182,7 +182,11 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 		for (int i = 0; i < config_setting_length(cfg_plugins); i++) {
 			struct config_setting_t *cfg_plugin = config_setting_get_elem(cfg_plugins, i);
 		
-			struct plugin plugin;
+			struct plugin plugin = { .state = STATE_DESTROYED };
+			
+			ret = plugin_init(&plugin);
+			if (ret)
+				cerror(cfg_plugin, "Failed to initialize plugin");
 		
 			ret = plugin_parse(&plugin, cfg_plugin);
 			if (ret)
@@ -207,23 +211,24 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 			/* Required settings */
 			if (!config_setting_lookup_string(cfg_node, "type", &type))
 				cerror(cfg_node, "Missing node type");
-		
-		
+
 			p = plugin_lookup(PLUGIN_TYPE_NODE, type);
 			if (!p)
 				cerror(cfg_node, "Invalid node type: %s", type);
-		
-			struct node n = { .state = STATE_DESTROYED };
+
+			struct node *n = alloc(sizeof(struct node));
 			
-			ret = node_init(&n, &p->node);
+			n->state = STATE_DESTROYED;
+			
+			ret = node_init(n, &p->node);
 			if (ret)
 				cerror(cfg_node, "Failed to initialize node");
 
-			ret = node_parse(&n, cfg_node);
+			ret = node_parse(n, cfg_node);
 			if (ret)
 				cerror(cfg_node, "Failed to parse node");
 		
-			list_push(&sn->nodes, memdup(&n, sizeof(n)));
+			list_push(&sn->nodes, n);
 		}
 	}
 

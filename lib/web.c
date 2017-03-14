@@ -124,8 +124,6 @@ static void logger(int level, const char *msg) {
 
 int web_init(struct web *w, struct api *a)
 {
-	info("Initialize web sub-system");
-	
 	lws_set_log_level((1 << LLL_COUNT) - 1, logger);
 
 	w->api = a;

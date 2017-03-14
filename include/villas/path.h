@@ -54,19 +54,19 @@ struct path
 	struct path_source *source;	/**< Pointer to the incoming node */
 	struct list destinations;	/**< List of all outgoing nodes (struct path_destination). */
 
-	struct list hooks;		/**< List of function pointers to hooks */
+	struct list hooks;		/**< List of function pointers to hooks. */
 
-	int enabled;			/**< Is this path enabled */
-	int reverse;			/**< This path as a matching reverse path */
+	int enabled;			/**< Is this path enabled. */
+	int reverse;			/**< This path as a matching reverse path. */
 
-	pthread_t tid;			/**< The thread id for this path */
+	pthread_t tid;			/**< The thread id for this path. */
 	
 	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
 	
 	struct stats *stats;		/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 	
 	struct super_node *super_node;	/**< The super node this path belongs to. */
-	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path */
+	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path. */
 };
 
 /** Initialize internal data structures. */

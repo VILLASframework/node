@@ -221,12 +221,12 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 		if (n->_vt->write == NULL)
 			cerror(cfg_out, "Output node '%s' is not supported as a destination.", node_name(n));
 		
-		struct path_destination *pd = alloc(sizeof(struct path_destination));
+		struct path_destination pd;
 		
-		pd->node = n;
-		pd->queuelen = queuelen;
+		pd.node = n;
+		pd.queuelen = queuelen;
 		
-		list_push(&p->destinations, pd);
+		list_push(&p->destinations, memdup(&pd, sizeof(pd)));
 	}
 
 	list_destroy(&destinations, NULL, false);
@@ -236,7 +236,9 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 
 int path_check(struct path *p)
 {
-	list_foreach (struct node *n, &p->destinations) {
+	assert(p->state != STATE_DESTROYED);
+	
+	list_foreach(struct node *n, &p->destinations) {
 		if (!n->_vt->write)
 			error("Destiation node '%s' is not supported as a sink for path '%s'", node_name(n), path_name(p));
 	}
@@ -296,13 +298,13 @@ int path_start(struct path *p)
 	
 	assert(p->state == STATE_CHECKED);
 
-	info("Starting path: %s (#hooks=%zu)",
-		path_name(p), list_length(&p->hooks));
+	info("Starting path: %s (#hooks=%zu)", path_name(p), list_length(&p->hooks));
 
 	ret = hook_run(p, NULL, 0, HOOK_PATH_START);
 	if (ret)
 		return ret;
-	
+
+	/* Start one thread per path for sending to destinations */
 	ret = pthread_create(&p->tid, NULL, &path_run,  p);
 	if (ret)
 		return ret;

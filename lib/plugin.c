@@ -11,13 +11,23 @@
 /** Global list of all known plugins */
 struct list plugins = LIST_INIT();
 
-int plugin_init(struct plugin *p, char *name, char *path)
+int plugin_init(struct plugin *p)
 {
-	p->name = strdup(name);
-	p->path = strdup(path);
+	assert(p->state == STATE_DESTROYED);
 
 	p->state = STATE_INITIALIZED;
 	
+	return 0;
+}
+
+int plugin_parse(struct plugin *p, config_setting_t *cfg)
+{
+	const char *path;
+
+	path = config_setting_get_string(cfg);
+	if (!path)
+		cerror(cfg, "Setting 'plugin' must be a string.");
+
 	return 0;
 }
 
@@ -54,17 +64,6 @@ int plugin_destroy(struct plugin *p)
 	if (p->path)
 		free(p->path);
 	
-	return 0;
-}
-
-int plugin_parse(struct plugin *p, config_setting_t *cfg)
-{
-	const char *path;
-
-	path = config_setting_get_string(cfg);
-	if (!path)
-		cerror(cfg, "Setting 'plugin' must be a string.");
-
 	return 0;
 }
 

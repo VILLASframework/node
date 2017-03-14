@@ -62,7 +62,7 @@ struct plugin {
 #define plugin_name(vt) plugin(vt)->name
 #define plugin_description(vt) plugin(vt)->description
 
-int plugin_init(struct plugin *p, char *name, char *path);
+int plugin_init(struct plugin *p);
 
 int plugin_destroy(struct plugin *p);
 

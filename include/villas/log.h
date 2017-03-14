@@ -72,7 +72,8 @@ struct log {
 	int level;
 
 	/** Debug facilities used by the debug() macro. */
-	int facilities;
+	long facilities;
+	
 };
 
 /** Initialize log object */

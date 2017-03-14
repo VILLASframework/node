@@ -46,9 +46,6 @@ int socket_init(int argc, char *argv[], config_setting_t *cfg)
 
 	/* Gather list of used network interfaces */
 	list_foreach(struct node *n, &p.node.instances) {
-		if (n->state != STATE_INITIALIZED)
-			continue;
-
 		struct socket *s = n->_vd;
 		struct rtnl_link *link;
 

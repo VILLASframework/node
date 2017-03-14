@@ -10,11 +10,9 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "config.h"
+#include <jansson.h>
 
-#ifdef WITH_JANSSON
-  #include <jansson.h>
-#endif
+#include "config.h"
 
 #define HIST_HEIGHT	(LOG_WIDTH - 55)
 #define HIST_SEQ	17
