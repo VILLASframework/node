@@ -60,3 +60,26 @@ Test(utils, version)
 	cr_assert_gt(version_cmp(&v2, &v1), 0);
 	cr_assert_lt(version_cmp(&v3, &v4), 0);
 }
+
+Test(utils, sha1sum)
+{
+	int ret;
+	FILE *f = tmpfile();
+	
+	unsigned char     hash[SHA_DIGEST_LENGTH];
+	unsigned char expected[SHA_DIGEST_LENGTH] = { 0x69, 0xdf, 0x29, 0xdf, 0x1f, 0xf2, 0xd2, 0x5d, 0xb8, 0x68, 0x6c, 0x02, 0x8d, 0xdf, 0x40, 0xaf, 0xb3, 0xc1, 0xc9, 0x4d };
+	
+	/* Write the first 512 fibonaccia numbers to the file */
+	for (int i = 0, a = 0, b = 1, c; i < 512; i++, a = b, b = c) {
+		c = a + b;
+		
+		fwrite((void *) &c, sizeof(c), 1, f);
+	}
+
+	ret = sha1sum(f, hash);
+
+	cr_assert_eq(ret, 0);
+	cr_assert_arr_eq(hash, expected, SHA_DIGEST_LENGTH);
+
+	fclose(f);
+}

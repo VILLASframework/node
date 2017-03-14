@@ -18,6 +18,8 @@ LIB_LDLIBS  = $(LDLIBS) -ldl -lrt
 -include lib/apis/Makefile.inc
 -include lib/fpga/Makefile.inc
 
+LIB_PKGS = openssl
+
 ######## Node types ########
 
 # Enable Socket node type when libnl3 is available

@@ -351,3 +351,24 @@ void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 	sigaction(SIGINT, &sa_quit, NULL);
 	sigaction(SIGTERM, &sa_quit, NULL);
 }
+
+int sha1sum(FILE *f, unsigned char *sha1)
+{
+	SHA_CTX c;
+	char buf[512];
+	ssize_t bytes;
+	
+	rewind(f); /* Rewind the file in order to calculate over the whole file. */
+
+	SHA1_Init(&c);
+
+	bytes = fread(buf, 1, 512, f);
+	while (bytes > 0) {
+		SHA1_Update(&c, buf, bytes);
+		bytes = fread(buf, 1, 512, f);
+	}
+
+	SHA1_Final(sha1, &c);
+
+	return 0;
+}
