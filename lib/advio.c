@@ -1,16 +1,4 @@
-/** libcurl based remote IO
- *
- * Implements an fopen() abstraction allowing reading from URLs
- *
- * This file introduces a c library buffered I/O interface to
- * URL reads it supports fopen(), fread(), fgets(), feof(), fclose(),
- * rewind(). Supported functions have identical prototypes to their normal c
- * lib namesakes and are preceaded by a .
- *
- * Using this code you can replace your program's fopen() with afopen()
- * and fread() with afread() and it become possible to read remote streams
- * instead of (only) local files. Local files (ie those that can be directly
- * fopened) will drop back to using the underlying clib implementations
+/** libcurl based advanced IO aka ADVIO.
  *
  * This example requires libcurl 7.9.7 or later.
  *
@@ -19,9 +7,12 @@
  *********************************************************************************/
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 #include <math.h>
+#include <errno.h>
+#include <unistd.h>
 
 #include <curl/curl.h>
 
@@ -31,7 +22,7 @@
 
 #define BAR_WIDTH 60 /**< How wide you want the progress meter to be. */
 
-static int xferinfo(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
+static int advio_xferinfo(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
 {
 	struct advio *af = (struct advio *) p;
 	double curtime = 0;
@@ -67,13 +58,18 @@ static int xferinfo(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ul
 	return 0;
 }
 
-AFILE * afopen(const char *uri, const char *mode, int flags)
+AFILE * afopen(const char *uri, const char *mode)
 {
-	CURLcode res;
-	long code;
+	int ret;
 
 	AFILE *af = alloc(sizeof(AFILE));
 	
+	strncpy(af->mode, mode, sizeof(af->mode));
+	
+	af->uri = strdup(uri);
+	if (!af->uri)
+		goto out2;
+
 	af->file = tmpfile();
 	if (!af->file)
 		goto out2;
@@ -81,53 +77,28 @@ AFILE * afopen(const char *uri, const char *mode, int flags)
 	af->curl = curl_easy_init();
 	if (!af->curl)
 		goto out1;
-	
+
+	/* Setup libcurl handle */
 	curl_easy_setopt(af->curl, CURLOPT_DEFAULT_PROTOCOL, "file");
 	curl_easy_setopt(af->curl, CURLOPT_FOLLOWLOCATION, 1L);
 	curl_easy_setopt(af->curl, CURLOPT_UPLOAD, 0L);
 	curl_easy_setopt(af->curl, CURLOPT_USERAGENT, USER_AGENT);
 	curl_easy_setopt(af->curl, CURLOPT_URL, uri);
 	curl_easy_setopt(af->curl, CURLOPT_WRITEDATA, af->file);
-	curl_easy_setopt(af->curl, CURLOPT_XFERINFOFUNCTION, xferinfo);
+	curl_easy_setopt(af->curl, CURLOPT_XFERINFOFUNCTION, advio_xferinfo);
 	curl_easy_setopt(af->curl, CURLOPT_XFERINFODATA, af);
 	curl_easy_setopt(af->curl, CURLOPT_NOPROGRESS, 0L);
 	
-	res = curl_easy_perform(af->curl);
-	switch (res) {
-		case CURLE_OK:
-			if (mode[0] == 'a')
-				fseek(af->file, 0, SEEK_END);
-			else if (mode[0] == 'r' || mode[0] == 'w')
-				fseek(af->file, 0, SEEK_SET);
-			break;
+	ret = adownload(af);
+	if (ret)
+		goto out0;
 
-		/* The following error codes indicate that the file does not exist
-		 * Check the fopen mode to see if we should continue with an emoty file */ 
-		case CURLE_FILE_COULDNT_READ_FILE:
-		case CURLE_TFTP_NOTFOUND:
-		case CURLE_REMOTE_FILE_NOT_FOUND:
-			if (mode[0] == 'a' || (mode[0] == 'w' && mode[1] == '+'))
-				break;	/* its okay */
-
-		/* If libcurl does not know the protocol, we will try it with the stdio */
-		case CURLE_UNSUPPORTED_PROTOCOL:
-			af->file = fopen(uri, mode);
-			if (!af->file)
-				goto out2;
-		
-		default:
-		printf("avdio: %s\n", curl_easy_strerror(res));
-			goto out0;	/* no please fail here */
-	}
-	
-	af->uri = strdup(uri);
-	af->flags = flags & ~ADVIO_DIRTY;
-	
 	return af;
 
 out0:	curl_easy_cleanup(af->curl);
 out1:	fclose(af->file);
-out2:	free(af);
+out2:	free(af->file);
+	free(af);
 
 	return NULL;
 }
@@ -137,8 +108,11 @@ int afclose(AFILE *af)
 	int ret;
 	
 	ret = afflush(af);
+
 	curl_easy_cleanup(af->curl);
 	fclose(af->file);
+	
+	free(af->uri);
 	free(af);
 	
 	return ret;
@@ -146,49 +120,102 @@ int afclose(AFILE *af)
 
 int afflush(AFILE *af)
 {
-	int ret;
+	bool dirty;
+	unsigned char hash[SHA_DIGEST_LENGTH];
 	
-	/* Only upload file if it was changed */
-	if (af->flags & ADVIO_DIRTY) {
-		CURLcode res;
-		long pos;
-		
-		ret = fflush(af->file);
-		if (ret)
-			return ret;
-
-		curl_easy_setopt(af->curl, CURLOPT_UPLOAD, 1L);
-		curl_easy_setopt(af->curl, CURLOPT_READDATA, af->file);
-
-		pos = ftell(af->file); /* Remember old stream pointer */
-		fseek(af->file, 0, SEEK_SET);
-
-		res = curl_easy_perform(af->curl);
-		
-		fseek(af->file, pos, SEEK_SET); /* Restore old stream pointer */
-		
-		if (res != CURLE_OK)
-			return -1;
-		
-		af->flags &= ADVIO_DIRTY;
-	}
+	/* Check if fle was modified on disk by comparing hashes */
+	sha1sum(af->file, hash);
+	dirty = memcmp(hash, af->hash, sizeof(hash));
+	
+	if (dirty)
+		return aupload(af);
 
 	return 0;
 }
 
-size_t afread(void *restrict ptr, size_t size, size_t nitems, AFILE *restrict af)
+int aupload(AFILE *af)
 {
-	return fread(ptr, size, nitems, af->file);
+	CURLcode res;
+	long pos;
+	int ret;
+
+	ret = fflush(af->file);
+	if (ret)
+		return ret;
+
+	curl_easy_setopt(af->curl, CURLOPT_UPLOAD, 1L);
+	curl_easy_setopt(af->curl, CURLOPT_READDATA, af->file);
+
+	pos = ftell(af->file); /* Remember old stream pointer */
+	fseek(af->file, 0, SEEK_SET);
+
+	res = curl_easy_perform(af->curl);
+	
+	fseek(af->file, pos, SEEK_SET); /* Restore old stream pointer */
+	
+	if (res != CURLE_OK)
+		return -1;
+
+	sha1sum(af->file, af->hash);
+
+	return 0;
 }
 
-size_t afwrite(const void *restrict ptr, size_t size, size_t nitems, AFILE *restrict af)
+int adownload(AFILE *af)
 {
-	size_t ret;
+	CURLcode res;
+	long code;
+
+	rewind(af->file);
+
+	res = curl_easy_perform(af->curl);
+	switch (res) {
+		case CURLE_OK:
+			curl_easy_getinfo(af->curl, CURLINFO_RESPONSE_CODE, &code);
+			switch (code) {
+				case 404: goto notexist;
+				case 200: goto exist;
+				default:  return -1;
+			}
+
+		/* The following error codes indicate that the file does not exist
+		 * Check the fopen mode to see if we should continue with an emoty file */ 
+		case CURLE_FILE_COULDNT_READ_FILE:
+		case CURLE_TFTP_NOTFOUND:
+		case CURLE_REMOTE_FILE_NOT_FOUND:
+			goto notexist;
+
+		/* If libcurl does not know the protocol, we will try it with the stdio */
+		case CURLE_UNSUPPORTED_PROTOCOL:
+			af->file = fopen(af->uri, af->mode);
+			if (!af->file)
+				return -1;
+		
+		default:
+			error("Failed to fetch file: %s: %s\n", af->uri, curl_easy_strerror(res));
+			return -1;
+	}
+
+
+notexist: /* File does not exist */
+
+	/* According to mode the file must exist! */
+	if (af->mode[1] != '+' || (af->mode[0] != 'w' && af->mode[0] != 'a')) {
+		errno = ENOENT;
+		return -1;
+	}
+
+	/* If we receive a 404, we discard the already received error page
+	 * and start with an empty file. */
+	ftruncate(fileno(af->file), 0);
+
+exist: /* File exists */
+	if (af->mode[0] == 'a')
+		fseek(af->file, 0, SEEK_END);
+	else if (af->mode[0] == 'r' || af->mode[0] == 'w')
+		fseek(af->file, 0, SEEK_SET);
 	
-	ret = fwrite(ptr, size, nitems, af->file);
+	sha1sum(af->file, af->hash);
 	
-	if (ret > 0)
-		af->flags |= ADVIO_DIRTY;
-	
-	return ret;
+	return 0;
 }
