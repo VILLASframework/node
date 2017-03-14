@@ -24,12 +24,12 @@ static struct stats_desc {
 		double resolution;
 	} hist;
 } stats_table[] = {
-	{ "skipped",	  "",	"skipped messages by hooks",						{0,	0,	-1,	}},
-	{ "dropped",	  "",	"dropped messages because of reordering",				{0,	0,	-1,	}},
-	{ "gap_sequence", "",	"sequence number displacement of received messages",			{-10,	10, 20,		}},
-	{ "gap_sample",	  "",	"inter message timestamps (as sent by remote)",				{90e-3,	110e-3,	1e-3,	}},
-	{ "gap_received", "",	"Histogram for inter message arrival time (as seen by this instance)",	{90e-3,	110e-3,	1e-3,	}},
-	{ "owd",	  "s",	"Histogram for one-way-delay (OWD) of received messages",		{0,	1,	100e-3,	}}
+	{ "skipped",	  "samples",	"skipped samples by hooks",						{0,	0,	-1,	}},
+	{ "dropped",	  "samples",	"dropped messages because of reordering",				{0,	0,	-1,	}},
+	{ "gap_sequence", "samples",	"sequence number displacement of received messages",			{-10,	10, 20,		}},
+	{ "gap_sample",	  "seconds",	"inter message timestamps (as sent by remote)",				{90e-3,	110e-3,	1e-3,	}},
+	{ "gap_received", "seconds",	"Histogram for inter message arrival time (as seen by this instance)",	{90e-3,	110e-3,	1e-3,	}},
+	{ "owd",	  "seconds",	"Histogram for one-way-delay (OWD) of received messages",		{0,	1,	100e-3,	}}
 };
 
 int stats_init(struct stats *s)
