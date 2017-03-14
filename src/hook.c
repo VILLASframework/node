@@ -69,13 +69,13 @@ int main(int argc, char *argv[])
 	log_init(&log, log.level, LOG_ALL);
 	memory_init(DEFAULT_NR_HUGEPAGES);
 
-	if (argc < optind + 2) {
+	if (argc < optind + 1) {
 		usage();
 		exit(EXIT_FAILURE);
 	}
 	
 	name      = argv[optind];
-	parameter = argv[optind + 1];
+	parameter = argc >= optind + 2 ? argv[optind + 1] : NULL;
 		
 	p = plugin_lookup(PLUGIN_TYPE_HOOK, name);
 	if (!p)
