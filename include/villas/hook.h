@@ -97,7 +97,6 @@ struct hook {
 	const char *parameter;	/**< A parameter string for this hook. Can be used to configure the hook behaviour. */
 
 	int priority;		/**< A priority to change the order of execution within one type of hook */
-	int history;		/**< How many samples of history this hook requires. */
 	enum hook_type type;	/**< The type of the hook as a bitfield */
 
 	void *_vd;		/**< Private data for this hook. This pointer can be used to pass data between consecutive calls of the callback. */

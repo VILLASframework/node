@@ -92,7 +92,6 @@ static struct plugin p1 = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 2,
-		.history = 1,
 		.cb	= hook_stats,
 		.type	= HOOK_STORAGE | HOOK_PATH | HOOK_READ | HOOK_PERIODIC
 	}
@@ -104,7 +103,6 @@ static struct plugin p2 = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
-		.history = 0,
 		.cb	= hook_stats_send,
 		.type	= HOOK_STORAGE | HOOK_PATH | HOOK_READ
 	}

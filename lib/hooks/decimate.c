@@ -56,7 +56,6 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
-		.history = 0,
 		.cb	= hook_decimate,
 		.type	= HOOK_STORAGE | HOOK_DESTROY | HOOK_READ
 	}

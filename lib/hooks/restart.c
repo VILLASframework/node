@@ -42,7 +42,6 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 1,
-		.history = 1,
 		.cb	= hook_restart,
 		.type	= HOOK_AUTO | HOOK_READ
 	}
