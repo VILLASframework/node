@@ -15,11 +15,16 @@
 static int hook_shift(struct hook *h, int when, struct hook_info *k)
 {
 	struct {
-		struct timespec offset;
+		union {
+			struct timespec ts;	/**< For SHIFT_TS_* modes. */
+			int seq;		/**< For SHIFT_SEQUENCE mode. */
+		} offset;
+		
 		enum {
-			TS_ORIGIN,
-			TS_RECEIVED,
-			TS_SENT
+			SHIFT_TS_ORIGIN,
+			SHIFT_TS_RECEIVED,
+			SHIFT_TS_SENT,
+			SHIFT_SEQUENCE
 		} mode;
 	} *private = hook_storage(h, when, sizeof(*private), NULL, NULL);
 
@@ -28,12 +33,9 @@ static int hook_shift(struct hook *h, int when, struct hook_info *k)
 			if (!h->parameter)
 				error("Missing parameter for hook: '%s'", plugin_name(h));
 
-			char *endptr;
-			double offset;
+			char *endptr, *off;
 			
-			char *off;
 			char *cpy = strdup(h->parameter);
-			
 			char *tok1 = strtok(cpy, ",");
 			char *tok2 = strtok(NULL, ",");
 
@@ -41,25 +43,36 @@ static int hook_shift(struct hook *h, int when, struct hook_info *k)
 				off = tok2;
 
 				if      (!strcmp(tok1, "origin"))
-					private->mode = TS_ORIGIN;
+					private->mode = SHIFT_TS_ORIGIN;
 				else if (!strcmp(tok1, "received"))
-					private->mode = TS_RECEIVED;
+					private->mode = SHIFT_TS_RECEIVED;
 				else if (!strcmp(tok1, "sent"))
-					private->mode = TS_SENT;
+					private->mode = SHIFT_TS_SENT;
+				else if (!strcmp(tok1, "sequence"))
+					private->mode = SHIFT_SEQUENCE;
 				else
 					error("Invalid mode parameter for hook '%s'", plugin_name(h));
 			}
 			else {
 				off = tok1;
 
-				private->mode = TS_ORIGIN;
+				private->mode = SHIFT_TS_ORIGIN; /* Default mode */
 			}
 			
-			offset = strtod(off, &endptr);
+			switch (private->mode) {
+				case SHIFT_TS_ORIGIN:
+				case SHIFT_TS_RECEIVED:
+				case SHIFT_TS_SENT:
+					private->offset.ts = time_from_double(strtod(off, &endptr));
+					break;
+
+				case SHIFT_SEQUENCE:
+					private->offset.seq = strtoul(off, &endptr, 10);
+					break;
+			}
+			
 			if (endptr == off)
 				error("Invalid offset parameter for hook '%s'", plugin_name(h));
-				
-			private->offset = time_from_double(offset);
 			
 			free(cpy);
 
@@ -67,16 +80,18 @@ static int hook_shift(struct hook *h, int when, struct hook_info *k)
 		
 		case HOOK_READ:
 			for (int i = 0; i < k->cnt; i++) {
-				struct timespec *ts = NULL;
-				
+				struct sample *s = k->smps[i];
+
 				switch (private->mode) {
-					case TS_ORIGIN:   ts = &k->smps[i]->ts.origin; break;
-					case TS_RECEIVED: ts = &k->smps[i]->ts.received; break;
-					case TS_SENT:     ts = &k->smps[i]->ts.sent; break;
+					case SHIFT_TS_ORIGIN:
+						s->ts.origin = time_add(&s->ts.origin, &private->offset.ts); break;
+					case SHIFT_TS_RECEIVED:
+						s->ts.received = time_add(&s->ts.received, &private->offset.ts); break;
+					case SHIFT_TS_SENT:
+						s->ts.origin = time_add(&s->ts.sent, &private->offset.ts); break;
+					case SHIFT_SEQUENCE:
+						s->sequence += private->offset.seq; break;
 				}
-				
-				if (ts)
-					*ts = time_add(ts, &private->offset);
 			}
 
 			return k->cnt;
@@ -87,7 +102,7 @@ static int hook_shift(struct hook *h, int when, struct hook_info *k)
 
 static struct plugin p = {
 	.name		= "shift",
-	.description	= "Shift the origin timestamp of samples",
+	.description	= "Shift the origin timestamp or sequence number of samples",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
