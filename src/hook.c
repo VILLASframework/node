@@ -39,7 +39,11 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	int j, ret, cnt = 1;
+	int j, ret, level, cnt;
+	
+	/* Default values */
+	level = V;
+	cnt = 1;
 	
 	char *name, *parameter;
 	
@@ -57,7 +61,7 @@ int main(int argc, char *argv[])
 				cnt = atoi(optarg);
 				break;
 			case 'd':
-				log.level = atoi(optarg);
+				level = atoi(optarg);
 				break;
 			case 'h':
 			case '?':
@@ -66,7 +70,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-	log_init(&log, log.level, LOG_ALL);
+	log_init(&log, level, LOG_ALL);
 	memory_init(DEFAULT_NR_HUGEPAGES);
 
 	if (argc < optind + 1) {
