@@ -97,9 +97,12 @@ int main(int argc, char *argv[])
 	h->parameter = parameter;
 	hi.smps = samples;
 	
-	h->cb(h, HOOK_INIT, &hi);
-	h->cb(h, HOOK_PARSE, &hi);
-	h->cb(h, HOOK_PATH_START, &hi);
+	if (h->type & HOOK_INIT)
+		h->cb(h, HOOK_INIT, &hi);
+	if (h->type & HOOK_PARSE)
+		h->cb(h, HOOK_PARSE, &hi);
+	if (h->type & HOOK_PATH_START)
+		h->cb(h, HOOK_PATH_START, &hi);
 	
 	while (!feof(stdin)) {
 		for (j = 0; j < cnt && !feof(stdin); j++)
@@ -118,8 +121,10 @@ int main(int argc, char *argv[])
 			sample_fprint(stdout, hi.smps[j], SAMPLE_ALL);
 	}
 	
-	h->cb(h, HOOK_PATH_STOP, &hi);
-	h->cb(h, HOOK_DESTROY, &hi);
+	if (h->type & HOOK_PATH_STOP)
+		h->cb(h, HOOK_PATH_STOP, &hi);
+	if (h->type & HOOK_DESTROY)
+		h->cb(h, HOOK_DESTROY, &hi);
 	
 	sample_free(samples, cnt);
 	pool_destroy(&pool);
