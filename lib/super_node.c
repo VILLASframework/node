@@ -103,7 +103,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 		}
 		/* Use advio (libcurl) to fetch the config from a remote */
 		else {
-			af = afopen(uri, "r", 0);
+			af = afopen(uri, "r");
 			f = af ? af->file : NULL;
 		}
 

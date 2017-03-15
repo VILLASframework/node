@@ -28,7 +28,7 @@ Test(advio, download)
 	size_t len;
 	char buffer[64];
 
-	af = afopen(BASE_URI "/download" , "r", 0);
+	af = afopen(BASE_URI "/download" , "r");
 	cr_assert(af, "Failed to download file");
 
 	len = afread(buffer, 1, sizeof(buffer), af);
@@ -51,7 +51,7 @@ Test(advio, upload)
 	char buffer[tlen];
 	
 	/* Open file for writing */
-	af = afopen(BASE_URI "/upload", "w+", 0);
+	af = afopen(BASE_URI "/upload", "w+");
 	cr_assert(af, "Failed to download file");
 	
 	len = afwrite(TEST_DATA_UPLOAD, 1, strlen(TEST_DATA_UPLOAD), af);
@@ -61,7 +61,7 @@ Test(advio, upload)
 	cr_assert_eq(ret, 0, "Failed to close/upload file");
 	
 	/* Open for reading and comparison */
-	af = afopen(BASE_URI "/upload", "r", 0);
+	af = afopen(BASE_URI "/upload", "r");
 	cr_assert(af, "Failed to download file");
 	
 	len = afread(buffer, 1, strlen(TEST_DATA_UPLOAD), af);
@@ -85,7 +85,7 @@ Test(advio, append)
 	char buffer[tlen];
 
 	/* Open file for writing first chunk */
-	af = afopen(BASE_URI "/append", "w+", 0);
+	af = afopen(BASE_URI "/append", "w+");
 	cr_assert(af, "Failed to download file");
 
 	len = afwrite(TEST_DATA_APPEND1, 1, strlen(TEST_DATA_APPEND1), af);
@@ -95,7 +95,7 @@ Test(advio, append)
 	cr_assert_eq(ret, 0, "Failed to close/upload file");
 
 	/* Open file for writing second chunk */
-	af = afopen(BASE_URI "/append", "a", 0);
+	af = afopen(BASE_URI "/append", "a");
 	cr_assert(af, "Failed to download file");
 	
 	len = afwrite(TEST_DATA_APPEND1, 1, strlen(TEST_DATA_APPEND2), af);
@@ -105,7 +105,7 @@ Test(advio, append)
 	cr_assert_eq(ret, 0, "Failed to close/upload file");
 	
 	/* Open for reading and comparison */
-	af = afopen(BASE_URI "/append", "r", 0);
+	af = afopen(BASE_URI "/append", "r");
 	cr_assert(af, "Failed to download file");
 	
 	len = afread(buffer, 1, tlen, af);
