@@ -11,6 +11,7 @@
 #include <villas/super_node.h>
 #include <villas/memory.h>
 #include <villas/node.h>
+#include <villas/path.h>
 #include <villas/api.h>
 #include <villas/web.h>
 #include <villas/timing.h>
@@ -107,7 +108,8 @@ int main(int argc, char *argv[])
 		now = time_now();
 		if (sn.stats > 0 && time_delta(&last, &now) > sn.stats) {
 			list_foreach(struct path *p, &sn.paths) {
-				hook_run(p, NULL, 0, HOOK_PERIODIC);
+				list_foreach(struct hook *h, &p->hooks)
+					hook_run(h, HOOK_PERIODIC, NULL);
 			}
 
 			last = time_now();

@@ -14,12 +14,12 @@
 
 static int hook_print(struct hook *h, int when, struct hook_info *j)
 {
-	assert(j->smps);
+	assert(j->samples);
 	
-	for (int i = 0; i < j->cnt; i++)
-		sample_fprint(stdout, j->smps[i], SAMPLE_ALL);
+	for (int i = 0; i < j->count; i++)
+		sample_fprint(stdout, j->samples[i], SAMPLE_ALL);
 
-	return j->cnt;
+	return j->count;
 }
 
 static struct plugin p = {
@@ -29,7 +29,7 @@ static struct plugin p = {
 	.hook		= {
 		.priority = 99,
 		.cb	= hook_print,
-		.type	= HOOK_READ
+		.when	= HOOK_READ
 	}
 };
 

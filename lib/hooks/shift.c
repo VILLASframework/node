@@ -12,7 +12,7 @@
 #include "plugin.h"
 #include "timing.h"
 
-static int hook_shift(struct hook *h, int when, struct hook_info *k)
+static int hook_shift(struct hook *h, int when, struct hook_info *j)
 {
 	struct {
 		union {
@@ -31,7 +31,7 @@ static int hook_shift(struct hook *h, int when, struct hook_info *k)
 	switch (when) {
 		case HOOK_PARSE:
 			if (!h->parameter)
-				error("Missing parameter for hook: '%s'", plugin_name(h));
+				error("Missing parameter for hook: '%s'", plugin_name(h->_vt));
 
 			char *endptr, *off;
 			
@@ -51,7 +51,7 @@ static int hook_shift(struct hook *h, int when, struct hook_info *k)
 				else if (!strcmp(tok1, "sequence"))
 					private->mode = SHIFT_SEQUENCE;
 				else
-					error("Invalid mode parameter for hook '%s'", plugin_name(h));
+					error("Invalid mode parameter for hook '%s'", plugin_name(h->_vt));
 			}
 			else {
 				off = tok1;
@@ -72,15 +72,15 @@ static int hook_shift(struct hook *h, int when, struct hook_info *k)
 			}
 			
 			if (endptr == off)
-				error("Invalid offset parameter for hook '%s'", plugin_name(h));
+				error("Invalid offset parameter for hook '%s'", plugin_name(h->_vt));
 			
 			free(cpy);
 
 			break;
 		
 		case HOOK_READ:
-			for (int i = 0; i < k->cnt; i++) {
-				struct sample *s = k->smps[i];
+			for (int i = 0; i < j->count; i++) {
+				struct sample *s = j->samples[i];
 
 				switch (private->mode) {
 					case SHIFT_TS_ORIGIN:
@@ -94,7 +94,7 @@ static int hook_shift(struct hook *h, int when, struct hook_info *k)
 				}
 			}
 
-			return k->cnt;
+			return j->count;
 	}
 
 	return 0;
@@ -107,7 +107,7 @@ static struct plugin p = {
 	.hook		= {
 		.priority = 99,
 		.cb	= hook_shift,
-		.type	= HOOK_STORAGE | HOOK_READ
+		.when	= HOOK_STORAGE | HOOK_READ
 	}
 };
 

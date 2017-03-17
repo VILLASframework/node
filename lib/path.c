@@ -50,7 +50,7 @@ static void path_read(struct path *p)
 	debug(LOG_PATH | 15, "Received %u messages from node %s", recv, node_name(ps->node));
 
 	/* Run preprocessing hooks for vector of samples */
-	enqueue = hook_run(p, smps, recv, HOOK_READ);
+	enqueue = path_run_hooks(p, HOOK_READ, smps, recv);
 	if (enqueue != recv) {
 		info("Hooks skipped %u out of %u samples for path %s", recv - enqueue, recv, path_name(p));
 		
@@ -90,7 +90,7 @@ static void path_write(struct path *p)
 			
 			debug(LOG_PATH | 15, "Dequeued %u samples from queue of node %s which is part of path %s", available, node_name(pd->node), path_name(p));
 
-			tosend = hook_run(p, smps, available, HOOK_WRITE);
+			tosend = path_run_hooks(p, HOOK_WRITE, smps, available);
 			if (tosend == 0)
 				continue;
 
@@ -256,24 +256,22 @@ int path_init2(struct path *p)
 	assert(p->state == STATE_CHECKED);
 
 	/* Add internal hooks if they are not already in the list*/
-	list_foreach(struct plugin *pl, &plugins) {
-		if (pl->type == PLUGIN_TYPE_HOOK) {
-			struct hook c;
-			struct hook *h = &pl->hook;
+	list_foreach(struct plugin *q, &plugins) {
+		if (q->type == PLUGIN_TYPE_HOOK) {
+			struct hook h;
+			struct hook_type *vt = &q->hook;
 
-			if (h->type & HOOK_AUTO) {
-				hook_copy(h, &c);
-				list_push(&p->hooks, memdup(&c, sizeof(c)));
+			if (vt->when & HOOK_AUTO) {
+				hook_init(&h, vt, p->super_node);
+
+				list_push(&p->hooks, memdup(&h, sizeof(h)));
 			}
 		}
 	}
 	
 	/* We sort the hooks according to their priority before starting the path */
 	list_sort(&p->hooks, hook_cmp_priority);
-	
-	list_foreach(struct hook *h, &p->hooks)
-		hook_init(h, p->super_node);
-	
+
 	/* Initialize destinations */
 	list_foreach(struct path_destination *pd, &p->destinations) {
 		ret = queue_init(&pd->queue, pd->queuelen, &memtype_hugepage);
@@ -300,9 +298,11 @@ int path_start(struct path *p)
 
 	info("Starting path: %s (#hooks=%zu)", path_name(p), list_length(&p->hooks));
 
-	ret = hook_run(p, NULL, 0, HOOK_PATH_START);
-	if (ret)
-		return ret;
+	list_foreach(struct hook *h, &p->hooks) {
+		ret = hook_run(h, HOOK_PATH_START, &(struct hook_info) { .path = p });
+		if (ret)
+			return ret;
+	}
 
 	/* Start one thread per path for sending to destinations */
 	ret = pthread_create(&p->tid, NULL, &path_run,  p);
@@ -324,9 +324,11 @@ int path_stop(struct path *p)
 	pthread_cancel(p->tid);
 	pthread_join(p->tid, NULL);
 
-	ret = hook_run(p, NULL, 0, HOOK_PATH_STOP);
-	if (ret)
-		return -1;
+	list_foreach(struct hook *h, &p->hooks) {
+		ret = hook_run(h, HOOK_PATH_STOP, &(struct hook_info) { .path = p });
+		if (ret)
+			return ret;
+	}
 
 	p->state = STATE_STOPPED;
 
@@ -411,14 +413,35 @@ int path_reverse(struct path *p, struct path *r)
 	r->source = ps;
 
 	list_foreach(struct hook *h, &p->hooks) {
-		struct hook *hc = alloc(sizeof(struct hook));
+		struct hook hc;
 		
-		ret = hook_copy(h, hc);
+		ret = hook_init(&hc, h->_vt, p->super_node);
 		if (ret)
 			return ret;
 		
-		list_push(&r->hooks, hc);
+		list_push(&r->hooks, memdup(&hc, sizeof(hc)));
 	}
 	
 	return 0;
+}
+
+int path_run_hooks(struct path *p, int when, struct sample *smps[], size_t cnt)
+{
+	int ret = 0;
+	
+	struct hook_info i = {
+		.samples = smps,
+		.count = cnt
+	};
+
+	list_foreach(struct hook *h, &p->hooks) {
+		ret = hook_run(h, when, &i);
+		if (ret)
+			break;
+		
+		if (i.count == 0)
+			break;
+	}
+
+	return i.count;
 }

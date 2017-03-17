@@ -51,7 +51,7 @@ struct plugin {
 		struct api_ressource	api;
 		struct node_type	node;
 		struct fpga_ip_type	ip;
-		struct hook		hook;
+		struct hook_type	hook;
 		struct cbuilder_model	cb;
 	};
 };

@@ -17,6 +17,11 @@ static int hook_skip_first(struct hook *h, int when, struct hook_info *j)
 	struct {
 		struct timespec skip;	/**< Time to wait until first message is not skipped */
 		struct timespec until;	/**< Absolute point in time from where we accept samples. */
+		enum {
+			HOOK_SKIP_FIRST_STATE_STARTED,	/**< Path just started. First sample not received yet. */
+			HOOK_SKIP_FIRST_STATE_SKIPPING,	/**< First sample received. Skipping samples now. */
+			HOOK_SKIP_FIRST_STATE_NORMAL,	/**< All samples skipped. Normal operation. */
+		} state;
 	} *private = hook_storage(h, when, sizeof(*private), NULL, NULL);
 
 	char *endptr;
@@ -25,7 +30,7 @@ static int hook_skip_first(struct hook *h, int when, struct hook_info *j)
 	switch (when) {
 		case HOOK_PARSE:
 			if (!h->parameter)
-				error("Missing parameter for hook: '%s'", plugin_name(h));
+				error("Missing parameter for hook: '%s'", plugin_name(h->_vt));
 
 			wait = strtof(h->parameter, &endptr);
 			if (h->parameter == endptr)
@@ -33,23 +38,29 @@ static int hook_skip_first(struct hook *h, int when, struct hook_info *j)
 	
 			private->skip = time_from_double(wait);
 			break;
-	
+		
 		case HOOK_PATH_START:
 		case HOOK_PATH_RESTART:
-			private->until = time_add(&j->smps[0]->ts.received, &private->skip);
+			private->state = HOOK_SKIP_FIRST_STATE_STARTED;
 			break;
 	
 		case HOOK_READ:
-			assert(j->smps);
+			assert(j->samples);
+			
+			if (private->state == HOOK_SKIP_FIRST_STATE_STARTED) {
+				private->until = time_add(&j->samples[0]->ts.received, &private->skip);
+				private->state = HOOK_SKIP_FIRST_STATE_SKIPPING;
+			}
+			
 
 			int i, ok;
-			for (i = 0, ok = 0; i < j->cnt; i++) {
-				if (time_delta(&private->until, &j->smps[i]->ts.received) > 0) {
+			for (i = 0, ok = 0; i < j->count; i++) {
+				if (time_delta(&private->until, &j->samples[i]->ts.received) > 0) {
 					struct sample *tmp;
 
-					tmp = j->smps[i];
-					j->smps[i] = j->smps[ok];
-					j->smps[ok++] = tmp;
+					tmp = j->samples[i];
+					j->samples[i] = j->samples[ok];
+					j->samples[ok++] = tmp;
 				
 				}
 
@@ -73,7 +84,7 @@ static struct plugin p = {
 	.hook		= {
 		.priority = 99,
 		.cb	= hook_skip_first,
-		.type	= HOOK_STORAGE |  HOOK_PARSE | HOOK_READ | HOOK_PATH
+		.when	= HOOK_STORAGE |  HOOK_PARSE | HOOK_READ | HOOK_PATH
 	}
 };
 

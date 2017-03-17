@@ -47,12 +47,12 @@ int main(int argc, char *argv[])
 	
 	char *name, *parameter;
 	
-	struct sample *samples[cnt];
 	struct log log;
-	struct pool pool = { .state = STATE_DESTROYED };
-	struct hook_info hi = { .smps = samples };
 	struct plugin *p;
-	struct hook *h;
+	struct sample *samples[cnt];
+	struct pool pool = { .state = STATE_DESTROYED };
+	struct hook h = { .state = STATE_DESTROYED };
+	struct hook_info hi = { .samples = samples };
 
 	char c;
 	while ((c = getopt(argc, argv, "hv:d:")) != -1) {
@@ -78,58 +78,56 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 	
-	name      = argv[optind];
-	parameter = argc >= optind + 2 ? argv[optind + 1] : NULL;
-		
-	p = plugin_lookup(PLUGIN_TYPE_HOOK, name);
-	if (!p)
-		error("Unknown hook function '%s'", argv[optind]);
-	
-	h = &p->hook;
-	
 	if (cnt < 1)
 		error("Vectorize option must be greater than 0");
 	
 	ret = pool_init(&pool, 10 * cnt, SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
 	if (ret)
 		error("Failed to initilize memory pool");
-
-	h->parameter = parameter;
 	
-	if (h->type & HOOK_INIT)
-		h->cb(h, HOOK_INIT, &hi);
-	if (h->type & HOOK_PARSE)
-		h->cb(h, HOOK_PARSE, &hi);
-	if (h->type & HOOK_PATH_START)
-		h->cb(h, HOOK_PATH_START, &hi);
+	name        = argv[optind];
+	parameter = argc >= optind + 2 ? argv[optind + 1] : NULL;
+
+	h.parameter = parameter;
+
+	p = plugin_lookup(PLUGIN_TYPE_HOOK, name);
+	if (!p)
+		error("Unknown hook function '%s'", argv[optind]);
+	
+	hook_init(&h, &p->hook, NULL);
+
+	hook_run(&h, HOOK_PARSE, &hi);
+	hook_run(&h, HOOK_PATH_START, &hi);
 	
 	while (!feof(stdin)) {
 		ret = sample_alloc(&pool, samples, cnt);
 		if (ret != cnt)
 			error("Failed to allocate %u samples from pool", cnt);
 
-		for (j = 0; j < cnt && !feof(stdin); j++)
-			sample_fscan(stdin, hi.smps[j], NULL);
+		for (j = 0; j < cnt && !feof(stdin); j++) {
+			ret = sample_fscan(stdin, hi.samples[j], NULL);
+			if (ret < 0)
+				break;
+		}
 		
 		debug(15, "Read %d samples from stdin", cnt);
 		
-		hi.cnt = j;
+		hi.count = j;
 		
-		if (h->type & HOOK_READ)
-			hi.cnt = h->cb(h, HOOK_READ, &hi);
-		if (h->type & HOOK_WRITE)
-			hi.cnt = h->cb(h, HOOK_WRITE, &hi);
+		if (h._vt->when & HOOK_READ)
+			hi.count = h._vt->cb(&h, HOOK_READ, &hi);
+		if (h._vt->when & HOOK_WRITE)
+			hi.count = h._vt->cb(&h, HOOK_WRITE, &hi);
 		
-		for (j = 0; j < hi.cnt; j++)
-			sample_fprint(stdout, hi.smps[j], SAMPLE_ALL);
+		for (j = 0; j < hi.count; j++)
+			sample_fprint(stdout, hi.samples[j], SAMPLE_ALL);
 		
 		sample_free(samples, cnt);
 	}
 	
-	if (h->type & HOOK_PATH_STOP)
-		h->cb(h, HOOK_PATH_STOP, &hi);
-	if (h->type & HOOK_DESTROY)
-		h->cb(h, HOOK_DESTROY, &hi);
+	hook_run(&h, HOOK_PATH_STOP, &hi);
+
+	hook_destroy(&h);
 	
 	sample_free(samples, cnt);
 	pool_destroy(&pool);

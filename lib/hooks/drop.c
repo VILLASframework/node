@@ -17,10 +17,10 @@ static int hook_drop(struct hook *h, int when, struct hook_info *j)
 {
 	int i, ok, dist;
 	
-	assert(j->smps);
+	assert(j->samples);
 
-	for (i = 0, ok = 0; i < j->cnt; i++) {
-		h->last = j->smps[i];
+	for (i = 0, ok = 0; i < j->count; i++) {
+		h->last = j->samples[i];
 		
 		if (h->prev) {
 			dist = h->last->sequence - (int32_t) h->prev->sequence;
@@ -32,9 +32,9 @@ static int hook_drop(struct hook *h, int when, struct hook_info *j)
 			else {
 				struct sample *tmp;
 			
-				tmp = j->smps[i];
-				j->smps[i] = j->smps[ok];
-				j->smps[ok++] = tmp;
+				tmp = j->samples[i];
+				j->samples[i] = j->samples[ok];
+				j->samples[ok++] = tmp;
 			}
 		
 			/* To discard the first X samples in 'smps[]' we must
@@ -46,9 +46,9 @@ static int hook_drop(struct hook *h, int when, struct hook_info *j)
 		else {
 			struct sample *tmp;
 		
-			tmp = j->smps[i];
-			j->smps[i] = j->smps[ok];
-			j->smps[ok++] = tmp;
+			tmp = j->samples[i];
+			j->samples[i] = j->samples[ok];
+			j->samples[ok++] = tmp;
 		}
 
 		h->prev = h->last;
@@ -64,7 +64,7 @@ static struct plugin p = {
 	.hook		= {
 		.priority = 3,
 		.cb	= hook_drop,
-		.type	= HOOK_AUTO | HOOK_READ
+		.when	= HOOK_AUTO | HOOK_READ
 	}
 };
 

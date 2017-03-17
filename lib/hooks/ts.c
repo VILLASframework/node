@@ -14,12 +14,12 @@
 
 static int hook_ts(struct hook *h, int when, struct hook_info *j)
 {
-	assert(j->smps);
+	assert(j->samples);
 
-	for (int i = 0; i < j->cnt; i++)
-		j->smps[i]->ts.origin = j->smps[i]->ts.received;
+	for (int i = 0; i < j->count; i++)
+		j->samples[i]->ts.origin = j->samples[i]->ts.received;
 
-	return j->cnt;
+	return j->count;
 }
 
 static struct plugin p = {
@@ -29,7 +29,7 @@ static struct plugin p = {
 	.hook		= {
 		.priority = 99,
 		.cb	= hook_ts,
-		.type	= HOOK_READ
+		.when	= HOOK_READ
 	}
 };
 

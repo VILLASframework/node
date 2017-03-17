@@ -14,11 +14,11 @@
 
 static int hook_restart(struct hook *h, int when, struct hook_info *j)
 {
-	assert(j->smps);
+	assert(j->samples);
 	assert(j->path);
 
-	for (int i = 0; i < j->cnt; i++) {
-		h->last = j->smps[i];
+	for (int i = 0; i < j->count; i++) {
+		h->last = j->samples[i];
 		
 		if (h->prev) {
 			if (h->last->sequence  == 0 &&
@@ -26,14 +26,14 @@ static int hook_restart(struct hook *h, int when, struct hook_info *j)
 				warn("Simulation for path %s restarted (prev->seq=%u, current->seq=%u)",
 					path_name(j->path), h->prev->sequence, h->last->sequence);
 
-				hook_run(j->path, &j->smps[i], j->cnt - i, HOOK_PATH_RESTART);
+				path_run_hooks(j->path, HOOK_PATH_RESTART, &j->samples[i], j->count - i);
 			}
 		}
 		
 		h->prev = h->last;
 	}
 
-	return j->cnt;
+	return j->count;
 }
 
 static struct plugin p = {
@@ -43,7 +43,7 @@ static struct plugin p = {
 	.hook		= {
 		.priority = 1,
 		.cb	= hook_restart,
-		.type	= HOOK_AUTO | HOOK_READ
+		.when	= HOOK_AUTO | HOOK_READ
 	}
 };
 

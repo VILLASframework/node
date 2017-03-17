@@ -24,14 +24,15 @@ static int hook_stats(struct hook *h, int when, struct hook_info *j)
 			break;
 
 		case HOOK_READ:
-			assert(j->smps);
+			assert(j->samples);
 		
-			stats_collect(s->delta, j->smps, j->cnt);
+			stats_collect(s->delta, j->samples, j->count);
 			stats_commit(s, s->delta);
 			break;
 
 		case HOOK_PATH_STOP:
 			stats_print(s, 1);
+			printf("%s", json_dumps(stats_json(s), 0));
 			break;
 
 		case HOOK_PATH_RESTART:
@@ -45,7 +46,7 @@ static int hook_stats(struct hook *h, int when, struct hook_info *j)
 			break;
 	}
 	
-	return j->cnt;
+	return j->count;
 }
 
 /** @todo This is untested */
@@ -63,11 +64,11 @@ static int hook_stats_send(struct hook *h, int when, struct hook_info *j)
 			assert(j->path);
 		
 			if (!h->parameter)
-				error("Missing parameter for hook '%s'", plugin_name(h));
+				error("Missing parameter for hook '%s'", plugin_name(h->_vt));
 			
 			private->dest = list_lookup(j->nodes, h->parameter);
 			if (!private->dest)
-				error("Invalid destination node '%s' for hook '%s'", h->parameter, plugin_name(h));
+				error("Invalid destination node '%s' for hook '%s'", h->parameter, plugin_name(h->_vt));
 			break;
 			
 		case HOOK_PATH_START:
@@ -93,7 +94,7 @@ static struct plugin p1 = {
 	.hook		= {
 		.priority = 2,
 		.cb	= hook_stats,
-		.type	= HOOK_STORAGE | HOOK_PATH | HOOK_READ | HOOK_PERIODIC
+		.when	= HOOK_STORAGE | HOOK_PATH | HOOK_READ | HOOK_PERIODIC
 	}
 };
 
@@ -104,7 +105,7 @@ static struct plugin p2 = {
 	.hook		= {
 		.priority = 99,
 		.cb	= hook_stats_send,
-		.type	= HOOK_STORAGE | HOOK_PATH | HOOK_READ
+		.when	= HOOK_STORAGE | HOOK_PATH | HOOK_READ
 	}
 };
 
