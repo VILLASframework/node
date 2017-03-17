@@ -31,6 +31,7 @@ int hook_init(struct hook *h, struct hook_type *vt, struct super_node *sn)
 	assert(h->state == STATE_DESTROYED);
 	
 	h->_vt = vt;
+	h->priority = vt->priority;
 	
 	ret = hook_run(h, HOOK_INIT, &i);
 	if (ret)
@@ -43,29 +44,14 @@ int hook_init(struct hook *h, struct hook_type *vt, struct super_node *sn)
 
 int hook_parse(struct hook *h, config_setting_t *cfg)
 {
-	const char *hookline;
-	char *name, *param;
-	struct plugin *p;
 	int ret;
-	
+
 	assert(h->state != STATE_DESTROYED);
 	
-	hookline = config_setting_get_string(cfg);
-	if (!hookline)
-		cerror(cfg, "Invalid hook function");
+	h->cfg = cfg;
 	
-	name  = strtok((char *) hookline, ":");
-	param = strtok(NULL, "");
+	config_setting_lookup_int(h->cfg, "priority", &h->priority);
 
-	p = plugin_lookup(PLUGIN_TYPE_HOOK, name);
-	if (!p)
-		cerror(cfg, "Unknown hook function '%s'", name);
-	
-	if (p->hook.when & HOOK_AUTO)
-		cerror(cfg, "Hook '%s' is built-in and can not be added manually.", name);
-
-	h->parameter = param;
-	
 	/* Parse hook arguments */
 	ret = hook_run(h, HOOK_PARSE, NULL);
 	if (ret)
@@ -96,12 +82,12 @@ int hook_cmp_priority(const void *a, const void *b)
 	struct hook *ha = (struct hook *) a;
 	struct hook *hb = (struct hook *) b;
 	
-	return ha->_vt->priority - hb->_vt->priority;
+	return ha->priority - hb->priority;
 }
 
 int hook_run(struct hook *h, int when, struct hook_info *i)
 {
-	debug(LOG_HOOK | 22, "Running hook '%s' when=%u, prio=%u, cnt=%zu", plugin_name(h->_vt), when, h->_vt->priority, i ? i->count : 0);
+	debug(LOG_HOOK | 22, "Running hook '%s' when=%u, prio=%u, cnt=%zu", plugin_name(h->_vt), when, h->priority, i ? i->count : 0);
 	
 	return h->_vt->when & when ? h->_vt->cb(h, when, i) : 0;
 }
@@ -129,33 +115,40 @@ void * hook_storage(struct hook *h, int when, size_t len, ctor_cb_t ctor, dtor_c
 	return h->_vd;
 }
 
-/** Parse an array or single hook function.
- *
- * Examples:
- *     hooks = [ "print", "fir" ]
- *     hooks = "log"
- */
-int hook_parse_list(struct list *list, config_setting_t *cfg)
+int hook_parse_list(struct list *list, config_setting_t *cfg, struct super_node *sn)
 {
 	struct hook h;
+	struct plugin *p;
+
+	int ret;
+
+	if (!config_setting_is_group(cfg))
+		cerror(cfg, "Hooks must be configured with an object");
 	
-	switch (config_setting_type(cfg)) {
-		case CONFIG_TYPE_STRING:
-			hook_parse(&h, cfg);
-			list_push(list, memdup(&h, sizeof(h)));
-			break;
+	int priority = 10;
+	for (int i = 0; i < config_setting_length(cfg); i++) {
+		config_setting_t *cfg_hook = config_setting_get_elem(cfg, i);
+		
+		const char *name = config_setting_name(cfg_hook);
+		
+		p = plugin_lookup(PLUGIN_TYPE_HOOK, name);
+		if (!p)
+			continue; /* We ignore all non hook settings in this libconfig object setting */
+		
+		if (!config_setting_is_group(cfg_hook))
+			cerror(cfg_hook, "The 'hooks' setting must be an array of strings.");
+	
+		ret = hook_init(&h, &p->hook, sn);
+		if (ret)
+			continue;
+		
+		h.priority = priority++;
+		
+		ret = hook_parse(&h, cfg_hook);
+		if (ret)
+			continue;
 
-		case CONFIG_TYPE_ARRAY:
-			for (int i = 0; i < config_setting_length(cfg); i++) {
-				config_setting_t *cfg_hook = config_setting_get_elem(cfg, i);
-				
-				hook_parse(&h, cfg_hook);
-				list_push(list, memdup(&h, sizeof(h)));
-			}
-			break;
-
-		default:
-			cerror(cfg, "Invalid hook functions");
+		list_push(list, memdup(&h, sizeof(h)));
 	}
 
 	return list_length(list);

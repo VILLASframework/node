@@ -24,15 +24,46 @@
 
 #include "config.h"
 
+static int hook_parse_cli(struct hook *h, char *param)
+{
+	int ret;
+
+	config_t cfg;
+	config_setting_t *cfg_root;
+
+	config_init(&cfg);
+	config_set_auto_convert(&cfg, 1);
+
+	cfg_root = config_root_setting(&cfg);
+
+	ret = config_read_string(&cfg, param);
+	if (ret != CONFIG_TRUE)
+		error("Failed to parse argument '%s': %s", param, config_error_text(&cfg));
+	
+	config_write(&cfg, stdout);
+
+	ret = hook_parse(h, cfg_root);
+	if (ret)
+		error("Failed to parse hook settings");
+
+	config_destroy(&cfg);
+	
+	return 0;
+}
+
 static void usage()
 {
-	printf("Usage: villas-hook [OPTIONS] NAME [PARAMETER] \n");
+	printf("Usage: villas-hook [OPTIONS] NAME [PARAMETER1 PARAMTER2 ...] \n");
 	printf("  NAME      the name of the hook function to run\n");
 	printf("  PARAM     the name of the node to which samples are sent and received from\n\n");
 	printf("  OPTIONS are:\n");
 	printf("    -h      show this help\n");
 	printf("    -d LVL  set debug level to LVL\n");
-	printf("    -v CNT  process CNT samples at once\n\n");
+	printf("    -v CNT  process CNT samples at once\n");
+	printf("\n");
+	printf("Example:");
+	printf("  villas-signal random | villas-hook skip_first seconds=10\n");
+	printf("\n");
 
 	print_copyright();
 }
@@ -45,7 +76,7 @@ int main(int argc, char *argv[])
 	level = V;
 	cnt = 1;
 	
-	char *name, *parameter;
+	char *name;
 	
 	struct log log;
 	struct plugin *p;
@@ -86,17 +117,16 @@ int main(int argc, char *argv[])
 		error("Failed to initilize memory pool");
 	
 	name        = argv[optind];
-	parameter = argc >= optind + 2 ? argv[optind + 1] : NULL;
-
-	h.parameter = parameter;
 
 	p = plugin_lookup(PLUGIN_TYPE_HOOK, name);
 	if (!p)
 		error("Unknown hook function '%s'", argv[optind]);
 	
 	hook_init(&h, &p->hook, NULL);
+	
+	if (argc > optind + 1)
+		hook_parse_cli(&h, argv[optind + 1]);
 
-	hook_run(&h, HOOK_PARSE, &hi);
 	hook_run(&h, HOOK_PATH_START, &hi);
 	
 	while (!feof(stdin)) {

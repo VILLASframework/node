@@ -8,6 +8,8 @@
  * @{
  */
 
+#include <libconfig.h>
+
 #include "hook.h"
 #include "plugin.h"
 #include "timing.h"
@@ -24,20 +26,19 @@ static int hook_skip_first(struct hook *h, int when, struct hook_info *j)
 		} state;
 	} *private = hook_storage(h, when, sizeof(*private), NULL, NULL);
 
-	char *endptr;
-	double wait;
-
 	switch (when) {
-		case HOOK_PARSE:
-			if (!h->parameter)
-				error("Missing parameter for hook: '%s'", plugin_name(h->_vt));
-
-			wait = strtof(h->parameter, &endptr);
-			if (h->parameter == endptr)
-				error("Invalid parameter '%s' for hook 'skip_first'", h->parameter);
+		case HOOK_PARSE: {
+			double wait;
+			
+			if (!h->cfg)
+				error("Missing configuration for hook: '%s'", plugin_name(h->_vt));
+			
+			if (!config_setting_lookup_float(h->cfg, "seconds", &wait))
+				cerror(h->cfg, "Missing setting 'seconds' for hook '%s'", plugin_name(h->_vt));
 	
 			private->skip = time_from_double(wait);
 			break;
+		}
 		
 		case HOOK_PATH_START:
 		case HOOK_PATH_RESTART:

@@ -20,17 +20,22 @@ static int hook_convert(struct hook *h, int when, struct hook_info *j)
 		} mode;
 	} *private = hook_storage(h, when, sizeof(*private), NULL, NULL);
 
+	const char *mode;
+
 	switch (when) {
 		case HOOK_PARSE:
-			if (!h->parameter)
-				error("Missing parameter for hook: '%s'", plugin_name(h->_vt));
-
-			if      (!strcmp(h->parameter, "fixed"))
+			if (!h->cfg)
+				error("Missing configuration for hook: '%s'", plugin_name(h->_vt));
+			
+			if (!config_setting_lookup_string(h->cfg, "mode", &mode))
+				cerror(h->cfg, "Missing setting 'mode' for hook '%s'", plugin_name(h->_vt));
+			
+			if      (!strcmp(mode, "fixed"))
 				private->mode = TO_FIXED;
-			else if (!strcmp(h->parameter, "float"))
+			else if (!strcmp(mode, "float"))
 				private->mode = TO_FLOAT;
 			else
-				error("Invalid parameter '%s' for hook 'convert'", h->parameter);
+				error("Invalid parameter '%s' for hook 'convert'", mode);
 			break;
 		
 		case HOOK_READ:
@@ -56,7 +61,7 @@ static struct plugin p = {
 	.hook		= {
 		.priority = 99,
 		.cb	= hook_convert,
-		.when	= HOOK_STORAGE | HOOK_READ
+		.when	= HOOK_STORAGE | HOOK_PARSE | HOOK_READ
 	}
 };
 

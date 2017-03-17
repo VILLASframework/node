@@ -14,20 +14,22 @@
 static int hook_decimate(struct hook *h, int when, struct hook_info *j)
 {
 	struct {
-		unsigned ratio;
+		int ratio;
 		unsigned counter;
 	} *private = hook_storage(h, when, sizeof(*private), NULL, NULL);
 
 	switch (when) {
-		case HOOK_PARSE:
-			if (!h->parameter)
-				error("Missing parameter for hook: '%s'", plugin_name(h->_vt));
-	
-			private->ratio = strtol(h->parameter, NULL, 10);
-			if (!private->ratio)
-				error("Invalid parameter '%s' for hook 'decimate'", h->parameter);
-		
+		case HOOK_INIT:
 			private->counter = 0;
+			break;
+		
+		case HOOK_PARSE:
+			if (!h->cfg)
+				error("Missing configuration for hook: '%s'", plugin_name(h->_vt));
+		
+			if (!config_setting_lookup_int(h->cfg, "ratio", &private->ratio))
+				cerror(h->cfg, "Missing setting 'ratio' for hook '%s'", plugin_name(h->_vt));
+	
 			break;
 		
 		case HOOK_READ:
@@ -57,7 +59,7 @@ static struct plugin p = {
 	.hook		= {
 		.priority = 99,
 		.cb	= hook_decimate,
-		.when	= HOOK_STORAGE | HOOK_DESTROY | HOOK_READ
+		.when	= HOOK_STORAGE | HOOK_PARSE | HOOK_DESTROY | HOOK_READ
 	}
 };
 

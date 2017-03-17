@@ -27,55 +27,55 @@ static int hook_shift(struct hook *h, int when, struct hook_info *j)
 			SHIFT_SEQUENCE
 		} mode;
 	} *private = hook_storage(h, when, sizeof(*private), NULL, NULL);
+	
+	const char *mode;
 
 	switch (when) {
+		case HOOK_INIT:
+			private->mode = SHIFT_TS_ORIGIN; /* Default mode */
+			break;
+
 		case HOOK_PARSE:
-			if (!h->parameter)
-				error("Missing parameter for hook: '%s'", plugin_name(h->_vt));
+			if (!h->cfg)
+				error("Missing configuration for hook: '%s'", plugin_name(h->_vt));
 
-			char *endptr, *off;
-			
-			char *cpy = strdup(h->parameter);
-			char *tok1 = strtok(cpy, ",");
-			char *tok2 = strtok(NULL, ",");
-
-			if (tok2) {
-				off = tok2;
-
-				if      (!strcmp(tok1, "origin"))
+			if (config_setting_lookup_string(h->cfg, "mode", &mode)) {
+				if      (!strcmp(mode, "origin"))
 					private->mode = SHIFT_TS_ORIGIN;
-				else if (!strcmp(tok1, "received"))
+				else if (!strcmp(mode, "received"))
 					private->mode = SHIFT_TS_RECEIVED;
-				else if (!strcmp(tok1, "sent"))
+				else if (!strcmp(mode, "sent"))
 					private->mode = SHIFT_TS_SENT;
-				else if (!strcmp(tok1, "sequence"))
+				else if (!strcmp(mode, "sequence"))
 					private->mode = SHIFT_SEQUENCE;
 				else
-					error("Invalid mode parameter for hook '%s'", plugin_name(h->_vt));
-			}
-			else {
-				off = tok1;
-
-				private->mode = SHIFT_TS_ORIGIN; /* Default mode */
+					error("Invalid mode parameter '%s' for hook '%s'", mode, plugin_name(h->_vt));
 			}
 			
 			switch (private->mode) {
 				case SHIFT_TS_ORIGIN:
 				case SHIFT_TS_RECEIVED:
-				case SHIFT_TS_SENT:
-					private->offset.ts = time_from_double(strtod(off, &endptr));
+				case SHIFT_TS_SENT: {
+					double offset;
+					
+					if (!config_setting_lookup_float(h->cfg, "offset", &offset))
+						cerror(h->cfg, "Missing setting 'offset' for hook '%s'", plugin_name(h->_vt));
+					
+					private->offset.ts = time_from_double(offset);
 					break;
+				}
 
-				case SHIFT_SEQUENCE:
-					private->offset.seq = strtoul(off, &endptr, 10);
+				case SHIFT_SEQUENCE: {
+					int offset;
+					
+					if (!config_setting_lookup_int(h->cfg, "offset", &offset))
+						cerror(h->cfg, "Missing setting 'offset' for hook '%s'", plugin_name(h->_vt));
+					
+					private->offset.seq = offset;
 					break;
+				}
 			}
 			
-			if (endptr == off)
-				error("Invalid offset parameter for hook '%s'", plugin_name(h->_vt));
-			
-			free(cpy);
-
 			break;
 		
 		case HOOK_READ:

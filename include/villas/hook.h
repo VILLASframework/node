@@ -96,19 +96,21 @@ enum hook_when {
 struct hook_type {
 	enum hook_when when;	/**< The type of the hook as a bitfield */
 	hook_cb_t cb;		/**< The hook callback function as a function pointer. */
-	int priority;		/**< A priority to change the order of execution within one type of hook */
+	int priority;		/**< Default priority of this hook type. */
 };
 
 /** Descriptor for user defined hooks. See hooks[]. */
 struct hook {
 	enum state state;
-	
-	const char *parameter;	/**< A parameter string for this hook. Can be used to configure the hook behaviour. */
-	
+
 	struct sample *prev, *last;
 	
 	struct hook_type *_vt;	/**< C++ like Vtable pointer. */
 	void *_vd;		/**< Private data for this hook. This pointer can be used to pass data between consecutive calls of the callback. */
+	
+	int priority;		/**< A priority to change the order of execution within one type of hook. */
+	
+	config_setting_t *cfg;
 };
 
 /** Save references to global nodes, paths and settings */
@@ -142,10 +144,18 @@ int hook_cmp_priority(const void *a, const void *b);
  */
 void * hook_storage(struct hook *h, int when, size_t len, ctor_cb_t ctor, dtor_cb_t dtor);
 
-/** Parse an array or single hook function.
+/** Parses an object of hooks
  *
- * Examples:
- *     hooks = [ "print", "fir" ]
- *     hooks = "log"
+ * Example:
+ *
+ * {
+ *    stats = {
+ *       output = "stdout"
+ *    },
+ *    skip_first = {
+ *       seconds = 10
+ *    },
+ *    hooks = [ "print" ]
+ * }
  */
-int hook_parse_list(struct list *list, config_setting_t *cfg);
+int hook_parse_list(struct list *list, config_setting_t *cfg, struct super_node *sn);

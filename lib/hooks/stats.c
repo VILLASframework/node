@@ -63,12 +63,17 @@ static int hook_stats_send(struct hook *h, int when, struct hook_info *j)
 			assert(j->nodes);
 			assert(j->path);
 		
-			if (!h->parameter)
-				error("Missing parameter for hook '%s'", plugin_name(h->_vt));
+			if (!h->cfg)
+				error("Missing configuration for hook '%s'", plugin_name(h->_vt));
 			
-			private->dest = list_lookup(j->nodes, h->parameter);
+			const char *dest;
+			
+			if (!config_setting_lookup_string(h->cfg, "destination", &dest))
+				cerror(h->cfg, "Missing setting 'destination' for hook '%s'", plugin_name(h->_vt));
+			
+			private->dest = list_lookup(j->nodes, dest);
 			if (!private->dest)
-				error("Invalid destination node '%s' for hook '%s'", h->parameter, plugin_name(h->_vt));
+				cerror(h->cfg, "Invalid destination node '%s' for hook '%s'", dest, plugin_name(h->_vt));
 			break;
 			
 		case HOOK_PATH_START:
