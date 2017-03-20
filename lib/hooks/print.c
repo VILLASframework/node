@@ -12,12 +12,45 @@
 #include "plugin.h"
 #include "sample.h"
 
+struct print {
+	FILE *output;
+	const char *uri;
+};
+
 static int hook_print(struct hook *h, int when, struct hook_info *j)
 {
-	assert(j->samples);
+	struct print *p = (struct print *) h->_vd;
 	
-	for (int i = 0; i < j->count; i++)
-		sample_fprint(stdout, j->samples[i], SAMPLE_ALL);
+	switch (when) {
+		case HOOK_INIT:
+			p->output = stdout;
+			p->uri = NULL;
+			break;
+
+		case HOOK_PATH_START:
+			if (p->uri) {
+				p->output = fopen(p->uri, "w+");
+				if (!p->output)
+					error("Failed to open file %s for writing", p->uri);
+			}
+			break;
+		
+		case HOOK_PATH_STOP:
+			if (p->uri)
+				fclose(p->output);
+			break;
+		
+		case HOOK_PARSE:
+			config_setting_lookup_string(h->cfg, "output", &p->uri);
+			break;
+		
+		case HOOK_READ:
+			assert(j->samples);
+	
+			for (int i = 0; i < j->count; i++)
+				sample_fprint(p->output, j->samples[i], SAMPLE_ALL);
+			break;
+	}
 
 	return j->count;
 }
@@ -28,8 +61,9 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
+		.size	= sizeof(struct print),
 		.cb	= hook_print,
-		.when	= HOOK_READ
+		.when	= HOOK_STORAGE | HOOK_PARSE | HOOK_READ | HOOK_PATH
 	}
 };
 

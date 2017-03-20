@@ -30,8 +30,10 @@ int hook_init(struct hook *h, struct hook_type *vt, struct super_node *sn)
 	
 	assert(h->state == STATE_DESTROYED);
 	
-	h->_vt = vt;
 	h->priority = vt->priority;
+
+	h->_vt = vt;
+	h->_vd = alloc(vt->size);
 	
 	ret = hook_run(h, HOOK_INIT, &i);
 	if (ret)
@@ -51,11 +53,16 @@ int hook_parse(struct hook *h, config_setting_t *cfg)
 	h->cfg = cfg;
 	
 	config_setting_lookup_int(h->cfg, "priority", &h->priority);
+	
+	if (h->_vt->when & HOOK_PARSE) {
+		if (!h->cfg)
+			error("Missing configuration for hook: '%s'", plugin_name(h->_vt));
 
-	/* Parse hook arguments */
-	ret = hook_run(h, HOOK_PARSE, NULL);
-	if (ret)
-		return ret;
+		/* Parse hook arguments */
+		ret = hook_run(h, HOOK_PARSE, NULL);
+		if (ret)
+			return ret;
+	}
 	
 	h->state = STATE_PARSED;
 	
@@ -71,6 +78,9 @@ int hook_destroy(struct hook *h)
 	ret = hook_run(h, HOOK_DESTROY, NULL);
 	if (ret)
 		return ret;
+	
+	if (h->_vd)
+		free(h->_vd);
 	
 	h->state = HOOK_DESTROYED;
 	
@@ -90,29 +100,6 @@ int hook_run(struct hook *h, int when, struct hook_info *i)
 	debug(LOG_HOOK | 22, "Running hook '%s' when=%u, prio=%u, cnt=%zu", plugin_name(h->_vt), when, h->priority, i ? i->count : 0);
 	
 	return h->_vt->when & when ? h->_vt->cb(h, when, i) : 0;
-}
-
-void * hook_storage(struct hook *h, int when, size_t len, ctor_cb_t ctor, dtor_cb_t dtor)
-{
-	switch (when) {
-		case HOOK_INIT:
-			h->_vd = alloc(len);
-			
-			if (ctor)
-				ctor(h->_vd);
-			
-			break;
-			
-		case HOOK_DESTROY:
-			if (dtor)
-				dtor(h->_vd);
-		
-			free(h->_vd);
-			h->_vd = NULL;
-			break;
-	}
-	
-	return h->_vd;
 }
 
 int hook_parse_list(struct list *list, config_setting_t *cfg, struct super_node *sn)

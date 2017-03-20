@@ -12,27 +12,28 @@
 #include "plugin.h"
 #include "timing.h"
 
+struct shift {
+	union {
+		struct timespec ts;	/**< For SHIFT_TS_* modes. */
+		int seq;		/**< For SHIFT_SEQUENCE mode. */
+	} offset;
+	enum {
+		SHIFT_TS_ORIGIN,
+		SHIFT_TS_RECEIVED,
+		SHIFT_TS_SENT,
+		SHIFT_SEQUENCE
+	} mode;
+};
+
 static int hook_shift(struct hook *h, int when, struct hook_info *j)
 {
-	struct {
-		union {
-			struct timespec ts;	/**< For SHIFT_TS_* modes. */
-			int seq;		/**< For SHIFT_SEQUENCE mode. */
-		} offset;
-		
-		enum {
-			SHIFT_TS_ORIGIN,
-			SHIFT_TS_RECEIVED,
-			SHIFT_TS_SENT,
-			SHIFT_SEQUENCE
-		} mode;
-	} *private = hook_storage(h, when, sizeof(*private), NULL, NULL);
+	struct shift *p = (struct shift *) h->_vd;
 	
 	const char *mode;
 
 	switch (when) {
 		case HOOK_INIT:
-			private->mode = SHIFT_TS_ORIGIN; /* Default mode */
+			p->mode = SHIFT_TS_ORIGIN; /* Default mode */
 			break;
 
 		case HOOK_PARSE:
@@ -41,18 +42,18 @@ static int hook_shift(struct hook *h, int when, struct hook_info *j)
 
 			if (config_setting_lookup_string(h->cfg, "mode", &mode)) {
 				if      (!strcmp(mode, "origin"))
-					private->mode = SHIFT_TS_ORIGIN;
+					p->mode = SHIFT_TS_ORIGIN;
 				else if (!strcmp(mode, "received"))
-					private->mode = SHIFT_TS_RECEIVED;
+					p->mode = SHIFT_TS_RECEIVED;
 				else if (!strcmp(mode, "sent"))
-					private->mode = SHIFT_TS_SENT;
+					p->mode = SHIFT_TS_SENT;
 				else if (!strcmp(mode, "sequence"))
-					private->mode = SHIFT_SEQUENCE;
+					p->mode = SHIFT_SEQUENCE;
 				else
 					error("Invalid mode parameter '%s' for hook '%s'", mode, plugin_name(h->_vt));
 			}
 			
-			switch (private->mode) {
+			switch (p->mode) {
 				case SHIFT_TS_ORIGIN:
 				case SHIFT_TS_RECEIVED:
 				case SHIFT_TS_SENT: {
@@ -61,7 +62,7 @@ static int hook_shift(struct hook *h, int when, struct hook_info *j)
 					if (!config_setting_lookup_float(h->cfg, "offset", &offset))
 						cerror(h->cfg, "Missing setting 'offset' for hook '%s'", plugin_name(h->_vt));
 					
-					private->offset.ts = time_from_double(offset);
+					p->offset.ts = time_from_double(offset);
 					break;
 				}
 
@@ -71,7 +72,7 @@ static int hook_shift(struct hook *h, int when, struct hook_info *j)
 					if (!config_setting_lookup_int(h->cfg, "offset", &offset))
 						cerror(h->cfg, "Missing setting 'offset' for hook '%s'", plugin_name(h->_vt));
 					
-					private->offset.seq = offset;
+					p->offset.seq = offset;
 					break;
 				}
 			}
@@ -82,15 +83,15 @@ static int hook_shift(struct hook *h, int when, struct hook_info *j)
 			for (int i = 0; i < j->count; i++) {
 				struct sample *s = j->samples[i];
 
-				switch (private->mode) {
+				switch (p->mode) {
 					case SHIFT_TS_ORIGIN:
-						s->ts.origin = time_add(&s->ts.origin, &private->offset.ts); break;
+						s->ts.origin = time_add(&s->ts.origin, &p->offset.ts); break;
 					case SHIFT_TS_RECEIVED:
-						s->ts.received = time_add(&s->ts.received, &private->offset.ts); break;
+						s->ts.received = time_add(&s->ts.received, &p->offset.ts); break;
 					case SHIFT_TS_SENT:
-						s->ts.origin = time_add(&s->ts.sent, &private->offset.ts); break;
+						s->ts.origin = time_add(&s->ts.sent, &p->offset.ts); break;
 					case SHIFT_SEQUENCE:
-						s->sequence += private->offset.seq; break;
+						s->sequence += p->offset.seq; break;
 				}
 			}
 
@@ -106,6 +107,7 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
+		.size	= sizeof(struct shift),
 		.cb	= hook_shift,
 		.when	= HOOK_STORAGE | HOOK_READ
 	}

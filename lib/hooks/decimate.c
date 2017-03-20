@@ -11,23 +11,25 @@
 #include "hook.h"
 #include "plugin.h"
 
+struct decimate {
+	int ratio;
+	unsigned counter;
+};
+
 static int hook_decimate(struct hook *h, int when, struct hook_info *j)
 {
-	struct {
-		int ratio;
-		unsigned counter;
-	} *private = hook_storage(h, when, sizeof(*private), NULL, NULL);
+	struct decimate *p = (struct decimate *) h->_vd;
 
 	switch (when) {
 		case HOOK_INIT:
-			private->counter = 0;
+			p->counter = 0;
 			break;
 		
 		case HOOK_PARSE:
 			if (!h->cfg)
 				error("Missing configuration for hook: '%s'", plugin_name(h->_vt));
 		
-			if (!config_setting_lookup_int(h->cfg, "ratio", &private->ratio))
+			if (!config_setting_lookup_int(h->cfg, "ratio", &p->ratio))
 				cerror(h->cfg, "Missing setting 'ratio' for hook '%s'", plugin_name(h->_vt));
 	
 			break;
@@ -37,7 +39,7 @@ static int hook_decimate(struct hook *h, int when, struct hook_info *j)
 		
 			int i, ok;
 			for (i = 0, ok = 0; i < j->count; i++) {
-				if (private->counter++ % private->ratio == 0) {
+				if (p->counter++ % p->ratio == 0) {
 					struct sample *tmp;
 					
 					tmp = j->samples[ok];
@@ -58,6 +60,7 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
+		.size	= sizeof(struct decimate),
 		.cb	= hook_decimate,
 		.when	= HOOK_STORAGE | HOOK_PARSE | HOOK_DESTROY | HOOK_READ
 	}
