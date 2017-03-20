@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <villas/timing.h>
 #include <villas/sample.h>
 #include <villas/hook.h>
 #include <villas/utils.h>
@@ -143,6 +144,8 @@ int main(int argc, char *argv[])
 			ret = sample_fscan(stdin, hi.samples[j], NULL);
 			if (ret < 0)
 				break;
+			
+			hi.samples[j]->ts.received = time_now();
 		}
 		
 		debug(15, "Read %d samples from stdin", cnt);
