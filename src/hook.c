@@ -24,38 +24,44 @@
 
 #include "config.h"
 
-static int hook_parse_cli(struct hook *h, char *param)
+config_t cfg;
+
+static int hook_parse_cli(struct hook *h, char *params[], int paramlen)
 {
 	int ret;
-
-	config_t cfg;
+	char *str;
 	config_setting_t *cfg_root;
+	
+	/* Concat all params */
+	str = NULL;
+	for (int i = 0; i < paramlen; i++)
+		str = strcatf(&str, params[i]);
 
-	config_init(&cfg);
 	config_set_auto_convert(&cfg, 1);
 
-	cfg_root = config_root_setting(&cfg);
-
-	ret = config_read_string(&cfg, param);
-	if (ret != CONFIG_TRUE)
-		error("Failed to parse argument '%s': %s", param, config_error_text(&cfg));
+	if (str) {
+		ret = config_read_string(&cfg, str);
+		if (ret != CONFIG_TRUE)
+			error("Failed to parse argument '%s': %s", str, config_error_text(&cfg));
+	}
 	
-	config_write(&cfg, stdout);
+	//config_write(&cfg, stdout);
 
+	cfg_root = config_root_setting(&cfg);
 	ret = hook_parse(h, cfg_root);
 	if (ret)
 		error("Failed to parse hook settings");
 
-	config_destroy(&cfg);
-	
+	free(str);
+
 	return 0;
 }
 
 static void usage()
 {
-	printf("Usage: villas-hook [OPTIONS] NAME [PARAMETER1 PARAMTER2 ...] \n");
+	printf("Usage: villas-hook [OPTIONS] NAME [PARAM] \n");
 	printf("  NAME      the name of the hook function to run\n");
-	printf("  PARAM     the name of the node to which samples are sent and received from\n\n");
+	printf("  PARAM     a string of configuration settings for the hook\n\n");
 	printf("  OPTIONS are:\n");
 	printf("    -h      show this help\n");
 	printf("    -d LVL  set debug level to LVL\n");
@@ -121,12 +127,11 @@ int main(int argc, char *argv[])
 	p = plugin_lookup(PLUGIN_TYPE_HOOK, name);
 	if (!p)
 		error("Unknown hook function '%s'", argv[optind]);
+
+	config_init(&cfg);
 	
 	hook_init(&h, &p->hook, NULL);
-	
-	if (argc > optind + 1)
-		hook_parse_cli(&h, argv[optind + 1]);
-
+	hook_parse_cli(&h, &argv[optind + 1], argc - optind - 1);
 	hook_run(&h, HOOK_PATH_START, &hi);
 	
 	while (!feof(stdin)) {
@@ -158,6 +163,7 @@ int main(int argc, char *argv[])
 	hook_run(&h, HOOK_PATH_STOP, &hi);
 
 	hook_destroy(&h);
+	config_destroy(&cfg);
 	
 	sample_free(samples, cnt);
 	pool_destroy(&pool);
