@@ -23,6 +23,12 @@ struct sample;
 struct path;
 struct node;
 
+enum stats_format {
+	STATS_FORMAT_HUMAN,
+	STATS_FORMAT_JSON,
+	STATS_FORMAT_MATLAB
+};
+
 enum stats_id {
 	STATS_SKIPPED,		/**< Counter for skipped messages due to hooks */
 	STATS_DROPPED,		/**< Counter for dropped messages due to reordering */
@@ -64,9 +70,9 @@ void stats_reset(struct stats *s);
 
 void stats_print_header();
 
-void stats_print_periodic(struct stats *s, struct path *p);
+void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int verbose, struct path *p);
 
-void stats_print(struct stats *s, int details);
+void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose);
 
 void stats_send(struct stats *s, struct node *n);
 

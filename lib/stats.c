@@ -110,6 +110,17 @@ json_t * stats_json(struct stats *s)
 	
 	return obj;
 }
+
+json_t * stats_json_periodic(struct stats *s, struct path *p)
+{
+	return json_pack("{ s: s, s: f, s: f, s: i, s: i }"
+		"path", path_name(p),
+		"owd", s->histograms[STATS_OWD].last,
+		"rate", 1.0 / s->histograms[STATS_GAP_SAMPLE].last,
+		"dropped", s->histograms[STATS_REORDERED].total,
+		"skipped", s->histograms[STATS_SKIPPED].total
+	);
+}
 #endif
 
 void stats_reset(struct stats *s)
@@ -119,36 +130,67 @@ void stats_reset(struct stats *s)
 	}
 }
 
-void stats_print_header()
+void stats_print_header(enum stats_format fmt)
 {
 	#define UNIT(u)	"(" YEL(u) ")"
-
-	stats("%-40s|%19s|%19s|%19s|%19s|", "Source " MAG("=>") " Destination",
-		"OWD"	UNIT("S") " ",
-		"Rate"	UNIT("p/S") " ",
-		"Drop"	UNIT("p") " ",
-		"Skip"	UNIT("p") " "
-	);
-	line();
+	
+	switch (fmt) {
+		case STATS_FORMAT_HUMAN:
+			stats("%-40s|%19s|%19s|%19s|%19s|", "Source " MAG("=>") " Destination",
+				"OWD"	UNIT("S") " ",
+				"Rate"	UNIT("p/S") " ",
+				"Drop"	UNIT("p") " ",
+				"Skip"	UNIT("p") " "
+			);
+			line();
+			break;
+			
+		default: { }
+	}
 }
 
-void stats_print_periodic(struct stats *s, struct path *p)
+void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int verbose, struct path *p)
 {
-	stats("%-40.40s|%10f|%10f|%10ju|%10ju|", path_name(p),
-		s->histograms[STATS_OWD].last,
-		1.0 / s->histograms[STATS_GAP_SAMPLE].last,
-		s->histograms[STATS_DROPPED].total,
-		s->histograms[STATS_SKIPPED].total
-	);
-}
-
-void stats_print(struct stats *s, int details)
-{
-	for (int i = 0; i < STATS_COUNT; i++) {
-		struct stats_desc *desc = &stats_table[i];
+	switch (fmt) {
+		case STATS_FORMAT_HUMAN:
+			stats("%-40.40s|%10f|%10f|%10ju|%10ju|", path_name(p),
+				s->histograms[STATS_OWD].last,
+				1.0 / s->histograms[STATS_GAP_SAMPLE].last,
+				s->histograms[STATS_REORDERED].total,
+				s->histograms[STATS_SKIPPED].total
+			);
+			break;
 		
-		stats("%s: %s", desc->name, desc->desc);
-		hist_print(&s->histograms[i], details);
+		case STATS_FORMAT_JSON: {
+			json_t *json_stats = stats_json_periodic(s, p);
+			json_dumpf(json_stats, f, 0);
+			break;
+		}
+			
+		default: { }
+	}
+}
+
+void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose)
+{
+	switch (fmt) {
+		case STATS_FORMAT_HUMAN:
+			for (int i = 0; i < STATS_COUNT; i++) {
+				struct stats_desc *desc = &stats_table[i];
+		
+				stats("%s: %s", desc->name, desc->desc);
+				hist_print(&s->histograms[i], verbose);
+			}
+			break;
+			
+		case STATS_FORMAT_JSON: {
+			json_t *json_stats = stats_json(s);
+			json_dumpf(json_stats, f, 0);
+			fflush(f);
+			break;
+		}
+			
+		default: { }
 	}
 }
 
