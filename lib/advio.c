@@ -175,8 +175,9 @@ int adownload(AFILE *af)
 		case CURLE_OK:
 			curl_easy_getinfo(af->curl, CURLINFO_RESPONSE_CODE, &code);
 			switch (code) {
-				case 404: goto notexist;
+				case   0:
 				case 200: goto exist;
+				case 404: goto notexist;
 				default:  return -1;
 			}
 
