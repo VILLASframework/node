@@ -77,7 +77,7 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	int j, ret, level, cnt;
+	int ret, level, cnt;
 	
 	/* Default values */
 	level = V;
@@ -140,25 +140,24 @@ int main(int argc, char *argv[])
 		if (ret != cnt)
 			error("Failed to allocate %u samples from pool", cnt);
 
-		for (j = 0; j < cnt && !feof(stdin); j++) {
+		hi.count = 0;
+		for (int j = 0; j < cnt && !feof(stdin); j++) {
 			ret = sample_fscan(stdin, hi.samples[j], NULL);
 			if (ret < 0)
 				break;
 			
 			hi.samples[j]->ts.received = time_now();
+			hi.count++;
 		}
-		
+
 		debug(15, "Read %d samples from stdin", cnt);
 		
-		hi.count = j;
+		hook_run(&h, HOOK_READ, &hi);
+		hook_run(&h, HOOK_WRITE, &hi);
 		
-		if (h._vt->when & HOOK_READ)
-			hi.count = h._vt->cb(&h, HOOK_READ, &hi);
-		if (h._vt->when & HOOK_WRITE)
-			hi.count = h._vt->cb(&h, HOOK_WRITE, &hi);
-		
-		for (j = 0; j < hi.count; j++)
+		for (int j = 0; j < hi.count; j++)
 			sample_fprint(stdout, hi.samples[j], SAMPLE_ALL);
+		fflush(stdout);
 		
 		sample_free(samples, cnt);
 	}
