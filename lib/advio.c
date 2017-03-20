@@ -97,7 +97,7 @@ AFILE * afopen(const char *uri, const char *mode)
 
 out0:	curl_easy_cleanup(af->curl);
 out1:	fclose(af->file);
-out2:	free(af->file);
+out2:	free(af->uri);
 	free(af);
 
 	return NULL;
