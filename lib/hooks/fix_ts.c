@@ -34,7 +34,7 @@ int hook_fix_ts(struct hook *h, int when, struct hook_info *j)
 			j->samples[i]->ts.origin = now;
 	}
 
-	return j->count;
+	return 0;
 }
 
 static struct plugin p = {

@@ -97,6 +97,7 @@ struct hook_type {
 	enum hook_when when;	/**< The type of the hook as a bitfield */
 	hook_cb_t cb;		/**< The hook callback function as a function pointer. */
 	int priority;		/**< Default priority of this hook type. */
+	size_t size;		/**< Size of allocation for struct hook::_vd */
 };
 
 /** Descriptor for user defined hooks. See hooks[]. */
@@ -132,17 +133,6 @@ int hook_destroy(struct hook *h);
 
 /** Compare two hook functions with their priority. Used by list_sort() */
 int hook_cmp_priority(const void *a, const void *b);
-
-/** Allocate & deallocate private memory per hook.
- *
- * Hooks which use this function must be flagged with HOOL_STORAGE.
- *
- * @param h A pointer to the hook structure.
- * @param when Which event cause the hook to be executed?
- * @param len The size of hook prvate memory allocation.
- * @return A pointer to the allocated memory region or NULL after it was released.
- */
-void * hook_storage(struct hook *h, int when, size_t len, ctor_cb_t ctor, dtor_cb_t dtor);
 
 /** Parses an object of hooks
  *

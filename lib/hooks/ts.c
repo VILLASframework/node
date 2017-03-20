@@ -19,7 +19,7 @@ static int hook_ts(struct hook *h, int when, struct hook_info *j)
 	for (int i = 0; i < j->count; i++)
 		j->samples[i]->ts.origin = j->samples[i]->ts.received;
 
-	return j->count;
+	return 0;
 }
 
 static struct plugin p = {

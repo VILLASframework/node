@@ -102,7 +102,7 @@ static int hook_stats(struct hook *h, int when, struct hook_info *j)
 			break;
 	}
 	
-	return j->count;
+	return 0;
 }
 
 struct stats_send {

@@ -52,7 +52,7 @@ static int hook_print(struct hook *h, int when, struct hook_info *j)
 			break;
 	}
 
-	return j->count;
+	return 0;
 }
 
 static struct plugin p = {

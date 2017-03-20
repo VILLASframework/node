@@ -48,7 +48,7 @@ static int hook_convert(struct hook *h, int when, struct hook_info *j)
 				}
 			}
 			
-			return j->count;
+			break;
 	}
 
 	return 0;

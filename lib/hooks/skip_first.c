@@ -111,8 +111,8 @@ static int hook_skip_first(struct hook *h, int when, struct hook_info *j)
 				 * only the first 'ok' samples in 'smps[]' are accepted and further processed.
 				 */
 			}
-
-			return ok;
+			
+			j->count = ok;
 	}
 
 	return 0;

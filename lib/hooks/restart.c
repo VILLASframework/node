@@ -33,7 +33,7 @@ static int hook_restart(struct hook *h, int when, struct hook_info *j)
 		h->prev = h->last;
 	}
 
-	return j->count;
+	return 0;
 }
 
 static struct plugin p = {
