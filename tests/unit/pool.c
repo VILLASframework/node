@@ -34,7 +34,7 @@ ParameterizedTestParameters(pool, basic)
 ParameterizedTest(struct param *p, pool, basic)
 {
 	int ret;
-	struct pool pool;
+	struct pool pool = { .state = STATE_DESTROYED };
 
 	void *ptr, *ptrs[p->pool_size];
 

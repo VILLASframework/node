@@ -20,7 +20,7 @@ struct data {
 
 Test(list, list_lookup)
 {
-	struct list l;
+	struct list l = { .state = STATE_DESTROYED };
 	
 	list_init(&l);
 	
@@ -42,26 +42,26 @@ Test(list, list_lookup)
 
 Test(list, list_search)
 {
-	struct list l;
+	struct list l = { .state = STATE_DESTROYED };
 	
 	list_init(&l);
 	
 	/* Fill list */
 	for (int i = 0; i < ARRAY_LEN(nouns); i++)
 		list_push(&l, nouns[i]);
+	
+	cr_assert_eq(list_length(&l), ARRAY_LEN(nouns));
 
 	/* Declare on stack! */
 	char positive[] = "woman";
 	char negative[] = "dinosaurrier";
 	
-	char *found = (char *) list_search(&l, (cmp_cb_t) strcmp, positive);
-	
+	char *found = list_search(&l, (cmp_cb_t) strcmp, positive);
 	cr_assert_not_null(found);
-	cr_assert_eq(found, nouns[13]);
+	cr_assert_eq(found, nouns[13], "found = %p, nouns[13] = %p", found, nouns[13]);
 	cr_assert_str_eq(found, positive);
 	
 	char *not_found = (char *) list_search(&l, (cmp_cb_t) strcmp, negative);
-
 	cr_assert_null(not_found);
 
 	list_destroy(&l, NULL, false);
@@ -82,7 +82,7 @@ static int dtor(void *ptr)
 
 Test(list, destructor)
 {
-	struct list l;
+	struct list l = { .state = STATE_DESTROYED };
 	struct content elm = { .destroyed = 0 };
 	
 	list_init(&l);
@@ -102,7 +102,8 @@ static int compare(const void *a, const void *b) {
 Test(list, basics)
 {
 	intptr_t i;
-	struct list l;
+	int ret;
+	struct list l = { .state = STATE_DESTROYED };
 	
 	list_init(&l);
 	
@@ -131,13 +132,16 @@ Test(list, basics)
 		i--;
 	}
 
-	cr_assert(list_contains(&l, (void *) 55));
+	ret = list_contains(&l, (void *) 55);
+	cr_assert(ret);
 	
 	list_remove(&l, (void *) 55);
 	
-	cr_assert(!list_contains(&l, (void *) 55));
+	ret = list_contains(&l, (void *) 55);
+	cr_assert(!ret);
 
 	list_destroy(&l, NULL, false);
 
-	cr_assert_eq(list_length(&l), -1, "List not properly destroyed: l.length = %zd", l.length);
+	ret = list_length(&l);
+	cr_assert_eq(ret, -1, "List not properly destroyed: l.length = %zd", l.length);
 }
