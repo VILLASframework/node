@@ -43,7 +43,7 @@ int dft_parse(struct fpga_ip *c)
 	return 0;
 }
 
-int dft_init(struct fpga_ip *c)
+int dft_start(struct fpga_ip *c)
 {
 	int ret;
 	
@@ -76,13 +76,20 @@ int dft_init(struct fpga_ip *c)
 	return 0;
 }
 
-int dft_destroy(struct fpga_ip *c)
+int dft_stop(struct fpga_ip *c)
 {
 	struct dft *dft = (struct dft *) &c->_vd;
 
 	XHls_dft *xdft = &dft->inst;
 
 	XHls_dft_DisableAutoRestart(xdft);
+	
+	return 0;
+}
+
+int dft_destroy(struct fpga_ip *c)
+{
+	struct dft *dft = (struct dft *) &c->_vd;
 
 	if (dft->fharmonics) {
 		free(dft->fharmonics);
@@ -99,7 +106,8 @@ static struct plugin p = {
 	.ip		= {
 		.vlnv	= { "acs.eonerc.rwth-aachen.de", "hls", "hls_dft", NULL },
 		.type	= FPGA_IP_TYPE_MATH,
-		.init	= dft_init,
+		.start	= dft_start,
+		.stop	= dft_stop,
 		.destroy = dft_destroy,
 		.parse	= dft_parse,
 		.size	= sizeof(struct dft)

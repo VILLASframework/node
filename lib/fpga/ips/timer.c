@@ -14,7 +14,7 @@
 #include "fpga/card.h"
 #include "fpga/ips/timer.h"
 
-int timer_init(struct fpga_ip *c)
+int timer_start(struct fpga_ip *c)
 {
 	struct fpga_card *f = c->card;
 	struct timer *tmr = (struct timer *) &c->_vd;
@@ -38,7 +38,7 @@ static struct plugin p = {
 	.ip		= {
 		.vlnv	= { "xilinx.com", "ip", "axi_timer", NULL },
 		.type	= FPGA_IP_TYPE_MISC,
-		.init	= timer_init
+		.start	= timer_start,
 		.size	= sizeof(struct timer)
 	}
 };

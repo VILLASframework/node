@@ -14,7 +14,7 @@
 #include "fpga/card.h"
 #include "fpga/ips/switch.h"
 
-int switch_init(struct fpga_ip *c)
+int switch_start(struct fpga_ip *c)
 {
 	int ret;
 	
@@ -194,7 +194,7 @@ static struct plugin p = {
 	.ip		= {
 		.vlnv	= { "xilinx.com", "ip", "axis_interconnect", NULL },
 		.type	= FPGA_IP_TYPE_MISC,
-		.init	= switch_init,
+		.start	= switch_start,
 		.destroy = switch_destroy,
 		.parse	= switch_parse,
 		.size	= sizeof(struct sw)

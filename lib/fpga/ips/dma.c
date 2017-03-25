@@ -560,7 +560,7 @@ static int dma_init_rings(XAxiDma *xdma, struct dma_mem *bd)
 	return 0;
 }
 
-int dma_init(struct fpga_ip *c)
+int dma_start(struct fpga_ip *c)
 {
 	int ret, sg;
 	struct dma *dma = (struct dma *) &c->_vd;
@@ -631,8 +631,8 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_FPGA_IP,
 	.ip		= {
 		.vlnv	= { "xilinx.com", "ip", "axi_dma", NULL },
-		.type	= FPGA_IP_TYPE_DATAMOVER,
-		.init	= dma_init,
+		.type	= FPGA_IP_TYPE_DM_DMA,
+		.init	= dma_start,
 		.reset	= dma_reset,
 		.size	= sizeof(struct dma)
 	}

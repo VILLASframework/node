@@ -16,7 +16,7 @@
 #include "fpga/ips/fifo.h"
 #include "fpga/ips/intc.h"
 
-int fifo_init(struct fpga_ip *c)
+int fifo_start(struct fpga_ip *c)
 {
 	int ret;
 	
@@ -35,6 +35,17 @@ int fifo_init(struct fpga_ip *c)
 		return -1;
 
 	XLlFifo_IntEnable(xfifo, XLLF_INT_RC_MASK); /* Receive complete IRQ */
+
+	return 0;
+}
+
+int fifo_stop(struct fpga_ip *c)
+{
+	struct fifo *fifo = (struct fifo *) &c->_vd;
+	
+	XLlFifo *xfifo = &fifo->inst;
+
+	XLlFifo_IntDisable(xfifo, XLLF_INT_RC_MASK); /* Receive complete IRQ */
 
 	return 0;
 }
@@ -109,8 +120,9 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_FPGA_IP,
 	.ip		= {
 		.vlnv	= { "xilinx.com", "ip", "axi_fifo_mm_s", NULL },
-		.type	= FPGA_IP_TYPE_DATAMOVER,
-		.init	= fifo_init,
+		.type	= FPGA_IP_TYPE_DM_FIFO,
+		.start	= fifo_start,
+		.stop	= fifo_stop,
 		.parse	= fifo_parse,
 		.reset	= fifo_reset,
 		.size	= sizeof(struct fifo)
