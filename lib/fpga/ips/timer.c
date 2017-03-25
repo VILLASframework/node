@@ -17,7 +17,7 @@
 int timer_init(struct fpga_ip *c)
 {
 	struct fpga_card *f = c->card;
-	struct timer *tmr = &c->timer;
+	struct timer *tmr = (struct timer *) &c->_vd;
 
 	XTmrCtr *xtmr = &tmr->inst;
 	XTmrCtr_Config xtmr_cfg = {
@@ -39,6 +39,7 @@ static struct plugin p = {
 		.vlnv	= { "xilinx.com", "ip", "axi_timer", NULL },
 		.type	= FPGA_IP_TYPE_MISC,
 		.init	= timer_init
+		.size	= sizeof(struct timer)
 	}
 };
 

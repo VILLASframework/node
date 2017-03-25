@@ -56,7 +56,8 @@ static struct plugin p = {
 	.ip		= {
 		.vlnv	= { "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL },
 		.type	= FPGA_IP_TYPE_INTERFACE,
-		.dump	= rtds_axis_dump
+		.dump	= rtds_axis_dump,
+		.size	= 0
 	}
 };
 

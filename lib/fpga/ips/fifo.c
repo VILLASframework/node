@@ -19,9 +19,9 @@
 int fifo_init(struct fpga_ip *c)
 {
 	int ret;
-
+	
 	struct fpga_card *f = c->card;
-	struct fifo *fifo = &c->fifo;
+	struct fifo *fifo = (struct fifo *) &c->_vd;
 	
 	XLlFifo *xfifo = &fifo->inst;
 	XLlFifo_Config fifo_cfg = {
@@ -41,43 +41,48 @@ int fifo_init(struct fpga_ip *c)
 
 ssize_t fifo_write(struct fpga_ip *c, char *buf, size_t len)
 {
-	XLlFifo *fifo = &c->fifo.inst;
+	struct fifo *fifo = (struct fifo *) &c->_vd;
+
+	XLlFifo *xllfifo = &fifo->inst;
+
 	uint32_t tdfv;
 
-	tdfv = XLlFifo_TxVacancy(fifo);
+	tdfv = XLlFifo_TxVacancy(xllfifo);
 	if (tdfv < len)
 		return -1;
 
-	XLlFifo_Write(fifo, buf, len);
-	XLlFifo_TxSetLen(fifo, len);
+	XLlFifo_Write(xllfifo, buf, len);
+	XLlFifo_TxSetLen(xllfifo, len);
 
 	return len;
 }
 
 ssize_t fifo_read(struct fpga_ip *c, char *buf, size_t len)
 {
-	XLlFifo *fifo = &c->fifo.inst;
+	struct fifo *fifo = (struct fifo *) &c->_vd;
+
+	XLlFifo *xllfifo = &fifo->inst;
 
 	size_t nextlen = 0;
 	uint32_t rxlen;
 
-	while (!XLlFifo_IsRxDone(fifo))
+	while (!XLlFifo_IsRxDone(xllfifo))
 		intc_wait(c->card->intc, c->irq);
-	XLlFifo_IntClear(fifo, XLLF_INT_RC_MASK);
+	XLlFifo_IntClear(xllfifo, XLLF_INT_RC_MASK);
 
 	/* Get length of next frame */
-	rxlen = XLlFifo_RxGetLen(fifo);
+	rxlen = XLlFifo_RxGetLen(xllfifo);
 	nextlen = MIN(rxlen, len);
 	
 	/* Read from FIFO */
-	XLlFifo_Read(fifo, buf, nextlen);
+	XLlFifo_Read(xllfifo, buf, nextlen);
 
 	return nextlen;
 }
 
 int fifo_parse(struct fpga_ip *c)
 {
-	struct fifo *fifo = &c->fifo;
+	struct fifo *fifo = (struct fifo *) &c->_vd;
 
 	int baseaddr_axi4;
 	
@@ -91,7 +96,9 @@ int fifo_parse(struct fpga_ip *c)
 
 int fifo_reset(struct fpga_ip *c)
 {
-	XLlFifo_Reset(&c->fifo.inst);
+	struct fifo *fifo = (struct fifo *) &c->_vd;
+	
+	XLlFifo_Reset(&fifo->inst);
 
 	return 0;
 }
@@ -105,7 +112,8 @@ static struct plugin p = {
 		.type	= FPGA_IP_TYPE_DATAMOVER,
 		.init	= fifo_init,
 		.parse	= fifo_parse,
-		.reset	= fifo_reset
+		.reset	= fifo_reset,
+		.size	= sizeof(struct fifo)
 	}
 };
 

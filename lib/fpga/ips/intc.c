@@ -24,18 +24,18 @@ int intc_init(struct fpga_ip *c)
 	int ret;
 
 	struct fpga_card *f = c->card;
-	struct intc *intc = &c->intc;
+	struct intc *intc = (struct intc *) &c->_vd;
 
 	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
 
 	if (c != f->intc)
 		error("There can be only one interrupt controller per FPGA");
 
-	intc->num_irqs = vfio_pci_msi_init(&f->vd, intc->efds);
+	intc->num_irqs = vfio_pci_msi_init(&f->vfio_device, intc->efds);
 	if (intc->num_irqs < 0)
 		return -1;
 
-	ret = vfio_pci_msi_find(&f->vd, intc->nos);
+	ret = vfio_pci_msi_find(&f->vfio_device, intc->nos);
 	if (ret)
 		return -2;
 
@@ -64,9 +64,9 @@ int intc_init(struct fpga_ip *c)
 int intc_destroy(struct fpga_ip *c)
 {
 	struct fpga_card *f = c->card;
-	struct intc *intc = &c->intc;
+	struct intc *intc = (struct intc *) &c->_vd;
 
-	vfio_pci_msi_deinit(&f->vd, intc->efds);
+	vfio_pci_msi_deinit(&f->vfio_device, intc->efds);
 	
 	return 0;
 }
@@ -74,7 +74,7 @@ int intc_destroy(struct fpga_ip *c)
 int intc_enable(struct fpga_ip *c, uint32_t mask, int flags)
 {
 	struct fpga_card *f = c->card;
-	struct intc *intc = &c->intc;
+	struct intc *intc = (struct intc *) &c->_vd;
 
 	uint32_t ier, imr;
 	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
@@ -124,7 +124,7 @@ int intc_disable(struct fpga_ip *c, uint32_t mask)
 uint64_t intc_wait(struct fpga_ip *c, int irq)
 {
 	struct fpga_card *f = c->card;
-	struct intc *intc = &c->intc;
+	struct intc *intc = (struct intc *) &c->_vd;
 
 	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
 
@@ -158,7 +158,8 @@ static struct plugin p = {
 		.vlnv	= { "acs.eonerc.rwth-aachen.de", "user", "axi_pcie_intc", NULL },
 		.type	= FPGA_IP_TYPE_MISC,
 		.init	= intc_init,
-		.destroy = intc_destroy
+		.destroy = intc_destroy,
+		.size	= sizeof(struct intc)
 	}
 };
 
