@@ -30,12 +30,11 @@
 }
 				
 #define list_length(list)	((list)->length)
-#define list_at(list, index)	((list)->length > index ? (list)->array[index] : NULL)
+#define list_at_safe(list, index) ((list)->length > index ? (list)->array[index] : NULL)
+#define list_at(list, index) 	((list)->array[index])
 
 #define list_first(list)	list_at(list, 0)
 #define list_last(list)		list_at(list, (list)->length-1)
-#define list_foreach(ptr, list)	for (int _i = 0, _p; _p = 1, _i < (list)->length; _i++) \
-					for (ptr = (list)->array[_i]; _p--; )
 
 /** Callback to destroy list elements.
  *

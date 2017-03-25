@@ -131,9 +131,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 			afclose(af);
 		else
 			fclose(f);
-		
-		
-		
+
 		return super_node_parse(sn, cfg_root);
 	}
 	else { INDENT
@@ -278,13 +276,17 @@ int super_node_check(struct super_node *sn)
 {
 	int ret;
 
-	list_foreach(struct node *n, &sn->nodes) {
+	for (size_t i = 0; i < list_length(&sn->nodes); i++) {
+		struct node *n = list_at(&sn->nodes, i);
+
 		ret = node_check(n);
 		if (ret)
 			error("Invalid configuration for node %s", node_name(n));
 	}
 	
-	list_foreach(struct path *p, &sn->paths) {
+	for (size_t i = 0; i < list_length(&sn->paths); i++) {
+		struct path *p = list_at(&sn->paths, i);
+
 		ret = path_check(p);
 		if (ret)
 			error("Invalid configuration for path %s", path_name(p));
@@ -306,14 +308,16 @@ int super_node_start(struct super_node *sn)
 	web_start(&sn->web);
 	
 	info("Start node types");
-	list_foreach(struct node *n, &sn->nodes) { INDENT
-		config_setting_t *cfg = config_root_setting(&sn->cfg);
+	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
+		struct node *n = list_at(&sn->nodes, i);
 		
-		node_type_start(n->_vt, sn->cli.argc, sn->cli.argv, cfg);
+		node_type_start(n->_vt, sn);
 	}
 	
 	info("Starting nodes");
-	list_foreach(struct node *n, &sn->nodes) { INDENT
+	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
+		struct node *n = list_at(&sn->nodes, i);
+
 		int refs = list_count(&sn->paths, (cmp_cb_t) path_uses_node, n);
 		if (refs > 0)
 			node_start(n);
@@ -322,7 +326,9 @@ int super_node_start(struct super_node *sn)
 	}
 
 	info("Starting paths");
-	list_foreach(struct path *p, &sn->paths) { INDENT
+	for (size_t i = 0; i < list_length(&sn->paths); i++) { INDENT
+		struct path *p = list_at(&sn->paths, i);
+		
 		if (p->enabled) {
 			path_init(p, sn);
 			path_start(p);
@@ -341,17 +347,22 @@ int super_node_stop(struct super_node *sn)
 	assert(sn->state == STATE_STARTED);
 
 	info("Stopping paths");
-	list_foreach(struct path *p, &sn->paths) { INDENT
+	for (size_t i = 0; i < list_length(&sn->paths); i++) { INDENT
+		struct path *p = list_at(&sn->paths, i);
+
 		path_stop(p);
 	}
 
 	info("Stopping nodes");
-	list_foreach(struct node *n, &sn->nodes) { INDENT
+	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
+		struct node *n = list_at(&sn->nodes, i);
+
 		node_stop(n);
 	}
 
 	info("De-initializing node types");
-	list_foreach(struct plugin *p, &plugins) { INDENT
+	for (size_t i = 0; i < list_length(&plugins); i++) { INDENT
+		struct plugin *p = list_at(&plugins, i);
 		if (p->type == PLUGIN_TYPE_NODE)
 			node_type_stop(&p->node);
 	}

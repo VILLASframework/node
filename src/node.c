@@ -107,9 +107,14 @@ int main(int argc, char *argv[])
 	while (1) {
 		now = time_now();
 		if (sn.stats > 0 && time_delta(&last, &now) > sn.stats) {
-			list_foreach(struct path *p, &sn.paths) {
-				list_foreach(struct hook *h, &p->hooks)
-					hook_run(h, HOOK_PERIODIC, NULL);
+			for (size_t i = 0; i < list_length(&sn.paths); i++) {
+				struct path *p = list_at(&sn.paths, i);
+
+				for (size_t j = 0; j < list_length(&p->hooks); j++) {
+					struct hook *h = list_at(&p->hooks, j);
+
+					hook_run(h, HOOK_PERIODIC, NULL, 0);
+				}
 			}
 
 			last = time_now();

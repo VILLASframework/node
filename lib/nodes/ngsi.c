@@ -56,7 +56,10 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct sample *smps[], unsigned
 	
 	if (flags & NGSI_ENTITY_ATTRIBUTES) {
 		json_t *attributes = json_array();
-		list_foreach(struct ngsi_attribute *map, &i->mapping) {
+		
+		for (size_t j = 0; j < list_length(&i->mapping); j++) {
+			struct ngsi_attribute *map = list_at(&i->mapping, j);
+
 			json_t *attribute = json_pack("{ s: s, s: s }",
 				"name",		map->name,
 				"type",		map->type
@@ -77,7 +80,10 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct sample *smps[], unsigned
 			
 			if (flags & NGSI_ENTITY_METADATA) { /* Create Metadata for attribute */
 				json_t *metadatas = json_array();
-				list_foreach(struct ngsi_metadata *meta, &map->metadata) {
+				
+				for (size_t i = 0; i < list_length(&map->metadata); i++) {
+					struct ngsi_metadata *meta = list_at(&map->metadata, i);
+
 					json_array_append_new(metadatas, json_pack("{ s: s, s: s, s: s }",
 						"name",  meta->name,
 						"type",  meta->type,

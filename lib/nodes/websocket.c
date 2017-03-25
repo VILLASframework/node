@@ -288,7 +288,9 @@ int websocket_stop(struct node *n)
 {
 	struct websocket *w = n->_vd;
 	
-	list_foreach(struct websocket_connection *c, &w->connections) {
+	for (size_t i = 0; i < list_length(&w->connections); i++) {
+		struct websocket_connection *c = list_at(&w->connections, i);
+
 		c->state = WEBSOCKET_SHUTDOWN;
 		lws_callback_on_writable(c->wsi);
 	}
@@ -340,11 +342,18 @@ int websocket_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct websocket *w = n->_vd;
 
-	list_foreach(struct websocket_connection *c, &w->connections)
-		websocket_connection_write(c, smps, cnt);
 	
-	list_foreach(struct websocket_connection *c, &connections)
+	for (size_t i = 0; i < list_length(&w->connections); i++) {
+		struct websocket_connection *c = list_at(&w->connections, i);
+	
 		websocket_connection_write(c, smps, cnt);
+	}
+	
+	for (size_t i = 0; i < list_length(&connections); i++) {
+		struct websocket_connection *c = list_at(&connections, i);
+	
+		websocket_connection_write(c, smps, cnt);
+	}
 
 	return cnt;
 }
@@ -399,7 +408,9 @@ char * websocket_print(struct node *n)
 	
 	buf = strcatf(&buf, "dests=");
 	
-	list_foreach(struct lws_client_connect_info *in, &w->destinations) {
+	for (size_t i = 0; i < list_length(&w->destinations); i++) {
+		struct lws_client_connect_info *in = list_at(&w->destinations, i);
+
 		buf = strcatf(&buf, "%s://%s:%d/%s",
 			in->ssl_connection ? "https" : "http",
 			in->address,

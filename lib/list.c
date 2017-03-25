@@ -40,6 +40,7 @@ void list_init(struct list *l)
 	l->length = 0;
 	l->capacity = 0;
 	l->array = NULL;
+
 	l->state = STATE_INITIALIZED;
 }
 
@@ -49,7 +50,9 @@ int list_destroy(struct list *l, dtor_cb_t destructor, bool release)
 
 	assert(l->state != STATE_DESTROYED);
 
-	list_foreach(void *p, l) {
+	for (size_t i = 0; i < list_length(l); i++) {
+		void *p = list_at(l, i);
+		
 		if (destructor)
 			destructor(p);
 		if (release)
@@ -97,7 +100,7 @@ void list_remove(struct list *l, void *p)
 
 	assert(l->state == STATE_INITIALIZED);
 
-	for (int i = 0; i < l->length; i++) {
+	for (size_t i = 0; i < list_length(l); i++) {
 		if (l->array[i] == p)
 			removed++;
 		else
@@ -127,7 +130,9 @@ int list_count(struct list *l, cmp_cb_t cmp, void *ctx)
 
 	assert(l->state == STATE_INITIALIZED);
 
-	list_foreach(void *e, l) {
+	for (size_t i = 0; i < list_length(l); i++) {
+		void *e = list_at(l, i);
+		
 		if (cmp(e, ctx) == 0)
 			c++;
 	}
@@ -145,8 +150,9 @@ void * list_search(struct list *l, cmp_cb_t cmp, void *ctx)
 
 	assert(l->state == STATE_INITIALIZED);
 	
-	list_foreach(e, l) {
-		if (!cmp(e, ctx))
+	for (size_t i = 0; i < list_length(l); i++) {
+		e = list_at(l, i);
+		if (cmp(e, ctx) == 0)
 			goto out;
 	}
 	

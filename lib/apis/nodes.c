@@ -19,7 +19,9 @@ static int api_nodes(struct api_ressource *r, json_t *args, json_t **resp, struc
 {
 	json_t *json_nodes = json_array();
 
-	list_foreach(struct node *n, &s->api->super_node->nodes) {
+	for (size_t i = 0; i < list_length(&s->api->super_node->nodes); i++) {
+		struct node *n = list_at(&s->api->super_node->nodes, i);
+
 		json_t *json_node = json_pack("{ s: s, s: i, s: i, s: i, s: i }",
 			"name",		node_name_short(n),
 			"state",	n->state,

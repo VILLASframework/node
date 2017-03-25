@@ -116,15 +116,18 @@ Test(list, basics)
 	cr_assert_eq(list_last(&l), (void *) 99);
 	cr_assert_eq(list_first(&l), NULL);
 
-	i = 0;
-	list_foreach (void *j, &l)
-		cr_assert_eq(j, (void *) i++);
+	for (size_t j = 0, i = 0; j < list_length(&l); j++) {
+		void *k = list_at(&l, j);
+
+		cr_assert_eq(k, (void *) i++);
+	}
 	
 	list_sort(&l, compare); /* Reverse list */
 	
-	i = 99;
-	list_foreach (void *j, &l) {
-		cr_assert_eq(j, (void *) i, "Is %p, expected %p", i, j);
+	for (size_t j = 0, i = 99; j < list_length(&l); j++) {
+		void *k = list_at(&l, j);
+		
+		cr_assert_eq(k, (void *) i, "Is %p, expected %p", i, k);
 		i--;
 	}
 

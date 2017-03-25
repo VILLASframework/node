@@ -247,7 +247,9 @@ int vfio_dev_attach(struct vfio_dev *d, struct vfio_container *c, const char *na
 	struct vfio_group *g = NULL;
 	
 	/* Check if group already exists */
-	list_foreach(struct vfio_group *h, &c->groups) {
+	for (size_t i = 0; i < list_length(&c->groups); i++) {
+		struct vfio_group *h = list_at(&c->groups, i);
+
 		if (h->index == index)
 			g = h;
 	}
@@ -497,13 +499,18 @@ void vfio_dump(struct vfio_container *v)
 	info("VFIO Version: %u", v->version);
 	info("VFIO Extensions: %#x", v->extensions);
 
-	list_foreach(struct vfio_group *g, &v->groups) {
+	for (size_t i = 0; i < list_length(&v->groups); i++) {
+		struct vfio_group *g = list_at(&v->groups, i);
+
 		info("VFIO Group %u, viable=%u, container=%d", g->index,
 			(g->status.flags & VFIO_GROUP_FLAGS_VIABLE) > 0,
 			(g->status.flags & VFIO_GROUP_FLAGS_CONTAINER_SET) > 0
 		);
 
-		list_foreach(struct vfio_dev *d, &g->devices) { INDENT
+
+		for (size_t i = 0; i < list_length(&g->devices); i++) { INDENT
+			struct vfio_device *d = list_at(&g->devices, i);
+
 			info("Device %s: regions=%u, irqs=%u, flags=%#x", d->name,
 				d->info.num_regions,
 				d->info.num_irqs,

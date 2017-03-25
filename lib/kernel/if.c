@@ -59,7 +59,9 @@ int if_start(struct interface *i, int affinity)
 		
 		/* Assign fwmark's to socket nodes which have netem options */
 		int ret, mark = 0;
-		list_foreach(struct socket *s, &i->sockets) {
+		for (size_t j = 0; j < list_length(&i->sockets); j++) {
+			struct socket *s = list_at(&i->sockets, j);
+
 			if (s->tc_qdisc)
 				s->mark = 1 + mark++;
 		}
@@ -82,7 +84,9 @@ int if_start(struct interface *i, int affinity)
 			error("Failed to setup priority queuing discipline: %s", nl_geterror(ret));
 
 		/* Create netem qdisks and appropriate filter per netem node */
-		list_foreach(struct socket *s, &i->sockets) {
+		for (size_t j = 0; j < list_length(&i->sockets); j++) {
+			struct socket *s = list_at(&i->sockets, j);
+
 			if (s->tc_qdisc) {
 				ret = tc_mark(i,  &s->tc_classifier, TC_HANDLE(1, s->mark), s->mark);
 				if (ret)

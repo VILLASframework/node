@@ -45,7 +45,8 @@ int socket_init(int argc, char *argv[], config_setting_t *cfg)
 	list_init(&interfaces);
 
 	/* Gather list of used network interfaces */
-	list_foreach(struct node *n, &p.node.instances) {
+	for (size_t i = 0; i < list_length(&p.node.instances); i++) {
+		struct node *n = list_at(&p.node.instances, i);
 		struct socket *s = n->_vd;
 		struct rtnl_link *link;
 
@@ -58,7 +59,10 @@ int socket_init(int argc, char *argv[], config_setting_t *cfg)
 
 		/* Search of existing interface with correct ifindex */
 		struct interface *i;
-		list_foreach(i, &interfaces) {
+		
+		for (size_t k = 0; k < list_length(&interfaces); k++) {
+			i = list_at(&interfaces, k);
+			
 			if (rtnl_link_get_ifindex(i->nl_link) == rtnl_link_get_ifindex(link))
 				goto found;
 		}
@@ -79,16 +83,22 @@ found:		list_push(&i->sockets, s);
 	if (!config_setting_lookup_int(cfg, "affinity", &affinity))
 		affinity = -1;
 
-	list_foreach(struct interface *i, &interfaces)
+	for (size_t j = 0; list_length(&interfaces); j++) {
+		struct interface *i = list_at(&interfaces, j);
+
 		if_start(i, affinity);
+	}
 
 	return 0;
 }
 
 int socket_deinit()
 {
-	list_foreach(struct interface *i, &interfaces)
+	for (size_t j = 0; list_length(&interfaces); j++) {
+		struct interface *i = list_at(&interfaces, j);
+		
 		if_stop(i);
+	}
 
 	list_destroy(&interfaces, (dtor_cb_t) if_destroy, false);
 
