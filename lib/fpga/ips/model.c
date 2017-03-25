@@ -206,7 +206,9 @@ int model_init(struct fpga_ip *c)
 		ret = 0;
 
 	/* Set default values for parameters */
-	list_foreach(struct model_param *p, &m->parameters) {
+	for (size_t i = 0; i < list_length(&m->parameters); i++) {
+		struct model_param *p = list_at(&m->parameters, i);
+
 		p->ip = c;
 
 		if (p->direction == MODEL_PARAM_IN) {
@@ -243,7 +245,9 @@ void model_dump(struct fpga_ip *c)
 
 	{ INDENT
 		info("Parameters:");
-		list_foreach(struct model_param *p, &m->parameters) { INDENT
+		for (size_t i = 0; i < list_length(&m->parameters); i++) { INDENT
+			struct model_param *p = list_at(&m->parameters, i);
+			
 			if (p->direction == MODEL_PARAM_IN)
 				info("%#jx: %s (%s) = %.3f %s %u",
 					p->offset,
@@ -262,7 +266,9 @@ void model_dump(struct fpga_ip *c)
 		}
 
 		info("Infos:");
-		list_foreach(struct model_info *i, &m->infos) { INDENT
+		for (size_t j = 0; j < list_length(&m->infos); j++) { INDENT
+			struct model_info *i = list_at(&m->infos, j);
+
 			info("%s: %s", i->field, i->value);
 		}
 	}

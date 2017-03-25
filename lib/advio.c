@@ -40,20 +40,20 @@ static int advio_xferinfo(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_of
 	int dotz = round(frac * BAR_WIDTH);
 
 	// create the "meter"
-	printf("%3.0f%% in %f s (%" CURL_FORMAT_CURL_OFF_T " / %" CURL_FORMAT_CURL_OFF_T ") [", frac * 100, curtime, dlnow, dltotal);
+	fprintf(stderr, "%3.0f%% in %f s (%" CURL_FORMAT_CURL_OFF_T " / %" CURL_FORMAT_CURL_OFF_T ") [", frac * 100, curtime, dlnow, dltotal);
 
 	// part  that's full already
 	int i = 0;
 	for ( ; i < dotz; i++)
-		printf("=");
+		fprintf(stderr, "=");
 
 	// remaining part (spaces)
 	for ( ; i < BAR_WIDTH; i++)
-		printf(" ");
+		fprintf(stderr, " ");
 
 	// and back to line begin - do not forget the fflush to avoid output buffering problems!
-	printf("]\r");
-	fflush(stdout);
+	fprintf(stderr, "]\r");
+	fflush(stderr);
 
 	return 0;
 }
@@ -150,8 +150,10 @@ int aupload(AFILE *af)
 	fseek(af->file, 0, SEEK_SET);
 
 	res = curl_easy_perform(af->curl);
-	printf("\n"); /* do not continue in the same line as the progress bar */
-	
+
+	fprintf(stderr, "\e[2K");
+	fflush(stderr); /* do not continue in the same line as the progress bar */
+
 	fseek(af->file, pos, SEEK_SET); /* Restore old stream pointer */
 	
 	if (res != CURLE_OK)
@@ -166,11 +168,15 @@ int adownload(AFILE *af)
 {
 	CURLcode res;
 	long code;
+	int ret;
 
-	rewind(af->file);
+	fseek(af->file, 0, SEEK_SET);
 
 	res = curl_easy_perform(af->curl);
-	printf("\n"); /* do not continue in the same line as the progress bar */
+	
+	fprintf(stderr, "\e[2K");
+	fflush(stderr); /* do not continue in the same line as the progress bar */
+	
 	switch (res) {
 		case CURLE_OK:
 			curl_easy_getinfo(af->curl, CURLINFO_RESPONSE_CODE, &code);
@@ -210,7 +216,10 @@ notexist: /* File does not exist */
 
 	/* If we receive a 404, we discard the already received error page
 	 * and start with an empty file. */
-	ftruncate(fileno(af->file), 0);
+	fflush(af->file);
+	ret = ftruncate(fileno(af->file), 0);
+	if (ret)
+		return ret;
 
 exist: /* File exists */
 	if (af->mode[0] == 'a')
@@ -219,6 +228,6 @@ exist: /* File exists */
 		fseek(af->file, 0, SEEK_SET);
 	
 	sha1sum(af->file, af->hash);
-	
+
 	return 0;
 }

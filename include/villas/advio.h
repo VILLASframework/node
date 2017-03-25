@@ -25,10 +25,10 @@ struct advio {
 typedef struct advio AFILE;
 
 /* The remaining functions from stdio are just replaced macros */
-
 #define afeof(af)			feof((af)->file)
 #define aftell(af)			ftell((af)->file)
 #define arewind(af)			rewind((af)->file)
+#define afileno(af)			fileno((af)->file)
 #define afread(ptr, sz, nitems, af)	fread(ptr, sz, nitems, (af)->file)
 #define afwrite(ptr, sz, nitems, af)	fwrite(ptr, sz, nitems, (af)->file)
 

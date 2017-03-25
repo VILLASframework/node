@@ -58,7 +58,8 @@ int switch_init_paths(struct fpga_ip *c)
 	XAxisScr_RegUpdateDisable(xsw);
 	XAxisScr_MiPortDisableAll(xsw);
 	
-	list_foreach(struct sw_path *p, &sw->paths) {
+	for (size_t i = 0; i < list_length(&sw->paths); i++) {
+		struct sw_path *p = list_at(&sw->paths, i);
 		struct fpga_ip *mi, *si;
 		
 		mi = list_lookup(&c->card->ips, p->out);
