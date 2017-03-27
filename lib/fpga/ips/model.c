@@ -135,7 +135,7 @@ static int model_xsg_map_read(uint32_t *map, size_t len, void *baseaddr)
 
 int model_parse(struct fpga_ip *c)
 {
-	struct model *m = (struct model *) &c->_vd;
+	struct model *m = c->_vd;
 	struct model_param p;
 
 	config_setting_t *cfg_params, *cfg_param;
@@ -195,7 +195,7 @@ int model_init(struct fpga_ip *c)
 {
 	int ret;
 
-	struct model *m = (struct model *) &c->_vd;
+	struct model *m = c->_vd;
 
 	list_init(&m->parameters);
 	list_init(&m->infos);
@@ -225,7 +225,7 @@ int model_init(struct fpga_ip *c)
 
 int model_destroy(struct fpga_ip *c)
 {
-	struct model *m = (struct model *) &c->_vd;
+	struct model *m = c->_vd;
 
 	list_destroy(&m->parameters, (dtor_cb_t) model_param_destroy, true);
 	list_destroy(&m->infos, (dtor_cb_t) model_info_destroy, true);
@@ -238,7 +238,7 @@ int model_destroy(struct fpga_ip *c)
 
 void model_dump(struct fpga_ip *c)
 {
-	struct model *m = (struct model *) &c->_vd;
+	struct model *m = c->_vd;
 
 	const char *param_type[] = { "UFix", "Fix", "Float", "Boolean" };
 	const char *parameter_dirs[] = { "In", "Out", "In/Out" };
@@ -329,7 +329,7 @@ int model_param_write(struct model_param *p, double v)
 
 void model_param_add(struct fpga_ip *c, const char *name, enum model_param_direction dir, enum model_param_type type)
 {
-	struct model *m = (struct model *) &c->_vd;
+	struct model *m = c->_vd;
 	struct model_param *p = alloc(sizeof(struct model_param));
 	
 	p->name = strdup(name);
@@ -341,7 +341,7 @@ void model_param_add(struct fpga_ip *c, const char *name, enum model_param_direc
 
 int model_param_remove(struct fpga_ip *c, const char *name)
 {
-	struct model *m = (struct model *) &c->_vd;
+	struct model *m = c->_vd;
 	struct model_param *p;
 	
 	p = list_lookup(&m->parameters, name);

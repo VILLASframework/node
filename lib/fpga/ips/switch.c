@@ -19,7 +19,7 @@ int switch_start(struct fpga_ip *c)
 	int ret;
 	
 	struct fpga_card *f = c->card;
-	struct sw *sw = (struct sw *) &c->_vd;
+	struct sw *sw = c->_vd;
 
 	XAxis_Switch *xsw = &sw->inst;
 
@@ -51,7 +51,7 @@ int switch_start(struct fpga_ip *c)
 int switch_init_paths(struct fpga_ip *c)
 {
 	int ret;
-	struct sw *sw = (struct sw *) &c->_vd;
+	struct sw *sw = c->_vd;
 
 	XAxis_Switch *xsw = &sw->inst;
 
@@ -80,7 +80,7 @@ int switch_init_paths(struct fpga_ip *c)
 
 int switch_destroy(struct fpga_ip *c)
 {
-	struct sw *sw = (struct sw *) &c->_vd;
+	struct sw *sw = c->_vd;
 
 	list_destroy(&sw->paths, NULL, true);
 	
@@ -90,7 +90,7 @@ int switch_destroy(struct fpga_ip *c)
 int switch_parse(struct fpga_ip *c)
 {
 	struct fpga_card *f = c->card;
-	struct sw *sw = (struct sw *) &c->_vd;
+	struct sw *sw = c->_vd;
 
 	list_init(&sw->paths);
 
@@ -141,7 +141,7 @@ int switch_parse(struct fpga_ip *c)
 
 int switch_connect(struct fpga_ip *c, struct fpga_ip *mi, struct fpga_ip *si)
 {
-	struct sw *sw = (struct sw *) &c->_vd;
+	struct sw *sw = c->_vd;
 	XAxis_Switch *xsw = &sw->inst;
 	
 	uint32_t mux, port;
@@ -177,7 +177,7 @@ int switch_connect(struct fpga_ip *c, struct fpga_ip *mi, struct fpga_ip *si)
 
 int switch_disconnect(struct fpga_ip *c, struct fpga_ip *mi, struct fpga_ip *si)
 {
-	struct sw *sw = (struct sw *) &c->_vd;
+	struct sw *sw = c->_vd;
 	XAxis_Switch *xsw = &sw->inst;
 
 	if (!XAxisScr_IsMiPortEnabled(xsw, mi->port, si->port))

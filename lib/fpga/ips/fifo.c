@@ -21,7 +21,7 @@ int fifo_start(struct fpga_ip *c)
 	int ret;
 	
 	struct fpga_card *f = c->card;
-	struct fifo *fifo = (struct fifo *) &c->_vd;
+	struct fifo *fifo = c->_vd;
 	
 	XLlFifo *xfifo = &fifo->inst;
 	XLlFifo_Config fifo_cfg = {
@@ -41,7 +41,7 @@ int fifo_start(struct fpga_ip *c)
 
 int fifo_stop(struct fpga_ip *c)
 {
-	struct fifo *fifo = (struct fifo *) &c->_vd;
+	struct fifo *fifo = c->_vd;
 	
 	XLlFifo *xfifo = &fifo->inst;
 
@@ -52,7 +52,7 @@ int fifo_stop(struct fpga_ip *c)
 
 ssize_t fifo_write(struct fpga_ip *c, char *buf, size_t len)
 {
-	struct fifo *fifo = (struct fifo *) &c->_vd;
+	struct fifo *fifo = c->_vd;
 
 	XLlFifo *xllfifo = &fifo->inst;
 
@@ -70,7 +70,7 @@ ssize_t fifo_write(struct fpga_ip *c, char *buf, size_t len)
 
 ssize_t fifo_read(struct fpga_ip *c, char *buf, size_t len)
 {
-	struct fifo *fifo = (struct fifo *) &c->_vd;
+	struct fifo *fifo = c->_vd;
 
 	XLlFifo *xllfifo = &fifo->inst;
 
@@ -93,7 +93,7 @@ ssize_t fifo_read(struct fpga_ip *c, char *buf, size_t len)
 
 int fifo_parse(struct fpga_ip *c)
 {
-	struct fifo *fifo = (struct fifo *) &c->_vd;
+	struct fifo *fifo = c->_vd;
 
 	int baseaddr_axi4;
 	
@@ -107,7 +107,7 @@ int fifo_parse(struct fpga_ip *c)
 
 int fifo_reset(struct fpga_ip *c)
 {
-	struct fifo *fifo = (struct fifo *) &c->_vd;
+	struct fifo *fifo = c->_vd;
 	
 	XLlFifo_Reset(&fifo->inst);
 
