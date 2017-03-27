@@ -241,6 +241,22 @@ char *cpulist_create(char *str, size_t len, cpu_set_t *set)
 }
 
 #ifdef WITH_JANSSON
+static int json_to_config_type(int type)
+{
+	switch (type) {
+		case JSON_OBJECT:	return CONFIG_TYPE_GROUP;
+		case JSON_ARRAY:	return CONFIG_TYPE_LIST;
+		case JSON_STRING:	return CONFIG_TYPE_STRING;
+		case JSON_INTEGER:	return CONFIG_TYPE_INT64;
+		case JSON_REAL:		return CONFIG_TYPE_FLOAT;
+		case JSON_TRUE:
+		case JSON_FALSE:
+		case JSON_NULL:		return CONFIG_TYPE_BOOL;
+	}
+	
+	return -1;
+}
+
 json_t * config_to_json(config_setting_t *cfg)
 {
 	switch (config_setting_type(cfg)) {
@@ -263,18 +279,82 @@ json_t * config_to_json(config_setting_t *cfg)
 		case CONFIG_TYPE_GROUP: {
 			json_t *json = json_object();
 			
-			for (int i = 0; i < config_setting_length(cfg); i++)
+			for (int i = 0; i < config_setting_length(cfg); i++) {
 				json_object_set_new(json,
 					config_setting_name(config_setting_get_elem(cfg, i)),
 					config_to_json(config_setting_get_elem(cfg, i))
 				);
-			
+			}
+
 			return json;
 		}
-		
+
 		default:
 			return json_object();
 	}
+}
+
+int json_to_config(json_t *json, config_setting_t *parent)
+{
+	config_setting_t *cfg;
+	int ret, type;
+	
+	if (config_setting_is_root(parent)) {
+		if (!json_is_object(json))
+			return -1; /* The root must be an object! */
+	}
+	
+	switch (json_typeof(json)) {
+		case JSON_OBJECT: {
+			const char *key;
+			json_t *json_value;
+
+			json_object_foreach(json, key, json_value) {
+				type = json_to_config_type(json_typeof(json_value));
+				
+				cfg = config_setting_add(parent, key, type);
+				ret = json_to_config(json_value, cfg);
+				if (ret)
+					return ret;
+			}
+			break;
+		}
+		
+		case JSON_ARRAY: {
+			size_t i;
+			json_t *json_value;
+
+			json_array_foreach(json, i, json_value) {
+				type = json_to_config_type(json_typeof(json_value));
+				
+				cfg = config_setting_add(parent, NULL, type);
+				ret = json_to_config(json_value, cfg);
+				if (ret)
+					return ret;
+			}
+			break;
+		}
+		
+		case JSON_STRING:
+			config_setting_set_string(parent, json_string_value(json));
+			break;
+		
+		case JSON_INTEGER:
+			config_setting_set_int64(parent, json_integer_value(json));
+			break;
+
+		case JSON_REAL:
+			config_setting_set_float(parent, json_real_value(json));
+			break;
+
+		case JSON_TRUE:
+		case JSON_FALSE:
+		case JSON_NULL:
+			config_setting_set_bool(parent, json_is_true(json));
+			break;
+	}
+	
+	return 0;
 }
 #endif
 

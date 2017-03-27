@@ -3,7 +3,7 @@ TEST_OBJS = $(patsubst %.c,$(BUILDDIR)/%.o,$(TEST_SRCS))
 
 TEST_CFLAGS = $(CFLAGS)
 TEST_LDFLAGS = $(LDFLAGS) -Wl,-rpath,'$$ORIGIN'
-TEST_LDLIBS = $(LDLIBS) -lcriterion -lvillas -pthread
+TEST_LDLIBS = $(LDLIBS) -lcriterion -lvillas -pthread -ljansson
 
 unit-tests: $(BUILDDIR)/unit-tests
 
