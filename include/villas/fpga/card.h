@@ -26,8 +26,8 @@ struct fpga_card {
 
 	enum state state;		/**< The state of this FPGA card. */
 
-	struct pci_dev filter;		/**< Filter for PCI device. */
-	struct vfio_dev vd;		/**< VFIO device handle. */
+	struct pci_device filter;		/**< Filter for PCI device. */
+	struct vfio_device vfio_device;	/**< VFIO device handle. */
 
 	int do_reset;			/**< Reset VILLASfpga during startup? */
 	int affinity;			/**< Affinity for MSI interrupts */

@@ -90,7 +90,7 @@ int vfio_group_destroy(struct vfio_group *g)
 {
 	int ret;
 
-	list_destroy(&g->devices, (dtor_cb_t) vfio_dev_destroy, false);
+	list_destroy(&g->devices, (dtor_cb_t) vfio_device_destroy, false);
 	
 	ret = ioctl(g->fd, VFIO_GROUP_UNSET_CONTAINER);
 	if (ret)
@@ -107,7 +107,7 @@ int vfio_group_destroy(struct vfio_group *g)
 	return 0;
 }
 
-int vfio_dev_destroy(struct vfio_dev *d)
+int vfio_device_destroy(struct vfio_device *d)
 {
 	int ret;
 
@@ -204,7 +204,7 @@ int vfio_group_attach(struct vfio_group *g, struct vfio_container *c, int index)
 	return 0;
 }
 
-int vfio_pci_attach(struct vfio_dev *d, struct vfio_container *c, struct pci_dev *pdev)
+int vfio_pci_attach(struct vfio_device *d, struct vfio_container *c, struct pci_device *pdev)
 {
 	char name[32];
 	int ret;
@@ -226,22 +226,22 @@ int vfio_pci_attach(struct vfio_dev *d, struct vfio_container *c, struct pci_dev
 	/* VFIO device name consists of PCI BDF */
 	snprintf(name, sizeof(name), "%04x:%02x:%02x.%x", pdev->slot.domain, pdev->slot.bus, pdev->slot.device, pdev->slot.function);
 
-	ret = vfio_dev_attach(d, c, name, index);
+	ret = vfio_device_attach(d, c, name, index);
 	if (ret < 0)
 		return ret;
 	
 	/* Check if this is really a vfio-pci device */
 	if (!(d->info.flags & VFIO_DEVICE_FLAGS_PCI)) {
-		vfio_dev_destroy(d);
+		vfio_device_destroy(d);
 		return -1;
 	}
 
-	d->pdev = pdev;
+	d->pci_device = pdev;
 
 	return 0;
 }
 
-int vfio_dev_attach(struct vfio_dev *d, struct vfio_container *c, const char *name, int index)
+int vfio_device_attach(struct vfio_device *d, struct vfio_container *c, const char *name, int index)
 {
 	int ret;
 	struct vfio_group *g = NULL;
@@ -313,7 +313,7 @@ int vfio_dev_attach(struct vfio_dev *d, struct vfio_container *c, const char *na
 	return 0;
 }
 
-int vfio_pci_reset(struct vfio_dev *d)
+int vfio_pci_reset(struct vfio_device *d)
 {
 	int ret;
 
@@ -353,7 +353,7 @@ int vfio_pci_reset(struct vfio_dev *d)
 	return ret;
 }
 
-int vfio_pci_msi_find(struct vfio_dev *d, int nos[32])
+int vfio_pci_msi_find(struct vfio_device *d, int nos[32])
 {
 	int ret, idx, irq;
 	char *end, *col, *last, line[1024], name[13];
@@ -393,7 +393,7 @@ int vfio_pci_msi_find(struct vfio_dev *d, int nos[32])
 	return 0;
 }
 
-int vfio_pci_msi_deinit(struct vfio_dev *d, int efds[32])
+int vfio_pci_msi_deinit(struct vfio_device *d, int efds[32])
 {
 	int ret, irq_setlen, irq_count = d->irqs[VFIO_PCI_MSI_IRQ_INDEX].count; 
 	struct vfio_irq_set *irq_set;
@@ -427,7 +427,7 @@ int vfio_pci_msi_deinit(struct vfio_dev *d, int efds[32])
 	return irq_count;
 }
 
-int vfio_pci_msi_init(struct vfio_dev *d, int efds[32])
+int vfio_pci_msi_init(struct vfio_device *d, int efds[32])
 {
 	int ret, irq_setlen, irq_count = d->irqs[VFIO_PCI_MSI_IRQ_INDEX].count; 
 	struct vfio_irq_set *irq_set;
@@ -462,7 +462,7 @@ int vfio_pci_msi_init(struct vfio_dev *d, int efds[32])
 	return irq_count;
 }
 
-int vfio_pci_enable(struct vfio_dev *d)
+int vfio_pci_enable(struct vfio_device *d)
 {
 	int ret;
 	uint32_t reg;
@@ -486,7 +486,7 @@ int vfio_pci_enable(struct vfio_dev *d)
 	return 0;
 }
 
-int vfio_dev_reset(struct vfio_dev *d)
+int vfio_device_reset(struct vfio_device *d)
 {
 	if (d->info.flags & VFIO_DEVICE_FLAGS_RESET)
 		return ioctl(d->fd, VFIO_DEVICE_RESET);
@@ -543,7 +543,7 @@ void vfio_dump(struct vfio_container *v)
 	}
 }
 
-void * vfio_map_region(struct vfio_dev *d, int idx)
+void * vfio_map_region(struct vfio_device *d, int idx)
 {
 	struct vfio_region_info *r = &d->regions[idx];
 
@@ -555,7 +555,7 @@ void * vfio_map_region(struct vfio_dev *d, int idx)
 	return d->mappings[idx];
 }
 
-int vfio_unmap_region(struct vfio_dev *d, int idx)
+int vfio_unmap_region(struct vfio_device *d, int idx)
 {
 	int ret;
 	struct vfio_region_info *r = &d->regions[idx];

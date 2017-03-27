@@ -14,7 +14,7 @@
 #define PCI_SLOT(devfn)		(((devfn) >> 3) & 0x1f)
 #define PCI_FUNC(devfn)		((devfn) & 0x07)
 
-struct pci_dev {
+struct pci_device {
 	struct {
 		int vendor;
 		int device;
@@ -30,7 +30,7 @@ struct pci_dev {
 };
 
 struct pci {
-	struct list devices; /**< List of available PCI devices in the system (struct pci_dev) */
+	struct list devices; /**< List of available PCI devices in the system (struct pci_device) */
 };
 
 /** Initialize Linux PCI handle.
@@ -45,18 +45,18 @@ int pci_init(struct pci *p);
 /** Destroy handle. */
 int pci_destroy(struct pci *p);
 
-int pci_dev_parse_slot(struct pci_dev *f, const char *str, const char **error);
+int pci_device_parse_slot(struct pci_device *f, const char *str, const char **error);
 
-int pci_dev_parse_id(struct pci_dev *f, const char *str, const char **error);
+int pci_device_parse_id(struct pci_device *f, const char *str, const char **error);
 
-int pci_dev_compare(const struct pci_dev *d, const struct pci_dev *f);
+int pci_device_compare(const struct pci_device *d, const struct pci_device *f);
 
-struct pci_dev * pci_lookup_device(struct pci *p, struct pci_dev *filter);
+struct pci_device * pci_lookup_device(struct pci *p, struct pci_device *filter);
 
 /** Bind a new LKM to the PCI device */
-int pci_attach_driver(struct pci_dev *d, const char *driver);
+int pci_attach_driver(struct pci_device *d, const char *driver);
 
 /** Return the IOMMU group of this PCI device or -1 if the device is not in a group. */
-int pci_get_iommu_group(struct pci_dev *d);
+int pci_get_iommu_group(struct pci_device *d);
 
 /** @} */
