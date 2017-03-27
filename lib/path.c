@@ -151,6 +151,13 @@ int path_init(struct path *p, struct super_node *sn)
 	list_init(&p->hooks);
 	list_init(&p->destinations);
 	
+	/* Default values */
+	p->reverse = 0;
+	p->enabled = 1;
+
+	p->samplelen = DEFAULT_VALUES;
+	p->queuelen = DEFAULT_QUEUELEN;
+	
 	p->super_node = sn;
 	
 	p->state = STATE_INITIALIZED;
@@ -160,9 +167,9 @@ int path_init(struct path *p, struct super_node *sn)
 
 int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 {
-	config_setting_t *cfg_out, *cfg_hook;
+	config_setting_t *cfg_out, *cfg_hooks;
 	const char *in;
-	int ret, samplelen, queuelen;
+	int ret;
 
 	struct node *source;
 	struct list destinations = { .state = STATE_DESTROYED };
@@ -189,37 +196,32 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 		cerror(cfg, "Missing output nodes for path");
 
 	ret = node_parse_list(&destinations, cfg_out, nodes);
-	if (ret <= 0)
+	if (ret || list_length(&destinations) == 0)
 		cerror(cfg_out, "Invalid output nodes");
 
 	/* Optional settings */
-	cfg_hook = config_setting_get_member(cfg, "hook");
-	if (cfg_hook)
-		hook_parse_list(&p->hooks, cfg_hook);
+	cfg_hooks = config_setting_get_member(cfg, "hooks");
+	if (cfg_hooks) {
+		ret = hook_parse_list(&p->hooks, cfg_hooks, p);
+		if (ret)
+			return ret;
+	}
 
-	if (!config_setting_lookup_bool(cfg, "reverse", &p->reverse))
-		p->reverse = 0;
-	if (!config_setting_lookup_bool(cfg, "enabled", &p->enabled))
-		p->enabled = 1;
-	if (!config_setting_lookup_int(cfg, "values", &samplelen))
-		samplelen = DEFAULT_VALUES;
-	if (!config_setting_lookup_int(cfg, "queuelen", &queuelen))
-		queuelen = DEFAULT_QUEUELEN;
+	config_setting_lookup_bool(cfg, "reverse", &p->reverse);
+	config_setting_lookup_bool(cfg, "enabled", &p->enabled);
+	config_setting_lookup_int(cfg, "values", &p->samplelen);
+	config_setting_lookup_int(cfg, "queuelen", &p->queuelen);
 
-	if (!IS_POW2(queuelen)) {
-		queuelen = LOG2_CEIL(queuelen);
-		warn("Queue length should always be a power of 2. Adjusting to %d", queuelen);
+	if (!IS_POW2(p->queuelen)) {
+		p->queuelen = LOG2_CEIL(p->queuelen);
+		warn("Queue length should always be a power of 2. Adjusting to %d", p->queuelen);
 	}
 
 	p->cfg = cfg;
-	
-	/* Check if nodes are suitable */
-	if (source->_vt->read == NULL)
-		cerror(cfg, "Input node '%s' is not supported as a source.", node_name(source));
 
 	p->source = alloc(sizeof(struct path_source));
 	p->source->node = source;
-	p->source->samplelen = samplelen;
+	p->source->samplelen = p->samplelen;
 
 	for (size_t i = 0; i < list_length(&destinations); i++) {
 		struct node *n = list_at(&destinations, i);
@@ -242,14 +244,16 @@ int path_check(struct path *p)
 	assert(p->state != STATE_DESTROYED);
 	
 	for (size_t i = 0; i < list_length(&p->destinations); i++) {
-		struct node *n = list_at(&p->destinations, i);
+		struct path_destination *pd = list_at(&p->destinations, i);
 		
-		if (!n->_vt->write)
-			error("Destiation node '%s' is not supported as a sink for path '%s'", node_name(n), path_name(p));
+		if (!pd->node->_vt->write)
+			error("Destiation node '%s' is not supported as a sink for path '%s'", node_name(pd->node), path_name(p));
 	}
 
 	if (!p->source->node->_vt->read)
 		error("Source node '%s' is not supported as source for path '%s'", node_name(p->source->node), path_name(p));
+	
+	p->state = STATE_CHECKED;
 	
 	return 0;
 }

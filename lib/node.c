@@ -20,6 +20,9 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_vt = vt;
 	n->_vd = alloc(vt->size);
 	
+	/* Default values */
+	n->vectorize = 1;
+	
 	list_push(&vt->instances, n);
 
 	n->state = STATE_INITIALIZED;
@@ -41,8 +44,7 @@ int node_parse(struct node *n, config_setting_t *cfg)
 	p = plugin_lookup(PLUGIN_TYPE_NODE, type);
 	assert(&p->node == n->_vt);
 	
-	if (!config_setting_lookup_int(cfg, "vectorize", &n->vectorize))
-		n->vectorize = 1;
+	config_setting_lookup_int(cfg, "vectorize", &n->vectorize);
 
 	n->name = name;
 	n->cfg = cfg;
