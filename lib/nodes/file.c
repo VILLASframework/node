@@ -12,6 +12,7 @@
 #include "timing.h"
 #include "queue.h"
 #include "plugin.h"
+#include "sample_io.h"
 
 int file_reverse(struct node *n)
 {
@@ -206,7 +207,7 @@ int file_start(struct node *n)
 
 		/* Get timestamp of first line */
 		struct sample s;
-		int ret = sample_fscan(f->read.handle->file, &s, NULL); arewind(f->read.handle);
+		int ret = sample_io_villas_fscan(f->read.handle->file, &s, NULL); arewind(f->read.handle);
 		if (ret < 0)
 			error("Failed to read first timestamp of node %s", node_name(n));
 		
@@ -274,7 +275,7 @@ int file_read(struct node *n, struct sample *smps[], unsigned cnt)
 	assert(f->read.handle);
 	assert(cnt == 1);
 
-retry:	values = sample_fscan(f->read.handle->file, s, &flags); /* Get message and timestamp */
+retry:	values = sample_io_villas_fscan(f->read.handle->file, s, &flags); /* Get message and timestamp */
 	if (values < 0) {
 		if (afeof(f->read.handle)) {
 			if (f->read.split) {
@@ -329,7 +330,7 @@ int file_write(struct node *n, struct sample *smps[], unsigned cnt)
 		info("Splitted output node %s: chunk=%u", node_name(n), f->write.chunk);
 	}
 		
-	sample_fprint(f->write.handle->file, s, SAMPLE_ALL & ~SAMPLE_OFFSET);
+	sample_io_villas_fprint(f->write.handle->file, s, SAMPLE_IO_ALL & ~SAMPLE_IO_OFFSET);
 	afflush(f->write.handle);
 
 	return 1;
