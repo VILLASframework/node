@@ -16,40 +16,44 @@ struct decimate {
 	unsigned counter;
 };
 
-static int hook_decimate(struct hook *h, int when, struct hook_info *j)
+static int decimate_init(struct hook *h)
 {
-	struct decimate *p = (struct decimate *) h->_vd;
-
-	switch (when) {
-		case HOOK_INIT:
-			p->counter = 0;
-			break;
-		
-		case HOOK_PARSE:
-			if (!h->cfg)
-				error("Missing configuration for hook: '%s'", plugin_name(h->_vt));
-		
-			if (!config_setting_lookup_int(h->cfg, "ratio", &p->ratio))
-				cerror(h->cfg, "Missing setting 'ratio' for hook '%s'", plugin_name(h->_vt));
+	struct decimate *p = h->_vd;
 	
-			break;
-		
-		case HOOK_READ:
-			assert(j->samples);
-		
-			int i, ok;
-			for (i = 0, ok = 0; i < j->count; i++) {
-				if (p->counter++ % p->ratio == 0) {
-					struct sample *tmp;
-					
-					tmp = j->samples[ok];
-					j->samples[ok++] = j->samples[i];
-					j->samples[i] = tmp;
-				}
-			}
+	p->counter = 0;
 
-			return ok;
+	return 0;
+}
+
+static int decimate_parse(struct hook *h, config_setting_t *cfg)
+{
+	struct decimate *p = h->_vd;
+	
+	if (!cfg)
+		error("Missing configuration for hook: '%s'", plugin_name(h->_vt));
+
+	if (!config_setting_lookup_int(cfg, "ratio", &p->ratio))
+		cerror(cfg, "Missing setting 'ratio' for hook '%s'", plugin_name(h->_vt));
+
+	return 0;
+}
+
+static int decimate_read(struct hook *h, struct sample *smps[], size_t *cnt)
+{
+	struct decimate *p = h->_vd;
+	
+	int i, ok;
+	for (i = 0, ok = 0; i < *cnt; i++) {
+		if (p->counter++ % p->ratio == 0) {
+			struct sample *tmp;
+			
+			tmp = smps[ok];
+			smps[ok++] = smps[i];
+			smps[i] = tmp;
+		}
 	}
+	
+	*cnt = ok;
 
 	return 0;
 }
@@ -60,9 +64,10 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
-		.size	= sizeof(struct decimate),
-		.cb	= hook_decimate,
-		.when	= HOOK_STORAGE | HOOK_PARSE | HOOK_DESTROY | HOOK_READ
+		.init	= decimate_init,
+		.parse	= decimate_parse,
+		.read	= decimate_read,
+		.size	= sizeof(struct decimate)
 	}
 };
 

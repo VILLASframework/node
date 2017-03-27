@@ -12,24 +12,22 @@
 #include "plugin.h"
 #include "timing.h"
 
-static int hook_ts(struct hook *h, int when, struct hook_info *j)
+static int ts_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {
-	assert(j->samples);
-
-	for (int i = 0; i < j->count; i++)
-		j->samples[i]->ts.origin = j->samples[i]->ts.received;
+	for (int i = 0; i < *cnt; i++)
+		smps[i]->ts.origin = smps[i]->ts.received;
 
 	return 0;
 }
 
 static struct plugin p = {
 	.name		= "ts",
-	.description	= "Update timestamp of message with current time",
+	.description	= "Overwrite origin timestamp of samples with receive timestamp",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
-		.cb	= hook_ts,
-		.when	= HOOK_READ
+		.read	= ts_read,
+		.size	= 0
 	}
 };
 

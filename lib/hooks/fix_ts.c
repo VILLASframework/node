@@ -12,26 +12,26 @@
 #include "plugin.h"
 #include "timing.h"
 
-int hook_fix_ts(struct hook *h, int when, struct hook_info *j)
+int fix_ts_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {
-	struct timespec now = time_now();
+	struct timespec now;
 
-	assert(j->samples);
+	now = time_now();
 
-	for (int i = 0; i < j->count; i++) {
+	for (int i = 0; i < *cnt; i++) {
 		/* Check for missing receive timestamp
 		 * Usually node_type::read() should update the receive timestamp.
 		 * An example would be to use hardware timestamp capabilities of
 		 * modern NICs.
 		 */
-		if ((j->samples[i]->ts.received.tv_sec ==  0 && j->samples[i]->ts.received.tv_nsec ==  0) ||
-		    (j->samples[i]->ts.received.tv_sec == -1 && j->samples[i]->ts.received.tv_nsec == -1))
-			j->samples[i]->ts.received = now;
+		if ((smps[i]->ts.received.tv_sec ==  0 && smps[i]->ts.received.tv_nsec ==  0) ||
+		    (smps[i]->ts.received.tv_sec == -1 && smps[i]->ts.received.tv_nsec == -1))
+			smps[i]->ts.received = now;
 
 		/* Check for missing origin timestamp */
-		if ((j->samples[i]->ts.origin.tv_sec ==  0 && j->samples[i]->ts.origin.tv_nsec ==  0) ||
-		    (j->samples[i]->ts.origin.tv_sec == -1 && j->samples[i]->ts.origin.tv_nsec == -1))
-			j->samples[i]->ts.origin = now;
+		if ((smps[i]->ts.origin.tv_sec ==  0 && smps[i]->ts.origin.tv_nsec ==  0) ||
+		    (smps[i]->ts.origin.tv_sec == -1 && smps[i]->ts.origin.tv_nsec == -1))
+			smps[i]->ts.origin = now;
 	}
 
 	return 0;
@@ -43,8 +43,8 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 0,
-		.cb	= hook_fix_ts,
-		.when	= HOOK_AUTO | HOOK_READ
+		.builtin = true,
+		.read	= fix_ts_read,
 	}
 };
 

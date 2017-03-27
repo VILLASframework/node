@@ -36,84 +36,83 @@ struct skip_first {
 	};
 };
 
-static int hook_skip_first(struct hook *h, int when, struct hook_info *j)
+static int skip_first_parse(struct hook *h, config_setting_t *cfg)
 {
-	struct skip_first *p = (struct skip_first *) h->_vd;
+	struct skip_first *p = h->_vd;
 
-	switch (when) {
-		case HOOK_PARSE: {
-			double seconds;
-			
-			if (!h->cfg)
-				error("Missing configuration for hook: '%s'", plugin_name(h->_vt));
-			
-			if (config_setting_lookup_float(h->cfg, "seconds", &seconds)) {
-				p->seconds.wait = time_from_double(seconds);
-				p->mode = HOOK_SKIP_MODE_SECONDS;
-			}
-			else if (config_setting_lookup_int(h->cfg, "samples", &p->samples.wait)) {
-				p->mode = HOOK_SKIP_MODE_SAMPLES;
-			}
-			else
-				cerror(h->cfg, "Missing setting 'seconds' or 'samples' for hook '%s'", plugin_name(h->_vt));
+	double seconds;
 
-			break;
+	if (config_setting_lookup_float(cfg, "seconds", &seconds)) {
+		p->seconds.wait = time_from_double(seconds);
+		p->mode = HOOK_SKIP_MODE_SECONDS;
+	}
+	else if (config_setting_lookup_int(cfg, "samples", &p->samples.wait)) {
+		p->mode = HOOK_SKIP_MODE_SAMPLES;
+	}
+	else
+		cerror(cfg, "Missing setting 'seconds' or 'samples' for hook '%s'", plugin_name(h->_vt));
+	
+	return 0;
+}
+
+static int skip_first_restart(struct hook *h)
+{
+	struct skip_first *p = h->_vd;
+
+	p->state = HOOK_SKIP_FIRST_STATE_STARTED;
+	
+	return 0;
+}
+
+static int skip_first_read(struct hook *h, struct sample *smps[], size_t *cnt)
+{
+	struct skip_first *p = h->_vd;
+
+	if (p->state == HOOK_SKIP_FIRST_STATE_STARTED) {
+		switch (p->mode) {
+			case HOOK_SKIP_MODE_SAMPLES:
+				p->samples.until = smps[0]->sequence + p->samples.wait;
+				break;
+			
+			case HOOK_SKIP_MODE_SECONDS:
+				p->seconds.until = time_add(&smps[0]->ts.received, &p->seconds.wait);
+				break;
 		}
 		
-		case HOOK_PATH_START:
-		case HOOK_PATH_RESTART:
-			p->state = HOOK_SKIP_FIRST_STATE_STARTED;
-			break;
-	
-		case HOOK_READ:
-			assert(j->samples);
-			
-			if (p->state == HOOK_SKIP_FIRST_STATE_STARTED) {
-				switch (p->mode) {
-					case HOOK_SKIP_MODE_SAMPLES:
-						p->samples.until = j->samples[0]->sequence + p->samples.wait;
-						break;
-					
-					case HOOK_SKIP_MODE_SECONDS:
-						p->seconds.until = time_add(&j->samples[0]->ts.received, &p->seconds.wait);
-						break;
-				}
-				
-				p->state = HOOK_SKIP_FIRST_STATE_SKIPPING;
-			}
-
-			int i, ok;
-			for (i = 0, ok = 0; i < j->count; i++) {
-				bool skip;
-				switch (p->mode) {
-					case HOOK_SKIP_MODE_SAMPLES:
-						skip = p->samples.until >= j->samples[i]->sequence;
-						break;
-					
-					case HOOK_SKIP_MODE_SECONDS:
-						skip = time_delta(&p->seconds.until, &j->samples[i]->ts.received) < 0;
-						break;
-					default:
-						skip = false;
-				}
-				
-				if (!skip) {
-					struct sample *tmp;
-
-					tmp = j->samples[i];
-					j->samples[i] = j->samples[ok];
-					j->samples[ok++] = tmp;
-				}
-
-				/* To discard the first X samples in 'smps[]' we must
-				 * shift them to the end of the 'smps[]' array.
-				 * In case the hook returns a number 'ok' which is smaller than 'cnt',
-				 * only the first 'ok' samples in 'smps[]' are accepted and further processed.
-				 */
-			}
-			
-			j->count = ok;
+		p->state = HOOK_SKIP_FIRST_STATE_SKIPPING;
 	}
+
+	int i, ok;
+	for (i = 0, ok = 0; i < *cnt; i++) {
+		bool skip;
+		switch (p->mode) {
+			case HOOK_SKIP_MODE_SAMPLES:
+				skip = p->samples.until >= smps[i]->sequence;
+				break;
+			
+			case HOOK_SKIP_MODE_SECONDS:
+				skip = time_delta(&p->seconds.until, &smps[i]->ts.received) < 0;
+				break;
+			default:
+				skip = false;
+		}
+		
+		if (!skip) {
+			struct sample *tmp;
+
+			tmp = smps[i];
+			smps[i] = smps[ok];
+			smps[ok++] = tmp;
+		}
+
+		/* To discard the first X samples in 'smps[]' we must
+		 * shift them to the end of the 'smps[]' array.
+		 * In case the hook returns a number 'ok' which is smaller than 'cnt',
+		 * only the first 'ok' samples in 'smps[]' are accepted and further processed.
+		 */
+	}
+	
+	*cnt = ok;
 
 	return 0;
 }
@@ -124,9 +123,11 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
-		.size	= sizeof(struct skip_first),
-		.cb	= hook_skip_first,
-		.when	= HOOK_STORAGE |  HOOK_PARSE | HOOK_READ | HOOK_PATH
+		.parse	= skip_first_parse,
+		.start	= skip_first_restart,
+		.restart = skip_first_restart,
+		.read	= skip_first_read,
+		.size	= sizeof(struct skip_first)
 	}
 };
 

@@ -13,28 +13,26 @@
 #include "stats.h"
 #include "path.h"
 
-static int hook_drop(struct hook *h, int when, struct hook_info *j)
+static int drop_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {
 	int i, ok, dist;
 	
-	assert(j->samples);
-
-	for (i = 0, ok = 0; i < j->count; i++) {
-		h->last = j->samples[i];
+	for (i = 0, ok = 0; i < *cnt; i++) {
+		h->last = smps[i];
 		
 		if (h->prev) {
 			dist = h->last->sequence - (int32_t) h->prev->sequence;
 			if (dist <= 0) {
 				warn("Dropped sample: dist = %d, i = %d", dist, i);
-				if (j->path && j->path->stats)
-					stats_update(j->path->stats->delta, STATS_DROPPED, dist);
+				if (h->path && h->path->stats)
+					stats_update(h->path->stats->delta, STATS_REORDERED, dist);
 			}
 			else {
 				struct sample *tmp;
-			
-				tmp = j->samples[i];
-				j->samples[i] = j->samples[ok];
-				j->samples[ok++] = tmp;
+	
+				tmp = smps[i];
+				smps[i] = smps[ok];
+				smps[ok++] = tmp;
 			}
 		
 			/* To discard the first X samples in 'smps[]' we must
@@ -46,15 +44,17 @@ static int hook_drop(struct hook *h, int when, struct hook_info *j)
 		else {
 			struct sample *tmp;
 		
-			tmp = j->samples[i];
-			j->samples[i] = j->samples[ok];
-			j->samples[ok++] = tmp;
+			tmp = smps[i];
+			smps[i] = smps[ok];
+			smps[ok++] = tmp;
 		}
 
 		h->prev = h->last;
 	}
 
-	return ok;
+	*cnt = ok;
+		
+	return 0;
 }
 
 static struct plugin p = {
@@ -63,8 +63,8 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 3,
-		.cb	= hook_drop,
-		.when	= HOOK_AUTO | HOOK_READ
+		.builtin = true,
+		.read	= drop_read
 	}
 };
 

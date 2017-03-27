@@ -20,56 +20,61 @@ struct map {
 	struct stats *stats;
 };
 
-static int hook_map(struct hook *h, int when, struct sample *smps[], size_t *cnt)
+static int map_init(struct hook *h)
+{
+	struct map *p = h->_vd;
+
+	return mapping_init(&p->mapping);
+}
+
+static int map_destroy(struct hook *h)
+{
+	struct map *p = h->_vd;
+
+	return mapping_destroy(&p->mapping);
+}
+
+static int map_parse(struct hook *h, config_setting_t *cfg)
+{
+	struct map *p = h->_vd;
+	
+	int ret;
+
+	config_setting_t *cfg_mapping;
+	
+	cfg_mapping = config_setting_lookup(cfg, "mapping");
+	
+	if (!config_setting_is_array(cfg_mapping))
+		return -1;
+	
+	ret = mapping_parse(&p->mapping, cfg_mapping);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+static int map_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {
 	int ret;
-	struct map *p = (struct map *) h->_vd;
+	struct map *p = h->_vd;
+	struct sample *tmp[*cnt];
 
-	switch (when) {
-		case HOOK_INIT:
-			mapping_init(&p->mapping);
-			break;
-			
-		case HOOK_DESTROY:
-			mapping_destroy(&p->mapping);
-			break;
-		
-		case HOOK_PARSE: {
-			config_setting_t *cfg_mapping;
-			
-			cfg_mapping = config_setting_lookup(h->cfg, "mapping");
-			
-			if (!config_setting_is_array(cfg_mapping))
-				return -1;
-			
-			ret = mapping_parse(&p->mapping, cfg_mapping);
-			if (ret)
-				return ret;
+	if (*cnt <= 0)
+		return 0;
 
-			break;
-		}
+	ret = sample_alloc(smps[0]->pool, tmp, *cnt);
+	if (ret != *cnt)
+		return ret;
 
-		case HOOK_READ: {
-			struct sample *tmp[*cnt];
-
-			if (*cnt <= 0)
-				return 0;
-			
-			ret = sample_alloc(smps[0]->pool, tmp, *cnt);
-			if (ret != *cnt)
-				return ret;
-
-			for (int i = 0; i < *cnt; i++) {
-				mapping_remap(&p->mapping, smps[i], tmp[i], NULL);
-				
-				SWAP(smps[i], tmp[i]);
-			}
-			
-			sample_free(tmp, *cnt);
-			break;
-		}
-	}
+	for (int i = 0; i < *cnt; i++) {
+		mapping_remap(&p->mapping, smps[i], tmp[i], NULL);
 	
+		SWAP(smps[i], tmp[i]);
+	}
+
+	sample_free(tmp, *cnt);
+
 	return 0;
 }
 
@@ -79,9 +84,11 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
-		.size	= sizeof(struct map),
-		.cb	= hook_map,
-		.when	= HOOK_STORAGE | HOOK_READ | HOOK_PARSE
+		.init	= map_init,
+		.destroy= map_destroy,
+		.parse	= map_parse,
+		.read	= map_read,
+		.size	= sizeof(struct map)
 	}
 };
 

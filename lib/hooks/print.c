@@ -17,40 +17,54 @@ struct print {
 	const char *uri;
 };
 
-static int hook_print(struct hook *h, int when, struct hook_info *j)
+static int print_init(struct hook *h)
 {
-	struct print *p = (struct print *) h->_vd;
-	
-	switch (when) {
-		case HOOK_INIT:
-			p->output = stdout;
-			p->uri = NULL;
-			break;
+	struct print *p = h->_vd;
 
-		case HOOK_PATH_START:
-			if (p->uri) {
-				p->output = fopen(p->uri, "w+");
-				if (!p->output)
-					error("Failed to open file %s for writing", p->uri);
-			}
-			break;
-		
-		case HOOK_PATH_STOP:
-			if (p->uri)
-				fclose(p->output);
-			break;
-		
-		case HOOK_PARSE:
-			config_setting_lookup_string(h->cfg, "output", &p->uri);
-			break;
-		
-		case HOOK_READ:
-			assert(j->samples);
+	p->output = stdout;
+	p->uri = NULL;
+
+	return 0;
+}
+
+static int print_start(struct hook *h)
+{
+	struct print *p = h->_vd;
 	
-			for (int i = 0; i < j->count; i++)
-				sample_fprint(p->output, j->samples[i], SAMPLE_ALL);
-			break;
+	if (p->uri) {
+		p->output = fopen(p->uri, "w+");
+		if (!p->output)
+			error("Failed to open file %s for writing", p->uri);
 	}
+	
+	return 0;
+}
+
+static int print_stop(struct hook *h)
+{
+	struct print *p = h->_vd;
+
+	if (p->uri)
+		fclose(p->output);
+
+	return 0;
+}
+
+static int print_parse(struct hook *h, config_setting_t *cfg)
+{
+	struct print *p = h->_vd;
+
+	config_setting_lookup_string(cfg, "output", &p->uri);
+	
+	return 0;
+}
+
+static int print_read(struct hook *h, struct sample *smps[], size_t *cnt)
+{
+	struct print *p = h->_vd;
+
+	for (int i = 0; i < *cnt; i++)
+		sample_fprint(p->output, smps[i], SAMPLE_ALL);
 
 	return 0;
 }
@@ -61,9 +75,12 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
-		.size	= sizeof(struct print),
-		.cb	= hook_print,
-		.when	= HOOK_STORAGE | HOOK_PARSE | HOOK_READ | HOOK_PATH
+		.init	= print_init,
+		.parse	= print_parse,
+		.start	= print_start,
+		.stop	= print_stop,
+		.read	= print_read,
+		.size	= sizeof(struct print)
 	}
 };
 

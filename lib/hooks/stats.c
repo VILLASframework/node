@@ -13,7 +13,7 @@
 #include "stats.h"
 #include "path.h"
 
-struct stats_hook {
+struct stats_collect {
 	struct stats stats;
 
 	enum stats_format format;
@@ -23,128 +23,202 @@ struct stats_hook {
 	const char *uri;
 };
 
-static int hook_stats(struct hook *h, int when, struct hook_info *j)
+static int stats_collect_init(struct hook *h)
 {
-	struct stats_hook *p = (struct stats_hook *) h->_vd;
+	struct stats_collect *p = h->_vd;
+
+	stats_init(&p->stats);
+
+	/* Register statistic object to path.
+	 *
+	 * This allows the path code to update statistics. */
+	if (h->path)
+		h->path->stats = &p->stats;
 	
-	switch (when) {
-		case HOOK_INIT:
-			stats_init(&p->stats);
-		
-			/* Register statistic object to path.
-			 *
-			 * This allows the path code to update statistics. */
-			if (j->path)
-				j->path->stats = &p->stats;
-			
-			/* Set default values */
-			p->format = STATS_FORMAT_HUMAN;
-			p->verbose = 0;
-			p->uri = NULL;
-			p->output = stdout;
-			
-			break;
-		
-		case HOOK_PARSE: {
-			const char *format;
-			if (config_setting_lookup_string(h->cfg, "format", &format)) {
-				if      (!strcmp(format, "human"))
-					p->format = STATS_FORMAT_HUMAN;
-				else if (!strcmp(format, "json"))
-					p->format = STATS_FORMAT_JSON;
-				else if (!strcmp(format, "matlab"))
-					p->format = STATS_FORMAT_MATLAB;
-				else
-					cerror(h->cfg, "Invalid statistic output format: %s", format);
-			}
-			
-			config_setting_lookup_int(h->cfg, "verbose", &p->verbose);
-			config_setting_lookup_string(h->cfg, "output", &p->uri);
+	/* Set default values */
+	p->format = STATS_FORMAT_HUMAN;
+	p->verbose = 0;
+	p->uri = NULL;
+	p->output = stdout;
+	
+	return 0;
+}
 
-			break;
-		}
+static int stats_collect_destroy(struct hook *h)
+{
+	struct stats_collect *p = h->_vd;
+	
+	stats_destroy(&p->stats);
+	
+	return 0;
+}
 
-		case HOOK_DESTROY:
-			stats_destroy(&p->stats);
-			break;
-
-		case HOOK_READ:
-			assert(j->samples);
-		
-			stats_collect(p->stats.delta, j->samples, j->count);
-			stats_commit(&p->stats, p->stats.delta);
-			break;
-			
-		case HOOK_PATH_START:
-			if (p->uri) {
-				p->output = fopen(p->uri, "w+");
-				if (!p->output)
-					error("Failed to open file %s for writing", p->uri);
-			}
-			break;
-
-		case HOOK_PATH_STOP:
-			stats_print(&p->stats, p->output, p->format, p->verbose);
-
-			if (p->uri)
-				fclose(p->output);
-
-			break;
-
-		case HOOK_PATH_RESTART:
-			stats_reset(&p->stats);
-			break;
-			
-		case HOOK_PERIODIC:
-			assert(j->path);
-
-			stats_print_periodic(&p->stats, p->output, p->format, p->verbose, j->path);
-			break;
+static int stats_collect_start(struct hook *h)
+{
+	struct stats_collect *p = h->_vd;
+	
+	if (p->uri) {
+		p->output = fopen(p->uri, "w+");
+		if (!p->output)
+			error("Failed to open file %s for writing", p->uri);
 	}
+	
+	return 0;
+}
+
+static int stats_collect_stop(struct hook *h)
+{
+	struct stats_collect *p = h->_vd;
+	
+	stats_print(&p->stats, p->output, p->format, p->verbose);
+
+	if (p->uri)
+		fclose(p->output);
+	
+	return 0;
+}
+
+static int stats_collect_restart(struct hook *h)
+{
+	struct stats_collect *p = h->_vd;
+
+	stats_reset(&p->stats);
+	
+	return 0;
+}
+
+static int stats_collect_periodic(struct hook *h)
+{
+	struct stats_collect *p = h->_vd;
+
+	stats_print_periodic(&p->stats, p->output, p->format, p->verbose, h->path);
+	
+	return 0;
+}
+
+static int stats_collect_parse(struct hook *h, config_setting_t *cfg)
+{
+	struct stats_collect *p = h->_vd;
+
+	const char *format;
+	if (config_setting_lookup_string(cfg, "format", &format)) {
+		if      (!strcmp(format, "human"))
+			p->format = STATS_FORMAT_HUMAN;
+		else if (!strcmp(format, "json"))
+			p->format = STATS_FORMAT_JSON;
+		else if (!strcmp(format, "matlab"))
+			p->format = STATS_FORMAT_MATLAB;
+		else
+			cerror(cfg, "Invalid statistic output format: %s", format);
+	}
+	
+	config_setting_lookup_int(cfg, "verbose", &p->verbose);
+	config_setting_lookup_string(cfg, "output", &p->uri);
+	
+	return 0;
+}
+
+static int stats_collect_read(struct hook *h, struct sample *smps[], size_t *cnt)
+{
+	struct stats_collect *p = h->_vd;
+	
+	stats_collect(p->stats.delta, smps, *cnt);
+	stats_commit(&p->stats, p->stats.delta);
 	
 	return 0;
 }
 
 struct stats_send {
 	struct node *dest;
-	struct stats *stats;
-	int ratio;
+
+	enum {
+		STATS_SEND_MODE_PERIODIC,
+		STATS_SEND_MODE_READ
+	} mode;
+
+	int decimation;
 };
 
-/** @todo This is untested */
-static int hook_stats_send(struct hook *h, int when, struct hook_info *j)
+static int stats_send_init(struct hook *h)
 {
-	struct stats_send *p = (struct stats_send *) h->_vd;
+	struct stats_send *p = h->_vd;
+
+	p->decimation = 1;
+	p->mode = STATS_SEND_MODE_PERIODIC;
 	
-	switch (when) {
-		case HOOK_INIT:
-			assert(j->nodes);
-			assert(j->path);
-		
-			if (!h->cfg)
-				error("Missing configuration for hook '%s'", plugin_name(h->_vt));
-			
-			const char *dest;
-			
-			if (!config_setting_lookup_string(h->cfg, "destination", &dest))
-				cerror(h->cfg, "Missing setting 'destination' for hook '%s'", plugin_name(h->_vt));
-			
-			p->dest = list_lookup(j->nodes, dest);
-			if (!p->dest)
-				cerror(h->cfg, "Invalid destination node '%s' for hook '%s'", dest, plugin_name(h->_vt));
-			break;
-			
-		case HOOK_PATH_START:
-			node_start(p->dest);
-			break;
+	return 0;
+}
 
-		case HOOK_PATH_STOP:
-			node_stop(p->dest);
-			break;
+static int stats_send_parse(struct hook *h, config_setting_t *cfg)
+{
+	struct stats_send *p = h->_vd;
 
-		case HOOK_READ:
-			stats_send(p->stats, p->dest);
-			break;
+	assert(h->path && h->path->super_node);
+
+	const char *dest, *mode;
+
+	if (config_setting_lookup_string(cfg, "destination", &dest)) {
+		p->dest = list_lookup(&h->path->super_node->nodes, dest);
+		if (!p->dest)
+			cerror(cfg, "Invalid destination node '%s' for hook '%s'", dest, plugin_name(h->_vt));
+	}
+	else
+		cerror(cfg, "Missing setting 'destination' for hook '%s'", plugin_name(h->_vt));
+
+	if (config_setting_lookup_string(cfg, "destination", &mode)) {
+		if      (!strcmp(mode, "periodic"))
+			p->mode = STATS_SEND_MODE_PERIODIC;
+		else if (!strcmp(mode, "read"))
+			p->mode = STATS_SEND_MODE_READ;
+		else
+			cerror(cfg, "Invalid value '%s' for setting 'mode' of hook '%s'", mode, plugin_name(h->_vt));
+	}
+
+	config_setting_lookup_int(cfg, "decimation", &p->decimation);
+
+	return 0;
+}
+
+static int stats_send_start(struct hook *h)
+{
+	struct stats_send *p = h->_vd;
+
+	if (p->dest->state != STATE_STOPPED)
+		node_start(p->dest);
+	
+	return 0;
+}
+
+static int stats_send_stop(struct hook *h)
+{
+	struct stats_send *p = h->_vd;
+
+	if (p->dest->state != STATE_STOPPED)
+		node_stop(p->dest);
+	
+	return 0;
+}
+
+static int stats_send_periodic(struct hook *h)
+{
+	struct stats_send *p = h->_vd;
+	
+	if (p->mode == STATS_SEND_MODE_PERIODIC)
+		stats_send(h->path->stats, p->dest);
+
+	return 0;
+}
+
+static int stats_send_read(struct hook *h, struct sample *smps[], size_t *cnt)
+{
+	struct stats_send *p = h->_vd;
+
+	assert(h->path->stats);
+
+	if (p->mode == STATS_SEND_MODE_READ) {
+		size_t processed = h->path->stats->histograms[STATS_OWD].total;
+		if (processed % p->decimation == 0)
+			stats_send(h->path->stats, p->dest);
 	}
 	
 	return 0;
@@ -156,9 +230,15 @@ static struct plugin p1 = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 2,
-		.size	= sizeof(struct stats_hook),
-		.cb	= hook_stats,
-		.when	= HOOK_STORAGE | HOOK_PARSE | HOOK_PATH | HOOK_READ | HOOK_PERIODIC
+		.init	= stats_collect_init,
+		.destroy= stats_collect_destroy,
+		.start	= stats_collect_start,
+		.stop	= stats_collect_stop,
+		.read	= stats_collect_read,
+		.restart= stats_collect_restart,
+		.periodic= stats_collect_periodic,
+		.parse	= stats_collect_parse,
+		.size	= sizeof(struct stats_collect),
 	}
 };
 
@@ -168,8 +248,13 @@ static struct plugin p2 = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
-		.cb	= hook_stats_send,
-		.when	= HOOK_STORAGE | HOOK_PATH | HOOK_READ
+		.init	= stats_send_init,
+		.parse	= stats_send_parse,
+		.start	= stats_send_start,
+		.stop	= stats_send_stop,
+		.periodic= stats_send_periodic,
+		.read	= stats_send_read,
+		.size	= sizeof(struct stats_send)
 	}
 };
 

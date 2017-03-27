@@ -19,23 +19,20 @@
 #include "node.h"
 #include "plugin.h"
 
-int hook_init(struct hook *h, struct hook_type *vt, struct super_node *sn)
+int hook_init(struct hook *h, struct hook_type *vt, struct path *p)
 {
 	int ret;
 
-	struct hook_info i = {
-		.nodes = &sn->nodes,
-		.paths = &sn->paths
-	};
-	
 	assert(h->state == STATE_DESTROYED);
 	
 	h->priority = vt->priority;
+	h->path = p;
 
 	h->_vt = vt;
 	h->_vd = alloc(vt->size);
+
 	
-	ret = hook_run(h, HOOK_INIT, &i);
+	ret = h->_vt->init ? h->_vt->init(h) : 0;
 	if (ret)
 		return ret;
 	
@@ -49,21 +46,13 @@ int hook_parse(struct hook *h, config_setting_t *cfg)
 	int ret;
 
 	assert(h->state != STATE_DESTROYED);
-	
-	h->cfg = cfg;
-	
-	config_setting_lookup_int(h->cfg, "priority", &h->priority);
-	
-	if (h->_vt->when & HOOK_PARSE) {
-		if (!h->cfg)
-			error("Missing configuration for hook: '%s'", plugin_name(h->_vt));
 
-		/* Parse hook arguments */
-		ret = hook_run(h, HOOK_PARSE, NULL);
-		if (ret)
-			return ret;
-	}
-	
+	config_setting_lookup_int(cfg, "priority", &h->priority);
+
+	ret = h->_vt->parse ? h->_vt->parse(h, cfg) : 0;
+	if (ret)
+		return ret;
+
 	h->state = STATE_PARSED;
 	
 	return 0;
@@ -75,16 +64,80 @@ int hook_destroy(struct hook *h)
 
 	assert(h->state != STATE_DESTROYED);
 	
-	ret = hook_run(h, HOOK_DESTROY, NULL);
+	ret = h->_vt->destroy ? h->_vt->destroy(h) : 0;
 	if (ret)
 		return ret;
 	
 	if (h->_vd)
 		free(h->_vd);
 	
-	h->state = HOOK_DESTROYED;
+	h->state = STATE_DESTROYED;
 	
 	return 0;
+}
+
+int hook_start(struct hook *h)
+{
+	return h->_vt->start ? h->_vt->start(h) : 0;
+}
+
+int hook_stop(struct hook *h)
+{
+	return h->_vt->stop ? h->_vt->stop(h) : 0;
+}
+
+int hook_periodic(struct hook *h)
+{
+	return h->_vt->periodic ? h->_vt->periodic(h) : 0;
+}
+
+int hook_restart(struct hook *h)
+{
+	return h->_vt->restart ? h->_vt->restart(h) : 0;
+}
+
+int hook_read(struct hook *h, struct sample *smps[], size_t *cnt)
+{
+	return h->_vt->read ? h->_vt->read(h, smps, cnt) : 0;
+}
+
+size_t hook_read_list(struct list *hs, struct sample *smps[], size_t cnt)
+{
+	size_t ret;
+
+	for (size_t i = 0; i < list_length(hs); i++) {
+		struct hook *h = list_at(hs, i);
+
+		ret = hook_read(h, smps, &cnt);
+		if (ret || !cnt)
+			/* Abort hook processing if earlier hooks removed all samples
+			 * or they returned something non-zero */
+			break;
+	}
+
+	return cnt;
+}
+
+size_t hook_write_list(struct list *hs, struct sample *smps[], size_t cnt)
+{
+	size_t ret;
+
+	for (size_t i = 0; i < list_length(hs); i++) {
+		struct hook *h = list_at(hs, i);
+
+		ret = hook_write(h, smps, &cnt);
+		if (ret || !cnt)
+			/* Abort hook processing if earlier hooks removed all samples
+			 * or they returned something non-zero */
+			break;
+	}
+
+	return cnt;
+}
+
+int hook_write(struct hook *h, struct sample *smps[], size_t *cnt)
+{
+	return h->_vt->write ? h->_vt->write(h, smps, cnt) : 0;
 }
 
 int hook_cmp_priority(const void *a, const void *b)
@@ -95,24 +148,16 @@ int hook_cmp_priority(const void *a, const void *b)
 	return ha->priority - hb->priority;
 }
 
-int hook_run(struct hook *h, int when, struct hook_info *i)
-{
-	debug(LOG_HOOK | 22, "Running hook '%s' when=%u, prio=%u, cnt=%zu", plugin_name(h->_vt), when, h->priority, i ? i->count : 0);
-	
-	return h->_vt->when & when ? h->_vt->cb(h, when, i) : 0;
-}
-
-int hook_parse_list(struct list *list, config_setting_t *cfg, struct super_node *sn)
+int hook_parse_list(struct list *list, config_setting_t *cfg, struct path *o)
 {
 	struct hook h;
 	struct plugin *p;
 
-	int ret;
+	int ret, priority = 10;
 
 	if (!config_setting_is_group(cfg))
 		cerror(cfg, "Hooks must be configured with an object");
-	
-	int priority = 10;
+
 	for (int i = 0; i < config_setting_length(cfg); i++) {
 		config_setting_t *cfg_hook = config_setting_get_elem(cfg, i);
 		
@@ -125,10 +170,12 @@ int hook_parse_list(struct list *list, config_setting_t *cfg, struct super_node 
 		if (!config_setting_is_group(cfg_hook))
 			cerror(cfg_hook, "The 'hooks' setting must be an array of strings.");
 	
-		ret = hook_init(&h, &p->hook, sn);
+		ret = hook_init(&h, &p->hook, o);
 		if (ret)
 			continue;
 		
+		/* If the user does not assign a priority, we will use the
+		 * position of the hook section in the congiguration file. */
 		h.priority = priority++;
 		
 		ret = hook_parse(&h, cfg_hook);
@@ -138,5 +185,5 @@ int hook_parse_list(struct list *list, config_setting_t *cfg, struct super_node 
 		list_push(list, memdup(&h, sizeof(h)));
 	}
 
-	return list_length(list);
+	return 0;
 }

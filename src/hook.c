@@ -61,12 +61,15 @@ static int hook_parse_cli(struct hook *h, char *params[], int paramlen)
 static void usage()
 {
 	printf("Usage: villas-hook [OPTIONS] NAME [PARAM] \n");
-	printf("  NAME      the name of the hook function to run\n");
-	printf("  PARAM     a string of configuration settings for the hook\n\n");
+	printf("  PARAM     a string of configuration settings for the hook\n");
 	printf("  OPTIONS are:\n");
 	printf("    -h      show this help\n");
 	printf("    -d LVL  set debug level to LVL\n");
 	printf("    -v CNT  process CNT samples at once\n");
+	printf("  NAME      the name of the hook function\n\n");
+	
+	printf("The following hook functions are supported:\n");
+	plugin_dump(PLUGIN_TYPE_HOOK);
 	printf("\n");
 	printf("Example:");
 	printf("  villas-signal random | villas-hook skip_first seconds=10\n");
@@ -77,7 +80,9 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	int ret, level, cnt;
+	int ret, level;
+	
+	size_t cnt, recv;
 	
 	/* Default values */
 	level = V;
@@ -88,9 +93,9 @@ int main(int argc, char *argv[])
 	struct log log;
 	struct plugin *p;
 	struct sample *samples[cnt];
-	struct pool pool = { .state = STATE_DESTROYED };
+	
+	struct pool q = { .state = STATE_DESTROYED };
 	struct hook h = { .state = STATE_DESTROYED };
-	struct hook_info hi = { .samples = samples };
 
 	char c;
 	while ((c = getopt(argc, argv, "hv:d:")) != -1) {
@@ -109,6 +114,8 @@ int main(int argc, char *argv[])
 	}
 	
 	log_init(&log, level, LOG_ALL);
+	log_start(&log);
+
 	memory_init(DEFAULT_NR_HUGEPAGES);
 
 	if (argc < optind + 1) {
@@ -119,41 +126,47 @@ int main(int argc, char *argv[])
 	if (cnt < 1)
 		error("Vectorize option must be greater than 0");
 	
-	ret = pool_init(&pool, 10 * cnt, SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
+	ret = pool_init(&q, 10 * cnt, SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
 	if (ret)
 		error("Failed to initilize memory pool");
 	
-	name        = argv[optind];
+	name = argv[optind];
 
 	p = plugin_lookup(PLUGIN_TYPE_HOOK, name);
 	if (!p)
-		error("Unknown hook function '%s'", argv[optind]);
+		error("Unknown hook function '%s'", name);
 
 	config_init(&cfg);
 	
-	hook_init(&h, &p->hook, NULL);
-	hook_parse_cli(&h, &argv[optind + 1], argc - optind - 1);
-	hook_run(&h, HOOK_PATH_START, &hi);
+	ret = hook_init(&h, &p->hook, NULL);
+	if (ret)
+		error("Failed to initialize hook");
+
+	ret = hook_parse_cli(&h, &argv[optind + 1], argc - optind - 1);
+	if (ret)
+		error("Failed to parse hook config");
+
+	hook_start(&h);
 	
 	while (!feof(stdin)) {
-		ret = sample_alloc(&pool, samples, cnt);
+		ret = sample_alloc(&q, samples, cnt);
 		if (ret != cnt)
-			error("Failed to allocate %u samples from pool", cnt);
+			error("Failed to allocate %zu samples from pool", cnt);
 
-		hi.count = 0;
+		recv = 0;
 		for (int j = 0; j < cnt && !feof(stdin); j++) {
 			ret = sample_fscan(stdin, hi.samples[j], NULL);
 			if (ret < 0)
 				break;
 			
-			hi.samples[j]->ts.received = time_now();
-			hi.count++;
+			samples[j]->ts.received = time_now();
+			recv++;
 		}
 
-		debug(15, "Read %d samples from stdin", cnt);
+		debug(15, "Read %zu samples from stdin", recv);
 		
-		hook_run(&h, HOOK_READ, &hi);
-		hook_run(&h, HOOK_WRITE, &hi);
+		hook_read(&h, samples, &recv);
+		hook_write(&h, samples, &recv);
 		
 		for (int j = 0; j < hi.count; j++)
 			sample_fprint(stdout, hi.samples[j], SAMPLE_ALL);
@@ -162,13 +175,12 @@ int main(int argc, char *argv[])
 		sample_free(samples, cnt);
 	}
 	
-	hook_run(&h, HOOK_PATH_STOP, &hi);
-
+	hook_stop(&h);
 	hook_destroy(&h);
 	config_destroy(&cfg);
 	
 	sample_free(samples, cnt);
-	pool_destroy(&pool);
+	pool_destroy(&q);
 
 	return 0;
 }

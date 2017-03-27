@@ -18,37 +18,36 @@ struct convert {
 	} mode;
 };
 
-static int hook_convert(struct hook *h, int when, struct hook_info *j)
+static int convert_parse(struct hook *h, config_setting_t *cfg)
 {
-	struct convert *p = (struct convert *) h->_vd;
+	struct convert *p = h->_vd;
 	
-	switch (when) {
-		case HOOK_PARSE: {
-			const char *mode;
-			
-			if (!config_setting_lookup_string(h->cfg, "mode", &mode))
-				cerror(h->cfg, "Missing setting 'mode' for hook '%s'", plugin_name(h->_vt));
-			
-			if      (!strcmp(mode, "fixed"))
-				p->mode = TO_FIXED;
-			else if (!strcmp(mode, "float"))
-				p->mode = TO_FLOAT;
-			else
-				error("Invalid parameter '%s' for hook 'convert'", mode);
-			break;
-		}
-		
-		case HOOK_READ:
-			for (int i = 0; i < j->count; i++) {
-				for (int k = 0; k < j->samples[i]->length; k++) {
-					switch (p->mode) {
-						case TO_FIXED: j->samples[i]->data[k].i = j->samples[i]->data[k].f * 1e3; break;
-						case TO_FLOAT: j->samples[i]->data[k].f = j->samples[i]->data[k].i; break;
-					}
-				}
+	const char *mode;
+	
+	if (!config_setting_lookup_string(cfg, "mode", &mode))
+		cerror(cfg, "Missing setting 'mode' for hook '%s'", plugin_name(h->_vt));
+	
+	if      (!strcmp(mode, "fixed"))
+		p->mode = TO_FIXED;
+	else if (!strcmp(mode, "float"))
+		p->mode = TO_FLOAT;
+	else
+		error("Invalid parameter '%s' for hook 'convert'", mode);
+	
+	return 0;
+}
+
+static int convert_read(struct hook *h, struct sample *smps[], size_t *cnt)
+{
+	struct convert *p = h->_vd;
+
+	for (int i = 0; i < *cnt; i++) {
+		for (int k = 0; k < smps[i]->length; k++) {
+			switch (p->mode) {
+				case TO_FIXED: smps[i]->data[k].i = smps[i]->data[k].f * 1e3; break;
+				case TO_FLOAT: smps[i]->data[k].f = smps[i]->data[k].i; break;
 			}
-			
-			break;
+		}
 	}
 
 	return 0;
@@ -60,9 +59,9 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
-		.size	= sizeof(struct convert),
-		.cb	= hook_convert,
-		.when	= HOOK_STORAGE | HOOK_PARSE | HOOK_READ
+		.parse	= convert_parse,
+		.read	= convert_read,
+		.size	= sizeof(struct convert)
 	}
 };
 
