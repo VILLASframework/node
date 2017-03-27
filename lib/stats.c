@@ -1,10 +1,8 @@
 /** Statistic collection.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC
- *   This file is part of VILLASnode. All Rights Reserved. Proprietary and confidential.
- *   Unauthorized copying of this file, via any medium is strictly prohibited.
- */
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
 
 #include "stats.h"
 #include "hist.h"

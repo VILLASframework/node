@@ -71,7 +71,7 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 			return -1;
 		case WEBSOCKET_CLOSED:
 			if (c->node) {
-				struct websocket *w = (struct websocket *) c->node->_vd;
+				struct websocket *w = c->node->_vd;
 				list_remove(&w->connections, c);
 			}
 			else
@@ -169,7 +169,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			info("LWS: New connection %s", websocket_connection_name(c));
 
 			if (c->node != NULL) {
-				struct websocket *w = (struct websocket *) c->node->_vd;
+				struct websocket *w = c->node->_vd;
 				list_push(&w->connections, c);
 			}
 			else {
@@ -191,7 +191,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			
 		case LWS_CALLBACK_CLIENT_WRITEABLE:
 		case LWS_CALLBACK_SERVER_WRITEABLE: {
-			w = (struct websocket *) c->node->_vd;
+			w = c->node->_vd;
 
 			if (c->node && c->node->state != STATE_STARTED)
 				return -1;
@@ -224,7 +224,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 		case LWS_CALLBACK_CLIENT_RECEIVE:
 		case LWS_CALLBACK_RECEIVE: {
-			w = (struct websocket *) c->node->_vd;
+			w = c->node->_vd;
 
 			if (c->node->state != STATE_STARTED)
 				return -1;

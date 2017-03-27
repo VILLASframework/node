@@ -51,12 +51,10 @@ static int hook_parse_cli(struct hook *h, char *params[], int paramlen)
 
 	cfg_root = config_root_setting(&cfg);
 	ret = hook_parse(h, cfg_root);
-	if (ret)
-		error("Failed to parse hook settings");
 
 	free(str);
 
-	return 0;
+	return ret;
 }
 
 static void usage()

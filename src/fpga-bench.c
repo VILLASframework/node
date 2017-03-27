@@ -84,15 +84,15 @@ int fpga_benchmark_jitter(struct fpga_card *c)
 {
 	int ret;
 
-	struct fpga_ip *tmr;
-
-	tmr = list_lookup(&c->ips, "timer_0");
-	if (!tmr || !c->intc)
+	struct fpga_ip *ip = list_lookup(&c->ips, "timer_0");
+	if (!ip || !c->intc)
 		return -1;
 
-	XTmrCtr *xtmr = &tmr->timer.inst;
+	struct timer *tmr = ip->_vd;
 
-	ret = intc_enable(c->intc, (1 << tmr->irq), intc_flags);
+	XTmrCtr *xtmr = &tmr->inst;
+
+	ret = intc_enable(c->intc, (1 << ip->irq), intc_flags);
 	if (ret)
 		error("Failed to enable interrupt");
 	
@@ -107,12 +107,12 @@ int fpga_benchmark_jitter(struct fpga_card *c)
 
 	uint64_t end, start = rdtsc();
 	for (int i = 0; i < runs; i++) {
-		uint64_t cnt = intc_wait(c->intc, tmr->irq);
+		uint64_t cnt = intc_wait(c->intc, ip->irq);
 		if (cnt != 1)
 			warn("fail");
 		
 		/* Ackowledge IRQ */
-		XTmrCtr_WriteReg((uintptr_t) c->map + tmr->baseaddr, 0, XTC_TCSR_OFFSET, XTmrCtr_ReadReg((uintptr_t) c->map + tmr->baseaddr, 0, XTC_TCSR_OFFSET));
+		XTmrCtr_WriteReg((uintptr_t) c->map + ip->baseaddr, 0, XTC_TCSR_OFFSET, XTmrCtr_ReadReg((uintptr_t) c->map + ip->baseaddr, 0, XTC_TCSR_OFFSET));
 
 		end = rdtsc();
 		hist[i] = end - start;
@@ -130,7 +130,7 @@ int fpga_benchmark_jitter(struct fpga_card *c)
 
 	free(hist);
 	
-	ret = intc_disable(c->intc, (1 << tmr->irq));
+	ret = intc_disable(c->intc, (1 << ip->irq));
 	if (ret)
 		error("Failed to disable interrupt");
 

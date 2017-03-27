@@ -82,8 +82,6 @@ int main(int argc, char *argv[])
 	else if (argc > 2)
 		usage();
 #endif
-
-	super_node_init(&sn);
 	
 	info("This is VILLASnode %s (built on %s, %s)", BLD(YEL(VERSION_STR)),
 		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
@@ -93,7 +91,10 @@ int main(int argc, char *argv[])
 		error("Your kernel version is to old: required >= %u.%u", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
 
 	signals_init(quit);
+	log_init(&sn.log, V, LOG_ALL);
+	log_start(&sn.log);
 
+	super_node_init(&sn);
 	super_node_parse_cli(&sn, argc, argv);
 	super_node_check(&sn);
 	super_node_start(&sn);
@@ -113,7 +114,7 @@ int main(int argc, char *argv[])
 				for (size_t j = 0; j < list_length(&p->hooks); j++) {
 					struct hook *h = list_at(&p->hooks, j);
 
-					hook_run(h, HOOK_PERIODIC, NULL, 0);
+					hook_periodic(h);
 				}
 			}
 
