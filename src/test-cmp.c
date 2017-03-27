@@ -12,6 +12,7 @@
 #include <jansson.h>
 
 #include <villas/sample.h>
+#include <villas/sample_io.h>
 #include <villas/utils.h>
 #include <villas/hist.h>
 #include <villas/timing.h>
@@ -128,14 +129,14 @@ check:		if (optarg == endptr)
 		serror("Failed to open file: %s", f2.path);
 	
 	while (!feof(f1.handle) && !feof(f2.handle)) {
-		ret = sample_fscan(f1.handle, f1.sample, &f1.flags);
+		ret = sample_io_villas_fscan(f1.handle, f1.sample, &f1.flags);
 		if (ret < 0) {
 			if (feof(f1.handle))
 				ret = 0;
 			goto out;
 		}
 		
-		ret = sample_fscan(f2.handle, f2.sample, &f2.flags);
+		ret = sample_io_villas_fscan(f2.handle, f2.sample, &f2.flags);
 		if (ret < 0) {
 			if (feof(f2.handle))
 				ret = 0;
@@ -143,7 +144,7 @@ check:		if (optarg == endptr)
 		}
 
 		/* Compare sequence no */
-		if ((f1.flags & SAMPLE_SEQUENCE) && (f2.flags & SAMPLE_SEQUENCE)) {
+		if ((f1.flags & SAMPLE_IO_SEQUENCE) && (f2.flags & SAMPLE_IO_SEQUENCE)) {
 			if (f1.sample->sequence != f2.sample->sequence) {
 				printf("sequence no: %d != %d\n", f1.sample->sequence, f2.sample->sequence);
 				ret = -1;

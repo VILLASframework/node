@@ -15,6 +15,7 @@
 
 #include <villas/timing.h>
 #include <villas/sample.h>
+#include <villas/sample_io.h>
 #include <villas/hook.h>
 #include <villas/utils.h>
 #include <villas/pool.h>
@@ -155,7 +156,7 @@ int main(int argc, char *argv[])
 
 		recv = 0;
 		for (int j = 0; j < cnt && !feof(stdin); j++) {
-			ret = sample_fscan(stdin, hi.samples[j], NULL);
+			ret = sample_io_villas_fscan(stdin, samples[j], NULL);
 			if (ret < 0)
 				break;
 			
@@ -168,8 +169,8 @@ int main(int argc, char *argv[])
 		hook_read(&h, samples, &recv);
 		hook_write(&h, samples, &recv);
 		
-		for (int j = 0; j < hi.count; j++)
-			sample_fprint(stdout, hi.samples[j], SAMPLE_ALL);
+		for (int j = 0; j < recv; j++)
+			sample_io_villas_fprint(stdout, samples[j], SAMPLE_IO_ALL);
 		fflush(stdout);
 		
 		sample_free(samples, cnt);

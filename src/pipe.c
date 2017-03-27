@@ -20,6 +20,7 @@
 #include <villas/msg.h>
 #include <villas/timing.h>
 #include <villas/pool.h>
+#include <villas/sample_io.h>
 #include <villas/kernel/rt.h>
 
 #include "config.h"
@@ -103,7 +104,7 @@ static void * send_loop(void *ctx)
 			struct sample *s = smps[i];
 			int reason;
 
-retry:			reason = sample_fscan(stdin, s, NULL);
+retry:			reason = sample_io_villas_fscan(stdin, s, NULL);
 			if (reason < 0) {
 				if (feof(stdin)) {
 					info("Reached end-of-file. Terminating...");
@@ -157,7 +158,7 @@ static void * recv_loop(void *ctx)
 			if (s->ts.received.tv_sec == -1 || s->ts.received.tv_sec == 0)
 				s->ts.received = now;
 
-			sample_fprint(stdout, s, SAMPLE_ALL);
+			sample_io_villas_fprint(stdout, s, SAMPLE_IO_ALL);
 			fflush(stdout);
 		}
 		pthread_testcancel();
