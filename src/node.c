@@ -84,8 +84,8 @@ int main(int argc, char *argv[])
 #endif
 
 	super_node_init(&sn);
-
-	info("This is VILLASnode %s (built on %s, %s)", BLD(YEL(VERSION)),
+	
+	info("This is VILLASnode %s (built on %s, %s)", BLD(YEL(VERSION_STR)),
 		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
 	/* Checks system requirements*/

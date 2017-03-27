@@ -10,12 +10,8 @@
 
 #pragma once
 
-#ifndef _GIT_REV
-  #define _GIT_REV		"nogit"
-#endif
-
 /** The version number of VILLASnode */
-#define VERSION			"v0.7-" _GIT_REV _VARIANT
+#define VERSION_STR		"v" XSTR(_VERSION) "-" _GIT_REV "-" _VARIANT
 
 /** Default number of values in a sample */
 #define DEFAULT_VALUES		64
@@ -38,7 +34,7 @@
 #define SYSFS_PATH		"/sys"
 #define PROCFS_PATH		"/proc"
 
-#define USER_AGENT		"VILLASnode " VERSION
+#define USER_AGENT		"VILLASnode " VERSION_STR
 
 /* Required kernel version */
 #define KERNEL_VERSION_MAJ	3

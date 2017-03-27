@@ -26,6 +26,9 @@ BUILDDIR ?= build
 # Default debug level for executables
 V ?= 2
 
+# Version of VILLASnode
+VERSION = 0.7
+
 # Common flags
 LDLIBS   =
 CFLAGS  += -std=c11 -Iinclude -Iinclude/villas -I. -MMD -mcx16
@@ -69,16 +72,16 @@ SRCDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 # Add git revision and build variant defines
 ifdef CI
-	CFLAGS += -D_GIT_REV='"${CI_BUILD_REF:0:7}"'
-	CFLAGS += -D_VARIANT='"-ci-$(VARIANT)"'
+	GIT_REV = ${CI_BUILD_REF:0:7}
+	VARIANT = ci-$(VARIANT)
 else
-	GIT = $(shell type -p git)
-	GIT_REV = $(shell git describe --tags --dirty)
-	ifneq ($(GIT),)
-		CFLAGS += -D_GIT_REV='"$(GIT_REV)"'
+	ifneq ($(shell type -p git),)
+#		GIT_REV = $(shell git describe --tags)
+		GIT_REV = $(shell REV=$$(git rev-parse HEAD); echo $${REV:0:7})
 	endif
-	CFLAGS += -D_VARIANT='"-$(VARIANT)"'
 endif
+
+CFLAGS += -D_VERSION='$(VERSION)' -D_VARIANT='"$(VARIANT)"' -D_GIT_REV='"$(GIT_REV)"'
 
 # pkg-config dependencies
 PKGS = libconfig
