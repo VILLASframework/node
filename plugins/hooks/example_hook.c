@@ -14,10 +14,10 @@ struct hook;
 struct path;
 struct sample;
 
-static int hook_example(struct hook *h, int when, struct hook_info *j)
+static int example_start(struct hook *h)
 {
 	info("Hello world from example hook!");
-	
+
 	return 0;
 }
 
@@ -27,8 +27,7 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.priority = 99,
-		.cb	= hook_example,
-		.when	= HOOK_PATH_START
+		.start	= example_start
 	}
 };
 

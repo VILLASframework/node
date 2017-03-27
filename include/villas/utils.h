@@ -176,6 +176,7 @@ char * cpulist_create(char *str, size_t len, cpu_set_t *set);
 json_t * config_to_json(config_setting_t *cfg);
 
 #endif
+int json_to_config(json_t *json, config_setting_t *parent);
 
 /** Allocate and initialize memory. */
 void * alloc(size_t bytes);
