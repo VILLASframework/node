@@ -18,7 +18,7 @@
 /** A thread-safe memory pool */
 struct pool {
 	void *buffer;		/**< Address of the underlying memory area */
-	const struct memtype *mem;
+	struct memtype *mem;
 	
 	size_t len;		/**< Length of the underlying memory area */
 	
@@ -31,7 +31,7 @@ struct pool {
 #define INLINE static inline __attribute__((unused)) 
 
 /** Initiazlize a pool */
-int pool_init(struct pool *p, size_t cnt, size_t blocksz, const struct memtype *mem);
+int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memtype *mem);
 
 /** Destroy and release memory used by pool. */
 int pool_destroy(struct pool *p);

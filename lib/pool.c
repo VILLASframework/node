@@ -10,7 +10,7 @@
 #include "memory.h"
 #include "kernel/kernel.h"
 
-int pool_init(struct pool *p, size_t cnt, size_t blocksz, const struct memtype *m)
+int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memtype *m)
 {
 	int ret;
 

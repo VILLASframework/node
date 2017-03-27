@@ -45,7 +45,7 @@ typedef char cacheline_pad_t[CACHELINE_SIZE];
 struct queue {
 	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
 
-	struct memtype const * mem;
+	struct memtype * mem;
 	size_t buffer_mask;
 	struct queue_cell {
 		atomic_size_t sequence;
@@ -64,7 +64,7 @@ struct queue {
 };
 
 /** Initialize MPMC queue */
-int queue_init(struct queue *q, size_t size, const struct memtype *mem);
+int queue_init(struct queue *q, size_t size, struct memtype *mem);
 
 /** Desroy MPMC queue and release memory */
 int queue_destroy(struct queue *q);
