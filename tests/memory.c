@@ -56,7 +56,7 @@ Test(memory, manager) {
 
     p3 = memory_alloc_aligned(manager, 128, 256);
     cr_assert(p3);
-    cr_assert(IS_ALIGNED(p1, 256));
+    cr_assert(IS_ALIGNED(p3, 256));
 
     cr_assert(memory_free(manager, p2, 32) == 0);
     cr_assert(memory_free(manager, p1, 128) == 0);
