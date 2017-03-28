@@ -51,7 +51,7 @@
 
 #define ALIGN(x, a)	 ALIGN_MASK(x, (uintptr_t) (a) - 1)
 #define ALIGN_MASK(x, m) (((uintptr_t) (x) + (m)) & ~(m))
-#define IS_ALIGNED(x, a) (ALIGN(x, a) == (uintptr_t) x)
+#define IS_ALIGNED(x, a) ((uintptr_t) (x) % (uintptr_t) (a) == 0)
 
 /** Round-up integer division */
 #define CEIL(x, y)	(((x) + (y) - 1) / (y))
