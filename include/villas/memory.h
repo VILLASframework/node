@@ -44,7 +44,7 @@ enum memblock_flags {
 struct memblock {
   struct memblock* prev;
   struct memblock* next;
-  size_t len;
+  size_t len; // lenght of the block; doesn't include the descriptor itself
   int flags;
 };
 
