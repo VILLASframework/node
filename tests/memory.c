@@ -36,8 +36,10 @@ Theory((size_t len, size_t align, struct memtype *m), memory, aligned) {
 }
 
 Test(memory, manager) {
-    void *p = memory_alloc(&memtype_heap, 1<<10);
-    struct memtype *manager = memtype_managed_init(p, 1<<10);
+    size_t total_size = 1 << 10;
+    size_t max_block = total_size - sizeof(struct memtype_managed) - sizeof(struct memblock);
+    void *p = memory_alloc(&memtype_heap, total_size);
+    struct memtype *manager = memtype_managed_init(p, total_size);
 
     void *p1, *p2, *p3;
     p1 = memory_alloc(manager, 16);
@@ -60,7 +62,8 @@ Test(memory, manager) {
     cr_assert(memory_free(manager, p1, 128) == 0);
     cr_assert(memory_free(manager, p3, 128) == 0);
 
-    p1 = memory_alloc(manager, (1<<10)-sizeof(struct memblock));
+
+    p1 = memory_alloc(manager, max_block);
     cr_assert(p1);
-    cr_assert(memory_free(manager, p1, (1<<10)-sizeof(struct memblock)) == 0);
+    cr_assert(memory_free(manager, p1, max_block) == 0);
 }
