@@ -120,6 +120,9 @@ void* memory_managed_alloc(struct memtype *m, size_t len, size_t alignment)
         uintptr_t gap = 0;
         if (rem != 0) {
             gap = alignment - rem;
+            if (gap > avail)
+                // next aligned address isn't in this block anymore
+                continue;
             cptr += gap;
             avail -= gap;
         }
