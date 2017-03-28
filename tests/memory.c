@@ -15,10 +15,10 @@
 TheoryDataPoints(memory, aligned) = {
 	DataPoints(size_t, 1, 32, 55, 1 << 10, 1 << 20),
 	DataPoints(size_t, 1, 8, 1 << 12),
-	DataPoints(const struct memtype *, &memtype_heap, &memtype_hugepage)
+	DataPoints(struct memtype *, &memtype_heap, &memtype_hugepage)
 };
 
-Theory((size_t len, size_t align, const struct memtype *m), memory, aligned) {
+Theory((size_t len, size_t align, struct memtype *m), memory, aligned) {
 	int ret;
 	void *ptr;
 	
