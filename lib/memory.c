@@ -181,8 +181,15 @@ int memory_managed_free(struct memtype *m, void *ptr, size_t len)
         // alignment, ptr may not actually be the start of the block
         if ((char*) block + sizeof(struct memblock) <= cptr &&
             cptr < (char*) block + sizeof(struct memblock) + block->len) {
-            // try to merge it with a neighbouring free block
-            if (block->prev && !(block->prev->flags & MEMBLOCK_USED)) {
+            // try to merge it with neighbouring free blocks
+            if (block->prev && !(block->prev->flags & MEMBLOCK_USED) &&
+                block->next && !(block->next->flags & MEMBLOCK_USED)) {
+                // special case first: both previous and next block are unused
+                block->prev->len += block->len + block->next->len + 2 * sizeof(struct memblock);
+                block->prev->next = block->next->next;
+                if (block->next->next)
+                    block->next->next->prev = block->prev;
+            } else if (block->prev && !(block->prev->flags & MEMBLOCK_USED)) {
                 block->prev->len += block->len + sizeof(struct memblock);
                 block->prev->next = block->next;
                 if (block->next)
