@@ -132,7 +132,7 @@ void* memory_managed_alloc(struct memtype *m, size_t len, size_t alignment)
                  * The original block descriptor is already at the correct
                  * position, so we just change its len and create a new block
                  * descriptor for the actual block we're handling. */
-                block->len = gap;
+                block->len = gap - sizeof(struct memblock);
                 struct memblock *newblock = (struct memblock*) (cptr - sizeof(struct memblock));
                 newblock->prev = block;
                 newblock->next = block->next;
