@@ -74,7 +74,7 @@ VERSION_NUM = $(shell VERSION=$(VERSION); echo $${VERSION:1})
 
 ifdef CI
 	GIT_REV = ${CI_BUILD_REF:0:7}
-	VARIANT = ci-$(VARIANT)
+	VARIANT := ci-$(VARIANT)
 else
 	GIT_REV = $(shell REV=$$(git rev-parse HEAD); echo $${REV:0:7})
 endif
