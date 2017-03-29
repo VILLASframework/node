@@ -2,7 +2,6 @@ variables:
   # This registry is a linked docker container running on the same host
   # and configured in gitlab-ci-runner config.toml as a linked service
   DOCKER_REGISTRY: acs-public:5000
-  DOCKER_IMAGE: villas:latest
   PREFIX: /usr/
 
 stages:
@@ -15,15 +14,15 @@ stages:
 ##############################################################################
 
 # Build docker image which is used to build & test VILLASnode
-docker-image:
+docker-images:
   stage: prepare
   before_script:
     - git submodule sync --recursive
     - git submodule update --recursive --init
     - docker info
   script:
-    - docker build -t $DOCKER_REGISTRY/$DOCKER_IMAGE .
-    - docker push $DOCKER_REGISTRY/$DOCKER_IMAGE
+    - make docker-dev
+    - docker push $DOCKER_REGISTRY/docker-dev
   tags:
     - shell
     - linux
@@ -117,10 +116,10 @@ packaging:
 deliver:
   stage: deploy
   script:
-    - rsync -r build/release/doc/html/ $DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
-    - rsync -r build/release-coverage/coverage/ $DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
-    - rsync -r build/release/packaging/rpm/RPMS $DEPLOY_PATH/../packages
-    - createrepo $DEPLOY_PATH/../packages
+    - rsync -r build/release/doc/html/ $DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
+    - rsync -r build/release-coverage/coverage/ $DEPLOY_HOST:$DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
+    - rsync -r build/release/packaging/rpm/RPMS $DEPLOY_HOST:$DEPLOY_PATH/../packages
+    - ssh $DEPLOY_HOST createrepo $DEPLOY_PATH/../packages
   dependencies:
    - docs
    - coverage
