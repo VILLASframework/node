@@ -19,7 +19,8 @@ $(PLUGINS):
 	$(CC) $(LIB_LDFLAGS) -o $@ $^ $(LIB_LDLIBS)
 
 # Plugins are not installed to the system for now...
-install-plugins:
+install-plugins: plugins
+	install -D -t $(DESTDIR)$(PREFIX)/share/villas/node/plugins $(PLUGINS)
 	
 clean-plugins:
 	rm -rf $(BUILDDIR)/plugins $(PLUGINS)

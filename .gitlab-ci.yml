@@ -17,7 +17,6 @@ stages:
 # Build docker image which is used to build & test VILLASnode
 docker-image:
   stage: prepare
-  # Must match the docker version on the build machine!
   before_script:
     - git submodule sync --recursive
     - git submodule update --recursive --init
@@ -107,14 +106,25 @@ website:
   tags:
     - villas-deploy
 
+packaging:
+  stage: deploy
+  script:
+    - make rpm
+  tags:
+    - shell
+    - fedora
+
 deliver:
   stage: deploy
   script:
     - rsync -r build/release/doc/html/ $DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
     - rsync -r build/release-coverage/coverage/ $DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
+    - rsync -r build/release/packaging/rpm/RPMS $DEPLOY_PATH/../packages
+    - createrepo $DEPLOY_PATH/../packages
   dependencies:
    - docs
    - coverage
+   - packaging
   tags:
     - villas-deploy
 

@@ -63,9 +63,6 @@ int super_node_init(struct super_node *sn)
 	sn->stats = 0;
 	sn->hugepages = DEFAULT_NR_HUGEPAGES;
 	
-	sn->web.port = 80;
-	sn->web.htdocs = "/villas/web/socket/";
-	
 	sn->state = STATE_INITIALIZED;
 
 	return 0;

@@ -21,8 +21,8 @@
 void print_copyright()
 {
 	printf("VILLASnode %s (built on %s %s)\n",
-		BLU(VERSION_STR), MAG(__DATE__), MAG(__TIME__));
-	printf(" copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC\n");
+		BLU(BUILDID), MAG(__DATE__), MAG(__TIME__));
+	printf(" Copyright 2014-2017, Institute for Automation of Complex Power Systems, EONERC\n");
 	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
 }
 

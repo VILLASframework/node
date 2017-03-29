@@ -10,9 +10,6 @@
 
 #pragma once
 
-/** The version number of VILLASnode */
-#define VERSION_STR		"v" XSTR(_VERSION) "-" _GIT_REV "-" _VARIANT
-
 /** Default number of values in a sample */
 #define DEFAULT_VALUES		64
 #define DEFAULT_QUEUELEN	1024
@@ -31,25 +28,11 @@
 #define IPPROTO_VILLAS		137
 #define ETH_P_VILLAS		0xBABE
 
-#define SYSFS_PATH		"/sys"
-#define PROCFS_PATH		"/proc"
+#define USER_AGENT		"VILLASnode (" BUILDID ")"
 
-#define USER_AGENT		"VILLASnode " VERSION_STR
-
-/* Required kernel version */
+/*ID Required kernel version */
 #define KERNEL_VERSION_MAJ	3
 #define KERNEL_VERSION_MIN	6
-
-/* Some hard-coded configuration for the FPGA benchmarks */
-#define BENCH_DM		3
-// 1 FIFO
-// 2 DMA SG
-// 3 DMA Simple
-
-#define BENCH_RUNS		3000000
-#define BENCH_WARMUP		100
-#define BENCH_DM_EXP_MIN	0
-#define BENCH_DM_EXP_MAX	20
 
 /** PCIe BAR number of VILLASfpga registers */
 #define FPGA_PCI_BAR		0
