@@ -18,6 +18,8 @@
 #include <villas/timing.h>
 #include <villas/pool.h>
 
+#include "config.h"
+
 void usage()
 {
 	printf("Usage: villas-test-cmp FILE1 FILE2 [OPTIONS]\n");

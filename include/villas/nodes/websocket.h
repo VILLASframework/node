@@ -36,20 +36,19 @@ struct websocket {
 	int id;					/**< The index of this node */
 };
 
+/* Internal datastructures */
 struct websocket_connection {
 	enum {
-		WEBSOCKET_ESTABLISHED,
-		WEBSOCKET_ACTIVE,
-		WEBSOCKET_SHUTDOWN,
-		WEBSOCKET_CLOSED
+		WEBSOCKET_CONNECTION_CLOSED,
+		WEBSOCKET_CONNECTION_ESTABLISHED,
+		WEBSOCKET_CONNECTION_ACTIVE,
+		WEBSOCKET_CONNECTION_SHUTDOWN
 	} state;
 	
 	struct node *node;
-	struct path *path;
-	
-	struct queue queue;			/**< For samples which are sent to the WebSocket */
-	
 	struct lws *wsi;
+	
+	struct queue queue;			/**< For samples which are sent to the WebSocket */	
 	
 	struct {
 		char name[64];
@@ -57,6 +56,12 @@ struct websocket_connection {
 	} peer;
 	
 	char *_name;
+};
+
+/* Internal datastructures */
+struct websocket_destination {
+	char *uri;
+	struct lws_client_connect_info info;
 };
 
 int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
