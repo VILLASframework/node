@@ -138,10 +138,6 @@ char * vstrcatf(char **dest, const char *fmt, va_list va)
 #define strf(fmt, ...) strcatf(&(char *) { NULL }, fmt, ##__VA_ARGS__)
 #define vstrf(fmt, va) vstrcatf(&(char *) { NULL }, fmt, va)
 
-/** Format a struct timespec date similar to strftime() */
-int strftimespec(char *s, size_t max, const char *format, struct timespec *ts)
-	__attribute__ ((format(strftime, 3, 0)));
-
 /** Convert integer to cpu_set_t.
  *
  * @param set An integer number which is used as the mask
