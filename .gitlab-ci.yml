@@ -24,8 +24,8 @@ docker-images:
   script:
     - docker pull fedora:latest
     - make docker-dev
-    - docker tag villas-dev $DOCKER_REGISTRY/villas-dev
-    - docker push $DOCKER_REGISTRY/docker-dev
+    - docker tag -f villas-dev $DOCKER_REGISTRY/villas-dev:latest
+    - docker push $DOCKER_REGISTRY/villas-dev:latest
   tags:
     - shell
     - linux
