@@ -19,8 +19,6 @@
 #include <villas/pool.h>
 #include <villas/kernel/rt.h>
 
-#include "config.h"
-
 struct super_node sn; /** <The global configuration */
 
 static struct node *node;

@@ -21,8 +21,6 @@
 
 #include <villas/fpga/card.h>
 
-#include "config.h"
-
 /* Declarations */
 int fpga_benchmarks(int argc, char *argv[], struct fpga_card *c);
 

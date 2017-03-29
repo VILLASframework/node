@@ -9,7 +9,8 @@
 
 #include <villas/log.h>
 
-#include "config.h"
+/* Some hard-coded configuration for the FPGA benchmarks */
+#define BENCH_WARMUP		100
 
 /* Declared in fpga-bench.c */
 extern int intc_flags;

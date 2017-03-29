@@ -17,8 +17,6 @@
 #include <villas/sample_io.h>
 #include <villas/timing.h>
 
-#include "config.h"
-
 #define CLOCKID	CLOCK_REALTIME
 
 enum SIGNAL_TYPE {
