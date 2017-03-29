@@ -8,6 +8,7 @@ stages:
   - prepare
   - build
   - test
+  - packaging
   - deploy
 
 # Stage: prepare
@@ -33,12 +34,14 @@ docker-images:
 build:
   stage: build
   script:
+    - make
+    - make tests
     - make install
   artifacts:
     name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
     paths:
       - build/release/
-  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
+  image: $DOCKER_REGISTRY/villas-dev
   tags:
     - docker
 
@@ -50,7 +53,7 @@ docs:
       - build/release/doc/
   script:
     - make doc
-  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
+  image: $DOCKER_REGISTRY/villas-dev
   tags:
     - docker
 
@@ -68,7 +71,7 @@ coverage:
       - build/release-coverage/coverage/
       - build/release-coverage/coverage.txt
       - build/release-coverage/coverage.xml
-  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
+  image: $DOCKER_REGISTRY/villas-dev
   tags:
     - docker
 
@@ -77,8 +80,8 @@ unit:
   dependencies:
     - build
   script:
-    - make run-tests
-  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
+    - make run-unit-tests
+  image: $DOCKER_REGISTRY/villas-dev
   tags:
     - docker
 
@@ -87,8 +90,8 @@ integration:
   dependencies:
     - build
   script:
-    - "build/release/villas-node || true"
-  image: $DOCKER_REGISTRY/$DOCKER_IMAGE
+    - make run-integration-tests
+  image: $DOCKER_REGISTRY/villas-dev
   tags:
     - docker
 
@@ -105,8 +108,8 @@ website:
   tags:
     - villas-deploy
 
-packaging:
-  stage: deploy
+rpm:
+  stage: packaging
   script:
     - make rpm
   tags:
@@ -123,7 +126,7 @@ deliver:
   dependencies:
    - docs
    - coverage
-   - packaging
+   - rpm
   tags:
     - villas-deploy
 
