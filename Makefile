@@ -90,6 +90,7 @@ CFLAGS += $(shell pkg-config --cflags ${PKGS})
 LDLIBS += $(shell pkg-config --libs ${PKGS})
 
 all: src plugins tools
+src plugins tools tests: lib
 
 # Build all variants: debug, coverage, ...
 everything:
