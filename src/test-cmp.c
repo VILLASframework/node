@@ -14,7 +14,6 @@
 #include <villas/sample.h>
 #include <villas/sample_io.h>
 #include <villas/utils.h>
-#include <villas/hist.h>
 #include <villas/timing.h>
 #include <villas/pool.h>
 
@@ -28,12 +27,7 @@ void usage()
 	printf("  OPTIONS  the following optional options:\n");
 	printf("   -h      print this usage information\n");
 	printf("   -d LVL  adjust the debug level\n");
-	printf("   -j      return the results as a JSON object\n");
-	printf("   -m      return the results as a MATLAB struct\n");
 	printf("   -e EPS  set epsilon for floating point comparisons to EPS\n");
-	printf("   -l LOW  smallest value for histogram\n");
-	printf("   -H HIGH largest value for histogram\n");
-	printf("   -r RES  bucket resolution for histogram\n");
 	printf("\n");
 
 	print_copyright();	
@@ -43,21 +37,9 @@ int main(int argc, char *argv[])
 {
 	int ret = 0;
 	double epsilon = 1e-9;
-	
-	/* Histogram */
-	double low = 0;		/**< Lowest value in histogram. */
-	double high = 1e-1;	/**< Highest value in histogram. */
-	double res = 1e-3;	/**< Histogram resolution. */
-	
-	enum {
-		OUTPUT_JSON,
-		OUTPUT_MATLAB,
-		OUTPUT_HUMAN
-	} output = OUTPUT_HUMAN;
-	
+
 	struct log log;
 	struct pool pool = { .state = STATE_DESTROYED };
-	struct hist hist;
 	struct sample *samples[2];
 	
 	struct {
@@ -76,21 +58,6 @@ int main(int argc, char *argv[])
 				goto check;
 			case 'e':
 				epsilon = strtod(optarg, &endptr);
-				goto check;
-			case 'j':
-				output = OUTPUT_JSON;
-				break;
-			case 'm':
-				output = OUTPUT_MATLAB;
-				break;
-			case 'l':
-				low = strtod(optarg, &endptr);
-				goto check;
-			case 'H':
-				high = strtod(optarg, &endptr);
-				goto check;
-			case 'r':
-				res = strtod(optarg, &endptr);
 				goto check;
 			case 'h':
 			case '?':
@@ -115,7 +82,6 @@ check:		if (optarg == endptr)
 	log_init(&log, V, LOG_ALL);
 	log_start(&log);
 
-	hist_init(&hist, low, high, res);
 	pool_init(&pool, 1024, SAMPLE_LEN(DEFAULT_VALUES), &memtype_heap);
 	sample_alloc(&pool, samples, 2);
 	
@@ -161,9 +127,6 @@ check:		if (optarg == endptr)
 			goto out;
 		}
 		
-		/* Collect historgram info of offset */
-		hist_put(&hist, time_delta(&f1.sample->ts.origin, &f2.sample->ts.received));
-
 		/* Compare data */
 		if (f1.sample->length != f2.sample->length) {
 			printf("length: %d != %d\n", f1.sample->length, f2.sample->length);
@@ -185,19 +148,6 @@ out:	sample_free(samples, 2);
 	fclose(f1.handle);
 	fclose(f2.handle);
 	
-	switch (output) {
-		case OUTPUT_MATLAB:
-			hist_dump_matlab(&hist, stdout);
-			break;
-		case OUTPUT_JSON:
-			hist_dump_json(&hist, stdout);
-			break;
-		case OUTPUT_HUMAN:
-			hist_print(&hist, 1);
-			break;
-	}
-
-	hist_destroy(&hist);
 	pool_destroy(&pool);
 
 	return ret;
