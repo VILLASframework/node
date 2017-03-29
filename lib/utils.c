@@ -131,10 +131,19 @@ char * vstrcatf(char **dest, const char *fmt, va_list ap)
 	return *dest;
 }
 
+void cpuset_to_integer(cpu_set_t *cset, uintmax_t *set)
+{
+	*set = 0;
+	for (int i = 0; i < MIN(sizeof(*set) * 8, CPU_SETSIZE); i++) {
+		if (CPU_ISSET(i, cset))
+			*set |= 1ULL << i;
+	}
+}
+
 void cpuset_from_integer(uintmax_t set, cpu_set_t *cset)
 {
 	CPU_ZERO(cset);
-	for (int i = 0; i < MIN(sizeof(set), CPU_SETSIZE) * 8; i++) {
+	for (int i = 0; i < MIN(sizeof(set) * 8, CPU_SETSIZE); i++) {
 		if (set & (1L << i))
 			CPU_SET(i, cset);
 	}
@@ -196,6 +205,7 @@ int cpulist_parse(const char *str, cpu_set_t *set, int fail)
 
 	if (r == 2)
 		return 1;
+	
 	return 0;
 }
 

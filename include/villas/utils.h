@@ -149,6 +149,9 @@ int strftimespec(char *s, size_t max, const char *format, struct timespec *ts)
  */
 void cpuset_from_integer(uintmax_t set, cpu_set_t *cset);
 
+/** Convert cpu_set_t to an integer. */
+void cpuset_to_integer(cpu_set_t *cset, uintmax_t *set);
+
 /** Parses string with list of CPU ranges.
  *
  * From: https://github.com/mmalecki/util-linux/blob/master/lib/cpuset.c
