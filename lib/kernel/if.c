@@ -49,13 +49,13 @@ int if_destroy(struct interface *i)
 	return 0;
 }
 
-int if_start(struct interface *i, int affinity)
+int if_start(struct interface *i)
 {
 	info("Starting interface '%s' which is used by %zu sockets", rtnl_link_get_name(i->nl_link), list_length(&i->sockets));
 
 	{ INDENT
 		/* Set affinity for network interfaces (skip _loopback_ dev) */
-		if_set_affinity(i, affinity);
+		//if_set_affinity(i, i->affinity);
 		
 		/* Assign fwmark's to socket nodes which have netem options */
 		int ret, mark = 0;

@@ -38,6 +38,8 @@ struct list interfaces;
 
 int socket_init(int argc, char *argv[], config_setting_t *cfg)
 {
+	int ret;
+
 	if (getuid() != 0)
 		error("The 'socket' node-type requires super-user privileges!");
 
@@ -51,7 +53,8 @@ int socket_init(int argc, char *argv[], config_setting_t *cfg)
 		struct rtnl_link *link;
 
 		/* Determine outgoing interface */
-		if (if_get_egress((struct sockaddr *) &s->remote, &link)) {
+		ret = if_get_egress((struct sockaddr *) &s->remote, &link);
+		if (ret) {
 			char *buf = socket_print_addr((struct sockaddr *) &s->remote);
 			error("Failed to get interface for socket address '%s'", buf);
 			free(buf);
@@ -70,7 +73,9 @@ int socket_init(int argc, char *argv[], config_setting_t *cfg)
 		/* If not found, create a new interface */
 		struct interface j;
 		
-		if_init(&j, link);
+		ret = if_init(&j, link);
+		if (ret)
+			continue;
 		
 		list_push(&interfaces, memdup(&j, sizeof(j)));
 		i = &j;
@@ -78,15 +83,10 @@ int socket_init(int argc, char *argv[], config_setting_t *cfg)
 found:		list_push(&i->sockets, s);
 	}
 
-	/** @todo Improve mapping of NIC IRQs per path */
-	int affinity;
-	if (!config_setting_lookup_int(cfg, "affinity", &affinity))
-		affinity = -1;
-
-	for (size_t j = 0; list_length(&interfaces); j++) {
+	for (size_t j = 0; j < list_length(&interfaces); j++) {
 		struct interface *i = list_at(&interfaces, j);
 
-		if_start(i, affinity);
+		if_start(i);
 	}
 
 	return 0;

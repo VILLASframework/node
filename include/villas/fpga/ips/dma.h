@@ -67,6 +67,6 @@ int dma_simple_write_complete(struct fpga_ip *c, char **buf, size_t *len);
 
 int dma_ping_pong(struct fpga_ip *c, char *src, char *dst, size_t len);
 
-int dma_init(struct fpga_ip *c);
+int dma_start(struct fpga_ip *c);
 
 /** @} */

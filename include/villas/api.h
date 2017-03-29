@@ -7,13 +7,13 @@
 
 #pragma once
 
+#include <libwebsockets.h>
 #include <jansson.h>
 
 #include "list.h"
 #include "common.h"
 
 /* Forward declarations */
-enum lws_callback_reasons;
 struct lws;
 struct super_node;
 
@@ -103,7 +103,7 @@ int api_session_destroy(struct api_session *s);
 int api_session_run_command(struct api_session *s, json_t *req, json_t **resp);
 
 /** Send contents of buffer over libwebsockets connection */
-int api_buffer_send(struct api_buffer *b, struct lws *w);
+int api_buffer_send(struct api_buffer *b, struct lws *w, enum lws_write_protocol prot);
 
 /** Append received data to buffer. */
 int api_buffer_append(struct api_buffer *b, const char *in, size_t len);

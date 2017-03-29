@@ -68,6 +68,7 @@ static int skip_first_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {
 	struct skip_first *p = h->_vd;
 
+	/* Remember sequence no or timestamp of first sample. */
 	if (p->state == HOOK_SKIP_FIRST_STATE_STARTED) {
 		switch (p->mode) {
 			case HOOK_SKIP_MODE_SAMPLES:
@@ -75,7 +76,7 @@ static int skip_first_read(struct hook *h, struct sample *smps[], size_t *cnt)
 				break;
 			
 			case HOOK_SKIP_MODE_SECONDS:
-				p->seconds.until = time_add(&smps[0]->ts.received, &p->seconds.wait);
+				p->seconds.until = time_add(&smps[0]->ts.origin, &p->seconds.wait);
 				break;
 		}
 		
@@ -87,14 +88,15 @@ static int skip_first_read(struct hook *h, struct sample *smps[], size_t *cnt)
 		bool skip;
 		switch (p->mode) {
 			case HOOK_SKIP_MODE_SAMPLES:
-				skip = p->samples.until >= smps[i]->sequence;
+				skip = p->samples.until > smps[i]->sequence;
 				break;
 			
 			case HOOK_SKIP_MODE_SECONDS:
-				skip = time_delta(&p->seconds.until, &smps[i]->ts.received) < 0;
+				skip = time_delta(&p->seconds.until, &smps[i]->ts.origin) < 0;
 				break;
 			default:
 				skip = false;
+				break;	
 		}
 		
 		if (!skip) {

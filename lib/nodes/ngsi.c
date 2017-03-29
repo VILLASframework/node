@@ -17,6 +17,7 @@
 #include "utils.h"
 #include "timing.h"
 #include "plugin.h"
+#include "config.h"
 
 /* Some global settings */
 static char *name = NULL;

@@ -11,6 +11,7 @@
 #include "hook.h"
 #include "plugin.h"
 #include "sample.h"
+#include "sample_io.h"
 
 struct print {
 	FILE *output;
@@ -64,7 +65,7 @@ static int print_read(struct hook *h, struct sample *smps[], size_t *cnt)
 	struct print *p = h->_vd;
 
 	for (int i = 0; i < *cnt; i++)
-		sample_fprint(p->output, smps[i], SAMPLE_ALL);
+		sample_io_villas_fprint(p->output, smps[i], SAMPLE_IO_ALL);
 
 	return 0;
 }

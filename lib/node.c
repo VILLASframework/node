@@ -98,7 +98,8 @@ int node_stop(struct node *n)
 {
 	int ret;
 
-	assert(n->state == STATE_STARTED);
+	if (n->state != STATE_STARTED)
+		return 0;
 
 	info("Stopping node %s", node_name(n));
 	{ INDENT
@@ -248,5 +249,5 @@ int node_parse_list(struct list *list, config_setting_t *cfg, struct list *all)
 			cerror(cfg, "Invalid output node(s)");
 	}
 
-	return list_length(list);
+	return 0;
 }

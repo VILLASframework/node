@@ -21,6 +21,7 @@
 #include "plugin.h"
 #include "super_node.h"
 #include "memory.h"
+#include "stats.h"
 
 static void path_read(struct path *p)
 {
@@ -50,7 +51,7 @@ static void path_read(struct path *p)
 	debug(LOG_PATH | 15, "Received %u messages from node %s", recv, node_name(ps->node));
 
 	/* Run preprocessing hooks for vector of samples */
-	enqueue = path_run_hooks(p, HOOK_READ, smps, recv);
+	enqueue = hook_read_list(&p->hooks, smps, recv);
 	if (enqueue != recv) {
 		info("Hooks skipped %u out of %u samples for path %s", recv - enqueue, recv, path_name(p));
 		
@@ -94,7 +95,7 @@ static void path_write(struct path *p)
 			
 			debug(LOG_PATH | 15, "Dequeued %u samples from queue of node %s which is part of path %s", available, node_name(pd->node), path_name(p));
 
-			tosend = path_run_hooks(p, HOOK_WRITE, smps, available);
+			tosend = hook_write_list(&p->hooks, smps, available);
 			if (tosend == 0)
 				continue;
 
@@ -269,11 +270,13 @@ int path_init2(struct path *p)
 		struct plugin *q = list_at(&plugins, i);
 		
 		if (q->type == PLUGIN_TYPE_HOOK) {
-			struct hook h;
+			struct hook h = { .state = STATE_DESTROYED };
 			struct hook_type *vt = &q->hook;
 
-			if (vt->when & HOOK_AUTO) {
-				hook_init(&h, vt, p->super_node);
+			if (vt->builtin) {
+				ret = hook_init(&h, vt, p);
+				if (ret)
+					return ret;
 
 				list_push(&p->hooks, memdup(&h, sizeof(h)));
 			}
@@ -314,6 +317,7 @@ int path_start(struct path *p)
 	for (size_t i = 0; i < list_length(&p->hooks); i++) {
 		struct hook *h = list_at(&p->hooks, i);
 
+		ret = hook_start(h);
 		if (ret)
 			return ret;
 	}
@@ -341,7 +345,7 @@ int path_stop(struct path *p)
 	for (size_t i = 0; i < list_length(&p->hooks); i++) {
 		struct hook *h = list_at(&p->hooks, i);
 
-		ret = hook_run(h, HOOK_STOP, NULL, 0);
+		ret = hook_stop(h);
 		if (ret)
 			return ret;
 	}
@@ -445,27 +449,4 @@ int path_reverse(struct path *p, struct path *r)
 	}
 	
 	return 0;
-}
-
-int path_run_hooks(struct path *p, int when, struct sample *smps[], size_t cnt)
-{
-	int ret = 0;
-	
-	struct hook_info i = {
-		.samples = smps,
-		.count = cnt
-	};
-
-		if (ret)
-			break;
-		
-		if (i.count == 0)
-	for (size_t i = 0; i < list_length(&p->hooks); i++) {
-		struct hook *h = list_at(&p->hooks, i);
-
-		ret = hook_run(h, when, smps, &cnt);
-			break;
-	}
-
-	return i.count;
 }

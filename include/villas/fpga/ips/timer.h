@@ -15,8 +15,13 @@
 
 #include <xilinx/xtmrctr.h>
 
+/* Forward declarations */
+struct fpga_ip;
+
 struct timer {
 	XTmrCtr inst;
 };
+
+int timer_start(struct fpga_ip *c);
 
 /** @} */

@@ -29,15 +29,12 @@ struct fpga_ip;
 /** The node type */
 struct fpga {
 	struct fpga_ip *ip;
+	
+	struct pci *pci;
+	struct vfio_container *vfio_container;
 
 	int use_irqs;
-
 	struct dma_mem dma;
-
-	enum {
-		FPGA_DM_DMA,
-		FPGA_DM_FIFO
-	} type;
 };
 
 /** @see node_vtable::init */
@@ -48,9 +45,6 @@ int fpga_deinit();
 
 /** @see node_vtable::parse */
 int fpga_parse(struct node *n, config_setting_t *cfg);
-
-/** Parse the 'fpga' section in the configuration file */
-int fpga_parse_cards(config_setting_t *cfg);
 
 struct fpga_card * fpga_lookup_card(const char *name);
 

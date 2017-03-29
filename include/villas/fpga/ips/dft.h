@@ -27,7 +27,9 @@ struct dft {
 
 int dft_parse(struct fpga_ip *c);
 
-int dft_init(struct fpga_ip *c);
+int dft_start(struct fpga_ip *c);
+
+int dft_stop(struct fpga_ip *c);
 
 int dft_destroy(struct fpga_ip *c);
 

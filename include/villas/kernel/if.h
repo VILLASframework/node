@@ -33,6 +33,7 @@ struct interface {
 	struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Root priority queuing discipline (qdisc). */
 
 	char irqs[IF_IRQ_MAX];		/**< List of IRQs of the NIC. */
+	int affinity;			/**< IRQ / Core Affinity of this interface. */
 
 	struct list sockets;		/**< Linked list of associated sockets. */
 };
@@ -58,11 +59,10 @@ int if_destroy(struct interface *i);
  * maps interface IRQs according to affinity.
  *
  * @param i A pointer to the interface structure.
- * @param affinity Set the IRQ affinity of this interface.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int if_start(struct interface *i, int affinity);
+int if_start(struct interface *i);
 
 /** Stop interface
  *

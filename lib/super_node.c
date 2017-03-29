@@ -21,6 +21,7 @@
 #include "api.h"
 #include "plugin.h"
 #include "memory.h"
+#include "config.h"
 
 #include "kernel/rt.h"
 
@@ -80,9 +81,11 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 		config_setting_t *cfg_root;
 
 		/* Via stdin */
-		if (strcmp("-", uri) == 0) {
+		if (!strcmp("-", uri)) {
 			af = NULL;
 			f = stdin;
+
+			info("Reading config from stdin");
 		}
 		/* Local file? */
 		else if (access(uri, F_OK) != -1) {
@@ -126,7 +129,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 		/* Close configuration file */
 		if (af)
 			afclose(af);
-		else
+		else if (f != stdin)
 			fclose(f);
 
 		return super_node_parse(sn, cfg_root);
@@ -272,6 +275,8 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 int super_node_check(struct super_node *sn)
 {
 	int ret;
+	
+	assert(sn->state != STATE_DESTROYED);
 
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) {
 		struct node *n = list_at(&sn->nodes, i);
@@ -301,6 +306,7 @@ int super_node_start(struct super_node *sn)
 	memory_init(sn->hugepages);
 	rt_init(sn->priority, sn->affinity);
 
+	log_start(&sn->log);
 	api_start(&sn->api);
 	web_start(&sn->web);
 	
@@ -308,7 +314,7 @@ int super_node_start(struct super_node *sn)
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
 		struct node *n = list_at(&sn->nodes, i);
 		
-		node_type_start(n->_vt, sn);
+		node_type_start(n->_vt, sn->cli.argc, sn->cli.argv, config_root_setting(&sn->cfg));
 	}
 	
 	info("Starting nodes");
@@ -327,7 +333,7 @@ int super_node_start(struct super_node *sn)
 		struct path *p = list_at(&sn->paths, i);
 		
 		if (p->enabled) {
-			path_init(p, sn);
+			path_init2(p);
 			path_start(p);
 		}
 		else

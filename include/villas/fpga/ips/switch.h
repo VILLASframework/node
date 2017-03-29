@@ -17,7 +17,7 @@
 
 #include "list.h"
 
-/* Forward declaration */
+/* Forward declarations */
 struct ip;
 
 struct sw_path {
@@ -34,7 +34,7 @@ struct sw {
 
 struct ip;
 
-int switch_init(struct fpga_ip *c);
+int switch_start(struct fpga_ip *c);
 
 /** Initialize paths which have been parsed by switch_parse() */
 int switch_init_paths(struct fpga_ip *c);

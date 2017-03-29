@@ -26,7 +26,10 @@ struct fpga_card {
 
 	enum state state;		/**< The state of this FPGA card. */
 
+	struct pci *pci;
 	struct pci_device filter;		/**< Filter for PCI device. */
+	
+	struct vfio_container *vfio_container;
 	struct vfio_device vfio_device;	/**< VFIO device handle. */
 
 	int do_reset;			/**< Reset VILLASfpga during startup? */
@@ -47,17 +50,28 @@ struct fpga_card {
 	config_setting_t *cfg;
 };
 
-int fpga_card_parse(struct fpga_card *c, config_setting_t *cfg);
-
-void fpga_card_dump(struct fpga_card *c);
-
 /** Initialize FPGA card and its IP components. */
 int fpga_card_init(struct fpga_card *c, struct pci *pci, struct vfio_container *vc);
 
-int fpga_card_destroy(struct fpga_card *c);
+/** Parse configuration of FPGA card including IP cores from config. */
+int fpga_card_parse(struct fpga_card *c, config_setting_t *cfg);
+
+int fpga_card_parse_list(struct list *l, config_setting_t *cfg);
 
 /** Check if the FPGA card configuration is plausible. */
 int fpga_card_check(struct fpga_card *c);
+
+/** Start FPGA card. */
+int fpga_card_start(struct fpga_card *c);
+
+/** Stop FPGA card. */
+int fpga_card_stop(struct fpga_card *c);
+
+/** Destroy FPGA card. */
+int fpga_card_destroy(struct fpga_card *c);
+
+/** Dump details of FPGA card to stdout. */
+void fpga_card_dump(struct fpga_card *c);
 
 /** Reset the FPGA to a known state */
 int fpga_card_reset(struct fpga_card *c);

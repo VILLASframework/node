@@ -11,8 +11,6 @@
 
 #include <stdint.h>
 
-#include "config.h"
-
 //#include <sys/capability.h>
 
 /** Check if current process has capability \p cap.

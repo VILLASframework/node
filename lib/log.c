@@ -25,6 +25,14 @@
 /** The global log instance. */
 static struct log *log;
 
+__attribute__((constructor)) static void setup_default_logger()
+{
+	static struct log l;
+	
+	log_init(&l, V, LOG_ALL);
+	log_start(&l);
+}
+
 /** List of debug facilities as strings */
 static const char *facilities_strs[] = {
 	"pool",		/* LOG_POOL */
@@ -63,8 +71,8 @@ int log_init(struct log *l, int level, long facilitites)
 
 	l->level = level;
 	l->facilities = facilitites;
-	
-	debug(LOG_LOG | 5, "Log sub-system intialized: level=%d, faciltities=%#lx", level, facilitites);
+	l->file = stderr;
+	l->path = NULL;
 	
 	l->state = STATE_INITIALIZED;
 	
@@ -100,6 +108,8 @@ int log_start(struct log *l)
 	}
 
 	l->state = STATE_STARTED;
+	
+	debug(LOG_LOG | 5, "Log sub-system started: level=%d, faciltities=%#lx, path=%s", l->level, l->facilities, l->path);
 
 	return 0;
 }
@@ -242,7 +252,7 @@ void debug(long class, const char *fmt, ...)
 	int lvl = class &  0xFF;
 	int fac = class & ~0xFF;
 	
-	assert(log != NULL);
+	assert(log && log->state != STATE_DESTROYED);
 
 	if (((fac == 0) || (fac & log->facilities)) && (lvl <= log->level)) {
 		va_start(ap, fmt);
@@ -255,7 +265,7 @@ void info(const char *fmt, ...)
 {
 	va_list ap;
 	
-	assert(log != NULL);
+	assert(log && log->state != STATE_DESTROYED);
 
 	va_start(ap, fmt);
 	log_vprint(log, LOG_LVL_INFO, fmt, ap);
@@ -266,7 +276,7 @@ void warn(const char *fmt, ...)
 {
 	va_list ap;
 	
-	assert(log != NULL);
+	assert(log && log->state != STATE_DESTROYED);
 
 	va_start(ap, fmt);
 	log_vprint(log, LOG_LVL_WARN, fmt, ap);
@@ -277,7 +287,7 @@ void stats(const char *fmt, ...)
 {
 	va_list ap;
 
-	assert(log != NULL);
+	assert(log && log->state != STATE_DESTROYED);
 
 	va_start(ap, fmt);
 	log_vprint(log, LOG_LVL_STATS, fmt, ap);
@@ -288,7 +298,7 @@ void error(const char *fmt, ...)
 {
 	va_list ap;
 	
-	assert(log != NULL);
+	assert(log && log->state != STATE_DESTROYED);
 
 	va_start(ap, fmt);
 	log_vprint(log, LOG_LVL_ERROR, fmt, ap);
@@ -302,7 +312,7 @@ void serror(const char *fmt, ...)
 	va_list ap;
 	char *buf = NULL;
 
-	assert(log != NULL);
+	assert(log && log->state != STATE_DESTROYED);
 
 	va_start(ap, fmt);
 	vstrcatf(&buf, fmt, ap);
@@ -321,7 +331,7 @@ void cerror(config_setting_t *cfg, const char *fmt, ...)
 	const char *file;
 	int line;
 
-	assert(log != NULL);
+	assert(log && log->state != STATE_DESTROYED);
 
 	va_start(ap, fmt);
 	vstrcatf(&buf, fmt, ap);

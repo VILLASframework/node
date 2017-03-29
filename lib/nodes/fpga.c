@@ -30,36 +30,10 @@ void fpga_dump(struct fpga *f)
 	fpga_card_dump(c);
 }
 
-int fpga_parse_cards(config_setting_t *cfg)
-{
-	int ret;
-	config_setting_t *cfg_fpgas;
-
-	cfg_fpgas = config_setting_get_member(cfg, "fpgas");
-	if (!cfg_fpgas)
-		cerror(cfg, "Config file is missing 'fpgas' section");
-	
-	if (!config_setting_is_group(cfg_fpgas))
-		cerror(cfg_fpgas, "FPGA configuration section must be a group");
-	
-	for (int i = 0; i < config_setting_length(cfg_fpgas); i++) {
-		config_setting_t *cfg_fpga = config_setting_get_elem(cfg_fpgas, i);
-		
-		struct fpga_card *c = alloc(sizeof(struct fpga_card));
-		
-		ret = fpga_card_parse(c, cfg_fpga);
-		if (ret)
-			cerror(cfg_fpga, "Failed to parse FPGA card configuration");
-		
-		list_push(&cards, c);
-	}
-
-	return 0;
-}
-
 int fpga_init(int argc, char *argv[], config_setting_t *cfg)
 {
 	int ret;
+	config_setting_t *cfg_fpgas;
 	
 	ret = pci_init(&pci);
 	if (ret)
@@ -70,7 +44,11 @@ int fpga_init(int argc, char *argv[], config_setting_t *cfg)
 		cerror(cfg, "Failed to initiliaze VFIO sub-system");
 
 	/* Parse FPGA configuration */
-	ret = fpga_parse_cards(cfg);
+	cfg_fpgas = config_setting_lookup(cfg, "fpgas");
+	if (!cfg_fpgas)
+		cerror(cfg, "Config file is missing 'fpgas' section");
+	
+	ret = fpga_card_parse_list(&cards, cfg_fpgas);
 	if (ret)
 		cerror(cfg, "Failed to parse VILLASfpga config");
 
@@ -123,7 +101,7 @@ int fpga_parse(struct node *n, config_setting_t *cfg)
 	ip = list_lookup(&card->ips, ip_name);
 	if (!ip)
 		cerror(cfg, "There is no datamover named '%s' on the FPGA card '%s'", ip_name, card_name);
-	if (!ip->_vt->type != FPGA_IP_TYPE_DATAMOVER)
+	if (ip->_vt->type != FPGA_IP_TYPE_DM_DMA && ip->_vt->type != FPGA_IP_TYPE_DM_FIFO)
 		cerror(cfg, "The IP '%s' on FPGA card '%s' is not a datamover", ip_name, card_name);
 
 	free(cpy);
@@ -148,16 +126,6 @@ char * fpga_print(struct node *n)
 		return strf("dm=%s", f->ip->name);
 }
 
-int fpga_get_type(struct fpga_ip *c)
-{
-	if      (!fpga_vlnv_cmp(&c->vlnv, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_dma", NULL }))
-		return FPGA_DM_DMA;
-	else if (!fpga_vlnv_cmp(&c->vlnv, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_fifo_mm_s", NULL }))
-		return FPGA_DM_FIFO;
-	else
-		return -1;
-}
-
 int fpga_start(struct node *n)
 {
 	int ret;
@@ -165,14 +133,14 @@ int fpga_start(struct node *n)
 	struct fpga *f = n->_vd;
 	struct fpga_card *c = f->ip->card;
 
-	fpga_card_init(c, &pci, &vc);
+	fpga_card_init(c, f->pci, f->vfio_container);
 
 	int flags = 0;
 	if (!f->use_irqs)
 		flags |= INTC_POLLING;
 
-	switch (f->type) {
-		case FPGA_DM_DMA:
+	switch (f->ip->_vt->type) {
+		case FPGA_IP_TYPE_DM_DMA:
 			/* Map DMA accessible memory */
 			ret = dma_alloc(f->ip, &f->dma, 0x1000, 0);
 			if (ret)
@@ -182,9 +150,11 @@ int fpga_start(struct node *n)
 			intc_enable(c->intc, (1 << (f->ip->irq + 1)), flags); /* S2MM */
 			break;
 
-		case FPGA_DM_FIFO:
+		case FPGA_IP_TYPE_DM_FIFO:
 			intc_enable(c->intc, (1 << f->ip->irq),      flags);	/* MM2S & S2MM */
 			break;
+			
+		default: { }
 	}
 	
 
@@ -198,8 +168,8 @@ int fpga_stop(struct node *n)
 	struct fpga *f = n->_vd;
 	struct fpga_card *c = f->ip->card;
 
-	switch (f->type) {
-		case FPGA_DM_DMA:
+	switch (f->ip->_vt->type) {
+		case FPGA_IP_TYPE_DM_DMA:
 			intc_disable(c->intc, f->ip->irq);	/* MM2S */
 			intc_disable(c->intc, f->ip->irq + 1);	/* S2MM */
 
@@ -207,9 +177,11 @@ int fpga_stop(struct node *n)
 			if (ret)
 				return ret;
 
-		case FPGA_DM_FIFO:
+		case FPGA_IP_TYPE_DM_FIFO:
 			if (f->use_irqs)
 				intc_disable(c->intc, f->ip->irq);	/* MM2S & S2MM */
+			
+		default: { }
 	}
 
 	return 0;
@@ -231,8 +203,8 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 	smp->ts.origin = time_now();
 
 	/* Read data from RTDS */
-	switch (f->type) {
-		case FPGA_DM_DMA:
+	switch (f->ip->_vt->type) {
+		case FPGA_IP_TYPE_DM_DMA:
 			ret = dma_read(f->ip, f->dma.base_phys + 0x800, len);
 			if (ret)
 				return ret;
@@ -245,11 +217,13 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 			smp->length = recvlen / 4;
 			return 1;
-		case FPGA_DM_FIFO:
+		case FPGA_IP_TYPE_DM_FIFO:
 			recvlen = fifo_read(f->ip, (char *) smp->data, len);
 			
 			smp->length = recvlen / 4;
 			return 1;
+
+		default: { }
 	}
 
 	return -1;
@@ -265,8 +239,8 @@ int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 	size_t len = smp->length * sizeof(smp->data[0]);
 
 	/* Send data to RTDS */
-	switch (f->type) {
-		case FPGA_DM_DMA:
+	switch (f->ip->_vt->type) {
+		case FPGA_IP_TYPE_DM_DMA:
 			memcpy(f->dma.base_virt, smp->data, len);
 
 			ret = dma_write(f->ip, f->dma.base_phys, len);
@@ -280,10 +254,12 @@ int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 			//info("Sent %u bytes to FPGA", sentlen);
 
 			return 1;
-		case FPGA_DM_FIFO:
+		case FPGA_IP_TYPE_DM_FIFO:
 			sentlen = fifo_write(f->ip, (char *) smp->data, len);
 			return sentlen / sizeof(smp->data[0]);
 			break;
+		
+		default: { }
 	}
 	
 	return -1;

@@ -72,7 +72,7 @@ int opal_init(int argc, char *argv[], config_setting_t *cfg)
 
 	info("Started as OPAL Asynchronous process");
 	info("This is VILLASnode %s (built on %s, %s)",
-		VERSION_STR, __DATE__, __TIME__);
+		BUILDID, __DATE__, __TIME__);
 
 	opal_print_global();
 

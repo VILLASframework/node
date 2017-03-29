@@ -24,10 +24,10 @@ struct fifo {
 	uint32_t baseaddr_axi4;
 };
 
-/* Forward declaration */
+/* Forward declarations */
 struct ip;
 
-int fifo_init(struct fpga_ip *c);
+int fifo_start(struct fpga_ip *c);
 
 ssize_t fifo_write(struct fpga_ip *c, char *buf, size_t len);
 

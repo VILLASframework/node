@@ -128,8 +128,12 @@ int web_init(struct web *w, struct api *a)
 
 	w->api = a;
 	
-	w->state = STATE_INITIALIZED;
+	/* Default values */
+	w->port = 80;
+	w->htdocs = WEB_PATH;
 	
+	w->state = STATE_INITIALIZED;
+
 	return 0;
 }
 
@@ -140,12 +144,8 @@ int web_parse(struct web *w, config_setting_t *cfg)
 
 	config_setting_lookup_string(cfg, "ssl_cert", &w->ssl_cert);
 	config_setting_lookup_string(cfg, "ssl_private_key", &w->ssl_private_key);
-	
-	if (!config_setting_lookup_int(cfg, "port", &w->port))
-		w->port = 80;
-	
-	if (!config_setting_lookup_string(cfg, "htdocs", &w->htdocs))
-		w->htdocs = "/usr/share/villas/htdocs";
+	config_setting_lookup_int(cfg, "port", &w->port);
+	config_setting_lookup_string(cfg, "htdocs", &w->htdocs);
 
 	w->state = STATE_PARSED;
 
@@ -171,7 +171,7 @@ int web_start(struct web *w)
 		.ssl_private_key_filepath = w->ssl_private_key
 	};
 
-	info("Starting web sub-system");
+	info("Starting Web sub-system: webroot=%s", w->htdocs);
 
 	{ INDENT
 		/* update web root of mount point */

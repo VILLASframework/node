@@ -17,18 +17,15 @@
 #include <libconfig.h>
 
 #include "list.h"
-#include "config.h"
-#include "hist.h"
-#include "node.h"
-#include "msg.h"
 #include "queue.h"
 #include "pool.h"
-#include "stats.h"
 #include "common.h"
+#include "hook.h"
 
 /* Forward declarations */
+struct stats;
+struct node;
 struct super_node;
-struct hook_info;
 
 struct path_source
 {
@@ -59,6 +56,9 @@ struct path
 
 	int enabled;			/**< Is this path enabled. */
 	int reverse;			/**< This path as a matching reverse path. */
+	
+	int samplelen;
+	int queuelen;
 
 	pthread_t tid;			/**< The thread id for this path. */
 	
@@ -132,16 +132,5 @@ int path_uses_node(struct path *p, struct node *n);
  * @retval <0 Error. Something went wrong.
  */
 int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes);
-
-/** Conditionally execute the hooks
- *
- * @param p A pointer to the path structure.
- * @param when Which type of hooks should be executed?
- * @param smps An array to of (cnt) pointers to msgs.
- * @param cnt The size of the sample array.
- * @retval 0 All registred hooks for the specified type have been executed successfully. 
- * @retval <0 On of the hook functions signalized, that the processing should be aborted; message should be skipped.
- */
-int path_run_hooks(struct path *p, int when, struct sample *smps[], size_t cnt);
 
 /** @} */
