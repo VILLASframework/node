@@ -106,9 +106,9 @@ static int memory_hugepage_free(struct memtype *m, void *ptr, size_t len)
 void* memory_managed_alloc(struct memtype *m, size_t len, size_t alignment)
 {
     /* Simple first-fit allocation */
-    struct memtype_managed* man = (struct memtype_managed*) m;
-    struct memblock* block;
-    for (block = man->first; block != NULL; block = block->next) {
+    struct memblock *first = (struct memblock*) m->_vd;
+    struct memblock *block;
+    for (block = first; block != NULL; block = block->next) {
         if (block->flags & MEMBLOCK_USED)
             continue;
         char* cptr = (char*) block + sizeof(struct memblock);
@@ -171,10 +171,10 @@ void* memory_managed_alloc(struct memtype *m, size_t len, size_t alignment)
 
 int memory_managed_free(struct memtype *m, void *ptr, size_t len)
 {
-    struct memtype_managed* man = (struct memtype_managed*) m;
+    struct memblock *first = m->_vd;
+    struct memblock *block;
     char* cptr = (char*) ptr;
-    struct memblock* block;
-    for (block = man->first; block != NULL; block = block->next) {
+    for (block = first; block != NULL; block = block->next) {
         if (!(block->flags & MEMBLOCK_USED))
             continue;
         /* since we may waste some memory at the start of a block to ensure
@@ -211,29 +211,28 @@ int memory_managed_free(struct memtype *m, void *ptr, size_t len)
 
 struct memtype* memtype_managed_init(void *ptr, size_t len)
 {
-    if (len < sizeof(struct memtype_managed) + sizeof(struct memblock)) {
-        info("memtype_managed: passed region too small");
+    if (len < sizeof(struct memtype) + sizeof(struct memblock)) {
+        info("memtype_managed_init: passed region too small");
         return NULL;
     }
-    struct memtype_managed *man = (struct memtype_managed*) ptr;
-    man->mt.name = "managed";
-    man->mt.flags = 0;
-    man->mt.alloc = memory_managed_alloc;
-    man->mt.free = memory_managed_free;
-    man->mt.alignment = 1;
-    man->base = ptr;
-    man->len = len;
+    struct memtype *mt = (struct memtype*) ptr;
+    mt->name = "managed";
+    mt->flags = 0;
+    mt->alloc = memory_managed_alloc;
+    mt->free = memory_managed_free;
+    mt->alignment = 1;
 
     char *cptr = (char*) ptr;
-    cptr += ALIGN(sizeof(struct memtype_managed), sizeof(void*));
-    man->first = (struct memblock*) ((void*) cptr);
-    man->first->prev = NULL;
-    man->first->next = NULL;
+    cptr += ALIGN(sizeof(struct memtype), sizeof(void*));
+    struct memblock *first = (struct memblock*) ((void*) cptr);
+    first->prev = NULL;
+    first->next = NULL;
     cptr += ALIGN(sizeof(struct memblock), sizeof(void*));
-    man->first->len = len - (cptr - (char*) ptr);
-    man->first->flags = 0;
+    first->len = len - (cptr - (char*) ptr);
+    first->flags = 0;
+    mt->_vd = (void*) first;
 
-    return (struct memtype*) man;
+    return mt;
 }
 
 /* List of available memory types */
@@ -242,7 +241,8 @@ struct memtype memtype_heap = {
 	.flags = MEMORY_HEAP,
 	.alloc = memory_heap_alloc,
 	.free = memory_heap_free,
-	.alignment = 1
+	.alignment = 1,
+    ._vd = NULL,
 };
 
 struct memtype memtype_hugepage = {
@@ -250,7 +250,8 @@ struct memtype memtype_hugepage = {
 	.flags = MEMORY_MMAP | MEMORY_HUGEPAGE,
 	.alloc = memory_hugepage_alloc,
 	.free = memory_hugepage_free,
-	.alignment = 21  /* 2 MiB hugepage */
+	.alignment = 21,  /* 2 MiB hugepage */
+	._vd = NULL,
 };
 
 /** @todo */
