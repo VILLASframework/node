@@ -5,7 +5,7 @@ The `file` node-type can be used to log or replay samples to / from disk.
 ## Configuration
 
 Every `file` node can be configured to only read or write or to do both at the same time.
-The node configuration is splitted in to groups: `in` and `out`.
+The node configuration is divided into two sub-groups: `in` and `out`.
 
 #### `uri` *(string: libcurl URI)*
 
@@ -19,7 +19,9 @@ See [strftime(3)](http://man7.org/linux/man-pages/man3/strftime.3.html) for a li
 
     uri = "logs/measurements_%Y-%m-%d_%H-%M-%S.log"
 
-will create a file called: *path_of_working_directory*/logs/measurements_2015-08-09_22-20-50.log
+will create a file called:
+
+    ./logs/measurements_2015-08-09_22-20-50.log
 
 See below for a description of the file format.
 
@@ -48,32 +50,19 @@ Those variables will also been displayed during the startup phase of the server 
 
 The supported values for `epoch_mode`:
  
- | `epoch_mode` | `offset`              | `start = first + offset` |
- | -----------: | :-------------------: | :----------------------: |
- | `direct`     | `now - first + epoch` | `now + epoch`            |
- | `wait`       | `now + epoch`         | `now + first`            | 
- | `relative`   | `epoch`               | `first + epoch`          |
- | `absolute`   | `epoch - first`       | `epoch`                  |
+| `epoch_mode` | `offset`              | `start = first + offset` |
+| -----------: | :-------------------: | :----------------------: |
+| `direct`     | `now - first + epoch` | `now + epoch`            |
+| `wait`       | `now + epoch`         | `now + first`            | 
+| `relative`   | `epoch`               | `first + epoch`          |
+| `absolute`   | `epoch - first`       | `epoch`                  |
+| `original`   | `0` | immeadiatly |
 
 #### `rate` *(float)*
 
 By default `send_rate` has the value `0` which means that the time between consecutive samples is the same as in the `in` file based on the timestamps in the first column. 
 
 If this setting has a non-zero value, the default behaviour is overwritten with a fixed rate.
-
-#### `split` *(integer)*
-
-Only valid for the `out` group.
-
-Splits the output file every `split` mega-byte. This setting will append the chunk number to the `uri` setting.
-
-Example: `data/my_measurements.log_001`
-
-#### `splitted` *(boolean)*
-
-Only valid for the `in` group.
-
-Expects the input data in splitted format.
 
 ### Example
 
@@ -94,14 +83,10 @@ Expects the input data in splitted format.
 				rate = 2.0			# A constant rate at which the lines of the input files should be read
 								# A missing or zero value will use the timestamp in the first column
 								# of the file to determine the pause between consecutive lines.
-			
-				splitted = false
 			},
 			out = {
-				URI = "logs/output_%F_%T.log"	# The output URI accepts all format tokens of (see strftime(3))
+				uri = "logs/output_%F_%T.log"	# The output URI accepts all format tokens of (see strftime(3))
 				mode = "a+"			# You might want to use "a+" to append to a file
-	
-				split	= 100,			# Split output file every 100 MB
 			}
 		}
 	}
@@ -132,10 +117,10 @@ The columns are defined as follows:
 
 This example shows a dump with three values per sample:
 
-    1438959964.162102394	6	3.489760	-1.882725	0.860070
-    1438959964.261677582	7	2.375948	-2.204084	0.907518
-    1438959964.361622787	8	3.620115	-1.359236	-0.622333
-    1438959964.461907066	9	5.844254	-0.966527	-0.628751
-    1438959964.561499526	10	6.317059	-1.716363	0.351925
-    1438959964.661578339	11	6.471288	-0.159862	0.123948
-    1438959964.761956859	12	7.365932	-1.488268	-0.780568
+    1438959964.162102394(6)	3.489760	-1.882725	0.860070
+    1438959964.261677582(7)	2.375948	-2.204084	0.907518
+    1438959964.361622787(8)	3.620115	-1.359236	-0.622333
+    1438959964.461907066(9)	5.844254	-0.966527	-0.628751
+    1438959964.561499526(10)	6.317059	-1.716363	0.351925
+    1438959964.661578339(11)	6.471288	-0.159862	0.123948
+    1438959964.761956859(12)	7.365932	-1.488268	-0.780568

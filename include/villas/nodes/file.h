@@ -33,16 +33,16 @@ struct file {
 		const char *fmt;	/**< Format string for file name. */
 
 		char *uri;		/**< Real file name */
-		
-		int chunk;		/**< Current chunk number. */
-		int split;		/**< Split file every file::split mega bytes. */
 	} read, write;
+	
+	int rewind;			/**< Should we rewind the file when we reach EOF? */
 
 	enum read_epoch_mode {
 		EPOCH_DIRECT,
 		EPOCH_WAIT,
 		EPOCH_RELATIVE,
-		EPOCH_ABSOLUTE
+		EPOCH_ABSOLUTE,
+		EPOCH_ORIGINAL
 	} read_epoch_mode;		/**< Specifies how file::offset is calculated. */
 
 	struct timespec read_first;	/**< The first timestamp in the file file::{read,write}::uri */
