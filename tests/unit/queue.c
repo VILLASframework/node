@@ -23,6 +23,8 @@
 
 static struct queue q = { .state = STATE_DESTROYED };
 
+static pthread_barrier_t barrier;
+
 struct param {
 	int volatile start;
 	int thread_count;
@@ -150,6 +152,8 @@ void * producer_consumer(void *ctx)
 		nop();
 
 	for (int iter = 0; iter < p->iter_count; ++iter) {
+		pthread_barrier_wait(&barrier);
+		
 		for (size_t i = 0; i < p->batch_size; i++) {
 			void *ptr = (void *) (iter * p->batch_size + i);
 			while (!queue_push(&p->queue, ptr))
@@ -186,6 +190,8 @@ void * producer_consumer_many(void *ctx)
 	for (int iter = 0; iter < p->iter_count; ++iter) {
 		for (size_t i = 0; i < p->batch_size; i++)
 			ptrs[i] = (void *) (iter * p->batch_size + i);
+		
+		pthread_barrier_wait(&barrier);
 
 		int pushed = 0;
 		do {
@@ -245,7 +251,7 @@ ParameterizedTestParameters(queue, multi_threaded)
 			.memtype = &memtype_heap
 		}, {
 			.iter_count = 1 << 16,
-			.queue_size = 1 << 9,
+			.queue_size = 1 << 14,
 			.thread_count = 16,
 			.thread_func = producer_consumer_many,
 			.batch_size = 100,
@@ -270,7 +276,7 @@ ParameterizedTestParameters(queue, multi_threaded)
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
 }
 
-ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 10)
+ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20)
 {
 	int ret, cycpop;
 	
@@ -283,6 +289,8 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 10)
 
 	uint64_t start_tsc_time, end_tsc_time;
 	
+	pthread_barrier_init(&barrier, NULL, p->thread_count);
+	
 	for (int i = 0; i < p->thread_count; ++i)
 		pthread_create(&threads[i], NULL, p->thread_func, p);
 
@@ -293,6 +301,8 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 10)
 
 	for (int i = 0; i < p->thread_count; ++i)
 		pthread_join(threads[i], NULL);
+	
+	pthread_barrier_destroy(&barrier);
 
 	end_tsc_time = rdtsc();
 	cycpop = (end_tsc_time - start_tsc_time) / p->iter_count;
