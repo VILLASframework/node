@@ -24,13 +24,13 @@
 #include <villas/fpga/ips/intc.h>
 #include <villas/fpga/ips/timer.h>
 
-#include "config.h"
+#define TEST_CONFIG	"/villas/etc/fpga.conf"
+#define TEST_LEN	0x1000
 
-#define TEST_CONFIG "/villas/etc/fpga.conf"
-#define TEST_LEN 0x1000
+#define CPU_HZ		3392389000
+#define FPGA_AXI_HZ	125000000
 
-#define CPU_HZ 3392389000
-
+static struct list cards;
 static struct fpga_card *card;
 static struct super_node sn = { .state = STATE_DESTROYED };
 static struct pci pci;
@@ -60,10 +60,11 @@ static void init()
 	cr_assert_eq(ret, 0, "Failed to initiliaze VFIO sub-system");
 
 	/* Parse FPGA configuration */
-	ret = fpga_parse_cards(cfg_root);
+	list_init(&cards);
+	ret = fpga_card_parse_list(&cards, cfg_root);
 	cr_assert_eq(ret, 0, "Failed to parse FPGA config");
 
-	card = fpga_lookup_card("vc707");
+	card = list_lookup(&cards, "vc707");
 	cr_assert(card, "FPGA card not found");
 
 	if (criterion_options.logging_threshold < CRITERION_IMPORTANT)
@@ -83,7 +84,8 @@ static void fini()
 TestSuite(fpga,
 	.init = init,
 	.fini = fini,
-	.description = "VILLASfpga");
+	.description = "VILLASfpga",
+	.disabled = true);
 
 Test(fpga, intc, .description = "Interrupt Controller")
 {
@@ -126,7 +128,7 @@ Test(fpga, xsg, .description = "XSG: multiply_add")
 	dma = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_dma", NULL });
 	cr_assert(dma);
 
-	struct model *model = (struct model *) ip->_vd;
+	struct model *model = ip->_vd;
 
 	p = list_lookup(&model->parameters, "factor");
 	if (!p)
@@ -271,7 +273,7 @@ Test(fpga, dma, .description = "DMA")
 		if (fpga_vlnv_cmp(&dm->vlnv, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_dma", NULL }))
 			continue; /* skip non DMA IP cores */
 		
-		struct dma *dma = (struct dma *) dm->_vd;
+		struct dma *dma = dm->_vd;
 		
 		/* Simple DMA can only transfer up to 4 kb due to
 		 * PCIe page size burst limitation */
@@ -327,7 +329,7 @@ Test(fpga, timer, .description = "Timer Counter")
 	ip = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_timer", NULL });
 	cr_assert(ip);
 	
-	tmr = (struct timer *) ip->_vd;
+	tmr = ip->_vd;
 	
 	XTmrCtr *xtmr = &tmr->inst;
 
