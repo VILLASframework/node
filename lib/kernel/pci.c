@@ -1,15 +1,16 @@
 /** Linux PCI helpers
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Steffen Vogel
+ * @copyright 2017, Steffen Vogel
  **********************************************************************************/
 
 #include <dirent.h>
-#include <unistd.h>
 #include <libgen.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "log.h"
+#include "utils.h"
 
 #include "kernel/pci.h"
 #include "config.h"
@@ -31,7 +32,7 @@ int pci_init(struct pci *p)
 	}
 
 	while ((entry = readdir(dp))) {
-		struct pci_dev d;
+		struct pci_device d;
 		
 		struct { const char *s; int *p; } map[] = {
 			{ "vendor", &d.id.vendor },
@@ -57,6 +58,8 @@ int pci_init(struct pci *p)
 		ret = sscanf(entry->d_name, "%4x:%2x:%2x.%u", &d.slot.domain, &d.slot.bus, &d.slot.device, &d.slot.function);
 		if (ret != 4)
 			error("Failed to parse PCI slot number: %s", entry->d_name);
+		
+		list_push(&p->devices, memdup(&d, sizeof(d)));
 	}
 
 	closedir(dp);
@@ -64,22 +67,14 @@ int pci_init(struct pci *p)
 	return 0;
 }
 
-void pci_destroy(struct pci *p)
+int pci_destroy(struct pci *p)
 {
 	list_destroy(&p->devices, NULL, true);
-}
-
-int pci_dev_init(struct pci_dev *d)
-{
+	
 	return 0;
 }
 
-void pci_dev_destroy(struct pci_dev *d)
-{
-
-}
-
-int pci_dev_parse_slot(struct pci_dev *f, const char *s, const char **error)
+int pci_device_parse_slot(struct pci_device *f, const char *s, const char **error)
 {
 	char *str = strdup(s);
 	char *colon = strrchr(str, ':');
@@ -154,7 +149,7 @@ fail:
 }
 
 /* ID filter syntax: [vendor]:[device][:class] */
-int pci_dev_parse_id(struct pci_dev *f, const char *str, const char **error)
+int pci_device_parse_id(struct pci_device *f, const char *str, const char **error)
 {
 	char *s, *c, *e;
 
@@ -210,7 +205,7 @@ fail:
 	return -1;
 }
 
-int pci_dev_compare(const struct pci_dev *d, const struct pci_dev *f)
+int pci_device_compare(const struct pci_device *d, const struct pci_device *f)
 {
 	if ((f->slot.domain >= 0 && f->slot.domain != d->slot.domain) ||
 			(f->slot.bus >= 0 && f->slot.bus != d->slot.bus) ||
@@ -231,12 +226,12 @@ int pci_dev_compare(const struct pci_dev *d, const struct pci_dev *f)
 	return 1;
 }
 
-struct pci_dev * pci_lookup_device(struct pci *p, struct pci_dev *f)
+struct pci_device * pci_lookup_device(struct pci *p, struct pci_device *f)
 {
-	return list_search(&p->devices, (cmp_cb_t) pci_dev_compare, (void *) f);
+	return list_search(&p->devices, (cmp_cb_t) pci_device_compare, (void *) f);
 }
 
-int pci_attach_driver(struct pci_dev *d, const char *driver)
+int pci_attach_driver(struct pci_device *d, const char *driver)
 {
 	FILE *f;
 	char fn[256];
@@ -264,7 +259,7 @@ int pci_attach_driver(struct pci_dev *d, const char *driver)
 	return 0;
 }
 
-int pci_get_iommu_group(struct pci_dev *d)
+int pci_get_iommu_group(struct pci_device *d)
 {
 	int ret;
 	char *group, link[1024], sysfs[1024];

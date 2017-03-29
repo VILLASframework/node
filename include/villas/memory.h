@@ -2,18 +2,17 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
- */
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
 
 #include <stddef.h>
 #include <stdint.h>
 
-#ifndef _MEMORY_H_
-#define _MEMORY_H_
+#pragma once
 
 #define HUGEPAGESIZE	(1 << 21)
 
-typedef void *(*memzone_allocator_t)(size_t len);
+typedef void *(*memzone_allocator_t)(size_t len, size_t alignment);
 typedef int (*memzone_deallocator_t)(void *ptr, size_t len);
 
 enum memtype_flags {
@@ -42,6 +41,9 @@ struct memzone {
 	size_t len; 
 };
 
+/** Initilialize memory subsystem */
+int memory_init(int hugepages);
+
 /** Allocate \p len bytes memory of type \p m.
  *
  * @retval NULL If allocation failed.
@@ -55,5 +57,3 @@ int memory_free(const struct memtype *m, void *ptr, size_t len);
 
 extern const struct memtype memtype_heap;
 extern const struct memtype memtype_hugepage;
-
-#endif /* _MEMORY_H_ */

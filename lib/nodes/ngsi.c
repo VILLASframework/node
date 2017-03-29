@@ -1,7 +1,7 @@
 /** Node type: OMA Next Generation Services Interface 10 (NGSI) (FIWARE context broker)
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  **********************************************************************************/
 
 #include <string.h>
@@ -9,7 +9,6 @@
 
 #include <curl/curl.h>
 #include <jansson.h>
-#include <math.h>
 #include <pthread.h>
 #include <unistd.h>
 
@@ -17,6 +16,7 @@
 
 #include "utils.h"
 #include "timing.h"
+#include "plugin.h"
 
 /* Some global settings */
 static char *name = NULL;
@@ -56,7 +56,10 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct sample *smps[], unsigned
 	
 	if (flags & NGSI_ENTITY_ATTRIBUTES) {
 		json_t *attributes = json_array();
-		list_foreach(struct ngsi_attribute *map, &i->mapping) {
+		
+		for (size_t j = 0; j < list_length(&i->mapping); j++) {
+			struct ngsi_attribute *map = list_at(&i->mapping, j);
+
 			json_t *attribute = json_pack("{ s: s, s: s }",
 				"name",		map->name,
 				"type",		map->type
@@ -77,7 +80,10 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct sample *smps[], unsigned
 			
 			if (flags & NGSI_ENTITY_METADATA) { /* Create Metadata for attribute */
 				json_t *metadatas = json_array();
-				list_foreach(struct ngsi_metadata *meta, &map->metadata) {
+				
+				for (size_t i = 0; i < list_length(&map->metadata); i++) {
+					struct ngsi_metadata *meta = list_at(&map->metadata, i);
+
 					json_array_append_new(metadatas, json_pack("{ s: s, s: s, s: s }",
 						"name",  meta->name,
 						"type",  meta->type,
@@ -201,7 +207,7 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 		list_init(&map.metadata);
 		struct ngsi_metadata meta;
 		while (sscanf(token, " %m[^(](%m[^)])=%ms%n", &meta.name, &meta.type, &meta.value, &bytes) == 3) { INDENT
-			list_push(&map.metadata, memdup(&meta, sizeof(struct ngsi_metadata)));
+			list_push(&map.metadata, memdup(&meta, sizeof(meta)));
 			token += bytes;
 		}
 		
@@ -219,10 +225,10 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 		};
 		snprintf(index.value, 8, "%u", j);
 
-		list_push(&map.metadata, memdup(&index, sizeof(struct ngsi_metadata)));		
-		list_push(&map.metadata, memdup(&source, sizeof(struct ngsi_metadata)));
+		list_push(&map.metadata, memdup(&index, sizeof(index)));		
+		list_push(&map.metadata, memdup(&source, sizeof(source)));
 		
-		list_push(mapping, memdup(&map, sizeof(struct ngsi_attribute)));
+		list_push(mapping, memdup(&map, sizeof(map)));
 	}
 
 	return 0;
@@ -285,7 +291,7 @@ static int ngsi_request(CURL *handle, const char *endpoint, const char *operatio
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, strlen(post));
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDS, post);
 	
-	debug(DBG_NGSI | 18, "Request to context broker: %s\n%s", url, post);
+	debug(LOG_NGSI | 18, "Request to context broker: %s\n%s", url, post);
 
 	/* We don't want to leave the handle in an invalid state */
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &old);
@@ -299,8 +305,8 @@ static int ngsi_request(CURL *handle, const char *endpoint, const char *operatio
 
 	curl_easy_getinfo(handle, CURLINFO_TOTAL_TIME, &time);
 	
-	debug(DBG_NGSI | 16, "Request to context broker completed in %.4f seconds", time);
-	debug(DBG_NGSI | 17, "Response from context broker:\n%s", chunk.data);
+	debug(LOG_NGSI | 16, "Request to context broker completed in %.4f seconds", time);
+	debug(LOG_NGSI | 17, "Response from context broker:\n%s", chunk.data);
 	
 	*response = json_loads(chunk.data, 0, &err);
 	if (!*response)
@@ -427,31 +433,35 @@ char * ngsi_print(struct node *n)
 		i->endpoint, i->timeout, list_length(&i->mapping));
 }
 
-static void ngsi_destroy_metadata(struct ngsi_metadata *meta)
+static int ngsi_metadata_destroy(struct ngsi_metadata *meta)
 {
 	free(meta->value);
 	free(meta->name);
 	free(meta->type);
+	
+	return 0;
 }
 
-static void ngsi_destroy_attribute(struct ngsi_attribute *attr)
+static int ngsi_attribute_destroy(struct ngsi_attribute *attr)
 {
 	free(attr->name);
 	free(attr->type);
 	
-	list_destroy(&attr->metadata, (dtor_cb_t) ngsi_destroy_metadata, true);
+	list_destroy(&attr->metadata, (dtor_cb_t) ngsi_metadata_destroy, true);
+	
+	return 0;
 }
 
 int ngsi_destroy(struct node *n)
 {
 	struct ngsi *i = n->_vd;
 	
-	list_destroy(&i->mapping, (dtor_cb_t) ngsi_destroy_attribute, true);
+	list_destroy(&i->mapping, (dtor_cb_t) ngsi_attribute_destroy, true);
 	
 	return 0;
 }
 
-int ngsi_open(struct node *n)
+int ngsi_start(struct node *n)
 {
 	struct ngsi *i = n->_vd;
 	int ret;
@@ -473,13 +483,13 @@ int ngsi_open(struct node *n)
 	if (i->tfd < 0)
 		serror("Failed to create timer");
 	
-	i->headers = curl_slist_append(i->headers, "User-Agent: VILLASnode " VERSION);
 	i->headers = curl_slist_append(i->headers, "Accept: application/json");
 	i->headers = curl_slist_append(i->headers, "Content-Type: application/json");
 	
 	curl_easy_setopt(i->curl, CURLOPT_SSL_VERIFYPEER, i->ssl_verify);
 	curl_easy_setopt(i->curl, CURLOPT_TIMEOUT_MS, i->timeout * 1e3);
 	curl_easy_setopt(i->curl, CURLOPT_HTTPHEADER, i->headers);
+	curl_easy_setopt(i->curl, CURLOPT_USERAGENT, USER_AGENT);
 		
 	/* Create entity and atributes */
 	json_t *entity = ngsi_build_entity(i, NULL, 0, NGSI_ENTITY_METADATA);	
@@ -493,7 +503,7 @@ int ngsi_open(struct node *n)
 	return ret;
 }
 
-int ngsi_close(struct node *n)
+int ngsi_stop(struct node *n)
 {
 	struct ngsi *i = n->_vd;
 	int ret;
@@ -550,19 +560,23 @@ int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return ret ? 0 : cnt;
 }
 
-static struct node_type vt = {
+static struct plugin p = {
 	.name		= "ngsi",
 	.description	= "OMA Next Generation Services Interface 10 (libcurl, libjansson)",
-	.vectorize	= 0, /* unlimited */
-	.size		= sizeof(struct ngsi),
-	.parse		= ngsi_parse,
-	.print		= ngsi_print,
-	.open		= ngsi_open,
-	.close		= ngsi_close,
-	.read		= ngsi_read,
-	.write		= ngsi_write,
-	.init		= ngsi_init,
-	.deinit		= ngsi_deinit
+	.type		= PLUGIN_TYPE_NODE,
+	.node		= {
+		.vectorize	= 0, /* unlimited */
+		.size		= sizeof(struct ngsi),
+		.parse		= ngsi_parse,
+		.print		= ngsi_print,
+		.start		= ngsi_start,
+		.stop		= ngsi_stop,
+		.read		= ngsi_read,
+		.write		= ngsi_write,
+		.init		= ngsi_init,
+		.deinit		= ngsi_deinit,
+		.instances	= LIST_INIT()
+	}
 };
 
-REGISTER_NODE_TYPE(&vt)
+REGISTER_PLUGIN(&p)

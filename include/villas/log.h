@@ -2,16 +2,16 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
  
-#ifndef _LOG_H_
-#define _LOG_H_
+#pragma once
 
 #include <stdarg.h>
+#include <time.h>
 #include <libconfig.h>
 
-#include "utils.h"
+#include "common.h"
 
 #ifdef __GNUC__
   #define INDENT	int __attribute__ ((__cleanup__(log_outdent), unused)) _old_indent = log_indent(1);
@@ -30,23 +30,66 @@
  *
  * To be or-ed with the debug level
  */
-enum debug_facilities {
-	DBG_POOL =	(1 <<  8),
-	DBG_QUEUE =	(1 <<  9),
-	DBG_CONFIG =	(1 << 10),
-	DBG_HOOK =	(1 << 11),
-	DBG_PATH =	(1 << 12),
-	DBG_MEM =	(1 << 13),
+enum log_facilities {
+	LOG_POOL =	(1L <<  8),
+	LOG_QUEUE =	(1L <<  9),
+	LOG_CONFIG =	(1L << 10),
+	LOG_HOOK =	(1L << 11),
+	LOG_PATH =	(1L << 12),
+	LOG_NODE =	(1L << 13),
+	LOG_MEM =	(1L << 14),
+	LOG_WEB =	(1L << 15),
+	LOG_API =	(1L << 16),
+	LOG_LOG =	(1L << 17),
+	LOG_VFIO =	(1L << 18),
+	LOG_PCI =	(1L << 19),
+	LOG_XIL =	(1L << 20),
+	LOG_TC =	(1L << 21),
+	LOG_IF =	(1L << 22),
 	
 	/* Node-types */
-	DBG_SOCKET =	(1 << 16),
-	DBG_FILE =	(1 << 17),
-	DBG_FPGA =	(1 << 18),
-	DBG_NGSI =	(1 << 19),
-	DBG_WEBSOCKET =	(1 << 20),
-	DBG_OPAL =	(1 << 21),
-	DBG_NODE =   (0xFF << 16)
+	LOG_SOCKET =	(1L << 23),
+	LOG_FILE =	(1L << 24),
+	LOG_FPGA =	(1L << 25),
+	LOG_NGSI =	(1L << 26),
+	LOG_WEBSOCKET =	(1L << 27),
+	LOG_OPAL =	(1L << 28),
+	
+	/* Classes */
+	LOG_NODES =	LOG_NODE | LOG_SOCKET | LOG_FILE | LOG_FPGA | LOG_NGSI | LOG_WEBSOCKET | LOG_OPAL,
+	LOG_KERNEL =	LOG_VFIO | LOG_PCI | LOG_TC | LOG_IF,
+	LOG_ALL =	~0xFF 
 };
+
+struct log {
+	enum state state;
+	
+	struct timespec epoch;	/**< A global clock used to prefix the log messages. */
+
+	/** Debug level used by the debug() macro.
+	 * It defaults to V (defined by the Makefile) and can be
+	 * overwritten by the 'debug' setting in the configuration file. */
+	int level;
+
+	/** Debug facilities used by the debug() macro. */
+	long facilities;
+	
+	/** Path of the log file */
+	const char *path;
+	
+	/** Send all log output to this file / stdout / stderr */
+	FILE *file;
+};
+
+/** Initialize log object */
+int log_init(struct log *l, int level, long faciltities);
+
+int log_start(struct log *l);
+
+int log_stop(struct log *l);
+
+/** Destroy log object */
+int log_destroy(struct log *l);
 
 /** Change log indention  for current thread.
  *
@@ -61,23 +104,30 @@ int log_indent(int levels);
  */
 void log_outdent(int *);
 
-/** Set the verbosity level of debug messages.
+/** Set logging facilities based on expression.
  *
- * @param lvl The new debug level.
- * @param fac The new mask for debug facilities.
+ * Currently we support two types of expressions:
+ *  1. A comma seperated list of logging facilities
+ *  2. A comma seperated list of logging facilities which is prefixes with an exclamation mark '!'
+ *
+ * The first case enables only faciltities which are in the list.
+ * The second case enables all faciltities with exception of those which are in the list.
+ * 
+ * @param expression The expression
+ * @return The new facilties mask (see enum log_faciltities)
  */
-void log_setlevel(int lvl, int fac);
+int log_set_facility_expression(struct log *l, const char *expression);
 
-/** Reset the wallclock of debug messages. */
-void log_init();
+/** Parse logging configuration. */
+int log_parse(struct log *l, config_setting_t *cfg);
 
 /** Logs variadic messages to stdout.
  *
  * @param lvl The log level
  * @param fmt The format string (printf alike)
  */
-void log_print(const char *lvl, const char *fmt, ...)
-	__attribute__ ((format(printf, 2, 3)));
+void log_print(struct log *l, const char *lvl, const char *fmt, ...)
+	__attribute__ ((format(printf, 3, 4)));
 
 /** Logs variadic messages to stdout.
  *
@@ -85,10 +135,10 @@ void log_print(const char *lvl, const char *fmt, ...)
  * @param fmt The format string (printf alike)
  * @param va The variadic argument list (see stdarg.h)
  */	
-void log_vprint(const char *lvl, const char *fmt, va_list va);
+void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list va);
 
 /** Printf alike debug message with level. */
-void debug(int lvl, const char *fmt, ...)
+void debug(long lvl, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
 
 /** Print a horizontal line. */
@@ -117,6 +167,3 @@ void serror(const char *fmt, ...)
 /** Print configuration error and exit. */
 void cerror(config_setting_t *cfg, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
-
-#endif /* _LOG_H_ */
-

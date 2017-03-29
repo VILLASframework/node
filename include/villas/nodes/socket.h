@@ -4,16 +4,16 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
- */
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
+
 /**
  * @addtogroup socket BSD Socket Node Type
  * @ingroup node
  * @{
- *********************************************************************************/
+ */
 
-#ifndef _SOCKET_H_
-#define _SOCKET_H_
+#pragma once
 
 #include <sys/socket.h>
 #include <linux/if_packet.h>
@@ -64,10 +64,10 @@ int socket_init(int argc, char *argv[], config_setting_t *cfg);
 int socket_deinit();
 
 /** @see node_vtable::open */
-int socket_open(struct node *n);
+int socket_start(struct node *n);
 
 /** @see node_vtable::close */
-int socket_close(struct node *n);
+int socket_stop(struct node *n);
 
 /** @see node_vtable::write */
 int socket_write(struct node *n, struct sample *smps[], unsigned cnt);
@@ -107,4 +107,4 @@ char * socket_print_addr(struct sockaddr *saddr);
  */
 int socket_parse_addr(const char *str, struct sockaddr *sa, enum socket_layer layer, int flags);
 
-#endif /** _SOCKET_H_ @} */
+/** @} */

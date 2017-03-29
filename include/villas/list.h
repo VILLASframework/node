@@ -8,14 +8,15 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 20177, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
-#ifndef _LIST_H_
-#define _LIST_H_
+#pragma once
 
 #include <stdbool.h>
 #include <pthread.h>
+
+#include "common.h"
 
 #define LIST_CHUNKSIZE		16
 
@@ -24,22 +25,22 @@
 	.array = NULL,				\
 	.length = 0,				\
 	.capacity = 0,				\
-	.lock = PTHREAD_MUTEX_INITIALIZER	\
+	.lock = PTHREAD_MUTEX_INITIALIZER,	\
+	.state = STATE_INITIALIZED		\
 }
 				
 #define list_length(list)	((list)->length)
-#define list_at(list, index)	((list)->length > index ? (list)->array[index] : NULL)
+#define list_at_safe(list, index) ((list)->length > index ? (list)->array[index] : NULL)
+#define list_at(list, index) 	((list)->array[index])
 
 #define list_first(list)	list_at(list, 0)
 #define list_last(list)		list_at(list, (list)->length-1)
-#define list_foreach(ptr, list)	for (int _i = 0, _p; _p = 1, _i < (list)->length; _i++) \
-					for (ptr = (list)->array[_i]; _p--; )
 
 /** Callback to destroy list elements.
  *
  * @param data A pointer to the data which should be freed.
  */
-typedef void (*dtor_cb_t)(void *);
+typedef int (*dtor_cb_t)(void *);
 
 /** Callback to search or sort a list. */	
 typedef int (*cmp_cb_t)(const void *, const void *);
@@ -50,6 +51,7 @@ struct list {
 	size_t capacity;	/**< Size of list::array in elements */
 	size_t length;		/**< Number of elements of list::array which are in use */
 	pthread_mutex_t lock;	/**< A mutex to allow thread-safe accesses */
+	enum state state;	/**< The state of this list. */
 };
 
 /** Initialize a list.
@@ -64,7 +66,7 @@ void list_init(struct list *l);
  * @param dtor A function pointer to a desctructor which will be called for every list item when the list is destroyed.
  * @param l A pointer to the list data structure.
  */
-void list_destroy(struct list *l, dtor_cb_t dtor, bool free);
+int list_destroy(struct list *l, dtor_cb_t dtor, bool free);
 
 /** Append an element to the end of the list */
 void list_push(struct list *l, void *p);
@@ -96,5 +98,3 @@ int list_contains(struct list *l, void *p);
 
 /** Sort the list using the quicksort algorithm of libc */
 void list_sort(struct list *l, cmp_cb_t cmp);
-
-#endif /* _LIST_H_ */

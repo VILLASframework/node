@@ -1,7 +1,7 @@
 /** Linux kernel related functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
 #include <stdio.h>
@@ -102,11 +102,6 @@ int kernel_has_version(int maj, int min)
 	return version_cmp(&current, &required) < 0;
 }
 
-int kernel_is_rt()
-{
-	return access(SYSFS_PATH "/kernel/realtime", R_OK);
-}
-
 int kernel_get_cmdline_param(const char *param, char *buf, size_t len)
 {
 	int ret;
@@ -148,6 +143,38 @@ out:
 int kernel_get_cacheline_size()
 {
 	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
+}
+
+int kernel_get_nr_hugepages()
+{
+	FILE *f;
+	int nr, ret;
+	
+	f = fopen(PROCFS_PATH "/sys/vm/nr_hugepages", "r");
+	if (!f)
+		serror("Failed to open %s", PROCFS_PATH "/sys/vm/nr_hugepages");
+	
+	ret = fscanf(f, "%d", &nr);
+	if (ret != 1)
+		nr = -1;
+		
+	fclose(f);
+	
+	return nr;
+}
+
+int kernel_set_nr_hugepages(int nr)
+{
+	FILE *f;
+
+	f = fopen(PROCFS_PATH "/sys/vm/nr_hugepages", "w");
+	if (!f)
+		serror("Failed to open %s", PROCFS_PATH "/sys/vm/nr_hugepages");
+	
+	fprintf(f, "%d\n", nr);
+	fclose(f);
+	
+	return 0;
 }
 
 #if 0

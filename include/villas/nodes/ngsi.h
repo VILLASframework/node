@@ -8,16 +8,16 @@
  * @see http://technical.openmobilealliance.org/Technical/Release_Program/docs/NGSI/V1_0-20120529-A/OMA-TS-NGSI_Context_Management-V1_0-20120529-A.pdf
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
- */
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
+
 /**
  * @addtogroup ngsi FIRWARE NGSI 9/10 RESTful HTTP API
  * @ingroup node
  * @{
- **********************************************************************************/
+ */
 
-#ifndef _NGSI_H_
-#define _NGSI_H_
+#pragma once
 
 #include <curl/curl.h>
 #include <jansson.h>
@@ -25,7 +25,7 @@
 #include "list.h"
 #include "config.h"
 #include "msg.h"
-#include "cfg.h"
+#include "super_node.h"
 #include "node.h"
 
 struct node;
@@ -68,10 +68,10 @@ int ngsi_parse(struct node *n, config_setting_t *cfg);
 char * ngsi_print(struct node *n);
 
 /** @see node_vtable::open */
-int ngsi_open(struct node *n);
+int ngsi_start(struct node *n);
 
 /** @see node_vtable::close */
-int ngsi_close(struct node *n);
+int ngsi_stop(struct node *n);
 
 /** @see node_vtable::read */
 int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt);
@@ -79,4 +79,4 @@ int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt);
 /** @see node_vtable::write */
 int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt);
 
-#endif /** _NGSI_H_ @} */
+/** @} */

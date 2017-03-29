@@ -2,34 +2,23 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *
  * @addtogroup node Node
  * @{
  *********************************************************************************/
 
-#ifndef _NODE_H_
-#define _NODE_H_
+#pragma once
 
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <libconfig.h>
 
+#include "node_type.h"
 #include "sample.h"
 #include "list.h"
 #include "queue.h"
-
-/* Helper macros for virtual node type */
-#define REGISTER_NODE_TYPE(vt)				\
-__attribute__((constructor)) static void __register() {	\
-	list_push(&node_types, vt);			\
-}
-
-extern struct list node_types;	/**< Vtable for virtual node sub types */
-
-/* Forward declarations */
-struct config_setting_t cfg;
-struct node_type;
+#include "common.h"
 
 /** The data structure for a node.
  *
@@ -47,163 +36,28 @@ struct node
 	int affinity;		/**< CPU Affinity of this node */
 
 	unsigned long sequence;	/**< This is a counter of received samples, in case the node-type does not generate sequence numbers itself. */
-
-	enum node_state {
-		NODE_INVALID,	/**< This node object is not in a valid state. */
-		NODE_CREATED,	/**< This node has been parsed from the configuration. */
-		NODE_STARTING,	/**< This node is currently being started. */
-		NODE_RUNNING,	/**< This node has been started by calling node_open() */
-		NODE_STOPPING,	/**< This node is currently shutting down. */
-		NODE_STOPPED	/**< Node was running, but has been stopped by calling node_close() */
-	} state;		/**< Node state */
-
+	
+	enum state state;
+	
 	struct node_type *_vt;	/**< Virtual functions (C++ OOP style) */
 	void *_vd;		/**< Virtual data (used by struct node::_vt functions) */
 
 	config_setting_t *cfg;	/**< A pointer to the libconfig object which instantiated this node */
 };
 
-/** C++ like vtable construct for node_types */
-struct node_type {
-	const char *name;		/**< The unique name of this node. This must be allways the first member! */
-	const char *description;	/**< A short description of this node type. Will be shown in help text. */
-	int vectorize;			/**< Maximal vector length supported by this node type. Zero is unlimited. */
+int node_init(struct node *n, struct node_type *vt);
 
-	struct list instances;		/**< A list of all existing nodes of this type. */
-	size_t size;			/**< Size of private data bock. @see node::_vd */
-	
-	enum node_type_state {
-		NODE_TYPE_UNINITIALIZED = 0,
-		NODE_TYPE_INITIALIZED
-	} state;
-	
-	/** Global initialization per node type.
-	 *
-	 * This callback is invoked once per node-type.
-	 *
-	 * @param argc	Number of arguments passed to the server executable (see main()).
-	 * @param argv	Array of arguments  passed to the server executable (see main()).
-	 * @param cfg	Root libconfig object of global configuration file.
-	 * @retval 0	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
-	 */
-	int (*init)(int argc, char * argv[], config_setting_t *cfg);
-
-	/** Global de-initialization per node type.
-	 *
-	 * This callback is invoked once per node-type.
-	 *
-	 * @retval 0	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
-	 */
-	int (*deinit)();
-	
-	/** Allocate memory for an instance of this type. 
-	 *
-	 * @return A pointer to the node-type specific private data.
-	 */
-	void * (*create)();
-	
-	/** Free memory of an instance of this type.
-	 *
-	 * @param n	A pointer to the node object.
-	 */
-	int (*destroy)(struct node *n);
-
-	/** Parse node connection details.‚
-	 *
-	 * @param n	A pointer to the node object.
-	 * @param cfg	A libconfig object pointing to the node.
-	 * @retval 0 	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
-	 */
-	int (*parse)(struct node *n, config_setting_t *cfg);
-
-	/** Returns a string with a textual represenation of this node.
-	 *
-	 * @param n	A pointer to the node object.
-	 * @return	A pointer to a dynamically allocated string. Must be freed().
-	 */
-	char * (*print)(struct node *n);
-
-	/** Opens the connection to this node.
-	 *
-	 * @param n	A pointer to the node object.
-	 * @retval 0	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
-	 */
-	int (*open) (struct node *n);
-
-	/** Close the connection to this node.
-	 *
-	 * @param n	A pointer to the node object.
-	 * @retval 0	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
-	 */
-	int (*close)(struct node *n);
-
-	/** Receive multiple messages at once.
-	 *
-	 * Messages are received with a single recvmsg() syscall by
-	 * using gathering techniques (struct iovec).
-	 * The messages will be stored in a circular buffer / array @p m.
-	 * Indexes used to address @p m will wrap around after len messages.
-	 * Some node types might only support to receive one message at a time.
-	 *
-	 * @param n		A pointer to the node object.
-	 * @param smps		An array of pointers to memory blocks where the function should store received samples.
-	 * @param cnt		The number of messages which should be received.
-	 * @return		The number of messages actually received.
-	 */
-	int (*read) (struct node *n, struct sample *smps[], unsigned cnt);
-
-	/** Send multiple messages in a single datagram / packet.
-	 *
-	 * Messages are sent with a single sendmsg() syscall by
-	 * using gathering techniques (struct iovec).
-	 * The messages have to be stored in a circular buffer / array m.
-	 * So the indexes will wrap around after len.
-	 *
-	 * @param n		A pointer to the node object.
-	 * @param smps		An array of pointers to memory blocks where samples read from.
-	 * @param cnt		The number of messages which should be sent.
-	 * @return		The number of messages actually sent.
-	 */
-	int (*write)(struct node *n, struct sample *smps[], unsigned cnt);
-	
-	/** Reverse source and destination of a node.
-	 *
-	 * This is not supported by all node types!
-	 *
-	 * @param n		A pointer to the node object.
-	 */
-	int (*reverse)(struct node *n);
-};
-
-/** Initialize all registered node type subsystems.
+/** Parse a single node and add it to the global configuration.
  *
- * @see node_type::init
+ * @param cfg A libconfig object pointing to the node.
+ * @param nodes Add new nodes to this linked list.
+ * @retval 0 Success. Everything went well.
+ * @retval <0 Error. Something went wrong.
  */
-int node_init(struct node_type *vt, int argc, char *argv[], config_setting_t *cfg);
+int node_parse(struct node *n, config_setting_t *cfg);
 
-/** De-initialize node type subsystems.
- *
- * @see node_type::deinit
- */
-int node_deinit(struct node_type *vt);
-
-/** Create a node by allocating dynamic memory.
- *
- * @see node_type::create
- * @param vt A pointer to the node-type table of virtual functions.
- */
-struct node * node_create(struct node_type *vt);
-
-/** Destroy node by freeing dynamically allocated memory.
- *
- * @see node_type::destroy
- */
-void node_destroy(struct node *n);
+/** Validate node configuration. */
+int node_check(struct node *n);
 
 /** Start operation of a node.
  *
@@ -217,11 +71,11 @@ int node_start(struct node *n);
  */
 int node_stop(struct node *n);
 
-/** Parse node connection details.
+/** Destroy node by freeing dynamically allocated memory.
  *
- * @see node_type::parse
+ * @see node_type::destroy
  */
-int node_parse(struct node *n, config_setting_t *cfg);
+int node_destroy(struct node *n);
 
 /** Return a pointer to a string which should be used to print this node.
  *
@@ -241,9 +95,6 @@ char * node_name(struct node *n);
  */
 char * node_name_long(struct node *n);
 
-/** Return a pointer to a string which describes the node type */
-const char * node_name_type(struct node *n);
-
 /** Reverse local and remote socket address.
  *
  * @see node_type::reverse
@@ -254,4 +105,16 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 int node_write(struct node *n, struct sample *smps[], unsigned cnt);
 
-#endif /** _NODE_H_ @} */
+/** Parse an array or single node and checks if they exist in the "nodes" section.
+ *
+ * Examples:
+ *     out = [ "sintef", "scedu" ]
+ *     out = "acs"
+ *
+ * @param cfg The libconfig object handle for "out".
+ * @param nodes The nodes will be added to this list.
+ * @param all This list contains all valid nodes.
+ */
+int node_parse_list(struct list *list, config_setting_t *cfg, struct list *all);
+
+/** @} */

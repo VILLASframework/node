@@ -4,7 +4,7 @@
  *   http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
  *
  * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2016 Steffen Vogel
+ * @copyright 2017 Steffen Vogel
  * @license BSD 2-Clause License
  * 
  * All rights reserved.
@@ -29,21 +29,27 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ *********************************************************************************/
 
-#ifndef _MPMC_QUEUE_H_
-#define _MPMC_QUEUE_H_
+#pragma once
 
+#include <stddef.h>
 #include <stdint.h>
 #include <stdatomic.h>
 
-#include "memory.h"
+#include "common.h"
+
+/* Forward declarations */
+struct memtype;
 
 #define CACHELINE_SIZE 64
 typedef char cacheline_pad_t[CACHELINE_SIZE];
 
+/** A lock-free multiple-producer, multiple-consumer (MPMC) queue. */
 struct queue {
 	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
+	
+	enum state state;
 
 	struct memtype const * mem;
 	size_t buffer_mask;
@@ -52,15 +58,15 @@ struct queue {
 		void *data;
 	} *buffer;
 
-	cacheline_pad_t	_pad1;	/**> Producer area: only producers read & write */
+	cacheline_pad_t	_pad1;	/**< Producer area: only producers read & write */
 
-	atomic_size_t	tail;	/**> Queue tail pointer */
+	atomic_size_t	tail;	/**< Queue tail pointer */
 
-	cacheline_pad_t	_pad2;	/**> Consumer area: only consumers read & write */
+	cacheline_pad_t	_pad2;	/**< Consumer area: only consumers read & write */
 
-	atomic_size_t	head;	/**> Queue head pointer */
+	atomic_size_t	head;	/**< Queue head pointer */
 
-	cacheline_pad_t	_pad3;	/**> @todo Why needed? */
+	cacheline_pad_t	_pad3;	/**< @todo Why needed? */
 };
 
 /** Initialize MPMC queue */
@@ -80,8 +86,17 @@ int queue_push(struct queue *q, void *ptr);
 
 int queue_pull(struct queue *q, void **ptr);
 
+/** Enqueue up to \p cnt pointers of the \p ptr array into the queue.
+ *
+ * @return The number of pointers actually enqueued.
+ *         This number can be smaller then \p cnt in case the queue is filled.
+ */
 int queue_push_many(struct queue *q, void *ptr[], size_t cnt);
 
+/** Dequeue up to \p cnt pointers from the queue and place them into the \p ptr array.
+ *
+ * @return The number of pointers actually dequeued.
+ *         This number can be smaller than \p cnt in case the queue contained less than
+ *         \p cnt elements.
+ */
 int queue_pull_many(struct queue *q, void *ptr[], size_t cnt);
-
-#endif /* _MPMC_QUEUE_H_ */

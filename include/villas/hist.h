@@ -2,20 +2,22 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
-#ifndef _HIST_H_
-#define _HIST_H_
+#pragma once
 
 #include <stdio.h>
+#include <stdint.h>
+
+#include <jansson.h>
 
 #include "config.h"
 
 #define HIST_HEIGHT	(LOG_WIDTH - 55)
 #define HIST_SEQ	17
 
-typedef unsigned hist_cnt_t;
+typedef uintmax_t hist_cnt_t;
 
 /** Histogram structure used to collect statistics. */
 struct hist {
@@ -40,10 +42,10 @@ struct hist {
 };
 
 /** Initialize struct hist with supplied values and allocate memory for buckets. */
-void hist_create(struct hist *h, double start, double end, double resolution);
+int hist_init(struct hist *h, double start, double end, double resolution);
 
 /** Free the dynamically allocated memory. */
-void hist_destroy(struct hist *h);
+int hist_destroy(struct hist *h);
 
 /** Reset all counters and values back to zero. */
 void hist_reset(struct hist *h);
@@ -61,7 +63,7 @@ double hist_mean(struct hist *h);
 double hist_stddev(struct hist *h);
 
 /** Print all statistical properties of distribution including a graphilcal plot of the histogram. */
-void hist_print(struct hist *h);
+void hist_print(struct hist *h, int details);
 
 /** Print ASCII style plot of histogram */
 void hist_plot(struct hist *h);
@@ -73,6 +75,8 @@ void hist_plot(struct hist *h);
 char * hist_dump(struct hist *h);
 
 /** Prints Matlab struct containing all infos to file. */
-void hist_matlab(struct hist *h, FILE *f);
+int hist_dump_matlab(struct hist *h, FILE *f);
 
-#endif /* _HIST_H_ */
+int hist_dump_json(struct hist *h, FILE *f);
+
+json_t * hist_json(struct hist *h);

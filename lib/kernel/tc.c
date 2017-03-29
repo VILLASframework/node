@@ -3,7 +3,7 @@
  * VILLASnode uses these functions to setup the network emulation feature.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
 #include <netlink/route/cls/fw.h>
@@ -134,6 +134,7 @@ char * tc_print(struct rtnl_qdisc *ne)
 
 int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent, int bands)
 {
+	int ret;
 	struct nl_sock *sock = nl_init();
 	struct rtnl_qdisc *q = rtnl_qdisc_alloc();
 
@@ -151,9 +152,11 @@ int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl
 	rtnl_qdisc_prio_set_bands(q, bands + 3);
 	rtnl_qdisc_prio_set_priomap(q, map, sizeof(map));
 
-	int ret = rtnl_qdisc_add(sock, q, NLM_F_CREATE | NLM_F_REPLACE);
+	ret = rtnl_qdisc_add(sock, q, NLM_F_CREATE | NLM_F_REPLACE);
 
 	*qd = q;
+	
+	debug(LOG_TC | 3, "Added prio qdisc with %d bands to interface '%s'", bands, rtnl_link_get_name(i->nl_link));
 	
 	return ret;
 }
@@ -171,6 +174,8 @@ int tc_netem(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hd
 	int ret = rtnl_qdisc_add(sock, q, NLM_F_CREATE);
 
 	*qd = q;
+	
+	debug(LOG_TC | 3, "Added netem qdisc to interface '%s'", rtnl_link_get_name(i->nl_link));
 	
 	return ret;
 }
@@ -192,6 +197,8 @@ int tc_mark(struct interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_
 	int ret = rtnl_cls_add(sock, c, NLM_F_CREATE);
 
 	*cls = c;
+	
+	debug(LOG_TC | 3, "Added fwmark classifier with mark %d to interface '%s'", mark, rtnl_link_get_name(i->nl_link));
 	
 	return ret;
 }

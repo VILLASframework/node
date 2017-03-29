@@ -2,11 +2,10 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
-#ifndef _MSG_H_
-#define _MSG_H_
+#pragma once
 
 #include <stdio.h>
 
@@ -36,5 +35,3 @@ void msg_hdr_swap(struct msg *m);
  * @retval <0 The message header is invalid.
  */
 int msg_verify(struct msg *m);
-
-#endif /* _MSG_H_ */

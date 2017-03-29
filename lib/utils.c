@@ -1,7 +1,7 @@
 /** General purpose helper functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
 #include <stdlib.h>
@@ -11,20 +11,18 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
-#include <signal.h>
 #include <pthread.h>
 #include <fcntl.h>
 #include <ctype.h>
 
 #include "config.h"
-#include "cfg.h"
 #include "utils.h"
 
 void print_copyright()
 {
 	printf("VILLASnode %s (built on %s %s)\n",
-		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-	printf(" copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC\n");
+		BLU(BUILDID), MAG(__DATE__), MAG(__TIME__));
+	printf(" Copyright 2014-2017, Institute for Automation of Complex Power Systems, EONERC\n");
 	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
 }
 
@@ -243,6 +241,22 @@ char *cpulist_create(char *str, size_t len, cpu_set_t *set)
 }
 
 #ifdef WITH_JANSSON
+static int json_to_config_type(int type)
+{
+	switch (type) {
+		case JSON_OBJECT:	return CONFIG_TYPE_GROUP;
+		case JSON_ARRAY:	return CONFIG_TYPE_LIST;
+		case JSON_STRING:	return CONFIG_TYPE_STRING;
+		case JSON_INTEGER:	return CONFIG_TYPE_INT64;
+		case JSON_REAL:		return CONFIG_TYPE_FLOAT;
+		case JSON_TRUE:
+		case JSON_FALSE:
+		case JSON_NULL:		return CONFIG_TYPE_BOOL;
+	}
+	
+	return -1;
+}
+
 json_t * config_to_json(config_setting_t *cfg)
 {
 	switch (config_setting_type(cfg)) {
@@ -265,18 +279,82 @@ json_t * config_to_json(config_setting_t *cfg)
 		case CONFIG_TYPE_GROUP: {
 			json_t *json = json_object();
 			
-			for (int i = 0; i < config_setting_length(cfg); i++)
+			for (int i = 0; i < config_setting_length(cfg); i++) {
 				json_object_set_new(json,
 					config_setting_name(config_setting_get_elem(cfg, i)),
 					config_to_json(config_setting_get_elem(cfg, i))
 				);
-			
+			}
+
 			return json;
 		}
-		
+
 		default:
 			return json_object();
 	}
+}
+
+int json_to_config(json_t *json, config_setting_t *parent)
+{
+	config_setting_t *cfg;
+	int ret, type;
+	
+	if (config_setting_is_root(parent)) {
+		if (!json_is_object(json))
+			return -1; /* The root must be an object! */
+	}
+	
+	switch (json_typeof(json)) {
+		case JSON_OBJECT: {
+			const char *key;
+			json_t *json_value;
+
+			json_object_foreach(json, key, json_value) {
+				type = json_to_config_type(json_typeof(json_value));
+				
+				cfg = config_setting_add(parent, key, type);
+				ret = json_to_config(json_value, cfg);
+				if (ret)
+					return ret;
+			}
+			break;
+		}
+		
+		case JSON_ARRAY: {
+			size_t i;
+			json_t *json_value;
+
+			json_array_foreach(json, i, json_value) {
+				type = json_to_config_type(json_typeof(json_value));
+				
+				cfg = config_setting_add(parent, NULL, type);
+				ret = json_to_config(json_value, cfg);
+				if (ret)
+					return ret;
+			}
+			break;
+		}
+		
+		case JSON_STRING:
+			config_setting_set_string(parent, json_string_value(json));
+			break;
+		
+		case JSON_INTEGER:
+			config_setting_set_int64(parent, json_integer_value(json));
+			break;
+
+		case JSON_REAL:
+			config_setting_set_float(parent, json_real_value(json));
+			break;
+
+		case JSON_TRUE:
+		case JSON_FALSE:
+		case JSON_NULL:
+			config_setting_set_bool(parent, json_is_true(json));
+			break;
+	}
+	
+	return 0;
 }
 #endif
 
@@ -300,68 +378,28 @@ void * memdup(const void *src, size_t bytes)
 	return dst;
 }
 
-int read_random(char *buf, size_t len)
+ssize_t read_random(char *buf, size_t len)
 {
 	int fd;
-	
+	ssize_t bytes, total;
+
 	fd = open("/dev/urandom", O_RDONLY);
 	if (fd < 0)
 		return -1;
-	
-	ssize_t bytes, total = 0;
-	
+
+	bytes = 0;
+	total = 0;
 	while (total < len) {
 		bytes = read(fd, buf + total, len - total);
 		if (bytes < 0)
-			goto out;
+			break;
 
 		total += bytes;
 	}
 	
 	close(fd);
 	
-	return 0;
-out:
-	close(fd);
-
-	return -1;
-}
-
-void printb(void *mem, size_t len)
-{
-	uint8_t *mem8 = (uint8_t *) mem;
-
-	for (int i = 0; i < len; i++) {
-		printf("%02hx ", mem8[i]);
-
-		if (i % 16 == 15)
-			printf("\n");
-	}
-}
-
-void printdw(void *mem, size_t len)
-{
-	int columns = 4;
-
-	uint32_t *mem32 = (uint32_t *) mem;
-
-	for (int i = 0; i < len; i++) {
-		if (i % columns == 0)
-			printf("%#x: ", i * 4);
-
-		printf("%08x ", mem32[i]);
-		
-		char *memc = (char *) &mem32[i];
-		printf("%c%c%c%c ",
-			isprint(memc[0]) ? memc[0] : ' ',
-			isprint(memc[1]) ? memc[1] : ' ',
-			isprint(memc[2]) ? memc[2] : ' ',
-			isprint(memc[3]) ? memc[3] : ' '
-		);
-
-		if ((i+1) % columns == 0)
-			printf("\n");
-	}
+	return bytes;
 }
 
 void rdtsc_sleep(uint64_t nanosecs, uint64_t start)
@@ -377,4 +415,40 @@ void rdtsc_sleep(uint64_t nanosecs, uint64_t start)
 	do {
 		__asm__("nop");
 	} while (rdtsc() - start < cycles);
+}
+
+/* Setup exit handler */
+void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
+{
+	info("Initialize signals");
+	
+	struct sigaction sa_quit = {
+		.sa_flags = SA_SIGINFO,
+		.sa_sigaction = cb
+	};
+
+	sigemptyset(&sa_quit.sa_mask);
+	sigaction(SIGINT, &sa_quit, NULL);
+	sigaction(SIGTERM, &sa_quit, NULL);
+}
+
+int sha1sum(FILE *f, unsigned char *sha1)
+{
+	SHA_CTX c;
+	char buf[512];
+	ssize_t bytes;
+	
+	rewind(f); /* Rewind the file in order to calculate over the whole file. */
+
+	SHA1_Init(&c);
+
+	bytes = fread(buf, 1, 512, f);
+	while (bytes > 0) {
+		SHA1_Update(&c, buf, bytes);
+		bytes = fread(buf, 1, 512, f);
+	}
+
+	SHA1_Final(sha1, &c);
+
+	return 0;
 }

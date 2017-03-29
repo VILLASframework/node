@@ -2,17 +2,19 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
-#ifndef _UTILS_H_
-#define _UTILS_H_
+#pragma once
 
 #include <stdlib.h>
 #include <stdint.h>
 #include <sched.h>
 #include <assert.h>
+#include <signal.h>
 #include <sys/types.h>
+
+#include <openssl/sha.h>
 
 #include "log.h"
 
@@ -53,6 +55,13 @@
 #define ALIGN_MASK(x, m) (((uintptr_t) (x) + (m)) & ~(m))
 #define IS_ALIGNED(x, a) (ALIGN(x, a) == (uintptr_t) x)
 
+#define SWAP(x,y) do {	\
+  __auto_type _x = x;	\
+  __auto_type _y = y;	\
+  x = _y;		\
+  y = _x;		\
+} while(0)
+
 /** Round-up integer division */
 #define CEIL(x, y)	(((x) + (y) - 1) / (y))
 
@@ -92,7 +101,6 @@
 #define BIT(nr)			(1UL << (nr))
 
 /* Forward declarations */
-struct settings;
 struct timespec;
 
 /** Print copyright message to screen. */
@@ -168,6 +176,7 @@ char * cpulist_create(char *str, size_t len, cpu_set_t *set);
 json_t * config_to_json(config_setting_t *cfg);
 
 #endif
+int json_to_config(json_t *json, config_setting_t *parent);
 
 /** Allocate and initialize memory. */
 void * alloc(size_t bytes);
@@ -200,13 +209,7 @@ int version_parse(const char *s, struct version *v);
 #endif
 
 /** Fill buffer with random data */
-int read_random(char *buf, size_t len);
-
-/** Hexdump bytes */
-void printb(void *mem, size_t len);
-
-/** Hexdump 32-bit dwords */
-void printdw(void *mem, size_t len);
+ssize_t read_random(char *buf, size_t len);
 
 /** Get CPU timestep counter */
 __attribute__((always_inline)) static inline uint64_t rdtsc()
@@ -225,7 +228,8 @@ __attribute__((always_inline)) static inline uint64_t rdtsc()
 
 /** Get log2 of long long integers */
 static inline int log2i(long long x) {
-	assert(x > 0);
+	if (x == 0)
+		return 1;
 
 	return sizeof(x) * 8 - __builtin_clzll(x) - 1;
 }
@@ -233,4 +237,12 @@ static inline int log2i(long long x) {
 /** Sleep with rdtsc */
 void rdtsc_sleep(uint64_t nanosecs, uint64_t start);
 
-#endif /* _UTILS_H_ */
+/** Register a exit callback for program termination (SIGINT / SIGKILL). */
+void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx));
+
+/** Calculate SHA1 hash of complete file \p f and place it into \p sha1.
+ * 
+ * @param sha1[out] Must be SHA_DIGEST_LENGTH (20) in size.
+ * @retval 0 Everything was okay.
+ */
+int sha1sum(FILE *f, unsigned char *sha1);

@@ -3,13 +3,14 @@
  * Linked lists a used for several data structures in the code.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "list.h"
+#include "utils.h"
 
 /* Compare functions */
 static int cmp_lookup(const void *a, const void *b) {
@@ -32,19 +33,26 @@ static int cmp_sort(const void *a, const void *b, void *thunk) {
 
 void list_init(struct list *l)
 {
+	assert(l->state == STATE_DESTROYED);
+
 	pthread_mutex_init(&l->lock, NULL);
 
 	l->length = 0;
 	l->capacity = 0;
-
 	l->array = NULL;
+
+	l->state = STATE_INITIALIZED;
 }
 
-void list_destroy(struct list *l, dtor_cb_t destructor, bool release)
+int list_destroy(struct list *l, dtor_cb_t destructor, bool release)
 {
 	pthread_mutex_lock(&l->lock);
 
-	list_foreach(void *p, l) {
+	assert(l->state != STATE_DESTROYED);
+
+	for (size_t i = 0; i < list_length(l); i++) {
+		void *p = list_at(l, i);
+		
 		if (destructor)
 			destructor(p);
 		if (release)
@@ -60,11 +68,17 @@ void list_destroy(struct list *l, dtor_cb_t destructor, bool release)
 
 	pthread_mutex_unlock(&l->lock);
 	pthread_mutex_destroy(&l->lock);
+	
+	l->state = STATE_DESTROYED;
+	
+	return 0;
 }
 
 void list_push(struct list *l, void *p)
 {
 	pthread_mutex_lock(&l->lock);
+
+	assert(l->state == STATE_INITIALIZED);
 	
 	/* Resize array if out of capacity */
 	if (l->length >= l->capacity) {
@@ -84,7 +98,9 @@ void list_remove(struct list *l, void *p)
 
 	pthread_mutex_lock(&l->lock);
 
-	for (int i = 0; i < l->length; i++) {
+	assert(l->state == STATE_INITIALIZED);
+
+	for (size_t i = 0; i < list_length(l); i++) {
 		if (l->array[i] == p)
 			removed++;
 		else
@@ -112,7 +128,11 @@ int list_count(struct list *l, cmp_cb_t cmp, void *ctx)
 
 	pthread_mutex_lock(&l->lock);
 
-	list_foreach(void *e, l) {
+	assert(l->state == STATE_INITIALIZED);
+
+	for (size_t i = 0; i < list_length(l); i++) {
+		void *e = list_at(l, i);
+		
 		if (cmp(e, ctx) == 0)
 			c++;
 	}
@@ -127,9 +147,12 @@ void * list_search(struct list *l, cmp_cb_t cmp, void *ctx)
 	void *e;
 
 	pthread_mutex_lock(&l->lock);
+
+	assert(l->state == STATE_INITIALIZED);
 	
-	list_foreach(e, l) {
-		if (!cmp(e, ctx))
+	for (size_t i = 0; i < list_length(l); i++) {
+		e = list_at(l, i);
+		if (cmp(e, ctx) == 0)
 			goto out;
 	}
 	
@@ -143,6 +166,8 @@ out:	pthread_mutex_unlock(&l->lock);
 void list_sort(struct list *l, cmp_cb_t cmp)
 {
 	pthread_mutex_lock(&l->lock);
+
+	assert(l->state == STATE_INITIALIZED);
 
 	qsort_r(l->array, l->length, sizeof(void *), cmp_sort, (void *) cmp);
 

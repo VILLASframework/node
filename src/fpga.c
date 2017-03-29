@@ -1,109 +1,94 @@
 /** VILLASfpga utility for tests and benchmarks
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Steffen Vogel
+ * @copyright 2017, Steffen Vogel
  **********************************************************************************/
  
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
-#include <errno.h>
 #include <getopt.h>
-#include <sched.h>
 
 #include <villas/log.h>
-#include <villas/cfg.h>
+#include <villas/super_node.h>
 #include <villas/timing.h>
 #include <villas/utils.h>
+#include <villas/memory.h>
 #include <villas/nodes/fpga.h>
 #include <villas/kernel/rt.h>
 #include <villas/kernel/pci.h>
 #include <villas/kernel/kernel.h>
 
+#include <villas/fpga/card.h>
+
 #include "config.h"
 
 /* Declarations */
-int fpga_benchmarks(int argc, char *argv[], struct fpga *f);
-int fpga_tests(int argc, char *argv[], struct fpga *f);
+int fpga_benchmarks(int argc, char *argv[], struct fpga_card *c);
 
-struct settings settings;
-
-void usage(char *name)
+void usage()
 {
-	printf("Usage: %s CONFIGFILE CMD [OPTIONS]\n", name);
-	printf("   Commands:\n");
-	printf("      tests      Test functionality of VILLASfpga card\n");
-	printf("      benchmarks Do benchmarks\n\n");
+	printf("Usage: villas-fpga CONFIGFILE CARD [OPTIONS]\n\n");
 	printf("   Options:\n");
 	printf("      -d    Set log level\n\n");
 
 	print_copyright();
-
-	exit(EXIT_FAILURE);
 }
 
 int main(int argc, char *argv[])
 {
 	int ret;
-	struct fpga *fpga;
-	config_t config;
+	
+	struct super_node sn;
+	struct fpga_card *card;
 
-	enum {
-		FPGA_TESTS,
-		FPGA_BENCH
-	} subcommand;
-
-	if (argc < 3)
+	if (argc < 3) {
 		usage(argv[0]);
-	if      (strcmp(argv[2], "tests") == 0)
-		subcommand = FPGA_TESTS;
-	else if (strcmp(argv[2], "benchmarks") == 0)
-		subcommand = FPGA_BENCH;
-	else
-		usage(argv[0]);
+		exit(EXIT_FAILURE);
+	}
 
 	/* Parse arguments */
 	char c, *endptr;
 	while ((c = getopt(argc-1, argv+1, "d:")) != -1) {
 		switch (c) {
 			case 'd':
-				log_setlevel(strtoul(optarg, &endptr, 10), ~0);
+				sn.log.level = strtoul(optarg, &endptr, 10);
 				break;	
 
 			case '?':
 			default:
-				usage(argv[0]);
+				usage();
+				exit(EXIT_SUCCESS);
 		}
 	}
 
-	info("Parsing configuration");
-	cfg_parse(argv[1], &config, &settings, NULL, NULL);
+	super_node_init(&sn);
+	super_node_parse_uri(&sn, argv[1]);
 	
-	info("Initialize real-time system");
-	rt_init(settings.affinity, settings.priority);
+	log_init(&sn.log, sn.log.level, sn.log.facilities);
+	rt_init(sn.priority, sn.affinity);
+	memory_init(sn.hugepages);
 
 	/* Initialize VILLASfpga card */
-	config_setting_t *cfg_root = config_root_setting(&config);
-	ret = fpga_init(argc, argv, cfg_root);
+	ret = fpga_init(argc, argv, config_root_setting(&sn.cfg));
 	if (ret)
 		error("Failed to initialize FPGA card");
 	
-	fpga = fpga_get();
-	fpga_dump(fpga);
+	card = fpga_lookup_card(argv[2]);
+	if (!card)
+		error("FPGA card '%s' does not exist", argv[2]);
 
-	/* Start subcommand */
-	switch (subcommand) {
-		case FPGA_TESTS: fpga_tests(argc-optind-1, argv+optind+1, fpga);      break;
-		case FPGA_BENCH: fpga_benchmarks(argc-optind-1, argv+optind+1, fpga); break;
-	}
+	fpga_card_dump(card);
+
+	/* Run benchmarks */
+	fpga_benchmarks(argc-optind-1, argv+optind+1, card);
 
 	/* Shutdown */
-	ret = fpga_deinit(&fpga);
+	ret = fpga_deinit();
 	if (ret)
-		error("Failed to de-initialize fpga card");
+		error("Failed to de-initialize FPGA card");
 	
-	cfg_destroy(&config);
+	super_node_destroy(&sn);
 
 	return 0;
 }

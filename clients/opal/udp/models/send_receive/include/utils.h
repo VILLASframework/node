@@ -4,7 +4,7 @@
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @author Mathieu Dubé-Dallaire
  * @copyright 2003, OPAL-RT Technologies inc
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
 #ifndef _UTILS_H_

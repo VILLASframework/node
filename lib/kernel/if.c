@@ -1,18 +1,15 @@
 /** Interface related functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <dirent.h>
-#include <arpa/inet.h>
 #include <linux/if_packet.h>
 
 #include <netlink/route/link.h>
-#include <netlink/route/route.h>
 
 #include "kernel/if.h"
 #include "kernel/tc.h"
@@ -23,13 +20,11 @@
 
 #include "utils.h"
 
-struct interface * if_create(struct rtnl_link *link)
+int if_init(struct interface *i, struct rtnl_link *link)
 {
-	struct interface *i = alloc(sizeof(struct interface));
-	
 	i->nl_link = link;
 
-	debug(DBG_SOCKET | 3, "Created interface '%s'", rtnl_link_get_name(i->nl_link));
+	debug(LOG_IF | 3, "Created interface '%s'", rtnl_link_get_name(i->nl_link));
 
 	int  n = if_get_irqs(i);
 	if (n > 0)
@@ -39,10 +34,10 @@ struct interface * if_create(struct rtnl_link *link)
 
 	list_init(&i->sockets);
 
-	return i;
+	return 0;
 }
 
-void if_destroy(struct interface *i)
+int if_destroy(struct interface *i)
 {
 	/* List members are freed by the nodes they belong to. */
 	list_destroy(&i->sockets, NULL, false);
@@ -50,6 +45,8 @@ void if_destroy(struct interface *i)
 	rtnl_qdisc_put(i->tc_qdisc);
 
 	free(i);
+	
+	return 0;
 }
 
 int if_start(struct interface *i, int affinity)
@@ -62,7 +59,9 @@ int if_start(struct interface *i, int affinity)
 		
 		/* Assign fwmark's to socket nodes which have netem options */
 		int ret, mark = 0;
-		list_foreach(struct socket *s, &i->sockets) {
+		for (size_t j = 0; j < list_length(&i->sockets); j++) {
+			struct socket *s = list_at(&i->sockets, j);
+
 			if (s->tc_qdisc)
 				s->mark = 1 + mark++;
 		}
@@ -85,14 +84,16 @@ int if_start(struct interface *i, int affinity)
 			error("Failed to setup priority queuing discipline: %s", nl_geterror(ret));
 
 		/* Create netem qdisks and appropriate filter per netem node */
-		list_foreach(struct socket *s, &i->sockets) {
+		for (size_t j = 0; j < list_length(&i->sockets); j++) {
+			struct socket *s = list_at(&i->sockets, j);
+
 			if (s->tc_qdisc) {
 				ret = tc_mark(i,  &s->tc_classifier, TC_HANDLE(1, s->mark), s->mark);
 				if (ret)
 					error("Failed to setup FW mark classifier: %s", nl_geterror(ret));
 				
 				char *buf = tc_print(s->tc_qdisc);
-				debug(DBG_SOCKET | 5, "Starting network emulation on interface '%s' for FW mark %u: %s",
+				debug(LOG_IF | 5, "Starting network emulation on interface '%s' for FW mark %u: %s",
 					rtnl_link_get_name(i->nl_link), s->mark, buf);
 				free(buf);
 
@@ -193,7 +194,7 @@ int if_set_affinity(struct interface *i, int affinity)
 				error("Failed to set affinity for IRQ %u", i->irqs[n]);
 
 			fclose(file);
-			debug(DBG_SOCKET | 5, "Set affinity of IRQ %u for interface '%s' to %#x", i->irqs[n], rtnl_link_get_name(i->nl_link), affinity);
+			debug(LOG_IF | 5, "Set affinity of IRQ %u for interface '%s' to %#x", i->irqs[n], rtnl_link_get_name(i->nl_link), affinity);
 		}
 		else
 			error("Failed to set affinity for interface '%s'", rtnl_link_get_name(i->nl_link));

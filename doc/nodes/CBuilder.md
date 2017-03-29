@@ -1,4 +1,4 @@
-# RTDS CBuilder models for VILLASnode
+# RTDS CBuilder Control System Components {#cbuilder}
 
 RTDS's Component Builder creates user-defined components including graphical representation, data menus and real-time code.
 

@@ -1,7 +1,7 @@
 /** Virtual Function IO wrapper around kernel API
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Steffen Vogel
+ * @copyright 2017, Steffen Vogel
  **********************************************************************************/
 
 #define _DEFAULT_SOURCE
@@ -10,7 +10,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <string.h>
 
 #include <sys/ioctl.h>
@@ -24,8 +23,6 @@
 #include "kernel/kernel.h"
 #include "kernel/vfio.h"
 #include "kernel/pci.h"
-
-#include "fpga/dma.h"
 
 static const char *vfio_pci_region_names[] = {
 	"PCI_BAR0",		// VFIO_PCI_BAR0_REGION_INDEX,
@@ -89,26 +86,28 @@ int vfio_destroy(struct vfio_container *v)
 	return 0;
 }
 
-void vfio_group_destroy(struct vfio_group *g)
+int vfio_group_destroy(struct vfio_group *g)
 {
 	int ret;
 
-	list_destroy(&g->devices, (dtor_cb_t) vfio_dev_destroy, false);
+	list_destroy(&g->devices, (dtor_cb_t) vfio_device_destroy, false);
 	
 	ret = ioctl(g->fd, VFIO_GROUP_UNSET_CONTAINER);
 	if (ret)
-		return;
+		return ret;
 
 	debug(5, "VFIO: released group from container: group=%u", g->index);
 
 	ret = close(g->fd);
 	if (ret)
-		return;
+		return ret;
 
 	debug(5, "VFIO: closed group: group=%u, fd=%d", g->index, g->fd);
+	
+	return 0;
 }
 
-void vfio_dev_destroy(struct vfio_dev *d)
+int vfio_device_destroy(struct vfio_device *d)
 {
 	int ret;
 
@@ -117,12 +116,14 @@ void vfio_dev_destroy(struct vfio_dev *d)
 
 	ret = close(d->fd);
 	if (ret)
-		return;
+		return ret;
 
 	debug(5, "VFIO: closed device: name=%s, fd=%d", d->name, d->fd);
 	
 	free(d->mappings);
 	free(d->name);
+	
+	return 0;
 }
 
 /* Constructors */
@@ -203,7 +204,7 @@ int vfio_group_attach(struct vfio_group *g, struct vfio_container *c, int index)
 	return 0;
 }
 
-int vfio_pci_attach(struct vfio_dev *d, struct vfio_container *c, struct pci_dev *pdev)
+int vfio_pci_attach(struct vfio_device *d, struct vfio_container *c, struct pci_device *pdev)
 {
 	char name[32];
 	int ret;
@@ -225,28 +226,30 @@ int vfio_pci_attach(struct vfio_dev *d, struct vfio_container *c, struct pci_dev
 	/* VFIO device name consists of PCI BDF */
 	snprintf(name, sizeof(name), "%04x:%02x:%02x.%x", pdev->slot.domain, pdev->slot.bus, pdev->slot.device, pdev->slot.function);
 
-	ret = vfio_dev_attach(d, c, name, index);
+	ret = vfio_device_attach(d, c, name, index);
 	if (ret < 0)
 		return ret;
 	
 	/* Check if this is really a vfio-pci device */
 	if (!(d->info.flags & VFIO_DEVICE_FLAGS_PCI)) {
-		vfio_dev_destroy(d);
+		vfio_device_destroy(d);
 		return -1;
 	}
 
-	d->pdev = pdev;
+	d->pci_device = pdev;
 
 	return 0;
 }
 
-int vfio_dev_attach(struct vfio_dev *d, struct vfio_container *c, const char *name, int index)
+int vfio_device_attach(struct vfio_device *d, struct vfio_container *c, const char *name, int index)
 {
 	int ret;
 	struct vfio_group *g = NULL;
 	
 	/* Check if group already exists */
-	list_foreach(struct vfio_group *h, &c->groups) {
+	for (size_t i = 0; i < list_length(&c->groups); i++) {
+		struct vfio_group *h = list_at(&c->groups, i);
+
 		if (h->index == index)
 			g = h;
 	}
@@ -310,7 +313,7 @@ int vfio_dev_attach(struct vfio_dev *d, struct vfio_container *c, const char *na
 	return 0;
 }
 
-int vfio_pci_reset(struct vfio_dev *d)
+int vfio_pci_reset(struct vfio_device *d)
 {
 	int ret;
 
@@ -350,7 +353,7 @@ int vfio_pci_reset(struct vfio_dev *d)
 	return ret;
 }
 
-int vfio_pci_msi_find(struct vfio_dev *d, int nos[32])
+int vfio_pci_msi_find(struct vfio_device *d, int nos[32])
 {
 	int ret, idx, irq;
 	char *end, *col, *last, line[1024], name[13];
@@ -390,7 +393,7 @@ int vfio_pci_msi_find(struct vfio_dev *d, int nos[32])
 	return 0;
 }
 
-int vfio_pci_msi_deinit(struct vfio_dev *d, int efds[32])
+int vfio_pci_msi_deinit(struct vfio_device *d, int efds[32])
 {
 	int ret, irq_setlen, irq_count = d->irqs[VFIO_PCI_MSI_IRQ_INDEX].count; 
 	struct vfio_irq_set *irq_set;
@@ -424,7 +427,7 @@ int vfio_pci_msi_deinit(struct vfio_dev *d, int efds[32])
 	return irq_count;
 }
 
-int vfio_pci_msi_init(struct vfio_dev *d, int efds[32])
+int vfio_pci_msi_init(struct vfio_device *d, int efds[32])
 {
 	int ret, irq_setlen, irq_count = d->irqs[VFIO_PCI_MSI_IRQ_INDEX].count; 
 	struct vfio_irq_set *irq_set;
@@ -459,7 +462,7 @@ int vfio_pci_msi_init(struct vfio_dev *d, int efds[32])
 	return irq_count;
 }
 
-int vfio_pci_enable(struct vfio_dev *d)
+int vfio_pci_enable(struct vfio_device *d)
 {
 	int ret;
 	uint32_t reg;
@@ -483,7 +486,7 @@ int vfio_pci_enable(struct vfio_dev *d)
 	return 0;
 }
 
-int vfio_dev_reset(struct vfio_dev *d)
+int vfio_device_reset(struct vfio_device *d)
 {
 	if (d->info.flags & VFIO_DEVICE_FLAGS_RESET)
 		return ioctl(d->fd, VFIO_DEVICE_RESET);
@@ -496,13 +499,18 @@ void vfio_dump(struct vfio_container *v)
 	info("VFIO Version: %u", v->version);
 	info("VFIO Extensions: %#x", v->extensions);
 
-	list_foreach(struct vfio_group *g, &v->groups) {
+	for (size_t i = 0; i < list_length(&v->groups); i++) {
+		struct vfio_group *g = list_at(&v->groups, i);
+
 		info("VFIO Group %u, viable=%u, container=%d", g->index,
 			(g->status.flags & VFIO_GROUP_FLAGS_VIABLE) > 0,
 			(g->status.flags & VFIO_GROUP_FLAGS_CONTAINER_SET) > 0
 		);
 
-		list_foreach(struct vfio_dev *d, &g->devices) { INDENT
+
+		for (size_t i = 0; i < list_length(&g->devices); i++) { INDENT
+			struct vfio_device *d = list_at(&g->devices, i);
+
 			info("Device %s: regions=%u, irqs=%u, flags=%#x", d->name,
 				d->info.num_regions,
 				d->info.num_irqs,
@@ -535,7 +543,7 @@ void vfio_dump(struct vfio_container *v)
 	}
 }
 
-void * vfio_map_region(struct vfio_dev *d, int idx)
+void * vfio_map_region(struct vfio_device *d, int idx)
 {
 	struct vfio_region_info *r = &d->regions[idx];
 
@@ -547,7 +555,7 @@ void * vfio_map_region(struct vfio_dev *d, int idx)
 	return d->mappings[idx];
 }
 
-int vfio_unmap_region(struct vfio_dev *d, int idx)
+int vfio_unmap_region(struct vfio_device *d, int idx)
 {
 	int ret;
 	struct vfio_region_info *r = &d->regions[idx];
@@ -566,25 +574,26 @@ int vfio_unmap_region(struct vfio_dev *d, int idx)
 	return 0;
 }
 
-int vfio_map_dma(struct vfio_container *c, struct dma_mem *mem)
+int vfio_map_dma(struct vfio_container *c, uint64_t virt, uint64_t phys, size_t len)
 {
 	int ret;
 	
-	if (mem->len & 0xFFF) {
-		mem->len += 0x1000;
-		mem->len &= ~0xFFF;
+	if (len & 0xFFF) {
+		len += 0x1000;
+		len &= ~0xFFF;
 	}
 	
-	if (mem->base_phys == (void *) -1) {
-		mem->base_phys = c->iova_next;
-		c->iova_next += mem->len;
+	/* Super stupid allocator */
+	if (phys == -1) {
+		phys = c->iova_next;
+		c->iova_next += len;
 	}
 
 	struct vfio_iommu_type1_dma_map dma_map = {
 		.argsz = sizeof(struct vfio_iommu_type1_dma_map),
-		.vaddr = (uint64_t) mem->base_virt,
-		.iova  = (uint64_t) mem->base_phys,
-		.size  = mem->len,
+		.vaddr = virt,
+		.iova  = phys,
+		.size  = len,
 		.flags = VFIO_DMA_MAP_FLAG_READ | VFIO_DMA_MAP_FLAG_WRITE
 	};
 
@@ -597,15 +606,15 @@ int vfio_map_dma(struct vfio_container *c, struct dma_mem *mem)
 	return 0;
 }
 
-int vfio_unmap_dma(struct vfio_container *c, struct dma_mem *mem)
+int vfio_unmap_dma(struct vfio_container *c, uint64_t virt, uint64_t phys, size_t len)
 {
 	int ret;
 	
 	struct vfio_iommu_type1_dma_unmap dma_unmap = {
 		.argsz = sizeof(struct vfio_iommu_type1_dma_unmap),
 		.flags = 0,
-		.iova  = (uint64_t) mem->base_phys,
-		.size  = mem->len,
+		.iova  = phys,
+		.size  = len,
 	};
 	
 	ret = ioctl(c->fd, VFIO_IOMMU_UNMAP_DMA, &dma_unmap);

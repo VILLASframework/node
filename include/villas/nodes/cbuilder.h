@@ -2,29 +2,38 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Steffen Vogel
- **********************************************************************************/
- 
-#ifndef _CBUILDER_H_
-#define _CBUILDER_H_
+ * @copyright 2017, Steffen Vogel
+ *********************************************************************************/
+
+/**
+ * @addtogroup cbuilder RTDS CBuilder model node
+ * @ingroup node
+ * @{ 
+ */
+
+#pragma once
 
 #include <pthread.h>
 
 #include "list.h"
 
-/* Helper macros for registering new models */
-#define REGISTER_CBMODEL(cb)				\
-__attribute__((constructor)) static void __register() {	\
-	list_push(&cbmodels, cb);			\
-}
+/* Forward declaration */
+struct cbuilder;
 
-extern struct list cbmodels;	/**< Table of existing CBuilder models */
+struct cbuilder_model {
+	void (*code)();
+	void (*ram)();
+	
+	int (*init)(struct cbuilder *cb);
+	int (*read)(float inputs[], int len);
+	int (*write)(float outputs[], int len);
+};
 
 struct cbuilder {
 	unsigned long step, read;
 	double timestep;
 
-	struct cbmodel *model;
+	struct cbuilder_model *model;
 	
 	float *params;
 	int paramlen;
@@ -39,15 +48,4 @@ struct cbuilder {
 	pthread_cond_t cv;
 };
 
-struct cbmodel {
-	char *name;
-
-	void (*code)();
-	void (*ram)();
-	
-	int (*init)(struct cbuilder *cb);
-	int (*read)(float inputs[], int len);
-	int (*write)(float outputs[], int len);
-};
-
-#endif /* _CBUILDER_H_ */
+/** @} */

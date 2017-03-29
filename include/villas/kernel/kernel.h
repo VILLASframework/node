@@ -2,13 +2,16 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
-#ifndef _LINUX_H_
-#define _LINUX_H_
+/** @addtogroup fpga Kernel @{ */
+
+#pragma once
 
 #include <stdint.h>
+
+#include "config.h"
 
 //#include <sys/capability.h>
 
@@ -17,16 +20,13 @@
  * @retval 0 If capabilty is present.
  * @retval <0 If capability is not present.
  */
-//int kernel_check_cap(cap_value_t cap):
+//int kernel_check_cap(cap_value_t cap);
 
-/** Checks for realtime (PREEMPT_RT) patched kernel.
- *
- * See https://rt.wiki.kernel.org
- *
- * @retval 0 Kernel is patched.
- * @reval <>0 Kernel is not patched.
- */
-int kernel_is_rt();
+/** Get number of reserved hugepages. */
+int kernel_get_nr_hugepages();
+
+/** Set number of reserved hugepages. */
+int kernel_set_nr_hugepages(int nr);
 
 /** Get kernel cmdline parameter
  *
@@ -67,4 +67,4 @@ int kernel_get_cacheline_size();
 /** Set SMP affinity of IRQ */
 int kernel_irq_setaffinity(unsigned irq, uintmax_t new, uintmax_t *old);
 
-#endif /* _LINUX_H_ */
+/** @} */

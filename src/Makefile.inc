@@ -2,7 +2,9 @@
 TARGETS = $(BUILDDIR)/villas-node \
 	  $(BUILDDIR)/villas-pipe  \
 	  $(BUILDDIR)/villas-signal \
-	  $(BUILDDIR)/villas-test
+	  $(BUILDDIR)/villas-test-rtt \
+	  $(BUILDDIR)/villas-test-cmp \
+	  $(BUILDDIR)/villas-hook
 
 SRC_LDLIBS = $(LDLIBS) -pthread -lm -lvillas
 SRC_CFLAGS = $(CFLAGS)
@@ -28,11 +30,10 @@ src: $(TARGETS)
 $(TARGETS): $(BUILDDIR)/villas-%: $(BUILDDIR)/src/%.o
 
 # Some additional prereqs for individual binaries
-$(BUILDDIR)/villas-fpga: $(addprefix $(BUILDDIR)/src/,fpga-tests.o fpga-bench.o $(BENCH_OBJS))
-
+$(BUILDDIR)/villas-fpga: $(addprefix $(BUILDDIR)/src/,fpga-bench.o $(BENCH_OBJS))
 
 # Compile executable objects
-$(BUILDDIR)/src/%.o: src/%.c | $$(dir $$@)
+$(BUILDDIR)/src/%.o: src/%.c $(BUILDDIR)/defines | $$(dir $$@)
 	$(CC) $(SRC_CFLAGS) -c $< -o $@
 
 # Link target executables
@@ -41,7 +42,7 @@ $(TARGETS): | $(LIBS)
 
 # Install
 install-src: src
-	install -m 0755 $(TARGETS) $(PREFIX)/bin
+	install -m 0755 -D -t $(DESTDIR)$(PREFIX)/bin $(TARGETS)
 
 clean-src:
 	rm -rf $(BUILDDIR)/src $(TARGETS)

@@ -1,8 +1,8 @@
 /** Memory allocators.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
- */
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
 
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -10,33 +10,64 @@
 /* Required to allocate hugepages on Apple OS X */
 #ifdef __MACH__
   #include <mach/vm_statistics.h>
+#elif defined(__linux__)
+  #include "kernel/kernel.h"
 #endif
 
 #include "log.h"
 #include "memory.h"
+#include "utils.h"
+
+int memory_init(int hugepages)
+{
+#ifdef __linux__
+	info("Initialize memory sub-system");
+	
+	int nr = kernel_get_nr_hugepages();
+	
+	if (nr < hugepages) { INDENT
+		kernel_set_nr_hugepages(hugepages);
+		debug(LOG_MEM | 2, "Reserved %d hugepages (was %d)", hugepages, nr);
+	}
+#endif
+	return 0;
+}
 
 void * memory_alloc(const struct memtype *m, size_t len)
 {
-	debug(DBG_MEM | 2, "Allocating %#zx bytes of %s memory", len, m->name);
-	return m->alloc(len);
+	void *ptr = m->alloc(len, sizeof(void *));
+		
+	debug(LOG_MEM | 2, "Allocated %#zx bytes of %s memory: %p", len, m->name, ptr);
+
+	return ptr;
 }
 
 void * memory_alloc_aligned(const struct memtype *m, size_t len, size_t alignment)
 {
-	debug(DBG_MEM | 2, "Allocating %#zx bytes of %#zx-byte-aligned %s memory", len, alignment, m->name);
-	warn("%s: not implemented yet!", __FUNCTION__);
-	return memory_alloc(m, len);
+	void *ptr = m->alloc(len, alignment);
+	
+	debug(LOG_MEM | 2, "Allocated %#zx bytes of %#zx-byte-aligned %s memory: %p", len, alignment, m->name, ptr);
+	
+	return ptr;
 }
 
 int memory_free(const struct memtype *m, void *ptr, size_t len)
 {
-	debug(DBG_MEM | 2, "Releasing %#zx bytes of %s memory", len, m->name);
+	debug(LOG_MEM | 2, "Releasing %#zx bytes of %s memory", len, m->name);
 	return m->free(ptr, len);
 }
 
-static void * memory_heap_alloc(size_t len)
+static void * memory_heap_alloc(size_t len, size_t alignment)
 {
-	return malloc(len);
+	void *ptr;
+	int ret;
+	
+	if (alignment < sizeof(void *))
+		alignment = sizeof(void *);
+	
+	ret = posix_memalign(&ptr, alignment, len);
+	
+	return ret ? NULL : ptr;
 }
 
 int memory_heap_free(void *ptr, size_t len)
@@ -47,7 +78,7 @@ int memory_heap_free(void *ptr, size_t len)
 }
 
 /** Allocate memory backed by hugepages with malloc() like interface */
-static void * memory_hugepage_alloc(size_t len)
+static void * memory_hugepage_alloc(size_t len, size_t alignment)
 {
 	int prot = PROT_READ | PROT_WRITE;
 	int flags = MAP_PRIVATE | MAP_ANONYMOUS;

@@ -1,7 +1,7 @@
 /** Histogram functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
 #include <stdio.h>
@@ -17,20 +17,34 @@
 #define VAL(h, i)	((h)->low + (i) * (h)->resolution)
 #define INDEX(h, v)	round((v - (h)->low) / (h)->resolution)
 
-void hist_create(struct hist *h, double low, double high, double resolution)
+int hist_init(struct hist *h, double low, double high, double resolution)
 {
 	h->low = low;
 	h->high = high;
 	h->resolution = resolution;
-	h->length = (high - low) / resolution;
-	h->data = alloc(h->length * sizeof(unsigned));
+
+	if (resolution > 0) {
+		h->length = (high - low) / resolution;
+		h->data = alloc(h->length * sizeof(hist_cnt_t));
+	}
+	else {
+		h->length = 0;
+		h->data = NULL;
+	}
 
 	hist_reset(h);
+	
+	return 0;
 }
 
-void hist_destroy(struct hist *h)
+int hist_destroy(struct hist *h)
 {
-	free(h->data);
+	if (h->data) {
+		free(h->data);
+		h->data = NULL;
+	}
+	
+	return 0;
 }
 
 void hist_put(struct hist *h, double value)
@@ -50,7 +64,7 @@ void hist_put(struct hist *h, double value)
 		h->higher++;
 	else if (idx < 0)
 		h->lower++;
-	else
+	else if (h->data != NULL)
 		h->data[idx]++;
 
 	h->total++;
@@ -81,7 +95,8 @@ void hist_reset(struct hist *h)
 	h->highest = DBL_MIN;
 	h->lowest = DBL_MAX;
 
-	memset(h->data, 0, h->length * sizeof(unsigned));
+	if (h->data)
+		memset(h->data, 0, h->length * sizeof(unsigned));
 }
 
 double hist_mean(struct hist *h)
@@ -99,13 +114,13 @@ double hist_stddev(struct hist *h)
 	return sqrt(hist_var(h));
 }
 
-void hist_print(struct hist *h)
+void hist_print(struct hist *h, int details)
 { INDENT
-	stats("Counted values: %u (%u between %f and %f)", h->total, h->total-h->higher-h->lower, h->high, h->low);
+	stats("Counted values: %ju (%ju between %f and %f)", h->total, h->total-h->higher-h->lower, h->high, h->low);
 	stats("Highest: %f Lowest: %f", h->highest, h->lowest);
 	stats("Mu: %f Sigma2: %f Sigma: %f", hist_mean(h), hist_var(h), hist_stddev(h));
 
-	if (h->total - h->higher - h->lower > 0) {
+	if (details > 0 && h->total - h->higher - h->lower > 0) {
 		char *buf = hist_dump(h);
 		stats("Matlab: %s", buf);
 		free(buf);
@@ -133,11 +148,11 @@ void hist_plot(struct hist *h)
 
 	for (int i = 0; i < h->length; i++) {
 		double value = VAL(h, i);
-		int cnt = h->data[i];
+		hist_cnt_t cnt = h->data[i];
 		int bar = HIST_HEIGHT * ((double) cnt / max);
 
 		if (value > h->lowest || value < h->highest)
-			stats("%+9g | "     "%5u"  " | %.*s", value, cnt, bar, buf);
+			stats("%+9g | %5ju | %.*s", value, cnt, bar, buf);
 	}
 }
 
@@ -148,26 +163,78 @@ char * hist_dump(struct hist *h)
 	strcatf(&buf, "[ ");
 
 	for (int i = 0; i < h->length; i++)
-		strcatf(&buf, "%u ", h->data[i]);
+		strcatf(&buf, "%ju ", h->data[i]);
 
 	strcatf(&buf, "]");
 	
 	return buf;
 }
 
-void hist_matlab(struct hist *h, FILE *f)
+#ifdef WITH_JANSSON
+json_t * hist_json(struct hist *h)
 {
-	char *buf = hist_dump(h);
+	json_t *json_buckets, *json_hist;
 
-	fprintf(f, "%lu = struct( ", time(NULL));
-	fprintf(f, "'min', %f, 'max', %f, ", h->low, h->high);
-	fprintf(f, "'total', %u, higher', %u, 'lower', %u, ", h->total, h->higher, h->lower);
-	fprintf(f, "'highest', %f, 'lowest', %f, ", h->highest, h->lowest);
-	fprintf(f, "'mean', %f, ", hist_mean(h));
-	fprintf(f, "'var', %f, ", hist_var(h));
-	fprintf(f, "'stddev', %f, ", hist_stddev(h));
-	fprintf(f, "'hist', %s ", buf);
-	fprintf(f, "),\n");
+	json_hist = json_pack("{ s: f, s: f, s: i, s: i, s: i, s: f, s: f, s: f, s: f, s: f }",
+		"low", h->low,
+		"high", h->high,
+		"total", h->total,
+		"higher", h->higher,
+		"lower", h->lower,
+		"highest", h->highest,
+		"lowest", h->lowest,
+		"mean", hist_mean(h),
+		"variance", hist_var(h),
+		"stddev", hist_stddev(h)
+	);
+
+	if (h->total - h->lower - h->higher > 0) {
+		json_buckets = json_array();
+
+		for (int i = 0; i < h->length; i++)
+			json_array_append(json_buckets, json_integer(h->data[i]));
+		
+		json_object_set(json_hist, "buckets", json_buckets);
+	}
+
+	return json_hist;
+}
+
+int hist_dump_json(struct hist *h, FILE *f)
+{
+	json_t *j = hist_json(h);
 	
-	free(buf);
+	int ret = json_dumpf(j, f, 0);
+	
+	json_decref(j);
+	
+	return ret;
+}
+#endif /* WITH_JANNSON */
+
+int hist_dump_matlab(struct hist *h, FILE *f)
+{
+	fprintf(f, "struct(");
+	fprintf(f, "'low', %f, ", h->low);
+	fprintf(f, "'high', %f, ", h->high);
+	fprintf(f, "'total', %ju, ", h->total);
+	fprintf(f, "'higher', %ju, ", h->higher);
+	fprintf(f, "'lower', %ju, ", h->lower);
+	fprintf(f, "'highest', %f, ", h->highest);
+	fprintf(f, "'lowest', %f, ", h->lowest);
+	fprintf(f, "'mean', %f, ", hist_mean(h));
+	fprintf(f, "'variance', %f, ", hist_var(h));
+	fprintf(f, "'stddev', %f, ", hist_stddev(h));
+	
+	if (h->total - h->lower - h->higher > 0) {
+		char *buf = hist_dump(h);
+		fprintf(f, "'buckets', %s", buf);
+		free(buf);
+	}
+	else
+		fprintf(f, "'buckets', zeros(1, %d)", h->length);
+
+	fprintf(f, ")");
+	
+	return 0;
 }

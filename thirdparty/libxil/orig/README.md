@@ -1,1 +1,0 @@
-Those drivers are taken from https://github.com/Xilinx/embeddedsw

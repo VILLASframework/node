@@ -1,10 +1,11 @@
 /** Logging and debugging routines
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <time.h>
 #include <errno.h>
@@ -21,20 +22,108 @@
   #include "OpalPrint.h"
 #endif
 
-/** Debug level used by the debug() macro.
- * It defaults to V (defined by the Makefile) and can be
- * overwritten by the 'debug' setting in the configuration file. */
-static unsigned level = V;
+/** The global log instance. */
+static struct log *log;
 
-/** Debug facilities used by the debug() macro. */
-static unsigned facilities = ~0;
-
-/** A global clock used to prefix the log messages. */
-static struct timespec epoch;
+/** List of debug facilities as strings */
+static const char *facilities_strs[] = {
+	"pool",		/* LOG_POOL */
+	"queue",	/* LOG_QUEUE */
+	"config",	/* LOG_CONFIG */
+	"hook",		/* LOG_HOOK */
+	"path",		/* LOG_PATH */
+	"node",		/* LOG_NODE */
+	"mem",		/* LOG_MEM */
+	"web",		/* LOG_WEB */
+	"api",		/* LOG_API */
+	"log",		/* LOG_LOG */
+	"vfio",		/* LOG_VFIO */
+	"pci",		/* LOG_PCI */
+	"xil",		/* LOG_XIL */
+	"tc",		/* LOG_TC */
+	"if",		/* LOG_IF */
+	
+	/* Node-types */	
+	"socket",	/* LOG_SOCKET */
+	"file",		/* LOG_FILE */
+	"fpga",		/* LOG_FPGA */
+	"ngsi",		/* LOG_NGSI */
+	"websocket",	/* LOG_WEBSOCKET */
+	"opal",		/* LOG_OPAL */
+};
 
 #ifdef __GNUC__
 /** The current log indention level (per thread!). */
 static __thread int indent = 0;
+
+int log_init(struct log *l, int level, long facilitites)
+{
+	/* Register this log instance globally */
+	log = l;
+
+	l->level = level;
+	l->facilities = facilitites;
+	
+	debug(LOG_LOG | 5, "Log sub-system intialized: level=%d, faciltities=%#lx", level, facilitites);
+	
+	l->state = STATE_INITIALIZED;
+	
+	return 0;
+}
+
+int log_parse(struct log *l, config_setting_t *cfg)
+{
+	const char *facilities;
+	
+	if (!config_setting_is_group(cfg))
+		cerror(cfg, "Setting 'log' must be a group.");
+
+	config_setting_lookup_int(cfg, "level", &l->level);
+	config_setting_lookup_string(cfg, "file", &l->path);
+
+	if (config_setting_lookup_string(cfg, "facilities", &facilities))
+		log_set_facility_expression(l, facilities);
+
+	l->state = STATE_PARSED;
+
+	return 0;
+}
+
+int log_start(struct log *l)
+{
+	l->epoch = time_now();
+
+	l->file = l->path ? fopen(l->path, "a+") : stderr;
+	if (!l->file) {
+		l->file = stderr;
+		error("Failed to open log file '%s'", l->path);
+	}
+
+	l->state = STATE_STARTED;
+
+	return 0;
+}
+
+int log_stop(struct log *l)
+{
+	assert(l->state == STATE_STARTED);
+	
+	if (l->file != stderr && l->file != stdout)
+		fclose(l->file);
+	
+	l->state = STATE_STOPPED;
+	
+	return 0;
+}
+
+int log_destroy(struct log *l)
+{
+	assert(l->state != STATE_STARTED);
+	
+	l->state = STATE_DESTROYED;
+	
+	return 0;
+}
 
 int log_indent(int levels)
 {
@@ -49,34 +138,72 @@ void log_outdent(int *old)
 }
 #endif
 
-void log_setlevel(int lvl, int fac)
+int log_set_facility_expression(struct log *l, const char *expression)
 {
-	level = lvl;
-	debug(10, "Switched to debug level %u", level);
+	bool negate;
+	char *copy, *token;
+	long mask = 0, facilities = 0;
+	
+	copy = strdup(expression);
+	token = strtok(copy, ",");
+
+	while (token != NULL) {
+		if (token[0] == '!') {
+			token++;
+			negate = true;
+		}
+		else
+			negate = false;
+
+		/* Check for some classes */
+		if      (!strcmp(token, "all"))
+			mask = LOG_ALL;
+		else if (!strcmp(token, "nodes"))
+			mask = LOG_NODES;
+		else if (!strcmp(token, "kernel"))
+			mask = LOG_KERNEL;
+		else {
+			for (int ind = 0; ind < ARRAY_LEN(facilities_strs); ind++) {
+				if (!strcmp(token, facilities_strs[ind])) {
+					mask = (1 << (ind+8));
+					goto found;
+				}
+			}
+			
+			error("Invalid log class '%s'", token);
+		}
+
+found:		if (negate)
+			facilities &= ~mask;
+		else
+			facilities |= mask;
+
+		token = strtok(NULL, ",");
+	}
+	
+	l->facilities = facilities;
+	
+	free(copy);
+
+	return l->facilities;
 }
 
-void log_init()
-{
-	epoch = time_now();
-	debug(10, "Debug clock resetted");
-}
-
-void log_print(const char *lvl, const char *fmt, ...)
+void log_print(struct log *l, const char *lvl, const char *fmt, ...)
 {
 	va_list ap;
 
 	va_start(ap, fmt);
-	log_vprint(lvl, fmt, ap);
+	log_vprint(l, lvl, fmt, ap);
 	va_end(ap);
 }
 
-void log_vprint(const char *lvl, const char *fmt, va_list ap)
+void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 {
 	struct timespec ts = time_now();
 	char *buf = alloc(512);
 	
 	/* Timestamp */
-	strcatf(&buf, "%10.3f ", time_delta(&epoch, &ts));
+	strcatf(&buf, "%10.3f ", time_delta(&l->epoch, &ts));
 
 	/* Severity */
 	strcatf(&buf, "%5s ", lvl);
@@ -96,7 +223,7 @@ void log_vprint(const char *lvl, const char *fmt, va_list ap)
 #ifdef ENABLE_OPAL_ASYNC
 	OpalPrint("VILLASnode: %s\n", buf);
 #endif
-	fprintf(stderr, "\r%s\n", buf);
+	fprintf(l->file, "\r%s\n", buf);
 	free(buf);
 }
 
@@ -105,19 +232,21 @@ void line()
 	char buf[LOG_WIDTH];
 	memset(buf, 0x71, sizeof(buf));
 
-	log_print("", "\b" ACS("%.*s"), LOG_WIDTH, buf);
+	log_print(log, "", "\b" ACS("%.*s"), LOG_WIDTH, buf);
 }
 
-void debug(int class, const char *fmt, ...)
+void debug(long class, const char *fmt, ...)
 {
 	va_list ap;
 	
 	int lvl = class &  0xFF;
 	int fac = class & ~0xFF;
+	
+	assert(log != NULL);
 
-	if (((fac == 0) || (fac & facilities)) && (lvl <= level)) {
+	if (((fac == 0) || (fac & log->facilities)) && (lvl <= log->level)) {
 		va_start(ap, fmt);
-		log_vprint(LOG_LVL_DEBUG, fmt, ap);
+		log_vprint(log, LOG_LVL_DEBUG, fmt, ap);
 		va_end(ap);
 	}
 }
@@ -125,18 +254,22 @@ void debug(int class, const char *fmt, ...)
 void info(const char *fmt, ...)
 {
 	va_list ap;
+	
+	assert(log != NULL);
 
 	va_start(ap, fmt);
-	log_vprint(LOG_LVL_INFO, fmt, ap);
+	log_vprint(log, LOG_LVL_INFO, fmt, ap);
 	va_end(ap);
 }
 
 void warn(const char *fmt, ...)
 {
 	va_list ap;
+	
+	assert(log != NULL);
 
 	va_start(ap, fmt);
-	log_vprint(LOG_LVL_WARN, fmt, ap);
+	log_vprint(log, LOG_LVL_WARN, fmt, ap);
 	va_end(ap);
 }
 
@@ -144,17 +277,21 @@ void stats(const char *fmt, ...)
 {
 	va_list ap;
 
+	assert(log != NULL);
+
 	va_start(ap, fmt);
-	log_vprint(LOG_LVL_STATS, fmt, ap);
+	log_vprint(log, LOG_LVL_STATS, fmt, ap);
 	va_end(ap);
 }
 
 void error(const char *fmt, ...)
 {
 	va_list ap;
+	
+	assert(log != NULL);
 
 	va_start(ap, fmt);
-	log_vprint(LOG_LVL_ERROR, fmt, ap);
+	log_vprint(log, LOG_LVL_ERROR, fmt, ap);
 	va_end(ap);
 
 	die();
@@ -165,11 +302,13 @@ void serror(const char *fmt, ...)
 	va_list ap;
 	char *buf = NULL;
 
+	assert(log != NULL);
+
 	va_start(ap, fmt);
 	vstrcatf(&buf, fmt, ap);
 	va_end(ap);
 
-	log_print(LOG_LVL_ERROR, "%s: %m (%u)", buf, errno);
+	log_print(log, LOG_LVL_ERROR, "%s: %m (%u)", buf, errno);
 	
 	free(buf);
 	die();
@@ -179,16 +318,21 @@ void cerror(config_setting_t *cfg, const char *fmt, ...)
 {
 	va_list ap;
 	char *buf = NULL;
+	const char *file;
+	int line;
+
+	assert(log != NULL);
 
 	va_start(ap, fmt);
 	vstrcatf(&buf, fmt, ap);
 	va_end(ap);
+	
+	line = config_setting_source_line(cfg);
+	file = config_setting_source_file(cfg);
+	if (!file)
+		file = config_setting_get_hook(config_root_setting(cfg->config));
 
-	log_print(LOG_LVL_ERROR, "%s in %s:%u", buf,
-		config_setting_source_file(cfg)
-		   ? config_setting_source_file(cfg)
-		   : "(stdio)",
-		config_setting_source_line(cfg));
+	log_print(log, LOG_LVL_ERROR, "%s in %s:%u", buf, file, line);
 
 	free(buf);
 	die();
