@@ -22,7 +22,9 @@ docker-images:
     - git submodule update --recursive --init
     - docker info
   script:
+    - docker pull fedora:latest
     - make docker-dev
+    - docker tag villas-dev $DOCKER_REGISTRY/villas-dev
     - docker push $DOCKER_REGISTRY/docker-dev
   tags:
     - shell
