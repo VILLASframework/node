@@ -110,14 +110,31 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 		/* Check if file could be loaded / opened */
 		if (!f)
 			error("Failed to open configuration from: %s", uri);
-	
+		
+		cfg_root = config_root_setting(&sn->cfg);
+
 		/* Parse config */
 		config_set_auto_convert(&sn->cfg, 1);
 		ret = config_read(&sn->cfg, f);
-		if (ret != CONFIG_TRUE)
-			error("Failed to parse configuration: %s in %s:%d", config_error_text(&sn->cfg), uri, config_error_line(&sn->cfg));
-
-		cfg_root = config_root_setting(&sn->cfg);
+		if (ret != CONFIG_TRUE) {
+			/* This does not seem to be a valid libconfig configuration.
+			 * Lets try to parse it as JSON instead. */
+			
+			json_error_t err;
+			json_t *json;
+			
+			json = json_loadf(f, 0, &err);
+			if (json) {
+				ret = json_to_config(json, cfg_root);
+				if (ret)
+					error("Failed t convert JSON to configuration file");
+			}
+			else {
+				info("conf: %s in %s:%d", config_error_text(&sn->cfg), uri, config_error_line(&sn->cfg));
+				info("json: %s in %s:%d:%d", err.text, err.source, err.line, err.column);
+				error("Failed to parse configuration");
+			}
+		}
 
 		/* Little hack to properly report configuration filename in error messages
 		 * We add the uri as a "hook" object to the root setting.
