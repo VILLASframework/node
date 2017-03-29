@@ -11,6 +11,7 @@
 #include "sample.h"
 #include "utils.h"
 #include "log.h"
+#include "node.h"
 
 static struct stats_desc {
 	const char *name;
@@ -23,7 +24,7 @@ static struct stats_desc {
 	} hist;
 } stats_table[] = {
 	{ "skipped",	  "samples",	"skipped samples by hooks",						{0,	0,	-1,	}},
-	{ "dropped",	  "samples",	"dropped messages because of reordering",				{0,	0,	-1,	}},
+	{ "reorderd",	  "samples",	"reordered samples",							{0,	20,	1,	}},
 	{ "gap_sequence", "samples",	"sequence number displacement of received messages",			{-10,	10, 20,		}},
 	{ "gap_sample",	  "seconds",	"inter message timestamps (as sent by remote)",				{90e-3,	110e-3,	1e-3,	}},
 	{ "gap_received", "seconds",	"Histogram for inter message arrival time (as seen by this instance)",	{90e-3,	110e-3,	1e-3,	}},
@@ -62,8 +63,10 @@ void stats_update(struct stats_delta *d, enum stats_id id, double val)
 int stats_commit(struct stats *s, struct stats_delta *d)
 {
 	for (int i = 0; i < STATS_COUNT; i++) {
-		if (d->update & 1 << i)
+		if (d->update & 1 << i) {
 			hist_put(&s->histograms[i], d->values[i]);
+			d->update &= ~(1 << i);
+		}
 	}
 	
 	return 0;
@@ -71,14 +74,19 @@ int stats_commit(struct stats *s, struct stats_delta *d)
 
 void stats_collect(struct stats_delta *s, struct sample *smps[], size_t cnt)
 {
+	int dist;
 	struct sample *previous = s->last;
 	
 	for (int i = 0; i < cnt; i++) {
 		if (previous) {
 			stats_update(s, STATS_GAP_RECEIVED, time_delta(&previous->ts.received, &smps[i]->ts.received));
 			stats_update(s, STATS_GAP_SAMPLE,   time_delta(&previous->ts.origin,   &smps[i]->ts.origin));
-			stats_update(s, STATS_OWD,          time_delta(&smps[i]->ts.origin,    &smps[i]->ts.received));
+			stats_update(s, STATS_OWD,          -time_delta(&smps[i]->ts.origin,    &smps[i]->ts.received));
 			stats_update(s, STATS_GAP_SEQUENCE, smps[i]->sequence - (int32_t) previous->sequence);
+			
+			dist = smps[i]->sequence - (int32_t) previous->sequence;
+			if (dist > 0)
+				stats_update(s, STATS_REORDERED,    dist);
 		}
 	
 		previous = smps[i];
@@ -209,4 +217,16 @@ void stats_send(struct stats *s, struct node *n)
 	smp->length = i;
 	
 	node_write(n, &smp, 1); /* Send single message with statistics to destination node */
+}
+
+enum stats_id stats_lookup_id(const char *name)
+{
+	for (int i = 0; i < STATS_COUNT; i++) {
+		struct stats_desc *desc = &stats_table[i];
+		
+		if (!strcmp(desc->name, name))
+			return i;
+	}
+	
+	return -1;
 }
