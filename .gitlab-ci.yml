@@ -1,26 +1,23 @@
 variables:
-  # This registry is a linked docker container running on the same host
-  # and configured in gitlab-ci-runner config.toml as a linked service
-  DOCKER_REGISTRY: acs-public:5000
   PREFIX: /usr/
+  BUILDDIR: build/release
 
 stages:
   - prepare
   - build
   - test
-  - packaging
   - deploy
 
 # Stage: prepare
 ##############################################################################
 
 # Build docker image which is used to build & test VILLASnode
-docker-images:
+docker-dev:
   stage: prepare
   before_script:
-    - git submodule sync --recursive
-    - git submodule update --recursive --init
     - docker info
+    - git submodule sync --recursive
+    - git submodule update --init --recursive
   script:
     - docker pull fedora:latest
     - make docker-dev
@@ -42,7 +39,7 @@ build:
   artifacts:
     name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
     paths:
-      - build/release/
+      - $BUILDDIR/
   image: $DOCKER_REGISTRY/villas-dev
   tags:
     - docker
@@ -52,9 +49,25 @@ docs:
   artifacts:
     name: "${CI_PROJECT_NAME}-doc-${CI_BUILD_REF}"
     paths:
-      - build/release/doc/
+      - $BUILDDIR/doc/
   script:
     - make doc
+  image: $DOCKER_REGISTRY/villas-dev
+  tags:
+    - docker
+
+packages:
+  stage: build
+  before_script:
+    - curl -s https://$DEPLOY_USER:$DEPLOY_PASS@$DEPLOY_HOST/packages/villas.repo > /etc/yum.repos.d/villas.repo
+    - dnf -y --refresh install libwebsockets-devel libxil-devel
+  script:
+    - make dist
+    - make rpm-villas
+  artifacts:
+    name: "${CI_PROJECT_NAME}-packages-${CI_BUILD_REF}"
+    paths:
+      - $BUILDDIR/packaging/
   image: $DOCKER_REGISTRY/villas-dev
   tags:
     - docker
@@ -93,6 +106,10 @@ integration:
     - build
   script:
     - make run-integration-tests
+  artifacts:
+    name: "${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}"
+    paths:
+      - BUILDDIR/tests/integration/
   image: $DOCKER_REGISTRY/villas-dev
   tags:
     - docker
@@ -110,25 +127,28 @@ website:
   tags:
     - villas-deploy
 
-rpm:
-  stage: packaging
+docker:
+  stage: deploy
   script:
-    - make rpm
+    - make docker
+    - docker tag -f villas $DOCKER_REGISTRY/villas:latest
+    - docker push $DOCKER_REGISTRY/villas:latest
+  dependencies:
+   - packages
   tags:
     - shell
-    - fedora
+    - linux
 
 deliver:
   stage: deploy
   script:
-    - rsync -r build/release/doc/html/ $DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
     - rsync -r build/release-coverage/coverage/ $DEPLOY_HOST:$DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
-    - rsync -r build/release/packaging/rpm/RPMS $DEPLOY_HOST:$DEPLOY_PATH/../packages
+    - rsync -r $BUILDDIR/doc/html/ $DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
+    - rsync -r $BUILDDIR/packaging/rpm/RPMS $DEPLOY_HOST:$DEPLOY_PATH/../packages
     - ssh $DEPLOY_HOST createrepo $DEPLOY_PATH/../packages
   dependencies:
    - docs
    - coverage
-   - rpm
+   - packages
   tags:
     - villas-deploy
-

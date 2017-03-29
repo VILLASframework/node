@@ -1,10 +1,8 @@
 -include tests/unit/Makefile.inc
+-include tests/integration/Makefile.inc
 
-tests: unit-tests
+tests: unit-tests integration-tests
 
 run-tests: run-unit-tests run-integration-tests
-	
-run-integration-tests: src tools
-	@$(SRCDIR)/tests/integration-tests.sh
 
-.PHONY: tests run-tests run-integration-tests
+.PHONY: tests run-tests

@@ -1,7 +1,7 @@
 LIB_NAME = libvillas
 LIB_ABI_VERSION = 1
 
-LIB = $(BUILDDIR)/$(LIB_NAME).so
+LIB = $(BUILDDIR)/$(LIB_NAME).so.$(LIB_ABI_VERSION)
 
 # Object files for libvillas
 LIB_SRCS = $(addprefix lib/nodes/, file.c cbuilder.c) 		\
@@ -86,6 +86,7 @@ lib: $(LIB)
 # Link
 $(LIB): $(LIB_OBJS)
 	$(CC) $(LIB_LDFLAGS) -o $@ $^ $(LIB_LDLIBS)
+	ln -srf $@ $(BUILDDIR)/$(LIB_NAME).so
 
 # Compile
 $(BUILDDIR)/lib/%.o: lib/%.c $(BUILDDIR)/defines | $$(dir $$@)
