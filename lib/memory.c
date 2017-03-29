@@ -105,7 +105,7 @@ static int memory_hugepage_free(struct memtype *m, void *ptr, size_t len)
 
 void* memory_managed_alloc(struct memtype *m, size_t len, size_t alignment)
 {
-    // Simple first-fit allocation.
+    /* Simple first-fit allocation */
     struct memtype_managed* man = (struct memtype_managed*) m;
     struct memblock* block;
     for (block = man->first; block != NULL; block = block->next) {
@@ -114,24 +114,24 @@ void* memory_managed_alloc(struct memtype *m, size_t len, size_t alignment)
         char* cptr = (char*) block + sizeof(struct memblock);
         size_t avail = block->len;
         uintptr_t uptr = (uintptr_t) cptr;
-        // check alignment first; leave a gap at start of block to assure
-        // alignment if necessary
+        /* check alignment first; leave a gap at start of block to assure
+         * alignment if necessary */
         uintptr_t rem = uptr % alignment;
         uintptr_t gap = 0;
         if (rem != 0) {
             gap = alignment - rem;
             if (gap > avail)
-                // next aligned address isn't in this block anymore
+                /* next aligned address isn't in this block anymore */
                 continue;
             cptr += gap;
             avail -= gap;
         }
         if (avail >= len) {
             if (gap > sizeof(struct memblock)) {
-                // the alignment gap is big enough to fit another block.
-                // the original block descriptor is already at the correct
-                // position, so we just change its len and create a new block
-                // descriptor for the actual block we're handling.
+                /* The alignment gap is big enough to fit another block.
+                 * The original block descriptor is already at the correct
+                 * position, so we just change its len and create a new block
+                 * descriptor for the actual block we're handling. */
                 block->len = gap;
                 struct memblock *newblock = (struct memblock*) (cptr - sizeof(struct memblock));
                 newblock->prev = block;
@@ -141,12 +141,12 @@ void* memory_managed_alloc(struct memtype *m, size_t len, size_t alignment)
                 newblock->len = len;
                 block = newblock;
             } else {
-                // the gap is too small to fit another block descriptor, so we
-                // must account for the gap length in the block length.
+                /* The gap is too small to fit another block descriptor, so we
+                 * must account for the gap length in the block length. */
                 block->len = len + gap;
             }
             if (avail > len + sizeof(struct memblock)) {
-                // imperfect fit, so create another block for the remaining part
+                /* imperfect fit, so create another block for the remaining part */
                 struct memblock *newblock = (struct memblock*) (cptr + len);
                 newblock->prev = block;
                 newblock->next = block->next;
@@ -156,16 +156,16 @@ void* memory_managed_alloc(struct memtype *m, size_t len, size_t alignment)
                 newblock->flags = 0;
                 newblock->len = avail - len - sizeof(struct memblock);
             } else {
-                // if this block was larger than the requested length, but only
-                // by less than sizeof(struct memblock), we may have wasted
-                // memory by previous assignments to block->len
+                /* if this block was larger than the requested length, but only
+                 * by less than sizeof(struct memblock), we may have wasted
+                 * memory by previous assignments to block->len. */
                 block->len = avail;
             }
             block->flags |= MEMBLOCK_USED;
             return (void*) cptr;
         }
     }
-    // no suitable block found
+    /* no suitable block found */
     return NULL;
 }
 
@@ -177,14 +177,14 @@ int memory_managed_free(struct memtype *m, void *ptr, size_t len)
     for (block = man->first; block != NULL; block = block->next) {
         if (!(block->flags & MEMBLOCK_USED))
             continue;
-        // since we may waste some memory at the start of a block to ensure
-        // alignment, ptr may not actually be the start of the block
+        /* since we may waste some memory at the start of a block to ensure
+         * alignment, ptr may not actually be the start of the block */
         if ((char*) block + sizeof(struct memblock) <= cptr &&
             cptr < (char*) block + sizeof(struct memblock) + block->len) {
-            // try to merge it with neighbouring free blocks
+            /* try to merge it with neighbouring free blocks */
             if (block->prev && !(block->prev->flags & MEMBLOCK_USED) &&
                 block->next && !(block->next->flags & MEMBLOCK_USED)) {
-                // special case first: both previous and next block are unused
+                /* special case first: both previous and next block are unused */
                 block->prev->len += block->len + block->next->len + 2 * sizeof(struct memblock);
                 block->prev->next = block->next->next;
                 if (block->next->next)
@@ -200,7 +200,7 @@ int memory_managed_free(struct memtype *m, void *ptr, size_t len)
                 if (block->next)
                     block->next->prev = block;
             } else {
-                // no neighbouring free block, so just mark it as free
+                /* no neighbouring free block, so just mark it as free */
                 block->flags &= (~MEMBLOCK_USED);
             }
             return 0;
@@ -217,7 +217,7 @@ struct memtype* memtype_managed_init(void *ptr, size_t len)
     }
     struct memtype_managed *man = (struct memtype_managed*) ptr;
     man->mt.name = "managed";
-    man->mt.flags = 0; // TODO
+    man->mt.flags = 0;
     man->mt.alloc = memory_managed_alloc;
     man->mt.free = memory_managed_free;
     man->mt.alignment = 1;
