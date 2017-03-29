@@ -34,20 +34,20 @@ struct memtype {
 	memzone_allocator_t alloc;
 	memzone_deallocator_t free;
 
-  void *_vd; /**<Virtual data for possible state */
+	void *_vd; /**<Virtual data for possible state */
 };
 
 enum memblock_flags {
-  MEMBLOCK_USED = 1,
+	MEMBLOCK_USED = 1,
 };
 
 /** Descriptor of a memory block. Associated block always starts at
  * &m + sizeof(struct memblock). */
 struct memblock {
-  struct memblock* prev;
-  struct memblock* next;
-  size_t len; /**<Length of the block; doesn't include the descriptor itself */
-  int flags;
+	struct memblock* prev;
+	struct memblock* next;
+	size_t len; /**<Length of the block; doesn't include the descriptor itself */
+	int flags;
 };
 
 /** @todo Unused for now */
