@@ -12,8 +12,10 @@
 
 #define HUGEPAGESIZE	(1 << 21)
 
-typedef void *(*memzone_allocator_t)(size_t len, size_t alignment);
-typedef int (*memzone_deallocator_t)(void *ptr, size_t len);
+struct memtype;
+
+typedef void *(*memzone_allocator_t)(struct memtype *mem, size_t len, size_t alignment);
+typedef int (*memzone_deallocator_t)(struct memtype *mem, void *ptr, size_t len);
 
 enum memtype_flags {
 	MEMORY_MMAP	= (1 << 0),
@@ -30,6 +32,21 @@ struct memtype {
 	
 	memzone_allocator_t alloc;
 	memzone_deallocator_t free;
+
+	void *_vd; /**<Virtual data for possible state */
+};
+
+enum memblock_flags {
+	MEMBLOCK_USED = 1,
+};
+
+/** Descriptor of a memory block. Associated block always starts at
+ * &m + sizeof(struct memblock). */
+struct memblock {
+	struct memblock* prev;
+	struct memblock* next;
+	size_t len; /**<Length of the block; doesn't include the descriptor itself */
+	int flags;
 };
 
 /** @todo Unused for now */
@@ -49,11 +66,13 @@ int memory_init(int hugepages);
  * @retval NULL If allocation failed.
  * @retval <>0  If allocation was successful.
  */
-void * memory_alloc(const struct memtype *m, size_t len);
+void * memory_alloc(struct memtype *m, size_t len);
 
-void * memory_alloc_aligned(const struct memtype *m, size_t len, size_t alignment);
+void * memory_alloc_aligned(struct memtype *m, size_t len, size_t alignment);
 
-int memory_free(const struct memtype *m, void *ptr, size_t len);
+int memory_free(struct memtype *m, void *ptr, size_t len);
 
-extern const struct memtype memtype_heap;
-extern const struct memtype memtype_hugepage;
+struct memtype * memtype_managed_init(void *ptr, size_t len);
+
+extern struct memtype memtype_heap;
+extern struct memtype memtype_hugepage;

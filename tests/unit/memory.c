@@ -15,10 +15,10 @@
 TheoryDataPoints(memory, aligned) = {
 	DataPoints(size_t, 1, 32, 55, 1 << 10, 1 << 20),
 	DataPoints(size_t, 1, 8, 1 << 12),
-	DataPoints(const struct memtype *, &memtype_heap, &memtype_hugepage)
+	DataPoints(struct memtype *, &memtype_heap, &memtype_hugepage)
 };
 
-Theory((size_t len, size_t align, const struct memtype *m), memory, aligned) {
+Theory((size_t len, size_t align, struct memtype *m), memory, aligned) {
 	int ret;
 	void *ptr;
 	
@@ -33,4 +33,38 @@ Theory((size_t len, size_t align, const struct memtype *m), memory, aligned) {
 
 	ret = memory_free(m, ptr, len);
 	cr_assert_eq(ret, 0, "Failed to release memory: ret=%d, ptr=%p, len=%zu: %s", ret, ptr, len, strerror(errno));
+}
+
+Test(memory, manager) {
+    size_t total_size = 1 << 10;
+    size_t max_block = total_size - sizeof(struct memtype) - sizeof(struct memblock);
+    void *p = memory_alloc(&memtype_heap, total_size);
+    struct memtype *manager = memtype_managed_init(p, total_size);
+
+    void *p1, *p2, *p3;
+    p1 = memory_alloc(manager, 16);
+    cr_assert(p1);
+
+    p2 = memory_alloc(manager, 32);
+    cr_assert(p2);
+
+    cr_assert(memory_free(manager, p1, 16) == 0);
+
+    p1 = memory_alloc_aligned(manager, 128, 128);
+    cr_assert(p1);
+    cr_assert(IS_ALIGNED(p1, 128));
+
+    p3 = memory_alloc_aligned(manager, 128, 256);
+    cr_assert(p3);
+    cr_assert(IS_ALIGNED(p3, 256));
+
+    cr_assert(memory_free(manager, p2, 32) == 0);
+    cr_assert(memory_free(manager, p1, 128) == 0);
+    cr_assert(memory_free(manager, p3, 128) == 0);
+
+
+    p1 = memory_alloc(manager, max_block);
+    cr_assert(p1);
+    cr_assert(memory_free(manager, p1, max_block) == 0);
+    memory_free(&memtype_heap, p, total_size);
 }

@@ -36,7 +36,7 @@
 #include "memory.h"
 
 /** Initialize MPMC queue */
-int queue_init(struct queue *q, size_t size, const struct memtype *mem)
+int queue_init(struct queue *q, size_t size, struct memtype *mem)
 {
 	assert(q->state == STATE_DESTROYED);
 

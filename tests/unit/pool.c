@@ -16,7 +16,7 @@ struct param {
 	int thread_count;
 	int pool_size;
 	size_t block_size;
-	const struct memtype *memtype;
+	struct memtype *memtype;
 };
 
 ParameterizedTestParameters(pool, basic)

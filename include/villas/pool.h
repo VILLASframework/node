@@ -19,7 +19,7 @@
 /** A thread-safe memory pool */
 struct pool {
 	void *buffer;		/**< Address of the underlying memory area */
-	const struct memtype *mem;
+	struct memtype *mem;
 	
 	enum state state;
 	
@@ -42,7 +42,7 @@ struct pool {
  * @retval 0 The pool has been successfully initialized.
  * @retval <>0 There was an error during the pool initialization.
  */
-int pool_init(struct pool *p, size_t cnt, size_t blocksz, const struct memtype *mem);
+int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memtype *mem);
 
 /** Destroy and release memory used by pool. */
 int pool_destroy(struct pool *p);
