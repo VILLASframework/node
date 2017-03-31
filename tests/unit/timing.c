@@ -106,13 +106,13 @@ Test(timing, timerfd_create_rate, .timeout = 20)
 	close(tfd);
 }
 
-Test(timing, timerfd_wait_until, .timeout = 1)
+Test(timing, timerfd_wait_until, .timeout = 10)
 {
 	int tfd = timerfd_create(CLOCK_REALTIME, 0);
 	
 	cr_assert(tfd > 0);
 	
-	double waitfor = 0.423456789;
+	double waitfor = 2.423456789;
 	
 	struct timespec start = time_now();
 	struct timespec diff = time_from_double(waitfor);
@@ -124,7 +124,7 @@ Test(timing, timerfd_wait_until, .timeout = 1)
 	
 	double waited = time_delta(&start, &end);
 	
-	cr_assert_float_eq(waited, waitfor, 5e-3, "We slept for %f instead of %f secs", waited, waitfor);
+	cr_assert_float_eq(waited, waitfor, 1e-2, "We slept for %f instead of %f secs", waited, waitfor);
 	
 	close(tfd);
 }

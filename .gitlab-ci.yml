@@ -1,6 +1,5 @@
 variables:
   PREFIX: /usr/
-  BUILDDIR: build/release
 
 stages:
   - prepare
@@ -39,7 +38,7 @@ build:
   artifacts:
     name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
     paths:
-      - $BUILDDIR/
+      - build/release/
   image: $DOCKER_REGISTRY/villas-dev
   tags:
     - docker
@@ -49,7 +48,7 @@ docs:
   artifacts:
     name: "${CI_PROJECT_NAME}-doc-${CI_BUILD_REF}"
     paths:
-      - $BUILDDIR/doc/
+      - build/release/doc/
   script:
     - make doc
   image: $DOCKER_REGISTRY/villas-dev
@@ -67,7 +66,8 @@ packages:
   artifacts:
     name: "${CI_PROJECT_NAME}-packages-${CI_BUILD_REF}"
     paths:
-      - $BUILDDIR/packaging/
+      - build/release/packaging/*.tar.gz
+      - build/release/packaging/rpm/RPMS/
   image: $DOCKER_REGISTRY/villas-dev
   tags:
     - docker
@@ -78,6 +78,8 @@ packages:
 
 coverage:
   stage: test
+  before_script:
+    - ulimit -l 1073741824
   script:
     - make coverage COVERAGE=1
   artifacts:
@@ -94,6 +96,8 @@ unit:
   stage: test
   dependencies:
     - build
+  before_script:
+    - ulimit -l 1073741824
   script:
     - make run-unit-tests
   image: $DOCKER_REGISTRY/villas-dev
@@ -104,12 +108,16 @@ integration:
   stage: test
   dependencies:
     - build
+  before_script:
+    - ulimit -l 1073741824
+    - make install
   script:
     - make run-integration-tests
   artifacts:
     name: "${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}"
+    when: always
     paths:
-      - BUILDDIR/tests/integration/
+      - build/release/tests/integration/
   image: $DOCKER_REGISTRY/villas-dev
   tags:
     - docker
@@ -117,15 +125,6 @@ integration:
 
 # Stage: deliver
 ##############################################################################
-
-website:
-  stage: deploy
-  script:
-    - rsync -r web/ $DEPLOY_PATH/
-  only:
-    - develop
-  tags:
-    - villas-deploy
 
 docker:
   stage: deploy
@@ -139,13 +138,23 @@ docker:
     - shell
     - linux
 
+website:
+  stage: deploy
+  script:
+    - rsync -r web/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/
+  only:
+    - develop
+  tags:
+    - villas-deploy
+
 deliver:
   stage: deploy
   script:
-    - rsync -r build/release-coverage/coverage/ $DEPLOY_HOST:$DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
-    - rsync -r $BUILDDIR/doc/html/ $DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
-    - rsync -r $BUILDDIR/packaging/rpm/RPMS $DEPLOY_HOST:$DEPLOY_PATH/../packages
-    - ssh $DEPLOY_HOST createrepo $DEPLOY_PATH/../packages
+    - rsync -r build/release-coverage/coverage/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
+    - rsync -r build/release/doc/html/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
+    - rsync -r build/release/packaging/rpm/RPMS/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/../packages/
+    - rsync    build/release/packaging/*.tar.gz $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/dist/
+    - ssh $DEPLOY_USER@$DEPLOY_HOST createrepo $DEPLOY_PATH/../packages
   dependencies:
    - docs
    - coverage
