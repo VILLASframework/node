@@ -42,15 +42,17 @@
 #define CACHELINE_SIZE 64
 typedef char cacheline_pad_t[CACHELINE_SIZE];
 
+struct queue_cell {
+	atomic_size_t sequence;
+	void *data;
+};
+
 struct queue {
 	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
 
 	struct memtype * mem;
 	size_t buffer_mask;
-	struct queue_cell {
-		atomic_size_t sequence;
-		void *data;
-	} *buffer;
+	size_t buffer_off; /**< Relative pointer to struct queue_cell[] */
 
 	cacheline_pad_t	_pad1;	/**< Producer area: only producers read & write */
 

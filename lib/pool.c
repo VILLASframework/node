@@ -20,16 +20,17 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memtype *m)
 	p->len = cnt * p->blocksz;
 	p->mem = m;
 
-	p->buffer = memory_alloc_aligned(m, p->len, p->alignment);
-	if (!p->buffer)
+	void *buffer = memory_alloc_aligned(m, p->len, p->alignment);
+	if (!buffer)
 		serror("Failed to allocate memory for memory pool");
+	p->buffer_off = (char*) buffer - (char*) p;
 
 	ret = queue_init(&p->queue, LOG2_CEIL(cnt), m);
 	if (ret)
 		return ret;
 	
 	for (int i = 0; i < cnt; i++)
-		queue_push(&p->queue, (char *) p->buffer + i * p->blocksz);
+		queue_push(&p->queue, (char *) buffer + i * p->blocksz);
 
 	return 0;
 }
@@ -38,5 +39,6 @@ int pool_destroy(struct pool *p)
 {
 	queue_destroy(&p->queue);	
 
-	return memory_free(p->mem, p->buffer, p->len);
+	void *buffer = (char*) p + p->buffer_off;
+	return memory_free(p->mem, buffer, p->len);
 }
