@@ -36,35 +36,54 @@ Theory((size_t len, size_t align, struct memtype *m), memory, aligned) {
 }
 
 Test(memory, manager) {
-    size_t total_size = 1 << 10;
-    size_t max_block = total_size - sizeof(struct memtype) - sizeof(struct memblock);
-    void *p = memory_alloc(&memtype_heap, total_size);
-    struct memtype *manager = memtype_managed_init(p, total_size);
+	size_t total_size;
+	size_t max_block;
+	
+	int ret;
+	void *p, *p1, *p2, *p3;
+	struct memtype *m;
 
-    void *p1, *p2, *p3;
-    p1 = memory_alloc(manager, 16);
-    cr_assert(p1);
+	total_size = 1 << 10;
+	max_block = total_size - sizeof(struct memtype) - sizeof(struct memblock);
 
-    p2 = memory_alloc(manager, 32);
-    cr_assert(p2);
+	p = memory_alloc(&memtype_heap, total_size);
+	cr_assert_not_null(p);
+	
+	m = memtype_managed_init(p, total_size);
+	cr_assert_not_null(m);
 
-    cr_assert(memory_free(manager, p1, 16) == 0);
+	p1 = memory_alloc(m, 16);
+	cr_assert_not_null(p1);
 
-    p1 = memory_alloc_aligned(manager, 128, 128);
-    cr_assert(p1);
-    cr_assert(IS_ALIGNED(p1, 128));
+	p2 = memory_alloc(m, 32);
+	cr_assert_not_null(p2);
 
-    p3 = memory_alloc_aligned(manager, 128, 256);
-    cr_assert(p3);
-    cr_assert(IS_ALIGNED(p3, 256));
+	ret = memory_free(m, p1, 16);
+	cr_assert(ret == 0);
 
-    cr_assert(memory_free(manager, p2, 32) == 0);
-    cr_assert(memory_free(manager, p1, 128) == 0);
-    cr_assert(memory_free(manager, p3, 128) == 0);
+	p1 = memory_alloc_aligned(m, 128, 128);
+	cr_assert_not_null(p1);
+	cr_assert(IS_ALIGNED(p1, 128));
 
+	p3 = memory_alloc_aligned(m, 128, 256);
+	cr_assert(p3);
+	cr_assert(IS_ALIGNED(p3, 256));
 
-    p1 = memory_alloc(manager, max_block);
-    cr_assert(p1);
-    cr_assert(memory_free(manager, p1, max_block) == 0);
-    memory_free(&memtype_heap, p, total_size);
+	ret = memory_free(m, p2, 32);
+	cr_assert(ret == 0);
+
+	ret = memory_free(m, p1, 128);
+	cr_assert(ret == 0);
+
+	ret = memory_free(m, p3, 128);
+	cr_assert(ret == 0);
+
+	p1 = memory_alloc(m, max_block);
+	cr_assert_not_null(p1);
+
+	ret = memory_free(m, p1, max_block);
+	cr_assert(ret == 0);
+
+	ret = memory_free(&memtype_heap, p, total_size);
+	cr_assert(ret == 0);
 }
