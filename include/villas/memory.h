@@ -73,7 +73,7 @@ void * memory_alloc_aligned(struct memtype *m, size_t len, size_t alignment);
 
 int memory_free(struct memtype *m, void *ptr, size_t len);
 
-struct memtype* memtype_managed_init(void *ptr, size_t len);
+struct memtype * memtype_managed_init(void *ptr, size_t len);
 
 extern struct memtype memtype_heap;
 extern struct memtype memtype_hugepage;
