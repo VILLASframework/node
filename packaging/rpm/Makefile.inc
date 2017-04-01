@@ -2,9 +2,6 @@ RPMDIR = $(BUILDDIR)/packaging/rpm
 
 SPEC_VILLAS = $(BUILDDIR)/packaging/rpm/villas-node.spec
 
-# Increment this number for minor release bumps
-MINOR = 2
-
 rpm: rpm-villas rpm-libwebsockets rpm-libxil
 
 rpm-villas: $(TAR_VILLAS) $(SPEC_VILLAS) | $(RPMDIR)/SOURCES/
@@ -29,7 +26,7 @@ rpm-libwebsockets: | $(RPMDIR)/RPMS $(BUILDDIR)/thirdparty/libwebsockets/
 # We patch version number and release fields of the spec file based on the current Git commit
 $(SPEC_VILLAS): $(SRCDIR)/packaging/rpm/villas-node.spec | $$(dir $$@)
 	sed -e "s/§VERSION§/$(VERSION_NUM)/g" \
-	    -e "s/§RELEASE§/$(MINOR).$(VARIANT).$$(date +%Y%m%d)git$$(echo $(GIT_REV) | cut -b1-7)/g" < $^ > $@
+	    -e "s/§RELEASE§/1.$(GIT_BRANCH)-$(VARIANT).$$(date +%Y%m%d)git$(GIT_REV)/g" < $^ > $@
 
 clean-rpm:
 	rm -rf $(RPMDIR)
