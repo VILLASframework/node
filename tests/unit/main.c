@@ -7,24 +7,40 @@
  *********************************************************************************/
 
 #include <criterion/criterion.h>
+#include <criterion/logging.h>
 
 #include <villas/log.h>
 #include <villas/memory.h>
 
 #include "config.h"
 
-int main(int argc, char *argv[]) {
-	
-	struct criterion_test_set *tests = criterion_initialize();
+int main(int argc, char *argv[])
+{
+	int ret;
+
+	struct criterion_test_set *tests;
 	struct log log;
 
-	log_init(&log, V, LOG_ALL);
-	memory_init(DEFAULT_NR_HUGEPAGES);
+	ret = log_init(&log, V, LOG_ALL);
+	if (ret) {
+		error("Failed to initialize logging sub-system");
+		return ret;
+	}
+	
+	ret = memory_init(DEFAULT_NR_HUGEPAGES);
+	if (ret) {
+		error("Failed to initialize memory sub-system");
+		return ret;
+	}
 
-	int result = 0;
-	if (criterion_handle_args(argc, argv, true))
-		result = !criterion_run_all_tests(tests);
+	/* Run criterion tests */
+	tests = criterion_initialize();
+	
+	ret = criterion_handle_args(argc, argv, true);
+	if (ret)
+		ret = !criterion_run_all_tests(tests);
 
 	criterion_finalize(tests);
-	return result;
+
+	return ret;
 }
