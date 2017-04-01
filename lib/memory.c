@@ -6,6 +6,8 @@
 
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 /* Required to allocate hugepages on Apple OS X */
 #ifdef __MACH__
@@ -21,13 +23,34 @@
 int memory_init(int hugepages)
 {
 #ifdef __linux__
+	int ret, pagecnt, pagesz;
+	struct rlimit l;
+
 	info("Initialize memory sub-system");
 	
-	int nr = kernel_get_nr_hugepages();
-	
-	if (nr < hugepages) { INDENT
+	pagecnt = kernel_get_nr_hugepages();
+	if (pagecnt < hugepages) { INDENT
 		kernel_set_nr_hugepages(hugepages);
-		debug(LOG_MEM | 2, "Reserved %d hugepages (was %d)", hugepages, nr);
+		debug(LOG_MEM | 2, "Reserved %d hugepages (was %d)", hugepages, pagecnt);
+	}
+	
+	pagesz = kernel_get_hugepage_size();
+	if (pagesz < 0)
+		return -1;
+
+	ret = getrlimit(RLIMIT_MEMLOCK, &l);
+	if (ret)
+		return ret;
+	
+	if (l.rlim_cur < pagesz * pagecnt) {
+		l.rlim_cur = pagesz * pagecnt;
+		l.rlim_max = l.rlim_cur;
+		
+		ret = setrlimit(RLIMIT_MEMLOCK, &l);
+		if (ret)
+			return ret;
+		
+		debug(LOG_MEM | 2, "Increased ressource limit of locked memory to %d bytes", pagesz * pagecnt);
 	}
 #endif
 	return 0;

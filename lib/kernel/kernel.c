@@ -145,6 +145,34 @@ int kernel_get_cacheline_size()
 	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
 }
 
+int kernel_get_page_size()
+{
+	return sysconf(_SC_PAGESIZE);
+}
+
+/* There is no sysconf interface to get the hugepage size */
+int kernel_get_hugepage_size()
+{
+	char *key, *value, *unit, *line = NULL;
+	size_t len = 0;
+	FILE *f;
+	
+	f = fopen(PROCFS_PATH "/meminfo", "r");
+	if (!f)
+		return -1;
+	
+	while (getline(&line, &len, f) != -1) {
+		key   = strtok(line, ": ");
+		value = strtok(NULL, " ");
+		unit  = strtok(NULL, "\n");
+		
+		if (!strcmp(key, "Hugepagesize") && !strcmp(unit, "kB"))
+			return strtoul(value, NULL, 10) * 1024;
+	}
+	
+	return -1;
+}
+
 int kernel_get_nr_hugepages()
 {
 	FILE *f;

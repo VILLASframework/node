@@ -78,8 +78,6 @@ packages:
 
 coverage:
   stage: test
-  before_script:
-    - ulimit -l 1073741824
   script:
     - make coverage COVERAGE=1
   artifacts:
@@ -96,8 +94,6 @@ unit:
   stage: test
   dependencies:
     - build
-  before_script:
-    - ulimit -l 1073741824
   script:
     - make run-unit-tests
   image: $DOCKER_REGISTRY/villas-dev
@@ -108,8 +104,6 @@ integration:
   stage: test
   dependencies:
     - build
-  before_script:
-    - ulimit -l 1073741824
     - make install
   script:
     - make run-integration-tests

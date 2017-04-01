@@ -62,6 +62,12 @@ int kernel_module_set_param(const char *module, const char *param, const char *v
 /** Get cacheline size in bytes */
 int kernel_get_cacheline_size();
 
+/** Get the size of a standard page in bytes. */
+int kernel_get_page_size();
+
+/** Get the size of a huge page in bytes. */
+int kernel_get_hugepage_size();
+
 /** Set SMP affinity of IRQ */
 int kernel_irq_setaffinity(unsigned irq, uintmax_t new, uintmax_t *old);
 
