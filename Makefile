@@ -73,8 +73,8 @@ VERSION = $(shell git describe --tags --abbrev=0 --match v*)
 VERSION_NUM = $(shell VERSION=$(VERSION); echo $${VERSION:1})
 
 ifdef CI
-	GIT_REV = ${CI_BUILD_REF:0:7}
-	GIT_BRANCH = ${CI_COMMIT_REF_NAME}
+	GIT_REV = $(shell REV=$${CI_BUILD_REF}; echo $${REV:0:7})
+	GIT_BRANCH = ${CI_BUILD_REF_NAME}
 	VARIANT := $(VARIANT)-ci
 else
 	GIT_REV = $(shell REV=$$(git rev-parse HEAD); echo $${REV:0:7})

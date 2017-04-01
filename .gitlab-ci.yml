@@ -58,11 +58,14 @@ docs:
 packages:
   stage: build
   before_script:
-    - curl -s https://$DEPLOY_USER:$DEPLOY_PASS@$DEPLOY_HOST/packages/villas.repo > /etc/yum.repos.d/villas.repo
+    - dnf -y config-manager --add-repo https://$DEPLOY_USER:$DEPLOY_PASS@$DEPLOY_HOST/packages/villas.repo
     - dnf -y --refresh install libwebsockets-devel libxil-devel
   script:
     - make dist
-    - make rpm-villas
+    - make rpm-villas-node
+  only:
+    - tags
+    - triggers
   artifacts:
     name: "${CI_PROJECT_NAME}-packages-${CI_BUILD_REF}"
     paths:
@@ -87,6 +90,7 @@ coverage:
       - build/release-coverage/coverage.txt
       - build/release-coverage/coverage.xml
   image: $DOCKER_REGISTRY/villas-dev
+  coverage: '/lines: (\d+\.\d+\%)/'
   tags:
     - docker
 
@@ -104,6 +108,7 @@ integration:
   stage: test
   dependencies:
     - build
+  before_script:
     - make install
   script:
     - make run-integration-tests
@@ -129,7 +134,7 @@ docker:
   dependencies:
    - packages
   only:
-    - develop
+    - tags
   tags:
     - shell
     - linux
@@ -146,10 +151,10 @@ website:
 deliver:
   stage: deploy
   script:
-    - rsync -r build/release-coverage/coverage/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
-    - rsync -r build/release/doc/html/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
-    - rsync -r build/release/packaging/rpm/RPMS/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/../packages/
-    - rsync    build/release/packaging/*.tar.gz $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/dist/
+    - rsync --recursive --ignore-missing-args build/release-coverage/coverage/  $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
+    - rsync --recursive --ignore-missing-args build/release/doc/html/           $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
+    - rsync --recursive --ignore-missing-args build/release/packaging/rpm/RPMS/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/../packages/
+    - rsync             --ignore-missing-args build/release/packaging/*.tar.gz  $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/dist/
     - ssh $DEPLOY_USER@$DEPLOY_HOST createrepo $DEPLOY_PATH/../packages
   dependencies:
    - docs
