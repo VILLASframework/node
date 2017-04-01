@@ -134,6 +134,8 @@ docker:
     - docker push $DOCKER_REGISTRY/villas:latest
   dependencies:
    - packages
+  only:
+    - develop
   tags:
     - shell
     - linux
