@@ -26,7 +26,8 @@ static int api_nodes(struct api_ressource *r, json_t *args, json_t **resp, struc
 			"name",		node_name_short(n),
 			"state",	n->state,
 			"vectorize",	n->vectorize,
-			"affinity",	n->affinity
+			"affinity",	n->affinity,
+			"id",		i
 		);
 		
 		/* Add all additional fields of node here.

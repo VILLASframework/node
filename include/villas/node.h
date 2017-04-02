@@ -34,6 +34,8 @@ struct node
 
 	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
 	int affinity;		/**< CPU Affinity of this node */
+	
+	int id;			/**< An id of this node which is only unique in the scope of it's super-node (VILLASnode instance). */
 
 	unsigned long sequence;	/**< This is a counter of received samples, in case the node-type does not generate sequence numbers itself. */
 	

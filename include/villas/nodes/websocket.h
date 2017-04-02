@@ -33,7 +33,6 @@ struct websocket {
 	struct pool pool;
 	struct queue queue;			/**< For samples which are received from WebSockets a */
 	
-	int id;					/**< The index of this node */
 };
 
 /* Internal datastructures */

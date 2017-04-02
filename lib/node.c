@@ -15,10 +15,14 @@
 
 int node_init(struct node *n, struct node_type *vt)
 {
+	static int max_id;
+
 	assert(n->state == STATE_DESTROYED);
 
 	n->_vt = vt;
 	n->_vd = alloc(vt->size);
+	
+	n->id = max_id++;
 	
 	/* Default values */
 	n->vectorize = 1;

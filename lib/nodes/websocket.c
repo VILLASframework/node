@@ -22,8 +22,6 @@
 #include "nodes/websocket.h"
 
 /* Private static storage */
-static int id = 0;		/**< Highest assigned ID to websocket nodes. */
-
 struct list connections;	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
 
 /* Forward declarations */
@@ -122,7 +120,7 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 				msg->endian   = WEBMSG_ENDIAN_HOST;
 				msg->length   = smps[i]->length;
 				msg->sequence = smps[i]->sequence;
-				msg->id       = w->id;
+				msg->id       = c->node->id;
 				msg->ts.sec   = smps[i]->ts.origin.tv_sec;
 				msg->ts.nsec  = smps[i]->ts.origin.tv_nsec;
 	
@@ -263,8 +261,6 @@ int websocket_start(struct node *n)
 	int ret;
 	struct websocket *w = n->_vd;
 	
-	w->id = id++;
-
 	size_t blocklen = LWS_PRE + WEBMSG_LEN(DEFAULT_VALUES);
 	
 	ret = pool_init(&w->pool, 64 * DEFAULT_QUEUELEN, blocklen, &memtype_hugepage);
