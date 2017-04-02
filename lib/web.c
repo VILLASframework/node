@@ -115,7 +115,7 @@ static void logger(int level, const char *msg) {
 		level = LLL_WARN;
 		
 	switch (level) {
-		case LLL_ERR:  error("LWS: %.*s", len, msg); break;
+		case LLL_ERR:   warn("LWS: %.*s", len, msg); break;
 		case LLL_WARN:	warn("LWS: %.*s", len, msg); break;
 		case LLL_INFO:	info("LWS: %.*s", len, msg); break;
 		default:    debug(LOG_WEBSOCKET | 1, "LWS: %.*s", len, msg); break;
