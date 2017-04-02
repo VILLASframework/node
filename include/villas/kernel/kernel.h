@@ -11,6 +11,9 @@
 
 #include <stdint.h>
 
+/* Forward declarations */
+struct version;
+
 //#include <sys/capability.h>
 
 /** Check if current process has capability \p cap.
@@ -38,12 +41,8 @@ int kernel_set_nr_hugepages(int nr);
  */
 int kernel_get_cmdline_param(const char *param, char *buf, size_t len);
 
-/** Check if kernel is version is sufficient
- *
- * @retval 0 Kernel version is sufficient.
- * @reval <>0 Kernel version is not sufficient.
- */
-int kernel_has_version(int maj, int min);
+/** Get the version of the kernel. */
+int kernel_get_version(struct version *v);
 
 /** Checks if a kernel module is loaded
  *

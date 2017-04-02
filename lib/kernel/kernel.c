@@ -87,19 +87,17 @@ int kernel_module_loaded(const char *module)
 	return ret;
 }
 
-int kernel_has_version(int maj, int min)
+int kernel_get_version(struct version *v)
 {
 	struct utsname uts;
-	struct version current;
-	struct version required = { maj, min };
 
 	if (uname(&uts) < 0)
 		return -1;
 
-	if (version_parse(uts.release, &current))
+	if (version_parse(uts.release, v))
 		return -1;
 
-	return version_cmp(&current, &required) < 0;
+	return 0;
 }
 
 int kernel_get_cmdline_param(const char *param, char *buf, size_t len)

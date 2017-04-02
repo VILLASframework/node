@@ -89,7 +89,8 @@ int main(int argc, char *argv[])
 		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 
 	/* Checks system requirements*/
-	if (kernel_has_version(KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN))
+	struct version kver, reqv = { KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN };
+	if (kernel_get_version(&kver) == 0 && version_cmp(&kver, &reqv) < 0)
 		error("Your kernel version is to old: required >= %u.%u", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
 
 	signals_init(quit);
