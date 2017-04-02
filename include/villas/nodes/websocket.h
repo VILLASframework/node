@@ -34,6 +34,8 @@ struct websocket {
 	struct pool pool;
 	struct queue queue;			/**< For samples which are received from WebSockets a */
 	
+	pthread_mutex_t mutex;			/**< Mutex for signalling the availability of new samples in struct websocket::queue. */
+	pthread_cond_t cond;			/**< Condition variable for signalling the availability of new samples in struct websocket::queue. */
 };
 
 /* Internal datastructures */
