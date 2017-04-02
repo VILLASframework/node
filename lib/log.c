@@ -233,7 +233,7 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 #ifdef ENABLE_OPAL_ASYNC
 	OpalPrint("VILLASnode: %s\n", buf);
 #endif
-	fprintf(l->file, "\r%s\n", buf);
+	fprintf(l->file, "%s\n", buf);
 	free(buf);
 }
 
