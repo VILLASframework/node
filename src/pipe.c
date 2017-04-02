@@ -23,6 +23,8 @@
 #include <villas/sample_io.h>
 #include <villas/kernel/rt.h>
 
+#include <villas/nodes/websocket.h>
+
 #include "config.h"
 
 static struct super_node sn = { .state = STATE_DESTROYED };		/**< The global configuration */
@@ -54,7 +56,9 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 		pool_destroy(&sendd.pool);
 	}
 
-	web_stop(&sn.web);
+	if (node->_vt->start == websocket_start)
+		web_stop(&sn.web);
+
 	node_stop(node);
 	node_type_stop(node->_vt);
 
@@ -214,13 +218,15 @@ int main(int argc, char *argv[])
 	signals_init(quit);
 	rt_init(sn.priority, sn.affinity);
 
-	web_init(&sn.web, NULL); /* API is disabled in villas-pipe */
-	web_start(&sn.web);
-	
 	/* Initialize node */
 	node = list_lookup(&sn.nodes, argv[optind+1]);
 	if (!node)
 		error("Node '%s' does not exist!", argv[optind+1]);
+
+	if (node->_vt->start == websocket_start) {
+		web_init(&sn.web, NULL); /* API is disabled in villas-pipe */
+		web_start(&sn.web);
+	}
 
 	if (reverse)
 		node_reverse(node);
@@ -242,7 +248,10 @@ int main(int argc, char *argv[])
 	pthread_create(&sendd.thread, NULL, send_loop, NULL);
 
 	for (;;) {
-		web_service(&sn.web);
+		if (node->_vt->start == websocket_start)
+			web_service(&sn.web);
+		else
+			sleep(1);
 	}
 
 	return 0;
