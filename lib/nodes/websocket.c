@@ -43,7 +43,7 @@ static int websocket_connection_init(struct websocket_connection *c, struct lws 
 {
 	int ret;
 	
-	struct websocket *w = (struct websocket *) c->node->_vd;
+	struct websocket *w = c->node->_vd;
 	
 	lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi), c->peer.name, sizeof(c->peer.name), c->peer.ip, sizeof(c->peer.ip));
 
@@ -68,8 +68,8 @@ static int websocket_connection_init(struct websocket_connection *c, struct lws 
 
 static void websocket_connection_destroy(struct websocket_connection *c)
 {
-	struct websocket *w = (struct websocket *) c->node->_vd;
 	
+	struct websocket *w = c->node->_vd;
 	info("LWS: Connection %s closed", websocket_connection_name(c));
 	
 	c->state = WEBSOCKET_CONNECTION_CLOSED;
