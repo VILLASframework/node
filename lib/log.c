@@ -24,14 +24,13 @@
 
 /** The global log instance. */
 static struct log *log;
-
-__attribute__((constructor)) static void setup_default_logger()
-{
-	static struct log l;
-	
-	log_init(&l, V, LOG_ALL);
-	log_start(&l);
-}
+static struct log default_log = {
+	.level = V,
+	.facilities = LOG_ALL,
+	.file = NULL,
+	.path = NULL,
+	.epoch = { -1 , -1 }
+};
 
 /** List of debug facilities as strings */
 static const char *facilities_strs[] = {
@@ -116,10 +115,10 @@ int log_start(struct log *l)
 
 int log_stop(struct log *l)
 {
-	assert(l->state == STATE_STARTED);
-	
-	if (l->file != stderr && l->file != stdout)
-		fclose(l->file);
+	if (l->state == STATE_STARTED) {
+		if (l->file != stderr && l->file != stdout)
+			fclose(l->file);
+	}
 	
 	l->state = STATE_STOPPED;
 	
@@ -128,10 +127,12 @@ int log_stop(struct log *l)
 
 int log_destroy(struct log *l)
 {
-	assert(l->state != STATE_STARTED);
+	default_log.epoch = l->epoch;
 	
+	log = NULL;
+
 	l->state = STATE_DESTROYED;
-	
+
 	return 0;
 }
 
@@ -233,7 +234,7 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 #ifdef ENABLE_OPAL_ASYNC
 	OpalPrint("VILLASnode: %s\n", buf);
 #endif
-	fprintf(l->file, "%s\n", buf);
+	fprintf(l->file ? l->file : stderr, "%s\n", buf);
 	free(buf);
 }
 
@@ -249,14 +250,14 @@ void debug(long class, const char *fmt, ...)
 {
 	va_list ap;
 	
-	int lvl = class &  0xFF;
-	int fac = class & ~0xFF;
+	struct log *l = log ? log : &default_log;
 	
-	assert(log && log->state != STATE_DESTROYED);
+	int lvl = class &  0xFF;
+	int fac = class & ~0xFF; 
 
-	if (((fac == 0) || (fac & log->facilities)) && (lvl <= log->level)) {
+	if (((fac == 0) || (fac & l->facilities)) && (lvl <= l->level)) {
 		va_start(ap, fmt);
-		log_vprint(log, LOG_LVL_DEBUG, fmt, ap);
+		log_vprint(l, LOG_LVL_DEBUG, fmt, ap);
 		va_end(ap);
 	}
 }
@@ -265,10 +266,10 @@ void info(const char *fmt, ...)
 {
 	va_list ap;
 	
-	assert(log && log->state != STATE_DESTROYED);
-
+	struct log *l = log ? log : &default_log;
+	
 	va_start(ap, fmt);
-	log_vprint(log, LOG_LVL_INFO, fmt, ap);
+	log_vprint(l, LOG_LVL_INFO, fmt, ap);
 	va_end(ap);
 }
 
@@ -276,21 +277,21 @@ void warn(const char *fmt, ...)
 {
 	va_list ap;
 	
-	assert(log && log->state != STATE_DESTROYED);
-
+	struct log *l = log ? log : &default_log;
+	
 	va_start(ap, fmt);
-	log_vprint(log, LOG_LVL_WARN, fmt, ap);
+	log_vprint(l, LOG_LVL_WARN, fmt, ap);
 	va_end(ap);
 }
 
 void stats(const char *fmt, ...)
 {
 	va_list ap;
-
-	assert(log && log->state != STATE_DESTROYED);
+	
+	struct log *l = log ? log : &default_log;
 
 	va_start(ap, fmt);
-	log_vprint(log, LOG_LVL_STATS, fmt, ap);
+	log_vprint(l, LOG_LVL_STATS, fmt, ap);
 	va_end(ap);
 }
 
@@ -298,10 +299,10 @@ void error(const char *fmt, ...)
 {
 	va_list ap;
 	
-	assert(log && log->state != STATE_DESTROYED);
-
+	struct log *l = log ? log : &default_log;
+	
 	va_start(ap, fmt);
-	log_vprint(log, LOG_LVL_ERROR, fmt, ap);
+	log_vprint(l, LOG_LVL_ERROR, fmt, ap);
 	va_end(ap);
 
 	die();
@@ -311,14 +312,14 @@ void serror(const char *fmt, ...)
 {
 	va_list ap;
 	char *buf = NULL;
-
-	assert(log && log->state != STATE_DESTROYED);
+	
+	struct log *l = log ? log : &default_log;
 
 	va_start(ap, fmt);
 	vstrcatf(&buf, fmt, ap);
 	va_end(ap);
 
-	log_print(log, LOG_LVL_ERROR, "%s: %m (%u)", buf, errno);
+	log_print(l, LOG_LVL_ERROR, "%s: %m (%u)", buf, errno);
 	
 	free(buf);
 	die();
@@ -330,8 +331,8 @@ void cerror(config_setting_t *cfg, const char *fmt, ...)
 	char *buf = NULL;
 	const char *file;
 	int line;
-
-	assert(log && log->state != STATE_DESTROYED);
+	
+	struct log *l = log ? log : &default_log;
 
 	va_start(ap, fmt);
 	vstrcatf(&buf, fmt, ap);
@@ -342,7 +343,7 @@ void cerror(config_setting_t *cfg, const char *fmt, ...)
 	if (!file)
 		file = config_setting_get_hook(config_root_setting(cfg->config));
 
-	log_print(log, LOG_LVL_ERROR, "%s in %s:%u", buf, file, line);
+	log_print(l, LOG_LVL_ERROR, "%s in %s:%u", buf, file, line);
 
 	free(buf);
 	die();

@@ -44,7 +44,8 @@ int pool_destroy(struct pool *p)
 {
 	int ret;
 
-	assert(p->state == STATE_INITIALIZED);
+	if (p->state == STATE_DESTROYED)
+		return 0;
 
 	queue_destroy(&p->queue);	
 

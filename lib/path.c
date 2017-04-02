@@ -357,6 +357,9 @@ int path_stop(struct path *p)
 
 int path_destroy(struct path *p)
 {
+	if (p->state == STATE_DESTROYED)
+		return 0;
+
 	list_destroy(&p->hooks, (dtor_cb_t) hook_destroy, true);
 	list_destroy(&p->destinations, (dtor_cb_t) path_destination_destroy, true);
 	

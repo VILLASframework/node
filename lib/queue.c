@@ -68,7 +68,8 @@ int queue_destroy(struct queue *q)
 {
 	int ret = 0;
 
-	assert(q->state == STATE_INITIALIZED);
+	if (q->state == STATE_DESTROYED)
+		return 0;
 
 	ret = memory_free(q->mem, q->buffer, (q->buffer_mask + 1) * sizeof(q->buffer[0]));
 

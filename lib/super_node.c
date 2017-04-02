@@ -364,7 +364,8 @@ int super_node_start(struct super_node *sn)
 
 int super_node_stop(struct super_node *sn)
 {
-	assert(sn->state == STATE_STARTED);
+	if (sn->state != STATE_STARTED)
+		return 0;
 
 	info("Stopping paths");
 	for (size_t i = 0; i < list_length(&sn->paths); i++) { INDENT
@@ -380,7 +381,7 @@ int super_node_stop(struct super_node *sn)
 		node_stop(n);
 	}
 
-	info("De-initializing node types");
+	info("Stopping node types");
 	for (size_t i = 0; i < list_length(&plugins); i++) { INDENT
 		struct plugin *p = list_at(&plugins, i);
 		if (p->type == PLUGIN_TYPE_NODE)
@@ -400,16 +401,16 @@ int super_node_destroy(struct super_node *sn)
 {
 	assert(sn->state != STATE_DESTROYED);
 
-	config_destroy(&sn->cfg);
-
-	web_destroy(&sn->web);
-	log_destroy(&sn->log);
-	api_destroy(&sn->api);
-
 	list_destroy(&sn->plugins, (dtor_cb_t) plugin_destroy, false);
 	list_destroy(&sn->paths,   (dtor_cb_t) path_destroy, true);
 	list_destroy(&sn->nodes,   (dtor_cb_t) node_destroy, true);
-	
+
+	web_destroy(&sn->web);
+	api_destroy(&sn->api);
+	log_destroy(&sn->log);
+
+	config_destroy(&sn->cfg);
+
 	sn->state = STATE_DESTROYED;
 	
 	return 0;
