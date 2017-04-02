@@ -171,6 +171,7 @@ int kernel_get_hugepage_size()
 		}
 	}
 	
+	free(line);
 	fclose(f);
 
 	return sz;
