@@ -16,16 +16,7 @@ static int api_config(struct api_ressource *h, json_t *args, json_t **resp, stru
 {
 	config_setting_t *cfg_root = config_root_setting(&s->api->super_node->cfg);
 	
-	if (cfg_root) {
-		*resp = json_pack("{ s: o }",
-			"config", config_to_json(cfg_root));
-	}
-	/* No configuration has been loaded yet. */
-	else {
-		*resp = json_pack("{ s: s, s: i }",
-				"error", "no configuration loaded",
-				"code", 2);
-	}
+	*resp = cfg_root ? config_to_json(cfg_root) : json_object();
 	
 	return 0;
 }

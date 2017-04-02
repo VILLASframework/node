@@ -28,24 +28,25 @@ _This transport is not implemented yet_
 
 ## Commands
 
-### `reload`
+### `restart`
 
 Restart VILLASnode with a new configuration file.
 
 **Request:** _application/json_
 
 	{
-		"request": "reload",
-		"id": "edei4shahNgucoo7paeth8chue0iyook"
-		"configuration": "smb://MY-WINDOWS-HOST/SHARE1/path/to/config.conf"
+		"request": "restart",
+		"id": "66675eb4-6a0b-49e6-8e82-64d2b2504e7a"
+		"args" : {
+			"configuration": "smb://MY-WINDOWS-HOST/SHARE1/path/to/config.conf"
+		}
 	}
 
 **Response:** _application/json_
 
 	{
 		"response": "reload",
-		"id": "edei4shahNgucoo7paeth8chue0iyook",
-		"status": "success"
+		"id": "66675eb4-6a0b-49e6-8e82-64d2b2504e7a"
 	}
 
 ### `config`
@@ -56,16 +57,15 @@ Retrieve the contents of the current configuration.
 
 	{
 		"request": "config",
-		"id": "oom3lie7nee4Iepieng8ae4ueToebeki"
-		"configuration": "smb://MY-WINDOWS-HOST/SHARE1/path/to/config.conf"
+		"id": "66675eb4-6a0b-49e6-8e82-64d2b2504e7a"
 	}
 
 **Response:** _application/json_
 
 	{
 		"response": "config",
-		"id": "oom3lie7nee4Iepieng8ae4ueToebeki",
-		"config" : {
+		"id": "66675eb4-6a0b-49e6-8e82-64d2b2504e7a",
+		"response" : {
 			"nodes" : {
 				"socket_node" : {
 					"type": "socket",
@@ -86,7 +86,30 @@ Retrieve the contents of the current configuration.
 
 Get a list of currently active nodes.
 
-_This request is not implemented yet_
+**Request:** _application/json_
+
+	{
+		"request": "nodes",
+		"id": "5a786626-fbc6-4c04-98c2-48027e68c2fa"
+	}
+
+**Response:** _application/json_
+
+	{
+		"command": "nodes",
+		"response": [
+			{
+				"name": "ws",
+				"state": 4,
+				"vectorize": 1,
+				"affinity": 0,
+				"id": 0,
+				"type": "websocket",
+				"description": "Demo Channel"
+			}
+		],
+		"id": "5a786626-fbc6-4c04-98c2-48027e68c2fa"
+	}
 
 ### `paths`
 
