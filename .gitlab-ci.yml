@@ -132,7 +132,7 @@ docker:
     - docker tag -f villas $DOCKER_REGISTRY/villas:latest
     - docker push $DOCKER_REGISTRY/villas:latest
   dependencies:
-   - packages
+    - packages
   only:
     - tags
   tags:
@@ -153,12 +153,23 @@ deliver:
   script:
     - rsync --recursive --ignore-missing-args build/release-coverage/coverage/  $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
     - rsync --recursive --ignore-missing-args build/release/doc/html/           $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
+  dependencies:
+    - docs
+    - coverage
+    - packages
+  tags:
+    - villas-deploy
+
+deliver-packages:
+  stage: deploy
+  script:
     - rsync --recursive --ignore-missing-args build/release/packaging/rpm/RPMS/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/../packages/
     - rsync             --ignore-missing-args build/release/packaging/*.tar.gz  $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/dist/
     - ssh $DEPLOY_USER@$DEPLOY_HOST createrepo $DEPLOY_PATH/../packages
   dependencies:
-   - docs
-   - coverage
-   - packages
+    - packages
+  only:
+    - tags
   tags:
     - villas-deploy
+  
