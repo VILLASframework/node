@@ -152,6 +152,7 @@ int kernel_get_page_size()
 int kernel_get_hugepage_size()
 {
 	char *key, *value, *unit, *line = NULL;
+	int sz = -1;
 	size_t len = 0;
 	FILE *f;
 	
@@ -164,11 +165,15 @@ int kernel_get_hugepage_size()
 		value = strtok(NULL, " ");
 		unit  = strtok(NULL, "\n");
 		
-		if (!strcmp(key, "Hugepagesize") && !strcmp(unit, "kB"))
-			return strtoul(value, NULL, 10) * 1024;
+		if (!strcmp(key, "Hugepagesize") && !strcmp(unit, "kB")) {
+			sz = strtoul(value, NULL, 10) * 1024;
+			break;
+		}
 	}
 	
-	return -1;
+	fclose(f);
+
+	return sz;
 }
 
 int kernel_get_nr_hugepages()
@@ -204,7 +209,7 @@ int kernel_set_nr_hugepages(int nr)
 }
 
 #if 0
-int kernel_check_cap(cap_value_t cap)
+int kernel_has_cap(cap_value_t cap)
 {
 	int ret;
 
