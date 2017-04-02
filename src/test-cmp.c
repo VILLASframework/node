@@ -35,7 +35,7 @@ void usage()
 
 int main(int argc, char *argv[])
 {
-	int ret = 0;
+	int ret;
 	double epsilon = 1e-9;
 
 	struct log log;
@@ -98,24 +98,27 @@ check:		if (optarg == endptr)
 	
 	while (!feof(f1.handle) && !feof(f2.handle)) {
 		ret = sample_io_villas_fscan(f1.handle, f1.sample, &f1.flags);
-		if (ret < 0) {
-			if (feof(f1.handle))
-				ret = 0;
+		if (ret < 0 && !feof(f1.handle))
 			goto out;
-		}
 		
 		ret = sample_io_villas_fscan(f2.handle, f2.sample, &f2.flags);
-		if (ret < 0) {
-			if (feof(f2.handle))
-				ret = 0;
+		if (ret < 0 && !feof(f2.handle))
 			goto out;
+		
+		/* EOF is only okay if both files are at the end */
+		if (feof(f1.handle) || feof(f2.handle)) {
+			if (!(feof(f1.handle) && feof(f2.handle))) {
+				printf("file length not equal\n");
+				ret = 1;
+				goto out;
+			}
 		}
 
 		/* Compare sequence no */
 		if ((f1.flags & SAMPLE_IO_SEQUENCE) && (f2.flags & SAMPLE_IO_SEQUENCE)) {
 			if (f1.sample->sequence != f2.sample->sequence) {
 				printf("sequence no: %d != %d\n", f1.sample->sequence, f2.sample->sequence);
-				ret = -1;
+				ret = 2;
 				goto out;
 			}
 		}
@@ -123,25 +126,27 @@ check:		if (optarg == endptr)
 		/* Compare timestamp */
 		if (time_delta(&f1.sample->ts.origin, &f2.sample->ts.origin) > epsilon) {
 			printf("ts.origin: %f != %f\n", time_to_double(&f1.sample->ts.origin), time_to_double(&f2.sample->ts.origin));
-			ret = -2;
+			ret = 3;
 			goto out;
 		}
 		
 		/* Compare data */
 		if (f1.sample->length != f2.sample->length) {
 			printf("length: %d != %d\n", f1.sample->length, f2.sample->length);
-			ret = -3;
+			ret = 4;
 			goto out;
 		}
 		
 		for (int i = 0; i < f1.sample->length; i++) {
 			if (fabs(f1.sample->data[i].f - f2.sample->data[i].f) > epsilon) {
 				printf("data[%d]: %f != %f\n", i, f1.sample->data[i].f, f2.sample->data[i].f);
-				ret = -4;
+				ret = 5;
 				goto out;
 			}
 		}
 	}
+	
+	ret = 0;
 	
 out:	sample_free(samples, 2);
 
