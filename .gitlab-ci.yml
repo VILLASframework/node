@@ -34,7 +34,6 @@ build:
   script:
     - make
     - make tests
-    - make install
   artifacts:
     name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
     paths:
