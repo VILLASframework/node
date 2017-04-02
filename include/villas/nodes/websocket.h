@@ -21,6 +21,7 @@
 #include "node.h"
 #include "pool.h"
 #include "queue.h"
+#include "common.h"
 
 /* Forward declaration */
 struct lws;
@@ -37,13 +38,6 @@ struct websocket {
 
 /* Internal datastructures */
 struct websocket_connection {
-	enum {
-		WEBSOCKET_CONNECTION_CLOSED,
-		WEBSOCKET_CONNECTION_ESTABLISHED,
-		WEBSOCKET_CONNECTION_ACTIVE,
-		WEBSOCKET_CONNECTION_SHUTDOWN
-	} state;
-	
 	struct node *node;
 	struct lws *wsi;
 	
@@ -53,6 +47,8 @@ struct websocket_connection {
 		char name[64];
 		char ip[64];
 	} peer;
+	
+	enum state state;
 	
 	char *_name;
 };

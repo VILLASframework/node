@@ -49,7 +49,7 @@ static int websocket_connection_init(struct websocket_connection *c, struct lws 
 
 	info("LWS: New connection %s", websocket_connection_name(c));
 
-	c->state = WEBSOCKET_CONNECTION_ESTABLISHED;
+	c->state = STATE_INITIALIZED;
 	c->wsi = wsi;
 	
 	if (c->node != NULL)
@@ -68,11 +68,14 @@ static int websocket_connection_init(struct websocket_connection *c, struct lws 
 
 static void websocket_connection_destroy(struct websocket_connection *c)
 {
-	
+	if (c->state == STATE_DESTROYED)
+		return;
+
 	struct websocket *w = c->node->_vd;
+
 	info("LWS: Connection %s closed", websocket_connection_name(c));
-	
-	c->state = WEBSOCKET_CONNECTION_CLOSED;
+
+	c->state = STATE_DESTROYED;
 	c->wsi = NULL;
 	
 	if (c->node)
@@ -99,15 +102,15 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 	struct websocket *w = c->node->_vd;
 
 	switch (c->state) {
-		case WEBSOCKET_CONNECTION_CLOSED:
-		case WEBSOCKET_CONNECTION_SHUTDOWN:
+		case STATE_DESTROYED:
+		case STATE_STOPPED:
 			return -1;
 
-		case WEBSOCKET_CONNECTION_ESTABLISHED:
-			c->state = WEBSOCKET_CONNECTION_ACTIVE;
+		case STATE_INITIALIZED:
+			c->state = STATE_STARTED;
 			/* fall through */
 
-		case WEBSOCKET_CONNECTION_ACTIVE:
+		case STATE_STARTED:
 			blocks = pool_get_many(&w->pool, (void **) bufs, cnt);
 			if (blocks != cnt)
 				warn("Pool underrun in websocket connection: %s", websocket_connection_name(c));
@@ -133,6 +136,8 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 			
 			lws_callback_on_writable(c->wsi);
 			break;
+			
+		default: { }
 	}
 	
 	return 0;
@@ -147,6 +152,8 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 	switch (reason) {
 		case LWS_CALLBACK_CLIENT_ESTABLISHED:
 		case LWS_CALLBACK_ESTABLISHED: {
+			c->state = STATE_DESTROYED;
+			
 			/* Get path of incoming request */
 			char uri[64];
 			lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_GET_URI); /* The path component of the*/
@@ -192,7 +199,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			if (c->node && c->node->state != STATE_STARTED)
 				return -1;
 
-			if (c->state == WEBSOCKET_CONNECTION_SHUTDOWN) {
+			if (c->state == STATE_STOPPED) {
 				lws_close_reason(wsi, LWS_CLOSE_STATUS_GOINGAWAY, (unsigned char *) "Node stopped", 4);
 				return -1;
 			}
@@ -283,7 +290,7 @@ int websocket_stop(struct node *n)
 	for (size_t i = 0; i < list_length(&w->connections); i++) {
 		struct websocket_connection *c = list_at(&w->connections, i);
 
-		c->state = WEBSOCKET_CONNECTION_SHUTDOWN;
+		c->state = STATE_STOPPED;
 
 		lws_callback_on_writable(c->wsi);
 	}
