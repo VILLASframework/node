@@ -60,7 +60,7 @@ void * memory_alloc(struct memtype *m, size_t len)
 {
 	void *ptr = m->alloc(m, len, sizeof(void *));
 		
-	debug(LOG_MEM | 2, "Allocated %#zx bytes of %s memory: %p", len, m->name, ptr);
+	debug(LOG_MEM | 5, "Allocated %#zx bytes of %s memory: %p", len, m->name, ptr);
 
 	return ptr;
 }
@@ -69,14 +69,14 @@ void * memory_alloc_aligned(struct memtype *m, size_t len, size_t alignment)
 {
 	void *ptr = m->alloc(m, len, alignment);
 	
-	debug(LOG_MEM | 2, "Allocated %#zx bytes of %#zx-byte-aligned %s memory: %p", len, alignment, m->name, ptr);
+	debug(LOG_MEM | 5, "Allocated %#zx bytes of %#zx-byte-aligned %s memory: %p", len, alignment, m->name, ptr);
 
 	return ptr;
 }
 
 int memory_free(struct memtype *m, void *ptr, size_t len)
 {
-	debug(LOG_MEM | 2, "Releasing %#zx bytes of %s memory", len, m->name);
+	debug(LOG_MEM | 5, "Releasing %#zx bytes of %s memory", len, m->name);
 
 	return m->free(m, ptr, len);
 }
