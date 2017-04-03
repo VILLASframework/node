@@ -193,6 +193,8 @@ int web_start(struct web *w)
 
 int web_stop(struct web *w)
 {
+	info("Stopping Web sub-system");
+
 	if (w->state == STATE_STARTED)
 		lws_cancel_service(w->context);
 	
