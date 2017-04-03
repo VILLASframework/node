@@ -10,6 +10,7 @@ LIB_SRCS = $(addprefix lib/nodes/, file.c cbuilder.c) 		\
               log.c utils.c super_node.c hist.c timing.c pool.c	\
               list.c queue.c memory.c advio.c web.c api.c	\
               plugin.c node_type.c stats.c mapping.c sample_io.c\
+              compat.c						\
            )
 
 LIB_CFLAGS  = $(CFLAGS) -fPIC

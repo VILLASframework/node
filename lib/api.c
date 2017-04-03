@@ -11,26 +11,6 @@
 #include "log.h"
 #include "config.h"
 
-#if JANSSON_VERSION_HEX < 0x020A00
-size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags)
-{
-	char *str;
-	size_t len;
-
-	str = json_dumps(json, flags);
-	if (!str)
-		return 0;
-	
-	len = strlen(str); // not \0 terminated
-	if (buffer && len <= size)
-		memcpy(buffer, str, len);
-
-	free(str);
-
-	return len;
-}
-#endif
-
 static int api_parse_request(struct api_buffer *b, json_t **req)
 {
 	json_error_t e;
