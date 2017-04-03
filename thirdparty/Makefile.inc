@@ -3,9 +3,18 @@ DEPS_AUTOCONF = libnl libconfig libcurl
 
 DEPS = $(DEPS_CMAKE) $(DEPS_AUTOCONF)
 
+ifdef DEBUG
+	CMAKE_OPTS += -DCMAKE_BUILD_TYPE=DEBUG
+	
+	AC_CPPFLAGS=-DDEBUG
+	AC_CFLAGS=-g -O0
+	AC_CXXFLAGS=-g -O0
+endif
+
 thirdparty:
 
 # Install & compile autotools based projects
+$(DEPS_AUTOCONF): CPPFLAGS=$(AC_CPPFLAGS) CFLAGS=$(AC_CFLAGS) CXXFLAGS=$(AC_CXXFLAGS)
 $(DEPS_AUTOCONF): | $(BUILDDIR)/thirdparty/$$@/
 	autoreconf -fi $(SRCDIR)/thirdparty/$@
 	cd $(BUILDDIR)/thirdparty/$@ && $(SRCDIR)/thirdparty/$@/configure --prefix=$(PREFIX) && make
@@ -35,6 +44,6 @@ libconfig: | libconfig-fix
 libconfig-fix:
 	rm -f $(SRCDIR)/thirdparty/libconfig/lib/scanner.[hc]
 
-libwebsockets: CMAKE_OPTS = -DLWS_IPV6=1 -DLWS_WITH_STATIC=0 -DLWS_WITHOUT_TESTAPPS=1 -DLWS_WITH_HTTP2=1
+libwebsockets: CMAKE_OPTS += -DLWS_IPV6=1 -DLWS_WITH_STATIC=0 -DLWS_WITHOUT_TESTAPPS=1 -DLWS_WITH_HTTP2=1
 
 .PHONY: $(DEPS) thirdparty clean-thirdparty install-thirdparty
