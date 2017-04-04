@@ -19,7 +19,7 @@ int sample_alloc(struct pool *p, struct sample *smps[], int cnt) {
 
 	for (int i = 0; i < ret; i++) {
 		smps[i]->capacity = (p->blocksz - sizeof(**smps)) / sizeof(smps[0]->data[0]);
-		smps[i]->pool = p;
+		smps[i]->pool_off = (char *) p - (char *) smps[i];
 	}
 
 	return ret;
@@ -27,8 +27,10 @@ int sample_alloc(struct pool *p, struct sample *smps[], int cnt) {
 
 void sample_free(struct sample *smps[], int cnt)
 {
-	for (int i = 0; i < cnt; i++)
-		pool_put(smps[i]->pool, smps[i]);
+	for (int i = 0; i < cnt; i++) {
+		struct pool *p = (struct pool *) ((char *) smps[i] + smps[i]->pool_off);
+		pool_put(p, smps[i]);
+	}
 }
 
 int sample_get(struct sample *s)
@@ -40,9 +42,11 @@ int sample_put(struct sample *s)
 {
 	int prev = atomic_fetch_sub(&s->refcnt, 1);
 	
-	/* Did we had the last refernce? */
-	if (prev == 1)
-		pool_put(s->pool, s);
+	/* Did we had the last reference? */
+	if (prev == 1) {
+		struct pool *p = (struct pool *) ((char *) s + s->pool_off);
+		pool_put(p, s);
+	}
 	
 	return prev - 1;
 }
