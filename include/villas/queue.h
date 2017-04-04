@@ -44,7 +44,7 @@ typedef char cacheline_pad_t[CACHELINE_SIZE];
 
 struct queue_cell {
 	atomic_size_t sequence;
-	void *data;
+	size_t data_off; /**< Pointer relative to the queue struct */
 };
 
 struct queue {

@@ -102,7 +102,7 @@ int queue_push(struct queue *q, void *ptr)
 			pos = atomic_load_explicit(&q->tail, memory_order_relaxed);
 	}
 
-	cell->data = ptr;
+	cell->data_off = (char *) ptr - (char *) q;
 	atomic_store_explicit(&cell->sequence, pos + 1, memory_order_release);
 
 	return 1;
@@ -131,7 +131,7 @@ int queue_pull(struct queue *q, void **ptr)
 			pos = atomic_load_explicit(&q->head, memory_order_relaxed);
 	}
 
-	*ptr = cell->data;
+	*ptr = (char *) q + cell->data_off;
 	atomic_store_explicit(&cell->sequence, pos + q->buffer_mask + 1, memory_order_release);
 
 	return 1;
