@@ -2,6 +2,7 @@
 TARGETS = $(BUILDDIR)/villas-node \
 	  $(BUILDDIR)/villas-pipe  \
 	  $(BUILDDIR)/villas-signal \
+	  $(BUILDDIR)/villas-shmem \
 	  $(BUILDDIR)/villas-test \
 	  $(BUILDDIR)/villas-hook
 
