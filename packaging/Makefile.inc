@@ -24,13 +24,13 @@ deploy-rpm:
 
 # Docker targets
 run-docker-dev:
-	docker run -it -p 80:80 -p 443:443 -p 1234:1234 --privileged --security-opt seccomp:unconfined -v $(PWD):/villas villas-dev
+	docker run -it -p 80:80 -p 443:443 -p 1234:1234 --privileged --security-opt seccomp:unconfined -v $(PWD):/villas villas-node-dev
 
 docker-dev:
-	docker build -f Dockerfile.dev -t villas-dev $(SRCDIR)
+	docker build -f Dockerfile.dev -t villas-node-dev $(SRCDIR)
 	
 docker:
-	docker build -f Dockerfile -t villas $(SRCDIR)
+	docker build -f Dockerfile -t villas-node $(SRCDIR)
 	
 clean-packaging:
 	rm -f $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM).tar.gz

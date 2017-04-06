@@ -20,9 +20,9 @@ docker-dev:
     - docker info
   script:
     - docker pull fedora:latest
-    - make docker-dev
-    - docker tag -f villas-dev $DOCKER_REGISTRY/villas-dev:latest
-    - docker push $DOCKER_REGISTRY/villas-dev:latest
+    - docker build -f Dockerfile.dev -t villas-node-dev .
+    - docker tag -f villas-node-dev $DOCKER_REGISTRY/villas-node-dev:latest
+    - docker push $DOCKER_REGISTRY/villas-node-dev:latest
   tags:
     - shell
     - linux
@@ -39,7 +39,7 @@ build:
     name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
     paths:
       - build/release/
-  image: $DOCKER_REGISTRY/villas-dev
+  image: $DOCKER_REGISTRY/villas-node-dev
   tags:
     - docker
 
@@ -51,7 +51,7 @@ docs:
       - build/release/doc/
   script:
     - make doc
-  image: $DOCKER_REGISTRY/villas-dev
+  image: $DOCKER_REGISTRY/villas-node-dev
   tags:
     - docker
 
@@ -71,7 +71,7 @@ packages:
     paths:
       - build/release/packaging/*.tar.gz
       - build/release/packaging/rpm/RPMS/
-  image: $DOCKER_REGISTRY/villas-dev
+  image: $DOCKER_REGISTRY/villas-node-dev
   tags:
     - docker
 
@@ -89,7 +89,7 @@ coverage:
       - build/release-coverage/coverage/
       - build/release-coverage/coverage.txt
       - build/release-coverage/coverage.xml
-  image: $DOCKER_REGISTRY/villas-dev
+  image: $DOCKER_REGISTRY/villas-node-dev
   coverage: '/lines: (\d+\.\d+\%)/'
   tags:
     - docker
@@ -100,7 +100,7 @@ unit:
     - build
   script:
     - make run-unit-tests
-  image: $DOCKER_REGISTRY/villas-dev
+  image: $DOCKER_REGISTRY/villas-node-dev
   tags:
     - docker
 
@@ -117,7 +117,7 @@ integration:
     when: always
     paths:
       - build/release/tests/integration/
-  image: $DOCKER_REGISTRY/villas-dev
+  image: $DOCKER_REGISTRY/villas-node-dev
   tags:
     - docker
 
