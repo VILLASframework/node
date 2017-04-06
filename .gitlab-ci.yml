@@ -1,5 +1,8 @@
 variables:
+  GIT_STRATEGY: clone
+  GIT_SUBMODULE_STRATEGY: recursive
   PREFIX: /usr/
+  RSYNC_OPTS: --recursive --ignore-missing-args --chown $DEPLOY_USER:$DEPLOY_USER
 
 stages:
   - prepare
@@ -15,8 +18,6 @@ docker-dev:
   stage: prepare
   before_script:
     - docker info
-    - git submodule sync --recursive
-    - git submodule update --init --recursive
   script:
     - docker pull fedora:latest
     - make docker-dev
@@ -150,8 +151,9 @@ website:
 deliver:
   stage: deploy
   script:
-    - rsync --recursive --ignore-missing-args build/release-coverage/coverage/  $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
-    - rsync --recursive --ignore-missing-args build/release/doc/html/           $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
+    - ssh $DEPLOY_USER@$DEPLOY_HOST mkdir -pf $DEPLOY_PATH/{coverage,doc}/$CI_BUILD_REF_NAME/
+    - rsync $RSYNC_OPTS build/release-coverage/coverage/  $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
+    - rsync $RSYNC_OPTS build/release/doc/html/           $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
   dependencies:
     - docs
     - coverage
@@ -162,8 +164,9 @@ deliver:
 deliver-packages:
   stage: deploy
   script:
-    - rsync --recursive --ignore-missing-args build/release/packaging/rpm/RPMS/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/../packages/
-    - rsync             --ignore-missing-args build/release/packaging/*.tar.gz  $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/dist/
+    - ssh $DEPLOY_USER@$DEPLOY_HOST mkdir -p $DEPLOY_PATH/{dist,../packages}
+    - rsync $RSYNC_OPTS build/release/packaging/rpm/RPMS/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/../packages/
+    - rsync $RSYNC_OPTS build/release/packaging/*.tar.gz  $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/dist/
     - ssh $DEPLOY_USER@$DEPLOY_HOST createrepo $DEPLOY_PATH/../packages
   dependencies:
     - packages

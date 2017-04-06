@@ -18,18 +18,16 @@ MAINTAINER Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # Toolchain
 RUN dnf -y update && \
     dnf -y install \
-	gcc pkgconfig make cmake \
-	git \
-	gcc-c++ \
+	gcc gcc-c++ \
+	pkgconfig make cmake \
 	autoconf automake autogen libtool \
 	flex bison \
-	texinfo
+	texinfo git
 
 # Dependencies
 RUN dnf -y update && \
     dnf -y install \
-	openssl \
-	openssl-devel \
+	openssl openssl-devel \
 	libconfig-devel \
 	libnl3-devel \
 	libcurl-devel \
@@ -38,12 +36,9 @@ RUN dnf -y update && \
 # Several tools only needed for developement and testing
 RUN dnf -y update && \
     dnf -y install \
-	doxygen \
-	dia \
-	graphviz \
+	doxygen dia graphviz \
 	openssh-clients \
-	rpmdevtools \
-	rpm-build \
+	rpmdevtools rpm-build \
 	jq \
 	iproute \
 	python-pip \
