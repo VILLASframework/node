@@ -59,10 +59,13 @@ int shmem_open(struct node *n) {
 	shm->manager = memtype_managed_init(shm->base, shm->len);
 	shm->shared = memory_alloc(shm->manager, sizeof(struct shmem_shared));
 	if (!shm->shared)
-		error("Shm shared struct allocation failed (not enough memory?");
-	queue_init(&shm->shared->in.queue, shm->insize, shm->manager);
-	queue_init(&shm->shared->out.queue, shm->outsize, shm->manager);
-	pool_init(&shm->shared->pool, shm->insize+shm->outsize, SAMPLE_LEN(shm->sample_size), shm->manager);
+		error("Shm shared struct allocation failed (not enough memory?)");
+	if (queue_init(&shm->shared->in.queue, shm->insize, shm->manager) < 0)
+		error("Shm queue allocation failed (not enough memory?)");
+	if (queue_init(&shm->shared->out.queue, shm->outsize, shm->manager) < 0)
+		error("Shm queue allocation failed (not enough memory?)");
+	if (pool_init(&shm->shared->pool, shm->insize+shm->outsize, SAMPLE_LEN(shm->sample_size), shm->manager) < 0)
+		error("Shm pool allocation failed (not enough memory?)");
 	if (shm->cond_out)
 		shmem_cond_init(&shm->shared->out);
 	if (shm->cond_in)
@@ -73,6 +76,9 @@ int shmem_open(struct node *n) {
 
 int shmem_close(struct node *n) {
 	struct shmem* shm = n->_vd;
+	queue_destroy(&shm->shared->in.queue);
+	queue_destroy(&shm->shared->out.queue);
+	pool_destroy(&shm->shared->pool);
 	int r = munmap(shm->base, shm->len);
 	if (r != 0)
 		return r;
