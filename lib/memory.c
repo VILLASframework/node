@@ -1,11 +1,13 @@
 /** Memory allocators.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
- */
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
 
 #include <stdlib.h>
 #include <sys/mman.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 /* Required to allocate hugepages on Apple OS X */
 #ifdef __MACH__
@@ -16,16 +18,40 @@
 
 #include "log.h"
 #include "memory.h"
+#include "utils.h"
 
-int memory_init()
+int memory_init(int hugepages)
 {
 #ifdef __linux__
-	int nr = kernel_get_nr_hugepages();
+	int ret, pagecnt, pagesz;
+	struct rlimit l;
+
+	info("Initialize memory sub-system");
 	
-	debug(DBG_MEM | 2, "System has %d reserved hugepages", nr);
+	pagecnt = kernel_get_nr_hugepages();
+	if (pagecnt < hugepages) { INDENT
+		kernel_set_nr_hugepages(hugepages);
+		debug(LOG_MEM | 2, "Reserved %d hugepages (was %d)", hugepages, pagecnt);
+	}
 	
-	if (nr < DEFAULT_NR_HUGEPAGES)
-		kernel_set_nr_hugepages(DEFAULT_NR_HUGEPAGES);
+	pagesz = kernel_get_hugepage_size();
+	if (pagesz < 0)
+		return -1;
+
+	ret = getrlimit(RLIMIT_MEMLOCK, &l);
+	if (ret)
+		return ret;
+	
+	if (l.rlim_cur < pagesz * pagecnt) {
+		l.rlim_cur = pagesz * pagecnt;
+		l.rlim_max = l.rlim_cur;
+		
+		ret = setrlimit(RLIMIT_MEMLOCK, &l);
+		if (ret)
+			return ret;
+		
+		debug(LOG_MEM | 2, "Increased ressource limit of locked memory to %d bytes", pagesz * pagecnt);
+	}
 #endif
 	return 0;
 }
@@ -34,7 +60,7 @@ void * memory_alloc(struct memtype *m, size_t len)
 {
 	void *ptr = m->alloc(m, len, sizeof(void *));
 		
-	debug(DBG_MEM | 2, "Allocated %#zx bytes of %s memory: %p", len, m->name, ptr);
+	debug(LOG_MEM | 5, "Allocated %#zx bytes of %s memory: %p", len, m->name, ptr);
 
 	return ptr;
 }
@@ -43,14 +69,15 @@ void * memory_alloc_aligned(struct memtype *m, size_t len, size_t alignment)
 {
 	void *ptr = m->alloc(m, len, alignment);
 	
-	debug(DBG_MEM | 2, "Allocated %#zx bytes of %#zx-byte-aligned %s memory: %p", len, alignment, m->name, ptr);
-	
+	debug(LOG_MEM | 5, "Allocated %#zx bytes of %#zx-byte-aligned %s memory: %p", len, alignment, m->name, ptr);
+
 	return ptr;
 }
 
 int memory_free(struct memtype *m, void *ptr, size_t len)
 {
-	debug(DBG_MEM | 2, "Releasing %#zx bytes of %s memory", len, m->name);
+	debug(LOG_MEM | 5, "Releasing %#zx bytes of %s memory", len, m->name);
+
 	return m->free(m, ptr, len);
 }
 
@@ -58,19 +85,19 @@ static void * memory_heap_alloc(struct memtype *m, size_t len, size_t alignment)
 {
 	void *ptr;
 	int ret;
-	
+
 	if (alignment < sizeof(void *))
 		alignment = sizeof(void *);
-	
+
 	ret = posix_memalign(&ptr, alignment, len);
-	
+
 	return ret ? NULL : ptr;
 }
 
 int memory_heap_free(struct memtype *m, void *ptr, size_t len)
 {
 	free(ptr);
-	
+
 	return 0;
 }
 
@@ -79,20 +106,20 @@ static void * memory_hugepage_alloc(struct memtype *m, size_t len, size_t alignm
 {
 	int prot = PROT_READ | PROT_WRITE;
 	int flags = MAP_PRIVATE | MAP_ANONYMOUS;
-	
+
 #ifdef __MACH__
 	flags |= VM_FLAGS_SUPERPAGE_SIZE_2MB;
 #elif defined(__linux__)
 	flags |= MAP_HUGETLB | MAP_LOCKED;
 #endif
-	
+
 	void *ret = mmap(NULL, len, prot, flags, -1, 0);
-	
+
 	if (ret == MAP_FAILED) {
 		info("Failed to allocate huge pages: Check https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt");
 		return NULL;
 	}
-	
+
 	return ret;
 }
 
@@ -105,27 +132,31 @@ static int memory_hugepage_free(struct memtype *m, void *ptr, size_t len)
 
 void* memory_managed_alloc(struct memtype *m, size_t len, size_t alignment)
 {
-    /* Simple first-fit allocation */
-	struct memblock *first = (struct memblock*) m->_vd;
+	/* Simple first-fit allocation */
+	struct memblock *first = m->_vd;
 	struct memblock *block;
+
 	for (block = first; block != NULL; block = block->next) {
 		if (block->flags & MEMBLOCK_USED)
 			continue;
-		char* cptr = (char*) block + sizeof(struct memblock);
+
+		char* cptr = (char *) block + sizeof(struct memblock);
 		size_t avail = block->len;
 		uintptr_t uptr = (uintptr_t) cptr;
-		/* check alignment first; leave a gap at start of block to assure
+
+		/* Check alignment first; leave a gap at start of block to assure
 		 * alignment if necessary */
 		uintptr_t rem = uptr % alignment;
 		uintptr_t gap = 0;
 		if (rem != 0) {
 			gap = alignment - rem;
 			if (gap > avail)
-				/* next aligned address isn't in this block anymore */
-				continue;
+				continue; /* Next aligned address isn't in this block anymore */
+
 			cptr += gap;
 			avail -= gap;
 		}
+
 		if (avail >= len) {
 			if (gap > sizeof(struct memblock)) {
 				/* The alignment gap is big enough to fit another block.
@@ -133,21 +164,23 @@ void* memory_managed_alloc(struct memtype *m, size_t len, size_t alignment)
 				 * position, so we just change its len and create a new block
 				 * descriptor for the actual block we're handling. */
 				block->len = gap - sizeof(struct memblock);
-				struct memblock *newblock = (struct memblock*) (cptr - sizeof(struct memblock));
+				struct memblock *newblock = (struct memblock *) (cptr - sizeof(struct memblock));
 				newblock->prev = block;
 				newblock->next = block->next;
 				block->next = newblock;
 				newblock->flags = 0;
 				newblock->len = len;
 				block = newblock;
-			} else {
+			}
+			else {
 				/* The gap is too small to fit another block descriptor, so we
 				 * must account for the gap length in the block length. */
 				block->len = len + gap;
 			}
+
 			if (avail > len + sizeof(struct memblock)) {
-				/* imperfect fit, so create another block for the remaining part */
-				struct memblock *newblock = (struct memblock*) (cptr + len);
+				/* Imperfect fit, so create another block for the remaining part */
+				struct memblock *newblock = (struct memblock *) (cptr + len);
 				newblock->prev = block;
 				newblock->next = block->next;
 				block->next = newblock;
@@ -155,17 +188,21 @@ void* memory_managed_alloc(struct memtype *m, size_t len, size_t alignment)
 					newblock->next->prev = newblock;
 				newblock->flags = 0;
 				newblock->len = avail - len - sizeof(struct memblock);
-			} else {
-				/* if this block was larger than the requested length, but only
+			}
+			else {
+				/* If this block was larger than the requested length, but only
 				 * by less than sizeof(struct memblock), we may have wasted
 				 * memory by previous assignments to block->len. */
 				block->len = avail;
 			}
+
 			block->flags |= MEMBLOCK_USED;
-			return (void*) cptr;
+
+			return (void *) cptr;
 		}
 	}
-	/* no suitable block found */
+
+	/* No suitable block found */
 	return NULL;
 }
 
@@ -173,64 +210,80 @@ int memory_managed_free(struct memtype *m, void *ptr, size_t len)
 {
 	struct memblock *first = m->_vd;
 	struct memblock *block;
-	char* cptr = (char*) ptr;
+	char *cptr = ptr;
+
 	for (block = first; block != NULL; block = block->next) {
 		if (!(block->flags & MEMBLOCK_USED))
 			continue;
-		/* since we may waste some memory at the start of a block to ensure
+
+		/* Since we may waste some memory at the start of a block to ensure
 		 * alignment, ptr may not actually be the start of the block */
-		if ((char*) block + sizeof(struct memblock) <= cptr &&
-		    cptr < (char*) block + sizeof(struct memblock) + block->len) {
-			/* try to merge it with neighbouring free blocks */
+		if ((char *) block + sizeof(struct memblock) <= cptr &&
+		    cptr < (char *) block + sizeof(struct memblock) + block->len) {
+			/* Try to merge it with neighbouring free blocks */
 			if (block->prev && !(block->prev->flags & MEMBLOCK_USED) &&
 			    block->next && !(block->next->flags & MEMBLOCK_USED)) {
-				/* special case first: both previous and next block are unused */
+				/* Special case first: both previous and next block are unused */
 				block->prev->len += block->len + block->next->len + 2 * sizeof(struct memblock);
 				block->prev->next = block->next->next;
 				if (block->next->next)
 					block->next->next->prev = block->prev;
-			} else if (block->prev && !(block->prev->flags & MEMBLOCK_USED)) {
+			}
+			else if (block->prev && !(block->prev->flags & MEMBLOCK_USED)) {
 				block->prev->len += block->len + sizeof(struct memblock);
 				block->prev->next = block->next;
 				if (block->next)
 					block->next->prev = block->prev;
-			} else if (block->next && !(block->next->flags & MEMBLOCK_USED)) {
+			}
+			else if (block->next && !(block->next->flags & MEMBLOCK_USED)) {
 				block->len += block->next->len + sizeof(struct memblock);
 				block->next = block->next->next;
 				if (block->next)
 					block->next->prev = block;
-			} else {
-				/* no neighbouring free block, so just mark it as free */
-				block->flags &= (~MEMBLOCK_USED);
 			}
+			else {
+				/* no neighbouring free block, so just mark it as free */
+				block->flags &= ~MEMBLOCK_USED;
+			}
+
 			return 0;
 		}
 	}
+
 	return -1;
 }
 
-struct memtype* memtype_managed_init(void *ptr, size_t len)
+struct memtype * memtype_managed_init(void *ptr, size_t len)
 {
+	struct memtype *mt = ptr;
+	struct memblock *mb;
+	char *cptr = ptr;
+
 	if (len < sizeof(struct memtype) + sizeof(struct memblock)) {
 		info("memtype_managed_init: passed region too small");
 		return NULL;
 	}
-	struct memtype *mt = (struct memtype*) ptr;
-	mt->name = "managed";
+
+	/* Initialize memtype */
+	mt->name  = "managed";
 	mt->flags = 0;
 	mt->alloc = memory_managed_alloc;
-	mt->free = memory_managed_free;
+	mt->free  = memory_managed_free;
 	mt->alignment = 1;
 
-	char *cptr = (char*) ptr;
-	cptr += ALIGN(sizeof(struct memtype), sizeof(void*));
-	struct memblock *first = (struct memblock*) ((void*) cptr);
-	first->prev = NULL;
-	first->next = NULL;
-	cptr += ALIGN(sizeof(struct memblock), sizeof(void*));
-	first->len = len - (cptr - (char*) ptr);
-	first->flags = 0;
-	mt->_vd = (void*) first;
+	cptr += ALIGN(sizeof(struct memtype), sizeof(void *));
+
+	/* Initialize first free memblock */
+	mb = (struct memblock *) cptr;
+	mb->prev = NULL;
+	mb->next = NULL;
+	mb->flags = 0;
+
+	cptr += ALIGN(sizeof(struct memblock), sizeof(void *));
+
+	mb->len = len - (cptr - (char *) ptr);
+
+	mt->_vd = (void *) mb;
 
 	return mt;
 }
@@ -241,8 +294,7 @@ struct memtype memtype_heap = {
 	.flags = MEMORY_HEAP,
 	.alloc = memory_heap_alloc,
 	.free = memory_heap_free,
-	.alignment = 1,
-	._vd = NULL,
+	.alignment = 1
 };
 
 struct memtype memtype_hugepage = {
@@ -250,14 +302,5 @@ struct memtype memtype_hugepage = {
 	.flags = MEMORY_MMAP | MEMORY_HUGEPAGE,
 	.alloc = memory_hugepage_alloc,
 	.free = memory_hugepage_free,
-	.alignment = 21,  /* 2 MiB hugepage */
-	._vd = NULL,
-};
-
-/** @todo */
-const struct memtype memtype_dma = {
-	.name = "dma",
-	.flags = MEMORY_DMA | MEMORY_MMAP,
-	.alloc = NULL, .free = NULL,
-	.alignment = 12
+	.alignment = 21 /* 2 MiB hugepage */
 };

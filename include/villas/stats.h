@@ -23,14 +23,20 @@ struct sample;
 struct path;
 struct node;
 
+enum stats_format {
+	STATS_FORMAT_HUMAN,
+	STATS_FORMAT_JSON,
+	STATS_FORMAT_MATLAB
+};
+
 enum stats_id {
-	STATS_SKIPPED,		/**< Counter for skipped messages due to hooks */
-	STATS_DROPPED,		/**< Counter for dropped messages due to reordering */
-	STATS_GAP_SEQUENCE,	/**< Histogram of sequence number displacement of received messages */
-	STATS_GAP_SAMPLE,	/**< Histogram for inter message timestamps (as sent by remote) */
-	STATS_GAP_RECEIVED,	/**< Histogram for inter message arrival time (as seen by this instance) */
-	STATS_OWD,		/**< Histogram for one-way-delay (OWD) of received messages */
-	STATS_COUNT		/**< Just here to have an updated number of statistics */
+	STATS_SKIPPED,		/**< Counter for skipped samples due to hooks. */
+	STATS_REORDERED,	/**< Counter for reordered samples. */
+	STATS_GAP_SEQUENCE,	/**< Histogram of sequence number displacement of received samples. */
+	STATS_GAP_SAMPLE,	/**< Histogram for inter sample timestamps (as sent by remote). */
+	STATS_GAP_RECEIVED,	/**< Histogram for inter sample arrival time (as seen by this instance). */
+	STATS_OWD,		/**< Histogram for one-way-delay (OWD) of received samples. */
+	STATS_COUNT		/**< Just here to have an updated number of statistics. */
 };
 
 struct stats_delta {
@@ -64,10 +70,12 @@ void stats_reset(struct stats *s);
 
 void stats_print_header();
 
-void stats_print_periodic(struct stats *s, struct path *p);
+void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int verbose, struct path *p);
 
-void stats_print(struct stats *s, int details);
+void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose);
 
 void stats_send(struct stats *s, struct node *n);
+
+enum stats_id stats_lookup_id(const char *name);
 
 #endif /* _STATS_H_ */

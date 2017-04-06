@@ -4,18 +4,18 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
- */
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
+
 /**
  * @addtogroup file File-IO node type
  * @ingroup node
  * @{
- *********************************************************************************/
+ */
 
+#pragma once
 
-#ifndef _FILE_H_
-#define _FILE_H_
-
+#include "advio.h"
 #include "node.h"
 
 #define FILE_MAX_PATHLEN	512
@@ -27,25 +27,25 @@ enum {
 
 struct file {
 	struct file_direction {
-		FILE *handle;		/**< libc: stdio file handle */
+		AFILE *handle;		/**< libc: stdio file handle */
 
 		const char *mode;	/**< libc: fopen() mode */
 		const char *fmt;	/**< Format string for file name. */
 
-		char *path;		/**< Real file name */
-		
-		int chunk;		/**< Current chunk number. */
-		int split;		/**< Split file every file::split mega bytes. */
+		char *uri;		/**< Real file name */
 	} read, write;
+	
+	int rewind;			/**< Should we rewind the file when we reach EOF? */
 
 	enum read_epoch_mode {
 		EPOCH_DIRECT,
 		EPOCH_WAIT,
 		EPOCH_RELATIVE,
-		EPOCH_ABSOLUTE
+		EPOCH_ABSOLUTE,
+		EPOCH_ORIGINAL
 	} read_epoch_mode;		/**< Specifies how file::offset is calculated. */
 
-	struct timespec read_first;	/**< The first timestamp in the file file::path_in */
+	struct timespec read_first;	/**< The first timestamp in the file file::{read,write}::uri */
 	struct timespec read_epoch;	/**< The epoch timestamp from the configuration. */
 	struct timespec read_offset;	/**< An offset between the timestamp in the input file and the current time */
 
@@ -60,10 +60,10 @@ char * file_print(struct node *n);
 int file_parse(struct node *n, config_setting_t *cfg);
 
 /** @see node_vtable::open */
-int file_open(struct node *n);
+int file_start(struct node *n);
 
 /** @see node_vtable::close */
-int file_close(struct node *n);
+int file_stop(struct node *n);
 
 /** @see node_vtable::read */
 int file_read(struct node *n, struct sample *smps[], unsigned cnt);
@@ -71,4 +71,4 @@ int file_read(struct node *n, struct sample *smps[], unsigned cnt);
 /** @see node_vtable::write */
 int file_write(struct node *n, struct sample *smps[], unsigned cnt);
 
-#endif /** _FILE_H_ @} */
+/** @} */

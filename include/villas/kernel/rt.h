@@ -2,12 +2,26 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
-#ifndef _RT_H_
-#define _RT_H_
+/** @addtogroup fpga Kernel @{ */
 
-int rt_init(int affinity, int priority);
+#pragma once
 
-#endif /* _RT_H_ */
+int rt_init(int priority, int affinity);
+
+int rt_set_affinity(int affinity);
+
+int rt_set_priority(int priority);
+
+/** Checks for realtime (PREEMPT_RT) patched kernel.
+ *
+ * See https://rt.wiki.kernel.org
+ *
+ * @retval 0 Kernel is patched.
+ * @reval <>0 Kernel is not patched.
+ */
+int rt_is_preemptible();
+
+/** @} */

@@ -1,7 +1,7 @@
 /** Node type: File
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
 #include <unistd.h>
@@ -11,6 +11,8 @@
 #include "utils.h"
 #include "timing.h"
 #include "queue.h"
+#include "plugin.h"
+#include "sample_io.h"
 
 int file_reverse(struct node *n)
 {
@@ -37,28 +39,19 @@ static char * file_format_name(const char *format, struct timespec *ts)
 	return buf;
 }
 
-static FILE * file_reopen(struct file_direction *dir)
+static AFILE * file_reopen(struct file_direction *dir)
 {
-	char buf[FILE_MAX_PATHLEN];
-	const char *path = buf;
-
-	/* Append chunk number to filename */
-	if (dir->chunk >= 0)
-		snprintf(buf, FILE_MAX_PATHLEN, "%s_%03u", dir->path, dir->chunk);
-	else
-		path = dir->path;
-
 	if (dir->handle)
-		fclose(dir->handle);
+		afclose(dir->handle);
 
-	return fopen(path, dir->mode);
+	return afopen(dir->uri, dir->mode);
 }
 
 static int file_parse_direction(config_setting_t *cfg, struct file *f, int d)
 {
 	struct file_direction *dir = (d == FILE_READ) ? &f->read : &f->write;
 
-	if (!config_setting_lookup_string(cfg, "path", &dir->fmt))
+	if (!config_setting_lookup_string(cfg, "uri", &dir->fmt))
 		return -1;
 
 	if (!config_setting_lookup_string(cfg, "mode", &dir->mode))
@@ -77,12 +70,6 @@ int file_parse(struct node *n, config_setting_t *cfg)
 	if (cfg_out) {
 		if (file_parse_direction(cfg_out, f, FILE_WRITE))
 			cerror(cfg_out, "Failed to parse output file for node %s", node_name(n));
-
-		/* More write specific settings */
-		if (config_setting_lookup_int(cfg_out, "split", &f->write.split))
-			f->write.split <<= 20; /* in MiB */
-		else
-			f->write.split = -1; /* Save all samples in a single file */
 	}
 
 	cfg_in = config_setting_get_member(cfg, "in");
@@ -91,8 +78,8 @@ int file_parse(struct node *n, config_setting_t *cfg)
 			cerror(cfg_in, "Failed to parse input file for node %s", node_name(n));
 
 		/* More read specific settings */
-		if (!config_setting_lookup_bool(cfg_in, "splitted", &f->read.split))
-			f->read.split = 0; /* Input files are suffixed with split indizes (.000, .001) */
+		if (!config_setting_lookup_bool(cfg_in, "rewind", &f->rewind))
+			f->rewind = 0;
 		if (!config_setting_lookup_float(cfg_in, "rate", &f->read_rate))
 			f->read_rate = 0; /* Disable fixed rate sending. Using timestamps of file instead */
 		
@@ -114,6 +101,8 @@ int file_parse(struct node *n, config_setting_t *cfg)
 			f->read_epoch_mode = EPOCH_RELATIVE;
 		else if (!strcmp(epoch_mode, "absolute"))
 			f->read_epoch_mode = EPOCH_ABSOLUTE;
+		else if (!strcmp(epoch_mode, "original"))
+			f->read_epoch_mode = EPOCH_ORIGINAL;
 		else
 			cerror(cfg_in, "Invalid value '%s' for setting 'epoch_mode'", epoch_mode);
 	}
@@ -135,10 +124,11 @@ char * file_print(struct node *n)
 			case EPOCH_WAIT:	epoch_str = "wait"; break;
 			case EPOCH_RELATIVE:	epoch_str = "relative"; break;
 			case EPOCH_ABSOLUTE:	epoch_str = "absolute"; break;
+			case EPOCH_ORIGINAL:	epoch_str = "original"; break;
 		}
 		
 		strcatf(&buf, "in=%s, epoch_mode=%s, epoch=%.2f, ",
-			f->read.path ? f->read.path : f->read.fmt,
+			f->read.uri ? f->read.uri : f->read.fmt,
 			epoch_str,
 			time_to_double(&f->read_epoch)
 		);
@@ -149,7 +139,7 @@ char * file_print(struct node *n)
 	
 	if (f->write.fmt) {
 		strcatf(&buf, "out=%s, mode=%s, ",
-			f->write.path ? f->write.path : f->write.fmt,
+			f->write.uri ? f->write.uri : f->write.fmt,
 			f->write.mode
 		);
 	}
@@ -177,7 +167,7 @@ char * file_print(struct node *n)
 	return buf;
 }
 
-int file_open(struct node *n)
+int file_start(struct node *n)
 {
 	struct file *f = n->_vd;
 	
@@ -185,16 +175,15 @@ int file_open(struct node *n)
 
 	if (f->read.fmt) {
 		/* Prepare file name */
-		f->read.chunk = f->read.split ? 0 : -1;
-		f->read.path = file_format_name(f->read.fmt, &now);
+		f->read.uri = file_format_name(f->read.fmt, &now);
 		
 		/* Open file */
 		f->read.handle = file_reopen(&f->read);
 		if (!f->read.handle)
-			serror("Failed to open file for reading: '%s'", f->read.path);
+			serror("Failed to open file for reading: '%s'", f->read.uri);
 
 		/* Create timer */
-		f->read_timer = (f->read_rate)
+		f->read_timer = f->read_rate
 			? timerfd_create_rate(f->read_rate)
 			: timerfd_create(CLOCK_REALTIME, 0);
 		if (f->read_timer < 0)
@@ -205,7 +194,7 @@ int file_open(struct node *n)
 
 		/* Get timestamp of first line */
 		struct sample s;
-		int ret = sample_fscan(f->read.handle, &s, NULL); rewind(f->read.handle);
+		int ret = sample_io_villas_fscan(f->read.handle->file, &s, NULL); arewind(f->read.handle);
 		if (ret < 0)
 			error("Failed to read first timestamp of node %s", node_name(n));
 		
@@ -230,36 +219,37 @@ int file_open(struct node *n)
 			case EPOCH_ABSOLUTE: /* read first value at f->read_epoch */
 				f->read_offset = time_diff(&f->read_first, &f->read_epoch);
 				break;
+			
+			default: { }
 		}
 	}
 
 	if (f->write.fmt) {
 		/* Prepare file name */
-		f->write.chunk  = f->write.split ? 0 : -1;
-		f->write.path   = file_format_name(f->write.fmt, &now);
+		f->write.uri   = file_format_name(f->write.fmt, &now);
 
 		/* Open file */
 		f->write.handle = file_reopen(&f->write);
 		if (!f->write.handle)
-			serror("Failed to open file for writing: '%s'", f->write.path);
+			serror("Failed to open file for writing: '%s'", f->write.uri);
 	}
 
 	return 0;
 }
 
-int file_close(struct node *n)
+int file_stop(struct node *n)
 {
 	struct file *f = n->_vd;
 	
-	free(f->read.path);
-	free(f->write.path);
+	free(f->read.uri);
+	free(f->write.uri);
 
 	if (f->read_timer)
 		close(f->read_timer);
 	if (f->read.handle)
-		fclose(f->read.handle);
+		afclose(f->read.handle);
 	if (f->write.handle)
-		fclose(f->write.handle);
+		afclose(f->write.handle);
 
 	return 0;
 }
@@ -273,21 +263,17 @@ int file_read(struct node *n, struct sample *smps[], unsigned cnt)
 	assert(f->read.handle);
 	assert(cnt == 1);
 
-retry:	values = sample_fscan(f->read.handle, s, &flags); /* Get message and timestamp */
+retry:	values = sample_io_villas_fscan(f->read.handle->file, s, &flags); /* Get message and timestamp */
 	if (values < 0) {
-		if (feof(f->read.handle)) {
-			if (f->read.split) {
-				f->read.chunk++;
-				f->read.handle = file_reopen(&f->read);
-				if (!f->read.handle)
-					return 0;
-				
-				info("Open new input chunk of node %s: %d", node_name(n), f->read.chunk);
+		if (afeof(f->read.handle)) {
+			if (f->rewind) {
+				info("Rewind input file of node %s", node_name(n));
+				arewind(f->read.handle);
+				goto retry;
 			}
 			else {
-				info("Rewind input file of node %s", node_name(n));
-				rewind(f->read.handle);
-				goto retry;
+				info("Reached end-of-file");
+				exit(EXIT_SUCCESS);
 			}
 		}
 		else
@@ -295,8 +281,11 @@ retry:	values = sample_fscan(f->read.handle, s, &flags); /* Get message and time
 
 		return 0;
 	}
-
-	if (!f->read_rate || ftell(f->read.handle) == 0) {
+	
+	if (f->read_epoch_mode == EPOCH_ORIGINAL) {
+		return 1;
+	}
+	else if (!f->read_rate || aftell(f->read.handle) == 0) {
 		s->ts.origin = time_add(&s->ts.origin, &f->read_offset);
 		if (timerfd_wait_until(f->read_timer, &s->ts.origin) == 0)
 			serror("Failed to wait for timer");
@@ -320,32 +309,28 @@ int file_write(struct node *n, struct sample *smps[], unsigned cnt)
 	assert(f->write.handle);
 	assert(cnt == 1);
 
-	/* Split file if requested */
-	if (f->write.split > 0 && ftell(f->write.handle) > f->write.split) {
-		f->write.chunk++;
-		f->write.handle = file_reopen(&f->write);
-				
-		info("Splitted output node %s: chunk=%u", node_name(n), f->write.chunk);
-	}
-		
-	sample_fprint(f->write.handle, s, SAMPLE_ALL & ~SAMPLE_OFFSET);
-	fflush(f->write.handle);
+	sample_io_villas_fprint(f->write.handle->file, s, SAMPLE_IO_ALL & ~SAMPLE_IO_OFFSET);
+	afflush(f->write.handle);
 
 	return 1;
 }
 
-static struct node_type vt = {
+static struct plugin p = {
 	.name		= "file",
 	.description	= "support for file log / replay node type",
-	.vectorize	= 1,
-	.size		= sizeof(struct file),
-	.reverse	= file_reverse,
-	.parse		= file_parse,
-	.print		= file_print,
-	.open		= file_open,
-	.close		= file_close,
-	.read		= file_read,
-	.write		= file_write
+	.type		= PLUGIN_TYPE_NODE,
+	.node		= {
+		.vectorize	= 1,
+		.size		= sizeof(struct file),
+		.reverse	= file_reverse,
+		.parse		= file_parse,
+		.print		= file_print,
+		.start		= file_start,
+		.stop		= file_stop,
+		.read		= file_read,
+		.write		= file_write,
+		.instances	= LIST_INIT()
+	}
 };
 
-REGISTER_NODE_TYPE(&vt)
+REGISTER_PLUGIN(&p)

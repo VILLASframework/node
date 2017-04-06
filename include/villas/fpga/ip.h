@@ -1,101 +1,107 @@
-#ifndef _IP_H_
-#define _IP_H_
+/** Interlectual Property component.
+ *
+ * This class represents a module within the FPGA.
+ *
+ * @file
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
+
+/** @addtogroup fpga VILLASfpga
+ * @{
+ */
+
+#pragma once
 
 #include <stdint.h>
 
-#include <xilinx/xtmrctr.h>
-#include <xilinx/xintc.h>
-#include <xilinx/xllfifo.h>
-#include <xilinx/xaxis_switch.h>
-#include <xilinx/xaxidma.h>
+#include "common.h"
 
-#include "utils.h"
-#include "fpga/dma.h"
-#include "fpga/switch.h"
-#include "fpga/fifo.h"
-#include "fpga/rtds_axis.h"
-#include "fpga/timer.h"
-#include "fpga/model.h"
-#include "fpga/dft.h"
-#include "fpga/intc.h"
 #include "nodes/fpga.h"
 
-#define REGISTER_IP_TYPE(ip)			\
-__attribute__((constructor)) static		\
-void UNIQUE(__register_)() {		\
-	list_push(&ip_types, ip);		\
-}
+#include "fpga/vlnv.h"
 
-extern struct list ip_types;	/**< Table of existing FPGA IP core drivers */
+#include "fpga/ips/dma.h"
+#include "fpga/ips/switch.h"
+#include "fpga/ips/fifo.h"
+#include "fpga/ips/rtds_axis.h"
+#include "fpga/ips/timer.h"
+#include "fpga/ips/model.h"
+#include "fpga/ips/dft.h"
+#include "fpga/ips/intc.h"
 
-enum ip_state {
-	IP_STATE_UNKNOWN,
-	IP_STATE_INITIALIZED
-};
+enum fpga_ip_types {
+	FPGA_IP_TYPE_DM_DMA,	/**< A datamover IP exchanges streaming data between the FPGA and the CPU. */
+	FPGA_IP_TYPE_DM_FIFO,	/**< A datamover IP exchanges streaming data between the FPGA and the CPU. */
+	FPGA_IP_TYPE_MODEL,	/**< A model IP simulates a system on the FPGA. */
+	FPGA_IP_TYPE_MATH,	/**< A math IP performs some kind of mathematical operation on the streaming data */
+	FPGA_IP_TYPE_MISC,	/**< Other IP components like timer, counters, interrupt conctrollers or routing. */
+	FPGA_IP_TYPE_INTERFACE	/**< A interface IP connects the FPGA to another system or controller. */
+} type;
 
-struct ip_vlnv {
-	char *vendor;
-	char *library;
-	char *name;
-	char *version;
-};
+struct fpga_ip_type {
+	struct fpga_vlnv vlnv;
 
-struct ip_type {
-	struct ip_vlnv vlnv;
+	enum fpga_ip_types type;
 
-	int (*parse)(struct ip *c);
-	int (*init)(struct ip *c);
-	int (*reset)(struct ip *c);
-	void (*dump)(struct ip *c);
-	void (*destroy)(struct ip *c);
-};
-
-struct ip {
-	char *name;
-
-	struct ip_vlnv vlnv;
-
-	uintptr_t baseaddr;
-	uintptr_t baseaddr_axi4;
-
-	int port, irq;
-
-	enum ip_state state;
-
-	struct ip_type *_vt;
-
-	union {
-		struct model model;
-		struct timer timer;
-		struct fifo fifo;
-		struct dma dma;
-		struct sw sw;
-		struct dft dft;
-		struct intc intc;
-	};
+	int (*init)(struct fpga_ip *c);
+	int (*parse)(struct fpga_ip *c);
+	int (*check)(struct fpga_ip *c);
+	int (*start)(struct fpga_ip *c);
+	int (*stop)(struct fpga_ip *c);
+	int (*destroy)(struct fpga_ip *c);
+	int (*reset)(struct fpga_ip *c);
+	void (*dump)(struct fpga_ip *c);
 	
-	struct fpga *card;
+	size_t size;			/**< Amount of memory which should be reserved for struct fpga_ip::_vd */
+};
+
+struct fpga_ip {
+	char *name;			/**< Name of the FPGA IP component. */
+	struct fpga_vlnv vlnv;		/**< The Vendor, Library, Name, Version tag of the FPGA IP component. */
+
+	enum state state;		/**< The current state of the FPGA IP component. */
+
+	struct fpga_ip_type *_vt;	/**< Vtable containing FPGA IP type function pointers. */
+	void *_vd;			/**< Virtual data (used by struct fpga_ip::_vt functions) */
+
+	uintptr_t baseaddr;		/**< The baseadress of this FPGA IP component */
+	uintptr_t baseaddr_axi4;	/**< Used by AXI4 FIFO DM */
+
+	int port;			/**< The port of the AXI4-Stream switch to which this FPGA IP component is connected. */
+	int irq;			/**< The interrupt number of the FPGA IP component. */
+
+	struct fpga_card *card;		/**< The FPGA to which this IP instance belongs to. */
 
 	config_setting_t *cfg;
 };
 
-/** Return the first IP block in list \p l which matches the VLNV */
-struct ip * ip_vlnv_lookup(struct list *l, const char *vendor, const char *library, const char *name, const char *version);
+/** Initialize IP core. */
+int fpga_ip_init(struct fpga_ip *c, struct fpga_ip_type *vt);
 
-/** Check if IP block \p c matched VLNV. */
-int ip_vlnv_match(struct ip *c, const char *vendor, const char *library, const char *name, const char *version);
+/** Parse IP core configuration from configuration file */
+int fpga_ip_parse(struct fpga_ip *c, config_setting_t *cfg);
 
-/** Tokenizes VLNV \p vlnv and stores it into \p c */
-int ip_vlnv_parse(struct ip *c, const char *vlnv);
+/** Check configuration of IP core. */
+int fpga_ip_check(struct fpga_ip *c);
 
-int ip_init(struct ip *c);
+/** Start IP core. */
+int fpga_ip_start(struct fpga_ip *c);
 
-void ip_destroy(struct ip *c);
+/** Stop IP core. */
+int fpga_ip_stop(struct fpga_ip *c);
 
-void ip_dump(struct ip *c);
+/** Release dynamic memory allocated by this IP core. */
+int fpga_ip_destroy(struct fpga_ip *c);
 
-int ip_reset(struct ip *c);
+/** Dump details about this IP core to stdout. */
+void fpga_ip_dump(struct fpga_ip *c);
 
-int ip_parse(struct ip *c, config_setting_t *cfg);
+/** Reset IP component to its initial state. */
+int fpga_ip_reset(struct fpga_ip *c);
 
-#endif
+/** Find a registered FPGA IP core type with the given VLNV identifier. */
+struct fpga_ip_type * fpga_ip_type_lookup(const char *vstr);
+
+
+/** @} */

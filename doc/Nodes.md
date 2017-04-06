@@ -3,8 +3,8 @@
 Every server needs clients which act as sinks / sources for simulation data. In case of VILLASnode these clients are called _nodes_.
 Every node is an instance of a node-type. VILLASnode currently supports the following node-types:
 
-#### @subpage gtfpga
- - RTDS via GTFPGA and PCIexpress (Linux vfio, uio)
+#### @subpage villasfpga
+ - VILLASfpga sub-project connect RTDS via GTFPGA and PCIexpress (Linux vfio, uio)
  
 #### @subpage opal
  - OPAL via Asynchronous Process (libOpalAsyncApi)
@@ -25,3 +25,6 @@ Every node is an instance of a node-type. VILLASnode currently supports the foll
 
 #### @subpage labview
  - NI LabView RT-targets
+ 
+#### @subpage cbuilder
+- RTDS CBuilder Control System components

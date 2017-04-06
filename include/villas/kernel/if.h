@@ -5,11 +5,12 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
-#ifndef _IF_H_
-#define _IF_H_
+/** @addtogroup fpga Kernel @{ */
+
+#pragma once
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -32,6 +33,7 @@ struct interface {
 	struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Root priority queuing discipline (qdisc). */
 
 	char irqs[IF_IRQ_MAX];		/**< List of IRQs of the NIC. */
+	int affinity;			/**< IRQ / Core Affinity of this interface. */
 
 	struct list sockets;		/**< Linked list of associated sockets. */
 };
@@ -42,14 +44,14 @@ struct interface {
  * @retval >0 Success. A pointer to the new interface.
  * @retval 0 Error. The creation failed.
  */
-struct interface * if_create(struct rtnl_link *link);
+int if_init(struct interface * , struct rtnl_link *link);
 
 
 /** Destroy interface by freeing dynamically allocated memory.
  *
  * @param i A pointer to the interface structure.
  */
-void if_destroy(struct interface *i);
+int if_destroy(struct interface *i);
 
 /** Start interface.
  *
@@ -57,11 +59,10 @@ void if_destroy(struct interface *i);
  * maps interface IRQs according to affinity.
  *
  * @param i A pointer to the interface structure.
- * @param affinity Set the IRQ affinity of this interface.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int if_start(struct interface *i, int affinity);
+int if_start(struct interface *i);
 
 /** Stop interface
  *
@@ -104,4 +105,4 @@ int if_get_irqs(struct interface *i);
  */
 int if_set_affinity(struct interface *i, int affinity);
 
-#endif /* _IF_H_ */
+/** @} */

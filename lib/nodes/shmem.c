@@ -8,6 +8,8 @@
 #include "kernel/kernel.h"
 #include "log.h"
 #include "nodes/shmem.h"
+#include "plugin.h"
+#include "utils.h"
 
 int shmem_parse(struct node *n, config_setting_t *cfg) {
 	struct shmem *shm = n->_vd;
@@ -60,6 +62,7 @@ int shmem_open(struct node *n) {
 	shm->shared = memory_alloc(shm->manager, sizeof(struct shmem_shared));
 	if (!shm->shared)
 		error("Shm shared struct allocation failed (not enough memory?)");
+	memset(shm->shared, 0, sizeof(struct shmem_shared));
 	if (queue_init(&shm->shared->in.queue, shm->insize, shm->manager) < 0)
 		error("Shm queue allocation failed (not enough memory?)");
 	if (queue_init(&shm->shared->out.queue, shm->outsize, shm->manager) < 0)
@@ -134,20 +137,24 @@ char *shmem_print(struct node *n) {
 	return buf;
 };
 
-static struct node_type vt = {
+static struct plugin p = {
 	.name = "shmem",
 	.description = "use POSIX shared memory to interface with other programs",
-	.vectorize = 1,
-	.size = sizeof(struct shmem),
-	.parse = shmem_parse,
-	.print = shmem_print,
-	.open = shmem_open,
-	.close = shmem_close,
-	.read = shmem_read,
-	.write = shmem_write
+	.type = PLUGIN_TYPE_NODE,
+	.node = {
+		.vectorize = 1,
+		.size = sizeof(struct shmem),
+		.parse = shmem_parse,
+		.print = shmem_print,
+		.start = shmem_open,
+		.stop = shmem_close,
+		.read = shmem_read,
+		.write = shmem_write,
+		.instances = LIST_INIT(),
+	}
 };
 
-REGISTER_NODE_TYPE(&vt)
+REGISTER_PLUGIN(&p)
 
 size_t shmem_total_size(int insize, int outsize, int sample_size)
 {

@@ -15,7 +15,7 @@
 ###################################################################################
 
 # Project modules
-MODULES = lib plugins src tests thirdparty tools
+MODULES = lib plugins src tests thirdparty tools packaging doc etc web
 
 # Default prefix for install target
 PREFIX ?= /usr/local
@@ -28,19 +28,11 @@ V ?= 2
 
 # Common flags
 LDLIBS   =
-CFLAGS  += -std=c11 -Iinclude -Iinclude/villas -I. -MMD -mcx16
+CFLAGS  += -I. -Iinclude -Iinclude/villas
+CFLAGS  +=  @$(BUILDDIR)/defines
+CFLAGS  += -std=c11 -MMD -mcx16 
 CFLAGS  += -Wall -Werror -fdiagnostics-color=auto
-CFLAGS  += -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -DV=$(V)
 LDFLAGS += -L$(BUILDDIR)
-
-ifdef CI
-	CFLAGS += -D_GIT_REV='"${CI_BUILD_REF:0:7}~ci"'
-else
-	GIT = $(shell type -p git)
-	ifneq ($(GIT),)
-		CFLAGS += -D_GIT_REV='"$(shell git rev-parse --short HEAD)"'
-	endif
-endif
 
 # We must compile without optimizations for gcov!
 ifdef DEBUG
@@ -69,11 +61,26 @@ ifdef COVERAGE
 	VARIANTS += coverage
 endif
 
-SPACE :=
-SPACE +=
-BUILDDIR := $(BUILDDIR)/$(subst $(SPACE),-,$(strip $(VARIANTS)))
+EMPTY :=
+SPACE := $(EMPTY) $(EMPTY)
 
+VARIANT = $(subst $(SPACE),-,$(strip $(VARIANTS)))
+BUILDDIR := $(BUILDDIR)/$(VARIANT)
 SRCDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+# Add git revision and build variant defines
+VERSION = $(shell git describe --tags --abbrev=0 --match v*)
+VERSION_NUM = $(shell VERSION=$(VERSION); echo $${VERSION:1})
+
+ifdef CI
+	GIT_REV = $(shell REV=$${CI_BUILD_REF}; echo $${REV:0:7})
+	GIT_BRANCH = ${CI_BUILD_REF_NAME}
+	VARIANT := $(VARIANT)-ci
+else
+	GIT_REV = $(shell REV=$$(git rev-parse HEAD); echo $${REV:0:7})
+	GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+endif
+
 
 # pkg-config dependencies
 PKGS = libconfig
@@ -81,37 +88,48 @@ PKGS = libconfig
 ######## Targets ########
 
 # Add flags by pkg-config
-CFLAGS += $(addprefix -DWITH_, $(shell echo ${PKGS} | tr a-z- A-Z_ | tr -dc ' A-Z0-9_' ))
 CFLAGS += $(shell pkg-config --cflags ${PKGS})
 LDLIBS += $(shell pkg-config --libs ${PKGS})
 
-all: src plugins | lib
+all: src plugins tools
+src plugins tools tests: lib
 
+# Build all variants: debug, coverage, ...
 everything:
+	$(MAKE) RELEASE=1
 	$(MAKE) DEBUG=1
 	$(MAKE) COVERAGE=1
 	$(MAKE) PROFILE=1
-	$(MAKE) doc
-	$(MAKE) tests
-
-install: $(addprefix install-,$(MODULES))
-
-clean: $(addprefix clean-,$(MODULES))
-
-docker:
-	docker build -t villas .
-	docker run -it -p 80:80 -p 443:443 -p 1234:1234 --privileged --cap-add sys_nic --ulimit memlock=1073741824 --security-opt seccomp:unconfined -v $(PWD):/villas villas
-
-doc: | $(BUILDDIR)/doc/
-	( cat Doxyfile ; echo "OUTPUT_DIRECTORY=$(BUILDDIR)/doc/" ) | doxygen -
 
 # Create non-existent directories
+.SECONDEXPANSION:
+.PRECIOUS: %/
 %/:
 	mkdir -p $@
 
-.PHONY: all everything clean install docker doc
-.PRECIOUS: %/
-.SECONDEXPANSION:
+define DEFINES
+-DV=$(V)
+
+-DPLUGIN_PATH=\"$(PREFIX)/share/villas/node/plugins\"
+-DWEB_PATH=\"$(PREFIX)/share/villas/node/web\"
+-DSYSFS_PATH=\"/sys\"
+-DPROCFS_PATH=\"/proc\"
+-DBUILDID=\"$(VERSION)-$(GIT_REV)-$(VARIANT)\"
+
+-D_POSIX_C_SOURCE=200809L
+-D_GNU_SOURCE=1
+endef
+export DEFINES
+
+$(BUILDDIR)/defines: | $$(dir $$@)
+	echo "$${DEFINES}" > $@
+	echo -e "$(addprefix \n-DWITH_, $(shell echo ${PKGS} | tr a-z- A-Z_ | tr -dc ' A-Z0-9_' ))" >> $@
+	echo -e "$(addprefix \n-DWITH_, $(shell echo ${LIB_PKGS} | tr a-z- A-Z_ | tr -dc ' A-Z0-9_' ))" >> $@
+
+install: $(addprefix install-,$(filter-out thirdparty doc,$(MODULES)))
+clean: $(addprefix clean-,$(filter-out thirdparty doc,$(MODULES)))
+
+.PHONY: all everything clean install
 
 -include $(wildcard $(BUILDDIR)/**/*.d)
 -include $(addsuffix /Makefile.inc,$(MODULES))

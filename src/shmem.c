@@ -3,14 +3,18 @@
  * back to the other queue. */
 
 #include "config.h"
-#include "cfg.h"
 #include "log.h"
 #include "nodes/shmem.h"
 #include "pool.h"
 #include "queue.h"
 #include "sample.h"
+#include "sample_io.h"
+#include "super_node.h"
+#include "utils.h"
 
 #include <string.h>
+
+static struct super_node sn = { .state = STATE_DESTROYED };
 
 void usage()
 {
@@ -25,14 +29,11 @@ int main(int argc, char* argv[])
 		usage();
 		return 1;
 	}
-	struct list nodes;
-	struct settings settings;
-	config_t config;
 
-	list_init(&nodes);
-	cfg_parse(argv[1], &config, &settings, &nodes, NULL);
+	super_node_init(&sn);
+	super_node_parse_uri(&sn, argv[1]);
 
-	struct node *node = list_lookup(&nodes, argv[2]);
+	struct node *node = list_lookup(&sn.nodes, argv[2]);
 	if (!node)
 		error("Node '%s' does not exist!", argv[2]);
 
@@ -54,7 +55,7 @@ int main(int argc, char* argv[])
 		if (avail < r)
 			warn("pool underrun (%d/%d)\n", avail, r);
 		for (int i = 0; i < r; i++)
-			sample_fprint(stdout, insmps[i], SAMPLE_ALL);
+			sample_io_villas_fprint(stdout, insmps[i], SAMPLE_IO_ALL);
 		for (int i = 0; i < avail; i++) {
 			outsmps[i]->sequence = insmps[i]->sequence;
 			outsmps[i]->ts = insmps[i]->ts;

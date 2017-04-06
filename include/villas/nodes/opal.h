@@ -4,16 +4,16 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
- */
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
+
 /**
  * @ingroup node
  * @addtogroup opal OPAL-RT Async Process node type
  * @{
- **********************************************************************************/
+ */
 
-#ifndef _OPAL_H_
-#define _OPAL_H_
+#pragma once
 
 #include <pthread.h>
 
@@ -60,10 +60,10 @@ char * opal_print(struct node *n);
 int opal_print_global();
 
 /** @see node_vtable::open */
-int opal_open(struct node *n);
+int opal_start(struct node *n);
 
 /** @see node_vtable::close */
-int opal_close(struct node *n);
+int opal_stop(struct node *n);
 
 /** @see node_vtable::read */
 int opal_read(struct node *n, struct sample *smps[], unsigned cnt);
@@ -71,4 +71,4 @@ int opal_read(struct node *n, struct sample *smps[], unsigned cnt);
 /** @see node_vtable::write */
 int opal_write(struct node *n, struct sample *smps[], unsigned cnt);
 
-#endif /** _OPAL_H_ @} */
+/** @} */

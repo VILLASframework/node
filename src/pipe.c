@@ -2,7 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *
  * @addtogroup tools Test and debug tools
  * @{
@@ -11,23 +11,23 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include <string.h>
 #include <signal.h>
 #include <pthread.h>
 
-#include <villas/cfg.h>
+#include <villas/super_node.h>
 #include <villas/utils.h>
 #include <villas/node.h>
 #include <villas/msg.h>
 #include <villas/timing.h>
 #include <villas/pool.h>
+#include <villas/sample_io.h>
 #include <villas/kernel/rt.h>
+
+#include <villas/nodes/websocket.h>
 
 #include "config.h"
 
-static struct list nodes;		/**< List of all nodes */
-static struct settings settings;	/**< The global configuration */
-static config_t config;
+static struct super_node sn = { .state = STATE_DESTROYED };		/**< The global configuration */
 
 struct dir {
 	struct pool pool;
@@ -56,14 +56,16 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 		pool_destroy(&sendd.pool);
 	}
 
-	node_stop(node);
-	node_deinit(node->_vt);
+	if (node->_vt->start == websocket_start)
+		web_stop(&sn.web);
 
-	list_destroy(&nodes, (dtor_cb_t) node_destroy, false);
-	cfg_destroy(&config);
+	node_stop(node);
+	node_type_stop(node->_vt);
+
+	super_node_destroy(&sn);
 
 	info(GRN("Goodbye!"));
-	exit(EXIT_SUCCESS);
+	_exit(EXIT_SUCCESS);
 }
 
 static void usage()
@@ -106,10 +108,12 @@ static void * send_loop(void *ctx)
 			struct sample *s = smps[i];
 			int reason;
 
-retry:			reason = sample_fscan(stdin, s, NULL);
+retry:			reason = sample_io_villas_fscan(stdin, s, NULL);
 			if (reason < 0) {
-				if (feof(stdin))
+				if (feof(stdin)) {
+					info("Reached end-of-file. Terminating...");
 					goto killme;
+				}
 				else {
 					warn("Skipped invalid message message: reason=%d", reason);
 					goto retry;
@@ -158,7 +162,7 @@ static void * recv_loop(void *ctx)
 			if (s->ts.received.tv_sec == -1 || s->ts.received.tv_sec == 0)
 				s->ts.received = now;
 
-			sample_fprint(stdout, s, SAMPLE_ALL);
+			sample_io_villas_fprint(stdout, s, SAMPLE_IO_ALL);
 			fflush(stdout);
 		}
 		pthread_testcancel();
@@ -169,20 +173,16 @@ static void * recv_loop(void *ctx)
 
 int main(int argc, char *argv[])
 {
-	int ret, level = -1;
+	int ret, level = V;
 	char c;
 
 	ptid = pthread_self();
-
-	/* Parse command line arguments */
-	if (argc < 3)
-		usage();
 
 	/* Default values */
 	sendd.enabled = true;
 	recvv.enabled = true;
 
-	while ((c = getopt(argc-2, argv+2, "hxrsd:")) != -1) {
+	while ((c = getopt(argc, argv, "hxrsd:")) != -1) {
 		switch (c) {
 			case 'x':
 				reverse = true;
@@ -202,43 +202,42 @@ int main(int argc, char *argv[])
 				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
 	}
-
-	/* Setup signals */
-	struct sigaction sa_quit = {
-		.sa_flags = SA_SIGINFO,
-		.sa_sigaction = quit
-	};
-
-	sigemptyset(&sa_quit.sa_mask);
-	sigaction(SIGTERM, &sa_quit, NULL);
-	sigaction(SIGINT,  &sa_quit, NULL);
-
-	/* Initialize log, configuration.. */
-	list_init(&nodes);
-
-	info("Parsing configuration");
-	cfg_parse(argv[1], &config, &settings, &nodes, NULL);
 	
-	info("Initialize logging system");
-	log_init(level > 0 ? level : settings.log.level, settings.log.facilities, settings.log.file);
+	if (argc < optind + 2) {
+		usage();
+		exit(EXIT_FAILURE);
+	}
 
-	info("Initialize real-time system");
-	rt_init(settings.affinity, settings.priority);
+	log_init(&sn.log, level, LOG_ALL);
+	log_start(&sn.log);
 	
-	info("Initialize memory system");
-	memory_init();
+	super_node_init(&sn);
+	super_node_parse_uri(&sn, argv[optind]);
 	
+	memory_init(sn.hugepages);
+	signals_init(quit);
+	rt_init(sn.priority, sn.affinity);
+
 	/* Initialize node */
-	node = list_lookup(&nodes, argv[2]);
+	node = list_lookup(&sn.nodes, argv[optind+1]);
 	if (!node)
-		error("Node '%s' does not exist!", argv[2]);
+		error("Node '%s' does not exist!", argv[optind+1]);
+
+	if (node->_vt->start == websocket_start) {
+		web_init(&sn.web, NULL); /* API is disabled in villas-pipe */
+		web_start(&sn.web);
+	}
 
 	if (reverse)
 		node_reverse(node);
 
-	ret = node_init(node->_vt, argc-optind, argv+optind, config_root_setting(&config));
+	ret = node_type_start(node->_vt, argc, argv, config_root_setting(&sn.cfg));
 	if (ret)
-		error("Failed to intialize node: %s", node_name(node));
+		error("Failed to intialize node type: %s", node_name(node));
+	
+	ret = node_check(node);
+	if (ret)
+		error("Invalid node configuration");
 
 	ret = node_start(node);
 	if (ret)
@@ -248,8 +247,12 @@ int main(int argc, char *argv[])
 	pthread_create(&recvv.thread, NULL, recv_loop, NULL);
 	pthread_create(&sendd.thread, NULL, send_loop, NULL);
 
-	for (;;)
-		pause();
+	for (;;) {
+		if (node->_vt->start == websocket_start)
+			web_service(&sn.web);
+		else
+			sleep(1);
+	}
 
 	return 0;
 }

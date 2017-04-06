@@ -1,18 +1,26 @@
-# Libraries
-LIBS = $(BUILDDIR)/libvillas.so
+LIB_NAME = libvillas
+LIB_ABI_VERSION = 1
+
+LIB = $(BUILDDIR)/$(LIB_NAME).so.$(LIB_ABI_VERSION)
 
 # Object files for libvillas
 LIB_SRCS = $(addprefix lib/nodes/, file.c cbuilder.c shmem.c) 		\
            $(addprefix lib/kernel/, kernel.c rt.c)		\
-	   $(addprefix lib/, sample.c path.c node.c hook.c	\
-              log.c utils.c cfg.c hist.c timing.c pool.c list.c \
-              queue.c memory.c stats.c				\
-           )							\
-           $(wildcard  lib/hooks/*.c)				\
+           $(addprefix lib/, sample.c path.c node.c hook.c	\
+              log.c utils.c super_node.c hist.c timing.c pool.c	\
+              list.c queue.c memory.c advio.c web.c api.c	\
+              plugin.c node_type.c stats.c mapping.c sample_io.c\
+           )
 
 LIB_CFLAGS  = $(CFLAGS) -fPIC
 LIB_LDFLAGS = -shared
-LIB_LDLIBS  = $(LDLIBS) -ldl -lrt
+LIB_LDLIBS  = $(LDLIBS) -ldl -lrt -Wl,-soname,$(LIB_NAME).so.$(LIB_ABI_VERSION)
+
+-include lib/hooks/Makefile.inc
+-include lib/apis/Makefile.inc
+-include lib/fpga/Makefile.inc
+
+LIB_PKGS = openssl
 
 ######## Node types ########
 
@@ -31,7 +39,6 @@ ifndef WITHOUT_FPGA
 ifeq ($(shell pkg-config libxil; echo $$?),0)
 	LIB_SRCS    += $(addprefix lib/nodes/, fpga.c)
 	LIB_SRCS    += $(addprefix lib/kernel/, pci.c vfio.c)
-	LIB_SRCS    += $(wildcard  lib/fpga/*.c)
 	PKGS        += libxil
 endif
 endif
@@ -69,30 +76,30 @@ endif
 endif
 
 # Add flags by pkg-config
-LIB_CFLAGS += $(addprefix -DWITH_, $(shell echo ${LIB_PKGS} | tr a-z- A-Z_ | tr -dc ' A-Z0-9_' ))
 LIB_CFLAGS += $(shell pkg-config --cflags ${LIB_PKGS})
 LIB_LDLIBS += $(shell pkg-config --libs ${LIB_PKGS})
 
 LIB_OBJS = $(patsubst %.c, $(BUILDDIR)/%.o, $(LIB_SRCS))
 
-lib: $(LIBS)
-
-# Compile
-$(BUILDDIR)/lib/%.o: lib/%.c | $$(dir $$@)
-	$(CC) $(LIB_CFLAGS) -c $< -o $@
+lib: $(LIB)
 
 # Link
-$(LIBS): $(LIB_OBJS)
+$(LIB): $(LIB_OBJS)
 	$(CC) $(LIB_LDFLAGS) -o $@ $^ $(LIB_LDLIBS)
-	
+	ln -srf $@ $(BUILDDIR)/$(LIB_NAME).so
+
+# Compile
+$(BUILDDIR)/lib/%.o: lib/%.c $(BUILDDIR)/defines | $$(dir $$@)
+	$(CC) $(LIB_CFLAGS) -c $< -o $@
+
 # Install
 install-lib: lib
-	install -m 0644 $(LIBS) $(PREFIX)/lib
-	install -m 0755				-d $(PREFIX)/include/villas/
-	install -m 0644 include/villas/*.h 	   $(PREFIX)/include/villas/
+	install -m 0755 -D -T $(LIB) $(DESTDIR)$(PREFIX)/lib/$(LIB_NAME).so.$(LIB_ABI_VERSION)
+	install -m 0644 -D -t $(DESTDIR)$(PREFIX)/include/villas/ include/villas/*.h
+	ln -srf $(DESTDIR)$(PREFIX)/lib/$(LIB_NAME).so.$(LIB_ABI_VERSION) $(DESTDIR)$(PREFIX)/lib/$(LIB_NAME).so
 	ldconfig
 
 clean-lib:
-	rm -rf $(BUILDDIR)/lib $(LIBS)
+	rm -rf $(BUILDDIR)/lib $(LIB)
 
-.PHONY: lib lib-tests lib-tests
+.PHONY: lib install-lib clean-lib $(BUILDDIR)/lib/defines

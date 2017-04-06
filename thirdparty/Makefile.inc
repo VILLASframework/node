@@ -14,7 +14,7 @@ $(DEPS_AUTOCONF): | $(BUILDDIR)/thirdparty/$$@/
 $(DEPS_CMAKE): | $(BUILDDIR)/thirdparty/$$@/
 	cmake -DCMAKE_INSTALL_PREFIX:PATH=$(PREFIX) \
 	      -H$(SRCDIR)/thirdparty/$@ \
-	      -B$(BUILDDIR)/thirdparty/$@
+	      -B$(BUILDDIR)/thirdparty/$@ $(CMAKE_OPTS)
 	make  -C$(BUILDDIR)/thirdparty/$@
 
 $(addprefix install-,$(DEPS)): install-%: %
@@ -24,16 +24,17 @@ $(addprefix install-,$(DEPS)): install-%: %
 $(addprefix clean-,$(DEPS)):
 	rm -rf $(BUILDDIR)/thirdparty/$(@:clean-%=%)
 
-install-thirdparty:
+install-thirdparty: $(addprefix install-,$(DEPS))
 
-clean-thirdparty:
+clean-thirdparty: $(addprefix clean-,$(DEPS))
 	rm -rf $(BUILDDIR)/thirdparty
-
-.PHONY: $(DEPS) thirdparty clean-thirdparty install-thirdparty
-
 
 # libconfig's build system is currently broken.
 # This is a workaround for: https://github.com/hyperrealm/libconfig/issues/53
 libconfig: | libconfig-fix
 libconfig-fix:
 	rm -f $(SRCDIR)/thirdparty/libconfig/lib/scanner.[hc]
+
+libwebsockets: CMAKE_OPTS = -DLWS_IPV6=1 -DLWS_WITH_STATIC=0 -DLWS_WITHOUT_TESTAPPS=1 -DLWS_WITH_HTTP2=1
+
+.PHONY: $(DEPS) thirdparty clean-thirdparty install-thirdparty

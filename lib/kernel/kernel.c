@@ -1,7 +1,7 @@
 /** Linux kernel related functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
 #include <stdio.h>
@@ -87,24 +87,17 @@ int kernel_module_loaded(const char *module)
 	return ret;
 }
 
-int kernel_has_version(int maj, int min)
+int kernel_get_version(struct version *v)
 {
 	struct utsname uts;
-	struct version current;
-	struct version required = { maj, min };
 
 	if (uname(&uts) < 0)
 		return -1;
 
-	if (version_parse(uts.release, &current))
+	if (version_parse(uts.release, v))
 		return -1;
 
-	return version_cmp(&current, &required) < 0;
-}
-
-int kernel_is_rt()
-{
-	return access(SYSFS_PATH "/kernel/realtime", R_OK);
+	return 0;
 }
 
 int kernel_get_cmdline_param(const char *param, char *buf, size_t len)
@@ -150,6 +143,40 @@ int kernel_get_cacheline_size()
 	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
 }
 
+int kernel_get_page_size()
+{
+	return sysconf(_SC_PAGESIZE);
+}
+
+/* There is no sysconf interface to get the hugepage size */
+int kernel_get_hugepage_size()
+{
+	char *key, *value, *unit, *line = NULL;
+	int sz = -1;
+	size_t len = 0;
+	FILE *f;
+	
+	f = fopen(PROCFS_PATH "/meminfo", "r");
+	if (!f)
+		return -1;
+	
+	while (getline(&line, &len, f) != -1) {
+		key   = strtok(line, ": ");
+		value = strtok(NULL, " ");
+		unit  = strtok(NULL, "\n");
+		
+		if (!strcmp(key, "Hugepagesize") && !strcmp(unit, "kB")) {
+			sz = strtoul(value, NULL, 10) * 1024;
+			break;
+		}
+	}
+	
+	free(line);
+	fclose(f);
+
+	return sz;
+}
+
 int kernel_get_nr_hugepages()
 {
 	FILE *f;
@@ -183,7 +210,7 @@ int kernel_set_nr_hugepages(int nr)
 }
 
 #if 0
-int kernel_check_cap(cap_value_t cap)
+int kernel_has_cap(cap_value_t cap)
 {
 	int ret;
 

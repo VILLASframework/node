@@ -4,7 +4,7 @@
  *   http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
  *
  * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2016 Steffen Vogel
+ * @copyright 2017 Steffen Vogel
  * @license BSD 2-Clause License
  * 
  * All rights reserved.
@@ -29,15 +29,17 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ *********************************************************************************/
 
 #include "queue.h"
 #include "utils.h"
+#include "memory.h"
 
 /** Initialize MPMC queue */
 int queue_init(struct queue *q, size_t size, struct memtype *mem)
 {
-	
+	assert(q->state == STATE_DESTROYED);
+
 	/* Queue size must be 2 exponent */
 	if (!IS_POW2(size)) {
 		size_t old_size = size;
@@ -59,13 +61,25 @@ int queue_init(struct queue *q, size_t size, struct memtype *mem)
 	atomic_store_explicit(&q->tail, 0, memory_order_relaxed);
 	atomic_store_explicit(&q->head, 0, memory_order_relaxed);
 	
+	q->state = STATE_INITIALIZED;
+	
 	return 0;
 }
 
 int queue_destroy(struct queue *q)
 {
 	void *buffer = (char *) q + q->buffer_off;
-	return memory_free(q->mem, buffer, (q->buffer_mask + 1) * sizeof(struct queue_cell));
+	int ret = 0;
+
+	if (q->state == STATE_DESTROYED)
+		return 0;
+
+	ret = memory_free(q->mem, buffer, (q->buffer_mask + 1) * sizeof(struct queue_cell));
+
+	if (ret == 0)
+		q->state = STATE_DESTROYED;
+	
+	return ret;
 }
 
 /** Return estimation of current queue usage.

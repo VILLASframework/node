@@ -1,121 +1,46 @@
-#include <string.h>
-#include <unistd.h>
+/** FPGA IP component.
+ *
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
 
 #include <libconfig.h>
 
 #include "log.h"
+#include "plugin.h"
 
-#include "fpga/ip.h"
-#include "fpga/intc.h"
-#include "fpga/fifo.h"
-#include "nodes/fpga.h"
-
-#include "config.h"
-
-struct list ip_types;	/**< Table of existing FPGA IP core drivers */
-
-struct ip * ip_vlnv_lookup(struct list *l, const char *vendor, const char *library, const char *name, const char *version)
-{
-	list_foreach(struct ip *c, l) {
-		if (ip_vlnv_match(c, vendor, library, name, version))
-			return c;
-	}
-
-	return NULL;
-}
-
-int ip_vlnv_match(struct ip *c, const char *vendor, const char *library, const char *name, const char *version)
-{
-	return ((vendor  && strcmp(c->vlnv.vendor, vendor))	||
-		(library && strcmp(c->vlnv.library, library))	||
-		(name    && strcmp(c->vlnv.name, name))		||
-		(version && strcmp(c->vlnv.version, version))) ? 0 : 1;
-}
-
-int ip_vlnv_parse(struct ip *c, const char *vlnv)
-{
-	char *tmp = strdup(vlnv);
-
-	c->vlnv.vendor  = strdup(strtok(tmp, ":"));
-	c->vlnv.library = strdup(strtok(NULL, ":"));
-	c->vlnv.name    = strdup(strtok(NULL, ":"));
-	c->vlnv.version = strdup(strtok(NULL, ":"));
-	
-	free(tmp);
-
-	return 0;
-}
-
-int ip_init(struct ip *c)
+int fpga_ip_init(struct fpga_ip *c, struct fpga_ip_type *vt)
 {
 	int ret;
+	
+	assert(c->state == STATE_DESTROYED);
+	
+	c->_vt = vt;
+	c->_vd = alloc(vt->size);
 
-	ret = c->_vt && c->_vt->init ? c->_vt->init(c) : 0;
+	ret = c->_vt->init ? c->_vt->init(c) : 0;
 	if (ret)
-		error("Failed to intialize IP core: %s", c->name);
+		return ret;
 
-	if (ret == 0)
-		c->state = IP_STATE_INITIALIZED;
+	c->state = STATE_INITIALIZED;
 	
 	debug(8, "IP Core %s initalized (%u)", c->name, ret);
 
 	return ret;
 }
 
-int ip_reset(struct ip *c)
-{
-	debug(3, "Reset IP core: %s", c->name);
-
-	return c->_vt && c->_vt->reset ? c->_vt->reset(c) : 0;
-}
-
-void ip_destroy(struct ip *c)
-{
-	if (c->_vt && c->_vt->destroy)
-		c->_vt->destroy(c);
-
-	free(c->vlnv.vendor);
-	free(c->vlnv.library);
-	free(c->vlnv.name);
-	free(c->vlnv.version);
-}
-
-void ip_dump(struct ip *c)
-{
-	info("IP %s: vlnv=%s:%s:%s:%s baseaddr=%#jx, irq=%d, port=%d",
-		c->name, c->vlnv.vendor, c->vlnv.library, c->vlnv.name, c->vlnv.version, 
-		c->baseaddr, c->irq, c->port);
-
-	if (c->_vt && c->_vt->dump)
-		c->_vt->dump(c);
-}
-
-int ip_parse(struct ip *c, config_setting_t *cfg)
+int fpga_ip_parse(struct fpga_ip *c, config_setting_t *cfg)
 {
 	int ret;
-	const char *vlnv;
 	long long baseaddr;
+	
+	assert(c->state != STATE_STARTED && c->state != STATE_DESTROYED);
 
 	c->cfg = cfg;
 
 	c->name = config_setting_name(cfg);
 	if (!c->name)
 		cerror(cfg, "IP is missing a name");
-
-	if (!config_setting_lookup_string(cfg, "vlnv", &vlnv))
-		cerror(cfg, "IP %s is missing the VLNV identifier", c->name);
-
-	ret = ip_vlnv_parse(c, vlnv);
-	if (ret)
-		cerror(cfg, "Failed to parse VLNV identifier");
-
-	/* Try to find matching IP type */
-	list_foreach(struct ip_type *t, &ip_types) {
-		if (ip_vlnv_match(c, t->vlnv.vendor, t->vlnv.library, t->vlnv.name, t->vlnv.version)) {
-			c->_vt = t;
-			break;
-		}
-	}
 
 	/* Common settings */
 	if (config_setting_lookup_int64(cfg, "baseaddr", &baseaddr))
@@ -132,6 +57,97 @@ int ip_parse(struct ip *c, config_setting_t *cfg)
 	ret = c->_vt && c->_vt->parse ? c->_vt->parse(c) : 0;
 	if (ret)
 		error("Failed to parse settings for IP core '%s'", c->name);
+	
+	c->state = STATE_PARSED;
 
 	return 0;
+}
+
+int fpga_ip_start(struct fpga_ip *c)
+{
+	int ret;
+
+	assert(c->state == STATE_CHECKED);
+	
+	ret = c->_vt->start ? c->_vt->start(c) : 0;
+	if (ret)
+		return ret;
+
+	c->state = STATE_STARTED;
+	
+	return 0;
+}
+
+int fpga_ip_stop(struct fpga_ip *c)
+{
+	int ret;
+
+	assert(c->state == STATE_STARTED);
+	
+	ret = c->_vt->stop ? c->_vt->stop(c) : 0;
+	if (ret)
+		return ret;
+	
+	c->state = STATE_STOPPED;
+	
+	return 0;
+}
+
+int fpga_ip_destroy(struct fpga_ip *c)
+{
+	int ret;
+
+	assert(c->state != STATE_DESTROYED);
+	
+	fpga_vlnv_destroy(&c->vlnv);
+
+	ret = c->_vt->destroy ? c->_vt->destroy(c) : 0;
+	if (ret)
+		return ret;
+
+	c->state = STATE_DESTROYED;
+
+	free(c->_vd);
+
+	return 0;
+}
+
+int fpga_ip_reset(struct fpga_ip *c)
+{
+	debug(3, "Reset IP core: %s", c->name);
+
+	return c->_vt->reset ? c->_vt->reset(c) : 0;
+}
+
+void fpga_ip_dump(struct fpga_ip *c)
+{
+	assert(c->state != STATE_DESTROYED);
+
+	info("IP %s: vlnv=%s:%s:%s:%s baseaddr=%#jx, irq=%d, port=%d",
+		c->name, c->vlnv.vendor, c->vlnv.library, c->vlnv.name, c->vlnv.version, 
+		c->baseaddr, c->irq, c->port);
+
+	if (c->_vt->dump)
+		c->_vt->dump(c);
+}
+
+struct fpga_ip_type * fpga_ip_type_lookup(const char *vstr)
+{
+	int ret;
+
+	struct fpga_vlnv vlnv;
+	
+	ret = fpga_vlnv_parse(&vlnv, vstr);
+	if (ret)
+		return NULL;
+	
+	/* Try to find matching IP type */
+	for (size_t i = 0; i < list_length(&plugins); i++) {
+		struct plugin *p = list_at(&plugins, i);
+
+		if (p->type == PLUGIN_TYPE_FPGA_IP && !fpga_vlnv_cmp(&vlnv, &p->ip.vlnv))
+			return &p->ip;
+	}
+	
+	return NULL;
 }

@@ -1,0 +1,85 @@
+# Dockerfile for VILLASnode development.
+#
+# This Dockerfile builds an image which contains all library dependencies
+# and tools to build VILLASnode.
+# However, VILLASnode itself it not part of the image.
+#
+# This image can be used for developing VILLASnode
+# by running:
+#   make docker
+#
+# @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+# @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+###################################################################################
+
+FROM fedora:latest
+MAINTAINER Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+
+# Toolchain
+RUN dnf -y update && \
+    dnf -y install \
+	gcc pkgconfig make cmake \
+	git \
+	gcc-c++ \
+	autoconf automake autogen libtool \
+	flex bison \
+	texinfo
+
+# Dependencies
+RUN dnf -y update && \
+    dnf -y install \
+	openssl \
+	openssl-devel \
+	libconfig-devel \
+	libnl3-devel \
+	libcurl-devel \
+	jansson-devel
+
+# Several tools only needed for developement and testing
+RUN dnf -y update && \
+    dnf -y install \
+	doxygen \
+	dia \
+	graphviz \
+	openssh-clients \
+	rpmdevtools \
+	rpm-build \
+	jq \
+	iproute \
+	python-pip \
+	valgrind \
+	gdb
+
+# Tools for debugging, coverage, profiling
+RUN pip install \
+        gcovr
+
+ENV PKG_CONFIG_PATH /usr/local/lib/pkgconfig
+ENV LD_LIBRARY_PATH /usr/local/lib
+
+# Build & Install libxil
+COPY thirdparty/libxil /tmp/libxil
+RUN mkdir -p /tmp/libxil/build && cd /tmp/libxil/build && cmake .. && make install
+
+# Build & Install Criterion
+COPY thirdparty/criterion /tmp/criterion
+RUN mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && cmake .. && make install
+
+# Build & Install libwebsockets
+COPY thirdparty/libwebsockets /tmp/libwebsockets
+RUN mkdir -p /tmp/libwebsockets/build && cd /tmp/libwebsockets/build && cmake -DLWS_IPV6=1 -DLWS_WITH_STATIC=0 -DLWS_WITHOUT_TESTAPPS=1 -DLWS_WITH_HTTP2=1 .. && make install
+
+# Cleanup intermediate files from builds
+RUN rm -rf /tmp/*
+
+# Expose ports for HTTP and WebSocket frontend
+EXPOSE 80
+EXPOSE 443
+
+#ADD https://villas.0l.de/packages/villas.repo /etc/yum.repos.d/
+
+ENTRYPOINT villas
+
+WORKDIR /villas
+
+ENTRYPOINT bash

@@ -1,44 +1,53 @@
 /** Benchmarks for VILLASfpga
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Steffen Vogel
+ * @copyright 2017, Steffen Vogel
  **********************************************************************************/
 
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/utsname.h>
 
 #include <villas/utils.h>
 #include <villas/log.h>
 #include <villas/timing.h>
-#include <villas/nodes/fpga.h>
-#include <villas/fpga/intc.h>
-#include <villas/fpga/ip.h>
 
-#include <xilinx/xtmrctr_l.h>
+#include <villas/fpga/ip.h>
+#include <villas/fpga/card.h>
+#include <villas/fpga/ips/intc.h>
+#include <villas/fpga/ips/timer.h>
 
 #include "config.h"
 
-int fpga_benchmark_datamover(struct fpga *f);
-int fpga_benchmark_jitter(struct fpga *f);
-int fpga_benchmark_memcpy(struct fpga *f);
-int fpga_benchmark_latency(struct fpga *f);
+/* Some hard-coded configuration for the FPGA benchmarks */
+#define BENCH_DM		3
+// 1 FIFO
+// 2 DMA SG
+// 3 DMA Simple
+
+#define BENCH_RUNS		3000000
+#define BENCH_WARMUP		100
+#define BENCH_DM_EXP_MIN	0
+#define BENCH_DM_EXP_MAX	20
+
+int fpga_benchmark_datamover(struct fpga_card *c);
+int fpga_benchmark_jitter(struct fpga_card *c);
+int fpga_benchmark_memcpy(struct fpga_card *c);
+int fpga_benchmark_latency(struct fpga_card *c);
 
 #if defined(WITH_BLAS) && defined(WITH_LAPACK)
-int fpga_benchmark_overruns(struct fpga *f);
+int fpga_benchmark_overruns(struct fpga_card *c);
 #endif
 
 int intc_flags = 0;
 struct utsname uts;
 
-int fpga_benchmarks(int argc, char *argv[], struct fpga *f)
+int fpga_benchmarks(int argc, char *argv[], struct fpga_card *c)
 {
 	int ret;
 	struct bench {
 		const char *name;
-		int (*func)(struct fpga *f);
+		int (*func)(struct fpga_card *c);
 	} benchmarks[] = {
 		{ "datamover",	fpga_benchmark_datamover },
 		{ "jitter",	fpga_benchmark_jitter },
@@ -67,7 +76,7 @@ int fpga_benchmarks(int argc, char *argv[], struct fpga *f)
 	if (ret)
 		return -1;
 
-again:	ret = bench->func(f);
+again:	ret = bench->func(c);
 	if (ret)
 		error("Benchmark %s failed", bench->name);
 
@@ -81,19 +90,19 @@ again:	ret = bench->func(f);
 	return -1;
 }
 
-int fpga_benchmark_jitter(struct fpga *f)
+int fpga_benchmark_jitter(struct fpga_card *c)
 {
 	int ret;
 
-	struct ip *tmr;
-
-	tmr = list_lookup(&f->ips, "timer_0");
-	if (!tmr || !f->intc)
+	struct fpga_ip *ip = list_lookup(&c->ips, "timer_0");
+	if (!ip || !c->intc)
 		return -1;
 
-	XTmrCtr *xtmr = &tmr->timer.inst;
+	struct timer *tmr = ip->_vd;
 
-	ret = intc_enable(f->intc, (1 << tmr->irq), intc_flags);
+	XTmrCtr *xtmr = &tmr->inst;
+
+	ret = intc_enable(c->intc, (1 << ip->irq), intc_flags);
 	if (ret)
 		error("Failed to enable interrupt");
 	
@@ -108,12 +117,12 @@ int fpga_benchmark_jitter(struct fpga *f)
 
 	uint64_t end, start = rdtsc();
 	for (int i = 0; i < runs; i++) {
-		uint64_t cnt = intc_wait(f->intc, tmr->irq);
+		uint64_t cnt = intc_wait(c->intc, ip->irq);
 		if (cnt != 1)
 			warn("fail");
 		
 		/* Ackowledge IRQ */
-		XTmrCtr_WriteReg((uintptr_t) f->map + tmr->baseaddr, 0, XTC_TCSR_OFFSET, XTmrCtr_ReadReg((uintptr_t) f->map + tmr->baseaddr, 0, XTC_TCSR_OFFSET));
+		XTmrCtr_WriteReg((uintptr_t) c->map + ip->baseaddr, 0, XTC_TCSR_OFFSET, XTmrCtr_ReadReg((uintptr_t) c->map + ip->baseaddr, 0, XTC_TCSR_OFFSET));
 
 		end = rdtsc();
 		hist[i] = end - start;
@@ -131,34 +140,34 @@ int fpga_benchmark_jitter(struct fpga *f)
 
 	free(hist);
 	
-	ret = intc_disable(f->intc, (1 << tmr->irq));
+	ret = intc_disable(c->intc, (1 << ip->irq));
 	if (ret)
 		error("Failed to disable interrupt");
 
 	return 0;
 }
 
-int fpga_benchmark_latency(struct fpga *f)
+int fpga_benchmark_latency(struct fpga_card *c)
 {
 	int ret;
 
 	uint64_t start, end;
 
-	if (!f->intc)
+	if (!c->intc)
 		return -1;
 
 	int runs = 1000000;
 	int hist[runs];
 
-	ret = intc_enable(f->intc, 0x100, intc_flags);
+	ret = intc_enable(c->intc, 0x100, intc_flags);
 	if (ret)
 		error("Failed to enable interrupts");
 
 	for (int i = 0; i < runs; i++) {
 		start = rdtsc();
-		XIntc_Out32((uintptr_t) f->map + f->intc->baseaddr + XIN_ISR_OFFSET, 0x100);
+		XIntc_Out32((uintptr_t) c->map + c->intc->baseaddr + XIN_ISR_OFFSET, 0x100);
 
-		intc_wait(f->intc, 8);
+		intc_wait(c->intc, 8);
 		end = rdtsc();
 
 		hist[i] = end - start;
@@ -171,18 +180,18 @@ int fpga_benchmark_latency(struct fpga *f)
 		fprintf(g, "%u\n", hist[i]);
 	fclose(g);
 
-	ret = intc_disable(f->intc, 0x100);
+	ret = intc_disable(c->intc, 0x100);
 	if (ret)
 		error("Failed to disable interrupt");
 
 	return 0;
 }
 
-int fpga_benchmark_datamover(struct fpga *f)
+int fpga_benchmark_datamover(struct fpga_card *c)
 {
 	int ret;
 
-	struct ip *dm;
+	struct fpga_ip *dm;
 	struct dma_mem mem, src, dst;
 
 #if BENCH_DM == 1
@@ -193,15 +202,15 @@ int fpga_benchmark_datamover(struct fpga *f)
 	char *dm_name = "dma_1";
 #endif
 
-	dm = list_lookup(&f->ips, dm_name);
+	dm = list_lookup(&c->ips, dm_name);
 	if (!dm)
 		error("Unknown datamover");
 	
-	ret = switch_connect(f->sw, dm, dm);
+	ret = switch_connect(c->sw, dm, dm);
 	if (ret)
 		error("Failed to configure switch");
 	
-	ret = intc_enable(f->intc, (1 << dm->irq) | (1 << (dm->irq + 1)), intc_flags);
+	ret = intc_enable(c->intc, (1 << dm->irq) | (1 << (dm->irq + 1)), intc_flags);
 	if (ret)
 		error("Failed to enable interrupt");
 
@@ -268,7 +277,7 @@ int fpga_benchmark_datamover(struct fpga *f)
 
 	fclose(g);
 	
-	ret = switch_disconnect(f->sw, dm, dm);
+	ret = switch_disconnect(c->sw, dm, dm);
 	if (ret)
 		error("Failed to configure switch");
 	
@@ -276,7 +285,7 @@ int fpga_benchmark_datamover(struct fpga *f)
 	if (ret)
 		error("Failed to release DMA memory");
 	
-	ret = intc_disable(f->intc, (1 << dm->irq) | (1 << (dm->irq + 1)));
+	ret = intc_disable(c->intc, (1 << dm->irq) | (1 << (dm->irq + 1)));
 	if (ret)
 		error("Failed to enable interrupt");
 
@@ -284,9 +293,9 @@ int fpga_benchmark_datamover(struct fpga *f)
 	return 0;
 }
 
-int fpga_benchmark_memcpy(struct fpga *f)
+int fpga_benchmark_memcpy(struct fpga_card *c)
 {
-	char *map = f->map + 0x200000;
+	char *map = c->map + 0x200000;
 	uint32_t *mapi = (uint32_t *) map;
 
 	char fn[256];

@@ -3,7 +3,7 @@
  * This file implements the opal subtype for nodes.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
 #include <stdlib.h>
@@ -11,6 +11,7 @@
 
 #include "opal.h"
 #include "utils.h"
+#incude "plugin.h"
 
 /* Private static storage */
 static char *async_shmem_name;		/**< Shared Memory identifiers and size, provided via argv. */
@@ -71,7 +72,7 @@ int opal_init(int argc, char *argv[], config_setting_t *cfg)
 
 	info("Started as OPAL Asynchronous process");
 	info("This is VILLASnode %s (built on %s, %s)",
-		VERSION, __DATE__, __TIME__);
+		BUILDID, __DATE__, __TIME__);
 
 	opal_print_global();
 
@@ -86,7 +87,7 @@ int opal_deinit()
 	if (err != EOK)
 		error("Failed to close shared memory area (%d)", err);
 
-	debug(DBG_OPAL | 4, "Closing OPAL shared memory mapping");
+	debug(LOG_OPAL | 4, "Closing OPAL shared memory mapping");
 
 	err = OpalSystemCtrl_UnRegister(print_shmem_name);
 	if (err != EOK)
@@ -102,7 +103,7 @@ int opal_deinit()
 
 int opal_print_global()
 {
-	debug(DBG_OPAL | 2, "Controller ID: %u", params.controllerID);
+	debug(LOG_OPAL | 2, "Controller ID: %u", params.controllerID);
 	
 	char *sbuf = alloc(send_icons * 5);
 	char *rbuf = alloc(recv_icons * 5);
@@ -112,17 +113,17 @@ int opal_print_global()
 	for (int i = 0; i < recv_icons; i++)
 		strcatf(&rbuf, "%u ", recv_ids[i]);
 
-	debug(DBG_OPAL | 2, "Send Blocks: %s",    sbuf);
-	debug(DBG_OPAL | 2, "Receive Blocks: %s", rbuf);
+	debug(LOG_OPAL | 2, "Send Blocks: %s",    sbuf);
+	debug(LOG_OPAL | 2, "Receive Blocks: %s", rbuf);
 	
 	free(sbuf);
 	free(rbuf);
 
-	debug(DBG_OPAL | 2, "Control Block Parameters:");
+	debug(LOG_OPAL | 2, "Control Block Parameters:");
 	for (int i = 0; i < GENASYNC_NB_FLOAT_PARAM; i++)
-		debug(DBG_OPAL | 2, "FloatParam[]%u] = %f", i, params.FloatParam[i]);
+		debug(LOG_OPAL | 2, "FloatParam[]%u] = %f", i, params.FloatParam[i]);
 	for (int i = 0; i < GENASYNC_NB_STRING_PARAM; i++)
-		debug(DBG_OPAL | 2, "StringParam[%u] = %s", i, params.StringParam[i]);
+		debug(LOG_OPAL | 2, "StringParam[%u] = %s", i, params.StringParam[i]);
 
 	return 0;
 }
@@ -148,7 +149,7 @@ char * opal_print(struct node *n)
 		o->send_id, o->recv_id, o->reply);
 }
 
-int opal_open(struct node *n)
+int opal_start(struct node *n)
 {
 	struct opal *o = n->_vd;
 
@@ -172,7 +173,7 @@ int opal_open(struct node *n)
 	return 0;
 }
 
-int opal_close(struct node *n)
+int opal_stop(struct node *n)
 {
 	return 0;
 }
@@ -275,19 +276,23 @@ int opal_write(struct node *n, struct pool *pool, unsigned cnt)
 	return 1;
 }
 
-static struct node_type vt = {
+static struct plugin p = {
 	.name		= "opal",
 	.description	= "run as OPAL Asynchronous Process (libOpalAsyncApi)",
-	.vectoroize	= 1,
-	.size		= sizeof(struct opal),
-	.parse		= opal_parse,
-	.print		= opal_print,
-	.open		= opal_open,
-	.close		= opal_close,
-	.read		= opal_read,
-	.write		= opal_write,
-	.init		= opal_init,
-	.deinit		= opal_deinit
+	.type		= PLUGIN_TYPE_NODE,
+	.node		= {
+		.vectoroize	= 1,
+		.size		= sizeof(struct opal),
+		.parse		= opal_parse,
+		.print		= opal_print,
+		.start		= opal_start,
+		.stop		= opal_stop,
+		.read		= opal_read,
+		.write		= opal_write,
+		.init		= opal_init,
+		.deinit		= opal_deinit,
+		.instances	= LIST_INIT()
+	}
 };
 
-REGISTER_NODE_TYPE(&vt)
+REGISTER_PLUGIN(&p)

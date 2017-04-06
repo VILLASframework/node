@@ -4,67 +4,41 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Steffen Vogel
- */
-/**
- * @addtogroup fpga VILLASnode
- * @ingroup node
- * @{
+ * @copyright 2017, Steffen Vogel
  *********************************************************************************/
 
-#ifndef _FPGA_H_
-#define _FPGA_H_
+/**
+ * @addtogroup fpga VILLASfpga
+ * @ingroup node
+ * @{
+ */
+
+#pragma once
 
 #include "kernel/vfio.h"
 #include "kernel/pci.h"
 
-#include "fpga/dma.h"
-#include "fpga/ip.h"
-#include "fpga/intc.h"
+#include "fpga/ips/dma.h"
 
 #include "node.h"
 #include "list.h"
 
+/* Forward declarations */
+struct fpga_ip;
+
+/** The node type */
 struct fpga {
-	struct pci_dev filter;		/**< Filter for PCI device. */
-	struct vfio_dev vd;		/**< VFIO device handle. */
-
-	int do_reset;			/**< Reset VILLASfpga during startup? */
-	int affinity;			/**< Affinity for MSI interrupts */
-
-	struct list ips;		/**< List of IP components on FPGA. */
-
-	char *map;			/**< PCI BAR0 mapping for register access */
-
-	size_t maplen;
-	size_t dmalen;
-
-	/* Some IP cores are special and referenced here */
-	struct ip *intc;
-	struct ip *reset;
-	struct ip *sw;
+	struct fpga_ip *ip;
 	
-	config_setting_t *cfg;
-};
-
-struct fpga_dm {
-	struct ip *ip;
-	const char *ip_name;
+	struct pci *pci;
+	struct vfio_container *vfio_container;
 
 	int use_irqs;
-
 	struct dma_mem dma;
-
-	enum {
-		FPGA_DM_DMA,
-		FPGA_DM_FIFO
-	} type;
-
-	struct fpga *card;
 };
 
 /** @see node_vtable::init */
-int fpga_init(int argc, char * argv[], config_setting_t *cfg);
+int fpga_init(int argc, char *argv[], config_setting_t *cfg);
 
 /** @see node_vtable::deinit */
 int fpga_deinit();
@@ -72,17 +46,16 @@ int fpga_deinit();
 /** @see node_vtable::parse */
 int fpga_parse(struct node *n, config_setting_t *cfg);
 
-/** Parse the 'fpga' section in the configuration file */
-int fpga_parse_card(struct fpga *v, int argc, char * argv[], config_setting_t *cfg);
+struct fpga_card * fpga_lookup_card(const char *name);
 
 /** @see node_vtable::print */
 char * fpga_print(struct node *n);
 
 /** @see node_vtable::open */
-int fpga_open(struct node *n);
+int fpga_start(struct node *n);
 
 /** @see node_vtable::close */
-int fpga_close(struct node *n);
+int fpga_stop(struct node *n);
 
 /** @see node_vtable::read */
 int fpga_read(struct node *n, struct sample *smps[], unsigned cnt);
@@ -99,4 +72,4 @@ int fpga_reset(struct fpga *f);
 /** Dump some details about the fpga card */
 void fpga_dump(struct fpga *f);
 
-#endif /** _FPGA_H_ @} */
+/** @} */

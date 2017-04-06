@@ -2,20 +2,15 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
-#ifndef _HIST_H_
-#define _HIST_H_
+#pragma once
 
 #include <stdio.h>
 #include <stdint.h>
 
-#include "config.h"
-
-#ifdef WITH_JANSSON
-  #include <jansson.h>
-#endif
+#include <jansson.h>
 
 #define HIST_HEIGHT	(LOG_WIDTH - 55)
 #define HIST_SEQ	17
@@ -45,10 +40,10 @@ struct hist {
 };
 
 /** Initialize struct hist with supplied values and allocate memory for buckets. */
-int hist_create(struct hist *h, double start, double end, double resolution);
+int hist_init(struct hist *h, double start, double end, double resolution);
 
 /** Free the dynamically allocated memory. */
-void hist_destroy(struct hist *h);
+int hist_destroy(struct hist *h);
 
 /** Reset all counters and values back to zero. */
 void hist_reset(struct hist *h);
@@ -80,10 +75,6 @@ char * hist_dump(struct hist *h);
 /** Prints Matlab struct containing all infos to file. */
 int hist_dump_matlab(struct hist *h, FILE *f);
 
-#ifdef WITH_JANSSON
 int hist_dump_json(struct hist *h, FILE *f);
 
 json_t * hist_json(struct hist *h);
-#endif
-
-#endif /* _HIST_H_ */

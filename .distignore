@@ -1,0 +1,16 @@
+build
+thirdparty
+clients
+
+.git
+.gitmodules
+.gitignore
+.dockerignore
+
+.DS_Store
+*~
+
+*.o
+*.d
+
+villas-*

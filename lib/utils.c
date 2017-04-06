@@ -1,7 +1,7 @@
 /** General purpose helper functions.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
 #include <stdlib.h>
@@ -11,20 +11,18 @@
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
-#include <signal.h>
 #include <pthread.h>
 #include <fcntl.h>
 #include <ctype.h>
 
 #include "config.h"
-#include "cfg.h"
 #include "utils.h"
 
 void print_copyright()
 {
 	printf("VILLASnode %s (built on %s %s)\n",
-		BLU(VERSION), MAG(__DATE__), MAG(__TIME__));
-	printf(" copyright 2014-2016, Institute for Automation of Complex Power Systems, EONERC\n");
+		BLU(BUILDID), MAG(__DATE__), MAG(__TIME__));
+	printf(" Copyright 2014-2017, Institute for Automation of Complex Power Systems, EONERC\n");
 	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
 }
 
@@ -38,35 +36,6 @@ int version_cmp(struct version *a, struct version *b) {
 	int minor = a->minor - b->minor;
 
 	return major ? major : minor;
-}
-
-int strftimespec(char *dst, size_t max, const char *fmt, struct timespec *ts)
-{
-	int s, d;
-	char fmt2[64], dst2[64];
-
-	for (s=0, d=0; fmt[s] && d < 64;) {
-		char c = fmt2[d++] = fmt[s++];
-		if (c == '%') {
-			char n = fmt[s];
-			if (n == 'u') {
-				fmt2[d++] = '0';
-				fmt2[d++] = '3';
-			}
-			else
-				fmt2[d++] = '%';
-		}
-	}
-	
-	/* Print sub-second part to format string */
-	snprintf(dst2, sizeof(dst2), fmt2, ts->tv_nsec / 1000000);
-
-	/* Print timestamp */
-	struct tm tm;
-	if (localtime_r(&(ts->tv_sec), &tm) == NULL)
-		return -1;
-
-	return strftime(dst, max, dst2, &tm);
 }
 
 double box_muller(float m, float s)
@@ -133,10 +102,19 @@ char * vstrcatf(char **dest, const char *fmt, va_list ap)
 	return *dest;
 }
 
+void cpuset_to_integer(cpu_set_t *cset, uintmax_t *set)
+{
+	*set = 0;
+	for (int i = 0; i < MIN(sizeof(*set) * 8, CPU_SETSIZE); i++) {
+		if (CPU_ISSET(i, cset))
+			*set |= 1ULL << i;
+	}
+}
+
 void cpuset_from_integer(uintmax_t set, cpu_set_t *cset)
 {
 	CPU_ZERO(cset);
-	for (int i = 0; i < MIN(sizeof(set), CPU_SETSIZE) * 8; i++) {
+	for (int i = 0; i < MIN(sizeof(set) * 8, CPU_SETSIZE); i++) {
 		if (set & (1L << i))
 			CPU_SET(i, cset);
 	}
@@ -198,6 +176,7 @@ int cpulist_parse(const char *str, cpu_set_t *set, int fail)
 
 	if (r == 2)
 		return 1;
+	
 	return 0;
 }
 
@@ -243,6 +222,22 @@ char *cpulist_create(char *str, size_t len, cpu_set_t *set)
 }
 
 #ifdef WITH_JANSSON
+static int json_to_config_type(int type)
+{
+	switch (type) {
+		case JSON_OBJECT:	return CONFIG_TYPE_GROUP;
+		case JSON_ARRAY:	return CONFIG_TYPE_LIST;
+		case JSON_STRING:	return CONFIG_TYPE_STRING;
+		case JSON_INTEGER:	return CONFIG_TYPE_INT64;
+		case JSON_REAL:		return CONFIG_TYPE_FLOAT;
+		case JSON_TRUE:
+		case JSON_FALSE:
+		case JSON_NULL:		return CONFIG_TYPE_BOOL;
+	}
+	
+	return -1;
+}
+
 json_t * config_to_json(config_setting_t *cfg)
 {
 	switch (config_setting_type(cfg)) {
@@ -265,18 +260,82 @@ json_t * config_to_json(config_setting_t *cfg)
 		case CONFIG_TYPE_GROUP: {
 			json_t *json = json_object();
 			
-			for (int i = 0; i < config_setting_length(cfg); i++)
+			for (int i = 0; i < config_setting_length(cfg); i++) {
 				json_object_set_new(json,
 					config_setting_name(config_setting_get_elem(cfg, i)),
 					config_to_json(config_setting_get_elem(cfg, i))
 				);
-			
+			}
+
 			return json;
 		}
-		
+
 		default:
 			return json_object();
 	}
+}
+
+int json_to_config(json_t *json, config_setting_t *parent)
+{
+	config_setting_t *cfg;
+	int ret, type;
+	
+	if (config_setting_is_root(parent)) {
+		if (!json_is_object(json))
+			return -1; /* The root must be an object! */
+	}
+	
+	switch (json_typeof(json)) {
+		case JSON_OBJECT: {
+			const char *key;
+			json_t *json_value;
+
+			json_object_foreach(json, key, json_value) {
+				type = json_to_config_type(json_typeof(json_value));
+				
+				cfg = config_setting_add(parent, key, type);
+				ret = json_to_config(json_value, cfg);
+				if (ret)
+					return ret;
+			}
+			break;
+		}
+		
+		case JSON_ARRAY: {
+			size_t i;
+			json_t *json_value;
+
+			json_array_foreach(json, i, json_value) {
+				type = json_to_config_type(json_typeof(json_value));
+				
+				cfg = config_setting_add(parent, NULL, type);
+				ret = json_to_config(json_value, cfg);
+				if (ret)
+					return ret;
+			}
+			break;
+		}
+		
+		case JSON_STRING:
+			config_setting_set_string(parent, json_string_value(json));
+			break;
+		
+		case JSON_INTEGER:
+			config_setting_set_int64(parent, json_integer_value(json));
+			break;
+
+		case JSON_REAL:
+			config_setting_set_float(parent, json_real_value(json));
+			break;
+
+		case JSON_TRUE:
+		case JSON_FALSE:
+		case JSON_NULL:
+			config_setting_set_bool(parent, json_is_true(json));
+			break;
+	}
+	
+	return 0;
 }
 #endif
 
@@ -300,31 +359,28 @@ void * memdup(const void *src, size_t bytes)
 	return dst;
 }
 
-int read_random(char *buf, size_t len)
+ssize_t read_random(char *buf, size_t len)
 {
 	int fd;
-	
+	ssize_t bytes, total;
+
 	fd = open("/dev/urandom", O_RDONLY);
 	if (fd < 0)
 		return -1;
-	
-	ssize_t bytes, total = 0;
-	
+
+	bytes = 0;
+	total = 0;
 	while (total < len) {
 		bytes = read(fd, buf + total, len - total);
 		if (bytes < 0)
-			goto out;
+			break;
 
 		total += bytes;
 	}
 	
 	close(fd);
 	
-	return 0;
-out:
-	close(fd);
-
-	return -1;
+	return bytes;
 }
 
 void rdtsc_sleep(uint64_t nanosecs, uint64_t start)
@@ -340,4 +396,44 @@ void rdtsc_sleep(uint64_t nanosecs, uint64_t start)
 	do {
 		__asm__("nop");
 	} while (rdtsc() - start < cycles);
+}
+
+/* Setup exit handler */
+void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
+{
+	info("Initialize signals");
+	
+	struct sigaction sa_quit = {
+		.sa_flags = SA_SIGINFO,
+		.sa_sigaction = cb
+	};
+
+	sigemptyset(&sa_quit.sa_mask);
+	sigaction(SIGINT, &sa_quit, NULL);
+	sigaction(SIGTERM, &sa_quit, NULL);
+}
+
+int sha1sum(FILE *f, unsigned char *sha1)
+{
+	SHA_CTX c;
+	char buf[512];
+	ssize_t bytes;
+	long seek;
+	
+	seek = ftell(f);
+	fseek(f, 0, SEEK_SET);
+
+	SHA1_Init(&c);
+
+	bytes = fread(buf, 1, 512, f);
+	while (bytes > 0) {
+		SHA1_Update(&c, buf, bytes);
+		bytes = fread(buf, 1, 512, f);
+	}
+
+	SHA1_Final(sha1, &c);
+	
+	fseek(f, seek, SEEK_SET);
+
+	return 0;
 }

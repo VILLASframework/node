@@ -7,10 +7,11 @@
  *   Unauthorized copying of this file, via any medium is strictly prohibited. 
  *********************************************************************************/
 
-#ifndef _WEBMSG_FORMAT_H_
-#define _WEBMSG_FORMAT_H_
+#pragma once
 
 #include <stdint.h>
+
+#include "msg_format.h"
 
 #ifdef __linux__
   #define _BSD_SOURCE		1
@@ -39,16 +40,16 @@
 #endif
 
 /** The total size in bytes of a message */
-#define WEBMSG_LEN(values)	(sizeof(struct msg) + MSG_DATA_LEN(values))
+#define WEBMSG_LEN(values)	(sizeof(struct webmsg) + MSG_DATA_LEN(values))
 
 /** The length of \p values values in bytes. */
 #define WEBMSG_DATA_LEN(values)	(sizeof(float) * (values))
 
 /** The offset to the first data value in a message. */
-#define WEBMSG_DATA_OFFSET(msg)	((char *) (msg) + offsetof(struct msg, data))
+#define WEBMSG_DATA_OFFSET(msg)	((char *) (msg) + offsetof(struct webmsg, data))
 
 /** Initialize a message with default values */
-#define WEBMSG_INIT(len, seq) (struct msg) {\
+#define WEBMSG_INIT(len, seq) (struct webmsg) {\
 	.version  = WEBMSG_VERSION,	\
 	.type     = WEBMSG_TYPE_DATA,	\
 	.endian   = WEBMSG_ENDIAN_HOST,	\
@@ -98,5 +99,3 @@ struct webmsg
 		uint32_t i;	/**< Integer values (note msg::endian) */
 	} data[];
 } __attribute__((packed));
-
-#endif /* _WEBMSG_FORMAT_H_ */

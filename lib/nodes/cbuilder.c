@@ -1,14 +1,15 @@
 /** Node type: Wrapper around RSCAD CBuilder model
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Steffen Vogel
+ * @copyright 2017, Steffen Vogel
  **********************************************************************************/
 
 #include "node.h"
 #include "log.h"
-#include "nodes/cbuilder.h"
+#include "plugin.h"
+#include "utils.h"
 
-struct list cbmodels;	/**< Table of existing CBuilder models */
+#include "nodes/cbuilder.h"
 
 int cbuilder_parse(struct node *n, config_setting_t *cfg)
 {
@@ -23,7 +24,7 @@ int cbuilder_parse(struct node *n, config_setting_t *cfg)
 	if (!config_setting_lookup_string(cfg, "model", &model))
 		cerror(cfg, "CBuilder model requires 'model' setting");
 	
-	cb->model = list_lookup(&cbmodels, model);
+	cb->model = (struct cbuilder_model *) plugin_lookup(PLUGIN_TYPE_MODEL_CBUILDER, model);
 	if (!cb->model)
 		cerror(cfg, "Unknown model '%s'", model);
 	
@@ -42,7 +43,7 @@ int cbuilder_parse(struct node *n, config_setting_t *cfg)
 	return 0;
 }
 
-int cbuilder_open(struct node *n)
+int cbuilder_start(struct node *n)
 {
 	int ret;
 	struct cbuilder *cb = n->_vd;
@@ -64,7 +65,7 @@ int cbuilder_open(struct node *n)
 	return 0;
 }
 
-int cbuilder_close(struct node *n)
+int cbuilder_stop(struct node *n)
 {
 	struct cbuilder *cb = n->_vd;
 	
@@ -112,16 +113,20 @@ int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return 1;
 }
 
-static struct node_type vt = {
+static struct plugin p = {
 	.name		= "cbuilder",
 	.description	= "RTDS CBuilder model",
-	.vectorize	= 1,
-	.size		= sizeof(struct cbuilder),
-	.parse		= cbuilder_parse,
-	.open		= cbuilder_open,
-	.close		= cbuilder_close,
-	.read		= cbuilder_read,
-	.write		= cbuilder_write,
+	.type		= PLUGIN_TYPE_NODE,
+	.node		= {
+		.vectorize	= 1,
+		.size		= sizeof(struct cbuilder),
+		.parse		= cbuilder_parse,
+		.start		= cbuilder_start,
+		.stop		= cbuilder_stop,
+		.read		= cbuilder_read,
+		.write		= cbuilder_write,
+		.instances	= LIST_INIT()
+	}
 };
 
-REGISTER_NODE_TYPE(&vt)
+REGISTER_PLUGIN(&p)

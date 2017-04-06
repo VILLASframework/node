@@ -1,16 +1,16 @@
 /** Benchmarks for VILLASfpga: LAPACK & BLAS
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Steffen Vogel
+ * @copyright 2017, Steffen Vogel
  **********************************************************************************/
 
 #include <stdio.h>
 #include <sys/utsname.h>
 
 #include <villas/log.h>
-#include <villas/nodes/fpga.h>
 
-#include "config.h"
+/* Some hard-coded configuration for the FPGA benchmarks */
+#define BENCH_WARMUP		100
 
 /* Declared in fpga-bench.c */
 extern int intc_flags;
@@ -61,13 +61,13 @@ static int lapack_workload(int N, double *A)
 	return 0;
 }
 
-int fpga_benchmark_overruns(struct fpga *f)
+int fpga_benchmark_overruns(struct fpga_card *c)
 {
-	struct ip *rtds, *dm;
+	struct fpga_ip *rtds, *dm;
 
-	dm = list_lookup(&f->ips, "dma_1");
-	rtds = list_lookup(&f->ips, "rtds_axis_0");
-	if (!rtds || !f->intc)
+	dm = list_lookup(&c->ips, "dma_1");
+	rtds = list_lookup(&c->ips, "rtds_axis_0");
+	if (!rtds || !c->intc)
 		return -1;
 
 	int ret;
@@ -77,10 +77,10 @@ int fpga_benchmark_overruns(struct fpga *f)
 	
 	info("runs = %u", runs);
 
-	switch_connect(f->sw, dm, rtds);
-	switch_connect(f->sw, rtds, dm);
+	switch_connect(c->sw, dm, rtds);
+	switch_connect(c->sw, rtds, dm);
 
-	intc_enable(f->intc, (1 << (dm->irq + 1  )), intc_flags);
+	intc_enable(c->intc, (1 << (dm->irq + 1  )), intc_flags);
 
 	/* Dump results */
 	char fn[256];

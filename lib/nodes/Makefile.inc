@@ -1,0 +1,1 @@
+LIB_SRC += $(wildcard lib/nodes/*.c)

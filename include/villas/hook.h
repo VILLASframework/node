@@ -8,7 +8,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  */
 /**
  * @addtogroup hooks User-defined hook functions
@@ -16,180 +16,99 @@
  * @{
  *********************************************************************************/
  
-#ifndef _HOOKS_H_
-#define _HOOKS_H_
+#pragma once
 
 #include <time.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "queue.h"
 #include "list.h"
-
-#define REGISTER_HOOK(nam, desc, prio, hist, fnc, typ)		\
-__attribute__((constructor)) void __register_ ## fnc () {	\
-	static struct hook h = {				\
-		.name = nam,					\
-		.description = desc,				\
-		.priority = prio,				\
-		.history = hist,				\
-		.type = typ,					\
-		.cb = fnc					\
-	};							\
-	list_push(&hooks, &h);					\
-}
-
-/* The configuration of hook parameters is done in "config.h" */
+#include "super_node.h"
+#include "common.h"
 
 /* Forward declarations */
 struct path;
 struct hook;
 struct sample;
-struct settings;
-typedef struct config_setting_t config_setting_t;
+struct super_node;
 
-/** This is a list of hooks which can be used in the configuration file. */
-extern struct list hooks;
+struct hook_type {
+	int priority;		/**< Default priority of this hook type. */
+	bool builtin;		/**< Should we add this hook by default to every path?. */
 
-/** Optional parameters to hook callbacks */
-struct hook_info {
-	struct node *node;
-	struct path *path;
+	size_t size;		/**< Size of allocation for struct hook::_vd */
 	
-	struct sample **smps;
-	size_t cnt;
+	int (*parse)(struct hook *h, config_setting_t *cfg);
 
-	struct list *paths;
-	struct list *nodes;
-	struct settings *settings;
-};
+	int (*init)(struct hook *h);	/**< Called before path is started to parseHOOK_DESTROYs. */
+	int (*destroy)(struct hook *h);	/**< Called after path has been stopped to release memory allocated by HOOK_INIT */	
 
-/** Callback type of hook function
- *
- * @param h The hook datastructure which contains parameter, name and private context for the hook.
- * @param when Provides the type of hook for which this occurence of the callback function was executed. See hook_type for possible values.
- * @param i The hook_info structure contains references to the current node, path or samples. Some fields of this structure can be NULL.
- * @retval 0 Success. Continue processing and forwarding the message.
- * @retval <0 Error. Drop the message.
- */
-typedef int (*hook_cb_t)(struct hook *h, int when, struct hook_info *i);
+	int (*start)(struct hook *h);	/**< Called whenever a path is started; before threads are created. */
+	int (*stop)(struct hook *h);	/**< Called whenever a path is stopped; after threads are destoyed. */
+	
+	int (*periodic)(struct hook *h);/**< Called periodically. Period is set by global 'stats' option in the configuration file. */
+	int (*restart)(struct hook *h);	/**< Called whenever a new simulation case is started. This is detected by a sequence no equal to zero. */
 
-/** Destructor callback for hook_storage()
- *
- * @param data A pointer to the data which should be destroyed.
- */
-typedef void (*dtor_cb_t)(void *);
-
-/** Constructor callback for hook_storage() */
-typedef int (*ctor_cb_t)(void *);
-
-enum hook_state {
-	HOOK_DESTROYED,
-	HOOK_INITIALIZED
-};
-
-/** The type of a hook defines when a hook will be exectuted. This is used as a bitmask. */
-enum hook_type {
-	HOOK_PATH_START		= 1 << 0,  /**< Called whenever a path is started; before threads are created. */
-	HOOK_PATH_STOP		= 1 << 1,  /**< Called whenever a path is stopped; after threads are destoyed. */
-	HOOK_PATH_RESTART	= 1 << 2,  /**< Called whenever a new simulation case is started. This is detected by a sequence no equal to zero. */
-
-	HOOK_READ		= 1 << 3,  /**< Called for every single received samples. */
-	HOOK_WRITE		= 1 << 4,  /**< Called for every single sample which will be sent. */
-
-	HOOK_ASYNC		= 1 << 7,  /**< Called asynchronously with fixed rate (see path::rate). */
-	HOOK_PERIODIC		= 1 << 8,  /**< Called periodically. Period is set by global 'stats' option in the configuration file. */
-
-	HOOK_INIT		= 1 << 9,  /**< Called before path is started to parseHOOK_DESTROYs. */
-	HOOK_DESTROY		= 1 << 10, /**< Called after path has been stopped to release memory allocated by HOOK_INIT */	
-
-	HOOK_AUTO		= 1 << 11,  /**< Internal hooks are added to every path implicitely. */
-	HOOK_PARSE		= 1 << 12, /**< Called for parsing hook arguments. */
-
-	/** @{ Classes of hooks */
-	/** Hooks which are using private data must allocate and free them propery. */	
-	HOOK_STORAGE		= HOOK_INIT | HOOK_DESTROY,
-	/** All path related actions */
-	HOOK_PATH		= HOOK_PATH_START | HOOK_PATH_STOP | HOOK_PATH_RESTART
-	/** @} */
+	int (*read)(struct hook *h, struct sample *smps[], size_t *cnt);	/**< Called for every single received samples. */
+	int (*write)(struct hook *h, struct sample *smps[], size_t *cnt);	/**< Called for every single sample which will be sent. */
 };
 
 /** Descriptor for user defined hooks. See hooks[]. */
 struct hook {
-	const char *name;	/**< The unique name of this hook. This must be the first member! */
-	const char *parameter;	/**< A parameter string for this hook. Can be used to configure the hook behaviour. */
-	const char *description;/**< A short description of this hook function. */
+	enum state state;
 
-	int priority;		/**< A priority to change the order of execution within one type of hook */
-	int history;		/**< How many samples of history this hook requires. */
-	enum hook_type type;	/**< The type of the hook as a bitfield */
-
+	struct sample *prev, *last;
+	struct path *path;
+	
+	struct hook_type *_vt;	/**< C++ like Vtable pointer. */
 	void *_vd;		/**< Private data for this hook. This pointer can be used to pass data between consecutive calls of the callback. */
-
-	struct sample *last;
-	struct sample *prev;
-
-	hook_cb_t cb;		/**< The hook callback function as a function pointer. */
+	
+	int priority;		/**< A priority to change the order of execution within one type of hook. */
 };
 
-int hook_init(struct hook *h, struct list *nodes, struct list *paths, struct settings *settings);
+/** Save references to global nodes, paths and settings */
+int hook_init(struct hook *h, struct hook_type *vt, struct path *p);
 
-void hook_destroy(struct hook *h);
-
-int hook_copy(struct hook *h, struct hook *c);
-
-/** Sort hook list according to the their priority. See hook::priority. */
-int hooks_sort_priority(const void *a, const void *b);
-
-/** Conditionally execute the hooks
+/** Parse a single hook.
  *
- * @param p A pointer to the path structure.
- * @param when Which type of hooks should be executed?
- * @param m An array to of (cnt) pointers to msgs.
- * @param cnt The size of the message array.
- * @retval 0 All registred hooks for the specified type have been executed successfully. 
- * @retval <0 On of the hook functions signalized, that the processing should be aborted; message should be skipped.
- */
-int hook_run(struct path *p, struct sample *smps[], size_t cnt, int when);
-
-/** Allocate & deallocate private memory per hook.
- *
- * Hooks which use this function must be flagged with HOOL_STORAGE.
- *
- * @param h A pointer to the hook structure.
- * @param when Which event cause the hook to be executed?
- * @param len The size of hook prvate memory allocation.
- * @return A pointer to the allocated memory region or NULL after it was released.
- */
-void * hook_storage(struct hook *h, int when, size_t len, ctor_cb_t ctor, dtor_cb_t dtor);
-
-int hook_print(struct hook *h, int when, struct hook_info *j);
-int hook_ts(struct hook *h, int when, struct hook_info *j);
-int hook_convert(struct hook *h, int when, struct hook_info *j);
-int hook_decimate(struct hook *h, int when, struct hook_info *j);
-int hook_skip_first(struct hook *h, int when, struct hook_info *j);
-
-int hook_stats_send(struct hook *h, int when, struct hook_info *j);
-int hook_stats(struct hook *h, int when, struct hook_info *j);
-
-int hook_fix_ts(struct hook *h, int when, struct hook_info *j);
-int hook_restart(struct hook *h, int when, struct hook_info *j);
-int hook_drop(struct hook *h, int when, struct hook_info *j);
-
-/** Parse an array or single hook function.
- *
- * Examples:
- *     hooks = [ "print", "fir" ]
- *     hooks = "log"
- */
-int hook_parse_list(struct list *list, config_setting_t *cfg);
-
-/** Parse a single hook and append it to the list.
  * A hook definition is composed of the hook name and optional parameters
  * seperated by a colon.
  *
  * Examples:
  *   "print:stdout"
  */
-int hook_parse(config_setting_t *cfg, struct list *list);
+int hook_parse(struct hook *h, config_setting_t *cfg);
 
-#endif /** _HOOKS_H_ @} */
+int hook_destroy(struct hook *h);
+
+int hook_start(struct hook *h);
+int hook_stop(struct hook *h);
+
+int hook_periodic(struct hook *h);
+int hook_restart(struct hook *h);
+
+int hook_read(struct hook *h, struct sample *smps[], size_t *cnt);
+int hook_write(struct hook *h, struct sample *smps[], size_t *cnt);
+
+size_t hook_read_list(struct list *hs, struct sample *smps[], size_t cnt);
+size_t hook_write_list(struct list *hs, struct sample *smps[], size_t cnt);
+
+/** Compare two hook functions with their priority. Used by list_sort() */
+int hook_cmp_priority(const void *a, const void *b);
+
+/** Parses an object of hooks
+ *
+ * Example:
+ *
+ * {
+ *    stats = {
+ *       output = "stdout"
+ *    },
+ *    skip_first = {
+ *       seconds = 10
+ *    },
+ *    hooks = [ "print" ]
+ * }
+ */
+int hook_parse_list(struct list *list, config_setting_t *cfg, struct path *p);

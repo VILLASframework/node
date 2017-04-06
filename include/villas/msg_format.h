@@ -2,11 +2,10 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
-#ifndef _MSG_FORMAT_H_
-#define _MSG_FORMAT_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -94,5 +93,3 @@ struct msg
 		uint32_t i;	/**< Integer values (note msg::endian) */
 	} data[];
 } __attribute__((packed));
-
-#endif /* _MSG_FORMAT_H_ */
