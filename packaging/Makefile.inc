@@ -1,6 +1,6 @@
 TAROPTS = --exclude-ignore-recursive=.distignore --transform='s|^\.|villas-node-$(VERSION_NUM)|' --show-transformed-names
 
-TAR_VILLAS = $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM).tar.gz
+TAR_VILLAS = $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM)-1.$(GIT_BRANCH)_$(subst -,_,$(VARIANT)).$$(date +%Y%m%d)git$(GIT_REV).tar.gz
 
 DEPLOY_HOST = root@villas.0l.de
 DEPLOY_PATH = /var/www/villas
