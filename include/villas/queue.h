@@ -36,6 +36,7 @@
 
 #include <stdint.h>
 #include <stdatomic.h>
+#include <unistd.h>
 
 #include "memory.h"
 
@@ -44,7 +45,7 @@ typedef char cacheline_pad_t[CACHELINE_SIZE];
 
 struct queue_cell {
 	atomic_size_t sequence;
-	size_t data_off; /**< Pointer relative to the queue struct */
+	off_t data_off; /**< Pointer relative to the queue struct */
 };
 
 struct queue {
@@ -52,7 +53,7 @@ struct queue {
 
 	struct memtype * mem;
 	size_t buffer_mask;
-	size_t buffer_off; /**< Relative pointer to struct queue_cell[] */
+	off_t buffer_off; /**< Relative pointer to struct queue_cell[] */
 
 	cacheline_pad_t	_pad1;	/**< Producer area: only producers read & write */
 

@@ -17,7 +17,7 @@
 
 /** A thread-safe memory pool */
 struct pool {
-	size_t buffer_off; /**< Offset from the struct address to the underlying memory area */
+	off_t  buffer_off; /**< Offset from the struct address to the underlying memory area */
 	struct memtype *mem;
 	
 	size_t len;		/**< Length of the underlying memory area */

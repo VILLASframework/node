@@ -42,7 +42,7 @@ struct sample {
 	int capacity;		/**< The number of values in sample::values for which memory is reserved. */
 	
 	atomic_int refcnt;	/**< Reference counter. */
-	uintptr_t pool_off;	/**< This sample is belong to this memory pool (relative pointer). */
+	off_t pool_off;	/**< This sample is belong to this memory pool (relative pointer). */
 	struct node *source;	/**< The node from which this sample originates. */
 
 	/** All timestamps are seconds / nano seconds after 1.1.1970 UTC */
