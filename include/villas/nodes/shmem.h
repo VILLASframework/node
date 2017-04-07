@@ -5,21 +5,9 @@
 #include "memory.h"
 #include "pool.h"
 #include "queue.h"
-#include "queue_signalled.h"
+#include "shmem.h"
 
 #define DEFAULT_SHMEM_QUEUESIZE 512
-
-union shmem_queue {
-	struct queue q;
-	struct queue_signalled qs;
-};
-
-/** The structure that actually resides in the shared memory. TODO better name?*/
-struct shmem_shared {
-	union shmem_queue in; /**< Queue for samples passed from external program to node.*/
-	union shmem_queue out; /**< Queue for samples passed from node to external program.*/
-	struct pool pool; /**< Pool for the samples in the queues. */
-};
 
 struct shmem {
 	const char* name; /**< Name of the shm object. */
@@ -46,11 +34,4 @@ int shmem_close(struct node *n);
 int shmem_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 int shmem_write(struct node *n, struct sample *smps[], unsigned cnt);
-
-/* The interface functions that the external program should use. TODO put this
- * in another file? */
-
-struct shmem_shared * shmem_int_open(const char* name, size_t len);
-
-size_t shmem_total_size(int insize, int outsize, int sample_size);
 #endif /* _SHMEM_H_ */

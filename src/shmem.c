@@ -4,11 +4,13 @@
 
 #include "config.h"
 #include "log.h"
+#include "node.h"
 #include "nodes/shmem.h"
 #include "pool.h"
 #include "queue.h"
 #include "sample.h"
 #include "sample_io.h"
+#include "shmem.h"
 #include "super_node.h"
 #include "utils.h"
 
