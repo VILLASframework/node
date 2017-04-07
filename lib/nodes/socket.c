@@ -36,7 +36,7 @@ static struct plugin p;
 /* Private static storage */
 struct list interfaces;
 
-int socket_init(int argc, char *argv[], config_setting_t *cfg)
+int socket_init(struct super_node *sn)
 {
 	int ret;
 

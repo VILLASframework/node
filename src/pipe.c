@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
 	if (reverse)
 		node_reverse(node);
 
-	ret = node_type_start(node->_vt, argc, argv, config_root_setting(&sn.cfg));
+	ret = node_type_start(node->_vt, &sn);
 	if (ret)
 		error("Failed to intialize node type: %s", node_name(node));
 	

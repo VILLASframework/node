@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 	memory_init(sn.hugepages);
 
 	/* Initialize VILLASfpga card */
-	ret = fpga_init(argc, argv, config_root_setting(&sn.cfg));
+	ret = fpga_init(&sn);
 	if (ret)
 		error("Failed to initialize FPGA card");
 	

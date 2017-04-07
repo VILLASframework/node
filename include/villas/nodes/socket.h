@@ -58,7 +58,7 @@ struct socket {
 
 
 /** @see node_vtable::init */
-int socket_init(int argc, char *argv[], config_setting_t *cfg);
+int socket_init(struct super_node *sn);
 
 /** @see node_vtable::deinit */
 int socket_deinit();

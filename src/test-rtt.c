@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 	if (!node)
 		error("There's no node with the name '%s'", argv[3]);
 
-	node_type_start(node->_vt, argc-3, argv+3, config_root_setting(&sn.cfg));
+	node_type_start(node->_vt, &sn);
 	node_start(node);
 
 	/* Parse Arguments */
