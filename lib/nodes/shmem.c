@@ -40,20 +40,22 @@ int shmem_open(struct node *n) {
 		serror("Opening shared memory object failed");
 
 	shm->fd = r;
-	shm->len = shmem_total_size(shm->insize, shm->outsize, shm->sample_size);
-	if (ftruncate(shm->fd, shm->len) < 0)
+	size_t len = shmem_total_size(shm->insize, shm->outsize, shm->sample_size);
+	if (ftruncate(shm->fd, len) < 0)
 		serror("Setting size of shared memory object failed");
-	/* TODO: we could use huge pages here as well */
-	shm->base = mmap(NULL, shm->len, PROT_READ|PROT_WRITE, MAP_SHARED, shm->fd, 0);
+	shm->base = mmap(NULL, len, PROT_READ|PROT_WRITE, MAP_SHARED, shm->fd, 0);
 
 	if (shm->base == MAP_FAILED)
 		serror("Mapping shared memory failed");
 
-	shm->manager = memtype_managed_init(shm->base, shm->len);
+	shm->manager = memtype_managed_init(shm->base, len);
 	shm->shared = memory_alloc(shm->manager, sizeof(struct shmem_shared));
 	if (!shm->shared)
 		error("Shm shared struct allocation failed (not enough memory?)");
 	memset(shm->shared, 0, sizeof(struct shmem_shared));
+	shm->shared->len = len;
+	shm->shared->cond_in = shm->cond_in;
+	shm->shared->cond_out = shm->cond_out;
 	if (shm->cond_in) {
 		if (queue_signalled_init(&shm->shared->in.qs, shm->insize, shm->manager) < 0)
 			error("Shm queue allocation failed (not enough memory?)");
@@ -76,6 +78,7 @@ int shmem_open(struct node *n) {
 
 int shmem_close(struct node *n) {
 	struct shmem* shm = n->_vd;
+	size_t len = shm->shared->len;
 	if (shm->cond_in)
 		queue_signalled_destroy(&shm->shared->in.qs);
 	else
@@ -85,7 +88,7 @@ int shmem_close(struct node *n) {
 	else
 		queue_destroy(&shm->shared->out.q);
 	pool_destroy(&shm->shared->pool);
-	int r = munmap(shm->base, shm->len);
+	int r = munmap(shm->base, len);
 	if (r != 0)
 		return r;
 	return shm_unlink(shm->name);

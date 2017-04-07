@@ -16,7 +16,6 @@ struct shmem {
 	int cond_out; /**< Whether to use a pthread_cond_t to signal if new samples are written to outqueue. */
 	int cond_in; /**< Whether to use a pthread_cond_t to signal if new samples are written to inqueue. */
 
-	size_t len; /**< Overall size of shared memory object. */
 	struct memtype *manager; /**< Manager for the shared memory region. */
 	int fd; /**< Handle as returned by shm_open().*/
 	void *base; /**< Pointer to the shared memory region. */

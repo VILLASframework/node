@@ -11,13 +11,20 @@ union shmem_queue {
 	struct queue_signalled qs;
 };
 
-/** The structure that actually resides in the shared memory. TODO better name?*/
+/** The structure that actually resides in the shared memory. */
 struct shmem_shared {
+	size_t len; /**< Total size of the shared memory region.*/
 	union shmem_queue in; /**< Queue for samples passed from external program to node.*/
+	int cond_in; /**< Whether to use a pthread_cond_t to signal if new samples are written to inqueue. */
 	union shmem_queue out; /**< Queue for samples passed from node to external program.*/
+	int cond_out; /**< Whether to use a pthread_cond_t to signal if new samples are written to outqueue. */
 	struct pool pool; /**< Pool for the samples in the queues. */
 };
 
-struct shmem_shared * shmem_int_open(const char* name, size_t len);
+struct shmem_shared * shmem_shared_open(const char* name);
+
+int shmem_shared_read(struct shmem_shared *shm, struct sample *smps[], unsigned cnt);
+
+int shmem_shared_write(struct shmem_shared *shm, struct sample *smps[], unsigned cnt);
 
 size_t shmem_total_size(int insize, int outsize, int sample_size);

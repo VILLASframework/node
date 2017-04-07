@@ -40,19 +40,15 @@ int main(int argc, char* argv[])
 		error("Node '%s' does not exist!", argv[2]);
 
 	struct shmem* shm = node->_vd;
-	size_t len = shmem_total_size(shm->insize, shm->outsize, shm->sample_size);
-	struct shmem_shared *shmem = shmem_int_open(shm->name, len);
-	if (!shmem)
+	struct shmem_shared *shared = shmem_shared_open(shm->name);
+	if (!shared)
 		serror("Failed to open shmem interface");
 
 	struct sample *insmps[node->vectorize], *outsmps[node->vectorize];
 	while (1) {
 		int r, w;
-		if (shm->cond_out)
-			r = queue_signalled_pull_many(&shmem->out.qs, (void **) insmps, node->vectorize);
-		else
-			r = queue_pull_many(&shmem->out.q, (void **) insmps, node->vectorize);
-		int avail = sample_alloc(&shmem->pool, outsmps, r);
+		r = shmem_shared_read(shared, insmps, node->vectorize);
+		int avail = sample_alloc(&shared->pool, outsmps, r);
 		if (avail < r)
 			warn("pool underrun (%d/%d)\n", avail, r);
 		for (int i = 0; i < r; i++)
@@ -66,10 +62,7 @@ int main(int argc, char* argv[])
 		}
 		for (int i = 0; i < r; i++)
 			sample_put(insmps[i]);
-		if (shm->cond_in)
-			w = queue_signalled_push_many(&shmem->in.qs, (void **) outsmps, avail);
-		else
-			w = queue_push_many(&shmem->in.q, (void **) outsmps, avail);
+		w = shmem_shared_write(shared, outsmps, avail);
 		if (w < avail)
 			warn("short write (%d/%d)\n", w, r);
 	}
