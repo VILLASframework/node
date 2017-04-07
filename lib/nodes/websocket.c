@@ -22,7 +22,7 @@
 #include "nodes/websocket.h"
 
 /* Private static storage */
-struct list connections;	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
+static struct list connections = { .state = STATE_DESTROYED };	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
 
 /* Forward declarations */
 static struct plugin p;

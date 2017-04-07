@@ -54,8 +54,9 @@ static void path_read(struct path *p)
 	enqueue = hook_read_list(&p->hooks, smps, recv);
 	if (enqueue != recv) {
 		info("Hooks skipped %u out of %u samples for path %s", recv - enqueue, recv, path_name(p));
-		
-		stats_update(p->stats->delta, STATS_SKIPPED, recv - enqueue);
+
+		if (p->stats)
+			stats_update(p->stats->delta, STATS_SKIPPED, recv - enqueue);
 	}
 
 	for (size_t i = 0; i < list_length(&p->destinations); i++) {
@@ -336,6 +337,9 @@ int path_start(struct path *p)
 int path_stop(struct path *p)
 {
 	int ret;
+	
+	if (p->state != STATE_STARTED)
+		return 0;
 
 	info("Stopping path: %s", path_name(p));
 

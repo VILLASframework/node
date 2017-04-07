@@ -17,7 +17,7 @@ int node_type_start(struct node_type *vt, struct super_node *sn)
 {
 	int ret;
 	
-	if (vt->state != STATE_STARTED)
+	if (vt->state != STATE_DESTROYED)
 		return 0;
 
 	info("Initializing " YEL("%s") " node type which is used by %zu nodes", plugin_name(vt), list_length(&vt->instances));
@@ -40,7 +40,7 @@ int node_type_stop(struct node_type *vt)
 
 	info("De-initializing " YEL("%s") " node type", plugin_name(vt));
 	{ INDENT
-		ret = vt->deinit ? vt->deinit() : -1;
+		ret = vt->deinit ? vt->deinit() : 0;
 	}
 	
 	if (ret == 0)
