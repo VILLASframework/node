@@ -245,15 +245,11 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				
 				memcpy(msg2, msg, WEBMSG_LEN(msg->length));
 				
-				ret = queue_push(&w->queue, msg2);
+				ret = queue_signalled_push_many(&w->queue, (void **) msg2, 1);
 				if (ret != 1) {
 					warn("Queue overrun for connection %s", websocket_connection_name(c));
 					break;
 				}
-				
-				pthread_mutex_lock(&w->mutex);
-				pthread_cond_broadcast(&w->cond);
-				pthread_mutex_unlock(&w->mutex);
 				
 				/* Next message */
 				msg = (struct webmsg *) ((char *) msg + WEBMSG_LEN(msg->length));
@@ -278,15 +274,7 @@ int websocket_start(struct node *n)
 	if (ret)
 		return ret;
 	
-	ret = queue_init(&w->queue, DEFAULT_QUEUELEN, &memtype_hugepage);
-	if (ret)
-		return ret;
-	
-	ret = pthread_mutex_init(&w->mutex, NULL);
-	if (ret)
-		return ret;
-	
-	ret = pthread_cond_init(&w->cond, NULL);
+	ret = queue_signalled_init(&w->queue, DEFAULT_QUEUELEN, &memtype_hugepage);
 	if (ret)
 		return ret;
 
@@ -312,18 +300,10 @@ int websocket_stop(struct node *n)
 	if (ret)
 		return ret;
 
-	ret = queue_destroy(&w->queue);
+	ret = queue_signalled_destroy(&w->queue);
 	if (ret)
 		return ret;
 	
-	ret = pthread_mutex_destroy(&w->mutex);
-	if (ret)
-		return ret;
-	
-	ret = pthread_cond_destroy(&w->cond);
-	if (ret)
-		return ret;
-
 	return 0;
 }
 
@@ -345,11 +325,7 @@ int websocket_read(struct node *n, struct sample *smps[], unsigned cnt)
 	struct webmsg *msgs[cnt];
 
 	do {
-		pthread_mutex_lock(&w->mutex);
-		pthread_cond_wait(&w->cond, &w->mutex);
-		pthread_mutex_unlock(&w->mutex);
-
-		got = queue_pull_many(&w->queue, (void **) msgs, cnt);
+		got = queue_signalled_pull_many(&w->queue, (void **) msgs, cnt);
 		if (got < 0)
 			return got;
 	} while (got == 0);

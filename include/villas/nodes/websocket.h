@@ -20,7 +20,7 @@
 
 #include "node.h"
 #include "pool.h"
-#include "queue.h"
+#include "queue_signalled.h"
 #include "common.h"
 
 /* Forward declaration */
@@ -32,10 +32,7 @@ struct websocket {
 	struct list destinations;		/**< List of websocket servers connect to in client mode (struct websocket_destination). */
 	
 	struct pool pool;
-	struct queue queue;			/**< For samples which are received from WebSockets a */
-	
-	pthread_mutex_t mutex;			/**< Mutex for signalling the availability of new samples in struct websocket::queue. */
-	pthread_cond_t cond;			/**< Condition variable for signalling the availability of new samples in struct websocket::queue. */
+	struct queue_signalled queue;   /**< For samples which are received from WebSockets a */
 };
 
 /* Internal datastructures */
