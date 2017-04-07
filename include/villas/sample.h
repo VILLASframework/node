@@ -70,6 +70,12 @@ int sample_get(struct sample *s);
 /** Decrease reference count and release memory if last reference was held. */
 int sample_put(struct sample *s);
 
+int sample_copy(struct sample *dst, struct sample *src);
+
+int sample_copy_many(struct sample *dsts[], struct sample *srcs[], int cnt);
+int sample_get_many(struct sample *smps[], int cnt);
+int sample_put_many(struct sample *smps[], int cnt);
+
 /** Set number representation for a single value of a sample. */
 int sample_get_data_format(struct sample *s, int idx);
 

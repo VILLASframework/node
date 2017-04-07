@@ -66,8 +66,7 @@ static void path_read(struct path *p)
 		if (enqueue != enqueued)
 			warn("Queue overrun for path %s", path_name(p));
 		
-		for (int i = 0; i < enqueued; i++)
-			sample_get(smps[i]); /* increase reference count */
+		sample_get_many(smps, enqueued);
 
 		debug(LOG_PATH | 15, "Enqueued %u samples from %s to queue of %s", enqueued, node_name(ps->node), node_name(pd->node));
 	}
@@ -108,11 +107,7 @@ static void path_write(struct path *p)
 
 			debug(LOG_PATH | 15, "Sent %u messages to node %s", sent, node_name(pd->node));
 
-			released = 0;
-			for (int i = 0; i < sent; i++) {
-				if (sample_put(smps[i]) == 0)
-					released++; /* we had the last reference (0 remaining) */
-			}
+			released = sample_put_many(smps, sent);
 	
 			debug(LOG_PATH | 15, "Released %d samples back to memory pool", released);
 		}
