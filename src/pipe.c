@@ -247,12 +247,8 @@ int main(int argc, char *argv[])
 	pthread_create(&recvv.thread, NULL, recv_loop, NULL);
 	pthread_create(&sendd.thread, NULL, send_loop, NULL);
 
-	for (;;) {
-		if (node->_vt->start == websocket_start)
-			web_service(&sn.web);
-		else
-			sleep(1);
-	}
+	for (;;)
+		sleep(1);
 
 	return 0;
 }

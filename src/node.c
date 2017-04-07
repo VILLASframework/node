@@ -123,8 +123,6 @@ int main(int argc, char *argv[])
 
 			last = time_now();
 		}
-
-		web_service(&sn.web); /** @todo Maybe we should move this to another thread */
 	}
 
 	return 0;
