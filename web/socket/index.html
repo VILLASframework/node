@@ -14,6 +14,7 @@
 		<script src="msg.js"></script>
 		<script src="app.js"></script>
 		<script src="utils.js"></script>
+		<script src="api.js"></script>
 	</head>
 	<body>
 		<div id="wrapper">
@@ -22,7 +23,7 @@
 				<h1>VILLASweb Mockup</h1>
 			</div>
 			<div id="container">
-				<ul class="node-selector"></ul>
+				<div class="node-selector"></div>
 				
 				<div class="plot-container">	
 					<div id="placeholder" class="plot-placeholder"></div>
@@ -32,21 +33,21 @@
 					<div class="left">
 						<div class="inputs">
 							<dl>
-								<dt><label>Buttons</label></dt>
-								<dd>
-									<button>1</button>
-									<button>2</button>
-									<button>3</button>
-									<button>4</button>
-									<button>5</button>
+								<dt><label>Switches</label></dt>
+								<dd class="inputs-checkboxes">
+									<label for="checkbox-1">1</label>
+									<input type="checkbox" name="checkbox-1" id="checkbox-1">
+									<label for="checkbox-2">2</label>
+									<input type="checkbox" name="checkbox-2" id="checkbox-2">
+									<label for="checkbox-3">3</label>
+									<input type="checkbox" name="checkbox-3" id="checkbox-3">
+									<label for="checkbox-4">4</label>
+									<input type="checkbox" name="checkbox-4" id="checkbox-4">
 								</dd>
-						
+
 								<dt><label for="slider">Slider</label></dt>
 								<dd><div id="slider"></div></dd>
-					
-								<dt><label for="text">Text</label></dt>
-								<dd><input type="text" id="text" /></dd>
-					
+
 								<dt><label for="file">File</label></dt>
 								<dd><input type="file" onchange="fileStart(event)" /></dd>
 							</dl>
@@ -57,6 +58,9 @@
 							<dl>
 								<dt><label for="timespan">Plot timespan</label></dt>
 								<dd><div id="timespan"></div></dd>
+								
+								<dt><label for="updaterate">Plot update rate</label></dt>
+								<dd><div id="updaterate"></div></dd>
 							</dl>
 						</div>
 				
@@ -66,7 +70,7 @@
 								<dd>
 									<button id="pause">Pause</button>
 									<button id="play">Play</button>
-									<span id="connectionStatus"></span>
+									<span id="status"></span>
 								</dd>
 							</dl>
 						</div>
@@ -75,13 +79,11 @@
 				</div>
 			</div>
 			<div id="footer">
-				<div class="left">
-					<p>Copyright 2016: Institute for Automation of Complex Power Systems, </br>EON Energy Research Center, RWTH Aachen University, Germany</p>
-					<p>Authors: <a href="mailto:stvogel@eonerc.rwth-aachen.de">Steffen Vogel</a>, <a href="mailto:mgrigul@eonerc.rwth-aachen.de">Markus Grigul</a></p>
-				</div>
-				<div class="right">
-					<p><a style="font-size: 1.5em" href="/doc/index.html" style="float: right">Documentation</a></p>
-				</div>
+				<p>&copy; 2017 Institute for Automation of Complex Power Systems<br>
+					EON Energy Research Center<br>
+					RWTH Aachen University<br>
+				</p>
+				<p>Authors: <a href="mailto:stvogel@eonerc.rwth-aachen.de">Steffen Vogel</a>, <a href="mailto:mgrigul@eonerc.rwth-aachen.de">Markus Grigul</a></p>
 			</div>
 		</div>
 	</body>
