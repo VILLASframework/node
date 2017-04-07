@@ -5,22 +5,19 @@
 #include "memory.h"
 #include "pool.h"
 #include "queue.h"
+#include "queue_signalled.h"
 
 #define DEFAULT_SHMEM_QUEUESIZE 512
 
-/** Per-direction shared datastructure for a shmem node. */
-struct shmem_queue {
-	struct queue queue; /**< Actual queue where the samples are passed */
-	pthread_cond_t ready; /**< Condition variable to signal writes to the queue */
-	pthread_condattr_t readyattr;
-	pthread_mutex_t mt; /**< Mutex for ready */
-	pthread_mutexattr_t mtattr;
+union shmem_queue {
+	struct queue q;
+	struct queue_signalled qs;
 };
 
 /** The structure that actually resides in the shared memory. TODO better name?*/
 struct shmem_shared {
-	struct shmem_queue in; /**< Queue for samples passed from external program to node.*/
-	struct shmem_queue out; /**< Queue for samples passed from node to external program.*/
+	union shmem_queue in; /**< Queue for samples passed from external program to node.*/
+	union shmem_queue out; /**< Queue for samples passed from node to external program.*/
 	struct pool pool; /**< Pool for the samples in the queues. */
 };
 

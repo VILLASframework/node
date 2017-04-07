@@ -31,16 +31,6 @@ int shmem_parse(struct node *n, config_setting_t *cfg) {
 	return 0;
 }
 
-/* Helper for initializing condition variables / mutexes. */
-void shmem_cond_init(struct shmem_queue *queue) {
-	pthread_mutexattr_init(&queue->mtattr);
-	pthread_mutexattr_setpshared(&queue->mtattr, PTHREAD_PROCESS_SHARED);
-	pthread_condattr_init(&queue->readyattr);
-	pthread_condattr_setpshared(&queue->readyattr, PTHREAD_PROCESS_SHARED);
-	pthread_mutex_init(&queue->mt, &queue->mtattr);
-	pthread_cond_init(&queue->ready, &queue->readyattr);
-}
-
 int shmem_open(struct node *n) {
 	struct shmem *shm = n->_vd;
 
@@ -63,24 +53,36 @@ int shmem_open(struct node *n) {
 	if (!shm->shared)
 		error("Shm shared struct allocation failed (not enough memory?)");
 	memset(shm->shared, 0, sizeof(struct shmem_shared));
-	if (queue_init(&shm->shared->in.queue, shm->insize, shm->manager) < 0)
-		error("Shm queue allocation failed (not enough memory?)");
-	if (queue_init(&shm->shared->out.queue, shm->outsize, shm->manager) < 0)
-		error("Shm queue allocation failed (not enough memory?)");
+	if (shm->cond_in) {
+		if (queue_signalled_init(&shm->shared->in.qs, shm->insize, shm->manager) < 0)
+			error("Shm queue allocation failed (not enough memory?)");
+	} else {
+		if (queue_init(&shm->shared->in.q, shm->insize, shm->manager) < 0)
+			error("Shm queue allocation failed (not enough memory?)");
+	}
+	if (shm->cond_out) {
+		if (queue_signalled_init(&shm->shared->out.qs, shm->outsize, shm->manager) < 0)
+			error("Shm queue allocation failed (not enough memory?)");
+	} else {
+		if (queue_init(&shm->shared->out.q, shm->outsize, shm->manager) < 0)
+			error("Shm queue allocation failed (not enough memory?)");
+	}
 	if (pool_init(&shm->shared->pool, shm->insize+shm->outsize, SAMPLE_LEN(shm->sample_size), shm->manager) < 0)
 		error("Shm pool allocation failed (not enough memory?)");
-	if (shm->cond_out)
-		shmem_cond_init(&shm->shared->out);
-	if (shm->cond_in)
-		shmem_cond_init(&shm->shared->in);
 
 	return 0;
 }
 
 int shmem_close(struct node *n) {
 	struct shmem* shm = n->_vd;
-	queue_destroy(&shm->shared->in.queue);
-	queue_destroy(&shm->shared->out.queue);
+	if (shm->cond_in)
+		queue_signalled_destroy(&shm->shared->in.qs);
+	else
+		queue_destroy(&shm->shared->in.q);
+	if (shm->cond_out)
+		queue_signalled_destroy(&shm->shared->out.qs);
+	else
+		queue_destroy(&shm->shared->out.q);
 	pool_destroy(&shm->shared->pool);
 	int r = munmap(shm->base, shm->len);
 	if (r != 0)
@@ -90,13 +92,9 @@ int shmem_close(struct node *n) {
 
 int shmem_read(struct node *n, struct sample *smps[], unsigned cnt) {
 	struct shmem *shm = n->_vd;
-	if (shm->cond_in) {
-		pthread_mutex_lock(&shm->shared->in.mt);
-		pthread_cond_wait(&shm->shared->in.ready, &shm->shared->in.mt);
-		pthread_mutex_unlock(&shm->shared->in.mt);
-	}
-	int r = queue_pull_many(&shm->shared->in.queue, (void**) smps, cnt);
-	return r;
+	if (shm->cond_in)
+		return queue_signalled_pull_many(&shm->shared->in.qs, (void**) smps, cnt);
+	return queue_pull_many(&shm->shared->in.q, (void**) smps, cnt);
 }
 
 int shmem_write(struct node *n, struct sample *smps[], unsigned cnt) {
@@ -119,14 +117,13 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt) {
 		shared_smps[i]->length = len;
 		sample_get(shared_smps[i]);
 	}
-	int pushed = queue_push_many(&shm->shared->out.queue, (void**) shared_smps, avail);
+	int pushed;
+	if (shm->cond_out)
+		pushed = queue_signalled_push_many(&shm->shared->out.qs, (void**) shared_smps, avail);
+	else
+		pushed = queue_push_many(&shm->shared->out.q, (void**) shared_smps, avail);
 	if (pushed != avail)
 		warn("Outqueue overrun for shmem node %s", shm->name);
-	if (pushed && shm->cond_out) {
-		pthread_mutex_lock(&shm->shared->out.mt);
-		pthread_cond_broadcast(&shm->shared->out.ready);
-		pthread_mutex_unlock(&shm->shared->out.mt);
-	}
 	return pushed;
 }
 

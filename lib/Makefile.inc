@@ -8,7 +8,7 @@ LIB_SRCS = $(addprefix lib/nodes/, file.c cbuilder.c shmem.c) 		\
            $(addprefix lib/kernel/, kernel.c rt.c)		\
            $(addprefix lib/, sample.c path.c node.c hook.c	\
               log.c utils.c super_node.c hist.c timing.c pool.c	\
-              list.c queue.c memory.c advio.c web.c api.c	\
+              list.c queue.c queue_signalled.c memory.c advio.c web.c api.c	\
               plugin.c node_type.c stats.c mapping.c sample_io.c\
            )
 

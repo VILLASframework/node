@@ -45,12 +45,11 @@ int main(int argc, char* argv[])
 
 	struct sample *insmps[node->vectorize], *outsmps[node->vectorize];
 	while (1) {
-		if (shm->cond_out) {
-			pthread_mutex_lock(&shmem->out.mt);
-			pthread_cond_wait(&shmem->out.ready, &shmem->out.mt);
-			pthread_mutex_unlock(&shmem->out.mt);
-		}
-		int r = queue_pull_many(&shmem->out.queue, (void **) insmps, node->vectorize);
+		int r, w;
+		if (shm->cond_out)
+			r = queue_signalled_pull_many(&shmem->out.qs, (void **) insmps, node->vectorize);
+		else
+			r = queue_pull_many(&shmem->out.q, (void **) insmps, node->vectorize);
 		int avail = sample_alloc(&shmem->pool, outsmps, r);
 		if (avail < r)
 			warn("pool underrun (%d/%d)\n", avail, r);
@@ -65,13 +64,11 @@ int main(int argc, char* argv[])
 		}
 		for (int i = 0; i < r; i++)
 			sample_put(insmps[i]);
-		int w = queue_push_many(&shmem->in.queue, (void **) outsmps, avail);
+		if (shm->cond_in)
+			w = queue_signalled_push_many(&shmem->in.qs, (void **) outsmps, avail);
+		else
+			w = queue_push_many(&shmem->in.q, (void **) outsmps, avail);
 		if (w < avail)
 			warn("short write (%d/%d)\n", w, r);
-		if (shm->cond_in && w) {
-			pthread_mutex_lock(&shmem->in.mt);
-			pthread_cond_broadcast(&shmem->in.ready);
-			pthread_mutex_unlock(&shmem->in.mt);
-		}
 	}
 }
