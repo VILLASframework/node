@@ -11,46 +11,9 @@
 #include "log.h"
 #include "config.h"
 
-static int api_parse_request(struct api_buffer *b, json_t **req)
 {
-	json_error_t e;
-	
-	if (b->len <= 0)
-		return -1;
 
-	*req = json_loadb(b->buf, b->len, JSON_DISABLE_EOF_CHECK, &e);
-	if (!*req)
-		return -1;
 
-	if (e.position < b->len) {
-		void *dst = (void *) b->buf;
-		void *src = (void *) (b->buf + e.position);
-		
-		memmove(dst, src, b->len - e.position);
-		
-		b->len -= e.position;
-	}
-	else
-		b->len = 0;
-
-	return 1;
-}
-
-static int api_unparse_response(struct api_buffer *b, json_t *res)
-{
-	size_t len;
-
-retry:	len = json_dumpb(res, b->buf + b->len, b->size - b->len, 0);
-	if (len > b->size - b->len) {
-		b->buf = realloc(b->buf, b->len + len);
-		b->size += len;
-		goto retry;
-	}
-	else
-		b->len += len;
-	
-	return 0;
-}
 
 int api_session_run_command(struct api_session *s, json_t *json_in, json_t **json_out)
 {

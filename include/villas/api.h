@@ -19,7 +19,6 @@ struct super_node;
 
 struct api;
 struct api_ressource;
-struct api_buffer;
 struct api_session;
 
 /** Callback type of command function
@@ -47,12 +46,6 @@ struct api {
 	enum state state;
 	
 	struct super_node *super_node;
-};
-
-struct api_buffer {
-	char *buf;	/**< A pointer to the buffer. Usually resized via realloc() */
-	size_t size;	/**< The allocated size of the buffer. */
-	size_t len;	/**< The used length of the buffer. */
 };
 
 /** A connection via HTTP REST or WebSockets to issue API actions. */
@@ -101,12 +94,6 @@ int api_session_init(struct api_session *s, struct api *a, enum api_mode m);
 int api_session_destroy(struct api_session *s);
 
 int api_session_run_command(struct api_session *s, json_t *req, json_t **resp);
-
-/** Send contents of buffer over libwebsockets connection */
-int api_buffer_send(struct api_buffer *b, struct lws *w, enum lws_write_protocol prot);
-
-/** Append received data to buffer. */
-int api_buffer_append(struct api_buffer *b, const char *in, size_t len);
 
 /** Libwebsockets callback for "api" endpoint */
 int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
