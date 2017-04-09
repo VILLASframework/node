@@ -13,13 +13,14 @@
 #include "list.h"
 #include "common.h"
 
+#include "api/session.h"
+
 /* Forward declarations */
 struct lws;
 struct super_node;
 
 struct api;
 struct api_ressource;
-struct api_session;
 
 /** Callback type of command function
  *
@@ -30,43 +31,12 @@ struct api_session;
  */
 typedef int (*api_cb_t)(struct api_ressource *c, json_t *args, json_t **resp, struct api_session *s);
 
-enum api_version {
-	API_VERSION_UNKOWN	= 0,
-	API_VERSION_1		= 1
-};
-
-enum api_mode {
-	API_MODE_WS,	/**< This API session was established over a WebSocket connection. */
-	API_MODE_HTTP	/**< This API session was established via a HTTP REST request. */
-};
-
 struct api {
 	struct list sessions;	/**< List of currently active connections */
 	
 	enum state state;
 	
 	struct super_node *super_node;
-};
-
-/** A connection via HTTP REST or WebSockets to issue API actions. */
-struct api_session {
-	enum api_mode mode;
-	enum api_version version;
-	
-	int runs;
-
-	struct {
-		struct api_buffer body;		/**< HTTP body / WS payload */
-	} request;
-
-	struct {
-		struct api_buffer body;		/**< HTTP body / WS payload */
-		struct api_buffer headers;	/**< HTTP headers */
-	} response;
-	
-	bool completed;				/**< Did we receive the complete body yet? */
-	
-	struct api *api;
 };
 
 /** Command descriptor

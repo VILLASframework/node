@@ -15,58 +15,10 @@
 
 
 
-int api_session_run_command(struct api_session *s, json_t *json_in, json_t **json_out)
-{
-	int ret;
-	const char *rstr;
-	char *id;
-	struct plugin *p;
-	
-	json_t *json_args = NULL, *json_resp;
-	
-	ret = json_unpack(json_in, "{ s: s, s: s, s?: o }",
-		"request", &rstr,
-		"id", &id,
-		"args", &json_args);
-	if (ret) {
-		*json_out = json_pack("{ s: s, s: s, s: i, s: s }",
-				"command", rstr,
-				"error", "invalid request",
-				"code", -1,
-				"id", id);
-		goto out;
-	}
-	
-	p = plugin_lookup(PLUGIN_TYPE_API, rstr);
-	if (!p) {
-		*json_out = json_pack("{ s: s, s: s, s: d, s: s, s: s }",
-				"command", rstr,
-				"error", "command not found",
-				"code", -2,
-				"command", rstr,
-				"id", id);
-		goto out;
-	}
 
-	debug(LOG_API, "Running API request: %s", p->name);
 
-	ret = p->api.cb(&p->api, json_args, &json_resp, s);
-	if (ret)
-		*json_out = json_pack("{ s: s, s: s, s: s }",
-				"command", rstr,
-				"error", "command failed",
-				"code", ret,
-				"id", id);
-	else
-		*json_out = json_pack("{ s: s, s: o, s: s }",
-				"command", rstr,
-				"response", json_resp,
-				"id", id);
 
-out:	debug(LOG_API, "API request completed with code: %d", ret);
 
-	return 0;
-}
 
 int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
