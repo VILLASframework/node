@@ -51,7 +51,7 @@ struct queue {
 	
 	enum state state;
 
-	struct memtype * mem;
+	struct memtype *mem;
 	size_t buffer_mask;
 	struct queue_cell {
 		atomic_size_t sequence;
