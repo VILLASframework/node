@@ -12,7 +12,7 @@
 #include "utils.h"
 #include "log.h"
 #include "web.h"
-#include "api.h"
+#include "api/session.h"
 
 #include "nodes/websocket.h"
 
