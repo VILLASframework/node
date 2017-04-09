@@ -35,23 +35,65 @@ This technique, also called 'pinning', improves the determinism of the server by
 The `priority` setting allows to adjust the scheduling priority of the deamon processes.
 By default, the daemon uses a real-time optimized FIFO scheduling algorithm.
 
-#### `name` *(integer)*
+#### `name` *(string)*
 
 By default the `name` of a VILLASnode instance is equalt to the hostname of the machine it is running on.
 Some node types are using this name to identify themselves agains their remotes.
 An example is the `ngsi` node type which adds a metadata attribute `source` to its updates.
+
+## Log
+
+```
+log = {
+	file = "/var/log/villas-node.log";
+	level = 5;
+	facilities = "socket,log,mem";	// log socket node-type, log and memory sub-system
+	facilities = "nodes,!websocket";	// log all node-type but not the websocket node-type
+	//facilities = "all,!nodes";	// log everything but not the node-types
+}
+```
+
+#### Available logging facilities
+
+| Facility		| Description |
+|:-		|:- |
+| `pool` 		| Memory Pool for fixed size allocations |
+| `queue` 	| Multiple-producer / Multiple-consumer queue |
+| `config` 	| Configuration parser |
+| `hook` 		| Hook sub-system |
+| `path` 		| Send / Receive path |
+| `node` 		| Node-types |
+| `mem` 		| Memory management |
+| `web` 		| Web sub-system |
+| `api` 		| Remote API |
+| `log` 		| Logging sub-system |
+| `vfio` 		| Virtual Function Input/Output sub-system for access to PCI devices |
+| `pci` 		| PCI device detection |
+| `xil` 		| Xilinx drivers for FPGA components |
+| `tc` 		| Linux traffic control for network emulation |
+| `if` 		| Linux network interfaces |
+| `socket` 	| BSD Socket node-type |
+| `file` 		| File node-type |
+| `fpga` 		| VILLASfpga node-type |
+| `ngsi` 		| FIWARE NGSI node-type |
+| `websocket` 	| WebSocket node-type |
+| `opal` 		| OPAL-RT node-type |
+
+## Web
 
 ## Nodes
 
 The node section is a **directory** of nodes (clients) which are connected to the VILLASnode instance.
 The directory is indexed by the name of the node:
 
-    nodes = {
-        "sintef_node" = {
-	    type = "socket"
-	    ....
+```
+nodes = {
+	"sintef_node" = {
+		type = "socket";
+		...
 	}
-    }
+}
+```
 
 There are multiple diffrent type of nodes. But all types have the following settings in common:
 
