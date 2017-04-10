@@ -39,8 +39,11 @@ int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cn
 
 int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cnt)
 {
+	/* Make sure that qs->mt is unlocked if this thread gets cancelled. */
+	pthread_cleanup_push((void (*)(void*)) pthread_mutex_unlock, &qs->mt);
 	pthread_mutex_lock(&qs->mt);
 	pthread_cond_wait(&qs->ready, &qs->mt);
 	pthread_mutex_unlock(&qs->mt);
+	pthread_cleanup_pop(0);
 	return queue_pull_many(&qs->q, ptr, cnt);
 }
