@@ -18,8 +18,9 @@ LIB_LDFLAGS = -shared
 LIB_LDLIBS  = $(LDLIBS) -ldl -lrt -Wl,-soname,$(LIB_NAME).so.$(LIB_ABI_VERSION)
 
 -include lib/hooks/Makefile.inc
--include lib/apis/Makefile.inc
+-include lib/api/Makefile.inc
 -include lib/fpga/Makefile.inc
+-include lib/web/Makefile.inc
 
 LIB_PKGS = openssl
 
