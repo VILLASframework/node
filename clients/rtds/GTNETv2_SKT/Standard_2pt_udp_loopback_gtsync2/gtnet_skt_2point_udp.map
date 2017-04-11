@@ -1,0 +1,85 @@
+CASE: Test Circuit
+Delt: 50.000000 us 
+Backplane operation set to IEEE mode
+
+ +----------------------------------------------------------+
+ |                                                          |
+ |                  S U B S Y S T E M #01                   |
+ |                                                          |
+ |                        mapped to                         |
+ |                                                          |
+ |                   R T D S  R A C K #07                   |
+ |                                                          |
+ +----------------------------------------------------------+
+
+
+           C O M P O N E N T   P R O C E S S O R S        
+ ------------------------------------------------------------
+
+
+RISC CONTROLS COMPONENTS(proc 1) --> RPC-GPC Card #3 Processor A
+	RISC sum3_A function
+	RISC sum3_A function
+	RISC sum3_A function
+	RISC sum3_A function
+	RISC sum3_A function
+	RISC sum3_A function
+	RISC edgedet_cb function
+	RISC UPDOWNC function
+	RISC gtnetskt function
+	RISC TIMERC function
+	RISC UPDOWNC function
+	RISC gtnetskt function
+	RISC dtdel_cb function
+	RISC dtdel_cb function
+	RISC sh_A function
+	RISC sh_A function
+	RISC sh_A function
+	RISC sh_A function
+	RISC sh_A function
+	RISC sh_A function
+
+    Hidden T2 Transfer List
+--------------------------------
+BP_Address  Signal_Type       Signal_name
+0x106       named_signal_prc  SendData
+0x107       named_signal_prc  txCnt
+0x108       named_signal_prc  rxCnt2
+0x109       named_signal_prc  rdyTosend2
+0x10A       named_signal_prc  NoTSin0
+0x10B       named_signal_prc  NoTSin1
+0x10C       named_signal_prc  NoTSin2
+0x10D       named_signal_prc  NoTSin3
+0x10E       named_signal_prc  NoTSin4
+0x10F       named_signal_prc  POINT5
+0x110       named_signal_prc  POINT0
+0x111       named_signal_prc  rxCnt
+0x112       named_signal_prc  rdyToSen1
+0x113       named_signal_prc  POINTIn0
+0x114       named_signal_prc  ts2sec
+0x115       named_signal_prc  ts2nsec
+0x116       named_signal_prc  POINTin3
+0x117       named_signal_prc  POINTin4
+0x118       named_signal_prc  OnewaySec
+0x119       named_signal_prc  OnewayNSec
+0x11A       named_signal_prc  RTTnsec1
+0x11B       named_signal_prc  RTTsec1
+0x11C       named_signal_prc  RTTsec2
+0x11D       named_signal_prc  RTTnsec2
+0x11E       named_signal_wif  ADVSECD
+0x11F       named_signal_wif  ADVSTAT
+0x120       named_signal_wif  CRTSTAT
+
+
+       T I M E - S T E P   I N F O R M A T I O N         
+                 S U B S Y S T E M   1
+ ==========================================================
+
+
+  Backplane Communication Speed = 60.000000 ns
+  T2 communication time 2.2200 us
+
+
+  Minimum time-step 4.2200 us
+
+	 Common Current Injections: 0(local) + 0(xrack)
