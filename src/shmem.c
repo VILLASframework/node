@@ -7,7 +7,7 @@
 #include "node.h"
 #include "nodes/shmem.h"
 #include "pool.h"
-#include "queue.h"
+#include "queue_signalled.h"
 #include "sample.h"
 #include "sample_io.h"
 #include "shmem.h"
@@ -17,10 +17,19 @@
 
 #define VECTORIZE 8
 
+void *base;
+struct shmem_shared *shared;
+
 void usage()
 {
 	printf("Usage: villas-shmem SHM_NAME\n");
 	printf("  SHMNAME name of the shared memory object\n");
+}
+
+void quit(int sig)
+{
+	shmem_shared_close(shared, base);
+	exit(1);
 }
 
 int main(int argc, char* argv[])
@@ -30,14 +39,20 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	struct shmem_shared *shared = shmem_shared_open(argv[1]);
+	shared = shmem_shared_open(argv[1], &base);
 	if (!shared)
 		serror("Failed to open shmem interface");
 
+	signal(SIGINT, quit);
+	signal(SIGTERM, quit);
 	struct sample *insmps[VECTORIZE], *outsmps[VECTORIZE];
 	while (1) {
 		int r, w;
 		r = shmem_shared_read(shared, insmps, VECTORIZE);
+		if (r == -1) {
+			printf("node stopped, exiting\n");
+			break;
+		}
 		int avail = sample_alloc(&shared->pool, outsmps, r);
 		if (avail < r)
 			warn("pool underrun (%d/%d)\n", avail, r);

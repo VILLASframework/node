@@ -79,15 +79,15 @@ int shmem_open(struct node *n) {
 int shmem_close(struct node *n) {
 	struct shmem* shm = n->_vd;
 	size_t len = shm->shared->len;
-	if (shm->cond_in)
-		queue_signalled_destroy(&shm->shared->in.qs);
-	else
-		queue_destroy(&shm->shared->in.q);
-	if (shm->cond_out)
-		queue_signalled_destroy(&shm->shared->out.qs);
-	else
-		queue_destroy(&shm->shared->out.q);
-	pool_destroy(&shm->shared->pool);
+	atomic_store_explicit(&shm->shared->node_stopped, 1, memory_order_relaxed);
+	if (shm->cond_out) {
+		pthread_mutex_lock(&shm->shared->out.qs.mt);
+		pthread_cond_broadcast(&shm->shared->out.qs.ready);
+		pthread_mutex_unlock(&shm->shared->out.qs.mt);
+	}
+	/* Don't destroy the data structures yet, since the other process might
+	 * still be using them. Once both processes are done and have unmapped the
+	 * memory, it will be freed anyway. */
 	int r = munmap(shm->base, len);
 	if (r != 0)
 		return r;
@@ -96,9 +96,14 @@ int shmem_close(struct node *n) {
 
 int shmem_read(struct node *n, struct sample *smps[], unsigned cnt) {
 	struct shmem *shm = n->_vd;
+	int r;
 	if (shm->cond_in)
-		return queue_signalled_pull_many(&shm->shared->in.qs, (void**) smps, cnt);
-	return queue_pull_many(&shm->shared->in.q, (void**) smps, cnt);
+		r = queue_signalled_pull_many(&shm->shared->in.qs, (void**) smps, cnt);
+	else
+		r = queue_pull_many(&shm->shared->in.q, (void**) smps, cnt);
+	if (!r && atomic_load_explicit(&shm->shared->ext_stopped, memory_order_relaxed))
+		return -1;
+	return r;
 }
 
 int shmem_write(struct node *n, struct sample *smps[], unsigned cnt) {
@@ -122,6 +127,11 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt) {
 		sample_get(shared_smps[i]);
 	}
 	int pushed;
+	if (atomic_load_explicit(&shm->shared->ext_stopped, memory_order_relaxed)) {
+		for (int i = 0; i < avail; i++)
+			sample_put(shared_smps[i]);
+		return -1;
+	}
 	if (shm->cond_out)
 		pushed = queue_signalled_push_many(&shm->shared->out.qs, (void**) shared_smps, avail);
 	else

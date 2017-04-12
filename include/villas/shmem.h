@@ -19,9 +19,13 @@ struct shmem_shared {
 	union shmem_queue out; /**< Queue for samples passed from node to external program.*/
 	int cond_out; /**< Whether to use a pthread_cond_t to signal if new samples are written to outqueue. */
 	struct pool pool; /**< Pool for the samples in the queues. */
+	atomic_size_t node_stopped;
+	atomic_size_t ext_stopped;
 };
 
-struct shmem_shared * shmem_shared_open(const char* name);
+struct shmem_shared * shmem_shared_open(const char* name, void **base_ptr);
+
+int shmem_shared_close(struct shmem_shared *shm, void *base);
 
 int shmem_shared_read(struct shmem_shared *shm, struct sample *smps[], unsigned cnt);
 

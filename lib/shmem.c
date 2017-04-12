@@ -24,7 +24,7 @@ size_t shmem_total_size(int insize, int outsize, int sample_size)
 		+ 1024;
 }
 
-struct shmem_shared* shmem_shared_open(const char *name)
+struct shmem_shared* shmem_shared_open(const char *name, void **base_ptr)
 {
 	int fd = shm_open(name, O_RDWR, 0);
 	if (fd < 0)
@@ -47,19 +47,40 @@ struct shmem_shared* shmem_shared_open(const char *name)
 		return NULL;
 	/* Adress might have moved */
 	cptr = (char *) base + sizeof(struct memtype) + sizeof(struct memblock);
+	if (base_ptr)
+		*base_ptr = base;
 	return (struct shmem_shared *) cptr;
 }
 
-int shmem_shared_read(struct shmem_shared *shm, struct sample *smps[], unsigned cnt) {
-	if (shm->cond_out)
-		return queue_signalled_pull_many(&shm->out.qs, (void **) smps, cnt);
-	else
-		return queue_pull_many(&shm->out.q, (void **) smps, cnt);
+int shmem_shared_close(struct shmem_shared *shm, void *base)
+{
+	atomic_store_explicit(&shm->ext_stopped, 1, memory_order_relaxed);
+	if (shm->cond_in) {
+		pthread_mutex_lock(&shm->in.qs.mt);
+		pthread_cond_broadcast(&shm->in.qs.ready);
+		pthread_mutex_unlock(&shm->in.qs.mt);
+	}
+	return munmap(base, shm->len);
 }
 
-int shmem_shared_write(struct shmem_shared *shm, struct sample *smps[], unsigned cnt) {
+int shmem_shared_read(struct shmem_shared *shm, struct sample *smps[], unsigned cnt)
+{
+	int r;
+	if (shm->cond_out)
+		r = queue_signalled_pull_many(&shm->out.qs, (void **) smps, cnt);
+	else
+		r = queue_pull_many(&shm->out.q, (void **) smps, cnt);
+	if (!r && atomic_load_explicit(&shm->node_stopped, memory_order_relaxed))
+		return -1;
+	return r;
+}
+
+int shmem_shared_write(struct shmem_shared *shm, struct sample *smps[], unsigned cnt)
+{
+	if (atomic_load_explicit(&shm->node_stopped, memory_order_relaxed))
+		return -1;
 	if (shm->cond_in)
 		return queue_signalled_push_many(&shm->in.qs, (void **) smps, cnt);
 	else
-		return queue_pull_many(&shm->in.q, (void **) smps, cnt);
+		return queue_push_many(&shm->in.q, (void **) smps, cnt);
 }
