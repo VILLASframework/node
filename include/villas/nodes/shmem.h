@@ -15,6 +15,7 @@ struct shmem {
 	int insize, outsize; /**< Size of ingoing and outgoing queue, respectively. */
 	int cond_out; /**< Whether to use a pthread_cond_t to signal if new samples are written to outqueue. */
 	int cond_in; /**< Whether to use a pthread_cond_t to signal if new samples are written to inqueue. */
+	char **exec; /**< External program to execute on start. */
 
 	struct memtype *manager; /**< Manager for the shared memory region. */
 	int fd; /**< Handle as returned by shm_open().*/

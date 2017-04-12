@@ -411,6 +411,11 @@ void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 	sigemptyset(&sa_quit.sa_mask);
 	sigaction(SIGINT, &sa_quit, NULL);
 	sigaction(SIGTERM, &sa_quit, NULL);
+	struct sigaction sa_chld = {
+		.sa_flags = 0,
+		.sa_handler = SIG_IGN
+	};
+	sigaction(SIGCHLD, &sa_chld, NULL);
 }
 
 int sha1sum(FILE *f, unsigned char *sha1)
@@ -436,4 +441,17 @@ int sha1sum(FILE *f, unsigned char *sha1)
 	fseek(f, seek, SEEK_SET);
 
 	return 0;
+}
+
+pid_t
+spawn(const char* name, char **argv) {
+	pid_t pid = fork();
+	switch(pid) {
+	case -1:
+		return -1;
+	case 0:
+		return execvp(name, argv);
+	default:
+		return pid;
+	}
 }

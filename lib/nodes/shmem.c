@@ -28,6 +28,22 @@ int shmem_parse(struct node *n, config_setting_t *cfg) {
 		shm->cond_out = false;
 	if (!config_setting_lookup_bool(cfg, "cond_in", &shm->cond_in))
 		shm->cond_in = false;
+	config_setting_t *exec_setting = config_setting_lookup(cfg, "exec");
+	if (!exec_setting) {
+		shm->exec = NULL;
+	} else {
+		if (!config_setting_is_array(exec_setting))
+			cerror(exec_setting, "Invalid format for exec");
+		shm->exec = malloc(sizeof(char*) * (config_setting_length(exec_setting) + 1));
+		int i;
+		for (i = 0; i < config_setting_length(exec_setting); i++) {
+			const char* elm = config_setting_get_string_elem(exec_setting, i);
+			if (!elm)
+				cerror(exec_setting, "Invalid format for exec");
+			shm->exec[i] = strdup(elm);
+		}
+		shm->exec[i] = NULL;
+	}
 
 	return 0;
 }
@@ -73,6 +89,8 @@ int shmem_open(struct node *n) {
 	if (pool_init(&shm->shared->pool, shm->insize+shm->outsize, SAMPLE_LEN(shm->sample_size), shm->manager) < 0)
 		error("Shm pool allocation failed (not enough memory?)");
 
+	if (shm->exec && !spawn(shm->exec[0], shm->exec))
+		serror("Failed to spawn external program");
 	return 0;
 }
 

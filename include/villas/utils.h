@@ -245,3 +245,5 @@ void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx));
  * @retval 0 Everything was okay.
  */
 int sha1sum(FILE *f, unsigned char *sha1);
+
+pid_t spawn(const char* name, char **argv);
