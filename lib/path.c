@@ -58,7 +58,8 @@ static void path_read(struct path *p)
 	if (enqueue != recv) {
 		info("Hooks skipped %u out of %u samples for path %s", recv - enqueue, recv, path_name(p));
 		
-		stats_update(p->stats->delta, STATS_SKIPPED, recv - enqueue);
+		if (p->stats)
+			stats_update(p->stats->delta, STATS_SKIPPED, recv - enqueue);
 	}
 
 	/* Keep track of the lowest index that wasn't enqueued;
@@ -452,7 +453,7 @@ int path_reverse(struct path *p, struct path *r)
 
 	for (size_t i = 0; i < list_length(&p->hooks); i++) {
 		struct hook *h = list_at(&p->hooks, i);
-		struct hook hc;
+		struct hook hc = {.state = STATE_DESTROYED};
 		
 		ret = hook_init(&hc, h->_vt, p);
 		if (ret)
