@@ -89,8 +89,14 @@ int shmem_open(struct node *n) {
 	if (pool_init(&shm->shared->pool, shm->insize+shm->outsize, SAMPLE_LEN(shm->sample_size), shm->manager) < 0)
 		error("Shm pool allocation failed (not enough memory?)");
 
+	pthread_barrierattr_init(&shm->shared->start_attr);
+	pthread_barrierattr_setpshared(&shm->shared->start_attr, PTHREAD_PROCESS_SHARED);
+	pthread_barrier_init(&shm->shared->start_bar, &shm->shared->start_attr, 2);
+
 	if (shm->exec && !spawn(shm->exec[0], shm->exec))
 		serror("Failed to spawn external program");
+
+	pthread_barrier_wait(&shm->shared->start_bar);
 	return 0;
 }
 

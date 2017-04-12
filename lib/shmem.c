@@ -49,7 +49,9 @@ struct shmem_shared* shmem_shared_open(const char *name, void **base_ptr)
 	cptr = (char *) base + sizeof(struct memtype) + sizeof(struct memblock);
 	if (base_ptr)
 		*base_ptr = base;
-	return (struct shmem_shared *) cptr;
+	shm = (struct shmem_shared *) cptr;
+	pthread_barrier_wait(&shm->start_bar);
+	return shm;
 }
 
 int shmem_shared_close(struct shmem_shared *shm, void *base)
