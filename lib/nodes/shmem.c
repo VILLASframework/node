@@ -142,20 +142,20 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct shmem *shm = n->_vd;
 
-	int ret;
+	int ret, recv;
 
-	ret = shm->polling ? queue_pull_many(&shm->shared->in.q, (void**) smps, cnt)
+	recv = shm->polling ? queue_pull_many(&shm->shared->in.q, (void**) smps, cnt)
 			   : queue_signalled_pull_many(&shm->shared->in.qs, (void**) smps, cnt);
 	
-	if (ret <= 0)
-		return ret;
+	if (recv <= 0)
+		return recv;
 	
 	/* Check if remote process is still running */
 	ret = atomic_load_explicit(&shm->shared->ext_stopped, memory_order_relaxed);
 	if (ret)
-		return -1;
+		return ret;
 
-	return ret;
+	return recv;
 }
 
 int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
