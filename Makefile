@@ -15,7 +15,7 @@
 ###################################################################################
 
 # Project modules
-MODULES = lib libext plugins src tests thirdparty tools packaging doc etc web
+MODULES = lib plugins src tests thirdparty tools packaging doc etc web
 
 # Default prefix for install target
 PREFIX ?= /usr/local
