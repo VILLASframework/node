@@ -47,6 +47,21 @@ int queue_signalled_destroy(struct queue_signalled *qs)
 	return 0;
 }
 
+int queue_signalled_push(struct queue_signalled *qs, void *ptr)
+{
+	int ret;
+	
+	ret = queue_push(&qs->queue, ptr);
+	if (ret < 0)
+		return ret;
+	
+	pthread_mutex_lock(&qs->mutex);
+	pthread_cond_broadcast(&qs->ready);
+	pthread_mutex_unlock(&qs->mutex);
+
+	return ret;
+}
+
 int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cnt)
 {
 	int ret;
@@ -60,6 +75,18 @@ int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cn
 	pthread_mutex_unlock(&qs->mutex);
 
 	return ret;
+}
+
+int queue_signalled_pull(struct queue_signalled *qs, void **ptr)
+{
+	/* Make sure that qs->mutex is unlocked if this thread gets cancelled. */
+	pthread_cleanup_push((void (*)(void*)) pthread_mutex_unlock, &qs->mutex);
+	pthread_mutex_lock(&qs->mutex);
+	pthread_cond_wait(&qs->ready, &qs->mutex);
+	pthread_mutex_unlock(&qs->mutex);
+	pthread_cleanup_pop(0);
+	
+	return queue_pull(&qs->queue, ptr);
 }
 
 int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cnt)

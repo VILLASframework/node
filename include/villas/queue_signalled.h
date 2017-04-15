@@ -18,9 +18,15 @@ struct queue_signalled {
 	pthread_mutex_t mutex;		/**< Mutex for ready. */
 };
 
+#define queue_signalled_available(q) queue_available(&((q)->queue))
+
 int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memtype *mem);
 
 int queue_signalled_destroy(struct queue_signalled *qs);
+
+int queue_signalled_push(struct queue_signalled *qs, void *ptr);
+
+int queue_signalled_pull(struct queue_signalled *qs, void **ptr);
 
 int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cnt);
 
