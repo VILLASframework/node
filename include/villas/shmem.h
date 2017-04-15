@@ -1,4 +1,3 @@
-#pragma once
 /** Shared-memory interface: The interface functions that the external program should use.
  *
  * @file
@@ -6,6 +5,7 @@
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
+#pragma once
 
 #include "pool.h"
 #include "queue.h"
@@ -18,12 +18,16 @@ union shmem_queue {
 
 /** The structure that actually resides in the shared memory. */
 struct shmem_shared {
-	size_t len; /**< Total size of the shared memory region.*/
-	union shmem_queue in; /**< Queue for samples passed from external program to node.*/
-	int cond_in; /**< Whether to use a pthread_cond_t to signal if new samples are written to inqueue. */
-	union shmem_queue out; /**< Queue for samples passed from node to external program.*/
-	int cond_out; /**< Whether to use a pthread_cond_t to signal if new samples are written to outqueue. */
-	struct pool pool; /**< Pool for the samples in the queues. */
+	size_t len;		/**< Total size of the shared memory region.*/
+
+	int cond_in;		/**< Whether to use a pthread_cond_t to signal if new samples are written to inqueue. */
+	int cond_out;		/**< Whether to use a pthread_cond_t to signal if new samples are written to outqueue. */
+
+	union shmem_queue in;	/**< Queue for samples passed from external program to node.*/
+	union shmem_queue out;	/**< Queue for samples passed from node to external program.*/
+
+	struct pool pool;	/**< Pool for the samples in the queues. */
+
 	pthread_barrier_t start_bar;
 	pthread_barrierattr_t start_attr;
 	atomic_size_t node_stopped;

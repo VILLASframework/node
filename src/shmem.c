@@ -38,6 +38,8 @@ void quit(int sig)
 
 int main(int argc, char* argv[])
 {
+	int readcnt, writecnt, avail;
+
 	if (argc != 2) {
 		usage();
 		return 1;
@@ -51,30 +53,37 @@ int main(int argc, char* argv[])
 	signal(SIGTERM, quit);
 	struct sample *insmps[VECTORIZE], *outsmps[VECTORIZE];
 	while (1) {
-		int r, w;
-		r = shmem_shared_read(shared, insmps, VECTORIZE);
-		if (r == -1) {
-			printf("node stopped, exiting\n");
+
+		readcnt = shmem_shared_read(shared, insmps, VECTORIZE);
+		if (readcnt == -1) {
+			printf("Node stopped, exiting\n");
 			break;
 		}
-		int avail = sample_alloc(&shared->pool, outsmps, r);
-		if (avail < r)
-			warn("pool underrun (%d/%d)\n", avail, r);
-		for (int i = 0; i < r; i++) {
-			printf("got sample: seq %d recv %ld.%ld\n", insmps[i]->sequence,
-			       insmps[i]->ts.received.tv_sec, insmps[i]->ts.received.tv_nsec);
-		}
+		
+		avail = sample_alloc(&shared->pool, outsmps, readcnt);
+		if (avail < readcnt)
+			warn("Pool underrun: %d / %d\n", avail, readcnt);
+
+		for (int i = 0; i < readcnt; i++)
+			sample_io_villas_fprint(stdout, insmps[i], SAMPLE_IO_ALL);
+
 		for (int i = 0; i < avail; i++) {
 			outsmps[i]->sequence = insmps[i]->sequence;
 			outsmps[i]->ts = insmps[i]->ts;
+
 			int len = MIN(insmps[i]->length, outsmps[i]->capacity);
-			memcpy(outsmps[i]->data, insmps[i]->data, len*sizeof(insmps[0]->data[0]));
+			memcpy(outsmps[i]->data, insmps[i]->data, SAMPLE_DATA_LEN(len));
+
 			outsmps[i]->length = len;
 		}
-		for (int i = 0; i < r; i++)
+
+		for (int i = 0; i < readcnt; i++)
 			sample_put(insmps[i]);
-		w = shmem_shared_write(shared, outsmps, avail);
-		if (w < avail)
-			warn("short write (%d/%d)\n", w, r);
+
+		writecnt = shmem_shared_write(shared, outsmps, avail);
+		if (writecnt < avail)
+			warn("Short write");
+		
+		info("Read / Write: %d / %d", readcnt, writecnt);
 	}
 }

@@ -293,10 +293,12 @@ void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 	sigemptyset(&sa_quit.sa_mask);
 	sigaction(SIGINT, &sa_quit, NULL);
 	sigaction(SIGTERM, &sa_quit, NULL);
+
 	struct sigaction sa_chld = {
 		.sa_flags = 0,
 		.sa_handler = SIG_IGN
 	};
+
 	sigaction(SIGCHLD, &sa_chld, NULL);
 }
 

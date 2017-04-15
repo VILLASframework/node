@@ -453,7 +453,7 @@ int path_reverse(struct path *p, struct path *r)
 
 	for (size_t i = 0; i < list_length(&p->hooks); i++) {
 		struct hook *h = list_at(&p->hooks, i);
-		struct hook hc = {.state = STATE_DESTROYED};
+		struct hook hc = { .state = STATE_DESTROYED };
 		
 		ret = hook_init(&hc, h->_vt, p);
 		if (ret)
