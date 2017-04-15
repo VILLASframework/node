@@ -38,6 +38,11 @@ void quit(int sig)
 
 int main(int argc, char* argv[])
 {
+	struct log log;
+	
+	log_init(&log, V, LOG_ALL);
+	log_start(&log);
+	
 	int readcnt, writecnt, avail;
 
 	if (argc != 2) {
