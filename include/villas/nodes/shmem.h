@@ -17,13 +17,15 @@
 #include "memory.h"
 #include "pool.h"
 #include "queue.h"
+#include "config.h"
 
-#define DEFAULT_SHMEM_QUEUESIZE 512
+#define DEFAULT_SHMEM_QUEUELEN	512
+#define DEFAULT_SHMEM_SAMPLELEN	DEFAULT_SAMPLELEN
 
 struct shmem {
 	const char* name;		/**< Name of the shm object. */
-	int sample_size;		/**< Number of data entries for each sample. */
-	int insize, outsize;		/**< Size of ingoing and outgoing queue, respectively. */
+	int samplelen;			/**< Number of data entries for each sample. */
+	int queuelen;			/**< Size of ingoing and outgoing queue, respectively. */
 	int polling;			/**< Whether to use a pthread_cond_t to signal if new samples are written to outgoing queue. */
 	char **exec;			/**< External program to execute on start. */
 

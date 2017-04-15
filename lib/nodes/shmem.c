@@ -24,12 +24,10 @@ int shmem_parse(struct node *n, config_setting_t *cfg)
 
 	if (!config_setting_lookup_string(cfg, "name", &shm->name))
 		cerror(cfg, "Missing shared memory object name");
-	if (!config_setting_lookup_int(cfg, "insize", &shm->insize))
-		shm->insize = DEFAULT_SHMEM_QUEUESIZE;
-	if (!config_setting_lookup_int(cfg, "outsize", &shm->outsize))
-		shm->outsize = DEFAULT_SHMEM_QUEUESIZE;
-	if (!config_setting_lookup_int(cfg, "sample_size", &shm->sample_size))
-		cerror(cfg, "Missing sample size setting");
+	if (!config_setting_lookup_int(cfg, "queuelen", &shm->queuelen))
+		shm->queuelen = DEFAULT_SHMEM_QUEUELEN;
+	if (!config_setting_lookup_int(cfg, "samplelen", &shm->samplelen))
+		shm->samplelen = DEFAULT_SHMEM_SAMPLELEN;
 	if (!config_setting_lookup_bool(cfg, "polling", &shm->polling))
 		shm->polling = false;
 
@@ -67,7 +65,7 @@ int shmem_open(struct node *n)
 	if (shm->fd < 0)
 		serror("Opening shared memory object failed");
 	
-	len = shmem_total_size(shm->insize, shm->outsize, shm->sample_size);
+	len = shmem_total_size(shm->queuelen, shm->queuelen, shm->samplelen);
 	
 	ret = ftruncate(shm->fd, len);
 	if (ret < 0)
@@ -86,17 +84,17 @@ int shmem_open(struct node *n)
 	shm->shared->len = len;
 	shm->shared->polling = shm->polling;
 
-	ret = shm->polling ? queue_init(&shm->shared->in.q, shm->insize, shm->manager)
-			   : queue_signalled_init(&shm->shared->in.qs, shm->insize, shm->manager);
+	ret = shm->polling ? queue_init(&shm->shared->in.q, shm->queuelen, shm->manager)
+			   : queue_signalled_init(&shm->shared->in.qs, shm->queuelen, shm->manager);
 	if (ret)
 		error("Shared memory queue allocation failed (not enough memory?)");
 
-	ret = shm->polling ? queue_init(&shm->shared->out.q, shm->outsize, shm->manager)
-			   : queue_signalled_init(&shm->shared->out.qs, shm->outsize, shm->manager);
+	ret = shm->polling ? queue_init(&shm->shared->out.q, shm->queuelen, shm->manager)
+			   : queue_signalled_init(&shm->shared->out.qs, shm->queuelen, shm->manager);
 	if (ret)
 		error("Shared memory queue allocation failed (not enough memory?)");
 
-	ret = pool_init(&shm->shared->pool, shm->insize+shm->outsize, SAMPLE_LEN(shm->sample_size), shm->manager);
+	ret = pool_init(&shm->shared->pool, 2 * shm->queuelen, SAMPLE_LEN(shm->samplelen), shm->manager);
 	if (ret)
 		error("Shared memory pool allocation failed (not enough memory?)");
 
@@ -178,7 +176,7 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 		if (len != smps[i]->length)
 			warn("Losing data because of sample capacity mismatch in node %s", node_name(n));
 		
-		memcpy(shared_smps[i]->data, smps[i]->data, len*sizeof(smps[0]->data[0]));
+		memcpy(shared_smps[i]->data, smps[i]->data, SAMPLE_DATA_LEN(len));
 		
 		shared_smps[i]->length = len;
 		
@@ -206,8 +204,8 @@ char * shmem_print(struct node *n)
 	struct shmem *shm = n->_vd;
 	char *buf = NULL;
 
-	strcatf(&buf, "name=%s, insize=%d, outsize=%d, sample_size=%d, polling=%s",
-		shm->name, shm->insize, shm->outsize, shm->sample_size, shm->polling ? "yes" : "no");
+	strcatf(&buf, "name=%s, queuelen=%d, samplelen=%d, polling=%s",
+		shm->name, shm->queuelen, shm->samplelen, shm->polling ? "yes" : "no");
 	
 	if (shm->exec) {
 		strcatf(&buf, ", exec='");
