@@ -13,9 +13,9 @@
 
 /** Wrapper around queue that uses POSIX CV's for signalling writes. */
 struct queue_signalled {
-	struct queue q;			/**< Actual underlying queue. */
+	struct queue queue;		/**< Actual underlying queue. */
 	pthread_cond_t ready;		/**< Condition variable to signal writes to the queue. */
-	pthread_mutex_t mt;		/**< Mutex for ready. */
+	pthread_mutex_t mutex;		/**< Mutex for ready. */
 };
 
 int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memtype *mem);

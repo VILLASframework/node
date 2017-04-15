@@ -82,9 +82,9 @@ int shmem_shared_close(struct shmem_shared *shm, void *base)
 	atomic_store_explicit(&shm->ext_stopped, 1, memory_order_relaxed);
 
 	if (!shm->polling) {
-		pthread_mutex_lock(&shm->in.qs.mt);
+		pthread_mutex_lock(&shm->in.qs.mutex);
 		pthread_cond_broadcast(&shm->in.qs.ready);
-		pthread_mutex_unlock(&shm->in.qs.mt);
+		pthread_mutex_unlock(&shm->in.qs.mutex);
 	}
 
 	return munmap(base, shm->len);
