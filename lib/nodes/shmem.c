@@ -225,7 +225,7 @@ char * shmem_print(struct node *n)
 
 static struct plugin p = {
 	.name = "shmem",
-	.description = "use POSIX shared memory to interface with other programs",
+	.description = "POSIX shared memory interface with external processes",
 	.type = PLUGIN_TYPE_NODE,
 	.node = {
 		.vectorize = 0,
