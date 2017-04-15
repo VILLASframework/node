@@ -12,6 +12,7 @@
 #include "api.h"
 #include "node.h"
 #include "utils.h"
+#include "json.h"
 
 extern struct list nodes;
 

@@ -6,6 +6,7 @@
 
 #include <ctype.h>
 
+#include "json.h"
 #include "sample.h"
 #include "sample_io.h"
 #include "timing.h"
@@ -179,104 +180,3 @@ skip:	if (fgets(line, sizeof(line), f) == NULL)
 	return sample_io_villas_scan(line, s, fl);
 }
 
-#ifdef WITH_JANSSON
-int sample_io_json_pack(json_t **j, struct sample *s, int flags)
-{
-	json_error_t err;
-	json_t *json_data = json_array();
-	
-	for (int i = 0; i < s->length; i++) {
-		json_t *json_value = sample_get_data_format(s, i)
-					? json_integer(s->data[i].i)
-					: json_real(s->data[i].f);
-						
-		json_array_append(json_data, json_value);
-	}
-	
-	*j = json_pack_ex(&err, 0, "{ s: { s: [ I, I ], s: [ I, I ], s: [ I, I ] }, s: I, s: o }",
-		"ts",
-			"origin", s->ts.origin.tv_sec, s->ts.origin.tv_nsec,
-			"received", s->ts.received.tv_sec, s->ts.received.tv_nsec,
-			"sent", s->ts.sent.tv_sec, s->ts.sent.tv_nsec,
-		"sequence", s->sequence,
-		"data", json_data);
-		
-	if (!*j)
-		return -1;
-	
-	return 0;
-}
-
-int sample_io_json_unpack(json_t *j, struct sample *s, int *flags)
-{
-	int ret, i;
-	json_t *json_data, *json_value;
-	
-	ret = json_unpack(j, "{ s: { s: [ I, I ], s: [ I, I ], s: [ I, I ] }, s: I, s: o }",
-		"ts",
-			"origin", &s->ts.origin.tv_sec, &s->ts.origin.tv_nsec,
-			"received", &s->ts.received.tv_sec, &s->ts.received.tv_nsec,
-			"sent", &s->ts.sent.tv_sec, &s->ts.sent.tv_nsec,
-		"sequence", &s->sequence,
-		"data", &json_data);
-		
-	if (ret)
-		return ret;
-	
-	s->length = 0;
-
-	json_array_foreach(json_data, i, json_value) {
-		switch (json_typeof(json_value)) {
-			case JSON_REAL:
-				s->data[i].f = json_real_value(json_value);
-				sample_set_data_format(s, i, SAMPLE_DATA_FORMAT_FLOAT);
-				break;
-
-			case JSON_INTEGER:
-				s->data[i].f = json_integer_value(json_value);
-				sample_set_data_format(s, i, SAMPLE_DATA_FORMAT_INT);
-				break;
-
-			default:
-				return -1;
-		}
-		
-		s->length++;
-	}
-
-	return 0;
-}
-
-int sample_io_json_fprint(FILE *f, struct sample *s, int flags)
-{
-	int ret;
-	json_t *json;
-	
-	ret = sample_io_json_pack(&json, s, flags);
-	if (ret)
-		return ret;
-	
-	ret = json_dumpf(json, f, 0);
-	
-	json_decref(json);
-	
-	return ret;
-}
-
-int sample_io_json_fscan(FILE *f, struct sample *s, int *flags)
-{
-	int ret;
-	json_t *json;
-	json_error_t err;
-
-	json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
-	if (!json)
-		return -1;
-	
-	ret = sample_io_json_unpack(json, s, flags);
-	
-	json_decref(json);
-	
-	return ret;
-}
-#endif

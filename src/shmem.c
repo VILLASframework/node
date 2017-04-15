@@ -9,7 +9,6 @@
 #include "pool.h"
 #include "queue_signalled.h"
 #include "sample.h"
-#include "sample_io.h"
 #include "shmem.h"
 #include "utils.h"
 
@@ -56,8 +55,10 @@ int main(int argc, char* argv[])
 		int avail = sample_alloc(&shared->pool, outsmps, r);
 		if (avail < r)
 			warn("pool underrun (%d/%d)\n", avail, r);
-		for (int i = 0; i < r; i++)
-			sample_io_villas_fprint(stdout, insmps[i], SAMPLE_IO_ALL);
+		for (int i = 0; i < r; i++) {
+			printf("got sample: seq %d recv %ld.%ld\n", insmps[i]->sequence,
+			       insmps[i]->ts.received.tv_sec, insmps[i]->ts.received.tv_nsec);
+		}
 		for (int i = 0; i < avail; i++) {
 			outsmps[i]->sequence = insmps[i]->sequence;
 			outsmps[i]->ts = insmps[i]->ts;

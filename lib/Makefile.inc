@@ -13,10 +13,11 @@ LIB_SRCS = $(addprefix lib/nodes/, file.c cbuilder.c shmem.c) 		\
               log.c utils.c super_node.c hist.c timing.c pool.c	\
               list.c queue.c queue_signalled.c memory.c advio.c web.c api.c	\
               plugin.c node_type.c stats.c mapping.c sample_io.c shmem.c \
+              json.c crypt.c \
            )
 
 LIBEXT_SRCS = $(addprefix lib/, sample.c node.c queue.c queue_signalled.c \
-                memory.c shmem.c utils.c kernel/kernel.c log.c list.c sample_io.c \
+                memory.c shmem.c utils.c kernel/kernel.c log.c list.c \
                 plugin.c timing.c)
 
 LIB_CFLAGS  = $(CFLAGS) -fPIC
@@ -25,7 +26,7 @@ LIB_LDLIBS  = $(LDLIBS) -ldl -lrt -Wl,-soname,$(LIB_NAME).so.$(LIB_ABI_VERSION)
 
 LIBEXT_CFLAGS = $(CFLAGS) -fPIC
 LIBEXT_LDFLAGS = -shared
-LIBEXT_LDLIBS = -ljansson -lcrypto -lrt -Wl,-soname,$(LIBEXT_NAME).so.$(LIBEXT_ABI_VERSION)
+LIBEXT_LDLIBS = -ldl -lrt -Wl,-soname,$(LIBEXT_NAME).so.$(LIBEXT_ABI_VERSION)
 
 -include lib/hooks/Makefile.inc
 -include lib/apis/Makefile.inc
