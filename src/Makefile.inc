@@ -2,7 +2,6 @@
 TARGETS = $(BUILDDIR)/villas-node \
 	  $(BUILDDIR)/villas-pipe  \
 	  $(BUILDDIR)/villas-signal \
-	  $(BUILDDIR)/villas-shmem \
 	  $(BUILDDIR)/villas-test-rtt \
 	  $(BUILDDIR)/villas-test-cmp \
 	  $(BUILDDIR)/villas-hook
@@ -26,7 +25,7 @@ ifeq ($(shell pkg-config libxil; echo $$?),0)
 	endif
 endif
 
-src: $(TARGETS)
+src: $(TARGETS) $(BUILDDIR)/villas-shmem
 
 $(TARGETS): $(BUILDDIR)/villas-%: $(BUILDDIR)/src/%.o
 
@@ -36,6 +35,10 @@ $(BUILDDIR)/villas-fpga: $(addprefix $(BUILDDIR)/src/,fpga-bench.o $(BENCH_OBJS)
 # Compile executable objects
 $(BUILDDIR)/src/%.o: src/%.c $(BUILDDIR)/defines | $$(dir $$@)
 	$(CC) $(SRC_CFLAGS) -c $< -o $@
+
+# Build villas-shmem only with libext (to ensure that libext contains everything needed)
+$(BUILDDIR)/villas-shmem: $(BUILDDIR)/src/shmem.o $(LIBS) libext
+	$(CC) $(SRC_LDFLAGS) $(BUILDDIR)/src/shmem.o $(filter-out -lvillas,$(SRC_LDLIBS)) -lvillas-ext -o $@
 
 # Link target executables
 $(TARGETS): | $(LIBS)

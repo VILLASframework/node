@@ -1,7 +1,10 @@
 LIB_NAME = libvillas
+LIBEXT_NAME = libvillas-ext
 LIB_ABI_VERSION = 1
+LIBEXT_ABI_VERSION = 1
 
 LIB = $(BUILDDIR)/$(LIB_NAME).so.$(LIB_ABI_VERSION)
+LIBEXT = $(BUILDDIR)/$(LIBEXT_NAME).so.$(LIBEXT_ABI_VERSION)
 
 # Object files for libvillas
 LIB_SRCS = $(addprefix lib/nodes/, file.c cbuilder.c shmem.c) 		\
@@ -12,9 +15,17 @@ LIB_SRCS = $(addprefix lib/nodes/, file.c cbuilder.c shmem.c) 		\
               plugin.c node_type.c stats.c mapping.c sample_io.c shmem.c \
            )
 
+LIBEXT_SRCS = $(addprefix lib/, sample.c node.c queue.c queue_signalled.c \
+                memory.c shmem.c utils.c kernel/kernel.c log.c list.c sample_io.c \
+                plugin.c timing.c)
+
 LIB_CFLAGS  = $(CFLAGS) -fPIC
 LIB_LDFLAGS = -shared
 LIB_LDLIBS  = $(LDLIBS) -ldl -lrt -Wl,-soname,$(LIB_NAME).so.$(LIB_ABI_VERSION)
+
+LIBEXT_CFLAGS = $(CFLAGS) -fPIC
+LIBEXT_LDFLAGS = -shared
+LIBEXT_LDLIBS = -ljansson -lcrypto -lrt -Wl,-soname,$(LIBEXT_NAME).so.$(LIBEXT_ABI_VERSION)
 
 -include lib/hooks/Makefile.inc
 -include lib/apis/Makefile.inc
@@ -102,4 +113,19 @@ install-lib: lib
 clean-lib:
 	rm -rf $(BUILDDIR)/lib $(LIB)
 
-.PHONY: lib install-lib clean-lib $(BUILDDIR)/lib/defines
+LIBEXT_OBJS = $(patsubst %.c, $(BUILDDIR)/%.o, $(LIBEXT_SRCS))
+
+libext: $(LIBEXT)
+
+$(LIBEXT): $(LIBEXT_OBJS)
+	$(CC) $(LIBEXT_LDFLAGS) -o $@ $^ $(LIBEXT_LDLIBS)
+	ln -srf $@ $(BUILDDIR)/$(LIBEXT_NAME).so
+
+install-libext: libext
+	install -m 0755 -D -T $(LIBEXT) $(DESTDIR)$(PREFIX)/lib/$(LIBEXT_NAME).so.$(LIBEXT_ABI_VERSION)
+	ln -srf $(DESTDIR)$(PREFIX)/lib/$(LIBEXT_NAME).so.$(LIBEXT_ABI_VERSION) $(DESTDIR)$(PREFIX)/lib/$(LIBEXT_NAME).so
+
+clean-libext:
+	rm -rf $(BUILDDIR)/lib $(LIBEXT)
+
+.PHONY: lib install-lib libext install-libext clean-lib $(BUILDDIR)/lib/defines
