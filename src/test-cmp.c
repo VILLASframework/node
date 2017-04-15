@@ -82,7 +82,7 @@ check:		if (optarg == endptr)
 	log_init(&log, V, LOG_ALL);
 	log_start(&log);
 
-	pool_init(&pool, 1024, SAMPLE_LEN(DEFAULT_VALUES), &memtype_heap);
+	pool_init(&pool, 1024, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_heap);
 	sample_alloc(&pool, samples, 2);
 	
 	f1.sample = samples[0];

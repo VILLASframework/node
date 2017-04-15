@@ -167,7 +167,7 @@ int path_init(struct path *p, struct super_node *sn)
 	p->reverse = 0;
 	p->enabled = 1;
 
-	p->samplelen = DEFAULT_VALUES;
+	p->samplelen = DEFAULT_SAMPLELEN;
 	p->queuelen = DEFAULT_QUEUELEN;
 	
 	p->super_node = sn;
@@ -221,7 +221,7 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 
 	config_setting_lookup_bool(cfg, "reverse", &p->reverse);
 	config_setting_lookup_bool(cfg, "enabled", &p->enabled);
-	config_setting_lookup_int(cfg, "values", &p->samplelen);
+	config_setting_lookup_int(cfg, "samplelen", &p->samplelen);
 	config_setting_lookup_int(cfg, "queuelen", &p->queuelen);
 
 	if (!IS_POW2(p->queuelen)) {

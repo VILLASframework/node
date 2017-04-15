@@ -268,7 +268,7 @@ int websocket_start(struct node *n)
 	int ret;
 	struct websocket *w = n->_vd;
 	
-	size_t blocklen = LWS_PRE + WEBMSG_LEN(DEFAULT_VALUES);
+	size_t blocklen = LWS_PRE + WEBMSG_LEN(DEFAULT_SAMPLELEN);
 	
 	ret = pool_init(&w->pool, 64 * DEFAULT_QUEUELEN, blocklen, &memtype_hugepage);
 	if (ret)
