@@ -24,7 +24,7 @@ struct shmem_shared *shared;
 
 void usage()
 {
-	printf("Usage: villas-shmem SHM_NAME VECTORIZE\n");
+	printf("Usage: villas-test-shmem SHM_NAME VECTORIZE\n");
 	printf("  SHMNAME name of the shared memory object\n");
 }
 
