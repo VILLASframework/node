@@ -1,11 +1,10 @@
-#pragma once
 /** JSON serializtion of various objects.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
-#ifdef WITH_JANSSON
+#pragma once
 
 #include <jansson.h>
 #include <libconfig.h>
@@ -24,4 +23,3 @@ int sample_io_json_unpack(json_t *j, struct sample *s, int *flags);
 int sample_io_json_fprint(FILE *f, struct sample *s, int flags);
 
 int sample_io_json_fscan(FILE *f, struct sample *s, int *flags);
-#endif

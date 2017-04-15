@@ -7,6 +7,7 @@
 #pragma once
 
 #include <stdio.h>
+#include <openssl/sha.h>
 
 /** Calculate SHA1 hash of complete file \p f and place it into \p sha1.
  * 

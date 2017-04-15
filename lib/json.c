@@ -6,7 +6,6 @@
 
 #include "json.h"
 
-#ifdef WITH_JANSSON
 static int json_to_config_type(int type)
 {
 	switch (type) {
@@ -222,5 +221,3 @@ int sample_io_json_fscan(FILE *f, struct sample *s, int *flags)
 	
 	return ret;
 }
-#endif
-

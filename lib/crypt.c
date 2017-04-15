@@ -1,11 +1,10 @@
-#include "crypt.h"
 /** Crypto helpers.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
-#include <openssl/sha.h>
+#include "crypt.h"
 
 int sha1sum(FILE *f, unsigned char *sha1)
 {

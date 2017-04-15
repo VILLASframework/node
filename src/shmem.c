@@ -70,9 +70,6 @@ int main(int argc, char* argv[])
 		if (avail < readcnt)
 			warn("Pool underrun: %d / %d\n", avail, readcnt);
 
-		for (int i = 0; i < readcnt; i++)
-			sample_io_villas_fprint(stdout, insmps[i], SAMPLE_IO_ALL);
-
 		for (int i = 0; i < avail; i++) {
 			outsmps[i]->sequence = insmps[i]->sequence;
 			outsmps[i]->ts = insmps[i]->ts;
