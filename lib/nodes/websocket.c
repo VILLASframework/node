@@ -16,7 +16,6 @@
 #include "webmsg_format.h"
 #include "timing.h"
 #include "utils.h"
-#include "config.h"
 #include "plugin.h"
 
 #include "nodes/websocket.h"
@@ -57,7 +56,7 @@ static int websocket_connection_init(struct websocket_connection *c, struct lws 
 	else
 		list_push(&connections, c);
 	
-	ret = queue_init(&c->queue, DEFAULT_QUEUELEN, &memtype_hugepage);
+	ret = queue_init(&c->queue, DEFAULT_WEBSOCKET_QUEUELEN, &memtype_hugepage);
 	if (ret) {
 		warn("Failed to create queue for incoming websocket connection. Closing..");
 		return -1;
@@ -268,13 +267,13 @@ int websocket_start(struct node *n)
 	int ret;
 	struct websocket *w = n->_vd;
 	
-	size_t blocklen = LWS_PRE + WEBMSG_LEN(DEFAULT_SAMPLELEN);
+	size_t blocklen = LWS_PRE + WEBMSG_LEN(DEFAULT_WEBSOCKET_SAMPLELEN);
 	
-	ret = pool_init(&w->pool, 64 * DEFAULT_QUEUELEN, blocklen, &memtype_hugepage);
+	ret = pool_init(&w->pool, DEFAULT_WEBSOCKET_QUEUELEN, blocklen, &memtype_hugepage);
 	if (ret)
 		return ret;
 	
-	ret = queue_signalled_init(&w->queue, DEFAULT_QUEUELEN, &memtype_hugepage);
+	ret = queue_signalled_init(&w->queue, DEFAULT_WEBSOCKET_QUEUELEN, &memtype_hugepage);
 	if (ret)
 		return ret;
 

@@ -22,6 +22,10 @@
 #include "pool.h"
 #include "queue_signalled.h"
 #include "common.h"
+#include "config.h"
+
+#define DEFAULT_WEBSOCKET_QUEUELEN	(DEFAULT_QUEUELEN * 64)
+#define DEFAULT_WEBSOCKET_SAMPLELEN	DEFAULT_SAMPLELEN
 
 /* Forward declaration */
 struct lws;
