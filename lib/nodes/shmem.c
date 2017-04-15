@@ -1,3 +1,9 @@
+/** Node-type for shared memory communication.
+ *
+ * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
+
 #include <fcntl.h>
 #include <pthread.h>
 #include <string.h>

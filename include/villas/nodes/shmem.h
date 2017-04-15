@@ -1,5 +1,18 @@
 #ifndef _SHMEM_H_
 #define _SHMEM_H_
+/** Node-type for shared memory communication.
+ *
+ * @file
+ * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
+
+/**
+ * @ingroup node
+ * @addtogroup shmem Shared memory interface
+ * @{
+ */
+
 
 #include "node.h"
 #include "memory.h"

@@ -1,6 +1,11 @@
-/* Test "client" for the shared memory interface.
- * Busy waits on the incoming queue, prints received samples and writes them
- * back to the other queue. */
+/** Test "client" for the shared memory interface.
+ *
+ * Waits on the incoming queue, prints received samples and writes them
+ * back to the other queue.
+ *
+ * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
 
 #include "config.h"
 #include "log.h"

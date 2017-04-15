@@ -1,3 +1,10 @@
+/** Shared-memory interface: The interface functions that the external program should use.
+ *
+ * @file
+ * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
+
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>

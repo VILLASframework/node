@@ -1,3 +1,10 @@
+/** Wrapper around queue that uses POSIX CV's for signalling writes.
+ *
+ * @file
+ * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
+
 #pragma once
 
 #include <pthread.h>

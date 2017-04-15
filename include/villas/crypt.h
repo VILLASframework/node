@@ -1,3 +1,9 @@
+/** Crypto helpers.
+ *
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
+
 #pragma once
 
 #include <stdio.h>

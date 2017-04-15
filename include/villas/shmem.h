@@ -1,6 +1,11 @@
 #pragma once
+/** Shared-memory interface: The interface functions that the external program should use.
+ *
+ * @file
+ * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
 
-/* The interface functions that the external program should use. */
 
 #include "pool.h"
 #include "queue.h"
