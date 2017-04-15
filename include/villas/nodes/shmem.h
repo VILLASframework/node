@@ -1,5 +1,3 @@
-#ifndef _SHMEM_H_
-#define _SHMEM_H_
 /** Node-type for shared memory communication.
  *
  * @file
@@ -13,6 +11,7 @@
  * @{
  */
 
+#pragma once
 
 #include "node.h"
 #include "memory.h"
@@ -47,4 +46,5 @@ int shmem_close(struct node *n);
 int shmem_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 int shmem_write(struct node *n, struct sample *smps[], unsigned cnt);
-#endif /* _SHMEM_H_ */
+
+/** @} */
