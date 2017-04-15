@@ -12,15 +12,23 @@ int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memtype
 	int ret;
 	
 	ret = queue_init(&qs->q, size, mem);
+
+	pthread_condattr_t  cvattr;
+	pthread_mutexattr_t mtattr;
 	if (ret < 0)
 		return ret;
 
-	pthread_mutexattr_init(&qs->mtattr);
-	pthread_mutexattr_setpshared(&qs->mtattr, PTHREAD_PROCESS_SHARED);
-	pthread_condattr_init(&qs->readyattr);
-	pthread_condattr_setpshared(&qs->readyattr, PTHREAD_PROCESS_SHARED);
-	pthread_mutex_init(&qs->mt, &qs->mtattr);
-	pthread_cond_init(&qs->ready, &qs->readyattr);
+	pthread_mutexattr_init(&mtattr);
+	pthread_condattr_init(&cvattr);
+
+	pthread_mutexattr_setpshared(&mtattr, PTHREAD_PROCESS_SHARED);	
+	pthread_condattr_setpshared(&cvattr, PTHREAD_PROCESS_SHARED);
+
+	pthread_mutex_init(&qs->mutex, &mtattr);
+	pthread_cond_init(&qs->ready, &cvattr);
+	
+	pthread_mutexattr_destroy(&mtattr);
+	pthread_condattr_destroy(&cvattr);
 
 	return 0;
 }

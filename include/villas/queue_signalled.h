@@ -15,9 +15,7 @@
 struct queue_signalled {
 	struct queue q;			/**< Actual underlying queue. */
 	pthread_cond_t ready;		/**< Condition variable to signal writes to the queue. */
-	pthread_condattr_t readyattr;
 	pthread_mutex_t mt;		/**< Mutex for ready. */
-	pthread_mutexattr_t mtattr;
 };
 
 int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memtype *mem);
