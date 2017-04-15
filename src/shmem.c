@@ -19,14 +19,12 @@
 
 #include <string.h>
 
-#define VECTORIZE 8
-
 void *base;
 struct shmem_shared *shared;
 
 void usage()
 {
-	printf("Usage: villas-shmem SHM_NAME\n");
+	printf("Usage: villas-shmem SHM_NAME VECTORIZE\n");
 	printf("  SHMNAME name of the shared memory object\n");
 }
 
@@ -45,26 +43,29 @@ int main(int argc, char* argv[])
 	
 	int readcnt, writecnt, avail;
 
-	if (argc != 2) {
+	if (argc != 3) {
 		usage();
 		return 1;
 	}
+	
+	char *object = argv[1];
+	int vectorize = atoi(argv[2]);
 
-	shared = shmem_shared_open(argv[1], &base);
+	shared = shmem_shared_open(object, &base);
 	if (!shared)
 		serror("Failed to open shmem interface");
 
 	signal(SIGINT, quit);
 	signal(SIGTERM, quit);
-	struct sample *insmps[VECTORIZE], *outsmps[VECTORIZE];
+	struct sample *insmps[vectorize], *outsmps[vectorize];
+	
 	while (1) {
-
-		readcnt = shmem_shared_read(shared, insmps, VECTORIZE);
+		readcnt = shmem_shared_read(shared, insmps, vectorize);
 		if (readcnt == -1) {
-			printf("Node stopped, exiting\n");
+			printf("Node stopped, exiting");
 			break;
 		}
-		
+
 		avail = sample_alloc(&shared->pool, outsmps, readcnt);
 		if (avail < readcnt)
 			warn("Pool underrun: %d / %d\n", avail, readcnt);
