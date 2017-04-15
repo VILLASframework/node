@@ -20,8 +20,7 @@ union shmem_queue {
 struct shmem_shared {
 	size_t len;		/**< Total size of the shared memory region.*/
 
-	int cond_in;		/**< Whether to use a pthread_cond_t to signal if new samples are written to inqueue. */
-	int cond_out;		/**< Whether to use a pthread_cond_t to signal if new samples are written to outqueue. */
+	int polling;		/**< Whether to use a pthread_cond_t to signal if new samples are written to incoming queue. */
 
 	union shmem_queue in;	/**< Queue for samples passed from external program to node.*/
 	union shmem_queue out;	/**< Queue for samples passed from node to external program.*/

@@ -81,7 +81,7 @@ int shmem_shared_close(struct shmem_shared *shm, void *base)
 {
 	atomic_store_explicit(&shm->ext_stopped, 1, memory_order_relaxed);
 
-	if (shm->cond_in) {
+	if (!shm->polling) {
 		pthread_mutex_lock(&shm->in.qs.mt);
 		pthread_cond_broadcast(&shm->in.qs.ready);
 		pthread_mutex_unlock(&shm->in.qs.mt);
@@ -94,8 +94,8 @@ int shmem_shared_read(struct shmem_shared *shm, struct sample *smps[], unsigned 
 {
 	int ret;
 	
-	ret = shm->cond_out ? queue_signalled_pull_many(&shm->out.qs, (void **) smps, cnt)
-			    : queue_pull_many(&shm->out.q, (void **) smps, cnt);
+	ret = shm->polling ? queue_pull_many(&shm->out.q, (void **) smps, cnt)
+			   : queue_signalled_pull_many(&shm->out.qs, (void **) smps, cnt);
 
 	if (!ret && atomic_load_explicit(&shm->node_stopped, memory_order_relaxed))
 		return -1;
@@ -111,6 +111,6 @@ int shmem_shared_write(struct shmem_shared *shm, struct sample *smps[], unsigned
 	if (ret)
 		return -1;
 
-	return shm->cond_in ? queue_signalled_push_many(&shm->in.qs, (void **) smps, cnt)
-			    : queue_push_many(&shm->in.q, (void **) smps, cnt);
+	return shm->polling ? queue_push_many(&shm->in.q, (void **) smps, cnt)
+			    : queue_signalled_push_many(&shm->in.qs, (void **) smps, cnt);
 }

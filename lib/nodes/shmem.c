@@ -30,10 +30,8 @@ int shmem_parse(struct node *n, config_setting_t *cfg)
 		shm->outsize = DEFAULT_SHMEM_QUEUESIZE;
 	if (!config_setting_lookup_int(cfg, "sample_size", &shm->sample_size))
 		cerror(cfg, "Missing sample size setting");
-	if (!config_setting_lookup_bool(cfg, "cond_out", &shm->cond_out))
-		shm->cond_out = false;
-	if (!config_setting_lookup_bool(cfg, "cond_in", &shm->cond_in))
-		shm->cond_in = false;
+	if (!config_setting_lookup_bool(cfg, "polling", &shm->polling))
+		shm->polling = false;
 
 	config_setting_t *exec_cfg = config_setting_lookup(cfg, "exec");
 	if (!exec_cfg)
@@ -86,16 +84,15 @@ int shmem_open(struct node *n)
 
 	memset(shm->shared, 0, sizeof(struct shmem_shared));
 	shm->shared->len = len;
-	shm->shared->cond_in = shm->cond_in;
-	shm->shared->cond_out = shm->cond_out;
+	shm->shared->polling = shm->polling;
 
-	ret = shm->cond_in ? queue_signalled_init(&shm->shared->in.qs, shm->insize, shm->manager)
-			   : queue_init(&shm->shared->in.q, shm->insize, shm->manager);
+	ret = shm->polling ? queue_init(&shm->shared->in.q, shm->insize, shm->manager)
+			   : queue_signalled_init(&shm->shared->in.qs, shm->insize, shm->manager);
 	if (ret)
 		error("Shared memory queue allocation failed (not enough memory?)");
 
-	ret = shm->cond_out ? queue_signalled_init(&shm->shared->out.qs, shm->outsize, shm->manager)
-			    : queue_init(&shm->shared->out.q, shm->outsize, shm->manager);
+	ret = shm->polling ? queue_init(&shm->shared->out.q, shm->outsize, shm->manager)
+			   : queue_signalled_init(&shm->shared->out.qs, shm->outsize, shm->manager);
 	if (ret)
 		error("Shared memory queue allocation failed (not enough memory?)");
 
@@ -125,7 +122,7 @@ int shmem_close(struct node *n)
 
 	atomic_store_explicit(&shm->shared->node_stopped, 1, memory_order_relaxed);
 
-	if (shm->cond_out) {
+	if (!shm->polling) {
 		pthread_mutex_lock(&shm->shared->out.qs.mt);
 		pthread_cond_broadcast(&shm->shared->out.qs.ready);
 		pthread_mutex_unlock(&shm->shared->out.qs.mt);
@@ -147,8 +144,8 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 	int ret;
 
-	ret = shm->cond_in ? queue_signalled_pull_many(&shm->shared->in.qs, (void**) smps, cnt)
-			   : queue_pull_many(&shm->shared->in.q, (void**) smps, cnt);
+	ret = shm->polling ? queue_pull_many(&shm->shared->in.q, (void**) smps, cnt)
+			   : queue_signalled_pull_many(&shm->shared->in.qs, (void**) smps, cnt);
 	
 	if (ret <= 0)
 		return ret;
@@ -195,8 +192,8 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 		return -1;
 	}
 	
-	pushed = shm->cond_out ? queue_signalled_push_many(&shm->shared->out.qs, (void**) shared_smps, avail)
-			       : queue_push_many(&shm->shared->out.q, (void**) shared_smps, avail);
+	pushed = shm->polling ? queue_push_many(&shm->shared->out.q, (void**) shared_smps, avail)
+			      : queue_signalled_push_many(&shm->shared->out.qs, (void**) shared_smps, avail);
 
 	if (pushed != avail)
 		warn("Outgoing queue overrun for node %s", node_name(n));
@@ -209,7 +206,8 @@ char * shmem_print(struct node *n)
 	struct shmem *shm = n->_vd;
 	char *buf = NULL;
 
-	strcatf(&buf, "name=%s, insize=%d, outsize=%d, sample_size=%d", shm->name, shm->insize, shm->outsize, shm->sample_size);
+	strcatf(&buf, "name=%s, insize=%d, outsize=%d, sample_size=%d, polling=%s",
+		shm->name, shm->insize, shm->outsize, shm->sample_size, shm->polling ? "yes" : "no");
 	
 	if (shm->exec) {
 		strcatf(&buf, ", exec='");

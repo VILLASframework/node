@@ -24,8 +24,7 @@ struct shmem {
 	const char* name;		/**< Name of the shm object. */
 	int sample_size;		/**< Number of data entries for each sample. */
 	int insize, outsize;		/**< Size of ingoing and outgoing queue, respectively. */
-	int cond_out;			/**< Whether to use a pthread_cond_t to signal if new samples are written to outqueue. */
-	int cond_in;			/**< Whether to use a pthread_cond_t to signal if new samples are written to inqueue. */
+	int polling;			/**< Whether to use a pthread_cond_t to signal if new samples are written to outgoing queue. */
 	char **exec;			/**< External program to execute on start. */
 
 	struct memtype *manager;	/**< Manager for the shared memory region. */
