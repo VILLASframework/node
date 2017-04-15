@@ -211,6 +211,15 @@ char * shmem_print(struct node *n)
 
 	strcatf(&buf, "name=%s, insize=%d, outsize=%d, sample_size=%d", shm->name, shm->insize, shm->outsize, shm->sample_size);
 	
+	if (shm->exec) {
+		strcatf(&buf, ", exec='");
+		
+		for (int i = 0; shm->exec[i]; i++)
+			strcatf(&buf, shm->exec[i+1] ? "%s " : "%s", shm->exec[i]);
+		
+		strcatf(&buf, "'");
+	}
+
 	return buf;
 };
 
