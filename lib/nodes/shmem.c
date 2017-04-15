@@ -46,9 +46,11 @@ int shmem_parse(struct node *n, config_setting_t *cfg)
 
 		int i;
 		for (i = 0; i < config_setting_length(exec_cfg); i++) {
-			shm->exec[i] = config_setting_get_string_elem(exec_cfg, i);
-			if (!shm->exec[i])
+			const char *elm = config_setting_get_string_elem(exec_cfg, i);
+			if (!elm)
 				cerror(exec_cfg, "Invalid format for exec");
+			
+			shm->exec[i] = strdup(elm);
 		}
 
 		shm->exec[i] = NULL;

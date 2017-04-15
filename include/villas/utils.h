@@ -230,4 +230,4 @@ void rdtsc_sleep(uint64_t nanosecs, uint64_t start);
 /** Register a exit callback for program termination (SIGINT / SIGKILL). */
 void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx));
 
-pid_t spawn(const char* name, char **argv);
+pid_t spawn(const char* name, char *const argv[]);

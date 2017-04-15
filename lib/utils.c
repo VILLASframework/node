@@ -302,15 +302,15 @@ void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 	sigaction(SIGCHLD, &sa_chld, NULL);
 }
 
-pid_t
-spawn(const char* name, char **argv) {
-	pid_t pid = fork();
-	switch(pid) {
-	case -1:
-		return -1;
-	case 0:
-		return execvp(name, argv);
-	default:
-		return pid;
+pid_t spawn(const char* name, char *const argv[])
+{
+	pid_t pid;
+	
+	pid = fork();
+	switch (pid) {
+		case -1: return -1;
+		case 0:  return execvp(name, (char * const*) argv);
 	}
+	
+	return pid;
 }
