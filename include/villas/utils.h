@@ -14,8 +14,6 @@
 #include <signal.h>
 #include <sys/types.h>
 
-#include <openssl/sha.h>
-
 #include "log.h"
 
 #ifdef __GNUC__
