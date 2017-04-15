@@ -17,7 +17,6 @@
 #include "memory.h"
 #include "pool.h"
 #include "queue.h"
-#include "shmem.h"
 
 #define DEFAULT_SHMEM_QUEUESIZE 512
 
