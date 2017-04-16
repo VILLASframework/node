@@ -25,7 +25,8 @@ struct shmem_shared *shared;
 void usage()
 {
 	printf("Usage: villas-test-shmem SHM_NAME VECTORIZE\n");
-	printf("  SHMNAME name of the shared memory object\n");
+	printf("  SHMNAME   name of the shared memory object\n");
+	printf("  VECTORIZE maximum number of samples to read/write at a time\n");
 }
 
 void quit(int sig)

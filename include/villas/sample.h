@@ -32,19 +32,19 @@ enum sample_data_format {
 };
 
 struct sample {
-	int sequence;		/**< The sequence number of this sample. */
-	int length;		/**< The number of values in sample::values which are valid. */
-	int capacity;		/**< The number of values in sample::values for which memory is reserved. */
+	int sequence; /**< The sequence number of this sample. */
+	int length;   /**< The number of values in sample::values which are valid. */
+	int capacity; /**< The number of values in sample::values for which memory is reserved. */
 	
-	atomic_int refcnt;	/**< Reference counter. */
-	off_t pool_off;	/**< This sample is belong to this memory pool (relative pointer). */
-	struct node *source;	/**< The node from which this sample originates. */
+	atomic_int refcnt;   /**< Reference counter. */
+	off_t pool_off;	     /**< This sample belongs to this memory pool (relative pointer). */
+	struct node *source; /**< The node from which this sample originates. */
 
 	/** All timestamps are seconds / nano seconds after 1.1.1970 UTC */
 	struct {
 		struct timespec origin;		/**< The point in time when this data was sampled. */
 		struct timespec received;	/**< The point in time when this data was received. */
-		struct timespec sent;		/**< The point in time this data was send for the last time. */
+		struct timespec sent;		/**< The point in time when this data was send for the last time. */
 	} ts;
 	
 	uint64_t format;	/**< A long bitfield indicating the number representation of the first 64 values in sample::data[] */
@@ -70,8 +70,8 @@ int sample_get(struct sample *s);
 /** Decrease reference count and release memory if last reference was held. */
 int sample_put(struct sample *s);
 
-/** Set number representation for a single value of a sample. */
+/** Get number representation for a single value of a sample. */
 int sample_get_data_format(struct sample *s, int idx);
 
-/** Get number representation for a single value of a sample. */
+/** Set number representation for a single value of a sample. */
 int sample_set_data_format(struct sample *s, int idx, enum sample_data_format fmt);

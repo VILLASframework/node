@@ -36,7 +36,7 @@ struct websocket {
 	struct list destinations;		/**< List of websocket servers connect to in client mode (struct websocket_destination). */
 	
 	struct pool pool;
-	struct queue_signalled queue;   /**< For samples which are received from WebSockets a */
+	struct queue_signalled queue;   /**< For samples which are received from WebSockets */
 };
 
 /* Internal datastructures */
