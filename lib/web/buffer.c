@@ -115,8 +115,8 @@ int web_buffer_append(struct web_buffer *b, const char *in, size_t len)
 	}
 	
 	memcpy(b->buffer + b->prefix + b->len, in, len);
+	b->buffer[b->prefix + b->len + len - 1] = 0;
 	b->len += len;
-	b->buffer[b->len+b->prefix] = 0;
 	
 	return 0;
 }
@@ -126,7 +126,7 @@ int web_buffer_append_json(struct web_buffer *b, json_t *res)
 	size_t len;
 
 	assert(b->state == STATE_INITIALIZED);
-
+	
 retry:	len = json_dumpb(res, b->buffer + b->prefix + b->len, b->size - b->len, 0) + 1;
 	if (b->size < b->len + len) {
 		b->buffer = realloc(b->buffer, b->prefix + b->len + len);
@@ -137,8 +137,8 @@ retry:	len = json_dumpb(res, b->buffer + b->prefix + b->len, b->size - b->len, 0
 		goto retry;
 	}
 
+	b->buffer[b->prefix + b->len + len - 1] = 0;
 	b->len += len;
-	b->buffer[b->len+b->prefix] = 0;
 
 	return 0;
 }
