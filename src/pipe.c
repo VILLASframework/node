@@ -27,7 +27,7 @@
 
 #include "config.h"
 
-static struct super_node sn = { .state = STATE_DESTROYED };		/**< The global configuration */
+static struct super_node sn = { .state = STATE_DESTROYED }; /**< The global configuration */
 
 struct dir {
 	struct pool pool;
@@ -95,7 +95,7 @@ static void * send_loop(void *ctx)
 	sendd.started = true;
 	
 	/* Initialize memory */
-	ret = pool_init(&sendd.pool, LOG2_CEIL(node->vectorize), SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
+	ret = pool_init(&sendd.pool, LOG2_CEIL(node->vectorize), SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 	
@@ -103,17 +103,16 @@ static void * send_loop(void *ctx)
 	if (ret < 0)
 		error("Failed to get %u samples out of send pool (%d).", node->vectorize, ret);
 
-	for (;;) {
-		for (int i = 0; i < node->vectorize; i++) {
-			struct sample *s = smps[i];
+	while (!feof(stdin)) {
+		int len;
+		for (len = 0; len < node->vectorize; len++) {
+			struct sample *s = smps[len];
 			int reason;
 
 retry:			reason = sample_io_villas_fscan(stdin, s, NULL);
 			if (reason < 0) {
-				if (feof(stdin)) {
-					info("Reached end-of-file. Terminating...");
-					goto killme;
-				}
+				if (feof(stdin))
+					break;
 				else {
 					warn("Skipped invalid message message: reason=%d", reason);
 					goto retry;
@@ -121,11 +120,13 @@ retry:			reason = sample_io_villas_fscan(stdin, s, NULL);
 			}
 		}
 
-		node_write(node, smps, node->vectorize);
+		node_write(node, smps, len);
 		pthread_testcancel();
 	}
 
-killme: pthread_kill(ptid, SIGINT);
+	/* We reached EOF on stdin here. Lets kill the process */
+	info("Reached end-of-file. Terminating...");
+	pthread_kill(ptid, SIGINT);
 
 	return NULL;
 }
@@ -141,7 +142,7 @@ static void * recv_loop(void *ctx)
 	recvv.started = true;
 	
 	/* Initialize memory */
-	ret = pool_init(&recvv.pool, LOG2_CEIL(node->vectorize), SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
+	ret = pool_init(&recvv.pool, LOG2_CEIL(node->vectorize), SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 	

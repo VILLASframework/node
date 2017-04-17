@@ -14,8 +14,6 @@
 #include <signal.h>
 #include <sys/types.h>
 
-#include <openssl/sha.h>
-
 #include "log.h"
 
 #ifdef __GNUC__
@@ -168,15 +166,6 @@ int cpulist_parse(const char *str, cpu_set_t *set, int fail);
  */
 char * cpulist_create(char *str, size_t len, cpu_set_t *set);
 
-#ifdef WITH_JANSSON
-  #include <jansson.h>
-
-/* Convert a libconfig object to a libjansson object */
-json_t * config_to_json(config_setting_t *cfg);
-
-#endif
-int json_to_config(json_t *json, config_setting_t *parent);
-
 /** Allocate and initialize memory. */
 void * alloc(size_t bytes);
 
@@ -239,9 +228,4 @@ void rdtsc_sleep(uint64_t nanosecs, uint64_t start);
 /** Register a exit callback for program termination (SIGINT / SIGKILL). */
 void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx));
 
-/** Calculate SHA1 hash of complete file \p f and place it into \p sha1.
- * 
- * @param sha1[out] Must be SHA_DIGEST_LENGTH (20) in size.
- * @retval 0 Everything was okay.
- */
-int sha1sum(FILE *f, unsigned char *sha1);
+pid_t spawn(const char* name, char *const argv[]);

@@ -71,13 +71,3 @@ int sample_io_villas_scan(const char *line, struct sample *s, int *fl);
 int sample_io_villas_fprint(FILE *f, struct sample *s, int flags);
 
 int sample_io_villas_fscan(FILE *f, struct sample *s, int *flags);
-
-/* JSON format */
-
-int sample_io_json_pack(json_t **j, struct sample *s, int flags);
-
-int sample_io_json_unpack(json_t *j, struct sample *s, int *flags);
-
-int sample_io_json_fprint(FILE *f, struct sample *s, int flags);
-
-int sample_io_json_fscan(FILE *f, struct sample *s, int *flags);

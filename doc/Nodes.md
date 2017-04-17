@@ -28,3 +28,6 @@ Every node is an instance of a node-type. VILLASnode currently supports the foll
  
 #### @subpage cbuilder
 - RTDS CBuilder Control System components
+
+#### @subpage shmem
+- POSIX shared memory interface

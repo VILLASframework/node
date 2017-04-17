@@ -69,16 +69,16 @@ BUILDDIR := $(BUILDDIR)/$(VARIANT)
 SRCDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
 # Add git revision and build variant defines
-VERSION = $(shell git describe --tags --abbrev=0 --match v*)
-VERSION_NUM = $(shell VERSION=$(VERSION); echo $${VERSION:1})
+VERSION := $(shell git describe --tags --abbrev=0 --match v*)
+VERSION_NUM := $(shell VERSION=$(VERSION); echo $${VERSION:1})
 
 ifdef CI
-	GIT_REV = $(shell REV=$${CI_BUILD_REF}; echo $${REV:0:7})
+	GIT_REV := $(shell REV=$${CI_BUILD_REF}; echo $${REV:0:7})
 	GIT_BRANCH = ${CI_BUILD_REF_NAME}
 	VARIANT := $(VARIANT)-ci
 else
-	GIT_REV = $(shell REV=$$(git rev-parse HEAD); echo $${REV:0:7})
-	GIT_BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+	GIT_REV := $(shell REV=$$(git rev-parse HEAD); echo $${REV:0:7})
+	GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 endif
 
 

@@ -218,7 +218,7 @@ int mapping_remap(struct mapping *m, struct sample *original, struct sample *rem
 
 	/* We copy all the header fields */
 	remapped->sequence = original->sequence;
-	remapped->pool     = original->pool;
+	remapped->pool_off = (char *) original + original->pool_off - (char *) remapped;
 	remapped->source   = original->source;
 	remapped->ts       = original->ts;
 	remapped->format   = 0;

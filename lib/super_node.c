@@ -22,6 +22,7 @@
 #include "plugin.h"
 #include "memory.h"
 #include "config.h"
+#include "json.h"
 
 #include "kernel/rt.h"
 
@@ -269,7 +270,7 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 			list_push(&sn->paths, memdup(&p, sizeof(p)));
 
 			if (p.reverse) {
-				struct path r;
+				struct path r = { .state = STATE_DESTROYED };
 				
 				ret = path_init(&r, sn);
 				if (ret)

@@ -4,6 +4,7 @@ TARGETS = $(BUILDDIR)/villas-node \
 	  $(BUILDDIR)/villas-signal \
 	  $(BUILDDIR)/villas-test-rtt \
 	  $(BUILDDIR)/villas-test-cmp \
+	  $(BUILDDIR)/villas-test-shmem \
 	  $(BUILDDIR)/villas-hook
 
 SRC_LDLIBS = $(LDLIBS) -pthread -lm -lvillas
@@ -35,6 +36,10 @@ $(BUILDDIR)/villas-fpga: $(addprefix $(BUILDDIR)/src/,fpga-bench.o $(BENCH_OBJS)
 # Compile executable objects
 $(BUILDDIR)/src/%.o: src/%.c $(BUILDDIR)/defines | $$(dir $$@)
 	$(CC) $(SRC_CFLAGS) -c $< -o $@
+
+# Build villas-shmem only with libvillas-ext (to ensure that libext contains everything needed)
+$(BUILDDIR)/villas-shmem: $(BUILDDIR)/src/shmem.o $(LIBS) libvillas-ext
+	$(CC) $(SRC_LDFLAGS) $(BUILDDIR)/src/shmem.o $(filter-out -lvillas,$(SRC_LDLIBS)) -lvillas-ext -o $@
 
 # Link target executables
 $(TARGETS): | $(LIBS)

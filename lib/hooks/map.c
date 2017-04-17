@@ -60,7 +60,7 @@ static int map_read(struct hook *h, struct sample *smps[], size_t *cnt)
 	if (*cnt <= 0)
 		return 0;
 
-	ret = sample_alloc(smps[0]->pool, tmp, *cnt);
+	ret = sample_alloc((struct pool *) ((char* ) smps[0] + smps[0]->pool_off), tmp, *cnt);
 	if (ret != *cnt)
 		return ret;
 

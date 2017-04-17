@@ -49,12 +49,14 @@ int queue_init(struct queue *q, size_t size, struct memtype *mem)
 	
 	q->mem = mem;
 	q->buffer_mask = size - 1;
-	q->buffer = memory_alloc(q->mem, sizeof(q->buffer[0]) * size);
-	if (!q->buffer)
+	struct queue_cell* buffer = memory_alloc(q->mem, sizeof(struct queue_cell) * size);
+	if (!buffer)
 		return -2;
+
+	q->buffer_off = (char *) buffer - (char *) q;
 	
 	for (size_t i = 0; i != size; i += 1)
-		atomic_store_explicit(&q->buffer[i].sequence, i, memory_order_relaxed);
+		atomic_store_explicit(&buffer[i].sequence, i, memory_order_relaxed);
 
 	atomic_store_explicit(&q->tail, 0, memory_order_relaxed);
 	atomic_store_explicit(&q->head, 0, memory_order_relaxed);
@@ -66,12 +68,13 @@ int queue_init(struct queue *q, size_t size, struct memtype *mem)
 
 int queue_destroy(struct queue *q)
 {
+	void *buffer = (char *) q + q->buffer_off;
 	int ret = 0;
 
 	if (q->state == STATE_DESTROYED)
 		return 0;
 
-	ret = memory_free(q->mem, q->buffer, (q->buffer_mask + 1) * sizeof(q->buffer[0]));
+	ret = memory_free(q->mem, buffer, (q->buffer_mask + 1) * sizeof(struct queue_cell));
 
 	if (ret == 0)
 		q->state = STATE_DESTROYED;
@@ -92,13 +95,14 @@ size_t queue_available(struct queue *q)
 
 int queue_push(struct queue *q, void *ptr)
 {
-	struct queue_cell *cell;
+	struct queue_cell *cell, *buffer;
 	size_t pos, seq;
 	intptr_t diff;
 
+	buffer = (struct queue_cell *) ((char *) q + q->buffer_off);
 	pos = atomic_load_explicit(&q->tail, memory_order_relaxed);
 	for (;;) {
-		cell = &q->buffer[pos & q->buffer_mask];
+		cell = &buffer[pos & q->buffer_mask];
 		seq = atomic_load_explicit(&cell->sequence, memory_order_acquire);
 		diff = (intptr_t) seq - (intptr_t) pos;
 
@@ -112,7 +116,7 @@ int queue_push(struct queue *q, void *ptr)
 			pos = atomic_load_explicit(&q->tail, memory_order_relaxed);
 	}
 
-	cell->data = ptr;
+	cell->data_off = (char *) ptr - (char *) q;
 	atomic_store_explicit(&cell->sequence, pos + 1, memory_order_release);
 
 	return 1;
@@ -120,13 +124,14 @@ int queue_push(struct queue *q, void *ptr)
 
 int queue_pull(struct queue *q, void **ptr)
 {
-	struct queue_cell *cell;
+	struct queue_cell *cell, *buffer;
 	size_t pos, seq;
 	intptr_t diff;
 	
+	buffer = (struct queue_cell *) ((char *) q + q->buffer_off);
 	pos = atomic_load_explicit(&q->head, memory_order_relaxed);
 	for (;;) {
-		cell = &q->buffer[pos & q->buffer_mask];
+		cell = &buffer[pos & q->buffer_mask];
 		seq = atomic_load_explicit(&cell->sequence, memory_order_acquire);
 		diff = (intptr_t) seq - (intptr_t) (pos + 1);
 
@@ -140,7 +145,7 @@ int queue_pull(struct queue *q, void **ptr)
 			pos = atomic_load_explicit(&q->head, memory_order_relaxed);
 	}
 
-	*ptr = cell->data;
+	*ptr = (char *) q + cell->data_off;
 	atomic_store_explicit(&cell->sequence, pos + q->buffer_mask + 1, memory_order_release);
 
 	return 1;

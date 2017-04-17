@@ -18,7 +18,7 @@
 
 /** A thread-safe memory pool */
 struct pool {
-	void *buffer;		/**< Address of the underlying memory area */
+	off_t  buffer_off; /**< Offset from the struct address to the underlying memory area */
 	struct memtype *mem;
 	
 	enum state state;

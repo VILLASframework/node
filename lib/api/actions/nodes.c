@@ -9,6 +9,7 @@
 #include "plugin.h"
 #include "node.h"
 #include "utils.h"
+#include "json.h"
 
 #include "api.h"
 

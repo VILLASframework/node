@@ -10,6 +10,7 @@
 #include <libconfig.h>
 
 #include "utils.h"
+#include "json.h"
 
 const char *cfg_example = "test : \n"
 			  "{\n"

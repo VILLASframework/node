@@ -6,6 +6,7 @@
 
 #include <criterion/criterion.h>
 
+#include "crypt.h"
 #include "utils.h"
 
 /* Simple normality test for 1,2,3s intervals */

@@ -9,6 +9,7 @@
 #include "api.h"
 #include "utils.h"
 #include "plugin.h"
+#include "json.h"
 
 static int api_config(struct api_action *h, json_t *args, json_t **resp, struct api_session *s)
 {

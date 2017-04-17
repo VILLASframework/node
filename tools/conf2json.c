@@ -7,6 +7,7 @@
 #include <jansson.h>
 #include <libconfig.h>
 
+#include <villas/json.h>
 #include <villas/utils.h>
 
 void usage()

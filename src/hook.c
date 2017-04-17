@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 	if (cnt < 1)
 		error("Vectorize option must be greater than 0");
 	
-	ret = pool_init(&q, 10 * cnt, SAMPLE_LEN(DEFAULT_VALUES), &memtype_hugepage);
+	ret = pool_init(&q, 10 * cnt, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
 	if (ret)
 		error("Failed to initilize memory pool");
 	

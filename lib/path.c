@@ -28,7 +28,7 @@ static void path_read(struct path *p)
 	int recv;
 	int enqueue;
 	int enqueued;
-	int ready = 0; /**< Number of blocks in smps[] which are allocated and ready to be used by node_read(). */
+	int ready; /**< Number of blocks in smps[] which are allocated and ready to be used by node_read(). */
 	
 	struct path_source *ps = p->source;
 	
@@ -37,7 +37,7 @@ static void path_read(struct path *p)
 	struct sample *smps[cnt];
 
 	/* Fill smps[] free sample blocks from the pool */
-	ready += sample_alloc(&ps->pool, smps, cnt - ready);
+	ready = sample_alloc(&ps->pool, smps, cnt);
 	if (ready != cnt)
 		warn("Pool underrun for path %s", path_name(p));
 
@@ -45,8 +45,11 @@ static void path_read(struct path *p)
 	recv = node_read(ps->node, smps, ready);
 	if (recv < 0)
 		error("Failed to receive message from node %s", node_name(ps->node));
-	else if (recv < ready)
+	else if (recv < ready) {
 		warn("Partial read for path %s: read=%u expected=%u", path_name(p), recv, ready);
+		/* Free samples that weren't written to */
+		sample_free(smps+recv, ready-recv);
+	}
 
 	debug(LOG_PATH | 15, "Received %u messages from node %s", recv, node_name(ps->node));
 
@@ -59,17 +62,24 @@ static void path_read(struct path *p)
 			stats_update(p->stats->delta, STATS_SKIPPED, recv - enqueue);
 	}
 
+	/* Keep track of the lowest index that wasn't enqueued;
+	 * all following samples must be freed here */
+	int refd = 0;
 	for (size_t i = 0; i < list_length(&p->destinations); i++) {
 		struct path_destination *pd = list_at(&p->destinations, i);
 	
 		enqueued = queue_push_many(&pd->queue, (void **) smps, enqueue);
 		if (enqueue != enqueued)
 			warn("Queue overrun for path %s", path_name(p));
-		
-		sample_get_many(smps, enqueued);
+
+		if (refd < enqueued)
+			refd = enqueued;
 
 		debug(LOG_PATH | 15, "Enqueued %u samples from %s to queue of %s", enqueued, node_name(ps->node), node_name(pd->node));
 	}
+
+	/* Release those samples which have not been pushed into a queue */
+	sample_free(smps + refd, ready - refd);
 }
 
 static void path_write(struct path *p)
@@ -152,7 +162,7 @@ int path_init(struct path *p, struct super_node *sn)
 	p->reverse = 0;
 	p->enabled = 1;
 
-	p->samplelen = DEFAULT_VALUES;
+	p->samplelen = DEFAULT_SAMPLELEN;
 	p->queuelen = DEFAULT_QUEUELEN;
 	
 	p->super_node = sn;
@@ -206,7 +216,7 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 
 	config_setting_lookup_bool(cfg, "reverse", &p->reverse);
 	config_setting_lookup_bool(cfg, "enabled", &p->enabled);
-	config_setting_lookup_int(cfg, "values", &p->samplelen);
+	config_setting_lookup_int(cfg, "samplelen", &p->samplelen);
 	config_setting_lookup_int(cfg, "queuelen", &p->queuelen);
 
 	if (!IS_POW2(p->queuelen)) {
@@ -441,7 +451,7 @@ int path_reverse(struct path *p, struct path *r)
 
 	for (size_t i = 0; i < list_length(&p->hooks); i++) {
 		struct hook *h = list_at(&p->hooks, i);
-		struct hook hc;
+		struct hook hc = { .state = STATE_DESTROYED };
 		
 		ret = hook_init(&hc, h->_vt, p);
 		if (ret)

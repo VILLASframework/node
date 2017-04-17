@@ -19,6 +19,7 @@
 #include "utils.h"
 #include "config.h"
 #include "advio.h"
+#include "crypt.h"
 
 #define BAR_WIDTH 60 /**< How wide you want the progress meter to be. */
 
