@@ -28,7 +28,7 @@ villas-node ${CONFIG_FILE} &
 sleep 1
 
 # Fetch config via API
-curl -sX POST --data '{ "request" : "nodes", "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost/api/v1 > ${FETCHED_NODES}
+curl -sX POST --data '{ "action" : "nodes", "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost/api/v1 > ${FETCHED_NODES}
 
 # Shutdown VILLASnode
 kill $!

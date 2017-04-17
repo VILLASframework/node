@@ -15,7 +15,7 @@ villas-node file://${LOCAL_CONF} &
 sleep 1
 
 # Fetch config via API
-curl -sX POST --data '{ "request" : "config", "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost/api/v1 > ${FETCHED_CONF}
+curl -sX POST --data '{ "action" : "config", "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost/api/v1 > ${FETCHED_CONF}
 
 # Shutdown VILLASnode
 kill $!
