@@ -34,9 +34,9 @@
 static struct plugin p;
 
 /* Private static storage */
-struct list interfaces;
+struct list interfaces = { .state = STATE_DESTROYED };
 
-int socket_init(int argc, char *argv[], config_setting_t *cfg)
+int socket_init(struct super_node *sn)
 {
 	int ret;
 
@@ -71,7 +71,7 @@ int socket_init(int argc, char *argv[], config_setting_t *cfg)
 		}
 
 		/* If not found, create a new interface */
-		struct interface j;
+		struct interface j = { .sockets.state = STATE_DESTROYED };
 		
 		ret = if_init(&j, link);
 		if (ret)
@@ -94,7 +94,7 @@ found:		list_push(&i->sockets, s);
 
 int socket_deinit()
 {
-	for (size_t j = 0; list_length(&interfaces); j++) {
+	for (size_t j = 0; j < list_length(&interfaces); j++) {
 		struct interface *i = list_at(&interfaces, j);
 		
 		if_stop(i);

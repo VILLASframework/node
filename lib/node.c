@@ -86,7 +86,7 @@ int node_start(struct node *n)
 
 	info("Starting node %s", node_name_long(n));
 	{ INDENT
-		ret = n->_vt->start ? n->_vt->start(n) : -1;
+		ret = n->_vt->start ? n->_vt->start(n) : 0;
 		if (ret)
 			return ret;
 	}
@@ -107,7 +107,7 @@ int node_stop(struct node *n)
 
 	info("Stopping node %s", node_name(n));
 	{ INDENT
-		ret = n->_vt->stop ? n->_vt->stop(n) : -1;
+		ret = n->_vt->stop ? n->_vt->stop(n) : 0;
 	}
 	
 	if (ret == 0)

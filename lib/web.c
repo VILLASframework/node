@@ -12,7 +12,7 @@
 #include "utils.h"
 #include "log.h"
 #include "web.h"
-#include "api.h"
+#include "api/session.h"
 
 #include "nodes/websocket.h"
 
@@ -122,6 +122,18 @@ static void logger(int level, const char *msg) {
 	}
 }
 
+static void * worker(void *ctx)
+{
+	struct web *w = ctx;
+	
+	assert(w->state == STATE_STARTED);
+
+	for (;;)
+		lws_service(w->context, 100);
+	
+	return NULL;
+}
+
 int web_init(struct web *w, struct api *a)
 {
 	lws_set_log_level((1 << LLL_COUNT) - 1, logger);
@@ -154,6 +166,8 @@ int web_parse(struct web *w, config_setting_t *cfg)
 
 int web_start(struct web *w)
 {
+	int ret;
+
 	/* Start server */
 	struct lws_context_creation_info ctx_info = {
 		.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS | LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT,
@@ -185,16 +199,27 @@ int web_start(struct web *w)
 		if (w->vhost == NULL)
 			error("WebSocket: failed to initialize server");
 	}
+	
+	ret = pthread_create(&w->thread, NULL, worker, w);
+	if (ret)
+		error("Failed to start Web worker");
 
 	w->state = STATE_STARTED;
 
-	return 0;
+	return ret;
 }
 
 int web_stop(struct web *w)
 {
+	info("Stopping Web sub-system");
+
 	if (w->state == STATE_STARTED)
 		lws_cancel_service(w->context);
+	
+	/** @todo Wait for all connections to be closed */
+	
+	pthread_cancel(w->thread);
+	pthread_join(w->thread, NULL);
 	
 	w->state = STATE_STOPPED;
 
@@ -212,11 +237,4 @@ int web_destroy(struct web *w)
 	w->state = STATE_DESTROYED;
 
 	return 0;
-}
-
-int web_service(struct web *w)
-{
-	assert(w->state == STATE_STARTED);
-
-	return lws_service(w->context, 10);
 }

@@ -122,9 +122,9 @@ int shmem_close(struct node *n)
 	atomic_store_explicit(&shm->shared->node_stopped, 1, memory_order_relaxed);
 
 	if (!shm->polling) {
-		pthread_mutex_lock(&shm->shared->out.qs.mt);
+		pthread_mutex_lock(&shm->shared->out.qs.mutex);
 		pthread_cond_broadcast(&shm->shared->out.qs.ready);
-		pthread_mutex_unlock(&shm->shared->out.qs.mt);
+		pthread_mutex_unlock(&shm->shared->out.qs.mutex);
 	}
 
 	/* Don't destroy the data structures yet, since the other process might

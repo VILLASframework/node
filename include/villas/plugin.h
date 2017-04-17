@@ -48,7 +48,7 @@ struct plugin {
 	int (*unload)(struct plugin *p);
 	
 	union {
-		struct api_ressource	api;
+		struct api_action	api;
 		struct node_type	node;
 		struct fpga_ip_type	ip;
 		struct hook_type	hook;

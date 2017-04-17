@@ -65,7 +65,7 @@ struct websocket_destination {
 int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
 /** @see node_vtable::init */
-int websocket_init(int argc, char *argv[], config_setting_t *cfg);
+int websocket_init(struct super_node *sn);
 
 /** @see node_vtable::deinit */
 int websocket_deinit();

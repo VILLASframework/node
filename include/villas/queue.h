@@ -57,7 +57,7 @@ struct queue {
 	
 	enum state state;
 
-	struct memtype * mem;
+	struct memtype *mem;
 	size_t buffer_mask;
 	off_t buffer_off; /**< Relative pointer to struct queue_cell[] */
 

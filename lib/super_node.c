@@ -332,7 +332,7 @@ int super_node_start(struct super_node *sn)
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
 		struct node *n = list_at(&sn->nodes, i);
 		
-		node_type_start(n->_vt, sn->cli.argc, sn->cli.argv, config_root_setting(&sn->cfg));
+		node_type_start(n->_vt, sn);
 	}
 	
 	info("Starting nodes");
@@ -365,28 +365,35 @@ int super_node_start(struct super_node *sn)
 
 int super_node_stop(struct super_node *sn)
 {
-	if (sn->state != STATE_STARTED)
-		return 0;
+	int ret;
 
 	info("Stopping paths");
 	for (size_t i = 0; i < list_length(&sn->paths); i++) { INDENT
 		struct path *p = list_at(&sn->paths, i);
 
-		path_stop(p);
+		ret = path_stop(p);
+		if (ret)
+			error("Failed to stop path: %s", path_name(p));
 	}
 
 	info("Stopping nodes");
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
 		struct node *n = list_at(&sn->nodes, i);
 
-		node_stop(n);
+		ret = node_stop(n);
+		if (ret)
+			error("Failed to stop node: %s", node_name(n));
 	}
 
 	info("Stopping node types");
 	for (size_t i = 0; i < list_length(&plugins); i++) { INDENT
 		struct plugin *p = list_at(&plugins, i);
-		if (p->type == PLUGIN_TYPE_NODE)
-			node_type_stop(&p->node);
+
+		if (p->type == PLUGIN_TYPE_NODE) {
+			ret = node_type_stop(&p->node);
+			if (ret)
+				error("Failed to stop node-type: %s", plugin_name(p));
+		}
 	}
 
 	web_stop(&sn->web);

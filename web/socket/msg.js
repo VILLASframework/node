@@ -11,7 +11,7 @@
  *********************************************************************************/
 
 /* Class for parsing and printing a message */
-function Msg(c, d)
+function Msg(c)
 {
 	this.sequence  = typeof c.sequence  === 'undefined' ? 0                           : c.sequence;
 	this.length    = typeof c.length    === 'undefined' ? 0                           : c.length;
@@ -21,9 +21,9 @@ function Msg(c, d)
 	this.id        = typeof c.id        === 'undefined' ? -1                          : c.id;
 	this.timestamp = typeof c.timestamp === 'undefined' ? Date.now()                  : c.timestamp;
 	
-	if (Array.isArray(d)) {
-		this.length = d.length;
-		this.data   = d
+	if (Array.isArray(c.data)) {
+		this.length = c.data.length;
+		this.data   = c.data;
 	}
 }
 

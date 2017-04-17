@@ -368,8 +368,12 @@ out:	json_decref(request);
 	return ret;
 }
 
-int ngsi_init(int argc, char *argv[], config_setting_t *cfg)
+int ngsi_init(struct super_node *sn)
 {
+	config_setting_t *cfg;
+	
+	cfg = config_root_setting(&sn->cfg);
+	
 	const char *tname;
 	if (config_setting_lookup_string(cfg, "name", &tname)) {
 		name = strdup(tname);

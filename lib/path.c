@@ -57,7 +57,7 @@ static void path_read(struct path *p)
 	enqueue = hook_read_list(&p->hooks, smps, recv);
 	if (enqueue != recv) {
 		info("Hooks skipped %u out of %u samples for path %s", recv - enqueue, recv, path_name(p));
-		
+
 		if (p->stats)
 			stats_update(p->stats->delta, STATS_SKIPPED, recv - enqueue);
 	}
@@ -71,16 +71,15 @@ static void path_read(struct path *p)
 		enqueued = queue_push_many(&pd->queue, (void **) smps, enqueue);
 		if (enqueue != enqueued)
 			warn("Queue overrun for path %s", path_name(p));
-		
-		for (int i = 0; i < enqueued; i++) {
-			sample_get(smps[i]); /* increase reference count */
-			refd = i;
-		}
+
+		if (refd < enqueued)
+			refd = enqueued;
 
 		debug(LOG_PATH | 15, "Enqueued %u samples from %s to queue of %s", enqueued, node_name(ps->node), node_name(pd->node));
 	}
-	if (refd != recv-1)
-		sample_free(smps+refd+1, recv-refd-1);
+
+	/* Release those samples which have not been pushed into a queue */
+	sample_free(smps + refd, ready - refd);
 }
 
 static void path_write(struct path *p)
@@ -118,11 +117,7 @@ static void path_write(struct path *p)
 
 			debug(LOG_PATH | 15, "Sent %u messages to node %s", sent, node_name(pd->node));
 
-			released = 0;
-			for (int i = 0; i < sent; i++) {
-				if (sample_put(smps[i]) == 0)
-					released++; /* we had the last reference (0 remaining) */
-			}
+			released = sample_put_many(smps, sent);
 	
 			debug(LOG_PATH | 15, "Released %d samples back to memory pool", released);
 		}
@@ -347,6 +342,9 @@ int path_start(struct path *p)
 int path_stop(struct path *p)
 {
 	int ret;
+	
+	if (p->state != STATE_STARTED)
+		return 0;
 
 	info("Stopping path: %s", path_name(p));
 

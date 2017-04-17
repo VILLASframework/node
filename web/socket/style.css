@@ -54,18 +54,8 @@ a {
 	height: 100%;
 }
 
-ul.node-selector {
-	padding: 0;
-}
-
-.node-selector li {
-	display: inline;
-	padding: 0.5em;
-}
-
-.node-selector li.active {
-	font-weight: bold;
-	background-color: #FFC7C7;
+.node-selector {
+	margin-bottom: 1em;
 }
 
 .off {

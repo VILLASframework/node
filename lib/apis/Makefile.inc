@@ -1,1 +1,0 @@
-LIB_SRCS += $(wildcard lib/apis/*.c)

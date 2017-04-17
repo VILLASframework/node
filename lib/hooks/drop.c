@@ -23,7 +23,7 @@ static int drop_read(struct hook *h, struct sample *smps[], size_t *cnt)
 		if (h->prev) {
 			dist = h->last->sequence - (int32_t) h->prev->sequence;
 			if (dist <= 0) {
-				warn("Dropped sample: dist = %d, i = %d", dist, i);
+				warn("Dropped sample: sequence=%u, dist=%d, i=%d", h->last->sequence, dist, i);
 				if (h->path && h->path->stats)
 					stats_update(h->path->stats->delta, STATS_REORDERED, dist);
 			}

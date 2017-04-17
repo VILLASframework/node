@@ -80,7 +80,9 @@ AFILE * afopen(const char *uri, const char *mode)
 		goto out1;
 
 	/* Setup libcurl handle */
+#if LIBCURL_VERSION_NUM >= 0x072d00
 	curl_easy_setopt(af->curl, CURLOPT_DEFAULT_PROTOCOL, "file");
+#endif
 	curl_easy_setopt(af->curl, CURLOPT_FOLLOWLOCATION, 1L);
 	curl_easy_setopt(af->curl, CURLOPT_UPLOAD, 0L);
 	curl_easy_setopt(af->curl, CURLOPT_USERAGENT, USER_AGENT);

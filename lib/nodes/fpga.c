@@ -30,20 +30,21 @@ void fpga_dump(struct fpga *f)
 	fpga_card_dump(c);
 }
 
-int fpga_init(int argc, char *argv[], config_setting_t *cfg)
+int fpga_init(struct super_node *sn)
 {
 	int ret;
-	config_setting_t *cfg_fpgas;
+	config_setting_t *cfg, *cfg_fpgas;
 	
 	ret = pci_init(&pci);
 	if (ret)
-		cerror(cfg, "Failed to initialize PCI sub-system");
+		error("Failed to initialize PCI sub-system");
 	
 	ret = vfio_init(&vc);
 	if (ret)
-		cerror(cfg, "Failed to initiliaze VFIO sub-system");
+		error("Failed to initiliaze VFIO sub-system");
 
 	/* Parse FPGA configuration */
+	cfg = config_root_setting(&sn->cfg);
 	cfg_fpgas = config_setting_lookup(cfg, "fpgas");
 	if (!cfg_fpgas)
 		cerror(cfg, "Config file is missing 'fpgas' section");

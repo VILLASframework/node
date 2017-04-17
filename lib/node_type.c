@@ -5,7 +5,6 @@
  *********************************************************************************/
 
 #include <string.h>
-#include <libconfig.h>
 
 #include "sample.h"
 #include "node.h"
@@ -14,16 +13,16 @@
 #include "config.h"
 #include "plugin.h"
 
-int node_type_start(struct node_type *vt, int argc, char *argv[], config_setting_t *cfg)
+int node_type_start(struct node_type *vt, struct super_node *sn)
 {
 	int ret;
 	
-	if (vt->state != STATE_STARTED)
+	if (vt->state != STATE_DESTROYED)
 		return 0;
 
 	info("Initializing " YEL("%s") " node type which is used by %zu nodes", plugin_name(vt), list_length(&vt->instances));
 	{ INDENT
-		ret = vt->init ? vt->init(argc, argv, cfg) : 0;
+		ret = vt->init ? vt->init(sn) : 0;
 	}	
 
 	if (ret == 0)
@@ -41,7 +40,7 @@ int node_type_stop(struct node_type *vt)
 
 	info("De-initializing " YEL("%s") " node type", plugin_name(vt));
 	{ INDENT
-		ret = vt->deinit ? vt->deinit() : -1;
+		ret = vt->deinit ? vt->deinit() : 0;
 	}
 	
 	if (ret == 0)

@@ -25,18 +25,18 @@ static Opal_GenAsyncParam_Ctrl params;	/** String and Float parameters, provided
 	
 static pthread_mutex_t lock;		/** Big Global Lock for libOpalAsync API */
 
-int opal_init(int argc, char *argv[], config_setting_t *cfg)
+int opal_init(struct super_node *sn)
 {
 	int err;
 
-	if (argc != 4)
+	if (sn->cli.argc != 4)
 		return -1;
 
 	pthread_mutex_init(&lock, NULL);
 
-	async_shmem_name = argv[1];
-	async_shmem_size = atoi(argv[2]);
-	print_shmem_name = argv[3];
+	async_shmem_name = sn->cli.argv[1];
+	async_shmem_size = atoi(sn->cli.argv[2]);
+	print_shmem_name = sn->cli.argv[3];
 
 	/* Enable the OpalPrint function. This prints to the OpalDisplay. */
 	err = OpalSystemCtrl_Register(print_shmem_name);
