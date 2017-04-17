@@ -151,7 +151,7 @@ website:
 deliver:
   stage: deploy
   script:
-    - ssh $DEPLOY_USER@$DEPLOY_HOST mkdir -pf $DEPLOY_PATH/{coverage,doc}/$CI_BUILD_REF_NAME/
+    - ssh $DEPLOY_USER@$DEPLOY_HOST mkdir -p $DEPLOY_PATH/{coverage,doc}/$CI_BUILD_REF_NAME/
     - rsync $RSYNC_OPTS build/release-coverage/coverage/  $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
     - rsync $RSYNC_OPTS build/release/doc/html/           $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
   dependencies:
