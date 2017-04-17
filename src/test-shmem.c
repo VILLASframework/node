@@ -7,15 +7,13 @@
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
-#include "config.h"
-#include "log.h"
-#include "node.h"
-#include "nodes/shmem.h"
-#include "pool.h"
-#include "queue_signalled.h"
-#include "sample.h"
-#include "shmem.h"
-#include "utils.h"
+#include <villas/log.h>
+#include <villas/node.h>
+#include <villas/nodes/shmem.h>
+#include <villas/pool.h>
+#include <villas/sample.h>
+#include <villas/shmem.h>
+#include <villas/utils.h>
 
 #include <string.h>
 
