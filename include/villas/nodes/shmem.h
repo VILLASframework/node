@@ -7,7 +7,7 @@
 
 /**
  * @ingroup node
- * @addtogroup shmem Shared memory interface
+ * @addtogroup shmem_node Shared memory node type
  * @{
  */
 
@@ -22,6 +22,9 @@
 #define DEFAULT_SHMEM_QUEUELEN	512
 #define DEFAULT_SHMEM_SAMPLELEN	DEFAULT_SAMPLELEN
 
+/** Node-type for shared memory communication.
+ * @see node_type
+ */
 struct shmem {
 	const char* name;		/**< Name of the shm object. */
 	int samplelen;			/**< Number of data entries for each sample. */

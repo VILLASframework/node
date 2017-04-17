@@ -5,6 +5,12 @@
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
+/** Interface to the shared memory node for external programs.
+ *
+ * @addtogroup shmem Shared memory interface
+ * @{
+ */
+
 #pragma once
 
 #include "pool.h"
@@ -37,28 +43,34 @@ struct shmem_shared {
 /** Open the shared memory object and retrieve / initialize the shared data structures.
  * @param[in] name Name of the POSIX shared memory object.
  * @param[inout] base_ptr The base address of the shared memory region is written to this pointer.
- * @retval A valid shmem_shared* on success, or NULL with errno indicating the error on failure.
+ * @retval NULL An error occurred; errno is set appropiately.
  */
 struct shmem_shared * shmem_shared_open(const char* name, void **base_ptr);
 
 /** Close and destroy the shared memory object and related structures.
- * @param[shm] The shared memory structure.
- * @param[base] The base address as returned by shmem_shared_open.
+ * @param shm The shared memory structure.
+ * @param base The base address as returned by shmem_shared_open.
+ * @retval 0 Closing successfull.
+ * @retval <0 An error occurred; errno is set appropiately.
  */
 int shmem_shared_close(struct shmem_shared *shm, void *base);
 
 /** Read samples from VILLASNode.
- * @param[shm] The shared memory structure.
- * @param[smps] An array where the pointers to the samples will be written. The samples
+ * @param shm The shared memory structure.
+ * @param smps  An array where the pointers to the samples will be written. The samples
  * must be freed with sample_put after use.
- * @param[cnt] Number of samples to be read.
+ * @param cnt  Number of samples to be read.
+ * @retval >=0 Number of samples that were read. Can be less than cnt (including 0) in case not enough samples were available.
+ * @retval -1 VILLASNode exited; no samples can be read anymore.
  */
 int shmem_shared_read(struct shmem_shared *shm, struct sample *smps[], unsigned cnt);
 
 /** Write samples to VILLASNode.
- * @param[shm] The shared memory structure.
- * @param[smps] The samples to be written. Must be allocated from shm->pool.
- * @param[cnt] Number of samples to write.
+ * @param shm The shared memory structure.
+ * @param smps The samples to be written. Must be allocated from shm->pool.
+ * @param cnt Number of samples to write.
+ * @retval >=0 Number of samples that were successfully written. Can be less than cnt (including 0) in case of a full queue.
+ * @retval -1 VILLASNode exited; no samples can be written anymore.
  */
 int shmem_shared_write(struct shmem_shared *shm, struct sample *smps[], unsigned cnt);
 
@@ -66,3 +78,5 @@ int shmem_shared_write(struct shmem_shared *shm, struct sample *smps[], unsigned
  * the input/output queues (in elements) and the given number of data elements
  * per struct sample. */
 size_t shmem_total_size(int insize, int outsize, int sample_size);
+
+/** @} */

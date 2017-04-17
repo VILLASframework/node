@@ -1,5 +1,6 @@
 /** Node-type for shared memory communication.
  *
+ * @file
  * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
@@ -159,7 +160,7 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct shmem *shm = n->_vd;
-	struct sample *shared_smps[cnt]; /**< Samples need to be copied to the shared pool first */
+	struct sample *shared_smps[cnt]; /* Samples need to be copied to the shared pool first */
 	int avail, pushed, len;
 	
 	avail = sample_alloc(&shm->shared->pool, shared_smps, cnt);
