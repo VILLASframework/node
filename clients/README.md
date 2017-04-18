@@ -6,9 +6,15 @@ For a protocol specification, please see `include/msg_format.h`.
 
 - opal/udp
    Contains the implementation of an asynchronous process block for RT-LAB.
+
    This block allows exchanging sample values with VILLASnode over UDP using the `socket` node-type.
    Author: Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 
 - labview
    This example model is using LabView standard UDP blocks to exchange sample values with VILLASnode over UDP using the `socket` node-type.
    Author: Eyke Liegmann <ELiegmann@eonerc.rwth-aachen.de>
+   This block allows exchanging messages with an S2SS server over UDP/TCP.
+
+- rtds
+   This directory contains RSCAD drafts showing how to use GTSYNC and GTNET together with VILLASnode.
+   Author: Umar Farooq <umar.farooq@rwth-aachen.de>
