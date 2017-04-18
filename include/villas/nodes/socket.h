@@ -60,25 +60,25 @@ struct socket {
 /** @see node_vtable::init */
 int socket_init(struct super_node *sn);
 
-/** @see node_vtable::deinit */
+/** @see node_type::deinit */
 int socket_deinit();
 
-/** @see node_vtable::open */
+/** @see node_type::open */
 int socket_start(struct node *n);
 
-/** @see node_vtable::close */
+/** @see node_type::close */
 int socket_stop(struct node *n);
 
-/** @see node_vtable::write */
+/** @see node_type::write */
 int socket_write(struct node *n, struct sample *smps[], unsigned cnt);
 
-/** @see node_vtable::read */
+/** @see node_type::read */
 int socket_read(struct node *n, struct sample *smps[], unsigned cnt);
 
-/** @see node_vtable::parse */
+/** @see node_type::parse */
 int socket_parse(struct node *n, config_setting_t *cfg);
 
-/** @see node_vtable::print */
+/** @see node_type::print */
 char * socket_print(struct node *n);
 
 /** Generate printable socket address depending on the address family

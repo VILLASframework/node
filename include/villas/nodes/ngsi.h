@@ -50,32 +50,32 @@ struct ngsi {
 
 /** Initialize global NGSI settings and maps shared memory regions.
  *
- * @see node_vtable::init
+ * @see node_type::init
  */
 int ngsi_init(struct super_node *sn);
 
 /** Free global NGSI settings and unmaps shared memory regions.
  *
- * @see node_vtable::deinit
+ * @see node_type::deinit
  */
 int ngsi_deinit();
 
-/** @see node_vtable::parse */
+/** @see node_type::parse */
 int ngsi_parse(struct node *n, config_setting_t *cfg);
 
-/** @see node_vtable::print */
+/** @see node_type::print */
 char * ngsi_print(struct node *n);
 
-/** @see node_vtable::open */
+/** @see node_type::open */
 int ngsi_start(struct node *n);
 
-/** @see node_vtable::close */
+/** @see node_type::close */
 int ngsi_stop(struct node *n);
 
-/** @see node_vtable::read */
+/** @see node_type::read */
 int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt);
 
-/** @see node_vtable::write */
+/** @see node_type::write */
 int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @} */

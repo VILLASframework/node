@@ -38,16 +38,22 @@ struct shmem {
 	struct shmem_shared *shared;	/**< Shared datastructure. */
 };
 
-char *shmem_print(struct node *n);
+/** @see node_type::print */
+char * shmem_print(struct node *n);
 
+/** @see node_type::parse */
 int shmem_parse(struct node *n, config_setting_t *cfg);
 
+/** @see node_type::open */
 int shmem_open(struct node *n);
 
+/** @see node_type::close */
 int shmem_close(struct node *n);
 
+/** @see node_type::read */
 int shmem_read(struct node *n, struct sample *smps[], unsigned cnt);
 
+/** @see node_type::write */
 int shmem_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @} */

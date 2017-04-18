@@ -36,7 +36,7 @@ struct websocket {
 	struct list destinations;		/**< List of websocket servers connect to in client mode (struct websocket_destination). */
 	
 	struct pool pool;
-	struct queue_signalled queue;   /**< For samples which are received from WebSockets */
+	struct queue_signalled queue;		/**< For samples which are received from WebSockets */
 };
 
 /* Internal datastructures */
@@ -56,7 +56,6 @@ struct websocket_connection {
 	char *_name;
 };
 
-/* Internal datastructures */
 struct websocket_destination {
 	char *uri;
 	struct lws_client_connect_info info;
@@ -67,22 +66,22 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 /** @see node_vtable::init */
 int websocket_init(struct super_node *sn);
 
-/** @see node_vtable::deinit */
+/** @see node_type::deinit */
 int websocket_deinit();
 
-/** @see node_vtable::open */
+/** @see node_type::open */
 int websocket_start(struct node *n);
 
-/** @see node_vtable::close */
+/** @see node_type::close */
 int websocket_stop(struct node *n);
 
-/** @see node_vtable::close */
+/** @see node_type::close */
 int websocket_destroy(struct node *n);
 
-/** @see node_vtable::read */
+/** @see node_type::read */
 int websocket_read(struct node *n, struct sample *smps[], unsigned cnt);
 
-/** @see node_vtable::write */
+/** @see node_type::write */
 int websocket_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @} */

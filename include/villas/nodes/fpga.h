@@ -40,27 +40,27 @@ struct fpga {
 /** @see node_vtable::init */
 int fpga_init(struct super_node *sn);
 
-/** @see node_vtable::deinit */
+/** @see node_type::deinit */
 int fpga_deinit();
 
-/** @see node_vtable::parse */
+/** @see node_type::parse */
 int fpga_parse(struct node *n, config_setting_t *cfg);
 
 struct fpga_card * fpga_lookup_card(const char *name);
 
-/** @see node_vtable::print */
+/** @see node_type::print */
 char * fpga_print(struct node *n);
 
-/** @see node_vtable::open */
+/** @see node_type::open */
 int fpga_start(struct node *n);
 
-/** @see node_vtable::close */
+/** @see node_type::close */
 int fpga_stop(struct node *n);
 
-/** @see node_vtable::read */
+/** @see node_type::read */
 int fpga_read(struct node *n, struct sample *smps[], unsigned cnt);
 
-/** @see node_vtable::write */
+/** @see node_type::write */
 int fpga_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** Get pointer to internal VILLASfpga datastructure */

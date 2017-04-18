@@ -40,35 +40,35 @@ struct opal {
 
 /** Initialize global OPAL settings and maps shared memory regions.
  *
- * @see node_vtable::init
+ * @see node_type::init
  */
 int opal_init(struct super_node *sn);
 
 /** Free global OPAL settings and unmaps shared memory regions.
  *
- * @see node_vtable::deinit
+ * @see node_type::deinit
  */
 int opal_deinit();
 
-/** @see node_vtable::parse */
+/** @see node_type::parse */
 int opal_parse(struct node *n, config_setting_t *cfg);
 
-/** @see node_vtable::print */
+/** @see node_type::print */
 char * opal_print(struct node *n);
 
 /** Print global settings of the OPAL node type. */
 int opal_print_global();
 
-/** @see node_vtable::open */
+/** @see node_type::open */
 int opal_start(struct node *n);
 
-/** @see node_vtable::close */
+/** @see node_type::close */
 int opal_stop(struct node *n);
 
-/** @see node_vtable::read */
+/** @see node_type::read */
 int opal_read(struct node *n, struct sample *smps[], unsigned cnt);
 
-/** @see node_vtable::write */
+/** @see node_type::write */
 int opal_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @} */

@@ -27,12 +27,12 @@ enum {
 
 struct file {
 	struct file_direction {
-		AFILE *handle;		/**< libc: stdio file handle */
+		AFILE *handle;		/**< libc: stdio file handle. */
 
-		const char *mode;	/**< libc: fopen() mode */
+		const char *mode;	/**< libc: fopen() mode. */
 		const char *fmt;	/**< Format string for file name. */
 
-		char *uri;		/**< Real file name */
+		char *uri;		/**< Real file name. */
 	} read, write;
 	
 	int rewind;			/**< Should we rewind the file when we reach EOF? */
@@ -53,22 +53,22 @@ struct file {
 	double read_rate;		/**< The read rate. */
 };
 
-/** @see node_vtable::print */
+/** @see node_type::print */
 char * file_print(struct node *n);
 
-/** @see node_vtable::parse */
+/** @see node_type::parse */
 int file_parse(struct node *n, config_setting_t *cfg);
 
-/** @see node_vtable::open */
+/** @see node_type::open */
 int file_start(struct node *n);
 
-/** @see node_vtable::close */
+/** @see node_type::close */
 int file_stop(struct node *n);
 
-/** @see node_vtable::read */
+/** @see node_type::read */
 int file_read(struct node *n, struct sample *smps[], unsigned cnt);
 
-/** @see node_vtable::write */
+/** @see node_type::write */
 int file_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @} */
