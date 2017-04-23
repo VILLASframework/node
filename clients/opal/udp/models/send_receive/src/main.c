@@ -139,6 +139,8 @@ static void *SendToIPPort(void *arg)
 		msg.sequence = seq++;
 		msg.ts.sec = now.tv_sec;
 		msg.ts.nsec = now.tv_nsec;
+		
+		msg_hton(msg);
 
 		/* Perform the actual write to the ip port */
 		if (SendPacket((char *) &msg, MSG_LEN(&msg)) < 0)
@@ -207,15 +209,12 @@ static void *RecvFromIPPort(void *arg)
 			OpalPrint("%s: Received message with unknown version. Skipping..\n", PROGNAME);
 			continue;
 		}
+		msg_ntoh(msg);
 		
 		if (msg.type != MSG_TYPE_DATA) {
 			OpalPrint("%s: Received no data. Skipping..\n", PROGNAME);
 			continue;
 		}
-		
-		/* Convert message to host endianess */
-		if (msg.endian != MSG_ENDIAN_HOST)
-			msg_swap(&msg);
 		
 		if (n != MSG_LEN(&msg)) {
 			OpalPrint("%s: Received incoherent packet (size: %d, complete: %d)\n", PROGNAME, n, MSG_LEN(&msg));
