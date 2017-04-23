@@ -2,8 +2,7 @@
  *
  *  Code example of an asynchronous program.  This program is started
  *  by the asynchronous controller and demonstrates how to send and 
- *  receive data to and from the asynchronous icons and a UDP or TCP
- *  port.
+ *  receive data to and from the asynchronous icons and a UDP port.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @author Mathieu Dubé-Dallaire
@@ -35,43 +34,27 @@
 struct sockaddr_in send_ad;	/* Send address */
 struct sockaddr_in recv_ad;	/* Receive address */
 int sd = -1;			/* socket descriptor */
-int proto = UDP_PROTOCOL;
 
 int InitSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 {
 	struct ip_mreq mreq; /* Multicast group structure */
-	int socket_type;
-	int socket_proto;
-	unsigned char TTL = 1;
-	unsigned char LOOP = 0;
-	int rc;
+	unsigned char TTL = 1, LOOP = 0;
+	int rc, proto, ret;
 
 	proto = (int) IconCtrlStruct.FloatParam[0];
-	OpalPrint("%s: Version        : %s\n", PROGNAME, VERSION);
-
-	switch (proto) {
-		case UDP_PROTOCOL:	/* Communication using UDP/IP protocol */
-			socket_proto = IPPROTO_UDP;
-			socket_type = SOCK_DGRAM;
-			OpalPrint("%s: Protocol       : UDP/IP\n", PROGNAME);
-			break;
-			
-		case TCP_PROTOCOL:	/* Communication using TCP/IP protocol */
-			socket_proto = IPPROTO_IP;
-			socket_type = SOCK_STREAM;
-			OpalPrint("%s: Protocol       : TCP/IP\n", PROGNAME);
-			break;
-			
-		default:		/* Protocol is not recognized */
-			OpalPrint("%s: ERROR: Protocol (%d) not supported!\n", PROGNAME, proto);
-			return EINVAL;
+	if (proto != UDP_PROTOCOL) {
+		OpalPrint("%s: This version of %s only supports UDP\n", PROGNAME, PROGNAME);
+		return EIO;
 	}
-
+		
+	
+	OpalPrint("%s: Version        : %s\n", PROGNAME, VERSION);
 	OpalPrint("%s: Remote Address : %s\n", PROGNAME, IconCtrlStruct.StringParam[0]);
 	OpalPrint("%s: Remote Port    : %d\n", PROGNAME, (int) IconCtrlStruct.FloatParam[1]);
 
 	/* Initialize the socket */
-	if ((sd = socket(AF_INET, socket_type, socket_proto)) < 0) {
+	sd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (sd < 0) {
 		OpalPrint("%s: ERROR: Could not open socket\n", PROGNAME);
 		return EIO;
 	}
@@ -89,89 +72,82 @@ int InitSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 	recv_ad.sin_port = htons((u_short)IconCtrlStruct.FloatParam[2]);
 
 	/* Bind local port and address to socket. */
-	if (bind(sd, (struct sockaddr *) &recv_ad, sizeof(struct sockaddr_in)) == -1) {
+	ret = bind(sd, (struct sockaddr *) &recv_ad, sizeof(struct sockaddr_in));
+	if (ret == -1) {
 		OpalPrint("%s: ERROR: Could not bind local port to socket\n", PROGNAME);
 		return EIO;
 	}
 	else
 		OpalPrint("%s: Local Port     : %d\n", PROGNAME, (int) IconCtrlStruct.FloatParam[2]);
 
-	switch (proto) {
-		case UDP_PROTOCOL:	/* Communication using UDP/IP protocol */
-			/* If sending to a multicast address */
-			if ((inet_addr(IconCtrlStruct.StringParam[0]) & inet_addr("240.0.0.0")) == inet_addr("224.0.0.0")) {
-				if (setsockopt(sd, IPPROTO_IP, IP_MULTICAST_TTL, (char *) &TTL, sizeof(TTL)) == -1) {
-					OpalPrint("%s: ERROR: Could not set TTL for multicast send (%d)\n", PROGNAME, errno);
-					return EIO;
-				}
-				if (setsockopt(sd, IPPROTO_IP, IP_MULTICAST_LOOP, (char *)&LOOP, sizeof(LOOP)) == -1) {
-					OpalPrint("%s: ERROR: Could not set loopback for multicast send (%d)\n", PROGNAME, errno);
-					return EIO;
-				}
+	/* If sending to a multicast address */
+	if ((inet_addr(IconCtrlStruct.StringParam[0]) & inet_addr("240.0.0.0")) == inet_addr("224.0.0.0")) {
+		ret = setsockopt(sd, IPPROTO_IP, IP_MULTICAST_TTL, (char *) &TTL, sizeof(TTL));
+		if (ret == -1) {
+			OpalPrint("%s: ERROR: Could not set TTL for multicast send (%d)\n", PROGNAME, errno);
+			return EIO;
+		}
+		
+		ret = setsockopt(sd, IPPROTO_IP, IP_MULTICAST_LOOP, (char *)&LOOP, sizeof(LOOP));
+		if (ret == -1) {
+			OpalPrint("%s: ERROR: Could not set loopback for multicast send (%d)\n", PROGNAME, errno);
+			return EIO;
+		}
 
-				OpalPrint("%s: Configured socket for sending to multicast address\n", PROGNAME);
-			}
+		OpalPrint("%s: Configured socket for sending to multicast address\n", PROGNAME);
+	}
 
-			/* If receiving from a multicast group, register for it. */
-			if (inet_addr(IconCtrlStruct.StringParam[1]) > 0) {
-				if ((inet_addr(IconCtrlStruct.StringParam[1]) & inet_addr("240.0.0.0")) == inet_addr("224.0.0.0")) {
-					mreq.imr_multiaddr.s_addr = inet_addr(IconCtrlStruct.StringParam[1]);
-					mreq.imr_interface.s_addr = INADDR_ANY;
+	/* If receiving from a multicast group, register for it. */
+	if (inet_addr(IconCtrlStruct.StringParam[1]) > 0) {
+		if ((inet_addr(IconCtrlStruct.StringParam[1]) & inet_addr("240.0.0.0")) == inet_addr("224.0.0.0")) {
+			mreq.imr_multiaddr.s_addr = inet_addr(IconCtrlStruct.StringParam[1]);
+			mreq.imr_interface.s_addr = INADDR_ANY;
 
-					/* Have the multicast socket join the multicast group */
-					if (setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *) &mreq, sizeof(mreq)) == -1) {
-						OpalPrint("%s: ERROR: Could not join multicast group (%d)\n", PROGNAME, errno);
-						return EIO;
-					}
-
-					OpalPrint("%s: Added process to multicast group (%s)\n",
-						PROGNAME, IconCtrlStruct.StringParam[1]);
-				}
-				else {
-					OpalPrint("%s: WARNING: IP address for multicast group is not in multicast range. Ignored\n",
-						PROGNAME);
-				}
-			}
-			break;
-			
-		case TCP_PROTOCOL:	/* Communication using TCP/IP protocol */
-			OpalPrint("%s: Calling connect()\n", PROGNAME);
-
-			/* Connect to server to start data transmission */
-			rc = connect(sd, (struct sockaddr *) &send_ad, sizeof(send_ad));
-			if (rc < 0)  {
-				OpalPrint("%s: ERROR: Call to connect() failed\n", PROGNAME);
+			/* Have the multicast socket join the multicast group */
+			ret = setsockopt(sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char *) &mreq, sizeof(mreq));
+			if (ret == -1) {
+				OpalPrint("%s: ERROR: Could not join multicast group (%d)\n", PROGNAME, errno);
 				return EIO;
 			}
-			break;
+
+			OpalPrint("%s: Added process to multicast group (%s)\n",
+				PROGNAME, IconCtrlStruct.StringParam[1]);
+		}
+		else {
+			OpalPrint("%s: WARNING: IP address for multicast group is not in multicast range. Ignored\n",
+				PROGNAME);
+		}
 	}
 
 	return EOK;
 }
 
+int CloseSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
+{
+	if (sd < 0) {
+		shutdown(sd, SHUT_RDWR);
+		close(sd);
+	}
+
+	return 0;
+}
+
 int SendPacket(char* DataSend, int datalength)
 {
-	int err;
-
-	if(sd < 0)
+	if (sd < 0)
 		return -1;
 
 	/* Send the packet */
-	if (proto == TCP_PROTOCOL)
-		err = send(sd, DataSend, datalength, 0);
-	else
-		err = sendto(sd, DataSend, datalength, 0, (struct sockaddr *)&send_ad, sizeof(send_ad));
-
-	return err;
+	return sendto(sd, DataSend, datalength, 0, (struct sockaddr *)&send_ad, sizeof(send_ad));
 }
 
 int RecvPacket(char* DataRecv, int datalength, double timeout)
 {
-	int len;
+	int len, ret;
 	struct sockaddr_in client_ad;
+	struct timeval tv;
 	socklen_t client_ad_size = sizeof(client_ad);
 	fd_set sd_set;
-	struct timeval tv;
 
 	if (sd < 0)
 		return -1;
@@ -188,7 +164,8 @@ int RecvPacket(char* DataRecv, int datalength, double timeout)
 	 * necessary when reseting the model so we don't wait indefinitely
 	 * and prevent the process from exiting and freeing the port for
 	 * a future instance (model load). */
-	switch (select(sd+1, &sd_set, (fd_set *) 0, (fd_set *) 0, &tv)) {
+	ret = select(sd+1, &sd_set, (fd_set *) 0, (fd_set *) 0, &tv);
+	switch (ret) {
 		case -1: /* Error */
 			return -1;
 		case  0: /* We hit the timeout */
@@ -206,20 +183,5 @@ int RecvPacket(char* DataRecv, int datalength, double timeout)
 	memset(DataRecv, 0, datalength);
 
 	/* Perform the reception */
-	if (proto == TCP_PROTOCOL)
-		len = recv(sd, DataRecv, datalength, 0);
-	else
-		len = recvfrom(sd, DataRecv, datalength, 0, (struct sockaddr *) &client_ad, &client_ad_size);
-
-	return len;
-}
-
-int CloseSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct)
-{
-	if (sd < 0) {
-		shutdown(sd, SHUT_RDWR);
-		close(sd);
-	}
-
-	return 0;
+	return recvfrom(sd, DataRecv, datalength, 0, (struct sockaddr *) &client_ad, &client_ad_size);
 }

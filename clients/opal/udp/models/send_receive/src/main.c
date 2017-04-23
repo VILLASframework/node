@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <termios.h>
@@ -43,6 +44,7 @@
 /* This is the message format */
 #include "config.h"
 #include "msg.h"
+#include "msg_format.h"
 #include "socket.h"
 #include "utils.h"
 
@@ -53,6 +55,7 @@
 #define PRINT_SHMEM_NAME	argv[3]
 
 #ifdef _DEBUG // TODO: workaround
+
 #define CPU_TICKS 3466948000
 struct msg *msg_send = NULL;
 
@@ -75,23 +78,22 @@ void Tick(int sig, siginfo_t *si, void *ptr)
 }
 #endif /* _DEBUG */
 
-static void *SendToIPPort(void *arg)
+static void * SendToIPPort(void *arg)
 {
-	unsigned int SendID = 1;
-	unsigned int ModelState;
-	unsigned int i, n;
-	int nbSend = 0;
+	unsigned int ModelState, SendID = 1, i, n;
+	int nbSend = 0, ret;
 	uint32_t seq = 0;
 
 	/* Data from OPAL-RT model */
-	double mdldata[MSG_VALUES];
+	double mdldata[MAX_VALUES];
 	int mdldata_size;
 
 	/* Data from VILLASnode */
-	struct msg msg = MSG_INIT(0);
+	char buf[MSG_LEN(MAX_VALUES)];
+	struct msg *msg = (struct msg *) buf;
 
 #ifdef _DEBUG // TODO: workaround
-	msg_send = &msg;
+	msg_send = msg;
 #endif /* _DEBUG */
 
 	OpalPrint("%s: SendToIPPort thread started\n", PROGNAME);
@@ -104,7 +106,8 @@ static void *SendToIPPort(void *arg)
 	
 	do {
 		/* This call unblocks when the 'Data Ready' line of a send icon is asserted. */
-		if ((n = OpalWaitForAsyncSendRequest(&SendID)) != EOK) {
+		n = OpalWaitForAsyncSendRequest(&SendID);
+		if (n != EOK) {
 			ModelState = OpalGetAsyncModelState();
 			if ((ModelState != STATE_RESET) && (ModelState != STATE_STOP)) {
 				OpalSetAsyncSendIconError(n, SendID);
@@ -119,9 +122,9 @@ static void *SendToIPPort(void *arg)
 
 		/* Get the size of the data being sent by the unblocking SendID */
 		OpalGetAsyncSendIconDataLength(&mdldata_size, SendID);
-		if (mdldata_size / sizeof(double) > MSG_VALUES) {
+		if (mdldata_size / sizeof(double) > MAX_VALUES) {
 			OpalPrint("%s: Number of signals for SendID=%d exceeds allowed maximum (%d)\n",
-				PROGNAME, SendID, MSG_VALUES);
+				PROGNAME, SendID, MAX_VALUES);
 			return NULL;
 		}
 
@@ -132,18 +135,19 @@ static void *SendToIPPort(void *arg)
 		struct timespec now;
 		clock_gettime(CLOCK_REALTIME, &now);
 
-		msg.length = mdldata_size / sizeof(double);
-		for (i = 0; i < msg.length; i++)
-			msg.data[i].f = (float) mdldata[i];
+		msg->length = mdldata_size / sizeof(double);
+		for (i = 0; i < msg->length; i++)
+			msg->data[i].f = (float) mdldata[i];
 
-		msg.sequence = seq++;
-		msg.ts.sec = now.tv_sec;
-		msg.ts.nsec = now.tv_nsec;
+		msg->sequence = seq++;
+		msg->ts.sec = now.tv_sec;
+		msg->ts.nsec = now.tv_nsec;
 		
 		msg_hton(msg);
 
 		/* Perform the actual write to the ip port */
-		if (SendPacket((char *) &msg, MSG_LEN(&msg)) < 0)
+		ret = SendPacket((char *) msg, MSG_LEN(msg->length));
+		if (ret < 0)
 			OpalSetAsyncSendIconError(errno, SendID);
 		else
 			OpalSetAsyncSendIconError(0, SendID);
@@ -166,19 +170,18 @@ static void *SendToIPPort(void *arg)
 	return NULL;
 }
 
-static void *RecvFromIPPort(void *arg)
+static void * RecvFromIPPort(void *arg)
 {
-	unsigned RecvID = 1;
-	unsigned i, n;
-	int nbRecv = 0;
-	unsigned ModelState;
+	unsigned int ModelState, RecvID = 1, i, n;
+	int nbRecv = 0, ret;
 
 	/* Data from OPAL-RT model */
-	double mdldata[MSG_VALUES];
+	double mdldata[MAX_VALUES];
 	int mdldata_size;
 
 	/* Data from VILLASnode */
-	struct msg msg = MSG_INIT(0);
+	char buf[MSG_LEN(MAX_VALUES)];
+	struct msg *msg = (struct msg *) buf;
 
 	OpalPrint("%s: RecvFromIPPort thread started\n", PROGNAME);
 
@@ -190,7 +193,7 @@ static void *RecvFromIPPort(void *arg)
 
 	do {
 		/* Receive message */
-		n  = RecvPacket((char *) &msg, sizeof(msg), 1.0);
+		n  = RecvPacket((char *) msg, sizeof(buf), 1.0);
 		if (n < 1) {
 			ModelState = OpalGetAsyncModelState();
 			if ((ModelState != STATE_RESET) && (ModelState != STATE_STOP)) {
@@ -204,41 +207,32 @@ static void *RecvFromIPPort(void *arg)
 			break;
 		}
 
-		/* Check message contents */
-		if (msg.version != MSG_VERSION) {
-			OpalPrint("%s: Received message with unknown version. Skipping..\n", PROGNAME);
-			continue;
-		}
 		msg_ntoh(msg);
 		
-		if (msg.type != MSG_TYPE_DATA) {
-			OpalPrint("%s: Received no data. Skipping..\n", PROGNAME);
-			continue;
-		}
-		
-		if (n != MSG_LEN(&msg)) {
-			OpalPrint("%s: Received incoherent packet (size: %d, complete: %d)\n", PROGNAME, n, MSG_LEN(&msg));
+		ret = msg_verify(msg);
+		if (ret) {
+			OpalPrint("%s: Skipping invalid packet\n", PROGNAME);
 			continue;
 		}
 
 		/* Update OPAL model */
-		OpalSetAsyncRecvIconStatus(msg.sequence, RecvID);	/* Set the Status to the message ID */
+		OpalSetAsyncRecvIconStatus(msg->sequence, RecvID);	/* Set the Status to the message ID */
 		OpalSetAsyncRecvIconError(0, RecvID);			/* Set the Error to 0 */
 
 		/* Get the number of signals to send back to the model */
 		OpalGetAsyncRecvIconDataLength(&mdldata_size, RecvID);
-		if (mdldata_size / sizeof(double) > MSG_VALUES) {
+		if (mdldata_size / sizeof(double) > MAX_VALUES) {
 			OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds allowed maximum (%d)\n",
-				PROGNAME, RecvID, mdldata_size / sizeof(double), MSG_VALUES);
+				PROGNAME, RecvID, mdldata_size / sizeof(double), MAX_VALUES);
 			return NULL;
 		}
 
-		if (mdldata_size / sizeof(double) > msg.length)
+		if (mdldata_size / sizeof(double) > msg->length)
 			OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds what was received (%d)\n",
-				PROGNAME, RecvID, mdldata_size / sizeof(double), msg.length);
+				PROGNAME, RecvID, mdldata_size / sizeof(double), msg->length);
 
-		for (i = 0; i < msg.length; i++)
-			mdldata[i] = (double) msg.data[i].f;
+		for (i = 0; i < msg->length; i++)
+			mdldata[i] = (double) msg->data[i].f;
 
 		OpalSetAsyncRecvIconData(mdldata, mdldata_size, RecvID);
 
@@ -254,7 +248,7 @@ static void *RecvFromIPPort(void *arg)
 
 int main(int argc, char *argv[])
 {
-	int err;
+	int ret;
 
 	Opal_GenAsyncParam_Ctrl IconCtrlStruct;
 
@@ -276,24 +270,27 @@ int main(int argc, char *argv[])
 	}
 
 	/* Open Share Memory created by the model. */
-	if ((OpalOpenAsyncMem(ASYNC_SHMEM_SIZE, ASYNC_SHMEM_NAME)) != EOK) {
+	ret = OpalOpenAsyncMem(ASYNC_SHMEM_SIZE, ASYNC_SHMEM_NAME);
+	if (ret != EOK) {
 		OpalPrint("%s: ERROR: Model shared memory not available\n", PROGNAME);
 		exit(EXIT_FAILURE);
 	}
 
-	/* For Redhawk, Assign this process to CPU 0 in order to support partial XHP */
 	AssignProcToCpu0();
 
 	/* Get IP Controler Parameters (ie: ip address, port number...) and
 	 * initialize the device on the QNX node. */
 	memset(&IconCtrlStruct, 0, sizeof(IconCtrlStruct));
-	if ((err = OpalGetAsyncCtrlParameters(&IconCtrlStruct, sizeof(IconCtrlStruct))) != EOK) {
-		OpalPrint("%s: ERROR: Could not get controller parameters (%d).\n", PROGNAME, err);
+	
+	ret = OpalGetAsyncCtrlParameters(&IconCtrlStruct, sizeof(IconCtrlStruct));
+	if (ret != EOK) {
+		OpalPrint("%s: ERROR: Could not get controller parameters (%d).\n", PROGNAME, ret);
 		exit(EXIT_FAILURE);
 	}
 
 	/* Initialize socket */
-	if (InitSocket(IconCtrlStruct) != EOK) {
+	ret = InitSocket(IconCtrlStruct);
+	if (ret != EOK) {
 		OpalPrint("%s: ERROR: Initialization failed.\n", PROGNAME);
 		exit(EXIT_FAILURE);
 	}
@@ -326,16 +323,22 @@ int main(int argc, char *argv[])
 #endif /* _DEBUG */
 
 	/* Start send/receive threads */
-	if ((pthread_create(&tid_send, NULL, SendToIPPort, NULL)) == -1)
+	ret = pthread_create(&tid_send, NULL, SendToIPPort, NULL);
+	if (ret == -1)
 		OpalPrint("%s: ERROR: Could not create thread (SendToIPPort), errno %d\n", PROGNAME, errno);
-	if ((pthread_create(&tid_recv, NULL, RecvFromIPPort, NULL)) == -1)
+	
+	ret = pthread_create(&tid_recv, NULL, RecvFromIPPort, NULL);
+	if (ret == -1)
 		OpalPrint("%s: ERROR: Could not create thread (RecvFromIPPort), errno %d\n", PROGNAME, errno);
 
 	/* Wait for both threads to finish */
-	if ((err = pthread_join(tid_send, NULL)) != 0)
-		OpalPrint("%s: ERROR: pthread_join (SendToIPPort), errno %d\n", PROGNAME, err);
-	if ((err = pthread_join(tid_recv, NULL)) != 0)
-		OpalPrint("%s: ERROR: pthread_join (RecvFromIPPort), errno %d\n", PROGNAME, err);
+	ret = pthread_join(tid_send, NULL);
+	if (ret != 0)
+		OpalPrint("%s: ERROR: pthread_join (SendToIPPort), errno %d\n", PROGNAME, ret);
+	
+	ret = pthread_join(tid_recv, NULL);
+	if (ret != 0)
+		OpalPrint("%s: ERROR: pthread_join (RecvFromIPPort), errno %d\n", PROGNAME, ret);
 
 	/* Close the ip port and shared memories */
 	CloseSocket(IconCtrlStruct);
