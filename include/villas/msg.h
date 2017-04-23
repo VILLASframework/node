@@ -7,24 +7,22 @@
 
 #pragma once
 
-#include <stdio.h>
+/* Forward declarations. */
+struct msg;
 
-#include "msg_format.h"
-
-struct node;
-
-/** Swaps the byte order of the header part of struct msg.
+/** Swaps the byte-order of the message.
  *
- * Message can either be transmitted in little or big endian
- * format. The actual endianess for a message is defined by the
- * msg::endian field. This covers msg::length, msg::sequence, msg::data and msg::ts fields.
- * Received message are usally converted to the endianess of the host.
- * This is required for further sanity checks of the sequence number
- * or parsing of the data.
+ * Message are always transmitted in network (big endian) byte order.
  *
  * @param m A pointer to the message
  */
-void msg_hdr_swap(struct msg *m);
+void msg_hdr_ntoh(struct msg *m);
+
+void msg_hdr_hton(struct msg *m);
+
+void msg_ntoh(struct msg *m);
+
+void msg_hton(struct msg *m);
 
 /** Check the consistency of a message.
  *
