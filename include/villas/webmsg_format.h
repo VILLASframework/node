@@ -11,33 +11,13 @@
 
 #include <stdint.h>
 
-#include "msg_format.h"
-
-#ifdef __linux__
-  #define _BSD_SOURCE		1
-  #include <endian.h>
-#elif defined(__PPC__) /* Xilinx toolchain */
-  #include <lwip/arch.h>
-#endif
-
 /** The current version number for the message format */
-#define WEBMSG_VERSION		1
+#define WEBMSG_VERSION		2
 
 /** @todo Implement more message types */
 #define WEBMSG_TYPE_DATA	0 /**< Message contains float values */
 #define WEBMSG_TYPE_START	1 /**< Message marks the beginning of a new simulation case */
 #define WEBMSG_TYPE_STOP	2 /**< Message marks the end of a simulation case */
-
-#define WEBMSG_ENDIAN_LITTLE	0 /**< Message values are in little endian format (float too!) */
-#define WEBMSG_ENDIAN_BIG	1 /**< Message values are in bit endian format */
-
-#if BYTE_ORDER == LITTLE_ENDIAN
-  #define WEBMSG_ENDIAN_HOST	MSG_ENDIAN_LITTLE
-#elif BYTE_ORDER == BIG_ENDIAN
-  #define WEBMSG_ENDIAN_HOST	MSG_ENDIAN_BIG
-#else
-  #error "Unknown byte order!"
-#endif
 
 /** The total size in bytes of a message */
 #define WEBMSG_LEN(values)	(sizeof(struct webmsg) + MSG_DATA_LEN(values))
@@ -69,33 +49,25 @@
  **/
 struct webmsg
 {
-#if BYTE_ORDER == BIG_ENDIAN
 	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
 	unsigned type	: 2;	/**< Data or control message (see MSG_TYPE_*) */
-	unsigned endian	: 1;	/**< Specifies the byteorder of the message (see MSG_ENDIAN_*) */
-	unsigned rsvd1	: 1;	/**< Reserved bits */
-#elif BYTE_ORDER == LITTLE_ENDIAN
-	unsigned rsvd1	: 1;	/**< Reserved bits */
-	unsigned endian	: 1;	/**< Specifies the byteorder of the message (see MSG_ENDIAN_*) */
-	unsigned type	: 2;	/**< Data or control message (see MSG_TYPE_*) */
-	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
-#endif
+	unsigned rsvd1	: 2;	/**< Reserved bits */
 
-	uint8_t id;	/**< The node index from / to which this sample received / sent to.
+	uint8_t id;		/**< The node index from / to which this sample received / sent to.
 				 *   Corresponds to the index of the node in the http://localhost/nodes.json  array. */
 	
-	uint16_t length;	/**< The number of values in msg::data[]. Endianess is specified in msg::endian. */
-	uint32_t sequence;	/**< The sequence number is incremented by one for consecutive messages. Endianess is specified in msg::endian. */
+	uint16_t length;	/**< The number of values in msg::data[]. */
+	uint32_t sequence;	/**< The sequence number is incremented by one for consecutive messages. */
 	
-	/** A timestamp per message. Endianess is specified in msg::endian. */
+	/** A timestamp per message. */
 	struct {
 		uint32_t sec;	/**< Seconds since 1970-01-01 00:00:00 */
 		uint32_t nsec;	/**< Nanoseconds of the current second. */
 	} ts;
 
-	/** The message payload. Endianess is specified in msg::endian. */
+	/** The message payload. */
 	union {
-		float    f;	/**< Floating point values (note msg::endian) */
-		uint32_t i;	/**< Integer values (note msg::endian) */
+		float    f;	/**< Floating point values. */
+		uint32_t i;	/**< Integer values. */
 	} data[];
 } __attribute__((packed));
