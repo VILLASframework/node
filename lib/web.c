@@ -151,6 +151,8 @@ int web_init(struct web *w, struct api *a)
 
 int web_parse(struct web *w, config_setting_t *cfg)
 {
+	int enabled = true;
+
 	if (!config_setting_is_group(cfg))
 		cerror(cfg, "Setting 'http' must be a group.");
 
@@ -158,6 +160,10 @@ int web_parse(struct web *w, config_setting_t *cfg)
 	config_setting_lookup_string(cfg, "ssl_private_key", &w->ssl_private_key);
 	config_setting_lookup_int(cfg, "port", &w->port);
 	config_setting_lookup_string(cfg, "htdocs", &w->htdocs);
+	config_setting_lookup_bool(cfg, "enabled", &enabled);
+	
+	if (!enabled)
+		w->port = CONTEXT_PORT_NO_LISTEN;
 
 	w->state = STATE_PARSED;
 
