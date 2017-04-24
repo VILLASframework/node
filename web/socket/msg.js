@@ -1,8 +1,11 @@
-/** Javascript class for parsing binary messages
+/** Javascript class for parsing binary messages.
+ *
+ * Note: Messages sent by the 'websocket' node-type are always send in little endian byte-order!
+ *       This is different from the messages send with the 'socket' node-type!
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2016, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 /**
  * @addtogroup websocket
@@ -15,7 +18,6 @@ function Msg(c)
 {
 	this.sequence  = typeof c.sequence  === 'undefined' ? 0                           : c.sequence;
 	this.length    = typeof c.length    === 'undefined' ? 0                           : c.length;
-	this.endian    = typeof c.endian    === 'undefined' ? Msg.prototype.ENDIAN_LITTLE : c.endian;
 	this.version   = typeof c.version   === 'undefined' ? Msg.prototype.VERSION       : c.version;
 	this.type      = typeof c.type      === 'undefined' ? Msg.prototype.TYPE_DATA     : c.type;
 	this.id        = typeof c.id        === 'undefined' ? -1                          : c.id;
@@ -32,11 +34,7 @@ Msg.prototype.VERSION		= 1;
 
 Msg.prototype.TYPE_DATA		= 0; /**< Message contains float values */
 
-Msg.prototype.ENDIAN_LITTLE	= 0; /**< Message values are in little endian format (float too!) */
-Msg.prototype.ENDIAN_BIG	= 1; /**< Message values are in bit endian format */
-
 /* Some offsets in the binary message */
-Msg.prototype.OFFSET_ENDIAN	= 1;
 Msg.prototype.OFFSET_TYPE	= 2;
 Msg.prototype.OFFSET_VERSION	= 4;
 
@@ -48,30 +46,20 @@ Msg.bytes = function(len)
 Msg.fromArrayBuffer = function(data)
 {
 	var bits = data.getUint8(0);
-	var endian = (bits >> Msg.prototype.OFFSET_ENDIAN) & 0x1 ? 0 : 1;
 
 	var msg = new Msg({
-		endian:  (bits >> Msg.prototype.OFFSET_ENDIAN) & 0x1,
 		version: (bits >> Msg.prototype.OFFSET_VERSION) & 0xF,
 		type:    (bits >> Msg.prototype.OFFSET_TYPE) & 0x3,
-		id:        data.getUint8( 0x01, endian),
-		length:    data.getUint16(0x02, endian),
-		sequence:  data.getUint32(0x04, endian),
-		timestamp: data.getUint32(0x08, endian) * 1e3 +
-		           data.getUint32(0x0C, endian) * 1e-6,
+		id:        data.getUint8( 0x01),
+		length:    data.getUint16(0x02, 1),
+		sequence:  data.getUint32(0x04, 1),
+		timestamp: data.getUint32(0x08, 1) * 1e3 +
+		           data.getUint32(0x0C, 1) * 1e-6,
 	});
 	
 	msg.blob = new DataView(    data.buffer, data.byteOffset + 0x00, Msg.bytes(msg.length));
 	msg.data = new Float32Array(data.buffer, data.byteOffset + 0x10, msg.length);
 
-	if (msg.endian != host_endianess()) {
-		console.warn("Message is not given in host endianess!");
-
-		var data = new Uint32Array(msg.blob, 0x10);
-		for (var i = 0; i < data.length; i++)
-			data[i] = swap32(data[i]);
-	}
-	
 	return msg;
 }
 
@@ -101,7 +89,6 @@ Msg.prototype.toArrayBuffer = function()
 	view   = new DataView(buffer);
 	
 	var bits = 0;
-	bits |= (this.endian  & 0x1) << Msg.prototype.OFFSET_ENDIAN;
 	bits |= (this.version & 0xF) << Msg.prototype.OFFSET_VERSION;
 	bits |= (this.type    & 0x3) << Msg.prototype.OFFSET_TYPE;
 	
@@ -120,25 +107,5 @@ Msg.prototype.toArrayBuffer = function()
 
 	return buffer;
 }
-
-/** @todo parsing of big endian messages not yet supported */
-function swap16(val)
-{
-    return ((val & 0xFF) << 8)
-           | ((val >> 8) & 0xFF);
-}
-
-function swap32(val) {
-    return ((val & 0xFF) << 24)
-           | ((val & 0xFF00) << 8)
-           | ((val >> 8) & 0xFF00)
-           | ((val >> 24) & 0xFF);
-}
-
-function host_endianess() {
-	var buffer = new ArrayBuffer(2);
-	new DataView(buffer).setInt16(0, 256, true /* littleEndian */);
-	return new Int16Array(buffer)[0] === 256 ? 0 : 1; // Int16Array uses the platform's endianness.
-};
 
 /** @} */

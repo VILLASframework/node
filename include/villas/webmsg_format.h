@@ -1,4 +1,7 @@
-/** Binary websocket message format
+/** Binary websocket message format.
+ *
+ * Note: Messages sent by the 'websocket' node-type are always send in little endian byte-order!
+ *       This is different from the messages send with the 'socket' node-type!
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -20,7 +23,7 @@
 #define WEBMSG_TYPE_STOP	2 /**< Message marks the end of a simulation case */
 
 /** The total size in bytes of a message */
-#define WEBMSG_LEN(values)	(sizeof(struct webmsg) + MSG_DATA_LEN(values))
+#define WEBMSG_LEN(values)	(sizeof(struct webmsg) + WEBMSG_DATA_LEN(values))
 
 /** The length of \p values values in bytes. */
 #define WEBMSG_DATA_LEN(values)	(sizeof(float) * (values))
@@ -32,7 +35,6 @@
 #define WEBMSG_INIT(len, seq) (struct webmsg) {\
 	.version  = WEBMSG_VERSION,	\
 	.type     = WEBMSG_TYPE_DATA,	\
-	.endian   = WEBMSG_ENDIAN_HOST,	\
 	.length   = len,	 	\
 	.sequence = seq			\
 }
@@ -49,9 +51,9 @@
  **/
 struct webmsg
 {
-	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
-	unsigned type	: 2;	/**< Data or control message (see MSG_TYPE_*) */
 	unsigned rsvd1	: 2;	/**< Reserved bits */
+	unsigned type	: 2;	/**< Data or control message (see MSG_TYPE_*) */
+	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
 
 	uint8_t id;		/**< The node index from / to which this sample received / sent to.
 				 *   Corresponds to the index of the node in the http://localhost/nodes.json  array. */
