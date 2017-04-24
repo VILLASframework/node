@@ -131,6 +131,9 @@ int node_destroy(struct node *n)
 	if (n->_name)
 		free(n->_name);
 	
+	if (n->_name_long)
+		free(n->_name_long);
+	
 	n->state = STATE_DESTROYED;
 	
 	return 0;
