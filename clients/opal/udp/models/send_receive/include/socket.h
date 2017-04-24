@@ -13,7 +13,6 @@
 
 #define UDP_PROTOCOL	1
 #define TCP_PROTOCOL	2
-#define	EOK		0
 
 int InitSocket(Opal_GenAsyncParam_Ctrl IconCtrlStruct);
 

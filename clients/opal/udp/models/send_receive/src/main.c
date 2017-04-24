@@ -6,27 +6,16 @@
  *********************************************************************************/
 
 /* Standard ANSI C headers needed for this program */
-#include <errno.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <string.h>
-#include <sys/wait.h>
-#include <termios.h>
 #include <unistd.h>
 #include <signal.h>
 #include <time.h>
 #include <pthread.h>
-
-#if defined(__QNXNTO__)
-  #include <process.h>
-  #include <devctl.h>
-  #include <sys/dcmd_chr.h>
-#elif defined(__linux__)
-  #define _GNU_SOURCE   1
-  #include <time.h>
-#endif
 
 /* Define RTLAB before including OpalPrint.h for messages to be sent
  * to the OpalDisplay. Otherwise stdout will be used. */

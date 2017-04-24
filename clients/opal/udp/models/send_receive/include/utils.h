@@ -10,8 +10,6 @@
 #ifndef _UTILS_H_
 #define _UTILS_H_
 
-#define EOK	0
-
 int AssignProcToCpu0(void);
 
 #endif /* _UTILS_H_ */
