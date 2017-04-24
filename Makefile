@@ -15,7 +15,7 @@
 ###################################################################################
 
 # Project modules
-MODULES = lib plugins src tests thirdparty tools packaging doc etc web
+MODULES = clients lib plugins src tests thirdparty tools packaging doc etc web
 
 # Default prefix for install target
 PREFIX ?= /usr/local

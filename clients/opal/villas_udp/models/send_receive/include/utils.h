@@ -1,4 +1,4 @@
-/** Configure Scheduler
+/** Configure scheduler.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -9,8 +9,6 @@
 
 #ifndef _UTILS_H_
 #define _UTILS_H_
-
-#define EOK	0
 
 int AssignProcToCpu0(void);
 

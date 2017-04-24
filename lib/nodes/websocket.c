@@ -13,6 +13,7 @@
 #include <libconfig.h>
 
 #include "super_node.h"
+#include "webmsg.h"
 #include "webmsg_format.h"
 #include "timing.h"
 #include "utils.h"
@@ -119,7 +120,6 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 	
 				msg->version  = WEBMSG_VERSION;
 				msg->type     = WEBMSG_TYPE_DATA;
-				msg->endian   = WEBMSG_ENDIAN_HOST;
 				msg->length   = smps[i]->length;
 				msg->sequence = smps[i]->sequence;
 				msg->id       = c->node->id;

@@ -1,14 +1,20 @@
 # Asynchronous Process interface to VILLASnode / GTNET-SKT
 
-To "models" folder of OPAL project folder copy:
-folder: include
-folder: src
-file: villas.mk
+## Add AsyncIP to new project
 
-----------------------------------------------
+#### Step 1
 
-.llm file should contain the following:
-note: path to libOpalAsyncApiCore.a depends on version of RT-Lab  
+Copy the following files to the _models_ folder of the RT-LAB project:
+
+- Folder: `include/`
+- Folder: `src/`
+- File: `Makefile.mk`
+
+#### Step 2
+
+The `.llm` file should contain the following lines:
+
+**Note:** path to libOpalAsyncApiCore.a depends on version of RT-Lab  
 
 ```
 [ExtraPutFilesComp]
@@ -18,27 +24,32 @@ include\msg.h=Ascii
 include\msg_format.h=Ascii
 include\socket.h=Ascii
 include\utils.h=Ascii
-villas.mk=Ascii
+Makefile.mk=Ascii
 src\msg.c=Ascii
 src\main.c=Ascii
 src\socket.c=Ascii
 src\utils.c=Ascii
+src\compat.c=Ascii
 ```
 
---------------------------------------------------
+#### Step 3
 
 In RT-Lab under Files tab, we should see the files listed above for .llm file
 
---------------------------------------------------
+#### Step 4
 
-Development tab -> Compiler -> Compiler Command (makefile) add the following command
+In RT-LAB model settings: Development tab -> Compiler -> Compiler Command (makefile) add the following command
+
+```
 /usr/bin/make -f /usr/opalrt/common/bin/opalmodelmk
+```
 
---------------------------------------------------
+#### Step 5
 
-max umber of values in UDP packets:
-there’s a „#define“ inside the implementation which must be changed accordingly.
-The #define is in file: model_directory/include/config.h There you will find a directive called MAX_VALUES.
+Maximum number of values in UDP packets:
+
+There’s a `#define` inside the implementation which must be changed accordingly.
+The #define is in file: `model_directory/include/config.h` There you will find a directive called MAX_VALUES.
 
 # Troubleshooting
 
