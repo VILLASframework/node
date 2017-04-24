@@ -16,7 +16,7 @@
 
 /** Number of hugepages which are requested from the the kernel.
  * @see https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt */
-#define DEFAULT_NR_HUGEPAGES	25
+#define DEFAULT_NR_HUGEPAGES	100
 
 /** Width of log output in characters */
 #define LOG_WIDTH		132
