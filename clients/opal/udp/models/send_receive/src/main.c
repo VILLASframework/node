@@ -41,9 +41,8 @@ struct socket skt;
 
 static void * SendToIPPort(void *arg)
 {
-	unsigned int ModelState, SendID = 1, i, n;
-	int nbSend = 0, ret;
-	uint32_t seq = 0;
+	unsigned int ModelState, SendID = 1, Sequence = 0;
+	int nbSend = 0, ret, cnt, len;
 
 	/* Data from OPAL-RT model */
 	double mdldata[MAX_VALUES];
@@ -63,12 +62,12 @@ static void * SendToIPPort(void *arg)
 	
 	do {
 		/* This call unblocks when the 'Data Ready' line of a send icon is asserted. */
-		n = OpalWaitForAsyncSendRequest(&SendID);
-		if (n != EOK) {
+		ret = OpalWaitForAsyncSendRequest(&SendID);
+		if (ret != EOK) {
 			ModelState = OpalGetAsyncModelState();
 			if ((ModelState != STATE_RESET) && (ModelState != STATE_STOP)) {
-				OpalSetAsyncSendIconError(n, SendID);
-				OpalPrint("%s: OpalWaitForAsyncSendRequest(), errno %d\n", PROGNAME, n);
+				OpalSetAsyncSendIconError(ret, SendID);
+				OpalPrint("%s: OpalWaitForAsyncSendRequest(), errno %d\n", PROGNAME, ret);
 			}
 
 			continue;
@@ -93,13 +92,13 @@ static void * SendToIPPort(void *arg)
 		clock_gettime(CLOCK_REALTIME, &now);
 
 		msg->length = mdldata_size / sizeof(double);
-		for (i = 0; i < msg->length; i++)
-			msg->data[i].f = (float) mdldata[i];
-
-		msg->sequence = seq++;
+		msg->sequence = Sequence++;
 		msg->ts.sec = now.tv_sec;
 		msg->ts.nsec = now.tv_nsec;
-		
+
+		for (int i = 0; i < msg->length; i++)
+			msg->data[i].f = (float) mdldata[i];
+
 		msg_hton(msg);
 
 		/* Perform the actual write to the ip port */
@@ -129,8 +128,8 @@ static void * SendToIPPort(void *arg)
 
 static void * RecvFromIPPort(void *arg)
 {
-	unsigned int ModelState, RecvID = 1, i, n;
-	int nbRecv = 0, ret;
+	unsigned int ModelState, RecvID = 1;
+	int nbRecv = 0, ret, cnt;
 
 	/* Data from OPAL-RT model */
 	double mdldata[MAX_VALUES];
@@ -154,9 +153,9 @@ static void * RecvFromIPPort(void *arg)
 		if (ret < 1) {
 			ModelState = OpalGetAsyncModelState();
 			if ((ModelState != STATE_RESET) && (ModelState != STATE_STOP)) {
-				if (n ==  0) /* timeout, so we continue silently */
+				if (ret ==  0) /* timeout, so we continue silently */
 					OpalPrint("%s: Timeout while waiting for data\n", PROGNAME, errno);
-				if (n == -1) /* a more serious error, so we print it */
+				if (ret == -1) /* a more serious error, so we print it */
 					OpalPrint("%s: Error %d while waiting for data\n", PROGNAME, errno);
 					
 				continue;
@@ -210,7 +209,6 @@ int main(int argc, char *argv[])
 	Opal_GenAsyncParam_Ctrl IconCtrlStruct;
 
 	pthread_t tid_send, tid_recv;
-	pthread_attr_t attr_send, attr_recv;
 
 	OpalPrint("%s: This is %s client version %s\n", PROGNAME, PROGNAME, VERSION);
 
@@ -221,7 +219,8 @@ int main(int argc, char *argv[])
 	}
 
 	/* Enable the OpalPrint function. This prints to the OpalDisplay. */
-	if (OpalSystemCtrl_Register(PRINT_SHMEM_NAME) != EOK) {
+	ret = OpalSystemCtrl_Register(PRINT_SHMEM_NAME);
+	if (ret != EOK) {
 		printf("%s: ERROR: OpalPrint() access not available\n", PROGNAME);
 		exit(EXIT_FAILURE);
 	}
