@@ -51,7 +51,7 @@ endif
 # Enable WebSocket support
 ifndef WITHOUT_WEBSOCKETS
 ifeq ($(shell pkg-config libwebsockets jansson; echo $$?),0)
-	LIB_SRCS    += lib/nodes/websocket.c
+	LIB_SRCS    += lib/nodes/websocket.c lib/webmsg.c
 	LIB_PKGS    += libwebsockets jansson
 endif
 endif
