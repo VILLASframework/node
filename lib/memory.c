@@ -42,7 +42,7 @@ int memory_init(int hugepages)
 	if (ret)
 		return ret;
 	
-	if (l.rlim_cur < pagesz * pagecnt) {
+	if (l.rlim_cur < pagesz * pagecnt) { INDENT
 		l.rlim_cur = pagesz * pagecnt;
 		l.rlim_max = l.rlim_cur;
 		

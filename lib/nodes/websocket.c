@@ -556,7 +556,7 @@ char * websocket_print(struct node *n)
 	for (size_t i = 0; i < list_length(&w->destinations); i++) {
 		struct websocket_destination *d = list_at(&w->destinations, i);
 
-		buf = strcatf(&buf, "%s://%s:%d/%s ",
+		buf = strcatf(&buf, "%s://%s:%d%s ",
 			d->info.ssl_connection ? "wss" : "ws",
 			d->info.address,
 			d->info.port,
