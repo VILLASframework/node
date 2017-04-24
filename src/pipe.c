@@ -65,7 +65,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	super_node_destroy(&sn);
 
 	info(GRN("Goodbye!"));
-	_exit(EXIT_SUCCESS);
+	exit(EXIT_SUCCESS);
 }
 
 static void usage()

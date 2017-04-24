@@ -36,7 +36,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 	info(GRN("Goodbye!"));
 
-	_exit(EXIT_SUCCESS);
+	exit(EXIT_SUCCESS);
 }
 
 static void usage()
