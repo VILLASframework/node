@@ -1,0 +1,8 @@
+{
+   openssl
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   fun:SSL_library_init
+   ...
+}
