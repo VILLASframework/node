@@ -11,6 +11,11 @@
 /** Global list of all known plugins */
 struct list plugins = LIST_INIT();
 
+__attribute__((destructor(999))) static void __dtor_plugins()
+{
+	list_destroy(&plugins, NULL, false);
+}
+
 int plugin_init(struct plugin *p)
 {
 	assert(p->state == STATE_DESTROYED);
