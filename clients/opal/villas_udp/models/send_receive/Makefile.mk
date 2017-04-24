@@ -1,6 +1,6 @@
 TARGET = AsyncIP
 
-VPATH = $(SRCDIR)/src
+VPATH = src
 
 RTLAB_INTEL_COMPILER ?= 1
 
@@ -49,7 +49,7 @@ install: $(TARGET)
 	install -m 0755 -D -t $(DESTDIR)$(PREFIX)/bin $(TARGET)
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(OBJS:%.o=%.d) $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
