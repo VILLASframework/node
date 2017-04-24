@@ -409,18 +409,20 @@ char * websocket_print(struct node *n)
 
 	char *buf = NULL;
 	
-	buf = strcatf(&buf, "dests=");
+	buf = strcatf(&buf, "destinations=[ ");
 	
 	for (size_t i = 0; i < list_length(&w->destinations); i++) {
-		struct lws_client_connect_info *in = list_at(&w->destinations, i);
+		struct websocket_destination *d = list_at(&w->destinations, i);
 
-		buf = strcatf(&buf, "%s://%s:%d/%s",
-			in->ssl_connection ? "https" : "http",
-			in->address,
-			in->port,
-			in->path
+		buf = strcatf(&buf, "%s://%s:%d/%s ",
+			d->info.ssl_connection ? "wss" : "ws",
+			d->info.address,
+			d->info.port,
+			d->info.path
 		);
 	}
+	
+	buf = strcatf(&buf, "]");
 	
 	return buf;
 }
