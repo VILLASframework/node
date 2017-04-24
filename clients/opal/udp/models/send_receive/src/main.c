@@ -36,29 +36,6 @@
 #define ASYNC_SHMEM_SIZE	atoi(argv[2])
 #define PRINT_SHMEM_NAME	argv[3]
 
-#ifdef _DEBUG // TODO: workaround
-
-#define CPU_TICKS 3466948000
-struct msg *msg_send = NULL;
-
-void Tick(int sig, siginfo_t *si, void *ptr)
-{
-	Opal_GenAsyncParam_Ctrl *IconCtrlStruct;
-	unsigned long long CpuTime, CpuTimeStart;
-	double ModelTime;
-
-	if (!msg_send)
-		return;
-
-	IconCtrlStruct = (Opal_GenAsyncParam_Ctrl*) si->si_value.sival_ptr;
-
-	OpalGetAsyncStartExecCpuTime(IconCtrlStruct, &CpuTimeStart);
-	OpalGetAsyncModelTime(IconCtrlStruct, &CpuTime, &ModelTime);
-
-	OpalPrint("%s: CpuTime: %llu\tModelTime: %.3f\tSequence: %hu\tValue: %.2f\n",
-		PROGNAME, (CpuTime - CpuTimeStart) / CPU_TICKS, ModelTime, msg_send->sequence, msg_send->data[0].f);
-}
-#endif /* _DEBUG */
 /* Global Variables */
 struct socket skt;
 
@@ -75,10 +52,6 @@ static void * SendToIPPort(void *arg)
 	/* Data from VILLASnode */
 	char buf[MSG_LEN(MAX_VALUES)];
 	struct msg *msg = (struct msg *) buf;
-
-#ifdef _DEBUG // TODO: workaround
-	msg_send = msg;
-#endif /* _DEBUG */
 
 	OpalPrint("%s: SendToIPPort thread started\n", PROGNAME);
 
@@ -279,33 +252,6 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-#ifdef _DEBUG
-	/* Setup signals */
-	struct sigaction sa_tick = {
-		.sa_flags = SA_SIGINFO,
-		.sa_sigaction = Tick
-	};
-
-	sigemptyset(&sa_tick.sa_mask);
-	sigaction(SIGUSR1, &sa_tick, NULL);
-
-	/* Setup timer */
-	timer_t t;
-	struct sigevent sev = {
-		.sigev_notify = SIGEV_SIGNAL,
-		.sigev_signo = SIGUSR1,
-		.sigev_value.sival_ptr = &IconCtrlStruct
-	};
-
-	struct itimerspec its = {
-		.it_interval = { 1, 0 },
-		.it_value = { 0, 1 }
-	};
-
-	timer_create(CLOCK_REALTIME, &sev, &t);
-	timer_settime(t, 0, &its, NULL);
-#endif /* _DEBUG */
-
 	/* Start send/receive threads */
 	ret = pthread_create(&tid_send, NULL, SendToIPPort, NULL);
 	if (ret == -1)
@@ -329,10 +275,6 @@ int main(int argc, char *argv[])
 	
 	OpalCloseAsyncMem (ASYNC_SHMEM_SIZE, ASYNC_SHMEM_NAME);
 	OpalSystemCtrl_UnRegister(PRINT_SHMEM_NAME);
-
-#ifdef _DEBUG
-	timer_delete(t);
-#endif /* _DEBUG */
 
 	return 0;
 }
