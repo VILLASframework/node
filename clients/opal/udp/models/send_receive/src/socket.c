@@ -1,15 +1,8 @@
-/** Helper functions for socket
- *
- *  Code example of an asynchronous program.  This program is started
- *  by the asynchronous controller and demonstrates how to send and 
- *  receive data to and from the asynchronous icons and a UDP port.
+/** Helper functions for sockets.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @author Mathieu Dubé-Dallaire
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
- * @copyright 2003, OPAL-RT Technologies inc
- * @file
- */
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
 
 #include <errno.h>
 #include <unistd.h>

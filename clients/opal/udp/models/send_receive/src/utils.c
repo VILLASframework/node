@@ -1,6 +1,5 @@
-/** Configure Scheduler
+/** Configure scheduler.
  *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @author Mathieu Dubé-Dallaire
  * @copyright 2003, OPAL-RT Technologies inc

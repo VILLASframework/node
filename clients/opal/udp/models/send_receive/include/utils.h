@@ -1,4 +1,4 @@
-/** Configure Scheduler
+/** Configure scheduler.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>

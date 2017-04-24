@@ -1,9 +1,9 @@
-/** Compiled-in settings
+/** Compile-time configuration.
  *
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
  * @file
- */
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
  
 #ifndef _CONFIG_H_
 #define _CONFIG_H_

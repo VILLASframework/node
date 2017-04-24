@@ -1,16 +1,9 @@
-/** Main
+/** Main routine of AsyncIP.
  *
- *  Code example of an asynchronous program.  This program is started
- *  by the asynchronous controller and demonstrates how to send and 
- *  receive data to and from the asynchronous icons and a UDP or TCP
- *  port.
- *
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @author Mathieu Dubé-Dallaire
- * @copyright 2014, Institute for Automation of Complex Power Systems, EONERC
- * @copyright 2003, OPAL-RT Technologies inc
  * @file
- */
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ *********************************************************************************/
 
 /* Standard ANSI C headers needed for this program */
 #include <errno.h>
