@@ -72,21 +72,19 @@ int super_node_init(struct super_node *sn)
 
 int super_node_parse_uri(struct super_node *sn, const char *uri)
 {
-	info("Parsing configuration: uri=%s", uri);
-	
 	int ret = CONFIG_FALSE;
 
 	if (uri) { INDENT
 		FILE *f;
 		AFILE *af;
-		config_setting_t *cfg_root;
+		config_setting_t *cfg_root = NULL;
 
 		/* Via stdin */
 		if (!strcmp("-", uri)) {
 			af = NULL;
 			f = stdin;
 
-			info("Reading config from stdin");
+			info("Reading configuration from stdin");
 		}
 		/* Local file? */
 		else if (access(uri, F_OK) != -1) {
@@ -101,21 +99,25 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 
 			af = NULL;
 			f = fopen(uri, "r");
+			
+			info("Reading configuration from local file: %s", uri);
 		}
 		/* Use advio (libcurl) to fetch the config from a remote */
 		else {
 			af = afopen(uri, "r");
 			f = af ? af->file : NULL;
+			
+			info("Reading configuration from URI: %s", uri);
 		}
 
 		/* Check if file could be loaded / opened */
 		if (!f)
-			error("Failed to open configuration from: %s", uri);
-		
-		cfg_root = config_root_setting(&sn->cfg);
+			error("Failed to open configuration");
+
+		config_set_destructor(&sn->cfg, config_dtor);
+		config_set_auto_convert(&sn->cfg, 1);
 
 		/* Parse config */
-		config_set_auto_convert(&sn->cfg, 1);
 		ret = config_read(&sn->cfg, f);
 		if (ret != CONFIG_TRUE) {
 			/* This does not seem to be a valid libconfig configuration.
@@ -141,8 +143,8 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 		 * We add the uri as a "hook" object to the root setting.
 		 * See cerror() on how this info is used.
 		 */
+		cfg_root = config_root_setting(&sn->cfg);
 		config_setting_set_hook(cfg_root, strdup(uri));
-		config_set_destructor(&sn->cfg, config_dtor);
 
 		/* Close configuration file */
 		if (af)
