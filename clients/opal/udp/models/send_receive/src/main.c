@@ -59,6 +59,8 @@ void Tick(int sig, siginfo_t *si, void *ptr)
 		PROGNAME, (CpuTime - CpuTimeStart) / CPU_TICKS, ModelTime, msg_send->sequence, msg_send->data[0].f);
 }
 #endif /* _DEBUG */
+/* Global Variables */
+struct socket skt;
 
 static void * SendToIPPort(void *arg)
 {
@@ -128,7 +130,7 @@ static void * SendToIPPort(void *arg)
 		msg_hton(msg);
 
 		/* Perform the actual write to the ip port */
-		ret = SendPacket((char *) msg, MSG_LEN(msg->length));
+		ret = socket_send(&skt, (char *) msg, len);
 		if (ret < 0)
 			OpalSetAsyncSendIconError(errno, SendID);
 		else
@@ -175,8 +177,8 @@ static void * RecvFromIPPort(void *arg)
 
 	do {
 		/* Receive message */
-		n  = RecvPacket((char *) msg, sizeof(buf), 1.0);
-		if (n < 1) {
+		ret  = socket_recv(&skt, (char *) msg, sizeof(buf), 1.0);
+		if (ret < 1) {
 			ModelState = OpalGetAsyncModelState();
 			if ((ModelState != STATE_RESET) && (ModelState != STATE_STOP)) {
 				if (n ==  0) /* timeout, so we continue silently */
@@ -271,7 +273,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Initialize socket */
-	ret = InitSocket(IconCtrlStruct);
+	ret = socket_init(&skt, IconCtrlStruct);
 	if (ret != EOK) {
 		OpalPrint("%s: ERROR: Initialization failed.\n", PROGNAME);
 		exit(EXIT_FAILURE);
@@ -323,7 +325,8 @@ int main(int argc, char *argv[])
 		OpalPrint("%s: ERROR: pthread_join (RecvFromIPPort), errno %d\n", PROGNAME, ret);
 
 	/* Close the ip port and shared memories */
-	CloseSocket(IconCtrlStruct);
+	socket_close(&skt, IconCtrlStruct);
+	
 	OpalCloseAsyncMem (ASYNC_SHMEM_SIZE, ASYNC_SHMEM_NAME);
 	OpalSystemCtrl_UnRegister(PRINT_SHMEM_NAME);
 
