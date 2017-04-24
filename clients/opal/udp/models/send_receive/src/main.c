@@ -25,10 +25,13 @@
 
 /* This is the message format */
 #include "config.h"
-#include "msg.h"
-#include "msg_format.h"
 #include "socket.h"
 #include "utils.h"
+
+#if PROTOCOL == VILLAS
+  #include "msg.h"
+  #include "msg_format.h"
+#endif
 
 /* This is just for initializing the shared memory access to communicate
  * with the RT-LAB model. It's easier to remember the arguments like this */
@@ -48,9 +51,13 @@ static void * SendToIPPort(void *arg)
 	double mdldata[MAX_VALUES];
 	int mdldata_size;
 
-	/* Data from VILLASnode */
+#if PROTOCOL == VILLAS
 	char buf[MSG_LEN(MAX_VALUES)];
 	struct msg *msg = (struct msg *) buf;
+#elif PROTOCOL == GTNET_SKT
+	char buf[MAX_VALUES * sizeof(float)];
+	float *msg = (float *) buf;
+#endif
 
 	OpalPrint("%s: SendToIPPort thread started\n", PROGNAME);
 
@@ -78,7 +85,8 @@ static void * SendToIPPort(void *arg)
 
 		/* Get the size of the data being sent by the unblocking SendID */
 		OpalGetAsyncSendIconDataLength(&mdldata_size, SendID);
-		if (mdldata_size / sizeof(double) > MAX_VALUES) {
+		cnt = mdldata_size / sizeof(double);
+		if (cnt > MAX_VALUES) {
 			OpalPrint("%s: Number of signals for SendID=%d exceeds allowed maximum (%d)\n",
 				PROGNAME, SendID, MAX_VALUES);
 			return NULL;
@@ -86,7 +94,8 @@ static void * SendToIPPort(void *arg)
 
 		/* Read data from the model */
 		OpalGetAsyncSendIconData(mdldata, mdldata_size, SendID);
-		
+
+#if PROTOCOL == VILLAS
 		/* Get current time */
 		struct timespec now;
 		clock_gettime(CLOCK_REALTIME, &now);
@@ -100,6 +109,16 @@ static void * SendToIPPort(void *arg)
 			msg->data[i].f = (float) mdldata[i];
 
 		msg_hton(msg);
+		
+		len = MSG_LEN(msg->length);
+#elif PROTOCOL == GTNET_SKT
+		for (int i = 0; i < cnt; i++)
+			msg[i] = (float) mdldata[i];
+		
+		len = mdldata_size / sizeof(double) * sizeof(float);
+#else
+  #error Unknown protocol
+#endif
 
 		/* Perform the actual write to the ip port */
 		ret = socket_send(&skt, (char *) msg, len);
@@ -135,9 +154,15 @@ static void * RecvFromIPPort(void *arg)
 	double mdldata[MAX_VALUES];
 	int mdldata_size;
 
-	/* Data from VILLASnode */
+#if PROTOCOL == VILLAS
 	char buf[MSG_LEN(MAX_VALUES)];
 	struct msg *msg = (struct msg *) buf;
+#elif PROTOCOL == GTNET_SKT
+	char buf[MAX_VALUES * sizeof(float)];
+	float *msg = (float *) buf;
+#else
+  #error Unknown protocol
+#endif
 
 	OpalPrint("%s: RecvFromIPPort thread started\n", PROGNAME);
 
@@ -162,7 +187,17 @@ static void * RecvFromIPPort(void *arg)
 			}
 			break;
 		}
+		
+		/* Get the number of signals to send back to the model */
+		OpalGetAsyncRecvIconDataLength(&mdldata_size, RecvID);
+		cnt = mdldata_size / sizeof(double);
+		if (cnt > MAX_VALUES) {
+			OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds allowed maximum (%d)\n",
+				PROGNAME, RecvID, cnt, MAX_VALUES);
+			return NULL;
+		}
 
+#if PROTOCOL == VILLAS
 		msg_ntoh(msg);
 		
 		ret = msg_verify(msg);
@@ -170,25 +205,25 @@ static void * RecvFromIPPort(void *arg)
 			OpalPrint("%s: Skipping invalid packet\n", PROGNAME);
 			continue;
 		}
+			
+		if (cnt > msg->length) {
+			OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds what was received (%d)\n",
+				PROGNAME, RecvID, cnt, msg->length);
+		}
+		
+		for (int i = 0; i < msg->length; i++)
+			mdldata[i] = (double) msg->data[i].f;
 
 		/* Update OPAL model */
 		OpalSetAsyncRecvIconStatus(msg->sequence, RecvID);	/* Set the Status to the message ID */
+#elif PROTOCOL == GTNET_SKT
+		for (int i = 0; i < cnt; i++)
+			mdldata[i] = (double) msg[i];
+#else
+  #error Unknown protocol
+#endif
+
 		OpalSetAsyncRecvIconError(0, RecvID);			/* Set the Error to 0 */
-
-		/* Get the number of signals to send back to the model */
-		OpalGetAsyncRecvIconDataLength(&mdldata_size, RecvID);
-		if (mdldata_size / sizeof(double) > MAX_VALUES) {
-			OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds allowed maximum (%d)\n",
-				PROGNAME, RecvID, mdldata_size / sizeof(double), MAX_VALUES);
-			return NULL;
-		}
-
-		if (mdldata_size / sizeof(double) > msg->length)
-			OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds what was received (%d)\n",
-				PROGNAME, RecvID, mdldata_size / sizeof(double), msg->length);
-
-		for (i = 0; i < msg->length; i++)
-			mdldata[i] = (double) msg->data[i].f;
 
 		OpalSetAsyncRecvIconData(mdldata, mdldata_size, RecvID);
 

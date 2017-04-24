@@ -9,8 +9,17 @@
 #define _CONFIG_H_
 
 #define PROGNAME	"VILLASnode-OPAL-UDP"
-#define VERSION		"0.5"
+#define VERSION		"0.6"
 
 #define MAX_VALUES	64
+
+/* List of protocols */
+#define VILLAS		1
+#define GTNET_SKT	2
+
+/* Default protocol */
+#ifndef PROTOCOL
+  #define PROTOCOL VILLAS
+#endif
 
 #endif /* _CONFIG_H_ */
