@@ -1,4 +1,4 @@
-# VILLASnode
+# <img src="doc/pictures/villas_node.png" width=40 /> VILLASnode
 
 [![build status](https://git.rwth-aachen.de/VILLASframework/VILLASnode/badges/develop/build.svg)](https://git.rwth-aachen.de/acs/VILLASnode/commits/develop)
 [![coverage report](https://git.rwth-aachen.de/VILLASframework/VILLASnode/badges/develop/coverage.svg)](https://git.rwth-aachen.de/acs/VILLASnode/commits/develop)
