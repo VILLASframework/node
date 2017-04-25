@@ -7,7 +7,7 @@ Model {
     NumRootInports	    0
     NumRootOutports	    0
     ParameterArgumentNames  ""
-    ComputedModelVersion    "1.446"
+    ComputedModelVersion    "1.451"
     NumModelReferences	    0
     NumTestPointedSignals   0
   }
@@ -100,11 +100,11 @@ Model {
   Creator		  "jwu"
   UpdateHistory		  "UpdateHistoryNever"
   ModifiedByFormat	  "%<Auto>"
-  LastModifiedBy	  "ACS"
+  LastModifiedBy	  "opal-user"
   ModifiedDateFormat	  "%<Auto>"
-  LastModifiedDate	  "Thu May 19 14:14:01 2016"
-  RTWModifiedTimeStamp	  385568034
-  ModelVersionFormat	  "1.%<AutoIncrement:446>"
+  LastModifiedDate	  "Tue Apr 25 15:37:56 2017"
+  RTWModifiedTimeStamp	  415035473
+  ModelVersionFormat	  "1.%<AutoIncrement:451>"
   ConfigurationManager	  "none"
   SampleTimeColors	  off
   SampleTimeAnnotations	  off
@@ -1401,18 +1401,18 @@ Model {
 	  Name			  "OpIPSocketCtrl1"
 	  SID			  "18"
 	  Ports			  []
-	  Position		  [105, 112, 234, 173]
+	  Position		  [110, 92, 239, 153]
 	  ZOrder		  -3
 	  LibraryVersion	  "1.10"
 	  SourceBlock		  "rtio_generic_ip/OpIPSocketCtrl"
 	  SourceType		  "OpAsyncIPCtrl"
 	  ctl_id		  "1"
 	  proto			  "UDP/IP"
-	  ip_addr_remote	  "10.10.10.1"
+	  ip_addr_remote	  "134.130.169.31"
 	  ip_port_remote	  "12000"
 	  ip_port_local		  "12001"
 	  ip_addr_mcast		  "0.0.0.0"
-	  exe_name		  "s2ss"
+	  exe_name		  "AsyncIP"
 	}
 	Block {
 	  BlockType		  DiscretePulseGenerator

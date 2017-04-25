@@ -1,19 +1,19 @@
 <?xml version="1.0" ?>
 <Project>
     <General>
-        <att_name>s2ss_tests</att_name>
+        <att_name>villas_udp</att_name>
         <att_description>This is a project!</att_description>
-        <att_ip_address>134.130.169.90:25252</att_ip_address>
-        <att_hashcode>C2357876-6DB6-422F-ABD4-AB47963523A2</att_hashcode>
+        <att_ip_address>134.130.169.16:25252</att_ip_address>
+        <att_hashcode>7B042784-8CF2-444A-92E3-8457E429E28A</att_hashcode>
         <att_autosave>ON</att_autosave>
-        <att_filename>D:\svo\s2ss\clients\opal\villas_udp\villas_udp.llp</att_filename>
+        <att_filename>C:\Users\opal-user\OPAL-RT\msv-ufa\villas_udp\villas_udp.llp</att_filename>
     </General>
     <Models>
         <Model>
             <Path>
                 <Relative>models/send_receive/send_receive.mdl</Relative>
-                <Absolute>D:/svo/s2ss/clients/opal/villas_udp/models/send_receive/send_receive.mdl</Absolute>
-                <UNC>//E265/D/svo/s2ss/clients/opal/villas_udp/models/send_receive/send_receive.mdl</UNC>
+                <Absolute>C:/Users/opal-user/OPAL-RT/msv-ufa/villas_udp/models/send_receive/send_receive.mdl</Absolute>
+                <UNC>C:/Users/opal-user/OPAL-RT/msv-ufa/villas_udp/models/send_receive/send_receive.mdl</UNC>
             </Path>
         </Model>
     </Models>
