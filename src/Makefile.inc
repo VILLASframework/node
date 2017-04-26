@@ -38,7 +38,7 @@ $(BUILDDIR)/src/%.o: src/%.c $(BUILDDIR)/defines | $$(dir $$@)
 	$(CC) $(SRC_CFLAGS) -c $< -o $@
 
 # Build villas-shmem only with libvillas-ext (to ensure that libext contains everything needed)
-$(BUILDDIR)/villas-shmem: $(BUILDDIR)/src/shmem.o $(LIBS) libvillas-ext
+$(BUILDDIR)/villas-shmem: $(BUILDDIR)/src/shmem.o libvillas-ext
 	$(CC) $(SRC_LDFLAGS) $(BUILDDIR)/src/shmem.o $(filter-out -lvillas,$(SRC_LDLIBS)) -lvillas-ext -o $@
 
 # Link target executables

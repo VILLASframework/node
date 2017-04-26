@@ -10,9 +10,9 @@
 #include <time.h>
 #include <errno.h>
 
+#include "config.h"
 #include "log.h"
 #include "utils.h"
-#include "config.h"
 #include "timing.h"
 
 #ifdef ENABLE_OPAL_ASYNC
@@ -23,8 +23,8 @@
 #endif
 
 /** The global log instance. */
-static struct log *log;
-static struct log default_log = {
+struct log *global_log;
+struct log default_log = {
 	.level = V,
 	.facilities = LOG_ALL,
 	.file = NULL,
@@ -66,7 +66,7 @@ static __thread int indent = 0;
 int log_init(struct log *l, int level, long facilitites)
 {
 	/* Register this log instance globally */
-	log = l;
+	global_log = l;
 
 	l->level = level;
 	l->facilities = facilitites;
@@ -75,24 +75,6 @@ int log_init(struct log *l, int level, long facilitites)
 	
 	l->state = STATE_INITIALIZED;
 	
-	return 0;
-}
-
-int log_parse(struct log *l, config_setting_t *cfg)
-{
-	const char *facilities;
-	
-	if (!config_setting_is_group(cfg))
-		cerror(cfg, "Setting 'log' must be a group.");
-
-	config_setting_lookup_int(cfg, "level", &l->level);
-	config_setting_lookup_string(cfg, "file", &l->path);
-
-	if (config_setting_lookup_string(cfg, "facilities", &facilities))
-		log_set_facility_expression(l, facilities);
-
-	l->state = STATE_PARSED;
-
 	return 0;
 }
 
@@ -129,7 +111,7 @@ int log_destroy(struct log *l)
 {
 	default_log.epoch = l->epoch;
 	
-	log = NULL;
+	global_log = NULL;
 
 	l->state = STATE_DESTROYED;
 
@@ -243,14 +225,14 @@ void line()
 	char buf[LOG_WIDTH];
 	memset(buf, 0x71, sizeof(buf));
 
-	log_print(log, "", "\b" ACS("%.*s"), LOG_WIDTH, buf);
+	log_print(global_log, "", "\b" ACS("%.*s"), LOG_WIDTH, buf);
 }
 
 void debug(long class, const char *fmt, ...)
 {
 	va_list ap;
 	
-	struct log *l = log ? log : &default_log;
+	struct log *l = global_log ? global_log : &default_log;
 	
 	int lvl = class &  0xFF;
 	int fac = class & ~0xFF; 
@@ -266,7 +248,7 @@ void info(const char *fmt, ...)
 {
 	va_list ap;
 	
-	struct log *l = log ? log : &default_log;
+	struct log *l = global_log ? global_log : &default_log;
 	
 	va_start(ap, fmt);
 	log_vprint(l, LOG_LVL_INFO, fmt, ap);
@@ -277,7 +259,7 @@ void warn(const char *fmt, ...)
 {
 	va_list ap;
 	
-	struct log *l = log ? log : &default_log;
+	struct log *l = global_log ? global_log : &default_log;
 	
 	va_start(ap, fmt);
 	log_vprint(l, LOG_LVL_WARN, fmt, ap);
@@ -288,7 +270,7 @@ void stats(const char *fmt, ...)
 {
 	va_list ap;
 	
-	struct log *l = log ? log : &default_log;
+	struct log *l = global_log ? global_log : &default_log;
 
 	va_start(ap, fmt);
 	log_vprint(l, LOG_LVL_STATS, fmt, ap);
@@ -299,7 +281,7 @@ void error(const char *fmt, ...)
 {
 	va_list ap;
 	
-	struct log *l = log ? log : &default_log;
+	struct log *l = global_log ? global_log : &default_log;
 	
 	va_start(ap, fmt);
 	log_vprint(l, LOG_LVL_ERROR, fmt, ap);
@@ -313,7 +295,7 @@ void serror(const char *fmt, ...)
 	va_list ap;
 	char *buf = NULL;
 	
-	struct log *l = log ? log : &default_log;
+	struct log *l = global_log ? global_log : &default_log;
 
 	va_start(ap, fmt);
 	vstrcatf(&buf, fmt, ap);
@@ -321,30 +303,6 @@ void serror(const char *fmt, ...)
 
 	log_print(l, LOG_LVL_ERROR, "%s: %m (%u)", buf, errno);
 	
-	free(buf);
-	die();
-}
-
-void cerror(config_setting_t *cfg, const char *fmt, ...)
-{
-	va_list ap;
-	char *buf = NULL;
-	const char *file;
-	int line;
-	
-	struct log *l = log ? log : &default_log;
-
-	va_start(ap, fmt);
-	vstrcatf(&buf, fmt, ap);
-	va_end(ap);
-	
-	line = config_setting_source_line(cfg);
-	file = config_setting_source_file(cfg);
-	if (!file)
-		file = config_setting_get_hook(config_root_setting(cfg->config));
-
-	log_print(l, LOG_LVL_ERROR, "%s in %s:%u", buf, file, line);
-
 	free(buf);
 	die();
 }

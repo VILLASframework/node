@@ -6,6 +6,7 @@
 
 #include <libconfig.h>
 
+#include "log_config.h"
 #include "log.h"
 #include "plugin.h"
 
