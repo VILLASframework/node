@@ -8,6 +8,7 @@
 
 #include "config.h"
 #include "log.h"
+#include "log_config.h"
 #include "list.h"
 #include "utils.h"
 

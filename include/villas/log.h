@@ -7,11 +7,15 @@
  
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdarg.h>
 #include <time.h>
-#include <libconfig.h>
 
 #include "common.h"
+#include "log_config.h"
 
 #ifdef __GNUC__
   #define INDENT	int __attribute__ ((__cleanup__(log_outdent), unused)) _old_indent = log_indent(1);
@@ -81,6 +85,10 @@ struct log {
 	FILE *file;
 };
 
+/** The global log instance. */
+struct log *global_log;
+struct log default_log;
+
 /** Initialize log object */
 int log_init(struct log *l, int level, long faciltities);
 
@@ -117,9 +125,6 @@ void log_outdent(int *);
  * @return The new facilties mask (see enum log_faciltities)
  */
 int log_set_facility_expression(struct log *l, const char *expression);
-
-/** Parse logging configuration. */
-int log_parse(struct log *l, config_setting_t *cfg);
 
 /** Logs variadic messages to stdout.
  *
@@ -164,6 +169,6 @@ void error(const char *fmt, ...)
 void serror(const char *fmt, ...)
 	__attribute__ ((format(printf, 1, 2)));
 
-/** Print configuration error and exit. */
-void cerror(config_setting_t *cfg, const char *fmt, ...)
-	__attribute__ ((format(printf, 2, 3)));
+#ifdef __cplusplus
+}
+#endif

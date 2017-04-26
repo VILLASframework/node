@@ -8,6 +8,7 @@
 
 #include "list.h"
 #include "log.h"
+#include "log_config.h"
 #include "plugin.h"
 
 #include "fpga/ip.h"

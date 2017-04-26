@@ -33,11 +33,12 @@
 
 #pragma once
 
+
 #include <stddef.h>
 #include <stdint.h>
-#include <stdatomic.h>
 #include <unistd.h>
 
+#include "atomic.h"
 #include "common.h"
 
 /* Forward declarations */

@@ -2,9 +2,9 @@ LIBEXT_NAME = libvillas-ext
 LIBEXT_ABI_VERSION = 1
 LIBEXT = $(BUILDDIR)/$(LIBEXT_NAME).so.$(LIBEXT_ABI_VERSION)
 
-LIBEXT_SRCS += $(addprefix lib/, sample.c node.c queue.c queue_signalled.c \
-                 memory.c shmem.c utils.c kernel/kernel.c log.c list.c \
-                 plugin.c timing.c \
+LIBEXT_SRCS += $(addprefix lib/, sample.c queue.c queue_signalled.c \
+                 memory.c log.c shmem.c utils.c kernel/kernel.c list.c \
+                 timing.c \
                )
 
 LIBEXT_LDFLAGS = -shared
