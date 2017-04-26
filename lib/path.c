@@ -318,7 +318,7 @@ int path_start(struct path *p)
 	
 	assert(p->state == STATE_CHECKED);
 
-	info("Starting path: %s (#hooks=%zu)", path_name(p), list_length(&p->hooks));
+	info("Starting path %s: #hooks=%zu, #destinations=%zu", path_name(p), list_length(&p->hooks), list_length(&p->destinations));
 
 	for (size_t i = 0; i < list_length(&p->hooks); i++) {
 		struct hook *h = list_at(&p->hooks, i);
