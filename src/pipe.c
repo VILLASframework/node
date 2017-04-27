@@ -128,7 +128,7 @@ static void * send_loop(void *ctx)
 retry:			reason = sample_io_villas_fscan(stdin, s, NULL);
 			if (reason < 0) {
 				if (feof(stdin))
-					break;
+					goto exit;
 				else {
 					warn("Skipped invalid message message: reason=%d", reason);
 					goto retry;
@@ -141,7 +141,7 @@ retry:			reason = sample_io_villas_fscan(stdin, s, NULL);
 	}
 
 	/* We reached EOF on stdin here. Lets kill the process */
-	info("Reached end-of-file. Terminating...");
+exit:	info("Reached end-of-file. Terminating...");
 	pthread_kill(ptid, SIGINT);
 
 	return NULL;
