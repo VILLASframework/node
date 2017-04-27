@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<Project>
+    <General>
+        <att_name>test1</att_name>
+        <att_description>This is a project!</att_description>
+        <att_ip_address>134.130.169.16:25250</att_ip_address>
+        <att_hashcode>F05E0725-AE82-4740-86EB-DB5EE3183AC8</att_hashcode>
+        <att_autosave>ON</att_autosave>
+        <att_filename>C:\Users\opal-user\OPAL-RT\msv-ufa\test1\villas_udp.llp</att_filename>
+    </General>
+    <Models>
+        <Model>
+            <Path>
+                <Relative>models/send_receive/send_receive.mdl</Relative>
+                <Absolute>C:/Users/opal-user/OPAL-RT/msv-ufa/test1/models/send_receive/send_receive.mdl</Absolute>
+                <UNC>C:/Users/opal-user/OPAL-RT/msv-ufa/test1/models/send_receive/send_receive.mdl</UNC>
+            </Path>
+        </Model>
+    </Models>
+</Project>

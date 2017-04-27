@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<item name="report">
+    <item name="general">
+        <property name="User">
+          <value>
+            UserName
+          </value>
+        </property>
+        <property name="Command station">
+          <value>
+            ComputerName
+          </value>
+        </property>
+        <property name="Date">
+          <value>
+            CurrentDate
+          </value>
+        </property>
+     </item>     
+</item>
