@@ -1,5 +1,5 @@
 variables:
-  GIT_STRATEGY: clone
+  GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
   PREFIX: /usr/
   RSYNC_OPTS: --recursive --ignore-missing-args --chown $DEPLOY_USER:$DEPLOY_USER
@@ -17,12 +17,10 @@ stages:
 docker-dev:
   stage: prepare
   before_script:
-    - docker info
+#    - docker login -u $DOCKER_USER -p $DOCKER_PASS -e $DOCKER_EMAIL $DOCKER_REGISTRY
   script:
-    - docker pull fedora:latest
-    - docker build -f Dockerfile.dev -t villas-node-dev:$CI_COMMIT_REF_NAME .
-    - docker tag -f villas-node-dev $DOCKER_REGISTRY/villas-node-dev:$CI_COMMIT_REF_NAME
-    - docker push $DOCKER_REGISTRY/villas-node-dev:$CI_COMMIT_REF_NAME
+    - make docker-dev
+    - make deploy-docker-dev
   tags:
     - shell
     - linux
@@ -39,7 +37,7 @@ build:
     name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
     paths:
       - build/release/
-  image: $DOCKER_REGISTRY/villas-node-dev:$CI_COMMIT_REF_NAME
+  image: $DOCKER_REGISTRY/villas/node-dev:$CI_COMMIT_REF_NAME
   tags:
     - docker
 
@@ -51,7 +49,7 @@ docs:
       - build/release/doc/
   script:
     - make doc
-  image: $DOCKER_REGISTRY/villas-node-dev:$CI_COMMIT_REF_NAME
+  image: $DOCKER_REGISTRY/villas/node-dev:$CI_COMMIT_REF_NAME
   tags:
     - docker
 
@@ -71,7 +69,7 @@ packages:
     paths:
       - build/release/packaging/*.tar.gz
       - build/release/packaging/rpm/RPMS/
-  image: $DOCKER_REGISTRY/villas-node-dev:$CI_COMMIT_REF_NAME
+  image: $DOCKER_REGISTRY/villas/node-dev:$CI_COMMIT_REF_NAME
   tags:
     - docker
 
@@ -89,7 +87,7 @@ coverage:
       - build/release-coverage/coverage/
       - build/release-coverage/coverage.txt
       - build/release-coverage/coverage.xml
-  image: $DOCKER_REGISTRY/villas-node-dev:$CI_COMMIT_REF_NAME
+  image: $DOCKER_REGISTRY/villas/node-dev:$CI_COMMIT_REF_NAME
   coverage: '/lines: (\d+\.\d+\%)/'
   tags:
     - docker
@@ -100,7 +98,7 @@ unit:
     - build
   script:
     - make run-unit-tests
-  image: $DOCKER_REGISTRY/villas-node-dev:$CI_COMMIT_REF_NAME
+  image: $DOCKER_REGISTRY/villas/node-dev:$CI_COMMIT_REF_NAME
   tags:
     - docker
 
@@ -117,7 +115,7 @@ integration:
     when: always
     paths:
       - build/release/tests/integration/
-  image: $DOCKER_REGISTRY/villas-node-dev:$CI_COMMIT_REF_NAME
+  image: $DOCKER_REGISTRY/villas/node-dev:$CI_COMMIT_REF_NAME
   tags:
     - docker
 
@@ -127,10 +125,11 @@ integration:
 
 docker:
   stage: deploy
+  before_script:
+#    - docker login -u $DOCKER_USER -p $DOCKER_PASS -e $DOCKER_EMAIL $DOCKER_REGISTRY
   script:
     - make docker
-    - docker tag -f villas-node $DOCKER_REGISTRY/villas-node:$CI_COMMIT_REF_NAME
-    - docker push $DOCKER_REGISTRY/villas-node:$CI_COMMIT_REF_NAME
+    - make deploy-docker
   dependencies:
     - packages
   only:

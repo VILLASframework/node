@@ -7,7 +7,7 @@ Summary:  This is VILLASnode, a gateway for processing and forwardning simulatio
 
 License:  LGPLv2
 URL:      https://git.rwth-aachen.de/VILLASframework/VILLASnode
-Source0:  villas-node-%{version}.tar.gz
+Source0:  villas-node-§VERSION§-§RELEASE§.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: gcc pkgconfig make
@@ -60,6 +60,9 @@ rm -rf %{?buildroot}
 
 /usr/lib/libvillas.so
 /usr/lib/libvillas.so.*
+
+/usr/lib/libvillas-ext.so
+/usr/lib/libvillas-ext.so.*
 
 /usr/share/villas/node/web/
 /usr/share/villas/node/plugins/

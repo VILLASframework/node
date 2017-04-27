@@ -5,7 +5,7 @@ SPEC_VILLAS = $(BUILDDIR)/packaging/rpm/villas-node.spec
 rpm: rpm-villas-node rpm-libwebsockets rpm-libxil
 
 rpm-villas-node: $(TAR_VILLAS) $(SPEC_VILLAS) | $(RPMDIR)/SOURCES/
-	cp $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM).tar.gz $(RPMDIR)/SOURCES
+	cp $(TAR_VILLAS) $(RPMDIR)/SOURCES
 	rpmbuild -ba --define="_topdir $$(pwd)/$(RPMDIR)" $(BUILDDIR)/packaging/rpm/villas-node.spec
 
 rpm-libxil: $(BUILDDIR)/thirdparty/libxil/
@@ -16,7 +16,7 @@ rpm-libxil: $(BUILDDIR)/thirdparty/libxil/
 	cp $(BUILDDIR)/thirdparty/libxil/libxil-*.tar.gz $(RPMDIR)/SOURCES
 	rpmbuild -ba --define="_topdir $$(pwd)/$(RPMDIR)" $(SRCDIR)/thirdparty/libxil/libxil.spec
 
-rpm-libwebsockets: | $(RPMDIR)/RPMS $(BUILDDIR)/thirdparty/libwebsockets/
+rpm-libwebsockets: | $(RPMDIR)/RPMS/x86_64/ $(BUILDDIR)/thirdparty/libwebsockets/
 	cmake -DCMAKE_INSTALL_PREFIX:PATH=$(PREFIX) \
 	      -H$(SRCDIR)/thirdparty/libwebsockets \
 	      -B$(BUILDDIR)/thirdparty/libwebsockets $(CMAKE_OPTS)

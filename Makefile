@@ -126,8 +126,8 @@ $(BUILDDIR)/defines: | $$(dir $$@)
 	echo -e "$(addprefix \n-DWITH_, $(shell echo ${PKGS} | tr a-z- A-Z_ | tr -dc ' A-Z0-9_' ))" >> $@
 	echo -e "$(addprefix \n-DWITH_, $(shell echo ${LIB_PKGS} | tr a-z- A-Z_ | tr -dc ' A-Z0-9_' ))" >> $@
 
-install: $(addprefix install-,$(filter-out thirdparty doc,$(MODULES)))
-clean: $(addprefix clean-,$(filter-out thirdparty doc,$(MODULES)))
+install: $(addprefix install-,$(filter-out thirdparty doc clients,$(MODULES)))
+clean: $(addprefix clean-,$(filter-out thirdparty doc clients,$(MODULES)))
 
 .PHONY: all everything clean install
 
