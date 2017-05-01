@@ -235,7 +235,7 @@ function wsConnect(node)
 		console.log('WebSocket connection closed', error);
 		
 		$('#status')
-			.text('Disconnected (' + error.reason + ')')
+			.text('Disconnected' + (error.reason != '' ? ' (' + error.reason + ')' : ''))
 			.css('color', 'red');
 
 		/* Try connect if close reason was CLOSE_NORMAL */
