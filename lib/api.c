@@ -124,10 +124,19 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			const char headers[] =	"HTTP/1.1 200 OK\r\n"
 						"Content-type: application/json\r\n"
 						"User-agent: " USER_AGENT "\r\n"
+						"Access-Control-Allow-Origin: *\r\n"
+						"Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+						"Access-Control-Allow-Headers: Content-Type\r\n"
+						"Access-Control-Max-Age: 86400\r\n"
 						"\r\n";
 
 			web_buffer_append(&s->response.headers, headers, sizeof(headers)-1);
 			lws_callback_on_writable(wsi);
+
+			/* Only HTTP POST requests wait for body */
+			if (lws_hdr_total_length(wsi, WSI_TOKEN_POST_URI) == 0)
+				s->completed = true;
+
 			break;
 			
 		case LWS_CALLBACK_CLOSED_HTTP:
