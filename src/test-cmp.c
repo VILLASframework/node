@@ -37,13 +37,21 @@
 
 void usage()
 {
-	printf("Usage: villas-test-cmp FILE1 FILE2 [OPTIONS]\n");
+	printf("Usage: villas-test-cmp [OPTIONS] FILE1 FILE2\n");
 	printf("  FILE1    first file to compare\n");
 	printf("  FILE2    second file to compare against\n");
-	printf("  OPTIONS  the following optional options:\n");
-	printf("   -h      print this usage information\n");
-	printf("   -d LVL  adjust the debug level\n");
-	printf("   -e EPS  set epsilon for floating point comparisons to EPS\n");
+	printf("  OPTIONS is one or more of the following options:\n");
+	printf("    -h      print this usage information\n");
+	printf("    -d LVL  adjust the debug level\n");
+	printf("    -e EPS  set epsilon for floating point comparisons to EPS\n");
+	printf("\n");
+	printf("Return codes:\n");
+	printf("  0   files are equal\n");
+	printf("  1   file length not equal\n");
+	printf("  2   sequence no not equal\n");
+	printf("  3   timestamp not equal\n");
+	printf("  4   number of values is not equal\n");
+	printf("  5   data is not equal\n");
 	printf("\n");
 
 	print_copyright();	
@@ -87,7 +95,7 @@ check:		if (optarg == endptr)
 			error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
 	
-	if (argc < optind + 2) {
+	if (argc != optind + 2) {
 		usage();
 		exit(EXIT_FAILURE);
 	}

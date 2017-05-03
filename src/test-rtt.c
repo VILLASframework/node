@@ -67,16 +67,16 @@ void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 void usage()
 {
-	printf("Usage: villas-test-rtt CONFIG NODE [ARGS]\n");
+	printf("Usage: villas-test-rtt [OPTIONS] CONFIG NODE\n");
 	printf("  CONFIG  path to a configuration file\n");
 	printf("  NODE    name of the node which shoud be used\n");
-	printf("  ARGS    the following optional options:\n");
-	printf("   -c CNT  send CNT messages\n");
-	printf("   -f FD   use file descriptor FD for result output instead of stdout\n");
-	printf("   -l LOW  smallest value for histogram\n");
-	printf("   -H HIGH largest value for histogram\n");
-	printf("   -r RES  bucket resolution for histogram\n");
-	printf("   -h      show this usage information\n");
+	printf("  OPTIONS is one or more of the following options:\n");
+	printf("    -c CNT  send CNT messages\n");
+	printf("    -f FD   use file descriptor FD for result output instead of stdout\n");
+	printf("    -l LOW  smallest value for histogram\n");
+	printf("    -H HIGH largest value for histogram\n");
+	printf("    -r RES  bucket resolution for histogram\n");
+	printf("    -h      show this usage information\n");
 	printf("\n");
 
 	print_copyright();
@@ -84,30 +84,9 @@ void usage()
 
 int main(int argc, char *argv[])
 {
-	if (argc < 4) {
-		usage();
-		exit(EXIT_FAILURE);
-	}
-
-	log_init(&sn.log, V, LOG_ALL);
-	
-	super_node_init(&sn);
-	super_node_parse_uri(&sn, argv[1]);
-	
-	signals_init(quit);
-	rt_init(sn.priority, sn.affinity);
-	memory_init(sn.hugepages);
-
-	node = list_lookup(&sn.nodes, argv[3]);
-	if (!node)
-		error("There's no node with the name '%s'", argv[3]);
-
-	node_type_start(node->_vt, &sn);
-	node_start(node);
-
 	/* Parse Arguments */
 	char c, *endptr;
-	while ((c = getopt (argc-3, argv+3, "l:hH:r:f:c:")) != -1) {
+	while ((c = getopt (argc, argv, "l:hH:r:f:c:")) != -1) {
 		switch (c) {
 			case 'c':
 				count = strtoul(optarg, &endptr, 10);
@@ -135,6 +114,30 @@ int main(int argc, char *argv[])
 check:		if (optarg == endptr)
 			error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
+	
+	if (argc != optind + 2) {
+		usage();
+		exit(EXIT_FAILURE);
+	}
+	
+	char *configfile = argv[optind];
+	char *nodestr    = argv[optind + 1];
+	
+	log_init(&sn.log, V, LOG_ALL);
+	
+	super_node_init(&sn);
+	super_node_parse_uri(&sn, configfile);
+	
+	signals_init(quit);
+	rt_init(sn.priority, sn.affinity);
+	memory_init(sn.hugepages);
+
+	node = list_lookup(&sn.nodes, nodestr);
+	if (!node)
+		error("There's no node with the name '%s'", nodestr);
+
+	node_type_start(node->_vt, &sn);
+	node_start(node);
 
 	test_rtt();
 

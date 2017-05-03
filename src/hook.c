@@ -75,14 +75,14 @@ static int hook_parse_cli(struct hook *h, char *params[], int paramlen)
 
 static void usage()
 {
-	printf("Usage: villas-hook [OPTIONS] NAME [PARAM] \n");
-	printf("  PARAM     a string of configuration settings for the hook\n");
-	printf("  OPTIONS are:\n");
+	printf("Usage: villas-hook [OPTIONS] NAME [[PARAM1] [PARAM2] ...]\n");
+	printf("  NAME      the name of the hook function\n");
+	printf("  PARAM*    a string of configuration settings for the hook\n");
+	printf("  OPTIONS is one or more of the following options:\n");
 	printf("    -h      show this help\n");
 	printf("    -d LVL  set debug level to LVL\n");
 	printf("    -v CNT  process CNT samples at once\n");
-	printf("  NAME      the name of the hook function\n\n");
-	
+	printf("\n");
 	printf("The following hook functions are supported:\n");
 	plugin_dump(PLUGIN_TYPE_HOOK);
 	printf("\n");
@@ -102,8 +102,6 @@ int main(int argc, char *argv[])
 	/* Default values */
 	level = V;
 	cnt = 1;
-	
-	char *name;
 	
 	struct log log;
 	struct plugin *p;
@@ -133,6 +131,8 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 	
+	char *hookstr = argv[optind];
+	
 	if (cnt < 1)
 		error("Vectorize option must be greater than 0");
 	
@@ -145,11 +145,11 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to initilize memory pool");
 	
-	name = argv[optind];
+	
 
-	p = plugin_lookup(PLUGIN_TYPE_HOOK, name);
+	p = plugin_lookup(PLUGIN_TYPE_HOOK, hookstr);
 	if (!p)
-		error("Unknown hook function '%s'", name);
+		error("Unknown hook function '%s'", hookstr);
 
 	config_init(&cfg);
 	

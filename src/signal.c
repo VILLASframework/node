@@ -46,16 +46,24 @@ enum SIGNAL_TYPE {
 
 void usage()
 {
-	printf("Usage: villas-signal SIGNAL [OPTIONS]\n");
-	printf("  SIGNAL   is on of: 'mixed', 'random', 'sine', 'triangle', 'square', 'ramp'\n");
-	printf("  -d LVL   set debug level\n");
-	printf("  -v NUM   specifies how many values a message should contain\n");
-	printf("  -r HZ    how many messages per second\n");
-	printf("  -n       non real-time mode. do not throttle output.\n");
-	printf("  -f HZ    the frequency of the signal\n");
-	printf("  -a FLT   the amplitude\n");
-	printf("  -D FLT   the standard deviation for 'random' signals\n");
-	printf("  -l NUM   only send LIMIT messages and stop\n\n");
+	printf("Usage: villas-signal [OPTIONS] SIGNAL\n");
+	printf("  SIGNAL   is on of the following signal types:\n");
+	printf("    mixed\n");
+	printf("    random\n");
+	printf("    sine\n");
+	printf("    triangle\n");
+	printf("    square\n");
+	printf("    ramp\n");
+	printf("\n");
+	printf("  OPTIONS is one or more of the following options:\n");
+	printf("    -d LVL   set debug level\n");
+	printf("    -v NUM   specifies how many values a message should contain\n");
+	printf("    -r HZ    how many messages per second\n");
+	printf("    -n       non real-time mode. do not throttle output.\n");
+	printf("    -f HZ    the frequency of the signal\n");
+	printf("    -a FLT   the amplitude\n");
+	printf("    -D FLT   the standard deviation for 'random' signals\n");
+	printf("    -l NUM   only send LIMIT messages and stop\n\n");
 
 	print_copyright();
 }
@@ -81,28 +89,9 @@ int main(int argc, char *argv[])
 	int limit = -1;	
 	int counter, tfd, steps, level = V;
 
-	if (argc < 2) {
-		usage();
-		exit(EXIT_FAILURE);
-	}
-		
-	/* Parse signal type */
-	if      (!strcmp(argv[1], "random"))
-		type = TYPE_RANDOM;
-	else if (!strcmp(argv[1], "sine"))
-		type = TYPE_SINE;
-	else if (!strcmp(argv[1], "square"))
-		type = TYPE_SQUARE;
-	else if (!strcmp(argv[1], "triangle"))
-		type = TYPE_TRIANGLE;
-	else if (!strcmp(argv[1], "ramp"))
-		type = TYPE_RAMP;
-	else if (!strcmp(argv[1], "mixed"))
-		type = TYPE_MIXED;
-	
 	/* Parse optional command line arguments */
 	char c, *endptr;
-	while ((c = getopt(argc-1, argv+1, "hv:r:f:l:a:D:d:n")) != -1) {
+	while ((c = getopt(argc, argv, "hv:r:f:l:a:D:d:n")) != -1) {
 		switch (c) {
 			case 'd':
 				level = strtoul(optarg, &endptr, 10);
@@ -139,6 +128,29 @@ int main(int argc, char *argv[])
 check:		if (optarg == endptr)
 			error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
+
+	if (argc != optind + 1) {
+		usage();
+		exit(EXIT_FAILURE);
+	}
+	
+	char *typestr = argv[optind];
+		
+	/* Parse signal type */
+	if      (!strcmp(typestr, "random"))
+		type = TYPE_RANDOM;
+	else if (!strcmp(typestr, "sine"))
+		type = TYPE_SINE;
+	else if (!strcmp(typestr, "square"))
+		type = TYPE_SQUARE;
+	else if (!strcmp(typestr, "triangle"))
+		type = TYPE_TRIANGLE;
+	else if (!strcmp(typestr, "ramp"))
+		type = TYPE_RAMP;
+	else if (!strcmp(typestr, "mixed"))
+		type = TYPE_MIXED;
+	else
+		error("Invalid signal type: %s", typestr);
 	
 	log_init(&log, level, LOG_ALL);
 

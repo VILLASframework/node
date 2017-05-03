@@ -26,10 +26,12 @@ int fpga_benchmarks(int argc, char *argv[], struct fpga_card *c);
 
 void usage()
 {
-	printf("Usage: villas-fpga CONFIGFILE CARD [OPTIONS]\n\n");
-	printf("   Options:\n");
-	printf("      -d    Set log level\n\n");
-
+	printf("Usage: villas-fpga [OPTIONS] CONFIG CARD\n\n");
+	printf("  CONFIG  path to a configuration file\n");
+	printf("  CARD    name of the FPGA card\n");
+	printf("  OPTIONS is one or more of the following options:\n");
+	printf("     -d    Set log level\n");
+	printf("\n");
 	print_copyright();
 }
 
@@ -40,28 +42,33 @@ int main(int argc, char *argv[])
 	struct super_node sn;
 	struct fpga_card *card;
 
-	if (argc < 3) {
-		usage(argv[0]);
-		exit(EXIT_FAILURE);
-	}
-
 	/* Parse arguments */
 	char c, *endptr;
-	while ((c = getopt(argc-1, argv+1, "d:")) != -1) {
+	while ((c = getopt(argc, argv, "d:")) != -1) {
 		switch (c) {
 			case 'd':
 				sn.log.level = strtoul(optarg, &endptr, 10);
-				break;	
+				goto check;
 
 			case '?':
 			default:
 				usage();
 				exit(EXIT_SUCCESS);
 		}
+
+check:		if (optarg == endptr)
+			error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
+	
+	if (argc != optind + 2) {
+		usage();
+		exit(EXIT_FAILURE);
+	}
+	
+	char *configfile = argv[optind];
 
 	super_node_init(&sn);
-	super_node_parse_uri(&sn, argv[1]);
+	super_node_parse_uri(&sn, configfile);
 	
 	log_init(&sn.log, sn.log.level, sn.log.facilities);
 	rt_init(sn.priority, sn.affinity);

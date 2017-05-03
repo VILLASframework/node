@@ -86,7 +86,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 static void usage()
 {
-	printf("Usage: villas-pipe CONFIG NODE [OPTIONS]\n");
+	printf("Usage: villas-pipe [OPTIONS] CONFIG NODE\n");
 	printf("  CONFIG  path to a configuration file\n");
 	printf("  NODE    the name of the node to which samples are sent and received from\n");
 	printf("  OPTIONS are:\n");
@@ -220,25 +220,28 @@ int main(int argc, char *argv[])
 		}
 	}
 	
-	if (argc < optind + 2) {
+	if (argc != optind + 2) {
 		usage();
 		exit(EXIT_FAILURE);
 	}
 	
+	char *configfile = argv[optind];
+	char *nodestr    = argv[optind+1];
+
 	log_init(&sn.log, level, LOG_ALL);
 	log_start(&sn.log);
 	
 	super_node_init(&sn);
-	super_node_parse_uri(&sn, argv[optind]);
+	super_node_parse_uri(&sn, configfile);
 	
 	memory_init(sn.hugepages);
 	signals_init(quit);
 	rt_init(sn.priority, sn.affinity);
 
 	/* Initialize node */
-	node = list_lookup(&sn.nodes, argv[optind+1]);
+	node = list_lookup(&sn.nodes, nodestr);
 	if (!node)
-		error("Node '%s' does not exist!", argv[optind+1]);
+		error("Node '%s' does not exist!", nodestr);
 
 	if (node->_vt->start == websocket_start) {
 		web_start(&sn.web);
