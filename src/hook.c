@@ -127,11 +127,6 @@ int main(int argc, char *argv[])
 				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
 	}
-	
-	log_init(&log, level, LOG_ALL);
-	log_start(&log);
-
-	memory_init(DEFAULT_NR_HUGEPAGES);
 
 	if (argc < optind + 1) {
 		usage();
@@ -140,6 +135,11 @@ int main(int argc, char *argv[])
 	
 	if (cnt < 1)
 		error("Vectorize option must be greater than 0");
+	
+	log_init(&log, level, LOG_ALL);
+	log_start(&log);
+
+	memory_init(DEFAULT_NR_HUGEPAGES);
 	
 	ret = pool_init(&q, 10 * cnt, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
 	if (ret)
