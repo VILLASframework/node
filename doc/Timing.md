@@ -1,3 +1,0 @@
-# Timing
-
-@diafile timing.dia
