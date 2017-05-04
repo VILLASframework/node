@@ -159,7 +159,7 @@ check:		if (optarg == endptr)
 
 	/* Print header */
 	printf("# VILLASnode signal params: type=%s, values=%u, rate=%f, limit=%d, amplitude=%f, freq=%f\n",
-		argv[1], values, rate, limit, ampl, freq);
+		typestr, values, rate, limit, ampl, freq);
 	printf("# %-20s\t\t%s\n", "sec.nsec(seq)", "data[]");
 
 	/* Setup timer */
