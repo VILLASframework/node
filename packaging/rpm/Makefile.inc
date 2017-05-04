@@ -30,12 +30,12 @@ rpm-villas-node: $(TAR_VILLAS) $(SPEC_VILLAS) | $(RPMDIR)/SOURCES/
 	cp $(TAR_VILLAS) $(RPMDIR)/SOURCES
 	rpmbuild -ba --define="_topdir $$(pwd)/$(RPMDIR)" $(BUILDDIR)/packaging/rpm/villas-node.spec
 
-rpm-libxil: $(BUILDDIR)/thirdparty/libxil/
+rpm-libxil: $(BUILDDIR)/thirdparty/libxil/ | $(RPMDIR)/SOURCES/
 	cmake -DCMAKE_INSTALL_PREFIX:PATH=$(PREFIX) \
 	      -H$(SRCDIR)/thirdparty/libxil \
 	      -B$(BUILDDIR)/thirdparty/libxil $(CMAKE_OPTS)
 	make -C$(BUILDDIR)/thirdparty/libxil package_source
-	cp $(BUILDDIR)/thirdparty/libxil/libxil-*.tar.gz $(RPMDIR)/SOURCES
+	cp $(BUILDDIR)/thirdparty/libxil/libxil-*.tar.gz $(RPMDIR)/SOURCES/
 	rpmbuild -ba --define="_topdir $$(pwd)/$(RPMDIR)" $(SRCDIR)/thirdparty/libxil/libxil.spec
 
 rpm-libwebsockets: | $(RPMDIR)/RPMS/x86_64/ $(BUILDDIR)/thirdparty/libwebsockets/
