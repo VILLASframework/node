@@ -72,7 +72,7 @@ int if_start(struct interface *i)
 	{ INDENT
 		/* Set affinity for network interfaces (skip _loopback_ dev) */
 		//if_set_affinity(i, i->affinity);
-		
+
 		/* Assign fwmark's to socket nodes which have netem options */
 		int ret, mark = 0;
 		for (size_t j = 0; j < list_length(&i->sockets); j++) {
@@ -85,14 +85,6 @@ int if_start(struct interface *i)
 		/* Abort if no node is using netem */
 		if (mark == 0)
 			return 0;
-
-		/* Check if all kernel modules are loaded */
-		if (kernel_module_load("sch_prio"))
-			error("Missing kernel module: sch_prio");
-		if (kernel_module_load("sch_netem"))
-			error("Missing kernel module: sch_netem");		
-		if (kernel_module_load("cls_fw"))
-			error("Missing kernel module: cls_fw");
 
 		/* Replace root qdisc */
 		ret = tc_prio(i, &i->tc_qdisc, TC_HANDLE(1, 0), TC_H_ROOT, mark);
@@ -107,7 +99,7 @@ int if_start(struct interface *i)
 				ret = tc_mark(i,  &s->tc_classifier, TC_HANDLE(1, s->mark), s->mark);
 				if (ret)
 					error("Failed to setup FW mark classifier: %s", nl_geterror(ret));
-				
+
 				char *buf = tc_print(s->tc_qdisc);
 				debug(LOG_IF | 5, "Starting network emulation on interface '%s' for FW mark %u: %s",
 					rtnl_link_get_name(i->nl_link), s->mark, buf);

@@ -28,6 +28,7 @@
 
 #include <linux/if_ether.h>
 
+#include "kernel/kernel.h"
 #include "kernel/if.h"
 #include "kernel/tc.h"
 #include "kernel/nl.h"
@@ -154,6 +155,10 @@ int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl
 	struct nl_sock *sock = nl_init();
 	struct rtnl_qdisc *q = rtnl_qdisc_alloc();
 
+	ret = kernel_module_load("sch_prio");
+	if (ret)
+		error("Failed to load kernel module: sch_prio (%d)", ret);
+
 	/* This is the default priomap used by the tc-prio qdisc
 	 * We will use the first 'bands' bands internally */
 	uint8_t map[] = QDISC_PRIO_DEFAULT_PRIOMAP;
@@ -179,15 +184,20 @@ int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl
 
 int tc_netem(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent)
 {
+	int ret;
 	struct nl_sock *sock = nl_init();
 	struct rtnl_qdisc *q = *qd;
+
+	ret = kernel_module_load("sch_netem");
+	if (ret)
+		error("Failed to load kernel module: sch_netem (%d)", ret);
 
 	rtnl_tc_set_link(TC_CAST(q), i->nl_link);
 	rtnl_tc_set_parent(TC_CAST(q), parent);
 	rtnl_tc_set_handle(TC_CAST(q), handle);
 	//rtnl_tc_set_kind(TC_CAST(q), "netem");
 
-	int ret = rtnl_qdisc_add(sock, q, NLM_F_CREATE);
+	ret = rtnl_qdisc_add(sock, q, NLM_F_CREATE);
 
 	*qd = q;
 	
@@ -198,8 +208,13 @@ int tc_netem(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hd
 
 int tc_mark(struct interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_t mark)
 {
+	int ret;
 	struct nl_sock *sock = nl_init();
 	struct rtnl_cls *c = rtnl_cls_alloc();
+
+	ret = kernel_module_load("cls_fw");
+	if (ret)
+		error("Failed to load kernel module: cls_fw");
 
 	rtnl_tc_set_link(TC_CAST(c), i->nl_link);
 	rtnl_tc_set_handle(TC_CAST(c), mark);
@@ -210,7 +225,7 @@ int tc_mark(struct interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_
 	rtnl_fw_set_classid(c, flowid);
 	rtnl_fw_set_mask(c, 0xFFFFFFFF);
 
-	int ret = rtnl_cls_add(sock, c, NLM_F_CREATE);
+	ret = rtnl_cls_add(sock, c, NLM_F_CREATE);
 
 	*cls = c;
 	
