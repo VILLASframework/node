@@ -133,17 +133,23 @@ double hist_stddev(struct hist *h)
 
 void hist_print(struct hist *h, int details)
 { INDENT
-	stats("Counted values: %ju (%ju between %f and %f)", h->total, h->total-h->higher-h->lower, h->high, h->low);
-	stats("Highest: %f Lowest: %f", h->highest, h->lowest);
-	stats("Mu: %f Sigma2: %f Sigma: %f", hist_mean(h), hist_var(h), hist_stddev(h));
+	if (h->length > 0) {
+		hist_cnt_t missed = h->total - h->higher - h->lower;
+		
+		stats("Counted values: %ju (%ju between %f and %f)", h->total, missed, h->low, h->high);
+		stats("Highest: %f Lowest: %f", h->highest, h->lowest);
+		stats("Mu: %f Sigma2: %f Sigma: %f", hist_mean(h), hist_var(h), hist_stddev(h));
 
-	if (details > 0 && h->total - h->higher - h->lower > 0) {
-		char *buf = hist_dump(h);
-		stats("Matlab: %s", buf);
-		free(buf);
+		if (details > 0 && h->total - h->higher - h->lower > 0) {
+			char *buf = hist_dump(h);
+			stats("Matlab: %s", buf);
+			free(buf);
 
-		hist_plot(h);
+			hist_plot(h);
+		}
 	}
+	else
+		stats("Counted values: %ju", h->total);
 }
 
 void hist_plot(struct hist *h)
@@ -168,7 +174,7 @@ void hist_plot(struct hist *h)
 		hist_cnt_t cnt = h->data[i];
 		int bar = HIST_HEIGHT * ((double) cnt / max);
 
-		if (value > h->lowest || value < h->highest)
+		if (value >= h->lowest || value <= h->highest)
 			stats("%+9g | %5ju | %.*s", value, cnt, bar, buf);
 	}
 }
