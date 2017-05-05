@@ -17,12 +17,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -31,7 +31,7 @@
  * @ingroup path
  * @{
  *********************************************************************************/
- 
+
 #pragma once
 
 #include <time.h>
@@ -55,15 +55,15 @@ struct hook_type {
 	bool builtin;		/**< Should we add this hook by default to every path?. */
 
 	size_t size;		/**< Size of allocation for struct hook::_vd */
-	
+
 	int (*parse)(struct hook *h, config_setting_t *cfg);
 
 	int (*init)(struct hook *h);	/**< Called before path is started to parseHOOK_DESTROYs. */
-	int (*destroy)(struct hook *h);	/**< Called after path has been stopped to release memory allocated by HOOK_INIT */	
+	int (*destroy)(struct hook *h);	/**< Called after path has been stopped to release memory allocated by HOOK_INIT */
 
 	int (*start)(struct hook *h);	/**< Called whenever a path is started; before threads are created. */
 	int (*stop)(struct hook *h);	/**< Called whenever a path is stopped; after threads are destoyed. */
-	
+
 	int (*periodic)(struct hook *h);/**< Called periodically. Period is set by global 'stats' option in the configuration file. */
 	int (*restart)(struct hook *h);	/**< Called whenever a new simulation case is started. This is detected by a sequence no equal to zero. */
 
@@ -77,10 +77,10 @@ struct hook {
 
 	struct sample *prev, *last;
 	struct path *path;
-	
+
 	struct hook_type *_vt;	/**< C++ like Vtable pointer. */
 	void *_vd;		/**< Private data for this hook. This pointer can be used to pass data between consecutive calls of the callback. */
-	
+
 	int priority;		/**< A priority to change the order of execution within one type of hook. */
 };
 

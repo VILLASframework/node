@@ -18,7 +18,7 @@ struct ip;
 
 struct dft {
 	XHls_dft inst;
-	
+
 	int period; /* in samples */
 	int num_harmonics;
 	float *fharmonics;

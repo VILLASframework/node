@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -32,14 +32,14 @@
 int node_type_start(struct node_type *vt, struct super_node *sn)
 {
 	int ret;
-	
+
 	if (vt->state != STATE_DESTROYED)
 		return 0;
 
 	info("Initializing " YEL("%s") " node type which is used by %zu nodes", plugin_name(vt), list_length(&vt->instances));
 	{ INDENT
 		ret = vt->init ? vt->init(sn) : 0;
-	}	
+	}
 
 	if (ret == 0)
 		vt->state = STATE_STARTED;
@@ -50,7 +50,7 @@ int node_type_start(struct node_type *vt, struct super_node *sn)
 int node_type_stop(struct node_type *vt)
 {
 	int ret;
-	
+
 	if (vt->state != STATE_STARTED)
 		return 0;
 
@@ -58,7 +58,7 @@ int node_type_stop(struct node_type *vt)
 	{ INDENT
 		ret = vt->deinit ? vt->deinit() : 0;
 	}
-	
+
 	if (ret == 0)
 		vt->state = STATE_DESTROYED;
 

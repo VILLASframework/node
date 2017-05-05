@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -69,11 +69,11 @@ static void usage()
 	printf("Supported node types:\n");
 	plugin_dump(PLUGIN_TYPE_NODE);
 	printf("\n");
-	
+
 	printf("Supported hooks:\n");
 	plugin_dump(PLUGIN_TYPE_HOOK);
 	printf("\n");
-	
+
 	printf("Supported API commands:\n");
 	plugin_dump(PLUGIN_TYPE_API);
 	printf("\n");
@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 #ifdef ENABLE_OPAL_ASYNC
 	if (argc != 4)
 		usage(argv[0]);
-	
+
 	char *uri = "opal-shmem.conf";
 #else
 	if (argc == 2) {
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 	else if (argc > 2)
 		usage();
 #endif
-	
+
 	info("This is VILLASnode %s (built on %s, %s)", BLD(YEL(BUILDID)),
 		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
 

@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -32,7 +32,7 @@ struct convert {
 		TO_FIXED,
 		TO_FLOAT
 	} mode;
-	
+
 	double scale;
 
 	long long mask;
@@ -41,7 +41,7 @@ struct convert {
 static int convert_init(struct hook *h)
 {
 	struct convert *p = h->_vd;
-	
+
 	p->scale = 1;
 	p->mask = -1;
 
@@ -51,9 +51,9 @@ static int convert_init(struct hook *h)
 static int convert_parse(struct hook *h, config_setting_t *cfg)
 {
 	struct convert *p = h->_vd;
-	
+
 	const char *mode;
-	
+
 	config_setting_lookup_float(cfg, "scale", &p->scale);
 	config_setting_lookup_int64(cfg, "mask", &p->mask);
 
@@ -66,7 +66,7 @@ static int convert_parse(struct hook *h, config_setting_t *cfg)
 		p->mode = TO_FLOAT;
 	else
 		error("Invalid parameter '%s' for hook 'convert'", mode);
-	
+
 	return 0;
 }
 
@@ -76,11 +76,11 @@ static int convert_read(struct hook *h, struct sample *smps[], size_t *cnt)
 
 	for (int i = 0; i < *cnt; i++) {
 		for (int k = 0; k < smps[i]->length; k++) {
-			
+
 			/* Only convert values which are not masked */
 			if ((k < sizeof(p->mask) * 8) && !(p->mask & (1LL << k)))
 				continue;
-			
+
 			switch (p->mode) {
 				case TO_FIXED:
 					smps[i]->data[k].i = smps[i]->data[k].f * p->scale;

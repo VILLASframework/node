@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -37,12 +37,12 @@ int node_init(struct node *n, struct node_type *vt)
 
 	n->_vt = vt;
 	n->_vd = alloc(vt->size);
-	
+
 	n->id = max_id++;
-	
+
 	/* Default values */
 	n->vectorize = 1;
-	
+
 	list_push(&vt->instances, n);
 
 	n->state = STATE_INITIALIZED;
@@ -57,13 +57,13 @@ int node_parse(struct node *n, config_setting_t *cfg)
 	int ret;
 
 	name = config_setting_name(cfg);
-	
+
 	if (!config_setting_lookup_string(cfg, "type", &type))
 		cerror(cfg, "Missing node type");
-	
+
 	p = plugin_lookup(PLUGIN_TYPE_NODE, type);
 	assert(&p->node == n->_vt);
-	
+
 	config_setting_lookup_int(cfg, "vectorize", &n->vectorize);
 
 	n->name = name;
@@ -72,7 +72,7 @@ int node_parse(struct node *n, config_setting_t *cfg)
 	ret = n->_vt->parse ? n->_vt->parse(n, cfg) : 0;
 	if (ret)
 		cerror(cfg, "Failed to parse node '%s'", node_name(n));
-	
+
 	n->state = STATE_PARSED;
 
 	return ret;
@@ -97,7 +97,7 @@ int node_check(struct node *n)
 int node_start(struct node *n)
 {
 	int ret;
-	
+
 	assert(n->state == STATE_CHECKED);
 
 	info("Starting node %s", node_name_long(n));
@@ -108,9 +108,9 @@ int node_start(struct node *n)
 	}
 
 	n->state = STATE_STARTED;
-	
+
 	n->sequence = 0;
-	
+
 	return ret;
 }
 
@@ -125,7 +125,7 @@ int node_stop(struct node *n)
 	{ INDENT
 		ret = n->_vt->stop ? n->_vt->stop(n) : 0;
 	}
-	
+
 	if (ret == 0)
 		n->state = STATE_STOPPED;
 
@@ -138,20 +138,20 @@ int node_destroy(struct node *n)
 
 	if (n->_vt->destroy)
 		n->_vt->destroy(n);
-	
+
 	list_remove(&n->_vt->instances, n);
 
 	if (n->_vd)
 		free(n->_vd);
-	
+
 	if (n->_name)
 		free(n->_name);
-	
+
 	if (n->_name_long)
 		free(n->_name_long);
-	
+
 	n->state = STATE_DESTROYED;
-	
+
 	return 0;
 }
 
@@ -171,10 +171,10 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 	else {
 		nread = n->_vt->read(n, smps, cnt);
 	}
-	
+
 	for (int i = 0; i < nread; i++)
 		smps[i]->source = n;
-	
+
 	return nread;
 }
 
@@ -193,7 +193,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt)
 	else {
 		nsent = n->_vt->write(n, smps, cnt);
 	}
-	
+
 	return nsent;
 }
 
@@ -201,7 +201,7 @@ char * node_name(struct node *n)
 {
 	if (!n->_name)
 		strcatf(&n->_name, RED("%s") "(" YEL("%s") ")", n->name, plugin_name(n->_vt));
-		
+
 	return n->_name;
 }
 
@@ -215,9 +215,9 @@ char * node_name_long(struct node *n)
 			free(name_long);
 		}
 		else
-			n->_name_long = node_name(n);		
+			n->_name_long = node_name(n);
 	}
-		
+
 	return n->_name_long;
 }
 
@@ -253,7 +253,7 @@ int node_parse_list(struct list *list, config_setting_t *cfg, struct list *all)
 		case CONFIG_TYPE_ARRAY:
 			for (int i = 0; i < config_setting_length(cfg); i++) {
 				config_setting_t *elm = config_setting_get_elem(cfg, i);
-				
+
 				str = config_setting_get_string(elm);
 				if (str) {
 					node = list_lookup(all, str);

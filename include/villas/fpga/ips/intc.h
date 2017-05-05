@@ -22,7 +22,7 @@ struct intc {
 
 	int efds[32];		/**< Event FDs */
 	int nos[32];		/**< Interrupt numbers from /proc/interrupts */
-	
+
 	int flags[32];		/**< Mask of intc_flags */
 };
 

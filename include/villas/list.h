@@ -28,7 +28,7 @@
 	.lock = PTHREAD_MUTEX_INITIALIZER,	\
 	.state = STATE_INITIALIZED		\
 }
-				
+
 #define list_length(list)	((list)->length)
 #define list_at_safe(list, index) ((list)->length > index ? (list)->array[index] : NULL)
 #define list_at(list, index) 	((list)->array[index])
@@ -42,7 +42,7 @@
  */
 typedef int (*dtor_cb_t)(void *);
 
-/** Callback to search or sort a list. */	
+/** Callback to search or sort a list. */
 typedef int (*cmp_cb_t)(const void *, const void *);
 
 /* The list data structure. */

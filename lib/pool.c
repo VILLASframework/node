@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -29,7 +29,7 @@
 int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memtype *m)
 {
 	int ret;
-	
+
 	assert(p->state == STATE_DESTROYED);
 
 	/* Make sure that we use a block size that is aligned to the size of a cache line */
@@ -48,10 +48,10 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memtype *m)
 	ret = queue_init(&p->queue, LOG2_CEIL(cnt), m);
 	if (ret)
 		return ret;
-	
+
 	for (int i = 0; i < cnt; i++)
 		queue_push(&p->queue, (char *) buffer + i * p->blocksz);
-	
+
 	p->state = STATE_INITIALIZED;
 
 	return 0;
@@ -64,7 +64,7 @@ int pool_destroy(struct pool *p)
 	if (p->state == STATE_DESTROYED)
 		return 0;
 
-	queue_destroy(&p->queue);	
+	queue_destroy(&p->queue);
 
 	void *buffer = (char*) p + p->buffer_off;
 	ret = memory_free(p->mem, buffer, p->len);

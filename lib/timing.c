@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -28,9 +28,9 @@
 int timerfd_create_rate(double rate)
 {
 	int fd, ret;
-	
+
 	struct timespec ts = time_from_double(1 / rate);
-	
+
 	struct itimerspec its = {
 		.it_interval = ts,
 		.it_value = ts
@@ -43,7 +43,7 @@ int timerfd_create_rate(double rate)
 	ret = timerfd_settime(fd, 0, &its, NULL);
 	if (ret)
 		return ret;
-	
+
 	return fd;
 }
 
@@ -65,7 +65,7 @@ uint64_t timerfd_wait_until(int fd, struct timespec *until)
 	ret = timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, NULL);
 	if (ret)
 		return 0;
-	
+
 	return timerfd_wait(fd);
 }
 
@@ -74,7 +74,7 @@ struct timespec time_now()
 	struct timespec ts;
 
 	clock_gettime(CLOCK_REALTIME, &ts);
-	
+
 	return ts;
 }
 

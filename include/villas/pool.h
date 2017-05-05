@@ -13,12 +13,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -36,18 +36,18 @@
 struct pool {
 	off_t  buffer_off; /**< Offset from the struct address to the underlying memory area */
 	struct memtype *mem;
-	
+
 	enum state state;
-	
+
 	size_t len;		/**< Length of the underlying memory area */
-	
+
 	size_t blocksz;		/**< Length of a block in bytes */
 	size_t alignment;	/**< Alignment of a block in bytes */
-	
+
 	struct queue queue; /**< The queue which is used to keep track of free blocks */
 };
 
-#define INLINE static inline __attribute__((unused)) 
+#define INLINE static inline __attribute__((unused))
 
 /** Initiazlize a pool
  *

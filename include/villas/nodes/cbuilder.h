@@ -8,7 +8,7 @@
 /**
  * @addtogroup cbuilder RTDS CBuilder model node
  * @ingroup node
- * @{ 
+ * @{
  */
 
 #pragma once
@@ -23,7 +23,7 @@ struct cbuilder;
 struct cbuilder_model {
 	void (*code)();
 	void (*ram)();
-	
+
 	int (*init)(struct cbuilder *cb);
 	int (*read)(float inputs[], int len);
 	int (*write)(float outputs[], int len);
@@ -34,7 +34,7 @@ struct cbuilder {
 	double timestep;
 
 	struct cbuilder_model *model;
-	
+
 	float *params;
 	int paramlen;
 

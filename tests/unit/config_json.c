@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -63,25 +63,25 @@ Test(utils, config_to_json)
 	config_t cfg;
 	config_setting_t *cfg_root;
 	json_t *json;
-	
+
 	config_init(&cfg);
-	
+
 	ret = config_read_string(&cfg, cfg_example);
 	cr_assert_eq(ret, CONFIG_TRUE);
-	
+
 	cfg_root = config_root_setting(&cfg);
-	
+
 	json = config_to_json(cfg_root);
 	cr_assert_not_null(json);
-	
+
 	char *str = json_dumps(json, JSON_INDENT(2));
-	
+
 	//printf("%s\n", str);
-	
+
 	json_decref(json);
-	
+
 	cr_assert_str_eq(str, json_example);
-	
+
 	config_destroy(&cfg);
 }
 
@@ -90,27 +90,27 @@ Test(utils, json_to_config)
 	config_t cfg;
 	config_setting_t *cfg_root;
 	json_t *json;
-	
+
 	/* For config_write() */
 	FILE *f;
 	char str[1024];
-	
+
 	config_init(&cfg);
 
 	cfg_root = config_root_setting(&cfg);
-	
+
 	json = json_loads(json_example, 0, NULL);
 	cr_assert_not_null(json);
-	
+
 	json_to_config(json, cfg_root);
-	
+
 	//config_write(&cfg, stdout);
 
 	f = fmemopen(str, sizeof(str), "w+");
 	config_write(&cfg, f);
 	fclose(f);
-	
+
 	cr_assert_str_eq(str, cfg_example);
-	
+
 	json_decref(json);
 }

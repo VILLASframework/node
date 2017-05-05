@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -46,7 +46,7 @@ static int stats_send_init(struct hook *h)
 
 	p->decimation = 1;
 	p->mode = STATS_SEND_MODE_PERIODIC;
-	
+
 	return 0;
 }
 
@@ -86,7 +86,7 @@ static int stats_send_start(struct hook *h)
 
 	if (p->dest->state != STATE_STOPPED)
 		node_start(p->dest);
-	
+
 	return 0;
 }
 
@@ -96,14 +96,14 @@ static int stats_send_stop(struct hook *h)
 
 	if (p->dest->state != STATE_STOPPED)
 		node_stop(p->dest);
-	
+
 	return 0;
 }
 
 static int stats_send_periodic(struct hook *h)
 {
 	struct stats_send *p = h->_vd;
-	
+
 	if (p->mode == STATS_SEND_MODE_PERIODIC)
 		stats_send(h->path->stats, p->dest);
 
@@ -121,7 +121,7 @@ static int stats_send_read(struct hook *h, struct sample *smps[], size_t *cnt)
 		if (processed % p->decimation == 0)
 			stats_send(h->path->stats, p->dest);
 	}
-	
+
 	return 0;
 }
 
@@ -142,5 +142,5 @@ static struct plugin p = {
 };
 
 REGISTER_PLUGIN(&p)
-	
+
 /** @} */

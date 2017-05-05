@@ -11,16 +11,16 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
- 
+
 #pragma once
 
 #ifdef __cplusplus
@@ -41,7 +41,7 @@ extern "C" {
 
 /* The log level which is passed as first argument to print() */
 #define LOG_LVL_DEBUG	GRY("Debug")
-#define LOG_LVL_INFO	WHT("Info ") 
+#define LOG_LVL_INFO	WHT("Info ")
 #define LOG_LVL_WARN	YEL("Warn ")
 #define LOG_LVL_ERROR	RED("Error")
 #define LOG_LVL_STATS	MAG("Stats")
@@ -66,7 +66,7 @@ enum log_facilities {
 	LOG_XIL =	(1L << 20),
 	LOG_TC =	(1L << 21),
 	LOG_IF =	(1L << 22),
-	
+
 	/* Node-types */
 	LOG_SOCKET =	(1L << 23),
 	LOG_FILE =	(1L << 24),
@@ -74,16 +74,16 @@ enum log_facilities {
 	LOG_NGSI =	(1L << 26),
 	LOG_WEBSOCKET =	(1L << 27),
 	LOG_OPAL =	(1L << 28),
-	
+
 	/* Classes */
 	LOG_NODES =	LOG_NODE | LOG_SOCKET | LOG_FILE | LOG_FPGA | LOG_NGSI | LOG_WEBSOCKET | LOG_OPAL,
 	LOG_KERNEL =	LOG_VFIO | LOG_PCI | LOG_TC | LOG_IF,
-	LOG_ALL =	~0xFF 
+	LOG_ALL =	~0xFF
 };
 
 struct log {
 	enum state state;
-	
+
 	struct timespec epoch;	/**< A global clock used to prefix the log messages. */
 
 	/** Debug level used by the debug() macro.
@@ -93,10 +93,10 @@ struct log {
 
 	/** Debug facilities used by the debug() macro. */
 	long facilities;
-	
+
 	/** Path of the log file */
 	const char *path;
-	
+
 	/** Send all log output to this file / stdout / stderr */
 	FILE *file;
 };
@@ -136,7 +136,7 @@ void log_outdent(int *);
  *
  * The first case enables only faciltities which are in the list.
  * The second case enables all faciltities with exception of those which are in the list.
- * 
+ *
  * @param expression The expression
  * @return The new facilties mask (see enum log_faciltities)
  */
@@ -155,7 +155,7 @@ void log_print(struct log *l, const char *lvl, const char *fmt, ...)
  * @param lvl The log level
  * @param fmt The format string (printf alike)
  * @param va The variadic argument list (see stdarg.h)
- */	
+ */
 void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list va);
 
 /** Printf alike debug message with level. */

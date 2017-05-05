@@ -27,7 +27,7 @@ int timer_start(struct fpga_ip *c)
 
 	XTmrCtr_CfgInitialize(xtmr, &xtmr_cfg, (uintptr_t) f->map + c->baseaddr);
 	XTmrCtr_InitHw(xtmr);
-	
+
 	return 0;
 }
 

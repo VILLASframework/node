@@ -12,7 +12,7 @@
  */
 
 #pragma once
- 
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <sys/types.h>

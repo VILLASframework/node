@@ -30,12 +30,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -112,10 +112,10 @@ void simple_circuit_code() {
 	/* Update source vector */
 	AC2 = iC2Hist+vC2Hist*GC2;
 	Jn = IntfIn+AC2;
-	
+
 	/* Solution of the equation Gn*e=Jn; */
 	eSS2 = GnInv*Jn;
-	
+
 	/* Post step -> calculate the voltage and current for C2 for next step and set interface output */
 	vC2Hist= eSS2;
 	iC2Hist = vC2Hist*GC2-AC2;

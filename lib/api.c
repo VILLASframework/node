@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -47,11 +47,11 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 			/* Parse request URI */
 			char uri[64];
 			lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_GET_URI); /* The path component of the*/
-			
+
 			ret = sscanf(uri, "/v%d", (int *) &s->version);
 			if (ret != 1)
 				return -1;
-			
+
 			ret = api_session_init(s, w->api, API_MODE_WS);
 			if (ret)
 				return -1;
@@ -63,9 +63,9 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 			ret = api_session_destroy(s);
 			if (ret)
 				return -1;
-			
+
 			debug(LOG_API, "Closed API session");
-			
+
 			break;
 
 		case LWS_CALLBACK_SERVER_WRITEABLE:
@@ -75,14 +75,14 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 				return -1;
 
 			break;
-			
+
 		case LWS_CALLBACK_RECEIVE:
 			web_buffer_append(&s->request.body, in, len);
-			
+
 			json_t *req, *resp;
 			while (web_buffer_read_json(&s->request.body, &req) >= 0) {
 				api_session_run_command(s, req, &resp);
-				
+
 				web_buffer_append_json(&s->response.body, resp);
 				lws_callback_on_writable(wsi);
 			}
@@ -138,7 +138,7 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 				s->completed = true;
 
 			break;
-			
+
 		case LWS_CALLBACK_CLOSED_HTTP:
 			ret = api_session_destroy(s);
 			if (ret)
@@ -147,7 +147,7 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 
 		case LWS_CALLBACK_HTTP_BODY:
 			web_buffer_append(&s->request.body, in, len);
-			
+
 			json_t *req, *resp;
 			while (web_buffer_read_json(&s->request.body, &req) == 1) {
 				api_session_run_command(s, req, &resp);
@@ -211,8 +211,8 @@ int api_stop(struct api *a)
 	info("Stopping API sub-system");
 
 	list_destroy(&a->sessions, (dtor_cb_t) api_session_destroy, false);
-	
+
 	a->state = STATE_STOPPED;
-	
+
 	return 0;
 }

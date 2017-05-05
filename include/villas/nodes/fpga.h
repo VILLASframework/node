@@ -29,7 +29,7 @@ struct fpga_ip;
 /** The node type */
 struct fpga {
 	struct fpga_ip *ip;
-	
+
 	struct pci *pci;
 	struct vfio_container *vfio_container;
 

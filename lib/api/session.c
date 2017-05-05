@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -29,9 +29,9 @@ int api_session_init(struct api_session *s, struct api *a, enum api_mode m)
 {
 	s->mode = m;
 	s->api = a;
-	
+
 	s->completed = false;
-	
+
 	web_buffer_init(&s->request.body,  s->mode == API_MODE_HTTP ? LWS_WRITE_HTTP : LWS_WRITE_TEXT);
 	web_buffer_init(&s->response.body, s->mode == API_MODE_HTTP ? LWS_WRITE_HTTP : LWS_WRITE_TEXT);
 
@@ -45,15 +45,15 @@ int api_session_destroy(struct api_session *s)
 {
 	if (s->state == STATE_DESTROYED)
 		return 0;
-	
+
 	web_buffer_destroy(&s->request.body);
 	web_buffer_destroy(&s->response.body);
-	
+
 	if (s->mode == API_MODE_HTTP)
 		web_buffer_destroy(&s->response.headers);
-	
+
 	s->state = STATE_DESTROYED;
-	
+
 	return 0;
 }
 
@@ -63,9 +63,9 @@ int api_session_run_command(struct api_session *s, json_t *json_in, json_t **jso
 	const char *action;
 	char *id;
 	struct plugin *p;
-	
+
 	json_t *json_args = NULL, *json_resp;
-	
+
 	ret = json_unpack(json_in, "{ s: s, s: s, s?: o }",
 		"action", &action,
 		"id", &id,
@@ -77,7 +77,7 @@ int api_session_run_command(struct api_session *s, json_t *json_in, json_t **jso
 				"code", ret);
 		goto out;
 	}
-	
+
 	p = plugin_lookup(PLUGIN_TYPE_API, action);
 	if (!p) {
 		ret = -101;

@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -56,7 +56,7 @@ struct sample {
 	int sequence; /**< The sequence number of this sample. */
 	int length;   /**< The number of values in sample::values which are valid. */
 	int capacity; /**< The number of values in sample::values for which memory is reserved. */
-	
+
 	atomic_int refcnt;   /**< Reference counter. */
 	off_t pool_off;	     /**< This sample belongs to this memory pool (relative pointer). */
 	struct node *source; /**< The node from which this sample originates. */
@@ -67,7 +67,7 @@ struct sample {
 		struct timespec received;	/**< The point in time when this data was received. */
 		struct timespec sent;		/**< The point in time when this data was send for the last time. */
 	} ts;
-	
+
 	uint64_t format;	/**< A long bitfield indicating the number representation of the first 64 values in sample::data[] */
 
 	/** The values. */

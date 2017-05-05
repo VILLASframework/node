@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -114,20 +114,20 @@ int main(int argc, char *argv[])
 check:		if (optarg == endptr)
 			error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
-	
+
 	if (argc != optind + 2) {
 		usage();
 		exit(EXIT_FAILURE);
 	}
-	
+
 	char *configfile = argv[optind];
 	char *nodestr    = argv[optind + 1];
-	
+
 	log_init(&sn.log, V, LOG_ALL);
-	
+
 	super_node_init(&sn);
 	super_node_parse_uri(&sn, configfile);
-	
+
 	signals_init(quit);
 	rt_init(sn.priority, sn.affinity);
 	memory_init(sn.hugepages);
@@ -143,7 +143,7 @@ check:		if (optarg == endptr)
 
 	node_stop(node);
 	node_type_stop(node->_vt);
-	
+
 	super_node_destroy(&sn);
 
 	return 0;
@@ -151,23 +151,23 @@ check:		if (optarg == endptr)
 
 void test_rtt() {
 	struct hist hist;
-	
+
 	struct timespec send, recv;
 
 	struct sample *smp_send = alloc(SAMPLE_LEN(2));
 	struct sample *smp_recv = alloc(SAMPLE_LEN(2));
-	
+
 	hist_init(&hist, low, high, res);
 
 	/* Print header */
 	fprintf(stdout, "%17s%5s%10s%10s%10s%10s%10s\n", "timestamp", "seq", "rtt", "min", "max", "mean", "stddev");
 
-	while (running && (count < 0 || count--)) {		
+	while (running && (count < 0 || count--)) {
 		clock_gettime(CLOCK_ID, &send);
 
 		node_write(node, &smp_send, 1); /* Ping */
 		node_read(node,  &smp_recv, 1); /* Pong */
-		
+
 		clock_gettime(CLOCK_ID, &recv);
 
 		double rtt = time_delta(&recv, &send);
@@ -179,7 +179,7 @@ void test_rtt() {
 
 		smp_send->sequence++;
 
-		fprintf(stdout, "%10lu.%06lu%5u%10.3f%10.3f%10.3f%10.3f%10.3f\n", 
+		fprintf(stdout, "%10lu.%06lu%5u%10.3f%10.3f%10.3f%10.3f%10.3f\n",
 			recv.tv_sec, recv.tv_nsec / 1000, smp_send->sequence,
 			1e3 * rtt, 1e3 * hist.lowest, 1e3 * hist.highest,
 			1e3 * hist_mean(&hist), 1e3 * hist_stddev(&hist));

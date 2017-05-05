@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -50,7 +50,7 @@ int hist_init(struct hist *h, double low, double high, double resolution)
 	}
 
 	hist_reset(h);
-	
+
 	return 0;
 }
 
@@ -60,14 +60,14 @@ int hist_destroy(struct hist *h)
 		free(h->data);
 		h->data = NULL;
 	}
-	
+
 	return 0;
 }
 
 void hist_put(struct hist *h, double value)
 {
 	int idx = INDEX(h, value);
-	
+
 	h->last = value;
 
 	/* Update min/max */
@@ -135,7 +135,7 @@ void hist_print(struct hist *h, int details)
 { INDENT
 	if (h->length > 0) {
 		hist_cnt_t missed = h->total - h->higher - h->lower;
-		
+
 		stats("Counted values: %ju (%ju between %f and %f)", h->total, missed, h->low, h->high);
 		stats("Highest: %f Lowest: %f", h->highest, h->lowest);
 		stats("Mu: %f Sigma2: %f Sigma: %f", hist_mean(h), hist_var(h), hist_stddev(h));
@@ -182,14 +182,14 @@ void hist_plot(struct hist *h)
 char * hist_dump(struct hist *h)
 {
 	char *buf = alloc(128);
-	
+
 	strcatf(&buf, "[ ");
 
 	for (int i = 0; i < h->length; i++)
 		strcatf(&buf, "%ju ", h->data[i]);
 
 	strcatf(&buf, "]");
-	
+
 	return buf;
 }
 
@@ -216,7 +216,7 @@ json_t * hist_json(struct hist *h)
 
 		for (int i = 0; i < h->length; i++)
 			json_array_append(json_buckets, json_integer(h->data[i]));
-		
+
 		json_object_set(json_hist, "buckets", json_buckets);
 	}
 
@@ -226,11 +226,11 @@ json_t * hist_json(struct hist *h)
 int hist_dump_json(struct hist *h, FILE *f)
 {
 	json_t *j = hist_json(h);
-	
+
 	int ret = json_dumpf(j, f, 0);
-	
+
 	json_decref(j);
-	
+
 	return ret;
 }
 #endif /* WITH_JANNSON */
@@ -248,7 +248,7 @@ int hist_dump_matlab(struct hist *h, FILE *f)
 	fprintf(f, "'mean', %f, ", hist_mean(h));
 	fprintf(f, "'variance', %f, ", hist_var(h));
 	fprintf(f, "'stddev', %f, ", hist_stddev(h));
-	
+
 	if (h->total - h->lower - h->higher > 0) {
 		char *buf = hist_dump(h);
 		fprintf(f, "'buckets', %s", buf);
@@ -258,6 +258,6 @@ int hist_dump_matlab(struct hist *h, FILE *f)
 		fprintf(f, "'buckets', zeros(1, %d)", h->length);
 
 	fprintf(f, ")");
-	
+
 	return 0;
 }

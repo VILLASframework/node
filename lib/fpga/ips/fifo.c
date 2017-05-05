@@ -19,17 +19,17 @@
 int fifo_start(struct fpga_ip *c)
 {
 	int ret;
-	
+
 	struct fpga_card *f = c->card;
 	struct fifo *fifo = c->_vd;
-	
+
 	XLlFifo *xfifo = &fifo->inst;
 	XLlFifo_Config fifo_cfg = {
 		.BaseAddress = (uintptr_t) f->map + c->baseaddr,
 		.Axi4BaseAddress = (uintptr_t) c->card->map + fifo->baseaddr_axi4,
 		.Datainterface = (fifo->baseaddr_axi4 != -1) ? 1 : 0 /* use AXI4 for Data, AXI4-Lite for control */
 	};
-	
+
 	ret = XLlFifo_CfgInitialize(xfifo, &fifo_cfg, (uintptr_t) c->card->map + c->baseaddr);
 	if (ret != XST_SUCCESS)
 		return -1;
@@ -42,7 +42,7 @@ int fifo_start(struct fpga_ip *c)
 int fifo_stop(struct fpga_ip *c)
 {
 	struct fifo *fifo = c->_vd;
-	
+
 	XLlFifo *xfifo = &fifo->inst;
 
 	XLlFifo_IntDisable(xfifo, XLLF_INT_RC_MASK); /* Receive complete IRQ */
@@ -84,7 +84,7 @@ ssize_t fifo_read(struct fpga_ip *c, char *buf, size_t len)
 	/* Get length of next frame */
 	rxlen = XLlFifo_RxGetLen(xllfifo);
 	nextlen = MIN(rxlen, len);
-	
+
 	/* Read from FIFO */
 	XLlFifo_Read(xllfifo, buf, nextlen);
 
@@ -96,7 +96,7 @@ int fifo_parse(struct fpga_ip *c)
 	struct fifo *fifo = c->_vd;
 
 	int baseaddr_axi4;
-	
+
 	if (config_setting_lookup_int(c->cfg, "baseaddr_axi4", &baseaddr_axi4))
 		fifo->baseaddr_axi4 = baseaddr_axi4;
 	else
@@ -108,7 +108,7 @@ int fifo_parse(struct fpga_ip *c)
 int fifo_reset(struct fpga_ip *c)
 {
 	struct fifo *fifo = c->_vd;
-	
+
 	XLlFifo_Reset(&fifo->inst);
 
 	return 0;

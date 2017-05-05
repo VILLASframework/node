@@ -57,7 +57,7 @@ int vfio_get_iommu_name(int index, char *buf, size_t len)
 		return -1;
 
 	int ret = fgets(buf, len, f) == buf ? 0 : -1;
-	
+
 	/* Remove trailing newline */
 	char *c = strrchr(buf, '\n');
 	if (c)
@@ -91,7 +91,7 @@ int vfio_group_destroy(struct vfio_group *g)
 	int ret;
 
 	list_destroy(&g->devices, (dtor_cb_t) vfio_device_destroy, false);
-	
+
 	ret = ioctl(g->fd, VFIO_GROUP_UNSET_CONTAINER);
 	if (ret)
 		return ret;
@@ -103,7 +103,7 @@ int vfio_group_destroy(struct vfio_group *g)
 		return ret;
 
 	debug(5, "VFIO: closed group: group=%u, fd=%d", g->index, g->fd);
-	
+
 	return 0;
 }
 
@@ -119,10 +119,10 @@ int vfio_device_destroy(struct vfio_device *d)
 		return ret;
 
 	debug(5, "VFIO: closed device: name=%s, fd=%d", d->name, d->fd);
-	
+
 	free(d->mappings);
 	free(d->name);
-	
+
 	return 0;
 }
 
@@ -133,7 +133,7 @@ int vfio_init(struct vfio_container *v)
 
 	/* Initialize datastructures */
 	memset(v, 0, sizeof(*v));
-	
+
 	list_init(&v->groups);
 
 	/* Load VFIO kernel module */
@@ -170,9 +170,9 @@ int vfio_group_attach(struct vfio_group *g, struct vfio_container *c, int index)
 
 	g->index = index;
 	g->container = c;
-	
+
 	list_init(&g->devices);
-	
+
 	/* Open group fd */
 	snprintf(buf, sizeof(buf), VFIO_DEV("%u"), g->index);
 	g->fd = open(buf, O_RDWR);
@@ -183,7 +183,7 @@ int vfio_group_attach(struct vfio_group *g, struct vfio_container *c, int index)
 	ret = ioctl(g->fd, VFIO_GROUP_SET_CONTAINER, &c->fd);
 	if (ret < 0)
 		serror("Failed to attach VFIO group to container");
-	
+
 	/* Set IOMMU type */
 	ret = ioctl(c->fd, VFIO_SET_IOMMU, VFIO_TYPE1_IOMMU);
 	if (ret < 0)
@@ -195,10 +195,10 @@ int vfio_group_attach(struct vfio_group *g, struct vfio_container *c, int index)
 	ret = ioctl(g->fd, VFIO_GROUP_GET_STATUS, &g->status);
 	if (ret < 0)
 		serror("Failed to get VFIO group status");
-	
+
 	if (!(g->status.flags & VFIO_GROUP_FLAGS_VIABLE))
 		error("VFIO group is not available: bind all devices to the VFIO driver!");
-	
+
 	list_push(&c->groups, g);
 
 	return 0;
@@ -208,11 +208,11 @@ int vfio_pci_attach(struct vfio_device *d, struct vfio_container *c, struct pci_
 {
 	char name[32];
 	int ret;
-	
+
 	/* Load PCI bus driver for VFIO */
 	if (kernel_module_load("vfio_pci"))
 		error("Failed to load kernel driver: %s", "vfio_pci");
-	
+
 	/* Bind PCI card to vfio-pci driver*/
 	ret = pci_attach_driver(pdev, "vfio-pci");
 	if (ret)
@@ -229,7 +229,7 @@ int vfio_pci_attach(struct vfio_device *d, struct vfio_container *c, struct pci_
 	ret = vfio_device_attach(d, c, name, index);
 	if (ret < 0)
 		return ret;
-	
+
 	/* Check if this is really a vfio-pci device */
 	if (!(d->info.flags & VFIO_DEVICE_FLAGS_PCI)) {
 		vfio_device_destroy(d);
@@ -245,7 +245,7 @@ int vfio_device_attach(struct vfio_device *d, struct vfio_container *c, const ch
 {
 	int ret;
 	struct vfio_group *g = NULL;
-	
+
 	/* Check if group already exists */
 	for (size_t i = 0; i < list_length(&c->groups); i++) {
 		struct vfio_group *h = list_at(&c->groups, i);
@@ -253,7 +253,7 @@ int vfio_device_attach(struct vfio_device *d, struct vfio_container *c, const ch
 		if (h->index == index)
 			g = h;
 	}
-	
+
 	if (!g) {
 		g = alloc(sizeof(struct vfio_group));
 
@@ -261,7 +261,7 @@ int vfio_device_attach(struct vfio_device *d, struct vfio_container *c, const ch
 		ret = vfio_group_attach(g, c, index);
 		if (ret)
 			error("Failed to attach to IOMMU group: %u", index);
-		
+
 		info("Attached new group %u to VFIO container", g->index);
 	}
 
@@ -307,7 +307,7 @@ int vfio_device_attach(struct vfio_device *d, struct vfio_container *c, const ch
 		if (ret < 0)
 			serror("Failed to get IRQs of VFIO device: %s", d->name);
 	}
-	
+
 	list_push(&d->group->devices, d);
 
 	return 0;
@@ -379,7 +379,7 @@ int vfio_pci_msi_find(struct vfio_device *d, int nos[32])
 		do {
 			last = col;
 		} while ((col = strtok(NULL, " ")));
-			
+
 
 		ret = sscanf(last, "vfio-msi[%u](%12[0-9:])", &idx, name);
 		if (ret == 2) {
@@ -395,7 +395,7 @@ int vfio_pci_msi_find(struct vfio_device *d, int nos[32])
 
 int vfio_pci_msi_deinit(struct vfio_device *d, int efds[32])
 {
-	int ret, irq_setlen, irq_count = d->irqs[VFIO_PCI_MSI_IRQ_INDEX].count; 
+	int ret, irq_setlen, irq_count = d->irqs[VFIO_PCI_MSI_IRQ_INDEX].count;
 	struct vfio_irq_set *irq_set;
 
 	/* Check if this is really a vfio-pci device */
@@ -429,9 +429,9 @@ int vfio_pci_msi_deinit(struct vfio_device *d, int efds[32])
 
 int vfio_pci_msi_init(struct vfio_device *d, int efds[32])
 {
-	int ret, irq_setlen, irq_count = d->irqs[VFIO_PCI_MSI_IRQ_INDEX].count; 
+	int ret, irq_setlen, irq_count = d->irqs[VFIO_PCI_MSI_IRQ_INDEX].count;
 	struct vfio_irq_set *irq_set;
-	
+
 	/* Check if this is really a vfio-pci device */
 	if (!(d->info.flags & VFIO_DEVICE_FLAGS_PCI))
 		return -1;
@@ -528,7 +528,7 @@ void vfio_dump(struct vfio_container *v)
 						region->flags
 					);
 			}
-			
+
 			for (int i = 0; i < d->info.num_irqs; i++) { INDENT
 				struct vfio_irq_info *irq = &d->irqs[i];
 
@@ -551,7 +551,7 @@ void * vfio_map_region(struct vfio_device *d, int idx)
 		return MAP_FAILED;
 
 	d->mappings[idx] = mmap(NULL, r->size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_32BIT, d->fd, r->offset);
-	
+
 	return d->mappings[idx];
 }
 
@@ -559,16 +559,16 @@ int vfio_unmap_region(struct vfio_device *d, int idx)
 {
 	int ret;
 	struct vfio_region_info *r = &d->regions[idx];
-	
+
 	if (!d->mappings[idx])
 		return -1; /* was not mapped */
-	
+
 	debug(3, "VFIO: unmap region %u from device", idx);
-	
+
 	ret = munmap(d->mappings[idx], r->size);
 	if (ret)
 		return -2;
-	
+
 	d->mappings[idx] = NULL;
 
 	return 0;
@@ -577,12 +577,12 @@ int vfio_unmap_region(struct vfio_device *d, int idx)
 int vfio_map_dma(struct vfio_container *c, uint64_t virt, uint64_t phys, size_t len)
 {
 	int ret;
-	
+
 	if (len & 0xFFF) {
 		len += 0x1000;
 		len &= ~0xFFF;
 	}
-	
+
 	/* Super stupid allocator */
 	if (phys == -1) {
 		phys = c->iova_next;
@@ -609,17 +609,17 @@ int vfio_map_dma(struct vfio_container *c, uint64_t virt, uint64_t phys, size_t 
 int vfio_unmap_dma(struct vfio_container *c, uint64_t virt, uint64_t phys, size_t len)
 {
 	int ret;
-	
+
 	struct vfio_iommu_type1_dma_unmap dma_unmap = {
 		.argsz = sizeof(struct vfio_iommu_type1_dma_unmap),
 		.flags = 0,
 		.iova  = phys,
 		.size  = len,
 	};
-	
+
 	ret = ioctl(c->fd, VFIO_IOMMU_UNMAP_DMA, &dma_unmap);
 	if (ret)
 		serror("Failed to unmap DMA mapping");
-	
+
 	return 0;
 }

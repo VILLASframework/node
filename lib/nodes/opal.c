@@ -12,12 +12,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -33,12 +33,12 @@
 static char *async_shmem_name;		/**< Shared Memory identifiers and size, provided via argv. */
 static char *print_shmem_name;		/**< Shared Memory identifiers and size, provided via argv. */
 static int async_shmem_size;		/**< Shared Memory identifiers and size, provided via argv. */
-	
+
 static int send_icons, recv_icons;	/** Number of send blocks used in the running OPAL model. */
 static int *send_ids, *recv_ids;	/** A dynamically allocated array of SendIDs. */
 
 static Opal_GenAsyncParam_Ctrl params;	/** String and Float parameters, provided by the OPAL AsyncProcess block. */
-	
+
 static pthread_mutex_t lock;		/** Big Global Lock for libOpalAsync API */
 
 int opal_init(struct super_node *sn)
@@ -120,7 +120,7 @@ int opal_deinit()
 int opal_print_global()
 {
 	debug(LOG_OPAL | 2, "Controller ID: %u", params.controllerID);
-	
+
 	char *sbuf = alloc(send_icons * 5);
 	char *rbuf = alloc(recv_icons * 5);
 
@@ -131,7 +131,7 @@ int opal_print_global()
 
 	debug(LOG_OPAL | 2, "Send Blocks: %s",    sbuf);
 	debug(LOG_OPAL | 2, "Receive Blocks: %s", rbuf);
-	
+
 	free(sbuf);
 	free(rbuf);
 
@@ -204,7 +204,7 @@ int opal_read(struct node *n, struct pool *pool, unsigned cnt)
 	struct msg *m = &pool[first % poolsize];
 
 	double data[MSG_VALUES];
-	
+
 	if (cnt != 1)
 		error("The OPAL-RT node type does not support combining!");
 
@@ -268,7 +268,7 @@ int opal_write(struct node *n, struct pool *pool, unsigned cnt)
 	int state;
 	int len;
 	double data[m->length];
-	
+
 	if (cnt != 1)
 		error("The OPAL-RT node type does not support combining!");
 

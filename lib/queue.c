@@ -6,19 +6,19 @@
  * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2017 Steffen Vogel
  * @license BSD 2-Clause License
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modiffication, are permitted provided that the following conditions are met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright notice, this
  *   list of conditions and the following disclaimer.
- * 
+ *
  * * Redistributions in binary form must reproduce the above copyright notice,
  *   this list of conditions and the following disclaimer in the documentation
  *   and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -46,7 +46,7 @@ int queue_init(struct queue *q, size_t size, struct memtype *mem)
 		size = LOG2_CEIL(size);
 		warn("A queue size was changed from %lu to %lu", old_size, size);
 	}
-	
+
 	q->mem = mem;
 	q->buffer_mask = size - 1;
 	struct queue_cell* buffer = memory_alloc(q->mem, sizeof(struct queue_cell) * size);
@@ -54,15 +54,15 @@ int queue_init(struct queue *q, size_t size, struct memtype *mem)
 		return -2;
 
 	q->buffer_off = (char *) buffer - (char *) q;
-	
+
 	for (size_t i = 0; i != size; i += 1)
 		atomic_store_explicit(&buffer[i].sequence, i, memory_order_relaxed);
 
 	atomic_store_explicit(&q->tail, 0, memory_order_relaxed);
 	atomic_store_explicit(&q->head, 0, memory_order_relaxed);
-	
+
 	q->state = STATE_INITIALIZED;
-	
+
 	return 0;
 }
 
@@ -78,7 +78,7 @@ int queue_destroy(struct queue *q)
 
 	if (ret == 0)
 		q->state = STATE_DESTROYED;
-	
+
 	return ret;
 }
 
@@ -86,7 +86,7 @@ int queue_destroy(struct queue *q)
  *
  * Note: This is only an estimation and not accurate as long other
  *       threads are performing operations.
- */ 
+ */
 size_t queue_available(struct queue *q)
 {
 	return  atomic_load_explicit(&q->tail, memory_order_relaxed) -
@@ -127,7 +127,7 @@ int queue_pull(struct queue *q, void **ptr)
 	struct queue_cell *cell, *buffer;
 	size_t pos, seq;
 	intptr_t diff;
-	
+
 	buffer = (struct queue_cell *) ((char *) q + q->buffer_off);
 	pos = atomic_load_explicit(&q->head, memory_order_relaxed);
 	for (;;) {
@@ -161,7 +161,7 @@ int queue_push_many(struct queue *q, void *ptr[], size_t cnt)
 		if (!ret)
 			break;
 	}
-	
+
 	return i;
 }
 
@@ -175,6 +175,6 @@ int queue_pull_many(struct queue *q, void *ptr[], size_t cnt)
 		if (!ret)
 			break;
 	}
-	
+
 	return i;
 }

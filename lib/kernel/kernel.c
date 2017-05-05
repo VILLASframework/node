@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -45,7 +45,7 @@ int kernel_module_set_param(const char *module, const char *param, const char *v
 	f = fopen(fn, "w");
 	if (!f)
 		serror("Failed set parameter %s for kernel module %s to %s", module, param, value);
-	
+
 	debug(LOG_KERNEL | 5, "Set parameter %s of kernel module %s to %s", module, param, value);
 	fprintf(f, "%s", value);
 	fclose(f);
@@ -56,7 +56,7 @@ int kernel_module_set_param(const char *module, const char *param, const char *v
 int kernel_module_load(const char *module)
 {
 	int ret;
-	
+
 	ret = kernel_module_loaded(module);
 	if (!ret) {
 		debug(LOG_KERNEL | 5, "Kernel module %s already loaded...", module);
@@ -124,7 +124,7 @@ int kernel_get_cmdline_param(const char *param, char *buf, size_t len)
 	FILE *f = fopen(PROCFS_PATH "/cmdline", "r");
 	if (!f)
 		return -1;
-	
+
 	if (!fgets(cmdline, sizeof(cmdline), f))
 		goto out;
 
@@ -171,22 +171,22 @@ int kernel_get_hugepage_size()
 	int sz = -1;
 	size_t len = 0;
 	FILE *f;
-	
+
 	f = fopen(PROCFS_PATH "/meminfo", "r");
 	if (!f)
 		return -1;
-	
+
 	while (getline(&line, &len, f) != -1) {
 		key   = strtok(line, ": ");
 		value = strtok(NULL, " ");
 		unit  = strtok(NULL, "\n");
-		
+
 		if (!strcmp(key, "Hugepagesize") && !strcmp(unit, "kB")) {
 			sz = strtoul(value, NULL, 10) * 1024;
 			break;
 		}
 	}
-	
+
 	free(line);
 	fclose(f);
 
@@ -197,17 +197,17 @@ int kernel_get_nr_hugepages()
 {
 	FILE *f;
 	int nr, ret;
-	
+
 	f = fopen(PROCFS_PATH "/sys/vm/nr_hugepages", "r");
 	if (!f)
 		serror("Failed to open %s", PROCFS_PATH "/sys/vm/nr_hugepages");
-	
+
 	ret = fscanf(f, "%d", &nr);
 	if (ret != 1)
 		nr = -1;
-		
+
 	fclose(f);
-	
+
 	return nr;
 }
 
@@ -218,10 +218,10 @@ int kernel_set_nr_hugepages(int nr)
 	f = fopen(PROCFS_PATH "/sys/vm/nr_hugepages", "w");
 	if (!f)
 		serror("Failed to open %s", PROCFS_PATH "/sys/vm/nr_hugepages");
-	
+
 	fprintf(f, "%d\n", nr);
 	fclose(f);
-	
+
 	return 0;
 }
 
@@ -232,7 +232,7 @@ int kernel_has_cap(cap_value_t cap)
 
 	cap_t caps;
 	cap_flag_value_t value;
-	
+
 	caps = cap_get_proc();
 	if (caps == NULL)
 		return -1;
@@ -240,15 +240,15 @@ int kernel_has_cap(cap_value_t cap)
 	ret = cap_get_proc(caps);
 	if (ret == -1)
 		return -1;
-	
+
 	ret = cap_get_flag(caps, cap, CAP_EFFECTIVE, &value);
 	if (ret == -1)
 		return -1;
-	
-	ret = cap_free(caps);	
+
+	ret = cap_free(caps);
 	if (ret)
 		return -1;
-	
+
 	return value == CAP_SET ? 0 : -1;
 }
 #endif
@@ -258,9 +258,9 @@ int kernel_irq_setaffinity(unsigned irq, uintmax_t new, uintmax_t *old)
 	char fn[64];
 	FILE *f;
 	int ret = 0;
-	
+
 	snprintf(fn, sizeof(fn), "/proc/irq/%u/smp_affinity", irq);
-	
+
 	f = fopen(fn, "w+");
 	if (!f)
 		return -1; /* IRQ does not exist */

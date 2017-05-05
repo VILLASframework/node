@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -32,10 +32,10 @@
 static int drop_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {
 	int i, ok, dist;
-	
+
 	for (i = 0, ok = 0; i < *cnt; i++) {
 		h->last = smps[i];
-		
+
 		if (h->prev) {
 			dist = h->last->sequence - (int32_t) h->prev->sequence;
 			if (dist <= 0) {
@@ -45,12 +45,12 @@ static int drop_read(struct hook *h, struct sample *smps[], size_t *cnt)
 			}
 			else {
 				struct sample *tmp;
-	
+
 				tmp = smps[i];
 				smps[i] = smps[ok];
 				smps[ok++] = tmp;
 			}
-		
+
 			/* To discard the first X samples in 'smps[]' we must
 			 * shift them to the end of the 'smps[]' array.
 			 * In case the hook returns a number 'ok' which is smaller than 'cnt',
@@ -59,7 +59,7 @@ static int drop_read(struct hook *h, struct sample *smps[], size_t *cnt)
 		}
 		else {
 			struct sample *tmp;
-		
+
 			tmp = smps[i];
 			smps[i] = smps[ok];
 			smps[ok++] = tmp;
@@ -69,7 +69,7 @@ static int drop_read(struct hook *h, struct sample *smps[], size_t *cnt)
 	}
 
 	*cnt = ok;
-		
+
 	return 0;
 }
 

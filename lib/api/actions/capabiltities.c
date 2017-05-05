@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -28,10 +28,10 @@ static int api_capabilities(struct api_action *h, json_t *args, json_t **resp, s
 	json_t *json_apis  = json_array();
 	json_t *json_nodes = json_array();
 	json_t *json_name;
-	
+
 	for (size_t i = 0; i < list_length(&plugins); i++) {
 		struct plugin *p = list_at(&plugins, i);
-		
+
 		json_name = json_string(p->name);
 
 		switch (p->type) {
@@ -41,13 +41,13 @@ static int api_capabilities(struct api_action *h, json_t *args, json_t **resp, s
 			default: { }
 		}
 	}
-	
+
 	*resp = json_pack("{ s: s, s: o, s: o, s: o }",
 			"build", BUILDID,
 			"hooks",      json_hooks,
 			"node-types", json_nodes,
 			"apis",       json_apis);
-	
+
 	return 0;
 }
 

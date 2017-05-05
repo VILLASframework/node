@@ -26,7 +26,7 @@ static struct vfio_container vc;
 void fpga_dump(struct fpga *f)
 {
 	struct fpga_card *c = f->ip->card;
-	
+
 	fpga_card_dump(c);
 }
 
@@ -34,11 +34,11 @@ int fpga_init(struct super_node *sn)
 {
 	int ret;
 	config_setting_t *cfg, *cfg_fpgas;
-	
+
 	ret = pci_init(&pci);
 	if (ret)
 		error("Failed to initialize PCI sub-system");
-	
+
 	ret = vfio_init(&vc);
 	if (ret)
 		error("Failed to initiliaze VFIO sub-system");
@@ -48,7 +48,7 @@ int fpga_init(struct super_node *sn)
 	cfg_fpgas = config_setting_lookup(cfg, "fpgas");
 	if (!cfg_fpgas)
 		cerror(cfg, "Config file is missing 'fpgas' section");
-	
+
 	ret = fpga_card_parse_list(&cards, cfg_fpgas);
 	if (ret)
 		cerror(cfg, "Failed to parse VILLASfpga config");
@@ -61,13 +61,13 @@ int fpga_deinit()
 	int ret;
 
 	list_destroy(&cards, (dtor_cb_t) fpga_card_destroy, true);
-	
+
 	pci_destroy(&pci);
 
 	ret = vfio_destroy(&vc);
 	if (ret)
 		error("Failed to deinitialize VFIO sub-system");
-	
+
 	ret = pci_destroy(&pci);
 	if (ret)
 		error("Failed to deinitialize PCI sub-system");
@@ -91,14 +91,14 @@ int fpga_parse(struct node *n, config_setting_t *cfg)
 		f->use_irqs = false;
 
 	cpy = strdup(dm); /* strtok can not operate on type const char * */
-	
+
 	card_name = strtok(cpy, ":");
 	ip_name = strtok(NULL, ":");
 
 	card = list_lookup(&cards, card_name);
 	if (!card)
 		cerror(cfg, "There is no FPGA card named '%s", card_name);
-	
+
 	ip = list_lookup(&card->ips, ip_name);
 	if (!ip)
 		cerror(cfg, "There is no datamover named '%s' on the FPGA card '%s'", ip_name, card_name);
@@ -106,7 +106,7 @@ int fpga_parse(struct node *n, config_setting_t *cfg)
 		cerror(cfg, "The IP '%s' on FPGA card '%s' is not a datamover", ip_name, card_name);
 
 	free(cpy);
-	
+
 	f->ip = ip;
 
 	return 0;
@@ -116,7 +116,7 @@ char * fpga_print(struct node *n)
 {
 	struct fpga *f = n->_vd;
 	struct fpga_card *c = f->ip->card;
-	
+
 	if (f->ip)
 		return strf("dm=%s (%s:%s:%s:%s) baseaddr=%#jx port=%u slot=%02"PRIx8":%02"PRIx8".%"PRIx8" id=%04"PRIx16":%04"PRIx16,
 			f->ip->name, f->ip->vlnv.vendor, f->ip->vlnv.library, f->ip->vlnv.name, f->ip->vlnv.version,
@@ -154,10 +154,10 @@ int fpga_start(struct node *n)
 		case FPGA_IP_TYPE_DM_FIFO:
 			intc_enable(c->intc, (1 << f->ip->irq),      flags);	/* MM2S & S2MM */
 			break;
-			
+
 		default: { }
 	}
-	
+
 
 	return 0;
 }
@@ -181,7 +181,7 @@ int fpga_stop(struct node *n)
 		case FPGA_IP_TYPE_DM_FIFO:
 			if (f->use_irqs)
 				intc_disable(c->intc, f->ip->irq);	/* MM2S & S2MM */
-			
+
 		default: { }
 	}
 
@@ -198,7 +198,7 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 	size_t recvlen;
 
 	size_t len = SAMPLE_DATA_LEN(64);
-	
+
 	/* We dont get a sequence no from the FPGA. Lets fake it */
 	smp->sequence = -1;
 	smp->ts.origin = time_now();
@@ -209,7 +209,7 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 			ret = dma_read(f->ip, f->dma.base_phys + 0x800, len);
 			if (ret)
 				return ret;
-			
+
 			ret = dma_read_complete(f->ip, NULL, &recvlen);
 			if (ret)
 				return ret;
@@ -220,7 +220,7 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 			return 1;
 		case FPGA_IP_TYPE_DM_FIFO:
 			recvlen = fifo_read(f->ip, (char *) smp->data, len);
-			
+
 			smp->length = recvlen / 4;
 			return 1;
 
@@ -247,7 +247,7 @@ int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 			ret = dma_write(f->ip, f->dma.base_phys, len);
 			if (ret)
 				return ret;
-			
+
 			ret = dma_write_complete(f->ip, NULL, &sentlen);
 			if (ret)
 				return ret;
@@ -259,10 +259,10 @@ int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 			sentlen = fifo_write(f->ip, (char *) smp->data, len);
 			return sentlen / sizeof(smp->data[0]);
 			break;
-		
+
 		default: { }
 	}
-	
+
 	return -1;
 }
 

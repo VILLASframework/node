@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -37,46 +37,46 @@ struct data {
 Test(list, list_lookup)
 {
 	struct list l = { .state = STATE_DESTROYED };
-	
+
 	list_init(&l);
-	
+
 	for (int i = 0; i < ARRAY_LEN(nouns); i++) {
 		struct data *d = malloc(sizeof(struct data));
-		
+
 		d->tag = nouns[i];
 		d->data = i;
-		
+
 		list_push(&l, d);
 	}
-	
+
 	struct data *found = list_lookup(&l, "woman");
-	
+
 	cr_assert_eq(found->data, 13);
-	
+
 	list_destroy(&l, NULL, true);
 }
 
 Test(list, list_search)
 {
 	struct list l = { .state = STATE_DESTROYED };
-	
+
 	list_init(&l);
-	
+
 	/* Fill list */
 	for (int i = 0; i < ARRAY_LEN(nouns); i++)
 		list_push(&l, nouns[i]);
-	
+
 	cr_assert_eq(list_length(&l), ARRAY_LEN(nouns));
 
 	/* Declare on stack! */
 	char positive[] = "woman";
 	char negative[] = "dinosaurrier";
-	
+
 	char *found = list_search(&l, (cmp_cb_t) strcmp, positive);
 	cr_assert_not_null(found);
 	cr_assert_eq(found, nouns[13], "found = %p, nouns[13] = %p", found, nouns[13]);
 	cr_assert_str_eq(found, positive);
-	
+
 	char *not_found = (char *) list_search(&l, (cmp_cb_t) strcmp, negative);
 	cr_assert_null(not_found);
 
@@ -90,9 +90,9 @@ struct content {
 static int dtor(void *ptr)
 {
 	struct content *elm = (struct content *) ptr;
-	
+
 	elm->destroyed = 1;
-	
+
 	return 0;
 }
 
@@ -100,12 +100,12 @@ Test(list, destructor)
 {
 	struct list l = { .state = STATE_DESTROYED };
 	struct content elm = { .destroyed = 0 };
-	
+
 	list_init(&l);
 	list_push(&l, &elm);
-	
+
 	cr_assert_eq(list_length(&l), 1);
-	
+
 	list_destroy(&l, dtor, false);
 
 	cr_assert_eq(elm.destroyed, 1);
@@ -120,12 +120,12 @@ Test(list, basics)
 	intptr_t i;
 	int ret;
 	struct list l = { .state = STATE_DESTROYED };
-	
+
 	list_init(&l);
-	
+
 	for (i = 0; i < 100; i++) {
 		cr_assert_eq(list_length(&l), i);
-		
+
 		list_push(&l, (void *) i);
 	}
 
@@ -138,21 +138,21 @@ Test(list, basics)
 
 		cr_assert_eq(k, (void *) i++);
 	}
-	
+
 	list_sort(&l, compare); /* Reverse list */
-	
+
 	for (size_t j = 0, i = 99; j < list_length(&l); j++) {
 		void *k = list_at(&l, j);
-		
+
 		cr_assert_eq(k, (void *) i, "Is %p, expected %p", i, k);
 		i--;
 	}
 
 	ret = list_contains(&l, (void *) 55);
 	cr_assert(ret);
-	
+
 	list_remove(&l, (void *) 55);
-	
+
 	ret = list_contains(&l, (void *) 55);
 	cr_assert(!ret);
 

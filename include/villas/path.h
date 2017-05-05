@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -48,7 +48,7 @@ struct path_source
 	struct node *node;
 	struct pool pool;
 	int samplelen;
-	pthread_t tid;	
+	pthread_t tid;
 };
 
 struct path_destination
@@ -63,7 +63,7 @@ struct path_destination
 struct path
 {
 	enum state state;		/**< Path state. */
-	
+
 	/* Each path has a single source and multiple destinations */
 	struct path_source *source;	/**< Pointer to the incoming node */
 	struct list destinations;	/**< List of all outgoing nodes (struct path_destination). */
@@ -72,16 +72,16 @@ struct path
 
 	int enabled;			/**< Is this path enabled. */
 	int reverse;			/**< This path as a matching reverse path. */
-	
+
 	int samplelen;
 	int queuelen;
 
 	pthread_t tid;			/**< The thread id for this path. */
-	
+
 	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
-	
+
 	struct stats *stats;		/**< Statistic counters. This is a pointer to the statistic hooks private data. */
-	
+
 	struct super_node *super_node;	/**< The super node this path belongs to. */
 	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path. */
 };

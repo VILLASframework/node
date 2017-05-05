@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -65,8 +65,8 @@ static const char *facilities_strs[] = {
 	"xil",		/* LOG_XIL */
 	"tc",		/* LOG_TC */
 	"if",		/* LOG_IF */
-	
-	/* Node-types */	
+
+	/* Node-types */
 	"socket",	/* LOG_SOCKET */
 	"file",		/* LOG_FILE */
 	"fpga",		/* LOG_FPGA */
@@ -88,9 +88,9 @@ int log_init(struct log *l, int level, long facilitites)
 	l->facilities = facilitites;
 	l->file = stderr;
 	l->path = NULL;
-	
+
 	l->state = STATE_INITIALIZED;
-	
+
 	return 0;
 }
 
@@ -105,7 +105,7 @@ int log_start(struct log *l)
 	}
 
 	l->state = STATE_STARTED;
-	
+
 	debug(LOG_LOG | 5, "Log sub-system started: level=%d, faciltities=%#lx, path=%s", l->level, l->facilities, l->path);
 
 	return 0;
@@ -117,16 +117,16 @@ int log_stop(struct log *l)
 		if (l->file != stderr && l->file != stdout)
 			fclose(l->file);
 	}
-	
+
 	l->state = STATE_STOPPED;
-	
+
 	return 0;
 }
 
 int log_destroy(struct log *l)
 {
 	default_log.epoch = l->epoch;
-	
+
 	global_log = NULL;
 
 	l->state = STATE_DESTROYED;
@@ -152,7 +152,7 @@ int log_set_facility_expression(struct log *l, const char *expression)
 	bool negate;
 	char *copy, *token;
 	long mask = 0, facilities = 0;
-	
+
 	copy = strdup(expression);
 	token = strtok(copy, ",");
 
@@ -178,7 +178,7 @@ int log_set_facility_expression(struct log *l, const char *expression)
 					goto found;
 				}
 			}
-			
+
 			error("Invalid log class '%s'", token);
 		}
 
@@ -189,9 +189,9 @@ found:		if (negate)
 
 		token = strtok(NULL, ",");
 	}
-	
+
 	l->facilities = facilities;
-	
+
 	free(copy);
 
 	return l->facilities;
@@ -210,7 +210,7 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 {
 	struct timespec ts = time_now();
 	char *buf = alloc(512);
-	
+
 	/* Timestamp */
 	strcatf(&buf, "%10.3f ", time_delta(&l->epoch, &ts));
 
@@ -247,11 +247,11 @@ void line()
 void debug(long class, const char *fmt, ...)
 {
 	va_list ap;
-	
+
 	struct log *l = global_log ? global_log : &default_log;
-	
+
 	int lvl = class &  0xFF;
-	int fac = class & ~0xFF; 
+	int fac = class & ~0xFF;
 
 	if (((fac == 0) || (fac & l->facilities)) && (lvl <= l->level)) {
 		va_start(ap, fmt);
@@ -263,9 +263,9 @@ void debug(long class, const char *fmt, ...)
 void info(const char *fmt, ...)
 {
 	va_list ap;
-	
+
 	struct log *l = global_log ? global_log : &default_log;
-	
+
 	va_start(ap, fmt);
 	log_vprint(l, LOG_LVL_INFO, fmt, ap);
 	va_end(ap);
@@ -274,9 +274,9 @@ void info(const char *fmt, ...)
 void warn(const char *fmt, ...)
 {
 	va_list ap;
-	
+
 	struct log *l = global_log ? global_log : &default_log;
-	
+
 	va_start(ap, fmt);
 	log_vprint(l, LOG_LVL_WARN, fmt, ap);
 	va_end(ap);
@@ -285,7 +285,7 @@ void warn(const char *fmt, ...)
 void stats(const char *fmt, ...)
 {
 	va_list ap;
-	
+
 	struct log *l = global_log ? global_log : &default_log;
 
 	va_start(ap, fmt);
@@ -296,9 +296,9 @@ void stats(const char *fmt, ...)
 void error(const char *fmt, ...)
 {
 	va_list ap;
-	
+
 	struct log *l = global_log ? global_log : &default_log;
-	
+
 	va_start(ap, fmt);
 	log_vprint(l, LOG_LVL_ERROR, fmt, ap);
 	va_end(ap);
@@ -310,7 +310,7 @@ void serror(const char *fmt, ...)
 {
 	va_list ap;
 	char *buf = NULL;
-	
+
 	struct log *l = global_log ? global_log : &default_log;
 
 	va_start(ap, fmt);
@@ -318,7 +318,7 @@ void serror(const char *fmt, ...)
 	va_end(ap);
 
 	log_print(l, LOG_LVL_ERROR, "%s: %m (%u)", buf, errno);
-	
+
 	free(buf);
 	die();
 }

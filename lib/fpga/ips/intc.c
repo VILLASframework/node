@@ -6,14 +6,14 @@
 
 #include <unistd.h>
 
-#include "config.h" 
+#include "config.h"
 #include "log.h"
 #include "plugin.h"
 
 #include "nodes/fpga.h"
 
-#include "kernel/vfio.h" 
-#include "kernel/kernel.h" 
+#include "kernel/vfio.h"
+#include "kernel/kernel.h"
 
 #include "fpga/ip.h"
 #include "fpga/card.h"
@@ -57,7 +57,7 @@ int intc_start(struct fpga_ip *c)
 	XIntc_Out32(base + XIN_MER_OFFSET, XIN_INT_HARDWARE_ENABLE_MASK | XIN_INT_MASTER_ENABLE_MASK);
 
 	debug(4, "FPGA: enabled interrupts");
-	
+
 	return 0;
 }
 
@@ -67,7 +67,7 @@ int intc_destroy(struct fpga_ip *c)
 	struct intc *intc = c->_vd;
 
 	vfio_pci_msi_deinit(&f->vfio_device, intc->efds);
-	
+
 	return 0;
 }
 
@@ -85,7 +85,7 @@ int intc_enable(struct fpga_ip *c, uint32_t mask, int flags)
 
 	/* Clear pending IRQs */
 	XIntc_Out32(base + XIN_IAR_OFFSET, mask);
-	
+
 	for (int i = 0; i < intc->num_irqs; i++) {
 		if (mask & (1 << i))
 			intc->flags[i] = flags;
@@ -145,7 +145,7 @@ uint64_t intc_wait(struct fpga_ip *c, int irq)
 		ssize_t ret = read(intc->efds[irq], &cnt, sizeof(cnt));
 		if (ret != sizeof(cnt))
 			return 0;
-		
+
 		return cnt;
 	}
 }

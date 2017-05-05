@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -34,7 +34,7 @@ Test(utils, box_muller)
 
 	for (int i = 0; i < iter; i++) {
 		n = box_muller(0, 1);
-		
+
 		if      (n > 2 || n < -2) sigma[2]++;
 		else if (n > 1 || n < -1) sigma[1]++;
 		else                     sigma[0]++;
@@ -64,18 +64,18 @@ Test(utils, cpuset)
 	cpu_set_t cset2;
 	uintmax_t int1 = 0x1234567890ABCDEFULL;
 	uintmax_t int2 = 0;
-	
+
 	cpuset_from_integer(int1, &cset1);
-	
+
 	cpulist_create(str, sizeof(str), &cset1);
-	
+
 	ret = cpulist_parse(str, &cset2, 1);
 	cr_assert_eq(ret, 0);
-	
+
 	cr_assert(CPU_EQUAL(&cset1, &cset2));
-	
+
 	cpuset_to_integer(&cset2, &int2);
-	
+
 	cr_assert_eq(int1, int2);
 }
 
@@ -83,14 +83,14 @@ Test(utils, memdup)
 {
 	char orig[1024], *copy;
 	size_t len;
-	
+
 	len = read_random(orig, sizeof(orig));
 	cr_assert_eq(len, sizeof(orig));
-	
+
 	copy = memdup(orig, sizeof(orig));
 	cr_assert_not_null(copy);
 	cr_assert_arr_eq(copy, orig, sizeof(orig));
-	
+
 	free(copy);
 }
 
@@ -99,7 +99,7 @@ Test(utils, is_aligned)
 	/* Positive */
 	cr_assert(IS_ALIGNED(1, 1));
 	cr_assert(IS_ALIGNED(128, 64));
-	
+
 	/* Negative */
 	cr_assert(!IS_ALIGNED(55, 16));
 	cr_assert(!IS_ALIGNED(55, 55));
@@ -119,7 +119,7 @@ Test(utils, is_pow2)
 	cr_assert(IS_POW2(1));
 	cr_assert(IS_POW2(2));
 	cr_assert(IS_POW2(64));
-	
+
 	/* Negative */
 	cr_assert(!IS_POW2(0));
 	cr_assert(!IS_POW2(3));
@@ -140,7 +140,7 @@ Test(utils, version)
 	version_parse("1.3", &v2);
 	version_parse("55",  &v3);
 	version_parse("66",  &v4);
-	
+
 	cr_assert_lt(version_cmp(&v1, &v2), 0);
 	cr_assert_eq(version_cmp(&v1, &v1), 0);
 	cr_assert_gt(version_cmp(&v2, &v1), 0);
@@ -151,14 +151,14 @@ Test(utils, sha1sum)
 {
 	int ret;
 	FILE *f = tmpfile();
-	
+
 	unsigned char     hash[SHA_DIGEST_LENGTH];
 	unsigned char expected[SHA_DIGEST_LENGTH] = { 0x69, 0xdf, 0x29, 0xdf, 0x1f, 0xf2, 0xd2, 0x5d, 0xb8, 0x68, 0x6c, 0x02, 0x8d, 0xdf, 0x40, 0xaf, 0xb3, 0xc1, 0xc9, 0x4d };
-	
+
 	/* Write the first 512 fibonaccia numbers to the file */
 	for (int i = 0, a = 0, b = 1, c; i < 512; i++, a = b, b = c) {
 		c = a + b;
-		
+
 		fwrite((void *) &c, sizeof(c), 1, f);
 	}
 

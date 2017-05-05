@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -37,20 +37,20 @@ int hook_init(struct hook *h, struct hook_type *vt, struct path *p)
 	int ret;
 
 	assert(h->state == STATE_DESTROYED);
-	
+
 	h->priority = vt->priority;
 	h->path = p;
 
 	h->_vt = vt;
 	h->_vd = alloc(vt->size);
 
-	
+
 	ret = h->_vt->init ? h->_vt->init(h) : 0;
 	if (ret)
 		return ret;
-	
+
 	h->state = STATE_INITIALIZED;
-	
+
 	return 0;
 }
 
@@ -67,7 +67,7 @@ int hook_parse(struct hook *h, config_setting_t *cfg)
 		return ret;
 
 	h->state = STATE_PARSED;
-	
+
 	return 0;
 }
 
@@ -76,16 +76,16 @@ int hook_destroy(struct hook *h)
 	int ret;
 
 	assert(h->state != STATE_DESTROYED);
-	
+
 	ret = h->_vt->destroy ? h->_vt->destroy(h) : 0;
 	if (ret)
 		return ret;
-	
+
 	if (h->_vd)
 		free(h->_vd);
-	
+
 	h->state = STATE_DESTROYED;
-	
+
 	return 0;
 }
 
@@ -157,7 +157,7 @@ int hook_cmp_priority(const void *a, const void *b)
 {
 	struct hook *ha = (struct hook *) a;
 	struct hook *hb = (struct hook *) b;
-	
+
 	return ha->priority - hb->priority;
 }
 
@@ -172,26 +172,26 @@ int hook_parse_list(struct list *list, config_setting_t *cfg, struct path *o)
 
 	for (int i = 0; i < config_setting_length(cfg); i++) {
 		config_setting_t *cfg_hook = config_setting_get_elem(cfg, i);
-		
+
 		const char *name = config_setting_name(cfg_hook);
-		
+
 		p = plugin_lookup(PLUGIN_TYPE_HOOK, name);
 		if (!p)
 			continue; /* We ignore all non hook settings in this libconfig object setting */
-		
+
 		if (!config_setting_is_group(cfg_hook))
 			cerror(cfg_hook, "The 'hooks' setting must be an array of strings.");
-	
+
 		struct hook h = { .state = STATE_DESTROYED };
-	
+
 		ret = hook_init(&h, &p->hook, o);
 		if (ret)
 			continue;
-		
+
 		/* If the user does not assign a priority, we will use the
 		 * position of the hook section in the congiguration file. */
 		h.priority = priority++;
-		
+
 		ret = hook_parse(&h, cfg_hook);
 		if (ret)
 			continue;

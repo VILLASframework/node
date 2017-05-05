@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -35,7 +35,7 @@ struct decimate {
 static int decimate_init(struct hook *h)
 {
 	struct decimate *p = h->_vd;
-	
+
 	p->counter = 0;
 
 	return 0;
@@ -44,7 +44,7 @@ static int decimate_init(struct hook *h)
 static int decimate_parse(struct hook *h, config_setting_t *cfg)
 {
 	struct decimate *p = h->_vd;
-	
+
 	if (!cfg)
 		error("Missing configuration for hook: '%s'", plugin_name(h->_vt));
 
@@ -57,18 +57,18 @@ static int decimate_parse(struct hook *h, config_setting_t *cfg)
 static int decimate_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {
 	struct decimate *p = h->_vd;
-	
+
 	int i, ok;
 	for (i = 0, ok = 0; i < *cnt; i++) {
 		if (p->counter++ % p->ratio == 0) {
 			struct sample *tmp;
-			
+
 			tmp = smps[ok];
 			smps[ok++] = smps[i];
 			smps[i] = tmp;
 		}
 	}
-	
+
 	*cnt = ok;
 
 	return 0;
@@ -88,5 +88,5 @@ static struct plugin p = {
 };
 
 REGISTER_PLUGIN(&p)
-	
+
 /** @} */

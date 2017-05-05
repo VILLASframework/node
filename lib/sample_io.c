@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -50,13 +50,13 @@ int sample_io_fscan(FILE *f, struct sample *s, enum sample_io_format fmt, int *f
 int sample_io_villas_print(char *buf, size_t len, struct sample *s, int flags)
 {
 	size_t off = snprintf(buf, len, "%llu", (unsigned long long) s->ts.origin.tv_sec);
-	
+
 	if (flags & SAMPLE_IO_NANOSECONDS)
 		off += snprintf(buf + off, len - off, ".%09llu", (unsigned long long) s->ts.origin.tv_nsec);
-	
+
 	if (flags & SAMPLE_IO_OFFSET)
 		off += snprintf(buf + off, len - off, "%+e", time_delta(&s->ts.origin, &s->ts.received));
-	
+
 	if (flags & SAMPLE_IO_SEQUENCE)
 		off += snprintf(buf + off, len - off, "(%u)", s->sequence);
 
@@ -86,7 +86,7 @@ int sample_io_villas_scan(const char *line, struct sample *s, int *fl)
 	int flags = 0;
 	double offset = 0;
 
-	/* Format: Seconds.NanoSeconds+Offset(SequenceNumber) Value1 Value2 ... 
+	/* Format: Seconds.NanoSeconds+Offset(SequenceNumber) Value1 Value2 ...
 	 * RegEx: (\d+(?:\.\d+)?)([-+]\d+(?:\.\d+)?(?:e[+-]?\d+)?)?(?:\((\d+)\))?
 	 *
 	 * Please note that only the seconds and at least one value are mandatory
@@ -120,17 +120,17 @@ int sample_io_villas_scan(const char *line, struct sample *s, int *fl)
 		else
 			return -4;
 	}
-	
+
 	/* Optional: sequence */
 	if (*end == '(') {
 		ptr = end + 1;
-		
+
 		s->sequence = strtoul(ptr, &end, 10);
 		if (ptr != end)
 			flags |= SAMPLE_IO_SEQUENCE;
 		else
 			return -5;
-		
+
 		if (*end == ')')
 			end++;
 	}
@@ -151,10 +151,10 @@ int sample_io_villas_scan(const char *line, struct sample *s, int *fl)
 		if (end == ptr) /* There are no valid FP values anymore */
 			break;
 	}
-	
+
 	if (s->length > 0)
 		flags |= SAMPLE_IO_VALUES;
-	
+
 	if (fl)
 		*fl = flags;
 	if (flags & SAMPLE_IO_OFFSET) {
@@ -171,20 +171,20 @@ int sample_io_villas_fprint(FILE *f, struct sample *s, int flags)
 {
 	char line[4096];
 	int ret;
-	
+
 	ret = sample_io_villas_print(line, sizeof(line), s, flags);
 	if (ret)
 		return ret;
 
 	fputs(line, f);
-	
+
 	return 0;
 }
 
 int sample_io_villas_fscan(FILE *f, struct sample *s, int *fl)
 {
 	char *ptr, line[4096];
-	
+
 skip:	if (fgets(line, sizeof(line), f) == NULL)
 		return -1; /* An error occured */
 
@@ -192,7 +192,7 @@ skip:	if (fgets(line, sizeof(line), f) == NULL)
 	for (ptr = line; isspace(*ptr); ptr++);
 	if (*ptr == '\0' || *ptr == '#')
 		goto skip;
-	
+
 	return sample_io_villas_scan(line, s, fl);
 }
 

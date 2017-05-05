@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -57,11 +57,11 @@ int if_destroy(struct interface *i)
 {
 	/* List members are freed by the nodes they belong to. */
 	list_destroy(&i->sockets, NULL, false);
-	
+
 	rtnl_qdisc_put(i->tc_qdisc);
 
 	free(i);
-	
+
 	return 0;
 }
 
@@ -138,30 +138,30 @@ int if_get_egress(struct sockaddr *sa, struct rtnl_link **link)
 		case AF_INET6: {
 			struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *) sa;
-			
+
 			struct nl_addr *addr = (sa->sa_family == AF_INET)
 				? nl_addr_build(sin->sin_family, &sin->sin_addr.s_addr, sizeof(sin->sin_addr.s_addr))
 				: nl_addr_build(sin6->sin6_family, sin6->sin6_addr.s6_addr, sizeof(sin6->sin6_addr));
-			
+
 			ifindex = nl_get_egress(addr); nl_addr_put(addr);
 			if (ifindex < 0)
 				error("Netlink error: %s", nl_geterror(ifindex));
 			break;
 		}
-		
+
 		case AF_PACKET: {
 			struct sockaddr_ll *sll = (struct sockaddr_ll *) sa;
-			
+
 			ifindex = sll->sll_ifindex;
 			break;
 		}
 	}
-	
+
 	struct nl_cache *cache = nl_cache_mngt_require("route/link");
 	*link = rtnl_link_get(cache, ifindex);
 	if (!*link)
 		return -1;
-	
+
 	return 0;
 }
 

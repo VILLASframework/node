@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -74,13 +74,13 @@ int super_node_init(struct super_node *sn)
 	list_init(&sn->nodes);
 	list_init(&sn->paths);
 	list_init(&sn->plugins);
-	
+
 	/* Default values */
 	sn->affinity = 0;
 	sn->priority = 0;
 	sn->stats = 0;
 	sn->hugepages = DEFAULT_NR_HUGEPAGES;
-	
+
 	sn->state = STATE_INITIALIZED;
 
 	return 0;
@@ -110,19 +110,19 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 			char *include_dir = dirname(uri_cpy);
 
 			config_set_include_dir(&sn->cfg, include_dir);
-			
+
 			free(uri_cpy);
 
 			af = NULL;
 			f = fopen(uri, "r");
-			
+
 			info("Reading configuration from local file: %s", uri);
 		}
 		/* Use advio (libcurl) to fetch the config from a remote */
 		else {
 			af = afopen(uri, "r");
 			f = af ? af->file : NULL;
-			
+
 			info("Reading configuration from URI: %s", uri);
 		}
 
@@ -138,10 +138,10 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 		if (ret != CONFIG_TRUE) {
 			/* This does not seem to be a valid libconfig configuration.
 			 * Lets try to parse it as JSON instead. */
-			
+
 			json_error_t err;
 			json_t *json;
-			
+
 			json = json_loadf(f, 0, &err);
 			if (json) {
 				ret = json_to_config(json, cfg_root);
@@ -173,17 +173,17 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 	else { INDENT
 		warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 	}
-	
+
 	return 0;
 }
 
 int super_node_parse_cli(struct super_node *sn, int argc, char *argv[])
 {
 	char *uri = (argc == 2) ? argv[1] : NULL;
-	
+
 	sn->cli.argc = argc;
 	sn->cli.argv = argv;
-	
+
 	return super_node_parse_uri(sn, uri);
 }
 
@@ -193,7 +193,7 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 
 	assert(sn->state != STATE_STARTED);
 	assert(sn->state != STATE_DESTROYED);
-	
+
 	config_setting_t *cfg_nodes, *cfg_paths, *cfg_plugins, *cfg_logging, *cfg_web;
 
 	super_node_parse_global(sn, cfg);
@@ -215,17 +215,17 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 
 		for (int i = 0; i < config_setting_length(cfg_plugins); i++) {
 			struct config_setting_t *cfg_plugin = config_setting_get_elem(cfg_plugins, i);
-		
+
 			struct plugin plugin = { .state = STATE_DESTROYED };
-			
+
 			ret = plugin_init(&plugin);
 			if (ret)
 				cerror(cfg_plugin, "Failed to initialize plugin");
-		
+
 			ret = plugin_parse(&plugin, cfg_plugin);
 			if (ret)
 				cerror(cfg_plugin, "Failed to parse plugin");
-		
+
 			list_push(&sn->plugins, memdup(&plugin, sizeof(plugin)));
 		}
 	}
@@ -251,9 +251,9 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 				cerror(cfg_node, "Invalid node type: %s", type);
 
 			struct node *n = alloc(sizeof(struct node));
-			
+
 			n->state = STATE_DESTROYED;
-			
+
 			ret = node_init(n, &p->node);
 			if (ret)
 				cerror(cfg_node, "Failed to initialize node");
@@ -261,7 +261,7 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 			ret = node_parse(n, cfg_node);
 			if (ret)
 				cerror(cfg_node, "Failed to parse node");
-		
+
 			list_push(&sn->nodes, n);
 		}
 	}
@@ -276,7 +276,7 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 			config_setting_t *cfg_path = config_setting_get_elem(cfg_paths, i);
 
 			struct path p = { .state = STATE_DESTROYED };
-			
+
 			ret = path_init(&p, sn);
 			if (ret)
 				cerror(cfg_path, "Failed to init path");
@@ -284,16 +284,16 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 			ret = path_parse(&p, cfg_path, &sn->nodes);
 			if (ret)
 				cerror(cfg_path, "Failed to parse path");
-		
+
 			list_push(&sn->paths, memdup(&p, sizeof(p)));
 
 			if (p.reverse) {
 				struct path r = { .state = STATE_DESTROYED };
-				
+
 				ret = path_init(&r, sn);
 				if (ret)
 					cerror(cfg_path, "Failed to init path");
-	
+
 				ret = path_reverse(&p, &r);
 				if (ret)
 					cerror(cfg_path, "Failed to reverse path %s", path_name(&p));
@@ -302,7 +302,7 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 			}
 		}
 	}
-	
+
 	sn->state = STATE_PARSED;
 
 	return 0;
@@ -311,7 +311,7 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 int super_node_check(struct super_node *sn)
 {
 	int ret;
-	
+
 	assert(sn->state != STATE_DESTROYED);
 
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) {
@@ -321,7 +321,7 @@ int super_node_check(struct super_node *sn)
 		if (ret)
 			error("Invalid configuration for node %s", node_name(n));
 	}
-	
+
 	for (size_t i = 0; i < list_length(&sn->paths); i++) {
 		struct path *p = list_at(&sn->paths, i);
 
@@ -329,7 +329,7 @@ int super_node_check(struct super_node *sn)
 		if (ret)
 			error("Invalid configuration for path %s", path_name(p));
 	}
-	
+
 	sn->state = STATE_CHECKED;
 
 	return 0;
@@ -345,14 +345,14 @@ int super_node_start(struct super_node *sn)
 	log_start(&sn->log);
 	api_start(&sn->api);
 	web_start(&sn->web);
-	
+
 	info("Start node types");
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
 		struct node *n = list_at(&sn->nodes, i);
-		
+
 		node_type_start(n->_vt, sn);
 	}
-	
+
 	info("Starting nodes");
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
 		struct node *n = list_at(&sn->nodes, i);
@@ -367,7 +367,7 @@ int super_node_start(struct super_node *sn)
 	info("Starting paths");
 	for (size_t i = 0; i < list_length(&sn->paths); i++) { INDENT
 		struct path *p = list_at(&sn->paths, i);
-		
+
 		if (p->enabled) {
 			path_init2(p);
 			path_start(p);
@@ -375,9 +375,9 @@ int super_node_start(struct super_node *sn)
 		else
 			warn("Path %s is disabled. Skipping...", path_name(p));
 	}
-	
+
 	sn->state = STATE_STARTED;
-	
+
 	return 0;
 }
 
@@ -417,9 +417,9 @@ int super_node_stop(struct super_node *sn)
 	web_stop(&sn->web);
 	api_stop(&sn->api);
 	log_stop(&sn->log);
-	
+
 	sn->state = STATE_STOPPED;
-	
+
 	return 0;
 }
 
@@ -438,6 +438,6 @@ int super_node_destroy(struct super_node *sn)
 	config_destroy(&sn->cfg);
 
 	sn->state = STATE_DESTROYED;
-	
+
 	return 0;
 }

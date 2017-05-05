@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -24,7 +24,7 @@ function fileStart(e)
 {
 	var file = e.target.files[0];
 	var reader = new FileReader();
-	
+
 	var start;
 	var msgs = [ ]
 	var position = 0;
@@ -43,14 +43,14 @@ function fileStart(e)
 		if (msgs.length > 0) {
 			var offset = Date.now() - msgs[0].ts;
 			var data = [];
-			
+
 			for (var i = 0; i < msgs.length; i++)
 				data.push(msgs[i].ts + offset, msgs[i].data[0]);
-		
+
 			plotData.push(data);
 		}
 		else {
-			
+
 		}
 	};
 

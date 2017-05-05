@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -67,7 +67,7 @@ static int skip_first_parse(struct hook *h, config_setting_t *cfg)
 	}
 	else
 		cerror(cfg, "Missing setting 'seconds' or 'samples' for hook '%s'", plugin_name(h->_vt));
-	
+
 	return 0;
 }
 
@@ -76,7 +76,7 @@ static int skip_first_restart(struct hook *h)
 	struct skip_first *p = h->_vd;
 
 	p->state = HOOK_SKIP_FIRST_STATE_STARTED;
-	
+
 	return 0;
 }
 
@@ -90,12 +90,12 @@ static int skip_first_read(struct hook *h, struct sample *smps[], size_t *cnt)
 			case HOOK_SKIP_MODE_SAMPLES:
 				p->samples.until = smps[0]->sequence + p->samples.wait;
 				break;
-			
+
 			case HOOK_SKIP_MODE_SECONDS:
 				p->seconds.until = time_add(&smps[0]->ts.origin, &p->seconds.wait);
 				break;
 		}
-		
+
 		p->state = HOOK_SKIP_FIRST_STATE_SKIPPING;
 	}
 
@@ -106,15 +106,15 @@ static int skip_first_read(struct hook *h, struct sample *smps[], size_t *cnt)
 			case HOOK_SKIP_MODE_SAMPLES:
 				skip = p->samples.until > smps[i]->sequence;
 				break;
-			
+
 			case HOOK_SKIP_MODE_SECONDS:
 				skip = time_delta(&p->seconds.until, &smps[i]->ts.origin) < 0;
 				break;
 			default:
 				skip = false;
-				break;	
+				break;
 		}
-		
+
 		if (!skip) {
 			struct sample *tmp;
 
@@ -129,7 +129,7 @@ static int skip_first_read(struct hook *h, struct sample *smps[], size_t *cnt)
 		 * only the first 'ok' samples in 'smps[]' are accepted and further processed.
 		 */
 	}
-	
+
 	*cnt = ok;
 
 	return 0;
@@ -150,5 +150,5 @@ static struct plugin p = {
 };
 
 REGISTER_PLUGIN(&p)
-	
+
 /** @} */

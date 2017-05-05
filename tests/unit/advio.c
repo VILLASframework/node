@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -45,7 +45,7 @@ Test(advio, download)
 
 	len = afread(buffer, 1, sizeof(buffer), af);
 	cr_assert_gt(len, 0, "len=%zu, feof=%u", len, afeof(af));
-	
+
 	cr_assert_arr_eq(buffer, expect, sizeof(expect));
 
 	ret = afclose(af);
@@ -57,33 +57,33 @@ Test(advio, upload)
 	AFILE *af;
 	int ret;
 	size_t len;
-	
+
 	char upload[64];
 	char buffer[64];
-	
+
 	/* Get some random data to upload */
 	len = read_random(upload, sizeof(upload));
 	cr_assert_eq(len, sizeof(upload));
-	
+
 	/* Open file for writing */
 	af = afopen(BASE_URI "/upload", "w+");
 	cr_assert(af, "Failed to download file");
-	
+
 	len = afwrite(upload, 1, sizeof(upload), af);
 	cr_assert_eq(len, sizeof(upload));
-	
+
 	ret = afclose(af);
 	cr_assert_eq(ret, 0, "Failed to close/upload file");
-	
+
 	/* Open for reading and comparison */
 	af = afopen(BASE_URI "/upload", "r");
 	cr_assert(af, "Failed to download file");
-	
+
 	len = afread(buffer, 1, sizeof(upload), af);
 	cr_assert_eq(len, sizeof(upload));
-	
+
 	cr_assert_arr_eq(buffer, upload, len);
-	
+
 	ret = afclose(af);
 	cr_assert(ret == 0, "Failed to close file");
 }
@@ -106,7 +106,7 @@ Test(advio, append)
 	/* The append file might already exist and be not empty from a previous run. */
 	ret = ftruncate(afileno(af), 0);
 	cr_assert_eq(ret, 0);
-	
+
 	char c;
 	fseek(af->file, 0, SEEK_SET);
 	if (af->file) {
@@ -123,20 +123,20 @@ Test(advio, append)
 	/* Open file for writing second chunk */
 	af = afopen(BASE_URI "/append", "a");
 	cr_assert(af, "Failed to download file");
-	
+
 	len = afwrite(append2, 1, sizeof(append2), af);
 	cr_assert_eq(len, sizeof(append2));
-	
+
 	ret = afclose(af);
 	cr_assert_eq(ret, 0, "Failed to close/upload file");
-	
+
 	/* Open for reading and comparison */
 	af = afopen(BASE_URI "/append", "r");
 	cr_assert(af, "Failed to download file");
-	
+
 	len = afread(buffer, 1, sizeof(buffer), af);
 	cr_assert_eq(len, sizeof(buffer));
-	
+
 	ret = afclose(af);
 	cr_assert(ret == 0, "Failed to close file");
 

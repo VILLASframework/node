@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -42,9 +42,9 @@ struct node_type {
 
 	struct list instances;		/**< A list of all existing nodes of this type. */
 	size_t size;			/**< Size of private data bock. @see node::_vd */
-	
+
 	enum state state;
-	
+
 	/** Global initialization per node type.
 	 *
 	 * This callback is invoked once per node-type.
@@ -62,13 +62,13 @@ struct node_type {
 	 * @retval <0	Error. Something went wrong.
 	 */
 	int (*deinit)();
-	
-	/** Allocate memory for an instance of this type. 
+
+	/** Allocate memory for an instance of this type.
 	 *
 	 * @return A pointer to the node-type specific private data.
 	 */
 	void * (*create)();
-	
+
 	/** Free memory of an instance of this type.
 	 *
 	 * @param n	A pointer to the node object.
@@ -135,7 +135,7 @@ struct node_type {
 	 * @return		The number of messages actually sent.
 	 */
 	int (*write)(struct node *n, struct sample *smps[], unsigned cnt);
-	
+
 	/** Reverse source and destination of a node.
 	 *
 	 * This is not supported by all node types!

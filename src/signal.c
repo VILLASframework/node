@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
 {
 	struct log log;
 	struct timespec start, now;
-	
+
 	enum {
 		MODE_RT,
 		MODE_NON_RT
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 	double running;
 	int type = TYPE_MIXED;
 	int values = 1;
-	int limit = -1;	
+	int limit = -1;
 	int counter, tfd, steps, level = V;
 
 	/* Parse optional command line arguments */
@@ -122,9 +122,9 @@ int main(int argc, char *argv[])
 				usage();
 				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
-		
+
 		continue;
-		
+
 check:		if (optarg == endptr)
 			error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
@@ -133,9 +133,9 @@ check:		if (optarg == endptr)
 		usage();
 		exit(EXIT_FAILURE);
 	}
-	
+
 	char *typestr = argv[optind];
-		
+
 	/* Parse signal type */
 	if      (!strcmp(typestr, "random"))
 		type = TYPE_RANDOM;
@@ -151,7 +151,7 @@ check:		if (optarg == endptr)
 		type = TYPE_MIXED;
 	else
 		error("Invalid signal type: %s", typestr);
-	
+
 	log_init(&log, level, LOG_ALL);
 
 	/* Allocate memory for message buffer */
@@ -181,10 +181,10 @@ check:		if (optarg == endptr)
 		}
 		else {
 			struct timespec offset;
-			
+
 			running = counter * 1.0 / rate;
 			offset = time_from_double(running);
-			
+
 			now = time_add(&start, &offset);
 		}
 
@@ -193,7 +193,7 @@ check:		if (optarg == endptr)
 		s->length    = values;
 
 		for (int i = 0; i < values; i++) {
-			int rtype = (type != TYPE_MIXED) ? type : i % 4;			
+			int rtype = (type != TYPE_MIXED) ? type : i % 4;
 			switch (rtype) {
 				case TYPE_RANDOM:   s->data[i].f += box_muller(0, stddev); 					break;
 				case TYPE_SINE:	    s->data[i].f = ampl *        sin(running * freq * 2 * M_PI);		break;
@@ -202,17 +202,17 @@ check:		if (optarg == endptr)
 				case TYPE_RAMP:     s->data[i].f = fmod(counter, rate / freq); /** @todo send as integer? */	break;
 			}
 		}
-			
+
 		sample_io_villas_fprint(stdout, s, SAMPLE_IO_ALL & ~SAMPLE_IO_OFFSET);
 		fflush(stdout);
-		
+
 		/* Throttle output if desired */
 		if (mode == MODE_RT) {
 			/* Block until 1/p->rate seconds elapsed */
 			steps = timerfd_wait(tfd);
 			if (steps > 1)
 				warn("Missed steps: %u", steps);
-			
+
 			counter += steps;
 		}
 		else

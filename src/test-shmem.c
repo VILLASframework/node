@@ -13,12 +13,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -52,17 +52,17 @@ void quit(int sig)
 int main(int argc, char* argv[])
 {
 	struct log log;
-	
+
 	log_init(&log, V, LOG_ALL);
 	log_start(&log);
-	
+
 	int readcnt, writecnt, avail;
 
 	if (argc != 3) {
 		usage();
 		return 1;
 	}
-	
+
 	char *object = argv[1];
 	int vectorize = atoi(argv[2]);
 
@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
 	signal(SIGINT, quit);
 	signal(SIGTERM, quit);
 	struct sample *insmps[vectorize], *outsmps[vectorize];
-	
+
 	while (1) {
 		readcnt = shmem_shared_read(shared, insmps, vectorize);
 		if (readcnt == -1) {
@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
 		writecnt = shmem_shared_write(shared, outsmps, avail);
 		if (writecnt < avail)
 			warn("Short write");
-		
+
 		info("Read / Write: %d / %d", readcnt, writecnt);
 	}
 }

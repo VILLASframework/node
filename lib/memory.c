@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -43,13 +43,13 @@ int memory_init(int hugepages)
 	struct rlimit l;
 
 	info("Initialize memory sub-system");
-	
+
 	pagecnt = kernel_get_nr_hugepages();
 	if (pagecnt < hugepages) { INDENT
 		kernel_set_nr_hugepages(hugepages);
 		debug(LOG_MEM | 2, "Reserved %d hugepages (was %d)", hugepages, pagecnt);
 	}
-	
+
 	pagesz = kernel_get_hugepage_size();
 	if (pagesz < 0)
 		return -1;
@@ -57,15 +57,15 @@ int memory_init(int hugepages)
 	ret = getrlimit(RLIMIT_MEMLOCK, &l);
 	if (ret)
 		return ret;
-	
+
 	if (l.rlim_cur < pagesz * pagecnt) { INDENT
 		l.rlim_cur = pagesz * pagecnt;
 		l.rlim_max = l.rlim_cur;
-		
+
 		ret = setrlimit(RLIMIT_MEMLOCK, &l);
 		if (ret)
 			return ret;
-		
+
 		debug(LOG_MEM | 2, "Increased ressource limit of locked memory to %d bytes", pagesz * pagecnt);
 	}
 #endif
@@ -75,7 +75,7 @@ int memory_init(int hugepages)
 void * memory_alloc(struct memtype *m, size_t len)
 {
 	void *ptr = m->alloc(m, len, sizeof(void *));
-		
+
 	debug(LOG_MEM | 5, "Allocated %#zx bytes of %s memory: %p", len, m->name, ptr);
 
 	return ptr;
@@ -84,7 +84,7 @@ void * memory_alloc(struct memtype *m, size_t len)
 void * memory_alloc_aligned(struct memtype *m, size_t len, size_t alignment)
 {
 	void *ptr = m->alloc(m, len, alignment);
-	
+
 	debug(LOG_MEM | 5, "Allocated %#zx bytes of %#zx-byte-aligned %s memory: %p", len, alignment, m->name, ptr);
 
 	return ptr;

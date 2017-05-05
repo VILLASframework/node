@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -80,25 +80,25 @@ static void * producer(void *ctx)
 {
 	int ret;
 	struct param *p = ctx;
-	
+
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
-	
+
 	/** @todo Criterion cr_log() is broken for multi-threaded programs */
 	//cr_log_info("producer: tid = %lu", thread_get_id());
 
 	/* Wait for global start signal */
 	while (p->start == 0)
 		pthread_yield();
-	
+
 	//cr_log_info("producer: wait for %zd nops", nops);
-	
+
 	/* Wait for a random time */
 	for (size_t i = 0; i != nops; i += 1)
 		nop();
-	
+
 	//cr_log_info("producer: start pushing");
-	
+
 	/* Enqueue */
 	for (unsigned long count = 0; count < p->iter_count; count++) {
 		do {
@@ -106,9 +106,9 @@ static void * producer(void *ctx)
 			pthread_yield();
 		} while (ret != 1);
 	}
-	
+
 	//cr_log_info("producer: finished");
-	
+
 	return NULL;
 }
 
@@ -116,37 +116,37 @@ static void * consumer(void *ctx)
 {
 	int ret;
 	struct param *p = ctx;
-	
+
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
-	
+
 	//cr_log_info("consumer: tid = %lu", thread_get_id());
 
 	/* Wait for global start signal */
 	while (p->start == 0)
 		pthread_yield();
-	
+
 	//cr_log_info("consumer: wait for %zd nops", nops);
-	
+
 	/* Wait for a random time */
 	for (size_t i = 0; i != nops; i += 1)
 		nop();
-	
+
 	//cr_log_info("consumer: start pulling");
-	
+
 	/* Dequeue */
 	for (unsigned long count = 0; count < p->iter_count; count++) {
 		void *ptr;
-		
+
 		do {
 			ret = queue_pull(&p->queue, &ptr);
 		} while (ret != 1);
-		
+
 		//cr_log_info("consumer: %lu\n", count);
-		
+
 		//cr_assert_eq((intptr_t) ptr, count);
 	}
-	
+
 	//cr_log_info("consumer: finished");
 
 	return NULL;
@@ -169,7 +169,7 @@ void * producer_consumer(void *ctx)
 
 	for (int iter = 0; iter < p->iter_count; ++iter) {
 		pthread_barrier_wait(&barrier);
-		
+
 		for (size_t i = 0; i < p->batch_size; i++) {
 			void *ptr = (void *) (iter * p->batch_size + i);
 			while (!queue_push(&p->queue, ptr))
@@ -200,13 +200,13 @@ void * producer_consumer_many(void *ctx)
 	/* Wait for a random time */
 	for (size_t i = 0; i != nops; i += 1)
 		nop();
-	
+
 	void *ptrs[p->batch_size];
 
 	for (int iter = 0; iter < p->iter_count; ++iter) {
 		for (size_t i = 0; i < p->batch_size; i++)
 			ptrs[i] = (void *) (iter * p->batch_size + i);
-		
+
 		pthread_barrier_wait(&barrier);
 
 		int pushed = 0;
@@ -235,15 +235,15 @@ Test(queue, single_threaded)
 		.queue_size = 1 << 10,
 		.start = 1 /* we start immeadiatly */
 	};
-	
+
 	ret = queue_init(&p.queue, p.queue_size, &memtype_heap);
 	cr_assert_eq(ret, 0, "Failed to create queue");
-	
+
 	producer(&p);
 	consumer(&p);
-	
+
 	cr_assert_eq(queue_available(&q), 0);
-	
+
 	ret = queue_destroy(&p.queue);
 	cr_assert_eq(ret, 0, "Failed to create queue");
 }
@@ -288,25 +288,25 @@ ParameterizedTestParameters(queue, multi_threaded)
 			.memtype = &memtype_hugepage
 		}
 	};
-	
+
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
 }
 
 ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20)
 {
 	int ret, cycpop;
-	
+
 	pthread_t threads[p->thread_count];
-	
+
 	p->start = 0;
-	
+
 	ret = queue_init(&p->queue, p->queue_size, &memtype_heap);
 	cr_assert_eq(ret, 0, "Failed to create queue");
 
 	uint64_t start_tsc_time, end_tsc_time;
-	
+
 	pthread_barrier_init(&barrier, NULL, p->thread_count);
-	
+
 	for (int i = 0; i < p->thread_count; ++i)
 		pthread_create(&threads[i], NULL, p->thread_func, p);
 
@@ -317,12 +317,12 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20)
 
 	for (int i = 0; i < p->thread_count; ++i)
 		pthread_join(threads[i], NULL);
-	
+
 	pthread_barrier_destroy(&barrier);
 
 	end_tsc_time = rdtsc();
 	cycpop = (end_tsc_time - start_tsc_time) / p->iter_count;
-	
+
 	if (cycpop < 400)
 		cr_log_info("cycles/op: %u\n", cycpop);
 	else
@@ -330,7 +330,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20)
 
 	ret = queue_available(&q);
 	cr_assert_eq(ret, 0);
-	
+
 	ret = queue_destroy(&p->queue);
 	cr_assert_eq(ret, 0, "Failed to destroy queue");
 }
@@ -339,10 +339,10 @@ Test(queue, init_destroy)
 {
 	int ret;
 	struct queue q = { .state = STATE_DESTROYED };
-	
+
 	ret = queue_init(&q, 1024, &memtype_heap);
 	cr_assert_eq(ret, 0); /* Should succeed */
-	
+
 	ret = queue_destroy(&q);
 	cr_assert_eq(ret, 0); /* Should succeed */
 }

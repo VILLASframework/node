@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -33,9 +33,9 @@
 int rt_init(int priority, int affinity)
 {
 	info("Initialize real-time sub-system");
-	
+
 	{ INDENT
-	
+
 	int is_rt;
 
 	/* Use FIFO scheduler with real time priority */
@@ -52,7 +52,7 @@ int rt_init(int priority, int affinity)
 		rt_set_affinity(affinity);
 	else
 		warn("You should use the 'affinity' setting to pin VILLASnode to dedicate CPU cores");
-	
+
 	}
 
 	return 0;
@@ -82,7 +82,7 @@ int rt_set_affinity(int affinity)
 		CPU_XOR(&cset_non_isol, &cset_isol, &cset_pin);
 		if (CPU_COUNT(&cset_non_isol) > 0) {
 			char isol[128], pin[128];
-	
+
 			cpulist_create(isol, sizeof(isol), &cset_isol);
 			cpulist_create(pin, sizeof(pin), &cset_pin);
 
@@ -98,7 +98,7 @@ int rt_set_affinity(int affinity)
 		serror("Failed to set CPU affinity to %s", list);
 
 	debug(LOG_KERNEL | 3, "Set affinity to %s", list);
-	
+
 	return 0;
 }
 
@@ -114,7 +114,7 @@ int rt_set_priority(int priority)
 		serror("Failed to set real time priority");
 
 	debug(LOG_KERNEL | 3, "Task priority set to %u", priority);
-	
+
 	return 0;
 }
 

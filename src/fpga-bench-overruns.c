@@ -45,15 +45,15 @@ static int lapack_generate_workload(int N, double *C)
 
 static int lapack_workload(int N, double *A)
 {
-	int info = 0; 
+	int info = 0;
 	int lworkspace = N;
-	int ipiv[N]; 
-	double workspace[N]; 
+	int ipiv[N];
+	double workspace[N];
 
 	dgetrf_(&N, &N, A, &N, ipiv, &info);
 	if (info > 0)
 		error("Failed to pivot matrix");
-	
+
 	dgetri_(&N, A, &N, ipiv, workspace, &lworkspace, &info);
 	if (info > 0)
 		error("Failed to LU factorized matrix");
@@ -74,7 +74,7 @@ int fpga_benchmark_overruns(struct fpga_card *c)
 	float period = 50e-6;
 	int runs = 1.0 / period;
 	int overruns;
-	
+
 	info("runs = %u", runs);
 
 	switch_connect(c->sw, dm, rtds);
@@ -88,7 +88,7 @@ int fpga_benchmark_overruns(struct fpga_card *c)
 	FILE *g = fopen(fn, "w");
 	fprintf(g, "# period = %f\n", period);
 	fprintf(g, "# runs = %u\n", runs);
-	
+
 	struct dma_mem mem;
 	ret = dma_alloc(dm, &mem, 0x1000, 0);
 	if (ret)
@@ -104,7 +104,7 @@ int fpga_benchmark_overruns(struct fpga_card *c)
 
 		overruns = 0;
 		total = 0;
-		
+
 		for (int i = 0; i < 2000; i++) {
 			dma_read(dm, mem.base_phys, 0x200);
 			dma_read_complete(dm, NULL, NULL);
@@ -135,7 +135,7 @@ int fpga_benchmark_overruns(struct fpga_card *c)
 
 		info("iter = %u clks = %ju overruns = %u", p, total / runs, overruns);
 		fprintf(g, "%u %ju %u\n", p, total / runs, overruns);
-		
+
 		if (overruns >= runs)
 			break;
 	}

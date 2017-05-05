@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -62,7 +62,7 @@ int shmem_parse(struct node *n, config_setting_t *cfg)
 			const char *elm = config_setting_get_string_elem(exec_cfg, i);
 			if (!elm)
 				cerror(exec_cfg, "Invalid format for exec");
-			
+
 			shm->exec[i] = strdup(elm);
 		}
 
@@ -77,13 +77,13 @@ int shmem_open(struct node *n)
 	struct shmem *shm = n->_vd;
 	int ret;
 	size_t len;
-	
+
 	shm->fd = shm_open(shm->name, O_RDWR | O_CREAT, 0600);
 	if (shm->fd < 0)
 		serror("Opening shared memory object failed");
-	
+
 	len = shmem_total_size(shm->queuelen, shm->queuelen, shm->samplelen);
-	
+
 	ret = ftruncate(shm->fd, len);
 	if (ret < 0)
 		serror("Setting size of shared memory object failed");
@@ -161,10 +161,10 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 	recv = shm->polling ? queue_pull_many(&shm->shared->in.q, (void**) smps, cnt)
 			   : queue_signalled_pull_many(&shm->shared->in.qs, (void**) smps, cnt);
-	
+
 	if (recv <= 0)
 		return recv;
-	
+
 	/* Check if remote process is still running */
 	ret = atomic_load_explicit(&shm->shared->ext_stopped, memory_order_relaxed);
 	if (ret)
@@ -178,7 +178,7 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 	struct shmem *shm = n->_vd;
 	struct sample *shared_smps[cnt]; /* Samples need to be copied to the shared pool first */
 	int avail, pushed, len;
-	
+
 	avail = sample_alloc(&shm->shared->pool, shared_smps, cnt);
 	if (avail != cnt)
 		warn("Pool underrun for shmem node %s", shm->name);
@@ -188,15 +188,15 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 		shared_smps[i]->source = NULL;
 		shared_smps[i]->sequence = smps[i]->sequence;
 		shared_smps[i]->ts = smps[i]->ts;
-		
+
 		len = MIN(smps[i]->length, shared_smps[i]->capacity);
 		if (len != smps[i]->length)
 			warn("Losing data because of sample capacity mismatch in node %s", node_name(n));
-		
+
 		memcpy(shared_smps[i]->data, smps[i]->data, SAMPLE_DATA_LEN(len));
-		
+
 		shared_smps[i]->length = len;
-		
+
 		sample_get(shared_smps[i]);
 	}
 
@@ -206,7 +206,7 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 		return -1;
 	}
-	
+
 	pushed = shm->polling ? queue_push_many(&shm->shared->out.q, (void**) shared_smps, avail)
 			      : queue_signalled_push_many(&shm->shared->out.qs, (void**) shared_smps, avail);
 
@@ -223,13 +223,13 @@ char * shmem_print(struct node *n)
 
 	strcatf(&buf, "name=%s, queuelen=%d, samplelen=%d, polling=%s",
 		shm->name, shm->queuelen, shm->samplelen, shm->polling ? "yes" : "no");
-	
+
 	if (shm->exec) {
 		strcatf(&buf, ", exec='");
-		
+
 		for (int i = 0; shm->exec[i]; i++)
 			strcatf(&buf, shm->exec[i+1] ? "%s " : "%s", shm->exec[i]);
-		
+
 		strcatf(&buf, "'");
 	}
 

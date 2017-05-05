@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -50,17 +50,17 @@ var xFuture = xDelta * 0.1;
 
 $(document).ready(function() {
 	api = new Api('v1', apiConnected);
-	
+
 	$('#play').click(function(e, ui) {
 		connection = wsConnect(currentNode);
 		paused = false;
 	});
-	
+
 	$('#pause').click(function(e, ui) {
 		connection.close();
 		paused = true;
 	});
-	
+
 	$('#timespan').slider({
 		min : 1000,
 		max : 10000,
@@ -69,7 +69,7 @@ $(document).ready(function() {
 			updatePlotWindow(ui.value);
 		}
 	});
-	
+
 	$('#updaterate').slider({
 		min : 1,
 		max : 50,
@@ -86,12 +86,12 @@ $(document).ready(function() {
 		max : 100,
 		slide : sendData
 	});
-	
+
 	$('.inputs-checkboxes input').checkboxradio()
 		.each(function(idx, elm) {
 			$(elm).change(sendData);
 		});
-	
+
 	timer = setInterval(updatePlot, 1000.0 / updateRate);
 });
 
@@ -127,7 +127,7 @@ function apiConnected()
 	api.request('nodes', {},
 		function(response) {
 			nodes = response;
-			
+
 			console.log("Found " + nodes.length + " nodes:", nodes);
 
 			for (var i = 0; i < nodes.length; i++)
@@ -163,7 +163,7 @@ function updateNodeList()
 			);
 		}
 	});
-	
+
 	$('.node-selector').buttonset();
 }
 
@@ -177,14 +177,14 @@ function updatePlotWindow(delta)
 function updatePlot()
 {
 	var data = [];
-	
+
 	if (!redrawPlot)
 		return;
 
 	// add data to arrays
 	for (var i = 0; i < plotData.length; i++) {
 		var seriesOptions = nodes
-		
+
 		data[i] = {
 			data : plotData[i],
 			shadowSize : 0,
@@ -193,11 +193,11 @@ function updatePlot()
 				lineWidth: 2
 			}
 		}
-		
+
 		if (currentNode.series !== undefined && currentNode.series[i] !== undefined)
 			$.extend(true, data[i], currentNode.series[i]);
 	}
-	
+
 	var options = {
 		xaxis: {
 			min: Date.now() - xPast,
@@ -212,7 +212,7 @@ function updatePlot()
 
 	/* update plot */
 	$.plot('.plot-container div', data, $.extend(true, options, plotOptions));
-	
+
 	redrawPlot = false;
 }
 
@@ -222,18 +222,18 @@ function wsConnect(node)
 	var conn = new WebSocket(url, 'live');
 
 	conn.binaryType = 'arraybuffer';
-	
+
 	conn.onopen = function() {
 		$('#status')
 			.text('Connected')
 			.css('color', 'green');
-			
+
 		console.log('WebSocket connection established');
 	};
 
 	conn.onclose = function(error) {
 		console.log('WebSocket connection closed', error);
-		
+
 		$('#status')
 			.text('Disconnected' + (error.reason != '' ? ' (' + error.reason + ')' : ''))
 			.css('color', 'red');
@@ -248,13 +248,13 @@ function wsConnect(node)
 
 	conn.onerror = function(error) {
 		console.log('WebSocket connection error', error);
-		
+
 		$('#status').text('Status: Error: ' + error.message);
 	};
 
 	conn.onmessage = function(e) {
 		var msgs = Msg.fromArrayBufferVector(e.data);
-		
+
 		console.log('Received ' + msgs.length + ' messages with ' + msgs[0].data.length + ' values from id ' + msgs[0].id + ' with timestamp ' + msgs[0].timestamp);
 
 		for (var j = 0; j < plotData.length; j++) {
@@ -265,7 +265,7 @@ function wsConnect(node)
 
 		for (var j = 0; j < msgs.length; j++) {
 			var msg = msgs[j];
-			
+
 			if (msg.id != currentNode.id)
 				continue;
 
@@ -277,10 +277,10 @@ function wsConnect(node)
 			for (var i = 0; i < msg.length; i++)
 				plotData[i].push([msg.timestamp, msg.data[i]]);
 		}
-		
+
 		redrawPlot = true;
 	};
-	
+
 	return conn;
 };
 
@@ -294,14 +294,14 @@ function wsUrl(endpoint)
 		url += 'wss://';
 	else
 		url += 'ws://';
-	
+
 	url += l.hostname;
-	
+
 	if ((l.port) && (l.port != 80) && (l.port != 443))
 		url += ':'+ l.port;
 
 	url += '/' + endpoint;
-	
+
 	return url;
 }
 

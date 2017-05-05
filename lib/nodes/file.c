@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -34,7 +34,7 @@ int file_reverse(struct node *n)
 {
 	struct file *f = n->_vd;
 	struct file_direction tmp;
-	
+
 	tmp = f->read;
 	f->read = f->write;
 	f->write = tmp;
@@ -46,7 +46,7 @@ static char * file_format_name(const char *format, struct timespec *ts)
 {
 	struct tm tm;
 	char *buf = alloc(FILE_MAX_PATHLEN);
-	
+
 	/* Convert time */
 	gmtime_r(&ts->tv_sec, &tm);
 
@@ -79,10 +79,10 @@ static int file_parse_direction(config_setting_t *cfg, struct file *f, int d)
 int file_parse(struct node *n, config_setting_t *cfg)
 {
 	struct file *f = n->_vd;
-	
+
 	config_setting_t *cfg_in, *cfg_out;
-	
-	cfg_out = config_setting_get_member(cfg, "out"); 
+
+	cfg_out = config_setting_get_member(cfg, "out");
 	if (cfg_out) {
 		if (file_parse_direction(cfg_out, f, FILE_WRITE))
 			cerror(cfg_out, "Failed to parse output file for node %s", node_name(n));
@@ -98,11 +98,11 @@ int file_parse(struct node *n, config_setting_t *cfg)
 			f->rewind = 0;
 		if (!config_setting_lookup_float(cfg_in, "rate", &f->read_rate))
 			f->read_rate = 0; /* Disable fixed rate sending. Using timestamps of file instead */
-		
+
 		double epoch_flt;
 		if (!config_setting_lookup_float(cfg_in, "epoch", &epoch_flt))
 			epoch_flt = 0;
-	
+
 		f->read_epoch = time_from_double(epoch_flt);
 
 		const char *epoch_mode;
@@ -132,7 +132,7 @@ char * file_print(struct node *n)
 {
 	struct file *f = n->_vd;
 	char *buf = NULL;
-	
+
 	if (f->read.fmt) {
 		const char *epoch_str = NULL;
 		switch (f->read_epoch_mode) {
@@ -142,30 +142,30 @@ char * file_print(struct node *n)
 			case EPOCH_ABSOLUTE:	epoch_str = "absolute"; break;
 			case EPOCH_ORIGINAL:	epoch_str = "original"; break;
 		}
-		
+
 		strcatf(&buf, "in=%s, epoch_mode=%s, epoch=%.2f, ",
 			f->read.uri ? f->read.uri : f->read.fmt,
 			epoch_str,
 			time_to_double(&f->read_epoch)
 		);
-			
+
 		if (f->read_rate)
 			strcatf(&buf, "rate=%.1f, ", f->read_rate);
 	}
-	
+
 	if (f->write.fmt) {
 		strcatf(&buf, "out=%s, mode=%s, ",
 			f->write.uri ? f->write.uri : f->write.fmt,
 			f->write.mode
 		);
 	}
-	
+
 	if (f->read_first.tv_sec || f->read_first.tv_nsec)
 		strcatf(&buf, "first=%.2f, ", time_to_double(&f->read_first));
-	
+
 	if (f->read_offset.tv_sec || f->read_offset.tv_nsec)
 		strcatf(&buf, "offset=%.2f, ", time_to_double(&f->read_offset));
-	
+
 	if ((f->read_first.tv_sec || f->read_first.tv_nsec) &&
 	    (f->read_offset.tv_sec || f->read_offset.tv_nsec)) {
 		struct timespec eta, now = time_now();
@@ -176,7 +176,7 @@ char * file_print(struct node *n)
 		if (eta.tv_sec || eta.tv_nsec)
 		strcatf(&buf, "eta=%.2f sec, ", time_to_double(&eta));
 	}
-	
+
 	if (strlen(buf) > 2)
 		buf[strlen(buf) - 2] = 0;
 
@@ -186,13 +186,13 @@ char * file_print(struct node *n)
 int file_start(struct node *n)
 {
 	struct file *f = n->_vd;
-	
+
 	struct timespec now = time_now();
 
 	if (f->read.fmt) {
 		/* Prepare file name */
 		f->read.uri = file_format_name(f->read.fmt, &now);
-		
+
 		/* Open file */
 		f->read.handle = file_reopen(&f->read);
 		if (!f->read.handle)
@@ -204,7 +204,7 @@ int file_start(struct node *n)
 			: timerfd_create(CLOCK_REALTIME, 0);
 		if (f->read_timer < 0)
 			serror("Failed to create timer");
-		
+
 		/* Get current time */
 		struct timespec now = time_now();
 
@@ -213,7 +213,7 @@ int file_start(struct node *n)
 		int ret = sample_io_villas_fscan(f->read.handle->file, &s, NULL); arewind(f->read.handle);
 		if (ret < 0)
 			error("Failed to read first timestamp of node %s", node_name(n));
-		
+
 		f->read_first = s.ts.origin;
 
 		/* Set read_offset depending on epoch_mode */
@@ -227,15 +227,15 @@ int file_start(struct node *n)
 				f->read_offset = now;
 				f->read_offset = time_add(&f->read_offset, &f->read_epoch);
 				break;
-		
+
 			case EPOCH_RELATIVE: /* read first value at first + epoch */
 				f->read_offset = f->read_epoch;
 				break;
-		
+
 			case EPOCH_ABSOLUTE: /* read first value at f->read_epoch */
 				f->read_offset = time_diff(&f->read_first, &f->read_epoch);
 				break;
-			
+
 			default: { }
 		}
 	}
@@ -256,7 +256,7 @@ int file_start(struct node *n)
 int file_stop(struct node *n)
 {
 	struct file *f = n->_vd;
-	
+
 	free(f->read.uri);
 	free(f->write.uri);
 
@@ -297,7 +297,7 @@ retry:	values = sample_io_villas_fscan(f->read.handle->file, s, &flags); /* Get 
 
 		return 0;
 	}
-	
+
 	if (f->read_epoch_mode == EPOCH_ORIGINAL) {
 		return 1;
 	}
@@ -309,7 +309,7 @@ retry:	values = sample_io_villas_fscan(f->read.handle->file, s, &flags); /* Get 
 	else { /* Wait with fixed rate delay */
 		if (timerfd_wait(f->read_timer) == 0)
 			serror("Failed to wait for timer");
-	
+
 		/* Update timestamp */
 		s->ts.origin = time_now();
 	}

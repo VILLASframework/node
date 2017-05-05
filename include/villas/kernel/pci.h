@@ -20,7 +20,7 @@ struct pci_device {
 		int device;
 		int class;
 	} id;
-	
+
 	struct {
 		int domain;
 		int bus;

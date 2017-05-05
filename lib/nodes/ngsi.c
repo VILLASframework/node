@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************************/
@@ -70,10 +70,10 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct sample *smps[], unsigned
 		"type",		i->entity_type,
 		"isPattern", 	0
 	);
-	
+
 	if (flags & NGSI_ENTITY_ATTRIBUTES) {
 		json_t *attributes = json_array();
-		
+
 		for (size_t j = 0; j < list_length(&i->mapping); j++) {
 			struct ngsi_attribute *map = list_at(&i->mapping, j);
 
@@ -81,7 +81,7 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct sample *smps[], unsigned
 				"name",		map->name,
 				"type",		map->type
 			);
-			
+
 			if (flags & NGSI_ENTITY_VALUES) { /* Build value vector */
 				json_t *values = json_array();
 				for (int k = 0; k < cnt; k++) {
@@ -91,13 +91,13 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct sample *smps[], unsigned
 						smps[k]->sequence
 					));
 				}
-				
+
 				json_object_set(attribute, "value", values);
 			}
-			
+
 			if (flags & NGSI_ENTITY_METADATA) { /* Create Metadata for attribute */
 				json_t *metadatas = json_array();
-				
+
 				for (size_t i = 0; i < list_length(&map->metadata); i++) {
 					struct ngsi_metadata *meta = list_at(&map->metadata, i);
 
@@ -107,13 +107,13 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct sample *smps[], unsigned
 						"value", meta->value
 					));
 				}
-				
+
 				json_object_set(attribute, "metadatas", metadatas);
 			}
 
 			json_array_append_new(attributes, attribute);
 		}
-		
+
 		json_object_set(entity, "attributes", attributes);
 	}
 
@@ -135,10 +135,10 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 	);
 	if (ret || !json_is_array(attributes))
 		return -1;
-	
+
 	if (strcmp(id, i->entity_id) || strcmp(type, i->entity_type))
 		return -2;
-	
+
 	for (int k = 0; k < cnt; k++)
 		smps[k]->length = json_array_size(attributes);
 
@@ -155,16 +155,16 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 		);
 		if (ret)
 			return -3;
-		
+
 		/* Check attribute name and type */
 		map = list_lookup(&i->mapping, name);
 		if (!map || strcmp(map->type, type))
 			return -4;
-		
+
 		/* Check metadata */
 		if (!json_is_array(metadata))
 			return -5;
-		
+
 		/* Check number of values */
 		if (!json_is_array(values) || json_array_size(values) != cnt)
 			return -6;
@@ -178,11 +178,11 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 			char *end;
 			const char *value, *ts, *seq;
 			ret = json_unpack(tuple, "[ s, s, s ]", &ts, &value, &seq);
-			if (ret) 
+			if (ret)
 				return -8;
-			
+
 			smps[k]->sequence = atoi(seq);
-			
+
 			struct timespec tss = time_from_double(strtod(ts, &end));
 			if (ts == end)
 				return -9;
@@ -193,7 +193,7 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 				return -10;
 		}
 	}
-	
+
 	return cnt;
 }
 
@@ -212,13 +212,13 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 		struct ngsi_attribute map = {
 			.index = j
 		};
-		
+
 		/* Parse Attribute: AttributeName(AttributeType) */
 		int bytes;
 		if (sscanf(token, "%m[^(](%m[^)])%n", &map.name, &map.type, &bytes) != 2)
 			cerror(cfg, "Invalid mapping token: '%s'", token);
 
-		token += bytes;		
+		token += bytes;
 
 		/* MetadataName(MetadataType)=MetadataValue */
 		list_init(&map.metadata);
@@ -227,14 +227,14 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 			list_push(&map.metadata, memdup(&meta, sizeof(meta)));
 			token += bytes;
 		}
-		
+
 		/* Static metadata */
 		struct ngsi_metadata source = {
 			.name = "source",
 			.type = "string",
 			.value = name,
 		};
-		
+
 		struct ngsi_metadata index = {
 			.name = "index",
 			.type = "integer",
@@ -242,9 +242,9 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 		};
 		snprintf(index.value, 8, "%u", j);
 
-		list_push(&map.metadata, memdup(&index, sizeof(index)));		
+		list_push(&map.metadata, memdup(&index, sizeof(index)));
 		list_push(&map.metadata, memdup(&source, sizeof(source)));
-		
+
 		list_push(mapping, memdup(&map, sizeof(map)));
 	}
 
@@ -254,21 +254,21 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 static int ngsi_parse_context_response(json_t *response, int *code, char **reason, json_t **rentity) {
 	int ret;
 	char *codestr;
-	 
+
 	ret = json_unpack(response, "{ s: [ { s: O, s: { s: s, s: s } } ] }",
 		"contextResponses",
 			"contextElement", rentity,
 			"statusCode",
 				"code", &codestr,
 				"reasonPhrase", reason
-	);			
+	);
 	if (ret) {
 		warn("Failed to find NGSI response code");
 		return ret;
 	}
-	
+
 	*code = atoi(codestr);
-	
+
 	if (*code != 200)
 		warn("NGSI response: %s %s", codestr, *reason);
 
@@ -279,7 +279,7 @@ static size_t ngsi_request_writer(void *contents, size_t size, size_t nmemb, voi
 {
 	size_t realsize = size * nmemb;
 	struct ngsi_response *mem = (struct ngsi_response *) userp;
- 
+
 	mem->data = realloc(mem->data, mem->len + realsize + 1);
 	if(mem->data == NULL) /* out of memory! */
 		error("Not enough memory (realloc returned NULL)");
@@ -301,13 +301,13 @@ static int ngsi_request(CURL *handle, const char *endpoint, const char *operatio
 	json_error_t err;
 
 	snprintf(url, sizeof(url), "%s/v1/%s", endpoint, operation);
-	
+
 	curl_easy_setopt(handle, CURLOPT_URL, url);
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, ngsi_request_writer);
-	curl_easy_setopt(handle, CURLOPT_WRITEDATA, (void *) &chunk);	
+	curl_easy_setopt(handle, CURLOPT_WRITEDATA, (void *) &chunk);
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDSIZE, strlen(post));
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDS, post);
-	
+
 	debug(LOG_NGSI | 18, "Request to context broker: %s\n%s", url, post);
 
 	/* We don't want to leave the handle in an invalid state */
@@ -321,14 +321,14 @@ static int ngsi_request(CURL *handle, const char *endpoint, const char *operatio
 	}
 
 	curl_easy_getinfo(handle, CURLINFO_TOTAL_TIME, &time);
-	
+
 	debug(LOG_NGSI | 16, "Request to context broker completed in %.4f seconds", time);
 	debug(LOG_NGSI | 17, "Response from context broker:\n%s", chunk.data);
-	
+
 	*response = json_loads(chunk.data, 0, &err);
 	if (!*response)
 		warn("Received invalid JSON: %s in %s:%u:%u\n%s", err.text, err.source, err.line, err.column, chunk.data);
-	
+
 out:	free(post);
 	free(chunk.data);
 
@@ -346,7 +346,7 @@ static int ngsi_request_context_query(CURL *handle, const char *endpoint, json_t
 	ret = ngsi_request(handle, endpoint, "queryContext", request, &response);
 	if (ret)
 		goto out;
-	
+
 	ret = ngsi_parse_context_response(response, &code, &reason, rentity);
 	if (ret)
 		goto out2;
@@ -361,17 +361,17 @@ static int ngsi_request_context_update(CURL *handle, const char *endpoint, const
 {
 	int ret, code;
 	char *reason;
-	
+
 	json_t *response;
 	json_t *request = json_pack("{ s: s, s: [ o ] }",
 		"updateAction", action,
 		"contextElements", entity
 	);
-	
+
 	ret = ngsi_request(handle, endpoint, "updateContext", request, &response);
 	if (ret)
 		goto out;
-	
+
 	json_t *rentity;
 	ret = ngsi_parse_context_response(response, &code, &reason, &rentity);
 	if (ret)
@@ -387,9 +387,9 @@ out:	json_decref(request);
 int ngsi_init(struct super_node *sn)
 {
 	config_setting_t *cfg;
-	
+
 	cfg = config_root_setting(&sn->cfg);
-	
+
 	const char *tname;
 	if (config_setting_lookup_string(cfg, "name", &tname)) {
 		name = strdup(tname);
@@ -398,7 +398,7 @@ int ngsi_init(struct super_node *sn)
 		name = alloc(128); /** @todo missing free */
 		gethostname((char *) name, 128);
 	}
-	
+
 	return curl_global_init(CURL_GLOBAL_ALL);
 }
 
@@ -420,10 +420,10 @@ int ngsi_parse(struct node *n, config_setting_t *cfg)
 
 	if (!config_setting_lookup_string(cfg, "endpoint", &i->endpoint))
 		cerror(cfg, "Missing NGSI endpoint for node %s", node_name(n));
-	
+
 	if (!config_setting_lookup_string(cfg, "entity_id", &i->entity_id))
 		cerror(cfg, "Missing NGSI entity ID for node %s", node_name(n));
-	
+
 	if (!config_setting_lookup_string(cfg, "entity_type", &i->entity_type))
 		cerror(cfg, "Missing NGSI entity type for node %s", node_name(n));
 
@@ -432,7 +432,7 @@ int ngsi_parse(struct node *n, config_setting_t *cfg)
 
 	if (!config_setting_lookup_float(cfg, "timeout", &i->timeout))
 		i->timeout = 1; /* default value */
-	
+
 	if (!config_setting_lookup_float(cfg, "rate", &i->rate))
 		i->rate = 5; /* default value */
 
@@ -442,7 +442,7 @@ int ngsi_parse(struct node *n, config_setting_t *cfg)
 
 	if (ngsi_parse_mapping(&i->mapping, cfg_mapping))
 		cerror(cfg_mapping, "Invalid mapping for node %s", node_name(n));
-	
+
 	return 0;
 }
 
@@ -459,7 +459,7 @@ static int ngsi_metadata_destroy(struct ngsi_metadata *meta)
 	free(meta->value);
 	free(meta->name);
 	free(meta->type);
-	
+
 	return 0;
 }
 
@@ -467,18 +467,18 @@ static int ngsi_attribute_destroy(struct ngsi_attribute *attr)
 {
 	free(attr->name);
 	free(attr->type);
-	
+
 	list_destroy(&attr->metadata, (dtor_cb_t) ngsi_metadata_destroy, true);
-	
+
 	return 0;
 }
 
 int ngsi_destroy(struct node *n)
 {
 	struct ngsi *i = n->_vd;
-	
+
 	list_destroy(&i->mapping, (dtor_cb_t) ngsi_attribute_destroy, true);
-	
+
 	return 0;
 }
 
@@ -486,16 +486,16 @@ int ngsi_start(struct node *n)
 {
 	struct ngsi *i = n->_vd;
 	int ret;
-	
+
 	i->curl = curl_easy_init();
 	i->headers = NULL;
-	
+
 	if (i->access_token) {
 		char buf[128];
 		snprintf(buf, sizeof(buf), "Auth-Token: %s", i->access_token);
 		i->headers = curl_slist_append(i->headers, buf);
 	}
-	
+
 	/* Create timer */
 	if (i->timeout > 1 / i->rate)
 		warn("Timeout is to large for given rate: %f", i->rate);
@@ -503,24 +503,24 @@ int ngsi_start(struct node *n)
 	i->tfd = timerfd_create_rate(i->rate);
 	if (i->tfd < 0)
 		serror("Failed to create timer");
-	
+
 	i->headers = curl_slist_append(i->headers, "Accept: application/json");
 	i->headers = curl_slist_append(i->headers, "Content-Type: application/json");
-	
+
 	curl_easy_setopt(i->curl, CURLOPT_SSL_VERIFYPEER, i->ssl_verify);
 	curl_easy_setopt(i->curl, CURLOPT_TIMEOUT_MS, i->timeout * 1e3);
 	curl_easy_setopt(i->curl, CURLOPT_HTTPHEADER, i->headers);
 	curl_easy_setopt(i->curl, CURLOPT_USERAGENT, USER_AGENT);
-		
+
 	/* Create entity and atributes */
-	json_t *entity = ngsi_build_entity(i, NULL, 0, NGSI_ENTITY_METADATA);	
-	
+	json_t *entity = ngsi_build_entity(i, NULL, 0, NGSI_ENTITY_METADATA);
+
 	ret = ngsi_request_context_update(i->curl, i->endpoint, "APPEND", entity);
 	if (ret)
 		error("Failed to create NGSI context for node %s", node_name(n));
-	
+
 	json_decref(entity);
-	
+
 	return ret;
 }
 
@@ -528,17 +528,17 @@ int ngsi_stop(struct node *n)
 {
 	struct ngsi *i = n->_vd;
 	int ret;
-	
+
 	/* Delete complete entity (not just attributes) */
 	json_t *entity = ngsi_build_entity(i, NULL, 0, 0);
 
 	ret = ngsi_request_context_update(i->curl, i->endpoint, "DELETE", entity);
-		
+
 	json_decref(entity);
-	
+
 	curl_easy_cleanup(i->curl);
 	curl_slist_free_all(i->headers);
-	
+
 	return ret;
 }
 
@@ -546,21 +546,21 @@ int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct ngsi *i = n->_vd;
 	int ret;
-	
+
 	if (timerfd_wait(i->tfd) == 0)
 		perror("Failed to wait for timer");
-	
+
 	json_t *rentity;
 	json_t *entity = ngsi_build_entity(i, NULL, 0, 0);
 
 	ret = ngsi_request_context_query(i->curl, i->endpoint, entity, &rentity);
 	if (ret)
 		goto out;
-	
+
 	ret = ngsi_parse_entity(rentity, i, smps, cnt);
 	if (ret)
 		goto out2;
-	
+
 out2:	json_decref(rentity);
 out:	json_decref(entity);
 
@@ -571,13 +571,13 @@ int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct ngsi *i = n->_vd;
 	int ret;
-	
+
 	json_t *entity = ngsi_build_entity(i, smps, cnt, NGSI_ENTITY_VALUES);
 
 	ret = ngsi_request_context_update(i->curl, i->endpoint, "UPDATE", entity);
-	
+
 	json_decref(entity);
-	
+
 	return ret ? 0 : cnt;
 }
 

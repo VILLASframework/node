@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -40,18 +40,18 @@ int fpga_card_init(struct fpga_card *c, struct pci *pci, struct vfio_container *
 
 	c->vfio_container = vc;
 	c->pci = pci;
-	
+
 	list_init(&c->ips);
-	
+
 	/* Default values */
 	c->filter.id.vendor = FPGA_PCI_VID_XILINX;
 	c->filter.id.device = FPGA_PCI_PID_VFPGA;
-	
+
 	c->affinity = 0;
 	c->do_reset = 0;
-	
+
 	c->state = STATE_INITIALIZED;
-	
+
 	return 0;
 }
 
@@ -89,7 +89,7 @@ int fpga_card_parse(struct fpga_card *c, config_setting_t *cfg)
 		else
 			cerror(cfg_slot, "PCI ID must be a string");
 	}
-	
+
 	cfg_ips = config_setting_get_member(cfg, "ips");
 	if (!cfg_ips)
 		cerror(cfg, "FPGA configuration is missing ips section");
@@ -98,53 +98,53 @@ int fpga_card_parse(struct fpga_card *c, config_setting_t *cfg)
 		config_setting_t *cfg_ip = config_setting_get_elem(cfg_ips, i);
 
 		const char *vlnv;
-		
+
 		struct fpga_ip_type *vt;
 		struct fpga_ip ip = {
 			.card = c,
 			.state = STATE_DESTROYED
 		};
-		
+
 		if (!config_setting_lookup_string(cfg, "vlnv", &vlnv))
 			cerror(cfg, "FPGA IP core %s is missing the VLNV identifier", c->name);
 
 		vt = fpga_ip_type_lookup(vlnv);
 		if (!vt)
 			cerror(cfg, "FPGA IP core VLNV identifier '%s' is invalid", vlnv);
-	
+
 		ret = fpga_ip_init(&ip, vt);
 		if (ret)
 			error("Failed to initalize FPGA IP core");
-	
+
 		ret = fpga_ip_parse(&ip, cfg_ip);
 		if (ret)
 			cerror(cfg_ip, "Failed to parse FPGA IP core");
 
 		list_push(&c->ips, memdup(&ip, sizeof(ip)));
 	}
-	
+
 	c->cfg = cfg;
 	c->state = STATE_PARSED;
-	
+
 	return 0;
 }
 
 int fpga_card_parse_list(struct list *cards, config_setting_t *cfg)
 {
 	int ret;
-	
+
 	if (!config_setting_is_group(cfg))
 		cerror(cfg, "FPGA configuration section must be a group");
-	
+
 	for (int i = 0; i < config_setting_length(cfg); i++) {
 		config_setting_t *cfg_fpga = config_setting_get_elem(cfg, i);
-		
+
 		struct fpga_card c;
-		
+
 		ret = fpga_card_parse(&c, cfg_fpga);
 		if (ret)
 			cerror(cfg_fpga, "Failed to parse FPGA card configuration");
-		
+
 		list_push(cards, memdup(&c, sizeof(c)));
 	}
 
@@ -178,7 +178,7 @@ int fpga_card_start(struct fpga_card *c)
 	ret = vfio_pci_enable(&c->vfio_device);
 	if (ret)
 		serror("Failed to enable PCI device");
-	
+
 	/* Reset system? */
 	if (c->do_reset) {
 		/* Reset / detect PCI device */
@@ -210,7 +210,7 @@ int fpga_card_stop(struct fpga_card *c)
 	int ret;
 
 	assert(c->state == STATE_STOPPED);
-	
+
 	for (size_t j = 0; j < list_length(&c->ips); j++) {
 		struct fpga_ip *i = list_at(&c->ips, j);
 
@@ -218,9 +218,9 @@ int fpga_card_stop(struct fpga_card *c)
 		if (ret)
 			error("Failed to stop FPGA IP core: %s (%u)", i->name, ret);
 	}
-	
+
 	c->state = STATE_STOPPED;
-	
+
 	return 0;
 }
 
@@ -242,7 +242,7 @@ void fpga_card_dump(struct fpga_card *c)
 			fpga_ip_dump(i);
 		}
 	}
-	
+
 	vfio_dump(c->vfio_device.group->container);
 }
 
@@ -260,7 +260,7 @@ int fpga_card_check(struct fpga_card *c)
 	c->sw = fpga_vlnv_lookup(&c->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axis_interconnect", NULL });
 	if (!c->sw)
 		warn("FPGA is missing an AXI4-Stream switch");
-	
+
 	return 0;
 }
 
@@ -296,7 +296,7 @@ int fpga_card_reset(struct fpga_card *c)
 	/* After reset the value should be zero again */
 	if (rst_reg[0])
 		return -2;
-	
+
 	c->state = STATE_INITIALIZED;
 
 	return 0;

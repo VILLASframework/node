@@ -29,7 +29,7 @@ static int model_info_destroy(struct model_info *i)
 {
 	free(i->field);
 	free(i->value);
-	
+
 	return 0;
 }
 
@@ -58,7 +58,7 @@ static int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameter
 		uint16_t type   = map[j] & 0xFFFF;
 		uint16_t length = map[j] >> 16;
 		uint32_t *data  = &map[j+1];
-		
+
 		switch (type) {
 			case XSG_BLOCK_GATEWAY_IN:
 			case XSG_BLOCK_GATEWAY_OUT:
@@ -73,7 +73,7 @@ static int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameter
 				p.direction     = type & 0x1;
 				p.type          = (data[0] >> 0) & 0xFF;
 				p.binpt         = (data[0] >> 8) & 0xFF;
-				
+
 				e = list_lookup(parameters, p.name);
 				if (e)
 					model_param_update(e, &p);
@@ -86,14 +86,14 @@ static int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameter
 
 				i->field = copy_string(0);
 				i->value = copy_string((int) ceil((double) (strlen(i->field) + 1) / 4))
-				
+
 				list_push(infos, i);
 				break;
 
 			default:
 				warn("Unknown block type: %#06x", type);
 		}
-		
+
 		j += length + 1;
 	}
 
@@ -140,7 +140,7 @@ int model_parse(struct fpga_ip *c)
 	struct model_param p;
 
 	config_setting_t *cfg_params, *cfg_param;
-	
+
 	if      (strcmp(c->vlnv.library, "hls") == 0)
 		m->type = MODEL_TYPE_HLS;
 	else if (strcmp(c->vlnv.library, "sysgen") == 0)
@@ -233,7 +233,7 @@ int model_destroy(struct fpga_ip *c)
 
 	if (m->xsg.map != NULL)
 		free(m->xsg.map);
-	
+
 	return 0;
 }
 
@@ -248,7 +248,7 @@ void model_dump(struct fpga_ip *c)
 		info("Parameters:");
 		for (size_t i = 0; i < list_length(&m->parameters); i++) { INDENT
 			struct model_param *p = list_at(&m->parameters, i);
-			
+
 			if (p->direction == MODEL_PARAM_IN)
 				info("%#jx: %s (%s) = %.3f %s %u",
 					p->offset,
@@ -293,7 +293,7 @@ int model_param_read(struct model_param *p, double *v)
 		case MODEL_PARAM_TYPE_FLOAT:
 			*v = (double) ptr->flt;
 			break;
-			
+
 		case MODEL_PARAM_TYPE_BOOLEAN:
 			*v = (double) ptr->ufix ? 1 : 0;
 	}
@@ -319,7 +319,7 @@ int model_param_write(struct model_param *p, double v)
 		case MODEL_PARAM_TYPE_FLOAT:
 			ptr->flt = (float) v;
 			break;
-			
+
 		case MODEL_PARAM_TYPE_BOOLEAN:
 			ptr->bol = (bool) v;
 			break;
@@ -332,11 +332,11 @@ void model_param_add(struct fpga_ip *c, const char *name, enum model_param_direc
 {
 	struct model *m = c->_vd;
 	struct model_param *p = alloc(sizeof(struct model_param));
-	
+
 	p->name = strdup(name);
 	p->type = type;
 	p->direction = dir;
-	
+
 	list_push(&m->parameters, p);
 }
 
@@ -344,13 +344,13 @@ int model_param_remove(struct fpga_ip *c, const char *name)
 {
 	struct model *m = c->_vd;
 	struct model_param *p;
-	
+
 	p = list_lookup(&m->parameters, name);
 	if (!p)
 		return -1;
-	
+
 	list_remove(&m->parameters, p);
-	
+
 	return 0;
 }
 

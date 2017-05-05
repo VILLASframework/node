@@ -14,12 +14,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -50,7 +50,7 @@ struct lws;
 struct websocket {
 	struct list connections;		/**< List of active libwebsocket connections in server mode (struct websocket_connection). */
 	struct list destinations;		/**< List of websocket servers connect to in client mode (struct websocket_destination). */
-	
+
 	struct pool pool;
 	struct queue_signalled queue;		/**< For samples which are received from WebSockets */
 };
@@ -59,21 +59,21 @@ struct websocket {
 struct websocket_connection {
 	struct node *node;
 	struct lws *wsi;
-	
-	struct queue queue;			/**< For samples which are sent to the WebSocket */	
-	
+
+	struct queue queue;			/**< For samples which are sent to the WebSocket */
+
 	struct {
 		char name[64];
 		char ip[64];
 	} peer;
-	
+
 	enum {
 		WEBSOCKET_MODE_CLIENT,
 		WEBSOCKET_MODE_SERVER,
 	} mode;
-	
+
 	enum state state;
-	
+
 	char *_name;
 };
 

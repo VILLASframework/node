@@ -57,10 +57,10 @@ int fpga_benchmarks(int argc, char *argv[], struct fpga_card *c)
 #endif
 		{ "latency",	fpga_benchmark_latency }
 	};
-	
+
 	if (argc < 2)
 		error("Usage: fpga benchmark (bench)");
-	
+
 	struct bench *bench = NULL;
 	for (int i = 0; i < ARRAY_LEN(benchmarks); i++) {
 		if (strcmp(benchmarks[i].name, argv[1]) == 0) {
@@ -105,10 +105,10 @@ int fpga_benchmark_jitter(struct fpga_card *c)
 	ret = intc_enable(c->intc, (1 << ip->irq), intc_flags);
 	if (ret)
 		error("Failed to enable interrupt");
-	
+
 	float period = 50e-6;
 	int runs = 300.0 / period;
-	
+
 	int *hist = alloc(8 << 20);
 
 	XTmrCtr_SetOptions(xtmr, 0, XTC_INT_MODE_OPTION | XTC_EXT_COMPARE_OPTION | XTC_DOWN_COUNT_OPTION | XTC_AUTO_RELOAD_OPTION);
@@ -120,7 +120,7 @@ int fpga_benchmark_jitter(struct fpga_card *c)
 		uint64_t cnt = intc_wait(c->intc, ip->irq);
 		if (cnt != 1)
 			warn("fail");
-		
+
 		/* Ackowledge IRQ */
 		XTmrCtr_WriteReg((uintptr_t) c->map + ip->baseaddr, 0, XTC_TCSR_OFFSET, XTmrCtr_ReadReg((uintptr_t) c->map + ip->baseaddr, 0, XTC_TCSR_OFFSET));
 
@@ -139,7 +139,7 @@ int fpga_benchmark_jitter(struct fpga_card *c)
 	fclose(g);
 
 	free(hist);
-	
+
 	ret = intc_disable(c->intc, (1 << ip->irq));
 	if (ret)
 		error("Failed to disable interrupt");
@@ -205,11 +205,11 @@ int fpga_benchmark_datamover(struct fpga_card *c)
 	dm = list_lookup(&c->ips, dm_name);
 	if (!dm)
 		error("Unknown datamover");
-	
+
 	ret = switch_connect(c->sw, dm, dm);
 	if (ret)
 		error("Failed to configure switch");
-	
+
 	ret = intc_enable(c->intc, (1 << dm->irq) | (1 << (dm->irq + 1)), intc_flags);
 	if (ret)
 		error("Failed to enable interrupt");
@@ -230,7 +230,7 @@ int fpga_benchmark_datamover(struct fpga_card *c)
 
 	for (int exp = BENCH_DM_EXP_MIN; exp <= BENCH_DM_EXP_MAX; exp++) {
 		uint64_t start, stop, total = 0, len = 1 << exp;
-		
+
 #if BENCH_DM == 1
 		if (exp > 11)
 			break; /* FIFO and Simple DMA are limited to 4kb */
@@ -253,7 +253,7 @@ int fpga_benchmark_datamover(struct fpga_card *c)
 			ret = fifo_write(dm, src.base_virt, len);
 			if (ret < 0)
 				error("Failed write to FIFO with len = %zu", len);
-			
+
 			ret = fifo_read(dm, dst.base_virt, dst.len);
 			if (ret < 0)
 				error("Failed read from FIFO with len = %zu", len);
@@ -270,21 +270,21 @@ int fpga_benchmark_datamover(struct fpga_card *c)
 			if (i > BENCH_WARMUP)
 				total += stop - start;
 		}
-		
+
 		info("exp %u avg %lu", exp, total / runs);
 		fprintf(g, "%lu %lu\n", len, total / runs);
 	}
 
 	fclose(g);
-	
+
 	ret = switch_disconnect(c->sw, dm, dm);
 	if (ret)
 		error("Failed to configure switch");
-	
+
 	ret = dma_free(dm, &mem);
 	if (ret)
 		error("Failed to release DMA memory");
-	
+
 	ret = intc_disable(c->intc, (1 << dm->irq) | (1 << (dm->irq + 1)));
 	if (ret)
 		error("Failed to enable interrupt");
@@ -304,7 +304,7 @@ int fpga_benchmark_memcpy(struct fpga_card *c)
 	fprintf(g, "# bytes cycles\n");
 
 	uint32_t dummy = 0;
-	
+
 	for (int exp = BENCH_DM_EXP_MIN; exp <= BENCH_DM_EXP_MAX; exp++) {
 		uint64_t len = 1 << exp;
 		uint64_t start, end, total = 0;
@@ -312,13 +312,13 @@ int fpga_benchmark_memcpy(struct fpga_card *c)
 
 		for (int i = 0; i < runs + BENCH_WARMUP; i++) {
 			start = rdtsc();
-			
+
 			for (int j = 0; j < len / 4; j++)
 //				mapi[j] = j;		// write
 				dummy += mapi[j];	// read
 
 			end = rdtsc();
-		
+
 			if (i > BENCH_WARMUP)
 				total += end - start;
 		}

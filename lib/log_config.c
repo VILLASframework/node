@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -31,7 +31,7 @@
 int log_parse(struct log *l, config_setting_t *cfg)
 {
 	const char *facilities;
-	
+
 	if (!config_setting_is_group(cfg))
 		cerror(cfg, "Setting 'log' must be a group.");
 
@@ -52,13 +52,13 @@ void cerror(config_setting_t *cfg, const char *fmt, ...)
 	char *buf = NULL;
 	const char *file;
 	int line;
-	
+
 	struct log *l = global_log ? global_log : &default_log;
 
 	va_start(ap, fmt);
 	vstrcatf(&buf, fmt, ap);
 	va_end(ap);
-	
+
 	line = config_setting_source_line(cfg);
 	file = config_setting_source_file(cfg);
 	if (!file)

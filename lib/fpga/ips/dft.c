@@ -18,24 +18,24 @@ int dft_parse(struct fpga_ip *c)
 	struct dft *dft = c->_vd;
 
 	config_setting_t *cfg_harms;
-	
+
 	if (!config_setting_lookup_int(c->cfg, "period", &dft->period))
 		cerror(c->cfg, "DFT IP core requires 'period' setting");
-	
+
 	if (!config_setting_lookup_int(c->cfg, "decimation", &dft->decimation))
 		cerror(c->cfg, "DFT IP core requires 'decimation' setting");
 
 	cfg_harms = config_setting_get_member(c->cfg, "harmonics");
 	if (!cfg_harms)
 		cerror(c->cfg, "DFT IP core requires 'harmonics' setting!");
-	
+
 	if (!config_setting_is_array(cfg_harms))
 		cerror(c->cfg, "DFT IP core requires 'harmonics' to be an array of integers!");
-	
+
 	dft->num_harmonics = config_setting_length(cfg_harms);
 	if (dft->num_harmonics <= 0)
 		cerror(cfg_harms, "DFT IP core requires 'harmonics' to contain at least 1 integer!");
-	
+
 	dft->fharmonics = alloc(sizeof(float) * dft->num_harmonics);
 
 	for (int i = 0; i < dft->num_harmonics; i++)
@@ -47,7 +47,7 @@ int dft_parse(struct fpga_ip *c)
 int dft_start(struct fpga_ip *c)
 {
 	int ret;
-	
+
 	struct fpga_card *f = c->card;
 	struct dft *dft = c->_vd;
 
@@ -66,14 +66,14 @@ int dft_start(struct fpga_ip *c)
 		error("DFT IP core supports a maximum of %u harmonics", max_harmonics);
 
 	XHls_dft_Set_num_harmonics_V(xdft, dft->num_harmonics);
-	
+
 	XHls_dft_Set_decimation_V(xdft, dft->decimation);
 
 	memcpy((void *) (uintptr_t) XHls_dft_Get_fharmonics_BaseAddress(xdft), dft->fharmonics, dft->num_harmonics * sizeof(dft->fharmonics[0]));
 
 	XHls_dft_EnableAutoRestart(xdft);
 	XHls_dft_Start(xdft);
-	
+
 	return 0;
 }
 
@@ -84,7 +84,7 @@ int dft_stop(struct fpga_ip *c)
 	XHls_dft *xdft = &dft->inst;
 
 	XHls_dft_DisableAutoRestart(xdft);
-	
+
 	return 0;
 }
 
@@ -96,7 +96,7 @@ int dft_destroy(struct fpga_ip *c)
 		free(dft->fharmonics);
 		dft->fharmonics = NULL;
 	}
-	
+
 	return 0;
 }
 

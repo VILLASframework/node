@@ -20,14 +20,14 @@ int cbuilder_parse(struct node *n, config_setting_t *cfg)
 
 	if (!config_setting_lookup_float(cfg, "timestep", &cb->timestep))
 		cerror(cfg, "CBuilder model requires 'timestep' setting");
-	
+
 	if (!config_setting_lookup_string(cfg, "model", &model))
 		cerror(cfg, "CBuilder model requires 'model' setting");
-	
+
 	cb->model = (struct cbuilder_model *) plugin_lookup(PLUGIN_TYPE_MODEL_CBUILDER, model);
 	if (!cb->model)
 		cerror(cfg, "Unknown model '%s'", model);
-	
+
 	cfg_params = config_setting_get_member(cfg, "parameters");
 	if (cfg_params) {
 		if (!config_setting_is_array(cfg_params))
@@ -35,7 +35,7 @@ int cbuilder_parse(struct node *n, config_setting_t *cfg)
 
 		cb->paramlen = config_setting_length(cfg_params);
 		cb->params = alloc(cb->paramlen * sizeof(double));
-		
+
 		for (int i = 0; i < cb->paramlen; i++)
 			cb->params[i] = config_setting_get_float_elem(cfg_params, i);
 	}
@@ -68,7 +68,7 @@ int cbuilder_start(struct node *n)
 int cbuilder_stop(struct node *n)
 {
 	struct cbuilder *cb = n->_vd;
-	
+
 	pthread_mutex_destroy(&cb->mtx);
 	pthread_cond_destroy(&cb->cv);
 
@@ -99,7 +99,7 @@ int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct cbuilder *cb = n->_vd;
 	struct sample *smp = smps[0];
-	
+
 	pthread_mutex_lock(&cb->mtx);
 
 	cb->model->write(&smp->data[0].f, smp->length);

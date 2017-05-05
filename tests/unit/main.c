@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 		error("Failed to initialize logging sub-system");
 		return ret;
 	}
-	
+
 	ret = memory_init(DEFAULT_NR_HUGEPAGES);
 	if (ret) {
 		error("Failed to initialize memory sub-system");
@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 
 	/* Run criterion tests */
 	tests = criterion_initialize();
-	
+
 	ret = criterion_handle_args(argc, argv, true);
 	if (ret)
 		ret = !criterion_run_all_tests(tests);

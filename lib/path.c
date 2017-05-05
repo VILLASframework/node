@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -45,9 +45,9 @@ static void path_read(struct path *p)
 	int enqueue;
 	int enqueued;
 	int ready; /**< Number of blocks in smps[] which are allocated and ready to be used by node_read(). */
-	
+
 	struct path_source *ps = p->source;
-	
+
 	int cnt = ps->node->vectorize;
 
 	struct sample *smps[cnt];
@@ -83,7 +83,7 @@ static void path_read(struct path *p)
 	int refd = 0;
 	for (size_t i = 0; i < list_length(&p->destinations); i++) {
 		struct path_destination *pd = list_at(&p->destinations, i);
-	
+
 		enqueued = queue_push_many(&pd->queue, (void **) smps, enqueue);
 		if (enqueue != enqueued)
 			warn("Queue overrun for path %s", path_name(p));
@@ -102,7 +102,7 @@ static void path_write(struct path *p)
 {
 	for (size_t i = 0; i < list_length(&p->destinations); i++) {
 		struct path_destination *pd = list_at(&p->destinations, i);
-	
+
 		int cnt = pd->node->vectorize;
 		int sent;
 		int tosend;
@@ -116,9 +116,9 @@ static void path_write(struct path *p)
 			available = queue_pull_many(&pd->queue, (void **) smps, cnt);
 			if (available == 0)
 				break;
-			else if (available < cnt) 
+			else if (available < cnt)
 				debug(LOG_PATH | 5, "Queue underrun for path %s: available=%u expected=%u", path_name(p), available, cnt);
-			
+
 			debug(LOG_PATH | 15, "Dequeued %u samples from queue of node %s which is part of path %s", available, node_name(pd->node), path_name(p));
 
 			tosend = hook_write_list(&p->hooks, smps, available);
@@ -134,7 +134,7 @@ static void path_write(struct path *p)
 			debug(LOG_PATH | 15, "Sent %u messages to node %s", sent, node_name(pd->node));
 
 			released = sample_put_many(smps, sent);
-	
+
 			debug(LOG_PATH | 15, "Released %d samples back to memory pool", released);
 		}
 	}
@@ -156,14 +156,14 @@ static void * path_run(void *arg)
 static int path_source_destroy(struct path_source *ps)
 {
 	pool_destroy(&ps->pool);
-	
+
 	return 0;
 }
 
 static int path_destination_destroy(struct path_destination *pd)
 {
 	queue_destroy(&pd->queue);
-	
+
 	return 0;
 }
 
@@ -173,18 +173,18 @@ int path_init(struct path *p, struct super_node *sn)
 
 	list_init(&p->hooks);
 	list_init(&p->destinations);
-	
+
 	/* Default values */
 	p->reverse = 0;
 	p->enabled = 1;
 
 	p->samplelen = DEFAULT_SAMPLELEN;
 	p->queuelen = DEFAULT_QUEUELEN;
-	
+
 	p->super_node = sn;
-	
+
 	p->state = STATE_INITIALIZED;
-	
+
 	return 0;
 }
 
@@ -196,7 +196,7 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 
 	struct node *source;
 	struct list destinations = { .state = STATE_DESTROYED };
-	
+
 	list_init(&destinations);
 
 	/* Input node */
@@ -253,7 +253,7 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 			.node = n,
 			.queuelen = p->queuelen
 		};
-		
+
 		list_push(&p->destinations, memdup(&pd, sizeof(pd)));
 	}
 
@@ -265,19 +265,19 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 int path_check(struct path *p)
 {
 	assert(p->state != STATE_DESTROYED);
-	
+
 	for (size_t i = 0; i < list_length(&p->destinations); i++) {
 		struct path_destination *pd = list_at(&p->destinations, i);
-		
+
 		if (!pd->node->_vt->write)
 			error("Destiation node '%s' is not supported as a sink for path '%s'", node_name(pd->node), path_name(p));
 	}
 
 	if (!p->source->node->_vt->read)
 		error("Source node '%s' is not supported as source for path '%s'", node_name(p->source->node), path_name(p));
-	
+
 	p->state = STATE_CHECKED;
-	
+
 	return 0;
 }
 
@@ -290,7 +290,7 @@ int path_init2(struct path *p)
 	/* Add internal hooks if they are not already in the list*/
 	for (size_t i = 0; i < list_length(&plugins); i++) {
 		struct plugin *q = list_at(&plugins, i);
-		
+
 		if (q->type == PLUGIN_TYPE_HOOK) {
 			struct hook h = { .state = STATE_DESTROYED };
 			struct hook_type *vt = &q->hook;
@@ -304,7 +304,7 @@ int path_init2(struct path *p)
 			}
 		}
 	}
-	
+
 	/* We sort the hooks according to their priority before starting the path */
 	list_sort(&p->hooks, hook_cmp_priority);
 
@@ -315,23 +315,23 @@ int path_init2(struct path *p)
 		ret = queue_init(&pd->queue, pd->queuelen, &memtype_hugepage);
 		if (ret)
 			error("Failed to initialize queue for path");
-		
+
 		if (pd->queuelen > max_queuelen)
 			max_queuelen = pd->queuelen;
 	}
-	
+
 	/* Initialize source */
 	ret = pool_init(&p->source->pool, max_queuelen, SAMPLE_LEN(p->source->samplelen), &memtype_hugepage);
 	if (ret)
 		error("Failed to allocate memory pool for path");
-	
+
 	return 0;
 }
 
 int path_start(struct path *p)
 {
 	int ret;
-	
+
 	assert(p->state == STATE_CHECKED);
 
 	info("Starting path %s: #hooks=%zu, #destinations=%zu", path_name(p), list_length(&p->hooks), list_length(&p->destinations));
@@ -358,7 +358,7 @@ int path_start(struct path *p)
 int path_stop(struct path *p)
 {
 	int ret;
-	
+
 	if (p->state != STATE_STARTED)
 		return 0;
 
@@ -387,7 +387,7 @@ int path_destroy(struct path *p)
 
 	list_destroy(&p->hooks, (dtor_cb_t) hook_destroy, true);
 	list_destroy(&p->destinations, (dtor_cb_t) path_destination_destroy, true);
-	
+
 	path_source_destroy(p->source);
 
 	if (p->_name)
@@ -395,9 +395,9 @@ int path_destroy(struct path *p)
 
 	if (p->source)
 		free(p->source);
-	
+
 	p->state = STATE_DESTROYED;
-	
+
 	return 0;
 }
 
@@ -406,20 +406,20 @@ const char * path_name(struct path *p)
 	if (!p->_name) {
 		if (list_length(&p->destinations) == 1) {
 			struct path_destination *pd = (struct path_destination *) list_first(&p->destinations);
-			
+
 			strcatf(&p->_name, "%s " MAG("=>") " %s",
 				node_name_short(p->source->node),
 				node_name_short(pd->node));
 		}
 		else {
 			strcatf(&p->_name, "%s " MAG("=>") " [", node_name_short(p->source->node));
-			
+
 			for (size_t i = 0; i < list_length(&p->destinations); i++) {
 				struct path_destination *pd = list_at(&p->destinations, i);
 
 				strcatf(&p->_name, " %s", node_name_short(pd->node));
 			}
-			
+
 			strcatf(&p->_name, " ]");
 		}
 	}
@@ -444,37 +444,37 @@ int path_reverse(struct path *p, struct path *r)
 
 	if (list_length(&p->destinations) > 1)
 		return -1;
-	
+
 	struct path_destination *first_pd = list_first(&p->destinations);
 
 	/* General */
 	r->enabled = p->enabled;
 	r->cfg = p->cfg;
-	
+
 	struct path_destination *pd = alloc(sizeof(struct path_destination));
-	
+
 	pd->node = p->source->node;
 	pd->queuelen = first_pd->queuelen;
 
 	list_push(&r->destinations, pd);
-	
+
 	struct path_source *ps = alloc(sizeof(struct path_source));
 
 	ps->node = first_pd->node;
 	ps->samplelen = p->source->samplelen;
-	
+
 	r->source = ps;
 
 	for (size_t i = 0; i < list_length(&p->hooks); i++) {
 		struct hook *h = list_at(&p->hooks, i);
 		struct hook hc = { .state = STATE_DESTROYED };
-		
+
 		ret = hook_init(&hc, h->_vt, p);
 		if (ret)
 			return ret;
-		
+
 		list_push(&r->hooks, memdup(&hc, sizeof(hc)));
 	}
-	
+
 	return 0;
 }

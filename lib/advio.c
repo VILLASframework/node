@@ -12,12 +12,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -80,9 +80,9 @@ AFILE * afopen(const char *uri, const char *mode)
 	int ret;
 
 	AFILE *af = alloc(sizeof(AFILE));
-	
+
 	strncpy(af->mode, mode, sizeof(af->mode));
-	
+
 	af->uri = strdup(uri);
 	if (!af->uri)
 		goto out2;
@@ -90,7 +90,7 @@ AFILE * afopen(const char *uri, const char *mode)
 	af->file = tmpfile();
 	if (!af->file)
 		goto out2;
-	
+
 	af->curl = curl_easy_init();
 	if (!af->curl)
 		goto out1;
@@ -107,7 +107,7 @@ AFILE * afopen(const char *uri, const char *mode)
 	curl_easy_setopt(af->curl, CURLOPT_XFERINFOFUNCTION, advio_xferinfo);
 	curl_easy_setopt(af->curl, CURLOPT_XFERINFODATA, af);
 	curl_easy_setopt(af->curl, CURLOPT_NOPROGRESS, 0L);
-	
+
 	ret = adownload(af);
 	if (ret)
 		goto out0;
@@ -125,15 +125,15 @@ out2:	free(af->uri);
 int afclose(AFILE *af)
 {
 	int ret;
-	
+
 	ret = afflush(af);
 
 	curl_easy_cleanup(af->curl);
 	fclose(af->file);
-	
+
 	free(af->uri);
 	free(af);
-	
+
 	return ret;
 }
 
@@ -141,11 +141,11 @@ int afflush(AFILE *af)
 {
 	bool dirty;
 	unsigned char hash[SHA_DIGEST_LENGTH];
-	
+
 	/* Check if fle was modified on disk by comparing hashes */
 	sha1sum(af->file, hash);
 	dirty = memcmp(hash, af->hash, sizeof(hash));
-	
+
 	if (dirty)
 		return aupload(af);
 
@@ -174,7 +174,7 @@ int aupload(AFILE *af)
 	fflush(stderr); /* do not continue in the same line as the progress bar */
 
 	fseek(af->file, pos, SEEK_SET); /* Restore old stream pointer */
-	
+
 	if (res != CURLE_OK)
 		return -1;
 
@@ -192,10 +192,10 @@ int adownload(AFILE *af)
 	fseek(af->file, 0, SEEK_SET);
 
 	res = curl_easy_perform(af->curl);
-	
+
 	fprintf(stderr, "\e[2K");
 	fflush(stderr); /* do not continue in the same line as the progress bar */
-	
+
 	switch (res) {
 		case CURLE_OK:
 			curl_easy_getinfo(af->curl, CURLINFO_RESPONSE_CODE, &code);
@@ -207,7 +207,7 @@ int adownload(AFILE *af)
 			}
 
 		/* The following error codes indicate that the file does not exist
-		 * Check the fopen mode to see if we should continue with an emoty file */ 
+		 * Check the fopen mode to see if we should continue with an emoty file */
 		case CURLE_FILE_COULDNT_READ_FILE:
 		case CURLE_TFTP_NOTFOUND:
 		case CURLE_REMOTE_FILE_NOT_FOUND:
@@ -218,7 +218,7 @@ int adownload(AFILE *af)
 			af->file = fopen(af->uri, af->mode);
 			if (!af->file)
 				return -1;
-		
+
 		default:
 			error("Failed to fetch file: %s: %s\n", af->uri, curl_easy_strerror(res));
 			return -1;
@@ -245,7 +245,7 @@ exist: /* File exists */
 		fseek(af->file, 0, SEEK_END);
 	else if (af->mode[0] == 'r' || af->mode[0] == 'w')
 		fseek(af->file, 0, SEEK_SET);
-	
+
 	sha1sum(af->file, af->hash);
 
 	return 0;

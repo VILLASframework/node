@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -34,7 +34,7 @@ static int json_to_config_type(int type)
 		case JSON_FALSE:
 		case JSON_NULL:		return CONFIG_TYPE_BOOL;
 	}
-	
+
 	return -1;
 }
 
@@ -50,16 +50,16 @@ json_t * config_to_json(config_setting_t *cfg)
 		case CONFIG_TYPE_ARRAY:
 		case CONFIG_TYPE_LIST: {
 			json_t *json = json_array();
-			
+
 			for (int i = 0; i < config_setting_length(cfg); i++)
 				json_array_append_new(json, config_to_json(config_setting_get_elem(cfg, i)));
-			
+
 			return json;
 		}
-		
+
 		case CONFIG_TYPE_GROUP: {
 			json_t *json = json_object();
-			
+
 			for (int i = 0; i < config_setting_length(cfg); i++) {
 				json_object_set_new(json,
 					config_setting_name(config_setting_get_elem(cfg, i)),
@@ -79,12 +79,12 @@ int json_to_config(json_t *json, config_setting_t *parent)
 {
 	config_setting_t *cfg;
 	int ret, type;
-	
+
 	if (config_setting_is_root(parent)) {
 		if (!json_is_object(json))
 			return -1; /* The root must be an object! */
 	}
-	
+
 	switch (json_typeof(json)) {
 		case JSON_OBJECT: {
 			const char *key;
@@ -92,7 +92,7 @@ int json_to_config(json_t *json, config_setting_t *parent)
 
 			json_object_foreach(json, key, json_value) {
 				type = json_to_config_type(json_typeof(json_value));
-				
+
 				cfg = config_setting_add(parent, key, type);
 				ret = json_to_config(json_value, cfg);
 				if (ret)
@@ -100,14 +100,14 @@ int json_to_config(json_t *json, config_setting_t *parent)
 			}
 			break;
 		}
-		
+
 		case JSON_ARRAY: {
 			size_t i;
 			json_t *json_value;
 
 			json_array_foreach(json, i, json_value) {
 				type = json_to_config_type(json_typeof(json_value));
-				
+
 				cfg = config_setting_add(parent, NULL, type);
 				ret = json_to_config(json_value, cfg);
 				if (ret)
@@ -115,11 +115,11 @@ int json_to_config(json_t *json, config_setting_t *parent)
 			}
 			break;
 		}
-		
+
 		case JSON_STRING:
 			config_setting_set_string(parent, json_string_value(json));
 			break;
-		
+
 		case JSON_INTEGER:
 			config_setting_set_int64(parent, json_integer_value(json));
 			break;
@@ -134,7 +134,7 @@ int json_to_config(json_t *json, config_setting_t *parent)
 			config_setting_set_bool(parent, json_is_true(json));
 			break;
 	}
-	
+
 	return 0;
 }
 
@@ -142,15 +142,15 @@ int sample_io_json_pack(json_t **j, struct sample *s, int flags)
 {
 	json_error_t err;
 	json_t *json_data = json_array();
-	
+
 	for (int i = 0; i < s->length; i++) {
 		json_t *json_value = sample_get_data_format(s, i)
 					? json_integer(s->data[i].i)
 					: json_real(s->data[i].f);
-						
+
 		json_array_append(json_data, json_value);
 	}
-	
+
 	*j = json_pack_ex(&err, 0, "{ s: { s: [ I, I ], s: [ I, I ], s: [ I, I ] }, s: I, s: o }",
 		"ts",
 			"origin", s->ts.origin.tv_sec, s->ts.origin.tv_nsec,
@@ -158,10 +158,10 @@ int sample_io_json_pack(json_t **j, struct sample *s, int flags)
 			"sent", s->ts.sent.tv_sec, s->ts.sent.tv_nsec,
 		"sequence", s->sequence,
 		"data", json_data);
-		
+
 	if (!*j)
 		return -1;
-	
+
 	return 0;
 }
 
@@ -169,7 +169,7 @@ int sample_io_json_unpack(json_t *j, struct sample *s, int *flags)
 {
 	int ret, i;
 	json_t *json_data, *json_value;
-	
+
 	ret = json_unpack(j, "{ s: { s: [ I, I ], s: [ I, I ], s: [ I, I ] }, s: I, s: o }",
 		"ts",
 			"origin", &s->ts.origin.tv_sec, &s->ts.origin.tv_nsec,
@@ -177,10 +177,10 @@ int sample_io_json_unpack(json_t *j, struct sample *s, int *flags)
 			"sent", &s->ts.sent.tv_sec, &s->ts.sent.tv_nsec,
 		"sequence", &s->sequence,
 		"data", &json_data);
-		
+
 	if (ret)
 		return ret;
-	
+
 	s->length = 0;
 
 	json_array_foreach(json_data, i, json_value) {
@@ -198,7 +198,7 @@ int sample_io_json_unpack(json_t *j, struct sample *s, int *flags)
 			default:
 				return -1;
 		}
-		
+
 		s->length++;
 	}
 
@@ -209,15 +209,15 @@ int sample_io_json_fprint(FILE *f, struct sample *s, int flags)
 {
 	int ret;
 	json_t *json;
-	
+
 	ret = sample_io_json_pack(&json, s, flags);
 	if (ret)
 		return ret;
-	
+
 	ret = json_dumpf(json, f, 0);
-	
+
 	json_decref(json);
-	
+
 	return ret;
 }
 
@@ -230,10 +230,10 @@ int sample_io_json_fscan(FILE *f, struct sample *s, int *flags)
 	json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 	if (!json)
 		return -1;
-	
+
 	ret = sample_io_json_unpack(json, s, flags);
-	
+
 	json_decref(json);
-	
+
 	return ret;
 }

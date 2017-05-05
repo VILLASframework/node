@@ -14,12 +14,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -39,7 +39,7 @@ function Msg(c)
 	this.type      = typeof c.type      === 'undefined' ? Msg.prototype.TYPE_DATA     : c.type;
 	this.id        = typeof c.id        === 'undefined' ? -1                          : c.id;
 	this.timestamp = typeof c.timestamp === 'undefined' ? Date.now()                  : c.timestamp;
-	
+
 	if (Array.isArray(c.data)) {
 		this.length = c.data.length;
 		this.data   = c.data;
@@ -73,7 +73,7 @@ Msg.fromArrayBuffer = function(data)
 		timestamp: data.getUint32(0x08, 1) * 1e3 +
 		           data.getUint32(0x0C, 1) * 1e-6,
 	});
-	
+
 	msg.blob = new DataView(    data.buffer, data.byteOffset + 0x00, Msg.bytes(msg.length));
 	msg.data = new Float32Array(data.buffer, data.byteOffset + 0x10, msg.length);
 
@@ -89,7 +89,7 @@ Msg.fromArrayBufferVector = function(blob)
 	/* for every msg in vector */
 	while (offset < blob.byteLength) {
 		var msg = Msg.fromArrayBuffer(new DataView(blob, offset));
-		
+
 		if (msg != undefined) {
 			msgs.push(msg);
 
@@ -104,21 +104,21 @@ Msg.prototype.toArrayBuffer = function()
 {
 	buffer = new ArrayBuffer(Msg.bytes(this.length))
 	view   = new DataView(buffer);
-	
+
 	var bits = 0;
 	bits |= (this.version & 0xF) << Msg.prototype.OFFSET_VERSION;
 	bits |= (this.type    & 0x3) << Msg.prototype.OFFSET_TYPE;
-	
+
 	var sec  = Math.floor(this.timestamp / 1e3);
 	var nsec = (this.timestamp - sec * 1e3) * 1e6;
-	
+
 	view.setUint8( 0x00, bits, true);
 	view.setUint8( 0x01, this.id, true);
 	view.setUint16(0x02, this.length, true);
 	view.setUint32(0x04, this.sequence, true);
 	view.setUint32(0x08, sec, true);
 	view.setUint32(0x0C, nsec, true);
-	
+
 	data = new Float32Array(buffer, 0x10, this.length);
 	data.set(this.data);
 

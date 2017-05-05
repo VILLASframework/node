@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -72,21 +72,21 @@ int socket_init(struct super_node *sn)
 
 		/* Search of existing interface with correct ifindex */
 		struct interface *i;
-		
+
 		for (size_t k = 0; k < list_length(&interfaces); k++) {
 			i = list_at(&interfaces, k);
-			
+
 			if (rtnl_link_get_ifindex(i->nl_link) == rtnl_link_get_ifindex(link))
 				goto found;
 		}
 
 		/* If not found, create a new interface */
 		struct interface j = { .sockets.state = STATE_DESTROYED };
-		
+
 		ret = if_init(&j, link);
 		if (ret)
 			continue;
-		
+
 		i = memdup(&j, sizeof(j));
 		list_push(&interfaces, i);
 
@@ -106,7 +106,7 @@ int socket_deinit()
 {
 	for (size_t j = 0; j < list_length(&interfaces); j++) {
 		struct interface *i = list_at(&interfaces, j);
-		
+
 		if_stop(i);
 	}
 
@@ -131,7 +131,7 @@ char * socket_print(struct node *n)
 		case SOCKET_HEADER_FAKE:	header = "fake";	break;
 		case SOCKET_HEADER_DEFAULT:	header = "default";	break;
 	}
-	
+
 	if (s->header == SOCKET_HEADER_DEFAULT)
 		endian = "auto";
 	else {
@@ -252,7 +252,7 @@ static int socket_read_none(struct node *n, struct sample *smps[], unsigned cnt)
 	int iov_len = s->header == SOCKET_HEADER_FAKE ? 2 : 1;
 	struct iovec iov[iov_len];
 	struct sample *smp = smps[0];
-	
+
 	if (cnt < 1)
 		return 0;
 
@@ -261,11 +261,11 @@ static int socket_read_none(struct node *n, struct sample *smps[], unsigned cnt)
 		iov[0].iov_base = header;
 		iov[0].iov_len = sizeof(header);
 	}
-	
+
 	/* Remaining values are payload */
 	iov[iov_len-1].iov_base = &smp->data;
 	iov[iov_len-1].iov_len = SAMPLE_DATA_LEN(smp->capacity);
-		
+
 	struct msghdr mhdr = {
 		.msg_iov = iov,
 		.msg_iovlen = iov_len,
@@ -284,13 +284,13 @@ static int socket_read_none(struct node *n, struct sample *smps[], unsigned cnt)
 		recv(s->sd, NULL, 0, 0); /* empty receive buffer */
 		return -1;
 	}
-	
+
 	/* Convert message to host endianess */
 	for (int i = 0; i < ARRAY_LEN(header); i++)
 		header[i] = s->endian == SOCKET_ENDIAN_BIG
 				? be32toh(header[i])
 				: le32toh(header[i]);
-	
+
 	for (int i = 0; i < bytes / SAMPLE_DATA_LEN(1); i++)
 		smp->data[i].i = s->endian == SOCKET_ENDIAN_BIG
 				? be32toh(smp->data[i].i)
@@ -300,7 +300,7 @@ static int socket_read_none(struct node *n, struct sample *smps[], unsigned cnt)
 		length = (bytes - sizeof(header)) / SAMPLE_DATA_LEN(1);
 	else
 		length = bytes / SAMPLE_DATA_LEN(1);
-	
+
 	if (length > smp->capacity) {
 		warn("Node %s received more values than supported. Dropping %u values", node_name(n), length - smp->capacity);
 		length = smp->capacity;
@@ -351,7 +351,7 @@ static int socket_read_villas(struct node *n, struct sample *smps[], unsigned cn
 
 	int received = 0;
 	char *ptr = data;
-	
+
 	struct msg *msg = (struct msg *) ptr;
 	struct sample *smp = smps[received];
 
@@ -369,7 +369,7 @@ static int socket_read_villas(struct node *n, struct sample *smps[], unsigned cn
 		smp->ts.origin = MSG_TS(msg);
 		smp->ts.received.tv_sec  = -1;
 		smp->ts.received.tv_nsec = -1;
-		
+
 		memcpy(smp->data, msg->data, SAMPLE_DATA_LEN(msg->length));
 
 		ptr += MSG_LEN(msg->length);
@@ -402,7 +402,7 @@ static int socket_write_none(struct node *n, struct sample *smps[], unsigned cnt
 			data[1] = smps[i]->ts.origin.tv_sec;
 			data[2] = smps[i]->ts.origin.tv_nsec;
 		}
-		
+
 		for (int j = 0; j < smps[i]->length; j++)
 			data[off + j] = s->endian == SOCKET_ENDIAN_BIG
 					? htobe32(smps[i]->data[j].i)
@@ -415,7 +415,7 @@ static int socket_write_none(struct node *n, struct sample *smps[], unsigned cnt
 
 		sent++;
 	}
-	
+
 	return sent;
 }
 
@@ -427,23 +427,23 @@ static int socket_write_villas(struct node *n, struct sample *smps[], unsigned c
 
 	for (int i = 0; i < cnt; i++)
 		bytes += MSG_LEN(smps[i]->length);
-	
+
 	char data[bytes], *ptr = data;
-	
+
 	struct msg *msg = (struct msg *) ptr;
 
 	for (int i = 0; i < cnt; i++) {
 		*msg = MSG_INIT(smps[i]->length, smps[i]->sequence);
-		
+
 		msg->ts.sec  = smps[i]->ts.origin.tv_sec;
 		msg->ts.nsec = smps[i]->ts.origin.tv_nsec;
-		
+
 		memcpy(msg->data, smps[i]->data, MSG_DATA_LEN(smps[i]->length));
-		
+
 		msg_hton(msg);
-		
+
 		ptr += MSG_LEN(msg->length);
-		
+
 		msg = (struct msg *) ptr;
 	}
 
@@ -463,7 +463,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		case SOCKET_HEADER_NONE:
 		case SOCKET_HEADER_FAKE:
 			return socket_read_none(n, smps, cnt);
-			
+
 		case SOCKET_HEADER_DEFAULT:
 			return socket_read_villas(n, smps, cnt);
 	}
@@ -479,11 +479,11 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 		case SOCKET_HEADER_NONE:
 		case SOCKET_HEADER_FAKE:
 			return socket_write_none(n, smps, cnt);
-		
+
 		case SOCKET_HEADER_DEFAULT:
 			return socket_write_villas(n, smps, cnt);
 	}
-	
+
 	return -1;
 }
 
@@ -522,7 +522,7 @@ int socket_parse(struct node *n, config_setting_t *cfg)
 		else
 			cerror(cfg, "Invalid application header type '%s' for node %s", hdr, node_name(n));
 	}
-	
+
 	if (!config_setting_lookup_string(cfg, "endian", &endian))
 		s->endian = SOCKET_ENDIAN_BIG;
 	else {

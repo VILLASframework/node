@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -55,11 +55,11 @@ static int map_parse(struct hook *h, config_setting_t *cfg)
 	int ret;
 	struct map *p = h->_vd;
 	config_setting_t *cfg_mapping;
-	
+
 	cfg_mapping = config_setting_lookup(cfg, "mapping");
 	if (!cfg_mapping || !config_setting_is_array(cfg_mapping))
 		return -1;
-	
+
 	ret = mapping_parse(&p->mapping, cfg_mapping);
 	if (ret)
 		return ret;
@@ -82,7 +82,7 @@ static int map_read(struct hook *h, struct sample *smps[], size_t *cnt)
 
 	for (int i = 0; i < *cnt; i++) {
 		mapping_remap(&p->mapping, smps[i], tmp[i], NULL);
-	
+
 		SWAP(smps[i], tmp[i]);
 	}
 

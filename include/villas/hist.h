@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -36,22 +36,22 @@ typedef uintmax_t hist_cnt_t;
 /** Histogram structure used to collect statistics. */
 struct hist {
 	double resolution;	/**< The distance between two adjacent buckets. */
-	
+
 	double high;		/**< The value of the highest bucket. */
 	double low;		/**< The value of the lowest bucket. */
-	
+
 	double highest;		/**< The highest value observed (may be higher than #high). */
 	double lowest;		/**< The lowest value observed (may be lower than #low). */
 	double last;		/**< The last value which has been put into the buckets */
-	
+
 	int length;		/**< The number of buckets in #data. */
 
 	hist_cnt_t total;	/**< Total number of counted values. */
-	hist_cnt_t higher;	/**< The number of values which are higher than #high. */ 
+	hist_cnt_t higher;	/**< The number of values which are higher than #high. */
 	hist_cnt_t lower;	/**< The number of values which are lower than #low. */
 
 	hist_cnt_t *data;	/**< Pointer to dynamically allocated array of size length. */
-	
+
 	double _m[2], _s[2];	/**< Private variables for online variance calculation */
 };
 

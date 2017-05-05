@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -126,11 +126,11 @@ static void logger(int level, const char *msg) {
 	int len = strlen(msg);
 	if (strchr(msg, '\n'))
 		len -= 1;
-	
+
 	/* Decrease severity for some errors. */
 	if (strstr(msg, "Unable to open") == msg)
 		level = LLL_WARN;
-		
+
 	switch (level) {
 		case LLL_ERR:   warn("LWS: %.*s", len, msg); break;
 		case LLL_WARN:	warn("LWS: %.*s", len, msg); break;
@@ -142,12 +142,12 @@ static void logger(int level, const char *msg) {
 static void * worker(void *ctx)
 {
 	struct web *w = ctx;
-	
+
 	assert(w->state == STATE_STARTED);
 
 	for (;;)
 		lws_service(w->context, 100);
-	
+
 	return NULL;
 }
 
@@ -156,11 +156,11 @@ int web_init(struct web *w, struct api *a)
 	lws_set_log_level((1 << LLL_COUNT) - 1, logger);
 
 	w->api = a;
-	
+
 	/* Default values */
 	w->port = 80;
 	w->htdocs = WEB_PATH;
-	
+
 	w->state = STATE_INITIALIZED;
 
 	return 0;
@@ -178,7 +178,7 @@ int web_parse(struct web *w, config_setting_t *cfg)
 	config_setting_lookup_int(cfg, "port", &w->port);
 	config_setting_lookup_string(cfg, "htdocs", &w->htdocs);
 	config_setting_lookup_bool(cfg, "enabled", &enabled);
-	
+
 	if (!enabled)
 		w->port = CONTEXT_PORT_NO_LISTEN;
 
@@ -198,7 +198,7 @@ int web_start(struct web *w)
 		.uid = -1,
 		.user = (void *) w
 	};
-	
+
 	struct lws_context_creation_info vhost_info = {
 		.protocols = protocols,
 		.mounts = mounts,
@@ -217,12 +217,12 @@ int web_start(struct web *w)
 		w->context = lws_create_context(&ctx_info);
 		if (w->context == NULL)
 			error("WebSocket: failed to initialize server");
-	
+
 		w->vhost = lws_create_vhost(w->context, &vhost_info);
 		if (w->vhost == NULL)
 			error("WebSocket: failed to initialize server");
 	}
-	
+
 	ret = pthread_create(&w->thread, NULL, worker, w);
 	if (ret)
 		error("Failed to start Web worker");
@@ -238,12 +238,12 @@ int web_stop(struct web *w)
 
 	if (w->state == STATE_STARTED)
 		lws_cancel_service(w->context);
-	
+
 	/** @todo Wait for all connections to be closed */
-	
+
 	pthread_cancel(w->thread);
 	pthread_join(w->thread, NULL);
-	
+
 	w->state = STATE_STOPPED;
 
 	return 0;
@@ -253,7 +253,7 @@ int web_destroy(struct web *w)
 {
 	if (w->state == STATE_DESTROYED)
 		return 0;
-	
+
 	if (w->context)
 		lws_context_destroy(w->context);
 

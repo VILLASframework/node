@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -34,7 +34,7 @@ struct stats_collect {
 
 	enum stats_format format;
 	int verbose;
-	
+
 	FILE *output;
 	const char *uri;
 };
@@ -50,47 +50,47 @@ static int stats_collect_init(struct hook *h)
 	 * This allows the path code to update statistics. */
 	if (h->path)
 		h->path->stats = &p->stats;
-	
+
 	/* Set default values */
 	p->format = STATS_FORMAT_HUMAN;
 	p->verbose = 0;
 	p->uri = NULL;
 	p->output = stdout;
-	
+
 	return 0;
 }
 
 static int stats_collect_destroy(struct hook *h)
 {
 	struct stats_collect *p = h->_vd;
-	
+
 	stats_destroy(&p->stats);
-	
+
 	return 0;
 }
 
 static int stats_collect_start(struct hook *h)
 {
 	struct stats_collect *p = h->_vd;
-	
+
 	if (p->uri) {
 		p->output = fopen(p->uri, "w+");
 		if (!p->output)
 			error("Failed to open file %s for writing", p->uri);
 	}
-	
+
 	return 0;
 }
 
 static int stats_collect_stop(struct hook *h)
 {
 	struct stats_collect *p = h->_vd;
-	
+
 	stats_print(&p->stats, p->output, p->format, p->verbose);
 
 	if (p->uri)
 		fclose(p->output);
-	
+
 	return 0;
 }
 
@@ -99,7 +99,7 @@ static int stats_collect_restart(struct hook *h)
 	struct stats_collect *p = h->_vd;
 
 	stats_reset(&p->stats);
-	
+
 	return 0;
 }
 
@@ -108,7 +108,7 @@ static int stats_collect_periodic(struct hook *h)
 	struct stats_collect *p = h->_vd;
 
 	stats_print_periodic(&p->stats, p->output, p->format, p->verbose, h->path);
-	
+
 	return 0;
 }
 
@@ -127,20 +127,20 @@ static int stats_collect_parse(struct hook *h, config_setting_t *cfg)
 		else
 			cerror(cfg, "Invalid statistic output format: %s", format);
 	}
-	
+
 	config_setting_lookup_int(cfg, "verbose", &p->verbose);
 	config_setting_lookup_string(cfg, "output", &p->uri);
-	
+
 	return 0;
 }
 
 static int stats_collect_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {
 	struct stats_collect *p = h->_vd;
-	
+
 	stats_collect(p->stats.delta, smps, *cnt);
 	stats_commit(&p->stats, p->stats.delta);
-	
+
 	return 0;
 }
 

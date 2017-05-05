@@ -20,7 +20,7 @@
 
 struct fifo {
 	XLlFifo inst;
-	
+
 	uint32_t baseaddr_axi4;
 };
 

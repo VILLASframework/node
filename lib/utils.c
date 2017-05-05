@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -112,7 +112,7 @@ char * vstrcatf(char **dest, const char *fmt, va_list ap)
 	*dest = (char *)(realloc(*dest, n + i + 1));
 	if (*dest != NULL)
 		strncpy(*dest+n, tmp, i + 1);
-	
+
 	free(tmp);
 
 	return *dest;
@@ -192,7 +192,7 @@ int cpulist_parse(const char *str, cpu_set_t *set, int fail)
 
 	if (r == 2)
 		return 1;
-	
+
 	return 0;
 }
 
@@ -251,9 +251,9 @@ void * alloc(size_t bytes)
 void * memdup(const void *src, size_t bytes)
 {
 	void *dst = alloc(bytes);
-	
+
 	memcpy(dst, src, bytes);
-	
+
 	return dst;
 }
 
@@ -275,9 +275,9 @@ ssize_t read_random(char *buf, size_t len)
 
 		total += bytes;
 	}
-	
+
 	close(fd);
-	
+
 	return bytes;
 }
 
@@ -287,10 +287,10 @@ void rdtsc_sleep(uint64_t nanosecs, uint64_t start)
 
 	/** @todo Replace the hard coded CPU clock frequency */
 	cycles = (double) nanosecs / (1e9 / 3392389000);
-	
+
 	if (start == 0)
 		start = rdtsc();
-	
+
 	do {
 		__asm__("nop");
 	} while (rdtsc() - start < cycles);
@@ -300,7 +300,7 @@ void rdtsc_sleep(uint64_t nanosecs, uint64_t start)
 void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 {
 	info("Initialize signals");
-	
+
 	struct sigaction sa_quit = {
 		.sa_flags = SA_SIGINFO,
 		.sa_sigaction = cb
@@ -321,12 +321,12 @@ void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 pid_t spawn(const char* name, char *const argv[])
 {
 	pid_t pid;
-	
+
 	pid = fork();
 	switch (pid) {
 		case -1: return -1;
 		case 0:  return execvp(name, (char * const*) argv);
 	}
-	
+
 	return pid;
 }

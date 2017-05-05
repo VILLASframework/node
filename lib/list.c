@@ -12,12 +12,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -33,7 +33,7 @@ static int cmp_lookup(const void *a, const void *b) {
 	const struct {
 		char *name;
 	} *obj = a;
-		
+
 	return strcmp(obj->name, b);
 }
 
@@ -68,15 +68,15 @@ int list_destroy(struct list *l, dtor_cb_t destructor, bool release)
 
 	for (size_t i = 0; i < list_length(l); i++) {
 		void *p = list_at(l, i);
-		
+
 		if (destructor)
 			destructor(p);
 		if (release)
 			free(p);
 	}
-	
+
 	free(l->array);
-	
+
 	l->array = NULL;
 
 	l->length = -1;
@@ -84,9 +84,9 @@ int list_destroy(struct list *l, dtor_cb_t destructor, bool release)
 
 	pthread_mutex_unlock(&l->lock);
 	pthread_mutex_destroy(&l->lock);
-	
+
 	l->state = STATE_DESTROYED;
-	
+
 	return 0;
 }
 
@@ -95,13 +95,13 @@ void list_push(struct list *l, void *p)
 	pthread_mutex_lock(&l->lock);
 
 	assert(l->state == STATE_INITIALIZED);
-	
+
 	/* Resize array if out of capacity */
 	if (l->length >= l->capacity) {
 		l->capacity += LIST_CHUNKSIZE;
 		l->array = realloc(l->array, l->capacity * sizeof(void *));
 	}
-	
+
 	l->array[l->length] = p;
 	l->length++;
 
@@ -122,7 +122,7 @@ void list_remove(struct list *l, void *p)
 		else
 			l->array[i - removed] = l->array[i];
 	}
-	
+
 	l->length -= removed;
 
 	pthread_mutex_unlock(&l->lock);
@@ -134,7 +134,7 @@ void * list_lookup(struct list *l, const char *name)
 }
 
 int list_contains(struct list *l, void *p)
-{	
+{
 	return list_count(l, cmp_contains, p);
 }
 
@@ -148,7 +148,7 @@ int list_count(struct list *l, cmp_cb_t cmp, void *ctx)
 
 	for (size_t i = 0; i < list_length(l); i++) {
 		void *e = list_at(l, i);
-		
+
 		if (cmp(e, ctx) == 0)
 			c++;
 	}
@@ -165,13 +165,13 @@ void * list_search(struct list *l, cmp_cb_t cmp, void *ctx)
 	pthread_mutex_lock(&l->lock);
 
 	assert(l->state == STATE_INITIALIZED);
-	
+
 	for (size_t i = 0; i < list_length(l); i++) {
 		e = list_at(l, i);
 		if (cmp(e, ctx) == 0)
 			goto out;
 	}
-	
+
 	e = NULL; /* not found */
 
 out:	pthread_mutex_unlock(&l->lock);

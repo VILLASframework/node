@@ -18,7 +18,7 @@
 int switch_start(struct fpga_ip *c)
 {
 	int ret;
-	
+
 	struct fpga_card *f = c->card;
 	struct sw *sw = c->_vd;
 
@@ -34,7 +34,7 @@ int switch_start(struct fpga_ip *c)
 		.MaxNumMI = sw->num_ports,
 		.MaxNumSI = sw->num_ports
 	};
-	
+
 	ret = XAxisScr_CfgInitialize(xsw, &sw_cfg, (uintptr_t) c->card->map + c->baseaddr);
 	if (ret != XST_SUCCESS)
 		return -1;
@@ -43,7 +43,7 @@ int switch_start(struct fpga_ip *c)
 	XAxisScr_RegUpdateDisable(xsw);
 	XAxisScr_MiPortDisableAll(xsw);
 	XAxisScr_RegUpdateEnable(xsw);
-	
+
 	switch_init_paths(c);
 
 	return 0;
@@ -58,14 +58,14 @@ int switch_init_paths(struct fpga_ip *c)
 
 	XAxisScr_RegUpdateDisable(xsw);
 	XAxisScr_MiPortDisableAll(xsw);
-	
+
 	for (size_t i = 0; i < list_length(&sw->paths); i++) {
 		struct sw_path *p = list_at(&sw->paths, i);
 		struct fpga_ip *mi, *si;
-		
+
 		mi = list_lookup(&c->card->ips, p->out);
 		si = list_lookup(&c->card->ips, p->in);
-		
+
 		if (!mi || !si || mi->port == -1 || si->port == -1)
 			error("Invalid path configuration for FPGA");
 
@@ -84,7 +84,7 @@ int switch_destroy(struct fpga_ip *c)
 	struct sw *sw = c->_vd;
 
 	list_destroy(&sw->paths, NULL, true);
-	
+
 	return 0;
 }
 
@@ -103,13 +103,13 @@ int switch_parse(struct fpga_ip *c)
 	cfg_sw = config_setting_get_member(f->cfg, "paths");
 	if (!cfg_sw)
 		return 0; /* no switch config available */
-	
+
 	for (int i = 0; i < config_setting_length(cfg_sw); i++) {
 		cfg_path = config_setting_get_elem(cfg_sw, i);
 
 		struct sw_path path;
 		int reverse;
-		
+
 		if (!config_setting_lookup_bool(cfg_path, "reverse", &reverse))
 			reverse = 0;
 
@@ -132,11 +132,11 @@ int switch_parse(struct fpga_ip *c)
 			const char *tmp = path.in;
 			path.in = path.out;
 			path.out = tmp;
-			
+
 			list_push(&sw->paths, memdup(&path, sizeof(path)));
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -144,7 +144,7 @@ int switch_connect(struct fpga_ip *c, struct fpga_ip *mi, struct fpga_ip *si)
 {
 	struct sw *sw = c->_vd;
 	XAxis_Switch *xsw = &sw->inst;
-	
+
 	uint32_t mux, port;
 
 	/* Check if theres already something connected */
@@ -166,11 +166,11 @@ int switch_connect(struct fpga_ip *c, struct fpga_ip *mi, struct fpga_ip *si)
 	XAxisScr_RegUpdateDisable(xsw);
 	XAxisScr_MiPortEnable(xsw, mi->port, si->port);
 	XAxisScr_RegUpdateEnable(xsw);
-	
+
 	/* Reset IPs */
 	/*ip_reset(mi);
 	ip_reset(si);*/
-	
+
 	debug(8, "FPGA: Switch connected %s (%u) to %s (%u)", mi->name, mi->port, si->name, si->port);
 
 	return 0;

@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -43,7 +43,7 @@ enum api_mode {
 struct api_session {
 	enum api_mode mode;
 	enum api_version version;
-	
+
 	int runs;
 
 	struct {
@@ -54,11 +54,11 @@ struct api_session {
 		struct web_buffer body;		/**< HTTP body / WS payload */
 		struct web_buffer headers;	/**< HTTP headers */
 	} response;
-	
+
 	bool completed;				/**< Did we receive the complete body yet? */
-	
+
 	enum state state;
-	
+
 	struct api *api;
 };
 

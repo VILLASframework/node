@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -49,7 +49,7 @@ static int hook_parse_cli(struct hook *h, char *params[], int paramlen)
 	int ret;
 	char *str;
 	config_setting_t *cfg_root;
-	
+
 	/* Concat all params */
 	str = NULL;
 	for (int i = 0; i < paramlen; i++)
@@ -62,7 +62,7 @@ static int hook_parse_cli(struct hook *h, char *params[], int paramlen)
 		if (ret != CONFIG_TRUE)
 			error("Failed to parse argument '%s': %s", str, config_error_text(&cfg));
 	}
-	
+
 	//config_write(&cfg, stdout);
 
 	cfg_root = config_root_setting(&cfg);
@@ -96,17 +96,17 @@ static void usage()
 int main(int argc, char *argv[])
 {
 	int ret, level;
-	
+
 	size_t cnt, recv;
-	
+
 	/* Default values */
 	level = V;
 	cnt = 1;
-	
+
 	struct log log;
 	struct plugin *p;
 	struct sample *samples[cnt];
-	
+
 	struct pool q = { .state = STATE_DESTROYED };
 	struct hook h = { .state = STATE_DESTROYED };
 
@@ -130,29 +130,29 @@ int main(int argc, char *argv[])
 		usage();
 		exit(EXIT_FAILURE);
 	}
-	
+
 	char *hookstr = argv[optind];
-	
+
 	if (cnt < 1)
 		error("Vectorize option must be greater than 0");
-	
+
 	log_init(&log, level, LOG_ALL);
 	log_start(&log);
 
 	memory_init(DEFAULT_NR_HUGEPAGES);
-	
+
 	ret = pool_init(&q, 10 * cnt, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
 	if (ret)
 		error("Failed to initilize memory pool");
-	
-	
+
+
 
 	p = plugin_lookup(PLUGIN_TYPE_HOOK, hookstr);
 	if (!p)
 		error("Unknown hook function '%s'", hookstr);
 
 	config_init(&cfg);
-	
+
 	ret = hook_init(&h, &p->hook, NULL);
 	if (ret)
 		error("Failed to initialize hook");
@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
 		error("Failed to parse hook config");
 
 	hook_start(&h);
-	
+
 	while (!feof(stdin)) {
 		ret = sample_alloc(&q, samples, cnt);
 		if (ret != cnt)
@@ -173,27 +173,27 @@ int main(int argc, char *argv[])
 			ret = sample_io_villas_fscan(stdin, samples[j], NULL);
 			if (ret < 0)
 				break;
-			
+
 			samples[j]->ts.received = time_now();
 			recv++;
 		}
 
 		debug(15, "Read %zu samples from stdin", recv);
-		
+
 		hook_read(&h, samples, &recv);
 		hook_write(&h, samples, &recv);
-		
+
 		for (int j = 0; j < recv; j++)
 			sample_io_villas_fprint(stdout, samples[j], SAMPLE_IO_ALL);
 		fflush(stdout);
-		
+
 		sample_free(samples, cnt);
 	}
-	
+
 	hook_stop(&h);
 	hook_destroy(&h);
 	config_destroy(&cfg);
-	
+
 	sample_free(samples, cnt);
 	pool_destroy(&q);
 

@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -55,14 +55,14 @@ struct plugin {
 	char *description;
 	void *handle;
 	char *path;
-	
+
 	enum plugin_type type;
 
 	enum state state;
-	
+
 	int (*load)(struct plugin *p);
 	int (*unload)(struct plugin *p);
-	
+
 	union {
 		struct api_action	api;
 		struct node_type	node;

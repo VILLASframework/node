@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -43,7 +43,7 @@ static int curr_count = 0;
  *
  * Drawbacks: No protection for out of order packets. Default positive delay assumed,
  * so GPS timestamp should be earlier than NTP timestamp. If difference b/w NTP and GPS ts
- * is high (i.e. several mins depending on GPS_NTP_DELAY_WIN_SIZE), 
+ * is high (i.e. several mins depending on GPS_NTP_DELAY_WIN_SIZE),
  * the variance value will overrun the 64bit value.
  */
 int hook_jitter_ts(struct hook *h, struct sample *smps[], size_t *cnt)
@@ -58,13 +58,13 @@ int hook_jitter_ts(struct hook *h, struct sample *smps[], size_t *cnt)
 
 		/* Calc on microsec instead of nenosec delay as variance formula overflows otherwise.*/
 		curr_delay_us = delay_sec*1000000 + delay_nsec/1000;
-		
+
 		delay_mov_sum = delay_mov_sum + curr_delay_us - delay_series[curr_count];
 		moving_avg[curr_count] = delay_mov_sum/(GPS_NTP_DELAY_WIN_SIZE); /* Will be valid after GPS_NTP_DELAY_WIN_SIZE initial values */
-		
+
 		delay_mov_sum_sqrd = delay_mov_sum_sqrd + (curr_delay_us*curr_delay_us) - (delay_series[curr_count]*delay_series[curr_count]);
 		moving_var[curr_count] = (delay_mov_sum_sqrd - (delay_mov_sum*delay_mov_sum)/GPS_NTP_DELAY_WIN_SIZE)/(GPS_NTP_DELAY_WIN_SIZE-1);
-		
+
 		delay_series[curr_count] = curr_delay_us; /* Update the last delay value */
 
 		/* Jitter calc formula as used in Wireshark according to RFC3550 (RTP)
@@ -72,9 +72,9 @@ int hook_jitter_ts(struct hook *h, struct sample *smps[], size_t *cnt)
 			J(i) = J(i-1)+(|D(i-1,i)|-J(i-1))/16
 		*/
 		jitter_val[(curr_count+1)%GPS_NTP_DELAY_WIN_SIZE] = jitter_val[curr_count] + (abs(curr_delay_us) - jitter_val[curr_count])/16;
-		
+
 		info("jitter %ld usec, moving average %ld usec, moving variance %ld usec\n", jitter_val[(curr_count+1)%GPS_NTP_DELAY_WIN_SIZE], moving_avg[curr_count], moving_var[curr_count]);
-		
+
 		curr_count++;
 		if(curr_count >= GPS_NTP_DELAY_WIN_SIZE)
 			curr_count = 0;

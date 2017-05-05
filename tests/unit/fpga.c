@@ -40,22 +40,22 @@ static void init()
 {
 	int ret;
 	config_setting_t *cfg_root;
-	
+
 	ret = super_node_init(&sn);
 	cr_assert_eq(ret, 0, "Failed to initialize Supernode");
-	
+
 	ret = super_node_parse_uri(&sn, TEST_CONFIG);
 	cr_assert_eq(ret, 0, "Failed to parse configuration");
 
 	ret = super_node_check(&sn);
 	cr_assert_eq(ret, 0, "Failed to check configuration");
-	
+
 	cfg_root = config_root_setting(&sn.cfg);
 	cr_assert_neq(cfg_root, NULL);
 
 	ret = pci_init(&pci);
 	cr_assert_eq(ret, 0, "Failed to initialize PCI sub-system");
-	
+
 	ret = vfio_init(&vc);
 	cr_assert_eq(ret, 0, "Failed to initiliaze VFIO sub-system");
 
@@ -77,7 +77,7 @@ static void fini()
 
 	ret = fpga_card_destroy(card);
 	cr_assert_eq(ret, 0, "Failed to de-initilize FPGA");
-	
+
 	super_node_destroy(&sn);
 }
 
@@ -133,10 +133,10 @@ Test(fpga, xsg, .description = "XSG: multiply_add")
 	p = list_lookup(&model->parameters, "factor");
 	if (!p)
 		error("Missing parameter 'factor' for model '%s'", ip->name);
-	
+
 	ret = model_param_read(p, &factor);
 	cr_assert_eq(ret, 0, "Failed to read parameter 'factor' from model '%s'", ip->name);
-	
+
 	info("Model param: factor = %f", factor);
 
 	ret = switch_connect(card->sw, dma, ip);
@@ -147,7 +147,7 @@ Test(fpga, xsg, .description = "XSG: multiply_add")
 
 	ret = dma_alloc(dma, &mem, 0x1000, 0);
 	cr_assert_eq(ret, 0, "Failed to allocate DMA memory");
-	
+
 	float *src = (float *) mem.base_virt;
 	float *dst = (float *) mem.base_virt + 0x800;
 
@@ -178,7 +178,7 @@ Test(fpga, hls_dft, .description = "HLS: hls_dft")
 {
 	int ret;
 	struct fpga_ip *hls, *rtds;
-	
+
 	rtds = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL });
 	hls = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { NULL, "hls", "hls_dft", NULL });
 
@@ -187,7 +187,7 @@ Test(fpga, hls_dft, .description = "HLS: hls_dft")
 
 	ret = intc_enable(card->intc, (1 << rtds->irq), 0);
 	cr_assert_eq(ret, 0, "Failed to enable interrupt");
-	
+
 	ret = switch_connect(card->sw, rtds, hls);
 	cr_assert_eq(ret, 0, "Failed to configure switch");
 
@@ -203,14 +203,14 @@ Test(fpga, hls_dft, .description = "HLS: hls_dft")
 	int len = 2000;
 	int NSAMPLES = 400;
 	float src[len], dst[len];
-	
+
 	for (int i = 0; i < len; i++) {
-		src[i] = 4 + 5.0 * sin(2.0 * M_PI * 1 * i / NSAMPLES) + 
-		             2.0 * sin(2.0 * M_PI * 2 * i / NSAMPLES) + 
-			     1.0 * sin(2.0 * M_PI * 5 * i / NSAMPLES) + 
-			     0.5 * sin(2.0 * M_PI * 9 * i / NSAMPLES) + 
+		src[i] = 4 + 5.0 * sin(2.0 * M_PI * 1 * i / NSAMPLES) +
+		             2.0 * sin(2.0 * M_PI * 2 * i / NSAMPLES) +
+			     1.0 * sin(2.0 * M_PI * 5 * i / NSAMPLES) +
+			     0.5 * sin(2.0 * M_PI * 9 * i / NSAMPLES) +
 			     0.2 * sin(2.0 * M_PI * 15 * i / NSAMPLES);
-	
+
 		fifo_write()
 	}
 #endif
@@ -272,9 +272,9 @@ Test(fpga, dma, .description = "DMA")
 
 		if (fpga_vlnv_cmp(&dm->vlnv, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_dma", NULL }))
 			continue; /* skip non DMA IP cores */
-		
+
 		struct dma *dma = dm->_vd;
-		
+
 		/* Simple DMA can only transfer up to 4 kb due to
 		 * PCIe page size burst limitation */
 		ssize_t len2, len = dma->inst.HasSg ? 64 << 20 : 1 << 2;
@@ -298,7 +298,7 @@ Test(fpga, dma, .description = "DMA")
 
 		ret = switch_connect(card->sw, dm, dm);
 		cr_assert_eq(ret, 0, "Failed to configure switch");
-		
+
 		/* Start transfer */
 		ret = dma_ping_pong(dm, src.base_phys, dst.base_phys, dst.len);
 		cr_assert_eq(ret, 0, "DMA ping pong failed");
@@ -312,7 +312,7 @@ Test(fpga, dma, .description = "DMA")
 
 		ret = intc_disable(card->intc, (1 << irq_mm2s) | (1 << irq_s2mm));
 		cr_assert_eq(ret, 0, "Failed to disable interrupt");
-		
+
 		ret = dma_free(dm, &mem);
 		cr_assert_eq(ret, 0, "Failed to release DMA memory");
 	}
@@ -328,9 +328,9 @@ Test(fpga, timer, .description = "Timer Counter")
 
 	ip = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_timer", NULL });
 	cr_assert(ip);
-	
+
 	tmr = ip->_vd;
-	
+
 	XTmrCtr *xtmr = &tmr->inst;
 
 	ret = intc_enable(card->intc, (1 << ip->irq), 0);
@@ -364,8 +364,8 @@ Test(fpga, rtds_rtt, .description = "RTDS: tight rtt")
 	/* Get IP cores */
 	rtds = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { "acs.eonerc.rwth-aachen.de", "user", "rtds_axis", NULL });
 	cr_assert(rtds);
-	
-	ip   = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_dma", NULL }); 
+
+	ip   = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_dma", NULL });
 	cr_assert(ip);
 
 	ret = switch_connect(card->sw, rtds, ip);
@@ -378,7 +378,7 @@ Test(fpga, rtds_rtt, .description = "RTDS: tight rtt")
 	cr_assert_eq(ret, 0, "Failed to allocate DMA memory");
 
 	while (1) {
-		
+
 		ret = dma_read(ip, buf.base_phys, buf.len);
 		cr_assert_eq(ret, 0, "Failed to start DMA read: %d", ret);
 
@@ -387,7 +387,7 @@ Test(fpga, rtds_rtt, .description = "RTDS: tight rtt")
 
 		ret = dma_write(ip, buf.base_phys, recvlen);
 		cr_assert_eq(ret, 0, "Failed to start DMA write: %d", ret);
-		
+
 		ret = dma_write_complete(ip, NULL, NULL);
 		cr_assert_eq(ret, 0, "Failed to complete DMA write: %d", ret);
 	}
@@ -397,7 +397,7 @@ Test(fpga, rtds_rtt, .description = "RTDS: tight rtt")
 
 	ret = switch_disconnect(card->sw, ip, rtds);
 	cr_assert_eq(ret, 0, "Failed to configure switch");
-	
+
 	ret = dma_free(ip, &buf);
 	cr_assert_eq(ret, 0, "Failed to release DMA memory");
 }

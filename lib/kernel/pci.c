@@ -22,7 +22,7 @@ int pci_init(struct pci *p)
 	FILE *f;
 	char path[256];
 	int ret;
-	
+
 	snprintf(path, sizeof(path), "%s/bus/pci/devices", SYSFS_PATH);
 
 	dp = opendir(path);
@@ -33,20 +33,20 @@ int pci_init(struct pci *p)
 
 	while ((entry = readdir(dp))) {
 		struct pci_device d;
-		
+
 		struct { const char *s; int *p; } map[] = {
 			{ "vendor", &d.id.vendor },
 			{ "device", &d.id.device }
 		};
-		
+
 		/* Read vendor & device id */
 		for (int i = 0; i < 2; i++) {
 			snprintf(path, sizeof(path), "%s/bus/pci/devices/%s/%s", SYSFS_PATH, entry->d_name, map[i].s);
-			
+
 			f = fopen(path, "r");
 			if (!f)
 				serror("Failed to open '%s'", path);
-			
+
 			ret = fscanf(f, "%x", map[i].p);
 			if (ret != 1)
 				error("Failed to parse %s ID from: %s", map[i].s, path);
@@ -58,19 +58,19 @@ int pci_init(struct pci *p)
 		ret = sscanf(entry->d_name, "%4x:%2x:%2x.%u", &d.slot.domain, &d.slot.bus, &d.slot.device, &d.slot.function);
 		if (ret != 4)
 			error("Failed to parse PCI slot number: %s", entry->d_name);
-		
+
 		list_push(&p->devices, memdup(&d, sizeof(d)));
 	}
 
 	closedir(dp);
-	
+
 	return 0;
 }
 
 int pci_destroy(struct pci *p)
 {
 	list_destroy(&p->devices, NULL, true);
-	
+
 	return 0;
 }
 
@@ -103,21 +103,21 @@ int pci_device_parse_slot(struct pci_device *f, const char *s, const char **erro
 		}
 		else
 			bus = str;
-			
+
 		if (bus[0] && strcmp(bus, "*")) {
 			long int x = strtol(bus, &e, 16);
 			if ((e && *e) || (x < 0 || x > 0xff)) {
 				*error = "Invalid bus number";
 				goto fail;
 			}
-				
+
 			f->slot.bus = x;
 		}
 	}
 
 	if (dot)
 		*dot++ = 0;
-	
+
 	if (mid[0] && strcmp(mid, "*")) {
 		long int x = strtol(mid, &e, 16);
 
@@ -128,10 +128,10 @@ int pci_device_parse_slot(struct pci_device *f, const char *s, const char **erro
 
 		f->slot.device = x;
 	}
-	
+
 	if (dot && dot[0] && strcmp(dot, "*")) {
 		long int x = strtol(dot, &e, 16);
-		
+
 		if ((e && *e) || (x < 0 || x > 7)) {
 			*error = "Invalid function number";
 			goto fail;
@@ -139,7 +139,7 @@ int pci_device_parse_slot(struct pci_device *f, const char *s, const char **erro
 
 		f->slot.function = x;
 	}
-	
+
 	free(str);
 	return 0;
 
@@ -165,7 +165,7 @@ int pci_device_parse_id(struct pci_device *f, const char *str, const char **erro
 	*s++ = 0;
 	if (str[0] && strcmp(str, "*")) {
 		long int x = strtol(str, &e, 16);
-	
+
 		if ((e && *e) || (x < 0 || x > 0xffff)) {
 			*error = "Invalid vendor ID";
 			goto fail;
@@ -184,13 +184,13 @@ int pci_device_parse_id(struct pci_device *f, const char *str, const char **erro
 			*error = "Invalid device ID";
 			goto fail;
 		}
-		
+
 		f->id.device = x;
 	}
-	
+
 	if (c && c[0] && strcmp(s, "*")) {
 		long int x = strtol(c, &e, 16);
-		
+
 		if ((e && *e) || (x < 0 || x > 0xffff)) {
 			*error = "Invalid class code";
 			goto fail;
@@ -217,7 +217,7 @@ int pci_device_compare(const struct pci_device *d, const struct pci_device *f)
 		if ((f->id.device >= 0 && f->id.device != d->id.device) || (f->id.vendor >= 0 && f->id.vendor != d->id.vendor))
 			return 0;
 	}
-		
+
 	if (f->id.class >= 0) {
 		if (f->id.class != d->id.class)
 			return 0;

@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
@@ -67,17 +67,17 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 		pthread_join(recvv.thread, NULL);
 		pool_destroy(&recvv.pool);
 	}
-	
+
 	if (sendd.started) {
 		pthread_cancel(sendd.thread);
 		pthread_join(sendd.thread, NULL);
 		pool_destroy(&sendd.pool);
 	}
-	
+
 	ret = super_node_stop(&sn);
 	if (ret)
 		error("Failed to stop super-node");
-	
+
 	super_node_destroy(&sn);
 
 	info(GRN("Goodbye!"));
@@ -107,14 +107,14 @@ static void * send_loop(void *ctx)
 
 	if (!sendd.enabled)
 		return NULL;
-	
+
 	sendd.started = true;
-	
+
 	/* Initialize memory */
 	ret = pool_init(&sendd.pool, LOG2_CEIL(node->vectorize), SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
-	
+
 	ret = sample_alloc(&sendd.pool, smps, node->vectorize);
 	if (ret < 0)
 		error("Failed to get %u samples out of send pool (%d).", node->vectorize, ret);
@@ -151,17 +151,17 @@ static void * recv_loop(void *ctx)
 {
 	int ret;
 	struct sample *smps[node->vectorize];
-	
+
 	if (!recvv.enabled)
 		return NULL;
 
 	recvv.started = true;
-	
+
 	/* Initialize memory */
 	ret = pool_init(&recvv.pool, LOG2_CEIL(node->vectorize), SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
-	
+
 	ret = sample_alloc(&recvv.pool, smps, node->vectorize);
 	if (ret  < 0)
 		error("Failed to get %u samples out of receive pool (%d).", node->vectorize, ret);
@@ -219,21 +219,21 @@ int main(int argc, char *argv[])
 				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
 	}
-	
+
 	if (argc != optind + 2) {
 		usage();
 		exit(EXIT_FAILURE);
 	}
-	
+
 	char *configfile = argv[optind];
 	char *nodestr    = argv[optind+1];
 
 	log_init(&sn.log, level, LOG_ALL);
 	log_start(&sn.log);
-	
+
 	super_node_init(&sn);
 	super_node_parse_uri(&sn, configfile);
-	
+
 	memory_init(sn.hugepages);
 	signals_init(quit);
 	rt_init(sn.priority, sn.affinity);
@@ -254,7 +254,7 @@ int main(int argc, char *argv[])
 	ret = node_type_start(node->_vt, &sn);
 	if (ret)
 		error("Failed to intialize node type: %s", node_name(node));
-	
+
 	ret = node_check(node);
 	if (ret)
 		error("Invalid node configuration");

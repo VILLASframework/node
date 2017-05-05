@@ -13,12 +13,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -44,7 +44,7 @@ struct fpga_card {
 
 	struct pci *pci;
 	struct pci_device filter;		/**< Filter for PCI device. */
-	
+
 	struct vfio_container *vfio_container;
 	struct vfio_device vfio_device;	/**< VFIO device handle. */
 
@@ -62,7 +62,7 @@ struct fpga_card {
 	struct fpga_ip *intc;
 	struct fpga_ip *reset;
 	struct fpga_ip *sw;
-	
+
 	config_setting_t *cfg;
 };
 

@@ -38,7 +38,7 @@ int dma_mem_split(struct dma_mem *o, struct dma_mem *a, struct dma_mem *b)
 int dma_alloc(struct fpga_ip *c, struct dma_mem *mem, size_t len, int flags)
 {
 	int ret;
-	
+
 	struct fpga_card *f = c->card;
 
 	/* Align to next bigger page size chunk */
@@ -63,15 +63,15 @@ int dma_alloc(struct fpga_ip *c, struct dma_mem *mem, size_t len, int flags)
 int dma_free(struct fpga_ip *c, struct dma_mem *mem)
 {
 	int ret;
-	
+
 	ret = vfio_unmap_dma(c->card->vfio_device.group->container, (uint64_t) mem->base_virt, (uint64_t) mem->base_phys, mem->len);
 	if (ret)
 		return ret;
-	
+
 	ret = munmap(mem->base_virt, mem->len);
 	if (ret)
 		return ret;
-	
+
 	return 0;
 }
 
@@ -82,15 +82,15 @@ int dma_ping_pong(struct fpga_ip *c, char *src, char *dst, size_t len)
 	ret = dma_read(c, dst, len);
 	if (ret)
 		return ret;
-	
+
 	ret = dma_write(c, src, len);
 	if (ret)
 		return ret;
-	
+
 	ret = dma_write_complete(c, NULL, NULL);
 	if (ret)
 		return ret;
-	
+
 	ret = dma_read_complete(c, NULL, NULL);
 	if (ret)
 		return ret;
@@ -116,7 +116,7 @@ int dma_read(struct fpga_ip *c, char *buf, size_t len)
 	struct dma *dma = c->_vd;
 
 	XAxiDma *xdma = &dma->inst;
-	
+
 	debug(25, "DMA read: dmac=%s buf=%p len=%#zx", c->name, buf, len);
 
 	return xdma->HasSg
@@ -203,7 +203,7 @@ int dma_sg_write(struct fpga_ip *c, char *buf, size_t len)
 			cr |= XAXIDMA_BD_CTRL_TXSOF_MASK;
 		if (i == bdcnt - 1)
 			cr |= XAXIDMA_BD_CTRL_TXEOF_MASK;
-	
+
 		XAxiDma_BdSetCtrl(bd, cr);
 		XAxiDma_BdSetId(bd, (uintptr_t) buf);
 
@@ -311,9 +311,9 @@ int dma_sg_write_complete(struct fpga_ip *c, char **buf, size_t *len)
 	while (!(XAxiDma_IntrGetIrq(xdma, XAXIDMA_DMA_TO_DEVICE) & XAXIDMA_IRQ_IOC_MASK))
 		intc_wait(c->card->intc, c->irq);
 	XAxiDma_IntrAckIrq(xdma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
-	
+
 	processed = XAxiDma_BdRingFromHw(ring, XAXIDMA_ALL_BDS, &bds);
-	
+
 	if (len != NULL)
 		*len = XAxiDma_BdGetActualLength(bds, XAXIDMA_MAX_TRANSFER_LEN);
 
@@ -354,12 +354,12 @@ int dma_sg_read_complete(struct fpga_ip *c, char **buf, size_t *len)
 	bd = bds;
 	for (int i = 0; i < bdcnt; i++) {
 		recvlen += XAxiDma_BdGetActualLength(bd, ring->MaxTransferLen);
-		
+
 		sr = XAxiDma_BdGetSts(bd);
 		if (sr & XAXIDMA_BD_STS_RXSOF_MASK)
 			if (i != 0)
 				warn("sof not first");
-		
+
 		if (sr & XAXIDMA_BD_STS_RXEOF_MASK)
 			if (i != bdcnt - 1)
 				warn("eof not last");
@@ -368,7 +368,7 @@ int dma_sg_read_complete(struct fpga_ip *c, char **buf, size_t *len)
 
  		bd = (XAxiDma_Bd *) XAxiDma_BdRingNext(ring, bd);
 	}
-	
+
 	if (len != NULL)
 		*len = recvlen;
 	if (buf != NULL)
@@ -378,7 +378,7 @@ int dma_sg_read_complete(struct fpga_ip *c, char **buf, size_t *len)
 	ret = XAxiDma_BdRingFree(ring, bdcnt, bds);
 	if (ret != XST_SUCCESS)
 		return -3;
-	
+
 	return 0;
 }
 
@@ -398,13 +398,13 @@ int dma_simple_read(struct fpga_ip *c, char *buf, size_t len)
 
 	if (!xdma->HasS2Mm)
 		return -3;
-	
+
 	if (!ring->HasDRE) {
 		uint32_t mask = xdma->MicroDmaMode ? XAXIDMA_MICROMODE_MIN_BUF_ALIGN : ring->DataWidth - 1;
 		if ((uintptr_t) buf & mask)
 			return -4;
 	}
-	
+
 	if(!(XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_SR_OFFSET) & XAXIDMA_HALTED_MASK)) {
 		if (XAxiDma_Busy(xdma, XAXIDMA_DEVICE_TO_DMA))
 			return -5;
@@ -485,7 +485,7 @@ int dma_simple_read_complete(struct fpga_ip *c, char **buf, size_t *len)
 int dma_simple_write_complete(struct fpga_ip *c, char **buf, size_t *len)
 {
 	struct dma *dma = c->_vd;
-	
+
 	XAxiDma *xdma = &dma->inst;
 	XAxiDma_BdRing *ring = XAxiDma_GetTxRing(xdma);
 
@@ -566,7 +566,7 @@ int dma_start(struct fpga_ip *c)
 	struct dma *dma = c->_vd;
 
 	XAxiDma *xdma = &dma->inst;
-	
+
 	/* Guess DMA type */
 	sg = (XAxiDma_In32((uintptr_t) c->card->map + c->baseaddr + XAXIDMA_TX_OFFSET+ XAXIDMA_SR_OFFSET) &
 	      XAxiDma_In32((uintptr_t) c->card->map + c->baseaddr + XAXIDMA_RX_OFFSET+ XAXIDMA_SR_OFFSET) & XAXIDMA_SR_SGINCL_MASK) ? 1 : 0;
@@ -588,7 +588,7 @@ int dma_start(struct fpga_ip *c)
 		.MicroDmaMode = 0,
 		.AddrWidth = 32
 	};
-	
+
 	ret = XAxiDma_CfgInitialize(xdma, &xdma_cfg);
 	if (ret != XST_SUCCESS)
 		return -1;
@@ -597,7 +597,7 @@ int dma_start(struct fpga_ip *c)
 	ret = XAxiDma_Selftest(xdma);
 	if (ret != XST_SUCCESS)
 		return -2;
-	
+
 	/* Map buffer descriptors */
 	if (xdma->HasSg) {
 		ret = dma_alloc(c, &dma->bd, FPGA_DMA_BD_SIZE, 0);
@@ -619,7 +619,7 @@ int dma_start(struct fpga_ip *c)
 int dma_reset(struct fpga_ip *c)
 {
 	struct dma *dma = c->_vd;
-	
+
 	XAxiDma_Reset(&dma->inst);
 
 	return 0;
