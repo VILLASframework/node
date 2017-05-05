@@ -61,9 +61,9 @@ Test(kernel, hugepages)
 Test(kernel, version)
 {
 	int ret;
-	
+
 	struct version ver;
-	
+
 	ret = kernel_get_version(&ver);
 	cr_assert_eq(ret, 0);
 	
@@ -72,9 +72,6 @@ Test(kernel, version)
 
 	ret = version_cmp(&ver, &(struct version) { 2, 6 });
 	cr_assert_gt(ret, 0);
-	
-	ret = version_cmp(&ver, &(struct version) { 4, 4 });
-	cr_assert_eq(ret, 0);
 }
 
 Test(kernel, module)
