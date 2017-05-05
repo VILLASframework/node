@@ -46,7 +46,7 @@ int kernel_module_set_param(const char *module, const char *param, const char *v
 	if (!f)
 		serror("Failed set parameter %s for kernel module %s to %s", module, param, value);
 	
-	debug(5, "Set parameter %s of kernel module %s to %s", module, param, value);
+	debug(LOG_KERNEL | 5, "Set parameter %s of kernel module %s to %s", module, param, value);
 	fprintf(f, "%s", value);
 	fclose(f);
 
@@ -59,7 +59,7 @@ int kernel_module_load(const char *module)
 	
 	ret = kernel_module_loaded(module);
 	if (!ret) {
-		info("Kernel module %s already loaded...", module);
+		debug(LOG_KERNEL | 5, "Kernel module %s already loaded...", module);
 		return 0;
 	}
 
@@ -70,13 +70,13 @@ int kernel_module_load(const char *module)
 
 		case 0:  // child
 			execlp("modprobe", "modprobe", module, (char *) 0);
-			_exit(-1);   // exec never returns
+			exit(EXIT_FAILURE);   // exec never returns
 
 		default:
-			waitpid(pid, &ret, 0);
-	}
+			wait(&ret);
 
-	return ret;
+			return kernel_module_loaded(module);
+	}
 }
 
 int kernel_module_loaded(const char *module)
