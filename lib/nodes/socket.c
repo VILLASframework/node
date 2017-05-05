@@ -87,8 +87,8 @@ int socket_init(struct super_node *sn)
 		if (ret)
 			continue;
 		
-		list_push(&interfaces, memdup(&j, sizeof(j)));
-		i = &j;
+		i = memdup(&j, sizeof(j));
+		list_push(&interfaces, i);
 
 found:		list_push(&i->sockets, s);
 	}
