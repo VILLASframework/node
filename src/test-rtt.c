@@ -43,17 +43,15 @@ static struct node *node;
 static int running = 1; 	/**< Initiate shutdown if zero */
 static int count =  -1;		/**< Amount of messages which should be sent (default: -1 for unlimited) */
 
+static hist_cnt_t hist_warmup;
+static int hist_buckets;
+
 /** File descriptor for Matlab results.
  * This allows you to write Matlab results in a seperate log file:
  *
  *    ./test etc/example.conf rtt -f 3 3>> measurement_results.m
  */
 static int fd = STDOUT_FILENO;
-
-/* Histogram */
-static double low = 0;		/**< Lowest value in histogram. */
-static double high = 2e-4;	/**< Highest value in histogram. */
-static double res = 1e-5;	/**< Histogram resolution. */
 
 #define CLOCK_ID	CLOCK_MONOTONIC
 
@@ -73,9 +71,8 @@ void usage()
 	printf("  OPTIONS is one or more of the following options:\n");
 	printf("    -c CNT  send CNT messages\n");
 	printf("    -f FD   use file descriptor FD for result output instead of stdout\n");
-	printf("    -l LOW  smallest value for histogram\n");
-	printf("    -H HIGH largest value for histogram\n");
-	printf("    -r RES  bucket resolution for histogram\n");
+	printf("    -b BKTS number of buckets for histogram\n");
+	printf("    -w WMUP duration of histogram warmup phase\n");
 	printf("    -h      show this usage information\n");
 	printf("\n");
 
@@ -86,7 +83,7 @@ int main(int argc, char *argv[])
 {
 	/* Parse Arguments */
 	char c, *endptr;
-	while ((c = getopt (argc, argv, "l:hH:r:f:c:")) != -1) {
+	while ((c = getopt (argc, argv, "w:h:r:f:c:b:")) != -1) {
 		switch (c) {
 			case 'c':
 				count = strtoul(optarg, &endptr, 10);
@@ -94,14 +91,11 @@ int main(int argc, char *argv[])
 			case 'f':
 				fd = strtoul(optarg, &endptr, 10);
 				goto check;
-			case 'l':
-				low = strtod(optarg, &endptr);
+			case 'w':
+				hist_warmup = strtoul(optarg, &endptr, 10);
 				goto check;
-			case 'H':
-				high = strtod(optarg, &endptr);
-				goto check;
-			case 'r':
-				res = strtod(optarg, &endptr);
+			case 'b':
+				hist_buckets = strtoul(optarg, &endptr, 10);
 				goto check;
 			case 'h':
 			case '?':
@@ -157,7 +151,7 @@ void test_rtt() {
 	struct sample *smp_send = alloc(SAMPLE_LEN(2));
 	struct sample *smp_recv = alloc(SAMPLE_LEN(2));
 
-	hist_init(&hist, low, high, res);
+	hist_init(&hist, 20, 100);
 
 	/* Print header */
 	fprintf(stdout, "%17s%5s%10s%10s%10s%10s%10s\n", "timestamp", "seq", "rtt", "min", "max", "mean", "stddev");

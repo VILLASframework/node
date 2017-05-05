@@ -33,26 +33,19 @@ static struct stats_desc {
 	const char *name;
 	const char *unit;
 	const char *desc;
-	struct {
-		double min;
-		double max;
-		double resolution;
-	} hist;
+	int hist_buckets;
 } stats_table[] = {
-	{ "skipped",	  "samples",	"skipped samples by hooks",						{0,	0,	-1,	}},
-	{ "reorderd",	  "samples",	"reordered samples",							{0,	20,	1,	}},
-	{ "gap_sequence", "samples",	"sequence number displacement of received messages",			{-10,	10, 20,		}},
-	{ "gap_sample",	  "seconds",	"inter message timestamps (as sent by remote)",				{90e-3,	110e-3,	1e-3,	}},
-	{ "gap_received", "seconds",	"Histogram for inter message arrival time (as seen by this instance)",	{90e-3,	110e-3,	1e-3,	}},
-	{ "owd",	  "seconds",	"Histogram for one-way-delay (OWD) of received messages",		{0,	1,	100e-3,	}}
+	{ "skipped",	  "samples",	"skipped samples by hooks",						25 },
+	{ "reorderd",	  "samples",	"reordered samples",							25 },
+	{ "gap_sample",	  "seconds",	"inter message timestamps (as sent by remote)",				25 },
+	{ "gap_received", "seconds",	"Histogram for inter message arrival time (as seen by this instance)",	25 },
+	{ "owd",	  "seconds",	"Histogram for one-way-delay (OWD) of received messages",		25 }
 };
 
-int stats_init(struct stats *s)
+int stats_init(struct stats *s, int buckets, int warmup)
 {
-	for (int i = 0; i < STATS_COUNT; i++) {
-		struct stats_desc *desc = &stats_table[i];
-		hist_init(&s->histograms[i], desc->hist.min, desc->hist.max, desc->hist.resolution);
-	}
+	for (int i = 0; i < STATS_COUNT; i++)
+		hist_init(&s->histograms[i], buckets, warmup);
 
 	s->delta = alloc(sizeof(struct stats_delta));
 

@@ -34,20 +34,12 @@
 #define VAL(h, i)	((h)->low + (i) * (h)->resolution)
 #define INDEX(h, v)	round((v - (h)->low) / (h)->resolution)
 
-int hist_init(struct hist *h, double low, double high, double resolution)
+int hist_init(struct hist *h, int buckets, hist_cnt_t warmup)
 {
-	h->low = low;
-	h->high = high;
-	h->resolution = resolution;
+	h->length = buckets;
+	h->warmup = warmup;
 
-	if (resolution > 0) {
-		h->length = (high - low) / resolution;
-		h->data = alloc(h->length * sizeof(hist_cnt_t));
-	}
-	else {
-		h->length = 0;
-		h->data = NULL;
-	}
+	h->data = buckets ? alloc(h->length * sizeof(hist_cnt_t)) : NULL;
 
 	hist_reset(h);
 
@@ -66,8 +58,6 @@ int hist_destroy(struct hist *h)
 
 void hist_put(struct hist *h, double value)
 {
-	int idx = INDEX(h, value);
-
 	h->last = value;
 
 	/* Update min/max */
@@ -76,13 +66,25 @@ void hist_put(struct hist *h, double value)
 	if (value < h->lowest)
 		h->lowest = value;
 
-	/* Check bounds and increment */
-	if      (idx >= h->length)
-		h->higher++;
-	else if (idx < 0)
-		h->lower++;
-	else if (h->data != NULL)
-		h->data[idx]++;
+	if (h->total < h->warmup) {
+
+	}
+	else if (h->total == h->warmup) {
+		h->low  = hist_mean(h) - 3 * hist_stddev(h);
+		h->high = hist_mean(h) + 3 * hist_stddev(h);
+		h->resolution = (h->high - h->low) / h->length;
+	}
+	else {
+		int idx = INDEX(h, value);
+
+		/* Check bounds and increment */
+		if      (idx >= h->length)
+			h->higher++;
+		else if (idx < 0)
+			h->lower++;
+		else if (h->data != NULL)
+			h->data[idx]++;
+	}
 
 	h->total++;
 

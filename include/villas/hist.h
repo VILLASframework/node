@@ -47,6 +47,8 @@ struct hist {
 	int length;		/**< The number of buckets in #data. */
 
 	hist_cnt_t total;	/**< Total number of counted values. */
+	hist_cnt_t warmup;	/**< Number of values which are used during warmup phase. */
+
 	hist_cnt_t higher;	/**< The number of values which are higher than #high. */
 	hist_cnt_t lower;	/**< The number of values which are lower than #low. */
 
@@ -56,7 +58,7 @@ struct hist {
 };
 
 /** Initialize struct hist with supplied values and allocate memory for buckets. */
-int hist_init(struct hist *h, double start, double end, double resolution);
+int hist_init(struct hist *h, int buckets, hist_cnt_t warmup);
 
 /** Free the dynamically allocated memory. */
 int hist_destroy(struct hist *h);

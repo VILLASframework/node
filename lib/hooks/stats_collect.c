@@ -34,6 +34,8 @@ struct stats_collect {
 
 	enum stats_format format;
 	int verbose;
+	int warmup;
+	int buckets;
 
 	FILE *output;
 	const char *uri;
@@ -42,8 +44,6 @@ struct stats_collect {
 static int stats_collect_init(struct hook *h)
 {
 	struct stats_collect *p = h->_vd;
-
-	stats_init(&p->stats);
 
 	/* Register statistic object to path.
 	 *
@@ -54,6 +54,8 @@ static int stats_collect_init(struct hook *h)
 	/* Set default values */
 	p->format = STATS_FORMAT_HUMAN;
 	p->verbose = 0;
+	p->warmup = 500;
+	p->buckets = 20;
 	p->uri = NULL;
 	p->output = stdout;
 
@@ -72,6 +74,8 @@ static int stats_collect_destroy(struct hook *h)
 static int stats_collect_start(struct hook *h)
 {
 	struct stats_collect *p = h->_vd;
+
+	stats_init(&p->stats, p->buckets, p->warmup);
 
 	if (p->uri) {
 		p->output = fopen(p->uri, "w+");
@@ -129,6 +133,8 @@ static int stats_collect_parse(struct hook *h, config_setting_t *cfg)
 	}
 
 	config_setting_lookup_int(cfg, "verbose", &p->verbose);
+	config_setting_lookup_int(cfg, "warmup", &p->warmup);
+	config_setting_lookup_int(cfg, "buckets", &p->buckets);
 	config_setting_lookup_string(cfg, "output", &p->uri);
 
 	return 0;

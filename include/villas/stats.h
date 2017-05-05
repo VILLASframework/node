@@ -66,7 +66,7 @@ struct stats {
 	struct stats_delta *delta;
 };
 
-int stats_init(struct stats *s);
+int stats_init(struct stats *s, int buckets, int warmup);
 
 void stats_destroy(struct stats *s);
 
