@@ -135,12 +135,15 @@ double hist_stddev(struct hist *h)
 
 void hist_print(struct hist *h, int details)
 { INDENT
-	if (h->length > 0) {
+	if (h->total > 0) {
 		hist_cnt_t missed = h->total - h->higher - h->lower;
 
 		stats("Counted values: %ju (%ju between %f and %f)", h->total, missed, h->low, h->high);
-		stats("Highest: %f Lowest: %f", h->highest, h->lowest);
-		stats("Mu: %f Sigma2: %f Sigma: %f", hist_mean(h), hist_var(h), hist_stddev(h));
+		stats("Highest:  %f", h->highest);
+		stats("Lowest:   %f", h->lowest);
+		stats("Mu:       %f", hist_mean(h));
+		stats("Variance: %f", hist_var(h));
+		stats("Stddev:   %f", hist_stddev(h));
 
 		if (details > 0 && h->total - h->higher - h->lower > 0) {
 			char *buf = hist_dump(h);
@@ -156,9 +159,6 @@ void hist_print(struct hist *h, int details)
 
 void hist_plot(struct hist *h)
 {
-	char buf[HIST_HEIGHT];
-	memset(buf, '#', sizeof(buf));
-
 	hist_cnt_t max = 1;
 
 	/* Get highest bar */
@@ -176,9 +176,17 @@ void hist_plot(struct hist *h)
 		hist_cnt_t cnt = h->data[i];
 		int bar = HIST_HEIGHT * ((double) cnt / max);
 
-		if (value >= h->lowest || value <= h->highest)
-			stats("%+9g | %5ju | %.*s", value, cnt, bar, buf);
+		char *buf = 0;
+		buf = strcatf(&buf, "%+9.3g | %5ju | ", value, cnt);
+
+		for (int i = 0; i < bar; i++)
+			buf = strcatf(&buf, "\u2588");
+
+		stats(buf);
+		free(buf);
 	}
+
+	line();
 }
 
 char * hist_dump(struct hist *h)
