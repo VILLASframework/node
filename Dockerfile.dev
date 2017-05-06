@@ -87,7 +87,7 @@ RUN rm -rf /tmp/*
 EXPOSE 80
 EXPOSE 443
 
-#ADD https://villas.0l.de/packages/villas.repo /etc/yum.repos.d/
+#ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
 
 ENTRYPOINT villas
 
