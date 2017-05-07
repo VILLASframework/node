@@ -183,7 +183,7 @@ function updatePlot()
 
 	// add data to arrays
 	for (var i = 0; i < plotData.length; i++) {
-		var seriesOptions = nodes
+		var seriesOptions = nodes;
 
 		data[i] = {
 			data : plotData[i],
@@ -266,7 +266,7 @@ function wsConnect(node)
 		for (var j = 0; j < msgs.length; j++) {
 			var msg = msgs[j];
 
-			if (msg.id != currentNode.id)
+			if (msg.id !== currentNode.id)
 				continue;
 
 			// add empty arrays for data series
