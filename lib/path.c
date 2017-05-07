@@ -72,7 +72,7 @@ static void path_read(struct path *p)
 	/* Run preprocessing hooks for vector of samples */
 	enqueue = hook_read_list(&p->hooks, smps, recv);
 	if (enqueue != recv) {
-		info("Hooks skipped %u out of %u samples for path %s", recv - enqueue, recv, path_name(p));
+		debug(LOG_PATH | 10, "Hooks skipped %u out of %u samples for path %s", recv - enqueue, recv, path_name(p));
 
 		if (p->stats)
 			stats_update(p->stats->delta, STATS_SKIPPED, recv - enqueue);
