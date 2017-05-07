@@ -143,8 +143,9 @@ char * file_print(struct node *n)
 			case EPOCH_ORIGINAL:	epoch_str = "original"; break;
 		}
 
-		strcatf(&buf, "in=%s, epoch_mode=%s, epoch=%.2f, ",
+		strcatf(&buf, "in=%s, mode=%s, epoch_mode=%s, epoch=%.2f",
 			f->read.uri ? f->read.uri : f->read.fmt,
+			f->read.mode,
 			epoch_str,
 			time_to_double(&f->read_epoch)
 		);
@@ -188,6 +189,7 @@ int file_start(struct node *n)
 	struct file *f = n->_vd;
 
 	struct timespec now = time_now();
+	int ret;
 
 	if (f->read.fmt) {
 		/* Prepare file name */
@@ -210,9 +212,13 @@ int file_start(struct node *n)
 
 		/* Get timestamp of first line */
 		struct sample s;
-		int ret = sample_io_villas_fscan(f->read.handle->file, &s, NULL); arewind(f->read.handle);
+
+		arewind(f->read.handle);
+		ret = sample_io_villas_fscan(f->read.handle->file, &s, NULL);
 		if (ret < 0)
 			error("Failed to read first timestamp of node %s", node_name(n));
+		
+		arewind(f->read.handle);
 
 		f->read_first = s.ts.origin;
 
