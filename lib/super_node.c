@@ -102,28 +102,25 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 
 			info("Reading configuration from stdin");
 		}
-		/* Local file? */
-		else if (access(uri, F_OK) != -1) {
-			/* Setup libconfig include path.
-			 * This is only supported for local files */
-			char *uri_cpy = strdup(uri);
-			char *include_dir = dirname(uri_cpy);
-
-			config_set_include_dir(&sn->cfg, include_dir);
-
-			free(uri_cpy);
-
-			af = NULL;
-			f = fopen(uri, "r");
-
-			info("Reading configuration from local file: %s", uri);
-		}
-		/* Use advio (libcurl) to fetch the config from a remote */
 		else {
+			/* Local file? */
+			if (access(uri, F_OK) != -1) {
+				/* Setup libconfig include path.
+				 * This is only supported for local files */
+				char *uri_cpy = strdup(uri);
+				char *include_dir = dirname(uri_cpy);
+
+				config_set_include_dir(&sn->cfg, include_dir);
+
+				free(uri_cpy);
+
+				info("Reading configuration from local file: %s", uri);
+			}
+			else
+				info("Reading configuration from URI: %s", uri);
+
 			af = afopen(uri, "r");
 			f = af ? af->file : NULL;
-
-			info("Reading configuration from URI: %s", uri);
 		}
 
 		/* Check if file could be loaded / opened */
