@@ -34,7 +34,7 @@ Test(hist, simple) {
 	struct hist h;
 	int ret;
 
-	ret = hist_init(&h, -100, 100, 1);
+	ret = hist_init(&h, 0, 0);
 	cr_assert_eq(ret, 0);
 
 	for (int i = 0; i < ARRAY_LEN(test_data); i++)
