@@ -50,12 +50,8 @@ CFLAGS  += -std=c11 -MMD -mcx16
 CFLAGS  += -Wall -Werror -fdiagnostics-color=auto
 LDFLAGS += -L$(BUILDDIR)
 
-# Some environment variables to increase compatability with Fedora and other distros
-export PKG_CONFIG_PATH := /usr/local/lib/pkgconfig:/usr/lib/pkgconfig:$(PKG_CONFIG_PATH)
-export LD_LIBRARY_PATH := /usr/local/lib:/usr/lib:$(LD_LIBRARY_PATH)
-
 # Some tools
-PKGCONFIG := PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config
+PKGCONFIG := PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:$(PKG_CONFIG_PATH) pkg-config
 
 # We must compile without optimizations for gcov!
 ifdef DEBUG
@@ -111,8 +107,8 @@ PKGS = libconfig
 ######## Targets ########
 
 # Add flags by pkg-config
-CFLAGS += $(shell pkg-config --cflags ${PKGS})
-LDLIBS += $(shell pkg-config --libs ${PKGS})
+CFLAGS += $(shell $(PKGCONFIG) --cflags ${PKGS})
+LDLIBS += $(shell $(PKGCONFIG) --libs ${PKGS})
 
 all: src plugins tools
 src plugins tools tests: lib

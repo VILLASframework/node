@@ -34,7 +34,7 @@ SRC_CFLAGS = $(CFLAGS)
 SRC_LDFLAGS = $(LDFLAGS) -Wl,-rpath,'$$ORIGIN'
 
 # Enable VILLASfpga support when libxil is available
-ifeq ($(shell pkg-config libxil; echo $$?),0)
+ifeq ($(shell $(PKGCONFIG) libxil; echo $$?),0)
 	LIB_SRCS    += $(addprefix lib/nodes/, fpga.c)
 	LIB_SRCS    += $(addprefix lib/kernel/, pci.c vfio.c)
 	LIB_SRCS    += $(wildcard  lib/fpga/*.c)
@@ -42,7 +42,7 @@ ifeq ($(shell pkg-config libxil; echo $$?),0)
 	PKGS        += libxil
 
 	# Add support for LAPACK / BLAS benchmarks / solvers
-	ifeq ($(shell pkg-config blas lapack; echo $$?),0)
+	ifeq ($(shell $(PKGCONFIG) blas lapack; echo $$?),0)
 		PKGS        += blas lapack
 		BENCH_OBJS  += fpga-bench-overruns.o
 	endif

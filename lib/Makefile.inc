@@ -32,9 +32,6 @@ LIB_CFLAGS  = $(CFLAGS) -fPIC
 
 -include $(patsubst %, lib/Makefile.%.inc, $(SONAMES))
 
-# Add flags by pkg-config
-LIB_CFLAGS += $(shell pkg-config --cflags ${LIB_PKGS})
-
 # Compile
 $(BUILDDIR)/lib/%.o: lib/%.c $(BUILDDIR)/defines | $$(dir $$@)
 	$(CC) $(LIB_CFLAGS) -c $< -o $@

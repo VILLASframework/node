@@ -39,11 +39,6 @@ LIB_LDLIBS  = $(LDLIBS) -ldl -lrt -Wl,-soname,$(LIB_NAME).so.$(LIB_ABI_VERSION)
 
 LIB_PKGS += libwebsockets openssl
 
-ifneq ($(shell $(PKGCONFIG) --print-errors $(LIB_PKGS); echo $$?),0)
-$(error Please install missing dependencies: make install-thirdparty)
-endif
-
-
 ######## Node types ########
 
 # Enable Socket node type when libnl3 is available
@@ -59,11 +54,12 @@ endif
 # Enable VILLASfpga support when libxil is available
 ifndef WITHOUT_FPGA
 ifeq ($(shell $(PKGCONFIG) libxil; echo $$?),0)
-	LIB_SRCS    += $(addprefix lib/nodes/, fpga.c)
-	LIB_SRCS    += $(addprefix lib/kernel/, pci.c vfio.c)
-	PKGS        += libxil
+	LIB_SRCS    += $(addprefix lib/nodes/, fpga.c) \
+	               $(addprefix lib/kernel/, pci.c vfio.c) \
+	               $(wildcard  lib/fpga/*.c) \
+	               $(wildcard  lib/fpga/ips/*.c)
 
-	-include lib/fpga/Makefile.inc
+	LIB_PKGS    += libxil
 endif
 endif
 
