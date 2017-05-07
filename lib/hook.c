@@ -44,7 +44,6 @@ int hook_init(struct hook *h, struct hook_type *vt, struct path *p)
 	h->_vt = vt;
 	h->_vd = alloc(vt->size);
 
-
 	ret = h->_vt->init ? h->_vt->init(h) : 0;
 	if (ret)
 		return ret;
@@ -165,32 +164,30 @@ int hook_parse_list(struct list *list, config_setting_t *cfg, struct path *o)
 {
 	struct plugin *p;
 
-	int ret, priority = 10;
+	int ret;
+	const char *type;
 
-	if (!config_setting_is_group(cfg))
-		cerror(cfg, "Hooks must be configured with an object");
+	if (!config_setting_is_list(cfg))
+		cerror(cfg, "Hooks must be configured as a list of objects");
 
 	for (int i = 0; i < config_setting_length(cfg); i++) {
 		config_setting_t *cfg_hook = config_setting_get_elem(cfg, i);
 
-		const char *name = config_setting_name(cfg_hook);
-
-		p = plugin_lookup(PLUGIN_TYPE_HOOK, name);
-		if (!p)
-			continue; /* We ignore all non hook settings in this libconfig object setting */
-
 		if (!config_setting_is_group(cfg_hook))
 			cerror(cfg_hook, "The 'hooks' setting must be an array of strings.");
+
+		if (!config_setting_lookup_string(cfg_hook, "type", &type))
+			cerror(cfg_hook, "Missing setting 'type' for hook");
+
+		p = plugin_lookup(PLUGIN_TYPE_HOOK, type);
+		if (!p)
+			continue; /* We ignore all non hook settings in this libconfig object setting */
 
 		struct hook h = { .state = STATE_DESTROYED };
 
 		ret = hook_init(&h, &p->hook, o);
 		if (ret)
 			continue;
-
-		/* If the user does not assign a priority, we will use the
-		 * position of the hook section in the congiguration file. */
-		h.priority = priority++;
 
 		ret = hook_parse(&h, cfg_hook);
 		if (ret)
