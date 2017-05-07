@@ -24,6 +24,7 @@
 var api;
 var connection;
 var timer;
+var plot;
 
 var nodes = [];
 var currentNode;
@@ -38,6 +39,9 @@ var plotOptions = {
 	},
 	legend: {
 		show: true
+	},
+	selection: {
+		mode: "x"
 	}
 };
 
@@ -62,7 +66,7 @@ $(document).ready(function() {
 	});
 
 	$('#timespan').slider({
-		min : 1000,
+		min : 100,
 		max : 10000,
 		value : xDelta,
 		slide : function(e, ui) {
@@ -210,8 +214,22 @@ function updatePlot()
 		}
 	}
 
+	var placeholder = $('.plot-container div');
+
 	/* update plot */
-	$.plot('.plot-container div', data, $.extend(true, options, plotOptions));
+	plot = $.plot(placeholder, data, $.extend(true, options, plotOptions));
+
+	placeholder.bind("plotselected", function (event, ranges) {
+		$.each(plot.getXAxes(), function(_, axis) {
+			var opts = axis.options;
+			opts.min = ranges.xaxis.from;
+			opts.max = ranges.xaxis.to;
+		});
+
+		plot.setupGrid();
+		plot.draw();
+		plot.clearSelection();
+	});
 
 	redrawPlot = false;
 }
