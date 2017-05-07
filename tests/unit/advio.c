@@ -32,6 +32,20 @@
  * The Sciebo share is read/write accessible via WebDAV. */
 #define BASE_URI "https://1Nrd46fZX8HbggT:badpass@rwth-aachen.sciebo.de/public.php/webdav/node/tests"
 
+Test(advio, local)
+{
+	AFILE *af;
+	int ret;
+	char buf[32];
+	
+	af = afopen("/proc/version", "r");
+	cr_assert(af, "Failed to open local file");
+	
+	ret = fscanf(af->file, "%32s", buf);
+	cr_assert_eq(ret, 1);
+	cr_assert_str_eq(buf, "Linux");
+}
+
 Test(advio, download)
 {
 	AFILE *af;
