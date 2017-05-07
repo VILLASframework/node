@@ -200,10 +200,7 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 	list_init(&destinations);
 
 	/* Input node */
-	if (!config_setting_lookup_string(cfg, "in", &in) &&
-	    !config_setting_lookup_string(cfg, "from", &in) &&
-	    !config_setting_lookup_string(cfg, "src", &in) &&
-	    !config_setting_lookup_string(cfg, "source", &in))
+	if (!config_setting_lookup_string(cfg, "in", &in))
 		cerror(cfg, "Missing input node for path");
 
 	source = list_lookup(nodes, in);
@@ -211,11 +208,8 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 		cerror(cfg, "Invalid input node '%s'", in);
 
 	/* Output node(s) */
-	if (!(cfg_out = config_setting_get_member(cfg, "out")) &&
-	    !(cfg_out = config_setting_get_member(cfg, "to")) &&
-	    !(cfg_out = config_setting_get_member(cfg, "dst")) &&
-	    !(cfg_out = config_setting_get_member(cfg, "dest")) &&
-	    !(cfg_out = config_setting_get_member(cfg, "sink")))
+	cfg_out = config_setting_get_member(cfg, "out");
+	if (!cfg_out)
 		cerror(cfg, "Missing output nodes for path");
 
 	ret = node_parse_list(&destinations, cfg_out, nodes);
