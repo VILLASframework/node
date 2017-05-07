@@ -289,7 +289,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			struct timespec ts_recv = time_now();
 
 			msg = (struct webmsg *) in;
-			while ((char *) msg + WEBMSG_LEN(msg->length) < (char *) in + len) {
+			while ((char *) msg < (char *) in + len) {
 				struct node *dest;
 
 				/* Convert message to host byte-order */
