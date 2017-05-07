@@ -51,8 +51,6 @@ struct file {
 		char *uri;		/**< Real file name. */
 	} read, write;
 
-	int rewind;			/**< Should we rewind the file when we reach EOF? */
-
 	enum read_epoch_mode {
 		EPOCH_DIRECT,
 		EPOCH_WAIT,
@@ -64,7 +62,8 @@ struct file {
 	struct timespec read_first;	/**< The first timestamp in the file file::{read,write}::uri */
 	struct timespec read_epoch;	/**< The epoch timestamp from the configuration. */
 	struct timespec read_offset;	/**< An offset between the timestamp in the input file and the current time */
-
+	
+	int read_rewind;		/**< Should we rewind the file when we reach EOF? */
 	int read_timer;			/**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
 	double read_rate;		/**< The read rate. */
 };
