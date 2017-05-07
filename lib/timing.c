@@ -54,7 +54,7 @@ uint64_t timerfd_wait(int fd)
 	return read(fd, &runs, sizeof(runs)) < 0 ? 0 : runs;
 }
 
-uint64_t timerfd_wait_until(int fd, struct timespec *until)
+uint64_t timerfd_wait_until(int fd, const struct timespec *until)
 {
 	int ret;
 	struct itimerspec its = {
@@ -78,7 +78,7 @@ struct timespec time_now()
 	return ts;
 }
 
-struct timespec time_add(struct timespec *start, struct timespec *end)
+struct timespec time_add(const struct timespec *start, const struct timespec *end)
 {
 	struct timespec sum = {
 		.tv_sec  = end->tv_sec  + start->tv_sec,
@@ -93,7 +93,7 @@ struct timespec time_add(struct timespec *start, struct timespec *end)
 	return sum;
 }
 
-struct timespec time_diff(struct timespec *start, struct timespec *end)
+struct timespec time_diff(const struct timespec *start, const struct timespec *end)
 {
 	struct timespec diff = {
 		.tv_sec  = end->tv_sec  - start->tv_sec,
@@ -118,12 +118,12 @@ struct timespec time_from_double(double secs)
 	return ts;
 }
 
-double time_to_double(struct timespec *ts)
+double time_to_double(const struct timespec *ts)
 {
 	return ts->tv_sec + ts->tv_nsec * 1e-9;
 }
 
-double time_delta(struct timespec *start, struct timespec *end)
+double time_delta(const struct timespec *start, const struct timespec *end)
 {
 	struct timespec diff = time_diff(start, end);
 
