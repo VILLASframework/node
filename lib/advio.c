@@ -78,14 +78,31 @@ static int advio_xferinfo(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_of
 AFILE * afopen(const char *uri, const char *mode)
 {
 	int ret;
+	char *sep, *cwd;
 
 	AFILE *af = alloc(sizeof(AFILE));
 
 	strncpy(af->mode, mode, sizeof(af->mode));
 
-	af->uri = strdup(uri);
-	if (!af->uri)
-		goto out2;
+	sep = strstr(uri, "://");
+	if (sep) {
+		af->uri = strdup(uri);
+		if (!af->uri)
+			goto out2;
+	}
+	else {
+		if (strlen(uri) <= 1)
+			return NULL;
+
+		/* Handle relative paths */
+		if (uri[0] != '/') {
+			cwd = getcwd(NULL, 0);
+
+			af->uri = strf("file://%s/%s", cwd, uri);
+		}
+		else
+			af->uri = strf("file://%s", uri);
+	}
 
 	af->file = tmpfile();
 	if (!af->file)
@@ -96,13 +113,10 @@ AFILE * afopen(const char *uri, const char *mode)
 		goto out1;
 
 	/* Setup libcurl handle */
-#if LIBCURL_VERSION_NUM >= 0x072d00
-	curl_easy_setopt(af->curl, CURLOPT_DEFAULT_PROTOCOL, "file");
-#endif
 	curl_easy_setopt(af->curl, CURLOPT_FOLLOWLOCATION, 1L);
 	curl_easy_setopt(af->curl, CURLOPT_UPLOAD, 0L);
 	curl_easy_setopt(af->curl, CURLOPT_USERAGENT, USER_AGENT);
-	curl_easy_setopt(af->curl, CURLOPT_URL, uri);
+	curl_easy_setopt(af->curl, CURLOPT_URL, af->uri);
 	curl_easy_setopt(af->curl, CURLOPT_WRITEDATA, af->file);
 	curl_easy_setopt(af->curl, CURLOPT_XFERINFOFUNCTION, advio_xferinfo);
 	curl_easy_setopt(af->curl, CURLOPT_XFERINFODATA, af);
