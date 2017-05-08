@@ -1,5 +1,0 @@
-POINT0	int
-POINT1	int
-POINT2	int
-POINT3	int
-POINT4	float
