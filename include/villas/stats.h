@@ -46,7 +46,6 @@ enum stats_format {
 enum stats_id {
 	STATS_SKIPPED,		/**< Counter for skipped samples due to hooks. */
 	STATS_REORDERED,	/**< Counter for reordered samples. */
-	STATS_GAP_SEQUENCE,	/**< Histogram of sequence number displacement of received samples. */
 	STATS_GAP_SAMPLE,	/**< Histogram for inter sample timestamps (as sent by remote). */
 	STATS_GAP_RECEIVED,	/**< Histogram for inter sample arrival time (as seen by this instance). */
 	STATS_OWD,		/**< Histogram for one-way-delay (OWD) of received samples. */

@@ -90,11 +90,10 @@ void stats_collect(struct stats_delta *s, struct sample *smps[], size_t cnt)
 		if (previous) {
 			stats_update(s, STATS_GAP_RECEIVED, time_delta(&previous->ts.received, &smps[i]->ts.received));
 			stats_update(s, STATS_GAP_SAMPLE,   time_delta(&previous->ts.origin,   &smps[i]->ts.origin));
-			stats_update(s, STATS_OWD,          -time_delta(&smps[i]->ts.origin,    &smps[i]->ts.received));
-			stats_update(s, STATS_GAP_SEQUENCE, smps[i]->sequence - (int32_t) previous->sequence);
+			stats_update(s, STATS_OWD,          time_delta(&smps[i]->ts.origin,    &smps[i]->ts.received));
 
 			dist = smps[i]->sequence - (int32_t) previous->sequence;
-			if (dist > 0)
+			if (dist != 1)
 				stats_update(s, STATS_REORDERED,    dist);
 		}
 
