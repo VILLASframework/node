@@ -63,10 +63,6 @@ packages:
     - dnf -y config-manager --add-repo https://$DEPLOY_USER:$DEPLOY_PASS@$DEPLOY_HOST/packages/villas.repo
     - dnf -y --refresh install libwebsockets-devel libxil-devel
   script:
-    - make dist
-    - make rpm-libwebsockets
-    - make rpm-libxil
-    - rpm -i build/release/packaging/rpm/RPMS/x86_64/*.rpm
     - make rpm-villas-node
   only:
     - tags
