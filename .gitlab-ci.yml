@@ -36,7 +36,6 @@ build:
   stage: build
   script:
     - make
-    - make tests
   artifacts:
     name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
     paths:
