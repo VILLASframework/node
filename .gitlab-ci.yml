@@ -147,7 +147,7 @@ website:
   tags:
     - villas-deploy
 
-deliver:
+deliver-web:
   stage: deploy
   script:
     - ssh $DEPLOY_USER@$DEPLOY_HOST mkdir -p $DEPLOY_PATH/{coverage,doc}/$CI_BUILD_REF_NAME/
@@ -157,6 +157,9 @@ deliver:
     - docs
     - coverage
     - packages
+  only:
+    - develop
+    - master
   tags:
     - villas-deploy
 
