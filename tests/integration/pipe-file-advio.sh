@@ -40,11 +40,11 @@ nodes = {
 	},
 	remote_file_in = {
 		type = "file",
-
 		in = {
 			uri = "${URI}"
 			mode = "r"
 			epoch_mode = "original"
+			rewind = false,
 		}
 	}
 }
