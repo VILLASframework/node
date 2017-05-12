@@ -223,11 +223,11 @@ int web_start(struct web *w)
 			error("WebSocket: failed to initialize server");
 	}
 
+	w->state = STATE_STARTED;
 	ret = pthread_create(&w->thread, NULL, worker, w);
 	if (ret)
 		error("Failed to start Web worker");
 
-	w->state = STATE_STARTED;
 
 	return ret;
 }
