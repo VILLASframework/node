@@ -136,13 +136,10 @@ int shmem_close(struct node *n)
 	struct shmem* shm = n->_vd;
 	int ret;
 
-	atomic_store_explicit(&shm->shared->node_stopped, 1, memory_order_relaxed);
-
-	if (!shm->polling) {
-		pthread_mutex_lock(&shm->shared->out.qs.mutex);
-		pthread_cond_broadcast(&shm->shared->out.qs.ready);
-		pthread_mutex_unlock(&shm->shared->out.qs.mutex);
-	}
+	if (shm->polling)
+		queue_close(&shm->shared->out.q);
+	else
+		queue_signalled_close(&shm->shared->out.qs);
 
 	/* Don't destroy the data structures yet, since the other process might
 	 * still be using them. Once both processes are done and have unmapped the
@@ -158,7 +155,7 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct shmem *shm = n->_vd;
 
-	int ret, recv;
+	int recv;
 
 	struct sample *shared_smps[cnt];
 	recv = shm->polling ? queue_pull_many(&shm->shared->in.q, (void**) shared_smps, cnt)
@@ -166,11 +163,6 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 	if (recv <= 0)
 		return recv;
-
-	/* Check if remote process is still running */
-	ret = atomic_load_explicit(&shm->shared->ext_stopped, memory_order_relaxed);
-	if (ret)
-		return -1;
 
 	sample_copy_many(smps, shared_smps, recv);
 	sample_put_many(shared_smps, recv);
@@ -203,13 +195,6 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 		memcpy(shared_smps[i]->data, smps[i]->data, SAMPLE_DATA_LEN(len));
 
 		shared_smps[i]->length = len;
-	}
-
-	if (atomic_load_explicit(&shm->shared->ext_stopped, memory_order_relaxed)) {
-		for (int i = 0; i < avail; i++)
-			sample_put(shared_smps[i]);
-
-		return -1;
 	}
 
 	pushed = shm->polling ? queue_push_many(&shm->shared->out.q, (void**) shared_smps, avail)

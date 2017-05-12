@@ -99,6 +99,8 @@ int queue_push(struct queue *q, void *ptr)
 	size_t pos, seq;
 	intptr_t diff;
 
+	if (atomic_load_explicit(&q->state, memory_order_relaxed) == STATE_STOPPED)
+		return -1;
 	buffer = (struct queue_cell *) ((char *) q + q->buffer_off);
 	pos = atomic_load_explicit(&q->tail, memory_order_relaxed);
 	for (;;) {
@@ -128,6 +130,8 @@ int queue_pull(struct queue *q, void **ptr)
 	size_t pos, seq;
 	intptr_t diff;
 
+	if (atomic_load_explicit(&q->state, memory_order_relaxed) == STATE_STOPPED)
+		return -1;
 	buffer = (struct queue_cell *) ((char *) q + q->buffer_off);
 	pos = atomic_load_explicit(&q->head, memory_order_relaxed);
 	for (;;) {
@@ -158,9 +162,11 @@ int queue_push_many(struct queue *q, void *ptr[], size_t cnt)
 
 	for (i = 0; i < cnt; i++) {
 		ret = queue_push(q, ptr[i]);
-		if (!ret)
+		if (ret <= 0)
 			break;
 	}
+	if (ret == -1 && i == 0)
+		return -1;
 
 	return i;
 }
@@ -172,9 +178,20 @@ int queue_pull_many(struct queue *q, void *ptr[], size_t cnt)
 
 	for (i = 0; i < cnt; i++) {
 		ret = queue_pull(q, &ptr[i]);
-		if (!ret)
+		if (ret <= 0)
 			break;
 	}
+	if (ret == -1 && i == 0)
+		return -1;
 
 	return i;
+}
+
+int queue_close(struct queue *q)
+{
+	size_t expected = STATE_INITIALIZED;
+	if (atomic_compare_exchange_weak_explicit(&q->state, &expected, STATE_STOPPED, memory_order_relaxed, memory_order_relaxed)) {
+		return 0;
+	}
+	return -1;
 }
