@@ -78,7 +78,7 @@ struct sample {
 };
 
 /** Request \p cnt samples from memory pool \p p and initialize them.
- *  This will leave the reference count of the sample to zero.
+ *  The reference count will already be set to 1.
  *  Use the sample_get() function to increase it. */
 int sample_alloc(struct pool *p, struct sample *smps[], int cnt);
 

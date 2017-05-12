@@ -203,8 +203,6 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 		memcpy(shared_smps[i]->data, smps[i]->data, SAMPLE_DATA_LEN(len));
 
 		shared_smps[i]->length = len;
-
-		sample_get(shared_smps[i]);
 	}
 
 	if (atomic_load_explicit(&shm->shared->ext_stopped, memory_order_relaxed)) {
