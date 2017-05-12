@@ -33,6 +33,7 @@
 #include "nodes/shmem.h"
 #include "plugin.h"
 #include "shmem.h"
+#include "timing.h"
 #include "utils.h"
 
 int shmem_parse(struct node *n, config_setting_t *cfg)
@@ -159,8 +160,9 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 	int ret, recv;
 
-	recv = shm->polling ? queue_pull_many(&shm->shared->in.q, (void**) smps, cnt)
-			   : queue_signalled_pull_many(&shm->shared->in.qs, (void**) smps, cnt);
+	struct sample *shared_smps[cnt];
+	recv = shm->polling ? queue_pull_many(&shm->shared->in.q, (void**) shared_smps, cnt)
+			   : queue_signalled_pull_many(&shm->shared->in.qs, (void**) shared_smps, cnt);
 
 	if (recv <= 0)
 		return recv;
@@ -168,8 +170,13 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 	/* Check if remote process is still running */
 	ret = atomic_load_explicit(&shm->shared->ext_stopped, memory_order_relaxed);
 	if (ret)
-		return ret;
+		return -1;
 
+	sample_copy_many(smps, shared_smps, recv);
+	sample_put_many(shared_smps, recv);
+	struct timespec ts_recv = time_now();
+	for (int i = 0; i < recv; i++)
+		smps[i]->ts.received = ts_recv;
 	return recv;
 }
 
