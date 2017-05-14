@@ -24,7 +24,6 @@ docker-dev:
 #    - docker login -u $DOCKER_USER -p $DOCKER_PASS -e $DOCKER_EMAIL $DOCKER_REGISTRY
   script:
     - make docker-dev
-    - make deploy-docker-dev
   tags:
     - shell
     - linux

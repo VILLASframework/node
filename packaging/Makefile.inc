@@ -28,7 +28,6 @@ DEPLOY_USER ?= root
 DEPLOY_HOST ?= villas.fein-aachen.org
 DEPLOY_PATH ?= /var/www/villas/node
 
-DOCKER_REGISTRY ?= docker.io
 DOCKER_IMAGE ?= villas/node
 
 deploy-docker-dev: DOCKER_IMAGE := $(DOCKER_IMAGE)-dev
@@ -52,8 +51,7 @@ deploy-rpm:
 	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) createrepo $(DEPLOY_PATH)/../packages
 
 deploy-docker deploy-docker-dev:
-	docker tag $(DOCKER_IMAGE):$(GIT_BRANCH) $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(GIT_BRANCH)
-	docker push $(DOCKER_REGISTRY)/$(DOCKER_IMAGE):$(GIT_BRANCH)
+	docker push $(DOCKER_IMAGE):$(GIT_BRANCH)
 
 # Docker targets
 run-docker-dev: docker-dev
