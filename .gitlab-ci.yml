@@ -3,6 +3,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   PREFIX: /usr/
   RSYNC_OPTS: --recursive --ignore-missing-args --chown $DEPLOY_USER:$DEPLOY_USER
+  DOCKER_IMAGE_DEV: villas/node-dev:${CI_COMMIT_REF_NAME}
 
 stages:
   - prepare
@@ -39,7 +40,7 @@ build:
     name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
     paths:
       - build/release/
-  image: $DOCKER_REGISTRY/villas/node-dev:$CI_COMMIT_REF_NAME
+  image: $DOCKER_IMAGE_DEV
   tags:
     - docker
 
@@ -51,7 +52,7 @@ docs:
       - build/release/doc/
   script:
     - make doc
-  image: $DOCKER_REGISTRY/villas/node-dev:$CI_COMMIT_REF_NAME
+  image: $DOCKER_IMAGE_DEV
   tags:
     - docker
 
@@ -70,7 +71,7 @@ packages:
     paths:
       - build/release/packaging/*.tar.gz
       - build/release/packaging/rpm/RPMS/
-  image: $DOCKER_REGISTRY/villas/node-dev:$CI_COMMIT_REF_NAME
+  image: $DOCKER_IMAGE_DEV
   tags:
     - docker
 
@@ -88,7 +89,7 @@ coverage:
       - build/release-coverage/coverage/
       - build/release-coverage/coverage.txt
       - build/release-coverage/coverage.xml
-  image: $DOCKER_REGISTRY/villas/node-dev:$CI_COMMIT_REF_NAME
+  image: $DOCKER_IMAGE_DEV
   coverage: '/lines: (\d+\.\d+\%)/'
   tags:
     - docker
@@ -99,7 +100,7 @@ unit:
     - build
   script:
     - make run-unit-tests
-  image: $DOCKER_REGISTRY/villas/node-dev:$CI_COMMIT_REF_NAME
+  image: $DOCKER_IMAGE_DEV
   tags:
     - docker
 
@@ -114,7 +115,7 @@ integration:
     when: always
     paths:
       - build/release/tests/integration/
-  image: $DOCKER_REGISTRY/villas/node-dev:$CI_COMMIT_REF_NAME
+  image: $DOCKER_IMAGE_DEV
   tags:
     - docker
 
