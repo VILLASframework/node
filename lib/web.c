@@ -143,8 +143,6 @@ static void * worker(void *ctx)
 {
 	struct web *w = ctx;
 
-	assert(w->state == STATE_STARTED);
-
 	for (;;)
 		lws_service(w->context, 100);
 

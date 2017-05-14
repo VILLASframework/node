@@ -47,3 +47,5 @@ int queue_signalled_pull(struct queue_signalled *qs, void **ptr);
 int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cnt);
 
 int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cnt);
+
+int queue_signalled_close(struct queue_signalled *qs);

@@ -56,7 +56,7 @@ struct queue_cell {
 struct queue {
 	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
 
-	enum state state;
+	_Atomic enum state state;
 
 	struct memtype *mem;
 	size_t buffer_mask;
@@ -104,3 +104,11 @@ int queue_push_many(struct queue *q, void *ptr[], size_t cnt);
  *         \p cnt elements.
  */
 int queue_pull_many(struct queue *q, void *ptr[], size_t cnt);
+
+/** Closes the queue, causing following writes to fail and following reads (after
+ * the queue is empty) to fail.
+ *
+ * @return 0 on success.
+ * @return -1 on failure.
+ */
+int queue_close(struct queue *q);
