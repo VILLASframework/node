@@ -56,7 +56,7 @@ struct queue_cell {
 struct queue {
 	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
 
-	atomic_size_t state;
+	_Atomic enum state state;
 
 	struct memtype *mem;
 	size_t buffer_mask;
