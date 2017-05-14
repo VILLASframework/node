@@ -132,7 +132,7 @@ static int stats_collect_parse(struct hook *h, config_setting_t *cfg)
 			cerror(cfg, "Invalid statistic output format: %s", format);
 	}
 
-	config_setting_lookup_int(cfg, "verbose", &p->verbose);
+	config_setting_lookup_bool(cfg, "verbose", &p->verbose);
 	config_setting_lookup_int(cfg, "warmup", &p->warmup);
 	config_setting_lookup_int(cfg, "buckets", &p->buckets);
 	config_setting_lookup_string(cfg, "output", &p->uri);
