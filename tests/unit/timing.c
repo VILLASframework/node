@@ -117,7 +117,7 @@ Test(timing, timerfd_create_rate, .timeout = 20)
 	}
 
 	if (i < 10)
-		cr_assert_float_eq(waited, 1.0 / rate, 10e-3, "We slept for %f instead of %f secs in round %d", waited, 1.0 / rate, i);
+		cr_assert_float_eq(waited, 1.0 / rate, 1e-2, "We slept for %f instead of %f secs in round %d", waited, 1.0 / rate, i);
 
 	close(tfd);
 }

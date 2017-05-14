@@ -93,7 +93,5 @@ ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
 #ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
 
 ENTRYPOINT villas
-
 WORKDIR /villas
-
 ENTRYPOINT bash
