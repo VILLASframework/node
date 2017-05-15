@@ -21,15 +21,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include "common.h"
+
 #ifdef __cplusplus
 
 #include <atomic>
 
 typedef std::atomic_int atomic_int;
 typedef std::atomic_size_t atomic_size_t;
+typedef std::atomic_int atomic_state;
 
 #else
 
 #include <stdatomic.h>
+
+typedef _Atomic enum state atomic_state;
 
 #endif
