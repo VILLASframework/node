@@ -34,3 +34,13 @@ enum state {
 	STATE_STOPPED		= 5,
 	STATE_UNLOADED		= 5 /* alias for STATE_STARTED used by plugins */
 };
+
+#ifdef __cpluscplus
+
+typedef std::atomic_int atomic_state;
+
+#else
+
+typedef _Atomic enum state atomic_state;
+
+#endif
