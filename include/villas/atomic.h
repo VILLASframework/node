@@ -29,7 +29,7 @@
 
 typedef std::atomic_int atomic_int;
 typedef std::atomic_size_t atomic_size_t;
-typedef std::atomic_int atomic_state;
+typedef std::atomic<enum state> atomic_state;
 
 #else
 
