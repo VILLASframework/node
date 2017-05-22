@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
 
 	ret = node_type_start(node->_vt, &sn);
 	if (ret)
-		error("Failed to intialize node type: %s", node_name(node));
+		error("Failed to intialize node type: %s", node_type_name(node->_vt));
 
 	ret = node_check(node);
 	if (ret)
