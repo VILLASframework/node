@@ -21,7 +21,7 @@
 ###################################################################################
 
 DEPS_CMAKE = libxil libwebsockets criterion jansson nanomsg
-DEPS_AUTOCONF = libnl libconfig libcurl
+DEPS_AUTOCONF = libnl libconfig libcurl libzmq
 
 DEPS = $(DEPS_CMAKE) $(DEPS_AUTOCONF)
 
@@ -33,13 +33,15 @@ ifdef DEBUG
 	AC_CXXFLAGS=-g -O0
 endif
 
+CONFIGURE_OPTS = --prefix=$(PREFIX)
+
 thirdparty:
 
 # Install & compile autotools based projects
 $(DEPS_AUTOCONF): CPPFLAGS=$(AC_CPPFLAGS) CFLAGS=$(AC_CFLAGS) CXXFLAGS=$(AC_CXXFLAGS)
 $(DEPS_AUTOCONF): | $(BUILDDIR)/thirdparty/$$@/
 	autoreconf -fi $(SRCDIR)/thirdparty/$@
-	cd $(BUILDDIR)/thirdparty/$@ && $(SRCDIR)/thirdparty/$@/configure --prefix=$(PREFIX) && make
+	cd $(BUILDDIR)/thirdparty/$@ && $(SRCDIR)/thirdparty/$@/configure $(CONFIGURE_OPTS) && make
 
 # Install & compile CMake based projects
 $(DEPS_CMAKE): | $(BUILDDIR)/thirdparty/$$@/
@@ -68,5 +70,6 @@ libconfig-fix:
 	rm -f $(SRCDIR)/thirdparty/libconfig/lib/scanner.[hc]
 
 libwebsockets: CMAKE_OPTS += -DLWS_IPV6=1 -DLWS_WITH_STATIC=0 -DLWS_WITHOUT_TESTAPPS=1 -DLWS_WITH_HTTP2=1
+libzmq: CONFIGURE_OPTS += --with-libsodium --with-pgm --enable-drafts
 
 .PHONY: $(DEPS) thirdparty clean-thirdparty install-thirdparty

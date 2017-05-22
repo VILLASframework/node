@@ -28,3 +28,6 @@
 [submodule "thirdparty/nanomsg"]
 	path = thirdparty/nanomsg
 	url = https://github.com/nanomsg/nanomsg.git
+[submodule "thirdparty/libzmq"]
+	path = thirdparty/libzmq
+	url = https://github.com/zeromq/libzmq.git

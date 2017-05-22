@@ -45,7 +45,9 @@ RUN dnf -y install \
 	libconfig-devel \
 	libnl3-devel \
 	libcurl-devel \
-	jansson-devel
+	jansson-devel \
+	libsodium-devel \
+	openpgm-devel
 
 # Several tools only needed for developement and testing
 RUN dnf -y install \
@@ -84,6 +86,10 @@ RUN mkdir -p /tmp/libwebsockets/build && cd /tmp/libwebsockets/build && cmake -D
 # Build & Install nanomsg
 COPY thirdparty/nanomsg /tmp/nanomsg
 RUN mkdir -p /tmp/nanomsg/build && cd /tmp/nanomsg/build && cmake .. && make install
+
+# Build & Install libzmq
+COPY thirdparty/libzmq /tmp/libzmq
+RUN cd /tmp/libzmq && autoreconf -fi && ./configure --with-libsodium --with-pgm --enable-drafts && make install
 
 # Cleanup intermediate files from builds
 RUN rm -rf /tmp/*
