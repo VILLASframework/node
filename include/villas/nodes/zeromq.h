@@ -35,6 +35,8 @@
 struct zeromq {
 	int ipv6;
 	
+	char *filter;
+	
 	enum {
 		ZEROMQ_PATTERN_PUBSUB,
 		ZEROMQ_PATTERN_RADIODISH

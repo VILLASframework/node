@@ -89,7 +89,7 @@ int zeromq_parse(struct node *n, config_setting_t *cfg)
 {
 	struct zeromq *z = n->_vd;
 	
-	const char *ep, *type;
+	const char *ep, *type, *filter;
 	
 	config_setting_t *cfg_pub;
 	
@@ -123,6 +123,11 @@ int zeromq_parse(struct node *n, config_setting_t *cfg)
 				cerror(cfg_pub, "Invalid type for ZeroMQ publisher setting");
 		}
 	}
+	
+	if (config_setting_lookup_string(cfg, "filter", &filter))
+		z->filter = strdup(filter);
+	else
+		z->filter = NULL;
 	
 	if (config_setting_lookup_string(cfg, "pattern", &type)) {
 		if      (!strcmp(type, "pubsub"))
@@ -160,6 +165,9 @@ char * zeromq_print(struct node *n)
 	}
 
 	strcatf(&buf, " ]");
+	
+	if (z->filter)
+		strcatf(&buf, ", filter=%s", z->filter);
 
 	return buf;
 }
@@ -204,12 +212,17 @@ int zeromq_start(struct node *n)
 	if (ret)
 		return ret;
 	
+	/* Subscribe to pubsub messages. */
+	if (z->filter && z->pattern == ZEROMQ_PATTERN_PUBSUB) {
+		ret = zmq_setsockopt(z->subscriber.socket, ZMQ_SUBSCRIBE, z->filter, strlen(z->filter));
+		if (ret < 0)
+			return ret;
+	}
+
 		if (ret)
 			return ret;
 	}
 	
-	/* Subscribe to all pubsub messages. */
-	zmq_setsockopt(z->subscriber.socket, ZMQ_SUBSCRIBE, NULL, 0);
 #ifdef ZMQ_BUILD_DRAFT_API
 	/* Monitor handshake events on the server */
 	ret = zmq_socket_monitor(z->subscriber.socket, "inproc://monitor-server", ZMQ_EVENT_HANDSHAKE_SUCCEED | ZMQ_EVENT_HANDSHAKE_FAILED);
@@ -224,7 +237,6 @@ int zeromq_start(struct node *n)
 	assert(ret == 0);
 #endif
 
-	
 	/* Connect publisher socket */
 	for (size_t i = 0; i < list_length(&z->publisher.endpoints); i++) {
 		char *ep = list_at(&z->publisher.endpoints, i);
@@ -294,16 +306,28 @@ int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	ret = zmq_msg_init_size(&m, sent);
 	
+	if (z->filter && z->pattern == ZEROMQ_PATTERN_RADIODISH) {
+		ret = zmq_msg_set_group(&m, z->filter);
+		if (ret < 0)
+			goto fail;
+	}
+	
 	memcpy(zmq_msg_data(&m), data, sent);
 
-	if (ret < 0)
-		return ret;
-
 	ret = zmq_msg_send(&m, z->publisher.socket, 0);
+	if (ret < 0)
+		goto fail;
+	
+	ret = zmq_msg_close(&m);
 	if (ret < 0)
 		return ret;
 
 	return cnt;
+
+fail:
+	zmq_msg_close(&m);
+
+	return ret;
 }
 
 static struct plugin p = {
