@@ -40,8 +40,6 @@
 #include "queue.h"
 #include "plugin.h"
 
-#define MAX_PACKETLEN 1500
-
 /* Forward declartions */
 static struct plugin p;
 
