@@ -358,6 +358,12 @@ int zeromq_stop(struct node *n)
 	ret = zmq_close(z->subscriber.socket);
 	if (ret)
 		return ret;
+	
+#ifdef ZMQ_BUILD_DRAFT_API
+	ret = zmq_close(z->subscriber.mon_socket);
+	if (ret)
+		return ret;
+#endif
 
 	return zmq_close(z->publisher.socket);
 }
