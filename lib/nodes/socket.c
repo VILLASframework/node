@@ -348,37 +348,16 @@ static int socket_read_villas(struct node *n, struct sample *smps[], unsigned cn
 		error("Remote node %s closed the connection", node_name(n));
 	else if (bytes < 0)
 		serror("Failed receive packet from node %s", node_name(n));
-
-	int received = 0;
-	char *ptr = data;
-
-	struct msg *msg = (struct msg *) ptr;
-	struct sample *smp = smps[received];
-
-	while (ptr < data + bytes - sizeof(struct msg) && received < cnt) {
-		msg_ntoh(msg);
-
-		ret = msg_verify(msg);
-		if (ret) {
-			warn("Received invalid packet for node %s", node_name(n));
-			return -1;
-		}
-
-		smp->length   = msg->length;
-		smp->sequence = msg->sequence;
-		smp->ts.origin = MSG_TS(msg);
-		smp->ts.received.tv_sec  = -1;
-		smp->ts.received.tv_nsec = -1;
-
-		memcpy(smp->data, msg->data, SAMPLE_DATA_LEN(msg->length));
-
-		ptr += MSG_LEN(msg->length);
-
-		msg = (struct msg *) ptr;
-		smp = smps[++received];
+	else if (bytes < MSG_LEN(1) || bytes % 4 != 0) {
+		warn("Received invalid packet for node %s", node_name(n));
+		return 0;
 	}
-
-	return received;
+	
+	ret = msg_buffer_to_samples(smps, cnt, data, bytes);
+	if (ret < 0)
+		warn("Received invalid packet from node: %s", node_name(n));
+	
+	return ret;
 }
 
 static int socket_write_none(struct node *n, struct sample *smps[], unsigned cnt)
@@ -423,32 +402,15 @@ static int socket_write_villas(struct node *n, struct sample *smps[], unsigned c
 {
 	struct socket *s = n->_vd;
 
-	ssize_t bytes = 0;
+	char data[MAX_PACKETLEN];
+	ssize_t bytes = 0, sent;
 
-	for (int i = 0; i < cnt; i++)
-		bytes += MSG_LEN(smps[i]->length);
-
-	char data[bytes], *ptr = data;
-
-	struct msg *msg = (struct msg *) ptr;
-
-	for (int i = 0; i < cnt; i++) {
-		*msg = MSG_INIT(smps[i]->length, smps[i]->sequence);
-
-		msg->ts.sec  = smps[i]->ts.origin.tv_sec;
-		msg->ts.nsec = smps[i]->ts.origin.tv_nsec;
-
-		memcpy(msg->data, smps[i]->data, MSG_DATA_LEN(smps[i]->length));
-
-		msg_hton(msg);
-
-		ptr += MSG_LEN(msg->length);
-
-		msg = (struct msg *) ptr;
-	}
+	sent = msg_buffer_from_samples(smps, cnt, data, sizeof(data));
+	if (sent < 0)
+		return -1;
 
 	/* Send message */
-	bytes = sendto(s->sd, data, bytes, 0, (struct sockaddr *) &s->remote, sizeof(s->remote));
+	bytes = sendto(s->sd, data, sent, 0, (struct sockaddr *) &s->remote, sizeof(s->remote));
 	if (bytes < 0)
 		serror("Failed send to node %s", node_name(n));
 

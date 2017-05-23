@@ -21,9 +21,12 @@
  *********************************************************************************/
 
 #include <arpa/inet.h>
+#include <string.h>
 
 #include "msg.h"
 #include "msg_format.h"
+#include "sample.h"
+#include "utils.h"
 
 void msg_ntoh(struct msg *m)
 {
@@ -67,4 +70,83 @@ int msg_verify(struct msg *m)
 		return -3;
 	else
 		return 0;
+}
+
+int msg_to_sample(struct msg *msg, struct sample *smp)
+{
+	int ret;
+
+	msg_ntoh(msg);
+
+	ret = msg_verify(msg);
+	if (ret)
+		return -1;
+
+	smp->length = MIN(msg->length, smp->capacity);
+	smp->sequence = msg->sequence;
+	smp->ts.origin = MSG_TS(msg);
+	smp->ts.received.tv_sec  = -1;
+	smp->ts.received.tv_nsec = -1;
+
+	memcpy(smp->data, msg->data, SAMPLE_DATA_LEN(smp->length));
+	
+	return 0;
+}
+
+int msg_from_sample(struct msg *msg, struct sample *smp)
+{
+	*msg = MSG_INIT(smp->length, smp->sequence);
+
+	msg->ts.sec  = smp->ts.origin.tv_sec;
+	msg->ts.nsec = smp->ts.origin.tv_nsec;
+
+	memcpy(msg->data, smp->data, MSG_DATA_LEN(smp->length));
+
+	msg_hton(msg);
+
+	return 0;
+}
+
+ssize_t msg_buffer_from_samples(struct sample *smps[], unsigned cnt, char *buf, size_t len)
+{
+	int ret, i = 0;
+	char *ptr = buf;
+
+	struct msg *msg = (struct msg *) ptr;
+	struct sample *smp = smps[i];
+
+	while (ptr < buf + len && i < cnt) {
+		ret = msg_from_sample(msg, smp);
+		if (ret)
+			return ret;
+
+		ptr += MSG_LEN(smp->length);
+
+		msg = (struct msg *) ptr;
+		smp = smps[++i];
+	}
+	
+	return ptr - buf;
+}
+
+int msg_buffer_to_samples(struct sample *smps[], unsigned cnt, char *buf, size_t len)
+{
+	int ret, i = 0;
+	char *ptr = buf;
+
+	struct msg *msg = (struct msg *) ptr;
+	struct sample *smp = smps[i];
+
+	while (ptr < buf + len && i < cnt) {
+		ret = msg_to_sample(msg, smp);
+		if (ret)
+			return ret;
+
+		ptr += MSG_LEN(smp->length);
+
+		msg = (struct msg *) ptr;
+		smp = smps[++i];
+	}
+	
+	return i;
 }
