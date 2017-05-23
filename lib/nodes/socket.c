@@ -330,7 +330,7 @@ static int socket_read_villas(struct node *n, struct sample *smps[], unsigned cn
 	int ret;
 	struct socket *s = n->_vd;
 
-	char data[MAX_PACKETLEN];
+	char data[MSG_MAX_PACKET_LEN];
 	ssize_t bytes;
 
 	/* Receive message from socket */
