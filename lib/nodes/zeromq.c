@@ -247,6 +247,9 @@ int zeromq_start(struct node *n)
 		case ZEROMQ_PATTERN_PUBSUB:
 			ret = zmq_setsockopt(z->subscriber.socket, ZMQ_SUBSCRIBE, z->filter, z->filter ? strlen(z->filter) : 0);
 			break;
+			
+		default:
+			ret = -1;
 	}
 	
 	if (ret < 0)
