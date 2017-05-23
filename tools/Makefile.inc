@@ -26,6 +26,12 @@ TOOLS_CFLAGS = $(CFLAGS)
 TOOLS_LDLIBS = -lconfig -ljansson -lvillas
 TOOLS_LDFLAGS = $(LDFLAGS) -Wl,-rpath,'$$ORIGIN'
 
+ifeq ($(shell $(PKGCONFIG) libzmq; echo $$?),0)
+	TOOLS += $(BUILDDIR)/zmq-keygen
+	TOOLS_CFLAGS += $(shell $(PKGCONFIG) --cflags libzmq)
+	TOOLS_LDLIBS += $(shell $(PKGCONFIG) --libs libzmq)
+endif
+
 # Compile executable objects
 $(BUILDDIR)/tools/%.o: tools/%.c $(BUILDDIR)/defines | $$(dir $$@)
 	$(CC) $(TOOLS_CFLAGS) -c $< -o $@
