@@ -3,3 +3,4 @@
 !thirdparty/libxil/
 !thirdparty/criterion/
 !thirdparty/libwebsockets/
+!thirdparty/nanomsg/

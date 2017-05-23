@@ -51,6 +51,14 @@ ifeq ($(shell $(PKGCONFIG) libnl-route-3.0; echo $$?),0)
 endif
 endif
 
+# Enable nanomsg node type when libnanomsg is available
+ifndef WITHOUT_NANOMSG
+ifeq ($(shell $(PKGCONFIG) nanomsg; echo $$?),0)
+	LIB_SRCS    += lib/nodes/nanomsg.c
+	LIB_PKGS    += nanomsg
+endif
+endif
+
 # Enable VILLASfpga support when libxil is available
 ifndef WITHOUT_FPGA
 ifeq ($(shell $(PKGCONFIG) libxil; echo $$?),0)
