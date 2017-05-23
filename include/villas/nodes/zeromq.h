@@ -54,6 +54,7 @@ struct zeromq {
 
 	struct {
 		void *socket;	/**< ZeroMQ socket. */
+		void *mon_socket;
 		char *endpoint;
 	} subscriber;
 	
