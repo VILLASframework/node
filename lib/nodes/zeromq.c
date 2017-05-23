@@ -84,6 +84,9 @@ int zeromq_parse(struct node *n, config_setting_t *cfg)
 		else
 			cerror(cfg, "Invalid type for ZeroMQ node: %s", node_name_short(n));
 	}
+	
+	if (!config_setting_lookup_bool(cfg, "ipv6", &z->ipv6))
+		z->ipv6 = 0;
 
 	return 0;
 }
@@ -141,10 +144,18 @@ int zeromq_start(struct node *n)
 			z->publisher.socket  = zmq_socket(context, ZMQ_PUB);
 			break;
 	}
+	
+	ret = zmq_setsockopt(z->publisher.socket, &z->ipv6, sizeof(z->ipv6));
+	if (ret)
+		return ret;
 
 	/* Bind subscriber socket */
 	if (z->subscriber.endpoint) {
 		ret = zmq_bind(z->subscriber.socket, z->subscriber.endpoint);
+	ret = zmq_setsockopt(z->subscriber.socket, &z->ipv6, sizeof(z->ipv6));
+	if (ret)
+		return ret;
+	
 		if (ret)
 			return ret;
 	}

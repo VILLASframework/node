@@ -33,6 +33,8 @@
 #include "list.h"
 
 struct zeromq {
+	int ipv6;
+	
 	enum {
 		ZEROMQ_PATTERN_PUBSUB,
 		ZEROMQ_PATTERN_RADIODISH
