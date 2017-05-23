@@ -201,14 +201,14 @@ int zeromq_start(struct node *n)
 			break;
 	}
 	
-	ret = zmq_setsockopt(z->publisher.socket, &z->ipv6, sizeof(z->ipv6));
+	ret = zmq_setsockopt(z->publisher.socket, ZMQ_IPV6, &z->ipv6, sizeof(z->ipv6));
 	if (ret)
 		return ret;
 
 	/* Bind subscriber socket */
 	if (z->subscriber.endpoint) {
 		ret = zmq_bind(z->subscriber.socket, z->subscriber.endpoint);
-	ret = zmq_setsockopt(z->subscriber.socket, &z->ipv6, sizeof(z->ipv6));
+	ret = zmq_setsockopt(z->subscriber.socket, ZMQ_IPV6, &z->ipv6, sizeof(z->ipv6));
 	if (ret)
 		return ret;
 	
