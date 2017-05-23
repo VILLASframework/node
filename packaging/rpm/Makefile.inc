@@ -38,6 +38,14 @@ rpm-libxil: $(BUILDDIR)/thirdparty/libxil/ | $(RPMDIR)/SOURCES/
 	cp $(BUILDDIR)/thirdparty/libxil/libxil-*.tar.gz $(RPMDIR)/SOURCES/
 	rpmbuild -ba --define="_topdir $$(pwd)/$(RPMDIR)" $(SRCDIR)/thirdparty/libxil/libxil.spec
 
+rpm-nanomsg: $(BUILDDIR)/thirdparty/nanomsg/ | $(RPMDIR)/SOURCES/
+	cmake -DCMAKE_INSTALL_PREFIX:PATH=$(PREFIX) \
+		      -H$(SRCDIR)/thirdparty/nanomsg \
+		      -B$(BUILDDIR)/thirdparty/nanomsg $(CMAKE_OPTS)
+	make -C$(BUILDDIR)/thirdparty/nanomsg package_source
+	cp $(BUILDDIR)/thirdparty/nanomsg/nanomsg-*.tar.gz $(RPMDIR)/SOURCES/
+	rpmbuild -ba --define="_topdir $$(pwd)/$(RPMDIR)" $(SRCDIR)/packaging/rpm/nanomsg.spec
+
 rpm-libwebsockets: | $(RPMDIR)/RPMS/x86_64/ $(BUILDDIR)/thirdparty/libwebsockets/
 	cmake -DCMAKE_INSTALL_PREFIX:PATH=$(PREFIX) \
 	      -H$(SRCDIR)/thirdparty/libwebsockets \

@@ -20,7 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-DEPS_CMAKE = libxil libwebsockets criterion jansson
+DEPS_CMAKE = libxil libwebsockets criterion jansson nanomsg
 DEPS_AUTOCONF = libnl libconfig libcurl
 
 DEPS = $(DEPS_CMAKE) $(DEPS_AUTOCONF)

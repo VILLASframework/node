@@ -98,3 +98,6 @@ int list_contains(struct list *l, void *p);
 
 /** Sort the list using the quicksort algorithm of libc */
 void list_sort(struct list *l, cmp_cb_t cmp);
+
+/** Set single element in list */
+int list_set(struct list *l, int index, void *value);

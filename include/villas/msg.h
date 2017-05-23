@@ -25,6 +25,10 @@
 
 /* Forward declarations. */
 struct msg;
+struct sample;
+
+/** The maximum length of a packet which contains stuct msg. */
+#define MSG_MAX_PACKET_LEN 1500
 
 /** Swaps the byte-order of the message.
  *
@@ -49,3 +53,16 @@ void msg_hton(struct msg *m);
  * @retval <0 The message header is invalid.
  */
 int msg_verify(struct msg *m);
+
+/** Copy fields from \p msg into \p smp. */
+int msg_to_sample(struct msg *msg, struct sample *smp);
+
+/** Copy fields form \p smp into \p msg. */
+int msg_from_sample(struct msg *msg, struct sample *smp);
+
+
+/** Copy / read struct msg's from buffer \p buf to / fram samples \p smps. */
+ssize_t msg_buffer_from_samples(struct sample *smps[], unsigned cnt, char *buf, size_t len);
+
+/** Read struct sample's from buffer \p buf into samples \p smps. */
+int msg_buffer_to_samples(struct sample *smps[], unsigned cnt, char *buf, size_t len);
