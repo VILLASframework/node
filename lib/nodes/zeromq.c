@@ -32,7 +32,16 @@ static void *context;
 
 int zeromq_reverse(struct node *n)
 {
-//	struct zeromq *z = n->_vd;
+	struct zeromq *z = n->_vd;
+	
+	if (list_length(&z->publisher.endpoints) != 1)
+		return -1;
+	
+	char *subscriber = z->subscriber.endpoint;
+	char *publisher = list_first(&z->publisher.endpoints);
+	
+	z->subscriber.endpoint = publisher;
+	list_set(&z->publisher.endpoints, 0, subscriber);
 
 	return 0;
 }
