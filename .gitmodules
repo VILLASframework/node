@@ -25,3 +25,6 @@
 [submodule "thirdparty/libopal"]
 	path = thirdparty/libopal
 	url = ../libopal.git
+[submodule "thirdparty/nanomsg"]
+	path = thirdparty/nanomsg
+	url = https://github.com/nanomsg/nanomsg.git
