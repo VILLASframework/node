@@ -189,3 +189,13 @@ void list_sort(struct list *l, cmp_cb_t cmp)
 
 	pthread_mutex_unlock(&l->lock);
 }
+
+int list_set(struct list *l, int index, void *value)
+{
+	if (index >= l->length)
+		return -1;
+
+	l->array[index] = value;
+	
+	return 0;
+}
