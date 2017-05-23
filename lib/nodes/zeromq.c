@@ -116,9 +116,7 @@ char * zeromq_print(struct node *n)
 int zeromq_init(struct super_node *sn)
 {
 	context = zmq_ctx_new();
-	
-	info("context is %p", context);
-	
+
 	return context == NULL;
 }
 
@@ -134,8 +132,8 @@ int zeromq_start(struct node *n)
 	
 	switch (z->pattern) {
 		case ZEROMQ_PATTERN_RADIODISH:
-			z->subscriber.socket = zmq_socket(context, ZMQ_RADIO);
-			z->publisher.socket  = zmq_socket(context, ZMQ_DISH);
+			z->subscriber.socket = zmq_socket(context, ZMQ_DISH);
+			z->publisher.socket  = zmq_socket(context, ZMQ_RADIO);
 			break;
 		
 		case ZEROMQ_PATTERN_PUBSUB:
