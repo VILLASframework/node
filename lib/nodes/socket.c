@@ -327,23 +327,14 @@ static int socket_read_none(struct node *n, struct sample *smps[], unsigned cnt)
 
 static int socket_read_villas(struct node *n, struct sample *smps[], unsigned cnt)
 {
+	int ret;
 	struct socket *s = n->_vd;
 
-	int ret;
+	char data[MSG_MAX_PACKET_LEN];
 	ssize_t bytes;
 
-	/* Peak into message header of the first sample and to get total packet size. */
-	bytes = recv(s->sd, NULL, 0, MSG_PEEK | MSG_TRUNC);
-	if (bytes < MSG_LEN(1) || bytes % 4 != 0) {
-		warn("Received invalid packet for node %s", node_name(n));
-		recv(s->sd, NULL, 0, 0); /* empty receive buffer */
-		return -1;
-	}
-
-	char data[bytes];
-
 	/* Receive message from socket */
-	bytes = recv(s->sd, data, bytes, 0);
+	bytes = recv(s->sd, data, sizeof(data), 0);
 	if (bytes == 0)
 		error("Remote node %s closed the connection", node_name(n));
 	else if (bytes < 0)

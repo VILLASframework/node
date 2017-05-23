@@ -59,6 +59,14 @@ ifeq ($(shell $(PKGCONFIG) nanomsg; echo $$?),0)
 endif
 endif
 
+# Enable ZeroMQ node type when libzmq is available
+ifndef WITHOUT_ZMQ
+ifeq ($(shell $(PKGCONFIG) libzmq; echo $$?),0)
+	LIB_SRCS    += $(addprefix lib/nodes/, zeromq.c)
+	LIB_PKGS    += libzmq
+endif
+endif
+
 # Enable VILLASfpga support when libxil is available
 ifndef WITHOUT_FPGA
 ifeq ($(shell $(PKGCONFIG) libxil; echo $$?),0)

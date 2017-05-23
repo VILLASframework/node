@@ -57,6 +57,7 @@ rm -rf %{?buildroot}
 /usr/bin/villas
 /usr/bin/villas-*
 /usr/bin/conf2json
+/usr/bin/zmq-keygen
 
 /usr/lib/libvillas.so
 /usr/lib/libvillas.so.*

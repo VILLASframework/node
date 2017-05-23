@@ -4,3 +4,4 @@
 !thirdparty/criterion/
 !thirdparty/libwebsockets/
 !thirdparty/nanomsg/
+!thirdparty/libzmq/
