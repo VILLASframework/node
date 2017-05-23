@@ -29,6 +29,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #include "node.h"
 #include "list.h"
 
@@ -36,6 +38,14 @@ struct zeromq {
 	int ipv6;
 	
 	char *filter;
+	
+	struct {
+		int enabled;
+		struct {
+			char public_key[41];
+			char secret_key[41];
+		} server, client;
+	} curve;
 	
 	enum {
 		ZEROMQ_PATTERN_PUBSUB,
