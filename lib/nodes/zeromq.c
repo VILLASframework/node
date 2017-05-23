@@ -334,8 +334,12 @@ int zeromq_start(struct node *n)
 	}
 	
 #ifdef ZMQ_BUILD_DRAFT_API
-	ret = get_monitor_event(z->subscriber.mon_socket, NULL, NULL);
-	return ret == ZMQ_EVENT_HANDSHAKE_SUCCEED;
+	if (z->curve.enabled) {
+		ret = get_monitor_event(z->subscriber.mon_socket, NULL, NULL);
+		return ret == ZMQ_EVENT_HANDSHAKE_SUCCEED;
+	}
+	else
+		return 0; /* The handshake events are only emitted for CurveZMQ sessions. */
 #else
 	return 0;
 #endif
