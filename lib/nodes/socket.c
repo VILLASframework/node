@@ -402,7 +402,7 @@ static int socket_write_villas(struct node *n, struct sample *smps[], unsigned c
 {
 	struct socket *s = n->_vd;
 
-	char data[MAX_PACKETLEN];
+	char data[MSG_MAX_PACKET_LEN];
 	ssize_t bytes = 0, sent;
 
 	sent = msg_buffer_from_samples(smps, cnt, data, sizeof(data));

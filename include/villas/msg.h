@@ -27,6 +27,9 @@
 struct msg;
 struct sample;
 
+/** The maximum length of a packet which contains stuct msg. */
+#define MSG_MAX_PACKET_LEN 1500
+
 /** Swaps the byte-order of the message.
  *
  * Message are always transmitted in network (big endian) byte order.
