@@ -86,6 +86,9 @@ int if_start(struct interface *i)
 		if (mark == 0)
 			return 0;
 
+		if (getuid() != 0)
+			error("Network emulation requires super-user privileges!");
+
 		/* Replace root qdisc */
 		ret = tc_prio(i, &i->tc_qdisc, TC_HANDLE(1, 0), TC_H_ROOT, mark);
 		if (ret)

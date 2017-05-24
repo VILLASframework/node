@@ -50,9 +50,6 @@ int socket_init(struct super_node *sn)
 {
 	int ret;
 
-	if (getuid() != 0)
-		error("The 'socket' node-type requires super-user privileges!");
-
 	nl_init(); /* Fill link cache */
 	list_init(&interfaces);
 
@@ -510,7 +507,11 @@ int socket_parse(struct node *n, config_setting_t *cfg)
 		int enabled = 1;
 		if (!config_setting_lookup_bool(cfg_netem, "enabled", &enabled) || enabled)
 			tc_parse(cfg_netem, &s->tc_qdisc);
+		else
+			s->tc_qdisc = NULL;
 	}
+	else
+		s->tc_qdisc = NULL;
 
 	return 0;
 }
