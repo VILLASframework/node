@@ -32,6 +32,7 @@
 #pragma once
 
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <linux/if_packet.h>
 
 #include "node.h"
@@ -53,27 +54,27 @@ union sockaddr_union {
 	struct sockaddr_in sin;
 	struct sockaddr_in6 sin6;
 	struct sockaddr_ll sll;
+	struct sockaddr_un sun;
 };
 
 struct socket {
-	int sd;				/**> The socket descriptor */
-	int mark;			/**> Socket mark for netem, routing and filtering */
+	int sd;				/**< The socket descriptor */
+	int mark;			/**< Socket mark for netem, routing and filtering */
+	int verify_source;		/**< Verify the source address of incoming packets against socket::remote. */
 
 	enum {
 		SOCKET_ENDIAN_LITTLE,
 		SOCKET_ENDIAN_BIG
-	} endian;			/** Endianness of the data sent/received by the node */
+	} endian;			/**< Endianness of the data sent/received by the node */
 
-	enum socket_layer layer;	/**> The OSI / IP layer which should be used for this socket */
-	enum socket_header header;	/**> Payload header type */
+	enum socket_layer layer;	/**< The OSI / IP layer which should be used for this socket */
+	enum socket_header header;	/**< Payload header type */
 
-	union sockaddr_union local;	/**> Local address of the socket */
-	union sockaddr_union remote;	/**> Remote address of the socket */
+	union sockaddr_union local;	/**< Local address of the socket */
+	union sockaddr_union remote;	/**< Remote address of the socket */
 
-	struct rtnl_qdisc *tc_qdisc;	/**> libnl3: Network emulator queuing discipline */
-	struct rtnl_cls *tc_classifier;	/**> libnl3: Firewall mark classifier */
-
-	struct socket *next;		/* Linked list _per_interface_ */
+	struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Network emulator queuing discipline */
+	struct rtnl_cls *tc_classifier;	/**< libnl3: Firewall mark classifier */
 };
 
 
@@ -126,5 +127,7 @@ char * socket_print_addr(struct sockaddr *saddr);
  * @retval <0	Error. Something went wrong.
  */
 int socket_parse_addr(const char *str, struct sockaddr *sa, enum socket_layer layer, int flags);
+
+int socket_compare_addr(struct sockaddr *x, struct sockaddr *y);
 
 /** @} */
