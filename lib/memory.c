@@ -21,9 +21,12 @@
  *********************************************************************************/
 
 #include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/types.h>
 
 /* Required to allocate hugepages on Apple OS X */
 #ifdef __MACH__
@@ -126,13 +129,16 @@ static void * memory_hugepage_alloc(struct memtype *m, size_t len, size_t alignm
 #ifdef __MACH__
 	flags |= VM_FLAGS_SUPERPAGE_SIZE_2MB;
 #elif defined(__linux__)
-	flags |= MAP_HUGETLB | MAP_LOCKED;
+	flags |= MAP_HUGETLB;
+
+	if (getuid() == 0)
+		flags |= MAP_LOCKED;
 #endif
 
 	void *ret = mmap(NULL, len, prot, flags, -1, 0);
 
 	if (ret == MAP_FAILED) {
-		info("Failed to allocate huge pages: Check https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt");
+		info("Failed to allocate huge pages: Check https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt (%s)", strerror(errno));
 		return NULL;
 	}
 
