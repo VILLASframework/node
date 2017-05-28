@@ -155,6 +155,22 @@ int socket_start(struct node *n)
 	struct sockaddr_in *sin = (struct sockaddr_in *) &s->local;
 	struct sockaddr_ll *sll = (struct sockaddr_ll *) &s->local;
 	int ret;
+	
+	/* Some checks on the addresses */
+	if (s->local.sa.sa_family != s->remote.sa.sa_family)
+		error("Address families of local and remote must match!");
+	
+	if (s->layer == SOCKET_LAYER_IP) {
+		if (ntohs(s->local.sin.sin_port) != ntohs(s->remote.sin.sin_port))
+			error("IP protocol numbers of local and remote must match!");
+	}
+	else if(s->layer == SOCKET_LAYER_ETH) {
+		if (ntohs(s->local.sll.sll_protocol) != ntohs(s->remote.sll.sll_protocol))
+			error("Ethertypes of local and remote must match!");
+		
+		if (ntohs(s->local.sll.sll_protocol) <= 0x5DC)
+			error("Ethertype must be large than %d or it is interpreted as an IEEE802.3 length field!", 0x5DC);
+	}
 
 	/* Create socket */
 	switch (s->layer) {
