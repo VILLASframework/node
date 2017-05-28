@@ -51,7 +51,7 @@ int rt_init(int priority, int affinity)
 	if (affinity)
 		rt_set_affinity(affinity);
 	else
-		warn("You should use the 'affinity' setting to pin VILLASnode to dedicate CPU cores");
+		warn("You might want to use the 'affinity' setting to pin VILLASnode to dedicate CPU cores");
 
 	}
 
