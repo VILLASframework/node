@@ -152,8 +152,6 @@ char * socket_print(struct node *n)
 int socket_start(struct node *n)
 {
 	struct socket *s = n->_vd;
-	struct sockaddr_in *sin = (struct sockaddr_in *) &s->local;
-	struct sockaddr_ll *sll = (struct sockaddr_ll *) &s->local;
 	int ret;
 	
 	/* Some checks on the addresses */
@@ -174,9 +172,9 @@ int socket_start(struct node *n)
 
 	/* Create socket */
 	switch (s->layer) {
-		case SOCKET_LAYER_UDP:	s->sd = socket(sin->sin_family, SOCK_DGRAM,	IPPROTO_UDP); break;
-		case SOCKET_LAYER_IP:	s->sd = socket(sin->sin_family, SOCK_RAW,	ntohs(sin->sin_port)); break;
-		case SOCKET_LAYER_ETH:	s->sd = socket(sll->sll_family, SOCK_DGRAM,	sll->sll_protocol); break;
+		case SOCKET_LAYER_UDP:	s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM,	IPPROTO_UDP); break;
+		case SOCKET_LAYER_IP:	s->sd = socket(s->local.sa.sa_family, SOCK_RAW,		ntohs(s->local.sin.sin_port)); break;
+		case SOCKET_LAYER_ETH:	s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM,	s->local.sll.sll_protocol); break;
 		default:
 			error("Invalid socket type!");
 	}
