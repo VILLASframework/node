@@ -123,7 +123,7 @@ char * nanomsg_print(struct node *n)
 		strcatf(&buf, "%s ", ep);
 	}
 
-	strcatf(&buf, " ]");
+	strcatf(&buf, "]");
 
 	return buf;
 }

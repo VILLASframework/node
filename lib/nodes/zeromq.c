@@ -196,7 +196,7 @@ char * zeromq_print(struct node *n)
 		strcatf(&buf, "%s ", ep);
 	}
 
-	strcatf(&buf, " ]");
+	strcatf(&buf, "]");
 	
 	if (z->filter)
 		strcatf(&buf, ", filter=%s", z->filter);
@@ -323,14 +323,14 @@ int zeromq_start(struct node *n)
 		char *ep = list_at(&z->publisher.endpoints, i);
 		
 		ret = zmq_bind(z->publisher.socket, ep);
-		if (ret)
+		if (ret < 0)
 			goto fail;
 	}
 	
 	/* Connect subscribers to server socket */
 	if (z->subscriber.endpoint) {
 		ret = zmq_connect(z->subscriber.socket, z->subscriber.endpoint);
-		if (ret) {
+		if (ret < 0) {
 			info("Failed to bind ZeroMQ socket: endpoint=%s, error=%s", z->subscriber.endpoint, zmq_strerror(errno));
 			return ret;
 		}
