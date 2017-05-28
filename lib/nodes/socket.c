@@ -703,13 +703,13 @@ int socket_compare_addr(struct sockaddr *x, struct sockaddr *y)
 			return memcmp(xu->sin6.sin6_addr.s6_addr, yu->sin6.sin6_addr.s6_addr, sizeof(xu->sin6.sin6_addr.s6_addr));
 
 		case AF_PACKET:
-			CMP(xu->sll.sll_protocol, yu->sll.sll_protocol);
+			CMP(ntohs(xu->sll.sll_protocol), ntohs(yu->sll.sll_protocol));
 			CMP(xu->sll.sll_ifindex, yu->sll.sll_ifindex);
 //			CMP(xu->sll.sll_pkttype, yu->sll.sll_pkttype);
 //			CMP(xu->sll.sll_hatype, yu->sll.sll_hatype);
-//			CMP(xu->sll.sll_halen, yu->sll.sll_halen);
 
-			return memcmp(xu->sll.sll_addr, yu->sll.sll_addr, sizeof(xu->sll.sll_addr));
+			CMP(xu->sll.sll_halen, yu->sll.sll_halen);
+			return memcmp(xu->sll.sll_addr, yu->sll.sll_addr, xu->sll.sll_halen);
 
 		default:
 			return -1;
