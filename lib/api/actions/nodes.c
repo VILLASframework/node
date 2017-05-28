@@ -29,8 +29,6 @@
 
 #include "api.h"
 
-extern struct list nodes;
-
 static int api_nodes(struct api_action *r, json_t *args, json_t **resp, struct api_session *s)
 {
 	json_t *json_nodes = json_array();
