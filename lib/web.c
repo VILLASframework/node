@@ -156,7 +156,7 @@ int web_init(struct web *w, struct api *a)
 	w->api = a;
 
 	/* Default values */
-	w->port = 80;
+	w->port = getuid() > 0 ? 8080 : 80; /**< @todo Use libcap to check if user can bind to ports < 1024 */
 	w->htdocs = WEB_PATH;
 
 	w->state = STATE_INITIALIZED;
