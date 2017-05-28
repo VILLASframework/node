@@ -120,12 +120,12 @@ void hist_reset(struct hist *h)
 
 double hist_mean(struct hist *h)
 {
-	return (h->total > 0) ? h->_m[0] : 0.0;
+	return (h->total > 0) ? h->_m[0] : NAN;
 }
 
 double hist_var(struct hist *h)
 {
-	return (h->total > 1) ? h->_s[0] / (h->total - 1) : 0.0;
+	return (h->total > 1) ? h->_s[0] / (h->total - 1) : NAN;
 }
 
 double hist_stddev(struct hist *h)
@@ -208,18 +208,23 @@ json_t * hist_json(struct hist *h)
 {
 	json_t *json_buckets, *json_hist;
 
-	json_hist = json_pack("{ s: f, s: f, s: i, s: i, s: i, s: f, s: f, s: f, s: f, s: f }",
+	json_hist = json_pack("{ s: f, s: f, s: i }",
 		"low", h->low,
 		"high", h->high,
-		"total", h->total,
-		"higher", h->higher,
-		"lower", h->lower,
-		"highest", h->highest,
-		"lowest", h->lowest,
-		"mean", hist_mean(h),
-		"variance", hist_var(h),
-		"stddev", hist_stddev(h)
+		"total", h->total
 	);
+	
+	if (h->total > 0) {
+		json_object_update(json_hist, json_pack("{ s: i, s: i, s: f, s: f, s: f, s: f, s: f }",
+			"higher", h->higher,
+			"lower", h->lower,
+			"highest", h->highest,
+			"lowest", h->lowest,
+			"mean", hist_mean(h),
+			"variance", hist_var(h),
+			"stddev", hist_stddev(h)
+		));
+	}
 
 	if (h->total - h->lower - h->higher > 0) {
 		json_buckets = json_array();
