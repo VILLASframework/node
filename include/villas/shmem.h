@@ -53,9 +53,9 @@ union shmem_queue {
 /** Struct containing all parameters that need to be known when creating a new
  * shared memory object. */
 struct shmem_conf {
-    int polling; /*< Whether to use polling instead of POSIX CVs */
-    int queuelen; /*< Size of the queues (in elements) */
-    int samplelen; /*< Maximum number of data entries in a single sample */
+	int polling; /*< Whether to use polling instead of POSIX CVs */
+	int queuelen; /*< Size of the queues (in elements) */
+	int samplelen; /*< Maximum number of data entries in a single sample */
 };
 
 /** The structure that actually resides in the shared memory. */
@@ -70,13 +70,14 @@ struct shmem_shared {
 	struct pool pool;                 /**< Pool for the samples in the queues. */
 };
 
+/** Main structure representing the shared memory interface. */
 struct shmem_int {
-    void* base; /**< Base address of the mapping (needed for munmap) */
-    const char* name; /**< Name of the shared memory object */
-    size_t len; /**< Total size of the shared memory region */
-    struct shmem_shared *shared; /**< Pointer to mapped shared structure */
-    int secondary; /**< Set to 1 if this is the secondary user (i.e. not the one
-                        that created the object); 0 otherwise. */
+	void* base;                  /**< Base address of the mapping (needed for munmap) */
+	const char* name;            /**< Name of the shared memory object */
+	size_t len;                  /**< Total size of the shared memory region */
+	struct shmem_shared *shared; /**< Pointer to mapped shared structure */
+	int secondary;               /**< Set to 1 if this is the secondary user (i.e. not the one
+	                                  that created the object); 0 otherwise. */
 };
 
 /** Open the shared memory object and retrieve / initialize the shared data structures.
