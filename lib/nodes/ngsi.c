@@ -238,9 +238,9 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 		struct ngsi_metadata index = {
 			.name = "index",
 			.type = "integer",
-			.value = alloc(8)
+			.value = alloc(11)
 		};
-		snprintf(index.value, 8, "%u", j);
+		snprintf(index.value, 11, "%u", j);
 
 		list_push(&map.metadata, memdup(&index, sizeof(index)));
 		list_push(&map.metadata, memdup(&source, sizeof(source)));

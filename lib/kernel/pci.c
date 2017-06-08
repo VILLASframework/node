@@ -20,7 +20,7 @@ int pci_init(struct pci *p)
 	struct dirent *entry;
 	DIR *dp;
 	FILE *f;
-	char path[256];
+	char path[512];
 	int ret;
 
 	snprintf(path, sizeof(path), "%s/bus/pci/devices", SYSFS_PATH);
