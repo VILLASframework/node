@@ -83,6 +83,7 @@ int shmem_open(struct node *n)
 		if (!ret)
 			serror("Failed to spawn external program");
 	}
+
 	ret = shmem_int_open(shm->name, &shm->intf, &shm->conf);
 	if (ret < 0)
 		serror("Opening shared memory interface failed");

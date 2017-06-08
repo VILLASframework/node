@@ -40,11 +40,10 @@
  * @see node_type
  */
 struct shmem {
-	const char* name;		/**< Name of the shm object. */
+	const char* name;       /**< Name of the shm object. */
 	struct shmem_conf conf; /**< Interface configuration struct. */
-	char **exec;			/**< External program to execute on start. */
-
-	struct shmem_int intf;	/**< Shmem interface */
+	char **exec;            /**< External program to execute on start. */
+	struct shmem_int intf;  /**< Shmem interface */
 };
 
 /** @see node_type::print */

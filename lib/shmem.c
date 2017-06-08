@@ -68,6 +68,7 @@ int shmem_int_open(const char *name, struct shmem_int* shm, struct shmem_conf* c
 		fd = shm_open(name, O_RDWR, 0);
 		if (fd < 0)
 			return -1;
+
 		/* Theoretically, the other process might have created the object, but
 		 * isn't done with initializing it yet. So in the creating process,
 		 * we only reserve a small amount of memory, just enough for the barrier,
@@ -80,8 +81,8 @@ int shmem_int_open(const char *name, struct shmem_int* shm, struct shmem_conf* c
 			if (stat.st_size > SHMEM_MIN_SIZE)
 				break;
 		}
-		len = stat.st_size;
 
+		len = stat.st_size;
 		base = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 		if (base == MAP_FAILED)
 			return -1;
@@ -92,6 +93,7 @@ int shmem_int_open(const char *name, struct shmem_int* shm, struct shmem_conf* c
 		shared = (struct shmem_shared *) cptr;
 
 		pthread_barrier_wait(&shared->start_bar);
+
 		shm->base = base;
 		shm->shared = shared;
 		shm->len = 0;
@@ -154,11 +156,14 @@ int shmem_int_open(const char *name, struct shmem_int* shm, struct shmem_conf* c
 		errno = ENOMEM;
 		return -1;
 	}
+
 	shm->base = base;
 	shm->len = len;
 	shm->shared = shared;
 	shm->secondary = 0;
+
 	pthread_barrier_wait(&shared->start_bar);
+
 	return 1;
 }
 
