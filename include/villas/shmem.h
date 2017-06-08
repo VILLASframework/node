@@ -33,14 +33,13 @@
 extern "C" {
 #endif
 
-#include "config.h"
 #include "pool.h"
 #include "queue.h"
 #include "queue_signalled.h"
 #include "sample.h"
 
 #define DEFAULT_SHMEM_QUEUELEN	512
-#define DEFAULT_SHMEM_SAMPLELEN	DEFAULT_SAMPLELEN
+#define DEFAULT_SHMEM_SAMPLELEN	64
 
 /** A signalled queue or a regular (polling) queue, depending on the polling setting. */
 union shmem_queue {
