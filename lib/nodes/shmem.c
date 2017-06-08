@@ -30,9 +30,9 @@
 
 #include "kernel/kernel.h"
 #include "log.h"
+#include "shmem.h"
 #include "nodes/shmem.h"
 #include "plugin.h"
-#include "shmem.h"
 #include "timing.h"
 #include "utils.h"
 
@@ -42,12 +42,12 @@ int shmem_parse(struct node *n, config_setting_t *cfg)
 
 	if (!config_setting_lookup_string(cfg, "name", &shm->name))
 		cerror(cfg, "Missing shared memory object name");
-	if (!config_setting_lookup_int(cfg, "queuelen", &shm->queuelen))
-		shm->queuelen = DEFAULT_SHMEM_QUEUELEN;
-	if (!config_setting_lookup_int(cfg, "samplelen", &shm->samplelen))
-		shm->samplelen = DEFAULT_SHMEM_SAMPLELEN;
-	if (!config_setting_lookup_bool(cfg, "polling", &shm->polling))
-		shm->polling = false;
+	if (!config_setting_lookup_int(cfg, "queuelen", &shm->conf.queuelen))
+		shm->conf.queuelen = DEFAULT_SHMEM_QUEUELEN;
+	if (!config_setting_lookup_int(cfg, "samplelen", &shm->conf.samplelen))
+		shm->conf.samplelen = DEFAULT_SHMEM_SAMPLELEN;
+	if (!config_setting_lookup_bool(cfg, "polling", &shm->conf.polling))
+		shm->conf.polling = false;
 
 	config_setting_t *exec_cfg = config_setting_lookup(cfg, "exec");
 	if (!exec_cfg)
@@ -77,56 +77,15 @@ int shmem_open(struct node *n)
 {
 	struct shmem *shm = n->_vd;
 	int ret;
-	size_t len;
-
-	shm->fd = shm_open(shm->name, O_RDWR | O_CREAT, 0600);
-	if (shm->fd < 0)
-		serror("Opening shared memory object failed");
-
-	len = shmem_total_size(shm->queuelen, shm->queuelen, shm->samplelen);
-
-	ret = ftruncate(shm->fd, len);
-	if (ret < 0)
-		serror("Setting size of shared memory object failed");
-
-	shm->base = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, shm->fd, 0);
-	if (shm->base == MAP_FAILED)
-		serror("Mapping shared memory failed");
-
-	shm->manager = memtype_managed_init(shm->base, len);
-	shm->shared = memory_alloc(shm->manager, sizeof(struct shmem_shared));
-	if (!shm->shared)
-		error("Shared memory shared struct allocation failed (not enough memory?)");
-
-	memset(shm->shared, 0, sizeof(struct shmem_shared));
-	shm->shared->len = len;
-	shm->shared->polling = shm->polling;
-
-	ret = shm->polling ? queue_init(&shm->shared->in.q, shm->queuelen, shm->manager)
-			   : queue_signalled_init(&shm->shared->in.qs, shm->queuelen, shm->manager);
-	if (ret)
-		error("Shared memory queue allocation failed (not enough memory?)");
-
-	ret = shm->polling ? queue_init(&shm->shared->out.q, shm->queuelen, shm->manager)
-			   : queue_signalled_init(&shm->shared->out.qs, shm->queuelen, shm->manager);
-	if (ret)
-		error("Shared memory queue allocation failed (not enough memory?)");
-
-	ret = pool_init(&shm->shared->pool, 2 * shm->queuelen, SAMPLE_LEN(shm->samplelen), shm->manager);
-	if (ret)
-		error("Shared memory pool allocation failed (not enough memory?)");
-
-	pthread_barrierattr_init(&shm->shared->start_attr);
-	pthread_barrierattr_setpshared(&shm->shared->start_attr, PTHREAD_PROCESS_SHARED);
-	pthread_barrier_init(&shm->shared->start_bar, &shm->shared->start_attr, 2);
 
 	if (shm->exec) {
 		ret = spawn(shm->exec[0], shm->exec);
 		if (!ret)
 			serror("Failed to spawn external program");
 	}
-
-	pthread_barrier_wait(&shm->shared->start_bar);
+	ret = shmem_int_open(shm->name, &shm->intf, &shm->conf);
+	if (ret < 0)
+		serror("Opening shared memory interface failed");
 
 	return 0;
 }
@@ -134,33 +93,17 @@ int shmem_open(struct node *n)
 int shmem_close(struct node *n)
 {
 	struct shmem* shm = n->_vd;
-	int ret;
 
-	if (shm->polling)
-		queue_close(&shm->shared->out.q);
-	else
-		queue_signalled_close(&shm->shared->out.qs);
-
-	/* Don't destroy the data structures yet, since the other process might
-	 * still be using them. Once both processes are done and have unmapped the
-	 * memory, it will be freed anyway. */
-	ret = munmap(shm->base, shm->shared->len);
-	if (ret != 0)
-		return ret;
-
-	return shm_unlink(shm->name);
+	return shmem_int_close(&shm->intf);
 }
 
 int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct shmem *shm = n->_vd;
-
 	int recv;
-
 	struct sample *shared_smps[cnt];
-	recv = shm->polling ? queue_pull_many(&shm->shared->in.q, (void**) shared_smps, cnt)
-			   : queue_signalled_pull_many(&shm->shared->in.qs, (void**) shared_smps, cnt);
 
+	recv = shmem_int_read(&shm->intf, shared_smps, cnt);
 	if (recv <= 0)
 		return recv;
 
@@ -178,7 +121,7 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 	struct sample *shared_smps[cnt]; /* Samples need to be copied to the shared pool first */
 	int avail, pushed, len;
 
-	avail = sample_alloc(&shm->shared->pool, shared_smps, cnt);
+	avail = sample_alloc(&shm->intf.shared->pool, shared_smps, cnt);
 	if (avail != cnt)
 		warn("Pool underrun for shmem node %s", shm->name);
 
@@ -197,9 +140,7 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 		shared_smps[i]->length = len;
 	}
 
-	pushed = shm->polling ? queue_push_many(&shm->shared->out.q, (void**) shared_smps, avail)
-			      : queue_signalled_push_many(&shm->shared->out.qs, (void**) shared_smps, avail);
-
+	pushed = shmem_int_write(&shm->intf, shared_smps, avail);
 	if (pushed != avail)
 		warn("Outgoing queue overrun for node %s", node_name(n));
 
@@ -212,7 +153,7 @@ char * shmem_print(struct node *n)
 	char *buf = NULL;
 
 	strcatf(&buf, "name=%s, queuelen=%d, samplelen=%d, polling=%s",
-		shm->name, shm->queuelen, shm->samplelen, shm->polling ? "yes" : "no");
+		shm->name, shm->conf.queuelen, shm->conf.samplelen, shm->conf.polling ? "yes" : "no");
 
 	if (shm->exec) {
 		strcatf(&buf, ", exec='");

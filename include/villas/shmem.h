@@ -33,9 +33,14 @@
 extern "C" {
 #endif
 
+#include "config.h"
 #include "pool.h"
 #include "queue.h"
 #include "queue_signalled.h"
+#include "sample.h"
+
+#define DEFAULT_SHMEM_QUEUELEN	512
+#define DEFAULT_SHMEM_SAMPLELEN	DEFAULT_SAMPLELEN
 
 /** A signalled queue or a regular (polling) queue, depending on the polling setting. */
 union shmem_queue {
@@ -43,56 +48,75 @@ union shmem_queue {
 	struct queue_signalled qs;
 };
 
+#define SHMEM_MIN_SIZE (sizeof(struct memtype) + sizeof(struct memblock) + sizeof(pthread_barrier_t) + sizeof(pthread_barrierattr_t))
+
+/** Struct containing all parameters that need to be known when creating a new
+ * shared memory object. */
+struct shmem_conf {
+    int polling; /*< Whether to use polling instead of POSIX CVs */
+    int queuelen; /*< Size of the queues (in elements) */
+    int samplelen; /*< Maximum number of data entries in a single sample */
+};
+
 /** The structure that actually resides in the shared memory. */
 struct shmem_shared {
-	size_t len;                       /**< Total size of the shared memory region.*/
+	pthread_barrier_t start_bar;      /**< Barrier for synchronizing the start of both programs. */
 
 	int polling;                      /**< Whether to use a pthread_cond_t to signal if new samples are written to incoming queue. */
 
-	union shmem_queue in;             /**< Queue for samples passed from external program to node.*/
-	union shmem_queue out;            /**< Queue for samples passed from node to external program.*/
+	union shmem_queue queue[2];       /**< Queues for samples passed in both directions.
+                                           0: primary -> secondary, 1: secondary -> primary */
 
 	struct pool pool;                 /**< Pool for the samples in the queues. */
+};
 
-	pthread_barrier_t start_bar;      /**< Barrier for synchronizing the start of both programs. */
-	pthread_barrierattr_t start_attr;
-	atomic_size_t node_stopped;       /**< Set to 1 by VILLASNode if it is stopped/killed. */
-	atomic_size_t ext_stopped;        /**< Set to 1 by the external program if it is stopped/killed. */
+struct shmem_int {
+    void* base; /**< Base address of the mapping (needed for munmap) */
+    const char* name; /**< Name of the shared memory object */
+    size_t len; /**< Total size of the shared memory region */
+    struct shmem_shared *shared; /**< Pointer to mapped shared structure */
+    int secondary; /**< Set to 1 if this is the secondary user (i.e. not the one
+                        that created the object); 0 otherwise. */
 };
 
 /** Open the shared memory object and retrieve / initialize the shared data structures.
+ * If the object isn't already present, it is created instead.
  * @param[in] name Name of the POSIX shared memory object.
- * @param[inout] base_ptr The base address of the shared memory region is written to this pointer.
- * @retval NULL An error occurred; errno is set appropiately.
+ * @param[inout] shm The shmem_int structure that should be used for following
+ * calls will be written to this pointer.
+ * @param[in] conf Configuration parameters for the interface. This struct is
+ * ignored if the shared memory object is already present.
+ * @retval 1 The object was created successfully.
+ * @retval 0 The existing object was opened successfully.
+ * @retval <0 An error occured; errno is set accordingly.
  */
-struct shmem_shared * shmem_shared_open(const char* name, void **base_ptr);
+int shmem_int_open(const char* name, struct shmem_int* shm, struct shmem_conf* conf);
 
-/** Close and destroy the shared memory object and related structures.
- * @param shm The shared memory structure.
- * @param base The base address as returned by shmem_shared_open.
+/** Close and destroy the shared memory interface and related structures.
+ * @param shm The shared memory interface.
  * @retval 0 Closing successfull.
  * @retval <0 An error occurred; errno is set appropiately.
  */
-int shmem_shared_close(struct shmem_shared *shm, void *base);
+int shmem_int_close(struct shmem_int *shm);
 
-/** Read samples from VILLASNode.
- * @param shm The shared memory structure.
+/** Read samples from the interface.
+ * @param shm The shared memory interface.
  * @param smps  An array where the pointers to the samples will be written. The samples
  * must be freed with sample_put after use.
  * @param cnt  Number of samples to be read.
  * @retval >=0 Number of samples that were read. Can be less than cnt (including 0) in case not enough samples were available.
- * @retval -1 VILLASNode exited; no samples can be read anymore.
+ * @retval -1 The other process closed the interface; no samples can be read anymore.
  */
-int shmem_shared_read(struct shmem_shared *shm, struct sample *smps[], unsigned cnt);
+int shmem_int_read(struct shmem_int *shm, struct sample *smps[], unsigned cnt);
 
-/** Write samples to VILLASNode.
- * @param shm The shared memory structure.
+/** Write samples to the interface.
+ * @param shm The shared memory interface.
  * @param smps The samples to be written. Must be allocated from shm->pool.
  * @param cnt Number of samples to write.
  * @retval >=0 Number of samples that were successfully written. Can be less than cnt (including 0) in case of a full queue.
- * @retval -1 VILLASNode exited; no samples can be written anymore.
+ * @retval -1 The write failed for some reason; no more samples can be written.
  */
-int shmem_shared_write(struct shmem_shared *shm, struct sample *smps[], unsigned cnt);
+int shmem_int_write(struct shmem_int *shm, struct sample *smps[], unsigned cnt);
 
 /** Returns the total size of the shared memory region with the given size of
  * the input/output queues (in elements) and the given number of data elements

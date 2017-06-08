@@ -25,7 +25,6 @@
 
 #include <villas/log.h>
 #include <villas/node.h>
-#include <villas/nodes/shmem.h>
 #include <villas/pool.h>
 #include <villas/sample.h>
 #include <villas/shmem.h>
@@ -34,7 +33,7 @@
 #include <string.h>
 
 void *base;
-struct shmem_shared *shared;
+struct shmem_int shm;
 
 void usage()
 {
@@ -45,18 +44,23 @@ void usage()
 
 void quit(int sig)
 {
-	shmem_shared_close(shared, base);
+	shmem_int_close(&shm);
 	exit(1);
 }
 
 int main(int argc, char* argv[])
 {
 	struct log log;
+	int readcnt, writecnt, avail;
+	struct shmem_conf conf = {
+		.queuelen = DEFAULT_SHMEM_QUEUELEN,
+		.samplelen = DEFAULT_SHMEM_SAMPLELEN,
+		.polling = 0,
+	};
 
 	log_init(&log, V, LOG_ALL);
 	log_start(&log);
 
-	int readcnt, writecnt, avail;
 
 	if (argc != 3) {
 		usage();
@@ -66,8 +70,7 @@ int main(int argc, char* argv[])
 	char *object = argv[1];
 	int vectorize = atoi(argv[2]);
 
-	shared = shmem_shared_open(object, &base);
-	if (!shared)
+	if (shmem_int_open(object, &shm, &conf) < 0)
 		serror("Failed to open shmem interface");
 
 	signal(SIGINT, quit);
@@ -75,13 +78,13 @@ int main(int argc, char* argv[])
 	struct sample *insmps[vectorize], *outsmps[vectorize];
 
 	while (1) {
-		readcnt = shmem_shared_read(shared, insmps, vectorize);
+		readcnt = shmem_int_read(&shm, insmps, vectorize);
 		if (readcnt == -1) {
 			printf("Node stopped, exiting");
 			break;
 		}
 
-		avail = sample_alloc(&shared->pool, outsmps, readcnt);
+		avail = sample_alloc(&shm.shared->pool, outsmps, readcnt);
 		if (avail < readcnt)
 			warn("Pool underrun: %d / %d\n", avail, readcnt);
 
@@ -98,10 +101,11 @@ int main(int argc, char* argv[])
 		for (int i = 0; i < readcnt; i++)
 			sample_put(insmps[i]);
 
-		writecnt = shmem_shared_write(shared, outsmps, avail);
+		writecnt = shmem_int_write(&shm, outsmps, avail);
 		if (writecnt < avail)
 			warn("Short write");
 
 		info("Read / Write: %d / %d", readcnt, writecnt);
 	}
+	shmem_int_close(&shm);
 }
