@@ -14,8 +14,8 @@ BuildRequires: gcc pkgconfig make
 
 Requires:      iproute kernel-modules-extra module-init-tools
 
-BuildRequires: openssl-devel libconfig-devel libnl3-devel libcurl-devel jansson-devel libxil-devel libwebsockets-devel zeromq-devel nanomsg-devel
-Requires:      openssl       libconfig       libnl3       libcurl       jansson       libxil       libwebsockets       zeromq       nanomsg
+BuildRequires: openssl-devel libconfig-devel libnl3-devel libcurl-devel jansson-devel libxil-devel libwebsockets-devel zeromq-devel nanomsg-devel libiec61850-devel
+Requires:      openssl       libconfig       libnl3       libcurl       jansson       libxil       libwebsockets       zeromq       nanomsg       libiec61850
 
 %description
 

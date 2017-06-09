@@ -10,7 +10,7 @@ Summary: A fast, scalable, and easy to use socket library
 Group:	 System Environment/Libraries
 License: MIT
 URL:	 http://nanomsg.org/
-Source0: nanomsg-%{version}-40-g5cc0074.tar.gz
+Source0: nanomsg-1.0.0-40-g5cc0074.tar.gz
 
 BuildRequires: rubygem-asciidoctor xmlto cmake
 BuildRoot: %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)

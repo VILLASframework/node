@@ -45,6 +45,14 @@ rpm-nanomsg: $(BUILDDIR)/thirdparty/nanomsg/ | $(RPMDIR)/SOURCES/
 	make -C$(BUILDDIR)/thirdparty/nanomsg package_source
 	cp $(BUILDDIR)/thirdparty/nanomsg/nanomsg-*.tar.gz $(RPMDIR)/SOURCES/
 	rpmbuild -ba --define="_topdir $$(pwd)/$(RPMDIR)" $(SRCDIR)/packaging/rpm/nanomsg.spec
+	
+rpm-libiec61850: $(BUILDDIR)/thirdparty/libiec61850/ | $(RPMDIR)/SOURCES/
+	cmake -DCMAKE_INSTALL_PREFIX:PATH=$(PREFIX) -DCPACK_GENERATOR=TGZ \
+		      -H$(SRCDIR)/thirdparty/libiec61850 \
+		      -B$(BUILDDIR)/thirdparty/libiec61850 $(CMAKE_OPTS)
+	make -C$(BUILDDIR)/thirdparty/libiec61850 package_source
+	cp $(BUILDDIR)/thirdparty/libiec61850/libiec61850_*.tar.gz $(RPMDIR)/SOURCES/
+	rpmbuild -ba --define="_topdir $$(pwd)/$(RPMDIR)" $(SRCDIR)/packaging/rpm/libiec61850.spec
 
 rpm-libwebsockets: CMAKE_OPTS += -DLWS_IPV6=1 -DLWS_WITH_STATIC=0 -DLWS_WITHOUT_TESTAPPS=1 -DLWS_WITH_HTTP2=1 -DLWS_WITH_SERVER_STATUS=1
 rpm-libwebsockets: | $(RPMDIR)/RPMS/x86_64/ $(BUILDDIR)/thirdparty/libwebsockets/
