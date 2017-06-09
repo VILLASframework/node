@@ -34,3 +34,6 @@
 [submodule "thirdparty/protobuf-c"]
 	path = thirdparty/protobuf-c
 	url = https://github.com/protobuf-c/protobuf-c.git
+[submodule "thirdparty/libiec61850"]
+	path = thirdparty/libiec61850
+	url = https://github.com/mz-automation/libiec61850
