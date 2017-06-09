@@ -91,6 +91,10 @@ RUN mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && cmake -DCMAKE_IN
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
 
+# Build & Install libiec61850
+COPY thirdparty/libiec61850 /tmp/libiec61850
+RUN mkdir -p /tmp/libiec61850/build && cd /tmp/libiec61850/build && cmake -DBUILD_EXAMPLES=0 -DBUILD_PYTHON_BINDINGS=0 .. && make install
+
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
 EXPOSE 443

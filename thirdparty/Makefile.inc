@@ -20,7 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-DEPS_CMAKE = libxil libwebsockets criterion jansson nanomsg
+DEPS_CMAKE = libxil libwebsockets libiec61850 criterion jansson nanomsg
 DEPS_AUTOCONF = libnl libconfig libcurl libzmq
 
 DEPS = $(DEPS_CMAKE) $(DEPS_AUTOCONF)
@@ -69,6 +69,7 @@ libconfig-fix:
 	rm -f $(SRCDIR)/thirdparty/libconfig/lib/scanner.[hc]
 
 jansson: CMAKE_OPTS += -DJANSSON_BUILD_DOCS=OFF
+libiec61850: CMAKE_OPTS += -DBUILD_EXAMPLES=0 -DBUILD_PYTHON_BINDINGS=0
 libwebsockets: CMAKE_OPTS += -DLWS_IPV6=1 -DLWS_WITH_STATIC=0 -DLWS_WITHOUT_TESTAPPS=1 -DLWS_WITH_HTTP2=1 -DLWS_WITH_SERVER_STATUS=1
 libzmq: CONFIGURE_OPTS += --with-libsodium --with-pgm --enable-drafts
 
