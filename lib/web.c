@@ -234,15 +234,16 @@ int web_stop(struct web *w)
 {
 	info("Stopping Web sub-system");
 
-	if (w->state == STATE_STARTED)
+	if (w->state == STATE_STARTED) {
 		lws_cancel_service(w->context);
 
-	/** @todo Wait for all connections to be closed */
+		/** @todo Wait for all connections to be closed */
 
-	pthread_cancel(w->thread);
-	pthread_join(w->thread, NULL);
+		pthread_cancel(w->thread);
+		pthread_join(w->thread, NULL);
 
-	w->state = STATE_STOPPED;
+		w->state = STATE_STOPPED;
+	}
 
 	return 0;
 }
