@@ -78,13 +78,20 @@ for TEST in ${TESTS}; do
 
 	RC=$?
 
-	if (( $RC != 0 )); then
-		echo -e "\e[31m[Fail] \e[39m ${TESTNAME} with code $RC"
-		NUM_FAIL=$((${NUM_FAIL} + 1))
-	else
-		echo -e "\e[32m[Pass] \e[39m ${TESTNAME}"
-		NUM_PASS=$((${NUM_PASS} + 1))
-	fi
+	case $RC in
+		0)
+			echo -e "\e[32m[Pass] \e[39m ${TESTNAME}"
+			NUM_PASS=$((${NUM_PASS} + 1))
+			;;
+		99)
+			echo -e "\e[93m[Skip] \e[39m ${TESTNAME}"
+			NUM_SKIP=$((${NUM_SKIP} + 1))
+			;;
+		*)
+			echo -e "\e[31m[Fail] \e[39m ${TESTNAME} with code $RC"
+			NUM_FAIL=$((${NUM_FAIL} + 1))
+			;;
+	esac
 done
 
 # Show summary
