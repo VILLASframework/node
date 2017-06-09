@@ -37,6 +37,7 @@ WITH_NANOMSG   ?= 1
 WITH_SHMEM     ?= 1
 WITH_STATS     ?= 1
 WITH_INFLUXDB  ?= 1
+WITH_IEC61850  ?= 1
 
 # Enabled loopback node-type
 ifeq ($(WITH_LOOPBACK),1)
@@ -84,6 +85,14 @@ endif
 ifeq ($(WITH_TEST_RTT),1)
 	LIB_SRCS += lib/nodes/test_rtt.c
 	LIB_CFLAGS += -DWITH_TEST_RTT
+endif
+
+# Enable IEC61850 node-types when libiec61850 is available
+ifdef WITH_IEC61850
+ifneq ($(wildcard /usr/include/libiec61850/*),)
+	LIB_SRC		+= $(wildcard lib/nodes/iec61850_*.c)
+	LIB_LDLIBS  += -liec61850
+endif
 endif
 
 # Enable VILLASfpga support when libxil is available
