@@ -3,7 +3,7 @@ Version: 1.0.1
 Vendor: MZ Automation GmbH
 Packager: Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 Release: 1%{?dist}
-Summary: IEC 61850 MMS/GOOSE client and server library
+Summary: Open-source IEC 61850 MMS/GOOSE/SV server and client library
 
 License: GPLv3
 URL:     http://libiec61850.com/libiec61850/
@@ -18,9 +18,9 @@ libiec61850 is an open-source (GPLv3) implementation of an IEC 61850 client and 
 
 %package devel
 
-Summary:        Headers and libraries for building apps that use libiec61850
-Group:          Development/Libraries
-Requires:       %{name} = %{version}-%{release}
+Summary: Headers and libraries for building apps that use libiec61850
+Group: Development/Libraries
+Requires: %{name} = %{version}-%{release}
 
 %description devel
 
