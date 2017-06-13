@@ -58,6 +58,9 @@ $(SPEC_VILLAS): $(SRCDIR)/packaging/rpm/villas-node.spec | $$(dir $$@)
 	sed -e "s/§VERSION§/$(VERSION_NUM)/g" \
 	    -e "s/§RELEASE§/1.$(GIT_BRANCH)_$(subst -,_,$(VARIANT)).$(shell date +%Y%m%d)git$(GIT_REV)/g" < $^ > $@
 
+sign-rpm:
+	rpmsign $(RPMDIR)/RPMS/*/.rpm
+
 clean-rpm:
 	rm -rf $(RPMDIR)
 
