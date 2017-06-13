@@ -37,6 +37,7 @@
 #include "list.h"
 
 enum {
+	/* According to IEC 61850-7-2 */
 	IEC61850_TYPE_BOOLEAN,
 	IEC61850_TYPE_INT8,
 	IEC61850_TYPE_INT16,
@@ -52,10 +53,24 @@ enum {
 	IEC61850_TYPE_CODED_ENUM,
 	IEC61850_TYPE_OCTET_STRING,
 	IEC61850_TYPE_VISIBLE_STRING,
+	IEC61850_TYPE_OBJECTNAME,
+	IEC61850_TYPE_OBJECTREFERENCE,
 	IEC61850_TYPE_TIMESTAMP,
 	IEC61850_TYPE_ENTRYTIME,
+	/* According to IEC 61850-8-1 */
 	IEC61850_TYPE_BITSTRING 
 } type;
+
+struct iec61850_type_descriptor {
+	enum iec61850_type type;
+	const char *name;
+	unsigned size;
+	
+	/* Functions pointers */
+	double (*subscriber_get)(SVClientASDU self, int index);
+	int    (*publisher_add)(SV_ASDU self);
+	void   (*publisher_set)(SV_ASDU self, int index, int8_t value);
+};
 
 struct iec61850_sv_mapping {
 	SV_ASDU *asdu;
