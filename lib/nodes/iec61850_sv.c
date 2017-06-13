@@ -22,10 +22,8 @@
 
 #include <string.h>
 
-#include "plugin.h"
 #include "nodes/iec61850_sv.h"
-#include "utils.h"
-#include "msg.h"
+#include "plugin.h"
 
 int iec61850_sv_reverse(struct node *n)
 {
@@ -52,19 +50,24 @@ char * iec61850_sv_print(struct node *n)
 int iec61850_sv_start(struct node *n)
 {
 	struct iec61850_sv *i __attribute__((unused)) = n->_vd;
+	
+	SampledValuesPublisher svPublisher = SampledValuesPublisher_create(interface);
 
+	SV_ASDU asdu1 = SampledValuesPublisher_addASDU(svPublisher, "svpub1", NULL, 1);
+	       
+	int float1 = SV_ASDU_addFLOAT(asdu1);
+	int float2 = SV_ASDU_addFLOAT(asdu1);
+	       
+	SampledValuesPublisher_setupComplete(i->publisher);
+	       
 	return 0;
 }
 
 int iec61850_sv_stop(struct node *n)
 {
-	struct iec61850_sv *i __attribute__((unused)) = n->_vd;
-
-	return 0;
-}
-
-int iec61850_sv_deinit()
-{
+	struct iec61850_sv *i = n->_vd;
+	
+        SampledValuesPublisher_destroy(i->publisher.handle);
 
 	return 0;
 }
@@ -78,7 +81,19 @@ int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct iec61850_sv *i __attribute__((unused)) = n->_vd;
+	struct iec61850_sv *i = n->_vd;
+	
+	for (int i = 0; i < cnt; i++) {
+	        SV_ASDU_setFLOAT(asdu1, float1, fVal1);
+	}
+	
+	for (int j = 0; j < cnt; j++) {
+		SV_ASDU *asdu = (SV_ASDU *) list_at(i->publisher.asdus, j);
+		
+		SV_ASDU_increaseSmpCnt(asdu);
+	}
+	
+        SampledValuesPublisher_publish(i->publisher.handle);
 
 	return 0;
 }
@@ -95,7 +110,6 @@ static struct plugin p = {
 		.print		= iec61850_sv_print,
 		.start		= iec61850_sv_start,
 		.stop		= iec61850_sv_stop,
-		.deinit		= iec61850_sv_deinit,
 		.read		= iec61850_sv_read,
 		.write		= iec61850_sv_write,
 		.instances	= LIST_INIT()

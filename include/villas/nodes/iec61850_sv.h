@@ -31,11 +31,53 @@
 
 #include <stdint.h>
 
+#include <libiec61850/sv_publisher.h>
+
 #include "node.h"
 #include "list.h"
 
+enum {
+	IEC61850_TYPE_BOOLEAN,
+	IEC61850_TYPE_INT8,
+	IEC61850_TYPE_INT16,
+	IEC61850_TYPE_INT32,
+	IEC61850_TYPE_INT64,
+	IEC61850_TYPE_INT8U,
+	IEC61850_TYPE_INT16U,
+	IEC61850_TYPE_INT24U,
+	IEC61850_TYPE_INT32U,
+	IEC61850_TYPE_FLOAT32,
+	IEC61850_TYPE_FLOAT64,
+	IEC61850_TYPE_ENUMERATED,
+	IEC61850_TYPE_CODED_ENUM,
+	IEC61850_TYPE_OCTET_STRING,
+	IEC61850_TYPE_VISIBLE_STRING,
+	IEC61850_TYPE_TIMESTAMP,
+	IEC61850_TYPE_ENTRYTIME,
+	IEC61850_TYPE_BITSTRING 
+} type;
+
+struct iec61850_sv_mapping {
+	SV_ASDU *asdu;
+
+	int offset;
+	enum iec61850_type type;
+};
+
 struct iec61850_sv {
+	char *interface;
 	
+	struct {
+		SVReceiver receiver
+		SVSubscriber subscriber;
+	} in;
+
+	struct {
+		SampledValuesPublisher publisher;
+	
+		struct list mapping;
+		struct list asdus;
+	} out;
 };
 
 /** @} */
