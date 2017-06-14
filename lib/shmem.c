@@ -23,6 +23,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <semaphore.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
@@ -48,85 +49,37 @@ size_t shmem_total_size(int insize, int outsize, int sample_size)
 		+ 1024;
 }
 
-int shmem_int_open(const char *name, struct shmem_int* shm, struct shmem_conf* conf)
+int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, struct shmem_conf *conf)
 {
-	struct shmem_shared *shared;
-	pthread_barrierattr_t attr;
-	struct memtype *manager;
-	struct stat stat;
+	char *cptr;
+	int fd,  ret;
 	size_t len;
 	void *base;
-	char *cptr;
-	int fd, ret;
+	struct memtype *manager;
+	struct shmem_shared *shared;
+	struct stat stat_buf;
+	sem_t *sem_own, *sem_other;
 
-	shm->name = name;
-	fd = shm_open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
-	if (fd < 0) {
-		if (errno != EEXIST)
-			return -1;
-		/* Already present; reopen it nonexclusively */
-		fd = shm_open(name, O_RDWR, 0);
-		if (fd < 0)
-			return -1;
-
-		/* Theoretically, the other process might have created the object, but
-		 * isn't done with initializing it yet. So in the creating process,
-		 * we only reserve a small amount of memory, just enough for the barrier,
-		 * and init the barrier, and then resize the object. Thus, here we first
-		 * wait for the object to be resized, then wait on the barrier.
-		 */
-		while (1) {
-			if (fstat(fd, &stat) < 0)
-				return -1;
-			if (stat.st_size > SHMEM_MIN_SIZE)
-				break;
-		}
-
-		len = stat.st_size;
-		base = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-		if (base == MAP_FAILED)
-			return -1;
-
-		/* This relies on the behaviour of the node and the allocator; it assumes
-		 * that memtype_managed is used and the shmem_shared is the first allocated object */
-		cptr = (char *) base + sizeof(struct memtype) + sizeof(struct memblock);
-		shared = (struct shmem_shared *) cptr;
-
-		pthread_barrier_wait(&shared->start_bar);
-
-		shm->base = base;
-		shm->shared = shared;
-		shm->len = 0;
-		shm->secondary = 1;
-
-		return 0;
-	}
-	/* Only map the barrier and init it */
-	ret = ftruncate(fd, SHMEM_MIN_SIZE);
-	if (ret < 0)
+	/* Ensure both semaphores exist */
+	sem_own = sem_open(wname, O_CREAT, 0600, 0);
+	if (sem_own == SEM_FAILED)
 		return -1;
-	base = mmap(NULL, SHMEM_MIN_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	if (base == MAP_FAILED)
+	sem_other = sem_open(rname, O_CREAT, 0600, 0);
+	if (sem_other == SEM_FAILED)
 		return -1;
 
-	/* Again, this assumes that memtype_managed uses first-fit */
-	cptr  = (char *) base + sizeof(struct memtype) + sizeof(struct memblock);
-	shared = (struct shmem_shared*) cptr;
-	pthread_barrierattr_init(&attr);
-	pthread_barrierattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
-	pthread_barrier_init(&shared->start_bar, &attr, 2);
-
-	/* Remap it with the real size */
+	/* Open and initialize the shared region for the output queue */
+	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
+	if (fd < 0)
+		return -1;
 	len = shmem_total_size(conf->queuelen, conf->queuelen, conf->samplelen);
-	if (munmap(base, SHMEM_MIN_SIZE) < 0)
-		return -1;
 	if (ftruncate(fd, len) < 0)
 		return -1;
 	base = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (base == MAP_FAILED)
 		return -1;
+	close(fd);
 
-	/* Init everything else */
 	manager = memtype_managed_init(base, len);
 	shared = memory_alloc(manager, sizeof(struct shmem_shared));
 	if (!shared) {
@@ -134,64 +87,76 @@ int shmem_int_open(const char *name, struct shmem_int* shm, struct shmem_conf* c
 		return -1;
 	}
 
-	memset((char *) shared + sizeof(pthread_barrier_t), 0, sizeof(struct shmem_shared) - sizeof(pthread_barrier_t));
+	memset(shared, 0, sizeof(struct shmem_shared));
 	shared->polling = conf->polling;
 
-	ret = shared->polling ? queue_init(&shared->queue[0].q, conf->queuelen, manager)
-			   : queue_signalled_init(&shared->queue[0].qs, conf->queuelen, manager);
+	ret = shared->polling ? queue_init(&shared->queue.q, conf->queuelen, manager)
+			   : queue_signalled_init(&shared->queue.qs, conf->queuelen, manager);
 	if (ret) {
 		errno = ENOMEM;
 		return -1;
 	}
 
-	ret = shared->polling ? queue_init(&shared->queue[1].q, conf->queuelen, manager)
-			   : queue_signalled_init(&shared->queue[1].qs, conf->queuelen, manager);
+	ret = pool_init(&shared->pool, conf->queuelen, SAMPLE_LEN(conf->samplelen), manager);
 	if (ret) {
 		errno = ENOMEM;
 		return -1;
 	}
 
-	ret = pool_init(&shared->pool, 2 * conf->queuelen, SAMPLE_LEN(conf->samplelen), manager);
-	if (ret) {
-		errno = ENOMEM;
+	shm->write.base = base;
+	shm->write.name = wname;
+	shm->write.len = len;
+	shm->write.shared = shared;
+
+	/* Post own semaphore and wait on the other one, so both processes know that
+	 * both regions are initialized */
+	sem_post(sem_own);
+	sem_wait(sem_other);
+
+	/* Open and map the other region */
+	fd = shm_open(rname, O_RDWR, 0);
+	if (fd < 0)
 		return -1;
-	}
+	if (fstat(fd, &stat_buf) < 0)
+		return -1;
+	len = stat_buf.st_size;
+	base = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (base == MAP_FAILED)
+		return -1;
 
-	shm->base = base;
-	shm->len = len;
-	shm->shared = shared;
-	shm->secondary = 0;
+	cptr = (char *) base + sizeof(struct memtype) + sizeof(struct memblock);
+	shared = (struct shmem_shared *) cptr;
+	shm->read.base = base;
+	shm->read.name = rname;
+	shm->read.len = len;
+	shm->read.shared = shared;
 
-	pthread_barrier_wait(&shared->start_bar);
-
-	return 1;
+	/* Unlink the semaphores; we don't need them anymore */
+	sem_unlink(wname);
+	return 0;
 }
 
 int shmem_int_close(struct shmem_int *shm)
 {
-	union shmem_queue * queue = &shm->shared->queue[shm->secondary];
-	if (shm->shared->polling)
-		queue_close(&queue->q);
+	if (shm->write.shared->polling)
+		queue_close(&shm->write.shared->queue.q);
 	else
-		queue_signalled_close(&queue->qs);
-	if (!shm->secondary)
-		/* Ignore the error here; the only thing that is really possible is that
-		 * the object was deleted already, which we can't do anything about anyway. */
-		shm_unlink(shm->name);
+		queue_signalled_close(&shm->write.shared->queue.qs);
 
-	return munmap(shm->base, shm->len);
+	munmap(shm->read.base, shm->read.len);
+	munmap(shm->write.base, shm->write.len);
+	shm_unlink(shm->write.name);
+	return 0;
 }
 
 int shmem_int_read(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
 {
-	union shmem_queue* queue = &shm->shared->queue[1-shm->secondary];
-	return shm->shared->polling ? queue_pull_many(&queue->q, (void **) smps, cnt)
-			   : queue_signalled_pull_many(&queue->qs, (void **) smps, cnt);
+	return shm->read.shared->polling ? queue_pull_many(&shm->read.shared->queue.q, (void **) smps, cnt)
+			   : queue_signalled_pull_many(&shm->read.shared->queue.qs, (void **) smps, cnt);
 }
 
 int shmem_int_write(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
 {
-	union shmem_queue* queue = &shm->shared->queue[shm->secondary];
-	return shm->shared->polling ? queue_push_many(&queue->q, (void **) smps, cnt)
-			    : queue_signalled_push_many(&queue->qs, (void **) smps, cnt);
+	return shm->write.shared->polling ? queue_push_many(&shm->write.shared->queue.q, (void **) smps, cnt)
+			    : queue_signalled_push_many(&shm->write.shared->queue.qs, (void **) smps, cnt);
 }

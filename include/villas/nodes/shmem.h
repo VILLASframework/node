@@ -40,7 +40,8 @@
  * @see node_type
  */
 struct shmem {
-	const char* name;       /**< Name of the shm object. */
+	const char* out_name;   /**< Name of the shm object for the output queue. */
+	const char* in_name;    /**< Name of the shm object for the input queue. */
 	struct shmem_conf conf; /**< Interface configuration struct. */
 	char **exec;            /**< External program to execute on start. */
 	struct shmem_int intf;  /**< Shmem interface */

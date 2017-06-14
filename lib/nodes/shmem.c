@@ -40,8 +40,10 @@ int shmem_parse(struct node *n, config_setting_t *cfg)
 {
 	struct shmem *shm = n->_vd;
 
-	if (!config_setting_lookup_string(cfg, "name", &shm->name))
-		cerror(cfg, "Missing shared memory object name");
+	if (!config_setting_lookup_string(cfg, "out_name", &shm->out_name))
+		cerror(cfg, "Missing shared memory output queue name");
+	if (!config_setting_lookup_string(cfg, "in_name", &shm->in_name))
+		cerror(cfg, "Missing shared memory input queue name");
 	if (!config_setting_lookup_int(cfg, "queuelen", &shm->conf.queuelen))
 		shm->conf.queuelen = DEFAULT_SHMEM_QUEUELEN;
 	if (!config_setting_lookup_int(cfg, "samplelen", &shm->conf.samplelen))
@@ -84,7 +86,7 @@ int shmem_open(struct node *n)
 			serror("Failed to spawn external program");
 	}
 
-	ret = shmem_int_open(shm->name, &shm->intf, &shm->conf);
+	ret = shmem_int_open(shm->out_name, shm->in_name, &shm->intf, &shm->conf);
 	if (ret < 0)
 		serror("Opening shared memory interface failed");
 
@@ -105,6 +107,10 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 	struct sample *shared_smps[cnt];
 
 	recv = shmem_int_read(&shm->intf, shared_smps, cnt);
+	if (recv < 0)
+		/* This can only really mean that the other process has exited, so close
+		 * the interface to make sure the shared memory object is unlinked */
+		shmem_int_close(&shm->intf);
 	if (recv <= 0)
 		return recv;
 
@@ -122,9 +128,9 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 	struct sample *shared_smps[cnt]; /* Samples need to be copied to the shared pool first */
 	int avail, pushed, len;
 
-	avail = sample_alloc(&shm->intf.shared->pool, shared_smps, cnt);
+	avail = sample_alloc(&shm->intf.write.shared->pool, shared_smps, cnt);
 	if (avail != cnt)
-		warn("Pool underrun for shmem node %s", shm->name);
+		warn("Pool underrun for shmem node %s", shm->out_name);
 
 	for (int i = 0; i < avail; i++) {
 		/* Since the node isn't in shared memory, the source can't be accessed */
@@ -153,8 +159,8 @@ char * shmem_print(struct node *n)
 	struct shmem *shm = n->_vd;
 	char *buf = NULL;
 
-	strcatf(&buf, "name=%s, queuelen=%d, samplelen=%d, polling=%s",
-		shm->name, shm->conf.queuelen, shm->conf.samplelen, shm->conf.polling ? "yes" : "no");
+	strcatf(&buf, "out_name=%s, in_name=%s, queuelen=%d, samplelen=%d, polling=%s",
+		shm->out_name, shm->in_name, shm->conf.queuelen, shm->conf.samplelen, shm->conf.polling ? "yes" : "no");
 
 	if (shm->exec) {
 		strcatf(&buf, ", exec='");

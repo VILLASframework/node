@@ -59,38 +59,35 @@ struct shmem_conf {
 
 /** The structure that actually resides in the shared memory. */
 struct shmem_shared {
-	pthread_barrier_t start_bar;      /**< Barrier for synchronizing the start of both programs. */
+	int polling;       /**< Whether to use a pthread_cond_t to signal if new samples are written to incoming queue. */
 
-	int polling;                      /**< Whether to use a pthread_cond_t to signal if new samples are written to incoming queue. */
+	union shmem_queue queue; /**< Queues for samples passed in both directions. */
 
-	union shmem_queue queue[2];       /**< Queues for samples passed in both directions.
-                                           0: primary -> secondary, 1: secondary -> primary */
+	struct pool pool;  /**< Pool for the samples in the queues. */
+};
 
-	struct pool pool;                 /**< Pool for the samples in the queues. */
+struct shmem_dir {
+	void *base;
+	const char *name;
+	size_t len;
+	struct shmem_shared *shared;
 };
 
 /** Main structure representing the shared memory interface. */
 struct shmem_int {
-	void* base;                  /**< Base address of the mapping (needed for munmap) */
-	const char* name;            /**< Name of the shared memory object */
-	size_t len;                  /**< Total size of the shared memory region */
-	struct shmem_shared *shared; /**< Pointer to mapped shared structure */
-	int secondary;               /**< Set to 1 if this is the secondary user (i.e. not the one
-	                                  that created the object); 0 otherwise. */
+	struct shmem_dir read, write;
 };
 
-/** Open the shared memory object and retrieve / initialize the shared data structures.
- * If the object isn't already present, it is created instead.
- * @param[in] name Name of the POSIX shared memory object.
+/** Open the shared memory objects and retrieve / initialize the shared data structures.
+ * @param[in] wname Name of the POSIX shared memory object containing the output queue.
+ * @param[in] rname Name of the POSIX shared memory object containing the input queue.
  * @param[inout] shm The shmem_int structure that should be used for following
  * calls will be written to this pointer.
- * @param[in] conf Configuration parameters for the interface. This struct is
- * ignored if the shared memory object is already present.
- * @retval 1 The object was created successfully.
- * @retval 0 The existing object was opened successfully.
+ * @param[in] conf Configuration parameters for the output queue.
+ * @retval 0 The objects were opened and initialized successfully.
  * @retval <0 An error occured; errno is set accordingly.
  */
-int shmem_int_open(const char* name, struct shmem_int* shm, struct shmem_conf* conf);
+int shmem_int_open(const char* wname, const char* rname, struct shmem_int* shm, struct shmem_conf* conf);
 
 /** Close and destroy the shared memory interface and related structures.
  * @param shm The shared memory interface.

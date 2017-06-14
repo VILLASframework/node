@@ -37,8 +37,9 @@ struct shmem_int shm;
 
 void usage()
 {
-	printf("Usage: villas-test-shmem SHM_NAME VECTORIZE\n");
-	printf("  SHMNAME   name of the shared memory object\n");
+	printf("Usage: villas-test-shmem WNAME VECTORIZE\n");
+	printf("  WNAME     name of the shared memory object for the output queue\n");
+	printf("  RNAME     name of the shared memory object for the input queue\n");
 	printf("  VECTORIZE maximum number of samples to read/write at a time\n");
 }
 
@@ -62,15 +63,16 @@ int main(int argc, char* argv[])
 	log_start(&log);
 
 
-	if (argc != 3) {
+	if (argc != 4) {
 		usage();
 		return 1;
 	}
 
-	char *object = argv[1];
-	int vectorize = atoi(argv[2]);
+	char *wname = argv[1];
+	char *rname = argv[2];
+	int vectorize = atoi(argv[3]);
 
-	if (shmem_int_open(object, &shm, &conf) < 0)
+	if (shmem_int_open(wname, rname, &shm, &conf) < 0)
 		serror("Failed to open shmem interface");
 
 	signal(SIGINT, quit);
@@ -84,7 +86,7 @@ int main(int argc, char* argv[])
 			break;
 		}
 
-		avail = sample_alloc(&shm.shared->pool, outsmps, readcnt);
+		avail = sample_alloc(&shm.write.shared->pool, outsmps, readcnt);
 		if (avail < readcnt)
 			warn("Pool underrun: %d / %d\n", avail, readcnt);
 
