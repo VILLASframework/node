@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
 			break;
 		}
 
-		avail = sample_alloc(&shm.write.shared->pool, outsmps, readcnt);
+		avail = shmem_int_alloc(&shm, outsmps, readcnt);
 		if (avail < readcnt)
 			warn("Pool underrun: %d / %d\n", avail, readcnt);
 

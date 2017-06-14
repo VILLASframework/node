@@ -108,12 +108,24 @@ int shmem_int_read(struct shmem_int *shm, struct sample *smps[], unsigned cnt);
 
 /** Write samples to the interface.
  * @param shm The shared memory interface.
- * @param smps The samples to be written. Must be allocated from shm->pool.
+ * @param smps The samples to be written. Must be allocated from shm_int_alloc.
  * @param cnt Number of samples to write.
  * @retval >=0 Number of samples that were successfully written. Can be less than cnt (including 0) in case of a full queue.
  * @retval -1 The write failed for some reason; no more samples can be written.
  */
 int shmem_int_write(struct shmem_int *shm, struct sample *smps[], unsigned cnt);
+
+/** Allocate samples to be written to the interface. The writing process must
+ * not free the samples; only the receiving process should free them using
+ * sample_put after use.
+ * @param shm The shared memory interface.
+ * @param smps Array where pointers to newly allocated samples will be returned.
+ * @param cnt Number of samples to allocate.
+ * @returns Number of samples that were successfully allocated (may be less then cnt).
+ */
+inline int shmem_int_alloc(struct shmem_int *shm, struct sample *smps[], unsigned cnt) {
+	return sample_alloc(&shm->write.shared->pool, smps, cnt);
+}
 
 /** Returns the total size of the shared memory region with the given size of
  * the input/output queues (in elements) and the given number of data elements
