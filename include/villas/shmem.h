@@ -52,25 +52,26 @@ union shmem_queue {
 /** Struct containing all parameters that need to be known when creating a new
  * shared memory object. */
 struct shmem_conf {
-	int polling; /*< Whether to use polling instead of POSIX CVs */
-	int queuelen; /*< Size of the queues (in elements) */
-	int samplelen; /*< Maximum number of data entries in a single sample */
+	int polling;   /**< Whether to use polling instead of POSIX CVs */
+	int queuelen;  /**< Size of the queues (in elements) */
+	int samplelen; /**< Maximum number of data entries in a single sample */
 };
 
 /** The structure that actually resides in the shared memory. */
 struct shmem_shared {
-	int polling;       /**< Whether to use a pthread_cond_t to signal if new samples are written to incoming queue. */
+	int polling;             /**< Whether to use a pthread_cond_t to signal if new samples are written to incoming queue. */
 
 	union shmem_queue queue; /**< Queues for samples passed in both directions. */
 
-	struct pool pool;  /**< Pool for the samples in the queues. */
+	struct pool pool;        /**< Pool for the samples in the queues. */
 };
 
+/** Relevant information for one direction of the interface. */
 struct shmem_dir {
-	void *base;
-	const char *name;
-	size_t len;
-	struct shmem_shared *shared;
+	void *base;                  /**< Base address of the region. */
+	const char *name;            /**< Name of the shmem object. */
+	size_t len;                  /**< Total size of the region. */
+	struct shmem_shared *shared; /**< Actually shared datastructure */
 };
 
 /** Main structure representing the shared memory interface. */
@@ -79,6 +80,7 @@ struct shmem_int {
 };
 
 /** Open the shared memory objects and retrieve / initialize the shared data structures.
+ * Blocks until another process connects by opening the same objects.
  * @param[in] wname Name of the POSIX shared memory object containing the output queue.
  * @param[in] rname Name of the POSIX shared memory object containing the input queue.
  * @param[inout] shm The shmem_int structure that should be used for following
