@@ -93,10 +93,12 @@ EOF
 villas-pipe -r ${CONFIG_FILE} node2 > ${OUTPUT_FILE} &
 PID=$!
 
-sleep 0.1
+sleep 0.5
 
 # We delay EOF of the INPUT_FILE by 1 second in order to wait for incoming data to be received
 villas-pipe -s ${CONFIG_FILE} node1 < ${INPUT_FILE}
+
+sleep 0.5
 
 kill ${PID}
 
@@ -105,7 +107,7 @@ villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 if (( ${RC} != 0 )); then
-	echo "=========== Sub-test failed for: ${LAYER} ${HEADER} ${ENDIAN} ${VERIFY_SOURCE}"
+	echo "=========== Sub-test failed for: layer=${LAYER}, header=${HEADER}, endian=${ENDIAN} verify_source=${VERIFY_SOURCE}"
 	cat ${CONFIG_FILE}
 	echo
 	cat ${INPUT_FILE}
@@ -113,7 +115,7 @@ if (( ${RC} != 0 )); then
 	cat ${OUTPUT_FILE}
 	exit ${RC}
 else
-	echo "=========== Sub-test succeeded for: ${LAYER} ${HEADER} ${ENDIAN} ${VERIFY_SOURCE}"
+	echo "=========== Sub-test succeeded for: layer=${LAYER}, header=${HEADER}, endian=${ENDIAN} verify_source=${VERIFY_SOURCE}"
 fi
 
 done; done; done; done

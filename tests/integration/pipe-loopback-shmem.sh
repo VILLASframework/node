@@ -62,7 +62,7 @@ if (( ${RC} != 0 )); then
 	cat ${OUTPUT_FILE}
 	exit ${RC}
 else
-	echo "=========== Sub-test succeeded for: ${LAYER} ${HEADER} ${ENDIAN} ${VERIFY_SOURCE}"
+	echo "=========== Sub-test succeeded for: polling=${POLLING}, vecotrize=${VECTORIZE}"
 fi
 
 done; done
