@@ -26,7 +26,10 @@ CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
-cat > ${CONFIG_FILE} <<- EOF
+for POLLING	in true false; do
+for VECTORIZE	in 1 5 20; do
+
+cat > ${CONFIG_FILE} << EOF
 nodes = {
 	node1 = {
 		type = "shmem";
@@ -34,14 +37,14 @@ nodes = {
 		in_name = "/villas-test";
 		samplelen = 4;
 		queuelen = 32;
-		polling = false;
-		vectorize = 1
+		polling = ${POLLING};
+		vectorize = ${VECTORIZE}
 	}
 }
 EOF
 
 # Generate test data
-villas-signal random -l 10 -n > ${INPUT_FILE}
+villas-signal random -l 20 -n > ${INPUT_FILE}
 
 # We delay EOF of the INPUT_FILE by 1 second in order to wait for incoming data to be received
 villas-pipe ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < <(cat ${INPUT_FILE}; sleep 1; echo -n)
@@ -49,6 +52,20 @@ villas-pipe ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < <(cat ${INPUT_FILE}; sleep 1
 # Comapre data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
+
+if (( ${RC} != 0 )); then
+	echo "=========== Sub-test failed for: polling=${POLLING}, vecotrize=${VECTORIZE}"
+	cat ${CONFIG_FILE}
+	echo
+	cat ${INPUT_FILE}
+	echo
+	cat ${OUTPUT_FILE}
+	exit ${RC}
+else
+	echo "=========== Sub-test succeeded for: ${LAYER} ${HEADER} ${ENDIAN} ${VERIFY_SOURCE}"
+fi
+
+done; done
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
 
