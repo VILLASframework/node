@@ -34,6 +34,10 @@
 #include "node.h"
 #include "list.h"
 
+#if ZMQ_VERSION_MAJOR >= 4 && ZMQ_VERSION_MINOR >= 2
+  #define ZMQ_BUILD_DISH 1
+#endif
+
 struct zeromq {
 	int ipv6;
 	
@@ -49,7 +53,9 @@ struct zeromq {
 	
 	enum {
 		ZEROMQ_PATTERN_PUBSUB,
+#ifdef ZMQ_BUILD_DISH
 		ZEROMQ_PATTERN_RADIODISH
+#endif
 	} pattern;
 
 	struct {
