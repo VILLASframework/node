@@ -39,16 +39,6 @@ RUN dnf -y install \
 	flex bison \
 	texinfo git
 
-# Dependencies
-RUN dnf -y install \
-	openssl openssl-devel \
-	libconfig-devel \
-	libnl3-devel \
-	libcurl-devel \
-	jansson-devel \
-	libsodium-devel \
-	openpgm-devel
-
 # Several tools only needed for developement and testing
 RUN dnf -y install \
 	doxygen dia graphviz \
@@ -57,8 +47,7 @@ RUN dnf -y install \
 	jq \
 	iproute \
 	python-pip \
-	valgrind \
-	gdb \
+	valgrind gdb \
 	xmlto rubygem-asciidoctor
 
 # 32bit versions of some standard libraries for RT-LAB code
@@ -71,37 +60,32 @@ RUN dnf -y install \
 RUN pip install \
         gcovr
 
-# Build & Install libxil
-COPY thirdparty/libxil /tmp/libxil
-RUN mkdir -p /tmp/libxil/build && cd /tmp/libxil/build && cmake -DLIB_SUFFIX=64 .. && make install
+# Some of the dependencies are only available in our own repo
+ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/		
+
+# Dependencies
+RUN dnf -y install \
+	openssl openssl-devel \
+	libconfig-devel \
+	libnl3-devel \
+	libcurl-devel \
+	jansson-devel \
+	libsodium-devel \
+	libwebsockets-devel \
+	zeromq-devel \
+	nanomsg-devel \
+	openpgm-devel \
+	libxil-devel
 
 # Build & Install Criterion
 COPY thirdparty/criterion /tmp/criterion
-RUN mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install
-
-# Build & Install libwebsockets
-COPY thirdparty/libwebsockets /tmp/libwebsockets
-RUN mkdir -p /tmp/libwebsockets/build && cd /tmp/libwebsockets/build && cmake -DLWS_IPV6=1 -DLWS_WITH_STATIC=0 -DLWS_WITHOUT_TESTAPPS=1 -DLWS_WITH_HTTP2=1 -DLIB_SUFFIX=64 .. && make install
-
-# Build & Install nanomsg
-COPY thirdparty/nanomsg /tmp/nanomsg
-RUN mkdir -p /tmp/nanomsg/build && cd /tmp/nanomsg/build && cmake .. && make install
-
-# Build & Install libzmq
-COPY thirdparty/libzmq /tmp/libzmq
-RUN cd /tmp/libzmq && autoreconf -fi && ./configure --with-libsodium --with-pgm --enable-drafts && make install
-
-# Cleanup intermediate files from builds
-RUN rm -rf /tmp/*
+RUN mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && rm -rf /tmp/*
 
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
 EXPOSE 443
 
-ENV PKG_CONFIG_PATH /usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig
 ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
-
-#ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
 
 ENTRYPOINT villas
 WORKDIR /villas
