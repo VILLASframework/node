@@ -8,6 +8,7 @@
 #include <libgen.h>
 #include <string.h>
 #include <unistd.h>
+#include <linux/limits.h>
 
 #include "log.h"
 #include "utils.h"
@@ -20,7 +21,7 @@ int pci_init(struct pci *p)
 	struct dirent *entry;
 	DIR *dp;
 	FILE *f;
-	char path[512];
+	char path[PATH_MAX];
 	int ret;
 
 	snprintf(path, sizeof(path), "%s/bus/pci/devices", SYSFS_PATH);
