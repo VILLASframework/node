@@ -7,6 +7,11 @@
 #include <stdio.h>
 #include <sys/utsname.h>
 
+#include <fpga/card.h>
+#include <fpga/ip.h>
+#include <fpga/ips/switch.h>
+#include <fpga/ips/intc.h>
+#include <utils.h>
 #include <villas/log.h>
 
 /* Some hard-coded configuration for the FPGA benchmarks */

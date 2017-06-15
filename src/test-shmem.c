@@ -25,7 +25,6 @@
 
 #include <villas/log.h>
 #include <villas/node.h>
-#include <villas/nodes/shmem.h>
 #include <villas/pool.h>
 #include <villas/sample.h>
 #include <villas/shmem.h>
@@ -34,40 +33,46 @@
 #include <string.h>
 
 void *base;
-struct shmem_shared *shared;
+struct shmem_int shm;
 
 void usage()
 {
-	printf("Usage: villas-test-shmem SHM_NAME VECTORIZE\n");
-	printf("  SHMNAME   name of the shared memory object\n");
+	printf("Usage: villas-test-shmem WNAME VECTORIZE\n");
+	printf("  WNAME     name of the shared memory object for the output queue\n");
+	printf("  RNAME     name of the shared memory object for the input queue\n");
 	printf("  VECTORIZE maximum number of samples to read/write at a time\n");
 }
 
 void quit(int sig)
 {
-	shmem_shared_close(shared, base);
+	shmem_int_close(&shm);
 	exit(1);
 }
 
 int main(int argc, char* argv[])
 {
 	struct log log;
+	int readcnt, writecnt, avail;
+	struct shmem_conf conf = {
+		.queuelen = DEFAULT_SHMEM_QUEUELEN,
+		.samplelen = DEFAULT_SHMEM_SAMPLELEN,
+		.polling = 0,
+	};
 
 	log_init(&log, V, LOG_ALL);
 	log_start(&log);
 
-	int readcnt, writecnt, avail;
 
-	if (argc != 3) {
+	if (argc != 4) {
 		usage();
 		return 1;
 	}
 
-	char *object = argv[1];
-	int vectorize = atoi(argv[2]);
+	char *wname = argv[1];
+	char *rname = argv[2];
+	int vectorize = atoi(argv[3]);
 
-	shared = shmem_shared_open(object, &base);
-	if (!shared)
+	if (shmem_int_open(wname, rname, &shm, &conf) < 0)
 		serror("Failed to open shmem interface");
 
 	signal(SIGINT, quit);
@@ -75,13 +80,13 @@ int main(int argc, char* argv[])
 	struct sample *insmps[vectorize], *outsmps[vectorize];
 
 	while (1) {
-		readcnt = shmem_shared_read(shared, insmps, vectorize);
+		readcnt = shmem_int_read(&shm, insmps, vectorize);
 		if (readcnt == -1) {
 			printf("Node stopped, exiting");
 			break;
 		}
 
-		avail = sample_alloc(&shared->pool, outsmps, readcnt);
+		avail = shmem_int_alloc(&shm, outsmps, readcnt);
 		if (avail < readcnt)
 			warn("Pool underrun: %d / %d\n", avail, readcnt);
 
@@ -98,10 +103,11 @@ int main(int argc, char* argv[])
 		for (int i = 0; i < readcnt; i++)
 			sample_put(insmps[i]);
 
-		writecnt = shmem_shared_write(shared, outsmps, avail);
+		writecnt = shmem_int_write(&shm, outsmps, avail);
 		if (writecnt < avail)
 			warn("Short write");
 
 		info("Read / Write: %d / %d", readcnt, writecnt);
 	}
+	shmem_int_close(&shm);
 }

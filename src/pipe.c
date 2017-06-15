@@ -60,8 +60,6 @@ pthread_t ptid; /**< Parent thread id */
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
-	int ret;
-
 	if (recvv.started) {
 		pthread_cancel(recvv.thread);
 		pthread_join(recvv.thread, NULL);
@@ -74,11 +72,13 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 		pool_destroy(&sendd.pool);
 	}
 
-	ret = super_node_stop(&sn);
-	if (ret)
-		error("Failed to stop super-node");
-
-	super_node_destroy(&sn);
+	node_stop(node);
+	node_destroy(node);
+	
+	if (node->_vt->start == websocket_start) {
+		web_stop(&sn.web);
+		api_stop(&sn.api);
+	}
 
 	info(GRN("Goodbye!"));
 	exit(EXIT_SUCCESS);

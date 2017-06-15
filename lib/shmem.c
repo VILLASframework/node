@@ -21,7 +21,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <errno.h>
 #include <fcntl.h>
+#include <semaphore.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
@@ -47,70 +49,123 @@ size_t shmem_total_size(int insize, int outsize, int sample_size)
 		+ 1024;
 }
 
-struct shmem_shared * shmem_shared_open(const char *name, void **base_ptr)
+int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, struct shmem_conf *conf)
 {
-	struct shmem_shared *shm;
-	size_t len, newlen;
-	void *base;
 	char *cptr;
-	int fd, ret;
+	int fd,  ret;
+	size_t len;
+	void *base;
+	struct memtype *manager;
+	struct shmem_shared *shared;
+	struct stat stat_buf;
+	sem_t *sem_own, *sem_other;
 
-	fd = shm_open(name, O_RDWR, 0);
+	/* Ensure both semaphores exist */
+	sem_own = sem_open(wname, O_CREAT, 0600, 0);
+	if (sem_own == SEM_FAILED)
+		return -1;
+
+	sem_other = sem_open(rname, O_CREAT, 0600, 0);
+	if (sem_other == SEM_FAILED)
+		return -1;
+
+	/* Open and initialize the shared region for the output queue */
+	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 	if (fd < 0)
-		return NULL;
+		return -1;
 
-	/* Only map the first part (shmem_shared) first, read the correct length,
-	 * the map it with this length. */
-	len = sizeof(struct memtype) + sizeof(struct memblock) + sizeof(struct shmem_shared);
+	len = shmem_total_size(conf->queuelen, conf->queuelen, conf->samplelen);
+	if (ftruncate(fd, len) < 0)
+		return -1;
 
 	base = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (base == MAP_FAILED)
-		return NULL;
+		return -1;
 
-	/* This relies on the behaviour of the node and the allocator; it assumes
-	 * that memtype_managed is used and the shmem_shared is the first allocated object */
-	cptr = (char *) base + sizeof(struct memtype) + sizeof(struct memblock);
-	shm = (struct shmem_shared *) cptr;
-	newlen = shm->len;
+	close(fd);
 
-	ret = munmap(base, len);
-	if (ret)
-		return NULL;
+	manager = memtype_managed_init(base, len);
+	shared = memory_alloc(manager, sizeof(struct shmem_shared));
+	if (!shared) {
+		errno = ENOMEM;
+		return -1;
+	}
 
-	base = mmap(NULL, newlen, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	memset(shared, 0, sizeof(struct shmem_shared));
+	shared->polling = conf->polling;
+
+	ret = shared->polling ? queue_init(&shared->queue.q, conf->queuelen, manager)
+			   : queue_signalled_init(&shared->queue.qs, conf->queuelen, manager);
+	if (ret) {
+		errno = ENOMEM;
+		return -1;
+	}
+
+	ret = pool_init(&shared->pool, conf->queuelen, SAMPLE_LEN(conf->samplelen), manager);
+	if (ret) {
+		errno = ENOMEM;
+		return -1;
+	}
+
+	shm->write.base = base;
+	shm->write.name = wname;
+	shm->write.len = len;
+	shm->write.shared = shared;
+
+	/* Post own semaphore and wait on the other one, so both processes know that
+	 * both regions are initialized */
+	sem_post(sem_own);
+	sem_wait(sem_other);
+
+	/* Open and map the other region */
+	fd = shm_open(rname, O_RDWR, 0);
+	if (fd < 0)
+		return -1;
+
+	if (fstat(fd, &stat_buf) < 0)
+		return -1;
+
+	len = stat_buf.st_size;
+	base = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+
 	if (base == MAP_FAILED)
-		return NULL;
+		return -1;
 
-	/* Adress might have moved */
 	cptr = (char *) base + sizeof(struct memtype) + sizeof(struct memblock);
-	if (base_ptr)
-		*base_ptr = base;
+	shared = (struct shmem_shared *) cptr;
+	shm->read.base = base;
+	shm->read.name = rname;
+	shm->read.len = len;
+	shm->read.shared = shared;
 
-	shm = (struct shmem_shared *) cptr;
+	/* Unlink the semaphores; we don't need them anymore */
+	sem_unlink(wname);
 
-	pthread_barrier_wait(&shm->start_bar);
-
-	return shm;
+	return 0;
 }
 
-int shmem_shared_close(struct shmem_shared *shm, void *base)
+int shmem_int_close(struct shmem_int *shm)
 {
-	if (shm->polling)
-		queue_close(&shm->in.q);
+	if (shm->write.shared->polling)
+		queue_close(&shm->write.shared->queue.q);
 	else
-		queue_signalled_close(&shm->in.qs);
+		queue_signalled_close(&shm->write.shared->queue.qs);
 
-	return munmap(base, shm->len);
+	munmap(shm->read.base, shm->read.len);
+	munmap(shm->write.base, shm->write.len);
+	shm_unlink(shm->write.name);
+
+	return 0;
 }
 
-int shmem_shared_read(struct shmem_shared *shm, struct sample *smps[], unsigned cnt)
+int shmem_int_read(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
 {
-	return shm->polling ? queue_pull_many(&shm->out.q, (void **) smps, cnt)
-			   : queue_signalled_pull_many(&shm->out.qs, (void **) smps, cnt);
+	return shm->read.shared->polling ? queue_pull_many(&shm->read.shared->queue.q, (void **) smps, cnt)
+					 : queue_signalled_pull_many(&shm->read.shared->queue.qs, (void **) smps, cnt);
 }
 
-int shmem_shared_write(struct shmem_shared *shm, struct sample *smps[], unsigned cnt)
+int shmem_int_write(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
 {
-	return shm->polling ? queue_push_many(&shm->in.q, (void **) smps, cnt)
-			    : queue_signalled_push_many(&shm->in.qs, (void **) smps, cnt);
+	return shm->write.shared->polling ? queue_push_many(&shm->write.shared->queue.q, (void **) smps, cnt)
+					  : queue_signalled_push_many(&shm->write.shared->queue.qs, (void **) smps, cnt);
 }

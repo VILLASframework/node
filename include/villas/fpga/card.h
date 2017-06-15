@@ -32,6 +32,8 @@
 #include <libconfig.h>
 
 #include "common.h"
+#include "kernel/pci.h"
+#include "kernel/vfio.h"
 
 /* Forward declarations */
 struct fpga_ip;
