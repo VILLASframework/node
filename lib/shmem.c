@@ -64,6 +64,7 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 	sem_own = sem_open(wname, O_CREAT, 0600, 0);
 	if (sem_own == SEM_FAILED)
 		return -1;
+
 	sem_other = sem_open(rname, O_CREAT, 0600, 0);
 	if (sem_other == SEM_FAILED)
 		return -1;
@@ -72,12 +73,15 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 	if (fd < 0)
 		return -1;
+
 	len = shmem_total_size(conf->queuelen, conf->queuelen, conf->samplelen);
 	if (ftruncate(fd, len) < 0)
 		return -1;
+
 	base = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (base == MAP_FAILED)
 		return -1;
+
 	close(fd);
 
 	manager = memtype_managed_init(base, len);
@@ -117,10 +121,13 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 	fd = shm_open(rname, O_RDWR, 0);
 	if (fd < 0)
 		return -1;
+
 	if (fstat(fd, &stat_buf) < 0)
 		return -1;
+
 	len = stat_buf.st_size;
 	base = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+
 	if (base == MAP_FAILED)
 		return -1;
 
@@ -133,6 +140,7 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 
 	/* Unlink the semaphores; we don't need them anymore */
 	sem_unlink(wname);
+
 	return 0;
 }
 
@@ -146,17 +154,18 @@ int shmem_int_close(struct shmem_int *shm)
 	munmap(shm->read.base, shm->read.len);
 	munmap(shm->write.base, shm->write.len);
 	shm_unlink(shm->write.name);
+
 	return 0;
 }
 
 int shmem_int_read(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
 {
 	return shm->read.shared->polling ? queue_pull_many(&shm->read.shared->queue.q, (void **) smps, cnt)
-			   : queue_signalled_pull_many(&shm->read.shared->queue.qs, (void **) smps, cnt);
+					 : queue_signalled_pull_many(&shm->read.shared->queue.qs, (void **) smps, cnt);
 }
 
 int shmem_int_write(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
 {
 	return shm->write.shared->polling ? queue_push_many(&shm->write.shared->queue.q, (void **) smps, cnt)
-			    : queue_signalled_push_many(&shm->write.shared->queue.qs, (void **) smps, cnt);
+					  : queue_signalled_push_many(&shm->write.shared->queue.qs, (void **) smps, cnt);
 }

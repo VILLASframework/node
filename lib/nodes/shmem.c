@@ -42,12 +42,16 @@ int shmem_parse(struct node *n, config_setting_t *cfg)
 
 	if (!config_setting_lookup_string(cfg, "out_name", &shm->out_name))
 		cerror(cfg, "Missing shared memory output queue name");
+
 	if (!config_setting_lookup_string(cfg, "in_name", &shm->in_name))
 		cerror(cfg, "Missing shared memory input queue name");
+
 	if (!config_setting_lookup_int(cfg, "queuelen", &shm->conf.queuelen))
 		shm->conf.queuelen = DEFAULT_SHMEM_QUEUELEN;
+
 	if (!config_setting_lookup_int(cfg, "samplelen", &shm->conf.samplelen))
 		shm->conf.samplelen = DEFAULT_SHMEM_SAMPLELEN;
+
 	if (!config_setting_lookup_bool(cfg, "polling", &shm->conf.polling))
 		shm->conf.polling = false;
 
@@ -111,14 +115,18 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 		/* This can only really mean that the other process has exited, so close
 		 * the interface to make sure the shared memory object is unlinked */
 		shmem_int_close(&shm->intf);
+
 	if (recv <= 0)
 		return recv;
 
 	sample_copy_many(smps, shared_smps, recv);
 	sample_put_many(shared_smps, recv);
+
 	struct timespec ts_recv = time_now();
+
 	for (int i = 0; i < recv; i++)
 		smps[i]->ts.received = ts_recv;
+
 	return recv;
 }
 

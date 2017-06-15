@@ -52,26 +52,24 @@ union shmem_queue {
 /** Struct containing all parameters that need to be known when creating a new
  * shared memory object. */
 struct shmem_conf {
-	int polling;   /**< Whether to use polling instead of POSIX CVs */
-	int queuelen;  /**< Size of the queues (in elements) */
-	int samplelen; /**< Maximum number of data entries in a single sample */
+	int polling;			/**< Whether to use polling instead of POSIX CVs */
+	int queuelen;			/**< Size of the queues (in elements) */
+	int samplelen; 			/**< Maximum number of data entries in a single sample */
 };
 
 /** The structure that actually resides in the shared memory. */
 struct shmem_shared {
-	int polling;             /**< Whether to use a pthread_cond_t to signal if new samples are written to incoming queue. */
-
-	union shmem_queue queue; /**< Queues for samples passed in both directions. */
-
-	struct pool pool;        /**< Pool for the samples in the queues. */
+	int polling;			/**< Whether to use a pthread_cond_t to signal if new samples are written to incoming queue. */
+	union shmem_queue queue;	/**< Queues for samples passed in both directions. */
+	struct pool pool;        	/**< Pool for the samples in the queues. */
 };
 
 /** Relevant information for one direction of the interface. */
 struct shmem_dir {
-	void *base;                  /**< Base address of the region. */
-	const char *name;            /**< Name of the shmem object. */
-	size_t len;                  /**< Total size of the region. */
-	struct shmem_shared *shared; /**< Actually shared datastructure */
+	void *base;			/**< Base address of the region. */
+	const char *name;		/**< Name of the shmem object. */
+	size_t len;			/**< Total size of the region. */
+	struct shmem_shared *shared;	/**< Actually shared datastructure */
 };
 
 /** Main structure representing the shared memory interface. */
@@ -81,6 +79,7 @@ struct shmem_int {
 
 /** Open the shared memory objects and retrieve / initialize the shared data structures.
  * Blocks until another process connects by opening the same objects.
+ *
  * @param[in] wname Name of the POSIX shared memory object containing the output queue.
  * @param[in] rname Name of the POSIX shared memory object containing the input queue.
  * @param[inout] shm The shmem_int structure that should be used for following
@@ -92,6 +91,7 @@ struct shmem_int {
 int shmem_int_open(const char* wname, const char* rname, struct shmem_int* shm, struct shmem_conf* conf);
 
 /** Close and destroy the shared memory interface and related structures.
+ *
  * @param shm The shared memory interface.
  * @retval 0 Closing successfull.
  * @retval <0 An error occurred; errno is set appropiately.
@@ -99,6 +99,7 @@ int shmem_int_open(const char* wname, const char* rname, struct shmem_int* shm, 
 int shmem_int_close(struct shmem_int *shm);
 
 /** Read samples from the interface.
+ *
  * @param shm The shared memory interface.
  * @param smps  An array where the pointers to the samples will be written. The samples
  * must be freed with sample_put after use.
@@ -109,6 +110,7 @@ int shmem_int_close(struct shmem_int *shm);
 int shmem_int_read(struct shmem_int *shm, struct sample *smps[], unsigned cnt);
 
 /** Write samples to the interface.
+ *
  * @param shm The shared memory interface.
  * @param smps The samples to be written. Must be allocated from shm_int_alloc.
  * @param cnt Number of samples to write.
@@ -118,6 +120,7 @@ int shmem_int_read(struct shmem_int *shm, struct sample *smps[], unsigned cnt);
 int shmem_int_write(struct shmem_int *shm, struct sample *smps[], unsigned cnt);
 
 /** Allocate samples to be written to the interface. The writing process must
+ *
  * not free the samples; only the receiving process should free them using
  * sample_put after use.
  * @param shm The shared memory interface.
