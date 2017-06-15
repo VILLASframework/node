@@ -74,6 +74,11 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 	node_stop(node);
 	node_destroy(node);
+	
+	if (node->_vt->start == websocket_start) {
+		web_stop(&sn.web);
+		api_stop(&sn.api);
+	}
 
 	info(GRN("Goodbye!"));
 	exit(EXIT_SUCCESS);
