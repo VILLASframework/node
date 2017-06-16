@@ -55,7 +55,7 @@ deploy-docker deploy-docker-dev:
 
 # Docker targets
 run-docker-dev: docker-dev
-	docker run -it -p 80:80 -p 443:443 -p 1234:1234 -p 12000:12000/udp -p 12001:12001/udp --privileged --security-opt seccomp:unconfined -v "$(PWD):/villas" $(DOCKER_IMAGE)-dev:$(GIT_BRANCH)
+	docker run -it -p 80:80 -p 443:443 -p 1234:1234 -p 12000:12000/udp -p 12001:12001/udp --privileged --security-opt seccomp:unconfined -v "$(SRCDIR):/villas" $(DOCKER_IMAGE)-dev:$(GIT_BRANCH)
 
 docker-dev:
 	docker pull fedora:25
