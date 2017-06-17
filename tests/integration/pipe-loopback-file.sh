@@ -25,14 +25,24 @@
 CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
+NODE_FILE=$(mktemp)
 
 cat > ${CONFIG_FILE} << EOF
 nodes = {
 	node1 = {
-		type = "nanomsg";
+		type = "file";
+		
+		in = {
+			uri = "${NODE_FILE}",
+			mode = "w+",
 
-		subscribe = "tcp://127.0.0.1:12000";
-		publish = "tcp://127.0.0.1:12000"
+			epoch_mode = "original",
+			eof = "wait"
+		},
+		out = {
+			uri = "${NODE_FILE}"
+			mode = "w+"
+		}
 	}
 }
 EOF
@@ -41,16 +51,12 @@ EOF
 villas-signal random -l 10 -n > ${INPUT_FILE}
 
 # We delay EOF of the INPUT_FILE by 1 second in order to wait for incoming data to be received
-villas-pipe ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < <(sleep 0.5; cat ${INPUT_FILE}; sleep 0.5; echo -n)
-
-cat ${INPUT_FILE}
-echo
-cat ${OUTPUT_FILE}
+villas-pipe ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < <(cat ${INPUT_FILE}; sleep 0.5; echo -n)
 
 # Comapre data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
-rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
+rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${NODE_FILE}
 
 exit $RC

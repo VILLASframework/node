@@ -85,21 +85,21 @@ static struct timespec file_calc_read_offset(const struct timespec *first, const
 
 	/* Set read_offset depending on epoch_mode */
 	switch (mode) {
-		case EPOCH_DIRECT: /* read first value at now + epoch */
+		case FILE_EPOCH_DIRECT: /* read first value at now + epoch */
 			offset = time_diff(first, &now);
 			offset = time_add(&offset, epoch);
 			break;
 
-		case EPOCH_WAIT: /* read first value at now + first + epoch */
+		case FILE_EPOCH_WAIT: /* read first value at now + first + epoch */
 			offset = now;
 			return time_add(&now, epoch);
 			break;
 
-		case EPOCH_RELATIVE: /* read first value at first + epoch */
+		case FILE_EPOCH_RELATIVE: /* read first value at first + epoch */
 			return *epoch;
 			break;
 
-		case EPOCH_ABSOLUTE: /* read first value at f->read_epoch */
+		case FILE_EPOCH_ABSOLUTE: /* read first value at f->read_epoch */
 			return time_diff(first, epoch);
 			break;
 
@@ -123,12 +123,24 @@ int file_parse(struct node *n, config_setting_t *cfg)
 
 	cfg_in = config_setting_get_member(cfg, "in");
 	if (cfg_in) {
+		const char *eof;
+		
 		if (file_parse_direction(cfg_in, f, FILE_READ))
 			cerror(cfg_in, "Failed to parse input file for node %s", node_name(n));
 
 		/* More read specific settings */
-		if (!config_setting_lookup_bool(cfg_in, "rewind", &f->read_rewind))
-			f->read_rewind = 1;
+		if (config_setting_lookup_string(cfg_in, "eof", &eof)) {
+			if      (!strcmp(eof, "exit"))
+				f->read_eof = FILE_EOF_EXIT;
+			else if (!strcmp(eof, "rewind"))
+				f->read_eof = FILE_EOF_REWIND;
+			else if (!strcmp(eof, "wait"))
+				f->read_eof = FILE_EOF_WAIT;
+			else
+				cerror(cfg_in, "Invalid mode '%s' for 'eof' setting", eof);
+		}
+		else
+			f->read_eof = FILE_EOF_EXIT;
 		if (!config_setting_lookup_float(cfg_in, "rate", &f->read_rate))
 			f->read_rate = 0; /* Disable fixed rate sending. Using timestamps of file instead */
 
@@ -141,20 +153,20 @@ int file_parse(struct node *n, config_setting_t *cfg)
 		const char *epoch_mode;
 		if (config_setting_lookup_string(cfg_in, "epoch_mode", &epoch_mode)) {
 			if     (!strcmp(epoch_mode, "direct"))
-				f->read_epoch_mode = EPOCH_DIRECT;
+				f->read_epoch_mode = FILE_EPOCH_DIRECT;
 			else if (!strcmp(epoch_mode, "wait"))
-				f->read_epoch_mode = EPOCH_WAIT;
+				f->read_epoch_mode = FILE_EPOCH_WAIT;
 			else if (!strcmp(epoch_mode, "relative"))
-				f->read_epoch_mode = EPOCH_RELATIVE;
+				f->read_epoch_mode = FILE_EPOCH_RELATIVE;
 			else if (!strcmp(epoch_mode, "absolute"))
-				f->read_epoch_mode = EPOCH_ABSOLUTE;
+				f->read_epoch_mode = FILE_EPOCH_ABSOLUTE;
 			else if (!strcmp(epoch_mode, "original"))
-				f->read_epoch_mode = EPOCH_ORIGINAL;
+				f->read_epoch_mode = FILE_EPOCH_ORIGINAL;
 			else
 				cerror(cfg_in, "Invalid value '%s' for setting 'epoch_mode'", epoch_mode);
 		}
 		else
-			f->read_epoch_mode = EPOCH_DIRECT;
+			f->read_epoch_mode = FILE_EPOCH_DIRECT;
 	}
 
 	n->_vd = f;
@@ -170,37 +182,44 @@ char * file_print(struct node *n)
 	if (f->read.fmt) {
 		const char *epoch_str = NULL;
 		switch (f->read_epoch_mode) {
-			case EPOCH_DIRECT:	epoch_str = "direct"; break;
-			case EPOCH_WAIT:	epoch_str = "wait"; break;
-			case EPOCH_RELATIVE:	epoch_str = "relative"; break;
-			case EPOCH_ABSOLUTE:	epoch_str = "absolute"; break;
-			case EPOCH_ORIGINAL:	epoch_str = "original"; break;
+			case FILE_EPOCH_DIRECT:   epoch_str = "direct";   break;
+			case FILE_EPOCH_WAIT:     epoch_str = "wait";     break;
+			case FILE_EPOCH_RELATIVE: epoch_str = "relative"; break;
+			case FILE_EPOCH_ABSOLUTE: epoch_str = "absolute"; break;
+			case FILE_EPOCH_ORIGINAL: epoch_str = "original"; break;
+		}
+		
+		const char *eof_str = NULL;
+		switch (f->read_eof) {
+			case FILE_EOF_EXIT:   eof_str = "exit";   break;
+			case FILE_EOF_WAIT:   eof_str = "wait";   break;
+			case FILE_EOF_REWIND: eof_str = "rewind"; break;
 		}
 
-		strcatf(&buf, "in=%s, mode=%s, rewind=%u, epoch_mode=%s, epoch=%.2f",
+		strcatf(&buf, "in=%s, mode=%s, eof=%s, epoch_mode=%s, epoch=%.2f",
 			f->read.uri ? f->read.uri : f->read.fmt,
 			f->read.mode,
-			f->read_rewind,
+			eof_str,
 			epoch_str,
 			time_to_double(&f->read_epoch)
 		);
 
 		if (f->read_rate)
-			strcatf(&buf, "rate=%.1f, ", f->read_rate);
+			strcatf(&buf, ", rate=%.1f", f->read_rate);
 	}
 
 	if (f->write.fmt) {
-		strcatf(&buf, "out=%s, mode=%s, ",
+		strcatf(&buf, ", out=%s, mode=%s",
 			f->write.uri ? f->write.uri : f->write.fmt,
 			f->write.mode
 		);
 	}
 
 	if (f->read_first.tv_sec || f->read_first.tv_nsec)
-		strcatf(&buf, "first=%.2f, ", time_to_double(&f->read_first));
+		strcatf(&buf, ", first=%.2f", time_to_double(&f->read_first));
 
 	if (f->read_offset.tv_sec || f->read_offset.tv_nsec)
-		strcatf(&buf, "offset=%.2f, ", time_to_double(&f->read_offset));
+		strcatf(&buf, ", offset=%.2f", time_to_double(&f->read_offset));
 
 	if ((f->read_first.tv_sec || f->read_first.tv_nsec) &&
 	    (f->read_offset.tv_sec || f->read_offset.tv_nsec)) {
@@ -210,11 +229,8 @@ char * file_print(struct node *n)
 		eta = time_diff(&now, &eta);
 
 		if (eta.tv_sec || eta.tv_nsec)
-		strcatf(&buf, "eta=%.2f sec, ", time_to_double(&eta));
+			strcatf(&buf, ", eta=%.2f sec", time_to_double(&eta));
 	}
-
-	if (strlen(buf) > 2)
-		buf[strlen(buf) - 2] = 0;
 
 	return buf;
 }
@@ -246,13 +262,16 @@ int file_start(struct node *n)
 		struct sample s;
 
 		arewind(f->read.handle);
-		ret = sample_io_villas_fscan(f->read.handle->file, &s, NULL);
-		if (ret < 0)
-			error("Failed to read first timestamp of node %s", node_name(n));
+		
+		if (f->read_epoch_mode != FILE_EPOCH_ORIGINAL) {
+			ret = sample_io_villas_fscan(f->read.handle->file, &s, NULL);
+			if (ret < 0)
+				error("Failed to read first timestamp of node %s", node_name(n));
 
-		f->read_first = s.ts.origin;
-		f->read_offset = file_calc_read_offset(&f->read_first, &f->read_epoch, f->read_epoch_mode);
-		arewind(f->read.handle);
+			f->read_first = s.ts.origin;
+			f->read_offset = file_calc_read_offset(&f->read_first, &f->read_epoch, f->read_epoch_mode);
+			arewind(f->read.handle);
+		}
 	}
 
 	if (f->write.fmt) {
@@ -298,17 +317,23 @@ int file_read(struct node *n, struct sample *smps[], unsigned cnt)
 retry:	values = sample_io_villas_fscan(f->read.handle->file, s, &flags); /* Get message and timestamp */
 	if (values < 0) {
 		if (afeof(f->read.handle)) {
-			if (f->read_rewind) {
-				info("Rewind input file of node %s", node_name(n));
+			switch (f->read_eof) {
+				case FILE_EOF_REWIND:
+					info("Rewind input file of node %s", node_name(n));
 
-				f->read_offset = file_calc_read_offset(&f->read_first, &f->read_epoch, f->read_epoch_mode);
-				arewind(f->read.handle);
-
-				goto retry;
-			}
-			else {
-				info("Reached end-of-file");
-				exit(EXIT_SUCCESS);
+					f->read_offset = file_calc_read_offset(&f->read_first, &f->read_epoch, f->read_epoch_mode);
+					arewind(f->read.handle);
+					goto retry;
+				
+				case FILE_EOF_WAIT:
+					usleep(10000); /* We wait 10ms before fetching again. */
+					adownload(f->read.handle, 1);
+					goto retry;
+				
+				case FILE_EOF_EXIT:
+					info("Reached end-of-file");
+					exit(EXIT_SUCCESS);
+				
 			}
 		}
 		else
@@ -317,10 +342,7 @@ retry:	values = sample_io_villas_fscan(f->read.handle->file, s, &flags); /* Get 
 		return 0;
 	}
 
-	if (f->read_epoch_mode == EPOCH_ORIGINAL) {
-		return 1;
-	}
-	else {
+	if (f->read_epoch_mode != FILE_EPOCH_ORIGINAL) {
 		if (!f->read_rate || aftell(f->read.handle) == 0) {
 			s->ts.origin = time_add(&s->ts.origin, &f->read_offset);
 		

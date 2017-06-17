@@ -65,6 +65,7 @@ static const char *facilities_strs[] = {
 	"xil",		/* LOG_XIL */
 	"tc",		/* LOG_TC */
 	"if",		/* LOG_IF */
+	"advio",	/* LOG_ADVIO */
 
 	/* Node-types */
 	"socket",	/* LOG_SOCKET */
@@ -232,7 +233,7 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 #ifdef ENABLE_OPAL_ASYNC
 	OpalPrint("VILLASnode: %s\n", buf);
 #endif
-	fprintf(l->file ? l->file : stderr, "%s\n", buf);
+	fprintf(l->file ? l->file : stderr, "\33[2K\r%s\n", buf);
 	free(buf);
 }
 
