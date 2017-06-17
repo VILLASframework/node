@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include <zmq.h>
+#include <zmq_utils.h>
 
 #include "nodes/zeromq.h"
 #include "utils.h"
