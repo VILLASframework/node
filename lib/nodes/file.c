@@ -262,13 +262,16 @@ int file_start(struct node *n)
 		struct sample s;
 
 		arewind(f->read.handle);
-		ret = sample_io_villas_fscan(f->read.handle->file, &s, NULL);
-		if (ret < 0)
-			error("Failed to read first timestamp of node %s", node_name(n));
+		
+		if (f->read_epoch_mode != FILE_EPOCH_ORIGINAL) {
+			ret = sample_io_villas_fscan(f->read.handle->file, &s, NULL);
+			if (ret < 0)
+				error("Failed to read first timestamp of node %s", node_name(n));
 
-		f->read_first = s.ts.origin;
-		f->read_offset = file_calc_read_offset(&f->read_first, &f->read_epoch, f->read_epoch_mode);
-		arewind(f->read.handle);
+			f->read_first = s.ts.origin;
+			f->read_offset = file_calc_read_offset(&f->read_first, &f->read_epoch, f->read_epoch_mode);
+			arewind(f->read.handle);
+		}
 	}
 
 	if (f->write.fmt) {
@@ -339,10 +342,7 @@ retry:	values = sample_io_villas_fscan(f->read.handle->file, s, &flags); /* Get 
 		return 0;
 	}
 
-	if (f->read_epoch_mode == EPOCH_ORIGINAL) {
-		return 1;
-	}
-	else {
+	if (f->read_epoch_mode != FILE_EPOCH_ORIGINAL) {
 		if (!f->read_rate || aftell(f->read.handle) == 0) {
 			s->ts.origin = time_add(&s->ts.origin, &f->read_offset);
 		
