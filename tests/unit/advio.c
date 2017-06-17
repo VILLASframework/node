@@ -36,14 +36,16 @@ Test(advio, local)
 {
 	AFILE *af;
 	int ret;
-	char buf[32];
+	char *buf = NULL;
+	size_t buflen = 0;
 	
-	af = afopen("/proc/version", "r");
+	/* We open this file and check the first line */
+	af = afopen(__FILE__, "r");
 	cr_assert(af, "Failed to open local file");
-	
-	ret = fscanf(af->file, "%32s", buf);
-	cr_assert_eq(ret, 1);
-	cr_assert_str_eq(buf, "Linux");
+
+	ret = getline(&buf, &buflen, af->file);	
+	cr_assert_gt(ret, 1);
+	cr_assert_str_eq(buf, "/** Unit tests for advio\n");
 }
 
 Test(advio, download)
