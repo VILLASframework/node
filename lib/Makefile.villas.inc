@@ -56,6 +56,9 @@ ifndef WITHOUT_NANOMSG
 ifeq ($(shell $(PKGCONFIG) nanomsg; echo $$?),0)
 	LIB_SRCS    += lib/nodes/nanomsg.c
 	LIB_PKGS    += nanomsg
+else ifeq ($(shell $(PKGCONFIG) libnanomsg; echo $$?),0)
+	LIB_SRCS    += lib/nodes/nanomsg.c
+	LIB_PKGS    += libnanomsg
 endif
 endif
 
@@ -95,17 +98,17 @@ endif
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
 ifdef WITH_OPAL
-ifneq ($(wildcard thirdparty/opal/include/AsyncApi.h),)
+ifneq ($(wildcard thirdparty/libopal/include/opal/AsyncApi.h),)
 	LIB_OBJS    += opal.o
 
-	LIB_CFLAGS  += -I thirdparty/opal/include
-	LIB_LDFLAGS += -L/lib/i386-linux-gnu/ -L/usr/lib/i386-linux-gnu/ -Lthirdparty/opal/lib/redhawk/
+	LIB_CFLAGS  += -I thirdparty/libopal/include/opal/
+	LIB_LDFLAGS += -L/lib/i386-linux-gnu/ -L/usr/lib/i386-linux-gnu/ -Lthirdparty/libopal/
 	LIB_LDLIBS  += -lOpalAsyncApiCore -lOpalCore -lOpalUtils -lirc
 
 	# libOpalAsyncApi is a 32bit library. So we need to build everything in 32bit
 	CFLAGS      += -m32
 	LDFLAGS     += -m32
-	BUILDDIR    := $(BUILDDIR)32
+	BUILDDIR    := $(BUILDDIR)
 endif
 endif
 
