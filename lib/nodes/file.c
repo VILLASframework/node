@@ -85,21 +85,21 @@ static struct timespec file_calc_read_offset(const struct timespec *first, const
 
 	/* Set read_offset depending on epoch_mode */
 	switch (mode) {
-		case EPOCH_DIRECT: /* read first value at now + epoch */
+		case FILE_EPOCH_DIRECT: /* read first value at now + epoch */
 			offset = time_diff(first, &now);
 			offset = time_add(&offset, epoch);
 			break;
 
-		case EPOCH_WAIT: /* read first value at now + first + epoch */
+		case FILE_EPOCH_WAIT: /* read first value at now + first + epoch */
 			offset = now;
 			return time_add(&now, epoch);
 			break;
 
-		case EPOCH_RELATIVE: /* read first value at first + epoch */
+		case FILE_EPOCH_RELATIVE: /* read first value at first + epoch */
 			return *epoch;
 			break;
 
-		case EPOCH_ABSOLUTE: /* read first value at f->read_epoch */
+		case FILE_EPOCH_ABSOLUTE: /* read first value at f->read_epoch */
 			return time_diff(first, epoch);
 			break;
 
@@ -153,20 +153,20 @@ int file_parse(struct node *n, config_setting_t *cfg)
 		const char *epoch_mode;
 		if (config_setting_lookup_string(cfg_in, "epoch_mode", &epoch_mode)) {
 			if     (!strcmp(epoch_mode, "direct"))
-				f->read_epoch_mode = EPOCH_DIRECT;
+				f->read_epoch_mode = FILE_EPOCH_DIRECT;
 			else if (!strcmp(epoch_mode, "wait"))
-				f->read_epoch_mode = EPOCH_WAIT;
+				f->read_epoch_mode = FILE_EPOCH_WAIT;
 			else if (!strcmp(epoch_mode, "relative"))
-				f->read_epoch_mode = EPOCH_RELATIVE;
+				f->read_epoch_mode = FILE_EPOCH_RELATIVE;
 			else if (!strcmp(epoch_mode, "absolute"))
-				f->read_epoch_mode = EPOCH_ABSOLUTE;
+				f->read_epoch_mode = FILE_EPOCH_ABSOLUTE;
 			else if (!strcmp(epoch_mode, "original"))
-				f->read_epoch_mode = EPOCH_ORIGINAL;
+				f->read_epoch_mode = FILE_EPOCH_ORIGINAL;
 			else
 				cerror(cfg_in, "Invalid value '%s' for setting 'epoch_mode'", epoch_mode);
 		}
 		else
-			f->read_epoch_mode = EPOCH_DIRECT;
+			f->read_epoch_mode = FILE_EPOCH_DIRECT;
 	}
 
 	n->_vd = f;
@@ -182,11 +182,11 @@ char * file_print(struct node *n)
 	if (f->read.fmt) {
 		const char *epoch_str = NULL;
 		switch (f->read_epoch_mode) {
-			case EPOCH_DIRECT:	epoch_str = "direct"; break;
-			case EPOCH_WAIT:	epoch_str = "wait"; break;
-			case EPOCH_RELATIVE:	epoch_str = "relative"; break;
-			case EPOCH_ABSOLUTE:	epoch_str = "absolute"; break;
-			case EPOCH_ORIGINAL:	epoch_str = "original"; break;
+			case FILE_EPOCH_DIRECT:   epoch_str = "direct";   break;
+			case FILE_EPOCH_WAIT:     epoch_str = "wait";     break;
+			case FILE_EPOCH_RELATIVE: epoch_str = "relative"; break;
+			case FILE_EPOCH_ABSOLUTE: epoch_str = "absolute"; break;
+			case FILE_EPOCH_ORIGINAL: epoch_str = "original"; break;
 		}
 		
 		const char *eof_str = NULL;

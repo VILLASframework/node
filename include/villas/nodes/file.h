@@ -52,11 +52,11 @@ struct file {
 	} read, write;
 
 	enum read_epoch_mode {
-		EPOCH_DIRECT,
-		EPOCH_WAIT,
-		EPOCH_RELATIVE,
-		EPOCH_ABSOLUTE,
-		EPOCH_ORIGINAL
+		FILE_EPOCH_DIRECT,
+		FILE_EPOCH_WAIT,
+		FILE_EPOCH_RELATIVE,
+		FILE_EPOCH_ABSOLUTE,
+		FILE_EPOCH_ORIGINAL
 	} read_epoch_mode;		/**< Specifies how file::offset is calculated. */
 
 	struct timespec read_first;	/**< The first timestamp in the file file::{read,write}::uri */
