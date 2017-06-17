@@ -31,6 +31,11 @@
 struct advio {
 	CURL *curl;
 	FILE *file;
+	
+	long uploaded;		/**< Upload progress. How much has already been uploaded to the remote file. */
+	long downloaded;	/**< Download progress. How much has already been downloaded from the remote file. */
+	
+	int completed:1;	/**< Was the upload completd */
 
 	unsigned char hash[SHA_DIGEST_LENGTH];
 
@@ -43,10 +48,13 @@ typedef struct advio AFILE;
 /* The remaining functions from stdio are just replaced macros */
 #define afeof(af)			feof((af)->file)
 #define aftell(af)			ftell((af)->file)
-#define arewind(af)			rewind((af)->file)
 #define afileno(af)			fileno((af)->file)
 #define afread(ptr, sz, nitems, af)	fread(ptr, sz, nitems, (af)->file)
 #define afwrite(ptr, sz, nitems, af)	fwrite(ptr, sz, nitems, (af)->file)
+#define afputs(ptr, af)			fputs(ptr, (af)->file)
+#define afprintf(af, fmt, ...)		fprintf((af)->file, fmt, __VA_ARGS__)
+#define afscanf(af, fmt, ...)		fprintf((af)->file, fmt, __VA_ARGS__)
+#define agetline(linep, linecapp, af)	getline(linep, linecapp, (af)->file)
 
 /* Extensions */
 #define auri(af)			((af)->uri)
@@ -55,6 +63,18 @@ typedef struct advio AFILE;
 AFILE *afopen(const char *url, const char *mode);
 
 int afclose(AFILE *file);
+
 int afflush(AFILE *file);
-int adownload(AFILE *af);
-int aupload(AFILE *af);
+
+int afseek(AFILE *file, long offset, int origin);
+
+void arewind(AFILE *file);
+
+/** Download contens from remote file
+ *
+ *
+ * @param resume Do a partial download and append to the local file
+ */
+int adownload(AFILE *af, int resume);
+
+int aupload(AFILE *af, int resume);

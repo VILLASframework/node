@@ -66,14 +66,15 @@ enum log_facilities {
 	LOG_XIL =	(1L << 20),
 	LOG_TC =	(1L << 21),
 	LOG_IF =	(1L << 22),
+	LOG_ADVIO =	(1L << 23),
 
 	/* Node-types */
-	LOG_SOCKET =	(1L << 23),
-	LOG_FILE =	(1L << 24),
-	LOG_FPGA =	(1L << 25),
-	LOG_NGSI =	(1L << 26),
-	LOG_WEBSOCKET =	(1L << 27),
-	LOG_OPAL =	(1L << 28),
+	LOG_SOCKET =	(1L << 24),
+	LOG_FILE =	(1L << 25),
+	LOG_FPGA =	(1L << 26),
+	LOG_NGSI =	(1L << 27),
+	LOG_WEBSOCKET =	(1L << 28),
+	LOG_OPAL =	(1L << 30),
 
 	/* Classes */
 	LOG_NODES =	LOG_NODE | LOG_SOCKET | LOG_FILE | LOG_FPGA | LOG_NGSI | LOG_WEBSOCKET | LOG_OPAL,
