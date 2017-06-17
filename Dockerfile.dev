@@ -70,11 +70,9 @@ RUN dnf -y install \
 	libnl3-devel \
 	libcurl-devel \
 	jansson-devel \
-	libsodium-devel \
 	libwebsockets-devel \
 	zeromq-devel \
 	nanomsg-devel \
-	openpgm-devel \
 	libxil-devel
 
 # Build & Install Criterion
