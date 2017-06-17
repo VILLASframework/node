@@ -26,7 +26,7 @@ CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
-cat > ${CONFIG_FILE} <<- EOF
+cat > ${CONFIG_FILE} << EOF
 nodes = {
 	node1 = {
 		type = "nanomsg";
