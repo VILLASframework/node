@@ -144,7 +144,7 @@ Test(list, basics)
 	for (size_t j = 0, i = 99; j < list_length(&l); j++) {
 		void *k = list_at(&l, j);
 
-		cr_assert_eq(k, (void *) i, "Is %p, expected %p", i, k);
+		cr_assert_eq(k, (void *) i, "Is %#zx, expected %p", i, k);
 		i--;
 	}
 
