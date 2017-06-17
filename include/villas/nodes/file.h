@@ -63,7 +63,11 @@ struct file {
 	struct timespec read_epoch;	/**< The epoch timestamp from the configuration. */
 	struct timespec read_offset;	/**< An offset between the timestamp in the input file and the current time */
 	
-	int read_rewind;		/**< Should we rewind the file when we reach EOF? */
+	enum {
+		FILE_EOF_EXIT,		/**< Terminate when EOF is reached. */
+		FILE_EOF_REWIND,	/**< Rewind the file when EOF is reached. */
+		FILE_EOF_WAIT		/**< Blocking wait when EOF is reached. */
+	} read_eof;			/**< Should we rewind the file when we reach EOF? */
 	int read_timer;			/**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
 	double read_rate;		/**< The read rate. */
 };

@@ -123,12 +123,24 @@ int file_parse(struct node *n, config_setting_t *cfg)
 
 	cfg_in = config_setting_get_member(cfg, "in");
 	if (cfg_in) {
+		const char *eof;
+		
 		if (file_parse_direction(cfg_in, f, FILE_READ))
 			cerror(cfg_in, "Failed to parse input file for node %s", node_name(n));
 
 		/* More read specific settings */
-		if (!config_setting_lookup_bool(cfg_in, "rewind", &f->read_rewind))
-			f->read_rewind = 1;
+		if (config_setting_lookup_string(cfg_in, "eof", &eof)) {
+			if      (!strcmp(eof, "exit"))
+				f->read_eof = FILE_EOF_EXIT;
+			else if (!strcmp(eof, "rewind"))
+				f->read_eof = FILE_EOF_REWIND;
+			else if (!strcmp(eof, "wait"))
+				f->read_eof = FILE_EOF_WAIT;
+			else
+				cerror(cfg_in, "Invalid mode '%s' for 'eof' setting", eof);
+		}
+		else
+			f->read_eof = FILE_EOF_EXIT;
 		if (!config_setting_lookup_float(cfg_in, "rate", &f->read_rate))
 			f->read_rate = 0; /* Disable fixed rate sending. Using timestamps of file instead */
 
@@ -176,11 +188,18 @@ char * file_print(struct node *n)
 			case EPOCH_ABSOLUTE:	epoch_str = "absolute"; break;
 			case EPOCH_ORIGINAL:	epoch_str = "original"; break;
 		}
+		
+		const char *eof_str = NULL;
+		switch (f->read_eof) {
+			case FILE_EOF_EXIT:   eof_str = "exit";   break;
+			case FILE_EOF_WAIT:   eof_str = "wait";   break;
+			case FILE_EOF_REWIND: eof_str = "rewind"; break;
+		}
 
-		strcatf(&buf, "in=%s, mode=%s, rewind=%u, epoch_mode=%s, epoch=%.2f",
+		strcatf(&buf, "in=%s, mode=%s, eof=%s, epoch_mode=%s, epoch=%.2f",
 			f->read.uri ? f->read.uri : f->read.fmt,
 			f->read.mode,
-			f->read_rewind,
+			eof_str,
 			epoch_str,
 			time_to_double(&f->read_epoch)
 		);
@@ -298,17 +317,23 @@ int file_read(struct node *n, struct sample *smps[], unsigned cnt)
 retry:	values = sample_io_villas_fscan(f->read.handle->file, s, &flags); /* Get message and timestamp */
 	if (values < 0) {
 		if (afeof(f->read.handle)) {
-			if (f->read_rewind) {
-				info("Rewind input file of node %s", node_name(n));
+			switch (f->read_eof) {
+				case FILE_EOF_REWIND:
+					info("Rewind input file of node %s", node_name(n));
 
-				f->read_offset = file_calc_read_offset(&f->read_first, &f->read_epoch, f->read_epoch_mode);
-				arewind(f->read.handle);
-
-				goto retry;
-			}
-			else {
-				info("Reached end-of-file");
-				exit(EXIT_SUCCESS);
+					f->read_offset = file_calc_read_offset(&f->read_first, &f->read_epoch, f->read_epoch_mode);
+					arewind(f->read.handle);
+					goto retry;
+				
+				case FILE_EOF_WAIT:
+					usleep(10000); /* We wait 10ms before fetching again. */
+					adownload(f->read.handle, 1);
+					goto retry;
+				
+				case FILE_EOF_EXIT:
+					info("Reached end-of-file");
+					exit(EXIT_SUCCESS);
+				
 			}
 		}
 		else
