@@ -159,7 +159,7 @@ static void websocket_connection_close(struct websocket_connection *c, struct lw
 
 	msg = strcatf(&msg, ": status=%u, reason=%s", status, reason);
 
-	warn(msg);
+	warn("%s", msg);
 
 	free(msg);
 }
@@ -552,7 +552,7 @@ int websocket_parse(struct node *n, config_setting_t *cfg)
 			d.info.ietf_version_or_minus_one = -1;
 			d.info.protocol = "live";
 
-			asprintf((char **) &d.info.path, "/%s", path);
+			ret = asprintf((char **) &d.info.path, "/%s", path);
 
 			list_push(&w->destinations, memdup(&d, sizeof(d)));
 		}

@@ -129,9 +129,9 @@ Test(list, basics)
 		list_push(&l, (void *) i);
 	}
 
-	cr_assert_eq(list_at(&l, 555), NULL);
+	cr_assert_eq(list_at_safe(&l, 555), NULL);
 	cr_assert_eq(list_last(&l), (void *) 99);
-	cr_assert_eq(list_first(&l), NULL);
+	cr_assert_eq(list_first(&l), (void *) 0);
 
 	for (size_t j = 0, i = 0; j < list_length(&l); j++) {
 		void *k = list_at(&l, j);
@@ -144,7 +144,7 @@ Test(list, basics)
 	for (size_t j = 0, i = 99; j < list_length(&l); j++) {
 		void *k = list_at(&l, j);
 
-		cr_assert_eq(k, (void *) i, "Is %p, expected %p", i, k);
+		cr_assert_eq(k, (void *) i, "Is %#zx, expected %p", i, k);
 		i--;
 	}
 

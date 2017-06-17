@@ -74,7 +74,7 @@ Test(kernel, version)
 	cr_assert_gt(ret, 0);
 }
 
-Test(kernel, module)
+Test(kernel, module, .disabled = true)
 {
 	int ret;
 

@@ -22,6 +22,7 @@
 
 #include <unistd.h>
 #include <string.h>
+#include <inttypes.h>
 
 #include "nodes/file.h"
 #include "utils.h"
@@ -335,7 +336,7 @@ retry:	values = sample_io_villas_fscan(f->read.handle->file, s, &flags); /* Get 
 		if (ex == 0)
 			serror("Failed to wait for timer");
 		else if (ex != 1)
-			warn("Overrun: %lu", ex - 1);
+			warn("Overrun: %" PRIu64, ex - 1);
 	}
 
 	return 1;

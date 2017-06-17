@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <zmq.h>
+#include <zmq_utils.h>
 
 int main (int argc, char *argv[])
 {

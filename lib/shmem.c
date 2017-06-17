@@ -169,3 +169,8 @@ int shmem_int_write(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
 	return shm->write.shared->polling ? queue_push_many(&shm->write.shared->queue.q, (void **) smps, cnt)
 					  : queue_signalled_push_many(&shm->write.shared->queue.qs, (void **) smps, cnt);
 }
+
+int shmem_int_alloc(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
+{
+	return sample_alloc(&shm->write.shared->pool, smps, cnt);
+}

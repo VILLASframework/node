@@ -53,7 +53,7 @@ static int hook_parse_cli(struct hook *h, char *params[], int paramlen)
 	/* Concat all params */
 	str = NULL;
 	for (int i = 0; i < paramlen; i++)
-		str = strcatf(&str, params[i]);
+		str = strcatf(&str, "%s", params[i]);
 
 	config_set_auto_convert(&cfg, 1);
 

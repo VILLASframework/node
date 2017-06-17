@@ -24,6 +24,8 @@
  * @{
  */
 
+#include <inttypes.h>
+
 #include "hook.h"
 #include "plugin.h"
 #include "timing.h"
@@ -73,7 +75,7 @@ int hook_jitter_ts(struct hook *h, struct sample *smps[], size_t *cnt)
 		*/
 		jitter_val[(curr_count+1)%GPS_NTP_DELAY_WIN_SIZE] = jitter_val[curr_count] + (abs(curr_delay_us) - jitter_val[curr_count])/16;
 
-		info("jitter %ld usec, moving average %ld usec, moving variance %ld usec\n", jitter_val[(curr_count+1)%GPS_NTP_DELAY_WIN_SIZE], moving_avg[curr_count], moving_var[curr_count]);
+		stats("%s: jitter=%" PRId64 " usec, moving average=%" PRId64 " usec, moving variance=%" PRId64 " usec", __FUNCTION__, jitter_val[(curr_count+1)%GPS_NTP_DELAY_WIN_SIZE], moving_avg[curr_count], moving_var[curr_count]);
 
 		curr_count++;
 		if(curr_count >= GPS_NTP_DELAY_WIN_SIZE)

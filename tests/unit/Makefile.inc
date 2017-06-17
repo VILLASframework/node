@@ -38,7 +38,7 @@ $(BUILDDIR)/tests/unit/%.o: tests/unit/%.c $(BUILDDIR)/defines | $$(dir $$@)
 
 # Link
 $(BUILDDIR)/unit-tests: $(TEST_OBJS) $(LIB)
-	$(CC) $(TEST_LDFLAGS) $(TEST_LDLIBS) $^ -o $@
+	$(CC) $(TEST_LDFLAGS) $^ $(TEST_LDLIBS) -o $@
 
 ifdef COVERAGE
 -include tests/unit/Makefile.gcov.inc
