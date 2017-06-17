@@ -552,7 +552,7 @@ int websocket_parse(struct node *n, config_setting_t *cfg)
 			d.info.ietf_version_or_minus_one = -1;
 			d.info.protocol = "live";
 
-			asprintf((char **) &d.info.path, "/%s", path);
+			ret = asprintf((char **) &d.info.path, "/%s", path);
 
 			list_push(&w->destinations, memdup(&d, sizeof(d)));
 		}
