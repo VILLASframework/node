@@ -159,7 +159,7 @@ static void websocket_connection_close(struct websocket_connection *c, struct lw
 
 	msg = strcatf(&msg, ": status=%u, reason=%s", status, reason);
 
-	warn(msg);
+	warn("%s", msg);
 
 	free(msg);
 }

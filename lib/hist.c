@@ -182,7 +182,7 @@ void hist_plot(struct hist *h)
 		for (int i = 0; i < bar; i++)
 			buf = strcatf(&buf, "\u2588");
 
-		stats(buf);
+		stats("%s", buf);
 		free(buf);
 	}
 
