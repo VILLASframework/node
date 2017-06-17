@@ -27,6 +27,8 @@
 
 #include <villas/utils.h>
 #include <villas/advio.h>
+#include <villas/sample.h>
+#include <villas/sample_io.h>
 
 /** This URI points to a Sciebo share which contains some test files.
  * The Sciebo share is read/write accessible via WebDAV. */
@@ -64,6 +66,34 @@ Test(advio, download)
 
 	cr_assert_arr_eq(buffer, expect, sizeof(expect));
 
+	ret = afclose(af);
+	cr_assert_eq(ret, 0, "Failed to close file");
+}
+
+Test(advio, download_large)
+{
+	AFILE *af;
+	int ret, len = 16;
+	
+	struct sample *smp = alloc(SAMPLE_LEN(len));
+	smp->capacity = len;
+
+	af = afopen(BASE_URI "/download-large" , "r");
+	cr_assert(af, "Failed to download file");
+
+	ret = sample_io_villas_fscan(af->file, smp, NULL);
+	cr_assert_eq(ret, 0);
+	
+	cr_assert_eq(smp->sequence, 0);
+	cr_assert_eq(smp->length, 4);
+	cr_assert_eq(smp->ts.origin.tv_sec, 1497710378);
+	cr_assert_eq(smp->ts.origin.tv_nsec, 863332240);
+	
+	float data[] = { 0.022245, 0.000000, -1.000000, 1.000000 };
+	
+	for (int i = 0; i < smp->length; i++)
+		cr_assert_float_eq(smp->data[i].f, data[i], 1e-5);
+	
 	ret = afclose(af);
 	cr_assert_eq(ret, 0, "Failed to close file");
 }
