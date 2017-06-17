@@ -83,7 +83,7 @@ static char * advio_human_size(double s, char *buf, size_t len)
 		i++;
 	}
 	
-	snprintf(buf, len, "%.2f %s", s, units[i]);
+	snprintf(buf, len, "%.*f %s", i ? 2 : 0, s, units[i]);
 	
 	return buf;
 }
@@ -292,6 +292,9 @@ int aupload(AFILE *af, int resume)
 	
 	long pos, end;
 	
+	double total_bytes = 0, total_time = 0;
+	char buf[2][32];
+	
 	pos = aftell(af);
 	fseek(af->file, 0, SEEK_END);
 	end = aftell(af);
@@ -301,11 +304,15 @@ int aupload(AFILE *af, int resume)
 		if (end == af->uploaded)
 			return 0;
 		
-		info("Resume upload of %s from offset %lu", af->uri, af->uploaded);
+		char *size_human = advio_human_size(end - af->uploaded, buf[0], sizeof(buf[0]));
+		
+		info("Resume upload of %s of %s from offset %lu", af->uri, size_human, af->uploaded);
 		curl_easy_setopt(af->curl, CURLOPT_RESUME_FROM, af->uploaded);
 	}
 	else {
-		info("Start upload of %s", af->uri);
+		char *size_human = advio_human_size(end, buf[0], sizeof(buf[0]));
+		
+		info("Start upload of %s of %s", af->uri, size_human);
 		curl_easy_setopt(af->curl, CURLOPT_RESUME_FROM, 0);
 	}
 
@@ -321,9 +328,6 @@ int aupload(AFILE *af, int resume)
 		return -1;
 
 	sha1sum(af->file, af->hash);
-	
-	double total_bytes = 0, total_time = 0;
-	char buf[2][32];
 	
 	curl_easy_getinfo(af->curl, CURLINFO_SIZE_UPLOAD, &total_bytes);
 	curl_easy_getinfo(af->curl, CURLINFO_TOTAL_TIME, &total_time);
