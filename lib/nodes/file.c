@@ -205,21 +205,21 @@ char * file_print(struct node *n)
 		);
 
 		if (f->read_rate)
-			strcatf(&buf, "rate=%.1f, ", f->read_rate);
+			strcatf(&buf, ", rate=%.1f", f->read_rate);
 	}
 
 	if (f->write.fmt) {
-		strcatf(&buf, "out=%s, mode=%s, ",
+		strcatf(&buf, ", out=%s, mode=%s",
 			f->write.uri ? f->write.uri : f->write.fmt,
 			f->write.mode
 		);
 	}
 
 	if (f->read_first.tv_sec || f->read_first.tv_nsec)
-		strcatf(&buf, "first=%.2f, ", time_to_double(&f->read_first));
+		strcatf(&buf, ", first=%.2f", time_to_double(&f->read_first));
 
 	if (f->read_offset.tv_sec || f->read_offset.tv_nsec)
-		strcatf(&buf, "offset=%.2f, ", time_to_double(&f->read_offset));
+		strcatf(&buf, ", offset=%.2f", time_to_double(&f->read_offset));
 
 	if ((f->read_first.tv_sec || f->read_first.tv_nsec) &&
 	    (f->read_offset.tv_sec || f->read_offset.tv_nsec)) {
@@ -229,11 +229,8 @@ char * file_print(struct node *n)
 		eta = time_diff(&now, &eta);
 
 		if (eta.tv_sec || eta.tv_nsec)
-		strcatf(&buf, "eta=%.2f sec, ", time_to_double(&eta));
+			strcatf(&buf, ", eta=%.2f sec", time_to_double(&eta));
 	}
-
-	if (strlen(buf) > 2)
-		buf[strlen(buf) - 2] = 0;
 
 	return buf;
 }
