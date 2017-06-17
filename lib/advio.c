@@ -39,39 +39,116 @@
 
 #define BAR_WIDTH 60 /**< How wide you want the progress meter to be. */
 
-static int advio_xferinfo(void *p, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
+static int advio_trace(CURL *handle, curl_infotype type, char *data, size_t size, void *userp)
+{
+	char *nl;
+
+	switch (type) {
+		case CURLINFO_TEXT:
+			nl = strchr(data, '\n');
+			if (nl)
+				*nl = 0;
+
+			debug(LOG_ADVIO | 10, "%s", data);
+		default: /* in case a new one is introduced to shock us */
+			return 0;
+	}
+ 
+	return 0;
+}
+
+static char * advio_human_time(double t, char *buf, size_t len)
+{
+	int i = 0;
+	const char *units[] = { "secs", "mins", "hrs", "days", "weeks", "months", "years" };
+	int divs[]          = {     60,     60,    24,      7,       4,       12 };
+	
+	while (t > divs[i] && i < ARRAY_LEN(divs)) {
+		t /= divs[i];
+		i++;
+	}
+	
+	snprintf(buf, len, "%.2f %s", t, units[i]);
+
+	return buf;
+}
+
+static char * advio_human_size(double s, char *buf, size_t len)
+{
+	int i = 0;
+	const char *units[] = { "B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB" };
+	
+	while (s > 1024 && i < ARRAY_LEN(units)) {
+		s /= 1024;
+		i++;
+	}
+	
+	snprintf(buf, len, "%.2f %s", s, units[i]);
+	
+	return buf;
+}
+
+static int advio_xferinfo(void *p, curl_off_t dl_total_bytes, curl_off_t dl_bytes, curl_off_t ul_total_bytes, curl_off_t ul_bytes)
 {
 	struct advio *af = (struct advio *) p;
-	double curtime = 0;
+	double cur_time, eta_time, estimated_time, frac;
 
-	curl_easy_getinfo(af->curl, CURLINFO_TOTAL_TIME, &curtime);
-
-	// ensure that the file to be downloaded is not empty
-	// because that would cause a division by zero error later on
-	if (dltotal <= 0.0)
+	curl_easy_getinfo(af->curl, CURLINFO_TOTAL_TIME, &cur_time);
+	
+	/* Is this transaction an upload? */
+	int upload = ul_total_bytes > 0;
+	
+	curl_off_t total_bytes = upload ? ul_total_bytes : dl_total_bytes;
+	curl_off_t bytes       = upload ? ul_bytes       : dl_bytes;
+	
+	/* Are we finished? */
+	if (bytes == 0)
+		af->completed = 0;
+	
+	if (af->completed)
 		return 0;
+			
+	/* Ensure that the file to be downloaded is not empty
+	 * because that would cause a division by zero error later on */	
+	if (total_bytes <= 0)
+		return 0;
+	
+	frac = (double) bytes / total_bytes;
+	
+	estimated_time = cur_time * (1.0 / frac); 
+	eta_time = estimated_time - cur_time;
 
-	double frac = dlnow / dltotal;
+	/* Print file sizes in human readable format */
+	char buf[4][32];
+	
+	char *bytes_human = advio_human_size(bytes, buf[0], sizeof(buf[0]));
+	char *total_bytes_human = advio_human_size(total_bytes, buf[1], sizeof(buf[1]));
+	char *eta_time_human = advio_human_time(eta_time, buf[2], sizeof(buf[2]));
 
-	// part of the progressmeter that's already "full"
+	/* Part of the progressmeter that's already "full" */
 	int dotz = round(frac * BAR_WIDTH);
 
-	// create the "meter"
-	fprintf(stderr, "%3.0f%% in %f s (%" CURL_FORMAT_CURL_OFF_T " / %" CURL_FORMAT_CURL_OFF_T ") [", frac * 100, curtime, dlnow, dltotal);
+	/* Progress bar */
+	fprintf(stderr, "\r[");
+	
+	for (int i = 0 ; i < BAR_WIDTH; i++) {
+		if (upload)
+			fputc(BAR_WIDTH - i > dotz ? ' ' : '<', stderr);
+		else
+			fputc(i > dotz ? ' ' : '>', stderr);
+	}
 
-	// part  that's full already
-	int i = 0;
-	for ( ; i < dotz; i++)
-		fprintf(stderr, "=");
-
-	// remaining part (spaces)
-	for ( ; i < BAR_WIDTH; i++)
-		fprintf(stderr, " ");
-
-	// and back to line begin - do not forget the fflush to avoid output buffering problems!
-	fprintf(stderr, "]\r");
+	fprintf(stderr, "] ");
+	
+	/* Details */
+	fprintf(stderr, "eta %-12s %12s of %-12s", eta_time_human, bytes_human, total_bytes_human);
 	fflush(stderr);
-
+	
+	if (bytes == total_bytes) {
+		af->completed = 1;
+		fprintf(stderr, "\33[2K\r");
+	}
+	
 	return 0;
 }
 
@@ -120,7 +197,6 @@ AFILE * afopen(const char *uri, const char *mode)
 	curl_easy_setopt(af->curl, CURLOPT_WRITEDATA, af->file);
 	curl_easy_setopt(af->curl, CURLOPT_XFERINFOFUNCTION, advio_xferinfo);
 	curl_easy_setopt(af->curl, CURLOPT_XFERINFODATA, af);
-	curl_easy_setopt(af->curl, CURLOPT_NOPROGRESS, 0L);
 
 	ret = adownload(af);
 	if (ret)
@@ -181,6 +257,7 @@ int aupload(AFILE *af)
 
 	pos = ftell(af->file); /* Remember old stream pointer */
 	fseek(af->file, 0, SEEK_SET);
+	curl_easy_setopt(af->curl, CURLOPT_NOPROGRESS, !isatty(fileno(stderr)));
 
 	res = curl_easy_perform(af->curl);
 
@@ -204,6 +281,7 @@ int adownload(AFILE *af)
 	int ret;
 
 	fseek(af->file, 0, SEEK_SET);
+	curl_easy_setopt(af->curl, CURLOPT_NOPROGRESS, !isatty(fileno(stderr)));
 
 	res = curl_easy_perform(af->curl);
 
