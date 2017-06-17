@@ -68,6 +68,55 @@ Test(advio, download)
 	cr_assert_eq(ret, 0, "Failed to close file");
 }
 
+Test(advio, resume)
+{
+	int ret;
+	AFILE *af1, *af2;
+	char *fn, dir[] = "/tmp/temp.XXXXXX";
+	char line1[32];
+	char *line2 = NULL;
+	size_t linelen = 0;
+	
+	mkdtemp(dir);
+	ret = asprintf(&fn, "%s/file", dir);
+	cr_assert_gt(ret, 0);
+	
+	af1 = afopen(fn, "w+");
+	cr_assert_not_null(af1);
+	
+	/* We flush once the empty file in order to upload an empty file. */
+	aupload(af1, 0);
+	
+	af2 = afopen(fn, "r");
+	cr_assert_not_null(af2);
+	
+	for (int i = 0; i < 100; i++) {
+		snprintf(line1, sizeof(line1), "This is line %d\n", i);
+		
+		afputs(line1, af1);
+		aupload(af1, 1);
+		
+		adownload(af2, 1);
+		agetline(&line2, &linelen, af2);
+		
+		cr_assert_str_eq(line1, line2);
+	}
+	
+	ret = afclose(af1);
+	cr_assert_eq(ret, 0);
+	
+	ret = afclose(af2);
+	cr_assert_eq(ret, 0);
+	
+	ret = unlink(fn);
+	cr_assert_eq(ret, 0);
+	
+	ret = rmdir(dir);
+	cr_assert_eq(ret, 0);
+	
+	free(line2);
+}
+
 Test(advio, upload)
 {
 	AFILE *af;

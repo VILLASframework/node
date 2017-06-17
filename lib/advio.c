@@ -195,12 +195,20 @@ AFILE * afopen(const char *uri, const char *mode)
 	curl_easy_setopt(af->curl, CURLOPT_USERAGENT, USER_AGENT);
 	curl_easy_setopt(af->curl, CURLOPT_URL, af->uri);
 	curl_easy_setopt(af->curl, CURLOPT_WRITEDATA, af->file);
+	curl_easy_setopt(af->curl, CURLOPT_READDATA, af->file);
+
+	curl_easy_setopt(af->curl, CURLOPT_DEBUGFUNCTION, advio_trace);
+	curl_easy_setopt(af->curl, CURLOPT_VERBOSE, 1);
+
 	curl_easy_setopt(af->curl, CURLOPT_XFERINFOFUNCTION, advio_xferinfo);
 	curl_easy_setopt(af->curl, CURLOPT_XFERINFODATA, af);
 
-	ret = adownload(af);
+	ret = adownload(af, 0);
 	if (ret)
 		goto out0;
+	
+	af->uploaded = 0;
+	af->downloaded = 0;
 
 	return af;
 
@@ -227,6 +235,42 @@ int afclose(AFILE *af)
 	return ret;
 }
 
+int afseek(AFILE *af, long offset, int origin)
+{
+	long new, cur = aftell(af);
+	
+	switch (origin) {
+		case SEEK_SET:
+			new = offset;
+			break;
+
+		case SEEK_END:
+			fseek(af->file, 0, SEEK_END);
+			new = aftell(af);
+			fseek(af->file, cur, SEEK_SET);
+			break;
+		
+		case SEEK_CUR:
+			new = cur + offset;
+			break;
+			
+		default:
+			return -1;
+	}
+	
+	if (new < af->uploaded)
+		af->uploaded = new;
+
+	return fseek(af->file, offset, origin);
+}
+
+void arewind(AFILE *af)
+{
+	af->uploaded = 0;
+
+	return rewind(af->file);
+}
+
 int afflush(AFILE *af)
 {
 	bool dirty;
@@ -237,32 +281,39 @@ int afflush(AFILE *af)
 	dirty = memcmp(hash, af->hash, sizeof(hash));
 
 	if (dirty)
-		return aupload(af);
+		return aupload(af, 1);
 
 	return 0;
 }
-
-int aupload(AFILE *af)
+ 
+int aupload(AFILE *af, int resume)
 {
 	CURLcode res;
-	long pos;
-	int ret;
-
-	ret = fflush(af->file);
-	if (ret)
-		return ret;
+	
+	long pos, end;
+	
+	pos = aftell(af);
+	fseek(af->file, 0, SEEK_END);
+	end = aftell(af);
+	fseek(af->file, 0, SEEK_SET);
+	
+	if (resume) {
+		if (end == af->uploaded)
+			return 0;
+		
+		info("Resume upload of %s from offset %lu", af->uri, af->uploaded);
+		curl_easy_setopt(af->curl, CURLOPT_RESUME_FROM, af->uploaded);
+	}
+	else {
+		info("Start upload of %s", af->uri);
+		curl_easy_setopt(af->curl, CURLOPT_RESUME_FROM, 0);
+	}
 
 	curl_easy_setopt(af->curl, CURLOPT_UPLOAD, 1L);
-	curl_easy_setopt(af->curl, CURLOPT_READDATA, af->file);
-
-	pos = ftell(af->file); /* Remember old stream pointer */
-	fseek(af->file, 0, SEEK_SET);
+	curl_easy_setopt(af->curl, CURLOPT_INFILESIZE, end - af->uploaded);
 	curl_easy_setopt(af->curl, CURLOPT_NOPROGRESS, !isatty(fileno(stderr)));
 
 	res = curl_easy_perform(af->curl);
-
-	fprintf(stderr, "\e[2K");
-	fflush(stderr); /* do not continue in the same line as the progress bar */
 
 	fseek(af->file, pos, SEEK_SET); /* Restore old stream pointer */
 
@@ -270,27 +321,68 @@ int aupload(AFILE *af)
 		return -1;
 
 	sha1sum(af->file, af->hash);
+	
+	double total_bytes = 0, total_time = 0;
+	char buf[2][32];
+	
+	curl_easy_getinfo(af->curl, CURLINFO_SIZE_UPLOAD, &total_bytes);
+	curl_easy_getinfo(af->curl, CURLINFO_TOTAL_TIME, &total_time);
+	
+	char *total_bytes_human = advio_human_size(total_bytes, buf[0], sizeof(buf[0]));
+	char *total_time_human = advio_human_time(total_time, buf[1], sizeof(buf[1]));
+	
+	info("Finished uploaded of %s in %s", total_bytes_human, total_time_human);
+	
+	af->uploaded += total_bytes;
 
 	return 0;
 }
 
-int adownload(AFILE *af)
+int adownload(AFILE *af, int resume)
 {
 	CURLcode res;
-	long code;
+	long code, pos;
 	int ret;
+	
+	double total_bytes = 0, total_time = 0;
+	char buf[2][32];
+		
+	pos = aftell(af);
 
-	fseek(af->file, 0, SEEK_SET);
+	if (resume) {
+		info("Resume download of %s from offset %lu", af->uri, af->downloaded);
+		
+		curl_easy_setopt(af->curl, CURLOPT_RESUME_FROM, af->downloaded);
+	}
+	else {
+		info("Start download of %s", af->uri);
+
+		rewind(af->file);		
+		curl_easy_setopt(af->curl, CURLOPT_RESUME_FROM, 0);
+	}
+	
+	curl_easy_setopt(af->curl, CURLOPT_UPLOAD, 0L);
 	curl_easy_setopt(af->curl, CURLOPT_NOPROGRESS, !isatty(fileno(stderr)));
 
 	res = curl_easy_perform(af->curl);
 
-	fprintf(stderr, "\e[2K");
-	fflush(stderr); /* do not continue in the same line as the progress bar */
-
 	switch (res) {
 		case CURLE_OK:
-			curl_easy_getinfo(af->curl, CURLINFO_RESPONSE_CODE, &code);
+			curl_easy_getinfo(af->curl, CURLINFO_SIZE_DOWNLOAD, &total_bytes);
+			curl_easy_getinfo(af->curl, CURLINFO_TOTAL_TIME, &total_time);
+	
+			char *total_bytes_human = advio_human_size(total_bytes, buf[0], sizeof(buf[0]));
+			char *total_time_human = advio_human_time(total_time, buf[1], sizeof(buf[1]));
+	
+			info("Finished download of %s in %s", total_bytes_human, total_time_human);
+
+			af->downloaded += total_bytes;
+			af->uploaded = af->downloaded;
+			
+			res = curl_easy_getinfo(af->curl, CURLINFO_RESPONSE_CODE, &code);
+			if (res)
+				return -1;
+			
 			switch (code) {
 				case   0:
 				case 200: goto exist;
@@ -312,7 +404,7 @@ int adownload(AFILE *af)
 				return -1;
 
 		default:
-			error("Failed to fetch file: %s: %s\n", af->uri, curl_easy_strerror(res));
+			error("ADVIO: Failed to fetch file: %s: %s", af->uri, curl_easy_strerror(res));
 			return -1;
 	}
 
@@ -333,11 +425,13 @@ notexist: /* File does not exist */
 		return ret;
 
 exist: /* File exists */
-	if (af->mode[0] == 'a')
-		fseek(af->file, 0, SEEK_END);
+	if (resume)
+		afseek(af, pos, SEEK_SET);
+	else if (af->mode[0] == 'a')
+		afseek(af, 0, SEEK_END);
 	else if (af->mode[0] == 'r' || af->mode[0] == 'w')
-		fseek(af->file, 0, SEEK_SET);
-
+		afseek(af, 0, SEEK_SET);
+	
 	sha1sum(af->file, af->hash);
 
 	return 0;
