@@ -237,11 +237,10 @@ static void * RecvFromIPPort(void *arg)
 		OpalSetAsyncRecvIconStatus(msg->sequence, RecvID);	/* Set the Status to the message ID */
 #elif PROTOCOL == GTNET_SKT
         uint32_t *imsg = (uint32_t *) msg;
-        for (int i = 0; i < cnt; i++)
+        for (int i = 0; i < cnt; i++) {
             imsg[i] = ntohl(imsg[i]);
-			
-		for (int i = 0; i < cnt; i++)
 			mdldata[i] = (double) msg[i];
+        }
 #else
   #error Unknown protocol
 #endif
