@@ -103,9 +103,9 @@ static void * SendToIPPort(void *arg)
 		OpalGetAsyncSendIconDataLength(&mdldata_size, SendID);
 		cnt = mdldata_size / sizeof(double);
 		if (cnt > MAX_VALUES) {
-			OpalPrint("%s: Number of signals for SendID=%d exceeds allowed maximum (%d)\n",
+			OpalPrint("%s: Number of signals for SendID=%d exceeds allowed maximum (%d). Limiting...\n",
 				PROGNAME, SendID, MAX_VALUES);
-			return NULL;
+			cnt = MAX_VALUES;
 		}
 
 		/* Read data from the model */
@@ -116,25 +116,25 @@ static void * SendToIPPort(void *arg)
 		struct timespec now;
 		clock_gettime(CLOCK_REALTIME, &now);
 
-		msg->length = mdldata_size / sizeof(double);
+		msg->length = cnt;
 		msg->sequence = Sequence++;
 		msg->ts.sec = now.tv_sec;
 		msg->ts.nsec = now.tv_nsec;
 
 		for (int i = 0; i < msg->length; i++)
 			msg->data[i].f = (float) mdldata[i];
-
-		msg_hton(msg);
 		
 		len = MSG_LEN(msg->length);
+
+		msg_hton(msg);
 #elif PROTOCOL == GTNET_SKT
-        uint32_t *imsg = (uint32_t *) msg;
+		uint32_t *imsg = (uint32_t *) msg;
 		for (int i = 0; i < cnt; i++) {
 			msg[i] = (float) mdldata[i];
-            imsg[i] = htonl(imsg[i]);
-        }
+			imsg[i] = htonl(imsg[i]);
+		}
 		
-		len = mdldata_size / sizeof(double) * sizeof(float);
+		len = cnt * sizeof(float);
 #else
   #error Unknown protocol
 #endif
