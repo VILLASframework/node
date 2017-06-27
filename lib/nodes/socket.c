@@ -399,7 +399,7 @@ static int socket_read_villas(struct node *n, struct sample *smps[], unsigned cn
 
 	ret = msg_buffer_to_samples(smps, cnt, bufptr, bytes);
 	if (ret < 0)
-		warn("Received invalid packet from node: %s", node_name(n));
+		warn("Received invalid packet from node: %s reason=%d", node_name(n), ret);
 
 	return ret;
 }
