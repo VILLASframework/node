@@ -6,11 +6,27 @@
 This is VILLASnode, a gateway for processing and forwardning simulation data between real-time simulators.
 VILLASnode is a client/server application to connect simulation equipment and software such as:
 
- - OPAL-RT eMegaSim,
+ - OPAL-RT RT-LAB,
  - RTDS GTFPGA cards,
+ - RTDS GTWIF cards,
  - Simulink,
  - LabView,
- - and FPGA models.
+ - and FPGA models
+
+by using protcols such as:
+
+ - IEEE 802.2 Ethernet / IP / UDP,
+ - ZeroMQ,
+ - nanomsg,
+ - WebSockets
+ - Shared Memory
+ - Files
+
+Planned:
+
+ - IEC 61850-9-2 Sampled Values,
+ - IEC 61850-8-1 GOOSE,
+ - AMQP
 
 It's designed with a focus on very low latency to achieve almost realtime exchange of simulation data.
 VILLASnode is used in distributed- and co-simulation scenarios and developed for the field of power grid simulation at the EON Energy Research Center in Aachen, Germany.
