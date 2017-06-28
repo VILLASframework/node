@@ -172,9 +172,13 @@ int socket_start(struct node *n)
 	if (s->local.sa.sa_family != s->remote.sa.sa_family)
 		error("Address families of local and remote must match!");
 	
-	if (s->layer != SOCKET_LAYER_IP && s->layer != SOCKET_LAYER_UDP) {
-		if (s->multicast.enabled)
-			error("Multicast is only supported for the IP / UDP layers");
+	if (s->multicast.enabled) {
+		if (s->local.sa.sa_family != AF_INET)
+			error("Multicast is only supported by IPv4 for node %s", node_name(n));
+		
+		uint32_t addr = ntohl(s->multicast.mreq.imr_multiaddr.s_addr);
+		if ((addr >> 28) != 14)
+			error("Multicast group address of node %s must be within 224.0.0.0/4", node_name(n));
 	}
 	
 	if (s->layer == SOCKET_LAYER_IP) {
