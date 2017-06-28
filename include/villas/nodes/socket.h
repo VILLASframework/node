@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <linux/if_packet.h>
+#include <netinet/in.h>
 
 #include "node.h"
 
@@ -73,6 +74,14 @@ struct socket {
 
 	union sockaddr_union local;	/**< Local address of the socket */
 	union sockaddr_union remote;	/**< Remote address of the socket */
+        
+	/* Multicast options */
+	struct multicast {
+		int enabled;		/**< Is multicast enabled? */
+		unsigned char loop;	/** Loopback multicast packets to local host? */
+		unsigned char ttl;	/**< The time to live for multicast packets. */
+		struct ip_mreq mreq;	/**< A multicast group to join. */
+	} multicast;
 
 	struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Network emulator queuing discipline */
 	struct rtnl_cls *tc_classifier;	/**< libnl3: Firewall mark classifier */
