@@ -141,6 +141,7 @@ int file_parse(struct node *n, config_setting_t *cfg)
 		}
 		else
 			f->read_eof = FILE_EOF_EXIT;
+
 		if (!config_setting_lookup_float(cfg_in, "rate", &f->read_rate))
 			f->read_rate = 0; /* Disable fixed rate sending. Using timestamps of file instead */
 
