@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<Project>
+    <General>
+        <att_name>villas_udp</att_name>
+        <att_description>This is a project!</att_description>
+        <att_ip_address>134.130.169.120:25251</att_ip_address>
+        <att_hashcode>FC70D2D4-2B11-40E7-8317-6C0EB3BB3182</att_hashcode>
+        <att_autosave>ON</att_autosave>
+        <att_filename>C:\Users\svo\workspace\villas\node\clients\opal\villas_udp\villas_udp.llp</att_filename>
+    </General>
+    <Models>
+        <Model>
+            <Path>
+                <Relative>models/send_receive/send_receive.mdl</Relative>
+                <Absolute>C:/Users/svo/workspace/villas/node/clients/opal/villas_udp/models/send_receive/send_receive.mdl</Absolute>
+                <UNC>C:/Users/svo/workspace/villas/node/clients/opal/villas_udp/models/send_receive/send_receive.mdl</UNC>
+            </Path>
+        </Model>
+    </Models>
+</Project>

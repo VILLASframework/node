@@ -1,0 +1,8 @@
+*.o
+*.d
+AsyncIP
+Opcommon/
+report/
+*_sm_model/
+*_ss_model/
+*_sc_console.mdl
