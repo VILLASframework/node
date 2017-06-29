@@ -66,7 +66,7 @@ static int stats_send_parse(struct hook *h, config_setting_t *cfg)
 	else
 		cerror(cfg, "Missing setting 'destination' for hook '%s'", plugin_name(h->_vt));
 
-	if (config_setting_lookup_string(cfg, "destination", &mode)) {
+	if (config_setting_lookup_string(cfg, "mode", &mode)) {
 		if      (!strcmp(mode, "periodic"))
 			p->mode = STATS_SEND_MODE_PERIODIC;
 		else if (!strcmp(mode, "read"))
