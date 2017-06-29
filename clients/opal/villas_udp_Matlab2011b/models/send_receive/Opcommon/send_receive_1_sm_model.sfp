@@ -1,5 +1,0 @@
-[S-Function list]
-send_receive_1_sm_model/sm_model/OpIPSocketCtrl1=0
-send_receive_1_sm_model/sm_model/receive message 1/S-Function1=0
-send_receive_1_sm_model/sm_model/rtlab_send_subsystem/Subsystem1/Send1/S-Function=0
-send_receive_1_sm_model/sm_model/send message 1/S-Function2=0
