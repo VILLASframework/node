@@ -116,6 +116,10 @@ static void * SendToIPPort(void *arg)
 		struct timespec now;
 		clock_gettime(CLOCK_REALTIME, &now);
 
+		msg->version = MSG_VERSION;
+		msg->type = MSG_TYPE_DATA;
+		msg->rsvd1 = 0;
+		msg->rsvd2 = 0;
 		msg->length = cnt;
 		msg->sequence = Sequence++;
 		msg->ts.sec = now.tv_sec;
