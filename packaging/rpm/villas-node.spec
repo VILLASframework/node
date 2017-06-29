@@ -47,6 +47,10 @@ rm -rf %{?buildroot}
 make PREFIX=/usr DESTDIR=%{?buildroot} install
 make PREFIX=/usr DESTDIR=%{?buildroot} install-doc
 
+%check
+make run-unit-tests
+make run-integration-tests
+
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
 
