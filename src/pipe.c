@@ -200,13 +200,19 @@ int main(int argc, char *argv[])
 				sendd.enabled = false; // receive only
 				break;
 			case 'd':
-				level = atoi(optarg);
-				break;
+				level = strtoul(optarg, &endptr, 10);
+				goto check;
 			case 'h':
 			case '?':
 				usage();
 				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
+
+		continue;
+
+check:		if (optarg == endptr)
+			error("Failed to parse parse option argument '-%c %s'", c, optarg);
+
 	}
 
 	if (argc != optind + 2) {
