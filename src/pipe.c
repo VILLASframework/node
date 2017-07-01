@@ -49,7 +49,6 @@ struct dir {
 	struct pool pool;
 	pthread_t thread;
 	bool enabled;
-	bool started;
 } sendd, recvv;
 
 bool reverse = false;
@@ -60,13 +59,13 @@ pthread_t ptid; /**< Parent thread id */
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
-	if (recvv.started) {
+	if (recvv.enabled) {
 		pthread_cancel(recvv.thread);
 		pthread_join(recvv.thread, NULL);
 		pool_destroy(&recvv.pool);
 	}
 
-	if (sendd.started) {
+	if (sendd.enabled) {
 		pthread_cancel(sendd.thread);
 		pthread_join(sendd.thread, NULL);
 		pool_destroy(&sendd.pool);
@@ -104,11 +103,6 @@ static void * send_loop(void *ctx)
 {
 	int ret;
 	struct sample *smps[node->vectorize];
-
-	if (!sendd.enabled)
-		return NULL;
-
-	sendd.started = true;
 
 	/* Initialize memory */
 	ret = pool_init(&sendd.pool, LOG2_CEIL(node->vectorize), SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
@@ -151,11 +145,6 @@ static void * recv_loop(void *ctx)
 {
 	int ret;
 	struct sample *smps[node->vectorize];
-
-	if (!recvv.enabled)
-		return NULL;
-
-	recvv.started = true;
 
 	/* Initialize memory */
 	ret = pool_init(&recvv.pool, LOG2_CEIL(node->vectorize), SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
@@ -264,8 +253,11 @@ int main(int argc, char *argv[])
 		error("Failed to start node: %s", node_name(node));
 
 	/* Start threads */
-	pthread_create(&recvv.thread, NULL, recv_loop, NULL);
-	pthread_create(&sendd.thread, NULL, send_loop, NULL);
+	if (recvv.enabled)
+		pthread_create(&recvv.thread, NULL, recv_loop, NULL);
+	
+	if (sendd.enabled)
+		pthread_create(&sendd.thread, NULL, send_loop, NULL);
 
 	for (;;)
 		sleep(1);
