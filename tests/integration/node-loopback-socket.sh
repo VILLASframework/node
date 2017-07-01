@@ -26,15 +26,6 @@ CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
-function prefix() {
-	case $1 in
-		node) P=$'\\\e[36mnode\\\e[39m: ' ;;
-		pipe) P=$'\\\e[93mpipe\\\e[39m: ' ;;
-		cmp)  P=$'\\\e[35mcmp\\\e[39m:  ' ;;
-	esac
-
-	sed -e "s/^/$P/"
-}
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 cat > ${CONFIG_FILE} <<EOF
@@ -68,20 +59,23 @@ EOF
 villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 # Start node
-villas-node ${CONFIG_FILE} 2>&1 | prefix node &
+villas-node ${CONFIG_FILE} &
 
 # Wait for node to complete init
 sleep 1
 
 # Send / Receive data to node
-(villas-pipe ${CONFIG_FILE} node2 > ${OUTPUT_FILE} < <(cat ${INPUT_FILE}; sleep 1; echo -n)) 2>&1 | prefix pipe
+villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node2 > ${OUTPUT_FILE} < ${INPUT_FILE}
+
+# Wait for node to handle samples
+sleep 1
 
 # Stop node
 kill %1
 
 # Compare data
-villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE} 2>&1 | prefix cmp
-RC=${PIPESTATUS[0]}
+villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
+RC=$?
 
 rm ${CONFIG_FILE} ${INPUT_FILE} ${OUTPUT_FILE}
 
