@@ -34,10 +34,11 @@ export PATH=${BUILDDIR}:${PATH}
 VERBOSE=0
 FILTER='*'
 
-export NUM_SAMPLES=100
+NUM_SAMPLES=100
+TIMEOUT=1m
 
 # Parse command line arguments
-while getopts ":f:l:v" OPT; do
+while getopts ":f:l:t:v" OPT; do
 	case ${OPT} in
 		f)
 			FILTER=${OPTARG}
@@ -48,6 +49,9 @@ while getopts ":f:l:v" OPT; do
 		l)
 			NUM_SAMPLES=${OPTARG}
 			;;
+		t)
+			TIMEOUT=${OPTARG}
+			;;
 		\?)
 			echo "Invalid option: -${OPTARG}" >&2
 			;;
@@ -57,6 +61,9 @@ while getopts ":f:l:v" OPT; do
 			;;
 	esac
 done
+
+export VERBOSE
+export NUM_SAMPLES
 
 TESTS=${SRCDIR}/tests/integration/${FILTER}.sh
 
@@ -74,11 +81,10 @@ for TEST in ${TESTS}; do
 
 	# Run test
 	if (( ${VERBOSE} == 0 )); then
-		${TEST} &> ${LOGDIR}/${TESTNAME}.log
+		timeout ${TIMEOUT} ${TEST} &> ${LOGDIR}/${TESTNAME}.log
 	else
-		${TEST}
+		timeout ${TIMEOUT} ${TEST}
 	fi
-
 	RC=$?
 
 	case $RC in
@@ -89,6 +95,9 @@ for TEST in ${TESTS}; do
 		99)
 			echo -e "\e[93m[Skip] \e[39m ${TESTNAME}"
 			NUM_SKIP=$((${NUM_SKIP} + 1))
+			;;
+		124)
+			echo -e "\e[31m[Timeout] \e[39m ${TESTNAME}"
 			;;
 		*)
 			echo -e "\e[31m[Fail] \e[39m ${TESTNAME} with code $RC"
