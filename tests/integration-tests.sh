@@ -70,8 +70,10 @@ TESTS=${SRCDIR}/tests/integration/${FILTER}.sh
 # Preperations
 mkdir -p ${LOGDIR}
 
-NUM_PASS=0
-NUM_FAIL=0
+PASSED=0
+FAILED=0
+SKIPPED=0
+TIMEDOUT=0
 
 # Preamble
 echo -e "Starting integration tests for VILLASnode/fpga:\n"
@@ -90,25 +92,31 @@ for TEST in ${TESTS}; do
 	case $RC in
 		0)
 			echo -e "\e[32m[Pass] \e[39m ${TESTNAME}"
-			NUM_PASS=$((${NUM_PASS} + 1))
+			PASSED=$((${PASSED} + 1))
 			;;
 		99)
 			echo -e "\e[93m[Skip] \e[39m ${TESTNAME}"
-			NUM_SKIP=$((${NUM_SKIP} + 1))
+			SKIPPED=$((${SKIPPED} + 1))
 			;;
 		124)
-			echo -e "\e[31m[Timeout] \e[39m ${TESTNAME}"
+			echo -e "\e[33m[Time] \e[39m ${TESTNAME}"
+			TIMEDOUT=$((${TIMEDOUT} + 1))
+			FAILED=$((${FAILED} + 1))
 			;;
 		*)
 			echo -e "\e[31m[Fail] \e[39m ${TESTNAME} with code $RC"
-			NUM_FAIL=$((${NUM_FAIL} + 1))
+			FAILED=$((${FAILED} + 1))
 			;;
 	esac
+	
+	TOTAL=$((${TOTAL} + 1))
 done
 
 # Show summary
-if (( ${NUM_FAIL} > 0 )); then
-	echo -e "\nSummary: ${NUM_FAIL} of $((${NUM_FAIL} + ${NUM_PASS})) tests failed."
+if (( ${FAILED} > 0 )); then
+	echo -e "\nSummary: ${FAILED} of ${TOTAL} tests failed."
+	echo -e "   Timedout: ${TIMEDOUT}"
+	echo -e "   Skipped: ${SKIPPED}"
 	exit 1
 else
 	echo -e "\nSummary: all tests passed!"
