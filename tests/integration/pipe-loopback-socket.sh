@@ -27,8 +27,10 @@ INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 THEORIES=$(mktemp)
 
+NUM_SAMPLES=${NUM_SAMPLES:-10}
+
 # Generate test data
-villas-signal random -l 10 -n > ${INPUT_FILE}
+villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 for LAYER	in udp ip eth; do
 for HEADER	in none default; do

@@ -35,6 +35,7 @@ function prefix() {
 
 	sed -e "s/^/$P/"
 }
+NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 cat > ${CONFIG_FILE} <<EOF
 nodes = {
@@ -64,7 +65,7 @@ paths = (
 EOF
 
 # Generate test data
-villas-signal random -l 10 -n > ${INPUT_FILE}
+villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 # Start node
 villas-node ${CONFIG_FILE} 2>&1 | prefix node &

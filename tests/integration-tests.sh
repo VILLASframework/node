@@ -37,13 +37,16 @@ FILTER='*'
 export NUM_SAMPLES=100
 
 # Parse command line arguments
-while getopts ":f:v" OPT; do
+while getopts ":f:l:v" OPT; do
 	case ${OPT} in
 		f)
 			FILTER=${OPTARG}
 			;;
 		v)
 			VERBOSE=1
+			;;
+		l)
+			NUM_SAMPLES=${OPTARG}
 			;;
 		\?)
 			echo "Invalid option: -${OPTARG}" >&2

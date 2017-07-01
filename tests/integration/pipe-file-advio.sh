@@ -26,6 +26,8 @@ CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
+NUM_SAMPLES=${NUM_SAMPLES:-10}
+
 URI=https://1Nrd46fZX8HbggT:badpass@rwth-aachen.sciebo.de/public.php/webdav/node/tests/pipe
 
 cat > ${CONFIG_FILE} <<EOF
@@ -50,7 +52,7 @@ nodes = {
 }
 EOF
 
-villas-signal sine -n -l 10 > ${INPUT_FILE}
+villas-signal sine -n -l ${NUM_SAMPLES} > ${INPUT_FILE}
 
 villas-pipe -s ${CONFIG_FILE} remote_file_out < ${INPUT_FILE}
 

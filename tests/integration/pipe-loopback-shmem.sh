@@ -26,6 +26,8 @@ CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
+NUM_SAMPLES=${NUM_SAMPLES:-10}
+
 for POLLING	in true false; do
 for VECTORIZE	in 1 5 20; do
 
@@ -44,7 +46,7 @@ nodes = {
 EOF
 
 # Generate test data
-villas-signal random -l 20 -n > ${INPUT_FILE}
+villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 # We delay EOF of the INPUT_FILE by 1 second in order to wait for incoming data to be received
 villas-pipe ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < <(cat ${INPUT_FILE}; sleep 1; echo -n)

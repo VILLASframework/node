@@ -26,6 +26,8 @@ CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
+NUM_SAMPLES=${NUM_SAMPLES:-10}
+
 cat > ${CONFIG_FILE} << EOF
 nodes = {
 	node1 = {
@@ -46,7 +48,7 @@ nodes = {
 EOF
 
 # Generate test data
-villas-signal random -l 10 -n > ${INPUT_FILE}
+villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 # We delay EOF of the INPUT_FILE by 1 second in order to wait for incoming data to be received
 villas-pipe ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < <(sleep 0.5; cat ${INPUT_FILE}; sleep 0.5; echo -n)
