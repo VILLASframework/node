@@ -74,7 +74,7 @@ nodes = {
 EOF
 
 # We delay EOF of the INPUT_FILE by 1 second in order to wait for incoming data to be received
-villas-pipe ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < <(cat ${INPUT_FILE}; sleep 1; echo -n)
+villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
 # Compare data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
