@@ -58,6 +58,9 @@ pthread_t ptid; /**< Parent thread id */
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
+	if (signal == SIGALRM)
+		info("Reached timeout. Terminating...");
+	
 	if (recvv.enabled) {
 		pthread_cancel(recvv.thread);
 		pthread_join(recvv.thread, NULL);
@@ -92,6 +95,7 @@ static void usage()
 	printf("    -x      swap read / write endpoints\n");
 	printf("    -s      only read data from stdin and send it to node\n");
 	printf("    -r      only read data from node and write it to stdout\n");
+	printf(".   -t NUM  terminate after NUM seconds\n");
 	printf("    -L NUM  terminate after NUM samples sent\n");
 	printf("    -l NUM  terminate after NUM samples received\n\n");
 
@@ -205,6 +209,7 @@ int main(int argc, char *argv[])
 	int ret, level = V;
 
 	bool reverse = false;
+	double timeout = 0;
 
 	sendd = recvv = (struct dir) {
 		.enabled = true,
@@ -214,7 +219,7 @@ int main(int argc, char *argv[])
 	ptid = pthread_self();
 	
 	char c, *endptr;
-	while ((c = getopt(argc, argv, "hxrsd:l:L:")) != -1) {
+	while ((c = getopt(argc, argv, "hxrsd:l:L:t:")) != -1) {
 		switch (c) {
 			case 'x':
 				reverse = true;
@@ -233,6 +238,9 @@ int main(int argc, char *argv[])
 				goto check;
 			case 'L':
 				sendd.limit = strtoul(optarg, &endptr, 10);
+				goto check;
+			case 't':
+				timeout = strtod(optarg, &endptr);
 				goto check;
 			case 'h':
 			case '?':
@@ -297,8 +305,10 @@ check:		if (optarg == endptr)
 	if (sendd.enabled)
 		pthread_create(&sendd.thread, NULL, send_loop, NULL);
 
+	ualarm(timeout * 1e6);
+
 	for (;;)
-		sleep(1);
+		pause();
 
 	return 0;
 }
