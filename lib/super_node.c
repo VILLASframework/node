@@ -146,8 +146,8 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 					error("Failed t convert JSON to configuration file");
 			}
 			else {
-				info("conf: %s in %s:%d", config_error_text(&sn->cfg), uri, config_error_line(&sn->cfg));
-				info("json: %s in %s:%d:%d", err.text, err.source, err.line, err.column);
+				warn("conf: %s in %s:%d", config_error_text(&sn->cfg), uri, config_error_line(&sn->cfg));
+				warn("json: %s in %s:%d:%d", err.text, err.source, err.line, err.column);
 				error("Failed to parse configuration");
 			}
 		}

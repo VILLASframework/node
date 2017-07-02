@@ -95,7 +95,7 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 	shared->polling = conf->polling;
 
 	ret = shared->polling ? queue_init(&shared->queue.q, conf->queuelen, manager)
-			   : queue_signalled_init(&shared->queue.qs, conf->queuelen, manager);
+			      : queue_signalled_init(&shared->queue.qs, conf->queuelen, manager);
 	if (ret) {
 		errno = ENOMEM;
 		return -1;

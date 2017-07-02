@@ -47,7 +47,7 @@ int shmem_parse(struct node *n, config_setting_t *cfg)
 		cerror(cfg, "Missing shared memory input queue name");
 
 	if (!config_setting_lookup_int(cfg, "queuelen", &shm->conf.queuelen))
-		shm->conf.queuelen = DEFAULT_SHMEM_QUEUELEN;
+		shm->conf.queuelen = MAX(DEFAULT_SHMEM_QUEUELEN, n->vectorize);
 
 	if (!config_setting_lookup_int(cfg, "samplelen", &shm->conf.samplelen))
 		shm->conf.samplelen = DEFAULT_SHMEM_SAMPLELEN;
