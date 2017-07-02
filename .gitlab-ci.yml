@@ -10,6 +10,7 @@ stages:
   - build
   - test
   - deploy
+  - docker
 
 # For some reason, GitLab CI prunes the contents of the submodules so we need to restore them.
 before_script:
@@ -32,11 +33,12 @@ docker-dev:
 # Stage: build
 ##############################################################################
 
-build:
+build:source:
   stage: build
   script:
     - make
   artifacts:
+    expire_in: 1 week
     name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
     paths:
       - build/release/
@@ -44,7 +46,7 @@ build:
   tags:
     - docker
 
-docs:
+build:docs:
   stage: build
   artifacts:
     name: "${CI_PROJECT_NAME}-doc-${CI_BUILD_REF}"
@@ -56,17 +58,15 @@ docs:
   tags:
     - docker
 
-packages:
+build:packages:
   stage: build
   before_script:
     - dnf -y config-manager --add-repo https://$DEPLOY_USER:$DEPLOY_PASS@$DEPLOY_HOST/packages/villas.repo
-    - dnf -y --refresh install libwebsockets-devel libxil-devel
+    - dnf -y --refresh install openssl-devel libconfig-devel libnl3-devel libcurl-devel jansson-devel libxil-devel libwebsockets-devel zeromq-devel nanomsg-devel
   script:
     - make rpm-villas-node
-  only:
-    - tags
-    - triggers
   artifacts:
+    expire_in: 1 week
     name: "${CI_PROJECT_NAME}-packages-${CI_BUILD_REF}"
     paths:
       - build/release/packaging/*.tar.gz
@@ -79,7 +79,7 @@ packages:
 # Stage: test
 ##############################################################################
 
-coverage:
+test:coverage:
   stage: test
   script:
     - make coverage COVERAGE=1
@@ -94,20 +94,20 @@ coverage:
   tags:
     - docker
 
-unit:
+test:unit:
   stage: test
   dependencies:
-    - build
+    - build:source
   script:
     - make run-unit-tests
   image: $DOCKER_IMAGE_DEV
   tags:
     - docker
 
-integration:
+test:integration:
   stage: test
   dependencies:
-    - build
+    - build:source
   script:
     - make run-integration-tests
   artifacts:
@@ -119,51 +119,37 @@ integration:
   tags:
     - docker
 
+test:valgrind:
+  stage: test
+  script:
+    - make run-valgrind
+  dependencies:
+    - build:source
+  allow_failure: true
+  image: $DOCKER_IMAGE_DEV
+  tags:
+    - docker
 
 # Stage: deliver
 ##############################################################################
 
-docker:
-  stage: deploy
-  before_script:
-#    - docker login -u $DOCKER_USER -p $DOCKER_PASS -e $DOCKER_EMAIL $DOCKER_REGISTRY
-  script:
-    - make docker
-    - make deploy-docker
-  dependencies:
-    - packages
-  only:
-    - tags
-  tags:
-    - shell
-    - linux
-
-website:
-  stage: deploy
-  script:
-    - rsync -r web/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/
-  only:
-    - develop
-  tags:
-    - villas-deploy
-
-deliver-web:
+deploy:web:
   stage: deploy
   script:
     - ssh $DEPLOY_USER@$DEPLOY_HOST mkdir -p $DEPLOY_PATH/{coverage,doc}/$CI_BUILD_REF_NAME/
     - rsync $RSYNC_OPTS build/release-coverage/coverage/  $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
     - rsync $RSYNC_OPTS build/release/doc/html/           $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
+    - rsync $RSYNC_OPTS web/                              $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/
   dependencies:
-    - docs
-    - coverage
-    - packages
+    - build:docs
+    - build:packages
+    - test:coverage
   only:
     - develop
-    - master
   tags:
     - villas-deploy
 
-deliver-packages:
+deploy:packages:
   stage: deploy
   script:
     - ssh $DEPLOY_USER@$DEPLOY_HOST mkdir -p $DEPLOY_PATH/{dist,../packages}
@@ -171,9 +157,29 @@ deliver-packages:
     - rsync $RSYNC_OPTS build/release/packaging/*.tar.gz  $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/dist/
     - ssh $DEPLOY_USER@$DEPLOY_HOST createrepo $DEPLOY_PATH/../packages
   dependencies:
-    - packages
-  only:
-    - tags
+    - build:packages
   tags:
     - villas-deploy
-  
+
+
+# Stage: docker
+##############################################################################
+
+deploy:docker-dev:
+  stage: docker
+  script:
+    - make deploy-docker-dev
+  tags:
+    - shell
+    - linux
+
+deploy:docker:
+  stage: docker
+  script:
+    - make docker
+    - make deploy-docker
+  dependencies:
+    - build:packages
+  tags:
+    - shell
+    - linux

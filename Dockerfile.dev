@@ -61,7 +61,7 @@ RUN pip install \
         gcovr
 
 # Some of the dependencies are only available in our own repo
-ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/		
+ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
 
 # Dependencies
 RUN dnf -y install \

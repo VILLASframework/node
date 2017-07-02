@@ -39,12 +39,18 @@ RUN dnf -y update && \
 RUN dnf -y update && \
     dnf -y install \
 	iproute \
-	openssl \
-	kernel-modules-extra
+	openssl
+	
+# Some of the dependencies are only available in our own repo
+ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
 
-# Install our own RPMs
-COPY build/release/packaging/rpm/RPMS/ /rpms/
-RUN rpm -i /rpms/x86_64/{libxil,libwebsockets,villas-node,villas-node-doc}-[0-9]*; rm -rf /rpms/
+RUN dnf -y update && \
+    dnf -y install \
+	libwebsockets \
+	libxil \
+	nanomsg \
+	villas-node \
+	villas-node-doc
 
 # For WebSocket / API access
 EXPOSE 80
