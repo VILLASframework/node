@@ -50,6 +50,8 @@ struct file {
 
 		char *uri;		/**< Real file name. */
 	} read, write;
+	
+	int flush;			/**< Flush / upload file contents after each write. */
 
 	enum read_epoch_mode {
 		FILE_EPOCH_DIRECT,

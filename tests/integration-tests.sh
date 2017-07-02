@@ -33,17 +33,23 @@ export PATH=${BUILDDIR}:${PATH}
 # Default values
 VERBOSE=0
 FILTER='*'
-
-export NUM_SAMPLES=100
+NUM_SAMPLES=100
+TIMEOUT=1m
 
 # Parse command line arguments
-while getopts ":f:v" OPT; do
+while getopts ":f:l:t:v" OPT; do
 	case ${OPT} in
 		f)
 			FILTER=${OPTARG}
 			;;
 		v)
 			VERBOSE=1
+			;;
+		l)
+			NUM_SAMPLES=${OPTARG}
+			;;
+		t)
+			TIMEOUT=${OPTARG}
 			;;
 		\?)
 			echo "Invalid option: -${OPTARG}" >&2
@@ -55,13 +61,18 @@ while getopts ":f:v" OPT; do
 	esac
 done
 
+export VERBOSE
+export NUM_SAMPLES
+
 TESTS=${SRCDIR}/tests/integration/${FILTER}.sh
 
 # Preperations
 mkdir -p ${LOGDIR}
 
-NUM_PASS=0
-NUM_FAIL=0
+PASSED=0
+FAILED=0
+SKIPPED=0
+TIMEDOUT=0
 
 # Preamble
 echo -e "Starting integration tests for VILLASnode/fpga:\n"
@@ -71,32 +82,40 @@ for TEST in ${TESTS}; do
 
 	# Run test
 	if (( ${VERBOSE} == 0 )); then
-		${TEST} &> ${LOGDIR}/${TESTNAME}.log
+		timeout ${TIMEOUT} ${TEST} &> ${LOGDIR}/${TESTNAME}.log
 	else
-		${TEST}
+		timeout ${TIMEOUT} ${TEST}
 	fi
-
 	RC=$?
 
 	case $RC in
 		0)
 			echo -e "\e[32m[Pass] \e[39m ${TESTNAME}"
-			NUM_PASS=$((${NUM_PASS} + 1))
+			PASSED=$((${PASSED} + 1))
 			;;
 		99)
 			echo -e "\e[93m[Skip] \e[39m ${TESTNAME}"
-			NUM_SKIP=$((${NUM_SKIP} + 1))
+			SKIPPED=$((${SKIPPED} + 1))
+			;;
+		124)
+			echo -e "\e[33m[Time] \e[39m ${TESTNAME}"
+			TIMEDOUT=$((${TIMEDOUT} + 1))
+			FAILED=$((${FAILED} + 1))
 			;;
 		*)
 			echo -e "\e[31m[Fail] \e[39m ${TESTNAME} with code $RC"
-			NUM_FAIL=$((${NUM_FAIL} + 1))
+			FAILED=$((${FAILED} + 1))
 			;;
 	esac
+	
+	TOTAL=$((${TOTAL} + 1))
 done
 
 # Show summary
-if (( ${NUM_FAIL} > 0 )); then
-	echo -e "\nSummary: ${NUM_FAIL} of $((${NUM_FAIL} + ${NUM_PASS})) tests failed."
+if (( ${FAILED} > 0 )); then
+	echo -e "\nSummary: ${FAILED} of ${TOTAL} tests failed."
+	echo -e "   Timedout: ${TIMEDOUT}"
+	echo -e "   Skipped: ${SKIPPED}"
 	exit 1
 else
 	echo -e "\nSummary: all tests passed!"

@@ -24,10 +24,12 @@
 
 STATS_FILE=$(mktemp)
 
+NUM_SAMPLES=${NUM_SAMPLES:-10}
+
 OFFSET=-10
 EPSILON=0.05
 
-villas-signal sine -l 10 -r 10 | villas-hook shift_ts offset=${OFFSET} | villas-hook stats format=\"json\" output=\"${STATS_FILE}\" > /dev/null
+villas-signal random -l ${NUM_SAMPLES} -r 10 | villas-hook shift_ts offset=${OFFSET} | villas-hook stats format=\"json\" output=\"${STATS_FILE}\" > /dev/null
 
 jq .owd ${STATS_FILE}
 

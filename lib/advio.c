@@ -41,19 +41,36 @@
 
 static int advio_trace(CURL *handle, curl_infotype type, char *data, size_t size, void *userp)
 {
-	char *nl;
+	const char *text;
 
 	switch (type) {
 		case CURLINFO_TEXT:
-			nl = strchr(data, '\n');
-			if (nl)
-				*nl = 0;
-
-			debug(LOG_ADVIO | 10, "%s", data);
+			text = "info";
+			break;
+		case CURLINFO_HEADER_OUT: 
+			text = "send header"; 
+			break; 
+		case CURLINFO_DATA_OUT: 
+			text = "send data"; 
+			break; 
+		case CURLINFO_HEADER_IN: 
+			text = "recv header"; 
+			break; 
+		case CURLINFO_DATA_IN: 
+			text = "recv data"; 
+			break; 
+		case CURLINFO_SSL_DATA_IN: 
+			text = "recv SSL data"; 
+			break; 
+		case CURLINFO_SSL_DATA_OUT: 
+			text = "send SSL data"; 
+			break; 	
 		default: /* in case a new one is introduced to shock us */
 			return 0;
 	}
- 
+
+	debug(LOG_ADVIO | 5, "CURL: %s: %.*s", text, (int) size-1, data);
+
 	return 0;
 }
 
@@ -333,9 +350,9 @@ int aupload(AFILE *af, int resume)
 	curl_easy_getinfo(af->curl, CURLINFO_TOTAL_TIME, &total_time);
 	
 	char *total_bytes_human = advio_human_size(total_bytes, buf[0], sizeof(buf[0]));
-	char *total_time_human = advio_human_time(total_time, buf[1], sizeof(buf[1]));
+	char *total_time_human  = advio_human_time(total_time,  buf[1], sizeof(buf[1]));
 	
-	info("Finished uploaded of %s in %s", total_bytes_human, total_time_human);
+	info("Finished upload of %s in %s", total_bytes_human, total_time_human);
 	
 	af->uploaded += total_bytes;
 
@@ -376,7 +393,7 @@ int adownload(AFILE *af, int resume)
 			curl_easy_getinfo(af->curl, CURLINFO_TOTAL_TIME, &total_time);
 	
 			char *total_bytes_human = advio_human_size(total_bytes, buf[0], sizeof(buf[0]));
-			char *total_time_human = advio_human_time(total_time, buf[1], sizeof(buf[1]));
+			char *total_time_human  = advio_human_time(total_time,  buf[1], sizeof(buf[1]));
 	
 			info("Finished download of %s in %s", total_bytes_human, total_time_human);
 
@@ -386,7 +403,7 @@ int adownload(AFILE *af, int resume)
 			res = curl_easy_getinfo(af->curl, CURLINFO_RESPONSE_CODE, &code);
 			if (res)
 				return -1;
-			
+
 			switch (code) {
 				case   0:
 				case 200: goto exist;
@@ -408,7 +425,7 @@ int adownload(AFILE *af, int resume)
 				return -1;
 
 		default:
-			error("ADVIO: Failed to fetch file: %s: %s", af->uri, curl_easy_strerror(res));
+			error("ADVIO: Failed to download file: %s: %s", af->uri, curl_easy_strerror(res));
 			return -1;
 	}
 

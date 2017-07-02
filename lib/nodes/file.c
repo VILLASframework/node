@@ -119,6 +119,9 @@ int file_parse(struct node *n, config_setting_t *cfg)
 	if (cfg_out) {
 		if (file_parse_direction(cfg_out, f, FILE_WRITE))
 			cerror(cfg_out, "Failed to parse output file for node %s", node_name(n));
+		
+		if (!config_setting_lookup_bool(cfg_out, "flush", &f->flush))
+			f->flush = 0;
 	}
 
 	cfg_in = config_setting_get_member(cfg, "in");
@@ -259,12 +262,12 @@ int file_start(struct node *n)
 		if (f->read_timer < 0)
 			serror("Failed to create timer");
 
-		/* Get timestamp of first line */
-		struct sample s;
-
 		arewind(f->read.handle);
-		
+
+		/* Get timestamp of first line */
 		if (f->read_epoch_mode != FILE_EPOCH_ORIGINAL) {
+			struct sample s;
+			
 			ret = sample_io_villas_fscan(f->read.handle->file, &s, NULL);
 			if (ret < 0)
 				error("Failed to read first timestamp of node %s", node_name(n));
@@ -292,15 +295,15 @@ int file_stop(struct node *n)
 {
 	struct file *f = n->_vd;
 
-	free(f->read.uri);
-	free(f->write.uri);
-
 	if (f->read_timer)
 		close(f->read_timer);
 	if (f->read.handle)
 		afclose(f->read.handle);
 	if (f->write.handle)
 		afclose(f->write.handle);
+
+	free(f->read.uri);
+	free(f->write.uri);
 
 	return 0;
 }
@@ -374,7 +377,9 @@ int file_write(struct node *n, struct sample *smps[], unsigned cnt)
 	assert(cnt == 1);
 
 	sample_io_villas_fprint(f->write.handle->file, s, SAMPLE_IO_ALL & ~SAMPLE_IO_OFFSET);
-	afflush(f->write.handle);
+
+	if (f->flush)
+		afflush(f->write.handle);
 
 	return 1;
 }

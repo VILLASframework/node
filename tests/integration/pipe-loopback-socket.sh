@@ -27,8 +27,10 @@ INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 THEORIES=$(mktemp)
 
+NUM_SAMPLES=${NUM_SAMPLES:-10}
+
 # Generate test data
-villas-signal random -l 10 -n > ${INPUT_FILE}
+villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 for LAYER	in udp ip eth; do
 for HEADER	in none default; do
@@ -72,7 +74,7 @@ nodes = {
 EOF
 
 # We delay EOF of the INPUT_FILE by 1 second in order to wait for incoming data to be received
-villas-pipe ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < <(cat ${INPUT_FILE}; sleep 1; echo -n)
+villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
 # Compare data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
