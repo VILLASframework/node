@@ -38,6 +38,7 @@ nodes = {
 		out = {
 			uri = "${URI}"
 			mode = "w+"
+			flush = false /* WebDav / OwnCloud / Sciebo do not support partial upload */
 		},
 	},
 	remote_file_in = {

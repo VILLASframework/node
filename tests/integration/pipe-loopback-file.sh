@@ -44,6 +44,7 @@ nodes = {
 		out = {
 			uri = "${NODE_FILE}"
 			mode = "w+"
+			flush = true /* we need to flush / upload the new samples continously for a loopback */
 		}
 	}
 }
