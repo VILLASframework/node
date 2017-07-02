@@ -95,7 +95,7 @@ static void usage()
 	printf("    -x      swap read / write endpoints\n");
 	printf("    -s      only read data from stdin and send it to node\n");
 	printf("    -r      only read data from node and write it to stdout\n");
-	printf(".   -t NUM  terminate after NUM seconds\n");
+	printf("    -t NUM  terminate after NUM seconds\n");
 	printf("    -L NUM  terminate after NUM samples sent\n");
 	printf("    -l NUM  terminate after NUM samples received\n\n");
 
@@ -206,10 +206,8 @@ leave:	info("Reached receive limit. Terminating...");
 
 int main(int argc, char *argv[])
 {
-	int ret, level = V;
-
+	int ret, level = V, timeout = 0;
 	bool reverse = false;
-	double timeout = 0;
 
 	sendd = recvv = (struct dir) {
 		.enabled = true,
@@ -240,7 +238,7 @@ int main(int argc, char *argv[])
 				sendd.limit = strtoul(optarg, &endptr, 10);
 				goto check;
 			case 't':
-				timeout = strtod(optarg, &endptr);
+				timeout = strtoul(optarg, &endptr, 10);
 				goto check;
 			case 'h':
 			case '?':
@@ -305,7 +303,7 @@ check:		if (optarg == endptr)
 	if (sendd.enabled)
 		pthread_create(&sendd.thread, NULL, send_loop, NULL);
 
-	ualarm(timeout * 1e6, 0);
+	alarm(timeout);
 
 	for (;;)
 		pause();
