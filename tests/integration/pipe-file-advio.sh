@@ -46,7 +46,7 @@ nodes = {
 			uri = "${URI}"
 			mode = "r"
 			epoch_mode = "original"
-			rewind = false,
+			eof = "exit",
 		}
 	}
 }
