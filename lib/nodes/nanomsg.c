@@ -243,9 +243,9 @@ static struct plugin p = {
 		.stop		= nanomsg_stop,
 		.deinit		= nanomsg_deinit,
 		.read		= nanomsg_read,
-		.write		= nanomsg_write,
-		.instances	= LIST_INIT()
+		.write		= nanomsg_write
 	}
 };
 
 REGISTER_PLUGIN(&p)
+LIST_INIT_STATIC(&p.node.instances)

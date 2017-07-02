@@ -25,12 +25,9 @@
 #include "plugin.h"
 
 /** Global list of all known plugins */
-struct list plugins = LIST_INIT();
+struct list plugins;
 
-__attribute__((destructor(999))) static void __dtor_plugins()
-{
-	list_destroy(&plugins, NULL, false);
-}
+LIST_INIT_STATIC(&plugins)
 
 int plugin_init(struct plugin *p)
 {

@@ -397,9 +397,9 @@ static struct plugin p = {
 		.start		= file_start,
 		.stop		= file_stop,
 		.read		= file_read,
-		.write		= file_write,
-		.instances	= LIST_INIT()
+		.write		= file_write
 	}
 };
 
 REGISTER_PLUGIN(&p)
+LIST_INIT_STATIC(&p.node.instances)	

@@ -73,13 +73,8 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 		pool_destroy(&sendd.pool);
 	}
 
-	node_stop(node);
-	node_destroy(node);
-	
-	if (node->_vt->start == websocket_start) {
-		web_stop(&sn.web);
-		api_stop(&sn.api);
-	}
+	super_node_stop(&sn);
+	super_node_destroy(&sn);
 
 	info(GRN("Goodbye!"));
 	exit(EXIT_SUCCESS);

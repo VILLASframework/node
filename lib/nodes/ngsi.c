@@ -595,9 +595,10 @@ static struct plugin p = {
 		.read		= ngsi_read,
 		.write		= ngsi_write,
 		.init		= ngsi_init,
-		.deinit		= ngsi_deinit,
-		.instances	= LIST_INIT()
+		.deinit		= ngsi_deinit
 	}
 };
 
 REGISTER_PLUGIN(&p)
+LIST_INIT_STATIC(&p.node.instances)
+

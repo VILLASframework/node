@@ -29,9 +29,17 @@
 	.state = STATE_INITIALIZED		\
 }
 
+#define LIST_INIT_STATIC(l)					\
+__attribute__((constructor(105))) static void UNIQUE(__ctor)() {\
+	list_init(l);						\
+}								\
+__attribute__((destructor(105))) static void UNIQUE(__dtor)() {	\
+	list_destroy(l, NULL, false);				\
+}
+
 #define list_length(list)	((list)->length)
 #define list_at_safe(list, index) ((list)->length > index ? (list)->array[index] : NULL)
-#define list_at(list, index) 	((list)->array[index])
+#define list_at(list, index)	((list)->array[index])
 
 #define list_first(list)	list_at(list, 0)
 #define list_last(list)		list_at(list, (list)->length-1)

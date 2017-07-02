@@ -484,9 +484,9 @@ static struct plugin p = {
 		.init		= zeromq_init,
 		.deinit		= zeromq_deinit,
 		.read		= zeromq_read,
-		.write		= zeromq_write,
-		.instances	= LIST_INIT()
+		.write		= zeromq_write
 	}
 };
 
 REGISTER_PLUGIN(&p)
+LIST_INIT_STATIC(&p.node.instances)

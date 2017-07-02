@@ -850,9 +850,9 @@ static struct plugin p = {
 		.read		= socket_read,
 		.write		= socket_write,
 		.init		= socket_init,
-		.deinit		= socket_deinit,
-		.instances	= LIST_INIT()
+		.deinit		= socket_deinit
 	}
 };
 
 REGISTER_PLUGIN(&p)
+LIST_INIT_STATIC(&p.node.instances)

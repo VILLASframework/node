@@ -600,9 +600,9 @@ static struct plugin p = {
 		.read		= websocket_read,
 		.write		= websocket_write,
 		.print		= websocket_print,
-		.parse		= websocket_parse,
-		.instances	= LIST_INIT()
+		.parse		= websocket_parse
 	}
 };
 
 REGISTER_PLUGIN(&p)
+LIST_INIT_STATIC(&p.node.instances)

@@ -6,3 +6,23 @@
    fun:SSL_library_init
    ...
 }
+{
+   libcurl-libnspr4
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*/libnspr4.so*
+   ...
+   obj:*/libcurl.so*
+   ...
+}
+{
+   libcurl-crypto
+   Memcheck:Leak
+   match-leak-kinds: reachable
+   ...
+   obj:*/libcrypto.so*
+   ...
+   obj:*/libcurl.so*
+   ...
+}

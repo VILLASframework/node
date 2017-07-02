@@ -194,9 +194,9 @@ static struct plugin p = {
 		.start = shmem_open,
 		.stop = shmem_close,
 		.read = shmem_read,
-		.write = shmem_write,
-		.instances = LIST_INIT(),
+		.write = shmem_write
 	}
 };
 
 REGISTER_PLUGIN(&p)
+LIST_INIT_STATIC(&p.node.instances)

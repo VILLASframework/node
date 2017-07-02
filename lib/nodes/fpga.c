@@ -285,9 +285,10 @@ static struct plugin p = {
 		.read		= fpga_read,
 		.write		= fpga_write,
 		.init		= fpga_init,
-		.deinit		= fpga_deinit,
-		.instances	= LIST_INIT()
+		.deinit		= fpga_deinit
 	}
 };
 
 REGISTER_PLUGIN(&p)
+LIST_INIT_STATIC(&p.node.instances)
+	

@@ -33,10 +33,10 @@
 #include "nodes/cbuilder.h"
 
 #define REGISTER_PLUGIN(p)					\
-__attribute__((constructor)) static void UNIQUE(__ctor)() {	\
+__attribute__((constructor(110))) static void UNIQUE(__ctor)() {\
 	list_push(&plugins, p);					\
 }								\
-__attribute__((destructor)) static void UNIQUE(__dtor)() {	\
+__attribute__((destructor(110))) static void UNIQUE(__dtor)() {	\
 	list_remove(&plugins, p);				\
 }
 

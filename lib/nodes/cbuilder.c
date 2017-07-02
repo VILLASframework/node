@@ -124,9 +124,9 @@ static struct plugin p = {
 		.start		= cbuilder_start,
 		.stop		= cbuilder_stop,
 		.read		= cbuilder_read,
-		.write		= cbuilder_write,
-		.instances	= LIST_INIT()
+		.write		= cbuilder_write
 	}
 };
 
 REGISTER_PLUGIN(&p)
+LIST_INIT_STATIC(&p.node.instances)

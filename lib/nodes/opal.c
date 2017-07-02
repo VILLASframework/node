@@ -306,9 +306,9 @@ static struct plugin p = {
 		.read		= opal_read,
 		.write		= opal_write,
 		.init		= opal_init,
-		.deinit		= opal_deinit,
-		.instances	= LIST_INIT()
+		.deinit		= opal_deinit
 	}
 };
 
 REGISTER_PLUGIN(&p)
+LIST_INIT_STATIC(&p.node.instances)
