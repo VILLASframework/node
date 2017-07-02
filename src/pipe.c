@@ -305,7 +305,7 @@ check:		if (optarg == endptr)
 	if (sendd.enabled)
 		pthread_create(&sendd.thread, NULL, send_loop, NULL);
 
-	ualarm(timeout * 1e6);
+	ualarm(timeout * 1e6, 0);
 
 	for (;;)
 		pause();
