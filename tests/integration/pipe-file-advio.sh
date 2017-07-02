@@ -53,13 +53,16 @@ nodes = {
 }
 EOF
 
+# Delete old file
+curl -X DELETE ${URI}
+
 villas-signal random -n -l ${NUM_SAMPLES} > ${INPUT_FILE}
 
 villas-pipe -s ${CONFIG_FILE} remote_file_out < ${INPUT_FILE}
 
 villas-pipe -r ${CONFIG_FILE} remote_file_in > ${OUTPUT_FILE}
 
-villas-test-cmp -j ${INPUT_FILE} ${OUTPUT_FILE}
+villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm -f ${CONFIG_FILE} ${INPUT_FILE} ${OUTPUT_FILE}
