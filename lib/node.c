@@ -157,7 +157,7 @@ int node_destroy(struct node *n)
 
 int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	int nread = 0;
+	int readd, nread = 0;
 
 	if (!n->_vt->read)
 		return -1;
@@ -165,11 +165,14 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 	/* Send in parts if vector not supported */
 	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
 		while (cnt - nread > 0) {
-			nread += n->_vt->read(n, &smps[nread], MIN(cnt - nread, n->_vt->vectorize));
+			readd = n->_vt->read(n, &smps[nread], MIN(cnt - nread, n->_vt->vectorize));
+			nread += readd;
+			debug(LOG_NODES | 5, "Received %u samples from node %s", readd, node_name(n));
 		}
 	}
 	else {
 		nread = n->_vt->read(n, smps, cnt);
+		debug(LOG_NODES | 5, "Received %u samples from node %s", nread, node_name(n));
 	}
 
 	for (int i = 0; i < nread; i++)
@@ -180,18 +183,22 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 int node_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	int nsent = 0;
+	int sent, nsent = 0;
 
 	if (!n->_vt->write)
 		return -1;
 
 	/* Send in parts if vector not supported */
 	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
-		while (cnt - nsent > 0)
-			nsent += n->_vt->write(n, &smps[nsent], MIN(cnt - nsent, n->_vt->vectorize));
+		while (cnt - nsent > 0) {
+			sent = n->_vt->write(n, &smps[nsent], MIN(cnt - nsent, n->_vt->vectorize));
+			nsent += sent;
+			debug(LOG_NODES | 5, "Sent %u samples to node %s", sent, node_name(n));
+		}
 	}
 	else {
 		nsent = n->_vt->write(n, smps, cnt);
+		debug(LOG_NODES | 5, "Sent %u samples to node %s", nsent, node_name(n));
 	}
 
 	return nsent;
