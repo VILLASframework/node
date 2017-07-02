@@ -33,7 +33,6 @@ export PATH=${BUILDDIR}:${PATH}
 # Default values
 VERBOSE=0
 FILTER='*'
-
 NUM_SAMPLES=100
 TIMEOUT=1m
 

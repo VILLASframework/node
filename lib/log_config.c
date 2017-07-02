@@ -30,16 +30,20 @@
 
 int log_parse(struct log *l, config_setting_t *cfg)
 {
-	const char *facilities;
+	const char *fac, *pth;
+	int lvl;
 
 	if (!config_setting_is_group(cfg))
 		cerror(cfg, "Setting 'log' must be a group.");
 
-	config_setting_lookup_int(cfg, "level", &l->level);
-	config_setting_lookup_string(cfg, "file", &l->path);
+	if (config_setting_lookup_int(cfg, "level", &lvl))
+		l->level = lvl;
 
-	if (config_setting_lookup_string(cfg, "facilities", &facilities))
-		log_set_facility_expression(l, facilities);
+	if (config_setting_lookup_string(cfg, "file", &pth))
+		l->path = pth;
+
+	if (config_setting_lookup_string(cfg, "facilities", &fac))
+		log_set_facility_expression(l, fac);
 
 	l->state = STATE_PARSED;
 
