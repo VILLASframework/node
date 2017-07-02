@@ -81,8 +81,10 @@ build:packages:
 
 test:coverage:
   stage: test
+  variables:
+    COVERAGE: "1"
   script:
-    - make coverage COVERAGE=1
+    - make coverage
   artifacts:
     name: "${CI_PROJECT_NAME}-coverage-${CI_BUILD_REF}"
     paths:
@@ -121,6 +123,8 @@ test:integration:
 
 test:valgrind:
   stage: test
+  variables:
+    DEBUG: "1"
   script:
     - make run-valgrind
   dependencies:
