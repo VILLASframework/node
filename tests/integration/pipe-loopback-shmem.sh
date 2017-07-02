@@ -28,25 +28,29 @@ OUTPUT_FILE=$(mktemp)
 
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
+for SAMPLELEN	in 1 10 100; do
 for POLLING	in true false; do
-for VECTORIZE	in 1 5 20; do
+for VECTORIZE	in 1 5 25; do
 
 cat > ${CONFIG_FILE} << EOF
+logging = {
+	level = 2
+}
 nodes = {
 	node1 = {
 		type = "shmem";
 		out_name = "/villas-test";
 		in_name = "/villas-test";
-		samplelen = 4;
-		queuelen = 32;
+		samplelen = ${SAMPLELEN};
+		queuelen = 1024,
 		polling = ${POLLING};
-		vectorize = ${VECTORIZE}
+		vectorize = ${VECTORIZE};
 	}
 }
 EOF
 
 # Generate test data
-villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
+villas-signal random -l ${NUM_SAMPLES} -v ${SAMPLELEN} -n > ${INPUT_FILE}
 
 # We delay EOF of the INPUT_FILE by 1 second in order to wait for incoming data to be received
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
@@ -56,7 +60,7 @@ villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 if (( ${RC} != 0 )); then
-	echo "=========== Sub-test failed for: polling=${POLLING}, vecotrize=${VECTORIZE}"
+	echo "=========== Sub-test failed for: polling=${POLLING}, vectorize=${VECTORIZE}, samplelen=${SAMPLELEN}"
 	cat ${CONFIG_FILE}
 	echo
 	cat ${INPUT_FILE}
@@ -64,10 +68,10 @@ if (( ${RC} != 0 )); then
 	cat ${OUTPUT_FILE}
 	exit ${RC}
 else
-	echo "=========== Sub-test succeeded for: polling=${POLLING}, vecotrize=${VECTORIZE}"
+	echo "=========== Sub-test succeeded for: polling=${POLLING}, vectorize=${VECTORIZE}, samplelen=${SAMPLELEN}"
 fi
 
-done; done
+done; done; done
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
 
