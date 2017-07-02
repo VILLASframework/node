@@ -24,7 +24,7 @@ TAROPTS = --exclude-ignore-recursive=.distignore --transform='s|^\.|villas-node-
 
 TAR_VILLAS = $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM)-1.$(GIT_BRANCH)_$(subst -,_,$(VARIANT)).$(shell date +%Y%m%d)git$(GIT_REV).tar.gz
 
-DEPLOY_USER ?= root
+DEPLOY_USER ?= acs
 DEPLOY_HOST ?= villas.fein-aachen.org
 DEPLOY_PATH ?= /var/www/villas/node
 
