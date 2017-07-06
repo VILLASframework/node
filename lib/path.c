@@ -63,7 +63,7 @@ static void path_read(struct path *p)
 	if (recv < 0)
 		error("Failed to receive message from node %s", node_name(ps->node));
 	else if (recv < ready)
-		warn("Partial read for path %s: read=%u expected=%u", path_name(p), recv, ready);
+		warn("Partial read for path %s: read=%u, expected=%u", path_name(p), recv, ready);
 
 	/* Run preprocessing hooks for vector of samples */
 	enqueue = hook_read_list(&p->hooks, smps, recv);
@@ -73,7 +73,7 @@ static void path_read(struct path *p)
 		if (p->stats)
 			stats_update(p->stats->delta, STATS_SKIPPED, recv - enqueue);
 	}
-	
+
 	/* Keep track of the lowest index that wasn't enqueued;
 	 * all following samples must be freed here */
 	for (size_t i = 0; i < list_length(&p->destinations); i++) {
@@ -123,7 +123,7 @@ static void path_write(struct path *p)
 			if (sent < 0)
 				error("Failed to sent %u samples to node %s", cnt, node_name(pd->node));
 			else if (sent < tosend)
-				warn("Partial write to node %s", node_name(pd->node));
+				warn("Partial write to node %s: written=%d, expected=%d", node_name(pd->node), sent, tosend);
 
 			released = sample_put_many(smps, sent);
 
@@ -235,7 +235,7 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 		struct node *n = list_at(&destinations, i);
 
 		struct path_destination *pd = alloc(sizeof(struct path_destination));
-		
+
 		pd->node = n;
 		pd->queuelen = p->queuelen;
 
@@ -281,7 +281,7 @@ int path_init2(struct path *p)
 
 			if (vt->builtin) {
 				struct hook *h = alloc(sizeof(struct hook));
-				
+
 				ret = hook_init(h, vt, p);
 				if (ret) {
 					free(h);
