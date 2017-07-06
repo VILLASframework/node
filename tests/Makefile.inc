@@ -31,6 +31,7 @@ VALGRIND = valgrind --leak-check=full --show-leak-kinds=all --suppressions=$(SRC
 
 run-valgrind: src
 	$(VALGRIND) $(BUILDDIR)/villas-node & sleep 2; kill %1
-	$(VALGRIND) $(BUILDDIR)/villas-pipe -t 1 $(SRCDIR)/etc/websocket-loopback.conf ws1
+	$(VALGRIND) $(BUILDDIR)/villas-pipe -t 2 $(SRCDIR)/etc/websocket-loopback.conf ws1
+	$(VALGRIND) $(BUILDDIR)/villas-signal mixed -v 4 -l 10
 
 .PHONY: tests run-tests run-valgrind
