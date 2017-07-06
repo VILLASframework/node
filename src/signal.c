@@ -85,38 +85,37 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	exit(EXIT_SUCCESS);
 }
 
-int main(int argc, char *argv[])
+int signal_parse_cli(struct signal *s, int argc, char *argv[])
 {
 	char *type;
-	int ret, level = V;
 
 	/* Parse optional command line arguments */
 	char c, *endptr;
 	while ((c = getopt(argc, argv, "hv:r:f:l:a:D:d:n")) != -1) {
 		switch (c) {
 			case 'd':
-				level = strtoul(optarg, &endptr, 10);
+				l.level = strtoul(optarg, &endptr, 10);
 				goto check;
 			case 'n':
-				s.rt = 0;
+				s->rt = 0;
 				break;
 			case 'l':
-				s.limit = strtoul(optarg, &endptr, 10);
+				s->limit = strtoul(optarg, &endptr, 10);
 				goto check;
 			case 'v':
-				s.values = strtoul(optarg, &endptr, 10);
+				s->values = strtoul(optarg, &endptr, 10);
 				goto check;
 			case 'r':
-				s.rate = strtof(optarg, &endptr);
+				s->rate = strtof(optarg, &endptr);
 				goto check;
 			case 'f':
-				s.frequency = strtof(optarg, &endptr);
+				s->frequency = strtof(optarg, &endptr);
 				goto check;
 			case 'a':
-				s.amplitude = strtof(optarg, &endptr);
+				s->amplitude = strtof(optarg, &endptr);
 				goto check;
 			case 'D':
-				s.stddev = strtof(optarg, &endptr);
+				s->stddev = strtof(optarg, &endptr);
 				goto check;
 			case 'h':
 			case '?':
@@ -137,12 +136,28 @@ check:		if (optarg == endptr)
 	
 	type = argv[optind];
 
-	s.type = signal_lookup_type(type);
-	if (s.type == -1)
+	s->type = signal_lookup_type(type);
+	if (s->type == -1)
 		error("Invalid signal type: %s", type);
 
-	log_init(&l, level, LOG_ALL);
-	signals_init(quit);
+	return 0;
+}
+
+int main(int argc, char *argv[])
+{
+	int ret;
+	
+	ret = signal_parse_cli(&s, argc, argv);
+	if (ret)
+		error("Failed to parse command line options");
+
+	ret = log_init(&l, l.level, LOG_ALL);
+	if (ret)
+		error("Failed to initialize log");
+	
+	ret = signals_init(quit);
+	if (ret)
+		error("Failed to intialize signals");
 	
 	info("Starting signal generation: %s", signal_print(&n));
 
