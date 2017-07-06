@@ -54,8 +54,6 @@ struct dir {
 
 struct node *node;
 
-pthread_t ptid; /**< Parent thread id */
-
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
 	if (signal == SIGALRM)
@@ -140,14 +138,14 @@ retry:			reason = sample_io_villas_fscan(stdin, s, NULL);
 	}
 
 leave2:	info("Reached send limit. Terminating...");
-	pthread_kill(ptid, SIGINT);
+	killme(SIGTERM);
 
 	return NULL;
 
 	/* We reached EOF on stdin here. Lets kill the process */
 leave:	if (recvv.limit < 0) {
 		info("Reached end-of-file. Terminating...");
-		pthread_kill(ptid, SIGINT);
+		killme(SIGTERM);
 	}
 
 	return NULL;
@@ -193,7 +191,7 @@ static void * recv_loop(void *ctx)
 	}
 
 leave:	info("Reached receive limit. Terminating...");
-	pthread_kill(ptid, SIGINT);
+	killme(SIGTERM);
 	return NULL;
 
 	return NULL;
@@ -208,8 +206,6 @@ int main(int argc, char *argv[])
 		.enabled = true,
 		.limit = -1
 	};
-
-	ptid = pthread_self();
 	
 	char c, *endptr;
 	while ((c = getopt(argc, argv, "hxrsd:l:L:t:")) != -1) {
