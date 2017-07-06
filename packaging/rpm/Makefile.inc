@@ -56,7 +56,7 @@ rpm-libwebsockets: | $(RPMDIR)/RPMS/x86_64/ $(BUILDDIR)/thirdparty/libwebsockets
 # We patch version number and release fields of the spec file based on the current Git commit
 $(SPEC_VILLAS): $(SRCDIR)/packaging/rpm/villas-node.spec | $$(dir $$@)
 	sed -e "s/§VERSION§/$(VERSION_NUM)/g" \
-	    -e "s/§RELEASE§/1.$(GIT_BRANCH)_$(subst -,_,$(VARIANT)).$(shell date +%Y%m%d)git$(GIT_REV)/g" < $^ > $@
+	    -e "s/§RELEASE§/1.$(subst -,_,$(GIT_BRANCH))_$(subst -,_,$(VARIANT)).$(shell date +%Y%m%d)git$(GIT_REV)/g" < $^ > $@
 
 sign-rpm:
 	rpmsign $(RPMDIR)/RPMS/*/.rpm

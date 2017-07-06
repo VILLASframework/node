@@ -34,6 +34,8 @@
 #include "config.h"
 #include "utils.h"
 
+pthread_t main_thread;
+
 void print_copyright()
 {
 	printf("VILLASnode %s (built on %s %s)\n",
@@ -297,26 +299,48 @@ void rdtsc_sleep(uint64_t nanosecs, uint64_t start)
 }
 
 /* Setup exit handler */
-void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
+int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 {
+	int ret;
+
 	info("Initialize signals");
 
 	struct sigaction sa_quit = {
 		.sa_flags = SA_SIGINFO,
 		.sa_sigaction = cb
 	};
-
-	sigemptyset(&sa_quit.sa_mask);
-	sigaction(SIGINT, &sa_quit, NULL);
-	sigaction(SIGTERM, &sa_quit, NULL);
-	sigaction(SIGALRM, &sa_quit, NULL);
-
+	
 	struct sigaction sa_chld = {
 		.sa_flags = 0,
 		.sa_handler = SIG_IGN
 	};
+	
+	main_thread = pthread_self();
 
-	sigaction(SIGCHLD, &sa_chld, NULL);
+	sigemptyset(&sa_quit.sa_mask);
+	
+	ret = sigaction(SIGINT, &sa_quit, NULL);
+	if (ret)
+		return ret;
+	
+	ret = sigaction(SIGTERM, &sa_quit, NULL);
+	if (ret)
+		return ret;
+	
+	ret = sigaction(SIGALRM, &sa_quit, NULL);
+	if (ret)
+		return ret;
+
+	ret = sigaction(SIGCHLD, &sa_chld, NULL);
+	if (ret)
+		return ret;
+	
+	return 0;
+}
+
+void killme(int sig)
+{
+	pthread_kill(main_thread, sig);
 }
 
 pid_t spawn(const char* name, char *const argv[])
