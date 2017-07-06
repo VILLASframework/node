@@ -22,7 +22,7 @@
 
 TAROPTS = --exclude-ignore-recursive=.distignore --transform='s|^\.|villas-node-$(VERSION_NUM)|' --show-transformed-names
 
-TAR_VILLAS = $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM)-1.$(GIT_BRANCH)_$(subst -,_,$(VARIANT)).$(shell date +%Y%m%d)git$(GIT_REV).tar.gz
+TAR_VILLAS = $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM)-1.$(subst -,_,$(GIT_BRANCH))_$(subst -,_,$(VARIANT)).$(shell date +%Y%m%d)git$(GIT_REV).tar.gz
 
 DEPLOY_USER ?= acs
 DEPLOY_HOST ?= villas.fein-aachen.org
