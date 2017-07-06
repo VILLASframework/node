@@ -22,55 +22,63 @@
  *********************************************************************************/
 
 #include <math.h>
-#include <inttypes.h>
 
 #include "node.h"
 #include "plugin.h"
 #include "nodes/signal.h"
+
+enum signal_type signal_lookup_type(const char *type)
+{
+	if      (!strcmp(type, "random"))
+		return SIGNAL_TYPE_RANDOM;
+	else if (!strcmp(type, "sine"))
+		return SIGNAL_TYPE_SINE;
+	else if (!strcmp(type, "square"))
+		return SIGNAL_TYPE_SQUARE;
+	else if (!strcmp(type, "triangle"))
+		return SIGNAL_TYPE_TRIANGLE;
+	else if (!strcmp(type, "ramp"))
+		return SIGNAL_TYPE_RAMP;
+	else if (!strcmp(type, "mixed"))
+		return SIGNAL_TYPE_MIXED;
+	else
+		return -1;
+}
 
 int signal_parse(struct node *n, config_setting_t *cfg)
 {
 	struct signal *s = n->_vd;
 
 	const char *type;
-	
+
 	if (!config_setting_lookup_string(cfg, "signal", &type))
-		s->type = TYPE_MIXED;
+		s->type = SIGNAL_TYPE_MIXED;
 	else {
-		if      (!strcmp(type, "random"))
-			s->type = TYPE_RANDOM;
-		else if (!strcmp(type, "sine"))
-			s->type = TYPE_SINE;
-		else if (!strcmp(type, "square"))
-			s->type = TYPE_SQUARE;
-		else if (!strcmp(type, "triangle"))
-			s->type = TYPE_TRIANGLE;
-		else if (!strcmp(type, "ramp"))
-			s->type = TYPE_RAMP;
-		else if (!strcmp(type, "mixed"))
-			s->type = TYPE_MIXED;
-		else
-			cerror(cfg, "Invalid signal type: %s", type);
+		s->type = signal_lookup_type(type);
+		if (s->type == -1)
+			cerror(cfg, "Unknown signal type '%s'", type);
 	}
 	
+	if (!config_setting_lookup_bool(cfg, "realtime", &s->rt))
+		s->rt = 1;
+
 	if (!config_setting_lookup_int(cfg, "limit", &s->limit))
 		s->limit = -1;
-	
+
 	if (!config_setting_lookup_int(cfg, "values", &s->values))
 		s->values = 1;
-	
+
 	if (!config_setting_lookup_float(cfg, "rate", &s->rate))
 		s->rate = 10;
-	
+
 	if (!config_setting_lookup_float(cfg, "frequency", &s->frequency))
 		s->frequency = 1;
-	
+
 	if (!config_setting_lookup_float(cfg, "amplitude", &s->amplitude))
 		s->amplitude = 1;
-	
+
 	if (!config_setting_lookup_float(cfg, "stddev", &s->stddev))
 		s->stddev = 0.02;
-	
 
 	return 0;
 }
@@ -81,8 +89,15 @@ int signal_open(struct node *n)
 	
 	s->counter = 0;
 	s->started = time_now();
-	
-	s->tfd = timerfd_create_rate(s->rate);
+
+	/* Setup timer */
+	if (s->rt) {
+		s->tfd = timerfd_create_rate(s->rate);
+		if (s->tfd < 0)
+			return -1;
+	}
+	else
+		s->tfd = -1;
 
 	return 0;
 }
@@ -99,36 +114,51 @@ int signal_close(struct node *n)
 int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct signal *s = n->_vd;
+	struct sample *t = smps[0];
+	
+	struct timespec now;
 	
 	assert(cnt == 1);
 	
-	uint64_t steps = timerfd_wait(s->tfd);
-	if (steps > 1)
-		warn("Missed steps: %" PRIu64, steps);
-	
-	struct timespec now = time_now();
-	
+	/* Throttle output if desired */
+	if (s->rt) {
+		/* Block until 1/p->rate seconds elapsed */
+		int steps = timerfd_wait(s->tfd);
+		if (steps > 1)
+			warn("Missed steps: %u", steps);
+
+		s->counter += steps;
+		
+		now = time_now();
+	}
+	else {
+		struct timespec offset = time_from_double(s->counter * 1.0 / s->rate);
+
+		now = time_add(&s->started, &offset);
+		
+		s->counter += 1;
+	}
+
 	double running = time_delta(&s->started, &now);
 
-	smps[0]->ts.origin = 
-	smps[0]->ts.received = now;
-	smps[0]->sequence = s->counter;
-	smps[0]->length = s->values;
+	t->ts.origin = 
+	t->ts.received = now;
+	t->sequence = s->counter;
+	t->length = s->values;
 
-	for (int i = 0; i < MIN(s->values, smps[0]->capacity); i++) {
-		int rtype = (s->type != TYPE_MIXED) ? s->type : i % 4;
+	for (int i = 0; i < MIN(s->values, t->capacity); i++) {
+		int rtype = (s->type != SIGNAL_TYPE_MIXED) ? s->type : i % 4;
 		switch (rtype) {
-			case TYPE_RANDOM:   smps[0]->data[i].f += box_muller(0, s->stddev);                                              break;
-			case TYPE_SINE:	    smps[0]->data[i].f = s->amplitude *        sin(running * s->frequency * 2 * M_PI);           break;
-			case TYPE_TRIANGLE: smps[0]->data[i].f = s->amplitude * (fabs(fmod(running * s->frequency, 1) - .5) - 0.25) * 4; break;
-			case TYPE_SQUARE:   smps[0]->data[i].f = s->amplitude * (    (fmod(running * s->frequency, 1) < .5) ? -1 : 1);   break;
-			case TYPE_RAMP:     smps[0]->data[i].f = fmod(s->counter, s->rate / s->frequency); /** @todo send as integer? */ break;
+			case SIGNAL_TYPE_RANDOM:   t->data[i].f += box_muller(0, s->stddev);                                              break;
+			case SIGNAL_TYPE_SINE:	   t->data[i].f = s->amplitude *        sin(running * s->frequency * 2 * M_PI);           break;
+			case SIGNAL_TYPE_TRIANGLE: t->data[i].f = s->amplitude * (fabs(fmod(running * s->frequency, 1) - .5) - 0.25) * 4; break;
+			case SIGNAL_TYPE_SQUARE:   t->data[i].f = s->amplitude * (    (fmod(running * s->frequency, 1) < .5) ? -1 : 1);   break;
+			case SIGNAL_TYPE_RAMP:     t->data[i].f = fmod(s->counter, s->rate / s->frequency); /** @todo send as integer? */ break;
 		}
 	}
-	
-	s->counter++;
+
 	if (s->limit > 0 && s->counter >= s->limit) {
-		info("Reached limit of node %s", node_name(n));
+		info("Reached limit");
 		killme(SIGTERM);
 	}
 
@@ -141,12 +171,12 @@ char * signal_print(struct node *n)
 	char *type, *buf = NULL;
 	
 	switch (s->type) {
-		case TYPE_MIXED:    type = "mixed";    break;
-		case TYPE_RAMP:     type = "ramp";     break;
-		case TYPE_TRIANGLE: type = "triangle"; break;
-		case TYPE_SQUARE:   type = "square";   break;
-		case TYPE_SINE:     type = "sine";     break;
-		case TYPE_RANDOM:   type = "random";   break;
+		case SIGNAL_TYPE_MIXED:    type = "mixed";    break;
+		case SIGNAL_TYPE_RAMP:     type = "ramp";     break;
+		case SIGNAL_TYPE_TRIANGLE: type = "triangle"; break;
+		case SIGNAL_TYPE_SQUARE:   type = "square";   break;
+		case SIGNAL_TYPE_SINE:     type = "sine";     break;
+		case SIGNAL_TYPE_RANDOM:   type = "random";   break;
 		default: return NULL;
 	}
 	
@@ -165,12 +195,12 @@ static struct plugin p = {
 	.type = PLUGIN_TYPE_NODE,
 	.node = {
 		.vectorize = 1,
-		.size = sizeof(struct signal),
+		.size  = sizeof(struct signal),
 		.parse = signal_parse,
 		.print = signal_print,
 		.start = signal_open,
-		.stop = signal_close,
-		.read = signal_read,
+		.stop  = signal_close,
+		.read  = signal_read,
 	}
 };
 

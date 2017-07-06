@@ -37,20 +37,23 @@
 struct node;
 struct sample;
 
+enum signal_type {
+	SIGNAL_TYPE_RANDOM,
+	SIGNAL_TYPE_SINE,
+	SIGNAL_TYPE_SQUARE,
+	SIGNAL_TYPE_TRIANGLE,
+	SIGNAL_TYPE_RAMP,
+	SIGNAL_TYPE_MIXED
+};
+
 /** Node-type for signal generation.
  * @see node_type
  */
 struct signal {
 	int tfd;			/**< timerfd file descriptor. */
+	int rt;				/**< Real-time mode? */
 	
-	enum {
-		TYPE_RANDOM,
-		TYPE_SINE,
-		TYPE_SQUARE,
-		TYPE_TRIANGLE,
-		TYPE_RAMP,
-		TYPE_MIXED
-	} type;				/**< Signal type */
+	enum signal_type type;		/**< Signal type */
 	
 	double rate;			/**< Sampling rate. */
 	double frequency;		/**< Frequency of the generated signals. */
@@ -78,5 +81,9 @@ int signal_close(struct node *n);
 
 /** @see node_type::read */
 int signal_read(struct node *n, struct sample *smps[], unsigned cnt);
+
+enum signal_type signal_lookup_type(const char *type);
+
+void signal_get(struct signal *s, struct sample *t, struct timespec *now);
 
 /** @} */
