@@ -34,6 +34,8 @@
 #include "config.h"
 #include "utils.h"
 
+pthread_t main_thread;
+
 void print_copyright()
 {
 	printf("VILLASnode %s (built on %s %s)\n",
@@ -305,6 +307,8 @@ void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 		.sa_flags = SA_SIGINFO,
 		.sa_sigaction = cb
 	};
+	
+	main_thread = pthread_self();
 
 	sigemptyset(&sa_quit.sa_mask);
 	sigaction(SIGINT, &sa_quit, NULL);
@@ -317,6 +321,11 @@ void signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 	};
 
 	sigaction(SIGCHLD, &sa_chld, NULL);
+}
+
+void killme(int sig)
+{
+	pthread_kill(main_thread, sig);
 }
 
 pid_t spawn(const char* name, char *const argv[])
