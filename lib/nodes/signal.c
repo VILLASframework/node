@@ -117,18 +117,17 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 	struct sample *t = smps[0];
 	
 	struct timespec now;
+	int steps;
 	
 	assert(cnt == 1);
 	
 	/* Throttle output if desired */
 	if (s->rt) {
 		/* Block until 1/p->rate seconds elapsed */
-		int steps = timerfd_wait(s->tfd);
+		steps = timerfd_wait(s->tfd);
 		if (steps > 1)
 			warn("Missed steps: %u", steps);
 
-		s->counter += steps;
-		
 		now = time_now();
 	}
 	else {
@@ -136,7 +135,7 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 		now = time_add(&s->started, &offset);
 		
-		s->counter += 1;
+		steps = 1;
 	}
 
 	double running = time_delta(&s->started, &now);
@@ -161,6 +160,8 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 		info("Reached limit");
 		killme(SIGTERM);
 	}
+
+	s->counter += steps;
 
 	return 1;
 }
