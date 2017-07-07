@@ -96,8 +96,8 @@ ifdef CI
 	VARIANT := $(VARIANT)-ci
 endif
 
-GIT_REV    := $(shell git rev-parse --short=7  HEAD)
-GIT_BRANCH := $(shell git symbolic-ref --short HEAD)
+GIT_REV    := $(shell git rev-parse --short=7    HEAD)
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
 # pkg-config dependencies
 PKGS = libconfig

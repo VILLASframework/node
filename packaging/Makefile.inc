@@ -29,6 +29,7 @@ DEPLOY_HOST ?= villas.fein-aachen.org
 DEPLOY_PATH ?= /var/www/villas/node
 
 DOCKER_IMAGE ?= villas/node
+DOCKER_TAG ?= $(GIT_BRANCH)
 
 deploy-docker-dev: DOCKER_IMAGE := $(DOCKER_IMAGE)-dev
 docker-dev: DOCKER_IMAGE := $(DOCKER_IMAGE)-dev
@@ -51,7 +52,7 @@ deploy-rpm:
 	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) createrepo $(DEPLOY_PATH)/../packages
 
 deploy-docker deploy-docker-dev:
-	docker push $(DOCKER_IMAGE):$(GIT_BRANCH)
+	docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
 
 # Docker targets
 run-docker-dev: docker-dev
@@ -59,11 +60,11 @@ run-docker-dev: docker-dev
 
 docker-dev:
 	docker pull fedora:25
-	docker build -f Dockerfile.dev -t $(DOCKER_IMAGE):$(GIT_BRANCH) $(SRCDIR)
+	docker build -f Dockerfile.dev -t $(DOCKER_IMAGE):$(DOCKER_TAG) $(SRCDIR)
 	
 docker:
 	docker pull fedora:25
-	docker build -f Dockerfile -t $(DOCKER_IMAGE):$(GIT_BRANCH) $(SRCDIR)
+	docker build -f Dockerfile -t $(DOCKER_IMAGE):$(DCOKER_TAG) $(SRCDIR)
 	
 clean-packaging:
 	rm -f $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM).tar.gz
