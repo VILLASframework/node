@@ -34,7 +34,7 @@ export PATH=${BUILDDIR}:${PATH}
 VERBOSE=0
 FILTER='*'
 NUM_SAMPLES=100
-TIMEOUT=1m
+TIMEOUT=5m
 
 # Parse command line arguments
 while getopts ":f:l:t:v" OPT; do
