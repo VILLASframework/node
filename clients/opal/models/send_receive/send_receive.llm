@@ -36,8 +36,6 @@ WATCHDOG_TIMEOUT=5000
 INTERNAL_IGN_SOURCE_FILE=sfun_gen_async_ctrl.c sfun_recv_async.c sfun_send_async.c
 INTERNAL_LIBRARY2=-lOpalAsyncApiR2014b
 INTERNAL_LIBRARY3=-lOpalAsyncApiCore
-[ExtraGetFilesComp_1_RT_LAB]
-AsyncIP=Binary|Async_Proc
 [ExtraPutFilesComp]
 Makefile.mk=Ascii
 include\config.h=Ascii
@@ -50,10 +48,6 @@ src\main.c=Ascii
 src\msg.c=Ascii
 src\socket.c=Ascii
 src\utils.c=Ascii
-[ExtraPutFilesComp_1_RT_LAB]
-C:\OPAL-RT\RT-LAB\v11.0.8.13\common\lib\redhawk\libOpalAsyncApiCore.a=Binary|Other
-[ExtraPutFilesLoad_1_RT_LAB]
-.\send_receive_sm_model\OpREDHAWKtarget\AsyncIP=Binary|Async_Proc
 [General]
 ATT_CHECKSUM1=2360032266
 ATT_CHECKSUM2=1041833943

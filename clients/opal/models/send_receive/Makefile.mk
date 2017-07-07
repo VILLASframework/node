@@ -49,8 +49,13 @@ endif
 
 TARGET_LIB = -lpthread -lm -ldl -lutil -lrt $(INTEL_LIBS)
 
-INCLUDES = -I. $(OPAL_INCPATH) -Iinclude
-LIBPATH  = -L. $(OPAL_LIBPATH)
+LIBPATH  = -L.           $(OPAL_LIBPATH)
+INCLUDES = -I. -Iinclude $(OPAL_INCPATH)
+
+ifneq ($(RTLAB_ROOT),)
+	INCLUDES += -I$(RTLAB_ROOT)/common/include_target
+endif
+
 CC_OPTS  = -m32 -std=c99 -D_GNU_SOURCE -MMD
 LD_OPTS  = -m32
 OBJS     = main.o msg.o utils.o socket.o $(INTEL_OBJS)
