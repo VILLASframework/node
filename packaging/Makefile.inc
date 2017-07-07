@@ -64,7 +64,7 @@ docker-dev:
 	
 docker:
 	docker pull fedora:25
-	docker build -f Dockerfile -t $(DOCKER_IMAGE):$(DCOKER_TAG) $(SRCDIR)
+	docker build -f Dockerfile -t $(DOCKER_IMAGE):$(DOCKER_TAG) $(SRCDIR)
 	
 clean-packaging:
 	rm -f $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM).tar.gz
