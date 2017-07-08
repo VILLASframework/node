@@ -267,6 +267,7 @@ int file_start(struct node *n)
 		/* Get timestamp of first line */
 		if (f->read_epoch_mode != FILE_EPOCH_ORIGINAL) {
 			struct sample s;
+			s.capacity = 0;
 			
 			ret = sample_io_villas_fscan(f->read.handle->file, &s, NULL);
 			if (ret < 0)
@@ -402,4 +403,4 @@ static struct plugin p = {
 };
 
 REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)	
+LIST_INIT_STATIC(&p.node.instances)

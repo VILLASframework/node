@@ -25,7 +25,7 @@ docker-dev:
   before_script:
 #    - docker login -u $DOCKER_USER -p $DOCKER_PASS -e $DOCKER_EMAIL $DOCKER_REGISTRY
   script:
-    - make docker-dev
+    - make docker-dev DOCKER_TAG=${CI_COMMIT_REF_NAME}
   tags:
     - shell
     - linux
