@@ -28,7 +28,9 @@ DEPLOY_USER ?= acs
 DEPLOY_HOST ?= villas.fein-aachen.org
 DEPLOY_PATH ?= /var/www/villas/node
 
-DOCKER_IMAGE ?= villas/node
+DOCKER_IMAGE     ?= villas/node
+DOCKER_IMAGE_DEV ?= villas/node-dev
+
 DOCKER_TAG ?= $(GIT_BRANCH)
 
 deploy-docker-dev: DOCKER_IMAGE := $(DOCKER_IMAGE)-dev
@@ -51,8 +53,11 @@ deploy-rpm:
 	rsync -a --progress $(RPMDIR)/RPMS/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/../packages/
 	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) createrepo $(DEPLOY_PATH)/../packages
 
-deploy-docker deploy-docker-dev:
+deploy-docker:
 	docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
+
+deploy-docker-dev:
+	docker push $(DOCKER_IMAGE_DEV):$(DOCKER_TAG)
 
 # Docker targets
 run-docker-dev: docker-dev

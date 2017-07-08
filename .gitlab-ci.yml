@@ -3,7 +3,8 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   PREFIX: /usr/
   RSYNC_OPTS: --recursive --ignore-missing-args --chown $DEPLOY_USER:$DEPLOY_USER
-  DOCKER_IMAGE_DEV: villas/node-dev:${CI_COMMIT_REF_NAME}
+  DOCKER_TAG: ${CI_COMMIT_REF_SLUG}
+  DOCKER_IMAGE_DEV: villas/node-dev
 
 stages:
   - prepare
@@ -22,10 +23,8 @@ before_script:
 # Build docker image which is used to build & test VILLASnode
 docker-dev:
   stage: prepare
-  before_script:
-#    - docker login -u $DOCKER_USER -p $DOCKER_PASS -e $DOCKER_EMAIL $DOCKER_REGISTRY
   script:
-    - make docker-dev DOCKER_TAG=${CI_COMMIT_REF_NAME}
+    - make docker-dev
   tags:
     - shell
     - linux
@@ -42,7 +41,7 @@ build:source:
     name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
     paths:
       - build/release/
-  image: $DOCKER_IMAGE_DEV
+  image: $DOCKER_IMAGE_DEV:$DOCKER_TAG
   tags:
     - docker
 
@@ -54,7 +53,7 @@ build:docs:
       - build/release/doc/
   script:
     - make doc
-  image: $DOCKER_IMAGE_DEV
+  image: $DOCKER_IMAGE_DEV:$DOCKER_TAG
   tags:
     - docker
 
@@ -71,7 +70,7 @@ build:packages:
     paths:
       - build/release/packaging/*.tar.gz
       - build/release/packaging/rpm/RPMS/
-  image: $DOCKER_IMAGE_DEV
+  image: $DOCKER_IMAGE_DEV:$DOCKER_TAG
   tags:
     - docker
 
@@ -91,7 +90,7 @@ test:coverage:
       - build/release-coverage/coverage/
       - build/release-coverage/coverage.txt
       - build/release-coverage/coverage.xml
-  image: $DOCKER_IMAGE_DEV
+  image: $DOCKER_IMAGE_DEV:$DOCKER_TAG
   coverage: '/lines: (\d+\.\d+\%)/'
   tags:
     - docker
@@ -102,7 +101,7 @@ test:unit:
     - build:source
   script:
     - make run-unit-tests
-  image: $DOCKER_IMAGE_DEV
+  image: $DOCKER_IMAGE_DEV:$DOCKER_TAG
   tags:
     - docker
 
@@ -117,7 +116,7 @@ test:integration:
     when: always
     paths:
       - build/release/tests/integration/
-  image: $DOCKER_IMAGE_DEV
+  image: $DOCKER_IMAGE_DEV:$DOCKER_TAG
   tags:
     - docker
 
@@ -130,7 +129,7 @@ test:valgrind:
   dependencies:
     - build:source
   allow_failure: true
-  image: $DOCKER_IMAGE_DEV
+  image: $DOCKER_IMAGE_DEV:$DOCKER_TAG
   tags:
     - docker
 
@@ -169,19 +168,12 @@ deploy:packages:
 # Stage: docker
 ##############################################################################
 
-deploy:docker-dev:
-  stage: docker
-  script:
-    - make deploy-docker-dev
-  tags:
-    - shell
-    - linux
-
 deploy:docker:
   stage: docker
   script:
     - make docker
     - make deploy-docker
+    - make deploy-docker-dev
   dependencies:
     - build:packages
   tags:
