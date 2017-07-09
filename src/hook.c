@@ -161,7 +161,9 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to parse hook config");
 
-	hook_start(&h);
+	ret = hook_start(&h);
+	if (ret)
+		error("Failed to start hook");
 
 	while (!feof(stdin)) {
 		ret = sample_alloc(&q, samples, cnt);
@@ -190,8 +192,14 @@ int main(int argc, char *argv[])
 		sample_free(samples, cnt);
 	}
 
-	hook_stop(&h);
-	hook_destroy(&h);
+	ret = hook_stop(&h);
+	if (ret)
+		error("Failed to stop hook");
+	
+	ret = hook_destroy(&h);
+	if (ret)
+		error("Failed to destroy hook");
+
 	config_destroy(&cfg);
 
 	sample_free(samples, cnt);

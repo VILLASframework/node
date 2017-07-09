@@ -59,8 +59,8 @@ static int stats_collect_init(struct hook *h)
 	p->buckets = 20;
 	p->uri = NULL;
 	p->output = stdout;
-
-	return 0;
+	
+	return stats_init(&p->stats, p->buckets, p->warmup);
 }
 
 static int stats_collect_destroy(struct hook *h)
@@ -74,7 +74,7 @@ static int stats_collect_start(struct hook *h)
 {
 	struct stats_collect *p = h->_vd;
 
-	stats_init(&p->stats, p->buckets, p->warmup);
+	
 
 	if (p->uri) {
 		p->output = fopen(p->uri, "w+");

@@ -187,11 +187,11 @@ int hook_parse_list(struct list *list, config_setting_t *cfg, struct path *o)
 		
 		ret = hook_init(h, &p->hook, o);
 		if (ret)
-			continue;
+			cerror(cfg_hook, "Failed to initialize hook");
 
 		ret = hook_parse(h, cfg_hook);
 		if (ret)
-			continue;
+			cerror(cfg_hook, "Failed to parse hook configuration");
 
 		list_push(list, h);
 	}
