@@ -243,12 +243,12 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 	for (size_t i = 0; i < list_length(&destinations); i++) {
 		struct node *n = list_at(&destinations, i);
 
-		struct path_destination pd = {
-			.node = n,
-			.queuelen = p->queuelen
-		};
+		struct path_destination *pd = alloc(sizeof(struct path_destination));
+		
+		pd->node = n;
+		pd->queuelen = p->queuelen;
 
-		list_push(&p->destinations, memdup(&pd, sizeof(pd)));
+		list_push(&p->destinations, pd);
 	}
 
 	list_destroy(&destinations, NULL, false);
@@ -286,15 +286,18 @@ int path_init2(struct path *p)
 		struct plugin *q = list_at(&plugins, i);
 
 		if (q->type == PLUGIN_TYPE_HOOK) {
-			struct hook h = { .state = STATE_DESTROYED };
 			struct hook_type *vt = &q->hook;
 
 			if (vt->builtin) {
-				ret = hook_init(&h, vt, p);
-				if (ret)
+				struct hook *h = alloc(sizeof(struct hook));
+				
+				ret = hook_init(h, vt, p);
+				if (ret) {
+					free(h);
 					return ret;
+				}
 
-				list_push(&p->hooks, memdup(&h, sizeof(h)));
+				list_push(&p->hooks, h);
 			}
 		}
 	}
@@ -461,13 +464,13 @@ int path_reverse(struct path *p, struct path *r)
 
 	for (size_t i = 0; i < list_length(&p->hooks); i++) {
 		struct hook *h = list_at(&p->hooks, i);
-		struct hook hc = { .state = STATE_DESTROYED };
+		struct hook *g = alloc(sizeof(struct hook));
 
-		ret = hook_init(&hc, h->_vt, p);
+		ret = hook_init(g, h->_vt, r);
 		if (ret)
 			return ret;
 
-		list_push(&r->hooks, memdup(&hc, sizeof(hc)));
+		list_push(&r->hooks, g);
 	}
 
 	return 0;

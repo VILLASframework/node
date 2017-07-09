@@ -100,10 +100,9 @@ int fpga_card_parse(struct fpga_card *c, config_setting_t *cfg)
 		const char *vlnv;
 
 		struct fpga_ip_type *vt;
-		struct fpga_ip ip = {
-			.card = c,
-			.state = STATE_DESTROYED
-		};
+		struct fpga_ip *ip = alloc(sizeof(struct fpga_ip));
+		
+		ip->card = c;
 
 		if (!config_setting_lookup_string(cfg, "vlnv", &vlnv))
 			cerror(cfg, "FPGA IP core %s is missing the VLNV identifier", c->name);
@@ -112,15 +111,15 @@ int fpga_card_parse(struct fpga_card *c, config_setting_t *cfg)
 		if (!vt)
 			cerror(cfg, "FPGA IP core VLNV identifier '%s' is invalid", vlnv);
 
-		ret = fpga_ip_init(&ip, vt);
+		ret = fpga_ip_init(ip, vt);
 		if (ret)
 			error("Failed to initalize FPGA IP core");
 
-		ret = fpga_ip_parse(&ip, cfg_ip);
+		ret = fpga_ip_parse(ip, cfg_ip);
 		if (ret)
 			cerror(cfg_ip, "Failed to parse FPGA IP core");
 
-		list_push(&c->ips, memdup(&ip, sizeof(ip)));
+		list_push(&c->ips, ip);
 	}
 
 	c->cfg = cfg;
@@ -139,13 +138,13 @@ int fpga_card_parse_list(struct list *cards, config_setting_t *cfg)
 	for (int i = 0; i < config_setting_length(cfg); i++) {
 		config_setting_t *cfg_fpga = config_setting_get_elem(cfg, i);
 
-		struct fpga_card c;
+		struct fpga_card *c = alloc(sizeof(struct fpga_card));
 
-		ret = fpga_card_parse(&c, cfg_fpga);
+		ret = fpga_card_parse(c, cfg_fpga);
 		if (ret)
 			cerror(cfg_fpga, "Failed to parse FPGA card configuration");
 
-		list_push(cards, memdup(&c, sizeof(c)));
+		list_push(cards, c);
 	}
 
 	return 0;

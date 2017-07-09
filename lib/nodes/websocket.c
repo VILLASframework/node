@@ -533,28 +533,26 @@ int websocket_parse(struct node *n, config_setting_t *cfg)
 			if (!uri)
 				cerror(cfg_dests, "The 'destinations' setting must be an array of URLs");
 
-			struct websocket_destination d;
+			struct websocket_destination *d = alloc(sizeof(struct websocket_destination));
 
-			memset(&d, 0, sizeof(d));
-
-			d.uri = strdup(uri);
-			if (!d.uri)
+			d->uri = strdup(uri);
+			if (!d->uri)
 				serror("Failed to allocate memory");
 
-			ret = lws_parse_uri(d.uri, &prot, &ads, &d.info.port, &path);
+			ret = lws_parse_uri(d->uri, &prot, &ads, &d->info.port, &path);
 			if (ret)
 				cerror(cfg_dests, "Failed to parse websocket URI: '%s'", uri);
 
-			d.info.ssl_connection = !strcmp(prot, "https");
-			d.info.address = strdup(ads);
-			d.info.host    = d.info.address;
-			d.info.origin  = d.info.address;
-			d.info.ietf_version_or_minus_one = -1;
-			d.info.protocol = "live";
+			d->info.ssl_connection = !strcmp(prot, "https");
+			d->info.address = strdup(ads);
+			d->info.host    = d->info.address;
+			d->info.origin  = d->info.address;
+			d->info.ietf_version_or_minus_one = -1;
+			d->info.protocol = "live";
 
-			ret = asprintf((char **) &d.info.path, "/%s", path);
+			ret = asprintf((char **) &d->info.path, "/%s", path);
 
-			list_push(&w->destinations, memdup(&d, sizeof(d)));
+			list_push(&w->destinations, d);
 		}
 	}
 

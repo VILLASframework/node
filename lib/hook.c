@@ -183,17 +183,17 @@ int hook_parse_list(struct list *list, config_setting_t *cfg, struct path *o)
 		if (!p)
 			continue; /* We ignore all non hook settings in this libconfig object setting */
 
-		struct hook h = { .state = STATE_DESTROYED };
-
-		ret = hook_init(&h, &p->hook, o);
+		struct hook *h = alloc(sizeof(struct hook));
+		
+		ret = hook_init(h, &p->hook, o);
 		if (ret)
 			continue;
 
-		ret = hook_parse(&h, cfg_hook);
+		ret = hook_parse(h, cfg_hook);
 		if (ret)
 			continue;
 
-		list_push(list, memdup(&h, sizeof(h)));
+		list_push(list, h);
 	}
 
 	return 0;

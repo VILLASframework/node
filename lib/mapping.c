@@ -204,20 +204,21 @@ int mapping_parse(struct mapping *m, config_setting_t *cfg)
 	m->real_length = 0;
 
 	for (int i = 0; i < config_setting_length(cfg); i++) {
-		struct mapping_entry e;
 		config_setting_t *cfg_mapping;
 
 		cfg_mapping = config_setting_get_elem(cfg, i);
 		if (!cfg_mapping)
 			return -1;
 
-		ret = mapping_entry_parse(&e, cfg_mapping);
+		struct mapping_entry *e = alloc(sizeof(struct mapping_entry));
+
+		ret = mapping_entry_parse(e, cfg_mapping);
 		if (ret)
 			return ret;
 
-		list_push(&m->entries, memdup(&e, sizeof(e)));
+		list_push(&m->entries, e);
 
-		m->real_length += e.length;
+		m->real_length += e->length;
 	}
 
 	m->state = STATE_PARSED;

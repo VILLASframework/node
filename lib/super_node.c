@@ -213,17 +213,17 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 		for (int i = 0; i < config_setting_length(cfg_plugins); i++) {
 			struct config_setting_t *cfg_plugin = config_setting_get_elem(cfg_plugins, i);
 
-			struct plugin plugin = { .state = STATE_DESTROYED };
+			struct plugin *p = alloc(sizeof(struct plugin));
 
-			ret = plugin_init(&plugin);
+			ret = plugin_init(p);
 			if (ret)
 				cerror(cfg_plugin, "Failed to initialize plugin");
 
-			ret = plugin_parse(&plugin, cfg_plugin);
+			ret = plugin_parse(p, cfg_plugin);
 			if (ret)
 				cerror(cfg_plugin, "Failed to parse plugin");
 
-			list_push(&sn->plugins, memdup(&plugin, sizeof(plugin)));
+			list_push(&sn->plugins, p);
 		}
 	}
 
@@ -272,30 +272,30 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 		for (int i = 0; i < config_setting_length(cfg_paths); i++) {
 			config_setting_t *cfg_path = config_setting_get_elem(cfg_paths, i);
 
-			struct path p = { .state = STATE_DESTROYED };
+			struct path *p = alloc(sizeof(struct path));
 
-			ret = path_init(&p, sn);
+			ret = path_init(p, sn);
 			if (ret)
 				cerror(cfg_path, "Failed to init path");
 
-			ret = path_parse(&p, cfg_path, &sn->nodes);
+			ret = path_parse(p, cfg_path, &sn->nodes);
 			if (ret)
 				cerror(cfg_path, "Failed to parse path");
 
-			list_push(&sn->paths, memdup(&p, sizeof(p)));
+			list_push(&sn->paths, p);
 
-			if (p.reverse) {
-				struct path r = { .state = STATE_DESTROYED };
+			if (p->reverse) {
+				struct path *r = alloc(sizeof(struct path));
 
-				ret = path_init(&r, sn);
+				ret = path_init(r, sn);
 				if (ret)
 					cerror(cfg_path, "Failed to init path");
 
-				ret = path_reverse(&p, &r);
+				ret = path_reverse(p, r);
 				if (ret)
-					cerror(cfg_path, "Failed to reverse path %s", path_name(&p));
+					cerror(cfg_path, "Failed to reverse path %s", path_name(p));
 
-				list_push(&sn->paths, memdup(&r, sizeof(p)));
+				list_push(&sn->paths, r);
 			}
 		}
 	}

@@ -47,7 +47,6 @@ static int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameter
 {
 #define copy_string(off) strndup((char *) (data + (off)), (length - (off)) * 4);
 	int j;
-	struct model_param p, *e;
 	struct model_info *i;
 
 	/* Check magic */
@@ -64,21 +63,21 @@ static int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameter
 			case XSG_BLOCK_GATEWAY_OUT:
 				if (length < 4)
 					break; /* block is to small to describe a gateway */
+				
+				struct model_param *e, *p = alloc(sizeof(struct model_param));
 
-				memset(&p, 0, sizeof(p));
+				p->name          =  copy_string(3);
+				p->default_value.flt =  *((float *) &data[1]);
+				p->offset        = data[2];
+				p->direction     = type & 0x1;
+				p->type          = (data[0] >> 0) & 0xFF;
+				p->binpt         = (data[0] >> 8) & 0xFF;
 
-				p.name          =  copy_string(3);
-				p.default_value.flt =  *((float *) &data[1]);
-				p.offset        = data[2];
-				p.direction     = type & 0x1;
-				p.type          = (data[0] >> 0) & 0xFF;
-				p.binpt         = (data[0] >> 8) & 0xFF;
-
-				e = list_lookup(parameters, p.name);
+				e = list_lookup(parameters, p->name);
 				if (e)
-					model_param_update(e, &p);
+					model_param_update(e, p);
 				else
-					list_push(parameters, memdup(&p, sizeof(p)));
+					list_push(parameters, p);
 				break;
 
 			case XSG_BLOCK_INFO:
@@ -137,7 +136,6 @@ static int model_xsg_map_read(uint32_t *map, size_t len, void *baseaddr)
 int model_parse(struct fpga_ip *c)
 {
 	struct model *m = c->_vd;
-	struct model_param p;
 
 	config_setting_t *cfg_params, *cfg_param;
 
@@ -153,12 +151,12 @@ int model_parse(struct fpga_ip *c)
 		for (int i = 0; i < config_setting_length(cfg_params); i++) {
 			cfg_param = config_setting_get_elem(cfg_params, i);
 
-			memset(&p, 0, sizeof(p));
+			struct model_param *p = alloc(sizeof(struct model_param));
 
-			p.name = config_setting_name(cfg_param);
-			p.default_value.flt = config_setting_get_float(cfg_param);
+			p->name = config_setting_name(cfg_param);
+			p->default_value.flt = config_setting_get_float(cfg_param);
 
-			list_push(&m->parameters, memdup(&p, sizeof(p)));
+			list_push(&m->parameters, p);
 		}
 	}
 

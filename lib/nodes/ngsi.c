@@ -204,48 +204,49 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 
 	list_init(mapping);
 
-	for (int j = 0; j < config_setting_length(cfg); j++) { INDENT
+	for (int j = 0; j < config_setting_length(cfg); j++) {
 		const char *token = config_setting_get_string_elem(cfg, j);
 		if (!token)
 			return -2;
 
-		struct ngsi_attribute map = {
-			.index = j
-		};
+		struct ngsi_attribute *a = alloc(sizeof(struct ngsi_attribute));
+
+		a->index = j;
 
 		/* Parse Attribute: AttributeName(AttributeType) */
 		int bytes;
-		if (sscanf(token, "%m[^(](%m[^)])%n", &map.name, &map.type, &bytes) != 2)
+		if (sscanf(token, "%m[^(](%m[^)])%n", &a->name, &a->type, &bytes) != 2)
 			cerror(cfg, "Invalid mapping token: '%s'", token);
 
 		token += bytes;
 
 		/* MetadataName(MetadataType)=MetadataValue */
-		list_init(&map.metadata);
-		struct ngsi_metadata meta;
-		while (sscanf(token, " %m[^(](%m[^)])=%ms%n", &meta.name, &meta.type, &meta.value, &bytes) == 3) { INDENT
-			list_push(&map.metadata, memdup(&meta, sizeof(meta)));
+		list_init(&a->metadata);
+		
+		struct ngsi_metadata m;
+		while (sscanf(token, " %m[^(](%m[^)])=%ms%n", &m.name, &m.type, &m.value, &bytes) == 3) {
+			list_push(&a->metadata, memdup(&m, sizeof(m)));
 			token += bytes;
 		}
 
-		/* Static metadata */
-		struct ngsi_metadata source = {
+		/* Metadata: source(string)=name */
+		struct ngsi_metadata s = {
 			.name = "source",
 			.type = "string",
-			.value = name,
+			.value = name
 		};
 
-		struct ngsi_metadata index = {
+		/* Metadata: index(integer)=j */
+		struct ngsi_metadata i = {
 			.name = "index",
-			.type = "integer",
-			.value = alloc(11)
+			.type = "integer"
 		};
-		snprintf(index.value, 11, "%u", j);
+		asprintf(&i.value, "%u", j);
 
-		list_push(&map.metadata, memdup(&index, sizeof(index)));
-		list_push(&map.metadata, memdup(&source, sizeof(source)));
+		list_push(&a->metadata, memdup(&s, sizeof(s)));
+		list_push(&a->metadata, memdup(&i, sizeof(i)));
 
-		list_push(mapping, memdup(&map, sizeof(map)));
+		list_push(mapping, a);
 	}
 
 	return 0;

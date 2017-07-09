@@ -78,13 +78,12 @@ int socket_init(struct super_node *sn)
 		}
 
 		/* If not found, create a new interface */
-		struct interface j = { .sockets.state = STATE_DESTROYED };
+		i = alloc(sizeof(struct interface));
 
-		ret = if_init(&j, link);
+		ret = if_init(i, link);
 		if (ret)
 			continue;
 
-		i = memdup(&j, sizeof(j));
 		list_push(&interfaces, i);
 
 found:		list_push(&i->sockets, s);

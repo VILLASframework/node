@@ -107,33 +107,34 @@ int switch_parse(struct fpga_ip *c)
 	for (int i = 0; i < config_setting_length(cfg_sw); i++) {
 		cfg_path = config_setting_get_elem(cfg_sw, i);
 
-		struct sw_path path;
+		struct sw_path *p = alloc(sizeof(struct sw_path));
 		int reverse;
 
 		if (!config_setting_lookup_bool(cfg_path, "reverse", &reverse))
 			reverse = 0;
 
-		if (!config_setting_lookup_string(cfg_path, "in", &path.in) &&
-		    !config_setting_lookup_string(cfg_path, "from", &path.in) &&
-		    !config_setting_lookup_string(cfg_path, "src", &path.in) &&
-		    !config_setting_lookup_string(cfg_path, "source", &path.in))
+		if (!config_setting_lookup_string(cfg_path, "in", &p->in) &&
+		    !config_setting_lookup_string(cfg_path, "from", &p->in) &&
+		    !config_setting_lookup_string(cfg_path, "src", &p->in) &&
+		    !config_setting_lookup_string(cfg_path, "source", &p->in))
 			cerror(cfg_path, "Path is missing 'in' setting");
 
-		if (!config_setting_lookup_string(cfg_path, "out", &path.out) &&
-		    !config_setting_lookup_string(cfg_path, "to", &path.out) &&
-		    !config_setting_lookup_string(cfg_path, "dst", &path.out) &&
-		    !config_setting_lookup_string(cfg_path, "dest", &path.out) &&
-		    !config_setting_lookup_string(cfg_path, "sink", &path.out))
+		if (!config_setting_lookup_string(cfg_path, "out", &p->out) &&
+		    !config_setting_lookup_string(cfg_path, "to", &p->out) &&
+		    !config_setting_lookup_string(cfg_path, "dst", &p->out) &&
+		    !config_setting_lookup_string(cfg_path, "dest", &p->out) &&
+		    !config_setting_lookup_string(cfg_path, "sink", &p->out))
 			cerror(cfg_path, "Path is missing 'out' setting");
 
-		list_push(&sw->paths, memdup(&path, sizeof(path)));
+		list_push(&sw->paths, p);
 
 		if (reverse) {
-			const char *tmp = path.in;
-			path.in = path.out;
-			path.out = tmp;
+			struct sw_path *r = memdup(p, sizeof(struct sw_path));
+			
+			r->in = p->out;
+			r->out = p->in;
 
-			list_push(&sw->paths, memdup(&path, sizeof(path)));
+			list_push(&sw->paths, r);
 		}
 	}
 

@@ -18,7 +18,7 @@
 
 int pci_init(struct pci *p)
 {
-	struct dirent *entry;
+	struct dirent *e;
 	DIR *dp;
 	FILE *f;
 	char path[PATH_MAX];
@@ -32,17 +32,17 @@ int pci_init(struct pci *p)
 		return -1;
 	}
 
-	while ((entry = readdir(dp))) {
-		struct pci_device d;
+	while ((e = readdir(dp))) {
+		struct pci_device *d = alloc(sizeof(struct pci_device));
 
 		struct { const char *s; int *p; } map[] = {
-			{ "vendor", &d.id.vendor },
-			{ "device", &d.id.device }
+			{ "vendor", &d->id.vendor },
+			{ "device", &d->id.device }
 		};
 
 		/* Read vendor & device id */
 		for (int i = 0; i < 2; i++) {
-			snprintf(path, sizeof(path), "%s/bus/pci/devices/%s/%s", SYSFS_PATH, entry->d_name, map[i].s);
+			snprintf(path, sizeof(path), "%s/bus/pci/devices/%s/%s", SYSFS_PATH, e->d_name, map[i].s);
 
 			f = fopen(path, "r");
 			if (!f)
@@ -56,11 +56,11 @@ int pci_init(struct pci *p)
 		}
 
 		/* Get slot id */
-		ret = sscanf(entry->d_name, "%4x:%2x:%2x.%u", &d.slot.domain, &d.slot.bus, &d.slot.device, &d.slot.function);
+		ret = sscanf(e->d_name, "%4x:%2x:%2x.%u", &d->slot.domain, &d->slot.bus, &d->slot.device, &d->slot.function);
 		if (ret != 4)
-			error("Failed to parse PCI slot number: %s", entry->d_name);
+			error("Failed to parse PCI slot number: %s", e->d_name);
 
-		list_push(&p->devices, memdup(&d, sizeof(d)));
+		list_push(&p->devices, d);
 	}
 
 	closedir(dp);
