@@ -67,9 +67,7 @@ static int stats_collect_destroy(struct hook *h)
 {
 	struct stats_collect *p = h->_vd;
 
-	stats_destroy(&p->stats);
-
-	return 0;
+	return stats_destroy(&p->stats);
 }
 
 static int stats_collect_start(struct hook *h)

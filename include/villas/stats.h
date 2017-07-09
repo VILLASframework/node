@@ -67,7 +67,7 @@ struct stats {
 
 int stats_init(struct stats *s, int buckets, int warmup);
 
-void stats_destroy(struct stats *s);
+int stats_destroy(struct stats *s);
 
 void stats_update(struct stats_delta *s, enum stats_id id, double val);
 

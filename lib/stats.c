@@ -52,13 +52,14 @@ int stats_init(struct stats *s, int buckets, int warmup)
 	return 0;
 }
 
-void stats_destroy(struct stats *s)
+int stats_destroy(struct stats *s)
 {
-	for (int i = 0; i < STATS_COUNT; i++) {
+	for (int i = 0; i < STATS_COUNT; i++)
 		hist_destroy(&s->histograms[i]);
-	}
 
 	free(s->delta);
+	
+	return 0;
 }
 
 void stats_update(struct stats_delta *d, enum stats_id id, double val)
