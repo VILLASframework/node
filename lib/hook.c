@@ -90,27 +90,44 @@ int hook_destroy(struct hook *h)
 
 int hook_start(struct hook *h)
 {
+	debug(LOG_HOOK, "Running hook %s: type=sart, priority=%d", plugin_name(h->_vt), h->priority);
+
 	return h->_vt->start ? h->_vt->start(h) : 0;
 }
 
 int hook_stop(struct hook *h)
 {
+	debug(LOG_HOOK, "Running hook %s: type=stop, priority=%d", plugin_name(h->_vt), h->priority);
+
 	return h->_vt->stop ? h->_vt->stop(h) : 0;
 }
 
 int hook_periodic(struct hook *h)
 {
+	debug(LOG_HOOK, "Running hook %s: type=periodic, priority=%d", plugin_name(h->_vt), h->priority);
+
 	return h->_vt->periodic ? h->_vt->periodic(h) : 0;
 }
 
 int hook_restart(struct hook *h)
 {
+	debug(LOG_HOOK, "Running hook %s: type=restart, priority=%d", plugin_name(h->_vt), h->priority);
+	
 	return h->_vt->restart ? h->_vt->restart(h) : 0;
 }
 
 int hook_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {
+	debug(LOG_HOOK, "Running hook %s: type=read, priority=%d, cnt=%zu", plugin_name(h->_vt), h->priority, *cnt);
+	
 	return h->_vt->read ? h->_vt->read(h, smps, cnt) : 0;
+}
+
+int hook_write(struct hook *h, struct sample *smps[], size_t *cnt)
+{
+	debug(LOG_HOOK, "Running hook %s: type=write, priority=%d, cnt=%zu", plugin_name(h->_vt), h->priority, *cnt);
+
+	return h->_vt->write ? h->_vt->write(h, smps, cnt) : 0;
 }
 
 size_t hook_read_list(struct list *hs, struct sample *smps[], size_t cnt)
@@ -145,11 +162,6 @@ size_t hook_write_list(struct list *hs, struct sample *smps[], size_t cnt)
 	}
 
 	return cnt;
-}
-
-int hook_write(struct hook *h, struct sample *smps[], size_t *cnt)
-{
-	return h->_vt->write ? h->_vt->write(h, smps, cnt) : 0;
 }
 
 int hook_cmp_priority(const void *a, const void *b)
