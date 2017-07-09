@@ -26,6 +26,12 @@
 
 #pragma once
 
+/* Paths */
+#define PLUGIN_PATH		PREFIX "/share/villas/node/plugins"
+#define WEB_PATH		PREFIX "/share/villas/node/web"
+#define SYSFS_PATH		"/sys"
+#define PROCFS_PATH		"/proc"
+
 /** Default number of values in a sample */
 #define DEFAULT_SAMPLELEN	64
 #define DEFAULT_QUEUELEN	1024

@@ -45,7 +45,6 @@ V ?= 2
 # Common flags
 LDLIBS   =
 CFLAGS  += -I. -Iinclude -Iinclude/villas
-CFLAGS  +=  @$(BUILDDIR)/defines
 CFLAGS  += -std=c11 -MMD -mcx16 
 CFLAGS  += -Wall -Werror -fdiagnostics-color=auto
 LDFLAGS += -L$(BUILDDIR)
@@ -124,29 +123,17 @@ everything:
 %/:
 	mkdir -p $@
 
-define DEFINES
--DV=$(V)
+escape = $(shell echo $1 | tr a-z- A-Z_ | tr -dc ' A-Z0-9_')
 
--DPLUGIN_PATH=\"$(PREFIX)/share/villas/node/plugins\"
--DWEB_PATH=\"$(PREFIX)/share/villas/node/web\"
--DSYSFS_PATH=\"/sys\"
--DPROCFS_PATH=\"/proc\"
--DBUILDID=\"$(VERSION)-$(GIT_REV)-$(VARIANT)\"
-
--D_POSIX_C_SOURCE=200809L
--D_GNU_SOURCE=1
-endef
-export DEFINES
-
-$(BUILDDIR)/defines: | $$(dir $$@)
-	echo "$${DEFINES}" > $@
-	echo -e "$(addprefix \n-DWITH_, $(shell echo ${PKGS} | tr a-z- A-Z_ | tr -dc ' A-Z0-9_' ))" >> $@
-	echo -e "$(addprefix \n-DWITH_, $(shell echo ${LIB_PKGS} | tr a-z- A-Z_ | tr -dc ' A-Z0-9_' ))" >> $@
+CFLAGS += -DV=$(V) -DPREFIX=\"$(PREFIX)\"
+CFLAGS += -DBUILDID=\"$(VERSION)-$(GIT_REV)-$(VARIANT)\"
+CFLAGS += -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1
+CFLAGS += $(addprefix -DWITH_, $(call escape,$(PKGS)))
 
 install: $(addprefix install-,$(filter-out thirdparty doc clients,$(MODULES)))
-clean: $(addprefix clean-,$(filter-out thirdparty doc clients,$(MODULES)))
+clean:   $(addprefix clean-,  $(filter-out thirdparty doc clients,$(MODULES)))
 
-.PHONY: all everything clean install
+.PHONY: all everything clean install FORCE
 
 -include $(wildcard $(BUILDDIR)/**/*.d)
 -include $(addsuffix /Makefile.inc,$(MODULES))

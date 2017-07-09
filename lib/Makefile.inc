@@ -32,8 +32,10 @@ LIB_CFLAGS  = $(CFLAGS) -fPIC
 
 -include $(patsubst %, lib/Makefile.%.inc, $(SONAMES))
 
+LIB_CFLAGS += $(addprefix -DWITH_, $(call escape,$(LIB_PKGS)))
+
 # Compile
-$(BUILDDIR)/lib/%.o: lib/%.c $(BUILDDIR)/defines | $$(dir $$@)
+$(BUILDDIR)/lib/%.o: lib/%.c | $$(dir $$@)
 	$(CC) $(LIB_CFLAGS) -c $< -o $@
 
 lib: $(patsubst %, lib%, $(SONAMES))
