@@ -50,7 +50,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	super_node_stop(&sn);
 	super_node_destroy(&sn);
 
-	info(GRN("Goodbye!"));
+	info(CLR_GRN("Goodbye!"));
 
 	exit(EXIT_SUCCESS);
 }
@@ -101,8 +101,8 @@ int main(int argc, char *argv[])
 		usage();
 #endif
 
-	info("This is VILLASnode %s (built on %s, %s)", BLD(YEL(BUILDID)),
-		BLD(MAG(__DATE__)), BLD(MAG(__TIME__)));
+	info("This is VILLASnode %s (built on %s, %s)", CLR_BLD(CLR_YEL(BUILDID)),
+		CLR_BLD(CLR_MAG(__DATE__)), CLR_BLD(CLR_MAG(__TIME__)));
 
 	/* Checks system requirements*/
 	struct version kver, reqv = { KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN };

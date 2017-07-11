@@ -207,7 +207,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt)
 char * node_name(struct node *n)
 {
 	if (!n->_name)
-		strcatf(&n->_name, RED("%s") "(" YEL("%s") ")", n->name, plugin_name(n->_vt));
+		strcatf(&n->_name, CLR_RED("%s") "(" CLR_YEL("%s") ")", n->name, plugin_name(n->_vt));
 
 	return n->_name;
 }

@@ -305,7 +305,7 @@ Test(fpga, dma, .description = "DMA")
 
 		ret = memcmp(src.base_virt, dst.base_virt, src.len);
 
-		info("DMA %s (%s): %s", dm->name, dma->inst.HasSg ? "scatter-gather" : "simple", ret ? RED("failed") : GRN("passed"));
+		info("DMA %s (%s): %s", dm->name, dma->inst.HasSg ? "scatter-gather" : "simple", ret ? CLR_RED("failed") : CLR_GRN("passed"));
 
 		ret = switch_disconnect(card->sw, dm, dm);
 		cr_assert_eq(ret, 0, "Failed to configure switch");

@@ -81,7 +81,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
 	signal_close(&n);
 
-	info(GRN("Goodbye!"));
+	info(CLR_GRN("Goodbye!"));
 	exit(EXIT_SUCCESS);
 }
 

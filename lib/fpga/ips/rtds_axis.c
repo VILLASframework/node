@@ -24,11 +24,11 @@ void rtds_axis_dump(struct fpga_ip *c)
 	{ INDENT
 		info("RTDS status:  %#08x", sr);
 		{ INDENT
-			info("Card detected:  %s", sr & RTDS_AXIS_SR_CARDDETECTED ? GRN("yes") : RED("no"));
-			info("Link up:        %s", sr & RTDS_AXIS_SR_LINKUP ? GRN("yes") : RED("no"));
-			info("TX queue full:  %s", sr & RTDS_AXIS_SR_TX_FULL ? RED("yes") : GRN("no"));
-			info("TX in progress: %s", sr & RTDS_AXIS_SR_TX_INPROGRESS ? YEL("yes") : "no");
-			info("Case running:   %s", sr & RTDS_AXIS_SR_CASE_RUNNING ? GRN("yes") : RED("no"));
+			info("Card detected:  %s", sr & RTDS_AXIS_SR_CARDDETECTED ?  CLR_GRN("yes") : CLR_RED("no"));
+			info("Link up:        %s", sr & RTDS_AXIS_SR_LINKUP ?        CLR_GRN("yes") : CLR_RED("no"));
+			info("TX queue full:  %s", sr & RTDS_AXIS_SR_TX_FULL ?       CLR_RED("yes") : CLR_GRN("no"));
+			info("TX in progress: %s", sr & RTDS_AXIS_SR_TX_INPROGRESS ? CLR_YEL("yes") :         "no");
+			info("Case running:   %s", sr & RTDS_AXIS_SR_CASE_RUNNING ?  CLR_GRN("yes") : CLR_RED("no"));
 		}
 
 		info("RTDS control: %#08x", regs[RTDS_AXIS_CR_OFFSET/4]);

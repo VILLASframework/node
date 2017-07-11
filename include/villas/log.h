@@ -40,11 +40,11 @@ extern "C" {
 #endif
 
 /* The log level which is passed as first argument to print() */
-#define LOG_LVL_DEBUG	GRY("Debug")
-#define LOG_LVL_INFO	WHT("Info ")
-#define LOG_LVL_WARN	YEL("Warn ")
-#define LOG_LVL_ERROR	RED("Error")
-#define LOG_LVL_STATS	MAG("Stats")
+#define LOG_LVL_DEBUG	CLR_GRY("Debug")
+#define LOG_LVL_INFO	CLR_WHT("Info ")
+#define LOG_LVL_WARN	CLR_YEL("Warn ")
+#define LOG_LVL_ERROR	CLR_RED("Error")
+#define LOG_LVL_STATS	CLR_MAG("Stats")
 
 /** Debug facilities.
  *

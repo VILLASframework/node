@@ -74,7 +74,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	super_node_stop(&sn);
 	super_node_destroy(&sn);
 
-	info(GRN("Goodbye!"));
+	info(CLR_GRN("Goodbye!"));
 	exit(EXIT_SUCCESS);
 }
 

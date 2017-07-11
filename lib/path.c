@@ -404,12 +404,12 @@ const char * path_name(struct path *p)
 		if (list_length(&p->destinations) == 1) {
 			struct path_destination *pd = (struct path_destination *) list_first(&p->destinations);
 
-			strcatf(&p->_name, "%s " MAG("=>") " %s",
+			strcatf(&p->_name, "%s " CLR_MAG("=>") " %s",
 				node_name_short(p->source->node),
 				node_name_short(pd->node));
 		}
 		else {
-			strcatf(&p->_name, "%s " MAG("=>") " [", node_name_short(p->source->node));
+			strcatf(&p->_name, "%s " CLR_MAG("=>") " [", node_name_short(p->source->node));
 
 			for (size_t i = 0; i < list_length(&p->destinations); i++) {
 				struct path_destination *pd = list_at(&p->destinations, i);

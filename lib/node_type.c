@@ -36,7 +36,7 @@ int node_type_start(struct node_type *vt, struct super_node *sn)
 	if (vt->state != STATE_DESTROYED)
 		return 0;
 
-	info("Initializing " YEL("%s") " node type which is used by %zu nodes", node_type_name(vt), list_length(&vt->instances));
+	info("Initializing " CLR_YEL("%s") " node type which is used by %zu nodes", node_type_name(vt), list_length(&vt->instances));
 	{ INDENT
 		ret = vt->init ? vt->init(sn) : 0;
 	}
@@ -54,7 +54,7 @@ int node_type_stop(struct node_type *vt)
 	if (vt->state != STATE_STARTED)
 		return 0;
 
-	info("De-initializing " YEL("%s") " node type", node_type_name(vt));
+	info("De-initializing " CLR_YEL("%s") " node type", node_type_name(vt));
 	{ INDENT
 		ret = vt->deinit ? vt->deinit() : 0;
 	}
