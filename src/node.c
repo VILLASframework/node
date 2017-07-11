@@ -132,6 +132,9 @@ int main(int argc, char *argv[])
 		if (sn.stats > 0 && time_delta(&last, &now) > sn.stats) {
 			for (size_t i = 0; i < list_length(&sn.paths); i++) {
 				struct path *p = list_at(&sn.paths, i);
+				
+				if (p->state != STATE_STARTED)
+					continue;
 
 				for (size_t j = 0; j < list_length(&p->hooks); j++) {
 					struct hook *h = list_at(&p->hooks, j);
