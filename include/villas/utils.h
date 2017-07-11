@@ -248,4 +248,7 @@ int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx));
 /** Send signal \p sig to main thread. */
 void killme(int sig);
 
-pid_t spawn(const char* name, char *const argv[]);
+pid_t spawn(const char *name, char *const argv[]);
+
+/** Determines the string length as printed on the screen (ignores escable sequences). */
+size_t strlenp(const char *str);

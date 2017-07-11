@@ -355,3 +355,42 @@ pid_t spawn(const char* name, char *const argv[])
 
 	return pid;
 }
+
+size_t strlenp(const char *str)
+{
+	size_t sz = 0;
+
+	for (const char *d = str; *d; d++) {
+		const unsigned char *c = (const unsigned char *) d;
+		
+		if (isprint(*c))
+			sz++;
+		else if (c[0] == '\b')
+			sz--;
+		else if (c[0] == '\t')
+			sz += 4; /* tab width == 4 */
+		/* CSI sequence */
+		else if (c[0] == '\e' && c[1] == '[') {
+			c += 2;
+			while (*c && *c != 'm')
+				c++;
+		}
+		/* UTF-8 */
+		else if (c[0] >= 0xc2 && c[0] <= 0xdf) {
+			sz++;
+			c += 1;
+		}
+		else if (c[0] >= 0xe0 && c[0] <= 0xef) {
+			sz++;
+			c += 2;
+		}
+		else if (c[0] >= 0xf0 && c[0] <= 0xf4) {
+			sz++;
+			c += 3;
+		}
+		
+		d = (const char *) c;
+	}
+	
+	return sz;
+}
