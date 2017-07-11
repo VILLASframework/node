@@ -153,6 +153,7 @@ int main(int argc, char *argv[])
 
 	config_init(&cfg);
 
+	/** @todo villas-hook does not use the path structure */
 	ret = hook_init(&h, &p->hook, NULL);
 	if (ret)
 		error("Failed to initialize hook");

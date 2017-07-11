@@ -249,8 +249,6 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 
 			struct node *n = alloc(sizeof(struct node));
 
-			n->state = STATE_DESTROYED;
-
 			ret = node_init(n, &p->node);
 			if (ret)
 				cerror(cfg_node, "Failed to initialize node");

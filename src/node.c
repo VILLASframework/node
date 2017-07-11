@@ -47,14 +47,20 @@ struct super_node sn;
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
+	int ret;
+
 	if (sn.stats > 0)
 		stats_print_footer(STATS_FORMAT_HUMAN);
 	
-	super_node_stop(&sn);
-	super_node_destroy(&sn);
+	ret = super_node_stop(&sn);
+	if (ret)
+		error("Failed to stop super node");
+
+	ret = super_node_destroy(&sn);
+	if (ret)
+		error("Failed to destroy super node");
 
 	info(CLR_GRN("Goodbye!"));
-
 	exit(EXIT_SUCCESS);
 }
 

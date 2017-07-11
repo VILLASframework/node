@@ -192,7 +192,6 @@ static void * recv_loop(void *ctx)
 
 leave:	info("Reached receive limit. Terminating...");
 	killme(SIGTERM);
-	return NULL;
 
 	return NULL;
 }
