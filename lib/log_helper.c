@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include <errno.h>
+#include <unistd.h>
 
 #include "utils.h"
 #include "log.h"
@@ -84,7 +85,8 @@ void error(const char *fmt, ...)
 	log_vprint(l, LOG_LVL_ERROR, fmt, ap);
 	va_end(ap);
 
-	killme(SIGALRM);
+	killme(SIGABRT);
+	pause();
 }
 
 void serror(const char *fmt, ...)
@@ -101,5 +103,7 @@ void serror(const char *fmt, ...)
 	log_print(l, LOG_LVL_ERROR, "%s: %m (%u)", buf, errno);
 
 	free(buf);
-	killme(SIGALRM);
+
+	killme(SIGABRT);
+	pause();
 }

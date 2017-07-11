@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "config.h"
 #include "log.h"
@@ -71,5 +72,7 @@ void cerror(config_setting_t *cfg, const char *fmt, ...)
 	log_print(l, LOG_LVL_ERROR, "%s in %s:%u", buf, file, line);
 
 	free(buf);
-	die();
+
+	killme(SIGABRT);
+	pause();
 }

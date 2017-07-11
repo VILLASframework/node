@@ -338,6 +338,7 @@ retry:	values = sample_io_villas_fscan(f->read.handle->file, s, &flags); /* Get 
 				case FILE_EOF_EXIT:
 					info("Reached end-of-file of node %s", node_name(n));
 					killme(SIGTERM);
+					pause();
 				
 			}
 		}

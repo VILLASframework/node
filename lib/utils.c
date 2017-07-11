@@ -88,13 +88,6 @@ double randf()
 	return (double) random() / RAND_MAX;
 }
 
-void die()
-{
-	int zero = 0;
-	log_outdent(&zero);
-	abort();
-}
-
 char * strcatf(char **dest, const char *fmt, ...)
 {
 	va_list ap;

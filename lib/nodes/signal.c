@@ -159,6 +159,7 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (s->limit > 0 && s->counter >= s->limit) {
 		info("Reached limit");
 		killme(SIGTERM);
+		pause();
 	}
 
 	s->counter += steps;
