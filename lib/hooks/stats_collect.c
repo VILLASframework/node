@@ -60,7 +60,7 @@ static int stats_collect_init(struct hook *h)
 	p->uri = NULL;
 	p->output = stdout;
 	
-	return stats_init(&p->stats, p->buckets, p->warmup);
+	return 0;
 }
 
 static int stats_collect_destroy(struct hook *h)
@@ -74,15 +74,13 @@ static int stats_collect_start(struct hook *h)
 {
 	struct stats_collect *p = h->_vd;
 
-	
-
 	if (p->uri) {
 		p->output = fopen(p->uri, "w+");
 		if (!p->output)
 			error("Failed to open file %s for writing", p->uri);
 	}
-
-	return 0;
+	
+	return stats_init(&p->stats, p->buckets, p->warmup);
 }
 
 static int stats_collect_stop(struct hook *h)
