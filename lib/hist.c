@@ -166,27 +166,36 @@ void hist_plot(struct hist *h)
 		if (h->data[i] > max)
 			max = h->data[i];
 	}
+	
+	struct table_column cols[] = {
+		{ -9, "Value", "%+9.3g", NULL,         TABLE_ALIGN_RIGHT },
+		{ -6, "Count", "%6ju",   NULL,         TABLE_ALIGN_RIGHT },
+		{  0, "Plot",  "%s",     "occurences", TABLE_ALIGN_LEFT  }
+	};
+	
+	struct table table = {
+		.ncols = ARRAY_LEN(cols),
+		.cols = cols
+	};
 
 	/* Print plot */
-	stats("%9s | %5s | %s", "Value", "Count", "Plot");
-	line();
+	table_header(&table);
 
 	for (int i = 0; i < h->length; i++) {
 		double value = VAL(h, i);
 		hist_cnt_t cnt = h->data[i];
-		int bar = HIST_HEIGHT * ((double) cnt / max);
-
-		char *buf = 0;
-		buf = strcatf(&buf, "%+9.3g | %5ju | ", value, cnt);
-
+		int bar = cols[2]._width * ((double) cnt / max);
+		
+		char *buf = strf("%s", "");
 		for (int i = 0; i < bar; i++)
 			buf = strcatf(&buf, "\u2588");
 
-		stats("%s", buf);
+		table_row(&table, value, cnt, buf);
+
 		free(buf);
 	}
-
-	line();
+	
+	table_footer(&table);
 }
 
 char * hist_dump(struct hist *h)

@@ -41,7 +41,8 @@
 #define DEFAULT_NR_HUGEPAGES	100
 
 /** Width of log output in characters */
-#define LOG_WIDTH		132
+#define LOG_WIDTH		80
+#define LOG_HEIGHT		25
 
 /** Socket priority */
 #define SOCKET_PRIO		7

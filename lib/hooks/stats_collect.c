@@ -110,8 +110,7 @@ static int stats_collect_periodic(struct hook *h)
 {
 	struct stats_collect *p = h->_vd;
 
-	if (h->path->state == STATE_STARTED)
-		stats_print_periodic(&p->stats, p->output, p->format, p->verbose, h->path);
+	stats_print_periodic(&p->stats, p->output, p->format, p->verbose, h->path);
 
 	return 0;
 }

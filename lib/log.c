@@ -22,9 +22,10 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <string.h>
 #include <time.h>
-#include <errno.h>
+#include <unistd.h>
 
 #include "config.h"
 #include "log.h"
@@ -45,7 +46,11 @@ struct log default_log = {
 	.facilities = LOG_ALL,
 	.file = NULL,
 	.path = NULL,
-	.epoch = { -1 , -1 }
+	.epoch = { -1 , -1 },
+	.window = {
+		.ws_row = LOG_HEIGHT,
+		.ws_col = LOG_WIDTH
+	}
 };
 
 /** List of debug facilities as strings */
@@ -80,8 +85,41 @@ static const char *facilities_strs[] = {
 /** The current log indention level (per thread!). */
 static __thread int indent = 0;
 
+int log_indent(int levels)
+{
+	int old = indent;
+	indent += levels;
+	return old;
+}
+
+int log_noindent()
+{
+	int old = indent;
+	indent = 0;
+	return old;
+}
+
+void log_outdent(int *old)
+{
+	indent = *old;
+}
+#endif
+
+static void log_resize(int signal, siginfo_t *sinfo, void *ctx)
+{
+	int ret;
+
+	ret = ioctl(STDOUT_FILENO, TIOCGWINSZ, &global_log->window);
+	if (ret)
+		return;
+	
+	debug(LOG_LOG | 15, "New terminal size: %dx%x", global_log->window.ws_row, global_log->window.ws_col);
+}
+
 int log_init(struct log *l, int level, long facilitites)
 {
+	int ret;
+
 	/* Register this log instance globally */
 	global_log = l;
 
@@ -89,6 +127,26 @@ int log_init(struct log *l, int level, long facilitites)
 	l->facilities = facilitites;
 	l->file = stderr;
 	l->path = NULL;
+	l->window.ws_col = LOG_WIDTH;
+	l->window.ws_row = LOG_HEIGHT;
+	
+	/* Register signal handler which is called whenever the
+	 * terminal size changes. */
+	if (l->file == stderr) {
+		struct sigaction sa_resize = {
+			.sa_flags = SA_SIGINFO,
+			.sa_sigaction = log_resize
+		};
+	
+		sigemptyset(&sa_resize.sa_mask);
+	
+		ret = sigaction(SIGWINCH, &sa_resize, NULL);
+		if (ret)
+			return ret;
+	
+		/* Try to get initial window size */
+		ioctl(STDERR_FILENO, TIOCGWINSZ, &global_log->window);
+	}
 
 	l->state = STATE_INITIALIZED;
 
@@ -134,19 +192,6 @@ int log_destroy(struct log *l)
 
 	return 0;
 }
-
-int log_indent(int levels)
-{
-	int old = indent;
-	indent += levels;
-	return old;
-}
-
-void log_outdent(int *old)
-{
-	indent = *old;
-}
-#endif
 
 int log_set_facility_expression(struct log *l, const char *expression)
 {
@@ -212,18 +257,15 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 	struct timespec ts = time_now();
 	char *buf = alloc(512);
 
-	/* Timestamp */
-	strcatf(&buf, "%10.3f ", time_delta(&l->epoch, &ts));
-
-	/* Severity */
-	strcatf(&buf, "%5s ", lvl);
+	/* Timestamp & Severity */
+	strcatf(&buf, "%10.3f %5s ", time_delta(&l->epoch, &ts), lvl);
 
 	/* Indention */
 #ifdef __GNUC__
 	for (int i = 0; i < indent; i++)
-		strcatf(&buf, ACS_VERTICAL " ");
+		strcatf(&buf, "%s ", BOX_UD);
 
-	strcatf(&buf, ACS_VERTRIGHT " ");
+	strcatf(&buf, "%s ", BOX_UDR);
 #endif
 
 	/* Format String */
@@ -234,92 +276,6 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 	OpalPrint("VILLASnode: %s\n", buf);
 #endif
 	fprintf(l->file ? l->file : stderr, "\33[2K\r%s\n", buf);
-	free(buf);
-}
-
-void line()
-{
-	char buf[LOG_WIDTH];
-	memset(buf, 0x71, sizeof(buf));
-
-	log_print(global_log, "", "\b" ACS("%.*s"), LOG_WIDTH, buf);
-}
-
-void debug(long class, const char *fmt, ...)
-{
-	va_list ap;
-
-	struct log *l = global_log ? global_log : &default_log;
-
-	int lvl = class &  0xFF;
-	int fac = class & ~0xFF;
-
-	if (((fac == 0) || (fac & l->facilities)) && (lvl <= l->level)) {
-		va_start(ap, fmt);
-		log_vprint(l, LOG_LVL_DEBUG, fmt, ap);
-		va_end(ap);
-	}
-}
-
-void info(const char *fmt, ...)
-{
-	va_list ap;
-
-	struct log *l = global_log ? global_log : &default_log;
-
-	va_start(ap, fmt);
-	log_vprint(l, LOG_LVL_INFO, fmt, ap);
-	va_end(ap);
-}
-
-void warn(const char *fmt, ...)
-{
-	va_list ap;
-
-	struct log *l = global_log ? global_log : &default_log;
-
-	va_start(ap, fmt);
-	log_vprint(l, LOG_LVL_WARN, fmt, ap);
-	va_end(ap);
-}
-
-void stats(const char *fmt, ...)
-{
-	va_list ap;
-
-	struct log *l = global_log ? global_log : &default_log;
-
-	va_start(ap, fmt);
-	log_vprint(l, LOG_LVL_STATS, fmt, ap);
-	va_end(ap);
-}
-
-void error(const char *fmt, ...)
-{
-	va_list ap;
-
-	struct log *l = global_log ? global_log : &default_log;
-
-	va_start(ap, fmt);
-	log_vprint(l, LOG_LVL_ERROR, fmt, ap);
-	va_end(ap);
-
-	die();
-}
-
-void serror(const char *fmt, ...)
-{
-	va_list ap;
-	char *buf = NULL;
-
-	struct log *l = global_log ? global_log : &default_log;
-
-	va_start(ap, fmt);
-	vstrcatf(&buf, fmt, ap);
-	va_end(ap);
-
-	log_print(l, LOG_LVL_ERROR, "%s: %m (%u)", buf, errno);
 
 	free(buf);
-	die();
 }

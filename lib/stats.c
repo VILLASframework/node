@@ -34,7 +34,7 @@ static struct stats_desc {
 	const char *unit;
 	const char *desc;
 	int hist_buckets;
-} stats_table[] = {
+} stats_metrics[] = {
 	{ "skipped",	  "samples",	"skipped samples by hooks",						25 },
 	{ "reorderd",	  "samples",	"reordered samples",							25 },
 	{ "gap_sample",	  "seconds",	"inter message timestamps (as sent by remote)",				25 },
@@ -116,7 +116,7 @@ json_t * stats_json(struct stats *s)
 	json_t *obj = json_object();
 
 	for (int i = 0; i < STATS_COUNT; i++) {
-		struct stats_desc *desc = &stats_table[i];
+		struct stats_desc *desc = &stats_metrics[i];
 
 		json_t *stats = hist_json(&s->histograms[i]);
 
@@ -145,19 +145,36 @@ void stats_reset(struct stats *s)
 	}
 }
 
+static struct table_column stats_cols[] = {
+	{ 35, "Path", "%s", NULL,   TABLE_ALIGN_LEFT },
+	{ 10, "Cnt",  "%ju", "p",   TABLE_ALIGN_RIGHT },
+	{ 10, "OWD",  "%f",  "S",   TABLE_ALIGN_RIGHT },
+	{ 10, "Rate", "%f",  "p/S", TABLE_ALIGN_RIGHT },
+	{ 10, "Drop", "%ju", "p",   TABLE_ALIGN_RIGHT },
+	{ 10, "Skip", "%ju", "p",   TABLE_ALIGN_RIGHT }
+};
+
+static struct table stats_table = {
+	.ncols = ARRAY_LEN(stats_cols),
+	.cols = stats_cols
+};
+
 void stats_print_header(enum stats_format fmt)
 {
-	#define UNIT(u)	"(" YEL(u) ")"
-
 	switch (fmt) {
 		case STATS_FORMAT_HUMAN:
-			stats("%-40s|%19s|%19s|%19s|%19s|", "Source " MAG("=>") " Destination",
-				"OWD"	UNIT("S") " ",
-				"Rate"	UNIT("p/S") " ",
-				"Drop"	UNIT("p") " ",
-				"Skip"	UNIT("p") " "
-			);
-			line();
+			table_header(&stats_table);
+			break;
+
+		default: { }
+	}
+}
+
+void stats_print_footer(enum stats_format fmt)
+{
+	switch (fmt) {
+		case STATS_FORMAT_HUMAN:
+			table_footer(&stats_table);
 			break;
 
 		default: { }
@@ -168,7 +185,9 @@ void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int v
 {
 	switch (fmt) {
 		case STATS_FORMAT_HUMAN:
-			stats("%-40.40s|%10f|%10f|%10ju|%10ju|", path_name(p),
+			table_row(&stats_table,
+				path_name(p),
+				s->histograms[STATS_OWD].total,
 				s->histograms[STATS_OWD].last,
 				1.0 / s->histograms[STATS_GAP_SAMPLE].last,
 				s->histograms[STATS_REORDERED].total,
@@ -191,7 +210,7 @@ void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose)
 	switch (fmt) {
 		case STATS_FORMAT_HUMAN:
 			for (int i = 0; i < STATS_COUNT; i++) {
-				struct stats_desc *desc = &stats_table[i];
+				struct stats_desc *desc = &stats_metrics[i];
 
 				stats("%s: %s", desc->name, desc->desc);
 				hist_print(&s->histograms[i], verbose);
@@ -231,7 +250,7 @@ void stats_send(struct stats *s, struct node *n)
 enum stats_id stats_lookup_id(const char *name)
 {
 	for (int i = 0; i < STATS_COUNT; i++) {
-		struct stats_desc *desc = &stats_table[i];
+		struct stats_desc *desc = &stats_metrics[i];
 
 		if (!strcmp(desc->name, name))
 			return i;

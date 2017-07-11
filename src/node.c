@@ -47,6 +47,9 @@ struct super_node sn;
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
+	if (sn.stats > 0)
+		stats_print_footer(STATS_FORMAT_HUMAN);
+	
 	super_node_stop(&sn);
 	super_node_destroy(&sn);
 
@@ -119,7 +122,7 @@ int main(int argc, char *argv[])
 	super_node_start(&sn);
 
 	if (sn.stats > 0)
-		stats_print_header();
+		stats_print_header(STATS_FORMAT_HUMAN);
 
 	struct timespec now, last = time_now();
 

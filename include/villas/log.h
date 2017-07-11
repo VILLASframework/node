@@ -29,14 +29,17 @@ extern "C" {
 
 #include <stdarg.h>
 #include <time.h>
+#include <sys/ioctl.h>
 
 #include "common.h"
 #include "log_config.h"
 
 #ifdef __GNUC__
   #define INDENT	int __attribute__ ((__cleanup__(log_outdent), unused)) _old_indent = log_indent(1);
+  #define NOINDENT	int __attribute__ ((__cleanup__(log_outdent), unused)) _old_indent = log_noindent();
 #else
   #define INDENT	;
+  #define NOINDENT	;
 #endif
 
 /* The log level which is passed as first argument to print() */
@@ -86,20 +89,16 @@ struct log {
 	enum state state;
 
 	struct timespec epoch;	/**< A global clock used to prefix the log messages. */
+	
+	struct winsize window;	/**< Size of the terminal window. */
 
 	/** Debug level used by the debug() macro.
 	 * It defaults to V (defined by the Makefile) and can be
 	 * overwritten by the 'debug' setting in the configuration file. */
 	int level;
-
-	/** Debug facilities used by the debug() macro. */
-	long facilities;
-
-	/** Path of the log file */
-	const char *path;
-
-	/** Send all log output to this file / stdout / stderr */
-	FILE *file;
+	long facilities;	/**< Debug facilities used by the debug() macro. */
+	const char *path;	/**< Path of the log file. */
+	FILE *file;		/**< Send all log output to this file / stdout / stderr. */
 };
 
 /** The global log instance. */
@@ -121,6 +120,9 @@ int log_destroy(struct log *l);
  * The argument level can be negative!
  */
 int log_indent(int levels);
+
+/** Disable log indention of current thread. */
+int log_noindent();
 
 /** A helper function the restore the previous log indention level.
  *
@@ -163,9 +165,6 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list va);
 void debug(long lvl, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
 
-/** Print a horizontal line. */
-void line();
-
 /** Printf alike info message. */
 void info(const char *fmt, ...)
 	__attribute__ ((format(printf, 1, 2)));
@@ -185,6 +184,41 @@ void error(const char *fmt, ...)
 /** Print error and strerror(errno). */
 void serror(const char *fmt, ...)
 	__attribute__ ((format(printf, 1, 2)));
+
+/** @addtogroup table Print fancy tables
+ * @{
+ */
+
+struct table_column {
+	int width;	/**< Width of the column. */
+	char *title;	/**< The title as shown in the table header. */
+	char *format;	/**< The format which is used to print the table rows. */
+	char *unit;	/**< An optional unit which will be shown in the table header. */
+
+	enum {
+		TABLE_ALIGN_LEFT,
+		TABLE_ALIGN_RIGHT
+	} align;
+
+	int _width;	/**< The real width of this column. Calculated by table_header() */
+};
+
+struct table {
+	int ncols;
+	int width;
+	struct table_column *cols;
+};
+
+/** Print a table header consisting of \p n columns. */
+void table_header(struct table *t);
+
+/** Print table rows. */
+void table_row(struct table *t, ...);
+
+/** Print the table footer. */
+void table_footer(struct table *t);
+
+/** @} */
 
 #ifdef __cplusplus
 }

@@ -41,12 +41,6 @@
 #endif
 
 /* Some color escape codes for pretty log messages */
-
-/* Alternate character set */
-#define ACS(chr)	"\e(0" chr "\e(B"
-#define ACS_HORIZONTAL	ACS("\x71")
-#define ACS_VERTICAL	ACS("\x78")
-#define ACS_VERTRIGHT	ACS("\x74")
 #define CLR(clr, str)	"\e[" XSTR(clr) "m" str "\e[0m"
 #define CLR_GRY(str)	CLR(30, str) /**< Print str in gray */
 #define CLR_RED(str)	CLR(31, str) /**< Print str in red */
@@ -57,6 +51,29 @@
 #define CLR_CYN(str)	CLR(36, str) /**< Print str in cyan */
 #define CLR_WHT(str)	CLR(37, str) /**< Print str in white */
 #define CLR_BLD(str)	CLR( 1, str) /**< Print str in bold */
+
+/* Alternate character set
+ *
+ * The suffixed of the BOX_ macro a constructed by
+ * combining the following letters in the written order:
+ *   - U for a line facing upwards
+ *   - D for a line facing downwards
+ *   - L for a line facing leftwards
+ *   - R for a line facing rightwards
+ *
+ * E.g. a cross can be constructed by combining all line fragments:
+ *    BOX_UDLR
+ */
+#define BOX(chr)	"\e(0" chr "\e(B"
+#define BOX_LR		BOX("\x71") /**< Boxdrawing: ─ */
+#define BOX_UD		BOX("\x78") /**< Boxdrawing: │ */
+#define BOX_UDR		BOX("\x74") /**< Boxdrawing: ├ */
+#define BOX_UDLR	BOX("\x6E") /**< Boxdrawing: ┼ */
+#define BOX_UDL		BOX("\x75") /**< Boxdrawing: ┤ */
+#define BOX_ULR		BOX("\x76") /**< Boxdrawing: ┴ */
+#define BOX_UL		BOX("\x6A") /**< Boxdrawing: ┘ */
+#define BOX_DLR		BOX("\x77") /**< Boxdrawing: ┘ */
+#define BOX_DL		BOX("\x6B") /**< Boxdrawing: ┘ */
 
 /* CPP stringification */
 #define XSTR(x)		STR(x)
