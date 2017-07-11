@@ -29,44 +29,70 @@
 #include "stats.h"
 #include "path.h"
 
+struct drop {
+	struct sample *prev;
+};
+
+static int drop_start(struct hook *h)
+{
+	struct drop *d = h->_vd;
+	
+	d->prev = NULL;
+
+	return 0;
+}
+
+static int drop_stop(struct hook *h)
+{
+	struct drop *d = h->_vd;
+
+	if (d->prev)
+		sample_put(d->prev);
+
+	return 0;
+}
+
 static int drop_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {
 	int i, ok, dist;
+	
+	struct drop *d = h->_vd;
+	struct sample *prev, *cur = NULL;
 
-	for (i = 0, ok = 0; i < *cnt; i++) {
-		h->last = smps[i];
+	for (i = 0, ok = 0, prev = d->prev; i < *cnt; i++, prev = cur) {
+		cur = smps[i];
 
-		if (h->prev) {
-			dist = h->last->sequence - (int32_t) h->prev->sequence;
+		if (prev) {
+			dist = cur->sequence - (int32_t) prev->sequence;
 			if (dist <= 0) {
-				warn("Dropped sample: sequence=%u, dist=%d, i=%d", h->last->sequence, dist, i);
+				debug(10, "Reordered sample: sequence=%u, distance=%d", cur->sequence, dist);
 				if (h->path && h->path->stats)
 					stats_update(h->path->stats->delta, STATS_REORDERED, dist);
 			}
-			else {
-				struct sample *tmp;
-
-				tmp = smps[i];
-				smps[i] = smps[ok];
-				smps[ok++] = tmp;
-			}
-
-			/* To discard the first X samples in 'smps[]' we must
-			 * shift them to the end of the 'smps[]' array.
-			 * In case the hook returns a number 'ok' which is smaller than 'cnt',
-			 * only the first 'ok' samples in 'smps[]' are accepted and further processed.
-			 */
+			else
+				goto ok;
 		}
-		else {
-			struct sample *tmp;
+		else
+			goto ok;
 
-			tmp = smps[i];
-			smps[i] = smps[ok];
-			smps[ok++] = tmp;
-		}
+		continue;
 
-		h->prev = h->last;
+ok:		/* To discard the first X samples in 'smps[]' we must
+		 * shift them to the end of the 'smps[]' array.
+		 * In case the hook returns a number 'ok' which is smaller than 'cnt',
+		 * only the first 'ok' samples in 'smps[]' are accepted and further processed.
+		 */
+	
+		smps[i] = smps[ok];
+		smps[ok++] = cur;
 	}
+
+	if (cur)
+		sample_get(cur);
+	if (d->prev)
+		sample_put(d->prev);
+
+	d->prev = cur;
 
 	*cnt = ok;
 
@@ -80,7 +106,10 @@ static struct plugin p = {
 	.hook		= {
 		.priority = 3,
 		.builtin = true,
-		.read	= drop_read
+		.read	= drop_read,
+		.start	= drop_start,
+		.stop	= drop_stop,
+		.size	= sizeof(struct drop)
 	}
 };
 

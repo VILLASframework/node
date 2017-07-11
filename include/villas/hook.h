@@ -75,7 +75,6 @@ struct hook_type {
 struct hook {
 	enum state state;
 
-	struct sample *prev, *last;
 	struct path *path;
 
 	struct hook_type *_vt;	/**< C++ like Vtable pointer. */

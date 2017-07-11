@@ -28,18 +28,44 @@
 #include "plugin.h"
 #include "path.h"
 
+struct restart {
+	struct sample *prev;
+};
+
+static int restart_start(struct hook *h)
+{
+	struct restart *r = h->_vd;
+	
+	r->prev = NULL;
+
+	return 0;
+}
+
+static int restart_stop(struct hook *h)
+{
+	struct restart *r = h->_vd;
+
+	if (r->prev)
+		sample_put(r->prev);
+
+	return 0;
+}
+
 static int restart_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {
+	int i;
+	struct restart *r = h->_vd;
+	struct sample *prev, *cur = NULL;
+
 	assert(h->path);
 
-	for (int i = 0; i < *cnt; i++) {
-		h->last = smps[i];
+	for (i = 0, prev = r->prev; i < *cnt; i++, prev = cur) {
+		cur = smps[i];
 
-		if (h->prev) {
-			if (h->last->sequence  == 0 &&
-			    h->prev->sequence <= UINT32_MAX - 32) {
-				warn("Simulation for path %s restarted (prev->seq=%u, current->seq=%u)",
-					path_name(h->path), h->prev->sequence, h->last->sequence);
+		if (prev) {
+			if (cur->sequence == 0 && prev->sequence <= UINT32_MAX - 32) {
+				warn("Simulation for path %s restarted (previous->seq=%u, current->seq=%u)",
+					path_name(h->path), prev->sequence, cur->sequence);
 
 				/* Run restart hooks */
 				for (size_t i = 0; i < list_length(&h->path->hooks); i++) {
@@ -49,9 +75,14 @@ static int restart_read(struct hook *h, struct sample *smps[], size_t *cnt)
 				}
 			}
 		}
-
-		h->prev = h->last;
 	}
+	
+	if (cur)
+		sample_get(cur);
+	if (r->prev)
+		sample_put(r->prev);
+
+	r->prev = cur;
 
 	return 0;
 }
@@ -63,7 +94,10 @@ static struct plugin p = {
 	.hook		= {
 		.priority = 1,
 		.builtin = true,
-		.read	= restart_read
+		.read	= restart_read,
+		.start	= restart_start,
+		.stop	= restart_stop,
+		.size	= sizeof(struct restart)
 	}
 };
 
