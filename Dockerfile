@@ -26,29 +26,12 @@
 
 FROM fedora:latest
 MAINTAINER Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-
-# Install dependencies
-RUN dnf -y update && \
-    dnf -y install \
-	libconfig \
-	libnl3 \
-	libcurl \
-	jansson
-
-# Some additional tools required for running VILLASnode
-RUN dnf -y update && \
-    dnf -y install \
-	iproute \
-	openssl
 	
 # Some of the dependencies are only available in our own repo
 ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
 
 RUN dnf -y update && \
     dnf -y install \
-	libwebsockets \
-	libxil \
-	nanomsg \
 	villas-node \
 	villas-node-doc
 
