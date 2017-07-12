@@ -65,14 +65,16 @@ struct node
 
 int node_init(struct node *n, struct node_type *vt);
 
-/** Parse a single node and add it to the global configuration.
+/** Parse settings of a node.
  *
  * @param cfg A libconfig object pointing to the node.
- * @param nodes Add new nodes to this linked list.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
 int node_parse(struct node *n, config_setting_t *cfg);
+
+/** Parse settings of a node from cmdline. */
+int node_parse_cli(struct node *n, int argc, char *argv[]);
 
 /** Validate node configuration. */
 int node_check(struct node *n);

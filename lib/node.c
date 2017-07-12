@@ -78,6 +78,24 @@ int node_parse(struct node *n, config_setting_t *cfg)
 	return ret;
 }
 
+int node_parse_cli(struct node *n, int argc, char *argv[])
+{
+	int ret;
+
+	assert(n->_vt);
+
+	n->vectorize = 1;
+	n->name = "cli";
+
+	ret = n->_vt->parse_cli ? n->_vt->parse_cli(n, argc, argv) : 0;
+	if (ret)
+		error("Failed to parse node '%s'", node_name(n));
+
+	n->state = STATE_PARSED;
+
+	return ret;
+}
+
 int node_check(struct node *n)
 {
 	assert(n->state != STATE_DESTROYED);

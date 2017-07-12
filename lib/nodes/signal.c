@@ -83,6 +83,69 @@ int signal_parse(struct node *n, config_setting_t *cfg)
 	return 0;
 }
 
+int signal_parse_cli(struct node *n, int argc, char *argv[])
+{
+	char *type;
+	
+	struct signal *s = n->_vd;
+
+	/* Default values */
+	s->rate = 10;
+	s->frequency = 1;
+	s->amplitude = 1;
+	s->stddev = 0.02;
+	s->type = SIGNAL_TYPE_MIXED;
+	s->rt = 1;
+	s->values = 1;
+	s->limit = -1;
+
+	/* Parse optional command line arguments */
+	char c, *endptr;
+	while ((c = getopt(argc, argv, "v:r:f:l:a:D:n")) != -1) {
+		switch (c) {
+			case 'n':
+				s->rt = 0;
+				break;
+			case 'l':
+				s->limit = strtoul(optarg, &endptr, 10);
+				goto check;
+			case 'v':
+				s->values = strtoul(optarg, &endptr, 10);
+				goto check;
+			case 'r':
+				s->rate = strtof(optarg, &endptr);
+				goto check;
+			case 'f':
+				s->frequency = strtof(optarg, &endptr);
+				goto check;
+			case 'a':
+				s->amplitude = strtof(optarg, &endptr);
+				goto check;
+			case 'D':
+				s->stddev = strtof(optarg, &endptr);
+				goto check;
+			case '?':
+				break;
+		}
+
+		continue;
+
+check:		if (optarg == endptr)
+			error("Failed to parse parse option argument '-%c %s'", c, optarg);
+	}
+
+	if (argc != optind + 1)
+		return -1; 
+	
+	type = argv[optind];
+
+	s->type = signal_lookup_type(type);
+	if (s->type == -1)
+		error("Invalid signal type: %s", type);
+
+	return 0;
+}
+
 int signal_open(struct node *n)
 {
 	struct signal *s = n->_vd;
@@ -199,6 +262,7 @@ static struct plugin p = {
 		.vectorize = 1,
 		.size  = sizeof(struct signal),
 		.parse = signal_parse,
+		.parse_cli = signal_parse_cli,
 		.print = signal_print,
 		.start = signal_open,
 		.stop  = signal_close,

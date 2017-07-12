@@ -75,7 +75,7 @@ struct node_type {
 	 */
 	int (*destroy)(struct node *n);
 
-	/** Parse node connection details.‚
+	/** Parse node connection details.
 	 *
 	 * @param n	A pointer to the node object.
 	 * @param cfg	A libconfig object pointing to the node.
@@ -83,6 +83,9 @@ struct node_type {
 	 * @retval <0	Error. Something went wrong.
 	 */
 	int (*parse)(struct node *n, config_setting_t *cfg);
+	
+	/** Parse node from command line arguments. */
+	int (*parse_cli)(struct node *n, int argc, char *argv[]);
 
 	/** Returns a string with a textual represenation of this node.
 	 *
