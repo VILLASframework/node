@@ -33,25 +33,14 @@
 #include <villas/sample_io.h>
 #include <villas/timing.h>
 #include <villas/node.h>
+#include <villas/plugin.h>
 #include <villas/nodes/signal.h>
 
 /* Some default values */
-struct signal s = {
-	.rate = 10,
-	.frequency = 1,
-	.amplitude = 1,
-	.stddev = 0.02,
-	.type = SIGNAL_TYPE_MIXED,
-	.rt = 1,
-	.values = 1,
-	.limit = -1
-};
-
-struct node n = {
-	._vd = &s
-};
-
+struct node n;
 struct log l;
+
+struct sample *t;
 
 void usage()
 {
@@ -79,104 +68,72 @@ void usage()
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
-	signal_close(&n);
+	int ret;
+
+	ret = node_stop(&n);
+	if (ret)
+		error("Failed to stop node");
+
+	ret = node_destroy(&n);
+	if (ret)
+		error("Failed to destroy node");
+
+	free(t);
 
 	info(CLR_GRN("Goodbye!"));
 	exit(EXIT_SUCCESS);
 }
 
-int signal_parse_cli(struct signal *s, int argc, char *argv[])
-{
-	char *type;
-
-	/* Parse optional command line arguments */
-	char c, *endptr;
-	while ((c = getopt(argc, argv, "hv:r:f:l:a:D:d:n")) != -1) {
-		switch (c) {
-			case 'd':
-				l.level = strtoul(optarg, &endptr, 10);
-				goto check;
-			case 'n':
-				s->rt = 0;
-				break;
-			case 'l':
-				s->limit = strtoul(optarg, &endptr, 10);
-				goto check;
-			case 'v':
-				s->values = strtoul(optarg, &endptr, 10);
-				goto check;
-			case 'r':
-				s->rate = strtof(optarg, &endptr);
-				goto check;
-			case 'f':
-				s->frequency = strtof(optarg, &endptr);
-				goto check;
-			case 'a':
-				s->amplitude = strtof(optarg, &endptr);
-				goto check;
-			case 'D':
-				s->stddev = strtof(optarg, &endptr);
-				goto check;
-			case 'h':
-			case '?':
-				usage();
-				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
-		}
-
-		continue;
-
-check:		if (optarg == endptr)
-			error("Failed to parse parse option argument '-%c %s'", c, optarg);
-	}
-
-	if (argc != optind + 1) {
-		usage();
-		exit(EXIT_FAILURE);
-	}
-	
-	type = argv[optind];
-
-	s->type = signal_lookup_type(type);
-	if (s->type == -1)
-		error("Invalid signal type: %s", type);
-
-	return 0;
-}
-
 int main(int argc, char *argv[])
 {
 	int ret;
-	
-	ret = signal_parse_cli(&s, argc, argv);
-	if (ret)
-		error("Failed to parse command line options");
+	struct plugin *p;
+	struct signal *s;
 
 	ret = log_init(&l, l.level, LOG_ALL);
 	if (ret)
 		error("Failed to initialize log");
-	
+
 	ret = signals_init(quit);
 	if (ret)
 		error("Failed to intialize signals");
-	
-	info("Starting signal generation: %s", signal_print(&n));
+
+	p = plugin_lookup(PLUGIN_TYPE_NODE, "signal");
+	if (!p)
+		error("Signal generation is not supported.");
+
+	ret = node_init(&n, &p->node);
+	if (ret)
+		error("Failed to initialize node");
+
+	ret = node_parse_cli(&n, argc, argv);
+	if (ret)
+		error("Failed to parse command line options");
+
+	ret = node_check(&n);
+	if (ret)
+		error("Failed to verify node configuration");
+
+	info("Starting signal generation: %s", node_name(&n));
 
 	/* Allocate memory for message buffer */
-	struct sample *t = alloc(SAMPLE_LEN(s.values));
+	s = n._vd;
 
-	t->capacity = s.values;
+	t = alloc(SAMPLE_LEN(s->values));
+
+	t->capacity = s->values;
 
 	/* Print header */
 	printf("# VILLASnode signal params: type=%s, values=%u, rate=%f, limit=%d, amplitude=%f, freq=%f\n",
-		argv[optind], s.values, s.rate, s.limit, s.amplitude, s.frequency);
+		argv[optind], s->values, s->rate, s->limit, s->amplitude, s->frequency);
 	printf("# %-20s\t\t%s\n", "sec.nsec(seq)", "data[]");
 
-	ret = signal_open(&n);
+	ret = node_start(&n);
 	if (ret)
 		serror("Failed to start node");
 
 	for (;;) {
-		signal_read(&n, &t, 1);
+		node_read(&n, &t, 1);
 
 		sample_io_villas_fprint(stdout, t, SAMPLE_IO_ALL & ~SAMPLE_IO_OFFSET);
 		fflush(stdout);
