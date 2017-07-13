@@ -67,8 +67,6 @@ static void path_read(struct path *p)
 		sample_free(smps+recv, ready-recv);
 	}
 
-	debug(LOG_PATH | 15, "Received %u messages from node %s", recv, node_name(ps->node));
-
 	/* Run preprocessing hooks for vector of samples */
 	enqueue = hook_read_list(&p->hooks, smps, recv);
 	if (enqueue != recv) {
@@ -130,8 +128,6 @@ static void path_write(struct path *p)
 				error("Failed to sent %u samples to node %s", cnt, node_name(pd->node));
 			else if (sent < tosend)
 				warn("Partial write to node %s", node_name(pd->node));
-
-			debug(LOG_PATH | 15, "Sent %u messages to node %s", sent, node_name(pd->node));
 
 			released = sample_put_many(smps, sent);
 
