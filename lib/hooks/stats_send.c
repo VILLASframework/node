@@ -28,6 +28,7 @@
 #include "plugin.h"
 #include "stats.h"
 #include "path.h"
+#include "super_node.h"
 
 struct stats_send {
 	struct node *dest;
@@ -60,7 +61,7 @@ static int stats_send_parse(struct hook *h, config_setting_t *cfg)
 
 	if (config_setting_lookup_string(cfg, "destination", &dest)) {
 		assert(h->path);
-		
+
 		p->dest = list_lookup(&h->path->super_node->nodes, dest);
 		if (!p->dest)
 			cerror(cfg, "Invalid destination node '%s' for hook '%s'", dest, plugin_name(h->_vt));

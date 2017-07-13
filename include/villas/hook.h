@@ -34,42 +34,13 @@
 
 #pragma once
 
-#include <time.h>
-#include <string.h>
-#include <stdbool.h>
-
-#include "log_config.h"
-#include "queue.h"
-#include "list.h"
-#include "super_node.h"
+#include "hook_type.h"
 #include "common.h"
 
 /* Forward declarations */
 struct path;
-struct hook;
 struct sample;
-struct super_node;
-
-struct hook_type {
-	int priority;		/**< Default priority of this hook type. */
-	bool builtin;		/**< Should we add this hook by default to every path?. */
-
-	size_t size;		/**< Size of allocation for struct hook::_vd */
-
-	int (*parse)(struct hook *h, config_setting_t *cfg);
-
-	int (*init)(struct hook *h);	/**< Called before path is started to parseHOOK_DESTROYs. */
-	int (*destroy)(struct hook *h);	/**< Called after path has been stopped to release memory allocated by HOOK_INIT */
-
-	int (*start)(struct hook *h);	/**< Called whenever a path is started; before threads are created. */
-	int (*stop)(struct hook *h);	/**< Called whenever a path is stopped; after threads are destoyed. */
-
-	int (*periodic)(struct hook *h);/**< Called periodically. Period is set by global 'stats' option in the configuration file. */
-	int (*restart)(struct hook *h);	/**< Called whenever a new simulation case is started. This is detected by a sequence no equal to zero. */
-
-	int (*read)(struct hook *h, struct sample *smps[], size_t *cnt);	/**< Called for every single received samples. */
-	int (*write)(struct hook *h, struct sample *smps[], size_t *cnt);	/**< Called for every single sample which will be sent. */
-};
+struct list;
 
 /** Descriptor for user defined hooks. See hooks[]. */
 struct hook {
@@ -95,6 +66,8 @@ int hook_init(struct hook *h, struct hook_type *vt, struct path *p);
  *   "print:stdout"
  */
 int hook_parse(struct hook *h, config_setting_t *cfg);
+
+int hook_parse_cli(struct hook *h, int argc, char *argv[]);
 
 int hook_destroy(struct hook *h);
 

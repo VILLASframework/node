@@ -22,9 +22,9 @@
 
 #include <ctype.h>
 
-#include "json.h"
 #include "sample.h"
 #include "sample_io.h"
+#include "sample_io_json.h"
 #include "timing.h"
 
 int sample_io_fprint(FILE *f, struct sample *s, enum sample_io_format fmt, int flags)
@@ -195,4 +195,3 @@ skip:	if (fgets(line, sizeof(line), f) == NULL)
 
 	return sample_io_villas_scan(line, s, fl);
 }
-

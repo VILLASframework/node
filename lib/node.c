@@ -28,6 +28,7 @@
 #include "utils.h"
 #include "config.h"
 #include "plugin.h"
+#include "config_helper.h"
 
 int node_init(struct node *n, struct node_type *vt)
 {
@@ -87,11 +88,30 @@ int node_parse_cli(struct node *n, int argc, char *argv[])
 	n->vectorize = 1;
 	n->name = "cli";
 
-	ret = n->_vt->parse_cli ? n->_vt->parse_cli(n, argc, argv) : 0;
-	if (ret)
-		error("Failed to parse node '%s'", node_name(n));
+	if (n->_vt->parse_cli) {
+		ret = n->_vt->parse_cli(n, argc, argv);
+		if (ret)
+			return ret;
 
-	n->state = STATE_PARSED;
+		n->state = STATE_PARSED;
+	}
+	else {
+		config_t cfg;
+		config_setting_t *cfg_root;
+
+		config_init(&cfg);
+
+		ret = config_parse_cli(&cfg, argc, argv);
+		if (ret)
+			goto out;
+
+		cfg_root = config_root_setting(&cfg);
+
+		ret = node_parse(n, cfg_root);
+
+out:
+		config_destroy(&cfg);
+	}
 
 	return ret;
 }

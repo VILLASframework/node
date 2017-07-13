@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <string.h>
+
 #include "stats.h"
 #include "hist.h"
 #include "timing.h"
@@ -58,7 +60,7 @@ int stats_destroy(struct stats *s)
 		hist_destroy(&s->histograms[i]);
 
 	free(s->delta);
-	
+
 	return 0;
 }
 

@@ -25,8 +25,9 @@
 #include "plugin.h"
 #include "path.h"
 #include "utils.h"
-#include "json.h"
+#include "config_helper.h"
 #include "stats.h"
+#include "super_node.h"
 
 #include "api.h"
 
@@ -40,7 +41,7 @@ static int api_paths(struct api_action *r, json_t *args, json_t **resp, struct a
 		json_t *json_path = json_pack("{ s: i }",
 			"state",	p->state
 		);
-		
+
 		if (p->stats)
 			json_object_set(json_path, "stats", stats_json(p->stats));
 

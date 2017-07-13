@@ -16,6 +16,7 @@
 #include "utils.h"
 #include "timing.h"
 #include "plugin.h"
+#include "super_node.h"
 
 #include "fpga/card.h"
 
@@ -291,4 +292,3 @@ static struct plugin p = {
 
 REGISTER_PLUGIN(&p)
 LIST_INIT_STATIC(&p.node.instances)
-	

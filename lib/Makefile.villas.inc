@@ -10,12 +10,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
@@ -31,7 +31,8 @@ LIB_SRCS += $(addprefix lib/nodes/, file.c cbuilder.c shmem.c signal.c) 		\
                log.c log_config.c utils.c super_node.c hist.c timing.c pool.c	\
                list.c queue.c queue_signalled.c memory.c advio.c web.c api.c	\
                plugin.c node_type.c stats.c mapping.c sample_io.c shmem.c \
-               json.c crypt.c compat.c log_table.c log_helper.c \
+               config_helper.c sample_io_json.c crypt.c compat.c log_table.c \
+               log_helper.c \
             )
 
 LIB_LDFLAGS = -shared

@@ -31,6 +31,7 @@
 #include "utils.h"
 #include "node.h"
 #include "plugin.h"
+#include "config_helper.h"
 
 int hook_init(struct hook *h, struct hook_type *vt, struct path *p)
 {
@@ -68,6 +69,38 @@ int hook_parse(struct hook *h, config_setting_t *cfg)
 	h->state = STATE_PARSED;
 
 	return 0;
+}
+
+int hook_parse_cli(struct hook *h, int argc, char *argv[])
+{
+	int ret;
+
+	if (h->_vt->parse_cli) {
+		ret = h->_vt->parse_cli(h, argc, argv);
+		if (ret)
+			return ret;
+
+		h->state = STATE_PARSED;
+	}
+	else {
+		config_t cfg;
+		config_setting_t *cfg_root;
+
+		config_init(&cfg);
+
+		ret = config_parse_cli(&cfg, argc, argv);
+		if (ret)
+			goto out;
+
+		cfg_root = config_root_setting(&cfg);
+
+		ret = hook_parse(h, cfg_root);
+
+out:
+		config_destroy(&cfg);
+	}
+
+	return ret;
 }
 
 int hook_destroy(struct hook *h)
@@ -112,14 +145,14 @@ int hook_periodic(struct hook *h)
 int hook_restart(struct hook *h)
 {
 	debug(LOG_HOOK | 10, "Running hook %s: type=restart, priority=%d", plugin_name(h->_vt), h->priority);
-	
+
 	return h->_vt->restart ? h->_vt->restart(h) : 0;
 }
 
 int hook_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {
 	debug(LOG_HOOK | 10, "Running hook %s: type=read, priority=%d, cnt=%zu", plugin_name(h->_vt), h->priority, *cnt);
-	
+
 	return h->_vt->read ? h->_vt->read(h, smps, cnt) : 0;
 }
 
@@ -196,7 +229,7 @@ int hook_parse_list(struct list *list, config_setting_t *cfg, struct path *o)
 			continue; /* We ignore all non hook settings in this libconfig object setting */
 
 		struct hook *h = alloc(sizeof(struct hook));
-		
+
 		ret = hook_init(h, &p->hook, o);
 		if (ret)
 			cerror(cfg_hook, "Failed to initialize hook");

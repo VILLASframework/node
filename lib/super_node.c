@@ -38,7 +38,7 @@
 #include "plugin.h"
 #include "memory.h"
 #include "config.h"
-#include "json.h"
+#include "config_helper.h"
 
 #include "kernel/rt.h"
 

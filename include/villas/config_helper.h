@@ -1,4 +1,4 @@
-/** Convert old style config to new JSON format.
+/** Helpers for configuration parsers.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
@@ -20,49 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#pragma once
+
 #include <jansson.h>
 #include <libconfig.h>
 
-#include <villas/config_helper.h>
-#include <villas/utils.h>
+#include "sample.h"
 
-void usage()
-{
-	printf("Usage: conf2json < input.conf > output.json\n\n");
+/* Convert a libconfig object to a jansson object */
+json_t * config_to_json(config_setting_t *cfg);
 
-	print_copyright();
-}
+/* Convert a jansson object into a libconfig object. */
+int json_to_config(json_t *json, config_setting_t *parent);
 
-int main(int argc, char *argv[])
-{
-	int ret;
-	config_t cfg;
-	config_setting_t *cfg_root;
-	json_t *json;
-
-	if (argc != 1) {
-		usage();
-		exit(EXIT_FAILURE);
-	}
-
-	config_init(&cfg);
-
-	ret = config_read(&cfg, stdin);
-	if (ret != CONFIG_TRUE)
-		return ret;
-
-	cfg_root = config_root_setting(&cfg);
-
-	json = config_to_json(cfg_root);
-	if (!json)
-		return -1;
-
-	ret = json_dumpf(json, stdout, JSON_INDENT(2)); fflush(stdout);
-	if (ret)
-		return ret;
-
-	json_decref(json);
-	config_destroy(&cfg);
-
-	return 0;
-}
+/* Create a libconfig object from command line parameters. */
+int config_parse_cli(config_t *cfg, int argc, char *argv[]);

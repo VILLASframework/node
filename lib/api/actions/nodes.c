@@ -24,8 +24,9 @@
 
 #include "plugin.h"
 #include "node.h"
+#include "super_node.h"
 #include "utils.h"
-#include "json.h"
+#include "config_helper.h"
 
 #include "api.h"
 
