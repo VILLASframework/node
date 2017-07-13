@@ -78,6 +78,10 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	if (ret)
 		error("Failed to destroy node");
 
+	ret = log_stop(&l);
+	if (ret)
+		error("Failed to stop log");
+
 	free(t);
 
 	info(CLR_GRN("Goodbye!"));
@@ -93,6 +97,10 @@ int main(int argc, char *argv[])
 	ret = log_init(&l, l.level, LOG_ALL);
 	if (ret)
 		error("Failed to initialize log");
+
+	ret = log_start(&l);
+	if (ret)
+		error("Failed to start log");
 
 	ret = signals_init(quit);
 	if (ret)
