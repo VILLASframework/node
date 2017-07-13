@@ -200,12 +200,11 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 
 	/* Output node(s) */
 	cfg_out = config_setting_get_member(cfg, "out");
-	if (!cfg_out)
-		cerror(cfg, "Missing output nodes for path");
-
-	ret = node_parse_list(&destinations, cfg_out, nodes);
-	if (ret || list_length(&destinations) == 0)
-		cerror(cfg_out, "Invalid output nodes");
+	if (cfg_out) {
+		ret = node_parse_list(&destinations, cfg_out, nodes);
+		if (ret)
+			cerror(cfg_out, "Failed to parse output nodes");
+	}
 
 	/* Optional settings */
 	cfg_hooks = config_setting_get_member(cfg, "hooks");
@@ -268,7 +267,7 @@ int path_check(struct path *p)
 
 int path_init2(struct path *p)
 {
-	int ret, max_queuelen = 0;
+	int ret, queuelen = 0;
 
 	assert(p->state == STATE_CHECKED);
 
@@ -304,12 +303,12 @@ int path_init2(struct path *p)
 		if (ret)
 			error("Failed to initialize queue for path");
 
-		if (pd->queuelen > max_queuelen)
-			max_queuelen = pd->queuelen;
+		if (pd->queuelen > queuelen)
+			queuelen = pd->queuelen;
 	}
 
 	/* Initialize source */
-	ret = pool_init(&p->source->pool, max_queuelen, SAMPLE_LEN(p->source->samplelen), &memtype_hugepage);
+	ret = pool_init(&p->source->pool, MAX(DEFAULT_QUEUELEN, queuelen), SAMPLE_LEN(p->source->samplelen), &memtype_hugepage);
 	if (ret)
 		error("Failed to allocate memory pool for path");
 
