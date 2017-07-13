@@ -42,35 +42,36 @@
 
 #include "config.h"
 
-config_t cfg;
+int cnt;
 
-static int hook_parse_cli(struct hook *h, char *params[], int paramlen)
+struct sample **samples;
+struct plugin *p;
+
+struct log  l = { .state = STATE_DESTROYED };
+struct pool q = { .state = STATE_DESTROYED };
+struct hook h = { .state = STATE_DESTROYED };
+
+static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
 	int ret;
-	char *str;
-	config_setting_t *cfg_root;
 
-	/* Concat all params */
-	str = NULL;
-	for (int i = 0; i < paramlen; i++)
-		str = strcatf(&str, "%s", params[i]);
+	ret = hook_stop(&h);
+	if (ret)
+		error("Failed to stop hook");
 
-	config_set_auto_convert(&cfg, 1);
+	ret = hook_destroy(&h);
+	if (ret)
+		error("Failed to destroy hook");
 
-	if (str) {
-		ret = config_read_string(&cfg, str);
-		if (ret != CONFIG_TRUE)
-			error("Failed to parse argument '%s': %s", str, config_error_text(&cfg));
-	}
+	sample_free(samples, cnt);
 
-	//config_write(&cfg, stdout);
+	ret = pool_destroy(&q);
+	if (ret)
+		error("Failed to destroy memory pool");
 
-	cfg_root = config_root_setting(&cfg);
-	ret = hook_parse(h, cfg_root);
+	info(CLR_GRN("Goodbye!"));
 
-	free(str);
-
-	return ret;
+	exit(EXIT_SUCCESS);
 }
 
 static void usage()
@@ -95,20 +96,12 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	int ret, level;
+	int ret;
 
-	size_t cnt, recv;
+	size_t recv;
 
 	/* Default values */
-	level = V;
 	cnt = 1;
-
-	struct log log;
-	struct plugin *p;
-	struct sample *samples[cnt];
-
-	struct pool q = { .state = STATE_DESTROYED };
-	struct hook h = { .state = STATE_DESTROYED };
 
 	char c;
 	while ((c = getopt(argc, argv, "hv:d:")) != -1) {
@@ -117,7 +110,7 @@ int main(int argc, char *argv[])
 				cnt = atoi(optarg);
 				break;
 			case 'd':
-				level = atoi(optarg);
+				l.level = atoi(optarg);
 				break;
 			case 'h':
 			case '?':
@@ -133,32 +126,37 @@ int main(int argc, char *argv[])
 
 	char *hookstr = argv[optind];
 
+	ret = signals_init(quit);
+	if (ret)
+		error("Failed to intialize signals");
+
+	ret = log_init(&l, l.level, LOG_ALL);
+	if (ret)
+		error("Failed to initialize log");
+
+	log_start(&l);
+
 	if (cnt < 1)
 		error("Vectorize option must be greater than 0");
 
-	log_init(&log, level, LOG_ALL);
-	log_start(&log);
-
 	memory_init(DEFAULT_NR_HUGEPAGES);
+
+	samples = alloc(cnt * sizeof(struct sample *));
 
 	ret = pool_init(&q, 10 * cnt, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
 	if (ret)
 		error("Failed to initilize memory pool");
 
-
-
 	p = plugin_lookup(PLUGIN_TYPE_HOOK, hookstr);
 	if (!p)
 		error("Unknown hook function '%s'", hookstr);
-
-	config_init(&cfg);
 
 	/** @todo villas-hook does not use the path structure */
 	ret = hook_init(&h, &p->hook, NULL);
 	if (ret)
 		error("Failed to initialize hook");
 
-	ret = hook_parse_cli(&h, &argv[optind + 1], argc - optind - 1);
+	ret = hook_parse_cli(&h, argc - optind - 1, &argv[optind + 1]);
 	if (ret)
 		error("Failed to parse hook config");
 
@@ -166,10 +164,15 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to start hook");
 
-	while (!feof(stdin)) {
+	for (;;) {
+		if (feof(stdin)) {
+			killme(SIGTERM);
+			pause();
+		}
+
 		ret = sample_alloc(&q, samples, cnt);
 		if (ret != cnt)
-			error("Failed to allocate %zu samples from pool", cnt);
+			error("Failed to allocate %d samples from pool", cnt);
 
 		recv = 0;
 		for (int j = 0; j < cnt && !feof(stdin); j++) {
@@ -192,19 +195,6 @@ int main(int argc, char *argv[])
 
 		sample_free(samples, cnt);
 	}
-
-	ret = hook_stop(&h);
-	if (ret)
-		error("Failed to stop hook");
-	
-	ret = hook_destroy(&h);
-	if (ret)
-		error("Failed to destroy hook");
-
-	config_destroy(&cfg);
-
-	sample_free(samples, cnt);
-	pool_destroy(&q);
 
 	return 0;
 }
