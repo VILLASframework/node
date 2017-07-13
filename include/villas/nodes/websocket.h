@@ -74,6 +74,8 @@ struct websocket_connection {
 
 	enum state state;
 
+	char *buf;			/**< A buffer which is used to construct the messages. */
+
 	char *_name;
 };
 
