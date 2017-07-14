@@ -25,7 +25,7 @@ LIB_ABI_VERSION = 1
 LIB = $(BUILDDIR)/$(LIB_NAME).so.$(LIB_ABI_VERSION)
 
 # Object files for libvillas
-LIB_SRCS += $(addprefix lib/nodes/, file.c cbuilder.c shmem.c signal.c) 		\
+LIB_SRCS += $(addprefix lib/nodes/, file.c cbuilder.c shmem.c signal.c loopback.c) 		\
             $(addprefix lib/kernel/, kernel.c rt.c)		\
             $(addprefix lib/, sample.c path.c node.c hook.c	\
                log.c log_config.c utils.c super_node.c hist.c timing.c pool.c	\
