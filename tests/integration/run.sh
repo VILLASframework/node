@@ -25,16 +25,16 @@
 SCRIPT=$(realpath ${BASH_SOURCE[0]})
 SCRIPTPATH=$(dirname $SCRIPT)
 
-export SRCDIR=$(realpath ${SCRIPTPATH}/..)
+export SRCDIR=$(realpath ${SCRIPTPATH}/../..)
 export BUILDDIR=${SRCDIR}/build/release
 export LOGDIR=${BUILDDIR}/tests/integration
 export PATH=${BUILDDIR}:${PATH}
 
 # Default values
-VERBOSE=0
-FILTER='*'
-NUM_SAMPLES=100
-TIMEOUT=5m
+VERBOSE=${VERBOSE:-0}
+FILTER=${FILTER:-'*'}
+NUM_SAMPLES=${NUM_SAMPLES:-100}
+TIMEOUT=${TIMEOUT:-5m}
 
 # Parse command line arguments
 while getopts ":f:l:t:v" OPT; do
@@ -107,7 +107,7 @@ for TEST in ${TESTS}; do
 			FAILED=$((${FAILED} + 1))
 			;;
 	esac
-	
+
 	TOTAL=$((${TOTAL} + 1))
 done
 

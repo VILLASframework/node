@@ -10,12 +10,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
@@ -54,7 +54,7 @@ rpm-libwebsockets: | $(RPMDIR)/RPMS/x86_64/ $(BUILDDIR)/thirdparty/libwebsockets
 	mv $(BUILDDIR)/thirdparty/libwebsockets/RPM/RPMS/x86_64/libwebsockets-*.rpm $(RPMDIR)/RPMS/x86_64/
 
 # We patch version number and release fields of the spec file based on the current Git commit
-$(SPEC_VILLAS): $(SRCDIR)/packaging/rpm/villas-node.spec | $$(dir $$@)
+$(SPEC_VILLAS): packaging/rpm/villas-node.spec | $$(dir $$@)
 	sed -e "s/§VERSION§/$(VERSION_NUM)/g" \
 	    -e "s/§RELEASE§/1.$(subst -,_,$(GIT_BRANCH))_$(subst -,_,$(VARIANT)).$(shell date +%Y%m%d)git$(GIT_REV)/g" < $^ > $@
 
