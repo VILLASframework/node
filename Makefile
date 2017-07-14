@@ -20,12 +20,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
@@ -45,7 +45,7 @@ V ?= 2
 # Common flags
 LDLIBS   =
 CFLAGS  += -I. -Iinclude -Iinclude/villas
-CFLAGS  += -std=c11 -MMD -mcx16 
+CFLAGS  += -std=c11 -MMD -mcx16
 CFLAGS  += -Wall -Werror -fdiagnostics-color=auto
 LDFLAGS += -L$(BUILDDIR)
 
@@ -65,7 +65,7 @@ endif
 ifdef PROFILE
 	CFLAGS += -pg
 	LDFLAGS += -pg
-	
+
 	VARIANTS += profile
 endif
 
@@ -73,10 +73,10 @@ ifdef COVERAGE
 	CFLAGS  += -fprofile-arcs -ftest-coverage
 	LDFLAGS += --coverage
 	LDLIBS  += -lgcov
-	
+
 	LIB_LDFLAGS += -coverage
 	LIB_LDLIBS += -gcov
-	
+
 	VARIANTS += coverage
 endif
 
@@ -87,16 +87,21 @@ VARIANT = $(subst $(SPACE),-,$(strip $(VARIANTS)))
 BUILDDIR := $(BUILDDIR)/$(VARIANT)
 SRCDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
+VPATH = $(SRCDIR)
+
 # Add git revision and build variant defines
 VERSION := $(shell git describe --tags --abbrev=0 --match v*)
 VERSION_NUM := $(shell VERSION=$(VERSION); echo $${VERSION:1})
 
 ifdef CI
 	VARIANT := $(VARIANT)-ci
-endif
 
-GIT_REV    := $(shell git rev-parse --short=7    HEAD)
-GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+	GIT_REV    := $(shell echo $${CI_COMMIT_SHA:0:7})
+	GIT_BRANCH := $(CI_COMMIT_REF_NAME)
+else
+	GIT_REV    := $(shell git rev-parse --short=7    HEAD)
+	GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+endif
 
 # pkg-config dependencies
 PKGS = libconfig
