@@ -32,6 +32,7 @@
 #include <libconfig.h>
 
 #include "queue_signalled.h"
+#include "pool.h"
 
 /* Forward declarations */
 struct node;
@@ -42,8 +43,10 @@ struct sample;
  */
 struct loopback {
 	int queuelen;
+	int samplelen;
 
 	struct queue_signalled queue;
+	struct pool pool;
 };
 
 /** @see node_type::print */
