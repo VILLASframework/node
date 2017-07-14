@@ -236,7 +236,7 @@ function updatePlot()
 
 function wsConnect(node)
 {
-	var url = wsUrl('');
+	var url = wsUrl(node.name);
 	var conn = new WebSocket(url, 'live');
 
 	conn.binaryType = 'arraybuffer';
