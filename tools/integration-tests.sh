@@ -25,7 +25,7 @@
 SCRIPT=$(realpath ${BASH_SOURCE[0]})
 SCRIPTPATH=$(dirname $SCRIPT)
 
-export SRCDIR=$(realpath ${SCRIPTPATH}/../..)
+export SRCDIR=$(realpath ${SCRIPTPATH}/..)
 export BUILDDIR=${SRCDIR}/build/release
 export LOGDIR=${BUILDDIR}/tests/integration
 export PATH=${BUILDDIR}:${PATH}

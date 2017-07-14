@@ -23,4 +23,4 @@
 integration-tests: src tools
 
 run-integration-tests: integration-tests
-	@$(SRCDIR)/tests/integration/run.sh
+	@$(SRCDIR)/tools/integration-tests.sh
