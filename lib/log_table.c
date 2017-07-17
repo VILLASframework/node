@@ -102,9 +102,9 @@ void table_header(struct table *t)
 		free(col);
 	}
 
-	stats(line0);
-	stats(line1);
-	stats(line2);
+	stats("%s", line0);
+	stats("%s", line1);
+	stats("%s", line2);
 	
 	free(line0);
 	free(line1);
@@ -142,7 +142,7 @@ void table_row(struct table *t, ...)
 
 	va_end(args);
 	
-	stats(line);
+	stats("%s", line);
 	free(line);
 }
 
@@ -165,6 +165,6 @@ void table_footer(struct table *t)
 			strcatf(&line, "%s", BOX_ULR);
 	}
 	
-	stats(line);
+	stats("%s", line);
 	free(line);
 }

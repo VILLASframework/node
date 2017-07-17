@@ -241,7 +241,7 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 			.name = "index",
 			.type = "integer"
 		};
-		asprintf(&i.value, "%u", j);
+		assert(asprintf(&i.value, "%u", j));
 
 		list_push(&a->metadata, memdup(&s, sizeof(s)));
 		list_push(&a->metadata, memdup(&i, sizeof(i)));
