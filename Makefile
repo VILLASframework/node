@@ -50,7 +50,7 @@ CFLAGS  += -Wall -Werror -fdiagnostics-color=auto
 LDFLAGS += -L$(BUILDDIR)
 
 # Some tools
-PKGCONFIG := PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:$(PKG_CONFIG_PATH) pkg-config
+PKGCONFIG := PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:$(PKG_CONFIG_PATH) pkg-config
 SHELL := bash
 
 # We must compile without optimizations for gcov!
