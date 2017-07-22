@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -82,7 +82,7 @@ static void * SendToIPPort(void *arg)
 		OpalPrint("%s: SendToIPPort: No transimission block for this controller. Stopping thread.\n", PROGNAME);
 		return NULL;
 	}
-	
+
 	do {
 		/* This call unblocks when the 'Data Ready' line of a send icon is asserted. */
 		ret = OpalWaitForAsyncSendRequest(&SendID);
@@ -127,7 +127,7 @@ static void * SendToIPPort(void *arg)
 
 		for (int i = 0; i < msg->length; i++)
 			msg->data[i].f = (float) mdldata[i];
-		
+
 		len = MSG_LEN(msg->length);
 
 		msg_hton(msg);
@@ -137,7 +137,7 @@ static void * SendToIPPort(void *arg)
 			msg[i] = (float) mdldata[i];
 			imsg[i] = htonl(imsg[i]);
 		}
-		
+
 		len = cnt * sizeof(float);
 #else
   #error Unknown protocol
@@ -205,12 +205,12 @@ static void * RecvFromIPPort(void *arg)
 					OpalPrint("%s: Timeout while waiting for data\n", PROGNAME, errno);
 				if (ret == -1) /* a more serious error, so we print it */
 					OpalPrint("%s: Error %d while waiting for data\n", PROGNAME, errno);
-					
+
 				continue;
 			}
 			break;
 		}
-		
+
 		/* Get the number of signals to send back to the model */
 		OpalGetAsyncRecvIconDataLength(&mdldata_size, RecvID);
 		cnt = mdldata_size / sizeof(double);
@@ -228,23 +228,23 @@ static void * RecvFromIPPort(void *arg)
 			OpalPrint("%s: Skipping invalid packet\n", PROGNAME);
 			continue;
 		}
-			
+
 		if (cnt > msg->length) {
 			OpalPrint("%s: Number of signals for RecvID=%d (%d) exceeds what was received (%d)\n",
 				PROGNAME, RecvID, cnt, msg->length);
 		}
-		
+
 		for (int i = 0; i < msg->length; i++)
 			mdldata[i] = (double) msg->data[i].f;
 
 		/* Update OPAL model */
 		OpalSetAsyncRecvIconStatus(msg->sequence, RecvID);	/* Set the Status to the message ID */
 #elif PROTOCOL == GTNET_SKT
-        uint32_t *imsg = (uint32_t *) msg;
-        for (int i = 0; i < cnt; i++) {
-            imsg[i] = ntohl(imsg[i]);
+		uint32_t *imsg = (uint32_t *) msg;
+		for (int i = 0; i < cnt; i++) {
+			imsg[i] = ntohl(imsg[i]);
 			mdldata[i] = (double) msg[i];
-        }
+		}
 #else
   #error Unknown protocol
 #endif
@@ -298,7 +298,7 @@ int main(int argc, char *argv[])
 	/* Get IP Controler Parameters (ie: ip address, port number...) and
 	 * initialize the device on the QNX node. */
 	memset(&IconCtrlStruct, 0, sizeof(IconCtrlStruct));
-	
+
 	ret = OpalGetAsyncCtrlParameters(&IconCtrlStruct, sizeof(IconCtrlStruct));
 	if (ret != EOK) {
 		OpalPrint("%s: ERROR: Could not get controller parameters (%d).\n", PROGNAME, ret);
@@ -316,7 +316,7 @@ int main(int argc, char *argv[])
 	ret = pthread_create(&tid_send, NULL, SendToIPPort, NULL);
 	if (ret == -1)
 		OpalPrint("%s: ERROR: Could not create thread (SendToIPPort), errno %d\n", PROGNAME, errno);
-	
+
 	ret = pthread_create(&tid_recv, NULL, RecvFromIPPort, NULL);
 	if (ret == -1)
 		OpalPrint("%s: ERROR: Could not create thread (RecvFromIPPort), errno %d\n", PROGNAME, errno);
@@ -332,7 +332,7 @@ int main(int argc, char *argv[])
 
 	/* Close the ip port and shared memories */
 	socket_close(&skt, IconCtrlStruct);
-	
+
 	OpalCloseAsyncMem (ASYNC_SHMEM_SIZE, ASYNC_SHMEM_NAME);
 	OpalSystemCtrl_UnRegister(PRINT_SHMEM_NAME);
 

@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -49,8 +49,7 @@ int socket_init(struct socket *s, Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 		OpalPrint("%s: This version of %s only supports UDP\n", PROGNAME, PROGNAME);
 		return EIO;
 	}
-		
-	
+
 	OpalPrint("%s: Version        : %s\n", PROGNAME, VERSION);
 	OpalPrint("%s: Remote Address : %s\n", PROGNAME, IconCtrlStruct.StringParam[0]);
 	OpalPrint("%s: Remote Port    : %d\n", PROGNAME, (int) IconCtrlStruct.FloatParam[1]);
@@ -90,7 +89,7 @@ int socket_init(struct socket *s, Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 			OpalPrint("%s: ERROR: Could not set TTL for multicast send (%d)\n", PROGNAME, errno);
 			return EIO;
 		}
-		
+
 		ret = setsockopt(s->sd, IPPROTO_IP, IP_MULTICAST_LOOP, (char *)&LOOP, sizeof(LOOP));
 		if (ret == -1) {
 			OpalPrint("%s: ERROR: Could not set loopback for multicast send (%d)\n", PROGNAME, errno);
