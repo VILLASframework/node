@@ -10,17 +10,17 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-ASYNCIP_PATH = $(SRCDIR)/clients/opal/villas_udp/models/send_receive
+ASYNCIP_PATH = $(SRCDIR)/clients/opal/models/send_receive
 
 ASYNCIP_OPTS = RTLAB_INTEL_COMPILER=0 \
 		PROTOCOL=GTNET_SKT \
@@ -29,7 +29,7 @@ ASYNCIP_OPTS = RTLAB_INTEL_COMPILER=0 \
 		OPAL_INCPATH=-I$(SRCDIR)/thirdparty/libopal/include/opal
 
 clients: clients-opal
-	
+
 clients-opal:
 	$(MAKE) -C $(ASYNCIP_PATH) -f Makefile.mk AsyncIP $(ASYNCIP_OPTS)
 
