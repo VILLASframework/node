@@ -10,12 +10,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -28,7 +28,7 @@
 void msg_ntoh(struct msg *m)
 {
 	msg_hdr_ntoh(m);
-	
+
 	for (int i = 0; i < m->length; i++)
 		m->data[i].i = ntohl(m->data[i].i);
 }
@@ -63,7 +63,7 @@ int msg_verify(struct msg *m)
 		return -1;
 	else if (m->type    != MSG_TYPE_DATA)
 		return -2;
-	else if ((m->rsvd1 != 0)  || (m->rsvd2 != 0))
+	else if (m->rsvd1 != 0)
 		return -3;
 	else
 		return 0;

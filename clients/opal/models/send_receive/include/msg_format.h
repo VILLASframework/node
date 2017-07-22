@@ -11,12 +11,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -47,7 +47,8 @@
 	.version  = MSG_VERSION,	\
 	.type     = MSG_TYPE_DATA,	\
 	.length   = len,	 	\
-	.sequence = seq			\
+	.sequence = seq,		\
+	.id       = 0			\
 }
 
 /** The timestamp of a message in struct timespec format */
@@ -74,10 +75,10 @@ struct msg
   #error Invalid byte-order
 #endif
 
-	uint8_t rsvd2;		/**< Reserved bits */
+	uint8_t id;		/**< An id which identifies the source of this sample */
 	uint16_t length;	/**< The number of values in msg::data[]. */
 	uint32_t sequence;	/**< The sequence number is incremented by one for consecutive messages. */
-	
+
 	/** A timestamp per message. */
 	struct {
 		uint32_t sec;	/**< Seconds since 1970-01-01 00:00:00 */

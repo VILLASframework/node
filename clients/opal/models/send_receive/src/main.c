@@ -60,7 +60,7 @@ struct socket skt;
 
 static void * SendToIPPort(void *arg)
 {
-	unsigned int ModelState, SendID = 1, Sequence = 0;
+	unsigned int ModelState, SendID, Sequence = 0;
 	int nbSend = 0, ret, cnt, len;
 
 	/* Data from OPAL-RT model */
@@ -119,7 +119,7 @@ static void * SendToIPPort(void *arg)
 		msg->version = MSG_VERSION;
 		msg->type = MSG_TYPE_DATA;
 		msg->rsvd1 = 0;
-		msg->rsvd2 = 0;
+		msg->id = SendID;
 		msg->length = cnt;
 		msg->sequence = Sequence++;
 		msg->ts.sec = now.tv_sec;
@@ -170,7 +170,7 @@ static void * SendToIPPort(void *arg)
 
 static void * RecvFromIPPort(void *arg)
 {
-	unsigned int ModelState, RecvID = 1;
+	unsigned int ModelState, RecvID;
 	int nbRecv = 0, ret, cnt;
 
 	/* Data from OPAL-RT model */
@@ -195,6 +195,14 @@ static void * RecvFromIPPort(void *arg)
 		return NULL;
 	}
 
+	/* Get list of RecvIds */
+	unsigned int RecvIDs[nbRecv];
+	ret = OpalGetAsyncRecvIDList(RecvIDs, sizeof(RecvIDs));
+	if (ret != EOK) {
+		OpalPrint("%s: Failed to get list of RecvIDs\n", PROGNAME);
+		return NULL;
+	}
+
 	do {
 		/* Receive message */
 		ret  = socket_recv(&skt, (char *) msg, sizeof(buf), 1.0);
@@ -211,7 +219,23 @@ static void * RecvFromIPPort(void *arg)
 			break;
 		}
 
-		/* Get the number of signals to send back to the model */
+#if PROTOCOL == VILLAS
+		RecvID = msg->id;
+#elif PROTOCOL == GTNET_SKT
+		RecvID = 1;
+#else
+  #error Unknown protocol
+#endif
+		/* Check if this RecvID exists */
+		for (int i = 0; i < nbRecv; i++) {
+			if (RecvIDs[i] == RecvID)
+				goto found;
+		}
+
+		OpalPrint("%s: Received message with non-existent RecvID=%d. Changing to RecvID=%d...\n", PROGNAME, RecvID, RecvIDs[0]);
+		RecvID = RecvIDs[0];
+
+found:		/* Get the number of signals to send back to the model */
 		OpalGetAsyncRecvIconDataLength(&mdldata_size, RecvID);
 		cnt = mdldata_size / sizeof(double);
 		if (cnt > MAX_VALUES) {
@@ -308,26 +332,26 @@ int main(int argc, char *argv[])
 	/* Initialize socket */
 	ret = socket_init(&skt, IconCtrlStruct);
 	if (ret != EOK) {
-		OpalPrint("%s: ERROR: Initialization failed.\n", PROGNAME);
+		OpalPrint("%s: ERROR: Failed to create socket.\n", PROGNAME);
 		exit(EXIT_FAILURE);
 	}
 
 	/* Start send/receive threads */
 	ret = pthread_create(&tid_send, NULL, SendToIPPort, NULL);
-	if (ret == -1)
+	if (ret < 0)
 		OpalPrint("%s: ERROR: Could not create thread (SendToIPPort), errno %d\n", PROGNAME, errno);
 
 	ret = pthread_create(&tid_recv, NULL, RecvFromIPPort, NULL);
-	if (ret == -1)
+	if (ret < 0)
 		OpalPrint("%s: ERROR: Could not create thread (RecvFromIPPort), errno %d\n", PROGNAME, errno);
 
 	/* Wait for both threads to finish */
 	ret = pthread_join(tid_send, NULL);
-	if (ret != 0)
+	if (ret)
 		OpalPrint("%s: ERROR: pthread_join (SendToIPPort), errno %d\n", PROGNAME, ret);
-	
+
 	ret = pthread_join(tid_recv, NULL);
-	if (ret != 0)
+	if (ret)
 		OpalPrint("%s: ERROR: pthread_join (RecvFromIPPort), errno %d\n", PROGNAME, ret);
 
 	/* Close the ip port and shared memories */

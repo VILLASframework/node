@@ -66,7 +66,7 @@ int msg_verify(struct msg *m)
 		return -1;
 	else if (m->type    != MSG_TYPE_DATA)
 		return -2;
-	else if ((m->rsvd1 != 0)  || (m->rsvd2 != 0))
+	else if (m->rsvd1 != 0)
 		return -3;
 	else
 		return 0;
@@ -89,7 +89,7 @@ int msg_to_sample(struct msg *msg, struct sample *smp)
 	smp->ts.received.tv_nsec = -1;
 
 	memcpy(smp->data, msg->data, SAMPLE_DATA_LEN(smp->length));
-	
+
 	return 0;
 }
 
@@ -125,7 +125,7 @@ ssize_t msg_buffer_from_samples(struct sample *smps[], unsigned cnt, char *buf, 
 		msg = (struct msg *) ptr;
 		smp = smps[++i];
 	}
-	
+
 	return ptr - buf;
 }
 
@@ -147,6 +147,6 @@ int msg_buffer_to_samples(struct sample *smps[], unsigned cnt, char *buf, size_t
 		msg = (struct msg *) ptr;
 		smp = smps[++i];
 	}
-	
+
 	return i;
 }

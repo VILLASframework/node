@@ -75,7 +75,7 @@ int socket_init(struct socket *s, Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 
 	/* Bind local port and address to socket. */
 	ret = bind(s->sd, (struct sockaddr *) &s->recv_ad, sizeof(struct sockaddr_in));
-	if (ret == -1) {
+	if (ret < 0) {
 		OpalPrint("%s: ERROR: Could not bind local port to socket\n", PROGNAME);
 		return EIO;
 	}
@@ -112,13 +112,10 @@ int socket_init(struct socket *s, Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 				return EIO;
 			}
 
-			OpalPrint("%s: Added process to multicast group (%s)\n",
-				PROGNAME, IconCtrlStruct.StringParam[1]);
+			OpalPrint("%s: Added process to multicast group (%s)\n", PROGNAME, IconCtrlStruct.StringParam[1]);
 		}
-		else {
-			OpalPrint("%s: WARNING: IP address for multicast group is not in multicast range. Ignored\n",
-				PROGNAME);
-		}
+		else
+			OpalPrint("%s: WARNING: IP address for multicast group is not in multicast range. Ignored\n", PROGNAME);
 	}
 
 	return EOK;
@@ -126,20 +123,21 @@ int socket_init(struct socket *s, Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 
 int socket_close(struct socket *s, Opal_GenAsyncParam_Ctrl IconCtrlStruct)
 {
-	if (s->sd < 0) {
-		shutdown(s->sd, SHUT_RDWR);
-		close(s->sd);
-	}
+	int ret;
+
+	ret = shutdown(s->sd, SHUT_RDWR);
+	if (ret)
+		return ret;
+
+	ret = close(s->sd);
+	if (ret)
+		return ret;
 
 	return 0;
 }
 
 int socket_send(struct socket *s, char *data, int len)
 {
-	if (s->sd < 0)
-		return -1;
-
-	/* Send the packet */
 	return sendto(s->sd, data, len, 0, (struct sockaddr *) &s->send_ad, sizeof(s->send_ad));
 }
 
@@ -150,9 +148,6 @@ int socket_recv(struct socket *s, char *data, int len, double timeout)
 	struct timeval tv;
 	socklen_t client_ad_size = sizeof(client_ad);
 	fd_set sd_set;
-
-	if (s->sd < 0)
-		return -1;
 
 	/* Set the descriptor set for the select() call */
 	FD_ZERO(&sd_set);
