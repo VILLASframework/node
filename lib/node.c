@@ -101,7 +101,7 @@ int node_parse_cli(struct node *n, int argc, char *argv[])
 
 		config_init(&cfg);
 
-		ret = config_parse_cli(&cfg, argc, argv);
+		ret = config_read_cli(&cfg, argc, argv);
 		if (ret)
 			goto out;
 

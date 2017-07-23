@@ -139,7 +139,7 @@ int json_to_config(json_t *json, config_setting_t *parent)
 	return 0;
 }
 
-int config_parse_cli(config_t *cfg, int argc, char *argv[])
+int config_read_cli(config_t *cfg, int argc, char *argv[])
 {
 	int ret;
 	char *str = NULL;

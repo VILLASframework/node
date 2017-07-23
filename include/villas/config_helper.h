@@ -34,4 +34,4 @@ json_t * config_to_json(config_setting_t *cfg);
 int json_to_config(json_t *json, config_setting_t *parent);
 
 /* Create a libconfig object from command line parameters. */
-int config_parse_cli(config_t *cfg, int argc, char *argv[]);
+int config_read_cli(config_t *cfg, int argc, char *argv[]);
