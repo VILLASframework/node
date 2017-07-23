@@ -83,7 +83,7 @@ struct node_type {
 	 * @retval <0	Error. Something went wrong.
 	 */
 	int (*parse)(struct node *n, config_setting_t *cfg);
-	
+
 	/** Parse node from command line arguments. */
 	int (*parse_cli)(struct node *n, int argc, char *argv[]);
 
@@ -116,7 +116,7 @@ struct node_type {
 	 * using gathering techniques (struct iovec).
 	 * The messages will be stored in a circular buffer / array @p m.
 	 * Indexes used to address @p m will wrap around after len messages.
-	 * Some node types might only support to receive one message at a time.
+	 * Some node-types might only support to receive one message at a time.
 	 *
 	 * @param n		A pointer to the node object.
 	 * @param smps		An array of pointers to memory blocks where the function should store received samples.
@@ -141,7 +141,7 @@ struct node_type {
 
 	/** Reverse source and destination of a node.
 	 *
-	 * This is not supported by all node types!
+	 * This is not supported by all node-types!
 	 *
 	 * @param n		A pointer to the node object.
 	 */

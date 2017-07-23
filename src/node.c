@@ -51,7 +51,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 	if (sn.stats > 0)
 		stats_print_footer(STATS_FORMAT_HUMAN);
-	
+
 	ret = super_node_stop(&sn);
 	if (ret)
 		error("Failed to stop super node");
@@ -75,7 +75,7 @@ static void usage()
 	printf("  This type of invocation is used by OPAL-RT Asynchronous processes.\n");
 	printf("  See in the RT-LAB User Guide for more information.\n\n");
 #endif
-	printf("Supported node types:\n");
+	printf("Supported node-types:\n");
 	plugin_dump(PLUGIN_TYPE_NODE);
 	printf("\n");
 
@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 		if (sn.stats > 0 && time_delta(&last, &now) > sn.stats) {
 			for (size_t i = 0; i < list_length(&sn.paths); i++) {
 				struct path *p = list_at(&sn.paths, i);
-				
+
 				if (p->state != STATE_STARTED)
 					continue;
 

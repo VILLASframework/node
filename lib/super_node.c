@@ -341,7 +341,7 @@ int super_node_start(struct super_node *sn)
 	api_start(&sn->api);
 	web_start(&sn->web);
 
-	info("Start node types");
+	info("Starting node-types");
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
 		struct node *n = list_at(&sn->nodes, i);
 
@@ -398,7 +398,7 @@ int super_node_stop(struct super_node *sn)
 			error("Failed to stop node: %s", node_name(n));
 	}
 
-	info("Stopping node types");
+	info("Stopping node-types");
 	for (size_t i = 0; i < list_length(&plugins); i++) { INDENT
 		struct plugin *p = list_at(&plugins, i);
 

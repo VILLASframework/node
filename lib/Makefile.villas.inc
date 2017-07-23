@@ -40,7 +40,7 @@ LIB_LDLIBS  = $(LDLIBS) -ldl -lrt -Wl,-soname,$(LIB_NAME).so.$(LIB_ABI_VERSION)
 
 LIB_PKGS += libwebsockets openssl
 
-######## Node types ########
+######## Node-types ########
 
 # Enable Socket node type when libnl3 is available
 ifndef WITHOUT_SOCKET
