@@ -49,14 +49,17 @@ int signal_parse(struct node *n, config_setting_t *cfg)
 {
 	struct signal *s = n->_vd;
 
+	int ret;
 	const char *type;
 
 	if (!config_setting_lookup_string(cfg, "signal", &type))
 		s->type = SIGNAL_TYPE_MIXED;
 	else {
-		s->type = signal_lookup_type(type);
-		if (s->type == -1)
+		ret = signal_lookup_type(type);
+		if (ret == -1)
 			cerror(cfg, "Unknown signal type '%s'", type);
+
+		s->type = ret;
 	}
 	
 	if (!config_setting_lookup_bool(cfg, "realtime", &s->rt))
@@ -85,6 +88,7 @@ int signal_parse(struct node *n, config_setting_t *cfg)
 
 int signal_parse_cli(struct node *n, int argc, char *argv[])
 {
+	int ret;
 	char *type;
 	
 	struct signal *s = n->_vd;
@@ -139,9 +143,11 @@ check:		if (optarg == endptr)
 	
 	type = argv[optind];
 
-	s->type = signal_lookup_type(type);
-	if (s->type == -1)
+	ret = signal_lookup_type(type);
+	if (ret == -1)
 		error("Invalid signal type: %s", type);
+
+	s->type = ret;
 
 	return 0;
 }

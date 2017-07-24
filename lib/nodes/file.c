@@ -87,26 +87,21 @@ static struct timespec file_calc_read_offset(const struct timespec *first, const
 	switch (mode) {
 		case FILE_EPOCH_DIRECT: /* read first value at now + epoch */
 			offset = time_diff(first, &now);
-			offset = time_add(&offset, epoch);
-			break;
+			return time_add(&offset, epoch);
 
 		case FILE_EPOCH_WAIT: /* read first value at now + first + epoch */
 			offset = now;
 			return time_add(&now, epoch);
-			break;
 
 		case FILE_EPOCH_RELATIVE: /* read first value at first + epoch */
 			return *epoch;
-			break;
 
 		case FILE_EPOCH_ABSOLUTE: /* read first value at f->read_epoch */
 			return time_diff(first, epoch);
-			break;
 
-		default: { }
+		default:
+			return (struct timespec) { 0 };
 	}
-	
-	return offset;
 }
 
 int file_parse(struct node *n, config_setting_t *cfg)

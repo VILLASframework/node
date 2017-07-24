@@ -375,7 +375,7 @@ int websocket_deinit()
 
 	/* Wait for all connections to be closed */
 	while (list_length(&connections) > 0)
-		sleep(0.2);
+		usleep(0.2*1e6);
 
 	list_destroy(&connections, (dtor_cb_t) websocket_destination_destroy, true);
 

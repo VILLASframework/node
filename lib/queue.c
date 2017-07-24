@@ -188,7 +188,7 @@ int queue_pull_many(struct queue *q, void *ptr[], size_t cnt)
 
 int queue_close(struct queue *q)
 {
-	int expected = STATE_INITIALIZED;
+	enum state expected = STATE_INITIALIZED;
 	if (atomic_compare_exchange_weak_explicit(&q->state, &expected, STATE_STOPPED, memory_order_relaxed, memory_order_relaxed))
 		return 0;
 

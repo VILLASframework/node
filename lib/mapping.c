@@ -30,6 +30,7 @@
 
 int mapping_entry_parse_str(struct mapping_entry *e, const char *str)
 {
+	int id;
 	char *cpy, *type, *field, *subfield, *end;
 
 	cpy = strdup(str);
@@ -56,9 +57,11 @@ int mapping_entry_parse_str(struct mapping_entry *e, const char *str)
 		if (end)
 			goto invalid_format;
 
-		e->stats.id = stats_lookup_id(field);
-		if (e->stats.id < 0)
+		id = stats_lookup_id(field);
+		if (id < 0)
 			goto invalid_format;
+
+		e->stats.id = id;
 
 		if      (!strcmp(subfield, "total"))
 			e->stats.type = MAPPING_STATS_TYPE_TOTAL;

@@ -73,7 +73,7 @@ int hook_jitter_ts(struct hook *h, struct sample *smps[], size_t *cnt)
 			D(i,j) = (Rj-Ri)-(Sj-Si) = (Rj-Sj)-(Ri-Si)
 			J(i) = J(i-1)+(|D(i-1,i)|-J(i-1))/16
 		*/
-		jitter_val[(curr_count+1)%GPS_NTP_DELAY_WIN_SIZE] = jitter_val[curr_count] + (abs(curr_delay_us) - jitter_val[curr_count])/16;
+		jitter_val[(curr_count+1)%GPS_NTP_DELAY_WIN_SIZE] = jitter_val[curr_count] + (labs(curr_delay_us) - jitter_val[curr_count])/16;
 
 		stats("%s: jitter=%" PRId64 " usec, moving average=%" PRId64 " usec, moving variance=%" PRId64 " usec", __FUNCTION__, jitter_val[(curr_count+1)%GPS_NTP_DELAY_WIN_SIZE], moving_avg[curr_count], moving_var[curr_count]);
 
