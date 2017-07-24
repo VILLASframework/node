@@ -113,10 +113,12 @@ int main(int argc, char *argv[])
 	info("This is VILLASnode %s (built on %s, %s)", CLR_BLD(CLR_YEL(BUILDID)),
 		CLR_BLD(CLR_MAG(__DATE__)), CLR_BLD(CLR_MAG(__TIME__)));
 
+#ifdef __linux__
 	/* Checks system requirements*/
 	struct version kver, reqv = { KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN };
 	if (kernel_get_version(&kver) == 0 && version_cmp(&kver, &reqv) < 0)
 		error("Your kernel version is to old: required >= %u.%u", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
+#endif /* __linux__ */
 
 	signals_init(quit);
 	log_init(&sn.log, V, LOG_ALL);

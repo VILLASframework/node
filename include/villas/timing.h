@@ -27,7 +27,10 @@
 #include <stdint.h>
 
 #include <time.h>
-#include <sys/timerfd.h>
+
+#ifdef __linux__
+  #include <sys/timerfd.h>
+#endif
 
 /** Create a new timer with the given rate. */
 int timerfd_create_rate(double rate);

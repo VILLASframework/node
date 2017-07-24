@@ -29,6 +29,8 @@
 #include "stats.h"
 #include "path.h"
 #include "super_node.h"
+#include "sample.h"
+#include "node.h"
 
 struct stats_send {
 	struct node *dest;

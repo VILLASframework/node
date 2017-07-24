@@ -38,6 +38,7 @@
 #include "super_node.h"
 #include "memory.h"
 #include "stats.h"
+#include "node.h"
 
 static void path_read(struct path *p)
 {

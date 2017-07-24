@@ -27,6 +27,7 @@
 #include "hook.h"
 #include "plugin.h"
 #include "path.h"
+#include "sample.h"
 
 struct restart {
 	struct sample *prev;

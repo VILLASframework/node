@@ -30,10 +30,9 @@
 #pragma once
 
 #include <stdint.h>
+#include <libconfig.h>
 
 #include "common.h"
-
-#include "nodes/fpga.h"
 
 #include "fpga/vlnv.h"
 

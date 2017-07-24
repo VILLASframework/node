@@ -170,6 +170,7 @@ char * vstrcatf(char **dest, const char *fmt, va_list va)
 #define strf(fmt, ...) strcatf(&(char *) { NULL }, fmt, ##__VA_ARGS__)
 #define vstrf(fmt, va) vstrcatf(&(char *) { NULL }, fmt, va)
 
+#ifdef __linux__
 /** Convert integer to cpu_set_t.
  *
  * @param set An integer number which is used as the mask
@@ -199,6 +200,7 @@ int cpulist_parse(const char *str, cpu_set_t *set, int fail);
  * The output format is a list of CPUs with ranges (for example, "0,1,3-9").
  */
 char * cpulist_create(char *str, size_t len, cpu_set_t *set);
+#endif
 
 /** Allocate and initialize memory. */
 void * alloc(size_t bytes);

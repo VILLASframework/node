@@ -50,7 +50,9 @@ CFLAGS  += -Wall -Werror -fdiagnostics-color=auto
 LDFLAGS += -L$(BUILDDIR)
 
 # Some tools
-PKGCONFIG := PKG_CONFIG_PATH=/usr/local/lib64/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig:$(PKG_CONFIG_PATH) pkg-config
+PKG_CONFIG_PATH := $(PKG_CONFIG_PATH):/opt/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/lib/pkgconfig:/usr/lib/pkgconfig
+
+PKGCONFIG := PKG_CONFIG_PATH=:$(PKG_CONFIG_PATH) pkg-config
 SHELL := bash
 
 # We must compile without optimizations for gcov!
@@ -104,7 +106,7 @@ else
 endif
 
 # pkg-config dependencies
-PKGS = libconfig
+PKGS = libconfig openssl
 
 ######## Targets ########
 
@@ -132,7 +134,7 @@ escape = $(shell echo $1 | tr a-z- A-Z_ | tr -dc ' A-Z0-9_')
 
 CFLAGS += -DV=$(V) -DPREFIX=\"$(PREFIX)\"
 CFLAGS += -DBUILDID=\"$(VERSION)-$(GIT_REV)-$(VARIANT)\"
-CFLAGS += -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1
+CFLAGS += -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1 -D_DARWIN_C_SOURCE
 CFLAGS += $(addprefix -DWITH_, $(call escape,$(PKGS)))
 
 install: $(addprefix install-,$(filter-out thirdparty doc clients,$(MODULES)))

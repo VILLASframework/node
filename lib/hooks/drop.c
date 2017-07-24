@@ -28,6 +28,7 @@
 #include "plugin.h"
 #include "stats.h"
 #include "path.h"
+#include "sample.h"
 
 struct drop {
 	struct sample *prev;

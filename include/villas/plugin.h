@@ -27,13 +27,18 @@
 #include "api.h"
 #include "common.h"
 #include "utils.h"
+#include "node_type.h"
 
-#include "fpga/ip.h"
+#ifdef WITH_FPGA
+  #include "fpga/ip.h"
+#endif
 
 #include "nodes/cbuilder.h"
 
 #define REGISTER_PLUGIN(p)					\
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {\
+	if (plugins.state == STATE_DESTROYED)			\
+		list_init(&plugins);				\
 	list_push(&plugins, p);					\
 }								\
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {	\
@@ -66,7 +71,9 @@ struct plugin {
 	union {
 		struct api_action	api;
 		struct node_type	node;
+#ifdef WITH_FPGA
 		struct fpga_ip_type	ip;
+#endif
 		struct hook_type	hook;
 		struct cbuilder_model	cb;
 	};

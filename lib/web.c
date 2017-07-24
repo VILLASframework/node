@@ -22,8 +22,6 @@
 
 #include <libconfig.h>
 #include <libwebsockets.h>
-
-#include <linux/limits.h>
 #include <string.h>
 
 #include "utils.h"

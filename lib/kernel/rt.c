@@ -35,7 +35,7 @@ int rt_init(int priority, int affinity)
 	info("Initialize real-time sub-system");
 
 	{ INDENT
-
+#ifdef __linux__
 	int is_rt;
 
 	/* Use FIFO scheduler with real time priority */
@@ -52,11 +52,15 @@ int rt_init(int priority, int affinity)
 		rt_set_affinity(affinity);
 	else
 		warn("You might want to use the 'affinity' setting to pin VILLASnode to dedicate CPU cores");
-
+#else
+	warn("This platform is not optimized for real-time execution");
+#endif
 	}
 
 	return 0;
 }
+
+#ifdef __linux__
 
 int rt_set_affinity(int affinity)
 {
@@ -122,3 +126,5 @@ int rt_is_preemptible()
 {
 	return access(SYSFS_PATH "/kernel/realtime", R_OK);
 }
+
+#endif /* __linux__ */

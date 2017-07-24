@@ -25,7 +25,7 @@
 #include "plugin.h"
 
 /** Global list of all known plugins */
-struct list plugins;
+struct list plugins = { .state = STATE_DESTROYED };
 
 LIST_INIT_STATIC(&plugins)
 

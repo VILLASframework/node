@@ -23,22 +23,31 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/ip.h>
-#include <netinet/ether.h>
 #include <arpa/inet.h>
-#include <endian.h>
+
+#if defined(__linux__)
+  #include <netinet/ether.h>
+  #include <endian.h>
+#endif
 
 #include "nodes/socket.h"
 #include "config.h"
 #include "utils.h"
 
-#include "kernel/if.h"
-#include "kernel/nl.h"
-#include "kernel/tc.h"
+#ifdef WITH_LIBNL_ROUTE_30
+  #include "kernel/if.h"
+  #include "kernel/nl.h"
+  #include "kernel/tc.h"
+
+  #define WITH_NETEM
+#endif /* WITH_LIBNL_ROUTE_30 */
+
 #include "msg.h"
 #include "msg_format.h"
 #include "sample.h"
 #include "queue.h"
 #include "plugin.h"
+#include "compat.h"
 
 /* Forward declartions */
 static struct plugin p;
@@ -48,6 +57,7 @@ struct list interfaces = { .state = STATE_DESTROYED };
 
 int socket_init(struct super_node *sn)
 {
+#ifdef WITH_NETEM
 	int ret;
 
 	nl_init(); /* Fill link cache */
@@ -94,12 +104,14 @@ found:		list_push(&i->sockets, s);
 
 		if_start(i);
 	}
+#endif /* WITH_NETEM */
 
 	return 0;
 }
 
 int socket_deinit()
 {
+#ifdef WITH_NETEM
 	for (size_t j = 0; j < list_length(&interfaces); j++) {
 		struct interface *i = list_at(&interfaces, j);
 
@@ -107,6 +119,7 @@ int socket_deinit()
 	}
 
 	list_destroy(&interfaces, (dtor_cb_t) if_destroy, false);
+#endif /* WITH_NETEM */
 
 	return 0;
 }
@@ -184,6 +197,7 @@ int socket_start(struct node *n)
 		if (ntohs(s->local.sin.sin_port) != ntohs(s->remote.sin.sin_port))
 			error("IP protocol numbers of local and remote must match!");
 	}
+#ifdef __linux__
 	else if (s->layer == SOCKET_LAYER_ETH) {
 		if (ntohs(s->local.sll.sll_protocol) != ntohs(s->remote.sll.sll_protocol))
 			error("Ethertypes of local and remote must match!");
@@ -191,12 +205,15 @@ int socket_start(struct node *n)
 		if (ntohs(s->local.sll.sll_protocol) <= 0x5DC)
 			error("Ethertype must be large than %d or it is interpreted as an IEEE802.3 length field!", 0x5DC);
 	}
+#endif /* __linux__ */
 
 	/* Create socket */
 	switch (s->layer) {
 		case SOCKET_LAYER_UDP:	s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM,	IPPROTO_UDP); break;
 		case SOCKET_LAYER_IP:	s->sd = socket(s->local.sa.sa_family, SOCK_RAW,		ntohs(s->local.sin.sin_port)); break;
+#ifdef __linux__
 		case SOCKET_LAYER_ETH:	s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM,	s->local.sll.sll_protocol); break;
+#endif /* __linux__ */
 		default:
 			error("Invalid socket type!");
 	}
@@ -209,6 +226,7 @@ int socket_start(struct node *n)
 	if (ret < 0)
 		serror("Failed to bind socket");
 
+#ifdef __linux__
 	/* Set fwmark for outgoing packets if netem is enabled for this node */
 	if (s->mark) {
 		ret = setsockopt(s->sd, SOL_SOCKET, SO_MARK, &s->mark, sizeof(s->mark));
@@ -217,13 +235,14 @@ int socket_start(struct node *n)
 		else
 			debug(LOG_SOCKET | 4, "Set FW mark for socket (sd=%u) to %u", s->sd, s->mark);
 	}
-	
+#endif /* __linux__ */
+
 	if (s->multicast.enabled) {
 		ret = setsockopt(s->sd, IPPROTO_IP, IP_MULTICAST_LOOP, &s->multicast.loop, sizeof(s->multicast.loop));
 		if (ret)
 			serror("Failed to set multicast loop option");
 
-	        ret = setsockopt(s->sd, IPPROTO_IP, IP_MULTICAST_TTL, &s->multicast.ttl, sizeof(s->multicast.ttl));
+		ret = setsockopt(s->sd, IPPROTO_IP, IP_MULTICAST_TTL, &s->multicast.ttl, sizeof(s->multicast.ttl));
 		if (ret)
 			serror("Failed to set multicast ttl option");
 		
@@ -245,12 +264,16 @@ int socket_start(struct node *n)
 			break;
 
 		default:
+#ifdef __linux__
 			prio = SOCKET_PRIO;
 			if (setsockopt(s->sd, SOL_SOCKET, SO_PRIORITY, &prio, sizeof(prio)))
 				serror("Failed to set socket priority");
 			else
 				debug(LOG_SOCKET | 4, "Set socket priority for node %s to %d", node_name(n), prio);
 			break;
+#else
+			{ }
+#endif /* __linux__ */
 	}
 
 	return 0;
@@ -287,10 +310,12 @@ int socket_stop(struct node *n)
 
 int socket_destroy(struct node *n)
 {
+#ifdef WITH_NETEM
 	struct socket *s = n->_vd;
 
 	rtnl_qdisc_put(s->tc_qdisc);
 	rtnl_cls_put(s->tc_classifier);
+#endif /* WITH_NETEM */
 
 	return 0;
 }
@@ -538,7 +563,7 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 int socket_parse(struct node *n, config_setting_t *cfg)
 {
-	config_setting_t *cfg_netem, *cfg_multicast;
+	config_setting_t *cfg_multicast;
 	const char *local, *remote, *layer, *hdr, *endian;
 	int ret;
 
@@ -548,10 +573,12 @@ int socket_parse(struct node *n, config_setting_t *cfg)
 	if (!config_setting_lookup_string(cfg, "layer", &layer))
 		s->layer = SOCKET_LAYER_UDP;
 	else {
-		if (!strcmp(layer, "eth"))
-			s->layer = SOCKET_LAYER_ETH;
-		else if (!strcmp(layer, "ip"))
+		if (!strcmp(layer, "ip"))
 			s->layer = SOCKET_LAYER_IP;
+#ifdef __linux__
+		else if (!strcmp(layer, "eth"))
+			s->layer = SOCKET_LAYER_ETH;
+#endif /*__linux__ */
 		else if (!strcmp(layer, "udp"))
 			s->layer = SOCKET_LAYER_UDP;
 		else
@@ -644,6 +671,9 @@ int socket_parse(struct node *n, config_setting_t *cfg)
 			s->multicast.ttl = ttl;
 	} 
 
+#ifdef WITH_NETEM
+	config_setting_t *cfg_netem;
+
 	cfg_netem = config_setting_get_member(cfg, "netem");
 	if (cfg_netem) {
 		int enabled = 1;
@@ -654,6 +684,7 @@ int socket_parse(struct node *n, config_setting_t *cfg)
 	}
 	else
 		s->tc_qdisc = NULL;
+#endif /* WITH_NETEM */
 
 	return 0;
 }
@@ -673,11 +704,13 @@ char * socket_print_addr(struct sockaddr *saddr)
 			inet_ntop(AF_INET, &sa->sin.sin_addr, buf, 64);
 			break;
 
+#ifdef __linux__
 		case AF_PACKET:
 			strcatf(&buf, "%02x", sa->sll.sll_addr[0]);
 			for (int i = 1; i < sa->sll.sll_halen; i++)
 				strcatf(&buf, ":%02x", sa->sll.sll_addr[i]);
 			break;
+#endif /* __linux__ */
 
 		default:
 			error("Unknown address family: '%u'", sa->sa.sa_family);
@@ -690,6 +723,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 			strcatf(&buf, ":%hu", ntohs(sa->sin.sin_port));
 			break;
 
+#ifdef __linux__
 		case AF_PACKET: {
 			struct nl_cache *cache = nl_cache_mngt_require("route/link");
 			struct rtnl_link *link = rtnl_link_get(cache, sa->sll.sll_ifindex);
@@ -700,6 +734,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 			strcatf(&buf, ":%hu", ntohs(sa->sll.sll_protocol));
 			break;
 		}
+#endif /* __linux__ */
 	}
 
 	return buf;
@@ -713,6 +748,7 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 	char *copy = strdup(addr);
 	int ret;
 
+#ifdef __linux__
 	if (layer == SOCKET_LAYER_ETH) { /* Format: "ab:cd:ef:12:34:56%ifname:protocol" */
 		/* Split string */
 		char *node = strtok(copy, "%");
@@ -741,6 +777,7 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 		ret = 0;
 	}
 	else {	/* Format: "192.168.0.10:12001" */
+#endif /* __linux__ */
 		struct addrinfo hint = {
 			.ai_flags = flags,
 			.ai_family = AF_UNSPEC
@@ -785,8 +822,9 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 			memcpy(sa, result->ai_addr, result->ai_addrlen);
 			freeaddrinfo(result);
 		}
+#ifdef __linux__
 	}
-
+#endif /* __linux__ */
 	free(copy);
 
 	return ret;
@@ -817,6 +855,7 @@ int socket_compare_addr(struct sockaddr *x, struct sockaddr *y)
 
 			return memcmp(xu->sin6.sin6_addr.s6_addr, yu->sin6.sin6_addr.s6_addr, sizeof(xu->sin6.sin6_addr.s6_addr));
 
+#ifdef __linux__
 		case AF_PACKET:
 			CMP(ntohs(xu->sll.sll_protocol), ntohs(yu->sll.sll_protocol));
 			CMP(xu->sll.sll_ifindex, yu->sll.sll_ifindex);
@@ -825,7 +864,7 @@ int socket_compare_addr(struct sockaddr *x, struct sockaddr *y)
 
 			CMP(xu->sll.sll_halen, yu->sll.sll_halen);
 			return memcmp(xu->sll.sll_addr, yu->sll.sll_addr, xu->sll.sll_halen);
-
+#endif /* __linux__ */
 		default:
 			return -1;
 	}
@@ -835,7 +874,7 @@ int socket_compare_addr(struct sockaddr *x, struct sockaddr *y)
 
 static struct plugin p = {
 	.name		= "socket",
-	.description	= "BSD network sockets",
+	.description	= "BSD network sockets for Ethernet / IP / UDP (libnl3)",
 	.type		= PLUGIN_TYPE_NODE,
 	.node		= {
 		.vectorize	= 0,

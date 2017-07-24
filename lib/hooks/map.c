@@ -29,6 +29,7 @@
 #include "list.h"
 #include "utils.h"
 #include "path.h"
+#include "sample.h"
 
 struct map {
 	struct mapping mapping;

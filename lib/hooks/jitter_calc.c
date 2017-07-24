@@ -29,6 +29,7 @@
 #include "hook.h"
 #include "plugin.h"
 #include "timing.h"
+#include "sample.h"
 
 #define CALC_GPS_NTP_DELAY 0		/* @todo move to global config file */
 #define GPS_NTP_DELAY_WIN_SIZE 16

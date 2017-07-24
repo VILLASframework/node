@@ -33,8 +33,11 @@
 
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <linux/if_packet.h>
 #include <netinet/in.h>
+
+#ifdef __linux__
+  #include <linux/if_packet.h>
+#endif
 
 #include "node.h"
 
@@ -55,8 +58,10 @@ union sockaddr_union {
 	struct sockaddr_storage ss;
 	struct sockaddr_in sin;
 	struct sockaddr_in6 sin6;
-	struct sockaddr_ll sll;
 	struct sockaddr_un sun;
+#ifdef __linux__
+	struct sockaddr_ll sll;
+#endif
 };
 
 struct socket {

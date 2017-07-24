@@ -46,7 +46,7 @@ $(DEPS_AUTOCONF): | $(BUILDDIR)/thirdparty/$$@/
 # Install & compile CMake based projects
 $(DEPS_CMAKE): | $(BUILDDIR)/thirdparty/$$@/
 	cmake -DCMAKE_INSTALL_PREFIX:PATH=$(PREFIX) \
-	      -DCMAKE_INSTALL_LIBDIR=$(PREFIX)/lib64 -DLIB_SUFFIX=64 \
+	      -DCMAKE_INSTALL_LIBDIR=lib64 -DLIB_SUFFIX=64 \
 	      -H$(SRCDIR)/thirdparty/$@ \
 	      -B$(BUILDDIR)/thirdparty/$@ $(CMAKE_OPTS)
 	make  -C$(BUILDDIR)/thirdparty/$@

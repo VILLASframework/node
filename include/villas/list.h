@@ -30,10 +30,11 @@
 }
 
 #define LIST_INIT_STATIC(l)					\
-__attribute__((constructor(105))) static void UNIQUE(__ctor)() {\
-	list_init(l);						\
+__attribute__((constructor(100))) static void UNIQUE(__ctor)() {\
+	if ((l)->state == STATE_DESTROYED)			\
+		list_init(l);					\
 }								\
-__attribute__((destructor(105))) static void UNIQUE(__dtor)() {	\
+__attribute__((destructor(100))) static void UNIQUE(__dtor)() {	\
 	list_destroy(l, NULL, false);				\
 }
 

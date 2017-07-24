@@ -30,7 +30,11 @@ LIBEXT_SRCS += $(addprefix lib/, sample.c queue.c queue_signalled.c \
                )
 
 LIBEXT_LDFLAGS = -shared
-LIBEXT_LDLIBS = -ldl -lrt -Wl,-soname,$(LIBEXT_NAME).so.$(LIBEXT_ABI_VERSION)
+LIBEXT_LDLIBS =
+
+ifeq ($(shell uname),Linux)
+	LIBEXT_LDLIBS += -ldl -lrt -Wl,-soname,$(LIBEXT_NAME).so.$(LIBEXT_ABI_VERSION)
+endif
 
 LIBEXT_OBJS = $(patsubst %.c, $(BUILDDIR)/%.o, $(LIBEXT_SRCS))
 

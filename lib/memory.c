@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
+#include <strings.h>
+
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <sys/resource.h>

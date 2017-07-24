@@ -20,7 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <endian.h>
+#ifdef __MACH__
+  #include "compat.h"
+#elif defined(__linux__)
+  #include <endian.h>
+#endif
 
 #include "webmsg.h"
 #include "webmsg_format.h"

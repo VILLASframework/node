@@ -21,9 +21,10 @@
  *********************************************************************************/
 
 #include <unistd.h>
-#include <sys/timerfd.h>
 
 #include "timing.h"
+
+#ifdef __linux__
 
 int timerfd_create_rate(double rate)
 {
@@ -68,6 +69,8 @@ uint64_t timerfd_wait_until(int fd, const struct timespec *until)
 
 	return timerfd_wait(fd);
 }
+
+#endif /* __linux__ */
 
 struct timespec time_now()
 {

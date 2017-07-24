@@ -471,7 +471,7 @@ fail:
 
 static struct plugin p = {
 	.name		= "zeromq",
-	.description	= "ZeroMQ Distributed Messaging",
+	.description	= "ZeroMQ Distributed Messaging (libzmq)",
 	.type		= PLUGIN_TYPE_NODE,
 	.node		= {
 		.vectorize	= 0,

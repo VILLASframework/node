@@ -27,6 +27,7 @@
 #include "hook.h"
 #include "plugin.h"
 #include "timing.h"
+#include "sample.h"
 
 struct shift_ts {
 	struct timespec offset;

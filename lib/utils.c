@@ -113,6 +113,8 @@ char * vstrcatf(char **dest, const char *fmt, va_list ap)
 	return *dest;
 }
 
+#ifdef __linux__
+
 void cpuset_to_integer(cpu_set_t *cset, uintmax_t *set)
 {
 	*set = 0;
@@ -231,6 +233,7 @@ char *cpulist_create(char *str, size_t len, cpu_set_t *set)
 
 	return str;
 }
+#endif /* __linux__ */
 
 void * alloc(size_t bytes)
 {

@@ -26,6 +26,7 @@
 
 #include "hook.h"
 #include "plugin.h"
+#include "sample.h"
 
 struct shift {
 	int offset;

@@ -27,6 +27,7 @@
 #include "hook.h"
 #include "plugin.h"
 #include "timing.h"
+#include "sample.h"
 
 int fix_ts_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {

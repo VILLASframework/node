@@ -25,7 +25,7 @@ LIB_ABI_VERSION = 1
 LIB = $(BUILDDIR)/$(LIB_NAME).so.$(LIB_ABI_VERSION)
 
 # Object files for libvillas
-LIB_SRCS += $(addprefix lib/nodes/, file.c cbuilder.c shmem.c signal.c loopback.c) 		\
+LIB_SRCS += $(addprefix lib/nodes/, cbuilder.c loopback.c) \
             $(addprefix lib/kernel/, kernel.c rt.c)		\
             $(addprefix lib/, sample.c path.c node.c hook.c	\
                log.c log_config.c utils.c super_node.c hist.c timing.c pool.c	\
@@ -36,20 +36,36 @@ LIB_SRCS += $(addprefix lib/nodes/, file.c cbuilder.c shmem.c signal.c loopback.
             )
 
 LIB_LDFLAGS = -shared
-LIB_LDLIBS  = $(LDLIBS) -ldl -lrt -Wl,-soname,$(LIB_NAME).so.$(LIB_ABI_VERSION)
+LIB_LDLIBS  = $(LDLIBS)
 
-LIB_PKGS += libwebsockets openssl
+ifeq ($(shell uname),Linux)
+	LIB_LDLIBS += -ldl -lrt -Wl,-soname,$(LIB_NAME).so.$(LIB_ABI_VERSION)
+endif
+
+LIB_PKGS = libwebsockets openssl libcurl
+
+######## Features ##########
+
+ifeq ($(shell uname),Linux)
+	CFLAGS += -DWITH_FPGA
+endif
 
 ######## Node-types ########
 
+ifeq ($(shell uname),Linux)
+	LIB_SRCS += $(addprefix lib/nodes/,file.c shmem.c signal.c)
+endif
+
 # Enable Socket node type when libnl3 is available
 ifndef WITHOUT_SOCKET
-ifeq ($(shell $(PKGCONFIG) libnl-route-3.0; echo $$?),0)
 	LIB_SRCS    += $(addprefix lib/nodes/, socket.c)
-	LIB_SRCS    += $(addprefix lib/kernel/, nl.c tc.c if.c)
 	LIB_SRCS    += $(addprefix lib/, msg.c)
-	LIB_PKGS    += libnl-route-3.0
-endif
+
+	# libnl3 is optional but required for network emulation and IRQ pinning
+	ifeq ($(shell $(PKGCONFIG) libnl-route-3.0; echo $$?),0)
+		LIB_SRCS    += $(addprefix lib/kernel/, nl.c tc.c if.c)
+		LIB_PKGS    += libnl-route-3.0
+	endif
 endif
 
 # Enable nanomsg node type when libnanomsg is available
@@ -73,6 +89,7 @@ endif
 
 # Enable VILLASfpga support when libxil is available
 ifndef WITHOUT_FPGA
+ifeq ($(shell uname),Linux)
 ifeq ($(shell $(PKGCONFIG) libxil; echo $$?),0)
 	LIB_SRCS    += $(addprefix lib/nodes/, fpga.c) \
 	               $(addprefix lib/kernel/, pci.c vfio.c) \
@@ -82,12 +99,15 @@ ifeq ($(shell $(PKGCONFIG) libxil; echo $$?),0)
 	LIB_PKGS    += libxil
 endif
 endif
+endif
 
 # Enable NGSI support
 ifndef WITHOUT_NGSI
+ifeq ($(shell uname),Linux)
 ifeq ($(shell $(PKGCONFIG) libcurl jansson; echo $$?),0)
 	LIB_SRCS    += lib/nodes/ngsi.c
 	LIB_PKGS    += libcurl jansson
+endif
 endif
 endif
 
@@ -99,6 +119,7 @@ endif
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
 ifdef WITH_OPAL
+ifeq ($(shell uname),Linux)
 ifneq ($(wildcard thirdparty/libopal/include/opal/AsyncApi.h),)
 	LIB_OBJS    += opal.o
 
@@ -110,6 +131,7 @@ ifneq ($(wildcard thirdparty/libopal/include/opal/AsyncApi.h),)
 	CFLAGS      += -m32
 	LDFLAGS     += -m32
 	BUILDDIR    := $(BUILDDIR)
+endif
 endif
 endif
 

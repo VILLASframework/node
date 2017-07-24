@@ -231,7 +231,7 @@ int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 static struct plugin p = {
 	.name		= "nanomsg",
-	.description	= "scalability protocols library",
+	.description	= "scalability protocols library (libnanomsg)",
 	.type		= PLUGIN_TYPE_NODE,
 	.node		= {
 		.vectorize	= 0,

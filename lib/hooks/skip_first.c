@@ -29,6 +29,7 @@
 #include "hook.h"
 #include "plugin.h"
 #include "timing.h"
+#include "sample.h"
 
 struct skip_first {
 	enum {

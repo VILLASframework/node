@@ -26,7 +26,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include <sys/ptrace.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include <sys/types.h>
@@ -35,6 +34,17 @@
 #include "utils.h"
 #include "config.h"
 #include "kernel/kernel.h"
+
+int kernel_get_cacheline_size()
+{
+#ifdef __linux__
+	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
+#else
+	return 64; /** @todo fixme */
+#endif
+}
+
+#ifdef __linux__
 
 int kernel_module_set_param(const char *module, const char *param, const char *value)
 {
@@ -154,11 +164,6 @@ out:
 	return -1; /* not found or error */
 }
 
-int kernel_get_cacheline_size()
-{
-	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
-}
-
 int kernel_get_page_size()
 {
 	return sysconf(_SC_PAGESIZE);
@@ -273,3 +278,5 @@ int kernel_irq_setaffinity(unsigned irq, uintmax_t new, uintmax_t *old)
 
 	return ret;
 }
+
+#endif /* __linux__ */
