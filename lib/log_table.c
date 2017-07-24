@@ -31,7 +31,7 @@ static int table_resize(struct table *t, int width)
 	int norm, flex, fixed, total;
 
 	t->width = width;
-	
+
 	norm  = 0;
 	flex  = 0;
 	fixed = 0;
@@ -69,13 +69,13 @@ void table_header(struct table *t)
 	char *line1 = strf("\b\b" BOX_UD);
 	char *line0 = strf("\b");
 	char *line2 = strf("\b");
-	
+
 	for (int i = 0; i < t->ncols; i++) {
 		char *col = strf(CLR_BLD("%s"), t->cols[i].title);
-		
+
 		if (t->cols[i].unit)
 			strcatf(&col, " (" CLR_YEL("%s") ")", t->cols[i].unit);
-		
+
 		int l = strlenp(col);
 		int r = strlen(col);
 		int w = t->cols[i]._width + r - l;
@@ -98,14 +98,14 @@ void table_header(struct table *t)
 			strcatf(&line0, "%s", BOX_DLR);
 			strcatf(&line2, "%s", BOX_UDLR);
 		}
-		
+
 		free(col);
 	}
 
 	stats("%s", line0);
 	stats("%s", line1);
 	stats("%s", line2);
-	
+
 	free(line0);
 	free(line1);
 	free(line2);
@@ -127,7 +127,7 @@ void table_row(struct table *t, ...)
 
 	for (int i = 0; i < t->ncols; ++i) {
 		char *col = vstrf(t->cols[i].format, args);
-		
+
 		int l = strlenp(col);
 		int r = strlen(col);
 		int w = t->cols[i]._width + r - l;
@@ -141,7 +141,7 @@ void table_row(struct table *t, ...)
 	}
 
 	va_end(args);
-	
+
 	stats("%s", line);
 	free(line);
 }
@@ -152,19 +152,19 @@ void table_footer(struct table *t)
 
 	if (t->width != l->window.ws_col - 24)
 		table_resize(t, l->window.ws_col - 24);
-	
+
 	char *line = strf("\b");
-	
+
 	for (int i = 0; i < t->ncols; i++) {
 		for (int j = 0; j < t->cols[i]._width + 2; j++)
 			strcatf(&line, BOX_LR);
-		
+
 		if (i == t->ncols - 1)
 			strcatf(&line, "%s", BOX_UL);
 		else
 			strcatf(&line, "%s", BOX_ULR);
 	}
-	
+
 	stats("%s", line);
 	free(line);
 }

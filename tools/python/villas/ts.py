@@ -12,17 +12,17 @@ class Timestamp:
 	@classmethod
 	def parse(self, ts):
 		m = re.match('(\d+)(?:\.(\d+))?([-+]\d+(?:\.\d+)?(?:e[+-]?\d+)?)?(?:\((\d+)\))?', ts)
-		
+
 		seconds		= int(m.group(1)); # Mandatory
 		nanoseconds	= int(m.group(2))   if m.group(2) else None
 		offset		= float(m.group(3)) if m.group(3) else None
 		sequence	= int(m.group(4))   if m.group(4) else None
-		
+
 		return Timestamp(seconds, nanoseconds, offset, sequence)
 
 	def __str__(self):
 		str = "%u" % (self.seconds)
-		
+
 		if self.nanoseconds is not None:
 			str += ".%09u" % self.nanoseconds
 		if self.offset is not None:
@@ -31,10 +31,10 @@ class Timestamp:
 			str += "(%u)" % self.sequence
 
 		return str
-	
+
 	def __float__(self):
 		sum = float(self.seconds)
-		
+
 		if self.nanoseconds is not None:
 			sum += self.nanoseconds * 1e-9
 		if self.offset is not None:

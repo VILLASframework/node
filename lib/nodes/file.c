@@ -114,7 +114,7 @@ int file_parse(struct node *n, config_setting_t *cfg)
 	if (cfg_out) {
 		if (file_parse_direction(cfg_out, f, FILE_WRITE))
 			cerror(cfg_out, "Failed to parse output file for node %s", node_name(n));
-		
+
 		if (!config_setting_lookup_bool(cfg_out, "flush", &f->flush))
 			f->flush = 0;
 	}
@@ -122,7 +122,7 @@ int file_parse(struct node *n, config_setting_t *cfg)
 	cfg_in = config_setting_get_member(cfg, "in");
 	if (cfg_in) {
 		const char *eof;
-		
+
 		if (file_parse_direction(cfg_in, f, FILE_READ))
 			cerror(cfg_in, "Failed to parse input file for node %s", node_name(n));
 
@@ -187,7 +187,7 @@ char * file_print(struct node *n)
 			case FILE_EPOCH_ABSOLUTE: epoch_str = "absolute"; break;
 			case FILE_EPOCH_ORIGINAL: epoch_str = "original"; break;
 		}
-		
+
 		const char *eof_str = NULL;
 		switch (f->read_eof) {
 			case FILE_EOF_EXIT:   eof_str = "exit";   break;
@@ -263,7 +263,7 @@ int file_start(struct node *n)
 		if (f->read_epoch_mode != FILE_EPOCH_ORIGINAL) {
 			struct sample s;
 			s.capacity = 0;
-			
+
 			ret = sample_io_villas_fscan(f->read.handle->file, &s, NULL);
 			if (ret < 0)
 				error("Failed to read first timestamp of node %s", node_name(n));
@@ -324,17 +324,17 @@ retry:	values = sample_io_villas_fscan(f->read.handle->file, s, &flags); /* Get 
 					f->read_offset = file_calc_read_offset(&f->read_first, &f->read_epoch, f->read_epoch_mode);
 					arewind(f->read.handle);
 					goto retry;
-				
+
 				case FILE_EOF_WAIT:
 					usleep(10000); /* We wait 10ms before fetching again. */
 					adownload(f->read.handle, 1);
 					goto retry;
-				
+
 				case FILE_EOF_EXIT:
 					info("Reached end-of-file of node %s", node_name(n));
 					killme(SIGTERM);
 					pause();
-				
+
 			}
 		}
 		else
@@ -346,7 +346,7 @@ retry:	values = sample_io_villas_fscan(f->read.handle->file, s, &flags); /* Get 
 	if (f->read_epoch_mode != FILE_EPOCH_ORIGINAL) {
 		if (!f->read_rate || aftell(f->read.handle) == 0) {
 			s->ts.origin = time_add(&s->ts.origin, &f->read_offset);
-		
+
 			ex = timerfd_wait_until(f->read_timer, &s->ts.origin);
 		}
 		else { /* Wait with fixed rate delay */

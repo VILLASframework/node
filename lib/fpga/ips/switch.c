@@ -130,7 +130,7 @@ int switch_parse(struct fpga_ip *c)
 
 		if (reverse) {
 			struct sw_path *r = memdup(p, sizeof(struct sw_path));
-			
+
 			r->in = p->out;
 			r->out = p->in;
 

@@ -11,10 +11,10 @@ class Message:
 	@classmethod
 	def parse(self, line, source = None):
 		csv = line.split()
-	
+
 		t = ts.Timestamp.parse(csv[0])
 		v = map(float, csv[1:])
-		
+
 		return Message(t, v, source)
 
 	def __str__(self):

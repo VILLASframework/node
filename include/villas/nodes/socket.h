@@ -79,7 +79,7 @@ struct socket {
 
 	union sockaddr_union local;	/**< Local address of the socket */
 	union sockaddr_union remote;	/**< Remote address of the socket */
-        
+
 	/* Multicast options */
 	struct multicast {
 		int enabled;		/**< Is multicast enabled? */

@@ -39,7 +39,7 @@ struct nanomsg {
 		int socket;
 		struct list endpoints;
 	} publisher;
-	
+
 	struct {
 		int socket;
 		struct list endpoints;

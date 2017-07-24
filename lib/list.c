@@ -196,6 +196,6 @@ int list_set(struct list *l, int index, void *value)
 		return -1;
 
 	l->array[index] = value;
-	
+
 	return 0;
 }

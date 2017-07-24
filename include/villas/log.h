@@ -89,7 +89,7 @@ struct log {
 	enum state state;
 
 	struct timespec epoch;	/**< A global clock used to prefix the log messages. */
-	
+
 	struct winsize window;	/**< Size of the terminal window. */
 
 	/** Debug level used by the debug() macro.

@@ -40,9 +40,9 @@
 
 struct zeromq {
 	int ipv6;
-	
+
 	char *filter;
-	
+
 	struct {
 		int enabled;
 		struct {
@@ -50,7 +50,7 @@ struct zeromq {
 			char secret_key[41];
 		} server, client;
 	} curve;
-	
+
 	enum {
 		ZEROMQ_PATTERN_PUBSUB,
 #ifdef ZMQ_BUILD_DISH
@@ -63,7 +63,7 @@ struct zeromq {
 		void *mon_socket;
 		char *endpoint;
 	} subscriber;
-	
+
 	struct {
 		void *socket;	/**< ZeroMQ socket. */
 		struct list endpoints;

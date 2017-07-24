@@ -36,7 +36,7 @@ struct restart {
 static int restart_start(struct hook *h)
 {
 	struct restart *r = h->_vd;
-	
+
 	r->prev = NULL;
 
 	return 0;
@@ -77,7 +77,7 @@ static int restart_read(struct hook *h, struct sample *smps[], size_t *cnt)
 			}
 		}
 	}
-	
+
 	if (cur)
 		sample_get(cur);
 	if (r->prev)

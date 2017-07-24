@@ -112,7 +112,7 @@ static void log_resize(int signal, siginfo_t *sinfo, void *ctx)
 	ret = ioctl(STDOUT_FILENO, TIOCGWINSZ, &global_log->window);
 	if (ret)
 		return;
-	
+
 	debug(LOG_LOG | 15, "New terminal size: %dx%x", global_log->window.ws_row, global_log->window.ws_col);
 }
 
@@ -129,7 +129,7 @@ int log_init(struct log *l, int level, long facilitites)
 	l->path = NULL;
 	l->window.ws_col = LOG_WIDTH;
 	l->window.ws_row = LOG_HEIGHT;
-	
+
 	/* Register signal handler which is called whenever the
 	 * terminal size changes. */
 	if (l->file == stderr) {
@@ -137,13 +137,13 @@ int log_init(struct log *l, int level, long facilitites)
 			.sa_flags = SA_SIGINFO,
 			.sa_sigaction = log_resize
 		};
-	
+
 		sigemptyset(&sa_resize.sa_mask);
-	
+
 		ret = sigaction(SIGWINCH, &sa_resize, NULL);
 		if (ret)
 			return ret;
-	
+
 		/* Try to get initial window size */
 		ioctl(STDERR_FILENO, TIOCGWINSZ, &global_log->window);
 	}

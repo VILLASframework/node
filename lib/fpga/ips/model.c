@@ -63,7 +63,7 @@ static int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameter
 			case XSG_BLOCK_GATEWAY_OUT:
 				if (length < 4)
 					break; /* block is to small to describe a gateway */
-				
+
 				struct model_param *e, *p = alloc(sizeof(struct model_param));
 
 				p->name          =  copy_string(3);

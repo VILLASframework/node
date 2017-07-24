@@ -50,7 +50,7 @@ struct file {
 
 		char *uri;		/**< Real file name. */
 	} read, write;
-	
+
 	int flush;			/**< Flush / upload file contents after each write. */
 
 	enum read_epoch_mode {
@@ -64,7 +64,7 @@ struct file {
 	struct timespec read_first;	/**< The first timestamp in the file file::{read,write}::uri */
 	struct timespec read_epoch;	/**< The epoch timestamp from the configuration. */
 	struct timespec read_offset;	/**< An offset between the timestamp in the input file and the current time */
-	
+
 	enum {
 		FILE_EOF_EXIT,		/**< Terminate when EOF is reached. */
 		FILE_EOF_REWIND,	/**< Rewind the file when EOF is reached. */

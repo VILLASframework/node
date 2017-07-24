@@ -101,7 +101,7 @@ int fpga_card_parse(struct fpga_card *c, config_setting_t *cfg)
 
 		struct fpga_ip_type *vt;
 		struct fpga_ip *ip = alloc(sizeof(struct fpga_ip));
-		
+
 		ip->card = c;
 
 		if (!config_setting_lookup_string(cfg, "vlnv", &vlnv))

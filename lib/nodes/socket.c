@@ -154,14 +154,14 @@ char * socket_print(struct node *n)
 	char *remote = socket_print_addr((struct sockaddr *) &s->remote);
 
 	buf = strf("layer=%s, header=%s, endian=%s, local=%s, remote=%s", layer, header, endian, local, remote);
-	
+
 	if (s->multicast.enabled) {
 		char group[INET_ADDRSTRLEN];
 		char interface[INET_ADDRSTRLEN];
-		
+
 		inet_ntop(AF_INET, &s->multicast.mreq.imr_multiaddr, group, sizeof(group));
 		inet_ntop(AF_INET, &s->multicast.mreq.imr_interface, interface, sizeof(interface));
-		
+
 		strcatf(&buf, ", multicast.enabled=%s", s->multicast.enabled ? "yes" : "no");
 		strcatf(&buf, ", multicast.loop=%s",    s->multicast.loop    ? "yes" : "no");
 		strcatf(&buf, ", multicast.group=%s", group);
@@ -179,20 +179,20 @@ int socket_start(struct node *n)
 {
 	struct socket *s = n->_vd;
 	int ret;
-	
+
 	/* Some checks on the addresses */
 	if (s->local.sa.sa_family != s->remote.sa.sa_family)
 		error("Address families of local and remote must match!");
-	
+
 	if (s->multicast.enabled) {
 		if (s->local.sa.sa_family != AF_INET)
 			error("Multicast is only supported by IPv4 for node %s", node_name(n));
-		
+
 		uint32_t addr = ntohl(s->multicast.mreq.imr_multiaddr.s_addr);
 		if ((addr >> 28) != 14)
 			error("Multicast group address of node %s must be within 224.0.0.0/4", node_name(n));
 	}
-	
+
 	if (s->layer == SOCKET_LAYER_IP) {
 		if (ntohs(s->local.sin.sin_port) != ntohs(s->remote.sin.sin_port))
 			error("IP protocol numbers of local and remote must match!");
@@ -201,7 +201,7 @@ int socket_start(struct node *n)
 	else if (s->layer == SOCKET_LAYER_ETH) {
 		if (ntohs(s->local.sll.sll_protocol) != ntohs(s->remote.sll.sll_protocol))
 			error("Ethertypes of local and remote must match!");
-		
+
 		if (ntohs(s->local.sll.sll_protocol) <= 0x5DC)
 			error("Ethertype must be large than %d or it is interpreted as an IEEE802.3 length field!", 0x5DC);
 	}
@@ -245,7 +245,7 @@ int socket_start(struct node *n)
 		ret = setsockopt(s->sd, IPPROTO_IP, IP_MULTICAST_TTL, &s->multicast.ttl, sizeof(s->multicast.ttl));
 		if (ret)
 			serror("Failed to set multicast ttl option");
-		
+
 		ret = setsockopt(s->sd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &s->multicast.mreq, sizeof(s->multicast.mreq));
 		if (ret)
 			serror("Failed to join multicast group");
@@ -295,7 +295,7 @@ int socket_stop(struct node *n)
 {
 	int ret;
 	struct socket *s = n->_vd;
-	
+
 	if (s->multicast.enabled) {
 		ret = setsockopt(s->sd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &s->multicast.mreq, sizeof(s->multicast.mreq));
 		if (ret)
@@ -324,7 +324,7 @@ static int socket_read_none(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int length;
 	struct socket *s = n->_vd;
-	
+
 	char buf[MSG_MAX_PACKET_LEN];
 	uint32_t *values = (uint32_t *) buf;
 	ssize_t bytes;
@@ -336,7 +336,7 @@ static int socket_read_none(struct node *n, struct sample *smps[], unsigned cnt)
 
 	union sockaddr_union src;
 	socklen_t srclen = sizeof(src);
-	
+
 	/* Receive next sample */
 	bytes = recvfrom(s->sd, buf, sizeof(buf), 0, &src.sa, &srclen);
 	if (bytes == 0)
@@ -348,17 +348,17 @@ static int socket_read_none(struct node *n, struct sample *smps[], unsigned cnt)
 		recv(s->sd, NULL, 0, 0); /* empty receive buffer */
 		return -1;
 	}
-	
+
 	length = bytes / 4;
-	
+
 	/* Strip IP header from packet */
 	if (s->layer == SOCKET_LAYER_IP) {
 		struct ip *iphdr = (struct ip *) buf;
-		
+
 		length -= iphdr->ip_hl;
 		values += iphdr->ip_hl;
 	}
-	
+
 	/* SOCK_RAW IP sockets to not provide the IP protocol number via recvmsg()
 	 * So we simply set it ourself. */
 	if (s->layer == SOCKET_LAYER_IP) {
@@ -439,15 +439,15 @@ static int socket_read_villas(struct node *n, struct sample *smps[], unsigned cn
 		recv(s->sd, NULL, 0, 0); /* empty receive buffer */
 		return -1;
 	}
-	
+
 	/* Strip IP header from packet */
 	if (s->layer == SOCKET_LAYER_IP) {
 		struct ip *iphdr = (struct ip *) bufptr;
-		
+
 		bytes  -= iphdr->ip_hl * 4;
 		bufptr += iphdr->ip_hl * 4;
 	}
-	
+
 	/* SOCK_RAW IP sockets to not provide the IP protocol number via recvmsg()
 	 * So we simply set it ourself. */
 	if (s->layer == SOCKET_LAYER_IP) {
@@ -630,24 +630,24 @@ int socket_parse(struct node *n, config_setting_t *cfg)
 		cerror(cfg, "Failed to resolve remote address '%s' of node %s: %s",
 			remote, node_name(n), gai_strerror(ret));
 	}
-  
+
 	cfg_multicast = config_setting_get_member(cfg, "multicast");
 	if (cfg_multicast) {
 		const char *group, *interface;
 
 		if (!config_setting_lookup_bool(cfg_multicast, "enabled", &s->multicast.enabled))
 			s->multicast.enabled = true;
-		
+
 		if (!config_setting_lookup_string(cfg_multicast, "group", &group))
 			cerror(cfg_multicast, "The multicast group requires a 'group' setting.");
 		else {
-			ret = inet_aton(group, &s->multicast.mreq.imr_multiaddr);	
+			ret = inet_aton(group, &s->multicast.mreq.imr_multiaddr);
 			if (!ret) {
 				cerror(cfg_multicast, "Failed to resolve multicast group address '%s' of node %s",
 					group, node_name(n));
 			}
 		}
-		
+
 		if (!config_setting_lookup_string(cfg_multicast, "interface", &interface))
 			s->multicast.mreq.imr_interface.s_addr = INADDR_ANY;
 		else {
@@ -655,21 +655,21 @@ int socket_parse(struct node *n, config_setting_t *cfg)
 			if (!ret) {
 				cerror(cfg_multicast, "Failed to resolve multicast interface address '%s' of node %s",
 					interface, node_name(n));
-			}	
+			}
 		}
-		
+
 		int loop;
 		if (!config_setting_lookup_bool(cfg_multicast, "loop", &loop))
 			s->multicast.loop = 0;
 		else
 			s->multicast.loop = loop;
-	
+
 		int ttl;
 		if (!config_setting_lookup_int(cfg_multicast, "ttl", &ttl))
 			s->multicast.ttl = 255;
 		else
 			s->multicast.ttl = ttl;
-	} 
+	}
 
 #ifdef WITH_NETEM
 	config_setting_t *cfg_netem;

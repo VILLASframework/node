@@ -52,9 +52,9 @@ enum signal_type {
 struct signal {
 	int tfd;			/**< timerfd file descriptor. */
 	int rt;				/**< Real-time mode? */
-	
+
 	enum signal_type type;		/**< Signal type */
-	
+
 	double rate;			/**< Sampling rate. */
 	double frequency;		/**< Frequency of the generated signals. */
 	double amplitude;		/**< Amplitude of the generated signals. */

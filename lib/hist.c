@@ -166,13 +166,13 @@ void hist_plot(struct hist *h)
 		if (h->data[i] > max)
 			max = h->data[i];
 	}
-	
+
 	struct table_column cols[] = {
 		{ -9, "Value", "%+9.3g", NULL,         TABLE_ALIGN_RIGHT },
 		{ -6, "Count", "%6ju",   NULL,         TABLE_ALIGN_RIGHT },
 		{  0, "Plot",  "%s",     "occurences", TABLE_ALIGN_LEFT  }
 	};
-	
+
 	struct table table = {
 		.ncols = ARRAY_LEN(cols),
 		.cols = cols
@@ -185,7 +185,7 @@ void hist_plot(struct hist *h)
 		double value = VAL(h, i);
 		hist_cnt_t cnt = h->data[i];
 		int bar = cols[2]._width * ((double) cnt / max);
-		
+
 		char *buf = strf("%s", "");
 		for (int i = 0; i < bar; i++)
 			buf = strcatf(&buf, "\u2588");
@@ -194,7 +194,7 @@ void hist_plot(struct hist *h)
 
 		free(buf);
 	}
-	
+
 	table_footer(&table);
 }
 
@@ -222,7 +222,7 @@ json_t * hist_json(struct hist *h)
 		"high", h->high,
 		"total", h->total
 	);
-	
+
 	if (h->total > 0) {
 		json_object_update(json_hist, json_pack("{ s: i, s: i, s: f, s: f, s: f, s: f, s: f }",
 			"higher", h->higher,

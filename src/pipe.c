@@ -58,7 +58,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
 	if (signal == SIGALRM)
 		info("Reached timeout. Terminating...");
-	
+
 	if (recvv.enabled) {
 		pthread_cancel(recvv.thread);
 		pthread_join(recvv.thread, NULL);
@@ -114,7 +114,7 @@ static void * send_loop(void *ctx)
 		for (len = 0; len < node->vectorize; len++) {
 			struct sample *s = smps[len];
 			int reason;
-			
+
 			if (sendd.limit > 0 && cnt >= sendd.limit)
 				break;
 
@@ -130,7 +130,7 @@ retry:			reason = sample_io_villas_fscan(stdin, s, NULL);
 		}
 
 		cnt += node_write(node, smps, len);
-		
+
 		if (sendd.limit > 0 && cnt >= sendd.limit)
 			goto leave2;
 
@@ -182,7 +182,7 @@ static void * recv_loop(void *ctx)
 			sample_io_villas_fprint(stdout, s, SAMPLE_IO_ALL);
 			fflush(stdout);
 		}
-		
+
 		cnt += recv;
 		if (recvv.limit > 0 && cnt >= recvv.limit)
 			goto leave;
@@ -205,7 +205,7 @@ int main(int argc, char *argv[])
 		.enabled = true,
 		.limit = -1
 	};
-	
+
 	char c, *endptr;
 	while ((c = getopt(argc, argv, "hxrsd:l:L:t:")) != -1) {
 		switch (c) {
@@ -289,7 +289,7 @@ check:		if (optarg == endptr)
 	/* Start threads */
 	if (recvv.enabled)
 		pthread_create(&recvv.thread, NULL, recv_loop, NULL);
-	
+
 	if (sendd.enabled)
 		pthread_create(&sendd.thread, NULL, send_loop, NULL);
 

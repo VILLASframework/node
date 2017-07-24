@@ -76,13 +76,13 @@ static int get_monitor_event(void *monitor, int *value, char **address)
 int zeromq_reverse(struct node *n)
 {
 	struct zeromq *z = n->_vd;
-	
+
 	if (list_length(&z->publisher.endpoints) != 1)
 		return -1;
-	
+
 	char *subscriber = z->subscriber.endpoint;
 	char *publisher = list_first(&z->publisher.endpoints);
-	
+
 	z->subscriber.endpoint = publisher;
 	list_set(&z->publisher.endpoints, 0, subscriber);
 
@@ -92,18 +92,18 @@ int zeromq_reverse(struct node *n)
 int zeromq_parse(struct node *n, config_setting_t *cfg)
 {
 	struct zeromq *z = n->_vd;
-	
+
 	const char *ep, *type, *filter;
-	
+
 	config_setting_t *cfg_pub, *cfg_curve;
-	
+
 	list_init(&z->publisher.endpoints);
-	
+
 	if (config_setting_lookup_string(cfg, "subscribe", &ep))
 		z->subscriber.endpoint = strdup(ep);
 	else
 		z->subscriber.endpoint = NULL;
-	
+
 	cfg_pub = config_setting_lookup(cfg, "publish");
 	if (cfg_pub) {
 		switch (config_setting_type(cfg_pub)) {
@@ -111,30 +111,30 @@ int zeromq_parse(struct node *n, config_setting_t *cfg)
 			case CONFIG_TYPE_ARRAY:
 				for (int j = 0; j < config_setting_length(cfg_pub); j++) {
 					const char *ep = config_setting_get_string_elem(cfg_pub, j);
-					
+
 					list_push(&z->publisher.endpoints, strdup(ep));
 				}
 				break;
 
 			case CONFIG_TYPE_STRING:
 				ep = config_setting_get_string(cfg_pub);
-				
+
 				list_push(&z->publisher.endpoints, strdup(ep));
-				
+
 				break;
 
 			default:
 				cerror(cfg_pub, "Invalid type for ZeroMQ publisher setting");
 		}
 	}
-	
+
 	cfg_curve = config_setting_lookup(cfg, "curve");
 	if (cfg_curve) {
 		if (!config_setting_is_group(cfg_curve))
 			cerror(cfg_curve, "The curve setting must be a group");
-		
+
 		const char *public_key, *secret_key;
-		
+
 		if (!config_setting_lookup_string(cfg_curve, "public_key", &public_key))
 			cerror(cfg_curve, "Setting 'curve.public_key' is missing");
 
@@ -155,16 +155,16 @@ int zeromq_parse(struct node *n, config_setting_t *cfg)
 	}
 	else
 		z->curve.enabled = false;
-	
+
 	/** @todo We should fix this. Its mostly done. */
 	if (z->curve.enabled)
 		cerror(cfg_curve, "CurveZMQ support is currently broken");
-	
+
 	if (config_setting_lookup_string(cfg, "filter", &filter))
 		z->filter = strdup(filter);
 	else
 		z->filter = NULL;
-	
+
 	if (config_setting_lookup_string(cfg, "pattern", &type)) {
 		if      (!strcmp(type, "pubsub"))
 			z->pattern = ZEROMQ_PATTERN_PUBSUB;
@@ -175,7 +175,7 @@ int zeromq_parse(struct node *n, config_setting_t *cfg)
 		else
 			cerror(cfg, "Invalid type for ZeroMQ node: %s", node_name_short(n));
 	}
-	
+
 	if (!config_setting_lookup_bool(cfg, "ipv6", &z->ipv6))
 		z->ipv6 = 0;
 
@@ -195,17 +195,17 @@ char * zeromq_print(struct node *n)
 		case ZEROMQ_PATTERN_RADIODISH: pattern = "radiodish"; break;
 #endif
 	}
-	
+
 	strcatf(&buf, "pattern=%s, ipv6=%s, crypto=%s, subscribe=%s, publish=[ ", pattern, z->ipv6 ? "yes" : "no", z->curve.enabled ? "yes" : "no", z->subscriber.endpoint);
-	
+
 	for (size_t i = 0; i < list_length(&z->publisher.endpoints); i++) {
 		char *ep = list_at(&z->publisher.endpoints, i);
-		
+
 		strcatf(&buf, "%s ", ep);
 	}
 
 	strcatf(&buf, "]");
-	
+
 	if (z->filter)
 		strcatf(&buf, ", filter=%s", z->filter);
 
@@ -228,7 +228,7 @@ int zeromq_start(struct node *n)
 {
 	int ret;
 	struct zeromq *z = n->_vd;
-	
+
 	switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
 		case ZEROMQ_PATTERN_RADIODISH:
@@ -236,18 +236,18 @@ int zeromq_start(struct node *n)
 			z->publisher.socket  = zmq_socket(context, ZMQ_RADIO);
 			break;
 #endif
-		
+
 		case ZEROMQ_PATTERN_PUBSUB:
 			z->subscriber.socket = zmq_socket(context, ZMQ_SUB);
 			z->publisher.socket  = zmq_socket(context, ZMQ_PUB);
 			break;
 	}
-	
+
 	if (!z->subscriber.socket || !z->publisher.socket) {
 		ret = -1;
 		goto fail;
 	}
-	
+
 	/* Join group */
 	switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
@@ -255,18 +255,18 @@ int zeromq_start(struct node *n)
 			ret = zmq_join(z->subscriber.socket, z->filter);
 			break;
 #endif
-		
+
 		case ZEROMQ_PATTERN_PUBSUB:
 			ret = zmq_setsockopt(z->subscriber.socket, ZMQ_SUBSCRIBE, z->filter, z->filter ? strlen(z->filter) : 0);
 			break;
-			
+
 		default:
 			ret = -1;
 	}
-	
+
 	if (ret < 0)
 		goto fail;
-	
+
 	ret = zmq_setsockopt(z->publisher.socket, ZMQ_IPV6, &z->ipv6, sizeof(z->ipv6));
 	if (ret)
 		goto fail;
@@ -280,17 +280,17 @@ int zeromq_start(struct node *n)
 		ret = zmq_setsockopt(z->publisher.socket, ZMQ_CURVE_SECRETKEY, z->curve.server.secret_key, 41);
 		if (ret)
 			goto fail;
-		
+
 		ret = zmq_setsockopt(z->publisher.socket, ZMQ_CURVE_PUBLICKEY, z->curve.server.public_key, 41);
 		if (ret)
 			goto fail;
- 
+
 		int curve_server = 1;
 		ret = zmq_setsockopt(z->publisher.socket, ZMQ_CURVE_SERVER, &curve_server, sizeof(curve_server));
 		if (ret)
 			goto fail;
 	}
-	
+
 	if (z->curve.enabled) {
 		/* Create temporary client keys first */
 		ret = zmq_curve_keypair(z->curve.client.public_key, z->curve.client.secret_key);
@@ -310,7 +310,7 @@ int zeromq_start(struct node *n)
 		if (ret)
 			goto fail;
 	}
-	
+
 #ifdef ZMQ_BUILD_DRAFT_API
 	/* Monitor handshake events on the server */
 	ret = zmq_socket_monitor(z->subscriber.socket, "inproc://monitor-server", ZMQ_EVENT_HANDSHAKE_SUCCEED | ZMQ_EVENT_HANDSHAKE_FAILED);
@@ -333,12 +333,12 @@ int zeromq_start(struct node *n)
 	/* Spawn server for publisher */
 	for (size_t i = 0; i < list_length(&z->publisher.endpoints); i++) {
 		char *ep = list_at(&z->publisher.endpoints, i);
-		
+
 		ret = zmq_bind(z->publisher.socket, ep);
 		if (ret < 0)
 			goto fail;
 	}
-	
+
 	/* Connect subscribers to server socket */
 	if (z->subscriber.endpoint) {
 		ret = zmq_connect(z->subscriber.socket, z->subscriber.endpoint);
@@ -358,10 +358,10 @@ int zeromq_start(struct node *n)
 #else
 	return 0;
 #endif
-	
+
 fail:
 	info("Failed to start ZeroMQ node: %s, error=%s", node_name(n), zmq_strerror(errno));
-	
+
 	return ret;
 }
 
@@ -369,11 +369,11 @@ int zeromq_stop(struct node *n)
 {
 	int ret;
 	struct zeromq *z = n->_vd;
-	
+
 	ret = zmq_close(z->subscriber.socket);
 	if (ret)
 		return ret;
-	
+
 #ifdef ZMQ_BUILD_DRAFT_API
 	ret = zmq_close(z->subscriber.mon_socket);
 	if (ret)
@@ -389,33 +389,33 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt)
 	struct zeromq *z = n->_vd;
 
 	zmq_msg_t m;
-	
+
 	ret = zmq_msg_init(&m);
 	if (ret < 0)
 		return ret;
-	
+
 	if (z->filter) {
 		switch (z->pattern) {
 			case ZEROMQ_PATTERN_PUBSUB:
 				/* Discard envelope */
 				zmq_recv(z->subscriber.socket, NULL, 0, 0);
 				break;
-			
+
 			default: { }
 		}
 	}
-	
+
 	/* Receive payload */
 	ret = zmq_msg_recv(&m, z->subscriber.socket, 0);
 	if (ret < 0)
 		return ret;
 
 	recv = msg_buffer_to_samples(smps, cnt, zmq_msg_data(&m), zmq_msg_size(&m));
-	
+
 	ret = zmq_msg_close(&m);
 	if (ret)
 		return ret;
-	
+
 	return recv;
 }
 
@@ -423,10 +423,10 @@ int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 	struct zeromq *z = n->_vd;
-	
+
 	ssize_t sent;
 	zmq_msg_t m;
-	
+
 	char data[1500];
 
 	sent = msg_buffer_from_samples(smps, cnt, data, sizeof(data));
@@ -434,7 +434,7 @@ int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt)
 		return -1;
 
 	ret = zmq_msg_init_size(&m, sent);
-	
+
 	if (z->filter) {
 		switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
@@ -444,19 +444,19 @@ int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt)
 					goto fail;
 				break;
 #endif
-			
+
 			case ZEROMQ_PATTERN_PUBSUB: /* Send envelope */
 				zmq_send(z->publisher.socket, z->filter, strlen(z->filter), ZMQ_SNDMORE);
 				break;
 		}
 	}
-	
+
 	memcpy(zmq_msg_data(&m), data, sent);
 
 	ret = zmq_msg_send(&m, z->publisher.socket, 0);
 	if (ret < 0)
 		goto fail;
-	
+
 	ret = zmq_msg_close(&m);
 	if (ret < 0)
 		return ret;

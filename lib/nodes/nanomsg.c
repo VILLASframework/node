@@ -36,10 +36,10 @@ int nanomsg_reverse(struct node *n)
 	if (list_length(&m->publisher.endpoints)  != 1 ||
 	    list_length(&m->subscriber.endpoints) != 1)
 		return -1;
-	
+
 	char *subscriber = list_first(&m->subscriber.endpoints);
 	char *publisher = list_first(&m->publisher.endpoints);
-	
+
 	list_set(&m->subscriber.endpoints, 0, publisher);
 	list_set(&m->publisher.endpoints, 0, subscriber);
 
@@ -55,22 +55,22 @@ static int nanomsg_parse_endpoints(struct list *l, config_setting_t *cfg)
 		case CONFIG_TYPE_ARRAY:
 			for (int j = 0; j < config_setting_length(cfg); j++) {
 				const char *ep = config_setting_get_string_elem(cfg, j);
-				
+
 				list_push(l, strdup(ep));
 			}
 			break;
 
 		case CONFIG_TYPE_STRING:
 			ep = config_setting_get_string(cfg);
-			
+
 			list_push(l, strdup(ep));
-			
+
 			break;
 
 		default:
 			return -1;
 	}
-	
+
 	return 0;
 }
 
@@ -104,22 +104,22 @@ int nanomsg_parse(struct node *n, config_setting_t *cfg)
 char * nanomsg_print(struct node *n)
 {
 	struct nanomsg *m = n->_vd;
-	
+
 	char *buf = NULL;
 
 	strcatf(&buf, "subscribe=[ ");
-	
+
 	for (size_t i = 0; i < list_length(&m->subscriber.endpoints); i++) {
 		char *ep = list_at(&m->subscriber.endpoints, i);
-		
+
 		strcatf(&buf, "%s ", ep);
 	}
-	
+
 	strcatf(&buf, "], publish=[ ");
-	
+
 	for (size_t i = 0; i < list_length(&m->publisher.endpoints); i++) {
 		char *ep = list_at(&m->publisher.endpoints, i);
-		
+
 		strcatf(&buf, "%s ", ep);
 	}
 
@@ -132,35 +132,35 @@ int nanomsg_start(struct node *n)
 {
 	int ret;
 	struct nanomsg *m = n->_vd;
-	
+
 	ret = m->subscriber.socket = nn_socket(AF_SP, NN_SUB);
 	if (ret < 0)
 		return ret;
-	
+
 	ret = m->publisher.socket = nn_socket(AF_SP, NN_PUB);
 	if (ret < 0)
 		return ret;
-	
+
 	/* Subscribe to all topics */
 	ret = nn_setsockopt(ret = m->subscriber.socket, NN_SUB, NN_SUB_SUBSCRIBE, "", 0);
 	if (ret < 0)
 		return ret;
-	
+
 	/* Bind publisher to socket */
 	for (size_t i = 0; i < list_length(&m->publisher.endpoints); i++) {
 		char *ep = list_at(&m->publisher.endpoints, i);
-		
+
 		ret = nn_bind(m->publisher.socket, ep);
 		if (ret < 0) {
 			info("Failed to connect nanomsg socket: node=%s, endpoint=%s, error=%s", node_name(n), ep, nn_strerror(errno));
 			return ret;
 		}
 	}
-	
+
 	/* Sonnect subscribers socket */
 	for (size_t i = 0; i < list_length(&m->subscriber.endpoints); i++) {
 		char *ep = list_at(&m->subscriber.endpoints, i);
-		
+
 		ret = nn_connect(m->subscriber.socket, ep);
 		if (ret < 0) {
 			info("Failed to connect nanomsg socket: node=%s, endpoint=%s, error=%s", node_name(n), ep, nn_strerror(errno));
@@ -179,7 +179,7 @@ int nanomsg_stop(struct node *n)
 	ret = nn_shutdown(m->subscriber.socket, 0);
 	if (ret < 0)
 		return ret;
-	
+
 	ret = nn_shutdown(m->publisher.socket, 0);
 	if (ret < 0)
 		return ret;
@@ -190,7 +190,7 @@ int nanomsg_stop(struct node *n)
 int nanomsg_deinit()
 {
 	nn_term();
-	
+
 	return 0;
 }
 
@@ -198,7 +198,7 @@ int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 	struct nanomsg *m = n->_vd;
-	
+
 	char data[MSG_MAX_PACKET_LEN];
 
 	/* Receive payload */
@@ -215,7 +215,7 @@ int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)
 	struct nanomsg *m = n->_vd;
 
 	ssize_t sent;
-	
+
 	char data[MSG_MAX_PACKET_LEN];
 
 	sent = msg_buffer_from_samples(smps, cnt, data, sizeof(data));

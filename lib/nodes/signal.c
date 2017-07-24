@@ -61,7 +61,7 @@ int signal_parse(struct node *n, config_setting_t *cfg)
 
 		s->type = ret;
 	}
-	
+
 	if (!config_setting_lookup_bool(cfg, "realtime", &s->rt))
 		s->rt = 1;
 
@@ -90,7 +90,7 @@ int signal_parse_cli(struct node *n, int argc, char *argv[])
 {
 	int ret;
 	char *type;
-	
+
 	struct signal *s = n->_vd;
 
 	/* Default values */
@@ -139,8 +139,8 @@ check:		if (optarg == endptr)
 	}
 
 	if (argc != optind + 1)
-		return -1; 
-	
+		return -1;
+
 	type = argv[optind];
 
 	ret = signal_lookup_type(type);
@@ -155,7 +155,7 @@ check:		if (optarg == endptr)
 int signal_open(struct node *n)
 {
 	struct signal *s = n->_vd;
-	
+
 	s->counter = 0;
 	s->started = time_now();
 
@@ -174,7 +174,7 @@ int signal_open(struct node *n)
 int signal_close(struct node *n)
 {
 	struct signal* s = n->_vd;
-	
+
 	close(s->tfd);
 
 	return 0;
@@ -184,12 +184,12 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct signal *s = n->_vd;
 	struct sample *t = smps[0];
-	
+
 	struct timespec now;
 	int steps;
-	
+
 	assert(cnt == 1);
-	
+
 	/* Throttle output if desired */
 	if (s->rt) {
 		/* Block until 1/p->rate seconds elapsed */
@@ -203,13 +203,13 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 		struct timespec offset = time_from_double(s->counter * 1.0 / s->rate);
 
 		now = time_add(&s->started, &offset);
-		
+
 		steps = 1;
 	}
 
 	double running = time_delta(&s->started, &now);
 
-	t->ts.origin = 
+	t->ts.origin =
 	t->ts.received = now;
 	t->sequence = s->counter;
 	t->length = s->values;
@@ -240,7 +240,7 @@ char * signal_print(struct node *n)
 {
 	struct signal *s = n->_vd;
 	char *type, *buf = NULL;
-	
+
 	switch (s->type) {
 		case SIGNAL_TYPE_MIXED:    type = "mixed";    break;
 		case SIGNAL_TYPE_RAMP:     type = "ramp";     break;
@@ -250,10 +250,10 @@ char * signal_print(struct node *n)
 		case SIGNAL_TYPE_RANDOM:   type = "random";   break;
 		default: return NULL;
 	}
-	
+
 	strcatf(&buf, "signal=%s, rate=%.2f, values=%d, frequency=%.2f, amplitude=%.2f, stddev=%.2f",
 		type, s->rate, s->values, s->frequency, s->amplitude, s->stddev);
-	
+
 	if (s->limit > 0)
 		strcatf(&buf, ", limit=%d", s->limit);
 

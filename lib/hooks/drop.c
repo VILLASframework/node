@@ -37,7 +37,7 @@ struct drop {
 static int drop_start(struct hook *h)
 {
 	struct drop *d = h->_vd;
-	
+
 	d->prev = NULL;
 
 	return 0;
@@ -56,7 +56,7 @@ static int drop_stop(struct hook *h)
 static int drop_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {
 	int i, ok, dist;
-	
+
 	struct drop *d = h->_vd;
 	struct sample *prev, *cur = NULL;
 
@@ -83,7 +83,7 @@ ok:		/* To discard the first X samples in 'smps[]' we must
 		 * In case the hook returns a number 'ok' which is smaller than 'cnt',
 		 * only the first 'ok' samples in 'smps[]' are accepted and further processed.
 		 */
-	
+
 		smps[i] = smps[ok];
 		smps[ok++] = cur;
 	}

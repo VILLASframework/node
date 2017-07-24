@@ -42,7 +42,7 @@ int main (int argc, char *argv[])
 
 		exit (EXIT_FAILURE);
 	}
-	
+
 	printf("# Copy these lines to your 'zeromq' node-configuration\n");
 	printf("curve = {\n");
 	printf("\tpublic_key = \"%s\";\n", public_key);

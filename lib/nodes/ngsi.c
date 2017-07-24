@@ -222,7 +222,7 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 
 		/* MetadataName(MetadataType)=MetadataValue */
 		list_init(&a->metadata);
-		
+
 		struct ngsi_metadata m;
 		while (sscanf(token, " %m[^(](%m[^)])=%ms%n", &m.name, &m.type, &m.value, &bytes) == 3) {
 			list_push(&a->metadata, memdup(&m, sizeof(m)));

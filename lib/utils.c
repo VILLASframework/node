@@ -305,24 +305,24 @@ int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 		.sa_flags = SA_SIGINFO,
 		.sa_sigaction = cb
 	};
-	
+
 	struct sigaction sa_chld = {
 		.sa_flags = 0,
 		.sa_handler = SIG_IGN
 	};
-	
+
 	main_thread = pthread_self();
 
 	sigemptyset(&sa_quit.sa_mask);
-	
+
 	ret = sigaction(SIGINT, &sa_quit, NULL);
 	if (ret)
 		return ret;
-	
+
 	ret = sigaction(SIGTERM, &sa_quit, NULL);
 	if (ret)
 		return ret;
-	
+
 	ret = sigaction(SIGALRM, &sa_quit, NULL);
 	if (ret)
 		return ret;
@@ -330,7 +330,7 @@ int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 	ret = sigaction(SIGCHLD, &sa_chld, NULL);
 	if (ret)
 		return ret;
-	
+
 	return 0;
 }
 
@@ -358,7 +358,7 @@ size_t strlenp(const char *str)
 
 	for (const char *d = str; *d; d++) {
 		const unsigned char *c = (const unsigned char *) d;
-		
+
 		if (isprint(*c))
 			sz++;
 		else if (c[0] == '\b')
@@ -384,9 +384,9 @@ size_t strlenp(const char *str)
 			sz++;
 			c += 3;
 		}
-		
+
 		d = (const char *) c;
 	}
-	
+
 	return sz;
 }

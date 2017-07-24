@@ -31,10 +31,10 @@
 struct advio {
 	CURL *curl;
 	FILE *file;
-	
+
 	long uploaded;		/**< Upload progress. How much has already been uploaded to the remote file. */
 	long downloaded;	/**< Download progress. How much has already been downloaded from the remote file. */
-	
+
 	int completed:1;	/**< Was the upload completd */
 
 	unsigned char hash[SHA_DIGEST_LENGTH];
