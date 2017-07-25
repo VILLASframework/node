@@ -35,6 +35,7 @@
 
 #include "nodes/cbuilder.h"
 
+/** @todo This is ugly as hell and broken on OS X / Clang anyway. */
 #define REGISTER_PLUGIN(p)					\
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {\
 	if (plugins.state == STATE_DESTROYED)			\
@@ -42,7 +43,8 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {\
 	list_push(&plugins, p);					\
 }								\
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {	\
-	list_remove(&plugins, p);				\
+	if (plugins.state != STATE_DESTROYED)			\
+		list_remove(&plugins, p);			\
 }
 
 extern struct list plugins;
