@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <math.h>
 
 #include <criterion/criterion.h>
 #include <criterion/options.h>
@@ -158,7 +159,7 @@ Test(fpga, xsg, .description = "XSG: multiply_add")
 	cr_assert_eq(ret, 0, "Failed to to ping pong DMA transfer: %d", ret);
 
 	for (int i = 0; i < 6; i++)
-		err += abs(factor * src[i] - dst[i]);
+		err += fabs(factor * src[i] - dst[i]);
 
 	info("Error after FPGA operation: err = %f", err);
 
