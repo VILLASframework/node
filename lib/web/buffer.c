@@ -98,6 +98,7 @@ int web_buffer_read(struct web_buffer *b, char *out, size_t len)
 	return 0;
 }
 
+#ifdef WITH_JSON
 int web_buffer_read_json(struct web_buffer *b, json_t **req)
 {
 	json_error_t e;
@@ -115,6 +116,7 @@ int web_buffer_read_json(struct web_buffer *b, json_t **req)
 
 	return 1;
 }
+#endif /* WITH_JSON */
 
 int web_buffer_append(struct web_buffer *b, const char *in, size_t len)
 {
@@ -138,6 +140,7 @@ int web_buffer_append(struct web_buffer *b, const char *in, size_t len)
 	return 0;
 }
 
+#ifdef WITH_JSON
 int web_buffer_append_json(struct web_buffer *b, json_t *res)
 {
 	size_t len;
@@ -159,3 +162,4 @@ retry:	len = json_dumpb(res, b->buffer + b->prefix + b->len, b->size - b->len, 0
 
 	return 0;
 }
+#endif /* WITH_JSON */

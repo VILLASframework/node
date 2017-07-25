@@ -20,7 +20,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-TOOLS = $(BUILDDIR)/conf2json
+ifeq ($(WITH_JSON),1)
+	TOOLS += $(BUILDDIR)/conf2json
+endif
 
 TOOLS_CFLAGS = $(CFLAGS)
 TOOLS_LDLIBS = -lconfig -ljansson -lvillas

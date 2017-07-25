@@ -25,6 +25,8 @@ PLUGINS = $(BUILDDIR)/simple_circuit.so \
 	  $(BUILDDIR)/example_hook.so
 
 PLUGIN_CFLAGS = -fPIC -DVILLAS -I../include/villas
+PLUGIN_LDFLAGS = -shared -L$(BUILDDIR)
+PLUGIN_LDLIBS = -lvillas
 
 # Dependencies for plugins
 $(BUILDDIR)/example_hook.so:   $(BUILDDIR)/plugins/hooks/example_hook.o
@@ -38,7 +40,7 @@ $(BUILDDIR)/plugins/%.o: plugins/%.c | $$(dir $$@)
 
 # Link
 $(PLUGINS):
-	$(CC) $(LIB_LDFLAGS) -o $@ $^ $(LIB_LDLIBS)
+	$(CC) $(PLUGIN_LDFLAGS) -o $@ $^ $(PLUGIN_LDLIBS)
 
 # Plugins are not installed to the system for now...
 install-plugins: plugins

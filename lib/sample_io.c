@@ -22,16 +22,21 @@
 
 #include <ctype.h>
 
+#include "timing.h"
 #include "sample.h"
 #include "sample_io.h"
-#include "sample_io_json.h"
-#include "timing.h"
+
+#ifdef WITH_JSON
+  #include "sample_io_json.h"
+#endif
 
 int sample_io_fprint(FILE *f, struct sample *s, enum sample_io_format fmt, int flags)
 {
 	switch (fmt) {
 		case SAMPLE_IO_FORMAT_VILLAS: return sample_io_villas_fprint(f, s, flags);
+#ifdef WITH_JSON
 		case SAMPLE_IO_FORMAT_JSON:   return sample_io_json_fprint(f, s, flags);
+#endif
 		default:
 			return -1;
 	}
@@ -41,7 +46,9 @@ int sample_io_fscan(FILE *f, struct sample *s, enum sample_io_format fmt, int *f
 {
 	switch (fmt) {
 		case SAMPLE_IO_FORMAT_VILLAS: return sample_io_villas_fscan(f, s, flags);
+#ifdef WITH_JSON
 		case SAMPLE_IO_FORMAT_JSON: return sample_io_json_fscan(f, s, flags);
+#endif
 		default:
 			return -1;
 	}

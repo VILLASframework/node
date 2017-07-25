@@ -23,6 +23,7 @@
 #include "config_helper.h"
 #include "utils.h"
 
+#ifdef WITH_JSON
 static int json_to_config_type(int type)
 {
 	switch (type) {
@@ -138,6 +139,7 @@ int json_to_config(json_t *json, config_setting_t *parent)
 
 	return 0;
 }
+#endif /* WITH_JSON */
 
 int config_read_cli(config_t *cfg, int argc, char *argv[])
 {

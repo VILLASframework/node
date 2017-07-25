@@ -20,8 +20,5 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-LIB_SRCS   += lib/web.c
-LIB_SRCS   += $(wildcard lib/web/*.c)
-
-LIB_PKGS   += libwebsockets
-LIB_CFLAGS += -DWITH_WEB
+LIB_SRCS += $(wildcard lib/fpga/*.c)
+LIB_SRCS += $(wildcard lib/fpga/ips/*.c)

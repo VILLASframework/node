@@ -38,6 +38,7 @@ lws_callback_function websocket_protocol_cb;
 
 /** List of libwebsockets protocols. */
 static struct lws_protocols protocols[] = {
+#ifdef WITH_API
 	{
 		.name = "http-api",
 		.callback = api_http_protocol_cb,
@@ -50,6 +51,7 @@ static struct lws_protocols protocols[] = {
 		.per_session_data_size = sizeof(struct api_session),
 		.rx_buffer_size = 0
 	},
+#endif /* WITH_API */
 #if 0 /* not supported yet */
 	{
 		.name = "log",
@@ -64,12 +66,14 @@ static struct lws_protocols protocols[] = {
 		.rx_buffer_size = 0
 	},
 #endif
+#ifdef WITH_WEBSOCKET
 	{
 		.name = "live",
 		.callback = websocket_protocol_cb,
 		.per_session_data_size = sizeof(struct websocket_connection),
 		.rx_buffer_size = 0
 	},
+#endif /* WITH_WEBSOCKET */
 	{ NULL /* terminator */ }
 };
 
@@ -89,6 +93,7 @@ static struct lws_http_mount mounts[] = {
 		.origin_protocol = LWSMPRO_FILE,
 		.mountpoint_len = 1
 	},
+#ifdef WITH_API
 	{
 		.mount_next = NULL,
 		.mountpoint = "/api/v1/",
@@ -103,6 +108,7 @@ static struct lws_http_mount mounts[] = {
 		.origin_protocol = LWSMPRO_CALLBACK,
 		.mountpoint_len = 8
 	}
+#endif
 };
 
 /** List of libwebsockets extensions. */
@@ -230,9 +236,12 @@ int web_start(struct web *w)
 
 int web_stop(struct web *w)
 {
+	if (w->state == STATE_STARTED)
+		return 0;
+
 	info("Stopping Web sub-system");
 
-	if (w->state == STATE_STARTED) {
+	{ INDENT
 		lws_cancel_service(w->context);
 
 		/** @todo Wait for all connections to be closed */
@@ -251,8 +260,9 @@ int web_destroy(struct web *w)
 	if (w->state == STATE_DESTROYED)
 		return 0;
 
-	if (w->context)
+	if (w->context) { INDENT
 		lws_context_destroy(w->context);
+	}
 
 	w->state = STATE_DESTROYED;
 

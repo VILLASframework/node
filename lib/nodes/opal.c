@@ -25,9 +25,9 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "opal.h"
+#include "nodes/opal.h"
 #include "utils.h"
-#incude "plugin.h"
+#include "plugin.h"
 
 /* Private static storage */
 static char *async_shmem_name;		/**< Shared Memory identifiers and size, provided via argv. */

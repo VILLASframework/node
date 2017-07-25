@@ -32,7 +32,7 @@ LIBEXT_SRCS += $(addprefix lib/, sample.c queue.c queue_signalled.c \
 LIBEXT_LDFLAGS = -shared
 LIBEXT_LDLIBS =
 
-ifeq ($(shell uname),Linux)
+ifeq ($(PLATFORM),Linux)
 	LIBEXT_LDLIBS += -ldl -lrt -Wl,-soname,$(LIBEXT_NAME).so.$(LIBEXT_ABI_VERSION)
 endif
 
@@ -49,6 +49,6 @@ install-libvillas-ext: libvillas-ext
 	ln -srf $(DESTDIR)$(PREFIX)/lib/$(LIBEXT_NAME).so.$(LIBEXT_ABI_VERSION) $(DESTDIR)$(PREFIX)/lib/$(LIBEXT_NAME).so
 
 clean-libvillas-ext:
-	rm -rf $(BUILDDIR)/lib $(LIBEXT)
+	rm -f $(LIBEXT)
 
 .PHONY: install-libvillas-ext clean-libvillas-ext $(LIBEXT_NAME)

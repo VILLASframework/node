@@ -26,10 +26,6 @@
 
 #include <stdint.h>
 
-#ifdef WITH_JANSSON
-  #include <jansson.h>
-#endif
-
 #include "hist.h"
 
 /* Forward declarations */
@@ -75,7 +71,9 @@ void stats_collect(struct stats_delta *s, struct sample *smps[], size_t cnt);
 
 int stats_commit(struct stats *s, struct stats_delta *d);
 
-#ifdef WITH_JANSSON
+#ifdef WITH_JSON
+  #include <jansson.h>
+
 json_t * stats_json(struct stats *s);
 #endif
 

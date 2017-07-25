@@ -68,8 +68,12 @@ int super_node_init(struct super_node *sn)
 	config_init(&sn->cfg);
 
 	log_init(&sn->log, V, LOG_ALL);
+#ifdef WITH_API
 	api_init(&sn->api, sn);
+#endif /* WITH_API */
+#ifdef WITH_WEB
 	web_init(&sn->web, &sn->api);
+#endif /* WITH_WEB */
 
 	list_init(&sn->nodes);
 	list_init(&sn->paths);
@@ -133,9 +137,9 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 		/* Parse config */
 		ret = config_read(&sn->cfg, f);
 		if (ret != CONFIG_TRUE) {
+#ifdef WITH_JSON
 			/* This does not seem to be a valid libconfig configuration.
 			 * Lets try to parse it as JSON instead. */
-
 			json_error_t err;
 			json_t *json;
 
@@ -146,10 +150,18 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 					error("Failed t convert JSON to configuration file");
 			}
 			else {
-				warn("conf: %s in %s:%d", config_error_text(&sn->cfg), uri, config_error_line(&sn->cfg));
-				warn("json: %s in %s:%d:%d", err.text, err.source, err.line, err.column);
 				error("Failed to parse configuration");
+				{ INDENT
+					warn("conf: %s in %s:%d", config_error_text(&sn->cfg), uri, config_error_line(&sn->cfg));
+					warn("json: %s in %s:%d:%d", err.text, err.source, err.line, err.column);
+				}
 			}
+#else
+			error("Failed to parse configuration");
+			{ INDENT
+				warn("%s in %s:%d", config_error_text(&sn->cfg), uri, config_error_line(&sn->cfg));
+			}
+#endif
 		}
 
 		/* Little hack to properly report configuration filename in error messages
@@ -191,13 +203,17 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 	assert(sn->state != STATE_STARTED);
 	assert(sn->state != STATE_DESTROYED);
 
-	config_setting_t *cfg_nodes, *cfg_paths, *cfg_plugins, *cfg_logging, *cfg_web;
+	config_setting_t *cfg_nodes, *cfg_paths, *cfg_plugins, *cfg_logging;
 
 	super_node_parse_global(sn, cfg);
+
+#ifdef WITH_WEB
+	config_setting_t *cfg_web;
 
 	cfg_web = config_setting_get_member(cfg, "http");
 	if (cfg_web)
 		web_parse(&sn->web, cfg_web);
+#endif /* WITH_WEB */
 
 	/* Parse logging settings */
 	cfg_logging = config_setting_get_member(cfg, "logging");
@@ -338,8 +354,12 @@ int super_node_start(struct super_node *sn)
 	rt_init(sn->priority, sn->affinity);
 
 	log_start(&sn->log);
+#ifdef WITH_API
 	api_start(&sn->api);
+#endif
+#ifdef WITH_WEB
 	web_start(&sn->web);
+#endif
 
 	info("Starting node-types");
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
@@ -409,8 +429,12 @@ int super_node_stop(struct super_node *sn)
 		}
 	}
 
+#ifdef WITH_WEB
 	web_stop(&sn->web);
+#endif
+#ifdef WITH_API
 	api_stop(&sn->api);
+#endif
 	log_stop(&sn->log);
 
 	sn->state = STATE_STOPPED;
@@ -426,8 +450,12 @@ int super_node_destroy(struct super_node *sn)
 	list_destroy(&sn->paths,   (dtor_cb_t) path_destroy, true);
 	list_destroy(&sn->nodes,   (dtor_cb_t) node_destroy, true);
 
+#ifdef WITH_WEB
 	web_destroy(&sn->web);
+#endif
+#ifdef WITH_API
 	api_destroy(&sn->api);
+#endif
 	log_destroy(&sn->log);
 
 	config_destroy(&sn->cfg);

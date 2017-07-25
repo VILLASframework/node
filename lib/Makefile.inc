@@ -27,8 +27,7 @@ LIBS = $(patsubst %, $(BUILDDIR)/lib%.so, $(SONAMES))
 LIB_CFLAGS  = $(CFLAGS) -fPIC
 
 -include lib/hooks/Makefile.inc
--include lib/api/Makefile.inc
--include lib/web/Makefile.inc
+-include lib/nodes/Makefile.inc
 
 -include $(patsubst %, lib/Makefile.%.inc, $(SONAMES))
 
@@ -43,5 +42,6 @@ lib: $(patsubst %, lib%, $(SONAMES))
 install-lib: $(patsubst %, install-lib%, $(SONAMES))
 
 clean-lib: $(patsubst %, clean-lib%, $(SONAMES))
+	rm -rf $(BUILDDIR)/lib
 
 .PHONY: lib install-lib clean-lib
