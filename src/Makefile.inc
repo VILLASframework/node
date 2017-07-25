@@ -33,6 +33,12 @@ SRC_LDLIBS = $(LDLIBS) -pthread -lm -lvillas
 SRC_CFLAGS = $(CFLAGS)
 SRC_LDFLAGS = $(LDFLAGS) -Wl,-rpath,'$$ORIGIN'
 
+ifeq ($(WITH_WEB),1)
+ifeq ($(WITH_WEBSOCKET),1)
+	SRC_CFLAGS += -DWITH_WEBSOCKET
+endif
+endif
+
 # Enable VILLASfpga support when libxil is available
 ifeq ($(shell $(PKGCONFIG) libxil; echo $$?),0)
 	LIB_SRCS    += $(addprefix lib/nodes/, fpga.c)

@@ -266,11 +266,9 @@ check:		if (optarg == endptr)
 	if (!node)
 		error("Node '%s' does not exist!", nodestr);
 
-#ifdef WITH_WEBSOCKETS
-	if (node->_vt->start == websocket_start) {
+#ifdef WITH_WEBSOCKET
+	if (node->_vt->start == websocket_start)
 		web_start(&sn.web);
-		api_start(&sn.api);
-	}
 #endif
 
 	if (reverse)
