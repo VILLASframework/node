@@ -148,7 +148,8 @@ CFLAGS += $(addprefix -DWITH_, $(call escape,$(PKGS)))
 install: $(addprefix install-,$(filter-out thirdparty doc clients,$(MODULES)))
 clean:   $(addprefix clean-,  $(filter-out thirdparty doc clients,$(MODULES)))
 
-.PHONY: all everything clean install FORCE
+.PHONY: all everything clean install
 
+-include $(wildcard $(SRCDIR)/Makefile.*)
 -include $(wildcard $(BUILDDIR)/**/*.d)
--include $(addsuffix /Makefile.inc,$(MODULES))
+-include $(patsubst %,$(SRCDIR)/%/Makefile.inc,$(MODULES))
