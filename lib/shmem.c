@@ -33,18 +33,18 @@
 #include "sample.h"
 #include "shmem.h"
 
-size_t shmem_total_size(int insize, int outsize, int sample_size)
+size_t shmem_total_size(int queuelen, int samplelen)
 {
 	/* We have the constant const of the memtype header */
 	return sizeof(struct memtype)
 		/* and the shared struct itself */
 		+ sizeof(struct shmem_shared)
-		/* the size of the 2 queues and the queue for the pool */
-		+ (insize + outsize) * (2 * sizeof(struct queue_cell))
+		/* the size of the actual queue and the queue for the pool */
+		+ queuelen * (2 * sizeof(struct queue_cell))
 		/* the size of the pool */
-		+ (insize + outsize) * kernel_get_cacheline_size() * CEIL(SAMPLE_LEN(sample_size), kernel_get_cacheline_size())
-		/* a memblock for each allocation (1 shmem_shared, 3 queues, 1 pool) */
-		+ 5 * sizeof(struct memblock)
+		+ queuelen * kernel_get_cacheline_size() * CEIL(SAMPLE_LEN(samplelen), kernel_get_cacheline_size())
+		/* a memblock for each allocation (1 shmem_shared, 2 queues, 1 pool) */
+		+ 4 * sizeof(struct memblock)
 		/* and some extra buffer for alignment */
 		+ 1024;
 }
@@ -52,7 +52,7 @@ size_t shmem_total_size(int insize, int outsize, int sample_size)
 int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, struct shmem_conf *conf)
 {
 	char *cptr;
-	int fd,  ret;
+	int fd, ret;
 	size_t len;
 	void *base;
 	struct memtype *manager;
@@ -74,7 +74,7 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 	if (fd < 0)
 		return -1;
 
-	len = shmem_total_size(conf->queuelen, conf->queuelen, conf->samplelen);
+	len = shmem_total_size(conf->queuelen, conf->samplelen);
 	if (ftruncate(fd, len) < 0)
 		return -1;
 
