@@ -29,7 +29,7 @@
 #include "timing.h"
 #include "queue.h"
 #include "plugin.h"
-#include "sample_io.h"
+#include "formats/villas.h"
 
 int file_reverse(struct node *n)
 {
@@ -264,7 +264,7 @@ int file_start(struct node *n)
 			struct sample s;
 			s.capacity = 0;
 
-			ret = sample_io_villas_fscan(f->read.handle->file, &s, NULL);
+			ret = io_format_villas_fscan(f->read.handle->file, &s, NULL);
 			if (ret < 0)
 				error("Failed to read first timestamp of node %s", node_name(n));
 
@@ -314,7 +314,7 @@ int file_read(struct node *n, struct sample *smps[], unsigned cnt)
 	assert(f->read.handle);
 	assert(cnt == 1);
 
-retry:	values = sample_io_villas_fscan(f->read.handle->file, s, &flags); /* Get message and timestamp */
+retry:	values = io_format_villas_fscan(f->read.handle->file, s, &flags); /* Get message and timestamp */
 	if (values < 0) {
 		if (afeof(f->read.handle)) {
 			switch (f->read_eof) {
@@ -373,7 +373,7 @@ int file_write(struct node *n, struct sample *smps[], unsigned cnt)
 	assert(f->write.handle);
 	assert(cnt == 1);
 
-	sample_io_villas_fprint(f->write.handle->file, s, SAMPLE_IO_ALL & ~SAMPLE_IO_OFFSET);
+	io_format_villas_fprint(f->write.handle->file, s, IO_FORMAT_ALL & ~IO_FORMAT_OFFSET);
 
 	if (f->flush)
 		afflush(f->write.handle);

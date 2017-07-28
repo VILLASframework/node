@@ -27,6 +27,7 @@ ifeq ($(PLATFORM),Linux)
 	WITH_SIGNAL   ?= 1
 	WITH_NGSI     ?= 1
 	WITH_FPGA     ?= 1
+	WITH_TEST_RTT ?= 1
 endif
 
 WITH_WEBSOCKET ?= 1
@@ -51,6 +52,12 @@ endif
 ifeq ($(WITH_SIGNAL),1)
 	LIB_SRCS += lib/nodes/signal.c
 	LIB_CFLAGS += -DWITH_SIGNAL
+endif
+
+# Enable RTT test node-tyoe
+ifeq ($(WITH_TEST_RTT),1)
+	LIB_SRCS += lib/nodes/test_rtt.c
+	LIB_CFLAGS += -DWITH_TEST_RTT
 endif
 
 # Enable VILLASfpga support when libxil is available

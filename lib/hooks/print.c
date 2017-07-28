@@ -27,10 +27,10 @@
 #include "hook.h"
 #include "plugin.h"
 #include "sample.h"
-#include "sample_io.h"
+#include "io.h"
 
 struct print {
-	FILE *output;
+	struct io output;
 	const char *uri;
 };
 
@@ -38,7 +38,6 @@ static int print_init(struct hook *h)
 {
 	struct print *p = h->_vd;
 
-	p->output = stdout;
 	p->uri = NULL;
 
 	return 0;
@@ -48,23 +47,14 @@ static int print_start(struct hook *h)
 {
 	struct print *p = h->_vd;
 
-	if (p->uri) {
-		p->output = fopen(p->uri, "w+");
-		if (!p->output)
-			error("Failed to open file %s for writing", p->uri);
-	}
-
-	return 0;
+	return io_open(&p->output, p->uri, "w+");
 }
 
 static int print_stop(struct hook *h)
 {
 	struct print *p = h->_vd;
 
-	if (p->uri)
-		fclose(p->output);
-
-	return 0;
+	return io_close(&p->output);
 }
 
 static int print_parse(struct hook *h, config_setting_t *cfg)
@@ -80,8 +70,7 @@ static int print_read(struct hook *h, struct sample *smps[], size_t *cnt)
 {
 	struct print *p = h->_vd;
 
-	for (int i = 0; i < *cnt; i++)
-		sample_io_villas_fprint(p->output, smps[i], SAMPLE_IO_ALL);
+	io_print(&p->output, smps, *cnt);
 
 	return 0;
 }

@@ -33,8 +33,8 @@ LIB_SRCS += $(addprefix lib/kernel/, kernel.c rt.c) \
             $(addprefix lib/, sample.c path.c node.c hook.c log.c log_config.c \
                utils.c super_node.c hist.c timing.c pool.c list.c queue.c \
                queue_signalled.c memory.c advio.c plugin.c node_type.c stats.c \
-               mapping.c sample_io.c shmem.c config_helper.c crypt.c compat.c \
-               log_table.c log_helper.c
+               mapping.c io.c shmem.c config_helper.c crypt.c compat.c \
+               log_table.c log_helper.c \
             )
 
 LIB_LDFLAGS = -shared
@@ -47,7 +47,7 @@ endif
 LIB_PKGS += openssl libcurl
 
 ifeq ($(WITH_JSON),1)
-	LIB_SRCS   += lib/sample_io_json.c
+	LIB_SRCS   += lib/formats/json.c
 	LIB_PKGS   += jansson
 	LIB_CFLAGS += -DWITH_JSON
 endif

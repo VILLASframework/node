@@ -36,7 +36,7 @@
 #include <villas/msg.h>
 #include <villas/timing.h>
 #include <villas/pool.h>
-#include <villas/sample_io.h>
+#include <villas/io.h>
 #include <villas/kernel/rt.h>
 
 #include <villas/nodes/websocket.h>
@@ -84,6 +84,7 @@ static void usage()
 	printf("  CONFIG  path to a configuration file\n");
 	printf("  NODE    the name of the node to which samples are sent and received from\n");
 	printf("  OPTIONS are:\n");
+	printf("    -f FMT  set the format\n")
 	printf("    -d LVL  set debug log level to LVL\n");
 	printf("    -x      swap read / write endpoints\n");
 	printf("    -s      only read data from stdin and send it to node\n");
@@ -207,8 +208,10 @@ int main(int argc, char *argv[])
 	};
 
 	char c, *endptr;
-	while ((c = getopt(argc, argv, "hxrsd:l:L:t:")) != -1) {
+	while ((c = getopt(argc, argv, "hxrsd:l:L:t:f:")) != -1) {
 		switch (c) {
+			case 'f';
+
 			case 'x':
 				reverse = true;
 				break;

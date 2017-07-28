@@ -1,5 +1,6 @@
-/** JSON serializtion sample data.
+/** Comma-separated values.
  *
+ * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -22,14 +23,13 @@
 
 #pragma once
 
-#include <jansson.h>
+#include "advio.h"
 
-#include "sample.h"
+/* Forward declarations. */
+struct sample;
 
-int sample_io_json_pack(json_t **j, struct sample *s, int flags);
+#define CSV_SEPARATOR '\t'
 
-int sample_io_json_unpack(json_t *j, struct sample *s, int *flags);
+int io_format_csv_fprint(AFILE *f, struct sample *smp, int flags);
 
-int sample_io_json_fprint(FILE *f, struct sample *s, int flags);
-
-int sample_io_json_fscan(FILE *f, struct sample *s, int *flags);
+int io_format_csv_fscan(AFILE *f, struct sample *smp, int *flags);

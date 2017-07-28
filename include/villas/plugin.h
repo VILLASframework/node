@@ -23,6 +23,7 @@
 
 #pragma once
 
+#include "io.h"
 #include "hook.h"
 #include "api.h"
 #include "common.h"
@@ -53,6 +54,7 @@ enum plugin_type {
 	PLUGIN_TYPE_HOOK,
 	PLUGIN_TYPE_NODE,
 	PLUGIN_TYPE_API,
+	PLUGIN_TYPE_FORMAT,
 	PLUGIN_TYPE_FPGA_IP,
 	PLUGIN_TYPE_MODEL_CBUILDER
 };
@@ -71,6 +73,7 @@ struct plugin {
 	int (*unload)(struct plugin *p);
 
 	union {
+		struct io_format	io;
 		struct api_action	api;
 		struct node_type	node;
 #ifdef WITH_FPGA

@@ -1,4 +1,4 @@
-/** JSON serializtion sample data.
+/** JSON serializtion of sample data.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
@@ -20,9 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "sample_io_json.h"
+#include "plugin.h"
+#include "formats/json.h"
 
-int sample_io_json_pack(json_t **j, struct sample *s, int flags)
+int io_format_json_pack(json_t **j, struct sample *s, int flags)
 {
 	json_error_t err;
 	json_t *json_data = json_array();
@@ -49,7 +50,7 @@ int sample_io_json_pack(json_t **j, struct sample *s, int flags)
 	return 0;
 }
 
-int sample_io_json_unpack(json_t *j, struct sample *s, int *flags)
+int io_format_json_unpack(json_t *j, struct sample *s, int *flags)
 {
 	int ret, i;
 	json_t *json_data, *json_value;
@@ -89,35 +90,58 @@ int sample_io_json_unpack(json_t *j, struct sample *s, int *flags)
 	return 0;
 }
 
-int sample_io_json_fprint(FILE *f, struct sample *s, int flags)
+int io_format_json_fprint(AFILE *f, struct sample *s, int flags)
 {
 	int ret;
 	json_t *json;
 
-	ret = sample_io_json_pack(&json, s, flags);
+	ret = io_format_json_pack(&json, s, flags);
 	if (ret)
 		return ret;
 
-	ret = json_dumpf(json, f, 0);
+	ret = json_dumpf(json, f->file, 0);
 
 	json_decref(json);
 
 	return ret;
 }
 
-int sample_io_json_fscan(FILE *f, struct sample *s, int *flags)
+int io_format_json_fscan(AFILE *f, struct sample *s, int *flags)
 {
 	int ret;
 	json_t *json;
 	json_error_t err;
 
-	json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
+	json = json_loadf(f->file, JSON_DISABLE_EOF_CHECK, &err);
 	if (!json)
 		return -1;
 
-	ret = sample_io_json_unpack(json, s, flags);
+	ret = io_format_json_unpack(json, s, flags);
 
 	json_decref(json);
 
 	return ret;
 }
+
+int io_format_json_print(struct io *io, struct sample *smp, int flags)
+{
+	return io_format_json_fprint(io->file, smp, flags);
+}
+
+int io_format_json_scan(struct io *io, struct sample *smp, int *flags)
+{
+	return io_format_json_fscan(io->file, smp, flags);
+}
+
+static struct plugin p = {
+	.name = "json",
+	.description = "Javascript Object Notation",
+	.type = PLUGIN_TYPE_FORMAT,
+	.io = {
+		.print	= io_format_json_print,
+		.scan	= io_format_json_scan,
+		.size = 0
+	},
+};
+
+REGISTER_PLUGIN(&p);

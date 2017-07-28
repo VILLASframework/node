@@ -119,14 +119,13 @@ static int stats_collect_parse(struct hook *h, config_setting_t *cfg)
 
 	const char *format;
 	if (config_setting_lookup_string(cfg, "format", &format)) {
-		if      (!strcmp(format, "human"))
-			p->format = STATS_FORMAT_HUMAN;
-		else if (!strcmp(format, "json"))
-			p->format = STATS_FORMAT_JSON;
-		else if (!strcmp(format, "matlab"))
-			p->format = STATS_FORMAT_MATLAB;
-		else
+		int fmt;
+
+		fmt = stats_lookup_format(format);
+		if (fmt < 0)
 			cerror(cfg, "Invalid statistic output format: %s", format);
+
+		p->format = fmt;
 	}
 
 	config_setting_lookup_bool(cfg, "verbose", &p->verbose);

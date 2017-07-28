@@ -44,6 +44,18 @@ static struct stats_desc {
 	{ "owd",	  "seconds",	"Histogram for one-way-delay (OWD) of received messages",		25 }
 };
 
+int stats_lookup_format(const char *str)
+{
+	if      (!strcmp(str, "human"))
+		return STATS_FORMAT_HUMAN;
+	else if (!strcmp(str, "json"))
+		return STATS_FORMAT_JSON;
+	else if (!strcmp(str, "matlab"))
+	 	return STATS_FORMAT_MATLAB;
+	else
+		return -1;
+}
+
 int stats_init(struct stats *s, int buckets, int warmup)
 {
 	for (int i = 0; i < STATS_COUNT; i++)

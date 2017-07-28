@@ -61,6 +61,8 @@ struct stats {
 	struct stats_delta *delta;
 };
 
+int stats_lookup_format(const char *str);
+
 int stats_init(struct stats *s, int buckets, int warmup);
 
 int stats_destroy(struct stats *s);

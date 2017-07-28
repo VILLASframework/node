@@ -21,53 +21,28 @@
  *********************************************************************************/
 
 #include <ctype.h>
+#include <string.h>
 
+#include "io.h"
+#include "plugin.h"
+#include "utils.h"
 #include "timing.h"
 #include "sample.h"
-#include "sample_io.h"
 
-#ifdef WITH_JSON
-  #include "sample_io_json.h"
-#endif
-
-int sample_io_fprint(FILE *f, struct sample *s, enum sample_io_format fmt, int flags)
-{
-	switch (fmt) {
-		case SAMPLE_IO_FORMAT_VILLAS: return sample_io_villas_fprint(f, s, flags);
-#ifdef WITH_JSON
-		case SAMPLE_IO_FORMAT_JSON:   return sample_io_json_fprint(f, s, flags);
-#endif
-		default:
-			return -1;
-	}
-}
-
-int sample_io_fscan(FILE *f, struct sample *s, enum sample_io_format fmt, int *flags)
-{
-	switch (fmt) {
-		case SAMPLE_IO_FORMAT_VILLAS: return sample_io_villas_fscan(f, s, flags);
-#ifdef WITH_JSON
-		case SAMPLE_IO_FORMAT_JSON: return sample_io_json_fscan(f, s, flags);
-#endif
-		default:
-			return -1;
-	}
-}
-
-int sample_io_villas_print(char *buf, size_t len, struct sample *s, int flags)
+int io_format_villas_print(char *buf, size_t len, struct sample *s, int flags)
 {
 	size_t off = snprintf(buf, len, "%llu", (unsigned long long) s->ts.origin.tv_sec);
 
-	if (flags & SAMPLE_IO_NANOSECONDS)
+	if (flags & IO_FORMAT_NANOSECONDS)
 		off += snprintf(buf + off, len - off, ".%09llu", (unsigned long long) s->ts.origin.tv_nsec);
 
-	if (flags & SAMPLE_IO_OFFSET)
+	if (flags & IO_FORMAT_OFFSET)
 		off += snprintf(buf + off, len - off, "%+e", time_delta(&s->ts.origin, &s->ts.received));
 
-	if (flags & SAMPLE_IO_SEQUENCE)
+	if (flags & IO_FORMAT_SEQUENCE)
 		off += snprintf(buf + off, len - off, "(%u)", s->sequence);
 
-	if (flags & SAMPLE_IO_VALUES) {
+	if (flags & IO_FORMAT_VALUES) {
 		for (int i = 0; i < s->length; i++) {
 			switch ((s->format >> i) & 0x1) {
 				case SAMPLE_DATA_FORMAT_FLOAT:
@@ -85,7 +60,7 @@ int sample_io_villas_print(char *buf, size_t len, struct sample *s, int flags)
 	return 0; /* trailing '\0' */
 }
 
-int sample_io_villas_scan(const char *line, struct sample *s, int *fl)
+int io_format_villas_scan(const char *line, struct sample *s, int *fl)
 {
 	char *end;
 	const char *ptr = line;
@@ -110,7 +85,7 @@ int sample_io_villas_scan(const char *line, struct sample *s, int *fl)
 
 		s->ts.origin.tv_nsec = (uint32_t) strtoul(ptr, &end, 10);
 		if (ptr != end)
-			flags |= SAMPLE_IO_NANOSECONDS;
+			flags |= IO_FORMAT_NANOSECONDS;
 		else
 			return -3;
 	}
@@ -123,7 +98,7 @@ int sample_io_villas_scan(const char *line, struct sample *s, int *fl)
 
 		offset = strtof(ptr, &end); /* offset is ignored for now */
 		if (ptr != end)
-			flags |= SAMPLE_IO_OFFSET;
+			flags |= IO_FORMAT_OFFSET;
 		else
 			return -4;
 	}
@@ -134,7 +109,7 @@ int sample_io_villas_scan(const char *line, struct sample *s, int *fl)
 
 		s->sequence = strtoul(ptr, &end, 10);
 		if (ptr != end)
-			flags |= SAMPLE_IO_SEQUENCE;
+			flags |= IO_FORMAT_SEQUENCE;
 		else
 			return -5;
 
@@ -160,11 +135,11 @@ int sample_io_villas_scan(const char *line, struct sample *s, int *fl)
 	}
 
 	if (s->length > 0)
-		flags |= SAMPLE_IO_VALUES;
+		flags |= IO_FORMAT_VALUES;
 
 	if (fl)
 		*fl = flags;
-	if (flags & SAMPLE_IO_OFFSET) {
+	if (flags & IO_FORMAT_OFFSET) {
 		struct timespec off = time_from_double(offset);
 		s->ts.received = time_add(&s->ts.origin, &off);
 	}
@@ -174,12 +149,12 @@ int sample_io_villas_scan(const char *line, struct sample *s, int *fl)
 	return 0;
 }
 
-int sample_io_villas_fprint(FILE *f, struct sample *s, int flags)
+int io_format_villas_fprint(FILE *f, struct sample *s, int flags)
 {
 	char line[4096];
 	int ret;
 
-	ret = sample_io_villas_print(line, sizeof(line), s, flags);
+	ret = io_format_villas_print(line, sizeof(line), s, flags);
 	if (ret)
 		return ret;
 
@@ -188,7 +163,7 @@ int sample_io_villas_fprint(FILE *f, struct sample *s, int flags)
 	return 0;
 }
 
-int sample_io_villas_fscan(FILE *f, struct sample *s, int *fl)
+int io_format_villas_fscan(FILE *f, struct sample *s, int *fl)
 {
 	char *ptr, line[4096];
 
@@ -200,5 +175,18 @@ skip:	if (fgets(line, sizeof(line), f) == NULL)
 	if (*ptr == '\0' || *ptr == '#')
 		goto skip;
 
-	return sample_io_villas_scan(line, s, fl);
+	return io_format_villas_scan(line, s, fl);
 }
+
+struct plugin p = {
+	.name = "villas",
+	.description = "Human readable VILLAS format",
+	.type = PLUGIN_TYPE_FORMAT,
+	.io = {
+		.fprint	= io_format_villas_fprint,
+		.fscan	= io_format_villas_fscan,
+		.size = 0
+	}
+};
+
+REGISTER_PLUGIN(&p);

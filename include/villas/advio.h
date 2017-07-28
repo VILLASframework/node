@@ -47,6 +47,7 @@ typedef struct advio AFILE;
 
 /* The remaining functions from stdio are just replaced macros */
 #define afeof(af)			feof((af)->file)
+#define afgets(ln, sz, af)		fgets(ln, sz, (af)->file)
 #define aftell(af)			ftell((af)->file)
 #define afileno(af)			fileno((af)->file)
 #define afread(ptr, sz, nitems, af)	fread(ptr, sz, nitems, (af)->file)
