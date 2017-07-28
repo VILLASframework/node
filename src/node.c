@@ -132,12 +132,13 @@ int main(int argc, char *argv[])
 	if (sn.stats > 0)
 		stats_print_header(STATS_FORMAT_HUMAN);
 
-	struct timespec now, last = time_now();
 
-	/* Run! Until signal handler is invoked */
-	while (1) {
-		now = time_now();
-		if (sn.stats > 0 && time_delta(&last, &now) > sn.stats) {
+	if (sn.stats > 0) {
+		int tfd = timerfd_create_rate(1.0 / sn.stats);
+
+		for (;;) {
+			timerfd_wait(tfd);
+
 			for (size_t i = 0; i < list_length(&sn.paths); i++) {
 				struct path *p = list_at(&sn.paths, i);
 
@@ -150,9 +151,11 @@ int main(int argc, char *argv[])
 					hook_periodic(h);
 				}
 			}
-
-			last = time_now();
 		}
+	}
+	else {
+		for (;;)
+			pause();
 	}
 
 	return 0;
