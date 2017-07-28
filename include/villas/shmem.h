@@ -47,8 +47,6 @@ union shmem_queue {
 	struct queue_signalled qs;
 };
 
-#define SHMEM_MIN_SIZE (sizeof(struct memtype) + sizeof(struct memblock) + sizeof(pthread_barrier_t) + sizeof(pthread_barrierattr_t))
-
 /** Struct containing all parameters that need to be known when creating a new
  * shared memory object. */
 struct shmem_conf {
@@ -75,6 +73,7 @@ struct shmem_dir {
 /** Main structure representing the shared memory interface. */
 struct shmem_int {
 	struct shmem_dir read, write;
+	atomic_int readers, writers, closed;
 };
 
 /** Open the shared memory objects and retrieve / initialize the shared data structures.
@@ -132,7 +131,7 @@ int shmem_int_alloc(struct shmem_int *shm, struct sample *smps[], unsigned cnt);
 /** Returns the total size of the shared memory region with the given size of
  * the input/output queues (in elements) and the given number of data elements
  * per struct sample. */
-size_t shmem_total_size(int insize, int outsize, int sample_size);
+size_t shmem_total_size(int queuelen, int samplelen);
 
 /** @} */
 
