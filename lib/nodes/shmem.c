@@ -110,14 +110,15 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 	int recv;
 	struct sample *shared_smps[cnt];
 
-	recv = shmem_int_read(&shm->intf, shared_smps, cnt);
-	if (recv < 0)
+	do {
+		recv = shmem_int_read(&shm->intf, shared_smps, cnt);
+	} while (recv == 0);
+	if (recv < 0) {
 		/* This can only really mean that the other process has exited, so close
 		 * the interface to make sure the shared memory object is unlinked */
 		shmem_int_close(&shm->intf);
-
-	if (recv <= 0)
 		return recv;
+	}
 
 	sample_copy_many(smps, shared_smps, recv);
 	sample_put_many(shared_smps, recv);
