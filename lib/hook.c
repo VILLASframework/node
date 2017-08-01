@@ -96,8 +96,7 @@ int hook_parse_cli(struct hook *h, int argc, char *argv[])
 
 		ret = hook_parse(h, cfg_root);
 
-out:
-		config_destroy(&cfg);
+out:		config_destroy(&cfg);
 	}
 
 	return ret;

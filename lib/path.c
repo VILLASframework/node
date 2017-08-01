@@ -225,8 +225,6 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 		warn("Queue length should always be a power of 2. Adjusting to %d", p->queuelen);
 	}
 
-	p->cfg = cfg;
-
 	p->source = alloc(sizeof(struct path_source));
 	p->source->node = source;
 	p->source->samplelen = p->samplelen;
@@ -437,7 +435,6 @@ int path_reverse(struct path *p, struct path *r)
 
 	/* General */
 	r->enabled = p->enabled;
-	r->cfg = p->cfg;
 
 	struct path_destination *pd = alloc(sizeof(struct path_destination));
 

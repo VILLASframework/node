@@ -87,8 +87,6 @@ struct fpga_ip {
 	int irq;			/**< The interrupt number of the FPGA IP component. */
 
 	struct fpga_card *card;		/**< The FPGA to which this IP instance belongs to. */
-
-	config_setting_t *cfg;
 };
 
 /** Initialize IP core. */

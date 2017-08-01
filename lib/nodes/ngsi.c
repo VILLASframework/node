@@ -392,9 +392,8 @@ int ngsi_init(struct super_node *sn)
 	cfg = config_root_setting(&sn->cfg);
 
 	const char *tname;
-	if (config_setting_lookup_string(cfg, "name", &tname)) {
+	if (config_setting_lookup_string(cfg, "name", &tname))
 		name = strdup(tname);
-	}
 	else {
 		name = alloc(128); /** @todo missing free */
 		gethostname((char *) name, 128);
@@ -602,4 +601,3 @@ static struct plugin p = {
 
 REGISTER_PLUGIN(&p)
 LIST_INIT_STATIC(&p.node.instances)
-

@@ -161,7 +161,7 @@ int web_init(struct web *w, struct api *a)
 
 	/* Default values */
 	w->port = getuid() > 0 ? 8080 : 80; /**< @todo Use libcap to check if user can bind to ports < 1024 */
-	w->htdocs = WEB_PATH;
+	w->htdocs = strdup(WEB_PATH);
 
 	w->state = STATE_INITIALIZED;
 
@@ -171,14 +171,25 @@ int web_init(struct web *w, struct api *a)
 int web_parse(struct web *w, config_setting_t *cfg)
 {
 	int enabled = true;
+	const char *ssl_cert, *ssl_private_key, *htdocs;
 
 	if (!config_setting_is_group(cfg))
 		cerror(cfg, "Setting 'http' must be a group.");
 
-	config_setting_lookup_string(cfg, "ssl_cert", &w->ssl_cert);
-	config_setting_lookup_string(cfg, "ssl_private_key", &w->ssl_private_key);
+	if (config_setting_lookup_string(cfg, "ssl_cert", &ssl_cert))
+		w->ssl_cert = strdup(ssl_cert);
+
+	if (config_setting_lookup_string(cfg, "ssl_private_key", &ssl_private_key))
+		w->ssl_private_key = strdup(ssl_private_key);
+
+	if (config_setting_lookup_string(cfg, "htdocs", &htdocs)) {
+		if (w->htdocs)
+			free(w->htdocs);
+
+		w->htdocs = strdup(htdocs);
+	}
+
 	config_setting_lookup_int(cfg, "port", &w->port);
-	config_setting_lookup_string(cfg, "htdocs", &w->htdocs);
 	config_setting_lookup_bool(cfg, "enabled", &enabled);
 
 	if (!enabled)
@@ -263,6 +274,15 @@ int web_destroy(struct web *w)
 	if (w->context) { INDENT
 		lws_context_destroy(w->context);
 	}
+
+	if (w->ssl_cert)
+		free(w->ssl_cert);
+
+	if (w->ssl_private_key)
+		free(w->ssl_private_key);
+
+	if (w->htdocs)
+		free(w->htdocs);
 
 	w->state = STATE_DESTROYED;
 

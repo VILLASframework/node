@@ -39,6 +39,7 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_vt = vt;
 	n->_vd = alloc(vt->size);
 
+	n->name = NULL;
 	n->id = max_id++;
 
 	/* Default values */
@@ -67,8 +68,7 @@ int node_parse(struct node *n, config_setting_t *cfg)
 
 	config_setting_lookup_int(cfg, "vectorize", &n->vectorize);
 
-	n->name = name;
-	n->cfg = cfg;
+	n->name = strdup(name);
 
 	ret = n->_vt->parse ? n->_vt->parse(n, cfg) : 0;
 	if (ret)
@@ -187,6 +187,9 @@ int node_destroy(struct node *n)
 
 	if (n->_name_long)
 		free(n->_name_long);
+
+	if (n->name)
+		free(n->name);
 
 	n->state = STATE_DESTROYED;
 

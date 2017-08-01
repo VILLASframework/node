@@ -83,7 +83,6 @@ struct path
 	struct stats *stats;		/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 
 	struct super_node *super_node;	/**< The super node this path belongs to. */
-	config_setting_t *cfg;		/**< A pointer to the libconfig object which instantiated this path. */
 };
 
 /** Initialize internal data structures. */

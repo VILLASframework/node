@@ -65,8 +65,6 @@ int super_node_init(struct super_node *sn)
 {
 	assert(sn->state == STATE_DESTROYED);
 
-	config_init(&sn->cfg);
-
 	log_init(&sn->log, V, LOG_ALL);
 #ifdef WITH_API
 	api_init(&sn->api, sn);
@@ -131,6 +129,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 		if (!f)
 			error("Failed to open configuration");
 
+		config_init(&sn->cfg);
 		config_set_destructor(&sn->cfg, config_dtor);
 		config_set_auto_convert(&sn->cfg, 1);
 
@@ -177,7 +176,11 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 		else if (f != stdin)
 			fclose(f);
 
-		return super_node_parse(sn, cfg_root);
+		ret = super_node_parse(sn, cfg_root);
+
+		config_destroy(&sn->cfg);
+
+		return ret;
 	}
 	else { INDENT
 		warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
@@ -457,8 +460,6 @@ int super_node_destroy(struct super_node *sn)
 	api_destroy(&sn->api);
 #endif
 	log_destroy(&sn->log);
-
-	config_destroy(&sn->cfg);
 
 	sn->state = STATE_DESTROYED;
 

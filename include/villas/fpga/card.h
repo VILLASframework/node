@@ -64,8 +64,6 @@ struct fpga_card {
 	struct fpga_ip *intc;
 	struct fpga_ip *reset;
 	struct fpga_ip *sw;
-
-	config_setting_t *cfg;
 };
 
 /** Initialize FPGA card and its IP components. */

@@ -43,8 +43,7 @@
  */
 struct node
 {
-	const char *name;	/**< A short identifier of the node, only used for configuration and logging */
-
+	char *name;		/**< A short identifier of the node, only used for configuration and logging */
 	char *_name;		/**< Singleton: A string used to print to screen. */
 	char *_name_long;	/**< Singleton: A string used to print to screen. */
 
@@ -59,8 +58,6 @@ struct node
 
 	struct node_type *_vt;	/**< Virtual functions (C++ OOP style) */
 	void *_vd;		/**< Virtual data (used by struct node::_vt functions) */
-
-	config_setting_t *cfg;	/**< A pointer to the libconfig object which instantiated this node */
 };
 
 int node_init(struct node *n, struct node_type *vt);

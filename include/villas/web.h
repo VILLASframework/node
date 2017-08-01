@@ -40,9 +40,9 @@ struct web {
 	struct lws_vhost *vhost;	/**< The libwebsockets vhost. */
 
 	int port;			/**< Port of the build in HTTP / WebSocket server. */
-	const char *htdocs;		/**< The root directory for files served via HTTP. */
-	const char *ssl_cert;		/**< Path to the SSL certitifcate for HTTPS / WSS. */
-	const char *ssl_private_key;	/**< Path to the SSL private key for HTTPS / WSS. */
+	char *htdocs;			/**< The root directory for files served via HTTP. */
+	char *ssl_cert;			/**< Path to the SSL certitifcate for HTTPS / WSS. */
+	char *ssl_private_key;		/**< Path to the SSL private key for HTTPS / WSS. */
 
 	pthread_t thread;
 };

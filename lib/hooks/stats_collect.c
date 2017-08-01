@@ -40,7 +40,7 @@ struct stats_collect {
 	int buckets;
 
 	AFILE *output;
-	const char *uri;
+	char *uri;
 };
 
 static int stats_collect_init(struct hook *h)
@@ -66,6 +66,9 @@ static int stats_collect_init(struct hook *h)
 static int stats_collect_destroy(struct hook *h)
 {
 	struct stats_collect *p = h->_vd;
+
+	if (p->uri)
+		free(p->uri);
 
 	return stats_destroy(&p->stats);
 }
@@ -117,7 +120,7 @@ static int stats_collect_parse(struct hook *h, config_setting_t *cfg)
 {
 	struct stats_collect *p = h->_vd;
 
-	const char *format;
+	const char *format, *uri;
 	if (config_setting_lookup_string(cfg, "format", &format)) {
 		int fmt;
 
@@ -131,7 +134,9 @@ static int stats_collect_parse(struct hook *h, config_setting_t *cfg)
 	config_setting_lookup_bool(cfg, "verbose", &p->verbose);
 	config_setting_lookup_int(cfg, "warmup", &p->warmup);
 	config_setting_lookup_int(cfg, "buckets", &p->buckets);
-	config_setting_lookup_string(cfg, "output", &p->uri);
+
+	if (config_setting_lookup_string(cfg, "output", &uri))
+		p->uri = strdup(uri);
 
 	return 0;
 }
