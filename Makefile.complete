@@ -44,6 +44,6 @@ clang-complete: $(CLANG_COMPLETES)
 clean: clean-clang-complete
 
 clean-clang-complete:
-	rm $(CLANG_COMPLETES)
+	rm -f $(CLANG_COMPLETES)
 
 .PHONY: clang-complete
