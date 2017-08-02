@@ -42,13 +42,13 @@ case ${LAYER} in
 		LOCAL="*:12000"
 		REMOTE="127.0.0.1:12000"
 		;;
-		
+
 	ip)
 		# We use IP protocol number 253 which is reserved for experimentation and testing according to RFC 3692
 		LOCAL="127.0.0.1:254"
 		REMOTE="127.0.0.1:254"
 		;;
-		
+
 	eth)
 		# We use IP protocol number 253 which is reserved for experimentation and testing according to RFC 7042
 		LOCAL="00:00:00:00:00:00%lo:34997"
@@ -58,17 +58,19 @@ case ${LAYER} in
 
 
 cat > ${CONFIG_FILE} << EOF
-nodes = {
-	node1 = {
-		type = "socket";
+{
+	"nodes" : {
+		"node1" : {
+			"type" : "socket",
 
-		layer = "${LAYER}";
-		header = "${HEADER}";
-		endian = "${ENDIAN}";
-		verify_source = ${VERIFY_SOURCE};
+			"layer" : "${LAYER}",
+			"header" : "${HEADER}",
+			"endian" : "${ENDIAN}",
+			"verify_source" : ${VERIFY_SOURCE},
 
-		local = "${LOCAL}";
-		remote = "${REMOTE}";
+			"local" : "${LOCAL}",
+			"remote" : "${REMOTE}"
+		}
 	}
 }
 EOF
@@ -78,10 +80,10 @@ villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FI
 
 # Compare data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
-RC=$?
+RC:$?
 
 if (( ${RC} != 0 )); then
-	echo "=========== Sub-test failed for: layer=${LAYER}, header=${HEADER}, endian=${ENDIAN} verify_source=${VERIFY_SOURCE}"
+	echo "=========== Sub-test failed for: layer=${LAYER}, header=${HEADER}, endian=${ENDIAN}, verify_source=${VERIFY_SOURCE}"
 	cat ${CONFIG_FILE}
 	echo
 	cat ${INPUT_FILE}
@@ -89,7 +91,7 @@ if (( ${RC} != 0 )); then
 	cat ${OUTPUT_FILE}
 	exit ${RC}
 else
-	echo "=========== Sub-test succeeded for: layer=${LAYER}, header=${HEADER}, endian=${ENDIAN} verify_source=${VERIFY_SOURCE}"
+	echo "=========== Sub-test succeeded for: layer=${LAYER}, header=${HEADER}, endian=${ENDIAN}, verify_source=${VERIFY_SOURCE}"
 fi
 
 done; done; done; done

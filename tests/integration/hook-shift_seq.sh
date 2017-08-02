@@ -23,18 +23,21 @@
 ##################################################################################
 
 OUTPUT_FILE=$(mktemp)
+INPUT_FILE=$(mktemp)
 
 OFFSET=100
 
-villas-signal random -l ${NUM_SAMPLES} -n | villas-hook shift_seq offset=${OFFSET} > ${OUTPUT_FILE}
+villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
+
+villas-hook shift_seq -o offset=${OFFSET} > ${OUTPUT_FILE} < ${INPUT_FILE}
 
 # Compare shifted sequence no
 diff -u \
-	<(sed -re 's/^[0-9]+\.[0-9]+([\+\-][0-9]+\.[0-9]+(e[\+\-][0-9]+)?)?\(([0-9]+)\).*/\3/g' ${OUTPUT_FILE}) \
+	<(sed -re '/^#/d;s/^[0-9]+\.[0-9]+([\+\-][0-9]+\.[0-9]+(e[\+\-][0-9]+)?)?\(([0-9]+)\).*/\3/g' ${OUTPUT_FILE}) \
 	<(seq ${OFFSET} $((${NUM_SAMPLES}+${OFFSET}-1)))
 
 RC=$?
 
-rm -f ${OUTPUT_FILE}
+rm -f ${OUTPUT_FILE} ${INPUT_FILE}
 
 exit $RC

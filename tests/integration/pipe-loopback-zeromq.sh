@@ -29,13 +29,15 @@ OUTPUT_FILE=$(mktemp)
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 cat > ${CONFIG_FILE} << EOF
-nodes = {
-	node1 = {
-		type = "zeromq";
+{
+	"nodes" : {
+		"node1" : {
+			"type" : "zeromq",
 
-		pattern = "pubsub";
-		subscribe = "tcp://127.0.0.1:12000";
-		publish = "tcp://127.0.0.1:12000"
+			"pattern" : "pubsub",
+			"subscribe" : "tcp://127.0.0.1:12000",
+			"publish" : "tcp://127.0.0.1:12000"
+		}
 	}
 }
 EOF

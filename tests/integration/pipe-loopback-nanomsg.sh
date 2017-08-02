@@ -29,12 +29,14 @@ OUTPUT_FILE=$(mktemp)
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 cat > ${CONFIG_FILE} << EOF
-nodes = {
-	node1 = {
-		type = "nanomsg";
+{
+	"nodes" : {
+		"node1" : {
+			"type" : "nanomsg",
 
-		subscribe = "tcp://127.0.0.1:12000";
-		publish = "tcp://127.0.0.1:12000"
+			"subscribe" : "tcp://127.0.0.1:12000",
+			"publish" : "tcp://127.0.0.1:12000"
+		}
 	}
 }
 EOF

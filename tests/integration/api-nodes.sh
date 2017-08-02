@@ -28,17 +28,19 @@ CONFIG_FILE=$(mktemp)
 FETCHED_NODES=$(mktemp)
 
 cat > ${CONFIG_FILE} <<EOF
-nodes = {
-	testnode1 = {
-		type = "websocket";
-		dummy = "value1";
-	},
-	testnode2 = {
-		type = "socket";
-		dummy = "value2";
+{
+	"nodes" : {
+		"testnode1" : {
+			"type" : "websocket",
+			"dummy" : "value1"
+		},
+		"testnode2" : {
+			"type" : "socket",
+			"dummy" : "value2",
 
-		local = "*:12001";
-		remote = "localhost:12000";
+			"local" : "*:12001",
+			"remote" : "localhost:12000"
+		}
 	}
 }
 EOF

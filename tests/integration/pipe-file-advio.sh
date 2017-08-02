@@ -30,24 +30,28 @@ NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 URI=https://1Nrd46fZX8HbggT:badpass@rwth-aachen.sciebo.de/public.php/webdav/node/tests/pipe
 
+# WebDav / OwnCloud / Sciebo do not support partial upload
+# So we disable flusing the output
 cat > ${CONFIG_FILE} <<EOF
-nodes = {
-	remote_file_out = {
-		type = "file",
+{
+	"nodes" : {
+		"remote_file_out" : {
+			"type" : "file",
 
-		out = {
-			uri = "${URI}"
-			mode = "w+"
-			flush = false /* WebDav / OwnCloud / Sciebo do not support partial upload */
+			"out" : {
+				"uri" : "${URI}",
+				"mode" : "w+",
+				"flush" : false
+			}
 		},
-	},
-	remote_file_in = {
-		type = "file",
-		in = {
-			uri = "${URI}"
-			mode = "r"
-			epoch_mode = "original"
-			eof = "exit",
+		"remote_file_in" : {
+			"type" : "file",
+			"in" : {
+				"uri" : "${URI}",
+				"mode" : "r",
+				"epoch_mode" : "original",
+				"eof" : "exit"
+			}
 		}
 	}
 }

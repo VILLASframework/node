@@ -55,7 +55,7 @@ EOF
 villas-hook drop < ${INPUT_FILE} > ${OUTPUT_FILE}
 
 # Compare only the data values
-diff -u <(cut -f2- ${OUTPUT_FILE}) <(cut -f2- ${EXPECT_FILE})
+villas-test-cmp ${OUTPUT_FILE} ${EXPECT_FILE}
 
 RC=$?
 

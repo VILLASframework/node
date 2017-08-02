@@ -30,21 +30,23 @@ NODE_FILE=$(mktemp)
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 cat > ${CONFIG_FILE} << EOF
-nodes = {
-	node1 = {
-		type = "file";
-		
-		in = {
-			uri = "${NODE_FILE}",
-			mode = "w+",
+{
+	"nodes" : {
+		"node1" : {
+			"type" : "file",
 
-			epoch_mode = "original",
-			eof = "wait"
-		},
-		out = {
-			uri = "${NODE_FILE}"
-			mode = "w+"
-			flush = true /* we need to flush / upload the new samples continously for a loopback */
+			"in" : {
+				"uri"   : "${NODE_FILE}",
+				"mode"  : "w+",
+
+				"epoch_mode" : "original",
+				"eof"   : "wait"
+			},
+			"out" : {
+				"uri"   : "${NODE_FILE}",
+				"mode"  : "w+",
+				"flush" : true
+			}
 		}
 	}
 }
