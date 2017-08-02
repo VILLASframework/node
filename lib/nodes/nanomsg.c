@@ -46,25 +46,28 @@ int nanomsg_reverse(struct node *n)
 	return 0;
 }
 
-static int nanomsg_parse_endpoints(struct list *l, config_setting_t *cfg)
+static int nanomsg_parse_endpoints(struct list *l, json_t *cfg)
 {
 	const char *ep;
 
-	switch (config_setting_type(cfg)) {
-		case CONFIG_TYPE_LIST:
-		case CONFIG_TYPE_ARRAY:
-			for (int j = 0; j < config_setting_length(cfg); j++) {
-				const char *ep = config_setting_get_string_elem(cfg, j);
+	size_t index;
+	json_t *cfg_val;
+
+	switch (json_typeof(cfg)) {
+		case JSON_ARRAY:
+			json_array_foreach(cfg, index, cfg_val) {
+				ep = json_string_value(cfg_val);
+				if (!ep)
+					return -1;
 
 				list_push(l, strdup(ep));
 			}
 			break;
 
-		case CONFIG_TYPE_STRING:
-			ep = config_setting_get_string(cfg);
+		case JSON_STRING:
+			ep = json_string_value(cfg);
 
 			list_push(l, strdup(ep));
-
 			break;
 
 		default:
@@ -74,28 +77,36 @@ static int nanomsg_parse_endpoints(struct list *l, config_setting_t *cfg)
 	return 0;
 }
 
-int nanomsg_parse(struct node *n, config_setting_t *cfg)
+int nanomsg_parse(struct node *n, json_t *cfg)
 {
 	int ret;
 	struct nanomsg *m = n->_vd;
 
-	config_setting_t *cfg_pub, *cfg_sub;
+	json_error_t err;
+
+	json_t *cfg_pub = NULL;
+	json_t *cfg_sub = NULL;
 
 	list_init(&m->publisher.endpoints);
 	list_init(&m->subscriber.endpoints);
 
-	cfg_pub = config_setting_lookup(cfg, "publish");
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o }",
+		"publish", &cfg_pub,
+		"subscribe", &cfg_sub
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+
 	if (cfg_pub) {
 		ret = nanomsg_parse_endpoints(&m->publisher.endpoints, cfg_pub);
 		if (ret < 0)
-			cerror(cfg_pub, "Invalid type for 'publish' setting of node %s", node_name(n));
+			error("Invalid type for 'publish' setting of node %s", node_name(n));
 	}
 
-	cfg_sub = config_setting_lookup(cfg, "subscribe");
 	if (cfg_sub) {
 		ret = nanomsg_parse_endpoints(&m->subscriber.endpoints, cfg_sub);
 		if (ret < 0)
-			cerror(cfg_pub, "Invalid type for 'subscribe' setting of node %s", node_name(n));
+			error("Invalid type for 'subscribe' setting of node %s", node_name(n));
 	}
 
 	return 0;

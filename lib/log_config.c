@@ -1,4 +1,4 @@
-/** Logging routines that depend on libconfig.
+/** Logging routines that depend on jansson.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
@@ -28,35 +28,39 @@
 #include "log.h"
 #include "log_config.h"
 #include "utils.h"
+#include "string.h"
 
-int log_parse(struct log *l, config_setting_t *cfg)
+int log_parse(struct log *l, json_t *cfg)
 {
-	const char *fac, *pth;
-	int lvl;
+	const char *facilities = NULL;
+	const char *path = NULL;
+	int ret;
 
-	if (!config_setting_is_group(cfg))
-		cerror(cfg, "Setting 'log' must be a group.");
+	json_error_t err;
 
-	if (config_setting_lookup_int(cfg, "level", &lvl))
-		l->level = lvl;
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: s, s?: s }",
+		"level", &l->level,
+		"file", &path,
+		"facilities", &facilities
+	);
+	if (ret)
+		jerror(&err, "Failed to parse logging configuration");
 
-	if (config_setting_lookup_string(cfg, "file", &pth))
-		l->path = pth;
+	if (path)
+		l->path = strdup(path);
 
-	if (config_setting_lookup_string(cfg, "facilities", &fac))
-		log_set_facility_expression(l, fac);
+	if (facilities)
+		log_set_facility_expression(l, facilities);
 
 	l->state = STATE_PARSED;
 
 	return 0;
 }
 
-void cerror(config_setting_t *cfg, const char *fmt, ...)
+void jerror(json_error_t *err, const char *fmt, ...)
 {
 	va_list ap;
 	char *buf = NULL;
-	const char *file;
-	int line;
 
 	struct log *l = global_log ? global_log : &default_log;
 
@@ -64,12 +68,10 @@ void cerror(config_setting_t *cfg, const char *fmt, ...)
 	vstrcatf(&buf, fmt, ap);
 	va_end(ap);
 
-	line = config_setting_source_line(cfg);
-	file = config_setting_source_file(cfg);
-	if (!file)
-		file = config_setting_get_hook(config_root_setting(cfg->config));
-
-	log_print(l, LOG_LVL_ERROR, "%s in %s:%u", buf, file, line);
+	log_print(l, LOG_LVL_ERROR, "%s:", buf);
+	{ INDENT
+		log_print(l, LOG_LVL_ERROR, "%s in %s:%d:%d", err->text, err->source, err->line, err->column);
+	}
 
 	free(buf);
 

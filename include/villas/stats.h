@@ -25,6 +25,7 @@
 #define _STATS_H_
 
 #include <stdint.h>
+#include <jansson.h>
 
 #include "hist.h"
 
@@ -73,11 +74,7 @@ void stats_collect(struct stats_delta *s, struct sample *smps[], size_t cnt);
 
 int stats_commit(struct stats *s, struct stats_delta *d);
 
-#ifdef WITH_JSON
-  #include <jansson.h>
-
 json_t * stats_json(struct stats *s);
-#endif
 
 void stats_reset(struct stats *s);
 

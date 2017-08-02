@@ -51,15 +51,18 @@ static int map_destroy(struct hook *h)
 	return mapping_destroy(&p->mapping);
 }
 
-static int map_parse(struct hook *h, config_setting_t *cfg)
+static int map_parse(struct hook *h, json_t *cfg)
 {
 	int ret;
 	struct map *p = h->_vd;
-	config_setting_t *cfg_mapping;
+	json_error_t err;
+	json_t *cfg_mapping;
 
-	cfg_mapping = config_setting_lookup(cfg, "mapping");
-	if (!cfg_mapping || !config_setting_is_array(cfg_mapping))
-		return -1;
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: o }",
+		"map", &cfg_mapping
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
 
 	ret = mapping_parse(&p->mapping, cfg_mapping);
 	if (ret)

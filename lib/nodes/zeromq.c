@@ -89,83 +89,92 @@ int zeromq_reverse(struct node *n)
 	return 0;
 }
 
-int zeromq_parse(struct node *n, config_setting_t *cfg)
+int zeromq_parse(struct node *n, json_t *cfg)
 {
 	struct zeromq *z = n->_vd;
 
-	const char *ep, *type, *filter;
+	int ret;
+	const char *ep = NULL;
+	const char *type = NULL;
+	const char *filter = NULL;
 
-	config_setting_t *cfg_pub, *cfg_curve;
+	size_t index;
+	json_t *cfg_pub = NULL;
+	json_t *cfg_curve = NULL;
+	json_t *cfg_val;
+	json_error_t err;
 
 	list_init(&z->publisher.endpoints);
 
-	if (config_setting_lookup_string(cfg, "subscribe", &ep))
-		z->subscriber.endpoint = strdup(ep);
-	else
-		z->subscriber.endpoint = NULL;
+	z->curve.enabled = false;
+	z->ipv6 = 0;
 
-	cfg_pub = config_setting_lookup(cfg, "publish");
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: o, s?: o, s?: s, s?: s, s?: b }",
+		"subscribe", &ep,
+		"publish", &cfg_pub,
+		"curve", &cfg_curve,
+		"filter", &filter,
+		"pattern", &type,
+		"ipv6", &z->ipv6
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+
+	z->subscriber.endpoint = ep ? strdup(ep) : NULL;
+	z->filter = filter ? strdup(filter) : NULL;
+
 	if (cfg_pub) {
-		switch (config_setting_type(cfg_pub)) {
-			case CONFIG_TYPE_LIST:
-			case CONFIG_TYPE_ARRAY:
-				for (int j = 0; j < config_setting_length(cfg_pub); j++) {
-					const char *ep = config_setting_get_string_elem(cfg_pub, j);
+		switch (json_typeof(cfg_pub)) {
+			case JSON_ARRAY:
+				json_array_foreach(cfg_pub, index, cfg_val) {
+					ep = json_string_value(cfg_pub);
+					if (!ep)
+						error("All 'publish' settings must be strings");
 
 					list_push(&z->publisher.endpoints, strdup(ep));
 				}
 				break;
 
-			case CONFIG_TYPE_STRING:
-				ep = config_setting_get_string(cfg_pub);
+			case JSON_STRING:
+				ep = json_string_value(cfg_pub);
 
 				list_push(&z->publisher.endpoints, strdup(ep));
 
 				break;
 
 			default:
-				cerror(cfg_pub, "Invalid type for ZeroMQ publisher setting");
+				error("Invalid type for ZeroMQ publisher setting");
 		}
 	}
 
-	cfg_curve = config_setting_lookup(cfg, "curve");
 	if (cfg_curve) {
-		if (!config_setting_is_group(cfg_curve))
-			cerror(cfg_curve, "The curve setting must be a group");
-
 		const char *public_key, *secret_key;
 
-		if (!config_setting_lookup_string(cfg_curve, "public_key", &public_key))
-			cerror(cfg_curve, "Setting 'curve.public_key' is missing");
+		z->curve.enabled = true;
 
-		if (!config_setting_lookup_string(cfg_curve, "secret_key", &secret_key))
-			cerror(cfg_curve, "Setting 'curve.secret_key' is missing");
-
-		if (!config_setting_lookup_bool(cfg_curve, "enabled", &z->curve.enabled))
-			z->curve.enabled = true;
+		ret = json_unpack_ex(cfg_curve, &err, 0, "{ s: s, s: s, s?: b }",
+			"public_key", &public_key,
+			"secret_key", &secret_key,
+			"enabled", &z->curve.enabled
+		);
+		if (ret)
+			jerror(&err, "Failed to parse setting 'curve' of node %s", node_name(n));
 
 		if (strlen(secret_key) != 40)
-			cerror(cfg_curve, "Setting 'curve.secret_key' must be a Z85 encoded CurveZMQ key");
+			error("Setting 'curve.secret_key' of node %s must be a Z85 encoded CurveZMQ key", node_name(n));
 
 		if (strlen(public_key) != 40)
-			cerror(cfg_curve, "Setting 'curve.public_key' must be a Z85 encoded CurveZMQ key");
+			error("Setting 'curve.public_key' of node %s must be a Z85 encoded CurveZMQ key", node_name(n));
 
 		strncpy(z->curve.server.public_key, public_key, 41);
 		strncpy(z->curve.server.secret_key, secret_key, 41);
 	}
-	else
-		z->curve.enabled = false;
 
 	/** @todo We should fix this. Its mostly done. */
 	if (z->curve.enabled)
-		cerror(cfg_curve, "CurveZMQ support is currently broken");
+		error("CurveZMQ support is currently broken");
 
-	if (config_setting_lookup_string(cfg, "filter", &filter))
-		z->filter = strdup(filter);
-	else
-		z->filter = NULL;
-
-	if (config_setting_lookup_string(cfg, "pattern", &type)) {
+	if (type) {
 		if      (!strcmp(type, "pubsub"))
 			z->pattern = ZEROMQ_PATTERN_PUBSUB;
 #ifdef ZMQ_BUILD_DISH
@@ -173,11 +182,8 @@ int zeromq_parse(struct node *n, config_setting_t *cfg)
 			z->pattern = ZEROMQ_PATTERN_RADIODISH;
 #endif
 		else
-			cerror(cfg, "Invalid type for ZeroMQ node: %s", node_name_short(n));
+			error("Invalid type for ZeroMQ node: %s", node_name_short(n));
 	}
-
-	if (!config_setting_lookup_bool(cfg, "ipv6", &z->ipv6))
-		z->ipv6 = 0;
 
 	return 0;
 }

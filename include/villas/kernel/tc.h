@@ -35,7 +35,7 @@
 #include <netlink/route/qdisc.h>
 #include <netlink/route/classifier.h>
 
-#include <libconfig.h>
+#include <jansson.h>
 
 typedef uint32_t tc_hdl_t;
 
@@ -43,12 +43,12 @@ struct interface;
 
 /** Parse network emulator (netem) settings.
  *
- * @param cfg A libconfig object containing the settings.
+ * @param cfg A jansson object containing the settings.
  * @param[out] ne A pointer to a libnl3 qdisc object where setting will be written to.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int tc_parse(config_setting_t *cfg, struct rtnl_qdisc **ne);
+int tc_parse(struct rtnl_qdisc **ne, json_t *cfg);
 
 /** Print network emulator (netem) setting into buffer.
  *

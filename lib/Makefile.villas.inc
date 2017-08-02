@@ -26,7 +26,6 @@ LIB = $(BUILDDIR)/$(LIB_NAME).so.$(LIB_ABI_VERSION)
 
 WITH_WEB  ?= 1
 WITH_API  ?= 1
-WITH_JSON ?= 1
 
 # Object files for libvillas
 LIB_SRCS += $(addprefix lib/kernel/, kernel.c rt.c) \
@@ -45,12 +44,6 @@ ifeq ($(PLATFORM),Linux)
 endif
 
 LIB_PKGS += openssl libcurl
-
-ifeq ($(WITH_JSON),1)
-	LIB_SRCS   += lib/formats/json.c
-	LIB_PKGS   += jansson
-	LIB_CFLAGS += -DWITH_JSON
-endif
 
 ifeq ($(WITH_WEB),1)
 	-include lib/web/Makefile.inc

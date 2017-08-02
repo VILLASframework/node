@@ -30,7 +30,7 @@
 #pragma once
 
 #include <pthread.h>
-#include <libconfig.h>
+#include <jansson.h>
 
 #include "list.h"
 #include "queue.h"
@@ -83,6 +83,8 @@ struct path
 	struct stats *stats;		/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 
 	struct super_node *super_node;	/**< The super node this path belongs to. */
+
+	json_t *cfg;			/**< A JSON object containing the configuration of the path. */
 };
 
 /** Initialize internal data structures. */
@@ -140,12 +142,12 @@ int path_uses_node(struct path *p, struct node *n);
 
 /** Parse a single path and add it to the global configuration.
  *
- * @param cfg A libconfig object pointing to the path
+ * @param cfg A JSON object containing the configuration of the path.
  * @param p Pointer to the allocated memory for this path
  * @param nodes A linked list of all existing nodes
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes);
+int path_parse(struct path *p, json_t *cfg, struct list *nodes);
 
 /** @} */

@@ -50,7 +50,7 @@ struct nanomsg {
 char * nanomsg_print(struct node *n);
 
 /** @see node_type::parse */
-int nanomsg_parse(struct node *n, config_setting_t *cfg);
+int nanomsg_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::open */
 int nanomsg_start(struct node *n);

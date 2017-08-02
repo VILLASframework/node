@@ -21,7 +21,6 @@
  *********************************************************************************/
 
 #include <string.h>
-#include <libconfig.h>
 
 #include "sample.h"
 #include "node.h"
@@ -52,28 +51,32 @@ int node_init(struct node *n, struct node_type *vt)
 	return 0;
 }
 
-int node_parse(struct node *n, config_setting_t *cfg)
+int node_parse(struct node *n, json_t *cfg, const char *name)
 {
 	struct plugin *p;
-	const char *type, *name;
 	int ret;
 
-	name = config_setting_name(cfg);
+	json_error_t err;
 
-	if (!config_setting_lookup_string(cfg, "type", &type))
-		cerror(cfg, "Missing node type");
+	const char *type;
+
+	n->name = strdup(name);
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: i }",
+		"type", &type,
+		"vectorize", &n->vectorize
+	);
+	if (ret)
+		jerror(&err, "Failed to parse node '%s'", node_name(n));
 
 	p = plugin_lookup(PLUGIN_TYPE_NODE, type);
 	assert(&p->node == n->_vt);
 
-	config_setting_lookup_int(cfg, "vectorize", &n->vectorize);
-
-	n->name = strdup(name);
-
 	ret = n->_vt->parse ? n->_vt->parse(n, cfg) : 0;
 	if (ret)
-		cerror(cfg, "Failed to parse node '%s'", node_name(n));
+		error("Failed to parse node '%s'", node_name(n));
 
+	n->cfg = cfg;
 	n->state = STATE_PARSED;
 
 	return ret;
@@ -85,10 +88,9 @@ int node_parse_cli(struct node *n, int argc, char *argv[])
 
 	assert(n->_vt);
 
-	n->vectorize = 1;
-	n->name = "cli";
-
 	if (n->_vt->parse_cli) {
+		n->name = strdup("cli");
+
 		ret = n->_vt->parse_cli(n, argc, argv);
 		if (ret)
 			return ret;
@@ -96,21 +98,11 @@ int node_parse_cli(struct node *n, int argc, char *argv[])
 		n->state = STATE_PARSED;
 	}
 	else {
-		config_t cfg;
-		config_setting_t *cfg_root;
+		n->cfg = json_load_cli(argc, argv);
+		if (!n->cfg)
+			return -1;
 
-		config_init(&cfg);
-
-		ret = config_read_cli(&cfg, argc, argv);
-		if (ret)
-			goto out;
-
-		cfg_root = config_root_setting(&cfg);
-
-		ret = node_parse(n, cfg_root);
-
-out:
-		config_destroy(&cfg);
+		ret = node_parse(n, n->cfg, "cli");
 	}
 
 	return ret;
@@ -279,47 +271,57 @@ int node_reverse(struct node *n)
 	return n->_vt->reverse ? n->_vt->reverse(n) : -1;
 }
 
-int node_parse_list(struct list *list, config_setting_t *cfg, struct list *all)
+int node_parse_list(struct list *list, json_t *cfg, struct list *all)
 {
-	const char *str;
 	struct node *node;
+	const char *str;
+	char *allstr = NULL;
 
-	switch (config_setting_type(cfg)) {
-		case CONFIG_TYPE_STRING:
-			str = config_setting_get_string(cfg);
-			if (str) {
-				node = list_lookup(all, str);
-				if (node)
-					list_push(list, node);
-				else
-					cerror(cfg, "Unknown outgoing node '%s'", str);
-			}
-			else
-				cerror(cfg, "Invalid outgoing node");
+	size_t index;
+	json_t *elm;
+
+	switch (json_typeof(cfg)) {
+		case JSON_STRING:
+			str = json_string_value(cfg);
+			node = list_lookup(all, str);
+			if (!node)
+				goto invalid2;
+
+			list_push(list, node);
 			break;
 
-		case CONFIG_TYPE_ARRAY:
-			for (int i = 0; i < config_setting_length(cfg); i++) {
-				config_setting_t *elm = config_setting_get_elem(cfg, i);
+		case JSON_ARRAY:
+			json_array_foreach(cfg, index, elm) {
+				if (!json_is_string(elm))
+					goto invalid;
 
-				str = config_setting_get_string(elm);
-				if (str) {
-					node = list_lookup(all, str);
-					if (!node)
-						cerror(elm, "Unknown outgoing node '%s'", str);
-					else if (node->_vt->write == NULL)
-						cerror(cfg, "Output node '%s' is not supported as a sink.", node_name(node));
+				node = list_lookup(all, json_string_value(elm));
+				if (!node)
 
-					list_push(list, node);
-				}
-				else
-					cerror(cfg, "Invalid outgoing node");
+
+				list_push(list, node);
 			}
 			break;
 
 		default:
-			cerror(cfg, "Invalid output node(s)");
+			goto invalid;
 	}
+
+	return 0;
+
+invalid:
+	error("The node list must be an a single or an array of strings referring to the keys of the 'nodes' section");
+
+	return -1;
+
+invalid2:
+	for (size_t i = 0; i < list_length(all); i++) {
+		struct node *n = list_at(all, i);
+
+		strcatf(&allstr, " %s", node_name_short(n));
+	}
+
+	error("Unknown node '%s'. Choose of one of: %s", str, allstr);
 
 	return 0;
 }

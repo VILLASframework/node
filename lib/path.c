@@ -25,7 +25,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <inttypes.h>
-#include <libconfig.h>
 
 #include "config.h"
 #include "utils.h"
@@ -39,6 +38,7 @@
 #include "memory.h"
 #include "stats.h"
 #include "node.h"
+#include "config_helper.h"
 
 static void path_read(struct path *p)
 {
@@ -180,45 +180,50 @@ int path_init(struct path *p, struct super_node *sn)
 	return 0;
 }
 
-int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
+int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 {
-	config_setting_t *cfg_out, *cfg_hooks;
-	const char *in;
 	int ret;
+	const char *in;
+
+	json_error_t err;
+	json_t *cfg_out = NULL;
+	json_t *cfg_hooks = NULL;
 
 	struct node *source;
 	struct list destinations = { .state = STATE_DESTROYED };
 
 	list_init(&destinations);
 
-	/* Input node */
-	if (!config_setting_lookup_string(cfg, "in", &in))
-		cerror(cfg, "Missing input node for path");
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: o, s?: o, s?: b, s?: b, s?: i, s?: i }",
+		"in", &in,
+		"out", &cfg_out,
+		"hooks", &cfg_hooks,
+		"reverse", &p->reverse,
+		"enabled", &p->enabled,
+		"samplelen", &p->samplelen,
+		"queuelen", &p->queuelen
+	);
+	if (ret)
+		jerror(&err, "Failed to parse path configuration");
 
+	/* Input node */
 	source = list_lookup(nodes, in);
 	if (!source)
-		cerror(cfg, "Invalid input node '%s'", in);
+		jerror(&err, "Invalid input node '%s'", in);
 
 	/* Output node(s) */
-	cfg_out = config_setting_get_member(cfg, "out");
 	if (cfg_out) {
 		ret = node_parse_list(&destinations, cfg_out, nodes);
 		if (ret)
-			cerror(cfg_out, "Failed to parse output nodes");
+			jerror(&err, "Failed to parse output nodes");
 	}
 
 	/* Optional settings */
-	cfg_hooks = config_setting_get_member(cfg, "hooks");
 	if (cfg_hooks) {
 		ret = hook_parse_list(&p->hooks, cfg_hooks, p);
 		if (ret)
 			return ret;
 	}
-
-	config_setting_lookup_bool(cfg, "reverse", &p->reverse);
-	config_setting_lookup_bool(cfg, "enabled", &p->enabled);
-	config_setting_lookup_int(cfg, "samplelen", &p->samplelen);
-	config_setting_lookup_int(cfg, "queuelen", &p->queuelen);
 
 	if (!IS_POW2(p->queuelen)) {
 		p->queuelen = LOG2_CEIL(p->queuelen);
@@ -241,6 +246,9 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 	}
 
 	list_destroy(&destinations, NULL, false);
+
+	p->cfg = cfg;
+	p->state = STATE_PARSED;
 
 	return 0;
 }

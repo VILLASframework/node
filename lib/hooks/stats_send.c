@@ -53,34 +53,44 @@ static int stats_send_init(struct hook *h)
 	return 0;
 }
 
-static int stats_send_parse(struct hook *h, config_setting_t *cfg)
+static int stats_send_parse(struct hook *h, json_t *cfg)
 {
 	struct stats_send *p = h->_vd;
 
 	assert(h->path && h->path->super_node);
 
-	const char *dest, *mode;
+	const char *dest = NULL;
+	const char *mode = NULL;
 
-	if (config_setting_lookup_string(cfg, "destination", &dest)) {
+	int ret;
+	json_error_t err;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s?: i }"
+		"destination", &dest,
+		"mode", &mode,
+		"decimation", &p->decimation
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
+
+	if (dest) {
 		assert(h->path);
 
 		p->dest = list_lookup(&h->path->super_node->nodes, dest);
 		if (!p->dest)
-			cerror(cfg, "Invalid destination node '%s' for hook '%s'", dest, plugin_name(h->_vt));
+			jerror(&err, "Invalid destination node '%s' for hook '%s'", dest, plugin_name(h->_vt));
 	}
 	else
-		cerror(cfg, "Missing setting 'destination' for hook '%s'", plugin_name(h->_vt));
+		jerror(&err, "Missing setting 'destination' for hook '%s'", plugin_name(h->_vt));
 
-	if (config_setting_lookup_string(cfg, "mode", &mode)) {
+	if (mode) {
 		if      (!strcmp(mode, "periodic"))
 			p->mode = STATS_SEND_MODE_PERIODIC;
 		else if (!strcmp(mode, "read"))
 			p->mode = STATS_SEND_MODE_READ;
 		else
-			cerror(cfg, "Invalid value '%s' for setting 'mode' of hook '%s'", mode, plugin_name(h->_vt));
+			jerror(&err, "Invalid value '%s' for setting 'mode' of hook '%s'", mode, plugin_name(h->_vt));
 	}
-
-	config_setting_lookup_int(cfg, "decimation", &p->decimation);
 
 	return 0;
 }

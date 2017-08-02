@@ -20,8 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <libconfig.h>
-
 #include "api.h"
 #include "utils.h"
 #include "plugin.h"
@@ -30,9 +28,7 @@
 
 static int api_config(struct api_action *h, json_t *args, json_t **resp, struct api_session *s)
 {
-	config_setting_t *cfg_root = config_root_setting(&s->api->super_node->cfg);
-
-	*resp = cfg_root ? config_to_json(cfg_root) : json_object();
+	*resp = s->api->super_node->cfg;
 
 	return 0;
 }

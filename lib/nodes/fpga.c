@@ -34,7 +34,6 @@ void fpga_dump(struct fpga *f)
 int fpga_init(struct super_node *sn)
 {
 	int ret;
-	config_setting_t *cfg, *cfg_fpgas;
 
 	ret = pci_init(&pci);
 	if (ret)
@@ -43,6 +42,9 @@ int fpga_init(struct super_node *sn)
 	ret = vfio_init(&vc);
 	if (ret)
 		error("Failed to initiliaze VFIO sub-system");
+
+#if 0
+	json_t *cfg, *cfg_fpgas;
 
 	/* Parse FPGA configuration */
 	cfg = config_root_setting(&sn->cfg);
@@ -53,7 +55,7 @@ int fpga_init(struct super_node *sn)
 	ret = fpga_card_parse_list(&cards, cfg_fpgas);
 	if (ret)
 		cerror(cfg, "Failed to parse VILLASfpga config");
-
+#endif
 	return 0;
 }
 
@@ -76,7 +78,7 @@ int fpga_deinit()
 	return 0;
 }
 
-int fpga_parse(struct node *n, config_setting_t *cfg)
+int fpga_parse(struct node *n, json_t *cfg)
 {
 	struct fpga *f = n->_vd;
 	struct fpga_card *card;
@@ -85,11 +87,18 @@ int fpga_parse(struct node *n, config_setting_t *cfg)
 	char *cpy, *card_name, *ip_name;
 	const char *dm;
 
-	if (!config_setting_lookup_string(cfg, "datamover", &dm))
-		cerror(cfg, "Node '%s' is missing the 'datamover' setting", node_name(n));
+	json_error_t err;
+	int ret;
 
-	if (!config_setting_lookup_bool(cfg, "use_irqs", &f->use_irqs))
-		f->use_irqs = false;
+	/* Default values */
+	f->use_irqs = false;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: b }",
+		"datamover", &dm,
+		"use_irqs", &f->use_irqs
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 	cpy = strdup(dm); /* strtok can not operate on type const char * */
 
@@ -98,13 +107,13 @@ int fpga_parse(struct node *n, config_setting_t *cfg)
 
 	card = list_lookup(&cards, card_name);
 	if (!card)
-		cerror(cfg, "There is no FPGA card named '%s", card_name);
+		error("There is no FPGA card named '%s' used by node %s", card_name, node_name(n));
 
 	ip = list_lookup(&card->ips, ip_name);
 	if (!ip)
-		cerror(cfg, "There is no datamover named '%s' on the FPGA card '%s'", ip_name, card_name);
+		error("There is no datamover named '%s' on the FPGA card '%s' used by node %s", ip_name, card_name, node_name(n));
 	if (ip->_vt->type != FPGA_IP_TYPE_DM_DMA && ip->_vt->type != FPGA_IP_TYPE_DM_FIFO)
-		cerror(cfg, "The IP '%s' on FPGA card '%s' is not a datamover", ip_name, card_name);
+		error("The IP '%s' on FPGA card '%s' is not a datamover", ip_name, card_name);
 
 	free(cpy);
 

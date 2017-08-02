@@ -212,7 +212,6 @@ char * hist_dump(struct hist *h)
 	return buf;
 }
 
-#ifdef WITH_JSON
 json_t * hist_json(struct hist *h)
 {
 	json_t *json_buckets, *json_hist;
@@ -257,7 +256,6 @@ int hist_dump_json(struct hist *h, FILE *f)
 
 	return ret;
 }
-#endif /* WITH_JSON */
 
 int hist_dump_matlab(struct hist *h, FILE *f)
 {

@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include <libconfig.h>
 #include <pthread.h>
 
 #include "common.h"
@@ -60,4 +59,4 @@ int web_start(struct web *w);
 int web_stop(struct web *w);
 
 /** Parse HTTPd and WebSocket related options */
-int web_parse(struct web *w, config_setting_t *lcs);
+int web_parse(struct web *w, json_t *cfg);

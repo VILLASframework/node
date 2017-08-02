@@ -13,33 +13,40 @@
 #include "fpga/card.h"
 #include "fpga/ips/dft.h"
 
-int dft_parse(struct fpga_ip *c)
+int dft_parse(struct fpga_ip *c, json_t *cfg)
 {
 	struct dft *dft = c->_vd;
 
-	config_setting_t *cfg_harms;
+	int ret;
 
-	if (!config_setting_lookup_int(c->cfg, "period", &dft->period))
-		cerror(c->cfg, "DFT IP core requires 'period' setting");
+	json_t *cfg_harms;
+	json_error_t err;
 
-	if (!config_setting_lookup_int(c->cfg, "decimation", &dft->decimation))
-		cerror(c->cfg, "DFT IP core requires 'decimation' setting");
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s: i, s: o }",
+		"period", &dft->period,
+		"decimation", &dft->decimation,
+		"harmonics", &cfg_harms
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of FPGA IP '%s'", c->name);
 
-	cfg_harms = config_setting_get_member(c->cfg, "harmonics");
-	if (!cfg_harms)
-		cerror(c->cfg, "DFT IP core requires 'harmonics' setting!");
+	if (!json_is_array(cfg_harms))
+		error("DFT IP core requires 'harmonics' to be an array of integers!");
 
-	if (!config_setting_is_array(cfg_harms))
-		cerror(c->cfg, "DFT IP core requires 'harmonics' to be an array of integers!");
-
-	dft->num_harmonics = config_setting_length(cfg_harms);
+	dft->num_harmonics = json_array_size(cfg_harms);
 	if (dft->num_harmonics <= 0)
-		cerror(cfg_harms, "DFT IP core requires 'harmonics' to contain at least 1 integer!");
+		error("DFT IP core requires 'harmonics' to contain at least 1 value!");
 
 	dft->fharmonics = alloc(sizeof(float) * dft->num_harmonics);
 
-	for (int i = 0; i < dft->num_harmonics; i++)
-		dft->fharmonics[i] = (float) config_setting_get_int_elem(cfg_harms, i) / dft->period;
+	size_t index;
+	json_t *cfg_harm;
+	json_array_foreach(cfg_harms, index, cfg_harm) {
+		if (!json_is_real(cfg_harm))
+			error("DFT IP core requires all 'harmonics' values to be of floating point type");
+
+		dft->fharmonics[index] = (float) json_number_value(cfg_harm) / dft->period;
+	}
 
 	return 0;
 }

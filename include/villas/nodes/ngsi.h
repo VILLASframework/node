@@ -39,7 +39,6 @@
 #include <jansson.h>
 
 #include "list.h"
-#include "msg.h"
 #include "super_node.h"
 #include "node.h"
 
@@ -77,7 +76,7 @@ int ngsi_init(struct super_node *sn);
 int ngsi_deinit();
 
 /** @see node_type::parse */
-int ngsi_parse(struct node *n, config_setting_t *cfg);
+int ngsi_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::print */
 char * ngsi_print(struct node *n);

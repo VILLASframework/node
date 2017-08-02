@@ -116,26 +116,35 @@ static int stats_collect_periodic(struct hook *h)
 	return 0;
 }
 
-static int stats_collect_parse(struct hook *h, config_setting_t *cfg)
+static int stats_collect_parse(struct hook *h, json_t *cfg)
 {
 	struct stats_collect *p = h->_vd;
 
-	const char *format, *uri;
-	if (config_setting_lookup_string(cfg, "format", &format)) {
-		int fmt;
+	int ret, fmt;
+	json_error_t err;
 
+	const char *format = NULL;
+	const char *uri = NULL;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: s?: i, s?: s }"
+		"format", &format,
+		"verbose", &p->verbose,
+		"warmup", &p->warmup,
+		"buckets", &p->buckets,
+		"output", &uri
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
+
+	if (format) {
 		fmt = stats_lookup_format(format);
 		if (fmt < 0)
-			cerror(cfg, "Invalid statistic output format: %s", format);
+			jerror(&err, "Invalid statistic output format: %s", format);
 
 		p->format = fmt;
 	}
 
-	config_setting_lookup_bool(cfg, "verbose", &p->verbose);
-	config_setting_lookup_int(cfg, "warmup", &p->warmup);
-	config_setting_lookup_int(cfg, "buckets", &p->buckets);
-
-	if (config_setting_lookup_string(cfg, "output", &uri))
+	if (uri)
 		p->uri = strdup(uri);
 
 	return 0;

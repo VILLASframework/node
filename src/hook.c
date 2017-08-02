@@ -37,6 +37,7 @@
 #include <villas/pool.h>
 #include <villas/log.h>
 #include <villas/plugin.h>
+#include <config_helper.h>
 
 #include <villas/kernel/rt.h>
 
@@ -103,20 +104,34 @@ int main(int argc, char *argv[])
 	/* Default values */
 	cnt = 1;
 
-	char c;
-	while ((c = getopt(argc, argv, "hv:d:")) != -1) {
+	json_t *cfg_cli = json_object();
+
+	char c, *endptr;
+	while ((c = getopt(argc, argv, "hv:d:f:o:")) != -1) {
 		switch (c) {
+				break;
 			case 'v':
-				cnt = atoi(optarg);
-				break;
+				cnt = strtoul(optarg, &endptr, 0);
+				goto check;
 			case 'd':
-				l.level = atoi(optarg);
+				l.level = strtoul(optarg, &endptr, 0);
+				goto check;
+			case 'o':
+				ret = json_object_extend_str(cfg_cli, optarg);
+				if (ret)
+					error("Invalid option: %s", optarg);
 				break;
-			case 'h':
 			case '?':
+			case 'h':
 				usage();
 				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
+
+		continue;
+
+check:		if (optarg == endptr)
+			error("Failed to parse parse option argument '-%c %s'", c, optarg);
+
 	}
 
 	if (argc < optind + 1) {
@@ -156,7 +171,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to initialize hook");
 
-	ret = hook_parse_cli(&h, argc - optind - 1, &argv[optind + 1]);
+	ret = hook_parse(&h, cfg_cli);
 	if (ret)
 		error("Failed to parse hook config");
 

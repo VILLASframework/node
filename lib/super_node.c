@@ -1,4 +1,4 @@
-/** Configuration parser.
+/** The super node object holding the state of the application.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
@@ -42,30 +42,10 @@
 
 #include "kernel/rt.h"
 
-static void config_dtor(void *data)
-{
-	if (data)
-		free(data);
-}
-
-static int super_node_parse_global(struct super_node *sn, config_setting_t *cfg)
-{
-	if (!config_setting_is_group(cfg))
-		cerror(cfg, "Global section must be a dictionary.");
-
-	config_setting_lookup_int(cfg, "hugepages", &sn->hugepages);
-	config_setting_lookup_int(cfg, "affinity", &sn->affinity);
-	config_setting_lookup_int(cfg, "priority", &sn->priority);
-	config_setting_lookup_float(cfg, "stats", &sn->stats);
-
-	return 0;
-}
-
 int super_node_init(struct super_node *sn)
 {
 	assert(sn->state == STATE_DESTROYED);
 
-	log_init(&sn->log, V, LOG_ALL);
 #ifdef WITH_API
 	api_init(&sn->api, sn);
 #endif /* WITH_API */
@@ -83,6 +63,9 @@ int super_node_init(struct super_node *sn)
 	sn->stats = 0;
 	sn->hugepages = DEFAULT_NR_HUGEPAGES;
 
+	sn->name = alloc(128); /** @todo missing free */
+	gethostname(sn->name, 128);
+
 	sn->state = STATE_INITIALIZED;
 
 	return 0;
@@ -90,85 +73,81 @@ int super_node_init(struct super_node *sn)
 
 int super_node_parse_uri(struct super_node *sn, const char *uri)
 {
-	int ret = CONFIG_FALSE;
+	json_error_t err;
 
 	if (uri) { INDENT
 		FILE *f;
 		AFILE *af;
-		config_setting_t *cfg_root = NULL;
 
 		/* Via stdin */
 		if (!strcmp("-", uri)) {
+			info("Reading configuration from stdin");
+
 			af = NULL;
 			f = stdin;
-
-			info("Reading configuration from stdin");
 		}
 		else {
-			/* Local file? */
-			if (access(uri, F_OK) != -1) {
-				/* Setup libconfig include path.
-				 * This is only supported for local files */
-				char *uri_cpy = strdup(uri);
-				char *include_dir = dirname(uri_cpy);
-
-				config_set_include_dir(&sn->cfg, include_dir);
-
-				free(uri_cpy);
-
-				info("Reading configuration from local file: %s", uri);
-			}
-			else
-				info("Reading configuration from URI: %s", uri);
+			info("Reading configuration from URI: %s", uri);
 
 			af = afopen(uri, "r");
-			f = af ? af->file : NULL;
+			if (!af)
+				error("Failed to open configuration from: %s", uri);
+
+			f = af->file;
 		}
-
-		/* Check if file could be loaded / opened */
-		if (!f)
-			error("Failed to open configuration");
-
-		config_init(&sn->cfg);
-		config_set_destructor(&sn->cfg, config_dtor);
-		config_set_auto_convert(&sn->cfg, 1);
 
 		/* Parse config */
-		ret = config_read(&sn->cfg, f);
-		if (ret != CONFIG_TRUE) {
-#ifdef WITH_JSON
-			/* This does not seem to be a valid libconfig configuration.
-			 * Lets try to parse it as JSON instead. */
-			json_error_t err;
-			json_t *json;
+		sn->cfg = json_loadf(f, 0, &err);
+		if (sn->cfg == NULL) {
+#ifdef WITH_LIBCONFIG
+			int ret;
 
-			json = json_loadf(f, 0, &err);
-			if (json) {
-				ret = json_to_config(json, cfg_root);
-				if (ret)
-					error("Failed t convert JSON to configuration file");
+			config_t cfg;
+			config_setting_t *cfg_root = NULL;
+
+			warn("Failed to parse JSON configuration. Re-trying with old libconfig format.");
+			{ INDENT
+				warn("Please consider migrating to the new format using the 'conf2json' command.");
 			}
-			else {
-				error("Failed to parse configuration");
+
+			config_init(&cfg);
+			config_set_auto_convert(&cfg, 1);
+
+			/* Setup libconfig include path.
+			 * This is only supported for local files */
+			if (access(uri, F_OK) != -1) {
+				char *cpy = strdup(uri);
+
+				config_set_include_dir(&cfg, dirname(cpy));
+
+				free(cpy);
+			}
+
+			if (af)
+				arewind(af);
+			else
+				rewind(f);
+
+			ret = config_read(&cfg, f);
+			if (ret != CONFIG_TRUE) {
 				{ INDENT
-					warn("conf: %s in %s:%d", config_error_text(&sn->cfg), uri, config_error_line(&sn->cfg));
+					warn("conf: %s in %s:%d", config_error_text(&cfg), uri, config_error_line(&cfg));
 					warn("json: %s in %s:%d:%d", err.text, err.source, err.line, err.column);
 				}
+				error("Failed to parse configuration");
 			}
-#else
-			error("Failed to parse configuration");
-			{ INDENT
-				warn("%s in %s:%d", config_error_text(&sn->cfg), uri, config_error_line(&sn->cfg));
-			}
-#endif
-		}
 
-		/* Little hack to properly report configuration filename in error messages
-		 * We add the uri as a "hook" object to the root setting.
-		 * See cerror() on how this info is used.
-		 */
-		cfg_root = config_root_setting(&sn->cfg);
-		config_setting_set_hook(cfg_root, strdup(uri));
+			cfg_root = config_root_setting(&cfg);
+
+			sn->cfg = config_to_json(cfg_root);
+			if (sn->cfg == NULL)
+				error("Failed to convert JSON to configuration file");
+
+			config_destroy(&cfg);
+#else
+			jerror(&err, "Failed to parse configuration file");
+#endif /* WITH_LIBCONFIG */
+		}
 
 		/* Close configuration file */
 		if (af)
@@ -176,11 +155,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 		else if (f != stdin)
 			fclose(f);
 
-		ret = super_node_parse(sn, cfg_root);
-
-		config_destroy(&sn->cfg);
-
-		return ret;
+		return super_node_parse_json(sn, sn->cfg);
 	}
 	else { INDENT
 		warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
@@ -199,105 +174,120 @@ int super_node_parse_cli(struct super_node *sn, int argc, char *argv[])
 	return super_node_parse_uri(sn, uri);
 }
 
-int super_node_parse(struct super_node *sn, config_setting_t *cfg)
+int super_node_parse_json(struct super_node *sn, json_t *cfg)
 {
 	int ret;
+	const char *name = NULL;
 
 	assert(sn->state != STATE_STARTED);
 	assert(sn->state != STATE_DESTROYED);
 
-	config_setting_t *cfg_nodes, *cfg_paths, *cfg_plugins, *cfg_logging;
+	json_t *cfg_nodes = NULL;
+	json_t *cfg_paths = NULL;
+	json_t *cfg_plugins = NULL;
+	json_t *cfg_logging = NULL;
+	json_t *cfg_web = NULL;
 
-	super_node_parse_global(sn, cfg);
+	json_error_t err;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: F, s?: s }",
+		"http", &cfg_web,
+		"logging", &cfg_logging,
+		"plugins", &cfg_plugins,
+		"nodes", &cfg_nodes,
+		"paths", &cfg_paths,
+		"hugepages", &sn->hugepages,
+		"affinity", &sn->affinity,
+		"priority", &sn->priority,
+		"stats", &sn->stats,
+		"name", &name
+	);
+	if (ret)
+		jerror(&err, "Failed to parse global configuration");
+
+	if (name)
+		strncpy(sn->name, name, 128);
 
 #ifdef WITH_WEB
-	config_setting_t *cfg_web;
-
-	cfg_web = config_setting_get_member(cfg, "http");
 	if (cfg_web)
 		web_parse(&sn->web, cfg_web);
 #endif /* WITH_WEB */
 
-	/* Parse logging settings */
-	cfg_logging = config_setting_get_member(cfg, "logging");
 	if (cfg_logging)
 		log_parse(&sn->log, cfg_logging);
 
 	/* Parse plugins */
-	cfg_plugins = config_setting_get_member(cfg, "plugins");
 	if (cfg_plugins) {
-		if (!config_setting_is_array(cfg_plugins))
-			cerror(cfg_plugins, "Setting 'plugins' must be a list of strings");
+		if (!json_is_array(cfg_plugins))
+			error("Setting 'plugins' must be a list of strings");
 
-		for (int i = 0; i < config_setting_length(cfg_plugins); i++) {
-			struct config_setting_t *cfg_plugin = config_setting_get_elem(cfg_plugins, i);
-
+		size_t index;
+		json_t *cfg_plugin;
+		json_array_foreach(cfg_plugins, index, cfg_plugin) {
 			struct plugin *p = alloc(sizeof(struct plugin));
 
 			ret = plugin_init(p);
 			if (ret)
-				cerror(cfg_plugin, "Failed to initialize plugin");
+				error("Failed to initialize plugin");
 
 			ret = plugin_parse(p, cfg_plugin);
 			if (ret)
-				cerror(cfg_plugin, "Failed to parse plugin");
+				error("Failed to parse plugin");
 
 			list_push(&sn->plugins, p);
 		}
 	}
 
 	/* Parse nodes */
-	cfg_nodes = config_setting_get_member(cfg, "nodes");
 	if (cfg_nodes) {
-		if (!config_setting_is_group(cfg_nodes))
-			warn("Setting 'nodes' must be a group with node name => group mappings.");
+		if (!json_is_object(cfg_nodes))
+			error("Setting 'nodes' must be a group with node name => group mappings.");
 
-		for (int i = 0; i < config_setting_length(cfg_nodes); i++) {
-			config_setting_t *cfg_node = config_setting_get_elem(cfg_nodes, i);
-
+		const char *name;
+		json_t *cfg_node;
+		json_object_foreach(cfg_nodes, name, cfg_node) {
 			struct plugin *p;
 			const char *type;
 
-			/* Required settings */
-			if (!config_setting_lookup_string(cfg_node, "type", &type))
-				cerror(cfg_node, "Missing node type");
+			ret = json_unpack_ex(cfg_node, &err, 0, "{ s: s }", "type", &type);
+			if (ret)
+				jerror(&err, "Failed to parse node");
 
 			p = plugin_lookup(PLUGIN_TYPE_NODE, type);
 			if (!p)
-				cerror(cfg_node, "Invalid node type: %s", type);
+				error("Invalid node type: %s", type);
 
 			struct node *n = alloc(sizeof(struct node));
 
 			ret = node_init(n, &p->node);
 			if (ret)
-				cerror(cfg_node, "Failed to initialize node");
+				error("Failed to initialize node");
 
-			ret = node_parse(n, cfg_node);
+			ret = node_parse(n, cfg_node, name);
 			if (ret)
-				cerror(cfg_node, "Failed to parse node");
+				error("Failed to parse node");
 
 			list_push(&sn->nodes, n);
 		}
 	}
 
 	/* Parse paths */
-	cfg_paths = config_setting_get_member(cfg, "paths");
 	if (cfg_paths) {
-		if (!config_setting_is_list(cfg_paths))
+		if (!json_is_array(cfg_paths))
 			warn("Setting 'paths' must be a list.");
 
-		for (int i = 0; i < config_setting_length(cfg_paths); i++) {
-			config_setting_t *cfg_path = config_setting_get_elem(cfg_paths, i);
-
+		size_t index;
+		json_t *cfg_path;
+		json_array_foreach(cfg_paths, index, cfg_path) {
 			struct path *p = alloc(sizeof(struct path));
 
 			ret = path_init(p, sn);
 			if (ret)
-				cerror(cfg_path, "Failed to init path");
+				error("Failed to initialize path");
 
 			ret = path_parse(p, cfg_path, &sn->nodes);
 			if (ret)
-				cerror(cfg_path, "Failed to parse path");
+				error("Failed to parse path");
 
 			list_push(&sn->paths, p);
 
@@ -306,11 +296,11 @@ int super_node_parse(struct super_node *sn, config_setting_t *cfg)
 
 				ret = path_init(r, sn);
 				if (ret)
-					cerror(cfg_path, "Failed to init path");
+					error("Failed to init path");
 
 				ret = path_reverse(p, r);
 				if (ret)
-					cerror(cfg_path, "Failed to reverse path %s", path_name(p));
+					error("Failed to reverse path %s", path_name(p));
 
 				list_push(&sn->paths, r);
 			}
@@ -455,11 +445,16 @@ int super_node_destroy(struct super_node *sn)
 
 #ifdef WITH_WEB
 	web_destroy(&sn->web);
-#endif
+#endif /* WITH_WEB */
 #ifdef WITH_API
 	api_destroy(&sn->api);
-#endif
+#endif /* WITH_API */
+
+	json_decref(sn->cfg);
 	log_destroy(&sn->log);
+
+	if (sn->name)
+		free(sn->name);
 
 	sn->state = STATE_DESTROYED;
 

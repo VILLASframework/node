@@ -33,11 +33,11 @@
 #include <villas/super_node.h>
 #include <villas/utils.h>
 #include <villas/node.h>
-#include <villas/msg.h>
 #include <villas/timing.h>
 #include <villas/pool.h>
 #include <villas/io.h>
 #include <villas/kernel/rt.h>
+#include <villas/config_helper.h>
 
 #include <villas/nodes/websocket.h>
 

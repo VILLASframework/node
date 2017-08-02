@@ -31,6 +31,8 @@
 
 struct print {
 	struct io output;
+	struct io_format *format;
+
 	const char *uri;
 };
 
@@ -38,7 +40,14 @@ static int print_init(struct hook *h)
 {
 	struct print *p = h->_vd;
 
+	struct plugin *pl;
+
+	pl = plugin_lookup(PLUGIN_TYPE_FORMAT, "villas");
+	if (!pl)
+		return -1;
+
 	p->uri = NULL;
+	p->format = &pl->io;
 
 	return 0;
 }
@@ -46,22 +55,56 @@ static int print_init(struct hook *h)
 static int print_start(struct hook *h)
 {
 	struct print *p = h->_vd;
+	int ret;
 
-	return io_open(&p->output, p->uri, "w+");
+	ret = io_init(&p->output, p->format, IO_FORMAT_ALL);
+	if (ret)
+		return ret;
+
+	ret = io_open(&p->output, p->uri, "w+");
+	if (ret)
+		return ret;
+
+	return 0;
 }
 
 static int print_stop(struct hook *h)
 {
 	struct print *p = h->_vd;
+	int ret;
 
-	return io_close(&p->output);
+	ret = io_close(&p->output);
+	if (ret)
+		return ret;
+
+	ret = io_destroy(&p->output);
+	if (ret)
+		return ret;
+
+	return 0;
 }
 
-static int print_parse(struct hook *h, config_setting_t *cfg)
+static int print_parse(struct hook *h, json_t *cfg)
 {
 	struct print *p = h->_vd;
+	struct plugin *pl;
+	const char *format = NULL;
+	int ret;
+	json_error_t err;
 
-	config_setting_lookup_string(cfg, "output", &p->uri);
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s }",
+		"output", &p->uri
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
+
+	if (format) {
+		pl = plugin_lookup(PLUGIN_TYPE_FORMAT, format);
+		if (!pl)
+			jerror(&err, "Invalid format '%s'", format);
+
+		p->format = &pl->io;
+	}
 
 	return 0;
 }

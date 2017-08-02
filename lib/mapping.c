@@ -162,11 +162,11 @@ invalid_format:
 	return -1;
 }
 
-int mapping_entry_parse(struct mapping_entry *e, config_setting_t *cfg)
+int mapping_entry_parse(struct mapping_entry *e, json_t *cfg)
 {
 	const char *str;
 
-	str = config_setting_get_string(cfg);
+	str = json_string_value(cfg);
 	if (!str)
 		return -1;
 
@@ -195,27 +195,23 @@ int mapping_destroy(struct mapping *m)
 	return 0;
 }
 
-int mapping_parse(struct mapping *m, config_setting_t *cfg)
+int mapping_parse(struct mapping *m, json_t *cfg)
 {
 	int ret;
 
 	assert(m->state == STATE_INITIALIZED);
 
-	if (!config_setting_is_array(cfg))
+	if (!json_is_array(cfg))
 		return -1;
 
 	m->real_length = 0;
 
-	for (int i = 0; i < config_setting_length(cfg); i++) {
-		config_setting_t *cfg_mapping;
-
-		cfg_mapping = config_setting_get_elem(cfg, i);
-		if (!cfg_mapping)
-			return -1;
-
+	size_t index;
+	json_t *cfg_entry;
+	json_array_foreach(cfg, index, cfg_entry) {
 		struct mapping_entry *e = alloc(sizeof(struct mapping_entry));
 
-		ret = mapping_entry_parse(e, cfg_mapping);
+		ret = mapping_entry_parse(e, cfg_entry);
 		if (ret)
 			return ret;
 

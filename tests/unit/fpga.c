@@ -40,7 +40,6 @@ static struct vfio_container vc;
 static void init()
 {
 	int ret;
-	config_setting_t *cfg_root;
 
 	ret = super_node_init(&sn);
 	cr_assert_eq(ret, 0, "Failed to initialize Supernode");
@@ -51,9 +50,6 @@ static void init()
 	ret = super_node_check(&sn);
 	cr_assert_eq(ret, 0, "Failed to check configuration");
 
-	cfg_root = config_root_setting(&sn.cfg);
-	cr_assert_neq(cfg_root, NULL);
-
 	ret = pci_init(&pci);
 	cr_assert_eq(ret, 0, "Failed to initialize PCI sub-system");
 
@@ -62,7 +58,7 @@ static void init()
 
 	/* Parse FPGA configuration */
 	list_init(&cards);
-	ret = fpga_card_parse_list(&cards, cfg_root);
+	ret = fpga_card_parse_list(&cards, sn.cfg);
 	cr_assert_eq(ret, 0, "Failed to parse FPGA config");
 
 	card = list_lookup(&cards, "vc707");
@@ -120,7 +116,7 @@ Test(fpga, xsg, .description = "XSG: multiply_add")
 	double factor, err = 0;
 
 	struct fpga_ip *ip, *dma;
-	struct model_param *p;
+	struct model_parameter *p;
 	struct dma_mem mem;
 
 	ip = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { NULL, "sysgen", "xsg_multiply", NULL });
@@ -135,7 +131,7 @@ Test(fpga, xsg, .description = "XSG: multiply_add")
 	if (!p)
 		error("Missing parameter 'factor' for model '%s'", ip->name);
 
-	ret = model_param_read(p, &factor);
+	ret = model_parameter_read(p, &factor);
 	cr_assert_eq(ret, 0, "Failed to read parameter 'factor' from model '%s'", ip->name);
 
 	info("Model param: factor = %f", factor);

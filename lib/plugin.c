@@ -23,6 +23,7 @@
 #include <dlfcn.h>
 
 #include "plugin.h"
+#include "config_helper.h"
 
 /** Global list of all known plugins */
 struct list plugins = { .state = STATE_DESTROYED };
@@ -38,13 +39,15 @@ int plugin_init(struct plugin *p)
 	return 0;
 }
 
-int plugin_parse(struct plugin *p, config_setting_t *cfg)
+int plugin_parse(struct plugin *p, json_t *cfg)
 {
 	const char *path;
 
-	path = config_setting_get_string(cfg);
+	path = json_string_value(cfg);
 	if (!path)
-		cerror(cfg, "Setting 'plugin' must be a string.");
+		return -1;
+
+	p->path = strdup(path);
 
 	return 0;
 }

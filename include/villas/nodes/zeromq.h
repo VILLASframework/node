@@ -74,7 +74,7 @@ struct zeromq {
 char * zeromq_print(struct node *n);
 
 /** @see node_type::parse */
-int zeromq_parse(struct node *n, config_setting_t *cfg);
+int zeromq_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::init */
 int zeromq_init();

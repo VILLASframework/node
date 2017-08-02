@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <libconfig.h>
+#include <jansson.h>
 
 #include "stats.h"
 #include "common.h"
@@ -87,7 +87,7 @@ struct mapping {
 
 int mapping_init(struct mapping *m);
 
-int mapping_parse(struct mapping *m, config_setting_t *cfg);
+int mapping_parse(struct mapping *m, json_t *cfg);
 
 int mapping_check(struct mapping *m);
 
@@ -95,6 +95,6 @@ int mapping_destroy(struct mapping *m);
 
 int mapping_remap(struct mapping *m, struct sample *orig, struct sample *remapped, struct stats *s);
 
-int mapping_entry_parse(struct mapping_entry *e, config_setting_t *cfg);
+int mapping_entry_parse(struct mapping_entry *e, json_t *cfg);
 
 int mapping_entry_parse_str(struct mapping_entry *e, const char *str);

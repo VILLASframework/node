@@ -22,6 +22,8 @@
 
 #include <criterion/criterion.h>
 
+#ifdef WITH_LIBCONFIG
+
 #include <jansson.h>
 #include <libconfig.h>
 
@@ -114,3 +116,5 @@ Test(utils, json_to_config)
 
 	json_decref(json);
 }
+
+#endif

@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <libconfig.h>
+#include <jansson.h>
 
 /* Forward declarations */
 struct hook;
@@ -49,7 +49,7 @@ struct hook_type {
 
 	size_t size;		/**< Size of allocation for struct hook::_vd */
 
-	int (*parse)(struct hook *h, config_setting_t *cfg);
+	int (*parse)(struct hook *h, json_t *cfg);
 	int (*parse_cli)(struct hook *h, int argc, char *argv[]);
 
 	int (*init)(struct hook *h);	/**< Called before path is started to parseHOOK_DESTROYs. */

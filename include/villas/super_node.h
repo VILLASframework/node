@@ -1,8 +1,4 @@
-/** Configuration file parser.
- *
- * The server program is configured by a single file.
- * This config file is parsed with a third-party library:
- *  libconfig http://www.hyperrealm.com/libconfig/
+/** The super node object holding the state of the application.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -26,8 +22,6 @@
  *********************************************************************************/
 
 #pragma once
-
-#include <libconfig.h>
 
 #include "list.h"
 #include "api.h"
@@ -57,8 +51,7 @@ struct super_node {
 
 	enum state state;
 
-	config_t cfg;		/**< Pointer to configuration file */
-	json_t *json;		/**< JSON representation of the same config. */
+	json_t *cfg;		/**< JSON representation of the configuration. */
 };
 
 /* Compatibility with libconfig < 1.5 */
@@ -82,7 +75,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int super_node_parse(struct super_node *sn, config_setting_t *cfg);
+int super_node_parse_json(struct super_node *sn, json_t *cfg);
 
 /** Check validity of super node configuration. */
 int super_node_check(struct super_node *sn);

@@ -26,8 +26,6 @@
 #include <string.h>
 #include <signal.h>
 
-#include <libconfig.h>
-
 #include "super_node.h"
 #include "webmsg.h"
 #include "webmsg_format.h"
@@ -510,36 +508,41 @@ int websocket_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return cnt;
 }
 
-int websocket_parse(struct node *n, config_setting_t *cfg)
+int websocket_parse(struct node *n, json_t *cfg)
 {
 	struct websocket *w = n->_vd;
-	config_setting_t *cfg_dests;
 	int ret;
+
+	size_t index;
+	json_t *cfg_dests = NULL;
+	json_t *cfg_dest;
+	json_error_t err;
 
 	list_init(&w->connections);
 	list_init(&w->destinations);
 
-	cfg_dests = config_setting_get_member(cfg, "destinations");
-	if (cfg_dests) {
-		if (!config_setting_is_array(cfg_dests))
-			cerror(cfg_dests, "The 'destinations' setting must be an array of URLs");
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o }", "destinations", &cfg_dests);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-		for (int i = 0; i < config_setting_length(cfg_dests); i++) {
+	if (cfg_dests) {
+		if (!json_is_array(cfg_dests))
+			error("The 'destinations' setting of node %s must be an array of URLs", node_name(n));
+
+		json_array_foreach(cfg_dests, index, cfg_dest) {
 			const char *uri, *prot, *ads, *path;
 
-			uri = config_setting_get_string_elem(cfg_dests, i);
+			uri = json_string_value(cfg_dest);
 			if (!uri)
-				cerror(cfg_dests, "The 'destinations' setting must be an array of URLs");
+				error("The 'destinations' setting of node %s must be an array of URLs", node_name(n));
 
 			struct websocket_destination *d = alloc(sizeof(struct websocket_destination));
 
 			d->uri = strdup(uri);
-			if (!d->uri)
-				serror("Failed to allocate memory");
 
 			ret = lws_parse_uri(d->uri, &prot, &ads, &d->info.port, &path);
 			if (ret)
-				cerror(cfg_dests, "Failed to parse websocket URI: '%s'", uri);
+				error("Failed to parse WebSocket URI: '%s'", uri);
 
 			d->info.ssl_connection = !strcmp(prot, "https");
 			d->info.address = strdup(ads);

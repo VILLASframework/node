@@ -561,18 +561,40 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return -1;
 }
 
-int socket_parse(struct node *n, config_setting_t *cfg)
+int socket_parse(struct node *n, json_t *cfg)
 {
-	config_setting_t *cfg_multicast;
-	const char *local, *remote, *layer, *hdr, *endian;
-	int ret;
-
 	struct socket *s = n->_vd;
 
+	const char *local, *remote;
+	const char *endian = NULL;
+	const char *layer = NULL;
+	const char *header = NULL;
+
+	int ret;
+
+	json_t *cfg_multicast = NULL;
+	json_error_t err;
+
+	/* Default values */
+	s->layer = SOCKET_LAYER_UDP;
+	s->header = SOCKET_HEADER_DEFAULT;
+	s->endian = SOCKET_ENDIAN_BIG;
+	s->verify_source = 0;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s: s, s: s, s?: b, s?: o }",
+		"layer", &layer,
+		"header", &header,
+		"endian", &endian,
+		"remote", &remote,
+		"local", &local,
+		"verify_source", &s->verify_source,
+		"multicast", &cfg_multicast
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+
 	/* IP layer */
-	if (!config_setting_lookup_string(cfg, "layer", &layer))
-		s->layer = SOCKET_LAYER_UDP;
-	else {
+	if (layer) {
 		if (!strcmp(layer, "ip"))
 			s->layer = SOCKET_LAYER_IP;
 #ifdef __linux__
@@ -582,103 +604,89 @@ int socket_parse(struct node *n, config_setting_t *cfg)
 		else if (!strcmp(layer, "udp"))
 			s->layer = SOCKET_LAYER_UDP;
 		else
-			cerror(cfg, "Invalid layer '%s' for node %s", layer, node_name(n));
+			error("Invalid layer '%s' for node %s", layer, node_name(n));
 	}
 
 	/* Application header */
-	if (!config_setting_lookup_string(cfg, "header", &hdr))
-		s->header = SOCKET_HEADER_DEFAULT;
-	else {
-		if      (!strcmp(hdr, "gtnet-skt") || (!strcmp(hdr, "none")))
+	if (header) {
+		if      (!strcmp(header, "gtnet-skt") || (!strcmp(header, "none")))
 			s->header = SOCKET_HEADER_NONE;
-		else if (!strcmp(hdr, "gtnet-skt:fake") || (!strcmp(hdr, "fake")))
+		else if (!strcmp(header, "gtnet-skt:fake") || (!strcmp(header, "fake")))
 			s->header = SOCKET_HEADER_FAKE;
-		else if (!strcmp(hdr, "villas") || !strcmp(hdr, "default"))
+		else if (!strcmp(header, "villas") || !strcmp(header, "default"))
 			s->header = SOCKET_HEADER_DEFAULT;
 		else
-			cerror(cfg, "Invalid application header type '%s' for node %s", hdr, node_name(n));
+			error("Invalid application header type '%s' for node %s", header, node_name(n));
 	}
 
-	if (!config_setting_lookup_string(cfg, "endian", &endian))
-		s->endian = SOCKET_ENDIAN_BIG;
-	else {
+	if (endian) {
 		if      (!strcmp(endian, "big") || !strcmp(endian, "network"))
 			s->endian = SOCKET_ENDIAN_BIG;
 		else if (!strcmp(endian, "little"))
 			s->endian = SOCKET_ENDIAN_LITTLE;
 		else
-			cerror(cfg, "Invalid endianness type '%s' for node %s", endian, node_name(n));
+			error("Invalid endianness type '%s' for node %s", endian, node_name(n));
 	}
-
-	if (!config_setting_lookup_string(cfg, "remote", &remote))
-		cerror(cfg, "Missing remote address for node %s", node_name(n));
-
-	if (!config_setting_lookup_string(cfg, "local", &local))
-		cerror(cfg, "Missing local address for node %s", node_name(n));
-
-	if (!config_setting_lookup_bool(cfg, "verify_source", &s->verify_source))
-		s->verify_source = 0;
 
 	ret = socket_parse_addr(local, (struct sockaddr *) &s->local, s->layer, AI_PASSIVE);
 	if (ret) {
-		cerror(cfg, "Failed to resolve local address '%s' of node %s: %s",
+		error("Failed to resolve local address '%s' of node %s: %s",
 			local, node_name(n), gai_strerror(ret));
 	}
 
 	ret = socket_parse_addr(remote, (struct sockaddr *) &s->remote, s->layer, 0);
 	if (ret) {
-		cerror(cfg, "Failed to resolve remote address '%s' of node %s: %s",
+		error("Failed to resolve remote address '%s' of node %s: %s",
 			remote, node_name(n), gai_strerror(ret));
 	}
 
-	cfg_multicast = config_setting_get_member(cfg, "multicast");
 	if (cfg_multicast) {
-		const char *group, *interface;
+		const char *group, *interface = NULL;
 
-		if (!config_setting_lookup_bool(cfg_multicast, "enabled", &s->multicast.enabled))
-			s->multicast.enabled = true;
+		/* Default values */
+		s->multicast.enabled = true;
+		s->multicast.mreq.imr_interface.s_addr = INADDR_ANY;
+		s->multicast.loop = 0;
+		s->multicast.ttl = 255;
 
-		if (!config_setting_lookup_string(cfg_multicast, "group", &group))
-			cerror(cfg_multicast, "The multicast group requires a 'group' setting.");
-		else {
-			ret = inet_aton(group, &s->multicast.mreq.imr_multiaddr);
-			if (!ret) {
-				cerror(cfg_multicast, "Failed to resolve multicast group address '%s' of node %s",
-					group, node_name(n));
-			}
+		ret = json_unpack_ex(cfg_multicast, &err, 0, "{ s?: b, s: s, s?: s, s?: b, s?: i }",
+			"enabled", &s->multicast.enabled,
+			"group", &group,
+			"interface", &interface,
+			"loop", &s->multicast.loop,
+			"ttl", &s->multicast.ttl
+		);
+		if (ret)
+			jerror(&err, "Failed to parse setting 'multicast' of node %s", node_name(n));
+
+		ret = inet_aton(group, &s->multicast.mreq.imr_multiaddr);
+		if (!ret) {
+			error("Failed to resolve multicast group address '%s' of node %s",
+				group, node_name(n));
 		}
 
-		if (!config_setting_lookup_string(cfg_multicast, "interface", &interface))
-			s->multicast.mreq.imr_interface.s_addr = INADDR_ANY;
-		else {
+		if (interface) {
 			ret = inet_aton(group, &s->multicast.mreq.imr_interface);
 			if (!ret) {
-				cerror(cfg_multicast, "Failed to resolve multicast interface address '%s' of node %s",
+				error("Failed to resolve multicast interface address '%s' of node %s",
 					interface, node_name(n));
 			}
 		}
-
-		int loop;
-		if (!config_setting_lookup_bool(cfg_multicast, "loop", &loop))
-			s->multicast.loop = 0;
-		else
-			s->multicast.loop = loop;
-
-		int ttl;
-		if (!config_setting_lookup_int(cfg_multicast, "ttl", &ttl))
-			s->multicast.ttl = 255;
-		else
-			s->multicast.ttl = ttl;
 	}
 
 #ifdef WITH_NETEM
-	config_setting_t *cfg_netem;
+	json_t *cfg_netem;
 
-	cfg_netem = config_setting_get_member(cfg, "netem");
+	cfg_netem = json_object_get(cfg, "netem");
 	if (cfg_netem) {
 		int enabled = 1;
-		if (!config_setting_lookup_bool(cfg_netem, "enabled", &enabled) || enabled)
-			tc_parse(cfg_netem, &s->tc_qdisc);
+
+		ret = json_unpack_ex(cfg_netem, &err, 0, "{ s?: b }",  "enabled", &enabled);
+		if (ret)
+			jerror(&err, "Failed to parse setting 'netem' of node %s", node_name(n));
+
+		if (enabled)
+			tc_parse(&s->tc_qdisc, cfg_netem);
 		else
 			s->tc_qdisc = NULL;
 	}

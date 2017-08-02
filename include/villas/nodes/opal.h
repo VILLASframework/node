@@ -67,7 +67,7 @@ int opal_init(struct super_node *sn);
 int opal_deinit();
 
 /** @see node_type::parse */
-int opal_parse(struct node *n, config_setting_t *cfg);
+int opal_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::print */
 char * opal_print(struct node *n);

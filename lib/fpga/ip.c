@@ -20,8 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <libconfig.h>
-
 #include "log_config.h"
 #include "log.h"
 #include "plugin.h"
@@ -46,34 +44,33 @@ int fpga_ip_init(struct fpga_ip *c, struct fpga_ip_type *vt)
 	return ret;
 }
 
-int fpga_ip_parse(struct fpga_ip *c, config_setting_t *cfg)
+int fpga_ip_parse(struct fpga_ip *c, json_t *cfg, const char *name)
 {
-	int ret;
-	long long baseaddr;
+	int ret, baseaddr = -1;
 
 	assert(c->state != STATE_STARTED && c->state != STATE_DESTROYED);
 
-	c->cfg = cfg;
+	c->name = strdup(name);
+	c->baseaddr = -1;
+	c->irq = -1;
+	c->port = -1;
 
-	c->name = config_setting_name(cfg);
-	if (!c->name)
-		cerror(cfg, "IP is missing a name");
+	json_error_t err;
 
-	/* Common settings */
-	if (config_setting_lookup_int64(cfg, "baseaddr", &baseaddr))
-		c->baseaddr = baseaddr;
-	else
-		c->baseaddr = -1;
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: i, s?: i }",
+		"baseaddr", &baseaddr,
+		"irq", &c->irq,
+		"port", &c->port
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration for FPGA IP '%s'", name);
 
-	if (!config_setting_lookup_int(cfg, "irq", &c->irq))
-		c->irq = -1;
-	if (!config_setting_lookup_int(cfg, "port", &c->port))
-		c->port = -1;
+	c->baseaddr = baseaddr;
 
 	/* Type sepecific settings */
-	ret = c->_vt && c->_vt->parse ? c->_vt->parse(c) : 0;
+	ret = c->_vt && c->_vt->parse ? c->_vt->parse(c, cfg) : 0;
 	if (ret)
-		error("Failed to parse settings for IP core '%s'", c->name);
+		error("Failed to parse settings for IP core '%s'", name);
 
 	c->state = STATE_PARSED;
 

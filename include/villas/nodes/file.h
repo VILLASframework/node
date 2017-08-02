@@ -46,7 +46,7 @@ struct file {
 		AFILE *handle;		/**< libc: stdio file handle. */
 
 		const char *mode;	/**< libc: fopen() mode. */
-		const char *fmt;	/**< Format string for file name. */
+		const char *format;	/**< Format string for file name. */
 
 		char *uri;		/**< Real file name. */
 	} read, write;
@@ -78,7 +78,7 @@ struct file {
 char * file_print(struct node *n);
 
 /** @see node_type::parse */
-int file_parse(struct node *n, config_setting_t *cfg);
+int file_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::open */
 int file_start(struct node *n);

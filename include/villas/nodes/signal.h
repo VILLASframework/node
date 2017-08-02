@@ -29,8 +29,6 @@
 
 #pragma once
 
-#include <libconfig.h>
-
 #include "timing.h"
 
 /* Forward declarations */
@@ -71,7 +69,7 @@ struct signal {
 char * signal_print(struct node *n);
 
 /** @see node_type::parse */
-int signal_parse(struct node *n, config_setting_t *cfg);
+int signal_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::open */
 int signal_open(struct node *n);

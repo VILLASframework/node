@@ -47,7 +47,7 @@ static int api_nodes(struct api_action *r, json_t *args, json_t **resp, struct a
 
 		/* Add all additional fields of node here.
 		 * This can be used for metadata */
-		json_object_update(json_node, config_to_json(n->cfg));
+		json_object_update(json_node, n->cfg);
 
 		json_array_append_new(json_nodes, json_node);
 	}

@@ -93,12 +93,8 @@ char * hist_dump(struct hist *h);
 /** Prints Matlab struct containing all infos to file. */
 int hist_dump_matlab(struct hist *h, FILE *f);
 
-#ifdef WITH_JSON
-
 /** Write the histogram in JSON format to fiel \p f. */
 int hist_dump_json(struct hist *h, FILE *f);
 
 /** Build a libjansson / JSON object of the histogram. */
 json_t * hist_json(struct hist *h);
-
-#endif /* WITH_JSON */

@@ -94,7 +94,7 @@ int plugin_init(struct plugin *p);
 
 int plugin_destroy(struct plugin *p);
 
-int plugin_parse(struct plugin *p, config_setting_t *cfg);
+int plugin_parse(struct plugin *p, json_t *cfg);
 
 int plugin_load(struct plugin *p);
 

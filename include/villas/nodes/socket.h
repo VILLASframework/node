@@ -112,7 +112,7 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt);
 int socket_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_type::parse */
-int socket_parse(struct node *n, config_setting_t *cfg);
+int socket_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::print */
 char * socket_print(struct node *n);

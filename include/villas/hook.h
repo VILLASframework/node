@@ -52,21 +52,13 @@ struct hook {
 	void *_vd;		/**< Private data for this hook. This pointer can be used to pass data between consecutive calls of the callback. */
 
 	int priority;		/**< A priority to change the order of execution within one type of hook. */
+
+	json_t *cfg;		/**< A JSON object containing the configuration of the hook. */
 };
 
-/** Save references to global nodes, paths and settings */
 int hook_init(struct hook *h, struct hook_type *vt, struct path *p);
 
-/** Parse a single hook.
- *
- * A hook definition is composed of the hook name and optional parameters
- * seperated by a colon.
- *
- * Examples:
- *   "print:stdout"
- */
-int hook_parse(struct hook *h, config_setting_t *cfg);
-
+int hook_parse(struct hook *h, json_t *cfg);
 int hook_parse_cli(struct hook *h, int argc, char *argv[]);
 
 int hook_destroy(struct hook *h);
@@ -100,4 +92,4 @@ int hook_cmp_priority(const void *a, const void *b);
  *    hooks = [ "print" ]
  * }
  */
-int hook_parse_list(struct list *list, config_setting_t *cfg, struct path *p);
+int hook_parse_list(struct list *list, json_t *cfg, struct path *p);

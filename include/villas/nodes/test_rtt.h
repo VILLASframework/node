@@ -55,7 +55,7 @@ struct test_rtt {
 char * test_rtt_print(struct node *n);
 
 /** @see node_type::parse */
-int test_rtt_parse(struct node *n, config_setting_t *cfg);
+int test_rtt_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::open */
 int test_rtt_start(struct node *n);

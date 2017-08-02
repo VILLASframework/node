@@ -47,13 +47,22 @@ static int shift_ts_init(struct hook *h)
 	return 0;
 }
 
-static int shift_ts_parse(struct hook *h, config_setting_t *cfg)
+static int shift_ts_parse(struct hook *h, json_t *cfg)
 {
 	struct shift_ts *p = h->_vd;
+	double offset;
+	const char *mode = NULL;
+	int ret;
+	json_error_t err;
 
-	const char *mode;
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: f }",
+		"mode", &mode,
+		"offset", &offset
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
 
-	if (config_setting_lookup_string(cfg, "mode", &mode)) {
+	if (mode) {
 		if      (!strcmp(mode, "origin"))
 			p->mode = SHIFT_ORIGIN;
 		else if (!strcmp(mode, "received"))
@@ -61,12 +70,8 @@ static int shift_ts_parse(struct hook *h, config_setting_t *cfg)
 		else if (!strcmp(mode, "sent"))
 			p->mode = SHIFT_SENT;
 		else
-			cerror(cfg, "Invalid mode parameter '%s' for hook '%s'", mode, plugin_name(h->_vt));
+			jerror(&err, "Invalid mode parameter '%s' for hook '%s'", mode, plugin_name(h->_vt));
 	}
-
-	double offset;
-	if (!config_setting_lookup_float(cfg, "offset", &offset))
-		cerror(cfg, "Missing setting 'offset' for hook '%s'", plugin_name(h->_vt));
 
 	p->offset = time_from_double(offset);
 

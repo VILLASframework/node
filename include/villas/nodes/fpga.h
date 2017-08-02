@@ -44,7 +44,7 @@ int fpga_init(struct super_node *sn);
 int fpga_deinit();
 
 /** @see node_type::parse */
-int fpga_parse(struct node *n, config_setting_t *cfg);
+int fpga_parse(struct node *n, json_t *cfg);
 
 struct fpga_card * fpga_lookup_card(const char *name);
 

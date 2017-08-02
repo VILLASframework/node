@@ -20,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <libconfig.h>
 #include <libwebsockets.h>
 #include <string.h>
 
@@ -28,6 +27,7 @@
 #include "log.h"
 #include "web.h"
 #include "api/session.h"
+#include "config_helper.h"
 
 #include "nodes/websocket.h"
 
@@ -168,29 +168,36 @@ int web_init(struct web *w, struct api *a)
 	return 0;
 }
 
-int web_parse(struct web *w, config_setting_t *cfg)
+int web_parse(struct web *w, json_t *cfg)
 {
-	int enabled = true;
-	const char *ssl_cert, *ssl_private_key, *htdocs;
+	int ret, enabled = 1;
+	const char *ssl_cert = NULL;
+	const char *ssl_private_key = NULL;
+	const char *htdocs = NULL;
+	json_error_t err;
 
-	if (!config_setting_is_group(cfg))
-		cerror(cfg, "Setting 'http' must be a group.");
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: i, s?: b }",
+		"ssl_cert", &ssl_cert,
+		"ssl_private_key", &ssl_private_key,
+		"htdocs", &htdocs,
+		"port", &w->port,
+		"enabled", &enabled
+	);
+	if (ret)
+		jerror(&err, "Failed to http section of configuration file");
 
-	if (config_setting_lookup_string(cfg, "ssl_cert", &ssl_cert))
+	if (ssl_cert)
 		w->ssl_cert = strdup(ssl_cert);
 
-	if (config_setting_lookup_string(cfg, "ssl_private_key", &ssl_private_key))
+	if (ssl_private_key)
 		w->ssl_private_key = strdup(ssl_private_key);
 
-	if (config_setting_lookup_string(cfg, "htdocs", &htdocs)) {
+	if (htdocs) {
 		if (w->htdocs)
 			free(w->htdocs);
 
 		w->htdocs = strdup(htdocs);
 	}
-
-	config_setting_lookup_int(cfg, "port", &w->port);
-	config_setting_lookup_bool(cfg, "enabled", &enabled);
 
 	if (!enabled)
 		w->port = CONTEXT_PORT_NO_LISTEN;
@@ -247,7 +254,7 @@ int web_start(struct web *w)
 
 int web_stop(struct web *w)
 {
-	if (w->state == STATE_STARTED)
+	if (w->state != STATE_STARTED)
 		return 0;
 
 	info("Stopping Web sub-system");

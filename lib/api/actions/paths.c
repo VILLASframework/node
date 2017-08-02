@@ -47,7 +47,7 @@ static int api_paths(struct api_action *r, json_t *args, json_t **resp, struct a
 
 		/* Add all additional fields of node here.
 		 * This can be used for metadata */
-		json_object_update(json_path, config_to_json(p->cfg));
+		json_object_update(json_path, p->cfg);
 
 		json_array_append_new(json_paths, json_path);
 	}
