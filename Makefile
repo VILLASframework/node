@@ -45,6 +45,9 @@ V ?= 2
 # Platform
 PLATFORM ?= $(shell uname)
 
+# Enable supprot for libconfig configuration files
+WITH_CONFIG ?= 1
+
 # Common flags
 LDLIBS   =
 CFLAGS  += -I. -Iinclude -Iinclude/villas
@@ -116,7 +119,11 @@ else
 endif
 
 # pkg-config dependencies
-PKGS = libconfig openssl
+PKGS = openssl jansson
+
+ifeq ($(WITH_CONFIG),1)
+	PKGS += libconfig
+endif
 
 ######## Targets ########
 
