@@ -86,7 +86,7 @@ int jitter_calc_deinit(struct hook *h)
  * is high (i.e. several mins depending on GPS_NTP_DELAY_WIN_SIZE),
  * the variance value will overrun the 64bit value.
  */
-int jitter_calc_read(struct hook *h, struct sample *smps[], size_t *cnt)
+int jitter_calc_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct jitter_calc *j = h->_vd;
 

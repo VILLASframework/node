@@ -48,7 +48,7 @@ static int shift_seq_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int shift_seq_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int shift_seq_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct shift *p = h->_vd;
 

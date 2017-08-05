@@ -53,7 +53,7 @@ static int drop_stop(struct hook *h)
 	return 0;
 }
 
-static int drop_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int drop_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	int i, ok, dist;
 

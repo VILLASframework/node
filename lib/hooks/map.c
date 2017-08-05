@@ -71,7 +71,7 @@ static int map_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int map_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int map_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	int ret;
 	struct map *p = h->_vd;

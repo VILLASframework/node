@@ -29,7 +29,7 @@
 #include "timing.h"
 #include "sample.h"
 
-static int ts_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int ts_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	for (int i = 0; i < *cnt; i++)
 		smps[i]->ts.origin = smps[i]->ts.received;

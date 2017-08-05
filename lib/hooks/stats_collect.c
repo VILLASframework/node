@@ -150,7 +150,7 @@ static int stats_collect_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int stats_collect_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int stats_collect_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct stats_collect *p = h->_vd;
 

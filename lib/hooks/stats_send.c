@@ -125,7 +125,7 @@ static int stats_send_periodic(struct hook *h)
 	return 0;
 }
 
-static int stats_send_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int stats_send_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct stats_send *p = h->_vd;
 

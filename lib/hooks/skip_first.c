@@ -89,7 +89,7 @@ static int skip_first_restart(struct hook *h)
 	return 0;
 }
 
-static int skip_first_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int skip_first_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct skip_first *p = h->_vd;
 

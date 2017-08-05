@@ -75,7 +75,7 @@ static int convert_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int convert_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int convert_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct convert *p = h->_vd;
 

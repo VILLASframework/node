@@ -144,23 +144,23 @@ int hook_restart(struct hook *h)
 	return h->_vt->restart ? h->_vt->restart(h) : 0;
 }
 
-int hook_read(struct hook *h, struct sample *smps[], size_t *cnt)
+int hook_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	debug(LOG_HOOK | 10, "Running hook %s: type=read, priority=%d, cnt=%zu", plugin_name(h->_vt), h->priority, *cnt);
+	debug(LOG_HOOK | 10, "Running hook %s: type=read, priority=%d, cnt=%u", plugin_name(h->_vt), h->priority, *cnt);
 
 	return h->_vt->read ? h->_vt->read(h, smps, cnt) : 0;
 }
 
-int hook_write(struct hook *h, struct sample *smps[], size_t *cnt)
+int hook_write(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	debug(LOG_HOOK | 10, "Running hook %s: type=write, priority=%d, cnt=%zu", plugin_name(h->_vt), h->priority, *cnt);
+	debug(LOG_HOOK | 10, "Running hook %s: type=write, priority=%d, cnt=%u", plugin_name(h->_vt), h->priority, *cnt);
 
 	return h->_vt->write ? h->_vt->write(h, smps, cnt) : 0;
 }
 
-size_t hook_read_list(struct list *hs, struct sample *smps[], size_t cnt)
+int hook_read_list(struct list *hs, struct sample *smps[], unsigned cnt)
 {
-	size_t ret;
+	unsigned ret;
 
 	for (size_t i = 0; i < list_length(hs); i++) {
 		struct hook *h = list_at(hs, i);
@@ -175,9 +175,9 @@ size_t hook_read_list(struct list *hs, struct sample *smps[], size_t cnt)
 	return cnt;
 }
 
-size_t hook_write_list(struct list *hs, struct sample *smps[], size_t cnt)
+int hook_write_list(struct list *hs, struct sample *smps[], unsigned cnt)
 {
-	size_t ret;
+	unsigned ret;
 
 	for (size_t i = 0; i < list_length(hs); i++) {
 		struct hook *h = list_at(hs, i);
