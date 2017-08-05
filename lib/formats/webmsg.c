@@ -26,8 +26,9 @@
   #include <endian.h>
 #endif
 
-#include "webmsg.h"
-#include "webmsg_format.h"
+#include "plugin.h"
+#include "formats/webmsg.h"
+#include "formats/webmsg_format.h"
 
 void webmsg_ntoh(struct webmsg *m)
 {
@@ -72,3 +73,14 @@ int webmsg_verify(struct webmsg *m)
 	else
 		return 0;
 }
+
+static struct plugin p = {
+	.name = "webmsg",
+	.description = "VILLAS binary format for websockets",
+	.type = PLUGIN_TYPE_FORMAT,
+	.io = {
+		.size = 0
+	},
+};
+
+REGISTER_PLUGIN(&p);

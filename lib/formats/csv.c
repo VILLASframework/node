@@ -25,50 +25,44 @@
 #include "formats/csv.h"
 #include "plugin.h"
 #include "sample.h"
+#include "timing.h"
 
-int io_format_csv_fprint(AFILE *f, struct sample *s, int flags)
+int io_format_csv_fprint_single(FILE *f, struct sample *s, int flags)
 {
-	afprintf(f, "%ld %09ld %d", s->ts.origin.tv_sec, s->ts.origin.tv_nsec, s->sequence);
+	fprintf(f, "%ld %09ld %d", s->ts.origin.tv_sec, s->ts.origin.tv_nsec, s->sequence);
 
 	for (int i = 0; i < s->length; i++) {
 		switch ((s->format >> i) & 0x1) {
 			case SAMPLE_DATA_FORMAT_FLOAT:
-				afprintf(f, "%c%.6f", CSV_SEPARATOR, s->data[i].f);
+				fprintf(f, "%c%.6f", CSV_SEPARATOR, s->data[i].f);
 				break;
 			case SAMPLE_DATA_FORMAT_INT:
-				afprintf(f, "%c%d", CSV_SEPARATOR, s->data[i].i);
+				fprintf(f, "%c%d", CSV_SEPARATOR, s->data[i].i);
 				break;
 		}
 	}
 
+	fputc('\n', f);
+
 	return 0;
 }
 
-int io_format_csv_fscan(AFILE *f, struct sample *smp, int *flags)
+size_t io_format_csv_sscan_single(const char *buf, size_t len, struct sample *s, int *flags)
 {
 	int ret, off;
-	char *ptr, line[4096];
 
-skip:	if (afgets(line, sizeof(line), f) == NULL)
-		return -1; /* An error occured */
-
-	/* Skip whitespaces, empty and comment lines */
-	for (ptr = line; isspace(*ptr); ptr++);
-	if (*ptr == '\0' || *ptr == '#')
-		goto skip;
-
-	ret = sscanf(line, "%ld %09ld %d %n", &smp->ts.origin.tv_sec, &smp->ts.origin.tv_nsec, &smp->sequence, &off);
-	if (ret != 4)
+	ret = sscanf(buf, "%ld %ld %d %n", &s->ts.origin.tv_sec, &s->ts.origin.tv_nsec, &s->sequence, &off);
+	if (ret != 3)
 		return -1;
 
 	int i;
-	for (i = 0; i < smp->capacity; i++) {
-		switch (smp->format & (1 << i)) {
+	for (i = 0; i < s->capacity; i++) {
+		switch (s->format & (1 << i)) {
 			case SAMPLE_DATA_FORMAT_FLOAT:
-				ret = sscanf(line + off, "%f %n", &smp->data[i].f, &off);
+				ret = sscanf(buf + off, "%f %n", &s->data[i].f, &off);
 				break;
 			case SAMPLE_DATA_FORMAT_INT:
-				ret = sscanf(line + off, "%d %n", &smp->data[i].i, &off);
+				ret = sscanf(buf + off, "%d %n", &s->data[i].i, &off);
 				break;
 		}
 
@@ -76,19 +70,51 @@ skip:	if (afgets(line, sizeof(line), f) == NULL)
 			break;
 	}
 
-	smp->length = i;
+	s->length = i;
+	s->ts.received = time_now();
 
-	return ret;
+	return 0;
 }
 
-int io_format_csv_print(struct io *io, struct sample *smp, int flags)
+int io_format_csv_fscan_single(FILE *f, struct sample *s, int *flags)
 {
-	return io_format_csv_fprint(io->file, smp, flags);
+	char *ptr, line[4096];
+
+skip:	if (fgets(line, sizeof(line), f) == NULL)
+		return -1; /* An error occured */
+
+	/* Skip whitespaces, empty and comment lines */
+	for (ptr = line; isspace(*ptr); ptr++);
+	if (*ptr == '\0' || *ptr == '#')
+		goto skip;
+
+	return io_format_csv_sscan_single(line, strlen(line), s, flags);
 }
 
-int io_format_csv_scan(struct io *io, struct sample *smp, int *flags)
+int io_format_csv_fprint(FILE *f, struct sample *smps[], size_t cnt, int flags)
 {
-	return io_format_csv_fscan(io->file, smp, flags);
+	int ret, i;
+	for (i = 0; i < cnt; i++) {
+		ret = io_format_csv_fprint_single(f, smps[i], flags);
+		if (ret < 0)
+			break;
+	}
+
+	return i;
+}
+
+int io_format_csv_fscan(FILE *f, struct sample *smps[], size_t cnt, int *flags)
+{
+	int ret, i;
+	for (i = 0; i < cnt; i++) {
+		ret = io_format_csv_fscan_single(f, smps[i], flags);
+		if (ret < 0) {
+			warn("Failed to read CSV line: %d", ret);
+			break;
+		}
+	}
+
+	return i;
 }
 
 static struct plugin p = {
@@ -96,8 +122,8 @@ static struct plugin p = {
 	.description = "Tabulator-separated values",
 	.type = PLUGIN_TYPE_FORMAT,
 	.io = {
-		.scan	= io_format_csv_scan,
-		.print	= io_format_csv_print,
+		.fprint	= io_format_csv_fprint,
+		.fscan	= io_format_csv_fscan,
 		.size = 0
 	}
 };

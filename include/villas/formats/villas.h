@@ -25,12 +25,12 @@
 
 #include <stdio.h>
 
-/* VILLASnode human readable format */
+#include "io.h"
 
-int io_format_villas_print(char *buf, size_t len, struct sample *s, int flags);
+int io_format_villas_print(struct io *io, struct sample *smps[], size_t cnt);
 
-int io_format_villas_scan(const char *line, struct sample *s, int *fl);
+int io_format_villas_scan(struct io *io, struct sample *smps[], size_t cnt);
 
-int io_format_villas_fprint(FILE *f, struct sample *s, int flags);
+int io_format_villas_fprint(FILE *f, struct sample *smps[], size_t cnt, int flags);
 
-int io_format_villas_fscan(FILE *f, struct sample *s, int *flags);
+int io_format_villas_fscan(FILE *f, struct sample *smps[], size_t cnt, int *flags);

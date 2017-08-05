@@ -28,7 +28,8 @@
 #include <jansson.h>
 
 #include <villas/sample.h>
-#include <villas/sample_io.h>
+#include <villas/io.h>
+#include <villas/formats/villas.h>
 #include <villas/utils.h>
 #include <villas/timing.h>
 #include <villas/pool.h>
@@ -103,11 +104,21 @@ check:		if (optarg == endptr)
 	f1.path = argv[optind];
 	f2.path = argv[optind + 1];
 
-	log_init(&log, V, LOG_ALL);
-	log_start(&log);
+	ret = log_init(&log, V, LOG_ALL);
+	if (ret)
+		error("Failed to initialize log");
 
-	pool_init(&pool, 1024, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_heap);
-	sample_alloc(&pool, samples, 2);
+	ret = log_start(&log);
+	if (ret)
+		error("Failed to start log");
+
+	ret = pool_init(&pool, 1024, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_heap);
+	if (ret)
+		error("Failed to initialize pool");
+
+	ret = sample_alloc(&pool, samples, 2);
+	if (ret != 2)
+		error("Failed to allocate samples");
 
 	f1.sample = samples[0];
 	f2.sample = samples[1];
@@ -121,11 +132,11 @@ check:		if (optarg == endptr)
 		serror("Failed to open file: %s", f2.path);
 
 	while (!feof(f1.handle) && !feof(f2.handle)) {
-		ret = sample_io_villas_fscan(f1.handle, f1.sample, &f1.flags);
+		ret = io_format_villas_fscan(f1.handle, &f1.sample, 1, &f1.flags);
 		if (ret < 0 && !feof(f1.handle))
 			goto out;
 
-		ret = sample_io_villas_fscan(f2.handle, f2.sample, &f2.flags);
+		ret = io_format_villas_fscan(f2.handle, &f2.sample, 1, &f2.flags);
 		if (ret < 0 && !feof(f2.handle))
 			goto out;
 
@@ -139,7 +150,7 @@ check:		if (optarg == endptr)
 		}
 
 		/* Compare sequence no */
-		if ((f1.flags & SAMPLE_IO_SEQUENCE) && (f2.flags & SAMPLE_IO_SEQUENCE)) {
+		if ((f1.flags & IO_FORMAT_SEQUENCE) && (f2.flags & IO_FORMAT_SEQUENCE)) {
 			if (f1.sample->sequence != f2.sample->sequence) {
 				printf("sequence no: %d != %d\n", f1.sample->sequence, f2.sample->sequence);
 				ret = 2;

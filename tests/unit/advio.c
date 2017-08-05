@@ -28,7 +28,7 @@
 #include <villas/utils.h>
 #include <villas/advio.h>
 #include <villas/sample.h>
-#include <villas/sample_io.h>
+#include <villas/formats/villas.h>
 
 /** This URI points to a Sciebo share which contains some test files.
  * The Sciebo share is read/write accessible via WebDAV. */
@@ -40,12 +40,12 @@ Test(advio, local)
 	int ret;
 	char *buf = NULL;
 	size_t buflen = 0;
-	
+
 	/* We open this file and check the first line */
 	af = afopen(__FILE__, "r");
 	cr_assert(af, "Failed to open local file");
 
-	ret = getline(&buf, &buflen, af->file);	
+	ret = getline(&buf, &buflen, af->file);
 	cr_assert_gt(ret, 1);
 	cr_assert_str_eq(buf, "/** Unit tests for advio\n");
 }
@@ -74,26 +74,26 @@ Test(advio, download_large)
 {
 	AFILE *af;
 	int ret, len = 16;
-	
+
 	struct sample *smp = alloc(SAMPLE_LEN(len));
 	smp->capacity = len;
 
 	af = afopen(BASE_URI "/download-large" , "r");
 	cr_assert(af, "Failed to download file");
 
-	ret = sample_io_villas_fscan(af->file, smp, NULL);
-	cr_assert_eq(ret, 0);
-	
+	ret = io_format_villas_fscan(af->file, &smp, 1, NULL);
+	cr_assert_eq(ret, 1);
+
 	cr_assert_eq(smp->sequence, 0);
 	cr_assert_eq(smp->length, 4);
 	cr_assert_eq(smp->ts.origin.tv_sec, 1497710378);
 	cr_assert_eq(smp->ts.origin.tv_nsec, 863332240);
-	
+
 	float data[] = { 0.022245, 0.000000, -1.000000, 1.000000 };
-	
+
 	for (int i = 0; i < smp->length; i++)
 		cr_assert_float_eq(smp->data[i].f, data[i], 1e-5);
-	
+
 	ret = afclose(af);
 	cr_assert_eq(ret, 0, "Failed to close file");
 }
@@ -106,44 +106,44 @@ Test(advio, resume)
 	char line1[32];
 	char *line2 = NULL;
 	size_t linelen = 0;
-	
+
 	mkdtemp(dir);
 	ret = asprintf(&fn, "%s/file", dir);
 	cr_assert_gt(ret, 0);
-	
+
 	af1 = afopen(fn, "w+");
 	cr_assert_not_null(af1);
-	
+
 	/* We flush once the empty file in order to upload an empty file. */
 	aupload(af1, 0);
-	
+
 	af2 = afopen(fn, "r");
 	cr_assert_not_null(af2);
-	
+
 	for (int i = 0; i < 100; i++) {
 		snprintf(line1, sizeof(line1), "This is line %d\n", i);
-		
+
 		afputs(line1, af1);
 		aupload(af1, 1);
-		
+
 		adownload(af2, 1);
 		agetline(&line2, &linelen, af2);
-		
+
 		cr_assert_str_eq(line1, line2);
 	}
-	
+
 	ret = afclose(af1);
 	cr_assert_eq(ret, 0);
-	
+
 	ret = afclose(af2);
 	cr_assert_eq(ret, 0);
-	
+
 	ret = unlink(fn);
 	cr_assert_eq(ret, 0);
-	
+
 	ret = rmdir(dir);
 	cr_assert_eq(ret, 0);
-	
+
 	free(line2);
 }
 

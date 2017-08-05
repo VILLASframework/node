@@ -27,7 +27,7 @@
 #include "plugin.h"
 #include "nodes/nanomsg.h"
 #include "utils.h"
-#include "msg.h"
+#include "formats/msg.h"
 
 int nanomsg_reverse(struct node *n)
 {

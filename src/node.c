@@ -75,6 +75,7 @@ static void usage()
 	printf("  This type of invocation is used by OPAL-RT Asynchronous processes.\n");
 	printf("  See in the RT-LAB User Guide for more information.\n\n");
 #endif
+
 	printf("Supported node-types:\n");
 	plugin_dump(PLUGIN_TYPE_NODE);
 	printf("\n");
@@ -85,6 +86,10 @@ static void usage()
 
 	printf("Supported API commands:\n");
 	plugin_dump(PLUGIN_TYPE_API);
+	printf("\n");
+
+	printf("Supported IO formats:\n");
+	plugin_dump(PLUGIN_TYPE_FORMAT);
 	printf("\n");
 
 	print_copyright();

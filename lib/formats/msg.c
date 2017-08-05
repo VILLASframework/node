@@ -23,10 +23,11 @@
 #include <arpa/inet.h>
 #include <string.h>
 
-#include "msg.h"
-#include "msg_format.h"
+#include "formats/msg.h"
+#include "formats/msg_format.h"
 #include "sample.h"
 #include "utils.h"
+#include "plugin.h"
 
 void msg_ntoh(struct msg *m)
 {
@@ -150,3 +151,14 @@ int msg_buffer_to_samples(struct sample *smps[], unsigned cnt, char *buf, size_t
 
 	return i;
 }
+
+static struct plugin p = {
+	.name = "msg",
+	.description = "VILLAS binary network format",
+	.type = PLUGIN_TYPE_FORMAT,
+	.io = {
+		.size = 0
+	},
+};
+
+REGISTER_PLUGIN(&p);

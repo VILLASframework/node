@@ -27,12 +27,12 @@
 #include <signal.h>
 
 #include "super_node.h"
-#include "webmsg.h"
-#include "webmsg_format.h"
 #include "timing.h"
 #include "utils.h"
 #include "plugin.h"
 
+#include "formats/webmsg.h"
+#include "formats/webmsg_format.h"
 #include "nodes/websocket.h"
 
 /* Private static storage */

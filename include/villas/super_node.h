@@ -44,6 +44,8 @@ struct super_node {
 	struct api api;
 	struct web web;
 
+	char *name;		/**< A name of this super node. Usually the hostname. */
+
 	struct {
 		int argc;
 		char **argv;

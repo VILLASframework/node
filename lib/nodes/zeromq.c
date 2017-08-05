@@ -30,7 +30,7 @@
 #include "utils.h"
 #include "queue.h"
 #include "plugin.h"
-#include "msg.h"
+#include "formats/msg.h"
 
 static void *context;
 

@@ -28,8 +28,9 @@
 #include "utils.h"
 #include "timing.h"
 #include "sample.h"
+#include "formats/villas.h"
 
-int io_format_villas_print(char *buf, size_t len, struct sample *s, int flags)
+size_t io_format_villas_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 {
 	size_t off = snprintf(buf, len, "%llu", (unsigned long long) s->ts.origin.tv_sec);
 
@@ -57,15 +58,15 @@ int io_format_villas_print(char *buf, size_t len, struct sample *s, int flags)
 
 	off += snprintf(buf + off, len - off, "\n");
 
-	return 0; /* trailing '\0' */
+	return off;
 }
 
-int io_format_villas_scan(const char *line, struct sample *s, int *fl)
+size_t io_format_villas_sscan_single(const char *buf, size_t len, struct sample *s, int *flags)
 {
 	char *end;
-	const char *ptr = line;
+	const char *ptr = buf;
 
-	int flags = 0;
+	int fl = 0;
 	double offset = 0;
 
 	/* Format: Seconds.NanoSeconds+Offset(SequenceNumber) Value1 Value2 ...
@@ -85,7 +86,7 @@ int io_format_villas_scan(const char *line, struct sample *s, int *fl)
 
 		s->ts.origin.tv_nsec = (uint32_t) strtoul(ptr, &end, 10);
 		if (ptr != end)
-			flags |= IO_FORMAT_NANOSECONDS;
+			fl |= IO_FORMAT_NANOSECONDS;
 		else
 			return -3;
 	}
@@ -98,7 +99,7 @@ int io_format_villas_scan(const char *line, struct sample *s, int *fl)
 
 		offset = strtof(ptr, &end); /* offset is ignored for now */
 		if (ptr != end)
-			flags |= IO_FORMAT_OFFSET;
+			fl |= IO_FORMAT_OFFSET;
 		else
 			return -4;
 	}
@@ -109,7 +110,7 @@ int io_format_villas_scan(const char *line, struct sample *s, int *fl)
 
 		s->sequence = strtoul(ptr, &end, 10);
 		if (ptr != end)
-			flags |= IO_FORMAT_SEQUENCE;
+			fl |= IO_FORMAT_SEQUENCE;
 		else
 			return -5;
 
@@ -135,35 +136,42 @@ int io_format_villas_scan(const char *line, struct sample *s, int *fl)
 	}
 
 	if (s->length > 0)
-		flags |= IO_FORMAT_VALUES;
+		fl |= IO_FORMAT_VALUES;
 
-	if (fl)
-		*fl = flags;
-	if (flags & IO_FORMAT_OFFSET) {
+	if (flags)
+		*flags = fl;
+
+	if (fl & IO_FORMAT_OFFSET) {
 		struct timespec off = time_from_double(offset);
 		s->ts.received = time_add(&s->ts.origin, &off);
 	}
 	else
-		s->ts.received = s->ts.origin;
+		s->ts.received = time_now();
 
-	return 0;
+	return end - buf;
 }
 
-int io_format_villas_fprint(FILE *f, struct sample *s, int flags)
+size_t io_format_villas_sprint(char *buf, size_t len, struct sample *smps[], size_t cnt, int flags)
 {
-	char line[4096];
-	int ret;
+	size_t off = 0;
 
-	ret = io_format_villas_print(line, sizeof(line), s, flags);
-	if (ret)
-		return ret;
+	for (int i = 0; i < cnt && off < len; i++)
+		off += io_format_villas_sprint_single(buf + off, len - off, smps[i], flags);
 
-	fputs(line, f);
-
-	return 0;
+	return off;
 }
 
-int io_format_villas_fscan(FILE *f, struct sample *s, int *fl)
+size_t io_format_villas_sscan(char *buf, size_t len, struct sample *smps[], size_t cnt, int *flags)
+{
+	size_t off = 0;
+
+	for (int i = 0; i < cnt && off < len; i++)
+		off += io_format_villas_sscan_single(buf + off, len - off, smps[i], flags);
+
+	return off;
+}
+
+int io_format_villas_fscan_single(FILE *f, struct sample *s, int *flags)
 {
 	char *ptr, line[4096];
 
@@ -175,16 +183,68 @@ skip:	if (fgets(line, sizeof(line), f) == NULL)
 	if (*ptr == '\0' || *ptr == '#')
 		goto skip;
 
-	return io_format_villas_scan(line, s, fl);
+	return io_format_villas_sscan_single(line, strlen(line), s, flags);
 }
 
-struct plugin p = {
+int io_format_villas_fprint(FILE *f, struct sample *smps[], size_t cnt, int flags)
+{
+	char line[4096];
+	int ret, i;
+
+	for (i = 0; i < cnt; i++) {
+		ret = io_format_villas_sprint_single(line, sizeof(line), smps[i], flags);
+		if (ret < 0)
+			break;
+
+		fputs(line, f);
+	}
+
+	return i;
+}
+
+int io_format_villas_fscan(FILE *f, struct sample *smps[], size_t cnt, int *flags)
+{
+	int ret, i;
+
+	for (i = 0; i < cnt; i++) {
+		ret = io_format_villas_fscan_single(f, smps[i], flags);
+		if (ret < 0)
+			return ret;
+	}
+
+	return i;
+}
+
+int io_format_villas_open(struct io *io, const char *uri, const char *mode)
+{
+	int ret;
+
+	ret = io_stream_open(io, uri, mode);
+	if (ret)
+		return ret;
+
+	FILE *f = io->mode == IO_MODE_ADVIO
+			? io->advio.output->file
+			: io->stdio.output;
+
+	fprintf(f, "# %-20s\t\t%s\n", "sec.nsec+offset", "data[]");
+
+	if (io->flags & IO_FLAG_FLUSH)
+		io_flush(io);
+
+	return 0;
+}
+
+static struct plugin p = {
 	.name = "villas",
-	.description = "Human readable VILLAS format",
+	.description = "VILLAS human readable format",
 	.type = PLUGIN_TYPE_FORMAT,
 	.io = {
+		.open	= io_format_villas_open,
 		.fprint	= io_format_villas_fprint,
 		.fscan	= io_format_villas_fscan,
+		.sprint	= io_format_villas_sprint,
+		.sscan	= io_format_villas_sscan,
 		.size = 0
 	}
 };

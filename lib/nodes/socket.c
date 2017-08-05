@@ -42,8 +42,8 @@
   #define WITH_NETEM
 #endif /* WITH_LIBNL_ROUTE_30 */
 
-#include "msg.h"
-#include "msg_format.h"
+#include "formats/msg.h"
+#include "formats/msg_format.h"
 #include "sample.h"
 #include "queue.h"
 #include "plugin.h"

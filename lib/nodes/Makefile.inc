@@ -90,8 +90,8 @@ endif
 
 # Enable Socket node type when libnl3 is available
 ifeq ($(WITH_SOCKET),1)
-	LIB_SRCS    += $(addprefix lib/nodes/, socket.c)
-	LIB_SRCS    += $(addprefix lib/, msg.c)
+	LIB_SRCS    += lib/nodes/socket.c
+	LIB_SRCS    += lib/formats/msg.c
 	LIB_CFLAGS  += -DWITH_SOCKET
 
 	# libnl3 is optional but required for network emulation and IRQ pinning
@@ -135,7 +135,8 @@ endif
 # Enable WebSocket support
 ifeq ($(WITH_WEBSOCKET),1)
 ifeq ($(shell $(PKGCONFIG) libwebsockets jansson; echo $$?),0)
-	LIB_SRCS    += lib/nodes/websocket.c lib/webmsg.c
+	LIB_SRCS    += lib/nodes/websocket.c
+	LIB_SRCS    += lib/formats/webmsg.c
 	LIB_PKGS    += libwebsockets jansson
 	LIB_CFLAGS  += -DWITH_WEBSOCKET
 endif

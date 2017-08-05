@@ -20,4 +20,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-LIB_SRCS += $(addprefix lib/formats/,villas.c csv.c msg.c webmsg.c)
+LIB_SRCS += $(addprefix lib/formats/,json.c villas.c csv.c)
+
+WITH_HDF5 ?= 0
+
+ifeq ($(PLATFORM),Darwin)
+	HDF5_PREFIX ?= /opt/local
+else
+	HDF5_PREFIX ?= /usr
+endif
+
+ifeq ($(WITH_HDF5),1)
+ifneq ($(wildcard $(HDF5_PREFIX)/include/hdf5_hl.h),)
+	LIB_SRCS += lib/formats/hdf5.c
+endif
+endif

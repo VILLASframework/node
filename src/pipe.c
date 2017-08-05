@@ -37,6 +37,7 @@
 #include <villas/pool.h>
 #include <villas/io.h>
 #include <villas/kernel/rt.h>
+#include <villas/plugin.h>
 #include <villas/config_helper.h>
 
 #include <villas/nodes/websocket.h>
@@ -44,8 +45,9 @@
 #include "config.h"
 
 static struct super_node sn = { .state = STATE_DESTROYED }; /**< The global configuration */
+static struct io io = { .state = STATE_DESTROYED };
 
-struct dir {
+static struct dir {
 	struct pool pool;
 	pthread_t thread;
 	bool enabled;
@@ -84,21 +86,22 @@ static void usage()
 	printf("  CONFIG  path to a configuration file\n");
 	printf("  NODE    the name of the node to which samples are sent and received from\n");
 	printf("  OPTIONS are:\n");
-	printf("    -f FMT  set the format\n")
-	printf("    -d LVL  set debug log level to LVL\n");
-	printf("    -x      swap read / write endpoints\n");
-	printf("    -s      only read data from stdin and send it to node\n");
-	printf("    -r      only read data from node and write it to stdout\n");
-	printf("    -t NUM  terminate after NUM seconds\n");
-	printf("    -L NUM  terminate after NUM samples sent\n");
-	printf("    -l NUM  terminate after NUM samples received\n\n");
+	printf("    -f FMT           set the format\n");
+	printf("    -d LVL           set debug log level to LVL\n");
+	printf("    -o OPTION=VALUE  overwrite options in config file\n");
+	printf("    -x               swap read / write endpoints\n");
+	printf("    -s               only read data from stdin and send it to node\n");
+	printf("    -r               only read data from node and write it to stdout\n");
+	printf("    -t NUM           terminate after NUM seconds\n");
+	printf("    -L NUM           terminate after NUM samples sent\n");
+	printf("    -l NUM           terminate after NUM samples received\n\n");
 
 	print_copyright();
 }
 
 static void * send_loop(void *ctx)
 {
-	int ret, cnt = 0;
+	int ret, len, sent, cnt = 0;
 	struct sample *smps[node->vectorize];
 
 	/* Initialize memory */
@@ -110,42 +113,30 @@ static void * send_loop(void *ctx)
 	if (ret < 0)
 		error("Failed to get %u samples out of send pool (%d).", node->vectorize, ret);
 
-	while (!feof(stdin)) {
-		int len;
-		for (len = 0; len < node->vectorize; len++) {
-			struct sample *s = smps[len];
-			int reason;
+	while (!io_eof(&io)) {
+		len = io_scan(&io, smps, node->vectorize);
+		if (len <= 0)
+			continue;
 
-			if (sendd.limit > 0 && cnt >= sendd.limit)
-				break;
+		sent = node_write(node, smps, len);
 
-retry:			reason = sample_io_villas_fscan(stdin, s, NULL);
-			if (reason < 0) {
-				if (feof(stdin))
-					goto leave;
-				else {
-					warn("Skipped invalid message message: reason=%d", reason);
-					goto retry;
-				}
-			}
-		}
-
-		cnt += node_write(node, smps, len);
-
+		cnt += sent;
 		if (sendd.limit > 0 && cnt >= sendd.limit)
-			goto leave2;
+			goto leave;
 
 		pthread_testcancel();
 	}
 
-leave2:	info("Reached send limit. Terminating...");
-	killme(SIGTERM);
-
-	return NULL;
-
-	/* We reached EOF on stdin here. Lets kill the process */
-leave:	if (recvv.limit < 0) {
-		info("Reached end-of-file. Terminating...");
+leave:	if (io_eof(&io)) {
+		if (recvv.limit < 0) {
+			info("Reached end-of-file. Terminating...");
+			killme(SIGTERM);
+		}
+		else
+			info("Reached end-of-file. Wait for receive side...");
+	}
+	else {
+		info("Reached send limit. Terminating...");
 		killme(SIGTERM);
 	}
 
@@ -164,25 +155,21 @@ static void * recv_loop(void *ctx)
 
 	ret = sample_alloc(&recvv.pool, smps, node->vectorize);
 	if (ret  < 0)
-		error("Failed to get %u samples out of receive pool (%d).", node->vectorize, ret);
-
-	/* Print header */
-	fprintf(stdout, "# %-20s\t\t%s\n", "sec.nsec+offset", "data[]");
-	fflush(stdout);
+		error("Failed to allocate %u samples from receive pool.", node->vectorize);
 
 	for (;;) {
 		int recv = node_read(node, smps, node->vectorize);
 		struct timespec now = time_now();
 
+		/* Fix timestamps */
 		for (int i = 0; i < recv; i++) {
 			struct sample *s = smps[i];
 
 			if (s->ts.received.tv_sec == -1 || s->ts.received.tv_sec == 0)
 				s->ts.received = now;
-
-			sample_io_villas_fprint(stdout, s, SAMPLE_IO_ALL);
-			fflush(stdout);
 		}
+
+		io_print(&io, smps, recv);
 
 		cnt += recv;
 		if (recvv.limit > 0 && cnt >= recvv.limit)
@@ -201,17 +188,21 @@ int main(int argc, char *argv[])
 {
 	int ret, level = V, timeout = 0;
 	bool reverse = false;
+	char *format = "villas";
 
 	sendd = recvv = (struct dir) {
 		.enabled = true,
 		.limit = -1
 	};
 
-	char c, *endptr;
-	while ((c = getopt(argc, argv, "hxrsd:l:L:t:f:")) != -1) {
-		switch (c) {
-			case 'f';
+	json_t *cfg_cli = json_object();
 
+	char c, *endptr;
+	while ((c = getopt(argc, argv, "hxrsd:l:L:t:f:o:")) != -1) {
+		switch (c) {
+			case 'f':
+				format = optarg;
+				break;
 			case 'x':
 				reverse = true;
 				break;
@@ -233,6 +224,11 @@ int main(int argc, char *argv[])
 			case 't':
 				timeout = strtoul(optarg, &endptr, 10);
 				goto check;
+			case 'o':
+				ret = json_object_extend_str(cfg_cli, optarg);
+				if (ret)
+					error("Invalid option: %s", optarg);
+				break;
 			case 'h':
 			case '?':
 				usage();
@@ -243,7 +239,6 @@ int main(int argc, char *argv[])
 
 check:		if (optarg == endptr)
 			error("Failed to parse parse option argument '-%c %s'", c, optarg);
-
 	}
 
 	if (argc != optind + 2) {
@@ -253,18 +248,48 @@ check:		if (optarg == endptr)
 
 	char *configfile = argv[optind];
 	char *nodestr    = argv[optind+1];
+	struct plugin *p;
 
-	log_init(&sn.log, level, LOG_ALL);
-	log_start(&sn.log);
+	ret = log_init(&sn.log, level, LOG_ALL);
+	if (ret)
+		error("Failed to intialize log");
 
-	super_node_init(&sn);
-	super_node_parse_uri(&sn, configfile);
+	ret = log_start(&sn.log);
+	if (ret)
+		error("Failed to start log");
 
-	memory_init(sn.hugepages);
-	signals_init(quit);
-	rt_init(sn.priority, sn.affinity);
+	ret = signals_init(quit);
+	if (ret)
+		error("Failed to initialize signals");
 
-	/* Initialize node */
+	ret = memory_init(sn.hugepages);
+	if (ret)
+		error("Failed to initialize memory");
+
+	ret = rt_init(sn.priority, sn.affinity);
+	if (ret)
+		error("Failed to initalize real-time");
+
+	p = plugin_lookup(PLUGIN_TYPE_FORMAT, format);
+	if (!p)
+		error("Invalid format: %s", format);
+
+	ret = io_init(&io, &p->io, IO_FORMAT_ALL);
+	if (ret)
+		error("Failed to initialize IO");
+
+	ret = io_open(&io, NULL, NULL);
+	if (ret)
+		error("Failed to open IO");
+
+	ret = super_node_init(&sn);
+	if (ret)
+		error("Failed to initialize super-node");
+
+	ret = super_node_parse_uri(&sn, configfile);
+	if (ret)
+		error("Failed to parse configuration");
+
 	node = list_lookup(&sn.nodes, nodestr);
 	if (!node)
 		error("Node '%s' does not exist!", nodestr);

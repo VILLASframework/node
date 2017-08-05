@@ -30,6 +30,6 @@ int io_format_json_pack(json_t **j, struct sample *s, int flags);
 
 int io_format_json_unpack(json_t *j, struct sample *s, int *flags);
 
-int io_format_json_fprint(AFILE *f, struct sample *s, int flags);
+int io_format_json_fprint(FILE *f, struct sample *smps[], size_t cnt, int flags);
 
-int io_format_json_fscan(AFILE *f, struct sample *s, int *flags);
+int io_format_json_fscan(FILE *f, struct sample *smps[], size_t cnt, int *flags);

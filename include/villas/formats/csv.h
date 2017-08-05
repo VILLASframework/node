@@ -23,13 +23,13 @@
 
 #pragma once
 
-#include "advio.h"
+#include <stdio.h>
 
 /* Forward declarations. */
 struct sample;
 
 #define CSV_SEPARATOR '\t'
 
-int io_format_csv_fprint(AFILE *f, struct sample *smp, int flags);
+int io_format_csv_fprint(FILE *f, struct sample *smps[], size_t cnt, int flags);
 
-int io_format_csv_fscan(AFILE *f, struct sample *smp, int *flags);
+int io_format_csv_fscan(FILE *f, struct sample *smps[], size_t cnt, int *flags);
