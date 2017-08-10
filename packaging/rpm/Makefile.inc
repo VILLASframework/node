@@ -64,4 +64,4 @@ sign-rpm:
 clean-rpm:
 	rm -rf $(RPMDIR)
 
-.PHONY: rpm clean-rpm rpm-libwebsockets rpm-libxil
+.PHONY: rpm clean-rpm rpm-libwebsockets rpm-libxil $(SPEC_VILLAS)
