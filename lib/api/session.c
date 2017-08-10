@@ -64,7 +64,8 @@ int api_session_run_command(struct api_session *s, json_t *json_in, json_t **jso
 	char *id;
 	struct plugin *p;
 
-	json_t *json_args = NULL, *json_resp;
+	json_t *json_args = NULL;
+	json_t *json_resp = NULL;
 
 	ret = json_unpack(json_in, "{ s: s, s: s, s?: o }",
 		"action", &action,
@@ -99,10 +100,12 @@ int api_session_run_command(struct api_session *s, json_t *json_in, json_t **jso
 				"code", ret,
 				"error", "command failed");
 	else
-		*json_out = json_pack("{ s: s, s: s, s: o }",
+		*json_out = json_pack("{ s: s, s: s }",
 				"action", action,
-				"id", id,
-				"response", json_resp);
+				"id", id);
+
+	if (json_resp)
+		json_object_set(*json_out, "response", json_resp);
 
 out:	debug(LOG_API, "API request completed with code: %d", ret);
 
