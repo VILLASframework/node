@@ -150,6 +150,9 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			break;
 
 		case LWS_CALLBACK_CLOSED_HTTP:
+			if (!s)
+				return -1;
+
 			ret = api_session_destroy(s);
 			if (ret)
 				return -1;

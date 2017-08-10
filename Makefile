@@ -102,7 +102,7 @@ SRCDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 VPATH = $(SRCDIR)
 
 # Add git revision and build variant defines
-VERSION := $(shell git describe --tags --abbrev=0 --match v*)
+VERSION := $(shell git describe --tags --abbrev=0 --match 'v*')
 VERSION_NUM := $(shell VERSION=$(VERSION); echo $${VERSION:1})
 
 ifdef CI
