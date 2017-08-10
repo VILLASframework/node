@@ -54,6 +54,11 @@ struct api_session {
 		struct web_buffer body;		/**< HTTP body / WS payload */
 		struct web_buffer headers;	/**< HTTP headers */
 	} response;
+	
+	struct {
+		char name[64];
+		char ip[64];
+	} peer;
 
 	bool completed;				/**< Did we receive the complete body yet? */
 

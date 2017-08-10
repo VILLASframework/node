@@ -55,8 +55,10 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 			ret = api_session_init(s, w->api, API_MODE_WS);
 			if (ret)
 				return -1;
+			
+			lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi), s->peer.name, sizeof(s->peer.name), s->peer.ip, sizeof(s->peer.ip));
 
-			debug(LOG_API, "New API session initiated: version=%d, mode=websocket", s->version);
+			debug(LOG_API, "New API session initiated: version=%d, mode=websocket, remote=%s (%s)", s->version, s->peer.name, s->peer.ip);
 			break;
 
 		case LWS_CALLBACK_CLOSED:
@@ -117,8 +119,10 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			ret = api_session_init(s, w->api, API_MODE_HTTP);
 			if (ret)
 				return -1;
+			
+			lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi), s->peer.name, sizeof(s->peer.name), s->peer.ip, sizeof(s->peer.ip));
 
-			debug(LOG_API, "New API session initiated: version=%d, mode=http", s->version);
+			debug(LOG_API, "New API session initiated: version=%d, mode=http, remote=%s (%s)", s->version, s->peer.name, s->peer.ip);
 
 			/* Prepare HTTP response header */
 			const char headers[] =	"HTTP/1.1 200 OK\r\n"
