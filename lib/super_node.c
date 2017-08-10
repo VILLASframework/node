@@ -176,6 +176,8 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 			afclose(af);
 		else if (f != stdin)
 			fclose(f);
+		
+		sn->uri = strdup(uri);
 
 		return super_node_parse(sn, cfg_root);
 	}
@@ -459,6 +461,9 @@ int super_node_destroy(struct super_node *sn)
 	log_destroy(&sn->log);
 
 	config_destroy(&sn->cfg);
+	
+	if (sn->uri)
+		free(sn->uri);
 
 	sn->state = STATE_DESTROYED;
 
