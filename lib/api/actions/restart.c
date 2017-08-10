@@ -45,7 +45,8 @@ static int api_restart(struct api_action *h, json_t *args, json_t **resp, struct
 	json_error_t err;
 	
 	/* If no config is provided via request, we will use the previous one */
-	config = strdup(s->api->super_node->uri);
+	if (s->api->super_node->uri)
+		config = strdup(s->api->super_node->uri);
 	
 	if (args) {
 		ret = json_unpack_ex(args, &err, 0, "{ s?: s }", "config", &config);

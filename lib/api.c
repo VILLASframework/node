@@ -154,7 +154,8 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			if (ret)
 				return -1;
 			
-			list_remove(&w->api->sessions, s);
+			if (w->api->sessions.state == STATE_INITIALIZED)
+				list_remove(&w->api->sessions, s);
 			
 			break;
 
