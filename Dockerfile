@@ -30,8 +30,26 @@ MAINTAINER Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # Some of the dependencies are only available in our own repo
 ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
 
-RUN dnf -y update && \
-    dnf -y install \
+# Usually the following dependecies would be resolved by dnf
+# when installing villas-node.
+# We add them here to utilise Dockers caching and layer feature
+# in order reduce bandwidth and space usage.
+RUN dnf -y install \
+	openssl \
+	libconfig \
+	libnl3 \
+	libcurl \
+	jansson \
+	libxil \
+	libwebsockets \
+	zeromq \
+	nanomsg \
+	iproute \
+	kernel-modules-extra \
+	module-init-tools
+
+# Install the application
+RUN dnf -y --refresh install \
 	villas-node \
 	villas-node-doc
 
