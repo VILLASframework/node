@@ -236,7 +236,7 @@ int web_start(struct web *w)
 
 int web_stop(struct web *w)
 {
-	if (w->state == STATE_STARTED)
+	if (w->state != STATE_STARTED)
 		return 0;
 
 	info("Stopping Web sub-system");

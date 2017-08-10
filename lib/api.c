@@ -56,6 +56,8 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 			if (ret)
 				return -1;
 			
+			list_push(&w->api->sessions, s);
+			
 			lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi), s->peer.name, sizeof(s->peer.name), s->peer.ip, sizeof(s->peer.ip));
 
 			debug(LOG_API, "New API session initiated: version=%d, mode=websocket, remote=%s (%s)", s->version, s->peer.name, s->peer.ip);
@@ -65,6 +67,8 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 			ret = api_session_destroy(s);
 			if (ret)
 				return -1;
+			
+			list_remove(&w->api->sessions, s);
 
 			debug(LOG_API, "Closed API session");
 
@@ -120,6 +124,8 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			if (ret)
 				return -1;
 			
+			list_push(&w->api->sessions, s);
+			
 			lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi), s->peer.name, sizeof(s->peer.name), s->peer.ip, sizeof(s->peer.ip));
 
 			debug(LOG_API, "New API session initiated: version=%d, mode=http, remote=%s (%s)", s->version, s->peer.name, s->peer.ip);
@@ -147,6 +153,9 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			ret = api_session_destroy(s);
 			if (ret)
 				return -1;
+			
+			list_remove(&w->api->sessions, s);
+			
 			break;
 
 		case LWS_CALLBACK_HTTP_BODY:
@@ -170,7 +179,7 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			web_buffer_write(&s->response.body,    wsi);
 
 			if (s->completed && s->response.body.len == 0)
-				return -1;
+				return -1; /* Close connection */
 			break;
 
 		default:
@@ -213,6 +222,11 @@ int api_start(struct api *a)
 int api_stop(struct api *a)
 {
 	info("Stopping API sub-system");
+	
+	for (int i = 0; i < 10 && list_length(&a->sessions) > 0; i++) {
+		info("Wait for API requests to complete");
+		usleep(100 * 1e-3);
+	}
 
 	list_destroy(&a->sessions, (dtor_cb_t) api_session_destroy, false);
 

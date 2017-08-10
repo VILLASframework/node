@@ -431,11 +431,11 @@ int super_node_stop(struct super_node *sn)
 		}
 	}
 
-#ifdef WITH_WEB
-	web_stop(&sn->web);
-#endif
 #ifdef WITH_API
 	api_stop(&sn->api);
+#endif
+#ifdef WITH_WEB
+	web_stop(&sn->web);
 #endif
 	log_stop(&sn->log);
 
