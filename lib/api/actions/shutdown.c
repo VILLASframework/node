@@ -1,4 +1,4 @@
-/** The "restart" API ressource.
+/** The "shutdown" API action.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
@@ -23,17 +23,18 @@
 #include "plugin.h"
 #include "api.h"
 
-/** @todo not implemented yet */
-static int api_restart(struct api_action *h, json_t *args, json_t **resp, struct api_session *s)
+static int api_shutdown(struct api_action *h, json_t *args, json_t **resp, struct api_session *s)
 {
-	return -1;
+	killme(SIGTERM);
+
+	return 0;
 }
 
 static struct plugin p = {
-	.name = "restart",
-	.description = "restart VILLASnode with new configuration",
+	.name = "shutdown",
+	.description = "stop VILLASnode",
 	.type = PLUGIN_TYPE_API,
-	.api.cb = api_restart
+	.api.cb = api_shutdown
 };
 
 REGISTER_PLUGIN(&p)

@@ -56,6 +56,8 @@ struct super_node {
 	} cli;
 
 	enum state state;
+	
+	char *uri;		/**< URI of configuration */
 
 	config_t cfg;		/**< Pointer to configuration file */
 	json_t *json;		/**< JSON representation of the same config. */

@@ -302,7 +302,7 @@ int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 	info("Initialize signals");
 
 	struct sigaction sa_quit = {
-		.sa_flags = SA_SIGINFO,
+		.sa_flags = SA_SIGINFO | SA_NODEFER,
 		.sa_sigaction = cb
 	};
 

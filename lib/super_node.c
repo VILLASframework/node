@@ -134,6 +134,14 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 		config_set_destructor(&sn->cfg, config_dtor);
 		config_set_auto_convert(&sn->cfg, 1);
 
+		cfg_root = config_root_setting(&sn->cfg);
+		
+		/* Little hack to properly report configuration filename in error messages
+		 * We add the uri as a "hook" object to the root setting.
+		 * See cerror() on how this info is used.
+		 */
+		config_setting_set_hook(cfg_root, strdup(uri));
+
 		/* Parse config */
 		ret = config_read(&sn->cfg, f);
 		if (ret != CONFIG_TRUE) {
@@ -143,6 +151,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 			json_error_t err;
 			json_t *json;
 
+			rewind(f);
 			json = json_loadf(f, 0, &err);
 			if (json) {
 				ret = json_to_config(json, cfg_root);
@@ -150,32 +159,27 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 					error("Failed t convert JSON to configuration file");
 			}
 			else {
-				error("Failed to parse configuration");
 				{ INDENT
 					warn("conf: %s in %s:%d", config_error_text(&sn->cfg), uri, config_error_line(&sn->cfg));
 					warn("json: %s in %s:%d:%d", err.text, err.source, err.line, err.column);
 				}
+				error("Failed to parse configuration");
 			}
 #else
-			error("Failed to parse configuration");
 			{ INDENT
 				warn("%s in %s:%d", config_error_text(&sn->cfg), uri, config_error_line(&sn->cfg));
 			}
+			error("Failed to parse configuration");
 #endif
 		}
-
-		/* Little hack to properly report configuration filename in error messages
-		 * We add the uri as a "hook" object to the root setting.
-		 * See cerror() on how this info is used.
-		 */
-		cfg_root = config_root_setting(&sn->cfg);
-		config_setting_set_hook(cfg_root, strdup(uri));
 
 		/* Close configuration file */
 		if (af)
 			afclose(af);
 		else if (f != stdin)
 			fclose(f);
+		
+		sn->uri = strdup(uri);
 
 		return super_node_parse(sn, cfg_root);
 	}
@@ -429,11 +433,11 @@ int super_node_stop(struct super_node *sn)
 		}
 	}
 
-#ifdef WITH_WEB
-	web_stop(&sn->web);
-#endif
 #ifdef WITH_API
 	api_stop(&sn->api);
+#endif
+#ifdef WITH_WEB
+	web_stop(&sn->web);
 #endif
 	log_stop(&sn->log);
 
@@ -459,6 +463,9 @@ int super_node_destroy(struct super_node *sn)
 	log_destroy(&sn->log);
 
 	config_destroy(&sn->cfg);
+	
+	if (sn->uri)
+		free(sn->uri);
 
 	sn->state = STATE_DESTROYED;
 
