@@ -157,6 +157,7 @@ check:		if (optarg == endptr)
 
 int signal_open(struct node *n)
 {
+	int ret;
 	struct signal *s = n->_vd;
 
 	s->counter = 0;
@@ -164,22 +165,25 @@ int signal_open(struct node *n)
 
 	/* Setup timer */
 	if (s->rt) {
-		s->tfd = timerfd_create_rate(s->rate);
-		if (s->tfd < 0)
-			return -1;
+		ret = periodic_task_init(&s->timer, s->rate);
+		if (ret)
+			return ret;
 	}
-	else
-		s->tfd = -1;
 
 	return 0;
 }
 
 int signal_close(struct node *n)
 {
+	int ret;
 	struct signal* s = n->_vd;
 
-	close(s->tfd);
-
+	if (s->rt) {
+		ret = periodic_task_destroy(&s->timer);
+		if (ret)
+			return ret;
+	}
+	
 	return 0;
 }
 
@@ -196,7 +200,7 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 	/* Throttle output if desired */
 	if (s->rt) {
 		/* Block until 1/p->rate seconds elapsed */
-		steps = timerfd_wait(s->tfd);
+		steps = periodic_task_wait_until_next_period(&s->timer);
 		if (steps > 1)
 			warn("Missed steps: %u", steps);
 

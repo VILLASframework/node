@@ -30,6 +30,7 @@
 #pragma once
 
 #include "timing.h"
+#include "periodic_task.h"
 
 /* Forward declarations */
 struct node;
@@ -48,7 +49,7 @@ enum signal_type {
  * @see node_type
  */
 struct signal {
-	int tfd;			/**< timerfd file descriptor. */
+	struct periodic_task timer;	/**< Timer for periodic events. */
 	int rt;				/**< Real-time mode? */
 
 	enum signal_type type;		/**< Signal type */

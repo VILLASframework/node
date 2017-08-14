@@ -33,6 +33,7 @@
 
 #include "advio.h"
 #include "node.h"
+#include "periodic_task.h"
 
 #define FILE_MAX_PATHLEN	512
 

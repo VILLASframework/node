@@ -492,8 +492,8 @@ int ngsi_start(struct node *n)
 	if (i->timeout > 1 / i->rate)
 		warn("Timeout is to large for given rate: %f", i->rate);
 
-	i->tfd = timerfd_create_rate(i->rate);
-	if (i->tfd < 0)
+	ret = periodic_task_init(&i->timer, i->rate);
+	if (ret)
 		serror("Failed to create timer");
 
 	i->headers = curl_slist_append(i->headers, "Accept: application/json");
@@ -539,7 +539,7 @@ int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt)
 	struct ngsi *i = n->_vd;
 	int ret;
 
-	if (timerfd_wait(i->tfd) == 0)
+	if (periodic_task_wait_until_next_period(&i->timer) == 0)
 		perror("Failed to wait for timer");
 
 	json_t *rentity;
