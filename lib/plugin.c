@@ -106,6 +106,6 @@ void plugin_dump(enum plugin_type type)
 		struct plugin *p = list_at(&plugins, i);
 
 		if (p->type == type)
-			printf(" - %-12s: %s\n", p->name, p->description);
+			printf(" - %-13s: %s\n", p->name, p->description);
 	}
 }
