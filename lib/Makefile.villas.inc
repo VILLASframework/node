@@ -67,7 +67,7 @@ $(LIB): $(LIB_OBJS)
 	ln -srf $@ $(BUILDDIR)/$(LIB_NAME).so
 
 # Install
-install-libvillas: libvillas
+install-libvillas: libvillas | $(DESTDIR)$(PREFIX)/include/villas/
 	install -m 0755 -D -T $(LIB) $(DESTDIR)$(PREFIX)/lib/$(LIB_NAME).so.$(LIB_ABI_VERSION)
 	install -m 0644 -D -t $(DESTDIR)$(PREFIX)/include/villas/ include/villas/*.h
 	ln -srf $(DESTDIR)$(PREFIX)/lib/$(LIB_NAME).so.$(LIB_ABI_VERSION) $(DESTDIR)$(PREFIX)/lib/$(LIB_NAME).so

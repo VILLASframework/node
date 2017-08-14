@@ -22,8 +22,8 @@
 
 etc:
 
-install-etc:
-	install -D -t $(DESTDIR)/etc/villas/node etc/*.conf
+install-etc: | $(DESTDIR)/etc/villas/node/
+	install -D -t $(DESTDIR)/etc/villas/node $(SRCDIR)/etc/*.conf
 
 clean-etc:
 

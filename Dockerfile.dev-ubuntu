@@ -98,6 +98,5 @@ ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
 
-ENTRYPOINT villas
 WORKDIR /villas
 ENTRYPOINT bash
