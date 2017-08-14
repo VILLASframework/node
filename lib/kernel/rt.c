@@ -22,6 +22,7 @@
 
 #include <sched.h>
 #include <unistd.h>
+#include <sys/mman.h>
 
 #include "config.h"
 #include "utils.h"
@@ -52,6 +53,8 @@ int rt_init(int priority, int affinity)
 		rt_set_affinity(affinity);
 	else
 		warn("You might want to use the 'affinity' setting to pin VILLASnode to dedicate CPU cores");
+	
+	rt_lock_memory();
 #else
 	warn("This platform is not optimized for real-time execution");
 #endif
@@ -61,6 +64,19 @@ int rt_init(int priority, int affinity)
 }
 
 #ifdef __linux__
+
+int rt_lock_memory()
+{
+	int ret;
+
+#ifdef _POSIX_MEMLOCK
+	ret = mlockall(MCL_CURRENT | MCL_FUTURE);
+	if (ret)
+		error("Failed to lock memory");
+#endif
+	
+	return 0;
+}
 
 int rt_set_affinity(int affinity)
 {
