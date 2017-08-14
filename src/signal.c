@@ -30,7 +30,7 @@
 
 #include <villas/utils.h>
 #include <villas/sample.h>
-#include <villas/formats/villas.h>
+#include <villas/io/villas.h>
 #include <villas/timing.h>
 #include <villas/node.h>
 #include <villas/plugin.h>
@@ -125,15 +125,15 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to initialize node");
 
-	p = plugin_lookup(PLUGIN_TYPE_FORMAT, format);
+	p = plugin_lookup(PLUGIN_TYPE_IO, format);
 	if (!p)
 		error("Invalid output format '%s'", format);
 
-	ret = io_init(&io, &p->io, IO_FLAG_FLUSH | (IO_FORMAT_ALL & ~IO_FORMAT_OFFSET));
+	ret = io_init(&io, &p->io, IO_FLUSH | (IO_FORMAT_ALL & ~IO_FORMAT_OFFSET));
 	if (ret)
 		error("Failed to initialize output");
 
-	ret = io_open(&io, NULL, NULL);
+	ret = io_open(&io, NULL);
 	if (ret)
 		error("Failed to open output");
 

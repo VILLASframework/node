@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include <ctype.h>
+#include <inttypes.h>
 #include <string.h>
 
 #include "io.h"
@@ -28,9 +29,9 @@
 #include "utils.h"
 #include "timing.h"
 #include "sample.h"
-#include "formats/villas.h"
+#include "io/villas.h"
 
-size_t io_format_villas_sprint_single(char *buf, size_t len, struct sample *s, int flags)
+size_t villas_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 {
 	size_t off = snprintf(buf, len, "%llu", (unsigned long long) s->ts.origin.tv_sec);
 
@@ -47,10 +48,10 @@ size_t io_format_villas_sprint_single(char *buf, size_t len, struct sample *s, i
 		for (int i = 0; i < s->length; i++) {
 			switch ((s->format >> i) & 0x1) {
 				case SAMPLE_DATA_FORMAT_FLOAT:
-					off += snprintf(buf + off, len - off, "\t%.6f", s->data[i].f);
+					off += snprintf(buf + off, len - off, "\t%.6lf", s->data[i].f);
 					break;
 				case SAMPLE_DATA_FORMAT_INT:
-					off += snprintf(buf + off, len - off, "\t%d", s->data[i].i);
+					off += snprintf(buf + off, len - off, "\t%" PRIi64, s->data[i].i);
 					break;
 			}
 		}
@@ -61,7 +62,7 @@ size_t io_format_villas_sprint_single(char *buf, size_t len, struct sample *s, i
 	return off;
 }
 
-size_t io_format_villas_sscan_single(const char *buf, size_t len, struct sample *s, int *flags)
+size_t villas_sscan_single(const char *buf, size_t len, struct sample *s, int *flags)
 {
 	char *end;
 	const char *ptr = buf;
@@ -151,27 +152,35 @@ size_t io_format_villas_sscan_single(const char *buf, size_t len, struct sample 
 	return end - buf;
 }
 
-size_t io_format_villas_sprint(char *buf, size_t len, struct sample *smps[], size_t cnt, int flags)
+int villas_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
 {
+	int i;
 	size_t off = 0;
 
-	for (int i = 0; i < cnt && off < len; i++)
-		off += io_format_villas_sprint_single(buf + off, len - off, smps[i], flags);
+	for (i = 0; i < cnt && off < len; i++)
+		off += villas_sprint_single(buf + off, len - off, smps[i], flags);
+	
+	if (wbytes)
+		*wbytes = off;
 
-	return off;
+	return i;
 }
 
-size_t io_format_villas_sscan(char *buf, size_t len, struct sample *smps[], size_t cnt, int *flags)
+int villas_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags)
 {
+	int i;
 	size_t off = 0;
 
-	for (int i = 0; i < cnt && off < len; i++)
-		off += io_format_villas_sscan_single(buf + off, len - off, smps[i], flags);
+	for (i = 0; i < cnt && off < len; i++)
+		off += villas_sscan_single(buf + off, len - off, smps[i], flags);
+	
+	if (rbytes)
+		*rbytes = off;
 
-	return off;
+	return i;
 }
 
-int io_format_villas_fscan_single(FILE *f, struct sample *s, int *flags)
+int villas_fscan_single(FILE *f, struct sample *s, int *flags)
 {
 	char *ptr, line[4096];
 
@@ -183,31 +192,29 @@ skip:	if (fgets(line, sizeof(line), f) == NULL)
 	if (*ptr == '\0' || *ptr == '#')
 		goto skip;
 
-	return io_format_villas_sscan_single(line, strlen(line), s, flags);
+	return villas_sscan_single(line, strlen(line), s, flags);
 }
 
-int io_format_villas_fprint(FILE *f, struct sample *smps[], size_t cnt, int flags)
+int villas_fprint_single(FILE *f, struct sample *s, int flags)
 {
+	int ret;
 	char line[4096];
-	int ret, i;
 
-	for (i = 0; i < cnt; i++) {
-		ret = io_format_villas_sprint_single(line, sizeof(line), smps[i], flags);
-		if (ret < 0)
-			break;
+	ret = villas_sprint_single(line, sizeof(line), s, flags);
+	if (ret < 0)
+		return ret;
+	
+	fputs(line, f);
 
-		fputs(line, f);
-	}
-
-	return i;
+	return 0;
 }
 
-int io_format_villas_fscan(FILE *f, struct sample *smps[], size_t cnt, int *flags)
+int villas_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 {
 	int ret, i;
 
 	for (i = 0; i < cnt; i++) {
-		ret = io_format_villas_fscan_single(f, smps[i], flags);
+		ret = villas_fprint_single(f, smps[i], flags);
 		if (ret < 0)
 			return ret;
 	}
@@ -215,11 +222,24 @@ int io_format_villas_fscan(FILE *f, struct sample *smps[], size_t cnt, int *flag
 	return i;
 }
 
-int io_format_villas_open(struct io *io, const char *uri, const char *mode)
+int villas_fscan(FILE *f, struct sample *smps[], unsigned cnt, int *flags)
+{
+	int ret, i;
+
+	for (i = 0; i < cnt; i++) {
+		ret = villas_fscan_single(f, smps[i], flags);
+		if (ret < 0)
+			return ret;
+	}
+
+	return i;
+}
+
+int villas_open(struct io *io, const char *uri)
 {
 	int ret;
 
-	ret = io_stream_open(io, uri, mode);
+	ret = io_stream_open(io, uri);
 	if (ret)
 		return ret;
 
@@ -229,7 +249,7 @@ int io_format_villas_open(struct io *io, const char *uri, const char *mode)
 
 	fprintf(f, "# %-20s\t\t%s\n", "sec.nsec+offset", "data[]");
 
-	if (io->flags & IO_FLAG_FLUSH)
+	if (io->flags & IO_FLUSH)
 		io_flush(io);
 
 	return 0;
@@ -238,14 +258,14 @@ int io_format_villas_open(struct io *io, const char *uri, const char *mode)
 static struct plugin p = {
 	.name = "villas",
 	.description = "VILLAS human readable format",
-	.type = PLUGIN_TYPE_FORMAT,
+	.type = PLUGIN_TYPE_IO,
 	.io = {
-		.open	= io_format_villas_open,
-		.fprint	= io_format_villas_fprint,
-		.fscan	= io_format_villas_fscan,
-		.sprint	= io_format_villas_sprint,
-		.sscan	= io_format_villas_sscan,
-		.size = 0
+		.open	= villas_open,
+		.fprint	= villas_fprint,
+		.fscan	= villas_fscan,
+		.sprint	= villas_sprint,
+		.sscan	= villas_sscan,
+		.size	= 0
 	}
 };
 

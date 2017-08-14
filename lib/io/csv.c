@@ -21,13 +21,14 @@
  *********************************************************************************/
 
 #include <ctype.h>
+#include <inttypes.h>
 
-#include "formats/csv.h"
+#include "io/csv.h"
 #include "plugin.h"
 #include "sample.h"
 #include "timing.h"
 
-int io_format_csv_fprint_single(FILE *f, struct sample *s, int flags)
+int csv_fprint_single(FILE *f, struct sample *s, int flags)
 {
 	fprintf(f, "%ld %09ld %d", s->ts.origin.tv_sec, s->ts.origin.tv_nsec, s->sequence);
 
@@ -37,7 +38,7 @@ int io_format_csv_fprint_single(FILE *f, struct sample *s, int flags)
 				fprintf(f, "%c%.6f", CSV_SEPARATOR, s->data[i].f);
 				break;
 			case SAMPLE_DATA_FORMAT_INT:
-				fprintf(f, "%c%d", CSV_SEPARATOR, s->data[i].i);
+				fprintf(f, "%c%" PRId64, CSV_SEPARATOR, s->data[i].i);
 				break;
 		}
 	}
@@ -47,7 +48,7 @@ int io_format_csv_fprint_single(FILE *f, struct sample *s, int flags)
 	return 0;
 }
 
-size_t io_format_csv_sscan_single(const char *buf, size_t len, struct sample *s, int *flags)
+size_t csv_sscan_single(const char *buf, size_t len, struct sample *s, int *flags)
 {
 	int ret, off;
 
@@ -59,10 +60,10 @@ size_t io_format_csv_sscan_single(const char *buf, size_t len, struct sample *s,
 	for (i = 0; i < s->capacity; i++) {
 		switch (s->format & (1 << i)) {
 			case SAMPLE_DATA_FORMAT_FLOAT:
-				ret = sscanf(buf + off, "%f %n", &s->data[i].f, &off);
+				ret = sscanf(buf + off, "%lf %n", &s->data[i].f, &off);
 				break;
 			case SAMPLE_DATA_FORMAT_INT:
-				ret = sscanf(buf + off, "%d %n", &s->data[i].i, &off);
+				ret = sscanf(buf + off, "%" PRId64 " %n", &s->data[i].i, &off);
 				break;
 		}
 
@@ -76,7 +77,7 @@ size_t io_format_csv_sscan_single(const char *buf, size_t len, struct sample *s,
 	return 0;
 }
 
-int io_format_csv_fscan_single(FILE *f, struct sample *s, int *flags)
+int csv_fscan_single(FILE *f, struct sample *s, int *flags)
 {
 	char *ptr, line[4096];
 
@@ -88,14 +89,14 @@ skip:	if (fgets(line, sizeof(line), f) == NULL)
 	if (*ptr == '\0' || *ptr == '#')
 		goto skip;
 
-	return io_format_csv_sscan_single(line, strlen(line), s, flags);
+	return csv_sscan_single(line, strlen(line), s, flags);
 }
 
-int io_format_csv_fprint(FILE *f, struct sample *smps[], size_t cnt, int flags)
+int csv_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 {
 	int ret, i;
 	for (i = 0; i < cnt; i++) {
-		ret = io_format_csv_fprint_single(f, smps[i], flags);
+		ret = csv_fprint_single(f, smps[i], flags);
 		if (ret < 0)
 			break;
 	}
@@ -103,11 +104,11 @@ int io_format_csv_fprint(FILE *f, struct sample *smps[], size_t cnt, int flags)
 	return i;
 }
 
-int io_format_csv_fscan(FILE *f, struct sample *smps[], size_t cnt, int *flags)
+int csv_fscan(FILE *f, struct sample *smps[], unsigned cnt, int *flags)
 {
 	int ret, i;
 	for (i = 0; i < cnt; i++) {
-		ret = io_format_csv_fscan_single(f, smps[i], flags);
+		ret = csv_fscan_single(f, smps[i], flags);
 		if (ret < 0) {
 			warn("Failed to read CSV line: %d", ret);
 			break;
@@ -120,10 +121,10 @@ int io_format_csv_fscan(FILE *f, struct sample *smps[], size_t cnt, int *flags)
 static struct plugin p = {
 	.name = "csv",
 	.description = "Tabulator-separated values",
-	.type = PLUGIN_TYPE_FORMAT,
+	.type = PLUGIN_TYPE_IO,
 	.io = {
-		.fprint	= io_format_csv_fprint,
-		.fscan	= io_format_csv_fscan,
+		.fprint	= csv_fprint,
+		.fscan	= csv_fscan,
 		.size = 0
 	}
 };

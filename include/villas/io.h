@@ -28,91 +28,10 @@
 
 /* Forward declarations */
 struct sample;
-struct io;
+struct io_format;
 
-/** These flags define the format which is used by io_fscan() and io_fprint(). */
 enum io_flags {
-	IO_FORMAT_NANOSECONDS	= (1 << 0), /**< Include nanoseconds in output. */
-	IO_FORMAT_OFFSET	= (1 << 1), /**< Include offset / delta between received and send timestamps. */
-	IO_FORMAT_SEQUENCE	= (1 << 2), /**< Include sequence number in output. */
-	IO_FORMAT_VALUES	= (1 << 3), /**< Include values in output. */
-	IO_FORMAT_ALL		= 16-1,     /**< Enable all output options. */
-	IO_FLAG_FLUSH		= (1 << 8), /**< Flush the output stream after each chunk of samples. */
-};
-
-struct io_format {
-	int (*init)(struct io *io);
-	int (*destroy)(struct io *io);
-
-	/** @{
-	 * High-level interface
-	 */
-
-	/** Open an IO stream.
-	 *
-	 * @see fopen()
-	 */
-	int (*open)(struct io *io, const char *uri, const char *mode);
-
-	/** Close an IO stream.
-	 *
-	 * @see fclose()
-	 */
-	int (*close)(struct io *io);
-
-	/** Check if end-of-file was reached.
-	 *
-	 * @see feof()
-	 */
-	int (*eof)(struct io *io);
-
-	/** Rewind an IO stream.
-	 *
-	 * @see rewind()
-	 */
-	void (*rewind)(struct io *io);
-
-	/** Flush buffered data to disk.
-	 *
-	 * @see fflush()
-	 */
-	int (*flush)(struct io *io);
-
-	int (*print)(struct io *io, struct sample *smps[], size_t cnt);
-	int (*scan)( struct io *io, struct sample *smps[], size_t cnt);
-	/** @} */
-
-	/** @{
-	 * Low-level interface
-	 */
-
-	/** Parse samples from the buffer \p buf with a length of \p len bytes.
-	 *
-	 * @return The number of bytes consumed of \p buf.
-	 */
-	size_t (*sscan)( char *buf, size_t len, struct sample *smps[], size_t cnt, int *flags);
-
-	/** Print \p cnt samples from \p smps into buffer \p buf of length \p len.
-	 *
-	 * @return The number of bytes written to \p buf.
-	 */
-	size_t (*sprint)(char *buf, size_t len, struct sample *smps[], size_t cnt, int flags);
-
-	/** Parse up to \p cnt samples from stream \p f into array \p smps.
-	 *
-	 * @return The number of samples parsed.
-	 */
-	int (*fscan)( FILE *f, struct sample *smps[], size_t cnt, int *flags);
-
-	/** Print \p cnt samples from \p smps to stream \p f.
-	 *
-	 * @return The number of samples written to \p f.
-	 */
-	int (*fprint)(FILE *f, struct sample *smps[], size_t cnt, int  flags);
-
-	/** @} */
-
-	size_t size; /**< Number of bytes to allocate for io::_vd */
+	IO_FLUSH		= (1 << 8) /**< Flush the output stream after each chunk of samples. */
 };
 
 struct io {
@@ -126,7 +45,7 @@ struct io {
 	} mode;
 
 	/** A format type can use this file handle or overwrite the
-	 * io_format::{open,close,eof,rewind} functions and the private
+	 * format::{open,close,eof,rewind} functions and the private
 	 * data in io::_vd.
 	 */
 	union {
@@ -140,6 +59,11 @@ struct io {
 		} advio;
 	};
 
+	struct {
+		char *input;
+		char *output;
+	} buffer;
+
 	void *_vd;
 	struct io_format *_vt;
 };
@@ -148,7 +72,7 @@ int io_init(struct io *io, struct io_format *fmt, int flags);
 
 int io_destroy(struct io *io);
 
-int io_open(struct io *io, const char *uri, const char *mode);
+int io_open(struct io *io, const char *uri);
 
 int io_close(struct io *io);
 
@@ -163,7 +87,7 @@ void io_rewind(struct io *io);
 int io_flush(struct io *io);
 
 
-int io_stream_open(struct io *io, const char *uri, const char *mode);
+int io_stream_open(struct io *io, const char *uri);
 
 int io_stream_close(struct io *io);
 

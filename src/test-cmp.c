@@ -29,7 +29,8 @@
 
 #include <villas/sample.h>
 #include <villas/io.h>
-#include <villas/formats/villas.h>
+#include <villas/io_format.h>
+#include <villas/io/villas.h>
 #include <villas/utils.h>
 #include <villas/timing.h>
 #include <villas/pool.h>
@@ -132,11 +133,11 @@ check:		if (optarg == endptr)
 		serror("Failed to open file: %s", f2.path);
 
 	while (!feof(f1.handle) && !feof(f2.handle)) {
-		ret = io_format_villas_fscan(f1.handle, &f1.sample, 1, &f1.flags);
+		ret = villas_fscan(f1.handle, &f1.sample, 1, &f1.flags);
 		if (ret < 0 && !feof(f1.handle))
 			goto out;
 
-		ret = io_format_villas_fscan(f2.handle, &f2.sample, 1, &f2.flags);
+		ret = villas_fscan(f2.handle, &f2.sample, 1, &f2.flags);
 		if (ret < 0 && !feof(f2.handle))
 			goto out;
 

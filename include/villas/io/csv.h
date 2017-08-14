@@ -1,6 +1,5 @@
-/** Linux specific real-time optimizations
+/** Comma-separated values.
  *
- * @see: https://wiki.linuxfoundation.org/realtime/documentation/howto/applications/application_base
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
@@ -22,25 +21,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga Kernel @{ */
-
 #pragma once
 
-int rt_init(int priority, int affinity);
+#include <stdio.h>
 
-int rt_set_affinity(int affinity);
+/* Forward declarations. */
+struct sample;
 
-int rt_set_priority(int priority);
+#define CSV_SEPARATOR '\t'
 
-int rt_lock_memory();
+int csv_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags);
 
-/** Checks for realtime (PREEMPT_RT) patched kernel.
- *
- * See https://rt.wiki.kernel.org
- *
- * @retval 0 Kernel is patched.
- * @reval <>0 Kernel is not patched.
- */
-int rt_is_preemptible();
-
-/** @} */
+int csv_fscan(FILE *f, struct sample *smps[], unsigned cnt, int *flags);

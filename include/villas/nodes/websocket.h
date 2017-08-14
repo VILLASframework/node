@@ -57,24 +57,31 @@ struct websocket {
 
 /* Internal datastructures */
 struct websocket_connection {
-	struct node *node;
-	struct lws *wsi;
-
-	struct queue queue;			/**< For samples which are sent to the WebSocket */
-
-	struct {
-		char name[64];
-		char ip[64];
-	} peer;
-
+	enum state state;			/**< The current status of this connection. */
+	
 	enum {
 		WEBSOCKET_MODE_CLIENT,
 		WEBSOCKET_MODE_SERVER,
 	} mode;
 
-	enum state state;
+	struct lws *wsi;
+	struct node *node;
+	struct io_format *format;		/**< The IO format used for this connection. */
+	struct queue_signalled queue;		/**< For samples which are sent to the WebSocket */
 
-	char *buf;			/**< A buffer which is used to construct the messages. */
+	union {
+		/**< Only used in case websocket_connection::mode == WEBSOCKET_MODE_CLIENT  */
+		struct websocket_destination *destination;
+		
+		/**< Only used in case websocket_connection::mode == WEBSOCKET_MODE_SERVER  */
+		struct {
+			char name[64];
+			char ip[64];
+		} peer;
+	};
+	
+	char *buf;				/**< A buffer which is used to construct the messages. */
+	size_t buflen;				/**< Length of websocket_connection::buf. */
 
 	char *_name;
 };

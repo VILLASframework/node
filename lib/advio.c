@@ -247,14 +247,19 @@ int afclose(AFILE *af)
 	int ret;
 
 	ret = afflush(af);
-
+	if (ret)
+		return ret;
+	
 	curl_easy_cleanup(af->curl);
-	fclose(af->file);
+
+	ret = fclose(af->file);
+	if (ret)
+		return ret;
 
 	free(af->uri);
 	free(af);
 
-	return ret;
+	return 0;
 }
 
 int afseek(AFILE *af, long offset, int origin)

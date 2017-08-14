@@ -27,10 +27,11 @@
 #endif
 
 #include "nodes/zeromq.h"
+#include "node.h"
 #include "utils.h"
 #include "queue.h"
 #include "plugin.h"
-#include "formats/msg.h"
+#include "io_format.h"
 
 static void *context;
 
@@ -97,6 +98,7 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	const char *ep = NULL;
 	const char *type = NULL;
 	const char *filter = NULL;
+	const char *format = "villas";
 
 	size_t index;
 	json_t *cfg_pub = NULL;
@@ -109,19 +111,24 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	z->curve.enabled = false;
 	z->ipv6 = 0;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: o, s?: o, s?: s, s?: s, s?: b }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: o, s?: o, s?: s, s?: s, s?: b, s?: s }",
 		"subscribe", &ep,
 		"publish", &cfg_pub,
 		"curve", &cfg_curve,
 		"filter", &filter,
 		"pattern", &type,
-		"ipv6", &z->ipv6
+		"ipv6", &z->ipv6,
+		"format", &format
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 	z->subscriber.endpoint = ep ? strdup(ep) : NULL;
 	z->filter = filter ? strdup(filter) : NULL;
+	
+	z->format = io_format_lookup(format);
+	if (!z->format)
+		error("Invalid format '%s' for node %s", format, node_name(n));
 
 	if (cfg_pub) {
 		switch (json_typeof(cfg_pub)) {
@@ -202,7 +209,13 @@ char * zeromq_print(struct node *n)
 #endif
 	}
 
-	strcatf(&buf, "pattern=%s, ipv6=%s, crypto=%s, subscribe=%s, publish=[ ", pattern, z->ipv6 ? "yes" : "no", z->curve.enabled ? "yes" : "no", z->subscriber.endpoint);
+	strcatf(&buf, "format=%s, pattern=%s, ipv6=%s, crypto=%s, subscribe=%s, publish=[ ",
+		plugin_name(z->format),
+		pattern,
+		z->ipv6 ? "yes" : "no",
+		z->curve.enabled ? "yes" : "no",
+		z->subscriber.endpoint
+	);
 
 	for (size_t i = 0; i < list_length(&z->publisher.endpoints); i++) {
 		char *ep = list_at(&z->publisher.endpoints, i);
@@ -416,7 +429,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (ret < 0)
 		return ret;
 
-	recv = msg_buffer_to_samples(smps, cnt, zmq_msg_data(&m), zmq_msg_size(&m));
+	recv = io_format_sscan(z->format, zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, cnt, NULL);
 
 	ret = zmq_msg_close(&m);
 	if (ret)
@@ -430,16 +443,16 @@ int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt)
 	int ret;
 	struct zeromq *z = n->_vd;
 
-	ssize_t sent;
+	size_t wbytes;
 	zmq_msg_t m;
 
 	char data[1500];
 
-	sent = msg_buffer_from_samples(smps, cnt, data, sizeof(data));
-	if (sent < 0)
+	ret = io_format_sprint(z->format, data, sizeof(data), &wbytes, smps, cnt, IO_FORMAT_ALL);
+	if (ret <= 0)
 		return -1;
 
-	ret = zmq_msg_init_size(&m, sent);
+	ret = zmq_msg_init_size(&m, wbytes);
 
 	if (z->filter) {
 		switch (z->pattern) {
@@ -457,7 +470,7 @@ int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt)
 		}
 	}
 
-	memcpy(zmq_msg_data(&m), data, sent);
+	memcpy(zmq_msg_data(&m), data, wbytes);
 
 	ret = zmq_msg_send(&m, z->publisher.socket, 0);
 	if (ret < 0)

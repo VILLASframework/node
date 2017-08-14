@@ -21,9 +21,9 @@
  *********************************************************************************/
 
 #include "plugin.h"
-#include "formats/json.h"
+#include "io/json.h"
 
-int io_format_json_pack(json_t **j, struct sample *s, int flags)
+int json_pack_sample(json_t **j, struct sample *s, int flags)
 {
 	json_error_t err;
 	json_t *json_data = json_array();
@@ -50,7 +50,7 @@ int io_format_json_pack(json_t **j, struct sample *s, int flags)
 	return 0;
 }
 
-int io_format_json_unpack(json_t *j, struct sample *s, int *flags)
+int json_unpack_sample(json_t *j, struct sample *s, int *flags)
 {
 	int ret, i;
 	json_t *json_data, *json_value;
@@ -90,14 +90,14 @@ int io_format_json_unpack(json_t *j, struct sample *s, int *flags)
 	return 0;
 }
 
-size_t io_format_json_sprint(char *buf, size_t len, struct sample *smps[], size_t cnt, int flags)
+int json_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
 {
 	int i, ret;
 	json_t *json;
 	size_t wr, off = 0;
 
 	for (i = 0; i < cnt; i++) {
-		ret = io_format_json_pack(&json, smps[i], flags);
+		ret = json_pack_sample(&json, smps[i], flags);
 		if (ret)
 			return ret;
 
@@ -114,7 +114,7 @@ size_t io_format_json_sprint(char *buf, size_t len, struct sample *smps[], size_
 	return i;
 }
 
-size_t io_format_json_sscan(char *buf, size_t len, struct sample *smps[], size_t cnt, int *flags)
+int json_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags)
 {
 	int i, ret;
 	json_t *json;
@@ -128,7 +128,7 @@ size_t io_format_json_sscan(char *buf, size_t len, struct sample *smps[], size_t
 
 		off += err.position;
 
-		ret = io_format_json_unpack(json, smps[i], flags);
+		ret = json_unpack_sample(json, smps[i], flags);
 
 		json_decref(json);
 
@@ -139,13 +139,13 @@ size_t io_format_json_sscan(char *buf, size_t len, struct sample *smps[], size_t
 	return i;
 }
 
-int io_format_json_fprint(FILE *f, struct sample *smps[], size_t cnt, int flags)
+int json_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 {
 	int ret, i;
 	json_t *json;
 
 	for (i = 0; i < cnt; i++) {
-		ret = io_format_json_pack(&json, smps[i], flags);
+		ret = json_pack_sample(&json, smps[i], flags);
 		if (ret)
 			return ret;
 
@@ -158,7 +158,7 @@ int io_format_json_fprint(FILE *f, struct sample *smps[], size_t cnt, int flags)
 	return i;
 }
 
-int io_format_json_fscan(FILE *f, struct sample *smps[], size_t cnt, int *flags)
+int json_fscan(FILE *f, struct sample *smps[], unsigned cnt, int *flags)
 {
 	int i, ret;
 	json_t *json;
@@ -169,7 +169,7 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 		if (!json)
 			break;
 
-		ret = io_format_json_unpack(json, smps[i], flags);
+		ret = json_unpack_sample(json, smps[i], flags);
 		if (ret)
 			goto skip;
 
@@ -182,12 +182,12 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 static struct plugin p = {
 	.name = "json",
 	.description = "Javascript Object Notation",
-	.type = PLUGIN_TYPE_FORMAT,
+	.type = PLUGIN_TYPE_IO,
 	.io = {
-		.fscan	= io_format_json_fscan,
-		.fprint	= io_format_json_fprint,
-		.sscan	= io_format_json_sscan,
-		.sprint	= io_format_json_sprint,
+		.fscan	= json_fscan,
+		.fprint	= json_fprint,
+		.sscan	= json_sscan,
+		.sprint	= json_sprint,
 		.size = 0
 	},
 };

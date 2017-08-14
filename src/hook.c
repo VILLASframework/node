@@ -93,7 +93,7 @@ static void usage()
 	printf("\n");
 
 	printf("Supported IO formats:\n");
-	plugin_dump(PLUGIN_TYPE_FORMAT);
+	plugin_dump(PLUGIN_TYPE_IO);
 	printf("\n");
 
 	printf("Example:");
@@ -105,10 +105,8 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	int ret;
+	int ret, recv;
 	char *format = "villas";
-
-	size_t recv;
 
 	/* Default values */
 	cnt = 1;
@@ -178,7 +176,7 @@ check:		if (optarg == endptr)
 		error("Failed to initilize memory pool");
 
 	/* Initialize IO */
-	p = plugin_lookup(PLUGIN_TYPE_FORMAT, format);
+	p = plugin_lookup(PLUGIN_TYPE_IO, format);
 	if (!p)
 		error("Unknown IO format '%s'", format);
 
@@ -186,7 +184,7 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to initialize IO");
 
-	ret = io_open(&io, NULL, NULL);
+	ret = io_open(&io, NULL);
 	if (ret)
 		error("Failed to open IO");
 
@@ -218,11 +216,13 @@ check:		if (optarg == endptr)
 			error("Failed to allocate %d smps from pool", cnt);
 
 		recv = io_scan(&io, smps, cnt);
+		if (recv < 0)
+			killme(SIGTERM);
 
-		debug(15, "Read %zu smps from stdin", recv);
+		debug(15, "Read %u smps from stdin", recv);
 
-		hook_read(&h, smps, &recv);
-		hook_write(&h, smps, &recv);
+		hook_read(&h, smps, (unsigned *) &recv);
+		hook_write(&h, smps, (unsigned *) &recv);
 
 		io_print(&io, smps, recv);
 

@@ -30,18 +30,25 @@
 #pragma once
 
 #include <stdint.h>
+#include <jansson.h>
 
-#include "node.h"
 #include "list.h"
 
 #if ZMQ_VERSION_MAJOR > 4 || (ZMQ_VERSION_MAJOR == 4 && ZMQ_VERSION_MINOR >= 2)
   #define ZMQ_BUILD_DISH 1
 #endif
 
+/* Forward declarations */
+struct io_format;
+struct node;
+struct sample;
+
 struct zeromq {
 	int ipv6;
 
 	char *filter;
+
+	struct io_format *format;
 
 	struct {
 		int enabled;

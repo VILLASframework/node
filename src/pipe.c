@@ -270,7 +270,7 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to initalize real-time");
 
-	p = plugin_lookup(PLUGIN_TYPE_FORMAT, format);
+	p = plugin_lookup(PLUGIN_TYPE_IO, format);
 	if (!p)
 		error("Invalid format: %s", format);
 
@@ -278,7 +278,7 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to initialize IO");
 
-	ret = io_open(&io, NULL, NULL);
+	ret = io_open(&io, NULL);
 	if (ret)
 		error("Failed to open IO");
 

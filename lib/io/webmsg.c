@@ -26,6 +26,7 @@
   #include <endian.h>
 #endif
 
+#include "sample.h"
 #include "plugin.h"
 #include "formats/webmsg.h"
 #include "formats/webmsg_format.h"
@@ -74,11 +75,106 @@ int webmsg_verify(struct webmsg *m)
 		return 0;
 }
 
+int webmsg_to_sample(struct webmsg *msg, struct sample *smp)
+{
+	int ret;
+
+	webmsg_ntoh(msg);
+
+	ret = webmsg_verify(msg);
+	if (ret)
+		return -1;
+
+	smp->length = MIN(msg->length, smp->capacity);
+	smp->sequence = msg->sequence;
+	smp->id = msg->id;
+	smp->ts.origin = WEBMSG_TS(msg);
+	smp->ts.received.tv_sec  = -1;
+	smp->ts.received.tv_nsec = -1;
+
+	memcpy(smp->data, msg->data, SAMPLE_DATA_LEN(smp->length));
+
+	return 0;
+}
+
+int webmsg_from_sample(struct webmsg *msg, struct sample *smp)
+{
+	*msg = WEBMSG_INIT(smp->length, smp->sequence);
+
+	msg->id = smp->id;
+	msg->ts.sec  = smp->ts.origin.tv_sec;
+	msg->ts.nsec = smp->ts.origin.tv_nsec;
+
+	memcpy(msg->data, smp->data, WEBMSG_DATA_LEN(smp->length));
+
+	msg_hton(msg);
+
+	return 0;
+}
+
+size_t io_format_webmsg_length(struct sample *smps[], size_t cnt)
+{
+	size_t sz = 0;
+
+	for (int i = 0; i < cnt; i++)
+		sz += WEBMSG_LEN(smps[i]->length);
+
+	return sz;
+}
+
+size_t io_format_webmsg_sprint(char *buf, size_t len, struct sample *smps[], size_t cnt, int flags)
+{
+	int ret, i = 0;
+	char *ptr = buf;
+
+	struct webmsg *msg = (struct webmsg *) ptr;
+	struct sample *smp = smps[i];
+
+	while (ptr < buf + len && i < cnt) {
+		ret = webmsg_from_sample(msg, smp);
+		if (ret)
+			return ret;
+
+		ptr += WEBMSG_LEN(smp->length);
+
+		msg = (struct webmsg *) ptr;
+		smp = smps[++i];
+	}
+
+	return ptr - buf;
+}
+
+size_t io_format_webmsg_sscan(char *buf, size_t len, struct sample *smps[], size_t cnt, int *flags)
+{
+	int ret, i = 0;
+	char *ptr = buf;
+
+	struct webmsg *msg = (struct webmsg *) ptr;
+	struct sample *smp = smps[i];
+
+	while (ptr < buf + len && i < cnt) {
+		ret = webmsg_to_sample(msg, smp);
+		if (ret)
+			return ret;
+
+		ptr += WEBMSG_LEN(smp->length);
+
+		msg = (struct webmsg *) ptr;
+		smp = smps[++i];
+	}
+
+	return i;
+}
+
 static struct plugin p = {
 	.name = "webmsg",
 	.description = "VILLAS binary format for websockets",
 	.type = PLUGIN_TYPE_FORMAT,
-	.io = {
+	.format = {
+		.length	= io_format_webmsg_length,
+		.sprint	= io_format_webmsg_sprint,
+		.sscan	= io_format_webmsg_sscan,
+		.flags	= IO_FORMAT_BINARY,
 		.size = 0
 	},
 };

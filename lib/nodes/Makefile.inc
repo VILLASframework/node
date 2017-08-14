@@ -24,9 +24,9 @@ LIB_SRCS += $(addprefix lib/nodes/, cbuilder.c loopback.c)
 
 ifeq ($(PLATFORM),Linux)
 	WITH_FPGA     ?= 1
-	WITH_TEST_RTT ?= 1
 endif
 
+WITH_TEST_RTT  ?= 0
 WITH_FILE      ?= 1
 WITH_SIGNAL    ?= 1
 WITH_NGSI      ?= 1
@@ -91,7 +91,6 @@ endif
 # Enable Socket node type when libnl3 is available
 ifeq ($(WITH_SOCKET),1)
 	LIB_SRCS    += lib/nodes/socket.c
-	LIB_SRCS    += lib/formats/msg.c
 	LIB_CFLAGS  += -DWITH_SOCKET
 
 	# libnl3 is optional but required for network emulation and IRQ pinning
@@ -136,7 +135,6 @@ endif
 ifeq ($(WITH_WEBSOCKET),1)
 ifeq ($(shell $(PKGCONFIG) libwebsockets jansson; echo $$?),0)
 	LIB_SRCS    += lib/nodes/websocket.c
-	LIB_SRCS    += lib/formats/webmsg.c
 	LIB_PKGS    += libwebsockets jansson
 	LIB_CFLAGS  += -DWITH_WEBSOCKET
 endif

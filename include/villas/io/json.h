@@ -26,10 +26,10 @@
 
 #include "sample.h"
 
-int io_format_json_pack(json_t **j, struct sample *s, int flags);
+int json_pack_sample(json_t **j, struct sample *s, int flags);
 
-int io_format_json_unpack(json_t *j, struct sample *s, int *flags);
+int json_unpack_sample(json_t *j, struct sample *s, int *flags);
 
-int io_format_json_fprint(FILE *f, struct sample *smps[], size_t cnt, int flags);
+int json_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags);
 
-int io_format_json_fscan(FILE *f, struct sample *smps[], size_t cnt, int *flags);
+int json_fscan(FILE *f, struct sample *smps[], unsigned cnt, int *flags);

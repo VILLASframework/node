@@ -89,7 +89,7 @@ static void usage()
 	printf("\n");
 
 	printf("Supported IO formats:\n");
-	plugin_dump(PLUGIN_TYPE_FORMAT);
+	plugin_dump(PLUGIN_TYPE_IO);
 	printf("\n");
 
 	print_copyright();

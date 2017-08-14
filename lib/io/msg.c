@@ -20,11 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <arpa/inet.h>
 #include <string.h>
 
-#include "formats/msg.h"
-#include "formats/msg_format.h"
+#include "io/msg.h"
+#include "io/msg_format.h"
 #include "sample.h"
 #include "utils.h"
 #include "plugin.h"
@@ -85,11 +84,18 @@ int msg_to_sample(struct msg *msg, struct sample *smp)
 
 	smp->length = MIN(msg->length, smp->capacity);
 	smp->sequence = msg->sequence;
+	smp->id = msg->id;
 	smp->ts.origin = MSG_TS(msg);
 	smp->ts.received.tv_sec  = -1;
 	smp->ts.received.tv_nsec = -1;
+	smp->format = 0;
 
-	memcpy(smp->data, msg->data, SAMPLE_DATA_LEN(smp->length));
+	for (int i = 0; i < smp->length; i++) {
+		switch (sample_get_data_format(smp, i)) {
+			case SAMPLE_DATA_FORMAT_FLOAT: smp->data[i].f = msg->data[i].f; break;
+			case SAMPLE_DATA_FORMAT_INT:   smp->data[i].i = msg->data[i].i; break;
+		}
+	}
 
 	return 0;
 }
@@ -100,54 +106,71 @@ int msg_from_sample(struct msg *msg, struct sample *smp)
 
 	msg->ts.sec  = smp->ts.origin.tv_sec;
 	msg->ts.nsec = smp->ts.origin.tv_nsec;
+	msg->id = smp->id;
 
-	memcpy(msg->data, smp->data, MSG_DATA_LEN(smp->length));
+	for (int i = 0; i < smp->length; i++) {
+		switch (sample_get_data_format(smp, i)) {
+			case SAMPLE_DATA_FORMAT_FLOAT: msg->data[i].f = smp->data[i].f; break;
+			case SAMPLE_DATA_FORMAT_INT:   msg->data[i].i = smp->data[i].i; break;
+		}
+	}
 
 	msg_hton(msg);
 
 	return 0;
 }
 
-ssize_t msg_buffer_from_samples(struct sample *smps[], unsigned cnt, char *buf, size_t len)
+int msg_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
 {
 	int ret, i = 0;
 	char *ptr = buf;
 
-	struct msg *msg = (struct msg *) ptr;
-	struct sample *smp = smps[i];
+	for (i = 0; i < cnt; i++) {
+		if (ptr + MSG_LEN(smps[i]->length) > buf + len)
+			break;
 
-	while (ptr < buf + len && i < cnt) {
-		ret = msg_from_sample(msg, smp);
+		ret = msg_from_sample((struct msg *) ptr, smps[i]);
 		if (ret)
 			return ret;
 
-		ptr += MSG_LEN(smp->length);
-
-		msg = (struct msg *) ptr;
-		smp = smps[++i];
+		ptr += MSG_LEN(smps[i]->length);
 	}
+	
+	if (wbytes)
+		*wbytes = ptr - buf;
 
-	return ptr - buf;
+	return i;
 }
 
-int msg_buffer_to_samples(struct sample *smps[], unsigned cnt, char *buf, size_t len)
+int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags)
 {
 	int ret, i = 0;
 	char *ptr = buf;
 
-	struct msg *msg = (struct msg *) ptr;
-	struct sample *smp = smps[i];
-
-	while (ptr < buf + len && i < cnt) {
-		ret = msg_to_sample(msg, smp);
+	for (i = 0; i < cnt; i++) {
+		struct msg *msg = (struct msg *) ptr;
+		
+		/* Check if length field is still in buffer bounaries */
+		if ((char *) &msg->length + sizeof(msg->length) > buf + len) {
+			warn("Invalid msg received: reason=1");
+			break;
+		}
+		
+		/* Check if remainder of message is in buffer boundaries */
+		if (ptr + MSG_LEN(ntohs(msg->length)) > buf + len) {
+			warn("Invalid msg received: reason=2, msglen=%zu, len=%zu, ptr=%p, buf+%p, i=%u", MSG_LEN(ntohs(msg->length)), len, ptr, buf, i);
+			break;
+		}
+		
+		ret = msg_to_sample((struct msg *) ptr, smps[i]);
 		if (ret)
 			return ret;
 
-		ptr += MSG_LEN(smp->length);
-
-		msg = (struct msg *) ptr;
-		smp = smps[++i];
+		ptr += MSG_LEN(smps[i]->length);
 	}
+	
+	if (rbytes)
+		*rbytes = ptr - buf;
 
 	return i;
 }
@@ -155,9 +178,12 @@ int msg_buffer_to_samples(struct sample *smps[], unsigned cnt, char *buf, size_t
 static struct plugin p = {
 	.name = "msg",
 	.description = "VILLAS binary network format",
-	.type = PLUGIN_TYPE_FORMAT,
+	.type = PLUGIN_TYPE_IO,
 	.io = {
-		.size = 0
+		.sprint	= msg_sprint,
+		.sscan	= msg_sscan,
+		.size	= 0,
+		.flags	= IO_FORMAT_BINARY
 	},
 };
 

@@ -1,6 +1,5 @@
-/** Comma-separated values.
+/** Read / write sample data in different formats.
  *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -21,15 +20,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#pragma once
-
+#include <stdlib.h>
 #include <stdio.h>
 
-/* Forward declarations. */
-struct sample;
+#include "io_format.h"
 
-#define CSV_SEPARATOR '\t'
+int io_format_sscan(struct io_format *fmt, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags)
+{
+	return fmt->sscan ? fmt->sscan(buf, len, rbytes, smps, cnt, flags) : -1;
+}
 
-int io_format_csv_fprint(FILE *f, struct sample *smps[], size_t cnt, int flags);
+int io_format_sprint(struct io_format *fmt, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
+{
+	return fmt->sprint ? fmt->sprint(buf, len, wbytes, smps, cnt, flags) : -1;
+}
 
-int io_format_csv_fscan(FILE *f, struct sample *smps[], size_t cnt, int *flags);
+int io_format_fscan(struct io_format *fmt, FILE *f, struct sample *smps[], unsigned cnt, int *flags)
+{
+	return fmt->sprint ? fmt->fscan(f, smps, cnt, flags) : -1;
+}
+
+int io_format_fprint(struct io_format *fmt, FILE *f, struct sample *smps[], unsigned cnt, int flags)
+{
+	return fmt->fprint ? fmt->fprint(f, smps, cnt, flags) : -1;
+}

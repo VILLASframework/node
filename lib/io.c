@@ -24,15 +24,17 @@
 #include <stdio.h>
 
 #include "io.h"
+#include "io_format.h"
 #include "utils.h"
 #include "sample.h"
+#include "plugin.h"
 
 int io_init(struct io *io, struct io_format *fmt, int flags)
 {
 	io->_vt = fmt;
 	io->_vd = alloc(fmt->size);
 
-	io->flags = flags;
+	io->flags = flags | io->_vt->flags;
 
 	return io->_vt->init ? io->_vt->init(io) : 0;
 }
@@ -50,41 +52,43 @@ int io_destroy(struct io *io)
 	return 0;
 }
 
-int io_stream_open(struct io *io, const char *uri, const char *mode)
+int io_stream_open(struct io *io, const char *uri)
 {
 	int ret;
 
 	if (uri) {
 		if (aislocal(uri)) {
 			io->mode = IO_MODE_STDIO;
-
-			io->stdio.input  =
-			io->stdio.output = fopen(uri, mode);
-
+			
+			io->stdio.output = fopen(uri, "a+");
 			if (io->stdio.output == NULL)
 				return -1;
 
-			ret = setvbuf(io->stdio.output, NULL, _IOLBF, BUFSIZ);
-			if (ret)
+			io->stdio.input  = fopen(uri, "r");
+			if (io->stdio.input == NULL)
 				return -1;
 		}
 		else {
 			io->mode = IO_MODE_ADVIO;
 
-			io->advio.input  =
-			io->advio.output = afopen(uri, mode);
-
+			io->advio.output = afopen(uri, "a+");
 			if (io->advio.output == NULL)
+				return -1;
+
+			io->advio.input  = afopen(uri, "r");
+			if (io->advio.input == NULL)
 				return -1;
 		}
 	}
 	else {
 		io->mode = IO_MODE_STDIO;
-		io->flags |= IO_FLAG_FLUSH;
+		io->flags |= IO_FLUSH;
 
 		io->stdio.input  = stdin;
 		io->stdio.output = stdout;
-
+	}
+	
+	if (io->mode == IO_MODE_STDIO) {
 		ret = setvbuf(io->stdio.input, NULL, _IOLBF, BUFSIZ);
 		if (ret)
 			return -1;
@@ -99,11 +103,34 @@ int io_stream_open(struct io *io, const char *uri, const char *mode)
 
 int io_stream_close(struct io *io)
 {
+	int ret;
+
 	switch (io->mode) {
 		case IO_MODE_ADVIO:
-			return afclose(io->advio.input);
+			ret = afclose(io->advio.input);
+			if (ret)
+				return ret;
+
+			ret = afclose(io->advio.output);
+			if (ret)
+				return ret;
+
+			return 0;
+
 		case IO_MODE_STDIO:
-			return io->stdio.input != stdin ? fclose(io->stdio.input) : 0;
+			if (io->stdio.input == stdin)
+				return 0;
+
+			ret = fclose(io->stdio.input);
+			if (ret)
+				return ret;
+
+			ret = fclose(io->stdio.output);
+			if (ret)
+				return ret;
+
+			return 0;
+
 		case IO_MODE_CUSTOM:
 			return 0;
 	}
@@ -150,11 +177,11 @@ void io_stream_rewind(struct io *io)
 	}
 }
 
-int io_open(struct io *io, const char *uri, const char *mode)
+int io_open(struct io *io, const char *uri)
 {
 	return io->_vt->open
-		? io->_vt->open(io, uri, mode)
-		: io_stream_open(io, uri, mode);
+		? io->_vt->open(io, uri)
+		: io_stream_open(io, uri);
 }
 
 int io_close(struct io *io)
@@ -195,11 +222,26 @@ int io_print(struct io *io, struct sample *smps[], size_t cnt)
 		FILE *f = io->mode == IO_MODE_ADVIO
 				? io->advio.output->file
 				: io->stdio.output;
+		
+		//flockfile(f);
 
-		ret = io->_vt->fprint(f, smps, cnt, io->flags);
+		if (io->_vt->fprint)
+			ret = io->_vt->fprint(f, smps, cnt, io->flags);
+		else if (io->_vt->sprint) {
+			char buf[4096];
+			size_t wbytes;
+
+			ret = io->_vt->sprint(buf, sizeof(buf), &wbytes, smps, cnt, io->flags);
+
+			fwrite(buf, wbytes, 1, f);
+		}
+		else
+			ret = -1;
+		
+		//funlockfile(f);
 	}
 
-	if (io->flags & IO_FLAG_FLUSH)
+	if (io->flags & IO_FLUSH)
 		io_flush(io);
 
 	return ret;
@@ -207,13 +249,45 @@ int io_print(struct io *io, struct sample *smps[], size_t cnt)
 
 int io_scan(struct io *io, struct sample *smps[], size_t cnt)
 {
+	int ret;
+
 	if (io->_vt->scan)
-		return io->_vt->scan(io, smps, cnt);
+		ret = io->_vt->scan(io, smps, cnt);
 	else {
 		FILE *f = io->mode == IO_MODE_ADVIO
 				? io->advio.input->file
 				: io->stdio.input;
+		
+		//flockfile(f);
+		
+		int flags = io->flags;
 
-		return io->_vt->fscan(f, smps, cnt, NULL);
+		if (io->_vt->fscan)
+			return io->_vt->fscan(f, smps, cnt, &flags);
+		else if (io->_vt->sscan) {
+			size_t bytes, rbytes;
+			char buf[4096];
+
+			bytes = fread(buf, 1, sizeof(buf), f);
+
+			ret = io->_vt->sscan(buf, bytes, &rbytes, smps, cnt, &flags);
+		}
+		else
+			ret = -1;
+		
+		//funlockfile(f);
 	}
+	
+	return ret;
+}
+
+struct io_format * io_format_lookup(const char *name)
+{
+	struct plugin *p;
+	
+	p = plugin_lookup(PLUGIN_TYPE_IO, name);
+	if (!p)
+		return NULL;
+	
+	return &p->io;
 }

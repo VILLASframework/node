@@ -27,7 +27,7 @@
 #include "plugin.h"
 #include "nodes/nanomsg.h"
 #include "utils.h"
-#include "formats/msg.h"
+#include "io_format.h"
 
 int nanomsg_reverse(struct node *n)
 {
@@ -82,6 +82,8 @@ int nanomsg_parse(struct node *n, json_t *cfg)
 	int ret;
 	struct nanomsg *m = n->_vd;
 
+	const char *format = "villas";
+
 	json_error_t err;
 
 	json_t *cfg_pub = NULL;
@@ -90,9 +92,10 @@ int nanomsg_parse(struct node *n, json_t *cfg)
 	list_init(&m->publisher.endpoints);
 	list_init(&m->subscriber.endpoints);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: s }",
 		"publish", &cfg_pub,
-		"subscribe", &cfg_sub
+		"subscribe", &cfg_sub,
+		"format", &format
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
@@ -108,6 +111,10 @@ int nanomsg_parse(struct node *n, json_t *cfg)
 		if (ret < 0)
 			error("Invalid type for 'subscribe' setting of node %s", node_name(n));
 	}
+	
+	m->format = io_format_lookup(format);
+	if (!m->format)
+		error("Invalid format '%s' for node %s", format, node_name(n));
 
 	return 0;
 }
@@ -118,7 +125,7 @@ char * nanomsg_print(struct node *n)
 
 	char *buf = NULL;
 
-	strcatf(&buf, "subscribe=[ ");
+	strcatf(&buf, "format=%s, subscribe=[ ", plugin_name(m->format));
 
 	for (size_t i = 0; i < list_length(&m->subscriber.endpoints); i++) {
 		char *ep = list_at(&m->subscriber.endpoints, i);
@@ -207,17 +214,16 @@ int nanomsg_deinit()
 
 int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	int ret;
 	struct nanomsg *m = n->_vd;
-
-	char data[MSG_MAX_PACKET_LEN];
+	int bytes;
+	char data[NANOMSG_MAX_PACKET_LEN];
 
 	/* Receive payload */
-	ret = nn_recv(m->subscriber.socket, data, sizeof(data), 0);
-	if (ret < 0)
-		return ret;
+	bytes = nn_recv(m->subscriber.socket, data, sizeof(data), 0);
+	if (bytes < 0)
+		return -1;
 
-	return msg_buffer_to_samples(smps, cnt, data, ret);
+	return io_format_sscan(m->format, data, bytes, NULL, smps, cnt, NULL);
 }
 
 int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)
@@ -225,15 +231,15 @@ int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)
 	int ret;
 	struct nanomsg *m = n->_vd;
 
-	ssize_t sent;
+	size_t wbytes;
 
-	char data[MSG_MAX_PACKET_LEN];
+	char data[NANOMSG_MAX_PACKET_LEN];
 
-	sent = msg_buffer_from_samples(smps, cnt, data, sizeof(data));
-	if (sent < 0)
+	ret = io_format_sprint(m->format, data, sizeof(data), &wbytes, smps, cnt, IO_FORMAT_ALL);
+	if (ret <= 0)
 		return -1;
 
-	ret = nn_send(m->publisher.socket, data, sent, 0);
+	ret = nn_send(m->publisher.socket, data, wbytes, 0);
 	if (ret < 0)
 		return ret;
 

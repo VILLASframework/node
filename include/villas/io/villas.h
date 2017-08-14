@@ -27,10 +27,10 @@
 
 #include "io.h"
 
-int io_format_villas_print(struct io *io, struct sample *smps[], size_t cnt);
+int villas_print(struct io *io, struct sample *smps[], unsigned cnt);
 
-int io_format_villas_scan(struct io *io, struct sample *smps[], size_t cnt);
+int villas_scan(struct io *io, struct sample *smps[], unsigned cnt);
 
-int io_format_villas_fprint(FILE *f, struct sample *smps[], size_t cnt, int flags);
+int villas_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags);
 
-int io_format_villas_fscan(FILE *f, struct sample *smps[], size_t cnt, int *flags);
+int villas_fscan(FILE *f, struct sample *smps[], unsigned cnt, int *flags);

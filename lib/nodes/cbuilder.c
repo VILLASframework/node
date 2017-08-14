@@ -94,8 +94,15 @@ int cbuilder_read(struct node *n, struct sample *smps[], unsigned cnt)
 	pthread_mutex_lock(&cb->mtx);
 	while (cb->read >= cb->step)
 		pthread_cond_wait(&cb->cv, &cb->mtx);
+	
+	float data[smp->capacity];
 
-	smp->length = cb->model->read(&smp->data[0].f, 16);
+	smp->length = cb->model->read(data, smp->capacity);
+
+	/* Cast float -> double */
+	for (int i = 0; i < smp->length; i++)
+		smp->data[i].f = data[i];
+	
 	smp->sequence = cb->step;
 
 	cb->read = cb->step;
@@ -111,8 +118,10 @@ int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt)
 	struct sample *smp = smps[0];
 
 	pthread_mutex_lock(&cb->mtx);
+	
+	float flt = smp->data[0].f;
 
-	cb->model->write(&smp->data[0].f, smp->length);
+	cb->model->write(&flt, smp->length);
 	cb->model->code();
 
 	cb->step++;
