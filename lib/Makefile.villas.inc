@@ -71,7 +71,7 @@ install-libvillas: libvillas
 	install -m 0755 -D -T $(LIB) $(DESTDIR)$(PREFIX)/lib/$(LIB_NAME).so.$(LIB_ABI_VERSION)
 	install -m 0644 -D -t $(DESTDIR)$(PREFIX)/include/villas/ include/villas/*.h
 	ln -srf $(DESTDIR)$(PREFIX)/lib/$(LIB_NAME).so.$(LIB_ABI_VERSION) $(DESTDIR)$(PREFIX)/lib/$(LIB_NAME).so
-	ldconfig
+	if [ "$(PLATFORM)" == "Linux" ]; then ldconfig; fi
 
 clean-libvillas:
 	rm -f $(LIB)

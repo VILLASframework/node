@@ -23,13 +23,13 @@
 LIB_SRCS += $(addprefix lib/nodes/, cbuilder.c loopback.c)
 
 ifeq ($(PLATFORM),Linux)
-	WITH_FILE     ?= 1
-	WITH_SIGNAL   ?= 1
-	WITH_NGSI     ?= 1
 	WITH_FPGA     ?= 1
 	WITH_TEST_RTT ?= 1
 endif
 
+WITH_FILE      ?= 1
+WITH_SIGNAL    ?= 1
+WITH_NGSI      ?= 1
 WITH_WEBSOCKET ?= 1
 WITH_SOCKET    ?= 1
 WITH_ZEROMQ    ?= 1
