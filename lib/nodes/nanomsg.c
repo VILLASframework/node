@@ -194,11 +194,11 @@ int nanomsg_stop(struct node *n)
 	int ret;
 	struct nanomsg *m = n->_vd;
 
-	ret = nn_shutdown(m->subscriber.socket, 0);
+	ret = nn_close(m->subscriber.socket);
 	if (ret < 0)
 		return ret;
 
-	ret = nn_shutdown(m->publisher.socket, 0);
+	ret = nn_close(m->publisher.socket);
 	if (ret < 0)
 		return ret;
 
