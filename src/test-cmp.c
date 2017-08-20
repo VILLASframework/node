@@ -46,6 +46,9 @@ void usage()
 	printf("    -h      print this usage information\n");
 	printf("    -d LVL  adjust the debug level\n");
 	printf("    -e EPS  set epsilon for floating point comparisons to EPS\n");
+	printf("    -v      ignore data values\n");
+	printf("    -t      ignore timestamp\n");
+	printf("    -s      ignore sequence no\n");
 	printf("\n");
 	printf("Return codes:\n");
 	printf("  0   files are equal\n");
@@ -62,7 +65,12 @@ void usage()
 int main(int argc, char *argv[])
 {
 	int ret;
+	
+	/* Default values */
 	double epsilon = 1e-9;
+	int timestamp = 1;
+	int sequence = 1;
+	int data = 1;
 
 	struct log log;
 	struct pool pool = { .state = STATE_DESTROYED };
@@ -77,7 +85,7 @@ int main(int argc, char *argv[])
 
 	/* Parse Arguments */
 	char c, *endptr;
-	while ((c = getopt (argc, argv, "hjmd:e:l:H:r:")) != -1) {
+	while ((c = getopt (argc, argv, "hjmd:e:l:H:r:vts")) != -1) {
 		switch (c) {
 			case 'd':
 				log.level = strtoul(optarg, &endptr, 10);
@@ -85,6 +93,15 @@ int main(int argc, char *argv[])
 			case 'e':
 				epsilon = strtod(optarg, &endptr);
 				goto check;
+			case 'v':
+				data = 0;
+				break;
+			case 't':
+				timestamp = 0;
+				break;
+			case 's':
+				sequence = 0;
+				break;
 			case 'h':
 			case '?':
 				usage();
@@ -151,7 +168,7 @@ check:		if (optarg == endptr)
 		}
 
 		/* Compare sequence no */
-		if ((f1.flags & IO_FORMAT_SEQUENCE) && (f2.flags & IO_FORMAT_SEQUENCE)) {
+		if (sequence && (f1.flags & IO_FORMAT_SEQUENCE) && (f2.flags & IO_FORMAT_SEQUENCE)) {
 			if (f1.sample->sequence != f2.sample->sequence) {
 				printf("sequence no: %d != %d\n", f1.sample->sequence, f2.sample->sequence);
 				ret = 2;
@@ -160,24 +177,28 @@ check:		if (optarg == endptr)
 		}
 
 		/* Compare timestamp */
-		if (time_delta(&f1.sample->ts.origin, &f2.sample->ts.origin) > epsilon) {
-			printf("ts.origin: %f != %f\n", time_to_double(&f1.sample->ts.origin), time_to_double(&f2.sample->ts.origin));
-			ret = 3;
-			goto out;
+		if (timestamp) {
+			if (time_delta(&f1.sample->ts.origin, &f2.sample->ts.origin) > epsilon) {
+				printf("ts.origin: %f != %f\n", time_to_double(&f1.sample->ts.origin), time_to_double(&f2.sample->ts.origin));
+				ret = 3;
+				goto out;
+			}
 		}
 
 		/* Compare data */
-		if (f1.sample->length != f2.sample->length) {
-			printf("length: %d != %d\n", f1.sample->length, f2.sample->length);
-			ret = 4;
-			goto out;
-		}
-
-		for (int i = 0; i < f1.sample->length; i++) {
-			if (fabs(f1.sample->data[i].f - f2.sample->data[i].f) > epsilon) {
-				printf("data[%d]: %f != %f\n", i, f1.sample->data[i].f, f2.sample->data[i].f);
-				ret = 5;
+		if (data) {
+			if (f1.sample->length != f2.sample->length) {
+				printf("length: %d != %d\n", f1.sample->length, f2.sample->length);
+				ret = 4;
 				goto out;
+			}
+
+			for (int i = 0; i < f1.sample->length; i++) {
+				if (fabs(f1.sample->data[i].f - f2.sample->data[i].f) > epsilon) {
+					printf("data[%d]: %f != %f\n", i, f1.sample->data[i].f, f2.sample->data[i].f);
+					ret = 5;
+					goto out;
+				}
 			}
 		}
 	}
