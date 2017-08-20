@@ -171,7 +171,19 @@ static int advio_xferinfo(void *p, curl_off_t dl_total_bytes, curl_off_t dl_byte
 
 int aislocal(const char *uri)
 {
-	return access(uri, F_OK) != -1;
+	char *sep;
+	const char *supported_schemas[] = { "file", "http", "https", "tftp", "ftp", "scp", "sftp", "smb", "smbs" };
+	
+	sep = strstr(uri, "://");
+	if (!sep)
+		return 1; /* no schema, we assume its a local file */
+	
+	for (int i = 0; i < ARRAY_LEN(supported_schemas); i++) {
+		if (!strncmp(supported_schemas[i], uri, sep - uri))
+			return 0;
+	}
+	
+	return -1; /* none of the supported schemas match. this is an invalid uri */
 }
 
 AFILE * afopen(const char *uri, const char *mode)

@@ -26,22 +26,23 @@
 
 #include "utils.h"
 
-#include "periodic_task.h"
+#include "task.h"
 #include "timing.h"
 
 #if PERIODIC_TASK_IMPL == TIMERFD
   #include <sys/timerfd.h>
 #endif
 
-int periodic_task_init(struct periodic_task *t, double rate)
+int task_init(struct task *t, double rate, int clock)
 {
-	t->period = time_from_double(1.0 / rate);
+	t->clock = clock;
+	t->period = rate ? time_from_double(1.0 / rate) : (struct timespec) { 0, 0 };
 
 #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
 	struct timespec now;
 	
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	
+	clock_gettime(t->clock, &now);
+
 	t->next_period = time_add(&now, &t->period);
 #elif PERIODIC_TASK_IMPL == TIMERFD
 	int ret;
@@ -51,7 +52,7 @@ int periodic_task_init(struct periodic_task *t, double rate)
 		.it_value = t->period
 	};
 
-	t->fd = timerfd_create(CLOCK_MONOTONIC, 0);
+	t->fd = timerfd_create(t->clock, 0);
 	if (t->fd < 0)
 		return -1;
 
@@ -65,7 +66,7 @@ int periodic_task_init(struct periodic_task *t, double rate)
 	return 0;
 }
 
-int periodic_task_destroy(struct periodic_task *t)
+int task_destroy(struct task *t)
 {
 #if PERIODIC_TASK_IMPL == TIMERFD
 	return close(t->fd);
@@ -86,17 +87,17 @@ static int time_lt(const struct timespec *lhs, const struct timespec *rhs)
 }
 #endif
 
-uint64_t periodic_task_wait_until_next_period(struct periodic_task *t)
+uint64_t task_wait_until_next_period(struct task *t)
 {
 	uint64_t runs;
 	int ret;
 
 #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
-	ret = periodic_task_wait_until(t, &t->next_period);
+	ret = task_wait_until(t, &t->next_period);
 	
 	struct timespec now;
 	
-	ret = clock_gettime(CLOCK_MONOTONIC, &now);
+	ret = clock_gettime(t->clock, &now);
 	if (ret)
 		return 0;
 	
@@ -115,18 +116,18 @@ uint64_t periodic_task_wait_until_next_period(struct periodic_task *t)
 }
 
 
-int periodic_task_wait_until(struct periodic_task *t, const struct timespec *until)
+int task_wait_until(struct task *t, const struct timespec *until)
 {
 	int ret;
 
 #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP
-retry:	ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, until, NULL);
+retry:	ret = clock_nanosleep(t->clock, TIMER_ABSTIME, until, NULL);
 	if (ret == EINTR)
 		goto retry;
 #elif PERIODIC_TASK_IMPL == NANOSLEEP
 	struct timespec now, delta;
 
-	ret = clock_gettime(CLOCK_MONOTONIC, &now);
+	ret = clock_gettime(t->clock, &now);
 	if (ret)
 		return ret;
 
@@ -147,10 +148,10 @@ retry:	ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, until, NULL);
 
 	ret = read(t->fd, &runs, sizeof(runs));
 	if (ret < 0)
-		return 0;
+		return ret;
 #else
   #error "Invalid period task implementation"
 #endif
 	
-	return ret;
+	return 0;
 }

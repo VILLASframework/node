@@ -28,11 +28,25 @@
 #include <villas/utils.h>
 #include <villas/advio.h>
 #include <villas/sample.h>
-#include <villas/formats/villas.h>
+#include <villas/io/villas.h>
 
 /** This URI points to a Sciebo share which contains some test files.
  * The Sciebo share is read/write accessible via WebDAV. */
 #define BASE_URI "https://1Nrd46fZX8HbggT:badpass@rwth-aachen.sciebo.de/public.php/webdav/node/tests"
+
+Test(advio, islocal)
+{
+	int ret;
+	
+	ret = aislocal("/var/log/villas/dta.dat");
+	cr_assert_eq(ret, 1);
+	
+	ret = aislocal("http://www.google.de");
+	cr_assert_eq(ret, 0);
+
+	ret = aislocal("torrent://www.google.de");
+	cr_assert_eq(ret, -1);
+}
 
 Test(advio, local)
 {
@@ -81,7 +95,7 @@ Test(advio, download_large)
 	af = afopen(BASE_URI "/download-large" , "r");
 	cr_assert(af, "Failed to download file");
 
-	ret = io_format_villas_fscan(af->file, &smp, 1, NULL);
+	ret = villas_fscan(af->file, &smp, 1, NULL);
 	cr_assert_eq(ret, 1);
 
 	cr_assert_eq(smp->sequence, 0);

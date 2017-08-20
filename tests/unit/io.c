@@ -78,7 +78,7 @@ ParameterizedTestParameters(io, highlevel)
 		"json",
 		"msg",
 		"gtnet",
-		"gtnet-fake",
+		"gtnet-fake"
 	};
 
 	return cr_make_param_array(char[32], formats, ARRAY_LEN(formats));
@@ -125,6 +125,7 @@ ParameterizedTest(char *fmt, io, highlevel)
 	strncpy(dir, "/tmp/villas.XXXXXX", sizeof(dir));
 	
 	mkdtemp(dir);
+//	ret = asprintf(&fn, "file://%s/file", dir);
 	ret = asprintf(&fn, "%s/file", dir);
 	cr_assert_gt(ret, 0);
 
@@ -134,16 +135,16 @@ ParameterizedTest(char *fmt, io, highlevel)
 	ret = io_init(&io, f, IO_FORMAT_ALL);
 	cr_assert_eq(ret, 0);
 
-	ret = io_open(&io, fn, "w+");
+	ret = io_open(&io, fn);
 	cr_assert_eq(ret, 0);
 
 	ret = io_print(&io, smps, NUM_SAMPLES);
 	cr_assert_eq(ret, NUM_SAMPLES);
+	
+	ret = io_flush(&io);
+	cr_assert_eq(ret, 0);	
 
-	ret = io_close(&io);
-	cr_assert_eq(ret, 0);
-
-#if 1 /* Show the file contents */
+#if 0 /* Show the file contents */
 	char cmd[128];
 	if (!strcmp(fmt, "json") || !strcmp(fmt, "villas"))
 		snprintf(cmd, sizeof(cmd), "cat %s", fn);
@@ -152,10 +153,13 @@ ParameterizedTest(char *fmt, io, highlevel)
 	system(cmd);
 #endif
 	
-	ret = io_open(&io, fn, "r");
-	cr_assert_eq(ret, 0);
+	if (io.mode == IO_MODE_ADVIO)
+		adownload(io.advio.input, 0);
+
+	io_rewind(&io);
 
 	cnt = io_scan(&io, smpt, NUM_SAMPLES);
+	cr_assert_gt(cnt, 0, "Failed to read samples back");
 
 	/* The RAW format has certain limitations: 
 	 *  - limited accuracy if smaller datatypes are used
@@ -165,7 +169,7 @@ ParameterizedTest(char *fmt, io, highlevel)
 	 */
 	if (f->sscan == raw_sscan) {
 		cr_assert_eq(cnt, 1);
-		cr_assert_eq(smpt[0]->length, smpt[0]->capacity);
+		cr_assert_eq(smpt[0]->length, smpt[0]->capacity, "Expected values: %d, Received values: %d", smpt[0]->capacity, smpt[0]->length);
 		
 		if (io.flags & RAW_FAKE) {
 		}
