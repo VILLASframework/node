@@ -114,7 +114,6 @@ int main(int argc, char *argv[])
 	else if (argc > 2)
 		usage();
 #endif
-
 	info("This is VILLASnode %s (built on %s, %s)", CLR_BLD(CLR_YEL(BUILDID)),
 		CLR_BLD(CLR_MAG(__DATE__)), CLR_BLD(CLR_MAG(__TIME__)));
 
@@ -126,9 +125,6 @@ int main(int argc, char *argv[])
 #endif /* __linux__ */
 
 	signals_init(quit);
-	log_init(&sn.log, V, LOG_ALL);
-	log_start(&sn.log);
-
 	super_node_init(&sn);
 	super_node_parse_cli(&sn, argc, argv);
 	super_node_check(&sn);
