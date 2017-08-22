@@ -126,6 +126,8 @@ static const struct lws_extension extensions[] = {
 	{ NULL /* terminator */ }
 };
 
+extern struct log *global_log;
+
 static void logger(int level, const char *msg) {
 	int len = strlen(msg);
 	if (strchr(msg, '\n'))
@@ -136,10 +138,10 @@ static void logger(int level, const char *msg) {
 		level = LLL_WARN;
 
 	switch (level) {
-		case LLL_ERR:   warn("LWS: %.*s", len, msg); break;
-		case LLL_WARN:	warn("LWS: %.*s", len, msg); break;
-		case LLL_INFO:	info("LWS: %.*s", len, msg); break;
-		default:    debug(LOG_WEBSOCKET | 1, "LWS: %.*s", len, msg); break;
+		case LLL_ERR:   log_print(global_log, CLR_RED("Web"), "%.*s", len, msg); break;
+		case LLL_WARN:	log_print(global_log, CLR_YEL("Web"), "%.*s", len, msg); break;
+		case LLL_INFO:	log_print(global_log, CLR_WHT("Web"), "%.*s", len, msg); break;
+		default:        log_print(global_log,         "Web",  "%.*s", len, msg); break;
 	}
 }
 
