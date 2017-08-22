@@ -76,8 +76,6 @@ int msg_to_sample(struct msg *msg, struct sample *smp)
 {
 	int ret;
 
-	msg_ntoh(msg);
-
 	ret = msg_verify(msg);
 	if (ret)
 		return -1;
@@ -115,8 +113,6 @@ int msg_from_sample(struct msg *msg, struct sample *smp)
 		}
 	}
 
-	msg_hton(msg);
-
 	return 0;
 }
 
@@ -126,14 +122,23 @@ int msg_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 	char *ptr = buf;
 
 	for (i = 0; i < cnt; i++) {
-		if (ptr + MSG_LEN(smps[i]->length) > buf + len)
+		struct msg *msg = (struct msg *) ptr;
+		struct sample *smp = smps[i];
+		
+		if (ptr + MSG_LEN(smp->length) > buf + len)
 			break;
 
-		ret = msg_from_sample((struct msg *) ptr, smps[i]);
+		ret = msg_from_sample(msg, smp);
 		if (ret)
 			return ret;
 
-		ptr += MSG_LEN(smps[i]->length);
+		if (flags & MSG_WEB) {
+			/** @todo convert to little endian */
+		}
+		else
+			msg_hton(msg);
+
+		ptr += MSG_LEN(smp->length);
 	}
 	
 	if (wbytes)
@@ -154,6 +159,7 @@ int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 
 	for (i = 0; i < cnt; i++) {
 		struct msg *msg = (struct msg *) ptr;
+		struct sample *smp = smps[i];
 		
 		/* Check if length field is still in buffer bounaries */
 		if ((char *) &msg->length + sizeof(msg->length) > buf + len) {
@@ -166,12 +172,18 @@ int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 			warn("Invalid msg received: reason=2, msglen=%zu, len=%zu, ptr=%p, buf+%p, i=%u", MSG_LEN(ntohs(msg->length)), len, ptr, buf, i);
 			break;
 		}
-		
-		ret = msg_to_sample((struct msg *) ptr, smps[i]);
+
+		if (*flags & MSG_WEB) {
+			/** @todo convert to little endian */
+		}
+		else
+			msg_ntoh(msg);
+
+		ret = msg_to_sample((struct msg *) ptr, smp);
 		if (ret)
 			return ret;
 
-		ptr += MSG_LEN(smps[i]->length);
+		ptr += MSG_LEN(smp->length);
 	}
 	
 	if (rbytes)
@@ -180,7 +192,7 @@ int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 	return i;
 }
 
-static struct plugin p = {
+static struct plugin p1 = {
 	.name = "msg",
 	.description = "VILLAS binary network format",
 	.type = PLUGIN_TYPE_IO,
@@ -192,4 +204,17 @@ static struct plugin p = {
 	},
 };
 
-REGISTER_PLUGIN(&p);
+static struct plugin p2 = {
+	.name = "webmsg",
+	.description = "VILLAS binary network format for websockets",
+	.type = PLUGIN_TYPE_IO,
+	.io = {
+		.sprint	= msg_sprint,
+		.sscan	= msg_sscan,
+		.size	= 0,
+		.flags	= IO_FORMAT_BINARY | MSG_WEB
+	},
+};
+
+REGISTER_PLUGIN(&p1);
+REGISTER_PLUGIN(&p2);

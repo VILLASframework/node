@@ -30,6 +30,10 @@ struct msg;
 struct sample;
 struct io;
 
+enum msg_flags {
+	MSG_WEB	= (1 << 16) /**< Use webmsg format (everying little endian) */
+};
+
 /** Swaps the byte-order of the message.
  *
  * Message are always transmitted in network (big endian) byte order.
