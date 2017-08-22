@@ -267,7 +267,7 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 		strcatf(&buf, "%s", l->prefix);
 
 	/* Timestamp & Severity */
-	strcatf(&buf, "%10.3f %5s ", time_delta(&l->epoch, &ts), lvl);
+	strcatf(&buf, "%10.3f %-5s ", time_delta(&l->epoch, &ts), lvl);
 
 	/* Indention */
 #ifdef __GNUC__
