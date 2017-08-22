@@ -78,8 +78,8 @@ size_t villas_sscan_single(const char *buf, size_t len, struct sample *s, int *f
 
 	/* Mandatory: seconds */
 	s->ts.origin.tv_sec = (uint32_t) strtoul(ptr, &end, 10);
-	if (ptr == end)
-		return -2;
+	if (ptr == end || *end == '\n')
+		return -1;
 
 	/* Optional: nano seconds */
 	if (*end == '.') {
@@ -122,7 +122,9 @@ size_t villas_sscan_single(const char *buf, size_t len, struct sample *s, int *f
 	for (ptr  = end, s->length = 0;
 	                 s->length < s->capacity;
 	     ptr  = end, s->length++) {
-
+		if (*end == '\n')
+			break;
+		
 		switch (s->format & (1 << s->length)) {
 			case SAMPLE_DATA_FORMAT_FLOAT:
 				s->data[s->length].f = strtod(ptr, &end);
@@ -132,9 +134,13 @@ size_t villas_sscan_single(const char *buf, size_t len, struct sample *s, int *f
 				break;
 		}
 
-		if (end == ptr) /* There are no valid FP values anymore */
+		 /* There are no valid FP values anymore. */
+		if (end == ptr)
 			break;
 	}
+	
+	if (*end == '\n')
+		end++;
 
 	if (s->length > 0)
 		fl |= IO_FORMAT_VALUES;

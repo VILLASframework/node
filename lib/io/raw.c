@@ -121,7 +121,7 @@ int raw_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 			}
 		}
 	}
-	
+
 	if (wbytes)
 		*wbytes = o * (bits / 8);
 
@@ -209,6 +209,9 @@ int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 
 	smp->ts.received.tv_sec  = 0;
 	smp->ts.received.tv_nsec = 0;
+	
+	if (rbytes)
+		*rbytes = len;
 
 	return 1;
 }

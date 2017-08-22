@@ -28,51 +28,119 @@
 #include "sample.h"
 #include "timing.h"
 
-int csv_fprint_single(FILE *f, struct sample *s, int flags)
+size_t csv_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 {
-	fprintf(f, "%ld %09ld %d", s->ts.origin.tv_sec, s->ts.origin.tv_nsec, s->sequence);
+	size_t off = snprintf(buf, len, "%ld", s->ts.origin.tv_sec);
+	
+	if (flags & IO_FORMAT_NANOSECONDS)
+		off += snprintf(buf + off, len - off, "%c%09llu", CSV_SEPARATOR, (unsigned long long) s->ts.origin.tv_nsec);
+
+	if (flags & IO_FORMAT_SEQUENCE)
+		off += snprintf(buf + off, len - off, "%c%u", CSV_SEPARATOR, s->sequence);
 
 	for (int i = 0; i < s->length; i++) {
 		switch ((s->format >> i) & 0x1) {
 			case SAMPLE_DATA_FORMAT_FLOAT:
-				fprintf(f, "%c%.6f", CSV_SEPARATOR, s->data[i].f);
+				off += snprintf(buf + off, len - off, "%c%.6f", CSV_SEPARATOR, s->data[i].f);
 				break;
 			case SAMPLE_DATA_FORMAT_INT:
-				fprintf(f, "%c%" PRId64, CSV_SEPARATOR, s->data[i].i);
+				off += snprintf(buf + off, len - off, "%c%" PRId64, CSV_SEPARATOR, s->data[i].i);
 				break;
 		}
 	}
 
-	fputc('\n', f);
-
-	return 0;
+	off += snprintf(buf + off, len - off, "\n");
+	
+	return off;
 }
 
 size_t csv_sscan_single(const char *buf, size_t len, struct sample *s, int *flags)
 {
-	int ret, off;
+	const char *ptr = buf;
+	char *end;
 
-	ret = sscanf(buf, "%ld %ld %d %n", &s->ts.origin.tv_sec, &s->ts.origin.tv_nsec, &s->sequence, &off);
-	if (ret != 3)
-		return -1;
+	s->ts.origin.tv_sec = strtoul(ptr, &end, 10);
+	if (end == ptr || *end == '\n')
+		goto out;
+	
+	ptr = end;
+	
+	s->ts.origin.tv_nsec = strtoul(ptr, &end, 10);
+	if (end == ptr || *end == '\n')
+		goto out;
+	
+	ptr = end;
+	
+	s->sequence = strtoul(ptr, &end, 10);
+	if (end == ptr || *end == '\n')
+		goto out;
 
-	int i;
-	for (i = 0; i < s->capacity; i++) {
-		switch (s->format & (1 << i)) {
+	for (ptr  = end, s->length = 0;
+	                 s->length < s->capacity;
+	     ptr  = end, s->length++) {
+		if (*end == '\n')
+			goto out;
+
+		switch (s->format & (1 << s->length)) {
 			case SAMPLE_DATA_FORMAT_FLOAT:
-				ret = sscanf(buf + off, "%lf %n", &s->data[i].f, &off);
+				s->data[s->length].f = strtod(ptr, &end);
 				break;
 			case SAMPLE_DATA_FORMAT_INT:
-				ret = sscanf(buf + off, "%" PRId64 " %n", &s->data[i].i, &off);
+				s->data[s->length].i = strtol(ptr, &end, 10);
 				break;
 		}
 
-		if (ret != 2)
-			break;
+		/* There are no valid FP values anymore. */
+		if (end == ptr)
+			goto out;
 	}
+	
+out:	if (*end == '\n')
+		end++;
 
-	s->length = i;
 	s->ts.received = time_now();
+
+	return end - buf;
+}
+
+int csv_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
+{
+	int i;
+	size_t off = 0;
+
+	for (i = 0; i < cnt && off < len; i++)
+		off += csv_sprint_single(buf + off, len - off, smps[i], flags);
+	
+	if (wbytes)
+		*wbytes = off;
+
+	return i;
+}
+
+int csv_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags)
+{
+	int i;
+	size_t off = 0;
+
+	for (i = 0; i < cnt && off < len; i++)
+		off += csv_sscan_single(buf + off, len - off, smps[i], flags);
+	
+	if (rbytes)
+		*rbytes = off;
+
+	return i;
+}
+
+int csv_fprint_single(FILE *f, struct sample *s, int flags)
+{
+	int ret;
+	char line[4096];
+
+	ret = csv_sprint_single(line, sizeof(line), s, flags);
+	if (ret < 0)
+		return ret;
+	
+	fputs(line, f);
 
 	return 0;
 }
@@ -125,6 +193,8 @@ static struct plugin p = {
 	.io = {
 		.fprint	= csv_fprint,
 		.fscan	= csv_fscan,
+		.sprint	= csv_sprint,
+		.sscan	= csv_sscan,
 		.size = 0
 	}
 };

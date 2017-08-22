@@ -146,6 +146,11 @@ int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 {
 	int ret, i = 0;
 	char *ptr = buf;
+	
+	if (len % 4 != 0) {
+		warn("Packet size is invalid: %zd Must be multiple of 4 bytes.", len);
+		return 0;
+	}
 
 	for (i = 0; i < cnt; i++) {
 		struct msg *msg = (struct msg *) ptr;

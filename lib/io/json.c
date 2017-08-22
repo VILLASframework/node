@@ -23,120 +23,170 @@
 #include "plugin.h"
 #include "io/json.h"
 
-int json_pack_sample(json_t **j, struct sample *s, int flags)
+int json_pack_sample(json_t **j, struct sample *smp, int flags)
 {
+	json_t *json_smp;
 	json_error_t err;
-	json_t *json_data = json_array();
 
-	for (int i = 0; i < s->length; i++) {
-		json_t *json_value = sample_get_data_format(s, i)
-					? json_integer(s->data[i].i)
-					: json_real(s->data[i].f);
-
-		json_array_append(json_data, json_value);
-	}
-
-	*j = json_pack_ex(&err, 0, "{ s: { s: [ I, I ], s: [ I, I ], s: [ I, I ] }, s: I, s: o }",
+	json_smp = json_pack_ex(&err, 0, "{ s: { s: [ I, I ], s: [ I, I ], s: [ I, I ] } }",
 		"ts",
-			"origin", s->ts.origin.tv_sec, s->ts.origin.tv_nsec,
-			"received", s->ts.received.tv_sec, s->ts.received.tv_nsec,
-			"sent", s->ts.sent.tv_sec, s->ts.sent.tv_nsec,
-		"sequence", s->sequence,
-		"data", json_data);
+			"origin",   smp->ts.origin.tv_sec,   smp->ts.origin.tv_nsec,
+			"received", smp->ts.received.tv_sec, smp->ts.received.tv_nsec,
+			"sent",     smp->ts.sent.tv_sec,     smp->ts.sent.tv_nsec);
+	
+	if (flags & IO_FORMAT_SEQUENCE) {
+		json_t *json_sequence = json_integer(smp->sequence);
+			
+		json_object_set(json_smp, "sequence", json_sequence);
+	}
+	
+	if (flags & IO_FORMAT_VALUES) {
+		json_t *json_data = json_array();
 
-	if (!*j)
-		return -1;
+		for (int i = 0; i < smp->length; i++) {
+			json_t *json_value = sample_get_data_format(smp, i)
+						? json_integer(smp->data[i].i)
+						: json_real(smp->data[i].f);
+
+			json_array_append(json_data, json_value);
+		}
+		
+		json_object_set(json_smp, "data", json_data);
+	}
+	
+	*j = json_smp;
 
 	return 0;
 }
 
-int json_unpack_sample(json_t *j, struct sample *s, int *flags)
+int json_pack_samples(json_t **j, struct sample *smps[], unsigned cnt, int flags)
 {
-	int ret, i;
-	json_t *json_data, *json_value;
+	int ret;
+	json_t *json_smps = json_array();
+	
+	for (int i = 0; i < cnt; i++) {
+		json_t *json_smp;
+		
+		ret = json_pack_sample(&json_smp, smps[i], flags);
+		if (ret)
+			break;
+		
+		json_array_append(json_smps, json_smp);
+	}
+	
+	*j = json_smps;
+	
+	return cnt;
+}
 
-	ret = json_unpack(j, "{ s: { s: [ I, I ], s: [ I, I ], s: [ I, I ] }, s: I, s: o }",
+int json_unpack_sample(json_t *json_smp, struct sample *smp, int *flags)
+{
+	int ret;
+	json_t *json_data, *json_value;
+	size_t i;
+
+	ret = json_unpack(json_smp, "{ s: { s: [ I, I ], s: [ I, I ], s: [ I, I ] }, s: I, s: o }",
 		"ts",
-			"origin", &s->ts.origin.tv_sec, &s->ts.origin.tv_nsec,
-			"received", &s->ts.received.tv_sec, &s->ts.received.tv_nsec,
-			"sent", &s->ts.sent.tv_sec, &s->ts.sent.tv_nsec,
-		"sequence", &s->sequence,
+			"origin",   &smp->ts.origin.tv_sec,   &smp->ts.origin.tv_nsec,
+			"received", &smp->ts.received.tv_sec, &smp->ts.received.tv_nsec,
+			"sent",     &smp->ts.sent.tv_sec,     &smp->ts.sent.tv_nsec,
+		"sequence", &smp->sequence,
 		"data", &json_data);
 
 	if (ret)
 		return ret;
+	
+	if (!json_is_array(json_data))
+		return -1;
 
-	s->length = 0;
+	smp->length = 0;
 
 	json_array_foreach(json_data, i, json_value) {
+		if (i >= smp->capacity)
+			break;
+		
 		switch (json_typeof(json_value)) {
 			case JSON_REAL:
-				s->data[i].f = json_real_value(json_value);
-				sample_set_data_format(s, i, SAMPLE_DATA_FORMAT_FLOAT);
+				smp->data[i].f = json_real_value(json_value);
+				sample_set_data_format(smp, i, SAMPLE_DATA_FORMAT_FLOAT);
 				break;
 
 			case JSON_INTEGER:
-				s->data[i].f = json_integer_value(json_value);
-				sample_set_data_format(s, i, SAMPLE_DATA_FORMAT_INT);
+				smp->data[i].f = json_integer_value(json_value);
+				sample_set_data_format(smp, i, SAMPLE_DATA_FORMAT_INT);
 				break;
 
 			default:
-				return -1;
+				return -2;
 		}
 
-		s->length++;
+		smp->length++;
+	}
+	
+	return 0;
+}
+
+int json_unpack_samples(json_t *json_smps, struct sample *smps[], unsigned cnt, int *flags)
+{
+	int ret;
+	json_t *json_smp;
+	size_t i;
+	
+	if (!json_is_array(json_smps))
+		return -1;
+	
+	json_array_foreach(json_smps, i, json_smp) {
+		if (i >= cnt)
+			break;
+
+		ret = json_unpack_sample(json_smp, smps[i], flags);
+		if (ret < 0)
+			break;
 	}
 
-	return 0;
+	return i;
 }
 
 int json_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
 {
-	int i, ret;
+	int ret;
 	json_t *json;
-	size_t wr, off = 0;
+	size_t wr;
 
-	for (i = 0; i < cnt; i++) {
-		ret = json_pack_sample(&json, smps[i], flags);
-		if (ret)
-			return ret;
+	ret = json_pack_samples(&json, smps, cnt, flags);
+	if (ret < 0)
+		return ret;
 
-		wr = json_dumpb(json, buf + off, len - off, 0);
+	wr = json_dumpb(json, buf, len, 0);
 
-		json_decref(json);
+	json_decref(json);
 
-		if (wr > len)
-			break;
+	if (wbytes)
+		*wbytes = wr;
 
-		off += wr;
-	}
-
-	return i;
+	return ret;
 }
 
 int json_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags)
 {
-	int i, ret;
+	int ret;
 	json_t *json;
 	json_error_t err;
-	size_t off = 0;
 
-	for (i = 0; i < cnt; i++) {
-		json = json_loadb(buf + off, len - off, JSON_DISABLE_EOF_CHECK, &err);
-		if (!json)
-			break;
+	json = json_loadb(buf, len, 0, &err);
+	if (!json)
+		return -1;
 
-		off += err.position;
+	ret = json_unpack_samples(json, smps, cnt, flags);
+	if (ret < 0)
+		return ret;
 
-		ret = json_unpack_sample(json, smps[i], flags);
+	json_decref(json);
+	
+	if (rbytes)
+		*rbytes = err.position;
 
-		json_decref(json);
-
-		if (ret)
-			break;
-	}
-
-	return i;
+	return ret;
 }
 
 int json_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
