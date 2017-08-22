@@ -212,7 +212,7 @@ void io_rewind(struct io *io)
 		: io_stream_rewind(io);
 }
 
-int io_print(struct io *io, struct sample *smps[], size_t cnt)
+int io_print(struct io *io, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 
@@ -247,7 +247,7 @@ int io_print(struct io *io, struct sample *smps[], size_t cnt)
 	return ret;
 }
 
-int io_scan(struct io *io, struct sample *smps[], size_t cnt)
+int io_scan(struct io *io, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 

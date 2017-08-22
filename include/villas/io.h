@@ -76,9 +76,9 @@ int io_open(struct io *io, const char *uri);
 
 int io_close(struct io *io);
 
-int io_print(struct io *io, struct sample *smps[], size_t cnt);
+int io_print(struct io *io, struct sample *smps[], unsigned cnt);
 
-int io_scan(struct io *io, struct sample *smps[], size_t cnt);
+int io_scan(struct io *io, struct sample *smps[], unsigned cnt);
 
 int io_eof(struct io *io);
 
