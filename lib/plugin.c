@@ -23,7 +23,6 @@
 #include <dlfcn.h>
 
 #include "plugin.h"
-#include "config_helper.h"
 
 /** Global list of all known plugins */
 struct list plugins = { .state = STATE_DESTROYED };

@@ -38,7 +38,6 @@
 #include "memory.h"
 #include "stats.h"
 #include "node.h"
-#include "config_helper.h"
 
 static void path_read(struct path *p)
 {

@@ -27,7 +27,6 @@
 #include "log.h"
 #include "web.h"
 #include "api/session.h"
-#include "config_helper.h"
 
 #include "nodes/websocket.h"
 
