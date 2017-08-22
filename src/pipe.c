@@ -119,6 +119,10 @@ static void * send_loop(void *ctx)
 			continue;
 
 		sent = node_write(node, smps, len);
+		if (sent < 0) {
+			warn("Failed to sent samples to node %s: reason=%d", node_name(node), sent);
+			continue;
+		}
 
 		cnt += sent;
 		if (sendd.limit > 0 && cnt >= sendd.limit)
@@ -145,7 +149,7 @@ leave:	if (io_eof(&io)) {
 
 static void * recv_loop(void *ctx)
 {
-	int ret, cnt = 0;
+	int recv, ret, cnt = 0;
 	struct sample *smps[node->vectorize];
 
 	/* Initialize memory */
@@ -158,7 +162,12 @@ static void * recv_loop(void *ctx)
 		error("Failed to allocate %u samples from receive pool.", node->vectorize);
 
 	for (;;) {
-		int recv = node_read(node, smps, node->vectorize);
+		recv = node_read(node, smps, node->vectorize);
+		if (recv < 0) {
+			warn("Failed to receive samples from node %s: reason=%d", node_name(node), recv);
+			continue;
+		}
+		
 		struct timespec now = time_now();
 
 		/* Fix timestamps */
@@ -295,6 +304,7 @@ check:		if (optarg == endptr)
 		error("Node '%s' does not exist!", nodestr);
 
 #ifdef WITH_WEBSOCKET
+	/* Only start web subsystem if villas-pipe is used with a websocket node */
 	if (node->_vt->start == websocket_start)
 		web_start(&sn.web);
 #endif
@@ -312,7 +322,7 @@ check:		if (optarg == endptr)
 
 	ret = node_start(node);
 	if (ret)
-		error("Failed to start node: %s", node_name(node));
+		error("Failed to start node %s: reason=%d", node_name(node), ret);
 
 	/* Start threads */
 	if (recvv.enabled)

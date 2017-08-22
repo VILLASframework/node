@@ -199,12 +199,18 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
 		while (cnt - nread > 0) {
 			readd = n->_vt->read(n, &smps[nread], MIN(cnt - nread, n->_vt->vectorize));
+			if (readd < 0)
+				return readd;
+			
 			nread += readd;
 			debug(LOG_NODES | 5, "Received %u samples from node %s", readd, node_name(n));
 		}
 	}
 	else {
 		nread = n->_vt->read(n, smps, cnt);
+		if (nread < 0)
+			return nread;
+
 		debug(LOG_NODES | 5, "Received %u samples from node %s", nread, node_name(n));
 	}
 
@@ -225,12 +231,18 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt)
 	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
 		while (cnt - nsent > 0) {
 			sent = n->_vt->write(n, &smps[nsent], MIN(cnt - nsent, n->_vt->vectorize));
+			if (sent < 0)
+				return sent;
+
 			nsent += sent;
 			debug(LOG_NODES | 5, "Sent %u samples to node %s", sent, node_name(n));
 		}
 	}
 	else {
 		nsent = n->_vt->write(n, smps, cnt);
+		if (nsent < 0)
+			return nsent;
+
 		debug(LOG_NODES | 5, "Sent %u samples to node %s", nsent, node_name(n));
 	}
 
