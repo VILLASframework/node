@@ -74,6 +74,8 @@ int super_node_init(struct super_node *sn)
 int super_node_parse_uri(struct super_node *sn, const char *uri)
 {
 	json_error_t err;
+	
+	info("Parsing configuration");
 
 	if (uri) { INDENT
 		FILE *f;
