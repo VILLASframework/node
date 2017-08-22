@@ -33,7 +33,7 @@
 
 #include "io.h"
 #include "node.h"
-#include "periodic_task.h"
+#include "task.h"
 
 #define FILE_MAX_PATHLEN	512
 
@@ -46,7 +46,7 @@ struct file {
 	char *mode;			/**< File access mode. */
 
 	int flush;			/**< Flush / upload file contents after each write. */
-	struct periodic_task timer;	/**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
+	struct task task;		/**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
 	double rate;			/**< The read rate. */
 
 	enum epoch_mode {

@@ -163,9 +163,9 @@ int signal_open(struct node *n)
 	s->counter = 0;
 	s->started = time_now();
 
-	/* Setup timer */
+	/* Setup task */
 	if (s->rt) {
-		ret = periodic_task_init(&s->timer, s->rate);
+		ret = task_init(&s->task, s->rate, CLOCK_MONOTONIC);
 		if (ret)
 			return ret;
 	}
@@ -179,7 +179,7 @@ int signal_close(struct node *n)
 	struct signal* s = n->_vd;
 
 	if (s->rt) {
-		ret = periodic_task_destroy(&s->timer);
+		ret = task_destroy(&s->task);
 		if (ret)
 			return ret;
 	}
@@ -200,7 +200,7 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 	/* Throttle output if desired */
 	if (s->rt) {
 		/* Block until 1/p->rate seconds elapsed */
-		steps = periodic_task_wait_until_next_period(&s->timer);
+		steps = task_wait_until_next_period(&s->task);
 		if (steps > 1)
 			warn("Missed steps: %u", steps);
 

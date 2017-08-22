@@ -218,7 +218,7 @@ int file_start(struct node *n)
 		return ret;
 
 	/* Create timer */
-	ret = periodic_task_init(&f->timer, f->rate);
+	ret = task_init(&f->task, f->rate, CLOCK_REALTIME);
 	if (ret)
 		serror("Failed to create timer");
 
@@ -226,9 +226,8 @@ int file_start(struct node *n)
 	if (f->epoch_mode != FILE_EPOCH_ORIGINAL) {
 		io_rewind(&f->io);
 
-		struct sample s;
+		struct sample s = { .capacity = 0 };
 		struct sample *smps[] = { &s };
-		s.capacity = 0;
 
 		ret = io_scan(&f->io, smps, 1);
 		if (ret != 1)
@@ -248,7 +247,7 @@ int file_stop(struct node *n)
 	struct file *f = n->_vd;
 	int ret;
 
-	periodic_task_destroy(&f->timer);
+	task_destroy(&f->task);
 
 	ret = io_close(&f->io);
 	if (ret)
@@ -310,14 +309,14 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 		return cnt;
 
 	if (f->rate) {
-		steps = periodic_task_wait_until_next_period(&f->timer);
+		steps = task_wait_until_next_period(&f->task);
 
 		smps[0]->ts.origin = time_now();
 	}
 	else {
 		smps[0]->ts.origin = time_add(&smps[0]->ts.origin, &f->offset);
 
-		steps = periodic_task_wait_until(&f->timer, &smps[0]->ts.origin);
+		steps = task_wait_until(&f->task, &smps[0]->ts.origin);
 	}
 
 	/* Check for overruns */

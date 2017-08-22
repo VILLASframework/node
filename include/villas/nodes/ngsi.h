@@ -41,7 +41,7 @@
 #include "list.h"
 #include "super_node.h"
 #include "node.h"
-#include "periodic_task.h"
+#include "task.h"
 
 struct node;
 
@@ -54,7 +54,7 @@ struct ngsi {
 	double timeout;			/**< HTTP timeout in seconds */
 	double rate;			/**< Rate used for polling. */
 
-	struct periodic_task timer;	/**< Timer for periodic events. */
+	struct task task;		/**< Timer for periodic events. */
 	int ssl_verify;			/**< Boolean flag whether SSL server certificates should be verified or not. */
 
 	struct curl_slist *headers;	/**< List of HTTP request headers for libcurl */

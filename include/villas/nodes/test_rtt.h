@@ -32,9 +32,10 @@
 #include "node.h"
 #include "list.h"
 #include "io.h"
+#include "task.h"
 
 struct test_rtt_case {
-	int tfd;
+	struct task task;
 	double rate;
 	int values;
 	int counter;

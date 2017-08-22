@@ -28,7 +28,7 @@
 
 #include <time.h>
 
-/** We can choose between two periodic timer implementations */
+/** We can choose between two periodic task implementations */
 //#define PERIODIC_TASK_IMPL NANOSLEEP
 #define TIMERFD		1
 #define CLOCK_NANOSLEEP	2
@@ -37,10 +37,10 @@
 #if defined(__MACH__)
   #define PERIODIC_TASK_IMPL NANOSLEEP
 #else
-  #define PERIODIC_TASK_IMPL CLOCK_NANOSLEEP
+  #define PERIODIC_TASK_IMPL TIMERFD
 #endif
 
-struct periodic_task {
+struct task {
 	struct timespec period;
 #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
 	struct timespec next_period;
@@ -49,22 +49,23 @@ struct periodic_task {
 #else
   #error "Invalid period task implementation"
 #endif
+	int clock;
 };
 
-/** Create a new timer with the given rate. */
-int periodic_task_init(struct periodic_task *t, double rate);
+/** Create a new task with the given rate. */
+int task_init(struct task *t, double rate, int clock);
 
-int periodic_task_destroy(struct periodic_task *t);
+int task_destroy(struct task *t);
 
-/** Wait until timer elapsed
+/** Wait until task elapsed
  *
- * @retval 0 An error occured. Maybe the timer was stopped.
- * @retval >0 The nummer of runs this timer already fired.
+ * @retval 0 An error occured. Maybe the task was stopped.
+ * @retval >0 The nummer of runs this task already fired.
  */
-uint64_t periodic_task_wait_until_next_period(struct periodic_task *t);
+uint64_t task_wait_until_next_period(struct task *t);
 
 /** Wait until a fixed time in the future is reached
  *
  * @param until A pointer to a time in the future.
  */
-int periodic_task_wait_until(struct periodic_task *t, const struct timespec *until);
+int task_wait_until(struct task *t, const struct timespec *until);

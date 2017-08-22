@@ -38,8 +38,8 @@ static int test_rtt_case_start(struct test_rtt *t)
 		return ret;
 
 	/* Start timer. */
-	c->tfd = timerfd_create_rate(c->rate);
-	if (c->tfd < 0)
+	ret = task_init(&t->timer, c->rate);
+	if (ret)
 		serror("Failed to create timer");
 
 	return 0;
@@ -51,7 +51,7 @@ static int test_rtt_case_stop(struct test_rtt_case *c)
 	io_close(&t->io);
 
 	/* Stop timer. */
-	close(c->tfd);
+	task_destroy(&c->task);
 
 	return 0;
 }
@@ -189,10 +189,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt)
 	struct test_rtt_case *c = t->current;
 
 	/* Wait */
-	ret = read(c->tfd, &steps, sizeof(steps));
-	if (ret != sizeof(steps))
-		return -1;
-
+	steps = task_wait_until_next_period(&c->task);
 	if (steps > 1)
 		warn("Skipped %zu samples", steps - 1);
 

@@ -488,13 +488,13 @@ int ngsi_start(struct node *n)
 		i->headers = curl_slist_append(i->headers, buf);
 	}
 
-	/* Create timer */
+	/* Create task */
 	if (i->timeout > 1 / i->rate)
 		warn("Timeout is to large for given rate: %f", i->rate);
 
-	ret = periodic_task_init(&i->timer, i->rate);
+	ret = task_init(&i->task, i->rate, CLOCK_MONOTONIC);
 	if (ret)
-		serror("Failed to create timer");
+		serror("Failed to create task");
 
 	i->headers = curl_slist_append(i->headers, "Accept: application/json");
 	i->headers = curl_slist_append(i->headers, "Content-Type: application/json");
@@ -539,8 +539,8 @@ int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt)
 	struct ngsi *i = n->_vd;
 	int ret;
 
-	if (periodic_task_wait_until_next_period(&i->timer) == 0)
-		perror("Failed to wait for timer");
+	if (task_wait_until_next_period(&i->task) == 0)
+		perror("Failed to wait for task");
 
 	json_t *rentity;
 	json_t *entity = ngsi_build_entity(i, NULL, 0, 0);
