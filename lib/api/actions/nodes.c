@@ -26,8 +26,6 @@
 #include "node.h"
 #include "super_node.h"
 #include "utils.h"
-#include "config_helper.h"
-
 #include "api.h"
 
 static int api_nodes(struct api_action *r, json_t *args, json_t **resp, struct api_session *s)
