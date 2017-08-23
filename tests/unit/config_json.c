@@ -28,7 +28,6 @@
 #include <libconfig.h>
 
 #include "utils.h"
-#include "config_helper.h"
 
 const char *cfg_example = "test : \n"
 			  "{\n"

@@ -24,7 +24,6 @@
 #include <criterion/criterion.h>
 #include <criterion/parameterized.h>
 
-#include "config_helper.h"
 #include "utils.h"
 
 struct param {
