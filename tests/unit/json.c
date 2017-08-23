@@ -25,6 +25,7 @@
 #include <criterion/parameterized.h>
 
 #include "utils.h"
+#include "config_helper.h"
 
 struct param {
 	const char *desc;
