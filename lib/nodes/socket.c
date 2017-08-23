@@ -317,15 +317,8 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 	/* Receive next sample */
 	bytes = recvfrom(s->sd, bufptr, sizeof(buf), 0, &src.sa, &srclen);
-	if (bytes == 0)
-		error("Remote node %s closed the connection", node_name(n)); /** @todo Should we really hard fail here? */
-	else if (bytes < 0)
+	if (bytes < 0)
 		serror("Failed recv from node %s", node_name(n));
-	else if (bytes % 4 != 0) {
-		warn("Packet size is invalid: %zd Must be multiple of 4 bytes.", bytes);
-		recv(s->sd, NULL, 0, 0); /* empty receive buffer */
-		return -1;
-	}
 
 	/* Strip IP header from packet */
 	if (s->layer == SOCKET_LAYER_IP) {
@@ -353,8 +346,6 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 	}
 
 	ret = io_format_sscan(s->format, bufptr, bytes, &rbytes, smps, cnt, NULL);
-	if (ret < 0)
-		warn("Received invalid packet from node: %s reason=%d", node_name(n), ret);
 
 	if (bytes != rbytes)
 		warn("Received invalid packet from node: %s bytes=%zu, rbytes=%zu", node_name(n), bytes, rbytes);
@@ -394,7 +385,7 @@ int socket_parse(struct node *n, json_t *cfg)
 	const char *endian = NULL;
 	const char *layer = NULL;
 	const char *header = NULL;
-	const char *format = "villas";
+	const char *format = "msg";
 
 	int ret;
 
