@@ -38,49 +38,155 @@
 #define NUM_SAMPLES 10
 #define NUM_VALUES 10
 
-void cr_assert_eq_sample(struct sample *s, struct sample *t)
+static char formats[][32] = {
+#ifdef WITH_HDF5
+	"hdf5",
+#endif
+	"raw-int8",
+	"raw-int16-be",
+	"raw-int16-le",
+	"raw-int32-be",
+	"raw-int32-le",
+	"raw-int64-be",
+	"raw-int64-le",
+	"raw-flt32",
+	"raw-flt64",
+	"villas",
+	"csv",
+	"json",
+	"msg",
+	"gtnet",
+	"gtnet-fake"
+};
+
+void generate_samples(struct pool *p, struct sample *smps[], struct sample *smpt[], unsigned cnt, unsigned values)
 {
-	cr_assert_eq(s->length, t->length);
-	cr_assert_eq(s->sequence, t->sequence);
-//	cr_assert_eq(s->format, t->format);
+	int ret;
 
-	cr_assert_eq(s->ts.origin.tv_sec, t->ts.origin.tv_sec);
-	cr_assert_eq(s->ts.origin.tv_nsec, t->ts.origin.tv_nsec);
+	/* Prepare a sample with arbitrary data */
+	ret = sample_alloc(p, smps, cnt);
+	cr_assert_eq(ret, NUM_SAMPLES);
 
-	for (int i = 0; i < MIN(s->length, t->length); i++) {
-		switch (sample_get_data_format(t, i)) {
-			case SAMPLE_DATA_FORMAT_FLOAT:
-				cr_assert_float_eq(s->data[i].f, t->data[i].f, 1e-3, "Sample data mismatch at index %d: %f != %f", i, s->data[i].f, t->data[i].f);
-				break;
-			case SAMPLE_DATA_FORMAT_INT:
-				cr_assert_eq(s->data[i].i, t->data[i].i);
-				break;
+	ret = sample_alloc(p, smpt, cnt);
+	cr_assert_eq(ret, cnt);
+
+	for (int i = 0; i < cnt; i++) {
+		smpt[i]->capacity = values;
+		
+		smps[i]->length = values;
+		smps[i]->sequence = 235 + i;
+		smps[i]->format = 0; /* all float */
+		smps[i]->ts.origin = time_now();
+
+		for (int j = 0; j < smps[i]->length; j++)
+			smps[i]->data[j].f = j * 0.1 + i * 100;
+			//smps[i]->data[j].i = -500  + j*100;
+	}
+}
+
+void cr_assert_eq_samples(struct io_format *f, struct sample *smps[], struct sample *smpt[], unsigned cnt)
+{
+	/* The RAW format has certain limitations: 
+	 *  - limited accuracy if smaller datatypes are used
+	 *  - no support for vectors / framing
+	 *
+	 * We need to take these limitations into account before comparing.
+	 */
+	if (f->sscan == raw_sscan) {
+		cr_assert_eq(cnt, 1);
+		cr_assert_eq(smpt[0]->length, smpt[0]->capacity, "Expected values: %d, Received values: %d", smpt[0]->capacity, smpt[0]->length);
+	
+		if (f->flags & RAW_FAKE) {
+
+		}
+		else {
+			smpt[0]->sequence = smps[0]->sequence;
+			smpt[0]->ts.origin = smps[0]->ts.origin;
+		}
+
+		int bits = 1 << (f->flags >> 24);
+		for (int j = 0; j < smpt[0]->length; j++) {
+			if (f->flags & RAW_FLT) {
+				switch (bits) {
+					case  32: smps[0]->data[j].f = (float)  smps[0]->data[j].f; break;
+					case  64: smps[0]->data[j].f = (double) smps[0]->data[j].f; break;
+				}
+			}
+			else {
+				switch (bits) {
+					case   8: smps[0]->data[j].i = (  int8_t) smps[0]->data[j].i; break;
+					case  16: smps[0]->data[j].i = ( int16_t) smps[0]->data[j].i; break;
+					case  32: smps[0]->data[j].i = ( int32_t) smps[0]->data[j].i; break;
+					case  64: smps[0]->data[j].i = ( int64_t) smps[0]->data[j].i; break;
+				}
+			}
+		}
+	}
+	else
+		cr_assert_eq(cnt, NUM_SAMPLES, "Read only %d of %d samples back", cnt, NUM_SAMPLES);
+
+	for (int i = 0; i < cnt; i++) {
+		cr_assert_eq(smps[i]->length, smpt[i]->length);
+		cr_assert_eq(smps[i]->sequence, smpt[i]->sequence);
+
+		cr_assert_eq(smps[i]->ts.origin.tv_sec, smpt[i]->ts.origin.tv_sec);
+		cr_assert_eq(smps[i]->ts.origin.tv_nsec, smpt[i]->ts.origin.tv_nsec);
+
+		for (int j = 0; j < MIN(smps[i]->length, smpt[i]->length); j++) {
+			switch (sample_get_data_format(smpt[i], j)) {
+				case SAMPLE_DATA_FORMAT_FLOAT:
+					cr_assert_float_eq(smps[i]->data[j].f, smpt[i]->data[j].f, 1e-3, "Sample data mismatch at index %d: %f != %f", j, smps[i]->data[j].f, smpt[i]->data[j].f);
+					break;
+				case SAMPLE_DATA_FORMAT_INT:
+					cr_assert_eq(smps[i]->data[j].i, smpt[i]->data[j].i);
+					break;
+			}
 		}
 	}
 }
 
+ParameterizedTestParameters(io, lowlevel)
+{
+	return cr_make_param_array(char[32], formats, ARRAY_LEN(formats));
+}
+
+ParameterizedTest(char *fmt, io, lowlevel)
+{
+	int ret;
+	char buf[8192];
+	size_t wbytes, rbytes;
+	
+	struct io_format *f;
+
+	struct pool p = { .state = STATE_DESTROYED };
+	struct sample *smps[NUM_SAMPLES];
+	struct sample *smpt[NUM_SAMPLES];
+
+	ret = pool_init(&p, 2 * NUM_SAMPLES, SAMPLE_LEN(NUM_VALUES), &memtype_hugepage);
+	cr_assert_eq(ret, 0);
+
+	generate_samples(&p, smps, smpt, NUM_SAMPLES, NUM_VALUES);
+	
+	f = io_format_lookup(fmt);
+	cr_assert_not_null(f, "Format '%s' does not exist", fmt);
+	
+	ret = io_format_sprint(f, buf, sizeof(buf), &wbytes, smps, NUM_SAMPLES, IO_FORMAT_ALL);
+	cr_assert_eq(ret, NUM_SAMPLES);
+	
+	ret = io_format_sscan(f, buf, wbytes, &rbytes, smpt, NUM_SAMPLES, NULL);
+	cr_assert_eq(rbytes, wbytes);
+	
+	cr_assert_eq_samples(f, smps, smpt, ret);
+	
+	sample_free(smps, NUM_SAMPLES);
+	sample_free(smpt, NUM_SAMPLES);
+
+	ret = pool_destroy(&p);
+	cr_assert_eq(ret, 0);
+}
+
 ParameterizedTestParameters(io, highlevel)
 {
-	static char formats[][32] = {
-#ifdef WITH_HDF5
-		"hdf5",
-#endif
-		"raw-int8",
-		"raw-int16-be",
-		"raw-int16-le",
-		"raw-int32-be",
-		"raw-int32-le",
-		"raw-int64-be",
-		"raw-int64-le",
-		"raw-flt32",
-		"raw-flt64",
-		"villas",
-		"json",
-		"msg",
-		"gtnet",
-		"gtnet-fake"
-	};
-
 	return cr_make_param_array(char[32], formats, ARRAY_LEN(formats));
 }
 
@@ -97,28 +203,8 @@ ParameterizedTest(char *fmt, io, highlevel)
 
 	ret = pool_init(&p, 2 * NUM_SAMPLES, SAMPLE_LEN(NUM_VALUES), &memtype_hugepage);
 	cr_assert_eq(ret, 0);
-	
-	info("Testing: %s", fmt);
 
-	/* Prepare a sample with arbitrary data */
-	ret = sample_alloc(&p, smps, NUM_SAMPLES);
-	cr_assert_eq(ret, NUM_SAMPLES);
-
-	ret = sample_alloc(&p, smpt, NUM_SAMPLES);
-	cr_assert_eq(ret, NUM_SAMPLES);
-
-	for (int i = 0; i < NUM_SAMPLES; i++) {
-		smpt[i]->capacity = NUM_VALUES;
-		
-		smps[i]->length = NUM_VALUES;
-		smps[i]->sequence = 235 + i;
-		smps[i]->format = 0; /* all float */
-		smps[i]->ts.origin = time_now();
-
-		for (int j = 0; j < smps[i]->length; j++)
-			smps[i]->data[j].f = j * 0.1 + i * 100;
-			//smps[i]->data[j].i = -500  + j*100;
-	}
+	generate_samples(&p, smps, smpt, NUM_SAMPLES, NUM_VALUES);
 
 	/* Open a file for IO */
 	char *fn, dir[64];
@@ -161,46 +247,7 @@ ParameterizedTest(char *fmt, io, highlevel)
 	cnt = io_scan(&io, smpt, NUM_SAMPLES);
 	cr_assert_gt(cnt, 0, "Failed to read samples back");
 
-	/* The RAW format has certain limitations: 
-	 *  - limited accuracy if smaller datatypes are used
-	 *  - no support for vectors / framing
-	 *
-	 * We need to take these limitations into account before comparing.
-	 */
-	if (f->sscan == raw_sscan) {
-		cr_assert_eq(cnt, 1);
-		cr_assert_eq(smpt[0]->length, smpt[0]->capacity, "Expected values: %d, Received values: %d", smpt[0]->capacity, smpt[0]->length);
-		
-		if (io.flags & RAW_FAKE) {
-		}
-		else {
-			smpt[0]->sequence = smps[0]->sequence;
-			smpt[0]->ts.origin = smps[0]->ts.origin;
-		}
-
-		int bits = 1 << (io.flags >> 24);
-		for (int j = 0; j < smpt[0]->length; j++) {
-			if (io.flags & RAW_FLT) {
-				switch (bits) {
-					case  32: smps[0]->data[j].f = (float)  smps[0]->data[j].f; break;
-					case  64: smps[0]->data[j].f = (double) smps[0]->data[j].f; break;
-				}
-			}
-			else {
-				switch (bits) {
-					case   8: smps[0]->data[j].i = (  int8_t) smps[0]->data[j].i; break;
-					case  16: smps[0]->data[j].i = ( int16_t) smps[0]->data[j].i; break;
-					case  32: smps[0]->data[j].i = ( int32_t) smps[0]->data[j].i; break;
-					case  64: smps[0]->data[j].i = ( int64_t) smps[0]->data[j].i; break;
-				}
-			}
-		}
-	}
-	else
-		cr_assert_eq(cnt, NUM_SAMPLES, "Read only %d of %d samples back", cnt, NUM_SAMPLES);
-	
-	for (int i = 0; i < cnt; i++)
-		cr_assert_eq_sample(smps[i], smpt[i]);
+	cr_assert_eq_samples(f, smps, smpt, cnt);
 
 	ret = io_close(&io);
 	cr_assert_eq(ret, 0);
