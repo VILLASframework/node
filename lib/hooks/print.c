@@ -30,7 +30,7 @@
 #include "io.h"
 
 struct print {
-	struct io output;
+	struct io io;
 	struct io_format *format;
 
 	const char *uri;
@@ -40,14 +40,8 @@ static int print_init(struct hook *h)
 {
 	struct print *p = h->_vd;
 
-	struct plugin *pl;
-
-	pl = plugin_lookup(PLUGIN_TYPE_FORMAT, "villas");
-	if (!pl)
-		return -1;
-
 	p->uri = NULL;
-	p->format = &pl->io;
+	p->format = io_format_lookup("villas");
 
 	return 0;
 }
@@ -57,11 +51,11 @@ static int print_start(struct hook *h)
 	struct print *p = h->_vd;
 	int ret;
 
-	ret = io_init(&p->output, p->format, IO_FORMAT_ALL);
+	ret = io_init(&p->io, p->format, IO_FORMAT_ALL);
 	if (ret)
 		return ret;
 
-	ret = io_open(&p->output, p->uri, "w+");
+	ret = io_open(&p->io, p->uri);
 	if (ret)
 		return ret;
 
@@ -73,11 +67,11 @@ static int print_stop(struct hook *h)
 	struct print *p = h->_vd;
 	int ret;
 
-	ret = io_close(&p->output);
+	ret = io_close(&p->io);
 	if (ret)
 		return ret;
 
-	ret = io_destroy(&p->output);
+	ret = io_destroy(&p->io);
 	if (ret)
 		return ret;
 
@@ -87,23 +81,21 @@ static int print_stop(struct hook *h)
 static int print_parse(struct hook *h, json_t *cfg)
 {
 	struct print *p = h->_vd;
-	struct plugin *pl;
 	const char *format = NULL;
 	int ret;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s }",
-		"output", &p->uri
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s }",
+		"output", &p->uri,
+		"format", &format
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
 
 	if (format) {
-		pl = plugin_lookup(PLUGIN_TYPE_FORMAT, format);
-		if (!pl)
+		p->format = io_format_lookup(format);
+		if (!p->format)
 			jerror(&err, "Invalid format '%s'", format);
-
-		p->format = &pl->io;
 	}
 
 	return 0;
@@ -113,7 +105,7 @@ static int print_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct print *p = h->_vd;
 
-	io_print(&p->output, smps, *cnt);
+	io_print(&p->io, smps, *cnt);
 
 	return 0;
 }
