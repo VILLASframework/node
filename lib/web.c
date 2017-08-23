@@ -37,14 +37,6 @@ lws_callback_function websocket_protocol_cb;
 
 /** List of libwebsockets protocols. */
 static struct lws_protocols protocols[] = {
-#ifdef WITH_WEBSOCKET
-	{
-		.name = "live",
-		.callback = websocket_protocol_cb,
-		.per_session_data_size = sizeof(struct websocket_connection),
-		.rx_buffer_size = 0
-	},
-#endif /* WITH_WEBSOCKET */
 #ifdef WITH_API
 	{
 		.name = "http-api",
@@ -59,6 +51,14 @@ static struct lws_protocols protocols[] = {
 		.rx_buffer_size = 0
 	},
 #endif /* WITH_API */
+#ifdef WITH_WEBSOCKET
+	{
+		.name = "live",
+		.callback = websocket_protocol_cb,
+		.per_session_data_size = sizeof(struct websocket_connection),
+		.rx_buffer_size = 0
+	},
+#endif /* WITH_WEBSOCKET */
 #if 0 /* not supported yet */
 	{
 		.name = "log",
