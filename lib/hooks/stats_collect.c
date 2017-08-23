@@ -126,7 +126,7 @@ static int stats_collect_parse(struct hook *h, json_t *cfg)
 	const char *format = NULL;
 	const char *uri = NULL;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: s?: i, s?: s }"
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: s }",
 		"format", &format,
 		"verbose", &p->verbose,
 		"warmup", &p->warmup,
