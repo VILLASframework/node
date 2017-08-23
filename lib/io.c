@@ -75,9 +75,9 @@ int io_stream_open(struct io *io, const char *uri)
 			if (io->advio.output == NULL)
 				return -1;
 
-			io->advio.input  = afopen(uri, "r");
+			io->advio.input = afopen(uri, "a+");
 			if (io->advio.input == NULL)
-				return -1;
+				return -2;
 		}
 	}
 	else {

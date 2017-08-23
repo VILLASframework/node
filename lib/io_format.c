@@ -27,11 +27,16 @@
 
 int io_format_sscan(struct io_format *fmt, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags)
 {
+	if (!flags)
+		flags = &fmt->flags;
+	
 	return fmt->sscan ? fmt->sscan(buf, len, rbytes, smps, cnt, flags) : -1;
 }
 
 int io_format_sprint(struct io_format *fmt, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
 {
+	flags |= fmt->flags;
+
 	return fmt->sprint ? fmt->sprint(buf, len, wbytes, smps, cnt, flags) : -1;
 }
 

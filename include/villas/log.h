@@ -98,6 +98,7 @@ struct log {
 	int level;
 	long facilities;	/**< Debug facilities used by the debug() macro. */
 	const char *path;	/**< Path of the log file. */
+	char *prefix;		/**< Prefix each line with this string. */
 	FILE *file;		/**< Send all log output to this file / stdout / stderr. */
 };
 
