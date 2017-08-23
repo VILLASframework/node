@@ -446,7 +446,7 @@ int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt)
 	size_t wbytes;
 	zmq_msg_t m;
 
-	char data[1500];
+	char data[4096];
 
 	ret = io_format_sprint(z->format, data, sizeof(data), &wbytes, smps, cnt, IO_FORMAT_ALL);
 	if (ret <= 0)
