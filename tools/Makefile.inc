@@ -20,8 +20,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-ifeq ($(WITH_JSON),1)
+ifeq ($(WITH_CONFIG),1)
+ifeq ($(shell $(PKGCONFIG) libconfig; echo $$?),0)
 	TOOLS += $(BUILDDIR)/conf2json
+endif
 endif
 
 TOOLS_CFLAGS = $(CFLAGS)
