@@ -31,7 +31,7 @@ CONFIG_FILE2=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
-NUM_SAMPLES=${NUM_SAMPLES:-10}
+NUM_SAMPLES=${NUM_SAMPLES:-100}
 
 cat > ${CONFIG_FILE} << EOF
 {
@@ -67,16 +67,10 @@ villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 VILLAS_LOG_PREFIX=$(colorize "[Recv]  ") \
 villas-pipe -r -d 15 -l ${NUM_SAMPLES} ${CONFIG_FILE2} node2 > ${OUTPUT_FILE} &
 
-PID=$!
-
 VILLAS_LOG_PREFIX=$(colorize "[Send]  ") \
 villas-pipe -s -d 15 ${CONFIG_FILE} node1 < ${INPUT_FILE}
 
-wait ${PID}
-
-cat ${OUTPUT_FILE}
-echo
-cat ${INPUT_FILE}
+wait $!
 
 # Compare data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
