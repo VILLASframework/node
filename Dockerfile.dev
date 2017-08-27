@@ -70,6 +70,7 @@ RUN dnf -y install \
 	libnl3-devel \
 	libcurl-devel \
 	jansson-devel \
+	hdf5-devel \
 	libwebsockets-devel \
 	zeromq-devel \
 	nanomsg-devel \
