@@ -149,39 +149,46 @@ int msg_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 
 int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags)
 {
-	int ret, i = 0;
+	int ret, i = 0, values;
 	char *ptr = buf;
 	
 	if (len % 4 != 0) {
 		warn("Packet size is invalid: %zd Must be multiple of 4 bytes.", len);
-		return 0;
+		return -1;
 	}
 
 	for (i = 0; i < cnt; i++) {
 		struct msg *msg = (struct msg *) ptr;
 		struct sample *smp = smps[i];
-		
-		/* Check if length field is still in buffer bounaries */
-		if ((char *) &msg->length + sizeof(msg->length) > buf + len) {
+
+		/* Complete buffer has been parsed */
+		if (ptr == buf + len)
+			break;
+
+		/* Check if header is still in buffer bounaries */
+		if (ptr + sizeof(struct msg) > buf + len) {
 			warn("Invalid msg received: reason=1");
 			break;
 		}
 		
+		values = (*flags & MSG_WEB) ? msg->length : ntohs(msg->length);
+		
 		/* Check if remainder of message is in buffer boundaries */
-		if (ptr + MSG_LEN(ntohs(msg->length)) > buf + len) {
-			warn("Invalid msg received: reason=2, msglen=%zu, len=%zu, ptr=%p, buf+%p, i=%u", MSG_LEN(ntohs(msg->length)), len, ptr, buf, i);
+		if (ptr + MSG_LEN(values) > buf + len) {
+			warn("Invalid msg received: reason=2, msglen=%zu, len=%zu, ptr=%p, buf=%p, i=%u", MSG_LEN(values), len, ptr, buf, i);
 			break;
 		}
 
-		if (*flags & MSG_WEB) {
-			/** @todo convert to little endian */
-		}
+		if (*flags & MSG_WEB)
+			;
 		else
 			msg_ntoh(msg);
 
-		ret = msg_to_sample((struct msg *) ptr, smp);
-		if (ret)
-			return ret;
+		ret = msg_to_sample(msg, smp);
+		if (ret) {
+			warn("Invalid msg received: reason=3, ret=%d", ret);
+			break;
+		}
 
 		ptr += MSG_LEN(smp->length);
 	}
@@ -204,9 +211,10 @@ static struct plugin p1 = {
 	},
 };
 
+/** The WebSocket node-type usually uses little endian byte order intead of network byte order */
 static struct plugin p2 = {
 	.name = "webmsg",
-	.description = "VILLAS binary network format for websockets",
+	.description = "VILLAS binary network format for WebSockets",
 	.type = PLUGIN_TYPE_IO,
 	.io = {
 		.sprint	= msg_sprint,
