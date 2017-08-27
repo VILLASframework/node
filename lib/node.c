@@ -37,8 +37,11 @@ int node_init(struct node *n, struct node_type *vt)
 
 	n->_vt = vt;
 	n->_vd = alloc(vt->size);
-
+	
 	n->name = NULL;
+	n->_name = NULL;
+	n->_name_long = NULL;
+
 	n->id = max_id++;
 
 	/* Default values */

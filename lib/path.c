@@ -164,6 +164,8 @@ int path_init(struct path *p, struct super_node *sn)
 
 	list_init(&p->hooks);
 	list_init(&p->destinations);
+	
+	p->_name = NULL;
 
 	/* Default values */
 	p->reverse = 0;
