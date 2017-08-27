@@ -27,9 +27,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-var glob = require('glob');
-var path = require('path');
-var global  = require(__dirname + '/global.js')
+var glob   = require('glob');
+var global = require(__dirname + '/global.js')
 
 /* List of plugins
  *
@@ -42,9 +41,9 @@ global.plugins = glob.sync('/usr?(/local)/share/villas/node/plugins/*.so');
 global.nodes = {
 	loopback_node : {
 		vectorize : 1,
-		type : "loopback",			// A loopback node will receive exactly the same data which has been sent to it.
-							// The internal implementation is based on queue.
-		queuelen : 10240			// The queue length of the internal queue which buffers the samples.
+		type : "loopback",	// A loopback node will receive exactly the same data which has been sent to it.
+					// The internal implementation is based on queue.
+		queuelen : 10240	// The queue length of the internal queue which buffers the samples.
 	},
 	socket_node : {
 		type : "socket",
@@ -83,7 +82,7 @@ global.paths = [
 var json = JSON.stringify(global, null, 4);
 
 // Some log message
-process.stderr.write('Configuration file successfully generated');
+process.stderr.write('Configuration file successfully generated\n');
 
 // Print JSON to stdout
 process.stdout.write(json);
