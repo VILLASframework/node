@@ -61,27 +61,6 @@ static char * websocket_connection_name(struct websocket_connection *c)
 	return c->_name;
 }
 
-static int websocket_connection_destroy(struct websocket_connection *c)
-{
-	int ret;
-
-	list_remove(&connections, c);
-
-	if (c->_name)
-		free(c->_name);
-
-	ret = queue_destroy(&c->queue);
-	if (ret)
-		return ret;
-
-	buffer_destroy(&c->buffers.recv);
-	buffer_destroy(&c->buffers.send);
-
-	c->wsi = NULL;
-
-	return ret;
-}
-
 static void websocket_destination_destroy(struct websocket_destination *d)
 {
 	free(d->uri);
@@ -141,6 +120,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			c->wsi = wsi;
 			c->state = STATE_ESTABLISHED;
 			c->mode = WEBSOCKET_MODE_SERVER;
+			c->_name = NULL;
 
 			/* We use the URI to associate this connection to a node
 			 * and choose a protocol.
@@ -214,7 +194,19 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				/** @todo Attempt reconnect here */
 			}
 
-			websocket_connection_destroy(c);
+			list_remove(&connections, c);
+
+			if (c->_name)
+				free(c->_name);
+
+			ret = queue_destroy(&c->queue);
+			if (ret)
+				return ret;
+
+			buffer_destroy(&c->buffers.recv);
+			buffer_destroy(&c->buffers.send);
+
+			c->wsi = NULL;
 
 			if (c->mode == WEBSOCKET_MODE_CLIENT)
 				free(c);
@@ -224,28 +216,27 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 		case LWS_CALLBACK_CLIENT_WRITEABLE:
 		case LWS_CALLBACK_SERVER_WRITEABLE: {
 			size_t wbytes;
+			
+			if (c->state == STATE_SHUTDOWN) {
+				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_GOINGAWAY, "Node stopped");
+				return -1;
+			}
 
 			struct sample **smps = alloca(cnt * sizeof(struct sample *));
 
 			pulled = queue_pull_many(&c->queue, (void **) smps, cnt);
 			if (pulled > 0) {
-				io_format_sprint(c->format, c->buffers.send.buf, c->buffers.send.size, &wbytes, smps, pulled, IO_FORMAT_ALL);
+				io_format_sprint(c->format, c->buffers.send.buf + LWS_PRE, c->buffers.send.size - LWS_PRE, &wbytes, smps, pulled, IO_FORMAT_ALL);
 				
-				ret = lws_write(wsi, (unsigned char *) c->buffers.send.buf, wbytes, c->format->flags & IO_FORMAT_BINARY ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
+				ret = lws_write(wsi, (unsigned char *) c->buffers.send.buf + LWS_PRE, wbytes, c->format->flags & IO_FORMAT_BINARY ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
 
 				sample_put_many(smps, pulled);
 
 				debug(LOG_WEBSOCKET | 10, "Send %d samples on %s: bytes=%d", pulled, websocket_connection_name(c), ret);
 			}
 			
-			if (c->state == STATE_SHUTDOWN) {
-				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_GOINGAWAY, "Node stopped");
-				return -1;
-			}
-			else {
-				if (queue_available(&c->queue) > 0)
-					lws_callback_on_writable(wsi);
-			}
+			if (queue_available(&c->queue) > 0)
+				lws_callback_on_writable(wsi);
 			
 			break;
 		}
@@ -364,6 +355,7 @@ int websocket_start(struct node *n)
 		c->mode = WEBSOCKET_MODE_CLIENT;
 		c->node = n;
 		c->destination = d;
+		c->_name = NULL;
 
 		c->format = io_format_lookup("webmsg"); /** @todo We could parse the format from the URI */
 
