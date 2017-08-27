@@ -63,7 +63,7 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 			s->wsi = wsi;
 			s->api = w->api;
 
-			debug(LOG_API, "New API session initiated: version=%d, mode=websocket", s->version);
+			debug(LOG_API, "Initiated API session: %s", api_session_name(s));
 			break;
 
 		case LWS_CALLBACK_CLOSED:
@@ -71,7 +71,7 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 			if (ret)
 				return -1;
 
-			debug(LOG_API, "Closed API session");
+			debug(LOG_API, "Closing API session: %s", api_session_name(s));
 
 			break;
 
@@ -88,11 +88,11 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 				
 				pushed = queue_push(&s->request.queue, req);
 				if (pushed != 1)
-					warn("Queue overun in Api session");
+					warn("Queue overun in API session");
 
 				pushed = queue_signalled_push(&w->api->pending, s);
 				if (pushed != 1)
-					warn("Queue overrun in Api");
+					warn("Queue overrun in API");
 			}
 
 			break;
@@ -145,7 +145,7 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			s->wsi = wsi;
 			s->api = w->api;
 
-			debug(LOG_API, "New API session initiated: version=%d, mode=http", s->version);
+			debug(LOG_API, "Initiated API session: %s", api_session_name(s));
 
 			break;
 
@@ -172,11 +172,11 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			
 			pushed = queue_push(&s->request.queue, req);
 			if (pushed != 1)
-				warn("Queue overrun for Api session");
+				warn("Queue overrun for API session: %s", api_session_name(s));
 
 			pushed = queue_signalled_push(&w->api->pending, s);
 			if (pushed != 1)
-				warn("Queue overrun for Api");
+				warn("Queue overrun for API");
 
 			break;
 
@@ -198,6 +198,8 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 				lws_write(wsi, (unsigned char *) headers, strlen(headers), LWS_WRITE_HTTP_HEADERS);
 				lws_write(wsi, (unsigned char *) s->response.buffer.buf, s->response.buffer.len, LWS_WRITE_HTTP);
 				
+				debug(LOG_API, "Closing API session: %s", api_session_name(s));
+
 				return -1; /* Close connection */
 			}
 		
@@ -239,7 +241,7 @@ int api_start(struct api *a)
 	
 	ret = pthread_create(&a->thread, NULL, worker, a);
 	if (ret)
-		error("Failed to start Api worker thread");
+		error("Failed to start API worker thread");
 
 	a->state = STATE_STARTED;
 
@@ -261,11 +263,11 @@ int api_stop(struct api *a)
 	
 	ret = pthread_cancel(a->thread);
 	if (ret)
-		serror("Failed to cancel Api worker thread");
+		serror("Failed to cancel API worker thread");
 
 	ret = pthread_join(a->thread, NULL);
 	if (ret)
-		serror("Failed to join Api worker thread");
+		serror("Failed to join API worker thread");
 
 	a->state = STATE_STOPPED;
 
@@ -282,9 +284,12 @@ static void * worker(void *ctx)
 	json_t *req, *resp;
 
 	for (;;) {
+		info("waiting for aPI jobs");
 		pulled = queue_signalled_pull(&a->pending, (void **) &s);
 		if (pulled != 1)
 			continue;
+		
+		info("processing api request");
 		
 		queue_pull(&s->request.queue, (void **) &req);
 

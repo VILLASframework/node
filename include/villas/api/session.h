@@ -45,9 +45,9 @@ struct api_session {
 	enum state state;
 
 	enum api_version version;
+	enum api_mode mode;
 
 	int runs;
-	bool completed;				/**< Did we receive the complete body yet? */
 
 	struct {
 		struct buffer buffer;
@@ -56,6 +56,8 @@ struct api_session {
 
 	struct lws *wsi;
 	struct api *api;
+	
+	char *_name;
 };
 
 int api_session_init(struct api_session *s, enum api_mode m);
@@ -63,3 +65,5 @@ int api_session_init(struct api_session *s, enum api_mode m);
 int api_session_destroy(struct api_session *s);
 
 int api_session_run_command(struct api_session *s, json_t *req, json_t **resp);
+
+char * api_session_name(struct api_session *s);
