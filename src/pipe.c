@@ -261,7 +261,7 @@ check:		if (optarg == endptr)
 
 	ret = log_init(&sn.log, level, LOG_ALL);
 	if (ret)
-		error("Failed to intialize log");
+		error("Failed to initialize log");
 
 	ret = log_start(&sn.log);
 	if (ret)
