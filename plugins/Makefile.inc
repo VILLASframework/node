@@ -43,7 +43,7 @@ $(PLUGINS):
 	$(CC) $(PLUGIN_LDFLAGS) -o $@ $^ $(PLUGIN_LDLIBS)
 
 # Plugins are not installed to the system for now...
-install-plugins: plugins
+install-plugins: plugins | $(DESTDIR)$(PREFIX)/share/villas/node/plugins/
 	install -D -t $(DESTDIR)$(PREFIX)/share/villas/node/plugins $(PLUGINS)
 
 clean-plugins:

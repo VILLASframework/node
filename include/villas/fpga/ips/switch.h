@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <jansson.h>
 #include <xilinx/xaxis_switch.h>
 
 #include "list.h"
@@ -41,7 +42,7 @@ int switch_init_paths(struct fpga_ip *c);
 
 int switch_destroy(struct fpga_ip *c);
 
-int switch_parse(struct fpga_ip *c);
+int switch_parse(struct fpga_ip *c, json_t *cfg);
 
 int switch_connect(struct fpga_ip *c, struct fpga_ip *mi, struct fpga_ip *si);
 

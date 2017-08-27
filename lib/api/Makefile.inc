@@ -20,10 +20,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-ifndef WITH_JSON
-  $(error API support requires JSON)
-endif
-
 LIB_SRCS += lib/api.c
 LIB_SRCS += $(wildcard lib/api/*.c)
 

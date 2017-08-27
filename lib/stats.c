@@ -44,6 +44,18 @@ static struct stats_desc {
 	{ "owd",	  "seconds",	"Histogram for one-way-delay (OWD) of received messages",		25 }
 };
 
+int stats_lookup_format(const char *str)
+{
+	if      (!strcmp(str, "human"))
+		return STATS_FORMAT_HUMAN;
+	else if (!strcmp(str, "json"))
+		return STATS_FORMAT_JSON;
+	else if (!strcmp(str, "matlab"))
+	 	return STATS_FORMAT_MATLAB;
+	else
+		return -1;
+}
+
 int stats_init(struct stats *s, int buckets, int warmup)
 {
 	for (int i = 0; i < STATS_COUNT; i++)
@@ -112,7 +124,6 @@ void stats_collect(struct stats_delta *s, struct sample *smps[], size_t cnt)
 	s->last = previous;
 }
 
-#ifdef WITH_JSON
 json_t * stats_json(struct stats *s)
 {
 	json_t *obj = json_object();
@@ -138,7 +149,6 @@ json_t * stats_json_periodic(struct stats *s, struct path *p)
 		"skipped", s->histograms[STATS_SKIPPED].total
 	);
 }
-#endif /* WITH_JSON */
 
 void stats_reset(struct stats *s)
 {
@@ -197,13 +207,11 @@ void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int v
 			);
 			break;
 
-#ifdef WITH_JSON
 		case STATS_FORMAT_JSON: {
 			json_t *json_stats = stats_json_periodic(s, p);
 			json_dumpf(json_stats, f, 0);
 			break;
 		}
-#endif /* WITH_JSON */
 
 		default: { }
 	}
@@ -221,14 +229,12 @@ void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose)
 			}
 			break;
 
-#ifdef WITH_JSON
 		case STATS_FORMAT_JSON: {
 			json_t *json_stats = stats_json(s);
 			json_dumpf(json_stats, f, 0);
 			fflush(f);
 			break;
 		}
-#endif /* WITH_JSON */
 
 		default: { }
 	}

@@ -30,9 +30,13 @@
 #include "assert.h"
 #include "compat.h"
 
+/* Forward declarations */
+static void * worker(void *ctx);
+
 int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
-	int ret;
+	int ret, pulled, pushed;
+	json_t *req, *resp;
 
 	struct web *w = lws_context_user(lws_get_context(wsi));
 	struct api_session *s = (struct api_session *) user;
@@ -46,21 +50,23 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 
 			/* Parse request URI */
 			char uri[64];
-			lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_GET_URI); /* The path component of the*/
+			lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_GET_URI);
 
 			ret = sscanf(uri, "/v%d", (int *) &s->version);
 			if (ret != 1)
 				return -1;
 
-			ret = api_session_init(s, w->api, API_MODE_WS);
+			ret = api_session_init(s, API_MODE_WS);
 			if (ret)
 				return -1;
 			
-			list_push(&w->api->sessions, s);
+			s->wsi = wsi;
+			s->api = w->api;
 			
-			lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi), s->peer.name, sizeof(s->peer.name), s->peer.ip, sizeof(s->peer.ip));
+			list_push(&s->api->sessions, s);
 
-			debug(LOG_API, "New API session initiated: version=%d, mode=websocket, remote=%s (%s)", s->version, s->peer.name, s->peer.ip);
+			debug(LOG_API, "Initiated API session: %s", api_session_name(s));
+
 			break;
 
 		case LWS_CALLBACK_CLOSED:
@@ -70,28 +76,44 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 			
 			list_remove(&w->api->sessions, s);
 
-			debug(LOG_API, "Closed API session");
-
-			break;
-
-		case LWS_CALLBACK_SERVER_WRITEABLE:
-			web_buffer_write(&s->response.body, wsi);
-
-			if (s->completed && s->response.body.len == 0)
-				return -1;
+			debug(LOG_API, "Closing API session: %s", api_session_name(s));
 
 			break;
 
 		case LWS_CALLBACK_RECEIVE:
-			web_buffer_append(&s->request.body, in, len);
+			if (lws_is_first_fragment(wsi))
+				buffer_clear(&s->request.buffer);
+		
+			buffer_append(&s->request.buffer, in, len);
+			
+			if (lws_is_final_fragment(wsi)) {
+				ret = buffer_parse_json(&s->request.buffer, &req);
+				if (ret)
+					break;
+				
+				pushed = queue_push(&s->request.queue, req);
+				if (pushed != 1)
+					warn("Queue overun in API session");
 
-			json_t *req, *resp;
-			while (web_buffer_read_json(&s->request.body, &req) >= 0) {
-				api_session_run_command(s, req, &resp);
-
-				web_buffer_append_json(&s->response.body, resp);
-				lws_callback_on_writable(wsi);
+				pushed = queue_signalled_push(&w->api->pending, s);
+				if (pushed != 1)
+					warn("Queue overrun in API");
 			}
+
+			break;
+		
+		case LWS_CALLBACK_SERVER_WRITEABLE:
+			pulled = queue_pull(&s->response.queue, (void **) &resp);
+			if (pulled < 1)
+				break;
+			
+			char pad[LWS_PRE];
+			
+			buffer_clear(&s->response.buffer);
+			buffer_append(&s->response.buffer, pad, sizeof(pad));
+			buffer_append_json(&s->response.buffer, resp);
+
+			lws_write(wsi, (unsigned char *) s->response.buffer.buf + LWS_PRE, s->response.buffer.len - LWS_PRE, LWS_WRITE_TEXT);
 			break;
 
 		default:
@@ -103,7 +125,8 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 
 int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
-	int ret;
+	int ret, pulled, pushed;
+	json_t *resp, *req;
 
 	struct web *w = lws_context_user(lws_get_context(wsi));
 	struct api_session *s = (struct api_session *) user;
@@ -120,32 +143,16 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			if (ret != 1)
 				return -1;
 
-			ret = api_session_init(s, w->api, API_MODE_HTTP);
+			ret = api_session_init(s, API_MODE_HTTP);
 			if (ret)
 				return -1;
+
+			s->wsi = wsi;
+			s->api = w->api;
 			
-			list_push(&w->api->sessions, s);
-			
-			lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi), s->peer.name, sizeof(s->peer.name), s->peer.ip, sizeof(s->peer.ip));
+			list_push(&s->api->sessions, s);
 
-			debug(LOG_API, "New API session initiated: version=%d, mode=http, remote=%s (%s)", s->version, s->peer.name, s->peer.ip);
-
-			/* Prepare HTTP response header */
-			const char headers[] =	"HTTP/1.1 200 OK\r\n"
-						"Content-type: application/json\r\n"
-						"User-agent: " USER_AGENT "\r\n"
-						"Access-Control-Allow-Origin: *\r\n"
-						"Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-						"Access-Control-Allow-Headers: Content-Type\r\n"
-						"Access-Control-Max-Age: 86400\r\n"
-						"\r\n";
-
-			web_buffer_append(&s->response.headers, headers, sizeof(headers)-1);
-			lws_callback_on_writable(wsi);
-
-			/* Only HTTP POST requests wait for body */
-			if (lws_hdr_total_length(wsi, WSI_TOKEN_POST_URI) == 0)
-				s->completed = true;
+			debug(LOG_API, "Initiated API session: %s", api_session_name(s));
 
 			break;
 
@@ -163,27 +170,50 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			break;
 
 		case LWS_CALLBACK_HTTP_BODY:
-			web_buffer_append(&s->request.body, in, len);
+			buffer_append(&s->request.buffer, in, len);
 
-			json_t *req, *resp;
-			while (web_buffer_read_json(&s->request.body, &req) == 1) {
-				api_session_run_command(s, req, &resp);
-
-				web_buffer_append_json(&s->response.body, resp);
-				lws_callback_on_writable(wsi);
-			}
 			break;
 
 		case LWS_CALLBACK_HTTP_BODY_COMPLETION:
-			s->completed = true;
+			ret = buffer_parse_json(&s->request.buffer, &req);
+			if (ret)
+				break;
+
+			buffer_clear(&s->request.buffer);
+			
+			pushed = queue_push(&s->request.queue, req);
+			if (pushed != 1)
+				warn("Queue overrun for API session: %s", api_session_name(s));
+
+			pushed = queue_signalled_push(&w->api->pending, s);
+			if (pushed != 1)
+				warn("Queue overrun for API");
+
 			break;
 
 		case LWS_CALLBACK_HTTP_WRITEABLE:
-			web_buffer_write(&s->response.headers, wsi);
-			web_buffer_write(&s->response.body,    wsi);
+			pulled = queue_pull(&s->response.queue, (void **) &resp);
+			if (pulled) {
+				const char headers[] =	"HTTP/1.1 200 OK\r\n"
+					"Content-type: application/json\r\n"
+					"User-agent: " USER_AGENT "\r\n"
+					"Access-Control-Allow-Origin: *\r\n"
+					"Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+					"Access-Control-Allow-Headers: Content-Type\r\n"
+					"Access-Control-Max-Age: 86400\r\n"
+					"\r\n";
+				
+				buffer_clear(&s->response.buffer);
+				buffer_append_json(&s->response.buffer, resp);
+			
+				lws_write(wsi, (unsigned char *) headers, strlen(headers), LWS_WRITE_HTTP_HEADERS);
+				lws_write(wsi, (unsigned char *) s->response.buffer.buf, s->response.buffer.len, LWS_WRITE_HTTP);
+				
+				debug(LOG_API, "Closing API session: %s", api_session_name(s));
 
-			if (s->completed && s->response.body.len == 0)
 				return -1; /* Close connection */
+			}
+
 			break;
 
 		default:
@@ -216,7 +246,13 @@ int api_destroy(struct api *a)
 
 int api_start(struct api *a)
 {
+	int ret;
+
 	info("Starting API sub-system");
+	
+	ret = pthread_create(&a->thread, NULL, worker, a);
+	if (ret)
+		error("Failed to start API worker thread");
 
 	a->state = STATE_STARTED;
 
@@ -225,16 +261,57 @@ int api_start(struct api *a)
 
 int api_stop(struct api *a)
 {
+	int ret;
+
 	info("Stopping API sub-system");
 	
-	for (int i = 0; i < 10 && list_length(&a->sessions) > 0; i++) {
+	for (int i = 0; i < 10 && list_length(&a->sessions) > 0; i++) { INDENT
 		info("Wait for API requests to complete");
-		usleep(100 * 1e-3);
+		usleep(1 * 1e6);
 	}
+	
+	if (a->state != STATE_STARTED)
+		return 0;
 
-	list_destroy(&a->sessions, (dtor_cb_t) api_session_destroy, false);
+	ret = list_destroy(&a->sessions, (dtor_cb_t) api_session_destroy, false);
+	if (ret)
+		return ret;
+	
+	ret = pthread_cancel(a->thread);
+	if (ret)
+		serror("Failed to cancel API worker thread");
+
+	ret = pthread_join(a->thread, NULL);
+	if (ret)
+		serror("Failed to join API worker thread");
 
 	a->state = STATE_STOPPED;
 
 	return 0;
+}
+
+static void * worker(void *ctx)
+{
+	int pulled;
+
+	struct api *a = ctx;
+	struct api_session *s;
+	
+	json_t *req, *resp;
+
+	for (;;) {
+		pulled = queue_signalled_pull(&a->pending, (void **) &s);
+		if (pulled != 1)
+			continue;
+
+		queue_pull(&s->request.queue, (void **) &req);
+
+		api_session_run_command(s, req, &resp);
+		
+		queue_push(&s->response.queue, resp);
+		
+		lws_callback_on_writable(s->wsi);
+	}
+	
+	return NULL;
 }

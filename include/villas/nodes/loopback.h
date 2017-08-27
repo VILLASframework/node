@@ -29,8 +29,6 @@
 
 #pragma once
 
-#include <libconfig.h>
-
 #include "queue_signalled.h"
 #include "pool.h"
 
@@ -53,7 +51,7 @@ struct loopback {
 char * loopback_print(struct node *n);
 
 /** @see node_type::parse */
-int loopback_parse(struct node *n, config_setting_t *cfg);
+int loopback_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::open */
 int loopback_open(struct node *n);

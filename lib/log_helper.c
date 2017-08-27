@@ -30,7 +30,7 @@ void debug(long class, const char *fmt, ...)
 {
 	va_list ap;
 
-	struct log *l = global_log ? global_log : &default_log;
+	struct log *l = global_log;
 
 	int lvl = class &  0xFF;
 	int fac = class & ~0xFF;
@@ -46,7 +46,7 @@ void info(const char *fmt, ...)
 {
 	va_list ap;
 
-	struct log *l = global_log ? global_log : &default_log;
+	struct log *l = global_log;
 
 	va_start(ap, fmt);
 	log_vprint(l, LOG_LVL_INFO, fmt, ap);
@@ -57,7 +57,7 @@ void warn(const char *fmt, ...)
 {
 	va_list ap;
 
-	struct log *l = global_log ? global_log : &default_log;
+	struct log *l = global_log;
 
 	va_start(ap, fmt);
 	log_vprint(l, LOG_LVL_WARN, fmt, ap);
@@ -68,7 +68,7 @@ void stats(const char *fmt, ...)
 {
 	va_list ap;
 
-	struct log *l = global_log ? global_log : &default_log;
+	struct log *l = global_log;
 
 	va_start(ap, fmt);
 	log_vprint(l, LOG_LVL_STATS, fmt, ap);
@@ -79,7 +79,7 @@ void error(const char *fmt, ...)
 {
 	va_list ap;
 
-	struct log *l = global_log ? global_log : &default_log;
+	struct log *l = global_log;
 
 	va_start(ap, fmt);
 	log_vprint(l, LOG_LVL_ERROR, fmt, ap);
@@ -94,7 +94,7 @@ void serror(const char *fmt, ...)
 	va_list ap;
 	char *buf = NULL;
 
-	struct log *l = global_log ? global_log : &default_log;
+	struct log *l = global_log;
 
 	va_start(ap, fmt);
 	vstrcatf(&buf, fmt, ap);

@@ -30,7 +30,7 @@
 
 #include <villas/utils.h>
 #include <villas/sample.h>
-#include <villas/sample_io.h>
+#include <villas/io/villas.h>
 #include <villas/timing.h>
 #include <villas/node.h>
 #include <villas/plugin.h>
@@ -39,6 +39,7 @@
 /* Some default values */
 struct node n;
 struct log l;
+struct io io;
 
 struct sample *t;
 
@@ -54,14 +55,15 @@ void usage()
 	printf("    ramp\n");
 	printf("\n");
 	printf("  OPTIONS is one or more of the following options:\n");
-	printf("    -d LVL   set debug level\n");
-	printf("    -v NUM   specifies how many values a message should contain\n");
-	printf("    -r HZ    how many messages per second\n");
-	printf("    -n       non real-time mode. do not throttle output.\n");
-	printf("    -f HZ    the frequency of the signal\n");
-	printf("    -a FLT   the amplitude\n");
-	printf("    -D FLT   the standard deviation for 'random' signals\n");
-	printf("    -l NUM   only send LIMIT messages and stop\n\n");
+	printf("    -d LVL  set debug level\n");
+	printf("    -f FMT  set the format\n");
+	printf("    -v NUM  specifies how many values a message should contain\n");
+	printf("    -r HZ   how many messages per second\n");
+	printf("    -n      non real-time mode. do not throttle output.\n");
+	printf("    -F HZ   the frequency of the signal\n");
+	printf("    -a FLT  the amplitude\n");
+	printf("    -D FLT  the standard deviation for 'random' signals\n");
+	printf("    -l NUM  only send LIMIT messages and stop\n\n");
 
 	print_copyright();
 }
@@ -78,6 +80,14 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	if (ret)
 		error("Failed to destroy node");
 
+	ret = io_close(&io);
+	if (ret)
+		error("Failed to close output");
+
+	ret = io_destroy(&io);
+	if (ret)
+		error("Failed to destroy output");
+
 	ret = log_stop(&l);
 	if (ret)
 		error("Failed to stop log");
@@ -92,7 +102,8 @@ int main(int argc, char *argv[])
 {
 	int ret;
 	struct plugin *p;
-	struct signal *s;
+
+	char *format = "villas"; /** @todo hardcoded for now */
 
 	ret = log_init(&l, l.level, LOG_ALL);
 	if (ret)
@@ -114,6 +125,18 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to initialize node");
 
+	p = plugin_lookup(PLUGIN_TYPE_IO, format);
+	if (!p)
+		error("Invalid output format '%s'", format);
+
+	ret = io_init(&io, &p->io, IO_FLUSH | (IO_FORMAT_ALL & ~IO_FORMAT_OFFSET));
+	if (ret)
+		error("Failed to initialize output");
+
+	ret = io_open(&io, NULL);
+	if (ret)
+		error("Failed to open output");
+
 	ret = node_parse_cli(&n, argc, argv);
 	if (ret)
 		error("Failed to parse command line options");
@@ -122,19 +145,12 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to verify node configuration");
 
-	info("Starting signal generation: %s", node_name(&n));
-
 	/* Allocate memory for message buffer */
-	s = n._vd;
+	struct signal *s = n._vd;
 
 	t = alloc(SAMPLE_LEN(s->values));
 
 	t->capacity = s->values;
-
-	/* Print header */
-	printf("# VILLASnode signal params: type=%s, values=%u, rate=%f, limit=%d, amplitude=%f, freq=%f\n",
-		argv[optind], s->values, s->rate, s->limit, s->amplitude, s->frequency);
-	printf("# %-20s\t\t%s\n", "sec.nsec(seq)", "data[]");
 
 	ret = node_start(&n);
 	if (ret)
@@ -142,9 +158,7 @@ int main(int argc, char *argv[])
 
 	for (;;) {
 		node_read(&n, &t, 1);
-
-		sample_io_villas_fprint(stdout, t, SAMPLE_IO_ALL & ~SAMPLE_IO_OFFSET);
-		fflush(stdout);
+		io_print(&io, &t, 1);
 	}
 
 	return 0;

@@ -197,26 +197,31 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 	return cnt;
 }
 
-static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
+static int ngsi_parse_mapping(struct list *mapping, json_t *cfg)
 {
-	if (!config_setting_is_array(cfg))
+	if (!json_is_array(cfg))
 		return -1;
 
 	list_init(mapping);
 
-	for (int j = 0; j < config_setting_length(cfg); j++) {
-		const char *token = config_setting_get_string_elem(cfg, j);
+	size_t index;
+	json_t *cfg_token;
+
+	json_array_foreach(cfg, index, cfg_token) {
+		const char *token;
+
+		token = json_string_value(cfg_token);
 		if (!token)
 			return -2;
 
 		struct ngsi_attribute *a = alloc(sizeof(struct ngsi_attribute));
 
-		a->index = j;
+		a->index = index;
 
 		/* Parse Attribute: AttributeName(AttributeType) */
 		int bytes;
 		if (sscanf(token, "%m[^(](%m[^)])%n", &a->name, &a->type, &bytes) != 2)
-			cerror(cfg, "Invalid mapping token: '%s'", token);
+			error("Invalid mapping token: '%s'", token);
 
 		token += bytes;
 
@@ -241,7 +246,7 @@ static int ngsi_parse_mapping(struct list *mapping, config_setting_t *cfg)
 			.name = "index",
 			.type = "integer"
 		};
-		assert(asprintf(&i.value, "%u", j));
+		assert(asprintf(&i.value, "%zu", index));
 
 		list_push(&a->metadata, memdup(&s, sizeof(s)));
 		list_push(&a->metadata, memdup(&i, sizeof(i)));
@@ -387,19 +392,6 @@ out:	json_decref(request);
 
 int ngsi_init(struct super_node *sn)
 {
-	config_setting_t *cfg;
-
-	cfg = config_root_setting(&sn->cfg);
-
-	const char *tname;
-	if (config_setting_lookup_string(cfg, "name", &tname)) {
-		name = strdup(tname);
-	}
-	else {
-		name = alloc(128); /** @todo missing free */
-		gethostname((char *) name, 128);
-	}
-
 	return curl_global_init(CURL_GLOBAL_ALL);
 }
 
@@ -412,37 +404,36 @@ int ngsi_deinit()
 	return 0;
 }
 
-int ngsi_parse(struct node *n, config_setting_t *cfg)
+int ngsi_parse(struct node *n, json_t *cfg)
 {
 	struct ngsi *i = n->_vd;
 
-	if (!config_setting_lookup_string(cfg, "access_token", &i->access_token))
-		i->access_token = NULL; /* disabled by default */
+	int ret;
+	json_error_t err;
+	json_t *cfg_mapping;
 
-	if (!config_setting_lookup_string(cfg, "endpoint", &i->endpoint))
-		cerror(cfg, "Missing NGSI endpoint for node %s", node_name(n));
+	/* Default values */
+	i->access_token = NULL; /* disabled by default */
+	i->ssl_verify = 1; /* verify by default */
+	i->timeout = 1; /* default value */
+	i->rate = 5; /* default value */
 
-	if (!config_setting_lookup_string(cfg, "entity_id", &i->entity_id))
-		cerror(cfg, "Missing NGSI entity ID for node %s", node_name(n));
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: s, s: s, s: s, s?: b, s?: f, s?: f }",
+		"access_token", &i->access_token,
+		"endpoint", &i->endpoint,
+		"entity_id", &i->entity_id,
+		"entity_type", &i->entity_type,
+		"ssl_verify", &i->ssl_verify,
+		"timeout", &i->timeout,
+		"rate", &i->rate,
+		"mapping", &cfg_mapping
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-	if (!config_setting_lookup_string(cfg, "entity_type", &i->entity_type))
-		cerror(cfg, "Missing NGSI entity type for node %s", node_name(n));
-
-	if (!config_setting_lookup_bool(cfg, "ssl_verify", &i->ssl_verify))
-		i->ssl_verify = 1; /* verify by default */
-
-	if (!config_setting_lookup_float(cfg, "timeout", &i->timeout))
-		i->timeout = 1; /* default value */
-
-	if (!config_setting_lookup_float(cfg, "rate", &i->rate))
-		i->rate = 5; /* default value */
-
-	config_setting_t *cfg_mapping = config_setting_get_member(cfg, "mapping");
-	if (!cfg_mapping)
-		cerror(cfg, "Missing mapping for node %s", node_name(n));
-
-	if (ngsi_parse_mapping(&i->mapping, cfg_mapping))
-		cerror(cfg_mapping, "Invalid mapping for node %s", node_name(n));
+	ret = ngsi_parse_mapping(&i->mapping, cfg_mapping);
+	if (ret)
+		error("Invalid setting 'mapping' of node %s", node_name(n));
 
 	return 0;
 }
@@ -497,13 +488,13 @@ int ngsi_start(struct node *n)
 		i->headers = curl_slist_append(i->headers, buf);
 	}
 
-	/* Create timer */
+	/* Create task */
 	if (i->timeout > 1 / i->rate)
 		warn("Timeout is to large for given rate: %f", i->rate);
 
-	i->tfd = timerfd_create_rate(i->rate);
-	if (i->tfd < 0)
-		serror("Failed to create timer");
+	ret = task_init(&i->task, i->rate, CLOCK_MONOTONIC);
+	if (ret)
+		serror("Failed to create task");
 
 	i->headers = curl_slist_append(i->headers, "Accept: application/json");
 	i->headers = curl_slist_append(i->headers, "Content-Type: application/json");
@@ -548,8 +539,8 @@ int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt)
 	struct ngsi *i = n->_vd;
 	int ret;
 
-	if (timerfd_wait(i->tfd) == 0)
-		perror("Failed to wait for timer");
+	if (task_wait_until_next_period(&i->task) == 0)
+		perror("Failed to wait for task");
 
 	json_t *rentity;
 	json_t *entity = ngsi_build_entity(i, NULL, 0, 0);
@@ -602,4 +593,3 @@ static struct plugin p = {
 
 REGISTER_PLUGIN(&p)
 LIST_INIT_STATIC(&p.node.instances)
-

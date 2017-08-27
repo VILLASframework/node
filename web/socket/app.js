@@ -273,8 +273,6 @@ function wsConnect(node)
 	conn.onmessage = function(e) {
 		var msgs = Msg.fromArrayBufferVector(e.data);
 
-		console.log('Received ' + msgs.length + ' messages with ' + msgs[0].data.length + ' values from id ' + msgs[0].id + ' with timestamp ' + msgs[0].timestamp);
-
 		for (var j = 0; j < plotData.length; j++) {
 			// remove old
 			while (plotData[j].length > 0 && plotData[j][0][0] < (Date.now() - xPast))
@@ -283,6 +281,8 @@ function wsConnect(node)
 
 		for (var j = 0; j < msgs.length; j++) {
 			var msg = msgs[j];
+			
+			console.log('Received message with ' + msg.data.length + ' values from id ' + msg.id + ' with timestamp ' + new Date(msg.timestamp).toString());
 
 			if (msg.id !== currentNode.id)
 				continue;

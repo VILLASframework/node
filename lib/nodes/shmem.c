@@ -36,44 +36,49 @@
 #include "timing.h"
 #include "utils.h"
 
-int shmem_parse(struct node *n, config_setting_t *cfg)
+int shmem_parse(struct node *n, json_t *cfg)
 {
 	struct shmem *shm = n->_vd;
+	const char *val;
 
-	if (!config_setting_lookup_string(cfg, "out_name", &shm->out_name))
-		cerror(cfg, "Missing shared memory output queue name");
+	int ret;
+	json_t *cfg_exec = NULL;
+	json_error_t err;
 
-	if (!config_setting_lookup_string(cfg, "in_name", &shm->in_name))
-		cerror(cfg, "Missing shared memory input queue name");
+	/* Default values */
+	shm->conf.queuelen = MAX(DEFAULT_SHMEM_QUEUELEN, n->vectorize);
+	shm->conf.samplelen = DEFAULT_SHMEM_SAMPLELEN;
+	shm->conf.polling = false;
+	shm->exec = NULL;
 
-	if (!config_setting_lookup_int(cfg, "queuelen", &shm->conf.queuelen))
-		shm->conf.queuelen = MAX(DEFAULT_SHMEM_QUEUELEN, n->vectorize);
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: s, s?: i, s?: i, s?: b, s?: o }",
+		"out_name", &shm->out_name,
+		"in_name", &shm->in_name,
+		"queuelen", &shm->conf.queuelen,
+		"samplelen", &shm->conf.samplelen,
+		"polling", &shm->conf.polling,
+		"exec", &cfg_exec
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-	if (!config_setting_lookup_int(cfg, "samplelen", &shm->conf.samplelen))
-		shm->conf.samplelen = DEFAULT_SHMEM_SAMPLELEN;
+	if (cfg_exec) {
+		if (!json_is_array(cfg_exec))
+			error("Setting 'exec' of node %s must be a JSON array of strings", node_name(n));
 
-	if (!config_setting_lookup_bool(cfg, "polling", &shm->conf.polling))
-		shm->conf.polling = false;
+		shm->exec = alloc(sizeof(char *) * (json_array_size(cfg_exec) + 1));
 
-	config_setting_t *exec_cfg = config_setting_lookup(cfg, "exec");
-	if (!exec_cfg)
-		shm->exec = NULL;
-	else {
-		if (!config_setting_is_array(exec_cfg))
-			cerror(exec_cfg, "Invalid format for exec");
+		size_t index;
+		json_t *cfg_val;
+		json_array_foreach(cfg_exec, index, cfg_val) {
+			val = json_string_value(cfg_exec);
+			if (!val)
+				error("Setting 'exec' of node %s must be a JSON array of strings", node_name(n));
 
-		shm->exec = alloc(sizeof(char *) * (config_setting_length(exec_cfg) + 1));
-
-		int i;
-		for (i = 0; i < config_setting_length(exec_cfg); i++) {
-			const char *elm = config_setting_get_string_elem(exec_cfg, i);
-			if (!elm)
-				cerror(exec_cfg, "Invalid format for exec");
-
-			shm->exec[i] = strdup(elm);
+			shm->exec[index] = strdup(val);
 		}
 
-		shm->exec[i] = NULL;
+		shm->exec[index] = NULL;
 	}
 
 	return 0;

@@ -1,0 +1,106 @@
+# Dockerfile for VILLASnode development.
+#
+# This Dockerfile builds an image which contains all library dependencies
+# and tools to build VILLASnode.
+# However, VILLASnode itself it not part of the image.
+#
+# This image can be used for developing VILLASnode
+# by running:
+#   make docker
+#
+# @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+# @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+# @license GNU General Public License (version 3)
+#
+# VILLASnode
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###################################################################################
+
+FROM centos:7
+MAINTAINER Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+
+# Some of the dependencies are only available in our own repo
+ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
+
+# Enable Extra Packages for Enterprise Linux (EPEL) and Software collection repo
+RUN yum -y install epel-release centos-release-scl
+
+# Toolchain
+RUN yum -y install \
+	devtoolset-6-toolchain \
+	gcc gcc-c++ \
+	pkgconfig make cmake \
+	autoconf automake autogen libtool \
+	flex bison \
+	texinfo git curl tar
+
+# Several tools only needed for developement and testing
+RUN yum -y install \
+	doxygen dia graphviz \
+	openssh-clients \
+	rpmdevtools rpm-build \
+	jq \
+	iproute \
+	python-pip \
+	valgrind gdb gdb-gdbserver \
+	xmlto rubygem-asciidoctor
+
+# 32bit versions of some standard libraries for RT-LAB code
+RUN yum -y install \
+	libstdc++-devel.i686 \
+	libuuid-devel.i686 \
+	glibc-devel.i686
+
+# Tools for debugging, coverage, profiling
+RUN pip install \
+        gcovr
+
+# Dependencies
+RUN yum -y install \
+	openssl openssl-devel \
+	libconfig-devel \
+	libnl3-devel \
+	hdf5-devel \
+	zeromq-devel \
+	nanomsg-devel \
+	libxil-devel
+
+# Build & Install Criterion
+COPY thirdparty/criterion /tmp/criterion
+RUN cd /tmp/criterion && cmake . && make install && rm -rf /tmp/*
+
+# Build & Install Jansson
+COPY thirdparty/jansson /tmp/jansson
+RUN cd /tmp/jansson && cmake -DJANSSON_BUILD_DOCS=OFF . && make install && rm -rf /tmp/*
+
+# Build & Install libwebsockets
+COPY thirdparty/libwebsockets /tmp/libwebsockets
+RUN cd /tmp/libwebsockets && cmake -DLWS_IPV6=1 -DLWS_WITH_STATIC=0 -DLWS_WITHOUT_TESTAPPS=1 -DLWS_WITH_HTTP2=1 . && make install && rm -rf /tmp/*
+
+# Build & Install libcurl
+COPY thirdparty/libcurl /tmp/libcurl
+RUN cd /tmp/libcurl/ && ./buildconf && ./configure && make install && rm -rf /tmp/*
+
+# Workaround for libnl3's search path for netem distributions
+RUN ln -s /usr/lib64/tc /usr/lib/tc
+
+# Expose ports for HTTP and WebSocket frontend
+EXPOSE 80
+EXPOSE 443
+
+ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
+
+WORKDIR /villas
+ENTRYPOINT scl enable devtoolset-6 bash

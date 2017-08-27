@@ -1,4 +1,4 @@
-/** Logging routines that depend on libconfig.
+/** Logging routines that depend on jansson.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -25,14 +25,13 @@
 
 struct log;
 
-#include <libconfig.h>
+#include <jansson.h>
 
 #include "log.h"
 
 /** Parse logging configuration. */
-int log_parse(struct log *l, config_setting_t *cfg);
+int log_parse(struct log *l, json_t *cfg);
 
 /** Print configuration error and exit. */
-void cerror(config_setting_t *cfg, const char *fmt, ...)
+void jerror(json_error_t *err, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
-

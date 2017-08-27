@@ -31,12 +31,13 @@
 
 #include <villas/timing.h>
 #include <villas/sample.h>
-#include <villas/sample_io.h>
+#include <villas/io.h>
 #include <villas/hook.h>
 #include <villas/utils.h>
 #include <villas/pool.h>
 #include <villas/log.h>
 #include <villas/plugin.h>
+#include <config_helper.h>
 
 #include <villas/kernel/rt.h>
 
@@ -44,12 +45,13 @@
 
 int cnt;
 
-struct sample **samples;
+struct sample **smps;
 struct plugin *p;
 
 struct log  l = { .state = STATE_DESTROYED };
 struct pool q = { .state = STATE_DESTROYED };
 struct hook h = { .state = STATE_DESTROYED };
+struct io  io = { .state = STATE_DESTROYED };
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
@@ -63,7 +65,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	if (ret)
 		error("Failed to destroy hook");
 
-	sample_free(samples, cnt);
+	sample_free(smps, cnt);
 
 	ret = pool_destroy(&q);
 	if (ret)
@@ -80,13 +82,20 @@ static void usage()
 	printf("  NAME      the name of the hook function\n");
 	printf("  PARAM*    a string of configuration settings for the hook\n");
 	printf("  OPTIONS is one or more of the following options:\n");
+	printf("    -f FMT  the data format\n");
 	printf("    -h      show this help\n");
 	printf("    -d LVL  set debug level to LVL\n");
-	printf("    -v CNT  process CNT samples at once\n");
+	printf("    -v CNT  process CNT smps at once\n");
 	printf("\n");
+
 	printf("The following hook functions are supported:\n");
 	plugin_dump(PLUGIN_TYPE_HOOK);
 	printf("\n");
+
+	printf("Supported IO formats:\n");
+	plugin_dump(PLUGIN_TYPE_IO);
+	printf("\n");
+
 	printf("Example:");
 	printf("  villas-signal random | villas-hook skip_first seconds=10\n");
 	printf("\n");
@@ -96,27 +105,42 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	int ret;
-
-	size_t recv;
+	int ret, recv;
+	char *format = "villas";
 
 	/* Default values */
 	cnt = 1;
 
-	char c;
-	while ((c = getopt(argc, argv, "hv:d:")) != -1) {
+	json_t *cfg_cli = json_object();
+
+	char c, *endptr;
+	while ((c = getopt(argc, argv, "hv:d:f:o:")) != -1) {
 		switch (c) {
+			case 'f':
+				format = optarg;
+				break;
 			case 'v':
-				cnt = atoi(optarg);
-				break;
+				cnt = strtoul(optarg, &endptr, 0);
+				goto check;
 			case 'd':
-				l.level = atoi(optarg);
+				l.level = strtoul(optarg, &endptr, 0);
+				goto check;
+			case 'o':
+				ret = json_object_extend_str(cfg_cli, optarg);
+				if (ret)
+					error("Invalid option: %s", optarg);
 				break;
-			case 'h':
 			case '?':
+			case 'h':
 				usage();
 				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
+
+		continue;
+
+check:		if (optarg == endptr)
+			error("Failed to parse parse option argument '-%c %s'", c, optarg);
+
 	}
 
 	if (argc < optind + 1) {
@@ -124,39 +148,56 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	char *hookstr = argv[optind];
-
-	ret = signals_init(quit);
-	if (ret)
-		error("Failed to intialize signals");
+	char *hook = argv[optind];
 
 	ret = log_init(&l, l.level, LOG_ALL);
 	if (ret)
 		error("Failed to initialize log");
 
-	log_start(&l);
+	ret = log_start(&l);
+	if (ret)
+		error("Failed to start log");
+
+	ret = signals_init(quit);
+	if (ret)
+		error("Failed to intialize signals");
 
 	if (cnt < 1)
 		error("Vectorize option must be greater than 0");
 
-	memory_init(DEFAULT_NR_HUGEPAGES);
+	ret = memory_init(DEFAULT_NR_HUGEPAGES);
+	if (ret)
+		error("Failed to initialize memory");
 
-	samples = alloc(cnt * sizeof(struct sample *));
+	smps = alloc(cnt * sizeof(struct sample *));
 
 	ret = pool_init(&q, 10 * cnt, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
 	if (ret)
 		error("Failed to initilize memory pool");
 
-	p = plugin_lookup(PLUGIN_TYPE_HOOK, hookstr);
+	/* Initialize IO */
+	p = plugin_lookup(PLUGIN_TYPE_IO, format);
 	if (!p)
-		error("Unknown hook function '%s'", hookstr);
+		error("Unknown IO format '%s'", format);
 
-	/** @todo villas-hook does not use the path structure */
+	ret = io_init(&io, &p->io, IO_FORMAT_ALL);
+	if (ret)
+		error("Failed to initialize IO");
+
+	ret = io_open(&io, NULL);
+	if (ret)
+		error("Failed to open IO");
+
+	/* Initialize hook */
+	p = plugin_lookup(PLUGIN_TYPE_HOOK, hook);
+	if (!p)
+		error("Unknown hook function '%s'", hook);
+
 	ret = hook_init(&h, &p->hook, NULL);
 	if (ret)
 		error("Failed to initialize hook");
 
-	ret = hook_parse_cli(&h, argc - optind - 1, &argv[optind + 1]);
+	ret = hook_parse(&h, cfg_cli);
 	if (ret)
 		error("Failed to parse hook config");
 
@@ -165,35 +206,27 @@ int main(int argc, char *argv[])
 		error("Failed to start hook");
 
 	for (;;) {
-		if (feof(stdin)) {
+		if (io_eof(&io)) {
 			killme(SIGTERM);
 			pause();
 		}
 
-		ret = sample_alloc(&q, samples, cnt);
+		ret = sample_alloc(&q, smps, cnt);
 		if (ret != cnt)
-			error("Failed to allocate %d samples from pool", cnt);
+			error("Failed to allocate %d smps from pool", cnt);
 
-		recv = 0;
-		for (int j = 0; j < cnt && !feof(stdin); j++) {
-			ret = sample_io_villas_fscan(stdin, samples[j], NULL);
-			if (ret < 0)
-				break;
+		recv = io_scan(&io, smps, cnt);
+		if (recv < 0)
+			killme(SIGTERM);
 
-			samples[j]->ts.received = time_now();
-			recv++;
-		}
+		debug(15, "Read %u smps from stdin", recv);
 
-		debug(15, "Read %zu samples from stdin", recv);
+		hook_read(&h, smps, (unsigned *) &recv);
+		hook_write(&h, smps, (unsigned *) &recv);
 
-		hook_read(&h, samples, &recv);
-		hook_write(&h, samples, &recv);
+		io_print(&io, smps, recv);
 
-		for (int j = 0; j < recv; j++)
-			sample_io_villas_fprint(stdout, samples[j], SAMPLE_IO_ALL);
-		fflush(stdout);
-
-		sample_free(samples, cnt);
+		sample_free(smps, cnt);
 	}
 
 	return 0;

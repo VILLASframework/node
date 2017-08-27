@@ -28,6 +28,7 @@ LIB_CFLAGS  = $(CFLAGS) -fPIC
 
 -include lib/hooks/Makefile.inc
 -include lib/nodes/Makefile.inc
+-include lib/io/Makefile.inc
 
 -include $(patsubst %, lib/Makefile.%.inc, $(SONAMES))
 

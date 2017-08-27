@@ -21,11 +21,10 @@
  *********************************************************************************/
 #include <string.h>
 #include <math.h>
-#include <libconfig.h>
 
 #include "timing.h"
 #include "config.h"
-#include "msg.h"
+#include "io/msg.h"
 #include "hook.h"
 #include "path.h"
 #include "utils.h"
@@ -54,18 +53,24 @@ int hook_init(struct hook *h, struct hook_type *vt, struct path *p)
 	return 0;
 }
 
-int hook_parse(struct hook *h, config_setting_t *cfg)
+int hook_parse(struct hook *h, json_t *cfg)
 {
 	int ret;
+	json_error_t err;
 
 	assert(h->state != STATE_DESTROYED);
 
-	config_setting_lookup_int(cfg, "priority", &h->priority);
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i }",
+		"priority", &h->priority
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
 
 	ret = h->_vt->parse ? h->_vt->parse(h, cfg) : 0;
 	if (ret)
 		return ret;
 
+	h->cfg = cfg;
 	h->state = STATE_PARSED;
 
 	return 0;
@@ -83,21 +88,11 @@ int hook_parse_cli(struct hook *h, int argc, char *argv[])
 		h->state = STATE_PARSED;
 	}
 	else {
-		config_t cfg;
-		config_setting_t *cfg_root;
+		h->cfg = json_load_cli(argc, argv);
+		if (!h->cfg)
+			return -1;
 
-		config_init(&cfg);
-
-		ret = config_read_cli(&cfg, argc, argv);
-		if (ret)
-			goto out;
-
-		cfg_root = config_root_setting(&cfg);
-
-		ret = hook_parse(h, cfg_root);
-
-out:
-		config_destroy(&cfg);
+		ret = hook_parse(h, h->cfg);
 	}
 
 	return ret;
@@ -149,23 +144,23 @@ int hook_restart(struct hook *h)
 	return h->_vt->restart ? h->_vt->restart(h) : 0;
 }
 
-int hook_read(struct hook *h, struct sample *smps[], size_t *cnt)
+int hook_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	debug(LOG_HOOK | 10, "Running hook %s: type=read, priority=%d, cnt=%zu", plugin_name(h->_vt), h->priority, *cnt);
+	debug(LOG_HOOK | 10, "Running hook %s: type=read, priority=%d, cnt=%u", plugin_name(h->_vt), h->priority, *cnt);
 
 	return h->_vt->read ? h->_vt->read(h, smps, cnt) : 0;
 }
 
-int hook_write(struct hook *h, struct sample *smps[], size_t *cnt)
+int hook_write(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	debug(LOG_HOOK | 10, "Running hook %s: type=write, priority=%d, cnt=%zu", plugin_name(h->_vt), h->priority, *cnt);
+	debug(LOG_HOOK | 10, "Running hook %s: type=write, priority=%d, cnt=%u", plugin_name(h->_vt), h->priority, *cnt);
 
 	return h->_vt->write ? h->_vt->write(h, smps, cnt) : 0;
 }
 
-size_t hook_read_list(struct list *hs, struct sample *smps[], size_t cnt)
+int hook_read_list(struct list *hs, struct sample *smps[], unsigned cnt)
 {
-	size_t ret;
+	unsigned ret;
 
 	for (size_t i = 0; i < list_length(hs); i++) {
 		struct hook *h = list_at(hs, i);
@@ -180,9 +175,9 @@ size_t hook_read_list(struct list *hs, struct sample *smps[], size_t cnt)
 	return cnt;
 }
 
-size_t hook_write_list(struct list *hs, struct sample *smps[], size_t cnt)
+int hook_write_list(struct list *hs, struct sample *smps[], unsigned cnt)
 {
-	size_t ret;
+	unsigned ret;
 
 	for (size_t i = 0; i < list_length(hs); i++) {
 		struct hook *h = list_at(hs, i);
@@ -205,38 +200,36 @@ int hook_cmp_priority(const void *a, const void *b)
 	return ha->priority - hb->priority;
 }
 
-int hook_parse_list(struct list *list, config_setting_t *cfg, struct path *o)
+int hook_parse_list(struct list *list, json_t *cfg, struct path *o)
 {
-	struct plugin *p;
+	if (!json_is_array(cfg))
+		error("Hooks must be configured as a list of objects");
 
-	int ret;
-	const char *type;
+	size_t index;
+	json_t *cfg_hook;
+	json_array_foreach(cfg, index, cfg_hook) {
+		int ret;
+		const char *type;
+		struct plugin *p;
+		json_error_t err;
 
-	if (!config_setting_is_list(cfg))
-		cerror(cfg, "Hooks must be configured as a list of objects");
-
-	for (int i = 0; i < config_setting_length(cfg); i++) {
-		config_setting_t *cfg_hook = config_setting_get_elem(cfg, i);
-
-		if (!config_setting_is_group(cfg_hook))
-			cerror(cfg_hook, "The 'hooks' setting must be an array of strings.");
-
-		if (!config_setting_lookup_string(cfg_hook, "type", &type))
-			cerror(cfg_hook, "Missing setting 'type' for hook");
+		ret = json_unpack_ex(cfg_hook, &err, 0, "{ s: s }", "type", &type);
+		if (ret)
+			jerror(&err, "Failed to parse hook");
 
 		p = plugin_lookup(PLUGIN_TYPE_HOOK, type);
 		if (!p)
-			continue; /* We ignore all non hook settings in this libconfig object setting */
+			jerror(&err, "Unkown hook type '%s'", type);
 
 		struct hook *h = alloc(sizeof(struct hook));
 
 		ret = hook_init(h, &p->hook, o);
 		if (ret)
-			cerror(cfg_hook, "Failed to initialize hook");
+			jerror(&err, "Failed to initialize hook");
 
 		ret = hook_parse(h, cfg_hook);
 		if (ret)
-			cerror(cfg_hook, "Failed to parse hook configuration");
+			jerror(&err, "Failed to parse hook configuration");
 
 		list_push(list, h);
 	}

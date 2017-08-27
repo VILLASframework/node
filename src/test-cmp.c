@@ -28,7 +28,9 @@
 #include <jansson.h>
 
 #include <villas/sample.h>
-#include <villas/sample_io.h>
+#include <villas/io.h>
+#include <villas/io_format.h>
+#include <villas/io/villas.h>
 #include <villas/utils.h>
 #include <villas/timing.h>
 #include <villas/pool.h>
@@ -44,6 +46,9 @@ void usage()
 	printf("    -h      print this usage information\n");
 	printf("    -d LVL  adjust the debug level\n");
 	printf("    -e EPS  set epsilon for floating point comparisons to EPS\n");
+	printf("    -v      ignore data values\n");
+	printf("    -t      ignore timestamp\n");
+	printf("    -s      ignore sequence no\n");
 	printf("\n");
 	printf("Return codes:\n");
 	printf("  0   files are equal\n");
@@ -60,7 +65,12 @@ void usage()
 int main(int argc, char *argv[])
 {
 	int ret;
+	
+	/* Default values */
 	double epsilon = 1e-9;
+	int timestamp = 1;
+	int sequence = 1;
+	int data = 1;
 
 	struct log log;
 	struct pool pool = { .state = STATE_DESTROYED };
@@ -75,7 +85,7 @@ int main(int argc, char *argv[])
 
 	/* Parse Arguments */
 	char c, *endptr;
-	while ((c = getopt (argc, argv, "hjmd:e:l:H:r:")) != -1) {
+	while ((c = getopt (argc, argv, "hjmd:e:l:H:r:vts")) != -1) {
 		switch (c) {
 			case 'd':
 				log.level = strtoul(optarg, &endptr, 10);
@@ -83,6 +93,15 @@ int main(int argc, char *argv[])
 			case 'e':
 				epsilon = strtod(optarg, &endptr);
 				goto check;
+			case 'v':
+				data = 0;
+				break;
+			case 't':
+				timestamp = 0;
+				break;
+			case 's':
+				sequence = 0;
+				break;
 			case 'h':
 			case '?':
 				usage();
@@ -103,11 +122,21 @@ check:		if (optarg == endptr)
 	f1.path = argv[optind];
 	f2.path = argv[optind + 1];
 
-	log_init(&log, V, LOG_ALL);
-	log_start(&log);
+	ret = log_init(&log, V, LOG_ALL);
+	if (ret)
+		error("Failed to initialize log");
 
-	pool_init(&pool, 1024, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_heap);
-	sample_alloc(&pool, samples, 2);
+	ret = log_start(&log);
+	if (ret)
+		error("Failed to start log");
+
+	ret = pool_init(&pool, 1024, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_heap);
+	if (ret)
+		error("Failed to initialize pool");
+
+	ret = sample_alloc(&pool, samples, 2);
+	if (ret != 2)
+		error("Failed to allocate samples");
 
 	f1.sample = samples[0];
 	f2.sample = samples[1];
@@ -121,11 +150,11 @@ check:		if (optarg == endptr)
 		serror("Failed to open file: %s", f2.path);
 
 	while (!feof(f1.handle) && !feof(f2.handle)) {
-		ret = sample_io_villas_fscan(f1.handle, f1.sample, &f1.flags);
+		ret = villas_fscan(f1.handle, &f1.sample, 1, &f1.flags);
 		if (ret < 0 && !feof(f1.handle))
 			goto out;
 
-		ret = sample_io_villas_fscan(f2.handle, f2.sample, &f2.flags);
+		ret = villas_fscan(f2.handle, &f2.sample, 1, &f2.flags);
 		if (ret < 0 && !feof(f2.handle))
 			goto out;
 
@@ -139,7 +168,7 @@ check:		if (optarg == endptr)
 		}
 
 		/* Compare sequence no */
-		if ((f1.flags & SAMPLE_IO_SEQUENCE) && (f2.flags & SAMPLE_IO_SEQUENCE)) {
+		if (sequence && (f1.flags & IO_FORMAT_SEQUENCE) && (f2.flags & IO_FORMAT_SEQUENCE)) {
 			if (f1.sample->sequence != f2.sample->sequence) {
 				printf("sequence no: %d != %d\n", f1.sample->sequence, f2.sample->sequence);
 				ret = 2;
@@ -148,24 +177,28 @@ check:		if (optarg == endptr)
 		}
 
 		/* Compare timestamp */
-		if (time_delta(&f1.sample->ts.origin, &f2.sample->ts.origin) > epsilon) {
-			printf("ts.origin: %f != %f\n", time_to_double(&f1.sample->ts.origin), time_to_double(&f2.sample->ts.origin));
-			ret = 3;
-			goto out;
+		if (timestamp) {
+			if (time_delta(&f1.sample->ts.origin, &f2.sample->ts.origin) > epsilon) {
+				printf("ts.origin: %f != %f\n", time_to_double(&f1.sample->ts.origin), time_to_double(&f2.sample->ts.origin));
+				ret = 3;
+				goto out;
+			}
 		}
 
 		/* Compare data */
-		if (f1.sample->length != f2.sample->length) {
-			printf("length: %d != %d\n", f1.sample->length, f2.sample->length);
-			ret = 4;
-			goto out;
-		}
-
-		for (int i = 0; i < f1.sample->length; i++) {
-			if (fabs(f1.sample->data[i].f - f2.sample->data[i].f) > epsilon) {
-				printf("data[%d]: %f != %f\n", i, f1.sample->data[i].f, f2.sample->data[i].f);
-				ret = 5;
+		if (data) {
+			if (f1.sample->length != f2.sample->length) {
+				printf("length: %d != %d\n", f1.sample->length, f2.sample->length);
+				ret = 4;
 				goto out;
+			}
+
+			for (int i = 0; i < f1.sample->length; i++) {
+				if (fabs(f1.sample->data[i].f - f2.sample->data[i].f) > epsilon) {
+					printf("data[%d]: %f != %f\n", i, f1.sample->data[i].f, f2.sample->data[i].f);
+					ret = 5;
+					goto out;
+				}
 			}
 		}
 	}

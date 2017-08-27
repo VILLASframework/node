@@ -29,9 +29,11 @@ OUTPUT_FILE=$(mktemp)
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 cat > ${CONFIG_FILE} << EOF
-nodes = {
-	node1 = {
-		type = "loopback"
+{
+	"nodes" : {
+		"node1" : {
+			"type" : "loopback"
+		}
 	}
 }
 EOF
@@ -48,7 +50,7 @@ cat ${OUTPUT_FILE}
 
 # Comapre data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
-RC=$?
+RC:$?
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
 

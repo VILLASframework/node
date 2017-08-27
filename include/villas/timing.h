@@ -28,30 +28,6 @@
 
 #include <time.h>
 
-#ifdef __linux__
-  #include <sys/timerfd.h>
-#endif
-
-/** Create a new timer with the given rate. */
-int timerfd_create_rate(double rate);
-
-/** Wait until timer elapsed
- *
- * @param fd A file descriptor which was created by timerfd_create(3).
- * @retval 0 An error occured. Maybe the timer was stopped.
- * @retval >0 The nummer of runs this timer already fired.
- */
-uint64_t timerfd_wait(int fd);
-
-/** Wait until a fixed time in the future is reached
- *
- * @param fd A file descriptor which was created by timerfd_create(3).
- * @param until A pointer to a time in the future.
- * @retval 0 An error occured. Maybe the timer was stopped.
- * @retval >0 The nummer of runs this timer already fired.
- */
-uint64_t timerfd_wait_until(int fd, const struct timespec *until);
-
 /** Get delta between two timespec structs */
 struct timespec time_diff(const struct timespec *start, const struct timespec *end);
 

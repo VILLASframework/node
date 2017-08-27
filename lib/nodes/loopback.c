@@ -27,15 +27,23 @@
 #include "nodes/loopback.h"
 #include "memory.h"
 
-int loopback_parse(struct node *n, config_setting_t *cfg)
+int loopback_parse(struct node *n, json_t *cfg)
 {
 	struct loopback *l = n->_vd;
 
-	if (!config_setting_lookup_int(cfg, "queuelen", &l->queuelen))
-		l->queuelen = DEFAULT_QUEUELEN;
+	json_error_t err;
+	int ret;
 
-	if (!config_setting_lookup_int(cfg, "samplelen", &l->samplelen))
-		l->samplelen = DEFAULT_SAMPLELEN;
+	/* Default values */
+	l->queuelen = DEFAULT_QUEUELEN;
+	l->samplelen = DEFAULT_SAMPLELEN;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: i }",
+		"queuelen", &l->queuelen,
+		"samplelen", &l->samplelen
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 	return 0;
 }

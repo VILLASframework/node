@@ -39,19 +39,23 @@
   #include "OpalPrint.h"
 #endif
 
-/** The global log instance. */
 struct log *global_log;
-struct log default_log = {
-	.level = V,
-	.facilities = LOG_ALL,
-	.file = NULL,
-	.path = NULL,
-	.epoch = { -1 , -1 },
-	.window = {
-		.ws_row = LOG_HEIGHT,
-		.ws_col = LOG_WIDTH
-	}
-};
+
+/* We register a default log instance */
+__attribute__((constructor))
+void register_default_log()
+{
+	int ret;
+	static struct log default_log;
+	
+	ret = log_init(&default_log, V, LOG_ALL);
+	if (ret)
+		error("Failed to initalize log");
+	
+	ret = log_start(&default_log);
+	if (ret)
+		error("Failed to start log");
+}
 
 /** List of debug facilities as strings */
 static const char *facilities_strs[] = {
@@ -156,6 +160,7 @@ int log_init(struct log *l, int level, long facilitites)
 int log_start(struct log *l)
 {
 	l->epoch = time_now();
+	l->prefix = getenv("VILLAS_LOG_PREFIX");
 
 	l->file = l->path ? fopen(l->path, "a+") : stderr;
 	if (!l->file) {
@@ -186,7 +191,7 @@ int log_destroy(struct log *l)
 {
 	default_log.epoch = l->epoch;
 
-	global_log = NULL;
+	global_log = &default_log;
 
 	l->state = STATE_DESTROYED;
 
@@ -256,9 +261,13 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 {
 	struct timespec ts = time_now();
 	char *buf = alloc(512);
+	
+	/* Optional prefix */
+	if (l->prefix)
+		strcatf(&buf, "%s", l->prefix);
 
 	/* Timestamp & Severity */
-	strcatf(&buf, "%10.3f %5s ", time_delta(&l->epoch, &ts), lvl);
+	strcatf(&buf, "%10.3f %-5s ", time_delta(&l->epoch, &ts), lvl);
 
 	/* Indention */
 #ifdef __GNUC__
@@ -275,7 +284,7 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 #ifdef ENABLE_OPAL_ASYNC
 	OpalPrint("VILLASnode: %s\n", buf);
 #endif
-	fprintf(l->file ? l->file : stderr, "\33[2K\r%s\n", buf);
+	fprintf(l->file ? l->file : stderr, "%s\n", buf);
 
 	free(buf);
 }

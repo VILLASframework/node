@@ -139,11 +139,11 @@ void hist_print(struct hist *h, int details)
 		hist_cnt_t missed = h->total - h->higher - h->lower;
 
 		stats("Counted values: %ju (%ju between %f and %f)", h->total, missed, h->low, h->high);
-		stats("Highest:  %f", h->highest);
-		stats("Lowest:   %f", h->lowest);
-		stats("Mu:       %f", hist_mean(h));
-		stats("Variance: %f", hist_var(h));
-		stats("Stddev:   %f", hist_stddev(h));
+		stats("Highest:  %g", h->highest);
+		stats("Lowest:   %g", h->lowest);
+		stats("Mu:       %g", hist_mean(h));
+		stats("Variance: %g", hist_var(h));
+		stats("Stddev:   %g", hist_stddev(h));
 
 		if (details > 0 && h->total - h->higher - h->lower > 0) {
 			char *buf = hist_dump(h);
@@ -212,7 +212,6 @@ char * hist_dump(struct hist *h)
 	return buf;
 }
 
-#ifdef WITH_JSON
 json_t * hist_json(struct hist *h)
 {
 	json_t *json_buckets, *json_hist;
@@ -257,7 +256,6 @@ int hist_dump_json(struct hist *h, FILE *f)
 
 	return ret;
 }
-#endif /* WITH_JSON */
 
 int hist_dump_matlab(struct hist *h, FILE *f)
 {

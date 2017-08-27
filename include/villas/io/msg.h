@@ -23,12 +23,16 @@
 
 #pragma once
 
+#include <stdlib.h>
+
 /* Forward declarations. */
 struct msg;
 struct sample;
+struct io;
 
-/** The maximum length of a packet which contains stuct msg. */
-#define MSG_MAX_PACKET_LEN 1500
+enum msg_flags {
+	MSG_WEB	= (1 << 16) /**< Use webmsg format (everying little endian) */
+};
 
 /** Swaps the byte-order of the message.
  *
@@ -60,9 +64,8 @@ int msg_to_sample(struct msg *msg, struct sample *smp);
 /** Copy fields form \p smp into \p msg. */
 int msg_from_sample(struct msg *msg, struct sample *smp);
 
-
 /** Copy / read struct msg's from buffer \p buf to / fram samples \p smps. */
-ssize_t msg_buffer_from_samples(struct sample *smps[], unsigned cnt, char *buf, size_t len);
+int msg_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags);
 
 /** Read struct sample's from buffer \p buf into samples \p smps. */
-int msg_buffer_to_samples(struct sample *smps[], unsigned cnt, char *buf, size_t len);
+int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags);

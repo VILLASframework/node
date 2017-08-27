@@ -21,7 +21,8 @@
 ###################################################################################
 
 install-web:
-	cp -R web $(DESTDIR)$(PREFIX)/share/villas/node
+	mkdir -p $(DESTDIR)$(PREFIX)/share/villas/node/web/
+	cp -R $(SRCDIR)/web/socket/* $(DESTDIR)$(PREFIX)/share/villas/node/web/
 
 clean-web:
 

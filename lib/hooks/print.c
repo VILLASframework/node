@@ -27,10 +27,12 @@
 #include "hook.h"
 #include "plugin.h"
 #include "sample.h"
-#include "sample_io.h"
+#include "io.h"
 
 struct print {
-	FILE *output;
+	struct io io;
+	struct io_format *format;
+
 	const char *uri;
 };
 
@@ -38,8 +40,8 @@ static int print_init(struct hook *h)
 {
 	struct print *p = h->_vd;
 
-	p->output = stdout;
 	p->uri = NULL;
+	p->format = io_format_lookup("villas");
 
 	return 0;
 }
@@ -47,12 +49,15 @@ static int print_init(struct hook *h)
 static int print_start(struct hook *h)
 {
 	struct print *p = h->_vd;
+	int ret;
 
-	if (p->uri) {
-		p->output = fopen(p->uri, "w+");
-		if (!p->output)
-			error("Failed to open file %s for writing", p->uri);
-	}
+	ret = io_init(&p->io, p->format, IO_FORMAT_ALL);
+	if (ret)
+		return ret;
+
+	ret = io_open(&p->io, p->uri);
+	if (ret)
+		return ret;
 
 	return 0;
 }
@@ -60,28 +65,47 @@ static int print_start(struct hook *h)
 static int print_stop(struct hook *h)
 {
 	struct print *p = h->_vd;
+	int ret;
 
-	if (p->uri)
-		fclose(p->output);
+	ret = io_close(&p->io);
+	if (ret)
+		return ret;
 
-	return 0;
-}
-
-static int print_parse(struct hook *h, config_setting_t *cfg)
-{
-	struct print *p = h->_vd;
-
-	config_setting_lookup_string(cfg, "output", &p->uri);
+	ret = io_destroy(&p->io);
+	if (ret)
+		return ret;
 
 	return 0;
 }
 
-static int print_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int print_parse(struct hook *h, json_t *cfg)
+{
+	struct print *p = h->_vd;
+	const char *format = NULL;
+	int ret;
+	json_error_t err;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s }",
+		"output", &p->uri,
+		"format", &format
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
+
+	if (format) {
+		p->format = io_format_lookup(format);
+		if (!p->format)
+			jerror(&err, "Invalid format '%s'", format);
+	}
+
+	return 0;
+}
+
+static int print_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct print *p = h->_vd;
 
-	for (int i = 0; i < *cnt; i++)
-		sample_io_villas_fprint(p->output, smps[i], SAMPLE_IO_ALL);
+	io_print(&p->io, smps, *cnt);
 
 	return 0;
 }

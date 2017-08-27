@@ -1,4 +1,4 @@
-/** Message related functions
+/** A simple growing buffer.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -23,29 +23,28 @@
 
 #pragma once
 
-/* Forward declarations. */
-struct webmsg;
+#include <stdlib.h>
 
-/** Swaps the byte-order of the message.
- *
- * Message are always transmitted in network (big endian) byte order.
- *
- * @param m A pointer to the message
- */
-void webmsg_hdr_ntoh(struct webmsg *m);
+#include <jansson.h>
 
-void webmsg_hdr_hton(struct webmsg *m);
+#include "common.h"
 
-void webmsg_ntoh(struct webmsg *m);
+struct buffer {
+	enum state state;
+	
+	char *buf;
+	size_t len;
+	size_t size;
+};
 
-void webmsg_hton(struct webmsg *m);
+int buffer_init(struct buffer *b, size_t size);
 
-/** Check the consistency of a message.
- *
- * The functions checks the header fields of a message.
- *
- * @param m A pointer to the message
- * @retval 0 The message header is valid.
- * @retval <0 The message header is invalid.
- */
-int msg_verify(struct webmsg *m);
+int buffer_destroy(struct buffer *b);
+	
+void buffer_clear(struct buffer *b);
+
+int buffer_append(struct buffer *b, const char *data, size_t len);
+
+int buffer_parse_json(struct buffer *b, json_t **j);
+
+int buffer_append_json(struct buffer *b, json_t *j);

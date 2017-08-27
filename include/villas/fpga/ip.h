@@ -30,7 +30,6 @@
 #pragma once
 
 #include <stdint.h>
-#include <libconfig.h>
 
 #include "common.h"
 
@@ -60,7 +59,7 @@ struct fpga_ip_type {
 	enum fpga_ip_types type;
 
 	int (*init)(struct fpga_ip *c);
-	int (*parse)(struct fpga_ip *c);
+	int (*parse)(struct fpga_ip *c, json_t *cfg);
 	int (*check)(struct fpga_ip *c);
 	int (*start)(struct fpga_ip *c);
 	int (*stop)(struct fpga_ip *c);
@@ -87,15 +86,13 @@ struct fpga_ip {
 	int irq;			/**< The interrupt number of the FPGA IP component. */
 
 	struct fpga_card *card;		/**< The FPGA to which this IP instance belongs to. */
-
-	config_setting_t *cfg;
 };
 
 /** Initialize IP core. */
 int fpga_ip_init(struct fpga_ip *c, struct fpga_ip_type *vt);
 
 /** Parse IP core configuration from configuration file */
-int fpga_ip_parse(struct fpga_ip *c, config_setting_t *cfg);
+int fpga_ip_parse(struct fpga_ip *c, json_t *cfg, const char *name);
 
 /** Check configuration of IP core. */
 int fpga_ip_check(struct fpga_ip *c);

@@ -25,7 +25,7 @@ struct dft {
 	int decimation;
 };
 
-int dft_parse(struct fpga_ip *c);
+int dft_parse(struct fpga_ip *c, json_t *cfg);
 
 int dft_start(struct fpga_ip *c);
 

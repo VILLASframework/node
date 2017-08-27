@@ -41,20 +41,23 @@ static int decimate_init(struct hook *h)
 	return 0;
 }
 
-static int decimate_parse(struct hook *h, config_setting_t *cfg)
+static int decimate_parse(struct hook *h, json_t *cfg)
 {
 	struct decimate *p = h->_vd;
 
-	if (!cfg)
-		error("Missing configuration for hook: '%s'", plugin_name(h->_vt));
+	int ret;
+	json_error_t err;
 
-	if (!config_setting_lookup_int(cfg, "ratio", &p->ratio))
-		cerror(cfg, "Missing setting 'ratio' for hook '%s'", plugin_name(h->_vt));
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: i }",
+		"ratio", &p->ratio
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
 
 	return 0;
 }
 
-static int decimate_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int decimate_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct decimate *p = h->_vd;
 

@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#include <libconfig.h>
+#include <jansson.h>
 
 /* Forward declarations */
 struct hook;
@@ -49,7 +49,7 @@ struct hook_type {
 
 	size_t size;		/**< Size of allocation for struct hook::_vd */
 
-	int (*parse)(struct hook *h, config_setting_t *cfg);
+	int (*parse)(struct hook *h, json_t *cfg);
 	int (*parse_cli)(struct hook *h, int argc, char *argv[]);
 
 	int (*init)(struct hook *h);	/**< Called before path is started to parseHOOK_DESTROYs. */
@@ -61,6 +61,6 @@ struct hook_type {
 	int (*periodic)(struct hook *h);/**< Called periodically. Period is set by global 'stats' option in the configuration file. */
 	int (*restart)(struct hook *h);	/**< Called whenever a new simulation case is started. This is detected by a sequence no equal to zero. */
 
-	int (*read)(struct hook *h, struct sample *smps[], size_t *cnt);	/**< Called for every single received samples. */
-	int (*write)(struct hook *h, struct sample *smps[], size_t *cnt);	/**< Called for every single sample which will be sent. */
+	int (*read)(struct hook *h, struct sample *smps[], unsigned *cnt);	/**< Called for every single received samples. */
+	int (*write)(struct hook *h, struct sample *smps[], unsigned *cnt);	/**< Called for every single sample which will be sent. */
 };

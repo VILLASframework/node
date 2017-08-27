@@ -144,13 +144,20 @@ int opal_print_global()
 	return 0;
 }
 
-int opal_parse(struct node *n, config_setting_t *cfg)
+int opal_parse(struct node *n, json_t *cfg)
 {
 	struct opal *o = n->_vd;
 
-	config_setting_lookup_int(cfg, "send_id", &o->send_id);
-	config_setting_lookup_int(cfg, "recv_id", &o->recv_id);
-	config_setting_lookup_bool(cfg, "reply", &o->reply);
+	int ret;
+	json_error_t err;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s: i, s: b }",
+		"send_id", &o->send_id,
+		"recv_id", &o->recv_id,
+		"reply", &o->reply
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 	return 0;
 }

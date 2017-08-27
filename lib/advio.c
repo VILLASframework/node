@@ -169,6 +169,23 @@ static int advio_xferinfo(void *p, curl_off_t dl_total_bytes, curl_off_t dl_byte
 	return 0;
 }
 
+int aislocal(const char *uri)
+{
+	char *sep;
+	const char *supported_schemas[] = { "file", "http", "https", "tftp", "ftp", "scp", "sftp", "smb", "smbs" };
+	
+	sep = strstr(uri, "://");
+	if (!sep)
+		return 1; /* no schema, we assume its a local file */
+	
+	for (int i = 0; i < ARRAY_LEN(supported_schemas); i++) {
+		if (!strncmp(supported_schemas[i], uri, sep - uri))
+			return 0;
+	}
+	
+	return -1; /* none of the supported schemas match. this is an invalid uri */
+}
+
 AFILE * afopen(const char *uri, const char *mode)
 {
 	int ret;
@@ -184,7 +201,7 @@ AFILE * afopen(const char *uri, const char *mode)
 		if (!af->uri)
 			goto out2;
 	}
-	else {
+	else { /* Open local file by prepending file:// schema. */
 		if (strlen(uri) <= 1)
 			return NULL;
 
@@ -242,14 +259,19 @@ int afclose(AFILE *af)
 	int ret;
 
 	ret = afflush(af);
-
+	if (ret)
+		return ret;
+	
 	curl_easy_cleanup(af->curl);
-	fclose(af->file);
+
+	ret = fclose(af->file);
+	if (ret)
+		return ret;
 
 	free(af->uri);
 	free(af);
 
-	return ret;
+	return 0;
 }
 
 int afseek(AFILE *af, long offset, int origin)
@@ -416,6 +438,7 @@ int adownload(AFILE *af, int resume)
 		case CURLE_FILE_COULDNT_READ_FILE:
 		case CURLE_TFTP_NOTFOUND:
 		case CURLE_REMOTE_FILE_NOT_FOUND:
+			info("File does not exist.");
 			goto notexist;
 
 		/* If libcurl does not know the protocol, we will try it with the stdio */
@@ -425,7 +448,7 @@ int adownload(AFILE *af, int resume)
 				return -1;
 
 		default:
-			error("ADVIO: Failed to download file: %s: %s", af->uri, curl_easy_strerror(res));
+			error("Failed to download file: %s: %s", af->uri, curl_easy_strerror(res));
 			return -1;
 	}
 

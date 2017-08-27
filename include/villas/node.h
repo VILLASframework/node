@@ -28,7 +28,7 @@
 
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <libconfig.h>
+#include <jansson.h>
 
 #include "node_type.h"
 #include "sample.h"
@@ -43,8 +43,7 @@
  */
 struct node
 {
-	const char *name;	/**< A short identifier of the node, only used for configuration and logging */
-
+	char *name;		/**< A short identifier of the node, only used for configuration and logging */
 	char *_name;		/**< Singleton: A string used to print to screen. */
 	char *_name_long;	/**< Singleton: A string used to print to screen. */
 
@@ -60,18 +59,18 @@ struct node
 	struct node_type *_vt;	/**< Virtual functions (C++ OOP style) */
 	void *_vd;		/**< Virtual data (used by struct node::_vt functions) */
 
-	config_setting_t *cfg;	/**< A pointer to the libconfig object which instantiated this node */
+	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
 };
 
 int node_init(struct node *n, struct node_type *vt);
 
 /** Parse settings of a node.
  *
- * @param cfg A libconfig object pointing to the node.
+ * @param cfg A JSON object containing the configuration of the node.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int node_parse(struct node *n, config_setting_t *cfg);
+int node_parse(struct node *n, json_t *cfg, const char *name);
 
 /** Parse settings of a node from cmdline. */
 int node_parse_cli(struct node *n, int argc, char *argv[]);
@@ -131,10 +130,10 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt);
  *     out = [ "sintef", "scedu" ]
  *     out = "acs"
  *
- * @param cfg The libconfig object handle for "out".
+ * @param cfg A JSON array or string. See examples above.
  * @param nodes The nodes will be added to this list.
  * @param all This list contains all valid nodes.
  */
-int node_parse_list(struct list *list, config_setting_t *cfg, struct list *all);
+int node_parse_list(struct list *list, json_t *cfg, struct list *all);
 
 /** @} */

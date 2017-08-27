@@ -27,10 +27,11 @@
 #endif
 
 #include "nodes/zeromq.h"
+#include "node.h"
 #include "utils.h"
 #include "queue.h"
 #include "plugin.h"
-#include "msg.h"
+#include "io_format.h"
 
 static void *context;
 
@@ -89,83 +90,98 @@ int zeromq_reverse(struct node *n)
 	return 0;
 }
 
-int zeromq_parse(struct node *n, config_setting_t *cfg)
+int zeromq_parse(struct node *n, json_t *cfg)
 {
 	struct zeromq *z = n->_vd;
 
-	const char *ep, *type, *filter;
+	int ret;
+	const char *ep = NULL;
+	const char *type = NULL;
+	const char *filter = NULL;
+	const char *format = "villas";
 
-	config_setting_t *cfg_pub, *cfg_curve;
+	size_t index;
+	json_t *cfg_pub = NULL;
+	json_t *cfg_curve = NULL;
+	json_t *cfg_val;
+	json_error_t err;
 
 	list_init(&z->publisher.endpoints);
 
-	if (config_setting_lookup_string(cfg, "subscribe", &ep))
-		z->subscriber.endpoint = strdup(ep);
-	else
-		z->subscriber.endpoint = NULL;
+	z->curve.enabled = false;
+	z->ipv6 = 0;
 
-	cfg_pub = config_setting_lookup(cfg, "publish");
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: o, s?: o, s?: s, s?: s, s?: b, s?: s }",
+		"subscribe", &ep,
+		"publish", &cfg_pub,
+		"curve", &cfg_curve,
+		"filter", &filter,
+		"pattern", &type,
+		"ipv6", &z->ipv6,
+		"format", &format
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+
+	z->subscriber.endpoint = ep ? strdup(ep) : NULL;
+	z->filter = filter ? strdup(filter) : NULL;
+	
+	z->format = io_format_lookup(format);
+	if (!z->format)
+		error("Invalid format '%s' for node %s", format, node_name(n));
+
 	if (cfg_pub) {
-		switch (config_setting_type(cfg_pub)) {
-			case CONFIG_TYPE_LIST:
-			case CONFIG_TYPE_ARRAY:
-				for (int j = 0; j < config_setting_length(cfg_pub); j++) {
-					const char *ep = config_setting_get_string_elem(cfg_pub, j);
+		switch (json_typeof(cfg_pub)) {
+			case JSON_ARRAY:
+				json_array_foreach(cfg_pub, index, cfg_val) {
+					ep = json_string_value(cfg_pub);
+					if (!ep)
+						error("All 'publish' settings must be strings");
 
 					list_push(&z->publisher.endpoints, strdup(ep));
 				}
 				break;
 
-			case CONFIG_TYPE_STRING:
-				ep = config_setting_get_string(cfg_pub);
+			case JSON_STRING:
+				ep = json_string_value(cfg_pub);
 
 				list_push(&z->publisher.endpoints, strdup(ep));
 
 				break;
 
 			default:
-				cerror(cfg_pub, "Invalid type for ZeroMQ publisher setting");
+				error("Invalid type for ZeroMQ publisher setting");
 		}
 	}
 
-	cfg_curve = config_setting_lookup(cfg, "curve");
 	if (cfg_curve) {
-		if (!config_setting_is_group(cfg_curve))
-			cerror(cfg_curve, "The curve setting must be a group");
-
 		const char *public_key, *secret_key;
 
-		if (!config_setting_lookup_string(cfg_curve, "public_key", &public_key))
-			cerror(cfg_curve, "Setting 'curve.public_key' is missing");
+		z->curve.enabled = true;
 
-		if (!config_setting_lookup_string(cfg_curve, "secret_key", &secret_key))
-			cerror(cfg_curve, "Setting 'curve.secret_key' is missing");
-
-		if (!config_setting_lookup_bool(cfg_curve, "enabled", &z->curve.enabled))
-			z->curve.enabled = true;
+		ret = json_unpack_ex(cfg_curve, &err, 0, "{ s: s, s: s, s?: b }",
+			"public_key", &public_key,
+			"secret_key", &secret_key,
+			"enabled", &z->curve.enabled
+		);
+		if (ret)
+			jerror(&err, "Failed to parse setting 'curve' of node %s", node_name(n));
 
 		if (strlen(secret_key) != 40)
-			cerror(cfg_curve, "Setting 'curve.secret_key' must be a Z85 encoded CurveZMQ key");
+			error("Setting 'curve.secret_key' of node %s must be a Z85 encoded CurveZMQ key", node_name(n));
 
 		if (strlen(public_key) != 40)
-			cerror(cfg_curve, "Setting 'curve.public_key' must be a Z85 encoded CurveZMQ key");
+			error("Setting 'curve.public_key' of node %s must be a Z85 encoded CurveZMQ key", node_name(n));
 
 		strncpy(z->curve.server.public_key, public_key, 41);
 		strncpy(z->curve.server.secret_key, secret_key, 41);
 	}
-	else
-		z->curve.enabled = false;
 
 	/** @todo We should fix this. Its mostly done. */
 	if (z->curve.enabled)
-		cerror(cfg_curve, "CurveZMQ support is currently broken");
+		error("CurveZMQ support is currently broken");
 
-	if (config_setting_lookup_string(cfg, "filter", &filter))
-		z->filter = strdup(filter);
-	else
-		z->filter = NULL;
-
-	if (config_setting_lookup_string(cfg, "pattern", &type)) {
+	if (type) {
 		if      (!strcmp(type, "pubsub"))
 			z->pattern = ZEROMQ_PATTERN_PUBSUB;
 #ifdef ZMQ_BUILD_DISH
@@ -173,11 +189,8 @@ int zeromq_parse(struct node *n, config_setting_t *cfg)
 			z->pattern = ZEROMQ_PATTERN_RADIODISH;
 #endif
 		else
-			cerror(cfg, "Invalid type for ZeroMQ node: %s", node_name_short(n));
+			error("Invalid type for ZeroMQ node: %s", node_name_short(n));
 	}
-
-	if (!config_setting_lookup_bool(cfg, "ipv6", &z->ipv6))
-		z->ipv6 = 0;
 
 	return 0;
 }
@@ -196,7 +209,13 @@ char * zeromq_print(struct node *n)
 #endif
 	}
 
-	strcatf(&buf, "pattern=%s, ipv6=%s, crypto=%s, subscribe=%s, publish=[ ", pattern, z->ipv6 ? "yes" : "no", z->curve.enabled ? "yes" : "no", z->subscriber.endpoint);
+	strcatf(&buf, "format=%s, pattern=%s, ipv6=%s, crypto=%s, subscribe=%s, publish=[ ",
+		plugin_name(z->format),
+		pattern,
+		z->ipv6 ? "yes" : "no",
+		z->curve.enabled ? "yes" : "no",
+		z->subscriber.endpoint
+	);
 
 	for (size_t i = 0; i < list_length(&z->publisher.endpoints); i++) {
 		char *ep = list_at(&z->publisher.endpoints, i);
@@ -410,7 +429,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (ret < 0)
 		return ret;
 
-	recv = msg_buffer_to_samples(smps, cnt, zmq_msg_data(&m), zmq_msg_size(&m));
+	recv = io_format_sscan(z->format, zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, cnt, NULL);
 
 	ret = zmq_msg_close(&m);
 	if (ret)
@@ -424,16 +443,16 @@ int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt)
 	int ret;
 	struct zeromq *z = n->_vd;
 
-	ssize_t sent;
+	size_t wbytes;
 	zmq_msg_t m;
 
-	char data[1500];
+	char data[4096];
 
-	sent = msg_buffer_from_samples(smps, cnt, data, sizeof(data));
-	if (sent < 0)
+	ret = io_format_sprint(z->format, data, sizeof(data), &wbytes, smps, cnt, IO_FORMAT_ALL);
+	if (ret <= 0)
 		return -1;
 
-	ret = zmq_msg_init_size(&m, sent);
+	ret = zmq_msg_init_size(&m, wbytes);
 
 	if (z->filter) {
 		switch (z->pattern) {
@@ -451,7 +470,7 @@ int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt)
 		}
 	}
 
-	memcpy(zmq_msg_data(&m), data, sent);
+	memcpy(zmq_msg_data(&m), data, wbytes);
 
 	ret = zmq_msg_send(&m, z->publisher.socket, 0);
 	if (ret < 0)

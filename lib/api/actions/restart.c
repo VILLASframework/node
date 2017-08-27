@@ -64,12 +64,10 @@ static int api_restart(struct api_action *h, json_t *args, json_t **resp, struct
 
 	/* We pass some env variables to the new process */
 	setenv("VILLAS_API_RESTART_COUNT", buf, 1);
-	setenv("VILLAS_API_RESTART_REMOTE", s->peer.ip, 1);
 	
-	*resp = json_pack("{ s: i, s: s, s: s }",
+	*resp = json_pack("{ s: i, s: s }",
 		"restarts", cnt,
-		"config", config,
-		"remote", s->peer.ip
+		"config", config
 	);
 
 	/* Register exit handler */

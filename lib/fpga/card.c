@@ -55,48 +55,59 @@ int fpga_card_init(struct fpga_card *c, struct pci *pci, struct vfio_container *
 	return 0;
 }
 
-int fpga_card_parse(struct fpga_card *c, config_setting_t *cfg)
+int fpga_card_parse(struct fpga_card *c, json_t *cfg, const char *name)
 {
 	int ret;
-	const char *slot, *id, *err;
-	config_setting_t *cfg_ips, *cfg_slot, *cfg_id;
 
-	c->name = config_setting_name(cfg);
+	json_t *cfg_ips;
+	json_t *cfg_slot = NULL;
+	json_t *cfg_id = NULL;
+	json_error_t err;
 
-	config_setting_lookup_int(cfg, "affinity", &c->affinity);
-	config_setting_lookup_bool(cfg, "do_reset", &c->do_reset);
+	c->name = strdup(name);
 
-	cfg_slot = config_setting_get_member(cfg, "slot");
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: b, s?: o, s?: o, s: o }"
+		"affinity", &c->affinity,
+		"do_reset", &c->do_reset,
+		"slot", &cfg_slot,
+		"id", &cfg_id,
+		"ips", &cfg_ips
+	);
+	if (ret)
+		jerror(&err, "Failed to parse FPGA vard configuration");
+
 	if (cfg_slot) {
-		slot = config_setting_get_string(cfg_slot);
+		const char *err, *slot;
+
+		slot = json_string_value(cfg_slot);
 		if (slot) {
 			ret = pci_device_parse_slot(&c->filter, slot, &err);
 			if (ret)
-				cerror(cfg_slot, "Failed to parse PCI slot: %s", err);
+				error("Failed to parse PCI slot: %s", err);
 		}
 		else
-			cerror(cfg_slot, "PCI slot must be a string");
+			error("PCI slot must be a string");
 	}
 
-	cfg_id = config_setting_get_member(cfg, "id");
 	if (cfg_id) {
-		id = config_setting_get_string(cfg_id);
+		const char *err, *id;
+
+		id = json_string_value(cfg_id);
 		if (id) {
 			ret = pci_device_parse_id(&c->filter, (char*) id, &err);
 			if (ret)
-				cerror(cfg_id, "Failed to parse PCI id: %s", err);
+				error("Failed to parse PCI id: %s", err);
 		}
 		else
-			cerror(cfg_slot, "PCI ID must be a string");
+			error("PCI ID must be a string");
 	}
 
-	cfg_ips = config_setting_get_member(cfg, "ips");
-	if (!cfg_ips)
-		cerror(cfg, "FPGA configuration is missing ips section");
+	if (!json_is_object(cfg_ips))
+		error("FPGA card IPs section must be an object");
 
-	for (int i = 0; i < config_setting_length(cfg_ips); i++) {
-		config_setting_t *cfg_ip = config_setting_get_elem(cfg_ips, i);
-
+	const char *name_ip;
+	json_t *cfg_ip;
+	json_object_foreach(cfg_ips, name_ip, cfg_ip) {
 		const char *vlnv;
 
 		struct fpga_ip_type *vt;
@@ -104,45 +115,45 @@ int fpga_card_parse(struct fpga_card *c, config_setting_t *cfg)
 
 		ip->card = c;
 
-		if (!config_setting_lookup_string(cfg, "vlnv", &vlnv))
-			cerror(cfg, "FPGA IP core %s is missing the VLNV identifier", c->name);
+		ret = json_unpack_ex(cfg_ip, &err, 0, "{ s: s }", "vlnv", &vlnv);
+		if (ret)
+			error("Failed to parse FPGA IP '%s' of card '%s'", name_ip, name);
 
 		vt = fpga_ip_type_lookup(vlnv);
 		if (!vt)
-			cerror(cfg, "FPGA IP core VLNV identifier '%s' is invalid", vlnv);
+			error("FPGA IP core VLNV identifier '%s' is invalid", vlnv);
 
 		ret = fpga_ip_init(ip, vt);
 		if (ret)
 			error("Failed to initalize FPGA IP core");
 
-		ret = fpga_ip_parse(ip, cfg_ip);
+		ret = fpga_ip_parse(ip, cfg_ip, name_ip);
 		if (ret)
-			cerror(cfg_ip, "Failed to parse FPGA IP core");
+			error("Failed to parse FPGA IP core");
 
 		list_push(&c->ips, ip);
 	}
 
-	c->cfg = cfg;
 	c->state = STATE_PARSED;
 
 	return 0;
 }
 
-int fpga_card_parse_list(struct list *cards, config_setting_t *cfg)
+int fpga_card_parse_list(struct list *cards, json_t *cfg)
 {
 	int ret;
 
-	if (!config_setting_is_group(cfg))
-		cerror(cfg, "FPGA configuration section must be a group");
+	if (!json_is_object(cfg))
+		error("FPGA card configuration section must be a JSON object");
 
-	for (int i = 0; i < config_setting_length(cfg); i++) {
-		config_setting_t *cfg_fpga = config_setting_get_elem(cfg, i);
-
+	const char *name;
+	json_t *cfg_fpga;
+	json_object_foreach(cfg, name, cfg_fpga) {
 		struct fpga_card *c = alloc(sizeof(struct fpga_card));
 
-		ret = fpga_card_parse(c, cfg_fpga);
+		ret = fpga_card_parse(c, cfg_fpga, name);
 		if (ret)
-			cerror(cfg_fpga, "Failed to parse FPGA card configuration");
+			error("Failed to parse FPGA card configuration");
 
 		list_push(cards, c);
 	}

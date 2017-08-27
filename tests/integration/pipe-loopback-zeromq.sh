@@ -22,33 +22,71 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
+SCRIPT=$(realpath $0)
+SCRIPTPATH=$(dirname ${SCRIPT})
+source ${SCRIPTPATH}/../../tools/integration-tests-helper.sh
+
 CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
-cat > ${CONFIG_FILE} << EOF
-nodes = {
-	node1 = {
-		type = "zeromq";
+# Generate test data
+villas-signal random -l ${NUM_SAMPLES} -n -v 10 > ${INPUT_FILE}
 
-		pattern = "pubsub";
-		subscribe = "tcp://127.0.0.1:12000";
-		publish = "tcp://127.0.0.1:12000"
+for FORMAT in csv json villas csv msg gtnet-fake raw-flt32 gtnet-fake; do
+	
+VECTORIZES="1"
+
+# The raw format does not support vectors
+if villas_format_supports_vectorize ${FORMAT}; then
+	VECTORIZES="${VECTORIZES} 10"
+fi
+
+for VECTORIZE	in ${VECTORIZES}; do
+
+cat > ${CONFIG_FILE} << EOF
+{
+	"nodes" : {
+		"node1" : {
+			"type" : "zeromq",
+
+			"format" : "${FORMAT}",
+			"vectorize" : ${VECTORIZE},
+			"pattern" : "pubsub",
+			"subscribe" : "tcp://127.0.0.1:12000",
+			"publish" : "tcp://127.0.0.1:12000"
+		}
 	}
 }
 EOF
 
-# Generate test data
-villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
-
 # We delay EOF of the INPUT_FILE by 1 second in order to wait for incoming data to be received
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
-# Comapre data
-villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
+# Ignore timestamp and seqeunce no if in raw format 
+if villas_format_supports_header ${FORMAT}; then
+	CMPFLAGS=-ts
+fi
+
+# Compare data
+villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
+
+if (( ${RC} != 0 )); then
+	echo "=========== Sub-test failed for: format=${FORMAT}, vectorize=${VECTORIZE}"
+	cat ${CONFIG_FILE}
+	echo
+	cat ${INPUT_FILE}
+	echo
+	cat ${OUTPUT_FILE}
+	exit ${RC}
+else
+	echo "=========== Sub-test succeeded for: format=${FORMAT}, vectorize=${VECTORIZE}"
+fi
+
+done; done
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
 

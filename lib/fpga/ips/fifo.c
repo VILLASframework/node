@@ -91,16 +91,21 @@ ssize_t fifo_read(struct fpga_ip *c, char *buf, size_t len)
 	return nextlen;
 }
 
-int fifo_parse(struct fpga_ip *c)
+int fifo_parse(struct fpga_ip *c, json_t *cfg)
 {
 	struct fifo *fifo = c->_vd;
 
-	int baseaddr_axi4;
+	int baseaddr_axi4 = -1, ret;
 
-	if (config_setting_lookup_int(c->cfg, "baseaddr_axi4", &baseaddr_axi4))
-		fifo->baseaddr_axi4 = baseaddr_axi4;
-	else
-		fifo->baseaddr_axi4 = -1;
+	json_error_t err;
+
+	fifo->baseaddr_axi4 = -1;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i }", "baseaddr_axi4", &baseaddr_axi4);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of FPGA IP '%s'", c->name);
+
+	fifo->baseaddr_axi4 = baseaddr_axi4;
 
 	return 0;
 }

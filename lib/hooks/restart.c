@@ -52,7 +52,7 @@ static int restart_stop(struct hook *h)
 	return 0;
 }
 
-static int restart_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int restart_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	int i;
 	struct restart *r = h->_vd;

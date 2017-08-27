@@ -30,7 +30,7 @@
 #include <villas/path.h>
 #include <villas/api.h>
 #include <villas/web.h>
-#include <villas/timing.h>
+#include <villas/task.h>
 #include <villas/plugin.h>
 #include <villas/kernel/kernel.h>
 #include <villas/kernel/rt.h>
@@ -75,6 +75,7 @@ static void usage()
 	printf("  This type of invocation is used by OPAL-RT Asynchronous processes.\n");
 	printf("  See in the RT-LAB User Guide for more information.\n\n");
 #endif
+
 	printf("Supported node-types:\n");
 	plugin_dump(PLUGIN_TYPE_NODE);
 	printf("\n");
@@ -87,6 +88,10 @@ static void usage()
 	plugin_dump(PLUGIN_TYPE_API);
 	printf("\n");
 
+	printf("Supported IO formats:\n");
+	plugin_dump(PLUGIN_TYPE_IO);
+	printf("\n");
+
 	print_copyright();
 
 	exit(EXIT_FAILURE);
@@ -94,6 +99,8 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
+	int ret;
+
 	/* Check arguments */
 #ifdef ENABLE_OPAL_ASYNC
 	if (argc != 4)
@@ -109,7 +116,6 @@ int main(int argc, char *argv[])
 	else if (argc > 2)
 		usage();
 #endif
-
 	info("This is VILLASnode %s (built on %s, %s)", CLR_BLD(CLR_YEL(BUILDID)),
 		CLR_BLD(CLR_MAG(__DATE__)), CLR_BLD(CLR_MAG(__TIME__)));
 
@@ -120,24 +126,37 @@ int main(int argc, char *argv[])
 		error("Your kernel version is to old: required >= %u.%u", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
 #endif /* __linux__ */
 
-	signals_init(quit);
-	log_init(&sn.log, V, LOG_ALL);
-	log_start(&sn.log);
-
-	super_node_init(&sn);
-	super_node_parse_cli(&sn, argc, argv);
-	super_node_check(&sn);
-	super_node_start(&sn);
-
-	if (sn.stats > 0)
-		stats_print_header(STATS_FORMAT_HUMAN);
-
+	ret = signals_init(quit);
+	if (ret)
+		error("Failed to initialize signal subsystem");
+	
+	ret = super_node_init(&sn);
+	if (ret)
+		error("Failed to initialize super node");
+	
+	ret = super_node_parse_cli(&sn, argc, argv);
+	if (ret)
+		error("Failed to parse command line arguments");
+	
+	ret = super_node_check(&sn);
+	if (ret)
+		error("Failed to verify configuration");
+	
+	ret = super_node_start(&sn);
+	if (ret)
+		error("Failed to start super node");
 
 	if (sn.stats > 0) {
-		int tfd = timerfd_create_rate(1.0 / sn.stats);
+		stats_print_header(STATS_FORMAT_HUMAN);
+
+		struct task t;
+	
+		ret = task_init(&t, 1.0 / sn.stats, CLOCK_REALTIME);
+		if (ret)
+			error("Failed to create stats timer");
 
 		for (;;) {
-			timerfd_wait(tfd);
+			task_wait_until_next_period(&t);
 
 			for (size_t i = 0; i < list_length(&sn.paths); i++) {
 				struct path *p = list_at(&sn.paths, i);

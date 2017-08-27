@@ -18,12 +18,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
@@ -50,7 +50,7 @@ RUN apt-get update && apt-get install -y \
 	jq \
 	iproute \
 	python-pip \
-	valgrind gdb \
+	valgrind gdb gdbserver \
 	xmlto asciidoctor
 
 # 32bit versions of some standard libraries for RT-LAB code
@@ -74,6 +74,7 @@ RUN apt-get update && apt-get install -y \
 	libnl-3-dev libnl-route-3-dev \
 	libcurl4-openssl-dev \
 	libjansson-dev \
+	libhdf5-dev \
 	libzmq3-dev \
 	libnanomsg-dev
 
@@ -98,6 +99,5 @@ ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
 
-ENTRYPOINT villas
 WORKDIR /villas
 ENTRYPOINT bash

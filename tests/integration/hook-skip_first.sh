@@ -28,9 +28,9 @@ SKIP=10
 
 echo ${OUTPUT_FILE}
 
-villas-signal random -r 1 -l ${NUM_SAMPLES} -n | villas-hook skip_first seconds=${SKIP} > ${OUTPUT_FILE}
+villas-signal random -r 1 -l ${NUM_SAMPLES} -n | villas-hook skip_first -o seconds=${SKIP} > ${OUTPUT_FILE}
 
-LINES=$(wc -l < ${OUTPUT_FILE})
+LINES=$(sed -re '/^#/d' ${OUTPUT_FILE} | wc -l)
 
 rm ${OUTPUT_FILE}
 

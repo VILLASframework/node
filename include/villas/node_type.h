@@ -26,7 +26,7 @@
 
 #pragma once
 
-#include <libconfig.h>
+#include <jansson.h>
 
 #include "list.h"
 #include "common.h"
@@ -78,11 +78,11 @@ struct node_type {
 	/** Parse node connection details.
 	 *
 	 * @param n	A pointer to the node object.
-	 * @param cfg	A libconfig object pointing to the node.
+	 * @param cfg	A JSON object containing the configuration of the node.
 	 * @retval 0 	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*parse)(struct node *n, config_setting_t *cfg);
+	int (*parse)(struct node *n, json_t *cfg);
 
 	/** Parse node from command line arguments. */
 	int (*parse_cli)(struct node *n, int argc, char *argv[]);
@@ -118,10 +118,10 @@ struct node_type {
 	 * Indexes used to address @p m will wrap around after len messages.
 	 * Some node-types might only support to receive one message at a time.
 	 *
-	 * @param n		A pointer to the node object.
-	 * @param smps		An array of pointers to memory blocks where the function should store received samples.
-	 * @param cnt		The number of messages which should be received.
-	 * @return		The number of messages actually received.
+	 * @param n	A pointer to the node object.
+	 * @param smps	An array of pointers to memory blocks where the function should store received samples.
+	 * @param cnt	The number of messages which should be received.
+	 * @return	The number of messages actually received.
 	 */
 	int (*read) (struct node *n, struct sample *smps[], unsigned cnt);
 
@@ -132,10 +132,10 @@ struct node_type {
 	 * The messages have to be stored in a circular buffer / array m.
 	 * So the indexes will wrap around after len.
 	 *
-	 * @param n		A pointer to the node object.
-	 * @param smps		An array of pointers to memory blocks where samples read from.
-	 * @param cnt		The number of messages which should be sent.
-	 * @return		The number of messages actually sent.
+	 * @param n	A pointer to the node object.
+	 * @param smps	An array of pointers to memory blocks where samples read from.
+	 * @param cnt	The number of messages which should be sent.
+	 * @return	The number of messages actually sent.
 	 */
 	int (*write)(struct node *n, struct sample *smps[], unsigned cnt);
 
@@ -143,7 +143,7 @@ struct node_type {
 	 *
 	 * This is not supported by all node-types!
 	 *
-	 * @param n		A pointer to the node object.
+	 * @param n	A pointer to the node object.
 	 */
 	int (*reverse)(struct node *n);
 };

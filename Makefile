@@ -45,6 +45,9 @@ V ?= 2
 # Platform
 PLATFORM ?= $(shell uname)
 
+# Enable supprot for libconfig configuration files
+WITH_CONFIG ?= 1
+
 # Common flags
 LDLIBS   =
 CFLAGS  += -I. -Iinclude -Iinclude/villas
@@ -116,7 +119,11 @@ else
 endif
 
 # pkg-config dependencies
-PKGS = libconfig openssl
+PKGS = openssl jansson
+
+ifeq ($(WITH_CONFIG),1)
+	PKGS += libconfig
+endif
 
 ######## Targets ########
 
@@ -148,7 +155,8 @@ CFLAGS += $(addprefix -DWITH_, $(call escape,$(PKGS)))
 install: $(addprefix install-,$(filter-out thirdparty doc clients,$(MODULES)))
 clean:   $(addprefix clean-,  $(filter-out thirdparty doc clients,$(MODULES)))
 
-.PHONY: all everything clean install FORCE
+.PHONY: all everything clean install
 
+-include $(wildcard $(SRCDIR)/Makefile.*)
 -include $(wildcard $(BUILDDIR)/**/*.d)
--include $(addsuffix /Makefile.inc,$(MODULES))
+-include $(patsubst %,$(SRCDIR)/%/Makefile.inc,$(MODULES))

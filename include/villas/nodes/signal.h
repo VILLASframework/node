@@ -29,9 +29,8 @@
 
 #pragma once
 
-#include <libconfig.h>
-
 #include "timing.h"
+#include "task.h"
 
 /* Forward declarations */
 struct node;
@@ -50,7 +49,7 @@ enum signal_type {
  * @see node_type
  */
 struct signal {
-	int tfd;			/**< timerfd file descriptor. */
+	struct task task;		/**< Timer for periodic events. */
 	int rt;				/**< Real-time mode? */
 
 	enum signal_type type;		/**< Signal type */
@@ -71,7 +70,7 @@ struct signal {
 char * signal_print(struct node *n);
 
 /** @see node_type::parse */
-int signal_parse(struct node *n, config_setting_t *cfg);
+int signal_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::open */
 int signal_open(struct node *n);

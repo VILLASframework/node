@@ -36,16 +36,16 @@ int main(int argc, char *argv[])
 	struct log log;
 
 	ret = log_init(&log, V, LOG_ALL);
-	if (ret) {
+	if (ret)
 		error("Failed to initialize logging sub-system");
-		return ret;
-	}
+	
+	ret = log_start(&log);
+	if (ret)
+		error("Failed to start logging sub-system");
 
 	ret = memory_init(DEFAULT_NR_HUGEPAGES);
-	if (ret) {
+	if (ret)
 		error("Failed to initialize memory sub-system");
-		return ret;
-	}
 
 	/* Run criterion tests */
 	tests = criterion_initialize();

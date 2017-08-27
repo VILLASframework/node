@@ -34,6 +34,12 @@
 #include "node.h"
 #include "list.h"
 
+/** The maximum length of a packet which contains stuct msg. */
+#define NANOMSG_MAX_PACKET_LEN 1500
+
+/* Forward declarations */
+struct io_format;
+
 struct nanomsg {
 	struct {
 		int socket;
@@ -44,13 +50,15 @@ struct nanomsg {
 		int socket;
 		struct list endpoints;
 	} subscriber;
+
+	struct io_format *format;
 };
 
 /** @see node_type::print */
 char * nanomsg_print(struct node *n);
 
 /** @see node_type::parse */
-int nanomsg_parse(struct node *n, config_setting_t *cfg);
+int nanomsg_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::open */
 int nanomsg_start(struct node *n);

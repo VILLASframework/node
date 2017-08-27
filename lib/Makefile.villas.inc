@@ -26,15 +26,14 @@ LIB = $(BUILDDIR)/$(LIB_NAME).so.$(LIB_ABI_VERSION)
 
 WITH_WEB  ?= 1
 WITH_API  ?= 1
-WITH_JSON ?= 1
 
 # Object files for libvillas
 LIB_SRCS += $(addprefix lib/kernel/, kernel.c rt.c) \
             $(addprefix lib/, sample.c path.c node.c hook.c log.c log_config.c \
                utils.c super_node.c hist.c timing.c pool.c list.c queue.c \
                queue_signalled.c memory.c advio.c plugin.c node_type.c stats.c \
-               mapping.c sample_io.c shmem.c config_helper.c crypt.c compat.c \
-               log_table.c log_helper.c \
+               mapping.c io.c shmem.c config_helper.c crypt.c compat.c \
+               log_table.c log_helper.c io_format.c task.c buffer.c \
             )
 
 LIB_LDFLAGS = -shared
@@ -46,14 +45,10 @@ endif
 
 LIB_PKGS += openssl libcurl
 
-ifeq ($(WITH_JSON),1)
-	LIB_SRCS   += lib/sample_io_json.c
-	LIB_PKGS   += jansson
-	LIB_CFLAGS += -DWITH_JSON
-endif
-
 ifeq ($(WITH_WEB),1)
-	-include lib/web/Makefile.inc
+	LIB_SRCS += lib/web.c
+	LIB_PKGS += libwebsockets
+	LIB_CFLAGS += -DWITH_WEB
 endif
 
 ifeq ($(WITH_API),1)
@@ -74,11 +69,11 @@ $(LIB): $(LIB_OBJS)
 	ln -srf $@ $(BUILDDIR)/$(LIB_NAME).so
 
 # Install
-install-libvillas: libvillas
+install-libvillas: libvillas | $(DESTDIR)$(PREFIX)/include/villas/
 	install -m 0755 -D -T $(LIB) $(DESTDIR)$(PREFIX)/lib/$(LIB_NAME).so.$(LIB_ABI_VERSION)
 	install -m 0644 -D -t $(DESTDIR)$(PREFIX)/include/villas/ include/villas/*.h
 	ln -srf $(DESTDIR)$(PREFIX)/lib/$(LIB_NAME).so.$(LIB_ABI_VERSION) $(DESTDIR)$(PREFIX)/lib/$(LIB_NAME).so
-	ldconfig
+	if [ "$(PLATFORM)" == "Linux" ]; then ldconfig; fi
 
 clean-libvillas:
 	rm -f $(LIB)

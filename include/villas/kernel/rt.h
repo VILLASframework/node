@@ -1,5 +1,6 @@
 /** Linux specific real-time optimizations
  *
+ * @see: https://wiki.linuxfoundation.org/realtime/documentation/howto/applications/application_base
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
@@ -30,6 +31,8 @@ int rt_init(int priority, int affinity);
 int rt_set_affinity(int affinity);
 
 int rt_set_priority(int priority);
+
+int rt_lock_memory();
 
 /** Checks for realtime (PREEMPT_RT) patched kernel.
  *

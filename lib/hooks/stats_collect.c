@@ -25,6 +25,7 @@
  */
 
 #include "common.h"
+#include "advio.h"
 #include "hook.h"
 #include "plugin.h"
 #include "stats.h"
@@ -38,8 +39,8 @@ struct stats_collect {
 	int warmup;
 	int buckets;
 
-	FILE *output;
-	const char *uri;
+	AFILE *output;
+	char *uri;
 };
 
 static int stats_collect_init(struct hook *h)
@@ -58,14 +59,16 @@ static int stats_collect_init(struct hook *h)
 	p->warmup = 500;
 	p->buckets = 20;
 	p->uri = NULL;
-	p->output = stdout;
-	
+
 	return 0;
 }
 
 static int stats_collect_destroy(struct hook *h)
 {
 	struct stats_collect *p = h->_vd;
+
+	if (p->uri)
+		free(p->uri);
 
 	return stats_destroy(&p->stats);
 }
@@ -75,11 +78,11 @@ static int stats_collect_start(struct hook *h)
 	struct stats_collect *p = h->_vd;
 
 	if (p->uri) {
-		p->output = fopen(p->uri, "w+");
+		p->output = afopen(p->uri, "w+");
 		if (!p->output)
 			error("Failed to open file %s for writing", p->uri);
 	}
-	
+
 	return stats_init(&p->stats, p->buckets, p->warmup);
 }
 
@@ -87,10 +90,10 @@ static int stats_collect_stop(struct hook *h)
 {
 	struct stats_collect *p = h->_vd;
 
-	stats_print(&p->stats, p->output, p->format, p->verbose);
+	stats_print(&p->stats, p->uri ? p->output->file : stdout, p->format, p->verbose);
 
 	if (p->uri)
-		fclose(p->output);
+		afclose(p->output);
 
 	return 0;
 }
@@ -108,36 +111,46 @@ static int stats_collect_periodic(struct hook *h)
 {
 	struct stats_collect *p = h->_vd;
 
-	stats_print_periodic(&p->stats, p->output, p->format, p->verbose, h->path);
+	stats_print_periodic(&p->stats, p->uri ? p->output->file : stdout, p->format, p->verbose, h->path);
 
 	return 0;
 }
 
-static int stats_collect_parse(struct hook *h, config_setting_t *cfg)
+static int stats_collect_parse(struct hook *h, json_t *cfg)
 {
 	struct stats_collect *p = h->_vd;
 
-	const char *format;
-	if (config_setting_lookup_string(cfg, "format", &format)) {
-		if      (!strcmp(format, "human"))
-			p->format = STATS_FORMAT_HUMAN;
-		else if (!strcmp(format, "json"))
-			p->format = STATS_FORMAT_JSON;
-		else if (!strcmp(format, "matlab"))
-			p->format = STATS_FORMAT_MATLAB;
-		else
-			cerror(cfg, "Invalid statistic output format: %s", format);
+	int ret, fmt;
+	json_error_t err;
+
+	const char *format = NULL;
+	const char *uri = NULL;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: s }",
+		"format", &format,
+		"verbose", &p->verbose,
+		"warmup", &p->warmup,
+		"buckets", &p->buckets,
+		"output", &uri
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
+
+	if (format) {
+		fmt = stats_lookup_format(format);
+		if (fmt < 0)
+			jerror(&err, "Invalid statistic output format: %s", format);
+
+		p->format = fmt;
 	}
 
-	config_setting_lookup_bool(cfg, "verbose", &p->verbose);
-	config_setting_lookup_int(cfg, "warmup", &p->warmup);
-	config_setting_lookup_int(cfg, "buckets", &p->buckets);
-	config_setting_lookup_string(cfg, "output", &p->uri);
+	if (uri)
+		p->uri = strdup(uri);
 
 	return 0;
 }
 
-static int stats_collect_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int stats_collect_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct stats_collect *p = h->_vd;
 

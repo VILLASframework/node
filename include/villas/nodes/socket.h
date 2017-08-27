@@ -39,7 +39,21 @@
   #include <linux/if_packet.h>
 #endif
 
+#ifdef WITH_LIBNL_ROUTE_30
+  #include "kernel/if.h"
+  #include "kernel/nl.h"
+  #include "kernel/tc.h"
+
+  #define WITH_NETEM
+#endif /* WITH_LIBNL_ROUTE_30 */
+
 #include "node.h"
+
+/* Forward declarations */
+struct io_format;
+
+/** The maximum length of a packet which contains stuct msg. */
+#define SOCKET_MAX_PACKET_LEN 1500
 
 enum socket_layer {
 	SOCKET_LAYER_ETH,
@@ -80,6 +94,8 @@ struct socket {
 	union sockaddr_union local;	/**< Local address of the socket */
 	union sockaddr_union remote;	/**< Remote address of the socket */
 
+	struct io_format *format;
+
 	/* Multicast options */
 	struct multicast {
 		int enabled;		/**< Is multicast enabled? */
@@ -88,8 +104,10 @@ struct socket {
 		struct ip_mreq mreq;	/**< A multicast group to join. */
 	} multicast;
 
+#ifdef WITH_NETEM
 	struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Network emulator queuing discipline */
 	struct rtnl_cls *tc_classifier;	/**< libnl3: Firewall mark classifier */
+#endif /* WITH_NETEM */
 };
 
 
@@ -112,7 +130,7 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt);
 int socket_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_type::parse */
-int socket_parse(struct node *n, config_setting_t *cfg);
+int socket_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::print */
 char * socket_print(struct node *n);

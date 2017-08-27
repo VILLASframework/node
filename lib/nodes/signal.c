@@ -45,43 +45,46 @@ enum signal_type signal_lookup_type(const char *type)
 		return -1;
 }
 
-int signal_parse(struct node *n, config_setting_t *cfg)
+int signal_parse(struct node *n, json_t *cfg)
 {
 	struct signal *s = n->_vd;
 
 	int ret;
-	const char *type;
+	const char *type = NULL;
 
-	if (!config_setting_lookup_string(cfg, "signal", &type))
-		s->type = SIGNAL_TYPE_MIXED;
-	else {
+	json_error_t err;
+
+	s->rt = 1;
+	s->limit = -1;
+	s->values = 1;
+	s->rate = 10;
+	s->frequency = 1;
+	s->amplitude = 1;
+	s->stddev = 0.02;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: f, s?: f, s?: f, s?: f }",
+		"signal", &type,
+		"realtime", &s->rt,
+		"limit", &s->limit,
+		"values", &s->values,
+		"rate", &s->rate,
+		"frequency", &s->frequency,
+		"amplitude", &s->amplitude,
+		"stddev", &s->stddev
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+
+
+	if (type) {
 		ret = signal_lookup_type(type);
 		if (ret == -1)
-			cerror(cfg, "Unknown signal type '%s'", type);
+			error("Unknown signal type '%s' of node %s", type, node_name(n));
 
 		s->type = ret;
 	}
-
-	if (!config_setting_lookup_bool(cfg, "realtime", &s->rt))
-		s->rt = 1;
-
-	if (!config_setting_lookup_int(cfg, "limit", &s->limit))
-		s->limit = -1;
-
-	if (!config_setting_lookup_int(cfg, "values", &s->values))
-		s->values = 1;
-
-	if (!config_setting_lookup_float(cfg, "rate", &s->rate))
-		s->rate = 10;
-
-	if (!config_setting_lookup_float(cfg, "frequency", &s->frequency))
-		s->frequency = 1;
-
-	if (!config_setting_lookup_float(cfg, "amplitude", &s->amplitude))
-		s->amplitude = 1;
-
-	if (!config_setting_lookup_float(cfg, "stddev", &s->stddev))
-		s->stddev = 0.02;
+	else
+		s->type = SIGNAL_TYPE_MIXED;
 
 	return 0;
 }
@@ -154,29 +157,33 @@ check:		if (optarg == endptr)
 
 int signal_open(struct node *n)
 {
+	int ret;
 	struct signal *s = n->_vd;
 
 	s->counter = 0;
 	s->started = time_now();
 
-	/* Setup timer */
+	/* Setup task */
 	if (s->rt) {
-		s->tfd = timerfd_create_rate(s->rate);
-		if (s->tfd < 0)
-			return -1;
+		ret = task_init(&s->task, s->rate, CLOCK_MONOTONIC);
+		if (ret)
+			return ret;
 	}
-	else
-		s->tfd = -1;
 
 	return 0;
 }
 
 int signal_close(struct node *n)
 {
+	int ret;
 	struct signal* s = n->_vd;
 
-	close(s->tfd);
-
+	if (s->rt) {
+		ret = task_destroy(&s->task);
+		if (ret)
+			return ret;
+	}
+	
 	return 0;
 }
 
@@ -193,7 +200,7 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 	/* Throttle output if desired */
 	if (s->rt) {
 		/* Block until 1/p->rate seconds elapsed */
-		steps = timerfd_wait(s->tfd);
+		steps = task_wait_until_next_period(&s->task);
 		if (steps > 1)
 			warn("Missed steps: %u", steps);
 
@@ -226,7 +233,7 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 	}
 
 	if (s->limit > 0 && s->counter >= s->limit) {
-		info("Reached limit");
+		info("Reached limit of node %s", node_name(n));
 		killme(SIGTERM);
 		pause();
 	}

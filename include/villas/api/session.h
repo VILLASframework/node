@@ -27,7 +27,8 @@
 #include <jansson.h>
 
 #include "common.h"
-#include "web/buffer.h"
+#include "queue.h"
+#include "buffer.h"
 
 enum api_version {
 	API_VERSION_UNKOWN	= 0,
@@ -41,34 +42,28 @@ enum api_mode {
 
 /** A connection via HTTP REST or WebSockets to issue API actions. */
 struct api_session {
-	enum api_mode mode;
+	enum state state;
+
 	enum api_version version;
+	enum api_mode mode;
 
 	int runs;
 
 	struct {
-		struct web_buffer body;		/**< HTTP body / WS payload */
-	} request;
+		struct buffer buffer;
+		struct queue queue;
+	} request, response;
 
-	struct {
-		struct web_buffer body;		/**< HTTP body / WS payload */
-		struct web_buffer headers;	/**< HTTP headers */
-	} response;
-	
-	struct {
-		char name[64];
-		char ip[64];
-	} peer;
-
-	bool completed;				/**< Did we receive the complete body yet? */
-
-	enum state state;
-
+	struct lws *wsi;
 	struct api *api;
+	
+	char *_name;
 };
 
-int api_session_init(struct api_session *s, struct api *a, enum api_mode m);
+int api_session_init(struct api_session *s, enum api_mode m);
 
 int api_session_destroy(struct api_session *s);
 
 int api_session_run_command(struct api_session *s, json_t *req, json_t **resp);
+
+char * api_session_name(struct api_session *s);

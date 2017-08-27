@@ -1,7 +1,3 @@
 *
 !build/release/packaging/rpm/*
-!thirdparty/libxil/
-!thirdparty/criterion/
-!thirdparty/libwebsockets/
-!thirdparty/nanomsg/
-!thirdparty/libzmq/
+!thirdparty/

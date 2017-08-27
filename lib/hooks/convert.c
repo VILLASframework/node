@@ -49,29 +49,33 @@ static int convert_init(struct hook *h)
 	return 0;
 }
 
-static int convert_parse(struct hook *h, config_setting_t *cfg)
+static int convert_parse(struct hook *h, json_t *cfg)
 {
 	struct convert *p = h->_vd;
 
-	const char *mode;
+	int ret;
+	json_error_t err;
+	const char *mode = NULL;
 
-	config_setting_lookup_float(cfg, "scale", &p->scale);
-	config_setting_lookup_int64(cfg, "mask", &p->mask);
-
-	if (!config_setting_lookup_string(cfg, "mode", &mode))
-		cerror(cfg, "Missing setting 'mode' for hook '%s'", plugin_name(h->_vt));
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: F, s?: i, s: s }",
+		"scale", &p->scale,
+		"mask", &p->mask,
+		"mode", &mode
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
 
 	if      (!strcmp(mode, "fixed"))
 		p->mode = TO_FIXED;
 	else if (!strcmp(mode, "float"))
 		p->mode = TO_FLOAT;
 	else
-		error("Invalid parameter '%s' for hook 'convert'", mode);
+		error("Invalid 'mode' setting '%s' for hook '%s'", mode, plugin_name(h->_vt));
 
 	return 0;
 }
 
-static int convert_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int convert_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct convert *p = h->_vd;
 

@@ -48,7 +48,6 @@ struct lws;
 
 /** Internal data per websocket node */
 struct websocket {
-	struct list connections;		/**< List of active libwebsocket connections in server mode (struct websocket_connection). */
 	struct list destinations;		/**< List of websocket servers connect to in client mode (struct websocket_destination). */
 
 	struct pool pool;
@@ -57,24 +56,31 @@ struct websocket {
 
 /* Internal datastructures */
 struct websocket_connection {
-	struct node *node;
-	struct lws *wsi;
-
-	struct queue queue;			/**< For samples which are sent to the WebSocket */
-
-	struct {
-		char name[64];
-		char ip[64];
-	} peer;
-
+	enum websocket_connection_state {
+		STATE_DISCONNECTED,
+		STATE_CONNECTING,
+		STATE_RECONNECTING,
+		STATE_ESTABLISHED,
+		STATE_SHUTDOWN,
+		STATE_ERROR
+	} state;				/**< The current status of this connection. */
+	
 	enum {
 		WEBSOCKET_MODE_CLIENT,
 		WEBSOCKET_MODE_SERVER,
 	} mode;
 
-	enum state state;
+	struct lws *wsi;
+	struct node *node;
+	struct io_format *format;		/**< The IO format used for this connection. */
+	struct queue queue;			/**< For samples which are sent to the WebSocket */
 
-	char *buf;			/**< A buffer which is used to construct the messages. */
+	struct websocket_destination *destination;
+	
+	struct {
+		struct buffer recv;		/**< A buffer for reconstructing fragmented messags. */
+		struct buffer send;		/**< A buffer for contsructing messages before calling lws_write() */
+	} buffers;		
 
 	char *_name;
 };

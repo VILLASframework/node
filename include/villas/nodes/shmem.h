@@ -51,7 +51,7 @@ struct shmem {
 char * shmem_print(struct node *n);
 
 /** @see node_type::parse */
-int shmem_parse(struct node *n, config_setting_t *cfg);
+int shmem_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::open */
 int shmem_open(struct node *n);

@@ -47,13 +47,13 @@ function Msg(c)
 }
 
 /* Some constants for the binary protocol */
-Msg.prototype.VERSION		= 1;
+Msg.prototype.VERSION = 2;
 
-Msg.prototype.TYPE_DATA		= 0; /**< Message contains float values */
+Msg.prototype.TYPE_DATA = 0; /**< Message contains float values */
 
 /* Some offsets in the binary message */
-Msg.prototype.OFFSET_TYPE	= 2;
-Msg.prototype.OFFSET_VERSION	= 4;
+Msg.prototype.OFFSET_TYPE = 2;
+Msg.prototype.OFFSET_VERSION = 4;
 
 Msg.bytes = function(len)
 {

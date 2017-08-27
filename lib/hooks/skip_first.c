@@ -24,8 +24,6 @@
  * @{
  */
 
-#include <libconfig.h>
-
 #include "hook.h"
 #include "plugin.h"
 #include "timing.h"
@@ -53,23 +51,33 @@ struct skip_first {
 	};
 };
 
-static int skip_first_parse(struct hook *h, config_setting_t *cfg)
+static int skip_first_parse(struct hook *h, json_t *cfg)
 {
 	struct skip_first *p = h->_vd;
 
 	double seconds;
 
-	if (config_setting_lookup_float(cfg, "seconds", &seconds)) {
+	int ret;
+	json_error_t err;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: F }", "seconds", &seconds);
+	if (!ret) {
 		p->seconds.wait = time_from_double(seconds);
 		p->mode = HOOK_SKIP_MODE_SECONDS;
-	}
-	else if (config_setting_lookup_int(cfg, "samples", &p->samples.wait)) {
-		p->mode = HOOK_SKIP_MODE_SAMPLES;
-	}
-	else
-		cerror(cfg, "Missing setting 'seconds' or 'samples' for hook '%s'", plugin_name(h->_vt));
 
-	return 0;
+		return 0;
+	}
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: i }", "samples", &p->samples.wait);
+	if (!ret) {
+		p->mode = HOOK_SKIP_MODE_SAMPLES;
+
+		return 0;
+	}
+
+	jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
+
+	return -1;
 }
 
 static int skip_first_restart(struct hook *h)
@@ -81,7 +89,7 @@ static int skip_first_restart(struct hook *h)
 	return 0;
 }
 
-static int skip_first_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int skip_first_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct skip_first *p = h->_vd;
 

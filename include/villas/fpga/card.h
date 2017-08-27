@@ -29,8 +29,6 @@
 
 #pragma once
 
-#include <libconfig.h>
-
 #include "common.h"
 #include "kernel/pci.h"
 #include "kernel/vfio.h"
@@ -64,17 +62,15 @@ struct fpga_card {
 	struct fpga_ip *intc;
 	struct fpga_ip *reset;
 	struct fpga_ip *sw;
-
-	config_setting_t *cfg;
 };
 
 /** Initialize FPGA card and its IP components. */
 int fpga_card_init(struct fpga_card *c, struct pci *pci, struct vfio_container *vc);
 
 /** Parse configuration of FPGA card including IP cores from config. */
-int fpga_card_parse(struct fpga_card *c, config_setting_t *cfg);
+int fpga_card_parse(struct fpga_card *c, json_t *cfg, const char *name);
 
-int fpga_card_parse_list(struct list *l, config_setting_t *cfg);
+int fpga_card_parse_list(struct list *l, json_t *cfg);
 
 /** Check if the FPGA card configuration is plausible. */
 int fpga_card_check(struct fpga_card *c);

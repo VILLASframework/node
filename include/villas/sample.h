@@ -42,20 +42,22 @@ struct pool;
 #define SAMPLE_LEN(len)	(sizeof(struct sample) + SAMPLE_DATA_LEN(len))
 
 /** The length of a sample data portion of a sample datastructure with \p values values in bytes. */
-#define SAMPLE_DATA_LEN(len)	((len) * sizeof(float))
+#define SAMPLE_DATA_LEN(len)	((len) * sizeof(double))
 
 /** The offset to the beginning of the data section. */
 #define SAMPLE_DATA_OFFSET(smp)	((char *) (smp) + offsetof(struct sample, data))
 
 enum sample_data_format {
-	SAMPLE_DATA_FORMAT_FLOAT= 0,
-	SAMPLE_DATA_FORMAT_INT	= 1
+	SAMPLE_DATA_FORMAT_FLOAT = 0,
+	SAMPLE_DATA_FORMAT_INT   = 1
 };
 
 struct sample {
 	int sequence; /**< The sequence number of this sample. */
 	int length;   /**< The number of values in sample::values which are valid. */
 	int capacity; /**< The number of values in sample::values for which memory is reserved. */
+	
+	int id;
 
 	atomic_int refcnt;   /**< Reference counter. */
 	off_t pool_off;	     /**< This sample belongs to this memory pool (relative pointer). */
@@ -68,12 +70,16 @@ struct sample {
 		struct timespec sent;		/**< The point in time when this data was send for the last time. */
 	} ts;
 
-	uint64_t format;	/**< A long bitfield indicating the number representation of the first 64 values in sample::data[] */
+	/** A long bitfield indicating the number representation of the first 64 values in sample::data[].
+	 *
+	 * @see sample_data_format
+	 */
+	uint64_t format;
 
 	/** The values. */
 	union {
-		float    f;	/**< Floating point values. */
-		uint32_t i;	/**< Integer values. */
+		double   f;	/**< Floating point values. */
+		uint64_t i;	/**< Integer values. */
 	} data[];		/**< Data is in host endianess! */
 };
 

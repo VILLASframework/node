@@ -25,9 +25,11 @@
 
 #include <libwebsockets.h>
 #include <jansson.h>
+#include <pthread.h>
 
 #include "list.h"
 #include "common.h"
+#include "queue_signalled.h"
 
 #include "api/session.h"
 
@@ -48,9 +50,12 @@ struct api_action;
 typedef int (*api_cb_t)(struct api_action *c, json_t *args, json_t **resp, struct api_session *s);
 
 struct api {
-	struct list sessions;	/**< List of currently active connections */
-
 	enum state state;
+
+	struct list sessions;		/**< List of currently active connections */
+	struct queue_signalled pending;	/**< A queue of api_sessions which have pending requests. */
+	
+	pthread_t thread;
 
 	struct super_node *super_node;
 };

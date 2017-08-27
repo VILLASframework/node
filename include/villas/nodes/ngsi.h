@@ -39,9 +39,9 @@
 #include <jansson.h>
 
 #include "list.h"
-#include "msg.h"
 #include "super_node.h"
 #include "node.h"
+#include "task.h"
 
 struct node;
 
@@ -54,7 +54,7 @@ struct ngsi {
 	double timeout;			/**< HTTP timeout in seconds */
 	double rate;			/**< Rate used for polling. */
 
-	int tfd;			/**< Timer */
+	struct task task;		/**< Timer for periodic events. */
 	int ssl_verify;			/**< Boolean flag whether SSL server certificates should be verified or not. */
 
 	struct curl_slist *headers;	/**< List of HTTP request headers for libcurl */
@@ -77,7 +77,7 @@ int ngsi_init(struct super_node *sn);
 int ngsi_deinit();
 
 /** @see node_type::parse */
-int ngsi_parse(struct node *n, config_setting_t *cfg);
+int ngsi_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::print */
 char * ngsi_print(struct node *n);

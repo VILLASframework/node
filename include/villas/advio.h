@@ -47,6 +47,7 @@ typedef struct advio AFILE;
 
 /* The remaining functions from stdio are just replaced macros */
 #define afeof(af)			feof((af)->file)
+#define afgets(ln, sz, af)		fgets(ln, sz, (af)->file)
 #define aftell(af)			ftell((af)->file)
 #define afileno(af)			fileno((af)->file)
 #define afread(ptr, sz, nitems, af)	fread(ptr, sz, nitems, (af)->file)
@@ -60,6 +61,9 @@ typedef struct advio AFILE;
 #define auri(af)			((af)->uri)
 #define ahash(af)			((af)->hash)
 
+/** Check if a URI is pointing to a local file. */
+int aislocal(const char *uri);
+
 AFILE *afopen(const char *url, const char *mode);
 
 int afclose(AFILE *file);
@@ -71,7 +75,6 @@ int afseek(AFILE *file, long offset, int origin);
 void arewind(AFILE *file);
 
 /** Download contens from remote file
- *
  *
  * @param resume Do a partial download and append to the local file
  */

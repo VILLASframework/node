@@ -24,54 +24,6 @@
 
 #include "timing.h"
 
-#ifdef __linux__
-
-int timerfd_create_rate(double rate)
-{
-	int fd, ret;
-
-	struct timespec ts = time_from_double(1 / rate);
-
-	struct itimerspec its = {
-		.it_interval = ts,
-		.it_value = ts
-	};
-
-	fd = timerfd_create(CLOCK_MONOTONIC, 0);
-	if (fd < 0)
-		return fd;
-
-	ret = timerfd_settime(fd, 0, &its, NULL);
-	if (ret)
-		return ret;
-
-	return fd;
-}
-
-uint64_t timerfd_wait(int fd)
-{
-	uint64_t runs;
-
-	return read(fd, &runs, sizeof(runs)) < 0 ? 0 : runs;
-}
-
-uint64_t timerfd_wait_until(int fd, const struct timespec *until)
-{
-	int ret;
-	struct itimerspec its = {
-		.it_value = *until,
-		.it_interval = { 0, 0 }
-	};
-
-	ret = timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, NULL);
-	if (ret)
-		return 0;
-
-	return timerfd_wait(fd);
-}
-
-#endif /* __linux__ */
-
 struct timespec time_now()
 {
 	struct timespec ts;

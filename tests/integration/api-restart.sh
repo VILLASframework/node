@@ -55,7 +55,7 @@ sleep 0.2
 curl -sX POST --data '{ "action" : "restart", "request" : { "config": "'${LOCAL_CONF}'" }, "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost/api/v1
 
 # Wait for node to complete init
-sleep 0.2
+sleep 1
 
 # Fetch config via API
 curl -sX POST --data '{ "action" : "config", "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost/api/v1 > ${FETCHED_CONF}

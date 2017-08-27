@@ -20,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <libconfig.h>
 #include <libwebsockets.h>
 #include <string.h>
 
@@ -52,6 +51,14 @@ static struct lws_protocols protocols[] = {
 		.rx_buffer_size = 0
 	},
 #endif /* WITH_API */
+#ifdef WITH_WEBSOCKET
+	{
+		.name = "live",
+		.callback = websocket_protocol_cb,
+		.per_session_data_size = sizeof(struct websocket_connection),
+		.rx_buffer_size = 0
+	},
+#endif /* WITH_WEBSOCKET */
 #if 0 /* not supported yet */
 	{
 		.name = "log",
@@ -66,14 +73,6 @@ static struct lws_protocols protocols[] = {
 		.rx_buffer_size = 0
 	},
 #endif
-#ifdef WITH_WEBSOCKET
-	{
-		.name = "live",
-		.callback = websocket_protocol_cb,
-		.per_session_data_size = sizeof(struct websocket_connection),
-		.rx_buffer_size = 0
-	},
-#endif /* WITH_WEBSOCKET */
 	{ NULL /* terminator */ }
 };
 
@@ -126,6 +125,8 @@ static const struct lws_extension extensions[] = {
 	{ NULL /* terminator */ }
 };
 
+extern struct log *global_log;
+
 static void logger(int level, const char *msg) {
 	int len = strlen(msg);
 	if (strchr(msg, '\n'))
@@ -136,10 +137,10 @@ static void logger(int level, const char *msg) {
 		level = LLL_WARN;
 
 	switch (level) {
-		case LLL_ERR:   warn("LWS: %.*s", len, msg); break;
-		case LLL_WARN:	warn("LWS: %.*s", len, msg); break;
-		case LLL_INFO:	info("LWS: %.*s", len, msg); break;
-		default:    debug(LOG_WEBSOCKET | 1, "LWS: %.*s", len, msg); break;
+		case LLL_ERR:   log_print(global_log, CLR_RED("Web"), "%.*s", len, msg); break;
+		case LLL_WARN:	log_print(global_log, CLR_YEL("Web"), "%.*s", len, msg); break;
+		case LLL_INFO:	log_print(global_log, CLR_WHT("Web"), "%.*s", len, msg); break;
+		default:        log_print(global_log,         "Web",  "%.*s", len, msg); break;
 	}
 }
 
@@ -161,25 +162,43 @@ int web_init(struct web *w, struct api *a)
 
 	/* Default values */
 	w->port = getuid() > 0 ? 8080 : 80; /**< @todo Use libcap to check if user can bind to ports < 1024 */
-	w->htdocs = WEB_PATH;
+	w->htdocs = strdup(WEB_PATH);
 
 	w->state = STATE_INITIALIZED;
 
 	return 0;
 }
 
-int web_parse(struct web *w, config_setting_t *cfg)
+int web_parse(struct web *w, json_t *cfg)
 {
-	int enabled = true;
+	int ret, enabled = 1;
+	const char *ssl_cert = NULL;
+	const char *ssl_private_key = NULL;
+	const char *htdocs = NULL;
+	json_error_t err;
 
-	if (!config_setting_is_group(cfg))
-		cerror(cfg, "Setting 'http' must be a group.");
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: i, s?: b }",
+		"ssl_cert", &ssl_cert,
+		"ssl_private_key", &ssl_private_key,
+		"htdocs", &htdocs,
+		"port", &w->port,
+		"enabled", &enabled
+	);
+	if (ret)
+		jerror(&err, "Failed to http section of configuration file");
 
-	config_setting_lookup_string(cfg, "ssl_cert", &w->ssl_cert);
-	config_setting_lookup_string(cfg, "ssl_private_key", &w->ssl_private_key);
-	config_setting_lookup_int(cfg, "port", &w->port);
-	config_setting_lookup_string(cfg, "htdocs", &w->htdocs);
-	config_setting_lookup_bool(cfg, "enabled", &enabled);
+	if (ssl_cert)
+		w->ssl_cert = strdup(ssl_cert);
+
+	if (ssl_private_key)
+		w->ssl_private_key = strdup(ssl_private_key);
+
+	if (htdocs) {
+		if (w->htdocs)
+			free(w->htdocs);
+
+		w->htdocs = strdup(htdocs);
+	}
 
 	if (!enabled)
 		w->port = CONTEXT_PORT_NO_LISTEN;
@@ -227,7 +246,7 @@ int web_start(struct web *w)
 
 	ret = pthread_create(&w->thread, NULL, worker, w);
 	if (ret)
-		error("Failed to start Web worker");
+		error("Failed to start Web worker thread");
 
 	w->state = STATE_STARTED;
 
@@ -236,6 +255,8 @@ int web_start(struct web *w)
 
 int web_stop(struct web *w)
 {
+	int ret;
+
 	if (w->state != STATE_STARTED)
 		return 0;
 
@@ -246,11 +267,16 @@ int web_stop(struct web *w)
 
 		/** @todo Wait for all connections to be closed */
 
-		pthread_cancel(w->thread);
-		pthread_join(w->thread, NULL);
+		ret = pthread_cancel(w->thread);
+		if (ret)
+			serror("Failed to cancel Web worker thread");
 
-		w->state = STATE_STOPPED;
+		ret = pthread_join(w->thread, NULL);
+		if (ret)
+			serror("Failed to join Web worker thread");
 	}
+	
+	w->state = STATE_STOPPED;
 
 	return 0;
 }
@@ -263,6 +289,15 @@ int web_destroy(struct web *w)
 	if (w->context) { INDENT
 		lws_context_destroy(w->context);
 	}
+
+	if (w->ssl_cert)
+		free(w->ssl_cert);
+
+	if (w->ssl_private_key)
+		free(w->ssl_private_key);
+
+	if (w->htdocs)
+		free(w->htdocs);
 
 	w->state = STATE_DESTROYED;
 

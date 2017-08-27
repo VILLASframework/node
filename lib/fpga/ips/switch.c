@@ -88,43 +88,41 @@ int switch_destroy(struct fpga_ip *c)
 	return 0;
 }
 
-int switch_parse(struct fpga_ip *c)
+int switch_parse(struct fpga_ip *c, json_t *cfg)
 {
-	struct fpga_card *f = c->card;
 	struct sw *sw = c->_vd;
+
+	int ret;
+	size_t index;
+	json_error_t err;
+	json_t *cfg_path, *cfg_paths = NULL;
 
 	list_init(&sw->paths);
 
-	config_setting_t *cfg_sw, *cfg_path;
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s?: o }",
+		"num_ports", &sw->num_ports,
+		"paths", &cfg_paths
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of FPGA IP '%s'", c->name);
 
-	if (!config_setting_lookup_int(c->cfg, "num_ports", &sw->num_ports))
-		cerror(c->cfg, "Switch IP '%s' requires 'num_ports' option", c->name);
-
-	cfg_sw = config_setting_get_member(f->cfg, "paths");
-	if (!cfg_sw)
+	if (!cfg_paths)
 		return 0; /* no switch config available */
 
-	for (int i = 0; i < config_setting_length(cfg_sw); i++) {
-		cfg_path = config_setting_get_elem(cfg_sw, i);
+	if (!json_is_array(cfg_paths))
+		error("Setting 'paths' of FPGA IP '%s' should be an array of JSON objects", c->name);
 
+	json_array_foreach(cfg_paths, index, cfg_path) {
 		struct sw_path *p = alloc(sizeof(struct sw_path));
-		int reverse;
+		int reverse = 0;
 
-		if (!config_setting_lookup_bool(cfg_path, "reverse", &reverse))
-			reverse = 0;
-
-		if (!config_setting_lookup_string(cfg_path, "in", &p->in) &&
-		    !config_setting_lookup_string(cfg_path, "from", &p->in) &&
-		    !config_setting_lookup_string(cfg_path, "src", &p->in) &&
-		    !config_setting_lookup_string(cfg_path, "source", &p->in))
-			cerror(cfg_path, "Path is missing 'in' setting");
-
-		if (!config_setting_lookup_string(cfg_path, "out", &p->out) &&
-		    !config_setting_lookup_string(cfg_path, "to", &p->out) &&
-		    !config_setting_lookup_string(cfg_path, "dst", &p->out) &&
-		    !config_setting_lookup_string(cfg_path, "dest", &p->out) &&
-		    !config_setting_lookup_string(cfg_path, "sink", &p->out))
-			cerror(cfg_path, "Path is missing 'out' setting");
+		ret = json_unpack_ex(cfg_path, &err, 0, "{ s?: b, s: s, s: s }",
+			"reverse", &reverse,
+			"in", &p->in,
+			"out", &p->out
+		);
+		if (ret)
+			jerror(&err, "Failed to parse path %zu of FPGA IP '%s'", index, c->name);
 
 		list_push(&sw->paths, p);
 

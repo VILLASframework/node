@@ -25,7 +25,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <inttypes.h>
-#include <libconfig.h>
 
 #include "config.h"
 #include "utils.h"
@@ -63,7 +62,7 @@ static void path_read(struct path *p)
 	if (recv < 0)
 		error("Failed to receive message from node %s", node_name(ps->node));
 	else if (recv < ready)
-		warn("Partial read for path %s: read=%u expected=%u", path_name(p), recv, ready);
+		warn("Partial read for path %s: read=%u, expected=%u", path_name(p), recv, ready);
 
 	/* Run preprocessing hooks for vector of samples */
 	enqueue = hook_read_list(&p->hooks, smps, recv);
@@ -73,7 +72,7 @@ static void path_read(struct path *p)
 		if (p->stats)
 			stats_update(p->stats->delta, STATS_SKIPPED, recv - enqueue);
 	}
-	
+
 	/* Keep track of the lowest index that wasn't enqueued;
 	 * all following samples must be freed here */
 	for (size_t i = 0; i < list_length(&p->destinations); i++) {
@@ -123,7 +122,7 @@ static void path_write(struct path *p)
 			if (sent < 0)
 				error("Failed to sent %u samples to node %s", cnt, node_name(pd->node));
 			else if (sent < tosend)
-				warn("Partial write to node %s", node_name(pd->node));
+				warn("Partial write to node %s: written=%d, expected=%d", node_name(pd->node), sent, tosend);
 
 			released = sample_put_many(smps, sent);
 
@@ -165,6 +164,8 @@ int path_init(struct path *p, struct super_node *sn)
 
 	list_init(&p->hooks);
 	list_init(&p->destinations);
+	
+	p->_name = NULL;
 
 	/* Default values */
 	p->reverse = 0;
@@ -180,52 +181,55 @@ int path_init(struct path *p, struct super_node *sn)
 	return 0;
 }
 
-int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
+int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 {
-	config_setting_t *cfg_out, *cfg_hooks;
-	const char *in;
 	int ret;
+	const char *in;
+
+	json_error_t err;
+	json_t *cfg_out = NULL;
+	json_t *cfg_hooks = NULL;
 
 	struct node *source;
 	struct list destinations = { .state = STATE_DESTROYED };
 
 	list_init(&destinations);
 
-	/* Input node */
-	if (!config_setting_lookup_string(cfg, "in", &in))
-		cerror(cfg, "Missing input node for path");
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: o, s?: o, s?: b, s?: b, s?: i, s?: i }",
+		"in", &in,
+		"out", &cfg_out,
+		"hooks", &cfg_hooks,
+		"reverse", &p->reverse,
+		"enabled", &p->enabled,
+		"samplelen", &p->samplelen,
+		"queuelen", &p->queuelen
+	);
+	if (ret)
+		jerror(&err, "Failed to parse path configuration");
 
+	/* Input node */
 	source = list_lookup(nodes, in);
 	if (!source)
-		cerror(cfg, "Invalid input node '%s'", in);
+		jerror(&err, "Invalid input node '%s'", in);
 
 	/* Output node(s) */
-	cfg_out = config_setting_get_member(cfg, "out");
 	if (cfg_out) {
 		ret = node_parse_list(&destinations, cfg_out, nodes);
 		if (ret)
-			cerror(cfg_out, "Failed to parse output nodes");
+			jerror(&err, "Failed to parse output nodes");
 	}
 
 	/* Optional settings */
-	cfg_hooks = config_setting_get_member(cfg, "hooks");
 	if (cfg_hooks) {
 		ret = hook_parse_list(&p->hooks, cfg_hooks, p);
 		if (ret)
 			return ret;
 	}
 
-	config_setting_lookup_bool(cfg, "reverse", &p->reverse);
-	config_setting_lookup_bool(cfg, "enabled", &p->enabled);
-	config_setting_lookup_int(cfg, "samplelen", &p->samplelen);
-	config_setting_lookup_int(cfg, "queuelen", &p->queuelen);
-
 	if (!IS_POW2(p->queuelen)) {
 		p->queuelen = LOG2_CEIL(p->queuelen);
 		warn("Queue length should always be a power of 2. Adjusting to %d", p->queuelen);
 	}
-
-	p->cfg = cfg;
 
 	p->source = alloc(sizeof(struct path_source));
 	p->source->node = source;
@@ -235,7 +239,7 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 		struct node *n = list_at(&destinations, i);
 
 		struct path_destination *pd = alloc(sizeof(struct path_destination));
-		
+
 		pd->node = n;
 		pd->queuelen = p->queuelen;
 
@@ -243,6 +247,9 @@ int path_parse(struct path *p, config_setting_t *cfg, struct list *nodes)
 	}
 
 	list_destroy(&destinations, NULL, false);
+
+	p->cfg = cfg;
+	p->state = STATE_PARSED;
 
 	return 0;
 }
@@ -281,7 +288,7 @@ int path_init2(struct path *p)
 
 			if (vt->builtin) {
 				struct hook *h = alloc(sizeof(struct hook));
-				
+
 				ret = hook_init(h, vt, p);
 				if (ret) {
 					free(h);
@@ -437,7 +444,6 @@ int path_reverse(struct path *p, struct path *r)
 
 	/* General */
 	r->enabled = p->enabled;
-	r->cfg = p->cfg;
 
 	struct path_destination *pd = alloc(sizeof(struct path_destination));
 

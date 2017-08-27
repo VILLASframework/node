@@ -27,6 +27,7 @@ static int api_capabilities(struct api_action *h, json_t *args, json_t **resp, s
 	json_t *json_hooks = json_array();
 	json_t *json_apis  = json_array();
 	json_t *json_nodes = json_array();
+	json_t *json_ios   = json_array();
 	json_t *json_name;
 
 	for (size_t i = 0; i < list_length(&plugins); i++) {
@@ -38,15 +39,17 @@ static int api_capabilities(struct api_action *h, json_t *args, json_t **resp, s
 			case PLUGIN_TYPE_NODE: json_array_append_new(json_nodes, json_name); break;
 			case PLUGIN_TYPE_HOOK: json_array_append_new(json_hooks, json_name); break;
 			case PLUGIN_TYPE_API:  json_array_append_new(json_apis, json_name); break;
-			default: { }
+			case PLUGIN_TYPE_IO:   json_array_append_new(json_ios,  json_name); break;
+			default:               json_decref(json_name);
 		}
 	}
 
-	*resp = json_pack("{ s: s, s: o, s: o, s: o }",
+	*resp = json_pack("{ s: s, s: o, s: o, s: o, s: o }",
 			"build", BUILDID,
 			"hooks",      json_hooks,
 			"node-types", json_nodes,
-			"apis",       json_apis);
+			"apis",       json_apis,
+			"formats",    json_ios);
 
 	return 0;
 }

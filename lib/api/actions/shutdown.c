@@ -32,7 +32,7 @@ static int api_shutdown(struct api_action *h, json_t *args, json_t **resp, struc
 
 static struct plugin p = {
 	.name = "shutdown",
-	.description = "stop VILLASnode",
+	.description = "quit VILLASnode",
 	.type = PLUGIN_TYPE_API,
 	.api.cb = api_shutdown
 };

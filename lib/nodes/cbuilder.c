@@ -11,33 +11,43 @@
 
 #include "nodes/cbuilder.h"
 
-int cbuilder_parse(struct node *n, config_setting_t *cfg)
+int cbuilder_parse(struct node *n, json_t *cfg)
 {
 	struct cbuilder *cb = n->_vd;
-	config_setting_t *cfg_params;
+	json_t *cfg_param, *cfg_params = NULL;
 
 	const char *model;
 
-	if (!config_setting_lookup_float(cfg, "timestep", &cb->timestep))
-		cerror(cfg, "CBuilder model requires 'timestep' setting");
+	int ret;
+	size_t index;
+	json_error_t err;
 
-	if (!config_setting_lookup_string(cfg, "model", &model))
-		cerror(cfg, "CBuilder model requires 'model' setting");
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: f, s: s, s: b }",
+		"timestep", &cb->timestep,
+		"model", &model,
+		"parameters", &cfg_params
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 	cb->model = (struct cbuilder_model *) plugin_lookup(PLUGIN_TYPE_MODEL_CBUILDER, model);
 	if (!cb->model)
-		cerror(cfg, "Unknown model '%s'", model);
+		error("Unknown model '%s' of node %s", model, node_name(n));
 
-	cfg_params = config_setting_get_member(cfg, "parameters");
 	if (cfg_params) {
-		if (!config_setting_is_array(cfg_params))
-			cerror(cfg_params, "Model parameters must be an array of numbers!");
+		if (!json_is_array(cfg_params))
+			error("Setting 'parameters' of node %s must be an JSON array of numbers!", node_name(n));
 
-		cb->paramlen = config_setting_length(cfg_params);
+		cb->paramlen = json_array_size(cfg_params);
 		cb->params = alloc(cb->paramlen * sizeof(double));
 
-		for (int i = 0; i < cb->paramlen; i++)
-			cb->params[i] = config_setting_get_float_elem(cfg_params, i);
+		json_array_foreach(cfg_params, index, cfg_param) {
+			if (json_is_number(cfg_param))
+				error("Setting 'parameters' of node %s must be an JSON array of numbers!", node_name(n));
+
+			cb->params[index] = json_number_value(cfg_params);
+
+		}
 	}
 
 	return 0;
@@ -84,8 +94,15 @@ int cbuilder_read(struct node *n, struct sample *smps[], unsigned cnt)
 	pthread_mutex_lock(&cb->mtx);
 	while (cb->read >= cb->step)
 		pthread_cond_wait(&cb->cv, &cb->mtx);
+	
+	float data[smp->capacity];
 
-	smp->length = cb->model->read(&smp->data[0].f, 16);
+	smp->length = cb->model->read(data, smp->capacity);
+
+	/* Cast float -> double */
+	for (int i = 0; i < smp->length; i++)
+		smp->data[i].f = data[i];
+	
 	smp->sequence = cb->step;
 
 	cb->read = cb->step;
@@ -101,8 +118,10 @@ int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt)
 	struct sample *smp = smps[0];
 
 	pthread_mutex_lock(&cb->mtx);
+	
+	float flt = smp->data[0].f;
 
-	cb->model->write(&smp->data[0].f, smp->length);
+	cb->model->write(&flt, smp->length);
 	cb->model->code();
 
 	cb->step++;

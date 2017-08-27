@@ -52,10 +52,10 @@ cat <<EOF > ${EXPECT_FILE}
 1490500400.676379108(9)	-0.587785	9	1490500400	676379108	-0.587785	-0.587785
 EOF
 
-villas-hook map 'mapping = [ "data[3]", "hdr.sequence", "ts.origin", "data[1-2]" ]' < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas-hook map -o map=data[3] -o map=hdr.sequence -o map=ts.origin -o map=data[1-2] < ${INPUT_FILE} > ${OUTPUT_FILE}
 
 # Compare only the data values
-diff -u <(cut -f2- ${OUTPUT_FILE}) <(cut -f2- ${EXPECT_FILE})
+villas-test-cmp ${OUTPUT_FILE} ${EXPECT_FILE}
 
 RC=$?
 

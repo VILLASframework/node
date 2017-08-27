@@ -30,21 +30,17 @@ NODE_FILE=$(mktemp)
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 cat > ${CONFIG_FILE} << EOF
-nodes = {
-	node1 = {
-		type = "file";
-		
-		in = {
-			uri = "${NODE_FILE}",
-			mode = "w+",
+{
+	"nodes" : {
+		"node1" : {
+			"type" : "file",
 
-			epoch_mode = "original",
-			eof = "wait"
-		},
-		out = {
-			uri = "${NODE_FILE}"
-			mode = "w+"
-			flush = true /* we need to flush / upload the new samples continously for a loopback */
+			"uri"   : "${NODE_FILE}",
+			"mode"  : "w+",
+
+			"epoch_mode" : "original",
+			"eof"   : "wait",
+			"flush" : true
 		}
 	}
 }
@@ -56,9 +52,13 @@ villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 # We delay EOF of the INPUT_FILE by 1 second in order to wait for incoming data to be received
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
-# Comapre data
+# Compare data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
+
+cat ${OUTPUT_FILE}
+echo
+cat ${INPUT_FILE}
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${NODE_FILE}
 

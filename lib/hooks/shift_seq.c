@@ -32,17 +32,23 @@ struct shift {
 	int offset;
 };
 
-static int shift_seq_parse(struct hook *h, config_setting_t *cfg)
+static int shift_seq_parse(struct hook *h, json_t *cfg)
 {
 	struct shift *p = h->_vd;
 
-	if (!config_setting_lookup_int(cfg, "offset", &p->offset))
-		cerror(cfg, "Missing setting 'offset' for hook '%s'", plugin_name(h->_vt));
+	json_error_t err;
+	int ret;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: i }",
+		"offset", &p->offset
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
 
 	return 0;
 }
 
-static int shift_seq_read(struct hook *h, struct sample *smps[], size_t *cnt)
+static int shift_seq_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct shift *p = h->_vd;
 

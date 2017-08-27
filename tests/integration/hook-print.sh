@@ -1,4 +1,6 @@
-# Makefile.
+#!/bin/bash
+#
+# Integration test for print hook.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
@@ -18,10 +20,24 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-###################################################################################
+##################################################################################
 
-LIB_SRCS   += lib/web.c
-LIB_SRCS   += $(wildcard lib/web/*.c)
+INPUT_FILE=$(mktemp)
+OUTPUT_FILE1=$(mktemp)
+OUTPUT_FILE2=$(mktemp)
 
-LIB_PKGS   += libwebsockets
-LIB_CFLAGS += -DWITH_WEB
+NUM_SAMPLES=${NUM_SAMPLES:-100}
+
+# Prepare some test data
+villas-signal random -v 1 -r 10 -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
+
+villas-hook print -o format=villas -o output=${OUTPUT_FILE1} < ${INPUT_FILE} > ${OUTPUT_FILE2}
+
+# Compare only the data values
+villas-test-cmp ${OUTPUT_FILE1} ${INPUT_FILE} && \
+villas-test-cmp ${OUTPUT_FILE2} ${INPUT_FILE}
+RC=$?
+
+rm -f ${INPUT_FILE} ${OUTPUT_FILE1} ${OUTPUT_FILE2}
+
+exit $RC
