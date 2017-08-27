@@ -72,7 +72,6 @@ RUN yum -y install \
 	openssl openssl-devel \
 	libconfig-devel \
 	libnl3-devel \
-	hdf5-devel \
 	zeromq-devel \
 	nanomsg-devel \
 	libxil-devel

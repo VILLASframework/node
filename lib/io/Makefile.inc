@@ -21,17 +21,3 @@
 ###################################################################################
 
 LIB_SRCS += $(addprefix lib/io/,json.c villas.c csv.c raw.c msg.c)
-
-WITH_HDF5 ?= 0
-
-ifeq ($(PLATFORM),Darwin)
-	HDF5_PREFIX ?= /opt/local
-else
-	HDF5_PREFIX ?= /usr
-endif
-
-ifeq ($(WITH_HDF5),1)
-ifneq ($(wildcard $(HDF5_PREFIX)/include/hdf5_hl.h),)
-	LIB_SRCS += lib/formats/hdf5.c
-endif
-endif
