@@ -27,67 +27,61 @@ SCRIPTPATH=$(dirname ${SCRIPT})
 source ${SCRIPTPATH}/../../tools/integration-tests-helper.sh
 
 CONFIG_FILE=$(mktemp)
+CONFIG_FILE2=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
-NUM_SAMPLES=${NUM_SAMPLES:-100}
-
-# Generate test data
-villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
-
-for FORMAT in csv json villas csv msg gtnet-fake raw-flt32 gtnet-fake; do
-	
-VECTORIZES="1"
-
-# The raw format does not support vectors
-if villas_format_supports_vectorize ${FORMAT}; then
-	VECTORIZES="${VECTORIZES} 10"
-fi
-
-for VECTORIZE	in ${VECTORIZES}; do	
+NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 cat > ${CONFIG_FILE} << EOF
 {
 	"nodes" : {
 		"node1" : {
-			"type" : "nanomsg",
-			
-			"format" : "${FORMAT}",
-			"vectorize" : ${VECTORIZE},
+			"type" : "websocket",
 
-			"subscribe" : "tcp://127.0.0.1:12000",
-			"publish" : "tcp://127.0.0.1:12000"
+			"destinations" : [
+				"ws://127.0.0.1:81/node2"
+			]
 		}
 	}
 }
 EOF
 
-# We delay EOF of the INPUT_FILE by 1 second in order to wait for incoming data to be received
-villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
+cat > ${CONFIG_FILE2} << EOF
+{
+	"http" : {
+		"port" : 81
+	},
+	"nodes" : {
+		"node2" : {
+			"type" : "websocket"
+		}
+	}
+}
+EOF
 
-# Ignore timestamp and seqeunce no if in raw format 
-if villas_format_supports_header ${FORMAT}; then
-	CMPFLAGS=-ts
-fi
+# Generate test data
+VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
+villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
+
+VILLAS_LOG_PREFIX=$(colorize "[Recv]  ") \
+villas-pipe -r -d 15 -l ${NUM_SAMPLES} ${CONFIG_FILE2} node2 > ${OUTPUT_FILE} &
+
+PID=$!
+
+VILLAS_LOG_PREFIX=$(colorize "[Send]  ") \
+villas-pipe -s -d 15 ${CONFIG_FILE} node1 < ${INPUT_FILE}
+
+wait ${PID}
+
+cat ${OUTPUT_FILE}
+echo
+cat ${INPUT_FILE}
 
 # Compare data
-villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
+villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
-if (( ${RC} != 0 )); then
-	echo "=========== Sub-test failed for: format=${FORMAT}, vectorize=${VECTORIZE}"
-	cat ${CONFIG_FILE}
-	echo
-	cat ${INPUT_FILE}
-	echo
-	cat ${OUTPUT_FILE}
-	exit ${RC}
-else
-	echo "=========== Sub-test succeeded for: format=${FORMAT}, vectorize=${VECTORIZE}"
-fi
-
-done; done
-
-rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
+rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${CONFIG_FILE2}
 
 exit $RC

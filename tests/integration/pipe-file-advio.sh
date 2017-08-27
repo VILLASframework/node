@@ -22,6 +22,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
+SCRIPT=$(realpath $0)
+SCRIPTPATH=$(dirname ${SCRIPT})
+source ${SCRIPTPATH}/../../tools/integration-tests-helper.sh
+
 CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
@@ -35,36 +39,29 @@ URI=https://1Nrd46fZX8HbggT:badpass@rwth-aachen.sciebo.de/public.php/webdav/node
 cat > ${CONFIG_FILE} <<EOF
 {
 	"nodes" : {
-		"remote_file_out" : {
+		"remote_file" : {
 			"type" : "file",
 
-			"out" : {
-				"uri" : "${URI}",
-				"mode" : "w+",
-				"flush" : false
-			}
-		},
-		"remote_file_in" : {
-			"type" : "file",
-			"in" : {
-				"uri" : "${URI}",
-				"mode" : "r",
-				"epoch_mode" : "original",
-				"eof" : "exit"
-			}
+			"uri" : "${URI}",
+			"flush" : false,
+			"epoch_mode" : "original",
+			"eof" : "exit"
 		}
 	}
 }
 EOF
 
 # Delete old file
-curl -X DELETE ${URI}
+curl -X DELETE ${URI} > /dev/null
 
+VILLAS_LOG_PREFIX=$(colorize "[Signal] ") \
 villas-signal random -n -l ${NUM_SAMPLES} > ${INPUT_FILE}
 
-villas-pipe -s ${CONFIG_FILE} remote_file_out < ${INPUT_FILE}
+VILLAS_LOG_PREFIX=$(colorize "[Send]  ") \
+villas-pipe -s ${CONFIG_FILE} remote_file < ${INPUT_FILE}
 
-villas-pipe -r ${CONFIG_FILE} remote_file_in > ${OUTPUT_FILE}
+VILLAS_LOG_PREFIX=$(colorize "[Recv]  ") \
+villas-pipe -r -l ${NUM_SAMPLES} ${CONFIG_FILE} remote_file > ${OUTPUT_FILE}
 
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?

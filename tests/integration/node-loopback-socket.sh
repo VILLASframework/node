@@ -22,6 +22,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
+SCRIPT=$(realpath $0)
+SCRIPTPATH=$(dirname ${SCRIPT})
+source ${SCRIPTPATH}/../../tools/integration-tests-helper.sh
+
 CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
@@ -29,42 +33,40 @@ OUTPUT_FILE=$(mktemp)
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 cat > ${CONFIG_FILE} <<EOF
-nodes = {
-	node1 = {
-		type = "socket";
-		layer = "udp";
-
-		local = "*:12000";
-		remote = "127.0.0.1:12001"
-	}
-
-	node2 = {
-		type = "socket";
-		layer = "udp";
-
-		local = "*:12001";
-		remote = "127.0.0.1:12000"
-	}
+{
+	"nodes": {
+		"node1": {
+			"type": "socket",
+			"layer": "udp",
+			"local": "*:12000",
+			"remote": "127.0.0.1:12001"
+		},
+		"node2": {
+			"type": "socket",
+			"layer": "udp",
+			"local": "*:12001",
+			"remote": "127.0.0.1:12000"
+		}
+	},
+	"paths": [
+		{ "in": "node1", "out": "node1" }
+	]
 }
-
-paths = (
-	{
-		in  = "node1",
-		out = "node1"
-	}
-)
 EOF
 
 # Generate test data
+VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
 villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 # Start node
+VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
 villas-node ${CONFIG_FILE} &
 
 # Wait for node to complete init
 sleep 1
 
 # Send / Receive data to node
+VILLAS_LOG_PREFIX=$(colorize "[Pipe]  ") \
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node2 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
 # Wait for node to handle samples

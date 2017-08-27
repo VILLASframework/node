@@ -22,9 +22,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-set -e
+SCRIPT=$(realpath $0)
+SCRIPTPATH=$(dirname ${SCRIPT})
 
-LOCAL_CONF=${SRCDIR}/etc/loopback.json
+LOCAL_CONF=${SCRIPTPATH}/../../etc/loopback.json
 
 FETCHED_CONF=$(mktemp)
 FETCHED_JSON_CONF=$(mktemp)

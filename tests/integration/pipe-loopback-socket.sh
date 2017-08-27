@@ -22,20 +22,34 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
+SCRIPT=$(realpath $0)
+SCRIPTPATH=$(dirname ${SCRIPT})
+source ${SCRIPTPATH}/../../tools/integration-tests-helper.sh
+
 CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 THEORIES=$(mktemp)
 
-NUM_SAMPLES=${NUM_SAMPLES:-10}
+NUM_SAMPLES=${NUM_SAMPLES:-100}
 
 # Generate test data
 villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
+for FORMAT	in csv json villas csv msg gtnet-fake raw-flt32 gtnet-fake; do
 for LAYER	in udp ip eth; do
 for HEADER	in none default; do
 for ENDIAN	in big little; do
 for VERIFY_SOURCE in true false; do
+	
+VECTORIZES="1"
+
+# The raw format does not support vectors
+if villas_format_supports_vectorize ${FORMAT}; then
+	VECTORIZES="${VECTORIZES} 10"
+fi
+
+for VECTORIZE	in ${VECTORIZES}; do
 
 case ${LAYER} in
 	udp)
@@ -54,15 +68,16 @@ case ${LAYER} in
 		LOCAL="00:00:00:00:00:00%lo:34997"
 		REMOTE="00:00:00:00:00:00%lo:34997"
 		;;
-	esac
-
+esac
 
 cat > ${CONFIG_FILE} << EOF
 {
 	"nodes" : {
 		"node1" : {
 			"type" : "socket",
-
+			
+			"vectorize" : ${VECTORIZE},
+			"format" : "${FORMAT}",
 			"layer" : "${LAYER}",
 			"header" : "${HEADER}",
 			"endian" : "${ENDIAN}",
@@ -78,12 +93,17 @@ EOF
 # We delay EOF of the INPUT_FILE by 1 second in order to wait for incoming data to be received
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
+# Ignore timestamp and seqeunce no if in raw format 
+if ! villas_format_supports_header $FORMAT; then
+	CMPFLAGS=-ts
+fi
+
 # Compare data
-villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
-RC:$?
+villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
+RC=$?
 
 if (( ${RC} != 0 )); then
-	echo "=========== Sub-test failed for: layer=${LAYER}, header=${HEADER}, endian=${ENDIAN}, verify_source=${VERIFY_SOURCE}"
+	echo "=========== Sub-test failed for: format=${FORMAT}, layer=${LAYER}, header=${HEADER}, endian=${ENDIAN}, verify_source=${VERIFY_SOURCE}, vectorize=${VECTORIZE}"
 	cat ${CONFIG_FILE}
 	echo
 	cat ${INPUT_FILE}
@@ -91,10 +111,10 @@ if (( ${RC} != 0 )); then
 	cat ${OUTPUT_FILE}
 	exit ${RC}
 else
-	echo "=========== Sub-test succeeded for: layer=${LAYER}, header=${HEADER}, endian=${ENDIAN}, verify_source=${VERIFY_SOURCE}"
+	echo "=========== Sub-test succeeded for: format=${FORMAT}, layer=${LAYER}, header=${HEADER}, endian=${ENDIAN}, verify_source=${VERIFY_SOURCE}, vectorize=${VECTORIZE}"
 fi
 
-done; done; done; done
+done; done; done; done; done; done
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${THEORIES}
 
