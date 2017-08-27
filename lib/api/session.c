@@ -24,33 +24,55 @@
 
 #include "web.h"
 #include "plugin.h"
+#include "memory.h"
 
-int api_session_init(struct api_session *s, struct api *a, enum api_mode m)
+int api_session_init(struct api_session *s, enum api_mode m)
 {
-	s->mode = m;
-	s->api = a;
+	int ret;
 
 	s->completed = false;
+	
+	ret = buffer_init(&s->request.buffer, 0);
+	if (ret)
+		return ret;
+	
+	ret = buffer_init(&s->response.buffer, 0);
+	if (ret)
+		return ret;
+	
+	ret = queue_init(&s->request.queue, 128, &memtype_heap);
+	if (ret)
+		return ret;
 
-	web_buffer_init(&s->request.body,  s->mode == API_MODE_HTTP ? LWS_WRITE_HTTP : LWS_WRITE_TEXT);
-	web_buffer_init(&s->response.body, s->mode == API_MODE_HTTP ? LWS_WRITE_HTTP : LWS_WRITE_TEXT);
-
-	if (s->mode == API_MODE_HTTP)
-		web_buffer_init(&s->response.headers, LWS_WRITE_HTTP_HEADERS);
+	ret = queue_init(&s->response.queue, 128, &memtype_heap);
+	if (ret)
+		return ret;
 
 	return 0;
 }
 
 int api_session_destroy(struct api_session *s)
 {
+	int ret;
+
 	if (s->state == STATE_DESTROYED)
 		return 0;
 
-	web_buffer_destroy(&s->request.body);
-	web_buffer_destroy(&s->response.body);
+	ret = buffer_destroy(&s->request.buffer);
+	if (ret)
+		return ret;
 
-	if (s->mode == API_MODE_HTTP)
-		web_buffer_destroy(&s->response.headers);
+	ret = buffer_destroy(&s->response.buffer);
+	if (ret)
+		return ret;
+	
+	ret = queue_destroy(&s->request.queue);
+	if (ret)
+		return ret;
+
+	ret = queue_destroy(&s->response.queue);
+	if (ret)
+		return ret;
 
 	s->state = STATE_DESTROYED;
 

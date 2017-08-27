@@ -246,7 +246,7 @@ int web_start(struct web *w)
 
 	ret = pthread_create(&w->thread, NULL, worker, w);
 	if (ret)
-		error("Failed to start Web worker");
+		error("Failed to start Web worker thread");
 
 	w->state = STATE_STARTED;
 
@@ -255,6 +255,8 @@ int web_start(struct web *w)
 
 int web_stop(struct web *w)
 {
+	int ret;
+
 	if (w->state != STATE_STARTED)
 		return 0;
 
@@ -265,11 +267,16 @@ int web_stop(struct web *w)
 
 		/** @todo Wait for all connections to be closed */
 
-		pthread_cancel(w->thread);
-		pthread_join(w->thread, NULL);
+		ret = pthread_cancel(w->thread);
+		if (ret)
+			serror("Failed to cancel Web worker thread");
 
-		w->state = STATE_STOPPED;
+		ret = pthread_join(w->thread, NULL);
+		if (ret)
+			serror("Failed to join Web worker thread");
 	}
+	
+	w->state = STATE_STOPPED;
 
 	return 0;
 }

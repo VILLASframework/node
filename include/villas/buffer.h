@@ -1,4 +1,4 @@
-/** API session.
+/** A simple growing buffer.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -23,43 +23,28 @@
 
 #pragma once
 
-#include <stdbool.h>
+#include <stdlib.h>
+
 #include <jansson.h>
 
 #include "common.h"
-#include "queue.h"
-#include "buffer.h"
 
-enum api_version {
-	API_VERSION_UNKOWN	= 0,
-	API_VERSION_1		= 1
-};
-
-enum api_mode {
-	API_MODE_WS,	/**< This API session was established over a WebSocket connection. */
-	API_MODE_HTTP	/**< This API session was established via a HTTP REST request. */
-};
-
-/** A connection via HTTP REST or WebSockets to issue API actions. */
-struct api_session {
+struct buffer {
 	enum state state;
-
-	enum api_version version;
-
-	int runs;
-	bool completed;				/**< Did we receive the complete body yet? */
-
-	struct {
-		struct buffer buffer;
-		struct queue queue;
-	} request, response;
-
-	struct lws *wsi;
-	struct api *api;
+	
+	char *buf;
+	size_t len;
+	size_t size;
 };
 
-int api_session_init(struct api_session *s, enum api_mode m);
+int buffer_init(struct buffer *b, size_t size);
 
-int api_session_destroy(struct api_session *s);
+int buffer_destroy(struct buffer *b);
+	
+void buffer_clear(struct buffer *b);
 
-int api_session_run_command(struct api_session *s, json_t *req, json_t **resp);
+int buffer_append(struct buffer *b, const char *data, size_t len);
+
+int buffer_parse_json(struct buffer *b, json_t **j);
+
+int buffer_append_json(struct buffer *b, json_t *j);
