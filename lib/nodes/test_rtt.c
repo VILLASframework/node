@@ -26,14 +26,16 @@
 #include "plugin.h"
 #include "nodes/test_rtt.h"
 
-static int test_rtt_case_start(struct test_rtt *t)
+static int test_rtt_case_start(struct test_rtt *t, int caseno)
 {
 	int ret;
 	char fn[512];
 
+	struct test_rtt_case *c = list_at(&t->cases, caseno);
+
 	/* Open file */
 	snprintf(fn, sizeof(fn), "%s/test_rtt_%d_%.0f.log", t->output, c->values, c->rate);
-	ret = io_init(&t->io, NULL, IO_FORMAT_ALL & ~IO_FORMAT_VALUES);
+	ret = io_init(&t->io, NULL, FORMAT_ALL & ~FORMAT_VALUES);
 	if (ret)
 		return ret;
 
@@ -48,7 +50,7 @@ static int test_rtt_case_start(struct test_rtt *t)
 static int test_rtt_case_stop(struct test_rtt_case *c)
 {
 	/* Close file */
-	io_close(&t->io);
+	io_close(&c->io);
 
 	/* Stop timer. */
 	task_destroy(&c->task);
@@ -56,77 +58,72 @@ static int test_rtt_case_stop(struct test_rtt_case *c)
 	return 0;
 }
 
-int test_rtt_parse(struct node *n, config_setting_t *cfg)
+int test_rtt_parse(struct node *n, json_t *cfg)
 {
 	struct test_rtt *t = n->_vd;
-
-	int limit, ret;
-	int numrates = 0, numvalues = 0;
-	int *rates, *values;
-	const char *format;
-
-	config_setting_t *cfg_rates, *cfg_values, *cfg_elem;
-
-	if (!config_setting_lookup_int(cfg, "limit", &limit))
-		limit = 1000;
-
-	if (!config_setting_lookup_string(cfg, "output", &t->output))
-		t->output = ".";
-
-	if (!config_setting_lookup_string(cfg, "format", &format))
-		format = "villas";
-
-	if (!config_setting_lookup_float(cfg, "cooldown", &t->cooldown))
-		t->cooldown = 1.0;
-
-	cfg_rates = config_setting_get_member(cfg, "rates");
-	if (cfg_rates) {
-		if (!config_setting_is_array(cfg_rates) || !config_setting_length(cfg_rates))
-			cerror(cfg_rates, "The 'rates' setting must be an array of integers with at least one element.");
-
-		numrates = config_setting_length(cfg_rates);
-		rates = alloc(sizeof(rates[0]) * numrates);
-
-		for (int i = 0; i < numrates; i++) {
-			cfg_elem = config_setting_get_elem(cfg_rates, i);
-
-			if (config_setting_type(cfg_elem) != CONFIG_TYPE_INT)
-				cerror(cfg_elem, "The 'rates' setting must be an array of strings");
-
-			rates[i] = config_setting_get_int(cfg_elem);
-		}
-	}
-	else
-		cerror(cfg, "Node %s requires setting 'rates' which must be a list of integers", node_name(n));
-
-	cfg_values = config_setting_get_member(cfg, "values");
-	if (cfg_values) {
-		if (!config_setting_is_array(cfg_values) || !config_setting_length(cfg_values))
-			cerror(cfg_values, "The 'values' setting must be an array of integers with at least one element.");
-
-		numvalues = config_setting_length(cfg_values);
-		values = alloc(sizeof(values[0]) * numvalues);
-
-		for (int i = 0; i < numvalues; i++) {
-			cfg_elem = config_setting_get_elem(cfg_values, i);
-
-			if (config_setting_type(cfg_elem) != CONFIG_TYPE_INT)
-				cerror(cfg_elem, "The 'values' setting must be an array of strings");
-
-			values[i] = config_setting_get_int(cfg_elem);
-		}
-	}
-	else
-		cerror(cfg, "Node %s requires setting 'values' which must be a list of integers", node_name(n));
-
-	/* Initialize IO module */
 	struct plugin *p;
 
+	int ret, numrates, numvalues, limit = 1000;
+	int *rates, *values;
+
+	const char *format = "villas";
+	const char *output = ".";
+
+	size_t index;
+	json_t *cfg_rates, *cfg_values, *cfg_val;
+	json_error_t err;
+
+	t->cooldown = 1.0;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: s, s?: s, s: f, s: o, s: o }",
+		"limit", &limit,
+		"output", &output,
+		"format", &format,
+		"cooldown", &t->cooldown,
+		"rates", &cfg_rates,
+		"values", &cfg_values
+	);
+	if (ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+
+	t->output = strdup(output);
+
+	if (cfg_rates) {
+		if (!json_is_array(cfg_rates) || json_array_size(cfg_rates) < 1)
+			error("The 'rates' setting of node %s must be an array of integers with at least one element.", node_name(n));
+
+		numrates = json_array_size(cfg_rates);
+		rates = alloc(sizeof(rates[0]) * numrates);
+
+		json_array_foreach(cfg_rates, index, cfg_val) {
+			if (!json_is_integer(cfg_val))
+				error("The 'rates' setting of node %s must be an array of integers", node_name(n));
+
+			rates[index] = json_integer_value(cfg_val);
+		}
+	}
+
+	if (cfg_values) {
+		if (!json_is_array(cfg_values) || json_array_size(cfg_values) < 1)
+			error("The 'values' setting of node %s must be an array of integers with at least one element.", node_name(n));
+
+		numvalues = json_array_size(cfg_values);
+		rates = alloc(sizeof(rates[0]) * numvalues);
+
+		json_array_foreach(cfg_values, index, cfg_val) {
+			if (!json_is_integer(cfg_val))
+				error("The 'values' setting of node %s must be an array of integers", node_name(n));
+
+			values[index] = json_integer_value(cfg_val);
+		}
+	}
+
+	/* Initialize IO module */
 	p = plugin_lookup(PLUGIN_TYPE_FORMAT, format);
 	if (!p)
-		cerror(cfg, "Invalid value for setting 'format'");
+		error("Invalid value for setting 'format' of node %s", node_name(n));
 
-	ret = io_init(&t->io, &p->io, IO_FORMAT_ALL & ~IO_FORMAT_VALUES);
+	ret = io_init(&t->io, &p->io, FORMAT_ALL & ~FORMAT_VALUES);
 	if (ret)
 		return ret;
 
