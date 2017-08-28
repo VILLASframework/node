@@ -66,9 +66,10 @@ int node_parse(struct node *n, json_t *cfg, const char *name)
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: i }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: i, s?: i }",
 		"type", &type,
-		"vectorize", &n->vectorize
+		"vectorize", &n->vectorize,
+		"samplelen", &n->samplelen
 	);
 	if (ret)
 		jerror(&err, "Failed to parse node '%s'", node_name(n));

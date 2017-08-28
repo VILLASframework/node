@@ -49,6 +49,7 @@ struct node
 
 	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
 	int affinity;		/**< CPU Affinity of this node */
+	int samplelen;		/**< The maximum number of values this node can receive. */
 
 	int id;			/**< An id of this node which is only unique in the scope of it's super-node (VILLASnode instance). */
 
