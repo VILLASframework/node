@@ -37,19 +37,22 @@ struct list;
 
 struct mapping_entry {
 	struct node *node;
-	int length;
+
+	int offset;			/**< Offset of this mapping entry within sample::data */
+	int length;			/**< The number of values which is covered by this mapping entry. */
 
 	enum {
 		MAPPING_TYPE_DATA,
 		MAPPING_TYPE_STATS,
-		MAPPING_TYPE_HEADER,
-		MAPPING_TYPE_TIMESTAMP
+		MAPPING_TYPE_HDR,
+		MAPPING_TYPE_TS
 	} type;
 
 	union {
 		struct {
 			int offset;
 		} data;
+
 		struct {
 			enum stats_id id;
 			enum stats_type {
@@ -62,40 +65,26 @@ struct mapping_entry {
 				MAPPING_STATS_TYPE_TOTAL
 			} type;
 		} stats;
+
 		struct {
 			enum header_type {
-				MAPPING_HEADER_LENGTH,
-				MAPPING_HEADER_SEQUENCE,
+				MAPPING_HDR_LENGTH,
+				MAPPING_HDR_SEQUENCE,
 			} id;
-		} header;
+		} hdr;
+
 		struct {
 			enum timestamp_type {
-				MAPPING_TIMESTAMP_ORIGIN,
-				MAPPING_TIMESTAMP_RECEIVED,
-				MAPPING_TIMESTAMP_SENT
+				MAPPING_TS_ORIGIN,
+				MAPPING_TS_RECEIVED,
+				MAPPING_TS_SEND
 			} id;
-		} timestamp;
+		} ts;
 	};
 };
 
-struct mapping {
-	enum state state;
+int mapping_remap(struct list *m, struct sample *orig, struct sample *remapped, struct stats *s);
 
-	int real_length;
+int mapping_parse(struct mapping_entry *e, json_t *cfg, struct list *nodes);
 
-	struct list entries;
-};
-
-int mapping_init(struct mapping *m);
-
-int mapping_parse(struct mapping *m, json_t *cfg, struct list *nodes);
-
-int mapping_check(struct mapping *m);
-
-int mapping_destroy(struct mapping *m);
-
-int mapping_remap(struct mapping *m, struct sample *orig, struct sample *remapped, struct stats *s);
-
-int mapping_entry_parse(struct mapping_entry *e, json_t *cfg, struct list *nodes);
-
-int mapping_entry_parse_str(struct mapping_entry *e, const char *str, struct list *nodes);
+int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nodes);

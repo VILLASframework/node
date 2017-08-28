@@ -28,6 +28,7 @@
 #include "config.h"
 #include "plugin.h"
 #include "config_helper.h"
+#include "mapping.h"
 
 int node_init(struct node *n, struct node_type *vt)
 {
@@ -337,6 +338,36 @@ invalid2:
 	}
 
 	error("Unknown node '%s'. Choose of one of: %s", str, allstr);
+
+	return 0;
+}
+
+int node_parse_mapping_list(struct list *l, json_t *cfg, struct list *all)
+{
+	int ret;
+
+	json_t *json_entry;
+	json_t *json_mapping;
+
+	if (json_is_string(cfg)) {
+		json_mapping = json_array();
+		json_array_append(json_mapping, cfg);
+	}
+	else if (json_is_array(cfg))
+		json_mapping = cfg;
+	else
+		return -1;
+
+	size_t i;
+	json_array_foreach(json_mapping, i, json_entry) {
+		struct mapping_entry *e = alloc(sizeof(struct mapping_entry));
+
+		ret = mapping_parse(e, json_entry, all);
+		if (ret)
+			return ret;
+
+		list_push(l, e);
+	}
 
 	return 0;
 }

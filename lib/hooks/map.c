@@ -30,9 +30,10 @@
 #include "utils.h"
 #include "path.h"
 #include "sample.h"
+#include "node.h"
 
 struct map {
-	struct mapping mapping;
+	struct list mapping;
 
 	struct stats *stats;
 };
@@ -41,14 +42,14 @@ static int map_init(struct hook *h)
 {
 	struct map *p = h->_vd;
 
-	return mapping_init(&p->mapping);
+	return list_init(&p->mapping);
 }
 
 static int map_destroy(struct hook *h)
 {
 	struct map *p = h->_vd;
 
-	return mapping_destroy(&p->mapping);
+	return list_destroy(&p->mapping, NULL, true);
 }
 
 static int map_parse(struct hook *h, json_t *cfg)
@@ -64,7 +65,7 @@ static int map_parse(struct hook *h, json_t *cfg)
 	if (ret)
 		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
 
-	ret = mapping_parse(&p->mapping, cfg_mapping, NULL);
+	ret = node_parse_mapping_list(&p->mapping, cfg_mapping, NULL);
 	if (ret)
 		return ret;
 

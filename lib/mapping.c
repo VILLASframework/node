@@ -94,7 +94,7 @@ int mapping_entry_parse_str(struct mapping_entry *e, const char *str, struct lis
 			goto invalid_format;
 	}
 	else if (!strcmp(type, "hdr")) {
-		e->type = MAPPING_TYPE_HEADER;
+		e->type = MAPPING_TYPE_HDR;
 		e->length = 1;
 
 		field = strtok(NULL, ".");
@@ -102,14 +102,14 @@ int mapping_entry_parse_str(struct mapping_entry *e, const char *str, struct lis
 			goto invalid_format;
 
 		if      (!strcmp(field, "sequence"))
-			e->header.id = MAPPING_HEADER_SEQUENCE;
+			e->hdr.id = MAPPING_HDR_SEQUENCE;
 		else if (!strcmp(field, "length"))
-			e->header.id = MAPPING_HEADER_LENGTH;
+			e->hdr.id = MAPPING_HDR_LENGTH;
 		else
 			goto invalid_format;
 	}
 	else if (!strcmp(type, "ts")) {
-		e->type = MAPPING_TYPE_TIMESTAMP;
+		e->type = MAPPING_TYPE_TS;
 		e->length = 2;
 
 		field = strtok(NULL, ".");
@@ -117,11 +117,11 @@ int mapping_entry_parse_str(struct mapping_entry *e, const char *str, struct lis
 			goto invalid_format;
 
 		if      (!strcmp(field, "origin"))
-			e->timestamp.id = MAPPING_TIMESTAMP_ORIGIN;
+			e->ts.id = MAPPING_TS_ORIGIN;
 		else if (!strcmp(field, "received"))
-			e->timestamp.id = MAPPING_TIMESTAMP_RECEIVED;
+			e->ts.id = MAPPING_TS_RECEIVED;
 		else if (!strcmp(field, "sent"))
-			e->timestamp.id = MAPPING_TIMESTAMP_SENT;
+			e->ts.id = MAPPING_TS_SEND;
 		else
 			goto invalid_format;
 	}
@@ -176,7 +176,7 @@ invalid_format:
 	return -1;
 }
 
-int mapping_entry_parse(struct mapping_entry *e, json_t *j, struct list *nodes)
+int mapping_parse(struct mapping_entry *e, json_t *j, struct list *nodes)
 {
 	const char *str;
 
@@ -187,70 +187,9 @@ int mapping_entry_parse(struct mapping_entry *e, json_t *j, struct list *nodes)
 	return mapping_entry_parse_str(e, str, nodes);
 }
 
-int mapping_init(struct mapping *m)
+int mapping_remap(struct list *m, struct sample *original, struct sample *remapped, struct stats *s)
 {
-	assert(m->state == STATE_DESTROYED);
-
-	list_init(&m->entries);
-
-	m->state = STATE_INITIALIZED;
-
-	return 0;
-}
-
-int mapping_destroy(struct mapping *m)
-{
-	assert(m->state != STATE_DESTROYED);
-
-	list_destroy(&m->entries, NULL, true);
-
-	m->state = STATE_DESTROYED;
-
-	return 0;
-}
-
-int mapping_parse(struct mapping *m, json_t *j, struct list *nodes)
-{
-	int ret;
-
-	assert(m->state == STATE_INITIALIZED);
-
-	json_t *json_entry;
-	json_t *json_mapping;
-
-	if (json_is_string(j)) {
-		json_mapping = json_array();
-		json_array_append(json_mapping, j);
-	}
-	else if (!json_is_array(j))
-		return -1;
-
-	m->real_length = 0;
-
-	size_t index;
-	json_array_foreach(j, index, json_entry) {
-		struct mapping_entry *e = alloc(sizeof(struct mapping_entry));
-
-		ret = mapping_entry_parse(e, json_entry, nodes);
-		if (ret)
-			return ret;
-
-		list_push(&m->entries, e);
-
-		m->real_length += e->length;
-	}
-
-	m->state = STATE_PARSED;
-
-	return 0;
-}
-
-int mapping_remap(struct mapping *m, struct sample *original, struct sample *remapped, struct stats *s)
-{
-	int k = 0;
-
-	if (remapped->capacity < m->real_length)
-		return -1;
+	int k = 0, length;
 
 	/* We copy all the header fields */
 	remapped->sequence = original->sequence;
@@ -260,14 +199,18 @@ int mapping_remap(struct mapping *m, struct sample *original, struct sample *rem
 	remapped->format   = 0;
 	remapped->length   = 0;
 
-	for (size_t i = 0; i < list_length(&m->entries); i++) {
-		struct mapping_entry *e = list_at(&m->entries, i);
+	for (size_t i = 0; i < list_length(m); i++) {
+		struct mapping_entry *mapping = list_at(m, i);
 
-		switch (e->type) {
+		length = mapping->length;
+		if (length + k > remapped->capacity)
+			break;
+
+		switch (mapping->type) {
 			case MAPPING_TYPE_STATS: {
-				struct hist *h = &s->histograms[e->stats.id];
+				struct hist *h = &s->histograms[mapping->stats.id];
 
-				switch (e->stats.type) {
+				switch (mapping->stats.type) {
 					case MAPPING_STATS_TYPE_TOTAL:
 						sample_set_data_format(remapped, k, SAMPLE_DATA_FORMAT_INT);
 						remapped->data[k++].f = h->total;
@@ -295,14 +238,14 @@ int mapping_remap(struct mapping *m, struct sample *original, struct sample *rem
 				}
 			}
 
-			case MAPPING_TYPE_TIMESTAMP: {
+			case MAPPING_TYPE_TS: {
 				struct timespec *ts;
 
-				switch (e->timestamp.id) {
-					case MAPPING_TIMESTAMP_RECEIVED:
+				switch (mapping->ts.id) {
+					case MAPPING_TS_RECEIVED:
 						ts = &original->ts.received;
 						break;
-					case MAPPING_TIMESTAMP_ORIGIN:
+					case MAPPING_TS_ORIGIN:
 						ts = &original->ts.origin;
 						break;
 					default:
@@ -318,38 +261,45 @@ int mapping_remap(struct mapping *m, struct sample *original, struct sample *rem
 				break;
 			}
 
-			case MAPPING_TYPE_HEADER:
+			case MAPPING_TYPE_HDR:
 				sample_set_data_format(remapped, k, SAMPLE_DATA_FORMAT_INT);
 
-				switch (e->header.id) {
-					case MAPPING_HEADER_LENGTH:
+				switch (mapping->hdr.id) {
+					case MAPPING_HDR_LENGTH:
 						remapped->data[k++].i = original->length;
 						break;
-					case MAPPING_HEADER_SEQUENCE:
+					case MAPPING_HDR_SEQUENCE:
 						remapped->data[k++].i = original->sequence;
 						break;
 					default:
 						return -1;
 				}
+
 				break;
 
 			case MAPPING_TYPE_DATA:
-				for (int j = e->data.offset; j < e->length + e->data.offset; j++) {
-					int f = sample_get_data_format(original, j);
-
+				/* mapping->length == 0 means that we want to take all values */
+				if (!length)
+					length = original->length;
+				
+				if (length + k > remapped->capacity)
+					length = remapped->capacity - k;
+			
+				for (int j = mapping->data.offset; j < length + mapping->data.offset; j++) {
 					if (j >= original->length) {
 						sample_set_data_format(remapped, k, SAMPLE_DATA_FORMAT_FLOAT);
 						remapped->data[k++].f = 0;
 					}
 					else {
-						sample_set_data_format(remapped, k, f);
+						sample_set_data_format(remapped, k, sample_get_data_format(original, j));
 						remapped->data[k++] = original->data[j];
 					}
 				}
+
 				break;
 		}
 
-		remapped->length += e->length;
+		remapped->length += length;
 	}
 
 	return 0;
