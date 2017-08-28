@@ -37,22 +37,24 @@
 #include "pool.h"
 #include "common.h"
 #include "hook.h"
+#include "mapping.h"
 
 /* Forward declarations */
 struct stats;
 struct node;
 struct super_node;
 
-struct path_source
-{
+struct path_source {
 	struct node *node;
 	struct pool pool;
+	
+	struct mapping_entry *mapping;
+	
 	int samplelen;
 	pthread_t tid;
 };
 
-struct path_destination
-{
+struct path_destination {
 	struct node *node;
 	struct queue queue;
 	int queuelen;
@@ -60,14 +62,11 @@ struct path_destination
 };
 
 /** The datastructure for a path. */
-struct path
-{
+struct path {
 	enum state state;		/**< Path state. */
 
-	/* Each path has a single source and multiple destinations */
-	struct path_source *source;	/**< Pointer to the incoming node */
+	struct list sources;		/**< List of all incoming nodes (struct path_source). */
 	struct list destinations;	/**< List of all outgoing nodes (struct path_destination). */
-
 	struct list hooks;		/**< List of function pointers to hooks. */
 
 	int enabled;			/**< Is this path enabled. */
