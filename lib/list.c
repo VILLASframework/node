@@ -47,7 +47,7 @@ static int cmp_sort(const void *a, const void *b, void *thunk) {
 	return cmp(*(void **) a, *(void **) b);
 }
 
-void list_init(struct list *l)
+int list_init(struct list *l)
 {
 	assert(l->state == STATE_DESTROYED);
 
@@ -58,6 +58,8 @@ void list_init(struct list *l)
 	l->array = NULL;
 
 	l->state = STATE_INITIALIZED;
+	
+	return 0;
 }
 
 int list_destroy(struct list *l, dtor_cb_t destructor, bool release)

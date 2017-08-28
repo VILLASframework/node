@@ -67,7 +67,7 @@ struct list {
  *
  * @param l A pointer to the list data structure.
  */
-void list_init(struct list *l);
+int list_init(struct list *l);
 
 /** Destroy a list and call destructors for all list elements
  *
