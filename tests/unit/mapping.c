@@ -42,27 +42,27 @@ Test(mapping, parse_nodes)
 	list_push(&n, &n2);
 	list_push(&n, &n3);
 	
-	ret = mapping_entry_parse_str(&m, "apple.ts.origin", &n);
+	ret = mapping_parse_str(&m, "apple.ts.origin", &n);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, &n1);
-	cr_assert_eq(m.type, MAPPING_TYPE_TIMESTAMP);
-	cr_assert_eq(m.timestamp.id, MAPPING_TIMESTAMP_ORIGIN);
+	cr_assert_eq(m.type, MAPPING_TYPE_TS);
+	cr_assert_eq(m.ts.id, MAPPING_TS_ORIGIN);
 
-	ret = mapping_entry_parse_str(&m, "cherry.stats.owd.mean", &n);
+	ret = mapping_parse_str(&m, "cherry.stats.owd.mean", &n);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, &n2);
 	cr_assert_eq(m.type, MAPPING_TYPE_STATS);
 	cr_assert_eq(m.stats.id, STATS_OWD);
 	cr_assert_eq(m.stats.type, MAPPING_STATS_TYPE_MEAN);
 
-	ret = mapping_entry_parse_str(&m, "carrot.data[1-2]", &n);
+	ret = mapping_parse_str(&m, "carrot.data[1-2]", &n);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, &n3);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 1);
 	cr_assert_eq(m.length, 2);
 	
-	ret = mapping_entry_parse_str(&m, "carrot", &n);
+	ret = mapping_parse_str(&m, "carrot", &n);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, &n3);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
@@ -78,74 +78,74 @@ Test(mapping, parse)
 	int ret;
 	struct mapping_entry m;
 
-	ret = mapping_entry_parse_str(&m, "ts.origin", NULL);
+	ret = mapping_parse_str(&m, "ts.origin", NULL);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.type, MAPPING_TYPE_TIMESTAMP);
-	cr_assert_eq(m.timestamp.id, MAPPING_TIMESTAMP_ORIGIN);
+	cr_assert_eq(m.type, MAPPING_TYPE_TS);
+	cr_assert_eq(m.ts.id, MAPPING_TS_ORIGIN);
 
-	ret = mapping_entry_parse_str(&m, "hdr.sequence", NULL);
+	ret = mapping_parse_str(&m, "hdr.sequence", NULL);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.type, MAPPING_TYPE_HEADER);
-	cr_assert_eq(m.header.id, MAPPING_HEADER_SEQUENCE);
+	cr_assert_eq(m.type, MAPPING_TYPE_HDR);
+	cr_assert_eq(m.hdr.id, MAPPING_HDR_SEQUENCE);
 
-	ret = mapping_entry_parse_str(&m, "stats.owd.mean", NULL);
+	ret = mapping_parse_str(&m, "stats.owd.mean", NULL);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_STATS);
 	cr_assert_eq(m.stats.id, STATS_OWD);
 	cr_assert_eq(m.stats.type, MAPPING_STATS_TYPE_MEAN);
 
-	ret = mapping_entry_parse_str(&m, "data[1-2]", NULL);
+	ret = mapping_parse_str(&m, "data[1-2]", NULL);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 1);
 	cr_assert_eq(m.length, 2);
 
-	ret = mapping_entry_parse_str(&m, "data[5-5]", NULL);
+	ret = mapping_parse_str(&m, "data[5-5]", NULL);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 5);
 	cr_assert_eq(m.length, 1);
 
-	ret = mapping_entry_parse_str(&m, "data[22]", NULL);
+	ret = mapping_parse_str(&m, "data[22]", NULL);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 22);
 	cr_assert_eq(m.length, 1);
 	
-	ret = mapping_entry_parse_str(&m, "data", NULL);
+	ret = mapping_parse_str(&m, "data", NULL);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 0);
 	cr_assert_eq(m.length, 0);
 	
-	ret = mapping_entry_parse_str(&m, "data[]", NULL);
+	ret = mapping_parse_str(&m, "data[]", NULL);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 0);
 	cr_assert_eq(m.length, 0);
 
-	ret = mapping_entry_parse_str(&m, "data[1.1-2f]", NULL);
+	ret = mapping_parse_str(&m, "data[1.1-2f]", NULL);
 	cr_assert_neq(ret, 0);
 
 	/* Missing parts */
-	ret = mapping_entry_parse_str(&m, "stats.owd", NULL);
+	ret = mapping_parse_str(&m, "stats.owd", NULL);
 	cr_assert_neq(ret, 0);
 
 	/* This a type */
-	ret = mapping_entry_parse_str(&m, "hdr.sequences", NULL);
+	ret = mapping_parse_str(&m, "hdr.sequences", NULL);
 	cr_assert_neq(ret, 0);
 
 	/* Check for superfluous chars at the end */
-	ret = mapping_entry_parse_str(&m, "stats.ts.origin.bla", NULL);
+	ret = mapping_parse_str(&m, "stats.ts.origin.bla", NULL);
 	cr_assert_neq(ret, 0);
 
-	ret = mapping_entry_parse_str(&m, "stats.ts.origin.", NULL);
+	ret = mapping_parse_str(&m, "stats.ts.origin.", NULL);
 	cr_assert_neq(ret, 0);
 
-	ret = mapping_entry_parse_str(&m, "data[1-2]bla", NULL);
+	ret = mapping_parse_str(&m, "data[1-2]bla", NULL);
 	cr_assert_neq(ret, 0);
 
 	/* Negative length of chunk */
-	ret = mapping_entry_parse_str(&m, "data[5-3]", NULL);
+	ret = mapping_parse_str(&m, "data[5-3]", NULL);
 	cr_assert_eq(ret, -1);
 }

@@ -28,7 +28,7 @@
 #include "list.h"
 #include "utils.h"
 
-int mapping_entry_parse_str(struct mapping_entry *e, const char *str, struct list *nodes)
+int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nodes)
 {
 	int id;
 	char *cpy, *node, *type, *field, *subfield, *end;
@@ -184,7 +184,7 @@ int mapping_parse(struct mapping_entry *e, json_t *j, struct list *nodes)
 	if (!str)
 		return -1;
 
-	return mapping_entry_parse_str(e, str, nodes);
+	return mapping_parse_str(e, str, nodes);
 }
 
 int mapping_remap(struct list *m, struct sample *original, struct sample *remapped, struct stats *s)
