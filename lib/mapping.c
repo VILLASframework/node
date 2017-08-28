@@ -28,18 +28,35 @@
 #include "list.h"
 #include "utils.h"
 
-int mapping_entry_parse_str(struct mapping_entry *e, const char *str)
+int mapping_entry_parse_str(struct mapping_entry *e, const char *str, struct list *nodes)
 {
 	int id;
-	char *cpy, *type, *field, *subfield, *end;
+	char *cpy, *node, *type, *field, *subfield, *end;
 
 	cpy = strdup(str);
 	if (!cpy)
 		return -1;
-
-	type = strtok(cpy, ".[");
-	if (!type)
-		goto invalid_format;
+	
+	if (nodes) {
+		node = strtok(cpy, ".");
+		if (!node)
+			goto invalid_format;
+		
+		e->node = list_lookup(nodes, node);
+		if (!e->node)
+			goto invalid_format;
+		
+		type = strtok(NULL, ".[");
+		if (!type)
+			type = "data";
+	}
+	else {
+		e->node = NULL;
+	
+		type = strtok(cpy, ".[");
+		if (!type)
+			goto invalid_format;
+	}
 
 	if      (!strcmp(type, "stats")) {
 		e->type = MAPPING_TYPE_STATS;
@@ -51,10 +68,6 @@ int mapping_entry_parse_str(struct mapping_entry *e, const char *str)
 
 		subfield = strtok(NULL, ".");
 		if (!subfield)
-			goto invalid_format;
-
-		end = strtok(NULL, ".");
-		if (end)
 			goto invalid_format;
 
 		id = stats_lookup_id(field);
@@ -88,10 +101,6 @@ int mapping_entry_parse_str(struct mapping_entry *e, const char *str)
 		if (!field)
 			goto invalid_format;
 
-		end = strtok(NULL, ".");
-		if (end)
-			goto invalid_format;
-
 		if      (!strcmp(field, "sequence"))
 			e->header.id = MAPPING_HEADER_SEQUENCE;
 		else if (!strcmp(field, "length"))
@@ -107,70 +116,75 @@ int mapping_entry_parse_str(struct mapping_entry *e, const char *str)
 		if (!field)
 			goto invalid_format;
 
-		end = strtok(NULL, ".");
-		if (end)
-			goto invalid_format;
-
 		if      (!strcmp(field, "origin"))
 			e->timestamp.id = MAPPING_TIMESTAMP_ORIGIN;
 		else if (!strcmp(field, "received"))
 			e->timestamp.id = MAPPING_TIMESTAMP_RECEIVED;
+		else if (!strcmp(field, "sent"))
+			e->timestamp.id = MAPPING_TIMESTAMP_SENT;
 		else
 			goto invalid_format;
 	}
 	else if (!strcmp(type, "data")) {
 		char *first_str, *last_str, *endptr;
-		int first, last;
 
 		e->type = MAPPING_TYPE_DATA;
 
 		first_str = strtok(NULL, "-]");
-		if (!first_str)
-			goto invalid_format;
+		if (first_str) {
+			int first, last;
 
-		last_str = strtok(NULL, "]");
-		if (!last_str)
-			last_str = first_str; /* single element: data[5] => data[5-5] */
+			last_str = strtok(NULL, "]");
+			if (!last_str)
+				last_str = first_str; /* single element: data[5] => data[5-5] */
 
-		end = strtok(NULL, ".");
-		if (end)
-			goto invalid_format;
+			first = strtoul(first_str, &endptr, 10);
+			if (endptr != first_str + strlen(first_str))
+				goto invalid_format;
 
-		first = strtoul(first_str, &endptr, 10);
-		if (endptr != first_str + strlen(first_str))
-			goto invalid_format;
+			last = strtoul(last_str, &endptr, 10);
+			if (endptr != last_str + strlen(last_str))
+				goto invalid_format;
 
-		last = strtoul(last_str, &endptr, 10);
-		if (endptr != last_str + strlen(last_str))
-			goto invalid_format;
+			if (last < first)
+				goto invalid_format;
 
-		if (last < first)
-			goto invalid_format;
-
-		e->data.offset = first;
-		e->length = last - first + 1;
+			e->data.offset = first;
+			e->length = last - first + 1;
+		}
+		else {
+			e->data.offset = 0;
+			e->length = 0; /* Length in unkown.. we will take all values */
+		}
 	}
 	else
 		goto invalid_format;
 
+	/* Check that there is no garbage at the end */
+	end = strtok(NULL, "");
+	if (end)
+		goto invalid_format;
+
 	free(cpy);
+
 	return 0;
 
 invalid_format:
 
 	free(cpy);
+
 	return -1;
 }
 
-int mapping_entry_parse(struct mapping_entry *e, json_t *cfg)
+int mapping_entry_parse(struct mapping_entry *e, json_t *j, struct list *nodes)
 {
 	const char *str;
 
-	str = json_string_value(cfg);
+	str = json_string_value(j);
 	if (!str)
 		return -1;
 
-	return mapping_entry_parse_str(e, str);
+	return mapping_entry_parse_str(e, str, nodes);
 }
 
 int mapping_init(struct mapping *m)
@@ -195,23 +209,29 @@ int mapping_destroy(struct mapping *m)
 	return 0;
 }
 
-int mapping_parse(struct mapping *m, json_t *cfg)
+int mapping_parse(struct mapping *m, json_t *j, struct list *nodes)
 {
 	int ret;
 
 	assert(m->state == STATE_INITIALIZED);
 
-	if (!json_is_array(cfg))
+	json_t *json_entry;
+	json_t *json_mapping;
+
+	if (json_is_string(j)) {
+		json_mapping = json_array();
+		json_array_append(json_mapping, j);
+	}
+	else if (!json_is_array(j))
 		return -1;
 
 	m->real_length = 0;
 
 	size_t index;
-	json_t *cfg_entry;
-	json_array_foreach(cfg, index, cfg_entry) {
+	json_array_foreach(j, index, json_entry) {
 		struct mapping_entry *e = alloc(sizeof(struct mapping_entry));
 
-		ret = mapping_entry_parse(e, cfg_entry);
+		ret = mapping_entry_parse(e, json_entry, nodes);
 		if (ret)
 			return ret;
 
