@@ -146,6 +146,9 @@ struct node_type {
 	 * @param n	A pointer to the node object.
 	 */
 	int (*reverse)(struct node *n);
+	
+	/** Return a file descriptor which can be used by poll / select to detect the availability of new data. */
+	int (*fd)(struct node *n);
 };
 
 /** Initialize all registered node type subsystems.

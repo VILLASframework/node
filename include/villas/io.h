@@ -86,6 +86,7 @@ void io_rewind(struct io *io);
 
 int io_flush(struct io *io);
 
+int io_fd(struct io *io);
 
 int io_stream_open(struct io *io, const char *uri);
 
@@ -94,5 +95,7 @@ int io_stream_close(struct io *io);
 int io_stream_eof(struct io *io);
 
 void io_stream_rewind(struct io *io);
+
+int io_stream_fd(struct io *io);
 
 int io_stream_flush(struct io *io);

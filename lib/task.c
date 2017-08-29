@@ -115,7 +115,6 @@ uint64_t task_wait_until_next_period(struct task *t)
 	return runs;
 }
 
-
 int task_wait_until(struct task *t, const struct timespec *until)
 {
 	int ret;
@@ -154,4 +153,13 @@ retry:	ret = clock_nanosleep(t->clock, TIMER_ABSTIME, until, NULL);
 #endif
 	
 	return 0;
+}
+
+int task_fd(struct task *t)
+{
+#if PERIODIC_TASK_IMPL == TIMERFD
+	return t->fd;
+#else
+	return -1;
+#endif
 }

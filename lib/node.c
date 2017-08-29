@@ -288,6 +288,11 @@ int node_reverse(struct node *n)
 	return n->_vt->reverse ? n->_vt->reverse(n) : -1;
 }
 
+int node_fd(struct node *n)
+{
+	return n->_vt->fd ? n->_vt->fd(n) : -1;
+}
+
 int node_parse_list(struct list *list, json_t *cfg, struct list *all)
 {
 	struct node *node;

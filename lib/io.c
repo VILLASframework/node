@@ -177,6 +177,19 @@ void io_stream_rewind(struct io *io)
 	}
 }
 
+int io_stream_fd(struct io *io)
+{
+	switch (io->mode) {
+		case IO_MODE_ADVIO:
+			return afileno(io->advio.input);
+		case IO_MODE_STDIO:
+			return fileno(io->stdio.input);
+		case IO_MODE_CUSTOM:
+			return -1;
+	}
+}
+
+
 int io_open(struct io *io, const char *uri)
 {
 	return io->_vt->open
@@ -210,6 +223,13 @@ void io_rewind(struct io *io)
 	io->_vt->rewind
 		? io->_vt->rewind(io)
 		: io_stream_rewind(io);
+}
+
+int io_fd(struct io *io)
+{
+	return io->_vt->fd
+		? io->_vt->fd(io)
+		: io_stream_fd(io);
 }
 
 int io_print(struct io *io, struct sample *smps[], unsigned cnt)

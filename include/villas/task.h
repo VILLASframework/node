@@ -69,3 +69,5 @@ uint64_t task_wait_until_next_period(struct task *t);
  * @param until A pointer to a time in the future.
  */
 int task_wait_until(struct task *t, const struct timespec *until);
+
+int task_fd(struct task *t);

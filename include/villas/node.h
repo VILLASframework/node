@@ -125,6 +125,8 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 int node_write(struct node *n, struct sample *smps[], unsigned cnt);
 
+int node_fd(struct node *n);
+
 /** Parse an array or single node and checks if they exist in the "nodes" section.
  *
  * Examples:

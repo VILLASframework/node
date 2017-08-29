@@ -70,6 +70,9 @@ struct io_format {
 	 * @see rewind()
 	 */
 	void (*rewind)(struct io *io);
+	
+	/** Get a file descriptor which can be used with select / poll */
+	int (*fd)(struct io *io);
 
 	/** Flush buffered data to disk.
 	 *
