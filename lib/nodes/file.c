@@ -339,6 +339,20 @@ int file_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return cnt;
 }
 
+int file_fd(struct node *n)
+{
+	struct file *f = n->_vd;
+	
+	if (f->rate)
+		return task_fd(&f->task);
+	else {
+		if (f->epoch_mode == FILE_EPOCH_ORIGINAL)
+			return io_fd(&f->io);
+		else
+			return -1; /** @todo not supported yet */
+	}
+}
+
 static struct plugin p = {
 	.name		= "file",
 	.description	= "support for file log / replay node type",
@@ -351,7 +365,8 @@ static struct plugin p = {
 		.start		= file_start,
 		.stop		= file_stop,
 		.read		= file_read,
-		.write		= file_write
+		.write		= file_write,
+		.fd		= file_fd
 	}
 };
 

@@ -703,6 +703,13 @@ int socket_compare_addr(struct sockaddr *x, struct sockaddr *y)
 #undef CMP
 }
 
+int socket_fd(struct node *n)
+{
+	struct socket *s = n->_vd;
+
+	return s->sd;
+}
+
 static struct plugin p = {
 	.name		= "socket",
 	.description	= "BSD network sockets for Ethernet / IP / UDP (libnl3)",
@@ -719,7 +726,8 @@ static struct plugin p = {
 		.read		= socket_read,
 		.write		= socket_write,
 		.init		= socket_init,
-		.deinit		= socket_deinit
+		.deinit		= socket_deinit,
+		.fd		= socket_fd
 	}
 };
 

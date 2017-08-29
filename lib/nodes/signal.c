@@ -265,7 +265,14 @@ char * signal_print(struct node *n)
 		strcatf(&buf, ", limit=%d", s->limit);
 
 	return buf;
-};
+}
+
+int signal_fd(struct node *n)
+{
+	struct signal *s = n->_vd;
+	
+	return task_fd(&s->task);
+}
 
 static struct plugin p = {
 	.name = "signal",
@@ -280,6 +287,7 @@ static struct plugin p = {
 		.start = signal_open,
 		.stop  = signal_close,
 		.read  = signal_read,
+		.fd    = signal_fd
 	}
 };
 

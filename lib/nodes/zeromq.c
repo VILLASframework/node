@@ -488,6 +488,21 @@ fail:
 	return ret;
 }
 
+int zeromq_fd(struct node *n)
+{
+	int ret;
+	struct zeromq *z = n->_vd;
+	
+	int fd;
+	size_t len = sizeof(fd);
+	
+	ret = zmq_getsockopt(z->subscriber.socket, ZMQ_FD, &fd, &len);
+	if (ret)
+		return ret;
+
+	return fd;
+}
+
 static struct plugin p = {
 	.name		= "zeromq",
 	.description	= "ZeroMQ Distributed Messaging (libzmq)",
@@ -503,7 +518,8 @@ static struct plugin p = {
 		.init		= zeromq_init,
 		.deinit		= zeromq_deinit,
 		.read		= zeromq_read,
-		.write		= zeromq_write
+		.write		= zeromq_write,
+		.fd		= zeromq_fd
 	}
 };
 

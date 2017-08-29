@@ -187,6 +187,8 @@ int io_stream_fd(struct io *io)
 		case IO_MODE_CUSTOM:
 			return -1;
 	}
+	
+	return -1;
 }
 
 

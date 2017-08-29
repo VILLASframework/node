@@ -246,6 +246,21 @@ int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return cnt;
 }
 
+int nanomsg_fd(struct node *n)
+{
+	int ret;
+	struct nanomsg *m = n->_vd;
+	
+	int fd;
+	size_t len = sizeof(fd);
+
+	ret = nn_getsockopt(m->subscriber.socket, NN_SOL_SOCKET, NN_RCVFD, &fd, &len);
+	if (ret)
+		return ret;
+	
+	return fd;
+}
+
 static struct plugin p = {
 	.name		= "nanomsg",
 	.description	= "scalability protocols library (libnanomsg)",
@@ -260,7 +275,8 @@ static struct plugin p = {
 		.stop		= nanomsg_stop,
 		.deinit		= nanomsg_deinit,
 		.read		= nanomsg_read,
-		.write		= nanomsg_write
+		.write		= nanomsg_write,
+		.fd		= nanomsg_fd
 	}
 };
 

@@ -573,6 +573,13 @@ int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return ret ? 0 : cnt;
 }
 
+int ngsi_fd(struct node *n)
+{
+	struct ngsi *i = n->_vd;
+	
+	return task_fd(&i->task);
+}
+
 static struct plugin p = {
 	.name		= "ngsi",
 	.description	= "OMA Next Generation Services Interface 10 (libcurl, libjansson)",
@@ -587,7 +594,8 @@ static struct plugin p = {
 		.read		= ngsi_read,
 		.write		= ngsi_write,
 		.init		= ngsi_init,
-		.deinit		= ngsi_deinit
+		.deinit		= ngsi_deinit,
+		.fd		= ngsi_fd
 	}
 };
 

@@ -235,6 +235,13 @@ int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt)
 	return i;
 }
 
+int test_rtt_fd(struct node *n)
+{
+	struct test_rtt *t = n->_vd;
+	
+	return task_fd(&t->task);
+}
+
 static struct plugin p = {
 	.name		= "test_rtt",
 	.description	= "Test round-trip time with loopback",
@@ -247,7 +254,8 @@ static struct plugin p = {
 		.start		= test_rtt_start,
 		.stop		= test_rtt_stop,
 		.read		= test_rtt_read,
-		.write		= test_rtt_write
+		.write		= test_rtt_write,
+		.fd		= test_rtt_fd
 	}
 };
 
