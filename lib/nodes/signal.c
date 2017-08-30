@@ -63,8 +63,9 @@ int signal_parse(struct node *n, json_t *cfg)
 	s->frequency = 1;
 	s->amplitude = 1;
 	s->stddev = 0.2;
+	s->offset = 0;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: f, s?: f, s?: f, s?: f }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: f, s?: f, s?: f, s?: f, s?: f }",
 		"signal", &type,
 		"realtime", &s->rt,
 		"limit", &s->limit,
@@ -72,7 +73,8 @@ int signal_parse(struct node *n, json_t *cfg)
 		"rate", &s->rate,
 		"frequency", &s->frequency,
 		"amplitude", &s->amplitude,
-		"stddev", &s->stddev
+		"stddev", &s->stddev,
+		"offset", &s->offset
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
@@ -107,10 +109,11 @@ int signal_parse_cli(struct node *n, int argc, char *argv[])
 	s->rt = 1;
 	s->values = 1;
 	s->limit = -1;
+	s->offset = 0;
 
 	/* Parse optional command line arguments */
 	char c, *endptr;
-	while ((c = getopt(argc, argv, "v:r:f:l:a:D:n")) != -1) {
+	while ((c = getopt(argc, argv, "v:r:f:l:a:D:n:o")) != -1) {
 		switch (c) {
 			case 'n':
 				s->rt = 0;
@@ -123,6 +126,9 @@ int signal_parse_cli(struct node *n, int argc, char *argv[])
 				goto check;
 			case 'r':
 				s->rate = strtof(optarg, &endptr);
+				goto check;
+			case 'o':
+				s->offset = strtof(optarg, &endptr);
 				goto check;
 			case 'f':
 				s->frequency = strtof(optarg, &endptr);
@@ -164,6 +170,10 @@ int signal_open(struct node *n)
 
 	s->counter = 0;
 	s->started = time_now();
+	s->last = alloc(sizeof(double) * s->values);
+	
+	for (int i = 0; i < s->values; i++)
+		s->last[i] = s->offset;
 
 	/* Setup task */
 	if (s->rt) {
@@ -185,6 +195,8 @@ int signal_close(struct node *n)
 		if (ret)
 			return ret;
 	}
+	
+	free(s->last);
 	
 	return 0;
 }
@@ -224,14 +236,17 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 	t->length = s->values;
 
 	for (int i = 0; i < MIN(s->values, t->capacity); i++) {
-		int rtype = (s->type != SIGNAL_TYPE_MIXED) ? s->type : i % 4;
+		int rtype = (s->type != SIGNAL_TYPE_MIXED) ? s->type : i % 5;
 		switch (rtype) {
-			case SIGNAL_TYPE_CONSTANT: t->data[i].f = s->amplitude;                                                           break;
-			case SIGNAL_TYPE_RANDOM:   t->data[i].f += box_muller(0, s->stddev);                                              break;
-			case SIGNAL_TYPE_SINE:	   t->data[i].f = s->amplitude *        sin(running * s->frequency * 2 * M_PI);           break;
-			case SIGNAL_TYPE_TRIANGLE: t->data[i].f = s->amplitude * (fabs(fmod(running * s->frequency, 1) - .5) - 0.25) * 4; break;
-			case SIGNAL_TYPE_SQUARE:   t->data[i].f = s->amplitude * (    (fmod(running * s->frequency, 1) < .5) ? -1 : 1);   break;
-			case SIGNAL_TYPE_RAMP:     t->data[i].f = fmod(s->counter, s->rate / s->frequency); /** @todo send as integer? */ break;
+			case SIGNAL_TYPE_CONSTANT: t->data[i].f = s->offset + s->amplitude;                                                           break;
+			case SIGNAL_TYPE_SINE:	   t->data[i].f = s->offset + s->amplitude *        sin(running * s->frequency * 2 * M_PI);           break;
+			case SIGNAL_TYPE_TRIANGLE: t->data[i].f = s->offset + s->amplitude * (fabs(fmod(running * s->frequency, 1) - .5) - 0.25) * 4; break;
+			case SIGNAL_TYPE_SQUARE:   t->data[i].f = s->offset + s->amplitude * (    (fmod(running * s->frequency, 1) < .5) ? -1 : 1);   break;
+			case SIGNAL_TYPE_RAMP:     t->data[i].f = s->offset + fmod(s->counter, s->rate / s->frequency); /** @todo send as integer? */ break;
+			case SIGNAL_TYPE_RANDOM:
+				s->last[i] += box_muller(0, s->stddev);
+				t->data[i].f = s->last[i];
+				break;
 		}
 	}
 
@@ -262,8 +277,8 @@ char * signal_print(struct node *n)
 		default: return NULL;
 	}
 
-	strcatf(&buf, "signal=%s, rate=%.2f, values=%d, frequency=%.2f, amplitude=%.2f, stddev=%.2f",
-		type, s->rate, s->values, s->frequency, s->amplitude, s->stddev);
+	strcatf(&buf, "signal=%s, rt=%s, rate=%.2f, values=%d, frequency=%.2f, amplitude=%.2f, stddev=%.2f, offset=%.2f",
+		type, s->rt ? "yes" : "no", s->rate, s->values, s->frequency, s->amplitude, s->stddev, s->offset);
 
 	if (s->limit > 0)
 		strcatf(&buf, ", limit=%d", s->limit);

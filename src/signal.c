@@ -63,6 +63,7 @@ void usage()
 	printf("    -F HZ   the frequency of the signal\n");
 	printf("    -a FLT  the amplitude\n");
 	printf("    -D FLT  the standard deviation for 'random' signals\n");
+	printf("    -o OFF  the DC bias\n");
 	printf("    -l NUM  only send LIMIT messages and stop\n\n");
 
 	print_copyright();
