@@ -48,32 +48,40 @@ struct path_source {
 	struct node *node;
 	struct pool pool;
 	
-	struct mapping_entry *mapping;
-	
-	int samplelen;
-	pthread_t tid;
+	struct list hooks;		/**< Read Hooks. */
+	struct list mappings;		/**< List of struct mapping_entry */
 };
 
 struct path_destination {
 	struct node *node;
 	struct queue queue;
 	int queuelen;
-	pthread_t tid;
+
+	struct list hooks;		/**< Write Hooks. */
 };
 
 /** The datastructure for a path. */
 struct path {
 	enum state state;		/**< Path state. */
+	
+	struct {
+		int nfds;
+		struct pollfd *pfds;
+	} reader;
+	
+	struct pool pool;
+	struct sample *last_sample;
 
 	struct list sources;		/**< List of all incoming nodes (struct path_source). */
 	struct list destinations;	/**< List of all outgoing nodes (struct path_destination). */
-	struct list hooks;		/**< List of function pointers to hooks. */
+	struct list hooks;		/**< Processing hooks. */
 
 	int enabled;			/**< Is this path enabled. */
 	int reverse;			/**< This path as a matching reverse path. */
 
 	int samplelen;
 	int queuelen;
+	int sequence;
 
 	pthread_t tid;			/**< The thread id for this path. */
 
