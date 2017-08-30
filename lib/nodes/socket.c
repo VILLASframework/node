@@ -24,6 +24,7 @@
 #include <sys/socket.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 #if defined(__linux__)
   #include <netinet/ether.h>
@@ -370,8 +371,12 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	/* Send message */
 	bytes = sendto(s->sd, data, wbytes, 0, (struct sockaddr *) &s->remote, sizeof(s->remote));
-	if (bytes < 0)
-		serror("Failed send to node %s", node_name(n));
+	if (bytes < 0) {
+		if (errno == EPERM)
+			warn("Failed send to node %s: %s", node_name(n), strerror(errno));
+		else
+			serror("Failed send to node %s", node_name(n));
+	}
 
 	if (bytes != wbytes)
 		warn("Partial send to node %s", node_name(n));
