@@ -90,20 +90,20 @@ for TEST in ${TESTS}; do
 
 	case $RC in
 		0)
-			echo -e "\e[32m[Pass] \e[39m ${TESTNAME}"
+			echo -e "\e[32m[PASS] \e[39m ${TESTNAME}"
 			PASSED=$((${PASSED} + 1))
 			;;
 		99)
-			echo -e "\e[93m[Skip] \e[39m ${TESTNAME}"
+			echo -e "\e[93m[SKIP] \e[39m ${TESTNAME}"
 			SKIPPED=$((${SKIPPED} + 1))
 			;;
 		124)
-			echo -e "\e[33m[Time] \e[39m ${TESTNAME}"
+			echo -e "\e[33m[TIME] \e[39m ${TESTNAME}"
 			TIMEDOUT=$((${TIMEDOUT} + 1))
 			FAILED=$((${FAILED} + 1))
 			;;
 		*)
-			echo -e "\e[31m[Fail] \e[39m ${TESTNAME} with code $RC"
+			echo -e "\e[31m[FAIL] \e[39m ${TESTNAME} with code $RC"
 			FAILED=$((${FAILED} + 1))
 			;;
 	esac
