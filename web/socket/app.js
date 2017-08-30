@@ -76,7 +76,7 @@ $(document).ready(function() {
 
 	$('#updaterate').slider({
 		min : 1,
-		max : 50,
+		max : 100,
 		value : updateRate,
 		slide : function(e, ui) {
 			clearInterval(timer);
