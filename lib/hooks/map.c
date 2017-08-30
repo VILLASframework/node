@@ -86,7 +86,10 @@ static int map_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 		return ret;
 
 	for (int i = 0; i < *cnt; i++) {
-		mapping_remap(&p->mapping, smps[i], tmp[i], NULL);
+		tmp[i]->format   = 0;
+		tmp[i]->length   = 0;
+
+		mapping_remap(&p->mapping, tmp[i], smps[i], NULL);
 
 		SWAP(smps[i], tmp[i]);
 	}

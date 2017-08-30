@@ -350,8 +350,9 @@ invalid2:
 
 int node_parse_mapping_list(struct list *l, json_t *cfg, struct list *all)
 {
-	int ret;
+	int ret, off, len;
 
+	size_t i;
 	json_t *json_entry;
 	json_t *json_mapping;
 
@@ -364,13 +365,21 @@ int node_parse_mapping_list(struct list *l, json_t *cfg, struct list *all)
 	else
 		return -1;
 
-	size_t i;
+	off = 0;
+	len = json_array_size(json_mapping);
 	json_array_foreach(json_mapping, i, json_entry) {
 		struct mapping_entry *e = alloc(sizeof(struct mapping_entry));
 
 		ret = mapping_parse(e, json_entry, all);
 		if (ret)
 			return ret;
+		
+		/* Variable length mapping entries are currently only supported as the last element in a mapping */
+		if (e->length == 0 && i != len - 1)
+			return -1;
+		
+		e->offset = off;
+		off += e->length;
 
 		list_push(l, e);
 	}

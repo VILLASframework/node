@@ -191,119 +191,132 @@ int mapping_parse(struct mapping_entry *e, json_t *j, struct list *nodes)
 	return mapping_parse_str(e, str, nodes);
 }
 
-int mapping_remap(struct list *m, struct sample *original, struct sample *remapped, struct stats *s)
+int mapping_update(struct mapping_entry *me, struct sample *remapped, struct sample *original, struct stats *s)
 {
-	int k = 0, length;
+	int len = me->length;
+	int off = me->offset;
+	
+	/* me->length == 0 means that we want to take all values */
+	if (!len)
+		len = original->length;
+	
+	if (len + off > remapped->capacity)
+		return -1;
+	
+	if (len + off > remapped->length)
+		remapped->length = len + off;
+
+	switch (me->type) {
+		case MAPPING_TYPE_STATS: {
+			struct hist *h = &s->histograms[me->stats.id];
+
+			switch (me->stats.type) {
+				case MAPPING_STATS_TYPE_TOTAL:
+					sample_set_data_format(remapped, off, SAMPLE_DATA_FORMAT_INT);
+					remapped->data[off++].f = h->total;
+					break;
+				case MAPPING_STATS_TYPE_LAST:
+					remapped->data[off++].f = h->last;
+					break;
+				case MAPPING_STATS_TYPE_HIGHEST:
+					remapped->data[off++].f = h->highest;
+					break;
+				case MAPPING_STATS_TYPE_LOWEST:
+					remapped->data[off++].f = h->lowest;
+					break;
+				case MAPPING_STATS_TYPE_MEAN:
+					remapped->data[off++].f = hist_mean(h);
+					break;
+				case MAPPING_STATS_TYPE_STDDEV:
+					remapped->data[off++].f = hist_stddev(h);
+					break;
+				case MAPPING_STATS_TYPE_VAR:
+					remapped->data[off++].f = hist_var(h);
+					break;
+				default:
+					return -1;
+			}
+		}
+
+		case MAPPING_TYPE_TS: {
+			struct timespec *ts;
+
+			switch (me->ts.id) {
+				case MAPPING_TS_RECEIVED:
+					ts = &original->ts.received;
+					break;
+				case MAPPING_TS_ORIGIN:
+					ts = &original->ts.origin;
+					break;
+				default:
+					return -1;
+			}
+
+			sample_set_data_format(remapped, off,   SAMPLE_DATA_FORMAT_INT);
+			sample_set_data_format(remapped, off+1, SAMPLE_DATA_FORMAT_INT);
+
+			remapped->data[off++].i = ts->tv_sec;
+			remapped->data[off++].i = ts->tv_nsec;
+
+			break;
+		}
+
+		case MAPPING_TYPE_HDR:
+			sample_set_data_format(remapped, off, SAMPLE_DATA_FORMAT_INT);
+
+			switch (me->hdr.id) {
+				case MAPPING_HDR_LENGTH:
+					remapped->data[off++].i = original->length;
+					break;
+				case MAPPING_HDR_SEQUENCE:
+					remapped->data[off++].i = original->sequence;
+					break;
+				case MAPPING_HDR_ID:
+					remapped->data[off++].i = original->id;
+					break;
+				case MAPPING_HDR_FORMAT:
+					remapped->data[off++].i = original->format;
+					break;
+				default:
+					return -1;
+			}
+
+			break;
+
+		case MAPPING_TYPE_DATA:
+			for (int j = me->data.offset; j < len + me->data.offset; j++) {
+				if (j >= original->length) {
+					sample_set_data_format(remapped, off, SAMPLE_DATA_FORMAT_FLOAT);
+					remapped->data[off++].f = 0;
+				}
+				else {
+					sample_set_data_format(remapped, off, sample_get_data_format(original, j));
+					remapped->data[off++] = original->data[j];
+				}
+			}
+
+			break;
+	}
+	
+	return 0;
+}
+
+int mapping_remap(struct list *m, struct sample *remapped, struct sample *original, struct stats *s)
+{
+	int ret;
 
 	/* We copy all the header fields */
 	remapped->sequence = original->sequence;
-	remapped->pool_off = (char *) original + original->pool_off - (char *) remapped;
+	remapped->pool_off = (char *) sample_pool(original) - (char *) remapped;
 	remapped->source   = original->source;
 	remapped->ts       = original->ts;
-	remapped->format   = 0;
-	remapped->length   = 0;
 
 	for (size_t i = 0; i < list_length(m); i++) {
-		struct mapping_entry *mapping = list_at(m, i);
+		struct mapping_entry *me = list_at(m, i);
 
-		length = mapping->length;
-		if (length + k > remapped->capacity)
-			break;
-
-		switch (mapping->type) {
-			case MAPPING_TYPE_STATS: {
-				struct hist *h = &s->histograms[mapping->stats.id];
-
-				switch (mapping->stats.type) {
-					case MAPPING_STATS_TYPE_TOTAL:
-						sample_set_data_format(remapped, k, SAMPLE_DATA_FORMAT_INT);
-						remapped->data[k++].f = h->total;
-						break;
-					case MAPPING_STATS_TYPE_LAST:
-						remapped->data[k++].f = h->last;
-						break;
-					case MAPPING_STATS_TYPE_HIGHEST:
-						remapped->data[k++].f = h->highest;
-						break;
-					case MAPPING_STATS_TYPE_LOWEST:
-						remapped->data[k++].f = h->lowest;
-						break;
-					case MAPPING_STATS_TYPE_MEAN:
-						remapped->data[k++].f = hist_mean(h);
-						break;
-					case MAPPING_STATS_TYPE_STDDEV:
-						remapped->data[k++].f = hist_stddev(h);
-						break;
-					case MAPPING_STATS_TYPE_VAR:
-						remapped->data[k++].f = hist_var(h);
-						break;
-					default:
-						return -1;
-				}
-			}
-
-			case MAPPING_TYPE_TS: {
-				struct timespec *ts;
-
-				switch (mapping->ts.id) {
-					case MAPPING_TS_RECEIVED:
-						ts = &original->ts.received;
-						break;
-					case MAPPING_TS_ORIGIN:
-						ts = &original->ts.origin;
-						break;
-					default:
-						return -1;
-				}
-
-				sample_set_data_format(remapped, k,   SAMPLE_DATA_FORMAT_INT);
-				sample_set_data_format(remapped, k+1, SAMPLE_DATA_FORMAT_INT);
-
-				remapped->data[k++].i = ts->tv_sec;
-				remapped->data[k++].i = ts->tv_nsec;
-
-				break;
-			}
-
-			case MAPPING_TYPE_HDR:
-				sample_set_data_format(remapped, k, SAMPLE_DATA_FORMAT_INT);
-
-				switch (mapping->hdr.id) {
-					case MAPPING_HDR_LENGTH:
-						remapped->data[k++].i = original->length;
-						break;
-					case MAPPING_HDR_SEQUENCE:
-						remapped->data[k++].i = original->sequence;
-						break;
-					default:
-						return -1;
-				}
-
-				break;
-
-			case MAPPING_TYPE_DATA:
-				/* mapping->length == 0 means that we want to take all values */
-				if (!length)
-					length = original->length;
-				
-				if (length + k > remapped->capacity)
-					length = remapped->capacity - k;
-			
-				for (int j = mapping->data.offset; j < length + mapping->data.offset; j++) {
-					if (j >= original->length) {
-						sample_set_data_format(remapped, k, SAMPLE_DATA_FORMAT_FLOAT);
-						remapped->data[k++].f = 0;
-					}
-					else {
-						sample_set_data_format(remapped, k, sample_get_data_format(original, j));
-						remapped->data[k++] = original->data[j];
-					}
-				}
-
-				break;
-		}
-
-		remapped->length += length;
+		ret = mapping_update(me, remapped, original, s);
+		if (ret)
+			return ret;
 	}
 
 	return 0;
