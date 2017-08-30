@@ -39,6 +39,8 @@ enum signal_type signal_lookup_type(const char *type)
 		return SIGNAL_TYPE_TRIANGLE;
 	else if (!strcmp(type, "ramp"))
 		return SIGNAL_TYPE_RAMP;
+	else if (!strcmp(type, "constant"))
+		return SIGNAL_TYPE_CONSTANT;
 	else if (!strcmp(type, "mixed"))
 		return SIGNAL_TYPE_MIXED;
 	else
@@ -60,7 +62,7 @@ int signal_parse(struct node *n, json_t *cfg)
 	s->rate = 10;
 	s->frequency = 1;
 	s->amplitude = 1;
-	s->stddev = 0.02;
+	s->stddev = 0.2;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: f, s?: f, s?: f, s?: f }",
 		"signal", &type,
@@ -224,6 +226,7 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 	for (int i = 0; i < MIN(s->values, t->capacity); i++) {
 		int rtype = (s->type != SIGNAL_TYPE_MIXED) ? s->type : i % 4;
 		switch (rtype) {
+			case SIGNAL_TYPE_CONSTANT: t->data[i].f = s->amplitude;                                                           break;
 			case SIGNAL_TYPE_RANDOM:   t->data[i].f += box_muller(0, s->stddev);                                              break;
 			case SIGNAL_TYPE_SINE:	   t->data[i].f = s->amplitude *        sin(running * s->frequency * 2 * M_PI);           break;
 			case SIGNAL_TYPE_TRIANGLE: t->data[i].f = s->amplitude * (fabs(fmod(running * s->frequency, 1) - .5) - 0.25) * 4; break;
@@ -255,6 +258,7 @@ char * signal_print(struct node *n)
 		case SIGNAL_TYPE_SQUARE:   type = "square";   break;
 		case SIGNAL_TYPE_SINE:     type = "sine";     break;
 		case SIGNAL_TYPE_RANDOM:   type = "random";   break;
+		case SIGNAL_TYPE_CONSTANT: type = "constant"; break;
 		default: return NULL;
 	}
 
