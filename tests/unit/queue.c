@@ -310,15 +310,13 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20)
 	for (int i = 0; i < p->thread_count; ++i)
 		pthread_create(&threads[i], NULL, p->thread_func, p);
 
-	sleep(1);
+	sleep(0.2);
 
 	start_tsc_time = rdtsc();
 	p->start = 1;
 
 	for (int i = 0; i < p->thread_count; ++i)
 		pthread_join(threads[i], NULL);
-
-	pthread_barrier_destroy(&barrier);
 
 	end_tsc_time = rdtsc();
 	cycpop = (end_tsc_time - start_tsc_time) / p->iter_count;
@@ -333,6 +331,9 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20)
 
 	ret = queue_destroy(&p->queue);
 	cr_assert_eq(ret, 0, "Failed to destroy queue");
+	
+	ret = pthread_barrier_destroy(&barrier);
+	cr_assert_eq(ret, 0, "Failed to destroy barrier");
 }
 
 Test(queue, init_destroy)
