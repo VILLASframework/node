@@ -45,7 +45,8 @@ struct cbuilder {
 	 * The simulation step is triggerd by a call to cbuilder_write().
 	 */
 	pthread_mutex_t mtx;
-	pthread_cond_t cv;
+	
+	int eventfd; /**< Eventfd for synchronizing cbuilder_read() / cbuilder_write() access. */
 };
 
 /** @} */

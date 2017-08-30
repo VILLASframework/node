@@ -57,7 +57,7 @@ int loopback_open(struct node *n)
 	if (ret)
 		return ret;
 
-	return queue_signalled_init(&l->queue, l->queuelen, &memtype_hugepage);
+	return queue_signalled_init(&l->queue, l->queuelen, &memtype_hugepage, QUEUE_SIGNALLED_EVENTFD);
 }
 
 int loopback_close(struct node *n)
@@ -116,19 +116,27 @@ char * loopback_print(struct node *n)
 	return buf;
 };
 
+int loopback_fd(struct node *n)
+{
+	struct loopback *l = n->_vd;
+	
+	return queue_signalled_fd(&l->queue);
+}
+
 static struct plugin p = {
 	.name = "loopback",
 	.description = "Loopback to connect multiple paths",
 	.type = PLUGIN_TYPE_NODE,
 	.node = {
 		.vectorize = 0,
-		.size  = sizeof(struct loopback),
-		.parse = loopback_parse,
-		.print = loopback_print,
-		.start = loopback_open,
-		.stop  = loopback_close,
-		.read  = loopback_read,
-		.write = loopback_write
+		.size	= sizeof(struct loopback),
+		.parse	= loopback_parse,
+		.print	= loopback_print,
+		.start	= loopback_open,
+		.stop	= loopback_close,
+		.read	= loopback_read,
+		.write	= loopback_write,
+		.fd	= loopback_fd
 	}
 };
 

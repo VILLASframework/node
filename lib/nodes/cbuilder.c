@@ -4,6 +4,8 @@
  * @copyright 2017, Steffen Vogel
  **********************************************************************************/
 
+#include <sys/eventfd.h>
+
 #include "node.h"
 #include "log.h"
 #include "plugin.h"
@@ -60,7 +62,10 @@ int cbuilder_start(struct node *n)
 
 	/* Initialize mutex and cv */
 	pthread_mutex_init(&cb->mtx, NULL);
-	pthread_cond_init(&cb->cv, NULL);
+	
+	cb->eventfd = eventfd(0, 0);
+	if (cb->eventfd < 0)
+		return -1;
 
 	/* Currently only a single timestep per model / instance is supported */
 	cb->step = 0;
@@ -77,10 +82,14 @@ int cbuilder_start(struct node *n)
 
 int cbuilder_stop(struct node *n)
 {
+	int ret;
 	struct cbuilder *cb = n->_vd;
+	
+	ret = close(cb->eventfd);
+	if (ret)
+		return ret;
 
 	pthread_mutex_destroy(&cb->mtx);
-	pthread_cond_destroy(&cb->cv);
 
 	return 0;
 }
@@ -89,11 +98,13 @@ int cbuilder_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct cbuilder *cb = n->_vd;
 	struct sample *smp = smps[0];
+	
+	uint64_t cntr;
+	
+	read(cb->eventfd, &cntr, sizeof(cntr));
 
 	/* Wait for completion of step */
 	pthread_mutex_lock(&cb->mtx);
-	while (cb->read >= cb->step)
-		pthread_cond_wait(&cb->cv, &cb->mtx);
 	
 	float data[smp->capacity];
 
@@ -125,11 +136,20 @@ int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt)
 	cb->model->code();
 
 	cb->step++;
+	
+	uint64_t incr = 1;
+	write(cb->eventfd, &incr, sizeof(incr));
 
-	pthread_cond_signal(&cb->cv);
 	pthread_mutex_unlock(&cb->mtx);
 
 	return 1;
+}
+
+int cbuilder_fd(struct node *n)
+{
+	struct cbuilder *cb = n->_vd;
+	
+	return cb->eventfd;
 }
 
 static struct plugin p = {
@@ -143,7 +163,8 @@ static struct plugin p = {
 		.start		= cbuilder_start,
 		.stop		= cbuilder_stop,
 		.read		= cbuilder_read,
-		.write		= cbuilder_write
+		.write		= cbuilder_write,
+		.fd		= cbuilder_fd
 	}
 };
 

@@ -346,7 +346,7 @@ int websocket_start(struct node *n)
 	if (ret)
 		return ret;
 
-	ret = queue_signalled_init(&w->queue, DEFAULT_WEBSOCKET_QUEUELEN, &memtype_hugepage);
+	ret = queue_signalled_init(&w->queue, DEFAULT_WEBSOCKET_QUEUELEN, &memtype_hugepage, 0);
 	if (ret)
 		return ret;
 
@@ -558,6 +558,13 @@ char * websocket_print(struct node *n)
 	return buf;
 }
 
+int websocket_fd(struct node *n)
+{
+	struct websocket *w = n->_vd;
+	
+	return queue_signalled_fd(&w->queue);
+}
+
 static struct plugin p = {
 	.name		= "websocket",
 	.description	= "Send and receive samples of a WebSocket connection (libwebsockets)",
@@ -573,7 +580,8 @@ static struct plugin p = {
 		.read		= websocket_read,
 		.write		= websocket_write,
 		.print		= websocket_print,
-		.parse		= websocket_parse
+		.parse		= websocket_parse,
+		.fd		= websocket_fd
 	}
 };
 

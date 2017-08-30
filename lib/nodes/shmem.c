@@ -186,7 +186,7 @@ char * shmem_print(struct node *n)
 	}
 
 	return buf;
-};
+}
 
 static struct plugin p = {
 	.name = "shmem",
@@ -194,13 +194,13 @@ static struct plugin p = {
 	.type = PLUGIN_TYPE_NODE,
 	.node = {
 		.vectorize = 0,
-		.size = sizeof(struct shmem),
-		.parse = shmem_parse,
-		.print = shmem_print,
-		.start = shmem_open,
-		.stop = shmem_close,
-		.read = shmem_read,
-		.write = shmem_write
+		.size	= sizeof(struct shmem),
+		.parse	= shmem_parse,
+		.print	= shmem_print,
+		.start	= shmem_open,
+		.stop	= shmem_close,
+		.read	= shmem_read,
+		.write	= shmem_write
 	}
 };
 
