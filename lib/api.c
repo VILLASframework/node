@@ -61,6 +61,7 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 			if (ret)
 				return -1;
 			
+			s->state = API_SESSION_STATE_ESTABLISHED;
 			s->wsi = wsi;
 			s->api = w->api;
 			
@@ -71,13 +72,14 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 			break;
 
 		case LWS_CALLBACK_CLOSED:
+			debug(LOG_API, "Closed API session: %s, runs=%d", api_session_name(s), s->runs);
+
 			ret = api_session_destroy(s);
 			if (ret)
 				return -1;
 			
-			list_remove(&w->api->sessions, s);
-
-			debug(LOG_API, "Closing API session: %s", api_session_name(s));
+			if (w->api->sessions.state == STATE_INITIALIZED)
+				list_remove(&w->api->sessions, s);
 
 			break;
 
@@ -104,6 +106,9 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 			break;
 		
 		case LWS_CALLBACK_SERVER_WRITEABLE:
+			if (s->state == API_SESSION_STATE_SHUTDOWN)
+				return -1;
+		
 			pulled = queue_pull(&s->response.queue, (void **) &resp);
 			if (pulled < 1)
 				break;
@@ -148,6 +153,7 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			if (ret)
 				return -1;
 
+			s->state = API_SESSION_STATE_ESTABLISHED;
 			s->wsi = wsi;
 			s->api = w->api;
 			
@@ -160,6 +166,8 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 		case LWS_CALLBACK_CLOSED_HTTP:
 			if (!s)
 				return -1;
+			
+			debug(LOG_API, "Closed API session: %s, runs=%d", api_session_name(s), s->runs);
 
 			ret = api_session_destroy(s);
 			if (ret)
@@ -209,8 +217,6 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			
 				lws_write(wsi, (unsigned char *) headers, strlen(headers), LWS_WRITE_HTTP_HEADERS);
 				lws_write(wsi, (unsigned char *) s->response.buffer.buf, s->response.buffer.len, LWS_WRITE_HTTP);
-				
-				debug(LOG_API, "Closing API session: %s", api_session_name(s));
 
 				return -1; /* Close connection */
 			}
@@ -280,13 +286,21 @@ int api_stop(struct api *a)
 
 	info("Stopping API sub-system");
 	
-	for (int i = 0; i < 10 && list_length(&a->sessions) > 0; i++) { INDENT
-		info("Wait for API requests to complete");
-		usleep(1 * 1e6);
-	}
-	
 	if (a->state != STATE_STARTED)
 		return 0;
+	
+	for (int i = 0; i < list_length(&a->sessions); i++) {
+		struct api_session *s = list_at(&a->sessions, i);
+		
+		s->state = API_SESSION_STATE_SHUTDOWN;
+		
+		lws_callback_on_writable(s->wsi);
+	}
+	
+	for (int i = 0; i < 10 && list_length(&a->sessions) > 0; i++) { INDENT
+		info("Wait for API sessions to close");
+		usleep(1 * 1e6);
+	}
 
 	ret = list_destroy(&a->sessions, (dtor_cb_t) api_session_destroy, false);
 	if (ret)

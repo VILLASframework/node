@@ -58,9 +58,6 @@ int api_session_destroy(struct api_session *s)
 {
 	int ret;
 
-	if (s->state == STATE_DESTROYED)
-		return 0;
-
 	ret = buffer_destroy(&s->request.buffer);
 	if (ret)
 		return ret;
@@ -79,8 +76,6 @@ int api_session_destroy(struct api_session *s)
 	
 	if (s->_name)
 		free(s->_name);
-
-	s->state = STATE_DESTROYED;
 
 	return 0;
 }
@@ -153,12 +148,16 @@ char * api_session_name(struct api_session *s)
 			default:            mode = "unknown"; break;
 		}
 		
-		char name[128];
-		char ip[128];
+		strcatf(&s->_name, "version=%d, mode=%s", s->version, mode);
 		
-		lws_get_peer_addresses(s->wsi, lws_get_socket_fd(s->wsi), name, sizeof(name), ip, sizeof(ip));
-
-		s->_name = strcatf(&s->_name, "version=%d, mode=%s, runs=%d, remote.name=%s, remote.ip=%s", s->version, mode, s->runs, name, ip);
+		if (s->wsi) {
+			char name[128];
+			char ip[128];
+		
+			lws_get_peer_addresses(s->wsi, lws_get_socket_fd(s->wsi), name, sizeof(name), ip, sizeof(ip));
+			
+			strcatf(&s->_name, ", remote.name=%s, remote.ip=%s", name, ip);
+		}
 	}
 	
 	return s->_name;

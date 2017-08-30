@@ -42,7 +42,10 @@ enum api_mode {
 
 /** A connection via HTTP REST or WebSockets to issue API actions. */
 struct api_session {
-	enum state state;
+	enum {
+		API_SESSION_STATE_ESTABLISHED,
+		API_SESSION_STATE_SHUTDOWN
+	} state;
 
 	enum api_version version;
 	enum api_mode mode;
