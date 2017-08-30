@@ -46,10 +46,8 @@ int sample_alloc(struct pool *p, struct sample *smps[], int cnt)
 
 void sample_free(struct sample *smps[], int cnt)
 {
-	for (int i = 0; i < cnt; i++) {
-		struct pool *p = (struct pool *) ((char *) smps[i] + smps[i]->pool_off);
-		pool_put(p, smps[i]);
-	}
+	for (int i = 0; i < cnt; i++)
+		pool_put(sample_pool(smps[i]), smps[i]);
 }
 
 int sample_put_many(struct sample *smps[], int cnt)
@@ -82,10 +80,8 @@ int sample_put(struct sample *s)
 	int prev = atomic_fetch_sub(&s->refcnt, 1);
 
 	/* Did we had the last reference? */
-	if (prev == 1) {
-		struct pool *p = (struct pool *) ((char *) s + s->pool_off);
-		pool_put(p, s);
-	}
+	if (prev == 1)
+		pool_put(sample_pool(s), s);
 
 	return prev - 1;
 }

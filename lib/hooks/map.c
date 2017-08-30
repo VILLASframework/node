@@ -81,7 +81,7 @@ static int map_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 	if (*cnt <= 0)
 		return 0;
 
-	ret = sample_alloc((struct pool *) ((char* ) smps[0] + smps[0]->pool_off), tmp, *cnt);
+	ret = sample_alloc(sample_pool(smps[0]), tmp, *cnt);
 	if (ret != *cnt)
 		return ret;
 

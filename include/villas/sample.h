@@ -83,6 +83,8 @@ struct sample {
 	} data[];		/**< Data is in host endianess! */
 };
 
+#define sample_pool(s) ((struct pool *) ((char *) (s) + (s)->pool_off))
+
 /** Request \p cnt samples from memory pool \p p and initialize them.
  *  The reference count will already be set to 1.
  *  Use the sample_get() function to increase it. */
