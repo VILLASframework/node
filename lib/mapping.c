@@ -105,6 +105,10 @@ int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nod
 			e->hdr.id = MAPPING_HDR_SEQUENCE;
 		else if (!strcmp(field, "length"))
 			e->hdr.id = MAPPING_HDR_LENGTH;
+		else if (!strcmp(field, "id"))
+			e->hdr.id = MAPPING_HDR_ID;
+		else if (!strcmp(field, "format"))
+			e->hdr.id = MAPPING_HDR_FORMAT;
 		else
 			goto invalid_format;
 	}
