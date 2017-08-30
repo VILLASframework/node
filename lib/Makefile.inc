@@ -22,7 +22,7 @@
 
 SONAMES = villas villas-ext
 
-LIBS = $(patsubst %, $(BUILDDIR)/lib%.so, $(SONAMES))
+LIBS = $(patsubst %, lib%, $(SONAMES))
 
 LIB_CFLAGS  = $(CFLAGS) -fPIC
 
