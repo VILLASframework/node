@@ -41,25 +41,19 @@ extern "C" {
 #define DEFAULT_SHMEM_QUEUELEN	512
 #define DEFAULT_SHMEM_SAMPLELEN	64
 
-/** A signalled queue or a regular (polling) queue, depending on the polling setting. */
-union shmem_queue {
-	struct queue q;
-	struct queue_signalled qs;
-};
-
 /** Struct containing all parameters that need to be known when creating a new
  * shared memory object. */
 struct shmem_conf {
 	int polling;			/**< Whether to use polling instead of POSIX CVs */
 	int queuelen;			/**< Size of the queues (in elements) */
-	int samplelen; 			/**< Maximum number of data entries in a single sample */
+	int samplelen;			/**< Maximum number of data entries in a single sample */
 };
 
 /** The structure that actually resides in the shared memory. */
 struct shmem_shared {
 	int polling;			/**< Whether to use a pthread_cond_t to signal if new samples are written to incoming queue. */
-	union shmem_queue queue;	/**< Queues for samples passed in both directions. */
-	struct pool pool;        	/**< Pool for the samples in the queues. */
+	struct queue_signalled queue;	/**< Queue for samples passed in both directions. */
+	struct pool pool;		/**< Pool for the samples in the queues. */
 };
 
 /** Relevant information for one direction of the interface. */

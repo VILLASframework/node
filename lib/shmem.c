@@ -93,9 +93,14 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 
 	memset(shared, 0, sizeof(struct shmem_shared));
 	shared->polling = conf->polling;
+	
+	int flags = QUEUE_SIGNALLED_PROCESS_SHARED;
+	if (conf->polling)
+		flags |= QUEUE_SIGNALLED_POLLING;
+	else
+		flags |= QUEUE_SIGNALLED_PTHREAD;
 
-	ret = shared->polling ? queue_init(&shared->queue.q, conf->queuelen, manager)
-			      : queue_signalled_init(&shared->queue.qs, conf->queuelen, manager);
+	ret = queue_signalled_init(&shared->queue, conf->queuelen, manager, flags);
 	if (ret) {
 		errno = ENOMEM;
 		return -1;
@@ -151,10 +156,8 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 int shmem_int_close(struct shmem_int *shm)
 {
 	atomic_store(&shm->closed, 1);
-	if (shm->write.shared->polling)
-		queue_close(&shm->write.shared->queue.q);
-	else
-		queue_signalled_close(&shm->write.shared->queue.qs);
+	
+	queue_signalled_close(&shm->write.shared->queue);
 
 	shm_unlink(shm->write.name);
 	if (atomic_load(&shm->readers) == 0)
@@ -171,10 +174,7 @@ int shmem_int_read(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
 
 	atomic_fetch_add(&shm->readers, 1);
 
-	if (shm->read.shared->polling)
-		ret = queue_pull_many(&shm->read.shared->queue.q, (void **) smps, cnt);
-	else
-		ret = queue_signalled_pull_many(&shm->read.shared->queue.qs, (void **) smps, cnt);
+	ret = queue_signalled_pull_many(&shm->read.shared->queue, (void **) smps, cnt);
 
 	if (atomic_fetch_sub(&shm->readers, 1) == 1 && atomic_load(&shm->closed) == 1)
 		munmap(shm->read.base, shm->read.len);
@@ -188,10 +188,7 @@ int shmem_int_write(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
 
 	atomic_fetch_add(&shm->writers, 1);
 
-	if (shm->write.shared->polling)
-		ret = queue_push_many(&shm->write.shared->queue.q, (void **) smps, cnt);
-	else
-		ret = queue_signalled_push_many(&shm->write.shared->queue.qs, (void **) smps, cnt);
+	ret = queue_signalled_push_many(&shm->write.shared->queue, (void **) smps, cnt);
 
 	if (atomic_fetch_sub(&shm->writers, 1) == 1 && atomic_load(&shm->closed) == 1)
 		munmap(shm->write.base, shm->write.len);
