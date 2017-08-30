@@ -222,6 +222,7 @@ check:		if (optarg == endptr)
 		debug(15, "Read %u smps from stdin", recv);
 
 		hook_read(&h, smps, (unsigned *) &recv);
+		hook_process(&h, smps, (unsigned *) &recv);
 		hook_write(&h, smps, (unsigned *) &recv);
 
 		io_print(&io, smps, recv);
