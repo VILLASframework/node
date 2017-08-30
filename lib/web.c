@@ -144,7 +144,7 @@ static void logger(int level, const char *msg) {
 	}
 }
 
-static void * worker(void *ctx)
+static void * web_worker(void *ctx)
 {
 	struct web *w = ctx;
 
@@ -244,7 +244,7 @@ int web_start(struct web *w)
 			error("WebSocket: failed to initialize server");
 	}
 
-	ret = pthread_create(&w->thread, NULL, worker, w);
+	ret = pthread_create(&w->thread, NULL, web_worker, w);
 	if (ret)
 		error("Failed to start Web worker thread");
 

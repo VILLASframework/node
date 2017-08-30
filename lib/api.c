@@ -31,7 +31,7 @@
 #include "compat.h"
 
 /* Forward declarations */
-static void * worker(void *ctx);
+static void * api_worker(void *ctx);
 
 int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
@@ -250,7 +250,7 @@ int api_start(struct api *a)
 
 	info("Starting API sub-system");
 	
-	ret = pthread_create(&a->thread, NULL, worker, a);
+	ret = pthread_create(&a->thread, NULL, api_worker, a);
 	if (ret)
 		error("Failed to start API worker thread");
 
@@ -290,7 +290,7 @@ int api_stop(struct api *a)
 	return 0;
 }
 
-static void * worker(void *ctx)
+static void * api_worker(void *ctx)
 {
 	int pulled;
 
