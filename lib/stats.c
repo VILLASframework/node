@@ -160,8 +160,10 @@ void stats_reset(struct stats *s)
 static struct table_column stats_cols[] = {
 	{ 35, "Path", "%s", NULL,   TABLE_ALIGN_LEFT },
 	{ 10, "Cnt",  "%ju", "p",   TABLE_ALIGN_RIGHT },
-	{ 10, "OWD",  "%f",  "S",   TABLE_ALIGN_RIGHT },
-	{ 10, "Rate", "%f",  "p/S", TABLE_ALIGN_RIGHT },
+	{ 10, "OWD last",  "%f",  "S",   TABLE_ALIGN_RIGHT },
+	{ 10, "OWD mean",  "%f",  "S",   TABLE_ALIGN_RIGHT },
+	{ 10, "Rate last", "%f",  "p/S", TABLE_ALIGN_RIGHT },
+	{ 10, "Rate mean", "%f",  "p/S", TABLE_ALIGN_RIGHT },
 	{ 10, "Drop", "%ju", "p",   TABLE_ALIGN_RIGHT },
 	{ 10, "Skip", "%ju", "p",   TABLE_ALIGN_RIGHT }
 };
@@ -199,11 +201,13 @@ void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int v
 		case STATS_FORMAT_HUMAN:
 			table_row(&stats_table,
 				path_name(p),
-				s->histograms[STATS_OWD].total,
-				s->histograms[STATS_OWD].last,
-				1.0 / s->histograms[STATS_GAP_SAMPLE].last,
-				s->histograms[STATS_REORDERED].total,
-				s->histograms[STATS_SKIPPED].total
+				hist_total(&s->histograms[STATS_OWD]),
+				hist_last(&s->histograms[STATS_OWD]),
+				hist_mean(&s->histograms[STATS_OWD]),
+				1.0 / hist_last(&s->histograms[STATS_GAP_RECEIVED]),
+				1.0 / hist_mean(&s->histograms[STATS_GAP_RECEIVED]),
+				hist_total(&s->histograms[STATS_REORDERED]),
+				hist_total(&s->histograms[STATS_SKIPPED])
 			);
 			break;
 
