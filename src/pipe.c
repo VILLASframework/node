@@ -305,8 +305,10 @@ check:		if (optarg == endptr)
 
 #ifdef WITH_WEBSOCKET
 	/* Only start web subsystem if villas-pipe is used with a websocket node */
-	if (node->_vt->start == websocket_start)
+	if (node->_vt->start == websocket_start) {
 		web_start(&sn.web);
+		api_start(&sn.api);
+	}
 #endif
 
 	if (reverse)
