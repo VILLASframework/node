@@ -70,9 +70,11 @@ int hook_periodic(struct hook *h);
 int hook_restart(struct hook *h);
 
 int hook_read(struct hook *h, struct sample *smps[], unsigned *cnt);
+int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt);
 int hook_write(struct hook *h, struct sample *smps[], unsigned *cnt);
 
 int hook_read_list(struct list *hs, struct sample *smps[], unsigned cnt);
+int hook_process_list(struct list *hs, struct sample *smps[], unsigned cnt);
 int hook_write_list(struct list *hs, struct sample *smps[], unsigned cnt);
 
 /** Compare two hook functions with their priority. Used by list_sort() */

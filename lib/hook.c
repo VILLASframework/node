@@ -151,6 +151,13 @@ int hook_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 	return h->_vt->read ? h->_vt->read(h, smps, cnt) : 0;
 }
 
+int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+{
+	debug(LOG_HOOK | 10, "Running hook %s: type=process, priority=%d, cnt=%u", plugin_name(h->_vt), h->priority, *cnt);
+
+	return h->_vt->process ? h->_vt->process(h, smps, cnt) : 0;
+}
+
 int hook_write(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	debug(LOG_HOOK | 10, "Running hook %s: type=write, priority=%d, cnt=%u", plugin_name(h->_vt), h->priority, *cnt);
@@ -158,14 +165,14 @@ int hook_write(struct hook *h, struct sample *smps[], unsigned *cnt)
 	return h->_vt->write ? h->_vt->write(h, smps, cnt) : 0;
 }
 
-int hook_read_list(struct list *hs, struct sample *smps[], unsigned cnt)
+static int hook_run_list(struct list *hs, struct sample *smps[], unsigned cnt, int (*func)(struct hook *, struct sample **, unsigned *))
 {
 	unsigned ret;
 
 	for (size_t i = 0; i < list_length(hs); i++) {
 		struct hook *h = list_at(hs, i);
 
-		ret = hook_read(h, smps, &cnt);
+		ret = func(h, smps, &cnt);
 		if (ret || !cnt)
 			/* Abort hook processing if earlier hooks removed all samples
 			 * or they returned something non-zero */
@@ -175,21 +182,19 @@ int hook_read_list(struct list *hs, struct sample *smps[], unsigned cnt)
 	return cnt;
 }
 
+int hook_read_list(struct list *hs, struct sample *smps[], unsigned cnt)
+{
+	return hook_run_list(hs, smps, cnt, hook_read);
+}
+
+int hook_process_list(struct list *hs, struct sample *smps[], unsigned cnt)
+{
+	return hook_run_list(hs, smps, cnt, hook_process);
+}
+
 int hook_write_list(struct list *hs, struct sample *smps[], unsigned cnt)
 {
-	unsigned ret;
-
-	for (size_t i = 0; i < list_length(hs); i++) {
-		struct hook *h = list_at(hs, i);
-
-		ret = hook_write(h, smps, &cnt);
-		if (ret || !cnt)
-			/* Abort hook processing if earlier hooks removed all samples
-			 * or they returned something non-zero */
-			break;
-	}
-
-	return cnt;
+	return hook_run_list(hs, smps, cnt, hook_write);
 }
 
 int hook_cmp_priority(const void *a, const void *b)

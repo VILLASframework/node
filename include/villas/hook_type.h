@@ -61,6 +61,7 @@ struct hook_type {
 	int (*periodic)(struct hook *h);/**< Called periodically. Period is set by global 'stats' option in the configuration file. */
 	int (*restart)(struct hook *h);	/**< Called whenever a new simulation case is started. This is detected by a sequence no equal to zero. */
 
-	int (*read)(struct hook *h, struct sample *smps[], unsigned *cnt);	/**< Called for every single received samples. */
-	int (*write)(struct hook *h, struct sample *smps[], unsigned *cnt);	/**< Called for every single sample which will be sent. */
+	int (*read)(struct hook *h, struct sample *smps[], unsigned *cnt);	/**< Called whenever samples have been read from a node. */
+	int (*process)(struct hook *h, struct sample *smps[], unsigned *cnt);	/**< Called whenever muxed samples are processed. */
+	int (*write)(struct hook *h, struct sample *smps[], unsigned *cnt);	/**< Called whenever samples are written to a node. */
 };
