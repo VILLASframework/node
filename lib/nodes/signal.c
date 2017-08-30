@@ -113,7 +113,7 @@ int signal_parse_cli(struct node *n, int argc, char *argv[])
 
 	/* Parse optional command line arguments */
 	char c, *endptr;
-	while ((c = getopt(argc, argv, "v:r:f:l:a:D:n:o")) != -1) {
+	while ((c = getopt(argc, argv, "v:r:f:l:a:D:n:o:")) != -1) {
 		switch (c) {
 			case 'n':
 				s->rt = 0;
@@ -242,7 +242,7 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 			case SIGNAL_TYPE_SINE:	   t->data[i].f = s->offset + s->amplitude *        sin(running * s->frequency * 2 * M_PI);           break;
 			case SIGNAL_TYPE_TRIANGLE: t->data[i].f = s->offset + s->amplitude * (fabs(fmod(running * s->frequency, 1) - .5) - 0.25) * 4; break;
 			case SIGNAL_TYPE_SQUARE:   t->data[i].f = s->offset + s->amplitude * (    (fmod(running * s->frequency, 1) < .5) ? -1 : 1);   break;
-			case SIGNAL_TYPE_RAMP:     t->data[i].f = s->offset + fmod(s->counter, s->rate / s->frequency); /** @todo send as integer? */ break;
+			case SIGNAL_TYPE_RAMP:     t->data[i].f = s->offset + s->amplitude * fmod(running, s->frequency);                break;
 			case SIGNAL_TYPE_RANDOM:
 				s->last[i] += box_muller(0, s->stddev);
 				t->data[i].f = s->last[i];
