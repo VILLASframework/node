@@ -27,16 +27,40 @@
 
 #include "queue.h"
 
+enum queue_signalled_flags {
+	/* Mode */
+	QUEUE_SIGNALLED_AUTO		= (0 << 0), /**< We will choose the best method available on the platform */
+	QUEUE_SIGNALLED_PTHREAD		= (1 << 0),
+	QUEUE_SIGNALLED_POLLING		= (2 << 0),
+#ifdef __linux__
+	QUEUE_SIGNALLED_EVENTFD		= (3 << 0),
+#endif
+	QUEUE_SIGNALLED_MASK		= 0xf,
+	
+	/* Other flags */
+	QUEUE_SIGNALLED_PROCESS_SHARED	= (1 << 4)
+} mode;
+
 /** Wrapper around queue that uses POSIX CV's for signalling writes. */
 struct queue_signalled {
 	struct queue queue;		/**< Actual underlying queue. */
-	pthread_cond_t ready;		/**< Condition variable to signal writes to the queue. */
-	pthread_mutex_t mutex;		/**< Mutex for ready. */
+	
+	enum queue_signalled_flags mode;
+	
+	union {
+		struct {
+			pthread_cond_t ready;		/**< Condition variable to signal writes to the queue. */
+			pthread_mutex_t mutex;		/**< Mutex for ready. */
+		} pthread;
+#ifdef __linux__
+		int eventfd;
+#endif
+	};
 };
 
 #define queue_signalled_available(q) queue_available(&((q)->queue))
 
-int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memtype *mem);
+int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memtype *mem, int flags);
 
 int queue_signalled_destroy(struct queue_signalled *qs);
 
@@ -49,3 +73,6 @@ int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cn
 int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cnt);
 
 int queue_signalled_close(struct queue_signalled *qs);
+
+/** Returns a file descriptor which can be used with poll / select to wait for new data */
+int queue_signalled_fd(struct queue_signalled *qs);
