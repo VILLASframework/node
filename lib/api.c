@@ -28,6 +28,7 @@
 #include "web.h"
 #include "config.h"
 #include "assert.h"
+#include "memory.h"
 #include "compat.h"
 
 /* Forward declarations */
@@ -225,9 +226,17 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 
 int api_init(struct api *a, struct super_node *sn)
 {
+	int ret;
+
 	info("Initialize API sub-system");
 
-	list_init(&a->sessions);
+	ret = list_init(&a->sessions);
+	if (ret)
+		return ret;
+	
+	ret = queue_signalled_init(&a->pending, 1024, &memtype_heap, 0);
+	if (ret)
+		return ret;
 
 	a->super_node = sn;
 	a->state = STATE_INITIALIZED;
@@ -237,7 +246,13 @@ int api_init(struct api *a, struct super_node *sn)
 
 int api_destroy(struct api *a)
 {
+	int ret;
+
 	assert(a->state != STATE_STARTED);
+	
+	ret = queue_signalled_destroy(&a->pending);
+	if (ret)
+		return ret;
 
 	a->state = STATE_DESTROYED;
 
