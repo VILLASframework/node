@@ -420,7 +420,7 @@ int path_start(struct path *p)
 
 	assert(p->state == STATE_CHECKED);
 
-	info("Starting path %s: #hooks=%zu, #sources=%zu, #destinations=%zu", path_name(p), list_length(&p->hooks), list_length(&p->sources), list_length(&p->destinations));
+	info("Starting path %s: enabled=%s, queuelen=%d, #hooks=%zu, #sources=%zu, #destinations=%zu", path_name(p), p->enabled ? "yes": "no", p->queuelen, list_length(&p->hooks), list_length(&p->sources), list_length(&p->destinations));
 
 	for (size_t i = 0; i < list_length(&p->hooks); i++) {
 		struct hook *h = list_at(&p->hooks, i);
