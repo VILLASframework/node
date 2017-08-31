@@ -27,6 +27,7 @@
 #include "sample.h"
 #include "list.h"
 #include "utils.h"
+#include "node.h"
 
 int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nodes)
 {
@@ -158,7 +159,7 @@ int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nod
 		}
 		else {
 			e->data.offset = 0;
-			e->length = 0; /* Length in unkown.. we will take all values */
+			e->length = e->node->samplelen;
 		}
 	}
 	else
@@ -193,7 +194,7 @@ int mapping_parse(struct mapping_entry *e, json_t *j, struct list *nodes)
 
 int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes)
 {
-	int ret, off, len;
+	int ret, off;
 
 	size_t i;
 	json_t *json_entry;
@@ -209,17 +210,12 @@ int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes)
 		return -1;
 
 	off = 0;
-	len = json_array_size(json_mapping);
 	json_array_foreach(json_mapping, i, json_entry) {
 		struct mapping_entry *e = alloc(sizeof(struct mapping_entry));
 
 		ret = mapping_parse(e, json_entry, nodes);
 		if (ret)
 			return ret;
-		
-		/* Variable length mapping entries are currently only supported as the last element in a mapping */
-		if (e->length == 0 && i != len - 1)
-			return -1;
 		
 		e->offset = off;
 		off += e->length;
