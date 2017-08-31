@@ -143,10 +143,10 @@ json_t * stats_json_periodic(struct stats *s, struct path *p)
 {
 	return json_pack("{ s: s, s: f, s: f, s: i, s: i }"
 		"path", path_name(p),
-		"owd", s->histograms[STATS_OWD].last,
-		"rate", 1.0 / s->histograms[STATS_GAP_SAMPLE].last,
-		"dropped", s->histograms[STATS_REORDERED].total,
-		"skipped", s->histograms[STATS_SKIPPED].total
+		"owd", hist_last(&s->histograms[STATS_OWD])
+		"rate", 1.0 / hist_last(&s->histograms[STATS_GAP_SAMPLE]),
+		"dropped", hist_total(&s->histograms[STATS_REORDERED]),
+		"skipped", host_ttotal(&s->histograms[STATS_SKIPPED])
 	);
 }
 
@@ -252,9 +252,9 @@ void stats_send(struct stats *s, struct node *n)
 	int i = 0;
 
 	for (int j = 0; j < STATS_COUNT; j++) {
-		smp->data[i++].f = s->histograms[j].last;
-		smp->data[i++].f = s->histograms[j].highest;
-		smp->data[i++].f = s->histograms[j].lowest;
+		smp->data[i++].f = hist_last(&s->histograms[j]);
+		smp->data[i++].f = hist_highest(&s->histograms[j]);
+		smp->data[i++].f = hist_lowest(&s->histograms[j]);
 		smp->data[i++].f = hist_mean(&s->histograms[j]);
 		smp->data[i++].f = hist_var(&s->histograms[j]);
 	}

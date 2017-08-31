@@ -58,6 +58,8 @@ struct hist {
 };
 
 #define hist_last(h)	((h)->last)
+#define hist_highest(h)	((h)->highest)
+#define hist_lowest(h)	((h)->lowest)
 #define hist_total(h)	((h)->total)
 
 /** Initialize struct hist with supplied values and allocate memory for buckets. */
