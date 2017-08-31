@@ -28,8 +28,6 @@ SCRIPTPATH=$(dirname ${SCRIPT})
 LOCAL_CONF=${SCRIPTPATH}/../../etc/loopback.json
 
 FETCHED_CONF=$(mktemp)
-FETCHED_JSON_CONF=$(mktemp)
-LOCAL_JSON_CONF=$(mktemp)
 
 ID=$(uuidgen)
 
@@ -49,6 +47,6 @@ kill $!
 diff -u <(jq -S .response < ${FETCHED_CONF}) <(jq -S . < ${LOCAL_CONF})
 RC=$?
 
-rm -f ${FETCHED_CONF} ${FETCHED_JSON_CONF} ${LOCAL_JSON_CONF}
+rm -f ${FETCHED_CONF}
 
 exit $RC
