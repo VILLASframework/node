@@ -55,7 +55,6 @@ struct path_source {
 struct path_destination {
 	struct node *node;
 	struct queue queue;
-	int queuelen;
 
 	struct list hooks;		/**< Write Hooks. */
 };
@@ -78,8 +77,8 @@ struct path {
 
 	int enabled;			/**< Is this path enabled. */
 	int reverse;			/**< This path as a matching reverse path. */
-
-	int queuelen;
+	int queuelen;			/**< The queue length for each path_destination::queue */
+	int samplelen;			/**< Will be calculated based on path::sources.mappings */
 	int sequence;
 
 	pthread_t tid;			/**< The thread id for this path. */
