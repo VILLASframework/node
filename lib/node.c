@@ -268,7 +268,7 @@ char * node_name_long(struct node *n)
 		if (n->_vt->print) {
 			struct node_type *vt = n->_vt;
 			char *name_long = vt->print(n);
-			strcatf(&n->_name_long, "%s: vectorize=%d, %s", node_name(n), n->vectorize, name_long);
+			strcatf(&n->_name_long, "%s: id=%d, vectorize=%d, samplelen=%d, %s", node_name(n), n->id, n->vectorize, n->samplelen, name_long);
 			free(name_long);
 		}
 		else

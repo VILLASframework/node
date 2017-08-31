@@ -47,15 +47,14 @@ int shmem_parse(struct node *n, json_t *cfg)
 
 	/* Default values */
 	shm->conf.queuelen = MAX(DEFAULT_SHMEM_QUEUELEN, n->vectorize);
-	shm->conf.samplelen = DEFAULT_SHMEM_SAMPLELEN;
+	shm->conf.samplelen = n->samplelen;
 	shm->conf.polling = false;
 	shm->exec = NULL;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: s, s?: i, s?: i, s?: b, s?: o }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: s, s?: i, s?: b, s?: o }",
 		"out_name", &shm->out_name,
 		"in_name", &shm->in_name,
 		"queuelen", &shm->conf.queuelen,
-		"samplelen", &shm->conf.samplelen,
 		"polling", &shm->conf.polling,
 		"exec", &cfg_exec
 	);
@@ -173,8 +172,8 @@ char * shmem_print(struct node *n)
 	struct shmem *shm = n->_vd;
 	char *buf = NULL;
 
-	strcatf(&buf, "out_name=%s, in_name=%s, queuelen=%d, samplelen=%d, polling=%s",
-		shm->out_name, shm->in_name, shm->conf.queuelen, shm->conf.samplelen, shm->conf.polling ? "yes" : "no");
+	strcatf(&buf, "out_name=%s, in_name=%s, queuelen=%d, polling=%s",
+		shm->out_name, shm->in_name, shm->conf.queuelen, shm->conf.polling ? "yes" : "no");
 
 	if (shm->exec) {
 		strcatf(&buf, ", exec='");

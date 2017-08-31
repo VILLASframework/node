@@ -36,11 +36,9 @@ int loopback_parse(struct node *n, json_t *cfg)
 
 	/* Default values */
 	l->queuelen = DEFAULT_QUEUELEN;
-	l->samplelen = DEFAULT_SAMPLELEN;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: i }",
-		"queuelen", &l->queuelen,
-		"samplelen", &l->samplelen
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i }",
+		"queuelen", &l->queuelen
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
@@ -53,7 +51,7 @@ int loopback_open(struct node *n)
 	int ret;
 	struct loopback *l = n->_vd;
 
-	ret = pool_init(&l->pool, l->queuelen, SAMPLE_LEN(l->samplelen), &memtype_hugepage);
+	ret = pool_init(&l->pool, l->queuelen, SAMPLE_LEN(n->samplelen), &memtype_hugepage);
 	if (ret)
 		return ret;
 

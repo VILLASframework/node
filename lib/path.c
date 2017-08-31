@@ -209,7 +209,6 @@ int path_init(struct path *p, struct super_node *sn)
 	p->reverse = 0;
 	p->enabled = 1;
 
-	p->samplelen = DEFAULT_SAMPLELEN;
 	p->queuelen = DEFAULT_QUEUELEN;
 
 	p->super_node = sn;
@@ -311,7 +310,6 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 		"hooks", &json_hooks,
 		"reverse", &p->reverse,
 		"enabled", &p->enabled,
-		"samplelen", &p->samplelen,
 		"queuelen", &p->queuelen
 	);
 	if (ret)

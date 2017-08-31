@@ -79,7 +79,6 @@ struct path {
 	int enabled;			/**< Is this path enabled. */
 	int reverse;			/**< This path as a matching reverse path. */
 
-	int samplelen;
 	int queuelen;
 	int sequence;
 

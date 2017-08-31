@@ -41,7 +41,6 @@ struct sample;
  */
 struct loopback {
 	int queuelen;
-	int samplelen;
 
 	struct queue_signalled queue;
 	struct pool pool;
