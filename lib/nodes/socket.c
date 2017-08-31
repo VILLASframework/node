@@ -27,7 +27,6 @@
 
 #if defined(__linux__)
   #include <netinet/ether.h>
-  #include <endian.h>
 #endif
 
 #include "nodes/socket.h"
@@ -382,9 +381,7 @@ int socket_parse(struct node *n, json_t *cfg)
 	struct socket *s = n->_vd;
 
 	const char *local, *remote;
-	const char *endian = NULL;
 	const char *layer = NULL;
-	const char *header = NULL;
 	const char *format = "msg";
 
 	int ret;
@@ -394,14 +391,10 @@ int socket_parse(struct node *n, json_t *cfg)
 
 	/* Default values */
 	s->layer = SOCKET_LAYER_UDP;
-	s->header = SOCKET_HEADER_DEFAULT;
-	s->endian = SOCKET_ENDIAN_BIG;
 	s->verify_source = 0;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s: s, s: s, s?: b, s?: o, s?: s }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: s, s: s, s?: b, s?: o, s?: s }",
 		"layer", &layer,
-		"header", &header,
-		"endian", &endian,
 		"remote", &remote,
 		"local", &local,
 		"verify_source", &s->verify_source,
@@ -428,27 +421,6 @@ int socket_parse(struct node *n, json_t *cfg)
 			s->layer = SOCKET_LAYER_UDP;
 		else
 			error("Invalid layer '%s' for node %s", layer, node_name(n));
-	}
-
-	/* Application header */
-	if (header) {
-		if      (!strcmp(header, "gtnet-skt") || (!strcmp(header, "none")))
-			s->header = SOCKET_HEADER_NONE;
-		else if (!strcmp(header, "gtnet-skt:fake") || (!strcmp(header, "fake")))
-			s->header = SOCKET_HEADER_FAKE;
-		else if (!strcmp(header, "villas") || !strcmp(header, "default"))
-			s->header = SOCKET_HEADER_DEFAULT;
-		else
-			error("Invalid application header type '%s' for node %s", header, node_name(n));
-	}
-
-	if (endian) {
-		if      (!strcmp(endian, "big") || !strcmp(endian, "network"))
-			s->endian = SOCKET_ENDIAN_BIG;
-		else if (!strcmp(endian, "little"))
-			s->endian = SOCKET_ENDIAN_LITTLE;
-		else
-			error("Invalid endianness type '%s' for node %s", endian, node_name(n));
 	}
 
 	ret = socket_parse_addr(local, (struct sockaddr *) &s->local, s->layer, AI_PASSIVE);

@@ -61,12 +61,6 @@ enum socket_layer {
 	SOCKET_LAYER_UDP
 };
 
-enum socket_header {
-	SOCKET_HEADER_DEFAULT,	/**> Default header in the payload, (see msg_format.h) */
-	SOCKET_HEADER_NONE,	/**> No header in the payload, same as HDR_NONE*/
-	SOCKET_HEADER_FAKE	/**> Same as SOCKET_HEADER_NONE but using the first three data values as: sequence, seconds & nano-seconds. */
-};
-
 union sockaddr_union {
 	struct sockaddr sa;
 	struct sockaddr_storage ss;
@@ -83,13 +77,7 @@ struct socket {
 	int mark;			/**< Socket mark for netem, routing and filtering */
 	int verify_source;		/**< Verify the source address of incoming packets against socket::remote. */
 
-	enum {
-		SOCKET_ENDIAN_LITTLE,
-		SOCKET_ENDIAN_BIG
-	} endian;			/**< Endianness of the data sent/received by the node */
-
 	enum socket_layer layer;	/**< The OSI / IP layer which should be used for this socket */
-	enum socket_header header;	/**< Payload header type */
 
 	union sockaddr_union local;	/**< Local address of the socket */
 	union sockaddr_union remote;	/**< Remote address of the socket */
