@@ -89,7 +89,7 @@ static int map_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 		tmp[i]->format   = 0;
 		tmp[i]->length   = 0;
 
-		mapping_remap(&p->mapping, tmp[i], smps[i], NULL);
+		mapping_remap(&p->mapping, tmp[i], smps[i], p->stats);
 
 		SWAP(smps[i], tmp[i]);
 	}
