@@ -216,10 +216,10 @@ int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 	return 1;
 }
 
-#define REGISTER_FORMAT_RAW(i, n, f)		\
+#define REGISTER_FORMAT_RAW(i, n, d, f)		\
 static struct plugin i = {			\
 	.name = n,				\
-	.description = "RAW binary data",	\
+	.description = d,			\
 	.type = PLUGIN_TYPE_IO,			\
 	.io = {					\
 		.flags = f | IO_FORMAT_BINARY,	\
@@ -230,15 +230,15 @@ static struct plugin i = {			\
 REGISTER_PLUGIN(& i);
 
 /* Feel free to add additional format identifiers here to suit your needs */
-REGISTER_FORMAT_RAW(p,       "raw", 0)
-REGISTER_FORMAT_RAW(p_f32,   "raw-flt32",	RAW_32 | RAW_FLT)
-REGISTER_FORMAT_RAW(p_f64,   "raw-flt64",	RAW_64 | RAW_FLT)
-REGISTER_FORMAT_RAW(p_i8,    "raw-int8",	RAW_8)
-REGISTER_FORMAT_RAW(p_i16be, "raw-int16-be",	RAW_16 | RAW_BE)
-REGISTER_FORMAT_RAW(p_i16le, "raw-int16-le",	RAW_16)
-REGISTER_FORMAT_RAW(p_i32be, "raw-int32-be",	RAW_32 | RAW_BE)
-REGISTER_FORMAT_RAW(p_i32le, "raw-int32-le",	RAW_32)
-REGISTER_FORMAT_RAW(p_i64be, "raw-int64-be",	RAW_64 | RAW_BE)
-REGISTER_FORMAT_RAW(p_i64le, "raw-int64-le",	RAW_64)
-REGISTER_FORMAT_RAW(p_gtnet, "gtnet",		RAW_32 | RAW_FLT | RAW_BE)
-REGISTER_FORMAT_RAW(p_gtnef, "gtnet-fake",	RAW_32 | RAW_FLT | RAW_BE | RAW_FAKE)
+REGISTER_FORMAT_RAW(p,       "raw", "", 0)
+REGISTER_FORMAT_RAW(p_f32,   "raw-flt32",	"Raw single precission floating point", RAW_32 | RAW_FLT)
+REGISTER_FORMAT_RAW(p_f64,   "raw-flt64",	"Raw double precission floating point", RAW_64 | RAW_FLT)
+REGISTER_FORMAT_RAW(p_i8,    "raw-int8",	"Raw  8 bit, signed integer", RAW_8)
+REGISTER_FORMAT_RAW(p_i16be, "raw-int16-be",	"Raw 16 bit, signed integer, big endian byte-order", RAW_16 | RAW_BE)
+REGISTER_FORMAT_RAW(p_i16le, "raw-int16-le",	"Raw 16 bit, signed integer, little endian byte-order", RAW_16)
+REGISTER_FORMAT_RAW(p_i32be, "raw-int32-be",	"Raw 32 bit, signed integer, big endian byte-order", RAW_32 | RAW_BE)
+REGISTER_FORMAT_RAW(p_i32le, "raw-int32-le",	"Raw 32 bit, signed integer, little endian byte-order", RAW_32)
+REGISTER_FORMAT_RAW(p_i64be, "raw-int64-be",	"Raw 64 bit, signed integer, bit endian byte-order", RAW_64 | RAW_BE)
+REGISTER_FORMAT_RAW(p_i64le, "raw-int64-le",	"Raw 64 bit, signed integer, little endian byte-order", RAW_64)
+REGISTER_FORMAT_RAW(p_gtnet, "gtnet",		"RTDS GTNET", RAW_32 | RAW_FLT | RAW_BE)
+REGISTER_FORMAT_RAW(p_gtnef, "gtnet-fake",	"RTDS GTNET with fake header", RAW_32 | RAW_FLT | RAW_BE | RAW_FAKE)
