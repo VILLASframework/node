@@ -57,6 +57,9 @@ struct hist {
 	double _m[2], _s[2];	/**< Private variables for online variance calculation */
 };
 
+#define hist_last(h)	((h)->last)
+#define hist_total(h)	((h)->total)
+
 /** Initialize struct hist with supplied values and allocate memory for buckets. */
 int hist_init(struct hist *h, int buckets, hist_cnt_t warmup);
 
