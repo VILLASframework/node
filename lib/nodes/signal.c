@@ -113,7 +113,7 @@ int signal_parse_cli(struct node *n, int argc, char *argv[])
 
 	/* Parse optional command line arguments */
 	char c, *endptr;
-	while ((c = getopt(argc, argv, "v:r:f:l:a:D:n:o:")) != -1) {
+	while ((c = getopt(argc, argv, "v:r:f:l:a:D:no:")) != -1) {
 		switch (c) {
 			case 'n':
 				s->rt = 0;
