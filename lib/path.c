@@ -316,7 +316,7 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 		jerror(&err, "Failed to parse path configuration");
 
 	/* Input node(s) */
-	ret = node_parse_mapping_list(&sources, json_in, nodes);
+	ret = mapping_parse_list(&sources, json_in, nodes);
 	if (ret)
 		error("Failed to parse input mapping of path %s", path_name(p));
 

@@ -139,6 +139,4 @@ int node_fd(struct node *n);
  */
 int node_parse_list(struct list *list, json_t *cfg, struct list *all);
 
-int node_parse_mapping_list(struct list *l, json_t *cfg, struct list *all);
-
 /** @} */

@@ -92,3 +92,5 @@ int mapping_update(struct mapping_entry *e, struct sample *remapped, struct samp
 int mapping_parse(struct mapping_entry *e, json_t *cfg, struct list *nodes);
 
 int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nodes);
+
+int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes);

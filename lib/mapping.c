@@ -191,6 +191,45 @@ int mapping_parse(struct mapping_entry *e, json_t *j, struct list *nodes)
 	return mapping_parse_str(e, str, nodes);
 }
 
+int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes)
+{
+	int ret, off, len;
+
+	size_t i;
+	json_t *json_entry;
+	json_t *json_mapping;
+
+	if (json_is_string(cfg)) {
+		json_mapping = json_array();
+		json_array_append(json_mapping, cfg);
+	}
+	else if (json_is_array(cfg))
+		json_mapping = cfg;
+	else
+		return -1;
+
+	off = 0;
+	len = json_array_size(json_mapping);
+	json_array_foreach(json_mapping, i, json_entry) {
+		struct mapping_entry *e = alloc(sizeof(struct mapping_entry));
+
+		ret = mapping_parse(e, json_entry, nodes);
+		if (ret)
+			return ret;
+		
+		/* Variable length mapping entries are currently only supported as the last element in a mapping */
+		if (e->length == 0 && i != len - 1)
+			return -1;
+		
+		e->offset = off;
+		off += e->length;
+
+		list_push(l, e);
+	}
+
+	return 0;
+}
+
 int mapping_update(struct mapping_entry *me, struct sample *remapped, struct sample *original, struct stats *s)
 {
 	int len = me->length;

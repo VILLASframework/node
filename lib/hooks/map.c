@@ -65,7 +65,7 @@ static int map_parse(struct hook *h, json_t *cfg)
 	if (ret)
 		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
 
-	ret = node_parse_mapping_list(&p->mapping, cfg_mapping, NULL);
+	ret = mapping_parse_list(&p->mapping, cfg_mapping, NULL);
 	if (ret)
 		return ret;
 
