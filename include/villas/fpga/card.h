@@ -29,6 +29,8 @@
 
 #pragma once
 
+#include <jansson.h>
+
 #include "common.h"
 #include "kernel/pci.h"
 #include "kernel/vfio.h"
