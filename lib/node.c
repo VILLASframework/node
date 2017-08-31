@@ -47,6 +47,7 @@ int node_init(struct node *n, struct node_type *vt)
 
 	/* Default values */
 	n->vectorize = 1;
+	n->samplelen = DEFAULT_SAMPLELEN;
 
 	list_push(&vt->instances, n);
 
