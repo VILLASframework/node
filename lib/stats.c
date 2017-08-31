@@ -143,10 +143,10 @@ json_t * stats_json_periodic(struct stats *s, struct path *p)
 {
 	return json_pack("{ s: s, s: f, s: f, s: i, s: i }"
 		"path", path_name(p),
-		"owd", hist_last(&s->histograms[STATS_OWD])
+		"owd", hist_last(&s->histograms[STATS_OWD]),
 		"rate", 1.0 / hist_last(&s->histograms[STATS_GAP_SAMPLE]),
 		"dropped", hist_total(&s->histograms[STATS_REORDERED]),
-		"skipped", host_ttotal(&s->histograms[STATS_SKIPPED])
+		"skipped", hist_total(&s->histograms[STATS_SKIPPED])
 	);
 }
 
