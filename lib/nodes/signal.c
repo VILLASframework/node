@@ -39,6 +39,8 @@ enum signal_type signal_lookup_type(const char *type)
 		return SIGNAL_TYPE_TRIANGLE;
 	else if (!strcmp(type, "ramp"))
 		return SIGNAL_TYPE_RAMP;
+	else if (!strcmp(type, "counter"))
+		return SIGNAL_TYPE_COUNTER;
 	else if (!strcmp(type, "constant"))
 		return SIGNAL_TYPE_CONSTANT;
 	else if (!strcmp(type, "mixed"))
@@ -242,7 +244,8 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 			case SIGNAL_TYPE_SINE:	   t->data[i].f = s->offset + s->amplitude *        sin(running * s->frequency * 2 * M_PI);           break;
 			case SIGNAL_TYPE_TRIANGLE: t->data[i].f = s->offset + s->amplitude * (fabs(fmod(running * s->frequency, 1) - .5) - 0.25) * 4; break;
 			case SIGNAL_TYPE_SQUARE:   t->data[i].f = s->offset + s->amplitude * (    (fmod(running * s->frequency, 1) < .5) ? -1 : 1);   break;
-			case SIGNAL_TYPE_RAMP:     t->data[i].f = s->offset + s->amplitude * fmod(running, s->frequency);                break;
+			case SIGNAL_TYPE_RAMP:     t->data[i].f = s->offset + s->amplitude * fmod(running, s->frequency);                             break;
+			case SIGNAL_TYPE_COUNTER:  t->data[i].f = s->offset + s->amplitude * s->counter;                                              break;
 			case SIGNAL_TYPE_RANDOM:
 				s->last[i] += box_muller(0, s->stddev);
 				t->data[i].f = s->last[i];
@@ -269,6 +272,7 @@ char * signal_print(struct node *n)
 	switch (s->type) {
 		case SIGNAL_TYPE_MIXED:    type = "mixed";    break;
 		case SIGNAL_TYPE_RAMP:     type = "ramp";     break;
+		case SIGNAL_TYPE_COUNTER:  type = "counter";  break;
 		case SIGNAL_TYPE_TRIANGLE: type = "triangle"; break;
 		case SIGNAL_TYPE_SQUARE:   type = "square";   break;
 		case SIGNAL_TYPE_SINE:     type = "sine";     break;
