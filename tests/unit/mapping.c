@@ -30,7 +30,7 @@ Test(mapping, parse_nodes)
 {
 	int ret;
 	struct mapping_entry m;
-	struct list n;
+	struct list n = { .state = STATE_DESTROYED };
 
 	struct node n1 = { .name = "apple" };
 	struct node n2 = { .name = "cherry" };
