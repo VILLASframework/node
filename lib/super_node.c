@@ -285,7 +285,7 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 		json_array_foreach(cfg_paths, index, cfg_path) {
 			struct path *p = alloc(sizeof(struct path));
 
-			ret = path_init(p, sn);
+			ret = path_init(p);
 			if (ret)
 				error("Failed to initialize path");
 
@@ -298,7 +298,7 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 			if (p->reverse) {
 				struct path *r = alloc(sizeof(struct path));
 
-				ret = path_init(r, sn);
+				ret = path_init(r);
 				if (ret)
 					error("Failed to init path");
 

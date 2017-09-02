@@ -33,12 +33,14 @@
 int node_init(struct node *n, struct node_type *vt)
 {
 	static int max_id;
+	int ret;
 
 	assert(n->state == STATE_DESTROYED);
 
 	n->_vt = vt;
 	n->_vd = alloc(vt->size);
-	
+
+	n->stats = NULL;
 	n->name = NULL;
 	n->_name = NULL;
 	n->_name_long = NULL;
@@ -51,7 +53,37 @@ int node_init(struct node *n, struct node_type *vt)
 
 	list_push(&vt->instances, n);
 
+	list_init(&n->hooks);
+
+	/* Add internal hooks if they are not already in the list */
+	for (size_t i = 0; i < list_length(&plugins); i++) {
+		struct plugin *q = list_at(&plugins, i);
+
+		if (q->type != PLUGIN_TYPE_HOOK)
+			continue;
+
+		struct hook_type *vt = &q->hook;
+
+		if ((vt->flags & HOOK_NODE) && (vt->flags & HOOK_BUILTIN)) {
+			struct hook *h = alloc(sizeof(struct hook));
+
+			ret = hook_init(h, vt, NULL, n);
+			if (ret)
+				return ret;
+
+			list_push(&n->hooks, h);
+		}
+	}
+
 	n->state = STATE_INITIALIZED;
+
+	return 0;
+}
+
+int node_init2(struct node *n)
+{
+	/* We sort the hooks according to their priority before starting the path */
+	list_sort(&n->hooks, hook_cmp_priority);
 
 	return 0;
 }
@@ -62,21 +94,29 @@ int node_parse(struct node *n, json_t *cfg, const char *name)
 	int ret;
 
 	json_error_t err;
+	json_t *json_hooks = NULL;
 
 	const char *type;
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: i, s?: i }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: i, s?: i, s?: o }",
 		"type", &type,
 		"vectorize", &n->vectorize,
-		"samplelen", &n->samplelen
+		"samplelen", &n->samplelen,
+		"hooks", &json_hooks
 	);
 	if (ret)
 		jerror(&err, "Failed to parse node '%s'", node_name(n));
 
 	p = plugin_lookup(PLUGIN_TYPE_NODE, type);
 	assert(&p->node == n->_vt);
+
+	if (json_hooks) {
+		ret = hook_parse_list(&n->hooks, json_hooks, NULL, n);
+		if (ret < 0)
+			return ret;
+	}
 
 	ret = n->_vt->parse ? n->_vt->parse(n, cfg) : 0;
 	if (ret)
@@ -138,6 +178,14 @@ int node_start(struct node *n)
 
 	info("Starting node %s", node_name_long(n));
 	{ INDENT
+		for (size_t i = 0; i < list_length(&n->hooks); i++) {
+			struct hook *h = list_at(&n->hooks, i);
+
+			ret = hook_start(h);
+			if (ret)
+				return ret;
+		}
+
 		ret = n->_vt->start ? n->_vt->start(n) : 0;
 		if (ret)
 			return ret;
@@ -159,6 +207,14 @@ int node_stop(struct node *n)
 
 	info("Stopping node %s", node_name(n));
 	{ INDENT
+		for (size_t i = 0; i < list_length(&n->hooks); i++) {
+			struct hook *h = list_at(&n->hooks, i);
+
+			ret = hook_stop(h);
+			if (ret)
+				return ret;
+		}
+
 		ret = n->_vt->stop ? n->_vt->stop(n) : 0;
 	}
 
@@ -171,6 +227,8 @@ int node_stop(struct node *n)
 int node_destroy(struct node *n)
 {
 	assert(n->state != STATE_DESTROYED && n->state != STATE_STARTED);
+
+	list_destroy(&n->hooks, (dtor_cb_t) hook_destroy, true);
 
 	if (n->_vt->destroy)
 		n->_vt->destroy(n);
@@ -196,7 +254,7 @@ int node_destroy(struct node *n)
 
 int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	int readd, nread = 0;
+	int readd, rread, nread = 0;
 
 	if (!n->_vt->read)
 		return -1;
@@ -223,7 +281,17 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 	for (int i = 0; i < nread; i++)
 		smps[i]->source = n;
 
-	return nread;
+	rread = hook_read_list(&n->hooks, smps, nread);
+	if (nread != rread) {
+		int skipped = nread - rread;
+
+		debug(LOG_NODES | 10, "Hooks skipped %u out of %u samples for node %s", skipped, nread, node_name(n));
+
+		if (n->stats)
+			stats_update(n->stats->delta, STATS_SKIPPED, skipped);
+	}
+
+	return rread;
 }
 
 int node_write(struct node *n, struct sample *smps[], unsigned cnt)
@@ -232,6 +300,10 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	if (!n->_vt->write)
 		return -1;
+
+	cnt = hook_write_list(&n->hooks, smps, cnt);
+	if (cnt <= 0)
+		return cnt;
 
 	/* Send in parts if vector not supported */
 	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
@@ -269,7 +341,7 @@ char * node_name_long(struct node *n)
 		if (n->_vt->print) {
 			struct node_type *vt = n->_vt;
 			char *name_long = vt->print(n);
-			strcatf(&n->_name_long, "%s: id=%d, vectorize=%d, samplelen=%d, %s", node_name(n), n->id, n->vectorize, n->samplelen, name_long);
+			strcatf(&n->_name_long, "%s: #hooks=%zu, id=%d, vectorize=%d, samplelen=%d, %s", node_name(n), list_length(&n->hooks), n->id, n->vectorize, n->samplelen, name_long);
 			free(name_long);
 		}
 		else

@@ -193,7 +193,7 @@ check:		if (optarg == endptr)
 	if (!p)
 		error("Unknown hook function '%s'", hook);
 
-	ret = hook_init(&h, &p->hook, NULL);
+	ret = hook_init(&h, &p->hook, NULL, NULL);
 	if (ret)
 		error("Failed to initialize hook");
 

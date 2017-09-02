@@ -27,7 +27,7 @@
 #include "hook.h"
 #include "plugin.h"
 #include "stats.h"
-#include "path.h"
+#include "node.h"
 #include "sample.h"
 
 struct drop {
@@ -67,8 +67,8 @@ static int drop_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 			dist = cur->sequence - (int32_t) prev->sequence;
 			if (dist <= 0) {
 				debug(10, "Reordered sample: sequence=%u, distance=%d", cur->sequence, dist);
-				if (h->path && h->path->stats)
-					stats_update(h->path->stats->delta, STATS_REORDERED, dist);
+				if (h->node && h->node->stats)
+					stats_update(h->node->stats->delta, STATS_REORDERED, dist);
 			}
 			else
 				goto ok;
@@ -105,8 +105,8 @@ static struct plugin p = {
 	.description	= "Drop messages with reordered sequence numbers",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
+		.flags	= HOOK_BUILTIN | HOOK_NODE,
 		.priority = 3,
-		.builtin = true,
 		.read	= drop_read,
 		.start	= drop_start,
 		.stop	= drop_stop,

@@ -101,7 +101,7 @@ static int print_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int print_read(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int print_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct print *p = h->_vd;
 
@@ -115,12 +115,13 @@ static struct plugin p = {
 	.description	= "Print the message to stdout",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
+		.flags	= HOOK_NODE | HOOK_PATH,
 		.priority = 99,
 		.init	= print_init,
 		.parse	= print_parse,
 		.start	= print_start,
 		.stop	= print_stop,
-		.read	= print_read,
+		.process= print_process,
 		.size	= sizeof(struct print)
 	}
 };

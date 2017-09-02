@@ -29,7 +29,7 @@
 #include "hook.h"
 #include "plugin.h"
 #include "stats.h"
-#include "path.h"
+#include "node.h"
 
 struct stats_collect {
 	struct stats stats;
@@ -50,8 +50,8 @@ static int stats_collect_init(struct hook *h)
 	/* Register statistic object to path.
 	 *
 	 * This allows the path code to update statistics. */
-	if (h->path)
-		h->path->stats = &p->stats;
+	if (h->node)
+		h->node->stats = &p->stats;
 
 	/* Set default values */
 	p->format = STATS_FORMAT_HUMAN;
@@ -165,6 +165,7 @@ static struct plugin p = {
 	.description	= "Collect statistics for the current path",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
+		.flags	= HOOK_NODE,
 		.priority = 2,
 		.init	= stats_collect_init,
 		.destroy= stats_collect_destroy,

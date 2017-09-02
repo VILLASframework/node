@@ -53,7 +53,11 @@ struct node
 
 	int id;			/**< An id of this node which is only unique in the scope of it's super-node (VILLASnode instance). */
 
-	unsigned long sequence;	/**< This is a counter of received samples, in case the node-type does not generate sequence numbers itself. */
+	unsigned sequence;	/**< This is a counter of received samples, in case the node-type does not generate sequence numbers itself. */
+
+	struct stats *stats;	/**< Statistic counters. This is a pointer to the statistic hooks private data. */
+
+	struct list hooks;	/**< List of write hooks (struct hook). */
 
 	enum state state;
 

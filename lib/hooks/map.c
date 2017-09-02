@@ -72,7 +72,7 @@ static int map_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int map_read(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int map_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	int ret;
 	struct map *p = h->_vd;
@@ -104,11 +104,12 @@ static struct plugin p = {
 	.description	= "Remap values and / or add header, timestamp values to the sample",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
+		.flags	= HOOK_PATH,
 		.priority = 99,
 		.init	= map_init,
 		.destroy= map_destroy,
 		.parse	= map_parse,
-		.read	= map_read,
+		.process= map_process,
 		.size	= sizeof(struct map)
 	}
 };

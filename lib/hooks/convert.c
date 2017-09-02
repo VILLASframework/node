@@ -107,6 +107,7 @@ static struct plugin p = {
 	.description	= "Convert message from / to floating-point / integer",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
+		.flags	= HOOK_PATH | HOOK_NODE,
 		.priority = 99,
 		.init	= convert_init,
 		.parse	= convert_parse,

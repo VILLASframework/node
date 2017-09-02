@@ -32,7 +32,7 @@
 #include "plugin.h"
 #include "config_helper.h"
 
-int hook_init(struct hook *h, struct hook_type *vt, struct path *p)
+int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node *n)
 {
 	int ret;
 
@@ -41,6 +41,7 @@ int hook_init(struct hook *h, struct hook_type *vt, struct path *p)
 	h->priority = vt->priority;
 
 	h->path = p;
+	h->node = n;
 
 	h->_vt = vt;
 	h->_vd = alloc(vt->size);
@@ -206,7 +207,7 @@ int hook_cmp_priority(const void *a, const void *b)
 	return ha->priority - hb->priority;
 }
 
-int hook_parse_list(struct list *list, json_t *cfg, struct path *o)
+int hook_parse_list(struct list *list, json_t *cfg, struct path *o, struct node *n)
 {
 	if (!json_is_array(cfg))
 		error("Hooks must be configured as a list of objects");
@@ -229,7 +230,7 @@ int hook_parse_list(struct list *list, json_t *cfg, struct path *o)
 
 		struct hook *h = alloc(sizeof(struct hook));
 
-		ret = hook_init(h, &p->hook, o);
+		ret = hook_init(h, &p->hook, o, n);
 		if (ret)
 			jerror(&err, "Failed to initialize hook");
 

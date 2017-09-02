@@ -170,6 +170,20 @@ int main(int argc, char *argv[])
 					hook_periodic(h);
 				}
 			}
+
+			for (size_t i = 0; i < list_length(&sn.nodes); i++) {
+				struct node *n = list_at(&sn.nodes, i);
+
+				if (n->state != STATE_STARTED)
+					continue;
+
+				for (size_t j = 0; j < list_length(&n->hooks); j++) {
+					struct hook *h = list_at(&n->hooks, j);
+
+					hook_periodic(h);
+				}
+			}
+
 		}
 	}
 	else {

@@ -82,6 +82,7 @@ static struct plugin p = {
 	.description	= "Downsamping by integer factor",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
+		.flags	= HOOK_NODE | HOOK_PATH,
 		.priority = 99,
 		.init	= decimate_init,
 		.parse	= decimate_parse,

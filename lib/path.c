@@ -35,12 +35,33 @@
 #include "queue.h"
 #include "hook.h"
 #include "plugin.h"
-#include "super_node.h"
 #include "memory.h"
 #include "stats.h"
 #include "node.h"
 
-static void path_read_source(struct path *p, struct path_source *ps)
+static int path_source_init(struct path_source *ps)
+{
+	int ret;
+
+	ret = pool_init(&ps->pool, MAX(DEFAULT_QUEUELEN, ps->node->vectorize), SAMPLE_LEN(ps->node->samplelen), &memtype_hugepage);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+static int path_source_destroy(struct path_source *ps)
+{
+	int ret;
+
+	ret = pool_destroy(&ps->pool);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+static void path_source_read(struct path *p, struct path_source *ps)
 {
 	int ready, recv, mux, enqueue, enqueued;
 	int cnt = ps->node->vectorize;
@@ -55,19 +76,12 @@ static void path_read_source(struct path *p, struct path_source *ps)
 
 	/* Read ready samples and store them to blocks pointed by smps[] */
 	recv = node_read(ps->node, read_smps, ready);
-	if (recv < 0)
+	if (recv == 0)
+		goto out2;
+	else if (recv < 0)
 		error("Failed to receive message from node %s", node_name(ps->node));
 	else if (recv < ready)
 		warn("Partial read for path %s: read=%u, expected=%u", path_name(p), recv, ready);
-	
-	/* Run read hooks */
-	enqueue = hook_read_list(&p->hooks, read_smps, recv);
-	if (enqueue != recv) {
-		debug(LOG_PATH | 10, "Hooks skipped %u out of %u samples for path %s", recv - enqueue, recv, path_name(p));
-
-		if (p->stats)
-			stats_update(p->stats->delta, STATS_SKIPPED, recv - enqueue);
-	}
 
 	/* Mux samples */
 	mux = sample_alloc(&p->pool, muxed_smps, recv);
@@ -84,12 +98,8 @@ static void path_read_source(struct path *p, struct path_source *ps)
 
 	/* Run processing hooks */
 	enqueue = hook_process_list(&p->hooks, muxed_smps, mux);
-	if (enqueue != mux) {
-		debug(LOG_PATH | 10, "Hooks skipped %u out of %u samples for path %s", mux - enqueue, recv, path_name(p));
-
-		if (p->stats)
-			stats_update(p->stats->delta, STATS_SKIPPED, mux - enqueue);
-	}
+	if (enqueue == 0)
+		goto out1;
 
 	/* Keep track of the lowest index that wasn't enqueued;
 	 * all following samples must be freed here */
@@ -106,7 +116,30 @@ static void path_read_source(struct path *p, struct path_source *ps)
 		debug(LOG_PATH | 15, "Enqueued %u samples from %s to queue of %s", enqueued, node_name(ps->node), node_name(pd->node));
 	}
 
-	sample_put_many(muxed_smps, ready);
+out1:	sample_put_many(muxed_smps, recv);
+out2:	sample_put_many(read_smps, ready);
+}
+
+static int path_destination_init(struct path_destination *pd, int queuelen)
+{
+	int ret;
+
+	ret = queue_init(&pd->queue, queuelen, &memtype_hugepage);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+static int path_destination_destroy(struct path_destination *pd)
+{
+	int ret;
+
+	ret = queue_destroy(&pd->queue);
+	if (ret)
+		return ret;
+
+	return 0;
 }
 
 static void path_poll(struct path *p)
@@ -122,7 +155,7 @@ static void path_poll(struct path *p)
 		struct path_source *ps = list_at(&p->sources, i);
 
 		if (p->reader.pfds[i].revents & POLLIN) {
-			path_read_source(p, ps);
+			path_source_read(p, ps);
 			updates++;
 		}
 	}
@@ -135,7 +168,6 @@ static void path_write(struct path *p)
 
 		int cnt = pd->node->vectorize;
 		int sent;
-		int tosend;
 		int available;
 		int released;
 
@@ -151,15 +183,11 @@ static void path_write(struct path *p)
 
 			debug(LOG_PATH | 15, "Dequeued %u samples from queue of node %s which is part of path %s", available, node_name(pd->node), path_name(p));
 
-			tosend = hook_write_list(&p->hooks, smps, available);
-			if (tosend == 0)
-				continue;
-
-			sent = node_write(pd->node, smps, tosend);
+			sent = node_write(pd->node, smps, available);
 			if (sent < 0)
 				error("Failed to sent %u samples to node %s", cnt, node_name(pd->node));
-			else if (sent < tosend)
-				warn("Partial write to node %s: written=%d, expected=%d", node_name(pd->node), sent, tosend);
+			else if (sent < available)
+				warn("Partial write to node %s: written=%d, expected=%d", node_name(pd->node), sent, available);
 
 			released = sample_put_many(smps, sent);
 
@@ -174,29 +202,20 @@ static void * path_run(void *arg)
 	struct path *p = arg;
 
 	for (;;) {
-		path_poll(p);
+		/* We only need to poll in case there is more than one source */
+		if (list_length(&p->sources) > 1)
+			path_poll(p);
+
 		path_write(p);
 	}
 
 	return NULL;
 }
 
-static int path_source_destroy(struct path_source *ps)
+int path_init(struct path *p)
 {
-	pool_destroy(&ps->pool);
+	int ret;
 
-	return 0;
-}
-
-static int path_destination_destroy(struct path_destination *pd)
-{
-	queue_destroy(&pd->queue);
-
-	return 0;
-}
-
-int path_init(struct path *p, struct super_node *sn)
-{
 	assert(p->state == STATE_DESTROYED);
 
 	list_init(&p->hooks);
@@ -210,7 +229,25 @@ int path_init(struct path *p, struct super_node *sn)
 	p->enabled = 1;
 	p->queuelen = DEFAULT_QUEUELEN;
 
-	p->super_node = sn;
+	/* Add internal hooks if they are not already in the list */
+	for (size_t i = 0; i < list_length(&plugins); i++) {
+		struct plugin *q = list_at(&plugins, i);
+
+		if (q->type != PLUGIN_TYPE_HOOK)
+			continue;
+
+		struct hook_type *vt = &q->hook;
+
+		if ((vt->flags & HOOK_PATH) && (vt->flags & HOOK_BUILTIN)) {
+			struct hook *h = alloc(sizeof(struct hook));
+
+			ret = hook_init(h, vt, p, NULL);
+			if (ret)
+				return ret;
+
+			list_push(&p->hooks, h);
+		}
+	}
 
 	p->state = STATE_INITIALIZED;
 
@@ -223,27 +260,6 @@ int path_init2(struct path *p)
 
 	assert(p->state == STATE_CHECKED);
 
-	/* Add internal hooks if they are not already in the list*/
-	for (size_t i = 0; i < list_length(&plugins); i++) {
-		struct plugin *q = list_at(&plugins, i);
-
-		if (q->type == PLUGIN_TYPE_HOOK) {
-			struct hook_type *vt = &q->hook;
-
-			if (vt->builtin) {
-				struct hook *h = alloc(sizeof(struct hook));
-
-				ret = hook_init(h, vt, p);
-				if (ret) {
-					free(h);
-					return ret;
-				}
-
-				list_push(&p->hooks, h);
-			}
-		}
-	}
-
 	/* We sort the hooks according to their priority before starting the path */
 	list_sort(&p->hooks, hook_cmp_priority);
 
@@ -251,30 +267,34 @@ int path_init2(struct path *p)
 	for (size_t i = 0; i < list_length(&p->destinations); i++) {
 		struct path_destination *pd = list_at(&p->destinations, i);
 
-		ret = queue_init(&pd->queue, p->queuelen, &memtype_hugepage);
+		ret = path_destination_init(pd, p->queuelen);
 		if (ret)
 			return ret;
 	}
 
 	/* Initialize sources */
+	for (size_t i = 0; i < list_length(&p->sources); i++) {
+		struct path_source *ps = list_at(&p->sources, i);
+
+		ret = path_source_init(ps);
+		if (ret)
+			return ret;
+	}
+
+	/* Calc sample length of path */
 	p->samplelen = 0;
 	for (size_t i = 0; i < list_length(&p->sources); i++) {
 		struct path_source *ps = list_at(&p->sources, i);
 
-		/** @todo replace p->queuelen with ps->node->vectorize ? */
-		ret = pool_init(&ps->pool, p->queuelen, SAMPLE_LEN(ps->node->samplelen), &memtype_hugepage);
-		if (ret)
-			error("Failed to allocate memory pool for path");
-		
 		for (size_t i = 0; i < list_length(&ps->mappings); i++) {
 			struct mapping_entry *me = list_at(&ps->mappings, i);
-			
+
 			if (me->offset + me->length > p->samplelen)
 				p->samplelen = me->offset + me->length;
 		}
 	}
-	
-	ret = pool_init(&p->pool, list_length(&p->destinations) * p->queuelen, SAMPLE_LEN(p->samplelen), &memtype_hugepage);
+
+	ret = pool_init(&p->pool, MAX(1, list_length(&p->destinations)) * p->queuelen, SAMPLE_LEN(p->samplelen), &memtype_hugepage);
 	if (ret)
 		return ret;
 
@@ -353,10 +373,11 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 			ps = alloc(sizeof(struct path_source));
 
 			ps->node = me->node;
-			
+
+			ps->mappings.state = STATE_DESTROYED;
+
 			list_init(&ps->mappings);
-			list_init(&ps->hooks);
-			
+
 			list_push(&p->sources, ps);
 		}
 
@@ -369,14 +390,12 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 		struct path_destination *pd = alloc(sizeof(struct path_destination));
 
 		pd->node = n;
-		
-		list_init(&pd->hooks);
 
 		list_push(&p->destinations, pd);
 	}
 
 	if (json_hooks) {
-		ret = hook_parse_list(&p->hooks, json_hooks, p);
+		ret = hook_parse_list(&p->hooks, json_hooks, p, NULL);
 		if (ret)
 			return ret;
 	}
@@ -571,7 +590,7 @@ int path_reverse(struct path *p, struct path *r)
 		struct hook *h = list_at(&p->hooks, i);
 		struct hook *g = alloc(sizeof(struct hook));
 
-		ret = hook_init(g, h->_vt, r);
+		ret = hook_init(g, h->_vt, r, NULL);
 		if (ret)
 			return ret;
 

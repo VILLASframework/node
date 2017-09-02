@@ -43,9 +43,15 @@
 struct hook;
 struct sample;
 
+enum hook_flags {
+	HOOK_BUILTIN	= (1 << 0), /**< Should we add this hook by default to every path?. */
+	HOOK_PATH	= (1 << 1), /**< This hook type is used by paths. */
+	HOOK_NODE	= (1 << 2)  /**< This hook type is used by nodes. */
+};
+
 struct hook_type {
 	int priority;		/**< Default priority of this hook type. */
-	bool builtin;		/**< Should we add this hook by default to every path?. */
+	int flags;
 
 	size_t size;		/**< Size of allocation for struct hook::_vd */
 

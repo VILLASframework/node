@@ -159,7 +159,7 @@ int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nod
 		}
 		else {
 			e->data.offset = 0;
-			e->length = e->node->samplelen;
+			e->length = e->node ? e->node->samplelen : 0;
 		}
 	}
 	else

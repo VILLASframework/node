@@ -47,6 +47,7 @@ struct hook {
 	enum state state;
 
 	struct path *path;
+	struct node *node;
 
 	struct hook_type *_vt;	/**< C++ like Vtable pointer. */
 	void *_vd;		/**< Private data for this hook. This pointer can be used to pass data between consecutive calls of the callback. */
@@ -56,7 +57,7 @@ struct hook {
 	json_t *cfg;		/**< A JSON object containing the configuration of the hook. */
 };
 
-int hook_init(struct hook *h, struct hook_type *vt, struct path *p);
+int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node *n);
 
 int hook_parse(struct hook *h, json_t *cfg);
 int hook_parse_cli(struct hook *h, int argc, char *argv[]);
@@ -94,4 +95,4 @@ int hook_cmp_priority(const void *a, const void *b);
  *    hooks = [ "print" ]
  * }
  */
-int hook_parse_list(struct list *list, json_t *cfg, struct path *p);
+int hook_parse_list(struct list *list, json_t *cfg, struct path *p, struct node *n);

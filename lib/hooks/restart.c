@@ -26,7 +26,7 @@
 
 #include "hook.h"
 #include "plugin.h"
-#include "path.h"
+#include "node.h"
 #include "sample.h"
 
 struct restart {
@@ -58,19 +58,19 @@ static int restart_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 	struct restart *r = h->_vd;
 	struct sample *prev, *cur = NULL;
 
-	assert(h->path);
+	assert(h->node);
 
 	for (i = 0, prev = r->prev; i < *cnt; i++, prev = cur) {
 		cur = smps[i];
 
 		if (prev) {
 			if (cur->sequence == 0 && prev->sequence <= UINT32_MAX - 32) {
-				warn("Simulation for path %s restarted (previous->seq=%u, current->seq=%u)",
-					path_name(h->path), prev->sequence, cur->sequence);
+				warn("Simulation from node %s restarted (previous->seq=%u, current->seq=%u)",
+					node_name(h->node), prev->sequence, cur->sequence);
 
 				/* Run restart hooks */
-				for (size_t i = 0; i < list_length(&h->path->hooks); i++) {
-					struct hook *k = list_at(&h->path->hooks, i);
+				for (size_t i = 0; i < list_length(&h->node->hooks); i++) {
+					struct hook *k = list_at(&h->node->hooks, i);
 
 					hook_restart(k);
 				}
@@ -90,11 +90,11 @@ static int restart_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 
 static struct plugin p = {
 	.name		= "restart",
-	.description	= "Call restart hooks for current path",
+	.description	= "Call restart hooks for current node",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
+		.flags	= HOOK_NODE | HOOK_BUILTIN,
 		.priority = 1,
-		.builtin = true,
 		.read	= restart_read,
 		.start	= restart_start,
 		.stop	= restart_stop,

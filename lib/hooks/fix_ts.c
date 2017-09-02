@@ -59,8 +59,8 @@ static struct plugin p = {
 	.description	= "Update timestamps of sample if not set",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
+		.flags	= HOOK_NODE | HOOK_BUILTIN,
 		.priority = 0,
-		.builtin = true,
 		.read	= fix_ts_read,
 	}
 };

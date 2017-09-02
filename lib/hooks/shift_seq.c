@@ -63,6 +63,7 @@ static struct plugin p = {
 	.description	= "Shift sequence number of samples",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
+		.flags	= HOOK_NODE | HOOK_PATH,
 		.priority = 99,
 		.parse	= shift_seq_parse,
 		.read	= shift_seq_read,

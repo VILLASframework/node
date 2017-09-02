@@ -48,16 +48,13 @@ struct path_source {
 	struct node *node;
 
 	struct pool pool;
-	
-	struct list hooks;		/**< Read Hooks. */
-	struct list mappings;		/**< List of struct mapping_entry */
+	struct list mappings;		/**< List of mappings (struct mapping_entry). */
 };
 
 struct path_destination {
 	struct node *node;
-	struct queue queue;
 
-	struct list hooks;		/**< Write Hooks. */
+	struct queue queue;
 };
 
 /** The datastructure for a path. */
@@ -74,7 +71,7 @@ struct path {
 
 	struct list sources;		/**< List of all incoming nodes (struct path_source). */
 	struct list destinations;	/**< List of all outgoing nodes (struct path_destination). */
-	struct list hooks;		/**< Processing hooks. */
+	struct list hooks;		/**< List of processing hooks (struct hook). */
 
 	int enabled;			/**< Is this path enabled. */
 	int reverse;			/**< This path as a matching reverse path. */
@@ -82,19 +79,14 @@ struct path {
 	int samplelen;			/**< Will be calculated based on path::sources.mappings */
 	int sequence;
 
-	pthread_t tid;			/**< The thread id for this path. */
-
 	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
 
-	struct stats *stats;		/**< Statistic counters. This is a pointer to the statistic hooks private data. */
-
-	struct super_node *super_node;	/**< The super node this path belongs to. */
-
+	pthread_t tid;			/**< The thread id for this path. */
 	json_t *cfg;			/**< A JSON object containing the configuration of the path. */
 };
 
 /** Initialize internal data structures. */
-int path_init(struct path *p, struct super_node *sn);
+int path_init(struct path *p);
 
 int path_init2(struct path *p);
 

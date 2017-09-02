@@ -129,6 +129,7 @@ static struct plugin p = {
 	.description	= "Calc jitter, mean and variance of GPS vs NTP TS",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
+		.flags	= HOOK_NODE,
 		.priority = 0,
 		.init	= jitter_calc_init,
 		.destroy= jitter_calc_deinit,
