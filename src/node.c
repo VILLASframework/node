@@ -129,19 +129,19 @@ int main(int argc, char *argv[])
 	ret = signals_init(quit);
 	if (ret)
 		error("Failed to initialize signal subsystem");
-	
+
 	ret = super_node_init(&sn);
 	if (ret)
 		error("Failed to initialize super node");
-	
+
 	ret = super_node_parse_cli(&sn, argc, argv);
 	if (ret)
 		error("Failed to parse command line arguments");
-	
+
 	ret = super_node_check(&sn);
 	if (ret)
 		error("Failed to verify configuration");
-	
+
 	ret = super_node_start(&sn);
 	if (ret)
 		error("Failed to start super node");
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 		stats_print_header(STATS_FORMAT_HUMAN);
 
 		struct task t;
-	
+
 		ret = task_init(&t, 1.0 / sn.stats, CLOCK_REALTIME);
 		if (ret)
 			error("Failed to create stats timer");

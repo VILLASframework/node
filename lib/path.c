@@ -73,15 +73,15 @@ static void path_read_source(struct path *p, struct path_source *ps)
 	mux = sample_alloc(&p->pool, muxed_smps, recv);
 	if (mux != recv)
 		warn("Pool underrun for path %s", path_name(p));
-	
+
 	for (int i = 0; i < mux; i++) {
 		mapping_remap(&ps->mappings, p->last_sample, read_smps[i], NULL);
-		
+
 		p->last_sample->sequence = p->sequence++;
 
 		sample_copy(muxed_smps[i], p->last_sample);
 	}
-	
+
 	/* Run processing hooks */
 	enqueue = hook_process_list(&p->hooks, muxed_smps, mux);
 	if (enqueue != mux) {
@@ -112,11 +112,11 @@ static void path_read_source(struct path *p, struct path_source *ps)
 static void path_poll(struct path *p)
 {
 	int ret;
-	
+
 	ret = poll(p->reader.pfds, p->reader.nfds, -1);
 	if (ret < 0)
 		serror("Failed to poll");
-	
+
 	int updates = 0;
 	for (int i = 0; i < p->reader.nfds; i++) {
 		struct path_source *ps = list_at(&p->sources, i);
@@ -202,7 +202,7 @@ int path_init(struct path *p, struct super_node *sn)
 	list_init(&p->hooks);
 	list_init(&p->destinations);
 	list_init(&p->sources);
-	
+
 	p->_name = NULL;
 
 	/* Default values */
@@ -277,13 +277,13 @@ int path_init2(struct path *p)
 	ret = pool_init(&p->pool, list_length(&p->destinations) * p->queuelen, SAMPLE_LEN(p->samplelen), &memtype_hugepage);
 	if (ret)
 		return ret;
-	
+
 	sample_alloc(&p->pool, &p->last_sample, 1);
-	
+
 	/* Prepare poll() */
 	p->reader.nfds = list_length(&p->sources);
 	p->reader.pfds = alloc(sizeof(struct pollfd) * p->reader.nfds);
-	
+
 	for (int i = 0; i < p->reader.nfds; i++) {
 		struct path_source *ps = list_at(&p->sources, i);
 
@@ -336,22 +336,22 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 
 	for (size_t i = 0; i < list_length(&sources); i++) {
 		struct mapping_entry *me = list_at(&sources, i);
-		
+
 		struct path_source *ps = NULL;
-		
+
 		/* Check if there is already a path_source for this source */
 		for (size_t j = 0; j < list_length(&p->sources); j++) {
 			struct path_source *pt = list_at(&p->sources, j);
-			
+
 			if (pt->node == me->node) {
 				ps = pt;
 				break;
 			}
 		}
-		
+
 		if (!ps) {
 			ps = alloc(sizeof(struct path_source));
-			
+
 			ps->node = me->node;
 			
 			list_init(&ps->mappings);
@@ -442,7 +442,7 @@ int path_start(struct path *p)
 		if (ret)
 			return ret;
 	}
-	
+
 	p->sequence = 0;
 
 	/* Start one thread per path for sending to destinations */
@@ -486,13 +486,12 @@ int path_destroy(struct path *p)
 		return 0;
 
 	list_destroy(&p->hooks, (dtor_cb_t) hook_destroy, true);
-	
 	list_destroy(&p->sources, (dtor_cb_t) path_source_destroy, true);
 	list_destroy(&p->destinations, (dtor_cb_t) path_destination_destroy, true);
 
 	if (p->_name)
 		free(p->_name);
-	
+
 	pool_destroy(&p->pool);
 
 	p->state = STATE_DESTROYED;
@@ -510,7 +509,7 @@ const char * path_name(struct path *p)
 
 			strcatf(&p->_name, " %s", node_name_short(ps->node));
 		}
-		
+
 		strcatf(&p->_name, " ] " CLR_MAG("=>") " [");
 
 		for (size_t i = 0; i < list_length(&p->destinations); i++) {
@@ -533,7 +532,7 @@ int path_uses_node(struct path *p, struct node *n)
 		if (pd->node == n)
 			return 0;
 	}
-	
+
 	for (size_t i = 0; i < list_length(&p->sources); i++) {
 		struct path_source *ps = list_at(&p->sources, i);
 
@@ -550,10 +549,10 @@ int path_reverse(struct path *p, struct path *r)
 
 	if (list_length(&p->destinations) != 1 || list_length(&p->sources) != 1)
 		return -1;
-	
+
 	/* General */
 	r->enabled = p->enabled;
-	
+
 	/* Source / Destinations */
 	struct path_destination *orig_pd = list_first(&p->destinations);
 	struct path_source      *orig_ps = list_first(&p->sources);
@@ -562,7 +561,7 @@ int path_reverse(struct path *p, struct path *r)
 	struct path_source      *new_ps = alloc(sizeof(struct path_source));
 
 	new_pd->node     = orig_ps->node;
-	
+
 	new_ps->node      = orig_pd->node;
 
 	list_push(&r->destinations, new_pd);

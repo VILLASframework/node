@@ -39,6 +39,7 @@ int hook_init(struct hook *h, struct hook_type *vt, struct path *p)
 	assert(h->state == STATE_DESTROYED);
 
 	h->priority = vt->priority;
+
 	h->path = p;
 
 	h->_vt = vt;

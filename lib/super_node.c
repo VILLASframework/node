@@ -74,7 +74,7 @@ int super_node_init(struct super_node *sn)
 int super_node_parse_uri(struct super_node *sn, const char *uri)
 {
 	json_error_t err;
-	
+
 	info("Parsing configuration");
 
 	if (uri) { INDENT
@@ -156,7 +156,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 			afclose(af);
 		else if (f != stdin)
 			fclose(f);
-		
+
 		sn->uri = strdup(uri);
 
 		return super_node_parse_json(sn, sn->cfg);

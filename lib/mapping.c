@@ -37,23 +37,23 @@ int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nod
 	cpy = strdup(str);
 	if (!cpy)
 		return -1;
-	
+
 	if (nodes) {
 		node = strtok(cpy, ".");
 		if (!node)
 			goto invalid_format;
-		
+
 		e->node = list_lookup(nodes, node);
 		if (!e->node)
 			goto invalid_format;
-		
+
 		type = strtok(NULL, ".[");
 		if (!type)
 			type = "data";
 	}
 	else {
 		e->node = NULL;
-	
+
 		type = strtok(cpy, ".[");
 		if (!type)
 			goto invalid_format;
@@ -216,7 +216,7 @@ int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes)
 		ret = mapping_parse(e, json_entry, nodes);
 		if (ret)
 			return ret;
-		
+
 		e->offset = off;
 		off += e->length;
 
@@ -230,14 +230,14 @@ int mapping_update(struct mapping_entry *me, struct sample *remapped, struct sam
 {
 	int len = me->length;
 	int off = me->offset;
-	
+
 	/* me->length == 0 means that we want to take all values */
 	if (!len)
 		len = original->length;
-	
+
 	if (len + off > remapped->capacity)
 		return -1;
-	
+
 	if (len + off > remapped->length)
 		remapped->length = len + off;
 
@@ -332,7 +332,7 @@ int mapping_update(struct mapping_entry *me, struct sample *remapped, struct sam
 
 			break;
 	}
-	
+
 	return 0;
 }
 

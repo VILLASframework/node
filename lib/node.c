@@ -207,7 +207,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 			readd = n->_vt->read(n, &smps[nread], MIN(cnt - nread, n->_vt->vectorize));
 			if (readd < 0)
 				return readd;
-			
+
 			nread += readd;
 			debug(LOG_NODES | 5, "Received %u samples from node %s", readd, node_name(n));
 		}

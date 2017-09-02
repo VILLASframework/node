@@ -37,11 +37,11 @@ static struct stats_desc {
 	const char *desc;
 	int hist_buckets;
 } stats_metrics[] = {
-	{ "skipped",	  "samples",	"Skipped samples and the distance between them",		25 },
-	{ "reordered",	  "samples",	"Reordered samples and the distance between them",		25 },
-	{ "gap_sample",	  "seconds",	"Inter-message timestamps (as sent by remote)",			25 },
-	{ "gap_received", "seconds",	"Inter-message arrival time (as seen by this instance)",	25 },
-	{ "owd",	  "seconds",	"One-way-delay (OWD) of received messages",			25 }
+	{ "skipped",	  "samples", "Skipped samples and the distance between them",		25 },
+	{ "reordered",	  "samples", "Reordered samples and the distance between them",		25 },
+	{ "gap_sample",	  "seconds", "Inter-message timestamps (as sent by remote)",		25 },
+	{ "gap_received", "seconds", "Inter-message arrival time (as seen by this instance)",	25 },
+	{ "owd",	  "seconds", "One-way-delay (OWD) of received messages",		25 }
 };
 
 int stats_lookup_format(const char *str)
@@ -158,14 +158,14 @@ void stats_reset(struct stats *s)
 }
 
 static struct table_column stats_cols[] = {
-	{ 35, "Path", "%s", NULL,   TABLE_ALIGN_LEFT },
-	{ 10, "Cnt",  "%ju", "p",   TABLE_ALIGN_RIGHT },
-	{ 10, "OWD last",  "%f",  "S",   TABLE_ALIGN_RIGHT },
-	{ 10, "OWD mean",  "%f",  "S",   TABLE_ALIGN_RIGHT },
-	{ 10, "Rate last", "%f",  "p/S", TABLE_ALIGN_RIGHT },
-	{ 10, "Rate mean", "%f",  "p/S", TABLE_ALIGN_RIGHT },
-	{ 10, "Drop", "%ju", "p",   TABLE_ALIGN_RIGHT },
-	{ 10, "Skip", "%ju", "p",   TABLE_ALIGN_RIGHT }
+	{ 35, "Path",		"%s",	NULL,	TABLE_ALIGN_LEFT },
+	{ 10, "Cnt",		"%ju",	"p",	TABLE_ALIGN_RIGHT },
+	{ 10, "OWD last",	"%f",	"S",	TABLE_ALIGN_RIGHT },
+	{ 10, "OWD mean",	"%f",	"S",	TABLE_ALIGN_RIGHT },
+	{ 10, "Rate last",	"%f",	"p/S",	TABLE_ALIGN_RIGHT },
+	{ 10, "Rate mean",	"%f",	"p/S",	TABLE_ALIGN_RIGHT },
+	{ 10, "Drop",		"%ju",	"p",	TABLE_ALIGN_RIGHT },
+	{ 10, "Skip",		"%ju",	"p",	TABLE_ALIGN_RIGHT }
 };
 
 static struct table stats_table = {

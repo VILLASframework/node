@@ -46,6 +46,7 @@ struct super_node;
 
 struct path_source {
 	struct node *node;
+
 	struct pool pool;
 	
 	struct list hooks;		/**< Read Hooks. */
@@ -62,12 +63,12 @@ struct path_destination {
 /** The datastructure for a path. */
 struct path {
 	enum state state;		/**< Path state. */
-	
+
 	struct {
 		int nfds;
 		struct pollfd *pfds;
 	} reader;
-	
+
 	struct pool pool;
 	struct sample *last_sample;
 

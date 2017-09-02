@@ -81,7 +81,6 @@ int signal_parse(struct node *n, json_t *cfg)
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-
 	if (type) {
 		ret = signal_lookup_type(type);
 		if (ret == -1)
@@ -173,7 +172,7 @@ int signal_open(struct node *n)
 	s->counter = 0;
 	s->started = time_now();
 	s->last = alloc(sizeof(double) * s->values);
-	
+
 	for (int i = 0; i < s->values; i++)
 		s->last[i] = s->offset;
 
@@ -197,9 +196,9 @@ int signal_close(struct node *n)
 		if (ret)
 			return ret;
 	}
-	
+
 	free(s->last);
-	
+
 	return 0;
 }
 
@@ -293,7 +292,7 @@ char * signal_print(struct node *n)
 int signal_fd(struct node *n)
 {
 	struct signal *s = n->_vd;
-	
+
 	return task_fd(&s->task);
 }
 
