@@ -275,7 +275,7 @@ int web_stop(struct web *w)
 		if (ret)
 			serror("Failed to join Web worker thread");
 	}
-	
+
 	w->state = STATE_STOPPED;
 
 	return 0;

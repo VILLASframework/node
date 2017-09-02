@@ -183,7 +183,6 @@ int main(int argc, char *argv[])
 					hook_periodic(h);
 				}
 			}
-
 		}
 	}
 	else {

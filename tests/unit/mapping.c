@@ -41,7 +41,7 @@ Test(mapping, parse_nodes)
 	list_push(&n, &n1);
 	list_push(&n, &n2);
 	list_push(&n, &n3);
-	
+
 	ret = mapping_parse_str(&m, "apple.ts.origin", &n);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, &n1);
@@ -61,14 +61,14 @@ Test(mapping, parse_nodes)
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 1);
 	cr_assert_eq(m.length, 2);
-	
+
 	ret = mapping_parse_str(&m, "carrot", &n);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, &n3);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 0);
 	cr_assert_eq(m.length, 0);
-	
+
 	ret = list_destroy(&n, NULL, false);
 	cr_assert_eq(ret, 0);
 }
@@ -111,13 +111,13 @@ Test(mapping, parse)
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 22);
 	cr_assert_eq(m.length, 1);
-	
+
 	ret = mapping_parse_str(&m, "data", NULL);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 0);
 	cr_assert_eq(m.length, 0);
-	
+
 	ret = mapping_parse_str(&m, "data[]", NULL);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
