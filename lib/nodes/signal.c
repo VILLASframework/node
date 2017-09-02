@@ -208,7 +208,7 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 	struct signal *s = n->_vd;
 	struct sample *t = smps[0];
 
-	struct timespec now;
+	struct timespec ts_recv;
 	int steps;
 
 	assert(cnt == 1);
@@ -220,22 +220,22 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 		if (steps > 1)
 			warn("Missed steps: %u", steps);
 
-		now = time_now();
+		ts_recv = time_now();
 	}
 	else {
 		struct timespec offset = time_from_double(s->counter * 1.0 / s->rate);
 
-		now = time_add(&s->started, &offset);
+		ts_recv = time_add(&s->started, &offset);
 
 		steps = 1;
 	}
 
-	double running = time_delta(&s->started, &now);
+	double running = time_delta(&s->started, &ts_recv);
 
 	t->ts.origin =
-	t->ts.received = now;
+	t->ts.received = ts_recv;
 	t->sequence = s->counter;
-	t->length = s->values;
+	t->length = n->samplelen;
 
 	for (int i = 0; i < MIN(s->values, t->capacity); i++) {
 		int rtype = (s->type != SIGNAL_TYPE_MIXED) ? s->type : i % 5;
