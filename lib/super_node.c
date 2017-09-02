@@ -46,6 +46,7 @@ int super_node_init(struct super_node *sn)
 {
 	assert(sn->state == STATE_DESTROYED);
 
+	log_init(&sn->log, V, LOG_ALL);
 #ifdef WITH_API
 	api_init(&sn->api, sn);
 #endif /* WITH_API */
