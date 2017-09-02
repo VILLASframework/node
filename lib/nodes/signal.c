@@ -91,6 +91,9 @@ int signal_parse(struct node *n, json_t *cfg)
 	else
 		s->type = SIGNAL_TYPE_MIXED;
 
+	/* We know the expected number of values. */
+	n->samplelen = s->values;
+
 	return 0;
 }
 
