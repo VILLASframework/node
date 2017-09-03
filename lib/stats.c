@@ -25,7 +25,7 @@
 #include "stats.h"
 #include "hist.h"
 #include "timing.h"
-#include "path.h"
+#include "node.h"
 #include "sample.h"
 #include "utils.h"
 #include "log.h"
@@ -38,6 +38,7 @@ static struct stats_desc {
 	int hist_buckets;
 } stats_metrics[] = {
 	{ "skipped",	  "samples", "Skipped samples and the distance between them",		25 },
+	{ "time",	  "seconds", "The processing time per sample within VILLAsnode",	25 },
 	{ "reordered",	  "samples", "Reordered samples and the distance between them",		25 },
 	{ "gap_sample",	  "seconds", "Inter-message timestamps (as sent by remote)",		25 },
 	{ "gap_received", "seconds", "Inter-message arrival time (as seen by this instance)",	25 },
@@ -76,52 +77,22 @@ int stats_destroy(struct stats *s)
 	return 0;
 }
 
-void stats_update(struct stats_delta *d, enum stats_id id, double val)
+void stats_update(struct stats *s, enum stats_id id, double val)
 {
-	assert(id >= 0 && id < STATS_COUNT);
-
-	d->values[id] = val;
-	d->update |= 1 << id;
+	s->delta->values[id] = val;
+	s->delta->update |= 1 << id;
 }
 
-int stats_commit(struct stats *s, struct stats_delta *d)
+int stats_commit(struct stats *s)
 {
 	for (int i = 0; i < STATS_COUNT; i++) {
-		if (d->update & 1 << i) {
-			hist_put(&s->histograms[i], d->values[i]);
-			d->update &= ~(1 << i);
+		if (s->delta->update & 1 << i) {
+			hist_put(&s->histograms[i], s->delta->values[i]);
+			s->delta->update &= ~(1 << i);
 		}
 	}
 
 	return 0;
-}
-
-void stats_collect(struct stats_delta *s, struct sample *smps[], size_t cnt)
-{
-	int dist;
-	struct sample *previous = s->last;
-
-	for (int i = 0; i < cnt; i++) {
-		if (previous) {
-			stats_update(s, STATS_GAP_RECEIVED, time_delta(&previous->ts.received, &smps[i]->ts.received));
-			stats_update(s, STATS_GAP_SAMPLE,   time_delta(&previous->ts.origin,   &smps[i]->ts.origin));
-			stats_update(s, STATS_OWD,          time_delta(&smps[i]->ts.origin,    &smps[i]->ts.received));
-
-			dist = smps[i]->sequence - (int32_t) previous->sequence;
-			if (dist != 1)
-				stats_update(s, STATS_REORDERED,    dist);
-		}
-
-		previous = smps[i];
-	}
-
-	if (s->last)
-		sample_put(s->last);
-
-	if (previous)
-		sample_get(previous);
-
-	s->last = previous;
 }
 
 json_t * stats_json(struct stats *s)
@@ -139,10 +110,12 @@ json_t * stats_json(struct stats *s)
 	return obj;
 }
 
-json_t * stats_json_periodic(struct stats *s, struct path *p)
+json_t * stats_json_periodic(struct stats *s, struct node *n)
 {
-	return json_pack("{ s: s, s: f, s: f, s: i, s: i }"
-		"path", path_name(p),
+	return json_pack("{ s: s, s: i, s: i, s: f, s: f, s: i, s: i }",
+		"node", node_name(n),
+		"received", hist_total(&s->histograms[STATS_OWD]),
+		"sent", hist_total(&s->histograms[STATS_TIME]),
 		"owd", hist_last(&s->histograms[STATS_OWD]),
 		"rate", 1.0 / hist_last(&s->histograms[STATS_GAP_SAMPLE]),
 		"dropped", hist_total(&s->histograms[STATS_REORDERED]),
@@ -152,20 +125,21 @@ json_t * stats_json_periodic(struct stats *s, struct path *p)
 
 void stats_reset(struct stats *s)
 {
-	for (int i = 0; i < STATS_COUNT; i++) {
+	for (int i = 0; i < STATS_COUNT; i++)
 		hist_reset(&s->histograms[i]);
-	}
 }
 
 static struct table_column stats_cols[] = {
-	{ 35, "Path",		"%s",	NULL,	TABLE_ALIGN_LEFT },
-	{ 10, "Cnt",		"%ju",	"p",	TABLE_ALIGN_RIGHT },
+	{ 10, "Node",		"%s",	NULL,	TABLE_ALIGN_LEFT },
+	{ 10, "Recv",		"%ju",	"p",	TABLE_ALIGN_RIGHT },
+	{ 10, "Sent",		"%ju",	"p",	TABLE_ALIGN_RIGHT },
 	{ 10, "OWD last",	"%f",	"S",	TABLE_ALIGN_RIGHT },
 	{ 10, "OWD mean",	"%f",	"S",	TABLE_ALIGN_RIGHT },
 	{ 10, "Rate last",	"%f",	"p/S",	TABLE_ALIGN_RIGHT },
 	{ 10, "Rate mean",	"%f",	"p/S",	TABLE_ALIGN_RIGHT },
 	{ 10, "Drop",		"%ju",	"p",	TABLE_ALIGN_RIGHT },
-	{ 10, "Skip",		"%ju",	"p",	TABLE_ALIGN_RIGHT }
+	{ 10, "Skip",		"%ju",	"p",	TABLE_ALIGN_RIGHT },
+	{ 10, "Time",		"%f",	"S",	TABLE_ALIGN_RIGHT }
 };
 
 static struct table stats_table = {
@@ -195,24 +169,26 @@ void stats_print_footer(enum stats_format fmt)
 	}
 }
 
-void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int verbose, struct path *p)
+void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int verbose, struct node *n)
 {
 	switch (fmt) {
 		case STATS_FORMAT_HUMAN:
 			table_row(&stats_table,
-				path_name(p),
+				node_name_short(n),
 				hist_total(&s->histograms[STATS_OWD]),
+				hist_total(&s->histograms[STATS_TIME]),
 				hist_last(&s->histograms[STATS_OWD]),
 				hist_mean(&s->histograms[STATS_OWD]),
 				1.0 / hist_last(&s->histograms[STATS_GAP_RECEIVED]),
 				1.0 / hist_mean(&s->histograms[STATS_GAP_RECEIVED]),
 				hist_total(&s->histograms[STATS_REORDERED]),
-				hist_total(&s->histograms[STATS_SKIPPED])
+				hist_total(&s->histograms[STATS_SKIPPED]),
+				hist_mean(&s->histograms[STATS_TIME])
 			);
 			break;
 
 		case STATS_FORMAT_JSON: {
-			json_t *json_stats = stats_json_periodic(s, p);
+			json_t *json_stats = stats_json_periodic(s, n);
 			json_dumpf(json_stats, f, 0);
 			break;
 		}
@@ -242,25 +218,6 @@ void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose)
 
 		default: { }
 	}
-}
-
-void stats_send(struct stats *s, struct node *n)
-{
-	char buf[SAMPLE_LEN(STATS_COUNT * 5)];
-	struct sample *smp = (struct sample *) buf;
-
-	int i = 0;
-
-	for (int j = 0; j < STATS_COUNT; j++) {
-		smp->data[i++].f = hist_last(&s->histograms[j]);
-		smp->data[i++].f = hist_highest(&s->histograms[j]);
-		smp->data[i++].f = hist_lowest(&s->histograms[j]);
-		smp->data[i++].f = hist_mean(&s->histograms[j]);
-		smp->data[i++].f = hist_var(&s->histograms[j]);
-	}
-	smp->length = i;
-
-	node_write(n, &smp, 1); /* Send single message with statistics to destination node */
 }
 
 enum stats_id stats_lookup_id(const char *name)

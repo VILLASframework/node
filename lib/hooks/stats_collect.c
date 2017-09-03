@@ -30,6 +30,7 @@
 #include "plugin.h"
 #include "stats.h"
 #include "node.h"
+#include "timing.h"
 
 struct stats_collect {
 	struct stats stats;
@@ -41,6 +42,8 @@ struct stats_collect {
 
 	AFILE *output;
 	char *uri;
+
+	struct sample *last;
 };
 
 static int stats_collect_init(struct hook *h)
@@ -50,8 +53,7 @@ static int stats_collect_init(struct hook *h)
 	/* Register statistic object to path.
 	 *
 	 * This allows the path code to update statistics. */
-	if (h->node)
-		h->node->stats = &p->stats;
+	h->node->stats = &p->stats;
 
 	/* Set default values */
 	p->format = STATS_FORMAT_HUMAN;
@@ -111,7 +113,7 @@ static int stats_collect_periodic(struct hook *h)
 {
 	struct stats_collect *p = h->_vd;
 
-	stats_print_periodic(&p->stats, p->uri ? p->output->file : stdout, p->format, p->verbose, h->path);
+	stats_print_periodic(&p->stats, p->uri ? p->output->file : stdout, p->format, p->verbose, h->node);
 
 	return 0;
 }
@@ -153,9 +155,48 @@ static int stats_collect_parse(struct hook *h, json_t *cfg)
 static int stats_collect_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct stats_collect *p = h->_vd;
+	struct stats *s = &p->stats;
 
-	stats_collect(p->stats.delta, smps, *cnt);
-	stats_commit(&p->stats, p->stats.delta);
+	int dist;
+	struct sample *previous = p->last;
+
+	for (int i = 0; i < *cnt; i++) {
+		if (previous) {
+			stats_update(s, STATS_GAP_RECEIVED, time_delta(&previous->ts.received, &smps[i]->ts.received));
+			stats_update(s, STATS_GAP_SAMPLE,   time_delta(&previous->ts.origin,   &smps[i]->ts.origin));
+			stats_update(s, STATS_OWD,          time_delta(&smps[i]->ts.origin,    &smps[i]->ts.received));
+
+			dist = smps[i]->sequence - (int32_t) previous->sequence;
+			if (dist != 1)
+				stats_update(s, STATS_REORDERED,    dist);
+		}
+
+		previous = smps[i];
+	}
+
+	if (p->last)
+		sample_put(p->last);
+
+	if (previous)
+		sample_get(previous);
+
+	p->last = previous;
+
+	stats_commit(&p->stats);
+
+	return 0;
+}
+
+static int stats_collect_write(struct hook *h, struct sample *smps[], unsigned *cnt)
+{
+	struct stats_collect *p = h->_vd;
+
+	struct timespec ts_sent = time_now();
+
+	for (int i = 0; i < *cnt; i++)
+		stats_update(&p->stats, STATS_TIME, time_delta(&smps[i]->ts.received, &ts_sent));
+
+	stats_commit(&p->stats);
 
 	return 0;
 }
@@ -172,6 +213,7 @@ static struct plugin p = {
 		.start	= stats_collect_start,
 		.stop	= stats_collect_stop,
 		.read	= stats_collect_read,
+		.write	= stats_collect_write,
 		.restart= stats_collect_restart,
 		.periodic= stats_collect_periodic,
 		.parse	= stats_collect_parse,

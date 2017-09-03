@@ -26,6 +26,8 @@
 #include "node.h"
 #include "super_node.h"
 #include "utils.h"
+#include "stats.h"
+
 #include "api.h"
 
 static int api_nodes(struct api_action *r, json_t *args, json_t **resp, struct api_session *s)
@@ -42,6 +44,9 @@ static int api_nodes(struct api_action *r, json_t *args, json_t **resp, struct a
 			"affinity",	n->affinity,
 			"id",		i
 		);
+
+		if (n->stats)
+			json_object_set(json_node, "stats", stats_json(n->stats));
 
 		/* Add all additional fields of node here.
 		 * This can be used for metadata */

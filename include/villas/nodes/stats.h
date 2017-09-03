@@ -1,5 +1,6 @@
-/** The "paths" API ressource.
+/** Node-type for stats streaming.
  *
+ * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -20,43 +21,44 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <jansson.h>
+/**
+ * @ingroup node
+ * @addtogroup stats Sending stats
+ * @{
+ */
 
-#include "plugin.h"
-#include "path.h"
-#include "utils.h"
-#include "super_node.h"
+#pragma once
 
-#include "api.h"
+#include "task.h"
 
-static int api_paths(struct api_action *r, json_t *args, json_t **resp, struct api_session *s)
-{
-	json_t *json_paths = json_array();
+/* Forward declarations */
+struct node;
+struct path;
+struct sample;
 
-	for (size_t i = 0; i < list_length(&s->api->super_node->paths); i++) {
-		struct path *p = list_at(&s->api->super_node->paths, i);
+struct stats_node {
+	struct task task;
+	double rate;
 
-		json_t *json_path = json_pack("{ s: i }",
-			"state",	p->state
-		);
-
-		/* Add all additional fields of node here.
-		 * This can be used for metadata */
-		json_object_update(json_path, p->cfg);
-
-		json_array_append_new(json_paths, json_path);
-	}
-
-	*resp = json_paths;
-
-	return 0;
-}
-
-static struct plugin p = {
-	.name = "paths",
-	.description = "retrieve list of all paths with details",
-	.type = PLUGIN_TYPE_API,
-	.api.cb = api_paths
+	struct node *node;
 };
 
-REGISTER_PLUGIN(&p)
+/** @see node_type::print */
+int stats_node_init(struct super_node *sn);
+
+/** @see node_type::print */
+char * stats_node_print(struct node *n);
+
+/** @see node_type::parse */
+int stats_node_parse(struct node *n, json_t *cfg);
+
+/** @see node_type::start */
+int stats_node_start(struct node *n);
+
+/** @see node_type::stop */
+int stats_node_stop(struct node *n);
+
+/** @see node_type::read */
+int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt);
+
+/** @} */

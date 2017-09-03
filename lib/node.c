@@ -288,7 +288,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 		debug(LOG_NODES | 10, "Hooks skipped %u out of %u samples for node %s", skipped, nread, node_name(n));
 
 		if (n->stats)
-			stats_update(n->stats->delta, STATS_SKIPPED, skipped);
+			stats_update(n->stats, STATS_SKIPPED, skipped);
 	}
 
 	return rread;
