@@ -203,9 +203,7 @@ static void * path_run(void *arg)
 
 	for (;;) {
 		/* We only need to poll in case there is more than one source */
-		if (list_length(&p->sources) > 1)
-			path_poll(p);
-
+		path_poll(p);
 		path_write(p);
 	}
 
@@ -447,8 +445,7 @@ int path_start(struct path *p)
 		path_name(p),
 		p->enabled ? "yes": "no",
 		p->reverse ? "yes": "no",
-		p->queuelen,
-		p->samplelen,
+		p->queuelen, p->samplelen,
 		list_length(&p->hooks),
 		list_length(&p->sources),
 		list_length(&p->destinations)
@@ -465,7 +462,7 @@ int path_start(struct path *p)
 	p->sequence = 0;
 
 	/* Start one thread per path for sending to destinations */
-	ret = pthread_create(&p->tid, NULL, &path_run,  p);
+	ret = pthread_create(&p->tid, NULL, &path_run, p);
 	if (ret)
 		return ret;
 
@@ -483,8 +480,13 @@ int path_stop(struct path *p)
 
 	info("Stopping path: %s", path_name(p));
 
-	pthread_cancel(p->tid);
-	pthread_join(p->tid, NULL);
+	ret = pthread_cancel(p->tid);
+	if (ret)
+		return ret;
+
+	ret = pthread_join(p->tid, NULL);
+	if (ret)
+		return ret;
 
 	for (size_t i = 0; i < list_length(&p->hooks); i++) {
 		struct hook *h = list_at(&p->hooks, i);
