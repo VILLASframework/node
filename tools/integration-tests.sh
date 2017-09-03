@@ -91,7 +91,7 @@ for TEST in ${TESTS}; do
 	
 	# Show full log in case of an error
 	if (( ${VERBOSE} == 0 )); then
-		if (( $RC != 99 )) || (( $RC != 0 )); then
+		if (( $RC != 99 )) && (( $RC != 0 )); then
 			cat ${LOGDIR}/${TESTNAME}.log
 		fi
 	fi
