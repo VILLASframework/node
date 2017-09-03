@@ -125,6 +125,7 @@ int memory_heap_free(struct memtype *m, void *ptr, size_t len)
 /** Allocate memory backed by hugepages with malloc() like interface */
 static void * memory_hugepage_alloc(struct memtype *m, size_t len, size_t alignment)
 {
+	void *ret;
 	int prot = PROT_READ | PROT_WRITE;
 	int flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
@@ -137,12 +138,9 @@ static void * memory_hugepage_alloc(struct memtype *m, size_t len, size_t alignm
 		flags |= MAP_LOCKED;
 #endif
 
-	void *ret = mmap(NULL, len, prot, flags, -1, 0);
-
-	if (ret == MAP_FAILED) {
-		info("Failed to allocate huge pages: Check https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt (%s)", strerror(errno));
+	ret = mmap(NULL, len, prot, flags, -1, 0);
+	if (ret == MAP_FAILED)
 		return NULL;
-	}
 
 	return ret;
 }

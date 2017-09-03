@@ -63,8 +63,8 @@ void table_header(struct table *t)
 { NOINDENT
 	struct log *l = global_log ? global_log : &default_log;
 
-	if (t->width != l->window.ws_col - 24)
-		table_resize(t, l->window.ws_col - 24);
+	if (t->width != l->window.ws_col - 30)
+		table_resize(t, l->window.ws_col - 30);
 
 	char *line1 = strf("\b\b" BOX_UD);
 	char *line0 = strf("\b");
@@ -115,8 +115,8 @@ void table_row(struct table *t, ...)
 { NOINDENT
 	struct log *l = global_log ? global_log : &default_log;
 
-	if (t->width != l->window.ws_col - 24) {
-		table_resize(t, l->window.ws_col - 24);
+	if (t->width != l->window.ws_col - 30) {
+		table_resize(t, l->window.ws_col - 30);
 		table_header(t);
 	}
 
@@ -150,8 +150,8 @@ void table_footer(struct table *t)
 { NOINDENT
 	struct log *l = global_log ? global_log : &default_log;
 
-	if (t->width != l->window.ws_col - 24)
-		table_resize(t, l->window.ws_col - 24);
+	if (t->width != l->window.ws_col - 30)
+		table_resize(t, l->window.ws_col - 30);
 
 	char *line = strf("\b");
 
