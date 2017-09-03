@@ -33,12 +33,18 @@ fi
 DIR=$(realpath $(dirname $(realpath $BASH_SOURCE))/..)
 GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-# Build image once
-"make" docker-dev
+DOCKER_IMAGE="villas/node-dev:${GIT_BRANCH}"
 
-DOCKER_PATH=/villas/build/release/:/usr/bin
-DOCKER="docker run --rm --tty --env PATH=\"${DOCKER_PATH}\" -v \"${DIR}:/villas\""
+if [[ "$(docker images -q ${DOCKER_IMAGE} 2> /dev/null)" == "" ]]; then
+	"make" docker-dev
+fi
+
+# Start container
+docker run --rm --entrypoint bash --detach --tty --volume "${DIR}:/villas" ${DOCKER_IMAGE}
+
+DOCKER="docker exec --tty --env PATH=\"/villas/build/release/:/usr/bin:/bin/\" $(docker ps --latest --quiet)"
 
 # Then define alias for make and node
-alias make="${DOCKER}   --entrypoint make            villas/node-dev:${GIT_BRANCH}"
-alias villas="${DOCKER} --entrypoint tools/villas.sh villas/node-dev:${GIT_BRANCH}"
+alias moby="${DOCKER}"
+alias make="${DOCKER} make"
+alias villas="${DOCKER} bash tools/villas.sh"
