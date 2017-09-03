@@ -33,6 +33,7 @@
 #include <villas/io/villas.h>
 #include <villas/timing.h>
 #include <villas/node.h>
+#include <villas/pool.h>
 #include <villas/plugin.h>
 #include <villas/nodes/signal.h>
 
@@ -40,6 +41,7 @@
 struct node n;
 struct log l;
 struct io io;
+struct pool q;
 
 struct sample *t;
 
@@ -53,6 +55,8 @@ void usage()
 	printf("    triangle\n");
 	printf("    square\n");
 	printf("    ramp\n");
+	printf("    constants\n");
+	printf("    counter\n");
 	printf("\n");
 	printf("  OPTIONS is one or more of the following options:\n");
 	printf("    -d LVL  set debug level\n");
@@ -89,11 +93,13 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	if (ret)
 		error("Failed to destroy output");
 
+	ret = pool_destroy(&q);
+	if (ret)
+		error("Failed to destroy pool");
+
 	ret = log_stop(&l);
 	if (ret)
 		error("Failed to stop log");
-
-	free(t);
 
 	info(CLR_GRN("Goodbye!"));
 	exit(EXIT_SUCCESS);
@@ -146,20 +152,21 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to verify node configuration");
 
-	/* Allocate memory for message buffer */
-	struct signal *s = n._vd;
-
-	t = alloc(SAMPLE_LEN(s->values));
-
-	t->capacity = s->values;
+	ret = pool_init(&q, 1, SAMPLE_LEN(n.samplelen), &memtype_heap);
+	if (ret)
+		error("Failed to initialize pool");
 
 	ret = node_start(&n);
 	if (ret)
 		serror("Failed to start node");
 
 	for (;;) {
+		sample_alloc(&q, &t, 1);
+
 		node_read(&n, &t, 1);
 		io_print(&io, &t, 1);
+
+		sample_put(t);
 	}
 
 	return 0;

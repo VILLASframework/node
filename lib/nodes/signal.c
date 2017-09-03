@@ -99,7 +99,6 @@ int signal_parse(struct node *n, json_t *cfg)
 
 int signal_parse_cli(struct node *n, int argc, char *argv[])
 {
-	int ret;
 	char *type;
 
 	struct signal *s = n->_vd;
@@ -158,11 +157,12 @@ check:		if (optarg == endptr)
 
 	type = argv[optind];
 
-	ret = signal_lookup_type(type);
-	if (ret == -1)
+	s->type = signal_lookup_type(type);
+	if (s->type == -1)
 		error("Invalid signal type: %s", type);
 
-	s->type = ret;
+	/* We know the expected number of values. */
+	n->samplelen = s->values;
 
 	return 0;
 }
@@ -240,13 +240,13 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 	t->length = n->samplelen;
 
 	for (int i = 0; i < MIN(s->values, t->capacity); i++) {
-		int rtype = (s->type != SIGNAL_TYPE_MIXED) ? s->type : i % 5;
+		int rtype = (s->type != SIGNAL_TYPE_MIXED) ? s->type : i % 7;
 		switch (rtype) {
 			case SIGNAL_TYPE_CONSTANT: t->data[i].f = s->offset + s->amplitude;                                                           break;
 			case SIGNAL_TYPE_SINE:	   t->data[i].f = s->offset + s->amplitude *        sin(running * s->frequency * 2 * M_PI);           break;
 			case SIGNAL_TYPE_TRIANGLE: t->data[i].f = s->offset + s->amplitude * (fabs(fmod(running * s->frequency, 1) - .5) - 0.25) * 4; break;
 			case SIGNAL_TYPE_SQUARE:   t->data[i].f = s->offset + s->amplitude * (    (fmod(running * s->frequency, 1) < .5) ? -1 : 1);   break;
-			case SIGNAL_TYPE_RAMP:     t->data[i].f = s->offset + s->amplitude * fmod(running, s->frequency);                             break;
+			case SIGNAL_TYPE_RAMP:     t->data[i].f = s->offset + s->amplitude *       fmod(running, s->frequency);                       break;
 			case SIGNAL_TYPE_COUNTER:  t->data[i].f = s->offset + s->amplitude * s->counter;                                              break;
 			case SIGNAL_TYPE_RANDOM:
 				s->last[i] += box_muller(0, s->stddev);
