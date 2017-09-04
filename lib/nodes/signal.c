@@ -149,7 +149,7 @@ int signal_parse_cli(struct node *n, int argc, char *argv[])
 		continue;
 
 check:		if (optarg == endptr)
-			error("Failed to parse parse option argument '-%c %s'", c, optarg);
+			warn("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
 
 	if (argc != optind + 1)

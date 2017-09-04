@@ -145,8 +145,10 @@ int main(int argc, char *argv[])
 		error("Failed to open output");
 
 	ret = node_parse_cli(&n, argc, argv);
-	if (ret)
-		error("Failed to parse command line options");
+	if (ret) {
+		usage();
+		exit(EXIT_FAILURE);
+	}
 
 	ret = node_check(&n);
 	if (ret)
