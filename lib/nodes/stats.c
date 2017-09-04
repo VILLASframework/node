@@ -88,7 +88,7 @@ int stats_node_parse(struct node *n, json_t *cfg)
 
 	const char *node;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: f }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: F }",
 		"node", &node,
 		"rate", &s->rate
 	);

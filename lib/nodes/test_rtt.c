@@ -75,7 +75,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 
 	t->cooldown = 1.0;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: s, s?: s, s: f, s: o, s: o }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: s, s?: s, s: F, s: o, s: o }",
 		"limit", &limit,
 		"output", &output,
 		"format", &format,

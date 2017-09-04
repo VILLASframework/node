@@ -24,7 +24,7 @@ int cbuilder_parse(struct node *n, json_t *cfg)
 	size_t index;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: f, s: s, s: b }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: F, s: s, s: b }",
 		"timestep", &cb->timestep,
 		"model", &model,
 		"parameters", &cfg_params
@@ -62,7 +62,7 @@ int cbuilder_start(struct node *n)
 
 	/* Initialize mutex and cv */
 	pthread_mutex_init(&cb->mtx, NULL);
-	
+
 	cb->eventfd = eventfd(0, 0);
 	if (cb->eventfd < 0)
 		return -1;
@@ -84,7 +84,7 @@ int cbuilder_stop(struct node *n)
 {
 	int ret;
 	struct cbuilder *cb = n->_vd;
-	
+
 	ret = close(cb->eventfd);
 	if (ret)
 		return ret;
@@ -98,14 +98,14 @@ int cbuilder_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct cbuilder *cb = n->_vd;
 	struct sample *smp = smps[0];
-	
+
 	uint64_t cntr;
-	
+
 	read(cb->eventfd, &cntr, sizeof(cntr));
 
 	/* Wait for completion of step */
 	pthread_mutex_lock(&cb->mtx);
-	
+
 	float data[smp->capacity];
 
 	smp->length = cb->model->read(data, smp->capacity);
@@ -113,7 +113,7 @@ int cbuilder_read(struct node *n, struct sample *smps[], unsigned cnt)
 	/* Cast float -> double */
 	for (int i = 0; i < smp->length; i++)
 		smp->data[i].f = data[i];
-	
+
 	smp->sequence = cb->step;
 
 	cb->read = cb->step;
@@ -129,14 +129,14 @@ int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt)
 	struct sample *smp = smps[0];
 
 	pthread_mutex_lock(&cb->mtx);
-	
+
 	float flt = smp->data[0].f;
 
 	cb->model->write(&flt, smp->length);
 	cb->model->code();
 
 	cb->step++;
-	
+
 	uint64_t incr = 1;
 	write(cb->eventfd, &incr, sizeof(incr));
 
@@ -148,7 +148,7 @@ int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt)
 int cbuilder_fd(struct node *n)
 {
 	struct cbuilder *cb = n->_vd;
-	
+
 	return cb->eventfd;
 }
 

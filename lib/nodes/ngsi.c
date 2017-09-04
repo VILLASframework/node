@@ -418,7 +418,7 @@ int ngsi_parse(struct node *n, json_t *cfg)
 	i->timeout = 1; /* default value */
 	i->rate = 5; /* default value */
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: s, s: s, s: s, s?: b, s?: f, s?: f }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: s, s: s, s: s, s?: b, s?: F, s?: F }",
 		"access_token", &i->access_token,
 		"endpoint", &i->endpoint,
 		"entity_id", &i->entity_id,
@@ -576,7 +576,7 @@ int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt)
 int ngsi_fd(struct node *n)
 {
 	struct ngsi *i = n->_vd;
-	
+
 	return task_fd(&i->task);
 }
 

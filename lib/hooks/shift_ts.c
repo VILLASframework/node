@@ -55,7 +55,7 @@ static int shift_ts_parse(struct hook *h, json_t *cfg)
 	int ret;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: f }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: F }",
 		"mode", &mode,
 		"offset", &offset
 	);

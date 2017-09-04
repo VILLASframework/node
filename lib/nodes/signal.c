@@ -67,7 +67,7 @@ int signal_parse(struct node *n, json_t *cfg)
 	s->stddev = 0.2;
 	s->offset = 0;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: f, s?: f, s?: f, s?: f, s?: f }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: F, s?: F, s?: F, s?: F, s?: F }",
 		"signal", &type,
 		"realtime", &s->rt,
 		"limit", &s->limit,
