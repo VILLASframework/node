@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include "io.h"
 #include "io_format.h"
@@ -91,6 +92,26 @@ stdio:		io->mode = IO_MODE_STDIO;
 		io->stdio.output = stdout;
 	}
 
+	/* Make stream non-blocking if desired */
+	if (io->flags & IO_NONBLOCK) {
+		int ret, fd, flags;
+
+		fd = io_fd(io);
+		if (fd < 0)
+			return fd;
+
+		flags = fcntl(fd, F_GETFL);
+		if (flags < 0)
+			return flags;
+
+		flags |= O_NONBLOCK;
+
+		ret = fcntl(fd, F_SETFL, flags);
+		if (ret)
+			return ret;
+	}
+
+	/* Enable line buffering on stdio */
 	if (io->mode == IO_MODE_STDIO) {
 		ret = setvbuf(io->stdio.input, NULL, _IOLBF, BUFSIZ);
 		if (ret)

@@ -31,7 +31,8 @@ struct sample;
 struct io_format;
 
 enum io_flags {
-	IO_FLUSH		= (1 << 8) /**< Flush the output stream after each chunk of samples. */
+	IO_FLUSH		= (1 << 8),	/**< Flush the output stream after each chunk of samples. */
+	IO_NONBLOCK		= (1 << 9)	/**< Dont block io_read() while waiting for new samples. */
 };
 
 struct io {
