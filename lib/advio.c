@@ -173,16 +173,16 @@ int aislocal(const char *uri)
 {
 	char *sep;
 	const char *supported_schemas[] = { "file", "http", "https", "tftp", "ftp", "scp", "sftp", "smb", "smbs" };
-	
+
 	sep = strstr(uri, "://");
 	if (!sep)
 		return 1; /* no schema, we assume its a local file */
-	
+
 	for (int i = 0; i < ARRAY_LEN(supported_schemas); i++) {
 		if (!strncmp(supported_schemas[i], uri, sep - uri))
 			return 0;
 	}
-	
+
 	return -1; /* none of the supported schemas match. this is an invalid uri */
 }
 
@@ -210,6 +210,8 @@ AFILE * afopen(const char *uri, const char *mode)
 			cwd = getcwd(NULL, 0);
 
 			af->uri = strf("file://%s/%s", cwd, uri);
+
+			free(cwd);
 		}
 		else
 			af->uri = strf("file://%s", uri);
@@ -261,7 +263,7 @@ int afclose(AFILE *af)
 	ret = afflush(af);
 	if (ret)
 		return ret;
-	
+
 	curl_easy_cleanup(af->curl);
 
 	ret = fclose(af->file);

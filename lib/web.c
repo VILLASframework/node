@@ -79,7 +79,6 @@ static struct lws_protocols protocols[] = {
 /** List of libwebsockets mounts. */
 static struct lws_http_mount mounts[] = {
 	{
-		.mount_next = &mounts[1],
 		.mountpoint = "/",
 		.origin = NULL,
 		.def = "/index.html",
@@ -90,11 +89,11 @@ static struct lws_http_mount mounts[] = {
 		.cache_revalidate = 0,
 		.cache_intermediaries = 0,
 		.origin_protocol = LWSMPRO_FILE,
-		.mountpoint_len = 1
-	},
+		.mountpoint_len = 1,
 #ifdef WITH_API
+		.mount_next = &mounts[1]
+	},
 	{
-		.mount_next = NULL,
 		.mountpoint = "/api/v1/",
 		.origin = "http-api",
 		.def = NULL,
@@ -105,9 +104,10 @@ static struct lws_http_mount mounts[] = {
 		.cache_revalidate = 0,
 		.cache_intermediaries = 0,
 		.origin_protocol = LWSMPRO_CALLBACK,
-		.mountpoint_len = 8
-	}
+		.mountpoint_len = 8,
 #endif
+		.mount_next = NULL
+	}
 };
 
 /** List of libwebsockets extensions. */

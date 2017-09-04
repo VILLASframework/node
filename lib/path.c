@@ -58,6 +58,10 @@ static int path_source_destroy(struct path_source *ps)
 	if (ret)
 		return ret;
 
+	ret = list_destroy(&ps->mappings, NULL, true);
+	if (ret)
+		return ret;
+
 	return 0;
 }
 
@@ -330,7 +334,7 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 	list_init(&sources);
 	list_init(&destinations);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: i, s?: i }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: i }",
 		"in", &json_in,
 		"out", &json_out,
 		"hooks", &json_hooks,

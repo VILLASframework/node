@@ -105,6 +105,16 @@ int stats_node_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
+int stats_node_destroy(struct node *n)
+{
+	struct stats_node *s = n->_vd;
+
+	if (s->node_str)
+		free(&s->node_str);
+
+	return 0;
+}
+
 int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct stats_node *sn = n->_vd;
@@ -152,6 +162,7 @@ static struct plugin p = {
 		.size	= sizeof(struct stats_node),
 		.init	= stats_node_init,
 		.parse	= stats_node_parse,
+		.destroy= stats_node_destroy,
 		.print	= stats_node_print,
 		.start	= stats_node_start,
 		.stop	= stats_node_stop,

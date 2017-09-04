@@ -27,7 +27,7 @@
 
 static int api_config(struct api_action *h, json_t *args, json_t **resp, struct api_session *s)
 {
-	*resp = s->api->super_node->cfg;
+	*resp = json_incref(s->api->super_node->cfg);
 
 	return 0;
 }

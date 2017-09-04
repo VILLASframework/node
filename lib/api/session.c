@@ -32,15 +32,15 @@ int api_session_init(struct api_session *s, enum api_mode m)
 
 	s->runs = 0;
 	s->mode = m;
-	
+
 	ret = buffer_init(&s->request.buffer, 0);
 	if (ret)
 		return ret;
-	
+
 	ret = buffer_init(&s->response.buffer, 0);
 	if (ret)
 		return ret;
-	
+
 	ret = queue_init(&s->request.queue, 128, &memtype_heap);
 	if (ret)
 		return ret;
@@ -48,7 +48,7 @@ int api_session_init(struct api_session *s, enum api_mode m)
 	ret = queue_init(&s->response.queue, 128, &memtype_heap);
 	if (ret)
 		return ret;
-	
+
 	s->_name = NULL;
 
 	return 0;
@@ -65,7 +65,7 @@ int api_session_destroy(struct api_session *s)
 	ret = buffer_destroy(&s->response.buffer);
 	if (ret)
 		return ret;
-	
+
 	ret = queue_destroy(&s->request.queue);
 	if (ret)
 		return ret;
@@ -73,7 +73,7 @@ int api_session_destroy(struct api_session *s)
 	ret = queue_destroy(&s->response.queue);
 	if (ret)
 		return ret;
-	
+
 	if (s->_name)
 		free(s->_name);
 
@@ -128,7 +128,7 @@ int api_session_run_command(struct api_session *s, json_t *json_in, json_t **jso
 				"id", id);
 
 	if (json_resp)
-		json_object_set(*json_out, "response", json_resp);
+		json_object_set_new(*json_out, "response", json_resp);
 
 out:	debug(LOG_API, "Completed API request: action=%s, id=%s, code=%d", action, id, ret);
 
@@ -141,24 +141,24 @@ char * api_session_name(struct api_session *s)
 {
 	if (!s->_name) {
 		char *mode;
-		
+
 		switch (s->mode) {
 			case API_MODE_WS:   mode = "ws"; break;
 			case API_MODE_HTTP: mode = "http"; break;
 			default:            mode = "unknown"; break;
 		}
-		
+
 		strcatf(&s->_name, "version=%d, mode=%s", s->version, mode);
-		
+
 		if (s->wsi) {
 			char name[128];
 			char ip[128];
-		
+
 			lws_get_peer_addresses(s->wsi, lws_get_socket_fd(s->wsi), name, sizeof(name), ip, sizeof(ip));
-			
+
 			strcatf(&s->_name, ", remote.name=%s, remote.ip=%s", name, ip);
 		}
 	}
-	
+
 	return s->_name;
 }

@@ -205,7 +205,7 @@ int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes)
 		json_array_append(json_mapping, cfg);
 	}
 	else if (json_is_array(cfg))
-		json_mapping = cfg;
+		json_mapping = json_incref(cfg);
 	else
 		return -1;
 
@@ -215,7 +215,7 @@ int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes)
 
 		ret = mapping_parse(e, json_entry, nodes);
 		if (ret)
-			return ret;
+			goto out;
 
 		e->offset = off;
 		off += e->length;
@@ -223,7 +223,12 @@ int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes)
 		list_push(l, e);
 	}
 
-	return 0;
+	ret = 0;
+
+out:
+	json_decref(json_mapping);
+
+	return ret;
 }
 
 int mapping_update(struct mapping_entry *me, struct sample *remapped, struct sample *original, struct stats *s)

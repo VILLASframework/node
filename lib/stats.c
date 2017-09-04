@@ -100,11 +100,10 @@ json_t * stats_json(struct stats *s)
 	json_t *obj = json_object();
 
 	for (int i = 0; i < STATS_COUNT; i++) {
-		struct stats_desc *desc = &stats_metrics[i];
+		struct stats_desc *d = &stats_metrics[i];
+		struct hist *h = &s->histograms[i];
 
-		json_t *stats = hist_json(&s->histograms[i]);
-
-		json_object_set(obj, desc->name, stats);
+		json_object_set_new(obj, d->name, hist_json(h));
 	}
 
 	return obj;

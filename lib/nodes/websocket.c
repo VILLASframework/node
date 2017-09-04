@@ -197,7 +197,8 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				/** @todo Attempt reconnect here */
 			}
 
-			list_remove(&connections, c);
+			if (connections.state == STATE_INITIALIZED)
+				list_remove(&connections, c);
 
 			if (c->_name)
 				free(c->_name);
