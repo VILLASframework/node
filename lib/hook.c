@@ -120,23 +120,35 @@ int hook_destroy(struct hook *h)
 
 int hook_start(struct hook *h)
 {
-	debug(LOG_HOOK | 10, "Running hook %s: type=sart, priority=%d", plugin_name(h->_vt), h->priority);
+	if (h->_vt->start) {
+		debug(LOG_HOOK | 10, "Running hook %s: type=start, priority=%d", plugin_name(h->_vt), h->priority);
 
-	return h->_vt->start ? h->_vt->start(h) : 0;
+		return h->_vt->start(h);
+	}
+	else
+		return 0;
 }
 
 int hook_stop(struct hook *h)
 {
-	debug(LOG_HOOK | 10, "Running hook %s: type=stop, priority=%d", plugin_name(h->_vt), h->priority);
+	if (h->_vt->stop) {
+		debug(LOG_HOOK | 10, "Running hook %s: type=stop, priority=%d", plugin_name(h->_vt), h->priority);
 
-	return h->_vt->stop ? h->_vt->stop(h) : 0;
+		return h->_vt->stop(h);
+	}
+	else
+		return 0;
 }
 
 int hook_periodic(struct hook *h)
 {
-	debug(LOG_HOOK | 10, "Running hook %s: type=periodic, priority=%d", plugin_name(h->_vt), h->priority);
+	if (h->_vt->periodic) {
+		debug(LOG_HOOK | 10, "Running hook %s: type=periodic, priority=%d", plugin_name(h->_vt), h->priority);
 
-	return h->_vt->periodic ? h->_vt->periodic(h) : 0;
+		return h->_vt->periodic(h);
+	}
+	else
+		return 0;
 }
 
 int hook_restart(struct hook *h)
@@ -148,23 +160,35 @@ int hook_restart(struct hook *h)
 
 int hook_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	debug(LOG_HOOK | 10, "Running hook %s: type=read, priority=%d, cnt=%u", plugin_name(h->_vt), h->priority, *cnt);
+	if (h->_vt->read) {
+		debug(LOG_HOOK | 10, "Running hook %s: type=read, priority=%d", plugin_name(h->_vt), h->priority);
 
-	return h->_vt->read ? h->_vt->read(h, smps, cnt) : 0;
+		return h->_vt->read(h, smps, cnt);
+	}
+	else
+		return 0;
 }
 
 int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	debug(LOG_HOOK | 10, "Running hook %s: type=process, priority=%d, cnt=%u", plugin_name(h->_vt), h->priority, *cnt);
+	if (h->_vt->process) {
+		debug(LOG_HOOK | 10, "Running hook %s: type=process, priority=%d", plugin_name(h->_vt), h->priority);
 
-	return h->_vt->process ? h->_vt->process(h, smps, cnt) : 0;
+		return h->_vt->process(h, smps, cnt);
+	}
+	else
+		return 0;
 }
 
 int hook_write(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	debug(LOG_HOOK | 10, "Running hook %s: type=write, priority=%d, cnt=%u", plugin_name(h->_vt), h->priority, *cnt);
+	if (h->_vt->write) {
+		debug(LOG_HOOK | 10, "Running hook %s: type=write, priority=%d", plugin_name(h->_vt), h->priority);
 
-	return h->_vt->write ? h->_vt->write(h, smps, cnt) : 0;
+		return h->_vt->write(h, smps, cnt);
+	}
+	else
+		return 0;
 }
 
 static int hook_run_list(struct list *hs, struct sample *smps[], unsigned cnt, int (*func)(struct hook *, struct sample **, unsigned *))
@@ -232,7 +256,7 @@ int hook_parse_list(struct list *list, json_t *cfg, struct path *o, struct node 
 
 		ret = hook_init(h, &p->hook, o, n);
 		if (ret)
-			jerror(&err, "Failed to initialize hook");
+			error("Failed to initialize hook: %s", p->name);
 
 		ret = hook_parse(h, cfg_hook);
 		if (ret)
