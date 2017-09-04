@@ -336,7 +336,11 @@ int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 
 void killme(int sig)
 {
-	pthread_kill(main_thread, sig);
+	/* Send only to main thread in case the ID was initilized by signals_init() */
+	if (main_thread)
+		pthread_kill(main_thread, sig);
+	else
+		kill(0, sig);
 }
 
 pid_t spawn(const char* name, char *const argv[])
