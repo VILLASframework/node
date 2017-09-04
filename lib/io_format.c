@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "plugin.h"
 #include "io_format.h"
 
 int io_format_sscan(struct io_format *fmt, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
@@ -47,4 +48,15 @@ int io_format_fscan(struct io_format *fmt, FILE *f, struct sample *smps[], unsig
 int io_format_fprint(struct io_format *fmt, FILE *f, struct sample *smps[], unsigned cnt, int flags)
 {
 	return fmt->fprint ? fmt->fprint(f, smps, cnt, flags) : -1;
+}
+
+struct io_format * io_format_lookup(const char *name)
+{
+	struct plugin *p;
+
+	p = plugin_lookup(PLUGIN_TYPE_IO, name);
+	if (!p)
+		return NULL;
+
+	return &p->io;
 }

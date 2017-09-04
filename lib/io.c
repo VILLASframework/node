@@ -27,7 +27,6 @@
 #include "io_format.h"
 #include "utils.h"
 #include "sample.h"
-#include "plugin.h"
 
 int io_init(struct io *io, struct io_format *fmt, int flags)
 {
@@ -299,15 +298,4 @@ int io_scan(struct io *io, struct sample *smps[], unsigned cnt)
 	}
 
 	return ret;
-}
-
-struct io_format * io_format_lookup(const char *name)
-{
-	struct plugin *p;
-
-	p = plugin_lookup(PLUGIN_TYPE_IO, name);
-	if (!p)
-		return NULL;
-
-	return &p->io;
 }
