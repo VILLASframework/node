@@ -59,7 +59,7 @@ int io_stream_open(struct io *io, const char *uri)
 	if (uri) {
 		if (aislocal(uri)) {
 			io->mode = IO_MODE_STDIO;
-			
+
 			io->stdio.output = fopen(uri, "a+");
 			if (io->stdio.output == NULL)
 				return -1;
@@ -87,7 +87,7 @@ int io_stream_open(struct io *io, const char *uri)
 		io->stdio.input  = stdin;
 		io->stdio.output = stdout;
 	}
-	
+
 	if (io->mode == IO_MODE_STDIO) {
 		ret = setvbuf(io->stdio.input, NULL, _IOLBF, BUFSIZ);
 		if (ret)
@@ -187,7 +187,7 @@ int io_stream_fd(struct io *io)
 		case IO_MODE_CUSTOM:
 			return -1;
 	}
-	
+
 	return -1;
 }
 
@@ -244,7 +244,7 @@ int io_print(struct io *io, struct sample *smps[], unsigned cnt)
 		FILE *f = io->mode == IO_MODE_ADVIO
 				? io->advio.output->file
 				: io->stdio.output;
-		
+
 		//flockfile(f);
 
 		if (io->_vt->fprint)
@@ -259,7 +259,7 @@ int io_print(struct io *io, struct sample *smps[], unsigned cnt)
 		}
 		else
 			ret = -1;
-		
+
 		//funlockfile(f);
 	}
 
@@ -279,37 +279,35 @@ int io_scan(struct io *io, struct sample *smps[], unsigned cnt)
 		FILE *f = io->mode == IO_MODE_ADVIO
 				? io->advio.input->file
 				: io->stdio.input;
-		
+
 		//flockfile(f);
-		
-		int flags = io->flags;
 
 		if (io->_vt->fscan)
-			return io->_vt->fscan(f, smps, cnt, &flags);
+			return io->_vt->fscan(f, smps, cnt, io->flags);
 		else if (io->_vt->sscan) {
 			size_t bytes, rbytes;
 			char buf[4096];
 
 			bytes = fread(buf, 1, sizeof(buf), f);
 
-			ret = io->_vt->sscan(buf, bytes, &rbytes, smps, cnt, &flags);
+			ret = io->_vt->sscan(buf, bytes, &rbytes, smps, cnt, io->flags);
 		}
 		else
 			ret = -1;
-		
+
 		//funlockfile(f);
 	}
-	
+
 	return ret;
 }
 
 struct io_format * io_format_lookup(const char *name)
 {
 	struct plugin *p;
-	
+
 	p = plugin_lookup(PLUGIN_TYPE_IO, name);
 	if (!p)
 		return NULL;
-	
+
 	return &p->io;
 }

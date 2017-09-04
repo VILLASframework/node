@@ -128,11 +128,6 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 	sample_copy_many(smps, shared_smps, recv);
 	sample_put_many(shared_smps, recv);
 
-	struct timespec ts_recv = time_now();
-
-	for (int i = 0; i < recv; i++)
-		smps[i]->ts.received = ts_recv;
-
 	return recv;
 }
 
@@ -140,25 +135,18 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct shmem *shm = n->_vd;
 	struct sample *shared_smps[cnt]; /* Samples need to be copied to the shared pool first */
-	int avail, pushed, len;
+	int avail, pushed;
 
 	avail = sample_alloc(&shm->intf.write.shared->pool, shared_smps, cnt);
 	if (avail != cnt)
 		warn("Pool underrun for shmem node %s", shm->out_name);
 
 	for (int i = 0; i < avail; i++) {
+		sample_copy(shared_smps[i], smps[i]);
+
 		/* Since the node isn't in shared memory, the source can't be accessed */
 		shared_smps[i]->source = NULL;
-		shared_smps[i]->sequence = smps[i]->sequence;
-		shared_smps[i]->ts = smps[i]->ts;
-
-		len = MIN(smps[i]->length, shared_smps[i]->capacity);
-		if (len != smps[i]->length)
-			warn("Losing data because of sample capacity mismatch in node %s", node_name(n));
-
-		memcpy(shared_smps[i]->data, smps[i]->data, SAMPLE_DATA_LEN(len));
-
-		shared_smps[i]->length = len;
+		shared_smps[i]->has &= ~SAMPLE_SOURCE;
 	}
 
 	pushed = shmem_int_write(&shm->intf, shared_smps, avail);

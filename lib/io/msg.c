@@ -80,12 +80,11 @@ int msg_to_sample(struct msg *msg, struct sample *smp)
 	if (ret)
 		return -1;
 
+	smp->has = SAMPLE_ORIGIN | SAMPLE_SEQUENCE | SAMPLE_VALUES | SAMPLE_ID;
 	smp->length = MIN(msg->length, smp->capacity);
 	smp->sequence = msg->sequence;
 	smp->id = msg->id;
 	smp->ts.origin = MSG_TS(msg);
-	smp->ts.received.tv_sec  = -1;
-	smp->ts.received.tv_nsec = -1;
 	smp->format = 0;
 
 	for (int i = 0; i < smp->length; i++) {
@@ -124,7 +123,7 @@ int msg_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 	for (i = 0; i < cnt; i++) {
 		struct msg *msg = (struct msg *) ptr;
 		struct sample *smp = smps[i];
-		
+
 		if (ptr + MSG_LEN(smp->length) > buf + len)
 			break;
 
@@ -140,18 +139,18 @@ int msg_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 
 		ptr += MSG_LEN(smp->length);
 	}
-	
+
 	if (wbytes)
 		*wbytes = ptr - buf;
 
 	return i;
 }
 
-int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags)
+int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
 {
 	int ret, i = 0, values;
 	char *ptr = buf;
-	
+
 	if (len % 4 != 0) {
 		warn("Packet size is invalid: %zd Must be multiple of 4 bytes.", len);
 		return -1;
@@ -170,16 +169,16 @@ int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 			warn("Invalid msg received: reason=1");
 			break;
 		}
-		
-		values = (*flags & MSG_WEB) ? msg->length : ntohs(msg->length);
-		
+
+		values = (flags & MSG_WEB) ? msg->length : ntohs(msg->length);
+
 		/* Check if remainder of message is in buffer boundaries */
 		if (ptr + MSG_LEN(values) > buf + len) {
 			warn("Invalid msg received: reason=2, msglen=%zu, len=%zu, ptr=%p, buf=%p, i=%u", MSG_LEN(values), len, ptr, buf, i);
 			break;
 		}
 
-		if (*flags & MSG_WEB)
+		if (flags & MSG_WEB)
 			;
 		else
 			msg_ntoh(msg);
@@ -192,7 +191,7 @@ int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 
 		ptr += MSG_LEN(smp->length);
 	}
-	
+
 	if (rbytes)
 		*rbytes = ptr - buf;
 

@@ -34,7 +34,7 @@ enum raw_flags {
 	RAW_BE_INT	= (1 << 17), /**< Byte-order for integer data: big-endian if set. */
 	RAW_BE_FLT	= (1 << 18), /**< Byte-order for floating point data: big-endian if set. */
 	RAW_BE_HDR	= (1 << 19), /**< Byte-order for fake header fields: big-endian if set. */
-	
+
 	/** Byte-order for all fields: big-endian if set. */
 	RAW_BE		= RAW_BE_INT | RAW_BE_FLT | RAW_BE_HDR,
 
@@ -57,4 +57,4 @@ enum raw_flags {
 int raw_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags);
 
 /** Read struct sample's from buffer \p buf into samples \p smps. */
-int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags);
+int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags);

@@ -30,12 +30,6 @@ struct sample;
 struct io;
 
 enum io_format_flags {
-	IO_FORMAT_NANOSECONDS	= (1 << 0), /**< Include nanoseconds in output. */
-	IO_FORMAT_OFFSET	= (1 << 1), /**< Include offset / delta between received and send timestamps. */
-	IO_FORMAT_SEQUENCE	= (1 << 2), /**< Include sequence number in output. */
-	IO_FORMAT_VALUES	= (1 << 3), /**< Include values in output. */
-	IO_FORMAT_ALL		= 15,       /**< Enable all output options. */
-
 	IO_FORMAT_BINARY	= (1 << 8)
 };
 
@@ -70,7 +64,7 @@ struct io_format {
 	 * @see rewind()
 	 */
 	void (*rewind)(struct io *io);
-	
+
 	/** Get a file descriptor which can be used with select / poll */
 	int (*fd)(struct io *io);
 
@@ -89,13 +83,13 @@ struct io_format {
 	 */
 
 	/** @see io_format_sscan */
-	int (*sscan)(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags);
+	int (*sscan)(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags);
 
 	/** @see io_format_sprint */
 	int (*sprint)(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags);
 
 	/** @see io_format_fscan */
-	int (*fscan)(FILE *f, struct sample *smps[], unsigned cnt, int *flags);
+	int (*fscan)(FILE *f, struct sample *smps[], unsigned cnt, int flags);
 
 	/** @see io_format_fprint */
 	int (*fprint)(FILE *f, struct sample *smps[], unsigned cnt, int flags);
@@ -119,7 +113,7 @@ struct io_format * io_format_lookup(const char *name);
  * @retval >=0		The number of samples which have been parsed from \p buf and written into \p smps.
  * @retval <0		Something went wrong.
  */
-int io_format_sscan(struct io_format *fmt, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags);
+int io_format_sscan(struct io_format *fmt, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags);
 
 /** Print \p cnt samples from \p smps into buffer \p buf of length \p len.
  *
@@ -139,7 +133,7 @@ int io_format_sprint(struct io_format *fmt, char *buf, size_t len, size_t *wbyte
  * @retval >=0		The number of samples which have been parsed from \p f and written into \p smps.
  * @retval <0		Something went wrong.
  */
-int io_format_fscan(struct io_format *fmt, FILE *f, struct sample *smps[], unsigned cnt, int *flags);
+int io_format_fscan(struct io_format *fmt, FILE *f, struct sample *smps[], unsigned cnt, int flags);
 
 /** Print \p cnt samples from \p smps to stream \p f.
  *

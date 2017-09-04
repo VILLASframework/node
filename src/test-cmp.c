@@ -65,7 +65,7 @@ void usage()
 int main(int argc, char *argv[])
 {
 	int ret;
-	
+
 	/* Default values */
 	double epsilon = 1e-9;
 	int timestamp = 1;
@@ -77,7 +77,6 @@ int main(int argc, char *argv[])
 	struct sample *samples[2];
 
 	struct {
-		int flags;
 		char *path;
 		FILE *handle;
 		struct sample *sample;
@@ -150,11 +149,11 @@ check:		if (optarg == endptr)
 		serror("Failed to open file: %s", f2.path);
 
 	while (!feof(f1.handle) && !feof(f2.handle)) {
-		ret = villas_fscan(f1.handle, &f1.sample, 1, &f1.flags);
+		ret = villas_fscan(f1.handle, &f1.sample, 1, 0);
 		if (ret < 0 && !feof(f1.handle))
 			goto out;
 
-		ret = villas_fscan(f2.handle, &f2.sample, 1, &f2.flags);
+		ret = villas_fscan(f2.handle, &f2.sample, 1, 0);
 		if (ret < 0 && !feof(f2.handle))
 			goto out;
 
@@ -168,7 +167,7 @@ check:		if (optarg == endptr)
 		}
 
 		/* Compare sequence no */
-		if (sequence && (f1.flags & IO_FORMAT_SEQUENCE) && (f2.flags & IO_FORMAT_SEQUENCE)) {
+		if (sequence && (f1.sample->has & SAMPLE_SEQUENCE) && (f2.sample->has & SAMPLE_SEQUENCE)) {
 			if (f1.sample->sequence != f2.sample->sequence) {
 				printf("sequence no: %d != %d\n", f1.sample->sequence, f2.sample->sequence);
 				ret = 2;

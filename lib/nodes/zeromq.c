@@ -125,7 +125,7 @@ int zeromq_parse(struct node *n, json_t *cfg)
 
 	z->subscriber.endpoint = ep ? strdup(ep) : NULL;
 	z->filter = filter ? strdup(filter) : NULL;
-	
+
 	z->format = io_format_lookup(format);
 	if (!z->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
@@ -429,7 +429,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (ret < 0)
 		return ret;
 
-	recv = io_format_sscan(z->format, zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, cnt, NULL);
+	recv = io_format_sscan(z->format, zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, cnt, 0);
 
 	ret = zmq_msg_close(&m);
 	if (ret)
@@ -448,7 +448,7 @@ int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	char data[4096];
 
-	ret = io_format_sprint(z->format, data, sizeof(data), &wbytes, smps, cnt, IO_FORMAT_ALL);
+	ret = io_format_sprint(z->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_ALL);
 	if (ret <= 0)
 		return -1;
 
@@ -492,10 +492,10 @@ int zeromq_fd(struct node *n)
 {
 	int ret;
 	struct zeromq *z = n->_vd;
-	
+
 	int fd;
 	size_t len = sizeof(fd);
-	
+
 	ret = zmq_getsockopt(z->subscriber.socket, ZMQ_FD, &fd, &len);
 	if (ret)
 		return ret;

@@ -104,7 +104,7 @@ int file_parse(struct node *n, json_t *cfg)
 
 	f->epoch = time_from_double(epoch_flt);
 	f->uri_tmpl = uri_tmpl ? strdup(uri_tmpl) : NULL;
-	
+
 	f->format = io_format_lookup(format);
 	if (!f->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
@@ -205,7 +205,7 @@ int file_start(struct node *n)
 	f->uri = file_format_name(f->uri_tmpl, &now);
 
 	/* Open file */
-	flags = IO_FORMAT_ALL;
+	flags = SAMPLE_ALL;
 	if (f->flush)
 		flags |= IO_FLUSH;
 
@@ -342,7 +342,7 @@ int file_write(struct node *n, struct sample *smps[], unsigned cnt)
 int file_fd(struct node *n)
 {
 	struct file *f = n->_vd;
-	
+
 	if (f->rate)
 		return task_fd(&f->task);
 	else {

@@ -29,6 +29,7 @@
 #include "plugin.h"
 #include "config_helper.h"
 #include "mapping.h"
+#include "timing.h"
 
 int node_init(struct node *n, struct node_type *vt)
 {
@@ -278,9 +279,27 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 		debug(LOG_NODES | 5, "Received %u samples from node %s", nread, node_name(n));
 	}
 
-	for (int i = 0; i < nread; i++)
+	/* Add missing fields */
+	for (int i = 0; i < nread; i++) {
 		smps[i]->source = n;
 
+		if (!(smps[i]->has & SAMPLE_SEQUENCE))
+			smps[i]->sequence = n->sequence++;
+
+		if (!(smps[i]->has & SAMPLE_ORIGIN) ||
+		    !(smps[i]->has & SAMPLE_RECEIVED)) {
+
+			struct timespec now = time_now();
+
+			if (!(smps[i]->has & SAMPLE_RECEIVED))
+				smps[i]->ts.received = now;
+
+			if (!(smps[i]->has & SAMPLE_ORIGIN))
+				smps[i]->ts.origin = now;
+		}
+	}
+
+	/* Run read hooks */
 	rread = hook_read_list(&n->hooks, smps, nread);
 	if (nread != rread) {
 		int skipped = nread - rread;

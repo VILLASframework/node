@@ -292,7 +292,7 @@ check:		if (optarg == endptr)
 	if (!p)
 		error("Invalid format: %s", format);
 
-	ret = io_init(&io, &p->io, IO_FORMAT_ALL);
+	ret = io_init(&io, &p->io, SAMPLE_ALL);
 	if (ret)
 		error("Failed to initialize IO");
 

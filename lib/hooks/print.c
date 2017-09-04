@@ -51,7 +51,7 @@ static int print_start(struct hook *h)
 	struct print *p = h->_vd;
 	int ret;
 
-	ret = io_init(&p->io, p->format, IO_FORMAT_ALL);
+	ret = io_init(&p->io, p->format, SAMPLE_ALL);
 	if (ret)
 		return ret;
 

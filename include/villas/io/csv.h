@@ -32,4 +32,4 @@ struct sample;
 
 int csv_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags);
 
-int csv_fscan(FILE *f, struct sample *smps[], unsigned cnt, int *flags);
+int csv_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags);

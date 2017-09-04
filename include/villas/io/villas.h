@@ -33,4 +33,4 @@ int villas_scan(struct io *io, struct sample *smps[], unsigned cnt);
 
 int villas_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags);
 
-int villas_fscan(FILE *f, struct sample *smps[], unsigned cnt, int *flags);
+int villas_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags);

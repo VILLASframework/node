@@ -52,11 +52,24 @@ enum sample_data_format {
 	SAMPLE_DATA_FORMAT_INT   = 1
 };
 
+/** Parts of a sample that can be serialized / de-serialized by the IO formats */
+enum sample_has {
+	SAMPLE_ORIGIN		= (1 << 0), /**< Include nanoseconds in output. */
+	SAMPLE_RECEIVED		= (1 << 1), /**< Include nanoseconds in output. */
+	SAMPLE_OFFSET		= (1 << 2),
+	SAMPLE_SOURCE		= (1 << 3),
+	SAMPLE_ID		= (1 << 4),
+	SAMPLE_SEQUENCE		= (1 << 5), /**< Include sequence number in output. */
+	SAMPLE_VALUES		= (1 << 6), /**< Include values in output. */
+	SAMPLE_FORMAT		= (1 << 7),
+	SAMPLE_ALL		= (1 << 7) - 1, /**< Enable all output options. */
+};
+
 struct sample {
 	int sequence; /**< The sequence number of this sample. */
 	int length;   /**< The number of values in sample::values which are valid. */
 	int capacity; /**< The number of values in sample::values for which memory is reserved. */
-	
+
 	int id;
 
 	atomic_int refcnt;   /**< Reference counter. */
@@ -69,6 +82,8 @@ struct sample {
 		struct timespec received;	/**< The point in time when this data was received. */
 		struct timespec sent;		/**< The point in time when this data was send for the last time. */
 	} ts;
+
+	int has;
 
 	/** A long bitfield indicating the number representation of the first 64 values in sample::data[].
 	 *

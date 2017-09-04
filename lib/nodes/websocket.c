@@ -47,9 +47,9 @@ static char * websocket_connection_name(struct websocket_connection *c)
 		if (c->wsi) {
 			char name[128];
 			char ip[128];
-			
+
 			lws_get_peer_addresses(c->wsi, lws_get_socket_fd(c->wsi), name, sizeof(name), ip, sizeof(ip));
-			
+
 			strcatf(&c->_name, "remote.ip=%s, remote.name=%s", ip, name);
 		}
 		else if (c->destination)
@@ -75,15 +75,15 @@ static void websocket_destination_destroy(struct websocket_destination *d)
 static int websocket_connection_write(struct websocket_connection *c, struct sample *smps[], unsigned cnt)
 {
 	int pushed;
-	
+
 	pushed = queue_push_many(&c->queue, (void **) smps, cnt);
 	if (pushed < cnt)
 		warn("Queue overrun in WebSocket connection: %s", websocket_connection_name(c));
-	
+
 	sample_get_many(smps, cnt);
-	
+
 	debug(LOG_WEBSOCKET | 10, "Enqueued %u samples to %s", pushed, websocket_connection_name(c));
-	
+
 	/* Client connections which are currently conecting don't have an associate c->wsi yet */
 	if (c->wsi)
 		lws_callback_on_writable(c->wsi);
@@ -102,17 +102,17 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 {
 	int ret, recvd, pulled, cnt = 128;
 	struct websocket_connection *c = user;
-	
+
 	switch (reason) {
 		case LWS_CALLBACK_CLIENT_ESTABLISHED:
 			c->wsi = wsi;
 			c->state = STATE_ESTABLISHED;
-			
+
 			buffer_init(&c->buffers.recv, 1 << 12);
 			buffer_init(&c->buffers.send, 1 << 12);
 
 			debug(LOG_WEBSOCKET | 10, "Established WebSocket connection: %s", websocket_connection_name(c));
-			
+
 			/* Schedule writable callback in case we have something to send */
 			if (queue_available(&c->queue) > 0)
 				lws_callback_on_writable(wsi);
@@ -146,7 +146,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_PROTOCOL_ERR, "Invalid URL");
 				return -1;
 			}
-			
+
 			node = strtok(uri, "/.");
 			if (strlen(node) == 0)
 				c->node = NULL;
@@ -160,7 +160,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 					return -1;
 				}
 			}
-			
+
 			if (!format)
 				format = "webmsg";
 
@@ -169,16 +169,16 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_PROTOCOL_ERR, "Invalid format");
 				return -1;
 			}
-			
+
 			buffer_init(&c->buffers.recv, 1 << 12);
 			buffer_init(&c->buffers.send, 1 << 12);
-			
+
 			ret = queue_init(&c->queue, DEFAULT_QUEUELEN, &memtype_hugepage);
 			if (ret)
 				return -1;
 
 			list_push(&connections, c);
-			
+
 			debug(LOG_WEBSOCKET | 10, "Established WebSocket connection: %s", websocket_connection_name(c));
 
 			break;
@@ -189,10 +189,10 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			warn("Failed to establish WebSocket connection: %s, reason=%s", websocket_connection_name(c), in ? (char *) in : "unkown");
 
 			return -1;
-		
+
 		case LWS_CALLBACK_CLOSED:
 			debug(LOG_WEBSOCKET | 10, "Closed WebSocket connection: %s", websocket_connection_name(c));
-			
+
 			if (c->state != STATE_SHUTDOWN) {
 				/** @todo Attempt reconnect here */
 			}
@@ -219,7 +219,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 		case LWS_CALLBACK_CLIENT_WRITEABLE:
 		case LWS_CALLBACK_SERVER_WRITEABLE: {
 			size_t wbytes;
-			
+
 			if (c->state == STATE_SHUTDOWN) {
 				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_GOINGAWAY, "Node stopped");
 				return -1;
@@ -229,51 +229,51 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 			pulled = queue_pull_many(&c->queue, (void **) smps, cnt);
 			if (pulled > 0) {
-				io_format_sprint(c->format, c->buffers.send.buf + LWS_PRE, c->buffers.send.size - LWS_PRE, &wbytes, smps, pulled, IO_FORMAT_ALL);
-				
+				io_format_sprint(c->format, c->buffers.send.buf + LWS_PRE, c->buffers.send.size - LWS_PRE, &wbytes, smps, pulled, SAMPLE_ALL);
+
 				ret = lws_write(wsi, (unsigned char *) c->buffers.send.buf + LWS_PRE, wbytes, c->format->flags & IO_FORMAT_BINARY ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
 
 				sample_put_many(smps, pulled);
 
 				debug(LOG_WEBSOCKET | 10, "Send %d samples to connection: %s, bytes=%d", pulled, websocket_connection_name(c), ret);
 			}
-			
+
 			if (queue_available(&c->queue) > 0)
 				lws_callback_on_writable(wsi);
-			
+
 			break;
 		}
 
 		case LWS_CALLBACK_CLIENT_RECEIVE:
-		case LWS_CALLBACK_RECEIVE:		
+		case LWS_CALLBACK_RECEIVE:
 			if (!c->node) {
 				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_PROTOCOL_ERR, "Catch-all connection can not receive.");
 				return -1;
 			}
-			
+
 			if (lws_is_first_fragment(wsi))
 				buffer_clear(&c->buffers.recv);
-			
+
 			ret = buffer_append(&c->buffers.recv, in, len);
 			if (ret) {
 				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_UNACCEPTABLE_OPCODE, "Failed to process data");
 				return -1;
 			}
-			
+
 			/* We dont try to parse the frame yet, as we have to wait for the remaining fragments */
 			if (lws_is_final_fragment(wsi)) {
 				struct timespec ts_recv = time_now();
 
 				struct websocket *w = c->node->_vd;
 				struct sample **smps = alloca(cnt * sizeof(struct sample *));
-	
+
 				ret = sample_alloc(&w->pool, smps, cnt);
 				if (ret != cnt) {
 					warn("Pool underrun for connection: %s", websocket_connection_name(c));
 					break;
 				}
 
-				recvd = io_format_sscan(c->format, c->buffers.recv.buf, c->buffers.recv.len, NULL, smps, cnt, NULL);
+				recvd = io_format_sscan(c->format, c->buffers.recv.buf, c->buffers.recv.len, NULL, smps, cnt, 0);
 				if (recvd < 0) {
 					warn("Failed to parse sample data received on connection: %s", websocket_connection_name(c));
 					break;
@@ -282,13 +282,15 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				debug(LOG_WEBSOCKET | 10, "Received %d samples to connection: %s", recvd, websocket_connection_name(c));
 
 				/* Set receive timestamp */
-				for (int i = 0; i < recvd; i++)
+				for (int i = 0; i < recvd; i++) {
 					smps[i]->ts.received = ts_recv;
+					smps[i]->has |= SAMPLE_RECEIVED;
+				}
 
 				ret = queue_signalled_push_many(&w->queue, (void **) smps, recvd);
 				if (ret != recvd)
 					warn("Queue overrun for connection: %s", websocket_connection_name(c));
-			
+
 				if (c->state == STATE_SHUTDOWN) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_GOINGAWAY, "Node stopped");
 					return -1;
@@ -300,7 +302,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 		default:
 			break;
 	}
-	
+
 	return 0;
 }
 
@@ -365,7 +367,7 @@ int websocket_start(struct node *n)
 		d->info.context = web->context;
 		d->info.vhost = web->vhost;
 		d->info.userdata = c;
-		
+
 		ret = queue_init(&c->queue, DEFAULT_QUEUELEN, &memtype_hugepage);
 		if (ret)
 			return -1;
@@ -382,29 +384,29 @@ int websocket_stop(struct node *n)
 {
 	int ret;
 	struct websocket *w = n->_vd;
-	
+
 	/* Wait for all connections to be closed */
 	for (;;) {
 		int connecting = 0;
-		
+
 		for (int i = 0; i < list_length(&w->destinations); i++) {
 			struct websocket_destination *d = list_at(&w->destinations, i);
 			struct websocket_connection *c = d->info.userdata;
-		
+
 			if (c->state == STATE_CONNECTING)
 				connecting++;
 		}
-		
+
 		if (connecting == 0)
 			break;
-		
+
 		debug(LOG_WEBSOCKET | 10, "Waiting for %d client connections to be established", connecting);
 		sleep(1);
 	}
-	
+
 	for (size_t i = 0; i < list_length(&connections); i++) {
 		struct websocket_connection *c = list_at(&connections, i);
-		
+
 		if (c->node != n)
 			continue;
 
@@ -474,7 +476,7 @@ int websocket_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	for (size_t i = 0; i < list_length(&connections); i++) {
 		struct websocket_connection *c = list_at(&connections, i);
-		
+
 		if (c->node == n || c->node == NULL)
 			websocket_connection_write(c, cpys, cnt);
 	}
@@ -561,7 +563,7 @@ char * websocket_print(struct node *n)
 int websocket_fd(struct node *n)
 {
 	struct websocket *w = n->_vd;
-	
+
 	return queue_signalled_fd(&w->queue);
 }
 

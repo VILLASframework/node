@@ -25,11 +25,10 @@
 
 #include "io_format.h"
 
-int io_format_sscan(struct io_format *fmt, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags)
+int io_format_sscan(struct io_format *fmt, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
 {
-	if (!flags)
-		flags = &fmt->flags;
-	
+	flags |= fmt->flags;
+
 	return fmt->sscan ? fmt->sscan(buf, len, rbytes, smps, cnt, flags) : -1;
 }
 
@@ -40,7 +39,7 @@ int io_format_sprint(struct io_format *fmt, char *buf, size_t len, size_t *wbyte
 	return fmt->sprint ? fmt->sprint(buf, len, wbytes, smps, cnt, flags) : -1;
 }
 
-int io_format_fscan(struct io_format *fmt, FILE *f, struct sample *smps[], unsigned cnt, int *flags)
+int io_format_fscan(struct io_format *fmt, FILE *f, struct sample *smps[], unsigned cnt, int flags)
 {
 	return fmt->sprint ? fmt->fscan(f, smps, cnt, flags) : -1;
 }

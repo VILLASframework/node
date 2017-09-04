@@ -111,7 +111,7 @@ int nanomsg_parse(struct node *n, json_t *cfg)
 		if (ret < 0)
 			error("Invalid type for 'subscribe' setting of node %s", node_name(n));
 	}
-	
+
 	m->format = io_format_lookup(format);
 	if (!m->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
@@ -223,7 +223,7 @@ int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (bytes < 0)
 		return -1;
 
-	return io_format_sscan(m->format, data, bytes, NULL, smps, cnt, NULL);
+	return io_format_sscan(m->format, data, bytes, NULL, smps, cnt, 0);
 }
 
 int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)
@@ -235,7 +235,7 @@ int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	char data[NANOMSG_MAX_PACKET_LEN];
 
-	ret = io_format_sprint(m->format, data, sizeof(data), &wbytes, smps, cnt, IO_FORMAT_ALL);
+	ret = io_format_sprint(m->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_ALL);
 	if (ret <= 0)
 		return -1;
 
@@ -250,14 +250,14 @@ int nanomsg_fd(struct node *n)
 {
 	int ret;
 	struct nanomsg *m = n->_vd;
-	
+
 	int fd;
 	size_t len = sizeof(fd);
 
 	ret = nn_getsockopt(m->subscriber.socket, NN_SOL_SOCKET, NN_RCVFD, &fd, &len);
 	if (ret)
 		return ret;
-	
+
 	return fd;
 }
 

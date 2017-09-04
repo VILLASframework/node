@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 	if (!p)
 		error("Invalid output format '%s'", format);
 
-	ret = io_init(&io, &p->io, IO_FLUSH | (IO_FORMAT_ALL & ~IO_FORMAT_OFFSET));
+	ret = io_init(&io, &p->io, IO_FLUSH | (SAMPLE_ALL & ~SAMPLE_OFFSET));
 	if (ret)
 		error("Failed to initialize output");
 

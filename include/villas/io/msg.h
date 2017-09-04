@@ -68,4 +68,4 @@ int msg_from_sample(struct msg *msg, struct sample *smp);
 int msg_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags);
 
 /** Read struct sample's from buffer \p buf into samples \p smps. */
-int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags);
+int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags);

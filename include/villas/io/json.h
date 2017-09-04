@@ -28,8 +28,8 @@
 
 int json_pack_sample(json_t **j, struct sample *s, int flags);
 
-int json_unpack_sample(json_t *j, struct sample *s, int *flags);
+int json_unpack_sample(json_t *j, struct sample *s, int flags);
 
 int json_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags);
 
-int json_fscan(FILE *f, struct sample *smps[], unsigned cnt, int *flags);
+int json_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags);

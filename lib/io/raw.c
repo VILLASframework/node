@@ -23,7 +23,6 @@
 #include "sample.h"
 #include "plugin.h"
 #include "utils.h"
-#include "compat.h"
 #include "io/raw.h"
 
 /** Convert float to host byte order */
@@ -61,14 +60,14 @@ int raw_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 
 	int i, o = 0;
 	size_t nlen;
-	
+
 	int8_t  *i8  = (void *) buf;
 	int16_t *i16 = (void *) buf;
 	int32_t *i32 = (void *) buf;
 	int64_t *i64 = (void *) buf;
 	float   *f32 = (void *) buf;
 	double  *f64 = (void *) buf;
-	
+
 	int bits = 1 << (flags >> 24);
 
 	for (i = 0; i < cnt; i++) {
@@ -128,12 +127,12 @@ int raw_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 	return i;
 }
 
-int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags)
+int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
 {
 	/* The raw format can not encode multiple samples in one buffer
 	 * as there is no support for framing. */
 	struct sample *smp = smps[0];
-	
+
 	int8_t  *i8  = (void *) buf;
 	int16_t *i16 = (void *) buf;
 	int32_t *i32 = (void *) buf;
@@ -141,15 +140,15 @@ int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 	float   *f32 = (void *) buf;
 	double  *f64 = (void *) buf;
 
-	int off, bits = 1 << (*flags >> 24);
-	
+	int off, bits = 1 << (flags >> 24);
+
 	smp->length = len / (bits / 8);
-	
-	if (*flags & RAW_FAKE) {
+
+	if (flags & RAW_FAKE) {
 		off = 3;
-		
+
 		if (smp->length < off) {
-//			warn("Node %s received a packet with no fake header. Skipping...", node_name(n));
+			warn("Received a packet with no fake header. Skipping...");
 			return 0;
 		}
 
@@ -157,21 +156,24 @@ int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 
 		switch (bits) {
 			case 32:
-				smp->sequence          = SWAP_INT_TOH(*flags & RAW_BE_HDR, 32, i32[0]);
-				smp->ts.origin.tv_sec  = SWAP_INT_TOH(*flags & RAW_BE_HDR, 32, i32[1]);
-				smp->ts.origin.tv_nsec = SWAP_INT_TOH(*flags & RAW_BE_HDR, 32, i32[2]);
+				smp->sequence          = SWAP_INT_TOH(flags & RAW_BE_HDR, 32, i32[0]);
+				smp->ts.origin.tv_sec  = SWAP_INT_TOH(flags & RAW_BE_HDR, 32, i32[1]);
+				smp->ts.origin.tv_nsec = SWAP_INT_TOH(flags & RAW_BE_HDR, 32, i32[2]);
 				break;
 
 			case 64:
-				smp->sequence          = SWAP_INT_TOH(*flags & RAW_BE_HDR, 64, i64[0]);
-				smp->ts.origin.tv_sec  = SWAP_INT_TOH(*flags & RAW_BE_HDR, 64, i64[1]);
-				smp->ts.origin.tv_nsec = SWAP_INT_TOH(*flags & RAW_BE_HDR, 64, i64[2]);
+				smp->sequence          = SWAP_INT_TOH(flags & RAW_BE_HDR, 64, i64[0]);
+				smp->ts.origin.tv_sec  = SWAP_INT_TOH(flags & RAW_BE_HDR, 64, i64[1]);
+				smp->ts.origin.tv_nsec = SWAP_INT_TOH(flags & RAW_BE_HDR, 64, i64[2]);
 				break;
 		}
+
+		smp->has = SAMPLE_SEQUENCE | SAMPLE_ORIGIN;
 	}
 	else {
 		off = 0;
 
+		smp->has = 0;
 		smp->sequence = 0;
 		smp->ts.origin.tv_sec  = 0;
 		smp->ts.origin.tv_nsec = 0;
@@ -181,35 +183,32 @@ int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 		warn("Received more values than supported: length=%u, capacity=%u", smp->length, smp->capacity);
 		smp->length = smp->capacity;
 	}
-	
+
 	for (int i = 0; i < smp->length; i++) {
-		int fmt = *flags & RAW_FLT ? SAMPLE_DATA_FORMAT_FLOAT
+		int fmt = flags & RAW_FLT ? SAMPLE_DATA_FORMAT_FLOAT
 		                           : SAMPLE_DATA_FORMAT_INT;
-		
+
 		sample_set_data_format(smp, i, fmt);
-		
+
 		switch (fmt) {
 			case SAMPLE_DATA_FORMAT_FLOAT:
 				switch (bits) {
-					case 32: smp->data[i].f = SWAP_FLT_TOH(*flags & RAW_BE_FLT, f32[i+off]); break;
-					case 64: smp->data[i].f = SWAP_DBL_TOH(*flags & RAW_BE_FLT, f64[i+off]); break;
+					case 32: smp->data[i].f = SWAP_FLT_TOH(flags & RAW_BE_FLT, f32[i+off]); break;
+					case 64: smp->data[i].f = SWAP_DBL_TOH(flags & RAW_BE_FLT, f64[i+off]); break;
 				}
 				break;
-			
+
 			case SAMPLE_DATA_FORMAT_INT:
 				switch (bits) {
 					case 8:  smp->data[i].i = i8[i]; break;
-					case 16: smp->data[i].i = (int16_t) SWAP_INT_TOH(*flags & RAW_BE_INT, 16, i16[i+off]); break;
-					case 32: smp->data[i].i = (int32_t) SWAP_INT_TOH(*flags & RAW_BE_INT, 32, i32[i+off]); break;
-					case 64: smp->data[i].i = (int64_t) SWAP_INT_TOH(*flags & RAW_BE_INT, 64, i64[i+off]); break;
+					case 16: smp->data[i].i = (int16_t) SWAP_INT_TOH(flags & RAW_BE_INT, 16, i16[i+off]); break;
+					case 32: smp->data[i].i = (int32_t) SWAP_INT_TOH(flags & RAW_BE_INT, 32, i32[i+off]); break;
+					case 64: smp->data[i].i = (int64_t) SWAP_INT_TOH(flags & RAW_BE_INT, 64, i64[i+off]); break;
 				}
 				break;
 		}
 	}
 
-	smp->ts.received.tv_sec  = 0;
-	smp->ts.received.tv_nsec = 0;
-	
 	if (rbytes)
 		*rbytes = len;
 

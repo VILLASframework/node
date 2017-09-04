@@ -33,14 +33,14 @@ int json_pack_sample(json_t **j, struct sample *smp, int flags)
 			"origin",   smp->ts.origin.tv_sec,   smp->ts.origin.tv_nsec,
 			"received", smp->ts.received.tv_sec, smp->ts.received.tv_nsec,
 			"sent",     smp->ts.sent.tv_sec,     smp->ts.sent.tv_nsec);
-	
-	if (flags & IO_FORMAT_SEQUENCE) {
+
+	if (flags & SAMPLE_SEQUENCE) {
 		json_t *json_sequence = json_integer(smp->sequence);
-			
+
 		json_object_set(json_smp, "sequence", json_sequence);
 	}
-	
-	if (flags & IO_FORMAT_VALUES) {
+
+	if (flags & SAMPLE_VALUES) {
 		json_t *json_data = json_array();
 
 		for (int i = 0; i < smp->length; i++) {
@@ -50,10 +50,10 @@ int json_pack_sample(json_t **j, struct sample *smp, int flags)
 
 			json_array_append(json_data, json_value);
 		}
-		
+
 		json_object_set(json_smp, "data", json_data);
 	}
-	
+
 	*j = json_smp;
 
 	return 0;
@@ -63,23 +63,23 @@ int json_pack_samples(json_t **j, struct sample *smps[], unsigned cnt, int flags
 {
 	int ret;
 	json_t *json_smps = json_array();
-	
+
 	for (int i = 0; i < cnt; i++) {
 		json_t *json_smp;
-		
+
 		ret = json_pack_sample(&json_smp, smps[i], flags);
 		if (ret)
 			break;
-		
+
 		json_array_append(json_smps, json_smp);
 	}
-	
+
 	*j = json_smps;
-	
+
 	return cnt;
 }
 
-int json_unpack_sample(json_t *json_smp, struct sample *smp, int *flags)
+int json_unpack_sample(json_t *json_smp, struct sample *smp, int flags)
 {
 	int ret;
 	json_t *json_data, *json_value;
@@ -95,16 +95,17 @@ int json_unpack_sample(json_t *json_smp, struct sample *smp, int *flags)
 
 	if (ret)
 		return ret;
-	
+
 	if (!json_is_array(json_data))
 		return -1;
 
+	smp->has = SAMPLE_ORIGIN | SAMPLE_RECEIVED | SAMPLE_SEQUENCE;
 	smp->length = 0;
 
 	json_array_foreach(json_data, i, json_value) {
 		if (i >= smp->capacity)
 			break;
-		
+
 		switch (json_typeof(json_value)) {
 			case JSON_REAL:
 				smp->data[i].f = json_real_value(json_value);
@@ -122,19 +123,22 @@ int json_unpack_sample(json_t *json_smp, struct sample *smp, int *flags)
 
 		smp->length++;
 	}
-	
+
+	if (smp->length > 0)
+		smp->has |= SAMPLE_VALUES;
+
 	return 0;
 }
 
-int json_unpack_samples(json_t *json_smps, struct sample *smps[], unsigned cnt, int *flags)
+int json_unpack_samples(json_t *json_smps, struct sample *smps[], unsigned cnt, int flags)
 {
 	int ret;
 	json_t *json_smp;
 	size_t i;
-	
+
 	if (!json_is_array(json_smps))
 		return -1;
-	
+
 	json_array_foreach(json_smps, i, json_smp) {
 		if (i >= cnt)
 			break;
@@ -167,7 +171,7 @@ int json_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], un
 	return ret;
 }
 
-int json_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags)
+int json_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
 {
 	int ret;
 	json_t *json;
@@ -182,7 +186,7 @@ int json_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], uns
 		return ret;
 
 	json_decref(json);
-	
+
 	if (rbytes)
 		*rbytes = err.position;
 
@@ -208,7 +212,7 @@ int json_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 	return i;
 }
 
-int json_fscan(FILE *f, struct sample *smps[], unsigned cnt, int *flags)
+int json_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 {
 	int i, ret;
 	json_t *json;

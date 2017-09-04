@@ -30,12 +30,12 @@
 
 size_t csv_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 {
-	size_t off = snprintf(buf, len, "%ld", s->ts.origin.tv_sec);
-	
-	if (flags & IO_FORMAT_NANOSECONDS)
-		off += snprintf(buf + off, len - off, "%c%09llu", CSV_SEPARATOR, (unsigned long long) s->ts.origin.tv_nsec);
+	size_t off = 0;
 
-	if (flags & IO_FORMAT_SEQUENCE)
+	if (flags & SAMPLE_ORIGIN)
+		off += snprintf(buf + off, len - off, "%ld%c%09ld", s->ts.origin.tv_sec, CSV_SEPARATOR, s->ts.origin.tv_nsec);
+
+	if (flags & SAMPLE_SEQUENCE)
 		off += snprintf(buf + off, len - off, "%c%u", CSV_SEPARATOR, s->sequence);
 
 	for (int i = 0; i < s->length; i++) {
@@ -50,30 +50,36 @@ size_t csv_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 	}
 
 	off += snprintf(buf + off, len - off, "\n");
-	
+
 	return off;
 }
 
-size_t csv_sscan_single(const char *buf, size_t len, struct sample *s, int *flags)
+size_t csv_sscan_single(const char *buf, size_t len, struct sample *s, int flags)
 {
 	const char *ptr = buf;
 	char *end;
 
+	s->has = 0;
+
 	s->ts.origin.tv_sec = strtoul(ptr, &end, 10);
 	if (end == ptr || *end == '\n')
 		goto out;
-	
+
 	ptr = end;
-	
+
 	s->ts.origin.tv_nsec = strtoul(ptr, &end, 10);
 	if (end == ptr || *end == '\n')
 		goto out;
-	
+
 	ptr = end;
-	
+
+	s->has |= SAMPLE_ORIGIN;
+
 	s->sequence = strtoul(ptr, &end, 10);
 	if (end == ptr || *end == '\n')
 		goto out;
+
+	s->has |= SAMPLE_SEQUENCE;
 
 	for (ptr  = end, s->length = 0;
 	                 s->length < s->capacity;
@@ -94,11 +100,12 @@ size_t csv_sscan_single(const char *buf, size_t len, struct sample *s, int *flag
 		if (end == ptr)
 			goto out;
 	}
-	
+
 out:	if (*end == '\n')
 		end++;
 
-	s->ts.received = time_now();
+	if (s->length > 0)
+		s->has |= SAMPLE_VALUES;
 
 	return end - buf;
 }
@@ -110,21 +117,21 @@ int csv_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 
 	for (i = 0; i < cnt && off < len; i++)
 		off += csv_sprint_single(buf + off, len - off, smps[i], flags);
-	
+
 	if (wbytes)
 		*wbytes = off;
 
 	return i;
 }
 
-int csv_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags)
+int csv_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
 {
 	int i;
 	size_t off = 0;
 
 	for (i = 0; i < cnt && off < len; i++)
 		off += csv_sscan_single(buf + off, len - off, smps[i], flags);
-	
+
 	if (rbytes)
 		*rbytes = off;
 
@@ -139,13 +146,13 @@ int csv_fprint_single(FILE *f, struct sample *s, int flags)
 	ret = csv_sprint_single(line, sizeof(line), s, flags);
 	if (ret < 0)
 		return ret;
-	
+
 	fputs(line, f);
 
 	return 0;
 }
 
-int csv_fscan_single(FILE *f, struct sample *s, int *flags)
+int csv_fscan_single(FILE *f, struct sample *s, int flags)
 {
 	char *ptr, line[4096];
 
@@ -172,7 +179,7 @@ int csv_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 	return i;
 }
 
-int csv_fscan(FILE *f, struct sample *smps[], unsigned cnt, int *flags)
+int csv_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 {
 	int ret, i;
 	for (i = 0; i < cnt; i++) {

@@ -344,7 +344,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		return 0;
 	}
 
-	ret = io_format_sscan(s->format, bufptr, bytes, &rbytes, smps, cnt, NULL);
+	ret = io_format_sscan(s->format, bufptr, bytes, &rbytes, smps, cnt, 0);
 
 	if (bytes != rbytes)
 		warn("Received invalid packet from node: %s bytes=%zu, rbytes=%zu", node_name(n), bytes, rbytes);
@@ -361,7 +361,7 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 	ssize_t bytes;
 	size_t wbytes;
 
-	ret = io_format_sprint(s->format, data, sizeof(data), &wbytes, smps, cnt, IO_FORMAT_ALL);
+	ret = io_format_sprint(s->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_ALL);
 	if (ret < 0)
 		return -1;
 

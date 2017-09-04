@@ -33,18 +33,20 @@
 
 size_t villas_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 {
-	size_t off = snprintf(buf, len, "%llu", (unsigned long long) s->ts.origin.tv_sec);
+	size_t off = 0;
 
-	if (flags & IO_FORMAT_NANOSECONDS)
+	if (flags & SAMPLE_ORIGIN) {
+		off += snprintf(buf + off, len - off, "%llu", (unsigned long long) s->ts.origin.tv_sec);
 		off += snprintf(buf + off, len - off, ".%09llu", (unsigned long long) s->ts.origin.tv_nsec);
+	}
 
-	if (flags & IO_FORMAT_OFFSET)
+	if (flags & SAMPLE_OFFSET)
 		off += snprintf(buf + off, len - off, "%+e", time_delta(&s->ts.origin, &s->ts.received));
 
-	if (flags & IO_FORMAT_SEQUENCE)
+	if (flags & SAMPLE_SEQUENCE)
 		off += snprintf(buf + off, len - off, "(%u)", s->sequence);
 
-	if (flags & IO_FORMAT_VALUES) {
+	if (flags & SAMPLE_VALUES) {
 		for (int i = 0; i < s->length; i++) {
 			switch ((s->format >> i) & 0x1) {
 				case SAMPLE_DATA_FORMAT_FLOAT:
@@ -62,13 +64,14 @@ size_t villas_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 	return off;
 }
 
-size_t villas_sscan_single(const char *buf, size_t len, struct sample *s, int *flags)
+size_t villas_sscan_single(const char *buf, size_t len, struct sample *s, int flags)
 {
 	char *end;
 	const char *ptr = buf;
 
-	int fl = 0;
 	double offset = 0;
+
+	s->has = 0;
 
 	/* Format: Seconds.NanoSeconds+Offset(SequenceNumber) Value1 Value2 ...
 	 * RegEx: (\d+(?:\.\d+)?)([-+]\d+(?:\.\d+)?(?:e[+-]?\d+)?)?(?:\((\d+)\))?
@@ -81,14 +84,14 @@ size_t villas_sscan_single(const char *buf, size_t len, struct sample *s, int *f
 	if (ptr == end || *end == '\n')
 		return -1;
 
+	s->has |= SAMPLE_ORIGIN;
+
 	/* Optional: nano seconds */
 	if (*end == '.') {
 		ptr = end + 1;
 
 		s->ts.origin.tv_nsec = (uint32_t) strtoul(ptr, &end, 10);
-		if (ptr != end)
-			fl |= IO_FORMAT_NANOSECONDS;
-		else
+		if (ptr == end)
 			return -3;
 	}
 	else
@@ -100,7 +103,7 @@ size_t villas_sscan_single(const char *buf, size_t len, struct sample *s, int *f
 
 		offset = strtof(ptr, &end); /* offset is ignored for now */
 		if (ptr != end)
-			fl |= IO_FORMAT_OFFSET;
+			s->has |= SAMPLE_OFFSET;
 		else
 			return -4;
 	}
@@ -111,7 +114,7 @@ size_t villas_sscan_single(const char *buf, size_t len, struct sample *s, int *f
 
 		s->sequence = strtoul(ptr, &end, 10);
 		if (ptr != end)
-			fl |= IO_FORMAT_SEQUENCE;
+			s->has |= SAMPLE_SEQUENCE;
 		else
 			return -5;
 
@@ -124,7 +127,7 @@ size_t villas_sscan_single(const char *buf, size_t len, struct sample *s, int *f
 	     ptr  = end, s->length++) {
 		if (*end == '\n')
 			break;
-		
+
 		switch (s->format & (1 << s->length)) {
 			case SAMPLE_DATA_FORMAT_FLOAT:
 				s->data[s->length].f = strtod(ptr, &end);
@@ -138,22 +141,19 @@ size_t villas_sscan_single(const char *buf, size_t len, struct sample *s, int *f
 		if (end == ptr)
 			break;
 	}
-	
+
 	if (*end == '\n')
 		end++;
 
 	if (s->length > 0)
-		fl |= IO_FORMAT_VALUES;
+		s->has |= SAMPLE_VALUES;
 
-	if (flags)
-		*flags = fl;
-
-	if (fl & IO_FORMAT_OFFSET) {
+	if (s->has & SAMPLE_OFFSET) {
 		struct timespec off = time_from_double(offset);
 		s->ts.received = time_add(&s->ts.origin, &off);
+
+		s->has |= SAMPLE_RECEIVED;
 	}
-	else
-		s->ts.received = time_now();
 
 	return end - buf;
 }
@@ -165,28 +165,28 @@ int villas_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], 
 
 	for (i = 0; i < cnt && off < len; i++)
 		off += villas_sprint_single(buf + off, len - off, smps[i], flags);
-	
+
 	if (wbytes)
 		*wbytes = off;
 
 	return i;
 }
 
-int villas_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int *flags)
+int villas_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
 {
 	int i;
 	size_t off = 0;
 
 	for (i = 0; i < cnt && off < len; i++)
 		off += villas_sscan_single(buf + off, len - off, smps[i], flags);
-	
+
 	if (rbytes)
 		*rbytes = off;
 
 	return i;
 }
 
-int villas_fscan_single(FILE *f, struct sample *s, int *flags)
+int villas_fscan_single(FILE *f, struct sample *s, int flags)
 {
 	char *ptr, line[4096];
 
@@ -209,7 +209,7 @@ int villas_fprint_single(FILE *f, struct sample *s, int flags)
 	ret = villas_sprint_single(line, sizeof(line), s, flags);
 	if (ret < 0)
 		return ret;
-	
+
 	fputs(line, f);
 
 	return 0;
@@ -228,7 +228,7 @@ int villas_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 	return i;
 }
 
-int villas_fscan(FILE *f, struct sample *smps[], unsigned cnt, int *flags)
+int villas_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 {
 	int ret, i;
 
