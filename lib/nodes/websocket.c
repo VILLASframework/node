@@ -162,7 +162,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			}
 
 			if (!format)
-				format = "webmsg";
+				format = "villas-web";
 
 			c->format = io_format_lookup(format);
 			if (!c->format) {
@@ -362,7 +362,7 @@ int websocket_start(struct node *n)
 		c->destination = d;
 		c->_name = NULL;
 
-		c->format = io_format_lookup("webmsg"); /** @todo We could parse the format from the URI */
+		c->format = io_format_lookup("villas-web"); /** @todo We could parse the format from the URI */
 
 		d->info.context = web->context;
 		d->info.vhost = web->vhost;
