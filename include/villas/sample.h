@@ -93,8 +93,8 @@ struct sample {
 
 	/** The values. */
 	union {
-		double   f;	/**< Floating point values. */
-		uint64_t i;	/**< Integer values. */
+		double  f;	/**< Floating point values. */
+		int64_t i;	/**< Integer values. */
 	} data[];		/**< Data is in host endianess! */
 };
 
