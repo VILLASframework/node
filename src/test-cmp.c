@@ -22,7 +22,6 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-#include <math.h>
 #include <getopt.h>
 
 #include <jansson.h>
@@ -30,16 +29,24 @@
 #include <villas/sample.h>
 #include <villas/io.h>
 #include <villas/io_format.h>
-#include <villas/io/villas.h>
 #include <villas/utils.h>
-#include <villas/timing.h>
 #include <villas/pool.h>
 
 #include "config.h"
 
+struct side {
+	char *path;
+	char *format;
+
+	struct sample *sample;
+
+	struct io io;
+	struct io_format *fmt;
+};
+
 void usage()
 {
-	printf("Usage: villas-test-cmp [OPTIONS] FILE1 FILE2\n");
+	printf("Usage: villas-test-cmp [OPTIONS] FILE1 FILE2 ... FILEn\n");
 	printf("  FILE1    first file to compare\n");
 	printf("  FILE2    second file to compare against\n");
 	printf("  OPTIONS is one or more of the following options:\n");
@@ -49,6 +56,7 @@ void usage()
 	printf("    -v      ignore data values\n");
 	printf("    -t      ignore timestamp\n");
 	printf("    -s      ignore sequence no\n");
+	printf("    -f      file format for all files\n");
 	printf("\n");
 	printf("Return codes:\n");
 	printf("  0   files are equal\n");
@@ -68,38 +76,29 @@ int main(int argc, char *argv[])
 
 	/* Default values */
 	double epsilon = 1e-9;
-	int timestamp = 1;
-	int sequence = 1;
-	int data = 1;
+	char *format = "villas-human";
+	int flags = SAMPLE_SEQUENCE | SAMPLE_VALUES | SAMPLE_ORIGIN;
 
-	struct log log;
 	struct pool pool = { .state = STATE_DESTROYED };
-	struct sample *samples[2];
-
-	struct {
-		char *path;
-		FILE *handle;
-		struct sample *sample;
-	} f1, f2;
 
 	/* Parse Arguments */
 	char c, *endptr;
-	while ((c = getopt (argc, argv, "hjmd:e:l:H:r:vts")) != -1) {
+	while ((c = getopt (argc, argv, "he:vtsf:")) != -1) {
 		switch (c) {
-			case 'd':
-				log.level = strtoul(optarg, &endptr, 10);
-				goto check;
 			case 'e':
 				epsilon = strtod(optarg, &endptr);
 				goto check;
 			case 'v':
-				data = 0;
+				flags &= ~SAMPLE_VALUES;
 				break;
 			case 't':
-				timestamp = 0;
+				flags &= ~SAMPLE_ORIGIN;
 				break;
 			case 's':
-				sequence = 0;
+				flags &= ~SAMPLE_SEQUENCE;
+				break;
+			case 'f':
+				format = optarg;
 				break;
 			case 'h':
 			case '?':
@@ -113,101 +112,84 @@ check:		if (optarg == endptr)
 			error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
 
-	if (argc != optind + 2) {
+	if (argc - optind < 2) {
 		usage();
 		exit(EXIT_FAILURE);
 	}
 
-	f1.path = argv[optind];
-	f2.path = argv[optind + 1];
+	int n = argc - optind; /* The number of files which we compare */
+	struct side s[n];
 
-	ret = log_init(&log, V, LOG_ALL);
-	if (ret)
-		error("Failed to initialize log");
-
-	ret = log_start(&log);
-	if (ret)
-		error("Failed to start log");
-
-	ret = pool_init(&pool, 1024, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_heap);
+	ret = pool_init(&pool, n, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_heap);
 	if (ret)
 		error("Failed to initialize pool");
 
-	ret = sample_alloc(&pool, samples, 2);
-	if (ret != 2)
-		error("Failed to allocate samples");
+	/* Open files */
+	for (int i = 0; i < n; i++) {
+		s[i].format = format;
+		s[i].path = argv[optind + i];
 
-	f1.sample = samples[0];
-	f2.sample = samples[1];
+		s[i].fmt = io_format_lookup(s[i].format);
+		if (!s[i].fmt)
+			error("Invalid IO format: %s", s[i].format);
 
-	f1.handle = fopen(f1.path, "r");
-	if (!f1.handle)
-		serror("Failed to open file: %s", f1.path);
+		ret = io_init(&s[i].io, s[i].fmt, IO_NONBLOCK);
+		if (ret)
+			error("Failed to initialize IO");
 
-	f2.handle = fopen(f2.path, "r");
-	if (!f2.handle)
-		serror("Failed to open file: %s", f2.path);
+		ret = io_open(&s[i].io, s[i].path);
+		if (ret)
+			error("Failed to open file: %s", s[i].path);
 
-	while (!feof(f1.handle) && !feof(f2.handle)) {
-		ret = villas_fscan(f1.handle, &f1.sample, 1, 0);
-		if (ret < 0 && !feof(f1.handle))
-			goto out;
-
-		ret = villas_fscan(f2.handle, &f2.sample, 1, 0);
-		if (ret < 0 && !feof(f2.handle))
-			goto out;
-
-		/* EOF is only okay if both files are at the end */
-		if (feof(f1.handle) || feof(f2.handle)) {
-			if (!(feof(f1.handle) && feof(f2.handle))) {
-				printf("file length not equal\n");
-				ret = 1;
-				goto out;
-			}
-		}
-
-		/* Compare sequence no */
-		if (sequence && (f1.sample->has & SAMPLE_SEQUENCE) && (f2.sample->has & SAMPLE_SEQUENCE)) {
-			if (f1.sample->sequence != f2.sample->sequence) {
-				printf("sequence no: %d != %d\n", f1.sample->sequence, f2.sample->sequence);
-				ret = 2;
-				goto out;
-			}
-		}
-
-		/* Compare timestamp */
-		if (timestamp) {
-			if (time_delta(&f1.sample->ts.origin, &f2.sample->ts.origin) > epsilon) {
-				printf("ts.origin: %f != %f\n", time_to_double(&f1.sample->ts.origin), time_to_double(&f2.sample->ts.origin));
-				ret = 3;
-				goto out;
-			}
-		}
-
-		/* Compare data */
-		if (data) {
-			if (f1.sample->length != f2.sample->length) {
-				printf("length: %d != %d\n", f1.sample->length, f2.sample->length);
-				ret = 4;
-				goto out;
-			}
-
-			for (int i = 0; i < f1.sample->length; i++) {
-				if (fabs(f1.sample->data[i].f - f2.sample->data[i].f) > epsilon) {
-					printf("data[%d]: %f != %f\n", i, f1.sample->data[i].f, f2.sample->data[i].f);
-					ret = 5;
-					goto out;
-				}
-			}
-		}
+		ret = sample_alloc(&pool, &s[i].sample, 1);
+		if (ret != 1)
+			error("Failed to allocate samples");
 	}
 
-	ret = 0;
+	int line = 0;
+	for (;;) {
+		/* Read next sample from all files */
+		int fails = 0;
+		for (int i = 0; i < n; i++) {
+			ret = io_eof(&s[i].io);
+			if (ret) {
+				fails++;
+				continue;
+			}
 
-out:	sample_free(samples, 2);
+			ret = io_scan(&s[i].io, &s[i].sample, 1);
+			if (ret <= 0) {
+				fails++;
+				continue;
+			}
+		}
 
-	fclose(f1.handle);
-	fclose(f2.handle);
+		if (fails == n) {
+			ret = 0;
+			goto fail;
+		}
+		else if (fails != n) {
+			printf("fails = %d at line %d\n", fails, line);
+			ret = -1;
+			goto fail;
+		}
+
+		/* We compare all files against the first one */
+		for (int i = 1; i < n; i++) {
+			ret = sample_cmp(s[0].sample, s[i].sample, epsilon, flags);
+			if (ret)
+				goto fail;
+		}
+
+		line++;
+	}
+
+fail:
+	for (int i = 0; i < n; i++) {
+		io_close(&s[i].io);
+		io_destroy(&s[i].io);
+		sample_put(s[i].sample);
+	}
 
 	pool_destroy(&pool);
 

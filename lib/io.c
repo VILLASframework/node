@@ -58,7 +58,7 @@ int io_stream_open(struct io *io, const char *uri)
 	int ret;
 
 	if (uri) {
-		if (strcmp(uri, "-")) {
+		if (!strcmp(uri, "-")) {
 			goto stdio;
 		}
 		else if (aislocal(uri)) {
