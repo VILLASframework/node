@@ -38,7 +38,6 @@ villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 for FORMAT	in csv json villas csv msg gtnet-fake raw-flt32 gtnet-fake; do
 for LAYER	in udp ip eth; do
-for HEADER	in none default; do
 for ENDIAN	in big little; do
 for VERIFY_SOURCE in true false; do
 	
@@ -79,7 +78,6 @@ cat > ${CONFIG_FILE} << EOF
 			"vectorize" : ${VECTORIZE},
 			"format" : "${FORMAT}",
 			"layer" : "${LAYER}",
-			"header" : "${HEADER}",
 			"endian" : "${ENDIAN}",
 			"verify_source" : ${VERIFY_SOURCE},
 
@@ -103,7 +101,7 @@ villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 if (( ${RC} != 0 )); then
-	echo "=========== Sub-test failed for: format=${FORMAT}, layer=${LAYER}, header=${HEADER}, endian=${ENDIAN}, verify_source=${VERIFY_SOURCE}, vectorize=${VECTORIZE}"
+	echo "=========== Sub-test failed for: format=${FORMAT}, layer=${LAYER}, endian=${ENDIAN}, verify_source=${VERIFY_SOURCE}, vectorize=${VECTORIZE}"
 	cat ${CONFIG_FILE}
 	echo
 	cat ${INPUT_FILE}
@@ -111,10 +109,10 @@ if (( ${RC} != 0 )); then
 	cat ${OUTPUT_FILE}
 	exit ${RC}
 else
-	echo "=========== Sub-test succeeded for: format=${FORMAT}, layer=${LAYER}, header=${HEADER}, endian=${ENDIAN}, verify_source=${VERIFY_SOURCE}, vectorize=${VECTORIZE}"
+	echo "=========== Sub-test succeeded for: format=${FORMAT}, layer=${LAYER}, endian=${ENDIAN}, verify_source=${VERIFY_SOURCE}, vectorize=${VECTORIZE}"
 fi
 
-done; done; done; done; done; done
+done; done; done; done; done
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${THEORIES}
 

@@ -52,7 +52,7 @@ cat > ${CONFIG_FILE} <<EOF
 EOF
 
 # Delete old file
-curl -X DELETE ${URI} > /dev/null
+curl -sX DELETE ${URI} > /dev/null
 
 VILLAS_LOG_PREFIX=$(colorize "[Signal] ") \
 villas-signal random -n -l ${NUM_SAMPLES} > ${INPUT_FILE}

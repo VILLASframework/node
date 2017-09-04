@@ -39,17 +39,19 @@ cat > ${CONFIG_FILE} <<EOF
 			"type": "socket",
 			"layer": "udp",
 			"local": "*:12000",
-			"remote": "127.0.0.1:12001"
+			"remote": "127.0.0.1:12001",
+			"vectorize" : 10
 		},
 		"node2": {
 			"type": "socket",
 			"layer": "udp",
 			"local": "*:12001",
-			"remote": "127.0.0.1:12000"
+			"remote": "127.0.0.1:12000",
+			"vectorize" : 1
 		}
 	},
 	"paths": [
-		{ "in": "node1", "out": "node1" }
+		{ "in": "node1", "out": "node1", "hooks" : [ { "type" : "print" } ] }
 	]
 }
 EOF

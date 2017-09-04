@@ -44,10 +44,6 @@ villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 # We delay EOF of the INPUT_FILE by 1 second in order to wait for incoming data to be received
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
-cat ${INPUT_FILE}
-echo
-cat ${OUTPUT_FILE}
-
 # Comapre data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC:$?
