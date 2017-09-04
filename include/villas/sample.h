@@ -116,6 +116,9 @@ int sample_put(struct sample *s);
 
 int sample_copy(struct sample *dst, struct sample *src);
 
+/** Compare two samples */
+int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags);
+
 int sample_copy_many(struct sample *dsts[], struct sample *srcs[], int cnt);
 int sample_get_many(struct sample *smps[], int cnt);
 int sample_put_many(struct sample *smps[], int cnt);

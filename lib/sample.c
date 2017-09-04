@@ -21,10 +21,12 @@
  *********************************************************************************/
 
 #include <string.h>
+#include <math.h>
 
 #include "pool.h"
 #include "sample.h"
 #include "utils.h"
+#include "timing.h"
 
 int sample_alloc(struct pool *p, struct sample *smps[], int cnt)
 {
@@ -108,6 +110,47 @@ int sample_copy_many(struct sample *dsts[], struct sample *srcs[], int cnt)
 		sample_copy(dsts[i], srcs[i]);
 
 	return cnt;
+}
+
+int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
+{
+	if ((a->has & b->has & flags) != flags) {
+		printf("missing components: a=%#x, b=%#x, wanted=%#x\n", a->has, b->has, flags);
+		return -1;
+	}
+
+	/* Compare sequence no */
+	if (flags & SAMPLE_SEQUENCE) {
+		if (a->sequence != b->sequence) {
+			printf("sequence no: %d != %d\n", a->sequence, b->sequence);
+			return -2;
+		}
+	}
+
+	/* Compare timestamp */
+	if (flags & SAMPLE_ORIGIN) {
+		if (time_delta(&a->ts.origin, &b->ts.origin) > epsilon) {
+			printf("ts.origin: %f != %f\n", time_to_double(&a->ts.origin), time_to_double(&b->ts.origin));
+			return -3;
+		}
+	}
+
+	/* Compare data */
+	if (flags & SAMPLE_VALUES) {
+		if (a->length != b->length) {
+			printf("length: %d != %d\n", a->length, b->length);
+			return -4;
+		}
+
+		for (int i = 0; i < a->length; i++) {
+			if (fabs(a->data[i].f - b->data[i].f) > epsilon) {
+				printf("data[%d]: %f != %f\n", i, a->data[i].f, b->data[i].f);
+				return -5;
+			}
+		}
+	}
+
+	return 0;
 }
 
 int sample_set_data_format(struct sample *s, int idx, enum sample_data_format fmt)
