@@ -35,7 +35,7 @@ NUM_SAMPLES=${NUM_SAMPLES:-10}
 # Generate test data
 villas-signal random -l ${NUM_SAMPLES} -n -v 10 > ${INPUT_FILE}
 
-for FORMAT in csv json villas csv msg gtnet-fake raw-flt32 gtnet-fake; do
+for FORMAT in villas-human villas-binary villas-web csv json gtnet-fake raw-flt32; do
 	
 VECTORIZES="1"
 
