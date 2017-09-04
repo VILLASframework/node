@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <stdbool.h>
 #include <ctype.h>
 #include <inttypes.h>
 #include <string.h>
@@ -30,6 +31,10 @@
 #include "timing.h"
 #include "sample.h"
 #include "io/villas_human.h"
+
+struct villas_human {
+	bool header_written;
+};
 
 size_t villas_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 {
@@ -228,6 +233,26 @@ int villas_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 	return i;
 }
 
+int villas_print(struct io *io, struct sample *smps[], unsigned cnt)
+{
+	struct villas_human *h = io->_vd;
+
+	FILE *f = io->mode == IO_MODE_ADVIO
+			? io->advio.output->file
+			: io->stdio.output;
+
+	if (!h->header_written) {
+		fprintf(f, "# %-20s\t\t%s\n", "sec.nsec+offset", "data[]");
+
+		if (io->flags & IO_FLUSH)
+			io_flush(io);
+
+		h->header_written = true;
+	}
+
+	return villas_fprint(f, smps, cnt, io->flags);
+}
+
 int villas_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 {
 	int ret, i;
@@ -243,22 +268,25 @@ int villas_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 
 int villas_open(struct io *io, const char *uri)
 {
+	struct villas_human *h = io->_vd;
 	int ret;
 
 	ret = io_stream_open(io, uri);
 	if (ret)
 		return ret;
 
-	FILE *f = io->mode == IO_MODE_ADVIO
-			? io->advio.output->file
-			: io->stdio.output;
-
-	fprintf(f, "# %-20s\t\t%s\n", "sec.nsec+offset", "data[]");
-
-	if (io->flags & IO_FLUSH)
-		io_flush(io);
+	h->header_written = false;
 
 	return 0;
+}
+
+void villas_rewind(struct io *io)
+{
+	struct villas_human *h = io->_vd;
+
+	h->header_written = false;
+
+	io_stream_rewind(io);
 }
 
 static struct plugin p = {
@@ -267,11 +295,13 @@ static struct plugin p = {
 	.type = PLUGIN_TYPE_IO,
 	.io = {
 		.open	= villas_open,
+		.rewind	= villas_rewind,
+		.print	= villas_print,
 		.fprint	= villas_fprint,
 		.fscan	= villas_fscan,
 		.sprint	= villas_sprint,
 		.sscan	= villas_sscan,
-		.size	= 0
+		.size	= sizeof(struct villas_human)
 	}
 };
 
