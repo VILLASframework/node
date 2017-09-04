@@ -45,7 +45,7 @@ size_t villas_human_sprint_single(char *buf, size_t len, struct sample *s, int f
 		off += snprintf(buf + off, len - off, ".%09llu", (unsigned long long) s->ts.origin.tv_nsec);
 	}
 
-	if (flags & SAMPLE_OFFSET)
+	if (flags & SAMPLE_RECEIVED)
 		off += snprintf(buf + off, len - off, "%+e", time_delta(&s->ts.origin, &s->ts.received));
 
 	if (flags & SAMPLE_SEQUENCE)
@@ -53,7 +53,7 @@ size_t villas_human_sprint_single(char *buf, size_t len, struct sample *s, int f
 
 	if (flags & SAMPLE_VALUES) {
 		for (int i = 0; i < s->length; i++) {
-			switch ((s->format >> i) & 0x1) {
+			switch (sample_get_data_format(s, i)) {
 				case SAMPLE_DATA_FORMAT_FLOAT:
 					off += snprintf(buf + off, len - off, "\t%.6lf", s->data[i].f);
 					break;

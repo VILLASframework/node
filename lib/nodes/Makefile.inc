@@ -35,6 +35,13 @@ WITH_SOCKET    ?= 1
 WITH_ZEROMQ    ?= 1
 WITH_NANOMSG   ?= 1
 WITH_SHMEM     ?= 1
+WITH_STATS     ?= 1
+
+# Enable stats node-type
+ifeq ($(WITH_STATS),1)
+	LIB_SRCS += lib/nodes/stats.c
+	LIB_CFLAGS += -DWITH_STATS
+endif
 
 # Enable file node-type
 ifeq ($(WITH_FILE),1)

@@ -47,8 +47,7 @@ struct side {
 void usage()
 {
 	printf("Usage: villas-test-cmp [OPTIONS] FILE1 FILE2 ... FILEn\n");
-	printf("  FILE1    first file to compare\n");
-	printf("  FILE2    second file to compare against\n");
+	printf("  FILE     a list of files to compare\n");
 	printf("  OPTIONS is one or more of the following options:\n");
 	printf("    -h      print this usage information\n");
 	printf("    -d LVL  adjust the debug level\n");
@@ -56,7 +55,7 @@ void usage()
 	printf("    -v      ignore data values\n");
 	printf("    -t      ignore timestamp\n");
 	printf("    -s      ignore sequence no\n");
-	printf("    -f      file format for all files\n");
+	printf("    -f FMT  file format for all files\n");
 	printf("\n");
 	printf("Return codes:\n");
 	printf("  0   files are equal\n");
@@ -133,7 +132,7 @@ check:		if (optarg == endptr)
 		if (!s[i].fmt)
 			error("Invalid IO format: %s", s[i].format);
 
-		ret = io_init(&s[i].io, s[i].fmt, IO_NONBLOCK);
+		ret = io_init(&s[i].io, s[i].fmt, 0);
 		if (ret)
 			error("Failed to initialize IO");
 
@@ -146,46 +145,50 @@ check:		if (optarg == endptr)
 			error("Failed to allocate samples");
 	}
 
-	int line = 0;
+	int eofs, line, failed;
+
+	line = 0;
 	for (;;) {
 		/* Read next sample from all files */
-		int fails = 0;
+retry:		eofs = 0;
 		for (int i = 0; i < n; i++) {
 			ret = io_eof(&s[i].io);
-			if (ret) {
-				fails++;
-				continue;
+			if (ret)
+				eofs++;
+		}
+
+		if (eofs) {
+			if (eofs == n)
+				ret = 0;
+			else {
+				printf("length unequal\n");
+				ret = 1;
 			}
 
+			goto out;
+		}
+
+		failed = 0;
+		for (int i = 0; i < n; i++) {
 			ret = io_scan(&s[i].io, &s[i].sample, 1);
-			if (ret <= 0) {
-				fails++;
-				continue;
-			}
+			if (ret <= 0)
+				failed++;
 		}
 
-		if (fails == n) {
-			ret = 0;
-			goto fail;
-		}
-		else if (fails != n) {
-			printf("fails = %d at line %d\n", fails, line);
-			ret = -1;
-			goto fail;
-		}
+		if (failed)
+			goto retry;
 
 		/* We compare all files against the first one */
 		for (int i = 1; i < n; i++) {
 			ret = sample_cmp(s[0].sample, s[i].sample, epsilon, flags);
 			if (ret)
-				goto fail;
+				goto out;
 		}
 
 		line++;
 	}
 
-fail:
-	for (int i = 0; i < n; i++) {
+out:	for (int i = 0; i < n; i++) {
 		io_close(&s[i].io);
 		io_destroy(&s[i].io);
 		sample_put(s[i].sample);

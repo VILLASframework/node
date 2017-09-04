@@ -29,16 +29,20 @@
 
 #pragma once
 
+#include <jansson.h>
+
 #include "task.h"
 
 /* Forward declarations */
 struct node;
-struct path;
 struct sample;
+struct super_node;
 
 struct stats_node {
-	struct task task;
 	double rate;
+	char *node_str;
+
+	struct task task;
 
 	struct node *node;
 };

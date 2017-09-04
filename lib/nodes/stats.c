@@ -24,6 +24,7 @@
  * @{
  */
 
+#include "nodes/stats.h"
 #include "hook.h"
 #include "plugin.h"
 #include "stats.h"
@@ -48,20 +49,18 @@ int stats_node_start(struct node *n)
 	struct stats_node *s = n->_vd;
 	int ret;
 
-	if (!s->node->stats)
-		return -1;
-
-	if (s->node->stats->state != STATE_INITIALIZED)
-		return -2;
-
 	ret = task_init(&s->task, s->rate, CLOCK_MONOTONIC);
 	if (ret)
 		serror("Failed to create task");
 
+	s->node = list_lookup(nodes, s->node_str);
+	if (!s->node)
+		error("Invalid reference node %s for setting 'node' of node %s", s->node_str, node_name(n));
+
 	return 0;
 }
 
-int stats_node_start(struct node *n)
+int stats_node_stop(struct node *n)
 {
 	struct stats_node *s = n->_vd;
 	int ret;
@@ -75,14 +74,14 @@ int stats_node_start(struct node *n)
 
 char * stats_node_print(struct node *n)
 {
-	struct stats_node *p = h->_vd;
+	struct stats_node *s = n->_vd;
 
-	return strf("node=%s, rate=%f", node_name_short(s->node), s->rate);
+	return strf("node=%s, rate=%f", s->node_str, s->rate);
 }
 
 int stats_node_parse(struct node *n, json_t *cfg)
 {
-	struct stats_node *p = h->_vd;
+	struct stats_node *s = n->_vd;
 
 	int ret;
 	json_error_t err;
@@ -99,25 +98,39 @@ int stats_node_parse(struct node *n, json_t *cfg)
 	if (s->rate <= 0)
 		error("Setting 'rate' of node %s must be positive", node_name(n));
 
+	s->node_str = strdup(node);
+
+	n->samplelen = STATS_COUNT * 7;
+
 	return 0;
 }
 
-int stats_node_read(struct hook *h, struct sample *smps[], unsigned *cnt)
+int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct stats_node *sn = h->_vd;
+	struct stats_node *sn = n->_vd;
 	struct stats *s = sn->node->stats;
 
-	if (*cnt == 0)
+	if (!cnt)
 		return 0;
 
-	for (int i = 0; j < MIN(STATS_COUNT, smps[0]->capacity); i++) {
-		smps[0]->data[i++].f = hist_last(&s->histograms[i]);
-		smps[0]->data[i++].f = hist_highest(&s->histograms[i]);
-		smps[0]->data[i++].f = hist_lowest(&s->histograms[i]);
-		smps[0]->data[i++].f = hist_mean(&s->histograms[i]);
-		smps[0]->data[i++].f = hist_var(&s->histograms[i]);
+	if (!sn->node->stats)
+		return 0;
 
-		smps[0]->length = i;
+	task_wait_until_next_period(&sn->task);
+
+	smps[0]->length = MIN(STATS_COUNT * 7, smps[0]->capacity);
+	smps[0]->has = SAMPLE_VALUES;
+
+	for (int i = 0; i < 6 && i*7+5 < smps[0]->length; i++) {
+		int tot = hist_total(&s->histograms[i]);
+
+		smps[0]->data[i*7+0].f = tot ? hist_total(&s->histograms[i]) : 0;
+		smps[0]->data[i*7+1].f = tot ? hist_last(&s->histograms[i]) : 0;
+		smps[0]->data[i*7+2].f = tot ? hist_last(&s->histograms[i]) : 0;
+		smps[0]->data[i*7+3].f = tot ? hist_highest(&s->histograms[i]) : 0;
+		smps[0]->data[i*7+4].f = tot ? hist_lowest(&s->histograms[i]) : 0;
+		smps[0]->data[i*7+5].f = tot ? hist_mean(&s->histograms[i]) : 0;
+		smps[0]->data[i*7+6].f = tot ? hist_var(&s->histograms[i]) : 0;
 	}
 
 	return 1;
@@ -125,7 +138,7 @@ int stats_node_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 
 int stats_node_fd(struct node *n)
 {
-	struct stats_node *p = h->_vd;
+	struct stats_node *s = n->_vd;
 
 	return task_fd(&s->task);
 }
@@ -134,8 +147,8 @@ static struct plugin p = {
 	.name		= "stats",
 	.description	= "Send statistics to another node",
 	.type		= PLUGIN_TYPE_NODE,
-	.hook		= {
-		.vecotrize = 1,
+	.node		= {
+		.vectorize = 1,
 		.size	= sizeof(struct stats_node),
 		.init	= stats_node_init,
 		.parse	= stats_node_parse,
@@ -148,5 +161,6 @@ static struct plugin p = {
 };
 
 REGISTER_PLUGIN(&p)
+LIST_INIT_STATIC(&p.node.instances)
 
 /** @} */

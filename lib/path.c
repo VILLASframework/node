@@ -292,6 +292,9 @@ int path_init2(struct path *p)
 		}
 	}
 
+	if (!p->samplelen)
+		p->samplelen = DEFAULT_SAMPLELEN;
+
 	ret = pool_init(&p->pool, MAX(1, list_length(&p->destinations)) * p->queuelen, SAMPLE_LEN(p->samplelen), &memtype_hugepage);
 	if (ret)
 		return ret;

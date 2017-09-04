@@ -123,7 +123,7 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	if (flags & SAMPLE_SEQUENCE) {
 		if (a->sequence != b->sequence) {
 			printf("sequence no: %d != %d\n", a->sequence, b->sequence);
-			return -2;
+			return 2;
 		}
 	}
 
@@ -131,7 +131,15 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	if (flags & SAMPLE_ORIGIN) {
 		if (time_delta(&a->ts.origin, &b->ts.origin) > epsilon) {
 			printf("ts.origin: %f != %f\n", time_to_double(&a->ts.origin), time_to_double(&b->ts.origin));
-			return -3;
+			return 3;
+		}
+	}
+
+	/* Compare ID */
+	if (flags & SAMPLE_SOURCE) {
+		if (a->id != b->id) {
+			printf("id: %d != %d\n", a->id, b->id);
+			return 7;
 		}
 	}
 
@@ -139,13 +147,29 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	if (flags & SAMPLE_VALUES) {
 		if (a->length != b->length) {
 			printf("length: %d != %d\n", a->length, b->length);
-			return -4;
+			return 4;
+		}
+
+		if (a->format != b->format) {
+			printf("format: %#lx != %#lx\n", a->format, b->format);
+			return 6;
 		}
 
 		for (int i = 0; i < a->length; i++) {
-			if (fabs(a->data[i].f - b->data[i].f) > epsilon) {
-				printf("data[%d]: %f != %f\n", i, a->data[i].f, b->data[i].f);
-				return -5;
+			switch (sample_get_data_format(a, i)) {
+				case SAMPLE_DATA_FORMAT_FLOAT:
+					if (fabs(a->data[i].f - b->data[i].f) > epsilon) {
+						printf("data[%d].f: %f != %f\n", i, a->data[i].f, b->data[i].f);
+						return 5;
+					}
+					break;
+
+				case SAMPLE_DATA_FORMAT_INT:
+					if (a->data[i].i != b->data[i].i) {
+						printf("data[%d].i: %ld != %ld\n", i, a->data[i].i, b->data[i].i);
+						return 5;
+					}
+					break;
 			}
 		}
 	}
