@@ -40,6 +40,12 @@ int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node 
 
 	h->priority = vt->priority;
 
+	/* Node hooks can only used with nodes,
+	   Path hooks only with paths.. */
+	if ((!(vt->flags & HOOK_NODE) && n) ||
+	    (!(vt->flags & HOOK_PATH) && p))
+		return -1;
+
 	h->path = p;
 	h->node = n;
 
