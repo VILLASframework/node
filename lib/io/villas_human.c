@@ -29,7 +29,7 @@
 #include "utils.h"
 #include "timing.h"
 #include "sample.h"
-#include "io/villas.h"
+#include "io/villas_human.h"
 
 size_t villas_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 {
@@ -262,7 +262,7 @@ int villas_open(struct io *io, const char *uri)
 }
 
 static struct plugin p = {
-	.name = "villas",
+	.name = "villas-human",
 	.description = "VILLAS human readable format",
 	.type = PLUGIN_TYPE_IO,
 	.io = {

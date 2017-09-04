@@ -382,7 +382,7 @@ int socket_parse(struct node *n, json_t *cfg)
 
 	const char *local, *remote;
 	const char *layer = NULL;
-	const char *format = "msg";
+	const char *format = "villas-binary";
 
 	int ret;
 

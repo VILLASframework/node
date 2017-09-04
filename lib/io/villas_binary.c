@@ -22,7 +22,7 @@
 
 #include <string.h>
 
-#include "io/msg.h"
+#include "io/villas_binary.h"
 #include "io/msg_format.h"
 #include "sample.h"
 #include "utils.h"
@@ -199,7 +199,7 @@ int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 }
 
 static struct plugin p1 = {
-	.name = "msg",
+	.name = "villas-binary",
 	.description = "VILLAS binary network format",
 	.type = PLUGIN_TYPE_IO,
 	.io = {
@@ -212,7 +212,7 @@ static struct plugin p1 = {
 
 /** The WebSocket node-type usually uses little endian byte order intead of network byte order */
 static struct plugin p2 = {
-	.name = "webmsg",
+	.name = "villas-web",
 	.description = "VILLAS binary network format for WebSockets",
 	.type = PLUGIN_TYPE_IO,
 	.io = {

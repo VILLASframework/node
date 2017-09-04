@@ -79,7 +79,7 @@ int file_parse(struct node *n, json_t *cfg)
 	json_error_t err;
 
 	const char *uri_tmpl = NULL;
-	const char *format = "villas";
+	const char *format = "villas-human";
 	const char *eof = NULL;
 	const char *epoch_mode = NULL;
 	double epoch_flt = 0;

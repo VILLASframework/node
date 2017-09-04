@@ -66,7 +66,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 	int ret, numrates, numvalues, limit = 1000;
 	int *rates, *values;
 
-	const char *format = "villas";
+	const char *format = "villas-human";
 	const char *output = ".";
 
 	size_t index;
@@ -238,7 +238,7 @@ int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt)
 int test_rtt_fd(struct node *n)
 {
 	struct test_rtt *t = n->_vd;
-	
+
 	return task_fd(&t->task);
 }
 

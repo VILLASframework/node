@@ -51,10 +51,10 @@ static char formats[][32] = {
 	"raw-int64-le",
 	"raw-flt32",
 	"raw-flt64",
-	"villas",
+	"villas-human",
+	"villas-binary",
 	"csv",
 	"json",
-	"msg",
 	"gtnet",
 	"gtnet-fake"
 };
@@ -232,7 +232,7 @@ ParameterizedTest(char *fmt, io, highlevel)
 
 #if 0 /* Show the file contents */
 	char cmd[128];
-	if (!strcmp(fmt, "json") || !strcmp(fmt, "villas"))
+	if (!strcmp(fmt, "json") || !strcmp(fmt, "villas-human"))
 		snprintf(cmd, sizeof(cmd), "cat %s", fn);
 	else
 		snprintf(cmd, sizeof(cmd), "hexdump -C %s", fn);
