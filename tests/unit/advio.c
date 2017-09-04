@@ -37,10 +37,10 @@
 Test(advio, islocal)
 {
 	int ret;
-	
+
 	ret = aislocal("/var/log/villas/dta.dat");
 	cr_assert_eq(ret, 1);
-	
+
 	ret = aislocal("http://www.google.de");
 	cr_assert_eq(ret, 0);
 
@@ -95,7 +95,7 @@ Test(advio, download_large)
 	af = afopen(BASE_URI "/download-large" , "r");
 	cr_assert(af, "Failed to download file");
 
-	ret = villas_fscan(af->file, &smp, 1, NULL);
+	ret = villas_fscan(af->file, &smp, 1, 0);
 	cr_assert_eq(ret, 1);
 
 	cr_assert_eq(smp->sequence, 0);

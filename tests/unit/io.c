@@ -72,7 +72,7 @@ void generate_samples(struct pool *p, struct sample *smps[], struct sample *smpt
 
 	for (int i = 0; i < cnt; i++) {
 		smpt[i]->capacity = values;
-		
+
 		smps[i]->length = values;
 		smps[i]->sequence = 235 + i;
 		smps[i]->format = 0; /* all float */
@@ -86,7 +86,7 @@ void generate_samples(struct pool *p, struct sample *smps[], struct sample *smpt
 
 void cr_assert_eq_samples(struct io_format *f, struct sample *smps[], struct sample *smpt[], unsigned cnt)
 {
-	/* The RAW format has certain limitations: 
+	/* The RAW format has certain limitations:
 	 *  - limited accuracy if smaller datatypes are used
 	 *  - no support for vectors / framing
 	 *
@@ -95,7 +95,7 @@ void cr_assert_eq_samples(struct io_format *f, struct sample *smps[], struct sam
 	if (f->sscan == raw_sscan) {
 		cr_assert_eq(cnt, 1);
 		cr_assert_eq(smpt[0]->length, smpt[0]->capacity, "Expected values: %d, Received values: %d", smpt[0]->capacity, smpt[0]->length);
-	
+
 		if (f->flags & RAW_FAKE) {
 
 		}
@@ -155,7 +155,7 @@ ParameterizedTest(char *fmt, io, lowlevel)
 	int ret;
 	char buf[8192];
 	size_t wbytes, rbytes;
-	
+
 	struct io_format *f;
 
 	struct pool p = { .state = STATE_DESTROYED };
@@ -166,18 +166,18 @@ ParameterizedTest(char *fmt, io, lowlevel)
 	cr_assert_eq(ret, 0);
 
 	generate_samples(&p, smps, smpt, NUM_SAMPLES, NUM_VALUES);
-	
+
 	f = io_format_lookup(fmt);
 	cr_assert_not_null(f, "Format '%s' does not exist", fmt);
-	
-	ret = io_format_sprint(f, buf, sizeof(buf), &wbytes, smps, NUM_SAMPLES, IO_FORMAT_ALL);
+
+	ret = io_format_sprint(f, buf, sizeof(buf), &wbytes, smps, NUM_SAMPLES, SAMPLE_ALL);
 	cr_assert_eq(ret, NUM_SAMPLES);
-	
-	ret = io_format_sscan(f, buf, wbytes, &rbytes, smpt, NUM_SAMPLES, NULL);
+
+	ret = io_format_sscan(f, buf, wbytes, &rbytes, smpt, NUM_SAMPLES, 0);
 	cr_assert_eq(rbytes, wbytes);
-	
+
 	cr_assert_eq_samples(f, smps, smpt, ret);
-	
+
 	sample_free(smps, NUM_SAMPLES);
 	sample_free(smpt, NUM_SAMPLES);
 
@@ -209,7 +209,7 @@ ParameterizedTest(char *fmt, io, highlevel)
 	/* Open a file for IO */
 	char *fn, dir[64];
 	strncpy(dir, "/tmp/villas.XXXXXX", sizeof(dir));
-	
+
 	mkdtemp(dir);
 //	ret = asprintf(&fn, "file://%s/file", dir);
 	ret = asprintf(&fn, "%s/file", dir);
@@ -218,7 +218,7 @@ ParameterizedTest(char *fmt, io, highlevel)
 	f = io_format_lookup(fmt);
 	cr_assert_not_null(f, "Format '%s' does not exist", fmt);
 
-	ret = io_init(&io, f, IO_FORMAT_ALL);
+	ret = io_init(&io, f, SAMPLE_ALL);
 	cr_assert_eq(ret, 0);
 
 	ret = io_open(&io, fn);
@@ -226,9 +226,9 @@ ParameterizedTest(char *fmt, io, highlevel)
 
 	ret = io_print(&io, smps, NUM_SAMPLES);
 	cr_assert_eq(ret, NUM_SAMPLES);
-	
+
 	ret = io_flush(&io);
-	cr_assert_eq(ret, 0);	
+	cr_assert_eq(ret, 0);
 
 #if 0 /* Show the file contents */
 	char cmd[128];
@@ -238,7 +238,7 @@ ParameterizedTest(char *fmt, io, highlevel)
 		snprintf(cmd, sizeof(cmd), "hexdump -C %s", fn);
 	system(cmd);
 #endif
-	
+
 	if (io.mode == IO_MODE_ADVIO)
 		adownload(io.advio.input, 0);
 
@@ -257,10 +257,10 @@ ParameterizedTest(char *fmt, io, highlevel)
 
 	ret = unlink(fn);
 	cr_assert_eq(ret, 0);
-	
+
 	ret = rmdir(dir);
 	cr_assert_eq(ret, 0);
-	
+
 	free(fn);
 
 	sample_free(smps, NUM_SAMPLES);
