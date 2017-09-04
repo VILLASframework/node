@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "io.h"
 #include "io_format.h"
@@ -56,7 +57,10 @@ int io_stream_open(struct io *io, const char *uri)
 	int ret;
 
 	if (uri) {
-		if (aislocal(uri)) {
+		if (strcmp(uri, "-")) {
+			goto stdio;
+		}
+		else if (aislocal(uri)) {
 			io->mode = IO_MODE_STDIO;
 
 			io->stdio.output = fopen(uri, "a+");
@@ -80,7 +84,7 @@ int io_stream_open(struct io *io, const char *uri)
 		}
 	}
 	else {
-		io->mode = IO_MODE_STDIO;
+stdio:		io->mode = IO_MODE_STDIO;
 		io->flags |= IO_FLUSH;
 
 		io->stdio.input  = stdin;
