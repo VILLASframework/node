@@ -48,7 +48,8 @@ RUN dnf -y install \
 	iproute \
 	python-pip \
 	valgrind gdb gdb-gdbserver \
-	xmlto rubygem-asciidoctor
+	xmlto rubygem-asciidoctor \
+	psmisc procps-ng
 
 # 32bit versions of some standard libraries for RT-LAB code
 RUN dnf -y install \
