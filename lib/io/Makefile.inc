@@ -20,4 +20,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-LIB_SRCS += $(addprefix lib/io/,json.c villas.c csv.c raw.c msg.c)
+LIB_SRCS += $(addprefix lib/io/,json.c villas_binary.c villas_human.c csv.c raw.c msg.c)

@@ -36,7 +36,7 @@ struct villas_human {
 	bool header_written;
 };
 
-size_t villas_sprint_single(char *buf, size_t len, struct sample *s, int flags)
+size_t villas_human_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 {
 	size_t off = 0;
 
@@ -69,7 +69,7 @@ size_t villas_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 	return off;
 }
 
-size_t villas_sscan_single(const char *buf, size_t len, struct sample *s, int flags)
+size_t villas_human_sscan_single(const char *buf, size_t len, struct sample *s, int flags)
 {
 	char *end;
 	const char *ptr = buf;
@@ -163,13 +163,13 @@ size_t villas_sscan_single(const char *buf, size_t len, struct sample *s, int fl
 	return end - buf;
 }
 
-int villas_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
+int villas_human_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
 {
 	int i;
 	size_t off = 0;
 
 	for (i = 0; i < cnt && off < len; i++)
-		off += villas_sprint_single(buf + off, len - off, smps[i], flags);
+		off += villas_human_sprint_single(buf + off, len - off, smps[i], flags);
 
 	if (wbytes)
 		*wbytes = off;
@@ -177,13 +177,13 @@ int villas_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], 
 	return i;
 }
 
-int villas_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
+int villas_human_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
 {
 	int i;
 	size_t off = 0;
 
 	for (i = 0; i < cnt && off < len; i++)
-		off += villas_sscan_single(buf + off, len - off, smps[i], flags);
+		off += villas_human_sscan_single(buf + off, len - off, smps[i], flags);
 
 	if (rbytes)
 		*rbytes = off;
@@ -191,7 +191,7 @@ int villas_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], u
 	return i;
 }
 
-int villas_fscan_single(FILE *f, struct sample *s, int flags)
+int villas_human_fscan_single(FILE *f, struct sample *s, int flags)
 {
 	char *ptr, line[4096];
 
@@ -203,15 +203,15 @@ skip:	if (fgets(line, sizeof(line), f) == NULL)
 	if (*ptr == '\0' || *ptr == '#')
 		goto skip;
 
-	return villas_sscan_single(line, strlen(line), s, flags);
+	return villas_human_sscan_single(line, strlen(line), s, flags);
 }
 
-int villas_fprint_single(FILE *f, struct sample *s, int flags)
+int villas_human_fprint_single(FILE *f, struct sample *s, int flags)
 {
 	int ret;
 	char line[4096];
 
-	ret = villas_sprint_single(line, sizeof(line), s, flags);
+	ret = villas_human_sprint_single(line, sizeof(line), s, flags);
 	if (ret < 0)
 		return ret;
 
@@ -220,12 +220,12 @@ int villas_fprint_single(FILE *f, struct sample *s, int flags)
 	return 0;
 }
 
-int villas_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
+int villas_human_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 {
 	int ret, i;
 
 	for (i = 0; i < cnt; i++) {
-		ret = villas_fprint_single(f, smps[i], flags);
+		ret = villas_human_fprint_single(f, smps[i], flags);
 		if (ret < 0)
 			return ret;
 	}
@@ -233,7 +233,7 @@ int villas_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 	return i;
 }
 
-int villas_print(struct io *io, struct sample *smps[], unsigned cnt)
+int villas_human_print(struct io *io, struct sample *smps[], unsigned cnt)
 {
 	struct villas_human *h = io->_vd;
 
@@ -250,15 +250,15 @@ int villas_print(struct io *io, struct sample *smps[], unsigned cnt)
 		h->header_written = true;
 	}
 
-	return villas_fprint(f, smps, cnt, io->flags);
+	return villas_human_fprint(f, smps, cnt, io->flags);
 }
 
-int villas_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
+int villas_human_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 {
 	int ret, i;
 
 	for (i = 0; i < cnt; i++) {
-		ret = villas_fscan_single(f, smps[i], flags);
+		ret = villas_human_fscan_single(f, smps[i], flags);
 		if (ret < 0)
 			return ret;
 	}
@@ -266,7 +266,7 @@ int villas_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 	return i;
 }
 
-int villas_open(struct io *io, const char *uri)
+int villas_human_open(struct io *io, const char *uri)
 {
 	struct villas_human *h = io->_vd;
 	int ret;
@@ -280,7 +280,7 @@ int villas_open(struct io *io, const char *uri)
 	return 0;
 }
 
-void villas_rewind(struct io *io)
+void villas_human_rewind(struct io *io)
 {
 	struct villas_human *h = io->_vd;
 
@@ -294,13 +294,13 @@ static struct plugin p = {
 	.description = "VILLAS human readable format",
 	.type = PLUGIN_TYPE_IO,
 	.io = {
-		.open	= villas_open,
-		.rewind	= villas_rewind,
-		.print	= villas_print,
-		.fprint	= villas_fprint,
-		.fscan	= villas_fscan,
-		.sprint	= villas_sprint,
-		.sscan	= villas_sscan,
+		.open	= villas_human_open,
+		.rewind	= villas_human_rewind,
+		.print	= villas_human_print,
+		.fprint	= villas_human_fprint,
+		.fscan	= villas_human_fscan,
+		.sprint	= villas_human_sprint,
+		.sscan	= villas_human_sscan,
 		.size	= sizeof(struct villas_human)
 	}
 };

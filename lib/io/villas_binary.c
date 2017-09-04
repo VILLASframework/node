@@ -23,99 +23,14 @@
 #include <string.h>
 
 #include "io/villas_binary.h"
+
+#include "io/msg.h"
 #include "io/msg_format.h"
 #include "sample.h"
 #include "utils.h"
 #include "plugin.h"
 
-void msg_ntoh(struct msg *m)
-{
-	msg_hdr_ntoh(m);
-
-	for (int i = 0; i < m->length; i++)
-		m->data[i].i = ntohl(m->data[i].i);
-}
-
-void msg_hton(struct msg *m)
-{
-	for (int i = 0; i < m->length; i++)
-		m->data[i].i = htonl(m->data[i].i);
-
-	msg_hdr_hton(m);
-}
-
-void msg_hdr_hton(struct msg *m)
-{
-	m->length   = htons(m->length);
-	m->sequence = htonl(m->sequence);
-	m->ts.sec   = htonl(m->ts.sec);
-	m->ts.nsec  = htonl(m->ts.nsec);
-}
-
-void msg_hdr_ntoh(struct msg *m)
-{
-	m->length   = ntohs(m->length);
-	m->sequence = ntohl(m->sequence);
-	m->ts.sec   = ntohl(m->ts.sec);
-	m->ts.nsec  = ntohl(m->ts.nsec);
-}
-
-int msg_verify(struct msg *m)
-{
-	if      (m->version != MSG_VERSION)
-		return -1;
-	else if (m->type    != MSG_TYPE_DATA)
-		return -2;
-	else if (m->rsvd1 != 0)
-		return -3;
-	else
-		return 0;
-}
-
-int msg_to_sample(struct msg *msg, struct sample *smp)
-{
-	int ret;
-
-	ret = msg_verify(msg);
-	if (ret)
-		return -1;
-
-	smp->has = SAMPLE_ORIGIN | SAMPLE_SEQUENCE | SAMPLE_VALUES | SAMPLE_ID;
-	smp->length = MIN(msg->length, smp->capacity);
-	smp->sequence = msg->sequence;
-	smp->id = msg->id;
-	smp->ts.origin = MSG_TS(msg);
-	smp->format = 0;
-
-	for (int i = 0; i < smp->length; i++) {
-		switch (sample_get_data_format(smp, i)) {
-			case SAMPLE_DATA_FORMAT_FLOAT: smp->data[i].f = msg->data[i].f; break;
-			case SAMPLE_DATA_FORMAT_INT:   smp->data[i].i = msg->data[i].i; break;
-		}
-	}
-
-	return 0;
-}
-
-int msg_from_sample(struct msg *msg, struct sample *smp)
-{
-	*msg = MSG_INIT(smp->length, smp->sequence);
-
-	msg->ts.sec  = smp->ts.origin.tv_sec;
-	msg->ts.nsec = smp->ts.origin.tv_nsec;
-	msg->id = smp->id;
-
-	for (int i = 0; i < smp->length; i++) {
-		switch (sample_get_data_format(smp, i)) {
-			case SAMPLE_DATA_FORMAT_FLOAT: msg->data[i].f = smp->data[i].f; break;
-			case SAMPLE_DATA_FORMAT_INT:   msg->data[i].i = smp->data[i].i; break;
-		}
-	}
-
-	return 0;
-}
-
-int msg_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
+int villas_binary_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
 {
 	int ret, i = 0;
 	char *ptr = buf;
@@ -131,7 +46,7 @@ int msg_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 		if (ret)
 			return ret;
 
-		if (flags & MSG_WEB) {
+		if (flags & VILLAS_BINARY_WEB) {
 			/** @todo convert to little endian */
 		}
 		else
@@ -146,7 +61,7 @@ int msg_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 	return i;
 }
 
-int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
+int villas_binary_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
 {
 	int ret, i = 0, values;
 	char *ptr = buf;
@@ -170,7 +85,7 @@ int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 			break;
 		}
 
-		values = (flags & MSG_WEB) ? msg->length : ntohs(msg->length);
+		values = (flags & VILLAS_BINARY_WEB) ? msg->length : ntohs(msg->length);
 
 		/* Check if remainder of message is in buffer boundaries */
 		if (ptr + MSG_LEN(values) > buf + len) {
@@ -178,7 +93,7 @@ int msg_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 			break;
 		}
 
-		if (flags & MSG_WEB)
+		if (flags & VILLAS_BINARY_WEB)
 			;
 		else
 			msg_ntoh(msg);
@@ -203,8 +118,8 @@ static struct plugin p1 = {
 	.description = "VILLAS binary network format",
 	.type = PLUGIN_TYPE_IO,
 	.io = {
-		.sprint	= msg_sprint,
-		.sscan	= msg_sscan,
+		.sprint	= villas_binary_sprint,
+		.sscan	= villas_binary_sscan,
 		.size	= 0,
 		.flags	= IO_FORMAT_BINARY
 	},
@@ -216,10 +131,10 @@ static struct plugin p2 = {
 	.description = "VILLAS binary network format for WebSockets",
 	.type = PLUGIN_TYPE_IO,
 	.io = {
-		.sprint	= msg_sprint,
-		.sscan	= msg_sscan,
+		.sprint	= villas_binary_sprint,
+		.sscan	= villas_binary_sscan,
 		.size	= 0,
-		.flags	= IO_FORMAT_BINARY | MSG_WEB
+		.flags	= IO_FORMAT_BINARY | VILLAS_BINARY_WEB
 	},
 };
 

@@ -28,7 +28,7 @@
 #include <villas/utils.h>
 #include <villas/advio.h>
 #include <villas/sample.h>
-#include <villas/io/villas.h>
+#include <villas/io/villas_human.h>
 
 /** This URI points to a Sciebo share which contains some test files.
  * The Sciebo share is read/write accessible via WebDAV. */
@@ -95,7 +95,7 @@ Test(advio, download_large)
 	af = afopen(BASE_URI "/download-large" , "r");
 	cr_assert(af, "Failed to download file");
 
-	ret = villas_fscan(af->file, &smp, 1, 0);
+	ret = villas_human_fscan(af->file, &smp, 1, 0);
 	cr_assert_eq(ret, 1);
 
 	cr_assert_eq(smp->sequence, 0);

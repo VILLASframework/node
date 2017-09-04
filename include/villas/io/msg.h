@@ -1,6 +1,5 @@
-/** Message related functions
+/** Message related functions.
  *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -23,19 +22,34 @@
 
 #pragma once
 
-#include <stdlib.h>
-
-/* Forward declarations. */
-struct sample;
+/* Forward declaration */
 struct msg;
-struct io;
+struct sample;
 
-enum villas_binary_flags {
-	VILLAS_BINARY_WEB	= (1 << 16) /**< Use webmsg format (everying little endian) */
-};
+/** Convert msg from network to host byteorder */
+void msg_ntoh(struct msg *m);
 
-/** Copy / read struct msg's from buffer \p buf to / fram samples \p smps. */
-int villas_binary_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags);
+/** Convert msg from host to network byteorder */
+void msg_hton(struct msg *m);
 
-/** Read struct sample's from buffer \p buf into samples \p smps. */
-int villas_binary_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags);
+/** Convert msg header from network to host byteorder */
+void msg_hdr_hton(struct msg *m);
+
+/** Convert msg header from host to network byteorder */
+void msg_hdr_ntoh(struct msg *m);
+
+/** Check the consistency of a message.
+ *
+ * The functions checks the header fields of a message.
+ *
+ * @param m A pointer to the message
+ * @retval 0 The message header is valid.
+ * @retval <0 The message header is invalid.
+ */
+int msg_verify(struct msg *m);
+
+/** Copy fields from \p msg into \p smp. */
+int msg_to_sample(struct msg *msg, struct sample *smp);
+
+/** Copy fields form \p smp into \p msg. */
+int msg_from_sample(struct msg *msg, struct sample *smp);
