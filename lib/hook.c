@@ -24,7 +24,6 @@
 
 #include "timing.h"
 #include "config.h"
-#include "io/msg.h"
 #include "hook.h"
 #include "path.h"
 #include "utils.h"

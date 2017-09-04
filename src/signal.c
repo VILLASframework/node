@@ -28,9 +28,9 @@
 #include <math.h>
 #include <string.h>
 
+#include <villas/io.h>
 #include <villas/utils.h>
 #include <villas/sample.h>
-#include <villas/io/villas.h>
 #include <villas/timing.h>
 #include <villas/node.h>
 #include <villas/pool.h>
