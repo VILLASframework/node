@@ -132,18 +132,23 @@ function apiConnected()
 		function(response) {
 			nodes = response;
 
-			console.log("Found " + nodes.length + " nodes:", nodes);
+			console.log("Found " + nodes.length + " nodes:",);
 
-			for (var i = 0; i < nodes.length; i++)
-				if (nodes[i].name == getParameterByName('node'))
-					currentNode = nodes[i];
+			nodes.forEach(function(node) {
+				console.log(node);
+				if (node.type == 'websocket' && node.name == getParameterByName('node'))
+					currentNode = node;
+			});
 
-			if (currentNode === undefined)
-				currentNode = nodes[0];
+			if (currentNode === undefined) {
+				nodes.forEach(function(node) {
+					if (node.type == 'websocket')
+						currentNode = node;
+				});
+			}
 
 			if (currentNode !== undefined) {
 				updateNodeList();
-
 				connection = wsConnect(currentNode);
 			}
 		}

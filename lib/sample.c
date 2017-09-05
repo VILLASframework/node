@@ -22,6 +22,7 @@
 
 #include <string.h>
 #include <math.h>
+#include <inttypes.h>
 
 #include "pool.h"
 #include "sample.h"
@@ -151,7 +152,7 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 		}
 
 		if (a->format != b->format) {
-			printf("format: %#llx != %#llx\n", a->format, b->format);
+			printf("format: %#" PRIx64 " != %#" PRIx64 "\n", a->format, b->format);
 			return 6;
 		}
 
@@ -166,7 +167,7 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 
 				case SAMPLE_DATA_FORMAT_INT:
 					if (a->data[i].i != b->data[i].i) {
-						printf("data[%d].i: %lld != %lld\n", i, a->data[i].i, b->data[i].i);
+						printf("data[%d].i: %" PRId64 " != %" PRId64 "\n", i, a->data[i].i, b->data[i].i);
 						return 5;
 					}
 					break;
