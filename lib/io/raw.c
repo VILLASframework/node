@@ -231,8 +231,8 @@ REGISTER_PLUGIN(& i);
 
 /* Feel free to add additional format identifiers here to suit your needs */
 REGISTER_FORMAT_RAW(p,       "raw", "", 0)
-REGISTER_FORMAT_RAW(p_f32,   "raw-flt32",	"Raw single precission floating point", RAW_32 | RAW_FLT)
-REGISTER_FORMAT_RAW(p_f64,   "raw-flt64",	"Raw double precission floating point", RAW_64 | RAW_FLT)
+REGISTER_FORMAT_RAW(p_f32,   "raw-flt32",	"Raw single precision floating point", RAW_32 | RAW_FLT)
+REGISTER_FORMAT_RAW(p_f64,   "raw-flt64",	"Raw double precision floating point", RAW_64 | RAW_FLT)
 REGISTER_FORMAT_RAW(p_i8,    "raw-int8",	"Raw  8 bit, signed integer", RAW_8)
 REGISTER_FORMAT_RAW(p_i16be, "raw-int16-be",	"Raw 16 bit, signed integer, big endian byte-order", RAW_16 | RAW_BE)
 REGISTER_FORMAT_RAW(p_i16le, "raw-int16-le",	"Raw 16 bit, signed integer, little endian byte-order", RAW_16)
