@@ -110,7 +110,7 @@ int stats_node_destroy(struct node *n)
 	struct stats_node *s = n->_vd;
 
 	if (s->node_str)
-		free(&s->node_str);
+		free(s->node_str);
 
 	return 0;
 }
