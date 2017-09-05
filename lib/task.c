@@ -35,32 +35,43 @@
 
 int task_init(struct task *t, double rate, int clock)
 {
+	int ret;
+
 	t->clock = clock;
+
+#if PERIODIC_TASK_IMPL == TIMERFD
+	t->fd = timerfd_create(t->clock, 0);
+	if (t->fd < 0)
+		return -1;
+#endif
+
+	ret = task_set_rate(t, rate);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+int task_set_rate(struct task *t, double rate)
+{
 	t->period = rate ? time_from_double(1.0 / rate) : (struct timespec) { 0, 0 };
 
 #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
 	struct timespec now;
-	
+
 	clock_gettime(t->clock, &now);
 
 	t->next_period = time_add(&now, &t->period);
 #elif PERIODIC_TASK_IMPL == TIMERFD
 	int ret;
-
 	struct itimerspec its = {
 		.it_interval = t->period,
 		.it_value = t->period
 	};
 
-	t->fd = timerfd_create(t->clock, 0);
-	if (t->fd < 0)
-		return -1;
-
 	ret = timerfd_settime(t->fd, 0, &its, NULL);
 	if (ret)
 		return ret;
-#else
-  #error "Invalid period task implementation"
 #endif
 
 	return 0;
@@ -71,7 +82,7 @@ int task_destroy(struct task *t)
 #if PERIODIC_TASK_IMPL == TIMERFD
 	return close(t->fd);
 #endif
-	
+
 	return 0;
 }
 
@@ -82,7 +93,7 @@ static int time_lt(const struct timespec *lhs, const struct timespec *rhs)
 		return lhs->tv_nsec < rhs->tv_nsec;
 	else
 		return lhs->tv_sec < rhs->tv_sec;
-	
+
 	return 0;
 }
 #endif
@@ -94,13 +105,13 @@ uint64_t task_wait_until_next_period(struct task *t)
 
 #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
 	ret = task_wait_until(t, &t->next_period);
-	
+
 	struct timespec now;
-	
+
 	ret = clock_gettime(t->clock, &now);
 	if (ret)
 		return 0;
-	
+
 	for (runs = 0; time_lt(&t->next_period, &now); runs++)
 		t->next_period = time_add(&t->next_period, &t->period);
 
@@ -111,7 +122,7 @@ uint64_t task_wait_until_next_period(struct task *t)
 #else
   #error "Invalid period task implementation"
 #endif
-	
+
 	return runs;
 }
 
@@ -135,7 +146,7 @@ retry:	ret = clock_nanosleep(t->clock, TIMER_ABSTIME, until, NULL);
 	ret = nanosleep(&delta, NULL);
 #elif PERIODIC_TASK_IMPL == TIMERFD
 	uint64_t runs;
-	
+
 	struct itimerspec its = {
 		.it_value = *until,
 		.it_interval = { 0, 0 }
@@ -151,7 +162,7 @@ retry:	ret = clock_nanosleep(t->clock, TIMER_ABSTIME, until, NULL);
 #else
   #error "Invalid period task implementation"
 #endif
-	
+
 	return 0;
 }
 

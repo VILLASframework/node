@@ -64,6 +64,8 @@ int task_destroy(struct task *t);
  */
 uint64_t task_wait_until_next_period(struct task *t);
 
+int task_set_rate(struct task *t, double rate);
+
 /** Wait until a fixed time in the future is reached
  *
  * @param until A pointer to a time in the future.
