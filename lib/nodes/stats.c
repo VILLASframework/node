@@ -32,6 +32,8 @@
 #include "sample.h"
 #include "node.h"
 
+#define STATS_METRICS 6
+
 static struct list *nodes; /** The global list of nodes */
 
 int stats_node_init(struct super_node *sn)
@@ -100,7 +102,7 @@ int stats_node_parse(struct node *n, json_t *cfg)
 
 	s->node_str = strdup(node);
 
-	n->samplelen = STATS_COUNT * 7;
+	n->samplelen = STATS_COUNT * STATS_METRICS;
 
 	return 0;
 }
@@ -128,19 +130,18 @@ int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 	task_wait_until_next_period(&sn->task);
 
-	smps[0]->length = MIN(STATS_COUNT * 7, smps[0]->capacity);
+	smps[0]->length = MIN(STATS_COUNT * 6, smps[0]->capacity);
 	smps[0]->has = SAMPLE_VALUES;
 
-	for (int i = 0; i < 6 && i*7+5 < smps[0]->length; i++) {
+	for (int i = 0; i < 6 && (i+1)*STATS_METRICS <= smps[0]->length; i++) {
 		int tot = hist_total(&s->histograms[i]);
 
-		smps[0]->data[i*7+0].f = tot ? hist_total(&s->histograms[i]) : 0;
-		smps[0]->data[i*7+1].f = tot ? hist_last(&s->histograms[i]) : 0;
-		smps[0]->data[i*7+2].f = tot ? hist_last(&s->histograms[i]) : 0;
-		smps[0]->data[i*7+3].f = tot ? hist_highest(&s->histograms[i]) : 0;
-		smps[0]->data[i*7+4].f = tot ? hist_lowest(&s->histograms[i]) : 0;
-		smps[0]->data[i*7+5].f = tot ? hist_mean(&s->histograms[i]) : 0;
-		smps[0]->data[i*7+6].f = tot ? hist_var(&s->histograms[i]) : 0;
+		smps[0]->data[i*STATS_METRICS+0].f = tot ? hist_total(&s->histograms[i]) : 0;
+		smps[0]->data[i*STATS_METRICS+1].f = tot ? hist_last(&s->histograms[i]) : 0;
+		smps[0]->data[i*STATS_METRICS+2].f = tot ? hist_highest(&s->histograms[i]) : 0;
+		smps[0]->data[i*STATS_METRICS+3].f = tot ? hist_lowest(&s->histograms[i]) : 0;
+		smps[0]->data[i*STATS_METRICS+4].f = tot ? hist_mean(&s->histograms[i]) : 0;
+		smps[0]->data[i*STATS_METRICS+5].f = tot ? hist_var(&s->histograms[i]) : 0;
 	}
 
 	return 1;
