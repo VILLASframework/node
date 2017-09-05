@@ -151,7 +151,7 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 		}
 
 		if (a->format != b->format) {
-			printf("format: %#lx != %#lx\n", a->format, b->format);
+			printf("format: %#llx != %#llx\n", a->format, b->format);
 			return 6;
 		}
 
@@ -166,7 +166,7 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 
 				case SAMPLE_DATA_FORMAT_INT:
 					if (a->data[i].i != b->data[i].i) {
-						printf("data[%d].i: %ld != %ld\n", i, a->data[i].i, b->data[i].i);
+						printf("data[%d].i: %lld != %lld\n", i, a->data[i].i, b->data[i].i);
 						return 5;
 					}
 					break;

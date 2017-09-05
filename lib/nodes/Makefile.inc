@@ -20,10 +20,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-LIB_SRCS += $(addprefix lib/nodes/, cbuilder.c loopback.c)
-
 ifeq ($(PLATFORM),Linux)
 	WITH_FPGA     ?= 1
+	WITH_CBUILDER ?= 1
+	WITH_LOOPBACK ?= 1
 endif
 
 WITH_TEST_RTT  ?= 0
@@ -36,6 +36,18 @@ WITH_ZEROMQ    ?= 1
 WITH_NANOMSG   ?= 1
 WITH_SHMEM     ?= 1
 WITH_STATS     ?= 1
+
+# Enabled loopback node-type
+ifeq ($(WITH_LOOPBACK),1)
+	LIB_SRCS += lib/nodes/loopback.c 
+	LIB_CFLAGS += -DWITH_LOOPBACK
+endif
+
+# Enabled Cbuilder node-type
+ifeq ($(WITH_CBUILDER),1)
+	LIB_SRCS += lib/nodes/cbuilder.c 
+	LIB_CFLAGS += -DWITH_CBUILDER
+endif
 
 # Enable stats node-type
 ifeq ($(WITH_STATS),1)

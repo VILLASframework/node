@@ -31,10 +31,10 @@ static char *config;
 void api_restart_handler()
 {
 	int ret;
-	
+
 	char *argv[] = { "villas-node", config, NULL };
 
-	ret = execvpe("/proc/self/exe", argv, environ);
+	ret = execvp("/proc/self/exe", argv);
 	if (ret)
 		serror("Failed to restart");
 }
@@ -43,11 +43,11 @@ static int api_restart(struct api_action *h, json_t *args, json_t **resp, struct
 {
 	int ret;
 	json_error_t err;
-	
+
 	/* If no config is provided via request, we will use the previous one */
 	if (s->api->super_node->uri)
 		config = strdup(s->api->super_node->uri);
-	
+
 	if (args) {
 		ret = json_unpack_ex(args, &err, 0, "{ s?: s }", "config", &config);
 		if (ret < 0) {
@@ -64,7 +64,7 @@ static int api_restart(struct api_action *h, json_t *args, json_t **resp, struct
 
 	/* We pass some env variables to the new process */
 	setenv("VILLAS_API_RESTART_COUNT", buf, 1);
-	
+
 	*resp = json_pack("{ s: i, s: s }",
 		"restarts", cnt,
 		"config", config
@@ -74,7 +74,7 @@ static int api_restart(struct api_action *h, json_t *args, json_t **resp, struct
 	ret = atexit(api_restart_handler);
 	if (ret)
 		return 0;
-	
+
 	/* Properly terminate current instance */
 	killme(SIGTERM);
 

@@ -24,6 +24,7 @@
 #include "plugin.h"
 #include "utils.h"
 #include "io/raw.h"
+#include "compat.h"
 
 /** Convert float to host byte order */
 #define SWAP_FLT_TOH(o, n) ({				\

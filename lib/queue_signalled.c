@@ -31,7 +31,7 @@
 static void queue_signalled_cleanup(void *p)
 {
 	struct queue_signalled *qs = p;
-	
+
 	if (qs->mode == QUEUE_SIGNALLED_PTHREAD)
 		pthread_mutex_unlock(&qs->pthread.mutex);
 }
@@ -39,9 +39,9 @@ static void queue_signalled_cleanup(void *p)
 int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memtype *mem, int flags)
 {
 	int ret;
-	
+
 	qs->mode = flags & QUEUE_SIGNALLED_MASK;
-	
+
 	if (qs->mode == 0) {
 #ifdef __linux__
 		if (flags & QUEUE_SIGNALLED_PROCESS_SHARED)
@@ -60,7 +60,7 @@ int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memtype
 	if (qs->mode == QUEUE_SIGNALLED_PTHREAD) {
 		pthread_condattr_t  cvattr;
 		pthread_mutexattr_t mtattr;
-		
+
 		pthread_mutexattr_init(&mtattr);
 		pthread_condattr_init(&cvattr);
 
@@ -98,7 +98,7 @@ int queue_signalled_destroy(struct queue_signalled *qs)
 	ret = queue_destroy(&qs->queue);
 	if (ret < 0)
 		return ret;
-	
+
 	if (qs->mode == QUEUE_SIGNALLED_PTHREAD) {
 		pthread_cond_destroy(&qs->pthread.ready);
 		pthread_mutex_destroy(&qs->pthread.mutex);
@@ -121,12 +121,12 @@ int queue_signalled_destroy(struct queue_signalled *qs)
 
 int queue_signalled_push(struct queue_signalled *qs, void *ptr)
 {
-	int ret, pushed;
+	int pushed;
 
 	pushed = queue_push(&qs->queue, ptr);
 	if (pushed < 0)
 		return pushed;
-	
+
 	if (qs->mode == QUEUE_SIGNALLED_PTHREAD) {
 		pthread_mutex_lock(&qs->pthread.mutex);
 		pthread_cond_broadcast(&qs->pthread.ready);
@@ -137,6 +137,7 @@ int queue_signalled_push(struct queue_signalled *qs, void *ptr)
 	}
 #ifdef __linux__
 	else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
+		int ret;
 		uint64_t incr = 1;
 		ret = write(qs->eventfd, &incr, sizeof(incr));
 		if (ret < 0)
@@ -151,7 +152,7 @@ int queue_signalled_push(struct queue_signalled *qs, void *ptr)
 
 int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cnt)
 {
-	int ret, pushed;
+	int pushed;
 
 	pushed = queue_push_many(&qs->queue, ptr, cnt);
 	if (pushed < 0)
@@ -167,6 +168,7 @@ int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cn
 	}
 #ifdef __linux__
 	else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
+		int ret;
 		uint64_t incr = 1;
 		ret = write(qs->eventfd, &incr, sizeof(incr));
 		if (ret < 0)
@@ -181,7 +183,7 @@ int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cn
 
 int queue_signalled_pull(struct queue_signalled *qs, void **ptr)
 {
-	int ret, pulled = 0;
+	int pulled = 0;
 
 	/* Make sure that qs->mutex is unlocked if this thread gets cancelled. */
 	pthread_cleanup_push(queue_signalled_cleanup, qs);
@@ -200,6 +202,7 @@ int queue_signalled_pull(struct queue_signalled *qs, void **ptr)
 				continue; /* Try again */
 #ifdef __linux__
 			else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
+				int ret;
 				uint64_t cntr;
 				ret = read(qs->eventfd, &cntr, sizeof(cntr));
 				if (ret < 0)
@@ -221,7 +224,7 @@ int queue_signalled_pull(struct queue_signalled *qs, void **ptr)
 
 int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cnt)
 {
-	int ret, pulled = 0;
+	int pulled = 0;
 
 	/* Make sure that qs->mutex is unlocked if this thread gets cancelled. */
 	pthread_cleanup_push(queue_signalled_cleanup, qs);
@@ -240,6 +243,7 @@ int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cn
 				continue; /* Try again */
 #ifdef __linux__
 			else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
+				int ret;
 				uint64_t cntr;
 				ret = read(qs->eventfd, &cntr, sizeof(cntr));
 				if (ret < 0)
@@ -253,7 +257,7 @@ int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cn
 
 	if (qs->mode == QUEUE_SIGNALLED_PTHREAD)
 		pthread_mutex_unlock(&qs->pthread.mutex);
-		
+
 	pthread_cleanup_pop(0);
 
 	return pulled;
@@ -267,7 +271,7 @@ int queue_signalled_close(struct queue_signalled *qs)
 		pthread_mutex_lock(&qs->pthread.mutex);
 
 	ret = queue_close(&qs->queue);
-	
+
 	if (qs->mode == QUEUE_SIGNALLED_PTHREAD) {
 		pthread_cond_broadcast(&qs->pthread.ready);
 		pthread_mutex_unlock(&qs->pthread.mutex);
@@ -300,6 +304,6 @@ int queue_signalled_fd(struct queue_signalled *qs)
 #endif
 		default: { }
 	}
-	
+
 	return -1;
 }

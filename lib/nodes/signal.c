@@ -157,9 +157,11 @@ check:		if (optarg == endptr)
 
 	type = argv[optind];
 
-	s->type = signal_lookup_type(type);
-	if (s->type == -1)
+	int t = signal_lookup_type(type);
+	if (t == -1)
 		error("Invalid signal type: %s", type);
+
+	s->type = t;
 
 	/* We know the expected number of values. */
 	n->samplelen = s->values;

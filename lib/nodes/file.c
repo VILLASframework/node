@@ -229,12 +229,18 @@ int file_start(struct node *n)
 		struct sample s = { .capacity = 0 };
 		struct sample *smps[] = { &s };
 
-		ret = io_scan(&f->io, smps, 1);
-		if (ret != 1)
-			error("Failed to read first timestamp of node %s", node_name(n));
-
-		f->first = s.ts.origin;
-		f->offset = file_calc_offset(&f->first, &f->epoch, f->epoch_mode);
+		if (io_eof(&f->io)) {
+			warn("Empty file");
+		}
+		else {
+			ret = io_scan(&f->io, smps, 1);
+			if (ret == 1) {
+				f->first = s.ts.origin;
+				f->offset = file_calc_offset(&f->first, &f->epoch, f->epoch_mode);
+			}
+			else
+				warn("Failed to read first timestamp of node %s", node_name(n));
+		}
 	}
 
 	io_rewind(&f->io);
