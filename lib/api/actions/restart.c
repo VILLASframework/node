@@ -44,17 +44,23 @@ static int api_restart(struct api_action *h, json_t *args, json_t **resp, struct
 	int ret;
 	json_error_t err;
 
-	/* If no config is provided via request, we will use the previous one */
-	if (s->api->super_node->uri)
-		config = strdup(s->api->super_node->uri);
+	char *cfg = NULL;
 
 	if (args) {
-		ret = json_unpack_ex(args, &err, 0, "{ s?: s }", "config", &config);
+		ret = json_unpack_ex(args, &err, 0, "{ s?: s }", "config", &cfg);
 		if (ret < 0) {
 			*resp = json_string("failed to parse request");
 			return -1;
 		}
 	}
+
+	/* If no config is provided via request, we will use the previous one */
+	if (!cfg)
+		cfg = s->api->super_node->uri;
+
+	config = strdup(cfg);
+
+	info("restarting to %s", config);
 
 	/* Increment API restart counter */
 	char *scnt = getenv("VILLAS_API_RESTART_COUNT");
