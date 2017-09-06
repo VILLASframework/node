@@ -47,11 +47,11 @@ void register_default_log()
 {
 	int ret;
 	static struct log default_log;
-	
+
 	ret = log_init(&default_log, V, LOG_ALL);
 	if (ret)
 		error("Failed to initalize log");
-	
+
 	ret = log_start(&default_log);
 	if (ret)
 		error("Failed to start log");
@@ -134,6 +134,9 @@ int log_init(struct log *l, int level, long facilitites)
 	l->window.ws_col = LOG_WIDTH;
 	l->window.ws_row = LOG_HEIGHT;
 
+	l->epoch = time_now();
+	l->prefix = getenv("VILLAS_LOG_PREFIX");
+
 	/* Register signal handler which is called whenever the
 	 * terminal size changes. */
 	if (l->file == stderr) {
@@ -159,9 +162,6 @@ int log_init(struct log *l, int level, long facilitites)
 
 int log_start(struct log *l)
 {
-	l->epoch = time_now();
-	l->prefix = getenv("VILLAS_LOG_PREFIX");
-
 	l->file = l->path ? fopen(l->path, "a+") : stderr;
 	if (!l->file) {
 		l->file = stderr;
@@ -261,7 +261,7 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 {
 	struct timespec ts = time_now();
 	char *buf = alloc(512);
-	
+
 	/* Optional prefix */
 	if (l->prefix)
 		strcatf(&buf, "%s", l->prefix);
