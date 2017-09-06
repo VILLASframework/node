@@ -36,14 +36,20 @@ lws_callback_function api_http_protocol_cb;
 lws_callback_function websocket_protocol_cb;
 
 /** List of libwebsockets protocols. */
-static struct lws_protocols protocols[] = {
-#ifdef WITH_API
+ struct lws_protocols protocols[] = {
+ 	{
+ 		.name = "http",
+ 		.callback = lws_callback_http_dummy,
+ 		.per_session_data_size = 0,
+ 		.rx_buffer_size = 1024
+ 	},
 	{
 		.name = "http-api",
 		.callback = api_http_protocol_cb,
 		.per_session_data_size = sizeof(struct api_session),
-		.rx_buffer_size = 0
+		.rx_buffer_size = 1024
 	},
+#ifdef WITH_API
 	{
 		.name = "api",
 		.callback = api_ws_protocol_cb,
@@ -94,7 +100,7 @@ static struct lws_http_mount mounts[] = {
 		.mount_next = &mounts[1]
 	},
 	{
-		.mountpoint = "/api/v1/",
+		.mountpoint = "/api/v1",
 		.origin = "http-api",
 		.def = NULL,
 		.cgienv = NULL,
@@ -104,7 +110,7 @@ static struct lws_http_mount mounts[] = {
 		.cache_revalidate = 0,
 		.cache_intermediaries = 0,
 		.origin_protocol = LWSMPRO_CALLBACK,
-		.mountpoint_len = 8,
+		.mountpoint_len = 7,
 #endif
 		.mount_next = NULL
 	}
@@ -217,10 +223,7 @@ int web_start(struct web *w)
 		.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS | LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT,
 		.gid = -1,
 		.uid = -1,
-		.user = (void *) w
-	};
-
-	struct lws_context_creation_info vhost_info = {
+		.user = (void *) w,
 		.protocols = protocols,
 		.mounts = mounts,
 		.extensions = extensions,
@@ -237,11 +240,11 @@ int web_start(struct web *w)
 
 		w->context = lws_create_context(&ctx_info);
 		if (w->context == NULL)
-			error("WebSocket: failed to initialize server");
+			error("WebSocket: failed to initialize server context");
 
-		w->vhost = lws_create_vhost(w->context, &vhost_info);
+		w->vhost = lws_create_vhost(w->context, &ctx_info);
 		if (w->vhost == NULL)
-			error("WebSocket: failed to initialize server");
+			error("WebSocket: failed to initialize virtual host");
 	}
 
 	ret = pthread_create(&w->thread, NULL, web_worker, w);

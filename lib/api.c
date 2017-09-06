@@ -132,23 +132,29 @@ int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *
 
 int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
-	int ret, pulled, pushed;
+	int ret, pulled, pushed, hdrlen;
+	char *uri;
 	json_t *resp, *req;
 
 	struct web *w = lws_context_user(lws_get_context(wsi));
 	struct api_session *s = (struct api_session *) user;
 
 	switch (reason) {
-		case LWS_CALLBACK_HTTP:
-			if (w->api == NULL) {
-				lws_close_reason(wsi, LWS_CLOSE_STATUS_PROTOCOL_ERR, (unsigned char *) "API disabled", strlen("API disabled"));
+		case LWS_CALLBACK_HTTP_BIND_PROTOCOL:
+			if (w->api == NULL)
 				return -1;
-			}
+
+			hdrlen = lws_hdr_total_length(wsi, WSI_TOKEN_POST_URI);
+			uri = malloc(hdrlen+1);
+
+			lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_POST_URI);
 
 			/* Parse request URI */
-			ret = sscanf(in, "/api/v%d", (int *) &s->version);
+			ret = sscanf(uri, "/api/v%d", (int *) &s->version);
 			if (ret != 1)
 				return -1;
+
+			free(uri);
 
 			ret = api_session_init(s, API_MODE_HTTP);
 			if (ret)
@@ -164,7 +170,7 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 
 			break;
 
-		case LWS_CALLBACK_CLOSED_HTTP:
+		case LWS_CALLBACK_HTTP_DROP_PROTOCOL:
 			if (!s)
 				return -1;
 
@@ -177,7 +183,7 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			if (w->api->sessions.state == STATE_INITIALIZED)
 				list_remove(&w->api->sessions, s);
 
-			break;
+			return 1;
 
 		case LWS_CALLBACK_HTTP_BODY:
 			buffer_append(&s->request.buffer, in, len);
@@ -204,31 +210,48 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 		case LWS_CALLBACK_HTTP_WRITEABLE:
 			pulled = queue_pull(&s->response.queue, (void **) &resp);
 			if (pulled) {
-				const char headers[] =	"HTTP/1.1 200 OK\r\n"
-					"Content-type: application/json\r\n"
-					"User-agent: " USER_AGENT "\r\n"
-					"Access-Control-Allow-Origin: *\r\n"
-					"Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-					"Access-Control-Allow-Headers: Content-Type\r\n"
-					"Access-Control-Max-Age: 86400\r\n"
-					"\r\n";
+				char headers[1024];
 
 				buffer_clear(&s->response.buffer);
 				buffer_append_json(&s->response.buffer, resp);
 
 				json_decref(resp);
 
-				lws_write(wsi, (unsigned char *) headers, strlen(headers), LWS_WRITE_HTTP_HEADERS);
-				lws_write(wsi, (unsigned char *) s->response.buffer.buf, s->response.buffer.len, LWS_WRITE_HTTP);
+				snprintf(headers, sizeof(headers),
+					"HTTP/1.1 200 OK\r\n"
+					"Content-type: application/json\r\n"
+					"User-agent: " USER_AGENT "\r\n"
+					"Access-Control-Allow-Origin: *\r\n"
+					"Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+					"Access-Control-Allow-Headers: Content-Type\r\n"
+					"Access-Control-Max-Age: 86400\r\n"
+					"Content-Length: %zu\r\n"
+					"\r\n",
+					s->response.buffer.len
+				);
 
-				return -1; /* Close connection */
+				ret = lws_write(wsi, (unsigned char *) headers, strlen(headers), LWS_WRITE_HTTP_HEADERS);
+				if (ret < 0)
+					return 1;
+
+				ret = lws_write(wsi, (unsigned char *) s->response.buffer.buf, s->response.buffer.len, LWS_WRITE_HTTP);
+				if (ret < 0)
+					return 1;
+
+				goto try_to_reuse;
 			}
 
 			break;
 
 		default:
-			return 0;
+			break;
 	}
+
+	return 0;
+
+try_to_reuse:
+	if (lws_http_transaction_completed(wsi))
+		return -1;
 
 	return 0;
 }
