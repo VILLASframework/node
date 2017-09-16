@@ -170,7 +170,7 @@ ParameterizedTest(char *fmt, io, lowlevel)
 	f = io_format_lookup(fmt);
 	cr_assert_not_null(f, "Format '%s' does not exist", fmt);
 
-	ret = io_format_sprint(f, buf, sizeof(buf), &wbytes, smps, NUM_SAMPLES, SAMPLE_ALL);
+	ret = io_format_sprint(f, buf, sizeof(buf), &wbytes, smps, NUM_SAMPLES, SAMPLE_HAS_ALL);
 	cr_assert_eq(ret, NUM_SAMPLES);
 
 	ret = io_format_sscan(f, buf, wbytes, &rbytes, smpt, NUM_SAMPLES, 0);
@@ -218,7 +218,7 @@ ParameterizedTest(char *fmt, io, highlevel)
 	f = io_format_lookup(fmt);
 	cr_assert_not_null(f, "Format '%s' does not exist", fmt);
 
-	ret = io_init(&io, f, SAMPLE_ALL);
+	ret = io_init(&io, f, SAMPLE_HAS_ALL);
 	cr_assert_eq(ret, 0);
 
 	ret = io_open(&io, fn);
