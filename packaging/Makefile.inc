@@ -22,19 +22,20 @@
 
 TAROPTS = --exclude-ignore-recursive=.distignore --transform='s|^\.|villas-node-$(VERSION_NUM)|' --show-transformed-names
 
-TAR_VILLAS = $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM)-1.$(subst -,_,$(GIT_BRANCH))_$(subst -,_,$(VARIANT)).$(shell date +%Y%m%d)git$(GIT_REV).tar.gz
+TAR_VILLAS = $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM)-$(RELEASE).tar.gz
 
 DEPLOY_USER ?= acs
 DEPLOY_HOST ?= villas.fein-aachen.org
 DEPLOY_PATH ?= /var/www/villas/node
 
-DOCKER_IMAGE     ?= villas/node
-DOCKER_IMAGE_DEV ?= villas/node-dev
-
+DOCKER_FILE ?= Dockerfile
+DOCKER_IMAGE ?= villas/node
 DOCKER_TAG ?= $(GIT_BRANCH)
 
 deploy-docker-dev: DOCKER_IMAGE := $(DOCKER_IMAGE)-dev
+
 docker-dev: DOCKER_IMAGE := $(DOCKER_IMAGE)-dev
+docker-dev: DOCKER_FILE  := $(DOCKER_FILE).dev
 
 packaging: rpm dist
 	
@@ -53,23 +54,16 @@ deploy-rpm:
 	rsync -a --progress $(RPMDIR)/RPMS/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/../packages/
 	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) createrepo $(DEPLOY_PATH)/../packages
 
-deploy-docker:
+deploy-docker deploy-docker-dev:
 	docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
 
-deploy-docker-dev:
-	docker push $(DOCKER_IMAGE_DEV):$(DOCKER_TAG)
-
 # Docker targets
-run-docker-dev: docker-dev
+run-docker-dev:
 	docker run -it -p 80:80 -p 443:443 -p 1234:1234 -p 12000:12000/udp -p 12001:12001/udp --privileged --security-opt seccomp:unconfined -v "$(SRCDIR):/villas" $(DOCKER_IMAGE)-dev:$(GIT_BRANCH)
 
-docker-dev:
+docker docker-dev:
 	docker pull fedora:25
-	docker build -f Dockerfile.dev -t $(DOCKER_IMAGE):$(DOCKER_TAG) $(SRCDIR)
-	
-docker:
-	docker pull fedora:25
-	docker build -f Dockerfile -t $(DOCKER_IMAGE):$(DOCKER_TAG) $(SRCDIR)
+	docker build -f $(DOCKER_FILE) -t $(DOCKER_IMAGE):$(DOCKER_TAG) $(SRCDIR)
 	
 clean-packaging:
 	rm -f $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM).tar.gz

@@ -46,6 +46,7 @@ rpm-nanomsg: $(BUILDDIR)/thirdparty/nanomsg/ | $(RPMDIR)/SOURCES/
 	cp $(BUILDDIR)/thirdparty/nanomsg/nanomsg-*.tar.gz $(RPMDIR)/SOURCES/
 	rpmbuild -ba --define="_topdir $$(pwd)/$(RPMDIR)" $(SRCDIR)/packaging/rpm/nanomsg.spec
 
+rpm-libwebsockets: CMAKE_OPTS += -DLWS_IPV6=1 -DLWS_WITH_STATIC=0 -DLWS_WITHOUT_TESTAPPS=1 -DLWS_WITH_HTTP2=1 -DLWS_WITH_SERVER_STATUS=1
 rpm-libwebsockets: | $(RPMDIR)/RPMS/x86_64/ $(BUILDDIR)/thirdparty/libwebsockets/
 	cmake -DCMAKE_INSTALL_PREFIX:PATH=$(PREFIX) \
 	      -H$(SRCDIR)/thirdparty/libwebsockets \
@@ -56,7 +57,7 @@ rpm-libwebsockets: | $(RPMDIR)/RPMS/x86_64/ $(BUILDDIR)/thirdparty/libwebsockets
 # We patch version number and release fields of the spec file based on the current Git commit
 $(SPEC_VILLAS): packaging/rpm/villas-node.spec | $$(dir $$@)
 	sed -e "s/§VERSION§/$(VERSION_NUM)/g" \
-	    -e "s/§RELEASE§/1.$(subst -,_,$(GIT_BRANCH))_$(subst -,_,$(VARIANT)).$(shell date +%Y%m%d)git$(GIT_REV)/g" < $^ > $@
+	    -e "s/§RELEASE§/$(RELEASE)/g" < $^ > $@
 
 sign-rpm:
 	rpmsign $(RPMDIR)/RPMS/*/.rpm

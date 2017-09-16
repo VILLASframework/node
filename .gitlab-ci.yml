@@ -2,8 +2,8 @@ variables:
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
   PREFIX: /usr/
-  RSYNC_OPTS: --recursive --ignore-missing-args --chown $DEPLOY_USER:$DEPLOY_USER
-  DOCKER_TAG: ${CI_COMMIT_REF_SLUG}
+  RSYNC_OPTS: --recursive --ignore-missing-args --chown ${DEPLOY_USER}:${DEPLOY_USER}
+  DOCKER_TAG_DEV: ${CI_COMMIT_REF_SLUG}
   DOCKER_IMAGE_DEV: villas/node-dev
 
 stages:
@@ -38,41 +38,47 @@ build:source:
     - make
   artifacts:
     expire_in: 1 week
-    name: "${CI_PROJECT_NAME}-${CI_BUILD_REF}"
+    name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
     paths:
       - build/release/
-  image: $DOCKER_IMAGE_DEV:$DOCKER_TAG
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker
 
 build:docs:
   stage: build
   artifacts:
-    name: "${CI_PROJECT_NAME}-doc-${CI_BUILD_REF}"
+    name: ${CI_PROJECT_NAME}-doc-${CI_BUILD_REF}
     paths:
       - build/release/doc/
   script:
     - make doc
-  image: $DOCKER_IMAGE_DEV:$DOCKER_TAG
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker
+  only:
+    - tags
+    - master
 
 build:packages:
   stage: build
   before_script:
-    - dnf -y config-manager --add-repo https://$DEPLOY_USER:$DEPLOY_PASS@$DEPLOY_HOST/packages/villas.repo
+    - dnf -y config-manager --add-repo https://${DEPLOY_USER}:${DEPLOY_PASS}@${DEPLOY_HOST}/packages/villas.repo
     - dnf -y --refresh install openssl-devel libconfig-devel libnl3-devel libcurl-devel jansson-devel libxil-devel libwebsockets-devel zeromq-devel nanomsg-devel
   script:
     - make rpm-villas-node
   artifacts:
     expire_in: 1 week
-    name: "${CI_PROJECT_NAME}-packages-${CI_BUILD_REF}"
+    name: ${CI_PROJECT_NAME}-packages-${CI_BUILD_REF}
     paths:
       - build/release/packaging/*.tar.gz
       - build/release/packaging/rpm/RPMS/
-  image: $DOCKER_IMAGE_DEV:$DOCKER_TAG
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker
+  only:
+    - tags
+    - master
 
 
 # Stage: test
@@ -85,12 +91,12 @@ test:coverage:
   script:
     - make coverage
   artifacts:
-    name: "${CI_PROJECT_NAME}-coverage-${CI_BUILD_REF}"
+    name: ${CI_PROJECT_NAME}-coverage-${CI_BUILD_REF}
     paths:
       - build/release-coverage/coverage/
       - build/release-coverage/coverage.txt
       - build/release-coverage/coverage.xml
-  image: $DOCKER_IMAGE_DEV:$DOCKER_TAG
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   coverage: '/lines: (\d+\.\d+\%)/'
   tags:
     - docker
@@ -101,7 +107,7 @@ test:unit:
     - build:source
   script:
     - make run-unit-tests
-  image: $DOCKER_IMAGE_DEV:$DOCKER_TAG
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker
 
@@ -112,11 +118,11 @@ test:integration:
   script:
     - make run-integration-tests
   artifacts:
-    name: "${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}"
+    name: ${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}
     when: always
     paths:
       - build/release/tests/integration/
-  image: $DOCKER_IMAGE_DEV:$DOCKER_TAG
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker
 
@@ -129,7 +135,7 @@ test:valgrind:
   dependencies:
     - build:source
   allow_failure: true
-  image: $DOCKER_IMAGE_DEV:$DOCKER_TAG
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker
 
@@ -139,32 +145,32 @@ test:valgrind:
 deploy:web:
   stage: deploy
   script:
-    - ssh $DEPLOY_USER@$DEPLOY_HOST mkdir -p $DEPLOY_PATH/{coverage,doc}/$CI_BUILD_REF_NAME/
-    - rsync $RSYNC_OPTS build/release-coverage/coverage/  $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/coverage/$CI_BUILD_REF_NAME/
-    - rsync $RSYNC_OPTS build/release/doc/html/           $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/doc/$CI_BUILD_REF_NAME/
-    - rsync $RSYNC_OPTS web/                              $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/
+    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} mkdir -p ${DEPLOY_PATH}/{coverage,doc}/${CI_BUILD_REF_NAME}/
+    - rsync ${RSYNC_OPTS} build/release-coverage/coverage/  ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/coverage/$CI_BUILD_REF_NAME/
+    - rsync ${RSYNC_OPTS} build/release/doc/html/           ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/doc/$CI_BUILD_REF_NAME/
+    - rsync ${RSYNC_OPTS} web/                              ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/
   dependencies:
     - build:docs
     - build:packages
     - test:coverage
   only:
-    - master
+    - tags
   tags:
     - villas-deploy
 
 deploy:packages:
   stage: deploy
   script:
-    - ssh $DEPLOY_USER@$DEPLOY_HOST mkdir -p $DEPLOY_PATH/{dist,../packages}
-    - rsync $RSYNC_OPTS build/release/packaging/rpm/RPMS/ $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/../packages/
-    - rsync $RSYNC_OPTS build/release/packaging/*.tar.gz  $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/dist/
-    - ssh $DEPLOY_USER@$DEPLOY_HOST createrepo $DEPLOY_PATH/../packages
+    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} mkdir -p ${DEPLOY_PATH}/{dist,../packages}
+    - rsync ${RSYNC_OPTS} build/release/packaging/rpm/RPMS/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/../packages/
+    - rsync ${RSYNC_OPTS} build/release/packaging/*.tar.gz  ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/dist/
+    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} createrepo ${DEPLOY_PATH}/../packages
   dependencies:
     - build:packages
   tags:
     - villas-deploy
   only:
-    - master
+    - tags
 
 
 # Stage: docker
@@ -172,16 +178,21 @@ deploy:packages:
 
 deploy:docker:
   stage: docker
+  variables:
+    DOCKER_IMAGE: villas/node
+    DOCKER_TAG: $CI_COMMIT_TAG
   script:
     - make docker
     - make deploy-docker
+    - docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+    - docker push ${DOCKER_IMAGE}:latest
   dependencies:
     - build:packages
   tags:
     - shell
     - linux
   only:
-    - master
+    - tags
 
 deploy:docker-dev:
   stage: docker

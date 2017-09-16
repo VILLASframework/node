@@ -48,6 +48,9 @@ RUN dnf -y install \
 	kernel-modules-extra \
 	module-init-tools
 
+# Ugly: we need to invalidate the cache
+ADD https://villas.fein-aachen.org/packages/repodata/repomd.xml /tmp
+
 # Install the application
 RUN dnf -y --refresh install \
 	villas-node \
