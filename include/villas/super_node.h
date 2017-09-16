@@ -46,13 +46,8 @@ struct super_node {
 
 	char *name;		/**< A name of this super node. Usually the hostname. */
 
-	struct {
-		int argc;
-		char **argv;
-	} cli;
-
 	enum state state;
-	
+
 	char *uri;		/**< URI of configuration */
 
 	json_t *cfg;		/**< JSON representation of the configuration. */
@@ -65,9 +60,6 @@ struct super_node {
 
 /** Inititalize configuration object before parsing the configuration. */
 int super_node_init(struct super_node *sn);
-
-/** Wrapper for super_node_parse() */
-int super_node_parse_cli(struct super_node *sn, int argc, char *argv[]);
 
 /** Wrapper for super_node_parse() */
 int super_node_parse_uri(struct super_node *sn, const char *uri);

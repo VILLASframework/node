@@ -169,16 +169,6 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 	return 0;
 }
 
-int super_node_parse_cli(struct super_node *sn, int argc, char *argv[])
-{
-	char *uri = (argc == 2) ? argv[1] : NULL;
-
-	sn->cli.argc = argc;
-	sn->cli.argv = argv;
-
-	return super_node_parse_uri(sn, uri);
-}
-
 int super_node_parse_json(struct super_node *sn, json_t *cfg)
 {
 	int ret;

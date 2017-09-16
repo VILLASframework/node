@@ -135,8 +135,11 @@
 /* Forward declarations */
 struct timespec;
 
-/** Print copyright message to screen. */
+/** Print copyright message to stdout. */
 void print_copyright();
+
+/** Print version to stdout. */
+void print_version();
 
 /** Normal random variate generator using the Box-Muller method
  *

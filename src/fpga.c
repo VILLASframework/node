@@ -30,7 +30,9 @@ void usage()
 	printf("  CONFIG  path to a configuration file\n");
 	printf("  CARD    name of the FPGA card\n");
 	printf("  OPTIONS is one or more of the following options:\n");
-	printf("     -d    Set log level\n");
+	printf("    -d      set log level\n");
+	printf("    -h      show this help\n");
+	printf("    -V      show the version of the tool\n");
 	printf("\n");
 	print_copyright();
 }
@@ -44,12 +46,16 @@ int main(int argc, char *argv[])
 
 	/* Parse arguments */
 	char c, *endptr;
-	while ((c = getopt(argc, argv, "d:")) != -1) {
+	while ((c = getopt(argc, argv, "Vd:h")) != -1) {
 		switch (c) {
+			case 'V':
+				print_version();
+				exit(EXIT_SUCCESS);
 			case 'd':
 				sn.log.level = strtoul(optarg, &endptr, 10);
 				goto check;
 
+			case 'h':
 			case '?':
 			default:
 				usage();

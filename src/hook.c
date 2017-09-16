@@ -83,9 +83,10 @@ static void usage()
 	printf("  PARAM*    a string of configuration settings for the hook\n");
 	printf("  OPTIONS is one or more of the following options:\n");
 	printf("    -f FMT  the data format\n");
-	printf("    -h      show this help\n");
 	printf("    -d LVL  set debug level to LVL\n");
 	printf("    -v CNT  process CNT smps at once\n");
+	printf("    -h      show this help\n");
+	printf("    -V      show the version of the tool\n");
 	printf("\n");
 
 	printf("The following hook functions are supported:\n");
@@ -114,8 +115,11 @@ int main(int argc, char *argv[])
 	json_t *cfg_cli = json_object();
 
 	char c, *endptr;
-	while ((c = getopt(argc, argv, "hv:d:f:o:")) != -1) {
+	while ((c = getopt(argc, argv, "Vhv:d:f:o:")) != -1) {
 		switch (c) {
+			case 'V':
+				print_version();
+				exit(EXIT_SUCCESS);
 			case 'f':
 				format = optarg;
 				break;

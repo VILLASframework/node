@@ -44,6 +44,11 @@ void print_copyright()
 	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
 }
 
+void print_version()
+{
+	printf("%s\n", BUILDID);
+}
+
 int version_parse(const char *s, struct version *v)
 {
 	return sscanf(s, "%u.%u", &v->major, &v->minor) != 2;

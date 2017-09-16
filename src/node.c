@@ -66,7 +66,10 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 static void usage()
 {
-	printf("Usage: villas-node [CONFIG]\n");
+	printf("Usage: villas-node [OPTIONS] [CONFIG]\n");
+	printf("  OPTIONS is one or more of the following options:\n");
+	printf("    -V      show the version of the tool\n");
+	printf("    -h      show this help\n");
 	printf("  CONFIG is the path to an optional configuration file\n");
 	printf("         if omitted, VILLASnode will start without a configuration\n");
 	printf("         and wait for provisioning over the web interface.\n\n");
@@ -106,16 +109,28 @@ int main(int argc, char *argv[])
 	if (argc != 4)
 		usage(argv[0]);
 
+	opal_register_region(argc, argv);
+
 	char *uri = "opal-shmem.conf";
 #else
-	if (argc == 2) {
-		if (!strcmp(argv[1], "-h") ||
-		    !strcmp(argv[1], "--help"))
-			    usage();
+	char c;
+	while ((c = getopt(argc, argv, "hV")) != -1) {
+		switch (c) {
+			case 'V':
+				print_version();
+				exit(EXIT_SUCCESS);
+			case 'h':
+			case '?':
+				usage();
+				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+		}
+
+		continue;
 	}
-	else if (argc > 2)
-		usage();
+
+	char *uri = argc == optind + 1 ? argv[optind] : NULL;
 #endif
+
 	info("This is VILLASnode %s (built on %s, %s)", CLR_BLD(CLR_YEL(BUILDID)),
 		CLR_BLD(CLR_MAG(__DATE__)), CLR_BLD(CLR_MAG(__TIME__)));
 
@@ -134,7 +149,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to initialize super node");
 
-	ret = super_node_parse_cli(&sn, argc, argv);
+	ret = super_node_parse_uri(&sn, uri);
 	if (ret)
 		error("Failed to parse command line arguments");
 

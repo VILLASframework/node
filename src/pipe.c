@@ -99,7 +99,8 @@ static void usage()
 	printf("    -r               only read data from node and write it to stdout\n");
 	printf("    -t NUM           terminate after NUM seconds\n");
 	printf("    -L NUM           terminate after NUM samples sent\n");
-	printf("    -l NUM           terminate after NUM samples received\n\n");
+	printf("    -l NUM           terminate after NUM samples received\n");
+	printf("    -V               show the version of the tool\n\n");
 
 	print_copyright();
 }
@@ -216,8 +217,11 @@ int main(int argc, char *argv[])
 	json_t *cfg_cli = json_object();
 
 	char c, *endptr;
-	while ((c = getopt(argc, argv, "hxrsd:l:L:t:f:o:")) != -1) {
+	while ((c = getopt(argc, argv, "Vhxrsd:l:L:t:f:o:")) != -1) {
 		switch (c) {
+			case 'V':
+				print_version();
+				exit(EXIT_SUCCESS);
 			case 'f':
 				format = optarg;
 				break;
