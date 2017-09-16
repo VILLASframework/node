@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#ifdef LWS_WITH_SERVER_STATUS
+
 #include <jansson.h>
 
 #include "plugin.h"
@@ -51,3 +53,5 @@ static struct plugin p = {
 };
 
 REGISTER_PLUGIN(&p)
+
+#endif /* LWS_WITH_SERVER_STATUS */
