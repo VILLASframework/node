@@ -40,10 +40,6 @@ RUN dnf -y install \
 	libnl3 \
 	libcurl \
 	jansson \
-	libxil \
-	libwebsockets \
-	zeromq \
-	nanomsg \
 	iproute \
 	kernel-modules-extra \
 	module-init-tools

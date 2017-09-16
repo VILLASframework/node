@@ -47,7 +47,7 @@ if ! [[ "$TOOL" =~ $(echo ^\($TOOLS\)$) ]]; then
 	echo " and point your web browser to http://localhost:80"
 	echo
 	# Show VILLASnode copyright and contact info
-	villas-node --help | tail -n3
+	villas-node -h | tail -n3
 	exit 1
 fi
 
