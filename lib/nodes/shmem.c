@@ -146,7 +146,7 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 		/* Since the node isn't in shared memory, the source can't be accessed */
 		shared_smps[i]->source = NULL;
-		shared_smps[i]->has &= ~SAMPLE_SOURCE;
+		shared_smps[i]->flags &= ~SAMPLE_HAS_SOURCE;
 	}
 
 	pushed = shmem_int_write(&shm->intf, shared_smps, avail);

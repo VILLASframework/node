@@ -79,7 +79,7 @@ int msg_to_sample(struct msg *msg, struct sample *smp)
 	if (ret)
 		return -1;
 
-	smp->has = SAMPLE_ORIGIN | SAMPLE_SEQUENCE | SAMPLE_VALUES | SAMPLE_ID;
+	smp->flags = SAMPLE_HAS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_VALUES | SAMPLE_HAS_ID;
 	smp->length = MIN(msg->length, smp->capacity);
 	smp->sequence = msg->sequence;
 	smp->id = msg->id;

@@ -131,7 +131,7 @@ int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt)
 	task_wait_until_next_period(&sn->task);
 
 	smps[0]->length = MIN(STATS_COUNT * 6, smps[0]->capacity);
-	smps[0]->has = SAMPLE_VALUES;
+	smps[0]->flags = SAMPLE_HAS_VALUES;
 
 	for (int i = 0; i < 6 && (i+1)*STATS_METRICS <= smps[0]->length; i++) {
 		int tot = hist_total(&s->histograms[i]);

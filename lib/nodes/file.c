@@ -205,7 +205,7 @@ int file_start(struct node *n)
 	f->uri = file_format_name(f->uri_tmpl, &now);
 
 	/* Open file */
-	flags = SAMPLE_ALL;
+	flags = SAMPLE_HAS_ALL;
 	if (f->flush)
 		flags |= IO_FLUSH;
 

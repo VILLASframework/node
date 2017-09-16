@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 	/* Default values */
 	double epsilon = 1e-9;
 	char *format = "villas-human";
-	int flags = SAMPLE_SEQUENCE | SAMPLE_VALUES | SAMPLE_ORIGIN;
+	int flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_VALUES | SAMPLE_HAS_ORIGIN;
 
 	struct pool pool = { .state = STATE_DESTROYED };
 
@@ -88,13 +88,13 @@ int main(int argc, char *argv[])
 				epsilon = strtod(optarg, &endptr);
 				goto check;
 			case 'v':
-				flags &= ~SAMPLE_VALUES;
+				flags &= ~SAMPLE_HAS_VALUES;
 				break;
 			case 't':
-				flags &= ~SAMPLE_ORIGIN;
+				flags &= ~SAMPLE_HAS_ORIGIN;
 				break;
 			case 's':
-				flags &= ~SAMPLE_SEQUENCE;
+				flags &= ~SAMPLE_HAS_SEQUENCE;
 				break;
 			case 'f':
 				format = optarg;

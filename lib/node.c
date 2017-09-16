@@ -283,18 +283,18 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 	for (int i = 0; i < nread; i++) {
 		smps[i]->source = n;
 
-		if (!(smps[i]->has & SAMPLE_SEQUENCE))
+		if (!(smps[i]->flags & SAMPLE_HAS_SEQUENCE))
 			smps[i]->sequence = n->sequence++;
 
-		if (!(smps[i]->has & SAMPLE_ORIGIN) ||
-		    !(smps[i]->has & SAMPLE_RECEIVED)) {
+		if (!(smps[i]->flags & SAMPLE_HAS_ORIGIN) ||
+		    !(smps[i]->flags & SAMPLE_HAS_RECEIVED)) {
 
 			struct timespec now = time_now();
 
-			if (!(smps[i]->has & SAMPLE_RECEIVED))
+			if (!(smps[i]->flags & SAMPLE_HAS_RECEIVED))
 				smps[i]->ts.received = now;
 
-			if (!(smps[i]->has & SAMPLE_ORIGIN))
+			if (!(smps[i]->flags & SAMPLE_HAS_ORIGIN))
 				smps[i]->ts.origin = now;
 		}
 	}
@@ -320,6 +320,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt)
 	if (!n->_vt->write)
 		return -1;
 
+	/* Run write hooks */
 	cnt = hook_write_list(&n->hooks, smps, cnt);
 	if (cnt <= 0)
 		return cnt;

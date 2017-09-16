@@ -230,7 +230,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 			pulled = queue_pull_many(&c->queue, (void **) smps, cnt);
 			if (pulled > 0) {
-				io_format_sprint(c->format, c->buffers.send.buf + LWS_PRE, c->buffers.send.size - LWS_PRE, &wbytes, smps, pulled, SAMPLE_ALL);
+				io_format_sprint(c->format, c->buffers.send.buf + LWS_PRE, c->buffers.send.size - LWS_PRE, &wbytes, smps, pulled, SAMPLE_HAS_ALL);
 
 				ret = lws_write(wsi, (unsigned char *) c->buffers.send.buf + LWS_PRE, wbytes, c->format->flags & IO_FORMAT_BINARY ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
 
@@ -285,7 +285,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				/* Set receive timestamp */
 				for (int i = 0; i < recvd; i++) {
 					smps[i]->ts.received = ts_recv;
-					smps[i]->has |= SAMPLE_RECEIVED;
+					smps[i]->flags |= SAMPLE_HAS_RECEIVED;
 				}
 
 				ret = queue_signalled_push_many(&w->queue, (void **) smps, recvd);

@@ -361,7 +361,7 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 	ssize_t bytes;
 	size_t wbytes;
 
-	ret = io_format_sprint(s->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_ALL);
+	ret = io_format_sprint(s->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_HAS_ALL);
 	if (ret < 0)
 		return -1;
 

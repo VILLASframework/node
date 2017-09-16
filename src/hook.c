@@ -184,7 +184,7 @@ check:		if (optarg == endptr)
 	if (!p)
 		error("Unknown IO format '%s'", format);
 
-	ret = io_init(&io, &p->io, SAMPLE_ALL);
+	ret = io_init(&io, &p->io, SAMPLE_HAS_ALL);
 	if (ret)
 		error("Failed to initialize IO");
 

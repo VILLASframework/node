@@ -32,10 +32,10 @@ size_t csv_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 {
 	size_t off = 0;
 
-	if (flags & SAMPLE_ORIGIN)
+	if (flags & SAMPLE_HAS_ORIGIN)
 		off += snprintf(buf + off, len - off, "%ld%c%09ld", s->ts.origin.tv_sec, CSV_SEPARATOR, s->ts.origin.tv_nsec);
 
-	if (flags & SAMPLE_SEQUENCE)
+	if (flags & SAMPLE_HAS_SEQUENCE)
 		off += snprintf(buf + off, len - off, "%c%u", CSV_SEPARATOR, s->sequence);
 
 	for (int i = 0; i < s->length; i++) {
@@ -59,7 +59,7 @@ size_t csv_sscan_single(const char *buf, size_t len, struct sample *s, int flags
 	const char *ptr = buf;
 	char *end;
 
-	s->has = 0;
+	s->flags = 0;
 
 	s->ts.origin.tv_sec = strtoul(ptr, &end, 10);
 	if (end == ptr || *end == '\n')
@@ -73,13 +73,13 @@ size_t csv_sscan_single(const char *buf, size_t len, struct sample *s, int flags
 
 	ptr = end;
 
-	s->has |= SAMPLE_ORIGIN;
+	s->flags |= SAMPLE_HAS_ORIGIN;
 
 	s->sequence = strtoul(ptr, &end, 10);
 	if (end == ptr || *end == '\n')
 		goto out;
 
-	s->has |= SAMPLE_SEQUENCE;
+	s->flags |= SAMPLE_HAS_SEQUENCE;
 
 	for (ptr  = end, s->length = 0;
 	                 s->length < s->capacity;
@@ -105,7 +105,7 @@ out:	if (*end == '\n')
 		end++;
 
 	if (s->length > 0)
-		s->has |= SAMPLE_VALUES;
+		s->flags |= SAMPLE_HAS_VALUES;
 
 	return end - buf;
 }

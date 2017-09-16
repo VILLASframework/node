@@ -96,7 +96,7 @@ int sample_copy(struct sample *dst, struct sample *src)
 	dst->sequence = src->sequence;
 	dst->format = src->format;
 	dst->source = src->source;
-	dst->has = src->has;
+	dst->flags = src->flags;
 
 	dst->ts = src->ts;
 
@@ -115,13 +115,13 @@ int sample_copy_many(struct sample *dsts[], struct sample *srcs[], int cnt)
 
 int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 {
-	if ((a->has & b->has & flags) != flags) {
-		printf("missing components: a=%#x, b=%#x, wanted=%#x\n", a->has, b->has, flags);
+	if ((a->flags & b->flags & flags) != flags) {
+		printf("flags: a=%#x, b=%#x, wanted=%#x\n", a->flags, b->flags, flags);
 		return -1;
 	}
 
 	/* Compare sequence no */
-	if (flags & SAMPLE_SEQUENCE) {
+	if (flags & SAMPLE_HAS_SEQUENCE) {
 		if (a->sequence != b->sequence) {
 			printf("sequence no: %d != %d\n", a->sequence, b->sequence);
 			return 2;
@@ -129,7 +129,7 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	}
 
 	/* Compare timestamp */
-	if (flags & SAMPLE_ORIGIN) {
+	if (flags & SAMPLE_HAS_ORIGIN) {
 		if (time_delta(&a->ts.origin, &b->ts.origin) > epsilon) {
 			printf("ts.origin: %f != %f\n", time_to_double(&a->ts.origin), time_to_double(&b->ts.origin));
 			return 3;
@@ -137,7 +137,7 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	}
 
 	/* Compare ID */
-	if (flags & SAMPLE_SOURCE) {
+	if (flags & SAMPLE_HAS_SOURCE) {
 		if (a->id != b->id) {
 			printf("id: %d != %d\n", a->id, b->id);
 			return 7;
@@ -145,7 +145,7 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	}
 
 	/* Compare data */
-	if (flags & SAMPLE_VALUES) {
+	if (flags & SAMPLE_HAS_VALUES) {
 		if (a->length != b->length) {
 			printf("length: %d != %d\n", a->length, b->length);
 			return 4;

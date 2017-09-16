@@ -34,13 +34,13 @@ int json_pack_sample(json_t **j, struct sample *smp, int flags)
 			"received", smp->ts.received.tv_sec, smp->ts.received.tv_nsec,
 			"sent",     smp->ts.sent.tv_sec,     smp->ts.sent.tv_nsec);
 
-	if (flags & SAMPLE_SEQUENCE) {
+	if (flags & SAMPLE_HAS_SEQUENCE) {
 		json_t *json_sequence = json_integer(smp->sequence);
 
 		json_object_set(json_smp, "sequence", json_sequence);
 	}
 
-	if (flags & SAMPLE_VALUES) {
+	if (flags & SAMPLE_HAS_VALUES) {
 		json_t *json_data = json_array();
 
 		for (int i = 0; i < smp->length; i++) {
@@ -99,7 +99,7 @@ int json_unpack_sample(json_t *json_smp, struct sample *smp, int flags)
 	if (!json_is_array(json_data))
 		return -1;
 
-	smp->has = SAMPLE_ORIGIN | SAMPLE_RECEIVED | SAMPLE_SEQUENCE;
+	smp->flags = SAMPLE_HAS_ORIGIN | SAMPLE_HAS_RECEIVED | SAMPLE_HAS_SEQUENCE;
 	smp->length = 0;
 
 	json_array_foreach(json_data, i, json_value) {
@@ -125,7 +125,7 @@ int json_unpack_sample(json_t *json_smp, struct sample *smp, int flags)
 	}
 
 	if (smp->length > 0)
-		smp->has |= SAMPLE_VALUES;
+		smp->flags |= SAMPLE_HAS_VALUES;
 
 	return 0;
 }

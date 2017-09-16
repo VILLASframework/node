@@ -169,12 +169,12 @@ int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 				break;
 		}
 
-		smp->has = SAMPLE_SEQUENCE | SAMPLE_ORIGIN;
+		smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_ORIGIN;
 	}
 	else {
 		off = 0;
 
-		smp->has = 0;
+		smp->flags = 0;
 		smp->sequence = 0;
 		smp->ts.origin.tv_sec  = 0;
 		smp->ts.origin.tv_nsec = 0;

@@ -235,7 +235,7 @@ int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	char data[NANOMSG_MAX_PACKET_LEN];
 
-	ret = io_format_sprint(m->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_ALL);
+	ret = io_format_sprint(m->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_HAS_ALL);
 	if (ret <= 0)
 		return -1;
 

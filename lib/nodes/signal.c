@@ -236,7 +236,7 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 	double running = time_delta(&s->started, &ts);
 
-	t->has = SAMPLE_ORIGIN | SAMPLE_VALUES | SAMPLE_SEQUENCE;
+	t->flags = SAMPLE_HAS_ORIGIN | SAMPLE_HAS_VALUES | SAMPLE_HAS_SEQUENCE;
 	t->ts.origin = ts;
 	t->sequence = s->counter;
 	t->length = n->samplelen;

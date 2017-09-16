@@ -40,18 +40,18 @@ size_t villas_human_sprint_single(char *buf, size_t len, struct sample *s, int f
 {
 	size_t off = 0;
 
-	if (flags & SAMPLE_ORIGIN) {
+	if (flags & SAMPLE_HAS_ORIGIN) {
 		off += snprintf(buf + off, len - off, "%llu", (unsigned long long) s->ts.origin.tv_sec);
 		off += snprintf(buf + off, len - off, ".%09llu", (unsigned long long) s->ts.origin.tv_nsec);
 	}
 
-	if (flags & SAMPLE_RECEIVED)
+	if (flags & SAMPLE_HAS_RECEIVED)
 		off += snprintf(buf + off, len - off, "%+e", time_delta(&s->ts.origin, &s->ts.received));
 
-	if (flags & SAMPLE_SEQUENCE)
+	if (flags & SAMPLE_HAS_SEQUENCE)
 		off += snprintf(buf + off, len - off, "(%u)", s->sequence);
 
-	if (flags & SAMPLE_VALUES) {
+	if (flags & SAMPLE_HAS_VALUES) {
 		for (int i = 0; i < s->length; i++) {
 			switch (sample_get_data_format(s, i)) {
 				case SAMPLE_DATA_FORMAT_FLOAT:
@@ -76,7 +76,7 @@ size_t villas_human_sscan_single(const char *buf, size_t len, struct sample *s, 
 
 	double offset = 0;
 
-	s->has = 0;
+	s->flags = 0;
 
 	/* Format: Seconds.NanoSeconds+Offset(SequenceNumber) Value1 Value2 ...
 	 * RegEx: (\d+(?:\.\d+)?)([-+]\d+(?:\.\d+)?(?:e[+-]?\d+)?)?(?:\((\d+)\))?
@@ -89,7 +89,7 @@ size_t villas_human_sscan_single(const char *buf, size_t len, struct sample *s, 
 	if (ptr == end || *end == '\n')
 		return -1;
 
-	s->has |= SAMPLE_ORIGIN;
+	s->flags |= SAMPLE_HAS_ORIGIN;
 
 	/* Optional: nano seconds */
 	if (*end == '.') {
@@ -108,7 +108,7 @@ size_t villas_human_sscan_single(const char *buf, size_t len, struct sample *s, 
 
 		offset = strtof(ptr, &end); /* offset is ignored for now */
 		if (ptr != end)
-			s->has |= SAMPLE_OFFSET;
+			s->flags |= SAMPLE_HAS_OFFSET;
 		else
 			return -4;
 	}
@@ -119,7 +119,7 @@ size_t villas_human_sscan_single(const char *buf, size_t len, struct sample *s, 
 
 		s->sequence = strtoul(ptr, &end, 10);
 		if (ptr != end)
-			s->has |= SAMPLE_SEQUENCE;
+			s->flags |= SAMPLE_HAS_SEQUENCE;
 		else
 			return -5;
 
@@ -151,13 +151,13 @@ size_t villas_human_sscan_single(const char *buf, size_t len, struct sample *s, 
 		end++;
 
 	if (s->length > 0)
-		s->has |= SAMPLE_VALUES;
+		s->flags |= SAMPLE_HAS_VALUES;
 
-	if (s->has & SAMPLE_OFFSET) {
+	if (s->flags & SAMPLE_HAS_OFFSET) {
 		struct timespec off = time_from_double(offset);
 		s->ts.received = time_add(&s->ts.origin, &off);
 
-		s->has |= SAMPLE_RECEIVED;
+		s->flags |= SAMPLE_HAS_RECEIVED;
 	}
 
 	return end - buf;

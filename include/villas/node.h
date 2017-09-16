@@ -69,6 +69,8 @@ struct node
 
 int node_init(struct node *n, struct node_type *vt);
 
+int node_init2(struct node *n);
+
 /** Parse settings of a node.
  *
  * @param cfg A JSON object containing the configuration of the node.
