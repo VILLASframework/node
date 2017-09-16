@@ -112,11 +112,10 @@ ifdef CI
 	VARIANT := $(VARIANT)-ci
 
 	GIT_REV    := $(shell echo $${CI_COMMIT_SHA:0:7})
-	GIT_BRANCH := $(CI_COMMIT_REF_NAME)
 else
 	GIT_REV    := $(shell git rev-parse --short=7    HEAD)
-	GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 endif
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
 # pkg-config dependencies
 PKGS = openssl jansson
