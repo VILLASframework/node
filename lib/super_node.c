@@ -361,8 +361,10 @@ int super_node_start(struct super_node *sn)
 		struct node *n = list_at(&sn->nodes, i);
 
 		int refs = list_count(&sn->paths, (cmp_cb_t) path_uses_node, n);
-		if (refs > 0)
+		if (refs > 0) {
+			node_init2(n);
 			node_start(n);
+		}
 		else
 			warn("No path is using the node %s. Skipping...", node_name(n));
 	}
