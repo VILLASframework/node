@@ -148,7 +148,7 @@ deploy:web:
     - build:packages
     - test:coverage
   only:
-    - develop
+    - master
   tags:
     - villas-deploy
 
@@ -163,6 +163,8 @@ deploy:packages:
     - build:packages
   tags:
     - villas-deploy
+  only:
+    - master
 
 
 # Stage: docker
@@ -173,9 +175,20 @@ deploy:docker:
   script:
     - make docker
     - make deploy-docker
-    - make deploy-docker-dev
   dependencies:
     - build:packages
   tags:
     - shell
     - linux
+  only:
+    - master
+
+deploy:docker-dev:
+  stage: docker
+  script:
+    - make deploy-docker-dev
+  tags:
+    - shell
+    - linux
+  only:
+    - develop
