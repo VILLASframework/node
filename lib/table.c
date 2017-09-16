@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "utils.h"
+#include "table.h"
 #include "log.h"
 
 static int table_resize(struct table *t, int width)
@@ -63,40 +64,46 @@ void table_header(struct table *t)
 { NOINDENT
 	struct log *l = global_log ? global_log : &default_log;
 
-	if (t->width != l->window.ws_col - 30)
-		table_resize(t, l->window.ws_col - 30);
+	if (t->width != l->width)
+		table_resize(t, l->width);
 
-	char *line1 = strf("\b\b" BOX_UD);
+
 	char *line0 = strf("\b");
-	char *line2 = strf("\b");
+	char *line1 = strf("\b\b" BOX_UD);
+	char *line2 = strf("\b\b" BOX_UD);
+	char *line3 = strf("\b");
 
 	for (int i = 0; i < t->ncols; i++) {
-		char *col = strf(CLR_BLD("%s"), t->cols[i].title);
+		int w, u;
+		char *col, *unit;
 
-		if (t->cols[i].unit)
-			strcatf(&col, " (" CLR_YEL("%s") ")", t->cols[i].unit);
+		col = strf(CLR_BLD("%s"), t->cols[i].title);
+		unit = t->cols[i].unit ? strf(CLR_YEL("%s"), t->cols[i].unit) : "";
 
-		int l = strlenp(col);
-		int r = strlen(col);
-		int w = t->cols[i]._width + r - l;
+		w = t->cols[i]._width + strlen(col) - strlenp(col);
+		u = t->cols[i]._width + strlen(unit) - strlenp(unit);
 
-		if (t->cols[i].align == TABLE_ALIGN_LEFT)
-			strcatf(&line1, " %-*.*s " BOX_UD, w, w, col);
-		else
-			strcatf(&line1, " %*.*s " BOX_UD, w, w, col);
+		if (t->cols[i].align == TABLE_ALIGN_LEFT) {
+			strcatf(&line1, " %-*.*s\e[0m " BOX_UD, w, w, col);
+			strcatf(&line2, " %-*.*s\e[0m " BOX_UD, u, u, unit);
+		}
+		else {
+			strcatf(&line1, " %*.*s\e[0m " BOX_UD, w, w, col);
+			strcatf(&line2, " %*.*s\e[0m " BOX_UD, u, u, unit);
+		}
 
 		for (int j = 0; j < t->cols[i]._width + 2; j++) {
 			strcatf(&line0, "%s", BOX_LR);
-			strcatf(&line2, "%s", BOX_LR);
+			strcatf(&line3, "%s", BOX_LR);
 		}
 
 		if (i == t->ncols - 1) {
 			strcatf(&line0, "%s", BOX_DL);
-			strcatf(&line2, "%s", BOX_UDL);
+			strcatf(&line3, "%s", BOX_UDL);
 		}
 		else {
 			strcatf(&line0, "%s", BOX_DLR);
-			strcatf(&line2, "%s", BOX_UDLR);
+			strcatf(&line3, "%s", BOX_UDLR);
 		}
 
 		free(col);
@@ -105,18 +112,20 @@ void table_header(struct table *t)
 	stats("%s", line0);
 	stats("%s", line1);
 	stats("%s", line2);
+	stats("%s", line3);
 
 	free(line0);
 	free(line1);
 	free(line2);
+	free(line3);
 }
 
 void table_row(struct table *t, ...)
 { NOINDENT
 	struct log *l = global_log ? global_log : &default_log;
 
-	if (t->width != l->window.ws_col - 30) {
-		table_resize(t, l->window.ws_col - 30);
+	if (t->width != l->width) {
+		table_resize(t, l->width);
 		table_header(t);
 	}
 
@@ -133,9 +142,9 @@ void table_row(struct table *t, ...)
 		int w = t->cols[i]._width + r - l;
 
 		if (t->cols[i].align == TABLE_ALIGN_LEFT)
-			strcatf(&line, " %-*.*s " BOX_UD, w, w, col);
+			strcatf(&line, " %-*.*s\e[0m " BOX_UD, w, w, col);
 		else
-			strcatf(&line, " %*.*s " BOX_UD, w, w, col);
+			strcatf(&line, " %*.*s\e[0m " BOX_UD, w, w, col);
 
 		free(col);
 	}
@@ -150,8 +159,8 @@ void table_footer(struct table *t)
 { NOINDENT
 	struct log *l = global_log ? global_log : &default_log;
 
-	if (t->width != l->window.ws_col - 30)
-		table_resize(t, l->window.ws_col - 30);
+	if (t->width != l->width)
+		table_resize(t, l->width);
 
 	char *line = strf("\b");
 

@@ -92,6 +92,7 @@ struct log {
 	struct timespec epoch;	/**< A global clock used to prefix the log messages. */
 
 	struct winsize window;	/**< Size of the terminal window. */
+	int width;		/**< The real usable log output width which fits into one line. */
 
 	/** Debug level used by the debug() macro.
 	 * It defaults to V (defined by the Makefile) and can be
@@ -188,41 +189,6 @@ void error(const char *fmt, ...)
 /** Print error and strerror(errno). */
 void serror(const char *fmt, ...)
 	__attribute__ ((format(printf, 1, 2)));
-
-/** @addtogroup table Print fancy tables
- * @{
- */
-
-struct table_column {
-	int width;	/**< Width of the column. */
-	char *title;	/**< The title as shown in the table header. */
-	char *format;	/**< The format which is used to print the table rows. */
-	char *unit;	/**< An optional unit which will be shown in the table header. */
-
-	enum {
-		TABLE_ALIGN_LEFT,
-		TABLE_ALIGN_RIGHT
-	} align;
-
-	int _width;	/**< The real width of this column. Calculated by table_header() */
-};
-
-struct table {
-	int ncols;
-	int width;
-	struct table_column *cols;
-};
-
-/** Print a table header consisting of \p n columns. */
-void table_header(struct table *t);
-
-/** Print table rows. */
-void table_row(struct table *t, ...);
-
-/** Print the table footer. */
-void table_footer(struct table *t);
-
-/** @} */
 
 #ifdef __cplusplus
 }

@@ -30,6 +30,7 @@
 #include "utils.h"
 #include "hist.h"
 #include "config.h"
+#include "table.h"
 
 #define VAL(h, i)	((h)->low + (i) * (h)->resolution)
 #define INDEX(h, v)	round((v - (h)->low) / (h)->resolution)

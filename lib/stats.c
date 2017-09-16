@@ -30,6 +30,7 @@
 #include "utils.h"
 #include "log.h"
 #include "node.h"
+#include "table.h"
 
 static struct stats_desc {
 	const char *name;
@@ -129,16 +130,16 @@ void stats_reset(struct stats *s)
 }
 
 static struct table_column stats_cols[] = {
-	{ 10, "Node",		"%s",	NULL,	TABLE_ALIGN_LEFT },
-	{ 10, "Recv",		"%ju",	"p",	TABLE_ALIGN_RIGHT },
-	{ 10, "Sent",		"%ju",	"p",	TABLE_ALIGN_RIGHT },
-	{ 10, "OWD last",	"%f",	"S",	TABLE_ALIGN_RIGHT },
-	{ 10, "OWD mean",	"%f",	"S",	TABLE_ALIGN_RIGHT },
-	{ 10, "Rate last",	"%f",	"p/S",	TABLE_ALIGN_RIGHT },
-	{ 10, "Rate mean",	"%f",	"p/S",	TABLE_ALIGN_RIGHT },
-	{ 10, "Drop",		"%ju",	"p",	TABLE_ALIGN_RIGHT },
-	{ 10, "Skip",		"%ju",	"p",	TABLE_ALIGN_RIGHT },
-	{ 10, "Time",		"%f",	"S",	TABLE_ALIGN_RIGHT }
+	{ 10, "Node",		"%s",	NULL,		TABLE_ALIGN_LEFT },
+	{ 10, "Recv",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
+	{ 10, "Sent",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
+	{ 10, "OWD last",	"%f",	"secs",		TABLE_ALIGN_RIGHT },
+	{ 10, "OWD mean",	"%f",	"secs",		TABLE_ALIGN_RIGHT },
+	{ 10, "Rate last",	"%f",	"pkt/sec",	TABLE_ALIGN_RIGHT },
+	{ 10, "Rate mean",	"%f",	"pkt/sec",	TABLE_ALIGN_RIGHT },
+	{ 10, "Drop",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
+	{ 10, "Skip",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
+	{ 10, "Time",		"%f",	"secs",		TABLE_ALIGN_RIGHT }
 };
 
 static struct table stats_table = {

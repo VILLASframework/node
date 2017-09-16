@@ -118,6 +118,8 @@ static void log_resize(int signal, siginfo_t *sinfo, void *ctx)
 	if (ret)
 		return;
 
+	global_log->width = global_log->window.ws_col - 25 - strlenp(global_log->prefix);
+
 	debug(LOG_LOG | 15, "New terminal size: %dx%x", global_log->window.ws_row, global_log->window.ws_col);
 }
 
@@ -133,8 +135,6 @@ int log_init(struct log *l, int level, long facilitites)
 	l->facilities = facilitites;
 	l->file = stderr;
 	l->path = NULL;
-	l->window.ws_col = LOG_WIDTH;
-	l->window.ws_row = LOG_HEIGHT;
 
 	l->epoch = time_now();
 	l->prefix = getenv("VILLAS_LOG_PREFIX");
@@ -156,6 +156,12 @@ int log_init(struct log *l, int level, long facilitites)
 		/* Try to get initial window size */
 		ioctl(STDERR_FILENO, TIOCGWINSZ, &global_log->window);
 	}
+	else {
+		l->window.ws_col = LOG_WIDTH;
+		l->window.ws_row = LOG_HEIGHT;
+	}
+
+	l->width = l->window.ws_col - 25 - strlenp(l->prefix);
 
 	l->state = STATE_INITIALIZED;
 
