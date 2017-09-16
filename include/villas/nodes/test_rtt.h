@@ -29,27 +29,37 @@
 
 #pragma once
 
-#include "node.h"
 #include "list.h"
 #include "io.h"
 #include "task.h"
 
+/* Forward declarations */
+struct test_rtt;
+struct node;
+struct sample;
+
 struct test_rtt_case {
-	struct task task;
 	double rate;
 	int values;
-	int counter;
 	int limit;		/**< The number of samples we take per test. */
+
+	char *filename;
 };
 
 struct test_rtt {
-	double cooldown;	/**< Number of seconds to wait beween tests. */
-	int current;		/**< Index of current test in test_rtt::cases */
-
+	struct task task;	/**< The periodic task for test_rtt_read() */
 	struct io io;		/**< The format of the output file */
+	struct io_format *format;
+
+	double cooldown;	/**< Number of seconds to wait beween tests. */
+
+	int current;		/**< Index of current test in test_rtt::cases */
+	int counter;
+
 	struct list cases;	/**< List of test cases */
 
-	const char *output;	/**< The directory where we place the results. */
+	char *output;	/**< The directory where we place the results. */
+	char *prefix;	/**< An optional prefix in the filename. */
 };
 
 /** @see node_type::print */

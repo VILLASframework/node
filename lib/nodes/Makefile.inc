@@ -26,7 +26,7 @@ ifeq ($(PLATFORM),Linux)
 	WITH_LOOPBACK ?= 1
 endif
 
-WITH_TEST_RTT  ?= 0
+WITH_TEST_RTT  ?= 1
 WITH_FILE      ?= 1
 WITH_SIGNAL    ?= 1
 WITH_NGSI      ?= 1
