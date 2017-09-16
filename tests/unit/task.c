@@ -33,18 +33,18 @@ Test(task, rate, .timeout = 10)
 	double rate = 5, waited;
 	struct timespec start, end;
 	struct task task;
-	
+
 	ret = task_init(&task, rate, CLOCK_MONOTONIC);
 	cr_assert_eq(ret, 0);
 
 	int i;
 	for (i = 0; i < 10; i++) {
 		clock_gettime(CLOCK_MONOTONIC, &start);
-		
-		task_wait_until_next_period(&task);
-		
+
+		task_wait(&task);
+
 		clock_gettime(CLOCK_MONOTONIC, &end);
-		
+
 		waited = time_delta(&start, &end);
 
 		if (fabs(waited - 1.0 / rate) > 10e-3)
@@ -63,7 +63,7 @@ Test(task, wait_until, .timeout = 5)
 	int ret;
 	struct task task;
 	struct timespec start, end, diff, future;
-	
+
 	ret = task_init(&task, 1, CLOCK_REALTIME);
 	cr_assert_eq(ret, 0);
 
@@ -72,12 +72,15 @@ Test(task, wait_until, .timeout = 5)
 	start = time_now();
 	diff = time_from_double(waitfor);
 	future = time_add(&start, &diff);
-	
-	ret = task_wait_until(&task, &future);
+
+	ret = task_set_next(&task, &future);
+	cr_assert_eq(ret, 0);
+
+	ret = task_wait(&task);
 
 	end = time_now();
-	
-	cr_assert_eq(ret, 0);
+
+	cr_assert_eq(ret, 1);
 
 	double waited = time_delta(&start, &end);
 

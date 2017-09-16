@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 			error("Failed to create stats timer");
 
 		for (;;) {
-			task_wait_until_next_period(&t);
+			task_wait(&t);
 
 			for (size_t i = 0; i < list_length(&sn.paths); i++) {
 				struct path *p = list_at(&sn.paths, i);

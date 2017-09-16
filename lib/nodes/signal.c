@@ -220,7 +220,7 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 	/* Throttle output if desired */
 	if (s->rt) {
 		/* Block until 1/p->rate seconds elapsed */
-		steps = task_wait_until_next_period(&s->task);
+		steps = task_wait(&s->task);
 		if (steps > 1)
 			warn("Missed steps: %u", steps);
 

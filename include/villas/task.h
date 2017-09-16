@@ -36,20 +36,20 @@
 
 #if defined(__MACH__)
   #define PERIODIC_TASK_IMPL NANOSLEEP
-#else
+#elif defined(__linux__)
   #define PERIODIC_TASK_IMPL TIMERFD
+#else
+  #error "Platform not supported"
 #endif
 
 struct task {
-	struct timespec period;
-#if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
-	struct timespec next_period;
-#elif PERIODIC_TASK_IMPL == TIMERFD
-	int fd;
-#else
-  #error "Invalid period task implementation"
+	int clock;			/**< CLOCK_{MONOTONIC,REALTIME} */
+
+	struct timespec period;		/**< The period of periodic invations of this task */
+	struct timespec next;		/**< The timer value for the next invocation */
+#if PERIODIC_TASK_IMPL == TIMERFD
+	int fd;				/**< The timerfd_create(2) file descriptior. */
 #endif
-	int clock;
 };
 
 /** Create a new task with the given rate. */
@@ -62,14 +62,14 @@ int task_destroy(struct task *t);
  * @retval 0 An error occured. Maybe the task was stopped.
  * @retval >0 The nummer of runs this task already fired.
  */
-uint64_t task_wait_until_next_period(struct task *t);
+uint64_t task_wait(struct task *t);
 
+int task_set_next(struct task *t, struct timespec *next);
+int task_set_timeout(struct task *t, double to);
 int task_set_rate(struct task *t, double rate);
 
-/** Wait until a fixed time in the future is reached
+/** Returns a poll'able file descriptor which becomes readable when the timer expires.
  *
- * @param until A pointer to a time in the future.
+ * Note: currently not supported on all platforms.
  */
-int task_wait_until(struct task *t, const struct timespec *until);
-
 int task_fd(struct task *t);

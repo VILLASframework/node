@@ -539,7 +539,7 @@ int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt)
 	struct ngsi *i = n->_vd;
 	int ret;
 
-	if (task_wait_until_next_period(&i->task) == 0)
+	if (task_wait(&i->task) == 0)
 		perror("Failed to wait for task");
 
 	json_t *rentity;

@@ -52,16 +52,50 @@ int task_init(struct task *t, double rate, int clock)
 	return 0;
 }
 
-int task_set_rate(struct task *t, double rate)
+int task_set_timeout(struct task *t, double to)
 {
-	t->period = rate ? time_from_double(1.0 / rate) : (struct timespec) { 0, 0 };
-
-#if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
 	struct timespec now;
 
 	clock_gettime(t->clock, &now);
 
-	t->next_period = time_add(&now, &t->period);
+	struct timespec timeout = time_from_double(to);
+	struct timespec next = time_add(&now, &timeout);
+
+	return task_set_next(t, &next);
+}
+
+int task_set_next(struct task *t, struct timespec *next)
+{
+	t->next = *next;
+
+#if PERIODIC_TASK_IMPL == TIMERFD
+	int ret;
+	struct itimerspec its = {
+		.it_interval = (struct timespec) { 0, 0 },
+		.it_value = t->next
+	};
+
+	ret = timerfd_settime(t->fd, TFD_TIMER_ABSTIME, &its, NULL);
+	if (ret)
+		return ret;
+#endif
+
+	return 0;
+}
+
+int task_set_rate(struct task *t, double rate)
+{
+	/* A rate of 0 will disarm the timer */
+	t->period = rate ? time_from_double(1.0 / rate) : (struct timespec) { 0, 0 };
+
+#if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
+	struct timespec now, next;
+
+	clock_gettime(t->clock, &now);
+
+	next = time_add(&now, &t->period);
+
+	return time_set_next(t, &next);
 #elif PERIODIC_TASK_IMPL == TIMERFD
 	int ret;
 	struct itimerspec its = {
@@ -98,13 +132,31 @@ static int time_lt(const struct timespec *lhs, const struct timespec *rhs)
 }
 #endif
 
-uint64_t task_wait_until_next_period(struct task *t)
+uint64_t task_wait(struct task *t)
 {
 	uint64_t runs;
 	int ret;
 
 #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
-	ret = task_wait_until(t, &t->next_period);
+	struct timespec now;
+
+  #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP
+	do {
+		ret = clock_nanosleep(t->clock, TIMER_ABSTIME, &t->next, NULL);
+	} while (ret == EINTR);
+  #elif PERIODIC_TASK_IMPL == NANOSLEEP
+	struct timespec delta;
+
+	ret = clock_gettime(t->clock, &now);
+	if (ret)
+		return ret;
+
+	delta = time_diff(&now, &t->next);
+
+	ret = nanosleep(&delta, NULL);
+  #endif
+	if (ret < 0)
+		return 0;
 
 	struct timespec now;
 
@@ -112,9 +164,8 @@ uint64_t task_wait_until_next_period(struct task *t)
 	if (ret)
 		return 0;
 
-	for (runs = 0; time_lt(&t->next_period, &now); runs++)
-		t->next_period = time_add(&t->next_period, &t->period);
-
+	for (runs = 0; time_lt(&t->next, &now); runs++)
+		t->next = time_add(&t->next, &t->period);
 #elif PERIODIC_TASK_IMPL == TIMERFD
 	ret = read(t->fd, &runs, sizeof(runs));
 	if (ret < 0)
@@ -124,46 +175,6 @@ uint64_t task_wait_until_next_period(struct task *t)
 #endif
 
 	return runs;
-}
-
-int task_wait_until(struct task *t, const struct timespec *until)
-{
-	int ret;
-
-#if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP
-retry:	ret = clock_nanosleep(t->clock, TIMER_ABSTIME, until, NULL);
-	if (ret == EINTR)
-		goto retry;
-#elif PERIODIC_TASK_IMPL == NANOSLEEP
-	struct timespec now, delta;
-
-	ret = clock_gettime(t->clock, &now);
-	if (ret)
-		return ret;
-
-	delta = time_diff(&now, until);
-
-	ret = nanosleep(&delta, NULL);
-#elif PERIODIC_TASK_IMPL == TIMERFD
-	uint64_t runs;
-
-	struct itimerspec its = {
-		.it_value = *until,
-		.it_interval = { 0, 0 }
-	};
-
-	ret = timerfd_settime(t->fd, TFD_TIMER_ABSTIME, &its, NULL);
-	if (ret)
-		return 0;
-
-	ret = read(t->fd, &runs, sizeof(runs));
-	if (ret < 0)
-		return ret;
-#else
-  #error "Invalid period task implementation"
-#endif
-
-	return 0;
 }
 
 int task_fd(struct task *t)

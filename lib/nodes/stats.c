@@ -128,7 +128,7 @@ int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (!sn->node->stats)
 		return 0;
 
-	task_wait_until_next_period(&sn->task);
+	task_wait(&sn->task);
 
 	smps[0]->length = MIN(STATS_COUNT * 6, smps[0]->capacity);
 	smps[0]->flags = SAMPLE_HAS_VALUES;

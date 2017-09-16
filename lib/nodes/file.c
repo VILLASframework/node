@@ -315,14 +315,15 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 		return cnt;
 
 	if (f->rate) {
-		steps = task_wait_until_next_period(&f->task);
+		steps = task_wait(&f->task);
 
 		smps[0]->ts.origin = time_now();
 	}
 	else {
 		smps[0]->ts.origin = time_add(&smps[0]->ts.origin, &f->offset);
 
-		steps = task_wait_until(&f->task, &smps[0]->ts.origin);
+		task_set_next(&f->task, &smps[0]->ts.origin);
+		steps = task_wait(&f->task);
 	}
 
 	/* Check for overruns */
