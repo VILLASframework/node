@@ -158,9 +158,13 @@ int hook_periodic(struct hook *h)
 
 int hook_restart(struct hook *h)
 {
-	debug(LOG_HOOK | 10, "Running hook %s: type=restart, priority=%d", plugin_name(h->_vt), h->priority);
+	if (h->_vt->restart) {
+		debug(LOG_HOOK | 10, "Running hook %s: type=restart, priority=%d", plugin_name(h->_vt), h->priority);
 
-	return h->_vt->restart ? h->_vt->restart(h) : 0;
+		return h->_vt->restart(h);
+	}
+	else
+		return 0;
 }
 
 int hook_read(struct hook *h, struct sample *smps[], unsigned *cnt)

@@ -66,6 +66,8 @@ static int drop_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 		if (prev) {
 			dist = cur->sequence - (int32_t) prev->sequence;
 			if (dist <= 0) {
+				cur->flags |= SAMPLE_IS_REORDERED;
+
 				debug(10, "Reordered sample: sequence=%u, distance=%d", cur->sequence, dist);
 				if (h->node && h->node->stats)
 					stats_update(h->node->stats, STATS_REORDERED, dist);
@@ -100,6 +102,18 @@ ok:		/* To discard the first X samples in 'smps[]' we must
 	return 0;
 }
 
+static int drop_restart(struct hook *h)
+{
+	struct drop *d = h->_vd;
+
+	if (d->prev) {
+		sample_put(d->prev);
+		d->prev = NULL;
+	}
+
+	return 0;
+}
+
 static struct plugin p = {
 	.name		= "drop",
 	.description	= "Drop messages with reordered sequence numbers",
@@ -110,6 +124,7 @@ static struct plugin p = {
 		.read	= drop_read,
 		.start	= drop_start,
 		.stop	= drop_stop,
+		.restart= drop_restart,
 		.size	= sizeof(struct drop)
 	}
 };
