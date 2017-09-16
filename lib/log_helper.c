@@ -22,6 +22,7 @@
 
 #include <errno.h>
 #include <unistd.h>
+#include <syslog.h>
 
 #include "utils.h"
 #include "log.h"
@@ -37,7 +38,12 @@ void debug(long class, const char *fmt, ...)
 
 	if (((fac == 0) || (fac & l->facilities)) && (lvl <= l->level)) {
 		va_start(ap, fmt);
+
 		log_vprint(l, LOG_LVL_DEBUG, fmt, ap);
+
+		if (l->syslog)
+			syslog(LOG_DEBUG, fmt, ap);
+
 		va_end(ap);
 	}
 }
@@ -49,7 +55,12 @@ void info(const char *fmt, ...)
 	struct log *l = global_log;
 
 	va_start(ap, fmt);
+
 	log_vprint(l, LOG_LVL_INFO, fmt, ap);
+
+	if (l->syslog)
+		syslog(LOG_INFO, fmt, ap);
+
 	va_end(ap);
 }
 
@@ -60,7 +71,12 @@ void warn(const char *fmt, ...)
 	struct log *l = global_log;
 
 	va_start(ap, fmt);
+
 	log_vprint(l, LOG_LVL_WARN, fmt, ap);
+
+	if (l->syslog)
+		syslog(LOG_WARNING, fmt, ap);
+
 	va_end(ap);
 }
 
@@ -71,7 +87,12 @@ void stats(const char *fmt, ...)
 	struct log *l = global_log;
 
 	va_start(ap, fmt);
+
 	log_vprint(l, LOG_LVL_STATS, fmt, ap);
+
+	if (l->syslog)
+		syslog(LOG_INFO, fmt, ap);
+
 	va_end(ap);
 }
 
@@ -82,7 +103,12 @@ void error(const char *fmt, ...)
 	struct log *l = global_log;
 
 	va_start(ap, fmt);
+
 	log_vprint(l, LOG_LVL_ERROR, fmt, ap);
+
+	if (l->syslog)
+		syslog(LOG_ERR, fmt, ap);
+
 	va_end(ap);
 
 	killme(SIGABRT);
@@ -101,6 +127,9 @@ void serror(const char *fmt, ...)
 	va_end(ap);
 
 	log_print(l, LOG_LVL_ERROR, "%s: %m (%u)", buf, errno);
+
+	if (l->syslog)
+		syslog(LOG_ERR, "%s: %m (%u)", buf, errno);
 
 	free(buf);
 

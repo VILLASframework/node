@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <syslog.h>
 
 #include "config.h"
 #include "log.h"
@@ -38,10 +39,11 @@ int log_parse(struct log *l, json_t *cfg)
 
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: s, s?: s }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: s, s?: s, s?: b }",
 		"level", &l->level,
 		"file", &path,
-		"facilities", &facilities
+		"facilities", &facilities,
+		"syslog", &l->syslog
 	);
 	if (ret)
 		jerror(&err, "Failed to parse logging configuration");
@@ -71,6 +73,9 @@ void jerror(json_error_t *err, const char *fmt, ...)
 	log_print(l, LOG_LVL_ERROR, "%s:", buf);
 	{ INDENT
 		log_print(l, LOG_LVL_ERROR, "%s in %s:%d:%d", err->text, err->source, err->line, err->column);
+
+		if (l->syslog)
+			syslog(LOG_ERR, "%s in %s:%d:%d", err->text, err->source, err->line, err->column);
 	}
 
 	free(buf);

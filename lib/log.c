@@ -26,6 +26,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <syslog.h>
 
 #include "config.h"
 #include "log.h"
@@ -128,6 +129,7 @@ int log_init(struct log *l, int level, long facilitites)
 	global_log = l;
 
 	l->level = level;
+	l->syslog = 0;
 	l->facilities = facilitites;
 	l->file = stderr;
 	l->path = NULL;
@@ -162,13 +164,21 @@ int log_init(struct log *l, int level, long facilitites)
 
 int log_start(struct log *l)
 {
-	l->file = l->path ? fopen(l->path, "a+") : stderr;
-	if (!l->file) {
-		l->file = stderr;
-		error("Failed to open log file '%s'", l->path);
+	if (l->path) {
+		l->file = fopen(l->path, "a+");;
+		if (!l->file) {
+			l->file = stderr;
+			error("Failed to open log file '%s'", l->path);
+		}
 	}
+	else
+		l->file = stderr;
 
 	l->state = STATE_STARTED;
+
+	if (l->syslog) {
+		openlog(NULL, LOG_PID, LOG_DAEMON);
+	}
 
 	debug(LOG_LOG | 5, "Log sub-system started: level=%d, faciltities=%#lx, path=%s", l->level, l->facilities, l->path);
 
@@ -177,9 +187,15 @@ int log_start(struct log *l)
 
 int log_stop(struct log *l)
 {
-	if (l->state == STATE_STARTED) {
-		if (l->file != stderr && l->file != stdout)
-			fclose(l->file);
+	if (l->state != STATE_STARTED)
+		return 0;
+
+	if (l->file != stderr && l->file != stdout) {
+		fclose(l->file);
+	}
+
+	if (l->syslog) {
+		closelog();
 	}
 
 	l->state = STATE_STOPPED;

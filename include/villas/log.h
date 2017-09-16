@@ -31,6 +31,7 @@ extern "C" {
 #include <time.h>
 #include <sys/ioctl.h>
 
+#include "advio.h"
 #include "common.h"
 #include "log_config.h"
 
@@ -99,6 +100,8 @@ struct log {
 	long facilities;	/**< Debug facilities used by the debug() macro. */
 	const char *path;	/**< Path of the log file. */
 	char *prefix;		/**< Prefix each line with this string. */
+	int syslog;		/**< Whether or not to log to syslogd. */
+
 	FILE *file;		/**< Send all log output to this file / stdout / stderr. */
 };
 
