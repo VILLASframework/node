@@ -1,0 +1,24 @@
+{
+	"stats" : 1,
+
+	"nodes" : {
+		"node1" : {
+			"type"   : "socket",
+			"local"  : "127.0.0.1:12000",
+			"remote" : "127.0.0.1:12001",
+			
+			"hooks" : [
+				{
+					"type" : "stats",
+					"verbose" : true
+				}
+			]
+		}
+	},
+	"paths" : [
+		{
+			"in" : "node1",
+			"out" : "node1"
+		}
+	]
+}
