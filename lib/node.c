@@ -412,7 +412,7 @@ int node_parse_list(struct list *list, json_t *cfg, struct list *all)
 
 				node = list_lookup(all, json_string_value(elm));
 				if (!node)
-
+					goto invalid;
 
 				list_push(list, node);
 			}
