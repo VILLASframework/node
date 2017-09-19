@@ -336,6 +336,8 @@ int super_node_check(struct super_node *sn)
 
 int super_node_start(struct super_node *sn)
 {
+	int ret;
+
 	assert(sn->state == STATE_CHECKED);
 
 	memory_init(sn->hugepages);
@@ -353,7 +355,9 @@ int super_node_start(struct super_node *sn)
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
 		struct node *n = list_at(&sn->nodes, i);
 
-		node_type_start(n->_vt, sn);
+		ret = node_type_start(n->_vt, sn);
+		if (ret)
+			error("Failed to start node-type: %s", plugin_name(n->_vt));
 	}
 
 	info("Starting nodes");
@@ -361,9 +365,14 @@ int super_node_start(struct super_node *sn)
 		struct node *n = list_at(&sn->nodes, i);
 
 		int refs = list_count(&sn->paths, (cmp_cb_t) path_uses_node, n);
-		if (refs > 0) {
-			node_init2(n);
-			node_start(n);
+		if (refs > 0) { INDENT
+			ret = node_init2(n);
+			if (ret)
+				error("Failed to start node: %s", node_name(n));
+
+			ret = node_start(n);
+			if (ret)
+				error("Failed to start node: %s", node_name(n));
 		}
 		else
 			warn("No path is using the node %s. Skipping...", node_name(n));
@@ -373,9 +382,14 @@ int super_node_start(struct super_node *sn)
 	for (size_t i = 0; i < list_length(&sn->paths); i++) { INDENT
 		struct path *p = list_at(&sn->paths, i);
 
-		if (p->enabled) {
-			path_init2(p);
-			path_start(p);
+		if (p->enabled) { INDENT
+			ret = path_init2(p);
+			if (ret)
+				error("Failed to start path: %s", path_name(p));
+
+			ret = path_start(p);
+			if (ret)
+				error("Failed to start path: %s", path_name(p));
 		}
 		else
 			warn("Path %s is disabled. Skipping...", path_name(p));
