@@ -144,10 +144,16 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			if (w->api == NULL)
 				return -1;
 
-			hdrlen = lws_hdr_total_length(wsi, WSI_TOKEN_POST_URI);
-			uri = malloc(hdrlen+1);
+			int options;
+			if      ((hdrlen = lws_hdr_total_length(wsi, WSI_TOKEN_OPTIONS_URI)))
+				options = 1;
+			else if ((hdrlen = lws_hdr_total_length(wsi, WSI_TOKEN_POST_URI)))
+				options = 0;
+			else
+				return -1;
 
-			lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_POST_URI);
+			uri = malloc(hdrlen + 1);
+			lws_hdr_copy(wsi, uri, hdrlen + 1, options ? WSI_TOKEN_OPTIONS_URI : WSI_TOKEN_POST_URI);
 
 			/* Parse request URI */
 			ret = sscanf(uri, "/api/v%d", (int *) &s->version);
@@ -167,6 +173,9 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			list_push(&s->api->sessions, s);
 
 			debug(LOG_API, "Initiated API session: %s", api_session_name(s));
+
+			if (options)
+				lws_callback_on_writable(wsi);
 
 			break;
 
@@ -210,38 +219,35 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 		case LWS_CALLBACK_HTTP_WRITEABLE:
 			pulled = queue_pull(&s->response.queue, (void **) &resp);
 			if (pulled) {
-				char headers[1024];
-
 				buffer_clear(&s->response.buffer);
 				buffer_append_json(&s->response.buffer, resp);
 
 				json_decref(resp);
-
-				snprintf(headers, sizeof(headers),
-					"HTTP/1.1 200 OK\r\n"
-					"Content-type: application/json\r\n"
-					"User-agent: " USER_AGENT "\r\n"
-					"Access-Control-Allow-Origin: *\r\n"
-					"Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-					"Access-Control-Allow-Headers: Content-Type\r\n"
-					"Access-Control-Max-Age: 86400\r\n"
-					"Content-Length: %zu\r\n"
-					"\r\n",
-					s->response.buffer.len
-				);
-
-				ret = lws_write(wsi, (unsigned char *) headers, strlen(headers), LWS_WRITE_HTTP_HEADERS);
-				if (ret < 0)
-					return 1;
-
-				ret = lws_write(wsi, (unsigned char *) s->response.buffer.buf, s->response.buffer.len, LWS_WRITE_HTTP);
-				if (ret < 0)
-					return 1;
-
-				goto try_to_reuse;
 			}
 
-			break;
+			char headers[1024];
+			snprintf(headers, sizeof(headers),
+				"HTTP/1.1 200 OK\r\n"
+				"Content-type: application/json\r\n"
+				"User-agent: " USER_AGENT "\r\n"
+				"Access-Control-Allow-Origin: *\r\n"
+				"Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+				"Access-Control-Allow-Headers: Content-Type\r\n"
+				"Access-Control-Max-Age: 86400\r\n"
+				"Content-Length: %zu\r\n"
+				"\r\n",
+				s->response.buffer.len
+			);
+
+			ret = lws_write(wsi, (unsigned char *) headers, strlen(headers), LWS_WRITE_HTTP_HEADERS);
+			if (ret < 0)
+				return 1;
+
+			ret = lws_write(wsi, (unsigned char *) s->response.buffer.buf, s->response.buffer.len, LWS_WRITE_HTTP);
+			if (ret < 0)
+				return 1;
+
+			goto try_to_reuse;
 
 		default:
 			break;
