@@ -5,7 +5,7 @@ Packager: Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 Release:  §RELEASE§%{?dist}
 Summary:  This is VILLASnode, a gateway for processing and forwardning simulation data between real-time simulators.
 
-License:  LGPLv2
+License:  GPLv3
 URL:      https://git.rwth-aachen.de/VILLASframework/VILLASnode
 Source0:  villas-node-§VERSION§-§RELEASE§.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
