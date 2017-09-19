@@ -87,6 +87,7 @@ static struct plugin p = {
 		.init	= decimate_init,
 		.parse	= decimate_parse,
 		.read	= decimate_read,
+		.process= decimate_read,
 		.size	= sizeof(struct decimate)
 	}
 };
