@@ -148,7 +148,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			}
 
 			node = strtok(uri, "/.");
-			if (strlen(node) == 0)
+			if (!node || strlen(node) == 0)
 				c->node = NULL;
 			else {
 				format = strtok(NULL, "");
