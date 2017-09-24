@@ -40,22 +40,24 @@ struct map {
 
 static int map_init(struct hook *h)
 {
-	struct map *p = h->_vd;
+	struct map *m = h->_vd;
 
-	return list_init(&p->mapping);
+	m->stats = NULL; /** @todo */
+
+	return list_init(&m->mapping);
 }
 
 static int map_destroy(struct hook *h)
 {
-	struct map *p = h->_vd;
+	struct map *m = h->_vd;
 
-	return list_destroy(&p->mapping, NULL, true);
+	return list_destroy(&m->mapping, NULL, true);
 }
 
 static int map_parse(struct hook *h, json_t *cfg)
 {
 	int ret;
-	struct map *p = h->_vd;
+	struct map *m = h->_vd;
 	json_error_t err;
 	json_t *cfg_mapping;
 
@@ -65,7 +67,7 @@ static int map_parse(struct hook *h, json_t *cfg)
 	if (ret)
 		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
 
-	ret = mapping_parse_list(&p->mapping, cfg_mapping, NULL);
+	ret = mapping_parse_list(&m->mapping, cfg_mapping, NULL);
 	if (ret)
 		return ret;
 
@@ -75,13 +77,18 @@ static int map_parse(struct hook *h, json_t *cfg)
 static int map_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	int ret;
-	struct map *p = h->_vd;
+	struct map *m = h->_vd;
 	struct sample *tmp[*cnt];
+	struct pool *p;
 
 	if (*cnt <= 0)
 		return 0;
 
-	ret = sample_alloc(sample_pool(smps[0]), tmp, *cnt);
+	p = sample_pool(smps[0]);
+	if (!p)
+		return -1;
+
+	ret = sample_alloc(p, tmp, *cnt);
 	if (ret != *cnt)
 		return ret;
 
@@ -89,7 +96,7 @@ static int map_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 		tmp[i]->format   = 0;
 		tmp[i]->length   = 0;
 
-		mapping_remap(&p->mapping, tmp[i], smps[i], p->stats);
+		mapping_remap(&m->mapping, tmp[i], smps[i], m->stats);
 
 		SWAP(smps[i], tmp[i]);
 	}
