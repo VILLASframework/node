@@ -296,8 +296,11 @@ int path_init2(struct path *p)
 		for (size_t i = 0; i < list_length(&ps->mappings); i++) {
 			struct mapping_entry *me = list_at(&ps->mappings, i);
 
-			if (me->offset + me->length > p->samplelen)
-				p->samplelen = me->offset + me->length;
+			int len = me->length;
+			int off = me->offset;
+
+			if (off + len > p->samplelen)
+				p->samplelen = off + len;
 		}
 	}
 
@@ -308,7 +311,9 @@ int path_init2(struct path *p)
 	if (ret)
 		return ret;
 
-	sample_alloc(&p->pool, &p->last_sample, 1);
+	ret = sample_alloc(&p->pool, &p->last_sample, 1);
+	if (ret != 1)
+		return -1;
 
 	/* Prepare poll() */
 	p->reader.nfds = list_length(&p->sources);
@@ -472,6 +477,27 @@ int path_start(struct path *p)
 	}
 
 	p->sequence = 0;
+
+	/* We initialize the intial sample with zeros */
+	for (size_t i = 0; i < list_length(&p->sources); i++) {
+		struct path_source *ps = list_at(&p->sources, i);
+
+		for (size_t j = 0; j < list_length(&ps->mappings); j++) {
+			struct mapping_entry *me = list_at(&ps->mappings, j);
+
+			int len = me->length;
+			int off = me->offset;
+
+			if (len + off > p->last_sample->length)
+				p->last_sample->length = len + off;
+
+			for (int k = off; k < off + len; k++) {
+				p->last_sample->data[k].f = 0;
+
+				sample_set_data_format(p->last_sample, k, SAMPLE_DATA_FORMAT_FLOAT);
+			}
+		}
+	}
 
 	/* Start one thread per path for sending to destinations */
 	ret = pthread_create(&p->tid, NULL, &path_run, p);
