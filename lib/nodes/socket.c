@@ -365,6 +365,9 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 	if (ret < 0)
 		return -1;
 
+	if (wbytes <= 0)
+		return 0;
+
 	/* Send message */
 	bytes = sendto(s->sd, data, wbytes, 0, (struct sockaddr *) &s->remote, sizeof(s->remote));
 	if (bytes < 0)
