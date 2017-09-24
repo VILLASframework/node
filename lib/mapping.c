@@ -347,9 +347,9 @@ int mapping_remap(struct list *m, struct sample *remapped, struct sample *origin
 
 	/* We copy all the header fields */
 	remapped->sequence = original->sequence;
-	remapped->pool_off = (char *) sample_pool(original) - (char *) remapped;
 	remapped->source   = original->source;
 	remapped->ts       = original->ts;
+	remapped->id       = original->id;
 
 	for (size_t i = 0; i < list_length(m); i++) {
 		struct mapping_entry *me = list_at(m, i);

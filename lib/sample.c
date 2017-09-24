@@ -96,8 +96,8 @@ int sample_copy(struct sample *dst, struct sample *src)
 	dst->sequence = src->sequence;
 	dst->format = src->format;
 	dst->source = src->source;
+	dst->id = src->id;
 	dst->flags = src->flags;
-
 	dst->ts = src->ts;
 
 	memcpy(&dst->data, &src->data, SAMPLE_DATA_LEN(dst->length));
