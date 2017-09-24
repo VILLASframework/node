@@ -93,12 +93,6 @@ static void path_source_read(struct path *p, struct path_source *ps)
 		warn("Pool underrun for path %s", path_name(p));
 
 	for (int i = 0; i < mux; i++) {
-		/** @todo: This is ugly. We should try to make use of the 'restart' hook */
-		if (read_smps[i]->flags & SAMPLE_IS_FIRST) {
-			p->sequence = 0;
-			p->last_sample->length = 0;
-		}
-
 		p->last_sample->sequence = p->sequence++;
 
 		mapping_remap(&ps->mappings, p->last_sample, read_smps[i], NULL);
