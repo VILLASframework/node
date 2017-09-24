@@ -29,7 +29,7 @@
 #include "utils.h"
 #include "node.h"
 
-int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nodes)
+int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *nodes)
 {
 	int id;
 	char *cpy, *node, *type, *field, *subfield, *end;
@@ -43,8 +43,8 @@ int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nod
 		if (!node)
 			goto invalid_format;
 
-		e->node = list_lookup(nodes, node);
-		if (!e->node)
+		me->node = list_lookup(nodes, node);
+		if (!me->node)
 			goto invalid_format;
 
 		type = strtok(NULL, ".[");
@@ -52,7 +52,7 @@ int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nod
 			type = "data";
 	}
 	else {
-		e->node = NULL;
+		me->node = NULL;
 
 		type = strtok(cpy, ".[");
 		if (!type)
@@ -60,8 +60,8 @@ int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nod
 	}
 
 	if      (!strcmp(type, "stats")) {
-		e->type = MAPPING_TYPE_STATS;
-		e->length = 1;
+		me->type = MAPPING_TYPE_STATS;
+		me->length = 1;
 
 		field = strtok(NULL, ".");
 		if (!field)
@@ -75,65 +75,65 @@ int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nod
 		if (id < 0)
 			goto invalid_format;
 
-		e->stats.id = id;
+		me->stats.id = id;
 
 		if      (!strcmp(subfield, "total"))
-			e->stats.type = MAPPING_STATS_TYPE_TOTAL;
+			me->stats.type = MAPPING_STATS_TYPE_TOTAL;
 		else if (!strcmp(subfield, "last"))
-			e->stats.type = MAPPING_STATS_TYPE_LAST;
+			me->stats.type = MAPPING_STATS_TYPE_LAST;
 		else if (!strcmp(subfield, "lowest"))
-			e->stats.type = MAPPING_STATS_TYPE_LOWEST;
+			me->stats.type = MAPPING_STATS_TYPE_LOWEST;
 		else if (!strcmp(subfield, "highest"))
-			e->stats.type = MAPPING_STATS_TYPE_HIGHEST;
+			me->stats.type = MAPPING_STATS_TYPE_HIGHEST;
 		else if (!strcmp(subfield, "mean"))
-			e->stats.type = MAPPING_STATS_TYPE_MEAN;
+			me->stats.type = MAPPING_STATS_TYPE_MEAN;
 		else if (!strcmp(subfield, "var"))
-			e->stats.type = MAPPING_STATS_TYPE_VAR;
+			me->stats.type = MAPPING_STATS_TYPE_VAR;
 		else if (!strcmp(subfield, "stddev"))
-			e->stats.type = MAPPING_STATS_TYPE_STDDEV;
+			me->stats.type = MAPPING_STATS_TYPE_STDDEV;
 		else
 			goto invalid_format;
 	}
 	else if (!strcmp(type, "hdr")) {
-		e->type = MAPPING_TYPE_HDR;
-		e->length = 1;
+		me->type = MAPPING_TYPE_HDR;
+		me->length = 1;
 
 		field = strtok(NULL, ".");
 		if (!field)
 			goto invalid_format;
 
 		if      (!strcmp(field, "sequence"))
-			e->hdr.id = MAPPING_HDR_SEQUENCE;
+			me->hdr.id = MAPPING_HDR_SEQUENCE;
 		else if (!strcmp(field, "length"))
-			e->hdr.id = MAPPING_HDR_LENGTH;
+			me->hdr.id = MAPPING_HDR_LENGTH;
 		else if (!strcmp(field, "id"))
-			e->hdr.id = MAPPING_HDR_ID;
+			me->hdr.id = MAPPING_HDR_ID;
 		else if (!strcmp(field, "format"))
-			e->hdr.id = MAPPING_HDR_FORMAT;
+			me->hdr.id = MAPPING_HDR_FORMAT;
 		else
 			goto invalid_format;
 	}
 	else if (!strcmp(type, "ts")) {
-		e->type = MAPPING_TYPE_TS;
-		e->length = 2;
+		me->type = MAPPING_TYPE_TS;
+		me->length = 2;
 
 		field = strtok(NULL, ".");
 		if (!field)
 			goto invalid_format;
 
 		if      (!strcmp(field, "origin"))
-			e->ts.id = MAPPING_TS_ORIGIN;
+			me->ts.id = MAPPING_TS_ORIGIN;
 		else if (!strcmp(field, "received"))
-			e->ts.id = MAPPING_TS_RECEIVED;
+			me->ts.id = MAPPING_TS_RECEIVED;
 		else if (!strcmp(field, "sent"))
-			e->ts.id = MAPPING_TS_SEND;
+			me->ts.id = MAPPING_TS_SEND;
 		else
 			goto invalid_format;
 	}
 	else if (!strcmp(type, "data")) {
 		char *first_str, *last_str, *endptr;
 
-		e->type = MAPPING_TYPE_DATA;
+		me->type = MAPPING_TYPE_DATA;
 
 		first_str = strtok(NULL, "-]");
 		if (first_str) {
@@ -154,12 +154,12 @@ int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nod
 			if (last < first)
 				goto invalid_format;
 
-			e->data.offset = first;
-			e->length = last - first + 1;
+			me->data.offset = first;
+			me->length = last - first + 1;
 		}
 		else {
-			e->data.offset = 0;
-			e->length = 0;
+			me->data.offset = 0;
+			me->length = 0;
 		}
 	}
 	else
@@ -181,7 +181,7 @@ invalid_format:
 	return -1;
 }
 
-int mapping_parse(struct mapping_entry *e, json_t *j, struct list *nodes)
+int mapping_parse(struct mapping_entry *me, json_t *j, struct list *nodes)
 {
 	const char *str;
 
@@ -189,7 +189,7 @@ int mapping_parse(struct mapping_entry *e, json_t *j, struct list *nodes)
 	if (!str)
 		return -1;
 
-	return mapping_parse_str(e, str, nodes);
+	return mapping_parse_str(me, str, nodes);
 }
 
 int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes)
