@@ -40,16 +40,16 @@ The development headers for libvillas.
 %setup -q
 
 %build
-make PREFIX=/usr
+make DEBUG=1 PREFIX=/usr
 
 %install
 rm -rf %{?buildroot}
-make PREFIX=/usr DESTDIR=%{?buildroot} install
-make PREFIX=/usr DESTDIR=%{?buildroot} install-doc
+make DEBUG=1 PREFIX=/usr DESTDIR=%{?buildroot} install
+make DEBUG=1 PREFIX=/usr DESTDIR=%{?buildroot} install-doc
 
 %check
-make run-unit-tests
-make run-integration-tests
+make DEBUG=1 run-unit-tests
+make DEBUG=1 run-integration-tests
 
 %post -p /sbin/ldconfig
 %postun -p /sbin/ldconfig
