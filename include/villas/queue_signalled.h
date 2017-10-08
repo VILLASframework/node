@@ -39,7 +39,7 @@ enum queue_signalled_flags {
 	
 	/* Other flags */
 	QUEUE_SIGNALLED_PROCESS_SHARED	= (1 << 4)
-} mode;
+};
 
 /** Wrapper around queue that uses POSIX CV's for signalling writes. */
 struct queue_signalled {
