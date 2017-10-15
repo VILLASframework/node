@@ -36,6 +36,7 @@ WITH_ZEROMQ    ?= 1
 WITH_NANOMSG   ?= 1
 WITH_SHMEM     ?= 1
 WITH_STATS     ?= 1
+WITH_INFLUXDB  ?= 1
 
 # Enabled loopback node-type
 ifeq ($(WITH_LOOPBACK),1)
@@ -47,6 +48,12 @@ endif
 ifeq ($(WITH_CBUILDER),1)
 	LIB_SRCS += lib/nodes/cbuilder.c 
 	LIB_CFLAGS += -DWITH_CBUILDER
+endif
+
+# Enable InfluxDB node-type
+ifeq ($(WITH_INFLUXDB),1)
+	LIB_SRCS += lib/nodes/influxdb.c
+	LIB_CFLAGS += -DWITH_INFLUXDB
 endif
 
 # Enable stats node-type
