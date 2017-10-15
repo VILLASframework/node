@@ -50,7 +50,6 @@ int tc_parse(struct rtnl_qdisc **netem, json_t *cfg)
 
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i }",
 		"distribution", &cfg_distribution,
 		"limit", &cfg_limit,
 		"delay", &cfg_delay,
@@ -58,6 +57,7 @@ int tc_parse(struct rtnl_qdisc **netem, json_t *cfg)
 		"loss", &cfg_loss,
 		"duplicate", &cfg_duplicate,
 		"corruption", &cfg_corruption
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o }",
 	);
 	if (ret)
 		jerror(&err, "Failed to parse setting network emulation settings");
