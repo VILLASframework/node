@@ -38,6 +38,7 @@
 #include "common.h"
 #include "hook.h"
 #include "mapping.h"
+#include "task.h"
 
 /* Forward declarations */
 struct stats;
@@ -48,7 +49,7 @@ struct path_source {
 	struct node *node;
 
 	struct pool pool;
-	struct list mappings;		/**< List of mappings (struct mapping_entry). */
+	struct list mappings;			/**< List of mappings (struct mapping_entry). */
 };
 
 struct path_destination {
@@ -57,9 +58,17 @@ struct path_destination {
 	struct queue queue;
 };
 
+/** The register mode determines under which condition the path is triggered. */
+enum path_mode {
+	PATH_MODE_ANY,				/**< The path is triggered whenever one of the sources receives samples. */
+	PATH_MODE_ALL				/**< The path is triggered only after all sources have received at least 1 sample. */
+};
+
 /** The datastructure for a path. */
 struct path {
-	enum state state;		/**< Path state. */
+	enum state state;			/**< Path state. */
+
+	enum path_mode mode;		/**< Determines when this path is triggered. */
 
 	struct {
 		int nfds;
@@ -68,18 +77,24 @@ struct path {
 
 	struct pool pool;
 	struct sample *last_sample;
+	int last_sequence;
 
 	struct list sources;		/**< List of all incoming nodes (struct path_source). */
 	struct list destinations;	/**< List of all outgoing nodes (struct path_destination). */
 	struct list hooks;		/**< List of processing hooks (struct hook). */
 
+	struct task timeout;
+
+	double rate;			/**< A timeout for */
 	int enabled;			/**< Is this path enabled. */
 	int reverse;			/**< This path as a matching reverse path. */
 	int queuelen;			/**< The queue length for each path_destination::queue */
 	int samplelen;			/**< Will be calculated based on path::sources.mappings */
-	int sequence;
 
 	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
+
+	uintmax_t mask;			/**< A mask of path_sources which are enabled for poll(). */
+	uintmax_t received;		/**< A mask of path_sources for which we already received samples. */
 
 	pthread_t tid;			/**< The thread id for this path. */
 	json_t *cfg;			/**< A JSON object containing the configuration of the path. */
