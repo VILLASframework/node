@@ -107,6 +107,7 @@ static void usage()
 
 static void * send_loop(void *ctx)
 {
+	unsigned last_sequenceno = 0;
 	int ret, scanned, sent, ready, cnt = 0;
 	struct sample *smps[node->vectorize];
 
@@ -129,6 +130,14 @@ static void * send_loop(void *ctx)
 		}
 		else if (scanned == 0)
 			continue;
+
+		/* Fill in missing sequence numbers */
+		for (int i = 0; i < scanned; i++) {
+			if (smps[i]->flags & SAMPLE_HAS_SEQUENCE)
+				last_sequenceno = smps[i]->sequence;
+			else
+				smps[i]->sequence = last_sequenceno++;
+		}
 
 		sent = node_write(node, smps, scanned);
 		if (sent < 0) {
