@@ -116,7 +116,7 @@ static void * send_loop(void *ctx)
 		error("Failed to allocate memory for receive pool.");
 
 	while (!io_eof(&io)) {
-		ready = sample_alloc(&sendd.pool, smps, node->vectorize);
+		ready = sample_alloc_many(&sendd.pool, smps, node->vectorize);
 		if (ret < 0)
 			error("Failed to get %u samples out of send pool (%d).", node->vectorize, ret);
 		else if (ready < node->vectorize)
@@ -172,7 +172,7 @@ static void * recv_loop(void *ctx)
 		error("Failed to allocate memory for receive pool.");
 
 	for (;;) {
-		ready = sample_alloc(&recvv.pool, smps, node->vectorize);
+		ready = sample_alloc_many(&recvv.pool, smps, node->vectorize);
 		if (ready < 0)
 			error("Failed to allocate %u samples from receive pool.", node->vectorize);
 		else if (ready < node->vectorize)

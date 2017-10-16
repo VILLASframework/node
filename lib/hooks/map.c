@@ -88,7 +88,7 @@ static int map_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 	if (!p)
 		return -1;
 
-	ret = sample_alloc(p, tmp, *cnt);
+	ret = sample_alloc_many(p, tmp, *cnt);
 	if (ret != *cnt)
 		return ret;
 
@@ -101,7 +101,7 @@ static int map_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 		SWAP(smps[i], tmp[i]);
 	}
 
-	sample_free(tmp, *cnt);
+	sample_free_many(tmp, *cnt);
 
 	return 0;
 }

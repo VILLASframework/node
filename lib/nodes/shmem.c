@@ -135,15 +135,15 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct shmem *shm = n->_vd;
 	struct sample *shared_smps[cnt]; /* Samples need to be copied to the shared pool first */
-	int avail, pushed;
+	int avail, pushed, copied;
 
-	avail = sample_alloc(&shm->intf.write.shared->pool, shared_smps, cnt);
+	avail = sample_alloc_many(&shm->intf.write.shared->pool, shared_smps, cnt);
 	if (avail != cnt)
 		warn("Pool underrun for shmem node %s", shm->out_name);
 
-	for (int i = 0; i < avail; i++) {
-		sample_copy(shared_smps[i], smps[i]);
+	copied = sample_copy_many(shared_smps, smps, avail);
 
+	for (int i = 0; i < copied; i++) {
 		/* Since the node isn't in shared memory, the source can't be accessed */
 		shared_smps[i]->source = NULL;
 		shared_smps[i]->flags &= ~SAMPLE_HAS_SOURCE;

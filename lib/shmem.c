@@ -198,5 +198,5 @@ int shmem_int_write(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
 
 int shmem_int_alloc(struct shmem_int *shm, struct sample *smps[], unsigned cnt)
 {
-	return sample_alloc(&shm->write.shared->pool, smps, cnt);
+	return sample_alloc_many(&shm->write.shared->pool, smps, cnt);
 }

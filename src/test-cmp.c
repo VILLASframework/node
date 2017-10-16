@@ -140,8 +140,8 @@ check:		if (optarg == endptr)
 		if (ret)
 			error("Failed to open file: %s", s[i].path);
 
-		ret = sample_alloc(&pool, &s[i].sample, 1);
-		if (ret != 1)
+		s[i].sample = sample_alloc(&pool);
+		if (!s[i].sample)
 			error("Failed to allocate samples");
 	}
 

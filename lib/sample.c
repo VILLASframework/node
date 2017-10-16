@@ -29,7 +29,37 @@
 #include "utils.h"
 #include "timing.h"
 
-int sample_alloc(struct pool *p, struct sample *smps[], int cnt)
+int sample_init(struct sample *s)
+{
+	struct pool *p = sample_pool(s);
+
+	s->length = 0;
+	s->format = 0; /* all sample values are float by default */
+	s->capacity = (p->blocksz - sizeof(struct sample)) / sizeof(s->data[0]);
+	s->refcnt = ATOMIC_VAR_INIT(1);
+
+	return 0;
+}
+
+struct sample * sample_alloc(struct pool *p)
+{
+	struct sample *s = pool_get(p);
+
+	s->pool_off = (char *) p - (char *) s;
+
+	sample_init(s);
+
+	return s;
+}
+
+void sample_free(struct sample *s)
+{
+	struct pool *p = sample_pool(s);
+
+	pool_put(p, s);
+}
+
+int sample_alloc_many(struct pool *p, struct sample *smps[], int cnt)
 {
 	int ret;
 
@@ -38,19 +68,21 @@ int sample_alloc(struct pool *p, struct sample *smps[], int cnt)
 		return ret;
 
 	for (int i = 0; i < ret; i++) {
-		smps[i]->capacity = (p->blocksz - sizeof(**smps)) / sizeof(smps[0]->data[0]);
 		smps[i]->pool_off = (char *) p - (char *) smps[i];
-		smps[i]->format = 0; /* all sample values are float by default */
-		smps[i]->refcnt = ATOMIC_VAR_INIT(1);
+
+		sample_init(smps[i]);
 	}
 
 	return ret;
 }
 
-void sample_free(struct sample *smps[], int cnt)
+void sample_free_many(struct sample *smps[], int cnt)
 {
-	for (int i = 0; i < cnt; i++)
-		pool_put(sample_pool(smps[i]), smps[i]);
+	for (int i = 0; i < cnt; i++) {
+		struct pool *p = sample_pool(smps[i]);
+
+		pool_put(p, smps[i]);
+	}
 }
 
 int sample_put_many(struct sample *smps[], int cnt)
@@ -103,6 +135,43 @@ int sample_copy(struct sample *dst, struct sample *src)
 	memcpy(&dst->data, &src->data, SAMPLE_DATA_LEN(dst->length));
 
 	return 0;
+}
+
+struct sample * sample_clone(struct sample *orig)
+{
+	struct sample *clone;
+	struct pool *pool;
+
+	pool = sample_pool(orig);
+	if (!pool)
+		return NULL;
+
+	clone = sample_alloc(pool);
+	if (!clone)
+		return NULL;
+
+	sample_copy(clone, orig);
+
+	return clone;
+}
+
+int sample_clone_many(struct sample *clones[], struct sample *origs[], int cnt)
+{
+	int alloced, copied;
+	struct pool *pool;
+
+	if (cnt <= 0)
+		return 0;
+
+	pool = sample_pool(origs[0]);
+	if (!pool)
+		return 0;
+
+	alloced = sample_alloc_many(pool, clones, cnt);
+
+	copied = sample_copy_many(clones, origs, alloced);
+
+	return copied;
 }
 
 int sample_copy_many(struct sample *dsts[], struct sample *srcs[], int cnt)

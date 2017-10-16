@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to verify node configuration");
 
-	ret = pool_init(&q, 1, SAMPLE_LEN(n.samplelen), &memtype_heap);
+	ret = pool_init(&q, 16, SAMPLE_LEN(n.samplelen), &memtype_heap);
 	if (ret)
 		error("Failed to initialize pool");
 
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 		serror("Failed to start node");
 
 	for (;;) {
-		sample_alloc(&q, &t, 1);
+		t = sample_alloc(&q);
 
 		node_read(&n, &t, 1);
 		io_print(&io, &t, 1);

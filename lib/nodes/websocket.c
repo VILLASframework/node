@@ -268,7 +268,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				struct websocket *w = c->node->_vd;
 				struct sample **smps = alloca(cnt * sizeof(struct sample *));
 
-				ret = sample_alloc(&w->pool, smps, cnt);
+				ret = sample_alloc_many(&w->pool, smps, cnt);
 				if (ret != cnt) {
 					warn("Pool underrun for connection: %s", websocket_connection_name(c));
 					break;
@@ -464,7 +464,7 @@ int websocket_write(struct node *n, struct sample *smps[], unsigned cnt)
 	struct sample *cpys[cnt];
 
 	/* Make copies of all samples */
-	avail = sample_alloc(&w->pool, cpys, cnt);
+	avail = sample_alloc_many(&w->pool, cpys, cnt);
 	if (avail < cnt)
 		warn("Pool underrun for node %s: avail=%u", node_name(n), avail);
 

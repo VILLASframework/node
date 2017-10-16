@@ -89,19 +89,16 @@ int loopback_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 int loopback_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	int avail;
+	int cloned;
 
 	struct loopback *l = n->_vd;
-	struct sample *cpys[cnt];
+	struct sample *clones[cnt];
 
-	avail = sample_alloc(&l->pool, cpys, cnt);
-	if (avail < cnt)
-		warn("Pool underun for node %s", node_name(n));
+	cloned = sample_clone_many(smps, clones, cnt);
+	if (cloned < cnt)
+		warn("Pool underrun for node %s", node_name(n));
 
-	for (int i = 0; i < avail; i++)
-		sample_copy(cpys[i], smps[i]);
-
-	return queue_signalled_push_many(&l->queue, (void **) cpys, avail);
+	return queue_signalled_push_many(&l->queue, (void **) clones, cloned);
 }
 
 char * loopback_print(struct node *n)

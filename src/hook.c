@@ -65,7 +65,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	if (ret)
 		error("Failed to destroy hook");
 
-	sample_free(smps, cnt);
+	sample_free_many(smps, cnt);
 
 	ret = pool_destroy(&q);
 	if (ret)
@@ -215,7 +215,7 @@ check:		if (optarg == endptr)
 			pause();
 		}
 
-		ret = sample_alloc(&q, smps, cnt);
+		ret = sample_alloc_many(&q, smps, cnt);
 		if (ret != cnt)
 			error("Failed to allocate %d smps from pool", cnt);
 
@@ -231,7 +231,7 @@ check:		if (optarg == endptr)
 
 		io_print(&io, smps, recv);
 
-		sample_free(smps, cnt);
+		sample_free_many(smps, cnt);
 	}
 
 	return 0;

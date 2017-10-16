@@ -64,10 +64,10 @@ void generate_samples(struct pool *p, struct sample *smps[], struct sample *smpt
 	int ret;
 
 	/* Prepare a sample with arbitrary data */
-	ret = sample_alloc(p, smps, cnt);
+	ret = sample_alloc_many(p, smps, cnt);
 	cr_assert_eq(ret, NUM_SAMPLES);
 
-	ret = sample_alloc(p, smpt, cnt);
+	ret = sample_alloc_many(p, smpt, cnt);
 	cr_assert_eq(ret, cnt);
 
 	for (int i = 0; i < cnt; i++) {
@@ -178,8 +178,8 @@ ParameterizedTest(char *fmt, io, lowlevel)
 
 	cr_assert_eq_samples(f, smps, smpt, ret);
 
-	sample_free(smps, NUM_SAMPLES);
-	sample_free(smpt, NUM_SAMPLES);
+	sample_free_many(smps, NUM_SAMPLES);
+	sample_free_many(smpt, NUM_SAMPLES);
 
 	ret = pool_destroy(&p);
 	cr_assert_eq(ret, 0);
@@ -263,8 +263,8 @@ ParameterizedTest(char *fmt, io, highlevel)
 
 	free(fn);
 
-	sample_free(smps, NUM_SAMPLES);
-	sample_free(smpt, NUM_SAMPLES);
+	sample_free_many(smps, NUM_SAMPLES);
+	sample_free_many(smpt, NUM_SAMPLES);
 
 	ret = pool_destroy(&p);
 	cr_assert_eq(ret, 0);
