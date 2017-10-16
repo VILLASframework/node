@@ -1,6 +1,5 @@
 /** Node-type for loopback connections.
  *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -109,12 +108,12 @@ char * loopback_print(struct node *n)
 	strcatf(&buf, "queuelen=%d", l->queuelen);
 
 	return buf;
-};
+}
 
 int loopback_fd(struct node *n)
 {
 	struct loopback *l = n->_vd;
-	
+
 	return queue_signalled_fd(&l->queue);
 }
 

@@ -93,7 +93,7 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 
 	memset(shared, 0, sizeof(struct shmem_shared));
 	shared->polling = conf->polling;
-	
+
 	int flags = QUEUE_SIGNALLED_PROCESS_SHARED;
 	if (conf->polling)
 		flags |= QUEUE_SIGNALLED_POLLING;
@@ -156,7 +156,7 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 int shmem_int_close(struct shmem_int *shm)
 {
 	atomic_store(&shm->closed, 1);
-	
+
 	queue_signalled_close(&shm->write.shared->queue);
 
 	shm_unlink(shm->write.name);
