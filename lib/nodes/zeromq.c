@@ -101,9 +101,9 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	const char *format = "villas-human";
 
 	size_t index;
-	json_t *cfg_pub = NULL;
-	json_t *cfg_curve = NULL;
-	json_t *cfg_val;
+	json_t *json_pub = NULL;
+	json_t *json_curve = NULL;
+	json_t *json_val;
 	json_error_t err;
 
 	list_init(&z->publisher.endpoints);
@@ -113,8 +113,8 @@ int zeromq_parse(struct node *n, json_t *cfg)
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: o, s?: o, s?: s, s?: s, s?: b, s?: s }",
 		"subscribe", &ep,
-		"publish", &cfg_pub,
-		"curve", &cfg_curve,
+		"publish", &json_pub,
+		"curve", &json_curve,
 		"filter", &filter,
 		"pattern", &type,
 		"ipv6", &z->ipv6,
@@ -130,11 +130,11 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	if (!z->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 
-	if (cfg_pub) {
-		switch (json_typeof(cfg_pub)) {
+	if (json_pub) {
+		switch (json_typeof(json_pub)) {
 			case JSON_ARRAY:
-				json_array_foreach(cfg_pub, index, cfg_val) {
-					ep = json_string_value(cfg_pub);
+				json_array_foreach(json_pub, index, json_val) {
+					ep = json_string_value(json_pub);
 					if (!ep)
 						error("All 'publish' settings must be strings");
 
@@ -143,7 +143,7 @@ int zeromq_parse(struct node *n, json_t *cfg)
 				break;
 
 			case JSON_STRING:
-				ep = json_string_value(cfg_pub);
+				ep = json_string_value(json_pub);
 
 				list_push(&z->publisher.endpoints, strdup(ep));
 
@@ -154,12 +154,12 @@ int zeromq_parse(struct node *n, json_t *cfg)
 		}
 	}
 
-	if (cfg_curve) {
+	if (json_curve) {
 		const char *public_key, *secret_key;
 
 		z->curve.enabled = true;
 
-		ret = json_unpack_ex(cfg_curve, &err, 0, "{ s: s, s: s, s?: b }",
+		ret = json_unpack_ex(json_curve, &err, 0, "{ s: s, s: s, s?: b }",
 			"public_key", &public_key,
 			"secret_key", &secret_key,
 			"enabled", &z->curve.enabled

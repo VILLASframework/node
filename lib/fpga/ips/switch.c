@@ -95,28 +95,28 @@ int switch_parse(struct fpga_ip *c, json_t *cfg)
 	int ret;
 	size_t index;
 	json_error_t err;
-	json_t *cfg_path, *cfg_paths = NULL;
+	json_t *json_path, *json_paths = NULL;
 
 	list_init(&sw->paths);
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s?: o }",
 		"num_ports", &sw->num_ports,
-		"paths", &cfg_paths
+		"paths", &json_paths
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of FPGA IP '%s'", c->name);
 
-	if (!cfg_paths)
+	if (!json_paths)
 		return 0; /* no switch config available */
 
-	if (!json_is_array(cfg_paths))
+	if (!json_is_array(json_paths))
 		error("Setting 'paths' of FPGA IP '%s' should be an array of JSON objects", c->name);
 
-	json_array_foreach(cfg_paths, index, cfg_path) {
+	json_array_foreach(json_paths, index, json_path) {
 		struct sw_path *p = alloc(sizeof(struct sw_path));
 		int reverse = 0;
 
-		ret = json_unpack_ex(cfg_path, &err, 0, "{ s?: b, s: s, s: s }",
+		ret = json_unpack_ex(json_path, &err, 0, "{ s?: b, s: s, s: s }",
 			"reverse", &reverse,
 			"in", &p->in,
 			"out", &p->out

@@ -19,33 +19,33 @@ int dft_parse(struct fpga_ip *c, json_t *cfg)
 
 	int ret;
 
-	json_t *cfg_harms;
+	json_t *json_harms;
 	json_error_t err;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s: i, s: o }",
 		"period", &dft->period,
 		"decimation", &dft->decimation,
-		"harmonics", &cfg_harms
+		"harmonics", &json_harms
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of FPGA IP '%s'", c->name);
 
-	if (!json_is_array(cfg_harms))
+	if (!json_is_array(json_harms))
 		error("DFT IP core requires 'harmonics' to be an array of integers!");
 
-	dft->num_harmonics = json_array_size(cfg_harms);
+	dft->num_harmonics = json_array_size(json_harms);
 	if (dft->num_harmonics <= 0)
 		error("DFT IP core requires 'harmonics' to contain at least 1 value!");
 
 	dft->fharmonics = alloc(sizeof(float) * dft->num_harmonics);
 
 	size_t index;
-	json_t *cfg_harm;
-	json_array_foreach(cfg_harms, index, cfg_harm) {
-		if (!json_is_real(cfg_harm))
+	json_t *json_harm;
+	json_array_foreach(json_harms, index, json_harm) {
+		if (!json_is_real(json_harm))
 			error("DFT IP core requires all 'harmonics' values to be of floating point type");
 
-		dft->fharmonics[index] = (float) json_number_value(cfg_harm) / dft->period;
+		dft->fharmonics[index] = (float) json_number_value(json_harm) / dft->period;
 	}
 
 	return 0;

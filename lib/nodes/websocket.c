@@ -493,24 +493,24 @@ int websocket_parse(struct node *n, json_t *cfg)
 	int ret;
 
 	size_t index;
-	json_t *cfg_dests = NULL;
-	json_t *cfg_dest;
+	json_t *json_dests = NULL;
+	json_t *json_dest;
 	json_error_t err;
 
 	list_init(&w->destinations);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o }", "destinations", &cfg_dests);
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o }", "destinations", &json_dests);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-	if (cfg_dests) {
-		if (!json_is_array(cfg_dests))
+	if (json_dests) {
+		if (!json_is_array(json_dests))
 			error("The 'destinations' setting of node %s must be an array of URLs", node_name(n));
 
-		json_array_foreach(cfg_dests, index, cfg_dest) {
+		json_array_foreach(json_dests, index, json_dest) {
 			const char *uri, *prot, *ads, *path;
 
-			uri = json_string_value(cfg_dest);
+			uri = json_string_value(json_dest);
 			if (!uri)
 				error("The 'destinations' setting of node %s must be an array of URLs", node_name(n));
 

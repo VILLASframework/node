@@ -246,14 +246,14 @@ int hook_parse_list(struct list *list, json_t *cfg, struct path *o, struct node 
 		error("Hooks must be configured as a list of objects");
 
 	size_t index;
-	json_t *cfg_hook;
-	json_array_foreach(cfg, index, cfg_hook) {
+	json_t *json_hook;
+	json_array_foreach(cfg, index, json_hook) {
 		int ret;
 		const char *type;
 		struct plugin *p;
 		json_error_t err;
 
-		ret = json_unpack_ex(cfg_hook, &err, 0, "{ s: s }", "type", &type);
+		ret = json_unpack_ex(json_hook, &err, 0, "{ s: s }", "type", &type);
 		if (ret)
 			jerror(&err, "Failed to parse hook");
 
@@ -267,7 +267,7 @@ int hook_parse_list(struct list *list, json_t *cfg, struct path *o, struct node 
 		if (ret)
 			error("Failed to initialize hook: %s", p->name);
 
-		ret = hook_parse(h, cfg_hook);
+		ret = hook_parse(h, json_hook);
 		if (ret)
 			jerror(&err, "Failed to parse hook configuration");
 

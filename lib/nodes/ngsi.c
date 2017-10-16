@@ -205,12 +205,12 @@ static int ngsi_parse_mapping(struct list *mapping, json_t *cfg)
 	list_init(mapping);
 
 	size_t index;
-	json_t *cfg_token;
+	json_t *json_token;
 
-	json_array_foreach(cfg, index, cfg_token) {
+	json_array_foreach(cfg, index, json_token) {
 		const char *token;
 
-		token = json_string_value(cfg_token);
+		token = json_string_value(json_token);
 		if (!token)
 			return -2;
 
@@ -410,7 +410,7 @@ int ngsi_parse(struct node *n, json_t *cfg)
 
 	int ret;
 	json_error_t err;
-	json_t *cfg_mapping;
+	json_t *json_mapping;
 
 	/* Default values */
 	i->access_token = NULL; /* disabled by default */
@@ -426,12 +426,12 @@ int ngsi_parse(struct node *n, json_t *cfg)
 		"ssl_verify", &i->ssl_verify,
 		"timeout", &i->timeout,
 		"rate", &i->rate,
-		"mapping", &cfg_mapping
+		"mapping", &json_mapping
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-	ret = ngsi_parse_mapping(&i->mapping, cfg_mapping);
+	ret = ngsi_parse_mapping(&i->mapping, json_mapping);
 	if (ret)
 		error("Invalid setting 'mapping' of node %s", node_name(n));
 

@@ -44,15 +44,15 @@ int fpga_init(struct super_node *sn)
 		error("Failed to initiliaze VFIO sub-system");
 
 #if 0
-	json_t *cfg, *cfg_fpgas;
+	json_t *cfg, *json_fpgas;
 
 	/* Parse FPGA configuration */
 	cfg = config_root_setting(&sn->cfg);
-	cfg_fpgas = config_setting_lookup(cfg, "fpgas");
-	if (!cfg_fpgas)
+	json_fpgas = config_setting_lookup(cfg, "fpgas");
+	if (!json_fpgas)
 		cerror(cfg, "Config file is missing 'fpgas' section");
 
-	ret = fpga_card_parse_list(&cards, cfg_fpgas);
+	ret = fpga_card_parse_list(&cards, json_fpgas);
 	if (ret)
 		cerror(cfg, "Failed to parse VILLASfpga config");
 #endif

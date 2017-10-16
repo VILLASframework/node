@@ -389,7 +389,7 @@ int socket_parse(struct node *n, json_t *cfg)
 
 	int ret;
 
-	json_t *cfg_multicast = NULL;
+	json_t *json_multicast = NULL;
 	json_error_t err;
 
 	/* Default values */
@@ -401,7 +401,7 @@ int socket_parse(struct node *n, json_t *cfg)
 		"remote", &remote,
 		"local", &local,
 		"verify_source", &s->verify_source,
-		"multicast", &cfg_multicast,
+		"multicast", &json_multicast,
 		"format", &format
 	);
 	if (ret)
@@ -438,7 +438,7 @@ int socket_parse(struct node *n, json_t *cfg)
 			remote, node_name(n), gai_strerror(ret));
 	}
 
-	if (cfg_multicast) {
+	if (json_multicast) {
 		const char *group, *interface = NULL;
 
 		/* Default values */
@@ -447,7 +447,7 @@ int socket_parse(struct node *n, json_t *cfg)
 		s->multicast.loop = 0;
 		s->multicast.ttl = 255;
 
-		ret = json_unpack_ex(cfg_multicast, &err, 0, "{ s?: b, s: s, s?: s, s?: b, s?: i }",
+		ret = json_unpack_ex(json_multicast, &err, 0, "{ s?: b, s: s, s?: s, s?: b, s?: i }",
 			"enabled", &s->multicast.enabled,
 			"group", &group,
 			"interface", &interface,
@@ -473,18 +473,18 @@ int socket_parse(struct node *n, json_t *cfg)
 	}
 
 #ifdef WITH_NETEM
-	json_t *cfg_netem;
+	json_t *json_netem;
 
-	cfg_netem = json_object_get(cfg, "netem");
-	if (cfg_netem) {
+	json_netem = json_object_get(cfg, "netem");
+	if (json_netem) {
 		int enabled = 1;
 
-		ret = json_unpack_ex(cfg_netem, &err, 0, "{ s?: b }",  "enabled", &enabled);
+		ret = json_unpack_ex(json_netem, &err, 0, "{ s?: b }",  "enabled", &enabled);
 		if (ret)
 			jerror(&err, "Failed to parse setting 'netem' of node %s", node_name(n));
 
 		if (enabled)
-			tc_parse(&s->tc_qdisc, cfg_netem);
+			tc_parse(&s->tc_qdisc, json_netem);
 		else
 			s->tc_qdisc = NULL;
 	}

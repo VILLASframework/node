@@ -59,15 +59,15 @@ static int map_parse(struct hook *h, json_t *cfg)
 	int ret;
 	struct map *m = h->_vd;
 	json_error_t err;
-	json_t *cfg_mapping;
+	json_t *json_mapping;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: o }",
-		"map", &cfg_mapping
+		"map", &json_mapping
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
 
-	ret = mapping_parse_list(&m->mapping, cfg_mapping, NULL);
+	ret = mapping_parse_list(&m->mapping, json_mapping, NULL);
 	if (ret)
 		return ret;
 

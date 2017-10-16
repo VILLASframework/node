@@ -16,7 +16,7 @@
 int cbuilder_parse(struct node *n, json_t *cfg)
 {
 	struct cbuilder *cb = n->_vd;
-	json_t *cfg_param, *cfg_params = NULL;
+	json_t *json_param, *json_params = NULL;
 
 	const char *model;
 
@@ -27,7 +27,7 @@ int cbuilder_parse(struct node *n, json_t *cfg)
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: F, s: s, s: b }",
 		"timestep", &cb->timestep,
 		"model", &model,
-		"parameters", &cfg_params
+		"parameters", &json_params
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
@@ -36,18 +36,18 @@ int cbuilder_parse(struct node *n, json_t *cfg)
 	if (!cb->model)
 		error("Unknown model '%s' of node %s", model, node_name(n));
 
-	if (cfg_params) {
-		if (!json_is_array(cfg_params))
+	if (json_params) {
+		if (!json_is_array(json_params))
 			error("Setting 'parameters' of node %s must be an JSON array of numbers!", node_name(n));
 
-		cb->paramlen = json_array_size(cfg_params);
+		cb->paramlen = json_array_size(json_params);
 		cb->params = alloc(cb->paramlen * sizeof(double));
 
-		json_array_foreach(cfg_params, index, cfg_param) {
-			if (json_is_number(cfg_param))
+		json_array_foreach(json_params, index, json_param) {
+			if (json_is_number(json_param))
 				error("Setting 'parameters' of node %s must be an JSON array of numbers!", node_name(n));
 
-			cb->params[index] = json_number_value(cfg_params);
+			cb->params[index] = json_number_value(json_params);
 
 		}
 	}

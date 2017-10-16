@@ -82,8 +82,8 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 	int numvalues = 0;
 
 	size_t index;
-	json_t *cfg_cases, *cfg_case, *cfg_val;
-	json_t *cfg_rates = NULL, *cfg_values = NULL;
+	json_t *json_cases, *json_case, *json_val;
+	json_t *json_rates = NULL, *json_values = NULL;
 	json_error_t err;
 
 	t->cooldown = 1.0;
@@ -96,7 +96,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 		"output", &output,
 		"format", &format,
 		"cooldown", &t->cooldown,
-		"cases", &cfg_cases
+		"cases", &json_cases
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
@@ -111,16 +111,16 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 
 
 	/* Construct list of test cases */
-	if (!json_is_array(cfg_cases))
+	if (!json_is_array(json_cases))
 		error("The 'cases' setting of node %s must be an array.", node_name(n));
 
-	json_array_foreach(cfg_cases, index, cfg_case) {
+	json_array_foreach(json_cases, index, json_case) {
 		int limit = -1;
 		double duration = -1; /* in secs */
 
-		ret = json_unpack_ex(cfg_case, &err, 0, "{ s: o, s: o, s?: i, s?: F }",
-			"rates", &cfg_rates,
-			"values", &cfg_values,
+		ret = json_unpack_ex(json_case, &err, 0, "{ s: o, s: o, s?: i, s?: F }",
+			"rates", &json_rates,
+			"values", &json_values,
 			"limit", &limit,
 			"duration", &duration
 		);
@@ -128,16 +128,16 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 		if (limit > 0 && duration > 0)
 			error("The settings 'duration' and 'limit' of node %s must be used exclusively", node_name(n));
 
-		if (json_is_array(cfg_rates))
-			numrates = json_array_size(cfg_rates);
-		else if (json_is_number(cfg_rates))
+		if (json_is_array(json_rates))
+			numrates = json_array_size(json_rates);
+		else if (json_is_number(json_rates))
 			numrates = 1;
 		else
 			error("The 'rates' setting of node %s must be a real or an array of real numbers", node_name(n));
 
-		if (json_is_array(cfg_values))
-			numvalues = json_array_size(cfg_values);
-		else if (json_is_integer(cfg_values))
+		if (json_is_array(json_values))
+			numvalues = json_array_size(json_values);
+		else if (json_is_integer(json_values))
 			numvalues = 1;
 		else
 			error("The 'values' setting of node %s must be an integer or an array of integers", node_name(n));
@@ -145,29 +145,29 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 		rates  = realloc(rates, sizeof(rates[0]) * numrates);
 		values = realloc(values, sizeof(values[0]) * numvalues);
 
-		if (json_is_array(cfg_rates)) {
-			json_array_foreach(cfg_rates, index, cfg_val) {
-				if (!json_is_number(cfg_val))
+		if (json_is_array(json_rates)) {
+			json_array_foreach(json_rates, index, json_val) {
+				if (!json_is_number(json_val))
 					error("The 'rates' setting of node %s must be an array of real numbers", node_name(n));
 
-				rates[index] = json_integer_value(cfg_val);
+				rates[index] = json_integer_value(json_val);
 			}
 		}
 		else
-			rates[0] = json_number_value(cfg_rates);
+			rates[0] = json_number_value(json_rates);
 
-		if (json_is_array(cfg_values)) {
-			json_array_foreach(cfg_values, index, cfg_val) {
-				if (!json_is_integer(cfg_val))
+		if (json_is_array(json_values)) {
+			json_array_foreach(json_values, index, json_val) {
+				if (!json_is_integer(json_val))
 					error("The 'values' setting of node %s must be an array of integers", node_name(n));
 
-				values[index] = json_integer_value(cfg_val);
+				values[index] = json_integer_value(json_val);
 				if (values[index] < 2)
 					error("Each 'values' entry must be at least 2 or larger");
 			}
 		}
 		else {
-			values[0] = json_integer_value(cfg_values);
+			values[0] = json_integer_value(json_values);
 			if (values[0] <= 2)
 				error("Each 'values' entry must be at least 2 or larger");
 		}

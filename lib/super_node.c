@@ -106,7 +106,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 			int ret;
 
 			config_t cfg;
-			config_setting_t *cfg_root = NULL;
+			config_setting_t *json_root = NULL;
 
 			warn("Failed to parse JSON configuration. Re-trying with old libconfig format.");
 			{ INDENT
@@ -140,9 +140,9 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 				error("Failed to parse configuration");
 			}
 
-			cfg_root = config_root_setting(&cfg);
+			json_root = config_root_setting(&cfg);
 
-			sn->cfg = config_to_json(cfg_root);
+			sn->cfg = config_to_json(json_root);
 			if (sn->cfg == NULL)
 				error("Failed to convert JSON to configuration file");
 
@@ -177,20 +177,20 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 	assert(sn->state != STATE_STARTED);
 	assert(sn->state != STATE_DESTROYED);
 
-	json_t *cfg_nodes = NULL;
-	json_t *cfg_paths = NULL;
-	json_t *cfg_plugins = NULL;
-	json_t *cfg_logging = NULL;
-	json_t *cfg_web = NULL;
+	json_t *json_nodes = NULL;
+	json_t *json_paths = NULL;
+	json_t *json_plugins = NULL;
+	json_t *json_logging = NULL;
+	json_t *json_web = NULL;
 
 	json_error_t err;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: F, s?: s }",
-		"http", &cfg_web,
-		"logging", &cfg_logging,
-		"plugins", &cfg_plugins,
-		"nodes", &cfg_nodes,
-		"paths", &cfg_paths,
+		"http", &json_web,
+		"logging", &json_logging,
+		"plugins", &json_plugins,
+		"nodes", &json_nodes,
+		"paths", &json_paths,
 		"hugepages", &sn->hugepages,
 		"affinity", &sn->affinity,
 		"priority", &sn->priority,
@@ -204,28 +204,28 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 		strncpy(sn->name, name, 128);
 
 #ifdef WITH_WEB
-	if (cfg_web)
-		web_parse(&sn->web, cfg_web);
+	if (json_web)
+		web_parse(&sn->web, json_web);
 #endif /* WITH_WEB */
 
-	if (cfg_logging)
-		log_parse(&sn->log, cfg_logging);
+	if (json_logging)
+		log_parse(&sn->log, json_logging);
 
 	/* Parse plugins */
-	if (cfg_plugins) {
-		if (!json_is_array(cfg_plugins))
+	if (json_plugins) {
+		if (!json_is_array(json_plugins))
 			error("Setting 'plugins' must be a list of strings");
 
 		size_t index;
-		json_t *cfg_plugin;
-		json_array_foreach(cfg_plugins, index, cfg_plugin) {
+		json_t *json_plugin;
+		json_array_foreach(json_plugins, index, json_plugin) {
 			struct plugin *p = alloc(sizeof(struct plugin));
 
 			ret = plugin_init(p);
 			if (ret)
 				error("Failed to initialize plugin");
 
-			ret = plugin_parse(p, cfg_plugin);
+			ret = plugin_parse(p, json_plugin);
 			if (ret)
 				error("Failed to parse plugin");
 
@@ -234,17 +234,17 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 	}
 
 	/* Parse nodes */
-	if (cfg_nodes) {
-		if (!json_is_object(cfg_nodes))
+	if (json_nodes) {
+		if (!json_is_object(json_nodes))
 			error("Setting 'nodes' must be a group with node name => group mappings.");
 
 		const char *name;
-		json_t *cfg_node;
-		json_object_foreach(cfg_nodes, name, cfg_node) {
+		json_t *json_node;
+		json_object_foreach(json_nodes, name, json_node) {
 			struct plugin *p;
 			const char *type;
 
-			ret = json_unpack_ex(cfg_node, &err, 0, "{ s: s }", "type", &type);
+			ret = json_unpack_ex(json_node, &err, 0, "{ s: s }", "type", &type);
 			if (ret)
 				jerror(&err, "Failed to parse node");
 
@@ -258,7 +258,7 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 			if (ret)
 				error("Failed to initialize node");
 
-			ret = node_parse(n, cfg_node, name);
+			ret = node_parse(n, json_node, name);
 			if (ret)
 				error("Failed to parse node");
 
@@ -267,20 +267,20 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 	}
 
 	/* Parse paths */
-	if (cfg_paths) {
-		if (!json_is_array(cfg_paths))
+	if (json_paths) {
+		if (!json_is_array(json_paths))
 			warn("Setting 'paths' must be a list.");
 
 		size_t index;
-		json_t *cfg_path;
-		json_array_foreach(cfg_paths, index, cfg_path) {
+		json_t *json_path;
+		json_array_foreach(json_paths, index, json_path) {
 			struct path *p = alloc(sizeof(struct path));
 
 			ret = path_init(p);
 			if (ret)
 				error("Failed to initialize path");
 
-			ret = path_parse(p, cfg_path, &sn->nodes);
+			ret = path_parse(p, json_path, &sn->nodes);
 			if (ret)
 				error("Failed to parse path");
 

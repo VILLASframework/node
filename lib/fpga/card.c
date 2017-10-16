@@ -59,9 +59,9 @@ int fpga_card_parse(struct fpga_card *c, json_t *cfg, const char *name)
 {
 	int ret;
 
-	json_t *cfg_ips;
-	json_t *cfg_slot = NULL;
-	json_t *cfg_id = NULL;
+	json_t *json_ips;
+	json_t *json_slot = NULL;
+	json_t *json_id = NULL;
 	json_error_t err;
 
 	c->name = strdup(name);
@@ -69,17 +69,17 @@ int fpga_card_parse(struct fpga_card *c, json_t *cfg, const char *name)
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: b, s?: o, s?: o, s: o }"
 		"affinity", &c->affinity,
 		"do_reset", &c->do_reset,
-		"slot", &cfg_slot,
-		"id", &cfg_id,
-		"ips", &cfg_ips
+		"slot", &json_slot,
+		"id", &json_id,
+		"ips", &json_ips
 	);
 	if (ret)
 		jerror(&err, "Failed to parse FPGA vard configuration");
 
-	if (cfg_slot) {
+	if (json_slot) {
 		const char *err, *slot;
 
-		slot = json_string_value(cfg_slot);
+		slot = json_string_value(json_slot);
 		if (slot) {
 			ret = pci_device_parse_slot(&c->filter, slot, &err);
 			if (ret)
@@ -89,10 +89,10 @@ int fpga_card_parse(struct fpga_card *c, json_t *cfg, const char *name)
 			error("PCI slot must be a string");
 	}
 
-	if (cfg_id) {
+	if (json_id) {
 		const char *err, *id;
 
-		id = json_string_value(cfg_id);
+		id = json_string_value(json_id);
 		if (id) {
 			ret = pci_device_parse_id(&c->filter, (char*) id, &err);
 			if (ret)
@@ -102,12 +102,12 @@ int fpga_card_parse(struct fpga_card *c, json_t *cfg, const char *name)
 			error("PCI ID must be a string");
 	}
 
-	if (!json_is_object(cfg_ips))
+	if (!json_is_object(json_ips))
 		error("FPGA card IPs section must be an object");
 
 	const char *name_ip;
-	json_t *cfg_ip;
-	json_object_foreach(cfg_ips, name_ip, cfg_ip) {
+	json_t *json_ip;
+	json_object_foreach(json_ips, name_ip, json_ip) {
 		const char *vlnv;
 
 		struct fpga_ip_type *vt;
@@ -115,7 +115,7 @@ int fpga_card_parse(struct fpga_card *c, json_t *cfg, const char *name)
 
 		ip->card = c;
 
-		ret = json_unpack_ex(cfg_ip, &err, 0, "{ s: s }", "vlnv", &vlnv);
+		ret = json_unpack_ex(json_ip, &err, 0, "{ s: s }", "vlnv", &vlnv);
 		if (ret)
 			error("Failed to parse FPGA IP '%s' of card '%s'", name_ip, name);
 
@@ -127,7 +127,7 @@ int fpga_card_parse(struct fpga_card *c, json_t *cfg, const char *name)
 		if (ret)
 			error("Failed to initalize FPGA IP core");
 
-		ret = fpga_ip_parse(ip, cfg_ip, name_ip);
+		ret = fpga_ip_parse(ip, json_ip, name_ip);
 		if (ret)
 			error("Failed to parse FPGA IP core");
 
@@ -147,11 +147,11 @@ int fpga_card_parse_list(struct list *cards, json_t *cfg)
 		error("FPGA card configuration section must be a JSON object");
 
 	const char *name;
-	json_t *cfg_fpga;
-	json_object_foreach(cfg, name, cfg_fpga) {
+	json_t *json_fpga;
+	json_object_foreach(cfg, name, json_fpga) {
 		struct fpga_card *c = alloc(sizeof(struct fpga_card));
 
-		ret = fpga_card_parse(c, cfg_fpga, name);
+		ret = fpga_card_parse(c, json_fpga, name);
 		if (ret)
 			error("Failed to parse FPGA card configuration");
 

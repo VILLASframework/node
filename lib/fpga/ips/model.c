@@ -139,7 +139,7 @@ int model_parse(struct fpga_ip *c, json_t *cfg)
 
 	int ret;
 
-	json_t *cfg_params;
+	json_t *json_params;
 	json_error_t err;
 
 	if      (strcmp(c->vlnv.library, "hls") == 0)
@@ -149,17 +149,17 @@ int model_parse(struct fpga_ip *c, json_t *cfg)
 	else
 		error("Unsupported model type: %s", c->vlnv.library);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o }", "parameters", &cfg_params);
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o }", "parameters", &json_params);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of FPGA IP '%s'", c->name);
 
-	if (cfg_params) {
-		if (!json_is_object(cfg_params))
+	if (json_params) {
+		if (!json_is_object(json_params))
 			error("Setting 'parameters' must be a JSON object");
 
 		const char *name;
 		json_t *value;
-		json_object_foreach(cfg_params, name, value) {
+		json_object_foreach(json_params, name, value) {
 			if (!json_is_real(value))
 				error("Parameters of FPGA IP '%s' must be of type floating point", c->name);
 

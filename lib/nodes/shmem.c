@@ -42,7 +42,7 @@ int shmem_parse(struct node *n, json_t *cfg)
 	const char *val;
 
 	int ret;
-	json_t *cfg_exec = NULL;
+	json_t *json_exec = NULL;
 	json_error_t err;
 
 	/* Default values */
@@ -56,21 +56,21 @@ int shmem_parse(struct node *n, json_t *cfg)
 		"in_name", &shm->in_name,
 		"queuelen", &shm->conf.queuelen,
 		"polling", &shm->conf.polling,
-		"exec", &cfg_exec
+		"exec", &json_exec
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-	if (cfg_exec) {
-		if (!json_is_array(cfg_exec))
+	if (json_exec) {
+		if (!json_is_array(json_exec))
 			error("Setting 'exec' of node %s must be a JSON array of strings", node_name(n));
 
-		shm->exec = alloc(sizeof(char *) * (json_array_size(cfg_exec) + 1));
+		shm->exec = alloc(sizeof(char *) * (json_array_size(json_exec) + 1));
 
 		size_t index;
-		json_t *cfg_val;
-		json_array_foreach(cfg_exec, index, cfg_val) {
-			val = json_string_value(cfg_exec);
+		json_t *json_val;
+		json_array_foreach(json_exec, index, json_val) {
+			val = json_string_value(json_exec);
 			if (!val)
 				error("Setting 'exec' of node %s must be a JSON array of strings", node_name(n));
 

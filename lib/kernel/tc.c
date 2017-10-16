@@ -40,24 +40,24 @@ int tc_parse(struct rtnl_qdisc **netem, json_t *cfg)
 	const char *str;
 	int ret, val;
 
-	json_t *cfg_distribution = NULL;
-	json_t *cfg_limit = NULL;
-	json_t *cfg_delay = NULL;
-	json_t *cfg_jitter = NULL;
-	json_t *cfg_loss = NULL;
-	json_t *cfg_duplicate = NULL;
-	json_t *cfg_corruption = NULL;
+	json_t *json_distribution = NULL;
+	json_t *json_limit = NULL;
+	json_t *json_delay = NULL;
+	json_t *json_jitter = NULL;
+	json_t *json_loss = NULL;
+	json_t *json_duplicate = NULL;
+	json_t *json_corruption = NULL;
 
 	json_error_t err;
 
-		"distribution", &cfg_distribution,
-		"limit", &cfg_limit,
-		"delay", &cfg_delay,
-		"jitter", &cfg_jitter,
-		"loss", &cfg_loss,
-		"duplicate", &cfg_duplicate,
-		"corruption", &cfg_corruption
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: o, s?: o, s?: o }",
+		"distribution", &json_distribution,
+		"limit", &json_limit,
+		"delay", &json_delay,
+		"jitter", &json_jitter,
+		"loss", &json_loss,
+		"duplicate", &json_duplicate,
+		"corruption", &json_corruption
 	);
 	if (ret)
 		jerror(&err, "Failed to parse setting network emulation settings");
@@ -68,8 +68,8 @@ int tc_parse(struct rtnl_qdisc **netem, json_t *cfg)
 
 	rtnl_tc_set_kind(TC_CAST(ne), "netem");
 
-	if (cfg_distribution) {
-		str = json_string_value(cfg_distribution);
+	if (json_distribution) {
+		str = json_string_value(json_distribution);
 		if (!str)
 			error("Setting 'distribution' must be a JSON string");
 
@@ -77,10 +77,10 @@ int tc_parse(struct rtnl_qdisc **netem, json_t *cfg)
 			error("Invalid delay distribution '%s' in netem config", str);
 	}
 
-	if (cfg_limit) {
-		val = json_integer_value(cfg_limit);
+	if (json_limit) {
+		val = json_integer_value(json_limit);
 
-		if (!json_is_integer(cfg_limit) || val <= 0)
+		if (!json_is_integer(json_limit) || val <= 0)
 			error("Setting 'limit' must be a positive integer");
 
 		rtnl_netem_set_limit(ne, val);
@@ -88,46 +88,46 @@ int tc_parse(struct rtnl_qdisc **netem, json_t *cfg)
 	else
 		rtnl_netem_set_limit(ne, 0);
 
-	if (cfg_delay) {
-		val = json_integer_value(cfg_delay);
+	if (json_delay) {
+		val = json_integer_value(json_delay);
 
-		if (!json_is_integer(cfg_delay) || val <= 0)
+		if (!json_is_integer(json_delay) || val <= 0)
 			error("Setting 'delay' must be a positive integer");
 
 		rtnl_netem_set_delay(ne, val);
 	}
 
-	if (cfg_jitter) {
-		val = json_integer_value(cfg_jitter);
+	if (json_jitter) {
+		val = json_integer_value(json_jitter);
 
-		if (!json_is_integer(cfg_jitter) || val <= 0)
+		if (!json_is_integer(json_jitter) || val <= 0)
 			error("Setting 'jitter' must be a positive integer");
 
 		rtnl_netem_set_jitter(ne, val);
 	}
 
-	if (cfg_loss) {
-		val = json_integer_value(cfg_loss);
+	if (json_loss) {
+		val = json_integer_value(json_loss);
 
-		if (!json_is_integer(cfg_loss) || val < 0 || val > 100)
+		if (!json_is_integer(json_loss) || val < 0 || val > 100)
 			error("Setting 'loss' must be a positive integer within the range [ 0, 100 ]");
 
 		rtnl_netem_set_loss(ne, val);
 	}
 
-	if (cfg_duplicate) {
-		val = json_integer_value(cfg_duplicate);
+	if (json_duplicate) {
+		val = json_integer_value(json_duplicate);
 
-		if (!json_is_integer(cfg_duplicate) || val < 0 || val > 100)
+		if (!json_is_integer(json_duplicate) || val < 0 || val > 100)
 			error("Setting 'duplicate' must be a positive integer within the range [ 0, 100 ]");
 
 		rtnl_netem_set_duplicate(ne, val);
 	}
 
-	if (cfg_corruption) {
-		val = json_integer_value(cfg_corruption);
+	if (json_corruption) {
+		val = json_integer_value(json_corruption);
 
-		if (!json_is_integer(cfg_corruption) || val < 0 || val > 100)
+		if (!json_is_integer(json_corruption) || val < 0 || val > 100)
 			error("Setting 'corruption' must be a positive integer within the range [ 0, 100 ]");
 
 		rtnl_netem_set_corruption_probability(ne, val);

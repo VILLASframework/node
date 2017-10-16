@@ -51,12 +51,12 @@ static int nanomsg_parse_endpoints(struct list *l, json_t *cfg)
 	const char *ep;
 
 	size_t index;
-	json_t *cfg_val;
+	json_t *json_val;
 
 	switch (json_typeof(cfg)) {
 		case JSON_ARRAY:
-			json_array_foreach(cfg, index, cfg_val) {
-				ep = json_string_value(cfg_val);
+			json_array_foreach(cfg, index, json_val) {
+				ep = json_string_value(json_val);
 				if (!ep)
 					return -1;
 
@@ -86,28 +86,28 @@ int nanomsg_parse(struct node *n, json_t *cfg)
 
 	json_error_t err;
 
-	json_t *cfg_pub = NULL;
-	json_t *cfg_sub = NULL;
+	json_t *json_pub = NULL;
+	json_t *json_sub = NULL;
 
 	list_init(&m->publisher.endpoints);
 	list_init(&m->subscriber.endpoints);
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: s }",
-		"publish", &cfg_pub,
-		"subscribe", &cfg_sub,
+		"publish", &json_pub,
+		"subscribe", &json_sub,
 		"format", &format
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-	if (cfg_pub) {
-		ret = nanomsg_parse_endpoints(&m->publisher.endpoints, cfg_pub);
+	if (json_pub) {
+		ret = nanomsg_parse_endpoints(&m->publisher.endpoints, json_pub);
 		if (ret < 0)
 			error("Invalid type for 'publish' setting of node %s", node_name(n));
 	}
 
-	if (cfg_sub) {
-		ret = nanomsg_parse_endpoints(&m->subscriber.endpoints, cfg_sub);
+	if (json_sub) {
+		ret = nanomsg_parse_endpoints(&m->subscriber.endpoints, json_sub);
 		if (ret < 0)
 			error("Invalid type for 'subscribe' setting of node %s", node_name(n));
 	}
