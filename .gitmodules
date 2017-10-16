@@ -34,3 +34,6 @@
 [submodule "thirdparty/protobuf-c"]
 	path = thirdparty/protobuf-c
 	url = https://github.com/protobuf-c/protobuf-c.git
+[submodule "thirdparty/rabbitmq-c"]
+	path = thirdparty/rabbitmq-c
+	url = https://github.com/alanxz/rabbitmq-c
