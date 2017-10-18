@@ -293,6 +293,14 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to initialize signals");
 
+	ret = super_node_init(&sn);
+	if (ret)
+		error("Failed to initialize super-node");
+
+	ret = super_node_parse_uri(&sn, configfile);
+	if (ret)
+		error("Failed to parse configuration");
+
 	ret = memory_init(sn.hugepages);
 	if (ret)
 		error("Failed to initialize memory");
@@ -312,14 +320,6 @@ check:		if (optarg == endptr)
 	ret = io_open(&io, NULL);
 	if (ret)
 		error("Failed to open IO");
-
-	ret = super_node_init(&sn);
-	if (ret)
-		error("Failed to initialize super-node");
-
-	ret = super_node_parse_uri(&sn, configfile);
-	if (ret)
-		error("Failed to parse configuration");
 
 	node = list_lookup(&sn.nodes, nodestr);
 	if (!node)
