@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include "node.h"
 #include "sample.h"
@@ -235,8 +236,17 @@ char * test_rtt_print(struct node *n)
 int test_rtt_start(struct node *n)
 {
 	int ret;
+	struct stat st;
 	struct test_rtt *t = n->_vd;
 	struct test_rtt_case *c = list_first(&t->cases);
+
+	/* Create folder for results if not present */
+	ret = stat(t->output, &st);
+	if (ret || !S_ISDIR(st.st_mode)) {
+		ret = mkdir(t->output, 0777);
+		if (ret)
+			return ret;
+	}
 
 	ret = io_init(&t->io, t->format, SAMPLE_HAS_ALL & ~SAMPLE_HAS_VALUES);
 	if (ret)
