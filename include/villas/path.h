@@ -35,6 +35,7 @@
 #include "list.h"
 #include "queue.h"
 #include "pool.h"
+#include "bitset.h"
 #include "common.h"
 #include "hook.h"
 #include "mapping.h"
@@ -47,6 +48,8 @@ struct super_node;
 
 struct path_source {
 	struct node *node;
+
+	bool masked;
 
 	struct pool pool;
 	struct list mappings;			/**< List of mappings (struct mapping_entry). */
@@ -93,8 +96,8 @@ struct path {
 
 	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
 
-	uintmax_t mask;			/**< A mask of path_sources which are enabled for poll(). */
-	uintmax_t received;		/**< A mask of path_sources for which we already received samples. */
+	struct bitset mask;		/**< A mask of path_sources which are enabled for poll(). */
+	struct bitset received;		/**< A mask of path_sources for which we already received samples. */
 
 	pthread_t tid;			/**< The thread id for this path. */
 	json_t *cfg;			/**< A JSON object containing the configuration of the path. */
