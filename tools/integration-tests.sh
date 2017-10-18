@@ -25,10 +25,19 @@
 SCRIPT=$(realpath ${BASH_SOURCE[0]})
 SCRIPTPATH=$(dirname $SCRIPT)
 
-export SRCDIR=$(realpath ${SCRIPTPATH}/..)
-export BUILDDIR=${SRCDIR}/build/release
-export LOGDIR=${BUILDDIR}/tests/integration
-export PATH=${BUILDDIR}:${PATH}
+if [ -n "${DEBUG}" ]; then
+	VARIANT="debug"
+else
+	VARIANT="release"
+fi
+
+SRCDIR=${SRCDIR:-$(realpath ${SCRIPTPATH}/..)}
+BUILDDIR=${BUILDDIR:-${SRCDIR}/build/${VARIANT}}
+
+LOGDIR=${BUILDDIR}/tests/integration
+PATH=${BUILDDIR}:${PATH}
+
+export PATH SRCDIR BUILDDIR LOGDIR
 
 # Default values
 VERBOSE=${VERBOSE:-0}
