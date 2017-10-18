@@ -604,7 +604,7 @@ int path_start(struct path *p)
 		struct path_source *ps = (struct path_source *) list_at(&p->sources, i);
 
 		for (size_t j = 0; j < list_length(&ps->mappings); j++) {
-			struct mapping_entry *me = (struct path_source *) list_at(&ps->mappings, j);
+			struct mapping_entry *me = (struct mapping_entry *) list_at(&ps->mappings, j);
 
 			int len = me->length;
 			int off = me->offset;

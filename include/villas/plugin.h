@@ -60,8 +60,8 @@ enum plugin_type {
 };
 
 struct plugin {
-	char *name;
-	char *description;
+	const char *name;
+	const char *description;
 	void *handle;
 	char *path;
 

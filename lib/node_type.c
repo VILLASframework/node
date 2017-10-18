@@ -65,7 +65,7 @@ int node_type_stop(struct node_type *vt)
 	return ret;
 }
 
-char * node_type_name(struct node_type *vt)
+const char * node_type_name(struct node_type *vt)
 {
 	return plugin_name(vt);
 }

@@ -164,6 +164,6 @@ int node_type_start(struct node_type *vt, struct super_node *sn);
 int node_type_stop(struct node_type *vt);
 
 /** Return a printable representation of the node-type. */
-char * node_type_name(struct node_type *vt);
+const char * node_type_name(struct node_type *vt);
 
 /** @} */

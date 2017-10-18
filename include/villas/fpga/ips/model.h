@@ -53,6 +53,15 @@ union model_parameter_value {
 	bool     bol;
 };
 
+struct xsg_model {
+	uint32_t *map;
+	ssize_t maplen;
+};
+
+struct hls_model {
+
+};
+
 struct model {
 	enum model_type type;		/**< Either HLS or XSG model */
 
@@ -60,13 +69,8 @@ struct model {
 	struct list infos;		/**< A list of key / value pairs with model details */
 
 	union {
-		struct xsg_model {
-			uint32_t *map;
-			ssize_t maplen;
-		} xsg;			/**< XSG specific model data */
-		struct hls_model {
-
-		} hls;			/**< HLS specific model data */
+		struct xsg_model xsg;	/**< XSG specific model data */
+		struct hls_model hls;	/**< HLS specific model data */
 	};
 };
 
