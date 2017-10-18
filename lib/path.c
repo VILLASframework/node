@@ -113,7 +113,7 @@ static void path_destination_enqueue(struct path *p, struct sample *smps[], unsi
 	sample_put_many(clones, cloned);
 }
 
-/** Main thread function per path: receive -> sent messages */
+/** Main thread function per path: read samples -> write samples */
 static void * path_run(void *arg)
 {
 	int ret, recv, tomux, ready, cnt;
@@ -154,7 +154,7 @@ static void * path_run(void *arg)
 					if (recv == 0)
 						goto out2;
 					else if (recv < 0)
-						error("Failed to receive message from node %s", node_name(ps->node));
+						error("Failed to read samples from node %s", node_name(ps->node));
 					else if (recv < ready)
 						warn("Partial read for path %s: read=%u, expected=%u", path_name(p), recv, ready);
 
