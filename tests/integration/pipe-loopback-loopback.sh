@@ -46,7 +46,7 @@ villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FI
 
 # Comapre data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
-RC:$?
+RC=$?
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
 

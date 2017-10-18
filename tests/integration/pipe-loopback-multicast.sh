@@ -32,11 +32,11 @@ cat > ${CONFIG_FILE} << EOF
 {
 	"nodes" : {
 		"node1" : {
-			"type"   : "socket";
-			"layer"  : "udp";
+			"type"   : "socket",
+			"layer"  : "udp",
 
-			"local"  : "*:12000";
-			"remote" : "224.1.2.3:12000";
+			"local"  : "*:12000",
+			"remote" : "224.1.2.3:12000",
 
 			"multicast" : {
 				"enabled" : true,
@@ -57,7 +57,7 @@ villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FI
 
 # Comapre data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
-RC:$?
+RC=$?
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
 
