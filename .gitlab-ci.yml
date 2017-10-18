@@ -3,7 +3,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   PREFIX: /usr/
   RSYNC_OPTS: --recursive --ignore-missing-args --chown ${DEPLOY_USER}:${DEPLOY_USER}
-  DOCKER_TAG_DEV: ${CI_COMMIT_REF_SLUG}
+  DOCKER_TAG_DEV: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE_DEV: villas/node-dev
 
 stages:
