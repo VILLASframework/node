@@ -28,7 +28,7 @@
 
 int influxdb_parse(struct node *n, json_t *cfg)
 {
-	struct influxdb *i = n->_vd;
+	struct influxdb *i = (struct influxdb *) n->_vd;
 
 	json_t *json_fields = NULL;
 	json_error_t err;
@@ -83,7 +83,7 @@ int influxdb_parse(struct node *n, json_t *cfg)
 int influxdb_open(struct node *n)
 {
 	int ret;
-	struct influxdb *i = n->_vd;
+	struct influxdb *i = (struct influxdb *) n->_vd;
 
 	struct addrinfo hints, *servinfo, *p;
 
@@ -119,7 +119,7 @@ int influxdb_open(struct node *n)
 
 int influxdb_close(struct node *n)
 {
-	struct influxdb *i= n->_vd;
+	struct influxdb *i = (struct influxdb *) n->_vd;
 
 	close(i->sd);
 
@@ -134,7 +134,7 @@ int influxdb_close(struct node *n)
 
 int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct influxdb *i = n->_vd;
+	struct influxdb *i = (struct influxdb *) n->_vd;
 
 	char *buf = NULL;
 	ssize_t sentlen, buflen;
@@ -148,7 +148,7 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt)
 			strcatf(&buf, "%c", j == 0 ? ' ' : ',');
 
 			if (j < list_length(&i->fields)) {
-				char *field = list_at(&i->fields, j);
+				char *field = (char *) list_at(&i->fields, j);
 
 				strcatf(&buf, "%s=", field);
 			}
@@ -179,7 +179,7 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 char * influxdb_print(struct node *n)
 {
-	struct influxdb *i = n->_vd;
+	struct influxdb *i = (struct influxdb *) n->_vd;
 	char *buf = NULL;
 
 	strcatf(&buf, "host=%s, port=%s, key=%s, #fields=%zu", i->host, i->port, i->key, list_length(&i->fields));

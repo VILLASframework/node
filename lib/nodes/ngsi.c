@@ -75,7 +75,7 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct sample *smps[], unsigned
 		json_t *attributes = json_array();
 
 		for (size_t j = 0; j < list_length(&i->mapping); j++) {
-			struct ngsi_attribute *map = list_at(&i->mapping, j);
+			struct ngsi_attribute *map = (struct ngsi_attribute *) list_at(&i->mapping, j);
 
 			json_t *attribute = json_pack("{ s: s, s: s }",
 				"name",		map->name,
@@ -99,7 +99,7 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct sample *smps[], unsigned
 				json_t *metadatas = json_array();
 
 				for (size_t i = 0; i < list_length(&map->metadata); i++) {
-					struct ngsi_metadata *meta = list_at(&map->metadata, i);
+					struct ngsi_metadata *meta = (struct ngsi_metadata *) list_at(&map->metadata, i);
 
 					json_array_append_new(metadatas, json_pack("{ s: s, s: s, s: s }",
 						"name",  meta->name,
@@ -214,7 +214,7 @@ static int ngsi_parse_mapping(struct list *mapping, json_t *cfg)
 		if (!token)
 			return -2;
 
-		struct ngsi_attribute *a = alloc(sizeof(struct ngsi_attribute));
+		struct ngsi_attribute *a = (struct ngsi_attribute *) alloc(sizeof(struct ngsi_attribute));
 
 		a->index = index;
 
@@ -406,7 +406,7 @@ int ngsi_deinit()
 
 int ngsi_parse(struct node *n, json_t *cfg)
 {
-	struct ngsi *i = n->_vd;
+	struct ngsi *i = (struct ngsi *) n->_vd;
 
 	int ret;
 	json_error_t err;
@@ -440,7 +440,7 @@ int ngsi_parse(struct node *n, json_t *cfg)
 
 char * ngsi_print(struct node *n)
 {
-	struct ngsi *i = n->_vd;
+	struct ngsi *i = (struct ngsi *) n->_vd;
 
 	return strf("endpoint=%s, timeout=%.3f secs, #mappings=%zu",
 		i->endpoint, i->timeout, list_length(&i->mapping));
@@ -467,7 +467,7 @@ static int ngsi_attribute_destroy(struct ngsi_attribute *attr)
 
 int ngsi_destroy(struct node *n)
 {
-	struct ngsi *i = n->_vd;
+	struct ngsi *i = (struct ngsi *) n->_vd;
 
 	list_destroy(&i->mapping, (dtor_cb_t) ngsi_attribute_destroy, true);
 
@@ -476,7 +476,7 @@ int ngsi_destroy(struct node *n)
 
 int ngsi_start(struct node *n)
 {
-	struct ngsi *i = n->_vd;
+	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
 
 	i->curl = curl_easy_init();
@@ -518,7 +518,7 @@ int ngsi_start(struct node *n)
 
 int ngsi_stop(struct node *n)
 {
-	struct ngsi *i = n->_vd;
+	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
 
 	/* Delete complete entity (not just attributes) */
@@ -536,7 +536,7 @@ int ngsi_stop(struct node *n)
 
 int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct ngsi *i = n->_vd;
+	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
 
 	if (task_wait(&i->task) == 0)
@@ -561,7 +561,7 @@ out:	json_decref(entity);
 
 int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct ngsi *i = n->_vd;
+	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
 
 	json_t *entity = ngsi_build_entity(i, smps, cnt, NGSI_ENTITY_VALUES);
@@ -575,7 +575,7 @@ int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 int ngsi_fd(struct node *n)
 {
-	struct ngsi *i = n->_vd;
+	struct ngsi *i = (struct ngsi *) n->_vd;
 
 	return task_fd(&i->task);
 }

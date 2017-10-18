@@ -211,7 +211,7 @@ int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes)
 
 	off = 0;
 	json_array_foreach(json_mapping, i, json_entry) {
-		struct mapping_entry *e = alloc(sizeof(struct mapping_entry));
+		struct mapping_entry *e = (struct mapping_entry *) alloc(sizeof(struct mapping_entry));
 
 		ret = mapping_parse(e, json_entry, nodes);
 		if (ret)
@@ -352,7 +352,7 @@ int mapping_remap(struct list *m, struct sample *remapped, struct sample *origin
 	remapped->id       = original->id;
 
 	for (size_t i = 0; i < list_length(m); i++) {
-		struct mapping_entry *me = list_at(m, i);
+		struct mapping_entry *me = (struct mapping_entry *) list_at(m, i);
 
 		ret = mapping_update(me, remapped, original, s);
 		if (ret)

@@ -89,7 +89,7 @@ Test(advio, download_large)
 	AFILE *af;
 	int ret, len = 16;
 
-	struct sample *smp = alloc(SAMPLE_LEN(len));
+	struct sample *smp = (struct sample *) alloc(SAMPLE_LEN(len));
 	smp->capacity = len;
 
 	af = afopen(BASE_URI "/download-large" , "r");

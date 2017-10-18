@@ -322,7 +322,7 @@ int api_stop(struct api *a)
 		return 0;
 
 	for (int i = 0; i < list_length(&a->sessions); i++) {
-		struct api_session *s = list_at(&a->sessions, i);
+		struct api_session *s = (struct api_session *) list_at(&a->sessions, i);
 
 		s->state = API_SESSION_STATE_SHUTDOWN;
 

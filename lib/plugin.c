@@ -90,7 +90,7 @@ int plugin_destroy(struct plugin *p)
 struct plugin * plugin_lookup(enum plugin_type type, const char *name)
 {
 	for (size_t i = 0; i < list_length(&plugins); i++) {
-		struct plugin *p = list_at(&plugins, i);
+		struct plugin *p = (struct plugin *) list_at(&plugins, i);
 
 		if (p->type == type && strcmp(p->name, name) == 0)
 			return p;
@@ -102,7 +102,7 @@ struct plugin * plugin_lookup(enum plugin_type type, const char *name)
 void plugin_dump(enum plugin_type type)
 {
 	for (size_t i = 0; i < list_length(&plugins); i++) {
-		struct plugin *p = list_at(&plugins, i);
+		struct plugin *p = (struct plugin *) list_at(&plugins, i);
 
 		if (p->type == type)
 			printf(" - %-13s: %s\n", p->name, p->description);

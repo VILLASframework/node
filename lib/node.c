@@ -58,7 +58,7 @@ int node_init(struct node *n, struct node_type *vt)
 
 	/* Add internal hooks if they are not already in the list */
 	for (size_t i = 0; i < list_length(&plugins); i++) {
-		struct plugin *q = list_at(&plugins, i);
+		struct plugin *q = (struct plugin *) list_at(&plugins, i);
 
 		if (q->type != PLUGIN_TYPE_HOOK)
 			continue;
@@ -66,7 +66,7 @@ int node_init(struct node *n, struct node_type *vt)
 		struct hook_type *vt = &q->hook;
 
 		if ((vt->flags & HOOK_NODE) && (vt->flags & HOOK_BUILTIN)) {
-			struct hook *h = alloc(sizeof(struct hook));
+			struct hook *h = (struct hook *) alloc(sizeof(struct hook));
 
 			ret = hook_init(h, vt, NULL, n);
 			if (ret)
@@ -180,7 +180,7 @@ int node_start(struct node *n)
 	info("Starting node %s", node_name_long(n));
 	{ INDENT
 		for (size_t i = 0; i < list_length(&n->hooks); i++) {
-			struct hook *h = list_at(&n->hooks, i);
+			struct hook *h = (struct hook *) list_at(&n->hooks, i);
 
 			ret = hook_start(h);
 			if (ret)
@@ -209,7 +209,7 @@ int node_stop(struct node *n)
 	info("Stopping node %s", node_name(n));
 	{ INDENT
 		for (size_t i = 0; i < list_length(&n->hooks); i++) {
-			struct hook *h = list_at(&n->hooks, i);
+			struct hook *h = (struct hook *) list_at(&n->hooks, i);
 
 			ret = hook_stop(h);
 			if (ret)
@@ -431,7 +431,7 @@ invalid:
 
 invalid2:
 	for (size_t i = 0; i < list_length(all); i++) {
-		struct node *n = list_at(all, i);
+		struct node *n = (struct node *) list_at(all, i);
 
 		strcatf(&allstr, " %s", node_name_short(n));
 	}

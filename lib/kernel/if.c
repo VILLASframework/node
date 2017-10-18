@@ -76,7 +76,7 @@ int if_start(struct interface *i)
 		/* Assign fwmark's to socket nodes which have netem options */
 		int ret, mark = 0;
 		for (size_t j = 0; j < list_length(&i->sockets); j++) {
-			struct socket *s = list_at(&i->sockets, j);
+			struct socket *s = (struct socket *) list_at(&i->sockets, j);
 
 			if (s->tc_qdisc)
 				s->mark = 1 + mark++;
@@ -96,7 +96,7 @@ int if_start(struct interface *i)
 
 		/* Create netem qdisks and appropriate filter per netem node */
 		for (size_t j = 0; j < list_length(&i->sockets); j++) {
-			struct socket *s = list_at(&i->sockets, j);
+			struct socket *s = (struct socket *) list_at(&i->sockets, j);
 
 			if (s->tc_qdisc) {
 				ret = tc_mark(i,  &s->tc_classifier, TC_HANDLE(1, s->mark), s->mark);

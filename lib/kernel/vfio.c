@@ -248,7 +248,7 @@ int vfio_device_attach(struct vfio_device *d, struct vfio_container *c, const ch
 
 	/* Check if group already exists */
 	for (size_t i = 0; i < list_length(&c->groups); i++) {
-		struct vfio_group *h = list_at(&c->groups, i);
+		struct vfio_group *h = (struct vfio_group *) list_at(&c->groups, i);
 
 		if (h->index == index)
 			g = h;
@@ -324,8 +324,8 @@ int vfio_pci_reset(struct vfio_device *d)
 	size_t reset_infolen = sizeof(struct vfio_pci_hot_reset_info) + sizeof(struct vfio_pci_dependent_device) * 64;
 	size_t resetlen = sizeof(struct vfio_pci_hot_reset) + sizeof(int32_t) * 1;
 
-	struct vfio_pci_hot_reset_info *reset_info = alloc(reset_infolen);
-	struct vfio_pci_hot_reset *reset = alloc(resetlen);
+	struct vfio_pci_hot_reset_info *reset_info = (struct vfio_pci_hot_reset_info *) alloc(reset_infolen);
+	struct vfio_pci_hot_reset *reset = (struct vfio_pci_hot_reset *) alloc(resetlen);
 
 	reset_info->argsz = reset_infolen;
 	reset->argsz = resetlen;
@@ -500,7 +500,7 @@ void vfio_dump(struct vfio_container *v)
 	info("VFIO Extensions: %#x", v->extensions);
 
 	for (size_t i = 0; i < list_length(&v->groups); i++) {
-		struct vfio_group *g = list_at(&v->groups, i);
+		struct vfio_group *g = (struct vfio_group *) list_at(&v->groups, i);
 
 		info("VFIO Group %u, viable=%u, container=%d", g->index,
 			(g->status.flags & VFIO_GROUP_FLAGS_VIABLE) > 0,
@@ -509,7 +509,7 @@ void vfio_dump(struct vfio_container *v)
 
 
 		for (size_t i = 0; i < list_length(&g->devices); i++) { INDENT
-			struct vfio_device *d = list_at(&g->devices, i);
+			struct vfio_device *d = (struct vfio_device *) list_at(&g->devices, i);
 
 			info("Device %s: regions=%u, irqs=%u, flags=%#x", d->name,
 				d->info.num_regions,

@@ -142,7 +142,7 @@ int file_parse(struct node *n, json_t *cfg)
 
 char * file_print(struct node *n)
 {
-	struct file *f = n->_vd;
+	struct file *f = (struct file *) n->_vd;
 	char *buf = NULL;
 
 	const char *epoch_str = NULL;
@@ -196,7 +196,7 @@ char * file_print(struct node *n)
 
 int file_start(struct node *n)
 {
-	struct file *f = n->_vd;
+	struct file *f = (struct file *) n->_vd;
 
 	struct timespec now = time_now();
 	int ret, flags;
@@ -250,7 +250,7 @@ int file_start(struct node *n)
 
 int file_stop(struct node *n)
 {
-	struct file *f = n->_vd;
+	struct file *f = (struct file *) n->_vd;
 	int ret;
 
 	task_destroy(&f->task);
@@ -270,7 +270,7 @@ int file_stop(struct node *n)
 
 int file_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct file *f = n->_vd;
+	struct file *f = (struct file *) n->_vd;
 	int ret;
 	uint64_t steps;
 
@@ -337,7 +337,7 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 
 int file_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct file *f = n->_vd;
+	struct file *f = (struct file *) n->_vd;
 
 	assert(cnt == 1);
 
@@ -348,7 +348,7 @@ int file_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 int file_fd(struct node *n)
 {
-	struct file *f = n->_vd;
+	struct file *f = (struct file *) n->_vd;
 
 	if (f->rate)
 		return task_fd(&f->task);

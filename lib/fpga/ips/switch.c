@@ -20,7 +20,7 @@ int switch_start(struct fpga_ip *c)
 	int ret;
 
 	struct fpga_card *f = c->card;
-	struct sw *sw = c->_vd;
+	struct sw *sw = (struct sw *) c->_vd;
 
 	XAxis_Switch *xsw = &sw->inst;
 
@@ -52,7 +52,7 @@ int switch_start(struct fpga_ip *c)
 int switch_init_paths(struct fpga_ip *c)
 {
 	int ret;
-	struct sw *sw = c->_vd;
+	struct sw *sw = (struct sw *) c->_vd;
 
 	XAxis_Switch *xsw = &sw->inst;
 
@@ -60,7 +60,7 @@ int switch_init_paths(struct fpga_ip *c)
 	XAxisScr_MiPortDisableAll(xsw);
 
 	for (size_t i = 0; i < list_length(&sw->paths); i++) {
-		struct sw_path *p = list_at(&sw->paths, i);
+		struct sw_path *p = (struct sw_path *) list_at(&sw->paths, i);
 		struct fpga_ip *mi, *si;
 
 		mi = list_lookup(&c->card->ips, p->out);
@@ -81,7 +81,7 @@ int switch_init_paths(struct fpga_ip *c)
 
 int switch_destroy(struct fpga_ip *c)
 {
-	struct sw *sw = c->_vd;
+	struct sw *sw = (struct sw *) c->_vd;
 
 	list_destroy(&sw->paths, NULL, true);
 
@@ -90,7 +90,7 @@ int switch_destroy(struct fpga_ip *c)
 
 int switch_parse(struct fpga_ip *c, json_t *cfg)
 {
-	struct sw *sw = c->_vd;
+	struct sw *sw = (struct sw *) c->_vd;
 
 	int ret;
 	size_t index;
@@ -113,7 +113,7 @@ int switch_parse(struct fpga_ip *c, json_t *cfg)
 		error("Setting 'paths' of FPGA IP '%s' should be an array of JSON objects", c->name);
 
 	json_array_foreach(json_paths, index, json_path) {
-		struct sw_path *p = alloc(sizeof(struct sw_path));
+		struct sw_path *p = (struct sw_path *) alloc(sizeof(struct sw_path));
 		int reverse = 0;
 
 		ret = json_unpack_ex(json_path, &err, 0, "{ s?: b, s: s, s: s }",
@@ -141,7 +141,7 @@ int switch_parse(struct fpga_ip *c, json_t *cfg)
 
 int switch_connect(struct fpga_ip *c, struct fpga_ip *mi, struct fpga_ip *si)
 {
-	struct sw *sw = c->_vd;
+	struct sw *sw = (struct sw *) c->_vd;
 	XAxis_Switch *xsw = &sw->inst;
 
 	uint32_t mux, port;
@@ -177,7 +177,7 @@ int switch_connect(struct fpga_ip *c, struct fpga_ip *mi, struct fpga_ip *si)
 
 int switch_disconnect(struct fpga_ip *c, struct fpga_ip *mi, struct fpga_ip *si)
 {
-	struct sw *sw = c->_vd;
+	struct sw *sw = (struct sw *) c->_vd;
 	XAxis_Switch *xsw = &sw->inst;
 
 	if (!XAxisScr_IsMiPortEnabled(xsw, mi->port, si->port))

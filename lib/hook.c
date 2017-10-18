@@ -205,7 +205,7 @@ static int hook_run_list(struct list *hs, struct sample *smps[], unsigned cnt, i
 	unsigned ret;
 
 	for (size_t i = 0; i < list_length(hs); i++) {
-		struct hook *h = list_at(hs, i);
+		struct hook *h = (struct hook *) list_at(hs, i);
 
 		ret = func(h, smps, &cnt);
 		if (ret || !cnt)
@@ -261,7 +261,7 @@ int hook_parse_list(struct list *list, json_t *cfg, struct path *o, struct node 
 		if (!p)
 			jerror(&err, "Unkown hook type '%s'", type);
 
-		struct hook *h = alloc(sizeof(struct hook));
+		struct hook *h = (struct hook *) alloc(sizeof(struct hook));
 
 		ret = hook_init(h, &p->hook, o, n);
 		if (ret)

@@ -125,7 +125,7 @@ Test(fpga, xsg, .description = "XSG: multiply_add")
 	dma = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_dma", NULL });
 	cr_assert(dma);
 
-	struct model *model = ip->_vd;
+	struct model *model = (struct model *) ip->_vd;
 
 	p = list_lookup(&model->parameters, "factor");
 	if (!p)
@@ -265,12 +265,12 @@ Test(fpga, dma, .description = "DMA")
 	struct dma_mem mem, src, dst;
 
 	for (size_t i = 0; i < list_length(&card->ips); i++) { INDENT
-		struct fpga_ip *dm = list_at(&card->ips, i);
+		struct fpga_ip *dm = (struct fpga_ip *) list_at(&card->ips, i);
 
 		if (fpga_vlnv_cmp(&dm->vlnv, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_dma", NULL }))
 			continue; /* skip non DMA IP cores */
 
-		struct dma *dma = dm->_vd;
+		struct dma *dma = (struct dma *) dm->_vd;
 
 		/* Simple DMA can only transfer up to 4 kb due to
 		 * PCIe page size burst limitation */
@@ -326,7 +326,7 @@ Test(fpga, timer, .description = "Timer Counter")
 	ip = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_timer", NULL });
 	cr_assert(ip);
 
-	tmr = ip->_vd;
+	tmr = (struct timer *) ip->_vd;
 
 	XTmrCtr *xtmr = &tmr->inst;
 

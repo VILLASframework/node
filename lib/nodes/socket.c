@@ -62,8 +62,8 @@ int socket_init(struct super_node *sn)
 
 	/* Gather list of used network interfaces */
 	for (size_t i = 0; i < list_length(&p.node.instances); i++) {
-		struct node *n = list_at(&p.node.instances, i);
-		struct socket *s = n->_vd;
+		struct node *n = (struct node *) list_at(&p.node.instances, i);
+		struct socket *s = (struct socket *) n->_vd;
 		struct rtnl_link *link;
 
 		/* Determine outgoing interface */
@@ -78,7 +78,7 @@ int socket_init(struct super_node *sn)
 		struct interface *i;
 
 		for (size_t k = 0; k < list_length(&interfaces); k++) {
-			i = list_at(&interfaces, k);
+			i = (struct interface *) list_at(&interfaces, k);
 
 			if (rtnl_link_get_ifindex(i->nl_link) == rtnl_link_get_ifindex(link))
 				goto found;
@@ -97,7 +97,7 @@ found:		list_push(&i->sockets, s);
 	}
 
 	for (size_t j = 0; j < list_length(&interfaces); j++) {
-		struct interface *i = list_at(&interfaces, j);
+		struct interface *i = (struct interface *) list_at(&interfaces, j);
 
 		if_start(i);
 	}
@@ -110,7 +110,7 @@ int socket_deinit()
 {
 #ifdef WITH_NETEM
 	for (size_t j = 0; j < list_length(&interfaces); j++) {
-		struct interface *i = list_at(&interfaces, j);
+		struct interface *i = (struct interface *) list_at(&interfaces, j);
 
 		if_stop(i);
 	}
@@ -123,7 +123,7 @@ int socket_deinit()
 
 char * socket_print(struct node *n)
 {
-	struct socket *s = n->_vd;
+	struct socket *s = (struct socket *) n->_vd;
 	char *layer = NULL, *buf;
 
 	switch (s->layer) {
@@ -159,7 +159,7 @@ char * socket_print(struct node *n)
 
 int socket_start(struct node *n)
 {
-	struct socket *s = n->_vd;
+	struct socket *s = (struct socket *) n->_vd;
 	int ret;
 
 	/* Some checks on the addresses */
@@ -263,7 +263,7 @@ int socket_start(struct node *n)
 
 int socket_reverse(struct node *n)
 {
-	struct socket *s = n->_vd;
+	struct socket *s = (struct socket *) n->_vd;
 	union sockaddr_union tmp;
 
 	tmp = s->local;
@@ -276,7 +276,7 @@ int socket_reverse(struct node *n)
 int socket_stop(struct node *n)
 {
 	int ret;
-	struct socket *s = n->_vd;
+	struct socket *s = (struct socket *) n->_vd;
 
 	if (s->multicast.enabled) {
 		ret = setsockopt(s->sd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &s->multicast.mreq, sizeof(s->multicast.mreq));
@@ -293,7 +293,7 @@ int socket_stop(struct node *n)
 int socket_destroy(struct node *n)
 {
 #ifdef WITH_NETEM
-	struct socket *s = n->_vd;
+	struct socket *s = (struct socket *) n->_vd;
 
 	rtnl_qdisc_put(s->tc_qdisc);
 	rtnl_cls_put(s->tc_classifier);
@@ -305,7 +305,7 @@ int socket_destroy(struct node *n)
 int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int ret;
-	struct socket *s = n->_vd;
+	struct socket *s = (struct socket *) n->_vd;
 
 	char buf[SOCKET_MAX_PACKET_LEN];
 	char *bufptr = buf;
@@ -355,7 +355,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct socket *s = n->_vd;
+	struct socket *s = (struct socket *) n->_vd;
 
 	char data[SOCKET_MAX_PACKET_LEN];
 	int ret;
@@ -386,7 +386,7 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 int socket_parse(struct node *n, json_t *cfg)
 {
-	struct socket *s = n->_vd;
+	struct socket *s = (struct socket *) n->_vd;
 
 	const char *local, *remote;
 	const char *layer = NULL;
@@ -685,7 +685,7 @@ int socket_compare_addr(struct sockaddr *x, struct sockaddr *y)
 
 int socket_fd(struct node *n)
 {
-	struct socket *s = n->_vd;
+	struct socket *s = (struct socket *) n->_vd;
 
 	return s->sd;
 }

@@ -51,7 +51,7 @@ enum signal_type signal_lookup_type(const char *type)
 
 int signal_parse(struct node *n, json_t *cfg)
 {
-	struct signal *s = n->_vd;
+	struct signal *s = (struct signal *) n->_vd;
 
 	int ret;
 	const char *type = NULL;
@@ -101,7 +101,7 @@ int signal_parse_cli(struct node *n, int argc, char *argv[])
 {
 	char *type;
 
-	struct signal *s = n->_vd;
+	struct signal *s = (struct signal *) n->_vd;
 
 	/* Default values */
 	s->rate = 10;
@@ -172,7 +172,7 @@ check:		if (optarg == endptr)
 int signal_open(struct node *n)
 {
 	int ret;
-	struct signal *s = n->_vd;
+	struct signal *s = (struct signal *) n->_vd;
 
 	s->counter = 0;
 	s->started = time_now();
@@ -194,7 +194,7 @@ int signal_open(struct node *n)
 int signal_close(struct node *n)
 {
 	int ret;
-	struct signal* s = n->_vd;
+	struct signal* s = (struct signal *) n->_vd;
 
 	if (s->rt) {
 		ret = task_destroy(&s->task);
@@ -209,7 +209,7 @@ int signal_close(struct node *n)
 
 int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct signal *s = n->_vd;
+	struct signal *s = (struct signal *) n->_vd;
 	struct sample *t = smps[0];
 
 	struct timespec ts;
@@ -270,7 +270,7 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 char * signal_print(struct node *n)
 {
-	struct signal *s = n->_vd;
+	struct signal *s = (struct signal *) n->_vd;
 	char *type, *buf = NULL;
 
 	switch (s->type) {
@@ -296,7 +296,7 @@ char * signal_print(struct node *n)
 
 int signal_fd(struct node *n)
 {
-	struct signal *s = n->_vd;
+	struct signal *s = (struct signal *) n->_vd;
 
 	return task_fd(&s->task);
 }

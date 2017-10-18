@@ -34,7 +34,7 @@ struct decimate {
 
 static int decimate_init(struct hook *h)
 {
-	struct decimate *p = h->_vd;
+	struct decimate *p = (struct decimate *) h->_vd;
 
 	p->counter = 0;
 
@@ -43,7 +43,7 @@ static int decimate_init(struct hook *h)
 
 static int decimate_parse(struct hook *h, json_t *cfg)
 {
-	struct decimate *p = h->_vd;
+	struct decimate *p = (struct decimate *) h->_vd;
 
 	int ret;
 	json_error_t err;
@@ -59,7 +59,7 @@ static int decimate_parse(struct hook *h, json_t *cfg)
 
 static int decimate_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	struct decimate *p = h->_vd;
+	struct decimate *p = (struct decimate *) h->_vd;
 
 	int i, ok;
 	for (i = 0, ok = 0; i < *cnt; i++) {

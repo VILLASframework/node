@@ -76,7 +76,7 @@ static int get_monitor_event(void *monitor, int *value, char **address)
 
 int zeromq_reverse(struct node *n)
 {
-	struct zeromq *z = n->_vd;
+	struct zeromq *z = (struct zeromq *) n->_vd;
 
 	if (list_length(&z->publisher.endpoints) != 1)
 		return -1;
@@ -92,7 +92,7 @@ int zeromq_reverse(struct node *n)
 
 int zeromq_parse(struct node *n, json_t *cfg)
 {
-	struct zeromq *z = n->_vd;
+	struct zeromq *z = (struct zeromq *) n->_vd;
 
 	int ret;
 	const char *ep = NULL;
@@ -197,7 +197,7 @@ int zeromq_parse(struct node *n, json_t *cfg)
 
 char * zeromq_print(struct node *n)
 {
-	struct zeromq *z = n->_vd;
+	struct zeromq *z = (struct zeromq *) n->_vd;
 
 	char *buf = NULL;
 	char *pattern = NULL;
@@ -218,7 +218,7 @@ char * zeromq_print(struct node *n)
 	);
 
 	for (size_t i = 0; i < list_length(&z->publisher.endpoints); i++) {
-		char *ep = list_at(&z->publisher.endpoints, i);
+		char *ep = (char *) list_at(&z->publisher.endpoints, i);
 
 		strcatf(&buf, "%s ", ep);
 	}
@@ -246,7 +246,7 @@ int zeromq_deinit()
 int zeromq_start(struct node *n)
 {
 	int ret;
-	struct zeromq *z = n->_vd;
+	struct zeromq *z = (struct zeromq *) n->_vd;
 
 	switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
@@ -351,7 +351,7 @@ int zeromq_start(struct node *n)
 
 	/* Spawn server for publisher */
 	for (size_t i = 0; i < list_length(&z->publisher.endpoints); i++) {
-		char *ep = list_at(&z->publisher.endpoints, i);
+		char *ep = (char *) list_at(&z->publisher.endpoints, i);
 
 		ret = zmq_bind(z->publisher.socket, ep);
 		if (ret < 0)
@@ -387,7 +387,7 @@ fail:
 int zeromq_stop(struct node *n)
 {
 	int ret;
-	struct zeromq *z = n->_vd;
+	struct zeromq *z = (struct zeromq *) n->_vd;
 
 	ret = zmq_close(z->subscriber.socket);
 	if (ret)
@@ -405,7 +405,7 @@ int zeromq_stop(struct node *n)
 int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int recv, ret;
-	struct zeromq *z = n->_vd;
+	struct zeromq *z = (struct zeromq *) n->_vd;
 
 	zmq_msg_t m;
 
@@ -441,7 +441,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt)
 int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int ret;
-	struct zeromq *z = n->_vd;
+	struct zeromq *z = (struct zeromq *) n->_vd;
 
 	size_t wbytes;
 	zmq_msg_t m;
@@ -491,7 +491,7 @@ fail:
 int zeromq_fd(struct node *n)
 {
 	int ret;
-	struct zeromq *z = n->_vd;
+	struct zeromq *z = (struct zeromq *) n->_vd;
 
 	int fd;
 	size_t len = sizeof(fd);

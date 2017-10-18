@@ -41,7 +41,7 @@ struct convert {
 
 static int convert_init(struct hook *h)
 {
-	struct convert *p = h->_vd;
+	struct convert *p = (struct convert *) h->_vd;
 
 	p->scale = 1;
 	p->mask = -1;
@@ -51,7 +51,7 @@ static int convert_init(struct hook *h)
 
 static int convert_parse(struct hook *h, json_t *cfg)
 {
-	struct convert *p = h->_vd;
+	struct convert *p = (struct convert *) h->_vd;
 
 	int ret;
 	json_error_t err;
@@ -77,7 +77,7 @@ static int convert_parse(struct hook *h, json_t *cfg)
 
 static int convert_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	struct convert *p = h->_vd;
+	struct convert *p = (struct convert *) h->_vd;
 
 	for (int i = 0; i < *cnt; i++) {
 		for (int k = 0; k < smps[i]->length; k++) {

@@ -111,7 +111,7 @@ int fpga_card_parse(struct fpga_card *c, json_t *cfg, const char *name)
 		const char *vlnv;
 
 		struct fpga_ip_type *vt;
-		struct fpga_ip *ip = alloc(sizeof(struct fpga_ip));
+		struct fpga_ip *ip = (struct fpga_ip *) alloc(sizeof(struct fpga_ip));
 
 		ip->card = c;
 
@@ -149,7 +149,7 @@ int fpga_card_parse_list(struct list *cards, json_t *cfg)
 	const char *name;
 	json_t *json_fpga;
 	json_object_foreach(cfg, name, json_fpga) {
-		struct fpga_card *c = alloc(sizeof(struct fpga_card));
+		struct fpga_card *c = (struct fpga_card *) alloc(sizeof(struct fpga_card));
 
 		ret = fpga_card_parse(c, json_fpga, name);
 		if (ret)
@@ -203,7 +203,7 @@ int fpga_card_start(struct fpga_card *c)
 
 	/* Initialize IP cores */
 	for (size_t j = 0; j < list_length(&c->ips); j++) {
-		struct fpga_ip *i = list_at(&c->ips, j);
+		struct fpga_ip *i = (struct fpga_ip *) list_at(&c->ips, j);
 
 		ret = fpga_ip_start(i);
 		if (ret)
@@ -222,7 +222,7 @@ int fpga_card_stop(struct fpga_card *c)
 	assert(c->state == STATE_STOPPED);
 
 	for (size_t j = 0; j < list_length(&c->ips); j++) {
-		struct fpga_ip *i = list_at(&c->ips, j);
+		struct fpga_ip *i = (struct fpga_ip *) list_at(&c->ips, j);
 
 		ret = fpga_ip_stop(i);
 		if (ret)
@@ -247,7 +247,7 @@ void fpga_card_dump(struct fpga_card *c)
 
 		info("IP blocks:");
 		for (size_t j = 0; j < list_length(&c->ips); j++) { INDENT
-			struct fpga_ip *i = list_at(&c->ips, j);
+			struct fpga_ip *i = (struct fpga_ip *) list_at(&c->ips, j);
 
 			fpga_ip_dump(i);
 		}

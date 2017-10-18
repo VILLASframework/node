@@ -64,7 +64,7 @@ static int model_xsg_map_parse(uint32_t *map, size_t len, struct list *parameter
 				if (length < 4)
 					break; /* block is to small to describe a gateway */
 
-				struct model_parameter *e, *p = alloc(sizeof(struct model_parameter));
+				struct model_parameter *e, *p = (struct model_parameter *) alloc(sizeof(struct model_parameter));
 
 				p->name          =  copy_string(3);
 				p->default_value.flt =  *((float *) &data[1]);
@@ -135,7 +135,7 @@ static int model_xsg_map_read(uint32_t *map, size_t len, void *baseaddr)
 
 int model_parse(struct fpga_ip *c, json_t *cfg)
 {
-	struct model *m = c->_vd;
+	struct model *m = (struct model *) c->_vd;
 
 	int ret;
 
@@ -163,7 +163,7 @@ int model_parse(struct fpga_ip *c, json_t *cfg)
 			if (!json_is_real(value))
 				error("Parameters of FPGA IP '%s' must be of type floating point", c->name);
 
-			struct model_parameter *p = alloc(sizeof(struct model_parameter));
+			struct model_parameter *p = (struct model_parameter *) alloc(sizeof(struct model_parameter));
 
 			p->name = strdup(name);
 			p->default_value.flt = json_real_value(value);
@@ -206,7 +206,7 @@ int model_init(struct fpga_ip *c)
 {
 	int ret;
 
-	struct model *m = c->_vd;
+	struct model *m = (struct model *) c->_vd;
 
 	list_init(&m->parameters);
 	list_init(&m->infos);
@@ -218,7 +218,7 @@ int model_init(struct fpga_ip *c)
 
 	/* Set default values for parameters */
 	for (size_t i = 0; i < list_length(&m->parameters); i++) {
-		struct model_parameter *p = list_at(&m->parameters, i);
+		struct model_parameter *p = (struct model_parameter *) list_at(&m->parameters, i);
 
 		p->ip = c;
 
@@ -236,7 +236,7 @@ int model_init(struct fpga_ip *c)
 
 int model_destroy(struct fpga_ip *c)
 {
-	struct model *m = c->_vd;
+	struct model *m = (struct model *) c->_vd;
 
 	list_destroy(&m->parameters, (dtor_cb_t) model_parameter_destroy, true);
 	list_destroy(&m->infos, (dtor_cb_t) model_info_destroy, true);
@@ -249,7 +249,7 @@ int model_destroy(struct fpga_ip *c)
 
 void model_dump(struct fpga_ip *c)
 {
-	struct model *m = c->_vd;
+	struct model *m = (struct model *) c->_vd;
 
 	const char *param_type[] = { "UFix", "Fix", "Float", "Boolean" };
 	const char *parameter_dirs[] = { "In", "Out", "In/Out" };
@@ -257,7 +257,7 @@ void model_dump(struct fpga_ip *c)
 	{ INDENT
 		info("Parameters:");
 		for (size_t i = 0; i < list_length(&m->parameters); i++) { INDENT
-			struct model_parameter *p = list_at(&m->parameters, i);
+			struct model_parameter *p = (struct model_parameter *) list_at(&m->parameters, i);
 
 			if (p->direction == MODEL_PARAMETER_IN)
 				info("%#jx: %s (%s) = %.3f %s %u",
@@ -278,7 +278,7 @@ void model_dump(struct fpga_ip *c)
 
 		info("Infos:");
 		for (size_t j = 0; j < list_length(&m->infos); j++) { INDENT
-			struct model_info *i = list_at(&m->infos, j);
+			struct model_info *i = (struct model_info *) list_at(&m->infos, j);
 
 			info("%s: %s", i->field, i->value);
 		}
@@ -340,8 +340,8 @@ int model_parameter_write(struct model_parameter *p, double v)
 
 void model_parameter_add(struct fpga_ip *c, const char *name, enum model_parameter_direction dir, enum model_parameter_type type)
 {
-	struct model *m = c->_vd;
-	struct model_parameter *p = alloc(sizeof(struct model_parameter));
+	struct model *m = (struct model *) c->_vd;
+	struct model_parameter *p = (struct model_parameter *) alloc(sizeof(struct model_parameter));
 
 	p->name = strdup(name);
 	p->type = type;
@@ -352,7 +352,7 @@ void model_parameter_add(struct fpga_ip *c, const char *name, enum model_paramet
 
 int model_parameter_remove(struct fpga_ip *c, const char *name)
 {
-	struct model *m = c->_vd;
+	struct model *m = (struct model *) c->_vd;
 	struct model_parameter *p;
 
 	p = list_lookup(&m->parameters, name);

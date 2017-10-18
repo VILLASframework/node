@@ -15,7 +15,7 @@
 
 int dft_parse(struct fpga_ip *c, json_t *cfg)
 {
-	struct dft *dft = c->_vd;
+	struct dft *dft = (struct dft *) c->_vd;
 
 	int ret;
 
@@ -56,7 +56,7 @@ int dft_start(struct fpga_ip *c)
 	int ret;
 
 	struct fpga_card *f = c->card;
-	struct dft *dft = c->_vd;
+	struct dft *dft = (struct dft *) c->_vd;
 
 	XHls_dft *xdft = &dft->inst;
 	XHls_dft_Config xdft_cfg = {
@@ -86,7 +86,7 @@ int dft_start(struct fpga_ip *c)
 
 int dft_stop(struct fpga_ip *c)
 {
-	struct dft *dft = c->_vd;
+	struct dft *dft = (struct dft *) c->_vd;
 
 	XHls_dft *xdft = &dft->inst;
 
@@ -97,7 +97,7 @@ int dft_stop(struct fpga_ip *c)
 
 int dft_destroy(struct fpga_ip *c)
 {
-	struct dft *dft = c->_vd;
+	struct dft *dft = (struct dft *) c->_vd;
 
 	if (dft->fharmonics) {
 		free(dft->fharmonics);

@@ -53,7 +53,7 @@ struct skip_first {
 
 static int skip_first_parse(struct hook *h, json_t *cfg)
 {
-	struct skip_first *p = h->_vd;
+	struct skip_first *p = (struct skip_first *) h->_vd;
 
 	double seconds;
 
@@ -82,7 +82,7 @@ static int skip_first_parse(struct hook *h, json_t *cfg)
 
 static int skip_first_restart(struct hook *h)
 {
-	struct skip_first *p = h->_vd;
+	struct skip_first *p = (struct skip_first *) h->_vd;
 
 	p->state = HOOK_SKIP_FIRST_STATE_STARTED;
 
@@ -91,7 +91,7 @@ static int skip_first_restart(struct hook *h)
 
 static int skip_first_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	struct skip_first *p = h->_vd;
+	struct skip_first *p = (struct skip_first *) h->_vd;
 
 	/* Remember sequence no or timestamp of first sample. */
 	if (p->state == HOOK_SKIP_FIRST_STATE_STARTED) {

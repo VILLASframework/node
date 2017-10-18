@@ -15,7 +15,7 @@
 
 int cbuilder_parse(struct node *n, json_t *cfg)
 {
-	struct cbuilder *cb = n->_vd;
+	struct cbuilder *cb = (struct cbuilder *) n->_vd;
 	json_t *json_param, *json_params = NULL;
 
 	const char *model;
@@ -58,7 +58,7 @@ int cbuilder_parse(struct node *n, json_t *cfg)
 int cbuilder_start(struct node *n)
 {
 	int ret;
-	struct cbuilder *cb = n->_vd;
+	struct cbuilder *cb = (struct cbuilder *) n->_vd;
 
 	/* Initialize mutex and cv */
 	pthread_mutex_init(&cb->mtx, NULL);
@@ -83,7 +83,7 @@ int cbuilder_start(struct node *n)
 int cbuilder_stop(struct node *n)
 {
 	int ret;
-	struct cbuilder *cb = n->_vd;
+	struct cbuilder *cb = (struct cbuilder *) n->_vd;
 
 	ret = close(cb->eventfd);
 	if (ret)
@@ -96,7 +96,7 @@ int cbuilder_stop(struct node *n)
 
 int cbuilder_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct cbuilder *cb = n->_vd;
+	struct cbuilder *cb = (struct cbuilder *) n->_vd;
 	struct sample *smp = smps[0];
 
 	uint64_t cntr;
@@ -125,7 +125,7 @@ int cbuilder_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct cbuilder *cb = n->_vd;
+	struct cbuilder *cb = (struct cbuilder *) n->_vd;
 	struct sample *smp = smps[0];
 
 	pthread_mutex_lock(&cb->mtx);
@@ -147,7 +147,7 @@ int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 int cbuilder_fd(struct node *n)
 {
-	struct cbuilder *cb = n->_vd;
+	struct cbuilder *cb = (struct cbuilder *) n->_vd;
 
 	return cb->eventfd;
 }

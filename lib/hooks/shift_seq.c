@@ -34,7 +34,7 @@ struct shift {
 
 static int shift_seq_parse(struct hook *h, json_t *cfg)
 {
-	struct shift *p = h->_vd;
+	struct shift *p = (struct shift *) h->_vd;
 
 	json_error_t err;
 	int ret;
@@ -50,7 +50,7 @@ static int shift_seq_parse(struct hook *h, json_t *cfg)
 
 static int shift_seq_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	struct shift *p = h->_vd;
+	struct shift *p = (struct shift *) h->_vd;
 
 	for (int i = 0; i < *cnt; i++)
 		smps[i]->sequence += p->offset;

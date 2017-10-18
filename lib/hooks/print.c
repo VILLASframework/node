@@ -38,7 +38,7 @@ struct print {
 
 static int print_init(struct hook *h)
 {
-	struct print *p = h->_vd;
+	struct print *p = (struct print *) h->_vd;
 
 	p->uri = NULL;
 	p->format = io_format_lookup("villas-human");
@@ -48,7 +48,7 @@ static int print_init(struct hook *h)
 
 static int print_start(struct hook *h)
 {
-	struct print *p = h->_vd;
+	struct print *p = (struct print *) h->_vd;
 	int ret;
 
 	ret = io_init(&p->io, p->format, SAMPLE_HAS_ALL);
@@ -64,7 +64,7 @@ static int print_start(struct hook *h)
 
 static int print_stop(struct hook *h)
 {
-	struct print *p = h->_vd;
+	struct print *p = (struct print *) h->_vd;
 	int ret;
 
 	ret = io_close(&p->io);
@@ -80,7 +80,7 @@ static int print_stop(struct hook *h)
 
 static int print_parse(struct hook *h, json_t *cfg)
 {
-	struct print *p = h->_vd;
+	struct print *p = (struct print *) h->_vd;
 	const char *format = NULL;
 	int ret;
 	json_error_t err;
@@ -103,7 +103,7 @@ static int print_parse(struct hook *h, json_t *cfg)
 
 static int print_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	struct print *p = h->_vd;
+	struct print *p = (struct print *) h->_vd;
 
 	io_print(&p->io, smps, *cnt);
 

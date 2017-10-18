@@ -28,7 +28,7 @@
 
 int loopback_parse(struct node *n, json_t *cfg)
 {
-	struct loopback *l = n->_vd;
+	struct loopback *l = (struct loopback *) n->_vd;
 
 	json_error_t err;
 	int ret;
@@ -48,7 +48,7 @@ int loopback_parse(struct node *n, json_t *cfg)
 int loopback_open(struct node *n)
 {
 	int ret;
-	struct loopback *l = n->_vd;
+	struct loopback *l = (struct loopback *) n->_vd;
 
 	ret = pool_init(&l->pool, l->queuelen, SAMPLE_LEN(n->samplelen), &memtype_hugepage);
 	if (ret)
@@ -60,7 +60,7 @@ int loopback_open(struct node *n)
 int loopback_close(struct node *n)
 {
 	int ret;
-	struct loopback *l= n->_vd;
+	struct loopback *l= (struct loopback *) n->_vd;
 
 	ret = pool_destroy(&l->pool);
 	if (ret)
@@ -73,7 +73,7 @@ int loopback_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int avail;
 
-	struct loopback *l = n->_vd;
+	struct loopback *l = (struct loopback *) n->_vd;
 	struct sample *cpys[cnt];
 
 	avail = queue_signalled_pull_many(&l->queue, (void **) cpys, cnt);
@@ -90,7 +90,7 @@ int loopback_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int copied;
 
-	struct loopback *l = n->_vd;
+	struct loopback *l = (struct loopback *) n->_vd;
 	struct sample *copies[cnt];
 
 	copied = sample_alloc_many(&l->pool, copies, cnt);
@@ -104,7 +104,7 @@ int loopback_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 char * loopback_print(struct node *n)
 {
-	struct loopback *l = n->_vd;
+	struct loopback *l = (struct loopback *) n->_vd;
 	char *buf = NULL;
 
 	strcatf(&buf, "queuelen=%d", l->queuelen);
@@ -114,7 +114,7 @@ char * loopback_print(struct node *n)
 
 int loopback_fd(struct node *n)
 {
-	struct loopback *l = n->_vd;
+	struct loopback *l = (struct loopback *) n->_vd;
 
 	return queue_signalled_fd(&l->queue);
 }

@@ -155,7 +155,7 @@ static int memory_hugepage_free(struct memtype *m, void *ptr, size_t len)
 void* memory_managed_alloc(struct memtype *m, size_t len, size_t alignment)
 {
 	/* Simple first-fit allocation */
-	struct memblock *first = m->_vd;
+	struct memblock *first = (struct memblock *) m->_vd;
 	struct memblock *block;
 
 	for (block = first; block != NULL; block = block->next) {
@@ -230,7 +230,7 @@ void* memory_managed_alloc(struct memtype *m, size_t len, size_t alignment)
 
 int memory_managed_free(struct memtype *m, void *ptr, size_t len)
 {
-	struct memblock *first = m->_vd;
+	struct memblock *first = (struct memblock *) m->_vd;
 	struct memblock *block;
 	char *cptr = ptr;
 

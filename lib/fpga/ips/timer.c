@@ -17,7 +17,7 @@
 int timer_start(struct fpga_ip *c)
 {
 	struct fpga_card *f = c->card;
-	struct timer *tmr = c->_vd;
+	struct timer *tmr = (struct timer *) c->_vd;
 
 	XTmrCtr *xtmr = &tmr->inst;
 	XTmrCtr_Config xtmr_cfg = {

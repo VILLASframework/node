@@ -98,7 +98,7 @@ int fpga_benchmark_jitter(struct fpga_card *c)
 	if (!ip || !c->intc)
 		return -1;
 
-	struct timer *tmr = ip->_vd;
+	struct timer *tmr = (struct timer *) ip->_vd;
 
 	XTmrCtr *xtmr = &tmr->inst;
 

@@ -149,7 +149,7 @@ int opal_print_global()
 
 int opal_parse(struct node *n, json_t *cfg)
 {
-	struct opal *o = n->_vd;
+	struct opal *o = (struct opal *) n->_vd;
 
 	int ret;
 	json_error_t err;
@@ -167,7 +167,7 @@ int opal_parse(struct node *n, json_t *cfg)
 
 char * opal_print(struct node *n)
 {
-	struct opal *o = n->_vd;
+	struct opal *o = (struct opal *) n->_vd;
 
 	/** @todo: Print send_params, recv_params */
 
@@ -177,7 +177,7 @@ char * opal_print(struct node *n)
 
 int opal_start(struct node *n)
 {
-	struct opal *o = n->_vd;
+	struct opal *o = (struct opal *) n->_vd;
 
 	/* Search for valid send and recv ids */
 	int sfound = 0, rfound = 0;
@@ -206,7 +206,7 @@ int opal_stop(struct node *n)
 
 int opal_read(struct node *n, struct pool *pool, unsigned cnt)
 {
-	struct opal *o = n->_vd;
+	struct opal *o = (struct opal *) n->_vd;
 
 	int state, len, ret;
 	unsigned id;
@@ -271,7 +271,7 @@ int opal_read(struct node *n, struct pool *pool, unsigned cnt)
 
 int opal_write(struct node *n, struct pool *pool, unsigned cnt)
 {
-	struct opal *o = n->_vd;
+	struct opal *o = (struct opal *) n->_vd;
 
 	struct msg *m = &pool[first % poolsize];
 

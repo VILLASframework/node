@@ -35,7 +35,7 @@ struct restart {
 
 static int restart_start(struct hook *h)
 {
-	struct restart *r = h->_vd;
+	struct restart *r = (struct restart *) h->_vd;
 
 	r->prev = NULL;
 
@@ -44,7 +44,7 @@ static int restart_start(struct hook *h)
 
 static int restart_stop(struct hook *h)
 {
-	struct restart *r = h->_vd;
+	struct restart *r = (struct restart *) h->_vd;
 
 	if (r->prev)
 		sample_put(r->prev);
@@ -55,7 +55,7 @@ static int restart_stop(struct hook *h)
 static int restart_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	int i;
-	struct restart *r = h->_vd;
+	struct restart *r = (struct restart *) h->_vd;
 	struct sample *prev, *cur = NULL;
 
 	assert(h->node);
@@ -73,7 +73,7 @@ static int restart_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 
 				/* Run restart hooks */
 				for (size_t i = 0; i < list_length(&h->node->hooks); i++) {
-					struct hook *k = list_at(&h->node->hooks, i);
+					struct hook *k = (struct hook *) list_at(&h->node->hooks, i);
 
 					hook_restart(k);
 				}

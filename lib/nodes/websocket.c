@@ -265,7 +265,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			if (lws_is_final_fragment(wsi)) {
 				struct timespec ts_recv = time_now();
 
-				struct websocket *w = c->node->_vd;
+				struct websocket *w = (struct websocket *) c->node->_vd;
 				struct sample **smps = alloca(cnt * sizeof(struct sample *));
 
 				ret = sample_alloc_many(&w->pool, smps, cnt);
@@ -322,7 +322,7 @@ int websocket_init(struct super_node *sn)
 int websocket_deinit()
 {
 	for (size_t i = 0; i < list_length(&connections); i++) {
-		struct websocket_connection *c = list_at(&connections, i);
+		struct websocket_connection *c = (struct websocket_connection *) list_at(&connections, i);
 
 		c->state = STATE_SHUTDOWN;
 
@@ -343,7 +343,7 @@ int websocket_deinit()
 int websocket_start(struct node *n)
 {
 	int ret;
-	struct websocket *w = n->_vd;
+	struct websocket *w = (struct websocket *) n->_vd;
 
 	ret = pool_init(&w->pool, DEFAULT_WEBSOCKET_QUEUELEN, SAMPLE_LEN(DEFAULT_WEBSOCKET_SAMPLELEN), &memtype_hugepage);
 	if (ret)
@@ -354,8 +354,8 @@ int websocket_start(struct node *n)
 		return ret;
 
 	for (int i = 0; i < list_length(&w->destinations); i++) {
-		struct websocket_destination *d = list_at(&w->destinations, i);
-		struct websocket_connection *c = alloc(sizeof(struct websocket_connection));
+		struct websocket_destination *d = (struct websocket_destination *) list_at(&w->destinations, i);
+		struct websocket_connection *c = (struct websocket_connection *) alloc(sizeof(struct websocket_connection));
 
 		c->state = STATE_CONNECTING;
 		c->mode = WEBSOCKET_MODE_CLIENT;
@@ -384,14 +384,14 @@ int websocket_start(struct node *n)
 int websocket_stop(struct node *n)
 {
 	int ret;
-	struct websocket *w = n->_vd;
+	struct websocket *w = (struct websocket *) n->_vd;
 
 	/* Wait for all connections to be closed */
 	for (;;) {
 		int connecting = 0;
 
 		for (int i = 0; i < list_length(&w->destinations); i++) {
-			struct websocket_destination *d = list_at(&w->destinations, i);
+			struct websocket_destination *d = (struct websocket_destination *) list_at(&w->destinations, i);
 			struct websocket_connection *c = d->info.userdata;
 
 			if (c->state == STATE_CONNECTING)
@@ -406,7 +406,7 @@ int websocket_stop(struct node *n)
 	}
 
 	for (size_t i = 0; i < list_length(&connections); i++) {
-		struct websocket_connection *c = list_at(&connections, i);
+		struct websocket_connection *c = (struct websocket_connection *) list_at(&connections, i);
 
 		if (c->node != n)
 			continue;
@@ -430,7 +430,7 @@ int websocket_stop(struct node *n)
 
 int websocket_destroy(struct node *n)
 {
-	struct websocket *w = n->_vd;
+	struct websocket *w = (struct websocket *) n->_vd;
 
 	list_destroy(&w->destinations, (dtor_cb_t) websocket_destination_destroy, true);
 
@@ -441,7 +441,7 @@ int websocket_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int avail;
 
-	struct websocket *w = n->_vd;
+	struct websocket *w = (struct websocket *) n->_vd;
 	struct sample *cpys[cnt];
 
 	avail = queue_signalled_pull_many(&w->queue, (void **) cpys, cnt);
@@ -460,7 +460,7 @@ int websocket_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int avail;
 
-	struct websocket *w = n->_vd;
+	struct websocket *w = (struct websocket *) n->_vd;
 	struct sample *cpys[cnt];
 
 	/* Make copies of all samples */
@@ -476,7 +476,7 @@ int websocket_write(struct node *n, struct sample *smps[], unsigned cnt)
 	}
 
 	for (size_t i = 0; i < list_length(&connections); i++) {
-		struct websocket_connection *c = list_at(&connections, i);
+		struct websocket_connection *c = (struct websocket_connection *) list_at(&connections, i);
 
 		if (c->node == n || c->node == NULL)
 			websocket_connection_write(c, cpys, cnt);
@@ -489,7 +489,7 @@ int websocket_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 int websocket_parse(struct node *n, json_t *cfg)
 {
-	struct websocket *w = n->_vd;
+	struct websocket *w = (struct websocket *) n->_vd;
 	int ret;
 
 	size_t index;
@@ -514,7 +514,7 @@ int websocket_parse(struct node *n, json_t *cfg)
 			if (!uri)
 				error("The 'destinations' setting of node %s must be an array of URLs", node_name(n));
 
-			struct websocket_destination *d = alloc(sizeof(struct websocket_destination));
+			struct websocket_destination *d = (struct websocket_destination *) alloc(sizeof(struct websocket_destination));
 
 			d->uri = strdup(uri);
 
@@ -539,14 +539,14 @@ int websocket_parse(struct node *n, json_t *cfg)
 
 char * websocket_print(struct node *n)
 {
-	struct websocket *w = n->_vd;
+	struct websocket *w = (struct websocket *) n->_vd;
 
 	char *buf = NULL;
 
 	buf = strcatf(&buf, "destinations=[ ");
 
 	for (size_t i = 0; i < list_length(&w->destinations); i++) {
-		struct websocket_destination *d = list_at(&w->destinations, i);
+		struct websocket_destination *d = (struct websocket_destination *) list_at(&w->destinations, i);
 
 		buf = strcatf(&buf, "%s://%s:%d/%s ",
 			d->info.ssl_connection ? "wss" : "ws",
@@ -563,7 +563,7 @@ char * websocket_print(struct node *n)
 
 int websocket_fd(struct node *n)
 {
-	struct websocket *w = n->_vd;
+	struct websocket *w = (struct websocket *) n->_vd;
 
 	return queue_signalled_fd(&w->queue);
 }

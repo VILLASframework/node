@@ -80,7 +80,7 @@ int fpga_deinit()
 
 int fpga_parse(struct node *n, json_t *cfg)
 {
-	struct fpga *f = n->_vd;
+	struct fpga *f = (struct fpga *) n->_vd;
 	struct fpga_card *card;
 	struct fpga_ip *ip;
 
@@ -124,7 +124,7 @@ int fpga_parse(struct node *n, json_t *cfg)
 
 char * fpga_print(struct node *n)
 {
-	struct fpga *f = n->_vd;
+	struct fpga *f = (struct fpga *) n->_vd;
 	struct fpga_card *c = f->ip->card;
 
 	if (f->ip)
@@ -141,7 +141,7 @@ int fpga_start(struct node *n)
 {
 	int ret;
 
-	struct fpga *f = n->_vd;
+	struct fpga *f = (struct fpga *) n->_vd;
 	struct fpga_card *c = f->ip->card;
 
 	fpga_card_init(c, f->pci, f->vfio_container);
@@ -176,7 +176,7 @@ int fpga_stop(struct node *n)
 {
 	int ret;
 
-	struct fpga *f = n->_vd;
+	struct fpga *f = (struct fpga *) n->_vd;
 	struct fpga_card *c = f->ip->card;
 
 	switch (f->ip->_vt->type) {
@@ -202,7 +202,7 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 
-	struct fpga *f = n->_vd;
+	struct fpga *f = (struct fpga *) n->_vd;
 	struct sample *smp = smps[0];
 
 	size_t recvlen;
@@ -243,7 +243,7 @@ int fpga_read(struct node *n, struct sample *smps[], unsigned cnt)
 int fpga_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int ret;
-	struct fpga *f = n->_vd;
+	struct fpga *f = (struct fpga *) n->_vd;
 	struct sample *smp = smps[0];
 
 	size_t sentlen;

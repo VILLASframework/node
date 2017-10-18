@@ -48,7 +48,7 @@ struct stats_collect {
 
 static int stats_collect_init(struct hook *h)
 {
-	struct stats_collect *p = h->_vd;
+	struct stats_collect *p = (struct stats_collect *) h->_vd;
 
 	/* Register statistic object to path.
 	 *
@@ -67,7 +67,7 @@ static int stats_collect_init(struct hook *h)
 
 static int stats_collect_destroy(struct hook *h)
 {
-	struct stats_collect *p = h->_vd;
+	struct stats_collect *p = (struct stats_collect *) h->_vd;
 
 	if (p->uri)
 		free(p->uri);
@@ -77,7 +77,7 @@ static int stats_collect_destroy(struct hook *h)
 
 static int stats_collect_start(struct hook *h)
 {
-	struct stats_collect *p = h->_vd;
+	struct stats_collect *p = (struct stats_collect *) h->_vd;
 
 	if (p->uri) {
 		p->output = afopen(p->uri, "w+");
@@ -90,7 +90,7 @@ static int stats_collect_start(struct hook *h)
 
 static int stats_collect_stop(struct hook *h)
 {
-	struct stats_collect *p = h->_vd;
+	struct stats_collect *p = (struct stats_collect *) h->_vd;
 
 	stats_print(&p->stats, p->uri ? p->output->file : stdout, p->format, p->verbose);
 
@@ -102,7 +102,7 @@ static int stats_collect_stop(struct hook *h)
 
 static int stats_collect_restart(struct hook *h)
 {
-	struct stats_collect *p = h->_vd;
+	struct stats_collect *p = (struct stats_collect *) h->_vd;
 
 	stats_reset(&p->stats);
 
@@ -111,7 +111,7 @@ static int stats_collect_restart(struct hook *h)
 
 static int stats_collect_periodic(struct hook *h)
 {
-	struct stats_collect *p = h->_vd;
+	struct stats_collect *p = (struct stats_collect *) h->_vd;
 
 	stats_print_periodic(&p->stats, p->uri ? p->output->file : stdout, p->format, p->verbose, h->node);
 
@@ -120,7 +120,7 @@ static int stats_collect_periodic(struct hook *h)
 
 static int stats_collect_parse(struct hook *h, json_t *cfg)
 {
-	struct stats_collect *p = h->_vd;
+	struct stats_collect *p = (struct stats_collect *) h->_vd;
 
 	int ret, fmt;
 	json_error_t err;
@@ -154,7 +154,7 @@ static int stats_collect_parse(struct hook *h, json_t *cfg)
 
 static int stats_collect_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	struct stats_collect *p = h->_vd;
+	struct stats_collect *p = (struct stats_collect *) h->_vd;
 	struct stats *s = &p->stats;
 
 	int dist;
@@ -189,7 +189,7 @@ static int stats_collect_read(struct hook *h, struct sample *smps[], unsigned *c
 
 static int stats_collect_write(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	struct stats_collect *p = h->_vd;
+	struct stats_collect *p = (struct stats_collect *) h->_vd;
 
 	struct timespec ts_sent = time_now();
 

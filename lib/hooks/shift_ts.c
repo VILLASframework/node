@@ -40,7 +40,7 @@ struct shift_ts {
 
 static int shift_ts_init(struct hook *h)
 {
-	struct shift_ts *p = h->_vd;
+	struct shift_ts *p = (struct shift_ts *) h->_vd;
 
 	p->mode = SHIFT_ORIGIN; /* Default mode */
 
@@ -49,7 +49,7 @@ static int shift_ts_init(struct hook *h)
 
 static int shift_ts_parse(struct hook *h, json_t *cfg)
 {
-	struct shift_ts *p = h->_vd;
+	struct shift_ts *p = (struct shift_ts *) h->_vd;
 	double offset;
 	const char *mode = NULL;
 	int ret;
@@ -80,7 +80,7 @@ static int shift_ts_parse(struct hook *h, json_t *cfg)
 
 static int shift_ts_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	struct shift_ts *p = h->_vd;
+	struct shift_ts *p = (struct shift_ts *) h->_vd;
 
 	for (int i = 0; i < *cnt; i++) {
 		struct sample *s = smps[i];

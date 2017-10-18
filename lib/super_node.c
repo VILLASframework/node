@@ -219,7 +219,7 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 		size_t index;
 		json_t *json_plugin;
 		json_array_foreach(json_plugins, index, json_plugin) {
-			struct plugin *p = alloc(sizeof(struct plugin));
+			struct plugin *p = (struct plugin *) alloc(sizeof(struct plugin));
 
 			ret = plugin_init(p);
 			if (ret)
@@ -252,7 +252,7 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 			if (!p)
 				error("Invalid node type: %s", type);
 
-			struct node *n = alloc(sizeof(struct node));
+			struct node *n = (struct node *) alloc(sizeof(struct node));
 
 			ret = node_init(n, &p->node);
 			if (ret)
@@ -274,7 +274,7 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 		size_t index;
 		json_t *json_path;
 		json_array_foreach(json_paths, index, json_path) {
-			struct path *p = alloc(sizeof(struct path));
+			struct path *p = (struct path *) alloc(sizeof(struct path));
 
 			ret = path_init(p);
 			if (ret)
@@ -287,7 +287,7 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 			list_push(&sn->paths, p);
 
 			if (p->reverse) {
-				struct path *r = alloc(sizeof(struct path));
+				struct path *r = (struct path *) alloc(sizeof(struct path));
 
 				ret = path_init(r);
 				if (ret)
@@ -314,7 +314,7 @@ int super_node_check(struct super_node *sn)
 	assert(sn->state != STATE_DESTROYED);
 
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) {
-		struct node *n = list_at(&sn->nodes, i);
+		struct node *n = (struct node *) list_at(&sn->nodes, i);
 
 		ret = node_check(n);
 		if (ret)
@@ -322,7 +322,7 @@ int super_node_check(struct super_node *sn)
 	}
 
 	for (size_t i = 0; i < list_length(&sn->paths); i++) {
-		struct path *p = list_at(&sn->paths, i);
+		struct path *p = (struct path *) list_at(&sn->paths, i);
 
 		ret = path_check(p);
 		if (ret)
@@ -353,7 +353,7 @@ int super_node_start(struct super_node *sn)
 
 	info("Starting node-types");
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
-		struct node *n = list_at(&sn->nodes, i);
+		struct node *n = (struct node *) list_at(&sn->nodes, i);
 
 		ret = node_type_start(n->_vt, sn);
 		if (ret)
@@ -362,7 +362,7 @@ int super_node_start(struct super_node *sn)
 
 	info("Starting nodes");
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
-		struct node *n = list_at(&sn->nodes, i);
+		struct node *n = (struct node *) list_at(&sn->nodes, i);
 
 		int refs = list_count(&sn->paths, (cmp_cb_t) path_uses_node, n);
 		if (refs > 0) { INDENT
@@ -380,7 +380,7 @@ int super_node_start(struct super_node *sn)
 
 	info("Starting paths");
 	for (size_t i = 0; i < list_length(&sn->paths); i++) { INDENT
-		struct path *p = list_at(&sn->paths, i);
+		struct path *p = (struct path *) list_at(&sn->paths, i);
 
 		if (p->enabled) { INDENT
 			ret = path_init2(p);
@@ -406,7 +406,7 @@ int super_node_stop(struct super_node *sn)
 
 	info("Stopping paths");
 	for (size_t i = 0; i < list_length(&sn->paths); i++) { INDENT
-		struct path *p = list_at(&sn->paths, i);
+		struct path *p = (struct path *) list_at(&sn->paths, i);
 
 		ret = path_stop(p);
 		if (ret)
@@ -415,7 +415,7 @@ int super_node_stop(struct super_node *sn)
 
 	info("Stopping nodes");
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
-		struct node *n = list_at(&sn->nodes, i);
+		struct node *n = (struct node *) list_at(&sn->nodes, i);
 
 		ret = node_stop(n);
 		if (ret)
@@ -424,7 +424,7 @@ int super_node_stop(struct super_node *sn)
 
 	info("Stopping node-types");
 	for (size_t i = 0; i < list_length(&plugins); i++) { INDENT
-		struct plugin *p = list_at(&plugins, i);
+		struct plugin *p = (struct plugin *) list_at(&plugins, i);
 
 		if (p->type == PLUGIN_TYPE_NODE) {
 			ret = node_type_stop(&p->node);

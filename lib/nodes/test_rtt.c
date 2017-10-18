@@ -32,7 +32,7 @@
 static int test_rtt_case_start(struct test_rtt *t, int id)
 {
 	int ret;
-	struct test_rtt_case *c = list_at(&t->cases, id);
+	struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, id);
 
 	/* Open file */
 	ret = io_open(&t->io, c->filename);
@@ -70,7 +70,7 @@ static int test_rtt_case_stop(struct test_rtt *t, int id)
 int test_rtt_parse(struct node *n, json_t *cfg)
 {
 	int ret;
-	struct test_rtt *t = n->_vd;
+	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
 	const char *format = "villas-human";
 	const char *output = ".";
@@ -175,7 +175,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 
 		for (int i = 0; i < numrates; i++) {
 			for (int j = 0; j < numvalues; j++) {
-				struct test_rtt_case *c = alloc(sizeof(struct test_rtt_case));
+				struct test_rtt_case *c = (struct test_rtt_case *) alloc(sizeof(struct test_rtt_case));
 
 				c->rate = rates[i];
 				c->values = values[j];
@@ -203,7 +203,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 int test_rtt_destroy(struct node *n)
 {
 	int ret;
-	struct test_rtt *t = n->_vd;
+	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
 	ret = list_destroy(&t->cases, NULL, true);
 	if (ret)
@@ -228,7 +228,7 @@ int test_rtt_destroy(struct node *n)
 
 char * test_rtt_print(struct node *n)
 {
-	struct test_rtt *t = n->_vd;
+	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
 	return strf("output=%s, prefix=%s, cooldown=%f, #cases=%zu", t->output, t->prefix, t->cooldown, list_length(&t->cases));
 }
@@ -237,7 +237,7 @@ int test_rtt_start(struct node *n)
 {
 	int ret;
 	struct stat st;
-	struct test_rtt *t = n->_vd;
+	struct test_rtt *t = (struct test_rtt *) n->_vd;
 	struct test_rtt_case *c = list_first(&t->cases);
 
 	/* Create folder for results if not present */
@@ -265,7 +265,7 @@ int test_rtt_start(struct node *n)
 int test_rtt_stop(struct node *n)
 {
 	int ret;
-	struct test_rtt *t = n->_vd;
+	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
 	if (t->counter != -1) {
 		ret = test_rtt_case_stop(t, t->current);
@@ -281,7 +281,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt)
 	int i, ret, values;
 	uint64_t steps;
 
-	struct test_rtt *t = n->_vd;
+	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
 	if (t->counter == -1) {
 		if (t->current == -1) {
@@ -301,7 +301,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt)
 			pause();
 		}
 		else {
-			struct test_rtt_case *c = list_at(&t->cases, t->current);
+			struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, t->current);
 			info("Starting case #%d: filename=%s, rate=%f, values=%d, limit=%d", t->current, c->filename, c->rate, c->values, c->limit);
 			ret = test_rtt_case_start(t, t->current);
 			if (ret)
@@ -309,7 +309,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt)
 		}
 	}
 
-	struct test_rtt_case *c = list_at(&t->cases, t->current);
+	struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, t->current);
 
 	/* Wait */
 	steps = task_wait(&t->task);
@@ -349,8 +349,8 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct test_rtt *t = n->_vd;
-	struct test_rtt_case *c = list_at(&t->cases, t->current);
+	struct test_rtt *t = (struct test_rtt *) n->_vd;
+	struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, t->current);
 
 	int i;
 	for (i = 0; i < cnt; i++) {
@@ -367,7 +367,7 @@ int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 int test_rtt_fd(struct node *n)
 {
-	struct test_rtt *t = n->_vd;
+	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
 	return task_fd(&t->task);
 }

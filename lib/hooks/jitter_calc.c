@@ -45,7 +45,7 @@ struct jitter_calc {
 
 int jitter_calc_init(struct hook *h)
 {
-	struct jitter_calc *j = h->_vd;
+	struct jitter_calc *j = (struct jitter_calc *) h->_vd;
 
 	size_t sz = GPS_NTP_DELAY_WIN_SIZE * sizeof(int64_t);
 
@@ -68,7 +68,7 @@ int jitter_calc_init(struct hook *h)
 
 int jitter_calc_deinit(struct hook *h)
 {
-	struct jitter_calc *j = h->_vd;
+	struct jitter_calc *j = (struct jitter_calc *) h->_vd;
 
 	free(j->jitter_val);
 	free(j->delay_series);
@@ -88,7 +88,7 @@ int jitter_calc_deinit(struct hook *h)
  */
 int jitter_calc_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	struct jitter_calc *j = h->_vd;
+	struct jitter_calc *j = (struct jitter_calc *) h->_vd;
 
 	struct timespec now = time_now();
 	int64_t delay_sec, delay_nsec, curr_delay_us;

@@ -31,7 +31,7 @@
 
 int nanomsg_reverse(struct node *n)
 {
-	struct nanomsg *m = n->_vd;
+	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
 	if (list_length(&m->publisher.endpoints)  != 1 ||
 	    list_length(&m->subscriber.endpoints) != 1)
@@ -80,7 +80,7 @@ static int nanomsg_parse_endpoints(struct list *l, json_t *cfg)
 int nanomsg_parse(struct node *n, json_t *cfg)
 {
 	int ret;
-	struct nanomsg *m = n->_vd;
+	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
 	const char *format = "villas-human";
 
@@ -121,14 +121,14 @@ int nanomsg_parse(struct node *n, json_t *cfg)
 
 char * nanomsg_print(struct node *n)
 {
-	struct nanomsg *m = n->_vd;
+	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
 	char *buf = NULL;
 
 	strcatf(&buf, "format=%s, subscribe=[ ", plugin_name(m->format));
 
 	for (size_t i = 0; i < list_length(&m->subscriber.endpoints); i++) {
-		char *ep = list_at(&m->subscriber.endpoints, i);
+		char *ep = (char *) list_at(&m->subscriber.endpoints, i);
 
 		strcatf(&buf, "%s ", ep);
 	}
@@ -136,7 +136,7 @@ char * nanomsg_print(struct node *n)
 	strcatf(&buf, "], publish=[ ");
 
 	for (size_t i = 0; i < list_length(&m->publisher.endpoints); i++) {
-		char *ep = list_at(&m->publisher.endpoints, i);
+		char *ep = (char *) list_at(&m->publisher.endpoints, i);
 
 		strcatf(&buf, "%s ", ep);
 	}
@@ -149,7 +149,7 @@ char * nanomsg_print(struct node *n)
 int nanomsg_start(struct node *n)
 {
 	int ret;
-	struct nanomsg *m = n->_vd;
+	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
 	ret = m->subscriber.socket = nn_socket(AF_SP, NN_SUB);
 	if (ret < 0)
@@ -166,7 +166,7 @@ int nanomsg_start(struct node *n)
 
 	/* Bind publisher to socket */
 	for (size_t i = 0; i < list_length(&m->publisher.endpoints); i++) {
-		char *ep = list_at(&m->publisher.endpoints, i);
+		char *ep = (char *) list_at(&m->publisher.endpoints, i);
 
 		ret = nn_bind(m->publisher.socket, ep);
 		if (ret < 0) {
@@ -177,7 +177,7 @@ int nanomsg_start(struct node *n)
 
 	/* Sonnect subscribers socket */
 	for (size_t i = 0; i < list_length(&m->subscriber.endpoints); i++) {
-		char *ep = list_at(&m->subscriber.endpoints, i);
+		char *ep = (char *) list_at(&m->subscriber.endpoints, i);
 
 		ret = nn_connect(m->subscriber.socket, ep);
 		if (ret < 0) {
@@ -192,7 +192,7 @@ int nanomsg_start(struct node *n)
 int nanomsg_stop(struct node *n)
 {
 	int ret;
-	struct nanomsg *m = n->_vd;
+	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
 	ret = nn_close(m->subscriber.socket);
 	if (ret < 0)
@@ -214,7 +214,7 @@ int nanomsg_deinit()
 
 int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct nanomsg *m = n->_vd;
+	struct nanomsg *m = (struct nanomsg *) n->_vd;
 	int bytes;
 	char data[NANOMSG_MAX_PACKET_LEN];
 
@@ -229,7 +229,7 @@ int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt)
 int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int ret;
-	struct nanomsg *m = n->_vd;
+	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
 	size_t wbytes;
 
@@ -249,7 +249,7 @@ int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)
 int nanomsg_fd(struct node *n)
 {
 	int ret;
-	struct nanomsg *m = n->_vd;
+	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
 	int fd;
 	size_t len = sizeof(fd);

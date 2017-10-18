@@ -36,7 +36,7 @@ struct drop {
 
 static int drop_start(struct hook *h)
 {
-	struct drop *d = h->_vd;
+	struct drop *d = (struct drop *) h->_vd;
 
 	d->prev = NULL;
 
@@ -45,7 +45,7 @@ static int drop_start(struct hook *h)
 
 static int drop_stop(struct hook *h)
 {
-	struct drop *d = h->_vd;
+	struct drop *d = (struct drop *) h->_vd;
 
 	if (d->prev)
 		sample_put(d->prev);
@@ -57,7 +57,7 @@ static int drop_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	int i, ok, dist;
 
-	struct drop *d = h->_vd;
+	struct drop *d = (struct drop *) h->_vd;
 	struct sample *prev, *cur = NULL;
 
 	for (i = 0, ok = 0, prev = d->prev; i < *cnt; i++, prev = cur) {
@@ -104,7 +104,7 @@ ok:		/* To discard the first X samples in 'smps[]' we must
 
 static int drop_restart(struct hook *h)
 {
-	struct drop *d = h->_vd;
+	struct drop *d = (struct drop *) h->_vd;
 
 	if (d->prev) {
 		sample_put(d->prev);

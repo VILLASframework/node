@@ -48,7 +48,7 @@ int stats_node_init(struct super_node *sn)
 
 int stats_node_start(struct node *n)
 {
-	struct stats_node *s = n->_vd;
+	struct stats_node *s = (struct stats_node *) n->_vd;
 	int ret;
 
 	ret = task_init(&s->task, s->rate, CLOCK_MONOTONIC);
@@ -64,7 +64,7 @@ int stats_node_start(struct node *n)
 
 int stats_node_stop(struct node *n)
 {
-	struct stats_node *s = n->_vd;
+	struct stats_node *s = (struct stats_node *) n->_vd;
 	int ret;
 
 	ret = task_destroy(&s->task);
@@ -76,14 +76,14 @@ int stats_node_stop(struct node *n)
 
 char * stats_node_print(struct node *n)
 {
-	struct stats_node *s = n->_vd;
+	struct stats_node *s = (struct stats_node *) n->_vd;
 
 	return strf("node=%s, rate=%f", s->node_str, s->rate);
 }
 
 int stats_node_parse(struct node *n, json_t *cfg)
 {
-	struct stats_node *s = n->_vd;
+	struct stats_node *s = (struct stats_node *) n->_vd;
 
 	int ret;
 	json_error_t err;
@@ -109,7 +109,7 @@ int stats_node_parse(struct node *n, json_t *cfg)
 
 int stats_node_destroy(struct node *n)
 {
-	struct stats_node *s = n->_vd;
+	struct stats_node *s = (struct stats_node *) n->_vd;
 
 	if (s->node_str)
 		free(s->node_str);
@@ -119,7 +119,7 @@ int stats_node_destroy(struct node *n)
 
 int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct stats_node *sn = n->_vd;
+	struct stats_node *sn = (struct stats_node *) n->_vd;
 	struct stats *s = sn->node->stats;
 
 	if (!cnt)
@@ -149,7 +149,7 @@ int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 int stats_node_fd(struct node *n)
 {
-	struct stats_node *s = n->_vd;
+	struct stats_node *s = (struct stats_node *) n->_vd;
 
 	return task_fd(&s->task);
 }

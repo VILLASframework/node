@@ -34,7 +34,7 @@ static int api_paths(struct api_action *r, json_t *args, json_t **resp, struct a
 	json_t *json_paths = json_array();
 
 	for (size_t i = 0; i < list_length(&s->api->super_node->paths); i++) {
-		struct path *p = list_at(&s->api->super_node->paths, i);
+		struct path *p = (struct path *) list_at(&s->api->super_node->paths, i);
 
 		json_t *json_path = json_pack("{ s: i }",
 			"state",	p->state

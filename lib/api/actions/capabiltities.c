@@ -31,7 +31,7 @@ static int api_capabilities(struct api_action *h, json_t *args, json_t **resp, s
 	json_t *json_name;
 
 	for (size_t i = 0; i < list_length(&plugins); i++) {
-		struct plugin *p = list_at(&plugins, i);
+		struct plugin *p = (struct plugin *) list_at(&plugins, i);
 
 		json_name = json_string(p->name);
 

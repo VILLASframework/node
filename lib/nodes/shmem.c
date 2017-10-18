@@ -38,7 +38,7 @@
 
 int shmem_parse(struct node *n, json_t *cfg)
 {
-	struct shmem *shm = n->_vd;
+	struct shmem *shm = (struct shmem *) n->_vd;
 	const char *val;
 
 	int ret;
@@ -85,7 +85,7 @@ int shmem_parse(struct node *n, json_t *cfg)
 
 int shmem_open(struct node *n)
 {
-	struct shmem *shm = n->_vd;
+	struct shmem *shm = (struct shmem *) n->_vd;
 	int ret;
 
 	if (shm->exec) {
@@ -103,14 +103,14 @@ int shmem_open(struct node *n)
 
 int shmem_close(struct node *n)
 {
-	struct shmem* shm = n->_vd;
+	struct shmem* shm = (struct shmem *) n->_vd;
 
 	return shmem_int_close(&shm->intf);
 }
 
 int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct shmem *shm = n->_vd;
+	struct shmem *shm = (struct shmem *) n->_vd;
 	int recv;
 	struct sample *shared_smps[cnt];
 
@@ -133,7 +133,7 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct shmem *shm = n->_vd;
+	struct shmem *shm = (struct shmem *) n->_vd;
 	struct sample *shared_smps[cnt]; /* Samples need to be copied to the shared pool first */
 	int avail, pushed, copied;
 
@@ -158,7 +158,7 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 char * shmem_print(struct node *n)
 {
-	struct shmem *shm = n->_vd;
+	struct shmem *shm = (struct shmem *) n->_vd;
 	char *buf = NULL;
 
 	strcatf(&buf, "out_name=%s, in_name=%s, queuelen=%d, polling=%s",

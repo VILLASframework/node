@@ -40,7 +40,7 @@ struct map {
 
 static int map_init(struct hook *h)
 {
-	struct map *m = h->_vd;
+	struct map *m = (struct map *) h->_vd;
 
 	m->stats = NULL; /** @todo */
 
@@ -49,7 +49,7 @@ static int map_init(struct hook *h)
 
 static int map_destroy(struct hook *h)
 {
-	struct map *m = h->_vd;
+	struct map *m = (struct map *) h->_vd;
 
 	return list_destroy(&m->mapping, NULL, true);
 }
@@ -57,7 +57,7 @@ static int map_destroy(struct hook *h)
 static int map_parse(struct hook *h, json_t *cfg)
 {
 	int ret;
-	struct map *m = h->_vd;
+	struct map *m = (struct map *) h->_vd;
 	json_error_t err;
 	json_t *json_mapping;
 
@@ -77,7 +77,7 @@ static int map_parse(struct hook *h, json_t *cfg)
 static int map_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	int ret;
-	struct map *m = h->_vd;
+	struct map *m = (struct map *) h->_vd;
 	struct sample *tmp[*cnt];
 	struct pool *p;
 

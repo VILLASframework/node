@@ -235,7 +235,7 @@ int villas_human_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 
 int villas_human_print(struct io *io, struct sample *smps[], unsigned cnt)
 {
-	struct villas_human *h = io->_vd;
+	struct villas_human *h = (struct villas_human *) io->_vd;
 
 	FILE *f = io->mode == IO_MODE_ADVIO
 			? io->advio.output->file
@@ -268,7 +268,7 @@ int villas_human_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 
 int villas_human_open(struct io *io, const char *uri)
 {
-	struct villas_human *h = io->_vd;
+	struct villas_human *h = (struct villas_human *) io->_vd;
 	int ret;
 
 	ret = io_stream_open(io, uri);
@@ -282,7 +282,7 @@ int villas_human_open(struct io *io, const char *uri)
 
 void villas_human_rewind(struct io *io)
 {
-	struct villas_human *h = io->_vd;
+	struct villas_human *h = (struct villas_human *) io->_vd;
 
 	h->header_written = false;
 

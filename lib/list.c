@@ -58,7 +58,7 @@ int list_init(struct list *l)
 	l->array = NULL;
 
 	l->state = STATE_INITIALIZED;
-	
+
 	return 0;
 }
 

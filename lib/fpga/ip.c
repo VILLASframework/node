@@ -157,7 +157,7 @@ struct fpga_ip_type * fpga_ip_type_lookup(const char *vstr)
 
 	/* Try to find matching IP type */
 	for (size_t i = 0; i < list_length(&plugins); i++) {
-		struct plugin *p = list_at(&plugins, i);
+		struct plugin *p = (struct plugin *) list_at(&plugins, i);
 
 		if (p->type == PLUGIN_TYPE_FPGA_IP && !fpga_vlnv_cmp(&vlnv, &p->ip.vlnv))
 			return &p->ip;

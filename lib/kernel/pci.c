@@ -33,7 +33,7 @@ int pci_init(struct pci *p)
 	}
 
 	while ((e = readdir(dp))) {
-		struct pci_device *d = alloc(sizeof(struct pci_device));
+		struct pci_device *d = (struct pci_device *) alloc(sizeof(struct pci_device));
 
 		struct { const char *s; int *p; } map[] = {
 			{ "vendor", &d->id.vendor },
