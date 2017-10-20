@@ -139,7 +139,7 @@ endif
 CFLAGS += $(shell $(PKGCONFIG) --cflags ${PKGS})
 LDLIBS += $(shell $(PKGCONFIG) --libs ${PKGS})
 
-all: src plugins tools
+all: src plugins tools tests clients
 src plugins tools tests: lib
 
 # Build all variants: debug, coverage, ...

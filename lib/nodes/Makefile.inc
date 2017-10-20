@@ -101,11 +101,11 @@ endif
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
 ifeq ($(WITH_OPAL),1)
-ifneq ($(wildcard thirdparty/libopal/include/opal/AsyncApi.h),)
+ifneq ($(wildcard $(SRCDIR)/thirdparty/libopal/include/opal/AsyncApi.h),)
 	LIB_OBJS    += opal.o
 
-	LIB_CFLAGS  += -I thirdparty/libopal/include/opal/ -DWITH_OPAL
-	LIB_LDFLAGS += -L/lib/i386-linux-gnu/ -L/usr/lib/i386-linux-gnu/ -Lthirdparty/libopal/
+	LIB_CFLAGS  += -I $(SRCDIR)/thirdparty/libopal/include/opal/ -DWITH_OPAL
+	LIB_LDFLAGS += -L/lib/i386-linux-gnu/ -L/usr/lib/i386-linux-gnu/ -L$(SRCDIR)/thirdparty/libopal/
 	LIB_LDLIBS  += -lOpalAsyncApiCore -lOpalCore -lOpalUtils -lirc
 
 	# libOpalAsyncApi is a 32bit library. So we need to build everything in 32bit
