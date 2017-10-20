@@ -187,7 +187,11 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 				else
 					c->limit = 1000; /* default value */
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
 				asprintf(&c->filename, "%s/%s_%d_%.0f.log", t->output, t->prefix, c->values, c->rate);
+#pragma GCC diagnostic pop
+
 
 				list_push(&t->cases, c);
 			}

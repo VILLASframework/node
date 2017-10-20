@@ -193,6 +193,7 @@ ParameterizedTestParameters(io, highlevel)
 ParameterizedTest(char *fmt, io, highlevel)
 {
 	int ret, cnt;
+	char *retp;
 
 	struct io io;
 	struct io_format *f;
@@ -210,7 +211,9 @@ ParameterizedTest(char *fmt, io, highlevel)
 	char *fn, dir[64];
 	strncpy(dir, "/tmp/villas.XXXXXX", sizeof(dir));
 
-	mkdtemp(dir);
+	retp = mkdtemp(dir);
+	cr_assert_not_null(retp);
+
 //	ret = asprintf(&fn, "file://%s/file", dir);
 	ret = asprintf(&fn, "%s/file", dir);
 	cr_assert_gt(ret, 0);

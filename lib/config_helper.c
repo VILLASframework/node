@@ -280,14 +280,13 @@ json_t * json_load_cli(int argc, char *argv[])
 int json_object_extend(json_t *obj, json_t *merge)
 {
 	const char *key;
-	void *tmp;
 	int ret;
 	json_t *merge_value, *obj_value;
 
 	if (!json_is_object(obj) || !json_is_object(merge))
 		return -1;
 
-	json_object_foreach_safe(merge, tmp, key, merge_value) {
+	json_object_foreach(merge, key, merge_value) {
 		obj_value = json_object_get(obj, key);
 		if (obj_value && json_is_object(obj_value))
 			ret = json_object_extend(obj_value, merge_value);

@@ -4,6 +4,8 @@
  * @copyright 2017, Steffen Vogel
  *********************************************************************************/
 
+#ifdef WITH_FPGA
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
@@ -398,3 +400,5 @@ Test(fpga, rtds_rtt, .description = "RTDS: tight rtt")
 	ret = dma_free(ip, &buf);
 	cr_assert_eq(ret, 0, "Failed to release DMA memory");
 }
+
+#endif /* WITH_FPGA */

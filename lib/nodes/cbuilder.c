@@ -100,8 +100,12 @@ int cbuilder_read(struct node *n, struct sample *smps[], unsigned cnt)
 	struct sample *smp = smps[0];
 
 	uint64_t cntr;
+	ssize_t bytes;
 
-	read(cb->eventfd, &cntr, sizeof(cntr));
+	bytes = read(cb->eventfd, &cntr, sizeof(cntr));
+	if (bytes != sizeof(cntr))
+		return -1;
+
 
 	/* Wait for completion of step */
 	pthread_mutex_lock(&cb->mtx);
@@ -138,9 +142,14 @@ int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt)
 	cb->step++;
 
 	uint64_t incr = 1;
-	write(cb->eventfd, &incr, sizeof(incr));
+	ssize_t bytes;
+
+	bytes = write(cb->eventfd, &incr, sizeof(incr));
 
 	pthread_mutex_unlock(&cb->mtx);
+
+	if (bytes != sizeof(incr))
+		return -1;
 
 	return 1;
 }

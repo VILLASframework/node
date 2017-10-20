@@ -23,6 +23,7 @@
 
 #include <string.h>
 
+#include "compat.h"
 #include "buffer.h"
 #include "common.h"
 
@@ -33,9 +34,9 @@ int buffer_init(struct buffer *b, size_t size)
 	b->buf = malloc(size);
 	if (!b->buf)
 		return -1;
-	
+
 	b->state = STATE_INITIALIZED;
-	
+
 	return 0;
 }
 
@@ -43,9 +44,9 @@ int buffer_destroy(struct buffer *b)
 {
 	if (b->buf)
 		free(b->buf);
-	
+
 	b->state = STATE_DESTROYED;
-	
+
 	return 0;
 }
 
@@ -66,7 +67,7 @@ int buffer_append(struct buffer *b, const char *data, size_t len)
 	memcpy(b->buf + b->len, data, len);
 
 	b->len += len;
-	
+
 	return 0;
 }
 
@@ -75,7 +76,7 @@ int buffer_parse_json(struct buffer *b, json_t **j)
 	*j = json_loadb(b->buf, b->len, 0, NULL);
 	if (!*j)
 		return -1;
-	
+
 	return 0;
 }
 

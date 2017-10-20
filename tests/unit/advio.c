@@ -115,13 +115,16 @@ Test(advio, download_large)
 Test(advio, resume)
 {
 	int ret;
+	char *retp;
 	AFILE *af1, *af2;
 	char *fn, dir[] = "/tmp/temp.XXXXXX";
 	char line1[32];
 	char *line2 = NULL;
 	size_t linelen = 0;
 
-	mkdtemp(dir);
+	retp = mkdtemp(dir);
+	cr_assert_not_null(retp);
+
 	ret = asprintf(&fn, "%s/file", dir);
 	cr_assert_gt(ret, 0);
 
@@ -141,7 +144,9 @@ Test(advio, resume)
 		aupload(af1, 1);
 
 		adownload(af2, 1);
-		agetline(&line2, &linelen, af2);
+
+		ret = agetline(&line2, &linelen, af2);
+		cr_assert_gt(ret, 0);
 
 		cr_assert_str_eq(line1, line2);
 	}

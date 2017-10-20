@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include "plugin.h"
+#include "compat.h"
 #include "io/json.h"
 
 int json_pack_sample(json_t **j, struct sample *smp, int flags)
