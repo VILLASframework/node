@@ -1,6 +1,5 @@
 build
 thirdparty
-clients
 
 .git
 .gitmodules
