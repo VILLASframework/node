@@ -37,7 +37,7 @@ NUM_SAMPLES=${NUM_SAMPLES:-100}
 villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 for FORMAT in villas-human villas-binary villas-web csv json gtnet-fake raw-flt32; do
-for LAYER	in udp ip eth; do
+for LAYER	in udp ip eth unix; do
 for ENDIAN	in big little; do
 for VERIFY_SOURCE in true false; do
 	
@@ -66,6 +66,11 @@ case ${LAYER} in
 		# We use IP protocol number 253 which is reserved for experimentation and testing according to RFC 7042
 		LOCAL="00:00:00:00:00:00%lo:34997"
 		REMOTE="00:00:00:00:00:00%lo:34997"
+		;;
+		
+	unix)
+		LOCAL=$(mktemp)
+		REMOTE=${LOCAL}
 		;;
 esac
 
