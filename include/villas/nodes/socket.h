@@ -58,7 +58,8 @@ struct io_format;
 enum socket_layer {
 	SOCKET_LAYER_ETH,
 	SOCKET_LAYER_IP,
-	SOCKET_LAYER_UDP
+	SOCKET_LAYER_UDP,
+	SOCKET_LAYER_UNIX
 };
 
 union sockaddr_union {
