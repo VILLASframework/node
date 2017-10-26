@@ -37,8 +37,7 @@ NUM_SAMPLES=${NUM_SAMPLES:-100}
 villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 for FORMAT in villas-human villas-binary villas-web csv json gtnet-fake raw-flt32; do
-for LAYER	in udp ip eth unix; do
-for ENDIAN	in big little; do
+for LAYER in udp ip eth unix; do
 for VERIFY_SOURCE in true false; do
 	
 VECTORIZES="1"
@@ -48,7 +47,7 @@ if villas_format_supports_vectorize ${FORMAT}; then
 	VECTORIZES="${VECTORIZES} 10"
 fi
 
-for VECTORIZE	in ${VECTORIZES}; do
+for VECTORIZE in ${VECTORIZES}; do
 
 case ${LAYER} in
 	udp)
@@ -117,7 +116,7 @@ else
 	echo "=========== Sub-test succeeded for: format=${FORMAT}, layer=${LAYER}, endian=${ENDIAN}, verify_source=${VERIFY_SOURCE}, vectorize=${VECTORIZE}"
 fi
 
-done; done; done; done; done
+done; done; done; done
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${THEORIES}
 
