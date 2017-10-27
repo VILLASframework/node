@@ -23,7 +23,7 @@
 CLIENTS =
 	
 ifneq ($(wildcard $(SRCDIR)/thirdparty/libopal/include/opal/AsyncApi.h),)
-	-include $(SRCDIR)/clients/Makefile.opal.inc
+	-include $(SRCDIR)/clients/opal/Makefile.inc
 endif
 
 clients: $(addprefix clients-,$(CLIENTS))
