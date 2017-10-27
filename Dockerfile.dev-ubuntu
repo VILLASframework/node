@@ -41,7 +41,8 @@ RUN apt-get update && apt-get install -y \
 	autoconf automake autogen libtool \
 	flex bison \
 	texinfo \
-	git curl tar
+	git curl tar \
+	protobuf-compiler protobuf-c-compiler
 
 # Several tools only needed for developement and testing
 RUN apt-get update && apt-get install -y \
@@ -75,7 +76,8 @@ RUN apt-get update && apt-get install -y \
 	libcurl4-openssl-dev \
 	libjansson-dev \
 	libzmq3-dev \
-	libnanomsg-dev
+	libnanomsg-dev \
+	libprotobuf-c-dev
 
 # Build & Install Criterion
 COPY thirdparty/criterion /tmp/criterion

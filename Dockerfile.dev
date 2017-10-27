@@ -37,7 +37,8 @@ RUN dnf -y install \
 	pkgconfig make cmake \
 	autoconf automake autogen libtool \
 	flex bison \
-	texinfo git curl tar
+	texinfo git curl tar \
+	protobuf-compiler protobuf-c-compiler
 
 # Several tools only needed for developement and testing
 RUN dnf -y install \
@@ -74,7 +75,8 @@ RUN dnf -y install \
 	libwebsockets-devel \
 	zeromq-devel \
 	nanomsg-devel \
-	libxil-devel
+	libxil-devel \
+	protobuf-c-devel
 
 # Build & Install Criterion
 COPY thirdparty/criterion /tmp/criterion
