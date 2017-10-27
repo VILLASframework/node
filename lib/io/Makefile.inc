@@ -21,3 +21,20 @@
 ###################################################################################
 
 LIB_SRCS += $(addprefix lib/io/,json.c villas_binary.c villas_human.c csv.c raw.c msg.c)
+
+WITH_PROTOBUF ?= 1
+
+# Enable Google Protobuf IO format
+ifeq ($(WITH_PROTOBUF),1)
+ifeq ($(shell $(PKGCONFIG) libprotobuf-c; echo $$?),0)
+	LIB_SRCS += lib/io/protobuf.c lib/io/villas.pb-c.c
+	LIB_PKGS += libprotobuf-c
+endif
+endif
+
+%.pb-c.h: %.proto
+	protoc-c --proto_path=$(SRCDIR) --c_out=$(SRCDIR) $(realpath $^)
+
+lib/io/villas.pb-c.c \
+lib/io/protobuf.c: | lib/io/villas.pb-c.h
+

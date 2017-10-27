@@ -29,7 +29,7 @@
 #define MSG_VERSION		2
 
 /** @todo Implement more message types */
-#define MSG_TYPE_DATA		0 /**< Message contains float values */
+#define MSG_TYPE_DATA		0 /**< Message contains float / integer values */
 #define MSG_TYPE_START		1 /**< Message marks the beginning of a new simulation case */
 #define MSG_TYPE_STOP		2 /**< Message marks the end of a simulation case */
 
@@ -75,7 +75,7 @@ struct msg
   #error Invalid byte-order
 #endif
 
-	uint8_t id;		/**< An id which identifies the source of this sample */
+	uint8_t id;		/**< An id which identifies the source of this sample. */
 	uint16_t length;	/**< The number of values in msg::data[]. */
 	uint32_t sequence;	/**< The sequence number is incremented by one for consecutive messages. */
 

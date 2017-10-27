@@ -36,7 +36,7 @@ NUM_SAMPLES=${NUM_SAMPLES:-100}
 # Generate test data
 villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
-for FORMAT in villas-human villas-binary villas-web csv json gtnet-fake raw-flt32; do
+for FORMAT in villas-human villas-binary villas-web csv json gtnet-fake raw-flt32 protobuf; do
 for LAYER in udp ip eth unix; do
 for VERIFY_SOURCE in true false; do
 	

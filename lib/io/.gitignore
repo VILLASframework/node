@@ -1,0 +1,3 @@
+# Generated code by Protobuf-c
+*.pb-c.h
+*.pb-c.c
