@@ -53,7 +53,7 @@
 struct io_format;
 
 /** The maximum length of a packet which contains stuct msg. */
-#define SOCKET_MAX_PACKET_LEN 1500
+#define SOCKET_INITIAL_BUFFER_LEN 1500
 
 enum socket_layer {
 	SOCKET_LAYER_ETH,
