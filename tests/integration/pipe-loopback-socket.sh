@@ -82,7 +82,6 @@ cat > ${CONFIG_FILE} << EOF
 			"vectorize" : ${VECTORIZE},
 			"format" : "${FORMAT}",
 			"layer" : "${LAYER}",
-			"endian" : "${ENDIAN}",
 			"verify_source" : ${VERIFY_SOURCE},
 
 			"local" : "${LOCAL}",
@@ -105,7 +104,7 @@ villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 if (( ${RC} != 0 )); then
-	echo "=========== Sub-test failed for: format=${FORMAT}, layer=${LAYER}, endian=${ENDIAN}, verify_source=${VERIFY_SOURCE}, vectorize=${VECTORIZE}"
+	echo "=========== Sub-test failed for: format=${FORMAT}, layer=${LAYER}, verify_source=${VERIFY_SOURCE}, vectorize=${VECTORIZE}"
 	cat ${CONFIG_FILE}
 	echo
 	cat ${INPUT_FILE}
@@ -113,7 +112,7 @@ if (( ${RC} != 0 )); then
 	cat ${OUTPUT_FILE}
 	exit ${RC}
 else
-	echo "=========== Sub-test succeeded for: format=${FORMAT}, layer=${LAYER}, endian=${ENDIAN}, verify_source=${VERIFY_SOURCE}, vectorize=${VECTORIZE}"
+	echo "=========== Sub-test succeeded for: format=${FORMAT}, layer=${LAYER}, verify_source=${VERIFY_SOURCE}, vectorize=${VECTORIZE}"
 fi
 
 done; done; done; done
