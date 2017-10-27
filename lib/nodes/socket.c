@@ -216,7 +216,7 @@ int socket_start(struct node *n)
 	socklen_t addrlen = 0;
 	if (s->layer == SOCKET_LAYER_UNIX) {
 		ret = unlink(s->local.sun.sun_path);
-		if (ret)
+		if (ret && errno != ENOENT)
 			return ret;
 
 		addrlen = SUN_LEN(&s->local.sun);
