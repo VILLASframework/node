@@ -31,3 +31,6 @@
 [submodule "thirdparty/libzmq"]
 	path = thirdparty/libzmq
 	url = https://github.com/zeromq/libzmq.git
+[submodule "thirdparty/protobuf-c"]
+	path = thirdparty/protobuf-c
+	url = https://github.com/protobuf-c/protobuf-c.git
