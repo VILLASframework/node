@@ -20,17 +20,5 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-CLIENTS =
-
--include $(SRCDIR)/clients/python/Makefile.inc
-	
-ifneq ($(wildcard $(SRCDIR)/thirdparty/libopal/include/opal/AsyncApi.h),)
-	-include $(SRCDIR)/clients/opal/Makefile.inc
-endif
-
-clients: $(addprefix clients-,$(CLIENTS))
-
-clean-clients: $(addprefix clean-clients-,$(CLIENTS))
-install-clients: $(addprefix install-clients-,$(CLIENTS))
-
-.PHONY: clients clean-clients install-clients
+clients/python/villas_pb2.py: lib/io/villas.proto
+	protoc --proto_path=$(dir $^) --python_out=$(dir $@) $^

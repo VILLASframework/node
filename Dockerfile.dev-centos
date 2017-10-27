@@ -66,7 +66,8 @@ RUN yum -y install \
 
 # Tools for debugging, coverage, profiling
 RUN pip install \
-        gcovr
+	gcovr \
+	protobuf
 
 # Dependencies
 RUN yum -y install \

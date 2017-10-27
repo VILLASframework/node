@@ -64,7 +64,8 @@ RUN apt-get update && apt-get install -y \
 
 # Tools for debugging, coverage, profiling
 RUN pip install \
-        gcovr
+	gcovr \
+	protobuf
 
 # Dependencies
 RUN apt-get update && apt-get install -y \
