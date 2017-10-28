@@ -52,12 +52,6 @@ RUN dnf -y install \
 	xmlto rubygem-asciidoctor \
 	psmisc procps-ng
 
-# 32bit versions of some standard libraries for RT-LAB code
-RUN dnf -y install \
-	libstdc++-devel.i686 \
-	libuuid-devel.i686 \
-	glibc-devel.i686
-
 # Tools for debugging, coverage, profiling
 RUN pip install \
 	gcovr \

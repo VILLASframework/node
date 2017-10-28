@@ -58,12 +58,6 @@ RUN yum -y install \
 	valgrind gdb gdb-gdbserver \
 	xmlto rubygem-asciidoctor
 
-# 32bit versions of some standard libraries for RT-LAB code
-RUN yum -y install \
-	libstdc++-devel.i686 \
-	libuuid-devel.i686 \
-	glibc-devel.i686
-
 # Tools for debugging, coverage, profiling
 RUN pip install \
 	gcovr \
