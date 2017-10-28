@@ -22,10 +22,10 @@
 
 CLIENTS =
 
--include $(SRCDIR)/clients/python/Makefile.inc
+include $(SRCDIR)/clients/python/Makefile.inc
 	
 ifneq ($(wildcard $(SRCDIR)/thirdparty/libopal/include/opal/AsyncApi.h),)
-	-include $(SRCDIR)/clients/opal/Makefile.inc
+	include $(SRCDIR)/clients/opal/Makefile.inc
 endif
 
 clients: $(addprefix clients-,$(CLIENTS))

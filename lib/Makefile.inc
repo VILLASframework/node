@@ -26,11 +26,11 @@ LIBS = $(patsubst %, lib%, $(SONAMES))
 
 LIB_CFLAGS  = $(CFLAGS) -fPIC
 
--include lib/hooks/Makefile.inc
--include lib/nodes/Makefile.inc
--include lib/io/Makefile.inc
+include lib/hooks/Makefile.inc
+include lib/nodes/Makefile.inc
+include lib/io/Makefile.inc
 
--include $(patsubst %, lib/Makefile.%.inc, $(SONAMES))
+include $(patsubst %, lib/Makefile.%.inc, $(SONAMES))
 
 LIB_CFLAGS += $(addprefix -DWITH_, $(call escape,$(LIB_PKGS)))
 

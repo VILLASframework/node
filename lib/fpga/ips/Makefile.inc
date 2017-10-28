@@ -22,4 +22,4 @@
 
 LIB_SRCS += $(wildcard lib/fpga/*.c)
 
--include lib/fpga/ips/Makefile.inc
+include lib/fpga/ips/Makefile.inc

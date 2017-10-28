@@ -92,7 +92,7 @@ ifeq ($(shell $(PKGCONFIG) libxil; echo $$?),0)
 	LIB_SRCS    += $(addprefix lib/nodes/, fpga.c) \
 	               $(addprefix lib/kernel/, pci.c vfio.c) \
 
-	-include lib/fpga/Makefile.inc
+	include lib/fpga/Makefile.inc
 
 	LIB_PKGS    += libxil
 	LIB_CFLAGS += -DWITH_FPGA

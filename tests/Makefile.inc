@@ -20,8 +20,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
--include tests/unit/Makefile.inc
--include tests/integration/Makefile.inc
+include tests/unit/Makefile.inc
+include tests/integration/Makefile.inc
 
 tests: unit-tests integration-tests
 

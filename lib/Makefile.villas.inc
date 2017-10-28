@@ -52,7 +52,7 @@ ifeq ($(WITH_WEB),1)
 endif
 
 ifeq ($(WITH_API),1)
-	-include lib/api/Makefile.inc
+	include lib/api/Makefile.inc
 endif
 
 # Add flags by pkg-config

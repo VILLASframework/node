@@ -41,7 +41,7 @@ $(BUILDDIR)/unit-tests: $(TEST_OBJS) $(LIB)
 	$(CC) $(TEST_LDFLAGS) $^ $(TEST_LDLIBS) -o $@
 
 ifdef COVERAGE
--include tests/unit/Makefile.gcov.inc
+	include tests/unit/Makefile.gcov.inc
 endif
 
 # Tests are not installed

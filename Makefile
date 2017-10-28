@@ -165,6 +165,6 @@ clean:   $(addprefix clean-,  $(filter-out thirdparty doc clients,$(MODULES)))
 
 .PHONY: all everything clean install
 
--include $(wildcard $(SRCDIR)/Makefile.*)
--include $(wildcard $(BUILDDIR)/**/*.d)
--include $(patsubst %,$(SRCDIR)/%/Makefile.inc,$(MODULES))
+include $(wildcard $(SRCDIR)/Makefile.*)
+include $(wildcard $(BUILDDIR)/**/*.d)
+include $(patsubst %,$(SRCDIR)/%/Makefile.inc,$(MODULES))
