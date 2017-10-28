@@ -32,9 +32,8 @@ ifeq ($(shell $(PKGCONFIG) libprotobuf-c; echo $$?),0)
 endif
 endif
 
-%.pb-c.h: %.proto
+%.pb-c.c %.pb-c.h: %.proto
 	protoc-c --proto_path=$(SRCDIR) --c_out=$(SRCDIR) $(realpath $^)
 
-lib/io/villas.pb-c.c \
 lib/io/protobuf.c: | lib/io/villas.pb-c.h
 
