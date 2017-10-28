@@ -44,14 +44,24 @@ int protobuf_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[]
 		struct sample *smp = smps[i];
 
 		pb_smp->type = VILLAS__NODE__SAMPLE__TYPE__DATA;
-		pb_smp->sequence = smp->sequence;
-		pb_smp->id = smp->id;
 
-		pb_smp->timestamp = alloc(sizeof(Villas__Node__Timestamp));
-		villas__node__timestamp__init(pb_smp->timestamp);
+		if (smp->flags & SAMPLE_HAS_SEQUENCE) {
+			pb_smp->has_sequence = 1;
+			pb_smp->sequence = smp->sequence;
+		}
 
-		pb_smp->timestamp->sec = smp->ts.origin.tv_sec;
-		pb_smp->timestamp->nsec = smp->ts.origin.tv_nsec;
+		if (smp->flags & SAMPLE_HAS_ID) {
+			pb_smp->has_id = 1;
+			pb_smp->id = smp->id;
+		}
+
+		if (smp->flags & SAMPLE_HAS_ORIGIN) {
+			pb_smp->timestamp = alloc(sizeof(Villas__Node__Timestamp));
+			villas__node__timestamp__init(pb_smp->timestamp);
+
+			pb_smp->timestamp->sec = smp->ts.origin.tv_sec;
+			pb_smp->timestamp->nsec = smp->ts.origin.tv_nsec;
+		}
 
 		pb_smp->n_values = smp->length;
 		pb_smp->values = alloc(pb_smp->n_values * sizeof(Villas__Node__Value *));
@@ -99,17 +109,25 @@ int protobuf_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[],
 		struct sample *smp = smps[i];
 		Villas__Node__Sample *pb_smp = pb_msg->samples[i];
 
+		smp->flags = SAMPLE_HAS_FORMAT;
+
 		if (pb_smp->type != VILLAS__NODE__SAMPLE__TYPE__DATA) {
 			warn("Parsed non supported message type");
 			break;
 		}
 
-		smp->sequence = pb_smp->sequence;
+		if (pb_smp->has_sequence) {
+			smp->flags |= SAMPLE_HAS_SEQUENCE;
+			smp->sequence = pb_smp->sequence;
+		}
 
-		if (pb_smp->has_id)
+		if (pb_smp->has_id) {
+			smp->flags |= SAMPLE_HAS_ID;
 			smp->id	= pb_smp->id;
+		}
 
 		if (pb_smp->timestamp) {
+			smp->flags |= SAMPLE_HAS_ORIGIN;
 			smp->ts.origin.tv_sec = pb_smp->timestamp->sec;
 			smp->ts.origin.tv_nsec = pb_smp->timestamp->nsec;
 		}
@@ -129,6 +147,9 @@ int protobuf_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[],
 
 			sample_set_data_format(smp, j, fmt);
 		}
+
+		if (pb_smp->n_values > 0)
+			smp->flags |= SAMPLE_HAS_VALUES;
 
 		smp->length = j;
 	}

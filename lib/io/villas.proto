@@ -35,7 +35,7 @@ message Sample {
 	};
 
 	required Type type = 1 [default = DATA];
-	required uint32 sequence = 2;			// The sequence number is incremented by one for consecutive messages.
+	optional uint32 sequence = 2;			// The sequence number is incremented by one for consecutive messages.
 	optional uint32 id = 3;				// An id which identifies the source of this sample.
 	optional Timestamp timestamp = 4;
 	repeated Value values = 5;
