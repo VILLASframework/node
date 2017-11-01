@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Socket node-type support for Unix Domain Sockets
+- Protobuf io format
+- Python example client using new Protobuf and UDP/Unix sockets
+
+### Changed
+
+- Upgraded Docker build containers to Fedora 27
+- Updated submodules for most dependencies
+- Use "LABEL" instead of "MAINTAINER" keyword in Dockerfiles
+
+### Fixed
+
+- Socket node-type supports now arbirarily sized packets
+
 ## [0.5.1] - 2017-10-23
 
 ### Changed
