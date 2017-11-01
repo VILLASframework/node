@@ -126,6 +126,8 @@ else
 	RELEASE = 1.$(subst -,_,$(GIT_BRANCH))_$(subst -,_,$(VARIANT)).$(shell date +%Y%m%d)git$(GIT_REV)
 endif
 
+BUILDID = "$(VERSION)-$(GIT_REV)-$(VARIANT)"
+
 # pkg-config dependencies
 PKGS = openssl jansson
 
@@ -157,7 +159,7 @@ everything:
 
 escape = $(shell echo $1 | tr a-z- A-Z_ | tr -dc ' A-Z0-9_')
 
-CFLAGS += -DBUILDID=\"$(VERSION)-$(GIT_REV)-$(VARIANT)\"
+CFLAGS += -DBUILDID=\"$(BUILDID)\"
 CFLAGS += $(addprefix -DWITH_, $(call escape,$(PKGS)))
 
 install: $(addprefix install-,$(filter-out thirdparty doc clients,$(MODULES)))
@@ -165,6 +167,6 @@ clean:   $(addprefix clean-,  $(filter-out thirdparty doc clients,$(MODULES)))
 
 .PHONY: all everything clean install
 
-include $(wildcard $(SRCDIR)/Makefile.*)
+include $(wildcard $(SRCDIR)/make/Makefile.*)
 include $(wildcard $(BUILDDIR)/**/*.d)
 include $(patsubst %,$(SRCDIR)/%/Makefile.inc,$(MODULES))
