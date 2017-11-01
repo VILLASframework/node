@@ -28,15 +28,6 @@ DEPLOY_USER ?= acs
 DEPLOY_HOST ?= villas.fein-aachen.org
 DEPLOY_PATH ?= /var/www/villas/node
 
-DOCKER_FILE ?= Dockerfile
-DOCKER_IMAGE ?= villas/node
-DOCKER_TAG ?= $(GIT_BRANCH)
-
-deploy-docker-dev: DOCKER_IMAGE := $(DOCKER_IMAGE)-dev
-
-docker-dev: DOCKER_IMAGE := $(DOCKER_IMAGE)-dev
-docker-dev: DOCKER_FILE  := $(DOCKER_FILE).dev
-
 packaging: rpm dist
 	
 deploy: deploy-dist deploy-rpm deploy-docker
@@ -54,22 +45,12 @@ deploy-rpm:
 	rsync -a --progress $(RPMDIR)/RPMS/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/../packages/
 	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) createrepo $(DEPLOY_PATH)/../packages
 
-deploy-docker deploy-docker-dev:
-	docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
-
-# Docker targets
-run-docker-dev:
-	docker run -it -p 80:80 -p 443:443 -p 1234:1234 -p 12000:12000/udp -p 12001:12001/udp --privileged --security-opt seccomp:unconfined -v "$(SRCDIR):/villas" $(DOCKER_IMAGE)-dev:$(GIT_BRANCH)
-
-docker docker-dev:
-	docker pull fedora:25
-	docker build -f $(DOCKER_FILE) -t $(DOCKER_IMAGE):$(DOCKER_TAG) $(SRCDIR)
-	
 clean-packaging:
 	rm -f $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM).tar.gz
 
 install-packaging:
 
-.PHONY: packaging install-packaging clean-packaging deploy deploy-dist deploy-rpm dist docker docker-dev run-docker-dev $(TAR_VILLAS)
+.PHONY: packaging install-packaging clean-packaging deploy deploy-dist deploy-rpm dist $(TAR_VILLAS)
 
 include packaging/rpm/Makefile.inc
+include packaging/docker/Makefile.inc

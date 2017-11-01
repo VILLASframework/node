@@ -24,8 +24,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM fedora:latest
-MAINTAINER Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+FROM registry.fedoraproject.org/fedora:27
+
+LABEL \
+	org.label-schema.schema-version = "1.0" \
+	org.label-schema.name = "VILLASnode" \
+	org.label-schema.license = "GPL-3.0" \
+	org.label-schema.vendor = "Institute for Automation of Complex Power Systems, RWTH Aachen University" \
+	org.label-schema.author.name = "Steffen Vogel" \
+	org.label-schema.author.email = "stvogel@eonerc.rwth-aachen.de" \
+	org.label-schema.description = "A image containing for VILLASnode based on Fedora" \
+	org.label-schema.url = "http://fein-aachen.org/projects/villas-framework/" \
+	org.label-schema.vcs-url = "https://git.rwth-aachen.de/VILLASframework/VILLASnode" \
+	org.label-schema.usage = "https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"
 	
 # Some of the dependencies are only available in our own repo
 ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
