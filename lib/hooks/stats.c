@@ -24,6 +24,8 @@
  * @{
  */
 
+#include <string.h>
+
 #include "common.h"
 #include "advio.h"
 #include "hook.h"

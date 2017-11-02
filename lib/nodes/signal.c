@@ -22,6 +22,7 @@
  *********************************************************************************/
 
 #include <math.h>
+#include <string.h>
 
 #include "node.h"
 #include "plugin.h"
