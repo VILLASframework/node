@@ -24,6 +24,8 @@
  * @{
  */
 
+#include <string.h>
+
 #include "nodes/stats.h"
 #include "hook.h"
 #include "plugin.h"

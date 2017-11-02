@@ -24,6 +24,8 @@
  * @{
  */
 
+#include <string.h>
+
 #include "hook.h"
 #include "plugin.h"
 #include "sample.h"
