@@ -37,6 +37,7 @@ WITH_NANOMSG   ?= 1
 WITH_SHMEM     ?= 1
 WITH_STATS     ?= 1
 WITH_INFLUXDB  ?= 1
+WITH_AMQP      ?= 1
 
 # Enabled loopback node-type
 ifeq ($(WITH_LOOPBACK),1)
@@ -163,5 +164,14 @@ ifeq ($(shell $(PKGCONFIG) libwebsockets jansson; echo $$?),0)
 	LIB_SRCS    += lib/nodes/websocket.c
 	LIB_PKGS    += libwebsockets jansson
 	LIB_CFLAGS  += -DWITH_WEBSOCKET
+endif
+endif
+
+# Enable AMQP support
+ifeq ($(WITH_AMQP),1)
+ifeq ($(shell $(PKGCONFIG) librabbitmq; echo $$?),0)
+	LIB_SRCS    += lib/nodes/amqp.c
+	LIB_PKGS    += librabbitmq
+	LIB_CFLAGS  += -DWITH_AMQP
 endif
 endif
