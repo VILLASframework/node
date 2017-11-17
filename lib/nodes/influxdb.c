@@ -28,7 +28,7 @@
 #include "nodes/influxdb.h"
 #include "memory.h"
 
-int influxdb_parse(struct node *n, json_t *cfg)
+int influxdb_parse(struct node *n, json_t *json)
 {
 	struct influxdb *i = (struct influxdb *) n->_vd;
 
@@ -39,7 +39,7 @@ int influxdb_parse(struct node *n, json_t *cfg)
 	char *tmp, *host, *port;
 	const char *server, *key;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: s, s?: o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s: s, s?: o }",
 		"server", &server,
 		"key", &key,
 		"fields", &json_fields
