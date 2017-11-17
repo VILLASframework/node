@@ -30,7 +30,10 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <zmq.h>
-#include <zmq_utils.h>
+
+#if ZMQ_VERSION_MAJOR < 4 || (ZMQ_VERSION_MAJOR == 4 && ZMQ_VERSION_MINOR <= 1)
+  #include <zmq_utils.h>
+#endif
 
 int main (int argc, char *argv[])
 {
