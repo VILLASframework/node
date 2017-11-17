@@ -20,6 +20,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
+ifneq ($(wildcard $(SRCDIR)/thirdparty/libopal/include/opal/AsyncApi.h),)
+
 CLIENTS += opal
 
 ASYNCIP_PATH = $(SRCDIR)/clients/opal/models/send_receive
@@ -40,3 +42,5 @@ install-clients-opal:
 	$(MAKE) -C $(ASYNCIP_PATH) -f Makefile.mk install $(ASYNCIP_OPTS)
 
 .PHONY: clients-opal clean-clients-opal install-clients-opal
+
+endif

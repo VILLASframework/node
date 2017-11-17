@@ -23,14 +23,10 @@
 CLIENTS =
 
 include $(SRCDIR)/clients/python/Makefile.inc
-	
-ifneq ($(wildcard $(SRCDIR)/thirdparty/libopal/include/opal/AsyncApi.h),)
-	include $(SRCDIR)/clients/opal/Makefile.inc
-endif
+include $(SRCDIR)/clients/opal/Makefile.inc
 
-clients: $(addprefix clients-,$(CLIENTS))
-
-clean-clients: $(addprefix clean-clients-,$(CLIENTS))
-install-clients: $(addprefix install-clients-,$(CLIENTS))
+clients: $(addprefix clients-,$(filter-out opal,$(CLIENTS)))
+clean-clients: $(addprefix clean-clients-,$(filter-out opal,$(CLIENTS)))
+install-clients: $(addprefix install-clients-,$(filter-out opal,$(CLIENTS)))
 
 .PHONY: clients clean-clients install-clients
