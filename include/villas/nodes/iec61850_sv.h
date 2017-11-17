@@ -32,67 +32,51 @@
 #include <stdint.h>
 
 #include <libiec61850/sv_publisher.h>
+#include <libiec61850/sv_subscriber.h>
 
+#include "queue_signalled.h"
+#include "pool.h"
 #include "node.h"
 #include "list.h"
 
-enum {
-	/* According to IEC 61850-7-2 */
-	IEC61850_TYPE_BOOLEAN,
-	IEC61850_TYPE_INT8,
-	IEC61850_TYPE_INT16,
-	IEC61850_TYPE_INT32,
-	IEC61850_TYPE_INT64,
-	IEC61850_TYPE_INT8U,
-	IEC61850_TYPE_INT16U,
-	IEC61850_TYPE_INT24U,
-	IEC61850_TYPE_INT32U,
-	IEC61850_TYPE_FLOAT32,
-	IEC61850_TYPE_FLOAT64,
-	IEC61850_TYPE_ENUMERATED,
-	IEC61850_TYPE_CODED_ENUM,
-	IEC61850_TYPE_OCTET_STRING,
-	IEC61850_TYPE_VISIBLE_STRING,
-	IEC61850_TYPE_OBJECTNAME,
-	IEC61850_TYPE_OBJECTREFERENCE,
-	IEC61850_TYPE_TIMESTAMP,
-	IEC61850_TYPE_ENTRYTIME,
-	/* According to IEC 61850-8-1 */
-	IEC61850_TYPE_BITSTRING 
-} type;
+#include "nodes/iec61850.h"
 
-struct iec61850_type_descriptor {
-	enum iec61850_type type;
-	const char *name;
-	unsigned size;
-	
-	/* Functions pointers */
-	double (*subscriber_get)(SVClientASDU self, int index);
-	int    (*publisher_add)(SV_ASDU self);
-	void   (*publisher_set)(SV_ASDU self, int index, int8_t value);
-};
-
-struct iec61850_sv_mapping {
-	SV_ASDU *asdu;
-
-	int offset;
-	enum iec61850_type type;
+struct iec61850_sv_receiver {
+	char *interface;
+	SVReceiver receiver;
 };
 
 struct iec61850_sv {
 	char *interface;
-	
-	struct {
-		SVReceiver receiver
-		SVSubscriber subscriber;
-	} in;
+	int app_id;
+	struct ether_addr dst_address;
 
 	struct {
-		SampledValuesPublisher publisher;
-	
-		struct list mapping;
-		struct list asdus;
-	} out;
+		SVSubscriber subscriber;
+		SVReceiver receiver;
+
+		struct queue_signalled queue;
+		struct pool pool;
+
+		struct list mapping;		/**< Mappings of type struct iec61850_type_descriptor */
+		int total_size;
+	} subscriber;
+
+	struct {
+		SVPublisher publisher;
+		SVPublisher_ASDU asdu;
+
+		char *datset;
+		char *svid;
+
+		int vlan_priority;
+		int vlan_id;
+		int smpmod;
+		int confrev;
+
+		struct list mapping;		/**< Mappings of type struct iec61850_type_descriptor */
+		int total_size;
+	} publisher;
 };
 
 /** @} */
