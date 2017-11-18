@@ -39,23 +39,26 @@
 /* Forward declarations */
 struct io_format;
 
+struct amqp_ssl_info {
+	int verify_peer;
+	int verify_hostname;
+	char *ca_cert;
+	char *client_cert;
+	char *client_key;
+};
+
 struct amqp {
+	char *uri;
+
 	struct amqp_connection_info connection_info;
+	struct amqp_ssl_info ssl_info;
 
-	struct {
-		amqp_socket_t *socket;
-		amqp_connection_state_t connection;
+	amqp_bytes_t routing_key;
+	amqp_bytes_t exchange;
 
-		amqp_bytes_t routing_key;
-		amqp_bytes_t exchange;
-	} producer;
-
-	struct {
-		amqp_socket_t *socket;
-		amqp_connection_state_t connection;
-
-		amqp_bytes_t queue;
-	} consumer;
+	/* We need to create two connection because rabbitmq-c is not thread-safe! */
+	amqp_connection_state_t producer;
+	amqp_connection_state_t consumer;
 
 	struct io_format *format;
 };
@@ -64,7 +67,7 @@ struct amqp {
 char * amqp_print(struct node *n);
 
 /** @see node_type::parse */
-int amqp_parse(struct node *n, json_t *cfg);
+int amqp_parse(struct node *n, json_t *json);
 
 /** @see node_type::open */
 int amqp_start(struct node *n);
