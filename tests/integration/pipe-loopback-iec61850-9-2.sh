@@ -33,7 +33,7 @@ OUTPUT_FILE=$(mktemp)
 NUM_SAMPLES=${NUM_SAMPLES:-100}
 
 # Generate test data
-villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
+villas-signal random -l ${NUM_SAMPLES} -v 4 -n > ${INPUT_FILE}
 
 cat > ${CONFIG_FILE} << EOF
 {
@@ -43,27 +43,23 @@ cat > ${CONFIG_FILE} << EOF
 		
 			"interface" : "lo",
 		
-			"publish" : [
-				"float32",
-				"float64",
-				"int8",
-				"int32"
-			],
-			"subscribe" : [
-				"float32",
-				"float64",
-				"int8",
-				"int32"
-			]
+			"publish" : {
+				"svid" : "1234",
+				"datset" : "abc",
+				"fields" : [ "float32", "float32", "float32", "float32" ]
+			},
+			"subscribe" : {
+				"fields" : [ "float32", "float32", "float32", "float32" ]
+			}
 		}
 	}
 }
 EOF
 
-villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
+villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < <(sleep 1; cat ${INPUT_FILE}; sleep 1)
 
 # Compare data
-villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
+villas-test-cmp -t ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
