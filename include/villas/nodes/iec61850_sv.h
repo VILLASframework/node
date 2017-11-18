@@ -72,6 +72,7 @@ struct iec61850_sv {
 		int vlan_priority;
 		int vlan_id;
 		int smpmod;
+		int smprate;
 		int confrev;
 
 		struct list mapping;		/**< Mappings of type struct iec61850_type_descriptor */

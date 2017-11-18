@@ -124,8 +124,6 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 		smp->ts.origin.tv_sec = refrtm / 1000;
 		smp->ts.origin.tv_nsec = (refrtm % 1000) * 1000000;
 		smp->flags |= SAMPLE_HAS_ORIGIN;
-
-		info("refr read: %zu", refrtm);
 	}
 
 	unsigned offset = 0;
@@ -271,6 +269,8 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 	json_error_t err;
 
 	/* Default values */
+	i->publisher.smpmod = -1; /* do not set smpmod */
+	i->publisher.smprate = -1; /* do not set smpmod */
 	i->publisher.confrev = 1;
 	i->publisher.vlan_priority = CONFIG_SV_DEFAULT_PRIORITY;
 	i->publisher.vlan_id = CONFIG_SV_DEFAULT_VLAN_ID;
@@ -297,12 +297,13 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 		ether_aton_r(dst_address, &i->dst_address);
 
 	if (json_pub) {
-		ret = json_unpack_ex(json_pub, &err, 0, "{ s: o, s?: s, s?: s, s?: i, s: s, s?: i, s?: i }",
+		ret = json_unpack_ex(json_pub, &err, 0, "{ s: o, s: s, s: s, s?: i, s?: s, s?: i, s?: i, s?: i }",
 			"fields", &json_mapping,
 			"svid", &svid,
 			"datset", &datset,
 			"confrev", &i->publisher.confrev,
 			"smpmod", &smpmod,
+			"smprate", &i->publisher.smprate,
 			"vlan_id", &i->publisher.vlan_id,
 			"vlan_priority", &i->publisher.vlan_priority
 		);
@@ -373,15 +374,14 @@ char * iec61850_sv_print(struct node *n)
 	buf = strf("interface=%s, app_id=%#x, dst_address=%s", i->interface, i->app_id, ether_ntoa(&i->dst_address));
 
 	/* Publisher part */
-	strcatf(&buf, ", pub.vlan_prio=%d, pub.vlan_id=%#x, pub.confrev=%d, sub.#fields=%zu",
+	strcatf(&buf, ", pub.svid=%s, pub.datset=%s, pub.vlan_prio=%d, pub.vlan_id=%#x, pub.confrev=%d, pub.#fields=%zu",
+		i->publisher.svid,
+		i->publisher.datset,
 		i->publisher.vlan_priority,
 		i->publisher.vlan_id,
 		i->publisher.confrev,
 		list_length(&i->publisher.mapping)
 	);
-
-	if (i->publisher.datset)
-		strcatf(&buf, ", pub.datset=%s", i->publisher.datset);
 
 	/* Subscriber part */
 	strcatf(&buf, ", sub.#fields=%zu", list_length(&i->subscriber.mapping));
@@ -410,6 +410,12 @@ int iec61850_sv_start(struct node *n)
 		}
 	}
 
+	if (i->publisher.smpmod >= 0)
+		SV_ASDU_setSmpMod(i->publisher.asdu, i->publisher.smpmod);
+
+//	if (s->publisher.smprate >= 0)
+//		SV_ASDU_setSmpRate(i->publisher.asdu, i->publisher.smprate);
+
 	SVPublisher_setupComplete(i->publisher.publisher);
 
 	/* Initialize subscriber */
@@ -433,13 +439,14 @@ int iec61850_sv_start(struct node *n)
 	return 0;
 }
 
-int iec61850_sv_stop(struct node *n)
+int iec61850_sv_destroy(struct node *n)
 {
 	int ret;
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
 	/* Deinitialize publisher */
-	SVPublisher_destroy(i->publisher.publisher);
+	if (i->publisher.publisher)
+		SVPublisher_destroy(i->publisher.publisher);
 
 	/* Deinitialise subscriber */
 	ret = queue_signalled_destroy(&i->subscriber.queue);
@@ -508,8 +515,6 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt)
 		if (smps[j]->flags & SAMPLE_HAS_ORIGIN) {
 			uint64_t refrtm = smps[j]->ts.origin.tv_sec * 1000 + smps[j]->ts.origin.tv_nsec / 1000000;
 
-			info("refr write: %zu", refrtm);
-
 			SVPublisher_ASDU_setRefrTm(i->publisher.asdu, refrtm);
 		}
 
@@ -538,7 +543,7 @@ static struct plugin p = {
 		.parse		= iec61850_sv_parse,
 		.print		= iec61850_sv_print,
 		.start		= iec61850_sv_start,
-		.stop		= iec61850_sv_stop,
+		.destroy	= iec61850_sv_destroy,
 		.read		= iec61850_sv_read,
 		.write		= iec61850_sv_write,
 		.fd		= iec61850_sv_fd
