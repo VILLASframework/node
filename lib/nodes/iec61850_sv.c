@@ -215,7 +215,7 @@ int iec61850_sv_init(struct super_node *sn)
 	for (size_t i = 0; i < list_length(&receivers); i++) {
 		struct iec61850_sv_receiver *r = (struct iec61850_sv_receiver *) list_at(&receivers, i);
 
-		SVReceiver_start(r->receiver);
+		SVReceiver_startThreadless(r->receiver);
 	}
 
 	ret = pthread_create(&thread, NULL, iec61850_sv_thread, NULL);
@@ -241,7 +241,7 @@ int iec61850_sv_deinit()
 		struct iec61850_sv_receiver *r = (struct iec61850_sv_receiver *) list_at(&receivers, i);
 
 		/* Stop all receivers */
-		SVReceiver_stop(r->receiver);
+		SVReceiver_stopThreadless(r->receiver);
 
 		/* Cleanup and free resources */
 		SVReceiver_destroy(r->receiver);
