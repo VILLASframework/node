@@ -1,0 +1,47 @@
+# $Id$
+# Maintainer: Daniel Krebs <github@daniel-krebs.net>
+pkgname=villas-node
+pkgdesc="Connecting real-time power grid simulation equipment"
+
+## Choose to build tag release or some branch
+#branch=v$pkgver
+branch=develop
+
+pkgver=$branch
+pkgrel=1
+arch=('x86_64')
+install=$pkgname.install
+# TODO: check dependencies, might be more
+makedepends=('libconfig')
+depends=('libwebsockets' 'zeromq' 'nanomsg' 'libxil' 'openssl' 'jansson' 'curl'
+         'libnl' 'protobuf' 'libpgm')
+
+repo=VILLASnode
+url="https://git.rwth-aachen.de/VILLASframework/$repo"
+source=("$url/repository/$branch/archive.tar.bz2")
+sha256sums=(SKIP)
+
+prepare() {
+	cd "$(sh -c "echo ${repo}-*")"
+
+	# don't build tests
+	sed -i 's/all: src plugins tools tests clients/all: src plugins tools clients/' Makefile
+
+	# don't run ldconfig during install (requires root permissions)
+	# see villas-node.install for post_install hook
+	sed -i '/ldconfig/d' lib/Makefile.villas.inc
+}
+
+build() {
+	cd "$(sh -c "echo ${repo}-*")"
+
+	# concurrent build seems broken
+	make -j1
+}
+
+package() {
+	cd "$(sh -c "echo ${repo}-*")"
+
+	make DESTDIR="$pkgdir" PREFIX=/usr install
+}
+
