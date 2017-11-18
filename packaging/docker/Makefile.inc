@@ -31,7 +31,7 @@ DOCKER_RUN_TARGETS = $(addprefix run-,$(DOCKER_TARGETS))
 DOCKER_DEPLOY_TARGETS = $(addprefix deploy-,$(DOCKER_TARGETS)) 
 
 DOCKER_RUN_OPTS = --interactive --tty \
-	--port 80:80 --port 443:443 --port 12000:12000/udp --port 12001:12001/udp \
+	--publish 80:80 --publish 443:443 --publish 12000:12000/udp --publish 12001:12001/udp \
 	--privileged --security-opt seccomp:unconfined --volume "$(SRCDIR):/villas"
 	
 # Special cases for 'docker'target

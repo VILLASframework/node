@@ -1,3 +1,4 @@
 *
 !build/release/packaging/rpm/*
-!thirdparty/
+!thirdparty/criterion/
+!thirdparty/libiec61850/

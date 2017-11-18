@@ -36,8 +36,8 @@ LIB_SRCS += $(addprefix lib/kernel/, kernel.c rt.c) \
                log_helper.c io_format.c task.c buffer.c table.c bitset.c \
             )
 
-LIB_LDFLAGS = -shared
-LIB_LDLIBS  = $(LDLIBS)
+LIB_LDFLAGS += -shared
+LIB_LDLIBS  += $(LDLIBS)
 
 ifeq ($(PLATFORM),Linux)
 	LIB_LDLIBS += -ldl -lrt -Wl,-soname,$(LIB_NAME).so.$(LIB_ABI_VERSION)

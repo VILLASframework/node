@@ -37,3 +37,6 @@
 [submodule "thirdparty/rabbitmq-c"]
 	path = thirdparty/rabbitmq-c
 	url = https://github.com/alanxz/rabbitmq-c
+[submodule "thirdparty/libiec61850"]
+	path = thirdparty/libiec61850
+	url = https://github.com/mz-automation/libiec61850

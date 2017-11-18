@@ -82,7 +82,8 @@ RUN yum -y install \
 	zeromq-devel \
 	nanomsg-devel \
 	libxil-devel \
-	protobuf-c-devel
+	protobuf-c-devel \
+	libiec61850-devel
 
 # Build & Install Criterion
 COPY thirdparty/criterion /tmp/criterion
