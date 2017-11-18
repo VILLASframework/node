@@ -93,6 +93,7 @@ ifeq ($(WITH_IEC61850),1)
 ifneq ($(or $(wildcard /usr/include/libiec61850/*), $(wildcard /usr/local/include/libiec61850/*)),)
 	LIB_SRCS += $(wildcard lib/nodes/iec61850_*.c)
 	LIB_LDLIBS += -liec61850
+	LIB_CFLAGS += -DWITH_IEC61850
 endif
 endif
 
