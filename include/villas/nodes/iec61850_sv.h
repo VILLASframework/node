@@ -80,4 +80,24 @@ struct iec61850_sv {
 	} publisher;
 };
 
+int iec61850_sv_init(struct super_node *sn);
+
+int iec61850_sv_deinit();
+
+int iec61850_sv_parse(struct node *n, json_t *json);
+
+char * iec61850_sv_print(struct node *n);
+
+int iec61850_sv_start(struct node *n);
+
+int iec61850_sv_stop(struct node *n);
+
+int iec61850_sv_destroy(struct node *n);
+
+int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt);
+
+int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt);
+
+int iec61850_sv_fd(struct node *n);
+
 /** @} */
