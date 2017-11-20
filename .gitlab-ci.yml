@@ -139,7 +139,7 @@ test:valgrind:
   tags:
     - docker
 
-# Stage: deliver
+# Stage: deploy
 ##############################################################################
 
 deploy:web:
@@ -172,11 +172,15 @@ deploy:packages:
   only:
     - tags
 
+deploy:git-mirror:
+  stage: deploy
+  script:
+    - git push --force --mirror --prune https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com:VILLASframework/VILLASnode.git
 
 # Stage: docker
 ##############################################################################
 
-deploy:docker:
+docker:
   stage: docker
   variables:
     DOCKER_IMAGE: villas/node
@@ -194,7 +198,7 @@ deploy:docker:
   only:
     - tags
 
-deploy:docker-dev:
+docker:dev:
   stage: docker
   script:
     - make deploy-docker-dev
