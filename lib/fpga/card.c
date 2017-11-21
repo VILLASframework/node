@@ -66,7 +66,7 @@ int fpga_card_parse(struct fpga_card *c, json_t *cfg, const char *name)
 
 	c->name = strdup(name);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: b, s?: o, s?: o, s: o }"
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: b, s?: o, s?: o, s: o }",
 		"affinity", &c->affinity,
 		"do_reset", &c->do_reset,
 		"slot", &json_slot,
