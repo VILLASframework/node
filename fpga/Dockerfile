@@ -59,7 +59,8 @@ ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
 # Dependencies
 RUN dnf -y install \
 	jansson-devel \
-	libxil-devel
+	libxil-devel \
+	lapack-devel
 
 # Build & Install Criterion
 COPY thirdparty/criterion /tmp/criterion
