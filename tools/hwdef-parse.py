@@ -33,7 +33,8 @@ whitelist = [
 	[ 'acs.eonerc.rwth-aachen.de', 'user', 'rtds_axis' ],
 	[ 'acs.eonerc.rwth-aachen.de', 'hls' ],
 	[ 'acs.eonerc.rwth-aachen.de', 'sysgen' ],
-	[ 'xilinx.com', 'ip', 'axi_gpio' ]
+	[ 'xilinx.com', 'ip', 'axi_gpio' ],
+	[ 'xilinx.com', 'ip', 'axi_bram_ctrl' ]
 ]
 
 # List of VLNI ids of AXI4-Stream infrastructure IP cores which do not alter data
@@ -182,5 +183,18 @@ for port in ports:
 
 	if instance in ips:
 		ips[instance]['irqs'][irqname] = irq
+
+# Find BRAM storage depths (size)
+brams = root.xpath('.//MODULE[@MODTYPE="axi_bram_ctrl"]')
+for bram in brams:
+	instance = bram.get('INSTANCE')
+
+	width = bram.find('.//PARAMETER[@NAME="DATA_WIDTH"]').get('VALUE')
+	depth = bram.find('.//PARAMETER[@NAME="MEM_DEPTH"]').get('VALUE')
+	
+	size = int(width) * int(depth) / 8
+	
+	if instance in ips:
+		ips[instance]['size'] = int(size)
 
 print(json.dumps(ips, indent=2))
