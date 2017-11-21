@@ -113,8 +113,8 @@ for module in modules:
 	instance = module.get('INSTANCE')
 	vlnv = module.get('VLNV')
 
+	# Ignroing unkown
 	if not vlnv_match(vlnv, whitelist):
-		print('Ignoring unknown IP: %s (%s)' % (instance, vlnv))
 		continue
 
 	ips[instance] = {
@@ -172,9 +172,6 @@ for port in ports:
 	m = r.search(name)
 
 	irq = int(m.group(1))
-
-	print(irq, name, signame, instance)
-
 	ip = root.xpath('.//MODULE[.//PORT[@SIGNAME="{}" and @DIR="O"]]'.format(signame))[0]
 
 	instance = ip.get('INSTANCE')
@@ -185,7 +182,5 @@ for port in ports:
 
 	if instance in ips:
 		ips[instance]['irqs'][irqname] = irq
-	else:
-		print('Found IRQ %d connected to unkown IP: %s (%s)' % (irq, instance, vlnv))
 
 print(json.dumps(ips, indent=2))
