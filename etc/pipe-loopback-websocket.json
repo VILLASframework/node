@@ -1,0 +1,11 @@
+{
+	"nodes" : {
+		"node1" : {
+			"type" : "websocket",
+
+			"destinations" : [
+				"ws://localhost/node1"
+			]
+		}
+	}
+}

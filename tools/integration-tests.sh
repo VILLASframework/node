@@ -84,7 +84,7 @@ SKIPPED=0
 TIMEDOUT=0
 
 # Preamble
-echo -e "Starting integration tests for VILLASnode/fpga:\n"
+echo -e "Starting integration tests for VILLASnode:\n"
 
 for TEST in ${TESTS}; do
 	TESTNAME=$(basename -s .sh ${TEST})

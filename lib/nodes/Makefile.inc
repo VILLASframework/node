@@ -38,7 +38,7 @@ WITH_SHMEM     ?= 1
 WITH_STATS     ?= 1
 WITH_INFLUXDB  ?= 1
 WITH_AMQP      ?= 1
-WITH_IEC61850  ?= 1
+WITH_IEC61850  ?= 0
 
 # Enabled loopback node-type
 ifeq ($(WITH_LOOPBACK),1)
@@ -97,15 +97,12 @@ ifneq ($(or $(wildcard /usr/include/libiec61850/*), $(wildcard /usr/local/includ
 endif
 endif
 
-# Enable VILLASfpga support when libxil is available
+# Enable VILLASfpga support when libvillas-fpga is available
 ifeq ($(WITH_FPGA),1)
-ifeq ($(shell $(PKGCONFIG) libxil; echo $$?),0)
-	LIB_SRCS += $(addprefix lib/nodes/, fpga.c) \
-	            $(addprefix lib/kernel/, pci.c vfio.c) \
+ifeq ($(shell $(PKGCONFIG) libvillas-fpga; echo $$?),0)
+	LIB_SRCS += lib/nodes/fpga.c
 
-	include lib/fpga/Makefile.inc
-
-	LIB_PKGS    += libxil
+	LIB_PKGS    += libvillas-fpga
 	LIB_CFLAGS += -DWITH_FPGA
 endif
 endif

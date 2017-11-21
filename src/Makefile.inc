@@ -39,27 +39,9 @@ ifeq ($(WITH_WEBSOCKET),1)
 endif
 endif
 
-# Enable VILLASfpga support when libxil is available
-ifeq ($(shell $(PKGCONFIG) libxil; echo $$?),0)
-	LIB_SRCS    += $(addprefix lib/nodes/, fpga.c)
-	LIB_SRCS    += $(addprefix lib/kernel/, pci.c vfio.c)
-	LIB_SRCS    += $(wildcard  lib/fpga/*.c)
-	TARGETS     += $(BUILDDIR)/villas-fpga
-	PKGS        += libxil
-
-	# Add support for LAPACK / BLAS benchmarks / solvers
-	ifeq ($(shell $(PKGCONFIG) blas lapack; echo $$?),0)
-		PKGS        += blas lapack
-		BENCH_OBJS  += fpga-bench-overruns.o
-	endif
-endif
-
 src: $(TARGETS)
 
 $(TARGETS): $(BUILDDIR)/villas-%: $(BUILDDIR)/src/%.o
-
-# Some additional prereqs for individual binaries
-$(BUILDDIR)/villas-fpga: $(addprefix $(BUILDDIR)/src/,fpga-bench.o $(BENCH_OBJS))
 
 # Compile executable objects
 $(BUILDDIR)/src/%.o: src/%.c | $$(dir $$@)

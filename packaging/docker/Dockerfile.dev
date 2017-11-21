@@ -81,7 +81,6 @@ RUN dnf -y install \
 	libwebsockets-devel \
 	zeromq-devel \
 	nanomsg-devel \
-	libxil-devel \
 	protobuf-c-devel \
 	libiec61850-devel
 

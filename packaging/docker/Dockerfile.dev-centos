@@ -81,7 +81,6 @@ RUN yum -y install \
 	libnl3-devel \
 	zeromq-devel \
 	nanomsg-devel \
-	libxil-devel \
 	protobuf-c-devel \
 	libiec61850-devel
 
