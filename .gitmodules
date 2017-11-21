@@ -19,9 +19,6 @@
 [submodule "thirdparty/libcurl"]
 	path = thirdparty/libcurl
 	url = https://github.com/curl/curl.git
-[submodule "thirdparty/libxil"]
-	path = thirdparty/libxil
-	url = ../libxil.git
 [submodule "thirdparty/libopal"]
 	path = thirdparty/libopal
 	url = ../libopal.git
