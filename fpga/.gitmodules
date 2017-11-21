@@ -3,4 +3,4 @@
 	url = https://github.com/Snaipe/Criterion.git
 [submodule "thirdparty/libxil"]
 	path = thirdparty/libxil
-	url = git@git.rwth-aachen.de:VILLASframework/libxil.git
+	url = https://git.rwth-aachen.de/VILLASframework/libxil.git
