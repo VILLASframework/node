@@ -1,0 +1,94 @@
+variables:
+  GIT_STRATEGY: fetch
+  GIT_SUBMODULE_STRATEGY: recursive
+  PREFIX: /usr/
+  DOCKER_TAG_DEV: ${CI_COMMIT_REF_NAME}
+  DOCKER_IMAGE_DEV: villas/fpga-dev
+
+stages:
+  - prepare
+  - build
+  - test
+  - deploy
+  - docker
+
+# For some reason, GitLab CI prunes the contents of the submodules so we need to restore them.
+before_script:
+  - git submodule foreach git checkout .
+
+# Stage: prepare
+##############################################################################
+
+# Build docker image which is used to build & test VILLASnode
+docker-dev:
+  stage: prepare
+  script:
+    - docker build -t ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV} .
+  tags:
+    - shell
+    - linux
+
+# Stage: build
+##############################################################################
+
+build:source:
+  stage: build
+  script:
+    - mkdir build && cd build && cmake .. && make
+  artifacts:
+    expire_in: 1 week
+    name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
+    paths:
+      - build/
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+  tags:
+    - docker
+
+#build:packages:
+#  stage: build
+#  script:
+#    - mkdir build && cd build && cmake .. && make package
+#  artifacts:
+#    expire_in: 1 week
+#    name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
+#    paths:
+#      - build/
+#  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+#  tags:
+#    - docker
+
+# Stage: test
+##############################################################################
+
+#test:unit:
+#  stage: test
+#  dependencies:
+#    - build:source
+#  script:
+#    - make test
+#  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+#  tags:
+#    - docker
+#    - fpga
+
+# Stage: deploy
+##############################################################################
+
+#deploy:packages:
+#  stage: deploy
+#  script:
+#    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} mkdir -p ${DEPLOY_PATH}/{dist,../packages}
+#    - rsync ${RSYNC_OPTS} build/*.rpm ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/../packages/
+#    - rsync ${RSYNC_OPTS} build//*.tar.gz  ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/dist/
+#    - ssh ${DEPLOY_USER}@${DEPLOY_HOST} createrepo ${DEPLOY_PATH}/../packages
+#  dependencies:
+#    - build:packages
+#  tags:
+#    - villas-deploy
+#  only:
+#    - tags
+#
+#deploy:git-mirror:
+#  stage: deploy
+#  script:
+#    - git push --force --mirror --prune https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com:VILLASframework/VILLASnode.git
