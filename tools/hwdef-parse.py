@@ -48,10 +48,10 @@ axi_converter_whitelist = [
 ]
 
 opponent = {
-	'MASTER' : 'SLAVE',
-	'SLAVE'  : 'MASTER',
-	'INITIATOR' : 'TARGET',
-	'TARGET' : 'INITIATOR'
+	'MASTER' : ('SLAVE', 'TARGET'),
+	'SLAVE'  : ('MASTER', 'INITIATOR'),
+	'INITIATOR' : ('TARGET', 'SLAVE'),
+	'TARGET' : ('INITIATOR', 'MASTER')
 }
 
 def port_trace(root, signame, idx):
@@ -61,7 +61,7 @@ def port_find_driver(root, signame):
 	pass
 
 def bus_trace(root, busname, type, whitelist):
-	module = root.xpath('.//MODULE[.//BUSINTERFACE[@BUSNAME="{}" and @TYPE="{}"]]'.format(busname, type))
+	module = root.xpath('.//MODULE[.//BUSINTERFACE[@BUSNAME="{}" and (@TYPE="{}" or @TYPE="{}")]]'.format(busname, type[0], type[1]))
 
 	vlnv = module[0].get('VLNV')
 	instance = module[0].get('INSTANCE')
@@ -69,8 +69,8 @@ def bus_trace(root, busname, type, whitelist):
 	if vlnv_match(vlnv, whitelist):
 		return instance
 	elif vlnv_match(vlnv, axi_converter_whitelist):
-		next_bus = module[0].find('.//BUSINTERFACE[@TYPE="{}"]'.format(opponent[type]))
-		next_busname = next_bus.get('BUSNAME')
+		next_bus = module[0].xpath('.//BUSINTERFACE[@TYPE="{}" or @TYPE="{}"]'.format(opponent[type[0]][0], opponent[type[0]][1]))
+		next_busname = next_bus[0].get('BUSNAME')
 
 		return bus_trace(root, next_busname, type, whitelist)
 	else:
@@ -163,6 +163,10 @@ ports = concat.xpath('.//PORT[@DIR="I"]')
 for port in ports:
 	name = port.get('NAME')
 	signame = port.get('SIGNAME')
+	
+	# Skip unconnected IRQs
+	if not signame:
+		continue
 
 	r = re.compile('In([0-9+])')
 	m = r.search(name)
