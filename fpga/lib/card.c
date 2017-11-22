@@ -36,7 +36,7 @@
 
 int fpga_card_init(struct fpga_card *c, struct pci *pci, struct vfio_container *vc)
 {
-	assert(c->state = STATE_DESTROYED);
+	assert(c->state == STATE_DESTROYED);
 
 	c->vfio_container = vc;
 	c->pci = pci;
