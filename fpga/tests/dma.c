@@ -50,7 +50,7 @@ Test(fpga, dma, .description = "DMA")
 
 		/* Simple DMA can only transfer up to 4 kb due to
 		 * PCIe page size burst limitation */
-		ssize_t len2, len = dma->inst.HasSg ? 64 << 20 : 1 << 2;
+		ssize_t len2, len = dma->inst.HasSg ? 64 << 20 : 1 << 12;
 
 		ret = dma_alloc(dm, &mem, 2 * len, 0);
 		cr_assert_eq(ret, 0);
