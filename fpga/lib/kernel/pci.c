@@ -40,6 +40,8 @@ int pci_init(struct pci *p)
 	char path[PATH_MAX];
 	int ret;
 
+	list_init(&p->devices);
+
 	snprintf(path, sizeof(path), "%s/bus/pci/devices", SYSFS_PATH);
 
 	dp = opendir(path);
@@ -49,6 +51,12 @@ int pci_init(struct pci *p)
 	}
 
 	while ((e = readdir(dp))) {
+
+		// ignore special entries
+		if ((strcmp(e->d_name, ".") == 0) ||
+		    (strcmp(e->d_name, "..") == 0) )
+			continue;
+
 		struct pci_device *d = (struct pci_device *) alloc(sizeof(struct pci_device));
 
 		struct { const char *s; int *p; } map[] = {
