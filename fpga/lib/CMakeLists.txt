@@ -32,7 +32,7 @@ pkg_check_modules(XIL libxil)
 
 find_package(Threads)
 
-add_library(villas-fpga ${SOURCES})
+add_library(villas-fpga SHARED ${SOURCES})
 
 target_compile_definitions(villas-fpga PRIVATE
 	BUILDID=\"abc\"
