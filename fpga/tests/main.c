@@ -29,7 +29,8 @@
 #include <villas/fpga/card.h>
 #include <villas/fpga/vlnv.h>
 
-#define TEST_CONFIG	"/villas/etc/fpga.conf"
+#define FPGA_CARD	"vc707"
+#define TEST_CONFIG	"/villas/etc/fpga.json"
 #define TEST_LEN	0x1000
 
 #define CPU_HZ		3392389000
@@ -46,7 +47,6 @@ static void init()
 
 	FILE *f;
 	json_error_t err;
-	json_t *json;
 
 	ret = pci_init(&pci);
 	cr_assert_eq(ret, 0, "Failed to initialize PCI sub-system");
@@ -56,21 +56,30 @@ static void init()
 
 	/* Parse FPGA configuration */
 	f = fopen(TEST_CONFIG, "r");
-	cr_assert_not_null(f);
+	cr_assert_not_null(f, "Cannot open config file");
 
-	json = json_loadf(f, 0, &err);
-	cr_assert_not_null(json);
+	json_t *json = json_loadf(f, 0, &err);
+	cr_assert_not_null(json, "Cannot load JSON config");
 
 	fclose(f);
 
-	list_init(&cards);
-	ret = fpga_card_parse_list(&cards, json);
+	json_t *fpgas = json_object_get(json, "fpgas");
+	cr_assert_not_null(fpgas, "No section 'fpgas' found in config");
+	cr_assert(json_object_size(json) > 0, "No FPGAs defined in config");
+
+	json_t *json_card = json_object_get(fpgas, FPGA_CARD);
+	cr_assert_not_null(json_card, "FPGA card " FPGA_CARD " not found");
+
+	card = (struct fpga_card *) alloc(sizeof(struct fpga_card));
+	cr_assert_not_null(card, "Cannot allocate memory for FPGA card");
+
+	ret = fpga_card_init(card, &pci, &vc);
+	cr_assert_eq(ret, 0, "FPGA card initialization failed");
+
+	ret = fpga_card_parse(card, json_card, FPGA_CARD);
 	cr_assert_eq(ret, 0, "Failed to parse FPGA config");
 
 	json_decref(json);
-
-	card = list_lookup(&cards, "vc707");
-	cr_assert(card, "FPGA card not found");
 
 	if (criterion_options.logging_threshold < CRITERION_IMPORTANT)
 		fpga_card_dump(card);
