@@ -23,7 +23,7 @@
   "fpgas": {
     "vc707": {
       "id": "10ee:7022",
-      "slot": "01:00.0",
+      "slot": "03:00.0",
       "do_reset": true,
       "ips": {
         "axi_pcie_intc_0": {
