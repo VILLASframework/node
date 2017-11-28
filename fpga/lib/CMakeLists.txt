@@ -9,7 +9,7 @@ set(SOURCES
 	ips/dft.c
 	ips/fifo.c
 	ips/dma.c
-	ips/intc.c
+	ips/intc.cpp
 	ips/gpio.c
 	ips/rtds_axis.c
 
