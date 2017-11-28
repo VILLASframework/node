@@ -232,23 +232,21 @@ fail:
 
 int pci_device_compare(const struct pci_device *d, const struct pci_device *f)
 {
-	if ((f->slot.domain >= 0 && f->slot.domain != d->slot.domain) ||
-			(f->slot.bus >= 0 && f->slot.bus != d->slot.bus) ||
-			(f->slot.device >= 0 && f->slot.device != d->slot.device) ||
-			(f->slot.function >= 0 && f->slot.function != d->slot.function))
-		return 0;
+	if ((f->slot.domain		!= 0 && f->slot.domain != d->slot.domain) ||
+	    (f->slot.bus		!= 0 && f->slot.bus != d->slot.bus) ||
+	    (f->slot.device		!= 0 && f->slot.device != d->slot.device) ||
+	    (f->slot.function	!= 0 && f->slot.function != d->slot.function))
+		return 1;
 
-	if (f->id.device >= 0 || f->id.vendor >= 0) {
-		if ((f->id.device >= 0 && f->id.device != d->id.device) || (f->id.vendor >= 0 && f->id.vendor != d->id.vendor))
-			return 0;
-	}
+	if ((f->id.device != 0 && f->id.device != d->id.device) ||
+	    (f->id.vendor != 0 && f->id.vendor != d->id.vendor))
+		return 1;
 
-	if (f->id.class >= 0) {
-		if (f->id.class != d->id.class)
-			return 0;
-	}
+	if ((f->id.class != 0) || (f->id.class != d->id.class))
+		return 1;
 
-	return 1;
+	// found
+	return 0;
 }
 
 struct pci_device * pci_lookup_device(struct pci *p, struct pci_device *f)
