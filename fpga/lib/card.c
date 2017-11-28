@@ -167,7 +167,7 @@ int fpga_card_start(struct fpga_card *c)
 
 	struct pci_device *pdev;
 
-	assert(c->state == STATE_CHECKED);
+	assert(c->state == STATE_INITIALIZED);
 
 	/* Search for FPGA card */
 	pdev = pci_lookup_device(c->pci, &c->filter);
@@ -258,6 +258,8 @@ void fpga_card_dump(struct fpga_card *c)
 
 int fpga_card_check(struct fpga_card *c)
 {
+	assert(c->state == STATE_PARSED);
+
 	/* Check FPGA configuration */
 	c->reset = fpga_vlnv_lookup(&c->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_gpio", NULL });
 	if (!c->reset)

@@ -76,8 +76,14 @@ static void init()
 	ret = fpga_card_init(card, &pci, &vc);
 	cr_assert_eq(ret, 0, "FPGA card initialization failed");
 
+	ret = fpga_card_start(card);
+	cr_assert_eq(ret, 0, "FPGA card cannot be started");
+
 	ret = fpga_card_parse(card, json_card, FPGA_CARD);
 	cr_assert_eq(ret, 0, "Failed to parse FPGA config");
+
+	ret = fpga_card_check(card);
+	cr_assert_eq(ret, 0, "FPGA card check failed");
 
 	json_decref(json);
 
