@@ -221,7 +221,7 @@ int pci_device_parse_id(struct pci_device *f, const char *str, const char **erro
 			goto fail;
 		}
 
-		f->id.class = x;
+		f->id.class_code = x;
 	}
 
 	return 0;
@@ -242,7 +242,7 @@ int pci_device_compare(const struct pci_device *d, const struct pci_device *f)
 	    (f->id.vendor != 0 && f->id.vendor != d->id.vendor))
 		return 1;
 
-	if ((f->id.class != 0) || (f->id.class != d->id.class))
+	if ((f->id.class_code != 0) || (f->id.class_code != d->id.class_code))
 		return 1;
 
 	// found

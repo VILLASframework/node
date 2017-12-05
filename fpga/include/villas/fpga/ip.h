@@ -51,7 +51,7 @@ enum fpga_ip_types {
 	FPGA_IP_TYPE_MATH,	/**< A math IP performs some kind of mathematical operation on the streaming data */
 	FPGA_IP_TYPE_MISC,	/**< Other IP components like timer, counters, interrupt conctrollers or routing. */
 	FPGA_IP_TYPE_INTERFACE	/**< A interface IP connects the FPGA to another system or controller. */
-} type;
+};
 
 struct fpga_ip_type {
 	struct fpga_vlnv vlnv;

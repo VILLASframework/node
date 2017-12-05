@@ -106,8 +106,8 @@ struct log {
 };
 
 /** The global log instance. */
-struct log *global_log;
-struct log default_log;
+extern struct log *global_log;
+extern struct log default_log;
 
 /** Initialize log object */
 int log_init(struct log *l, int level, long faciltities);

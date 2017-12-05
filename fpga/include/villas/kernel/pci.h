@@ -18,7 +18,7 @@ struct pci_device {
 	struct {
 		int vendor;
 		int device;
-		int class;
+		int class_code;
 	} id;
 
 	struct {
