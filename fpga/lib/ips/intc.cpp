@@ -24,40 +24,37 @@
 
 #include "config.h"
 #include "log.h"
-#include "plugin.h"
+#include "plugin.hpp"
 
 #include "kernel/vfio.h"
 #include "kernel/kernel.h"
 
 #include "fpga/ip.h"
 #include "fpga/card.h"
-#include "fpga/ips/intc.h"
+#include "fpga/ips/intc.hpp"
 
-int intc_start(struct fpga_ip *c)
+namespace villas {
+
+InterruptController::~InterruptController()
 {
-	int ret;
+	vfio_pci_msi_deinit(&card->vfio_device , this->efds);
+}
 
-	struct fpga_card *f = c->card;
-	struct intc *intc = (struct intc *) c->_vd;
+bool InterruptController::start()
+{
+	const uintptr_t base = getBaseaddr();
 
-	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
+	num_irqs = vfio_pci_msi_init(&card->vfio_device, efds);
+	if (num_irqs < 0)
+		return false;
 
-	if (c != f->intc)
-		error("There can be only one interrupt controller per FPGA");
-
-	intc->num_irqs = vfio_pci_msi_init(&f->vfio_device, intc->efds);
-	if (intc->num_irqs < 0)
-		return -1;
-
-	ret = vfio_pci_msi_find(&f->vfio_device, intc->nos);
-	if (ret)
-		return -2;
+	if(vfio_pci_msi_find(&card->vfio_device, nos) != 0)
+		return false;
 
 	/* For each IRQ */
-	for (int i = 0; i < intc->num_irqs; i++) {
+	for (int i = 0; i < num_irqs; i++) {
 		/* Pin to core */
-		ret = kernel_irq_setaffinity(intc->nos[i], f->affinity, NULL);
-		if (ret)
+		if(kernel_irq_setaffinity(nos[i], card->affinity, NULL) !=0)
 			serror("Failed to change affinity of VFIO-MSI interrupt");
 
 		/* Setup vector */
@@ -72,26 +69,14 @@ int intc_start(struct fpga_ip *c)
 
 	debug(4, "FPGA: enabled interrupts");
 
-	return 0;
+	return true;
 }
 
-int intc_destroy(struct fpga_ip *c)
+int
+InterruptController::enableInterrupt(InterruptController::IrqMaskType mask, bool polling)
 {
-	struct fpga_card *f = c->card;
-	struct intc *intc = (struct intc *) c->_vd;
-
-	vfio_pci_msi_deinit(&f->vfio_device, intc->efds);
-
-	return 0;
-}
-
-int intc_enable(struct fpga_ip *c, uint32_t mask, int flags)
-{
-	struct fpga_card *f = c->card;
-	struct intc *intc = (struct intc *) c->_vd;
-
 	uint32_t ier, imr;
-	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
+	const uintptr_t base = getBaseaddr();
 
 	/* Current state of INTC */
 	ier = XIntc_In32(base + XIN_IER_OFFSET);
@@ -100,12 +85,12 @@ int intc_enable(struct fpga_ip *c, uint32_t mask, int flags)
 	/* Clear pending IRQs */
 	XIntc_Out32(base + XIN_IAR_OFFSET, mask);
 
-	for (int i = 0; i < intc->num_irqs; i++) {
+	for (int i = 0; i < num_irqs; i++) {
 		if (mask & (1 << i))
-			intc->flags[i] = flags;
+			this->polling[i] = polling;
 	}
 
-	if (flags & INTC_POLLING) {
+	if (polling) {
 		XIntc_Out32(base + XIN_IMR_OFFSET, imr & ~mask);
 		XIntc_Out32(base + XIN_IER_OFFSET, ier & ~mask);
 	}
@@ -118,31 +103,29 @@ int intc_enable(struct fpga_ip *c, uint32_t mask, int flags)
 	debug(3, "New imr = %#x", XIntc_In32(base + XIN_IMR_OFFSET));
 	debug(3, "New isr = %#x", XIntc_In32(base + XIN_ISR_OFFSET));
 
-	debug(8, "FPGA: Interupt enabled: mask=%#x flags=%#x", mask, flags);
+	debug(8, "FPGA: Interupts enabled: mask=%#x polling=%d", mask, polling);
 
-	return 0;
+	return true;
 }
 
-int intc_disable(struct fpga_ip *c, uint32_t mask)
+int
+InterruptController::disableInterrupt(InterruptController::IrqMaskType mask)
 {
-	struct fpga_card *f = c->card;
-
-	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
+	const uintptr_t base = getBaseaddr();
 	uint32_t ier = XIntc_In32(base + XIN_IER_OFFSET);
 
 	XIntc_Out32(base + XIN_IER_OFFSET, ier & ~mask);
 
-	return 0;
+	return true;
 }
 
-uint64_t intc_wait(struct fpga_ip *c, int irq)
+uint64_t InterruptController::waitForInterrupt(int irq)
 {
-	struct fpga_card *f = c->card;
-	struct intc *intc = (struct intc *) c->_vd;
+	assert(irq < maxIrqs);
 
-	uintptr_t base = (uintptr_t) f->map + c->baseaddr;
+	const uintptr_t base = getBaseaddr();
 
-	if (intc->flags[irq] & INTC_POLLING) {
+	if (this->polling[irq]) {
 		uint32_t isr, mask = 1 << irq;
 
 		do {
@@ -156,7 +139,7 @@ uint64_t intc_wait(struct fpga_ip *c, int irq)
 	}
 	else {
 		uint64_t cnt;
-		ssize_t ret = read(intc->efds[irq], &cnt, sizeof(cnt));
+		ssize_t ret = read(efds[irq], &cnt, sizeof(cnt));
 		if (ret != sizeof(cnt))
 			return 0;
 
@@ -164,17 +147,11 @@ uint64_t intc_wait(struct fpga_ip *c, int irq)
 	}
 }
 
-static struct plugin p = {
-	.name		= "Xilinx's programmable interrupt controller",
-	.description	= "",
-	.type		= PLUGIN_TYPE_FPGA_IP,
-	.ip		= {
-		.vlnv	= { "acs.eonerc.rwth-aachen.de", "user", "axi_pcie_intc", NULL },
-		.type	= FPGA_IP_TYPE_MISC,
-		.start	= intc_start,
-		.destroy = intc_destroy,
-		.size	= sizeof(struct intc)
-	}
-};
 
-REGISTER_PLUGIN(&p)
+bool InterruptControllerFactory::configureJson(FpgaIp *ip, json_t *json)
+{
+	// parse json and configure instance here
+	return true;
+}
+
+} // namespace villas
