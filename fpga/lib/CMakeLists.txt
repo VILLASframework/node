@@ -1,6 +1,8 @@
 set(SOURCES
 	ip.cpp
+	ip.c
 	vlnv.cpp
+	vlnv.c
 	card.c
 
 	ips/timer.c
@@ -17,6 +19,7 @@ set(SOURCES
 	kernel/pci.c
 	kernel/vfio.c
 
+	plugin.c
 	plugin.cpp
 	utils.c
 	list.c

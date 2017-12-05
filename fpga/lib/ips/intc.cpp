@@ -35,6 +35,9 @@
 
 namespace villas {
 
+// instantiate factory to make available to plugin infrastructure
+static InterruptControllerFactory factory;
+
 InterruptController::~InterruptController()
 {
 	vfio_pci_msi_deinit(&card->vfio_device , this->efds);

@@ -37,7 +37,6 @@ class FpgaVlnv {
 public:
 
 	static constexpr char delimiter	= ':';
-	static constexpr char wildcard[] = "*";
 
 	FpgaVlnv() :
 	    vendor(""), library(""), name(""), version("") {}

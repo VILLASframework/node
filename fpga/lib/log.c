@@ -39,6 +39,7 @@
 #endif
 
 struct log *global_log;
+struct log default_log;
 
 /* We register a default log instance */
 __attribute__((constructor))

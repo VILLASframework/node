@@ -59,10 +59,10 @@ FpgaVlnv::parseFromString(std::string vlnv)
 	std::getline(sstream, version,	delimiter);
 
 	// represent wildcard internally as empty string
-	if(vendor	== wildcard) vendor  = "";
-	if(library	== wildcard) library = "";
-	if(name		== wildcard) name    = "";
-	if(version	== wildcard) version = "";
+	if(vendor	== "*") vendor  = "";
+	if(library	== "*") library = "";
+	if(name		== "*") name    = "";
+	if(version	== "*") version = "";
 }
 
 
