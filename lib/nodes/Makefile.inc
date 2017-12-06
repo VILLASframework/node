@@ -90,10 +90,10 @@ endif
 
 # Enable IEC61850 node-types when libiec61850 is available
 ifeq ($(WITH_IEC61850),1)
-ifneq ($(or $(wildcard /usr/include/libiec61850/*), $(wildcard /usr/local/include/libiec61850/*)),)
-	LIB_SRCS += $(wildcard lib/nodes/iec61850_*.c)
-	LIB_LDLIBS += -liec61850
+ifeq ($(shell $(PKGCONFIG) --atleast-version=1.2.0 libiec61850; echo $$?),0)
+	LIB_SRCS += lib/nodes/iec61850.c lib/nodes/iec61850_sv.c
 	LIB_CFLAGS += -DWITH_IEC61850
+	LIB_PKGS += libiec61850
 endif
 endif
 
