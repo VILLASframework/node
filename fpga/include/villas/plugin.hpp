@@ -74,8 +74,29 @@ public:
 	enum state state;
 
 private:
+	/* Just using a standard std::list<> to hold plugins is problematic, because
+	   we want to push Plugins to the list from within each Plugin's constructor
+	   that is executed during static initialization. Since the order of static
+	   initialization is undefined in C++, it may happen that a Plugin
+	   constructor is executed before the list could be initialized. Therefore,
+	   we use the Nifty Counter Idiom [1] to initialize the list ourself before
+	   the first usage.
+
+		In short:
+		- allocate a buffer for the list
+		- initialize list before first usage
+		- (complicatedly) declaring a buffer is neccessary in order to avoid
+		  that the constructor of the static list is executed again
+
+	   [1] https://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Nifty_Counter
+	*/
+
 	using PluginList = std::list<Plugin *>;
-	static std::list<Plugin *> pluginList;
+	using PluginListBuffer = typename std::aligned_storage<sizeof (Plugin::PluginList), alignof (Plugin::PluginList)>::type;
+
+	static PluginListBuffer pluginListBuffer;	///< buffer to hold a PluginList
+	static PluginList& pluginList;		///< reference to pluginListBuffer
+	static int pluginListNiftyCounter;	///< track if pluginList has been initialized
 };
 
 } // namespace villas

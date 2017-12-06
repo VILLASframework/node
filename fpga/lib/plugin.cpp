@@ -25,7 +25,9 @@
 
 #include <string>
 #include <iostream>
-#include <iostream>
+
+#include <new>
+#include <type_traits>
 
 #include "plugin.hpp"
 
@@ -33,16 +35,27 @@
 namespace villas {
 
 // list of all registered plugins
-Plugin::PluginList Plugin::pluginList;
+Plugin::PluginList&
+Plugin::pluginList = reinterpret_cast<Plugin::PluginList&>(Plugin::pluginListBuffer);
+
+Plugin::PluginListBuffer
+Plugin::pluginListBuffer;
+
+// relies on zero initialization
+int Plugin::pluginListNiftyCounter;
 
 
 Plugin::Plugin() :
+    pluginType(Plugin::Type::Unknown),
     name(""),
     description(""),
     path(""),
-    pluginType(Plugin::Type::Unknown),
     state(STATE_INITIALIZED)
 {
+	// see comment in plugin.hpp on why we need to do this (Nifty Counter Idiom)
+	if(pluginListNiftyCounter++ == 0)
+		new (&pluginList) PluginList;
+
 	// push to global plugin list
 	pluginList.push_back(this);
 }
