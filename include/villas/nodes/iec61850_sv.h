@@ -41,11 +41,6 @@
 
 #include "nodes/iec61850.h"
 
-struct iec61850_sv_receiver {
-	char *interface;
-	SVReceiver receiver;
-};
-
 struct iec61850_sv {
 	char *interface;
 	int app_id;
@@ -66,7 +61,6 @@ struct iec61850_sv {
 		SVPublisher publisher;
 		SVPublisher_ASDU asdu;
 
-		char *datset;
 		char *svid;
 
 		int vlan_priority;

@@ -31,45 +31,12 @@
 
 #include <stdint.h>
 
+#include <libiec61850/hal_ethernet.h>
+#include <libiec61850/goose_receiver.h>
+#include <libiec61850/sv_subscriber.h>
+
 #include "node.h"
 #include "list.h"
-
-/* libiec61850's API is ugly... */
-#define SVPublisher			SampledValuesPublisher
-#define SVPublisher_create		SampledValuesPublisher_create
-#define SVPublisher_destroy		SampledValuesPublisher_destroy
-#define SVPublisher_addASDU		SampledValuesPublisher_addASDU
-#define SVPublisher_setupComplete	SampledValuesPublisher_setupComplete
-#define SVPublisher_publish		SampledValuesPublisher_publish
-
-#define SVPublisher_ASDU		SV_ASDU
-#define SVSubscriber_ASDU		SVClientASDU
-
-#define SVPublisher_ASDU_setINT8	SV_ASDU_setINT8
-#define SVPublisher_ASDU_setINT32	SV_ASDU_setINT32
-#define SVPublisher_ASDU_setFLOAT32	SV_ASDU_setFLOAT
-#define SVPublisher_ASDU_setFLOAT64	SV_ASDU_setFLOAT64
-
-#define SVPublisher_ASDU_increaseSmpCnt	SV_ASDU_increaseSmpCnt
-#define SVPublisher_ASDU_setSmpCnt	SV_ASDU_setSmpCnt
-#define SVPublisher_ASDU_setRefrTm	SV_ASDU_setRefrTm
-
-#define SVSubscriber_ASDU_getDataSize	SVClientASDU_getDataSize
-#define SVSubscriber_ASDU_getConfRev	SVClientASDU_getConfRev
-#define SVSubscriber_ASDU_getSvId	SVClientASDU_getSvId
-#define SVSubscriber_ASDU_getSmpCnt	SVClientASDU_getSmpCnt
-#define SVSubscriber_ASDU_getRefrTmAsMs	SVClientASDU_getRefrTmAsMs
-#define SVSubscriber_ASDU_hasRefrTm	SVClientASDU_hasRefrTm
-
-#define SVSubscriber_ASDU_getINT8	SVClientASDU_getINT8
-#define SVSubscriber_ASDU_getINT16	SVClientASDU_getINT16
-#define SVSubscriber_ASDU_getINT32	SVClientASDU_getINT32
-#define SVSubscriber_ASDU_getINT8U	SVClientASDU_getINT8U
-#define SVSubscriber_ASDU_getINT16U	SVClientASDU_getINT16U
-#define SVSubscriber_ASDU_getINT32U	SVClientASDU_getINT32U
-#define SVSubscriber_ASDU_getFLOAT32	SVClientASDU_getFLOAT32
-#define SVSubscriber_ASDU_getFLOAT64	SVClientASDU_getFLOAT64
-
 
 enum iec61850_type {
 	/* According to IEC 61850-7-2 */
@@ -99,10 +66,45 @@ enum iec61850_type {
 
 struct iec61850_type_descriptor {
 	const char *name;
+	char format;
 	enum iec61850_type type;
 	unsigned size;
 	bool publisher;
 	bool subscriber;
 };
+
+struct iec61850_receiver {
+	char *interface;
+
+	EthernetSocket socket;
+
+	enum iec61850_receiver_type {
+		IEC61850_RECEIVER_GOOSE,
+		IEC61850_RECEIVER_SV
+	} type;
+
+	union {
+		SVReceiver sv;
+		GooseReceiver goose;
+	};
+};
+
+int iec61850_init(struct super_node *sn);
+
+int iec61850_deinit();
+
+const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name, char fmt);
+
+int iec61850_parse_mapping(json_t *json_mapping, struct list *mapping);
+
+struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver_type t, const char *intf);
+
+struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver_type t, const char *intf);
+
+int iec61850_receiver_start(struct iec61850_receiver *r);
+
+int iec61850_receiver_stop(struct iec61850_receiver *r);
+
+int iec61850_receiver_destroy(struct iec61850_receiver *r);
 
 /** @} */
