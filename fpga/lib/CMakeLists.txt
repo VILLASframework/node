@@ -4,6 +4,7 @@ set(SOURCES
 	vlnv.cpp
 	vlnv.c
 	card.c
+	card.cpp
 
 	ips/timer.c
 	ips/model.c

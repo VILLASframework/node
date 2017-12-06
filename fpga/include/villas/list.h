@@ -45,6 +45,10 @@ __attribute__((destructor(105))) static void UNIQUE(__dtor)() {	\
 #define list_first(list)	list_at(list, 0)
 #define list_last(list)		list_at(list, (list)->length-1)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Callback to destroy list elements.
  *
  * @param data A pointer to the data which should be freed.
@@ -110,3 +114,7 @@ void list_sort(struct list *l, cmp_cb_t cmp);
 
 /** Set single element in list */
 int list_set(struct list *l, int index, void *value);
+
+#ifdef __cplusplus
+}
+#endif

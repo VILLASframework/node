@@ -4,6 +4,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
@@ -35,9 +36,9 @@
 #include "kernel/pci.h"
 #include "kernel/vfio.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "plugin.hpp"
+
+namespace villas {
 
 /* Forward declarations */
 struct fpga_ip;
@@ -96,8 +97,6 @@ void fpga_card_dump(struct fpga_card *c);
 /** Reset the FPGA to a known state */
 int fpga_card_reset(struct fpga_card *c);
 
-#ifdef __cplusplus
-}
-#endif
+} // namespace villas
 
 /** @} */

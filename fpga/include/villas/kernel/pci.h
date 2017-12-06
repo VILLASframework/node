@@ -14,6 +14,10 @@
 #define PCI_SLOT(devfn)		(((devfn) >> 3) & 0x1f)
 #define PCI_FUNC(devfn)		((devfn) & 0x07)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct pci_device {
 	struct {
 		int vendor;
@@ -58,5 +62,9 @@ int pci_attach_driver(struct pci_device *d, const char *driver);
 
 /** Return the IOMMU group of this PCI device or -1 if the device is not in a group. */
 int pci_get_iommu_group(struct pci_device *d);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */
