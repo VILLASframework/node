@@ -1,5 +1,5 @@
 set(SOURCES
-	main.c
+	main.cpp
 	dma.c
 	fifo.c
 	hls.c
