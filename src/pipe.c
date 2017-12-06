@@ -188,12 +188,8 @@ static void * recv_loop(void *ctx)
 			warn("Receive pool underrun");
 
 		recv = node_read(node, smps, ready);
-		if (recv < 0) {
+		if (recv < 0)
 			warn("Failed to receive samples from node %s: reason=%d", node_name(node), recv);
-			continue;
-		}
-		else if (recv == 0)
-			continue;
 
 		io_print(&io, smps, recv);
 
