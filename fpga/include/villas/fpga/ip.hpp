@@ -101,7 +101,8 @@ protected:
 
 class FpgaIpFactory : public Plugin {
 public:
-	FpgaIpFactory()
+	FpgaIpFactory(std::string concreteName) :
+	    Plugin(std::string("FPGA IP Factory: ") + concreteName)
 	{ pluginType = Plugin::Type::FpgaIp; }
 
 	/// Returns a running and checked FPGA IP

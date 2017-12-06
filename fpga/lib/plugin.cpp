@@ -45,9 +45,9 @@ Plugin::pluginListBuffer;
 int Plugin::pluginListNiftyCounter;
 
 
-Plugin::Plugin() :
+Plugin::Plugin(std::string name) :
     pluginType(Plugin::Type::Unknown),
-    name(""),
+    name(name),
     description(""),
     path(""),
     state(STATE_INITIALIZED)
@@ -118,6 +118,15 @@ void
 Plugin::dump()
 {
 	std::cout << " - " << this->name << ": " << this->description << std::endl;
+}
+
+void
+Plugin::dumpList()
+{
+	std::cout << "Registered plugins:" << std::endl;
+	for(auto& p : pluginList) {
+		std::cout << " - " << p->name <<  std::endl;
+	}
 }
 
 Plugin*

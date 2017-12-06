@@ -40,7 +40,7 @@ public:
 		FpgaIp,
 	};
 
-	Plugin();
+	Plugin(std::string name);
 	virtual ~Plugin();
 
 	// each plugin is a singleton, so copying is not allowed
@@ -52,6 +52,9 @@ public:
 
 	virtual int parse(json_t *cfg);
 	virtual void dump();
+
+	static void
+	dumpList();
 
 	/** Find registered and loaded plugin with given name and type. */
 	static Plugin *

@@ -66,6 +66,10 @@ private:
 class InterruptControllerFactory : public FpgaIpFactory {
 public:
 
+	InterruptControllerFactory() :
+	    FpgaIpFactory(getName())
+	{}
+
 	FpgaIp* create()
 	{ return new InterruptController; }
 
