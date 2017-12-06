@@ -150,11 +150,4 @@ uint64_t InterruptController::waitForInterrupt(int irq)
 	}
 }
 
-
-bool InterruptControllerFactory::configureJson(FpgaIp *ip, json_t *json)
-{
-	// parse json and configure instance here
-	return true;
-}
-
 } // namespace villas

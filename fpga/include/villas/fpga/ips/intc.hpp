@@ -58,7 +58,6 @@ private:
 	int efds[maxIrqs];
 	int nos[maxIrqs];
 	bool polling[maxIrqs];
-//	Interrupt irqs[maxIrqs];	/**< State of available interrupts */
 };
 
 
@@ -83,8 +82,6 @@ public:
 
 	FpgaVlnv getCompatibleVlnv() const
 	{ return FpgaVlnv("acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:"); }
-
-	bool configureJson(FpgaIp* ip, json_t *json);
 };
 
 } // namespace villas
