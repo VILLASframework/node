@@ -41,7 +41,7 @@
 #include "fpga/vlnv.hpp"
 
 #include "plugin.hpp"
-#include "card.h"
+#include "card.hpp"
 
 #include <jansson.h>
 
@@ -74,11 +74,7 @@ public:
 	virtual bool start() { return true; }
 	virtual bool stop()  { return true; }
 	virtual bool reset() { return true; }
-	virtual void dump()
-	{
-		info("IP %s: vlnv=%s baseaddr=%#jx, irq=%d, port=%d",
-		     name.c_str(), vlnv.toString().c_str(), baseaddr, irq, port);
-	}
+	virtual void dump();
 
 protected:
 	uintptr_t
@@ -90,12 +86,12 @@ protected:
 
 protected:
 	// populated by FpgaIpFactory
-	struct fpga_card *card;	/**< FPGA card this IP is instantiated on */
-	std::string name;		/**< Name defined in JSON config */
-	FpgaVlnv vlnv;			/**< VLNV defined in JSON config */
-	uintptr_t baseaddr;		/**< The baseadress of this FPGA IP component */
-	int irq;				/**< The interrupt number of the FPGA IP component. */
-	int port;				/**< The port of the AXI4-Stream switch to which this FPGA IP component is connected. */
+	FpgaCard* card;		/**< FPGA card this IP is instantiated on */
+	std::string name;	/**< Name defined in JSON config */
+	FpgaVlnv vlnv;		/**< VLNV defined in JSON config */
+	uintptr_t baseaddr;	/**< The baseadress of this FPGA IP component */
+	int irq;			/**< The interrupt number of the FPGA IP component. */
+	int port;			/**< The port of the AXI4-Stream switch to which this FPGA IP component is connected. */
 };
 
 
@@ -106,14 +102,16 @@ public:
 	{ pluginType = Plugin::Type::FpgaIp; }
 
 	/// Returns a running and checked FPGA IP
-	static FpgaIp* make(struct fpga_card* card, json_t *json, std::string name);
+	static FpgaIp*
+	make(FpgaCard* card, json_t *json, std::string name);
 
 private:
 	/// Create a concrete IP instance
 	virtual FpgaIp* create() = 0;
 
 	/// Configure IP instance from JSON config
-	virtual bool configureJson(FpgaIp* ip, json_t *json) = 0;
+	virtual bool configureJson(FpgaIp* ip, json_t *json)
+	{ return true; }
 
 	virtual FpgaVlnv getCompatibleVlnv() const = 0;
 	virtual std::string getName() const = 0;

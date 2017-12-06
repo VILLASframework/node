@@ -29,8 +29,11 @@
 #include <villas/fpga/card.h>
 #include <villas/fpga/vlnv.h>
 
+#include <villas/plugin.hpp>
+#include <villas/fpga/card.hpp>
+
 #define FPGA_CARD	"vc707"
-#define TEST_CONFIG	"/villas/etc/fpga.json"
+#define TEST_CONFIG	"../etc/fpga.json"
 #define TEST_LEN	0x1000
 
 #define CPU_HZ		3392389000
@@ -47,6 +50,8 @@ static void init()
 
 	FILE *f;
 	json_error_t err;
+
+	villas::Plugin::dumpList();
 
 	ret = pci_init(&pci);
 	cr_assert_eq(ret, 0, "Failed to initialize PCI sub-system");
@@ -66,6 +71,16 @@ static void init()
 	json_t *fpgas = json_object_get(json, "fpgas");
 	cr_assert_not_null(fpgas, "No section 'fpgas' found in config");
 	cr_assert(json_object_size(json) > 0, "No FPGAs defined in config");
+
+	// get the FPGA card plugin
+	villas::Plugin* plugin = villas::Plugin::lookup(villas::Plugin::Type::FpgaCard, "");
+	cr_assert_not_null(plugin, "No plugin for FPGA card found");
+	villas::FpgaCardPlugin* fpgaCardPlugin = dynamic_cast<villas::FpgaCardPlugin*>(plugin);
+
+	// create an FPGA card instance using the corresponding plugin
+//	villas::FpgaCard* fpgaCard = fpgaCardPlugin->make(json_);
+
+	std::list<villas::FpgaCard*> fpgaCards = fpgaCardPlugin->make(fpgas, &pci, &vc);
 
 	json_t *json_card = json_object_get(fpgas, FPGA_CARD);
 	cr_assert_not_null(json_card, "FPGA card " FPGA_CARD " not found");

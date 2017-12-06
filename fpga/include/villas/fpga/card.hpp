@@ -30,35 +30,67 @@
 
 #pragma once
 
+
 #include <jansson.h>
 
 #include "common.h"
 #include "kernel/pci.h"
 #include "kernel/vfio.h"
 
+
+#include <list>
+#include <string>
+
 #include "plugin.hpp"
+
+#include "config.h"
+
+#define PCI_FILTER_DEFAULT_FPGA {			\
+	.id = {								\
+	    .vendor = FPGA_PCI_VID_XILINX,	\
+	    .device = FPGA_PCI_PID_VFPGA	\
+	}									\
+}
 
 namespace villas {
 
 /* Forward declarations */
 struct fpga_ip;
 struct vfio_container;
+class FpgaCardPlugin;
+class FpgaIp;
 
-struct fpga_card {
-	char *name;			/**< The name of the FPGA card */
+class FpgaCard {
+public:
 
-	enum state state;		/**< The state of this FPGA card. */
+	friend FpgaCardPlugin;
+
+	FpgaCard() : filter(PCI_FILTER_DEFAULT_FPGA) {}
+
+	bool start();
+	bool stop()  { return true; }
+	bool check() { return true; }
+	bool reset() { return true; }
+	void dump()  { }
+
+
+	using IpList = std::list<FpgaIp*>;
+	IpList ips;		///< IPs located on this FPGA card
+
+	bool do_reset;			/**< Reset VILLASfpga during startup? */
+	int affinity;			/**< Affinity for MSI interrupts */
+
+
+	std::string name;			/**< The name of the FPGA card */
 
 	struct pci *pci;
 	struct pci_device filter;		/**< Filter for PCI device. */
 
-	struct vfio_container *vfio_container;
+	::vfio_container *vfio_container;
 	struct vfio_device vfio_device;	/**< VFIO device handle. */
 
-	int do_reset;			/**< Reset VILLASfpga during startup? */
-	int affinity;			/**< Affinity for MSI interrupts */
 
-	struct list ips;		/**< List of IP components on FPGA. */
+//	struct list ips;		/**< List of IP components on FPGA. */
 
 	char *map;			/**< PCI BAR0 mapping for register access */
 
@@ -66,9 +98,25 @@ struct fpga_card {
 	size_t dmalen;
 
 	/* Some IP cores are special and referenced here */
-	struct fpga_ip *intc;
-	struct fpga_ip *reset;
-	struct fpga_ip *sw;
+//	struct fpga_ip *intc;
+//	struct fpga_ip *reset;
+//	struct fpga_ip *sw;
+};
+
+
+
+class FpgaCardPlugin : public Plugin {
+public:
+
+	FpgaCardPlugin() :
+	    Plugin("FPGA Card plugin")
+	{ pluginType = Plugin::Type::FpgaCard; }
+
+	static std::list<FpgaCard*>
+	make(json_t *json, struct pci* pci, ::vfio_container* vc);
+
+	static FpgaCard*
+	create();
 };
 
 /** Initialize FPGA card and its IP components. */

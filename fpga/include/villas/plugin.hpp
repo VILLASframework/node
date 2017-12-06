@@ -38,12 +38,13 @@ public:
 	enum class Type {
 		Unknown,
 		FpgaIp,
+		FpgaCard,
 	};
 
 	Plugin(std::string name);
 	virtual ~Plugin();
 
-	// each plugin is a singleton, so copying is not allowed
+	// copying a plugin doesn't make sense, so explicitly deny it
 	Plugin(Plugin const&)  = delete;
 	void operator=(Plugin const&) = delete;
 
@@ -61,20 +62,19 @@ public:
 	static Plugin *
 	lookup(Type type, std::string name);
 
+	/// Get all plugins of a given type.
 	static std::list<Plugin*>
 	lookup(Type type);
 
-	// check if this makes sense! (no intermediate plugins)
+	// TODO: check if this makes sense! (no intermediate plugins)
 	bool
 	operator==(const Plugin& other) const;
 
 	Type pluginType;
-
 	std::string name;
 	std::string description;
 	std::string path;
 	void *handle;
-
 	enum state state;
 
 private:

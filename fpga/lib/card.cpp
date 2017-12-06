@@ -32,10 +32,156 @@
 #include "kernel/pci.h"
 #include "kernel/vfio.h"
 
-#include "fpga/ip.h"
-#include "fpga/card.h"
+#include <string>
+
+#include "fpga/ip.hpp"
+#include "fpga/card.hpp"
 
 namespace villas {
+
+static FpgaCardPlugin
+fpgaCardPlugin;
+
+std::list<FpgaCard*>
+FpgaCardPlugin::make(json_t *json, struct pci* pci, ::vfio_container* vc)
+{
+	std::list<FpgaCard*> cards;
+
+	const char *card_name;
+	json_t *json_card;
+	json_object_foreach(json, card_name, json_card) {
+		std::cout << "Found config for FPGA card " << card_name << std::endl;
+
+		json_t*     json_ips = nullptr;
+		const char* pci_slot = nullptr;
+		const char* pci_id   = nullptr;
+		int         do_reset = 0;
+		int         affinity = 0;
+
+		int ret = json_unpack(json_card, "{ s: o, s?: i, s?: b, s?: s, s?: s }",
+		    "ips", &json_ips,
+		    "affinity", &affinity,
+		    "do_reset", &do_reset,
+		    "slot", &pci_slot,
+		    "id", &pci_id);
+
+		if(ret != 0) {
+			std::cout << "  Cannot parse JSON config" << std::endl;
+			continue;
+		}
+
+		FpgaCard* card = create();
+
+		// populate generic properties
+		card->name = std::string(card_name);
+		card->pci = pci;
+		card->vfio_container = vc;
+		card->affinity = affinity;
+		card->do_reset = do_reset != 0;
+
+		const char* error;
+
+		if (pci_slot != nullptr and pci_device_parse_slot(&card->filter, pci_slot, &error) != 0)
+			std::cout << "  Failed to parse PCI slot: " << error << std::endl
+			          << "  -> ignoring" << std::endl;
+
+		if (pci_id != nullptr and pci_device_parse_id(&card->filter, pci_id, &error) != 0)
+			std::cout << "  Failed to parse PCI ID: " << error << std::endl
+			          << "  -> ignoring" << std::endl;;
+
+
+		// TODO: currently fails, fix and remove comment
+//		if(not card->start()) {
+//			std::cout << "  cannot start, destroying ..." << std::endl;
+//			delete card;
+//			continue;
+//		}
+
+		const char *ip_name;
+		json_t *json_ip;
+		json_object_foreach(json_ips, ip_name, json_ip) {
+			std::cout << "  Found IP "  << ip_name << std::endl;
+
+			FpgaIp* ip = FpgaIpFactory::make(card, json_ip, ip_name);
+			if(ip == nullptr) {
+				std::cout << "  -> cannot initialize" << std::endl;
+				continue;
+			}
+
+			card->ips.push_back(ip);
+		}
+
+		if(not card->check()) {
+			std::cout << "  checking failed, destroying ..." << std::endl;
+			delete card;
+			continue;
+		}
+
+		cards.push_back(card);
+	}
+
+	return cards;
+}
+
+FpgaCard*
+FpgaCardPlugin::create()
+{
+	return new FpgaCard;
+}
+
+
+bool FpgaCard::start()
+{
+	int ret;
+	struct pci_device *pdev;
+
+	/* Search for FPGA card */
+	pdev = pci_lookup_device(pci, &filter);
+	if (!pdev)
+		error("Failed to find PCI device");
+
+	/* Attach PCIe card to VFIO container */
+	ret = ::vfio_pci_attach(&vfio_device, vfio_container, pdev);
+	if (ret)
+		error("Failed to attach VFIO device");
+
+	/* Map PCIe BAR */
+	map = (char*) vfio_map_region(&vfio_device, VFIO_PCI_BAR0_REGION_INDEX);
+	if (map == MAP_FAILED)
+		serror("Failed to mmap() BAR0");
+
+	/* Enable memory access and PCI bus mastering for DMA */
+	ret = vfio_pci_enable(&vfio_device);
+	if (ret)
+		serror("Failed to enable PCI device");
+
+	/* Reset system? */
+	if (do_reset) {
+		/* Reset / detect PCI device */
+		ret = vfio_pci_reset(&vfio_device);
+		if (ret)
+			serror("Failed to reset PCI device");
+
+		if(not reset()) {
+			std::cout << "Failed to reset FGPA card" << std::endl;
+			return false;
+		}
+	}
+
+	/* Initialize IP cores */
+//	for (size_t j = 0; j < list_length(&ips); j++) {
+//		struct fpga_ip *i = (struct fpga_ip *) list_at(&ips, j);
+
+//		ret = fpga_ip_start(i);
+//		if (ret)
+//			error("Failed to initalize FPGA IP core: %s (%u)", i->name, ret);
+//	}
+
+	return 0;
+}
+
+
+#if 0
 
 int fpga_card_init(struct fpga_card *c, struct pci *pci, struct vfio_container *vc)
 {
@@ -320,5 +466,7 @@ int fpga_card_reset(struct fpga_card *c)
 
 	return 0;
 }
+
+#endif
 
 } // namespace villas
