@@ -59,6 +59,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_prefix}/lib/libiec61850.so.1.1.0
 %{_prefix}/lib/libiec61850.so
 %{_prefix}/lib/libiec61850.a
+%{_prefix}/share/pkgconfig/libiec61850.pc
 
 %files devel
 %{_includedir}/libiec61850/*

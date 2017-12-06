@@ -37,49 +37,6 @@
 #define CONFIG_SV_DEFAULT_PRIORITY 4
 #define CONFIG_SV_DEFAULT_VLAN_ID 0
 
-struct iec61850_type_descriptor type_descriptors[] = {
-	/* name,              type,                        size, supported */
-	{ "boolean",          IEC61850_TYPE_BOOLEAN,          1, false, false },
-	{ "int8",             IEC61850_TYPE_INT8,             1, false, false },
-	{ "int16",            IEC61850_TYPE_INT16,            2, false, false },
-	{ "int32",            IEC61850_TYPE_INT32,            4, false, false },
-	{ "int64",            IEC61850_TYPE_INT64,            8, false, false },
-	{ "int8u",            IEC61850_TYPE_INT8U,            1, false, false },
-	{ "int16u",           IEC61850_TYPE_INT16U,           2, false, false },
-	{ "int32u",           IEC61850_TYPE_INT32U,           4, false, false },
-	{ "int64u",           IEC61850_TYPE_INT64U,           8, false, false },
-	{ "float32",          IEC61850_TYPE_FLOAT32,          4, false, false },
-	{ "float64",          IEC61850_TYPE_FLOAT64,          8, false, false },
-	{ "enumerated",       IEC61850_TYPE_ENUMERATED,       4, false, false },
-	{ "coded_enum",       IEC61850_TYPE_CODED_ENUM,       4, false, false },
-	{ "octet_string",     IEC61850_TYPE_OCTET_STRING,    20, false, false },
-	{ "visible_string",   IEC61850_TYPE_VISIBLE_STRING,  35, false, false },
-	{ "objectname",       IEC61850_TYPE_OBJECTNAME,      20, false, false },
-	{ "objectreference",  IEC61850_TYPE_OBJECTREFERENCE, 20, false, false },
-	{ "timestamp",        IEC61850_TYPE_TIMESTAMP,        8, false, false },
-	{ "entrytime",        IEC61850_TYPE_ENTRYTIME,        6, false, false },
-	{ "bitstring",        IEC61850_TYPE_BITSTRING,        4, false, false }
-};
-
-/** Each network interface needs a separate receiver */
-static struct list receivers = LIST_INIT();
-static pthread_t thread;
-
-static void * iec61850_sv_thread(void *ctx)
-{
-	while (1) {
-		for (unsigned i = 0; i < list_length(&receivers); i++) {
-			struct iec61850_sv_receiver *r = (struct iec61850_sv_receiver *) list_at(&receivers, i);
-
-			SVReceiver_tick(r->receiver); /* calls iec61850_sv_listener() */
-		}
-
-		usleep(1e3);
-	}
-
-	return NULL;
-}
-
 static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscriber_ASDU asdu)
 {
 	struct node *n = (struct node *) ctx;
@@ -90,7 +47,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	int smpcnt       = SVSubscriber_ASDU_getSmpCnt(asdu);
 	int confrev      = SVSubscriber_ASDU_getConfRev(asdu);
 
-	debug(5, "Received SV: svid=%s, smpcnt=%i, confrev=%u", svid, smpcnt, confrev);
+	debug(10, "Received SV: svid=%s, smpcnt=%i, confrev=%u", svid, smpcnt, confrev);
 
 	if (SVSubscriber_ASDU_getDataSize(asdu) < i->subscriber.total_size) {
 		warn("Received truncated ASDU: size=%d, expected=%d", SVSubscriber_ASDU_getDataSize(asdu), i->subscriber.total_size);
@@ -167,91 +124,6 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	queue_signalled_push(&i->subscriber.queue, smp);
 }
 
-static struct iec61850_type_descriptor * iec61850_lookup_type(const char *name)
-{
-	for (unsigned i = 0; i < ARRAY_LEN(type_descriptors); i++) {
-		if (!strcmp(name, type_descriptors[i].name))
-			return &type_descriptors[i];
-	}
-
-	return NULL;
-}
-
-static int iec61850_sv_parse_mapping(json_t *json_mapping, struct list *mapping)
-{
-	json_t *json_field;
-	size_t index;
-
-	if (!json_is_array(json_mapping))
-		return -1;
-
-	list_init(mapping);
-
-	int total_size = 0;
-	json_array_foreach(json_mapping, index, json_field) {
-		struct iec61850_type_descriptor *m;
-		const char *type = json_string_value(json_field);
-
-		if (!json_is_string(json_field))
-			return -1;
-
-		m = iec61850_lookup_type(type);
-		if (!m)
-			return -1;
-
-		list_push(mapping, m);
-
-		total_size += m->size;
-	}
-
-	return total_size;
-}
-
-int iec61850_sv_init(struct super_node *sn)
-{
-	int ret;
-
-	/* Start all receivers */
-	for (size_t i = 0; i < list_length(&receivers); i++) {
-		struct iec61850_sv_receiver *r = (struct iec61850_sv_receiver *) list_at(&receivers, i);
-
-		SVReceiver_startThreadless(r->receiver);
-	}
-
-	ret = pthread_create(&thread, NULL, iec61850_sv_thread, NULL);
-	if (ret)
-		return ret;
-
-	return 0;
-}
-
-int iec61850_sv_deinit()
-{
-	int ret;
-
-	ret = pthread_cancel(thread);
-	if (ret)
-		return ret;
-
-	ret = pthread_join(thread, NULL);
-	if (ret)
-		return ret;
-
-	for (size_t i = 0; i < list_length(&receivers); i++) {
-		struct iec61850_sv_receiver *r = (struct iec61850_sv_receiver *) list_at(&receivers, i);
-
-		/* Stop all receivers */
-		SVReceiver_stopThreadless(r->receiver);
-
-		/* Cleanup and free resources */
-		SVReceiver_destroy(r->receiver);
-	}
-
-	list_destroy(&receivers, NULL, false);
-
-	return 0;
-}
-
 int iec61850_sv_parse(struct node *n, json_t *json)
 {
 	int ret;
@@ -260,7 +132,6 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 	const char *dst_address = NULL;
 	const char *interface = NULL;
 	const char *svid = NULL;
-	const char *datset = NULL;
 	const char *smpmod = NULL;
 
 	json_t *json_sub = NULL;
@@ -297,10 +168,9 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 		ether_aton_r(dst_address, &i->dst_address);
 
 	if (json_pub) {
-		ret = json_unpack_ex(json_pub, &err, 0, "{ s: o, s: s, s: s, s?: i, s?: s, s?: i, s?: i, s?: i }",
+		ret = json_unpack_ex(json_pub, &err, 0, "{ s: o, s: s, s?: i, s?: s, s?: i, s?: i, s?: i }",
 			"fields", &json_mapping,
 			"svid", &svid,
-			"datset", &datset,
 			"confrev", &i->publisher.confrev,
 			"smpmod", &smpmod,
 			"smprate", &i->publisher.smprate,
@@ -322,9 +192,8 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 		}
 
 		i->publisher.svid = svid ? strdup(svid) : NULL;
-		i->publisher.datset = datset ? strdup(datset) : NULL;
 
-		ret = iec61850_sv_parse_mapping(json_mapping, &i->publisher.mapping);
+		ret = iec61850_parse_mapping(json_mapping, &i->publisher.mapping);
 		if (ret <= 0)
 			error("Failed to parse setting 'fields' of node %s", node_name(n));
 
@@ -338,29 +207,11 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 		if (ret)
 			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-		ret = iec61850_sv_parse_mapping(json_mapping, &i->subscriber.mapping);
+		ret = iec61850_parse_mapping(json_mapping, &i->subscriber.mapping);
 		if (ret <= 0)
 			error("Failed to parse setting 'fields' of node %s", node_name(n));
 
 		i->subscriber.total_size = ret;
-
-		/* Check if there is already a SVReceiver for this interface */
-		struct iec61850_sv_receiver *r = (struct iec61850_sv_receiver *) list_lookup(&receivers, interface);
-
-		if (!r) {
-			r = alloc(sizeof(struct iec61850_sv_receiver));
-			if (!r)
-				return -1;
-
-			r->interface = strdup(interface);
-			r->receiver = SVReceiver_create();
-
-			SVReceiver_setInterfaceId(r->receiver, r->interface);
-
-			list_push(&receivers, r);
-		}
-
-		i->subscriber.receiver = r->receiver;
 	}
 
 	return 0;
@@ -374,9 +225,8 @@ char * iec61850_sv_print(struct node *n)
 	buf = strf("interface=%s, app_id=%#x, dst_address=%s", i->interface, i->app_id, ether_ntoa(&i->dst_address));
 
 	/* Publisher part */
-	strcatf(&buf, ", pub.svid=%s, pub.datset=%s, pub.vlan_prio=%d, pub.vlan_id=%#x, pub.confrev=%d, pub.#fields=%zu",
+	strcatf(&buf, ", pub.svid=%s, pub.vlan_prio=%d, pub.vlan_id=%#x, pub.confrev=%d, pub.#fields=%zu",
 		i->publisher.svid,
-		i->publisher.datset,
 		i->publisher.vlan_priority,
 		i->publisher.vlan_id,
 		i->publisher.confrev,
@@ -396,22 +246,22 @@ int iec61850_sv_start(struct node *n)
 
 	/* Initialize publisher */
 	i->publisher.publisher = SVPublisher_create(NULL, i->interface);
-	i->publisher.asdu = SVPublisher_addASDU(i->publisher.publisher, i->publisher.svid, i->publisher.datset, i->publisher.confrev);
+	i->publisher.asdu = SVPublisher_addASDU(i->publisher.publisher, i->publisher.svid, node_name_short(n), i->publisher.confrev);
 
 	for (unsigned k = 0; k < list_length(&i->publisher.mapping); k++) {
 		struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) list_at(&i->publisher.mapping, k);
 
 		switch (m->type) {
-			case IEC61850_TYPE_INT8:    SV_ASDU_addINT8(i->publisher.asdu); break;
-			case IEC61850_TYPE_INT32:   SV_ASDU_addINT32(i->publisher.asdu); break;
-			case IEC61850_TYPE_FLOAT32: SV_ASDU_addFLOAT(i->publisher.asdu); break;
-			case IEC61850_TYPE_FLOAT64: SV_ASDU_addFLOAT64(i->publisher.asdu); break;
+			case IEC61850_TYPE_INT8:    SVPublisher_ASDU_addINT8(i->publisher.asdu); break;
+			case IEC61850_TYPE_INT32:   SVPublisher_ASDU_addINT32(i->publisher.asdu); break;
+			case IEC61850_TYPE_FLOAT32: SVPublisher_ASDU_addFLOAT(i->publisher.asdu); break;
+			case IEC61850_TYPE_FLOAT64: SVPublisher_ASDU_addFLOAT64(i->publisher.asdu); break;
 			default: { }
 		}
 	}
 
 	if (i->publisher.smpmod >= 0)
-		SV_ASDU_setSmpMod(i->publisher.asdu, i->publisher.smpmod);
+		SVPublisher_ASDU_setSmpMod(i->publisher.asdu, i->publisher.smpmod);
 
 //	if (s->publisher.smprate >= 0)
 //		SV_ASDU_setSmpRate(i->publisher.asdu, i->publisher.smprate);
@@ -419,6 +269,9 @@ int iec61850_sv_start(struct node *n)
 	SVPublisher_setupComplete(i->publisher.publisher);
 
 	/* Initialize subscriber */
+	struct iec61850_receiver *r = iec61850_receiver_create(IEC61850_RECEIVER_SV, i->interface);
+
+	i->subscriber.receiver = r->sv;
 	i->subscriber.subscriber = SVSubscriber_create(i->dst_address.ether_addr_octet, i->app_id);
 
 	/* Install a callback handler for the subscriber */
@@ -435,6 +288,15 @@ int iec61850_sv_start(struct node *n)
 	ret = queue_signalled_init(&i->subscriber.queue, 1024, &memtype_hugepage, 0);
 	if (ret)
 		return ret;
+
+	return 0;
+}
+
+int iec61850_sv_stop(struct node *n)
+{
+	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
+
+	SVReceiver_removeSubscriber(i->subscriber.receiver, i->subscriber.subscriber);
 
 	return 0;
 }
@@ -502,7 +364,7 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt)
 			switch (m->type) {
 				case IEC61850_TYPE_INT8:    SVPublisher_ASDU_setINT8(i->publisher.asdu,    offset, ival); break;
 				case IEC61850_TYPE_INT32:   SVPublisher_ASDU_setINT32(i->publisher.asdu,   offset, ival); break;
-				case IEC61850_TYPE_FLOAT32: SVPublisher_ASDU_setFLOAT32(i->publisher.asdu, offset, fval); break;
+				case IEC61850_TYPE_FLOAT32: SVPublisher_ASDU_setFLOAT(i->publisher.asdu,   offset, fval); break;
 				case IEC61850_TYPE_FLOAT64: SVPublisher_ASDU_setFLOAT64(i->publisher.asdu, offset, fval); break;
 				default: { }
 			}
@@ -538,11 +400,12 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0,
 		.size		= sizeof(struct iec61850_sv),
-		.init		= iec61850_sv_init,
-		.deinit		= iec61850_sv_deinit,
+		.init		= iec61850_init,
+		.deinit		= iec61850_deinit,
 		.parse		= iec61850_sv_parse,
 		.print		= iec61850_sv_print,
 		.start		= iec61850_sv_start,
+		.stop		= iec61850_sv_stop,
 		.destroy	= iec61850_sv_destroy,
 		.read		= iec61850_sv_read,
 		.write		= iec61850_sv_write,

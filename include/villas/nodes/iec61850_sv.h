@@ -41,11 +41,6 @@
 
 #include "nodes/iec61850.h"
 
-struct iec61850_sv_receiver {
-	char *interface;
-	SVReceiver receiver;
-};
-
 struct iec61850_sv {
 	char *interface;
 	int app_id;
@@ -66,7 +61,6 @@ struct iec61850_sv {
 		SVPublisher publisher;
 		SVPublisher_ASDU asdu;
 
-		char *datset;
 		char *svid;
 
 		int vlan_priority;
@@ -79,5 +73,25 @@ struct iec61850_sv {
 		int total_size;
 	} publisher;
 };
+
+int iec61850_sv_init(struct super_node *sn);
+
+int iec61850_sv_deinit();
+
+int iec61850_sv_parse(struct node *n, json_t *json);
+
+char * iec61850_sv_print(struct node *n);
+
+int iec61850_sv_start(struct node *n);
+
+int iec61850_sv_stop(struct node *n);
+
+int iec61850_sv_destroy(struct node *n);
+
+int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt);
+
+int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt);
+
+int iec61850_sv_fd(struct node *n);
 
 /** @} */

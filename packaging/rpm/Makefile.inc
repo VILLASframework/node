@@ -47,7 +47,7 @@ rpm-nanomsg: $(BUILDDIR)/thirdparty/nanomsg/ | $(RPMDIR)/SOURCES/
 	rpmbuild -ba --define="_topdir $$(pwd)/$(RPMDIR)" $(SRCDIR)/packaging/rpm/nanomsg.spec
 	
 rpm-libiec61850: $(BUILDDIR)/thirdparty/libiec61850/ | $(RPMDIR)/SOURCES/
-	cmake -DCMAKE_INSTALL_PREFIX:PATH=$(PREFIX) -DCPACK_GENERATOR=TGZ \
+	cmake -DCMAKE_INSTALL_PREFIX:PATH=$(PREFIX) -DCPACK_SOURCE_GENERATOR=TGZ \
 		      -H$(SRCDIR)/thirdparty/libiec61850 \
 		      -B$(BUILDDIR)/thirdparty/libiec61850 $(CMAKE_OPTS)
 	make -C$(BUILDDIR)/thirdparty/libiec61850 package_source

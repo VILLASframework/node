@@ -45,7 +45,6 @@ cat > ${CONFIG_FILE} << EOF
 		
 			"publish" : {
 				"svid" : "1234",
-				"datset" : "abc",
 				"fields" : [ "float32", "float32", "float32", "float32" ]
 			},
 			"subscribe" : {
