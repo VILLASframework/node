@@ -47,7 +47,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	int smpcnt       = SVSubscriber_ASDU_getSmpCnt(asdu);
 	int confrev      = SVSubscriber_ASDU_getConfRev(asdu);
 
-	info("Received SV: svid=%s, smpcnt=%i, confrev=%u", svid, smpcnt, confrev);
+	debug(10, "Received SV: svid=%s, smpcnt=%i, confrev=%u", svid, smpcnt, confrev);
 
 	if (SVSubscriber_ASDU_getDataSize(asdu) < i->subscriber.total_size) {
 		warn("Received truncated ASDU: size=%d, expected=%d", SVSubscriber_ASDU_getDataSize(asdu), i->subscriber.total_size);
