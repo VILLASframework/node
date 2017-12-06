@@ -37,6 +37,8 @@
 #include "fpga/ip.hpp"
 #include "fpga/card.hpp"
 
+#include "log.hpp"
+
 namespace villas {
 
 static FpgaCardPlugin
@@ -50,7 +52,8 @@ FpgaCardPlugin::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 	const char *card_name;
 	json_t *json_card;
 	json_object_foreach(json, card_name, json_card) {
-		std::cout << "Found config for FPGA card " << card_name << std::endl;
+		cpp_info << "Found config for FPGA card " << card_name;
+		Logger::Indenter indent = cpp_debug.indent();
 
 		json_t*     json_ips = nullptr;
 		const char* pci_slot = nullptr;
@@ -66,7 +69,7 @@ FpgaCardPlugin::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 		    "id", &pci_id);
 
 		if(ret != 0) {
-			std::cout << "  Cannot parse JSON config" << std::endl;
+			cpp_warn << "Cannot parse JSON config";
 			continue;
 		}
 
@@ -81,18 +84,20 @@ FpgaCardPlugin::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 
 		const char* error;
 
-		if (pci_slot != nullptr and pci_device_parse_slot(&card->filter, pci_slot, &error) != 0)
-			std::cout << "  Failed to parse PCI slot: " << error << std::endl
-			          << "  -> ignoring" << std::endl;
+		if (pci_slot != nullptr and pci_device_parse_slot(&card->filter, pci_slot, &error) != 0) {
+			cpp_warn << "Failed to parse PCI slot: " << error;
+//			cpp_info << "... ignoring";
+		}
 
-		if (pci_id != nullptr and pci_device_parse_id(&card->filter, pci_id, &error) != 0)
-			std::cout << "  Failed to parse PCI ID: " << error << std::endl
-			          << "  -> ignoring" << std::endl;;
+		if (pci_id != nullptr and pci_device_parse_id(&card->filter, pci_id, &error) != 0) {
+			cpp_warn << "Failed to parse PCI ID: " << error;
+//			cpp_info << "ignoring ...";
+		}
 
 
 		// TODO: currently fails, fix and remove comment
 //		if(not card->start()) {
-//			std::cout << "  cannot start, destroying ..." << std::endl;
+//			cpp_warn << "  cannot start, destroying ...";
 //			delete card;
 //			continue;
 //		}
@@ -100,11 +105,12 @@ FpgaCardPlugin::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 		const char *ip_name;
 		json_t *json_ip;
 		json_object_foreach(json_ips, ip_name, json_ip) {
-			std::cout << "  Found IP "  << ip_name << std::endl;
+			cpp_info << "Found IP: "  << ip_name;
+			Logger::Indenter indent = cpp_debug.indent();
 
 			FpgaIp* ip = FpgaIpFactory::make(card, json_ip, ip_name);
 			if(ip == nullptr) {
-				std::cout << "  -> cannot initialize" << std::endl;
+				cpp_warn << "Cannot initialize, ignoring ...";
 				continue;
 			}
 
@@ -112,7 +118,7 @@ FpgaCardPlugin::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 		}
 
 		if(not card->check()) {
-			std::cout << "  checking failed, destroying ..." << std::endl;
+			cpp_warn << "Checking failed, destroying ...";
 			delete card;
 			continue;
 		}
@@ -163,7 +169,7 @@ bool FpgaCard::start()
 			serror("Failed to reset PCI device");
 
 		if(not reset()) {
-			std::cout << "Failed to reset FGPA card" << std::endl;
+			cpp_debug << "Failed to reset FGPA card";
 			return false;
 		}
 	}

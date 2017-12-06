@@ -29,6 +29,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include "log.hpp"
+
 namespace villas {
 
 void FpgaIp::dump() {
@@ -58,7 +60,7 @@ FpgaIp *FpgaIpFactory::make(FpgaCard* card, json_t *json, std::string name)
 	ret = json_unpack(json, "{ s: s }",
 	                        "vlnv", &vlnv_raw);
 	if(ret != 0) {
-		std::cout << "IP " << name << " has no entry 'vlnv'" << std::endl;
+		cpp_warn << "IP " << name << " has no entry 'vlnv'";
 		return nullptr;
 	}
 
@@ -73,11 +75,11 @@ FpgaIp *FpgaIpFactory::make(FpgaCard* card, json_t *json, std::string name)
 	FpgaIpFactory* fpgaIpFactory = lookup(vlnv);
 
 	if(fpgaIpFactory == nullptr) {
-		std::cout << "No IP plugin registered to handle VLNV " << vlnv << std::endl;
+		cpp_warn << "No plugin found to handle " << vlnv;
 		return nullptr;
 	}
 
-	std::cout << "Using " << fpgaIpFactory->getName() << " for IP " << vlnv << std::endl;
+	cpp_debug << "Using " << fpgaIpFactory->getName() << " for IP " << vlnv;
 
 
 	// Create new IP instance. Since this function is virtual, it will construct
@@ -85,7 +87,7 @@ FpgaIp *FpgaIpFactory::make(FpgaCard* card, json_t *json, std::string name)
 	// already picked the right factory.
 	FpgaIp* ip = fpgaIpFactory->create();
 	if(ip == nullptr) {
-		std::cout << "Cannot create an instance of " << fpgaIpFactory->getName() << std::endl;
+		cpp_warn << "Cannot create an instance of " << fpgaIpFactory->getName();
 		goto fail;
 	}
 
@@ -100,7 +102,7 @@ FpgaIp *FpgaIpFactory::make(FpgaCard* card, json_t *json, std::string name)
 	                        "irq",      &ip->irq,
 	                        "port",     &ip->port);
 	if(ret != 0) {
-		std::cout << "Problem while parsing JSON" << std::endl;
+		cpp_warn << "Problem while parsing JSON";
 		goto fail;
 	}
 
@@ -109,12 +111,12 @@ FpgaIp *FpgaIpFactory::make(FpgaCard* card, json_t *json, std::string name)
 
 	// TODO: currently fails, fix and remove comment
 //	if(not ip->start()) {
-//		std::cout << "Cannot start IP" << ip->name << std::endl;
+//		cpp_error << "Cannot start IP" << ip->name;
 //		goto fail;
 //	}
 
 	if(not ip->check()) {
-		std::cout << "Checking IP " << ip->name << " failed" << std::endl;
+		cpp_error << "Checking IP " << ip->name << " failed";
 		goto fail;
 	}
 
