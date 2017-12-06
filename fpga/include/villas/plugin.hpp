@@ -56,7 +56,8 @@ public:
 	static void
 	dumpList();
 
-	/** Find registered and loaded plugin with given name and type. */
+	/// Find plugin by type and (optional if empty) by name. If more match, it
+	/// is not defined which one will be returned.
 	static Plugin *
 	lookup(Type type, std::string name);
 

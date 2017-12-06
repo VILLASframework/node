@@ -133,7 +133,7 @@ Plugin*
 Plugin::lookup(Plugin::Type type, std::string name)
 {
 	for(auto& p : pluginList) {
-		if(p->pluginType == type and p->name == name)
+		if(p->pluginType == type and (name.empty() or p->name == name))
 			return p;
 	}
 
