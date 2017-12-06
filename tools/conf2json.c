@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <libgen.h>
+#include <stdio.h>
 #include <jansson.h>
 #include <libconfig.h>
 
@@ -28,7 +30,7 @@
 
 void usage()
 {
-	printf("Usage: conf2json < input.conf > output.json\n\n");
+	printf("Usage: conf2json input.conf > output.json\n\n");
 
 	print_copyright();
 }
@@ -40,22 +42,30 @@ int main(int argc, char *argv[])
 	config_setting_t *cfg_root;
 	json_t *json;
 
-	if (argc != 1) {
+	if (argc != 2) {
 		usage();
 		exit(EXIT_FAILURE);
 	}
 
+	FILE *f = fopen(argv[1], "r");
+	if(f == NULL)
+		return -1;
+
+	const char *confdir = dirname(argv[1]);
+
 	config_init(&cfg);
 
-	ret = config_read(&cfg, stdin);
+	config_set_include_dir(&cfg, confdir);
+
+	ret = config_read(&cfg, f);
 	if (ret != CONFIG_TRUE)
-		return ret;
+		return -2;
 
 	cfg_root = config_root_setting(&cfg);
 
 	json = config_to_json(cfg_root);
 	if (!json)
-		return -1;
+		return -3;
 
 	ret = json_dumpf(json, stdout, JSON_INDENT(2)); fflush(stdout);
 	if (ret)
