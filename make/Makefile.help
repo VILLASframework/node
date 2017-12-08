@@ -30,27 +30,70 @@ E = @echo
 
 help:
 	$E "The following make targets are available:"
+	$E
 	$E " - make all"
 	$E "    Build libvillas, villas CLI tools, tests"
 	$E
 	$E " - make everything"
 	$E "    Build all in all available build variants"
-	
+	$E
 	$E " - make docker"
 	$E " - make run-docker"
 	$E " - make deploy-docker"
-	
+	$E
 	$E " - make docker-{app,dev,dev-centos,dev-fedora}"
 	$E "    Build Docker images"
 	$E
 	$E " - make run-docker-{app,dev,dev-centos,dev-fedora}"
 	$E "    Run Docker containers"
 	$E
-	$E " - make deploy-{app,dev,dev-centos,dev-fedora}"
+	$E " - make deploy-docker-{app,dev,dev-centos,dev-fedora}"
 	$E "    Deploy Docker images to official registry"
 	$E
 	$E "The following environment variables can change the build:"
-	$E " DEBUG=1"
-	$E " COVERAGE=1"
+	$E "  DEBUG =           1"
+	$E "  COVERAGE =        1"
+	$E
+	$E "Use the following variables to enable/disabled certain features of VILLASnode"
+	$E "  The list also shows the currently active (default) value"
+	$E
+	$E "Enable modules:"
+	$E "  WITH_SRC =        $(WITH_SRC)"
+	$E "  WITH_TOOLS =      $(WITH_TOOLS)"
+	$E "  WITH_PLUGINS =    $(WITH_PLUGINS)"
+	$E "  WITH_TESTS =      $(WITH_TESTS)"
+	$E "  WITH_CLIENTS =    $(WITH_CLIENTS)"
+	$E
+	$E "Enable features:"
+	$E "  WITH_CONFIG =     $(WITH_CONFIG)"
+	$E "  WITH_HOOKS =      $(WITH_HOOKS)"
+	$E "  WITH_WEB =        $(WITH_WEB)"
+	$E "  WITH_API =        $(WITH_API)"
+	$E "  WITH_IO =         $(WITH_IO)"
+	$E
+	$E "Enable IO formats:"
+	$E "  WITH_FORMAT_PROTOBUF = $(WITH_FORMAT_PROTOBUF)"
+	$E
+	$E "Enable node-types:"
+	$E "  WITH_NODE_FPGA =       $(WITH_NODE_FPGA)"
+	$E "  WITH_NODE_CBUILDER =   $(WITH_NODE_CBUILDER)"
+	$E "  WITH_NODE_LOOPBACK =   $(WITH_NODE_LOOPBACK)"
+	$E "  WITH_NODE_TEST_RTT =   $(WITH_NODE_TEST_RTT)"
+	$E "  WITH_NODE_FILE =       $(WITH_NODE_FILE)"
+	$E "  WITH_NODE_SIGNAL =     $(WITH_NODE_SIGNAL)"
+	$E "  WITH_NODE_NGSI =       $(WITH_NODE_NGSI)"
+	$E "  WITH_NODE_WEBSOCKET =  $(WITH_NODE_WEBSOCKET)"
+	$E "  WITH_NODE_SOCKET =     $(WITH_NODE_SOCKET)"
+	$E "  WITH_NODE_ZEROMQ =     $(WITH_NODE_ZEROMQ)"
+	$E "  WITH_NODE_NANOMSG =    $(WITH_NODE_NANOMSG)"
+	$E "  WITH_NODE_SHMEM =      $(WITH_NODE_SHMEM)"
+	$E "  WITH_NODE_STATS =      $(WITH_NODE_STATS)"
+	$E "  WITH_NODE_INFLUXDB =   $(WITH_NODE_INFLUXDB)"
+	$E "  WITH_NODE_AMQP =       $(WITH_NODE_AMQP)"
+	$E "  WITH_NODE_IEC61850 =   $(WITH_NODE_IEC61850)"
+	$E
+	$E "Available dependencies: $(LIB_PKGS)"
+	$E "Enabled node-types: $(LIB_NODES)"
+	$E "Enabled formats: $(LIB_FORMATS)"
 
 .PHONY: help
