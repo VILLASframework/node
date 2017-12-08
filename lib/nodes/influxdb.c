@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include <string.h>
+#include <inttypes.h>
 
 #include "node.h"
 #include "plugin.h"
@@ -159,7 +160,7 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 			switch (sample_get_data_format(smps[k], j)) {
 				case SAMPLE_DATA_FORMAT_FLOAT:	strcatf(&buf, "%f", smps[k]->data[j].f); break;
-				case SAMPLE_DATA_FORMAT_INT:	strcatf(&buf, "%ld", smps[k]->data[j].i); break;
+				case SAMPLE_DATA_FORMAT_INT:	strcatf(&buf, "%" PRIi64, smps[k]->data[j].i); break;
 			}
 		}
 

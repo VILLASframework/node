@@ -95,7 +95,7 @@ int task_set_rate(struct task *t, double rate)
 
 	next = time_add(&now, &t->period);
 
-	return time_set_next(t, &next);
+	return task_set_next(t, &next);
 #elif PERIODIC_TASK_IMPL == TIMERFD
 	int ret;
 	struct itimerspec its = {
@@ -157,8 +157,6 @@ uint64_t task_wait(struct task *t)
   #endif
 	if (ret < 0)
 		return 0;
-
-	struct timespec now;
 
 	ret = clock_gettime(t->clock, &now);
 	if (ret)

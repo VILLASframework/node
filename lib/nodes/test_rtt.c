@@ -319,7 +319,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt)
 	/* Wait */
 	steps = task_wait(&t->task);
 	if (steps > 1)
-		warn("Skipped %zu steps", steps - 1);
+		warn("Skipped %ld steps", (long) (steps - 1));
 
 	struct timespec now = time_now();
 
