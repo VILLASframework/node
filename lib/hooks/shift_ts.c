@@ -26,10 +26,10 @@
 
 #include <string.h>
 
-#include "hook.h"
-#include "plugin.h"
-#include "timing.h"
-#include "sample.h"
+#include <villas/hook.h>
+#include <villas/plugin.h>
+#include <villas/timing.h>
+#include <villas/sample.h>
 
 struct shift_ts {
 	struct timespec offset;

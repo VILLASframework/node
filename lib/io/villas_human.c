@@ -25,12 +25,12 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include "io.h"
-#include "plugin.h"
-#include "utils.h"
-#include "timing.h"
-#include "sample.h"
-#include "io/villas_human.h"
+#include <villas/io.h>
+#include <villas/plugin.h>
+#include <villas/utils.h>
+#include <villas/timing.h>
+#include <villas/sample.h>
+#include <villas/io/villas_human.h>
 
 struct villas_human {
 	bool header_written;

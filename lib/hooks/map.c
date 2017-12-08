@@ -24,13 +24,13 @@
  * @{
  */
 
-#include "plugin.h"
-#include "mapping.h"
-#include "list.h"
-#include "utils.h"
-#include "path.h"
-#include "sample.h"
-#include "node.h"
+#include <villas/plugin.h>
+#include <villas/mapping.h>
+#include <villas/list.h>
+#include <villas/utils.h>
+#include <villas/path.h>
+#include <villas/sample.h>
+#include <villas/node.h>
 
 struct map {
 	struct list mapping;

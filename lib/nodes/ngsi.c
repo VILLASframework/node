@@ -28,12 +28,11 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include "nodes/ngsi.h"
-
-#include "utils.h"
-#include "timing.h"
-#include "plugin.h"
-#include "config.h"
+#include <villas/nodes/ngsi.h>
+#include <villas/utils.h>
+#include <villas/timing.h>
+#include <villas/plugin.h>
+#include <villas/config.h>
 
 /* Some global settings */
 static char *name = NULL;

@@ -27,10 +27,10 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include "hook.h"
-#include "plugin.h"
-#include "timing.h"
-#include "sample.h"
+#include <villas/hook.h>
+#include <villas/plugin.h>
+#include <villas/timing.h>
+#include <villas/sample.h>
 
 #define GPS_NTP_DELAY_WIN_SIZE 16
 

@@ -27,12 +27,12 @@
   #include <zmq_utils.h>
 #endif
 
-#include "nodes/zeromq.h"
-#include "node.h"
-#include "utils.h"
-#include "queue.h"
-#include "plugin.h"
-#include "io_format.h"
+#include <villas/nodes/zeromq.h>
+#include <villas/node.h>
+#include <villas/utils.h>
+#include <villas/queue.h>
+#include <villas/plugin.h>
+#include <villas/io_format.h>
 
 static void *context;
 

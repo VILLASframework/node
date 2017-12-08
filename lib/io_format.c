@@ -23,8 +23,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "plugin.h"
-#include "io_format.h"
+#include <villas/plugin.h>
+#include <villas/io_format.h>
 
 int io_format_sscan(struct io_format *fmt, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
 {

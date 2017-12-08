@@ -29,9 +29,9 @@
 
 #pragma once
 
-#include "list.h"
-#include "io.h"
-#include "task.h"
+#include <villas/list.h>
+#include <villas/io.h>
+#include <villas/task.h>
 
 /* Forward declarations */
 struct test_rtt;

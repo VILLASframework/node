@@ -31,9 +31,9 @@
 
 #pragma once
 
-#include "io.h"
-#include "node.h"
-#include "task.h"
+#include <villas/io.h>
+#include <villas/node.h>
+#include <villas/task.h>
 
 #define FILE_MAX_PATHLEN	512
 
@@ -56,7 +56,7 @@ struct file {
 		FILE_EPOCH_ABSOLUTE,
 		FILE_EPOCH_ORIGINAL
 	} epoch_mode;			/**< Specifies how file::offset is calculated. */
-	
+
 	enum {
 		FILE_EOF_EXIT,		/**< Terminate when EOF is reached. */
 		FILE_EOF_REWIND,	/**< Rewind the file when EOF is reached. */

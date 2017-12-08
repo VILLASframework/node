@@ -23,8 +23,8 @@
 #include <string.h>
 #include <limits.h>
 
-#include "bitset.h"
-#include "utils.h"
+#include <villas/bitset.h>
+#include <villas/utils.h>
 
 #define bitset_mask(b)		(1 << ((b) % CHAR_BIT))
 #define bitset_slot(b)		((b) / CHAR_BIT)

@@ -31,8 +31,8 @@
 
 #pragma once
 
-#include "node.h"
-#include "list.h"
+#include <villas/node.h>
+#include <villas/list.h>
 
 /** The maximum length of a packet which contains stuct msg. */
 #define NANOMSG_MAX_PACKET_LEN 1500

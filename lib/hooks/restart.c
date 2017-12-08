@@ -24,10 +24,10 @@
  * @{
  */
 
-#include "hook.h"
-#include "plugin.h"
-#include "node.h"
-#include "sample.h"
+#include <villas/hook.h>
+#include <villas/plugin.h>
+#include <villas/node.h>
+#include <villas/sample.h>
 
 struct restart {
 	struct sample *prev;

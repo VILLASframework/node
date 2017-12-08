@@ -20,7 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "plugin.h"
+#include <villas/plugin.h>
+#include <villas/config.h>
 
 static int api_capabilities(struct api_action *h, json_t *args, json_t **resp, struct api_session *s)
 {

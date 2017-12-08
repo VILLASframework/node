@@ -20,11 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "api/session.h"
-
-#include "web.h"
-#include "plugin.h"
-#include "memory.h"
+#include <villas/api/session.h>
+#include <villas/web.h>
+#include <villas/plugin.h>
+#include <villas/memory.h>
 
 int api_session_init(struct api_session *s, enum api_mode m)
 {

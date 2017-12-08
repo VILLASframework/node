@@ -24,12 +24,12 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "nodes/file.h"
-#include "utils.h"
-#include "timing.h"
-#include "queue.h"
-#include "plugin.h"
-#include "io.h"
+#include <villas/nodes/file.h>
+#include <villas/utils.h>
+#include <villas/timing.h>
+#include <villas/queue.h>
+#include <villas/plugin.h>
+#include <villas/io.h>
 
 static char * file_format_name(const char *format, struct timespec *ts)
 {

@@ -24,8 +24,8 @@
  * @{
  */
 
-#include "hook.h"
-#include "plugin.h"
+#include <villas/hook.h>
+#include <villas/plugin.h>
 
 struct decimate {
 	int ratio;

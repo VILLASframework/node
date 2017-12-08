@@ -20,11 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "utils.h"
-
-#include "pool.h"
-#include "memory.h"
-#include "kernel/kernel.h"
+#include <villas/utils.h>
+#include <villas/pool.h>
+#include <villas/memory.h>
+#include <villas/kernel/kernel.h>
 
 int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memtype *m)
 {

@@ -23,14 +23,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <string.h>
+
 #include <villas/log.h>
 #include <villas/node.h>
 #include <villas/pool.h>
 #include <villas/sample.h>
 #include <villas/shmem.h>
 #include <villas/utils.h>
-
-#include <string.h>
 
 void *base;
 struct shmem_int shm;

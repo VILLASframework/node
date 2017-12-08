@@ -32,7 +32,7 @@
 #include <stdint.h>
 #include <jansson.h>
 
-#include "list.h"
+#include <villas/list.h>
 
 #if ZMQ_BUILD_DRAFT_API && (ZMQ_VERSION_MAJOR > 4 || (ZMQ_VERSION_MAJOR == 4 && ZMQ_VERSION_MINOR >= 2))
   #define ZMQ_BUILD_DISH 1

@@ -25,10 +25,10 @@
 #include <amqp_ssl_socket.h>
 #include <amqp_tcp_socket.h>
 
-#include "plugin.h"
-#include "nodes/amqp.h"
-#include "utils.h"
-#include "io_format.h"
+#include <villas/plugin.h>
+#include <villas/nodes/amqp.h>
+#include <villas/utils.h>
+#include <villas/io_format.h>
 
 static void amqp_default_ssl_info(struct amqp_ssl_info *s)
 {

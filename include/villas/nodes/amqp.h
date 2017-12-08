@@ -33,8 +33,8 @@
 
 #include <amqp.h>
 
-#include "node.h"
-#include "list.h"
+#include <villas/node.h>
+#include <villas/list.h>
 
 /* Forward declarations */
 struct io_format;

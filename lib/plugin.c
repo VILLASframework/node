@@ -23,7 +23,7 @@
 #include <dlfcn.h>
 #include <string.h>
 
-#include "plugin.h"
+#include <villas/plugin.h>
 
 /** Global list of all known plugins */
 struct list plugins = { .state = STATE_DESTROYED };

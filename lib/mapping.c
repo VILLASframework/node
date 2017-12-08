@@ -22,12 +22,12 @@
 
 #include <string.h>
 
-#include "mapping.h"
-#include "stats.h"
-#include "sample.h"
-#include "list.h"
-#include "utils.h"
-#include "node.h"
+#include <villas/mapping.h>
+#include <villas/stats.h>
+#include <villas/sample.h>
+#include <villas/list.h>
+#include <villas/utils.h>
+#include <villas/node.h>
 
 int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *nodes)
 {

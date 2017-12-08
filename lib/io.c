@@ -25,10 +25,10 @@
 #include <string.h>
 #include <fcntl.h>
 
-#include "io.h"
-#include "io_format.h"
-#include "utils.h"
-#include "sample.h"
+#include <villas/io.h>
+#include <villas/io_format.h>
+#include <villas/utils.h>
+#include <villas/sample.h>
 
 int io_init(struct io *io, struct io_format *fmt, int flags)
 {

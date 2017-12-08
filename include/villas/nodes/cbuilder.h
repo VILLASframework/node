@@ -15,7 +15,7 @@
 
 #include <pthread.h>
 
-#include "list.h"
+#include <villas/list.h>
 
 /* Forward declaration */
 struct cbuilder;
@@ -45,7 +45,7 @@ struct cbuilder {
 	 * The simulation step is triggerd by a call to cbuilder_write().
 	 */
 	pthread_mutex_t mtx;
-	
+
 	int eventfd; /**< Eventfd for synchronizing cbuilder_read() / cbuilder_write() access. */
 };
 

@@ -22,12 +22,12 @@
 
 #include <string.h>
 
-#include "sample.h"
-#include "node.h"
-#include "super_node.h"
-#include "utils.h"
-#include "config.h"
-#include "plugin.h"
+#include <villas/sample.h>
+#include <villas/node.h>
+#include <villas/super_node.h>
+#include <villas/utils.h>
+#include <villas/config.h>
+#include <villas/plugin.h>
 
 int node_type_start(struct node_type *vt, struct super_node *sn)
 {

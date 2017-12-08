@@ -23,12 +23,12 @@
 #include <libwebsockets.h>
 #include <string.h>
 
-#include "utils.h"
-#include "log.h"
-#include "web.h"
-#include "api/session.h"
+#include <villas/utils.h>
+#include <villas/log.h>
+#include <villas/web.h>
+#include <villas/api/session.h>
 
-#include "nodes/websocket.h"
+#include <villas/nodes/websocket.h>
 
 /* Forward declarations */
 lws_callback_function api_ws_protocol_cb;

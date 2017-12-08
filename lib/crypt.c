@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "crypt.h"
+#include <villas/crypt.h>
 
 int sha1sum(FILE *f, unsigned char *sha1)
 {

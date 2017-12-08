@@ -29,12 +29,12 @@
 
 #pragma once
 
-#include "node.h"
-#include "memory.h"
-#include "pool.h"
-#include "queue.h"
-#include "config.h"
-#include "shmem.h"
+#include <villas/node.h>
+#include <villas/memory.h>
+#include <villas/pool.h>
+#include <villas/queue.h>
+#include <villas/config.h>
+#include <villas/shmem.h>
 
 /** Node-type for shared memory communication.
  * @see node_type

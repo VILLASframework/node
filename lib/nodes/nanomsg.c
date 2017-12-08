@@ -24,10 +24,10 @@
 #include <nanomsg/pubsub.h>
 #include <string.h>
 
-#include "plugin.h"
-#include "nodes/nanomsg.h"
-#include "utils.h"
-#include "io_format.h"
+#include <villas/plugin.h>
+#include <villas/nodes/nanomsg.h>
+#include <villas/utils.h>
+#include <villas/io_format.h>
 
 int nanomsg_reverse(struct node *n)
 {

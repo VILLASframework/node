@@ -32,10 +32,10 @@
 
 #include <curl/curl.h>
 
-#include "utils.h"
-#include "config.h"
-#include "advio.h"
-#include "crypt.h"
+#include <villas/utils.h>
+#include <villas/config.h>
+#include <villas/advio.h>
+#include <villas/crypt.h>
 
 #define BAR_WIDTH 60 /**< How wide you want the progress meter to be. */
 

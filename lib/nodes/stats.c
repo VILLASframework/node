@@ -26,13 +26,13 @@
 
 #include <string.h>
 
-#include "nodes/stats.h"
-#include "hook.h"
-#include "plugin.h"
-#include "stats.h"
-#include "super_node.h"
-#include "sample.h"
-#include "node.h"
+#include <villas/nodes/stats.h>
+#include <villas/hook.h>
+#include <villas/plugin.h>
+#include <villas/stats.h>
+#include <villas/super_node.h>
+#include <villas/sample.h>
+#include <villas/node.h>
 
 #define STATS_METRICS 6
 

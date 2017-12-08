@@ -22,13 +22,12 @@
 
 #include <string.h>
 
-#include "io/villas_binary.h"
-
-#include "io/msg.h"
-#include "io/msg_format.h"
-#include "sample.h"
-#include "utils.h"
-#include "plugin.h"
+#include <villas/io/villas_binary.h>
+#include <villas/io/msg.h>
+#include <villas/io/msg_format.h>
+#include <villas/sample.h>
+#include <villas/utils.h>
+#include <villas/plugin.h>
 
 int villas_binary_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
 {

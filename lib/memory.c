@@ -34,12 +34,12 @@
 #ifdef __MACH__
   #include <mach/vm_statistics.h>
 #elif defined(__linux__)
-  #include "kernel/kernel.h"
+  #include <villas/kernel/kernel.h>
 #endif
 
-#include "log.h"
-#include "memory.h"
-#include "utils.h"
+#include <villas/log.h>
+#include <villas/memory.h>
+#include <villas/utils.h>
 
 int memory_init(int hugepages)
 {

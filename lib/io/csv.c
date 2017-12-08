@@ -24,10 +24,10 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include "io/csv.h"
-#include "plugin.h"
-#include "sample.h"
-#include "timing.h"
+#include <villas/io/csv.h>
+#include <villas/plugin.h>
+#include <villas/sample.h>
+#include <villas/timing.h>
 
 size_t csv_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 {

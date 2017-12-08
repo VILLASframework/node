@@ -24,10 +24,10 @@
  * @{
  */
 
-#include "hook.h"
-#include "plugin.h"
-#include "sample.h"
-#include "io.h"
+#include <villas/hook.h>
+#include <villas/plugin.h>
+#include <villas/sample.h>
+#include <villas/io.h>
 
 struct print {
 	struct io io;

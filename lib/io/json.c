@@ -20,9 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "plugin.h"
-#include "compat.h"
-#include "io/json.h"
+#include <villas/plugin.h>
+#include <villas/sample.h>
+#include <villas/compat.h>
+#include <villas/io/json.h>
 
 int json_pack_sample(json_t **j, struct sample *smp, int flags)
 {

@@ -22,14 +22,14 @@
 #include <string.h>
 #include <math.h>
 
-#include "timing.h"
-#include "config.h"
-#include "hook.h"
-#include "path.h"
-#include "utils.h"
-#include "node.h"
-#include "plugin.h"
-#include "config_helper.h"
+#include <villas/timing.h>
+#include <villas/config.h>
+#include <villas/hook.h>
+#include <villas/path.h>
+#include <villas/utils.h>
+#include <villas/node.h>
+#include <villas/plugin.h>
+#include <villas/config_helper.h>
 
 int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node *n)
 {

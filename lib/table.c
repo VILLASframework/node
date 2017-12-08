@@ -23,9 +23,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "utils.h"
-#include "table.h"
-#include "log.h"
+#include <villas/utils.h>
+#include <villas/table.h>
+#include <villas/log.h>
 
 static int table_resize(struct table *t, int width)
 {

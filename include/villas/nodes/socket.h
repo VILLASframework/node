@@ -40,14 +40,14 @@
 #endif
 
 #ifdef WITH_LIBNL_ROUTE_30
-  #include "kernel/if.h"
-  #include "kernel/nl.h"
-  #include "kernel/tc.h"
+  #include <villas/kernel/if.h>
+  #include <villas/kernel/nl.h>
+  #include <villas/kernel/tc.h>
 
   #define WITH_NETEM
 #endif /* WITH_LIBNL_ROUTE_30 */
 
-#include "node.h"
+#include <villas/node.h>
 
 /* Forward declarations */
 struct io_format;

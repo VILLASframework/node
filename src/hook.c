@@ -37,8 +37,7 @@
 #include <villas/pool.h>
 #include <villas/log.h>
 #include <villas/plugin.h>
-#include <config_helper.h>
-
+#include <villas/config_helper.h>
 #include <villas/kernel/rt.h>
 
 #include "config.h"

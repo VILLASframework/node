@@ -22,14 +22,14 @@
 
 #include <string.h>
 
-#include "sample.h"
-#include "node.h"
-#include "utils.h"
-#include "config.h"
-#include "plugin.h"
-#include "config_helper.h"
-#include "mapping.h"
-#include "timing.h"
+#include <villas/sample.h>
+#include <villas/node.h>
+#include <villas/utils.h>
+#include <villas/config.h>
+#include <villas/plugin.h>
+#include <villas/config_helper.h>
+#include <villas/mapping.h>
+#include <villas/timing.h>
 
 int node_init(struct node *n, struct node_type *vt)
 {

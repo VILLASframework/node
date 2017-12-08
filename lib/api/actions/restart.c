@@ -22,11 +22,11 @@
 
 #include <string.h>
 
-#include "plugin.h"
-#include "api.h"
-#include "super_node.h"
+#include <villas/plugin.h>
+#include <villas/api.h>
+#include <villas/super_node.h>
 
-#include "log.h"
+#include <villas/log.h>
 
 static char *config;
 

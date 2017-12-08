@@ -23,9 +23,9 @@
 
 #include <string.h>
 
-#include "compat.h"
-#include "buffer.h"
-#include "common.h"
+#include <villas/compat.h>
+#include <villas/buffer.h>
+#include <villas/common.h>
 
 int buffer_init(struct buffer *b, size_t size)
 {

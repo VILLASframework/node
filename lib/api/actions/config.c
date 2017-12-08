@@ -20,10 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "api.h"
-#include "utils.h"
-#include "plugin.h"
-#include "super_node.h"
+#include <villas/api.h>
+#include <villas/utils.h>
+#include <villas/plugin.h>
+#include <villas/super_node.h>
 
 static int api_config(struct api_action *h, json_t *args, json_t **resp, struct api_session *s)
 {

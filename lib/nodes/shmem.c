@@ -28,13 +28,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "kernel/kernel.h"
-#include "log.h"
-#include "shmem.h"
-#include "nodes/shmem.h"
-#include "plugin.h"
-#include "timing.h"
-#include "utils.h"
+#include <villas/kernel/kernel.h>
+#include <villas/log.h>
+#include <villas/shmem.h>
+#include <villas/nodes/shmem.h>
+#include <villas/plugin.h>
+#include <villas/timing.h>
+#include <villas/utils.h>
 
 int shmem_parse(struct node *n, json_t *cfg)
 {

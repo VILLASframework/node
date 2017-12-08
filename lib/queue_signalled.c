@@ -21,8 +21,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "queue_signalled.h"
-#include "log.h"
+#include <villas/queue_signalled.h>
+#include <villas/log.h>
 
 #ifdef __linux__
   #include <sys/eventfd.h>

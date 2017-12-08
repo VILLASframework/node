@@ -27,17 +27,17 @@
 #include <inttypes.h>
 #include <poll.h>
 
-#include "config.h"
-#include "utils.h"
-#include "path.h"
-#include "timing.h"
-#include "pool.h"
-#include "queue.h"
-#include "hook.h"
-#include "plugin.h"
-#include "memory.h"
-#include "stats.h"
-#include "node.h"
+#include <villas/config.h>
+#include <villas/utils.h>
+#include <villas/path.h>
+#include <villas/timing.h>
+#include <villas/pool.h>
+#include <villas/queue.h>
+#include <villas/hook.h>
+#include <villas/plugin.h>
+#include <villas/memory.h>
+#include <villas/stats.h>
+#include <villas/node.h>
 
 static int path_source_init(struct path_source *ps)
 {

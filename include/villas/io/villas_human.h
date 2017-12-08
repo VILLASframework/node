@@ -25,7 +25,9 @@
 
 #include <stdio.h>
 
-#include "io.h"
+/* Forward declarations */
+struct io;
+struct sample;
 
 int villas_human_print(struct io *io, struct sample *smps[], unsigned cnt);
 

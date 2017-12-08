@@ -38,10 +38,10 @@
 #include <curl/curl.h>
 #include <jansson.h>
 
-#include "list.h"
-#include "super_node.h"
-#include "node.h"
-#include "task.h"
+#include <villas/list.h>
+#include <villas/super_node.h>
+#include <villas/node.h>
+#include <villas/task.h>
 
 struct node;
 

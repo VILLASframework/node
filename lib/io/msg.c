@@ -22,10 +22,10 @@
 
 #include <arpa/inet.h>
 
-#include "io/msg.h"
-#include "io/msg_format.h"
-#include "sample.h"
-#include "utils.h"
+#include <villas/io/msg.h>
+#include <villas/io/msg_format.h>
+#include <villas/sample.h>
+#include <villas/utils.h>
 
 void msg_ntoh(struct msg *m)
 {

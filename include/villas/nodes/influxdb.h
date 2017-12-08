@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include "list.h"
+#include <villas/list.h>
 
 /* Forward declarations */
 struct node;

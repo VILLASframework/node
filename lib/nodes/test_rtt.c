@@ -24,11 +24,11 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "node.h"
-#include "sample.h"
-#include "timing.h"
-#include "plugin.h"
-#include "nodes/test_rtt.h"
+#include <villas/node.h>
+#include <villas/sample.h>
+#include <villas/timing.h>
+#include <villas/plugin.h>
+#include <villas/nodes/test_rtt.h>
 
 static int test_rtt_case_start(struct test_rtt *t, int id)
 {

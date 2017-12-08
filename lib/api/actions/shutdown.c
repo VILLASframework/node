@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "plugin.h"
-#include "api.h"
+#include <villas/plugin.h>
+#include <villas/api.h>
 
 static int api_shutdown(struct api_action *h, json_t *args, json_t **resp, struct api_session *s)
 {

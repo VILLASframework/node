@@ -24,10 +24,10 @@
  * @{
  */
 
-#include "hook.h"
-#include "plugin.h"
-#include "timing.h"
-#include "sample.h"
+#include <villas/hook.h>
+#include <villas/plugin.h>
+#include <villas/timing.h>
+#include <villas/sample.h>
 
 static int ts_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 {

@@ -27,10 +27,10 @@
 #include <math.h>
 #include <time.h>
 
-#include "utils.h"
-#include "hist.h"
-#include "config.h"
-#include "table.h"
+#include <villas/utils.h>
+#include <villas/hist.h>
+#include <villas/config.h>
+#include <villas/table.h>
 
 #define VAL(h, i)	((h)->low + (i) * (h)->resolution)
 #define INDEX(h, v)	round((v - (h)->low) / (h)->resolution)

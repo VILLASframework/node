@@ -22,14 +22,14 @@
 
 #include <libwebsockets.h>
 #include <string.h>
+#include <assert.h>
 
-#include "api.h"
-#include "log.h"
-#include "web.h"
-#include "config.h"
-#include "assert.h"
-#include "memory.h"
-#include "compat.h"
+#include <villas/api.h>
+#include <villas/log.h>
+#include <villas/web.h>
+#include <villas/config.h>
+#include <villas/memory.h>
+#include <villas/compat.h>
 
 /* Forward declarations */
 static void * api_worker(void *ctx);

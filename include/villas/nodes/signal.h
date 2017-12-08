@@ -29,8 +29,8 @@
 
 #pragma once
 
-#include "timing.h"
-#include "task.h"
+#include <villas/timing.h>
+#include <villas/task.h>
 
 /* Forward declarations */
 struct node;
@@ -61,7 +61,7 @@ struct signal {
 	double amplitude;		/**< Amplitude of the generated signals. */
 	double stddev;			/**< Standard deviation of random signals (normal distributed). */
 	double offset;			/**< A constant bias. */
-	
+
 	double *last;			/**< The values from the previous period which are required for random walk. */
 
 	int values;			/**< The number of values which will be emitted by this node. */

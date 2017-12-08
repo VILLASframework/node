@@ -31,7 +31,7 @@
 
 #include <jansson.h>
 
-#include "task.h"
+#include <villas/task.h>
 
 /* Forward declarations */
 struct node;

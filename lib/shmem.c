@@ -27,11 +27,11 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 
-#include "kernel/kernel.h"
-#include "memory.h"
-#include "utils.h"
-#include "sample.h"
-#include "shmem.h"
+#include <villas/kernel/kernel.h>
+#include <villas/memory.h>
+#include <villas/utils.h>
+#include <villas/sample.h>
+#include <villas/shmem.h>
 
 size_t shmem_total_size(int queuelen, int samplelen)
 {

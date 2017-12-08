@@ -24,9 +24,9 @@
 #include <math.h>
 #include <string.h>
 
-#include "node.h"
-#include "plugin.h"
-#include "nodes/signal.h"
+#include <villas/node.h>
+#include <villas/plugin.h>
+#include <villas/nodes/signal.h>
 
 enum signal_type signal_lookup_type(const char *type)
 {

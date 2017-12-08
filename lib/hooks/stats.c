@@ -26,13 +26,13 @@
 
 #include <string.h>
 
-#include "common.h"
-#include "advio.h"
-#include "hook.h"
-#include "plugin.h"
-#include "stats.h"
-#include "node.h"
-#include "timing.h"
+#include <villas/common.h>
+#include <villas/advio.h>
+#include <villas/hook.h>
+#include <villas/plugin.h>
+#include <villas/stats.h>
+#include <villas/node.h>
+#include <villas/timing.h>
 
 struct stats_collect {
 	struct stats stats;

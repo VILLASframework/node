@@ -24,11 +24,11 @@
  * @{
  */
 
-#include "hook.h"
-#include "plugin.h"
-#include "stats.h"
-#include "node.h"
-#include "sample.h"
+#include <villas/hook.h>
+#include <villas/plugin.h>
+#include <villas/stats.h>
+#include <villas/node.h>
+#include <villas/sample.h>
 
 struct drop {
 	struct sample *prev;

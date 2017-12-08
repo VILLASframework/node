@@ -22,15 +22,15 @@
 
 #include <string.h>
 
-#include "stats.h"
-#include "hist.h"
-#include "timing.h"
-#include "node.h"
-#include "sample.h"
-#include "utils.h"
-#include "log.h"
-#include "node.h"
-#include "table.h"
+#include <villas/stats.h>
+#include <villas/hist.h>
+#include <villas/timing.h>
+#include <villas/node.h>
+#include <villas/sample.h>
+#include <villas/utils.h>
+#include <villas/log.h>
+#include <villas/node.h>
+#include <villas/table.h>
 
 static struct stats_desc {
 	const char *name;

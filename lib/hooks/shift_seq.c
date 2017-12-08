@@ -24,9 +24,9 @@
  * @{
  */
 
-#include "hook.h"
-#include "plugin.h"
-#include "sample.h"
+#include <villas/hook.h>
+#include <villas/plugin.h>
+#include <villas/sample.h>
 
 struct shift {
 	int offset;

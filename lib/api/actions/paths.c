@@ -22,12 +22,11 @@
 
 #include <jansson.h>
 
-#include "plugin.h"
-#include "path.h"
-#include "utils.h"
-#include "super_node.h"
-
-#include "api.h"
+#include <villas/plugin.h>
+#include <villas/path.h>
+#include <villas/utils.h>
+#include <villas/super_node.h>
+#include <villas/api.h>
 
 static int api_paths(struct api_action *r, json_t *args, json_t **resp, struct api_session *s)
 {

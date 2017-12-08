@@ -31,9 +31,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************************/
 
-#include "queue.h"
-#include "utils.h"
-#include "memory.h"
+#include <villas/queue.h>
+#include <villas/utils.h>
+#include <villas/memory.h>
 
 /** Initialize MPMC queue */
 int queue_init(struct queue *q, size_t size, struct memtype *mem)

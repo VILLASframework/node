@@ -24,12 +24,12 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
-#include "config.h"
-#include "utils.h"
-#include "super_node.h"
+#include <villas/config.h>
+#include <villas/utils.h>
+#include <villas/super_node.h>
 
-#include "kernel/kernel.h"
-#include "kernel/rt.h"
+#include <villas/kernel/kernel.h>
+#include <villas/kernel/rt.h>
 
 int rt_init(int priority, int affinity)
 {
@@ -53,7 +53,7 @@ int rt_init(int priority, int affinity)
 		rt_set_affinity(affinity);
 	else
 		warn("You might want to use the 'affinity' setting to pin VILLASnode to dedicate CPU cores");
-	
+
 	rt_lock_memory();
 #else
 	warn("This platform is not optimized for real-time execution");
@@ -74,7 +74,7 @@ int rt_lock_memory()
 	if (ret)
 		error("Failed to lock memory");
 #endif
-	
+
 	return 0;
 }
 

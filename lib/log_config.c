@@ -24,12 +24,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <string.h>
 
-#include "config.h"
-#include "log.h"
-#include "log_config.h"
-#include "utils.h"
-#include "string.h"
+#include <villas/config.h>
+#include <villas/log.h>
+#include <villas/log_config.h>
+#include <villas/utils.h>
 
 int log_parse(struct log *l, json_t *cfg)
 {

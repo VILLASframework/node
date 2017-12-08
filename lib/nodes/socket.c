@@ -30,21 +30,20 @@
   #include <netinet/ether.h>
 #endif
 
-#include "nodes/socket.h"
-#include "config.h"
-#include "utils.h"
+#include <villas/nodes/socket.h>
+#include <villas/config.h>
+#include <villas/utils.h>
+#include <villas/io_format.h>
+#include <villas/sample.h>
+#include <villas/queue.h>
+#include <villas/plugin.h>
+#include <villas/compat.h>
 
 #ifdef WITH_NETEM
-  #include "kernel/if.h"
-  #include "kernel/nl.h"
-  #include "kernel/tc_netem.h"
+  #include <villas/kernel/if.h>
+  #include <villas/kernel/nl.h>
+  #include <villas/kernel/tc_netem.h>
 #endif /* WITH_NETEM */
-
-#include "io_format.h"
-#include "sample.h"
-#include "queue.h"
-#include "plugin.h"
-#include "compat.h"
 
 /* Forward declartions */
 static struct plugin p;

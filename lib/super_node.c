@@ -25,22 +25,22 @@
 #include <libgen.h>
 #include <unistd.h>
 
-#include "super_node.h"
-#include "node.h"
-#include "path.h"
-#include "utils.h"
-#include "list.h"
-#include "hook.h"
-#include "advio.h"
-#include "web.h"
-#include "log.h"
-#include "api.h"
-#include "plugin.h"
-#include "memory.h"
-#include "config.h"
-#include "config_helper.h"
+#include <villas/super_node.h>
+#include <villas/node.h>
+#include <villas/path.h>
+#include <villas/utils.h>
+#include <villas/list.h>
+#include <villas/hook.h>
+#include <villas/advio.h>
+#include <villas/web.h>
+#include <villas/log.h>
+#include <villas/api.h>
+#include <villas/plugin.h>
+#include <villas/memory.h>
+#include <villas/config.h>
+#include <villas/config_helper.h>
 
-#include "kernel/rt.h"
+#include <villas/kernel/rt.h>
 
 int super_node_init(struct super_node *sn)
 {

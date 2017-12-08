@@ -20,11 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "sample.h"
-#include "plugin.h"
-#include "utils.h"
-#include "io/raw.h"
-#include "compat.h"
+#include <villas/sample.h>
+#include <villas/plugin.h>
+#include <villas/utils.h>
+#include <villas/io/raw.h>
+#include <villas/compat.h>
 
 /** Convert float to host byte order */
 #define SWAP_FLT_TOH(o, n) ({				\

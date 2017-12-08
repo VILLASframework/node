@@ -26,9 +26,9 @@
 #include <stdbool.h>
 #include <jansson.h>
 
-#include "common.h"
-#include "queue.h"
-#include "buffer.h"
+#include <villas/common.h>
+#include <villas/queue.h>
+#include <villas/buffer.h>
 
 enum api_version {
 	API_VERSION_UNKOWN	= 0,
@@ -59,7 +59,7 @@ struct api_session {
 
 	struct lws *wsi;
 	struct api *api;
-	
+
 	char *_name;
 };
 

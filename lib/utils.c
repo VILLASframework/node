@@ -31,8 +31,8 @@
 #include <fcntl.h>
 #include <ctype.h>
 
-#include "config.h"
-#include "utils.h"
+#include <villas/config.h>
+#include <villas/utils.h>
 
 pthread_t main_thread;
 

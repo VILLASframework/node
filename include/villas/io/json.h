@@ -24,7 +24,8 @@
 
 #include <jansson.h>
 
-#include "sample.h"
+/* Forward declarations */
+struct sample;
 
 int json_pack_sample(json_t **j, struct sample *s, int flags);
 

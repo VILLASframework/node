@@ -26,13 +26,13 @@
 #include <string.h>
 #include <signal.h>
 
-#include "super_node.h"
-#include "timing.h"
-#include "utils.h"
-#include "buffer.h"
-#include "plugin.h"
-#include "io_format.h"
-#include "nodes/websocket.h"
+#include <villas/super_node.h>
+#include <villas/timing.h>
+#include <villas/utils.h>
+#include <villas/buffer.h>
+#include <villas/plugin.h>
+#include <villas/io_format.h>
+#include <villas/nodes/websocket.h>
 
 /* Private static storage */
 static struct list connections = { .state = STATE_DESTROYED };	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */

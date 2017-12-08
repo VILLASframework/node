@@ -22,7 +22,7 @@
 
 #include <unistd.h>
 
-#include "timing.h"
+#include <villas/timing.h>
 
 struct timespec time_now()
 {

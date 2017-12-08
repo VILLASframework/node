@@ -28,10 +28,11 @@
 #include <unistd.h>
 #include <syslog.h>
 
-#include "config.h"
-#include "log.h"
-#include "utils.h"
-#include "timing.h"
+#include <villas/config.h>
+#include <villas/log.h>
+#include <villas/utils.h>
+#include <villas/timing.h>
+#include <villas/config.h>
 
 #ifdef ENABLE_OPAL_ASYNC
 /* Define RTLAB before including OpalPrint.h for messages to be sent

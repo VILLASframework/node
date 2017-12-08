@@ -34,11 +34,11 @@
 
 #include <libwebsockets.h>
 
-#include "node.h"
-#include "pool.h"
-#include "queue_signalled.h"
-#include "common.h"
-#include "config.h"
+#include <villas/node.h>
+#include <villas/pool.h>
+#include <villas/queue_signalled.h>
+#include <villas/common.h>
+#include <villas/config.h>
 
 #define DEFAULT_WEBSOCKET_QUEUELEN	(DEFAULT_QUEUELEN * 64)
 #define DEFAULT_WEBSOCKET_SAMPLELEN	DEFAULT_SAMPLELEN
@@ -64,7 +64,7 @@ struct websocket_connection {
 		STATE_SHUTDOWN,
 		STATE_ERROR
 	} state;				/**< The current status of this connection. */
-	
+
 	enum {
 		WEBSOCKET_MODE_CLIENT,
 		WEBSOCKET_MODE_SERVER,
@@ -76,11 +76,11 @@ struct websocket_connection {
 	struct queue queue;			/**< For samples which are sent to the WebSocket */
 
 	struct websocket_destination *destination;
-	
+
 	struct {
 		struct buffer recv;		/**< A buffer for reconstructing fragmented messags. */
 		struct buffer send;		/**< A buffer for contsructing messages before calling lws_write() */
-	} buffers;		
+	} buffers;
 
 	char *_name;
 };

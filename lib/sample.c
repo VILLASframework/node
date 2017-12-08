@@ -24,10 +24,10 @@
 #include <math.h>
 #include <inttypes.h>
 
-#include "pool.h"
-#include "sample.h"
-#include "utils.h"
-#include "timing.h"
+#include <villas/pool.h>
+#include <villas/sample.h>
+#include <villas/utils.h>
+#include <villas/timing.h>
 
 int sample_init(struct sample *s)
 {

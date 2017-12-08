@@ -23,11 +23,11 @@
 #include <string.h>
 #include <inttypes.h>
 
-#include "node.h"
-#include "plugin.h"
-#include "config.h"
-#include "nodes/influxdb.h"
-#include "memory.h"
+#include <villas/node.h>
+#include <villas/plugin.h>
+#include <villas/config.h>
+#include <villas/nodes/influxdb.h>
+#include <villas/memory.h>
 
 int influxdb_parse(struct node *n, json_t *json)
 {

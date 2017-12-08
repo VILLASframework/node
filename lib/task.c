@@ -24,10 +24,9 @@
 #include <time.h>
 #include <errno.h>
 
-#include "utils.h"
-
-#include "task.h"
-#include "timing.h"
+#include <villas/utils.h>
+#include <villas/task.h>
+#include <villas/timing.h>
 
 #if PERIODIC_TASK_IMPL == TIMERFD
   #include <sys/timerfd.h>
