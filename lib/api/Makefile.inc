@@ -20,9 +20,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-LIB_SRCS += lib/api.c
 LIB_SRCS += $(wildcard lib/api/*.c)
-
-LIB_CFLAGS += -DWITH_API
 
 include lib/api/actions/Makefile.inc

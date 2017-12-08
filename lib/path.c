@@ -239,11 +239,8 @@ out2:					sample_put_many(read_smps, ready);
 
 int path_init(struct path *p)
 {
-	int ret;
-
 	assert(p->state == STATE_DESTROYED);
 
-	list_init(&p->hooks);
 	list_init(&p->destinations);
 	list_init(&p->sources);
 
@@ -257,7 +254,9 @@ int path_init(struct path *p)
 	p->enabled = 1;
 	p->queuelen = DEFAULT_QUEUELEN;
 
+#ifdef WITH_HOOKS
 	/* Add internal hooks if they are not already in the list */
+	list_init(&p->hooks);
 	for (size_t i = 0; i < list_length(&plugins); i++) {
 		struct plugin *q = (struct plugin *) list_at(&plugins, i);
 
@@ -267,6 +266,8 @@ int path_init(struct path *p)
 		struct hook_type *vt = &q->hook;
 
 		if ((vt->flags & HOOK_PATH) && (vt->flags & HOOK_BUILTIN)) {
+			int ret;
+
 			struct hook *h = (struct hook *) alloc(sizeof(struct hook));
 
 			ret = hook_init(h, vt, p, NULL);
@@ -276,6 +277,7 @@ int path_init(struct path *p)
 			list_push(&p->hooks, h);
 		}
 	}
+#endif /* WITH_HOOKS */
 
 	p->state = STATE_INITIALIZED;
 
@@ -288,8 +290,10 @@ int path_init2(struct path *p)
 
 	assert(p->state == STATE_CHECKED);
 
+#ifdef WITH_HOOKS
 	/* We sort the hooks according to their priority before starting the path */
 	list_sort(&p->hooks, hook_cmp_priority);
+#endif /* WITH_HOOKS */
 
 	/* Initialize destinations */
 	for (size_t i = 0; i < list_length(&p->destinations); i++) {
@@ -511,11 +515,13 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 		}
 	}
 
+#if WITH_HOOKS
 	if (json_hooks) {
 		ret = hook_parse_list(&p->hooks, json_hooks, p, NULL);
 		if (ret)
 			return ret;
 	}
+#endif /* WITH_HOOKS */
 
 	list_destroy(&sources, NULL, false);
 	list_destroy(&destinations, NULL, false);
@@ -587,6 +593,7 @@ int path_start(struct path *p)
 
 	free(mask);
 
+#ifdef WITH_HOOKS
 	for (size_t i = 0; i < list_length(&p->hooks); i++) {
 		struct hook *h = (struct hook *) list_at(&p->hooks, i);
 
@@ -594,6 +601,7 @@ int path_start(struct path *p)
 		if (ret)
 			return ret;
 	}
+#endif /* WITH_HOOKS */
 
 	p->last_sequence = 0;
 
@@ -647,6 +655,7 @@ int path_stop(struct path *p)
 	if (ret)
 		return ret;
 
+#ifdef WITH_HOOKS
 	for (size_t i = 0; i < list_length(&p->hooks); i++) {
 		struct hook *h = (struct hook *) list_at(&p->hooks, i);
 
@@ -654,6 +663,7 @@ int path_stop(struct path *p)
 		if (ret)
 			return ret;
 	}
+#endif /* WITH_HOOKS */
 
 	p->state = STATE_STOPPED;
 
@@ -665,7 +675,9 @@ int path_destroy(struct path *p)
 	if (p->state == STATE_DESTROYED)
 		return 0;
 
+#ifdef WITH_HOOKS
 	list_destroy(&p->hooks, (dtor_cb_t) hook_destroy, true);
+#endif
 	list_destroy(&p->sources, (dtor_cb_t) path_source_destroy, true);
 	list_destroy(&p->destinations, (dtor_cb_t) path_destination_destroy, true);
 
@@ -731,8 +743,6 @@ int path_uses_node(struct path *p, struct node *n)
 
 int path_reverse(struct path *p, struct path *r)
 {
-	int ret;
-
 	if (list_length(&p->destinations) != 1 || list_length(&p->sources) != 1)
 		return -1;
 
@@ -761,7 +771,10 @@ int path_reverse(struct path *p, struct path *r)
 	list_push(&r->destinations, new_pd);
 	list_push(&r->sources, new_ps);
 
+#ifdef WITH_HOOKS
 	for (size_t i = 0; i < list_length(&p->hooks); i++) {
+		int ret;
+
 		struct hook *h = (struct hook *) list_at(&p->hooks, i);
 		struct hook *g = (struct hook *) alloc(sizeof(struct hook));
 
@@ -771,6 +784,6 @@ int path_reverse(struct path *p, struct path *r)
 
 		list_push(&r->hooks, g);
 	}
-
+#endif /* WITH_HOOKS */
 	return 0;
 }

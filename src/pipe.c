@@ -42,7 +42,7 @@
 
 #include <villas/nodes/websocket.h>
 
-#include "config.h"
+#include <villas/config.h>
 
 static struct super_node sn = { .state = STATE_DESTROYED }; /**< The global configuration */
 static struct io io = { .state = STATE_DESTROYED };

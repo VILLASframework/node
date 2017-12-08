@@ -22,22 +22,22 @@
 
 # Executables
 TARGETS = $(BUILDDIR)/villas-node \
-	  $(BUILDDIR)/villas-pipe  \
-	  $(BUILDDIR)/villas-signal \
 	  $(BUILDDIR)/villas-test-rtt \
-	  $(BUILDDIR)/villas-test-cmp \
-	  $(BUILDDIR)/villas-test-shmem \
-	  $(BUILDDIR)/villas-hook
+	  $(BUILDDIR)/villas-test-shmem
+
+ifeq ($(WITH_IO),1)
+	ifeq ($(WITH_HOOKS),1)
+		TARGETS += $(BUILDDIR)/villas-hook
+	endif
+
+	TARGETS += $(BUILDDIR)/villas-pipe \
+	  $(BUILDDIR)/villas-signal \
+		$(BUILDDIR)/villas-test-cmp
+endif
 
 SRC_LDLIBS = $(LDLIBS) -pthread -lm -lvillas
 SRC_CFLAGS = $(CFLAGS)
 SRC_LDFLAGS = $(LDFLAGS) -Wl,-rpath,'$$ORIGIN'
-
-ifeq ($(WITH_WEB),1)
-ifeq ($(WITH_WEBSOCKET),1)
-	SRC_CFLAGS += -DWITH_WEBSOCKET
-endif
-endif
 
 src: $(TARGETS)
 

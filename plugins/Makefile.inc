@@ -21,8 +21,11 @@
 ###################################################################################
 
 # Plugins
-PLUGINS = $(BUILDDIR)/simple_circuit.so \
-	  $(BUILDDIR)/example_hook.so
+PLUGINS = $(BUILDDIR)/simple_circuit.so
+
+ifeq ($(WITH_HOOKS),1)
+	PLUGINS += $(BUILDDIR)/example_hook.so
+endif
 
 PLUGIN_CFLAGS = -fPIC -DVILLAS -I../include/villas
 PLUGIN_LDFLAGS = -shared -L$(BUILDDIR)

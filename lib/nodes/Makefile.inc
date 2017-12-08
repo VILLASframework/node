@@ -20,102 +20,72 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-ifeq ($(PLATFORM),Linux)
-	WITH_FPGA     ?= 1
-	WITH_CBUILDER ?= 1
-	WITH_LOOPBACK ?= 1
-endif
-
-WITH_TEST_RTT  ?= 1
-WITH_FILE      ?= 1
-WITH_SIGNAL    ?= 1
-WITH_NGSI      ?= 1
-WITH_WEBSOCKET ?= 1
-WITH_SOCKET    ?= 1
-WITH_ZEROMQ    ?= 1
-WITH_NANOMSG   ?= 1
-WITH_SHMEM     ?= 1
-WITH_STATS     ?= 1
-WITH_INFLUXDB  ?= 1
-WITH_AMQP      ?= 1
-WITH_IEC61850  ?= 1
-WITH_MQTT      ?= 1
-
 # Enabled loopback node-type
-ifeq ($(WITH_LOOPBACK),1)
-	LIB_SRCS += lib/nodes/loopback.c 
-	LIB_CFLAGS += -DWITH_LOOPBACK
+ifeq ($(WITH_NODE_LOOPBACK),1)
+	LIB_NODES   += loopback
 endif
 
 # Enabled Cbuilder node-type
-ifeq ($(WITH_CBUILDER),1)
-	LIB_SRCS += lib/nodes/cbuilder.c 
-	LIB_CFLAGS += -DWITH_CBUILDER
+ifeq ($(WITH_NODE_CBUILDER),1)
+	LIB_NODES   += cbuilder
 endif
 
 # Enable InfluxDB node-type
-ifeq ($(WITH_INFLUXDB),1)
-	LIB_SRCS += lib/nodes/influxdb.c
-	LIB_CFLAGS += -DWITH_INFLUXDB
+ifeq ($(WITH_NODE_INFLUXDB),1)
+	LIB_NODES   += influxdb
 endif
 
 # Enable stats node-type
-ifeq ($(WITH_STATS),1)
-	LIB_SRCS += lib/nodes/stats.c
-	LIB_CFLAGS += -DWITH_STATS
+ifeq ($(WITH_NODE_STATS),1)
+	LIB_NODES   += stats
 endif
 
 # Enable file node-type
-ifeq ($(WITH_FILE),1)
-	LIB_SRCS += lib/nodes/file.c
-	LIB_CFLAGS += -DWITH_FILE
+ifeq ($(WITH_NODE_FILE),1)
+	LIB_NODES   += file
+	WITH_IO      = 1
 endif
 
 # Enable shared memory node-type
-ifeq ($(WITH_SHMEM),1)
-	LIB_SRCS += lib/nodes/shmem.c
-	LIB_CFLAGS += -DWITH_SHMEM
+ifeq ($(WITH_NODE_SHMEM),1)
+	LIB_NODES   += shmem
 endif
 
 # Enable signal generator node-type
-ifeq ($(WITH_SIGNAL),1)
-	LIB_SRCS += lib/nodes/signal.c
-	LIB_CFLAGS += -DWITH_SIGNAL
+ifeq ($(WITH_NODE_SIGNAL),1)
+	LIB_NODES   += signal
 endif
 
 # Enable RTT test node-tyoe
-ifeq ($(WITH_TEST_RTT),1)
-	LIB_SRCS += lib/nodes/test_rtt.c
-	LIB_CFLAGS += -DWITH_TEST_RTT
+ifeq ($(WITH_NODE_TEST_RTT),1)
+	LIB_NODES   += test_rtt
+	WITH_IO      = 1
 endif
 
 # Enable IEC61850 node-types when libiec61850 is available
-ifeq ($(WITH_IEC61850),1)
+ifeq ($(WITH_NODE_IEC61850),1)
 ifeq ($(shell $(PKGCONFIG) --atleast-version=1.2.0 libiec61850; echo $$?),0)
-	LIB_SRCS += lib/nodes/iec61850.c lib/nodes/iec61850_sv.c
-	LIB_CFLAGS += -DWITH_IEC61850
-	LIB_PKGS += libiec61850
+	LIB_SRCS    += lib/nodes/iec61850_sv.c
+	LIB_NODES   += iec61850
+	LIB_PKGS    += libiec61850
 endif
 endif
 
 # Enable VILLASfpga support when libvillas-fpga is available
-ifeq ($(WITH_FPGA),1)
+ifeq ($(WITH_NODE_FPGA),1)
 ifeq ($(shell $(PKGCONFIG) libvillas-fpga; echo $$?),0)
-	LIB_SRCS += lib/nodes/fpga.c
-
 	LIB_PKGS    += libvillas-fpga
-	LIB_CFLAGS += -DWITH_FPGA
+	LIB_NODES   += fpga
 endif
 endif
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
-ifeq ($(WITH_OPAL),1)
+ifeq ($(WITH_NODE_OPAL),1)
 ifneq ($(wildcard $(SRCDIR)/thirdparty/libopal/include/opal/AsyncApi.h),)
-	LIB_OBJS    += opal.o
-
-	LIB_CFLAGS  += -I $(SRCDIR)/thirdparty/libopal/include/opal/ -DWITH_OPAL
+	LIB_CFLAGS  += -I $(SRCDIR)/thirdparty/libopal/include/opal/
 	LIB_LDFLAGS += -L/lib/i386-linux-gnu/ -L/usr/lib/i386-linux-gnu/ -L$(SRCDIR)/thirdparty/libopal/
 	LIB_LDLIBS  += -lOpalAsyncApiCore -lOpalCore -lOpalUtils -lirc
+	LIB_NODES   += opal
 
 	# libOpalAsyncApi is a 32bit library. So we need to build everything in 32bit
 	CFLAGS      += -m32
@@ -124,9 +94,9 @@ endif
 endif
 
 # Enable Socket node type when libnl3 is available
-ifeq ($(WITH_SOCKET),1)
-	LIB_SRCS    += lib/nodes/socket.c
-	LIB_CFLAGS  += -DWITH_SOCKET
+ifeq ($(WITH_NODE_SOCKET),1)
+	LIB_NODES   += socket
+	WITH_IO      = 1
 
 	# libnl3 is optional but required for network emulation and IRQ pinning
 	ifeq ($(shell $(PKGCONFIG) libnl-route-3.0; echo $$?),0)
@@ -136,56 +106,56 @@ ifeq ($(WITH_SOCKET),1)
 endif
 
 # Enable nanomsg node type when libnanomsg is available
-ifeq ($(WITH_NANOMSG),1)
+ifeq ($(WITH_NODE_NANOMSG),1)
 ifeq ($(shell $(PKGCONFIG) nanomsg; echo $$?),0)
-	LIB_SRCS    += lib/nodes/nanomsg.c
 	LIB_PKGS    += nanomsg
-	LIB_CFLAGS  += -DWITH_NANOMSG
+	LIB_NODES   += nanomsg
+	WITH_IO      = 1
 else ifeq ($(shell $(PKGCONFIG) libnanomsg; echo $$?),0)
-	LIB_SRCS    += lib/nodes/nanomsg.c
 	LIB_PKGS    += libnanomsg
-	LIB_CFLAGS  += -DWITH_NANOMSG
+	LIB_NODES   += nanomsg
+	WITH_IO      = 1
 endif
 endif
 
 # Enable ZeroMQ node type when libzmq is available
-ifeq ($(WITH_ZEROMQ),1)
+ifeq ($(WITH_NODE_ZEROMQ),1)
 ifeq ($(shell $(PKGCONFIG) libzmq; echo $$?),0)
-	LIB_SRCS    += $(addprefix lib/nodes/, zeromq.c)
 	LIB_PKGS    += libzmq
-	LIB_CFLAGS  += -DWITH_ZEROMQ
+	LIB_NODES   += zeromq
+	WITH_IO      = 1
 endif
 endif
 
 # Enable NGSI support
-ifeq ($(WITH_NGSI),1)
-ifeq ($(shell $(PKGCONFIG) libcurl jansson; echo $$?),0)
-	LIB_SRCS    += lib/nodes/ngsi.c
-	LIB_PKGS    += libcurl jansson
-	LIB_CFLAGS  += -DWITH_NGSI
+ifeq ($(WITH_NODE_NGSI),1)
+ifeq ($(shell $(PKGCONFIG) libcurl; echo $$?),0)
+	LIB_PKGS    += libcurl
+	LIB_NODES   += ngsi
 endif
 endif
 
 # Enable WebSocket support
-ifeq ($(WITH_WEBSOCKET),1)
-ifeq ($(shell $(PKGCONFIG) libwebsockets jansson; echo $$?),0)
-	LIB_SRCS    += lib/nodes/websocket.c
-	LIB_PKGS    += libwebsockets jansson
-	LIB_CFLAGS  += -DWITH_WEBSOCKET
+ifeq ($(WITH_NODE_WEBSOCKET),1)
+ifeq ($(shell $(PKGCONFIG) libwebsockets; echo $$?),0)
+	LIB_PKGS    += libwebsockets
+	LIB_NODES   += websocket
+	WITH_IO      = 1
+	WITH_WEB     = 1
 endif
 endif
 
 # Enable AMQP support
-ifeq ($(WITH_AMQP),1)
+ifeq ($(WITH_NODE_AMQP),1)
 ifeq ($(shell $(PKGCONFIG) librabbitmq; echo $$?),0)
-	LIB_SRCS    += lib/nodes/amqp.c
 	LIB_PKGS    += librabbitmq
-	LIB_CFLAGS  += -DWITH_AMQP
+	LIB_NODES   += amqp
+	WITH_IO      = 1
 endif
 endif
 
 # Enable MQTT support
-ifeq ($(WITH_MQTT),1)
+ifeq ($(WITH_NODE_MQTT),1)
 ifneq ($(wildcard /usr/include/mosquitto.h),)
 	LIB_SRCS    += lib/nodes/mqtt.c
 	LIB_CFLAGS  += -DWITH_MQTT

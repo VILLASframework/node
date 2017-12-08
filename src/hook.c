@@ -39,8 +39,7 @@
 #include <villas/plugin.h>
 #include <villas/config_helper.h>
 #include <villas/kernel/rt.h>
-
-#include "config.h"
+#include <villas/config.h>
 
 int cnt;
 

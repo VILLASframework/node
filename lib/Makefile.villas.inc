@@ -24,15 +24,13 @@ LIB_NAME = libvillas
 LIB_ABI_VERSION = 1
 LIB = $(BUILDDIR)/$(LIB_NAME).so.$(LIB_ABI_VERSION)
 
-WITH_WEB  ?= 1
-WITH_API  ?= 1
-
 # Object files for libvillas
-LIB_SRCS += $(addprefix lib/, sample.c path.c node.c hook.c log.c log_config.c \
+LIB_SRCS += $(addprefix lib/kernel/, kernel.c rt.c) \
+            $(addprefix lib/, sample.c path.c node.c hook.c log.c log_config.c \
                utils.c super_node.c hist.c timing.c pool.c list.c queue.c \
                queue_signalled.c memory.c advio.c plugin.c node_type.c stats.c \
-               mapping.c io.c shmem.c config_helper.c crypt.c compat.c \
-               log_helper.c io_format.c task.c buffer.c table.c bitset.c \
+               mapping.c shmem.c config_helper.c crypt.c compat.c \
+               log_helper.c task.c buffer.c table.c bitset.c \
             )
 
 LIB_LDFLAGS += -shared
@@ -44,15 +42,30 @@ endif
 
 LIB_PKGS += openssl libcurl
 
+include lib/nodes/Makefile.inc
+
+ifeq ($(WITH_IO),1)
+	LIB_SRCS += lib/io.c lib/io_format.c
+	include lib/io/Makefile.inc
+endif
+
+ifeq ($(WITH_HOOKS),1)
+	LIB_SRCS += lib/hook.c
+	include lib/hooks/Makefile.inc
+endif
+
 ifeq ($(WITH_WEB),1)
 	LIB_SRCS += lib/web.c
 	LIB_PKGS += libwebsockets
-	LIB_CFLAGS += -DWITH_WEB
 endif
 
 ifeq ($(WITH_API),1)
+	LIB_SRCS += lib/api.c
 	include lib/api/Makefile.inc
 endif
+
+LIB_SRCS += $(patsubst %, lib/nodes/%.c, $(LIB_NODES))
+LIB_SRCS += $(patsubst %, lib/io/%.c, $(LIB_FORMATS))
 
 # Add flags by pkg-config
 LIB_LDLIBS += $(shell $(PKGCONFIG) --libs $(LIB_PKGS))

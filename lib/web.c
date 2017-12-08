@@ -43,13 +43,13 @@ lws_callback_function websocket_protocol_cb;
  		.per_session_data_size = 0,
  		.rx_buffer_size = 1024
  	},
+#ifdef WITH_API
 	{
 		.name = "http-api",
 		.callback = api_http_protocol_cb,
 		.per_session_data_size = sizeof(struct api_session),
 		.rx_buffer_size = 1024
 	},
-#ifdef WITH_API
 	{
 		.name = "api",
 		.callback = api_ws_protocol_cb,

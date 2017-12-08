@@ -34,7 +34,6 @@
 int node_init(struct node *n, struct node_type *vt)
 {
 	static int max_id;
-	int ret;
 
 	assert(n->state == STATE_DESTROYED);
 
@@ -54,9 +53,9 @@ int node_init(struct node *n, struct node_type *vt)
 
 	list_push(&vt->instances, n);
 
-	list_init(&n->hooks);
-
+#ifdef WITH_HOOKS
 	/* Add internal hooks if they are not already in the list */
+	list_init(&n->hooks);
 	for (size_t i = 0; i < list_length(&plugins); i++) {
 		struct plugin *q = (struct plugin *) list_at(&plugins, i);
 
@@ -66,6 +65,7 @@ int node_init(struct node *n, struct node_type *vt)
 		struct hook_type *vt = &q->hook;
 
 		if ((vt->flags & HOOK_NODE) && (vt->flags & HOOK_BUILTIN)) {
+			int ret;
 			struct hook *h = (struct hook *) alloc(sizeof(struct hook));
 
 			ret = hook_init(h, vt, NULL, n);
@@ -75,6 +75,7 @@ int node_init(struct node *n, struct node_type *vt)
 			list_push(&n->hooks, h);
 		}
 	}
+#endif /* WITH_HOOKS */
 
 	n->state = STATE_INITIALIZED;
 
@@ -83,8 +84,10 @@ int node_init(struct node *n, struct node_type *vt)
 
 int node_init2(struct node *n)
 {
+#ifdef WITH_HOOKS
 	/* We sort the hooks according to their priority before starting the path */
 	list_sort(&n->hooks, hook_cmp_priority);
+#endif
 
 	return 0;
 }
@@ -113,11 +116,13 @@ int node_parse(struct node *n, json_t *cfg, const char *name)
 	p = plugin_lookup(PLUGIN_TYPE_NODE, type);
 	assert(&p->node == n->_vt);
 
+#ifdef WITH_HOOKS
 	if (json_hooks) {
 		ret = hook_parse_list(&n->hooks, json_hooks, NULL, n);
 		if (ret < 0)
 			return ret;
 	}
+#endif /* WITH_HOOKS */
 
 	ret = n->_vt->parse ? n->_vt->parse(n, cfg) : 0;
 	if (ret)
@@ -179,6 +184,7 @@ int node_start(struct node *n)
 
 	info("Starting node %s", node_name_long(n));
 	{ INDENT
+#ifdef WITH_HOOKS
 		for (size_t i = 0; i < list_length(&n->hooks); i++) {
 			struct hook *h = (struct hook *) list_at(&n->hooks, i);
 
@@ -186,6 +192,7 @@ int node_start(struct node *n)
 			if (ret)
 				return ret;
 		}
+#endif /* WITH_HOOKS */
 
 		ret = n->_vt->start ? n->_vt->start(n) : 0;
 		if (ret)
@@ -208,6 +215,7 @@ int node_stop(struct node *n)
 
 	info("Stopping node %s", node_name(n));
 	{ INDENT
+#ifdef WITH_HOOKS
 		for (size_t i = 0; i < list_length(&n->hooks); i++) {
 			struct hook *h = (struct hook *) list_at(&n->hooks, i);
 
@@ -215,6 +223,7 @@ int node_stop(struct node *n)
 			if (ret)
 				return ret;
 		}
+#endif /* WITH_HOOKS */
 
 		ret = n->_vt->stop ? n->_vt->stop(n) : 0;
 	}
@@ -229,7 +238,9 @@ int node_destroy(struct node *n)
 {
 	assert(n->state != STATE_DESTROYED && n->state != STATE_STARTED);
 
+#ifdef WITH_HOOKS
 	list_destroy(&n->hooks, (dtor_cb_t) hook_destroy, true);
+#endif
 
 	if (n->_vt->destroy)
 		n->_vt->destroy(n);
@@ -255,7 +266,7 @@ int node_destroy(struct node *n)
 
 int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	int readd, rread, nread = 0;
+	int readd, nread = 0;
 
 	if (!n->_vt->read)
 		return -1;
@@ -299,8 +310,9 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 		}
 	}
 
+#ifdef WITH_HOOKS
 	/* Run read hooks */
-	rread = hook_read_list(&n->hooks, smps, nread);
+	int rread = hook_read_list(&n->hooks, smps, nread);
 	if (nread != rread) {
 		int skipped = nread - rread;
 
@@ -311,6 +323,9 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 	}
 
 	return rread;
+#else
+	return nread;
+#endif /* WITH_HOOKS */
 }
 
 int node_write(struct node *n, struct sample *smps[], unsigned cnt)
@@ -320,10 +335,12 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt)
 	if (!n->_vt->write)
 		return -1;
 
+#ifdef WITH_HOOKS
 	/* Run write hooks */
 	cnt = hook_write_list(&n->hooks, smps, cnt);
 	if (cnt <= 0)
 		return cnt;
+#endif /* WITH_HOOKS */
 
 	/* Send in parts if vector not supported */
 	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {

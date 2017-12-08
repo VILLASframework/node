@@ -36,12 +36,11 @@
 #include <villas/kernel/rt.h>
 #include <villas/hook.h>
 #include <villas/stats.h>
+#include <villas/config.h>
 
 #ifdef ENABLE_OPAL_ASYNC
   #include <villas/nodes/opal.h>
 #endif
-
-#include "config.h"
 
 struct super_node sn;
 
@@ -83,9 +82,11 @@ static void usage()
 	plugin_dump(PLUGIN_TYPE_NODE);
 	printf("\n");
 
+#ifdef WITH_HOOKS
 	printf("Supported hooks:\n");
 	plugin_dump(PLUGIN_TYPE_HOOK);
 	printf("\n");
+#endif
 
 	printf("Supported API commands:\n");
 	plugin_dump(PLUGIN_TYPE_API);
@@ -129,7 +130,7 @@ int main(int argc, char *argv[])
 	}
 
 	char *uri = argc == optind + 1 ? argv[optind] : NULL;
-#endif
+#endif /* ENABLE_OPAL_ASYNC */
 
 	info("This is VILLASnode %s (built on %s, %s)", CLR_BLD(CLR_YEL(BUILDID)),
 		CLR_BLD(CLR_MAG(__DATE__)), CLR_BLD(CLR_MAG(__TIME__)));
@@ -161,6 +162,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to start super node");
 
+#ifdef WITH_HOOKS
 	if (sn.stats > 0) {
 		stats_print_header(STATS_FORMAT_HUMAN);
 
@@ -200,10 +202,9 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
-	else {
-		for (;;)
-			pause();
-	}
+	else
+#endif /* WITH_HOOKS */
+		for (;;) pause();
 
 	return 0;
 }

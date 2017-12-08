@@ -24,26 +24,40 @@ SONAMES = villas villas-ext
 
 LIBS = $(patsubst %, lib%, $(SONAMES))
 
-LIB_CFLAGS = $(CFLAGS) -fPIC
-
-include lib/kernel/Makefile.inc
-include lib/hooks/Makefile.inc
-include lib/nodes/Makefile.inc
-include lib/io/Makefile.inc
+LIB_CFLAGS  += $(CFLAGS) -fPIC
 
 include $(patsubst %, lib/Makefile.%.inc, $(SONAMES))
 
-LIB_CFLAGS += $(addprefix -DWITH_, $(call escape,$(LIB_PKGS)))
+$(BUILDDIR)/include/villas/config.h: include/villas/config.h Makefile.config | $$(dir $$@)
+	cp $< $@
+	
+	echo -e "\n\n" >> $@
+	echo "#define BUILDID \"$(BUILDID)\"" >> $@
+	echo "#define V $(V)" >> $@
+	echo "#define PREFIX \"$(PREFIX)\"" >> $@
 
+	echo -e "\n\n" >> $@
+	echo "/* Available Features */" >> $@
+	
+	if (( $(WITH_WEB) ));                      then echo "#define WITH_WEB    1"            >> $@; fi
+	if (( $(WITH_API) ));                      then echo "#define WITH_API    1"            >> $@; fi
+	if (( $(WITH_HOOKS) ));                    then echo "#define WITH_HOOKS  1"            >> $@; fi
+	if (( $(WITH_IO) ));                       then echo "#define WITH_IO     1"            >> $@; fi
+	if (( $(WITH_CONFIG) ));                   then echo "#define WITH_CONFIG 1"            >> $@; fi
+	
+	for NODE   in $(call escape,$(LIB_NODES));   do echo "#define WITH_NODE_$${NODE} 1"     >> $@; done
+	for FORMAT in $(call escape,$(LIB_FORMATS)); do echo "#define WITH_FORMAT_$${FORMAT} 1" >> $@; done
+	
 # Compile
 $(BUILDDIR)/lib/%.o: lib/%.c | $$(dir $$@)
 	$(CC) $(LIB_CFLAGS) -c $< -o $@
 
-lib: $(patsubst %, lib%, $(SONAMES))
+lib: $(BUILDDIR)/include/villas/config.h $(patsubst %, lib%, $(SONAMES))
 
 install-lib: $(patsubst %, install-lib%, $(SONAMES))
 
 clean-lib: $(patsubst %, clean-lib%, $(SONAMES))
 	rm -rf $(BUILDDIR)/lib
+	rm -rf $(BUILDDIR)/include
 
 .PHONY: lib install-lib clean-lib

@@ -31,7 +31,10 @@
 ###################################################################################
 
 # Project modules
-MODULES = clients lib plugins src tests thirdparty tools packaging doc etc web
+MODULES = lib thirdparty packaging doc etc web
+
+# Modules which are not included in default, install and clean targets
+MODULES_EXCLUDE = thirdparty packaging doc
 
 # Default prefix for install target
 PREFIX ?= /usr/local
@@ -45,20 +48,28 @@ V ?= 2
 # Platform
 PLATFORM ?= $(shell uname)
 
-# Enable supprot for libconfig configuration files
-WITH_CONFIG ?= 1
+include Makefile.config
+
+ifeq ($(WITH_SRC),1)
+	MODULES += src
+endif
+	
+ifeq ($(WITH_TOOLS),1)
+	MODULES += tools
+endif
+
+ifeq ($(WITH_PLUGINS),1)
+	MODULES += plugins
+endif
+
+ifeq ($(WITH_TESTS),1)
+	MODULES += tests
+endif
 
 # Common flags
 LDLIBS   =
-CFLAGS  += -I. -Iinclude -Iinclude/villas
-CFLAGS  += -std=c11 -MMD -mcx16
+CFLAGS  += -std=c11 -MMD -mcx16 -I$(BUILDDIR)/include -I$(SRCDIR)/include
 CFLAGS  += -Wall -Werror -fdiagnostics-color=auto
-CFLAGS  += -DV=$(V) -DPREFIX=\"$(PREFIX)\"
-CFLAGS  += -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1
-
-ifeq ($(PLATFORM),Darwin)
-	CFLAGS += -D_DARWIN_C_SOURCE
-endif
 
 LDFLAGS += -L$(BUILDDIR)
 
@@ -137,7 +148,10 @@ endif
 CFLAGS += $(shell $(PKGCONFIG) --cflags ${PKGS})
 LDLIBS += $(shell $(PKGCONFIG) --libs ${PKGS})
 
-all: src plugins tools tests clients
+all:                          $(filter-out $(MODULES_EXCLUDE),$(MODULES))
+install: $(addprefix install-,$(filter-out $(MODULES_EXCLUDE),$(MODULES)))
+clean:   $(addprefix clean-,  $(filter-out $(MODULES_EXCLUDE),$(MODULES)))
+	
 src plugins tools tests: lib
 
 # Build all variants: debug, coverage, ...
@@ -155,14 +169,8 @@ everything:
 
 escape = $(shell echo $1 | tr a-z- A-Z_ | tr -dc ' A-Z0-9_')
 
-CFLAGS += -DBUILDID=\"$(BUILDID)\"
-CFLAGS += $(addprefix -DWITH_, $(call escape,$(PKGS)))
-
-install: $(addprefix install-,$(filter-out thirdparty doc clients,$(MODULES)))
-clean:   $(addprefix clean-,  $(filter-out thirdparty doc clients,$(MODULES)))
-
 .PHONY: all everything clean install
 
 include $(wildcard $(SRCDIR)/make/Makefile.*)
 include $(wildcard $(BUILDDIR)/**/*.d)
--include $(patsubst %,$(SRCDIR)/%/Makefile.inc,$(MODULES))
+include $(patsubst %,$(SRCDIR)/%/Makefile.inc,$(MODULES))

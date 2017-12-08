@@ -20,15 +20,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-LIB_SRCS += $(addprefix lib/io/,json.c villas_binary.c villas_human.c csv.c raw.c msg.c)
-
-WITH_PROTOBUF ?= 1
+LIB_FORMATS += json villas_binary villas_human csv raw
+LIB_SRCS += lib/io/msg.c
 
 # Enable Google Protobuf IO format
 ifeq ($(WITH_PROTOBUF),1)
 ifeq ($(shell $(PKGCONFIG) libprotobuf-c; echo $$?),0)
 	LIB_SRCS += lib/io/protobuf.c lib/io/villas.pb-c.c
 	LIB_PKGS += libprotobuf-c
+	LIB_FORMATS += protobuf
 endif
 endif
 

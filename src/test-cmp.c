@@ -31,8 +31,7 @@
 #include <villas/io_format.h>
 #include <villas/utils.h>
 #include <villas/pool.h>
-
-#include "config.h"
+#include <villas/config.h>
 
 struct side {
 	char *path;

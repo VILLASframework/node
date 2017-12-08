@@ -65,3 +65,10 @@
 /** AXI Bus frequency for all components
  * except RTDS AXI Stream bridge which runs at RTDS_HZ (100 Mhz) */
 #define FPGA_AXI_HZ		125000000 // 125 MHz
+
+#define _POSIX_C_SOURCE 200809L
+#define _GNU_SOURCE 1
+
+#if defined(__APPLE__)
+ #define _DARWIN_C_SOURCE	
+#endif

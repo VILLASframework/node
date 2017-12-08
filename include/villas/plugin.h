@@ -30,10 +30,6 @@
 #include "utils.h"
 #include "node_type.h"
 
-#ifdef WITH_FPGA
-  #include "fpga/ip.h"
-#endif
-
 #include "nodes/cbuilder.h"
 
 /** @todo This is ugly as hell and broken on OS X / Clang anyway. */
@@ -76,9 +72,6 @@ struct plugin {
 		struct io_format	io;
 		struct api_action	api;
 		struct node_type	node;
-#ifdef WITH_FPGA
-		struct fpga_ip_type	ip;
-#endif
 		struct hook_type	hook;
 		struct cbuilder_model	cb;
 	};

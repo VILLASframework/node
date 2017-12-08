@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <sys/stat.h>
 
+#include <villas/config.h>
 #include <villas/super_node.h>
 #include <villas/node.h>
 #include <villas/utils.h>
