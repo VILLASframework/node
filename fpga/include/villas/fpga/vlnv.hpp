@@ -32,16 +32,18 @@
 #include <iostream>
 
 namespace villas {
+namespace fpga {
 
-class FpgaVlnv {
+
+class Vlnv {
 public:
 
 	static constexpr char delimiter	= ':';
 
-	FpgaVlnv() :
+	Vlnv() :
 	    vendor(""), library(""), name(""), version("") {}
 
-	FpgaVlnv(std::string s) {
+	Vlnv(std::string s) {
 		parseFromString(s);
 	}
 
@@ -58,10 +60,10 @@ public:
 	}
 
 	bool
-	operator==(const FpgaVlnv& other) const;
+	operator==(const Vlnv& other) const;
 
 	friend std::ostream&
-	operator<< (std::ostream& stream, const FpgaVlnv& vlnv)
+	operator<< (std::ostream& stream, const Vlnv& vlnv)
 	{
 		return stream
 		        << (vlnv.vendor.empty()		? "*" : vlnv.vendor)	<< ":"
@@ -80,6 +82,7 @@ private:
 	std::string version;
 };
 
+} // namespace fpga
 } // namespace villas
 
 /** _FPGA_VLNV_HPP_ @} */

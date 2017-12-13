@@ -37,7 +37,6 @@
 #include "kernel/pci.h"
 #include "kernel/vfio.h"
 
-
 #include <list>
 #include <string>
 
@@ -45,7 +44,7 @@
 
 #include "config.h"
 
-#define PCI_FILTER_DEFAULT_FPGA {			\
+#define PCI_FILTER_DEFAULT_FPGA {		\
 	.id = {								\
 	    .vendor = FPGA_PCI_VID_XILINX,	\
 	    .device = FPGA_PCI_PID_VFPGA	\
@@ -53,19 +52,24 @@
 }
 
 namespace villas {
+namespace fpga {
+
 
 /* Forward declarations */
-struct fpga_ip;
 struct vfio_container;
-class FpgaCardPlugin;
-class FpgaIp;
+class PCIeCardFactory;
 
-class FpgaCard {
+namespace ip {
+class IpCore;
+}
+
+
+class PCIeCard {
 public:
 
-	friend FpgaCardPlugin;
+	friend PCIeCardFactory;
 
-	FpgaCard() : filter(PCI_FILTER_DEFAULT_FPGA) {}
+	PCIeCard() : filter(PCI_FILTER_DEFAULT_FPGA) {}
 
 	bool start();
 	bool stop()  { return true; }
@@ -74,7 +78,7 @@ public:
 	void dump()  { }
 
 
-	using IpList = std::list<FpgaIp*>;
+	using IpList = std::list<ip::IpCore*>;
 	IpList ips;		///< IPs located on this FPGA card
 
 	bool do_reset;			/**< Reset VILLASfpga during startup? */
@@ -89,62 +93,29 @@ public:
 	::vfio_container *vfio_container;
 	struct vfio_device vfio_device;	/**< VFIO device handle. */
 
-
-//	struct list ips;		/**< List of IP components on FPGA. */
-
 	char *map;			/**< PCI BAR0 mapping for register access */
 
 	size_t maplen;
 	size_t dmalen;
-
-	/* Some IP cores are special and referenced here */
-//	struct fpga_ip *intc;
-//	struct fpga_ip *reset;
-//	struct fpga_ip *sw;
 };
 
 
 
-class FpgaCardPlugin : public Plugin {
+class PCIeCardFactory : public Plugin {
 public:
 
-	FpgaCardPlugin() :
+	PCIeCardFactory() :
 	    Plugin("FPGA Card plugin")
 	{ pluginType = Plugin::Type::FpgaCard; }
 
-	static std::list<FpgaCard*>
+	static std::list<PCIeCard*>
 	make(json_t *json, struct pci* pci, ::vfio_container* vc);
 
-	static FpgaCard*
+	static PCIeCard*
 	create();
 };
 
-/** Initialize FPGA card and its IP components. */
-int fpga_card_init(struct fpga_card *c, struct pci *pci, struct vfio_container *vc);
-
-/** Parse configuration of FPGA card including IP cores from config. */
-int fpga_card_parse(struct fpga_card *c, json_t *cfg, const char *name);
-
-int fpga_card_parse_list(struct list *l, json_t *cfg);
-
-/** Check if the FPGA card configuration is plausible. */
-int fpga_card_check(struct fpga_card *c);
-
-/** Start FPGA card. */
-int fpga_card_start(struct fpga_card *c);
-
-/** Stop FPGA card. */
-int fpga_card_stop(struct fpga_card *c);
-
-/** Destroy FPGA card. */
-int fpga_card_destroy(struct fpga_card *c);
-
-/** Dump details of FPGA card to stdout. */
-void fpga_card_dump(struct fpga_card *c);
-
-/** Reset the FPGA to a known state */
-int fpga_card_reset(struct fpga_card *c);
-
+} // namespace fpga
 } // namespace villas
 
 /** @} */

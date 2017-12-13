@@ -30,9 +30,10 @@
 #include "fpga/ip.hpp"
 
 namespace villas {
+namespace fpga {
 
 bool
-FpgaVlnv::operator==(const FpgaVlnv &other) const
+Vlnv::operator==(const Vlnv &other) const
 {
 	// if a field is empty, it means wildcard matching everything
 	const bool vendorWildcard	= vendor.empty()	or other.vendor.empty();
@@ -49,7 +50,7 @@ FpgaVlnv::operator==(const FpgaVlnv &other) const
 }
 
 void
-FpgaVlnv::parseFromString(std::string vlnv)
+Vlnv::parseFromString(std::string vlnv)
 {
 	// tokenize by delimiter
 	std::stringstream sstream(vlnv);
@@ -65,5 +66,5 @@ FpgaVlnv::parseFromString(std::string vlnv)
 	if(version	== "*") version = "";
 }
 
-
+} // namespace fpga
 } // namespace villas

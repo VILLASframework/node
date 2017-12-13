@@ -32,26 +32,29 @@
 #include "log.hpp"
 
 namespace villas {
+namespace fpga {
+namespace ip {
 
-void FpgaIp::dump() {
+
+void IpCore::dump() {
 	info("IP %s: vlnv=%s baseaddr=%#jx, irq=%d, port=%d",
 	     name.c_str(), vlnv.toString().c_str(), baseaddr, irq, port);
 }
 
 
-FpgaIpFactory* FpgaIpFactory::lookup(const FpgaVlnv &vlnv)
+IpCoreFactory* IpCoreFactory::lookup(const Vlnv &vlnv)
 {
 	for(auto& ip : Plugin::lookup(Plugin::Type::FpgaIp)) {
-		FpgaIpFactory* fpgaIpFactory = dynamic_cast<FpgaIpFactory *>(ip);
+		IpCoreFactory* ipCoreFactory = dynamic_cast<IpCoreFactory*>(ip);
 
-		if(fpgaIpFactory->getCompatibleVlnv() == vlnv)
-			return fpgaIpFactory;
+		if(ipCoreFactory->getCompatibleVlnv() == vlnv)
+			return ipCoreFactory;
 	}
 
 	return nullptr;
 }
 
-FpgaIp *FpgaIpFactory::make(FpgaCard* card, json_t *json, std::string name)
+IpCore *IpCoreFactory::make(fpga::PCIeCard* card, json_t *json, std::string name)
 {
 	int ret;
 	const char* vlnv_raw;
@@ -65,29 +68,29 @@ FpgaIp *FpgaIpFactory::make(FpgaCard* card, json_t *json, std::string name)
 	}
 
 	// parse VLNV
-	FpgaVlnv vlnv(vlnv_raw);
+	Vlnv vlnv(vlnv_raw);
 
 	// find the appropriate factory that can create the specified VLNV
 	// Note:
 	// This is the magic part! Factories automatically register as a plugin
 	// as soon as they are instantiated. If there are multiple candidates,
 	// the first suitable factory will be used.
-	FpgaIpFactory* fpgaIpFactory = lookup(vlnv);
+	IpCoreFactory* ipCoreFactory = lookup(vlnv);
 
-	if(fpgaIpFactory == nullptr) {
+	if(ipCoreFactory == nullptr) {
 		cpp_warn << "No plugin found to handle " << vlnv;
 		return nullptr;
 	}
 
-	cpp_debug << "Using " << fpgaIpFactory->getName() << " for IP " << vlnv;
+	cpp_debug << "Using " << ipCoreFactory->getName() << " for IP " << vlnv;
 
 
 	// Create new IP instance. Since this function is virtual, it will construct
 	// the right, specialized type without knowing it here because we have
 	// already picked the right factory.
-	FpgaIp* ip = fpgaIpFactory->create();
+	IpCore* ip = ipCoreFactory->create();
 	if(ip == nullptr) {
-		cpp_warn << "Cannot create an instance of " << fpgaIpFactory->getName();
+		cpp_warn << "Cannot create an instance of " << ipCoreFactory->getName();
 		goto fail;
 	}
 
@@ -107,7 +110,7 @@ FpgaIp *FpgaIpFactory::make(FpgaCard* card, json_t *json, std::string name)
 	}
 
 	// IP-specific setup via JSON config
-	fpgaIpFactory->configureJson(ip, json);
+	ipCoreFactory->configureJson(ip, json);
 
 	// TODO: currently fails, fix and remove comment
 //	if(not ip->start()) {
@@ -127,4 +130,6 @@ fail:
 	return nullptr;
 }
 
+} // namespace ip
+} // namespace fpga
 } // namespace villas

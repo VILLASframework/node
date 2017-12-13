@@ -32,8 +32,11 @@
 #include <xilinx/xintc.h>
 
 namespace villas {
+namespace fpga {
+namespace ip {
 
-class InterruptController : public FpgaIp
+
+class InterruptController : public IpCore
 {
 public:
 	using IrqMaskType = uint32_t;
@@ -62,14 +65,14 @@ private:
 
 
 
-class InterruptControllerFactory : public FpgaIpFactory {
+class InterruptControllerFactory : public IpCoreFactory {
 public:
 
 	InterruptControllerFactory() :
-	    FpgaIpFactory(getName())
+	    IpCoreFactory(getName())
 	{}
 
-	FpgaIp* create()
+	IpCore* create()
 	{ return new InterruptController; }
 
 	std::string
@@ -80,10 +83,12 @@ public:
 	getDescription() const
 	{ return "Xilinx's programmable interrupt controller"; }
 
-	FpgaVlnv getCompatibleVlnv() const
-	{ return FpgaVlnv("acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:"); }
+	Vlnv getCompatibleVlnv() const
+	{ return Vlnv("acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:"); }
 };
 
+} // namespace ip
+} // namespace fpga
 } // namespace villas
 
 /** @} */

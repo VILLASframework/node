@@ -75,12 +75,12 @@ static void init()
 	// get the FPGA card plugin
 	villas::Plugin* plugin = villas::Plugin::lookup(villas::Plugin::Type::FpgaCard, "");
 	cr_assert_not_null(plugin, "No plugin for FPGA card found");
-	villas::FpgaCardPlugin* fpgaCardPlugin = dynamic_cast<villas::FpgaCardPlugin*>(plugin);
+	villas::fpga::PCIeCardFactory* fpgaCardPlugin = dynamic_cast<villas::fpga::PCIeCardFactory*>(plugin);
 
 	// create an FPGA card instance using the corresponding plugin
 //	villas::FpgaCard* fpgaCard = fpgaCardPlugin->make(json_);
 
-	std::list<villas::FpgaCard*> fpgaCards = fpgaCardPlugin->make(fpgas, &pci, &vc);
+	std::list<villas::fpga::PCIeCard*> fpgaCards = fpgaCardPlugin->make(fpgas, &pci, &vc);
 
 	json_t *json_card = json_object_get(fpgas, FPGA_CARD);
 	cr_assert_not_null(json_card, "FPGA card " FPGA_CARD " not found");

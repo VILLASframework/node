@@ -34,6 +34,9 @@
 #include "fpga/ips/intc.hpp"
 
 namespace villas {
+namespace fpga {
+namespace ip {
+
 
 // instantiate factory to make available to plugin infrastructure
 static InterruptControllerFactory factory;
@@ -150,4 +153,6 @@ uint64_t InterruptController::waitForInterrupt(int irq)
 	}
 }
 
+} // namespace ip
+} // namespace fpga
 } // namespace villas

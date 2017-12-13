@@ -40,14 +40,15 @@
 #include "log.hpp"
 
 namespace villas {
+namespace fpga {
 
-static FpgaCardPlugin
-fpgaCardPlugin;
+// instantiate factory to register
+static PCIeCardFactory PCIeCardFactory;
 
-std::list<FpgaCard*>
-FpgaCardPlugin::make(json_t *json, struct pci* pci, ::vfio_container* vc)
+std::list<fpga::PCIeCard*>
+fpga::PCIeCardFactory::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 {
-	std::list<FpgaCard*> cards;
+	std::list<fpga::PCIeCard*> cards;
 
 	const char *card_name;
 	json_t *json_card;
@@ -73,7 +74,7 @@ FpgaCardPlugin::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 			continue;
 		}
 
-		FpgaCard* card = create();
+		fpga::PCIeCard* card = create();
 
 		// populate generic properties
 		card->name = std::string(card_name);
@@ -108,7 +109,7 @@ FpgaCardPlugin::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 			cpp_info << "Found IP: "  << ip_name;
 			Logger::Indenter indent = cpp_debug.indent();
 
-			FpgaIp* ip = FpgaIpFactory::make(card, json_ip, ip_name);
+			ip::IpCore* ip = ip::IpCoreFactory::make(card, json_ip, ip_name);
 			if(ip == nullptr) {
 				cpp_warn << "Cannot initialize, ignoring ...";
 				continue;
@@ -129,14 +130,14 @@ FpgaCardPlugin::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 	return cards;
 }
 
-FpgaCard*
-FpgaCardPlugin::create()
+fpga::PCIeCard*
+fpga::PCIeCardFactory::create()
 {
-	return new FpgaCard;
+	return new fpga::PCIeCard;
 }
 
 
-bool FpgaCard::start()
+bool fpga::PCIeCard::start()
 {
 	int ret;
 	struct pci_device *pdev;
@@ -475,4 +476,5 @@ int fpga_card_reset(struct fpga_card *c)
 
 #endif
 
+} // namespace fpga
 } // namespace villas
