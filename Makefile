@@ -169,4 +169,4 @@ clean:   $(addprefix clean-,  $(filter-out thirdparty doc clients,$(MODULES)))
 
 include $(wildcard $(SRCDIR)/make/Makefile.*)
 include $(wildcard $(BUILDDIR)/**/*.d)
-include $(patsubst %,$(SRCDIR)/%/Makefile.inc,$(MODULES))
+-include $(patsubst %,$(SRCDIR)/%/Makefile.inc,$(MODULES))

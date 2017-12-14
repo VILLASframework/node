@@ -1,10 +1,12 @@
-build
-thirdparty
+build/
+thirdparty/
 
-.git
+.git/
+
 .gitmodules
 .gitignore
 .dockerignore
+.distignore
 
 .DS_Store
 *~
