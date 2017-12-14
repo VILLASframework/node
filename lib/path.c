@@ -181,7 +181,7 @@ static void * path_run(void *arg)
 
 					sample_copy(p->last_sample, muxed_smps[tomux-1]);
 
-					info("received = %s", bitset_dump(&p->received));
+					debug(15, "Path %s received = %s", path_name(p), bitset_dump(&p->received));
 
 					if (bitset_test(&p->mask, i)) {
 						/* Check if we received an update from all nodes/ */
