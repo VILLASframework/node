@@ -66,8 +66,8 @@ int socket_init(struct super_node *sn)
 		struct socket *s = (struct socket *) n->_vd;
 		struct rtnl_link *link;
 
-		if (s->layer != SOCKET_LAYER_ETH ||
-		    s->layer != SOCKET_LAYER_IP ||
+		if (s->layer != SOCKET_LAYER_ETH &&
+		    s->layer != SOCKET_LAYER_IP &&
 		    s->layer != SOCKET_LAYER_UDP)
 			    continue;
 
@@ -465,12 +465,13 @@ int socket_parse(struct node *n, json_t *cfg)
 	s->tc_qdisc = NULL;
 #endif /* WITH_NETEM */
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: s, s: s, s?: b, s?: o, s?: s }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: s, s: s, s?: b, s?: o, s?: o, s?: s }",
 		"layer", &layer,
 		"remote", &remote,
 		"local", &local,
 		"verify_source", &s->verify_source,
 		"multicast", &json_multicast,
+		"netem", &json_netem,
 		"format", &format
 	);
 	if (ret)
@@ -763,7 +764,11 @@ int socket_fd(struct node *n)
 
 static struct plugin p = {
 	.name		= "socket",
-	.description	= "BSD network sockets for Ethernet / IP / UDP (libnl3)",
+#ifdef WITH_NETEM
+	.description	= "BSD network sockets for Ethernet / IP / UDP (libnl3, netem support)",
+#else
+	.description	= "BSD network sockets for Ethernet / IP / UDP",
+#endif
 	.type		= PLUGIN_TYPE_NODE,
 	.node		= {
 		.vectorize	= 0,
