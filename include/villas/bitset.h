@@ -31,18 +31,35 @@ struct bitset {
 	size_t dimension;
 };
 
+/** Allocate memory for a new betset */
 int bitset_init(struct bitset *b, size_t dim);
+
+/** Release memory of bit set */
 int bitset_destroy(struct bitset *b);
 
+void bitset_set_value(struct bitset *b, uintmax_t val);
+uintmax_t bitset_get_value(struct bitset *b);
 
+/** Return the number of bits int the set which are set (1) */
+size_t bitset_count(struct bitset *b);
+
+/** Set a single bit in the set */
 int bitset_set(struct bitset *b, size_t bit);
+
+/** Clear a single bit in the set */
 int bitset_clear(struct bitset *b, size_t bit);
 
+/** Set all bits in the set */
 void bitset_set_all(struct bitset *b);
+
+/** Clear all bits in the set */
 void bitset_clear_all(struct bitset *b);
 
+/** Test if a single bit in the set is set */
 int bitset_test(struct bitset *b, size_t bit);
 
+/** Compare two bit sets bit-by-bit */
 int bitset_cmp(struct bitset *a, struct bitset *b);
 
+/** Return an human readable representation of the bit set */
 char * bitset_dump(struct bitset *b);

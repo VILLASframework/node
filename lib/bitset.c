@@ -47,6 +47,36 @@ int bitset_destroy(struct bitset *b)
 	return 0;
 }
 
+void bitset_set_value(struct bitset *b, uintmax_t val)
+{
+	bitset_clear_all(b);
+
+	for (size_t i = 0; i < b->dim; i++) {
+		if (val & (1 << i))
+			bitset_set(b, i);
+	}
+}
+
+uintmax_t bitset_get_value(struct bitset *b)
+{
+	uintmax_t v = 0;
+
+	for (size_t i = 0; i < b->dim; i++)
+		v += bitset_test(b, i) << i;
+
+	return v;
+}
+
+size_t bitset_count(struct bitset *b)
+{
+	size_t cnt = 0;
+
+	for (size_t i = 0; i < b->dim; i++)
+		cnt += bitset_test(b, i);
+
+	return cnt;
+}
+
 int bitset_set(struct bitset *b, size_t bit)
 {
 	int s = bitset_slot(bit);
