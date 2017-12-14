@@ -39,7 +39,7 @@ LABEL \
 	org.label-schema.usage = "https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"
 	
 # Some of the dependencies are only available in our own repo
-ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
+ADD https://packages.fein-aachen.org/redhat/fein.repo /etc/yum.repos.d/
 
 # Usually the following dependecies would be resolved by dnf
 # when installing villas-node.

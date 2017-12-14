@@ -69,7 +69,7 @@ RUN pip install \
 	protobuf
 
 # Some of the dependencies are only available in our own repo
-ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
+ADD https://packages.fein-aachen.org/redhat/fein.repo /etc/yum.repos.d/
 
 # Dependencies
 RUN dnf -y install \
