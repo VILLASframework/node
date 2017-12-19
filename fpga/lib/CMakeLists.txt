@@ -7,6 +7,7 @@ set(SOURCES
 	card.cpp
 
 	ips/timer.c
+	ips/timer.cpp
 	ips/model.c
 	ips/switch.c
 	ips/dft.c
