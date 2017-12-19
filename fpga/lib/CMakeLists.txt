@@ -24,6 +24,7 @@ set(SOURCES
 	plugin.c
 	plugin.cpp
 	utils.c
+	utils.cpp
 	list.c
 	log.c
 	log_config.c
