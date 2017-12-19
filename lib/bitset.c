@@ -51,7 +51,7 @@ void bitset_set_value(struct bitset *b, uintmax_t val)
 {
 	bitset_clear_all(b);
 
-	for (size_t i = 0; i < b->dim; i++) {
+	for (size_t i = 0; i < b->dimension; i++) {
 		if (val & (1 << i))
 			bitset_set(b, i);
 	}
@@ -61,7 +61,7 @@ uintmax_t bitset_get_value(struct bitset *b)
 {
 	uintmax_t v = 0;
 
-	for (size_t i = 0; i < b->dim; i++)
+	for (size_t i = 0; i < b->dimension; i++)
 		v += bitset_test(b, i) << i;
 
 	return v;
@@ -71,7 +71,7 @@ size_t bitset_count(struct bitset *b)
 {
 	size_t cnt = 0;
 
-	for (size_t i = 0; i < b->dim; i++)
+	for (size_t i = 0; i < b->dimension; i++)
 		cnt += bitset_test(b, i);
 
 	return cnt;
