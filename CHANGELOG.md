@@ -17,18 +17,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Added support for Unix Domain Sockets to `socket` node-type
 - Python example client using new Protobuf and UDP/Unix sockets
 
+### Removed
+
+- Moved VILLASfpga related code into external library
+  - `libxil` dependency is dropped
+
 ### Changed
 
 - Upgraded Docker build containers to Fedora 27
 - Updated submodules for most dependencies
 - Use "LABEL" instead of "MAINTAINER" keyword in Dockerfiles
-- Removed VILLASfpga related code into external library
-  - `libxil` dependency is dropped
 
 ### Fixed
 
 - Socket node-type supports now arbirarily sized packets
 - Netem support is working again
+- Sample data format conversion for RAW IO formats
 
 ## [0.5.1] - 2017-10-23
 
