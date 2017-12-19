@@ -85,6 +85,9 @@ public:
 
 	Vlnv getCompatibleVlnv() const
 	{ return Vlnv("acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:"); }
+
+	std::list<IpDependency> getDependencies() const
+	{ return {};  }
 };
 
 } // namespace ip

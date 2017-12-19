@@ -41,16 +41,41 @@
 #include "fpga/vlnv.hpp"
 
 #include "plugin.hpp"
-#include "card.hpp"
+
+#include <map>
+#include <list>
+#include <memory>
 
 #include <jansson.h>
 
 
 namespace villas {
 namespace fpga {
+
+class PCIeCard;
+
 namespace ip {
 
 
+class IpIdentifier {
+public:
+	IpIdentifier(Vlnv vlnv = Vlnv::getWildcard(), std::string name = "") :
+	    vlnv(vlnv), name(name) {}
+
+	IpIdentifier(std::string vlnvString, std::string name = "") :
+	    vlnv(vlnvString), name(name) {}
+
+	friend std::ostream&
+	operator<< (std::ostream& stream, const IpIdentifier& id)
+	{ return stream << "VLNV: " << id.vlnv << " Name: " << id.name; }
+
+	Vlnv vlnv;
+	std::string name;
+};
+
+using IpDependency = std::pair<std::string, Vlnv>;
+
+// forward declarations
 class IpCoreFactory;
 
 class IpCore {
@@ -58,7 +83,7 @@ public:
 
 	friend IpCoreFactory;
 
-	IpCore() : card(nullptr), baseaddr(0), irq(-1), port(-1) {}
+	IpCore() : card(nullptr), baseaddr(0) {} //, irq(-1), port(-1) {}
 	virtual ~IpCore() {}
 
 	// IPs can implement this interface
@@ -68,23 +93,39 @@ public:
 	virtual bool reset() { return true; }
 	virtual void dump();
 
+	bool
+	operator== (const IpIdentifier& otherId) {
+		const bool vlnvMatch = id.vlnv == otherId.vlnv;
+		const bool nameWildcard = id.name.empty() or otherId.name.empty();
+
+		return vlnvMatch and (nameWildcard or id.name == otherId.name);
+	}
+
+	bool
+	operator== (const Vlnv& otherVlnv)
+	{ return id.vlnv == otherVlnv; }
+
+	friend std::ostream&
+	operator<< (std::ostream& stream, const IpCore& ip)
+	{ return stream << ip.id; }
+
 protected:
 	uintptr_t
-	getBaseaddr() const
-	{
-		assert(card != nullptr);
-		return reinterpret_cast<uintptr_t>(card->map) + this->baseaddr;
-	}
+	getBaseaddr() const;
 
 protected:
 	// populated by FpgaIpFactory
-	PCIeCard* card;		/**< FPGA card this IP is instantiated on */
-	std::string name;	/**< Name defined in JSON config */
-	Vlnv vlnv;		/**< VLNV defined in JSON config */
+	PCIeCard* card;		/**< FPGA card this IP is instantiated on */	
+	IpIdentifier id;		/**< VLNV and name defined in JSON config */
 	uintptr_t baseaddr;	/**< The baseadress of this FPGA IP component */
-	int irq;			/**< The interrupt number of the FPGA IP component. */
-	int port;			/**< The port of the AXI4-Stream switch to which this FPGA IP component is connected. */
+//	int irq;			/**< The interrupt number of the FPGA IP component. */
+//	int port;			/**< The port of the AXI4-Stream switch to which this FPGA IP component is connected. */
+
+	std::map<std::string, IpCore*> dependencies;
 };
+
+
+using IpCoreList = std::list<std::unique_ptr<IpCore>>;
 
 
 class IpCoreFactory : public Plugin {
@@ -94,20 +135,21 @@ public:
 	{ pluginType = Plugin::Type::FpgaIp; }
 
 	/// Returns a running and checked FPGA IP
-	static IpCore*
-	make(PCIeCard* card, json_t *json, std::string name);
+	static IpCoreList
+	make(PCIeCard* card, json_t *json_ips);
 
 private:
 	/// Create a concrete IP instance
 	virtual IpCore* create() = 0;
 
 	/// Configure IP instance from JSON config
-	virtual bool configureJson(IpCore* ip, json_t *json)
+	virtual bool configureJson(const std::unique_ptr<IpCore>& ip, json_t *json)
 	{ return true; }
 
 	virtual Vlnv getCompatibleVlnv() const = 0;
 	virtual std::string getName() const = 0;
 	virtual std::string getDescription() const = 0;
+	virtual std::list<IpDependency> getDependencies() const = 0;
 
 private:
 	static IpCoreFactory*

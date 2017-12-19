@@ -41,6 +41,7 @@
 #include <string>
 
 #include "plugin.hpp"
+#include "fpga/ip.hpp"
 
 #include "config.h"
 
@@ -59,11 +60,6 @@ namespace fpga {
 struct vfio_container;
 class PCIeCardFactory;
 
-namespace ip {
-class IpCore;
-}
-
-
 class PCIeCard {
 public:
 
@@ -78,8 +74,7 @@ public:
 	void dump()  { }
 
 
-	using IpList = std::list<ip::IpCore*>;
-	IpList ips;		///< IPs located on this FPGA card
+	ip::IpCoreList ips;		///< IPs located on this FPGA card
 
 	bool do_reset;			/**< Reset VILLASfpga during startup? */
 	int affinity;			/**< Affinity for MSI interrupts */
@@ -99,7 +94,7 @@ public:
 	size_t dmalen;
 };
 
-
+using CardList = std::list<std::unique_ptr<PCIeCard>>;
 
 class PCIeCardFactory : public Plugin {
 public:
@@ -108,7 +103,7 @@ public:
 	    Plugin("FPGA Card plugin")
 	{ pluginType = Plugin::Type::FpgaCard; }
 
-	static std::list<PCIeCard*>
+	static CardList
 	make(json_t *json, struct pci* pci, ::vfio_container* vc);
 
 	static PCIeCard*

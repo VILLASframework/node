@@ -3,11 +3,22 @@
 #include <iostream>
 #include <string>
 
+#define _ESCAPE	"\x1b"
+#define TXT_BOLD(s) _ESCAPE "[1m" + std::string(s) + _ESCAPE "[0m"
+
 class LoggerIndent;
 
 class Logger {
     friend LoggerIndent;
 public:
+
+	enum class LogLevel : int {
+		Debug,
+		Info,
+		Warning,
+		Error,
+		Disabled
+	};
 
     class LoggerNewline {
     public:
@@ -36,7 +47,7 @@ public:
         Logger* logger;
     };
 
-    Logger(int level, std::string prefix = "") : level(level), prefix(prefix) {}
+	Logger(LogLevel level, std::string prefix = "") : level(level), prefix(prefix) {}
 
     Indenter indent()
     { return Indenter(this); }
@@ -80,11 +91,16 @@ public:
         depthCurrent = --depth;
     }
 
+	static
+	void
+	setLogLevel(LogLevel level)
+	{ global_level = level; }
+
 private:
-    int level;
+	LogLevel level;
     std::string prefix;
     static int depth;
-    static int global_level;
+	static LogLevel global_level;
     static int depthCurrent;
 };
 

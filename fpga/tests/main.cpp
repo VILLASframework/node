@@ -29,6 +29,7 @@
 #include <villas/fpga/card.h>
 #include <villas/fpga/vlnv.h>
 
+#include <villas/log.hpp>
 #include <villas/plugin.hpp>
 #include <villas/fpga/card.hpp>
 
@@ -52,6 +53,8 @@ static void init()
 	json_error_t err;
 
 	villas::Plugin::dumpList();
+
+	Logger::setLogLevel(Logger::LogLevel::Debug);
 
 	ret = pci_init(&pci);
 	cr_assert_eq(ret, 0, "Failed to initialize PCI sub-system");
@@ -80,7 +83,7 @@ static void init()
 	// create an FPGA card instance using the corresponding plugin
 //	villas::FpgaCard* fpgaCard = fpgaCardPlugin->make(json_);
 
-	std::list<villas::fpga::PCIeCard*> fpgaCards = fpgaCardPlugin->make(fpgas, &pci, &vc);
+	auto fpgaCards = fpgaCardPlugin->make(fpgas, &pci, &vc);
 
 	json_t *json_card = json_object_get(fpgas, FPGA_CARD);
 	cr_assert_not_null(json_card, "FPGA card " FPGA_CARD " not found");

@@ -33,6 +33,12 @@
 #include "kernel/vfio.h"
 
 #include <string>
+#include <map>
+#include <algorithm>
+#include <list>
+#include <vector>
+#include <memory>
+#include <utility>
 
 #include "fpga/ip.hpp"
 #include "fpga/card.hpp"
@@ -45,10 +51,11 @@ namespace fpga {
 // instantiate factory to register
 static PCIeCardFactory PCIeCardFactory;
 
-std::list<fpga::PCIeCard*>
+
+CardList
 fpga::PCIeCardFactory::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 {
-	std::list<fpga::PCIeCard*> cards;
+	CardList cards;
 
 	const char *card_name;
 	json_t *json_card;
@@ -74,7 +81,7 @@ fpga::PCIeCardFactory::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 			continue;
 		}
 
-		fpga::PCIeCard* card = create();
+		auto card = std::unique_ptr<PCIeCard>(create());
 
 		// populate generic properties
 		card->name = std::string(card_name);
@@ -87,44 +94,32 @@ fpga::PCIeCardFactory::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 
 		if (pci_slot != nullptr and pci_device_parse_slot(&card->filter, pci_slot, &error) != 0) {
 			cpp_warn << "Failed to parse PCI slot: " << error;
-//			cpp_info << "... ignoring";
 		}
 
 		if (pci_id != nullptr and pci_device_parse_id(&card->filter, pci_id, &error) != 0) {
 			cpp_warn << "Failed to parse PCI ID: " << error;
-//			cpp_info << "ignoring ...";
 		}
 
 
 		// TODO: currently fails, fix and remove comment
 //		if(not card->start()) {
-//			cpp_warn << "  cannot start, destroying ...";
+//		    cpp_warn << "Cannot start FPGA card " << card_name;
 //			delete card;
 //			continue;
 //		}
 
-		const char *ip_name;
-		json_t *json_ip;
-		json_object_foreach(json_ips, ip_name, json_ip) {
-			cpp_info << "Found IP: "  << ip_name;
-			Logger::Indenter indent = cpp_debug.indent();
-
-			ip::IpCore* ip = ip::IpCoreFactory::make(card, json_ip, ip_name);
-			if(ip == nullptr) {
-				cpp_warn << "Cannot initialize, ignoring ...";
-				continue;
-			}
-
-			card->ips.push_back(ip);
+		card->ips = ip::IpCoreFactory::make(card.get(), json_ips);
+		if(card->ips.empty()) {
+			cpp_error << "Cannot initialize IPs";
+			continue;
 		}
 
 		if(not card->check()) {
 			cpp_warn << "Checking failed, destroying ...";
-			delete card;
 			continue;
 		}
 
-		cards.push_back(card);
+		cards.push_back(std::move(card));
 	}
 
 	return cards;

@@ -26,9 +26,63 @@
       "slot": "03:00.0",
       "do_reset": true,
       "ips": {
+
+        "axi_reset_0": {
+          "vlnv": "xilinx.com:ip:axi_gpio:2.0",
+          "baseaddr": 28672
+        },
+        "timer_0": {
+          "vlnv": "xilinx.com:ip:axi_timer:2.0",
+          "baseaddr": 16384,
+          "irq": "axi_pcie_intc_0:0"
+        },
+        "dma_0": {
+          "vlnv": "xilinx.com:ip:axi_dma:7.1",
+          "baseaddr": 12288,
+          "port": "switch_0:1",
+          "irq": "axi_pcie_intc_0:3"
+        },
         "axi_pcie_intc_0": {
           "vlnv": "acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:1.0",
           "baseaddr": 45056
+        },
+        "dma_1": {
+          "vlnv": "xilinx.com:ip:axi_dma:7.1",
+          "baseaddr": 8192,
+          "port": "switch_0:6",
+          "irq": "axi_pcie_intc_0:3"
+        },
+        "fifo_mm_s_0": {
+          "vlnv": "xilinx.com:ip:axi_fifo_mm_s:4.1",
+          "baseaddr": 24576,
+          "baseaddr_axi4": 49152,
+          "port": "switch_0:2",
+          "irq": "axi_pcie_intc_0:2"
+        },
+        "rtds_axis_0": {
+          "vlnv": "acs.eonerc.rwth-aachen.de:user:rtds_axis:1.0",
+          "baseaddr": 32768,
+          "port": "switch_0:0",
+          "irq": "axi_pcie_intc_0:5"
+        },
+        "hls_dft_0": {
+          "vlnv": "acs.eonerc.rwth-aachen.de:hls:hls_dft:1.0",
+          "baseaddr": 36864,
+          "port": "switch_0:5",
+          "irq": "axi_pcie_intc_0:1",
+          "period": 400,
+          "harmonics": [
+            0,
+            1,
+            3,
+            5,
+            7
+          ],
+          "decimation": 0
+        },
+        "axis_data_fifo_0": {
+          "vlnv": "xilinx.com:ip:axis_data_fifo:1.1",
+          "port": "switch_0:3"
         },
         "switch_0": {
           "vlnv": "xilinx.com:ip:axis_interconnect:2.1",
@@ -42,62 +96,9 @@
             }
           ]
         },
-        "axi_reset_0": {
-          "vlnv": "xilinx.com:ip:axi_gpio:2.0",
-          "baseaddr": 28672
-        },
-        "timer_0": {
-          "vlnv": "xilinx.com:ip:axi_timer:2.0",
-          "baseaddr": 16384,
-          "irq": 0
-        },
-        "dma_0": {
-          "vlnv": "xilinx.com:ip:axi_dma:7.1",
-          "baseaddr": 12288,
-          "port": 1,
-          "irq": 3
-        },
-        "dma_1": {
-          "vlnv": "xilinx.com:ip:axi_dma:7.1",
-          "baseaddr": 8192,
-          "port": 6,
-          "irq": 3
-        },
-        "fifo_mm_s_0": {
-          "vlnv": "xilinx.com:ip:axi_fifo_mm_s:4.1",
-          "baseaddr": 24576,
-          "baseaddr_axi4": 49152,
-          "port": 2,
-          "irq": 2
-        },
-        "rtds_axis_0": {
-          "vlnv": "acs.eonerc.rwth-aachen.de:user:rtds_axis:1.0",
-          "baseaddr": 32768,
-          "port": 0,
-          "irq": 5
-        },
-        "hls_dft_0": {
-          "vlnv": "acs.eonerc.rwth-aachen.de:hls:hls_dft:1.0",
-          "baseaddr": 36864,
-          "port": 5,
-          "irq": 1,
-          "period": 400,
-          "harmonics": [
-            0,
-            1,
-            3,
-            5,
-            7
-          ],
-          "decimation": 0
-        },
-        "axis_data_fifo_0": {
-          "vlnv": "xilinx.com:ip:axis_data_fifo:1.1",
-          "port": 3
-        },
         "axis_data_fifo_1": {
           "vlnv": "xilinx.com:ip:axis_data_fifo:1.1",
-          "port": 6
+          "port": "switch_0:6"
         }
       }
     }

@@ -29,8 +29,7 @@
 #include "kernel/vfio.h"
 #include "kernel/kernel.h"
 
-#include "fpga/ip.h"
-#include "fpga/card.h"
+#include "fpga/card.hpp"
 #include "fpga/ips/intc.hpp"
 
 namespace villas {
@@ -48,6 +47,7 @@ InterruptController::~InterruptController()
 
 bool InterruptController::start()
 {
+	return true;
 	const uintptr_t base = getBaseaddr();
 
 	num_irqs = vfio_pci_msi_init(&card->vfio_device, efds);

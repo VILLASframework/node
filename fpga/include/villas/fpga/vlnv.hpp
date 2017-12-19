@@ -47,6 +47,10 @@ public:
 		parseFromString(s);
 	}
 
+	static Vlnv
+	getWildcard()
+	{ return Vlnv(); }
+
 	std::string
 	toString() const
 	{
