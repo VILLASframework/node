@@ -4,6 +4,8 @@ project(VILLASfpga C CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
+set (CMAKE_CXX_STANDARD 17)
+
 add_subdirectory(lib)
 add_subdirectory(tests)
 add_subdirectory(src)
