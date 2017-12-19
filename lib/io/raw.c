@@ -92,30 +92,52 @@ int raw_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 			}
 		}
 
+		enum raw_format {
+			RAW_FORMAT_INT,
+			RAW_FORMAT_FLT
+		};
+
 		for (int j = 0; j < smps[i]->length; j++) {
-			enum { INT, FLT } fmt;
+			enum sample_data_format smp_fmt;
+			enum raw_format raw_fmt;
+
+			union { double f; uint64_t i; } val;
 
 			if      (flags & RAW_AUTO)
-				fmt = smps[i]->format & (1 << i) ? INT : FLT;
+				raw_fmt = smps[i]->format & (1 << i) ? RAW_FORMAT_INT : RAW_FORMAT_FLT;
 			else if (flags & RAW_FLT)
-				fmt = FLT;
+				raw_fmt = RAW_FORMAT_FLT;
 			else
-				fmt = INT;
+				raw_fmt = RAW_FORMAT_INT;
 
-			switch (fmt) {
-				case FLT:
+			smp_fmt = sample_get_data_format(smps[i], j);
+
+			switch (raw_fmt) {
+				case RAW_FORMAT_FLT:
+					switch (smp_fmt) {
+						case SAMPLE_DATA_FORMAT_INT:   val.f = smps[i]->data[j].i; break;
+						case SAMPLE_DATA_FORMAT_FLOAT: val.f = smps[i]->data[j].f; break;
+						default:                       val.f = -1; break;
+					}
+
 					switch (bits) {
-						case 32: f32[o++] = SWAP_FLT_TOE(flags & RAW_BE_FLT, smps[i]->data[j].f); break;
-						case 64: f64[o++] = SWAP_DBL_TOE(flags & RAW_BE_FLT, smps[i]->data[j].f); break;
+						case 32: f32[o++] = SWAP_FLT_TOE(flags & RAW_BE_FLT, val.f); break;
+						case 64: f64[o++] = SWAP_DBL_TOE(flags & RAW_BE_FLT, val.f); break;
 					}
 					break;
 
-				case INT:
+				case RAW_FORMAT_INT:
+					switch (smp_fmt) {
+						case SAMPLE_DATA_FORMAT_INT:   val.i = smps[i]->data[j].i; break;
+						case SAMPLE_DATA_FORMAT_FLOAT: val.i = smps[i]->data[j].f; break;
+						default:                       val.i = -1; break;
+					}
+
 					switch (bits) {
-						case  8: i8 [o++] = smps[i]->data[j].i; break;
-						case 16: i16[o++] = SWAP_INT_TOE(flags & RAW_BE_INT, 16, smps[i]->data[j].i); break;
-						case 32: i32[o++] = SWAP_INT_TOE(flags & RAW_BE_INT, 32, smps[i]->data[j].i); break;
-						case 64: i64[o++] = SWAP_INT_TOE(flags & RAW_BE_INT, 64, smps[i]->data[j].i); break;
+						case  8: i8 [o++] =                                      val.i;  break;
+						case 16: i16[o++] = SWAP_INT_TOE(flags & RAW_BE_INT, 16, val.i); break;
+						case 32: i32[o++] = SWAP_INT_TOE(flags & RAW_BE_INT, 32, val.i); break;
+						case 64: i64[o++] = SWAP_INT_TOE(flags & RAW_BE_INT, 64, val.i); break;
 					}
 					break;
 			}
@@ -186,12 +208,12 @@ int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 	}
 
 	for (int i = 0; i < smp->length; i++) {
-		int fmt = flags & RAW_FLT ? SAMPLE_DATA_FORMAT_FLOAT
-		                           : SAMPLE_DATA_FORMAT_INT;
+		enum sample_data_format smp_fmt = flags & RAW_FLT ? SAMPLE_DATA_FORMAT_FLOAT
+		                                                  : SAMPLE_DATA_FORMAT_INT;
 
-		sample_set_data_format(smp, i, fmt);
+		sample_set_data_format(smp, i, smp_fmt);
 
-		switch (fmt) {
+		switch (smp_fmt) {
 			case SAMPLE_DATA_FORMAT_FLOAT:
 				switch (bits) {
 					case 32: smp->data[i].f = SWAP_FLT_TOH(flags & RAW_BE_FLT, f32[i+off]); break;
