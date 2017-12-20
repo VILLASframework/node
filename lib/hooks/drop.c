@@ -68,9 +68,7 @@ static int drop_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 			if (dist <= 0) {
 				cur->flags |= SAMPLE_IS_REORDERED;
 
-				debug(10, "Reordered sample: sequence=%u, distance=%d", cur->sequence, dist);
-				if (h->node && h->node->stats)
-					stats_update(h->node->stats, STATS_REORDERED, dist);
+				debug(10, "Dropping reordered sample: sequence=%u, distance=%d", cur->sequence, dist);
 			}
 			else
 				goto ok;
