@@ -745,10 +745,18 @@ int path_reverse(struct path *p, struct path *r)
 
 	struct path_destination *new_pd = (struct path_destination *) alloc(sizeof(struct path_destination));
 	struct path_source      *new_ps = (struct path_source *) alloc(sizeof(struct path_source));
+	struct mapping_entry    *new_me = alloc(sizeof(struct mapping_entry));
+	new_pd->node = orig_ps->node;
+	new_ps->node = orig_pd->node;
+	new_ps->masked = true;
 
-	new_pd->node     = orig_ps->node;
+	new_me->node = new_ps->node;
+	new_me->type = MAPPING_TYPE_DATA;
+	new_me->data.offset = 0;
+	new_me->length = 0;
 
-	new_ps->node      = orig_pd->node;
+	list_init(&new_ps->mappings);
+	list_push(&new_ps->mappings, new_me);
 
 	list_push(&r->destinations, new_pd);
 	list_push(&r->sources, new_ps);
