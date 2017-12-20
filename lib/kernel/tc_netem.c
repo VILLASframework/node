@@ -73,6 +73,17 @@ int tc_netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 			error("Invalid delay distribution in netem config");
 	}
 
+	if (json_delay_correlation) {
+		val = json_integer_value(json_delay_correlation);
+
+		if (!json_is_real(json_delay_correlation))
+			error("Setting 'correlation' must be a positive integer within the range [ 0, 100 ]");
+
+		rtnl_netem_set_delay_correlation(ne, val);
+	}
+	else
+		rtnl_netem_set_delay_correlation(ne, 0);
+
 	if (json_limit) {
 		val = json_integer_value(json_limit);
 
