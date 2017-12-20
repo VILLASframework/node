@@ -91,6 +91,7 @@ struct path {
 	double rate;			/**< A timeout for */
 	int enabled;			/**< Is this path enabled. */
 	int reverse;			/**< This path as a matching reverse path. */
+	int no_builtin;			/**< This path should not use built-in hooks by default. */
 	int queuelen;			/**< The queue length for each path_destination::queue */
 	int samplelen;			/**< Will be calculated based on path::sources.mappings */
 
