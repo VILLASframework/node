@@ -272,7 +272,7 @@ int test_rtt_stop(struct node *n)
 	int ret;
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
-	if (t->counter != -1) {
+	if (t->counter >= 0) {
 		ret = test_rtt_case_stop(t, t->current);
 		if (ret)
 			return ret;
@@ -289,7 +289,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt)
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
 	if (t->counter == -1) {
-		if (t->current == -1) {
+		if (t->current < 0) {
 			t->current = 0;
 		}
 		else {
@@ -355,6 +355,10 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt)
 int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
+
+	if (t->current < 0)
+		return 0;
+
 	struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, t->current);
 
 	int i;
