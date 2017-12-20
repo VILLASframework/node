@@ -37,7 +37,7 @@
 #ifdef WITH_NETEM
   #include "kernel/if.h"
   #include "kernel/nl.h"
-  #include "kernel/tc.h"
+  #include "kernel/tc_netem.h"
 #endif /* WITH_NETEM */
 
 #include "io_format.h"
@@ -553,7 +553,7 @@ int socket_parse(struct node *n, json_t *cfg)
 			jerror(&err, "Failed to parse setting 'netem' of node %s", node_name(n));
 
 		if (enabled)
-			tc_parse(&s->tc_qdisc, json_netem);
+			tc_netem_parse(&s->tc_qdisc, json_netem);
 		else
 			s->tc_qdisc = NULL;
 #endif /* WITH_NETEM */

@@ -29,6 +29,7 @@
 
 #include "kernel/if.h"
 #include "kernel/tc.h"
+#include "kernel/tc_netem.h"
 #include "kernel/nl.h"
 #include "kernel/kernel.h"
 
@@ -103,7 +104,7 @@ int if_start(struct interface *i)
 				if (ret)
 					error("Failed to setup FW mark classifier: %s", nl_geterror(ret));
 
-				char *buf = tc_print(s->tc_qdisc);
+				char *buf = tc_netem_print(s->tc_qdisc);
 				debug(LOG_IF | 5, "Starting network emulation on interface '%s' for FW mark %u: %s",
 					rtnl_link_get_name(i->nl_link), s->mark, buf);
 				free(buf);

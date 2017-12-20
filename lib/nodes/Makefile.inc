@@ -129,7 +129,7 @@ ifeq ($(WITH_SOCKET),1)
 
 	# libnl3 is optional but required for network emulation and IRQ pinning
 	ifeq ($(shell $(PKGCONFIG) libnl-route-3.0; echo $$?),0)
-		LIB_SRCS    += $(addprefix lib/kernel/, nl.c tc.c if.c)
+		LIB_SRCS    += $(addprefix lib/kernel/, nl.c tc.c tc_netem.c if.c)
 		LIB_PKGS    += libnl-route-3.0
 	endif
 endif

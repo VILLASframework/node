@@ -1,4 +1,4 @@
-/** Setup interface queuing desciplines for network emulation
+/** Setup network emulation
  *
  * We use the firewall mark to apply individual netem qdiscs
  * per node. Every node uses an own BSD socket.
@@ -41,35 +41,33 @@ typedef uint32_t tc_hdl_t;
 
 struct interface;
 
-/** Remove all queuing disciplines and filters.
+/** Parse network emulator (netem) settings.
  *
- * @param i The interface
+ * @param cfg A jansson object containing the settings.
+ * @param[out] ne A pointer to a libnl3 qdisc object where setting will be written to.
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int tc_reset(struct interface *i);
+int tc_netem_parse(struct rtnl_qdisc **ne, json_t *cfg);
 
-/** Create a priority (prio) queueing discipline.
+/** Print network emulator (netem) setting into buffer.
  *
- * @param i[in] The interface
+ * @param tc A pointer to the libnl3 qdisc object where settings will be read from.
+ * @return A pointer to a string which must be freed() by the caller.
+ */
+char * tc_netem_print(struct rtnl_qdisc *ne);
+
+/** Add a new network emulator (netem) discipline.
+ *
+ * @param i[in] The interface to which this qdisc will be added.
  * @param qd[in,out] The libnl3 object of the new prio qdisc.
- * @param handle[in] The handle for the new qdisc
+ * @param handle[in] The handle of the new qdisc.
  * @param parent[in] Make this qdisc a child of this class
- * @param bands[in] The number of classes for this new qdisc
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t, int bands);
+int tc_netem(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent);
 
-/** Add a new filter based on the netfilter mark.
- *
- * @param i The interface to which this classifier is applied to.
- * @param cls[in,out] The libnl3 object of the new prio qdisc.
- * @param flowid The destination class for matched traffic
- * @param mark The netfilter firewall mark (sometime called 'fwmark')
- * @retval 0 Success. Everything went well.
- * @retval <0 Error. Something went wrong.
-*/
-int tc_mark(struct interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_t mark);
+int tc_netem_set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json);
 
 /** @} */
