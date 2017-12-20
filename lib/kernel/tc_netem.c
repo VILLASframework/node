@@ -76,7 +76,7 @@ int tc_netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 	if (json_delay_correlation) {
 		val = json_integer_value(json_delay_correlation);
 
-		if (!json_is_real(json_delay_correlation))
+		if (!json_is_integer(json_delay_correlation) || val < 0 || val > 100)
 			error("Setting 'correlation' must be a positive integer within the range [ 0, 100 ]");
 
 		rtnl_netem_set_delay_correlation(ne, val);
