@@ -20,30 +20,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-SONAMES = villas villas-ext
-
-LIBS = $(patsubst %, lib%, $(SONAMES))
-
-LIB_CFLAGS  = $(CFLAGS) -fPIC
-
-include lib/kernel/Makefile.inc
-include lib/hooks/Makefile.inc
-include lib/nodes/Makefile.inc
-include lib/io/Makefile.inc
-
-include $(patsubst %, lib/Makefile.%.inc, $(SONAMES))
-
-LIB_CFLAGS += $(addprefix -DWITH_, $(call escape,$(LIB_PKGS)))
-
-# Compile
-$(BUILDDIR)/lib/%.o: lib/%.c | $$(dir $$@)
-	$(CC) $(LIB_CFLAGS) -c $< -o $@
-
-lib: $(patsubst %, lib%, $(SONAMES))
-
-install-lib: $(patsubst %, install-lib%, $(SONAMES))
-
-clean-lib: $(patsubst %, clean-lib%, $(SONAMES))
-	rm -rf $(BUILDDIR)/lib
-
-.PHONY: lib install-lib clean-lib
+LIB_SRCS += $(addprefix lib/kernel/, kernel.c rt.c)

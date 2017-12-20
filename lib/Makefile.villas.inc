@@ -28,8 +28,7 @@ WITH_WEB  ?= 1
 WITH_API  ?= 1
 
 # Object files for libvillas
-LIB_SRCS += $(addprefix lib/kernel/, kernel.c rt.c) \
-            $(addprefix lib/, sample.c path.c node.c hook.c log.c log_config.c \
+LIB_SRCS += $(addprefix lib/, sample.c path.c node.c hook.c log.c log_config.c \
                utils.c super_node.c hist.c timing.c pool.c list.c queue.c \
                queue_signalled.c memory.c advio.c plugin.c node_type.c stats.c \
                mapping.c io.c shmem.c config_helper.c crypt.c compat.c \
