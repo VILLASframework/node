@@ -47,6 +47,7 @@ struct node
 	char *_name;		/**< Singleton: A string used to print to screen. */
 	char *_name_long;	/**< Singleton: A string used to print to screen. */
 
+	int no_builtin;
 	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
 	int affinity;		/**< CPU Affinity of this node */
 	int samplelen;		/**< The maximum number of values this node can receive. */

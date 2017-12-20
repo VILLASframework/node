@@ -50,6 +50,7 @@ int node_init(struct node *n, struct node_type *vt)
 
 	/* Default values */
 	n->vectorize = 1;
+	n->no_builtin = 0;
 	n->samplelen = DEFAULT_SAMPLELEN;
 
 	list_push(&vt->instances, n);
@@ -57,22 +58,24 @@ int node_init(struct node *n, struct node_type *vt)
 	list_init(&n->hooks);
 
 	/* Add internal hooks if they are not already in the list */
-	for (size_t i = 0; i < list_length(&plugins); i++) {
-		struct plugin *q = (struct plugin *) list_at(&plugins, i);
+	if (!n->no_builtin) {
+		for (size_t i = 0; i < list_length(&plugins); i++) {
+			struct plugin *q = (struct plugin *) list_at(&plugins, i);
 
-		if (q->type != PLUGIN_TYPE_HOOK)
-			continue;
+			if (q->type != PLUGIN_TYPE_HOOK)
+				continue;
 
-		struct hook_type *vt = &q->hook;
+			struct hook_type *vt = &q->hook;
 
-		if ((vt->flags & HOOK_NODE) && (vt->flags & HOOK_BUILTIN)) {
-			struct hook *h = (struct hook *) alloc(sizeof(struct hook));
+			if ((vt->flags & HOOK_NODE) && (vt->flags & HOOK_BUILTIN)) {
+				struct hook *h = (struct hook *) alloc(sizeof(struct hook));
 
-			ret = hook_init(h, vt, NULL, n);
-			if (ret)
-				return ret;
+				ret = hook_init(h, vt, NULL, n);
+				if (ret)
+					return ret;
 
-			list_push(&n->hooks, h);
+				list_push(&n->hooks, h);
+			}
 		}
 	}
 
@@ -101,11 +104,12 @@ int node_parse(struct node *n, json_t *cfg, const char *name)
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: i, s?: i, s?: o }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: i, s?: i, s?: o, s?: b }",
 		"type", &type,
 		"vectorize", &n->vectorize,
 		"samplelen", &n->samplelen,
-		"hooks", &json_hooks
+		"hooks", &json_hooks,
+		"no_builtin", &n->no_builtin
 	);
 	if (ret)
 		jerror(&err, "Failed to parse node '%s'", node_name(n));
