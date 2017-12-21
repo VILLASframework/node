@@ -28,18 +28,10 @@
  * @{
  */
 
-#pragma once
-
-#include <stdint.h>
-#include <stdlib.h>
-
-#include "common.h"
-
-#include "log.h"
-#include "utils.h"
+#ifndef VILLAS_IP_HPP
+#define VILLAS_IP_HPP
 
 #include "fpga/vlnv.hpp"
-
 #include "plugin.hpp"
 
 #include <map>
@@ -161,3 +153,5 @@ private:
 } // namespace ip
 } // namespace fpga
 } // namespace villas
+
+#endif // VILLAS_IP_HPP
