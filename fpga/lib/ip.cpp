@@ -227,10 +227,10 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		ip->id = id;
 
 		// extract some optional properties
-		int ret = json_unpack(json_ip, "{ s?: i}", //, s?: i, s?: i }",
-		                        "baseaddr", &ip->baseaddr);
-	//	                        "irq",      &ip->irq,
-	//	                        "port",     &ip->port);
+		int ret = json_unpack(json_ip, "{ s?: i, s?: i }",
+		                               "baseaddr", &ip->baseaddr,	// required
+		                               "irq",      &ip->irq);		// optional
+
 		if(ret != 0) {
 			cpp_warn << "Problem while parsing JSON for IP "
 			         << TXT_BOLD(ipName);

@@ -75,7 +75,7 @@ public:
 
 	friend IpCoreFactory;
 
-	IpCore() : card(nullptr), baseaddr(0) {} //, irq(-1), port(-1) {}
+	IpCore() : card(nullptr), baseaddr(0), irq(-1) {}
 	virtual ~IpCore() {}
 
 	// IPs can implement this interface
@@ -108,10 +108,9 @@ protected:
 protected:
 	// populated by FpgaIpFactory
 	PCIeCard* card;		/**< FPGA card this IP is instantiated on */	
-	IpIdentifier id;		/**< VLNV and name defined in JSON config */
+	IpIdentifier id;	/**< VLNV and name defined in JSON config */
 	uintptr_t baseaddr;	/**< The baseadress of this FPGA IP component */
-//	int irq;			/**< The interrupt number of the FPGA IP component. */
-//	int port;			/**< The port of the AXI4-Stream switch to which this FPGA IP component is connected. */
+	int irq;			/**< The interrupt number of the FPGA IP component. */
 
 	std::map<std::string, IpCore*> dependencies;
 };
