@@ -134,7 +134,7 @@ private:
 	virtual IpCore* create() = 0;
 
 	/// Configure IP instance from JSON config
-	virtual bool configureJson(const std::unique_ptr<IpCore>& ip, json_t *json)
+	virtual bool configureJson(IpCore& ip, json_t *json)
 	{ return true; }
 
 	virtual Vlnv getCompatibleVlnv() const = 0;
