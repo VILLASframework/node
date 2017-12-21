@@ -122,7 +122,7 @@ using IpCoreList = std::list<std::unique_ptr<IpCore>>;
 class IpCoreFactory : public Plugin {
 public:
 	IpCoreFactory(std::string concreteName) :
-	    Plugin(std::string("FPGA IpCore Factory: ") + concreteName)
+	    Plugin(std::string("IpCore - ") + concreteName)
 	{ pluginType = Plugin::Type::FpgaIp; }
 
 	/// Returns a running and checked FPGA IP

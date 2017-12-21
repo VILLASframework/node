@@ -1,6 +1,7 @@
 set(SOURCES
 	ip.cpp
 	ip.c
+	ip_node.cpp
 	vlnv.cpp
 	vlnv.c
 	card.c

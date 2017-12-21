@@ -26,7 +26,6 @@
       "slot": "03:00.0",
       "do_reset": true,
       "ips": {
-
         "axi_reset_0": {
           "vlnv": "xilinx.com:ip:axi_gpio:2.0",
           "baseaddr": 28672
@@ -39,7 +38,6 @@
         "dma_0": {
           "vlnv": "xilinx.com:ip:axi_dma:7.1",
           "baseaddr": 12288,
-          "port": "switch_0:1",
           "irq": "axi_pcie_intc_0:3"
         },
         "axi_pcie_intc_0": {
@@ -49,26 +47,38 @@
         "dma_1": {
           "vlnv": "xilinx.com:ip:axi_dma:7.1",
           "baseaddr": 8192,
-          "port": "switch_0:6",
+          "ports": {
+            "master": [ { "num": 0, "other": "switch_0:6" } ],
+            "slave":  [ { "num": 0, "other": "switch_0:6" } ]
+          },
           "irq": "axi_pcie_intc_0:3"
         },
         "fifo_mm_s_0": {
           "vlnv": "xilinx.com:ip:axi_fifo_mm_s:4.1",
           "baseaddr": 24576,
           "baseaddr_axi4": 49152,
-          "port": "switch_0:2",
+          "ports": {
+            "master": [ { "num": 0, "other": "switch_0:2" } ],
+            "slave":  [ { "num": 0, "other": "switch_0:2" } ]
+          },
           "irq": "axi_pcie_intc_0:2"
         },
         "rtds_axis_0": {
           "vlnv": "acs.eonerc.rwth-aachen.de:user:rtds_axis:1.0",
           "baseaddr": 32768,
-          "port": "switch_0:0",
+          "ports": {
+            "master": [ { "num": 0, "other": "switch_0:0" } ],
+            "slave":  [ { "num": 0, "other": "switch_0:0" } ]
+          },
           "irq": "axi_pcie_intc_0:5"
         },
         "hls_dft_0": {
           "vlnv": "acs.eonerc.rwth-aachen.de:hls:hls_dft:1.0",
           "baseaddr": 36864,
-          "port": "switch_0:5",
+          "ports": {
+            "master": [ { "num": 0, "other": "switch_0:5" } ],
+            "slave":  [ { "num": 0, "other": "switch_0:5" } ]
+          },
           "irq": "axi_pcie_intc_0:1",
           "period": 400,
           "harmonics": [
@@ -82,23 +92,47 @@
         },
         "axis_data_fifo_0": {
           "vlnv": "xilinx.com:ip:axis_data_fifo:1.1",
-          "port": "switch_0:3"
+          "ports": {
+            "master": [ { "num": 0, "other": "switch_0:3" } ],
+            "slave":  [ { "num": 0, "other": "switch_0:3" } ]
+          }
         },
         "switch_0": {
           "vlnv": "xilinx.com:ip:axis_interconnect:2.1",
           "baseaddr": 20480,
-          "num_ports": 10,
-          "paths": [
-            {
-              "in": "rtds_axis_0",
-              "out": "dma_1",
-              "reverse": true
-            }
-          ]
+          "ports": {
+            "master": [
+              { "num": 0 },
+              { "num": 1 },
+              { "num": 2 },
+              { "num": 3 },
+              { "num": 4 },
+              { "num": 5 },
+              { "num": 6 },
+              { "num": 7 },
+              { "num": 8 },
+              { "num": 9 }
+            ],
+            "slave": [
+              { "num": 0 },
+              { "num": 1 },
+              { "num": 2 },
+              { "num": 3 },
+              { "num": 4 },
+              { "num": 5 },
+              { "num": 6 },
+              { "num": 7 },
+              { "num": 8 },
+              { "num": 9 }
+            ]
+          }
         },
         "axis_data_fifo_1": {
           "vlnv": "xilinx.com:ip:axis_data_fifo:1.1",
-          "port": "switch_0:6"
+          "ports": {
+            "master": [ { "num": 0, "other": "switch_0:6" } ],
+            "slave":  [ { "num": 0, "other": "switch_0:6" } ]
+          }
         }
       }
     }

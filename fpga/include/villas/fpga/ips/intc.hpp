@@ -31,6 +31,8 @@
 #include "fpga/ip.hpp"
 #include <xilinx/xintc.h>
 
+#include "fpga/ip_node.hpp"
+
 namespace villas {
 namespace fpga {
 namespace ip {
