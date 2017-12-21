@@ -11,6 +11,7 @@ set(SOURCES
 	ips/timer.cpp
 	ips/model.c
 	ips/switch.c
+	ips/switch.cpp
 	ips/dft.c
 	ips/fifo.c
 	ips/dma.c
