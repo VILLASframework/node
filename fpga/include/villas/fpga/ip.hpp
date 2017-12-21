@@ -59,7 +59,7 @@ public:
 
 	friend std::ostream&
 	operator<< (std::ostream& stream, const IpIdentifier& id)
-	{ return stream << "VLNV: " << id.vlnv << " Name: " << id.name; }
+	{ return stream << " Name: " << id.name << "(VLNV: " << id.vlnv << ")"; }
 
 	Vlnv vlnv;
 	std::string name;
