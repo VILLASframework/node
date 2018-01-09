@@ -95,8 +95,18 @@ public:
 	}
 
 	bool
+	operator!= (const IpIdentifier& otherId) {
+		return !(*this == otherId);
+	}
+
+	bool
 	operator== (const Vlnv& otherVlnv)
 	{ return id.vlnv == otherVlnv; }
+
+	bool
+	operator== (const std::string& otherName)
+	{ return id.name == otherName; }
+
 
 	friend std::ostream&
 	operator<< (std::ostream& stream, const IpCore& ip)
