@@ -128,8 +128,6 @@ protected:
 	IpIdentifier id;				///< VLNV and name defined in JSON config
 	uintptr_t baseaddr;				///< The baseadress of this IP component
 	std::map<int, IrqPort> irqs;	///< Interrupts of this IP component
-
-private:
 	std::map<std::string, IpCore*> dependencies; ///< dependencies on other IPs
 };
 
