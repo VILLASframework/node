@@ -49,7 +49,13 @@ public:
 	bool start();
 
 	int enableInterrupt(IrqMaskType mask, bool polling);
+	int enableInterrupt(IrqPort irq, bool polling)
+	{ return enableInterrupt(1 << irq.num, polling); }
+
 	int disableInterrupt(IrqMaskType mask);
+	int disableInterrupt(IrqPort irq)
+	{ return disableInterrupt(1 << irq.num); }
+
 	uint64_t waitForInterrupt(int irq);
 
 private:
