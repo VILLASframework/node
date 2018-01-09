@@ -33,6 +33,7 @@
 
 #include "fpga/vlnv.hpp"
 #include "plugin.hpp"
+#include "log.hpp"
 
 #include <map>
 #include <list>
@@ -59,7 +60,7 @@ public:
 
 	friend std::ostream&
 	operator<< (std::ostream& stream, const IpIdentifier& id)
-	{ return stream << " Name: " << id.name << "(VLNV: " << id.vlnv << ")"; }
+	{ return stream << "Name: " << TXT_BOLD(id.name) << " (VLNV: " << id.vlnv << ")"; }
 
 	Vlnv vlnv;
 	std::string name;
