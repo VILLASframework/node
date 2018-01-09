@@ -143,9 +143,10 @@ IpCoreFactory* IpCoreFactory::lookup(const Vlnv &vlnv)
 }
 
 uintptr_t
-IpCore::getBaseaddr() const {
+IpCore::getAddrMapped(uintptr_t address) const
+{
 	assert(card != nullptr);
-	return reinterpret_cast<uintptr_t>(card->map) + this->baseaddr;
+	return reinterpret_cast<uintptr_t>(card->map) + address;
 }
 
 

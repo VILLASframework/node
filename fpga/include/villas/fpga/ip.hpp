@@ -114,7 +114,11 @@ public:
 
 protected:
 	uintptr_t
-	getBaseaddr() const;
+	getBaseaddr() const
+	{ return getAddrMapped(this->baseaddr); }
+
+	uintptr_t
+	getAddrMapped(uintptr_t address) const;
 
 	struct IrqPort {
 		int num;
