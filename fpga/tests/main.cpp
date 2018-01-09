@@ -40,10 +40,12 @@
 #define CPU_HZ		3392389000
 #define FPGA_AXI_HZ	125000000
 
-struct list cards;
-struct fpga_card *card;
 struct pci pci;
 struct vfio_container vc;
+villas::fpga::CardList fpgaCards;
+
+// keep to make it compile with old C tests
+struct fpga_card* card;
 
 static void init()
 {
@@ -80,41 +82,15 @@ static void init()
 	cr_assert_not_null(plugin, "No plugin for FPGA card found");
 	villas::fpga::PCIeCardFactory* fpgaCardPlugin = dynamic_cast<villas::fpga::PCIeCardFactory*>(plugin);
 
-	// create an FPGA card instance using the corresponding plugin
-//	villas::FpgaCard* fpgaCard = fpgaCardPlugin->make(json_);
-
-	auto fpgaCards = fpgaCardPlugin->make(fpgas, &pci, &vc);
-
-	json_t *json_card = json_object_get(fpgas, FPGA_CARD);
-	cr_assert_not_null(json_card, "FPGA card " FPGA_CARD " not found");
-
-	card = (struct fpga_card *) alloc(sizeof(struct fpga_card));
-	cr_assert_not_null(card, "Cannot allocate memory for FPGA card");
-
-	ret = fpga_card_init(card, &pci, &vc);
-	cr_assert_eq(ret, 0, "FPGA card initialization failed");
-
-	ret = fpga_card_start(card);
-	cr_assert_eq(ret, 0, "FPGA card cannot be started");
-
-	ret = fpga_card_parse(card, json_card, FPGA_CARD);
-	cr_assert_eq(ret, 0, "Failed to parse FPGA config");
-
-	ret = fpga_card_check(card);
-	cr_assert_eq(ret, 0, "FPGA card check failed");
+	// create all FPGA card instances using the corresponding plugin
+	fpgaCards = fpgaCardPlugin->make(fpgas, &pci, &vc);
 
 	json_decref(json);
-
-	if (criterion_options.logging_threshold < CRITERION_IMPORTANT)
-		fpga_card_dump(card);
 }
 
 static void fini()
 {
-	int ret;
-
-	ret = fpga_card_destroy(card);
-	cr_assert_eq(ret, 0, "Failed to de-initilize FPGA");
+	fpgaCards.clear();
 }
 
 TestSuite(fpga,
