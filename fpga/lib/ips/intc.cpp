@@ -47,7 +47,6 @@ InterruptController::~InterruptController()
 
 bool InterruptController::start()
 {
-	return true;
 	const uintptr_t base = getBaseaddr();
 
 	num_irqs = vfio_pci_msi_init(&card->vfio_device, efds);
