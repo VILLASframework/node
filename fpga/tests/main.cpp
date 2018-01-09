@@ -43,6 +43,7 @@
 struct pci pci;
 struct vfio_container vc;
 villas::fpga::CardList fpgaCards;
+villas::fpga::PCIeCard* fpga;
 
 // keep to make it compile with old C tests
 struct fpga_card* card;
@@ -84,6 +85,12 @@ static void init()
 
 	// create all FPGA card instances using the corresponding plugin
 	fpgaCards = fpgaCardPlugin->make(fpgas, &pci, &vc);
+
+	if(fpgaCards.size() == 0) {
+		cpp_error << "No FPGA cards found!";
+	} else {
+		fpga = fpgaCards.front().get();
+	}
 
 	json_decref(json);
 }

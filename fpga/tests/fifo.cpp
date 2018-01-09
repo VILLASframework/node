@@ -31,7 +31,10 @@
 
 #include <villas/fpga/ips/fifo.h>
 
-extern struct fpga_card *card;
+#include <villas/fpga/card.hpp>
+#include <villas/fpga/ips/fifo.hpp>
+
+extern villas::fpga::PCIeCard* fpga;
 
 Test(fpga, fifo, .description = "FIFO")
 {
@@ -40,35 +43,35 @@ Test(fpga, fifo, .description = "FIFO")
 	char src[255], dst[255];
 	struct fpga_ip *fifo;
 
-	fifo = fpga_vlnv_lookup(&card->ips, &(struct fpga_vlnv) { "xilinx.com", "ip", "axi_fifo_mm_s", NULL });
-	cr_assert(fifo);
+	for(auto& ip : fpga->ips) {
+		// skip non-fifo IPs
+		if(*ip != villas::fpga::Vlnv("xilinx.com:ip:axi_fifo_mm_s:"))
+			continue;
 
-	ret = intc_enable(card->intc, (1 << fifo->irq), 0);
-	cr_assert_eq(ret, 0, "Failed to enable interrupt");
+		auto fifo = reinterpret_cast<villas::fpga::ip::Fifo&>(*ip);
 
-	ret = switch_connect(card->sw, fifo, fifo);
-	cr_assert_eq(ret, 0, "Failed to configure switch");
+		if(not fifo.loopbackPossible()) {
+			cpp_info << "Loopback test not possible for " << *ip;
+			continue;
+		}
 
-	/* Get some random data to compare */
-	memset(dst, 0, sizeof(dst));
-	len = read_random((char *) src, sizeof(src));
-	if (len != sizeof(src))
-		error("Failed to get random data");
+		fifo.connectLoopback();
 
-	len = fifo_write(fifo, (char *) src, sizeof(src));
-	if (len != sizeof(src))
-		error("Failed to send to FIFO");
+		/* Get some random data to compare */
+		memset(dst, 0, sizeof(dst));
+		len = read_random((char *) src, sizeof(src));
+		if (len != sizeof(src))
+			error("Failed to get random data");
 
-	len = fifo_read(fifo, (char *) dst, sizeof(dst));
-	if (len != sizeof(dst))
-		error("Failed to read from FIFO");
+		len = fifo.write(src, sizeof(src));
+		if (len != sizeof(src))
+			cpp_error << "Failed to send to FIFO";
 
-	ret = intc_disable(card->intc, (1 << fifo->irq));
-	cr_assert_eq(ret, 0, "Failed to disable interrupt");
+		len = fifo.read(dst, sizeof(dst));
+		if (len != sizeof(dst))
+			cpp_error << "Failed to read from FIFO";
 
-	ret = switch_disconnect(card->sw, fifo, fifo);
-	cr_assert_eq(ret, 0, "Failed to configure switch");
-
-	/* Compare data */
-	cr_assert_eq(memcmp(src, dst, sizeof(src)), 0);
+		/* Compare data */
+		cr_assert_eq(memcmp(src, dst, sizeof(src)), 0);
+	}
 }

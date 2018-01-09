@@ -14,6 +14,7 @@ set(SOURCES
 	ips/switch.cpp
 	ips/dft.c
 	ips/fifo.c
+	ips/fifo.cpp
 	ips/dma.c
 	ips/intc.cpp
 	ips/intc.c
