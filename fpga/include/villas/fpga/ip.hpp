@@ -75,7 +75,7 @@ public:
 
 	friend IpCoreFactory;
 
-	IpCore() : card(nullptr), baseaddr(0), irq(-1) {}
+	IpCore() : card(nullptr), baseaddr(0) {}
 	virtual ~IpCore() {}
 
 	// IPs can implement this interface
@@ -105,14 +105,21 @@ protected:
 	uintptr_t
 	getBaseaddr() const;
 
+	struct IrqPort {
+		int num;
+		std::string controllerName;
+		std::string description;
+	};
+
 protected:
 	// populated by FpgaIpFactory
-	PCIeCard* card;		/**< FPGA card this IP is instantiated on */	
-	IpIdentifier id;	/**< VLNV and name defined in JSON config */
-	uintptr_t baseaddr;	/**< The baseadress of this FPGA IP component */
-	int irq;			/**< The interrupt number of the FPGA IP component. */
+	PCIeCard* card;					///< FPGA card this IP is instantiated on
+	IpIdentifier id;				///< VLNV and name defined in JSON config
+	uintptr_t baseaddr;				///< The baseadress of this IP component
+	std::map<int, IrqPort> irqs;	///< Interrupts of this IP component
 
-	std::map<std::string, IpCore*> dependencies;
+private:
+	std::map<std::string, IpCore*> dependencies; ///< dependencies on other IPs
 };
 
 

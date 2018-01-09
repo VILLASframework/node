@@ -33,12 +33,12 @@
         "timer_0": {
           "vlnv": "xilinx.com:ip:axi_timer:2.0",
           "baseaddr": 16384,
-          "irq": "axi_pcie_intc_0:0"
+          "irqs": [ "axi_pcie_intc_0:0" ]
         },
         "dma_0": {
           "vlnv": "xilinx.com:ip:axi_dma:7.1",
           "baseaddr": 12288,
-          "irq": "axi_pcie_intc_0:3"
+          "irqs": [ "axi_pcie_intc_0:3" ]
         },
         "axi_pcie_intc_0": {
           "vlnv": "acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:1.0",
@@ -51,7 +51,7 @@
             "master": [ { "num": 0, "other": "switch_0:6" } ],
             "slave":  [ { "num": 0, "other": "switch_0:6" } ]
           },
-          "irq": "axi_pcie_intc_0:3"
+          "irqs": [ "axi_pcie_intc_0:3" ]
         },
         "fifo_mm_s_0": {
           "vlnv": "xilinx.com:ip:axi_fifo_mm_s:4.1",
@@ -61,7 +61,7 @@
             "master": [ { "num": 0, "other": "switch_0:2" } ],
             "slave":  [ { "num": 0, "other": "switch_0:2" } ]
           },
-          "irq": "axi_pcie_intc_0:2"
+          "irqs": [ "axi_pcie_intc_0:2" ]
         },
         "rtds_axis_0": {
           "vlnv": "acs.eonerc.rwth-aachen.de:user:rtds_axis:1.0",
@@ -70,7 +70,7 @@
             "master": [ { "num": 0, "other": "switch_0:0" } ],
             "slave":  [ { "num": 0, "other": "switch_0:0" } ]
           },
-          "irq": "axi_pcie_intc_0:5"
+          "irqs": [ "axi_pcie_intc_0:5", "axi_pcie_intc_0:6" ]
         },
         "hls_dft_0": {
           "vlnv": "acs.eonerc.rwth-aachen.de:hls:hls_dft:1.0",
@@ -79,7 +79,7 @@
             "master": [ { "num": 0, "other": "switch_0:5" } ],
             "slave":  [ { "num": 0, "other": "switch_0:5" } ]
           },
-          "irq": "axi_pcie_intc_0:1",
+          "irqs": [ "axi_pcie_intc_0:1" ],
           "period": 400,
           "harmonics": [
             0,

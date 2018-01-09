@@ -226,16 +226,38 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		ip->card = card;
 		ip->id = id;
 
-		// extract some optional properties
-		int ret = json_unpack(json_ip, "{ s?: i, s?: i }",
-		                               "baseaddr", &ip->baseaddr,	// required
-		                               "irq",      &ip->irq);		// optional
-
-		if(ret != 0) {
-			cpp_warn << "Problem while parsing JSON for IP "
+		// extract base address if it has one
+		if(json_unpack(json_ip, "{ s?: i }", "baseaddr", &ip->baseaddr) != 0) {
+			cpp_warn << "Problem while parsing base address of IP "
 			         << TXT_BOLD(ipName);
 			continue;
 		}
+
+		json_t* json_irqs = json_object_get(json_ip, "irqs");
+		if(json_is_array(json_irqs)) {
+			size_t index;
+			json_t* json_irq;
+			json_array_foreach(json_irqs, index, json_irq) {
+				const char* irq = json_string_value(json_irq);
+				auto tokens = utils::tokenize(irq, ":");
+				if(tokens.size() != 2) {
+					cpp_warn << "Cannot parse IRQ '" << irq << "' of"
+					          << TXT_BOLD(ipName);
+					continue;
+				}
+
+				int num;
+				try {
+					num = std::stoi(tokens[1]);
+				} catch(const std::invalid_argument&) {
+					cpp_warn << "IRQ number is not an integer: '" << irq << "'";
+					continue;
+				}
+
+				ip->irqs[index] = {num, tokens[0]};
+			}
+		}
+
 
 		bool dependenciesOk = true;
 		for(auto& [depName, depVlnv] : ipCoreFactory->getDependencies()) {
