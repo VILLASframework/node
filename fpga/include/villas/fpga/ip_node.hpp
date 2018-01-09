@@ -49,17 +49,17 @@ public:
 
 	friend class IpNodeFactory;
 
-	struct OtherIpNode {
-		int otherPortNum;
-		std::string otherName;
+	struct StreamPort {
+		int portNumber;
+		std::string nodeName;
 	};
 
-	bool connectTo(int port, const OtherIpNode& other);
+	bool connect(int port, const StreamPort& to);
 	bool disconnect(int port);
 
 protected:
-	std::map<int, OtherIpNode> portsMaster;
-	std::map<int, OtherIpNode> portsSlave;
+	std::map<int, StreamPort> portsMaster;
+	std::map<int, StreamPort> portsSlave;
 };
 
 class IpNodeFactory : public IpCoreFactory {
@@ -69,7 +69,7 @@ public:
 	virtual bool configureJson(IpCore& ip, json_t *json_ip);
 
 private:
-	bool populatePorts(std::map<int, IpNode::OtherIpNode>& portMap, json_t* json);
+	bool populatePorts(std::map<int, IpNode::StreamPort>& portMap, json_t* json);
 };
 
 /** @} */

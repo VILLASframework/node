@@ -48,8 +48,8 @@
           "vlnv": "xilinx.com:ip:axi_dma:7.1",
           "baseaddr": 8192,
           "ports": {
-            "master": [ { "num": 0, "other": "switch_0:6" } ],
-            "slave":  [ { "num": 0, "other": "switch_0:6" } ]
+            "master": [ { "num": 0, "to": "switch_0:6" } ],
+            "slave":  [ { "num": 0, "to": "switch_0:6" } ]
           },
           "irqs": [ "axi_pcie_intc_0:3" ]
         },
@@ -58,8 +58,8 @@
           "baseaddr": 24576,
           "baseaddr_axi4": 49152,
           "ports": {
-            "master": [ { "num": 0, "other": "switch_0:2" } ],
-            "slave":  [ { "num": 0, "other": "switch_0:2" } ]
+            "master": [ { "num": 0, "to": "switch_0:2" } ],
+            "slave":  [ { "num": 0, "to": "switch_0:2" } ]
           },
           "irqs": [ "axi_pcie_intc_0:2" ]
         },
@@ -67,8 +67,8 @@
           "vlnv": "acs.eonerc.rwth-aachen.de:user:rtds_axis:1.0",
           "baseaddr": 32768,
           "ports": {
-            "master": [ { "num": 0, "other": "switch_0:0" } ],
-            "slave":  [ { "num": 0, "other": "switch_0:0" } ]
+            "master": [ { "num": 0, "to": "switch_0:0" } ],
+            "slave":  [ { "num": 0, "to": "switch_0:0" } ]
           },
           "irqs": [ "axi_pcie_intc_0:5", "axi_pcie_intc_0:6" ]
         },
@@ -76,8 +76,8 @@
           "vlnv": "acs.eonerc.rwth-aachen.de:hls:hls_dft:1.0",
           "baseaddr": 36864,
           "ports": {
-            "master": [ { "num": 0, "other": "switch_0:5" } ],
-            "slave":  [ { "num": 0, "other": "switch_0:5" } ]
+            "master": [ { "num": 0, "to": "switch_0:5" } ],
+            "slave":  [ { "num": 0, "to": "switch_0:5" } ]
           },
           "irqs": [ "axi_pcie_intc_0:1" ],
           "period": 400,
@@ -93,8 +93,8 @@
         "axis_data_fifo_0": {
           "vlnv": "xilinx.com:ip:axis_data_fifo:1.1",
           "ports": {
-            "master": [ { "num": 0, "other": "switch_0:3" } ],
-            "slave":  [ { "num": 0, "other": "switch_0:3" } ]
+            "master": [ { "num": 0, "to": "switch_0:3" } ],
+            "slave":  [ { "num": 0, "to": "switch_0:3" } ]
           }
         },
         "switch_0": {
@@ -130,8 +130,8 @@
         "axis_data_fifo_1": {
           "vlnv": "xilinx.com:ip:axis_data_fifo:1.1",
           "ports": {
-            "master": [ { "num": 0, "other": "switch_0:6" } ],
-            "slave":  [ { "num": 0, "other": "switch_0:6" } ]
+            "master": [ { "num": 0, "to": "switch_0:6" } ],
+            "slave":  [ { "num": 0, "to": "switch_0:6" } ]
           }
         }
       }

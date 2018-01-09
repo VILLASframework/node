@@ -45,36 +45,35 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 }
 
 bool
-IpNodeFactory::populatePorts(std::map<int, IpNode::OtherIpNode>& portMap, json_t* json)
+IpNodeFactory::populatePorts(std::map<int, IpNode::StreamPort>& portMap, json_t* json)
 {
 	size_t index;
 	json_t* json_port;
 	json_array_foreach(json, index, json_port) {
 		int myPortNum;
-		const char* other = nullptr;
+		const char* to = nullptr;
 
 		int ret = json_unpack(json_port, "{ s : i, s? : s}",
 		                                 "num", &myPortNum,
-		                                 "other", &other);
+		                                 "to", &to);
 		if(ret != 0) {
 			cpp_error << "Port definition required field 'num'";
 			return false;
 		}
 
-		if(other == nullptr) {
+		if(to == nullptr) {
 			cpp_warn << "Nothing connected to port " << myPortNum;
 			portMap[myPortNum] = {};
 			continue;
 		}
 
-		const auto tokens = utils::tokenize(other, ":");
+		const auto tokens = utils::tokenize(to, ":");
 		if(tokens.size() != 2) {
 			cpp_error << "Too many tokens in property 'other'";
 			return false;
 		}
 
 		int otherPortNum;
-
 		try {
 			otherPortNum = std::stoi(tokens[1]);
 		} catch(const std::invalid_argument&) {
@@ -82,7 +81,7 @@ IpNodeFactory::populatePorts(std::map<int, IpNode::OtherIpNode>& portMap, json_t
 			return false;
 		}
 
-		cpp_debug << "Adding port mapping: " << myPortNum << ":" << other;
+		cpp_debug << "Adding port mapping: " << myPortNum << ":" << to;
 		portMap[myPortNum] = { otherPortNum, tokens[0] };
 	}
 
