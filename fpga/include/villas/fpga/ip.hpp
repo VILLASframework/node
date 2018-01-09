@@ -148,7 +148,7 @@ private:
 	virtual Vlnv getCompatibleVlnv() const = 0;
 	virtual std::string getName() const = 0;
 	virtual std::string getDescription() const = 0;
-	virtual std::list<IpDependency> getDependencies() const = 0;
+	virtual std::list<IpDependency> getDependencies() const { return {}; }
 
 private:
 	static IpCoreFactory*

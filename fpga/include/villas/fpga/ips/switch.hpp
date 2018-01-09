@@ -82,9 +82,6 @@ public:
 
 	Vlnv getCompatibleVlnv() const
 	{ return Vlnv("xilinx.com:ip:axis_interconnect:"); }
-
-	std::list<IpDependency> getDependencies() const
-	{ return {}; }
 };
 
 } // namespace ip
