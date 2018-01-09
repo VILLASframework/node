@@ -42,15 +42,15 @@ AxiStreamSwitch::start()
 	sw_cfg.MaxNumMI = portsMaster.size();
 	sw_cfg.MaxNumSI = portsSlave.size();
 
-	if(XAxisScr_CfgInitialize(&xilinxDriver, &sw_cfg, getBaseaddr()) != XST_SUCCESS) {
+	if(XAxisScr_CfgInitialize(&xSwitch, &sw_cfg, getBaseaddr()) != XST_SUCCESS) {
 		cpp_error << "Cannot start " << *this;
 		return false;
 	}
 
 	/* Disable all masters */
-	XAxisScr_RegUpdateDisable(&xilinxDriver);
-	XAxisScr_MiPortDisableAll(&xilinxDriver);
-	XAxisScr_RegUpdateEnable(&xilinxDriver);
+	XAxisScr_RegUpdateDisable(&xSwitch);
+	XAxisScr_MiPortDisableAll(&xSwitch);
+	XAxisScr_RegUpdateEnable(&xSwitch);
 
 	// initialize internal mapping
 	for(int portMaster = 0; portMaster < portsMaster.size(); portMaster++) {
@@ -74,16 +74,16 @@ AxiStreamSwitch::connect(int portSlave, int portMaster)
 			cpp_warn << "Slave " << slave << " has already been connected to "
 			         << "master " << master << ". Disabling master " << master;
 
-			XAxisScr_RegUpdateDisable(&xilinxDriver);
-			XAxisScr_MiPortDisable(&xilinxDriver, master);
-			XAxisScr_RegUpdateEnable(&xilinxDriver);
+			XAxisScr_RegUpdateDisable(&xSwitch);
+			XAxisScr_MiPortDisable(&xSwitch, master);
+			XAxisScr_RegUpdateEnable(&xSwitch);
 		}
 	}
 
 	/* Reconfigure switch */
-	XAxisScr_RegUpdateDisable(&xilinxDriver);
-	XAxisScr_MiPortEnable(&xilinxDriver, portMaster, portSlave);
-	XAxisScr_RegUpdateEnable(&xilinxDriver);
+	XAxisScr_RegUpdateDisable(&xSwitch);
+	XAxisScr_MiPortEnable(&xSwitch, portMaster, portSlave);
+	XAxisScr_RegUpdateEnable(&xSwitch);
 
 	cpp_debug << "Connect slave " << portSlave << " to master " << portMaster;
 
@@ -96,7 +96,7 @@ AxiStreamSwitch::disconnectMaster(int port)
 	cpp_debug << "Disconnect slave " << portMapping[port]
 	          << " from master " << port;
 
-	XAxisScr_MiPortDisable(&xilinxDriver, port);
+	XAxisScr_MiPortDisable(&xSwitch, port);
 	portMapping[port] = PORT_DISABLED;
 	return true;
 }
@@ -107,7 +107,7 @@ AxiStreamSwitch::disconnectSlave(int port)
 	for(auto [master, slave] : portMapping) {
 		if(slave == port) {
 			cpp_debug << "Disconnect slave " << slave << " from master " << master;
-			XAxisScr_MiPortDisable(&xilinxDriver, master);
+			XAxisScr_MiPortDisable(&xSwitch, master);
 			return true;
 		}
 	}

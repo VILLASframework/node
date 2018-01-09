@@ -61,7 +61,7 @@ private:
 		IpCore* slaveIn;
 	};
 
-	XAxis_Switch xilinxDriver;
+	XAxis_Switch xSwitch;
 	std::map<int, int> portMapping;
 };
 

@@ -42,8 +42,8 @@ bool Timer::start()
 	XTmrCtr_Config xtmr_cfg;
 	xtmr_cfg.SysClockFreqHz = FPGA_AXI_HZ;
 
-	XTmrCtr_CfgInitialize(&xtmr, &xtmr_cfg, getBaseaddr());
-	XTmrCtr_InitHw(&xtmr);
+	XTmrCtr_CfgInitialize(&xTmr, &xtmr_cfg, getBaseaddr());
+	XTmrCtr_InitHw(&xTmr);
 
 	return true;
 }

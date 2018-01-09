@@ -40,12 +40,10 @@ namespace ip {
 class Timer : public IpCore
 {
 public:
-//	~Timer();
-
 	bool start();
 
 private:
-	XTmrCtr xtmr;
+	XTmrCtr xTmr;
 };
 
 

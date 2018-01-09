@@ -30,7 +30,7 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 	const bool hasSlavePorts = json_is_array(json_slave);
 
 	if( (not hasMasterPorts) and (not hasSlavePorts)) {
-		cpp_error << "IpNode " << ip << " has not ports";
+		cpp_error << "IpNode " << ip << " has no ports";
 		return false;
 	}
 
