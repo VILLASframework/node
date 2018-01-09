@@ -4,15 +4,18 @@
 
 #include "utils.hpp"
 #include "fpga/ip_node.hpp"
+#include "fpga/ips/switch.hpp"
+#include "fpga/card.hpp"
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
+
 bool
 IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 {
-	auto ipNode = reinterpret_cast<IpNode&>(ip);
+	auto& ipNode = reinterpret_cast<IpNode&>(ip);
 
 	json_t* json_ports = json_object_get(json_ip, "ports");
 	if(json_ports == nullptr) {
@@ -86,6 +89,48 @@ IpNodeFactory::populatePorts(std::map<int, IpNode::StreamPort>& portMap, json_t*
 	}
 
 	return true;
+}
+
+std::pair<int, int>
+IpNode::getLoopbackPorts() const
+{
+	for(auto& [masterNum, masterTo] : portsMaster) {
+		for(auto& [slaveNum, slaveTo] : portsSlave) {
+			// TODO: should we also check which IP both ports are connected to?
+			if(masterTo.nodeName == slaveTo.nodeName) {
+				return { masterNum, slaveNum };
+			}
+		}
+	}
+
+	return { -1, -1 };
+}
+
+bool
+IpNode::loopbackPossible() const
+{
+	auto ports = getLoopbackPorts();
+	return (ports.first != -1) and (ports.second != -1);
+}
+
+bool
+IpNode::connectLoopback()
+{
+	auto ports = getLoopbackPorts();
+	const auto& portMaster = portsMaster[ports.first];
+	const auto& portSlave = portsSlave[ports.second];
+
+	// TODO: verify this is really a switch!
+	auto axiStreamSwitch = reinterpret_cast<ip::AxiStreamSwitch*>(
+	                            card->lookupIp(portMaster.nodeName));
+
+	if(axiStreamSwitch == nullptr) {
+		cpp_error << "Cannot find IP " << *axiStreamSwitch;
+		return false;
+	}
+
+	// switch's slave port is our master port and vice versa
+	return axiStreamSwitch->connect(portMaster.portNumber, portSlave.portNumber);
 }
 
 } // namespace ip

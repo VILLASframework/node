@@ -57,6 +57,12 @@ public:
 	bool connect(int port, const StreamPort& to);
 	bool disconnect(int port);
 
+	bool loopbackPossible() const;
+	bool connectLoopback();
+
+private:
+	std::pair<int, int> getLoopbackPorts() const;
+
 protected:
 	std::map<int, StreamPort> portsMaster;
 	std::map<int, StreamPort> portsSlave;
