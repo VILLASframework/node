@@ -286,7 +286,10 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		}
 
 		// IP-specific setup via JSON config
-		ipCoreFactory->configureJson(*ip, json_ip);
+		if(not ipCoreFactory->configureJson(*ip, json_ip)) {
+			cpp_warn << "Cannot configure IP from JSON";
+			continue;
+		}
 
 		// TODO: currently fails, fix and remove comment
 //		if(not ip->start()) {
