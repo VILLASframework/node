@@ -33,7 +33,6 @@ set(SOURCES
 	log.c
 	log_config.c
 	log_helper.c
-	log.cpp
 )
 
 include(FindPkgConfig)
