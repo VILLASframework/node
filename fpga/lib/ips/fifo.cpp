@@ -108,7 +108,7 @@ size_t Fifo::write(const void *buf, size_t len)
 size_t Fifo::read(void *buf, size_t len)
 {
 	size_t nextlen = 0;
-	uint32_t rxlen;
+	size_t rxlen;
 
 	auto intc = reinterpret_cast<InterruptController*>(dependencies["intc"]);
 
@@ -119,7 +119,7 @@ size_t Fifo::read(void *buf, size_t len)
 
 	/* Get length of next frame */
 	rxlen = XLlFifo_RxGetLen(&xFifo);
-	nextlen = MIN(rxlen, len);
+	nextlen = std::min(rxlen, len);
 
 	/* Read from FIFO */
 	XLlFifo_Read(&xFifo, buf, nextlen);
