@@ -30,7 +30,7 @@
 #include <type_traits>
 
 #include "plugin.hpp"
-
+#include "log.hpp"
 
 namespace villas {
 
@@ -117,15 +117,18 @@ Plugin::unload()
 void
 Plugin::dump()
 {
-	std::cout << " - " << this->name << ": " << this->description << std::endl;
+	auto logger = getStaticLogger();
+	logger->info("Name: '{}' Description: '{}'", name, description);
 }
 
 void
 Plugin::dumpList()
 {
-	std::cout << "Registered plugins:" << std::endl;
+	auto logger = getStaticLogger();
+
+	logger->info("Registered plugins:");
 	for(auto& p : pluginList) {
-		std::cout << " - " << p->name <<  std::endl;
+		logger->info(" - {}", p->name);
 	}
 }
 

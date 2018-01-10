@@ -33,6 +33,8 @@
 #include <villas/plugin.hpp>
 #include <villas/fpga/card.hpp>
 
+#include <spdlog/spdlog.h>
+
 #define FPGA_CARD	"vc707"
 #define TEST_CONFIG	"../etc/fpga.json"
 #define TEST_LEN	0x1000
@@ -57,7 +59,9 @@ static void init()
 
 	villas::Plugin::dumpList();
 
-	Logger::setLogLevel(Logger::LogLevel::Debug);
+	auto logger = loggerGetOrCreate("unittest");
+	spdlog::set_pattern("[%T] [%l] [%n] %v");
+	spdlog::set_level(spdlog::level::debug);
 
 	ret = pci_init(&pci);
 	cr_assert_eq(ret, 0, "Failed to initialize PCI sub-system");
@@ -87,7 +91,7 @@ static void init()
 	fpgaCards = fpgaCardPlugin->make(fpgas, &pci, &vc);
 
 	if(fpgaCards.size() == 0) {
-		cpp_error << "No FPGA cards found!";
+		logger->error("No FPGA cards found!");
 	} else {
 		fpga = fpgaCards.front().get();
 	}

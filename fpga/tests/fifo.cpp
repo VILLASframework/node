@@ -34,6 +34,8 @@
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/fifo.hpp>
 
+#include "log.hpp"
+
 extern villas::fpga::PCIeCard* fpga;
 
 Test(fpga, fifo, .description = "FIFO")
@@ -43,6 +45,8 @@ Test(fpga, fifo, .description = "FIFO")
 	char src[255], dst[255];
 	struct fpga_ip *fifo;
 
+	auto logger = loggerGetOrCreate("unittest:fifo");
+
 	for(auto& ip : fpga->ips) {
 		// skip non-fifo IPs
 		if(*ip != villas::fpga::Vlnv("xilinx.com:ip:axi_fifo_mm_s:"))
@@ -51,7 +55,7 @@ Test(fpga, fifo, .description = "FIFO")
 		auto fifo = reinterpret_cast<villas::fpga::ip::Fifo&>(*ip);
 
 		if(not fifo.loopbackPossible()) {
-			cpp_info << "Loopback test not possible for " << *ip;
+			logger->info("Loopback test not possible for {}", *ip);
 			continue;
 		}
 
@@ -60,16 +64,22 @@ Test(fpga, fifo, .description = "FIFO")
 		/* Get some random data to compare */
 		memset(dst, 0, sizeof(dst));
 		len = read_random((char *) src, sizeof(src));
-		if (len != sizeof(src))
-			error("Failed to get random data");
+		if (len != sizeof(src)) {
+			logger->error("Failed to get random data");
+			continue;
+		}
 
 		len = fifo.write(src, sizeof(src));
-		if (len != sizeof(src))
-			cpp_error << "Failed to send to FIFO";
+		if (len != sizeof(src)) {
+			logger->error("Failed to send to FIFO");
+			continue;
+		}
 
 		len = fifo.read(dst, sizeof(dst));
-		if (len != sizeof(dst))
-			cpp_error << "Failed to read from FIFO";
+		if (len != sizeof(dst)) {
+			logger->error("Failed to read from FIFO");
+			continue;
+		}
 
 		/* Compare data */
 		cr_assert_eq(memcmp(src, dst, sizeof(src)), 0);

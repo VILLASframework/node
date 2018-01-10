@@ -16,10 +16,11 @@ bool
 IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 {
 	auto& ipNode = reinterpret_cast<IpNode&>(ip);
+	auto logger = getLogger();
 
 	json_t* json_ports = json_object_get(json_ip, "ports");
 	if(json_ports == nullptr) {
-		cpp_error << "IpNode " << ip << " has no ports property";
+		logger->error("IpNode {} has no ports property", ip);
 		return false;
 	}
 
@@ -30,7 +31,7 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 	const bool hasSlavePorts = json_is_array(json_slave);
 
 	if( (not hasMasterPorts) and (not hasSlavePorts)) {
-		cpp_error << "IpNode " << ip << " has no ports";
+		logger->error("IpNode {} has no ports", ip);
 		return false;
 	}
 
@@ -50,6 +51,8 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 bool
 IpNodeFactory::populatePorts(std::map<int, IpNode::StreamPort>& portMap, json_t* json)
 {
+	auto logger = getLogger();
+
 	size_t index;
 	json_t* json_port;
 	json_array_foreach(json, index, json_port) {
@@ -60,19 +63,19 @@ IpNodeFactory::populatePorts(std::map<int, IpNode::StreamPort>& portMap, json_t*
 		                                 "num", &myPortNum,
 		                                 "to", &to);
 		if(ret != 0) {
-			cpp_error << "Port definition required field 'num'";
+			logger->error("Port definition required field 'num'");
 			return false;
 		}
 
 		if(to == nullptr) {
-			cpp_warn << "Nothing connected to port " << myPortNum;
+			logger->debug("Nothing connected to port {}", myPortNum);
 			portMap[myPortNum] = {};
 			continue;
 		}
 
 		const auto tokens = utils::tokenize(to, ":");
 		if(tokens.size() != 2) {
-			cpp_error << "Too many tokens in property 'other'";
+			logger->error("Too many tokens in property 'other'");
 			return false;
 		}
 
@@ -80,11 +83,11 @@ IpNodeFactory::populatePorts(std::map<int, IpNode::StreamPort>& portMap, json_t*
 		try {
 			otherPortNum = std::stoi(tokens[1]);
 		} catch(const std::invalid_argument&) {
-			cpp_error << "Other port number is not an integral number";
+			logger->error("Other port number is not an integral number");
 			return false;
 		}
 
-		cpp_debug << "Adding port mapping: " << myPortNum << ":" << to;
+		logger->debug("Adding port mapping: {}:{}", myPortNum, to);
 		portMap[myPortNum] = { otherPortNum, tokens[0] };
 	}
 
@@ -116,6 +119,8 @@ IpNode::loopbackPossible() const
 bool
 IpNode::connectLoopback()
 {
+	auto logger = getLogger();
+
 	auto ports = getLoopbackPorts();
 	const auto& portMaster = portsMaster[ports.first];
 	const auto& portSlave = portsSlave[ports.second];
@@ -125,7 +130,7 @@ IpNode::connectLoopback()
 	                            card->lookupIp(portMaster.nodeName));
 
 	if(axiStreamSwitch == nullptr) {
-		cpp_error << "Cannot find IP " << *axiStreamSwitch;
+		logger->error("Cannot find IP {}", *axiStreamSwitch);
 		return false;
 	}
 

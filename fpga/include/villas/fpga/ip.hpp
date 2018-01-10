@@ -60,7 +60,7 @@ public:
 
 	friend std::ostream&
 	operator<< (std::ostream& stream, const IpIdentifier& id)
-	{ return stream << "Name: " << TXT_BOLD(id.name) << " (VLNV: " << id.vlnv << ")"; }
+	{ return stream << TXT_BOLD(id.name) << " vlnv=" << id.vlnv; }
 
 	Vlnv vlnv;
 	std::string name;
@@ -120,6 +120,9 @@ protected:
 	uintptr_t
 	getAddrMapped(uintptr_t address) const;
 
+	SpdLogger
+	getLogger() { return loggerGetOrCreate(id.name); }
+
 	struct IrqPort {
 		int num;
 		std::string controllerName;
@@ -149,6 +152,10 @@ public:
 	static IpCoreList
 	make(PCIeCard* card, json_t *json_ips);
 
+protected:
+	SpdLogger
+	getLogger() { return loggerGetOrCreate(getName()); }
+
 private:
 	/// Create a concrete IP instance
 	virtual IpCore* create() = 0;
@@ -157,10 +164,15 @@ private:
 	virtual bool configureJson(IpCore& ip, json_t *json)
 	{ return true; }
 
+
 	virtual Vlnv getCompatibleVlnv() const = 0;
 	virtual std::string getName() const = 0;
 	virtual std::string getDescription() const = 0;
 	virtual std::list<IpDependency> getDependencies() const { return {}; }
+
+protected:
+	static SpdLogger
+	getStaticLogger() { return loggerGetOrCreate("IpCoreFactory"); }
 
 private:
 	static IpCoreFactory*

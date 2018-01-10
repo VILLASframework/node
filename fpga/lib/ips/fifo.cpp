@@ -43,14 +43,16 @@ static FifoFactory factory;
 bool
 FifoFactory::configureJson(IpCore &ip, json_t *json_ip)
 {
+	auto logger = getLogger();
+
 	if(not IpNodeFactory::configureJson(ip, json_ip)) {
-		cpp_error << "Configuring IpNode failed";
+		logger->error("Configuring IpNode failed");
 		return false;
 	}
 
 	auto& fifo = reinterpret_cast<Fifo&>(ip);
 	if(json_unpack(json_ip, "{ s: i }", "baseaddr_axi4", &fifo.baseaddr_axi4) != 0) {
-		cpp_warn << "Cannot parse property 'baseaddr_axi4' of " << ip;
+		logger->warn("Cannot parse property 'baseaddr_axi4'");
 		return false;
 	}
 

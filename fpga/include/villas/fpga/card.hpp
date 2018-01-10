@@ -93,6 +93,11 @@ public:
 
 	size_t maplen;
 	size_t dmalen;
+
+protected:
+	SpdLogger
+	getLogger() const
+	{ return loggerGetOrCreate(name); }
 };
 
 using CardList = std::list<std::unique_ptr<PCIeCard>>;
@@ -109,6 +114,10 @@ public:
 
 	static PCIeCard*
 	create();
+
+	static SpdLogger
+	getStaticLogger()
+	{ return loggerGetOrCreate("PCIeCardFactory"); }
 };
 
 } // namespace fpga

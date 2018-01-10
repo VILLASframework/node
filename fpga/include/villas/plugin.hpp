@@ -28,6 +28,7 @@
 #include <string>
 #include <jansson.h>
 
+#include "log.hpp"
 #include "utils.h"
 
 namespace villas {
@@ -76,6 +77,11 @@ public:
 	std::string path;
 	void *handle;
 	enum state state;
+
+protected:
+	static SpdLogger
+	getStaticLogger()
+	{ return loggerGetOrCreate("Plugin"); }
 
 private:
 	/* Just using a standard std::list<> to hold plugins is problematic, because

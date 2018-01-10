@@ -43,7 +43,6 @@ AxiStreamSwitch::start()
 	sw_cfg.MaxNumSI = portsSlave.size();
 
 	if(XAxisScr_CfgInitialize(&xSwitch, &sw_cfg, getBaseaddr()) != XST_SUCCESS) {
-		cpp_error << "Cannot start " << *this;
 		return false;
 	}
 
@@ -64,15 +63,18 @@ AxiStreamSwitch::start()
 bool
 AxiStreamSwitch::connect(int portSlave, int portMaster)
 {
+	auto logger = getLogger();
+
 	if(portMapping[portMaster] == portSlave) {
-		cpp_debug << "Ports already connected";
+		logger->debug("Ports already connected");
 		return true;
 	}
 
 	for(auto [master, slave] : portMapping) {
 		if(slave == portSlave) {
-			cpp_warn << "Slave " << slave << " has already been connected to "
-			         << "master " << master << ". Disabling master " << master;
+			logger->warn("Slave {} has already been connected to master {}. "
+			             "Disabling master {}.",
+			             slave, master, master);
 
 			XAxisScr_RegUpdateDisable(&xSwitch);
 			XAxisScr_MiPortDisable(&xSwitch, master);
@@ -85,7 +87,7 @@ AxiStreamSwitch::connect(int portSlave, int portMaster)
 	XAxisScr_MiPortEnable(&xSwitch, portMaster, portSlave);
 	XAxisScr_RegUpdateEnable(&xSwitch);
 
-	cpp_debug << "Connect slave " << portSlave << " to master " << portMaster;
+	logger->debug("Connect slave {} to master {}", portSlave, portMaster);
 
 	return true;
 }
@@ -93,8 +95,10 @@ AxiStreamSwitch::connect(int portSlave, int portMaster)
 bool
 AxiStreamSwitch::disconnectMaster(int port)
 {
-	cpp_debug << "Disconnect slave " << portMapping[port]
-	          << " from master " << port;
+	auto logger = getLogger();
+
+	logger->debug("Disconnect slave {} from master {}",
+	              portMapping[port], port);
 
 	XAxisScr_MiPortDisable(&xSwitch, port);
 	portMapping[port] = PORT_DISABLED;
@@ -104,15 +108,17 @@ AxiStreamSwitch::disconnectMaster(int port)
 bool
 AxiStreamSwitch::disconnectSlave(int port)
 {
+	auto logger = getLogger();
+
 	for(auto [master, slave] : portMapping) {
 		if(slave == port) {
-			cpp_debug << "Disconnect slave " << slave << " from master " << master;
+			logger->debug("Disconnect slave {} from master {}", slave, master);
 			XAxisScr_MiPortDisable(&xSwitch, master);
 			return true;
 		}
 	}
 
-	cpp_debug << "Slave " << port << " hasn't been connected to any master";
+	logger->debug("Slave {} hasn't been connected to any master", port);
 	return true;
 }
 

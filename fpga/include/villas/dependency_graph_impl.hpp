@@ -2,8 +2,12 @@
 #error "Do not include this file directly, please include depedency_graph.hpp"
 #endif
 
-#include "dependency_graph.hpp"
 #include <sstream>
+#include "dependency_graph.hpp"
+
+#include "log.hpp"
+
+static auto logger = loggerGetOrCreate("DependencyGraph");
 
 namespace villas {
 namespace utils {
@@ -53,7 +57,7 @@ DependencyGraph<T>::dump() {
 		for(auto& dep : node.second) {
 			ss << dep << " ";
 		}
-		cpp_debug << node.first << ": " << ss.str();
+		logger->info("{}: {}", node.first, ss.str());
 	}
 }
 
@@ -91,10 +95,9 @@ DependencyGraph<T>::getEvaluationOrder() const
 		// if a round doesn't add any elements and is not the last, then
 		// there is a circular dependency
 		if(added == 0 and graph.size() > 0) {
-			cpp_error << "Circular dependency detected! IPs not available:";
-			Logger::Indenter indent = cpp_debug.indent();
+			logger->error("Circular dependency detected! IPs not available:");
 			for(auto& [key, value] : graph) {
-				cpp_error << key;
+				logger->error("  {}", key);
 			}
 			break;
 		}

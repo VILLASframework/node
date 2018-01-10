@@ -56,12 +56,12 @@ CardList
 fpga::PCIeCardFactory::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 {
 	CardList cards;
+	auto logger = getStaticLogger();
 
 	const char *card_name;
 	json_t *json_card;
 	json_object_foreach(json, card_name, json_card) {
-		cpp_info << "Found config for FPGA card " << card_name;
-		Logger::Indenter indent = cpp_debug.indent();
+		logger->info("Found config for FPGA card {}", card_name);
 
 		json_t*     json_ips = nullptr;
 		const char* pci_slot = nullptr;
@@ -77,7 +77,7 @@ fpga::PCIeCardFactory::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 		    "id", &pci_id);
 
 		if(ret != 0) {
-			cpp_warn << "Cannot parse JSON config";
+			logger->warn("Cannot parse JSON config");
 			continue;
 		}
 
@@ -93,29 +93,28 @@ fpga::PCIeCardFactory::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 		const char* error;
 
 		if (pci_slot != nullptr and pci_device_parse_slot(&card->filter, pci_slot, &error) != 0) {
-			cpp_warn << "Failed to parse PCI slot: " << error;
+			logger->warn("Failed to parse PCI slot: {}", error);
 		}
 
 		if (pci_id != nullptr and pci_device_parse_id(&card->filter, pci_id, &error) != 0) {
-			cpp_warn << "Failed to parse PCI ID: " << error;
+			logger->warn("Failed to parse PCI ID: {}", error);
 		}
 
 
 		// TODO: currently fails, fix and remove comment
 //		if(not card->start()) {
-//		    cpp_warn << "Cannot start FPGA card " << card_name;
-//			delete card;
+//		    logger->warn("Cannot start FPGA card {}", card_name);
 //			continue;
 //		}
 
 		card->ips = ip::IpCoreFactory::make(card.get(), json_ips);
 		if(card->ips.empty()) {
-			cpp_error << "Cannot initialize IPs";
+			logger->error("Cannot initialize IPs of FPGA card {}", card_name);
 			continue;
 		}
 
 		if(not card->check()) {
-			cpp_warn << "Checking failed, destroying ...";
+			logger->warn("Checking of FPGA card {} failed", card_name);
 			continue;
 		}
 
@@ -148,6 +147,8 @@ bool fpga::PCIeCard::start()
 	int ret;
 	struct pci_device *pdev;
 
+	auto logger = getLogger();
+
 	/* Search for FPGA card */
 	pdev = pci_lookup_device(pci, &filter);
 	if (!pdev)
@@ -176,7 +177,7 @@ bool fpga::PCIeCard::start()
 			serror("Failed to reset PCI device");
 
 		if(not reset()) {
-			cpp_debug << "Failed to reset FGPA card";
+			logger->error("Failed to reset FGPA card");
 			return false;
 		}
 	}
