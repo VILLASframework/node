@@ -39,9 +39,21 @@ namespace
 {
 class name_formatter:public flag_formatter
 {
+    std::string center(std::string input, int width) {
+        const auto whitespace = width - input.length();
+        return std::string(whitespace / 2, ' ')
+                + input
+                + std::string(whitespace / 2, ' ')
+                + ((whitespace % 2 == 0) ? "" : " ");
+    }
+
     void format(details::log_msg& msg, const std::tm&) override
     {
+#ifdef SPDLOG_NAME_WIDTH
+        msg.formatted << center(*msg.logger_name, SPDLOG_NAME_WIDTH);
+#else
         msg.formatted << *msg.logger_name;
+#endif
     }
 };
 }
