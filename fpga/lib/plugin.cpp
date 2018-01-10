@@ -45,8 +45,8 @@ Plugin::pluginListBuffer;
 int Plugin::pluginListNiftyCounter;
 
 
-Plugin::Plugin(std::string name) :
-    pluginType(Plugin::Type::Unknown),
+Plugin::Plugin(Type type, const std::string& name) :
+    pluginType(type),
     name(name),
     description(""),
     path(""),

@@ -106,8 +106,7 @@ class PCIeCardFactory : public Plugin {
 public:
 
 	PCIeCardFactory() :
-	    Plugin("FPGA Card plugin")
-	{ pluginType = Plugin::Type::FpgaCard; }
+	    Plugin(Plugin::Type::FpgaCard, "FPGA Card plugin") {}
 
 	static CardList
 	make(json_t *json, struct pci* pci, ::vfio_container* vc);

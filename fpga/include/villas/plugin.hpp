@@ -42,7 +42,7 @@ public:
 		FpgaCard,
 	};
 
-	Plugin(std::string name);
+	Plugin(Type type, const std::string& name);
 	virtual ~Plugin();
 
 	// copying a plugin doesn't make sense, so explicitly deny it
