@@ -23,11 +23,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-
-#include "config.h"
+#include <xilinx/xtmrctr.h>
 
 #include "log.hpp"
 #include "fpga/ips/timer.hpp"
+#include "fpga/ips/intc.hpp"
 
 namespace villas {
 namespace fpga {
@@ -40,12 +40,39 @@ static TimerFactory factory;
 bool Timer::init()
 {
 	XTmrCtr_Config xtmr_cfg;
-	xtmr_cfg.SysClockFreqHz = FPGA_AXI_HZ;
+	xtmr_cfg.SysClockFreqHz = getFrequency();
 
 	XTmrCtr_CfgInitialize(&xTmr, &xtmr_cfg, getBaseaddr());
 	XTmrCtr_InitHw(&xTmr);
 
+	intc = reinterpret_cast<InterruptController*>(dependencies["intc"]);
+	intc->disableInterrupt(irqs[0]);
+
 	return true;
+}
+
+bool Timer::start(uint32_t ticks)
+{
+	intc->enableInterrupt(irqs[0], false);
+
+	XTmrCtr_SetOptions(&xTmr, 0, XTC_EXT_COMPARE_OPTION | XTC_DOWN_COUNT_OPTION);
+	XTmrCtr_SetResetValue(&xTmr, 0, ticks);
+	XTmrCtr_Start(&xTmr, 0);
+
+	return true;
+}
+
+bool Timer::wait()
+{
+	int count = intc->waitForInterrupt(irqs[0]);
+	intc->disableInterrupt(irqs[0]);
+
+	return (count == 1);
+}
+
+uint32_t Timer::remaining()
+{
+	return XTmrCtr_GetValue(&xTmr, 0);
 }
 
 

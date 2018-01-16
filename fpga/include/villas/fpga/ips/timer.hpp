@@ -29,8 +29,12 @@
 
 #pragma once
 
-#include "fpga/ip.hpp"
+#include <stdint.h>
 #include <xilinx/xtmrctr.h>
+
+#include "config.h"
+#include "fpga/ip.hpp"
+#include "fpga/ips/intc.hpp"
 
 namespace villas {
 namespace fpga {
@@ -42,8 +46,24 @@ class Timer : public IpCore
 public:
 	bool init();
 
+
+	bool start(uint32_t ticks);
+	bool wait();
+	uint32_t remaining();
+
+	inline bool isRunning()
+	{ return remaining() != 0; }
+
+	inline bool isFinished()
+	{ return remaining() == 0; }
+
+	static constexpr uint32_t
+	getFrequency()
+	{ return FPGA_AXI_HZ; }
+
 private:
 	XTmrCtr xTmr;
+	InterruptController* intc;
 };
 
 
