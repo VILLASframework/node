@@ -35,7 +35,7 @@ namespace ip {
 static AxiStreamSwitchFactory factory;
 
 bool
-AxiStreamSwitch::start()
+AxiStreamSwitch::init()
 {
 	/* Setup AXI-stream switch */
 	XAxis_Switch_Config sw_cfg;

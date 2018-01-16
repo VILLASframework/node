@@ -102,10 +102,10 @@ fpga::PCIeCardFactory::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 
 
 		// TODO: currently fails, fix and remove comment
-//		if(not card->start()) {
-//		    logger->warn("Cannot start FPGA card {}", card_name);
-//			continue;
-//		}
+		if(not card->init()) {
+			logger->warn("Cannot start FPGA card {}", card_name);
+			continue;
+		}
 
 		card->ips = ip::IpCoreFactory::make(card.get(), json_ips);
 		if(card->ips.empty()) {
@@ -142,7 +142,7 @@ PCIeCard::lookupIp(std::string name) const {
 }
 
 
-bool fpga::PCIeCard::start()
+bool fpga::PCIeCard::init()
 {
 	int ret;
 	struct pci_device *pdev;

@@ -45,7 +45,7 @@ InterruptController::~InterruptController()
 	vfio_pci_msi_deinit(&card->vfio_device , this->efds);
 }
 
-bool InterruptController::start()
+bool InterruptController::init()
 {
 	const uintptr_t base = getBaseaddr();
 

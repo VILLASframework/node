@@ -60,7 +60,7 @@ FifoFactory::configureJson(IpCore &ip, json_t *json_ip)
 }
 
 
-bool Fifo::start()
+bool Fifo::init()
 {
 	XLlFifo_Config fifo_cfg;
 

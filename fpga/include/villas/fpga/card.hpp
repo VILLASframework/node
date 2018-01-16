@@ -67,7 +67,7 @@ public:
 
 	PCIeCard() : filter(PCI_FILTER_DEFAULT_FPGA) {}
 
-	bool start();
+	bool init();
 	bool stop()  { return true; }
 	bool check() { return true; }
 	bool reset() { return true; }

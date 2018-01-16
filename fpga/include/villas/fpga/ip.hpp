@@ -81,7 +81,7 @@ public:
 
 	// IPs can implement this interface
 	virtual bool check() { return true; }
-	virtual bool start() { return true; }
+	virtual bool init() { return true; }
 	virtual bool stop()  { return true; }
 	virtual bool reset() { return true; }
 	virtual void dump();

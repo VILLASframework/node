@@ -47,7 +47,7 @@ class AxiStreamSwitch : public IpNode {
 public:
 	friend class AxiStreamSwitchFactory;
 
-	bool start();
+	bool init();
 
 	bool connect(int portSlave, int portMaster);
 	bool disconnectMaster(int port);

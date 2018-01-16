@@ -37,7 +37,7 @@ namespace ip {
 // instantiate factory to make available to plugin infrastructure
 static TimerFactory factory;
 
-bool Timer::start()
+bool Timer::init()
 {
 	XTmrCtr_Config xtmr_cfg;
 	xtmr_cfg.SysClockFreqHz = FPGA_AXI_HZ;

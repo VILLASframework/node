@@ -46,7 +46,7 @@ public:
 
 	~InterruptController();
 
-	bool start();
+	bool init();
 
 	int enableInterrupt(IrqMaskType mask, bool polling);
 	int enableInterrupt(IrqPort irq, bool polling)

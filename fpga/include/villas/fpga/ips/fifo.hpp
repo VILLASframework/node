@@ -43,7 +43,7 @@ class Fifo : public IpNode
 public:
 	friend class FifoFactory;
 
-	bool start();
+	bool init();
 	bool stop();
 
 	size_t write(const void* buf, size_t len);

@@ -284,10 +284,10 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		}
 
 		// TODO: currently fails, fix and remove comment
-//		if(not ip->start()) {
-//			logger->error("Cannot start IP {}", ip->id.name);
-//			continue;
-//		}
+		if(not ip->init()) {
+			logger->error("Cannot start IP {}", ip->id.name);
+			continue;
+		}
 
 		if(not ip->check()) {
 			logger->error("Checking of IP {} failed", ip->id.name);
