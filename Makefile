@@ -85,12 +85,8 @@ ifdef PROFILE
 endif
 
 ifdef COVERAGE
-	CFLAGS  += -fprofile-arcs -ftest-coverage
-	LDFLAGS += --coverage
-	LDLIBS  += -lgcov
-
-	LIB_LDFLAGS += -coverage
-	LIB_LDLIBS += -gcov
+	CFLAGS  += --coverage
+	LDLIBS += -lgcov
 
 	VARIANTS += coverage
 endif

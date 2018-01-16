@@ -21,6 +21,11 @@
 ###################################################################################
 
 include tests/unit/Makefile.inc
+
+ifdef COVERAGE
+	include tests/unit/Makefile.gcov.inc
+endif
+
 include tests/integration/Makefile.inc
 
 tests: unit-tests integration-tests
