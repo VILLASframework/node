@@ -56,7 +56,9 @@ public:
 	int disableInterrupt(IrqPort irq)
 	{ return disableInterrupt(1 << irq.num); }
 
-	uint64_t waitForInterrupt(int irq);
+	int waitForInterrupt(int irq);
+	int waitForInterrupt(IrqPort irq)
+	{ return waitForInterrupt(irq.num); }
 
 private:
 	struct Interrupt {

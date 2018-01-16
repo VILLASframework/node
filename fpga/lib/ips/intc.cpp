@@ -124,7 +124,7 @@ InterruptController::disableInterrupt(InterruptController::IrqMaskType mask)
 	return true;
 }
 
-uint64_t InterruptController::waitForInterrupt(int irq)
+int InterruptController::waitForInterrupt(int irq)
 {
 	assert(irq < maxIrqs);
 
@@ -134,21 +134,26 @@ uint64_t InterruptController::waitForInterrupt(int irq)
 		uint32_t isr, mask = 1 << irq;
 
 		do {
+			// poll status register
 			isr = XIntc_In32(base + XIN_ISR_OFFSET);
 			pthread_testcancel();
 		} while ((isr & mask) != mask);
 
+		// acknowledge interrupt
 		XIntc_Out32(base + XIN_IAR_OFFSET, mask);
 
+		// we can only tell that there has been (at least) one interrupt
 		return 1;
 	}
 	else {
-		uint64_t cnt;
-		ssize_t ret = read(efds[irq], &cnt, sizeof(cnt));
-		if (ret != sizeof(cnt))
-			return 0;
+		uint64_t count;
 
-		return cnt;
+		// block until there has been an interrupt, read number of interrupts
+		ssize_t ret = read(efds[irq], &count, sizeof(count));
+		if (ret != sizeof(count))
+			return -1;
+
+		return static_cast<int>(count);
 	}
 }
 
