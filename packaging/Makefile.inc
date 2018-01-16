@@ -42,8 +42,8 @@ deploy-dist: $(TAR_VILLAS)
 	rsync $(TAR_VILLAS) $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/src
 	
 deploy-rpm:
-	rsync -a --progress $(RPMDIR)/RPMS/ $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/../packages/
-	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) createrepo $(DEPLOY_PATH)/../packages
+	rsync -a --progress $(RPMDIR)/RPMS/ $(DEPLOY_USER)@$(DEPLOY_HOST):/var/www/packages/redhat/
+	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) createrepo /var/www/packages/redhat
 
 clean-packaging:
 	rm -f $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM).tar.gz
