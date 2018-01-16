@@ -5,7 +5,7 @@ set(SOURCES
 #	hls.c
 #	intc.c
 #	rtds_rtt.c
-#	tmrctr.c
+	timer.cpp
 #	xsg.c
 )
 
