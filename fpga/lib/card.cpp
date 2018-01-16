@@ -151,30 +151,40 @@ bool fpga::PCIeCard::init()
 
 	/* Search for FPGA card */
 	pdev = pci_lookup_device(pci, &filter);
-	if (!pdev)
-		error("Failed to find PCI device");
+	if (!pdev) {
+		logger->error("Failed to find PCI device");
+		return false;
+	}
 
 	/* Attach PCIe card to VFIO container */
 	ret = ::vfio_pci_attach(&vfio_device, vfio_container, pdev);
-	if (ret)
-		error("Failed to attach VFIO device");
+	if (ret) {
+		logger->error("Failed to attach VFIO device");
+		return false;
+	}
 
 	/* Map PCIe BAR */
 	map = (char*) vfio_map_region(&vfio_device, VFIO_PCI_BAR0_REGION_INDEX);
-	if (map == MAP_FAILED)
-		serror("Failed to mmap() BAR0");
+	if (map == MAP_FAILED) {
+		logger->error("Failed to mmap() BAR0");
+		return false;
+	}
 
 	/* Enable memory access and PCI bus mastering for DMA */
 	ret = vfio_pci_enable(&vfio_device);
-	if (ret)
-		serror("Failed to enable PCI device");
+	if (ret) {
+		logger->error("Failed to enable PCI device");
+		return false;
+	}
 
 	/* Reset system? */
 	if (do_reset) {
 		/* Reset / detect PCI device */
 		ret = vfio_pci_reset(&vfio_device);
-		if (ret)
-			serror("Failed to reset PCI device");
+		if (ret) {
+			logger->error("Failed to reset PCI device");
+			return false;
+		}
 
 		if(not reset()) {
 			logger->error("Failed to reset FGPA card");
