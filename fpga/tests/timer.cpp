@@ -21,13 +21,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <chrono>
 #include <criterion/criterion.h>
-
-#include "config.h"
-
 #include <villas/log.hpp>
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/timer.hpp>
+
+#include "config.h"
 
 extern villas::fpga::PCIeCard* fpga;
 
@@ -45,10 +45,26 @@ Test(fpga, timer, .description = "Timer Counter")
 
 		auto timer = reinterpret_cast<villas::fpga::ip::Timer&>(*ip);
 
+		logger->info("Test simple waiting");
 		timer.start(timer.getFrequency() / 10);
-		cr_assert(timer.wait(), "Timer failed");
+		cr_assert(timer.wait(), "Waiting failed");
+		logger->info("-> passed");
 
-		logger->info("Timer passed: {}", timer);
+		logger->info("Measure waiting time (1s)");
+		timer.start(timer.getFrequency());
+
+		const auto start = std::chrono::high_resolution_clock::now();
+		timer.wait();
+		const auto stop = std::chrono::high_resolution_clock::now();
+
+		const int oneSecondInUs = 1000000;
+		const auto duration = stop - start;
+		const auto durationUs =
+		        std::chrono::duration_cast<std::chrono::microseconds>(duration).count();
+		logger->info("-> time passed: {} us", durationUs);
+
+		cr_assert(std::abs(durationUs - oneSecondInUs) < 0.01 * oneSecondInUs,
+		          "Timer deviation > 1%%");
 	}
 
 	return;
