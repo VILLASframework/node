@@ -45,7 +45,8 @@ InterruptController::~InterruptController()
 	vfio_pci_msi_deinit(&card->vfio_device , this->efds);
 }
 
-bool InterruptController::init()
+bool
+InterruptController::init()
 {
 	const uintptr_t base = getBaseaddr();
 	auto logger = getLogger();
@@ -80,7 +81,7 @@ bool InterruptController::init()
 	return true;
 }
 
-int
+bool
 InterruptController::enableInterrupt(InterruptController::IrqMaskType mask, bool polling)
 {
 	auto logger = getLogger();
@@ -115,7 +116,7 @@ InterruptController::enableInterrupt(InterruptController::IrqMaskType mask, bool
 	return true;
 }
 
-int
+bool
 InterruptController::disableInterrupt(InterruptController::IrqMaskType mask)
 {
 	const uintptr_t base = getBaseaddr();
@@ -126,7 +127,8 @@ InterruptController::disableInterrupt(InterruptController::IrqMaskType mask)
 	return true;
 }
 
-int InterruptController::waitForInterrupt(int irq)
+int
+InterruptController::waitForInterrupt(int irq)
 {
 	assert(irq < maxIrqs);
 

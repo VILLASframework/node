@@ -48,12 +48,12 @@ public:
 
 	bool init();
 
-	int enableInterrupt(IrqMaskType mask, bool polling);
-	int enableInterrupt(IrqPort irq, bool polling)
+	bool enableInterrupt(IrqMaskType mask, bool polling);
+	bool enableInterrupt(IrqPort irq, bool polling)
 	{ return enableInterrupt(1 << irq.num, polling); }
 
-	int disableInterrupt(IrqMaskType mask);
-	int disableInterrupt(IrqPort irq)
+	bool disableInterrupt(IrqMaskType mask);
+	bool disableInterrupt(IrqPort irq)
 	{ return disableInterrupt(1 << irq.num); }
 
 	int waitForInterrupt(int irq);
