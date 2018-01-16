@@ -138,7 +138,7 @@ void cr_assert_eq_samples(struct io_format *f, struct sample *smps[], struct sam
 					cr_assert_float_eq(smps[i]->data[j].f, smpt[i]->data[j].f, 1e-3, "Sample data mismatch at index %d: %f != %f", j, smps[i]->data[j].f, smpt[i]->data[j].f);
 					break;
 				case SAMPLE_DATA_FORMAT_INT:
-					cr_assert_eq(smps[i]->data[j].i, smpt[i]->data[j].i);
+					cr_assert_eq(smps[i]->data[j].i, smpt[i]->data[j].i, "Sample data mismatch at index %d: %d != %d", j, smps[i]->data[j].i, smpt[i]->data[j].i);
 					break;
 			}
 		}
