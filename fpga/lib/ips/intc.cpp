@@ -48,6 +48,7 @@ InterruptController::~InterruptController()
 bool InterruptController::init()
 {
 	const uintptr_t base = getBaseaddr();
+	auto logger = getLogger();
 
 	num_irqs = vfio_pci_msi_init(&card->vfio_device, efds);
 	if (num_irqs < 0)
@@ -59,8 +60,10 @@ bool InterruptController::init()
 	/* For each IRQ */
 	for (int i = 0; i < num_irqs; i++) {
 		/* Pin to core */
-		if(kernel_irq_setaffinity(nos[i], card->affinity, NULL) !=0)
-			serror("Failed to change affinity of VFIO-MSI interrupt");
+		if(kernel_irq_setaffinity(nos[i], card->affinity, nullptr) != 0) {
+			logger->error("Failed to change affinity of VFIO-MSI interrupt");
+			return false;
+		}
 
 		/* Setup vector */
 		XIntc_Out32(base + XIN_IVAR_OFFSET + i * 4, i);
@@ -72,7 +75,7 @@ bool InterruptController::init()
 	XIntc_Out32(base + XIN_IER_OFFSET, 0x00000000); /* Disable all IRQs by default */
 	XIntc_Out32(base + XIN_MER_OFFSET, XIN_INT_HARDWARE_ENABLE_MASK | XIN_INT_MASTER_ENABLE_MASK);
 
-	debug(4, "FPGA: enabled interrupts");
+	logger->debug("enabled interrupts");;
 
 	return true;
 }
@@ -80,12 +83,12 @@ bool InterruptController::init()
 int
 InterruptController::enableInterrupt(InterruptController::IrqMaskType mask, bool polling)
 {
-	uint32_t ier, imr;
+	auto logger = getLogger();
 	const uintptr_t base = getBaseaddr();
 
 	/* Current state of INTC */
-	ier = XIntc_In32(base + XIN_IER_OFFSET);
-	imr = XIntc_In32(base + XIN_IMR_OFFSET);
+	const uint32_t ier = XIntc_In32(base + XIN_IER_OFFSET);
+	const uint32_t imr = XIntc_In32(base + XIN_IMR_OFFSET);
 
 	/* Clear pending IRQs */
 	XIntc_Out32(base + XIN_IAR_OFFSET, mask);
@@ -104,11 +107,10 @@ InterruptController::enableInterrupt(InterruptController::IrqMaskType mask, bool
 		XIntc_Out32(base + XIN_IMR_OFFSET, imr | mask);
 	}
 
-	debug(3, "New ier = %#x", XIntc_In32(base + XIN_IER_OFFSET));
-	debug(3, "New imr = %#x", XIntc_In32(base + XIN_IMR_OFFSET));
-	debug(3, "New isr = %#x", XIntc_In32(base + XIN_ISR_OFFSET));
-
-	debug(8, "FPGA: Interupts enabled: mask=%#x polling=%d", mask, polling);
+	logger->debug("New ier = {:x}", XIntc_In32(base + XIN_IER_OFFSET));
+	logger->debug("New imr = {:x}", XIntc_In32(base + XIN_IMR_OFFSET));
+	logger->debug("New isr = {:x}", XIntc_In32(base + XIN_ISR_OFFSET));
+	logger->debug("Interupts enabled: mask={:x} polling={:d}", mask, polling);
 
 	return true;
 }
