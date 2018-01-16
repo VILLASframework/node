@@ -80,7 +80,9 @@ RUN apt-get update && apt-get install -y \
 	libjansson-dev \
 	libzmq3-dev \
 	libnanomsg-dev \
-	libprotobuf-c-dev
+	libprotobuf-c-dev \
+	librabbitmq-dev \
+	libmosquitto-dev
 
 # Build & Install Criterion
 COPY thirdparty/criterion /tmp/criterion

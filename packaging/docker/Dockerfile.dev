@@ -83,7 +83,8 @@ RUN dnf -y install \
 	nanomsg-devel \
 	protobuf-c-devel \
 	libiec61850-devel \
-	librabbitmq-devel
+	librabbitmq-devel \
+	mosquitto-devel
 
 # Build & Install Criterion
 COPY thirdparty/criterion /tmp/criterion

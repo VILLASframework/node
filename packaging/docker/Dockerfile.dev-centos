@@ -82,7 +82,9 @@ RUN yum -y install \
 	zeromq-devel \
 	nanomsg-devel \
 	protobuf-c-devel \
-	libiec61850-devel
+	libiec61850-devel \
+	librabbitmq-devel \
+	mosquitto-devel
 
 # Build & Install Criterion
 COPY thirdparty/criterion /tmp/criterion
