@@ -23,27 +23,17 @@
 
 #include <criterion/criterion.h>
 
-#include <villas/utils.h>
-
-#include <villas/fpga/card.h>
-#include <villas/fpga/vlnv.h>
-#include <villas/fpga/ip.h>
-
-#include <villas/fpga/ips/fifo.h>
-
+#include <villas/log.hpp>
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/fifo.hpp>
 
-#include "log.hpp"
 
 extern villas::fpga::PCIeCard* fpga;
 
 Test(fpga, fifo, .description = "FIFO")
 {
-	int ret;
 	ssize_t len;
 	char src[255], dst[255];
-	struct fpga_ip *fifo;
 
 	auto logger = loggerGetOrCreate("unittest:fifo");
 
@@ -51,6 +41,8 @@ Test(fpga, fifo, .description = "FIFO")
 		// skip non-fifo IPs
 		if(*ip != villas::fpga::Vlnv("xilinx.com:ip:axi_fifo_mm_s:"))
 			continue;
+
+		logger->info("Testing {}", *ip);
 
 		auto fifo = reinterpret_cast<villas::fpga::ip::Fifo&>(*ip);
 
@@ -83,5 +75,7 @@ Test(fpga, fifo, .description = "FIFO")
 
 		/* Compare data */
 		cr_assert_eq(memcmp(src, dst, sizeof(src)), 0);
+
+		logger->info("All good for {}", *ip);
 	}
 }
