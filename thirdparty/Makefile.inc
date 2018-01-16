@@ -20,7 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-DEPS_CMAKE = libxil libwebsockets libiec61850 criterion jansson nanomsg rabbitmq-c
+DEPS_CMAKE = libxil libwebsockets libiec61850 criterion jansson nanomsg rabbitmq-c mosquitto
 DEPS_AUTOCONF = libnl libconfig libcurl libzmq
 
 DEPS = $(DEPS_CMAKE) $(DEPS_AUTOCONF)
