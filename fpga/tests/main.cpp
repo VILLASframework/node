@@ -96,6 +96,8 @@ static void init()
 		fpga = fpgaCards.front().get();
 	}
 
+	cr_assert_not_null(fpga, "No FPGA card available");
+
 	json_decref(json);
 }
 
