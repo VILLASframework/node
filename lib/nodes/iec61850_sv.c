@@ -64,7 +64,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	 * data block of the SV message before accessing the data.
 	 */
 
-	smp = pool_get(&i->subscriber.pool);
+	smp = sample_alloc(&i->subscriber.pool);
 	if (!smp) {
 		warn("Pool underrun in subscriber of %s", node_name(n));
 		return;
