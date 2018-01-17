@@ -154,7 +154,8 @@ int protobuf_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[],
 		smp->length = j;
 	}
 
-	*rbytes = villas__node__message__get_packed_size(pb_msg);
+	if (rbytes)
+		*rbytes = villas__node__message__get_packed_size(pb_msg);
 
 	villas__node__message__free_unpacked(pb_msg, NULL);
 
