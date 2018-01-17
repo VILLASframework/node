@@ -94,7 +94,7 @@ endif
 EMPTY :=
 SPACE := $(EMPTY) $(EMPTY)
 
-VARIANT = $(subst $(SPACE),-,$(strip $(VARIANTS)))
+VARIANT = $(shell uname -s)-$(shell uname -m)-$(subst $(SPACE),-,$(strip $(VARIANTS)))
 BUILDDIR := $(BUILDDIR)/$(VARIANT)
 SRCDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 
