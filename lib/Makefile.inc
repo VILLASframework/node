@@ -24,7 +24,7 @@ SONAMES = villas villas-ext
 
 LIBS = $(patsubst %, lib%, $(SONAMES))
 
-LIB_CFLAGS  = $(CFLAGS) -fPIC
+LIB_CFLAGS = $(CFLAGS) -fPIC
 
 include lib/kernel/Makefile.inc
 include lib/hooks/Makefile.inc
