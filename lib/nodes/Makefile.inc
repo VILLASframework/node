@@ -39,6 +39,7 @@ WITH_STATS     ?= 1
 WITH_INFLUXDB  ?= 1
 WITH_AMQP      ?= 1
 WITH_IEC61850  ?= 1
+WITH_MQTT      ?= 1
 
 # Enabled loopback node-type
 ifeq ($(WITH_LOOPBACK),1)
@@ -180,5 +181,14 @@ ifeq ($(shell $(PKGCONFIG) librabbitmq; echo $$?),0)
 	LIB_SRCS    += lib/nodes/amqp.c
 	LIB_PKGS    += librabbitmq
 	LIB_CFLAGS  += -DWITH_AMQP
+endif
+endif
+
+# Enable MQTT support
+ifeq ($(WITH_MQTT),1)
+ifneq ($(wildcard /usr/include/mosquitto.h),)
+	LIB_SRCS    += lib/nodes/mqtt.c
+	LIB_CFLAGS  += -DWITH_MQTT
+	LIB_LDLIBS  += -lmosquitto
 endif
 endif
