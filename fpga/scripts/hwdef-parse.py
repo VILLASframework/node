@@ -205,7 +205,7 @@ for port in ports:
 
 	if instance in ips:
 		irqs = ips[instance].setdefault('irqs', {})
-		irqs[irqname] = irq
+		irqs[irqname] = '{}:{}'.format(intc.get('INSTANCE'), irq)
 
 # Find BRAM storage depths (size)
 brams = root.xpath('.//MODULE[@MODTYPE="axi_bram_ctrl"]')
