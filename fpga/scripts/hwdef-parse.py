@@ -86,6 +86,9 @@ def vlnv_match(vlnv, whitelist):
 
 	return False
 
+def remove_prefix(text, prefix):
+	return text[text.startswith(prefix) and len(prefix):]
+
 if len(sys.argv) < 2:
 	print('Usage: {} path/to/*.hwdef'.format(sys.argv[0]))
 	print('       {} path/to/*.xml'.format(sys.argv[0]))
@@ -121,6 +124,23 @@ for module in modules:
 	ips[instance] = {
 		'vlnv' : vlnv
 	}
+
+	# populate memory view
+	mmap = module.find('.//MEMORYMAP')
+	if not mmap:
+		continue
+
+	mem = ips[instance].setdefault('memory-view', {})
+	for mrange in mmap:
+		mem_interface = remove_prefix(mrange.get('MASTERBUSINTERFACE'), 'M_AXI_')
+		mem_instance = mrange.get('INSTANCE')
+
+		entry = mem.setdefault(mem_interface, {}).setdefault(mem_instance, {})
+
+		entry['baseaddr'] = int(mrange.get('BASEVALUE'), 16);
+		entry['highaddr'] = int(mrange.get('HIGHVALUE'), 16);
+
+
 
 # find PCI-e module to extract memory map
 pcie = root.find('.//MODULE[@MODTYPE="axi_pcie"]')
