@@ -119,9 +119,7 @@ for module in modules:
 		continue
 
 	ips[instance] = {
-		'vlnv' : vlnv,
-		'irqs' : { },
-		'ports' : { }
+		'vlnv' : vlnv
 	}
 
 # find PCI-e module to extract memory map
@@ -151,9 +149,9 @@ for busif in busifs:
 	port = int(m.group(2))
 
 	ep = bus_trace(root, busname, opponent[type], whitelist)
-
 	if ep in ips:
-		ips[ep]['ports'][type.lower()] = port
+		ports = ips[ep].setdefault('ports', {})
+		ports[type.lower()] = port
 
 # find Interrupt assignments
 intc = root.find('.//MODULE[@MODTYPE="axi_pcie_intc"]')
@@ -182,7 +180,8 @@ for port in ports:
 	irqname = port.get('NAME')
 
 	if instance in ips:
-		ips[instance]['irqs'][irqname] = irq
+		irqs = ips[instance].setdefault('irqs', {})
+		irqs[irqname] = irq
 
 # Find BRAM storage depths (size)
 brams = root.xpath('.//MODULE[@MODTYPE="axi_bram_ctrl"]')
