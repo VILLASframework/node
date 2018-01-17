@@ -5,13 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.6.0] - 2017-12-14
+## [0.6.0] - Unreleased
 
 ### Added
 
 - New node-types:
   - `iec61850-9-2` for IEC 61850 Sampled Values
-  - `amqp` for RabbitMQ
+  - `amqp` for AMQP / RabbitMQ
+  - `mqtt` for MQTT / Mosquitto
 - New IO formats:
   - Google `protobuf`
 - Added support for Unix Domain Sockets to `socket` node-type
