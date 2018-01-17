@@ -170,8 +170,12 @@ for busif in busifs:
 
 	ep = bus_trace(root, busname, opponent[type], whitelist)
 	if ep in ips:
-		ports = ips[ep].setdefault('ports', {})
-		ports[type.lower()] = port
+		ports = ips[ep].setdefault('ports', [])
+		ports.append({
+			'role': type.lower(),
+			'target': switch.get('INSTANCE'),
+			'port': port
+		})
 
 # find Interrupt assignments
 intc = root.find('.//MODULE[@MODTYPE="axi_pcie_intc"]')
