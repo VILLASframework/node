@@ -166,9 +166,12 @@ for mrange in mmap:
 # find AXI-Stream switch port mapping
 switch = root.find('.//MODULE[@MODTYPE="axis_switch"]')
 busifs = switch.find('.//BUSINTERFACES')
+switch_ports = 0
 for busif in busifs:
 	if busif.get('VLNV') != 'xilinx.com:interface:axis:1.0':
 		continue
+
+	switch_ports += 1
 
 	busname = busif.get('BUSNAME')
 	name = busif.get('NAME')
@@ -192,6 +195,9 @@ for busif in busifs:
 		busif_ep = module_ep.find('.//BUSINTERFACE[@BUSNAME="{}"]'.format(busname_ep))
 		if busif_ep:
 			ports[-1]['name'] = sanitize_name(busif_ep.get('NAME'))
+
+# set number of master/slave port pairs for switch
+ips[switch.get('INSTANCE')]['num_ports'] = switch_ports / 2
 
 
 # find Interrupt assignments
