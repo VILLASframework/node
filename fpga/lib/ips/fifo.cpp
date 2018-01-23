@@ -51,8 +51,8 @@ FifoFactory::configureJson(IpCore &ip, json_t *json_ip)
 	}
 
 	auto& fifo = reinterpret_cast<Fifo&>(ip);
-	if(json_unpack(json_ip, "{ s: i }", "baseaddr_axi4", &fifo.baseaddr_axi4) != 0) {
-		logger->warn("Cannot parse property 'baseaddr_axi4'");
+	if(json_unpack(json_ip, "{ s: i }", "axi4_baseaddr", &fifo.baseaddr_axi4) != 0) {
+		logger->warn("Cannot parse property 'axi4_baseaddr'");
 		return false;
 	}
 
@@ -76,7 +76,7 @@ bool Fifo::init()
 	XLlFifo_IntEnable(&xFifo, XLLF_INT_RC_MASK);
 
 	auto intc = reinterpret_cast<InterruptController*>(dependencies["intc"]);
-	intc->enableInterrupt(irqs[0], false);
+	intc->enableInterrupt(irqs["interrupt"], false);
 
 	return true;
 }
@@ -113,7 +113,7 @@ size_t Fifo::read(void *buf, size_t len)
 	auto intc = reinterpret_cast<InterruptController*>(dependencies["intc"]);
 
 	while (!XLlFifo_IsRxDone(&xFifo))
-		intc->waitForInterrupt(irqs[0].num);
+		intc->waitForInterrupt(irqs["interrupt"].num);
 
 	XLlFifo_IntClear(&xFifo, XLLF_INT_RC_MASK);
 

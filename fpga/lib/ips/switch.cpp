@@ -23,6 +23,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <jansson.h>
 #include <xilinx/xaxis_switch.h>
 
 #include "log.hpp"
@@ -39,8 +40,8 @@ AxiStreamSwitch::init()
 {
 	/* Setup AXI-stream switch */
 	XAxis_Switch_Config sw_cfg;
-	sw_cfg.MaxNumMI = portsMaster.size();
-	sw_cfg.MaxNumSI = portsSlave.size();
+	sw_cfg.MaxNumMI = num_ports;
+	sw_cfg.MaxNumSI = num_ports;
 
 	if(XAxisScr_CfgInitialize(&xSwitch, &sw_cfg, getBaseaddr()) != XST_SUCCESS) {
 		return false;
@@ -121,6 +122,25 @@ AxiStreamSwitch::disconnectSlave(int port)
 	logger->debug("Slave {} hasn't been connected to any master", port);
 	return true;
 }
+
+bool
+AxiStreamSwitchFactory::configureJson(IpCore& ip, json_t* json_ip)
+{
+	if(not IpNodeFactory::configureJson(ip, json_ip))
+		return false;
+
+	auto logger = getLogger();
+
+	auto& axiSwitch = reinterpret_cast<AxiStreamSwitch&>(ip);
+
+	if(json_unpack(json_ip, "{ s: i }", "num_ports", &axiSwitch.num_ports) != 0) {
+		logger->error("Cannot parse 'num_ports'");
+		return false;
+	}
+
+	return true;
+}
+
 
 } // namespace ip
 } // namespace fpga

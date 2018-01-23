@@ -61,6 +61,7 @@ private:
 		IpCore* slaveIn;
 	};
 
+	int num_ports;
 	XAxis_Switch xSwitch;
 	std::map<int, int> portMapping;
 };
@@ -70,6 +71,8 @@ class AxiStreamSwitchFactory : public IpNodeFactory {
 public:
 	AxiStreamSwitchFactory() :
 	    IpNodeFactory(getName()) {}
+
+	bool configureJson(IpCore& ip, json_t *json_ip);
 
 	IpCore* create()
 	{ return new AxiStreamSwitch; }
@@ -81,7 +84,7 @@ public:
 	{ return "Xilinx's AXI4-Stream switch"; }
 
 	Vlnv getCompatibleVlnv() const
-	{ return Vlnv("xilinx.com:ip:axis_interconnect:"); }
+	{ return Vlnv("xilinx.com:ip:axis_switch:"); }
 };
 
 } // namespace ip

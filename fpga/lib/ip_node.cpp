@@ -19,101 +19,79 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 	auto logger = getLogger();
 
 	json_t* json_ports = json_object_get(json_ip, "ports");
-	if(json_ports == nullptr) {
-		logger->error("IpNode {} has no ports property", ip);
-		return false;
+	if(not json_is_array(json_ports)) {
+		logger->debug("IP has no ports");
+		return true;
 	}
-
-	json_t* json_master = json_object_get(json_ports, "master");
-	json_t* json_slave = json_object_get(json_ports, "slave");
-
-	const bool hasMasterPorts = json_is_array(json_master);
-	const bool hasSlavePorts = json_is_array(json_slave);
-
-	if( (not hasMasterPorts) and (not hasSlavePorts)) {
-		logger->error("IpNode {} has no ports", ip);
-		return false;
-	}
-
-	// intentionally use short-circuit evaluation to only call populatePorts
-	// if the property exists
-	bool masterPortsSuccess =
-	        (hasMasterPorts and populatePorts(ipNode.portsMaster, json_master))
-	        or (not hasMasterPorts);
-
-	bool slavePortsSuccess =
-	        (hasSlavePorts and populatePorts(ipNode.portsSlave, json_slave))
-	        or (not hasSlavePorts);
-
-	return (masterPortsSuccess and slavePortsSuccess);
-}
-
-bool
-IpNodeFactory::populatePorts(std::map<int, IpNode::StreamPort>& portMap, json_t* json)
-{
-	auto logger = getLogger();
 
 	size_t index;
 	json_t* json_port;
-	json_array_foreach(json, index, json_port) {
-		int myPortNum;
-		const char* to = nullptr;
+	json_array_foreach(json_ports, index, json_port) {
+		if(not json_is_object(json_port)) {
+			logger->error("Port {} is not an object", index);
+			return false;
+		}
 
-		int ret = json_unpack(json_port, "{ s : i, s? : s}",
-		                                 "num", &myPortNum,
-		                                 "to", &to);
+		const char *role_raw, *target_raw, *name_raw;
+		int ret = json_unpack(json_port, "{ s: s, s: s, s: s }",
+		                           "role", &role_raw,
+		                           "target", &target_raw,
+		                           "name", &name_raw);
 		if(ret != 0) {
-			logger->error("Port definition required field 'num'");
+			logger->error("Cannot parse port {}", index);
 			return false;
 		}
 
-		if(to == nullptr) {
-			logger->debug("Nothing connected to port {}", myPortNum);
-			portMap[myPortNum] = {};
-			continue;
-		}
-
-		const auto tokens = utils::tokenize(to, ":");
+		const auto tokens = utils::tokenize(target_raw, ":");
 		if(tokens.size() != 2) {
-			logger->error("Too many tokens in property 'other'");
+			logger->error("Cannot parse 'target' of port {}", index);
 			return false;
 		}
 
-		int otherPortNum;
+		int port_num;
 		try {
-			otherPortNum = std::stoi(tokens[1]);
+			port_num = std::stoi(tokens[1]);
 		} catch(const std::invalid_argument&) {
-			logger->error("Other port number is not an integral number");
+			logger->error("Target port number is not an integer: '{}'", target_raw);
 			return false;
 		}
 
-		logger->debug("Adding port mapping: {}:{}", myPortNum, to);
-		portMap[myPortNum] = { otherPortNum, tokens[0] };
+		IpNode::StreamPort port;
+		port.nodeName = tokens[0];
+		port.portNumber = port_num;
+
+		const std::string role(role_raw);
+		if(role == "master" or role == "initiator") {
+			ipNode.portsMaster[name_raw] = port;
+		} else /* slave */ {
+			ipNode.portsSlave[name_raw] = port;
+		}
+
 	}
 
 	return true;
 }
 
-std::pair<int, int>
+std::pair<std::string, std::string>
 IpNode::getLoopbackPorts() const
 {
-	for(auto& [masterNum, masterTo] : portsMaster) {
-		for(auto& [slaveNum, slaveTo] : portsSlave) {
+	for(auto& [masterName, masterTo] : portsMaster) {
+		for(auto& [slaveName, slaveTo] : portsSlave) {
 			// TODO: should we also check which IP both ports are connected to?
 			if(masterTo.nodeName == slaveTo.nodeName) {
-				return { masterNum, slaveNum };
+				return { masterName, slaveName };
 			}
 		}
 	}
 
-	return { -1, -1 };
+	return { "", "" };
 }
 
 bool
 IpNode::loopbackPossible() const
 {
 	auto ports = getLoopbackPorts();
-	return (ports.first != -1) and (ports.second != -1);
+	return (not ports.first.empty()) and (not ports.second.empty());
 }
 
 bool
@@ -125,12 +103,17 @@ IpNode::connectLoopback()
 	const auto& portMaster = portsMaster[ports.first];
 	const auto& portSlave = portsSlave[ports.second];
 
+	logger->debug("master port: {}", ports.first);
+	logger->debug("slave port: {}", ports.second);
+
+	logger->debug("switch at: {}", portMaster.nodeName);
+
 	// TODO: verify this is really a switch!
 	auto axiStreamSwitch = reinterpret_cast<ip::AxiStreamSwitch*>(
 	                            card->lookupIp(portMaster.nodeName));
 
 	if(axiStreamSwitch == nullptr) {
-		logger->error("Cannot find IP {}", *axiStreamSwitch);
+		logger->error("Cannot find switch");
 		return false;
 	}
 

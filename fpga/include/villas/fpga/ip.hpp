@@ -134,7 +134,7 @@ protected:
 	PCIeCard* card;					///< FPGA card this IP is instantiated on
 	IpIdentifier id;				///< VLNV and name defined in JSON config
 	uintptr_t baseaddr;				///< The baseadress of this IP component
-	std::map<int, IrqPort> irqs;	///< Interrupts of this IP component
+	std::map<std::string, IrqPort> irqs;	///< Interrupts of this IP component
 	std::map<std::string, IpCore*> dependencies; ///< dependencies on other IPs
 };
 

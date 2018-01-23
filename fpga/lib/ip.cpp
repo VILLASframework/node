@@ -42,7 +42,7 @@ using DependencyGraph = villas::utils::DependencyGraph<std::string>;
 
 static
 std::list<std::string>
-dependencyTokens = {"irq", "port", "memory"};
+dependencyTokens = {"irqs"};
 
 static
 bool
@@ -73,41 +73,45 @@ buildDependencyGraph(DependencyGraph& dependencyGraph, json_t* json_ips, std::st
 			continue;
 		}
 
-		const char* value = json_string_value(json_dependency);
-		if(value == nullptr) {
-			logger->warn("Property {} of {} is invalid",
-			             dependencyToken, TXT_BOLD(name));
-			continue;
-		}
+		const char* irq_name;
+		json_t* json_irq;
+		json_object_foreach(json_dependency, irq_name, json_irq) {
+			const char* value = json_string_value(json_irq);
+			if(value == nullptr) {
+				logger->warn("Property {} of {} is invalid",
+				             dependencyToken, TXT_BOLD(name));
+				continue;
+			}
 
-		auto mapping = villas::utils::tokenize(value, ":");
+			auto mapping = villas::utils::tokenize(value, ":");
 
 
-		if(mapping.size() != 2) {
-			logger->error("Invalid {} mapping of {}",
-			              dependencyToken, TXT_BOLD(name));
+			if(mapping.size() != 2) {
+				logger->error("Invalid {} mapping of {}",
+				              dependencyToken, TXT_BOLD(name));
 
-			dependencyGraph.removeNode(name);
-			return false;
-		}
+				dependencyGraph.removeNode(name);
+				return false;
+			}
 
-		if(name == mapping[0]) {
-			logger->error("IP {} cannot depend on itself", TXT_BOLD(name));
+			if(name == mapping[0]) {
+				logger->error("IP {} cannot depend on itself", TXT_BOLD(name));
 
-			dependencyGraph.removeNode(name);
-			return false;
-		}
+				dependencyGraph.removeNode(name);
+				return false;
+			}
 
-		// already add dependency, if adding it fails, removing the dependency
-		// will also remove the current one
-		dependencyGraph.addDependency(name, mapping[0]);
+			// already add dependency, if adding it fails, removing the dependency
+			// will also remove the current one
+			dependencyGraph.addDependency(name, mapping[0]);
 
-		if(not buildDependencyGraph(dependencyGraph, json_ips, mapping[0])) {
-			logger->error("Dependency {} of {} not satisfied",
-			              mapping[0], TXT_BOLD(name));
+			if(not buildDependencyGraph(dependencyGraph, json_ips, mapping[0])) {
+				logger->error("Dependency {} of {} not satisfied",
+				              mapping[0], TXT_BOLD(name));
 
-			dependencyGraph.removeNode(mapping[0]);
-			return false;
+				dependencyGraph.removeNode(mapping[0]);
+				return false;
+			}
 		}
 	}
 
@@ -228,11 +232,13 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		}
 
 		json_t* json_irqs = json_object_get(json_ip, "irqs");
-		if(json_is_array(json_irqs)) {
-			size_t index;
+		if(json_is_object(json_irqs)) {
+			const char* irq_name;
 			json_t* json_irq;
-			json_array_foreach(json_irqs, index, json_irq) {
+			json_object_foreach(json_irqs, irq_name, json_irq) {
 				const char* irq = json_string_value(json_irq);
+
+
 				auto tokens = utils::tokenize(irq, ":");
 				if(tokens.size() != 2) {
 					logger->warn("Cannot parse IRQ '{}' of {}",
@@ -247,9 +253,11 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 					logger->warn("IRQ number is not an integer: '{}'", irq);
 					continue;
 				}
-
-				ip->irqs[index] = {num, tokens[0], ""};
+				logger->debug("IRQ: {} -> {}:{}", irq_name, tokens[0], num);
+				ip->irqs[irq_name] = {num, tokens[0], ""};
 			}
+		} else {
+			logger->debug("IP has no interrupts");
 		}
 
 

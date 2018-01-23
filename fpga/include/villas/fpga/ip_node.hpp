@@ -54,18 +54,18 @@ public:
 		std::string nodeName;
 	};
 
-	bool connect(int port, const StreamPort& to);
-	bool disconnect(int port);
+	bool connect(std::string portName, const StreamPort& to);
+	bool disconnect(std::string portName);
 
 	bool loopbackPossible() const;
 	bool connectLoopback();
 
 private:
-	std::pair<int, int> getLoopbackPorts() const;
+	std::pair<std::string, std::string> getLoopbackPorts() const;
 
 protected:
-	std::map<int, StreamPort> portsMaster;
-	std::map<int, StreamPort> portsSlave;
+	std::map<std::string, StreamPort> portsMaster;
+	std::map<std::string, StreamPort> portsSlave;
 };
 
 class IpNodeFactory : public IpCoreFactory {

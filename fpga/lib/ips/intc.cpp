@@ -76,7 +76,8 @@ InterruptController::init()
 	XIntc_Out32(base + XIN_IER_OFFSET, 0x00000000); /* Disable all IRQs by default */
 	XIntc_Out32(base + XIN_MER_OFFSET, XIN_INT_HARDWARE_ENABLE_MASK | XIN_INT_MASTER_ENABLE_MASK);
 
-	logger->debug("enabled interrupts");;
+	logger->debug("enabled interrupts");
+
 
 	return true;
 }
