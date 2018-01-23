@@ -68,7 +68,7 @@ def bus_trace(root, busname, type, whitelist):
 	instance = module[0].get('INSTANCE')
 
 	if vlnv_match(vlnv, whitelist):
-		return instance
+		return instance, busname
 	elif vlnv_match(vlnv, axi_converter_whitelist):
 		next_bus = module[0].xpath('.//BUSINTERFACE[@TYPE="{}" or @TYPE="{}"]'.format(opponent[type[0]][0], opponent[type[0]][1]))
 		next_busname = next_bus[0].get('BUSNAME')
@@ -88,6 +88,14 @@ def vlnv_match(vlnv, whitelist):
 
 def remove_prefix(text, prefix):
 	return text[text.startswith(prefix) and len(prefix):]
+
+def sanitize_name(name):
+	name = remove_prefix(name, 'S_')
+	name = remove_prefix(name, 'M_')
+	name = remove_prefix(name, 'AXI_')
+	name = remove_prefix(name, 'AXIS_')
+
+	return name
 
 if len(sys.argv) < 2:
 	print('Usage: {} path/to/*.hwdef'.format(sys.argv[0]))
@@ -168,14 +176,20 @@ for busif in busifs:
 
 	port = int(m.group(2))
 
-	ep = bus_trace(root, busname, opponent[type], whitelist)
+	ep, busname_ep = bus_trace(root, busname, opponent[type], whitelist)
 	if ep in ips:
+
 		ports = ips[ep].setdefault('ports', [])
 		ports.append({
-			'role': type.lower(),
-			'target': switch.get('INSTANCE'),
-			'port': port
+			'role': opponent[type][0].lower(),
+			'target': '{}:{}'.format(switch.get('INSTANCE'), port)
 		})
+
+		module_ep = root.find('.//MODULE[@INSTANCE="{}"]'.format(ep))
+		busif_ep = module_ep.find('.//BUSINTERFACE[@BUSNAME="{}"]'.format(busname_ep))
+		if busif_ep:
+			ports[-1]['name'] = sanitize_name(busif_ep.get('NAME'))
+
 
 # find Interrupt assignments
 intc = root.find('.//MODULE[@MODTYPE="axi_pcie_intc"]')
