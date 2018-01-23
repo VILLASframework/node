@@ -9,7 +9,16 @@
 #include <spdlog/fmt/ostr.h>
 
 #define _ESCAPE	"\x1b"
-#define TXT_BOLD(s) _ESCAPE "[1m" + std::string(s) + _ESCAPE "[0m"
+#define TXT_RESET_ALL	_ESCAPE "[0m"
+
+#define TXT_RESET_BOLD	_ESCAPE "[21m"
+#define TXT_BOLD(s)		_ESCAPE "[1m" + std::string(s)  + TXT_RESET_BOLD
+
+#define TXT_RESET_COLOR	_ESCAPE "[39m"
+#define TXT_RED(s)		_ESCAPE "[31m" + std::string(s) + TXT_RESET_COLOR
+#define TXT_GREEN(s)	_ESCAPE "[32m" + std::string(s) + TXT_RESET_COLOR
+#define TXT_YELLOW(s)	_ESCAPE "[33m" + std::string(s) + TXT_RESET_COLOR
+#define TXT_BLUE(s)		_ESCAPE "[34m" + std::string(s) + TXT_RESET_COLOR
 
 using SpdLogger = std::shared_ptr<spdlog::logger>;
 
