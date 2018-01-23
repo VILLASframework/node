@@ -65,6 +65,8 @@ Test(fpga, timer, .description = "Timer Counter")
 
 		cr_assert(std::abs(durationUs - oneSecondInUs) < 0.01 * oneSecondInUs,
 		          "Timer deviation > 1%%");
+
+		logger->info(TXT_GREEN("Passed"));
 	}
 
 	return;

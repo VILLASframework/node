@@ -76,8 +76,8 @@ Test(fpga, fifo, .description = "FIFO")
 		}
 
 		/* Compare data */
-		cr_assert_eq(memcmp(src, dst, sizeof(src)), 0);
+		cr_assert_eq(memcmp(src, dst, sizeof(src)), 0, "Data not equal");
 
-		logger->info("All good for {}", *ip);
+		logger->info(TXT_GREEN("Passed"));
 	}
 }
