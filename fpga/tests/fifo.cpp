@@ -51,7 +51,9 @@ Test(fpga, fifo, .description = "FIFO")
 			continue;
 		}
 
-		fifo.connectLoopback();
+		if(not fifo.connectLoopback()) {
+			continue;
+		}
 
 		/* Get some random data to compare */
 		memset(dst, 0, sizeof(dst));
