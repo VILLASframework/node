@@ -19,6 +19,7 @@
 #include <utility>
 #include <vector>
 #include <array>
+#include <algorithm>
 
 namespace spdlog
 {
@@ -40,7 +41,7 @@ namespace
 class name_formatter:public flag_formatter
 {
     std::string center(std::string input, int width) {
-        const auto whitespace = width - input.length();
+        const int whitespace = std::max(int(width - input.length()), 0);
         return std::string(whitespace / 2, ' ')
                 + input
                 + std::string(whitespace / 2, ' ')
