@@ -157,8 +157,11 @@ for mrange in mmap:
 	instance = mrange.get('INSTANCE')
 
 	if instance in ips:
-		ips[instance]['baseaddr'] = int(mrange.get('BASEVALUE'), 16);
-		ips[instance]['highaddr'] = int(mrange.get('HIGHVALUE'), 16);
+		base_name = remove_prefix(mrange.get('BASENAME'), 'C_').lower()
+		high_name = remove_prefix(mrange.get('HIGHNAME'), 'C_').lower()
+
+		ips[instance][base_name] = int(mrange.get('BASEVALUE'), 16);
+		ips[instance][high_name] = int(mrange.get('HIGHVALUE'), 16);
 
 # find AXI-Stream switch port mapping
 switch = root.find('.//MODULE[@MODTYPE="axis_switch"]')
