@@ -73,9 +73,6 @@ public:
 	IpNodeFactory(std::string name) : IpCoreFactory("Ip Node - " + name) {}
 
 	virtual bool configureJson(IpCore& ip, json_t *json_ip);
-
-private:
-	bool populatePorts(std::map<int, IpNode::StreamPort>& portMap, json_t* json);
 };
 
 /** @} */
