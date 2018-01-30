@@ -71,13 +71,15 @@ test:unit-software:
 
 test:unit-hardware:
   stage: test
-  dependencies:
-    - build:source
+#  dependencies:
+#    - build:source
   tags:
     - villas-fpga
   script: |
+    mkdir build && cd build && cmake .. && make unit-tests
+
     if [ "$(who | wc -l)" -eq "0" ]; then
-      build/tests/unit-tests --filter 'fpga/*'
+      tests/unit-tests --filter 'fpga/*'
     else
       echo "System is currently used by: $(who)"
       echo "We are skipping the test. Please restart manually."
