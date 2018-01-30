@@ -28,6 +28,10 @@ class Vertex {
 public:
 	using Identifier = std::size_t;
 
+	friend std::ostream&
+	operator<< (std::ostream& stream, const Vertex& vertex)
+	{ return stream << vertex.id; }
+
 	bool
 	operator==(const Vertex& other)
 	{ return this->id == other.id; }
@@ -45,6 +49,10 @@ class Edge {
 
 public:
 	using Identifier = std::size_t;
+
+	friend std::ostream&
+	operator<< (std::ostream& stream, const Edge& edge)
+	{ return stream << edge.id; }
 
 	bool
 	operator==(const Edge& other)
@@ -100,7 +108,7 @@ public:
 	{
 		vertex->id = lastVertexId++;
 
-		logger->debug("New vertex: {}", vertex->id);
+		logger->debug("New vertex: {}", *vertex);
 		vertices[vertex->id] = vertex;
 
 		return vertex->id;
@@ -117,7 +125,7 @@ public:
 		edge->from = fromVertexId;
 		edge->to = toVertexId;
 
-		logger->debug("New edge {}: {} -> {}", edge->id, edge->from, edge->to);
+		logger->debug("New edge {}: {} -> {}", *edge, edge->from, edge->to);
 
 		// this is a directed graph, so only push edge to starting vertex
 		getVertex(edge->from)->edges.push_back(edge->id);
@@ -240,12 +248,12 @@ public:
 				ssEdges << getEdge(edge)->to << " ";
 			}
 
-			logger->info("  {} connected to: {}", vertexId, ssEdges.str());
+			logger->info("  {} connected to: {}", *vertex, ssEdges.str());
 		}
 
 		logger->info("Edges:");
 		for(auto& [edgeId, edge] : edges) {
-			logger->info("  {}: {} -> {}", edgeId, edge->from, edge->to);
+			logger->info("  {}: {} -> {}", *edge, edge->from, edge->to);
 		}
 	}
 
