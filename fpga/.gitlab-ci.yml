@@ -69,6 +69,20 @@ test:unit-software:
   tags:
     - docker
 
+test:unit-hardware:
+  stage: test
+  dependencies:
+    - build:source
+  tags:
+    - villas-fpga
+  script: |
+    if [ "$(who | wc -l)" -eq "0" ]; then
+      build/tests/unit-tests --filter 'fpga/*'
+    else
+      echo "System is currently used by: $(who)"
+      echo "We are skipping the test. Please restart manually."
+    fi
+
 # Stage: deploy
 ##############################################################################
 
