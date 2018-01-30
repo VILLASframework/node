@@ -33,7 +33,7 @@ docker-dev:
 build:source:
   stage: build
   script:
-    - mkdir build && cd build && cmake .. && make
+    - mkdir build && cd build && cmake .. && make -j8
   artifacts:
     expire_in: 1 week
     name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
@@ -68,6 +68,21 @@ test:unit-software:
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker
+
+test:unit-hardware:
+  stage: test
+#  dependencies:
+#    - build:source
+  tags:
+    - villas-fpga
+  script: |
+    rm -r build && mkdir build && cd build && cmake .. && make unit-tests -j8
+    if [ "$(who | wc -l)" -eq "0" ]; then
+      tests/unit-tests --jobs 1 --filter 'fpga/*'
+    else
+      echo "System is currently used by: $(who)"
+      echo "We are skipping the test. Please restart manually."
+    fi
 
 # Stage: deploy
 ##############################################################################
