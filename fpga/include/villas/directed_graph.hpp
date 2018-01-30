@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <stdexcept>
+#include <algorithm>
 
 #include "log.hpp"
 
@@ -167,6 +168,50 @@ public:
 	const std::list<EdgeIdentifier>&
 	vertexGetEdges(VertexIdentifier vertexId) const
 	{ return getVertex(vertexId)->edges; }
+
+	bool getPath(VertexIdentifier fromVertexId, VertexIdentifier toVertexId,
+	             std::list<EdgeIdentifier>& path)
+	{
+		if(fromVertexId == toVertexId) {
+			// arrived at the destination
+			return true;
+		} else {
+			auto fromVertex = getVertex(fromVertexId);
+
+			for(auto& edgeId : fromVertex->edges) {
+				auto edge = getEdge(edgeId);
+
+				// loop detection
+				bool loop = false;
+				for(auto& edgeIdInPath : path) {
+					auto edgeInPath = getEdge(edgeIdInPath);
+					if(edgeInPath->from == edgeId) {
+						loop = true;
+						break;
+					}
+				}
+
+				if(loop) {
+					logger->debug("Loop detected via edge {}", edgeId);
+					continue;
+				}
+
+				// remember the path we're investigating to detect loops
+				path.push_back(edgeId);
+
+				// recursive, depth-first search
+				if(getPath(edge->to, toVertexId, path)) {
+					// path found, we're done
+				    return true;
+				} else {
+					// tear down path that didn't lead to the destination
+					path.pop_back();
+				}
+			}
+		}
+
+		return false;
+	}
 
 	void dump()
 	{
