@@ -25,6 +25,7 @@ set(SOURCES
 	kernel/pci.c
 	kernel/vfio.c
 
+	memory_manager.cpp
 	plugin.c
 	plugin.cpp
 	utils.c
