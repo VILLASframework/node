@@ -2,7 +2,7 @@ variables:
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
   PREFIX: /usr/
-  DOCKER_TAG_DEV: ${CI_COMMIT_REF_NAME}
+  DOCKER_TAG_DEV: ${CI_BUILD_REF_SLUG}
   DOCKER_IMAGE_DEV: villas/fpga-dev
 
 # For some reason, GitLab CI prunes the contents of the submodules so we need to restore them.
