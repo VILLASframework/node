@@ -15,8 +15,6 @@ namespace villas {
 namespace graph {
 
 // use vector indices as identifiers
-using VertexIdentifier = std::size_t;
-using EdgeIdentifier = std::size_t;
 
 // forward declarations
 class Edge;
@@ -28,13 +26,16 @@ class Vertex {
 	friend class DirectedGraph;
 
 public:
+	using Identifier = std::size_t;
+
 	bool
 	operator==(const Vertex& other)
 	{ return this->id == other.id; }
 
 private:
-	VertexIdentifier id;
-	std::list<EdgeIdentifier> edges;
+	Identifier id;
+	// HACK: how to resolve this circular type dependency?
+	std::list<std::size_t> edges;
 };
 
 
@@ -43,20 +44,25 @@ class Edge {
 	friend class DirectedGraph;
 
 public:
+	using Identifier = std::size_t;
+
 	bool
 	operator==(const Edge& other)
 	{ return this->id == other.id; }
 
 private:
-	EdgeIdentifier id;
-	VertexIdentifier from;
-	VertexIdentifier to;
+	Identifier id;
+	Vertex::Identifier from;
+	Vertex::Identifier to;
 };
 
 
 template<typename VertexType = Vertex, typename EdgeType = Edge>
 class DirectedGraph {
 public:
+
+	using VertexIdentifier = Vertex::Identifier;
+	using EdgeIdentifier = Edge::Identifier;
 
 	DirectedGraph(const std::string& name = "DirectedGraph") :
 	    lastVertexId(0), lastEdgeId(0)
