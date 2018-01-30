@@ -12,7 +12,7 @@ before_script:
 stages:
   - prepare
   - build
-#  - test
+  - test
 #  - deploy
 
 # Stage: prepare
@@ -59,16 +59,16 @@ build:source:
 # Stage: test
 ##############################################################################
 
-#test:unit:
-#  stage: test
-#  dependencies:
-#    - build:source
-#  script:
-#    - make test
-#  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
-#  tags:
-#    - docker
-#    - fpga
+test:unit:
+  stage: test
+  dependencies:
+    - build:source
+  script:
+    - tests/unit-tests --filter 'graph/*'
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+  tags:
+    - docker
+    - fpga
 
 # Stage: deploy
 ##############################################################################
