@@ -20,10 +20,10 @@ Test(graph, basic, .description = "DirectedGraph")
 	auto v3id = g.addVertex(v3);
 	cr_assert(g.getVertexCount() == 3);
 
-	g.addEdge(v1id, v2id);
-	g.addEdge(v3id, v2id);
-	g.addEdge(v1id, v3id);
-	g.addEdge(v2id, v1id);
+	g.addDefaultEdge(v1id, v2id);
+	g.addDefaultEdge(v3id, v2id);
+	g.addDefaultEdge(v1id, v3id);
+	g.addDefaultEdge(v2id, v1id);
 	cr_assert(g.getEdgeCount() == 4);
 	cr_assert(g.vertexGetEdges(v1id).size() == 2);
 	cr_assert(g.vertexGetEdges(v2id).size() == 1);
@@ -40,7 +40,8 @@ Test(graph, path, .description = "Find path")
 	auto logger = loggerGetOrCreate("unittest:path");
 	logger->info("Testing path finding algorithm");
 
-	villas::graph::DirectedGraph<> g("unittest:path");
+	using Graph = villas::graph::DirectedGraph<>;
+	Graph g("unittest:path");
 
 	std::shared_ptr<villas::graph::Vertex> v1(new villas::graph::Vertex);
 	std::shared_ptr<villas::graph::Vertex> v2(new villas::graph::Vertex);
@@ -57,18 +58,18 @@ Test(graph, path, .description = "Find path")
 	auto v5id = g.addVertex(v5);
 	auto v6id = g.addVertex(v6);
 
-	g.addEdge(v1id, v2id);
-	g.addEdge(v2id, v3id);
+	g.addDefaultEdge(v1id, v2id);
+	g.addDefaultEdge(v2id, v3id);
 
 	// create circular subgraph
-	g.addEdge(v4id, v5id);
-	g.addEdge(v5id, v4id);
-	g.addEdge(v5id, v6id);
+	g.addDefaultEdge(v4id, v5id);
+	g.addDefaultEdge(v5id, v4id);
+	g.addDefaultEdge(v5id, v6id);
 
 	g.dump();
 
 	logger->info("Find simple path via two edges");
-	std::list<villas::graph::EdgeIdentifier> path1;
+	std::list<Graph::EdgeIdentifier> path1;
 	cr_assert(g.getPath(v1id, v3id, path1));
 
 	logger->info("  Path from {} to {} via:", v1id, v3id);
@@ -77,19 +78,19 @@ Test(graph, path, .description = "Find path")
 	}
 
 	logger->info("Find path between two unconnected sub-graphs");
-	std::list<villas::graph::EdgeIdentifier> path2;
+	std::list<Graph::EdgeIdentifier> path2;
 	cr_assert(not g.getPath(v1id, v4id, path2));
 	logger->info("  no path found -> ok");
 
 
 	logger->info("Find non-existing path in circular sub-graph");
-	std::list<villas::graph::EdgeIdentifier> path3;
+	std::list<Graph::EdgeIdentifier> path3;
 	cr_assert(not g.getPath(v4id, v2id, path3));
 	logger->info("  no path found -> ok");
 
 
 	logger->info("Find path in circular graph");
-	std::list<villas::graph::EdgeIdentifier> path4;
+	std::list<Graph::EdgeIdentifier> path4;
 	cr_assert(g.getPath(v4id, v6id, path4));
 
 	logger->info("  Path from {} to {} via:", v4id, v6id);

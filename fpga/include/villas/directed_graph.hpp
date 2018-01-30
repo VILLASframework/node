@@ -106,25 +106,36 @@ public:
 		return vertex->id;
 	}
 
-	EdgeIdentifier addEdge(VertexIdentifier fromVertexId,
+	EdgeIdentifier addEdge(std::shared_ptr<EdgeType> edge,
+	                       VertexIdentifier fromVertexId,
 	                       VertexIdentifier toVertexId)
 	{
-		std::shared_ptr<EdgeType> edge(new EdgeType);
+		// allocate edge id
 		edge->id = lastEdgeId++;
-
-		logger->debug("New edge {}: {} -> {}", edge->id, fromVertexId, toVertexId);
 
 		// connect it
 		edge->from = fromVertexId;
 		edge->to = toVertexId;
 
+		logger->debug("New edge {}: {} -> {}", edge->id, edge->from, edge->to);
+
 		// this is a directed graph, so only push edge to starting vertex
-		getVertex(fromVertexId)->edges.push_back(edge->id);
+		getVertex(edge->from)->edges.push_back(edge->id);
 
 		// add new edge to graph
 		edges[edge->id] = edge;
 
 		return edge->id;
+	}
+
+
+	EdgeIdentifier addDefaultEdge(VertexIdentifier fromVertexId,
+	                              VertexIdentifier toVertexId)
+	{
+		// create a new edge
+		std::shared_ptr<EdgeType> edge(new EdgeType);
+
+		return addEdge(edge, fromVertexId, toVertexId);
 	}
 
 	void removeEdge(EdgeIdentifier edgeId)
