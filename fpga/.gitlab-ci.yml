@@ -76,7 +76,7 @@ test:unit-hardware:
   tags:
     - villas-fpga
   script: |
-    mkdir build && cd build && cmake .. && make unit-tests
+    rm -r build && mkdir build && cd build && cmake .. && make unit-tests
     if [ "$(who | wc -l)" -eq "0" ]; then
       tests/unit-tests --jobs 1 --filter 'fpga/*'
     else
