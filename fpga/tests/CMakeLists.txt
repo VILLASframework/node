@@ -7,6 +7,7 @@ set(SOURCES
 #	rtds_rtt.c
 	timer.cpp
 #	xsg.c
+    graph.cpp
 )
 
 add_executable(unit-tests ${SOURCES})
