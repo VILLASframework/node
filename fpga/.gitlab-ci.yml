@@ -59,16 +59,15 @@ build:source:
 # Stage: test
 ##############################################################################
 
-test:unit:
+test:unit-software:
   stage: test
   dependencies:
     - build:source
   script:
-    - tests/unit-tests --filter 'graph/*'
+    - build/tests/unit-tests --filter 'graph/*'
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker
-    - fpga
 
 # Stage: deploy
 ##############################################################################
