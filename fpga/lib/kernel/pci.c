@@ -254,10 +254,29 @@ struct pci_device * pci_lookup_device(struct pci *p, struct pci_device *f)
 	return list_search(&p->devices, (cmp_cb_t) pci_device_compare, (void *) f);
 }
 
+int pci_get_driver(struct pci_device *d, char *buf, size_t buflen)
+{
+	int ret;
+	char sysfs[1024], syml[1024];
+
+	snprintf(sysfs, sizeof(sysfs), "%s/bus/pci/devices/%04x:%02x:%02x.%x/driver", SYSFS_PATH,
+		d->slot.domain, d->slot.bus, d->slot.device, d->slot.function);
+
+	ret = readlink(sysfs, syml, sizeof(syml));
+	if (ret < 0)
+		return ret;
+
+	char *driver = basename(syml);
+
+	strncpy(buf, driver, buflen);
+
+	return 0;
+}
+
 int pci_attach_driver(struct pci_device *d, const char *driver)
 {
 	FILE *f;
-	char fn[256];
+	char fn[1024];
 
 	/* Add new ID to driver */
 	snprintf(fn, sizeof(fn), "%s/bus/pci/drivers/%s/new_id", SYSFS_PATH, driver);

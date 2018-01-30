@@ -57,6 +57,9 @@ int pci_device_compare(const struct pci_device *d, const struct pci_device *f);
 
 struct pci_device * pci_lookup_device(struct pci *p, struct pci_device *filter);
 
+/** Get currently loaded driver for device */
+int pci_get_driver(struct pci_device *d, char *buf, size_t buflen);
+
 /** Bind a new LKM to the PCI device */
 int pci_attach_driver(struct pci_device *d, const char *driver);
 
