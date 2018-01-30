@@ -79,7 +79,7 @@ test:unit-hardware:
     mkdir build && cd build && cmake .. && make unit-tests
 
     if [ "$(who | wc -l)" -eq "0" ]; then
-      tests/unit-tests --filter 'fpga/*'
+      tests/unit-tests --jobs 1 --filter 'fpga/*'
     else
       echo "System is currently used by: $(who)"
       echo "We are skipping the test. Please restart manually."
