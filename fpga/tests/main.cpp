@@ -105,14 +105,3 @@ TestSuite(fpga,
 	.fini = fini,
 	.description = "VILLASfpga"
 );
-
-static void init_graph()
-{
-	spdlog::set_pattern("[%T] [%l] [%n] %v");
-	spdlog::set_level(spdlog::level::debug);
-}
-
-TestSuite(graph,
-    .init = init_graph,
-    .description = "Graph library"
-);
