@@ -39,7 +39,9 @@
 
 static struct queue q = { .state = STATE_DESTROYED };
 
+#if defined(_POSIX_BARRIERS) && _POSIX_BARRIERS > 0
 static pthread_barrier_t barrier;
+#endif
 
 struct param {
 	int volatile start;
@@ -87,6 +89,9 @@ static void * producer(void *ctx)
 	/** @todo Criterion cr_log() is broken for multi-threaded programs */
 	//cr_log_info("producer: tid = %lu", thread_get_id());
 
+#ifdef __APPLE__
+  #define pthread_yield pthread_yield_np
+#endif
 	/* Wait for global start signal */
 	while (p->start == 0)
 		pthread_yield();
@@ -152,6 +157,7 @@ static void * consumer(void *ctx)
 	return NULL;
 }
 
+#if defined(_POSIX_BARRIERS) && _POSIX_BARRIERS > 0
 void * producer_consumer(void *ctx)
 {
 	struct param *p = ctx;
@@ -226,6 +232,7 @@ void * producer_consumer_many(void *ctx)
 
 	return 0;
 }
+#endif /* _POSIX_BARRIERS */
 
 Test(queue, single_threaded)
 {
@@ -248,6 +255,7 @@ Test(queue, single_threaded)
 	cr_assert_eq(ret, 0, "Failed to create queue");
 }
 
+#if defined(_POSIX_BARRIERS) && _POSIX_BARRIERS > 0
 ParameterizedTestParameters(queue, multi_threaded)
 {
 	static struct param params[] = {
@@ -331,10 +339,11 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20)
 
 	ret = queue_destroy(&p->queue);
 	cr_assert_eq(ret, 0, "Failed to destroy queue");
-	
+
 	ret = pthread_barrier_destroy(&barrier);
 	cr_assert_eq(ret, 0, "Failed to destroy barrier");
 }
+#endif /* _POSIX_BARRIERS */
 
 Test(queue, init_destroy)
 {

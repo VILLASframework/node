@@ -25,6 +25,8 @@
 #include "kernel/kernel.h"
 #include "utils.h"
 
+#ifdef __linux__
+
 /* This test is not portable, but we currently support x86 only */
 Test(kernel, sizes)
 {
@@ -84,3 +86,5 @@ Test(kernel, module, .disabled = true)
 	ret = kernel_module_loaded("does_not_exist");
 	cr_assert_neq(ret, 0);
 }
+
+#endif /* __linux__ */

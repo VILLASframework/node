@@ -55,6 +55,7 @@ Test(utils, box_muller)
 	cr_assert_float_eq((double) sigma[0] / iter, 0.682829, 1e-2);
 }
 
+#ifdef __linux__
 Test(utils, cpuset)
 {
 	int ret;
@@ -78,6 +79,7 @@ Test(utils, cpuset)
 
 	cr_assert_eq(int1, int2);
 }
+#endif /* __linux__ */
 
 Test(utils, memdup)
 {
