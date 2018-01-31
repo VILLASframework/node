@@ -3,6 +3,13 @@
 #include <criterion/criterion.h>
 #include <villas/directed_graph.hpp>
 #include <villas/log.hpp>
+#include <villas/memory_manager.hpp>
+
+static void init_graph()
+{
+	spdlog::set_pattern("[%T] [%l] [%n] %v");
+	spdlog::set_level(spdlog::level::debug);
+}
 
 TestSuite(graph,
 	.description = "Graph library"
@@ -101,4 +108,16 @@ Test(graph, path, .description = "Find path")
 	for(auto& edge : path4) {
 		logger->info("  -> edge {}", edge);
 	}
+}
+
+Test(graph, memory_manager, .description = "Global Memory Manager")
+{
+	auto& mm = villas::MemoryManager::get();
+
+	auto dmaRegs = mm.createAddressSpace("DMA Registers");
+	auto pcieBridge = mm.createAddressSpace("PCIe Bridge");
+
+	mm.createMapping(0x1000, 0, 0x1000, dmaRegs, pcieBridge);
+
+	mm.dump();
 }
