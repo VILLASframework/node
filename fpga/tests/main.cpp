@@ -29,17 +29,26 @@
 #include <villas/fpga/card.h>
 #include <villas/fpga/vlnv.h>
 
+#include <villas/log.hpp>
+#include <villas/plugin.hpp>
+#include <villas/fpga/card.hpp>
+
+#include <spdlog/spdlog.h>
+
 #define FPGA_CARD	"vc707"
-#define TEST_CONFIG	"/villas/etc/fpga.json"
+#define TEST_CONFIG	"../etc/fpga.json"
 #define TEST_LEN	0x1000
 
 #define CPU_HZ		3392389000
 #define FPGA_AXI_HZ	125000000
 
-struct list cards;
-struct fpga_card *card;
 struct pci pci;
 struct vfio_container vc;
+villas::fpga::CardList fpgaCards;
+villas::fpga::PCIeCard* fpga;
+
+// keep to make it compile with old C tests
+struct fpga_card* card;
 
 static void init()
 {
@@ -47,6 +56,12 @@ static void init()
 
 	FILE *f;
 	json_error_t err;
+
+	villas::Plugin::dumpList();
+
+	auto logger = loggerGetOrCreate("unittest");
+	spdlog::set_pattern("[%T] [%l] [%n] %v");
+	spdlog::set_level(spdlog::level::debug);
 
 	ret = pci_init(&pci);
 	cr_assert_eq(ret, 0, "Failed to initialize PCI sub-system");
@@ -67,40 +82,43 @@ static void init()
 	cr_assert_not_null(fpgas, "No section 'fpgas' found in config");
 	cr_assert(json_object_size(json) > 0, "No FPGAs defined in config");
 
-	json_t *json_card = json_object_get(fpgas, FPGA_CARD);
-	cr_assert_not_null(json_card, "FPGA card " FPGA_CARD " not found");
+	// get the FPGA card plugin
+	villas::Plugin* plugin = villas::Plugin::lookup(villas::Plugin::Type::FpgaCard, "");
+	cr_assert_not_null(plugin, "No plugin for FPGA card found");
+	villas::fpga::PCIeCardFactory* fpgaCardPlugin = dynamic_cast<villas::fpga::PCIeCardFactory*>(plugin);
 
-	card = (struct fpga_card *) alloc(sizeof(struct fpga_card));
-	cr_assert_not_null(card, "Cannot allocate memory for FPGA card");
+	// create all FPGA card instances using the corresponding plugin
+	fpgaCards = fpgaCardPlugin->make(fpgas, &pci, &vc);
 
-	ret = fpga_card_init(card, &pci, &vc);
-	cr_assert_eq(ret, 0, "FPGA card initialization failed");
+	if(fpgaCards.size() == 0) {
+		logger->error("No FPGA cards found!");
+	} else {
+		fpga = fpgaCards.front().get();
+	}
 
-	ret = fpga_card_start(card);
-	cr_assert_eq(ret, 0, "FPGA card cannot be started");
-
-	ret = fpga_card_parse(card, json_card, FPGA_CARD);
-	cr_assert_eq(ret, 0, "Failed to parse FPGA config");
-
-	ret = fpga_card_check(card);
-	cr_assert_eq(ret, 0, "FPGA card check failed");
+	cr_assert_not_null(fpga, "No FPGA card available");
 
 	json_decref(json);
-
-	if (criterion_options.logging_threshold < CRITERION_IMPORTANT)
-		fpga_card_dump(card);
 }
 
 static void fini()
 {
-	int ret;
-
-	ret = fpga_card_destroy(card);
-	cr_assert_eq(ret, 0, "Failed to de-initilize FPGA");
+	fpgaCards.clear();
 }
 
 TestSuite(fpga,
 	.init = init,
 	.fini = fini,
 	.description = "VILLASfpga"
+);
+
+static void init_graph()
+{
+	spdlog::set_pattern("[%T] [%l] [%n] %v");
+	spdlog::set_level(spdlog::level::debug);
+}
+
+TestSuite(graph,
+    .init = init_graph,
+    .description = "Graph library"
 );

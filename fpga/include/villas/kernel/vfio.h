@@ -20,6 +20,10 @@
 
 #define VFIO_DEV(x)	"/dev/vfio/" x
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct pci_device;
 
@@ -108,5 +112,9 @@ int vfio_unmap_dma(struct vfio_container *c, uint64_t virt, uint64_t phys, size_
 
 /** munmap() a region which has been mapped by vfio_map_region() */
 int vfio_unmap_region(struct vfio_device *d, int idx);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

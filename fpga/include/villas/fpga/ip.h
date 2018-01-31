@@ -44,6 +44,10 @@
 #include "fpga/ips/dft.h"
 #include "fpga/ips/intc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum fpga_ip_types {
 	FPGA_IP_TYPE_DM_DMA,	/**< A datamover IP exchanges streaming data between the FPGA and the CPU. */
 	FPGA_IP_TYPE_DM_FIFO,	/**< A datamover IP exchanges streaming data between the FPGA and the CPU. */
@@ -51,7 +55,7 @@ enum fpga_ip_types {
 	FPGA_IP_TYPE_MATH,	/**< A math IP performs some kind of mathematical operation on the streaming data */
 	FPGA_IP_TYPE_MISC,	/**< Other IP components like timer, counters, interrupt conctrollers or routing. */
 	FPGA_IP_TYPE_INTERFACE	/**< A interface IP connects the FPGA to another system or controller. */
-} type;
+};
 
 struct fpga_ip_type {
 	struct fpga_vlnv vlnv;
@@ -115,5 +119,8 @@ int fpga_ip_reset(struct fpga_ip *c);
 /** Find a registered FPGA IP core type with the given VLNV identifier. */
 struct fpga_ip_type * fpga_ip_type_lookup(const char *vstr);
 
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

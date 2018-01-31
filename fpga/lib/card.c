@@ -241,7 +241,7 @@ void fpga_card_dump(struct fpga_card *c)
 		info("Slot: %04x:%02x:%02x.%d", c->vfio_device.pci_device->slot.domain, c->vfio_device.pci_device->slot.bus, c->vfio_device.pci_device->slot.device, c->vfio_device.pci_device->slot.function);
 		info("Vendor ID: %04x", c->vfio_device.pci_device->id.vendor);
 		info("Device ID: %04x", c->vfio_device.pci_device->id.device);
-		info("Class  ID: %04x", c->vfio_device.pci_device->id.class);
+		info("Class  ID: %04x", c->vfio_device.pci_device->id.class_code);
 
 		info("BAR0 mapped at %p", c->map);
 

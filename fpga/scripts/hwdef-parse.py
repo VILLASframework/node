@@ -68,7 +68,7 @@ def bus_trace(root, busname, type, whitelist):
 	instance = module[0].get('INSTANCE')
 
 	if vlnv_match(vlnv, whitelist):
-		return instance
+		return instance, busname
 	elif vlnv_match(vlnv, axi_converter_whitelist):
 		next_bus = module[0].xpath('.//BUSINTERFACE[@TYPE="{}" or @TYPE="{}"]'.format(opponent[type[0]][0], opponent[type[0]][1]))
 		next_busname = next_bus[0].get('BUSNAME')
@@ -85,6 +85,17 @@ def vlnv_match(vlnv, whitelist):
 			return True
 
 	return False
+
+def remove_prefix(text, prefix):
+	return text[text.startswith(prefix) and len(prefix):]
+
+def sanitize_name(name):
+	name = remove_prefix(name, 'S_')
+	name = remove_prefix(name, 'M_')
+	name = remove_prefix(name, 'AXI_')
+	name = remove_prefix(name, 'AXIS_')
+
+	return name
 
 if len(sys.argv) < 2:
 	print('Usage: {} path/to/*.hwdef'.format(sys.argv[0]))
@@ -119,10 +130,25 @@ for module in modules:
 		continue
 
 	ips[instance] = {
-		'vlnv' : vlnv,
-		'irqs' : { },
-		'ports' : { }
+		'vlnv' : vlnv
 	}
+
+	# populate memory view
+	mmap = module.find('.//MEMORYMAP')
+	if not mmap:
+		continue
+
+	mem = ips[instance].setdefault('memory-view', {})
+	for mrange in mmap:
+		mem_interface = remove_prefix(mrange.get('MASTERBUSINTERFACE'), 'M_AXI_')
+		mem_instance = mrange.get('INSTANCE')
+
+		entry = mem.setdefault(mem_interface, {}).setdefault(mem_instance, {})
+
+		entry['baseaddr'] = int(mrange.get('BASEVALUE'), 16);
+		entry['highaddr'] = int(mrange.get('HIGHVALUE'), 16);
+
+
 
 # find PCI-e module to extract memory map
 pcie = root.find('.//MODULE[@MODTYPE="axi_pcie"]')
@@ -131,15 +157,21 @@ for mrange in mmap:
 	instance = mrange.get('INSTANCE')
 
 	if instance in ips:
-		ips[instance]['baseaddr'] = int(mrange.get('BASEVALUE'), 16);
-		ips[instance]['highaddr'] = int(mrange.get('HIGHVALUE'), 16);
+		base_name = remove_prefix(mrange.get('BASENAME'), 'C_').lower()
+		high_name = remove_prefix(mrange.get('HIGHNAME'), 'C_').lower()
+
+		ips[instance][base_name] = int(mrange.get('BASEVALUE'), 16);
+		ips[instance][high_name] = int(mrange.get('HIGHVALUE'), 16);
 
 # find AXI-Stream switch port mapping
 switch = root.find('.//MODULE[@MODTYPE="axis_switch"]')
 busifs = switch.find('.//BUSINTERFACES')
+switch_ports = 0
 for busif in busifs:
 	if busif.get('VLNV') != 'xilinx.com:interface:axis:1.0':
 		continue
+
+	switch_ports += 1
 
 	busname = busif.get('BUSNAME')
 	name = busif.get('NAME')
@@ -150,10 +182,23 @@ for busif in busifs:
 
 	port = int(m.group(2))
 
-	ep = bus_trace(root, busname, opponent[type], whitelist)
-
+	ep, busname_ep = bus_trace(root, busname, opponent[type], whitelist)
 	if ep in ips:
-		ips[ep]['ports'][type.lower()] = port
+
+		ports = ips[ep].setdefault('ports', [])
+		ports.append({
+			'role': opponent[type][0].lower(),
+			'target': '{}:{}'.format(switch.get('INSTANCE'), port)
+		})
+
+		module_ep = root.find('.//MODULE[@INSTANCE="{}"]'.format(ep))
+		busif_ep = module_ep.find('.//BUSINTERFACE[@BUSNAME="{}"]'.format(busname_ep))
+		if busif_ep:
+			ports[-1]['name'] = sanitize_name(busif_ep.get('NAME'))
+
+# set number of master/slave port pairs for switch
+ips[switch.get('INSTANCE')]['num_ports'] = switch_ports / 2
+
 
 # find Interrupt assignments
 intc = root.find('.//MODULE[@MODTYPE="axi_pcie_intc"]')
@@ -182,7 +227,8 @@ for port in ports:
 	irqname = port.get('NAME')
 
 	if instance in ips:
-		ips[instance]['irqs'][irqname] = irq
+		irqs = ips[instance].setdefault('irqs', {})
+		irqs[irqname] = '{}:{}'.format(intc.get('INSTANCE'), irq)
 
 # Find BRAM storage depths (size)
 brams = root.xpath('.//MODULE[@MODTYPE="axi_bram_ctrl"]')

@@ -28,6 +28,10 @@
 #ifndef _FPGA_VLNV_H_
 #define _FPGA_VLNV_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct list;
 
@@ -49,5 +53,9 @@ int fpga_vlnv_parse(struct fpga_vlnv *c, const char *vlnv);
 
 /** Release memory allocated by fpga_vlnv_parse(). */
 int fpga_vlnv_destroy(struct fpga_vlnv *v);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /** _FPGA_VLNV_H_ @} */

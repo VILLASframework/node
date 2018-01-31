@@ -35,6 +35,10 @@
 #include "kernel/pci.h"
 #include "kernel/vfio.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct fpga_ip;
 struct vfio_container;
@@ -91,5 +95,9 @@ void fpga_card_dump(struct fpga_card *c);
 
 /** Reset the FPGA to a known state */
 int fpga_card_reset(struct fpga_card *c);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

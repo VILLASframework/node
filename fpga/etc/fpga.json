@@ -26,78 +26,226 @@
       "slot": "03:00.0",
       "do_reset": true,
       "ips": {
-        "axi_pcie_intc_0": {
-          "vlnv": "acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:1.0",
-          "baseaddr": 45056
+        "bram_0_axi_bram_ctrl_0": {
+          "vlnv": "xilinx.com:ip:axi_bram_ctrl:4.0",
+          "s_axi_baseaddr": 0,
+          "s_axi_highaddr": 8191,
+          "size": 8192
         },
-        "switch_0": {
-          "vlnv": "xilinx.com:ip:axis_interconnect:2.1",
-          "baseaddr": 20480,
-          "num_ports": 10,
-          "paths": [
+        "hier_0_axi_dma_axi_dma_0": {
+          "vlnv": "xilinx.com:ip:axi_dma:7.1",
+          "memory-view": {
+            "SG": {
+              "bram_0_axi_bram_ctrl_0": {
+                "baseaddr": 0,
+                "highaddr": 8191
+              },
+              "hier_0_axi_dma_axi_dma_1": {
+                "baseaddr": 8192,
+                "highaddr": 12287
+              },
+              "hier_0_axi_dma_axi_dma_0": {
+                "baseaddr": 12288,
+                "highaddr": 16383
+              },
+              "timer_0_axi_timer_0": {
+                "baseaddr": 16384,
+                "highaddr": 20479
+              },
+              "hier_0_axis_interconnect_0_axis_interconnect_0_xbar": {
+                "baseaddr": 20480,
+                "highaddr": 24575
+              },
+              "hier_0_axi_fifo_mm_s_0": {
+                "baseaddr": 49152,
+                "highaddr": 57343
+              },
+              "pcie_0_axi_reset_0": {
+                "baseaddr": 28672,
+                "highaddr": 32767
+              },
+              "hier_0_rtds_axis_0": {
+                "baseaddr": 32768,
+                "highaddr": 36863
+              },
+              "hier_0_hls_dft_0": {
+                "baseaddr": 36864,
+                "highaddr": 40959
+              },
+              "pcie_0_axi_pcie_intc_0": {
+                "baseaddr": 45056,
+                "highaddr": 49151
+              },
+              "pcie_0_axi_pcie_0": {
+                "baseaddr": 268435456,
+                "highaddr": 536870911
+              }
+            },
+            "MM2S": {
+              "pcie_0_axi_pcie_0": {
+                "baseaddr": 2147483648,
+                "highaddr": 4294967295
+              }
+            },
+            "S2MM": {
+              "pcie_0_axi_pcie_0": {
+                "baseaddr": 2147483648,
+                "highaddr": 4294967295
+              }
+            }
+          },
+          "baseaddr": 12288,
+          "highaddr": 16383,
+          "ports": [
             {
-              "in": "rtds_axis_0",
-              "out": "dma_1",
-              "reverse": true
+              "role": "initiator",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:1",
+              "name": "MM2S"
+            },
+            {
+              "role": "target",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:1",
+              "name": "S2MM"
             }
           ]
         },
-        "axi_reset_0": {
-          "vlnv": "xilinx.com:ip:axi_gpio:2.0",
-          "baseaddr": 28672
-        },
-        "timer_0": {
-          "vlnv": "xilinx.com:ip:axi_timer:2.0",
-          "baseaddr": 16384,
-          "irq": 0
-        },
-        "dma_0": {
+        "hier_0_axi_dma_axi_dma_1": {
           "vlnv": "xilinx.com:ip:axi_dma:7.1",
-          "baseaddr": 12288,
-          "port": 1,
-          "irq": 3
-        },
-        "dma_1": {
-          "vlnv": "xilinx.com:ip:axi_dma:7.1",
+          "memory-view": {
+            "MM2S": {
+              "pcie_0_axi_pcie_0": {
+                "baseaddr": 2147483648,
+                "highaddr": 4294967295
+              }
+            },
+            "S2MM": {
+              "pcie_0_axi_pcie_0": {
+                "baseaddr": 2147483648,
+                "highaddr": 4294967295
+              }
+            }
+          },
           "baseaddr": 8192,
-          "port": 6,
-          "irq": 3
+          "highaddr": 12287,
+          "ports": [
+            {
+              "role": "initiator",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:6",
+              "name": "MM2S"
+            },
+            {
+              "role": "target",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:6",
+              "name": "S2MM"
+            }
+          ]
         },
-        "fifo_mm_s_0": {
+        "hier_0_axi_fifo_mm_s_0": {
           "vlnv": "xilinx.com:ip:axi_fifo_mm_s:4.1",
           "baseaddr": 24576,
-          "baseaddr_axi4": 49152,
-          "port": 2,
-          "irq": 2
+          "highaddr": 28671,
+          "axi4_baseaddr": 49152,
+          "axi4_highaddr": 57343,
+          "ports": [
+            {
+              "role": "master",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:2",
+              "name": "STR_TXD"
+            },
+            {
+              "role": "slave",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:2",
+              "name": "STR_RXD"
+            }
+          ],
+          "irqs": {
+            "interrupt": "pcie_0_axi_pcie_intc_0:2"
+          }
         },
-        "rtds_axis_0": {
+        "hier_0_axis_interconnect_0_axis_interconnect_0_xbar": {
+          "vlnv": "xilinx.com:ip:axis_switch:1.1",
+          "baseaddr": 20480,
+          "highaddr": 24575,
+          "ports": [
+            {
+              "role": "initiator",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:3",
+              "name": "M03_AXIS"
+            },
+            {
+              "role": "target",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:3",
+              "name": "S03_AXIS"
+            },
+            {
+              "role": "initiator",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:4",
+              "name": "M04_AXIS"
+            },
+            {
+              "role": "target",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:4",
+              "name": "S04_AXIS"
+            }
+          ],
+          "num_ports": 14
+        },
+        "hier_0_hls_dft_0": {
+          "vlnv": "acs.eonerc.rwth-aachen.de:hls:hls_dft:1.0",
+          "s_axi_ctrl_baseaddr": 36864,
+          "s_axi_ctrl_highaddr": 40959,
+          "ports": [
+            {
+              "role": "master",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:5",
+              "name": "output_r"
+            },
+            {
+              "role": "slave",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:5",
+              "name": "input_r"
+            }
+          ]
+        },
+        "hier_0_rtds_axis_0": {
           "vlnv": "acs.eonerc.rwth-aachen.de:user:rtds_axis:1.0",
           "baseaddr": 32768,
-          "port": 0,
-          "irq": 5
-        },
-        "hls_dft_0": {
-          "vlnv": "acs.eonerc.rwth-aachen.de:hls:hls_dft:1.0",
-          "baseaddr": 36864,
-          "port": 5,
-          "irq": 1,
-          "period": 400,
-          "harmonics": [
-            0,
-            1,
-            3,
-            5,
-            7
+          "highaddr": 36863,
+          "ports": [
+            {
+              "role": "master",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:0",
+              "name": "m_axis"
+            },
+            {
+              "role": "slave",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:0",
+              "name": "s_axis"
+            }
           ],
-          "decimation": 0
+          "irqs": {
+            "irq_ts": "pcie_0_axi_pcie_intc_0:5",
+            "irq_overflow": "pcie_0_axi_pcie_intc_0:6",
+            "irq_case": "pcie_0_axi_pcie_intc_0:7"
+          }
         },
-        "axis_data_fifo_0": {
-          "vlnv": "xilinx.com:ip:axis_data_fifo:1.1",
-          "port": 3
+        "pcie_0_axi_pcie_intc_0": {
+          "vlnv": "acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:1.0",
+          "baseaddr": 45056,
+          "highaddr": 49151
         },
-        "axis_data_fifo_1": {
-          "vlnv": "xilinx.com:ip:axis_data_fifo:1.1",
-          "port": 6
+        "pcie_0_axi_reset_0": {
+          "vlnv": "xilinx.com:ip:axi_gpio:2.0",
+          "baseaddr": 28672,
+          "highaddr": 32767
+        },
+        "timer_0_axi_timer_0": {
+          "vlnv": "xilinx.com:ip:axi_timer:2.0",
+          "baseaddr": 16384,
+          "highaddr": 20479,
+          "irqs": {
+            "generateout0": "pcie_0_axi_pcie_intc_0:0"
+          }
         }
       }
     }

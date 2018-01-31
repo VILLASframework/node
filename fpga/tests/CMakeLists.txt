@@ -1,12 +1,13 @@
 set(SOURCES
-	main.c
-	dma.c
-	fifo.c
-	hls.c
-	intc.c
-	rtds_rtt.c
-	tmrctr.c
-	xsg.c
+	main.cpp
+#	dma.c
+    fifo.cpp
+#	hls.c
+#	intc.c
+#	rtds_rtt.c
+	timer.cpp
+#	xsg.c
+    graph.cpp
 )
 
 add_executable(unit-tests ${SOURCES})

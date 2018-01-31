@@ -229,10 +229,13 @@ int vfio_pci_attach(struct vfio_device *d, struct vfio_container *c, struct pci_
 	if (kernel_module_load("vfio_pci"))
 		error("Failed to load kernel driver: %s", "vfio_pci");
 
-	/* Bind PCI card to vfio-pci driver*/
-	ret = pci_attach_driver(pdev, "vfio-pci");
-	if (ret)
-		error("Failed to attach device to driver");
+	/* Bind PCI card to vfio-pci driver if not already bound */
+	ret = pci_get_driver(pdev, name, sizeof(name));
+	if (ret || strcmp(name, "vfio-pci")) {
+		ret = pci_attach_driver(pdev, "vfio-pci");
+		if (ret)
+			error("Failed to attach device to driver");
+	}
 
 	/* Get IOMMU group of device */
 	int index = pci_get_iommu_group(pdev);
