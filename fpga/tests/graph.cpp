@@ -4,23 +4,16 @@
 #include <villas/directed_graph.hpp>
 #include <villas/log.hpp>
 
-static void init_graph()
-{
-	spdlog::set_pattern("[%T] [%l] [%n] %v");
-	spdlog::set_level(spdlog::level::debug);
-}
-
 TestSuite(graph,
-	.init = init_graph,
 	.description = "Graph library"
 );
 
 Test(graph, basic, .description = "DirectedGraph")
 {
-	auto logger = loggerGetOrCreate("unittest:basic");
+	auto logger = loggerGetOrCreate("test:graph:basic");
 	logger->info("Testing basic graph construction and modification");
 
-	villas::graph::DirectedGraph<> g("unittest:basic");
+	villas::graph::DirectedGraph<> g("test:graph:basic");
 
 	std::shared_ptr<villas::graph::Vertex> v1(new villas::graph::Vertex);
 	std::shared_ptr<villas::graph::Vertex> v2(new villas::graph::Vertex);
@@ -48,11 +41,11 @@ Test(graph, basic, .description = "DirectedGraph")
 
 Test(graph, path, .description = "Find path")
 {
-	auto logger = loggerGetOrCreate("unittest:path");
+	auto logger = loggerGetOrCreate("test:graph:path");
 	logger->info("Testing path finding algorithm");
 
 	using Graph = villas::graph::DirectedGraph<>;
-	Graph g("unittest:path");
+	Graph g("test:graph:path");
 
 	std::shared_ptr<villas::graph::Vertex> v1(new villas::graph::Vertex);
 	std::shared_ptr<villas::graph::Vertex> v2(new villas::graph::Vertex);

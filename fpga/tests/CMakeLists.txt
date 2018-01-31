@@ -1,6 +1,7 @@
 set(SOURCES
 	main.cpp
 	fpga.cpp
+	logging.cpp
 #	dma.c
     fifo.cpp
 #	hls.c
