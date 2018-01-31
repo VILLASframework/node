@@ -1,5 +1,6 @@
 set(SOURCES
 	main.cpp
+	fpga.cpp
 #	dma.c
     fifo.cpp
 #	hls.c
