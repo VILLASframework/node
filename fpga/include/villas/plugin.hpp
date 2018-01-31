@@ -81,7 +81,7 @@ public:
 protected:
 	static SpdLogger
 	getStaticLogger()
-	{ return loggerGetOrCreate("Plugin"); }
+	{ return loggerGetOrCreate("plugin"); }
 
 private:
 	/* Just using a standard std::list<> to hold plugins is problematic, because

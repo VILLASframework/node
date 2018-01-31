@@ -64,8 +64,6 @@ int main(int argc, char *argv[])
 {
 	int ret;
 	
-	auto logger = loggerGetOrCreate("unittest");
-	spdlog::set_pattern("[%T] [%l] [%n] %v");
 	spdlog::set_level(spdlog::level::debug);
 	
 	/* Run criterion tests */
