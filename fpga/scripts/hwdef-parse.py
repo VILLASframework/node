@@ -188,7 +188,7 @@ for busif in busifs:
 			ports[-1]['name'] = sanitize_name(busif_ep.get('NAME'))
 
 # set number of master/slave port pairs for switch
-ips[switch.get('INSTANCE')]['num_ports'] = switch_ports / 2
+ips[switch.get('INSTANCE')]['num_ports'] = int(switch_ports / 2)
 
 
 # find Interrupt assignments
