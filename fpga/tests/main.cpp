@@ -50,11 +50,12 @@ static bool suite_enabled(struct criterion_test_set *tests, const char *name)
 }
 
 /* Limit number of parallel jobs to 1 in case we use the FPGA */
-ReportHook(PRE_ALL)(struct criterion_test_set *tests) {
+ReportHook(PRE_ALL)(struct criterion_test_set *tests)
+{
 	if (suite_enabled(tests, "fpga")) {
 		auto logger = loggerGetOrCreate("unittest");
 
-		logger->info("FPGA tests enabled. Only 1 job is executed in parallel!.\n");
+		logger->info("FPGA tests enabled. Only 1 job is executed in parallel!.");
 		criterion_options.jobs = 1;
 	}
 }
@@ -62,18 +63,15 @@ ReportHook(PRE_ALL)(struct criterion_test_set *tests) {
 int main(int argc, char *argv[])
 {
 	int ret;
-
-	struct criterion_test_set *tests;
 	
 	auto logger = loggerGetOrCreate("unittest");
 	spdlog::set_pattern("[%T] [%l] [%n] %v");
 	spdlog::set_level(spdlog::level::debug);
 	
 	/* Run criterion tests */
-	tests = criterion_initialize();
+	auto tests = criterion_initialize();
 
 	ret = criterion_handle_args(argc, argv, true);
-	
 	if (ret)
 		ret = !criterion_run_all_tests(tests);
 
