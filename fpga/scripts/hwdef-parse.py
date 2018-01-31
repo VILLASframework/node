@@ -34,7 +34,8 @@ whitelist = [
 	[ 'acs.eonerc.rwth-aachen.de', 'hls' ],
 	[ 'acs.eonerc.rwth-aachen.de', 'sysgen' ],
 	[ 'xilinx.com', 'ip', 'axi_gpio' ],
-	[ 'xilinx.com', 'ip', 'axi_bram_ctrl' ]
+	[ 'xilinx.com', 'ip', 'axi_bram_ctrl' ],
+	[ 'xilinx.com', 'ip', 'axi_pcie' ]
 ]
 
 # List of VLNI ids of AXI4-Stream infrastructure IP cores which do not alter data
@@ -140,28 +141,18 @@ for module in modules:
 
 	mem = ips[instance].setdefault('memory-view', {})
 	for mrange in mmap:
-		mem_interface = remove_prefix(mrange.get('MASTERBUSINTERFACE'), 'M_AXI_')
+		mem_interface = mrange.get('MASTERBUSINTERFACE')
 		mem_instance = mrange.get('INSTANCE')
+		mem_block = mrange.get('ADDRESSBLOCK')
 
-		entry = mem.setdefault(mem_interface, {}).setdefault(mem_instance, {})
+		_interface = mem.setdefault(mem_interface, {})
+		_instance = _interface.setdefault(mem_instance, {})
+		_block = _instance.setdefault(mem_block, {})
 
-		entry['baseaddr'] = int(mrange.get('BASEVALUE'), 16);
-		entry['highaddr'] = int(mrange.get('HIGHVALUE'), 16);
+		_block['baseaddr'] = int(mrange.get('BASEVALUE'), 16)
+		_block['highaddr'] = int(mrange.get('HIGHVALUE'), 16)
+		_block['size'] = _block['highaddr'] - _block['baseaddr'] + 1
 
-
-
-# find PCI-e module to extract memory map
-pcie = root.find('.//MODULE[@MODTYPE="axi_pcie"]')
-mmap = pcie.find('.//MEMORYMAP')
-for mrange in mmap:
-	instance = mrange.get('INSTANCE')
-
-	if instance in ips:
-		base_name = remove_prefix(mrange.get('BASENAME'), 'C_').lower()
-		high_name = remove_prefix(mrange.get('HIGHNAME'), 'C_').lower()
-
-		ips[instance][base_name] = int(mrange.get('BASEVALUE'), 16);
-		ips[instance][high_name] = int(mrange.get('HIGHVALUE'), 16);
 
 # find AXI-Stream switch port mapping
 switch = root.find('.//MODULE[@MODTYPE="axis_switch"]')
