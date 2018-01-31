@@ -27,8 +27,8 @@
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/fifo.hpp>
 
+#include "global.hpp"
 
-extern villas::fpga::PCIeCard* fpga;
 
 Test(fpga, fifo, .description = "FIFO")
 {
@@ -37,7 +37,7 @@ Test(fpga, fifo, .description = "FIFO")
 
 	auto logger = loggerGetOrCreate("unittest:fifo");
 
-	for(auto& ip : fpga->ips) {
+	for(auto& ip : state.cards.front()->ips) {
 		// skip non-fifo IPs
 		if(*ip != villas::fpga::Vlnv("xilinx.com:ip:axi_fifo_mm_s:"))
 			continue;

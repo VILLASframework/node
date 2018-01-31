@@ -35,6 +35,8 @@
 
 #include <spdlog/spdlog.h>
 
+#include "global.hpp"
+
 #define FPGA_CARD	"vc707"
 #define TEST_CONFIG	"../etc/fpga.json"
 #define TEST_LEN	0x1000
@@ -42,13 +44,10 @@
 #define CPU_HZ		3392389000
 #define FPGA_AXI_HZ	125000000
 
-struct pci pci;
-struct vfio_container vc;
-villas::fpga::CardList fpgaCards;
-villas::fpga::PCIeCard* fpga;
+FpgaState state;
 
-// keep to make it compile with old C tests
-struct fpga_card* card;
+static struct pci pci;
+static struct vfio_container vc;
 
 static void init()
 {
@@ -88,22 +87,17 @@ static void init()
 	villas::fpga::PCIeCardFactory* fpgaCardPlugin = dynamic_cast<villas::fpga::PCIeCardFactory*>(plugin);
 
 	// create all FPGA card instances using the corresponding plugin
-	fpgaCards = fpgaCardPlugin->make(fpgas, &pci, &vc);
+	state.cards = fpgaCardPlugin->make(fpgas, &pci, &vc);
 
-	if(fpgaCards.size() == 0) {
-		logger->error("No FPGA cards found!");
-	} else {
-		fpga = fpgaCards.front().get();
-	}
-
-	cr_assert_not_null(fpga, "No FPGA card available");
+	cr_assert(state.cards.size() != 0, "No FPGA cards found!");
 
 	json_decref(json);
 }
 
 static void fini()
 {
-	fpgaCards.clear();
+	// release all cards
+	state.cards.clear();
 }
 
 TestSuite(fpga,
