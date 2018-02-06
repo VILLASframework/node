@@ -158,7 +158,8 @@ endif
 ifeq ($(WITH_NODE_MQTT),1)
 ifneq ($(wildcard /usr/include/mosquitto.h),)
 	LIB_SRCS    += lib/nodes/mqtt.c
-	LIB_CFLAGS  += -DWITH_MQTT
+	LIB_NODES   += mqtt
 	LIB_LDLIBS  += -lmosquitto
+	WITH_IO      = 1
 endif
 endif

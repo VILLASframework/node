@@ -23,9 +23,9 @@
 // Generated message descriptors by protoc
 #include "villas.pb-c.h"
 
-#include "sample.h"
-#include "plugin.h"
-#include "io/protobuf.h"
+#include "villas/sample.h"
+#include "villas/plugin.h"
+#include "villas/io/protobuf.h"
 
 int protobuf_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
 {

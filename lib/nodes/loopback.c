@@ -20,11 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "node.h"
-#include "plugin.h"
-#include "config.h"
-#include "nodes/loopback.h"
-#include "memory.h"
+#include <villas/node.h>
+#include <villas/plugin.h>
+#include <villas/config.h>
+#include <villas/nodes/loopback.h>
+#include <villas/memory.h>
 
 int loopback_parse(struct node *n, json_t *cfg)
 {

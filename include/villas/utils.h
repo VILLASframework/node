@@ -30,7 +30,8 @@
 #include <signal.h>
 #include <sys/types.h>
 
-#include "log.h"
+#include <villas/config.h>
+#include <villas/log.h>
 
 #ifdef __GNUC__
   #define LIKELY(x)	__builtin_expect((x),1)

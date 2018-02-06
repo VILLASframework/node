@@ -31,9 +31,9 @@
 
 #pragma once
 
-#include "node.h"
-#include "pool.h"
-#include "queue_signalled.h"
+#include <villas/node.h>
+#include <villas/pool.h>
+#include <villas/queue_signalled.h>
 
 /* Forward declarations */
 struct io_format;
@@ -67,7 +67,7 @@ struct mqtt {
 };
 
 /** @see node_type::reverse */
-char * mqtt_reverse(struct node *n);
+int mqtt_reverse(struct node *n);
 
 /** @see node_type::print */
 char * mqtt_print(struct node *n);

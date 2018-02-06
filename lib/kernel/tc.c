@@ -27,12 +27,12 @@
 
 #include <linux/if_ether.h>
 
-#include "kernel/kernel.h"
-#include "kernel/if.h"
-#include "kernel/tc.h"
-#include "kernel/nl.h"
+#include <villas/utils.h>
 
-#include "utils.h"
+#include <villas/kernel/kernel.h>
+#include <villas/kernel/if.h>
+#include <villas/kernel/tc.h>
+#include <villas/kernel/nl.h>
 
 int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent, int bands)
 {

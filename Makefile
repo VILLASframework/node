@@ -69,7 +69,7 @@ endif
 # Common flags
 LDLIBS   =
 CFLAGS  += -std=c11 -MMD -mcx16 -I$(BUILDDIR)/include -I$(SRCDIR)/include
-CFLAGS  += -Wall -Werror -fdiagnostics-color=auto
+CFLAGS  += -Wall -Werror -fdiagnostics-color=auto -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1
 
 LDFLAGS += -L$(BUILDDIR)
 

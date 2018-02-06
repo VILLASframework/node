@@ -14,12 +14,12 @@
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
@@ -56,19 +56,3 @@
 /* Required kernel version */
 #define KERNEL_VERSION_MAJ	3
 #define KERNEL_VERSION_MIN	6
-
-/** PCIe BAR number of VILLASfpga registers */
-#define FPGA_PCI_BAR		0
-#define FPGA_PCI_VID_XILINX	0x10ee
-#define FPGA_PCI_PID_VFPGA	0x7022
-
-/** AXI Bus frequency for all components
- * except RTDS AXI Stream bridge which runs at RTDS_HZ (100 Mhz) */
-#define FPGA_AXI_HZ		125000000 // 125 MHz
-
-#define _POSIX_C_SOURCE 200809L
-#define _GNU_SOURCE 1
-
-#if defined(__APPLE__)
- #define _DARWIN_C_SOURCE	
-#endif

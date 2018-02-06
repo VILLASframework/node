@@ -22,9 +22,9 @@
 
 #include <string.h>
 
+#include <villas/config.h>
 #include <villas/config_helper.h>
 #include <villas/utils.h>
-#include <villas/config.h>
 
 #ifdef WITH_CONFIG
 

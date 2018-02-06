@@ -24,7 +24,7 @@ LIB_FORMATS += json villas_binary villas_human csv raw
 LIB_SRCS += lib/io/msg.c
 
 # Enable Google Protobuf IO format
-ifeq ($(WITH_PROTOBUF),1)
+ifeq ($(WITH_FORMAT_PROTOBUF),1)
 ifeq ($(shell $(PKGCONFIG) libprotobuf-c; echo $$?),0)
 	LIB_SRCS += lib/io/protobuf.c lib/io/villas.pb-c.c
 	LIB_PKGS += libprotobuf-c
@@ -35,5 +35,7 @@ endif
 %.pb-c.c %.pb-c.h: %.proto
 	protoc-c --proto_path=$(SRCDIR) --c_out=$(SRCDIR) $(realpath $^)
 
-lib/io/protobuf.c: | lib/io/villas.pb-c.h
+$(BUILDDIR)/%.pb-c.o: LIB_CFLAGS += -I$(SRCDIR) 
+
+$(BUILDDIR)/lib/io/protobuf.o: lib/io/villas.pb-c.h
 

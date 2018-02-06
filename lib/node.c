@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include <villas/config.h>
 #include <villas/sample.h>
 #include <villas/node.h>
 #include <villas/utils.h>
@@ -87,7 +88,7 @@ int node_init2(struct node *n)
 #ifdef WITH_HOOKS
 	/* We sort the hooks according to their priority before starting the path */
 	list_sort(&n->hooks, hook_cmp_priority);
-#endif
+#endif /* WITH_HOOKS */
 
 	return 0;
 }

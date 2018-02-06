@@ -31,7 +31,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 
-#include "list.h"
+#include <villas/list.h>
 
 #define IF_IRQ_MAX	3	/**< Maxmimal number of IRQs of an interface */
 

@@ -29,8 +29,8 @@
 
 #pragma once
 
-#include "queue_signalled.h"
-#include "pool.h"
+#include <villas/queue_signalled.h>
+#include <villas/pool.h>
 
 /* Forward declarations */
 struct node;

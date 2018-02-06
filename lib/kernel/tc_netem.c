@@ -26,12 +26,12 @@
 
 #include <netlink/route/qdisc/netem.h>
 
-#include "kernel/if.h"
-#include "kernel/nl.h"
-#include "kernel/nl-private.h"
-#include "kernel/tc_netem.h"
-#include "kernel/kernel.h"
-#include "utils.h"
+#include <villas/kernel/if.h>
+#include <villas/kernel/nl.h>
+#include <villas/kernel/nl-private.h>
+#include <villas/kernel/tc_netem.h>
+#include <villas/kernel/kernel.h>
+#include <villas/utils.h>
 
 
 int tc_netem_parse(struct rtnl_qdisc **netem, json_t *cfg)

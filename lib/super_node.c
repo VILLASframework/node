@@ -25,6 +25,7 @@
 #include <libgen.h>
 #include <unistd.h>
 
+#include <villas/config.h>
 #include <villas/super_node.h>
 #include <villas/node.h>
 #include <villas/path.h>

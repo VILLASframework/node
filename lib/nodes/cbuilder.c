@@ -6,12 +6,12 @@
 
 #include <sys/eventfd.h>
 
-#include "node.h"
-#include "log.h"
-#include "plugin.h"
-#include "utils.h"
+#include <villas/node.h>
+#include <villas/log.h>
+#include <villas/plugin.h>
+#include <villas/utils.h>
 
-#include "nodes/cbuilder.h"
+#include <villas/nodes/cbuilder.h>
 
 int cbuilder_parse(struct node *n, json_t *cfg)
 {

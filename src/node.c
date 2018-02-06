@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <villas/config.h>
 #include <villas/utils.h>
 #include <villas/super_node.h>
 #include <villas/memory.h>
@@ -76,7 +77,7 @@ static void usage()
 	printf("Usage: villas-node OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME\n");
 	printf("  This type of invocation is used by OPAL-RT Asynchronous processes.\n");
 	printf("  See in the RT-LAB User Guide for more information.\n\n");
-#endif
+#endif /* ENABLE_OPAL_ASYNC */
 
 	printf("Supported node-types:\n");
 	plugin_dump(PLUGIN_TYPE_NODE);
@@ -86,7 +87,7 @@ static void usage()
 	printf("Supported hooks:\n");
 	plugin_dump(PLUGIN_TYPE_HOOK);
 	printf("\n");
-#endif
+#endif /* WITH_HOOKS */
 
 	printf("Supported API commands:\n");
 	plugin_dump(PLUGIN_TYPE_API);

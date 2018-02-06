@@ -39,6 +39,8 @@
   #include <linux/if_packet.h>
 #endif
 
+#include <villas/config.h>
+
 #ifdef WITH_LIBNL_ROUTE_30
   #include <villas/kernel/if.h>
   #include <villas/kernel/nl.h>

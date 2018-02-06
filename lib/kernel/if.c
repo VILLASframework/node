@@ -27,15 +27,16 @@
 
 #include <netlink/route/link.h>
 
-#include "kernel/if.h"
-#include "kernel/tc.h"
-#include "kernel/tc_netem.h"
-#include "kernel/nl.h"
-#include "kernel/kernel.h"
+#include <villas/config.h>
+#include <villas/utils.h>
 
-#include "nodes/socket.h"
+#include <villas/kernel/if.h>
+#include <villas/kernel/tc.h>
+#include <villas/kernel/tc_netem.h>
+#include <villas/kernel/nl.h>
+#include <villas/kernel/kernel.h>
 
-#include "utils.h"
+#include <villas/nodes/socket.h>
 
 int if_init(struct interface *i, struct rtnl_link *link)
 {

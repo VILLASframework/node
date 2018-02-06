@@ -23,6 +23,7 @@
 #include <libwebsockets.h>
 #include <string.h>
 
+#include <villas/config.h>
 #include <villas/utils.h>
 #include <villas/log.h>
 #include <villas/web.h>
@@ -57,14 +58,14 @@ lws_callback_function websocket_protocol_cb;
 		.rx_buffer_size = 0
 	},
 #endif /* WITH_API */
-#ifdef WITH_WEBSOCKET
+#ifdef WITH_NODE_WEBSOCKET
 	{
 		.name = "live",
 		.callback = websocket_protocol_cb,
 		.per_session_data_size = sizeof(struct websocket_connection),
 		.rx_buffer_size = 0
 	},
-#endif /* WITH_WEBSOCKET */
+#endif /* WITH_NODE_WEBSOCKET */
 #if 0 /* not supported yet */
 	{
 		.name = "log",
@@ -111,7 +112,7 @@ static struct lws_http_mount mounts[] = {
 		.cache_intermediaries = 0,
 		.origin_protocol = LWSMPRO_CALLBACK,
 		.mountpoint_len = 7,
-#endif
+#endif /* WITH_API */
 		.mount_next = NULL
 	}
 };

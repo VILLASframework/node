@@ -30,6 +30,8 @@
 #include <signal.h>
 #include <pthread.h>
 
+#include <villas/config.h>
+#include <villas/config_helper.h>
 #include <villas/super_node.h>
 #include <villas/utils.h>
 #include <villas/node.h>
@@ -38,11 +40,8 @@
 #include <villas/io.h>
 #include <villas/kernel/rt.h>
 #include <villas/plugin.h>
-#include <villas/config_helper.h>
 
 #include <villas/nodes/websocket.h>
-
-#include <villas/config.h>
 
 static struct super_node sn = { .state = STATE_DESTROYED }; /**< The global configuration */
 static struct io io = { .state = STATE_DESTROYED };
@@ -321,13 +320,13 @@ check:		if (optarg == endptr)
 	if (!node)
 		error("Node '%s' does not exist!", nodestr);
 
-#ifdef WITH_WEBSOCKET
+#ifdef WITH_NODE_WEBSOCKET
 	/* Only start web subsystem if villas-pipe is used with a websocket node */
 	if (node->_vt->start == websocket_start) {
 		web_start(&sn.web);
 		api_start(&sn.api);
 	}
-#endif
+#endif /* WITH_NODE_WEBSOCKET */
 
 	if (reverse)
 		node_reverse(node);

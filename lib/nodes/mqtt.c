@@ -23,10 +23,10 @@
 #include <string.h>
 #include <mosquitto.h>
 
-#include "nodes/mqtt.h"
-#include "plugin.h"
-#include "utils.h"
-#include "io_format.h"
+#include <villas/nodes/mqtt.h>
+#include <villas/plugin.h>
+#include <villas/utils.h>
+#include <villas/io_format.h>
 
 #ifdef MQTT_THREAD
 #include <pthread.h>

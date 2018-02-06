@@ -26,17 +26,21 @@ LIBS = $(patsubst %, lib%, $(SONAMES))
 
 LIB_CFLAGS  += $(CFLAGS) -fPIC
 
+ifeq ($(shell uname),Darwin)
+	 LIB_CFLAGS += -D_DARWIN_C_SOURCE=1
+endif
+
 include $(patsubst %, lib/Makefile.%.inc, $(SONAMES))
 
-$(BUILDDIR)/include/villas/config.h: include/villas/config.h Makefile.config | $$(dir $$@)
+$(BUILDDIR)/include/villas/config.h: include/villas/config.h.in Makefile.config | $$(dir $$@)
 	cp $< $@
 	
-	echo -e "\n\n" >> $@
+	echo -e "\n" >> $@
 	echo "#define BUILDID \"$(BUILDID)\"" >> $@
 	echo "#define V $(V)" >> $@
 	echo "#define PREFIX \"$(PREFIX)\"" >> $@
 
-	echo -e "\n\n" >> $@
+	echo -e "\n" >> $@
 	echo "/* Available Features */" >> $@
 	
 	if (( $(WITH_WEB) ));                      then echo "#define WITH_WEB    1"            >> $@; fi
@@ -47,6 +51,7 @@ $(BUILDDIR)/include/villas/config.h: include/villas/config.h Makefile.config | $
 	
 	for NODE   in $(call escape,$(LIB_NODES));   do echo "#define WITH_NODE_$${NODE} 1"     >> $@; done
 	for FORMAT in $(call escape,$(LIB_FORMATS)); do echo "#define WITH_FORMAT_$${FORMAT} 1" >> $@; done
+	for PKG    in $(call escape,$(LIB_PKGS));    do echo "#define WITH_$${PKG} 1"           >> $@; done
 	
 # Compile
 $(BUILDDIR)/lib/%.o: lib/%.c | $$(dir $$@)
