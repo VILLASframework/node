@@ -94,7 +94,9 @@ buildDependencyGraph(DependencyGraph& dependencyGraph, json_t* json_ips, std::st
 				return false;
 			}
 
-			if(name == mapping[0]) {
+			const std::string& dependencyName = mapping[0];
+
+			if(name == dependencyName) {
 				logger->error("IP {} cannot depend on itself", TXT_BOLD(name));
 
 				dependencyGraph.removeNode(name);
@@ -103,13 +105,13 @@ buildDependencyGraph(DependencyGraph& dependencyGraph, json_t* json_ips, std::st
 
 			// already add dependency, if adding it fails, removing the dependency
 			// will also remove the current one
-			dependencyGraph.addDependency(name, mapping[0]);
+			dependencyGraph.addDependency(name, dependencyName);
 
-			if(not buildDependencyGraph(dependencyGraph, json_ips, mapping[0])) {
+			if(not buildDependencyGraph(dependencyGraph, json_ips, dependencyName)) {
 				logger->error("Dependency {} of {} not satisfied",
-				              mapping[0], TXT_BOLD(name));
+				              dependencyName, TXT_BOLD(name));
 
-				dependencyGraph.removeNode(mapping[0]);
+				dependencyGraph.removeNode(dependencyName);
 				return false;
 			}
 		}
