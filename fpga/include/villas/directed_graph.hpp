@@ -204,13 +204,13 @@ public:
 			auto fromVertex = getVertex(fromVertexId);
 
 			for(auto& edgeId : fromVertex->edges) {
-				auto edge = getEdge(edgeId);
+				auto edgeOfFromVertex = getEdge(edgeId);
 
 				// loop detection
 				bool loop = false;
 				for(auto& edgeIdInPath : path) {
 					auto edgeInPath = getEdge(edgeIdInPath);
-					if(edgeInPath->from == edgeId) {
+					if(edgeInPath->from == edgeOfFromVertex->to) {
 						loop = true;
 						break;
 					}
@@ -225,7 +225,7 @@ public:
 				path.push_back(edgeId);
 
 				// recursive, depth-first search
-				if(getPath(edge->to, toVertexId, path)) {
+				if(getPath(edgeOfFromVertex->to, toVertexId, path)) {
 					// path found, we're done
 				    return true;
 				} else {
