@@ -44,6 +44,8 @@ Test(graph, basic, .description = "DirectedGraph")
 	g.dump();
 	cr_assert(g.getVertexCount() == 2);
 	cr_assert(g.vertexGetEdges(v2id).size() == 0);
+
+	logger->info(TXT_GREEN("Passed"));
 }
 
 Test(graph, path, .description = "Find path")
@@ -108,6 +110,8 @@ Test(graph, path, .description = "Find path")
 	for(auto& edge : path4) {
 		logger->info("  -> edge {}", edge);
 	}
+
+	logger->info(TXT_GREEN("Passed"));
 }
 
 Test(graph, memory_manager, .description = "Global Memory Manager")

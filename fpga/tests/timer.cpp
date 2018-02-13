@@ -34,6 +34,8 @@ Test(fpga, timer, .description = "Timer Counter")
 {
 	auto logger = loggerGetOrCreate("unittest:timer");
 
+	size_t count = 0;
+
 	for(auto& ip : state.cards.front()->ips) {
 		// skip non-timer IPs
 		if(*ip != villas::fpga::Vlnv("xilinx.com:ip:axi_timer:")) {
@@ -41,6 +43,8 @@ Test(fpga, timer, .description = "Timer Counter")
 		}
 
 		logger->info("Testing {}", *ip);
+
+		count++;
 
 		auto timer = reinterpret_cast<villas::fpga::ip::Timer&>(*ip);
 
@@ -68,5 +72,5 @@ Test(fpga, timer, .description = "Timer Counter")
 		logger->info(TXT_GREEN("Passed"));
 	}
 
-	return;
+	cr_assert(count > 0, "No timer found");
 }
