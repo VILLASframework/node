@@ -195,14 +195,24 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		if(json_is_object(json_memory_view)) {
 			logger->debug("Parse memory view of {}", *ip);
 
-			// create a master address space because this IP has a memory view
-			const MemoryManager::AddressSpaceId myAddrSpaceId =
-			        MemoryManager::get().getOrCreateAddressSpace(id.getName());
 
 			// now find all slave address spaces this master can access
 			const char* bus_name;
 			json_t* json_bus;
 			json_object_foreach(json_memory_view, bus_name, json_bus) {
+
+				// this IP has a memory view => it is a bus master somewhere
+
+				// assemble name for master address space
+				const std::string myAddrSpaceName =
+				        MemoryManager::getMasterAddrSpaceName(ip->getInstanceName(),
+				                                              bus_name);
+				// create a master address space
+				const MemoryManager::AddressSpaceId myAddrSpaceId =
+				        MemoryManager::get().getOrCreateAddressSpace(myAddrSpaceName);
+
+				ip->busMasterInterfaces[bus_name] = myAddrSpaceId;
+
 
 				const char* instance_name;
 				json_t* json_instance;

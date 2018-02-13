@@ -208,6 +208,9 @@ protected:
 
 	/// Cached translations from the process address space to each memory block
 	std::map<std::string, MemoryTranslation> addressTranslations;
+
+	/// AXI bus master interfaces to access memory somewhere
+	std::map<std::string, MemoryManager::AddressSpaceId> busMasterInterfaces;
 };
 
 
