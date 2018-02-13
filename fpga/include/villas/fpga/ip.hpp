@@ -177,7 +177,8 @@ public:
 
 protected:
 	uintptr_t
-	getBaseAddr(const std::string& block) const;
+	getBaseAddr(const std::string& block) const
+	{ return getLocalAddr(block, 0); }
 
 	uintptr_t
 	getLocalAddr(const std::string& block, uintptr_t address) const;

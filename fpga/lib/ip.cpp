@@ -329,13 +329,6 @@ IpCoreFactory::lookup(const Vlnv &vlnv)
 
 
 uintptr_t
-IpCore::getBaseAddr(const std::string& block) const
-{
-	return getLocalAddr(block, 0);
-}
-
-
-uintptr_t
 IpCore::getLocalAddr(const std::string& block, uintptr_t address) const
 {
 	// throws exception if block not present
