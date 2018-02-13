@@ -23,9 +23,9 @@
 #include "log_config.h"
 #include "log.hpp"
 #include "plugin.h"
-#include "dependency_graph.hpp"
 #include "utils.hpp"
 
+#include "fpga/vlnv.hpp"
 #include "fpga/ip.hpp"
 #include "fpga/card.hpp"
 
@@ -38,94 +38,28 @@
 
 #include "log.hpp"
 
-using DependencyGraph = villas::utils::DependencyGraph<std::string>;
+#include "fpga/ips/pcie.hpp"
+#include "fpga/ips/intc.hpp"
+#include "fpga/ips/switch.hpp"
 
-static
-std::list<std::string>
-dependencyTokens = {"irqs"};
-
-static
-bool
-buildDependencyGraph(DependencyGraph& dependencyGraph, json_t* json_ips, std::string name)
-{
-	const bool nodeExists = dependencyGraph.addNode(name);
-
-	// HACK: just get the right logger
-	auto logger = loggerGetOrCreate("IpCoreFactory");
-
-	// do not add IP multiple times
-	// this happens if more than 1 IP depends on a certain other IP
-	if(nodeExists) {
-		return true;
-	}
-
-	json_t* json_ip = json_object_get(json_ips, name.c_str());
-	if(json_ip == nullptr) {
-		logger->error("IP {} not found in config", name);
-		return false;
-	}
-
-	for(auto& dependencyToken : dependencyTokens) {
-		json_t* json_dependency = json_object_get(json_ip, dependencyToken.c_str());
-		if(json_dependency == nullptr) {
-			logger->debug("Property {} of {} is not present",
-			              dependencyToken, TXT_BOLD(name));
-			continue;
-		}
-
-		const char* irq_name;
-		json_t* json_irq;
-		json_object_foreach(json_dependency, irq_name, json_irq) {
-			const char* value = json_string_value(json_irq);
-			if(value == nullptr) {
-				logger->warn("Property {} of {} is invalid",
-				             dependencyToken, TXT_BOLD(name));
-				continue;
-			}
-
-			auto mapping = villas::utils::tokenize(value, ":");
-
-
-			if(mapping.size() != 2) {
-				logger->error("Invalid {} mapping of {}",
-				              dependencyToken, TXT_BOLD(name));
-
-				dependencyGraph.removeNode(name);
-				return false;
-			}
-
-			const std::string& dependencyName = mapping[0];
-
-			if(name == dependencyName) {
-				logger->error("IP {} cannot depend on itself", TXT_BOLD(name));
-
-				dependencyGraph.removeNode(name);
-				return false;
-			}
-
-			// already add dependency, if adding it fails, removing the dependency
-			// will also remove the current one
-			dependencyGraph.addDependency(name, dependencyName);
-
-			if(not buildDependencyGraph(dependencyGraph, json_ips, dependencyName)) {
-				logger->error("Dependency {} of {} not satisfied",
-				              dependencyName, TXT_BOLD(name));
-
-				dependencyGraph.removeNode(dependencyName);
-				return false;
-			}
-		}
-	}
-
-	return true;
-}
 
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
-void IpCore::dump() {
+// Special IPs that have to be initialized first. Will be initialized in the
+// same order as they appear in this list, i.e. first here will be initialized
+// first.
+static std::list<Vlnv>
+vlnvInitializationOrder = {
+    Vlnv(AxiPciExpressBridgeFactory::getCompatibleVlnvString()),
+    Vlnv(InterruptControllerFactory::getCompatibleVlnvString()),
+    Vlnv(AxiStreamSwitchFactory::getCompatibleVlnvString()),
+};
+
+void
+IpCore::dump() {
 	auto logger = getLogger();
 
 	logger->info("Base address = {:08x}", baseaddr);
@@ -158,52 +92,68 @@ IpCore::getAddrMapped(uintptr_t address) const
 IpCoreList
 IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 {
-	DependencyGraph dependencyGraph;
-	IpCoreList initializedIps;
+	IpCoreList configuredIps;
 	auto loggerStatic = getStaticLogger();
 
+	std::list<IpIdentifier> allIps;		// all IPs available
+	std::list<IpIdentifier> orderedIps;	// IPs ordered in initialization order
 
-	loggerStatic->debug("Parsing IP dependency graph:");
-	void* iter = json_object_iter(json_ips);
-	while(iter != nullptr) {
-		buildDependencyGraph(dependencyGraph, json_ips, json_object_iter_key(iter));
-		iter = json_object_iter_next(json_ips, iter);
-	}
-
-
-	loggerStatic->debug("IP initialization order:");
-	for(auto& ipName : dependencyGraph.getEvaluationOrder()) {
-		loggerStatic->debug("  {}", TXT_BOLD(ipName));
-	}
-
-
-	for(auto& ipName : dependencyGraph.getEvaluationOrder()) {
-		loggerStatic->info("Initializing {}", TXT_BOLD(ipName));
-
-		json_t* json_ip = json_object_get(json_ips, ipName.c_str());
-
-		// extract VLNV from JSON
+	// parse all IP instance names and their VLNV into list `allIps`
+	const char* ipName;
+	json_t* json_ip;
+	json_object_foreach(json_ips, ipName, json_ip) {
 		const char* vlnv;
 		if(json_unpack(json_ip, "{ s: s }", "vlnv", &vlnv) != 0) {
-			loggerStatic->warn("IP {} has no entry 'vlnv'", ipName);
+			loggerStatic->warn("IP {} has no VLNV", ipName);
 			continue;
 		}
 
-		IpIdentifier id(Vlnv(vlnv), ipName);
+		allIps.push_back({vlnv, ipName});
+	}
+
+
+	// Pick out IPs to be initialized first.
+	//
+	// Reverse order of the initialization order list, because we push to the
+	// front of the output list, so that the first element will also be the
+	// first to be initialized.
+	vlnvInitializationOrder.reverse();
+
+	for(auto& vlnvInitFirst : vlnvInitializationOrder) {
+		// iterate over IPs, if VLNV matches, push to front and remove from list
+		for(auto it = allIps.begin(); it != allIps.end(); ++it) {
+			if(vlnvInitFirst == it->getVlnv()) {
+				orderedIps.push_front(*it);
+				it = allIps.erase(it);
+			}
+		}
+	}
+
+	// insert all other IPs at the end
+	orderedIps.splice(orderedIps.end(), allIps);
+
+
+	loggerStatic->debug("IP initialization order:");
+	for(auto& id : orderedIps) {
+		loggerStatic->debug("  {}", TXT_BOLD(id.getName()));
+	}
+
+	for(auto& id : orderedIps) {
+		loggerStatic->info("Initializing {}", id);
 
 		// find the appropriate factory that can create the specified VLNV
 		// Note:
 		// This is the magic part! Factories automatically register as a
 		// plugin as soon as they are instantiated. If there are multiple
 		// candidates, the first suitable factory will be used.
-		IpCoreFactory* ipCoreFactory = lookup(id.vlnv);
+		IpCoreFactory* ipCoreFactory = lookup(id.getVlnv());
 
 		if(ipCoreFactory == nullptr) {
-			loggerStatic->warn("No plugin found to handle {}", vlnv);
+			loggerStatic->warn("No plugin found to handle {}", id.getVlnv());
 			continue;
 		} else {
 			loggerStatic->debug("Using {} for IP {}",
-			                    ipCoreFactory->getName(), vlnv);
+			                    ipCoreFactory->getName(), id.getVlnv());
 		}
 
 		auto logger = ipCoreFactory->getLogger();
@@ -293,14 +243,40 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 			continue;
 		}
 
-		// TODO: currently fails, fix and remove comment
+		configuredIps.push_back(std::move(ip));
+	}
+
+	IpCoreList initializedIps;
+	for(auto& ip : configuredIps) {
+
+		// Translate all memory blocks that the IP needs to be accessible from
+		// the process and cache in the instance, so this has not to be done at
+		// runtime.
+		for(auto& memoryBlock : ip->getMemoryBlocks()) {
+			// construct the global name of this address block
+			const auto addrSpaceName =
+			        MemoryManager::getSlaveAddrSpaceName(ip->id.getName(), memoryBlock);
+
+			// retrieve its address space identifier
+			const auto addrSpace =
+			        MemoryManager::get().findAddressSpace(addrSpaceName);
+
+			// get the translation to the address space
+			const auto& translation =
+			        MemoryManager::get().getTranslationFromProcess(addrSpace);
+
+			// cache it in the IP instance only with local name
+			ip->addressTranslations.emplace(memoryBlock, translation);
+		}
+
+
 		if(not ip->init()) {
-			logger->error("Cannot start IP {}", ip->id.name);
+			loggerStatic->error("Cannot start IP {}", ip->id.getName());
 			continue;
 		}
 
 		if(not ip->check()) {
-			logger->error("Checking of IP {} failed", ip->id.name);
+			loggerStatic->error("Checking of IP {} failed", ip->id.getName());
 			continue;
 		}
 
