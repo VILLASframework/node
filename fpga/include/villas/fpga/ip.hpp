@@ -150,14 +150,20 @@ protected:
 	InterruptController*
 	getInterruptController(const std::string& interruptName);
 
-protected:
-	virtual std::list<std::string> getMemoryBlocks() const { return {}; }
+	/// Each IP can declare via this function which memory blocks it requires
+	virtual std::list<std::string>
+	getMemoryBlocks() const
+	{ return {}; }
 
-	// populated by FpgaIpFactory
-	PCIeCard* card;					///< FPGA card this IP is instantiated on
-	IpIdentifier id;				///< VLNV and name defined in JSON config
-	std::map<std::string, IrqPort> irqs;	///< Interrupts of this IP component
-	std::map<std::string, IpCore*> dependencies; ///< dependencies on other IPs
+protected:
+	/// FPGA card this IP is instantiated on (populated by FpgaIpFactory)
+	PCIeCard* card;
+
+	/// Identifier of this IP with its instance name and VLNV
+	IpIdentifier id;
+
+	/// All interrupts of this IP with their associated interrupt controller
+	std::map<std::string, IrqPort> irqs;
 
 	/// Cached translations from the process address space to each memory block
 	std::map<std::string, MemoryTranslation> addressTranslations;
