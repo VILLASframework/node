@@ -105,14 +105,39 @@ class IpCore {
 
 public:
 	IpCore() : card(nullptr) {}
-	virtual ~IpCore() {}
+	virtual ~IpCore() = default;
 
-	// IPs can implement this interface
+public:
+	/* Generic management interface for IPs */
+
+	/// Runtime setup of IP, should access and initialize hardware
+	virtual bool init()
+	{ return true; }
+
+	/// Runtime check of IP, should verify basic functionality
 	virtual bool check() { return true; }
-	virtual bool init() { return true; }
+
+	/// Generic disabling of IP, meaning may depend on IP
 	virtual bool stop()  { return true; }
+
+	/// Reset the IP, it should behave like freshly initialized afterwards
 	virtual bool reset() { return true; }
+
+	/// Print some debug information about the IP
 	virtual void dump();
+
+protected:
+	/// Each IP can declare via this function which memory blocks it requires
+	virtual std::list<std::string>
+	getMemoryBlocks() const
+	{ return {}; }
+
+public:
+	const std::string&
+	getInstanceName() const
+	{ return id.getName(); }
+
+	/* Operators */
 
 	bool
 	operator==(const Vlnv& otherVlnv) const
@@ -150,10 +175,6 @@ public:
 	operator<< (std::ostream& stream, const IpCore& ip)
 	{ return stream << ip.id; }
 
-	const std::string&
-	getInstanceName() const
-	{ return id.getName(); }
-
 protected:
 	uintptr_t
 	getBaseAddr(const std::string& block) const;
@@ -162,23 +183,19 @@ protected:
 	getLocalAddr(const std::string& block, uintptr_t address) const;
 
 	SpdLogger
-	getLogger() { return loggerGetOrCreate(id.getName()); }
+	getLogger() const
+	{ return loggerGetOrCreate(getInstanceName()); }
 
+	InterruptController*
+	getInterruptController(const std::string& interruptName) const;
+
+protected:
 	struct IrqPort {
 		int num;
 		InterruptController* irqController;
 		std::string description;
 	};
 
-	InterruptController*
-	getInterruptController(const std::string& interruptName);
-
-	/// Each IP can declare via this function which memory blocks it requires
-	virtual std::list<std::string>
-	getMemoryBlocks() const
-	{ return {}; }
-
-protected:
 	/// FPGA card this IP is instantiated on (populated by FpgaIpFactory)
 	PCIeCard* card;
 
@@ -194,7 +211,6 @@ protected:
 
 
 
-
 class IpCoreFactory : public Plugin {
 public:
 	IpCoreFactory(std::string concreteName) :
@@ -207,7 +223,8 @@ public:
 
 protected:
 	SpdLogger
-	getLogger() { return loggerGetOrCreate(getName()); }
+	getLogger() const
+	{ return loggerGetOrCreate(getName()); }
 
 private:
 	/// Create a concrete IP instance

@@ -346,7 +346,7 @@ IpCore::getLocalAddr(const std::string& block, uintptr_t address) const
 
 
 InterruptController*
-IpCore::getInterruptController(const std::string& interruptName)
+IpCore::getInterruptController(const std::string& interruptName) const
 {
 	try {
 		const IrqPort irq = irqs.at(interruptName);
