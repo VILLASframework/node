@@ -12,15 +12,16 @@ static void init_graph()
 }
 
 TestSuite(graph,
-	.description = "Graph library"
+    .description = "Graph library",
+    .init = init_graph
 );
 
 Test(graph, basic, .description = "DirectedGraph")
 {
 	auto logger = loggerGetOrCreate("test:graph:basic");
-	logger->info("Testing basic graph construction and modification");
-
 	villas::graph::DirectedGraph<> g("test:graph:basic");
+
+	logger->info("Testing basic graph construction and modification");
 
 	std::shared_ptr<villas::graph::Vertex> v1(new villas::graph::Vertex);
 	std::shared_ptr<villas::graph::Vertex> v2(new villas::graph::Vertex);
@@ -116,7 +117,7 @@ Test(graph, path, .description = "Find path")
 
 Test(graph, memory_manager, .description = "Global Memory Manager")
 {
-	auto logger = loggerGetOrCreate("unittest:mm");
+	auto logger = loggerGetOrCreate("test:graph:mm");
 	auto& mm = villas::MemoryManager::get();
 
 	logger->info("Create address spaces");

@@ -51,6 +51,9 @@ static void init()
 	FILE *f;
 	json_error_t err;
 
+	spdlog::set_level(spdlog::level::debug);
+	spdlog::set_pattern("[%T] [%l] [%n] %v");
+
 	villas::Plugin::dumpList();
 
 	ret = pci_init(&pci);

@@ -63,9 +63,10 @@ ReportHook(PRE_ALL)(struct criterion_test_set *tests)
 int main(int argc, char *argv[])
 {
 	int ret;
-	
+
 	spdlog::set_level(spdlog::level::debug);
-	
+	spdlog::set_pattern("[%T] [%l] [%n] %v");
+
 	/* Run criterion tests */
 	auto tests = criterion_initialize();
 
