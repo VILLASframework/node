@@ -142,6 +142,17 @@ PCIeCard::lookupIp(const std::string& name) const
 	return nullptr;
 }
 
+ip::IpCore*
+PCIeCard::lookupIp(const Vlnv& vlnv) const
+{
+	for(auto& ip : ips) {
+		if(*ip == vlnv) {
+			return ip.get();
+		}
+	}
+	return nullptr;
+}
+
 
 bool fpga::PCIeCard::init()
 {

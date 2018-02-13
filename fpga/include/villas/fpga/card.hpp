@@ -76,6 +76,7 @@ public:
 	void dump()  { }
 
 	ip::IpCore* lookupIp(const std::string& name) const;
+	ip::IpCore* lookupIp(const Vlnv& vlnv) const;
 
 	ip::IpCoreList ips;		///< IPs located on this FPGA card
 
