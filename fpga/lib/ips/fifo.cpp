@@ -60,10 +60,13 @@ bool Fifo::init()
 
 	XLlFifo_Config fifo_cfg;
 
-	fifo_cfg.Axi4BaseAddress = getBaseAddr(axi4Memory);
-
-	// use AXI4 for Data, AXI4-Lite for control
-	fifo_cfg.Datainterface = (fifo_cfg.Axi4BaseAddress != -1) ? 1 : 0;
+	try {
+		// if this throws an exception, then there's no AXI4 data interface
+		fifo_cfg.Axi4BaseAddress = getBaseAddr(axi4Memory);
+		fifo_cfg.Datainterface = 1;
+	} catch(const std::out_of_range&) {
+		fifo_cfg.Datainterface = 0;
+	}
 
 	if (XLlFifo_CfgInitialize(&xFifo, &fifo_cfg, getBaseAddr(registerMemory)) != XST_SUCCESS)
 		return false;
