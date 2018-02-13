@@ -48,6 +48,9 @@ public:
 	friend class AxiPciExpressBridgeFactory;
 
 	bool init();
+
+private:
+	static constexpr char axiInterface[] = "M_AXI";
 };
 
 
