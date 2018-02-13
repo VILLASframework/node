@@ -200,7 +200,7 @@ ports = concat.xpath('.//PORT[@DIR="I"]')
 for port in ports:
 	name = port.get('NAME')
 	signame = port.get('SIGNAME')
-	
+
 	# Skip unconnected IRQs
 	if not signame:
 		continue
@@ -213,13 +213,34 @@ for port in ports:
 
 	instance = ip.get('INSTANCE')
 	vlnv = ip.get('VLNV')
+	modtype = ip.get('MODTYPE')
 
-	port = ip.xpath('.//PORT[@SIGNAME="{}" and @DIR="O"]'.format(signame))[0]
-	irqname = port.get('NAME')
+	originators = []
 
-	if instance in ips:
-		irqs = ips[instance].setdefault('irqs', {})
-		irqs[irqname] = '{}:{}'.format(intc.get('INSTANCE'), irq)
+	# follow one level of OR gates merging interrupts (may be generalized later)
+	if modtype == 'util_vector_logic':
+		logic_op = ip.xpath('.//PARAMETER[@NAME="C_OPERATION"]')[0]
+		if logic_op.get('VALUE') == 'or':
+			# hardware interrupts sharing the same IRQ at the controller
+			ports = ip.xpath('.//PORT[@DIR="I"]')
+			for port in ports:
+				signame = port.get('SIGNAME')
+				ip = root.xpath('.//MODULE[.//PORT[@SIGNAME="{}" and @DIR="O"]]'.format(signame))[0]
+				instance = ip.get('INSTANCE')
+				originators.append((instance, signame))
+	else:
+		# consider this instance as originator
+		originators.append((instance, signame))
+
+
+	for instance, signame in originators:
+		ip = root.xpath('.//MODULE[.//PORT[@SIGNAME="{}" and @DIR="O"]]'.format(signame))[0]
+		port = ip.xpath('.//PORT[@SIGNAME="{}" and @DIR="O"]'.format(signame))[0]
+		irqname = port.get('NAME')
+
+		if instance in ips:
+			irqs = ips[instance].setdefault('irqs', {})
+			irqs[irqname] = '{}:{}'.format(intc.get('INSTANCE'), irq)
 
 # Find BRAM storage depths (size)
 brams = root.xpath('.//MODULE[@MODTYPE="axi_bram_ctrl"]')
