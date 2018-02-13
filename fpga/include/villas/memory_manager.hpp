@@ -152,7 +152,8 @@ public:
 
 	/// Create a default mapping
 	MappingId
-	createMapping(uintptr_t src, uintptr_t dest, size_t size, std::string name,
+	createMapping(uintptr_t src, uintptr_t dest, size_t size,
+	              const std::string& name,
 	              AddressSpaceId fromAddrSpace,
 	              AddressSpaceId toAddrSpace);
 
@@ -167,7 +168,7 @@ public:
 
 
 	AddressSpaceId
-	findAddressSpace(std::string name);
+	findAddressSpace(const std::string& name);
 
 	MemoryTranslation
 	getTranslation(AddressSpaceId fromAddrSpaceId, AddressSpaceId toAddrSpaceId);
@@ -177,8 +178,12 @@ public:
 	{ return getTranslation(getProcessAddressSpace(), foreignAddrSpaceId); }
 
 	static std::string
-	getSlaveAddrSpaceName(std::string ipInstance, std::string memoryBlock)
+	getSlaveAddrSpaceName(const std::string& ipInstance, const std::string& memoryBlock)
 	{ return ipInstance + "/" + memoryBlock; }
+
+	static std::string
+	getMasterAddrSpaceName(const std::string& ipInstance, const std::string& busInterface)
+	{ return ipInstance + ":" + busInterface; }
 
 	void
 	dump()
