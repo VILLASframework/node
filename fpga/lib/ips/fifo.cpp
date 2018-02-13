@@ -50,33 +50,32 @@ FifoFactory::configureJson(IpCore &ip, json_t *json_ip)
 		return false;
 	}
 
-	auto& fifo = reinterpret_cast<Fifo&>(ip);
-	if(json_unpack(json_ip, "{ s: i }", "axi4_baseaddr", &fifo.baseaddr_axi4) != 0) {
-		logger->warn("Cannot parse property 'axi4_baseaddr'");
-		return false;
-	}
-
 	return true;
 }
 
 
 bool Fifo::init()
 {
+	auto logger = getLogger();
+
 	XLlFifo_Config fifo_cfg;
 
-	fifo_cfg.Axi4BaseAddress = getAddrMapped(this->baseaddr_axi4);
+	fifo_cfg.Axi4BaseAddress = getBaseAddr(axi4Memory);
 
 	// use AXI4 for Data, AXI4-Lite for control
-	fifo_cfg.Datainterface = (this->baseaddr_axi4 != static_cast<size_t>(-1)) ? 1 : 0;
+	fifo_cfg.Datainterface = (fifo_cfg.Axi4BaseAddress != -1) ? 1 : 0;
 
-	if (XLlFifo_CfgInitialize(&xFifo, &fifo_cfg, getBaseaddr()) != XST_SUCCESS)
+	if (XLlFifo_CfgInitialize(&xFifo, &fifo_cfg, getBaseAddr(registerMemory)) != XST_SUCCESS)
 		return false;
+
+	if(irqs.find(irqName) == irqs.end()) {
+		logger->error("IRQ '{}' not found but required", irqName);
+		return false;
+	}
 
 	// Receive complete IRQ
 	XLlFifo_IntEnable(&xFifo, XLLF_INT_RC_MASK);
-
-	auto intc = reinterpret_cast<InterruptController*>(dependencies["intc"]);
-	intc->enableInterrupt(irqs["interrupt"], false);
+	irqs[irqName].irqController->enableInterrupt(irqs[irqName], false);
 
 	return true;
 }
@@ -85,6 +84,7 @@ bool Fifo::stop()
 {
 	// Receive complete IRQ
 	XLlFifo_IntDisable(&xFifo, XLLF_INT_RC_MASK);
+	irqs[irqName].irqController->disableInterrupt(irqs[irqName]);
 
 	return true;
 }
@@ -110,10 +110,8 @@ size_t Fifo::read(void *buf, size_t len)
 	size_t nextlen = 0;
 	size_t rxlen;
 
-	auto intc = reinterpret_cast<InterruptController*>(dependencies["intc"]);
-
 	while (!XLlFifo_IsRxDone(&xFifo))
-		intc->waitForInterrupt(irqs["interrupt"].num);
+		irqs[irqName].irqController->waitForInterrupt(irqs[irqName]);
 
 	XLlFifo_IntClear(&xFifo, XLLF_INT_RC_MASK);
 

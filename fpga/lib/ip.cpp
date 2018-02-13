@@ -20,28 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "log_config.h"
-#include "log.hpp"
-#include "plugin.h"
-#include "utils.hpp"
-
-#include "fpga/vlnv.hpp"
-#include "fpga/ip.hpp"
-#include "fpga/card.hpp"
-
-#include <algorithm>
-#include <iostream>
-#include <vector>
 #include <string>
 #include <memory>
 #include <utility>
 
 #include "log.hpp"
+#include "utils.hpp"
+#include "memory_manager.hpp"
 
+#include "fpga/ip.hpp"
+#include "fpga/vlnv.hpp"
+#include "fpga/card.hpp"
+
+// needed to get VLNVs for initialization order list
 #include "fpga/ips/pcie.hpp"
 #include "fpga/ips/intc.hpp"
 #include "fpga/ips/switch.hpp"
-
 
 
 namespace villas {
@@ -58,45 +52,19 @@ vlnvInitializationOrder = {
     Vlnv(AxiStreamSwitchFactory::getCompatibleVlnvString()),
 };
 
-void
-IpCore::dump() {
-	auto logger = getLogger();
-
-	logger->info("Base address = {:08x}", baseaddr);
-	for(auto& [num, irq] : irqs) {
-		logger->info("IRQ {}: {}:{}", num, irq.controllerName, irq.num);
-	}
-}
-
-
-IpCoreFactory* IpCoreFactory::lookup(const Vlnv &vlnv)
-{
-	for(auto& ip : Plugin::lookup(Plugin::Type::FpgaIp)) {
-		IpCoreFactory* ipCoreFactory = dynamic_cast<IpCoreFactory*>(ip);
-
-		if(ipCoreFactory->getCompatibleVlnv() == vlnv)
-			return ipCoreFactory;
-	}
-
-	return nullptr;
-}
-
-uintptr_t
-IpCore::getAddrMapped(uintptr_t address) const
-{
-	assert(card != nullptr);
-	return reinterpret_cast<uintptr_t>(card->map) + address;
-}
-
 
 IpCoreList
 IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 {
-	IpCoreList configuredIps;
+	// We only have this logger until we know the factory to build an IP with
 	auto loggerStatic = getStaticLogger();
 
-	std::list<IpIdentifier> allIps;		// all IPs available
+	std::list<IpIdentifier> allIps;		// all IPs available in config
 	std::list<IpIdentifier> orderedIps;	// IPs ordered in initialization order
+
+	IpCoreList configuredIps;	// Successfully configured IPs
+	IpCoreList initializedIps;	// Initialized, i.e. ready-to-use IPs
+
 
 	// parse all IP instance names and their VLNV into list `allIps`
 	const char* ipName;
@@ -110,7 +78,6 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 		allIps.push_back({vlnv, ipName});
 	}
-
 
 	// Pick out IPs to be initialized first.
 	//
@@ -132,12 +99,12 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 	// insert all other IPs at the end
 	orderedIps.splice(orderedIps.end(), allIps);
 
-
 	loggerStatic->debug("IP initialization order:");
 	for(auto& id : orderedIps) {
 		loggerStatic->debug("  {}", TXT_BOLD(id.getName()));
 	}
 
+	// configure all IPs
 	for(auto& id : orderedIps) {
 		loggerStatic->info("Initializing {}", id);
 
@@ -176,25 +143,38 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		ip->card = card;
 		ip->id = id;
 
-		// extract base address if it has one
-		if(json_unpack(json_ip, "{ s?: i }", "baseaddr", &ip->baseaddr) != 0) {
-			logger->warn("Problem while parsing base address of IP {}",
-			             TXT_BOLD(ipName));
-			continue;
-		}
+		json_t* json_ip = json_object_get(json_ips, id.getName().c_str());
 
 		json_t* json_irqs = json_object_get(json_ip, "irqs");
 		if(json_is_object(json_irqs)) {
-			const char* irq_name;
+			logger->debug("Parse IRQs of {}", *ip);
+
+			const char* irqName;
 			json_t* json_irq;
-			json_object_foreach(json_irqs, irq_name, json_irq) {
-				const char* irq = json_string_value(json_irq);
+			json_object_foreach(json_irqs, irqName, json_irq) {
+				const char* irqEntry = json_string_value(json_irq);
 
 
-				auto tokens = utils::tokenize(irq, ":");
+				auto tokens = utils::tokenize(irqEntry, ":");
 				if(tokens.size() != 2) {
 					logger->warn("Cannot parse IRQ '{}' of {}",
-					             irq, TXT_BOLD(ipName));
+					             irqEntry, TXT_BOLD(id.getName()));
+					continue;
+				}
+
+				const std::string& irqControllerName = tokens[0];
+				InterruptController* intc = nullptr;
+
+				for(auto& configuredIp : configuredIps) {
+					if(*configuredIp == irqControllerName) {
+						intc = dynamic_cast<InterruptController*>(configuredIp.get());
+						break;
+					}
+				}
+
+				if(intc == nullptr) {
+					logger->error("Interrupt Controller {} for IRQ {} not found",
+					              irqControllerName, irqName);
 					continue;
 				}
 
@@ -202,39 +182,66 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 				try {
 					num = std::stoi(tokens[1]);
 				} catch(const std::invalid_argument&) {
-					logger->warn("IRQ number is not an integer: '{}'", irq);
+					logger->warn("IRQ number is not an integer: '{}'", irqEntry);
 					continue;
 				}
-				logger->debug("IRQ: {} -> {}:{}", irq_name, tokens[0], num);
-				ip->irqs[irq_name] = {num, tokens[0], ""};
+				logger->debug("IRQ: {} -> {}:{}", irqName, irqControllerName, num);
+				ip->irqs[irqName] = {num, intc, ""};
 			}
-		} else {
-			logger->debug("IP has no interrupts");
 		}
 
 
-		bool dependenciesOk = true;
-		for(auto& [depName, depVlnv] : ipCoreFactory->getDependencies()) {
-			// lookup dependency IP core in list of already initialized IPs
-			auto iter = std::find_if(initializedIps.begin(),
-			                         initializedIps.end(),
-			                         [&](const std::unique_ptr<IpCore>& ip) {
-				                         return *ip == depVlnv;
-			                         });
+		json_t* json_memory_view = json_object_get(json_ip, "memory-view");
+		if(json_is_object(json_memory_view)) {
+			logger->debug("Parse memory view of {}", *ip);
 
-			if(iter == initializedIps.end()) {
-				logger->error("Cannot find '{}' dependency {} of {}",
-				              depName, depVlnv, TXT_BOLD(ipName));
-				dependenciesOk = false;
-				break;
+			// create a master address space because this IP has a memory view
+			const MemoryManager::AddressSpaceId myAddrSpaceId =
+			        MemoryManager::get().getOrCreateAddressSpace(id.getName());
+
+			// now find all slave address spaces this master can access
+			const char* bus_name;
+			json_t* json_bus;
+			json_object_foreach(json_memory_view, bus_name, json_bus) {
+
+				const char* instance_name;
+				json_t* json_instance;
+				json_object_foreach(json_bus, instance_name, json_instance) {
+
+					const char* block_name;
+					json_t* json_block;
+					json_object_foreach(json_instance, block_name, json_block) {
+
+						int base, high, size;
+						int ret = json_unpack(json_block, "{ s: i, s: i, s: i }",
+						                      "baseaddr", &base,
+						                      "highaddr", &high,
+						                      "size", &size);
+						if(ret != 0) {
+							logger->error("Cannot parse address block {}/{}/{}/{}",
+							              ip->getInstanceName(),
+							              bus_name, instance_name, block_name);
+							continue;
+
+						}
+
+						// get or create the slave address space
+						const std::string slaveAddrSpace =
+						        MemoryManager::getSlaveAddrSpaceName(instance_name, block_name);
+
+						const MemoryManager::AddressSpaceId slaveAddrSpaceId =
+						        MemoryManager::get().getOrCreateAddressSpace(slaveAddrSpace);
+
+						// create a new mapping to the slave address space
+						MemoryManager::get().createMapping(static_cast<uintptr_t>(base),
+						                                   0,
+						                                   static_cast<uintptr_t>(size),
+						                                   bus_name,
+						                                   myAddrSpaceId,
+						                                   slaveAddrSpaceId);
+					}
+				}
 			}
-
-			logger->debug("Found dependency IP {}", (*iter)->id);
-			ip->dependencies[depName] = (*iter).get();
-		}
-
-		if(not dependenciesOk) {
-			continue;
 		}
 
 		// IP-specific setup via JSON config
@@ -243,10 +250,11 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 			continue;
 		}
 
+		// IP has been configured now
 		configuredIps.push_back(std::move(ip));
 	}
 
-	IpCoreList initializedIps;
+	// Start and check IPs now
 	for(auto& ip : configuredIps) {
 
 		// Translate all memory blocks that the IP needs to be accessible from
@@ -255,37 +263,99 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		for(auto& memoryBlock : ip->getMemoryBlocks()) {
 			// construct the global name of this address block
 			const auto addrSpaceName =
-			        MemoryManager::getSlaveAddrSpaceName(ip->id.getName(), memoryBlock);
+			        MemoryManager::getSlaveAddrSpaceName(ip->getInstanceName(),
+			                                             memoryBlock);
 
 			// retrieve its address space identifier
-			const auto addrSpace =
+			const auto addrSpaceId =
 			        MemoryManager::get().findAddressSpace(addrSpaceName);
 
 			// get the translation to the address space
 			const auto& translation =
-			        MemoryManager::get().getTranslationFromProcess(addrSpace);
+			        MemoryManager::get().getTranslationFromProcess(addrSpaceId);
 
 			// cache it in the IP instance only with local name
 			ip->addressTranslations.emplace(memoryBlock, translation);
 		}
 
-
 		if(not ip->init()) {
-			loggerStatic->error("Cannot start IP {}", ip->id.getName());
+			loggerStatic->error("Cannot start IP {}", *ip);
 			continue;
 		}
 
 		if(not ip->check()) {
-			loggerStatic->error("Checking of IP {} failed", ip->id.getName());
+			loggerStatic->error("Checking failed for IP {}", *ip);
 			continue;
 		}
 
+		// will only be reached if the IP successfully was initialized
 		initializedIps.push_back(std::move(ip));
 	}
 
 
+	loggerStatic->debug("Initialized IPs:");
+	for(auto& ip : initializedIps) {
+		loggerStatic->debug("  {}", *ip);
+	}
+
 	return initializedIps;
 }
+
+
+void
+IpCore::dump() {
+	auto logger = getLogger();
+
+	logger->info("IP: {}", *this);
+	for(auto& [num, irq] : irqs) {
+		logger->info("IRQ {}: {}:{}",
+		             num, irq.irqController->getInstanceName(), irq.num);
+	}
+}
+
+
+IpCoreFactory*
+IpCoreFactory::lookup(const Vlnv &vlnv)
+{
+	for(auto& ip : Plugin::lookup(Plugin::Type::FpgaIp)) {
+		IpCoreFactory* ipCoreFactory = dynamic_cast<IpCoreFactory*>(ip);
+
+		if(ipCoreFactory->getCompatibleVlnv() == vlnv)
+			return ipCoreFactory;
+	}
+
+	return nullptr;
+}
+
+
+uintptr_t
+IpCore::getBaseAddr(const std::string& block) const
+{
+	return getLocalAddr(block, 0);
+}
+
+
+uintptr_t
+IpCore::getLocalAddr(const std::string& block, uintptr_t address) const
+{
+	// throws exception if block not present
+	auto& translation = addressTranslations.at(block);
+
+	return translation.getLocalAddr(address);
+}
+
+
+InterruptController*
+IpCore::getInterruptController(const std::string& interruptName)
+{
+	try {
+		const IrqPort irq = irqs.at(interruptName);
+		return irq.irqController;
+	} catch(const std::out_of_range&) {
+		return nullptr;
+	}
+}
+
 
 } // namespace ip
 } // namespace fpga

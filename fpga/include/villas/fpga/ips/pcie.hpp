@@ -1,7 +1,8 @@
-/** Timer related helper functions
+/** AXI Stream interconnect related helper functions
  *
- * These functions present a simpler interface to Xilinx' Timer Counter driver (XTmrCtr_*)
+ * These functions present a simpler interface to Xilinx' AXI Stream switch driver (XAxis_Switch_*)
  *
+ * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2017, Steffen Vogel
@@ -29,60 +30,47 @@
 
 #pragma once
 
-#include "fpga/ip_node.hpp"
-#include <xilinx/xllfifo.h>
+#include <string>
+#include <map>
 
+#include <jansson.h>
+#include <xilinx/xaxis_switch.h>
+
+#include "fpga/ip_node.hpp"
+#include "fpga/vlnv.hpp"
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
-
-class Fifo : public IpNode
-{
+class AxiPciExpressBridge : public IpCore {
 public:
-	friend class FifoFactory;
+	friend class AxiPciExpressBridgeFactory;
 
 	bool init();
-	bool stop();
-
-	size_t write(const void* buf, size_t len);
-	size_t read(void* buf, size_t len);
-
-private:
-	static constexpr char registerMemory[] = "Mem0";
-	static constexpr char axi4Memory[] = "Mem1";
-	static constexpr char irqName[] = "interrupt";
-
-	std::list<std::string> getMemoryBlocks() const
-	{ return { registerMemory, axi4Memory }; }
-
-	XLlFifo xFifo;
 };
 
 
-
-class FifoFactory : public IpNodeFactory {
+class AxiPciExpressBridgeFactory : public IpCoreFactory {
 public:
-	FifoFactory() :
-	    IpNodeFactory(getName())
-	{}
+	AxiPciExpressBridgeFactory() :
+	    IpCoreFactory(getName()) {}
 
-	bool configureJson(IpCore& ip, json_t *json_ip);
+	static constexpr const char*
+	getCompatibleVlnvString()
+	{ return "xilinx.com:ip:axi_pcie:"; }
 
 	IpCore* create()
-	{ return new Fifo; }
+	{ return new AxiPciExpressBridge; }
 
-	std::string
-	getName() const
-	{ return "Fifo"; }
+	std::string	getName() const
+	{ return "AxiPciExpressBridge"; }
 
-	std::string
-	getDescription() const
-	{ return "Xilinx's AXI4 FIFO data mover"; }
+	std::string getDescription() const
+	{ return "Xilinx's AXI-PCIe Bridge"; }
 
 	Vlnv getCompatibleVlnv() const
-	{ return {"xilinx.com:ip:axi_fifo_mm_s:"}; }
+	{ return Vlnv(getCompatibleVlnvString()); }
 };
 
 } // namespace ip

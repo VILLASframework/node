@@ -41,13 +41,22 @@
 
 #include <jansson.h>
 
+#include "memory_manager.hpp"
 
 namespace villas {
 namespace fpga {
 
+// forward declaration
 class PCIeCard;
 
 namespace ip {
+
+// forward declarations
+class IpCore;
+class IpCoreFactory;
+class InterruptController;
+
+using IpCoreList = std::list<std::unique_ptr<IpCore>>;
 
 
 class IpIdentifier {
@@ -58,25 +67,30 @@ public:
 	IpIdentifier(std::string vlnvString, std::string name = "") :
 	    vlnv(vlnvString), name(name) {}
 
+	const std::string&
+	getName() const
+	{ return name; }
+
+	const Vlnv&
+	getVlnv() const
+	{ return vlnv; }
+
 	friend std::ostream&
 	operator<< (std::ostream& stream, const IpIdentifier& id)
 	{ return stream << TXT_BOLD(id.name) << " vlnv=" << id.vlnv; }
 
+private:
 	Vlnv vlnv;
 	std::string name;
 };
 
-using IpDependency = std::pair<std::string, Vlnv>;
-
-// forward declarations
-class IpCoreFactory;
 
 class IpCore {
 public:
 
 	friend IpCoreFactory;
 
-	IpCore() : card(nullptr), baseaddr(0) {}
+	IpCore() : card(nullptr) {}
 	virtual ~IpCore() {}
 
 	// IPs can implement this interface
@@ -88,10 +102,10 @@ public:
 
 	bool
 	operator== (const IpIdentifier& otherId) {
-		const bool vlnvMatch = id.vlnv == otherId.vlnv;
-		const bool nameWildcard = id.name.empty() or otherId.name.empty();
+		const bool vlnvMatch = id.getVlnv() == otherId.getVlnv();
+		const bool nameWildcard = id.getName().empty() or otherId.getName().empty();
 
-		return vlnvMatch and (nameWildcard or id.name == otherId.name);
+		return vlnvMatch and (nameWildcard or id.getName() == otherId.getName());
 	}
 
 	bool
@@ -101,45 +115,55 @@ public:
 
 	bool
 	operator== (const Vlnv& otherVlnv)
-	{ return id.vlnv == otherVlnv; }
+	{ return id.getVlnv() == otherVlnv; }
 
 	bool
 	operator== (const std::string& otherName)
-	{ return id.name == otherName; }
+	{ return id.getName() == otherName; }
 
 
 	friend std::ostream&
 	operator<< (std::ostream& stream, const IpCore& ip)
 	{ return stream << ip.id; }
 
+	const std::string&
+	getInstanceName()
+	{ return id.getName(); }
+
 protected:
-	uintptr_t
-	getBaseaddr() const
-	{ return getAddrMapped(this->baseaddr); }
 
 	uintptr_t
-	getAddrMapped(uintptr_t address) const;
+	getBaseAddr(const std::string& block) const;
+
+	uintptr_t
+	getLocalAddr(const std::string& block, uintptr_t address) const;
 
 	SpdLogger
-	getLogger() { return loggerGetOrCreate(id.name); }
+	getLogger() { return loggerGetOrCreate(id.getName()); }
 
 	struct IrqPort {
 		int num;
-		std::string controllerName;
+		InterruptController* irqController;
 		std::string description;
 	};
 
+	InterruptController*
+	getInterruptController(const std::string& interruptName);
+
 protected:
+	virtual std::list<std::string> getMemoryBlocks() const { return {}; }
+
 	// populated by FpgaIpFactory
 	PCIeCard* card;					///< FPGA card this IP is instantiated on
 	IpIdentifier id;				///< VLNV and name defined in JSON config
-	uintptr_t baseaddr;				///< The baseadress of this IP component
 	std::map<std::string, IrqPort> irqs;	///< Interrupts of this IP component
 	std::map<std::string, IpCore*> dependencies; ///< dependencies on other IPs
+
+	/// Cached translations from the process address space to each memory block
+	std::map<std::string, MemoryTranslation> addressTranslations;
 };
 
 
-using IpCoreList = std::list<std::unique_ptr<IpCore>>;
 
 
 class IpCoreFactory : public Plugin {
@@ -164,11 +188,9 @@ private:
 	virtual bool configureJson(IpCore& /* ip */, json_t* /* json */)
 	{ return true; }
 
-
 	virtual Vlnv getCompatibleVlnv() const = 0;
 	virtual std::string getName() const = 0;
 	virtual std::string getDescription() const = 0;
-	virtual std::list<IpDependency> getDependencies() const { return {}; }
 
 protected:
 	static SpdLogger

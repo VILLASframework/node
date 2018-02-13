@@ -43,9 +43,9 @@ namespace ip {
 
 class Timer : public IpCore
 {
+	friend class TimerFactory;
 public:
 	bool init();
-
 
 	bool start(uint32_t ticks);
 	bool wait();
@@ -62,8 +62,14 @@ public:
 	{ return FPGA_AXI_HZ; }
 
 private:
+
+	std::list<std::string> getMemoryBlocks() const
+	{ return { registerMemory }; }
+
+	static constexpr char irqName[] = "generateout0";
+	static constexpr char registerMemory[] = "Reg";
+
 	XTmrCtr xTmr;
-	InterruptController* intc;
 };
 
 
@@ -88,9 +94,6 @@ public:
 
 	Vlnv getCompatibleVlnv() const
 	{ return {"xilinx.com:ip:axi_timer:"}; }
-
-	std::list<IpDependency> getDependencies() const
-	{ return { {"intc", Vlnv("acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:") } }; }
 };
 
 } // namespace ip

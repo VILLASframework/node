@@ -61,6 +61,13 @@ public:
 	{ return waitForInterrupt(irq.num); }
 
 private:
+
+	static constexpr char registerMemory[] = "Reg";
+
+	std::list<std::string> getMemoryBlocks() const
+	{ return { registerMemory }; }
+
+
 	struct Interrupt {
 		int eventFd;			/**< Event file descriptor */
 		int number;				/**< Interrupt number from /proc/interrupts */
@@ -82,6 +89,10 @@ public:
 	    IpCoreFactory(getName())
 	{}
 
+	static constexpr const char*
+	getCompatibleVlnvString()
+	{ return "acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:"; }
+
 	IpCore* create()
 	{ return new InterruptController; }
 
@@ -94,7 +105,10 @@ public:
 	{ return "Xilinx's programmable interrupt controller"; }
 
 	Vlnv getCompatibleVlnv() const
-	{ return Vlnv("acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:"); }
+	{ return Vlnv(getCompatibleVlnvString()); }
+
+//	std::list<IpDependency> getDependencies() const
+//	{ return { {"pcie", Vlnv("xilinx.com:ip:axi_pcie:") } }; }
 };
 
 } // namespace ip
