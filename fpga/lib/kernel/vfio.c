@@ -574,6 +574,14 @@ void * vfio_map_region(struct vfio_device *d, int idx)
 	return d->mappings[idx];
 }
 
+size_t vfio_region_size(struct vfio_device *d, int idx)
+{
+	assert(d != NULL);
+	assert((size_t)idx < d->info.num_regions);
+
+	return d->regions[idx].size;
+}
+
 int vfio_unmap_region(struct vfio_device *d, int idx)
 {
 	int ret;

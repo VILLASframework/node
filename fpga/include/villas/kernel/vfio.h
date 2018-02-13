@@ -104,6 +104,9 @@ void vfio_dump(struct vfio_container *c);
 /** Map a device memory region to the application address space (e.g. PCI BARs) */
 void * vfio_map_region(struct vfio_device *d, int idx);
 
+/** Get the size of a device memory region */
+size_t vfio_region_size(struct vfio_device *d, int idx);
+
 /** Map VM to an IOVA, which is accessible by devices in the container */
 int vfio_map_dma(struct vfio_container *c, uint64_t virt, uint64_t phys, size_t len);
 
