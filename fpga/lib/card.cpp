@@ -132,7 +132,8 @@ fpga::PCIeCardFactory::create()
 
 
 ip::IpCore*
-PCIeCard::lookupIp(std::string name) const {
+PCIeCard::lookupIp(const std::string& name) const
+{
 	for(auto& ip : ips) {
 		if(*ip == name) {
 			return ip.get();

@@ -75,7 +75,7 @@ public:
 	bool reset() { return true; }
 	void dump()  { }
 
-	ip::IpCore* lookupIp(std::string name) const;
+	ip::IpCore* lookupIp(const std::string& name) const;
 
 	ip::IpCoreList ips;		///< IPs located on this FPGA card
 
