@@ -79,6 +79,21 @@ public:
 	operator<< (std::ostream& stream, const IpIdentifier& id)
 	{ return stream << TXT_BOLD(id.name) << " vlnv=" << id.vlnv; }
 
+	bool
+	operator==(const IpIdentifier& otherId) const {
+		const bool vlnvWildcard = otherId.getVlnv() == Vlnv::getWildcard();
+		const bool nameWildcard = this->getName().empty() or otherId.getName().empty();
+
+		const bool vlnvMatch = vlnvWildcard or this->getVlnv() == otherId.getVlnv();
+		const bool nameMatch = nameWildcard or this->getName() == otherId.getName();
+
+		return vlnvMatch and nameMatch;
+	}
+
+	bool
+	operator!=(const IpIdentifier& otherId) const
+	{ return !(*this == otherId); }
+
 private:
 	Vlnv vlnv;
 	std::string name;
@@ -86,10 +101,9 @@ private:
 
 
 class IpCore {
-public:
-
 	friend IpCoreFactory;
 
+public:
 	IpCore() : card(nullptr) {}
 	virtual ~IpCore() {}
 
@@ -101,37 +115,46 @@ public:
 	virtual void dump();
 
 	bool
-	operator== (const IpIdentifier& otherId) {
-		const bool vlnvMatch = id.getVlnv() == otherId.getVlnv();
-		const bool nameWildcard = id.getName().empty() or otherId.getName().empty();
-
-		return vlnvMatch and (nameWildcard or id.getName() == otherId.getName());
-	}
-
-	bool
-	operator!= (const IpIdentifier& otherId) {
-		return !(*this == otherId);
-	}
-
-	bool
-	operator== (const Vlnv& otherVlnv)
+	operator==(const Vlnv& otherVlnv) const
 	{ return id.getVlnv() == otherVlnv; }
 
 	bool
-	operator== (const std::string& otherName)
-	{ return id.getName() == otherName; }
+	operator!=(const Vlnv& otherVlnv) const
+	{ return id.getVlnv() != otherVlnv; }
 
+	bool
+	operator==(const IpIdentifier& otherId) const
+	{ return this->id == otherId; }
+
+	bool
+	operator!=(const IpIdentifier& otherId) const
+	{ return this->id != otherId; }
+
+	bool
+	operator==(const std::string& otherName) const
+	{ return getInstanceName() == otherName; }
+
+	bool
+	operator!=(const std::string& otherName) const
+	{ return getInstanceName() != otherName; }
+
+	bool
+	operator==(const IpCore& otherIp) const
+	{ return this->id == otherIp.id; }
+
+	bool
+	operator!=(const IpCore& otherIp) const
+	{ return this->id != otherIp.id; }
 
 	friend std::ostream&
 	operator<< (std::ostream& stream, const IpCore& ip)
 	{ return stream << ip.id; }
 
 	const std::string&
-	getInstanceName()
+	getInstanceName() const
 	{ return id.getName(); }
 
 protected:
-
 	uintptr_t
 	getBaseAddr(const std::string& block) const;
 
