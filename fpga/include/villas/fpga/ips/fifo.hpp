@@ -64,11 +64,7 @@ private:
 
 class FifoFactory : public IpNodeFactory {
 public:
-	FifoFactory() :
-	    IpNodeFactory(getName())
-	{}
-
-	bool configureJson(IpCore& ip, json_t *json_ip);
+	FifoFactory();
 
 	IpCore* create()
 	{ return new Fifo; }

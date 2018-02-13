@@ -40,17 +40,11 @@ namespace ip {
 // instantiate factory to make available to plugin infrastructure
 static FifoFactory factory;
 
-bool
-FifoFactory::configureJson(IpCore &ip, json_t *json_ip)
+
+FifoFactory::FifoFactory() :
+    IpNodeFactory(getName())
 {
-	auto logger = getLogger();
-
-	if(not IpNodeFactory::configureJson(ip, json_ip)) {
-		logger->error("Configuring IpNode failed");
-		return false;
-	}
-
-	return true;
+	// nothing to do
 }
 
 
@@ -127,69 +121,6 @@ size_t Fifo::read(void *buf, size_t len)
 
 	return nextlen;
 }
-
-#if 0
-
-
-ssize_t fifo_write(struct fpga_ip *c, char *buf, size_t len)
-{
-	struct fifo *fifo = (struct fifo *) c->_vd;
-
-	XLlFifo *xllfifo = &fifo->inst;
-
-}
-
-ssize_t fifo_read(struct fpga_ip *c, char *buf, size_t len)
-{
-	struct fifo *fifo = (struct fifo *) c->_vd;
-
-	XLlFifo *xllfifo = &fifo->inst;
-
-	size_t nextlen = 0;
-	uint32_t rxlen;
-
-	while (!XLlFifo_IsRxDone(xllfifo))
-		intc_wait(c->card->intc, c->irq);
-	XLlFifo_IntClear(xllfifo, XLLF_INT_RC_MASK);
-
-	/* Get length of next frame */
-	rxlen = XLlFifo_RxGetLen(xllfifo);
-	nextlen = MIN(rxlen, len);
-
-	/* Read from FIFO */
-	XLlFifo_Read(xllfifo, buf, nextlen);
-
-	return nextlen;
-}
-
-int fifo_parse(struct fpga_ip *c, json_t *cfg)
-{
-	struct fifo *fifo = (struct fifo *) c->_vd;
-
-	int baseaddr_axi4 = -1, ret;
-
-	json_error_t err;
-
-	fifo->baseaddr_axi4 = -1;
-
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i }", "baseaddr_axi4", &baseaddr_axi4);
-	if (ret)
-		jerror(&err, "Failed to parse configuration of FPGA IP '%s'", c->name);
-
-	fifo->baseaddr_axi4 = baseaddr_axi4;
-
-	return 0;
-}
-
-int fifo_reset(struct fpga_ip *c)
-{
-	struct fifo *fifo = (struct fifo *) c->_vd;
-
-	XLlFifo_Reset(&fifo->inst);
-
-	return 0;
-}
-#endif
 
 } // namespace ip
 } // namespace fpga
