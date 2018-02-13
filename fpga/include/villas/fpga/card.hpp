@@ -45,6 +45,8 @@
 
 #include "config.h"
 
+#include "memory_manager.hpp"
+
 #define PCI_FILTER_DEFAULT_FPGA {		\
 	.id = {								\
 	    .vendor = FPGA_PCI_VID_XILINX,	\
@@ -92,7 +94,9 @@ public:
 	::vfio_container *vfio_container;
 	struct vfio_device vfio_device;	/**< VFIO device handle. */
 
-	char *map;			/**< PCI BAR0 mapping for register access */
+	/// Address space identifier of the master address space of this FPGA card.
+	/// This will be used for address resolution of all IPs on this card.
+	MemoryManager::AddressSpaceId addrSpaceId;
 
 	size_t maplen;
 	size_t dmalen;
