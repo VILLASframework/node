@@ -53,7 +53,7 @@ AxiStreamSwitch::init()
 	XAxisScr_RegUpdateEnable(&xSwitch);
 
 	// initialize internal mapping
-	for(int portMaster = 0; portMaster < portsMaster.size(); portMaster++) {
+	for(size_t portMaster = 0; portMaster < portsMaster.size(); portMaster++) {
 		portMapping[portMaster] = PORT_DISABLED;
 	}
 

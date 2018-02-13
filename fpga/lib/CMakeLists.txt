@@ -45,6 +45,8 @@ find_package(Threads)
 
 add_library(villas-fpga SHARED ${SOURCES})
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+
 target_compile_definitions(villas-fpga PRIVATE
 	BUILDID=\"abc\"
 	_GNU_SOURCE

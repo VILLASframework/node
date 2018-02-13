@@ -242,6 +242,8 @@ public:
 	{
 		logger->info("Vertices:");
 		for(auto& [vertexId, vertex] : vertices) {
+			(void) vertexId;
+
 			// format connected vertices into a list
 			std::stringstream ssEdges;
 			for(auto& edge : vertex->edges) {
@@ -253,6 +255,8 @@ public:
 
 		logger->info("Edges:");
 		for(auto& [edgeId, edge] : edges) {
+			(void) edgeId;
+
 			logger->info("  {}: {} -> {}", *edge, edge->from, edge->to);
 		}
 	}

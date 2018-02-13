@@ -67,7 +67,7 @@ bool Fifo::init()
 	fifo_cfg.Axi4BaseAddress = getAddrMapped(this->baseaddr_axi4);
 
 	// use AXI4 for Data, AXI4-Lite for control
-	fifo_cfg.Datainterface = (this->baseaddr_axi4 != -1) ? 1 : 0;
+	fifo_cfg.Datainterface = (this->baseaddr_axi4 != static_cast<size_t>(-1)) ? 1 : 0;
 
 	if (XLlFifo_CfgInitialize(&xFifo, &fifo_cfg, getBaseaddr()) != XST_SUCCESS)
 		return false;

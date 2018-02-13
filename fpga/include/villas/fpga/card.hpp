@@ -48,8 +48,10 @@
 #define PCI_FILTER_DEFAULT_FPGA {		\
 	.id = {								\
 	    .vendor = FPGA_PCI_VID_XILINX,	\
-	    .device = FPGA_PCI_PID_VFPGA	\
-	}									\
+	    .device = FPGA_PCI_PID_VFPGA,	\
+	    .class_code = 0					\
+	},									\
+	.slot = { }							\
 }
 
 namespace villas {
