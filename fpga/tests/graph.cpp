@@ -112,12 +112,21 @@ Test(graph, path, .description = "Find path")
 
 Test(graph, memory_manager, .description = "Global Memory Manager")
 {
+	auto logger = loggerGetOrCreate("unittest:mm");
 	auto& mm = villas::MemoryManager::get();
 
-	auto dmaRegs = mm.createAddressSpace("DMA Registers");
-	auto pcieBridge = mm.createAddressSpace("PCIe Bridge");
+	logger->info("Create address spaces");
+	auto dmaRegs = mm.getOrCreateAddressSpace("DMA Registers");
+	auto pcieBridge = mm.getOrCreateAddressSpace("PCIe Bridge");
 
-	mm.createMapping(0x1000, 0, 0x1000, dmaRegs, pcieBridge);
+	logger->info("Create a mapping");
+	mm.createMapping(0x1000, 0, 0x1000, "Testmapping", dmaRegs, pcieBridge);
+
+	logger->info("Find address space by name");
+	auto vertex = mm.findAddressSpace("PCIe Bridge");
+	logger->info("  found: {}", vertex);
 
 	mm.dump();
+
+	logger->info(TXT_GREEN("Passed"));
 }
