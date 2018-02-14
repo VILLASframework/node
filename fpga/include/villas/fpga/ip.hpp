@@ -161,7 +161,7 @@ private:
 	virtual IpCore* create() = 0;
 
 	/// Configure IP instance from JSON config
-	virtual bool configureJson(IpCore& ip, json_t *json)
+	virtual bool configureJson(IpCore& /* ip */, json_t* /* json */)
 	{ return true; }
 
 

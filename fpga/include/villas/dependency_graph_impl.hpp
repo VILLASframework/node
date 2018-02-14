@@ -97,6 +97,7 @@ DependencyGraph<T>::getEvaluationOrder() const
 		if(added == 0 and graph.size() > 0) {
 			logger->error("Circular dependency detected! IPs not available:");
 			for(auto& [key, value] : graph) {
+				(void) value;
 				logger->error("  {}", key);
 			}
 			break;

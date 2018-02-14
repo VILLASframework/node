@@ -19,14 +19,16 @@ struct criterion_prefix_data {
     const char *color;
 };
 
-static void format_msg(char *buf, size_t buflen, const char *msg, va_list args)
+static int format_msg(char *buf, size_t buflen, const char *msg, va_list args)
 {
 	int len = vsnprintf(buf, buflen, msg, args);
-	
+
 	/* Strip new line */
 	char *nl = strchr(buf, '\n');
 	if (nl)
 		*nl = 0;
+
+	return len;
 }
 
 void criterion_log_noformat(enum criterion_severity severity, const char *msg)
