@@ -183,10 +183,6 @@ protected:
 	uintptr_t
 	getLocalAddr(const std::string& block, uintptr_t address) const;
 
-	SpdLogger
-	getLogger() const
-	{ return loggerGetOrCreate(getInstanceName()); }
-
 	InterruptController*
 	getInterruptController(const std::string& interruptName) const;
 
@@ -196,6 +192,9 @@ protected:
 		InterruptController* irqController;
 		std::string description;
 	};
+
+	/// Specialized logger instance with the IPs name set as category
+	SpdLogger logger;
 
 	/// FPGA card this IP is instantiated on (populated by FpgaIpFactory)
 	PCIeCard* card;

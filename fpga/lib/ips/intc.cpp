@@ -50,7 +50,6 @@ bool
 InterruptController::init()
 {
 	const uintptr_t base = getBaseAddr(registerMemory);
-	auto logger = getLogger();
 
 	num_irqs = vfio_pci_msi_init(&card->vfio_device, efds);
 	if (num_irqs < 0)
@@ -97,7 +96,6 @@ InterruptController::init()
 bool
 InterruptController::enableInterrupt(InterruptController::IrqMaskType mask, bool polling)
 {
-	auto logger = getLogger();
 	const uintptr_t base = getBaseAddr(registerMemory);
 
 	/* Current state of INTC */

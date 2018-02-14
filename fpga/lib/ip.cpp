@@ -142,6 +142,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		// setup generic IP type properties
 		ip->card = card;
 		ip->id = id;
+		ip->logger = loggerGetOrCreate(id.getName());
 
 		json_t* json_ip = json_object_get(json_ips, id.getName().c_str());
 
@@ -313,9 +314,8 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 
 void
-IpCore::dump() {
-	auto logger = getLogger();
-
+IpCore::dump()
+{
 	logger->info("IP: {}", *this);
 	for(auto& [num, irq] : irqs) {
 		logger->info("IRQ {}: {}:{}",
