@@ -106,7 +106,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 	// configure all IPs
 	for(auto& id : orderedIps) {
-		loggerStatic->info("Initializing {}", id);
+		loggerStatic->info("Configuring {}", id);
 
 		// find the appropriate factory that can create the specified VLNV
 		// Note:
@@ -288,6 +288,8 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 			// cache it in the IP instance only with local name
 			ip->addressTranslations.emplace(memoryBlock, translation);
 		}
+
+		loggerStatic->info("Initializing {}", *ip);
 
 		if(not ip->init()) {
 			loggerStatic->error("Cannot start IP {}", *ip);
