@@ -25,6 +25,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include <sys/types.h>
 #include <sys/utsname.h>
@@ -268,7 +269,7 @@ int kernel_irq_setaffinity(unsigned irq, uintmax_t affinity, uintmax_t *old)
 
 	f = fopen(fn, "w+");
 	if (!f)
-		return -1; /* IRQ does not exist */
+		return errno;
 
 	if (old)
 		ret = fscanf(f, "%jx", old);

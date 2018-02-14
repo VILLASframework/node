@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include <unistd.h>
+#include <errno.h>
 
 #include "config.h"
 #include "log.h"
@@ -60,8 +61,19 @@ InterruptController::init()
 
 	/* For each IRQ */
 	for (int i = 0; i < num_irqs; i++) {
-		/* Pin to core */
-		if(kernel_irq_setaffinity(nos[i], card->affinity, nullptr) != 0) {
+
+		/* Try pinning to core */
+		int ret = kernel_irq_setaffinity(nos[i], card->affinity, nullptr);
+
+		switch(ret) {
+		case 0:
+			// everything is fine
+			break;
+		case EACCES:
+			logger->warn("No permission to change affinity of VFIO-MSI interrupt. "
+			             "This may degrade performance (increasing jitter)");
+			break;
+		default:
 			logger->error("Failed to change affinity of VFIO-MSI interrupt");
 			return false;
 		}
