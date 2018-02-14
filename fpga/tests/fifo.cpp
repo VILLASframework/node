@@ -34,6 +34,7 @@ Test(fpga, fifo, .description = "FIFO")
 {
 	ssize_t len;
 	char src[255], dst[255];
+	size_t count = 0;
 
 	auto logger = loggerGetOrCreate("unittest:fifo");
 
@@ -46,12 +47,14 @@ Test(fpga, fifo, .description = "FIFO")
 
 		auto fifo = reinterpret_cast<villas::fpga::ip::Fifo&>(*ip);
 
-		if(not fifo.loopbackPossible()) {
-			logger->info("Loopback test not possible for {}", *ip);
+		if(not fifo.connectLoopback()) {
 			continue;
 		}
 
-		if(not fifo.connectLoopback()) {
+		count++;
+
+		if(not fifo.loopbackPossible()) {
+			logger->info("Loopback test not possible for {}", *ip);
 			continue;
 		}
 
@@ -80,4 +83,6 @@ Test(fpga, fifo, .description = "FIFO")
 
 		logger->info(TXT_GREEN("Passed"));
 	}
+
+	cr_assert(count > 0, "No fifo found");
 }

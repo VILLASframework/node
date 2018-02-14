@@ -48,7 +48,7 @@ InterruptController::~InterruptController()
 bool
 InterruptController::init()
 {
-	const uintptr_t base = getBaseaddr();
+	const uintptr_t base = getBaseAddr(registerMemory);
 	auto logger = getLogger();
 
 	num_irqs = vfio_pci_msi_init(&card->vfio_device, efds);
@@ -86,7 +86,7 @@ bool
 InterruptController::enableInterrupt(InterruptController::IrqMaskType mask, bool polling)
 {
 	auto logger = getLogger();
-	const uintptr_t base = getBaseaddr();
+	const uintptr_t base = getBaseAddr(registerMemory);
 
 	/* Current state of INTC */
 	const uint32_t ier = XIntc_In32(base + XIN_IER_OFFSET);
@@ -120,7 +120,7 @@ InterruptController::enableInterrupt(InterruptController::IrqMaskType mask, bool
 bool
 InterruptController::disableInterrupt(InterruptController::IrqMaskType mask)
 {
-	const uintptr_t base = getBaseaddr();
+	const uintptr_t base = getBaseAddr(registerMemory);
 	uint32_t ier = XIntc_In32(base + XIN_IER_OFFSET);
 
 	XIntc_Out32(base + XIN_IER_OFFSET, ier & ~mask);
@@ -133,7 +133,7 @@ InterruptController::waitForInterrupt(int irq)
 {
 	assert(irq < maxIrqs);
 
-	const uintptr_t base = getBaseaddr();
+	const uintptr_t base = getBaseAddr(registerMemory);
 
 	if (this->polling[irq]) {
 		uint32_t isr, mask = 1 << irq;

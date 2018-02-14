@@ -50,19 +50,21 @@ public:
 	size_t read(void* buf, size_t len);
 
 private:
+	static constexpr char registerMemory[] = "Mem0";
+	static constexpr char axi4Memory[] = "Mem1";
+	static constexpr char irqName[] = "interrupt";
+
+	std::list<std::string> getMemoryBlocks() const
+	{ return { registerMemory, axi4Memory }; }
+
 	XLlFifo xFifo;
-	uintptr_t baseaddr_axi4;
 };
 
 
 
 class FifoFactory : public IpNodeFactory {
 public:
-	FifoFactory() :
-	    IpNodeFactory(getName())
-	{}
-
-	bool configureJson(IpCore& ip, json_t *json_ip);
+	FifoFactory();
 
 	IpCore* create()
 	{ return new Fifo; }
@@ -77,9 +79,6 @@ public:
 
 	Vlnv getCompatibleVlnv() const
 	{ return {"xilinx.com:ip:axi_fifo_mm_s:"}; }
-
-	std::list<IpDependency> getDependencies() const
-	{ return { {"intc", Vlnv("acs.eonerc.rwth-aachen.de:user:axi_pcie_intc:") } }; }
 };
 
 } // namespace ip

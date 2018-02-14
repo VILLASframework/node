@@ -40,43 +40,39 @@ namespace ip {
 // instantiate factory to make available to plugin infrastructure
 static FifoFactory factory;
 
-bool
-FifoFactory::configureJson(IpCore &ip, json_t *json_ip)
+
+FifoFactory::FifoFactory() :
+    IpNodeFactory(getName())
 {
-	auto logger = getLogger();
-
-	if(not IpNodeFactory::configureJson(ip, json_ip)) {
-		logger->error("Configuring IpNode failed");
-		return false;
-	}
-
-	auto& fifo = reinterpret_cast<Fifo&>(ip);
-	if(json_unpack(json_ip, "{ s: i }", "axi4_baseaddr", &fifo.baseaddr_axi4) != 0) {
-		logger->warn("Cannot parse property 'axi4_baseaddr'");
-		return false;
-	}
-
-	return true;
+	// nothing to do
 }
 
 
 bool Fifo::init()
 {
+	auto logger = getLogger();
+
 	XLlFifo_Config fifo_cfg;
 
-	fifo_cfg.Axi4BaseAddress = getAddrMapped(this->baseaddr_axi4);
+	try {
+		// if this throws an exception, then there's no AXI4 data interface
+		fifo_cfg.Axi4BaseAddress = getBaseAddr(axi4Memory);
+		fifo_cfg.Datainterface = 1;
+	} catch(const std::out_of_range&) {
+		fifo_cfg.Datainterface = 0;
+	}
 
-	// use AXI4 for Data, AXI4-Lite for control
-	fifo_cfg.Datainterface = (this->baseaddr_axi4 != static_cast<size_t>(-1)) ? 1 : 0;
-
-	if (XLlFifo_CfgInitialize(&xFifo, &fifo_cfg, getBaseaddr()) != XST_SUCCESS)
+	if (XLlFifo_CfgInitialize(&xFifo, &fifo_cfg, getBaseAddr(registerMemory)) != XST_SUCCESS)
 		return false;
+
+	if(irqs.find(irqName) == irqs.end()) {
+		logger->error("IRQ '{}' not found but required", irqName);
+		return false;
+	}
 
 	// Receive complete IRQ
 	XLlFifo_IntEnable(&xFifo, XLLF_INT_RC_MASK);
-
-	auto intc = reinterpret_cast<InterruptController*>(dependencies["intc"]);
-	intc->enableInterrupt(irqs["interrupt"], false);
+	irqs[irqName].irqController->enableInterrupt(irqs[irqName], false);
 
 	return true;
 }
@@ -85,6 +81,7 @@ bool Fifo::stop()
 {
 	// Receive complete IRQ
 	XLlFifo_IntDisable(&xFifo, XLLF_INT_RC_MASK);
+	irqs[irqName].irqController->disableInterrupt(irqs[irqName]);
 
 	return true;
 }
@@ -110,10 +107,8 @@ size_t Fifo::read(void *buf, size_t len)
 	size_t nextlen = 0;
 	size_t rxlen;
 
-	auto intc = reinterpret_cast<InterruptController*>(dependencies["intc"]);
-
 	while (!XLlFifo_IsRxDone(&xFifo))
-		intc->waitForInterrupt(irqs["interrupt"].num);
+		irqs[irqName].irqController->waitForInterrupt(irqs[irqName]);
 
 	XLlFifo_IntClear(&xFifo, XLLF_INT_RC_MASK);
 
@@ -126,69 +121,6 @@ size_t Fifo::read(void *buf, size_t len)
 
 	return nextlen;
 }
-
-#if 0
-
-
-ssize_t fifo_write(struct fpga_ip *c, char *buf, size_t len)
-{
-	struct fifo *fifo = (struct fifo *) c->_vd;
-
-	XLlFifo *xllfifo = &fifo->inst;
-
-}
-
-ssize_t fifo_read(struct fpga_ip *c, char *buf, size_t len)
-{
-	struct fifo *fifo = (struct fifo *) c->_vd;
-
-	XLlFifo *xllfifo = &fifo->inst;
-
-	size_t nextlen = 0;
-	uint32_t rxlen;
-
-	while (!XLlFifo_IsRxDone(xllfifo))
-		intc_wait(c->card->intc, c->irq);
-	XLlFifo_IntClear(xllfifo, XLLF_INT_RC_MASK);
-
-	/* Get length of next frame */
-	rxlen = XLlFifo_RxGetLen(xllfifo);
-	nextlen = MIN(rxlen, len);
-
-	/* Read from FIFO */
-	XLlFifo_Read(xllfifo, buf, nextlen);
-
-	return nextlen;
-}
-
-int fifo_parse(struct fpga_ip *c, json_t *cfg)
-{
-	struct fifo *fifo = (struct fifo *) c->_vd;
-
-	int baseaddr_axi4 = -1, ret;
-
-	json_error_t err;
-
-	fifo->baseaddr_axi4 = -1;
-
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i }", "baseaddr_axi4", &baseaddr_axi4);
-	if (ret)
-		jerror(&err, "Failed to parse configuration of FPGA IP '%s'", c->name);
-
-	fifo->baseaddr_axi4 = baseaddr_axi4;
-
-	return 0;
-}
-
-int fifo_reset(struct fpga_ip *c)
-{
-	struct fifo *fifo = (struct fifo *) c->_vd;
-
-	XLlFifo_Reset(&fifo->inst);
-
-	return 0;
-}
-#endif
 
 } // namespace ip
 } // namespace fpga

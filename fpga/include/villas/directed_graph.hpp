@@ -71,6 +71,7 @@ public:
 
 	using VertexIdentifier = Vertex::Identifier;
 	using EdgeIdentifier = Edge::Identifier;
+	using Path = std::list<EdgeIdentifier>;
 
 	DirectedGraph(const std::string& name = "DirectedGraph") :
 	    lastVertexId(0), lastEdgeId(0)
@@ -86,6 +87,18 @@ public:
 		// cannot use [] operator, because creates non-existing elements
 		// at() will throw std::out_of_range if element does not exist
 		return vertices.at(vertexId);
+	}
+
+	template<class UnaryPredicate>
+	VertexIdentifier findVertex(UnaryPredicate p)
+	{
+		for(auto& [vertexId, vertex] : vertices) {
+			if(p(vertex)) {
+				return vertexId;
+			}
+		}
+
+		throw std::out_of_range("vertex not found");
 	}
 
 	std::shared_ptr<EdgeType> getEdge(EdgeIdentifier edgeId) const
@@ -194,8 +207,9 @@ public:
 	vertexGetEdges(VertexIdentifier vertexId) const
 	{ return getVertex(vertexId)->edges; }
 
-	bool getPath(VertexIdentifier fromVertexId, VertexIdentifier toVertexId,
-	             std::list<EdgeIdentifier>& path)
+	bool getPath(VertexIdentifier fromVertexId,
+	             VertexIdentifier toVertexId,
+	             Path& path)
 	{
 		if(fromVertexId == toVertexId) {
 			// arrived at the destination

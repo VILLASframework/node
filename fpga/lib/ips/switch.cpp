@@ -37,13 +37,16 @@ static AxiStreamSwitchFactory factory;
 
 bool
 AxiStreamSwitch::init()
-{
+{	
+	auto logger = getLogger();
+
 	/* Setup AXI-stream switch */
 	XAxis_Switch_Config sw_cfg;
 	sw_cfg.MaxNumMI = num_ports;
 	sw_cfg.MaxNumSI = num_ports;
 
-	if(XAxisScr_CfgInitialize(&xSwitch, &sw_cfg, getBaseaddr()) != XST_SUCCESS) {
+	if(XAxisScr_CfgInitialize(&xSwitch, &sw_cfg, getBaseAddr(registerMemory)) != XST_SUCCESS) {
+		logger->error("Cannot initialize switch");
 		return false;
 	}
 
@@ -56,7 +59,6 @@ AxiStreamSwitch::init()
 	for(size_t portMaster = 0; portMaster < portsMaster.size(); portMaster++) {
 		portMapping[portMaster] = PORT_DISABLED;
 	}
-
 
 	return true;
 }

@@ -1,7 +1,8 @@
-/** Timer related helper functions
+/** AXI Stream interconnect related helper functions
  *
- * These functions present a simpler interface to Xilinx' Timer Counter driver (XTmrCtr_*)
+ * These functions present a simpler interface to Xilinx' AXI Stream switch driver (XAxis_Switch_*)
  *
+ * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2017, Steffen Vogel
@@ -29,71 +30,47 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <xilinx/xtmrctr.h>
+#include <string>
+#include <map>
 
-#include "config.h"
-#include "fpga/ip.hpp"
-#include "fpga/ips/intc.hpp"
+#include <jansson.h>
+#include <xilinx/xaxis_switch.h>
+
+#include "fpga/ip_node.hpp"
+#include "fpga/vlnv.hpp"
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
-
-class Timer : public IpCore
-{
-	friend class TimerFactory;
+class AxiPciExpressBridge : public IpCore {
 public:
+	friend class AxiPciExpressBridgeFactory;
+
 	bool init();
-
-	bool start(uint32_t ticks);
-	bool wait();
-	uint32_t remaining();
-
-	inline bool isRunning()
-	{ return remaining() != 0; }
-
-	inline bool isFinished()
-	{ return remaining() == 0; }
-
-	static constexpr uint32_t
-	getFrequency()
-	{ return FPGA_AXI_HZ; }
-
-private:
-
-	std::list<std::string> getMemoryBlocks() const
-	{ return { registerMemory }; }
-
-	static constexpr char irqName[] = "generateout0";
-	static constexpr char registerMemory[] = "Reg";
-
-	XTmrCtr xTmr;
 };
 
 
-
-class TimerFactory : public IpCoreFactory {
+class AxiPciExpressBridgeFactory : public IpCoreFactory {
 public:
+	AxiPciExpressBridgeFactory() :
+	    IpCoreFactory(getName()) {}
 
-	TimerFactory() :
-	    IpCoreFactory(getName())
-	{}
+	static constexpr const char*
+	getCompatibleVlnvString()
+	{ return "xilinx.com:ip:axi_pcie:"; }
 
 	IpCore* create()
-	{ return new Timer; }
+	{ return new AxiPciExpressBridge; }
 
-	std::string
-	getName() const
-	{ return "Timer"; }
+	std::string	getName() const
+	{ return "AxiPciExpressBridge"; }
 
-	std::string
-	getDescription() const
-	{ return "Xilinx's programmable timer / counter"; }
+	std::string getDescription() const
+	{ return "Xilinx's AXI-PCIe Bridge"; }
 
 	Vlnv getCompatibleVlnv() const
-	{ return {"xilinx.com:ip:axi_timer:"}; }
+	{ return Vlnv(getCompatibleVlnvString()); }
 };
 
 } // namespace ip

@@ -44,28 +44,23 @@ bool Timer::init()
 	XTmrCtr_Config xtmr_cfg;
 	xtmr_cfg.SysClockFreqHz = getFrequency();
 
-	XTmrCtr_CfgInitialize(&xTmr, &xtmr_cfg, getBaseaddr());
+	XTmrCtr_CfgInitialize(&xTmr, &xtmr_cfg, getBaseAddr(registerMemory));
 	XTmrCtr_InitHw(&xTmr);
 
-	if(dependencies.find("intc") == dependencies.end()) {
-		logger->error("No intc");
+	if(irqs.find(irqName) == irqs.end()) {
+		logger->error("IRQ '{}' not found but required", irqName);
 		return false;
 	}
 
-	if(irqs.find("generateout0") == irqs.end()) {
-		logger->error("no irq");
-		return false;
-	}
-
-	intc = reinterpret_cast<InterruptController*>(dependencies["intc"]);
-	intc->disableInterrupt(irqs["generateout0"]);
+	// disable so we don't receive any stray interrupts
+	irqs[irqName].irqController->disableInterrupt(irqs[irqName]);
 
 	return true;
 }
 
 bool Timer::start(uint32_t ticks)
 {
-	intc->enableInterrupt(irqs["generateout0"], false);
+	irqs[irqName].irqController->enableInterrupt(irqs[irqName], false);
 
 	XTmrCtr_SetOptions(&xTmr, 0, XTC_EXT_COMPARE_OPTION | XTC_DOWN_COUNT_OPTION);
 	XTmrCtr_SetResetValue(&xTmr, 0, ticks);
@@ -76,8 +71,8 @@ bool Timer::start(uint32_t ticks)
 
 bool Timer::wait()
 {
-	int count = intc->waitForInterrupt(irqs["generateout0"]);
-	intc->disableInterrupt(irqs["generateout0"]);
+	int count = irqs[irqName].irqController->waitForInterrupt(irqs[irqName]);
+	irqs[irqName].irqController->disableInterrupt(irqs[irqName]);
 
 	return (count == 1);
 }

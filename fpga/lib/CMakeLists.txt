@@ -1,39 +1,43 @@
 set(SOURCES
-	ip.cpp
 	ip.c
-	ip_node.cpp
-	vlnv.cpp
 	vlnv.c
 	card.c
+
+	vlnv.cpp
 	card.cpp
+	ip.cpp
+	ip_node.cpp
 
 	ips/timer.c
-	ips/timer.cpp
 	ips/model.c
 	ips/switch.c
-	ips/switch.cpp
 	ips/dft.c
 	ips/fifo.c
-	ips/fifo.cpp
 	ips/dma.c
-	ips/intc.cpp
 	ips/intc.c
 	ips/gpio.c
 	ips/rtds_axis.c
+
+	ips/timer.cpp
+	ips/switch.cpp
+	ips/fifo.cpp
+	ips/intc.cpp
+	ips/pcie.cpp
 
 	kernel/kernel.c
 	kernel/pci.c
 	kernel/vfio.c
 
-	memory_manager.cpp
 	plugin.c
-	plugin.cpp
 	utils.c
-	utils.cpp
 	list.c
 	log.c
 	log_config.c
 	log_helper.c
+
+	plugin.cpp
+	utils.cpp
+	memory_manager.cpp
 )
 
 include(FindPkgConfig)

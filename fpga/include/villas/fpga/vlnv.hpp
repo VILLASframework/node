@@ -34,10 +34,8 @@
 namespace villas {
 namespace fpga {
 
-
 class Vlnv {
 public:
-
 	static constexpr char delimiter	= ':';
 
 	Vlnv() :
@@ -52,19 +50,14 @@ public:
 	{ return Vlnv(); }
 
 	std::string
-	toString() const
-	{
-		std::stringstream stream;
-		std::string string;
-
-		stream << *this;
-		stream >> string;
-
-		return string;
-	}
+	toString() const;
 
 	bool
 	operator==(const Vlnv& other) const;
+
+	bool
+	operator!=(const Vlnv& other) const
+	{ return !(*this == other); }
 
 	friend std::ostream&
 	operator<< (std::ostream& stream, const Vlnv& vlnv)

@@ -66,5 +66,17 @@ Vlnv::parseFromString(std::string vlnv)
 	if(version	== "*") version = "";
 }
 
+std::string
+Vlnv::toString() const
+{
+	std::stringstream stream;
+	std::string string;
+
+	stream << *this;
+	stream >> string;
+
+	return string;
+}
+
 } // namespace fpga
 } // namespace villas

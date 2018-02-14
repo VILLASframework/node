@@ -3,17 +3,25 @@
 #include <criterion/criterion.h>
 #include <villas/directed_graph.hpp>
 #include <villas/log.hpp>
+#include <villas/memory_manager.hpp>
+
+static void init_graph()
+{
+	spdlog::set_pattern("[%T] [%l] [%n] %v");
+	spdlog::set_level(spdlog::level::debug);
+}
 
 TestSuite(graph,
-	.description = "Graph library"
+    .description = "Graph library",
+    .init = init_graph
 );
 
 Test(graph, basic, .description = "DirectedGraph")
 {
 	auto logger = loggerGetOrCreate("test:graph:basic");
-	logger->info("Testing basic graph construction and modification");
-
 	villas::graph::DirectedGraph<> g("test:graph:basic");
+
+	logger->info("Testing basic graph construction and modification");
 
 	std::shared_ptr<villas::graph::Vertex> v1(new villas::graph::Vertex);
 	std::shared_ptr<villas::graph::Vertex> v2(new villas::graph::Vertex);
@@ -37,6 +45,8 @@ Test(graph, basic, .description = "DirectedGraph")
 	g.dump();
 	cr_assert(g.getVertexCount() == 2);
 	cr_assert(g.vertexGetEdges(v2id).size() == 0);
+
+	logger->info(TXT_GREEN("Passed"));
 }
 
 Test(graph, path, .description = "Find path")
@@ -101,4 +111,27 @@ Test(graph, path, .description = "Find path")
 	for(auto& edge : path4) {
 		logger->info("  -> edge {}", edge);
 	}
+
+	logger->info(TXT_GREEN("Passed"));
+}
+
+Test(graph, memory_manager, .description = "Global Memory Manager")
+{
+	auto logger = loggerGetOrCreate("test:graph:mm");
+	auto& mm = villas::MemoryManager::get();
+
+	logger->info("Create address spaces");
+	auto dmaRegs = mm.getOrCreateAddressSpace("DMA Registers");
+	auto pcieBridge = mm.getOrCreateAddressSpace("PCIe Bridge");
+
+	logger->info("Create a mapping");
+	mm.createMapping(0x1000, 0, 0x1000, "Testmapping", dmaRegs, pcieBridge);
+
+	logger->info("Find address space by name");
+	auto vertex = mm.findAddressSpace("PCIe Bridge");
+	logger->info("  found: {}", vertex);
+
+	mm.dump();
+
+	logger->info(TXT_GREEN("Passed"));
 }

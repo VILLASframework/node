@@ -56,6 +56,11 @@ public:
 private:
 	static constexpr int PORT_DISABLED = -1;
 
+	static constexpr char registerMemory[] = "Reg";
+
+	std::list<std::string> getMemoryBlocks() const
+	{ return { registerMemory }; }
+
 	struct Path {
 		IpCore* masterOut;
 		IpCore* slaveIn;
@@ -72,6 +77,10 @@ public:
 	AxiStreamSwitchFactory() :
 	    IpNodeFactory(getName()) {}
 
+	static constexpr const char*
+	getCompatibleVlnvString()
+	{ return "xilinx.com:ip:axis_switch:"; }
+
 	bool configureJson(IpCore& ip, json_t *json_ip);
 
 	IpCore* create()
@@ -84,7 +93,7 @@ public:
 	{ return "Xilinx's AXI4-Stream switch"; }
 
 	Vlnv getCompatibleVlnv() const
-	{ return Vlnv("xilinx.com:ip:axis_switch:"); }
+	{ return Vlnv(getCompatibleVlnvString()); }
 };
 
 } // namespace ip
