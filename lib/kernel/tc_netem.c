@@ -23,6 +23,7 @@
  *********************************************************************************/
 
 #include <jansson.h>
+#include <math.h>
 
 #include <netlink/route/qdisc/netem.h>
 
@@ -33,6 +34,7 @@
 #include <villas/kernel/kernel.h>
 #include <villas/utils.h>
 
+static const double max_percent_value = 0xffffffff;
 
 int tc_netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 {
@@ -74,10 +76,13 @@ int tc_netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 	}
 
 	if (json_delay_correlation) {
-		val = json_integer_value(json_delay_correlation);
+		double dval = json_number_value(json_delay_correlation);
 
-		if (!json_is_real(json_delay_correlation))
+		if (!json_is_number(json_delay_correlation) || dval < 0 || dval > 100)
 			error("Setting 'correlation' must be a positive integer within the range [ 0, 100 ]");
+
+		unsigned *pval = (unsigned *) &val;
+		*pval = (unsigned) rint((dval / 100.) * max_percent_value);
 
 		rtnl_netem_set_delay_correlation(ne, val);
 	}
@@ -114,28 +119,37 @@ int tc_netem_parse(struct rtnl_qdisc **netem, json_t *cfg)
 	}
 
 	if (json_loss) {
-		val = json_integer_value(json_loss);
+		double dval = json_number_value(json_loss);
 
-		if (!json_is_integer(json_loss) || val < 0 || val > 100)
+		if (!json_is_number(json_loss) || dval < 0 || dval > 100)
 			error("Setting 'loss' must be a positive integer within the range [ 0, 100 ]");
+
+		unsigned *pval = (unsigned *) &val;
+		*pval = (unsigned) rint((dval / 100.) * max_percent_value);
 
 		rtnl_netem_set_loss(ne, val);
 	}
 
 	if (json_duplicate) {
-		val = json_integer_value(json_duplicate);
+		double dval = json_number_value(json_duplicate);
 
-		if (!json_is_integer(json_duplicate) || val < 0 || val > 100)
+		if (!json_is_number(json_duplicate) || dval < 0 || dval > 100)
 			error("Setting 'duplicate' must be a positive integer within the range [ 0, 100 ]");
+
+		unsigned *pval = (unsigned *) &val;
+		*pval = (unsigned) rint((dval / 100.) * max_percent_value);
 
 		rtnl_netem_set_duplicate(ne, val);
 	}
 
 	if (json_corruption) {
-		val = json_integer_value(json_corruption);
+		double dval = json_number_value(json_corruption);
 
-		if (!json_is_integer(json_corruption) || val < 0 || val > 100)
+		if (!json_is_number(json_corruption) || dval < 0 || dval > 100)
 			error("Setting 'corruption' must be a positive integer within the range [ 0, 100 ]");
+
+		unsigned *pval = (unsigned *) &val;
+		*pval = (unsigned) rint((dval / 100.) * max_percent_value);
 
 		rtnl_netem_set_corruption_probability(ne, val);
 	}

@@ -257,16 +257,19 @@ int path_init(struct path *p)
 #ifdef WITH_HOOKS
 	/* Add internal hooks if they are not already in the list */
 	list_init(&p->hooks);
-	for (size_t i = 0; i < list_length(&plugins); i++) {
-		struct plugin *q = (struct plugin *) list_at(&plugins, i);
+	if (!p->no_builtin) {
+		int ret;
 
-		if (q->type != PLUGIN_TYPE_HOOK)
-			continue;
+		for (size_t i = 0; i < list_length(&plugins); i++) {
+			struct plugin *q = (struct plugin *) list_at(&plugins, i);
 
-		struct hook_type *vt = &q->hook;
+			if (q->type != PLUGIN_TYPE_HOOK)
+				continue;
 
-		if ((vt->flags & HOOK_PATH) && (vt->flags & HOOK_BUILTIN)) {
-			int ret;
+			struct hook_type *vt = &q->hook;
+
+			if (!(vt->flags & HOOK_PATH) || !(vt->flags & HOOK_BUILTIN))
+				continue;
 
 			struct hook *h = (struct hook *) alloc(sizeof(struct hook));
 
@@ -394,12 +397,13 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 	list_init(&sources);
 	list_init(&destinations);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: i, s?: s, s?: F, s?: o }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: b, s?: i, s?: s, s?: F, s?: o }",
 		"in", &json_in,
 		"out", &json_out,
 		"hooks", &json_hooks,
 		"reverse", &p->reverse,
 		"enabled", &p->enabled,
+		"no_builtin", &p->no_builtin,
 		"queuelen", &p->queuelen,
 		"mode", &mode,
 		"rate", &p->rate,
