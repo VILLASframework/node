@@ -5,19 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.6.0] - Unreleased
+## [0.6.1] - 2018-02-17
+
+### Added
+
+- New node-types:
+  - `mqtt` for MQTT / Mosquitto
+- `make help` target
+
+### Fixed
+
+- Websocket node can now receive data from a "catch-all" connection and associate to the correct simulator
+
+## [0.6.0] - 2017-12-20
 
 ### Added
 
 - New node-types:
   - `iec61850-9-2` for IEC 61850 Sampled Values
   - `amqp` for AMQP / RabbitMQ
-  - `mqtt` for MQTT / Mosquitto
 - New IO formats:
   - Google `protobuf`
 - Added support for Unix Domain Sockets to `socket` node-type
 - Python example client using new Protobuf and UDP/Unix sockets
-
+- Built-in hooks can be disabled now
+- Network emulation has been improved
+  - can now load a delay distribution from the config instead from a separate file
+  - can emulate delay correlation
+  
 ### Removed
 
 - Moved VILLASfpga related code into external library
@@ -25,6 +40,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Changed
 
+- Packaging of Docker and RPM has been improved
 - Upgraded Docker build containers to Fedora 27
 - Updated submodules for most dependencies
 - Use "LABEL" instead of "MAINTAINER" keyword in Dockerfiles
@@ -32,8 +48,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Fixed
 
 - Socket node-type supports now arbirarily sized packets
-- Netem support is working again
 - Sample data format conversion for RAW IO formats
+- Network emulation support is working again
 
 ## [0.5.1] - 2017-10-23
 
