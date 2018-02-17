@@ -33,9 +33,9 @@ endif
 endif
 
 %.pb-c.c %.pb-c.h: %.proto
-	protoc-c --proto_path=$(SRCDIR) --c_out=$(SRCDIR) $(realpath $^)
+	protoc-c --proto_path=$(SRCDIR) --c_out=$(SRCDIR) --dependency_out=$(BUILDDIR)/$*.d $(realpath $^)
 
-$(BUILDDIR)/%.pb-c.o: LIB_CFLAGS += -I$(SRCDIR) 
-
+$(BUILDDIR)/%.pb-c.o: LIB_CFLAGS += -I$(SRCDIR)
+$(BUILDDIR)/lib/io/protobuf.o:  LIB_CFLAGS += -I$(SRCDIR)/lib/io
+	
 $(BUILDDIR)/lib/io/protobuf.o: lib/io/villas.pb-c.h
-
