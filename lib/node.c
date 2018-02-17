@@ -59,6 +59,7 @@ int node_init(struct node *n, struct node_type *vt)
 	/* Add internal hooks if they are not already in the list */
 	list_init(&n->hooks);
 	if (!n->no_builtin) {
+		int ret;
 		for (size_t i = 0; i < list_length(&plugins); i++) {
 			struct plugin *q = (struct plugin *) list_at(&plugins, i);
 
