@@ -26,11 +26,11 @@
 #include <villas/sample.h>
 #include <villas/node.h>
 #include <villas/utils.h>
-#include <villas/config.h>
 #include <villas/plugin.h>
 #include <villas/config_helper.h>
 #include <villas/mapping.h>
 #include <villas/timing.h>
+#include <villas/signal.h>
 
 int node_init(struct node *n, struct node_type *vt)
 {
@@ -104,17 +104,19 @@ int node_parse(struct node *n, json_t *cfg, const char *name)
 
 	json_error_t err;
 	json_t *json_hooks = NULL;
+	json_t *json_signals = NULL;
 
 	const char *type;
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: i, s?: i, s?: o, s?: b }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: i, s?: i, s?: o, s?: b, s?: o }",
 		"type", &type,
 		"vectorize", &n->vectorize,
 		"samplelen", &n->samplelen,
 		"hooks", &json_hooks,
-		"no_builtin", &n->no_builtin
+		"no_builtin", &n->no_builtin,
+		"signals", &json_signals
 	);
 	if (ret)
 		jerror(&err, "Failed to parse node '%s'", node_name(n));
@@ -129,6 +131,12 @@ int node_parse(struct node *n, json_t *cfg, const char *name)
 			return ret;
 	}
 #endif /* WITH_HOOKS */
+
+	if (json_signals) {
+		ret = signal_parse_list(&n->signals, json_signals);
+		if (ret)
+			error("Failed to parse signal definition of node '%s'", node_name(n));
+	}
 
 	ret = n->_vt->parse ? n->_vt->parse(n, cfg) : 0;
 	if (ret)
@@ -252,6 +260,8 @@ int node_destroy(struct node *n)
 		n->_vt->destroy(n);
 
 	list_remove(&n->_vt->instances, n);
+
+	list_destroy(&n->signals, (dtor_cb_t) signal_destroy, true);
 
 	if (n->_vd)
 		free(n->_vd);

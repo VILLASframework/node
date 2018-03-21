@@ -19,10 +19,12 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
+ *********************************************************************************/
+
+/**
  * @addtogroup node Node
  * @{
- *********************************************************************************/
+ */
 
 #pragma once
 
@@ -59,6 +61,7 @@ struct node
 	struct stats *stats;	/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 
 	struct list hooks;	/**< List of write hooks (struct hook). */
+	struct list signals;	/**< List of signal meta data such as signal names */
 
 	enum state state;
 
@@ -82,6 +85,21 @@ int node_parse(struct node *n, json_t *cfg, const char *name);
 
 /** Parse settings of a node from cmdline. */
 int node_parse_cli(struct node *n, int argc, char *argv[]);
+
+/** Parse an array or single node and checks if they exist in the "nodes" section.
+ *
+ * Examples:
+ *     out = [ "sintef", "scedu" ]
+ *     out = "acs"
+ *
+ * @param cfg A JSON array or string. See examples above.
+ * @param nodes The nodes will be added to this list.
+ * @param all This list contains all valid nodes.
+ */
+int node_parse_list(struct list *list, json_t *cfg, struct list *all);
+
+/** Parse the list of signal definitions. */
+int node_parse_signals(struct list *list, json_t *cfg);
 
 /** Validate node configuration. */
 int node_check(struct node *n);
@@ -133,17 +151,5 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt);
 int node_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 int node_fd(struct node *n);
-
-/** Parse an array or single node and checks if they exist in the "nodes" section.
- *
- * Examples:
- *     out = [ "sintef", "scedu" ]
- *     out = "acs"
- *
- * @param cfg A JSON array or string. See examples above.
- * @param nodes The nodes will be added to this list.
- * @param all This list contains all valid nodes.
- */
-int node_parse_list(struct list *list, json_t *cfg, struct list *all);
 
 /** @} */
