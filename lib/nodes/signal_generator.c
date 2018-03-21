@@ -26,33 +26,33 @@
 
 #include <villas/node.h>
 #include <villas/plugin.h>
-#include <villas/nodes/signal.h>
+#include <villas/nodes/signal_generator.h>
 
-enum signal_type signal_lookup_type(const char *type)
+enum signal_generator_type signal_generator_lookup_type(const char *type)
 {
 	if      (!strcmp(type, "random"))
-		return SIGNAL_TYPE_RANDOM;
+		return SIGNAL_GENERATOR_TYPE_RANDOM;
 	else if (!strcmp(type, "sine"))
-		return SIGNAL_TYPE_SINE;
+		return SIGNAL_GENERATOR_TYPE_SINE;
 	else if (!strcmp(type, "square"))
-		return SIGNAL_TYPE_SQUARE;
+		return SIGNAL_GENERATOR_TYPE_SQUARE;
 	else if (!strcmp(type, "triangle"))
-		return SIGNAL_TYPE_TRIANGLE;
+		return SIGNAL_GENERATOR_TYPE_TRIANGLE;
 	else if (!strcmp(type, "ramp"))
-		return SIGNAL_TYPE_RAMP;
+		return SIGNAL_GENERATOR_TYPE_RAMP;
 	else if (!strcmp(type, "counter"))
-		return SIGNAL_TYPE_COUNTER;
+		return SIGNAL_GENERATOR_TYPE_COUNTER;
 	else if (!strcmp(type, "constant"))
-		return SIGNAL_TYPE_CONSTANT;
+		return SIGNAL_GENERATOR_TYPE_CONSTANT;
 	else if (!strcmp(type, "mixed"))
-		return SIGNAL_TYPE_MIXED;
+		return SIGNAL_GENERATOR_TYPE_MIXED;
 	else
 		return -1;
 }
 
-int signal_parse(struct node *n, json_t *cfg)
+int signal_generator_parse(struct node *n, json_t *cfg)
 {
-	struct signal *s = (struct signal *) n->_vd;
+	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
 	int ret;
 	const char *type = NULL;
@@ -83,14 +83,14 @@ int signal_parse(struct node *n, json_t *cfg)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 	if (type) {
-		ret = signal_lookup_type(type);
+		ret = signal_generator_lookup_type(type);
 		if (ret == -1)
 			error("Unknown signal type '%s' of node %s", type, node_name(n));
 
 		s->type = ret;
 	}
 	else
-		s->type = SIGNAL_TYPE_MIXED;
+		s->type = SIGNAL_GENERATOR_TYPE_MIXED;
 
 	/* We know the expected number of values. */
 	n->samplelen = s->values;
@@ -98,18 +98,18 @@ int signal_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-int signal_parse_cli(struct node *n, int argc, char *argv[])
+int signal_generator_parse_cli(struct node *n, int argc, char *argv[])
 {
 	char *type;
 
-	struct signal *s = (struct signal *) n->_vd;
+	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
 	/* Default values */
 	s->rate = 10;
 	s->frequency = 1;
 	s->amplitude = 1;
 	s->stddev = 0.02;
-	s->type = SIGNAL_TYPE_MIXED;
+	s->type = SIGNAL_GENERATOR_TYPE_MIXED;
 	s->rt = 1;
 	s->values = 1;
 	s->limit = -1;
@@ -158,7 +158,7 @@ check:		if (optarg == endptr)
 
 	type = argv[optind];
 
-	int t = signal_lookup_type(type);
+	int t = signal_generator_lookup_type(type);
 	if (t == -1)
 		error("Invalid signal type: %s", type);
 
@@ -170,10 +170,10 @@ check:		if (optarg == endptr)
 	return 0;
 }
 
-int signal_open(struct node *n)
+int signal_generator_open(struct node *n)
 {
 	int ret;
-	struct signal *s = (struct signal *) n->_vd;
+	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
 	s->counter = 0;
 	s->started = time_now();
@@ -192,10 +192,10 @@ int signal_open(struct node *n)
 	return 0;
 }
 
-int signal_close(struct node *n)
+int signal_generator_close(struct node *n)
 {
 	int ret;
-	struct signal* s = (struct signal *) n->_vd;
+	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
 	if (s->rt) {
 		ret = task_destroy(&s->task);
@@ -208,9 +208,9 @@ int signal_close(struct node *n)
 	return 0;
 }
 
-int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
+int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct signal *s = (struct signal *) n->_vd;
+	struct signal_generator *s = (struct signal_generator *) n->_vd;
 	struct sample *t = smps[0];
 
 	struct timespec ts;
@@ -243,15 +243,15 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 	t->length = n->samplelen;
 
 	for (int i = 0; i < MIN(s->values, t->capacity); i++) {
-		int rtype = (s->type != SIGNAL_TYPE_MIXED) ? s->type : i % 7;
+		int rtype = (s->type != SIGNAL_GENERATOR_TYPE_MIXED) ? s->type : i % 7;
 		switch (rtype) {
-			case SIGNAL_TYPE_CONSTANT: t->data[i].f = s->offset + s->amplitude;                                                           break;
-			case SIGNAL_TYPE_SINE:	   t->data[i].f = s->offset + s->amplitude *        sin(running * s->frequency * 2 * M_PI);           break;
-			case SIGNAL_TYPE_TRIANGLE: t->data[i].f = s->offset + s->amplitude * (fabs(fmod(running * s->frequency, 1) - .5) - 0.25) * 4; break;
-			case SIGNAL_TYPE_SQUARE:   t->data[i].f = s->offset + s->amplitude * (    (fmod(running * s->frequency, 1) < .5) ? -1 : 1);   break;
-			case SIGNAL_TYPE_RAMP:     t->data[i].f = s->offset + s->amplitude *       fmod(running, s->frequency);                       break;
-			case SIGNAL_TYPE_COUNTER:  t->data[i].f = s->offset + s->amplitude * s->counter;                                              break;
-			case SIGNAL_TYPE_RANDOM:
+			case SIGNAL_GENERATOR_TYPE_CONSTANT: t->data[i].f = s->offset + s->amplitude;                                                           break;
+			case SIGNAL_GENERATOR_TYPE_SINE:	   t->data[i].f = s->offset + s->amplitude *        sin(running * s->frequency * 2 * M_PI);           break;
+			case SIGNAL_GENERATOR_TYPE_TRIANGLE: t->data[i].f = s->offset + s->amplitude * (fabs(fmod(running * s->frequency, 1) - .5) - 0.25) * 4; break;
+			case SIGNAL_GENERATOR_TYPE_SQUARE:   t->data[i].f = s->offset + s->amplitude * (    (fmod(running * s->frequency, 1) < .5) ? -1 : 1);   break;
+			case SIGNAL_GENERATOR_TYPE_RAMP:     t->data[i].f = s->offset + s->amplitude *       fmod(running, s->frequency);                       break;
+			case SIGNAL_GENERATOR_TYPE_COUNTER:  t->data[i].f = s->offset + s->amplitude * s->counter;                                              break;
+			case SIGNAL_GENERATOR_TYPE_RANDOM:
 				s->last[i] += box_muller(0, s->stddev);
 				t->data[i].f = s->last[i];
 				break;
@@ -269,20 +269,20 @@ int signal_read(struct node *n, struct sample *smps[], unsigned cnt)
 	return 1;
 }
 
-char * signal_print(struct node *n)
+char * signal_generator_print(struct node *n)
 {
-	struct signal *s = (struct signal *) n->_vd;
+	struct signal_generator *s = (struct signal_generator *) n->_vd;
 	char *type, *buf = NULL;
 
 	switch (s->type) {
-		case SIGNAL_TYPE_MIXED:    type = "mixed";    break;
-		case SIGNAL_TYPE_RAMP:     type = "ramp";     break;
-		case SIGNAL_TYPE_COUNTER:  type = "counter";  break;
-		case SIGNAL_TYPE_TRIANGLE: type = "triangle"; break;
-		case SIGNAL_TYPE_SQUARE:   type = "square";   break;
-		case SIGNAL_TYPE_SINE:     type = "sine";     break;
-		case SIGNAL_TYPE_RANDOM:   type = "random";   break;
-		case SIGNAL_TYPE_CONSTANT: type = "constant"; break;
+		case SIGNAL_GENERATOR_TYPE_MIXED:    type = "mixed";    break;
+		case SIGNAL_GENERATOR_TYPE_RAMP:     type = "ramp";     break;
+		case SIGNAL_GENERATOR_TYPE_COUNTER:  type = "counter";  break;
+		case SIGNAL_GENERATOR_TYPE_TRIANGLE: type = "triangle"; break;
+		case SIGNAL_GENERATOR_TYPE_SQUARE:   type = "square";   break;
+		case SIGNAL_GENERATOR_TYPE_SINE:     type = "sine";     break;
+		case SIGNAL_GENERATOR_TYPE_RANDOM:   type = "random";   break;
+		case SIGNAL_GENERATOR_TYPE_CONSTANT: type = "constant"; break;
 		default: return NULL;
 	}
 
@@ -295,27 +295,27 @@ char * signal_print(struct node *n)
 	return buf;
 }
 
-int signal_fd(struct node *n)
+int signal_generator_fd(struct node *n)
 {
-	struct signal *s = (struct signal *) n->_vd;
+	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
 	return task_fd(&s->task);
 }
 
 static struct plugin p = {
 	.name = "signal",
-	.description = "Signal generation",
+	.description = "Signal generator",
 	.type = PLUGIN_TYPE_NODE,
 	.node = {
 		.vectorize = 1,
-		.size  = sizeof(struct signal),
-		.parse = signal_parse,
-		.parse_cli = signal_parse_cli,
-		.print = signal_print,
-		.start = signal_open,
-		.stop  = signal_close,
-		.read  = signal_read,
-		.fd    = signal_fd
+		.size  = sizeof(struct signal_generator),
+		.parse = signal_generator_parse,
+		.parse_cli = signal_generator_parse_cli,
+		.print = signal_generator_print,
+		.start = signal_generator_open,
+		.stop  = signal_generator_close,
+		.read  = signal_generator_read,
+		.fd    = signal_generator_fd
 	}
 };
 

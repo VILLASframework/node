@@ -35,7 +35,7 @@
 #include <villas/node.h>
 #include <villas/pool.h>
 #include <villas/plugin.h>
-#include <villas/nodes/signal.h>
+#include <villas/nodes/signal_generator.h>
 
 /* Some default values */
 struct node n;

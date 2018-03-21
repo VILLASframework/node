@@ -23,7 +23,7 @@
 
 /**
  * @ingroup node
- * @addtogroup signal Signal generation node-type-
+ * @addtogroup signal_generator Signal generation node-type-
  * @{
  */
 
@@ -36,25 +36,25 @@
 struct node;
 struct sample;
 
-enum signal_type {
-	SIGNAL_TYPE_RANDOM,
-	SIGNAL_TYPE_SINE,
-	SIGNAL_TYPE_SQUARE,
-	SIGNAL_TYPE_TRIANGLE,
-	SIGNAL_TYPE_RAMP,
-	SIGNAL_TYPE_COUNTER,
-	SIGNAL_TYPE_CONSTANT,
-	SIGNAL_TYPE_MIXED
+enum signal_generator_type {
+	SIGNAL_GENERATOR_TYPE_RANDOM,
+	SIGNAL_GENERATOR_TYPE_SINE,
+	SIGNAL_GENERATOR_TYPE_SQUARE,
+	SIGNAL_GENERATOR_TYPE_TRIANGLE,
+	SIGNAL_GENERATOR_TYPE_RAMP,
+	SIGNAL_GENERATOR_TYPE_COUNTER,
+	SIGNAL_GENERATOR_TYPE_CONSTANT,
+	SIGNAL_GENERATOR_TYPE_MIXED
 };
 
 /** Node-type for signal generation.
  * @see node_type
  */
-struct signal {
+struct signal_generator {
 	struct task task;		/**< Timer for periodic events. */
 	int rt;				/**< Real-time mode? */
 
-	enum signal_type type;		/**< Signal type */
+	enum signal_generator_type type; /**< Signal type */
 
 	double rate;			/**< Sampling rate. */
 	double frequency;		/**< Frequency of the generated signals. */
@@ -72,22 +72,20 @@ struct signal {
 };
 
 /** @see node_type::print */
-char * signal_print(struct node *n);
+char * signal_generator_print(struct node *n);
 
 /** @see node_type::parse */
-int signal_parse(struct node *n, json_t *cfg);
+int signal_generator_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::open */
-int signal_open(struct node *n);
+int signal_generator_open(struct node *n);
 
 /** @see node_type::close */
-int signal_close(struct node *n);
+int signal_generator_close(struct node *n);
 
 /** @see node_type::read */
-int signal_read(struct node *n, struct sample *smps[], unsigned cnt);
+int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt);
 
-enum signal_type signal_lookup_type(const char *type);
-
-void signal_get(struct signal *s, struct sample *t, struct timespec *now);
+enum signal_generator_type signal_generator_lookup_type(const char *type);
 
 /** @} */

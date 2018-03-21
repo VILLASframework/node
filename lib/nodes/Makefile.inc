@@ -53,7 +53,7 @@ endif
 
 # Enable signal generator node-type
 ifeq ($(WITH_NODE_SIGNAL),1)
-	LIB_NODES   += signal
+	LIB_NODES   += signal_generator
 endif
 
 # Enable RTT test node-tyoe
