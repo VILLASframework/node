@@ -260,14 +260,14 @@ void * memdup(const void *src, size_t bytes)
 	return dst;
 }
 
-ssize_t read_random(char *buf, size_t len)
+size_t read_random(char *buf, size_t len)
 {
 	int fd;
 	ssize_t bytes, total;
 
 	fd = open("/dev/urandom", O_RDONLY);
 	if (fd < 0)
-		return -1;
+		return 0;
 
 	bytes = 0;
 	total = 0;
