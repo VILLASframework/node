@@ -55,6 +55,8 @@ int node_init(struct node *n, struct node_type *vt)
 
 	list_push(&vt->instances, n);
 
+	list_init(&n->signals);
+
 #ifdef WITH_HOOKS
 	/* Add internal hooks if they are not already in the list */
 	list_init(&n->hooks);
