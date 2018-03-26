@@ -56,7 +56,6 @@ int list_init(struct list *l)
 	l->length = 0;
 	l->capacity = 0;
 	l->array = NULL;
-
 	l->state = STATE_INITIALIZED;
 
 	return 0;
@@ -69,25 +68,23 @@ int list_destroy(struct list *l, dtor_cb_t destructor, bool release)
 	assert(l->state != STATE_DESTROYED);
 
 	for (size_t i = 0; i < list_length(l); i++) {
-		void *p = list_at(l, i);
+		void *e = list_at(l, i);
 
 		if (destructor)
-			destructor(p);
+			destructor(e);
 		if (release)
-			free(p);
+			free(e);
 	}
 
 	free(l->array);
 
-	l->array = NULL;
-
 	l->length = -1;
 	l->capacity = 0;
+	l->array = NULL;
+	l->state = STATE_DESTROYED;
 
 	pthread_mutex_unlock(&l->lock);
 	pthread_mutex_destroy(&l->lock);
-
-	l->state = STATE_DESTROYED;
 
 	return 0;
 }
@@ -119,10 +116,10 @@ void list_remove(struct list *l, void *p)
 	assert(l->state == STATE_INITIALIZED);
 
 	for (size_t i = 0; i < list_length(l); i++) {
-		if (l->array[i] == p)
+		if (list_at(l, i) == p)
 			removed++;
 		else
-			l->array[i - removed] = l->array[i];
+			l->array[i - removed] = list_at(l, i);
 	}
 
 	l->length -= removed;
@@ -143,14 +140,14 @@ int list_contains(struct list *l, void *p)
 int list_count(struct list *l, cmp_cb_t cmp, void *ctx)
 {
 	int c = 0;
+	void *e;
 
 	pthread_mutex_lock(&l->lock);
 
 	assert(l->state == STATE_INITIALIZED);
 
 	for (size_t i = 0; i < list_length(l); i++) {
-		void *e = list_at(l, i);
-
+		e = list_at(l, i);
 		if (cmp(e, ctx) == 0)
 			c++;
 	}
