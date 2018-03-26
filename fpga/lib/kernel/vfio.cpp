@@ -101,7 +101,7 @@ VfioContainer::VfioContainer()
 
 	/* Check available VFIO extensions (IOMMU types) */
 	extensions = 0;
-	for (int i = 1; i < VFIO_DMA_CC_IOMMU; i++) {
+	for (unsigned int i = VFIO_TYPE1_IOMMU; i <= VFIO_NOIOMMU_IOMMU; i++) {
 		int ret = ioctl(fd, VFIO_CHECK_EXTENSION, i);
 		if (ret < 0) {
 			logger->error("Failed to get VFIO extensions");
