@@ -31,7 +31,7 @@
 ###################################################################################
 
 # Project modules
-MODULES = lib thirdparty packaging doc etc web
+MODULES = lib thirdparty packaging doc etc web tests
 
 # Modules which are not included in default, install and clean targets
 MODULES_EXCLUDE = thirdparty packaging doc
