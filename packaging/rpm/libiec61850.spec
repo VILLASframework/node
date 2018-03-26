@@ -1,5 +1,5 @@
 Name: libiec61850
-Version: 1.1
+Version: 1.2
 Vendor: MZ Automation
 Packager: Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 Release: 1%{?dist}
@@ -7,8 +7,8 @@ Summary: Open source libraries for IEC 61850 and IEC 60870-5-104
 
 License: GPL-3.0
 URL: https://github.com/mz-automation/libiec61850
-#Source0: https://github.com/mz-automation/libiec61850/repository/archive.tar.gz?ref=v%{version}
-Source0: libiec61850_1.1.0.tar.gz
+#Source0: https://github.com/mz-automation/libiec61850/repository/archive.tar.gz?ref=v1.2.0
+Source0: libiec61850_1.2.0.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: gcc cmake
@@ -36,12 +36,13 @@ Requires:       %{name} = %{version}-%{release}
 The development headers for libiec61850.
 
 %prep
-%setup -q -n libiec61850_1.1.0/
+%setup -q -n libiec61850_1.2.0/
 
 %build
 mkdir -p build
 cd build
-%cmake -DCMAKE_INSTALL_LIBDIR=${_libdir} ..
+rm CMakeCache.txt
+%cmake -DCMAKE_INSTALL_LIBDIR=${_libdir} -DBUILD_EXAMPLES=0 -DBUILD_PYTHON_BINDINGS=0 ..
 make %{?_smp_mflags}
 
 %install
@@ -56,13 +57,13 @@ make install DESTDIR=$RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_ROOT
 
 %files
-%{_prefix}/lib/libiec61850.so.1.1.0
+%{_prefix}/lib/libiec61850.so.1.2.0
 %{_prefix}/lib/libiec61850.so
-%{_prefix}/lib/libiec61850.a
-%{_prefix}/share/pkgconfig/libiec61850.pc
 
 %files devel
 %{_includedir}/libiec61850/*
+%{_prefix}/share/pkgconfig/libiec61850.pc
+%{_prefix}/lib/libiec61850.a
 
 %changelog
 * Mon Nov 6 2017 Steffen Vogel <stvogel@eonerc.rwth-aachen.de
