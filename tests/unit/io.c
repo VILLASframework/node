@@ -65,6 +65,7 @@ static char formats[][32] = {
 void generate_samples(struct pool *p, struct sample *smps[], struct sample *smpt[], unsigned cnt, unsigned values)
 {
 	int ret;
+	struct timespec delta, now;
 
 	/* Prepare a sample with arbitrary data */
 	ret = sample_alloc_many(p, smps, cnt);
@@ -73,17 +74,46 @@ void generate_samples(struct pool *p, struct sample *smps[], struct sample *smpt
 	ret = sample_alloc_many(p, smpt, cnt);
 	cr_assert_eq(ret, cnt);
 
+	now = time_now();
+	delta = time_from_double(50e-6);
+
 	for (int i = 0; i < cnt; i++) {
 		smpt[i]->capacity = values;
 
+		smps[i]->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_VALUES | SAMPLE_HAS_ORIGIN | SAMPLE_HAS_FORMAT;
 		smps[i]->length = values;
 		smps[i]->sequence = 235 + i;
 		smps[i]->format = 0; /* all float */
-		smps[i]->ts.origin = time_now();
+		smps[i]->ts.origin = now;
 
-		for (int j = 0; j < smps[i]->length; j++)
+		for (int j = 0; j < smps[i]->length; j++) {
 			smps[i]->data[j].f = j * 0.1 + i * 100;
 			//smps[i]->data[j].i = -500  + j*100;
+		}
+
+		now = time_add(&now, &delta);
+	}
+}
+
+void cr_assert_eq_sample(struct sample *a, struct sample *b)
+{
+	cr_assert_eq(a->length, b->length);
+	cr_assert_eq(a->sequence, b->sequence);
+
+	cr_assert_eq(a->ts.origin.tv_sec, b->ts.origin.tv_sec);
+	cr_assert_eq(a->ts.origin.tv_nsec, b->ts.origin.tv_nsec);
+
+	for (int j = 0; j < MIN(a->length, b->length); j++) {
+		cr_assert_eq(sample_get_data_format(a, j), sample_get_data_format(b, j));
+
+		switch (sample_get_data_format(b, j)) {
+			case SAMPLE_DATA_FORMAT_FLOAT:
+				cr_assert_float_eq(a->data[j].f, b->data[j].f, 1e-3, "Sample data mismatch at index %d: %f != %f", j, a->data[j].f, b->data[j].f);
+				break;
+			case SAMPLE_DATA_FORMAT_INT:
+				cr_assert_eq(a->data[j].i, b->data[j].i, "Sample data mismatch at index %d: %lld != %lld", j, a->data[j].i, b->data[j].i);
+				break;
+		}
 	}
 }
 
@@ -117,35 +147,24 @@ void cr_assert_eq_samples(struct io_format *f, struct sample *smps[], struct sam
 			}
 			else {
 				switch (bits) {
-					case   8: smps[0]->data[j].i = (  int8_t) smps[0]->data[j].i; break;
-					case  16: smps[0]->data[j].i = ( int16_t) smps[0]->data[j].i; break;
-					case  32: smps[0]->data[j].i = ( int32_t) smps[0]->data[j].i; break;
-					case  64: smps[0]->data[j].i = ( int64_t) smps[0]->data[j].i; break;
+					case   8: smps[0]->data[j].f = (  int8_t) smps[0]->data[j].f; break;
+					case  16: smps[0]->data[j].f = ( int16_t) smps[0]->data[j].f; break;
+					case  32: smps[0]->data[j].f = ( int32_t) smps[0]->data[j].f; break;
+					case  64: smps[0]->data[j].f = ( int64_t) smps[0]->data[j].f; break;
 				}
+
+				/* The RAW format stores raw integer samples in integer format.
+				   However, the test expects floating point data */
+				smpt[0]->data[j].f = smpt[0]->data[j].i;
+				sample_set_data_format(smpt[0], j, SAMPLE_DATA_FORMAT_FLOAT);
 			}
 		}
 	}
 	else
 		cr_assert_eq(cnt, NUM_SAMPLES, "Read only %d of %d samples back", cnt, NUM_SAMPLES);
 
-	for (int i = 0; i < cnt; i++) {
-		cr_assert_eq(smps[i]->length, smpt[i]->length);
-		cr_assert_eq(smps[i]->sequence, smpt[i]->sequence);
-
-		cr_assert_eq(smps[i]->ts.origin.tv_sec, smpt[i]->ts.origin.tv_sec);
-		cr_assert_eq(smps[i]->ts.origin.tv_nsec, smpt[i]->ts.origin.tv_nsec);
-
-		for (int j = 0; j < MIN(smps[i]->length, smpt[i]->length); j++) {
-			switch (sample_get_data_format(smpt[i], j)) {
-				case SAMPLE_DATA_FORMAT_FLOAT:
-					cr_assert_float_eq(smps[i]->data[j].f, smpt[i]->data[j].f, 1e-3, "Sample data mismatch at index %d: %f != %f", j, smps[i]->data[j].f, smpt[i]->data[j].f);
-					break;
-				case SAMPLE_DATA_FORMAT_INT:
-					cr_assert_eq(smps[i]->data[j].i, smpt[i]->data[j].i, "Sample data mismatch at index %d: %lld != %lld", j, smps[i]->data[j].i, smpt[i]->data[j].i);
-					break;
-			}
-		}
-	}
+	for (int i = 0; i < cnt; i++)
+		cr_assert_eq_sample(smps[i], smpt[i]);
 }
 
 ParameterizedTestParameters(io, lowlevel)
@@ -167,6 +186,8 @@ ParameterizedTest(char *fmt, io, lowlevel)
 
 	ret = pool_init(&p, 2 * NUM_SAMPLES, SAMPLE_LEN(NUM_VALUES), &memtype_hugepage);
 	cr_assert_eq(ret, 0);
+
+	info("format = %s", fmt);
 
 	generate_samples(&p, smps, smpt, NUM_SAMPLES, NUM_VALUES);
 
