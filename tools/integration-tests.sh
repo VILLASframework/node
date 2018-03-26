@@ -25,12 +25,8 @@
 SCRIPT=$(realpath ${BASH_SOURCE[0]})
 SCRIPTPATH=$(dirname $SCRIPT)
 
-if [ -n "${DEBUG}" ]; then
-	VARIANT="debug"
-else
-	VARIANT="release"
-fi
-
+VARIANTS=${VARIANTS:-"release"}
+VARIANT=${VARIANT:-$(uname -s)-$(uname -m)-$(echo ${VARIANTS} | tr ' ' '_')}
 SRCDIR=${SRCDIR:-$(realpath ${SCRIPTPATH}/..)}
 BUILDDIR=${BUILDDIR:-${SRCDIR}/build/${VARIANT}}
 

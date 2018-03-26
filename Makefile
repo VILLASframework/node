@@ -115,6 +115,8 @@ VPATH = $(SRCDIR)
 VERSION := $(shell git describe --tags --abbrev=0 --match 'v*')
 VERSION_NUM := $(shell VERSION=$(VERSION); echo $${VERSION:1})
 
+export BUILDDIR VARIANT VERSION VERSION_NUM
+
 ifdef CI
 	VARIANT := $(VARIANT)-ci
 
