@@ -14,6 +14,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <sys/types.h>
 #include <pthread.h>
 
 #include "common.h"
