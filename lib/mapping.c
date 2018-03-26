@@ -28,6 +28,7 @@
 #include <villas/list.h>
 #include <villas/utils.h>
 #include <villas/node.h>
+#include <villas/signal.h>
 
 int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *nodes)
 {
@@ -131,7 +132,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 			goto invalid_format;
 	}
 	else if (!strcmp(type, "data")) {
-		char *first_str, *last_str, *endptr;
+		char *first_str, *last_str;
 
 		me->type = MAPPING_TYPE_DATA;
 
@@ -143,15 +144,9 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 			if (!last_str)
 				last_str = first_str; /* single element: data[5] => data[5-5] */
 
-			first = strtoul(first_str, &endptr, 10);
-			if (endptr != first_str + strlen(first_str))
-				goto invalid_format;
-
-			last = strtoul(last_str, &endptr, 10);
-			if (endptr != last_str + strlen(last_str))
-				goto invalid_format;
-
-			if (last < first)
+			first = signal_get_offset(first_str, me->node);
+			last = signal_get_offset(last_str, me->node);
+			if (first < 0 || last < 0 || last < first)
 				goto invalid_format;
 
 			me->data.offset = first;

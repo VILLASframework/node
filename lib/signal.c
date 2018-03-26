@@ -25,6 +25,7 @@
 #include "villas/signal.h"
 #include "villas/list.h"
 #include "villas/utils.h"
+#include "villas/node.h"
 
 int signal_destroy(struct signal *s)
 {
@@ -71,4 +72,25 @@ int signal_parse_list(struct list *list, json_t *cfg)
 	}
 
 	return 0;
+}
+
+int signal_get_offset(const char *str, struct node *n)
+{
+	int idx;
+	char *endptr;
+	struct signal *s;
+
+	/* Lets try to find a signal with a matching name */
+	if (n) {
+		s = list_lookup(&n->signals, str);
+		if (s)
+			return list_index(&n->signals, s);
+	}
+
+	/* Lets try to interpret the signal name as an index */
+	idx = strtoul(str, &endptr, 10);
+	if (endptr == str + strlen(str))
+		return idx;
+
+	return -1;
 }

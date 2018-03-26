@@ -27,6 +27,7 @@
 
 /* Forward declarations */
 struct list;
+struct node;
 
 struct signal {
 	char *name;	/**< The name of the signal. */
@@ -41,3 +42,5 @@ int signal_destroy(struct signal *s);
 int signal_parse(struct signal *s, json_t *cfg);
 
 int signal_parse_list(struct list *list, json_t *cfg);
+
+int signal_get_offset(const char *str, struct node *n);
