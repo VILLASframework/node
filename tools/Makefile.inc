@@ -27,7 +27,7 @@ endif
 endif
 
 TOOLS_CFLAGS = $(CFLAGS)
-TOOLS_LDLIBS = -lconfig -ljansson -lvillas
+TOOLS_LDLIBS = $(LDLIBS) -lconfig -ljansson -lvillas
 TOOLS_LDFLAGS = $(LDFLAGS) -Wl,-rpath,'$$ORIGIN'
 
 ifeq ($(shell $(PKGCONFIG) libzmq; echo $$?),0)
