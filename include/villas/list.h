@@ -110,3 +110,10 @@ void list_sort(struct list *l, cmp_cb_t cmp);
 
 /** Set single element in list */
 int list_set(struct list *l, int index, void *value);
+
+/** Return index in list for value.
+ *
+ * @retval <0 No list entry  matching \p value was found.
+ * @retval >=0 Entry \p value was found at returned index.
+ */
+ssize_t list_index(struct list *l, void *value);

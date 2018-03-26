@@ -198,3 +198,27 @@ int list_set(struct list *l, int index, void *value)
 
 	return 0;
 }
+
+ssize_t list_index(struct list *l, void *p)
+{
+	void *e;
+	ssize_t f;
+
+	pthread_mutex_lock(&l->lock);
+
+	assert(l->state == STATE_INITIALIZED);
+
+	for (size_t i = 0; i < list_length(l); i++) {
+		e = list_at(l, i);
+		if (e == p) {
+			f = i;
+			goto found;
+		}
+	}
+
+	f = -1;
+
+found:	pthread_mutex_unlock(&l->lock);
+
+	return f;
+}
