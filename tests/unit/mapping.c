@@ -25,51 +25,85 @@
 #include <villas/mapping.h>
 #include <villas/node.h>
 #include <villas/list.h>
+#include <villas/utils.h>
+#include <villas/signal.h>
 
 Test(mapping, parse_nodes)
 {
 	int ret;
 	struct mapping_entry m;
-	struct list n = { .state = STATE_DESTROYED };
+	struct list nodes = { .state = STATE_DESTROYED };
 
-	struct node n1 = { .name = "apple" };
-	struct node n2 = { .name = "cherry" };
-	struct node n3 = { .name = "carrot" };
+	char *node_names[3] = { "apple", "cherry", "carrot" };
+	char *signal_names[3][4] = {
+		{ "abra", "kadabra", "simsala", "bimm" },
+		{ "this", "is", "a", "test" },
+		{ "o",  "sole", "mio", "italia" }
+	};
 
-	list_init(&n);
+	list_init(&nodes);
 
-	list_push(&n, &n1);
-	list_push(&n, &n2);
-	list_push(&n, &n3);
+	for (int i = 0; i < ARRAY_LEN(node_names); i++) {
+		struct node *n = alloc(sizeof(struct node));
 
-	ret = mapping_parse_str(&m, "apple.ts.origin", &n);
+		n->name = node_names[i];
+		n->signals.state = STATE_DESTROYED;
+
+		list_init(&n->signals);
+
+		for (int j = 0; j < ARRAY_LEN(signal_names[i]); j++) {
+			struct signal *s = alloc(sizeof(struct signal *));
+
+			s->name = signal_names[i][j];
+
+			list_push(&n->signals, s);
+		}
+
+		list_push(&nodes, n);
+	}
+
+	ret = mapping_parse_str(&m, "apple.ts.origin", &nodes);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.node, &n1);
+	cr_assert_eq(m.node, list_lookup(&nodes, "apple"));
 	cr_assert_eq(m.type, MAPPING_TYPE_TS);
 	cr_assert_eq(m.ts.id, MAPPING_TS_ORIGIN);
 
-	ret = mapping_parse_str(&m, "cherry.stats.owd.mean", &n);
+	ret = mapping_parse_str(&m, "cherry.stats.owd.mean", &nodes);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.node, &n2);
+	cr_assert_eq(m.node, list_lookup(&nodes, "cherry"));
 	cr_assert_eq(m.type, MAPPING_TYPE_STATS);
 	cr_assert_eq(m.stats.id, STATS_OWD);
 	cr_assert_eq(m.stats.type, MAPPING_STATS_TYPE_MEAN);
 
-	ret = mapping_parse_str(&m, "carrot.data[1-2]", &n);
+	ret = mapping_parse_str(&m, "carrot.data[1-2]", &nodes);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.node, &n3);
+	cr_assert_eq(m.node, list_lookup(&nodes, "carrot"));
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 1);
 	cr_assert_eq(m.length, 2);
 
-	ret = mapping_parse_str(&m, "carrot", &n);
+	ret = mapping_parse_str(&m, "carrot", &nodes);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.node, &n3);
+	cr_assert_eq(m.node, list_lookup(&nodes, "carrot"));
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 0);
 	cr_assert_eq(m.length, 0);
 
-	ret = list_destroy(&n, NULL, false);
+	ret = mapping_parse_str(&m, "carrot.data[sole]", &nodes);
+	cr_assert_eq(ret, 0);
+	cr_assert_eq(m.node, list_lookup(&nodes, "carrot"));
+	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
+	cr_assert_eq(m.data.offset, 1);
+	cr_assert_eq(m.length, 1);
+
+	ret = mapping_parse_str(&m, "carrot.data[sole-mio]", &nodes);
+	cr_assert_eq(ret, 0);
+	cr_assert_eq(m.node, list_lookup(&nodes, "carrot"));
+	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
+	cr_assert_eq(m.data.offset, 1);
+	cr_assert_eq(m.length, 2);
+
+	ret = list_destroy(&nodes, NULL, true);
 	cr_assert_eq(ret, 0);
 }
 
