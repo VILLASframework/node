@@ -27,7 +27,7 @@
 #include "log.hpp"
 
 #include "kernel/pci.h"
-#include "kernel/vfio.h"
+#include "kernel/vfio.hpp"
 
 #include "fpga/ip.hpp"
 #include "fpga/card.hpp"
@@ -38,9 +38,8 @@ namespace fpga {
 // instantiate factory to register
 static PCIeCardFactory PCIeCardFactory;
 
-
 CardList
-fpga::PCIeCardFactory::make(json_t *json, struct pci* pci, ::vfio_container* vc)
+PCIeCardFactory::make(json_t *json, struct pci* pci, std::shared_ptr<VfioContainer> vc)
 {
 	CardList cards;
 	auto logger = getStaticLogger();
@@ -73,7 +72,7 @@ fpga::PCIeCardFactory::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 		// populate generic properties
 		card->name = std::string(card_name);
 		card->pci = pci;
-		card->vfio_container = vc;
+		card->vfioContainer = std::move(vc);
 		card->affinity = affinity;
 		card->do_reset = do_reset != 0;
 
@@ -158,18 +157,25 @@ fpga::PCIeCard::init()
 	}
 
 	/* Attach PCIe card to VFIO container */
-	ret = ::vfio_pci_attach(&vfio_device, vfio_container, pdev);
-	if (ret) {
-		logger->error("Failed to attach VFIO device");
+	VfioDevice& device = vfioContainer->attachDevice(pdev);
+	this->vfioDevice = &device;
+
+
+	/* Enable memory access and PCI bus mastering for DMA */
+	if (not device.pciEnable()) {
+		logger->error("Failed to enable PCI device");
 		return false;
 	}
 
 	/* Map PCIe BAR */
-	const void* bar0_mapped = vfio_map_region(&vfio_device, VFIO_PCI_BAR0_REGION_INDEX);
+	const void* bar0_mapped = vfioDevice->regionMap(VFIO_PCI_BAR0_REGION_INDEX);
 	if (bar0_mapped == MAP_FAILED) {
 		logger->error("Failed to mmap() BAR0");
 		return false;
 	}
+
+	// determine size of BAR0 region
+	const size_t bar0_size = vfioDevice->regionGetSize(VFIO_PCI_BAR0_REGION_INDEX);
 
 
 	/* Link mapped BAR0 to global memory graph */
@@ -180,9 +186,6 @@ fpga::PCIeCard::init()
 	// create a new address space for this FPGA card
 	this->addrSpaceId = MemoryManager::get().getOrCreateAddressSpace(name);
 
-	// determine size of BAR0 region
-	const size_t bar0_size = vfio_region_size(&vfio_device,
-	                                          VFIO_PCI_BAR0_REGION_INDEX);
 
 	// create a mapping from our address space to the FPGA card via vfio
 	MemoryManager::get().createMapping(reinterpret_cast<uintptr_t>(bar0_mapped),
@@ -190,18 +193,11 @@ fpga::PCIeCard::init()
 	                                   villasAddrSpace, this->addrSpaceId);
 
 
-	/* Enable memory access and PCI bus mastering for DMA */
-	ret = vfio_pci_enable(&vfio_device);
-	if (ret) {
-		logger->error("Failed to enable PCI device");
-		return false;
-	}
 
 	/* Reset system? */
 	if (do_reset) {
 		/* Reset / detect PCI device */
-		ret = vfio_pci_reset(&vfio_device);
-		if (ret) {
+		if(not vfioDevice->pciHotReset()) {
 			logger->error("Failed to reset PCI device");
 			return false;
 		}

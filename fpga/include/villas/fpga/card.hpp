@@ -35,7 +35,7 @@
 
 #include "common.h"
 #include "kernel/pci.h"
-#include "kernel/vfio.h"
+#include "kernel/vfio.hpp"
 
 #include <list>
 #include <string>
@@ -91,8 +91,11 @@ public:
 	struct pci *pci;
 	struct pci_device filter;		/**< Filter for PCI device. */
 
-	::vfio_container *vfio_container;
-	struct vfio_device vfio_device;	/**< VFIO device handle. */
+	/// The VFIO container that this card is part of
+	std::shared_ptr<VfioContainer> vfioContainer;
+
+	/// The VFIO device that represents this card
+	VfioDevice* vfioDevice;
 
 	/// Address space identifier of the master address space of this FPGA card.
 	/// This will be used for address resolution of all IPs on this card.
@@ -116,7 +119,7 @@ public:
 	    Plugin(Plugin::Type::FpgaCard, "FPGA Card plugin") {}
 
 	static CardList
-	make(json_t *json, struct pci* pci, ::vfio_container* vc);
+	make(json_t *json, struct pci* pci, std::shared_ptr<VfioContainer> vc);
 
 	static PCIeCard*
 	create();
