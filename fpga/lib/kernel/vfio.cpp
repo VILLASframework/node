@@ -32,6 +32,7 @@
 #include <cstdlib>
 #include <cstring>
 
+#include <stdint.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -118,7 +119,7 @@ VfioContainer::VfioContainer()
 
 VfioContainer::~VfioContainer()
 {
-	logger->debug("Clean up container with fd {}", this->fd);
+	logger->debug("Clean up container with fd {}", fd);
 
 	/* Release memory and close fds */
 	groups.clear();
@@ -126,10 +127,8 @@ VfioContainer::~VfioContainer()
 	/* Close container */
 	int ret = close(fd);
 	if (ret < 0) {
-		logger->error("Cannot close vfio container");
+		logger->error("Cannot close vfio container fd {}", fd);
 	}
-
-	logger->debug("VFIO: closed container: fd={}", fd);
 }
 
 
@@ -270,7 +269,7 @@ VfioContainer::attachDevice(const pci_device* pdev)
 {
 	int ret;
 	char name[32];
-	static constexpr char kernelDriver[] = "vfio-pci";
+	static constexpr const char* kernelDriver = "vfio-pci";
 
 	/* Load PCI bus driver for VFIO */
 	if (kernel_module_load("vfio_pci")) {
@@ -347,13 +346,14 @@ VfioContainer::memoryMap(uintptr_t virt, uintptr_t phys, size_t length)
 		return UINTPTR_MAX;
 	}
 
-	logger->info("DMA map size={:#x}, iova={:#x}, vaddr={:#x}", dmaMap.size, dmaMap.iova, dmaMap.vaddr);
+	logger->debug("DMA map size={:#x}, iova={:#x}, vaddr={:#x}",
+	              dmaMap.size, dmaMap.iova, dmaMap.vaddr);
 
 	// mapping successful, advance IOVA allocator
 	this->iova_next += iovaIncrement;
 
-	// we intentionally don't return the actual mapped length, the users are only
-	// guaranteed to have their demanded memory mapped correctly
+	// we intentionally don't return the actual mapped length, the users are
+	// only guaranteed to have their demanded memory mapped correctly
 	return dmaMap.iova;
 }
 
@@ -395,7 +395,7 @@ VfioContainer::getOrAttachGroup(int index)
 		logger->error("Failed to attach to IOMMU group: {}", index);
 		throw std::exception();
 	} else {
-		logger->info("Attached new group {} to VFIO container", index);
+		logger->debug("Attached new group {} to VFIO container", index);
 	}
 
 	// push to our list
@@ -407,7 +407,7 @@ VfioContainer::getOrAttachGroup(int index)
 
 VfioDevice::~VfioDevice()
 {
-	logger->debug("clean up device {} with fd {}", this->name, this->fd);
+	logger->debug("Clean up device {} with fd {}", this->name, this->fd);
 
 	for(auto& region : regions) {
 		regionUnmap(region.index);
@@ -417,8 +417,6 @@ VfioDevice::~VfioDevice()
 	if (ret != 0) {
 		logger->error("Closing device fd {} failed", fd);
 	}
-
-	logger->debug("VFIO: closed device: name={}, fd={}", name, fd);
 }
 
 
@@ -458,7 +456,7 @@ VfioDevice::regionUnmap(size_t index)
 	if (!mappings[index])
 		return false; /* was not mapped */
 
-	logger->debug("VFIO: unmap region {} from device", index);
+	logger->debug("Unmap region {} from device {}", index, name);
 
 	ret = munmap(mappings[index], r->size);
 	if (ret)
@@ -487,7 +485,8 @@ VfioDevice::pciEnable()
 {
 	int ret;
 	uint32_t reg;
-	off_t offset = ((off_t) VFIO_PCI_CONFIG_REGION_INDEX << 40) + PCI_COMMAND;
+	const off_t offset = PCI_COMMAND +
+	                     (static_cast<off_t>(VFIO_PCI_CONFIG_REGION_INDEX) << 40);
 
 	/* Check if this is really a vfio-pci device */
 	if (!(this->info.flags & VFIO_DEVICE_FLAGS_PCI))
@@ -528,10 +527,10 @@ VfioDevice::pciHotReset()
 		return false;
 	}
 
-	logger->debug("VFIO: dependent devices for hot-reset:");
+	logger->debug("Dependent devices for hot-reset:");
 	for (size_t i = 0; i < reset_info->count; i++) {
 		struct vfio_pci_dependent_device *dd = &reset_info->devices[i];
-		logger->debug("{:04x}:{:02x}:{:02x}.{:01x}: iommu_group={}",
+		logger->debug("  {:04x}:{:02x}:{:02x}.{:01x}: iommu_group={}",
 		              dd->segment, dd->bus,
 		              PCI_SLOT(dd->devfn), PCI_FUNC(dd->devfn), dd->group_id);
 
@@ -568,7 +567,7 @@ VfioDevice::pciMsiInit(int efds[])
 
 	const size_t irqCount = irqs[VFIO_PCI_MSI_IRQ_INDEX].count;
 	const size_t irqSetSize = sizeof(struct vfio_irq_set) +
-	                            sizeof(int) * irqCount;
+	                          sizeof(int) * irqCount;
 
 	auto irqSet = reinterpret_cast<struct vfio_irq_set*>(calloc(1, irqSetSize));
 	if(irqSet == nullptr)
@@ -692,8 +691,7 @@ VfioDevice::isVfioPciDevice() const
 
 VfioGroup::~VfioGroup()
 {
-	logger->debug("clean up group {} with fd {}", this->index, this->fd);
-	int ret;
+	logger->debug("Clean up group {} with fd {}", this->index, this->fd);
 
 	/* Release memory and close fds */
 	devices.clear();
@@ -701,19 +699,15 @@ VfioGroup::~VfioGroup()
 	if(fd < 0) {
 		logger->debug("Destructing group that has not been attached");
 	} else {
-		ret = ioctl(fd, VFIO_GROUP_UNSET_CONTAINER);
+		int ret = ioctl(fd, VFIO_GROUP_UNSET_CONTAINER);
 		if (ret != 0) {
 			logger->error("Cannot unset container for group fd {}", fd);
 		}
-
-		logger->debug("Released group from container: group={}", index);
 
 		ret = close(fd);
 		if (ret != 0) {
 			logger->error("Cannot close group fd {}", fd);
 		}
-
-		logger->debug("Closed group: group={}, fd={}", index, fd);
 	}
 }
 
@@ -728,7 +722,7 @@ VfioGroup::attach(int containerFd, int groupIndex)
 	groupPath << VFIO_DEV("") << groupIndex;
 	group->fd = open(groupPath.str().c_str(), O_RDWR);
 	if (group->fd < 0) {
-		logger->error("Failed to open VFIO group: {}", group->index);
+		logger->error("Failed to open VFIO group {}", group->index);
 		return nullptr;
 	}
 
