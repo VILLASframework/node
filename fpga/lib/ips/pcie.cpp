@@ -38,6 +38,8 @@ static AxiPciExpressBridgeFactory factory;
 bool
 AxiPciExpressBridge::init()
 {
+	auto& mm = MemoryManager::get();
+
 	// Throw an exception if the is no bus master interface and thus no
 	// address space we can use for translation -> error
 	const MemoryManager::AddressSpaceId myAddrSpaceid =
@@ -47,7 +49,19 @@ AxiPciExpressBridge::init()
 	// point to all other IPs in the FPGA, because Vivado will generate a
 	// memory view for this bridge that can see all others.
 	MemoryManager::get().createMapping(0x00, 0x00, SIZE_MAX, "PCIeBridge",
-	                                   card->addrSpaceId, myAddrSpaceid);
+	                                   card->addrSpaceIdHostToDevice, myAddrSpaceid);
+
+
+	/* Make PCIe (IOVA) address space available to FPGA via BAR0 */
+
+	// IPs that can access this address space will know it via their memory view
+	const auto addrSpaceNameDeviceToHost =
+	        mm.getSlaveAddrSpaceName(getInstanceName(), pcieMemory);
+
+	// save ID in card so we can create mappings later when needed (e.g. when
+	// allocating DMA memory in host RAM)
+	card->addrSpaceIdDeviceToHost =
+	        mm.getOrCreateAddressSpace(addrSpaceNameDeviceToHost);
 
 	return true;
 }

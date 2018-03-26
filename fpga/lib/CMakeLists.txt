@@ -23,6 +23,7 @@ set(SOURCES
 	plugin.cpp
 	utils.cpp
 	memory_manager.cpp
+	memory.cpp
 )
 
 include(FindPkgConfig)
