@@ -72,10 +72,17 @@ namespace villas {
 VfioContainer::VfioContainer()
     : iova_next(0)
 {
-	/* Load VFIO kernel module */
-	if (kernel_module_load("vfio") != 0) {
-		logger->error("Failed to load kernel module: vfio");
-		throw std::exception();
+
+	static constexpr const char* requiredKernelModules[] = {
+	    "vfio", "vfio_pci", "vfio_iommu_type1"
+	};
+
+	for(const char* module : requiredKernelModules) {
+		if(kernel_module_loaded(module) != 0) {
+			logger->error("Kernel module '{}' required but not loaded. "
+			              "Please load manually!", module);
+			throw std::exception();
+		}
 	}
 
 	/* Open VFIO API */
