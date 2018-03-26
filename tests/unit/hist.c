@@ -22,8 +22,8 @@
 
 #include <criterion/criterion.h>
 
-#include "hist.h"
-#include "utils.h"
+#include <villas/hist.h>
+#include <villas/utils.h>
 
 const double test_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 

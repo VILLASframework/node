@@ -27,8 +27,8 @@
 #include <jansson.h>
 #include <libconfig.h>
 
-#include "utils.h"
-#include "config_helper.h"
+#include <villas/utils.h>
+#include <villas/config_helper.h>
 
 const char *cfg_example = "test : \n"
 			  "{\n"

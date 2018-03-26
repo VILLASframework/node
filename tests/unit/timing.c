@@ -24,7 +24,7 @@
 #include <math.h>
 #include <criterion/criterion.h>
 
-#include "timing.h"
+#include <villas/timing.h>
 
 Test(timing, time_now)
 {

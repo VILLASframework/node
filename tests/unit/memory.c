@@ -25,8 +25,8 @@
 
 #include <errno.h>
 
-#include "memory.h"
-#include "utils.h"
+#include <villas/memory.h>
+#include <villas/utils.h>
 
 TheoryDataPoints(memory, aligned) = {
 	DataPoints(size_t, 1, 32, 55, 1 << 10, 1 << 20),

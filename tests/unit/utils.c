@@ -22,8 +22,8 @@
 
 #include <criterion/criterion.h>
 
-#include "crypt.h"
-#include "utils.h"
+#include <villas/crypt.h>
+#include <villas/utils.h>
 
 /* Simple normality test for 1,2,3s intervals */
 Test(utils, box_muller)

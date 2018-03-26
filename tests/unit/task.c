@@ -24,8 +24,8 @@
 
 #include <math.h>
 
-#include "task.h"
-#include "timing.h"
+#include <villas/task.h>
+#include <villas/timing.h>
 
 Test(task, rate, .timeout = 10)
 {

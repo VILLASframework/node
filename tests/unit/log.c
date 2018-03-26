@@ -23,8 +23,8 @@
 #include <criterion/criterion.h>
 #include <criterion/parameterized.h>
 
-#include "log.h"
-#include "utils.h"
+#include <villas/log.h>
+#include <villas/utils.h>
 
 struct param {
 	char *expression;

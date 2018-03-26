@@ -31,9 +31,9 @@
 #include <criterion/logging.h>
 #include <criterion/parameterized.h>
 
-#include "utils.h"
-#include "queue.h"
-#include "memory.h"
+#include <villas/utils.h>
+#include <villas/queue.h>
+#include <villas/memory.h>
 
 #define SIZE	(1 << 10)
 

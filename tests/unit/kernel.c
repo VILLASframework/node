@@ -22,8 +22,8 @@
 
 #include <criterion/criterion.h>
 
-#include "kernel/kernel.h"
-#include "utils.h"
+#include <villas/kernel/kernel.h>
+#include <villas/utils.h>
 
 #ifdef __linux__
 

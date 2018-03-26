@@ -25,8 +25,8 @@
 
 #include <signal.h>
 
-#include "pool.h"
-#include "utils.h"
+#include <villas/pool.h>
+#include <villas/utils.h>
 
 struct param {
 	int thread_count;

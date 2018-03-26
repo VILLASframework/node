@@ -22,9 +22,9 @@
 
 #include <criterion/criterion.h>
 
-#include "mapping.h"
-#include "node.h"
-#include "list.h"
+#include <villas/mapping.h>
+#include <villas/node.h>
+#include <villas/list.h>
 
 Test(mapping, parse_nodes)
 {

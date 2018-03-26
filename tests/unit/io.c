@@ -27,13 +27,13 @@
 #include <criterion/parameterized.h>
 #include <criterion/logging.h>
 
-#include "utils.h"
-#include "timing.h"
-#include "sample.h"
-#include "plugin.h"
-#include "pool.h"
-#include "io.h"
-#include "io/raw.h"
+#include <villas/utils.h>
+#include <villas/timing.h>
+#include <villas/sample.h>
+#include <villas/plugin.h>
+#include <villas/pool.h>
+#include <villas/io.h>
+#include <villas/io/raw.h>
 
 #define NUM_SAMPLES 10
 #define NUM_VALUES 10

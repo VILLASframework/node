@@ -25,8 +25,7 @@
 
 #include <villas/log.h>
 #include <villas/memory.h>
-
-#include "config.h"
+#include <villas/config.h>
 
 int main(int argc, char *argv[])
 {
@@ -38,7 +37,7 @@ int main(int argc, char *argv[])
 	ret = log_init(&log, V, LOG_ALL);
 	if (ret)
 		error("Failed to initialize logging sub-system");
-	
+
 	ret = log_start(&log);
 	if (ret)
 		error("Failed to start logging sub-system");
