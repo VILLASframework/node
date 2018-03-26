@@ -223,7 +223,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 					json_t* json_block;
 					json_object_foreach(json_instance, block_name, json_block) {
 
-						int base, high, size;
+						unsigned int base, high, size;
 						int ret = json_unpack(json_block, "{ s: i, s: i, s: i }",
 						                      "baseaddr", &base,
 						                      "highaddr", &high,
