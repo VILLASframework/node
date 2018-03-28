@@ -157,7 +157,7 @@ endif
 endif
 
 # Enable Comedi support
-if ($(WITH_NODE_COMEDI),1)
+ifeq ($(WITH_NODE_COMEDI),1)
 ifeq ($(shell $(PKGCONFIG) comedilib; echo $$?),0)
 	LIB_PKGS    += comedilib
 	LIB_SRCS    += lib/nodes/comedi.c
