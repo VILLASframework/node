@@ -26,7 +26,7 @@ COVERAGE_OBJS = $(LIB_OBJS) $(SRC_OBJS)
 GCDAS = $(COVERAGE_OBJS:.o=.gcda)
 GCNOS = $(COVERAGE_OBJS:.o=.gcno)
 
-GCOVR_OPTS = --exclude ^include --root $(SRCDIR) --sort-percentage --print-summary
+GCOVR_OPTS = --exclude $(SRCDIR)/include --root $(SRCDIR) --sort-percentage --print-summary
 
 coverage: $(BUILDDIR)/coverage/index.html $(BUILDDIR)/coverage.xml $(BUILDDIR)/coverage.txt
 
