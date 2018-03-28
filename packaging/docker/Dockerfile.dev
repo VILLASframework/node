@@ -53,7 +53,7 @@ RUN dnf -y install \
 	iproute \
 	python-pip \
 	valgrind gdb gdb-gdbserver \
-	xmlto rubygem-asciidoctor \
+	xmlto dblatex rubygem-asciidoctor \
 	psmisc procps-ng
 
 # Tools for debugging, coverage, profiling
