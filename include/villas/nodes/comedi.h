@@ -29,11 +29,15 @@
 
 #pragma once
 
+#include <comedilib.h>
+
 #include <villas/node.h>
 #include <villas/list.h>
 
 struct comedi {
+	char *device;
 
+	comedi_t *it;
 };
 
 /** @see node_type::print */

@@ -32,13 +32,17 @@ int comedi_parse(struct node *n, json_t *cfg)
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: s }",
-		"publish", &json_pub,
-		"subscribe", &json_sub,
-		"format", &format
+	const char *device;
+
+	json_error_t err;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s }",
+		"device", &device
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+
+	c->device = strdup(device);
 
 	return 0;
 }
@@ -49,13 +53,20 @@ char * comedi_print(struct node *n)
 
 	char *buf = NULL;
 
+	strcatf(&buf, "device=%s", c->device);
+
 	return buf;
 }
 
 int comedi_start(struct node *n)
 {
-	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
+
+	c->it = comedi_open(c->device);
+	if (!c->it) {
+		const char *err = comedi_strerror(comedi_errno());
+		error("Failed to open device: %s", err);
+	}
 
 	return 0;
 }
@@ -65,35 +76,32 @@ int comedi_stop(struct node *n)
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
 
-	return 0;
-}
+	ret = comedi_close(c->it);
+	if (ret)
+		return ret;
 
-int comedi_deinit()
-{
 	return 0;
 }
 
 int comedi_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	struct comedi *c = (struct comedi *) n->_vd;
+	//struct comedi *c = (struct comedi *) n->_vd;
 
 	return -1;
 }
 
 int comedi_write(struct node *n, struct sample *smps[], unsigned cnt)
 {
-	int ret;
-	struct comedi *c = (struct comedi *) n->_vd;
+	//struct comedi *c = (struct comedi *) n->_vd;
 
-	return cnt;
+	return -1;
 }
 
 int comedi_fd(struct node *n)
 {
-	int ret;
-	struct comedi *c = (struct comedi *) n->_vd;
+	//struct comedi *c = (struct comedi *) n->_vd;
 
-	return fd;
+	return -1;
 }
 
 static struct plugin p = {
@@ -107,7 +115,6 @@ static struct plugin p = {
 		.print		= comedi_print,
 		.start		= comedi_start,
 		.stop		= comedi_stop,
-		.deinit		= comedi_deinit,
 		.read		= comedi_read,
 		.write		= comedi_write,
 		.fd		= comedi_fd
