@@ -29,8 +29,8 @@
 #include <unistd.h>
 #include <netinet/ether.h>
 
-#include "nodes/iec61850_sv.h"
-#include "plugin.h"
+#include "villas/nodes/iec61850_sv.h"
+#include "villas/plugin.h"
 
 #define CONFIG_SV_DEFAULT_APPID 0x4000
 #define CONFIG_SV_DEFAULT_DST_ADDRESS CONFIG_GOOSE_DEFAULT_DST_ADDRESS

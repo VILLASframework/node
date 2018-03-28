@@ -259,7 +259,6 @@ int rtnl_netem_set_delay_distribution_data(struct rtnl_qdisc *qdisc, short *data
 	return 0;
 }
 
-
 /** Customized version of rtnl_netem_set_delay_distribution() of libnl */
 int tc_netem_set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json)
 {

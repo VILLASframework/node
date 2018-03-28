@@ -34,12 +34,11 @@
 #include <libiec61850/sv_publisher.h>
 #include <libiec61850/sv_subscriber.h>
 
-#include "queue_signalled.h"
-#include "pool.h"
-#include "node.h"
-#include "list.h"
-
-#include "nodes/iec61850.h"
+#include <villas/queue_signalled.h>
+#include <villas/pool.h>
+#include <villas/node.h>
+#include <villas/list.h>
+#include <villas/nodes/iec61850.h>
 
 struct iec61850_sv {
 	char *interface;

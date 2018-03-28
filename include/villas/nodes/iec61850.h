@@ -35,8 +35,8 @@
 #include <libiec61850/goose_receiver.h>
 #include <libiec61850/sv_subscriber.h>
 
-#include "node.h"
-#include "list.h"
+#include <villas/node.h>
+#include <villas/list.h>
 
 enum iec61850_type {
 	/* According to IEC 61850-7-2 */
