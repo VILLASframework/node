@@ -1,7 +1,5 @@
 /** Node type: mqtt
  *
- * This file implements the file type for nodes.
- *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC

@@ -1,7 +1,5 @@
 /** Node type: socket
  *
- * This file implements the socket subtype for nodes.
- *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC

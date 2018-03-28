@@ -1,8 +1,5 @@
 /** Node type: WebSockets
  *
- * This file implements the websocket type for nodes.
- * It's based on the libwebsockets library.
- *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
