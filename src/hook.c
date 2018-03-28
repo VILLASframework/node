@@ -104,7 +104,7 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	int ret, recv;
+	int ret, recv, sent;
 	char *format = "villas-human";
 
 	/* Default values */
@@ -208,26 +208,31 @@ check:		if (optarg == endptr)
 		error("Failed to start hook");
 
 	for (;;) {
-		if (io_eof(&io)) {
-			killme(SIGTERM);
-			pause();
-		}
-
 		ret = sample_alloc_many(&q, smps, cnt);
 		if (ret != cnt)
 			error("Failed to allocate %d smps from pool", cnt);
 
 		recv = io_scan(&io, smps, cnt);
-		if (recv < 0)
-			killme(SIGTERM);
+		if (recv < 0) {
+			if (io_eof(&io)) {
+				killme(SIGTERM);
+				pause();
+			}
+
+			error("Failed to read from stdin");
+		}
 
 		debug(15, "Read %u smps from stdin", recv);
 
-		hook_read(&h, smps, (unsigned *) &recv);
-		hook_process(&h, smps, (unsigned *) &recv);
-		hook_write(&h, smps, (unsigned *) &recv);
+		unsigned send = recv;
 
-		io_print(&io, smps, recv);
+		hook_read(&h, smps, (unsigned *) &send);
+		hook_process(&h, smps, (unsigned *) &send);
+		hook_write(&h, smps, (unsigned *) &send);
+
+		sent = io_print(&io, smps, send);
+		if (sent < 0)
+			error("Failed to write to stdout");
 
 		sample_free_many(smps, cnt);
 	}
