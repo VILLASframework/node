@@ -155,3 +155,12 @@ ifneq ($(wildcard /usr/include/mosquitto.h),)
 	WITH_IO      = 1
 endif
 endif
+
+# Enable Comedi support
+if ($(WITH_NODE_COMEDI),1)
+ifeq ($(shell $(PKGCONFIG) comedilib; echo $$?),0)
+	LIB_PKGS    += comedilib
+	LIB_SRCS    += lib/nodes/comedi.c
+	LIB_NODES   += comedi
+endif
+endif
