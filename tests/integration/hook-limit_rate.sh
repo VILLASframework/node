@@ -1,7 +1,9 @@
-# Makefile.
+#!/bin/bash
+#
+# Integration test for limit_rate hook.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2018 Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -18,12 +20,22 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-###################################################################################
+##################################################################################
 
-LIB_SRCS += $(addprefix lib/hooks/, convert.c decimate.c drop.c jitter_calc.c \
-				map.c restart.c shift_seq.c shift_ts.c \
-				skip_first.c stats.c ts.c limit_rate.c)
+INPUT_FILE=$(mktemp)
+OUTPUT_FILE=$(mktemp)
+EXPECT_FILE=$(mktemp)
 
-ifeq ($(WITH_IO),1)
-	LIB_SRCS += lib/hooks/print.c
-endif
+villas-signal sine -r 1000 -l 1000 -n > ${INPUT_FILE}
+awk 'NR % 10 == 2' < ${INPUT_FILE} > ${EXPECT_FILE}
+
+villas-hook limit_rate -o rate=100 -o mode=origin < ${INPUT_FILE} > ${OUTPUT_FILE}
+
+# Compare only the data values
+villas-test-cmp ${OUTPUT_FILE} ${EXPECT_FILE}
+
+RC=$?
+
+rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE}
+
+exit $RC
