@@ -54,10 +54,10 @@ $(BUILDDIR)/include/villas/config.h: include/villas/config.h.in Makefile.config 
 	for PKG    in $(call escape,$(LIB_PKGS));    do echo "#define WITH_$${PKG} 1"           >> $@; done
 	
 # Compile
-$(BUILDDIR)/lib/%.o: lib/%.c | $$(dir $$@)
+$(BUILDDIR)/lib/%.o: lib/%.c $(BUILDDIR)/include/villas/config.h | $$(dir $$@)
 	$(CC) $(LIB_CFLAGS) -c $< -o $@
 
-lib: $(BUILDDIR)/include/villas/config.h $(patsubst %, lib%, $(SONAMES))
+lib: $(patsubst %, lib%, $(SONAMES))
 
 install-lib: $(patsubst %, install-lib%, $(SONAMES))
 

@@ -33,7 +33,7 @@ run-unit-tests: tests
 	$(BUILDDIR)/unit-tests
 
 # Compile
-$(BUILDDIR)/tests/unit/%.o: tests/unit/%.c | $$(dir $$@)
+$(BUILDDIR)/tests/unit/%.o: tests/unit/%.c $(BUILDDIR)/include/villas/config.h | $$(dir $$@)
 	$(CC) $(TEST_CFLAGS) -c $< -o $@
 
 # Link
