@@ -43,7 +43,7 @@ docker: docker-app
 .PHONY: docker run-docker deploy-docker
 
 $(DOCKER_DEPLOY_TARGETS): deploy-docker-%: docker-%
-	$(DOCKER) push $(DOCKER_IMAGE)-%*:$(DOCKER_TAG)
+	$(DOCKER) push $(DOCKER_IMAGE)-$*:$(DOCKER_TAG)
 
 $(DOCKER_RUN_TARGETS): run-docker-%: docker-%
 	$(DOCKER)  run $(DOCKER_RUN_OPTS) $(DOCKER_IMAGE)-$*:$(DOCKER_TAG)
