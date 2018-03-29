@@ -34,8 +34,20 @@
 #include <villas/node.h>
 #include <villas/list.h>
 
+struct comedi_direction {
+	double rate;
+
+	bool enabled;
+	int subdevice;
+
+	unsigned *chanlist;
+	size_t chanlist_len;
+};
+
 struct comedi {
 	char *device;
+
+	struct comedi_direction in, out;
 
 	comedi_t *it;
 };
