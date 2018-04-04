@@ -22,7 +22,7 @@
 
 #include <libiec61850/stack_config.h>
 
-//#if CONFIG_IEC61850_SAMPLED_VALUES_SUPPORT == 1
+#if CONFIG_IEC61850_SAMPLED_VALUES_SUPPORT == 1
 
 #include <string.h>
 #include <pthread.h>
@@ -254,33 +254,34 @@ int iec61850_sv_start(struct node *n)
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
 	/* Initialize publisher */
-	i->publisher.publisher = SVPublisher_create(NULL, i->interface);
-	i->publisher.asdu = SVPublisher_addASDU(i->publisher.publisher, i->publisher.svid, node_name_short(n), i->publisher.confrev);
+	if (i->publisher.enabled) {
+		i->publisher.publisher = SVPublisher_create(NULL, i->interface);
+		i->publisher.asdu = SVPublisher_addASDU(i->publisher.publisher, i->publisher.svid, node_name_short(n), i->publisher.confrev);
 
-	for (unsigned k = 0; k < list_length(&i->publisher.mapping); k++) {
-		struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) list_at(&i->publisher.mapping, k);
+		for (unsigned k = 0; k < list_length(&i->publisher.mapping); k++) {
+			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) list_at(&i->publisher.mapping, k);
 
-		switch (m->type) {
-			case IEC61850_TYPE_INT8:    SVPublisher_ASDU_addINT8(i->publisher.asdu); break;
-			case IEC61850_TYPE_INT32:   SVPublisher_ASDU_addINT32(i->publisher.asdu); break;
-			case IEC61850_TYPE_FLOAT32: SVPublisher_ASDU_addFLOAT(i->publisher.asdu); break;
-			case IEC61850_TYPE_FLOAT64: SVPublisher_ASDU_addFLOAT64(i->publisher.asdu); break;
-			default: { }
+			switch (m->type) {
+				case IEC61850_TYPE_INT8:    SVPublisher_ASDU_addINT8(i->publisher.asdu); break;
+				case IEC61850_TYPE_INT32:   SVPublisher_ASDU_addINT32(i->publisher.asdu); break;
+				case IEC61850_TYPE_FLOAT32: SVPublisher_ASDU_addFLOAT(i->publisher.asdu); break;
+				case IEC61850_TYPE_FLOAT64: SVPublisher_ASDU_addFLOAT64(i->publisher.asdu); break;
+				default: { }
+			}
 		}
+
+		if (i->publisher.smpmod >= 0)
+			SVPublisher_ASDU_setSmpMod(i->publisher.asdu, i->publisher.smpmod);
+
+//		if (s->publisher.smprate >= 0)
+//			SV_ASDU_setSmpRate(i->publisher.asdu, i->publisher.smprate);
+
+		/* Start publisher */
+		SVPublisher_setupComplete(i->publisher.publisher);
 	}
 
-	if (i->publisher.smpmod >= 0)
-		SVPublisher_ASDU_setSmpMod(i->publisher.asdu, i->publisher.smpmod);
-
-//	if (s->publisher.smprate >= 0)
-//		SV_ASDU_setSmpRate(i->publisher.asdu, i->publisher.smprate);
-
-	/* Start publisher */
-	if (i->publisher.enabled)
-		SVPublisher_setupComplete(i->publisher.publisher);
-
 	/* Start subscriber */
-	if (i->publisher.enabled) {
+	if (i->subscriber.enabled) {
 		struct iec61850_receiver *r = iec61850_receiver_create(IEC61850_RECEIVER_SV, i->interface);
 
 		i->subscriber.receiver = r->sv;

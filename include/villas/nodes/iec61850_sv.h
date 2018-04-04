@@ -46,6 +46,8 @@ struct iec61850_sv {
 	struct ether_addr dst_address;
 
 	struct {
+		bool enabled;
+
 		SVSubscriber subscriber;
 		SVReceiver receiver;
 
@@ -57,6 +59,8 @@ struct iec61850_sv {
 	} subscriber;
 
 	struct {
+		bool enabled;
+
 		SVPublisher publisher;
 		SVPublisher_ASDU asdu;
 
