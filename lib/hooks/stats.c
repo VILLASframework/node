@@ -55,7 +55,8 @@ static int stats_collect_init(struct hook *h)
 	/* Register statistic object to path.
 	 *
 	 * This allows the path code to update statistics. */
-	h->node->stats = &p->stats;
+	if (h->node)
+		h->node->stats = &p->stats;
 
 	/* Set default values */
 	p->format = STATS_FORMAT_HUMAN;
