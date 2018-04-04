@@ -48,12 +48,13 @@ V ?= 2
 # Platform
 PLATFORM ?= $(shell uname)
 
+include Makefile.help
 include Makefile.config
 
 ifeq ($(WITH_SRC),1)
 	MODULES += src
 endif
-	
+
 ifeq ($(WITH_TOOLS),1)
 	MODULES += tools
 endif
@@ -122,7 +123,7 @@ ifdef CI
 
 	GIT_REV    := $(shell echo $${CI_COMMIT_SHA:0:7})
 	GIT_BRANCH := $(CI_COMMIT_REF_NAME)
-	
+
 	ifdef CI_COMMIT_TAG
 		RELEASE = 1
 	else
@@ -131,7 +132,7 @@ ifdef CI
 else
 	GIT_REV    := $(shell git rev-parse --short=7    HEAD)
 	GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
-	
+
 	RELEASE = 1.$(subst -,_,$(GIT_BRANCH))_$(subst -,_,$(VARIANT)).$(shell date +%Y%m%d)git$(GIT_REV)
 endif
 
@@ -153,7 +154,7 @@ LDLIBS += $(shell $(PKGCONFIG) --libs ${PKGS})
 all:                          $(filter-out $(MODULES_EXCLUDE),$(MODULES))
 install: $(addprefix install-,$(filter-out $(MODULES_EXCLUDE),$(MODULES)))
 clean:   $(addprefix clean-,  $(filter-out $(MODULES_EXCLUDE),$(MODULES)))
-	
+
 src plugins tools tests: lib
 
 # Build all variants: debug, coverage, ...
@@ -173,6 +174,5 @@ escape = $(shell echo $1 | tr a-z- A-Z_ | tr -dc ' A-Z0-9_')
 
 .PHONY: all everything clean install
 
-include $(wildcard $(SRCDIR)/make/Makefile.*)
 include $(wildcard $(BUILDDIR)/**/*.d)
 include $(patsubst %,$(SRCDIR)/%/Makefile.inc,$(MODULES))
