@@ -193,7 +193,7 @@ AFILE * afopen(const char *uri, const char *mode)
 
 	AFILE *af = alloc(sizeof(AFILE));
 
-	strncpy(af->mode, mode, sizeof(af->mode));
+	snprintf(af->mode, sizeof(af->mode), "%s", mode);
 
 	sep = strstr(uri, "://");
 	if (sep) {

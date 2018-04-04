@@ -39,7 +39,7 @@ struct advio {
 
 	unsigned char hash[SHA_DIGEST_LENGTH];
 
-	char mode[2];
+	char mode[3];
 	char *uri;
 };
 

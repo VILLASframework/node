@@ -151,7 +151,7 @@ int kernel_get_cmdline_param(const char *param, char *buf, size_t len)
 
 			if (strcmp(param, key) == 0) {
 				if (ret >= 2 && buf)
-					strncpy(buf, value, len);
+					snprintf(buf, len, "%s", value);
 
 				return 0; /* found */
 			}

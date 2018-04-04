@@ -201,8 +201,10 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 	if (ret)
 		jerror(&err, "Failed to parse global configuration");
 
-	if (name)
-		strncpy(sn->name, name, 128);
+	if (name) {
+		sn->name = realloc(sn->name, strlen(name)+1);
+		sprintf(sn->name, "%s", name);
+	}
 
 #ifdef WITH_WEB
 	if (json_web)

@@ -174,8 +174,8 @@ int zeromq_parse(struct node *n, json_t *cfg)
 		if (strlen(public_key) != 40)
 			error("Setting 'curve.public_key' of node %s must be a Z85 encoded CurveZMQ key", node_name(n));
 
-		strncpy(z->curve.server.public_key, public_key, 41);
-		strncpy(z->curve.server.secret_key, secret_key, 41);
+		memcpy(z->curve.server.public_key, public_key, 41);
+		memcpy(z->curve.server.secret_key, secret_key, 41);
 	}
 
 	/** @todo We should fix this. Its mostly done. */

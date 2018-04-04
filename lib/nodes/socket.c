@@ -626,7 +626,10 @@ int socket_parse_addr(const char *addr, struct sockaddr *saddr, enum socket_laye
 	if (layer == SOCKET_LAYER_UNIX) { /* Format: "/path/to/socket" */
 		sa->sun.sun_family = AF_UNIX;
 
-		strncpy(sa->sun.sun_path, addr, sizeof(sa->sun.sun_path));
+		if (strlen(addr) > sizeof(sa->sun.sun_path)-1)
+			error("Length of unix socket path is too long!");
+
+		memcpy(sa->sun.sun_path, addr, strlen(sa->sun.sun_path)+1);
 
 		ret = 0;
 	}
