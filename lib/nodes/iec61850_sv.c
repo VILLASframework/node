@@ -351,6 +351,7 @@ int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt)
 	pulled = queue_signalled_pull_many(&i->subscriber.queue, (void **) smpt, cnt);
 
 	sample_copy_many(smps, smpt, pulled);
+	sample_put_many(smpt, pulled);
 
 	return pulled;
 }
