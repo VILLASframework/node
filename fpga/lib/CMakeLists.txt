@@ -54,3 +54,15 @@ target_link_libraries(villas-fpga PUBLIC
 	${CMAKE_DL_LIBS}
 	m
 )
+
+include(GNUInstallDirs)
+
+install(TARGETS villas-fpga
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
+)
+
+install(DIRECTORY ../include/villas DESTINATION include)
+
+

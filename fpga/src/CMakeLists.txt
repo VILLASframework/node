@@ -26,3 +26,11 @@ if(LAPACK_FOUND)
 	target_include_directories(fpga PUBLIC ${LAPACK_INCLUDE_DIRS})
 	target_compile_definitions(fpga PUBLIC WITH_LAPACK)
 endif()
+
+include(GNUInstallDirs)
+
+install(TARGETS fpga
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}/static
+)
