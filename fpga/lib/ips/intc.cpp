@@ -21,12 +21,13 @@
  *********************************************************************************/
 
 #include <unistd.h>
+#include <errno.h>
 
 #include "config.h"
 #include "log.h"
 #include "plugin.hpp"
 
-#include "kernel/vfio.h"
+#include "kernel/vfio.hpp"
 #include "kernel/kernel.h"
 
 #include "fpga/card.hpp"
@@ -42,26 +43,37 @@ static InterruptControllerFactory factory;
 
 InterruptController::~InterruptController()
 {
-	vfio_pci_msi_deinit(&card->vfio_device , this->efds);
+	card->vfioDevice->pciMsiDeinit(this->efds);
 }
 
 bool
 InterruptController::init()
 {
 	const uintptr_t base = getBaseAddr(registerMemory);
-	auto logger = getLogger();
 
-	num_irqs = vfio_pci_msi_init(&card->vfio_device, efds);
+	num_irqs = card->vfioDevice->pciMsiInit(efds);
 	if (num_irqs < 0)
 		return false;
 
-	if(vfio_pci_msi_find(&card->vfio_device, nos) != 0)
+	if(not card->vfioDevice->pciMsiFind(nos)) {
 		return false;
+	}
 
 	/* For each IRQ */
 	for (int i = 0; i < num_irqs; i++) {
-		/* Pin to core */
-		if(kernel_irq_setaffinity(nos[i], card->affinity, nullptr) != 0) {
+
+		/* Try pinning to core */
+		int ret = kernel_irq_setaffinity(nos[i], card->affinity, nullptr);
+
+		switch(ret) {
+		case 0:
+			// everything is fine
+			break;
+		case EACCES:
+			logger->warn("No permission to change affinity of VFIO-MSI interrupt, "
+			             "performance may be degraded!");
+			break;
+		default:
 			logger->error("Failed to change affinity of VFIO-MSI interrupt");
 			return false;
 		}
@@ -85,7 +97,6 @@ InterruptController::init()
 bool
 InterruptController::enableInterrupt(InterruptController::IrqMaskType mask, bool polling)
 {
-	auto logger = getLogger();
 	const uintptr_t base = getBaseAddr(registerMemory);
 
 	/* Current state of INTC */

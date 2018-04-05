@@ -50,8 +50,6 @@ FifoFactory::FifoFactory() :
 
 bool Fifo::init()
 {
-	auto logger = getLogger();
-
 	XLlFifo_Config fifo_cfg;
 
 	try {

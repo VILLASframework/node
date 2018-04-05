@@ -39,8 +39,6 @@ static TimerFactory factory;
 
 bool Timer::init()
 {
-	auto logger = getLogger();
-
 	XTmrCtr_Config xtmr_cfg;
 	xtmr_cfg.SysClockFreqHz = getFrequency();
 

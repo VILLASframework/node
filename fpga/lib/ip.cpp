@@ -106,7 +106,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 	// configure all IPs
 	for(auto& id : orderedIps) {
-		loggerStatic->info("Initializing {}", id);
+		loggerStatic->info("Configuring {}", id);
 
 		// find the appropriate factory that can create the specified VLNV
 		// Note:
@@ -142,6 +142,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		// setup generic IP type properties
 		ip->card = card;
 		ip->id = id;
+		ip->logger = loggerGetOrCreate(id.getName());
 
 		json_t* json_ip = json_object_get(json_ips, id.getName().c_str());
 
@@ -195,14 +196,24 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 		if(json_is_object(json_memory_view)) {
 			logger->debug("Parse memory view of {}", *ip);
 
-			// create a master address space because this IP has a memory view
-			const MemoryManager::AddressSpaceId myAddrSpaceId =
-			        MemoryManager::get().getOrCreateAddressSpace(id.getName());
 
 			// now find all slave address spaces this master can access
 			const char* bus_name;
 			json_t* json_bus;
 			json_object_foreach(json_memory_view, bus_name, json_bus) {
+
+				// this IP has a memory view => it is a bus master somewhere
+
+				// assemble name for master address space
+				const std::string myAddrSpaceName =
+				        MemoryManager::getMasterAddrSpaceName(ip->getInstanceName(),
+				                                              bus_name);
+				// create a master address space
+				const MemoryManager::AddressSpaceId myAddrSpaceId =
+				        MemoryManager::get().getOrCreateAddressSpace(myAddrSpaceName);
+
+				ip->busMasterInterfaces[bus_name] = myAddrSpaceId;
+
 
 				const char* instance_name;
 				json_t* json_instance;
@@ -212,7 +223,7 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 					json_t* json_block;
 					json_object_foreach(json_instance, block_name, json_block) {
 
-						int base, high, size;
+						unsigned int base, high, size;
 						int ret = json_unpack(json_block, "{ s: i, s: i, s: i }",
 						                      "baseaddr", &base,
 						                      "highaddr", &high,
@@ -278,6 +289,8 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 			ip->addressTranslations.emplace(memoryBlock, translation);
 		}
 
+		loggerStatic->info("Initializing {}", *ip);
+
 		if(not ip->init()) {
 			loggerStatic->error("Cannot start IP {}", *ip);
 			continue;
@@ -303,9 +316,8 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 
 
 void
-IpCore::dump() {
-	auto logger = getLogger();
-
+IpCore::dump()
+{
 	logger->info("IP: {}", *this);
 	for(auto& [num, irq] : irqs) {
 		logger->info("IRQ {}: {}:{}",
@@ -325,13 +337,6 @@ IpCoreFactory::lookup(const Vlnv &vlnv)
 	}
 
 	return nullptr;
-}
-
-
-uintptr_t
-IpCore::getBaseAddr(const std::string& block) const
-{
-	return getLocalAddr(block, 0);
 }
 
 

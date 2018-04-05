@@ -177,14 +177,11 @@ public:
 
 protected:
 	uintptr_t
-	getBaseAddr(const std::string& block) const;
+	getBaseAddr(const std::string& block) const
+	{ return getLocalAddr(block, 0); }
 
 	uintptr_t
 	getLocalAddr(const std::string& block, uintptr_t address) const;
-
-	SpdLogger
-	getLogger() const
-	{ return loggerGetOrCreate(getInstanceName()); }
 
 	InterruptController*
 	getInterruptController(const std::string& interruptName) const;
@@ -195,6 +192,9 @@ protected:
 		InterruptController* irqController;
 		std::string description;
 	};
+
+	/// Specialized logger instance with the IPs name set as category
+	SpdLogger logger;
 
 	/// FPGA card this IP is instantiated on (populated by FpgaIpFactory)
 	PCIeCard* card;
@@ -207,6 +207,9 @@ protected:
 
 	/// Cached translations from the process address space to each memory block
 	std::map<std::string, MemoryTranslation> addressTranslations;
+
+	/// AXI bus master interfaces to access memory somewhere
+	std::map<std::string, MemoryManager::AddressSpaceId> busMasterInterfaces;
 };
 
 

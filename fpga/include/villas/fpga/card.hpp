@@ -35,9 +35,10 @@
 
 #include "common.h"
 #include "kernel/pci.h"
-#include "kernel/vfio.h"
+#include "kernel/vfio.hpp"
 
 #include <list>
+#include <set>
 #include <string>
 
 #include "plugin.hpp"
@@ -46,6 +47,7 @@
 #include "config.h"
 
 #include "memory_manager.hpp"
+#include "memory.hpp"
 
 #define PCI_FILTER_DEFAULT_FPGA {		\
 	.id = {								\
@@ -70,6 +72,7 @@ public:
 	friend PCIeCardFactory;
 
 	PCIeCard() : filter(PCI_FILTER_DEFAULT_FPGA) {}
+	~PCIeCard();
 
 	bool init();
 	bool stop()  { return true; }
@@ -80,31 +83,43 @@ public:
 	ip::IpCore* lookupIp(const std::string& name) const;
 	ip::IpCore* lookupIp(const Vlnv& vlnv) const;
 
+	bool
+	mapMemoryBlock(const MemoryBlock& block);
+
+private:
+	/// Cache a set of already mapped memory blocks
+	std::set<MemoryManager::AddressSpaceId> memoryBlocksMapped;
+
+public:	// TODO: make this private
 	ip::IpCoreList ips;		///< IPs located on this FPGA card
 
 	bool do_reset;			/**< Reset VILLASfpga during startup? */
 	int affinity;			/**< Affinity for MSI interrupts */
-
 
 	std::string name;			/**< The name of the FPGA card */
 
 	struct pci *pci;
 	struct pci_device filter;		/**< Filter for PCI device. */
 
-	::vfio_container *vfio_container;
-	struct vfio_device vfio_device;	/**< VFIO device handle. */
+	/// The VFIO container that this card is part of
+	std::shared_ptr<VfioContainer> vfioContainer;
+
+	/// The VFIO device that represents this card
+	VfioDevice* vfioDevice;
+
+	/// Slave address space ID to access the PCIe address space from the FPGA
+	MemoryManager::AddressSpaceId addrSpaceIdDeviceToHost;
 
 	/// Address space identifier of the master address space of this FPGA card.
 	/// This will be used for address resolution of all IPs on this card.
-	MemoryManager::AddressSpaceId addrSpaceId;
-
-	size_t maplen;
-	size_t dmalen;
+	MemoryManager::AddressSpaceId addrSpaceIdHostToDevice;
 
 protected:
 	SpdLogger
 	getLogger() const
 	{ return loggerGetOrCreate(name); }
+
+	SpdLogger logger;
 };
 
 using CardList = std::list<std::unique_ptr<PCIeCard>>;
@@ -116,7 +131,7 @@ public:
 	    Plugin(Plugin::Type::FpgaCard, "FPGA Card plugin") {}
 
 	static CardList
-	make(json_t *json, struct pci* pci, ::vfio_container* vc);
+	make(json_t *json, struct pci* pci, std::shared_ptr<VfioContainer> vc);
 
 	static PCIeCard*
 	create();

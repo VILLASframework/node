@@ -39,7 +39,7 @@ MemoryManager::getOrCreateAddressSpace(std::string name)
 
 MemoryManager::MappingId
 MemoryManager::createMapping(uintptr_t src, uintptr_t dest, size_t size,
-                             std::string name,
+                             const std::string& name,
                              MemoryManager::AddressSpaceId fromAddrSpace,
                              MemoryManager::AddressSpaceId toAddrSpace)
 {
@@ -62,7 +62,7 @@ MemoryManager::addMapping(std::shared_ptr<Mapping> mapping,
 }
 
 MemoryManager::AddressSpaceId
-MemoryManager::findAddressSpace(std::string name)
+MemoryManager::findAddressSpace(const std::string& name)
 {
 	return memoryGraph.findVertex(
 	            [&](const std::shared_ptr<AddressSpace>& v) {

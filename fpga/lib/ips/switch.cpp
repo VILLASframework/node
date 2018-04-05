@@ -38,8 +38,6 @@ static AxiStreamSwitchFactory factory;
 bool
 AxiStreamSwitch::init()
 {	
-	auto logger = getLogger();
-
 	/* Setup AXI-stream switch */
 	XAxis_Switch_Config sw_cfg;
 	sw_cfg.MaxNumMI = num_ports;
@@ -66,8 +64,6 @@ AxiStreamSwitch::init()
 bool
 AxiStreamSwitch::connect(int portSlave, int portMaster)
 {
-	auto logger = getLogger();
-
 	if(portMapping[portMaster] == portSlave) {
 		logger->debug("Ports already connected");
 		return true;
@@ -98,8 +94,6 @@ AxiStreamSwitch::connect(int portSlave, int portMaster)
 bool
 AxiStreamSwitch::disconnectMaster(int port)
 {
-	auto logger = getLogger();
-
 	logger->debug("Disconnect slave {} from master {}",
 	              portMapping[port], port);
 
@@ -111,8 +105,6 @@ AxiStreamSwitch::disconnectMaster(int port)
 bool
 AxiStreamSwitch::disconnectSlave(int port)
 {
-	auto logger = getLogger();
-
 	for(auto [master, slave] : portMapping) {
 		if(slave == port) {
 			logger->debug("Disconnect slave {} from master {}", slave, master);

@@ -2,7 +2,7 @@ set(SOURCES
 	main.cpp
 	fpga.cpp
 	logging.cpp
-#	dma.c
+	dma.cpp
     fifo.cpp
 #	hls.c
 #	intc.c

@@ -1,34 +1,20 @@
 set(SOURCES
-	ip.c
-	vlnv.c
-	card.c
-
 	vlnv.cpp
 	card.cpp
 	ip.cpp
 	ip_node.cpp
-
-	ips/timer.c
-	ips/model.c
-	ips/switch.c
-	ips/dft.c
-	ips/fifo.c
-	ips/dma.c
-	ips/intc.c
-	ips/gpio.c
-	ips/rtds_axis.c
 
 	ips/timer.cpp
 	ips/switch.cpp
 	ips/fifo.cpp
 	ips/intc.cpp
 	ips/pcie.cpp
+	ips/dma.cpp
 
 	kernel/kernel.c
 	kernel/pci.c
-	kernel/vfio.c
+	kernel/vfio.cpp
 
-	plugin.c
 	utils.c
 	list.c
 	log.c
@@ -38,6 +24,7 @@ set(SOURCES
 	plugin.cpp
 	utils.cpp
 	memory_manager.cpp
+	memory.cpp
 )
 
 include(FindPkgConfig)
