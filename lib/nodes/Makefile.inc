@@ -71,14 +71,6 @@ ifeq ($(shell $(PKGCONFIG) --atleast-version=1.2.0 libiec61850; echo $$?),0)
 endif
 endif
 
-# Enable VILLASfpga support when libvillas-fpga is available
-ifeq ($(WITH_NODE_FPGA),1)
-ifeq ($(shell $(PKGCONFIG) libvillas-fpga; echo $$?),0)
-	LIB_PKGS    += libvillas-fpga
-	LIB_NODES   += fpga
-endif
-endif
-
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
 ifeq ($(WITH_NODE_OPAL),1)
 ifneq ($(wildcard $(SRCDIR)/thirdparty/libopal/include/opal/AsyncApi.h),)

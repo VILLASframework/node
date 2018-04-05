@@ -32,7 +32,7 @@ var global = require(__dirname + '/global.js')
 
 /* List of plugins
  *
- * Additional node-types, hooks or VILLASfpga IP cores
+ * Additional node-types, hooks or formats
  * can be loaded by compiling them into a shared library and
  * adding them to this list
  */
