@@ -147,7 +147,11 @@
               "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:1",
               "name": "S2MM"
             }
-          ]
+          ],
+          "irqs": {
+            "mm2s_introut": "pcie_0_axi_pcie_intc_0:3",
+            "s2mm_introut": "pcie_0_axi_pcie_intc_0:4"
+          }
         },
         "hier_0_axi_dma_axi_dma_1": {
           "vlnv": "xilinx.com:ip:axi_dma:7.1",
@@ -182,7 +186,11 @@
               "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:6",
               "name": "S2MM"
             }
-          ]
+          ],
+          "irqs": {
+            "mm2s_introut": "pcie_0_axi_pcie_intc_0:3",
+            "s2mm_introut": "pcie_0_axi_pcie_intc_0:4"
+          }
         },
         "hier_0_axi_fifo_mm_s_0": {
           "vlnv": "xilinx.com:ip:axi_fifo_mm_s:4.1",

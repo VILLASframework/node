@@ -254,7 +254,7 @@ struct pci_device * pci_lookup_device(struct pci *p, struct pci_device *f)
 	return list_search(&p->devices, (cmp_cb_t) pci_device_compare, (void *) f);
 }
 
-int pci_get_driver(struct pci_device *d, char *buf, size_t buflen)
+int pci_get_driver(const struct pci_device *d, char *buf, size_t buflen)
 {
 	int ret;
 	char sysfs[1024], syml[1024];
@@ -273,7 +273,7 @@ int pci_get_driver(struct pci_device *d, char *buf, size_t buflen)
 	return 0;
 }
 
-int pci_attach_driver(struct pci_device *d, const char *driver)
+int pci_attach_driver(const struct pci_device *d, const char *driver)
 {
 	FILE *f;
 	char fn[1024];
@@ -284,7 +284,7 @@ int pci_attach_driver(struct pci_device *d, const char *driver)
 	if (!f)
 		serror("Failed to add PCI id to %s driver (%s)", driver, fn);
 
-	debug(5, "Adding ID to %s module: %04x %04x", driver, d->id.vendor, d->id.device);
+	info("Adding ID to %s module: %04x %04x", driver, d->id.vendor, d->id.device);
 	fprintf(f, "%04x %04x", d->id.vendor, d->id.device);
 	fclose(f);
 
@@ -294,14 +294,14 @@ int pci_attach_driver(struct pci_device *d, const char *driver)
 	if (!f)
 		serror("Failed to bind PCI device to %s driver (%s)", driver, fn);
 
-	debug(5, "Bind device to %s driver", driver);
+	info("Bind device to %s driver", driver);
 	fprintf(f, "%04x:%02x:%02x.%x\n", d->slot.domain, d->slot.bus, d->slot.device, d->slot.function);
 	fclose(f);
 
 	return 0;
 }
 
-int pci_get_iommu_group(struct pci_device *d)
+int pci_get_iommu_group(const struct pci_device *d)
 {
 	int ret;
 	char *group, link[1024], sysfs[1024];

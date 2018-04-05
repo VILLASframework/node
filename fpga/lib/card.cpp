@@ -27,7 +27,7 @@
 #include "log.hpp"
 
 #include "kernel/pci.h"
-#include "kernel/vfio.h"
+#include "kernel/vfio.hpp"
 
 #include "fpga/ip.hpp"
 #include "fpga/card.hpp"
@@ -38,9 +38,8 @@ namespace fpga {
 // instantiate factory to register
 static PCIeCardFactory PCIeCardFactory;
 
-
 CardList
-fpga::PCIeCardFactory::make(json_t *json, struct pci* pci, ::vfio_container* vc)
+PCIeCardFactory::make(json_t *json, struct pci* pci, std::shared_ptr<VfioContainer> vc)
 {
 	CardList cards;
 	auto logger = getStaticLogger();
@@ -73,7 +72,7 @@ fpga::PCIeCardFactory::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 		// populate generic properties
 		card->name = std::string(card_name);
 		card->pci = pci;
-		card->vfio_container = vc;
+		card->vfioContainer = std::move(vc);
 		card->affinity = affinity;
 		card->do_reset = do_reset != 0;
 
@@ -110,10 +109,30 @@ fpga::PCIeCardFactory::make(json_t *json, struct pci* pci, ::vfio_container* vc)
 	return cards;
 }
 
-fpga::PCIeCard*
-fpga::PCIeCardFactory::create()
+
+PCIeCard*
+PCIeCardFactory::create()
 {
 	return new fpga::PCIeCard;
+}
+
+
+PCIeCard::~PCIeCard()
+{
+	auto& mm = MemoryManager::get();
+
+	// unmap all memory blocks
+	for(auto& mappedMemoryBlock : memoryBlocksMapped) {
+		auto translation = mm.getTranslation(addrSpaceIdDeviceToHost,
+		                                     mappedMemoryBlock);
+
+		const uintptr_t iova = translation.getLocalAddr(0);
+		const size_t size = translation.getSize();
+
+		logger->debug("Unmap block {} at IOVA {:#x} of size {:#x}",
+		              mappedMemoryBlock, iova, size);
+		vfioContainer->memoryUnmap(iova, size);
+	}
 }
 
 
@@ -125,8 +144,10 @@ PCIeCard::lookupIp(const std::string& name) const
 			return ip.get();
 		}
 	}
+
 	return nullptr;
 }
+
 
 ip::IpCore*
 PCIeCard::lookupIp(const Vlnv& vlnv) const
@@ -136,17 +157,58 @@ PCIeCard::lookupIp(const Vlnv& vlnv) const
 			return ip.get();
 		}
 	}
+
 	return nullptr;
+}
+
+
+bool
+PCIeCard::mapMemoryBlock(const MemoryBlock& block)
+{
+	auto& mm = MemoryManager::get();
+	const auto& addrSpaceId = block.getAddrSpaceId();
+
+	if(memoryBlocksMapped.find(addrSpaceId) != memoryBlocksMapped.end()) {
+		// block already mapped
+		return true;
+	} else {
+		logger->debug("Create VFIO mapping for {}", addrSpaceId);
+	}
+
+
+	auto translationFromProcess = mm.getTranslationFromProcess(addrSpaceId);
+	uintptr_t processBaseAddr = translationFromProcess.getLocalAddr(0);
+	uintptr_t iovaAddr = vfioContainer->memoryMap(processBaseAddr,
+	                                              UINTPTR_MAX,
+	                                              block.getSize());
+
+	if(iovaAddr == UINTPTR_MAX) {
+		logger->error("Cannot map memory at {:#x} of size {:#x}",
+		              processBaseAddr, block.getSize());
+		return false;
+	}
+
+
+
+	mm.createMapping(iovaAddr, 0, block.getSize(),
+	                 "vfio",
+	                 this->addrSpaceIdDeviceToHost,
+	                 addrSpaceId);
+
+	// remember that this block has already been mapped for later
+	memoryBlocksMapped.insert(addrSpaceId);
+
+	return true;
 }
 
 
 bool
 fpga::PCIeCard::init()
 {
-	int ret;
 	struct pci_device *pdev;
 
-	auto logger = getLogger();
+	auto& mm = MemoryManager::get();
+	logger = getLogger();
 
 	logger->info("Initializing FPGA card {}", name);
 
@@ -158,50 +220,48 @@ fpga::PCIeCard::init()
 	}
 
 	/* Attach PCIe card to VFIO container */
-	ret = ::vfio_pci_attach(&vfio_device, vfio_container, pdev);
-	if (ret) {
-		logger->error("Failed to attach VFIO device");
+	VfioDevice& device = vfioContainer->attachDevice(pdev);
+	this->vfioDevice = &device;
+
+
+	/* Enable memory access and PCI bus mastering for DMA */
+	if (not device.pciEnable()) {
+		logger->error("Failed to enable PCI device");
 		return false;
 	}
 
 	/* Map PCIe BAR */
-	const void* bar0_mapped = vfio_map_region(&vfio_device, VFIO_PCI_BAR0_REGION_INDEX);
+	const void* bar0_mapped = vfioDevice->regionMap(VFIO_PCI_BAR0_REGION_INDEX);
 	if (bar0_mapped == MAP_FAILED) {
 		logger->error("Failed to mmap() BAR0");
 		return false;
 	}
 
+	// determine size of BAR0 region
+	const size_t bar0_size = vfioDevice->regionGetSize(VFIO_PCI_BAR0_REGION_INDEX);
+
 
 	/* Link mapped BAR0 to global memory graph */
 
 	// get the address space of the current application
-	auto villasAddrSpace = MemoryManager::get().getProcessAddressSpace();
+	const auto villasAddrSpace = mm.getProcessAddressSpace();
+
+	// get the address space for the PCIe proxy we use with VFIO
+	const auto cardPCIeAddrSpaceName = mm.getMasterAddrSpaceName(name, "PCIe");
 
 	// create a new address space for this FPGA card
-	this->addrSpaceId = MemoryManager::get().getOrCreateAddressSpace(name);
-
-	// determine size of BAR0 region
-	const size_t bar0_size = vfio_region_size(&vfio_device,
-	                                          VFIO_PCI_BAR0_REGION_INDEX);
+	addrSpaceIdHostToDevice = mm.getOrCreateAddressSpace(cardPCIeAddrSpaceName);
 
 	// create a mapping from our address space to the FPGA card via vfio
-	MemoryManager::get().createMapping(reinterpret_cast<uintptr_t>(bar0_mapped),
+	mm.createMapping(reinterpret_cast<uintptr_t>(bar0_mapped),
 	                                   0, bar0_size, "VFIO_map",
-	                                   villasAddrSpace, this->addrSpaceId);
+	                                   villasAddrSpace, addrSpaceIdHostToDevice);
 
-
-	/* Enable memory access and PCI bus mastering for DMA */
-	ret = vfio_pci_enable(&vfio_device);
-	if (ret) {
-		logger->error("Failed to enable PCI device");
-		return false;
-	}
 
 	/* Reset system? */
 	if (do_reset) {
 		/* Reset / detect PCI device */
-		ret = vfio_pci_reset(&vfio_device);
-		if (ret) {
+		if(not vfioDevice->pciHotReset()) {
 			logger->error("Failed to reset PCI device");
 			return false;
 		}

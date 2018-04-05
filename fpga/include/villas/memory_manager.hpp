@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <map>
+#include <unistd.h>
 
 #include "log.hpp"
 #include "directed_graph.hpp"
@@ -33,6 +34,10 @@ public:
 
 	uintptr_t
 	getForeignAddr(uintptr_t addrInLocalAddrSpace) const;
+
+	size_t
+	getSize() const
+	{ return size; }
 
 	friend std::ostream&
 	operator<< (std::ostream& stream, const MemoryTranslation& translation)
@@ -87,9 +92,9 @@ private:
 	 * the destination address space, where the mapping points to. Often, #dest
 	 * will be zero for mappings to hardware, but consider the example when
 	 * mapping FPGA to application memory:
-	 * The application allocates a block 1kB at address
-	 * 0x843001000 in its address space. The mapping would then have a #dest
-	 * address of 0x843001000 and a #size of 1024.
+	 * The application allocates a block 1kB at address 0x843001000 in its
+	 * address space. The mapping would then have a #dest address of 0x843001000
+	 * and a #size of 1024.
 	 */
 	class Mapping : public graph::Edge {
 	public:
@@ -148,11 +153,17 @@ public:
 	{ return getOrCreateAddressSpace("villas-fpga"); }
 
 	AddressSpaceId
+	    getProcessAddressSpaceMemoryBlock(const std::string& memoryBlock)
+	{ return getOrCreateAddressSpace(getSlaveAddrSpaceName("villas-fpga", memoryBlock)); }
+
+
+	AddressSpaceId
 	getOrCreateAddressSpace(std::string name);
 
 	/// Create a default mapping
 	MappingId
-	createMapping(uintptr_t src, uintptr_t dest, size_t size, std::string name,
+	createMapping(uintptr_t src, uintptr_t dest, size_t size,
+	              const std::string& name,
 	              AddressSpaceId fromAddrSpace,
 	              AddressSpaceId toAddrSpace);
 
@@ -167,7 +178,7 @@ public:
 
 
 	AddressSpaceId
-	findAddressSpace(std::string name);
+	findAddressSpace(const std::string& name);
 
 	MemoryTranslation
 	getTranslation(AddressSpaceId fromAddrSpaceId, AddressSpaceId toAddrSpaceId);
@@ -177,8 +188,12 @@ public:
 	{ return getTranslation(getProcessAddressSpace(), foreignAddrSpaceId); }
 
 	static std::string
-	getSlaveAddrSpaceName(std::string ipInstance, std::string memoryBlock)
+	getSlaveAddrSpaceName(const std::string& ipInstance, const std::string& memoryBlock)
 	{ return ipInstance + "/" + memoryBlock; }
+
+	static std::string
+	getMasterAddrSpaceName(const std::string& ipInstance, const std::string& busInterface)
+	{ return ipInstance + ":" + busInterface; }
 
 	void
 	dump()

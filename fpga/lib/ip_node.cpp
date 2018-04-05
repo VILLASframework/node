@@ -97,8 +97,6 @@ IpNode::loopbackPossible() const
 bool
 IpNode::connectLoopback()
 {
-	auto logger = getLogger();
-
 	auto ports = getLoopbackPorts();
 	const auto& portMaster = portsMaster[ports.first];
 	const auto& portSlave = portsSlave[ports.second];

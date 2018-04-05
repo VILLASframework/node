@@ -240,7 +240,7 @@ int version_parse(const char *s, struct version *v);
 #endif
 
 /** Fill buffer with random data */
-ssize_t read_random(char *buf, size_t len);
+size_t read_random(char *buf, size_t len);
 
 /** Get CPU timestep counter */
 __attribute__((always_inline)) static inline uint64_t rdtsc()

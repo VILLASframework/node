@@ -24,9 +24,9 @@
 #include <criterion/criterion.h>
 
 #include <villas/utils.h>
-#include <villas/fpga/ip.h>
-#include <villas/fpga/card.h>
-#include <villas/fpga/vlnv.h>
+#include <villas/fpga/ip.hpp>
+#include <villas/fpga/card.hpp>
+#include <villas/fpga/vlnv.hpp>
 
 #include "global.hpp"
 
@@ -40,7 +40,6 @@
 #define FPGA_AXI_HZ	125000000
 
 static struct pci pci;
-static struct vfio_container vc;
 
 FpgaState state;
 
@@ -59,8 +58,7 @@ static void init()
 	ret = pci_init(&pci);
 	cr_assert_eq(ret, 0, "Failed to initialize PCI sub-system");
 
-	ret = vfio_init(&vc);
-	cr_assert_eq(ret, 0, "Failed to initiliaze VFIO sub-system");
+	auto vfioContainer = villas::VfioContainer::create();
 
 	/* Parse FPGA configuration */
 	f = fopen(TEST_CONFIG, "r");
@@ -81,7 +79,7 @@ static void init()
 	villas::fpga::PCIeCardFactory* fpgaCardPlugin = dynamic_cast<villas::fpga::PCIeCardFactory*>(plugin);
 
 	// create all FPGA card instances using the corresponding plugin
-	state.cards = fpgaCardPlugin->make(fpgas, &pci, &vc);
+	state.cards = fpgaCardPlugin->make(fpgas, &pci, vfioContainer);
 
 	cr_assert(state.cards.size() != 0, "No FPGA cards found!");
 
