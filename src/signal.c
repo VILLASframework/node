@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
 	int ret;
 	struct plugin *p;
 
-	char *format = "villas-human"; /** @todo hardcoded for now */
+	char *format = "villas.human"; /** @todo hardcoded for now */
 
 	ret = log_init(&l, l.level, LOG_ALL);
 	if (ret)

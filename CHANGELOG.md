@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - Unreleased
+
+### Changed
+
+- Format identifiers such as `raw-flt32` now use dots instead of hyphens in their name.
+  Please update your configuration files accordingly.
+
 ## [0.6.1] - 2018-02-17
 
 ### Added

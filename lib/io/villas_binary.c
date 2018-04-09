@@ -113,7 +113,7 @@ int villas_binary_sscan(char *buf, size_t len, size_t *rbytes, struct sample *sm
 }
 
 static struct plugin p1 = {
-	.name = "villas-binary",
+	.name = "villas.binary",
 	.description = "VILLAS binary network format",
 	.type = PLUGIN_TYPE_IO,
 	.io = {
@@ -126,7 +126,7 @@ static struct plugin p1 = {
 
 /** The WebSocket node-type usually uses little endian byte order intead of network byte order */
 static struct plugin p2 = {
-	.name = "villas-web",
+	.name = "villas.web",
 	.description = "VILLAS binary network format for WebSockets",
 	.type = PLUGIN_TYPE_IO,
 	.io = {

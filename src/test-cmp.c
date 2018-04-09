@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 
 	/* Default values */
 	double epsilon = 1e-9;
-	char *format = "villas-human";
+	char *format = "villas.human";
 	int flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_VALUES | SAMPLE_HAS_ORIGIN;
 
 	struct pool pool = { .state = STATE_DESTROYED };

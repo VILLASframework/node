@@ -41,7 +41,7 @@ static int print_init(struct hook *h)
 	struct print *p = (struct print *) h->_vd;
 
 	p->uri = NULL;
-	p->format = io_format_lookup("villas-human");
+	p->format = io_format_lookup("villas.human");
 
 	return 0;
 }

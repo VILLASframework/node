@@ -26,9 +26,9 @@ function villas_format_supports_vectorize() {
 	local FORMAT=$1
 	
 	case $FORMAT in
-		raw-*) ;&
+		raw.*) ;&
 		gtnet) ;&
-		gtnet-fake) return 1 ;;
+		gtnet.fake) return 1 ;;
 	esac
 	
 	return 0

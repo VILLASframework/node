@@ -105,7 +105,7 @@ static void usage()
 int main(int argc, char *argv[])
 {
 	int ret, recv, sent;
-	char *format = "villas-human";
+	char *format = "villas.human";
 
 	/* Default values */
 	cnt = 1;

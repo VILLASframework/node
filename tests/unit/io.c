@@ -45,21 +45,21 @@ static char formats[][32] = {
 #ifdef WITH_FORMAT_PROTOBUF
 	"protobuf",
 #endif
-	"raw-int8",
-	"raw-int16-be",
-	"raw-int16-le",
-	"raw-int32-be",
-	"raw-int32-le",
-	"raw-int64-be",
-	"raw-int64-le",
-	"raw-flt32",
-	"raw-flt64",
-	"villas-human",
-	"villas-binary",
+	"raw.int8",
+	"raw.int16.be",
+	"raw.int16.le",
+	"raw.int32.be",
+	"raw.int32.le",
+	"raw.int64.be",
+	"raw.int64.le",
+	"raw.flt32",
+	"raw.flt64",
+	"villas.human",
+	"villas.binary",
 	"csv",
 	"json",
 	"gtnet",
-	"gtnet-fake"
+	"gtnet.fake"
 };
 
 void generate_samples(struct pool *p, struct sample *smps[], struct sample *smpt[], unsigned cnt, unsigned values)
@@ -259,7 +259,7 @@ ParameterizedTest(char *fmt, io, highlevel)
 
 #if 0 /* Show the file contents */
 	char cmd[128];
-	if (!strcmp(fmt, "json") || !strcmp(fmt, "villas-human"))
+	if (!strcmp(fmt, "json") || !strcmp(fmt, "villas.human"))
 		snprintf(cmd, sizeof(cmd), "cat %s", fn);
 	else
 		snprintf(cmd, sizeof(cmd), "hexdump -C %s", fn);

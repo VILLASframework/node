@@ -213,7 +213,7 @@ int mqtt_parse(struct node *n, json_t *cfg)
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
 	const char *host;
-	const char *format = "villas-human";
+	const char *format = "villas.human";
 	const char *publish = NULL;
 	const char *subscribe = NULL;
 	const char *username = NULL;

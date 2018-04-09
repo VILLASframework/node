@@ -290,7 +290,7 @@ void villas_human_rewind(struct io *io)
 }
 
 static struct plugin p = {
-	.name = "villas-human",
+	.name = "villas.human",
 	.description = "VILLAS human readable format",
 	.type = PLUGIN_TYPE_IO,
 	.io = {

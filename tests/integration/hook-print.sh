@@ -31,7 +31,7 @@ NUM_SAMPLES=${NUM_SAMPLES:-100}
 # Prepare some test data
 villas-signal random -v 1 -r 10 -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
-villas-hook print -o format=villas-human -o output=${OUTPUT_FILE1} < ${INPUT_FILE} > ${OUTPUT_FILE2}
+villas-hook print -o format=villas.human -o output=${OUTPUT_FILE1} < ${INPUT_FILE} > ${OUTPUT_FILE2}
 
 # Compare only the data values
 villas-test-cmp ${OUTPUT_FILE1} ${INPUT_FILE} && \
