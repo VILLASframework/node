@@ -20,7 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-LIB_FORMATS += json villas_binary villas_human csv raw
+LIB_FORMATS += json json-reserve villas_binary villas_human csv raw
 LIB_SRCS += lib/io/msg.c
 
 # Enable Google Protobuf IO format
