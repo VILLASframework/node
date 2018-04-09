@@ -40,14 +40,19 @@ int signal_parse(struct signal *s, json_t *cfg)
 	int ret;
 	json_error_t err;
 	const char *name;
+	const char *unit = NULL;
 
-	ret = json_unpack_ex(cfg, &err, 0, "s: s",
-		"name", &name
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s }",
+		"name", &name,
+		"unit", &unit
 	);
 	if (ret)
 		return -1;
 
 	s->name = strdup(name);
+	s->unit = unit
+		? strdup(unit)
+		: NULL;
 
 	return 0;
 }
