@@ -48,7 +48,6 @@ V ?= 2
 # Platform
 PLATFORM ?= $(shell uname)
 
-include Makefile.help
 include Makefile.config
 
 ifeq ($(WITH_SRC),1)
@@ -176,3 +175,4 @@ escape = $(shell echo $1 | tr a-z- A-Z_ | tr -dc ' A-Z0-9_')
 
 include $(wildcard $(BUILDDIR)/**/*.d)
 include $(patsubst %,$(SRCDIR)/%/Makefile.inc,$(MODULES))
+include Makefile.help
