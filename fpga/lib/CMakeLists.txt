@@ -1,3 +1,5 @@
+add_subdirectory(common)
+
 set(SOURCES
 	vlnv.cpp
 	card.cpp
@@ -21,11 +23,6 @@ set(SOURCES
 	log.c
 	log_config.c
 	log_helper.c
-
-	plugin.cpp
-	utils.cpp
-	memory_manager.cpp
-	memory.cpp
 )
 
 include(FindPkgConfig)
@@ -36,6 +33,8 @@ pkg_check_modules(XIL libxil)
 find_package(Threads)
 
 add_library(villas-fpga SHARED ${SOURCES})
+
+target_link_libraries(villas-fpga PUBLIC villas-common)
 
 target_compile_definitions(villas-fpga PRIVATE
 	BUILDID=\"abc\"
