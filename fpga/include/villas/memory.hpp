@@ -8,115 +8,221 @@
 
 namespace villas {
 
+/**
+ * @brief Basic memory block backed by an address space in the memory graph
+ *
+ * This is a generic representation of a chunk of memory in the system. It can
+ * reside anywhere and represent different types of memory.
+ */
 class MemoryBlock {
-protected:
-	MemoryBlock(MemoryManager::AddressSpaceId addrSpaceId, size_t size) :
-	    addrSpaceId(addrSpaceId), size(size) {}
-
 public:
+	using deallocator_fn = std::function<void(MemoryBlock*)>;
+
+	MemoryBlock(size_t offset, size_t size, MemoryManager::AddressSpaceId addrSpaceId) :
+	    offset(offset), size(size), addrSpaceId(addrSpaceId) {}
+
 	MemoryManager::AddressSpaceId getAddrSpaceId() const
 	{ return addrSpaceId; }
 
 	size_t getSize() const
 	{ return size; }
 
-private:
-	MemoryManager::AddressSpaceId addrSpaceId;
-	size_t size;
+	size_t getOffset() const
+	{ return offset; }
+
+protected:
+	size_t offset;								///< Offset (or address) inside address space
+	size_t size;								///< Size in bytes of this block
+	MemoryManager::AddressSpaceId addrSpaceId;	///< Identifier in memory graph
 };
 
 
-class MemoryAllocator {
-};
-
-
-class HostRam : public MemoryAllocator {
+/**
+ * @brief Wrapper for a MemoryBlock to access the underlying memory directly
+ *
+ * The underlying memory block has to be accessible for the current process,
+ * that means it has to be mapped accordingly and registered to the global
+ * memory graph.
+ * Furthermore, this wrapper can be owning the memory block when initialized
+ * with a moved unique pointer. Otherwise, it just stores a reference to the
+ * memory block and it's the users responsibility to take care that the memory
+ * block is valid.
+ */
+template<typename T>
+class MemoryAccessor {
 public:
+	using Type = T;
+
+	// take ownership of the MemoryBlock
+	MemoryAccessor(std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> mem) :
+	    translation(MemoryManager::get().getTranslationFromProcess(mem->getAddrSpaceId())),
+	    memoryBlock(std::move(mem)) {}
+
+	// just act as an accessor, do not take ownership of MemoryBlock
+	MemoryAccessor(const MemoryBlock& mem) :
+	    translation(MemoryManager::get().getTranslationFromProcess(mem.getAddrSpaceId())) {}
+
+
+	T& operator*() const {
+		return *reinterpret_cast<T*>(translation.getLocalAddr(0));
+	}
+
+	T& operator[](size_t idx) const {
+		const size_t offset = sizeof(T) * idx;
+		return *reinterpret_cast<T*>(translation.getLocalAddr(offset));
+	}
+
+	T* operator&() const {
+		return reinterpret_cast<T*>(translation.getLocalAddr(0));
+	}
+
+	T* operator->() const {
+		return reinterpret_cast<T*>(translation.getLocalAddr(0));
+	}
+
+	const MemoryBlock&
+	getMemoryBlock() const
+	{ if(not memoryBlock) throw std::bad_alloc(); else return *memoryBlock; }
+
+private:
+	/// cached memory translation for fast access
+	MemoryTranslation translation;
+
+	/// take the unique pointer in case user wants this class to have ownership
+	std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> memoryBlock;
+};
+
+
+/**
+ * @brief Base memory allocator
+ *
+ * Note the usage of CRTP idiom here to access methods of derived allocators.
+ * The concept is explained here at [1].
+ *
+ * [1] https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
+ */
+template<typename DerivedAllocator>
+class BaseAllocator {
+public:
+	/// memoryAddrSpaceId: memory that is managed by this allocator
+	BaseAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId) :
+	    memoryAddrSpaceId(memoryAddrSpaceId)
+	{
+		// CRTP
+		derivedAlloc = static_cast<DerivedAllocator*>(this);
+		logger = loggerGetOrCreate(derivedAlloc->getName());
+
+		// default deallocation callback
+		free = [&](MemoryBlock* mem) {
+			logger->warn("no free callback defined for addr space {}, not freeing",
+			             mem->getAddrSpaceId());
+		};
+	}
+
+	virtual std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
+	allocateBlock(size_t size) = 0;
 
 	template<typename T>
-	class MemoryBlockHostRam : public MemoryBlock {
-		friend class HostRam;
-	private:
-		MemoryBlockHostRam(void* addr, size_t size, MemoryManager::AddressSpaceId foreignAddrSpaceId) :
-		    MemoryBlock(foreignAddrSpaceId, size),
-		    addr(addr),
-		    translation(MemoryManager::get().getTranslationFromProcess(foreignAddrSpaceId))
-		{}
-	public:
-		using Type = T;
-
-		MemoryBlockHostRam() = delete;
-
-		T& operator*() {
-			return *reinterpret_cast<T*>(translation.getLocalAddr(0));
-		}
-
-		T& operator [](int idx) {
-			const size_t offset = sizeof(T) * idx;
-			return *reinterpret_cast<T*>(translation.getLocalAddr(offset));
-		}
-
-		T* operator &() const {
-			return reinterpret_cast<T*>(translation.getLocalAddr(0));
-		}
-
-	private:
-		// addr needed for freeing later
-		void* addr;
-
-		// cached memory translation for fast access
-		MemoryTranslation translation;
-	};
-
-	template<typename T>
-	static MemoryBlockHostRam<T>
+	MemoryAccessor<T>
 	allocate(size_t num)
 	{
-		/* Align to next bigger page size chunk */
-		size_t length = num * sizeof(T);
-		if (length &  size_t(0xFFF)) {
-			length += size_t(0x1000);
-			length &= size_t(~0xFFF);
-		}
-
-		void* const addr = HostRam::allocate(length);
-		if(addr == nullptr) {
-			throw std::bad_alloc();
-		}
-
-		auto& mm = MemoryManager::get();
-
-		// assemble name for this block
-		std::stringstream name;
-		name << std::showbase << std::hex << reinterpret_cast<uintptr_t>(addr);
-
-		auto blockAddrSpaceId = mm.getProcessAddressSpaceMemoryBlock(name.str());
-
-		// create mapping from VA space of process to this new block
-		mm.createMapping(reinterpret_cast<uintptr_t>(addr), 0, length,
-		                 "VA",
-		                 mm.getProcessAddressSpace(),
-		                 blockAddrSpaceId);
-
-		// create object and corresponding address space in memory manager
-		return MemoryBlockHostRam<T>(addr, length, blockAddrSpaceId);
+		const size_t size = num * sizeof(T);
+		auto mem = allocateBlock(size);
+		return MemoryAccessor<T>(std::move(mem));
 	}
 
-	template<typename T>
-	static inline bool
-	free(const MemoryBlockHostRam<T>& block)
+protected:
+	void insertMemoryBlock(const MemoryBlock& mem)
 	{
-		// TODO: remove address space from memory manager
-		// TODO: how to prevent use after free?
-		return HostRam::free(block.addr, block.size);
+		auto& mm = MemoryManager::get();
+		mm.createMapping(mem.getOffset(), 0, mem.getSize(),
+		                 derivedAlloc->getName(),
+		                 memoryAddrSpaceId,
+		                 mem.getAddrSpaceId());
 	}
+
+	void removeMemoryBlock(const MemoryBlock& mem)
+	{
+		// this will also remove any mapping to and from the memory block
+		auto& mm = MemoryManager::get();
+		mm.removeAddressSpace(mem.getAddrSpaceId());
+	}
+
+	MemoryManager::AddressSpaceId getAddrSpaceId() const
+	{ return memoryAddrSpaceId; }
+
+protected:
+	MemoryBlock::deallocator_fn free;
+	SpdLogger logger;
 
 private:
-	static void*
-	allocate(size_t length, int flags = 0);
+	MemoryManager::AddressSpaceId memoryAddrSpaceId;
+	DerivedAllocator* derivedAlloc;
+};
 
-	static bool
-	free(void*, size_t length);
+
+/**
+ * @brief Linear memory allocator
+ *
+ * This is the simplest kind of allocator. The idea is to keep a pointer at the
+ * first memory address of your memory chunk and move it every time an
+ * allocation is done. Due to its simplicity, this allocator doesn't allow
+ * specific positions of memory to be freed. Usually, all memory is freed
+ * together.
+ */
+class LinearAllocator : public BaseAllocator<LinearAllocator> {
+public:
+	LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId,
+	                size_t memorySize,
+	                size_t internalOffset = 0);
+
+	size_t getAvailableMemory() const
+	{ return memorySize - nextFreeAddress; }
+
+	std::string getName() const;
+
+	std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
+	allocateBlock(size_t size);
+
+private:
+	static constexpr size_t alignBytes = sizeof(uintptr_t);
+	static constexpr size_t alignMask = alignBytes - 1;
+
+	size_t getAlignmentPadding(uintptr_t addr) const
+	{ return (alignBytes - (addr & alignMask)) & alignMask; }
+
+private:
+	size_t nextFreeAddress;	///< next chunk will be allocated here
+	size_t memorySize;		///< total size of managed memory
+	size_t internalOffset;	///< offset in address space (usually 0)
+};
+
+
+/**
+ * @brief Wrapper around mmap() to create villas memory blocks
+ *
+ * This class simply wraps around mmap() and munmap() to allocate memory in the
+ * host memory via the OS.
+ */
+class HostRam {
+public:
+	class HostRamAllocator : public BaseAllocator<HostRamAllocator> {
+	public:
+		HostRamAllocator();
+
+		std::string getName() const
+		{ return "HostRamAlloc"; }
+
+		std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
+		allocateBlock(size_t size);
+	};
+
+	static HostRamAllocator&
+	getAllocator()
+	{ return allocator; }
+
+private:
+	static HostRamAllocator allocator;
 };
 
 } // namespace villas

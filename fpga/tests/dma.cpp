@@ -41,15 +41,16 @@ Test(fpga, dma, .description = "DMA")
 		size_t len = 4 * (1 << 10);
 
 		/* Allocate memory to use with DMA */
-		auto src = villas::HostRam::allocate<char>(len);
-		auto dst = villas::HostRam::allocate<char>(len);
+		auto src = villas::HostRam::getAllocator().allocate<char>(len);
+		auto dst = villas::HostRam::getAllocator().allocate<char>(len);
 
 		/* Get new random data */
 		const size_t lenRandom = read_random(&src, len);
 		cr_assert(len == lenRandom, "Failed to get random data");
 
 		/* Start transfer */
-		cr_assert(dma.pingPong(src, dst, len), "DMA ping pong failed");
+		cr_assert(dma.pingPong(src.getMemoryBlock(), dst.getMemoryBlock(), len),
+		          "DMA ping pong failed");
 
 		/* Compare data */
 		cr_assert(memcmp(&src, &dst, len) == 0, "Data not equal");
