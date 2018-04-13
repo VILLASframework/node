@@ -1,4 +1,5 @@
 add_subdirectory(common)
+add_subdirectory(gpu)
 
 set(SOURCES
 	vlnv.cpp
@@ -35,6 +36,7 @@ find_package(Threads)
 add_library(villas-fpga SHARED ${SOURCES})
 
 target_link_libraries(villas-fpga PUBLIC villas-common)
+target_link_libraries(villas-fpga PUBLIC villas-gpu)
 
 target_compile_definitions(villas-fpga PRIVATE
 	BUILDID=\"abc\"
