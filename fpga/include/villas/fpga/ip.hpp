@@ -127,8 +127,11 @@ public:
 	virtual void dump();
 
 protected:
+	/// Key-type for accessing maps addressTranslations and slaveAddressSpaces
+	using MemoryBlockName = std::string;
+
 	/// Each IP can declare via this function which memory blocks it requires
-	virtual std::list<std::string>
+	virtual std::list<MemoryBlockName>
 	getMemoryBlocks() const
 	{ return {}; }
 
@@ -177,11 +180,15 @@ public:
 
 protected:
 	uintptr_t
-	getBaseAddr(const std::string& block) const
+	getBaseAddr(const MemoryBlockName& block) const
 	{ return getLocalAddr(block, 0); }
 
 	uintptr_t
-	getLocalAddr(const std::string& block, uintptr_t address) const;
+	getLocalAddr(const MemoryBlockName& block, uintptr_t address) const;
+
+	MemoryManager::AddressSpaceId
+	getAddressSpaceId(const MemoryBlockName& block) const
+	{ return slaveAddressSpaces.at(block); }
 
 	InterruptController*
 	getInterruptController(const std::string& interruptName) const;
@@ -206,7 +213,10 @@ protected:
 	std::map<std::string, IrqPort> irqs;
 
 	/// Cached translations from the process address space to each memory block
-	std::map<std::string, MemoryTranslation> addressTranslations;
+	std::map<MemoryBlockName, MemoryTranslation> addressTranslations;
+
+	/// Lookup for IP's slave address spaces (= memory blocks)
+	std::map<MemoryBlockName, MemoryManager::AddressSpaceId> slaveAddressSpaces;
 
 	/// AXI bus master interfaces to access memory somewhere
 	std::map<std::string, MemoryManager::AddressSpaceId> busMasterInterfaces;

@@ -54,7 +54,7 @@ private:
 	static constexpr char axi4Memory[] = "Mem1";
 	static constexpr char irqName[] = "interrupt";
 
-	std::list<std::string> getMemoryBlocks() const
+	std::list<MemoryBlockName> getMemoryBlocks() const
 	{ return { registerMemory, axi4Memory }; }
 
 	XLlFifo xFifo;
