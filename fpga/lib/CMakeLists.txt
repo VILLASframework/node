@@ -10,6 +10,7 @@ set(SOURCES
 	ips/intc.cpp
 	ips/pcie.cpp
 	ips/dma.cpp
+	ips/bram.cpp
 
 	kernel/kernel.c
 	kernel/pci.c

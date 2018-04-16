@@ -1,10 +1,7 @@
-/** Timer related helper functions
- *
- * These functions present a simpler interface to Xilinx' Timer Counter driver (XTmrCtr_*)
- *
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+/** Block-Raam related helper functions
+ * *
  * @author Daniel Krebs <github@daniel-krebs.net>
- * @copyright 2017, Steffen Vogel
+ * @copyright 2018, Daniel Krebs
  * @license GNU General Public License (version 3)
  *
  * VILLASfpga
@@ -29,56 +26,58 @@
 
 #pragma once
 
-#include "fpga/ip_node.hpp"
-#include <xilinx/xllfifo.h>
-
+#include "memory.hpp"
+#include "fpga/ip.hpp"
 
 namespace villas {
 namespace fpga {
 namespace ip {
 
 
-class Fifo : public IpNode
+class Bram : public IpCore
 {
+	friend class BramFactory;
 public:
-	friend class FifoFactory;
 
 	bool init();
-	bool stop();
 
-	size_t write(const void* buf, size_t len);
-	size_t read(void* buf, size_t len);
+	LinearAllocator&
+	getAllocator()
+	{ return *allocator; }
 
 private:
-	static constexpr char registerMemory[] = "Mem0";
-	static constexpr char axi4Memory[] = "Mem1";
-	static constexpr char irqName[] = "interrupt";
-
+	static constexpr const char* memoryBlock = "Mem0";
 	std::list<MemoryBlockName> getMemoryBlocks() const
-	{ return { registerMemory, axi4Memory }; }
+	{ return { memoryBlock }; }
 
-	XLlFifo xFifo;
+	size_t size;
+	std::unique_ptr<LinearAllocator> allocator;
 };
 
 
 
-class FifoFactory : public IpNodeFactory {
+class BramFactory : public IpCoreFactory {
 public:
-	FifoFactory();
+
+	BramFactory() :
+	    IpCoreFactory(getName())
+	{}
+
+	bool configureJson(IpCore& ip, json_t *json_ip);
 
 	IpCore* create()
-	{ return new Fifo; }
+	{ return new Bram; }
 
 	std::string
 	getName() const
-	{ return "Fifo"; }
+	{ return "Bram"; }
 
 	std::string
 	getDescription() const
-	{ return "Xilinx's AXI4 FIFO data mover"; }
+	{ return "Block RAM"; }
 
 	Vlnv getCompatibleVlnv() const
-	{ return {"xilinx.com:ip:axi_fifo_mm_s:"}; }
+	{ return {"xilinx.com:ip:axi_bram_ctrl:"}; }
 };
 
 } // namespace ip

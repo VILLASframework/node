@@ -84,7 +84,7 @@ private:
 	// optional Scatter-Gather interface to access descriptors
 	static constexpr char sgInterface[] = "M_AXI_SG";
 
-	std::list<std::string> getMemoryBlocks() const
+	std::list<MemoryBlockName> getMemoryBlocks() const
 	{ return { registerMemory }; }
 
 	XAxiDma xDma;

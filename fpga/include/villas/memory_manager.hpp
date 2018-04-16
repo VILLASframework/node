@@ -77,7 +77,7 @@ private:
 
 	// ... and no copying or assigning
 	MemoryManager(const MemoryManager&) = delete;
-	MemoryManager& operator=(const MemoryManager&) = delete ;
+	MemoryManager& operator=(const MemoryManager&) = delete;
 
 	/**
 	 * @brief Custom edge in memory graph representing a memory mapping
@@ -153,12 +153,16 @@ public:
 	{ return getOrCreateAddressSpace("villas-fpga"); }
 
 	AddressSpaceId
-	    getProcessAddressSpaceMemoryBlock(const std::string& memoryBlock)
+	getProcessAddressSpaceMemoryBlock(const std::string& memoryBlock)
 	{ return getOrCreateAddressSpace(getSlaveAddrSpaceName("villas-fpga", memoryBlock)); }
 
 
 	AddressSpaceId
 	getOrCreateAddressSpace(std::string name);
+
+	void
+	removeAddressSpace(AddressSpaceId addrSpaceId)
+	{ memoryGraph.removeVertex(addrSpaceId); }
 
 	/// Create a default mapping
 	MappingId

@@ -64,7 +64,7 @@ private:
 
 	static constexpr char registerMemory[] = "Reg";
 
-	std::list<std::string> getMemoryBlocks() const
+	std::list<MemoryBlockName> getMemoryBlocks() const
 	{ return { registerMemory }; }
 
 

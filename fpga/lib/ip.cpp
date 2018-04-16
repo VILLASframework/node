@@ -281,6 +281,9 @@ IpCoreFactory::make(PCIeCard* card, json_t *json_ips)
 			const auto addrSpaceId =
 			        MemoryManager::get().findAddressSpace(addrSpaceName);
 
+			// ... and save it in IP
+			ip->slaveAddressSpaces.emplace(memoryBlock, addrSpaceId);
+
 			// get the translation to the address space
 			const auto& translation =
 			        MemoryManager::get().getTranslationFromProcess(addrSpaceId);
@@ -341,7 +344,7 @@ IpCoreFactory::lookup(const Vlnv &vlnv)
 
 
 uintptr_t
-IpCore::getLocalAddr(const std::string& block, uintptr_t address) const
+IpCore::getLocalAddr(const MemoryBlockName& block, uintptr_t address) const
 {
 	// throws exception if block not present
 	auto& translation = addressTranslations.at(block);
