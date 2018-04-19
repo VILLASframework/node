@@ -99,12 +99,12 @@ static void * mqtt_thread(void *ctx)
 {
 	int ret;
 
-	debug(1, "MQTT: started thread");
+	debug(5, "MQTT: started thread");
 
 	while (1) {
 //		pthread_mutex_lock(&polling.mutex);
 
-		debug(1, "MQTT: Polling on %d clients", polling.length);
+		debug(5, "MQTT: Polling on %d clients", polling.length);
 
 		ret = poll(polling.fds, polling.length, -1);
 		if (ret < 0)
@@ -153,7 +153,7 @@ static void mqtt_connect_cb(struct mosquitto *mosq, void *userdata, int result)
 	struct node *n = (struct node *) userdata;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
-	debug(1, "MQTT: Node %s connected to broker %s", node_name(n), m->host);
+	debug(5, "MQTT: Node %s connected to broker %s", node_name(n), m->host);
 
 //	mqtt_register_client(mosq);
 }
@@ -163,7 +163,7 @@ static void mqtt_disconnect_cb(struct mosquitto *mosq, void *userdata, int resul
 	struct node *n = (struct node *) userdata;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
-	debug(1, "MQTT: Node %s disconnected from broker %s", node_name(n), m->host);
+	debug(5, "MQTT: Node %s disconnected from broker %s", node_name(n), m->host);
 
 //	mqtt_unregister_client(mosq)
 }
@@ -175,7 +175,7 @@ static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct
 	struct mqtt *m = (struct mqtt *) n->_vd;
 	struct sample *smp;
 
-	debug(1, "MQTT: Node %s received a message of %d bytes from broker %s", node_name(n), msg->payloadlen, m->host);
+	debug(5, "MQTT: Node %s received a message of %d bytes from broker %s", node_name(n), msg->payloadlen, m->host);
 
 	smp = sample_alloc(&m->pool);
 	if (!smp) {
