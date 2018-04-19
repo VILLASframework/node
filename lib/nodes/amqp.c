@@ -146,7 +146,7 @@ int amqp_parse(struct node *n, json_t *json)
 		ret = amqp_parse_url(a->uri, &a->connection_info);
 
 		if (ret != AMQP_STATUS_OK)
-			error("Failed to parse URI of node %s", node_name(n));
+			error("Failed to parse URI '%s' of node %s", uri, node_name(n));
 	}
 
 	if (json_ssl) {
