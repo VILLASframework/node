@@ -90,6 +90,7 @@ help:
 	$E "  WITH_NODE_STATS =      $(WITH_NODE_STATS)"
 	$E "  WITH_NODE_INFLUXDB =   $(WITH_NODE_INFLUXDB)"
 	$E "  WITH_NODE_AMQP =       $(WITH_NODE_AMQP)"
+	$E "  WITH_NODE_MQTT =       $(WITH_NODE_MQTT)"
 	$E "  WITH_NODE_IEC61850 =   $(WITH_NODE_IEC61850)"
 	$E
 	$E "Available dependencies: $(LIB_PKGS)"
