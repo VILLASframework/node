@@ -250,6 +250,7 @@ int path_init(struct path *p)
 	p->mode = PATH_MODE_ANY;
 	p->rate = 0; /* Disabled */
 
+	p->builtin = 1;
 	p->reverse = 0;
 	p->enabled = 1;
 	p->queuelen = DEFAULT_QUEUELEN;
@@ -257,7 +258,7 @@ int path_init(struct path *p)
 #ifdef WITH_HOOKS
 	/* Add internal hooks if they are not already in the list */
 	list_init(&p->hooks);
-	if (!p->no_builtin) {
+	if (p->builtin) {
 		int ret;
 
 		for (size_t i = 0; i < list_length(&plugins); i++) {
@@ -403,7 +404,7 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 		"hooks", &json_hooks,
 		"reverse", &p->reverse,
 		"enabled", &p->enabled,
-		"no_builtin", &p->no_builtin,
+		"builtin", &p->builtin,
 		"queuelen", &p->queuelen,
 		"mode", &mode,
 		"rate", &p->rate,

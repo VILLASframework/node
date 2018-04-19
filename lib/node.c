@@ -50,7 +50,7 @@ int node_init(struct node *n, struct node_type *vt)
 
 	/* Default values */
 	n->vectorize = 1;
-	n->no_builtin = 0;
+	n->builtin = 1;
 	n->samplelen = DEFAULT_SAMPLELEN;
 
 	list_push(&vt->instances, n);
@@ -60,7 +60,7 @@ int node_init(struct node *n, struct node_type *vt)
 #ifdef WITH_HOOKS
 	/* Add internal hooks if they are not already in the list */
 	list_init(&n->hooks);
-	if (!n->no_builtin) {
+	if (n->builtin) {
 		int ret;
 		for (size_t i = 0; i < list_length(&plugins); i++) {
 			struct plugin *q = (struct plugin *) list_at(&plugins, i);
@@ -117,7 +117,7 @@ int node_parse(struct node *n, json_t *cfg, const char *name)
 		"vectorize", &n->vectorize,
 		"samplelen", &n->samplelen,
 		"hooks", &json_hooks,
-		"no_builtin", &n->no_builtin,
+		"builtin", &n->builtin,
 		"signals", &json_signals
 	);
 	if (ret)
