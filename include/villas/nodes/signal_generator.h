@@ -77,11 +77,11 @@ char * signal_generator_print(struct node *n);
 /** @see node_type::parse */
 int signal_generator_parse(struct node *n, json_t *cfg);
 
-/** @see node_type::open */
-int signal_generator_open(struct node *n);
+/** @see node_type::start */
+int signal_generator_start(struct node *n);
 
-/** @see node_type::close */
-int signal_generator_close(struct node *n);
+/** @see node_type::stop */
+int signal_generator_stop(struct node *n);
 
 /** @see node_type::read */
 int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt);

@@ -170,7 +170,7 @@ check:		if (optarg == endptr)
 	return 0;
 }
 
-int signal_generator_open(struct node *n)
+int signal_generator_start(struct node *n)
 {
 	int ret;
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
@@ -192,7 +192,7 @@ int signal_generator_open(struct node *n)
 	return 0;
 }
 
-int signal_generator_close(struct node *n)
+int signal_generator_stop(struct node *n)
 {
 	int ret;
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
@@ -312,8 +312,8 @@ static struct plugin p = {
 		.parse = signal_generator_parse,
 		.parse_cli = signal_generator_parse_cli,
 		.print = signal_generator_print,
-		.start = signal_generator_open,
-		.stop  = signal_generator_close,
+		.start = signal_generator_start,
+		.stop  = signal_generator_stop,
 		.read  = signal_generator_read,
 		.fd    = signal_generator_fd
 	}
