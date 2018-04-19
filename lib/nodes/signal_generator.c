@@ -223,7 +223,7 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt)
 		/* Block until 1/p->rate seconds elapsed */
 		steps = task_wait(&s->task);
 		if (steps > 1)
-			warn("Missed steps: %u", steps);
+			warn("Missed steps: %u", steps-1);
 
 		ts = time_now();
 	}
