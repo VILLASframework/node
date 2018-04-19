@@ -69,6 +69,7 @@ struct signal_generator {
 
 	struct timespec started;	/**< Point in time when this node was started. */
 	int counter;			/**< The number of packets already emitted. */
+	int missed_steps;		/**< Total number of missed steps. */
 };
 
 /** @see node_type::print */

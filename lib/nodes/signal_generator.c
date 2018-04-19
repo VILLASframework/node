@@ -175,6 +175,7 @@ int signal_generator_start(struct node *n)
 	int ret;
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
+	s->missed_steps = 0;
 	s->counter = 0;
 	s->started = time_now();
 	s->last = alloc(sizeof(double) * s->values);
@@ -203,6 +204,9 @@ int signal_generator_stop(struct node *n)
 			return ret;
 	}
 
+	if (s->missed_steps > 0)
+		warn("Node %s missed a total of %d steps.", node_name(n), s->missed_steps);
+
 	free(s->last);
 
 	return 0;
@@ -222,8 +226,10 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (s->rt) {
 		/* Block until 1/p->rate seconds elapsed */
 		steps = task_wait(&s->task);
-		if (steps > 1)
+		if (steps > 1) {
 			warn("Missed steps: %u", steps-1);
+			s->missed_steps += steps-1;
+		}
 
 		ts = time_now();
 	}
