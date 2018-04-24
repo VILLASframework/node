@@ -302,7 +302,7 @@ VfioContainer::attachDevice(const pci_device* pdev)
 	}
 
 	/* Get IOMMU group of device */
-	int index = pci_get_iommu_group(pdev);
+	int index = isIommuEnabled() ? pci_get_iommu_group(pdev) : 0;
 	if (index < 0) {
 		logger->error("Failed to get IOMMU group of device");
 		throw std::exception();
