@@ -743,9 +743,11 @@ VfioGroup::~VfioGroup()
 
 
 std::unique_ptr<VfioGroup>
-VfioGroup::attach(const VfioContainer& container, int groupIndex)
+VfioGroup::attach(VfioContainer& container, int groupIndex)
 {
 	std::unique_ptr<VfioGroup> group { new VfioGroup(groupIndex) };
+
+	group->container = &container;
 
 	/* Open group fd */
 	std::stringstream groupPath;

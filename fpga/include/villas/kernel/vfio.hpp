@@ -91,7 +91,7 @@ public:
 	~VfioGroup();
 
 	static std::unique_ptr<VfioGroup>
-	attach(const VfioContainer& container, int groupIndex);
+	attach(VfioContainer& container, int groupIndex);
 
 private:
 	/// VFIO group file descriptor
