@@ -120,30 +120,30 @@
             "M_AXI_MM2S": {
               "pcie_0_axi_pcie_0": {
                 "BAR0": {
-                  "baseaddr": 2147483648,
+                  "baseaddr": 0,
                   "highaddr": 4294967295,
-                  "size": 2147483648
+                  "size": 4294967296
                 }
               }
             },
             "M_AXI_S2MM": {
               "pcie_0_axi_pcie_0": {
                 "BAR0": {
-                  "baseaddr": 2147483648,
+                  "baseaddr": 0,
                   "highaddr": 4294967295,
-                  "size": 2147483648
+                  "size": 4294967296
                 }
               }
             }
           },
           "ports": [
             {
-              "role": "initiator",
+              "role": "master",
               "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:1",
               "name": "MM2S"
             },
             {
-              "role": "target",
+              "role": "slave",
               "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:1",
               "name": "S2MM"
             }
@@ -159,30 +159,30 @@
             "M_AXI_MM2S": {
               "pcie_0_axi_pcie_0": {
                 "BAR0": {
-                  "baseaddr": 2147483648,
+                  "baseaddr": 0,
                   "highaddr": 4294967295,
-                  "size": 2147483648
+                  "size": 4294967296
                 }
               }
             },
             "M_AXI_S2MM": {
               "pcie_0_axi_pcie_0": {
                 "BAR0": {
-                  "baseaddr": 2147483648,
+                  "baseaddr": 0,
                   "highaddr": 4294967295,
-                  "size": 2147483648
+                  "size": 4294967296
                 }
               }
             }
           },
           "ports": [
             {
-              "role": "initiator",
+              "role": "master",
               "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:6",
               "name": "MM2S"
             },
             {
-              "role": "target",
+              "role": "slave",
               "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:6",
               "name": "S2MM"
             }
@@ -214,22 +214,22 @@
           "vlnv": "xilinx.com:ip:axis_switch:1.1",
           "ports": [
             {
-              "role": "initiator",
+              "role": "master",
               "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:3",
               "name": "M03_AXIS"
             },
             {
-              "role": "target",
+              "role": "slave",
               "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:3",
               "name": "S03_AXIS"
             },
             {
-              "role": "initiator",
+              "role": "master",
               "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:4",
               "name": "M04_AXIS"
             },
             {
-              "role": "target",
+              "role": "slave",
               "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:4",
               "name": "S04_AXIS"
             }
@@ -237,7 +237,7 @@
           "num_ports": 7
         },
         "hier_0_hls_dft_0": {
-          "vlnv": "acs.eonerc.rwth-aachen.de:hls:hls_dft:1.0",
+          "vlnv": "acs.eonerc.rwth-aachen.de:hls:hls_dft:1.1",
           "ports": [
             {
               "role": "master",
@@ -249,7 +249,10 @@
               "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:5",
               "name": "input_r"
             }
-          ]
+          ],
+          "irqs": {
+            "interrupt": "pcie_0_axi_pcie_intc_0:1"
+          }
         },
         "hier_0_rtds_axis_0": {
           "vlnv": "acs.eonerc.rwth-aachen.de:user:rtds_axis:1.0",
@@ -357,6 +360,19 @@
                   "size": 268435456
                 }
               }
+            }
+          },
+          "axi_bars": {
+            "BAR0": {
+              "translation": 0,
+              "baseaddr": 0,
+              "highaddr": 4294967295,
+              "size": 4294967296
+            }
+          },
+          "pcie_bars": {
+            "BAR0": {
+              "translation": 0
             }
           }
         },
