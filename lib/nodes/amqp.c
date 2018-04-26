@@ -116,8 +116,13 @@ int amqp_parse(struct node *n, json_t *json)
 	int ret;
 	struct amqp *a = n->_vd;
 
+	int port = 5672;
 	const char *format = "json";
 	const char *uri = NULL;
+	const char *host = "localhost";
+	const char *vhost = "/";
+	const char *username = "guest";
+	const char *password = "guest";
 	const char *exchange, *routing_key;
 
 	json_error_t err;
@@ -128,8 +133,13 @@ int amqp_parse(struct node *n, json_t *json)
 	amqp_default_ssl_info(&a->ssl_info);
 	amqp_default_connection_info(&a->connection_info);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s: s, s: s, s?: s, s?: o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s?: s, s?: s, s?: s, s?: s, s?: i, s: s, s: s, s?: s, s?: o }",
 		"uri", &uri,
+		"host", &host,
+		"vhost", &vhost,
+		"username", &username,
+		"password", &password,
+		"port", &port,
 		"exchange", &exchange,
 		"routing_key", &routing_key,
 		"format", &format,
@@ -141,13 +151,15 @@ int amqp_parse(struct node *n, json_t *json)
 	a->exchange = amqp_bytes_strdup(exchange);
 	a->routing_key = amqp_bytes_strdup(routing_key);
 
-	if (uri) {
+	if (uri)
 		a->uri = strdup(uri);
-		ret = amqp_parse_url(a->uri, &a->connection_info);
+	else
+		asprintf(&a->uri, "amqp://%s:%s@%s:%d/%s", username, password, host, port, vhost);
 
-		if (ret != AMQP_STATUS_OK)
-			error("Failed to parse URI '%s' of node %s", uri, node_name(n));
-	}
+	ret = amqp_parse_url(a->uri, &a->connection_info);
+
+	if (ret != AMQP_STATUS_OK)
+		error("Failed to parse URI '%s' of node %s", uri, node_name(n));
 
 	if (json_ssl) {
 		const char *ca_cert = NULL;
