@@ -143,6 +143,7 @@ void hist_print(struct hist *h, int details)
 		stats("Highest:  %g", h->highest);
 		stats("Lowest:   %g", h->lowest);
 		stats("Mu:       %g", hist_mean(h));
+		stats("1/Mu:     %g", 1.0/hist_mean(h));
 		stats("Variance: %g", hist_var(h));
 		stats("Stddev:   %g", hist_stddev(h));
 
