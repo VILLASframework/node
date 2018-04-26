@@ -43,7 +43,11 @@ int sample_init(struct sample *s)
 
 struct sample * sample_alloc(struct pool *p)
 {
-	struct sample *s = pool_get(p);
+	struct sample *s;
+
+	s = pool_get(p);
+	if (!s)
+		return NULL;
 
 	s->pool_off = (char *) p - (char *) s;
 
