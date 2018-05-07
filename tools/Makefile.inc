@@ -36,6 +36,11 @@ ifeq ($(shell $(PKGCONFIG) libzmq; echo $$?),0)
 	TOOLS_LDLIBS += $(shell $(PKGCONFIG) --libs libzmq)
 endif
 
+ifeq ($(IS_LINUX),1)
+	TOOLS += $(BUILDDIR)/rmshm $(BUILDDIR)/rmsem
+	TOOLS_LDLIBS += -lrt -pthread
+endif
+
 # Compile executable objects
 $(BUILDDIR)/tools/%.o: tools/%.c | $$(dir $$@)
 	$(CC) $(TOOLS_CFLAGS) -c $< -o $@
