@@ -199,6 +199,13 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			if (c->_name)
 				free(c->_name);
 
+			/* Return all samples to pool */
+			int avail;
+			struct sample *smp;
+			while ((avail = queue_pull(&c->queue, (void **) &smp)))
+				sample_put(smp);
+
+			/* Destroy queue */
 			ret = queue_destroy(&c->queue);
 			if (ret)
 				return ret;
