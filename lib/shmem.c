@@ -67,12 +67,12 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 
 	sem_other = sem_open(rname, O_CREAT, 0600, 0);
 	if (sem_other == SEM_FAILED)
-		return -1;
+		return -2;
 
 	/* Open and initialize the shared region for the output queue */
 	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 	if (fd < 0)
-		return -1;
+		return -3;
 
 	len = shmem_total_size(conf->queuelen, conf->samplelen);
 	if (ftruncate(fd, len) < 0)
@@ -80,7 +80,7 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 
 	base = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (base == MAP_FAILED)
-		return -1;
+		return -4;
 
 	close(fd);
 
@@ -88,7 +88,7 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 	shared = memory_alloc(manager, sizeof(struct shmem_shared));
 	if (!shared) {
 		errno = ENOMEM;
-		return -1;
+		return -5;
 	}
 
 	memset(shared, 0, sizeof(struct shmem_shared));
@@ -103,13 +103,13 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 	ret = queue_signalled_init(&shared->queue, conf->queuelen, manager, flags);
 	if (ret) {
 		errno = ENOMEM;
-		return -1;
+		return -6;
 	}
 
 	ret = pool_init(&shared->pool, conf->queuelen, SAMPLE_LEN(conf->samplelen), manager);
 	if (ret) {
 		errno = ENOMEM;
-		return -1;
+		return -7;
 	}
 
 	shm->write.base = base;
@@ -125,16 +125,16 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 	/* Open and map the other region */
 	fd = shm_open(rname, O_RDWR, 0);
 	if (fd < 0)
-		return -1;
+		return -8;
 
 	if (fstat(fd, &stat_buf) < 0)
-		return -1;
+		return -9;
 
 	len = stat_buf.st_size;
 	base = mmap(NULL, len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
 	if (base == MAP_FAILED)
-		return -1;
+		return -10;
 
 	cptr = (char *) base + sizeof(struct memtype) + sizeof(struct memblock);
 	shared = (struct shmem_shared *) cptr;
