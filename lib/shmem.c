@@ -70,9 +70,17 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 		return -2;
 
 	/* Open and initialize the shared region for the output queue */
-	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
-	if (fd < 0)
+retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
+	if (fd < 0) {
+		if (errno == EEXIST) {
+			ret = shm_unlink(wname);
+			if (ret)
+				return -12;
+			goto retry;
+		}
+
 		return -3;
+	}
 
 	len = shmem_total_size(conf->queuelen, conf->samplelen);
 	if (ftruncate(fd, len) < 0)
