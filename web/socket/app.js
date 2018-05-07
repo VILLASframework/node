@@ -117,7 +117,6 @@ function sendData()
 	var msg = new Msg({
 		timestamp : Date.now(),
 		sequence  : sequence++,
-		id        : currentNode.id,
 		data      : data
 	});
 
@@ -287,10 +286,7 @@ function wsConnect(node)
 		for (var j = 0; j < msgs.length; j++) {
 			var msg = msgs[j];
 			
-			console.log('Received message with ' + msg.data.length + ' values from id ' + msg.id + ' with timestamp ' + new Date(msg.timestamp).toString());
-
-			if (msg.id !== currentNode.id)
-				continue;
+			console.log('Received message with ' + msg.data.length + ' values from id ' + msg.id + ' with timestamp ' + new Date(msg.timestamp).toString() + ': '+ msg.data);
 
 			// add empty arrays for data series
 			while (plotData.length < msg.length)

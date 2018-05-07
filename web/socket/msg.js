@@ -37,7 +37,6 @@ function Msg(c)
 	this.length    = typeof c.length    === 'undefined' ? 0                           : c.length;
 	this.version   = typeof c.version   === 'undefined' ? Msg.prototype.VERSION       : c.version;
 	this.type      = typeof c.type      === 'undefined' ? Msg.prototype.TYPE_DATA     : c.type;
-	this.id        = typeof c.id        === 'undefined' ? -1                          : c.id;
 	this.timestamp = typeof c.timestamp === 'undefined' ? Date.now()                  : c.timestamp;
 
 	if (Array.isArray(c.data)) {
@@ -113,7 +112,6 @@ Msg.prototype.toArrayBuffer = function()
 	var nsec = (this.timestamp - sec * 1e3) * 1e6;
 
 	view.setUint8( 0x00, bits, true);
-	view.setUint8( 0x01, this.id, true);
 	view.setUint16(0x02, this.length, true);
 	view.setUint32(0x04, this.sequence, true);
 	view.setUint32(0x08, sec, true);
