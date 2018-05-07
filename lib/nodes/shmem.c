@@ -122,6 +122,7 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 		/* This can only really mean that the other process has exited, so close
 		 * the interface to make sure the shared memory object is unlinked */
 		shmem_int_close(&shm->intf);
+		warn("Shared memory segment has been closed for node: %s", node_name(n));
 		return recv;
 	}
 
