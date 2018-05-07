@@ -96,7 +96,7 @@ int shmem_open(struct node *n)
 
 	ret = shmem_int_open(shm->out_name, shm->in_name, &shm->intf, &shm->conf);
 	if (ret < 0)
-		serror("Opening shared memory interface failed");
+		serror("Opening shared memory interface failed (%d)", ret);
 
 	return 0;
 }
