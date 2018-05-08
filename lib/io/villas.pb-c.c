@@ -248,7 +248,7 @@ const ProtobufCEnumDescriptor villas__node__sample__type__descriptor =
   NULL,NULL,NULL,NULL   /* reserved[1234] */
 };
 static const Villas__Node__Sample__Type villas__node__sample__type__default_value = VILLAS__NODE__SAMPLE__TYPE__DATA;
-static const ProtobufCFieldDescriptor villas__node__sample__field_descriptors[5] =
+static const ProtobufCFieldDescriptor villas__node__sample__field_descriptors[4] =
 {
   {
     "type",
@@ -269,18 +269,6 @@ static const ProtobufCFieldDescriptor villas__node__sample__field_descriptors[5]
     PROTOBUF_C_TYPE_UINT32,
     offsetof(Villas__Node__Sample, has_sequence),
     offsetof(Villas__Node__Sample, sequence),
-    NULL,
-    NULL,
-    0,             /* flags */
-    0,NULL,NULL    /* reserved1,reserved2, etc */
-  },
-  {
-    "id",
-    3,
-    PROTOBUF_C_LABEL_OPTIONAL,
-    PROTOBUF_C_TYPE_UINT32,
-    offsetof(Villas__Node__Sample, has_id),
-    offsetof(Villas__Node__Sample, id),
     NULL,
     NULL,
     0,             /* flags */
@@ -312,16 +300,16 @@ static const ProtobufCFieldDescriptor villas__node__sample__field_descriptors[5]
   },
 };
 static const unsigned villas__node__sample__field_indices_by_name[] = {
-  2,   /* field[2] = id */
   1,   /* field[1] = sequence */
-  3,   /* field[3] = timestamp */
+  2,   /* field[2] = timestamp */
   0,   /* field[0] = type */
-  4,   /* field[4] = values */
+  3,   /* field[3] = values */
 };
-static const ProtobufCIntRange villas__node__sample__number_ranges[1 + 1] =
+static const ProtobufCIntRange villas__node__sample__number_ranges[2 + 1] =
 {
   { 1, 0 },
-  { 0, 5 }
+  { 4, 2 },
+  { 0, 4 }
 };
 const ProtobufCMessageDescriptor villas__node__sample__descriptor =
 {
@@ -331,10 +319,10 @@ const ProtobufCMessageDescriptor villas__node__sample__descriptor =
   "Villas__Node__Sample",
   "villas.node",
   sizeof(Villas__Node__Sample),
-  5,
+  4,
   villas__node__sample__field_descriptors,
   villas__node__sample__field_indices_by_name,
-  1,  villas__node__sample__number_ranges,
+  2,  villas__node__sample__number_ranges,
   (ProtobufCMessageInit) villas__node__sample__init,
   NULL,NULL,NULL    /* reserved[123] */
 };

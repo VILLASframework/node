@@ -61,18 +61,13 @@ struct  _Villas__Node__Sample
    */
   protobuf_c_boolean has_sequence;
   uint32_t sequence;
-  /*
-   * An id which identifies the source of this sample.
-   */
-  protobuf_c_boolean has_id;
-  uint32_t id;
   Villas__Node__Timestamp *timestamp;
   size_t n_values;
   Villas__Node__Value **values;
 };
 #define VILLAS__NODE__SAMPLE__INIT \
  { PROTOBUF_C_MESSAGE_INIT (&villas__node__sample__descriptor) \
-    , VILLAS__NODE__SAMPLE__TYPE__DATA, 0,0, 0,0, NULL, 0,NULL }
+    , VILLAS__NODE__SAMPLE__TYPE__DATA, 0,0, NULL, 0,NULL }
 
 
 struct  _Villas__Node__Timestamp

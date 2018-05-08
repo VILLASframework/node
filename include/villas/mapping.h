@@ -70,7 +70,6 @@ struct mapping_entry {
 			enum header_type {
 				MAPPING_HDR_LENGTH,
 				MAPPING_HDR_SEQUENCE,
-				MAPPING_HDR_ID,
 				MAPPING_HDR_FORMAT
 			} id;
 		} hdr;

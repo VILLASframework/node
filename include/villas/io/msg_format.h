@@ -48,7 +48,6 @@
 	.type     = MSG_TYPE_DATA,	\
 	.length   = len,	 	\
 	.sequence = seq,		\
-	.id       = 0			\
 }
 
 /** The timestamp of a message in struct timespec format */
@@ -75,7 +74,7 @@ struct msg
   #error Invalid byte-order
 #endif
 
-	uint8_t id;		/**< An id which identifies the source of this sample. */
+	uint8_t resv2;		/**< An id which identifies the source of this sample. */
 	uint16_t length;	/**< The number of values in msg::data[]. */
 	uint32_t sequence;	/**< The sequence number is incremented by one for consecutive messages. */
 

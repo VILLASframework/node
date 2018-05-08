@@ -82,7 +82,6 @@ int msg_to_sample(struct msg *msg, struct sample *smp)
 	smp->flags = SAMPLE_HAS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_VALUES | SAMPLE_HAS_ID;
 	smp->length = MIN(msg->length, smp->capacity);
 	smp->sequence = msg->sequence;
-	smp->id = msg->id;
 	smp->ts.origin = MSG_TS(msg);
 	smp->format = 0;
 
@@ -102,7 +101,6 @@ int msg_from_sample(struct msg *msg, struct sample *smp)
 
 	msg->ts.sec  = smp->ts.origin.tv_sec;
 	msg->ts.nsec = smp->ts.origin.tv_nsec;
-	msg->id = smp->id;
 
 	for (int i = 0; i < smp->length; i++) {
 		switch (sample_get_data_format(smp, i)) {

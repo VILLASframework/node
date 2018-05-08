@@ -78,7 +78,6 @@ struct sample {
 	int capacity;		/**< The number of values in sample::values for which memory is reserved. */
 	int flags;		/**< Flags are used to store binary properties of a sample. */
 
-	int id;			/**< The id field is usually the same as sample::source::id */
 	struct node *source;	/**< The node from which this sample originates. */
 
 	atomic_int refcnt;	/**< Reference counter. */

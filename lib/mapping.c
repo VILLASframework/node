@@ -107,8 +107,6 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 			me->hdr.id = MAPPING_HDR_SEQUENCE;
 		else if (!strcmp(field, "length"))
 			me->hdr.id = MAPPING_HDR_LENGTH;
-		else if (!strcmp(field, "id"))
-			me->hdr.id = MAPPING_HDR_ID;
 		else if (!strcmp(field, "format"))
 			me->hdr.id = MAPPING_HDR_FORMAT;
 		else
@@ -306,9 +304,6 @@ int mapping_update(struct mapping_entry *me, struct sample *remapped, struct sam
 				case MAPPING_HDR_SEQUENCE:
 					remapped->data[off++].i = original->sequence;
 					break;
-				case MAPPING_HDR_ID:
-					remapped->data[off++].i = original->id;
-					break;
 				case MAPPING_HDR_FORMAT:
 					remapped->data[off++].i = original->format;
 					break;
@@ -344,7 +339,6 @@ int mapping_remap(struct list *m, struct sample *remapped, struct sample *origin
 	remapped->sequence = original->sequence;
 	remapped->source   = original->source;
 	remapped->ts       = original->ts;
-	remapped->id       = original->id;
 
 	for (size_t i = 0; i < list_length(m); i++) {
 		struct mapping_entry *me = (struct mapping_entry *) list_at(m, i);

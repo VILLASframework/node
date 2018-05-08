@@ -132,7 +132,6 @@ int sample_copy(struct sample *dst, struct sample *src)
 	dst->sequence = src->sequence;
 	dst->format = src->format;
 	dst->source = src->source;
-	dst->id = src->id;
 	dst->flags = src->flags;
 	dst->ts = src->ts;
 
@@ -206,14 +205,6 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 		if (time_delta(&a->ts.origin, &b->ts.origin) > epsilon) {
 			printf("ts.origin: %f != %f\n", time_to_double(&a->ts.origin), time_to_double(&b->ts.origin));
 			return 3;
-		}
-	}
-
-	/* Compare ID */
-	if (flags & SAMPLE_HAS_SOURCE) {
-		if (a->id != b->id) {
-			printf("id: %d != %d\n", a->id, b->id);
-			return 7;
 		}
 	}
 

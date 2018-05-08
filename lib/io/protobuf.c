@@ -50,11 +50,6 @@ int protobuf_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[]
 			pb_smp->sequence = smp->sequence;
 		}
 
-		if (smp->flags & SAMPLE_HAS_ID) {
-			pb_smp->has_id = 1;
-			pb_smp->id = smp->id;
-		}
-
 		if (smp->flags & SAMPLE_HAS_ORIGIN) {
 			pb_smp->timestamp = alloc(sizeof(Villas__Node__Timestamp));
 			villas__node__timestamp__init(pb_smp->timestamp);
@@ -119,11 +114,6 @@ int protobuf_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[],
 		if (pb_smp->has_sequence) {
 			smp->flags |= SAMPLE_HAS_SEQUENCE;
 			smp->sequence = pb_smp->sequence;
-		}
-
-		if (pb_smp->has_id) {
-			smp->flags |= SAMPLE_HAS_ID;
-			smp->id	= pb_smp->id;
 		}
 
 		if (pb_smp->timestamp) {
