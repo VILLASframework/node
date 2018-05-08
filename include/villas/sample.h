@@ -102,10 +102,14 @@ struct sample {
 	} data[];		/**< Data is in host endianess! */
 };
 
+#define SAMPLE_NON_POOL PTRDIFF_MIN
+
 /** Get the address of the pool to which the sample belongs. */
-#define sample_pool(s) ((struct pool *) ((char *) (s) + (s)->pool_off))
+#define sample_pool(s) ((s)->pool_off == SAMPLE_NON_POOL ? NULL : (struct pool *) ((char *) (s) + (s)->pool_off))
 
 struct sample * sample_alloc(struct pool *p);
+
+struct sample * sample_alloc_mem(int capacity);
 
 struct sample * sample_clone(struct sample *smp);
 

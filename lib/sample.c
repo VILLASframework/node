@@ -56,11 +56,34 @@ struct sample * sample_alloc(struct pool *p)
 	return s;
 }
 
+struct sample * sample_alloc_mem(int capacity)
+{
+	size_t sz = SAMPLE_LEN(capacity);
+
+	char *b = alloc(sz);
+	if (!b)
+		return NULL;
+
+	struct sample *s = (struct sample *) b;
+
+	s->pool_off = SAMPLE_NON_POOL;
+
+	s->length = 0;
+	s->format = 0; /* all sample values are float by default */
+	s->capacity = capacity;
+	s->refcnt = ATOMIC_VAR_INIT(1);
+
+	return s;
+}
+
 void sample_free(struct sample *s)
 {
 	struct pool *p = sample_pool(s);
 
-	pool_put(p, s);
+	if (p)
+		pool_put(p, s);
+	else
+		free(s);
 }
 
 int sample_alloc_many(struct pool *p, struct sample *smps[], int cnt)
@@ -82,11 +105,8 @@ int sample_alloc_many(struct pool *p, struct sample *smps[], int cnt)
 
 void sample_free_many(struct sample *smps[], int cnt)
 {
-	for (int i = 0; i < cnt; i++) {
-		struct pool *p = sample_pool(smps[i]);
-
-		pool_put(p, smps[i]);
-	}
+	for (int i = 0; i < cnt; i++)
+		sample_free(smps[i]);
 }
 
 int sample_put_many(struct sample *smps[], int cnt)
@@ -120,7 +140,7 @@ int sample_put(struct sample *s)
 
 	/* Did we had the last reference? */
 	if (prev == 1)
-		pool_put(sample_pool(s), s);
+		sample_free(s);
 
 	return prev - 1;
 }
