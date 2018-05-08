@@ -84,8 +84,7 @@ static void usage()
 	printf("    -d LVL  set debug level to LVL\n");
 	printf("    -v CNT  process CNT smps at once\n");
 	printf("    -h      show this help\n");
-	printf("    -V      show the version of the tool\n");
-	printf("\n");
+	printf("    -V      show the version of the tool\n\n");
 
 	printf("The following hook functions are supported:\n");
 	plugin_dump(PLUGIN_TYPE_HOOK);

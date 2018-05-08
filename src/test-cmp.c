@@ -48,14 +48,15 @@ void usage()
 	printf("Usage: villas-test-cmp [OPTIONS] FILE1 FILE2 ... FILEn\n");
 	printf("  FILE     a list of files to compare\n");
 	printf("  OPTIONS is one or more of the following options:\n");
-	printf("    -h      print this usage information\n");
 	printf("    -d LVL  adjust the debug level\n");
 	printf("    -e EPS  set epsilon for floating point comparisons to EPS\n");
 	printf("    -v      ignore data values\n");
 	printf("    -t      ignore timestamp\n");
 	printf("    -s      ignore sequence no\n");
 	printf("    -f FMT  file format for all files\n");
-	printf("\n");
+	printf("    -h      show this usage information\n");
+	printf("    -V      show the version of the tool\n\n");
+
 	printf("Return codes:\n");
 	printf("  0   files are equal\n");
 	printf("  1   file length not equal\n");
@@ -81,7 +82,7 @@ int main(int argc, char *argv[])
 
 	/* Parse Arguments */
 	char c, *endptr;
-	while ((c = getopt (argc, argv, "he:vtsf:")) != -1) {
+	while ((c = getopt (argc, argv, "he:vtsf:V")) != -1) {
 		switch (c) {
 			case 'e':
 				epsilon = strtod(optarg, &endptr);
@@ -98,6 +99,9 @@ int main(int argc, char *argv[])
 			case 'f':
 				format = optarg;
 				break;
+			case 'V':
+				print_version();
+				exit(EXIT_SUCCESS);
 			case 'h':
 			case '?':
 				usage();

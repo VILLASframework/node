@@ -99,6 +99,7 @@ static void usage()
 	printf("    -t NUM           terminate after NUM seconds\n");
 	printf("    -L NUM           terminate after NUM samples sent\n");
 	printf("    -l NUM           terminate after NUM samples received\n");
+	printf("    -h               show this usage information\n");
 	printf("    -V               show the version of the tool\n\n");
 
 	print_copyright();

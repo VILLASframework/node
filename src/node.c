@@ -68,8 +68,8 @@ static void usage()
 {
 	printf("Usage: villas-node [OPTIONS] [CONFIG]\n");
 	printf("  OPTIONS is one or more of the following options:\n");
-	printf("    -V      show the version of the tool\n");
-	printf("    -h      show this help\n");
+	printf("    -h      show this usage information\n");
+	printf("    -V      show the version of the tool\n\n");
 	printf("  CONFIG is the path to an optional configuration file\n");
 	printf("         if omitted, VILLASnode will start without a configuration\n");
 	printf("         and wait for provisioning over the web interface.\n\n");

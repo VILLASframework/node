@@ -75,6 +75,7 @@ void usage()
 	printf("    -b BKTS number of buckets for histogram\n");
 	printf("    -w WMUP duration of histogram warmup phase\n");
 	printf("    -h      show this usage information\n");
+	printf("    -V      show the version of the tool\n\n");
 	printf("\n");
 
 	print_copyright();
@@ -84,7 +85,7 @@ int main(int argc, char *argv[])
 {
 	/* Parse Arguments */
 	char c, *endptr;
-	while ((c = getopt (argc, argv, "w:h:r:f:c:b:")) != -1) {
+	while ((c = getopt (argc, argv, "w:h:r:f:c:b:V")) != -1) {
 		switch (c) {
 			case 'c':
 				count = strtoul(optarg, &endptr, 10);
@@ -98,6 +99,9 @@ int main(int argc, char *argv[])
 			case 'b':
 				hist_buckets = strtoul(optarg, &endptr, 10);
 				goto check;
+			case 'V':
+				print_version();
+				exit(EXIT_SUCCESS);
 			case 'h':
 			case '?':
 				usage();
