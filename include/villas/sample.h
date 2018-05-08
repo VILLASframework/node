@@ -93,7 +93,6 @@ struct sample {
 	struct {
 		struct timespec origin;		/**< The point in time when this data was sampled. */
 		struct timespec received;	/**< The point in time when this data was received. */
-		struct timespec sent;		/**< The point in time when this data was send for the last time. */
 	} ts;
 
 	/** The values. */

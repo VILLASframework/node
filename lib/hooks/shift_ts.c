@@ -35,8 +35,7 @@ struct shift_ts {
 	struct timespec offset;
 	enum {
 		SHIFT_ORIGIN,
-		SHIFT_RECEIVED,
-		SHIFT_SENT,
+		SHIFT_RECEIVED
 	} mode;
 };
 
@@ -69,8 +68,6 @@ static int shift_ts_parse(struct hook *h, json_t *cfg)
 			p->mode = SHIFT_ORIGIN;
 		else if (!strcmp(mode, "received"))
 			p->mode = SHIFT_RECEIVED;
-		else if (!strcmp(mode, "sent"))
-			p->mode = SHIFT_SENT;
 		else
 			jerror(&err, "Invalid mode parameter '%s' for hook '%s'", mode, plugin_name(h->_vt));
 	}
@@ -91,7 +88,6 @@ static int shift_ts_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 		switch (p->mode) {
 			case SHIFT_ORIGIN: ts = &s->ts.origin; break;
 			case SHIFT_RECEIVED: ts = &s->ts.received; break;
-			case SHIFT_SENT: ts = &s->ts.sent; break;
 			default: return -1;
 		}
 
