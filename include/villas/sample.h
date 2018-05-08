@@ -29,11 +29,11 @@
 extern "C" {
 #endif
 
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
-#include <sys/types.h>
 
 /* Forward declarations */
 struct pool;
@@ -81,7 +81,7 @@ struct sample {
 	struct node *source;	/**< The node from which this sample originates. */
 
 	atomic_int refcnt;	/**< Reference counter. */
-	off_t pool_off;		/**< This sample belongs to this memory pool (relative pointer). See sample_pool(). */
+	ptrdiff_t pool_off;	/**< This sample belongs to this memory pool (relative pointer). See sample_pool(). */
 
 	/** A long bitfield indicating the number representation of the first 64 values in sample::data[].
 	 *
