@@ -87,7 +87,7 @@ $(document).ready(function() {
 
 	$('.inputs #slider').slider({
 		min : 0,
-		max : 100,
+		max : 10000,
 		slide : sendData
 	});
 
@@ -109,7 +109,7 @@ function sendData()
 	var slider = $('.inputs #slider');
 	var checkboxes = $('.inputs-checkboxes  input');
 
-	var data = [ $(slider).slider('value'), 0 ];
+	var data = [ $(slider).slider('value') / 100, 0 ];
 
 	for (var i = 0; i < checkboxes.length; i++)
 		data[1] += (checkboxes[i].checked ? 1 : 0) << i;
