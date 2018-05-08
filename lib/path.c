@@ -676,7 +676,7 @@ int path_start(struct path *p)
 	 * does not offer a file descriptor for polling, we will use a special
 	 * thread function.
 	 */
-	struct path_source *ps0 = (struct path_source *) list_at(&p->sources, 0);
+	struct path_source *ps = (struct path_source *) list_at(&p->sources, 0);
 	if (list_length(&p->sources) == 1 && node_fd(ps->node) == -1)
 		ret = pthread_create(&p->tid, NULL, &path_run_single, p);
 	else
