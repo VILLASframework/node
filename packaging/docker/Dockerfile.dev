@@ -87,8 +87,11 @@ RUN dnf -y install \
 	mosquitto-devel
 
 # Build & Install Criterion
-COPY thirdparty/criterion /tmp/criterion
-RUN mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && rm -rf /tmp/*
+RUN cd /tmp && \
+	git clone --recursive https://github.com/Snaipe/Criterion && \
+	mkdir -p Criterion/build && cd Criterion/build && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	rm -rf /tmp/*
 
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
