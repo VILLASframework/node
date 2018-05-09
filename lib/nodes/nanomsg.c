@@ -82,7 +82,7 @@ int nanomsg_parse(struct node *n, json_t *cfg)
 	int ret;
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
-	const char *format = "villas-human";
+	const char *format = "villas.human";
 
 	json_error_t err;
 

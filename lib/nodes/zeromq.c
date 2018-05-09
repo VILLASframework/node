@@ -99,7 +99,7 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	const char *ep = NULL;
 	const char *type = NULL;
 	const char *filter = NULL;
-	const char *format = "villas-human";
+	const char *format = "villas.human";
 
 	size_t index;
 	json_t *json_pub = NULL;

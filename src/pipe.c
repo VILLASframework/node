@@ -212,7 +212,7 @@ int main(int argc, char *argv[])
 {
 	int ret, level = V, timeout = 0;
 	bool reverse = false;
-	char *format = "villas-human";
+	char *format = "villas.human";
 
 	sendd = recvv = (struct dir) {
 		.enabled = true,
