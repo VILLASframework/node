@@ -25,16 +25,55 @@
 #include <villas/compat.h>
 #include <villas/io/json.h>
 
+static json_t * json_pack_timestamps(struct sample *smp)
+{
+	json_t *json_ts = json_object();
+
+	if (smp->flags & SAMPLE_HAS_ORIGIN)
+		json_object_set(json_ts, "origin", json_pack("[ I, I ]", smp->ts.origin.tv_sec, smp->ts.origin.tv_nsec));
+
+	if (smp->flags & SAMPLE_HAS_RECEIVED)
+		json_object_set(json_ts, "received", json_pack("[ I, I ]", smp->ts.received.tv_sec, smp->ts.received.tv_nsec));
+
+	return json_ts;
+}
+
+static int json_unpack_timestamps(json_t *json_ts, struct sample *smp)
+{
+	int ret;
+	json_error_t err;
+	json_t *json_ts_origin = NULL, *json_ts_received = NULL;
+
+	json_unpack_ex(json_ts, &err, 0, "{ s?: o, s?: o }",
+		"origin",   &json_ts_origin,
+		"received", &json_ts_received
+	);
+
+	if (json_ts_origin) {
+		ret = json_unpack_ex(json_ts_origin, &err, 0, "[ I, I ]", &smp->ts.origin.tv_sec, &smp->ts.origin.tv_nsec);
+		if (ret)
+			return ret;
+
+		smp->flags |= SAMPLE_HAS_ORIGIN;
+	}
+
+	if (json_ts_received) {
+		ret = json_unpack_ex(json_ts_received, &err, 0, "[ I, I ]", &smp->ts.received.tv_sec, &smp->ts.received.tv_nsec);
+		if (ret)
+			return ret;
+
+		smp->flags |= SAMPLE_HAS_RECEIVED;
+	}
+
+	return 0;
+}
+
 int json_pack_sample(json_t **j, struct sample *smp, int flags)
 {
 	json_t *json_smp;
 	json_error_t err;
 
-	json_smp = json_pack_ex(&err, 0, "{ s: { s: [ I, I ], s: [ I, I ], s: [ I, I ] } }",
-		"ts",
-			"origin",   smp->ts.origin.tv_sec,   smp->ts.origin.tv_nsec,
-			"received", smp->ts.received.tv_sec, smp->ts.received.tv_nsec,
-			"sent",     smp->ts.sent.tv_sec,     smp->ts.sent.tv_nsec);
+	json_smp = json_pack_ex(&err, 0, "{ s: o }", "ts", json_pack_timestamps(smp));
 
 	if (flags & SAMPLE_HAS_SEQUENCE) {
 		json_t *json_sequence = json_integer(smp->sequence);
@@ -84,25 +123,34 @@ int json_pack_samples(json_t **j, struct sample *smps[], unsigned cnt, int flags
 int json_unpack_sample(json_t *json_smp, struct sample *smp, int flags)
 {
 	int ret;
-	json_t *json_data, *json_value;
+	json_error_t err;
+	json_t *json_data, *json_value, *json_ts = NULL;
 	size_t i;
+	int64_t sequence = -1;
 
-	ret = json_unpack(json_smp, "{ s: { s: [ I, I ], s: [ I, I ], s: [ I, I ] }, s: I, s: o }",
-		"ts",
-			"origin",   &smp->ts.origin.tv_sec,   &smp->ts.origin.tv_nsec,
-			"received", &smp->ts.received.tv_sec, &smp->ts.received.tv_nsec,
-			"sent",     &smp->ts.sent.tv_sec,     &smp->ts.sent.tv_nsec,
-		"sequence", &smp->sequence,
+	ret = json_unpack_ex(json_smp, &err, 0, "{ s?: o, s?: I, s: o }",
+		"ts", &json_ts,
+		"sequence", &sequence,
 		"data", &json_data);
-
 	if (ret)
 		return ret;
+
+	smp->flags = 0;
+	smp->length = 0;
+
+	if (json_ts) {
+		ret = json_unpack_timestamps(json_ts, smp);
+		if (ret)
+			return ret;
+	}
 
 	if (!json_is_array(json_data))
 		return -1;
 
-	smp->flags = SAMPLE_HAS_ORIGIN | SAMPLE_HAS_RECEIVED | SAMPLE_HAS_SEQUENCE;
-	smp->length = 0;
+	if (sequence >= 0) {
+		smp->sequence = sequence;
+		smp->flags |= SAMPLE_HAS_SEQUENCE;
+	}
 
 	json_array_foreach(json_data, i, json_value) {
 		if (i >= smp->capacity)
@@ -184,10 +232,11 @@ int json_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], uns
 		return -1;
 
 	ret = json_unpack_samples(json, smps, cnt, flags);
-	if (ret < 0)
-		return ret;
 
 	json_decref(json);
+
+	if (ret < 0)
+		return ret;
 
 	if (rbytes)
 		*rbytes = err.position;
