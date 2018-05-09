@@ -23,7 +23,8 @@
 # Executables
 TARGETS = $(BUILDDIR)/villas-node \
 	  $(BUILDDIR)/villas-test-rtt \
-	  $(BUILDDIR)/villas-test-shmem
+	  $(BUILDDIR)/villas-test-shmem \
+	  $(BUILDDIR)/villas-convert
 
 ifeq ($(WITH_IO),1)
 	ifeq ($(WITH_HOOKS),1)
