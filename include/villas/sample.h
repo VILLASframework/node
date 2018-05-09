@@ -79,6 +79,7 @@ struct sample {
 	int flags;		/**< Flags are used to store binary properties of a sample. */
 
 	struct node *source;	/**< The node from which this sample originates. */
+	struct node *destination; /**< The node to which this sample will be sent. */
 
 	atomic_int refcnt;	/**< Reference counter. */
 	ptrdiff_t pool_off;	/**< This sample belongs to this memory pool (relative pointer). See sample_pool(). */
