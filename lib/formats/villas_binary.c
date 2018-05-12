@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include <villas/io.h>
 #include <villas/formats/villas_binary.h>
 #include <villas/formats/msg.h>
 #include <villas/formats/msg_format.h>
@@ -29,7 +30,7 @@
 #include <villas/utils.h>
 #include <villas/plugin.h>
 
-int villas_binary_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
+int villas_binary_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
 {
 	int ret, i = 0;
 	char *ptr = buf;
@@ -45,7 +46,7 @@ int villas_binary_sprint(char *buf, size_t len, size_t *wbytes, struct sample *s
 		if (ret)
 			return ret;
 
-		if (flags & VILLAS_BINARY_WEB) {
+		if (io->flags & VILLAS_BINARY_WEB) {
 			/** @todo convert to little endian */
 		}
 		else
@@ -60,7 +61,7 @@ int villas_binary_sprint(char *buf, size_t len, size_t *wbytes, struct sample *s
 	return i;
 }
 
-int villas_binary_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
+int villas_binary_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
 	int ret, i = 0, values;
 	char *ptr = buf;
@@ -84,7 +85,7 @@ int villas_binary_sscan(char *buf, size_t len, size_t *rbytes, struct sample *sm
 			break;
 		}
 
-		values = (flags & VILLAS_BINARY_WEB) ? msg->length : ntohs(msg->length);
+		values = (io->flags & VILLAS_BINARY_WEB) ? msg->length : ntohs(msg->length);
 
 		/* Check if remainder of message is in buffer boundaries */
 		if (ptr + MSG_LEN(values) > buf + len) {
@@ -92,8 +93,9 @@ int villas_binary_sscan(char *buf, size_t len, size_t *rbytes, struct sample *sm
 			break;
 		}
 
-		if (flags & VILLAS_BINARY_WEB)
-			;
+		if (io->flags & VILLAS_BINARY_WEB) {
+			/** @todo convert from little endian */
+		}
 		else
 			msg_ntoh(msg);
 

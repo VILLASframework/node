@@ -29,7 +29,7 @@
 #include <villas/io.h>
 #include <villas/formats/json.h>
 
-int json_reserve_pack_sample(json_t **j, struct sample *smp, int flags)
+int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *smp)
 {
 	json_error_t err;
 	json_t *json_data, *json_name, *json_unit, *json_value;
@@ -95,7 +95,7 @@ int json_reserve_pack_sample(json_t **j, struct sample *smp, int flags)
 	return 0;
 }
 
-int json_reserve_unpack_sample(json_t *json_smp, struct sample *smp, int flags)
+int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sample *smp)
 {
 	int ret, idx;
 	double created = -1;
@@ -162,7 +162,7 @@ int json_reserve_unpack_sample(json_t *json_smp, struct sample *smp, int flags)
  * Note: The following functions are the same as io/json.c !!!
  */
 
-int json_reserve_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
+int json_reserve_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json;
@@ -170,7 +170,7 @@ int json_reserve_sprint(char *buf, size_t len, size_t *wbytes, struct sample *sm
 
 	assert(cnt == 1);
 
-	ret = json_reserve_pack_sample(&json, smps[0], flags);
+	ret = json_reserve_pack_sample(io, &json, smps[0]);
 	if (ret < 0)
 		return ret;
 
@@ -184,7 +184,7 @@ int json_reserve_sprint(char *buf, size_t len, size_t *wbytes, struct sample *sm
 	return ret;
 }
 
-int json_reserve_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
+int json_reserve_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json;
@@ -196,7 +196,7 @@ int json_reserve_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smp
 	if (!json)
 		return -1;
 
-	ret = json_reserve_unpack_sample(json, smps[0], flags);
+	ret = json_reserve_unpack_sample(io, json, smps[0]);
 
 	json_decref(json);
 
@@ -217,7 +217,7 @@ int json_reserve_print(struct io *io, struct sample *smps[], unsigned cnt)
 	FILE *f = io_stream_output(io);
 
 	for (i = 0; i < cnt; i++) {
-		ret = json_reserve_pack_sample(&json, smps[i], io->flags);
+		ret = json_reserve_pack_sample(io, &json, smps[i]);
 		if (ret)
 			return ret;
 
@@ -243,7 +243,7 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 		if (!json)
 			break;
 
-		ret = json_reserve_unpack_sample(json, smps[i], io->flags);
+		ret = json_reserve_unpack_sample(io, json, smps[i]);
 		if (ret)
 			goto skip;
 

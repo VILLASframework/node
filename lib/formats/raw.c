@@ -23,6 +23,7 @@
 #include <villas/sample.h>
 #include <villas/plugin.h>
 #include <villas/utils.h>
+#include <villas/io.h>
 #include <villas/formats/raw.h>
 #include <villas/compat.h>
 
@@ -56,7 +57,7 @@
 /** Convert integer of varying width to big/little endian byte order */
 #define SWAP_INT_TOE(o, b, n) (o ? htobe ## b (n) : htole ## b (n))
 
-int raw_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
+int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
 {
 
 	int i, o = 0;
@@ -69,25 +70,25 @@ int raw_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 	float   *f32 = (void *) buf;
 	double  *f64 = (void *) buf;
 
-	int bits = 1 << (flags >> 24);
+	int bits = 1 << (io->flags >> 24);
 
 	for (i = 0; i < cnt; i++) {
-		nlen = (smps[i]->length + o + (flags & RAW_FAKE) ? 3 : 0) * (bits / 8);
+		nlen = (smps[i]->length + o + (io->flags & RAW_FAKE) ? 3 : 0) * (bits / 8);
 		if (nlen >= len)
 			break;
 
 		/* First three values are sequence, seconds and nano-seconds timestamps */
-		if (flags & RAW_FAKE) {
+		if (io->flags & RAW_FAKE) {
 			switch (bits) {
 				case 32:
-					i32[o++] = SWAP_INT_TOE(flags & RAW_BE_HDR, 32, smps[i]->sequence);
-					i32[o++] = SWAP_INT_TOE(flags & RAW_BE_HDR, 32, smps[i]->ts.origin.tv_sec);
-					i32[o++] = SWAP_INT_TOE(flags & RAW_BE_HDR, 32, smps[i]->ts.origin.tv_nsec);
+					i32[o++] = SWAP_INT_TOE(io->flags & RAW_BE_HDR, 32, smps[i]->sequence);
+					i32[o++] = SWAP_INT_TOE(io->flags & RAW_BE_HDR, 32, smps[i]->ts.origin.tv_sec);
+					i32[o++] = SWAP_INT_TOE(io->flags & RAW_BE_HDR, 32, smps[i]->ts.origin.tv_nsec);
 					break;
 				case 64:
-					i64[o++] = SWAP_INT_TOE(flags & RAW_BE_HDR, 64, smps[i]->sequence);
-					i64[o++] = SWAP_INT_TOE(flags & RAW_BE_HDR, 64, smps[i]->ts.origin.tv_sec);
-					i64[o++] = SWAP_INT_TOE(flags & RAW_BE_HDR, 64, smps[i]->ts.origin.tv_nsec);
+					i64[o++] = SWAP_INT_TOE(io->flags & RAW_BE_HDR, 64, smps[i]->sequence);
+					i64[o++] = SWAP_INT_TOE(io->flags & RAW_BE_HDR, 64, smps[i]->ts.origin.tv_sec);
+					i64[o++] = SWAP_INT_TOE(io->flags & RAW_BE_HDR, 64, smps[i]->ts.origin.tv_nsec);
 					break;
 			}
 		}
@@ -103,9 +104,9 @@ int raw_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 
 			union { double f; uint64_t i; } val;
 
-			if      (flags & RAW_AUTO)
+			if      (io->flags & RAW_AUTO)
 				raw_fmt = smps[i]->format & (1 << i) ? RAW_FORMAT_INT : RAW_FORMAT_FLT;
-			else if (flags & RAW_FLT)
+			else if (io->flags & RAW_FLT)
 				raw_fmt = RAW_FORMAT_FLT;
 			else
 				raw_fmt = RAW_FORMAT_INT;
@@ -121,8 +122,8 @@ int raw_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 					}
 
 					switch (bits) {
-						case 32: f32[o++] = SWAP_FLT_TOE(flags & RAW_BE_FLT, val.f); break;
-						case 64: f64[o++] = SWAP_DBL_TOE(flags & RAW_BE_FLT, val.f); break;
+						case 32: f32[o++] = SWAP_FLT_TOE(io->flags & RAW_BE_FLT, val.f); break;
+						case 64: f64[o++] = SWAP_DBL_TOE(io->flags & RAW_BE_FLT, val.f); break;
 					}
 					break;
 
@@ -135,9 +136,9 @@ int raw_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 
 					switch (bits) {
 						case  8: i8 [o++] =                                      val.i;  break;
-						case 16: i16[o++] = SWAP_INT_TOE(flags & RAW_BE_INT, 16, val.i); break;
-						case 32: i32[o++] = SWAP_INT_TOE(flags & RAW_BE_INT, 32, val.i); break;
-						case 64: i64[o++] = SWAP_INT_TOE(flags & RAW_BE_INT, 64, val.i); break;
+						case 16: i16[o++] = SWAP_INT_TOE(io->flags & RAW_BE_INT, 16, val.i); break;
+						case 32: i32[o++] = SWAP_INT_TOE(io->flags & RAW_BE_INT, 32, val.i); break;
+						case 64: i64[o++] = SWAP_INT_TOE(io->flags & RAW_BE_INT, 64, val.i); break;
 					}
 					break;
 			}
@@ -150,7 +151,7 @@ int raw_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 	return i;
 }
 
-int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
+int raw_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
 	/* The raw format can not encode multiple samples in one buffer
 	 * as there is no support for framing. */
@@ -163,11 +164,11 @@ int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 	float   *f32 = (void *) buf;
 	double  *f64 = (void *) buf;
 
-	int off, bits = 1 << (flags >> 24);
+	int off, bits = 1 << (io->flags >> 24);
 
 	smp->length = len / (bits / 8);
 
-	if (flags & RAW_FAKE) {
+	if (io->flags & RAW_FAKE) {
 		off = 3;
 
 		if (smp->length < off) {
@@ -179,15 +180,15 @@ int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 
 		switch (bits) {
 			case 32:
-				smp->sequence          = SWAP_INT_TOH(flags & RAW_BE_HDR, 32, i32[0]);
-				smp->ts.origin.tv_sec  = SWAP_INT_TOH(flags & RAW_BE_HDR, 32, i32[1]);
-				smp->ts.origin.tv_nsec = SWAP_INT_TOH(flags & RAW_BE_HDR, 32, i32[2]);
+				smp->sequence          = SWAP_INT_TOH(io->flags & RAW_BE_HDR, 32, i32[0]);
+				smp->ts.origin.tv_sec  = SWAP_INT_TOH(io->flags & RAW_BE_HDR, 32, i32[1]);
+				smp->ts.origin.tv_nsec = SWAP_INT_TOH(io->flags & RAW_BE_HDR, 32, i32[2]);
 				break;
 
 			case 64:
-				smp->sequence          = SWAP_INT_TOH(flags & RAW_BE_HDR, 64, i64[0]);
-				smp->ts.origin.tv_sec  = SWAP_INT_TOH(flags & RAW_BE_HDR, 64, i64[1]);
-				smp->ts.origin.tv_nsec = SWAP_INT_TOH(flags & RAW_BE_HDR, 64, i64[2]);
+				smp->sequence          = SWAP_INT_TOH(io->flags & RAW_BE_HDR, 64, i64[0]);
+				smp->ts.origin.tv_sec  = SWAP_INT_TOH(io->flags & RAW_BE_HDR, 64, i64[1]);
+				smp->ts.origin.tv_nsec = SWAP_INT_TOH(io->flags & RAW_BE_HDR, 64, i64[2]);
 				break;
 		}
 
@@ -208,7 +209,7 @@ int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 	}
 
 	for (int i = 0; i < smp->length; i++) {
-		enum sample_data_format smp_fmt = flags & RAW_FLT ? SAMPLE_DATA_FORMAT_FLOAT
+		enum sample_data_format smp_fmt = io->flags & RAW_FLT ? SAMPLE_DATA_FORMAT_FLOAT
 		                                                  : SAMPLE_DATA_FORMAT_INT;
 
 		sample_set_data_format(smp, i, smp_fmt);
@@ -216,17 +217,17 @@ int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 		switch (smp_fmt) {
 			case SAMPLE_DATA_FORMAT_FLOAT:
 				switch (bits) {
-					case 32: smp->data[i].f = SWAP_FLT_TOH(flags & RAW_BE_FLT, f32[i+off]); break;
-					case 64: smp->data[i].f = SWAP_DBL_TOH(flags & RAW_BE_FLT, f64[i+off]); break;
+					case 32: smp->data[i].f = SWAP_FLT_TOH(io->flags & RAW_BE_FLT, f32[i+off]); break;
+					case 64: smp->data[i].f = SWAP_DBL_TOH(io->flags & RAW_BE_FLT, f64[i+off]); break;
 				}
 				break;
 
 			case SAMPLE_DATA_FORMAT_INT:
 				switch (bits) {
 					case 8:  smp->data[i].i = i8[i]; break;
-					case 16: smp->data[i].i = (int16_t) SWAP_INT_TOH(flags & RAW_BE_INT, 16, i16[i+off]); break;
-					case 32: smp->data[i].i = (int32_t) SWAP_INT_TOH(flags & RAW_BE_INT, 32, i32[i+off]); break;
-					case 64: smp->data[i].i = (int64_t) SWAP_INT_TOH(flags & RAW_BE_INT, 64, i64[i+off]); break;
+					case 16: smp->data[i].i = (int16_t) SWAP_INT_TOH(io->flags & RAW_BE_INT, 16, i16[i+off]); break;
+					case 32: smp->data[i].i = (int32_t) SWAP_INT_TOH(io->flags & RAW_BE_INT, 32, i32[i+off]); break;
+					case 64: smp->data[i].i = (int64_t) SWAP_INT_TOH(io->flags & RAW_BE_INT, 64, i64[i+off]); break;
 				}
 				break;
 		}

@@ -31,22 +31,22 @@
 #include <villas/sample.h>
 #include <villas/formats/villas_human.h>
 
-size_t villas_human_sprint_single(char *buf, size_t len, struct sample *s, int flags)
+size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, struct sample *s)
 {
 	size_t off = 0;
 
-	if (flags & SAMPLE_HAS_ORIGIN) {
+	if (io->flags & SAMPLE_HAS_ORIGIN) {
 		off += snprintf(buf + off, len - off, "%llu", (unsigned long long) s->ts.origin.tv_sec);
 		off += snprintf(buf + off, len - off, ".%09llu", (unsigned long long) s->ts.origin.tv_nsec);
 	}
 
-	if (flags & SAMPLE_HAS_RECEIVED)
+	if (io->flags & SAMPLE_HAS_RECEIVED)
 		off += snprintf(buf + off, len - off, "%+e", time_delta(&s->ts.origin, &s->ts.received));
 
-	if (flags & SAMPLE_HAS_SEQUENCE)
+	if (io->flags & SAMPLE_HAS_SEQUENCE)
 		off += snprintf(buf + off, len - off, "(%u)", s->sequence);
 
-	if (flags & SAMPLE_HAS_VALUES) {
+	if (io->flags & SAMPLE_HAS_VALUES) {
 		for (int i = 0; i < s->length; i++) {
 			switch (sample_get_data_format(s, i)) {
 				case SAMPLE_DATA_FORMAT_FLOAT:
@@ -64,7 +64,7 @@ size_t villas_human_sprint_single(char *buf, size_t len, struct sample *s, int f
 	return off;
 }
 
-size_t villas_human_sscan_single(const char *buf, size_t len, struct sample *s, int flags)
+size_t villas_human_sscan_single(struct io *io, const char *buf, size_t len, struct sample *s)
 {
 	char *end;
 	const char *ptr = buf;
@@ -158,13 +158,13 @@ size_t villas_human_sscan_single(const char *buf, size_t len, struct sample *s, 
 	return end - buf;
 }
 
-int villas_human_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
+int villas_human_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
 {
 	int i;
 	size_t off = 0;
 
 	for (i = 0; i < cnt && off < len; i++)
-		off += villas_human_sprint_single(buf + off, len - off, smps[i], flags);
+		off += villas_human_sprint_single(io, buf + off, len - off, smps[i]);
 
 	if (wbytes)
 		*wbytes = off;
@@ -172,13 +172,13 @@ int villas_human_sprint(char *buf, size_t len, size_t *wbytes, struct sample *sm
 	return i;
 }
 
-int villas_human_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
+int villas_human_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
 	int i;
 	size_t off = 0;
 
 	for (i = 0; i < cnt && off < len; i++)
-		off += villas_human_sscan_single(buf + off, len - off, smps[i], flags);
+		off += villas_human_sscan_single(io, buf + off, len - off, smps[i]);
 
 	if (rbytes)
 		*rbytes = off;

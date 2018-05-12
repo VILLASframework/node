@@ -69,20 +69,20 @@ static int json_unpack_timestamps(json_t *json_ts, struct sample *smp)
 	return 0;
 }
 
-int json_pack_sample(json_t **j, struct sample *smp, int flags)
+int json_pack_sample(struct io *io, json_t **j, struct sample *smp)
 {
 	json_t *json_smp;
 	json_error_t err;
 
 	json_smp = json_pack_ex(&err, 0, "{ s: o }", "ts", json_pack_timestamps(smp));
 
-	if (flags & SAMPLE_HAS_SEQUENCE) {
+	if (smp->flags & SAMPLE_HAS_SEQUENCE) {
 		json_t *json_sequence = json_integer(smp->sequence);
 
 		json_object_set(json_smp, "sequence", json_sequence);
 	}
 
-	if (flags & SAMPLE_HAS_VALUES) {
+	if (smp->flags & SAMPLE_HAS_VALUES) {
 		json_t *json_data = json_array();
 
 		for (int i = 0; i < smp->length; i++) {
@@ -101,7 +101,7 @@ int json_pack_sample(json_t **j, struct sample *smp, int flags)
 	return 0;
 }
 
-int json_pack_samples(json_t **j, struct sample *smps[], unsigned cnt, int flags)
+int json_pack_samples(struct io *io, json_t **j, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json_smps = json_array();
@@ -109,7 +109,7 @@ int json_pack_samples(json_t **j, struct sample *smps[], unsigned cnt, int flags
 	for (int i = 0; i < cnt; i++) {
 		json_t *json_smp;
 
-		ret = json_pack_sample(&json_smp, smps[i], flags);
+		ret = json_pack_sample(io, &json_smp, smps[i]);
 		if (ret)
 			break;
 
@@ -121,7 +121,7 @@ int json_pack_samples(json_t **j, struct sample *smps[], unsigned cnt, int flags
 	return cnt;
 }
 
-int json_unpack_sample(json_t *json_smp, struct sample *smp, int flags)
+int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *smp)
 {
 	int ret;
 	json_error_t err;
@@ -181,7 +181,7 @@ int json_unpack_sample(json_t *json_smp, struct sample *smp, int flags)
 	return 0;
 }
 
-int json_unpack_samples(json_t *json_smps, struct sample *smps[], unsigned cnt, int flags)
+int json_unpack_samples(struct io *io, json_t *json_smps, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json_smp;
@@ -194,7 +194,7 @@ int json_unpack_samples(json_t *json_smps, struct sample *smps[], unsigned cnt, 
 		if (i >= cnt)
 			break;
 
-		ret = json_unpack_sample(json_smp, smps[i], flags);
+		ret = json_unpack_sample(io, json_smp, smps[i]);
 		if (ret < 0)
 			break;
 	}
@@ -202,13 +202,13 @@ int json_unpack_samples(json_t *json_smps, struct sample *smps[], unsigned cnt, 
 	return i;
 }
 
-int json_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
+int json_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json;
 	size_t wr;
 
-	ret = json_pack_samples(&json, smps, cnt, flags);
+	ret = json_pack_samples(io, &json, smps, cnt);
 	if (ret < 0)
 		return ret;
 
@@ -222,7 +222,7 @@ int json_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], un
 	return ret;
 }
 
-int json_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
+int json_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json;
@@ -232,7 +232,7 @@ int json_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], uns
 	if (!json)
 		return -1;
 
-	ret = json_unpack_samples(json, smps, cnt, flags);
+	ret = json_unpack_samples(io, json, smps, cnt);
 
 	json_decref(json);
 
@@ -253,7 +253,7 @@ int json_print(struct io *io, struct sample *smps[], unsigned cnt)
 	FILE *f = io_stream_output(io);
 
 	for (i = 0; i < cnt; i++) {
-		ret = json_pack_sample(&json, smps[i], io->flags);
+		ret = json_pack_sample(io, &json, smps[i]);
 		if (ret)
 			return ret;
 
@@ -279,7 +279,7 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 		if (!json)
 			break;
 
-		ret = json_unpack_sample(json, smps[i], io->flags);
+		ret = json_unpack_sample(io, json, smps[i]);
 		if (ret)
 			goto skip;
 

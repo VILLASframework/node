@@ -90,10 +90,10 @@ struct format_type {
 	 */
 
 	/** @see format_type_sscan */
-	int (*sscan)(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags);
+	int (*sscan)(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
 
 	/** @see format_type_sprint */
-	int (*sprint)(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags);
+	int (*sprint)(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
 
 	/** @} */
 

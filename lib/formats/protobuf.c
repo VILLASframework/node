@@ -27,7 +27,7 @@
 #include <villas/plugin.h>
 #include <villas/formats/protobuf.h>
 
-int protobuf_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
+int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
 {
 	unsigned psz;
 
@@ -93,7 +93,7 @@ out:
 	return -1;
 }
 
-int protobuf_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
+int protobuf_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
 	unsigned i, j;
 	Villas__Node__Message *pb_msg;

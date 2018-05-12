@@ -29,7 +29,7 @@
 struct sample;
 
 /** Copy / read struct msg's from buffer \p buf to / fram samples \p smps. */
-int protobuf_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags);
+int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
 
 /** Read struct sample's from buffer \p buf into samples \p smps. */
-int protobuf_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags);
+int protobuf_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);

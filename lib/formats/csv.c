@@ -30,21 +30,21 @@
 #include <villas/sample.h>
 #include <villas/timing.h>
 
-size_t csv_sprint_single(char *buf, size_t len, struct sample *s, int flags)
+size_t csv_sprint_single(struct io *io, char *buf, size_t len, struct sample *s)
 {
 	size_t off = 0;
 
-	if (flags & SAMPLE_HAS_ORIGIN)
+	if (io->flags & SAMPLE_HAS_ORIGIN)
 		off += snprintf(buf + off, len - off, "%ld%c%09ld", s->ts.origin.tv_sec, CSV_SEPARATOR, s->ts.origin.tv_nsec);
 	else
 		off += snprintf(buf + off, len - off, "nan%cnan", CSV_SEPARATOR);
 
-	if (flags & SAMPLE_HAS_RECEIVED)
+	if (io->flags & SAMPLE_HAS_RECEIVED)
 		off += snprintf(buf + off, len - off, "%c%f", CSV_SEPARATOR, time_delta(&s->ts.origin, &s->ts.received));
 	else
 		off += snprintf(buf + off, len - off, "%cnan", CSV_SEPARATOR);
 
-	if (flags & SAMPLE_HAS_SEQUENCE)
+	if (io->flags & SAMPLE_HAS_SEQUENCE)
 		off += snprintf(buf + off, len - off, "%c%u", CSV_SEPARATOR, s->sequence);
 	else
 		off += snprintf(buf + off, len - off, "%cnan", CSV_SEPARATOR);
@@ -65,7 +65,7 @@ size_t csv_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 	return off;
 }
 
-size_t csv_sscan_single(const char *buf, size_t len, struct sample *s, int flags)
+size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struct sample *s)
 {
 	const char *ptr = buf;
 	char *end;
@@ -127,13 +127,13 @@ out:	if (*end == '\n')
 	return end - buf;
 }
 
-int csv_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
+int csv_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
 {
 	int i;
 	size_t off = 0;
 
 	for (i = 0; i < cnt && off < len; i++)
-		off += csv_sprint_single(buf + off, len - off, smps[i], flags);
+		off += csv_sprint_single(io, buf + off, len - off, smps[i]);
 
 	if (wbytes)
 		*wbytes = off;
@@ -141,13 +141,13 @@ int csv_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], uns
 	return i;
 }
 
-int csv_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
+int csv_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
 	int i;
 	size_t off = 0;
 
 	for (i = 0; i < cnt && off < len; i++)
-		off += csv_sscan_single(buf + off, len - off, smps[i], flags);
+		off += csv_sscan_single(io, buf + off, len - off, smps[i]);
 
 	if (rbytes)
 		*rbytes = off;
