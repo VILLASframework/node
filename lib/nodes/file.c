@@ -250,20 +250,30 @@ int file_start(struct node *n)
 
 int file_stop(struct node *n)
 {
-	struct file *f = (struct file *) n->_vd;
 	int ret;
+	struct file *f = (struct file *) n->_vd;
 
-	task_destroy(&f->task);
+	ret = task_destroy(&f->task);
+	if (ret)
+		return ret;
 
 	ret = io_close(&f->io);
 	if (ret)
 		return ret;
 
+	free(f->uri);
+
+	return 0;
+}
+
+int file_destroy(struct node *n)
+{
+	int ret;
+	struct file *f = (struct file *) n->_vd;
+
 	ret = io_destroy(&f->io);
 	if (ret)
 		return ret;
-
-	free(f->uri);
 
 	return 0;
 }
@@ -371,6 +381,7 @@ static struct plugin p = {
 		.print		= file_print,
 		.start		= file_start,
 		.stop		= file_stop,
+		.destroy	= file_destroy,
 		.read		= file_read,
 		.write		= file_write,
 		.fd		= file_fd
