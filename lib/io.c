@@ -81,6 +81,10 @@ skip:		bytes = getdelim(&io->input.buffer, &io->input.buflen, io->delimiter, f);
 
 int io_init(struct io *io, struct format_type *fmt, struct node *n, int flags)
 {
+	int ret;
+
+	assert(io->state == STATE_DESTROYED);
+
 	io->_vt = fmt;
 	io->_vd = alloc(fmt->size);
 
@@ -101,12 +105,20 @@ int io_init(struct io *io, struct format_type *fmt, struct node *n, int flags)
 		io->output.signals = &n->signals;
 	}
 
-	return io->_vt->init ? io->_vt->init(io) : 0;
+	ret = io->_vt->init ? io->_vt->init(io) : 0;
+	if (ret)
+		return ret;
+
+	io->state = STATE_INITIALIZED;
+
+	return 0;
 }
 
 int io_destroy(struct io *io)
 {
 	int ret;
+
+	assert(io->state == STATE_CLOSED || io->state == STATE_INITIALIZED);
 
 	ret = io->_vt->destroy ? io->_vt->destroy(io) : 0;
 	if (ret)
@@ -115,6 +127,8 @@ int io_destroy(struct io *io)
 	free(io->_vd);
 	free(io->input.buffer);
 	free(io->output.buffer);
+
+	io->state = STATE_DESTROYED;
 
 	return 0;
 }
@@ -295,9 +309,9 @@ int io_open(struct io *io, const char *uri)
 	if (ret)
 		return ret;
 
-	io_header(io);
-
 	io->state = STATE_OPENED;
+
+	io_header(io);
 
 	return 0;
 }
@@ -447,12 +461,12 @@ int io_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample
 {
 	struct format_type *fmt = io->_vt;
 
-	return fmt->sscan ? fmt->sscan(buf, len, rbytes, smps, cnt, io->flags) : -1;
+	return fmt->sscan ? fmt->sscan(io, buf, len, rbytes, smps, cnt) : -1;
 }
 
 int io_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
 {
 	struct format_type *fmt = io->_vt;
 
-	return fmt->sprint ? fmt->sprint(buf, len, wbytes, smps, cnt, io->flags) : -1;
+	return fmt->sprint ? fmt->sprint(io, buf, len, wbytes, smps, cnt) : -1;
 }

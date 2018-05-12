@@ -261,6 +261,9 @@ int json_print(struct io *io, struct sample *smps[], unsigned cnt)
 		fputc('\n', f);
 
 		json_decref(json);
+
+		if (ret)
+			return ret;
 	}
 
 	return i;

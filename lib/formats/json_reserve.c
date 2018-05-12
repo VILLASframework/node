@@ -45,8 +45,8 @@ int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *smp)
 	json_data = json_array();
 
 	for (int i = 0; i < smp->length; i++) {
-		if (smp->destination)
-			sig = (struct signal *) list_at(&smp->destination->signals, i);
+		if (io->output.signals)
+			sig = (struct signal *) list_at_safe(io->output.signals, i);
 		else
 			sig = NULL;
 
@@ -134,17 +134,21 @@ int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sample *s
 		if (ret)
 			return -1;
 
-		idx = signal_get_offset(name, smp->source);
-		if (idx < 0)
-			return -1;
+		void *s = list_lookup(io->input.signals, name);
+		if (s)
+			idx = list_index(io->input.signals, s);
+		else {
+			ret = sscanf(name, "signal_%d", &idx);
+			if (ret != 1)
+				continue;
+		}
 
-		if (idx >= smp->capacity)
-			continue;
+		if (idx < smp->capacity) {
+			smp->data[idx].f = value;
 
-		if (idx >= smp->length)
-			smp->length = idx;
-
-		smp->data[idx].f = value;
+			if (idx >= smp->length)
+				smp->length = idx;
+		}
 	}
 
 	if (smp->length > 0)
@@ -206,7 +210,7 @@ int json_reserve_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, str
 	if (rbytes)
 		*rbytes = err.position;
 
-	return ret;
+	return 1;
 }
 
 int json_reserve_print(struct io *io, struct sample *smps[], unsigned cnt)
@@ -225,6 +229,9 @@ int json_reserve_print(struct io *io, struct sample *smps[], unsigned cnt)
 		fputc('\n', f);
 
 		json_decref(json);
+
+		if (ret)
+			return ret;
 	}
 
 	return i;
