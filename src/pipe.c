@@ -57,6 +57,8 @@ struct node *node;
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
+	int ret;
+
 	if (signal == SIGALRM)
 		info("Reached timeout. Terminating...");
 
@@ -70,15 +72,29 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 		pthread_join(sendd.thread, NULL);
 	}
 
-	super_node_stop(&sn);
+	ret = super_node_stop(&sn);
+	if (ret)
+		error("Failed to stop super node");
 
-	if (recvv.enabled)
-		pool_destroy(&recvv.pool);
+	if (recvv.enabled) {
+		ret = pool_destroy(&recvv.pool);
+		if (ret)
+			error("Failed to destroy pool");
+	}
 
-	if (sendd.enabled)
-		pool_destroy(&sendd.pool);
+	if (sendd.enabled) {
+		ret = pool_destroy(&sendd.pool);
+		if (ret)
+			error("Failed to destroy pool");
+	}
 
-	super_node_destroy(&sn);
+	ret = super_node_destroy(&sn);
+	if (ret)
+		error("Failed to destroy super node");
+
+	ret = io_destroy(&io);
+	if (ret)
+		error("Failed to destroy IO");
 
 	info(CLR_GRN("Goodbye!"));
 	exit(EXIT_SUCCESS);
@@ -309,7 +325,7 @@ check:		if (optarg == endptr)
 	if (!p)
 		error("Invalid format: %s", format);
 
-	ret = io_init(&io, &p->io, SAMPLE_HAS_ALL);
+	ret = io_init(&io, &p->io, NULL, SAMPLE_HAS_ALL);
 	if (ret)
 		error("Failed to initialize IO");
 

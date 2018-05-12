@@ -51,7 +51,7 @@ static int print_start(struct hook *h)
 	struct print *p = (struct print *) h->_vd;
 	int ret;
 
-	ret = io_init(&p->io, p->format, SAMPLE_HAS_ALL);
+	ret = io_init(&p->io, p->format, h->node, SAMPLE_HAS_ALL);
 	if (ret)
 		return ret;
 
@@ -68,10 +68,6 @@ static int print_stop(struct hook *h)
 	int ret;
 
 	ret = io_close(&p->io);
-	if (ret)
-		return ret;
-
-	ret = io_destroy(&p->io);
 	if (ret)
 		return ret;
 
@@ -110,6 +106,18 @@ static int print_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 	return 0;
 }
 
+static int print_destroy(struct hook *h)
+{
+	int ret;
+	struct print *p = (struct print *) h->_vd;
+
+	ret = io_destroy(&p->io);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
 static struct plugin p = {
 	.name		= "print",
 	.description	= "Print the message to stdout",
@@ -119,6 +127,7 @@ static struct plugin p = {
 		.priority = 99,
 		.init	= print_init,
 		.parse	= print_parse,
+		.destroy= print_destroy,
 		.start	= print_start,
 		.stop	= print_stop,
 		.process= print_process,

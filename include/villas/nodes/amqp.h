@@ -35,6 +35,7 @@
 
 #include <villas/node.h>
 #include <villas/list.h>
+#include <villas/io.h>
 
 /* Forward declarations */
 struct format_type;
@@ -61,6 +62,7 @@ struct amqp {
 	amqp_connection_state_t consumer;
 
 	struct format_type *format;
+	struct io io;
 };
 
 /** @see node_type::print */

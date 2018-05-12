@@ -183,7 +183,7 @@ static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct
 		return;
 	}
 
-	ret = format_type_sscan(m->format, msg->payload, msg->payloadlen, NULL, &smp, 1, 0);
+	ret = io_sscan(&m->io, msg->payload, msg->payloadlen, NULL, &smp, 1);
 	if (ret != 1)
 		return;
 
@@ -315,6 +315,10 @@ int mqtt_destroy(struct node *n)
 
 	mosquitto_destroy(m->client);
 
+	ret = io_destroy(&m->io);
+	if (ret)
+		return ret;
+
 	ret = pool_destroy(&m->pool);
 	if (ret)
 		return ret;
@@ -373,6 +377,10 @@ int mqtt_start(struct node *n)
 	mosquitto_disconnect_callback_set(m->client, mqtt_disconnect_cb);
 	mosquitto_message_callback_set(m->client, mqtt_message_cb);
 	mosquitto_subscribe_callback_set(m->client, mqtt_subscribe_cb);
+
+	ret = io_init(&m->io, m->format, n, SAMPLE_HAS_ALL);
+	if (ret)
+		return ret;
 
 	ret = pool_init(&m->pool, 1024, SAMPLE_LEN(n->samplelen), &memtype_hugepage);
 	if (ret)
@@ -490,8 +498,8 @@ int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	char data[1500];
 
-	ret = format_type_sprint(m->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_HAS_ALL);
-	if (ret <= 0)
+	ret = io_sprint(&m->io, data, sizeof(data), &wbytes, smps, cnt);
+	if (ret < 0)
 		return -1;
 
 	ret = mosquitto_publish(m->client, NULL /* mid */, m->publish, wbytes, data, m->qos, m->retain);

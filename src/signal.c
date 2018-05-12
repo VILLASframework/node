@@ -87,11 +87,11 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 	ret = io_close(&io);
 	if (ret)
-		error("Failed to close output");
+		error("Failed to close IO");
 
 	ret = io_destroy(&io);
 	if (ret)
-		error("Failed to destroy output");
+		error("Failed to destroy IO");
 
 	ret = pool_destroy(&q);
 	if (ret)
@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 	if (!p)
 		error("Invalid output format '%s'", format);
 
-	ret = io_init(&io, &p->io, IO_FLUSH | (SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET));
+	ret = io_init(&io, &p->io, NULL, IO_FLUSH | (SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET));
 	if (ret)
 		error("Failed to initialize output");
 

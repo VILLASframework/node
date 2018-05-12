@@ -63,6 +63,10 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	if (ret)
 		error("Failed to destroy hook");
 
+	ret = io_destroy(&io);
+	if (ret)
+		error("Failed to destroy IO");
+
 	sample_free_many(smps, cnt);
 
 	ret = pool_destroy(&q);
@@ -181,7 +185,7 @@ check:		if (optarg == endptr)
 	if (!p)
 		error("Unknown IO format '%s'", format);
 
-	ret = io_init(&io, &p->io, SAMPLE_HAS_ALL);
+	ret = io_init(&io, &p->io, NULL, SAMPLE_HAS_ALL);
 	if (ret)
 		error("Failed to initialize IO");
 

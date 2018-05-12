@@ -33,6 +33,7 @@
 #include <jansson.h>
 
 #include <villas/list.h>
+#include <villas/io.h>
 
 #if ZMQ_BUILD_DRAFT_API && (ZMQ_VERSION_MAJOR > 4 || (ZMQ_VERSION_MAJOR == 4 && ZMQ_VERSION_MINOR >= 2))
   #define ZMQ_BUILD_DISH 1
@@ -49,6 +50,7 @@ struct zeromq {
 	char *filter;
 
 	struct format_type *format;
+	struct io io;
 
 	struct {
 		int enabled;

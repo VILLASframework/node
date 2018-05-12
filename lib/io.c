@@ -40,7 +40,7 @@ static int io_print_lines(struct io *io, struct sample *smps[], unsigned cnt)
 	for (i = 0; i < cnt; i++) {
 		size_t wbytes;
 
-		ret = format_type_sprint(io->_vt, io->output.buffer, io->output.buflen, &wbytes, &smps[i], 1, io->flags);
+		ret = io_sprint(io, io->output.buffer, io->output.buflen, &wbytes, &smps[i], 1);
 		if (ret < 0)
 			return ret;
 
@@ -71,7 +71,7 @@ skip:		bytes = getdelim(&io->input.buffer, &io->input.buflen, io->delimiter, f);
 		if (ptr[0] == '\0' || ptr[0] == '#')
 			goto skip;
 
-		ret = format_type_sscan(io->_vt, io->input.buffer, bytes, &rbytes, &smps[i], 1, io->flags);
+		ret = io_sscan(io, io->input.buffer, bytes, &rbytes, &smps[i], 1);
 		if (ret < 0)
 			return ret;
 	}
@@ -79,7 +79,7 @@ skip:		bytes = getdelim(&io->input.buffer, &io->input.buflen, io->delimiter, f);
 	return i;
 }
 
-int io_init(struct io *io, struct format_type *fmt, int flags)
+int io_init(struct io *io, struct format_type *fmt, struct node *n, int flags)
 {
 	io->_vt = fmt;
 	io->_vd = alloc(fmt->size);
@@ -92,6 +92,14 @@ int io_init(struct io *io, struct format_type *fmt, int flags)
 
 	io->input.buffer = alloc(io->input.buflen);
 	io->output.buffer = alloc(io->output.buflen);
+
+	if (n) {
+		io->input.node = n;
+		io->output.node = n;
+
+		io->input.signals = &n->signals;
+		io->output.signals = &n->signals;
+	}
 
 	return io->_vt->init ? io->_vt->init(io) : 0;
 }
@@ -372,25 +380,20 @@ int io_print(struct io *io, struct sample *smps[], unsigned cnt)
 
 	assert(io->state == STATE_OPENED);
 
-	if (io->_vt->print)
-		ret = io->_vt->print(io, smps, cnt);
-	else if (io->flags & IO_NEWLINES)
+	if (io->flags & IO_NEWLINES)
 		ret = io_print_lines(io, smps, cnt);
-	else {
+	else if (io->_vt->print)
+		ret = io->_vt->print(io, smps, cnt);
+	else if (io->_vt->sprint) {
 		FILE *f = io_stream_output(io);
+		size_t wbytes;
 
-		if (io->_vt->fprint)
-			ret = format_type_fprint(io->_vt, f, smps, cnt, io->flags);
-		else if (io->_vt->sprint) {
-			size_t wbytes;
+		ret = io_sprint(io, io->output.buffer, io->output.buflen, &wbytes, smps, cnt);
 
-			ret = format_type_sprint(io->_vt, io->output.buffer, io->output.buflen, &wbytes, smps, cnt, io->flags);
-
-			fwrite(io->output.buffer, wbytes, 1, f);
-		}
-		else
-			ret = -1;
+		fwrite(io->output.buffer, wbytes, 1, f);
 	}
+	else
+		ret = -1;
 
 	if (io->flags & IO_FLUSH)
 		io_flush(io);
@@ -404,25 +407,20 @@ int io_scan(struct io *io, struct sample *smps[], unsigned cnt)
 
 	assert(io->state == STATE_OPENED);
 
-	if (io->_vt->scan)
-		ret = io->_vt->scan(io, smps, cnt);
-	else if (io->flags & IO_NEWLINES)
+	if (io->flags & IO_NEWLINES)
 		ret = io_scan_lines(io, smps, cnt);
-	else {
+	else if (io->_vt->scan)
+		ret = io->_vt->scan(io, smps, cnt);
+	else if (io->_vt->sscan) {
 		FILE *f = io_stream_input(io);
+		size_t bytes, rbytes;
 
-		if (io->_vt->fscan)
-			ret = format_type_fscan(io->_vt, f, smps, cnt, io->flags);
-		else if (io->_vt->sscan) {
-			size_t bytes, rbytes;
+		bytes = fread(io->input.buffer, 1, io->input.buflen, f);
 
-			bytes = fread(io->input.buffer, 1, io->input.buflen, f);
-
-			ret = format_type_sscan(io->_vt, io->input.buffer, bytes, &rbytes, smps, cnt, io->flags);
-		}
-		else
-			ret = -1;
+		ret = io_sscan(io, io->input.buffer, bytes, &rbytes, smps, cnt);
 	}
+	else
+		ret = -1;
 
 	return ret;
 }
@@ -443,4 +441,18 @@ FILE * io_stream_input(struct io *io) {
 	return io->mode == IO_MODE_ADVIO
 		? io->input.stream.adv->file
 		: io->input.stream.std;
+}
+
+int io_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
+{
+	struct format_type *fmt = io->_vt;
+
+	return fmt->sscan ? fmt->sscan(buf, len, rbytes, smps, cnt, io->flags) : -1;
+}
+
+int io_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
+{
+	struct format_type *fmt = io->_vt;
+
+	return fmt->sprint ? fmt->sprint(buf, len, wbytes, smps, cnt, io->flags) : -1;
 }

@@ -253,7 +253,7 @@ int test_rtt_start(struct node *n)
 			return ret;
 	}
 
-	ret = io_init(&t->io, t->format, SAMPLE_HAS_ALL & ~SAMPLE_HAS_VALUES);
+	ret = io_init(&t->io, t->format, n, SAMPLE_HAS_ALL & ~SAMPLE_HAS_VALUES);
 	if (ret)
 		return ret;
 

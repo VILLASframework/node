@@ -135,7 +135,7 @@ check:		if (optarg == endptr)
 		if (!s[i].fmt)
 			error("Invalid IO format: %s", s[i].format);
 
-		ret = io_init(&s[i].io, s[i].fmt, 0);
+		ret = io_init(&s[i].io, s[i].fmt, NULL, 0);
 		if (ret)
 			error("Failed to initialize IO");
 
@@ -192,12 +192,20 @@ retry:		eofs = 0;
 	}
 
 out:	for (int i = 0; i < n; i++) {
-		io_close(&s[i].io);
-		io_destroy(&s[i].io);
+		ret = io_close(&s[i].io);
+		if (ret)
+			error("Failed to close IO");
+
+		ret = io_destroy(&s[i].io);
+		if (ret)
+			error("Failed to destroy IO");
+
 		sample_put(s[i].sample);
 	}
 
-	pool_destroy(&pool);
+	ret = pool_destroy(&pool);
+	if (ret)
+		error("Failed to destroy pool");
 
 	return ret;
 }

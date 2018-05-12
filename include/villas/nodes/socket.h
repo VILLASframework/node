@@ -40,6 +40,7 @@
 #endif
 
 #include <villas/config.h>
+#include <villas/io.h>
 
 #ifdef WITH_LIBNL_ROUTE_30
   #include <villas/kernel/if.h>
@@ -86,6 +87,7 @@ struct socket {
 	union sockaddr_union remote;	/**< Remote address of the socket */
 
 	struct format_type *format;
+	struct io io;
 
 	/* Multicast options */
 	struct multicast {

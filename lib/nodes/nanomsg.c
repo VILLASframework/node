@@ -151,6 +151,10 @@ int nanomsg_start(struct node *n)
 	int ret;
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
+	ret = io_init(&m->io, m->format, n, SAMPLE_HAS_ALL);
+	if (ret)
+		return ret;
+
 	ret = m->subscriber.socket = nn_socket(AF_SP, NN_SUB);
 	if (ret < 0)
 		return ret;
@@ -205,6 +209,18 @@ int nanomsg_stop(struct node *n)
 	return 0;
 }
 
+int nanomsg_destroy(struct node *n)
+{
+	int ret;
+	struct nanomsg *m = (struct nanomsg *) n->_vd;
+
+	ret = io_destroy(&m->io);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
 int nanomsg_deinit()
 {
 	nn_term();
@@ -223,7 +239,7 @@ int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (bytes < 0)
 		return -1;
 
-	return format_type_sscan(m->format, data, bytes, NULL, smps, cnt, 0);
+	return io_sscan(&m->io, data, bytes, NULL, smps, cnt);
 }
 
 int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)
@@ -235,7 +251,7 @@ int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	char data[NANOMSG_MAX_PACKET_LEN];
 
-	ret = format_type_sprint(m->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_HAS_ALL);
+	ret = io_sprint(&m->io, data, sizeof(data), &wbytes, smps, cnt);
 	if (ret <= 0)
 		return -1;
 
@@ -273,6 +289,7 @@ static struct plugin p = {
 		.print		= nanomsg_print,
 		.start		= nanomsg_start,
 		.stop		= nanomsg_stop,
+		.destroy	= nanomsg_destroy,
 		.deinit		= nanomsg_deinit,
 		.read		= nanomsg_read,
 		.write		= nanomsg_write,

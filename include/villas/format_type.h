@@ -30,7 +30,7 @@ struct sample;
 struct io;
 
 enum format_type_flags {
-	format_type_BINARY	= (1 << 8)
+	FORMAT_TYPE_BINARY	= (1 << 8)
 };
 
 struct format_type {
@@ -95,12 +95,6 @@ struct format_type {
 	/** @see format_type_sprint */
 	int (*sprint)(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags);
 
-	/** @see format_type_fscan */
-	int (*fscan)(FILE *f, struct sample *smps[], unsigned cnt, int flags);
-
-	/** @see format_type_fprint */
-	int (*fprint)(FILE *f, struct sample *smps[], unsigned cnt, int flags);
-
 	/** @} */
 
 	size_t size;		/**< Number of bytes to allocate for io::_vd */
@@ -108,43 +102,3 @@ struct format_type {
 };
 
 struct format_type * format_type_lookup(const char *name);
-
-/** Parse samples from the buffer \p buf with a length of \p len bytes.
- *
- * @param buf[in]	The buffer of data which should be parsed / de-serialized.
- * @param len[in]	The length of the buffer \p buf.
- * @param rbytes[out]	The number of bytes which have been read from \p buf.
- * @param smps[out]	The array of pointers to samples.
- * @param cnt[in]	The number of pointers in the array \p smps.
- *
- * @retval >=0		The number of samples which have been parsed from \p buf and written into \p smps.
- * @retval <0		Something went wrong.
- */
-int format_type_sscan(struct format_type *fmt, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags);
-
-/** Print \p cnt samples from \p smps into buffer \p buf of length \p len.
- *
- * @param buf[out]	The buffer which should be filled with serialized data.
- * @param len[in]	The length of the buffer \p buf.
- * @param rbytes[out]	The number of bytes which have been written to \p buf. Ignored if NULL.
- * @param smps[in]	The array of pointers to samples.
- * @param cnt[in]	The number of pointers in the array \p smps.
- *
- * @retval >=0		The number of samples from \p smps which have been written into \p buf.
- * @retval <0		Something went wrong.
- */
-int format_type_sprint(struct format_type *fmt, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags);
-
-/** Parse up to \p cnt samples from stream \p f into array \p smps.
- *
- * @retval >=0		The number of samples which have been parsed from \p f and written into \p smps.
- * @retval <0		Something went wrong.
- */
-int format_type_fscan(struct format_type *fmt, FILE *f, struct sample *smps[], unsigned cnt, int flags);
-
-/** Print \p cnt samples from \p smps to stream \p f.
- *
- * @retval >=0		The number of samples from \p smps which have been written to \p f.
- * @retval <0		Something went wrong.
- */
-int format_type_fprint(struct format_type *fmt, FILE *f, struct sample *smps[], unsigned cnt, int flags);

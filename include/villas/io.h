@@ -25,6 +25,7 @@
 
 #include "advio.h"
 #include "common.h"
+#include "node.h"
 
 /* Forward declarations */
 struct sample;
@@ -68,7 +69,7 @@ struct io {
 	struct format_type *_vt;
 };
 
-int io_init(struct io *io, struct format_type *fmt, int flags);
+int io_init(struct io *io, struct format_type *fmt, struct node *n, int flags);
 
 int io_destroy(struct io *io);
 
@@ -106,3 +107,29 @@ int io_stream_flush(struct io *io);
 
 FILE * io_stream_input(struct io *io);
 FILE * io_stream_output(struct io *io);
+
+/** Parse samples from the buffer \p buf with a length of \p len bytes.
+ *
+ * @param buf[in]	The buffer of data which should be parsed / de-serialized.
+ * @param len[in]	The length of the buffer \p buf.
+ * @param rbytes[out]	The number of bytes which have been read from \p buf.
+ * @param smps[out]	The array of pointers to samples.
+ * @param cnt[in]	The number of pointers in the array \p smps.
+ *
+ * @retval >=0		The number of samples which have been parsed from \p buf and written into \p smps.
+ * @retval <0		Something went wrong.
+ */
+int io_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
+
+/** Print \p cnt samples from \p smps into buffer \p buf of length \p len.
+ *
+ * @param buf[out]	The buffer which should be filled with serialized data.
+ * @param len[in]	The length of the buffer \p buf.
+ * @param rbytes[out]	The number of bytes which have been written to \p buf. Ignored if NULL.
+ * @param smps[in]	The array of pointers to samples.
+ * @param cnt[in]	The number of pointers in the array \p smps.
+ *
+ * @retval >=0		The number of samples from \p smps which have been written into \p buf.
+ * @retval <0		Something went wrong.
+ */
+int io_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);

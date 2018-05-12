@@ -167,6 +167,7 @@ int socket_start(struct node *n)
 	struct socket *s = (struct socket *) n->_vd;
 	int ret;
 
+	// TODO: Move to socket_check() ?
 	/* Some checks on the addresses */
 	if (s->layer != SOCKET_LAYER_UNIX) {
 		if (s->local.sa.sa_family != s->remote.sa.sa_family)
@@ -195,6 +196,11 @@ int socket_start(struct node *n)
 		if ((addr >> 28) != 14)
 			error("Multicast group address of node %s must be within 224.0.0.0/4", node_name(n));
 	}
+
+	/* Initialize IO */
+	ret = io_init(&s->io, s->format, n, SAMPLE_HAS_ALL);
+	if (ret)
+		return ret;
 
 	/* Create socket */
 	switch (s->layer) {
@@ -314,9 +320,14 @@ int socket_stop(struct node *n)
 
 int socket_destroy(struct node *n)
 {
-#ifdef WITH_NETEM
+	int ret;
 	struct socket *s = (struct socket *) n->_vd;
 
+	ret = io_destroy(&s->io);
+	if (ret)
+		return ret;
+
+#ifdef WITH_NETEM
 	rtnl_qdisc_put(s->tc_qdisc);
 	rtnl_cls_put(s->tc_classifier);
 #endif /* WITH_NETEM */
@@ -379,7 +390,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		goto out;
 	}
 
-	ret = format_type_sscan(s->format, ptr, bytes, &rbytes, smps, cnt, 0);
+	ret = io_sscan(&s->io, ptr, bytes, &rbytes, smps, cnt);
 
 	if (ret < 0 || bytes != rbytes)
 		warn("Received invalid packet from node: %s ret=%d, bytes=%zu, rbytes=%zu", node_name(n), ret, bytes, rbytes);
@@ -404,7 +415,7 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 	if (!buf)
 		return -1;
 
-retry:	ret = format_type_sprint(s->format, buf, buflen, &wbytes, smps, cnt, SAMPLE_HAS_ALL);
+retry:	ret = io_sprint(&s->io, buf, buflen, &wbytes, smps, cnt);
 	if (ret < 0)
 		goto out;
 

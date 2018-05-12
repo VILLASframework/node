@@ -106,7 +106,7 @@ check:		if (optarg == endptr)
 		if (!p)
 			error("Invalid format: %s", dirs[i].name);
 
-		ret = io_init(dirs[i].io, &p->io, SAMPLE_HAS_ALL);
+		ret = io_init(dirs[i].io, &p->io, NULL, SAMPLE_HAS_ALL);
 		if (ret)
 			error("Failed to initialize IO: %s", dirs[i].name);
 
@@ -131,6 +131,10 @@ check:		if (optarg == endptr)
 		ret = io_close(dirs[i].io);
 		if (ret)
 			error("Failed to close IO");
+
+		ret = io_destroy(dirs[i].io);
+		if (ret)
+			error("Failed to destroy IO");
 	}
 
 	return 0;

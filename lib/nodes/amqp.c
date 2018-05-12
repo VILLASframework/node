@@ -219,11 +219,16 @@ char * amqp_print(struct node *n)
 
 int amqp_start(struct node *n)
 {
+	int ret;
 	struct amqp *a = n->_vd;
 
 	amqp_bytes_t queue;
 	amqp_rpc_reply_t rep;
 	amqp_queue_declare_ok_t *r;
+
+	ret = io_init(&a->io, a->format, n, SAMPLE_HAS_ALL);
+	if (ret)
+		return ret;
 
 	/* Connect producer */
 	a->producer = amqp_connect(&a->connection_info, &a->ssl_info);
@@ -295,7 +300,7 @@ int amqp_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
 		return -1;
 
-	ret = format_type_sscan(a->format, env.message.body.bytes, env.message.body.len, NULL, smps, cnt, 0);
+	ret = io_sscan(&a->io, env.message.body.bytes, env.message.body.len, NULL, smps, cnt);
 
 	amqp_destroy_envelope(&env);
 
@@ -309,7 +314,7 @@ int amqp_write(struct node *n, struct sample *smps[], unsigned cnt)
 	char data[1500];
 	size_t wbytes;
 
-	ret = format_type_sprint(a->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_HAS_ALL);
+	ret = io_sprint(&a->io, data, sizeof(data), &wbytes, smps, cnt);
 	if (ret <= 0)
 		return -1;
 
@@ -341,7 +346,12 @@ int amqp_fd(struct node *n)
 
 int amqp_destroy(struct node *n)
 {
+	int ret;
 	struct amqp *a = n->_vd;
+
+	ret = io_destroy(&a->io);
+	if (ret)
+		return ret;
 
 	if (a->uri)
 		free(a->uri);

@@ -209,7 +209,7 @@ int file_start(struct node *n)
 	if (f->flush)
 		flags |= IO_FLUSH;
 
-	ret = io_init(&f->io, f->format, flags);
+	ret = io_init(&f->io, f->format, n, flags);
 	if (ret)
 		return ret;
 

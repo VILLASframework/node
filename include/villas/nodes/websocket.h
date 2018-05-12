@@ -38,6 +38,7 @@
 #include <villas/pool.h>
 #include <villas/queue_signalled.h>
 #include <villas/common.h>
+#include <villas/io.h>
 #include <villas/config.h>
 
 #define DEFAULT_WEBSOCKET_QUEUELEN	(DEFAULT_QUEUELEN * 64)
@@ -72,7 +73,7 @@ struct websocket_connection {
 
 	struct lws *wsi;
 	struct node *node;
-	struct format_type *format;		/**< The IO format used for this connection. */
+	struct io io;
 	struct queue queue;			/**< For samples which are sent to the WebSocket */
 
 	struct websocket_destination *destination;

@@ -33,6 +33,7 @@
 
 #include <villas/node.h>
 #include <villas/list.h>
+#include <villas/io.h>
 
 /** The maximum length of a packet which contains stuct msg. */
 #define NANOMSG_MAX_PACKET_LEN 1500
@@ -52,6 +53,7 @@ struct nanomsg {
 	} subscriber;
 
 	struct format_type *format;
+	struct io io;
 };
 
 /** @see node_type::print */

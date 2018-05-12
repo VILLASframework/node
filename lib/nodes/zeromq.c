@@ -249,6 +249,10 @@ int zeromq_start(struct node *n)
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
+	ret = io_init(&z->io, z->format, n, SAMPLE_HAS_ALL);
+	if (ret)
+		return ret;
+
 	switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
 		case ZEROMQ_PATTERN_RADIODISH:
@@ -403,6 +407,18 @@ int zeromq_stop(struct node *n)
 	return zmq_close(z->publisher.socket);
 }
 
+int zeromq_destroy(struct node *n)
+{
+	int ret;
+	struct zeromq *z = (struct zeromq *) n->_vd;
+
+	ret = io_destroy(&z->io);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
 int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt)
 {
 	int recv, ret;
@@ -430,7 +446,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (ret < 0)
 		return ret;
 
-	recv = format_type_sscan(z->format, zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, cnt, 0);
+	recv = io_sscan(&z->io, zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, cnt);
 
 	ret = zmq_msg_close(&m);
 	if (ret)
@@ -449,7 +465,7 @@ int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	char data[4096];
 
-	ret = format_type_sprint(z->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_HAS_ALL);
+	ret = io_sprint(&z->io, data, sizeof(data), &wbytes, smps, cnt);
 	if (ret <= 0)
 		return -1;
 
@@ -516,6 +532,7 @@ static struct plugin p = {
 		.print		= zeromq_print,
 		.start		= zeromq_start,
 		.stop		= zeromq_stop,
+		.destroy	= zeromq_destroy,
 		.init		= zeromq_init,
 		.deinit		= zeromq_deinit,
 		.read		= zeromq_read,
