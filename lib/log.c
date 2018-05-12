@@ -54,7 +54,7 @@ void register_default_log()
 	if (ret)
 		error("Failed to initalize log");
 
-	ret = log_start(&default_log);
+	ret = log_open(&default_log);
 	if (ret)
 		error("Failed to start log");
 }
@@ -173,7 +173,7 @@ int log_init(struct log *l, int level, long facilitites)
 	return 0;
 }
 
-int log_start(struct log *l)
+int log_open(struct log *l)
 {
 	if (l->path) {
 		l->file = fopen(l->path, "a+");;
@@ -185,7 +185,7 @@ int log_start(struct log *l)
 	else
 		l->file = stderr;
 
-	l->state = STATE_STARTED;
+	l->state = STATE_OPENED;
 
 	if (l->syslog) {
 		openlog(NULL, LOG_PID, LOG_DAEMON);
@@ -196,9 +196,9 @@ int log_start(struct log *l)
 	return 0;
 }
 
-int log_stop(struct log *l)
+int log_close(struct log *l)
 {
-	if (l->state != STATE_STARTED)
+	if (l->state != STATE_OPENED)
 		return 0;
 
 	if (l->file != stderr && l->file != stdout) {
@@ -209,7 +209,7 @@ int log_stop(struct log *l)
 		closelog();
 	}
 
-	l->state = STATE_STOPPED;
+	l->state = STATE_CLOSED;
 
 	return 0;
 }

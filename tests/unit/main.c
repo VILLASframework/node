@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to initialize logging sub-system");
 
-	ret = log_start(&log);
+	ret = log_open(&log);
 	if (ret)
 		error("Failed to start logging sub-system");
 

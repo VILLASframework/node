@@ -97,7 +97,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	if (ret)
 		error("Failed to destroy pool");
 
-	ret = log_stop(&l);
+	ret = log_close(&l);
 	if (ret)
 		error("Failed to stop log");
 
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to initialize log");
 
-	ret = log_start(&l);
+	ret = log_open(&l);
 	if (ret)
 		error("Failed to start log");
 

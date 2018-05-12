@@ -113,9 +113,9 @@ struct log default_log;
 /** Initialize log object */
 int log_init(struct log *l, int level, long faciltities);
 
-int log_start(struct log *l);
+int log_open(struct log *l);
 
-int log_stop(struct log *l);
+int log_close(struct log *l);
 
 /** Destroy log object */
 int log_destroy(struct log *l);

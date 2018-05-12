@@ -301,7 +301,7 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to initialize log");
 
-	ret = log_start(&sn.log);
+	ret = log_open(&sn.log);
 	if (ret)
 		error("Failed to start log");
 

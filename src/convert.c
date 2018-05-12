@@ -89,7 +89,7 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to initialize log");
 
-	ret = log_start(&log);
+	ret = log_open(&log);
 	if (ret)
 		error("Failed to start log");
 

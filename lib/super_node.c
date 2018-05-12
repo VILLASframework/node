@@ -346,7 +346,7 @@ int super_node_start(struct super_node *sn)
 	memory_init(sn->hugepages);
 	rt_init(sn->priority, sn->affinity);
 
-	log_start(&sn->log);
+	log_open(&sn->log);
 #ifdef WITH_API
 	api_start(&sn->api);
 #endif
@@ -442,7 +442,7 @@ int super_node_stop(struct super_node *sn)
 #ifdef WITH_WEB
 	web_stop(&sn->web);
 #endif
-	log_stop(&sn->log);
+	log_close(&sn->log);
 
 	sn->state = STATE_STOPPED;
 

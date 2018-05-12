@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
 	};
 
 	log_init(&log, V, LOG_ALL);
-	log_start(&log);
+	log_open(&log);
 
 
 	if (argc != 4) {
