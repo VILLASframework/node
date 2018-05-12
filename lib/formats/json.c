@@ -23,6 +23,7 @@
 #include <villas/plugin.h>
 #include <villas/sample.h>
 #include <villas/compat.h>
+#include <villas/io.h>
 #include <villas/formats/json.h>
 
 static json_t * json_pack_timestamps(struct sample *smp)
@@ -244,13 +245,15 @@ int json_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], uns
 	return ret;
 }
 
-int json_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
+int json_print(struct io *io, struct sample *smps[], unsigned cnt)
 {
 	int ret, i;
 	json_t *json;
 
+	FILE *f = io_stream_output(io);
+
 	for (i = 0; i < cnt; i++) {
-		ret = json_pack_sample(&json, smps[i], flags);
+		ret = json_pack_sample(&json, smps[i], io->flags);
 		if (ret)
 			return ret;
 
@@ -263,18 +266,20 @@ int json_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 	return i;
 }
 
-int json_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
+int json_scan(struct io *io, struct sample *smps[], unsigned cnt)
 {
 	int i, ret;
 	json_t *json;
 	json_error_t err;
+
+	FILE *f = io_stream_input(io);
 
 	for (i = 0; i < cnt; i++) {
 skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 		if (!json)
 			break;
 
-		ret = json_unpack_sample(json, smps[i], flags);
+		ret = json_unpack_sample(json, smps[i], io->flags);
 		if (ret)
 			goto skip;
 
@@ -289,8 +294,8 @@ static struct plugin p = {
 	.description = "Javascript Object Notation",
 	.type = PLUGIN_TYPE_FORMAT,
 	.io = {
-		.fscan	= json_fscan,
-		.fprint	= json_fprint,
+		.scan	= json_scan,
+		.print	= json_print,
 		.sscan	= json_sscan,
 		.sprint	= json_sprint,
 		.size = 0

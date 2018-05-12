@@ -242,9 +242,9 @@ int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 static struct plugin i = {			\
 	.name = n,				\
 	.description = d,			\
-	.type = PLUGIN_TYPE_FORMAT,			\
+	.type = PLUGIN_TYPE_FORMAT,		\
 	.io = {					\
-		.flags = f | format_type_BINARY,	\
+		.flags = f | FORMAT_TYPE_BINARY,\
 		.sprint = raw_sprint,		\
 		.sscan  = raw_sscan		\
 	}					\

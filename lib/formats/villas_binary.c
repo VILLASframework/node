@@ -120,7 +120,7 @@ static struct plugin p1 = {
 		.sprint	= villas_binary_sprint,
 		.sscan	= villas_binary_sscan,
 		.size	= 0,
-		.flags	= format_type_BINARY
+		.flags	= FORMAT_TYPE_BINARY
 	},
 };
 
@@ -133,7 +133,7 @@ static struct plugin p2 = {
 		.sprint	= villas_binary_sprint,
 		.sscan	= villas_binary_sscan,
 		.size	= 0,
-		.flags	= format_type_BINARY | VILLAS_BINARY_WEB
+		.flags	= FORMAT_TYPE_BINARY | VILLAS_BINARY_WEB
 	},
 };
 

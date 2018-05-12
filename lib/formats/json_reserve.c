@@ -26,6 +26,7 @@
 #include <villas/signal.h>
 #include <villas/compat.h>
 #include <villas/timing.h>
+#include <villas/io.h>
 #include <villas/formats/json.h>
 
 int json_reserve_pack_sample(json_t **j, struct sample *smp, int flags)
@@ -208,13 +209,15 @@ int json_reserve_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smp
 	return ret;
 }
 
-int json_reserve_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
+int json_reserve_print(struct io *io, struct sample *smps[], unsigned cnt)
 {
 	int ret, i;
 	json_t *json;
 
+	FILE *f = io_stream_output(io);
+
 	for (i = 0; i < cnt; i++) {
-		ret = json_reserve_pack_sample(&json, smps[i], flags);
+		ret = json_reserve_pack_sample(&json, smps[i], io->flags);
 		if (ret)
 			return ret;
 
@@ -227,18 +230,20 @@ int json_reserve_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 	return i;
 }
 
-int json_reserve_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
+int json_reserve_scan(struct io *io, struct sample *smps[], unsigned cnt)
 {
 	int i, ret;
 	json_t *json;
 	json_error_t err;
+
+	FILE *f = io_stream_input(io);
 
 	for (i = 0; i < cnt; i++) {
 skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 		if (!json)
 			break;
 
-		ret = json_reserve_unpack_sample(json, smps[i], flags);
+		ret = json_reserve_unpack_sample(json, smps[i], io->flags);
 		if (ret)
 			goto skip;
 
@@ -253,8 +258,8 @@ static struct plugin p = {
 	.description = "RESERVE JSON format",
 	.type = PLUGIN_TYPE_FORMAT,
 	.io = {
-		.fscan	= json_reserve_fscan,
-		.fprint	= json_reserve_fprint,
+		.scan	= json_reserve_scan,
+		.print	= json_reserve_print,
 		.sscan	= json_reserve_sscan,
 		.sprint	= json_reserve_sprint,
 		.size = 0

@@ -183,6 +183,7 @@ ParameterizedTest(char *fmt, io, lowlevel)
 	struct pool p = { .state = STATE_DESTROYED };
 	struct sample *smps[NUM_SAMPLES];
 	struct sample *smpt[NUM_SAMPLES];
+	struct io io;
 
 	ret = pool_init(&p, 2 * NUM_SAMPLES, SAMPLE_LEN(NUM_VALUES), &memtype_hugepage);
 	cr_assert_eq(ret, 0);
@@ -194,10 +195,13 @@ ParameterizedTest(char *fmt, io, lowlevel)
 	f = format_type_lookup(fmt);
 	cr_assert_not_null(f, "Format '%s' does not exist", fmt);
 
-	ret = format_type_sprint(f, buf, sizeof(buf), &wbytes, smps, NUM_SAMPLES, SAMPLE_HAS_ALL);
+	ret = io_init(&io, f, NULL, SAMPLE_HAS_ALL);
+	cr_assert_eq(ret, 0);
+
+	ret = io_sprint(&io, buf, sizeof(buf), &wbytes, smps, NUM_SAMPLES);
 	cr_assert_eq(ret, NUM_SAMPLES);
 
-	ret = format_type_sscan(f, buf, wbytes, &rbytes, smpt, NUM_SAMPLES, 0);
+	ret = io_sscan(&io, buf, wbytes, &rbytes, smpt, NUM_SAMPLES);
 	cr_assert_eq(rbytes, wbytes);
 
 	cr_assert_eq_samples(f, smps, smpt, ret);
@@ -247,7 +251,7 @@ ParameterizedTest(char *fmt, io, highlevel)
 	f = format_type_lookup(fmt);
 	cr_assert_not_null(f, "Format '%s' does not exist", fmt);
 
-	ret = io_init(&io, f, SAMPLE_HAS_ALL);
+	ret = io_init(&io, f, NULL, SAMPLE_HAS_ALL);
 	cr_assert_eq(ret, 0);
 
 	ret = io_open(&io, fn);
