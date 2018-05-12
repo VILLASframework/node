@@ -84,10 +84,6 @@ int io_print(struct io *io, struct sample *smps[], unsigned cnt);
 
 int io_scan(struct io *io, struct sample *smps[], unsigned cnt);
 
-int io_scan_lines(struct io *io, struct sample *smps[], unsigned cnt);
-
-int io_print_lines(struct io *io, struct sample *smps[], unsigned cnt);
-
 int io_eof(struct io *io);
 
 void io_rewind(struct io *io);

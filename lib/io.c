@@ -31,6 +31,54 @@
 #include <villas/utils.h>
 #include <villas/sample.h>
 
+static int io_print_lines(struct io *io, struct sample *smps[], unsigned cnt)
+{
+	int ret, i;
+
+	FILE *f = io_stream_output(io);
+
+	for (i = 0; i < cnt; i++) {
+		size_t wbytes;
+
+		ret = format_type_sprint(io->_vt, io->output.buffer, io->output.buflen, &wbytes, &smps[i], 1, io->flags);
+		if (ret < 0)
+			return ret;
+
+		fwrite(io->output.buffer, wbytes, 1, f);
+	}
+
+	return i;
+}
+
+static int io_scan_lines(struct io *io, struct sample *smps[], unsigned cnt)
+{
+	int ret, i;
+
+	FILE *f = io_stream_input(io);
+
+	for (i = 0; i < cnt; i++) {
+		size_t rbytes;
+		ssize_t bytes;
+		char *ptr;
+
+skip:		bytes = getdelim(&io->input.buffer, &io->input.buflen, io->delimiter, f);
+		if (bytes < 0)
+			return -1; /* An error or eof occured */
+
+		/* Skip whitespaces, empty and comment lines */
+		for (ptr = io->input.buffer; isspace(*ptr); ptr++);
+
+		if (ptr[0] == '\0' || ptr[0] == '#')
+			goto skip;
+
+		ret = format_type_sscan(io->_vt, io->input.buffer, bytes, &rbytes, &smps[i], 1, io->flags);
+		if (ret < 0)
+			return ret;
+	}
+
+	return i;
+}
+
 int io_init(struct io *io, struct format_type *fmt, int flags)
 {
 	io->_vt = fmt;
@@ -351,54 +399,6 @@ int io_scan(struct io *io, struct sample *smps[], unsigned cnt)
 	}
 
 	return ret;
-}
-
-int io_print_lines(struct io *io, struct sample *smps[], unsigned cnt)
-{
-	int ret, i;
-
-	FILE *f = io_stream_output(io);
-
-	for (i = 0; i < cnt; i++) {
-		size_t wbytes;
-
-		ret = format_type_sprint(io->_vt, io->output.buffer, io->output.buflen, &wbytes, &smps[i], 1, io->flags);
-		if (ret < 0)
-			return ret;
-
-		fwrite(io->output.buffer, wbytes, 1, f);
-	}
-
-	return i;
-}
-
-int io_scan_lines(struct io *io, struct sample *smps[], unsigned cnt)
-{
-	int ret, i;
-
-	FILE *f = io_stream_input(io);
-
-	for (i = 0; i < cnt; i++) {
-		size_t rbytes;
-		ssize_t bytes;
-		char *ptr;
-
-skip:		bytes = getdelim(&io->input.buffer, &io->input.buflen, io->delimiter, f);
-		if (bytes < 0)
-			return -1; /* An error or eof occured */
-
-		/* Skip whitespaces, empty and comment lines */
-		for (ptr = io->input.buffer; isspace(*ptr); ptr++);
-
-		if (ptr[0] == '\0' || ptr[0] == '#')
-			goto skip;
-
-		ret = format_type_sscan(io->_vt, io->input.buffer, bytes, &rbytes, &smps[i], 1, io->flags);
-		if (ret < 0)
-			return ret;
-	}
-
-	return i;
 }
 
 FILE * io_stream_output(struct io *io) {
