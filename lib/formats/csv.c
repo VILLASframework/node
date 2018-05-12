@@ -28,6 +28,7 @@
 #include <villas/formats/csv.h>
 #include <villas/plugin.h>
 #include <villas/sample.h>
+#include <villas/signal.h>
 #include <villas/timing.h>
 
 size_t csv_sprint_single(struct io *io, char *buf, size_t len, struct sample *s)
@@ -159,7 +160,22 @@ void csv_header(struct io *io)
 {
 	FILE *f = io_stream_output(io);
 
-	fprintf(f, "# secs%cnsecs%coffset%csequence%cdata[]\n", CSV_SEPARATOR, CSV_SEPARATOR, CSV_SEPARATOR, CSV_SEPARATOR);
+	fprintf(f, "# secs%cnsecs%coffset%csequence", CSV_SEPARATOR, CSV_SEPARATOR, CSV_SEPARATOR);
+
+	if (io->output.signals) {
+		for (int i = 0; i < list_length(io->output.signals); i++) {
+			struct signal *s = (struct signal *) list_at(io->output.signals, i);
+
+			fprintf(f, "%c%s", CSV_SEPARATOR, s->name);
+
+			if (s->unit)
+				fprintf(f, "[%s]", s->unit);
+		}
+	}
+	else
+		fprintf(f, "%cdata[]", CSV_SEPARATOR);
+
+	fprintf(f, "\n");
 }
 
 static struct plugin p = {

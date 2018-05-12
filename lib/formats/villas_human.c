@@ -29,6 +29,7 @@
 #include <villas/utils.h>
 #include <villas/timing.h>
 #include <villas/sample.h>
+#include <villas/signal.h>
 #include <villas/formats/villas_human.h>
 
 size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, struct sample *s)
@@ -190,7 +191,22 @@ void villas_human_header(struct io *io)
 {
 	FILE *f = io_stream_output(io);
 
-	fprintf(f, "# %-20s\t\t%s\n", "sec.nsec+offset", "data[]");
+	fprintf(f, "# %-20s", "sec.nsec+offset");
+
+	if (io->output.signals) {
+		for (int i = 0; i < list_length(io->output.signals); i++) {
+			struct signal *s = (struct signal *) list_at(io->output.signals, i);
+
+			fprintf(f, "\t%s", s->name);
+
+			if (s->unit)
+				fprintf(f, "[%s]", s->unit);
+		}
+	}
+	else
+		fprintf(f, "\tdata[]");
+
+	fprintf(f, "\n");
 }
 
 static struct plugin p = {
