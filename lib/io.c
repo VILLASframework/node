@@ -279,6 +279,8 @@ int io_open(struct io *io, const char *uri)
 {
 	int ret;
 
+	assert(io->state == STATE_INITIALIZED);
+
 	ret = io->_vt->open
 		? io->_vt->open(io, uri)
 		: io_stream_open(io, uri);
@@ -287,24 +289,34 @@ int io_open(struct io *io, const char *uri)
 
 	io_header(io);
 
-	return ret;
+	io->state = STATE_OPENED;
+
+	return 0;
 }
 
 int io_close(struct io *io)
 {
 	int ret;
 
+	assert(io->state == STATE_OPENED);
+
 	io_footer(io);
 
 	ret = io->_vt->close
 		? io->_vt->close(io)
 	 	: io_stream_close(io);
+	if (ret)
+		return ret;
 
-	return ret;
+	io->state = STATE_CLOSED;
+
+	return 0;
 }
 
 int io_flush(struct io *io)
 {
+	assert(io->state == STATE_OPENED);
+
 	return io->_vt->flush
 		? io->_vt->flush(io)
 		: io_stream_flush(io);
@@ -312,6 +324,8 @@ int io_flush(struct io *io)
 
 int io_eof(struct io *io)
 {
+	assert(io->state == STATE_OPENED);
+
 	return io->_vt->eof
 		? io->_vt->eof(io)
 		: io_stream_eof(io);
@@ -319,6 +333,8 @@ int io_eof(struct io *io)
 
 void io_rewind(struct io *io)
 {
+	assert(io->state == STATE_OPENED);
+
 	if (io->_vt->rewind)
 		io->_vt->rewind(io);
 	else
@@ -327,6 +343,8 @@ void io_rewind(struct io *io)
 
 int io_fd(struct io *io)
 {
+	assert(io->state == STATE_OPENED);
+
 	return io->_vt->fd
 		? io->_vt->fd(io)
 		: io_stream_fd(io);
@@ -334,12 +352,16 @@ int io_fd(struct io *io)
 
 void io_header(struct io *io)
 {
+	assert(io->state == STATE_OPENED);
+
 	if (io->_vt->header)
 		io->_vt->header(io);
 }
 
 void io_footer(struct io *io)
 {
+	assert(io->state == STATE_OPENED);
+
 	if (io->_vt->footer)
 		io->_vt->footer(io);
 }
@@ -347,6 +369,8 @@ void io_footer(struct io *io)
 int io_print(struct io *io, struct sample *smps[], unsigned cnt)
 {
 	int ret;
+
+	assert(io->state == STATE_OPENED);
 
 	if (io->_vt->print)
 		ret = io->_vt->print(io, smps, cnt);
@@ -378,6 +402,8 @@ int io_scan(struct io *io, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 
+	assert(io->state == STATE_OPENED);
+
 	if (io->_vt->scan)
 		ret = io->_vt->scan(io, smps, cnt);
 	else if (io->flags & IO_NEWLINES)
@@ -402,12 +428,18 @@ int io_scan(struct io *io, struct sample *smps[], unsigned cnt)
 }
 
 FILE * io_stream_output(struct io *io) {
+	if (io->state != STATE_OPENED)
+		return 0;
+
 	return io->mode == IO_MODE_ADVIO
 		? io->output.stream.adv->file
 		: io->output.stream.std;
 }
 
 FILE * io_stream_input(struct io *io) {
+	if (io->state != STATE_OPENED)
+		return 0;
+
 	return io->mode == IO_MODE_ADVIO
 		? io->input.stream.adv->file
 		: io->input.stream.std;

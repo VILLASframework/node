@@ -30,7 +30,9 @@ enum state {
 	STATE_PARSED		= 2,
 	STATE_CHECKED		= 3,
 	STATE_STARTED		= 4,
-	STATE_LOADED		= 4, /* alias for STATE_STARTED used by plugins */
+	STATE_LOADED		= 4, /* alias for STATE_STARTED used by struct plugin */
+	STATE_OPENED		= 4, /* alias for STATE_STARTED used by struct io */
 	STATE_STOPPED		= 5,
-	STATE_UNLOADED		= 5 /* alias for STATE_STARTED used by plugins */
+	STATE_UNLOADED		= 5, /* alias for STATE_STARTED used by struct plugin */
+	STATE_CLOSED		= 5  /* alias for STATE_STARTED used by struct io */
 };
