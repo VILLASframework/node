@@ -40,8 +40,6 @@ struct io {
 	int flags;
 
 	struct {
-		int counter;			/**< Number of samples, read or written by this IO instance */
-
 		/** A format type can use this file handle or overwrite the
 		 * format::{open,close,eof,rewind} functions and the private
 		 * data in io::_vd.
@@ -74,6 +72,10 @@ int io_destroy(struct io *io);
 int io_open(struct io *io, const char *uri);
 
 int io_close(struct io *io);
+
+void io_header(struct io *io);
+
+void io_footer(struct io *io);
 
 int io_print(struct io *io, struct sample *smps[], unsigned cnt);
 

@@ -194,6 +194,15 @@ int csv_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 	return i;
 }
 
+void csv_header(struct io *io)
+{
+	FILE *f = io->mode == IO_MODE_ADVIO
+			? io->output.stream.adv->file
+			: io->output.stream.std;
+
+	fprintf(f, "# secs%cnsecs%coffset%csequence%cdata[]\n", CSV_SEPARATOR, CSV_SEPARATOR, CSV_SEPARATOR, CSV_SEPARATOR);
+}
+
 static struct plugin p = {
 	.name = "csv",
 	.description = "Tabulator-separated values",
@@ -203,7 +212,8 @@ static struct plugin p = {
 		.fscan	= csv_fscan,
 		.sprint	= csv_sprint,
 		.sscan	= csv_sscan,
-		.size = 0
+		.header	= csv_header,
+		.size = 0,
 	}
 };
 

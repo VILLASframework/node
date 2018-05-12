@@ -218,16 +218,30 @@ int io_stream_fd(struct io *io)
 
 int io_open(struct io *io, const char *uri)
 {
-	return io->_vt->open
+	int ret;
+
+	ret = io->_vt->open
 		? io->_vt->open(io, uri)
 		: io_stream_open(io, uri);
+	if (ret)
+		return ret;
+
+	io_header(io);
+
+	return ret;
 }
 
 int io_close(struct io *io)
 {
-	return io->_vt->close
+	int ret;
+
+	io_footer(io);
+
+	ret = io->_vt->close
 		? io->_vt->close(io)
 	 	: io_stream_close(io);
+
+	return ret;
 }
 
 int io_flush(struct io *io)
@@ -256,6 +270,18 @@ int io_fd(struct io *io)
 	return io->_vt->fd
 		? io->_vt->fd(io)
 		: io_stream_fd(io);
+}
+
+void io_header(struct io *io)
+{
+	if (io->_vt->header)
+		io->_vt->header(io);
+}
+
+void io_footer(struct io *io)
+{
+	if (io->_vt->footer)
+		io->_vt->footer(io);
 }
 
 int io_print(struct io *io, struct sample *smps[], unsigned cnt)

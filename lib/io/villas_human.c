@@ -233,24 +233,13 @@ int villas_human_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 	return i;
 }
 
-int villas_human_print(struct io *io, struct sample *smps[], unsigned cnt)
+void villas_human_header(struct io *io)
 {
-	struct villas_human *h = (struct villas_human *) io->_vd;
-
 	FILE *f = io->mode == IO_MODE_ADVIO
 			? io->output.stream.adv->file
 			: io->output.stream.std;
 
-	if (!h->header_written) {
-		fprintf(f, "# %-20s\t\t%s\n", "sec.nsec+offset", "data[]");
-
-		if (io->flags & IO_FLUSH)
-			io_flush(io);
-
-		h->header_written = true;
-	}
-
-	return villas_human_fprint(f, smps, cnt, io->flags);
+	fprintf(f, "# %-20s\t\t%s\n", "sec.nsec+offset", "data[]");
 }
 
 int villas_human_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
@@ -280,28 +269,18 @@ int villas_human_open(struct io *io, const char *uri)
 	return 0;
 }
 
-void villas_human_rewind(struct io *io)
-{
-	struct villas_human *h = (struct villas_human *) io->_vd;
-
-	h->header_written = false;
-
-	io_stream_rewind(io);
-}
-
 static struct plugin p = {
 	.name = "villas.human",
 	.description = "VILLAS human readable format",
 	.type = PLUGIN_TYPE_IO,
 	.io = {
 		.open	= villas_human_open,
-		.rewind	= villas_human_rewind,
-		.print	= villas_human_print,
 		.fprint	= villas_human_fprint,
 		.fscan	= villas_human_fscan,
 		.sprint	= villas_human_sprint,
 		.sscan	= villas_human_sscan,
-		.size	= sizeof(struct villas_human)
+		.header = villas_human_header,
+		.size	= sizeof(struct villas_human),
 	}
 };
 

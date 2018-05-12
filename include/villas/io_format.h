@@ -76,6 +76,13 @@ struct io_format {
 
 	int (*print)(struct io *io, struct sample *smps[], unsigned cnt);
 	int (*scan)( struct io *io, struct sample *smps[], unsigned cnt);
+
+	/** Print a header. */
+	void (*header)(struct io *io);
+
+	/** Print a footer. */
+	void (*footer)(struct io *io);
+
 	/** @} */
 
 	/** @{
