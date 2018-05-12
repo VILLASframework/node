@@ -31,7 +31,7 @@
 #include <villas/signal.h>
 #include <villas/timing.h>
 
-size_t csv_sprint_single(struct io *io, char *buf, size_t len, struct sample *s)
+static size_t csv_sprint_single(struct io *io, char *buf, size_t len, struct sample *s)
 {
 	size_t off = 0;
 
@@ -66,7 +66,7 @@ size_t csv_sprint_single(struct io *io, char *buf, size_t len, struct sample *s)
 	return off;
 }
 
-size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struct sample *s)
+static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struct sample *s)
 {
 	const char *ptr = buf;
 	char *end;

@@ -26,12 +26,10 @@
 
 /* Forward declarations */
 struct sample;
+struct io;
 
-typedef int (*json_pack_cb_t)(json_t **j, struct sample *smp, int flags);
-typedef int (*json_unpack_cb_t)(json_t *j, struct sample *s, int flags);
+int json_reserve_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
+int json_reserve_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
 
-int json_reserve_pack_sample(json_t **j, struct sample *s, int flags);
-int json_reserve_unpack_sample(json_t *j, struct sample *s, int flags);
-
-int json_reserve_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags);
-int json_reserve_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags);
+int json_reserve_print(struct io *io, struct sample *smps[], unsigned cnt);
+int json_reserve_scan(struct io *io, struct sample *smps[], unsigned cnt);

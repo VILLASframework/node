@@ -27,10 +27,8 @@
 /* Forward declarations */
 struct sample;
 
-int json_pack_sample(struct io *io, json_t **j, struct sample *s);
+int json_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
+int json_sscan(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
 
-int json_unpack_sample(struct io *io, json_t *j, struct sample *s);
-
-int json_fprint(struct io *io, FILE *f, struct sample *smps[], unsigned cnt);
-
-int json_fscan(struct io *io, FILE *f, struct sample *smps[], unsigned cnt);
+int json_print(struct io *io, struct sample *smps[], unsigned cnt);
+int json_scan(struct io *io, struct sample *smps[], unsigned cnt);

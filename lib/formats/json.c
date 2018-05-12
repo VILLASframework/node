@@ -69,7 +69,7 @@ static int json_unpack_timestamps(json_t *json_ts, struct sample *smp)
 	return 0;
 }
 
-int json_pack_sample(struct io *io, json_t **j, struct sample *smp)
+static int json_pack_sample(struct io *io, json_t **j, struct sample *smp)
 {
 	json_t *json_smp;
 	json_error_t err;
@@ -101,7 +101,7 @@ int json_pack_sample(struct io *io, json_t **j, struct sample *smp)
 	return 0;
 }
 
-int json_pack_samples(struct io *io, json_t **j, struct sample *smps[], unsigned cnt)
+static int json_pack_samples(struct io *io, json_t **j, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json_smps = json_array();
@@ -121,7 +121,7 @@ int json_pack_samples(struct io *io, json_t **j, struct sample *smps[], unsigned
 	return cnt;
 }
 
-int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *smp)
+static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *smp)
 {
 	int ret;
 	json_error_t err;
@@ -181,7 +181,7 @@ int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *smp)
 	return 0;
 }
 
-int json_unpack_samples(struct io *io, json_t *json_smps, struct sample *smps[], unsigned cnt)
+static int json_unpack_samples(struct io *io, json_t *json_smps, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json_smp;

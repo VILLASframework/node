@@ -29,7 +29,7 @@
 #include <villas/io.h>
 #include <villas/formats/json.h>
 
-int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *smp)
+static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *smp)
 {
 	json_error_t err;
 	json_t *json_data, *json_name, *json_unit, *json_value;
@@ -95,7 +95,7 @@ int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *smp)
 	return 0;
 }
 
-int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sample *smp)
+static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sample *smp)
 {
 	int ret, idx;
 	double created = -1;

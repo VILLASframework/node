@@ -30,6 +30,7 @@ struct sample;
 
 #define CSV_SEPARATOR '\t'
 
-int csv_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags);
+void csv_header(struct io *io);
 
-int csv_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags);
+int csv_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
+int csv_sprint(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);

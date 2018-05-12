@@ -29,10 +29,7 @@
 struct io;
 struct sample;
 
+void villas_human_header(struct io *io);
+
 int villas_human_print(struct io *io, struct sample *smps[], unsigned cnt);
-
 int villas_human_scan(struct io *io, struct sample *smps[], unsigned cnt);
-
-int villas_human_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags);
-
-int villas_human_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags);

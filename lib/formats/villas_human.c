@@ -32,7 +32,7 @@
 #include <villas/signal.h>
 #include <villas/formats/villas_human.h>
 
-size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, struct sample *s)
+static size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, struct sample *s)
 {
 	size_t off = 0;
 
@@ -65,7 +65,7 @@ size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, struct s
 	return off;
 }
 
-size_t villas_human_sscan_single(struct io *io, const char *buf, size_t len, struct sample *s)
+static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t len, struct sample *s)
 {
 	char *end;
 	const char *ptr = buf;
