@@ -35,9 +35,18 @@ size_t csv_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 
 	if (flags & SAMPLE_HAS_ORIGIN)
 		off += snprintf(buf + off, len - off, "%ld%c%09ld", s->ts.origin.tv_sec, CSV_SEPARATOR, s->ts.origin.tv_nsec);
+	else
+		off += snprintf(buf + off, len - off, "nan%cnan", CSV_SEPARATOR);
+
+	if (flags & SAMPLE_HAS_RECEIVED)
+		off += snprintf(buf + off, len - off, "%c%f", CSV_SEPARATOR, time_delta(&s->ts.origin, &s->ts.received));
+	else
+		off += snprintf(buf + off, len - off, "%cnan", CSV_SEPARATOR);
 
 	if (flags & SAMPLE_HAS_SEQUENCE)
 		off += snprintf(buf + off, len - off, "%c%u", CSV_SEPARATOR, s->sequence);
+	else
+		off += snprintf(buf + off, len - off, "%cnan", CSV_SEPARATOR);
 
 	for (int i = 0; i < s->length; i++) {
 		switch ((s->format >> i) & 0x1) {
@@ -75,6 +84,12 @@ size_t csv_sscan_single(const char *buf, size_t len, struct sample *s, int flags
 	ptr = end;
 
 	s->flags |= SAMPLE_HAS_ORIGIN;
+
+	double offset __attribute__((unused)) = strtof(ptr, &end);
+	if (end == ptr || *end == '\n')
+		goto out;
+
+	ptr = end;
 
 	s->sequence = strtoul(ptr, &end, 10);
 	if (end == ptr || *end == '\n')
