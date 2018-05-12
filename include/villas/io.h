@@ -32,12 +32,14 @@ struct io_format;
 
 enum io_flags {
 	IO_FLUSH		= (1 << 8),	/**< Flush the output stream after each chunk of samples. */
-	IO_NONBLOCK		= (1 << 9)	/**< Dont block io_read() while waiting for new samples. */
+	IO_NONBLOCK		= (1 << 9),	/**< Dont block io_read() while waiting for new samples. */
+	IO_NEWLINES		= (1 << 10)	/**< The samples of this format are newline delimited. */
 };
 
 struct io {
 	enum state state;
 	int flags;
+	char delimiter;				/**< Newline delimiter. */
 
 	struct {
 		/** A format type can use this file handle or overwrite the
@@ -50,6 +52,7 @@ struct io {
 		} stream;
 
 		char *buffer;
+		size_t buflen;
 
 		struct list *signals;
 		struct node *node;
@@ -81,6 +84,10 @@ int io_print(struct io *io, struct sample *smps[], unsigned cnt);
 
 int io_scan(struct io *io, struct sample *smps[], unsigned cnt);
 
+int io_scan_lines(struct io *io, struct sample *smps[], unsigned cnt);
+
+int io_print_lines(struct io *io, struct sample *smps[], unsigned cnt);
+
 int io_eof(struct io *io);
 
 void io_rewind(struct io *io);
@@ -100,3 +107,6 @@ void io_stream_rewind(struct io *io);
 int io_stream_fd(struct io *io);
 
 int io_stream_flush(struct io *io);
+
+FILE * io_stream_input(struct io *io);
+FILE * io_stream_output(struct io *io);

@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #include <villas/io.h>
 #include <villas/io_format.h>
@@ -36,6 +37,13 @@ int io_init(struct io *io, struct io_format *fmt, int flags)
 	io->_vd = alloc(fmt->size);
 
 	io->flags = flags | io->_vt->flags;
+	io->delimiter = '\n';
+
+	io->input.buflen =
+	io->output.buflen = 4096;
+
+	io->input.buffer = alloc(io->input.buflen);
+	io->output.buffer = alloc(io->output.buflen);
 
 	return io->_vt->init ? io->_vt->init(io) : 0;
 }
@@ -49,6 +57,8 @@ int io_destroy(struct io *io)
 		return ret;
 
 	free(io->_vd);
+	free(io->input.buffer);
+	free(io->output.buffer);
 
 	return 0;
 }
@@ -61,7 +71,7 @@ int io_stream_open(struct io *io, const char *uri)
 		if (!strcmp(uri, "-")) {
 			goto stdio;
 		}
-		else if (aislocal(uri)) {
+		else if (aislocal(uri) == 1) {
 			io->mode = IO_MODE_STDIO;
 
 			io->output.stream.std = fopen(uri, "a+");
@@ -194,9 +204,11 @@ void io_stream_rewind(struct io *io)
 {
 	switch (io->mode) {
 		case IO_MODE_ADVIO:
-			return arewind(io->input.stream.adv);
+			arewind(io->input.stream.adv);
+			break;
 		case IO_MODE_STDIO:
-			return rewind(io->input.stream.std);
+			rewind(io->input.stream.std);
+			break;
 		case IO_MODE_CUSTOM: { }
 	}
 }
@@ -214,7 +226,6 @@ int io_stream_fd(struct io *io)
 
 	return -1;
 }
-
 
 int io_open(struct io *io, const char *uri)
 {
@@ -260,9 +271,10 @@ int io_eof(struct io *io)
 
 void io_rewind(struct io *io)
 {
-	io->_vt->rewind
-		? io->_vt->rewind(io)
-		: io_stream_rewind(io);
+	if (io->_vt->rewind)
+		io->_vt->rewind(io);
+	else
+		io_stream_rewind(io);
 }
 
 int io_fd(struct io *io)
@@ -290,27 +302,22 @@ int io_print(struct io *io, struct sample *smps[], unsigned cnt)
 
 	if (io->_vt->print)
 		ret = io->_vt->print(io, smps, cnt);
+	else if (io->flags & IO_NEWLINES)
+		ret = io_print_lines(io, smps, cnt);
 	else {
-		FILE *f = io->mode == IO_MODE_ADVIO
-				? io->output.stream.adv->file
-				: io->output.stream.std;
-
-		//flockfile(f);
+		FILE *f = io_stream_output(io);
 
 		if (io->_vt->fprint)
-			ret = io->_vt->fprint(f, smps, cnt, io->flags);
+			ret = io_format_fprint(io->_vt, f, smps, cnt, io->flags);
 		else if (io->_vt->sprint) {
-			char buf[4096];
 			size_t wbytes;
 
-			ret = io->_vt->sprint(buf, sizeof(buf), &wbytes, smps, cnt, io->flags);
+			ret = io_format_sprint(io->_vt, io->output.buffer, io->output.buflen, &wbytes, smps, cnt, io->flags);
 
-			fwrite(buf, wbytes, 1, f);
+			fwrite(io->output.buffer, wbytes, 1, f);
 		}
 		else
 			ret = -1;
-
-		//funlockfile(f);
 	}
 
 	if (io->flags & IO_FLUSH)
@@ -325,28 +332,83 @@ int io_scan(struct io *io, struct sample *smps[], unsigned cnt)
 
 	if (io->_vt->scan)
 		ret = io->_vt->scan(io, smps, cnt);
+	else if (io->flags & IO_NEWLINES)
+		ret = io_scan_lines(io, smps, cnt);
 	else {
-		FILE *f = io->mode == IO_MODE_ADVIO
-				? io->input.stream.adv->file
-				: io->input.stream.std;
-
-		//flockfile(f);
+		FILE *f = io_stream_input(io);
 
 		if (io->_vt->fscan)
-			return io->_vt->fscan(f, smps, cnt, io->flags);
+			ret = io_format_fscan(io->_vt, f, smps, cnt, io->flags);
 		else if (io->_vt->sscan) {
 			size_t bytes, rbytes;
-			char buf[4096];
 
-			bytes = fread(buf, 1, sizeof(buf), f);
+			bytes = fread(io->input.buffer, 1, io->input.buflen, f);
 
-			ret = io->_vt->sscan(buf, bytes, &rbytes, smps, cnt, io->flags);
+			ret = io_format_sscan(io->_vt, io->input.buffer, bytes, &rbytes, smps, cnt, io->flags);
 		}
 		else
 			ret = -1;
-
-		//funlockfile(f);
 	}
 
 	return ret;
+}
+
+int io_print_lines(struct io *io, struct sample *smps[], unsigned cnt)
+{
+	int ret, i;
+
+	FILE *f = io_stream_output(io);
+
+	for (i = 0; i < cnt; i++) {
+		size_t wbytes;
+
+		ret = io_format_sprint(io->_vt, io->output.buffer, io->output.buflen, &wbytes, &smps[i], 1, io->flags);
+		if (ret < 0)
+			return ret;
+
+		fwrite(io->output.buffer, wbytes, 1, f);
+	}
+
+	return i;
+}
+
+int io_scan_lines(struct io *io, struct sample *smps[], unsigned cnt)
+{
+	int ret, i;
+
+	FILE *f = io_stream_input(io);
+
+	for (i = 0; i < cnt; i++) {
+		size_t rbytes;
+		ssize_t bytes;
+		char *ptr;
+
+skip:		bytes = getdelim(&io->input.buffer, &io->input.buflen, io->delimiter, f);
+		if (bytes < 0)
+			return -1; /* An error or eof occured */
+
+		/* Skip whitespaces, empty and comment lines */
+		for (ptr = io->input.buffer; isspace(*ptr); ptr++);
+
+		if (ptr[0] == '\0' || ptr[0] == '#')
+			goto skip;
+
+		ret = io_format_sscan(io->_vt, io->input.buffer, bytes, &rbytes, &smps[i], 1, io->flags);
+		if (ret < 0)
+			return ret;
+	}
+
+	return i;
+}
+
+FILE * io_stream_output(struct io *io) {
+	return io->mode == IO_MODE_ADVIO
+		? io->output.stream.adv->file
+		: io->output.stream.std;
+}
+
+FILE * io_stream_input(struct io *io) {
+	return io->mode == IO_MODE_ADVIO
+		? io->input.stream.adv->file
+		: io->input.stream.std;
 }

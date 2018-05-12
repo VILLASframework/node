@@ -21,7 +21,6 @@
  *********************************************************************************/
 
 #include <stdbool.h>
-#include <ctype.h>
 #include <inttypes.h>
 #include <string.h>
 
@@ -187,68 +186,11 @@ int villas_human_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smp
 	return i;
 }
 
-int villas_human_fscan_single(FILE *f, struct sample *s, int flags)
-{
-	char *ptr, line[4096];
-
-skip:	if (fgets(line, sizeof(line), f) == NULL)
-		return -1; /* An error occured */
-
-	/* Skip whitespaces, empty and comment lines */
-	for (ptr = line; isspace(*ptr); ptr++);
-	if (*ptr == '\0' || *ptr == '#')
-		goto skip;
-
-	return villas_human_sscan_single(line, strlen(line), s, flags);
-}
-
-int villas_human_fprint_single(FILE *f, struct sample *s, int flags)
-{
-	int ret;
-	char line[4096];
-
-	ret = villas_human_sprint_single(line, sizeof(line), s, flags);
-	if (ret < 0)
-		return ret;
-
-	fputs(line, f);
-
-	return 0;
-}
-
-int villas_human_fprint(FILE *f, struct sample *smps[], unsigned cnt, int flags)
-{
-	int ret, i;
-
-	for (i = 0; i < cnt; i++) {
-		ret = villas_human_fprint_single(f, smps[i], flags);
-		if (ret < 0)
-			return ret;
-	}
-
-	return i;
-}
-
 void villas_human_header(struct io *io)
 {
-	FILE *f = io->mode == IO_MODE_ADVIO
-			? io->output.stream.adv->file
-			: io->output.stream.std;
+	FILE *f = io_stream_output(io);
 
 	fprintf(f, "# %-20s\t\t%s\n", "sec.nsec+offset", "data[]");
-}
-
-int villas_human_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
-{
-	int ret, i;
-
-	for (i = 0; i < cnt; i++) {
-		ret = villas_human_fscan_single(f, smps[i], flags);
-		if (ret < 0)
-			return ret;
-	}
-
-	return i;
 }
 
 static struct plugin p = {
@@ -256,12 +198,11 @@ static struct plugin p = {
 	.description = "VILLAS human readable format",
 	.type = PLUGIN_TYPE_IO,
 	.io = {
-		.fprint	= villas_human_fprint,
-		.fscan	= villas_human_fscan,
 		.sprint	= villas_human_sprint,
 		.sscan	= villas_human_sscan,
 		.header = villas_human_header,
 		.size	= 0,
+		.flags	= IO_NEWLINES
 	}
 };
 
