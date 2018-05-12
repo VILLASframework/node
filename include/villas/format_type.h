@@ -29,11 +29,11 @@
 struct sample;
 struct io;
 
-enum io_format_flags {
-	IO_FORMAT_BINARY	= (1 << 8)
+enum format_type_flags {
+	format_type_BINARY	= (1 << 8)
 };
 
-struct io_format {
+struct format_type {
 	int (*init)(struct io *io);
 	int (*destroy)(struct io *io);
 
@@ -89,16 +89,16 @@ struct io_format {
 	 * Low-level interface
 	 */
 
-	/** @see io_format_sscan */
+	/** @see format_type_sscan */
 	int (*sscan)(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags);
 
-	/** @see io_format_sprint */
+	/** @see format_type_sprint */
 	int (*sprint)(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags);
 
-	/** @see io_format_fscan */
+	/** @see format_type_fscan */
 	int (*fscan)(FILE *f, struct sample *smps[], unsigned cnt, int flags);
 
-	/** @see io_format_fprint */
+	/** @see format_type_fprint */
 	int (*fprint)(FILE *f, struct sample *smps[], unsigned cnt, int flags);
 
 	/** @} */
@@ -107,7 +107,7 @@ struct io_format {
 	int flags;		/**< A set of flags which is automatically used. */
 };
 
-struct io_format * io_format_lookup(const char *name);
+struct format_type * format_type_lookup(const char *name);
 
 /** Parse samples from the buffer \p buf with a length of \p len bytes.
  *
@@ -120,7 +120,7 @@ struct io_format * io_format_lookup(const char *name);
  * @retval >=0		The number of samples which have been parsed from \p buf and written into \p smps.
  * @retval <0		Something went wrong.
  */
-int io_format_sscan(struct io_format *fmt, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags);
+int format_type_sscan(struct format_type *fmt, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags);
 
 /** Print \p cnt samples from \p smps into buffer \p buf of length \p len.
  *
@@ -133,18 +133,18 @@ int io_format_sscan(struct io_format *fmt, char *buf, size_t len, size_t *rbytes
  * @retval >=0		The number of samples from \p smps which have been written into \p buf.
  * @retval <0		Something went wrong.
  */
-int io_format_sprint(struct io_format *fmt, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags);
+int format_type_sprint(struct format_type *fmt, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags);
 
 /** Parse up to \p cnt samples from stream \p f into array \p smps.
  *
  * @retval >=0		The number of samples which have been parsed from \p f and written into \p smps.
  * @retval <0		Something went wrong.
  */
-int io_format_fscan(struct io_format *fmt, FILE *f, struct sample *smps[], unsigned cnt, int flags);
+int format_type_fscan(struct format_type *fmt, FILE *f, struct sample *smps[], unsigned cnt, int flags);
 
 /** Print \p cnt samples from \p smps to stream \p f.
  *
  * @retval >=0		The number of samples from \p smps which have been written to \p f.
  * @retval <0		Something went wrong.
  */
-int io_format_fprint(struct io_format *fmt, FILE *f, struct sample *smps[], unsigned cnt, int flags);
+int format_type_fprint(struct format_type *fmt, FILE *f, struct sample *smps[], unsigned cnt, int flags);

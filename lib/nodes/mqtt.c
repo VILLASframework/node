@@ -26,7 +26,7 @@
 #include <villas/nodes/mqtt.h>
 #include <villas/plugin.h>
 #include <villas/utils.h>
-#include <villas/io_format.h>
+#include <villas/format_type.h>
 
 #ifdef MQTT_THREAD
 #include <pthread.h>
@@ -183,7 +183,7 @@ static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct
 		return;
 	}
 
-	ret = io_format_sscan(m->format, msg->payload, msg->payloadlen, NULL, &smp, 1, 0);
+	ret = format_type_sscan(m->format, msg->payload, msg->payloadlen, NULL, &smp, 1, 0);
 	if (ret != 1)
 		return;
 
@@ -278,7 +278,7 @@ int mqtt_parse(struct node *n, json_t *cfg)
 		m->ssl.keyfile = keyfile ? strdup(keyfile) : NULL;
 	}
 
-	m->format = io_format_lookup(format);
+	m->format = format_type_lookup(format);
 	if (!m->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 
@@ -490,7 +490,7 @@ int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	char data[1500];
 
-	ret = io_format_sprint(m->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_HAS_ALL);
+	ret = format_type_sprint(m->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_HAS_ALL);
 	if (ret <= 0)
 		return -1;
 

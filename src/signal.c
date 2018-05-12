@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to initialize node");
 
-	p = plugin_lookup(PLUGIN_TYPE_IO, format);
+	p = plugin_lookup(PLUGIN_TYPE_FORMAT, format);
 	if (!p)
 		error("Invalid output format '%s'", format);
 

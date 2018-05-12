@@ -31,7 +31,7 @@
 
 struct print {
 	struct io io;
-	struct io_format *format;
+	struct format_type *format;
 
 	const char *uri;
 };
@@ -41,7 +41,7 @@ static int print_init(struct hook *h)
 	struct print *p = (struct print *) h->_vd;
 
 	p->uri = NULL;
-	p->format = io_format_lookup("villas.human");
+	p->format = format_type_lookup("villas.human");
 
 	return 0;
 }
@@ -93,7 +93,7 @@ static int print_parse(struct hook *h, json_t *cfg)
 		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
 
 	if (format) {
-		p->format = io_format_lookup(format);
+		p->format = format_type_lookup(format);
 		if (!p->format)
 			jerror(&err, "Invalid format '%s'", format);
 	}

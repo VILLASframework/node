@@ -32,7 +32,7 @@
 #include <villas/utils.h>
 #include <villas/queue.h>
 #include <villas/plugin.h>
-#include <villas/io_format.h>
+#include <villas/format_type.h>
 
 static void *context;
 
@@ -127,7 +127,7 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	z->subscriber.endpoint = ep ? strdup(ep) : NULL;
 	z->filter = filter ? strdup(filter) : NULL;
 
-	z->format = io_format_lookup(format);
+	z->format = format_type_lookup(format);
 	if (!z->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 
@@ -430,7 +430,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (ret < 0)
 		return ret;
 
-	recv = io_format_sscan(z->format, zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, cnt, 0);
+	recv = format_type_sscan(z->format, zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, cnt, 0);
 
 	ret = zmq_msg_close(&m);
 	if (ret)
@@ -449,7 +449,7 @@ int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	char data[4096];
 
-	ret = io_format_sprint(z->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_HAS_ALL);
+	ret = format_type_sprint(z->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_HAS_ALL);
 	if (ret <= 0)
 		return -1;
 

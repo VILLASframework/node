@@ -27,11 +27,11 @@
 #include <ctype.h>
 
 #include <villas/io.h>
-#include <villas/io_format.h>
+#include <villas/format_type.h>
 #include <villas/utils.h>
 #include <villas/sample.h>
 
-int io_init(struct io *io, struct io_format *fmt, int flags)
+int io_init(struct io *io, struct format_type *fmt, int flags)
 {
 	io->_vt = fmt;
 	io->_vd = alloc(fmt->size);
@@ -308,11 +308,11 @@ int io_print(struct io *io, struct sample *smps[], unsigned cnt)
 		FILE *f = io_stream_output(io);
 
 		if (io->_vt->fprint)
-			ret = io_format_fprint(io->_vt, f, smps, cnt, io->flags);
+			ret = format_type_fprint(io->_vt, f, smps, cnt, io->flags);
 		else if (io->_vt->sprint) {
 			size_t wbytes;
 
-			ret = io_format_sprint(io->_vt, io->output.buffer, io->output.buflen, &wbytes, smps, cnt, io->flags);
+			ret = format_type_sprint(io->_vt, io->output.buffer, io->output.buflen, &wbytes, smps, cnt, io->flags);
 
 			fwrite(io->output.buffer, wbytes, 1, f);
 		}
@@ -338,13 +338,13 @@ int io_scan(struct io *io, struct sample *smps[], unsigned cnt)
 		FILE *f = io_stream_input(io);
 
 		if (io->_vt->fscan)
-			ret = io_format_fscan(io->_vt, f, smps, cnt, io->flags);
+			ret = format_type_fscan(io->_vt, f, smps, cnt, io->flags);
 		else if (io->_vt->sscan) {
 			size_t bytes, rbytes;
 
 			bytes = fread(io->input.buffer, 1, io->input.buflen, f);
 
-			ret = io_format_sscan(io->_vt, io->input.buffer, bytes, &rbytes, smps, cnt, io->flags);
+			ret = format_type_sscan(io->_vt, io->input.buffer, bytes, &rbytes, smps, cnt, io->flags);
 		}
 		else
 			ret = -1;
@@ -362,7 +362,7 @@ int io_print_lines(struct io *io, struct sample *smps[], unsigned cnt)
 	for (i = 0; i < cnt; i++) {
 		size_t wbytes;
 
-		ret = io_format_sprint(io->_vt, io->output.buffer, io->output.buflen, &wbytes, &smps[i], 1, io->flags);
+		ret = format_type_sprint(io->_vt, io->output.buffer, io->output.buflen, &wbytes, &smps[i], 1, io->flags);
 		if (ret < 0)
 			return ret;
 
@@ -393,7 +393,7 @@ skip:		bytes = getdelim(&io->input.buffer, &io->input.buflen, io->delimiter, f);
 		if (ptr[0] == '\0' || ptr[0] == '#')
 			goto skip;
 
-		ret = io_format_sscan(io->_vt, io->input.buffer, bytes, &rbytes, &smps[i], 1, io->flags);
+		ret = format_type_sscan(io->_vt, io->input.buffer, bytes, &rbytes, &smps[i], 1, io->flags);
 		if (ret < 0)
 			return ret;
 	}

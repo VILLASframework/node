@@ -29,7 +29,7 @@
 #include <villas/utils.h>
 #include <villas/timing.h>
 #include <villas/sample.h>
-#include <villas/io/villas_human.h>
+#include <villas/formats/villas_human.h>
 
 size_t villas_human_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 {
@@ -196,7 +196,7 @@ void villas_human_header(struct io *io)
 static struct plugin p = {
 	.name = "villas.human",
 	.description = "VILLAS human readable format",
-	.type = PLUGIN_TYPE_IO,
+	.type = PLUGIN_TYPE_FORMAT,
 	.io = {
 		.sprint	= villas_human_sprint,
 		.sscan	= villas_human_sscan,

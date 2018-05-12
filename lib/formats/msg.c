@@ -22,8 +22,8 @@
 
 #include <arpa/inet.h>
 
-#include <villas/io/msg.h>
-#include <villas/io/msg_format.h>
+#include <villas/formats/msg.h>
+#include <villas/formats/msg_format.h>
 #include <villas/sample.h>
 #include <villas/utils.h>
 

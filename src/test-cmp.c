@@ -28,7 +28,7 @@
 
 #include <villas/sample.h>
 #include <villas/io.h>
-#include <villas/io_format.h>
+#include <villas/format_type.h>
 #include <villas/utils.h>
 #include <villas/pool.h>
 #include <villas/config.h>
@@ -40,7 +40,7 @@ struct side {
 	struct sample *sample;
 
 	struct io io;
-	struct io_format *fmt;
+	struct format_type *fmt;
 };
 
 void usage()
@@ -131,7 +131,7 @@ check:		if (optarg == endptr)
 		s[i].format = format;
 		s[i].path = argv[optind + i];
 
-		s[i].fmt = io_format_lookup(s[i].format);
+		s[i].fmt = format_type_lookup(s[i].format);
 		if (!s[i].fmt)
 			error("Invalid IO format: %s", s[i].format);
 

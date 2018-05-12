@@ -6,7 +6,7 @@
 #define PROTOBUF_C__NO_DEPRECATED
 #endif
 
-#include "lib/io/villas.pb-c.h"
+#include "lib/formats/villas.pb-c.h"
 void   villas__node__message__init
                      (Villas__Node__Message         *message)
 {

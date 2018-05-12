@@ -91,7 +91,7 @@ static void usage()
 	printf("\n");
 
 	printf("Supported IO formats:\n");
-	plugin_dump(PLUGIN_TYPE_IO);
+	plugin_dump(PLUGIN_TYPE_FORMAT);
 	printf("\n");
 
 	printf("Example:");
@@ -177,7 +177,7 @@ check:		if (optarg == endptr)
 		error("Failed to initilize memory pool");
 
 	/* Initialize IO */
-	p = plugin_lookup(PLUGIN_TYPE_IO, format);
+	p = plugin_lookup(PLUGIN_TYPE_FORMAT, format);
 	if (!p)
 		error("Unknown IO format '%s'", format);
 

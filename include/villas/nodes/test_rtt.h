@@ -49,7 +49,7 @@ struct test_rtt_case {
 struct test_rtt {
 	struct task task;	/**< The periodic task for test_rtt_read() */
 	struct io io;		/**< The format of the output file */
-	struct io_format *format;
+	struct format_type *format;
 
 	double cooldown;	/**< Number of seconds to wait beween tests. */
 

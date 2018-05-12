@@ -23,7 +23,7 @@
 #include <villas/plugin.h>
 #include <villas/sample.h>
 #include <villas/compat.h>
-#include <villas/io/json.h>
+#include <villas/formats/json.h>
 
 static json_t * json_pack_timestamps(struct sample *smp)
 {
@@ -287,7 +287,7 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 static struct plugin p = {
 	.name = "json",
 	.description = "Javascript Object Notation",
-	.type = PLUGIN_TYPE_IO,
+	.type = PLUGIN_TYPE_FORMAT,
 	.io = {
 		.fscan	= json_fscan,
 		.fprint	= json_fprint,

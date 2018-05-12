@@ -22,9 +22,9 @@
 
 #include <string.h>
 
-#include <villas/io/villas_binary.h>
-#include <villas/io/msg.h>
-#include <villas/io/msg_format.h>
+#include <villas/formats/villas_binary.h>
+#include <villas/formats/msg.h>
+#include <villas/formats/msg_format.h>
 #include <villas/sample.h>
 #include <villas/utils.h>
 #include <villas/plugin.h>
@@ -115,12 +115,12 @@ int villas_binary_sscan(char *buf, size_t len, size_t *rbytes, struct sample *sm
 static struct plugin p1 = {
 	.name = "villas.binary",
 	.description = "VILLAS binary network format",
-	.type = PLUGIN_TYPE_IO,
+	.type = PLUGIN_TYPE_FORMAT,
 	.io = {
 		.sprint	= villas_binary_sprint,
 		.sscan	= villas_binary_sscan,
 		.size	= 0,
-		.flags	= IO_FORMAT_BINARY
+		.flags	= format_type_BINARY
 	},
 };
 
@@ -128,12 +128,12 @@ static struct plugin p1 = {
 static struct plugin p2 = {
 	.name = "villas.web",
 	.description = "VILLAS binary network format for WebSockets",
-	.type = PLUGIN_TYPE_IO,
+	.type = PLUGIN_TYPE_FORMAT,
 	.io = {
 		.sprint	= villas_binary_sprint,
 		.sscan	= villas_binary_sscan,
 		.size	= 0,
-		.flags	= IO_FORMAT_BINARY | VILLAS_BINARY_WEB
+		.flags	= format_type_BINARY | VILLAS_BINARY_WEB
 	},
 };
 

@@ -45,8 +45,8 @@ LIB_PKGS += openssl libcurl
 include lib/nodes/Makefile.inc
 
 ifeq ($(WITH_IO),1)
-	LIB_SRCS += lib/io.c lib/io_format.c
-	include lib/io/Makefile.inc
+	LIB_SRCS += lib/io.c lib/format_type.c
+	include lib/formats/Makefile.inc
 endif
 
 ifeq ($(WITH_HOOKS),1)
@@ -65,7 +65,7 @@ ifeq ($(WITH_API),1)
 endif
 
 LIB_SRCS += $(patsubst %, lib/nodes/%.c, $(LIB_NODES))
-LIB_SRCS += $(patsubst %, lib/io/%.c, $(LIB_FORMATS))
+LIB_SRCS += $(patsubst %, lib/formats/%.c, $(LIB_FORMATS))
 
 # Add flags by pkg-config
 LIB_LDLIBS += $(shell $(PKGCONFIG) --libs $(LIB_PKGS))

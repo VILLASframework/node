@@ -52,7 +52,7 @@
 #include <villas/node.h>
 
 /* Forward declarations */
-struct io_format;
+struct format_type;
 
 /** The maximum length of a packet which contains stuct msg. */
 #define SOCKET_INITIAL_BUFFER_LEN 1500
@@ -85,7 +85,7 @@ struct socket {
 	union sockaddr_union local;	/**< Local address of the socket */
 	union sockaddr_union remote;	/**< Remote address of the socket */
 
-	struct io_format *format;
+	struct format_type *format;
 
 	/* Multicast options */
 	struct multicast {

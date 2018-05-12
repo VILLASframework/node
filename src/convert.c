@@ -102,7 +102,7 @@ check:		if (optarg == endptr)
 	};
 
 	for (int i = 0; i < ARRAY_LEN(dirs); i++) {
-		p = plugin_lookup(PLUGIN_TYPE_IO, dirs[i].name);
+		p = plugin_lookup(PLUGIN_TYPE_FORMAT, dirs[i].name);
 		if (!p)
 			error("Invalid format: %s", dirs[i].name);
 

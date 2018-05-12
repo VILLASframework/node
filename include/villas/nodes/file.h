@@ -39,7 +39,7 @@
 
 struct file {
 	struct io io;			/**< Format and file IO */
-	struct io_format *format;
+	struct format_type *format;
 
 	char *uri_tmpl;			/**< Format string for file name. */
 	char *uri;			/**< Real file name. */

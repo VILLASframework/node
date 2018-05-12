@@ -305,7 +305,7 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to initalize real-time");
 
-	p = plugin_lookup(PLUGIN_TYPE_IO, format);
+	p = plugin_lookup(PLUGIN_TYPE_FORMAT, format);
 	if (!p)
 		error("Invalid format: %s", format);
 

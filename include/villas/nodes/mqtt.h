@@ -36,7 +36,7 @@
 #include <villas/queue_signalled.h>
 
 /* Forward declarations */
-struct io_format;
+struct format_type;
 struct mosquitto;
 
 struct mqtt {
@@ -63,7 +63,7 @@ struct mqtt {
 		char *keyfile;	/**< SSL private key. */
 	} ssl;
 
-	struct io_format *format;
+	struct format_type *format;
 };
 
 /** @see node_type::reverse */

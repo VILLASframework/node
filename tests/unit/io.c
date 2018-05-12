@@ -33,7 +33,7 @@
 #include <villas/plugin.h>
 #include <villas/pool.h>
 #include <villas/io.h>
-#include <villas/io/raw.h>
+#include <villas/formats/raw.h>
 
 #define NUM_SAMPLES 10
 #define NUM_VALUES 10
@@ -117,7 +117,7 @@ void cr_assert_eq_sample(struct sample *a, struct sample *b)
 	}
 }
 
-void cr_assert_eq_samples(struct io_format *f, struct sample *smps[], struct sample *smpt[], unsigned cnt)
+void cr_assert_eq_samples(struct format_type *f, struct sample *smps[], struct sample *smpt[], unsigned cnt)
 {
 	/* The RAW format has certain limitations:
 	 *  - limited accuracy if smaller datatypes are used
@@ -178,7 +178,7 @@ ParameterizedTest(char *fmt, io, lowlevel)
 	char buf[8192];
 	size_t wbytes, rbytes;
 
-	struct io_format *f;
+	struct format_type *f;
 
 	struct pool p = { .state = STATE_DESTROYED };
 	struct sample *smps[NUM_SAMPLES];
@@ -187,17 +187,17 @@ ParameterizedTest(char *fmt, io, lowlevel)
 	ret = pool_init(&p, 2 * NUM_SAMPLES, SAMPLE_LEN(NUM_VALUES), &memtype_hugepage);
 	cr_assert_eq(ret, 0);
 
-	info("format = %s", fmt);
+	info("Running test for format = %s", fmt);
 
 	generate_samples(&p, smps, smpt, NUM_SAMPLES, NUM_VALUES);
 
-	f = io_format_lookup(fmt);
+	f = format_type_lookup(fmt);
 	cr_assert_not_null(f, "Format '%s' does not exist", fmt);
 
-	ret = io_format_sprint(f, buf, sizeof(buf), &wbytes, smps, NUM_SAMPLES, SAMPLE_HAS_ALL);
+	ret = format_type_sprint(f, buf, sizeof(buf), &wbytes, smps, NUM_SAMPLES, SAMPLE_HAS_ALL);
 	cr_assert_eq(ret, NUM_SAMPLES);
 
-	ret = io_format_sscan(f, buf, wbytes, &rbytes, smpt, NUM_SAMPLES, 0);
+	ret = format_type_sscan(f, buf, wbytes, &rbytes, smpt, NUM_SAMPLES, 0);
 	cr_assert_eq(rbytes, wbytes);
 
 	cr_assert_eq_samples(f, smps, smpt, ret);
@@ -220,11 +220,13 @@ ParameterizedTest(char *fmt, io, highlevel)
 	char *retp;
 
 	struct io io;
-	struct io_format *f;
+	struct format_type *f;
 
 	struct pool p = { .state = STATE_DESTROYED };
 	struct sample *smps[NUM_SAMPLES];
 	struct sample *smpt[NUM_SAMPLES];
+
+	info("Running test for format = %s", fmt);
 
 	ret = pool_init(&p, 2 * NUM_SAMPLES, SAMPLE_LEN(NUM_VALUES), &memtype_hugepage);
 	cr_assert_eq(ret, 0);
@@ -242,7 +244,7 @@ ParameterizedTest(char *fmt, io, highlevel)
 	ret = asprintf(&fn, "%s/file", dir);
 	cr_assert_gt(ret, 0);
 
-	f = io_format_lookup(fmt);
+	f = format_type_lookup(fmt);
 	cr_assert_not_null(f, "Format '%s' does not exist", fmt);
 
 	ret = io_init(&io, f, SAMPLE_HAS_ALL);
@@ -259,20 +261,20 @@ ParameterizedTest(char *fmt, io, highlevel)
 
 #if 0 /* Show the file contents */
 	char cmd[128];
-	if (!strcmp(fmt, "json") || !strcmp(fmt, "villas.human"))
+	if (!strcmp(fmt, "csv") || !strcmp(fmt, "json") || !strcmp(fmt, "villas.human"))
 		snprintf(cmd, sizeof(cmd), "cat %s", fn);
 	else
 		snprintf(cmd, sizeof(cmd), "hexdump -C %s", fn);
 	system(cmd);
 #endif
 
+	io_rewind(&io);
+
 	if (io.mode == IO_MODE_ADVIO)
 		adownload(io.input.stream.adv, 0);
 
-	io_rewind(&io);
-
 	cnt = io_scan(&io, smpt, NUM_SAMPLES);
-	cr_assert_gt(cnt, 0, "Failed to read samples back");
+	cr_assert_gt(cnt, 0, "Failed to read samples back: cnt=%d", cnt);
 
 	cr_assert_eq_samples(f, smps, smpt, cnt);
 

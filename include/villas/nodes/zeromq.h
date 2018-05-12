@@ -39,7 +39,7 @@
 #endif
 
 /* Forward declarations */
-struct io_format;
+struct format_type;
 struct node;
 struct sample;
 
@@ -48,7 +48,7 @@ struct zeromq {
 
 	char *filter;
 
-	struct io_format *format;
+	struct format_type *format;
 
 	struct {
 		int enabled;

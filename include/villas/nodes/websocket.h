@@ -72,7 +72,7 @@ struct websocket_connection {
 
 	struct lws *wsi;
 	struct node *node;
-	struct io_format *format;		/**< The IO format used for this connection. */
+	struct format_type *format;		/**< The IO format used for this connection. */
 	struct queue queue;			/**< For samples which are sent to the WebSocket */
 
 	struct websocket_destination *destination;

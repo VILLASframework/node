@@ -28,7 +28,7 @@
 #include <villas/utils.h>
 #include <villas/advio.h>
 #include <villas/sample.h>
-#include <villas/io/villas_human.h>
+#include <villas/formats/villas_human.h>
 
 /** This URI points to a Sciebo share which contains some test files.
  * The Sciebo share is read/write accessible via WebDAV. */
@@ -95,18 +95,17 @@ Test(advio, download_large)
 	af = afopen(BASE_URI "/download-large" , "r");
 	cr_assert(af, "Failed to download file");
 
-	ret = villas_human_fscan(af->file, &smp, 1, 0);
-	cr_assert_eq(ret, 1);
+	char line[4096];
 
-	cr_assert_eq(smp->sequence, 0);
-	cr_assert_eq(smp->length, 4);
-	cr_assert_eq(smp->ts.origin.tv_sec, 1497710378);
-	cr_assert_eq(smp->ts.origin.tv_nsec, 863332240);
+	afgets(line, 4096, af);
 
-	float data[] = { 0.022245, 0.000000, -1.000000, 1.000000 };
+	/* Check first line */
+	cr_assert_str_eq(line, "# VILLASnode signal params: type=mixed, values=4, rate=1000.000000, limit=100000, amplitude=1.000000, freq=1.000000\n");
 
-	for (int i = 0; i < smp->length; i++)
-		cr_assert_float_eq(smp->data[i].f, data[i], 1e-5);
+	while(afgets(line, 4096, af));
+
+	/* Check last line */
+	cr_assert_str_eq(line, "1497710478.862332239(99999)	0.752074	-0.006283	1.000000	0.996000\n");
 
 	ret = afclose(af);
 	cr_assert_eq(ret, 0, "Failed to close file");

@@ -24,37 +24,37 @@
 #include <stdio.h>
 
 #include <villas/plugin.h>
-#include <villas/io_format.h>
+#include <villas/format_type.h>
 
-int io_format_sscan(struct io_format *fmt, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
+int format_type_sscan(struct format_type *fmt, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt, int flags)
 {
 	flags |= fmt->flags;
 
 	return fmt->sscan ? fmt->sscan(buf, len, rbytes, smps, cnt, flags) : -1;
 }
 
-int io_format_sprint(struct io_format *fmt, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
+int format_type_sprint(struct format_type *fmt, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
 {
 	flags |= fmt->flags;
 
 	return fmt->sprint ? fmt->sprint(buf, len, wbytes, smps, cnt, flags) : -1;
 }
 
-int io_format_fscan(struct io_format *fmt, FILE *f, struct sample *smps[], unsigned cnt, int flags)
+int format_type_fscan(struct format_type *fmt, FILE *f, struct sample *smps[], unsigned cnt, int flags)
 {
 	return fmt->sprint ? fmt->fscan(f, smps, cnt, flags) : -1;
 }
 
-int io_format_fprint(struct io_format *fmt, FILE *f, struct sample *smps[], unsigned cnt, int flags)
+int format_type_fprint(struct format_type *fmt, FILE *f, struct sample *smps[], unsigned cnt, int flags)
 {
 	return fmt->fprint ? fmt->fprint(f, smps, cnt, flags) : -1;
 }
 
-struct io_format * io_format_lookup(const char *name)
+struct format_type * format_type_lookup(const char *name)
 {
 	struct plugin *p;
 
-	p = plugin_lookup(PLUGIN_TYPE_IO, name);
+	p = plugin_lookup(PLUGIN_TYPE_FORMAT, name);
 	if (!p)
 		return NULL;
 

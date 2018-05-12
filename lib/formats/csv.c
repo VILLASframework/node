@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include <villas/io.h>
-#include <villas/io/csv.h>
+#include <villas/formats/csv.h>
 #include <villas/plugin.h>
 #include <villas/sample.h>
 #include <villas/timing.h>
@@ -165,7 +165,7 @@ void csv_header(struct io *io)
 static struct plugin p = {
 	.name = "csv",
 	.description = "Tabulator-separated values",
-	.type = PLUGIN_TYPE_IO,
+	.type = PLUGIN_TYPE_FORMAT,
 	.io = {
 		.sprint	= csv_sprint,
 		.sscan	= csv_sscan,

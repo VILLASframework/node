@@ -40,7 +40,7 @@ static int api_capabilities(struct api_action *h, json_t *args, json_t **resp, s
 			case PLUGIN_TYPE_NODE: json_array_append_new(json_nodes, json_name); break;
 			case PLUGIN_TYPE_HOOK: json_array_append_new(json_hooks, json_name); break;
 			case PLUGIN_TYPE_API:  json_array_append_new(json_apis, json_name); break;
-			case PLUGIN_TYPE_IO:   json_array_append_new(json_ios,  json_name); break;
+			case PLUGIN_TYPE_FORMAT:   json_array_append_new(json_ios,  json_name); break;
 			default:               json_decref(json_name);
 		}
 	}

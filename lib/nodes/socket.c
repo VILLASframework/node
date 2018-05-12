@@ -33,7 +33,7 @@
 #include <villas/nodes/socket.h>
 #include <villas/config.h>
 #include <villas/utils.h>
-#include <villas/io_format.h>
+#include <villas/format_type.h>
 #include <villas/sample.h>
 #include <villas/queue.h>
 #include <villas/plugin.h>
@@ -379,7 +379,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
 		goto out;
 	}
 
-	ret = io_format_sscan(s->format, ptr, bytes, &rbytes, smps, cnt, 0);
+	ret = format_type_sscan(s->format, ptr, bytes, &rbytes, smps, cnt, 0);
 
 	if (ret < 0 || bytes != rbytes)
 		warn("Received invalid packet from node: %s ret=%d, bytes=%zu, rbytes=%zu", node_name(n), ret, bytes, rbytes);
@@ -404,7 +404,7 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 	if (!buf)
 		return -1;
 
-retry:	ret = io_format_sprint(s->format, buf, buflen, &wbytes, smps, cnt, SAMPLE_HAS_ALL);
+retry:	ret = format_type_sprint(s->format, buf, buflen, &wbytes, smps, cnt, SAMPLE_HAS_ALL);
 	if (ret < 0)
 		goto out;
 
@@ -477,7 +477,7 @@ int socket_parse(struct node *n, json_t *cfg)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 	/* Format */
-	s->format = io_format_lookup(format);
+	s->format = format_type_lookup(format);
 	if (!s->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 

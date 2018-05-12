@@ -32,8 +32,8 @@
 #include <villas/buffer.h>
 #include <villas/plugin.h>
 #include <villas/nodes/websocket.h>
-#include <villas/io_format.h>
-#include <villas/io/msg_format.h>
+#include <villas/format_type.h>
+#include <villas/formats/msg_format.h>
 
 /* Private static storage */
 static struct list connections = { .state = STATE_DESTROYED };	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
@@ -161,7 +161,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				return -1;
 			}
 
-			c->format = io_format_lookup(format);
+			c->format = format_type_lookup(format);
 			if (!c->format) {
 				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_PROTOCOL_ERR, "Invalid format");
 				return -1;
@@ -233,9 +233,9 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 			pulled = queue_pull_many(&c->queue, (void **) smps, cnt);
 			if (pulled > 0) {
-				io_format_sprint(c->format, c->buffers.send.buf + LWS_PRE, c->buffers.send.size - LWS_PRE, &wbytes, smps, pulled, SAMPLE_HAS_ALL);
+				format_type_sprint(c->format, c->buffers.send.buf + LWS_PRE, c->buffers.send.size - LWS_PRE, &wbytes, smps, pulled, SAMPLE_HAS_ALL);
 
-				ret = lws_write(wsi, (unsigned char *) c->buffers.send.buf + LWS_PRE, wbytes, c->format->flags & IO_FORMAT_BINARY ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
+				ret = lws_write(wsi, (unsigned char *) c->buffers.send.buf + LWS_PRE, wbytes, c->format->flags & format_type_BINARY ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
 
 				sample_put_many(smps, pulled);
 
@@ -274,7 +274,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				if (avail < cnt)
 					warn("Pool underrun for connection: %s", websocket_connection_name(c));
 
-				recvd = io_format_sscan(c->format, c->buffers.recv.buf, c->buffers.recv.len, NULL, smps, avail, 0);
+				recvd = format_type_sscan(c->format, c->buffers.recv.buf, c->buffers.recv.len, NULL, smps, avail, 0);
 				if (recvd < 0) {
 					warn("Failed to parse sample data received on connection: %s", websocket_connection_name(c));
 					break;
@@ -367,7 +367,7 @@ int websocket_start(struct node *n)
 		c->destination = d;
 		c->_name = NULL;
 
-		c->format = io_format_lookup("villas-web"); /** @todo We could parse the format from the URI */
+		c->format = format_type_lookup("villas-web"); /** @todo We could parse the format from the URI */
 
 		d->info.context = web->context;
 		d->info.vhost = web->vhost;

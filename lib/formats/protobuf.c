@@ -25,7 +25,7 @@
 
 #include <villas/sample.h>
 #include <villas/plugin.h>
-#include <villas/io/protobuf.h>
+#include <villas/formats/protobuf.h>
 
 int protobuf_sprint(char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt, int flags)
 {
@@ -155,7 +155,7 @@ int protobuf_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[],
 static struct plugin p = {
 	.name = "protobuf",
 	.description = "Google Protobuf",
-	.type = PLUGIN_TYPE_IO,
+	.type = PLUGIN_TYPE_FORMAT,
 	.io = {
 		.sprint = protobuf_sprint,
 		.sscan  = protobuf_sscan

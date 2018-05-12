@@ -23,7 +23,7 @@
 #include <villas/sample.h>
 #include <villas/plugin.h>
 #include <villas/utils.h>
-#include <villas/io/raw.h>
+#include <villas/formats/raw.h>
 #include <villas/compat.h>
 
 /** Convert float to host byte order */
@@ -242,9 +242,9 @@ int raw_sscan(char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsi
 static struct plugin i = {			\
 	.name = n,				\
 	.description = d,			\
-	.type = PLUGIN_TYPE_IO,			\
+	.type = PLUGIN_TYPE_FORMAT,			\
 	.io = {					\
-		.flags = f | IO_FORMAT_BINARY,	\
+		.flags = f | format_type_BINARY,	\
 		.sprint = raw_sprint,		\
 		.sscan  = raw_sscan		\
 	}					\

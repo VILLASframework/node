@@ -105,7 +105,7 @@ int file_parse(struct node *n, json_t *cfg)
 	f->epoch = time_from_double(epoch_flt);
 	f->uri_tmpl = uri_tmpl ? strdup(uri_tmpl) : NULL;
 
-	f->format = io_format_lookup(format);
+	f->format = format_type_lookup(format);
 	if (!f->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 

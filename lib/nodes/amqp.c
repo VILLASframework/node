@@ -28,7 +28,7 @@
 #include <villas/plugin.h>
 #include <villas/nodes/amqp.h>
 #include <villas/utils.h>
-#include <villas/io_format.h>
+#include <villas/format_type.h>
 
 static void amqp_default_ssl_info(struct amqp_ssl_info *s)
 {
@@ -174,7 +174,7 @@ int amqp_parse(struct node *n, json_t *json)
 			a->ssl_info.client_key = strdup(client_key);
 	}
 
-	a->format = io_format_lookup(format);
+	a->format = format_type_lookup(format);
 	if (!a->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 
@@ -295,7 +295,7 @@ int amqp_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
 		return -1;
 
-	ret = io_format_sscan(a->format, env.message.body.bytes, env.message.body.len, NULL, smps, cnt, 0);
+	ret = format_type_sscan(a->format, env.message.body.bytes, env.message.body.len, NULL, smps, cnt, 0);
 
 	amqp_destroy_envelope(&env);
 
@@ -309,7 +309,7 @@ int amqp_write(struct node *n, struct sample *smps[], unsigned cnt)
 	char data[1500];
 	size_t wbytes;
 
-	ret = io_format_sprint(a->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_HAS_ALL);
+	ret = format_type_sprint(a->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_HAS_ALL);
 	if (ret <= 0)
 		return -1;
 

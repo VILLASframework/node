@@ -27,7 +27,7 @@
 #include <villas/plugin.h>
 #include <villas/nodes/nanomsg.h>
 #include <villas/utils.h>
-#include <villas/io_format.h>
+#include <villas/format_type.h>
 
 int nanomsg_reverse(struct node *n)
 {
@@ -112,7 +112,7 @@ int nanomsg_parse(struct node *n, json_t *cfg)
 			error("Invalid type for 'subscribe' setting of node %s", node_name(n));
 	}
 
-	m->format = io_format_lookup(format);
+	m->format = format_type_lookup(format);
 	if (!m->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 
@@ -223,7 +223,7 @@ int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (bytes < 0)
 		return -1;
 
-	return io_format_sscan(m->format, data, bytes, NULL, smps, cnt, 0);
+	return format_type_sscan(m->format, data, bytes, NULL, smps, cnt, 0);
 }
 
 int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)
@@ -235,7 +235,7 @@ int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	char data[NANOMSG_MAX_PACKET_LEN];
 
-	ret = io_format_sprint(m->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_HAS_ALL);
+	ret = format_type_sprint(m->format, data, sizeof(data), &wbytes, smps, cnt, SAMPLE_HAS_ALL);
 	if (ret <= 0)
 		return -1;
 

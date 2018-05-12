@@ -26,7 +26,7 @@
 #include <villas/signal.h>
 #include <villas/compat.h>
 #include <villas/timing.h>
-#include <villas/io/json.h>
+#include <villas/formats/json.h>
 
 int json_reserve_pack_sample(json_t **j, struct sample *smp, int flags)
 {
@@ -251,7 +251,7 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 static struct plugin p = {
 	.name = "json.reserve",
 	.description = "RESERVE JSON format",
-	.type = PLUGIN_TYPE_IO,
+	.type = PLUGIN_TYPE_FORMAT,
 	.io = {
 		.fscan	= json_reserve_fscan,
 		.fprint	= json_reserve_fprint,

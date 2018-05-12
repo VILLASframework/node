@@ -107,7 +107,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 	t->prefix = strdup(prefix);
 
 	/* Initialize IO module */
-	t->format = io_format_lookup(format);
+	t->format = format_type_lookup(format);
 	if (!t->format)
 		error("Invalid value for setting 'format' of node %s", node_name(n));
 

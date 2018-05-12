@@ -38,7 +38,7 @@
 #define NANOMSG_MAX_PACKET_LEN 1500
 
 /* Forward declarations */
-struct io_format;
+struct format_type;
 
 struct nanomsg {
 	struct {
@@ -51,7 +51,7 @@ struct nanomsg {
 		struct list endpoints;
 	} subscriber;
 
-	struct io_format *format;
+	struct format_type *format;
 };
 
 /** @see node_type::print */

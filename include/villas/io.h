@@ -28,7 +28,7 @@
 
 /* Forward declarations */
 struct sample;
-struct io_format;
+struct format_type;
 
 enum io_flags {
 	IO_FLUSH		= (1 << 8),	/**< Flush the output stream after each chunk of samples. */
@@ -65,10 +65,10 @@ struct io {
 	} mode;
 
 	void *_vd;
-	struct io_format *_vt;
+	struct format_type *_vt;
 };
 
-int io_init(struct io *io, struct io_format *fmt, int flags);
+int io_init(struct io *io, struct format_type *fmt, int flags);
 
 int io_destroy(struct io *io);
 
