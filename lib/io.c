@@ -64,23 +64,23 @@ int io_stream_open(struct io *io, const char *uri)
 		else if (aislocal(uri)) {
 			io->mode = IO_MODE_STDIO;
 
-			io->stdio.output = fopen(uri, "a+");
-			if (io->stdio.output == NULL)
+			io->output.stream.std = fopen(uri, "a+");
+			if (io->output.stream.std == NULL)
 				return -1;
 
-			io->stdio.input  = fopen(uri, "r");
-			if (io->stdio.input == NULL)
+			io->input.stream.std  = fopen(uri, "r");
+			if (io->input.stream.std == NULL)
 				return -1;
 		}
 		else {
 			io->mode = IO_MODE_ADVIO;
 
-			io->advio.output = afopen(uri, "a+");
-			if (io->advio.output == NULL)
+			io->output.stream.adv = afopen(uri, "a+");
+			if (io->output.stream.adv == NULL)
 				return -1;
 
-			io->advio.input = afopen(uri, "a+");
-			if (io->advio.input == NULL)
+			io->input.stream.adv = afopen(uri, "a+");
+			if (io->input.stream.adv == NULL)
 				return -2;
 		}
 	}
@@ -88,8 +88,8 @@ int io_stream_open(struct io *io, const char *uri)
 stdio:		io->mode = IO_MODE_STDIO;
 		io->flags |= IO_FLUSH;
 
-		io->stdio.input  = stdin;
-		io->stdio.output = stdout;
+		io->input.stream.std  = stdin;
+		io->output.stream.std = stdout;
 	}
 
 	/* Make stream non-blocking if desired */
@@ -113,11 +113,11 @@ stdio:		io->mode = IO_MODE_STDIO;
 
 	/* Enable line buffering on stdio */
 	if (io->mode == IO_MODE_STDIO) {
-		ret = setvbuf(io->stdio.input, NULL, _IOLBF, BUFSIZ);
+		ret = setvbuf(io->input.stream.std, NULL, _IOLBF, BUFSIZ);
 		if (ret)
 			return -1;
 
-		ret = setvbuf(io->stdio.output, NULL, _IOLBF, BUFSIZ);
+		ret = setvbuf(io->output.stream.std, NULL, _IOLBF, BUFSIZ);
 		if (ret)
 			return -1;
 	}
@@ -131,25 +131,25 @@ int io_stream_close(struct io *io)
 
 	switch (io->mode) {
 		case IO_MODE_ADVIO:
-			ret = afclose(io->advio.input);
+			ret = afclose(io->input.stream.adv);
 			if (ret)
 				return ret;
 
-			ret = afclose(io->advio.output);
+			ret = afclose(io->output.stream.adv);
 			if (ret)
 				return ret;
 
 			return 0;
 
 		case IO_MODE_STDIO:
-			if (io->stdio.input == stdin)
+			if (io->input.stream.std == stdin)
 				return 0;
 
-			ret = fclose(io->stdio.input);
+			ret = fclose(io->input.stream.std);
 			if (ret)
 				return ret;
 
-			ret = fclose(io->stdio.output);
+			ret = fclose(io->output.stream.std);
 			if (ret)
 				return ret;
 
@@ -166,9 +166,9 @@ int io_stream_flush(struct io *io)
 {
 	switch (io->mode) {
 		case IO_MODE_ADVIO:
-			return afflush(io->advio.output);
+			return afflush(io->output.stream.adv);
 		case IO_MODE_STDIO:
-			return fflush(io->stdio.output);
+			return fflush(io->output.stream.std);
 		case IO_MODE_CUSTOM:
 			return 0;
 	}
@@ -180,9 +180,9 @@ int io_stream_eof(struct io *io)
 {
 	switch (io->mode) {
 		case IO_MODE_ADVIO:
-			return afeof(io->advio.input);
+			return afeof(io->input.stream.adv);
 		case IO_MODE_STDIO:
-			return feof(io->stdio.input);
+			return feof(io->input.stream.std);
 		case IO_MODE_CUSTOM:
 			return 0;
 	}
@@ -194,9 +194,9 @@ void io_stream_rewind(struct io *io)
 {
 	switch (io->mode) {
 		case IO_MODE_ADVIO:
-			return arewind(io->advio.input);
+			return arewind(io->input.stream.adv);
 		case IO_MODE_STDIO:
-			return rewind(io->stdio.input);
+			return rewind(io->input.stream.std);
 		case IO_MODE_CUSTOM: { }
 	}
 }
@@ -205,9 +205,9 @@ int io_stream_fd(struct io *io)
 {
 	switch (io->mode) {
 		case IO_MODE_ADVIO:
-			return afileno(io->advio.input);
+			return afileno(io->input.stream.adv);
 		case IO_MODE_STDIO:
-			return fileno(io->stdio.input);
+			return fileno(io->input.stream.std);
 		case IO_MODE_CUSTOM:
 			return -1;
 	}
@@ -266,8 +266,8 @@ int io_print(struct io *io, struct sample *smps[], unsigned cnt)
 		ret = io->_vt->print(io, smps, cnt);
 	else {
 		FILE *f = io->mode == IO_MODE_ADVIO
-				? io->advio.output->file
-				: io->stdio.output;
+				? io->output.stream.adv->file
+				: io->output.stream.std;
 
 		//flockfile(f);
 
@@ -301,8 +301,8 @@ int io_scan(struct io *io, struct sample *smps[], unsigned cnt)
 		ret = io->_vt->scan(io, smps, cnt);
 	else {
 		FILE *f = io->mode == IO_MODE_ADVIO
-				? io->advio.input->file
-				: io->stdio.input;
+				? io->input.stream.adv->file
+				: io->input.stream.std;
 
 		//flockfile(f);
 

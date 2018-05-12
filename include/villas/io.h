@@ -39,31 +39,29 @@ struct io {
 	enum state state;
 	int flags;
 
+	struct {
+		int counter;			/**< Number of samples, read or written by this IO instance */
+
+		/** A format type can use this file handle or overwrite the
+		 * format::{open,close,eof,rewind} functions and the private
+		 * data in io::_vd.
+		 */
+		union {
+			FILE *std;
+			AFILE *adv;
+		} stream;
+
+		char *buffer;
+
+		struct list *signals;
+		struct node *node;
+	} input, output;
+
 	enum {
 		IO_MODE_STDIO,
 		IO_MODE_ADVIO,
 		IO_MODE_CUSTOM
 	} mode;
-
-	/** A format type can use this file handle or overwrite the
-	 * format::{open,close,eof,rewind} functions and the private
-	 * data in io::_vd.
-	 */
-	union {
-		struct {
-			FILE *input;
-			FILE *output;
-		} stdio;
-		struct {
-			AFILE *input;
-			AFILE *output;
-		} advio;
-	};
-
-	struct {
-		char *input;
-		char *output;
-	} buffer;
 
 	void *_vd;
 	struct io_format *_vt;

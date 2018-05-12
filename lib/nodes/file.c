@@ -293,7 +293,7 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 
 					/* Try to download more data if this is a remote file. */
 					if (f->io.mode == IO_MODE_ADVIO)
-						adownload(f->io.advio.input, 1);
+						adownload(f->io.input.stream.adv, 1);
 
 					goto retry;
 

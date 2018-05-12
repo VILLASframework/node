@@ -267,7 +267,7 @@ ParameterizedTest(char *fmt, io, highlevel)
 #endif
 
 	if (io.mode == IO_MODE_ADVIO)
-		adownload(io.advio.input, 0);
+		adownload(io.input.stream.adv, 0);
 
 	io_rewind(&io);
 

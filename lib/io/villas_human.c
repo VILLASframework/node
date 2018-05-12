@@ -238,8 +238,8 @@ int villas_human_print(struct io *io, struct sample *smps[], unsigned cnt)
 	struct villas_human *h = (struct villas_human *) io->_vd;
 
 	FILE *f = io->mode == IO_MODE_ADVIO
-			? io->advio.output->file
-			: io->stdio.output;
+			? io->output.stream.adv->file
+			: io->output.stream.std;
 
 	if (!h->header_written) {
 		fprintf(f, "# %-20s\t\t%s\n", "sec.nsec+offset", "data[]");
