@@ -32,10 +32,6 @@
 #include <villas/sample.h>
 #include <villas/io/villas_human.h>
 
-struct villas_human {
-	bool header_written;
-};
-
 size_t villas_human_sprint_single(char *buf, size_t len, struct sample *s, int flags)
 {
 	size_t off = 0;
@@ -255,32 +251,17 @@ int villas_human_fscan(FILE *f, struct sample *smps[], unsigned cnt, int flags)
 	return i;
 }
 
-int villas_human_open(struct io *io, const char *uri)
-{
-	struct villas_human *h = (struct villas_human *) io->_vd;
-	int ret;
-
-	ret = io_stream_open(io, uri);
-	if (ret)
-		return ret;
-
-	h->header_written = false;
-
-	return 0;
-}
-
 static struct plugin p = {
 	.name = "villas.human",
 	.description = "VILLAS human readable format",
 	.type = PLUGIN_TYPE_IO,
 	.io = {
-		.open	= villas_human_open,
 		.fprint	= villas_human_fprint,
 		.fscan	= villas_human_fscan,
 		.sprint	= villas_human_sprint,
 		.sscan	= villas_human_sscan,
 		.header = villas_human_header,
-		.size	= sizeof(struct villas_human),
+		.size	= 0,
 	}
 };
 
