@@ -100,7 +100,7 @@ struct node_type {
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*start) (struct node *n);
+	int (*start)(struct node *n);
 
 	/** Stop this node.
 	 *
@@ -123,7 +123,7 @@ struct node_type {
 	 * @param cnt	The number of messages which should be received.
 	 * @return	The number of messages actually received.
 	 */
-	int (*read) (struct node *n, struct sample *smps[], unsigned cnt);
+	int (*read)(struct node *n, struct sample *smps[], unsigned cnt);
 
 	/** Send multiple messages in a single datagram / packet.
 	 *
