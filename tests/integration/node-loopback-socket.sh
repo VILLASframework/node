@@ -51,7 +51,13 @@ cat > ${CONFIG_FILE} <<EOF
 		}
 	},
 	"paths": [
-		{ "in": "node1", "out": "node1", "hooks" : [ { "type" : "print" } ] }
+		{
+			"in": "node1",
+			"out": "node1",
+			"hooks" : [
+				{ "type" : "print" }
+			]
+		}
 	]
 }
 EOF
