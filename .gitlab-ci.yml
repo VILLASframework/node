@@ -3,6 +3,7 @@ variables:
   GIT_SUBMODULE_STRATEGY: recursive
   PREFIX: /usr/
   RSYNC_OPTS: --recursive --ignore-missing-args --chown ${DEPLOY_USER}:${DEPLOY_USER}
+  CRITERION_OPTS: --ignore-warnings
   DOCKER_TAG_DEV: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE_DEV: villas/node-dev
 
@@ -106,7 +107,7 @@ test:unit:
   dependencies:
     - build:source
   script:
-    - make run-unit-tests CRITERON_OPTS=--ignore-warnings
+    - make run-unit-tests
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker

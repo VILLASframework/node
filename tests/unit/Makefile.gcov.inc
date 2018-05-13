@@ -44,7 +44,7 @@ $(BUILDDIR)/coverage/index.html: $(addsuffix .gcdas,$(COVERAGE_TESTS)) | $$(dir 
 	@echo "Delete previous coverage information"
 	rm -f $(GCDAS)
 	@echo "Run $< for collecting coverage information (.gcda)"
-	$^
+	$^ $(CRITERION_OPTS)
 
 clean-coverage:
 	rm -rf $(BUILDDIR)/coverage $(BUILDDIR)/coverage.txt $(BUILDDIR)/coverage.xml
