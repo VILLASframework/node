@@ -186,7 +186,7 @@ static struct plugin p = {
 		.sprint	= csv_sprint,
 		.sscan	= csv_sscan,
 		.header	= csv_header,
-		.size = 0,
+		.size 	= 0,
 		.flags	= IO_NEWLINES
 	}
 };
