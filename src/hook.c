@@ -62,6 +62,10 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 	if (ret)
 		error("Failed to destroy hook");
 
+	ret = io_close(&io);
+	if (ret)
+		error("Failed to close IO");
+
 	ret = io_destroy(&io);
 	if (ret)
 		error("Failed to destroy IO");
