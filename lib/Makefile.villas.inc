@@ -50,7 +50,7 @@ ifeq ($(WITH_IO),1)
 endif
 
 ifeq ($(WITH_HOOKS),1)
-	LIB_SRCS += lib/hook.c
+	LIB_SRCS += lib/hook.c lib/hook_type.c
 	include lib/hooks/Makefile.inc
 endif
 

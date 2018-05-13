@@ -69,3 +69,14 @@ const char * node_type_name(struct node_type *vt)
 {
 	return plugin_name(vt);
 }
+
+struct node_type * node_type_lookup(const char *name)
+{
+	struct plugin *p;
+
+	p = plugin_lookup(PLUGIN_TYPE_NODE, name);
+	if (!p)
+		return NULL;
+
+	return &p->node;
+}

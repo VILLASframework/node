@@ -166,4 +166,6 @@ int node_type_stop(struct node_type *vt);
 /** Return a printable representation of the node-type. */
 const char * node_type_name(struct node_type *vt);
 
+struct node_type * node_type_lookup(const char *name);
+
 /** @} */

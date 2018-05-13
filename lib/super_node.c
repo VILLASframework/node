@@ -244,20 +244,20 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 		const char *name;
 		json_t *json_node;
 		json_object_foreach(json_nodes, name, json_node) {
-			struct plugin *p;
+			struct node_type *nt;
 			const char *type;
 
 			ret = json_unpack_ex(json_node, &err, 0, "{ s: s }", "type", &type);
 			if (ret)
 				jerror(&err, "Failed to parse node");
 
-			p = plugin_lookup(PLUGIN_TYPE_NODE, type);
-			if (!p)
+			nt = node_type_lookup(type);
+			if (!nt)
 				error("Invalid node type: %s", type);
 
 			struct node *n = (struct node *) alloc(sizeof(struct node));
 
-			ret = node_init(n, &p->node);
+			ret = node_init(n, nt);
 			if (ret)
 				error("Failed to initialize node");
 

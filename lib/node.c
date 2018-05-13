@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include <villas/config.h>
+#include <villas/hook.h>
 #include <villas/sample.h>
 #include <villas/node.h>
 #include <villas/utils.h>
@@ -101,7 +102,7 @@ int node_init2(struct node *n)
 
 int node_parse(struct node *n, json_t *cfg, const char *name)
 {
-	struct plugin *p;
+	struct node_type *nt;
 	int ret;
 
 	json_error_t err;
@@ -123,8 +124,8 @@ int node_parse(struct node *n, json_t *cfg, const char *name)
 	if (ret)
 		jerror(&err, "Failed to parse node '%s'", node_name(n));
 
-	p = plugin_lookup(PLUGIN_TYPE_NODE, type);
-	assert(&p->node == n->_vt);
+	nt = node_type_lookup(type);
+	assert(nt == n->_vt);
 
 #ifdef WITH_HOOKS
 	if (json_hooks) {

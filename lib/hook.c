@@ -19,6 +19,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
+
 #include <string.h>
 #include <math.h>
 
@@ -250,22 +251,22 @@ int hook_parse_list(struct list *list, json_t *cfg, struct path *o, struct node 
 	json_array_foreach(cfg, index, json_hook) {
 		int ret;
 		const char *type;
-		struct plugin *p;
+		struct hook_type *ht;
 		json_error_t err;
 
 		ret = json_unpack_ex(json_hook, &err, 0, "{ s: s }", "type", &type);
 		if (ret)
 			jerror(&err, "Failed to parse hook");
 
-		p = plugin_lookup(PLUGIN_TYPE_HOOK, type);
-		if (!p)
+		ht = hook_type_lookup(type);
+		if (!ht)
 			jerror(&err, "Unkown hook type '%s'", type);
 
 		struct hook *h = (struct hook *) alloc(sizeof(struct hook));
 
-		ret = hook_init(h, &p->hook, o, n);
+		ret = hook_init(h, ht, o, n);
 		if (ret)
-			error("Failed to initialize hook: %s", p->name);
+			error("Failed to initialize hook: %s", type);
 
 		ret = hook_parse(h, json_hook);
 		if (ret)

@@ -71,3 +71,6 @@ struct hook_type {
 	int (*process)(struct hook *h, struct sample *smps[], unsigned *cnt);	/**< Called whenever muxed samples are processed. */
 	int (*write)(struct hook *h, struct sample *smps[], unsigned *cnt);	/**< Called whenever samples are written to a node. */
 };
+
+struct hook_type * hook_type_lookup(const char *name);
+

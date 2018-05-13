@@ -80,10 +80,9 @@ check:		if (optarg == endptr)
 		exit(EXIT_FAILURE);
 	}
 
-	struct plugin *p;
+	struct format_type *fmt;
 	struct log log;
-	struct io input;
-	struct io output;
+	struct io input, output;
 
 	ret = log_init(&log, level, LOG_ALL);
 	if (ret)
@@ -102,11 +101,11 @@ check:		if (optarg == endptr)
 	};
 
 	for (int i = 0; i < ARRAY_LEN(dirs); i++) {
-		p = plugin_lookup(PLUGIN_TYPE_FORMAT, dirs[i].name);
-		if (!p)
+		fmt = format_type_lookup(dirs[i].name);
+		if (!fmt)
 			error("Invalid format: %s", dirs[i].name);
 
-		ret = io_init(dirs[i].io, &p->io, NULL, SAMPLE_HAS_ALL);
+		ret = io_init(dirs[i].io, fmt, NULL, SAMPLE_HAS_ALL);
 		if (ret)
 			error("Failed to initialize IO: %s", dirs[i].name);
 

@@ -108,7 +108,8 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 int main(int argc, char *argv[])
 {
 	int ret;
-	struct plugin *p;
+	struct node_type *nt;
+	struct format_type *ft;
 
 	char *format = "villas.human"; /** @todo hardcoded for now */
 
@@ -124,19 +125,19 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to intialize signals");
 
-	p = plugin_lookup(PLUGIN_TYPE_NODE, "signal");
-	if (!p)
+	nt = node_type_lookup("signal");
+	if (!nt)
 		error("Signal generation is not supported.");
 
-	ret = node_init(&n, &p->node);
+	ret = node_init(&n, nt);
 	if (ret)
 		error("Failed to initialize node");
 
-	p = plugin_lookup(PLUGIN_TYPE_FORMAT, format);
-	if (!p)
+	ft = format_type_lookup(format);
+	if (!ft)
 		error("Invalid output format '%s'", format);
 
-	ret = io_init(&io, &p->io, NULL, IO_FLUSH | (SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET));
+	ret = io_init(&io, ft, NULL, IO_FLUSH | (SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET));
 	if (ret)
 		error("Failed to initialize output");
 

@@ -44,7 +44,6 @@
 int cnt;
 
 struct sample **smps;
-struct plugin *p;
 
 struct log  l = { .state = STATE_DESTROYED };
 struct pool q = { .state = STATE_DESTROYED };
@@ -109,6 +108,9 @@ int main(int argc, char *argv[])
 {
 	int ret, recv, sent;
 	char *format = "villas.human";
+
+	struct format_type *ft;
+	struct hook_type *ht;
 
 	/* Default values */
 	cnt = 1;
@@ -181,11 +183,11 @@ check:		if (optarg == endptr)
 		error("Failed to initilize memory pool");
 
 	/* Initialize IO */
-	p = plugin_lookup(PLUGIN_TYPE_FORMAT, format);
-	if (!p)
+	ft = format_type_lookup(format);
+	if (!ft)
 		error("Unknown IO format '%s'", format);
 
-	ret = io_init(&io, &p->io, NULL, SAMPLE_HAS_ALL);
+	ret = io_init(&io, ft, NULL, SAMPLE_HAS_ALL);
 	if (ret)
 		error("Failed to initialize IO");
 
@@ -194,11 +196,11 @@ check:		if (optarg == endptr)
 		error("Failed to open IO");
 
 	/* Initialize hook */
-	p = plugin_lookup(PLUGIN_TYPE_HOOK, hook);
-	if (!p)
+	ht = hook_type_lookup(hook);
+	if (!ht)
 		error("Unknown hook function '%s'", hook);
 
-	ret = hook_init(&h, &p->hook, NULL, NULL);
+	ret = hook_init(&h, ht, NULL, NULL);
 	if (ret)
 		error("Failed to initialize hook");
 

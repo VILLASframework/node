@@ -295,7 +295,7 @@ check:		if (optarg == endptr)
 
 	char *configfile = argv[optind];
 	char *nodestr    = argv[optind+1];
-	struct plugin *p;
+	struct format_type *fmt;
 
 	ret = log_init(&sn.log, level, LOG_ALL);
 	if (ret)
@@ -325,11 +325,11 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to initalize real-time");
 
-	p = plugin_lookup(PLUGIN_TYPE_FORMAT, format);
-	if (!p)
+	fmt = format_type_lookup(format);
+	if (!fmt)
 		error("Invalid format: %s", format);
 
-	ret = io_init(&io, &p->io, NULL, SAMPLE_HAS_ALL);
+	ret = io_init(&io, fmt, NULL, SAMPLE_HAS_ALL);
 	if (ret)
 		error("Failed to initialize IO");
 
