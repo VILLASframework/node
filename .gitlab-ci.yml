@@ -106,7 +106,7 @@ test:unit:
   dependencies:
     - build:source
   script:
-    - make run-unit-tests
+    - make run-unit-tests CRITERON_OPTS=--ignore-warnings
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker

@@ -30,7 +30,7 @@ TEST_LDLIBS = $(LDLIBS) -lcriterion -lvillas -pthread -ljansson
 unit-tests: $(BUILDDIR)/unit-tests
 
 run-unit-tests: tests
-	$(BUILDDIR)/unit-tests
+	$(BUILDDIR)/unit-tests $(CRITERON_OPTS)
 
 # Compile
 $(BUILDDIR)/tests/unit/%.o: tests/unit/%.c $(BUILDDIR)/include/villas/config.h | $$(dir $$@)
