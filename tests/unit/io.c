@@ -181,9 +181,9 @@ ParameterizedTest(char *fmt, io, lowlevel)
 	struct format_type *f;
 
 	struct pool p = { .state = STATE_DESTROYED };
+	struct io io = { .state = STATE_DESTROYED };
 	struct sample *smps[NUM_SAMPLES];
 	struct sample *smpt[NUM_SAMPLES];
-	struct io io;
 
 	ret = pool_init(&p, 2 * NUM_SAMPLES, SAMPLE_LEN(NUM_VALUES), &memtype_hugepage);
 	cr_assert_eq(ret, 0);
@@ -223,9 +223,9 @@ ParameterizedTest(char *fmt, io, highlevel)
 	int ret, cnt;
 	char *retp;
 
-	struct io io;
 	struct format_type *f;
 
+	struct io io = { .state = STATE_DESTROYED };
 	struct pool p = { .state = STATE_DESTROYED };
 	struct sample *smps[NUM_SAMPLES];
 	struct sample *smpt[NUM_SAMPLES];
