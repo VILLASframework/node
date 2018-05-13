@@ -156,7 +156,7 @@ static struct plugin p = {
 	.name = "protobuf",
 	.description = "Google Protobuf",
 	.type = PLUGIN_TYPE_FORMAT,
-	.io = {
+	.format = {
 		.sprint = protobuf_sprint,
 		.sscan  = protobuf_sscan
 	}

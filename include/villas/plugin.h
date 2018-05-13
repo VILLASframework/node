@@ -23,14 +23,13 @@
 
 #pragma once
 
-#include "format_type.h"
-#include "hook.h"
-#include "api.h"
 #include "common.h"
 #include "utils.h"
-#include "node_type.h"
-
+#include "api.h"
 #include "nodes/cbuilder.h"
+#include "hook_type.h"
+#include "node_type.h"
+#include "format_type.h"
 
 /** @todo This is ugly as hell and broken on OS X / Clang anyway. */
 #define REGISTER_PLUGIN(p)					\
@@ -51,7 +50,6 @@ enum plugin_type {
 	PLUGIN_TYPE_NODE,
 	PLUGIN_TYPE_API,
 	PLUGIN_TYPE_FORMAT,
-	PLUGIN_TYPE_FPGA_IP,
 	PLUGIN_TYPE_MODEL_CBUILDER
 };
 
@@ -69,10 +67,10 @@ struct plugin {
 	int (*unload)(struct plugin *p);
 
 	union {
-		struct format_type	io;
-		struct api_action	api;
+		struct format_type	format;
 		struct node_type	node;
 		struct hook_type	hook;
+		struct api_action	api;
 		struct cbuilder_model	cb;
 	};
 };

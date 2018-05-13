@@ -34,5 +34,5 @@ struct format_type * format_type_lookup(const char *name)
 	if (!p)
 		return NULL;
 
-	return &p->io;
+	return &p->format;
 }
