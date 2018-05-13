@@ -97,12 +97,16 @@ int io_init(struct io *io, struct format_type *fmt, struct node *n, int flags)
 	io->input.buffer = alloc(io->input.buflen);
 	io->output.buffer = alloc(io->output.buflen);
 
-	if (n) {
-		io->input.node = n;
-		io->output.node = n;
+	io->input.node = n;
+	io->output.node = n;
 
+	if (n) {
 		io->input.signals = &n->signals;
 		io->output.signals = &n->signals;
+	}
+	else {
+		io->input.signals = NULL;
+		io->output.signals = NULL;
 	}
 
 	ret = io->_vt->init ? io->_vt->init(io) : 0;

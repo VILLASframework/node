@@ -130,6 +130,7 @@ check:		if (optarg == endptr)
 	for (int i = 0; i < n; i++) {
 		s[i].format = format;
 		s[i].path = argv[optind + i];
+		s[i].io.state = STATE_DESTROYED;
 
 		s[i].fmt = format_type_lookup(s[i].format);
 		if (!s[i].fmt)
