@@ -152,7 +152,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 			format = strtok(NULL, "");
 			if (!format)
-				format = "villas-web";
+				format = "villas.web";
 
 			/* Search for node whose name matches the URI. */
 			c->node = list_lookup(&p.node.instances, node);
@@ -162,7 +162,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			}
 
 			struct format_type *fmt = format_type_lookup(format);
-			if (fmt) {
+			if (!fmt) {
 				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_PROTOCOL_ERR, "Invalid format");
 				return -1;
 			}
