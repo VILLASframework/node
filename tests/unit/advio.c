@@ -97,7 +97,10 @@ Test(advio, download_large)
 
 	char line[4096];
 
-	afgets(line, 4096, af);
+	char *f;
+
+	f = afgets(line, 4096, af);
+	cr_assert_not_null(f);
 
 	/* Check first line */
 	cr_assert_str_eq(line, "# VILLASnode signal params: type=mixed, values=4, rate=1000.000000, limit=100000, amplitude=1.000000, freq=1.000000\n");
