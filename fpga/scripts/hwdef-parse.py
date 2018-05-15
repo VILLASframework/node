@@ -255,4 +255,27 @@ for bram in brams:
 	if instance in ips:
 		ips[instance]['size'] = int(size)
 
+pcies = root.xpath('.//MODULE[@MODTYPE="axi_pcie"]')
+for pcie in pcies:
+	instance = pcie.get('INSTANCE')
+	axi_bars = ips[instance].setdefault('axi_bars', {})
+	pcie_bars = ips[instance].setdefault('pcie_bars', {})
+
+	for from_bar, to_bar, from_bars in (('AXIBAR', 'PCIEBAR', axi_bars), ('PCIEBAR', 'AXIBAR', pcie_bars)):
+		from_bar_num = int(pcie.find('.//PARAMETER[@NAME="C_{}_NUM"]'.format(from_bar)).get('VALUE'))
+
+		for i in range(0, from_bar_num):
+			from_bar_to_bar_offset = int(pcie.find('.//PARAMETER[@NAME="C_{}2{}_{}"]'.format(from_bar, to_bar, i)).get('VALUE'), 16)
+			from_bars['BAR{}'.format(i)] = { 'translation': from_bar_to_bar_offset }
+
+			if from_bar == 'AXIBAR':
+				axi_bar_lo = int(pcie.find('.//PARAMETER[@NAME="C_{}_{}"]'.format(from_bar, i)).get('VALUE'), 16)
+				axi_bar_hi = int(pcie.find('.//PARAMETER[@NAME="C_{}_HIGHADDR_{}"]'.format(from_bar, i)).get('VALUE'), 16)
+				axi_bar_size = axi_bar_hi - axi_bar_lo + 1
+
+				axi_bar = from_bars['BAR{}'.format(i)]
+				axi_bar['baseaddr'] = axi_bar_lo
+				axi_bar['highaddr'] = axi_bar_hi
+				axi_bar['size'] = axi_bar_size
+
 print(json.dumps(ips, indent=2))
