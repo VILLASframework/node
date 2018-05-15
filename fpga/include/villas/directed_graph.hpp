@@ -81,7 +81,7 @@ public:
 
 	std::shared_ptr<VertexType> getVertex(VertexIdentifier vertexId) const
 	{
-		if(vertexId < 0 or vertexId >= lastVertexId)
+		if(vertexId >= lastVertexId)
 			throw std::invalid_argument("vertex doesn't exist");
 
 		// cannot use [] operator, because creates non-existing elements
@@ -92,7 +92,10 @@ public:
 	template<class UnaryPredicate>
 	VertexIdentifier findVertex(UnaryPredicate p)
 	{
-		for(auto& [vertexId, vertex] : vertices) {
+		for(auto& v : vertices) {
+			auto& vertexId = v.first;
+			auto& vertex = v.second;
+
 			if(p(vertex)) {
 				return vertexId;
 			}
@@ -103,7 +106,7 @@ public:
 
 	std::shared_ptr<EdgeType> getEdge(EdgeIdentifier edgeId) const
 	{
-		if(edgeId < 0 or edgeId >= lastEdgeId)
+		if(edgeId >= lastEdgeId)
 			throw std::invalid_argument("edge doesn't exist");
 
 		// cannot use [] operator, because creates non-existing elements
@@ -177,7 +180,9 @@ public:
 		// delete every edge that start or ends at this vertex
 		auto it = edges.begin();
 		while(it != edges.end()) {
-			auto& [edgeId, edge] = *it;
+			auto& edgeId = it->first;
+			auto& edge = it->second;
+
 			bool removeEdge = false;
 
 			if(edge->to == vertexId) {
@@ -255,8 +260,8 @@ public:
 	void dump()
 	{
 		logger->info("Vertices:");
-		for(auto& [vertexId, vertex] : vertices) {
-			(void) vertexId;
+		for(auto& v : vertices) {
+			auto& vertex = v.second;
 
 			// format connected vertices into a list
 			std::stringstream ssEdges;
@@ -268,8 +273,8 @@ public:
 		}
 
 		logger->info("Edges:");
-		for(auto& [edgeId, edge] : edges) {
-			(void) edgeId;
+		for(auto& e : edges) {
+			auto& edge = e.second;
 
 			logger->info("  {}: {} -> {}", *edge, edge->from, edge->to);
 		}
