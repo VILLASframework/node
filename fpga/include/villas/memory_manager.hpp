@@ -115,7 +115,7 @@ private:
 			return stream << static_cast<const Edge&>(mapping) << " = "
 			              << mapping.name
 			              << std::hex
-			              << "(src=0x"   << mapping.src
+			              << " (src=0x"  << mapping.src
 			              << ", dest=0x" << mapping.dest
 			              << ", size=0x" << mapping.size
 			              << ")";
@@ -159,6 +159,10 @@ public:
 	AddressSpaceId
 	getProcessAddressSpace()
 	{ return getOrCreateAddressSpace("villas-fpga"); }
+
+	AddressSpaceId
+	getPciAddressSpace()
+	{ return getOrCreateAddressSpace("PCIe"); }
 
 	AddressSpaceId
 	getProcessAddressSpaceMemoryBlock(const std::string& memoryBlock)
