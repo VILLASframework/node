@@ -245,4 +245,41 @@ private:
 	static HostRamAllocator allocator;
 };
 
+
+class HostDmaRam {
+private:
+
+	static std::string
+	getUdmaBufName(int num);
+
+	static std::string
+	getUdmaBufBasePath(int num);
+
+	static size_t
+	getUdmaBufBufSize(int num);
+
+	static uintptr_t
+	getUdmaBufPhysAddr(int num);
+
+public:
+	class HostDmaRamAllocator : public LinearAllocator {
+	public:
+		HostDmaRamAllocator(int num);
+
+		virtual ~HostDmaRamAllocator();
+
+		std::string getName() const
+		{ return getUdmaBufName(num); }
+
+	private:
+		int num;
+	};
+
+	static HostDmaRamAllocator&
+	getAllocator(int num = 0);
+
+private:
+	static std::map<int, std::unique_ptr<HostDmaRamAllocator>> allocators;
+};
+
 } // namespace villas

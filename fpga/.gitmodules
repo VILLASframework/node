@@ -7,3 +7,6 @@
 [submodule "lib/gpu/gdrcopy"]
 	path = lib/gpu/gdrcopy
 	url = https://github.com/daniel-k/gdrcopy.git
+[submodule "thirdparty/udmabuf"]
+	path = thirdparty/udmabuf
+	url = https://github.com/ikwzm/udmabuf
