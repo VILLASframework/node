@@ -212,9 +212,17 @@ public:
 	vertexGetEdges(VertexIdentifier vertexId) const
 	{ return getVertex(vertexId)->edges; }
 
+
+	using check_path_fn = std::function<bool(const Path&)>;
+
+	static bool
+	checkPath(const Path&)
+	{ return true; }
+
 	bool getPath(VertexIdentifier fromVertexId,
 	             VertexIdentifier toVertexId,
-	             Path& path)
+	             Path& path,
+	             check_path_fn pathCheckFunc = checkPath)
 	{
 		if(fromVertexId == toVertexId) {
 			// arrived at the destination
@@ -244,7 +252,8 @@ public:
 				path.push_back(edgeId);
 
 				// recursive, depth-first search
-				if(getPath(edgeOfFromVertex->to, toVertexId, path)) {
+				if(getPath(edgeOfFromVertex->to, toVertexId, path, pathCheckFunc) and
+				   pathCheckFunc(path)) {
 					// path found, we're done
 				    return true;
 				} else {

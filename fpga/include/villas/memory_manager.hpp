@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <map>
+#include <stdexcept>
 #include <unistd.h>
 
 #include "log.hpp"
@@ -73,7 +74,12 @@ private:
 	// This is a singleton, so private constructor ...
 	MemoryManager() :
 	    memoryGraph("MemoryGraph"),
-	    logger(loggerGetOrCreate("MemoryManager")) {}
+	    logger(loggerGetOrCreate("MemoryManager"))
+	{
+		pathCheckFunc = [&](const MemoryGraph::Path& path) {
+			return this->pathCheck(path);
+		};
+	}
 
 	// ... and no copying or assigning
 	MemoryManager(const MemoryManager&) = delete;
@@ -144,6 +150,8 @@ public:
 	using AddressSpaceId = MemoryGraph::VertexIdentifier;
 	using MappingId = MemoryGraph::EdgeIdentifier;
 
+	struct InvalidTranslation : public std::exception {};
+
 	/// Get singleton instance
 	static MemoryManager&
 	get();
@@ -210,6 +218,8 @@ private:
 	getTranslationFromMapping(const Mapping& mapping)
 	{ return MemoryTranslation(mapping.src, mapping.dest, mapping.size); }
 
+	bool
+	pathCheck(const MemoryGraph::Path& path);
 
 private:
 	/// Directed graph that stores address spaces and memory mappings
@@ -220,6 +230,8 @@ private:
 
 	/// Logger for universal access in this class
 	SpdLogger logger;
+
+	MemoryGraph::check_path_fn pathCheckFunc;
 
 	/// Static pointer to global instance, because this is a singleton
 	static MemoryManager* instance;

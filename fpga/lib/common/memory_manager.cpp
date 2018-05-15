@@ -2,7 +2,10 @@
 #include <limits>
 #include <cstdint>
 
+#include <villas/utils.hpp>
 #include "memory_manager.hpp"
+
+using namespace villas::utils;
 
 namespace villas {
 
@@ -76,7 +79,8 @@ MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
 {
 	// find a path through the memory graph
 	MemoryGraph::Path path;
-	if(not memoryGraph.getPath(fromAddrSpaceId, toAddrSpaceId, path)) {
+	if(not memoryGraph.getPath(fromAddrSpaceId, toAddrSpaceId, path, pathCheckFunc)) {
+
 		auto fromAddrSpace = memoryGraph.getVertex(fromAddrSpaceId);
 		auto toAddrSpace = memoryGraph.getVertex(toAddrSpaceId);
 
@@ -96,6 +100,26 @@ MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
 	}
 
 	return translation;
+}
+
+bool
+MemoryManager::pathCheck(const MemoryGraph::Path& path)
+{
+	// start with an identity mapping
+	MemoryTranslation translation(0, 0, SIZE_MAX);
+
+	// Try to add all mappings together to a common translation. If this fails
+	// there is a non-overlapping window
+	for(auto& mappingId : path) {
+		auto mapping = memoryGraph.getEdge(mappingId);
+		try {
+			translation += getTranslationFromMapping(*mapping);
+		} catch(const InvalidTranslation&) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 uintptr_t
@@ -125,8 +149,8 @@ MemoryTranslation::operator+=(const MemoryTranslation& other)
 	const uintptr_t other_src_high = other.src + other.size;
 
 	// make sure there is a common memory area
-	assert(other.src < this_dst_high);
-	assert(this->dst < other_src_high);
+	assertExcept(other.src < this_dst_high, MemoryManager::InvalidTranslation());
+	assertExcept(this->dst < other_src_high, MemoryManager::InvalidTranslation());
 
 	const uintptr_t hi = std::max(this_dst_high, other_src_high);
 	const uintptr_t lo = std::min(this->dst, other.src);
