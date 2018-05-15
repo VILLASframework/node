@@ -130,6 +130,21 @@ public:
 	{
 		const size_t size = num * sizeof(T);
 		auto mem = allocateBlock(size);
+
+		// Check if the allocated memory is really accessible by writing to the
+		// allocated memory and reading back. Exponentially increase offset to
+		// speed up testing.
+		MemoryAccessor<volatile uint8_t> byteAccessor(*mem);
+		size_t idx = 0;
+		for(int i = 0; idx < mem->getSize(); i++, idx = (1 << i)) {
+			auto val = static_cast<uint8_t>(i);
+			byteAccessor[idx] = val;
+			if(byteAccessor[idx] != val) {
+				logger->error("Cannot access allocated memory");
+				throw std::bad_alloc();
+			}
+		}
+
 		return MemoryAccessor<T>(std::move(mem));
 	}
 
@@ -180,6 +195,9 @@ public:
 
 	size_t getAvailableMemory() const
 	{ return memorySize - nextFreeAddress; }
+
+	size_t getSize() const
+	{ return memorySize; }
 
 	std::string getName() const;
 
