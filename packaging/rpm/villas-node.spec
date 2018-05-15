@@ -58,6 +58,8 @@ make DEBUG=1 run-integration-tests
 rm -rf %{?buildroot}
 
 %files
+/usr/bin/rmsem
+/usr/bin/rmshm
 /usr/bin/villas
 /usr/bin/villas-*
 /usr/bin/conf2json
