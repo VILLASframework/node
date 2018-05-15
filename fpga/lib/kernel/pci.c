@@ -325,6 +325,7 @@ int pci_get_driver(const struct pci_device *d, char *buf, size_t buflen)
 {
 	int ret;
 	char sysfs[1024], syml[1024];
+	memset(syml, 0, sizeof(syml));
 
 	snprintf(sysfs, sizeof(sysfs), "%s/bus/pci/devices/%04x:%02x:%02x.%x/driver", SYSFS_PATH,
 		d->slot.domain, d->slot.bus, d->slot.device, d->slot.function);
@@ -372,6 +373,7 @@ int pci_get_iommu_group(const struct pci_device *d)
 {
 	int ret;
 	char *group, link[1024], sysfs[1024];
+	memset(link, 0, sizeof(link));
 
 	snprintf(sysfs, sizeof(sysfs), "%s/bus/pci/devices/%04x:%02x:%02x.%x/iommu_group", SYSFS_PATH,
 		d->slot.domain, d->slot.bus, d->slot.device, d->slot.function);
