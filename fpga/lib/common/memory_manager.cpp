@@ -73,6 +73,33 @@ MemoryManager::findAddressSpace(const std::string& name)
 	});
 }
 
+std::list<MemoryManager::AddressSpaceId>
+MemoryManager::findPath(MemoryManager::AddressSpaceId fromAddrSpaceId,
+                        MemoryManager::AddressSpaceId toAddrSpaceId)
+{
+	std::list<AddressSpaceId> path;
+
+	auto fromAddrSpace = memoryGraph.getVertex(fromAddrSpaceId);
+	auto toAddrSpace = memoryGraph.getVertex(toAddrSpaceId);
+
+	// find a path through the memory graph
+	MemoryGraph::Path pathGraph;
+	if(not memoryGraph.getPath(fromAddrSpaceId, toAddrSpaceId, pathGraph, pathCheckFunc)) {
+
+		logger->debug("No translation found from ({}) to ({})",
+		              *fromAddrSpace, *toAddrSpace);
+
+		throw std::out_of_range("no translation found");
+	}
+
+	for(auto& mappingId : pathGraph) {
+		auto mapping = memoryGraph.getEdge(mappingId);
+		path.push_back(mapping->getVertexTo());
+	}
+
+	return path;
+}
+
 MemoryTranslation
 MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
                               MemoryManager::AddressSpaceId toAddrSpaceId)

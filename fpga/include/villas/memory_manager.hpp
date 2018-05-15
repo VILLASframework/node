@@ -192,6 +192,9 @@ public:
 	AddressSpaceId
 	findAddressSpace(const std::string& name);
 
+	std::list<AddressSpaceId>
+	findPath(AddressSpaceId fromAddrSpaceId, AddressSpaceId toAddrSpaceId);
+
 	MemoryTranslation
 	getTranslation(AddressSpaceId fromAddrSpaceId, AddressSpaceId toAddrSpaceId);
 
