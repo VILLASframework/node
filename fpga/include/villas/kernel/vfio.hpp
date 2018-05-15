@@ -18,7 +18,8 @@
 #include <linux/vfio.h>
 #include <sys/mman.h>
 
-#define VFIO_DEV(x)	"/dev/vfio/" x
+#define VFIO_PATH	"/dev/vfio/"
+#define VFIO_DEV	VFIO_PATH "vfio"
 
 /* Forward declarations */
 struct pci_device;
@@ -90,7 +91,7 @@ public:
 	~VfioGroup();
 
 	static std::unique_ptr<VfioGroup>
-	attach(int containerFd, int groupIndex);
+	attach(const VfioContainer& container, int groupIndex);
 
 private:
 	/// VFIO group file descriptor
@@ -137,6 +138,9 @@ public:
 
 	bool isIommuEnabled() const
 	{ return this->hasIommu; }
+
+	const int& getFd() const
+	{ return fd; }
 
 private:
 	VfioGroup& getOrAttachGroup(int index);
