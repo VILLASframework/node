@@ -108,12 +108,25 @@ VfioContainer::VfioContainer()
 			logger->error("Failed to get VFIO extensions");
 			throw std::exception();
 		}
-		else if (ret > 0)
+		else if (ret > 0) {
 			extensions |= (1 << i);
+		}
 	}
 
-	logger->debug("Version: {:#x}", version);
+	hasIommu = false;
+
+	if(not (extensions & (1 << VFIO_NOIOMMU_IOMMU))) {
+		if(not (extensions & (1 << VFIO_TYPE1_IOMMU))) {
+			logger->error("No supported IOMMU extension found");
+			throw std::exception();
+		} else {
+			hasIommu = true;
+		}
+	}
+
+	logger->debug("Version:    {:#x}", version);
 	logger->debug("Extensions: {:#x}", extensions);
+	logger->debug("IOMMU:      {}", hasIommu ? "yes" : "no");
 }
 
 
@@ -319,6 +332,11 @@ VfioContainer::memoryMap(uintptr_t virt, uintptr_t phys, size_t length)
 {
 	int ret;
 
+	if(not hasIommu) {
+		logger->error("DMA mapping not supported without IOMMU");
+		return UINTPTR_MAX;
+	}
+
 	if (length & 0xFFF) {
 		length += 0x1000;
 		length &= ~0xFFF;
@@ -362,6 +380,10 @@ bool
 VfioContainer::memoryUnmap(uintptr_t phys, size_t length)
 {
 	int ret;
+
+	if(not hasIommu) {
+		return true;
+	}
 
 	struct vfio_iommu_type1_dma_unmap dmaUnmap;
 	dmaUnmap.argsz = sizeof(struct vfio_iommu_type1_dma_unmap);
@@ -554,6 +576,11 @@ VfioDevice::pciHotReset()
 	free(reset);
 	free(reset_info);
 
+	if(not success and not group.container->isIommuEnabled()) {
+		logger->info("PCI hot reset failed, but this is expected without IOMMU");
+		return true;
+	}
+
 	return success;
 }
 
@@ -740,7 +767,11 @@ VfioGroup::attach(int containerFd, int groupIndex)
 	}
 
 	/* Set IOMMU type */
-	ret = ioctl(containerFd, VFIO_SET_IOMMU, VFIO_TYPE1_IOMMU);
+	int iommu_type = container.isIommuEnabled() ?
+	                     VFIO_TYPE1_IOMMU :
+	                     VFIO_NOIOMMU_IOMMU;
+
+	ret = ioctl(containerFd, VFIO_SET_IOMMU, iommu_type);
 	if (ret < 0) {
 		logger->error("Failed to set IOMMU type of container: {}", ret);
 		return nullptr;

@@ -135,6 +135,9 @@ public:
 	/** munmap() a region which has been mapped by vfio_map_region() */
 	bool memoryUnmap(uintptr_t phys, size_t length);
 
+	bool isIommuEnabled() const
+	{ return this->hasIommu; }
+
 private:
 	VfioGroup& getOrAttachGroup(int index);
 
@@ -143,6 +146,7 @@ private:
 	int version;
 	int extensions;
 	uint64_t iova_next;			/**< Next free IOVA address */
+	bool hasIommu;
 
 	/// All groups bound to this container
 	std::list<std::unique_ptr<VfioGroup>> groups;
