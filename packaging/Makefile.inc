@@ -24,8 +24,8 @@ TAR_OPTS = --exclude-ignore-recursive=$(SRCDIR)/.distignore --transform='s|^\.|v
 
 TAR_VILLAS = $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM)-$(RELEASE).tar.gz
 
-DEPLOY_USER ?= acs
-DEPLOY_HOST ?= villas.fein-aachen.org
+DEPLOY_USER ?= deploy
+DEPLOY_HOST ?= acs-os-fein-website
 DEPLOY_PATH ?= /var/www/villas/node
 
 packaging: rpm dist
