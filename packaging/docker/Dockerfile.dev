@@ -28,7 +28,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM fedora:27
+FROM fedora:28
 
 ARG GIT_REV=unkown
 ARG GIT_BRANCH=unkown
