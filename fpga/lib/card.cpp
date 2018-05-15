@@ -165,6 +165,11 @@ PCIeCard::lookupIp(const Vlnv& vlnv) const
 bool
 PCIeCard::mapMemoryBlock(const MemoryBlock& block)
 {
+	if(not vfioContainer->isIommuEnabled()) {
+		logger->warn("VFIO mapping not supported without IOMMU");
+		return false;
+	}
+
 	auto& mm = MemoryManager::get();
 	const auto& addrSpaceId = block.getAddrSpaceId();
 
@@ -174,7 +179,6 @@ PCIeCard::mapMemoryBlock(const MemoryBlock& block)
 	} else {
 		logger->debug("Create VFIO mapping for {}", addrSpaceId);
 	}
-
 
 	auto translationFromProcess = mm.getTranslationFromProcess(addrSpaceId);
 	uintptr_t processBaseAddr = translationFromProcess.getLocalAddr(0);
@@ -188,10 +192,8 @@ PCIeCard::mapMemoryBlock(const MemoryBlock& block)
 		return false;
 	}
 
-
-
 	mm.createMapping(iovaAddr, 0, block.getSize(),
-	                 "vfio",
+	                 "VFIO-D2H",
 	                 this->addrSpaceIdDeviceToHost,
 	                 addrSpaceId);
 
