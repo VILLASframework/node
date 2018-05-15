@@ -1,5 +1,2 @@
-*
-!build/release/packaging/rpm/*
-!thirdparty/criterion/
-!thirdparty/libiec61850/
-thirdparty/*/build/
+build/
+packaging/docker/Dockerfile.*

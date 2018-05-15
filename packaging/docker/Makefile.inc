@@ -50,6 +50,10 @@ $(DOCKER_RUN_TARGETS): run-docker-%: docker-%
 
 $(DOCKER_TARGETS): docker-%: $(BUILDDIR)/packaging/docker/Image.%
 
+ifneq ($(CI_COMMIT_TAG),)
+	DOCKER_OPTS += --tag $(DOCKER_IMAGE)-$*:$(CI_COMMIT_TAG)
+endif
+
 # The docker build targets use the --iidfile option to write the newly build image
 # id to an file. Make is using the modification timestamp of this file and the Dockerfile
 # to determine when the image needs to be rebuild.

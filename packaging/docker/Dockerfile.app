@@ -24,8 +24,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM fedora:27
+ARG BUILDER_IMAGE=villas/node-dev
 
+# This image is built by villas-node-git/packaging/docker/Dockerfile.dev
+FROM villas/node-dev:develop AS builder
+
+COPY . /villas-node/
+
+RUN rm -rf /villas-node/build
+WORKDIR /villas-node
+
+#RUN dnf -y install
+
+RUN make -j2 rpm-villas-node
+
+FROM fedora:28
 
 ARG GIT_REV=unkown
 ARG GIT_BRANCH=unkown
@@ -46,16 +59,12 @@ RUN dnf -y install \
 	libcurl \
 	jansson \
 	iproute \
-	kernel-modules-extra \
 	module-init-tools
 
-# Ugly: we need to invalidate the cache
-ADD https://villas.fein-aachen.org/packages/repodata/repomd.xml /tmp
+ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
 
-# Install the application
-RUN dnf -y --refresh install \
-	villas-node \
-	villas-node-doc
+COPY --from=builder /villas-node/build/Linux-x86_64-release/packaging/rpm/RPMS/x86_64/*.rpm /tmp/
+RUN dnf -y install /tmp/*.rpm
 
 # For WebSocket / API access
 EXPOSE 80
