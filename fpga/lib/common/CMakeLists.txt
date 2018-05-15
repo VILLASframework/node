@@ -10,4 +10,6 @@ add_library(villas-common SHARED
 
 target_include_directories(villas-common
 	PUBLIC
-	    ${CMAKE_CURRENT_LIST_DIR}/../../include/villas)
+		${CMAKE_CURRENT_LIST_DIR}/../../include/villas
+		${CMAKE_CURRENT_LIST_DIR}/../../include
+		${CMAKE_CURRENT_LIST_DIR}/../../thirdparty/spdlog/include)
