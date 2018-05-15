@@ -4,6 +4,7 @@ set(SOURCES
 	logging.cpp
 	dma.cpp
     fifo.cpp
+	gpu.cpp
 #	hls.c
 #	intc.c
 #	rtds_rtt.c

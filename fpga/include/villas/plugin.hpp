@@ -40,6 +40,7 @@ public:
 		Unknown,
 		FpgaIp,
 		FpgaCard,
+		Gpu
 	};
 
 	Plugin(Type type, const std::string& name);
