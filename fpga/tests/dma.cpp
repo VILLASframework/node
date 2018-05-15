@@ -55,7 +55,7 @@ Test(fpga, dma, .description = "DMA")
 		cr_assert(len == lenRandom, "Failed to get random data");
 
 		/* Start transfer */
-		cr_assert(dma.pingPong(src.getMemoryBlock(), dst.getMemoryBlock(), len),
+		cr_assert(dma.memcpy(src.getMemoryBlock(), dst.getMemoryBlock(), len),
 		          "DMA ping pong failed");
 
 		/* Compare data */

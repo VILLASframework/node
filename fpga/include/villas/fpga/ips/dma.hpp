@@ -55,7 +55,7 @@ public:
 	bool readComplete()
 	{ return hasScatterGather() ? readCompleteSG() : readCompleteSimple(); }
 
-	bool pingPong(const MemoryBlock& src, const MemoryBlock& dst, size_t len);
+	bool memcpy(const MemoryBlock& src, const MemoryBlock& dst, size_t len);
 
 	inline bool
 	hasScatterGather() const

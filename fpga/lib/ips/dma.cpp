@@ -132,8 +132,14 @@ Dma::reset()
 
 
 bool
-Dma::pingPong(const MemoryBlock& src, const MemoryBlock& dst, size_t len)
+Dma::memcpy(const MemoryBlock& src, const MemoryBlock& dst, size_t len)
 {
+	if(len == 0)
+		return true;
+
+	if(not connectLoopback())
+		return false;
+
 	if(this->read(dst, len) == 0)
 		return false;
 
