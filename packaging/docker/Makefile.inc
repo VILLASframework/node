@@ -46,7 +46,7 @@ $(DOCKER_DEPLOY_TARGETS): deploy-docker-%: docker-%
 	$(DOCKER) push $(DOCKER_IMAGE)-$*:$(DOCKER_TAG)
 
 $(DOCKER_RUN_TARGETS): run-docker-%: docker-%
-	$(DOCKER)  run $(DOCKER_RUN_OPTS) $(DOCKER_IMAGE)-$*:$(DOCKER_TAG)
+	$(DOCKER) run $(DOCKER_RUN_OPTS) $(DOCKER_IMAGE)-$*:$(DOCKER_TAG)
 
 $(DOCKER_TARGETS): docker-%: $(BUILDDIR)/packaging/docker/Image.%
 
