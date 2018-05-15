@@ -218,6 +218,9 @@ public:
 	dump()
 	{ memoryGraph.dump(); }
 
+	void
+	dumpToFile(const std::string& fileName)
+	{ memoryGraph.dump(fileName); }
 
 private:
 	/// Convert a Mapping to MemoryTranslation for calculations
