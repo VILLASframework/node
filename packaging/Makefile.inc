@@ -20,7 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-TAROPTS = --exclude-ignore-recursive=.distignore --transform='s|^\.|villas-node-$(VERSION_NUM)|' --show-transformed-names
+TAR_OPTS = --exclude-ignore-recursive=$(SRCDIR)/.distignore --transform='s|^\.|villas-node-$(VERSION_NUM)|' --show-transformed-names
 
 TAR_VILLAS = $(BUILDDIR)/packaging/villas-node-$(VERSION_NUM)-$(RELEASE).tar.gz
 
@@ -36,13 +36,13 @@ deploy: deploy-dist deploy-rpm deploy-docker
 dist: $(TAR_VILLAS)
 
 $(TAR_VILLAS): | $$(dir $$@)
-	tar $(TAROPTS) -C $(SRCDIR) -czf $@ .
+	tar $(TAR_OPTS) -C $(SRCDIR) -czf $@ .
 
 deploy-dist: $(TAR_VILLAS)
 	rsync $(TAR_VILLAS) $(DEPLOY_USER)@$(DEPLOY_HOST):$(DEPLOY_PATH)/src
 	
 deploy-rpm:
-	rsync -a --progress $(RPMDIR)/RPMS/ $(DEPLOY_USER)@$(DEPLOY_HOST):/var/www/packages/redhat/
+	rsync -a --progress $(BUILDDIR)/../Linux-x86_64-release/packaging/rpm/RPMS/ $(DEPLOY_USER)@$(DEPLOY_HOST):/var/www/packages/redhat/
 	ssh $(DEPLOY_USER)@$(DEPLOY_HOST) createrepo /var/www/packages/redhat
 
 clean-packaging:
