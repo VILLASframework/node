@@ -58,6 +58,12 @@ public:
 	operator==(const Edge& other)
 	{ return this->id == other.id; }
 
+	Vertex::Identifier getVertexTo() const
+	{ return to; }
+
+	Vertex::Identifier getVertexFrom() const
+	{ return from; }
+
 private:
 	Identifier id;
 	Vertex::Identifier from;
