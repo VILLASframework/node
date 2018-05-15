@@ -52,6 +52,19 @@ public:
 private:
 	static constexpr char axiInterface[] = "M_AXI";
 	static constexpr char pcieMemory[] = "BAR0";
+
+	struct AxiBar {
+		uintptr_t base;
+		size_t size;
+		uintptr_t translation;
+	};
+
+	struct PciBar {
+		uintptr_t translation;
+	};
+
+	std::map<std::string, AxiBar> axiToPcieTranslations;
+	std::map<std::string, PciBar> pcieToAxiTranslations;
 };
 
 
@@ -63,6 +76,8 @@ public:
 	static constexpr const char*
 	getCompatibleVlnvString()
 	{ return "xilinx.com:ip:axi_pcie:"; }
+
+	bool configureJson(IpCore& ip, json_t *json_ip);
 
 	IpCore* create()
 	{ return new AxiPciExpressBridge; }

@@ -63,6 +63,102 @@ AxiPciExpressBridge::init()
 	card->addrSpaceIdDeviceToHost =
 	        mm.getOrCreateAddressSpace(addrSpaceNameDeviceToHost);
 
+	auto pciAddrSpaceId = mm.getPciAddressSpace();
+
+	struct pci_region* pci_regions = nullptr;
+	size_t num_regions = pci_get_regions(card->pdev, &pci_regions);
+
+	for(size_t i = 0; i < num_regions; i++) {
+		const size_t region_size = pci_regions[i].end - pci_regions[i].start + 1;
+
+		char barName[] = "BARx";
+		barName[3] = '0' + pci_regions[i].num;
+		auto pciBar = pcieToAxiTranslations.at(barName);
+
+
+		logger->info("PCI-BAR{}: bus addr={:#x} size={:#x}",
+		             pci_regions[i].num, pci_regions[i].start, region_size);
+		logger->info("PCI-BAR{}: AXI translation offset {:#x}",
+		             i, pciBar.translation);
+
+		mm.createMapping(pci_regions[i].start, pciBar.translation, region_size,
+		                 std::string("PCI-") + barName,
+		                 pciAddrSpaceId, card->addrSpaceIdHostToDevice);
+
+	}
+
+	if(pci_regions != nullptr) {
+		logger->debug("freeing pci regions");
+		free(pci_regions);
+	}
+
+
+	for(auto& [barName, axiBar] : axiToPcieTranslations) {
+		logger->info("AXI-{}: bus addr={:#x} size={:#x}",
+		             barName, axiBar.base, axiBar.size);
+		logger->info("AXI-{}: PCI translation offset: {:#x}",
+		             barName, axiBar.translation);
+
+		auto barXAddrSpaceName = mm.getSlaveAddrSpaceName(getInstanceName(), barName);
+		auto barXAddrSpaceId = mm.getOrCreateAddressSpace(barXAddrSpaceName);
+
+		// base is already incorporated into mapping of each IP by Vivado, so
+		// the mapping src has to be 0
+		mm.createMapping(0, axiBar.translation, axiBar.size,
+		                 std::string("AXI-") + barName,
+		                 barXAddrSpaceId, pciAddrSpaceId);
+	}
+
+	return true;
+}
+
+bool
+AxiPciExpressBridgeFactory::configureJson(IpCore& ip, json_t* json_ip)
+{
+	auto logger = getLogger();
+	auto& pcie = reinterpret_cast<AxiPciExpressBridge&>(ip);
+
+	for(auto barType : std::list<std::string>{"axi_bars", "pcie_bars"}) {
+		json_t* json_bars = json_object_get(json_ip, barType.c_str());
+		if(not json_is_object(json_bars)) {
+			return false;
+		}
+
+		json_t* json_bar;
+		const char* bar_name;
+		json_object_foreach(json_bars, bar_name, json_bar) {
+			unsigned int translation;
+			int ret = json_unpack(json_bar, "{ s: i }", "translation", &translation);
+			if(ret != 0) {
+				logger->error("Cannot parse {}/{}", barType, bar_name);
+				return false;
+			}
+
+			if(barType == "axi_bars") {
+				json_int_t base, high, size;
+				int ret = json_unpack(json_bar, "{ s: I, s: I, s: I }",
+				                      "baseaddr", &base,
+				                      "highaddr", &high,
+				                      "size", &size);
+				if(ret != 0) {
+					logger->error("Cannot parse {}/{}", barType, bar_name);
+					return false;
+				}
+
+				pcie.axiToPcieTranslations[bar_name] = {
+				    .base = static_cast<uintptr_t>(base),
+				    .size = static_cast<size_t>(size),
+				    .translation = translation
+				};
+
+			} else {
+				pcie.pcieToAxiTranslations[bar_name] = {
+				    .translation = translation
+				};
+			}
+		}
+	}
+
 	return true;
 }
 
