@@ -98,8 +98,9 @@ public:	// TODO: make this private
 
 	std::string name;			/**< The name of the FPGA card */
 
-	struct pci *pci;
+	struct pci* pci;
 	struct pci_device filter;		/**< Filter for PCI device. */
+	struct pci_device* pdev;		/**< PCI device handle */
 
 	/// The VFIO container that this card is part of
 	std::shared_ptr<VfioContainer> vfioContainer;

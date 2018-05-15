@@ -203,10 +203,8 @@ PCIeCard::mapMemoryBlock(const MemoryBlock& block)
 
 
 bool
-fpga::PCIeCard::init()
+PCIeCard::init()
 {
-	struct pci_device *pdev;
-
 	auto& mm = MemoryManager::get();
 	logger = getLogger();
 
