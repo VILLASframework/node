@@ -5,6 +5,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <fstream>
 #include <stdexcept>
 #include <algorithm>
 
@@ -272,7 +273,7 @@ public:
 		return false;
 	}
 
-	void dump()
+	void dump(const std::string& fileName = "")
 	{
 		logger->info("Vertices:");
 		for(auto& v : vertices) {
@@ -287,11 +288,29 @@ public:
 			logger->info("  {} connected to: {}", *vertex, ssEdges.str());
 		}
 
+		std::fstream s(fileName, s.out | s.trunc);
+		if(s.is_open()) {
+			s << "digraph memgraph {" << std::endl;
+		}
+
 		logger->info("Edges:");
 		for(auto& e : edges) {
 			auto& edge = e.second;
 
 			logger->info("  {}: {} -> {}", *edge, edge->from, edge->to);
+			if(s.is_open()) {
+				auto from = getVertex(edge->from);
+				auto to = getVertex(edge->to);
+
+				s << std::dec;
+				s << "  \"" << *from << "\" -> \"" << *to << "\""
+				  << " [label=\"" << *edge << "\"];" << std::endl;
+			}
+		}
+
+		if(s.is_open()) {
+			s << "}" << std::endl;
+			s.close();
 		}
 	}
 
