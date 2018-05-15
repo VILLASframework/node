@@ -116,6 +116,8 @@ public:
 		free = [&](MemoryBlock* mem) {
 			logger->warn("no free callback defined for addr space {}, not freeing",
 			             mem->getAddrSpaceId());
+
+			removeMemoryBlock(*mem);
 		};
 	}
 

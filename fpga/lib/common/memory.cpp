@@ -62,6 +62,8 @@ LinearAllocator::LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId
 		              mem->getSize(), mem->getOffset(), mem->getAddrSpaceId());
 		logger->warn("free() not implemented");
 		logger->debug("available memory: {:#x} bytes", getAvailableMemory());
+
+		removeMemoryBlock(*mem);
 	};
 }
 
@@ -133,6 +135,8 @@ HostRam::HostRamAllocator::HostRamAllocator() :
 			logger->warn("munmap() failed for {:#x} of size {:#x}",
 			             mem->getOffset(), mem->getSize());
 		}
+
+		removeMemoryBlock(*mem);
 	};
 }
 
