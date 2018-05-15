@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include <stdint.h>
 #include "list.h"
 
 #define PCI_SLOT(devfn)		(((devfn) >> 3) & 0x1f)
@@ -31,6 +32,13 @@ struct pci_device {
 		int device;
 		int function;
 	} slot;			/**< Bus, Device, Function (BDF) */
+};
+
+struct pci_region {
+	int num;
+	uintptr_t start;
+	uintptr_t end;
+	unsigned long long flags;
 };
 
 struct pci {
@@ -65,6 +73,8 @@ int pci_attach_driver(const struct pci_device *d, const char *driver);
 
 /** Return the IOMMU group of this PCI device or -1 if the device is not in a group. */
 int pci_get_iommu_group(const struct pci_device *d);
+
+size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions);
 
 #ifdef __cplusplus
 }
