@@ -42,14 +42,23 @@ AxiPciExpressBridge::init()
 
 	// Throw an exception if the is no bus master interface and thus no
 	// address space we can use for translation -> error
-	const MemoryManager::AddressSpaceId myAddrSpaceid =
-	        busMasterInterfaces.at(axiInterface);
+	card->addrSpaceIdHostToDevice = busMasterInterfaces.at(axiInterface);
 
-	// Create an identity mapping from the FPGA card to this IP as an entry
-	// point to all other IPs in the FPGA, because Vivado will generate a
-	// memory view for this bridge that can see all others.
-	MemoryManager::get().createMapping(0x00, 0x00, SIZE_MAX, "PCIeBridge",
-	                                   card->addrSpaceIdHostToDevice, myAddrSpaceid);
+	/* Map PCIe BAR0 via VFIO */
+	const void* bar0_mapped = card->vfioDevice->regionMap(VFIO_PCI_BAR0_REGION_INDEX);
+	if (bar0_mapped == MAP_FAILED) {
+		logger->error("Failed to mmap() BAR0");
+		return false;
+	}
+
+	// determine size of BAR0 region
+	const size_t bar0_size = card->vfioDevice->regionGetSize(VFIO_PCI_BAR0_REGION_INDEX);
+
+	// create a mapping from process address space to the FPGA card via vfio
+	mm.createMapping(reinterpret_cast<uintptr_t>(bar0_mapped),
+	                 0, bar0_size, "VFIO-H2D",
+	                 mm.getProcessAddressSpace(),
+	                 card->addrSpaceIdHostToDevice);
 
 
 	/* Make PCIe (IOVA) address space available to FPGA via BAR0 */
