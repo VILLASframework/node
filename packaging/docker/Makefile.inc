@@ -54,13 +54,16 @@ $(DOCKER_TARGETS): docker-%: $(BUILDDIR)/packaging/docker/Image.%
 # id to an file. Make is using the modification timestamp of this file and the Dockerfile
 # to determine when the image needs to be rebuild.
 $(BUILDDIR)/packaging/docker/Image.%: packaging/docker/Dockerfile.% | $(BUILDDIR)/packaging/docker/
-	$(DOCKER) build --pull \
+	$(DOCKER) build \
 		--file $< --iidfile $@ \
 		--tag $(DOCKER_IMAGE)-$*:$(DOCKER_TAG) \
-		--label org.label-schema.vcs-ref="$(GIT_REV)" \
-		--label org.label-schema.vcs-branch="$(GIT_BRANCH)" \
-		--label org.label-schema.version="$(VERSION)" \
-		--label org.label-schema.variant="$(VARIANT)" \
-		$(SRCDIR)
+		--tag $(DOCKER_IMAGE)-$*:latest \
+		--build-arg BUILDER_IMAGE=$(DOCKER_IMAGE)-dev:$(DOCKER_TAG) \
+		--build-arg DOCKER_TAG=${DOCKER_TAG} \
+		--build-arg GIT_BRANCH=${GIT_BRANCH} \
+		--build-arg GIT_REV=${GIT_REV} \
+		--build-arg VERSION=${VERSION} \
+		--build-arg VARIANT=${VARIANT} \
+		$(DOCKER_OPTS) $(SRCDIR)
 
 .PHONY: $(DOCKER_TARGETS) $(DOCKER_RUN_TARGETS) $(DOCKER_DEPLOY_TARGETS)

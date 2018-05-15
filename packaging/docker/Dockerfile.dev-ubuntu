@@ -32,17 +32,10 @@
 FROM ubuntu:xenial
 #FROM debian:jessie
 
-LABEL \
-	org.label-schema.schema-version = "1.0" \
-	org.label-schema.name = "VILLASnode" \
-	org.label-schema.license = "GPL-3.0" \
-	org.label-schema.vendor = "Institute for Automation of Complex Power Systems, RWTH Aachen University" \
-	org.label-schema.author.name = "Steffen Vogel" \
-	org.label-schema.author.email = "stvogel@eonerc.rwth-aachen.de" \
-	org.label-schema.description = "A image containing all build-time dependencies for VILLASnode based on Ubuntu" \
-	org.label-schema.url = "http://fein-aachen.org/projects/villas-framework/" \
-	org.label-schema.vcs-url = "https://git.rwth-aachen.de/VILLASframework/VILLASnode" \
-	org.label-schema.usage = "https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"
+ARG GIT_REV=unkown
+ARG GIT_BRANCH=unkown
+ARG VERSION=unkown
+ARG VARIANT=unkown
 
 # Toolchain
 RUN apt-get update && apt-get install -y \
@@ -107,3 +100,19 @@ RUN ln -s /usr/lib64/tc /usr/lib/tc
 
 WORKDIR /villas
 ENTRYPOINT bash
+
+LABEL \
+	org.label-schema.schema-version="1.0" \
+	org.label-schema.name="VILLASnode" \
+	org.label-schema.license="GPL-3.0" \
+	org.label-schema.vcs-ref="$GIT_REV" \
+	org.label-schema.vcs-branch="$GIT_BRANCH" \
+	org.label-schema.version="$VERSION" \
+	org.label-schema.variant="$VARIANT" \
+	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
+	org.label-schema.author.name="Steffen Vogel" \
+	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \
+	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Ubuntu" \
+	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
+	org.label-schema.vcs-url="https://git.rwth-aachen.de/VILLASframework/VILLASnode" \
+	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"
