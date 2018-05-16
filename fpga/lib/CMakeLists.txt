@@ -1,5 +1,4 @@
 add_subdirectory(common)
-add_subdirectory(gpu)
 
 set(SOURCES
 	vlnv.cpp
@@ -36,7 +35,16 @@ find_package(Threads)
 add_library(villas-fpga SHARED ${SOURCES})
 
 target_link_libraries(villas-fpga PUBLIC villas-common)
-target_link_libraries(villas-fpga PUBLIC villas-gpu)
+
+# GPU library is optional, check for CUDA presence
+include(CheckLanguage)
+check_language(CUDA)
+if(CMAKE_CUDA_COMPILER)
+	add_subdirectory(gpu)
+	target_link_libraries(villas-fpga PUBLIC villas-gpu)
+else()
+	message("No CUDA support, not building GPU library")
+endif()
 
 target_compile_definitions(villas-fpga PRIVATE
 	BUILDID=\"abc\"

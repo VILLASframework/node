@@ -4,7 +4,6 @@ set(SOURCES
 	logging.cpp
 	dma.cpp
     fifo.cpp
-	gpu.cpp
 #	hls.c
 #	intc.c
 #	rtds_rtt.c
@@ -12,6 +11,10 @@ set(SOURCES
 #	xsg.c
     graph.cpp
 )
+
+if(CMAKE_CUDA_COMPILER)
+	list(APPEND SOURCES gpu.cpp)
+endif()
 
 add_executable(unit-tests ${SOURCES})
 
