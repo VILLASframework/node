@@ -49,7 +49,8 @@ LinearAllocator::LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId
     BaseAllocator(memoryAddrSpaceId),
     nextFreeAddress(0),
     memorySize(memorySize),
-    internalOffset(internalOffset)
+    internalOffset(internalOffset),
+    allocationCount(0)
 {
 	// make sure to start at aligned offset, reduce size in case we need padding
 	if(const size_t paddingBytes = getAlignmentPadding(internalOffset)) {
@@ -61,12 +62,20 @@ LinearAllocator::LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId
 
 	// deallocation callback
 	free = [&](MemoryBlock* mem) {
-		logger->debug("freeing {:#x} bytes at local addr {:#x} (addr space {})",
-		              mem->getSize(), mem->getOffset(), mem->getAddrSpaceId());
-		logger->warn("free() not implemented");
-		logger->debug("available memory: {:#x} bytes", getAvailableMemory());
+		logger->debug("Deallocating memory block at local addr {:#x} (addr space {})",
+		              mem->getOffset(), mem->getAddrSpaceId());
 
 		removeMemoryBlock(*mem);
+
+		allocationCount--;
+		if(allocationCount == 0) {
+			logger->debug("All allocations are deallocated now, freeing memory");
+
+			// all allocations have been deallocated, free all memory
+			nextFreeAddress = 0;
+		}
+
+		logger->debug("Available memory: {:#x} bytes", getAvailableMemory());
 	};
 }
 
@@ -75,8 +84,11 @@ std::string
 LinearAllocator::getName() const
 {
 	std::stringstream name;
-	name << "LinearAlloc" << getAddrSpaceId()
-	     << "@0x" << std::hex << internalOffset;
+	name << "LinearAlloc" << getAddrSpaceId();
+	if(internalOffset != 0) {
+		name << "@0x" << std::hex << internalOffset;
+	}
+
 	return name.str();
 }
 
@@ -122,6 +134,8 @@ LinearAllocator::allocateBlock(size_t size)
 	// mount block into the memory graph
 	insertMemoryBlock(*mem);
 
+	// increase the allocation count
+	allocationCount++;
 
 	return mem;
 }

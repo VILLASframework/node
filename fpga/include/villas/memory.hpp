@@ -215,6 +215,7 @@ private:
 	size_t nextFreeAddress;	///< next chunk will be allocated here
 	size_t memorySize;		///< total size of managed memory
 	size_t internalOffset;	///< offset in address space (usually 0)
+	size_t allocationCount;	///< Number of individual allocations present
 };
 
 
