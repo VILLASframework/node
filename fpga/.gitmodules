@@ -4,3 +4,9 @@
 [submodule "thirdparty/libxil"]
 	path = thirdparty/libxil
 	url = https://git.rwth-aachen.de/acs/public/villas/libxil.git
+[submodule "lib/gpu/gdrcopy"]
+	path = lib/gpu/gdrcopy
+	url = https://github.com/daniel-k/gdrcopy.git
+[submodule "thirdparty/udmabuf"]
+	path = thirdparty/udmabuf
+	url = https://github.com/ikwzm/udmabuf

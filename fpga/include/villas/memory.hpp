@@ -116,6 +116,8 @@ public:
 		free = [&](MemoryBlock* mem) {
 			logger->warn("no free callback defined for addr space {}, not freeing",
 			             mem->getAddrSpaceId());
+
+			removeMemoryBlock(*mem);
 		};
 	}
 
@@ -128,6 +130,21 @@ public:
 	{
 		const size_t size = num * sizeof(T);
 		auto mem = allocateBlock(size);
+
+		// Check if the allocated memory is really accessible by writing to the
+		// allocated memory and reading back. Exponentially increase offset to
+		// speed up testing.
+		MemoryAccessor<volatile uint8_t> byteAccessor(*mem);
+		size_t idx = 0;
+		for(int i = 0; idx < mem->getSize(); i++, idx = (1 << i)) {
+			auto val = static_cast<uint8_t>(i);
+			byteAccessor[idx] = val;
+			if(byteAccessor[idx] != val) {
+				logger->error("Cannot access allocated memory");
+				throw std::bad_alloc();
+			}
+		}
+
 		return MemoryAccessor<T>(std::move(mem));
 	}
 
@@ -179,6 +196,9 @@ public:
 	size_t getAvailableMemory() const
 	{ return memorySize - nextFreeAddress; }
 
+	size_t getSize() const
+	{ return memorySize; }
+
 	std::string getName() const;
 
 	std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
@@ -223,6 +243,43 @@ public:
 
 private:
 	static HostRamAllocator allocator;
+};
+
+
+class HostDmaRam {
+private:
+
+	static std::string
+	getUdmaBufName(int num);
+
+	static std::string
+	getUdmaBufBasePath(int num);
+
+	static size_t
+	getUdmaBufBufSize(int num);
+
+	static uintptr_t
+	getUdmaBufPhysAddr(int num);
+
+public:
+	class HostDmaRamAllocator : public LinearAllocator {
+	public:
+		HostDmaRamAllocator(int num);
+
+		virtual ~HostDmaRamAllocator();
+
+		std::string getName() const
+		{ return getUdmaBufName(num); }
+
+	private:
+		int num;
+	};
+
+	static HostDmaRamAllocator&
+	getAllocator(int num = 0);
+
+private:
+	static std::map<int, std::unique_ptr<HostDmaRamAllocator>> allocators;
 };
 
 } // namespace villas

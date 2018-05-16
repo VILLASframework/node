@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <string>
 #include <map>
+#include <stdexcept>
 #include <unistd.h>
 
 #include "log.hpp"
@@ -73,7 +74,12 @@ private:
 	// This is a singleton, so private constructor ...
 	MemoryManager() :
 	    memoryGraph("MemoryGraph"),
-	    logger(loggerGetOrCreate("MemoryManager")) {}
+	    logger(loggerGetOrCreate("MemoryManager"))
+	{
+		pathCheckFunc = [&](const MemoryGraph::Path& path) {
+			return this->pathCheck(path);
+		};
+	}
 
 	// ... and no copying or assigning
 	MemoryManager(const MemoryManager&) = delete;
@@ -109,7 +115,7 @@ private:
 			return stream << static_cast<const Edge&>(mapping) << " = "
 			              << mapping.name
 			              << std::hex
-			              << "(src=0x"   << mapping.src
+			              << " (src=0x"  << mapping.src
 			              << ", dest=0x" << mapping.dest
 			              << ", size=0x" << mapping.size
 			              << ")";
@@ -144,6 +150,8 @@ public:
 	using AddressSpaceId = MemoryGraph::VertexIdentifier;
 	using MappingId = MemoryGraph::EdgeIdentifier;
 
+	struct InvalidTranslation : public std::exception {};
+
 	/// Get singleton instance
 	static MemoryManager&
 	get();
@@ -151,6 +159,10 @@ public:
 	AddressSpaceId
 	getProcessAddressSpace()
 	{ return getOrCreateAddressSpace("villas-fpga"); }
+
+	AddressSpaceId
+	getPciAddressSpace()
+	{ return getOrCreateAddressSpace("PCIe"); }
 
 	AddressSpaceId
 	getProcessAddressSpaceMemoryBlock(const std::string& memoryBlock)
@@ -184,6 +196,9 @@ public:
 	AddressSpaceId
 	findAddressSpace(const std::string& name);
 
+	std::list<AddressSpaceId>
+	findPath(AddressSpaceId fromAddrSpaceId, AddressSpaceId toAddrSpaceId);
+
 	MemoryTranslation
 	getTranslation(AddressSpaceId fromAddrSpaceId, AddressSpaceId toAddrSpaceId);
 
@@ -203,6 +218,9 @@ public:
 	dump()
 	{ memoryGraph.dump(); }
 
+	void
+	dumpToFile(const std::string& fileName)
+	{ memoryGraph.dump(fileName); }
 
 private:
 	/// Convert a Mapping to MemoryTranslation for calculations
@@ -210,6 +228,8 @@ private:
 	getTranslationFromMapping(const Mapping& mapping)
 	{ return MemoryTranslation(mapping.src, mapping.dest, mapping.size); }
 
+	bool
+	pathCheck(const MemoryGraph::Path& path);
 
 private:
 	/// Directed graph that stores address spaces and memory mappings
@@ -220,6 +240,8 @@ private:
 
 	/// Logger for universal access in this class
 	SpdLogger logger;
+
+	MemoryGraph::check_path_fn pathCheckFunc;
 
 	/// Static pointer to global instance, because this is a singleton
 	static MemoryManager* instance;

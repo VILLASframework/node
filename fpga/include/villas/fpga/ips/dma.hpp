@@ -55,7 +55,9 @@ public:
 	bool readComplete()
 	{ return hasScatterGather() ? readCompleteSG() : readCompleteSimple(); }
 
-	bool pingPong(const MemoryBlock& src, const MemoryBlock& dst, size_t len);
+	bool memcpy(const MemoryBlock& src, const MemoryBlock& dst, size_t len);
+
+	bool makeAccesibleFromVA(const MemoryBlock& mem);
 
 	inline bool
 	hasScatterGather() const
@@ -71,6 +73,8 @@ private:
 	size_t readSimple(void* buf, size_t len);
 	bool writeCompleteSimple();
 	bool readCompleteSimple();
+
+	bool isMemoryBlockAccesible(const MemoryBlock& mem, const std::string& interface);
 
 private:
 	static constexpr char registerMemory[] = "Reg";

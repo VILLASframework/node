@@ -193,6 +193,10 @@ protected:
 	InterruptController*
 	getInterruptController(const std::string& interruptName) const;
 
+	MemoryManager::AddressSpaceId
+	getMasterAddrSpaceByInterface(const std::string& masterInterfaceName) const
+	{ return busMasterInterfaces.at(masterInterfaceName); }
+
 protected:
 	struct IrqPort {
 		int num;

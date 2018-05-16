@@ -5,6 +5,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <fstream>
 #include <stdexcept>
 #include <algorithm>
 
@@ -58,6 +59,12 @@ public:
 	operator==(const Edge& other)
 	{ return this->id == other.id; }
 
+	Vertex::Identifier getVertexTo() const
+	{ return to; }
+
+	Vertex::Identifier getVertexFrom() const
+	{ return from; }
+
 private:
 	Identifier id;
 	Vertex::Identifier from;
@@ -81,7 +88,7 @@ public:
 
 	std::shared_ptr<VertexType> getVertex(VertexIdentifier vertexId) const
 	{
-		if(vertexId < 0 or vertexId >= lastVertexId)
+		if(vertexId >= lastVertexId)
 			throw std::invalid_argument("vertex doesn't exist");
 
 		// cannot use [] operator, because creates non-existing elements
@@ -92,7 +99,10 @@ public:
 	template<class UnaryPredicate>
 	VertexIdentifier findVertex(UnaryPredicate p)
 	{
-		for(auto& [vertexId, vertex] : vertices) {
+		for(auto& v : vertices) {
+			auto& vertexId = v.first;
+			auto& vertex = v.second;
+
 			if(p(vertex)) {
 				return vertexId;
 			}
@@ -103,7 +113,7 @@ public:
 
 	std::shared_ptr<EdgeType> getEdge(EdgeIdentifier edgeId) const
 	{
-		if(edgeId < 0 or edgeId >= lastEdgeId)
+		if(edgeId >= lastEdgeId)
 			throw std::invalid_argument("edge doesn't exist");
 
 		// cannot use [] operator, because creates non-existing elements
@@ -177,7 +187,9 @@ public:
 		// delete every edge that start or ends at this vertex
 		auto it = edges.begin();
 		while(it != edges.end()) {
-			auto& [edgeId, edge] = *it;
+			auto& edgeId = it->first;
+			auto& edge = it->second;
+
 			bool removeEdge = false;
 
 			if(edge->to == vertexId) {
@@ -207,9 +219,17 @@ public:
 	vertexGetEdges(VertexIdentifier vertexId) const
 	{ return getVertex(vertexId)->edges; }
 
+
+	using check_path_fn = std::function<bool(const Path&)>;
+
+	static bool
+	checkPath(const Path&)
+	{ return true; }
+
 	bool getPath(VertexIdentifier fromVertexId,
 	             VertexIdentifier toVertexId,
-	             Path& path)
+	             Path& path,
+	             check_path_fn pathCheckFunc = checkPath)
 	{
 		if(fromVertexId == toVertexId) {
 			// arrived at the destination
@@ -239,7 +259,8 @@ public:
 				path.push_back(edgeId);
 
 				// recursive, depth-first search
-				if(getPath(edgeOfFromVertex->to, toVertexId, path)) {
+				if(getPath(edgeOfFromVertex->to, toVertexId, path, pathCheckFunc) and
+				   pathCheckFunc(path)) {
 					// path found, we're done
 				    return true;
 				} else {
@@ -252,11 +273,11 @@ public:
 		return false;
 	}
 
-	void dump()
+	void dump(const std::string& fileName = "")
 	{
 		logger->info("Vertices:");
-		for(auto& [vertexId, vertex] : vertices) {
-			(void) vertexId;
+		for(auto& v : vertices) {
+			auto& vertex = v.second;
 
 			// format connected vertices into a list
 			std::stringstream ssEdges;
@@ -267,11 +288,29 @@ public:
 			logger->info("  {} connected to: {}", *vertex, ssEdges.str());
 		}
 
+		std::fstream s(fileName, s.out | s.trunc);
+		if(s.is_open()) {
+			s << "digraph memgraph {" << std::endl;
+		}
+
 		logger->info("Edges:");
-		for(auto& [edgeId, edge] : edges) {
-			(void) edgeId;
+		for(auto& e : edges) {
+			auto& edge = e.second;
 
 			logger->info("  {}: {} -> {}", *edge, edge->from, edge->to);
+			if(s.is_open()) {
+				auto from = getVertex(edge->from);
+				auto to = getVertex(edge->to);
+
+				s << std::dec;
+				s << "  \"" << *from << "\" -> \"" << *to << "\""
+				  << " [label=\"" << *edge << "\"];" << std::endl;
+			}
+		}
+
+		if(s.is_open()) {
+			s << "}" << std::endl;
+			s.close();
 		}
 	}
 

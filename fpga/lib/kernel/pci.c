@@ -254,10 +254,78 @@ struct pci_device * pci_lookup_device(struct pci *p, struct pci_device *f)
 	return list_search(&p->devices, (cmp_cb_t) pci_device_compare, (void *) f);
 }
 
+size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
+{
+	FILE* f;
+	char sysfs[1024];
+
+	assert(regions != NULL);
+
+	snprintf(sysfs, sizeof(sysfs), "%s/bus/pci/devices/%04x:%02x:%02x.%x/resource",
+	         SYSFS_PATH, d->slot.domain, d->slot.bus, d->slot.device, d->slot.function);
+
+	f = fopen(sysfs, "r");
+	if (!f)
+		serror("Failed to open resource mapping %s", sysfs);
+
+	struct pci_region _regions[8];
+	struct pci_region* cur_region = _regions;
+	size_t valid_regions = 0;
+
+	ssize_t bytesRead;
+	char* line = NULL;
+	size_t len = 0;
+
+	int region = 0;
+	// cap to 8 regions, just because we don't know how many may exist
+	while(region < 8 && (bytesRead = getline(&line, &len, f)) != -1) {
+		unsigned long long tokens[3];
+		char* s = line;
+		for(int i = 0; i < 3; i++) {
+			char* end;
+			tokens[i] = strtoull(s, &end, 16);
+			if(s == end) {
+				printf("Error parsing line %d of %s\n", region + 1, sysfs);
+				tokens[0] = tokens[1] = 0; // mark invalid
+				break;
+			}
+			s = end;
+		}
+
+		free(line);
+
+		// required for getline() to allocate a new buffer on the next iteration
+		line = NULL;
+		len = 0;
+
+		if(tokens[0] != tokens[1]) {
+			// this is a valid region
+			cur_region->num = region;
+			cur_region->start = tokens[0];
+			cur_region->end = tokens[1];
+			cur_region->flags = tokens[2];
+			cur_region++;
+			valid_regions++;
+		}
+
+		region++;
+	}
+
+	if(valid_regions > 0) {
+		const size_t len = valid_regions * sizeof (struct pci_region);
+		*regions = malloc(len);
+		memcpy(*regions, _regions, len);
+	}
+
+	return valid_regions;
+}
+
+
 int pci_get_driver(const struct pci_device *d, char *buf, size_t buflen)
 {
 	int ret;
 	char sysfs[1024], syml[1024];
+	memset(syml, 0, sizeof(syml));
 
 	snprintf(sysfs, sizeof(sysfs), "%s/bus/pci/devices/%04x:%02x:%02x.%x/driver", SYSFS_PATH,
 		d->slot.domain, d->slot.bus, d->slot.device, d->slot.function);
@@ -305,6 +373,7 @@ int pci_get_iommu_group(const struct pci_device *d)
 {
 	int ret;
 	char *group, link[1024], sysfs[1024];
+	memset(link, 0, sizeof(link));
 
 	snprintf(sysfs, sizeof(sysfs), "%s/bus/pci/devices/%04x:%02x:%02x.%x/iommu_group", SYSFS_PATH,
 		d->slot.domain, d->slot.bus, d->slot.device, d->slot.function);

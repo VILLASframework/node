@@ -2,7 +2,10 @@
 #include <limits>
 #include <cstdint>
 
+#include <villas/utils.hpp>
 #include "memory_manager.hpp"
+
+using namespace villas::utils;
 
 namespace villas {
 
@@ -70,17 +73,44 @@ MemoryManager::findAddressSpace(const std::string& name)
 	});
 }
 
+std::list<MemoryManager::AddressSpaceId>
+MemoryManager::findPath(MemoryManager::AddressSpaceId fromAddrSpaceId,
+                        MemoryManager::AddressSpaceId toAddrSpaceId)
+{
+	std::list<AddressSpaceId> path;
+
+	auto fromAddrSpace = memoryGraph.getVertex(fromAddrSpaceId);
+	auto toAddrSpace = memoryGraph.getVertex(toAddrSpaceId);
+
+	// find a path through the memory graph
+	MemoryGraph::Path pathGraph;
+	if(not memoryGraph.getPath(fromAddrSpaceId, toAddrSpaceId, pathGraph, pathCheckFunc)) {
+
+		logger->debug("No translation found from ({}) to ({})",
+		              *fromAddrSpace, *toAddrSpace);
+
+		throw std::out_of_range("no translation found");
+	}
+
+	for(auto& mappingId : pathGraph) {
+		auto mapping = memoryGraph.getEdge(mappingId);
+		path.push_back(mapping->getVertexTo());
+	}
+
+	return path;
+}
+
 MemoryTranslation
 MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
                               MemoryManager::AddressSpaceId toAddrSpaceId)
 {
 	// find a path through the memory graph
 	MemoryGraph::Path path;
-	if(not memoryGraph.getPath(fromAddrSpaceId, toAddrSpaceId, path)) {
+	if(not memoryGraph.getPath(fromAddrSpaceId, toAddrSpaceId, path, pathCheckFunc)) {
+
 		auto fromAddrSpace = memoryGraph.getVertex(fromAddrSpaceId);
 		auto toAddrSpace = memoryGraph.getVertex(toAddrSpaceId);
-
-		logger->error("No translation found from ({}) to ({})",
+		logger->debug("No translation found from ({}) to ({})",
 		              *fromAddrSpace, *toAddrSpace);
 
 		throw std::out_of_range("no translation found");
@@ -96,6 +126,26 @@ MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
 	}
 
 	return translation;
+}
+
+bool
+MemoryManager::pathCheck(const MemoryGraph::Path& path)
+{
+	// start with an identity mapping
+	MemoryTranslation translation(0, 0, SIZE_MAX);
+
+	// Try to add all mappings together to a common translation. If this fails
+	// there is a non-overlapping window
+	for(auto& mappingId : path) {
+		auto mapping = memoryGraph.getEdge(mappingId);
+		try {
+			translation += getTranslationFromMapping(*mapping);
+		} catch(const InvalidTranslation&) {
+			return false;
+		}
+	}
+
+	return true;
 }
 
 uintptr_t
@@ -124,9 +174,18 @@ MemoryTranslation::operator+=(const MemoryTranslation& other)
 	const uintptr_t this_dst_high = this->dst + this->size;
 	const uintptr_t other_src_high = other.src + other.size;
 
+	logger->debug("this->src:      {:#x}", this->src);
+	logger->debug("this->dst:      {:#x}", this->dst);
+	logger->debug("this->size:     {:#x}", this->size);
+	logger->debug("other.src:      {:#x}", other.src);
+	logger->debug("other.dst:      {:#x}", other.dst);
+	logger->debug("other.size:     {:#x}", other.size);
+	logger->debug("this_dst_high:  {:#x}", this_dst_high);
+	logger->debug("other_src_high: {:#x}", other_src_high);
+
 	// make sure there is a common memory area
-	assert(other.src < this_dst_high);
-	assert(this->dst < other_src_high);
+	assertExcept(other.src < this_dst_high, MemoryManager::InvalidTranslation());
+	assertExcept(this->dst < other_src_high, MemoryManager::InvalidTranslation());
 
 	const uintptr_t hi = std::max(this_dst_high, other_src_high);
 	const uintptr_t lo = std::min(this->dst, other.src);
@@ -135,33 +194,39 @@ MemoryTranslation::operator+=(const MemoryTranslation& other)
 	                          ? (this_dst_high - other_src_high)
 	                          : (other_src_high - this_dst_high);
 
-	const uintptr_t diff_lo = (this->dst > other.src)
+	const bool otherSrcIsSmaller = this->dst > other.src;
+	const uintptr_t diff_lo = (otherSrcIsSmaller)
 	                          ? (this->dst - other.src)
 	                          : (other.src - this->dst);
 
-	const size_t size = (hi - lo) - diff_hi - diff_lo;
+	logger->debug("hi:             {:#x}", hi);
+	logger->debug("lo:             {:#x}", lo);
+	logger->debug("diff_hi:        {:#x}", diff_hi);
+	logger->debug("diff_lo:        {:#x}", diff_lo);
 
-	logger->debug("this->src:      0x{:x}", this->src);
-	logger->debug("this->dst:      0x{:x}", this->dst);
-	logger->debug("this->size:     0x{:x}", this->size);
-	logger->debug("other.src:      0x{:x}", other.src);
-	logger->debug("other.dst:      0x{:x}", other.dst);
-	logger->debug("other.size:     0x{:x}", other.size);
-	logger->debug("this_dst_high:  0x{:x}", this_dst_high);
-	logger->debug("other_src_high: 0x{:x}", other_src_high);
-	logger->debug("hi:             0x{:x}", hi);
-	logger->debug("lo:             0x{:x}", lo);
-	logger->debug("diff_hi:        0x{:x}", diff_hi);
-	logger->debug("diff_hi:        0x{:x}", diff_lo);
-	logger->debug("size:           0x{:x}", size);
+	// new size of aperture, can only stay or shrink
+	this->size = (hi - lo) - diff_hi - diff_lo;
 
-	this->src += other.src;
-	this->dst += other.dst;
-	this->size = size;
+	// new translation will come out other's destination (by default)
+	this->dst = other.dst;
 
-	logger->debug("result src:     0x{:x}", this->src);
-	logger->debug("result dst:     0x{:x}", this->dst);
-	logger->debug("result size:    0x{:x}", this->size);
+	// the source stays the same and can only increase with merged translations
+	this->src = this->src;
+
+	if(otherSrcIsSmaller) {
+		// other mapping starts at lower addresses, so we actually arrive at
+		// higher addresses
+		this->dst += diff_lo;
+	} else {
+		// other mapping starts at higher addresses than this, so we have to
+		// increase the start
+		// NOTE: for addresses equality, this just adds 0
+		this->src += diff_lo;
+	}
+
+	logger->debug("result src:     {:#x}", this->src);
+	logger->debug("result dst:     {:#x}", this->dst);
+	logger->debug("result size:    {:#x}", this->size);
 
 	return *this;
 }

@@ -12,6 +12,10 @@ set(SOURCES
     graph.cpp
 )
 
+if(CMAKE_CUDA_COMPILER)
+	list(APPEND SOURCES gpu.cpp)
+endif()
+
 add_executable(unit-tests ${SOURCES})
 
 find_package(Criterion REQUIRED)

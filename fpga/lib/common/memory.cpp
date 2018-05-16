@@ -1,6 +1,9 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+#include <sstream>
+#include <fstream>
+
 #include "memory.hpp"
 
 namespace villas {
@@ -62,6 +65,8 @@ LinearAllocator::LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId
 		              mem->getSize(), mem->getOffset(), mem->getAddrSpaceId());
 		logger->warn("free() not implemented");
 		logger->debug("available memory: {:#x} bytes", getAvailableMemory());
+
+		removeMemoryBlock(*mem);
 	};
 }
 
@@ -133,7 +138,127 @@ HostRam::HostRamAllocator::HostRamAllocator() :
 			logger->warn("munmap() failed for {:#x} of size {:#x}",
 			             mem->getOffset(), mem->getSize());
 		}
+
+		removeMemoryBlock(*mem);
 	};
+}
+
+
+std::map<int, std::unique_ptr<HostDmaRam::HostDmaRamAllocator>>
+HostDmaRam::allocators;
+
+HostDmaRam::HostDmaRamAllocator::HostDmaRamAllocator(int num) :
+    LinearAllocator(MemoryManager::get().getOrCreateAddressSpace(getUdmaBufName(num)), getUdmaBufBufSize(num)),
+    num(num)
+{
+	auto& mm = MemoryManager::get();
+	logger = loggerGetOrCreate(getName());
+
+	if(getSize() == 0) {
+		logger->error("Zero-sized DMA buffer not supported, is the kernel module loaded?");
+		throw std::bad_alloc();
+	}
+
+	const uintptr_t base = getUdmaBufPhysAddr(num);
+
+	mm.createMapping(base, 0, getSize(), getName() + "-PCI",
+	                 mm.getPciAddressSpace(), getAddrSpaceId());
+
+	const auto bufPath = std::string("/dev/") + getUdmaBufName(num);
+	const int bufFd = open(bufPath.c_str(), O_RDWR | O_SYNC);
+	if(bufFd != -1) {
+		void* buf = mmap(nullptr, getSize(), PROT_READ|PROT_WRITE, MAP_SHARED, bufFd, 0);
+		close(bufFd);
+
+		if(buf != MAP_FAILED) {
+			mm.createMapping(reinterpret_cast<uintptr_t>(buf), 0, getSize(),
+			                 getName() + "-VA",
+			                 mm.getProcessAddressSpace(), getAddrSpaceId());
+		} else {
+			logger->warn("Cannot map {}", bufPath);
+		}
+	} else {
+		logger->warn("Cannot open {}", bufPath);
+	}
+
+	logger->info("Mapped {} of size {} bytes", bufPath, getSize());
+}
+
+HostDmaRam::HostDmaRamAllocator::~HostDmaRamAllocator()
+{
+	auto& mm = MemoryManager::get();
+
+	void* baseVirt;
+	try {
+		auto translation = mm.getTranslationFromProcess(getAddrSpaceId());
+		baseVirt = reinterpret_cast<void*>(translation.getLocalAddr(0));
+	} catch(const std::out_of_range&) {
+		// not mapped, nothing to do
+		return;
+	}
+
+	logger->debug("Unmapping {}", getName());
+
+	// try to unmap it
+	if(::munmap(baseVirt, getSize()) != 0) {
+		logger->warn("munmap() failed for {:p} of size {:#x}",
+		             baseVirt, getSize());
+	}
+}
+
+std::string
+HostDmaRam::getUdmaBufName(int num)
+{
+	std::stringstream name;
+	name << "udmabuf" << num;
+
+	return name.str();
+}
+
+std::string
+HostDmaRam::getUdmaBufBasePath(int num)
+{
+	std::stringstream path;
+	path << "/sys/class/udmabuf/udmabuf" << num << "/";
+	return path.str();
+}
+
+size_t
+HostDmaRam::getUdmaBufBufSize(int num)
+{
+	std::fstream s(getUdmaBufBasePath(num) + "size", s.in);
+	if(s.is_open()) {
+		std::string line;
+		if(std::getline(s, line)) {
+			return std::strtoul(line.c_str(), nullptr, 10);
+		}
+	}
+
+	return 0;
+}
+
+uintptr_t
+HostDmaRam::getUdmaBufPhysAddr(int num)
+{
+	std::fstream s(getUdmaBufBasePath(num) + "phys_addr", s.in);
+	if(s.is_open()) {
+		std::string line;
+		if(std::getline(s, line)) {
+			return std::strtoul(line.c_str(), nullptr, 16);
+		}
+	}
+
+	return UINTPTR_MAX;
+}
+
+HostDmaRam::HostDmaRamAllocator&HostDmaRam::getAllocator(int num)
+{
+	auto& allocator = allocators[num];
+	if(not allocator) {
+		allocator = std::make_unique<HostDmaRamAllocator>(num);
+	}
+
+	return *allocator;
 }
 
 } // namespace villas

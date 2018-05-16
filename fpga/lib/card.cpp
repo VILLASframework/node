@@ -165,6 +165,11 @@ PCIeCard::lookupIp(const Vlnv& vlnv) const
 bool
 PCIeCard::mapMemoryBlock(const MemoryBlock& block)
 {
+	if(not vfioContainer->isIommuEnabled()) {
+		logger->warn("VFIO mapping not supported without IOMMU");
+		return false;
+	}
+
 	auto& mm = MemoryManager::get();
 	const auto& addrSpaceId = block.getAddrSpaceId();
 
@@ -174,7 +179,6 @@ PCIeCard::mapMemoryBlock(const MemoryBlock& block)
 	} else {
 		logger->debug("Create VFIO mapping for {}", addrSpaceId);
 	}
-
 
 	auto translationFromProcess = mm.getTranslationFromProcess(addrSpaceId);
 	uintptr_t processBaseAddr = translationFromProcess.getLocalAddr(0);
@@ -188,10 +192,8 @@ PCIeCard::mapMemoryBlock(const MemoryBlock& block)
 		return false;
 	}
 
-
-
 	mm.createMapping(iovaAddr, 0, block.getSize(),
-	                 "vfio",
+	                 "VFIO-D2H",
 	                 this->addrSpaceIdDeviceToHost,
 	                 addrSpaceId);
 
@@ -203,11 +205,8 @@ PCIeCard::mapMemoryBlock(const MemoryBlock& block)
 
 
 bool
-fpga::PCIeCard::init()
+PCIeCard::init()
 {
-	struct pci_device *pdev;
-
-	auto& mm = MemoryManager::get();
 	logger = getLogger();
 
 	logger->info("Initializing FPGA card {}", name);
@@ -223,40 +222,11 @@ fpga::PCIeCard::init()
 	VfioDevice& device = vfioContainer->attachDevice(pdev);
 	this->vfioDevice = &device;
 
-
 	/* Enable memory access and PCI bus mastering for DMA */
 	if (not device.pciEnable()) {
 		logger->error("Failed to enable PCI device");
 		return false;
 	}
-
-	/* Map PCIe BAR */
-	const void* bar0_mapped = vfioDevice->regionMap(VFIO_PCI_BAR0_REGION_INDEX);
-	if (bar0_mapped == MAP_FAILED) {
-		logger->error("Failed to mmap() BAR0");
-		return false;
-	}
-
-	// determine size of BAR0 region
-	const size_t bar0_size = vfioDevice->regionGetSize(VFIO_PCI_BAR0_REGION_INDEX);
-
-
-	/* Link mapped BAR0 to global memory graph */
-
-	// get the address space of the current application
-	const auto villasAddrSpace = mm.getProcessAddressSpace();
-
-	// get the address space for the PCIe proxy we use with VFIO
-	const auto cardPCIeAddrSpaceName = mm.getMasterAddrSpaceName(name, "PCIe");
-
-	// create a new address space for this FPGA card
-	addrSpaceIdHostToDevice = mm.getOrCreateAddressSpace(cardPCIeAddrSpaceName);
-
-	// create a mapping from our address space to the FPGA card via vfio
-	mm.createMapping(reinterpret_cast<uintptr_t>(bar0_mapped),
-	                                   0, bar0_size, "VFIO_map",
-	                                   villasAddrSpace, addrSpaceIdHostToDevice);
-
 
 	/* Reset system? */
 	if (do_reset) {

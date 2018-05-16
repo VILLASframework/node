@@ -132,8 +132,14 @@ Dma::reset()
 
 
 bool
-Dma::pingPong(const MemoryBlock& src, const MemoryBlock& dst, size_t len)
+Dma::memcpy(const MemoryBlock& src, const MemoryBlock& dst, size_t len)
 {
+	if(len == 0)
+		return true;
+
+	if(not connectLoopback())
+		return false;
+
 	if(this->read(dst, len) == 0)
 		return false;
 
@@ -153,17 +159,14 @@ Dma::pingPong(const MemoryBlock& src, const MemoryBlock& dst, size_t len)
 size_t
 Dma::write(const MemoryBlock& mem, size_t len)
 {
-	// make sure memory is reachable
-	if(not card->mapMemoryBlock(mem)) {
-		logger->error("Memory not accessible by DMA");
-		return 0;
-	}
-
 	auto& mm = MemoryManager::get();
+
+	// user has to make sure that memory is accessible, otherwise this will throw
 	auto translation = mm.getTranslation(busMasterInterfaces[mm2sInterface],
 	                                     mem.getAddrSpaceId());
 	const void* buf = reinterpret_cast<void*>(translation.getLocalAddr(0));
 
+	logger->debug("Write to address: {:p}", buf);
 	return hasScatterGather() ? writeSG(buf, len) : writeSimple(buf, len);
 }
 
@@ -171,17 +174,14 @@ Dma::write(const MemoryBlock& mem, size_t len)
 size_t
 Dma::read(const MemoryBlock& mem, size_t len)
 {
-	// make sure memory is reachable
-	if(not card->mapMemoryBlock(mem)) {
-		logger->error("Memory not accessible by DMA");
-		return 0;
-	}
-
 	auto& mm = MemoryManager::get();
+
+	// user has to make sure that memory is accessible, otherwise this will throw
 	auto translation = mm.getTranslation(busMasterInterfaces[s2mmInterface],
 	                                     mem.getAddrSpaceId());
 	void* buf = reinterpret_cast<void*>(translation.getLocalAddr(0));
 
+	logger->debug("Read from address: {:p}", buf);
 	return hasScatterGather() ? readSG(buf, len) : readSimple(buf, len);
 }
 
@@ -345,6 +345,48 @@ Dma::readCompleteSimple()
 		irqs[s2mmInterrupt].irqController->waitForInterrupt(irqs[s2mmInterrupt]);
 
 	XAxiDma_IntrAckIrq(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
+
+	return true;
+}
+
+
+bool
+Dma::makeAccesibleFromVA(const MemoryBlock& mem)
+{
+	// only symmetric mapping supported currently
+	if(isMemoryBlockAccesible(mem, s2mmInterface) and
+	   isMemoryBlockAccesible(mem, mm2sInterface)) {
+		return true;
+	}
+
+	// try mapping via FPGA-card (VFIO)
+	if(not card->mapMemoryBlock(mem)) {
+		logger->error("Memory not accessible by DMA");
+		return false;
+	}
+
+	// sanity-check if mapping worked, this shouldn't be neccessary
+	if(not isMemoryBlockAccesible(mem, s2mmInterface) or
+	   not isMemoryBlockAccesible(mem, mm2sInterface)) {
+		logger->error("Mapping memory via card didn't work, but reported success?!");
+		return false;
+	}
+
+	return true;
+}
+
+
+bool
+Dma::isMemoryBlockAccesible(const MemoryBlock& mem, const std::string& interface)
+{
+	auto& mm = MemoryManager::get();
+
+	try {
+		mm.findPath(getMasterAddrSpaceByInterface(interface), mem.getAddrSpaceId());
+	} catch(const std::out_of_range&) {
+		// not (yet) accessible
+		return false;
+	}
 
 	return true;
 }

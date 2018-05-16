@@ -87,7 +87,7 @@ VfioContainer::VfioContainer()
 	}
 
 	/* Open VFIO API */
-	fd = open(VFIO_DEV("vfio"), O_RDWR);
+	fd = open(VFIO_DEV, O_RDWR);
 	if (fd < 0) {
 		logger->error("Failed to open VFIO container");
 		throw std::exception();
@@ -108,12 +108,25 @@ VfioContainer::VfioContainer()
 			logger->error("Failed to get VFIO extensions");
 			throw std::exception();
 		}
-		else if (ret > 0)
+		else if (ret > 0) {
 			extensions |= (1 << i);
+		}
 	}
 
-	logger->debug("Version: {:#x}", version);
+	hasIommu = false;
+
+	if(not (extensions & (1 << VFIO_NOIOMMU_IOMMU))) {
+		if(not (extensions & (1 << VFIO_TYPE1_IOMMU))) {
+			logger->error("No supported IOMMU extension found");
+			throw std::exception();
+		} else {
+			hasIommu = true;
+		}
+	}
+
+	logger->debug("Version:    {:#x}", version);
 	logger->debug("Extensions: {:#x}", extensions);
+	logger->debug("IOMMU:      {}", hasIommu ? "yes" : "no");
 }
 
 
@@ -289,7 +302,7 @@ VfioContainer::attachDevice(const pci_device* pdev)
 	}
 
 	/* Get IOMMU group of device */
-	int index = pci_get_iommu_group(pdev);
+	int index = isIommuEnabled() ? pci_get_iommu_group(pdev) : 0;
 	if (index < 0) {
 		logger->error("Failed to get IOMMU group of device");
 		throw std::exception();
@@ -318,6 +331,11 @@ uintptr_t
 VfioContainer::memoryMap(uintptr_t virt, uintptr_t phys, size_t length)
 {
 	int ret;
+
+	if(not hasIommu) {
+		logger->error("DMA mapping not supported without IOMMU");
+		return UINTPTR_MAX;
+	}
 
 	if (length & 0xFFF) {
 		length += 0x1000;
@@ -363,6 +381,10 @@ VfioContainer::memoryUnmap(uintptr_t phys, size_t length)
 {
 	int ret;
 
+	if(not hasIommu) {
+		return true;
+	}
+
 	struct vfio_iommu_type1_dma_unmap dmaUnmap;
 	dmaUnmap.argsz = sizeof(struct vfio_iommu_type1_dma_unmap);
 	dmaUnmap.flags = 0;
@@ -390,7 +412,7 @@ VfioContainer::getOrAttachGroup(int index)
 	}
 
 	// group not yet part of this container, so acquire ownership
-	auto group = VfioGroup::attach(fd, index);
+	auto group = VfioGroup::attach(*this, index);
 	if(not group) {
 		logger->error("Failed to attach to IOMMU group: {}", index);
 		throw std::exception();
@@ -516,6 +538,7 @@ VfioDevice::pciHotReset()
 
 	const size_t reset_infolen = sizeof(struct vfio_pci_hot_reset_info) +
 	                             sizeof(struct vfio_pci_dependent_device) * 64;
+
 	auto reset_info = reinterpret_cast<struct vfio_pci_hot_reset_info*>
 	                    (calloc(1, reset_infolen));
 
@@ -540,6 +563,8 @@ VfioDevice::pciHotReset()
 		}
 	}
 
+	free(reset_info);
+
 	const size_t resetlen = sizeof(struct vfio_pci_hot_reset) +
 	                        sizeof(int32_t) * 1;
 	auto reset = reinterpret_cast<struct vfio_pci_hot_reset*>
@@ -549,10 +574,15 @@ VfioDevice::pciHotReset()
 	reset->count = 1;
 	reset->group_fds[0] = this->group.fd;
 
-	const bool success = ioctl(this->fd, VFIO_DEVICE_PCI_HOT_RESET, reset) == 0;
+	int ret = ioctl(this->fd, VFIO_DEVICE_PCI_HOT_RESET, reset);
+	const bool success = (ret == 0);
 
 	free(reset);
-	free(reset_info);
+
+	if(not success and not group.container->isIommuEnabled()) {
+		logger->info("PCI hot reset failed, but this is expected without IOMMU");
+		return true;
+	}
 
 	return success;
 }
@@ -713,13 +743,18 @@ VfioGroup::~VfioGroup()
 
 
 std::unique_ptr<VfioGroup>
-VfioGroup::attach(int containerFd, int groupIndex)
+VfioGroup::attach(VfioContainer& container, int groupIndex)
 {
 	std::unique_ptr<VfioGroup> group { new VfioGroup(groupIndex) };
 
+	group->container = &container;
+
 	/* Open group fd */
 	std::stringstream groupPath;
-	groupPath << VFIO_DEV("") << groupIndex;
+	groupPath << VFIO_PATH
+	          << (container.isIommuEnabled() ? "" : "noiommu-")
+	          << groupIndex;
+
 	group->fd = open(groupPath.str().c_str(), O_RDWR);
 	if (group->fd < 0) {
 		logger->error("Failed to open VFIO group {}", group->index);
@@ -729,18 +764,20 @@ VfioGroup::attach(int containerFd, int groupIndex)
 	logger->debug("VFIO group {} (fd {}) has path {}",
 	              groupIndex, group->fd, groupPath.str());
 
-	int ret;
-
 	/* Claim group ownership */
-	ret = ioctl(group->fd, VFIO_GROUP_SET_CONTAINER, &containerFd);
+	int ret = ioctl(group->fd, VFIO_GROUP_SET_CONTAINER, &container.getFd());
 	if (ret < 0) {
 		logger->error("Failed to attach VFIO group {} to container fd {} (error {})",
-		              group->index, containerFd, ret);
+		              group->index, container.getFd(), ret);
 		return nullptr;
 	}
 
 	/* Set IOMMU type */
-	ret = ioctl(containerFd, VFIO_SET_IOMMU, VFIO_TYPE1_IOMMU);
+	int iommu_type = container.isIommuEnabled() ?
+	                     VFIO_TYPE1_IOMMU :
+	                     VFIO_NOIOMMU_IOMMU;
+
+	ret = ioctl(container.getFd(), VFIO_SET_IOMMU, iommu_type);
 	if (ret < 0) {
 		logger->error("Failed to set IOMMU type of container: {}", ret);
 		return nullptr;

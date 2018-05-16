@@ -18,7 +18,8 @@
 #include <linux/vfio.h>
 #include <sys/mman.h>
 
-#define VFIO_DEV(x)	"/dev/vfio/" x
+#define VFIO_PATH	"/dev/vfio/"
+#define VFIO_DEV	VFIO_PATH "vfio"
 
 /* Forward declarations */
 struct pci_device;
@@ -90,7 +91,7 @@ public:
 	~VfioGroup();
 
 	static std::unique_ptr<VfioGroup>
-	attach(int containerFd, int groupIndex);
+	attach(VfioContainer& container, int groupIndex);
 
 private:
 	/// VFIO group file descriptor
@@ -135,6 +136,12 @@ public:
 	/** munmap() a region which has been mapped by vfio_map_region() */
 	bool memoryUnmap(uintptr_t phys, size_t length);
 
+	bool isIommuEnabled() const
+	{ return this->hasIommu; }
+
+	const int& getFd() const
+	{ return fd; }
+
 private:
 	VfioGroup& getOrAttachGroup(int index);
 
@@ -143,6 +150,7 @@ private:
 	int version;
 	int extensions;
 	uint64_t iova_next;			/**< Next free IOVA address */
+	bool hasIommu;
 
 	/// All groups bound to this container
 	std::list<std::unique_ptr<VfioGroup>> groups;
