@@ -26,10 +26,6 @@ LIBS = $(patsubst %, lib%, $(SONAMES))
 
 LIB_CFLAGS  += $(CFLAGS) -fPIC
 
-ifeq ($(shell uname),Darwin)
-	 LIB_CFLAGS += -D_DARWIN_C_SOURCE=1
-endif
-
 include $(patsubst %, lib/Makefile.%.inc, $(SONAMES))
 
 $(BUILDDIR)/include/villas/config.h: include/villas/config.h.in Makefile.config | $$(dir $$@)
