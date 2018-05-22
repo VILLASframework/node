@@ -229,9 +229,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			break;
 
 		case LWS_CALLBACK_CLIENT_WRITEABLE:
-		case LWS_CALLBACK_SERVER_WRITEABLE: {
-			size_t wbytes;
-
+		case LWS_CALLBACK_SERVER_WRITEABLE:
 			if (c->state == STATE_SHUTDOWN) {
 				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_GOINGAWAY, "Node stopped");
 				return -1;
@@ -241,6 +239,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 			pulled = queue_pull_many(&c->queue, (void **) smps, cnt);
 			if (pulled > 0) {
+				size_t wbytes;
 				io_sprint(&c->io, c->buffers.send.buf + LWS_PRE, c->buffers.send.size - LWS_PRE, &wbytes, smps, pulled);
 
 				ret = lws_write(wsi, (unsigned char *) c->buffers.send.buf + LWS_PRE, wbytes, c->io.flags & FORMAT_TYPE_BINARY ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
@@ -254,7 +253,6 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				lws_callback_on_writable(wsi);
 
 			break;
-		}
 
 		case LWS_CALLBACK_CLIENT_RECEIVE:
 		case LWS_CALLBACK_RECEIVE:
