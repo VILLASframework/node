@@ -157,7 +157,13 @@ int log_init(struct log *l, int level, long facilitites)
 			return ret;
 
 		/* Try to get initial window size */
-		ioctl(STDERR_FILENO, TIOCGWINSZ, &global_log->window);
+		ioctl(STDERR_FILENO, TIOCGWINSZ, &l->window);
+
+		/* Fallback if for some reason we can not determine a prober window size */
+		if (l->window.ws_col == 0)
+			l->window.ws_col = 150;
+		if (l->window.ws_row == 0)
+			l->window.ws_row = 50;
 	}
 	else {
 		l->window.ws_col = LOG_WIDTH;
