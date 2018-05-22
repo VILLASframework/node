@@ -81,7 +81,7 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 	if (pushed < cnt)
 		warn("Queue overrun in WebSocket connection: %s", websocket_connection_name(c));
 
-	sample_get_many(smps, cnt);
+	sample_get_many(smps, pushed);
 
 	debug(LOG_WEBSOCKET | 10, "Enqueued %u samples to %s", pushed, websocket_connection_name(c));
 
