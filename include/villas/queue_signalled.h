@@ -34,9 +34,11 @@ enum queue_signalled_flags {
 	QUEUE_SIGNALLED_POLLING		= (2 << 0),
 #ifdef __linux__
 	QUEUE_SIGNALLED_EVENTFD		= (3 << 0),
+#elif defined(__APPLE__)
+	QUEUE_SIGNALLED_PIPE		= (3 << 0),
 #endif
 	QUEUE_SIGNALLED_MASK		= 0xf,
-	
+
 	/* Other flags */
 	QUEUE_SIGNALLED_PROCESS_SHARED	= (1 << 4)
 };
@@ -44,9 +46,9 @@ enum queue_signalled_flags {
 /** Wrapper around queue that uses POSIX CV's for signalling writes. */
 struct queue_signalled {
 	struct queue queue;		/**< Actual underlying queue. */
-	
+
 	enum queue_signalled_flags mode;
-	
+
 	union {
 		struct {
 			pthread_cond_t ready;		/**< Condition variable to signal writes to the queue. */
@@ -54,6 +56,8 @@ struct queue_signalled {
 		} pthread;
 #ifdef __linux__
 		int eventfd;
+#elif defined(__APPLE__)
+		int pipe[2];
 #endif
 	};
 };
