@@ -62,18 +62,27 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 			json_unit = NULL;
 		}
 
-		json_value = json_pack_ex(&err, 0, "{ s: o, s: o*, s: f, s: o*, s: o* }",
+		json_value = json_pack_ex(&err, 0, "{ s: o, s: f }",
 			"name", json_name,
-			"unit", json_unit,
-			"value", smp->data[i].f,
-			"created", json_created,
-			"sequence", json_sequence
+			"value", smp->data[i].f
 		);
 		if (!json_value)
 			continue;
 
+		if (json_unit)
+			json_object_set(json_value, "unit", json_unit);
+		if (json_created)
+			json_object_set(json_value, "created", json_created);
+		if (json_sequence)
+			json_object_set(json_value, "sequence", json_sequence);
+
 		json_array_append(json_data, json_value);
 	}
+
+	if (json_created)
+		json_decref(json_created);
+	if (json_sequence)
+		json_decref(json_sequence);
 
 	char *origin, *target;
 	origin = smp->source
@@ -84,13 +93,16 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 		? smp->destination->name
 		: NULL;
 
-	*j = json_pack_ex(&err, 0, "{ s: s*, s: s*, s: o }",
-		"origin", origin,
-		"target", target,
+	*j = json_pack_ex(&err, 0, "{ s: o }",
 		"measurements", json_data
 	);
 	if (*j == NULL)
 		return -1;
+
+	if (target)
+		json_object_set_new(*j, "target", json_string(target));
+	if (origin)
+		json_object_set_new(*j, "origin", json_string(origin));
 
 	return 0;
 }
