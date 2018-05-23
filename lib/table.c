@@ -67,7 +67,6 @@ void table_header(struct table *t)
 	if (t->width != l->width)
 		table_resize(t, l->width);
 
-
 	char *line0 = strf("\b");
 	char *line1 = strf("\b\b" BOX_UD);
 	char *line2 = strf("\b\b" BOX_UD);
