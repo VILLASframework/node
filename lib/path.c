@@ -346,8 +346,8 @@ int path_init_poll(struct path *p)
 		p->reader.pfds[i].events = POLLIN;
 		p->reader.pfds[i].fd = node_fd(ps->node);
 
-		//if (p->reader.pfds[i].fd < 0)
-		//	error("Failed to get file descriptor for node %s", node_name(ps->node));
+		if (p->reader.pfds[i].fd < 0)
+			error("Failed to get file descriptor for node %s", node_name(ps->node));
 	}
 
 	/* We use the last slot for the timeout timer. */
@@ -356,8 +356,10 @@ int path_init_poll(struct path *p)
 		if (ret)
 			return ret;
 
-		p->reader.pfds[nfds-1].fd = task_fd(&p->timeout);
 		p->reader.pfds[nfds-1].events = POLLIN;
+		p->reader.pfds[nfds-1].fd = task_fd(&p->timeout);
+		if (p->reader.pfds[nfds-1].fd < 0)
+			error("Failed to get file descriptor for timer of path %s", path_name(p));
 	}
 
 	return 0;
