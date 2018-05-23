@@ -36,7 +36,9 @@ whitelist = [
 	[ 'xilinx.com', 'ip', 'axi_gpio' ],
 	[ 'xilinx.com', 'ip', 'axi_bram_ctrl' ],
 	[ 'xilinx.com', 'ip', 'axis_data_fifo' ],
-	[ 'xilinx.com', 'ip', 'axi_pcie' ]
+	[ 'xilinx.com', 'ip', 'axi_pcie' ],
+	[ 'xilinx.com', 'hls', 'rtds2gpu' ],
+	[ 'xilinx.com', 'hls', 'mem' ]
 ]
 
 # List of VLNI ids of AXI4-Stream infrastructure IP cores which do not alter data

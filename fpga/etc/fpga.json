@@ -33,14 +33,25 @@
         "hier_0_axi_dma_axi_dma_0": {
           "vlnv": "xilinx.com:ip:axi_dma:7.1",
           "memory-view": {
-            "M_AXI_SG": {
-              "bram_0_axi_bram_ctrl_0": {
-                "Mem0": {
+            "M_AXI_MM2S": {
+              "pcie_0_axi_pcie_0": {
+                "BAR0": {
                   "baseaddr": 0,
-                  "highaddr": 8191,
-                  "size": 8192
+                  "highaddr": 4294967295,
+                  "size": 4294967296
                 }
-              },
+              }
+            },
+            "M_AXI_S2MM": {
+              "pcie_0_axi_pcie_0": {
+                "BAR0": {
+                  "baseaddr": 0,
+                  "highaddr": 4294967295,
+                  "size": 4294967296
+                }
+              }
+            },
+            "M_AXI_SG": {
               "hier_0_axi_dma_axi_dma_1": {
                 "Reg": {
                   "baseaddr": 8192,
@@ -109,29 +120,32 @@
                   "size": 4096
                 }
               },
+              "mem_0": {
+                "Reg": {
+                  "baseaddr": 57344,
+                  "highaddr": 61439,
+                  "size": 4096
+                }
+              },
+              "rtds2gpu_0": {
+                "Reg": {
+                  "baseaddr": 61440,
+                  "highaddr": 65535,
+                  "size": 4096
+                }
+              },
+              "bram_0_axi_bram_ctrl_0": {
+                "Mem0": {
+                  "baseaddr": 65536,
+                  "highaddr": 73727,
+                  "size": 8192
+                }
+              },
               "pcie_0_axi_pcie_0": {
                 "CTL0": {
                   "baseaddr": 268435456,
                   "highaddr": 536870911,
                   "size": 268435456
-                }
-              }
-            },
-            "M_AXI_MM2S": {
-              "pcie_0_axi_pcie_0": {
-                "BAR0": {
-                  "baseaddr": 0,
-                  "highaddr": 4294967295,
-                  "size": 4294967296
-                }
-              }
-            },
-            "M_AXI_S2MM": {
-              "pcie_0_axi_pcie_0": {
-                "BAR0": {
-                  "baseaddr": 0,
-                  "highaddr": 4294967295,
-                  "size": 4294967296
                 }
               }
             }
@@ -234,7 +248,7 @@
               "name": "S04_AXIS"
             }
           ],
-          "num_ports": 7
+          "num_ports": 8
         },
         "hier_0_hls_dft_0": {
           "vlnv": "acs.eonerc.rwth-aachen.de:hls:hls_dft:1.1",
@@ -274,17 +288,24 @@
             "irq_case": "pcie_0_axi_pcie_intc_0:7"
           }
         },
+        "mem_0": {
+          "vlnv": "xilinx.com:hls:mem:1.6",
+          "memory-view": {
+            "m_axi_gmem": {
+              "pcie_0_axi_pcie_0": {
+                "BAR0": {
+                  "baseaddr": 0,
+                  "highaddr": 4294967295,
+                  "size": 4294967296
+                }
+              }
+            }
+          }
+        },
         "pcie_0_axi_pcie_0": {
           "vlnv": "xilinx.com:ip:axi_pcie:2.8",
           "memory-view": {
             "M_AXI": {
-              "bram_0_axi_bram_ctrl_0": {
-                "Mem0": {
-                  "baseaddr": 0,
-                  "highaddr": 8191,
-                  "size": 8192
-                }
-              },
               "hier_0_axi_dma_axi_dma_1": {
                 "Reg": {
                   "baseaddr": 8192,
@@ -353,6 +374,27 @@
                   "size": 4096
                 }
               },
+              "mem_0": {
+                "Reg": {
+                  "baseaddr": 57344,
+                  "highaddr": 61439,
+                  "size": 4096
+                }
+              },
+              "rtds2gpu_0": {
+                "Reg": {
+                  "baseaddr": 61440,
+                  "highaddr": 65535,
+                  "size": 4096
+                }
+              },
+              "bram_0_axi_bram_ctrl_0": {
+                "Mem0": {
+                  "baseaddr": 65536,
+                  "highaddr": 73727,
+                  "size": 8192
+                }
+              },
               "pcie_0_axi_pcie_0": {
                 "CTL0": {
                   "baseaddr": 268435456,
@@ -381,6 +423,27 @@
         },
         "pcie_0_axi_reset_0": {
           "vlnv": "xilinx.com:ip:axi_gpio:2.0"
+        },
+        "rtds2gpu_0": {
+          "vlnv": "xilinx.com:hls:rtds2gpu:1.0",
+          "memory-view": {
+            "m_axi_axi_mm": {
+              "pcie_0_axi_pcie_0": {
+                "BAR0": {
+                  "baseaddr": 0,
+                  "highaddr": 4294967295,
+                  "size": 4294967296
+                }
+              }
+            }
+          },
+          "ports": [
+            {
+              "role": "slave",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:7",
+              "name": "rtds_input"
+            }
+          ]
         },
         "timer_0_axi_timer_0": {
           "vlnv": "xilinx.com:ip:axi_timer:2.0",

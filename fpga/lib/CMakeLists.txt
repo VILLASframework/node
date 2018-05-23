@@ -15,6 +15,9 @@ set(SOURCES
 	ips/bram.cpp
 	ips/rtds.cpp
 
+	ips/rtds2gpu/rtds2gpu.cpp
+	ips/rtds2gpu/xrtds2gpu.c
+
 	kernel/kernel.c
 	kernel/pci.c
 	kernel/vfio.cpp

@@ -5,6 +5,7 @@ set(SOURCES
 	dma.cpp
 	fifo.cpp
 	rtds.cpp
+	rtds2gpu.cpp
 	timer.cpp
 	graph.cpp
 )
