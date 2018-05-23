@@ -117,12 +117,26 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 
 	debug(15, "Path %s received = %s", path_name(p), bitset_dump(&p->received));
 
+#ifdef WITH_HOOKS
+	int toenqueue = hook_process_list(&p->hooks, muxed_smps, tomux);
+        if (toenqueue != tomux) {
+                int skipped = tomux - toenqueue;
+
+                debug(LOG_NODES | 10, "Hooks skipped %u out of %u samples for path %s", skipped, timux, path_name(p));
+
+                if (p->stats)
+                        stats_update(p->stats, STATS_SKIPPED, skipped);
+        }
+#else
+	int toenqueue = tomux;
+#endif
+
 	if (bitset_test(&p->mask, i)) {
 		/* Check if we received an update from all nodes/ */
 		if ((p->mode == PATH_MODE_ANY) ||
 		    (p->mode == PATH_MODE_ALL && !bitset_cmp(&p->mask, &p->received)))
 		{
-			path_destination_enqueue(p, muxed_smps, tomux);
+			path_destination_enqueue(p, muxed_smps, toenqueue);
 
 			/* Reset bitset of updated nodes */
 			bitset_clear_all(&p->received);
