@@ -195,7 +195,7 @@ static void mqtt_subscribe_cb(struct mosquitto *mosq, void *userdata, int mid, i
 	struct node *n = (struct node *) userdata;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
-	info("MQTT node %s subscribed to broker %s", node_name(n), m->host);
+	info("MQTT: Node %s subscribed to broker %s", node_name(n), m->host);
 }
 
 int mqtt_reverse(struct node *n)
@@ -500,11 +500,13 @@ int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	ret = io_sprint(&m->io, data, sizeof(data), &wbytes, smps, cnt);
 	if (ret < 0)
-		return -1;
+		return ret;
 
 	ret = mosquitto_publish(m->client, NULL /* mid */, m->publish, wbytes, data, m->qos, m->retain);
-	if (ret)
-		return -1;
+	if (ret != MOSQ_ERR_SUCCESS) {
+		warn("MQTT: publish failed for node %s: %s", node_name(n), mosquitto_strerror(ret));
+		return -abs(ret);
+	}
 
 	return cnt;
 }
