@@ -70,7 +70,7 @@ int shmem_parse(struct node *n, json_t *cfg)
 		size_t index;
 		json_t *json_val;
 		json_array_foreach(json_exec, index, json_val) {
-			val = json_string_value(json_exec);
+			val = json_string_value(json_val);
 			if (!val)
 				error("Setting 'exec' of node %s must be an array of strings", node_name(n));
 
@@ -92,6 +92,8 @@ int shmem_open(struct node *n)
 		ret = spawn(shm->exec[0], shm->exec);
 		if (!ret)
 			serror("Failed to spawn external program");
+
+		sleep(1);
 	}
 
 	ret = shmem_int_open(shm->out_name, shm->in_name, &shm->intf, &shm->conf);
