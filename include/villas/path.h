@@ -90,6 +90,7 @@ struct path {
 
 	double rate;			/**< A timeout for */
 	int enabled;			/**< Is this path enabled. */
+	int poll;			/**< Weather or not to use poll(2). */
 	int reverse;			/**< This path as a matching reverse path. */
 	int builtin;			/**< This path should use built-in hooks by default. */
 	int queuelen;			/**< The queue length for each path_destination::queue */
