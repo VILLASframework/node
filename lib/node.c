@@ -298,15 +298,12 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 				return readd;
 
 			nread += readd;
-			debug(LOG_NODES | 5, "Received %u samples from node %s", readd, node_name(n));
 		}
 	}
 	else {
 		nread = n->_vt->read(n, smps, cnt);
 		if (nread < 0)
 			return nread;
-
-		debug(LOG_NODES | 5, "Received %u samples from node %s", nread, node_name(n));
 	}
 
 	/* Add missing fields */
@@ -332,17 +329,18 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 #ifdef WITH_HOOKS
 	/* Run read hooks */
 	int rread = hook_read_list(&n->hooks, smps, nread);
-	if (nread != rread) {
-		int skipped = nread - rread;
+	int skipped = nread - rread;
 
-		debug(LOG_NODES | 10, "Hooks skipped %u out of %u samples for node %s", skipped, nread, node_name(n));
-
-		if (n->stats)
-			stats_update(n->stats, STATS_SKIPPED, skipped);
+	if (skipped > 0 && n->stats != NULL) {
+		stats_update(n->stats, STATS_SKIPPED, skipped);
 	}
+
+	debug(LOG_NODES | 5, "Received %u samples from node %s of which %d have been skipped", nread, node_name(n), skipped);
 
 	return rread;
 #else
+	debug(LOG_NODES | 5, "Received %u samples from node %s", nread, node_name(n));
+
 	return nread;
 #endif /* WITH_HOOKS */
 }
