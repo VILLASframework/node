@@ -35,6 +35,8 @@
 #include <villas/format_type.h>
 #include <villas/formats/msg_format.h>
 
+#define DEFAULT_WEBSOCKET_BUFFER_SIZE (1 << 12)
+
 /* Private static storage */
 static struct list connections = { .state = STATE_DESTROYED };	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
 static struct web *web;
@@ -109,8 +111,13 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			c->wsi = wsi;
 			c->state = STATE_ESTABLISHED;
 
-			buffer_init(&c->buffers.recv, 1 << 12);
-			buffer_init(&c->buffers.send, 1 << 12);
+			ret = buffer_init(&c->buffers.recv, DEFAULT_WEBSOCKET_BUFFER_SIZE);
+			if (ret)
+				return -1;
+
+			ret = buffer_init(&c->buffers.send, DEFAULT_WEBSOCKET_BUFFER_SIZE);
+			if (ret)
+				return ret;
 
 			debug(LOG_WEBSOCKET | 10, "Established WebSocket connection: %s", websocket_connection_name(c));
 
@@ -171,8 +178,13 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			if (ret)
 				return -1;
 
-			buffer_init(&c->buffers.recv, 1 << 12);
-			buffer_init(&c->buffers.send, 1 << 12);
+			ret = buffer_init(&c->buffers.recv, DEFAULT_WEBSOCKET_BUFFER_SIZE);
+			if (ret)
+				return -1;
+
+			ret = buffer_init(&c->buffers.send, DEFAULT_WEBSOCKET_BUFFER_SIZE);
+			if (ret)
+				return ret;
 
 			ret = queue_init(&c->queue, DEFAULT_QUEUELEN, &memtype_hugepage);
 			if (ret)
@@ -218,8 +230,13 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			if (ret)
 				return ret;
 
-			buffer_destroy(&c->buffers.recv);
-			buffer_destroy(&c->buffers.send);
+			ret = buffer_destroy(&c->buffers.recv);
+			if (ret)
+				return ret;
+
+			ret = buffer_destroy(&c->buffers.send);
+			if (ret)
+				return ret;
 
 			c->wsi = NULL;
 
