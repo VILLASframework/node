@@ -26,6 +26,7 @@
 
 #include <villas/hook.h>
 #include <villas/plugin.h>
+#include <villas/path.h>
 #include <villas/sample.h>
 #include <villas/io.h>
 
@@ -33,7 +34,8 @@ struct print {
 	struct io io;
 	struct format_type *format;
 
-	const char *uri;
+	char *prefix;
+	char *uri;
 };
 
 static int print_init(struct hook *h)
@@ -41,6 +43,7 @@ static int print_init(struct hook *h)
 	struct print *p = (struct print *) h->_vd;
 
 	p->uri = NULL;
+	p->prefix = NULL;
 	p->format = format_type_lookup("villas.human");
 
 	return 0;
@@ -77,16 +80,23 @@ static int print_stop(struct hook *h)
 static int print_parse(struct hook *h, json_t *cfg)
 {
 	struct print *p = (struct print *) h->_vd;
-	const char *format = NULL;
+	const char *format = NULL, *prefix = NULL, *uri = NULL;
 	int ret;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s }",
-		"output", &p->uri,
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s }",
+		"output", &uri,
+		"prefix", &prefix,
 		"format", &format
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
+
+	if (prefix)
+		p->prefix = strdup(prefix);
+
+	if (uri)
+		p->uri = strdup(uri);
 
 	if (format) {
 		p->format = format_type_lookup(format);
@@ -97,9 +107,42 @@ static int print_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
+static int print_read(struct hook *h, struct sample *smps[], unsigned *cnt)
+{
+	struct print *p = (struct print *) h->_vd;
+
+	if (p->prefix)
+		printf("%s", p->prefix);
+	else if (h->node)
+		printf("Node %s read: ", node_name(h->node));
+
+	io_print(&p->io, smps, *cnt);
+
+	return 0;
+}
+
+static int print_write(struct hook *h, struct sample *smps[], unsigned *cnt)
+{
+	struct print *p = (struct print *) h->_vd;
+
+	if (p->prefix)
+		printf("%s", p->prefix);
+	else if (h->node)
+		printf("Node %s write: ", node_name(h->node));
+
+	io_print(&p->io, smps, *cnt);
+
+	return 0;
+}
+
 static int print_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct print *p = (struct print *) h->_vd;
+
+	if (p->prefix)
+		printf("%s", p->prefix);
+	else if (h->path)
+		printf("Path %s process: ", path_name(h->path));
 
 	io_print(&p->io, smps, *cnt);
 
@@ -110,6 +153,12 @@ static int print_destroy(struct hook *h)
 {
 	int ret;
 	struct print *p = (struct print *) h->_vd;
+
+	if (p->uri)
+		free(p->uri);
+
+	if (p->prefix)
+		free(p->prefix);
 
 	ret = io_destroy(&p->io);
 	if (ret)
@@ -130,6 +179,8 @@ static struct plugin p = {
 		.destroy= print_destroy,
 		.start	= print_start,
 		.stop	= print_stop,
+		.read   = print_read,
+		.write  = print_write,
 		.process= print_process,
 		.size	= sizeof(struct print)
 	}
