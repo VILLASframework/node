@@ -132,6 +132,15 @@ void * list_lookup(struct list *l, const char *name)
 	return list_search(l, cmp_lookup, (void *) name);
 }
 
+ssize_t list_lookup_index(struct list *l, const char *name)
+{
+	void *ptr = list_lookup(l, name);
+	if (!ptr)
+		return -1;
+
+	return list_index(l, ptr);
+}
+
 int list_contains(struct list *l, void *p)
 {
 	return list_count(l, cmp_contains, p);

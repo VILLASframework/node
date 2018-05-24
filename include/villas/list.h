@@ -97,6 +97,8 @@ void list_remove(struct list *l, void *p);
  */
 void * list_lookup(struct list *l, const char *name);
 
+ssize_t list_lookup_index(struct list *l, const char *name);
+
 /** Return the first element of the list for which cmp returns zero */
 void * list_search(struct list *l, cmp_cb_t cmp, void *ctx);
 
