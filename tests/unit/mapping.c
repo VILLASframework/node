@@ -47,16 +47,16 @@ Test(mapping, parse_nodes)
 		struct node *n = alloc(sizeof(struct node));
 
 		n->name = node_names[i];
-		n->signals.state = STATE_DESTROYED;
+		n->in.signals.state = STATE_DESTROYED;
 
-		list_init(&n->signals);
+		list_init(&n->in.signals);
 
 		for (int j = 0; j < ARRAY_LEN(signal_names[i]); j++) {
 			struct signal *s = alloc(sizeof(struct signal *));
 
 			s->name = signal_names[i][j];
 
-			list_push(&n->signals, s);
+			list_push(&n->in.signals, s);
 		}
 
 		list_push(&nodes, n);
