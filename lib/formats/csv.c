@@ -36,32 +36,32 @@ static size_t csv_sprint_single(struct io *io, char *buf, size_t len, struct sam
 	size_t off = 0;
 
 	if (io->flags & SAMPLE_HAS_ORIGIN)
-		off += snprintf(buf + off, len - off, "%ld%c%09ld", s->ts.origin.tv_sec, CSV_SEPARATOR, s->ts.origin.tv_nsec);
+		off += snprintf(buf + off, len - off, "%ld%c%09ld", s->ts.origin.tv_sec, io->separator, s->ts.origin.tv_nsec);
 	else
-		off += snprintf(buf + off, len - off, "nan%cnan", CSV_SEPARATOR);
+		off += snprintf(buf + off, len - off, "nan%cnan", io->separator);
 
 	if (io->flags & SAMPLE_HAS_RECEIVED)
-		off += snprintf(buf + off, len - off, "%c%f", CSV_SEPARATOR, time_delta(&s->ts.origin, &s->ts.received));
+		off += snprintf(buf + off, len - off, "%c%f", io->separator, time_delta(&s->ts.origin, &s->ts.received));
 	else
-		off += snprintf(buf + off, len - off, "%cnan", CSV_SEPARATOR);
+		off += snprintf(buf + off, len - off, "%cnan", io->separator);
 
 	if (io->flags & SAMPLE_HAS_SEQUENCE)
-		off += snprintf(buf + off, len - off, "%c%u", CSV_SEPARATOR, s->sequence);
+		off += snprintf(buf + off, len - off, "%c%u", io->separator, s->sequence);
 	else
-		off += snprintf(buf + off, len - off, "%cnan", CSV_SEPARATOR);
+		off += snprintf(buf + off, len - off, "%cnan", io->separator);
 
 	for (int i = 0; i < s->length; i++) {
 		switch ((s->format >> i) & 0x1) {
 			case SAMPLE_DATA_FORMAT_FLOAT:
-				off += snprintf(buf + off, len - off, "%c%.6f", CSV_SEPARATOR, s->data[i].f);
+				off += snprintf(buf + off, len - off, "%c%.6f", io->separator, s->data[i].f);
 				break;
 			case SAMPLE_DATA_FORMAT_INT:
-				off += snprintf(buf + off, len - off, "%c%" PRId64, CSV_SEPARATOR, s->data[i].i);
+				off += snprintf(buf + off, len - off, "%c%" PRId64, io->separator, s->data[i].i);
 				break;
 		}
 	}
 
-	off += snprintf(buf + off, len - off, "\n");
+	off += snprintf(buf + off, len - off, "%c", io->delimiter);
 
 	return off;
 }
@@ -74,13 +74,13 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 	s->flags = 0;
 
 	s->ts.origin.tv_sec = strtoul(ptr, &end, 10);
-	if (end == ptr || *end == '\n')
+	if (end == ptr || *end == io->delimiter)
 		goto out;
 
 	ptr = end;
 
 	s->ts.origin.tv_nsec = strtoul(ptr, &end, 10);
-	if (end == ptr || *end == '\n')
+	if (end == ptr || *end == io->delimiter)
 		goto out;
 
 	ptr = end;
@@ -88,13 +88,13 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 	s->flags |= SAMPLE_HAS_ORIGIN;
 
 	double offset __attribute__((unused)) = strtof(ptr, &end);
-	if (end == ptr || *end == '\n')
+	if (end == ptr || *end == io->delimiter)
 		goto out;
 
 	ptr = end;
 
 	s->sequence = strtoul(ptr, &end, 10);
-	if (end == ptr || *end == '\n')
+	if (end == ptr || *end == io->delimiter)
 		goto out;
 
 	s->flags |= SAMPLE_HAS_SEQUENCE;
@@ -102,7 +102,7 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 	for (ptr  = end, s->length = 0;
 	                 s->length < s->capacity;
 	     ptr  = end, s->length++) {
-		if (*end == '\n')
+		if (*end == io->delimiter)
 			goto out;
 
 		switch (s->format & (1 << s->length)) {
@@ -119,7 +119,7 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 			goto out;
 	}
 
-out:	if (*end == '\n')
+out:	if (*end == io->delimiter)
 		end++;
 
 	if (s->length > 0)
@@ -160,22 +160,22 @@ void csv_header(struct io *io)
 {
 	FILE *f = io_stream_output(io);
 
-	fprintf(f, "# secs%cnsecs%coffset%csequence", CSV_SEPARATOR, CSV_SEPARATOR, CSV_SEPARATOR);
+	fprintf(f, "# secs%cnsecs%coffset%csequence", io->separator, io->separator, io->separator);
 
 	if (io->output.signals) {
 		for (int i = 0; i < list_length(io->output.signals); i++) {
 			struct signal *s = (struct signal *) list_at(io->output.signals, i);
 
-			fprintf(f, "%c%s", CSV_SEPARATOR, s->name);
+			fprintf(f, "%c%s", io->separator, s->name);
 
 			if (s->unit)
 				fprintf(f, "[%s]", s->unit);
 		}
 	}
 	else
-		fprintf(f, "%cdata[]", CSV_SEPARATOR);
+		fprintf(f, "%cdata[]", io->separator);
 
-	fprintf(f, "\n");
+	fprintf(f, "%c", io->delimiter);
 }
 
 static struct plugin p = {

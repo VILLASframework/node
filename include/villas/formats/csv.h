@@ -28,8 +28,6 @@
 /* Forward declarations. */
 struct sample;
 
-#define CSV_SEPARATOR '\t'
-
 void csv_header(struct io *io);
 
 int csv_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
