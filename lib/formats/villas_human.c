@@ -191,7 +191,7 @@ void villas_human_header(struct io *io)
 {
 	FILE *f = io_stream_output(io);
 
-	fprintf(f, "# %-20s", "sec.nsec+offset");
+	fprintf(f, "# %-20s", "seconds.nanoseconds+offset(sequence)");
 
 	if (io->output.signals) {
 		for (int i = 0; i < list_length(io->output.signals); i++) {
