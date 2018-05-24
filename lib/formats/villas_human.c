@@ -51,16 +51,16 @@ static size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, s
 		for (int i = 0; i < s->length; i++) {
 			switch (sample_get_data_format(s, i)) {
 				case SAMPLE_DATA_FORMAT_FLOAT:
-					off += snprintf(buf + off, len - off, "\t%.6lf", s->data[i].f);
+					off += snprintf(buf + off, len - off, "%c%.6lf", io->separator, s->data[i].f);
 					break;
 				case SAMPLE_DATA_FORMAT_INT:
-					off += snprintf(buf + off, len - off, "\t%" PRIi64, s->data[i].i);
+					off += snprintf(buf + off, len - off, "%c%" PRIi64, io->separator, s->data[i].i);
 					break;
 			}
 		}
 	}
 
-	off += snprintf(buf + off, len - off, "\n");
+	off += snprintf(buf + off, len - off, "%c", io->delimiter);
 
 	return off;
 }
@@ -82,7 +82,7 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 
 	/* Mandatory: seconds */
 	s->ts.origin.tv_sec = (uint32_t) strtoul(ptr, &end, 10);
-	if (ptr == end || *end == '\n')
+	if (ptr == end || *end == io->delimiter)
 		return -1;
 
 	s->flags |= SAMPLE_HAS_ORIGIN;
@@ -126,7 +126,7 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 	for (ptr  = end, s->length = 0;
 	                 s->length < s->capacity;
 	     ptr  = end, s->length++) {
-		if (*end == '\n')
+		if (*end == io->delimiter)
 			break;
 
 		switch (s->format & (1 << s->length)) {
@@ -143,7 +143,7 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 			break;
 	}
 
-	if (*end == '\n')
+	if (*end == io->delimiter)
 		end++;
 
 	if (s->length > 0)
@@ -197,16 +197,16 @@ void villas_human_header(struct io *io)
 		for (int i = 0; i < list_length(io->output.signals); i++) {
 			struct signal *s = (struct signal *) list_at(io->output.signals, i);
 
-			fprintf(f, "\t%s", s->name);
+			fprintf(f, "%c%s", io->separator, s->name);
 
 			if (s->unit)
 				fprintf(f, "[%s]", s->unit);
 		}
 	}
 	else
-		fprintf(f, "\tdata[]");
+		fprintf(f, "%cdata[]", io->separator);
 
-	fprintf(f, "\n");
+	fprintf(f, "%c", io->delimiter);
 }
 
 static struct plugin p = {
@@ -218,7 +218,9 @@ static struct plugin p = {
 		.sscan	= villas_human_sscan,
 		.header = villas_human_header,
 		.size	= 0,
-		.flags	= IO_NEWLINES
+		.flags	= IO_NEWLINES,
+		.separator = '\t',
+		.delimiter = '\n'
 	}
 };
 

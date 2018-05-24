@@ -258,7 +258,7 @@ int json_print(struct io *io, struct sample *smps[], unsigned cnt)
 			return ret;
 
 		ret = json_dumpf(json, f, 0);
-		fputc('\n', f);
+		fputc(io->delimiter, f);
 
 		json_decref(json);
 
@@ -301,7 +301,8 @@ static struct plugin p = {
 		.print	= json_print,
 		.sscan	= json_sscan,
 		.sprint	= json_sprint,
-		.size = 0
+		.size = 0,
+		.delimiter = '\n'
 	},
 };
 
