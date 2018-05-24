@@ -97,8 +97,10 @@ struct format_type {
 
 	/** @} */
 
-	size_t size;		/**< Number of bytes to allocate for io::_vd */
-	int flags;		/**< A set of flags which is automatically used. */
+	size_t size;				/**< Number of bytes to allocate for io::_vd */
+	int flags;				/**< A set of flags which is automatically used. */
+	char delimiter;				/**< Newline delimiter. */
+	char separator;				/**< Column separator (used by csv and villas.human formats only) */
 };
 
 struct format_type * format_type_lookup(const char *name);

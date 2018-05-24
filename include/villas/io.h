@@ -41,6 +41,7 @@ struct io {
 	enum state state;
 	int flags;
 	char delimiter;				/**< Newline delimiter. */
+	char separator;				/**< Column separator (used by csv and villas.human formats only) */
 
 	struct {
 		/** A format type can use this file handle or overwrite the

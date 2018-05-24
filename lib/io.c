@@ -89,7 +89,8 @@ int io_init(struct io *io, struct format_type *fmt, struct node *n, int flags)
 	io->_vd = alloc(fmt->size);
 
 	io->flags = flags | io->_vt->flags;
-	io->delimiter = '\n';
+	io->delimiter = io->_vt->delimiter ? io->_vt->delimiter : '\n';
+	io->separator = io->_vt->separator ? io->_vt->separator : '\t';
 
 	io->input.buflen =
 	io->output.buflen = 4096;
