@@ -84,25 +84,16 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 	if (json_sequence)
 		json_decref(json_sequence);
 
-	char *origin, *target;
-	origin = smp->source
-		? smp->source->name
-		: NULL;
-
-	target = smp->destination
-		? smp->destination->name
-		: NULL;
-
 	*j = json_pack_ex(&err, 0, "{ s: o }",
 		"measurements", json_data
 	);
 	if (*j == NULL)
 		return -1;
 
-	if (target)
-		json_object_set_new(*j, "target", json_string(target));
-	if (origin)
-		json_object_set_new(*j, "origin", json_string(origin));
+	if (io->output.node)
+		json_object_set_new(*j, "target", json_string(io->output.node->name));
+	//if (smp->source)
+	//	json_object_set_new(*j, "origin", json_string(smp->source->name));
 
 	return 0;
 }
@@ -115,8 +106,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 	json_t *json_value, *json_data = NULL;
 	size_t i;
 
-	const char *origin;
-	const char *target;
+	const char *origin = NULL, *target = NULL;
 
 	ret = json_unpack_ex(json_smp, &err, 0, "{ s?: s, s?: s, s?: o, s?: o }",
 		"origin", &origin,
@@ -126,6 +116,11 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 	);
 	if (ret)
 		return -1;
+
+	if (target && io->input.node) {
+		if (strcmp(target, io->input.node->name))
+			return -1;
+	}
 
 	if (!json_data || !json_is_array(json_data))
 		return -1;
@@ -146,10 +141,8 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 		if (ret)
 			return -1;
 
-		void *s = list_lookup(io->input.signals, name);
-		if (s)
-			idx = list_index(io->input.signals, s);
-		else {
+		idx = list_lookup_index(io->input.signals, name);
+		if (idx < 0) {
 			ret = sscanf(name, "signal_%d", &idx);
 			if (ret != 1)
 				continue;
@@ -159,7 +152,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 			smp->data[idx].f = value;
 
 			if (idx >= smp->length)
-				smp->length = idx;
+				smp->length = idx + 1;
 		}
 	}
 
@@ -171,7 +164,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 		smp->flags |= SAMPLE_HAS_ORIGIN;
 	}
 
-	return 0;
+	return smp->length > 0 ? 1 : 0;
 }
 
 /*
@@ -222,7 +215,7 @@ int json_reserve_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, str
 	if (rbytes)
 		*rbytes = err.position;
 
-	return 1;
+	return ret;
 }
 
 int json_reserve_print(struct io *io, struct sample *smps[], unsigned cnt)
@@ -263,10 +256,11 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 			break;
 
 		ret = json_reserve_unpack_sample(io, json, smps[i]);
-		if (ret)
-			goto skip;
 
 		json_decref(json);
+
+		if (ret < 0)
+			goto skip;
 	}
 
 	return i;
