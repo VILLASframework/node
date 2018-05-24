@@ -302,13 +302,16 @@ char * mqtt_print(struct node *n)
 
 	char *buf = NULL;
 
-	strcatf(&buf, "format=%s, host=%s, port=%d, username=%s, keepalive=%s, ssl=%s", plugin_name(m->format),
+	strcatf(&buf, "format=%s, host=%s, port=%d, keepalive=%s, ssl=%s", plugin_name(m->format),
 		m->host,
 		m->port,
-		m->username,
 		m->keepalive ? "yes" : "no",
 		m->ssl.enabled ? "yes" : "no"
 	);
+
+	/* Only show if not default */
+	if (m->username)
+		strcatf(&buf, ", username=%s", m->username);
 
 	if (m->publish)
 		strcatf(&buf, ", publish=%s", m->publish);
