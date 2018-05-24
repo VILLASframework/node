@@ -369,10 +369,6 @@ int super_node_start(struct super_node *sn)
 
 		int refs = list_count(&sn->paths, (cmp_cb_t) path_uses_node, n);
 		if (refs > 0) { INDENT
-			ret = node_init2(n);
-			if (ret)
-				error("Failed to start node: %s", node_name(n));
-
 			ret = node_start(n);
 			if (ret)
 				error("Failed to start node: %s", node_name(n));

@@ -129,18 +129,18 @@ static void * send_loop(void *ctx)
 {
 	unsigned last_sequenceno = 0;
 	int ret, scanned, sent, ready, cnt = 0;
-	struct sample *smps[node->vectorize];
+	struct sample *smps[node->out.vectorize];
 
 	/* Initialize memory */
-	ret = pool_init(&sendd.pool, LOG2_CEIL(node->vectorize), SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
+	ret = pool_init(&sendd.pool, LOG2_CEIL(node->out.vectorize), SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 
 	while (!io_eof(&io)) {
-		ready = sample_alloc_many(&sendd.pool, smps, node->vectorize);
+		ready = sample_alloc_many(&sendd.pool, smps, node->out.vectorize);
 		if (ret < 0)
-			error("Failed to get %u samples out of send pool (%d).", node->vectorize, ret);
-		else if (ready < node->vectorize)
+			error("Failed to get %u samples out of send pool (%d).", node->out.vectorize, ret);
+		else if (ready < node->out.vectorize)
 			warn("Send pool underrun");
 
 		scanned = io_scan(&io, smps, ready);
@@ -193,18 +193,18 @@ leave:	if (io_eof(&io)) {
 static void * recv_loop(void *ctx)
 {
 	int recv, ret, cnt = 0, ready = 0;
-	struct sample *smps[node->vectorize];
+	struct sample *smps[node->in.vectorize];
 
 	/* Initialize memory */
-	ret = pool_init(&recvv.pool, LOG2_CEIL(node->vectorize), SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
+	ret = pool_init(&recvv.pool, LOG2_CEIL(node->in.vectorize), SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 
 	for (;;) {
-		ready = sample_alloc_many(&recvv.pool, smps, node->vectorize);
+		ready = sample_alloc_many(&recvv.pool, smps, node->in.vectorize);
 		if (ready < 0)
-			error("Failed to allocate %u samples from receive pool.", node->vectorize);
-		else if (ready < node->vectorize)
+			error("Failed to allocate %u samples from receive pool.", node->in.vectorize);
+		else if (ready < node->in.vectorize)
 			warn("Receive pool underrun");
 
 		recv = node_read(node, smps, ready);

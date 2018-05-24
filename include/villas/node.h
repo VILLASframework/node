@@ -38,6 +38,17 @@
 #include "queue.h"
 #include "common.h"
 
+struct node_direction {
+	int enabled;
+	int builtin;		/**< This node should use built-in hooks by default. */
+	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
+
+	struct list hooks;	/**< List of write hooks (struct hook). */
+	struct list signals;	/**< List of signal meta data such as signal names */
+
+	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
+};
+
 /** The data structure for a node.
  *
  * Every entity which exchanges messages is represented by a node.
@@ -49,19 +60,14 @@ struct node
 	char *_name;		/**< Singleton: A string used to print to screen. */
 	char *_name_long;	/**< Singleton: A string used to print to screen. */
 
-	int builtin;		/**< This node should use built-in hooks by default. */
-	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
 	int affinity;		/**< CPU Affinity of this node */
 	int samplelen;		/**< The maximum number of values this node can receive. */
-
-	int id;			/**< An id of this node which is only unique in the scope of it's super-node (VILLASnode instance). */
 
 	unsigned sequence;	/**< This is a counter of received samples, in case the node-type does not generate sequence numbers itself. */
 
 	struct stats *stats;	/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 
-	struct list hooks;	/**< List of write hooks (struct hook). */
-	struct list signals;	/**< List of signal meta data such as signal names */
+	struct node_direction in, out;
 
 	enum state state;
 

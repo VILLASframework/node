@@ -33,35 +33,19 @@
 #include <villas/timing.h>
 #include <villas/signal.h>
 
-int node_init(struct node *n, struct node_type *vt)
+static int node_direction_init(struct node_direction *nd, struct node *n)
 {
-	static int max_id;
+	nd->enabled = 1;
+	nd->vectorize = 1;
+	nd->builtin = 1;
 
-	assert(n->state == STATE_DESTROYED);
-
-	n->_vt = vt;
-	n->_vd = alloc(vt->size);
-
-	n->stats = NULL;
-	n->name = NULL;
-	n->_name = NULL;
-	n->_name_long = NULL;
-
-	n->id = max_id++;
-
-	/* Default values */
-	n->vectorize = 1;
-	n->builtin = 1;
-	n->samplelen = DEFAULT_SAMPLELEN;
-
-	list_push(&vt->instances, n);
-
-	list_init(&n->signals);
+	list_init(&nd->signals);
 
 #ifdef WITH_HOOKS
 	/* Add internal hooks if they are not already in the list */
-	list_init(&n->hooks);
-	if (n->builtin) {
+	list_init(&nd->hooks);
+
+	if (nd->builtin) {
 		int ret;
 		for (size_t i = 0; i < list_length(&plugins); i++) {
 			struct plugin *q = (struct plugin *) list_at(&plugins, i);
@@ -80,22 +64,142 @@ int node_init(struct node *n, struct node_type *vt)
 			if (ret)
 				return ret;
 
-			list_push(&n->hooks, h);
+			list_push(&nd->hooks, h);
 		}
 	}
 #endif /* WITH_HOOKS */
 
-	n->state = STATE_INITIALIZED;
+	return 0;
+}
+
+static int node_direction_destroy(struct node_direction *nd, struct node *n)
+{
+	int ret;
+
+	ret = list_destroy(&nd->signals, (dtor_cb_t) signal_destroy, true);
+	if (ret)
+		return ret;
+
+#ifdef WITH_HOOKS
+	ret = list_destroy(&nd->hooks, (dtor_cb_t) hook_destroy, true);
+	if (ret)
+		return ret;
+#endif
 
 	return 0;
 }
 
-int node_init2(struct node *n)
+static int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
+{
+	int ret;
+
+	json_t *json_hooks = NULL;
+	json_t *json_signals = NULL;
+
+	json_error_t err;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: i, s?: b }",
+		"hooks", &json_hooks,
+		"signals", &json_signals,
+		"vectorize", &nd->vectorize,
+		"builtin", &nd->builtin
+	);
+	if (ret)
+		jerror(&err, "Failed to parse node '%s'", node_name(n));
+
+#ifdef WITH_HOOKS
+	if (json_hooks) {
+		ret = hook_parse_list(&nd->hooks, json_hooks, NULL, n);
+		if (ret < 0)
+			return ret;
+	}
+#endif /* WITH_HOOKS */
+
+	if (json_signals) {
+		ret = signal_parse_list(&nd->signals, json_signals);
+		if (ret)
+			error("Failed to parse signal definition of node '%s'", node_name(n));
+	}
+
+	return 0;
+}
+
+static int node_direction_check(struct node_direction *nd, struct node *n)
+{
+	if (nd->vectorize <= 0)
+		error("Invalid `vectorize` value %d for node %s. Must be natural number!", nd->vectorize, node_name(n));
+
+	if (n->_vt->vectorize && n->_vt->vectorize < nd->vectorize)
+		error("Invalid value for `vectorize`. Node type requires a number smaller than %d!",
+			n->_vt->vectorize);
+
+	return 0;
+}
+
+static int node_direction_start(struct node_direction *nd, struct node *n)
 {
 #ifdef WITH_HOOKS
+	int ret;
+
 	/* We sort the hooks according to their priority before starting the path */
-	list_sort(&n->hooks, hook_cmp_priority);
+	list_sort(&nd->hooks, hook_cmp_priority);
+
+	for (size_t i = 0; i < list_length(&nd->hooks); i++) {
+		struct hook *h = (struct hook *) list_at(&nd->hooks, i);
+
+		ret = hook_start(h);
+		if (ret)
+			return ret;
+	}
 #endif /* WITH_HOOKS */
+
+	return 0;
+}
+
+static int node_direction_stop(struct node_direction *nd, struct node *n)
+{
+#ifdef WITH_HOOKS
+	int ret;
+
+	for (size_t i = 0; i < list_length(&nd->hooks); i++) {
+		struct hook *h = (struct hook *) list_at(&nd->hooks, i);
+
+		ret = hook_stop(h);
+		if (ret)
+			return ret;
+	}
+#endif /* WITH_HOOKS */
+
+	return 0;
+}
+
+int node_init(struct node *n, struct node_type *vt)
+{
+	int ret;
+	assert(n->state == STATE_DESTROYED);
+
+	n->_vt = vt;
+	n->_vd = alloc(vt->size);
+
+	n->stats = NULL;
+	n->name = NULL;
+	n->_name = NULL;
+	n->_name_long = NULL;
+
+	/* Default values */
+	n->samplelen = DEFAULT_SAMPLELEN;
+
+	ret = node_direction_init(&n->in, n);
+	if (ret)
+		return ret;
+
+	ret = node_direction_init(&n->out, n);
+	if (ret)
+		return ret;
+
+	n->state = STATE_INITIALIZED;
+
+	list_push(&vt->instances, n);
 
 	return 0;
 }
@@ -106,20 +210,17 @@ int node_parse(struct node *n, json_t *cfg, const char *name)
 	int ret;
 
 	json_error_t err;
-	json_t *json_hooks = NULL;
-	json_t *json_signals = NULL;
+	json_t *json_in = NULL, *json_out = NULL;
 
 	const char *type;
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: i, s?: i, s?: o, s?: b, s?: o }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: i, s?: o, s?: o }",
 		"type", &type,
-		"vectorize", &n->vectorize,
 		"samplelen", &n->samplelen,
-		"hooks", &json_hooks,
-		"builtin", &n->builtin,
-		"signals", &json_signals
+		"in", &json_in,
+		"out", &json_out
 	);
 	if (ret)
 		jerror(&err, "Failed to parse node '%s'", node_name(n));
@@ -127,18 +228,16 @@ int node_parse(struct node *n, json_t *cfg, const char *name)
 	nt = node_type_lookup(type);
 	assert(nt == n->_vt);
 
-#ifdef WITH_HOOKS
-	if (json_hooks) {
-		ret = hook_parse_list(&n->hooks, json_hooks, NULL, n);
-		if (ret < 0)
-			return ret;
-	}
-#endif /* WITH_HOOKS */
-
-	if (json_signals) {
-		ret = signal_parse_list(&n->signals, json_signals);
+	if (json_in) {
+		ret = node_direction_parse(&n->in, n, json_in);
 		if (ret)
-			error("Failed to parse signal definition of node '%s'", node_name(n));
+			error("Failed to parse input direction of node '%s'", node_name(n));
+	}
+
+	if (json_out) {
+		ret = node_direction_parse(&n->out, n, json_out);
+		if (ret)
+			error("Failed to parse output direction of node '%s'", node_name(n));
 	}
 
 	ret = n->_vt->parse ? n->_vt->parse(n, cfg) : 0;
@@ -179,14 +278,16 @@ int node_parse_cli(struct node *n, int argc, char *argv[])
 
 int node_check(struct node *n)
 {
+	int ret;
 	assert(n->state != STATE_DESTROYED);
 
-	if (n->vectorize <= 0)
-		error("Invalid `vectorize` value %d for node %s. Must be natural number!", n->vectorize, node_name(n));
+	ret = node_direction_check(&n->in, n);
+	if (ret)
+		return ret;
 
-	if (n->_vt->vectorize && n->_vt->vectorize < n->vectorize)
-		error("Invalid value for `vectorize`. Node type requires a number smaller than %d!",
-			n->_vt->vectorize);
+	ret = node_direction_check(&n->out, n);
+	if (ret)
+		return ret;
 
 	n->state = STATE_CHECKED;
 
@@ -201,15 +302,13 @@ int node_start(struct node *n)
 
 	info("Starting node %s", node_name_long(n));
 	{ INDENT
-#ifdef WITH_HOOKS
-		for (size_t i = 0; i < list_length(&n->hooks); i++) {
-			struct hook *h = (struct hook *) list_at(&n->hooks, i);
+		ret = node_direction_start(&n->in, n);
+		if (ret)
+			return ret;
 
-			ret = hook_start(h);
-			if (ret)
-				return ret;
-		}
-#endif /* WITH_HOOKS */
+		ret = node_direction_start(&n->out, n);
+		if (ret)
+			return ret;
 
 		ret = n->_vt->start ? n->_vt->start(n) : 0;
 		if (ret)
@@ -232,15 +331,13 @@ int node_stop(struct node *n)
 
 	info("Stopping node %s", node_name(n));
 	{ INDENT
-#ifdef WITH_HOOKS
-		for (size_t i = 0; i < list_length(&n->hooks); i++) {
-			struct hook *h = (struct hook *) list_at(&n->hooks, i);
+		ret = node_direction_stop(&n->in, n);
+		if (ret)
+			return ret;
 
-			ret = hook_stop(h);
-			if (ret)
-				return ret;
-		}
-#endif /* WITH_HOOKS */
+		ret = node_direction_stop(&n->out, n);
+		if (ret)
+			return ret;
 
 		ret = n->_vt->stop ? n->_vt->stop(n) : 0;
 	}
@@ -253,18 +350,21 @@ int node_stop(struct node *n)
 
 int node_destroy(struct node *n)
 {
+	int ret;
 	assert(n->state != STATE_DESTROYED && n->state != STATE_STARTED);
 
-#ifdef WITH_HOOKS
-	list_destroy(&n->hooks, (dtor_cb_t) hook_destroy, true);
-#endif
+	ret = node_direction_destroy(&n->in, n);
+	if (ret)
+		return ret;
+
+	ret = node_direction_destroy(&n->out, n);
+	if (ret)
+		return ret;
 
 	if (n->_vt->destroy)
 		n->_vt->destroy(n);
 
 	list_remove(&n->_vt->instances, n);
-
-	list_destroy(&n->signals, (dtor_cb_t) signal_destroy, true);
 
 	if (n->_vd)
 		free(n->_vd);
@@ -328,7 +428,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 #ifdef WITH_HOOKS
 	/* Run read hooks */
-	int rread = hook_read_list(&n->hooks, smps, nread);
+	int rread = hook_read_list(&n->in.hooks, smps, nread);
 	int skipped = nread - rread;
 
 	if (skipped > 0 && n->stats != NULL) {
@@ -354,7 +454,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 #ifdef WITH_HOOKS
 	/* Run write hooks */
-	cnt = hook_write_list(&n->hooks, smps, cnt);
+	cnt = hook_write_list(&n->out.hooks, smps, cnt);
 	if (cnt <= 0)
 		return cnt;
 #endif /* WITH_HOOKS */
@@ -395,7 +495,12 @@ char * node_name_long(struct node *n)
 		if (n->_vt->print) {
 			struct node_type *vt = n->_vt;
 			char *name_long = vt->print(n);
-			strcatf(&n->_name_long, "%s: #hooks=%zu, id=%d, vectorize=%d, samplelen=%d, %s", node_name(n), list_length(&n->hooks), n->id, n->vectorize, n->samplelen, name_long);
+			strcatf(&n->_name_long, "%s: #in.hooks=%zu, in.vectorize=%d, #out.hooks=%zu, out.vectorize=%d, samplelen=%d, %s",
+				node_name(n),
+				list_length(&n->in.hooks), n->in.vectorize,
+				list_length(&n->out.hooks), n->out.vectorize,
+				n->samplelen, name_long);
+
 			free(name_long);
 		}
 		else

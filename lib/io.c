@@ -101,8 +101,8 @@ int io_init(struct io *io, struct format_type *fmt, struct node *n, int flags)
 	io->output.node = n;
 
 	if (n) {
-		io->input.signals = &n->signals;
-		io->output.signals = &n->signals;
+		io->input.signals = &n->in.signals;
+		io->output.signals = &n->out.signals;
 	}
 	else {
 		io->input.signals = NULL;

@@ -46,7 +46,7 @@ static int path_source_init(struct path_source *ps)
 {
 	int ret;
 
-	ret = pool_init(&ps->pool, MAX(DEFAULT_QUEUELEN, ps->node->vectorize), SAMPLE_LEN(ps->node->samplelen), &memtype_hugepage);
+	ret = pool_init(&ps->pool, MAX(DEFAULT_QUEUELEN, ps->node->in.vectorize), SAMPLE_LEN(ps->node->samplelen), &memtype_hugepage);
 	if (ret)
 		return ret;
 
@@ -72,7 +72,7 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 {
 	int recv, tomux, ready, cnt;
 
-	cnt = ps->node->vectorize;
+	cnt = ps->node->in.vectorize;
 
 	struct sample *read_smps[cnt];
 	struct sample *muxed_smps[cnt];
@@ -122,10 +122,7 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
         if (toenqueue != tomux) {
                 int skipped = tomux - toenqueue;
 
-                debug(LOG_NODES | 10, "Hooks skipped %u out of %u samples for path %s", skipped, timux, path_name(p));
-
-                if (p->stats)
-                        stats_update(p->stats, STATS_SKIPPED, skipped);
+                debug(LOG_NODES | 10, "Hooks skipped %u out of %u samples for path %s", skipped, tomux, path_name(p));
         }
 #else
 	int toenqueue = tomux;
@@ -197,7 +194,7 @@ static void path_destination_enqueue(struct path *p, struct sample *smps[], unsi
 
 static void path_destination_write(struct path_destination *pd, struct path *p)
 {
-	int cnt = pd->node->vectorize;
+	int cnt = pd->node->out.vectorize;
 	int sent;
 	int available;
 	int released;
@@ -611,8 +608,13 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 			  && node_fd(ps->node) != 1;
 	}
 
-	list_destroy(&sources, NULL, false);
-	list_destroy(&destinations, NULL, false);
+	ret = list_destroy(&sources, NULL, false);
+	if (ret)
+		return ret;
+
+	ret = list_destroy(&destinations, NULL, false);
+	if (ret)
+		return ret;
 
 	p->cfg = cfg;
 	p->state = STATE_PARSED;

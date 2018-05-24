@@ -195,8 +195,14 @@ int main(int argc, char *argv[])
 				if (n->state != STATE_STARTED)
 					continue;
 
-				for (size_t j = 0; j < list_length(&n->hooks); j++) {
-					struct hook *h = (struct hook *) list_at(&n->hooks, j);
+				for (size_t j = 0; j < list_length(&n->in.hooks); j++) {
+					struct hook *h = (struct hook *) list_at(&n->in.hooks, j);
+
+					hook_periodic(h);
+				}
+
+				for (size_t j = 0; j < list_length(&n->out.hooks); j++) {
+					struct hook *h = (struct hook *) list_at(&n->out.hooks, j);
 
 					hook_periodic(h);
 				}
