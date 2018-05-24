@@ -178,8 +178,8 @@ void csv_header(struct io *io)
 	fprintf(f, "%c", io->delimiter);
 }
 
-static struct plugin p = {
-	.name = "csv",
+static struct plugin p1 = {
+	.name = "tsv",
 	.description = "Tabulator-separated values",
 	.type = PLUGIN_TYPE_FORMAT,
 	.format = {
@@ -187,8 +187,24 @@ static struct plugin p = {
 		.sscan	= csv_sscan,
 		.header	= csv_header,
 		.size 	= 0,
-		.flags	= IO_NEWLINES
+		.flags	= IO_NEWLINES,
+		.separator = '\t'
 	}
 };
 
-REGISTER_PLUGIN(&p);
+static struct plugin p2 = {
+	.name = "csv",
+	.description = "Comma-separated values",
+	.type = PLUGIN_TYPE_FORMAT,
+	.format = {
+		.sprint	= csv_sprint,
+		.sscan	= csv_sscan,
+		.header	= csv_header,
+		.size 	= 0,
+		.flags	= IO_NEWLINES,
+		.separator = ','
+	}
+};
+
+REGISTER_PLUGIN(&p1);
+REGISTER_PLUGIN(&p2);
