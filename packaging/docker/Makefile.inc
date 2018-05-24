@@ -30,6 +30,10 @@ DOCKER_TARGETS = docker-app docker-dev docker-dev-centos docker-dev-ubuntu
 DOCKER_RUN_TARGETS = $(addprefix run-,$(DOCKER_TARGETS))
 DOCKER_DEPLOY_TARGETS = $(addprefix deploy-,$(DOCKER_TARGETS)) 
 
+ifneq ($(CI_COMMIT_TAG),)
+	DOCKER_OPTS += --tag $(DOCKER_IMAGE)-$*:$(CI_COMMIT_TAG)
+endif
+
 DOCKER_RUN_OPTS = --interactive --tty \
 	--publish 80:80 --publish 443:443 --publish 12000:12000/udp --publish 12001:12001/udp \
 	--privileged --security-opt seccomp:unconfined --volume "$(SRCDIR):/villas"
@@ -39,6 +43,7 @@ run-docker: run-docker-app
 deploy-docker: deploy-docker-app
 docker: docker-app
 	$(DOCKER) tag $(DOCKER_IMAGE)-app:$(DOCKER_TAG) $(DOCKER_IMAGE):$(DOCKER_TAG)
+	$(DOCKER) tag $(DOCKER_IMAGE)-app:$(DOCKER_TAG) $(DOCKER_IMAGE):latest
 
 .PHONY: docker run-docker deploy-docker
 
@@ -49,10 +54,6 @@ $(DOCKER_RUN_TARGETS): run-docker-%: docker-%
 	$(DOCKER) run $(DOCKER_RUN_OPTS) $(DOCKER_IMAGE)-$*:$(DOCKER_TAG)
 
 $(DOCKER_TARGETS): docker-%: $(BUILDDIR)/packaging/docker/Image.%
-
-ifneq ($(CI_COMMIT_TAG),)
-	DOCKER_OPTS += --tag $(DOCKER_IMAGE)-$*:$(CI_COMMIT_TAG)
-endif
 
 # The docker build targets use the --iidfile option to write the newly build image
 # id to an file. Make is using the modification timestamp of this file and the Dockerfile
