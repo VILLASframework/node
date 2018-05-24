@@ -131,34 +131,55 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 	}
 	else if (!strcmp(type, "data")) {
 		char *first_str, *last_str;
+		int first = -1, last = -1;
 
 		me->type = MAPPING_TYPE_DATA;
 
 		first_str = strtok(NULL, "-]");
 		if (first_str) {
-			int first, last;
+			info("Mapping: %s", first_str);
 
-			last_str = strtok(NULL, "]");
-			if (!last_str)
-				last_str = first_str; /* single element: data[5] => data[5-5] */
+			if (me->node)
+				first = list_lookup_index(&me->node->in.signals, first_str);
 
-			first = signal_get_offset(first_str, me->node);
-			last = signal_get_offset(last_str, me->node);
-			if (first < 0 || last < 0 || last < first)
-				goto invalid_format;
-
-			me->data.offset = first;
-			me->length = last - first + 1;
+			if (first < 0) {
+				char *endptr;
+				first = strtoul(first_str, &endptr, 10);
+				if (endptr != first_str + strlen(first_str))
+					goto invalid_format;
+			}
 		}
 		else {
 			me->data.offset = 0;
 			me->length = 0;
+			goto end;
 		}
+
+		last_str = strtok(NULL, "]");
+		if (last_str) {
+			if (me->node)
+				last = list_lookup_index(&me->node->in.signals, last_str);
+
+			if (last < 0) {
+				char *endptr;
+				last = strtoul(last_str, &endptr, 10);
+				if (endptr != last_str + strlen(last_str))
+					goto invalid_format;
+			}
+		}
+		else
+			last = first; /* single element: data[5] => data[5-5] */
+
+		if (last < first)
+			goto invalid_format;
+
+		me->data.offset = first;
+		me->length = last - first + 1;
 	}
 	else
 		goto invalid_format;
 
-	/* Check that there is no garbage at the end */
+end:	/* Check that there is no garbage at the end */
 	end = strtok(NULL, "");
 	if (end)
 		goto invalid_format;

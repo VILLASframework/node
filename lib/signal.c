@@ -79,17 +79,17 @@ int signal_parse_list(struct list *list, json_t *cfg)
 	return 0;
 }
 
-int signal_get_offset(const char *str, struct node *n)
+int signal_get_offsets(const char *str, struct list *sigs)
 {
 	int idx;
 	char *endptr;
 	struct signal *s;
 
 	/* Lets try to find a signal with a matching name */
-	if (n) {
-		s = list_lookup(&n->signals, str);
+	if (1) {
+		s = list_lookup(sigs, str);
 		if (s)
-			return list_index(&n->signals, s);
+			return list_index(sigs, s);
 	}
 
 	/* Lets try to interpret the signal name as an index */
