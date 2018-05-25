@@ -321,6 +321,8 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				if (enqueued < avail)
 					sample_put_many(&smps[enqueued], avail - enqueued);
 
+				buffer_clear(&c->buffers.recv);
+
 				if (c->state == STATE_SHUTDOWN) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_GOINGAWAY, "Node stopped");
 					return -1;
