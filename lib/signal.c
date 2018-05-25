@@ -42,9 +42,13 @@ int signal_parse(struct signal *s, json_t *cfg)
 	const char *name;
 	const char *unit = NULL;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s }",
+	/* Default values */
+	s->enabled = true;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s?: b }",
 		"name", &name,
-		"unit", &unit
+		"unit", &unit,
+		"enabled", &s->enabled
 	);
 	if (ret)
 		return -1;
@@ -60,6 +64,7 @@ int signal_parse(struct signal *s, json_t *cfg)
 int signal_parse_list(struct list *list, json_t *cfg)
 {
 	int ret;
+	struct signal *s;
 
 	if (!json_is_array(cfg))
 		return -1;
@@ -67,7 +72,9 @@ int signal_parse_list(struct list *list, json_t *cfg)
 	size_t index;
 	json_t *json_signal;
 	json_array_foreach(cfg, index, json_signal) {
-		struct signal *s = alloc(sizeof(struct signal));
+		s = alloc(sizeof(struct signal));
+		if (!s)
+			return -1;
 
 		ret = signal_parse(s, json_signal);
 		if (ret)
