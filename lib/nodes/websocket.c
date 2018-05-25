@@ -305,7 +305,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 					break;
 				}
 
-				debug(LOG_WEBSOCKET | 10, "Received %d samples to connection: %s", recvd, websocket_connection_name(c));
+				debug(LOG_WEBSOCKET | 10, "Received %d samples from connection: %s", recvd, websocket_connection_name(c));
 
 				/* Set receive timestamp */
 				for (int i = 0; i < recvd; i++) {
@@ -315,7 +315,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 				enqueued = queue_signalled_push_many(&w->queue, (void **) smps, recvd);
 				if (enqueued < recvd)
-					warn("Queue overrun for connection: %s", websocket_connection_name(c));
+					warn("Queue overrun in connection: %s", websocket_connection_name(c));
 
 				/* Release unused samples back to pool */
 				if (enqueued < avail)
@@ -364,7 +364,7 @@ int websocket_deinit()
 
 	/* Wait for all connections to be closed */
 	while (list_length(&connections) > 0) {
-		info("Waiting for WebSocket connection shutdown");
+		info("Waiting for shutdown of %zu connections", list_length(&connections));
 		sleep(1);
 	}
 
