@@ -352,6 +352,8 @@ int websocket_init(struct super_node *sn)
 
 int websocket_deinit()
 {
+	int ret;
+
 	for (size_t i = 0; i < list_length(&connections); i++) {
 		struct websocket_connection *c = (struct websocket_connection *) list_at(&connections, i);
 
@@ -366,7 +368,9 @@ int websocket_deinit()
 		sleep(1);
 	}
 
-	list_destroy(&connections, (dtor_cb_t) websocket_destination_destroy, true);
+	ret = list_destroy(&connections, (dtor_cb_t) websocket_destination_destroy, true);
+	if (ret)
+		return ret;
 
 	return 0;
 }
@@ -470,8 +474,11 @@ int websocket_stop(struct node *n)
 int websocket_destroy(struct node *n)
 {
 	struct websocket *w = (struct websocket *) n->_vd;
+	int ret;
 
-	list_destroy(&w->destinations, (dtor_cb_t) websocket_destination_destroy, true);
+	ret = list_destroy(&w->destinations, (dtor_cb_t) websocket_destination_destroy, true);
+	if (ret)
+		return ret;
 
 	return 0;
 }
