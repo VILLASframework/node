@@ -290,8 +290,10 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				int avail, enqueued;
 				struct websocket *w = (struct websocket *) n->_vd;
 				struct sample **smps = alloca(cnt * sizeof(struct sample *));
-				if (!smps)
+				if (!smps) {
 					warn("Failed to allocate memory for connection: %s", websocket_connection_name(c));
+					break;
+				}
 
 				avail = sample_alloc_many(&w->pool, smps, cnt);
 				if (avail < cnt)
@@ -303,7 +305,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 					break;
 				}
 
-				debug(LOG_WEBSOCKET | 10, "Received %d samples to connection: %s", recvd, websocket_connection_name(c));
+				debug(LOG_WEBSOCKET | 10, "Received %d samples from connection: %s", recvd, websocket_connection_name(c));
 
 				/* Set receive timestamp */
 				for (int i = 0; i < recvd; i++) {
@@ -313,11 +315,13 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 				enqueued = queue_signalled_push_many(&w->queue, (void **) smps, recvd);
 				if (enqueued < recvd)
-					warn("Queue overrun for connection: %s", websocket_connection_name(c));
+					warn("Queue overrun in connection: %s", websocket_connection_name(c));
 
 				/* Release unused samples back to pool */
 				if (enqueued < avail)
 					sample_put_many(&smps[enqueued], avail - enqueued);
+
+				buffer_clear(&c->buffers.recv);
 
 				if (c->state == STATE_SHUTDOWN) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_GOINGAWAY, "Node stopped");
@@ -348,6 +352,8 @@ int websocket_init(struct super_node *sn)
 
 int websocket_deinit()
 {
+	int ret;
+
 	for (size_t i = 0; i < list_length(&connections); i++) {
 		struct websocket_connection *c = (struct websocket_connection *) list_at(&connections, i);
 
@@ -358,11 +364,13 @@ int websocket_deinit()
 
 	/* Wait for all connections to be closed */
 	while (list_length(&connections) > 0) {
-		info("Waiting for WebSocket connection shutdown");
+		info("Waiting for shutdown of %zu connections", list_length(&connections));
 		sleep(1);
 	}
 
-	list_destroy(&connections, (dtor_cb_t) websocket_destination_destroy, true);
+	ret = list_destroy(&connections, (dtor_cb_t) websocket_destination_destroy, true);
+	if (ret)
+		return ret;
 
 	return 0;
 }
@@ -466,8 +474,11 @@ int websocket_stop(struct node *n)
 int websocket_destroy(struct node *n)
 {
 	struct websocket *w = (struct websocket *) n->_vd;
+	int ret;
 
-	list_destroy(&w->destinations, (dtor_cb_t) websocket_destination_destroy, true);
+	ret = list_destroy(&w->destinations, (dtor_cb_t) websocket_destination_destroy, true);
+	if (ret)
+		return ret;
 
 	return 0;
 }

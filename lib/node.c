@@ -93,10 +93,21 @@ static int node_direction_parse(struct node_direction *nd, struct node *n, json_
 {
 	int ret;
 
+	json_error_t err;
 	json_t *json_hooks = NULL;
 	json_t *json_signals = NULL;
 
-	json_error_t err;
+	nd->cfg = cfg;
+
+	/* Before we start parsing, we will fill in a few default settings from the node config */
+	const char *fields[] = { "builtin", "vectorize", "signals", "hooks" };
+	for (int i = 0; i < ARRAY_LEN(fields); i++) {
+		json_t *json_field_dir  = json_object_get(cfg, fields[i]);
+		json_t *json_field_node = json_object_get(n->cfg, fields[i]);
+
+		if (json_field_node && !json_field_dir)
+			json_object_set(cfg, fields[i], json_field_node);
+	}
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: i, s?: b }",
 		"hooks", &json_hooks,
@@ -228,6 +239,8 @@ int node_parse(struct node *n, json_t *cfg, const char *name)
 	nt = node_type_lookup(type);
 	assert(nt == n->_vt);
 
+	n->cfg = cfg;
+
 	if (json_in) {
 		ret = node_direction_parse(&n->in, n, json_in);
 		if (ret)
@@ -244,7 +257,6 @@ int node_parse(struct node *n, json_t *cfg, const char *name)
 	if (ret)
 		error("Failed to parse node '%s'", node_name(n));
 
-	n->cfg = cfg;
 	n->state = STATE_PARSED;
 
 	return ret;
