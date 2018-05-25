@@ -29,6 +29,8 @@
 #include <villas/io.h>
 #include <villas/formats/json.h>
 
+#define JSON_RESERVE_INTEGER_TARGET 1
+
 static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *smp)
 {
 	json_error_t err;
@@ -93,10 +95,26 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 	if (*j == NULL)
 		return -1;
 
+#ifdef JSON_RESERVE_INTEGER_TARGET
+	if (io->output.node) {
+		char *endptr;
+		char *id_str = strrchr(io->output.node->name, '_');
+		if (!id_str)
+			return -1;
+
+		int id = strtoul(id_str+1, &endptr, 10);
+		if (endptr[0] != 0)
+			return -1;
+
+		json_object_set_new(*j, "target", json_integer(id));
+	}
+#else
 	if (io->output.node)
 		json_object_set_new(*j, "target", json_string(io->output.node->name));
-	//if (smp->source)
-	//	json_object_set_new(*j, "origin", json_string(smp->source->name));
+
+	if (smp->source)
+		json_object_set_new(*j, "origin", json_string(smp->source->name));
+#endif
 
 	return 0;
 }
@@ -107,23 +125,45 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 	double created = -1;
 	json_error_t err;
 	json_t *json_value, *json_data = NULL;
+	json_t *json_origin = NULL, *json_target = NULL;
 	size_t i;
 
-	const char *origin = NULL, *target = NULL;
-
-	ret = json_unpack_ex(json_smp, &err, 0, "{ s?: s, s?: s, s?: o, s?: o }",
-		"origin", &origin,
-		"target", &target,
+	ret = json_unpack_ex(json_smp, &err, 0, "{ s?: o, s?: o, s?: o, s?: o }",
+		"origin", &json_origin,
+		"target", &json_target,
 		"measurements", &json_data,
 		"setpoints", &json_data
 	);
 	if (ret)
 		return -1;
 
-	if (target && io->input.node) {
+#ifdef JSON_RESERVE_INTEGER_TARGET
+	if (json_target && io->input.node) {
+		if (!json_is_integer(json_target))
+			return -1;
+
+		char *endptr;
+		char *id_str = strrchr(io->input.node->name, '_');
+		if (!id_str)
+			return -1;
+
+		int id = strtoul(id_str+1, &endptr, 10);
+		if (endptr[0] != 0)
+			return -1;
+
+		if (id != json_integer_value(json_target))
+			return -1;
+	}
+#else
+	if (json_target && io->input.node) {
+		const char *target = json_string_value(json_target);
+		if (!target)
+			return -1;
+
 		if (strcmp(target, io->input.node->name))
 			return -1;
 	}
+#endif
 
 	if (!json_data || !json_is_array(json_data))
 		return -1;
