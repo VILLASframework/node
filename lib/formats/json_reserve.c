@@ -135,7 +135,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 		const char *name, *unit = NULL;
 		double value;
 
-		ret = json_unpack_ex(json_value, &err, 0, "{ s: s, s?: s, s: f, s?: f }",
+		ret = json_unpack_ex(json_value, &err, 0, "{ s: s, s?: s, s: f, s?: F }",
 			"name", &name,
 			"unit", &unit,
 			"value", &value,
