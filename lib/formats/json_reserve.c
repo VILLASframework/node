@@ -51,6 +51,9 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 			sig = NULL;
 
 		if (sig) {
+			if (!sig->enabled)
+				continue;
+
 			json_name = json_string(sig->name);
 			json_unit = json_string(sig->unit);
 		}
@@ -141,8 +144,16 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 		if (ret)
 			return -1;
 
-		idx = list_lookup_index(io->input.signals, name);
-		if (idx < 0) {
+		struct signal *sig;
+
+		sig = (struct signal *) list_lookup(io->input.signals, name);
+		if (sig) {
+			if (!sig->enabled)
+				continue;
+
+			idx = list_index(io->input.signals, sig);
+		}
+		else {
 			ret = sscanf(name, "signal_%d", &idx);
 			if (ret != 1)
 				continue;
