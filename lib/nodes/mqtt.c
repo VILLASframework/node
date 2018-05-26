@@ -58,7 +58,7 @@ static void mqtt_connect_cb(struct mosquitto *mosq, void *userdata, int result)
 
 	int ret;
 
-	debug(5, "MQTT: Node %s connected to broker %s", node_name(n), m->host);
+	info("MQTT: Node %s connected to broker %s", node_name(n), m->host);
 
 	ret = mosquitto_subscribe(m->client, NULL, m->subscribe, m->qos);
 	if (ret)
@@ -70,7 +70,7 @@ static void mqtt_disconnect_cb(struct mosquitto *mosq, void *userdata, int resul
 	struct node *n = (struct node *) userdata;
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
-	debug(5, "MQTT: Node %s disconnected from broker %s", node_name(n), m->host);
+	info("MQTT: Node %s disconnected from broker %s", node_name(n), m->host);
 }
 
 static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *msg)
