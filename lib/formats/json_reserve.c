@@ -152,7 +152,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 			return -1;
 
 		if (id != json_integer_value(json_target))
-			return -1;
+			return 0;
 	}
 #else
 	if (json_target && io->input.node) {
@@ -161,7 +161,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 			return -1;
 
 		if (strcmp(target, io->input.node->name))
-			return -1;
+			return 0;
 	}
 #endif
 
