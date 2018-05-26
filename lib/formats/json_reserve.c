@@ -39,7 +39,7 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 	struct signal *sig;
 
 	if (smp->flags & SAMPLE_HAS_ORIGIN)
-		json_created = json_real(time_to_double(&smp->ts.origin));
+		json_created = json_integer(time_to_double(&smp->ts.origin) * 1e3);
 
 	if (smp->flags & SAMPLE_HAS_SEQUENCE)
 		json_sequence = json_integer(smp->sequence);
@@ -175,7 +175,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 		const char *name, *unit = NULL;
 		double value;
 
-		ret = json_unpack_ex(json_value, &err, 0, "{ s: s, s?: s, s: f, s?: F }",
+		ret = json_unpack_ex(json_value, &err, 0, "{ s: s, s?: s, s: F, s?: F }",
 			"name", &name,
 			"unit", &unit,
 			"value", &value,
@@ -211,7 +211,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 		smp->flags |= SAMPLE_HAS_VALUES;
 
 	if (created > 0) {
-		smp->ts.origin = time_from_double(created);
+		smp->ts.origin = time_from_double(created * 1e-3);
 		smp->flags |= SAMPLE_HAS_ORIGIN;
 	}
 
