@@ -160,10 +160,10 @@ static void * send_loop(void *ctx)
 		}
 
 		sent = node_write(node, smps, scanned);
-		if (sent < 0) {
+		if (sent < 0)
 			warn("Failed to sent samples to node %s: reason=%d", node_name(node), sent);
-			continue;
-		}
+		else if (sent < scanned)
+			warn("Failed to sent %d out of %d samples to node %s", scanned-sent, scanned, node_name(node));
 
 		sample_put_many(smps, ready);
 
