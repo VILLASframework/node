@@ -96,6 +96,7 @@ static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct
 	}
 	if (ret != 1) {
 		debug(4, "MQTT: skip empty message for node %s", node_name(n));
+		sample_put(smp);
 		return;
 	}
 
