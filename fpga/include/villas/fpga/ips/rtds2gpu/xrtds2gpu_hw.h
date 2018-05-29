@@ -33,15 +33,14 @@
 // 0x20 : Data signal of doorbell_offset
 //        bit 31~0 - doorbell_offset[31:0] (Read/Write)
 // 0x24 : reserved
-// 0x28 : Data signal of status_i
-//        bit 31~0 - status_i[31:0] (Read/Write)
-// 0x2c : reserved
-// 0x30 : Data signal of status_o
-//        bit 31~0 - status_o[31:0] (Read)
-// 0x34 : reserved
-// 0x38 : Data signal of frame_size
+// 0x28 : Data signal of frame_size
 //        bit 31~0 - frame_size[31:0] (Read/Write)
-// 0x3c : reserved
+// 0x2c : reserved
+// 0x30 : Data signal of status
+//        bit 31~0 - status[31:0] (Read)
+// 0x34 : Control signal of status
+//        bit 0  - status_ap_vld (Read/COR)
+//        others - reserved
 // (SC = Self Clear, COR = Clear on Read, TOW = Toggle on Write, COH = Clear on Handshake)
 
 #define XRTDS2GPU_CTRL_ADDR_AP_CTRL              0x00
@@ -54,10 +53,9 @@
 #define XRTDS2GPU_CTRL_BITS_DATA_OFFSET_DATA     32
 #define XRTDS2GPU_CTRL_ADDR_DOORBELL_OFFSET_DATA 0x20
 #define XRTDS2GPU_CTRL_BITS_DOORBELL_OFFSET_DATA 32
-#define XRTDS2GPU_CTRL_ADDR_STATUS_I_DATA        0x28
-#define XRTDS2GPU_CTRL_BITS_STATUS_I_DATA        32
-#define XRTDS2GPU_CTRL_ADDR_STATUS_O_DATA        0x30
-#define XRTDS2GPU_CTRL_BITS_STATUS_O_DATA        32
-#define XRTDS2GPU_CTRL_ADDR_FRAME_SIZE_DATA      0x38
+#define XRTDS2GPU_CTRL_ADDR_FRAME_SIZE_DATA      0x28
 #define XRTDS2GPU_CTRL_BITS_FRAME_SIZE_DATA      32
+#define XRTDS2GPU_CTRL_ADDR_STATUS_DATA          0x30
+#define XRTDS2GPU_CTRL_BITS_STATUS_DATA          32
+#define XRTDS2GPU_CTRL_ADDR_STATUS_CTRL          0x34
 

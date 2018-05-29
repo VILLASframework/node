@@ -35,8 +35,11 @@
 
 
 static constexpr size_t SAMPLE_SIZE		= 4;
-static constexpr size_t SAMPLE_COUNT	= 8;
+static constexpr size_t SAMPLE_COUNT	= 16;
 static constexpr size_t FRAME_SIZE		= SAMPLE_COUNT * SAMPLE_SIZE;
+
+static constexpr size_t DOORBELL_OFFSET = SAMPLE_COUNT;
+static constexpr size_t DATA_OFFSET = 0;
 
 
 Test(fpga, rtds2gpu, .description = "Rtds2Gpu")
@@ -49,60 +52,55 @@ Test(fpga, rtds2gpu, .description = "Rtds2Gpu")
 
 		logger->info("Testing {}", *ip);
 
+
+		/* Collect neccessary IPs */
+
 		auto rtds2gpu = reinterpret_cast<villas::fpga::ip::Rtds2Gpu&>(*ip);
-
-		auto dmaMem0 = villas::HostDmaRam::getAllocator(0).allocate<char>(FRAME_SIZE + 4);
-		auto dmaMem1 = villas::HostDmaRam::getAllocator(0).allocate<char>(FRAME_SIZE + 4);
-
-//		continue;
-
-
 
 		auto axiSwitch = reinterpret_cast<villas::fpga::ip::AxiStreamSwitch*>(
 		                     state.cards.front()->lookupIp(villas::fpga::Vlnv("xilinx.com:ip:axis_switch:")));
-		cr_assert_not_null(axiSwitch);
 
 		auto dma = reinterpret_cast<villas::fpga::ip::Dma*>(
 		                     state.cards.front()->lookupIp(villas::fpga::Vlnv("xilinx.com:ip:axi_dma:")));
-		cr_assert_not_null(dma);
 
-		memset(&dmaMem0, 0x55, dmaMem0.getMemoryBlock().getSize());
-		memset(&dmaMem1, 0x11, dmaMem1.getMemoryBlock().getSize());
+		rtds2gpu.dump(spdlog::level::debug);
 
-		puts("Before:");
-		for(size_t i = 0; i < dmaMem0.getMemoryBlock().getSize(); i++) {
-			printf("0x%02x ", dmaMem0[i]);
-		}
-		puts("");
+		cr_assert_not_null(axiSwitch, "No AXI switch IP found");
+		cr_assert_not_null(dma, "No DMA IP found");
 
-		rtds2gpu.dump();
 
-		cr_assert(axiSwitch->connect(7, 6));
+		/* Allocate and prepare memory */
+
+		// allocate space for all samples and doorbell register
+		auto dmaMemSrc = villas::HostDmaRam::getAllocator(0).allocate<uint32_t>(SAMPLE_COUNT + 1);
+		auto dmaMemDst = villas::HostDmaRam::getAllocator(0).allocate<uint32_t>(SAMPLE_COUNT + 1);
+
+		memset(&dmaMemSrc, 0x11, dmaMemSrc.getMemoryBlock().getSize());
+		memset(&dmaMemDst, 0x55, dmaMemDst.getMemoryBlock().getSize());
+
+		const uint32_t* dataSrc = &dmaMemSrc[DATA_OFFSET];
+		const uint32_t* dataDst = &dmaMemDst[DATA_OFFSET];
+
+		// connect DMA to Rtds2Gpu IP
+		// TODO: this should be done automatically
 		cr_assert(axiSwitch->connect(6, 7));
 
-
-
-		cr_assert(rtds2gpu.startOnce(dmaMem0.getMemoryBlock(), SAMPLE_COUNT),
+		cr_assert(rtds2gpu.startOnce(dmaMemDst.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET*4, DOORBELL_OFFSET*4),
 		          "Preparing Rtds2Gpu IP failed");
 
-		cr_assert(dma->write(dmaMem1.getMemoryBlock(), FRAME_SIZE));
+		cr_assert(dma->write(dmaMemSrc.getMemoryBlock(), FRAME_SIZE),
+		          "Starting DMA MM2S transfer failed");
 
-//		cr_assert(axiSwitch->connect(6, 6)); // loopback
-//		cr_assert(dma->read(dmaMem1.getMemoryBlock(), FRAME_SIZE));
-//		cr_assert(dma->readComplete());
+		cr_assert(dma->writeComplete(),
+		          "DMA failed");
 
-		cr_assert(dma->writeComplete());
+		while(not rtds2gpu.isFinished());
 
-		puts("After:");
-		for(size_t i = 0; i < dmaMem0.getMemoryBlock().getSize(); i++) {
-			printf("0x%02x ", dmaMem0[i]);
-		}
-		puts("");
+		const uint32_t* doorbellDst = &dmaMemDst[DOORBELL_OFFSET];
+		rtds2gpu.dump(spdlog::level::info);
+		rtds2gpu.dumpDoorbell(*doorbellDst);
 
-
-		rtds2gpu.dump();
-
-		cr_assert(rtds2gpu.isDone());
+		cr_assert(memcmp(dataSrc, dataDst, FRAME_SIZE) == 0, "Memory not equal");
 
 		logger->info(TXT_GREEN("Passed"));
 	}

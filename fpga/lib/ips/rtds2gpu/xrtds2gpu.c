@@ -127,33 +127,6 @@ u32 XRtds2gpu_Get_doorbell_offset(XRtds2gpu *InstancePtr) {
     return Data;
 }
 
-void XRtds2gpu_Set_status_i(XRtds2gpu *InstancePtr, u32 Data) {
-    Xil_AssertVoid(InstancePtr != NULL);
-    Xil_AssertVoid(InstancePtr->IsReady == XIL_COMPONENT_IS_READY);
-
-    XRtds2gpu_WriteReg(InstancePtr->Ctrl_BaseAddress, XRTDS2GPU_CTRL_ADDR_STATUS_I_DATA, Data);
-}
-
-u32 XRtds2gpu_Get_status_i(XRtds2gpu *InstancePtr) {
-    u32 Data;
-
-    Xil_AssertNonvoid(InstancePtr != NULL);
-    Xil_AssertNonvoid(InstancePtr->IsReady == XIL_COMPONENT_IS_READY);
-
-    Data = XRtds2gpu_ReadReg(InstancePtr->Ctrl_BaseAddress, XRTDS2GPU_CTRL_ADDR_STATUS_I_DATA);
-    return Data;
-}
-
-u32 XRtds2gpu_Get_status_o(XRtds2gpu *InstancePtr) {
-    u32 Data;
-
-    Xil_AssertNonvoid(InstancePtr != NULL);
-    Xil_AssertNonvoid(InstancePtr->IsReady == XIL_COMPONENT_IS_READY);
-
-    Data = XRtds2gpu_ReadReg(InstancePtr->Ctrl_BaseAddress, XRTDS2GPU_CTRL_ADDR_STATUS_O_DATA);
-    return Data;
-}
-
 void XRtds2gpu_Set_frame_size(XRtds2gpu *InstancePtr, u32 Data) {
     Xil_AssertVoid(InstancePtr != NULL);
     Xil_AssertVoid(InstancePtr->IsReady == XIL_COMPONENT_IS_READY);
@@ -169,6 +142,26 @@ u32 XRtds2gpu_Get_frame_size(XRtds2gpu *InstancePtr) {
 
     Data = XRtds2gpu_ReadReg(InstancePtr->Ctrl_BaseAddress, XRTDS2GPU_CTRL_ADDR_FRAME_SIZE_DATA);
     return Data;
+}
+
+u32 XRtds2gpu_Get_status(XRtds2gpu *InstancePtr) {
+    u32 Data;
+
+    Xil_AssertNonvoid(InstancePtr != NULL);
+    Xil_AssertNonvoid(InstancePtr->IsReady == XIL_COMPONENT_IS_READY);
+
+    Data = XRtds2gpu_ReadReg(InstancePtr->Ctrl_BaseAddress, XRTDS2GPU_CTRL_ADDR_STATUS_DATA);
+    return Data;
+}
+
+u32 XRtds2gpu_Get_status_vld(XRtds2gpu *InstancePtr) {
+    u32 Data;
+
+    Xil_AssertNonvoid(InstancePtr != NULL);
+    Xil_AssertNonvoid(InstancePtr->IsReady == XIL_COMPONENT_IS_READY);
+
+    Data = XRtds2gpu_ReadReg(InstancePtr->Ctrl_BaseAddress, XRTDS2GPU_CTRL_ADDR_STATUS_CTRL);
+    return Data & 0x1;
 }
 
 void XRtds2gpu_InterruptGlobalEnable(XRtds2gpu *InstancePtr) {

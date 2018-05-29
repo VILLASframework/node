@@ -93,11 +93,10 @@ void XRtds2gpu_Set_data_offset(XRtds2gpu *InstancePtr, u32 Data);
 u32 XRtds2gpu_Get_data_offset(XRtds2gpu *InstancePtr);
 void XRtds2gpu_Set_doorbell_offset(XRtds2gpu *InstancePtr, u32 Data);
 u32 XRtds2gpu_Get_doorbell_offset(XRtds2gpu *InstancePtr);
-void XRtds2gpu_Set_status_i(XRtds2gpu *InstancePtr, u32 Data);
-u32 XRtds2gpu_Get_status_i(XRtds2gpu *InstancePtr);
-u32 XRtds2gpu_Get_status_o(XRtds2gpu *InstancePtr);
 void XRtds2gpu_Set_frame_size(XRtds2gpu *InstancePtr, u32 Data);
 u32 XRtds2gpu_Get_frame_size(XRtds2gpu *InstancePtr);
+u32 XRtds2gpu_Get_status(XRtds2gpu *InstancePtr);
+u32 XRtds2gpu_Get_status_vld(XRtds2gpu *InstancePtr);
 
 void XRtds2gpu_InterruptGlobalEnable(XRtds2gpu *InstancePtr);
 void XRtds2gpu_InterruptGlobalDisable(XRtds2gpu *InstancePtr);

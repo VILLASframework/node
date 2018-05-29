@@ -4,6 +4,7 @@
 #include <villas/fpga/ip_node.hpp>
 
 #include "rtds2gpu/xrtds2gpu.h"
+#include "rtds2gpu/register_types.hpp"
 
 namespace villas {
 namespace fpga {
@@ -17,11 +18,22 @@ public:
 
 	bool init();
 
-	void dump();
+	bool start();
 
-	bool startOnce(const MemoryBlock& mem, size_t frameSize);
+	void dump(spdlog::level::level_enum logLevel = spdlog::level::info);
 
-	bool isDone();
+	bool startOnce(const MemoryBlock& mem, size_t frameSize, size_t dataOffset, size_t doorbellOffset);
+
+	bool isFinished();
+
+	bool isReady();
+
+	size_t getMaxFrameSize();
+
+	void dumpDoorbell(uint32_t doorbellRegister) const;
+
+private:
+	bool updateStatus();
 
 private:
 	static constexpr const char* registerMemory = "Reg";
@@ -32,6 +44,11 @@ private:
 	{ return { registerMemory }; }
 
 	XRtds2gpu xInstance;
+
+	axilite_reg_status_t status;
+	size_t maxFrameSize;
+
+	bool started;
 };
 
 
