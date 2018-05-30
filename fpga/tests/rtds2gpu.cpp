@@ -47,7 +47,7 @@ Test(fpga, rtds2gpu, .description = "Rtds2Gpu")
 	auto logger = loggerGetOrCreate("unittest:rtds2gpu");
 
 	for(auto& ip : state.cards.front()->ips) {
-		if(*ip != villas::fpga::Vlnv("xilinx.com:hls:rtds2gpu:"))
+		if(*ip != villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:hls:rtds2gpu:"))
 			continue;
 
 		logger->info("Testing {}", *ip);

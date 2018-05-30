@@ -68,7 +68,7 @@ public:
 	{ return "HLS RTDS2GPU IP"; }
 
 	Vlnv getCompatibleVlnv() const
-	{ return {"xilinx.com:hls:rtds2gpu:"}; }
+	{ return {"acs.eonerc.rwth-aachen.de:hls:rtds2gpu:"}; }
 };
 
 } // namespace ip
