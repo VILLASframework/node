@@ -17,6 +17,7 @@ set(SOURCES
 
 	ips/rtds2gpu/rtds2gpu.cpp
 	ips/rtds2gpu/xrtds2gpu.c
+	ips/rtds2gpu/gpu2rtds.cpp
 
 	kernel/kernel.c
 	kernel/pci.c

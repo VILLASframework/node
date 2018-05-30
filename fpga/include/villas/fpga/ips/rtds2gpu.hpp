@@ -27,16 +27,17 @@ public:
 
 	void dumpDoorbell(uint32_t doorbellRegister) const;
 
+	       static constexpr const char* registerMemory = "Reg";
+	std::list<MemoryBlockName> getMemoryBlocks() const
+	       { return { registerMemory }; }
+
+
 private:
 	bool updateStatus();
 
 private:
-	static constexpr const char* registerMemory = "Reg";
 	static constexpr const char* axiInterface = "m_axi_axi_mm";
 	static constexpr const char* streamInterface = "rtds_input";
-
-	std::list<MemoryBlockName> getMemoryBlocks() const
-	{ return { registerMemory }; }
 
 	XRtds2gpu xInstance;
 
