@@ -24,7 +24,7 @@ Test(fpga, dma, .description = "DMA")
 
 		logger->info("Testing {}", *ip);
 
-		auto dma = reinterpret_cast<villas::fpga::ip::Dma&>(*ip);
+		auto dma = dynamic_cast<villas::fpga::ip::Dma&>(*ip);
 
 		if(not dma.loopbackPossible()) {
 			logger->info("Loopback test not possible for {}", *ip);

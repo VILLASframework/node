@@ -40,7 +40,7 @@ Test(fpga, gpu_dma, .description = "GPU DMA tests")
 
 		logger->info("Testing {}", *ip);
 
-		auto bram = reinterpret_cast<villas::fpga::ip::Bram*>(ip.get());
+		auto bram = dynamic_cast<villas::fpga::ip::Bram*>(ip.get());
 		cr_assert_not_null(bram, "Couldn't find BRAM");
 
 		count++;

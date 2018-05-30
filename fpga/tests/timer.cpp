@@ -46,7 +46,7 @@ Test(fpga, timer, .description = "Timer Counter")
 
 		count++;
 
-		auto timer = reinterpret_cast<villas::fpga::ip::Timer&>(*ip);
+		auto timer = dynamic_cast<villas::fpga::ip::Timer&>(*ip);
 
 		logger->info("Test simple waiting");
 		timer.start(timer.getFrequency() / 10);

@@ -143,7 +143,7 @@ AxiStreamSwitchFactory::configureJson(IpCore& ip, json_t* json_ip)
 
 	auto logger = getLogger();
 
-	auto& axiSwitch = reinterpret_cast<AxiStreamSwitch&>(ip);
+	auto& axiSwitch = dynamic_cast<AxiStreamSwitch&>(ip);
 
 	if(json_unpack(json_ip, "{ s: i }", "num_ports", &axiSwitch.num_ports) != 0) {
 		logger->error("Cannot parse 'num_ports'");

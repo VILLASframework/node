@@ -125,7 +125,7 @@ bool
 AxiPciExpressBridgeFactory::configureJson(IpCore& ip, json_t* json_ip)
 {
 	auto logger = getLogger();
-	auto& pcie = reinterpret_cast<AxiPciExpressBridge&>(ip);
+	auto& pcie = dynamic_cast<AxiPciExpressBridge&>(ip);
 
 	for(auto barType : std::list<std::string>{"axi_bars", "pcie_bars"}) {
 		json_t* json_bars = json_object_get(json_ip, barType.c_str());
