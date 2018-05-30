@@ -86,7 +86,7 @@ public:
 };
 
 
-class IpNode : public IpCore {
+class IpNode : public virtual IpCore {
 public:
 
 	friend class IpNodeFactory;

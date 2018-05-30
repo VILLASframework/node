@@ -62,6 +62,8 @@ public:
 	MemoryAccessor(const MemoryBlock& mem) :
 	    translation(MemoryManager::get().getTranslationFromProcess(mem.getAddrSpaceId())) {}
 
+	MemoryAccessor(const MemoryTranslation& translation) :
+	    translation(translation) {}
 
 	T& operator*() const {
 		return *reinterpret_cast<T*>(translation.getLocalAddr(0));

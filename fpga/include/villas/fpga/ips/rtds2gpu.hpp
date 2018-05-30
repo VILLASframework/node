@@ -2,6 +2,7 @@
 
 #include <villas/memory.hpp>
 #include <villas/fpga/ip_node.hpp>
+#include <villas/fpga/ips/hls.hpp>
 
 #include "rtds2gpu/xrtds2gpu.h"
 #include "rtds2gpu/register_types.hpp"
@@ -11,22 +12,16 @@ namespace fpga {
 namespace ip {
 
 
-class Rtds2Gpu : public IpNode
+class Rtds2Gpu : public IpNode, public Hls
 {
 public:
 	friend class Rtds2GpuFactory;
 
 	bool init();
 
-	bool start();
-
 	void dump(spdlog::level::level_enum logLevel = spdlog::level::info);
 
 	bool startOnce(const MemoryBlock& mem, size_t frameSize, size_t dataOffset, size_t doorbellOffset);
-
-	bool isFinished();
-
-	bool isReady();
 
 	size_t getMaxFrameSize();
 

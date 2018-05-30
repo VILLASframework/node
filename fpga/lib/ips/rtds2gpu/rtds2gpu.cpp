@@ -14,11 +14,10 @@ static Rtds2GpuFactory factory;
 
 bool Rtds2Gpu::init()
 {
+	Hls::init();
+
 	xInstance.IsReady = XIL_COMPONENT_IS_READY;
 	xInstance.Ctrl_BaseAddress = getBaseAddr(registerMemory);
-
-	// make sure IP is stopped for now
-	XRtds2gpu_DisableAutoRestart(&xInstance);
 
 	status.value = 0;
 	started = false;
@@ -29,13 +28,7 @@ bool Rtds2Gpu::init()
 	return true;
 }
 
-bool Rtds2Gpu::start()
-{
-	XRtds2gpu_Start(&xInstance);
-	started = true;
 
-	return true;
-}
 
 void Rtds2Gpu::dump(spdlog::level::level_enum logLevel)
 {
@@ -89,26 +82,9 @@ bool Rtds2Gpu::startOnce(const MemoryBlock& mem, size_t frameSize, size_t dataOf
 	return start();
 }
 
-bool Rtds2Gpu::isFinished()
-{
-	if(started and isReady()) {
-		started = false;
 
-		if(not updateStatus()) {
-			throw "IP is finished but status register invalid";
-		}
-	}
 
-	return !started;
-}
 
-bool
-Rtds2Gpu::isReady()
-{
-	// use the idle bit to indicate readiness, we don't care about the difference
-	// here
-	return XRtds2gpu_IsIdle(&xInstance);
-}
 
 bool
 Rtds2Gpu::updateStatus()
@@ -128,6 +104,7 @@ Rtds2Gpu::getMaxFrameSize()
 
 	start();
 	while(not isFinished());
+	updateStatus();
 
 	return status.max_frame_size;
 }

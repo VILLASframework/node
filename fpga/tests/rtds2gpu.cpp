@@ -55,12 +55,14 @@ Test(fpga, rtds2gpu, .description = "Rtds2Gpu")
 
 		/* Collect neccessary IPs */
 
-		auto rtds2gpu = reinterpret_cast<villas::fpga::ip::Rtds2Gpu&>(*ip);
+		auto rtds2gpu = dynamic_cast<villas::fpga::ip::Rtds2Gpu&>(*ip);
 
-		auto axiSwitch = reinterpret_cast<villas::fpga::ip::AxiStreamSwitch*>(
-		                     state.cards.front()->lookupIp(villas::fpga::Vlnv("xilinx.com:ip:axis_switch:")));
+		auto axiSwitchPtr = state.cards.front()->lookupIp(villas::fpga::Vlnv("xilinx.com:ip:axis_switch:"));
+		auto axiSwitch = dynamic_cast<villas::fpga::ip::AxiStreamSwitch*>(axiSwitchPtr);
 
-		auto dma = reinterpret_cast<villas::fpga::ip::Dma*>(
+		cr_assert_not_null(axiSwitchPtr);
+
+		auto dma = dynamic_cast<villas::fpga::ip::Dma*>(
 		                     state.cards.front()->lookupIp(villas::fpga::Vlnv("xilinx.com:ip:axi_dma:")));
 
 		rtds2gpu.dump(spdlog::level::debug);
