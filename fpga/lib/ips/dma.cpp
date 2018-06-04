@@ -104,8 +104,8 @@ Dma::init()
 	XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
 	XAxiDma_IntrEnable(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
 
-	irqs[mm2sInterrupt].irqController->enableInterrupt(irqs[mm2sInterrupt], false);
-	irqs[s2mmInterrupt].irqController->enableInterrupt(irqs[s2mmInterrupt], false);
+	irqs[mm2sInterrupt].irqController->enableInterrupt(irqs[mm2sInterrupt], true);
+	irqs[s2mmInterrupt].irqController->enableInterrupt(irqs[s2mmInterrupt], true);
 
 	return true;
 }
