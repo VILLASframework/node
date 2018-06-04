@@ -105,9 +105,6 @@ public:
 
 	Vlnv getCompatibleVlnv() const
 	{ return Vlnv(getCompatibleVlnvString()); }
-
-//	std::list<IpDependency> getDependencies() const
-//	{ return { {"pcie", Vlnv("xilinx.com:ip:axi_pcie:") } }; }
 };
 
 } // namespace ip
