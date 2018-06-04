@@ -24,6 +24,8 @@
  * @{
  */
 
+#include <string.h>
+
 #include <villas/hook.h>
 #include <villas/plugin.h>
 #include <villas/path.h>
