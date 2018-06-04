@@ -38,9 +38,16 @@ namespace ip {
 
 // instantiate factory to make available to plugin infrastructure
 static FifoFactory factory;
+static FifoDataFactory factoryData;
 
 
 FifoFactory::FifoFactory() :
+    IpNodeFactory(getName())
+{
+	// nothing to do
+}
+
+FifoDataFactory::FifoDataFactory() :
     IpNodeFactory(getName())
 {
 	// nothing to do

@@ -82,6 +82,31 @@ public:
 	{ return {"xilinx.com:ip:axi_fifo_mm_s:"}; }
 };
 
+
+class FifoData : public IpNode {
+	friend class FifoDataFactory;
+};
+
+
+class FifoDataFactory : public IpNodeFactory {
+public:
+	FifoDataFactory();
+
+	IpCore* create()
+	{ return new FifoData; }
+
+	std::string
+	getName() const
+	{ return "FifoData"; }
+
+	std::string
+	getDescription() const
+	{ return "Xilinx's AXI4 data stream FIFO"; }
+
+	Vlnv getCompatibleVlnv() const
+	{ return {"xilinx.com:ip:axis_data_fifo:"}; }
+};
+
 } // namespace ip
 } // namespace fpga
 } // namespace villas
