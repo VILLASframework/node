@@ -71,6 +71,10 @@ private:
 	size_t writeCompleteSimple();
 	size_t readCompleteSimple();
 
+public:
+	static constexpr const char* s2mmPort = "S2MM";
+	static constexpr const char* mm2sPort = "MM2S";
+
 	bool isMemoryBlockAccesible(const MemoryBlock& mem, const std::string& interface);
 
 private:
