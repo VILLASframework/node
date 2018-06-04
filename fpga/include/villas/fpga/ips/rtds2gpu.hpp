@@ -32,12 +32,16 @@ public:
 	       { return { registerMemory }; }
 
 
+	const StreamVertex&
+	getDefaultSlavePort() const
+	{ return getSlavePort(rtdsInputStreamPort); }
+
 private:
 	bool updateStatus();
 
 private:
 	static constexpr const char* axiInterface = "m_axi_axi_mm";
-	static constexpr const char* streamInterface = "rtds_input";
+	static constexpr const char* rtdsInputStreamPort = "rtds_input";
 
 	XRtds2gpu xInstance;
 

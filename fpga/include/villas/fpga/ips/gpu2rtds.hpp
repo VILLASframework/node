@@ -24,12 +24,16 @@ public:
 
 	size_t getMaxFrameSize();
 
-//	void dumpDoorbell(uint32_t doorbellRegister) const;
+	const StreamVertex&
+	getDefaultMasterPort() const
+	{ return getMasterPort(rtdsOutputStreamPort); }
 
 private:
 	bool updateStatus();
 
 private:
+	static constexpr const char* rtdsOutputStreamPort = "rtds_output";
+
 	struct StatusControlRegister { uint32_t
 		status_ap_vld	: 1,
 		_res			: 31;

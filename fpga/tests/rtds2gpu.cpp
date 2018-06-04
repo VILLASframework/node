@@ -117,9 +117,8 @@ Test(fpga, rtds2gpu, .description = "Rtds2Gpu")
 		dumpMem(dataDst2, dmaMemDst2.getMemoryBlock().getSize());
 
 
-		// connect DMA to Rtds2Gpu IP
-		// TODO: this should be done automatically
-		cr_assert(axiSwitch->connect(6, 7));
+		// connect AXI Stream from DMA to Rtds2Gpu IP
+		cr_assert(dma->connect(rtds2gpu));
 
 		cr_assert(rtds2gpu.startOnce(dmaMemDst.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET*4, DOORBELL_OFFSET*4),
 		          "Preparing Rtds2Gpu IP failed");
@@ -130,7 +129,6 @@ Test(fpga, rtds2gpu, .description = "Rtds2Gpu")
 		cr_assert(dma->writeComplete(),
 		          "DMA failed");
 
-
 		while(not rtds2gpu.isFinished());
 
 		const uint32_t* doorbellDst = &dmaMemDst[DOORBELL_OFFSET];
@@ -139,13 +137,14 @@ Test(fpga, rtds2gpu, .description = "Rtds2Gpu")
 
 		cr_assert(memcmp(dataSrc, dataDst, FRAME_SIZE) == 0, "Memory not equal");
 
-		(void) dmaMemDst2;
-		(void) dataDst2;
 
 		for(size_t i = 0; i < SAMPLE_COUNT; i++) {
 			gpu2rtds->registerFrames[i] = dmaMemDst[i];
 		}
-		cr_assert(axiSwitch->connect(7, 6));
+
+
+		// connect AXI Stream from Gpu2Rtds IP to DMA
+		cr_assert(gpu2rtds->connect(*dma));
 
 		cr_assert(dma->read(dmaMemDst2.getMemoryBlock(), FRAME_SIZE),
 		          "Starting DMA S2MM transfer failed");
@@ -156,7 +155,7 @@ Test(fpga, rtds2gpu, .description = "Rtds2Gpu")
 		cr_assert(dma->readComplete(),
 		          "DMA failed");
 
-		while(not rtds2gpu.isFinished());
+		while(not gpu2rtds->isFinished());
 
 		cr_assert(memcmp(dataSrc, dataDst2, FRAME_SIZE) == 0, "Memory not equal");
 
