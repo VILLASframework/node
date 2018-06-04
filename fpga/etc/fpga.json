@@ -153,12 +153,12 @@
           "ports": [
             {
               "role": "master",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:1",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:S01_AXIS",
               "name": "MM2S"
             },
             {
               "role": "slave",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:1",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:M01_AXIS",
               "name": "S2MM"
             }
           ],
@@ -192,12 +192,12 @@
           "ports": [
             {
               "role": "master",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:6",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:S06_AXIS",
               "name": "MM2S"
             },
             {
               "role": "slave",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:6",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:M06_AXIS",
               "name": "S2MM"
             }
           ],
@@ -211,12 +211,12 @@
           "ports": [
             {
               "role": "master",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:2",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:S02_AXIS",
               "name": "STR_TXD"
             },
             {
               "role": "slave",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:2",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:M02_AXIS",
               "name": "STR_RXD"
             }
           ],
@@ -224,28 +224,118 @@
             "interrupt": "pcie_0_axi_pcie_intc_0:2"
           }
         },
+        "hier_0_axis_data_fifo_0": {
+          "vlnv": "xilinx.com:ip:axis_data_fifo:1.1",
+          "ports": [
+            {
+              "role": "master",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:S03_AXIS",
+              "name": "AXIS"
+            },
+            {
+              "role": "slave",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:M03_AXIS",
+              "name": "AXIS"
+            }
+          ]
+        },
+        "hier_0_axis_data_fifo_1": {
+          "vlnv": "xilinx.com:ip:axis_data_fifo:1.1",
+          "ports": [
+            {
+              "role": "master",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:S04_AXIS",
+              "name": "AXIS"
+            },
+            {
+              "role": "slave",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:M04_AXIS",
+              "name": "AXIS"
+            }
+          ]
+        },
         "hier_0_axis_interconnect_0_axis_interconnect_0_xbar": {
           "vlnv": "xilinx.com:ip:axis_switch:1.1",
           "ports": [
             {
+              "role": "slave",
+              "target": "hier_0_rtds_axis_0:m_axis",
+              "name": "S00_AXIS"
+            },
+            {
               "role": "master",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:3",
-              "name": "M03_AXIS"
+              "target": "hier_0_rtds_axis_0:s_axis",
+              "name": "M00_AXIS"
             },
             {
               "role": "slave",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:3",
+              "target": "hier_0_axi_dma_axi_dma_0:MM2S",
+              "name": "S01_AXIS"
+            },
+            {
+              "role": "master",
+              "target": "hier_0_axi_dma_axi_dma_0:S2MM",
+              "name": "M01_AXIS"
+            },
+            {
+              "role": "slave",
+              "target": "hier_0_axi_fifo_mm_s_0:STR_TXD",
+              "name": "S02_AXIS"
+            },
+            {
+              "role": "master",
+              "target": "hier_0_axi_fifo_mm_s_0:STR_RXD",
+              "name": "M02_AXIS"
+            },
+            {
+              "role": "slave",
+              "target": "hier_0_axis_data_fifo_0:AXIS",
               "name": "S03_AXIS"
             },
             {
               "role": "master",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:4",
+              "target": "hier_0_axis_data_fifo_0:AXIS",
+              "name": "M03_AXIS"
+            },
+            {
+              "role": "slave",
+              "target": "hier_0_axis_data_fifo_1:AXIS",
+              "name": "S04_AXIS"
+            },
+            {
+              "role": "master",
+              "target": "hier_0_axis_data_fifo_1:AXIS",
               "name": "M04_AXIS"
             },
             {
               "role": "slave",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:4",
-              "name": "S04_AXIS"
+              "target": "hier_0_hls_dft_0:output_r",
+              "name": "S05_AXIS"
+            },
+            {
+              "role": "master",
+              "target": "hier_0_hls_dft_0:input_r",
+              "name": "M05_AXIS"
+            },
+            {
+              "role": "slave",
+              "target": "hier_0_axi_dma_axi_dma_1:MM2S",
+              "name": "S06_AXIS"
+            },
+            {
+              "role": "master",
+              "target": "hier_0_axi_dma_axi_dma_1:S2MM",
+              "name": "M06_AXIS"
+            },
+            {
+              "role": "slave",
+              "target": "hier_0_gpu2rtds_0:rtds_output",
+              "name": "S07_AXIS"
+            },
+            {
+              "role": "master",
+              "target": "hier_0_rtds2gpu_0:rtds_input",
+              "name": "M07_AXIS"
             }
           ],
           "num_ports": 8
@@ -255,7 +345,7 @@
           "ports": [
             {
               "role": "master",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:7",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:S07_AXIS",
               "name": "rtds_output"
             }
           ]
@@ -265,12 +355,12 @@
           "ports": [
             {
               "role": "master",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:5",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:S05_AXIS",
               "name": "output_r"
             },
             {
               "role": "slave",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:5",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:M05_AXIS",
               "name": "input_r"
             }
           ],
@@ -294,7 +384,7 @@
           "ports": [
             {
               "role": "slave",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:7",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:M07_AXIS",
               "name": "rtds_input"
             }
           ]
@@ -304,12 +394,12 @@
           "ports": [
             {
               "role": "master",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:0",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:S00_AXIS",
               "name": "m_axis"
             },
             {
               "role": "slave",
-              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:0",
+              "target": "hier_0_axis_interconnect_0_axis_interconnect_0_xbar:M00_AXIS",
               "name": "s_axis"
             }
           ],
