@@ -161,6 +161,17 @@ PCIeCard::lookupIp(const Vlnv& vlnv) const
 	return nullptr;
 }
 
+ip::IpCore*PCIeCard::lookupIp(const ip::IpIdentifier& id) const
+{
+	for(auto& ip : ips) {
+		if(*ip == id) {
+			return ip.get();
+		}
+	}
+
+	return nullptr;
+}
+
 
 bool
 PCIeCard::mapMemoryBlock(const MemoryBlock& block)

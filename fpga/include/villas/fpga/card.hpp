@@ -77,6 +77,7 @@ public:
 
 	ip::IpCore* lookupIp(const std::string& name) const;
 	ip::IpCore* lookupIp(const Vlnv& vlnv) const;
+	ip::IpCore* lookupIp(const ip::IpIdentifier& id) const;
 
 	bool
 	mapMemoryBlock(const MemoryBlock& block);
