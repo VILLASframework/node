@@ -3,13 +3,10 @@ set(SOURCES
 	fpga.cpp
 	logging.cpp
 	dma.cpp
-    fifo.cpp
-#	hls.c
-#	intc.c
-    rtds.cpp
+	fifo.cpp
+	rtds.cpp
 	timer.cpp
-#	xsg.c
-    graph.cpp
+	graph.cpp
 )
 
 if(CMAKE_CUDA_COMPILER)
