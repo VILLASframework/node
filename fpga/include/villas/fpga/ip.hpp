@@ -196,6 +196,10 @@ protected:
 	getMasterAddrSpaceByInterface(const std::string& masterInterfaceName) const
 	{ return busMasterInterfaces.at(masterInterfaceName); }
 
+	template<typename T>
+	T readMemory(const std::string& block, uintptr_t address) const
+	{ return *(reinterpret_cast<T*>(getLocalAddr(block, address))); }
+
 protected:
 	struct IrqPort {
 		int num;

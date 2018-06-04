@@ -13,6 +13,7 @@ set(SOURCES
 	ips/pcie.cpp
 	ips/dma.cpp
 	ips/bram.cpp
+	ips/rtds.cpp
 
 	kernel/kernel.c
 	kernel/pci.c
