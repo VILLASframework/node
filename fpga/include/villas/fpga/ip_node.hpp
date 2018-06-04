@@ -101,7 +101,7 @@ public:
 		std::string nodeName;
 	};
 
-	bool connect(std::string portName, const StreamPort& to);
+	bool connect(const StreamVertex& from, const StreamVertex& to);
 	bool disconnect(std::string portName);
 
 	const StreamVertex&
@@ -114,6 +114,11 @@ public:
 
 	bool loopbackPossible() const;
 	bool connectLoopback();
+
+protected:
+	virtual bool
+	connectInternal(const std::string& slavePort,
+	                const std::string& masterPort);
 
 private:
 	std::pair<std::string, std::string> getLoopbackPorts() const;

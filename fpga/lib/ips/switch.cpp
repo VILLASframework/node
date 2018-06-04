@@ -52,19 +52,36 @@ AxiStreamSwitch::init()
 	XAxisScr_MiPortDisableAll(&xSwitch);
 	XAxisScr_RegUpdateEnable(&xSwitch);
 
-	// initialize internal mapping
-	for(size_t portMaster = 0; portMaster < portsMaster.size(); portMaster++) {
-		portMapping[portMaster] = PORT_DISABLED;
+	for(auto& [masterName, masterPort] : portsMaster) {
+
+		// initialize internal mapping
+		portMapping[masterName] = PORT_DISABLED;
+
+		// each slave port may be internally routed to a master port
+		for(auto& [slaveName, slavePort] : portsSlave) {
+			(void) slaveName;
+
+			streamGraph.addDefaultEdge(slavePort->getIdentifier(),
+			                           masterPort->getIdentifier());
+		}
 	}
 
 	return true;
 }
 
 bool
-AxiStreamSwitch::connect(int portSlave, int portMaster)
+AxiStreamSwitch::connectInternal(const std::string& portSlave,
+                                 const std::string& portMaster)
 {
+	if(portSlave.substr(0, 1) != "S" or
+	   portMaster.substr(0, 1) != "M") {
+		logger->error("sanity check failed");
+		return false;
+	}
+
 	if(portMapping[portMaster] == portSlave) {
-		logger->debug("Ports already connected");
+		logger->debug("Ports already connected (slave {} to master {}",
+		              portSlave, portMaster);
 		return true;
 	}
 
@@ -75,45 +92,30 @@ AxiStreamSwitch::connect(int portSlave, int portMaster)
 			             slave, master, master);
 
 			XAxisScr_RegUpdateDisable(&xSwitch);
-			XAxisScr_MiPortDisable(&xSwitch, master);
+			XAxisScr_MiPortDisable(&xSwitch, portNameToNum(master));
 			XAxisScr_RegUpdateEnable(&xSwitch);
+
+			portMapping[master] = PORT_DISABLED;
 		}
 	}
 
 	/* Reconfigure switch */
 	XAxisScr_RegUpdateDisable(&xSwitch);
-	XAxisScr_MiPortEnable(&xSwitch, portMaster, portSlave);
+	XAxisScr_MiPortEnable(&xSwitch, portNameToNum(portMaster), portNameToNum(portSlave));
 	XAxisScr_RegUpdateEnable(&xSwitch);
+
+	portMapping[portMaster] = portSlave;
 
 	logger->debug("Connect slave {} to master {}", portSlave, portMaster);
 
 	return true;
 }
 
-bool
-AxiStreamSwitch::disconnectMaster(int port)
+int
+AxiStreamSwitch::portNameToNum(const std::string& portName)
 {
-	logger->debug("Disconnect slave {} from master {}",
-	              portMapping[port], port);
-
-	XAxisScr_MiPortDisable(&xSwitch, port);
-	portMapping[port] = PORT_DISABLED;
-	return true;
-}
-
-bool
-AxiStreamSwitch::disconnectSlave(int port)
-{
-	for(auto [master, slave] : portMapping) {
-		if(slave == port) {
-			logger->debug("Disconnect slave {} from master {}", slave, master);
-			XAxisScr_MiPortDisable(&xSwitch, master);
-			return true;
-		}
-	}
-
-	logger->debug("Slave {} hasn't been connected to any master", port);
-	return true;
+	const std::string number = portName.substr(1, 2);
+	return std::stoi(number);
 }
 
 bool

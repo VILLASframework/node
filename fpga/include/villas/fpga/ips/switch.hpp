@@ -46,13 +46,14 @@ public:
 
 	bool init();
 
-	bool connect(int portSlave, int portMaster);
-	bool disconnectMaster(int port);
-	bool disconnectSlave(int port);
+	bool connectInternal(const std::string& slavePort,
+	                     const std::string& masterPort);
 
 private:
-	static constexpr int PORT_DISABLED = -1;
+	int portNameToNum(const std::string& portName);
 
+private:
+	static constexpr const char* PORT_DISABLED = "DISABLED";
 	static constexpr char registerMemory[] = "Reg";
 
 	std::list<MemoryBlockName> getMemoryBlocks() const
@@ -65,7 +66,7 @@ private:
 
 	int num_ports;
 	XAxis_Switch xSwitch;
-	std::map<int, int> portMapping;
+	std::map<std::string, std::string> portMapping;
 };
 
 

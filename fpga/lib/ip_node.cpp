@@ -93,11 +93,72 @@ IpNode::getLoopbackPorts() const
 	return { "", "" };
 }
 
+bool IpNode::connect(const StreamVertex& from, const StreamVertex& to)
+{
+	StreamGraph::Path path;
+	if(not streamGraph.getPath(from.getIdentifier(), to.getIdentifier(), path)) {
+		logger->error("No path from {} to {}", from, to);
+		return false;
+	}
+
+	if(path.size() == 0) {
+		return true;
+	}
+
+	auto currentEdge = path.begin();
+	auto firstEdge = streamGraph.getEdge(*currentEdge);
+	auto firstHopNode = streamGraph.getVertex(firstEdge->getVertexTo());
+
+	auto nextHopNode = firstHopNode;
+
+	// check if next hop is an internal connection
+	if(firstHopNode->nodeName == getInstanceName()) {
+
+		if(not connectInternal(from.portName, firstHopNode->portName)) {
+			logger->error("Making internal connection from {} to {} failed",
+			              from, *firstHopNode);
+			return false;
+		}
+
+		// we have to advance to next hop
+		if(++currentEdge == path.end()) {
+			// arrived at the end of path
+			return true;
+		}
+
+		auto secondEdge = streamGraph.getEdge(*currentEdge);
+		auto secondHopNode = streamGraph.getVertex(secondEdge->getVertexTo());
+		nextHopNode = secondHopNode;
+	}
+
+	auto nextHopNodeIp = reinterpret_cast<IpNode*>
+	                     (card->lookupIp(nextHopNode->nodeName));
+
+	if(nextHopNodeIp == nullptr) {
+		logger->error("Cannot find IP {}, this shouldn't happen!",
+		              nextHopNode->nodeName);
+		return false;
+	}
+
+	return nextHopNodeIp->connect(*nextHopNode, to);
+}
+
 bool
 IpNode::loopbackPossible() const
 {
 	auto ports = getLoopbackPorts();
 	return (not ports.first.empty()) and (not ports.second.empty());
+}
+
+bool
+IpNode::connectInternal(const std::string& slavePort,
+                        const std::string& masterPort)
+{
+	(void) slavePort;
+	(void) masterPort;
+
+	logger->warn("This IP doesn't implement an internal connection");
+	return false;
 }
 
 bool
