@@ -6,7 +6,7 @@ set(SOURCES
     fifo.cpp
 #	hls.c
 #	intc.c
-#	rtds_rtt.c
+    rtds.cpp
 	timer.cpp
 #	xsg.c
     graph.cpp
