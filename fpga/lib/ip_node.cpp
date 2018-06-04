@@ -96,6 +96,11 @@ IpNode::getLoopbackPorts() const
 
 bool IpNode::connect(const StreamVertex& from, const StreamVertex& to)
 {
+	if(from.nodeName != getInstanceName()) {
+		logger->error("Cannot connect from a foreign StreamVertex: {}", from);
+		return false;
+	}
+
 	StreamGraph::Path path;
 	if(not streamGraph.getPath(from.getIdentifier(), to.getIdentifier(), path)) {
 		logger->error("No path from {} to {}", from, to);
@@ -132,7 +137,7 @@ bool IpNode::connect(const StreamVertex& from, const StreamVertex& to)
 		nextHopNode = secondHopNode;
 	}
 
-	auto nextHopNodeIp = reinterpret_cast<IpNode*>
+	auto nextHopNodeIp = dynamic_cast<IpNode*>
 	                     (card->lookupIp(nextHopNode->nodeName));
 
 	if(nextHopNodeIp == nullptr) {
