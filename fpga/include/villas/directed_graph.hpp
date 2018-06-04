@@ -29,6 +29,10 @@ class Vertex {
 public:
 	using Identifier = std::size_t;
 
+	const Identifier&
+	getIdentifier() const
+	{ return id; }
+
 	friend std::ostream&
 	operator<< (std::ostream& stream, const Vertex& vertex)
 	{ return stream << vertex.id; }
@@ -314,7 +318,7 @@ public:
 		}
 	}
 
-private:
+protected:
 	VertexIdentifier lastVertexId;
 	EdgeIdentifier lastEdgeId;
 

@@ -13,6 +13,8 @@ namespace fpga {
 namespace ip {
 
 
+StreamGraph streamGraph;
+
 bool
 IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 {
@@ -49,25 +51,28 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 			return false;
 		}
 
-		int port_num;
-		try {
-			port_num = std::stoi(tokens[1]);
-		} catch(const std::invalid_argument&) {
-			logger->error("Target port number is not an integer: '{}'", target_raw);
-			return false;
-		}
-
-		IpNode::StreamPort port;
-		port.nodeName = tokens[0];
-		port.portNumber = port_num;
-
 		const std::string role(role_raw);
-		if(role == "master" or role == "initiator") {
-			ipNode.portsMaster[name_raw] = port;
-		} else /* slave */ {
-			ipNode.portsSlave[name_raw] = port;
-		}
+		const bool isMaster = (role == "master" or role == "initiator");
 
+
+		auto thisVertex = streamGraph.getOrCreateStreamVertex(
+		                      ip.getInstanceName(),
+		                      name_raw,
+		                      isMaster);
+
+		auto connectedVertex = streamGraph.getOrCreateStreamVertex(
+		                           tokens[0],
+		                           tokens[1],
+		                           not isMaster);
+
+
+		if(isMaster) {
+			streamGraph.addDefaultEdge(thisVertex->getIdentifier(),
+			                           connectedVertex->getIdentifier());
+			ipNode.portsMaster[name_raw] = thisVertex;
+		} else /* slave */ {
+			ipNode.portsSlave[name_raw] = thisVertex;
+		}
 	}
 
 	return true;
@@ -79,7 +84,7 @@ IpNode::getLoopbackPorts() const
 	for(auto& [masterName, masterTo] : portsMaster) {
 		for(auto& [slaveName, slaveTo] : portsSlave) {
 			// TODO: should we also check which IP both ports are connected to?
-			if(masterTo.nodeName == slaveTo.nodeName) {
+			if(masterTo->nodeName == slaveTo->nodeName) {
 				return { masterName, slaveName };
 			}
 		}
@@ -105,11 +110,11 @@ IpNode::connectLoopback()
 	logger->debug("master port: {}", ports.first);
 	logger->debug("slave port: {}", ports.second);
 
-	logger->debug("switch at: {}", portMaster.nodeName);
+	logger->debug("switch at: {}", portMaster->nodeName);
 
 	// TODO: verify this is really a switch!
 	auto axiStreamSwitch = reinterpret_cast<ip::AxiStreamSwitch*>(
-	                            card->lookupIp(portMaster.nodeName));
+	                            card->lookupIp(portMaster->nodeName));
 
 	if(axiStreamSwitch == nullptr) {
 		logger->error("Cannot find switch");
@@ -117,7 +122,7 @@ IpNode::connectLoopback()
 	}
 
 	// switch's slave port is our master port and vice versa
-	return axiStreamSwitch->connect(portMaster.portNumber, portSlave.portNumber);
+	return axiStreamSwitch->connect(*portMaster, *portSlave);
 }
 
 } // namespace ip

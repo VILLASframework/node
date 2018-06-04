@@ -43,6 +43,52 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
+class StreamVertex : public graph::Vertex {
+public:
+	StreamVertex(const std::string& node, const std::string& port, bool isMaster) :
+	    nodeName(node), portName(port), isMaster(isMaster) {}
+
+	std::string getName() const
+	{ return nodeName + "/" + portName + "(" + (isMaster ? "M" : "S") + ")"; }
+
+	friend std::ostream&
+	operator<< (std::ostream& stream, const StreamVertex& vertex)
+	{ return stream << vertex.getIdentifier() << ": " << vertex.getName(); }
+
+public:
+	std::string nodeName;
+	std::string portName;
+	bool isMaster;
+};
+
+
+class StreamGraph : public graph::DirectedGraph<StreamVertex> {
+public:
+	StreamGraph() : graph::DirectedGraph<StreamVertex>("StreamGraph") {}
+
+	std::shared_ptr<StreamVertex>
+	getOrCreateStreamVertex(const std::string& node,
+	                        const std::string& port,
+	                        bool isMaster)
+	{
+		for(auto& [vertexId, vertex] : vertices) {
+			(void) vertexId;
+			if(vertex->nodeName == node and vertex->portName == port and vertex->isMaster == isMaster)
+				return vertex;
+		}
+
+		// vertex not found, create new one
+		auto vertex = std::make_shared<StreamVertex>(node, port, isMaster);
+		addVertex(vertex);
+
+		return vertex;
+	}
+};
+
+
+extern StreamGraph streamGraph;
+
+
 // TODO: reflect on interface that an IpNode exposes and how to design it to
 //       blend in with VILLASnode software nodes
 class IpNode : public IpCore {
@@ -58,6 +104,14 @@ public:
 	bool connect(std::string portName, const StreamPort& to);
 	bool disconnect(std::string portName);
 
+	const StreamVertex&
+	getMasterPort(const std::string& name) const
+	{ return *portsMaster.at(name); }
+
+	const StreamVertex&
+	getSlavePort(const std::string& name) const
+	{ return *portsSlave.at(name); }
+
 	bool loopbackPossible() const;
 	bool connectLoopback();
 
@@ -65,8 +119,8 @@ private:
 	std::pair<std::string, std::string> getLoopbackPorts() const;
 
 protected:
-	std::map<std::string, StreamPort> portsMaster;
-	std::map<std::string, StreamPort> portsSlave;
+	std::map<std::string, std::shared_ptr<StreamVertex>> portsMaster;
+	std::map<std::string, std::shared_ptr<StreamVertex>> portsSlave;
 };
 
 class IpNodeFactory : public IpCoreFactory {
