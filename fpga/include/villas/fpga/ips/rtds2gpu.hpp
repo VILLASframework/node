@@ -27,9 +27,16 @@ public:
 
 	void dumpDoorbell(uint32_t doorbellRegister) const;
 
-	       static constexpr const char* registerMemory = "Reg";
+	bool doorbellIsValid(const uint32_t& doorbellRegister) const
+	{ return reinterpret_cast<const reg_doorbell_t&>(doorbellRegister).is_valid; }
+
+	void doorbellReset(uint32_t& doorbellRegister) const
+	{ doorbellRegister = 0; }
+
+	static constexpr const char* registerMemory = "Reg";
+
 	std::list<MemoryBlockName> getMemoryBlocks() const
-	       { return { registerMemory }; }
+	{ return { registerMemory }; }
 
 
 	const StreamVertex&

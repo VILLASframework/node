@@ -44,6 +44,14 @@ public:
 	std::list<std::string> getMemoryBlocks() const
 	{ return { registerMemory }; }
 
+	const StreamVertex&
+	getDefaultSlavePort() const
+	{ return getSlavePort(slavePort); }
+
+	const StreamVertex&
+	getDefaultMasterPort() const
+	{ return getMasterPort(masterPort); }
+
 private:
 	static constexpr const char registerMemory[] = "reg0";
 	static constexpr const char* irqTs = "irq_ts";

@@ -81,8 +81,12 @@ Test(fpga, rtds, .description = "RTDS")
 			auto dmaMaster = dma->getMasterPort(dma->mm2sPort);
 			auto dmaSlave = dma->getSlavePort(dma->s2mmPort);
 
-			rtds->connect(rtdsMaster, dmaSlave);
-			dma->connect(dmaMaster, rtdsSlave);
+//			rtds->connect(*rtds);
+//			logger->info("loopback");
+//			while(1);
+
+//			rtds->connect(rtdsMaster, dmaSlave);
+//			dma->connect(dmaMaster, rtdsSlave);
 
 			auto mem = villas::HostRam::getAllocator().allocate<int32_t>(0x100 / sizeof(int32_t));
 

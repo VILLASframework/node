@@ -31,15 +31,16 @@
 #include <villas/fpga/ips/gpu2rtds.hpp>
 #include <villas/fpga/ips/switch.hpp>
 #include <villas/fpga/ips/dma.hpp>
+#include <villas/fpga/ips/rtds.hpp>
 
 #include "global.hpp"
 
 
 static constexpr size_t SAMPLE_SIZE		= 4;
-static constexpr size_t SAMPLE_COUNT	= 8;
+static constexpr size_t SAMPLE_COUNT	= 1;
 static constexpr size_t FRAME_SIZE		= SAMPLE_COUNT * SAMPLE_SIZE;
 
-static constexpr size_t DOORBELL_OFFSET = SAMPLE_COUNT;
+static constexpr size_t DOORBELL_OFFSET = FRAME_SIZE;
 static constexpr size_t DATA_OFFSET = 0;
 
 static void dumpMem(const uint32_t* addr, size_t len)
@@ -86,11 +87,14 @@ Test(fpga, rtds2gpu, .description = "Rtds2Gpu")
 		auto gpu2rtds = dynamic_cast<villas::fpga::ip::Gpu2Rtds*>(
 		                     state.cards.front()->lookupIp(villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:hls:gpu2rtds:")));
 
+		auto rtds = dynamic_cast<villas::fpga::ip::Rtds*>(
+		                     state.cards.front()->lookupIp(villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:")));
 
 
 		cr_assert_not_null(axiSwitch, "No AXI switch IP found");
 		cr_assert_not_null(dma, "No DMA IP found");
 		cr_assert_not_null(gpu2rtds, "No Gpu2Rtds IP found");
+		cr_assert_not_null(rtds, "RTDS IP not found");
 
 		rtds2gpu.dump(spdlog::level::debug);
 		gpu2rtds->dump(spdlog::level::debug);
@@ -164,5 +168,67 @@ Test(fpga, rtds2gpu, .description = "Rtds2Gpu")
 		dumpMem(dataDst2, dmaMemDst2.getMemoryBlock().getSize());
 
 		logger->info(TXT_GREEN("Passed"));
+	}
+}
+
+Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
+{
+	auto logger = loggerGetOrCreate("unittest:rtds2gpu");
+
+	/* Collect neccessary IPs */
+
+	auto gpu2rtds = dynamic_cast<villas::fpga::ip::Gpu2Rtds*>(
+	                     state.cards.front()->lookupIp(villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:hls:gpu2rtds:")));
+
+	auto rtds2gpu = dynamic_cast<villas::fpga::ip::Rtds2Gpu*>(
+	                     state.cards.front()->lookupIp(villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:hls:rtds2gpu:")));
+
+	cr_assert_not_null(gpu2rtds, "No Gpu2Rtds IP found");
+	cr_assert_not_null(rtds2gpu, "No Rtds2Gpu IP not found");
+
+	for(auto& ip : state.cards.front()->ips) {
+		if(*ip != villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:"))
+			continue;
+
+		auto& rtds = dynamic_cast<villas::fpga::ip::Rtds&>(*ip);
+		logger->info("Testing {}", rtds);
+
+		auto dmaRam = villas::HostDmaRam::getAllocator().allocate<uint32_t>(SAMPLE_COUNT + 1);
+		uint32_t* data = &dmaRam[DATA_OFFSET];
+		uint32_t* doorbell = &dmaRam[DOORBELL_OFFSET / SAMPLE_SIZE];
+
+		// TEST: rtds loopback via switch
+//		cr_assert(rtds.connect(rtds));
+//		logger->info("loopback");
+//		while(1);
+
+		cr_assert(rtds.connect(*rtds2gpu));
+		cr_assert(gpu2rtds->connect(rtds));
+
+
+		size_t count = 0;
+		while(true) {
+			rtds2gpu->doorbellReset(*doorbell);
+			rtds2gpu->startOnce(dmaRam.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET, DOORBELL_OFFSET);
+
+			//			while(not rtds2gpu->isFinished());
+			while(not rtds2gpu->doorbellIsValid(*doorbell));
+
+//			rtds2gpu->dump();
+//			rtds2gpu->dumpDoorbell(data[1]);
+//			dumpMem(data, FRAME_SIZE + SAMPLE_SIZE);
+
+			// copy samples to gpu2rtds IP
+			for(size_t i = 0; i < SAMPLE_COUNT; i++) {
+				gpu2rtds->registerFrames[i] = data[i];
+			}
+
+			gpu2rtds->startOnce(SAMPLE_COUNT);
+//			while(not gpu2rtds->isFinished());
+
+
+			count++;
+//			logger->debug("Successful iterations {}, data {}", count, data[0]);
+		}
 	}
 }
