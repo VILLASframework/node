@@ -13,6 +13,7 @@ IOMMU_GROUP=`basename $(readlink /sys/bus/pci/devices/${PCI_BDF}/iommu_group)`
 
 # bind to vfio driver
 echo "${PCI_VID} ${PCI_PID}" > /sys/bus/pci/drivers/vfio-pci/new_id
+echo "${PCI_BDF}" > /sys/bus/pci/drivers/vfio-pci/bind
 
 groupadd -f fpga
 usermod -G fpga -a svg
