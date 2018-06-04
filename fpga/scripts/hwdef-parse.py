@@ -35,6 +35,7 @@ whitelist = [
 	[ 'acs.eonerc.rwth-aachen.de', 'sysgen' ],
 	[ 'xilinx.com', 'ip', 'axi_gpio' ],
 	[ 'xilinx.com', 'ip', 'axi_bram_ctrl' ],
+	[ 'xilinx.com', 'ip', 'axis_data_fifo' ],
 	[ 'xilinx.com', 'ip', 'axi_pcie' ]
 ]
 
@@ -44,7 +45,6 @@ axi_converter_whitelist = [
 	[ 'xilinx.com', 'ip', 'axis_subset_converter' ],
 	[ 'xilinx.com', 'ip', 'axis_clock_converter' ],
 	[ 'xilinx.com', 'ip', 'axis_register_slice' ],
-	[ 'xilinx.com', 'ip', 'axis_data_fifo' ],
 	[ 'xilinx.com', 'ip', 'axis_dwidth_converter' ],
 	[ 'xilinx.com', 'ip', 'axis_register_slice' ]
 ]
@@ -173,19 +173,32 @@ for busif in busifs:
 
 	port = int(m.group(2))
 
+	switch_ip_ports = ips[switch.get('INSTANCE')].setdefault('ports', [])
+
 	ep, busname_ep = bus_trace(root, busname, opponent[type], whitelist)
 	if ep in ips:
 
 		ports = ips[ep].setdefault('ports', [])
 		ports.append({
 			'role': opponent[type][0].lower(),
-			'target': '{}:{}'.format(switch.get('INSTANCE'), port)
+			'target': '{}:{}'.format(switch.get('INSTANCE'), name)
 		})
 
 		module_ep = root.find('.//MODULE[@INSTANCE="{}"]'.format(ep))
 		busif_ep = module_ep.find('.//BUSINTERFACE[@BUSNAME="{}"]'.format(busname_ep))
-		if busif_ep:
-			ports[-1]['name'] = sanitize_name(busif_ep.get('NAME'))
+		if not busif_ep:
+			print("cannot find businterface: {}".format(busname_ep))
+			sys.exit(1)
+
+		busif_name = ports[-1]['name'] = sanitize_name(busif_ep.get('NAME'))
+		ports[-1]['name'] = busif_name
+
+		switch_ip_ports.append({
+			'role': type.lower(),
+			'target': '{}:{}'.format(ep, busif_name),
+			'name': name
+		})
+
 
 # set number of master/slave port pairs for switch
 ips[switch.get('INSTANCE')]['num_ports'] = int(switch_ports / 2)
