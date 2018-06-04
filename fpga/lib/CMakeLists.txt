@@ -51,10 +51,11 @@ target_compile_definitions(villas-fpga PRIVATE
 	_GNU_SOURCE
 )
 
-target_include_directories(villas-fpga PUBLIC
-	../include/villas
-	${XIL_INCLUDE_DIRS}
-	${JANSSON_INCLUDE_DIRS}
+target_include_directories(villas-fpga
+	PUBLIC
+		../include
+		${XIL_INCLUDE_DIRS}
+		${JANSSON_INCLUDE_DIRS}
 )
 
 target_link_libraries(villas-fpga PUBLIC
