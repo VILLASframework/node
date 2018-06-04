@@ -73,9 +73,26 @@ bool
 AxiStreamSwitch::connectInternal(const std::string& portSlave,
                                  const std::string& portMaster)
 {
+	// check if slave port exists
+	try {
+		getSlavePort(portSlave);
+	} catch(const std::out_of_range&) {
+		logger->error("Switch doesn't have a slave port named '{}'", portSlave);
+		return false;
+	}
+
+	// check if master port exists
+	try {
+		getMasterPort(portMaster);
+	} catch(const std::out_of_range&) {
+		logger->error("Switch doesn't have a master port named '{}'", portMaster);
+		return false;
+	}
+
 	if(portSlave.substr(0, 1) != "S" or
 	   portMaster.substr(0, 1) != "M") {
-		logger->error("sanity check failed");
+		logger->error("sanity check failed: master {} slave {}",
+		              portMaster, portSlave);
 		return false;
 	}
 
