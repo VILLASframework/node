@@ -13,7 +13,8 @@ namespace fpga {
 namespace ip {
 
 
-StreamGraph streamGraph;
+StreamGraph
+IpNode::streamGraph;
 
 bool
 IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
@@ -55,20 +56,20 @@ IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 		const bool isMaster = (role == "master" or role == "initiator");
 
 
-		auto thisVertex = streamGraph.getOrCreateStreamVertex(
+		auto thisVertex = IpNode::streamGraph.getOrCreateStreamVertex(
 		                      ip.getInstanceName(),
 		                      name_raw,
 		                      isMaster);
 
-		auto connectedVertex = streamGraph.getOrCreateStreamVertex(
+		auto connectedVertex = IpNode::streamGraph.getOrCreateStreamVertex(
 		                           tokens[0],
 		                           tokens[1],
 		                           not isMaster);
 
 
 		if(isMaster) {
-			streamGraph.addDefaultEdge(thisVertex->getIdentifier(),
-			                           connectedVertex->getIdentifier());
+			IpNode::streamGraph.addDefaultEdge(thisVertex->getIdentifier(),
+			                                   connectedVertex->getIdentifier());
 			ipNode.portsMaster[name_raw] = thisVertex;
 		} else /* slave */ {
 			ipNode.portsSlave[name_raw] = thisVertex;
@@ -141,6 +142,20 @@ bool IpNode::connect(const StreamVertex& from, const StreamVertex& to)
 	}
 
 	return nextHopNodeIp->connect(*nextHopNode, to);
+}
+
+const StreamVertex&
+IpNode::getDefaultSlavePort() const
+{
+	logger->error("No default slave port available");
+	throw std::exception();
+}
+
+const StreamVertex&
+IpNode::getDefaultMasterPort() const
+{
+	logger->error("No default master port available");
+	throw std::exception();
 }
 
 bool

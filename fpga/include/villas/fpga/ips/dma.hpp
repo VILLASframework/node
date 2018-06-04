@@ -60,6 +60,14 @@ public:
 	hasScatterGather() const
 	{ return hasSG; }
 
+	const StreamVertex&
+	getDefaultSlavePort() const
+	{ return getSlavePort(s2mmPort); }
+
+	const StreamVertex&
+	getDefaultMasterPort() const
+	{ return getMasterPort(mm2sPort); }
+
 private:
 	bool writeSG(const void* buf, size_t len);
 	bool readSG(void* buf, size_t len);

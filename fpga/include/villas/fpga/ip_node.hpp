@@ -86,11 +86,6 @@ public:
 };
 
 
-extern StreamGraph streamGraph;
-
-
-// TODO: reflect on interface that an IpNode exposes and how to design it to
-//       blend in with VILLASnode software nodes
 class IpNode : public IpCore {
 public:
 
@@ -102,7 +97,6 @@ public:
 	};
 
 	bool connect(const StreamVertex& from, const StreamVertex& to);
-	bool disconnect(std::string portName);
 
 	const StreamVertex&
 	getMasterPort(const std::string& name) const
@@ -111,6 +105,20 @@ public:
 	const StreamVertex&
 	getSlavePort(const std::string& name) const
 	{ return *portsSlave.at(name); }
+
+	// easy-usage assuming that the slave IP to connect to only has one slave
+	// port and implements the getDefaultSlavePort() function
+	bool connect(const IpNode& slaveNode)
+	{ return this->connect(this->getDefaultMasterPort(), slaveNode.getDefaultSlavePort()); }
+
+	// used by easy-usage connect, will throw if not implemented by derived node
+	virtual const StreamVertex&
+	getDefaultSlavePort() const;
+
+	// used by easy-usage connect, will throw if not implemented by derived node
+	virtual const StreamVertex&
+	getDefaultMasterPort() const;
+
 
 	bool loopbackPossible() const;
 	bool connectLoopback();
@@ -126,6 +134,8 @@ private:
 protected:
 	std::map<std::string, std::shared_ptr<StreamVertex>> portsMaster;
 	std::map<std::string, std::shared_ptr<StreamVertex>> portsSlave;
+
+	static StreamGraph streamGraph;
 };
 
 class IpNodeFactory : public IpCoreFactory {
