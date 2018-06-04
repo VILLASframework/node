@@ -30,14 +30,9 @@
 
 #pragma once
 
-#include <string>
-#include <map>
-
-#include <jansson.h>
 #include <xilinx/xaxis_switch.h>
 
-#include "fpga/ip_node.hpp"
-#include "fpga/vlnv.hpp"
+#include <villas/fpga/ip_node.hpp>
 
 namespace villas {
 namespace fpga {

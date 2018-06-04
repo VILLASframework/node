@@ -24,18 +24,17 @@
 #include <memory>
 #include <utility>
 
-#include "log.hpp"
-#include "utils.hpp"
-#include "memory_manager.hpp"
+#include <villas/log.hpp>
+#include <villas/memory.hpp>
+#include <villas/utils.hpp>
 
-#include "fpga/ip.hpp"
-#include "fpga/vlnv.hpp"
-#include "fpga/card.hpp"
+#include <villas/fpga/card.hpp>
+#include <villas/fpga/vlnv.hpp>
 
-// needed to get VLNVs for initialization order list
-#include "fpga/ips/pcie.hpp"
-#include "fpga/ips/intc.hpp"
-#include "fpga/ips/switch.hpp"
+#include <villas/fpga/ip.hpp>
+#include <villas/fpga/ips/pcie.hpp>
+#include <villas/fpga/ips/intc.hpp>
+#include <villas/fpga/ips/switch.hpp>
 
 
 namespace villas {

@@ -26,8 +26,7 @@
 #include <jansson.h>
 #include <xilinx/xaxis_switch.h>
 
-#include "log.hpp"
-#include "fpga/ips/switch.hpp"
+#include <villas/fpga/ips/switch.hpp>
 
 namespace villas {
 namespace fpga {

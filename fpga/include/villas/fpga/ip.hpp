@@ -31,17 +31,16 @@
 #ifndef VILLAS_IP_HPP
 #define VILLAS_IP_HPP
 
-#include "fpga/vlnv.hpp"
-#include "plugin.hpp"
-#include "log.hpp"
-
 #include <map>
 #include <list>
 #include <memory>
-
 #include <jansson.h>
 
-#include "memory_manager.hpp"
+#include <villas/log.hpp>
+#include <villas/memory.hpp>
+#include <villas/plugin.hpp>
+
+#include <villas/fpga/vlnv.hpp>
 
 namespace villas {
 namespace fpga {

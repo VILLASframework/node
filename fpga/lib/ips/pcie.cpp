@@ -23,11 +23,11 @@
 #include <limits>
 #include <jansson.h>
 
-#include "fpga/ips/pcie.hpp"
-#include "fpga/card.hpp"
+#include <villas/memory.hpp>
 
-#include "log.hpp"
-#include "memory_manager.hpp"
+#include <villas/fpga/card.hpp>
+#include <villas/fpga/ips/pcie.hpp>
+
 
 namespace villas {
 namespace fpga {

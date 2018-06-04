@@ -2,10 +2,11 @@
 #include <stdexcept>
 #include <jansson.h>
 
-#include "utils.hpp"
-#include "fpga/ip_node.hpp"
-#include "fpga/ips/switch.hpp"
-#include "fpga/card.hpp"
+#include <villas/utils.hpp>
+
+#include <villas/fpga/card.hpp>
+#include <villas/fpga/ip_node.hpp>
+#include <villas/fpga/ips/switch.hpp>
 
 namespace villas {
 namespace fpga {

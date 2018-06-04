@@ -25,8 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "list.h"
-#include "utils.h"
+#include <villas/list.h>
+#include <villas/utils.h>
 
 /* Compare functions */
 static int cmp_lookup(const void *a, const void *b) {

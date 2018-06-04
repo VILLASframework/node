@@ -30,24 +30,19 @@
 
 #pragma once
 
-
-#include <jansson.h>
-
-#include "common.h"
-#include "kernel/pci.h"
-#include "kernel/vfio.hpp"
-
 #include <list>
 #include <set>
 #include <string>
+#include <jansson.h>
 
-#include "plugin.hpp"
-#include "fpga/ip.hpp"
+#include <villas/plugin.hpp>
+#include <villas/config.h>
+#include <villas/memory.hpp>
 
-#include "config.h"
+#include <villas/kernel/pci.h>
+#include <villas/kernel/vfio.hpp>
 
-#include "memory_manager.hpp"
-#include "memory.hpp"
+#include <villas/fpga/ip.hpp>
 
 #define PCI_FILTER_DEFAULT_FPGA {		\
 	.id = {								\

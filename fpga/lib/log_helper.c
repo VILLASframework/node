@@ -24,8 +24,8 @@
 #include <unistd.h>
 #include <syslog.h>
 
-#include "utils.h"
-#include "log.h"
+#include <villas/utils.h>
+#include <villas/log.h>
 
 void debug(long class, const char *fmt, ...)
 {

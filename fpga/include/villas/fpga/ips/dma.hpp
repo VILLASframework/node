@@ -26,13 +26,10 @@
 
 #pragma once
 
-#include <list>
-#include <string>
-
 #include <xilinx/xaxidma.h>
 
-#include "fpga/ip_node.hpp"
-#include "memory.hpp"
+#include <villas/memory.hpp>
+#include <villas/fpga/ip_node.hpp>
 
 namespace villas {
 namespace fpga {

@@ -23,15 +23,13 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "config.h"
-#include "log.h"
-#include "plugin.hpp"
+#include <villas/config.h>
+#include <villas/plugin.hpp>
 
-#include "kernel/vfio.hpp"
-#include "kernel/kernel.h"
+#include <villas/kernel/kernel.h>
 
-#include "fpga/card.hpp"
-#include "fpga/ips/intc.hpp"
+#include <villas/fpga/card.hpp>
+#include <villas/fpga/ips/intc.hpp>
 
 namespace villas {
 namespace fpga {

@@ -28,10 +28,9 @@
 
 #pragma once
 
-#include "fpga/ip.hpp"
 #include <xilinx/xintc.h>
 
-#include "fpga/ip_node.hpp"
+#include <villas/fpga/ip.hpp>
 
 namespace villas {
 namespace fpga {

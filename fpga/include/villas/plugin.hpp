@@ -28,8 +28,8 @@
 #include <string>
 #include <jansson.h>
 
-#include "log.hpp"
-#include "utils.h"
+#include <villas/log.hpp>
+#include <villas/common.h>
 
 namespace villas {
 

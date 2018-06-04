@@ -29,8 +29,9 @@
 
 #pragma once
 
-#include "fpga/ip_node.hpp"
 #include <xilinx/xllfifo.h>
+
+#include <villas/fpga/ip_node.hpp>
 
 
 namespace villas {

@@ -32,9 +32,9 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include "utils.h"
-#include "config.h"
-#include "kernel/kernel.h"
+#include <villas/utils.h>
+#include <villas/config.h>
+#include <villas/kernel/kernel.h>
 
 int kernel_get_cacheline_size()
 {

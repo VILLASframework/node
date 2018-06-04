@@ -24,6 +24,8 @@
 #include <criterion/criterion.h>
 
 #include <villas/log.hpp>
+#include <villas/utils.h>
+
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/fifo.hpp>
 

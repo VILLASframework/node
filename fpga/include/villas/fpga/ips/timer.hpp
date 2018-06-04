@@ -29,12 +29,12 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <xilinx/xtmrctr.h>
 
-#include "config.h"
-#include "fpga/ip.hpp"
-#include "fpga/ips/intc.hpp"
+#include <villas/config.h>
+
+#include <villas/fpga/ip.hpp>
 
 namespace villas {
 namespace fpga {

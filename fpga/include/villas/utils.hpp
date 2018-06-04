@@ -2,7 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <list>
 
 namespace villas {
 namespace utils {

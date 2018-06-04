@@ -35,8 +35,9 @@
 #include <string>
 #include <jansson.h>
 
-#include "ip.hpp"
-#include "log.hpp"
+#include <villas/fpga/ip.hpp>
+
+#include <villas/directed_graph.hpp>
 
 namespace villas {
 namespace fpga {

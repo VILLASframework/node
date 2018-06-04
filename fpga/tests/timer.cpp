@@ -27,7 +27,7 @@
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/ips/timer.hpp>
 
-#include "config.h"
+#include <villas/config.h>
 #include "global.hpp"
 
 Test(fpga, timer, .description = "Timer Counter")

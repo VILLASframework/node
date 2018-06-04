@@ -26,11 +26,11 @@
 #include <unistd.h>
 #include <linux/limits.h>
 
-#include "log.h"
-#include "utils.h"
+#include <villas/log.h>
+#include <villas/utils.h>
 
-#include "kernel/pci.h"
-#include "config.h"
+#include <villas/kernel/pci.h>
+#include <villas/config.h>
 
 int pci_init(struct pci *p)
 {

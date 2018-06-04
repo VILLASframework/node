@@ -9,7 +9,7 @@
 #include <stdexcept>
 #include <algorithm>
 
-#include "log.hpp"
+#include <villas/log.hpp>
 
 
 namespace villas {

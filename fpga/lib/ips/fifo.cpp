@@ -28,9 +28,8 @@
 #include <xilinx/xstatus.h>
 #include <xilinx/xllfifo.h>
 
-#include "log.hpp"
-#include "fpga/ips/fifo.hpp"
-#include "fpga/ips/intc.hpp"
+#include <villas/fpga/ips/fifo.hpp>
+#include <villas/fpga/ips/intc.hpp>
 
 
 namespace villas {

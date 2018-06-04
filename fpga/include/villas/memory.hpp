@@ -3,8 +3,8 @@
 #include <string>
 #include <unistd.h>
 
-#include "log.hpp"
-#include "memory_manager.hpp"
+#include <villas/log.hpp>
+#include <villas/memory_manager.hpp>
 
 namespace villas {
 

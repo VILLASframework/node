@@ -23,11 +23,7 @@
 #include <string>
 #include <sstream>
 
-#include <stdlib.h>
-#include <string.h>
-
-#include "fpga/vlnv.hpp"
-#include "fpga/ip.hpp"
+#include <villas/fpga/vlnv.hpp>
 
 namespace villas {
 namespace fpga {

@@ -1,7 +1,7 @@
 #include <vector>
 #include <string>
 
-#include "utils.hpp"
+#include <villas/utils.hpp>
 
 namespace villas {
 namespace utils {

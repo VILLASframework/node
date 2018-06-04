@@ -3,7 +3,7 @@
 #include <cstdint>
 
 #include <villas/utils.hpp>
-#include "memory_manager.hpp"
+#include <villas/memory_manager.hpp>
 
 using namespace villas::utils;
 

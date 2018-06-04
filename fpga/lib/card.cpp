@@ -24,13 +24,13 @@
 #include <memory>
 #include <utility>
 
-#include "log.hpp"
+#include <villas/memory.hpp>
 
-#include "kernel/pci.h"
-#include "kernel/vfio.hpp"
+#include <villas/kernel/pci.h>
+#include <villas/kernel/vfio.hpp>
 
-#include "fpga/ip.hpp"
-#include "fpga/card.hpp"
+#include <villas/fpga/ip.hpp>
+#include <villas/fpga/card.hpp>
 
 namespace villas {
 namespace fpga {

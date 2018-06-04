@@ -23,11 +23,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <cstdint>
+
 #include <xilinx/xtmrctr.h>
 
-#include "log.hpp"
-#include "fpga/ips/timer.hpp"
-#include "fpga/ips/intc.hpp"
+#include <villas/fpga/ips/timer.hpp>
+#include <villas/fpga/ips/intc.hpp>
 
 namespace villas {
 namespace fpga {

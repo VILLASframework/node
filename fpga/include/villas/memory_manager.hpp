@@ -6,8 +6,8 @@
 #include <stdexcept>
 #include <unistd.h>
 
-#include "log.hpp"
-#include "directed_graph.hpp"
+#include <villas/log.hpp>
+#include <villas/directed_graph.hpp>
 
 namespace villas {
 

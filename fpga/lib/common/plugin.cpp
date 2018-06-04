@@ -20,17 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <dlfcn.h>
-#include <string.h>
-
-#include <string>
 #include <iostream>
-
+#include <string>
 #include <new>
 #include <type_traits>
+#include <dlfcn.h>
 
-#include "plugin.hpp"
-#include "log.hpp"
+#include <villas/plugin.hpp>
 
 namespace villas {
 

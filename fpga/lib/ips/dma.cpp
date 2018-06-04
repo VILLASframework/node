@@ -25,12 +25,11 @@
 
 #include <xilinx/xaxidma.h>
 
-#include "fpga/card.hpp"
-#include "fpga/ips/dma.hpp"
-#include "fpga/ips/intc.hpp"
+#include <villas/memory.hpp>
 
-#include "log.hpp"
-#include "memory_manager.hpp"
+#include <villas/fpga/card.hpp>
+#include <villas/fpga/ips/dma.hpp>
+#include <villas/fpga/ips/intc.hpp>
 
 // max. size of a DMA transfer in simple mode
 #define FPGA_DMA_BOUNDARY	0x1000

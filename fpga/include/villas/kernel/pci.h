@@ -9,8 +9,9 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <stdint.h>
-#include "list.h"
+#include <villas/list.h>
 
 #define PCI_SLOT(devfn)		(((devfn) >> 3) & 0x1f)
 #define PCI_FUNC(devfn)		((devfn) & 0x07)

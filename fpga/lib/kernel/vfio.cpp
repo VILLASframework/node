@@ -39,11 +39,10 @@
 #include <sys/eventfd.h>
 #include <linux/pci_regs.h>
 
-#include "kernel/pci.h"
-#include "kernel/kernel.h"
-
-#include "kernel/vfio.hpp"
-#include "log.hpp"
+#include <villas/log.hpp>
+#include <villas/kernel/pci.h>
+#include <villas/kernel/kernel.h>
+#include <villas/kernel/vfio.hpp>
 
 static auto logger = loggerGetOrCreate("Vfio");
 
