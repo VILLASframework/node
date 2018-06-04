@@ -322,8 +322,12 @@ IpCore::dump()
 {
 	logger->info("IP: {}", *this);
 	for(auto& [num, irq] : irqs) {
-		logger->info("IRQ {}: {}:{}",
+		logger->info("  IRQ {}: {}:{}",
 		             num, irq.irqController->getInstanceName(), irq.num);
+	}
+
+	for(auto& [block, translation] : addressTranslations) {
+		logger->info("  Memory {}: {}", block, translation);
 	}
 }
 
