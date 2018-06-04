@@ -155,7 +155,7 @@ Dma::memcpy(const MemoryBlock& src, const MemoryBlock& dst, size_t len)
 }
 
 
-size_t
+bool
 Dma::write(const MemoryBlock& mem, size_t len)
 {
 	auto& mm = MemoryManager::get();
@@ -170,7 +170,7 @@ Dma::write(const MemoryBlock& mem, size_t len)
 }
 
 
-size_t
+bool
 Dma::read(const MemoryBlock& mem, size_t len)
 {
 	auto& mm = MemoryManager::get();
@@ -185,53 +185,53 @@ Dma::read(const MemoryBlock& mem, size_t len)
 }
 
 
-size_t
+bool
 Dma::writeSG(const void* buf, size_t len)
 {
 	(void) buf;
 	(void) len;
 	logger->error("DMA Scatter Gather write not implemented");
 
-	return 0;
+	return false;
 }
 
 
-size_t
+bool
 Dma::readSG(void* buf, size_t len)
 {
 	(void) buf;
 	(void) len;
 	logger->error("DMA Scatter Gather read not implemented");
 
-	return 0;
-}
-
-
-bool
-Dma::writeCompleteSG()
-{
-	logger->error("DMA Scatter Gather write not implemented");
-
-	return false;
-}
-
-
-bool
-Dma::readCompleteSG()
-{
-	logger->error("DMA Scatter Gather read not implemented");
-
 	return false;
 }
 
 
 size_t
+Dma::writeCompleteSG()
+{
+	logger->error("DMA Scatter Gather write not implemented");
+
+	return 0;
+}
+
+
+size_t
+Dma::readCompleteSG()
+{
+	logger->error("DMA Scatter Gather read not implemented");
+
+	return 0;
+}
+
+
+bool
 Dma::writeSimple(const void *buf, size_t len)
 {
 	XAxiDma_BdRing *ring = XAxiDma_GetTxRing(&xDma);
 
 	if ((len == 0) || (len > FPGA_DMA_BOUNDARY))
-		return 0;
+		return false;
 
 	if (not ring->HasDRE) {
 		const uint32_t mask = xDma.MicroDmaMode
@@ -239,7 +239,7 @@ Dma::writeSimple(const void *buf, size_t len)
 		                      : ring->DataWidth - 1;
 
 		if (reinterpret_cast<uintptr_t>(buf) & mask) {
-			return 0;
+			return false;
 		}
 	}
 
@@ -250,7 +250,7 @@ Dma::writeSimple(const void *buf, size_t len)
 
 	/* If the engine is doing a transfer, cannot submit  */
 	if (not dmaChannelHalted and dmaToDeviceBusy) {
-		return 0;
+		return false;
 	}
 
 	// set lower 32 bit of source address
@@ -272,17 +272,17 @@ Dma::writeSimple(const void *buf, size_t len)
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET, len);
 
 
-	return len;
+	return true;
 }
 
 
-size_t
+bool
 Dma::readSimple(void *buf, size_t len)
 {
 	XAxiDma_BdRing *ring = XAxiDma_GetRxRing(&xDma);
 
 	if ((len == 0) || (len > FPGA_DMA_BOUNDARY))
-		return 0;
+		return false;
 
 	if (not ring->HasDRE) {
 		const uint32_t mask = xDma.MicroDmaMode
@@ -290,7 +290,7 @@ Dma::readSimple(void *buf, size_t len)
 		                      : ring->DataWidth - 1;
 
 		if (reinterpret_cast<uintptr_t>(buf) & mask) {
-			return 0;
+			return false;
 		}
 	}
 
@@ -301,7 +301,7 @@ Dma::readSimple(void *buf, size_t len)
 
 	/* If the engine is doing a transfer, cannot submit  */
 	if (not dmaChannelHalted and deviceToDmaBusy) {
-		return 0;
+		return false;
 	}
 
 	// set lower 32 bit of destination address
@@ -321,11 +321,11 @@ Dma::readSimple(void *buf, size_t len)
 	// set tail descriptor pointer
 	XAxiDma_WriteReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET, len);
 
-	return len;
+	return true;
 }
 
 
-bool
+size_t
 Dma::writeCompleteSimple()
 {
 	while (!(XAxiDma_IntrGetIrq(&xDma, XAXIDMA_DMA_TO_DEVICE) & XAXIDMA_IRQ_IOC_MASK))
@@ -333,11 +333,14 @@ Dma::writeCompleteSimple()
 
 	XAxiDma_IntrAckIrq(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DMA_TO_DEVICE);
 
-	return true;
+	const XAxiDma_BdRing* ring = XAxiDma_GetTxRing(&xDma);
+	const size_t bytesWritten = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET);
+
+	return bytesWritten;
 }
 
 
-bool
+size_t
 Dma::readCompleteSimple()
 {
 	while (!(XAxiDma_IntrGetIrq(&xDma, XAXIDMA_DEVICE_TO_DMA) & XAXIDMA_IRQ_IOC_MASK))
@@ -345,7 +348,10 @@ Dma::readCompleteSimple()
 
 	XAxiDma_IntrAckIrq(&xDma, XAXIDMA_IRQ_IOC_MASK, XAXIDMA_DEVICE_TO_DMA);
 
-	return true;
+	const XAxiDma_BdRing* ring = XAxiDma_GetRxRing(&xDma);
+	const size_t bytesRead = XAxiDma_ReadReg(ring->ChanBase, XAXIDMA_BUFFLEN_OFFSET);
+
+	return bytesRead;
 }
 
 

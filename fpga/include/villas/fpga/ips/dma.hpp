@@ -43,13 +43,13 @@ public:
 	bool init();
 	bool reset();
 
-	size_t write(const MemoryBlock& mem, size_t len);
-	size_t read(const MemoryBlock& mem, size_t len);
+	bool write(const MemoryBlock& mem, size_t len);
+	bool read(const MemoryBlock& mem, size_t len);
 
-	bool writeComplete()
+	size_t writeComplete()
 	{ return hasScatterGather() ? writeCompleteSG() : writeCompleteSimple(); }
 
-	bool readComplete()
+	size_t readComplete()
 	{ return hasScatterGather() ? readCompleteSG() : readCompleteSimple(); }
 
 	bool memcpy(const MemoryBlock& src, const MemoryBlock& dst, size_t len);
@@ -61,15 +61,15 @@ public:
 	{ return hasSG; }
 
 private:
-	size_t writeSG(const void* buf, size_t len);
-	size_t readSG(void* buf, size_t len);
-	bool writeCompleteSG();
-	bool readCompleteSG();
+	bool writeSG(const void* buf, size_t len);
+	bool readSG(void* buf, size_t len);
+	size_t writeCompleteSG();
+	size_t readCompleteSG();
 
-	size_t writeSimple(const void* buf, size_t len);
-	size_t readSimple(void* buf, size_t len);
-	bool writeCompleteSimple();
-	bool readCompleteSimple();
+	bool writeSimple(const void* buf, size_t len);
+	bool readSimple(void* buf, size_t len);
+	size_t writeCompleteSimple();
+	size_t readCompleteSimple();
 
 	bool isMemoryBlockAccesible(const MemoryBlock& mem, const std::string& interface);
 
