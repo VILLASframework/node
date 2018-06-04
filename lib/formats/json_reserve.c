@@ -31,6 +31,8 @@
 #include <villas/io.h>
 #include <villas/formats/json.h>
 
+#define JSON_RESERVE_INTEGER_TARGET 1
+
 static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *smp)
 {
 	json_error_t err;
@@ -39,7 +41,7 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 	struct signal *sig;
 
 	if (smp->flags & SAMPLE_HAS_ORIGIN)
-		json_created = json_real(time_to_double(&smp->ts.origin));
+		json_created = json_integer(time_to_double(&smp->ts.origin) * 1e3);
 
 	if (smp->flags & SAMPLE_HAS_SEQUENCE)
 		json_sequence = json_integer(smp->sequence);
@@ -53,6 +55,9 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 			sig = NULL;
 
 		if (sig) {
+			if (!sig->enabled)
+				continue;
+
 			json_name = json_string(sig->name);
 			json_unit = json_string(sig->unit);
 		}
@@ -92,10 +97,26 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 	if (*j == NULL)
 		return -1;
 
+#ifdef JSON_RESERVE_INTEGER_TARGET
+	if (io->output.node) {
+		char *endptr;
+		char *id_str = strrchr(io->output.node->name, '_');
+		if (!id_str)
+			return -1;
+
+		int id = strtoul(id_str+1, &endptr, 10);
+		if (endptr[0] != 0)
+			return -1;
+
+		json_object_set_new(*j, "target", json_integer(id));
+	}
+#else
 	if (io->output.node)
 		json_object_set_new(*j, "target", json_string(io->output.node->name));
-	//if (smp->source)
-	//	json_object_set_new(*j, "origin", json_string(smp->source->name));
+
+	if (smp->source)
+		json_object_set_new(*j, "origin", json_string(smp->source->name));
+#endif
 
 	return 0;
 }
@@ -106,23 +127,45 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 	double created = -1;
 	json_error_t err;
 	json_t *json_value, *json_data = NULL;
+	json_t *json_origin = NULL, *json_target = NULL;
 	size_t i;
 
-	const char *origin = NULL, *target = NULL;
-
-	ret = json_unpack_ex(json_smp, &err, 0, "{ s?: s, s?: s, s?: o, s?: o }",
-		"origin", &origin,
-		"target", &target,
+	ret = json_unpack_ex(json_smp, &err, 0, "{ s?: o, s?: o, s?: o, s?: o }",
+		"origin", &json_origin,
+		"target", &json_target,
 		"measurements", &json_data,
 		"setpoints", &json_data
 	);
 	if (ret)
 		return -1;
 
-	if (target && io->input.node) {
-		if (strcmp(target, io->input.node->name))
+#ifdef JSON_RESERVE_INTEGER_TARGET
+	if (json_target && io->input.node) {
+		if (!json_is_integer(json_target))
 			return -1;
+
+		char *endptr;
+		char *id_str = strrchr(io->input.node->name, '_');
+		if (!id_str)
+			return -1;
+
+		int id = strtoul(id_str+1, &endptr, 10);
+		if (endptr[0] != 0)
+			return -1;
+
+		if (id != json_integer_value(json_target))
+			return 0;
 	}
+#else
+	if (json_target && io->input.node) {
+		const char *target = json_string_value(json_target);
+		if (!target)
+			return -1;
+
+		if (strcmp(target, io->input.node->name))
+			return 0;
+	}
+#endif
 
 	if (!json_data || !json_is_array(json_data))
 		return -1;
@@ -134,7 +177,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 		const char *name, *unit = NULL;
 		double value;
 
-		ret = json_unpack_ex(json_value, &err, 0, "{ s: s, s?: s, s: f, s?: f }",
+		ret = json_unpack_ex(json_value, &err, 0, "{ s: s, s?: s, s: F, s?: F }",
 			"name", &name,
 			"unit", &unit,
 			"value", &value,
@@ -143,8 +186,16 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 		if (ret)
 			return -1;
 
-		idx = list_lookup_index(io->input.signals, name);
-		if (idx < 0) {
+		struct signal *sig;
+
+		sig = (struct signal *) list_lookup(io->input.signals, name);
+		if (sig) {
+			if (!sig->enabled)
+				continue;
+
+			idx = list_index(io->input.signals, sig);
+		}
+		else {
 			ret = sscanf(name, "signal_%d", &idx);
 			if (ret != 1)
 				continue;
@@ -162,7 +213,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 		smp->flags |= SAMPLE_HAS_VALUES;
 
 	if (created > 0) {
-		smp->ts.origin = time_from_double(created);
+		smp->ts.origin = time_from_double(created * 1e-3);
 		smp->flags |= SAMPLE_HAS_ORIGIN;
 	}
 

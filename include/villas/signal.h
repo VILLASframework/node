@@ -32,6 +32,7 @@ struct node;
 struct signal {
 	char *name;	/**< The name of the signal. */
 	char *unit;
+	int enabled;
 	enum {
 		SIGNAL_FORMAT_INTEGER,
 		SIGNAL_FORMAT_REAL

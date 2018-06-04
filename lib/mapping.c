@@ -137,8 +137,6 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 
 		first_str = strtok(NULL, "-]");
 		if (first_str) {
-			info("Mapping: %s", first_str);
-
 			if (me->node)
 				first = list_lookup_index(&me->node->in.signals, first_str);
 
