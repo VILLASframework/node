@@ -415,7 +415,7 @@ int websocket_start(struct node *n)
 		c->state = WEBSOCKET_CONNECTION_STATE_CONNECTING;
 
 		c->node = n;
-		c->format = format_type_lookup("villas.web");
+		c->format = format_type_lookup("villas.web"); /** @todo We could parse the format from the URI */
 		c->destination = d;
 
 		d->info.context = web->context;
