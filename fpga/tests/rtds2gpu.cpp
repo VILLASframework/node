@@ -63,7 +63,7 @@ static void dumpMem(const uint32_t* addr, size_t len)
 	}
 }
 
-Test(fpga, rtds2gpu, .description = "Rtds2Gpu")
+Test(fpga, rtds2gpu_loopback_dma, .description = "Rtds2Gpu")
 {
 	auto logger = loggerGetOrCreate("unittest:rtds2gpu");
 
@@ -197,38 +197,42 @@ Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 		uint32_t* data = &dmaRam[DATA_OFFSET];
 		uint32_t* doorbell = &dmaRam[DOORBELL_OFFSET];
 
-		// TEST: rtds loopback via switch
-//		cr_assert(rtds.connect(rtds));
-//		logger->info("loopback");
-//		while(1);
+		// TEST: rtds loopback via switch, this should always work and have RTT=1
+		//cr_assert(rtds.connect(rtds));
+		//logger->info("loopback");
+		//while(1);
 
 		cr_assert(rtds.connect(*rtds2gpu));
 		cr_assert(gpu2rtds->connect(rtds));
 
 
-		size_t count = 0;
-		while(true) {
+		for(size_t i = 1; i <= 10000; i++) {
 			rtds2gpu->doorbellReset(*doorbell);
 			rtds2gpu->startOnce(dmaRam.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET * 4, DOORBELL_OFFSET * 4);
 
-			//			while(not rtds2gpu->isFinished());
+			// Wait by polling rtds2gpu IP or ...
+			// while(not rtds2gpu->isFinished());
+
+			// Wait by polling (local) doorbell register (= just memory)
 			while(not rtds2gpu->doorbellIsValid(*doorbell));
 
-//			rtds2gpu->dump();
-//			rtds2gpu->dumpDoorbell(data[1]);
-//			dumpMem(data, FRAME_SIZE + SAMPLE_SIZE);
 
 			// copy samples to gpu2rtds IP
 			for(size_t i = 0; i < SAMPLE_COUNT; i++) {
 				gpu2rtds->registerFrames[i] = data[i];
 			}
 
+			// Waiting for gpu2rtds is not strictly required
 			gpu2rtds->startOnce(SAMPLE_COUNT);
-//			while(not gpu2rtds->isFinished());
+			//while(not gpu2rtds->isFinished());
 
-
-			count++;
-//			logger->debug("Successful iterations {}, data {}", count, data[0]);
+			if(i % 1000 == 0) {
+				logger->info("Successful iterations {}, data {}", i, data[0]);
+				rtds2gpu->dump();
+				rtds2gpu->dumpDoorbell(data[1]);
+			}
 		}
+
+		logger->info(TXT_GREEN("Passed"));
 	}
 }
