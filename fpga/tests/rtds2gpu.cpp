@@ -40,7 +40,7 @@ static constexpr size_t SAMPLE_SIZE		= 4;
 static constexpr size_t SAMPLE_COUNT	= 1;
 static constexpr size_t FRAME_SIZE		= SAMPLE_COUNT * SAMPLE_SIZE;
 
-static constexpr size_t DOORBELL_OFFSET = FRAME_SIZE;
+static constexpr size_t DOORBELL_OFFSET = SAMPLE_COUNT;
 static constexpr size_t DATA_OFFSET = 0;
 
 static void dumpMem(const uint32_t* addr, size_t len)
@@ -124,7 +124,7 @@ Test(fpga, rtds2gpu, .description = "Rtds2Gpu")
 		// connect AXI Stream from DMA to Rtds2Gpu IP
 		cr_assert(dma->connect(rtds2gpu));
 
-		cr_assert(rtds2gpu.startOnce(dmaMemDst.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET*4, DOORBELL_OFFSET*4),
+		cr_assert(rtds2gpu.startOnce(dmaMemDst.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET * 4, DOORBELL_OFFSET * 4),
 		          "Preparing Rtds2Gpu IP failed");
 
 		cr_assert(dma->write(dmaMemSrc.getMemoryBlock(), FRAME_SIZE),
@@ -195,7 +195,7 @@ Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 
 		auto dmaRam = villas::HostDmaRam::getAllocator().allocate<uint32_t>(SAMPLE_COUNT + 1);
 		uint32_t* data = &dmaRam[DATA_OFFSET];
-		uint32_t* doorbell = &dmaRam[DOORBELL_OFFSET / SAMPLE_SIZE];
+		uint32_t* doorbell = &dmaRam[DOORBELL_OFFSET];
 
 		// TEST: rtds loopback via switch
 //		cr_assert(rtds.connect(rtds));
@@ -209,7 +209,7 @@ Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 		size_t count = 0;
 		while(true) {
 			rtds2gpu->doorbellReset(*doorbell);
-			rtds2gpu->startOnce(dmaRam.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET, DOORBELL_OFFSET);
+			rtds2gpu->startOnce(dmaRam.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET * 4, DOORBELL_OFFSET * 4);
 
 			//			while(not rtds2gpu->isFinished());
 			while(not rtds2gpu->doorbellIsValid(*doorbell));
