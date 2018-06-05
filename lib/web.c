@@ -37,7 +37,7 @@ lws_callback_function api_http_protocol_cb;
 lws_callback_function websocket_protocol_cb;
 
 /** List of libwebsockets protocols. */
- struct lws_protocols protocols[] = {
+struct lws_protocols protocols[] = {
  	{
  		.name = "http",
  		.callback = lws_callback_http_dummy,
