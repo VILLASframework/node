@@ -351,6 +351,13 @@ void Gpu::memcpyKernel(const MemoryBlock& src, const MemoryBlock& dst, size_t si
 	cudaDeviceSynchronize();
 }
 
+MemoryTranslation
+Gpu::translate(const MemoryBlock& dst)
+{
+	auto& mm = MemoryManager::get();
+	return mm.getTranslation(masterPciEAddrSpaceId, dst.getAddrSpaceId());
+}
+
 
 std::unique_ptr<villas::MemoryBlock, villas::MemoryBlock::deallocator_fn>
 GpuAllocator::allocateBlock(size_t size)

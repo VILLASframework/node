@@ -36,6 +36,9 @@ public:
 
 	void memcpyKernel(const MemoryBlock& src, const MemoryBlock& dst, size_t size);
 
+	MemoryTranslation
+	translate(const MemoryBlock& dst);
+
 private:
 	bool registerIoMemory(const MemoryBlock& mem);
 	bool registerHostMemory(const MemoryBlock& mem);

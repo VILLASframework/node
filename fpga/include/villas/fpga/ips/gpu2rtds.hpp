@@ -28,10 +28,14 @@ public:
 	getDefaultMasterPort() const
 	{ return getMasterPort(rtdsOutputStreamPort); }
 
+	MemoryBlock
+	getRegisterMemory() const
+	{ return MemoryBlock(0, 1 << 10, getAddressSpaceId(registerMemory)); }
+
 private:
 	bool updateStatus();
 
-private:
+public:
 	static constexpr const char* rtdsOutputStreamPort = "rtds_output";
 
 	struct StatusControlRegister { uint32_t

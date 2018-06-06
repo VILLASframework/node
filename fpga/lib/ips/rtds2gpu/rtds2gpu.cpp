@@ -22,10 +22,9 @@ bool Rtds2Gpu::init()
 	status.value = 0;
 	started = false;
 
-	maxFrameSize = getMaxFrameSize();
+//	maxFrameSize = getMaxFrameSize();
+	maxFrameSize = 16;
 	logger->info("Max. frame size supported: {}", maxFrameSize);
-
-//	maxFrameSize = 16;
 
 	return true;
 }

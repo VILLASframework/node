@@ -11,6 +11,19 @@ namespace villas {
 namespace fpga {
 namespace ip {
 
+union ControlRegister {
+	uint32_t value;
+	struct  { uint32_t
+		ap_start				: 1,
+		ap_done					: 1,
+		ap_idle					: 1,
+		ap_ready				: 1,
+		_res1					: 3,
+		auto_restart			: 1,
+		_res2					: 24;
+	};
+};
+
 
 class Rtds2Gpu : public IpNode, public Hls
 {

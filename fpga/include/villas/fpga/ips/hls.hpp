@@ -92,7 +92,7 @@ protected:
 	{ return { registerMemory }; }
 
 
-private:
+public:
 	/* Register definitions */
 
 	static constexpr uintptr_t registerControlAddr			= 0x00;

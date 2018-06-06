@@ -11,7 +11,8 @@ set(SOURCES
 )
 
 if(CMAKE_CUDA_COMPILER)
-	list(APPEND SOURCES gpu.cpp)
+	enable_language(CUDA)
+	list(APPEND SOURCES gpu.cpp gpu_kernels.cu)
 endif()
 
 add_executable(unit-tests ${SOURCES})

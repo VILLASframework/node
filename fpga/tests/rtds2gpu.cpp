@@ -23,6 +23,8 @@
 
 #include <criterion/criterion.h>
 
+#include <iostream>
+
 #include <villas/log.hpp>
 #include <villas/memory.hpp>
 #include <villas/fpga/card.hpp>
@@ -32,6 +34,7 @@
 #include <villas/fpga/ips/switch.hpp>
 #include <villas/fpga/ips/dma.hpp>
 #include <villas/fpga/ips/rtds.hpp>
+#include <villas/gpu.hpp>
 
 #include "global.hpp"
 
@@ -206,7 +209,7 @@ Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 		cr_assert(gpu2rtds->connect(rtds));
 
 
-		for(size_t i = 1; i <= 10000; i++) {
+		for(size_t i = 1; i <= 10000; ) {
 			rtds2gpu->doorbellReset(*doorbell);
 			rtds2gpu->startOnce(dmaRam.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET * 4, DOORBELL_OFFSET * 4);
 
@@ -232,6 +235,114 @@ Test(fpga, rtds2gpu_rtt_cpu, .description = "Rtds2Gpu RTT via CPU")
 				rtds2gpu->dumpDoorbell(data[1]);
 			}
 		}
+
+		logger->info(TXT_GREEN("Passed"));
+	}
+}
+
+void gpu_rtds_rtt_start(volatile uint32_t* dataIn, volatile reg_doorbell_t* doorbellIn,
+                        volatile uint32_t* dataOut, volatile villas::fpga::ip::ControlRegister* controlRegister);
+
+void gpu_rtds_rtt_stop();
+
+Test(fpga, rtds2gpu_rtt_gpu, .description = "Rtds2Gpu RTT via GPU")
+{
+	auto logger = loggerGetOrCreate("unittest:rtds2gpu");
+
+	/* Collect neccessary IPs */
+
+	auto gpu2rtds = dynamic_cast<villas::fpga::ip::Gpu2Rtds*>(
+	                     state.cards.front()->lookupIp(villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:hls:gpu2rtds:")));
+
+	auto rtds2gpu = dynamic_cast<villas::fpga::ip::Rtds2Gpu*>(
+	                     state.cards.front()->lookupIp(villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:hls:rtds2gpu:")));
+
+	cr_assert_not_null(gpu2rtds, "No Gpu2Rtds IP found");
+	cr_assert_not_null(rtds2gpu, "No Rtds2Gpu IP not found");
+
+	villas::Plugin* plugin = villas::Plugin::lookup(villas::Plugin::Type::Gpu, "");
+	auto gpuPlugin = dynamic_cast<villas::gpu::GpuFactory*>(plugin);
+	cr_assert_not_null(gpuPlugin, "No GPU plugin found");
+
+	auto gpus = gpuPlugin->make();
+	cr_assert(gpus.size() > 0, "No GPUs found");
+
+	// just get first cpu
+	auto& gpu = gpus.front();
+
+	// allocate memory on GPU and make accessible by to PCIe/FPGA
+	auto gpuRam = gpu->getAllocator().allocate<uint32_t>(SAMPLE_COUNT + 1);
+	cr_assert(gpu->makeAccessibleToPCIeAndVA(gpuRam.getMemoryBlock()));
+
+	// make Gpu2Rtds IP register memory on FPGA accessible to GPU
+	cr_assert(gpu->makeAccessibleFromPCIeOrHostRam(gpu2rtds->getRegisterMemory()));
+
+	auto tr = gpu->translate(gpuRam.getMemoryBlock());
+
+	auto dataIn		= reinterpret_cast<uint32_t*>(tr.getLocalAddr(DATA_OFFSET * sizeof(uint32_t)));
+	auto doorbellIn	= reinterpret_cast<reg_doorbell_t*>(tr.getLocalAddr(DOORBELL_OFFSET * sizeof(uint32_t)));
+
+
+	auto gpu2rtdsRegisters = gpu->translate(gpu2rtds->getRegisterMemory());
+
+	auto frameRegister		= reinterpret_cast<uint32_t*>(gpu2rtdsRegisters.getLocalAddr(gpu2rtds->registerFrameOffset));
+	auto controlRegister	= reinterpret_cast<villas::fpga::ip::ControlRegister*>(gpu2rtdsRegisters.getLocalAddr(gpu2rtds->registerControlAddr));
+
+//	auto doorbellInCpu = reinterpret_cast<reg_doorbell_t*>(&gpuRam[DOORBELL_OFFSET]);
+
+	for(auto& ip : state.cards.front()->ips) {
+		if(*ip != villas::fpga::Vlnv("acs.eonerc.rwth-aachen.de:user:rtds_axis:"))
+			continue;
+
+		auto& rtds = dynamic_cast<villas::fpga::ip::Rtds&>(*ip);
+		logger->info("Testing {}", rtds);
+
+
+		// TEST: rtds loopback via switch, this should always work and have RTT=1
+		//cr_assert(rtds.connect(rtds));
+		//logger->info("loopback");
+		//while(1);
+
+		cr_assert(rtds.connect(*rtds2gpu));
+		cr_assert(gpu2rtds->connect(rtds));
+
+		// launch once so they are configured
+		cr_assert(rtds2gpu->startOnce(gpuRam.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET * 4, DOORBELL_OFFSET * 4));
+		cr_assert(gpu2rtds->startOnce(SAMPLE_COUNT));
+
+		rtds2gpu->setAutoRestart(true);
+		rtds2gpu->start();
+
+		logger->info("GPU RTT RTDS");
+
+		std::string dummy;
+
+//		logger->info("Press enter to proceed");
+//		std::cin >> dummy;
+
+		gpu_rtds_rtt_start(dataIn, doorbellIn, frameRegister, controlRegister);
+
+//		while(1) {
+//			cr_assert(rtds2gpu->startOnce(gpuRam.getMemoryBlock(), SAMPLE_COUNT, DATA_OFFSET * 4, DOORBELL_OFFSET * 4));
+//		}
+
+//		for(int i = 0; i < 10000; i++) {
+//			while(not doorbellInCpu->is_valid);
+//			logger->debug("received data");
+//		}
+
+//		logger->info("Press enter to cancel");
+//		std::cin >> dummy;
+
+		while(1) {
+			sleep(1);
+//			logger->debug("Current sequence number: {}", doorbellInCpu->seq_nr);
+			logger->debug("Still running");
+		}
+
+		gpu_rtds_rtt_stop();
+
+
 
 		logger->info(TXT_GREEN("Passed"));
 	}

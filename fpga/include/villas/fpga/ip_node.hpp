@@ -71,8 +71,8 @@ public:
 	                        const std::string& port,
 	                        bool isMaster)
 	{
-		for(auto& [vertexId, vertex] : vertices) {
-			(void) vertexId;
+		for(auto& vertexEntry : vertices) {
+			auto& vertex = vertexEntry.second;
 			if(vertex->nodeName == node and vertex->portName == port and vertex->isMaster == isMaster)
 				return vertex;
 		}
