@@ -53,11 +53,11 @@ char * shmem_print(struct node *n);
 /** @see node_type::parse */
 int shmem_parse(struct node *n, json_t *cfg);
 
-/** @see node_type::open */
-int shmem_open(struct node *n);
+/** @see node_type::start */
+int shmem_start(struct node *n);
 
-/** @see node_type::close */
-int shmem_close(struct node *n);
+/** @see node_type::stop */
+int shmem_stop(struct node *n);
 
 /** @see node_type::read */
 int shmem_read(struct node *n, struct sample *smps[], unsigned cnt);

@@ -83,7 +83,7 @@ int shmem_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-int shmem_open(struct node *n)
+int shmem_start(struct node *n)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
 	int ret;
@@ -103,7 +103,7 @@ int shmem_open(struct node *n)
 	return 0;
 }
 
-int shmem_close(struct node *n)
+int shmem_stop(struct node *n)
 {
 	struct shmem* shm = (struct shmem *) n->_vd;
 
@@ -188,8 +188,8 @@ static struct plugin p = {
 		.size	= sizeof(struct shmem),
 		.parse	= shmem_parse,
 		.print	= shmem_print,
-		.start	= shmem_open,
-		.stop	= shmem_close,
+		.start	= shmem_start,
+		.stop	= shmem_stop,
 		.read	= shmem_read,
 		.write	= shmem_write
 	}
