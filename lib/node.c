@@ -99,16 +99,6 @@ static int node_direction_parse(struct node_direction *nd, struct node *n, json_
 
 	nd->cfg = cfg;
 
-	/* Before we start parsing, we will fill in a few default settings from the node config */
-	const char *fields[] = { "builtin", "vectorize", "signals", "hooks" };
-	for (int i = 0; i < ARRAY_LEN(fields); i++) {
-		json_t *json_field_dir  = json_object_get(cfg, fields[i]);
-		json_t *json_field_node = json_object_get(n->cfg, fields[i]);
-
-		if (json_field_node && !json_field_dir)
-			json_object_set(cfg, fields[i], json_field_node);
-	}
-
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: i, s?: b }",
 		"hooks", &json_hooks,
 		"signals", &json_signals,
@@ -215,23 +205,20 @@ int node_init(struct node *n, struct node_type *vt)
 	return 0;
 }
 
-int node_parse(struct node *n, json_t *cfg, const char *name)
+int node_parse(struct node *n, json_t *json, const char *name)
 {
 	struct node_type *nt;
 	int ret;
 
 	json_error_t err;
-	json_t *json_in = NULL, *json_out = NULL;
 
 	const char *type;
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: i, s?: o, s?: o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: i }",
 		"type", &type,
-		"samplelen", &n->samplelen,
-		"in", &json_in,
-		"out", &json_out
+		"samplelen", &n->samplelen
 	);
 	if (ret)
 		jerror(&err, "Failed to parse node '%s'", node_name(n));
@@ -239,24 +226,45 @@ int node_parse(struct node *n, json_t *cfg, const char *name)
 	nt = node_type_lookup(type);
 	assert(nt == n->_vt);
 
-	n->cfg = cfg;
+	struct {
+		const char *str;
+		struct node_direction *dir;
+	} dirs[] = {
+		{ "in", &n->in },
+		{ "out", &n->out }
+	};
 
-	if (json_in) {
-		ret = node_direction_parse(&n->in, n, json_in);
+	const char *fields[] = { "builtin", "vectorize", "signals", "hooks" };
+
+	for (int j = 0; j < ARRAY_LEN(dirs); j++) {
+		json_t *json_dir = json_object_get(json, dirs	[j].str);
+
+		// Create empty object if not existing
+		if (!json_dir) {
+			json_dir = json_object();
+
+			json_object_set(json, dirs[j].str, json_dir);
+		}
+
+		// Copy missing fields from main node config to direction config
+		for (int i = 0; i < ARRAY_LEN(fields); i++) {
+			json_t *json_field_dir  = json_object_get(json_dir, fields[i]);
+			json_t *json_field_node = json_object_get(json, fields[i]);
+
+			if (json_field_node && !json_field_dir)
+				json_object_set(json_dir, fields[i], json_field_node);
+		}
+
+		ret = node_direction_parse(dirs[j].dir, n, json_dir);
 		if (ret)
-			error("Failed to parse input direction of node '%s'", node_name(n));
+			error("Failed to parse %s direction of node '%s'", dirs[j].str, node_name(n));
 	}
 
-	if (json_out) {
-		ret = node_direction_parse(&n->out, n, json_out);
-		if (ret)
-			error("Failed to parse output direction of node '%s'", node_name(n));
-	}
-
-	ret = n->_vt->parse ? n->_vt->parse(n, cfg) : 0;
+	ret = n->_vt->parse ? n->_vt->parse(n, json) : 0;
 	if (ret)
 		error("Failed to parse node '%s'", node_name(n));
 
+	n->cfg = json;
 	n->state = STATE_PARSED;
 
 	return ret;
