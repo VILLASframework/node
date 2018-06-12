@@ -144,10 +144,12 @@ static void logger(int level, const char *msg) {
 		level = LLL_WARN;
 
 	switch (level) {
-		case LLL_ERR:   log_print(global_log, CLR_RED("Web  "), "%.*s", len, msg); break;
-		case LLL_WARN:	log_print(global_log, CLR_YEL("Web  "), "%.*s", len, msg); break;
-		case LLL_INFO:	log_print(global_log, CLR_WHT("Web  "), "%.*s", len, msg); break;
-		default:        log_print(global_log,         "Web  ",  "%.*s", len, msg); break;
+		case LLL_ERR:		log_print(global_log, CLR_RED("Web  "), "%.*s", len, msg); break;
+		case LLL_WARN:		log_print(global_log, CLR_YEL("Web  "), "%.*s", len, msg); break;
+		case LLL_NOTICE:	log_print(global_log, CLR_WHT("Web  "), "%.*s", len, msg); break;
+		case LLL_INFO:		log_print(global_log,         "Web  ",  "%.*s", len, msg); break;
+		default: /* Everything else is debug */
+					log_print(global_log, CLR_GRY("Web  "), "%.*s", len, msg); break;
 	}
 }
 
@@ -163,7 +165,12 @@ static void * web_worker(void *ctx)
 
 int web_init(struct web *w, struct api *a)
 {
-	lws_set_log_level((1 << LLL_COUNT) - 1, logger);
+	int lvl = LLL_ERR | LLL_WARN | LLL_NOTICE;
+
+	if (global_log->level >=10 && global_log->facilities & LOG_WEB)
+		lvl |= (1 << LLL_COUNT) - 1;
+
+	lws_set_log_level(lvl, logger);
 
 	w->api = a;
 
