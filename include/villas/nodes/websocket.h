@@ -58,12 +58,13 @@ struct websocket {
 /* Internal datastructures */
 struct websocket_connection {
 	enum websocket_connection_state {
-		STATE_DISCONNECTED,
-		STATE_CONNECTING,
-		STATE_RECONNECTING,
-		STATE_ESTABLISHED,
-		STATE_SHUTDOWN,
-		STATE_ERROR
+		WEBSOCKET_CONNECTION_STATE_DESTROYED,
+		WEBSOCKET_CONNECTION_STATE_INITIALIZED,
+		WEBSOCKET_CONNECTION_STATE_CONNECTING,
+		WEBSOCKET_CONNECTION_STATE_RECONNECTING,
+		WEBSOCKET_CONNECTION_STATE_ESTABLISHED,
+		WEBSOCKET_CONNECTION_STATE_SHUTDOWN,
+		WEBSOCKET_CONNECTION_STATE_ERROR
 	} state;				/**< The current status of this connection. */
 
 	enum {
@@ -76,6 +77,7 @@ struct websocket_connection {
 	struct io io;
 	struct queue queue;			/**< For samples which are sent to the WebSocket */
 
+	struct format_type *format;
 	struct websocket_destination *destination;
 
 	struct {
