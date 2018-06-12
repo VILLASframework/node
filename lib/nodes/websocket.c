@@ -145,7 +145,7 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 {
 	int pushed;
 
-	if (c->state != WEBSOCKET_CONNECTION_STATE_ESTABLISHED)
+	if (c->state != WEBSOCKET_CONNECTION_STATE_INITIALIZED)
 		return -1;
 
 	pushed = queue_push_many(&c->queue, (void **) smps, cnt);
@@ -180,6 +180,8 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 		case LWS_CALLBACK_ESTABLISHED:
 			c->wsi = wsi;
 			c->state = WEBSOCKET_CONNECTION_STATE_ESTABLISHED;
+
+			debug(LOG_WEBSOCKET | 10, "Established WebSocket connection: %s", websocket_connection_name(c));
 
 			if (reason == LWS_CALLBACK_CLIENT_ESTABLISHED)
 				c->mode = WEBSOCKET_MODE_CLIENT;
@@ -235,7 +237,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 			list_push(&connections, c);
 
-			debug(LOG_WEBSOCKET | 10, "Established WebSocket connection: %s", websocket_connection_name(c));
+			debug(LOG_WEBSOCKET | 10, "Initialized WebSocket connection: %s", websocket_connection_name(c));
 			break;
 
 		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
@@ -255,7 +257,8 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			if (connections.state == STATE_INITIALIZED)
 				list_remove(&connections, c);
 
-			websocket_connection_destroy(c);
+			if (c->state == WEBSOCKET_CONNECTION_STATE_INITIALIZED)
+				websocket_connection_destroy(c);
 
 			if (c->mode == WEBSOCKET_MODE_CLIENT)
 				free(c);
@@ -380,12 +383,12 @@ int websocket_deinit()
 	}
 
 	/* Wait for all connections to be closed */
-	while (list_length(&connections) > 0) {
-		info("Waiting for shutdown of %zu connections", list_length(&connections));
+	for (int i = 0; i < 10 && list_length(&connections) > 0; i++) {
+		info("Waiting for shutdown of %zu connections... %d/10", list_length(&connections), i+1);
 		sleep(1);
 	}
 
-	ret = list_destroy(&connections, (dtor_cb_t) websocket_destination_destroy, true);
+	ret = list_destroy(&connections, (dtor_cb_t) websocket_connection_destroy, false);
 	if (ret)
 		return ret;
 
