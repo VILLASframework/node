@@ -130,6 +130,7 @@ static struct plugin p = {
 		.priority = 99,
 		.init	= limit_rate_init,
 		.parse	= limit_rate_parse,
+		.read	= limit_rate_write,
 		.write	= limit_rate_write,
 		.process= limit_rate_write,
 		.size	= sizeof(struct limit_rate)
