@@ -329,6 +329,7 @@ static int comedi_start_out(struct node *n)
 
 	// output will only start after the internal trigger
 	d->running = false;
+	d->last_debug = time_now();
 
 	// allocate buffer for one complete villas sample
 	// TODO: maybe increase buffer size according to c->vectorize
@@ -357,6 +358,10 @@ static int comedi_start_out(struct node *n)
 			error("Cannot preload Comedi buffer");
 		}
 	}
+
+	const size_t villas_samples_in_kernel_buf = d->buffer_size / (d->sample_size * d->chanlist_len);
+	const double latencyMs = (double)villas_samples_in_kernel_buf / d->sample_rate_hz * 1e3;
+	info("Added latency due to buffering: %4.1f ms\n", latencyMs);
 
 	return 0;
 }
@@ -871,12 +876,19 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt)
 	const size_t raw_samples_in_buffer = bytes_in_buffer / d->sample_size;
 	const size_t villas_samples_in_buffer = raw_samples_in_buffer / d->chanlist_len;
 
+
 	if(villas_samples_in_buffer == buffer_capacity_villas) {
 		warn("Comedi buffer is full");
 		return 0;
-	} else if(villas_samples_in_buffer % 1000 == 0) {
-		info("Comedi buffer: %4ld / %ld villas samples",
-		      villas_samples_in_buffer, buffer_capacity_villas);
+	} else {
+		struct timespec now = time_now();
+		if(time_delta(&d->last_debug, &now) >= 1) {
+			debug(LOG_COMEDI | 2, "Comedi write buffer: %4ld villas samples (%2.0f%% of buffer)",
+			      villas_samples_in_buffer,
+			      (100.0f * villas_samples_in_buffer / buffer_capacity_villas));
+
+			d->last_debug = time_now();
+		}
 	}
 
 	size_t villas_samples_written = 0;
