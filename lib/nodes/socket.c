@@ -437,11 +437,13 @@ retry:	ret = io_sprint(&s->io, buf, buflen, &wbytes, smps, cnt);
 		case SOCKET_LAYER_UNIX:	addrlen = SUN_LEN(&s->remote.sun); break;
 	}
 
-	bytes = sendto(s->sd, buf, wbytes, 0, (struct sockaddr *) &s->remote, addrlen);
+	bytes = sendto(s->sd, buf, wbytes, MSG_DONTWAIT, (struct sockaddr *) &s->remote, addrlen);
 	if (bytes < 0) {
 		if ((errno == EPERM) ||
 		    (errno == ENOENT && s->layer == SOCKET_LAYER_UNIX))
 			warn("Failed send to node %s: %s", node_name(n), strerror(errno));
+		else if ((errno == EAGAIN) || (errno == EWOULDBLOCK))
+			warn("socket: send would block");
 		else
 			serror("Failed send to node %s", node_name(n));
 	}
