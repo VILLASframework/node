@@ -33,15 +33,33 @@
 
 #include <villas/node.h>
 #include <villas/list.h>
+#include <villas/timing.h>
+
+// whether to use read() or mmap() kernel interface
+#define COMEDI_USE_READ (1)
+//#define COMEDI_USE_READ (0)
+
+struct comedi_chanspec {
+	unsigned int maxdata;
+	comedi_range *range;
+};
 
 struct comedi_direction {
-	double rate;
+	int subdevice;						///< Comedi subdevice
+	int buffer_size;					///< Comedi's kernel buffer size
+	int sample_size;					///< Size of a single measurement sample
+	int sample_rate_hz;					///< Sample rate in Hz
+	bool present;						///< Config present
+	bool enabled;						///< Card is started successfully
+	bool running;						///< Card is actively transfering samples
+	struct timespec started;			///< Timestamp when sampling started
+	int counter;						///< Number of villas samples transfered
+	struct comedi_chanspec *chanspecs;	///< Range and maxdata config of channels
+	unsigned *chanlist;					///< Channel list in comedi's packed format
+	size_t chanlist_len;				///< Number of channels for this direction
 
-	bool enabled;
-	int subdevice;
-
-	unsigned *chanlist;
-	size_t chanlist_len;
+	char* buffer;
+	char* bufptr;
 };
 
 struct comedi {
@@ -49,7 +67,18 @@ struct comedi {
 
 	struct comedi_direction in, out;
 
-	comedi_t *it;
+	comedi_t *dev;
+
+#if COMEDI_USE_READ
+	char* buf;
+	char* bufptr;
+#else
+	char *map;
+	size_t bufpos;
+	size_t front;
+	size_t back;
+#endif
+
 };
 
 /** @see node_type::print */
