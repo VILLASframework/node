@@ -14,8 +14,8 @@ BuildRequires: gcc pkgconfig make
 
 Requires:      iproute module-init-tools
 
-BuildRequires: openssl-devel libconfig-devel libnl3-devel libcurl-devel jansson-devel libwebsockets-devel zeromq-devel nanomsg-devel libiec61850-devel librabbitmq-devel mosquitto-devel
-Requires:      openssl       libconfig       libnl3       libcurl       jansson       libwebsockets       zeromq       nanomsg       libiec61850       librabbitmq       mosquitto
+BuildRequires: openssl-devel libconfig-devel libnl3-devel libcurl-devel jansson-devel libwebsockets-devel zeromq-devel nanomsg-devel libiec61850-devel librabbitmq-devel mosquitto-devel comedilib-devel
+Requires:      openssl       libconfig       libnl3       libcurl       jansson       libwebsockets       zeromq       nanomsg       libiec61850       librabbitmq       mosquitto       comedilib
 
 %description
 

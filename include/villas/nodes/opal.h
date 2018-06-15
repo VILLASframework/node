@@ -1,7 +1,5 @@
 /** Node type: OPAL (libOpalAsync API)
  *
- * This file implements the opal subtype for nodes.
- *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC

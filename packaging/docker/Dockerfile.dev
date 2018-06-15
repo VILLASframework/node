@@ -53,7 +53,7 @@ RUN dnf -y install \
 	iproute \
 	python-pip \
 	valgrind gdb gdb-gdbserver \
-	xmlto rubygem-asciidoctor \
+	xmlto dblatex rubygem-asciidoctor \
 	psmisc procps-ng
 
 # Tools for debugging, coverage, profiling
@@ -77,7 +77,8 @@ RUN dnf -y install \
 	protobuf-c-devel \
 	libiec61850-devel \
 	librabbitmq-devel \
-	mosquitto-devel
+	mosquitto-devel \
+	comedilib-devel
 
 # Build & Install Criterion
 RUN cd /tmp && \
