@@ -38,12 +38,12 @@ static struct stats_desc {
 	const char *desc;
 	int hist_buckets;
 } stats_metrics[] = {
-	{ "skipped",	  "samples", "Skipped samples and the distance between them",		25 },
-	{ "time",	  "seconds", "The processing time per sample within VILLAsnode",	25 },
-	{ "reordered",	  "samples", "Reordered samples and the distance between them",		25 },
-	{ "gap_sample",	  "seconds", "Inter-message timestamps (as sent by remote)",		25 },
-	{ "gap_received", "seconds", "Inter-message arrival time (as seen by this instance)",	25 },
-	{ "owd",	  "seconds", "One-way-delay (OWD) of received messages",		25 }
+	{ "skipped",	  "samples", "Skipped samples and the distance between them",			25 },
+	{ "proc_time",	  "seconds", "The processing time per sample within VILLAsnode",		25 },
+	{ "reordered",	  "samples", "Reordered samples and the distance between them",			25 },
+	{ "gap_sent",	  "seconds", "Inter-message timestamps (as sent by remote)",			25 },
+	{ "gap_received", "seconds", "Inter-message arrival time (as received by this instance)",	25 },
+	{ "owd",	  "seconds", "One-way-delay (OWD) of received messages",			25 }
 };
 
 int stats_lookup_format(const char *str)
