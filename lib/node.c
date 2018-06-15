@@ -241,12 +241,9 @@ int node_parse(struct node *n, json_t *json, const char *name)
 	for (int j = 0; j < ARRAY_LEN(dirs); j++) {
 		json_t *json_dir = json_object_get(json, dirs	[j].str);
 
-		// Create empty object if not existing
-		if (!json_dir) {
-			json_dir = json_object();
-
-			json_object_set(json, dirs[j].str, json_dir);
-		}
+		// Skip if direction is unused
+		if (!json_dir)
+			json_dir = json_pack("{ s: b }", "enabled", 0);
 
 		// Copy missing fields from main node config to direction config
 		for (int i = 0; i < ARRAY_LEN(fields); i++) {
