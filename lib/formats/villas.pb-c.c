@@ -10,7 +10,7 @@
 void   villas__node__message__init
                      (Villas__Node__Message         *message)
 {
-  static Villas__Node__Message init_value = VILLAS__NODE__MESSAGE__INIT;
+  static const Villas__Node__Message init_value = VILLAS__NODE__MESSAGE__INIT;
   *message = init_value;
 }
 size_t villas__node__message__get_packed_size
@@ -47,13 +47,15 @@ void   villas__node__message__free_unpacked
                      (Villas__Node__Message *message,
                       ProtobufCAllocator *allocator)
 {
+  if(!message)
+    return;
   assert(message->base.descriptor == &villas__node__message__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   villas__node__sample__init
                      (Villas__Node__Sample         *message)
 {
-  static Villas__Node__Sample init_value = VILLAS__NODE__SAMPLE__INIT;
+  static const Villas__Node__Sample init_value = VILLAS__NODE__SAMPLE__INIT;
   *message = init_value;
 }
 size_t villas__node__sample__get_packed_size
@@ -90,13 +92,15 @@ void   villas__node__sample__free_unpacked
                      (Villas__Node__Sample *message,
                       ProtobufCAllocator *allocator)
 {
+  if(!message)
+    return;
   assert(message->base.descriptor == &villas__node__sample__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   villas__node__timestamp__init
                      (Villas__Node__Timestamp         *message)
 {
-  static Villas__Node__Timestamp init_value = VILLAS__NODE__TIMESTAMP__INIT;
+  static const Villas__Node__Timestamp init_value = VILLAS__NODE__TIMESTAMP__INIT;
   *message = init_value;
 }
 size_t villas__node__timestamp__get_packed_size
@@ -133,13 +137,15 @@ void   villas__node__timestamp__free_unpacked
                      (Villas__Node__Timestamp *message,
                       ProtobufCAllocator *allocator)
 {
+  if(!message)
+    return;
   assert(message->base.descriptor == &villas__node__timestamp__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
 void   villas__node__value__init
                      (Villas__Node__Value         *message)
 {
-  static Villas__Node__Value init_value = VILLAS__NODE__VALUE__INIT;
+  static const Villas__Node__Value init_value = VILLAS__NODE__VALUE__INIT;
   *message = init_value;
 }
 size_t villas__node__value__get_packed_size
@@ -176,6 +182,8 @@ void   villas__node__value__free_unpacked
                      (Villas__Node__Value *message,
                       ProtobufCAllocator *allocator)
 {
+  if(!message)
+    return;
   assert(message->base.descriptor == &villas__node__value__descriptor);
   protobuf_c_message_free_unpacked ((ProtobufCMessage*)message, allocator);
 }
