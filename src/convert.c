@@ -82,7 +82,8 @@ check:		if (optarg == endptr)
 
 	struct format_type *fmt;
 	struct log log;
-	struct io input, output;
+	struct io input = { .state = STATE_DESTROYED };
+	struct io output = { .state = STATE_DESTROYED };
 
 	ret = log_init(&log, level, LOG_ALL);
 	if (ret)
