@@ -77,13 +77,13 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 	if (end == ptr || *end == io->delimiter)
 		goto out;
 
-	ptr = end;
+	ptr = end + 1;
 
 	s->ts.origin.tv_nsec = strtoul(ptr, &end, 10);
 	if (end == ptr || *end == io->delimiter)
 		goto out;
 
-	ptr = end;
+	ptr = end + 1;
 
 	s->flags |= SAMPLE_HAS_ORIGIN;
 
@@ -91,7 +91,7 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 	if (end == ptr || *end == io->delimiter)
 		goto out;
 
-	ptr = end;
+	ptr = end + 1;
 
 	s->sequence = strtoul(ptr, &end, 10);
 	if (end == ptr || *end == io->delimiter)
@@ -99,9 +99,10 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 
 	s->flags |= SAMPLE_HAS_SEQUENCE;
 
-	for (ptr  = end, s->length = 0;
-	                 s->length < s->capacity;
-	     ptr  = end, s->length++) {
+	for (ptr = end + 1, s->length = 0;
+	                    s->length < s->capacity;
+	     ptr = end + 1, s->length++) {
+
 		if (*end == io->delimiter)
 			goto out;
 
