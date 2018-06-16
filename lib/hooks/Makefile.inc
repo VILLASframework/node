@@ -22,7 +22,7 @@
 
 LIB_SRCS += $(addprefix lib/hooks/, convert.c decimate.c drop.c jitter_calc.c \
 				map.c restart.c shift_seq.c shift_ts.c \
-				skip_first.c stats.c ts.c limit_rate.c)
+				skip_first.c stats.c ts.c limit_rate.c scale.c)
 
 ifeq ($(WITH_IO),1)
 	LIB_SRCS += lib/hooks/print.c
