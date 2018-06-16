@@ -154,7 +154,7 @@ int amqp_parse(struct node *n, json_t *json)
 	if (uri)
 		a->uri = strdup(uri);
 	else
-		asprintf(&a->uri, "amqp://%s:%s@%s:%d/%s", username, password, host, port, vhost);
+		a->uri = strf("amqp://%s:%s@%s:%d/%s", username, password, host, port, vhost);
 
 	ret = amqp_parse_url(a->uri, &a->connection_info);
 
