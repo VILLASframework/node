@@ -20,10 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <iostream>
 #include <vector>
 #include <map>
-#include <deque>
+#include <queue>
 #include <string>
+#include <utility>
 #include <memory>
 
 #include <string.h>
@@ -45,25 +47,63 @@ struct Connection;
 
 static std::map<std::string, std::shared_ptr<Session>> sessions;
 
-class Frame : public std::vector<uint8_t> { };
+class InvalidUrlException { };
+
+struct Options {
+	bool loopback;
+} opts;
+
+class Frame : public std::vector<uint8_t> {
+public:
+	Frame() {
+		// lws_write() requires LWS_PRE bytes in front of the payload
+		insert(end(), LWS_PRE, 0);
+	}
+
+	uint8_t * data() {
+		return std::vector<uint8_t>::data() + LWS_PRE;
+	}
+
+	size_type size() {
+		return std::vector<uint8_t>::size() - LWS_PRE;
+	}
+};
 
 class Session {
 public:
 	typedef std::string Identifier;
 
-
-	static std::shared_ptr<Session> get(Identifier sid)
+	static std::shared_ptr<Session> get(lws *wsi)
 	{
+		char uri[64];
+
+		/* We use the URI to associate this connection to a session
+		 * Example: ws://example.com/node_1
+		 *   Will select the session with the name 'node_1'
+		 */
+
+		/* Get path of incoming request */
+		lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_GET_URI);
+		if (strlen(uri) <= 0)
+			throw InvalidUrlException();
+
+		Identifier sid = uri;//&uri[1];
+
 		auto it = sessions.find(sid);
 		if (it == sessions.end()) {
 			auto s = std::make_shared<Session>(sid);
 
 			sessions[sid] = s;
 
+			info("Creating new session: %s", sid.c_str());
+
 			return s;
 		}
-		else
+		else {
+			info("Reusing existing session: %s", sid.c_str());
+			
 			return it->second;
+		}
 	}
 
 	Session(Identifier sid) :
@@ -75,22 +115,70 @@ public:
 
 	Identifier identifier;
 
-	std::vector<std::shared_ptr<Connection>> connections;
+	std::map<lws *, std::shared_ptr<Connection>> connections;
 };
 
 class Connection {
-public:
+
+protected:
 	lws *wsi;
 
 	std::shared_ptr<Frame> currentFrame;
 
-	std::deque<std::shared_ptr<Frame>> outgoingFrames;	
+	std::queue<std::shared_ptr<Frame>> outgoingFrames;	
 
 	std::shared_ptr<Session> session;
 
-	Connection() :
-		currentFrame(nullptr)
-	{ }
+public:
+	Connection(lws *w) :
+		wsi(w),
+		currentFrame(std::make_shared<Frame>()),
+		outgoingFrames()
+	{
+		session = Session::get(sid);
+		session->connections[wsi] = std::shared_ptr<Connection>(this);
+
+		info("New connection established to session: %s", session->identifier.c_str());
+	}
+
+	~Connection() {
+		info("Connection closed");
+
+		session->connections.erase(wsi);
+	}
+
+	void write() {
+		while (!outgoingFrames.empty()) {
+			std::shared_ptr<Frame> fr = outgoingFrames.front();
+
+			lws_write(wsi, fr->data(), fr->size(), LWS_WRITE_BINARY);
+
+			outgoingFrames.pop();
+		}
+	}
+
+	void read(void *in, size_t len) {
+		currentFrame->insert(currentFrame->end(), (uint8_t *) in, (uint8_t *) in + len);
+
+		if (lws_is_final_fragment(wsi)) {
+			debug(5, "Received frame, relaying to %zu connections", session->connections.size() - (opts.loopback ? 0 : 1));
+			
+			for (auto p : session->connections) {
+				auto c = p.second;
+
+				/* We skip the current connection in order
+				 * to avoid receiving our own data */
+				if (opts.loopback == false && c.get() == this)
+					continue;
+
+				c->outgoingFrames.push(currentFrame);
+
+				lws_callback_on_writable(c->wsi);
+			}
+
+			currentFrame = std::make_shared<Frame>();
+		}
+	}
 };
 
 /** List of libwebsockets protocols. */
@@ -144,67 +232,28 @@ int protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in
 
 	switch (reason) {
 
-		case LWS_CALLBACK_ESTABLISHED: {
-			char uri[64];
+		case LWS_CALLBACK_ESTABLISHED:
+			auto s = Session::get(wsi);
 
-			new (c) Connection();
-
-			c->wsi = wsi;
-
-			/* We use the URI to associate this connection to a session
-			 * Example: ws://example.com/node_1
-			 *   Will select the session with the name 'node_1'
-			 */
-
-			/* Get path of incoming request */
-			lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_GET_URI);
-			if (strlen(uri) <= 0) {
+			try {
+				new (c) Connection(wsi);
+			}
+			catch (InvalidUrlException e) {
 				lws_close_reason(wsi, LWS_CLOSE_STATUS_PROTOCOL_ERR, (unsigned char *) "Invalid URL", strlen("Invalid URL"));
 				return -1;
 			}
-
-			Session::Identifier sid = &uri[1];
-
-			auto s = Session::get(sid);
-
-			c->session = s;
-			s->connections.push_back(std::shared_ptr<Connection>(c));
-
 			break;
-		}
 
 		case LWS_CALLBACK_CLOSED:
-
 			c->~Connection();
 			break;
 
 		case LWS_CALLBACK_SERVER_WRITEABLE:
-			while (c->outgoingFrames.size() > 0) {
-				std::shared_ptr<Frame> fr = c->outgoingFrames.front();
-
-				lws_write(wsi, fr->data(), fr->size(), LWS_WRITE_BINARY);
-
-				c->outgoingFrames.pop_front();
-			}
+			c->write();
 			break;
 
 		case LWS_CALLBACK_RECEIVE:
-			if (!c->currentFrame.get() || lws_is_first_fragment(wsi))
-				c->currentFrame = std::make_shared<Frame>();
-
-			c->currentFrame->insert(c->currentFrame->end(), (uint8_t *) in, (uint8_t *) in + len);
-
-			if (lws_is_final_fragment(wsi)) {
-				for (auto cc : c->session->connections) {
-					if (cc.get() == c)
-						continue;
-
-					cc->outgoingFrames.push_back(c->currentFrame);
-
-					lws_callback_on_writable(cc->wsi);
-				}
-			}
-			
+			c->read(in, len);
 			break;
 
 		default:
@@ -212,6 +261,20 @@ int protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in
 	}
 
 	return 0;
+}
+
+void usage()
+{
+	std::cout << "Usage: villas-relay [OPTIONS]" << std::endl;
+	std::cout << "  OPTIONS is one or more of the following options:" << std::endl;
+	std::cout << "    -d LVL    set debug level" << std::endl;
+	std::cout << "    -p PORT   the port number to listen on" << std::endl;
+	std::cout << "    -p PROT   the websocket protocol" << std::endl;
+	std::cout << "    -V        show version and exit" << std::endl;
+	std::cout << "    -h        show usage and exit" << std::endl;
+	std::cout << std::endl;
+
+	print_copyright();
 }
 
 int main(int argc, char *argv[])
@@ -227,6 +290,38 @@ int main(int argc, char *argv[])
 	ctx_info.protocols = protocols;
 	ctx_info.extensions = extensions;
 	ctx_info.port = 8088;
+
+	char c, *endptr;
+	while ((c = getopt (argc, argv, "hVp:P:l")) != -1) {
+		switch (c) {
+			case 'p':
+				ctx_info.port = strtoul(optarg, &endptr, 10);
+				goto check;
+			case 'P':
+				protocols[0].name = optarg;
+				break;
+			case 'l':
+				opts.loopback = true;
+				break;
+			case 'V':
+				print_version();
+				exit(EXIT_SUCCESS);
+			case 'h':
+			case '?':
+				usage();
+				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+		}
+
+		continue;
+
+check:	if (optarg == endptr)
+			error("Failed to parse parse option argument '-%c %s'", c, optarg);
+	}
+
+	if (argc - optind < 0) {
+		usage();
+		exit(EXIT_FAILURE);
+	}
 
 	context = lws_create_context(&ctx_info);
 	if (context == NULL)
