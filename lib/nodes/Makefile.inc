@@ -156,6 +156,13 @@ ifneq ($(wildcard /usr/include/mosquitto.h),)
 endif
 endif
 
+# Enable Infiniband support
+ifeq ($(WITH_NODE_INFINIBAND),1)
+    LIB_SRCS    += lib/nodes/infiniband.c
+	 LIB_NODES   += infiniband
+    WITH_IO      = 1
+endif
+
 # Enable Comedi support
 ifeq ($(WITH_NODE_COMEDI),1)
 ifeq ($(shell $(PKGCONFIG) comedilib; echo $$?),0)

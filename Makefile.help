@@ -92,7 +92,7 @@ help:
 	$E "  WITH_NODE_AMQP =       $(WITH_NODE_AMQP)"
 	$E "  WITH_NODE_MQTT =       $(WITH_NODE_MQTT)"
 	$E "  WITH_NODE_IEC61850 =   $(WITH_NODE_IEC61850)"
-	$E "  WITH_NODE_MQTT =       $(WITH_NODE_MQTT)"
+	$E "  WITH_NODE_INFINIBAND = $(WITH_NODE_INFINIBAND)"
 	$E "  WITH_NODE_COMEDI =     $(WITH_NODE_COMEDI)"
 	$E
 	$E "Available dependencies: $(LIB_PKGS)"
