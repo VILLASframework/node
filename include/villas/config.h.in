@@ -61,6 +61,20 @@ extern "C"{
 #define KERNEL_VERSION_MAJ	3
 #define KERNEL_VERSION_MIN	6
 
+#cmakedefine BUILDID "@BUILDID@"
+#cmakedefine V @V@
+#cmakedefine PREFIX "@PREFIX@"
+
+/* Available Features */
+#cmakedefine WITH_WEB
+#cmakedefine WITH_API
+#cmakedefine WITH_HOOKS
+#cmakedefine WITH_IO
+#cmakedefine WITH_CONFIG
+
+/* OS Headers */
+#cmakedefine HAS_EVENTFD
+
 #ifdef __cplusplus
 }
 #endif
