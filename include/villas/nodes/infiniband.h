@@ -40,6 +40,8 @@ struct format_type;
 
 struct infiniband {
     struct rdma_cm_id *id;
+    struct rdma_event_channel *ec;
+
     struct ibv_pd *pd;
     struct ibv_cq *cq;
     struct ibv_comp_channel *comp_channel;
@@ -47,13 +49,17 @@ struct infiniband {
     pthread_t cq_poller_thread;
 
     struct connection_s {
-        char *src_ip_addr;
-        char *dst_ip_addr;
+        struct addrinfo *src_addr;
+        struct addrinfo *dst_addr;
+        const int timeout;
+        enum rdma_port_space port_space;
 
         struct ibv_qp *qp;
         struct ibv_mr *mr_payload;
         struct r_addr_key_s *r_addr_key;
     } conn;
+
+    int is_source;
 
 };
 
@@ -76,7 +82,7 @@ int infiniband_destroy(struct node *n);
 int infiniband_stop(struct node *n);
 
 /** @see node_type::init */
-int infiniband_init();
+int infiniband_init(struct super_node *n);
 
 /** @see node_type::deinit */
 int infiniband_deinit();
