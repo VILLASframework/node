@@ -30,6 +30,7 @@ set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
 
 find_package(PkgConfig)
 include(CheckIncludeFile)
+include(FeatureSummary)
 
 # Check OS
 check_include_file("sys/eventfd.h" HAS_EVENTFD)
@@ -102,3 +103,15 @@ include_directories(
 add_subdirectory(lib)
 add_subdirectory(src)
 add_subdirectory(tools)
+
+# Show feature summary
+add_feature_info(HOOKS  WITH_HOOKS  "Build with support for processing hook plugins")
+add_feature_info(IO     WITH_IO     "Build with support format plugins")
+add_feature_info(WEB    WITH_WEB    "Build with internal webserver")
+add_feature_info(API    WITH_API    "Build with remote control API")
+add_feature_info(CONFIG WITH_CONFIG "Build with support for libconfig configuration syntax")
+
+if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
+    feature_summary(WHAT ALL VAR FEATURES)
+    message(STATUS "${FEATURES}")
+endif()
