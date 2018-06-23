@@ -38,15 +38,26 @@
 /* Forward declarations */
 struct format_type;
 
+enum poll_mode_e 
+{
+    EVENT,
+    BUSY
+};
+
 struct infiniband {
     struct rdma_cm_id *id;
     struct rdma_event_channel *ec;
 
-    struct ibv_pd *pd;
-    struct ibv_cq *cq;
-    struct ibv_comp_channel *comp_channel;
+    struct context_s {
+        struct ibv_pd *pd;
+        struct ibv_cq *cq;
+        struct ibv_comp_channel *comp_channel;
+    } ctx;
 
-    pthread_t cq_poller_thread;
+    struct poll_s {
+        enum poll_mode_e poll_mode;
+        pthread_t cq_poller_thread;
+    } poll;
 
     struct connection_s {
         struct addrinfo *src_addr;
@@ -54,13 +65,18 @@ struct infiniband {
         const int timeout;
         enum rdma_port_space port_space;
 
-        struct ibv_qp *qp;
         struct ibv_mr *mr_payload;
         struct r_addr_key_s *r_addr_key;
     } conn;
 
-    int is_source;
+    struct init_s {
+        int cq_size;
+        enum ibv_qp_type qp_type;
+        int max_send_wr;
+        int max_recv_wr;
+    } init;
 
+    int is_source;
 };
 
 /** @see node_type::reverse */

@@ -101,8 +101,6 @@ RUN dnf -y install \
     libibumad-devel \
     perftest 
 
-    
-
 # Build & Install Criterion
 RUN cd /tmp && \
 	git clone --recursive https://github.com/Snaipe/Criterion && \
