@@ -80,6 +80,29 @@ RUN dnf -y install \
 	mosquitto-devel \
 	comedilib-devel
 
+# IB Verbs Dependencies
+RUN dnf -y install \
+    libibverbs-utils \
+    libibverbs-devel \
+    libibverbs-devel-static \
+    libmlx4 \
+    libmlx5 \
+    ibutils \
+    libibcm \
+    libibcommon \
+    libibmad \
+    libibumad 
+
+# RDMA CM Dependencies
+RUN dnf -y install \
+    librdmacm-utils \
+    librdmacm-devel \
+    librdmacm \
+    libibumad-devel \
+    perftest 
+
+    
+
 # Build & Install Criterion
 RUN cd /tmp && \
 	git clone --recursive https://github.com/Snaipe/Criterion && \
