@@ -62,21 +62,17 @@ struct infiniband {
     struct connection_s {
         struct addrinfo *src_addr;
         struct addrinfo *dst_addr;
-        const int timeout;
+        int timeout;
         enum rdma_port_space port_space;
 
         struct ibv_mr *mr_payload;
         struct r_addr_key_s *r_addr_key;
     } conn;
 
-    struct init_s {
-        int cq_size;
-        enum ibv_qp_type qp_type;
-        int max_send_wr;
-        int max_recv_wr;
-    } init;
+    struct ibv_qp_init_attr qp_init;
 
     int is_source;
+    int cq_size;
 };
 
 /** @see node_type::reverse */
