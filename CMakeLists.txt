@@ -58,6 +58,28 @@ else()
 	endif()
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	string(APPEND VARIANTS "-debug")
+else()
+    string(APPEND VARIANTS "-release")
+endif()
+
+if(PROFILE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -pg")
+    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -pg")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
+
+	string(APPEND VARIANTS "-profile")
+endif()
+
+if(COVERAGE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
+    target_link_libraries("gcov")
+
+	string(APPEND VARIANTS "-coverage")
+endif()
+
 # Check OS
 check_include_file("sys/eventfd.h" HAS_EVENTFD)
 
