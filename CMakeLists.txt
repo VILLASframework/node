@@ -31,6 +31,32 @@ set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
 find_package(PkgConfig)
 include(CheckIncludeFile)
 include(FeatureSummary)
+include(CheckCCompilerFlag)
+#include(CheckCxxCompilerFlag)
+
+if(MSVC)
+    check_c_compiler_flag("/W4 /WX" C_SUPPORTS_WERROR)
+#    check_cxx_compiler_flag("/W4 /WX" CXX_SUPPORTS_WERROR)
+
+	if(C_SUPPORTS_WERROR)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4 /WX")
+	endif()
+
+    if(CXX_SUPPORTS_WERROR)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
+	endif()
+else()
+    check_c_compiler_flag("-Wall -Werror" C_SUPPORTS_WERROR)
+#	check_cxx_compiler_flag("-Wall -Werror" CXX_SUPPORTS_WERROR)
+
+    if(C_SUPPORTS_WERROR)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
+    endif()
+
+	if(CXX_SUPPORTS_WERROR)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+	endif()
+endif()
 
 # Check OS
 check_include_file("sys/eventfd.h" HAS_EVENTFD)
