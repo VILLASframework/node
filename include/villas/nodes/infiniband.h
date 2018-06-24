@@ -44,6 +44,15 @@ enum poll_mode_e
     BUSY
 };
 
+struct payload_s {
+    int data;
+};
+
+struct r_addr_key_s {
+    uint64_t remote_addr;
+    uint32_t rkey;
+};
+
 struct infiniband {
     struct rdma_cm_id *id;
     struct rdma_event_channel *ec;
@@ -65,7 +74,6 @@ struct infiniband {
         int timeout;
         enum rdma_port_space port_space;
 
-        struct ibv_mr *mr_payload;
         struct r_addr_key_s *r_addr_key;
     } conn;
 
@@ -73,6 +81,14 @@ struct infiniband {
 
     int is_source;
     int cq_size;
+
+    struct ib_memory {
+        struct pool p_recv;
+        struct pool p_send;
+
+        struct ibv_mr *mr_recv;
+        struct ibv_mr *mr_send;
+    } mem;
 };
 
 /** @see node_type::reverse */

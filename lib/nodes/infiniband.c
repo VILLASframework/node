@@ -26,6 +26,9 @@
 #include <villas/plugin.h>
 #include <villas/utils.h>
 #include <villas/format_type.h>
+#include <villas/memory.h>
+#include <villas/pool.h>
+
 #include <rdma/rdma_cma.h>
 
 static void ib_create_busy_poll(struct node *n, struct rdma_cm_id *id)
@@ -101,6 +104,75 @@ static void ib_build_ibv(struct node *n, struct rdma_cm_id *id)
         error("Failed to create Queue Pair in node %s.", node_name(n));
 
     info("Successfully created Queue Pair.");
+
+    // Allocate memory
+    ib->mem.p_recv.state = STATE_DESTROYED;
+    ib->mem.p_recv.queue.state = STATE_DESTROYED;
+
+    // Set pool size to maximum size of Receive Queue
+    pool_init(&ib->mem.p_recv, 
+            //ib->qp_init.cap.max_recv_wr, 
+            1,
+            sizeof(struct payload_s), 
+            &memtype_heap);
+    if(ret) {
+        error("Failed to init recv memory pool of node %s: %s",
+            node_name(n), gai_strerror(ret));
+    }
+
+    //ToDo: initialize r_addr_key struct if mode is RDMA
+    struct payload_s* test;
+    test = pool_get(&ib->mem.p_recv);
+
+    printf("Address value: %p\n", test);
+    printf("Address pool: %p\n", &ib->mem.p_recv);
+    printf("Address calculated: %p\n", &ib->mem.p_recv+ib->mem.p_recv.buffer_off);
+    
+    printf("Offset: %li\n", ib->mem.p_recv.buffer_off);
+    printf("Size of struct: %lu\n", sizeof(struct payload_s));
+    printf("Size of block: %lu\n", ib->mem.p_recv.blocksz);
+    
+    // Register memory for IB Device. Not necessary if data is send
+    // exclusively inline
+    ib->mem.mr_recv = ibv_reg_mr(
+            ib->ctx.pd,
+            &ib->mem.p_recv+ib->mem.p_recv.buffer_off,
+            ib->mem.p_recv.len*ib->mem.p_recv.blocksz,
+            IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
+    if(!ib->mem.mr_recv) {
+        error("Failed to register mr_recv with ibv_reg_mr of node %s.",
+            node_name(n));
+    }
+
+    if(ib->is_source)
+    {
+        ib->mem.p_send.state = STATE_DESTROYED;
+        ib->mem.p_send.queue.state = STATE_DESTROYED;
+
+        // Set pool size to maximum size of Receive Queue
+        pool_init(&ib->mem.p_send, 
+                ib->qp_init.cap.max_send_wr, 
+                sizeof(struct payload_s), 
+                &memtype_heap);
+        if(ret) {
+            error("Failed to init send memory of node %s: %s",
+                node_name(n), gai_strerror(ret));
+        }
+
+        //ToDo: initialize r_addr_key struct if mode is RDMA
+        
+        // Register memory for IB Device. Not necessary if data is send
+        // exclusively inline
+        ib->mem.mr_send = ibv_reg_mr(
+                ib->ctx.pd,
+                &ib->mem.p_send+ib->mem.p_send.buffer_off,
+                ib->mem.p_send.len*ib->mem.p_send.blocksz,
+                IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
+        if(!ib->mem.mr_send) {
+            error("Failed to register mr_send with ibv_reg_mr of node %s.",
+                node_name(n));
+        }
+    }
 }
 
 static int ib_addr_resolved(struct node *n, struct rdma_cm_id *id)
@@ -238,6 +310,7 @@ int ib_parse(struct node *n, json_t *cfg)
         jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
     // Translate IP:PORT to a struct addrinfo
+    //ToDo: Fix fixed port
     ret = getaddrinfo(local, (char *)"13337", NULL, &ib->conn.src_addr);
     if(ret) {
         error("Failed to resolve local address '%s' of node %s: %s",
@@ -291,6 +364,7 @@ int ib_parse(struct node *n, json_t *cfg)
         ib->is_source = 1;
 
         // Translate address info
+        //ToDo: Fix fixed port
         ret = getaddrinfo(remote, (char *)"13337", NULL, &ib->conn.dst_addr);
         if(ret) {
             error("Failed to resolve remote address '%s' of node %s: %s",
