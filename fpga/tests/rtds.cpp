@@ -1,6 +1,5 @@
 /** RTDS AXI-Stream RTT unit test.
  *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2018, Steffen Vogel, Daniel Krebs

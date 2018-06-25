@@ -8,7 +8,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2017-20187, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
  *********************************************************************************/
 
 #pragma once

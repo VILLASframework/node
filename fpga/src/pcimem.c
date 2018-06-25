@@ -1,26 +1,25 @@
-/*
- * pcimem.c: Simple program to read/write from/to a pci device from userspace.
+/** Simple program to read/write from/to a pci device from userspace.
  *
- *  Copyright (C) 2010, Bill Farrow (bfarrow@beyondelectronics.us)
+ *  @Copyright 2010, Bill Farrow (bfarrow@beyondelectronics.us)
  *
  *  Based on the devmem2.c code
- *  Copyright (C) 2000, Jan-Derk Bakker (J.D.Bakker@its.tudelft.nl)
+ *  @copyright 2000, Jan-Derk Bakker (J.D.Bakker@its.tudelft.nl)
  *
- * This program is free software; you can redistribute it and/or modify
+ * VILLASfpga
+ *
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- */
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *********************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -107,7 +106,7 @@ int main(int argc, char **argv) {
 			fprintf(stderr, "Illegal data type '%c'.\n", access_type);
 			exit(2);
 	}
-	
+
 	printf("Value at offset %#lx (%p): %#x\n", target, virt_addr, read_result);
 	fflush(stdout);
 

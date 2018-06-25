@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Author:     Daniel Krebs <github@daniel-krebs.net>
-Copyright:  2017, Institute for Automation of Complex Power Systems, EONERC
+Copyright:  2017-2018, Institute for Automation of Complex Power Systems, EONERC
 License:    GNU General Public License (version 3)
 
 This program is free software: you can redistribute it and/or modify

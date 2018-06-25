@@ -1,6 +1,5 @@
 /** FPGA related code for bootstrapping the unit-tests
  *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2018, Steffen Vogel
  * @license GNU General Public License (version 3)
