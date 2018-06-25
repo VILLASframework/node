@@ -10,3 +10,6 @@
 [submodule "thirdparty/udmabuf"]
 	path = thirdparty/udmabuf
 	url = https://github.com/ikwzm/udmabuf
+[submodule "hardware"]
+	path = hardware
+	url = ../VILLASfpga-hardware.git
