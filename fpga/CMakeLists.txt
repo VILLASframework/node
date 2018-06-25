@@ -12,6 +12,7 @@ include_directories(thirdparty/CLI11)
 include_directories(thirdparty/rang)
 
 add_subdirectory(lib)
+add_subdirectory(src)
 add_subdirectory(tests)
 
 # Project settings
