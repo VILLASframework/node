@@ -39,10 +39,10 @@
 #define NUM_VALUES 10
 
 static char formats[][32] = {
-#ifdef WITH_FORMAT_HDF5
+#ifdef LIBHDF5_FOUND
 	"hdf5",
 #endif
-#ifdef WITH_FORMAT_PROTOBUF
+#ifdef LIBPROTOBUF_FOUND
 	"protobuf",
 #endif
 	"raw.int8",

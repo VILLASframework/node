@@ -26,7 +26,7 @@
 #include <villas/config_helper.h>
 #include <villas/utils.h>
 
-#ifdef WITH_CONFIG
+#ifdef LIBCONFIG_FOUND
 
 static int json_to_config_type(int type)
 {
@@ -143,7 +143,7 @@ int json_to_config(json_t *json, config_setting_t *parent)
 
 	return 0;
 }
-#endif /* WITH_CONFIG */
+#endif /* LIBCONFIG_FOUND */
 
 void json_object_extend_key_value(json_t *obj, const char *key, const char *value)
 {

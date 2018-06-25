@@ -70,10 +70,17 @@ extern "C"{
 #cmakedefine WITH_API
 #cmakedefine WITH_HOOKS
 #cmakedefine WITH_IO
-#cmakedefine WITH_CONFIG
 
 /* OS Headers */
 #cmakedefine HAS_EVENTFD
+
+#cmakedefine HAS_SEMAPHORE
+
+#cmakedefine LIBWEBSOCKETS_FOUND
+#cmakedefine HDF5_FOUND
+#cmakedefine PROTOBUF_FOUND
+#cmakedefine LIBNL3_ROUTE_FOUND
+#cmakedefine LIBCONFIG_FOUND
 
 #ifdef __cplusplus
 }

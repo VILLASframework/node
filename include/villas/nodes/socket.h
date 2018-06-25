@@ -40,13 +40,13 @@
 #include <villas/config.h>
 #include <villas/io.h>
 
-#ifdef WITH_LIBNL_ROUTE_30
+#ifdef LIBNL3_ROUTE_FOUND
   #include <villas/kernel/if.h>
   #include <villas/kernel/nl.h>
   #include <villas/kernel/tc.h>
 
   #define WITH_NETEM
-#endif /* WITH_LIBNL_ROUTE_30 */
+#endif /* LIBNL3_ROUTE_FOUND */
 
 #include <villas/node.h>
 

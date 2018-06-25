@@ -341,13 +341,13 @@ check:		if (optarg == endptr)
 	if (!node)
 		error("Node '%s' does not exist!", nodestr);
 
-#ifdef WITH_NODE_WEBSOCKET
+#ifdef LIBWEBSOCKETS_FOUND
 	/* Only start web subsystem if villas-pipe is used with a websocket node */
 	if (node->_vt->start == websocket_start) {
 		web_start(&sn.web);
 		api_start(&sn.api);
 	}
-#endif /* WITH_NODE_WEBSOCKET */
+#endif /* LIBWEBSOCKETS_FOUND */
 
 	if (reverse)
 		node_reverse(node);
