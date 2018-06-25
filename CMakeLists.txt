@@ -151,6 +151,7 @@ include_directories(
 add_subdirectory(lib)
 add_subdirectory(src)
 add_subdirectory(tools)
+add_subdirectory(doc)
 
 # Show feature summary
 add_feature_info(HOOKS  WITH_HOOKS  "Build with support for processing hook plugins")
