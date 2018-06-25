@@ -1,7 +1,7 @@
 # CMakeLists.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -19,8 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
-
-pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson)
 
 set(INCLUDE_DIRS
     ${JANSSON_INCLUDE_DIRS}
@@ -52,6 +50,6 @@ if(WITH_IO)
     )
 endif()
 
-add_library(villas-hooks STATIC ${HOOK_SRC})
+add_library(villas-hooks SHARED ${HOOK_SRC})
 target_include_directories(villas-hooks PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas-hooks PUBLIC ${LIBRARIES})

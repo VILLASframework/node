@@ -1,7 +1,7 @@
 # CMakeLists.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -29,8 +29,6 @@ set(FORMAT_SRC
     raw.c
 )
 
-find_package(openssl REQUIRED)
-
 set(INCLUDE_DIRS
     ${OPENSSL_INCLUDE_DIR}
 )
@@ -40,7 +38,6 @@ set(LIBRARIES
 )
 
 # Enable Google Protobuf format
-find_package(Protobuf)
 if(Protobuf_FOUND)
     list(APPEND FORMAT_SRC
         protobuf.c
@@ -73,10 +70,6 @@ if(Protobuf_FOUND)
     )
 endif()
 
-add_library(villas-formats STATIC ${FORMAT_SRC})
+add_library(villas-formats SHARED ${FORMAT_SRC})
 target_include_directories(villas-formats PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas-formats PUBLIC ${LIBRARIES})
-
-if(Protobuf_FOUND)
-#    add_dependencies(villas-formats villas.pb-c.c villas.pb-c.h)
-endif()

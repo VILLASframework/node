@@ -1,7 +1,7 @@
 # CMakeLists.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -19,11 +19,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
-
-find_package(OpenSSL REQUIRED)
-find_package(curl REQUIRED)
-
-pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson)
 
 set(INCLUDE_DIRS
     ${JANSSON_INCLUDE_DIRS}
@@ -73,11 +68,9 @@ set(LIB_SRC
 
 add_subdirectory(nodes)
 
-if(WITH_CONFIG)
-    pkg_check_modules(CONFIG IMPORTED_TARGET REQUIRED libconfig)
-
-    list(APPEND INCLUDE_DIRS ${CONFIG_INCLUDE_DIRS})
-    list(APPEND LIBRARIES PkgConfig::CONFIG)
+if(LIBCONFIG_FOUND)
+    list(APPEND INCLUDE_DIRS ${LIBCONFIG_INCLUDE_DIRS})
+    list(APPEND LIBRARIES PkgConfig::LIBCONFIG)
 endif()
 
 if(WITH_IO)
@@ -95,7 +88,7 @@ if(WITH_HOOKS)
         hook.c
         hook_type.c
     )
-    
+
     add_subdirectory(hooks)
     list(APPEND LIBRARIES villas-hooks)
 endif()
@@ -104,10 +97,6 @@ if(WITH_WEB)
     list(APPEND LIB_SRC
         web.c
     )
-
-    find_package(libwebsockets REQUIRED)
-
-    message("LWS: ${LIBWEBSOCKETS_LIBRARIES}")
     
     list(APPEND INCLUDE_DIRS ${LIBWEBSOCKETS_INCLUDE_DIRS})
     list(APPEND LIBRARIES websockets_shared)
@@ -122,7 +111,35 @@ if(WITH_API AND WITH_WEB)
     list(APPEND LIBRARIES villas-api)
 endif()
 
+# libnl3 is optional but required for network emulation and IRQ pinning
+if(LIBNL3_ROUTE_FOUND)
+    list(APPEND LIB_SRC
+        kernel/nl.c
+        kernel/tc.c
+        kernel/tc_netem.c
+        kernel/if.c
+    )
+
+    list(APPEND INCLUDE_DIRS ${LIBNL3_ROUTE_INCLUDE_DIRS})
+    list(APPEND LIBRARIES PkgConfig::LIBNL3_ROUTE)
+endif()
+
 add_library(villas SHARED ${LIB_SRC})
 
 target_include_directories(villas PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas PUBLIC ${LIBRARIES})
+
+set_target_properties(villas PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_SOVERSION}
+)
+
+install(TARGETS villas EXPORT VILLASNodeConfig
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+install(DIRECTORY ../include/villas/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/villas/)
+
+#install(EXPORT VILLASNodeConfig DESTINATION share/VILLASNode/cmake)
+#export(TARGETS villas FILE VILLASNodeConfig.cmake)

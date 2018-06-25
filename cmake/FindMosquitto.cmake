@@ -1,4 +1,4 @@
-# CMakeLists.
+# CMakeLists.txt.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
@@ -20,29 +20,21 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-# All executables link against libvillas
-link_libraries(villas)
-
-add_executable(villas-node node.c)
-add_executable(villas-test-rtt test-rtt.c)
-add_executable(villas-test-shmem test-shmem.c)
-
-if(WITH_IO)
-    add_executable(villas-test-cmp test-cmp.c)
-    
-    add_executable(villas-convert convert.c)
-    
-    add_executable(villas-pipe pipe.c)
-    target_link_libraries(villas-pipe PUBLIC pthread)
-
-    add_executable(villas-signal signal.c)
-endif()
-
-if(WITH_IO AND WITH_HOOKS)
-    add_executable(villas-hook hook.c)
-endif()
-
-install(
-    TARGETS ${BUILDSYSTEM_TARGETS}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+find_path(MOSQUITTO_INCLUDE_DIR
+	NAMES mosquitto.h
 )
+
+find_library(MOSQUITTO_LIBRARY
+	NAMES mosquitto
+)
+
+include(FindPackageHandleStandardArgs)
+# handle the QUIETLY and REQUIRED arguments and set VILLASNODE_FOUND to TRUE
+# if all listed variables are TRUE
+find_package_handle_standard_args(MOSQUITTO DEFAULT_MSG
+    MOSQUITTO_LIBRARY MOSQUITTO_INCLUDE_DIR)
+
+mark_as_advanced(MOSQUITTO_INCLUDE_DIR MOSQUITTO_LIBRARY)
+
+set(MOSQUITTO_LIBRARIES ${MOSQUITTO_LIBRARY})
+set(MOSQUITTO_INCLUDE_DIRS ${MOSQUITTO_INCLUDE_DIR})

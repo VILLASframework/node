@@ -1,7 +1,7 @@
 # CMakeLists.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -20,9 +20,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-if(WITH_CONFIG)
+if(LIBCONFIG_FOUND)
+    list(APPEND TOOLS conf2json)
     add_executable(conf2json conf2json.c)
-
     target_link_libraries(conf2json PUBLIC villas)
 endif()
 
@@ -34,9 +34,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_link_libraries(rmsem PUBLIC pthread rt)
 endif()
 
-pkg_check_modules(ZMQ IMPORTED_TARGET REQUIRED libzmq)
-if(ZMQ_FOUND)
+if(LIBZMQ_FOUND)
     add_executable(zmq-keygen zmq-keygen.c)
-    target_include_directories(zmq-keygen PUBLIC ${ZMQ_INCLUDE_DIRS})
-	target_link_libraries(zmq-keygen PUBLIC PkgConfig::ZMQ)
+    target_include_directories(zmq-keygen PUBLIC ${LIBZMQ_INCLUDE_DIRS})
+	target_link_libraries(zmq-keygen PUBLIC PkgConfig::LIBZMQ)
 endif()
+
+install(
+    PROGRAMS villas.sh
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    RENAME villas
+)

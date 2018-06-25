@@ -1,7 +1,7 @@
 # Main CMakeLists.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -22,17 +22,36 @@
 
 cmake_minimum_required(VERSION 3.0)
 
-project(VILLASnode)
+project(VILLASnode C CXX)
 
 set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 11)
 
-set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig")
 
-find_package(PkgConfig)
+if(APPLE)
+    set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/opt/local/lib/pkgconfig")
+endif()
+
+include(FindPkgConfig)
 include(CheckIncludeFile)
 include(FeatureSummary)
 include(CheckCCompilerFlag)
 #include(CheckCxxCompilerFlag)
+include(GNUInstallDirs)
+include(VILLASnodePackaging)
+
+# Compiler flags
+if(BUILD32)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32")
+    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -m32")
+endif()
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdiagnostics-color=auto -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1")
 
 if(MSVC)
     check_c_compiler_flag("/W4 /WX" C_SUPPORTS_WERROR)
@@ -58,53 +77,58 @@ else()
 	endif()
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	string(APPEND VARIANTS "-debug")
-else()
-    string(APPEND VARIANTS "-release")
-endif()
-
-if(PROFILE)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -pg")
-    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -pg")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
-
-	string(APPEND VARIANTS "-profile")
-endif()
-
-if(COVERAGE)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
-    target_link_libraries("gcov")
-
-	string(APPEND VARIANTS "-coverage")
-endif()
-
 # Check OS
 check_include_file("sys/eventfd.h" HAS_EVENTFD)
+check_include_file("semaphore.h" HAS_SEMAPHORE)
+check_include_file("sys/mman.h" HAS_MMAN)
+
+pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson)
+pkg_check_modules(LIBNL3_ROUTE IMPORTED_TARGET libnl-route-3.0)
+pkg_check_modules(LIBIEC61850 IMPORTED_TARGET libiec61850>=1.2.0)
+pkg_check_modules(LIBCONFIG IMPORTED_TARGET libconfig)
+pkg_check_modules(RABBITMQ_C IMPORTED_TARGET librabbitmq)
+pkg_check_modules(COMEDILIB IMPORTED_TARGET comedilib)
+pkg_check_modules(LIBZMQ IMPORTED_TARGET libzmq)
+pkg_check_modules(NANOMSG IMPORTED_TARGET nanomsg)
+if(NOT NANOMSG_FOUND)
+    pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg)
+endif()
+
+find_package(Libwebsockets REQUIRED)
+find_package(OpenSSL REQUIRED)
+find_package(CURL REQUIRED)
+find_package(Protobuf)
+find_package(Opal)
 
 # Build options
-option(WITH_HOOKS "Build with support for processing hook plugins" ON)
-option(WITH_IO "Build with support format plugins" ON)
-option(WITH_WEB "Build with internal webserver" ON)
-option(WITH_API "Build with remote control API" ON)
-option(WITH_CONFIG "Build with support for libconfig configuration syntax" ON)
+option(WITH_HOOKS   "Build with support for processing hook plugins"    ON)
+option(WITH_IO      "Build with support format plugins" ON)
+option(WITH_WEB     "Build with internal webserver" ON)
+option(WITH_API     "Build with remote control API" ON)
+option(WITH_CONFIG  "Build with support for libconfig configuration syntax" ON)
 
 set(V 2)
 set(PREFIX ${CMAKE_INSTALL_PREFIX})
 
 set(VARIANT "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
 
+# Add more build configurations
+include(cmake/config/Debug.cmake)
+include(cmake/config/Release.cmake)
+include(cmake/config/Coverage.cmake)
+include(cmake/config/Profiling.cmake)
+
 # Add git revision and build variant defines
+set(PROJECT_SOVERSION 1)
+
 execute_process(
     COMMAND git describe --tags --abbrev=0 --match "v*"
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE VERSION
+    OUTPUT_VARIABLE PROJECT_VERSION_STR
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-string(SUBSTRING ${VERSION} 2 -1 VERSION_NUM)
-
+string(SUBSTRING ${PROJECT_VERSION_STR} 2 -1 PROJECT_VERSION)
 string(TIMESTAMP BUILD_DATE "%Y%m%d")
 
 if(DEFINED ENV{CI})
@@ -128,20 +152,15 @@ else()
 endif()
 
 if(DEFINED ENV{CI_COMMIT_TAG})
-		set(RELEASE 1)
+		set(PROJECT_RELEASE 1)
 else()
     string(REPLACE "-" "_" GIT_BRANCH_NORM ${GIT_BRANCH})
     string(REPLACE "-" "_" VARIANT_NORM    ${VARIANT})
 
-    set(RELEASE "1.${GIT_BRANCH_NORM}_${VARIANT_NORM}.${BUILD_DATE}git${GIT_REV}")
+    set(PROJECT_RELEASE "1.${GIT_BRANCH_NORM}_${VARIANT_NORM}.${BUILD_DATE}git${GIT_REV}")
 endif()
 
-set(BUILDID "${VERSION}-${GIT_REV}-${VARIANT}")
-
-configure_file(
-    ${CMAKE_SOURCE_DIR}/include/villas/config.h.in
-    ${CMAKE_BINARY_DIR}/include/villas/config.h
-)
+set(BUILDID "${PROJECT_VERSION_STR}-${GIT_REV}-${VARIANT}")
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/include
@@ -151,7 +170,18 @@ include_directories(
 add_subdirectory(lib)
 add_subdirectory(src)
 add_subdirectory(tools)
+add_subdirectory(plugins)
+add_subdirectory(etc)
 add_subdirectory(doc)
+add_subdirectory(web)
+add_subdirectory(clients)
+add_subdirectory(tests)
+add_subdirectory(packaging)
+
+configure_file(
+    ${CMAKE_SOURCE_DIR}/include/villas/config.h.in
+    ${CMAKE_BINARY_DIR}/include/villas/config.h
+)
 
 # Show feature summary
 add_feature_info(HOOKS  WITH_HOOKS  "Build with support for processing hook plugins")

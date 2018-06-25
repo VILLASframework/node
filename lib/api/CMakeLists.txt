@@ -2,7 +2,7 @@
 # CMakeLists.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -21,8 +21,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-find_package(openssl REQUIRED)
-
 set(INCLUDE_DIRS
     ${OPENSSL_INCLUDE_DIR}
 )
@@ -31,12 +29,17 @@ set(LIBRARIES
     ${OPENSSL_LIBRARIES}
 )
 
-file(GLOB ACTION_SRC actions/*.c)
-
-add_library(villas-api STATIC
-    ${ACTION_SRC}
+set(API_SRC
     session.c
+    actions/capabiltities.c
+    actions/config.c
+    actions/nodes.c
+    actions/paths.c
+    actions/restart.c
+    actions/shutdown.c
+    actions/status.c
 )
 
+add_library(villas-api SHARED ${API_SRC})
 target_include_directories(villas-api PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas-api PUBLIC ${LIBRARIES})

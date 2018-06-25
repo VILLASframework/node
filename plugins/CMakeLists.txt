@@ -1,4 +1,4 @@
-# CMakeLists.
+# CMakeLists.txt.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
@@ -20,29 +20,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-# All executables link against libvillas
+# Plugins
 link_libraries(villas)
+include_directories("${CMAKE_SOURCE_DIR}/include")
+add_definitions("-DVILLAS")
 
-add_executable(villas-node node.c)
-add_executable(villas-test-rtt test-rtt.c)
-add_executable(villas-test-shmem test-shmem.c)
+add_library(simple_circuit SHARED models/simple_circuit.c)
 
-if(WITH_IO)
-    add_executable(villas-test-cmp test-cmp.c)
-    
-    add_executable(villas-convert convert.c)
-    
-    add_executable(villas-pipe pipe.c)
-    target_link_libraries(villas-pipe PUBLIC pthread)
-
-    add_executable(villas-signal signal.c)
+if(WITH_HOOKS)
+    add_library(example_hook SHARED hooks/example_hook.c)
 endif()
-
-if(WITH_IO AND WITH_HOOKS)
-    add_executable(villas-hook hook.c)
-endif()
-
-install(
-    TARGETS ${BUILDSYSTEM_TARGETS}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)

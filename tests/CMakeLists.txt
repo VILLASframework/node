@@ -1,4 +1,4 @@
-# CMakeLists.
+# Makefile.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
@@ -20,29 +20,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-# All executables link against libvillas
-link_libraries(villas)
+add_subdirectory(unit)
+add_subdirectory(integration)
 
-add_executable(villas-node node.c)
-add_executable(villas-test-rtt test-rtt.c)
-add_executable(villas-test-shmem test-shmem.c)
-
-if(WITH_IO)
-    add_executable(villas-test-cmp test-cmp.c)
-    
-    add_executable(villas-convert convert.c)
-    
-    add_executable(villas-pipe pipe.c)
-    target_link_libraries(villas-pipe PUBLIC pthread)
-
-    add_executable(villas-signal signal.c)
+if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
+	#include tests/unit/Makefile.gcov.inc
 endif()
 
-if(WITH_IO AND WITH_HOOKS)
-    add_executable(villas-hook hook.c)
-endif()
+add_custom_target(tests
+	DEPENDS unit-tests integration-tests
+)
 
-install(
-    TARGETS ${BUILDSYSTEM_TARGETS}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+add_custom_target(run-tests
+	DEPENDS run-unit-tests run-integration-tests
+)
+
+set(VALGRIND "valgrind --leak-check=full --show-leak-kinds=all --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/valgrind.supp")
+
+add_custom_target(run-valgrind
+	COMMAND ${VALGRIND} $<TARGET_FILE:villas-node> & sleep 2; kill %1
+	COMMAND ${VALGRIND} $<TARGET_FILE:villas-pipe> -t 2 ${CMAKE_SOURCE_DIR}/etc/websocket-loopback.conf ws1
+	COMMAND ${VALGRIND} $<TARGET_FILE:villas-signal> mixed -v 4 -l 10
+	COMMAND ${VALGRIND} $<TARGET_FILE:villas-hook> stats < <($<TARGET_FILE:villas-signal> mixed -l 5)
+	DEPENDS villas-node villas-pipe villas-signal villas-hook
 )

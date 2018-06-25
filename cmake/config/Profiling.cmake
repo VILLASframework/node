@@ -1,4 +1,4 @@
-# CMakeLists.
+# CMakeLists.txt.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
@@ -20,29 +20,39 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-# All executables link against libvillas
-link_libraries(villas)
-
-add_executable(villas-node node.c)
-add_executable(villas-test-rtt test-rtt.c)
-add_executable(villas-test-shmem test-shmem.c)
-
-if(WITH_IO)
-    add_executable(villas-test-cmp test-cmp.c)
-    
-    add_executable(villas-convert convert.c)
-    
-    add_executable(villas-pipe pipe.c)
-    target_link_libraries(villas-pipe PUBLIC pthread)
-
-    add_executable(villas-signal signal.c)
-endif()
-
-if(WITH_IO AND WITH_HOOKS)
-    add_executable(villas-hook hook.c)
-endif()
-
-install(
-    TARGETS ${BUILDSYSTEM_TARGETS}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+set(CMAKE_CXX_FLAGS_PROFILING
+    "${CMAKE_CXX_FLAGS} -pg"
+    CACHE STRING "Flags used by the C++ compiler during coverage builds."
+    FORCE
 )
+
+set(CMAKE_C_FLAGS_PROFILING
+    "${CMAKE_C_FLAGS} -pg"
+    CACHE STRING "Flags used by the C compiler during coverage builds."
+    FORCE
+)
+
+set(CMAKE_EXE_LINKER_FLAGS_PROFILING
+    "${CMAKE_EXE_LINKER_FLAGS} -pg"
+    CACHE STRING "Flags used for linking binaries during coverage builds."
+    FORCE
+)
+
+set(CMAKE_SHARED_LINKER_FLAGS_PROFILING
+    "${CMAKE_SHARED_LINKER_FLAGS_COVERAGE} -pg"
+    CACHE STRING "Flags used by the shared libraries linker during coverage builds."
+    FORCE
+)
+
+mark_as_advanced(
+    CMAKE_CXX_FLAGS_PROFILING
+    CMAKE_C_FLAGS_PROFILING
+    CMAKE_EXE_LINKER_FLAGS_PROFILING
+    CMAKE_SHARED_LINKER_FLAGS_PROFILING
+)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Profiling")
+    string(APPEND VARIANTS "-profile")
+endif()
+
+	
