@@ -11,7 +11,7 @@ User documentation is available here: <https://villas.fein-aachen.org/doc/fpga.h
 
 ## Copyright
 
-2017, Institute for Automation of Complex Power Systems, EONERC
+2018, Institute for Automation of Complex Power Systems, EONERC
 
 ## License
 

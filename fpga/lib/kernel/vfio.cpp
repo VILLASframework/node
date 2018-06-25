@@ -2,7 +2,7 @@
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @author Daniel Krebs <github@daniel-krebs.net>
- * @copyright 2017, Steffen Vogel
+ * @copyright 2017-2018, Steffen Vogel
  * @copyright 2018, Daniel Krebs
  * @license GNU General Public License (version 3)
  *

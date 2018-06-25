@@ -1,7 +1,7 @@
 /** GPIO related helper functions
  *
  * @author Daniel Krebs <github@daniel-krebs.net>
- * @copyright 2017, Daniel Krebs
+ * @copyright 2017-2018, Daniel Krebs
  * @license GNU General Public License (version 3)
  *
  * VILLASfpga

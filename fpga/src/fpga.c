@@ -1,7 +1,7 @@
 /** VILLASfpga utility for tests and benchmarks
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2017, Steffen Vogel
+ * @copyright 2017-2018, Steffen Vogel
  **********************************************************************************/
 
 #include <stdlib.h>

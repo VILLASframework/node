@@ -1,7 +1,7 @@
 /** Driver for AXI Stream wrapper around RTDS_InterfaceModule (rtds_axis )
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2017, Steffen Vogel
+ * @copyright 2017-2018, Steffen Vogel
  * @license GNU General Public License (version 3)
  *
  * VILLASfpga
