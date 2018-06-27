@@ -35,9 +35,11 @@
 #include <villas/queue_signalled.h>
 #include <rdma/rdma_cma.h>
 
-/* Forward declarations */
-struct format_type;
+/* Function poitner typedefs */
+typedef void  (*ib_on_completion)(struct node*, struct ibv_wc*, int*);
+typedef void* (*ib_poll_function)(void*);
 
+/* Enums */
 enum poll_mode_e 
 {
     EVENT,
@@ -50,21 +52,33 @@ struct r_addr_key_s {
 };
 
 struct infiniband {
-    struct rdma_cm_id *listen_id;
-    struct rdma_cm_id *id;
-    struct rdma_event_channel *ec;
 
+    /* IBV/RDMA CM structs */
     struct context_s {
+        struct rdma_cm_id *listen_id;
+        struct rdma_cm_id *id;
+        struct rdma_event_channel *ec;
+
         struct ibv_pd *pd;
         struct ibv_cq *cq;
         struct ibv_comp_channel *comp_channel;
     } ctx;
 
+    /* Work Completion related */
     struct poll_s {
         enum poll_mode_e poll_mode;
+
+        /* On completion function */
+        ib_on_completion on_compl;
+
+        /* Busy poll or Event function */
+        ib_poll_function poll_func;
+
+        /* Poll thread */
         pthread_t cq_poller_thread;
     } poll;
 
+    /* Connection specific variables */
     struct connection_s {
         struct addrinfo *src_addr;
         struct addrinfo *dst_addr;
@@ -74,11 +88,7 @@ struct infiniband {
         struct r_addr_key_s *r_addr_key;
     } conn;
 
-    struct ibv_qp_init_attr qp_init;
-
-    int is_source;
-    int cq_size;
-
+    /* Memory related variables */
     struct ib_memory {
         struct pool p_recv;
         struct pool p_send;
@@ -86,6 +96,14 @@ struct infiniband {
         struct ibv_mr *mr_recv;
         struct ibv_mr *mr_send;
     } mem;
+
+    /* Queue Pair init variables */
+    struct ibv_qp_init_attr qp_init;
+
+    /* Misc settings */
+    int is_source;
+    int cq_size;
+
 };
 
 /** @see node_type::reverse */
