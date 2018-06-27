@@ -68,8 +68,8 @@ struct infiniband {
     struct connection_s {
         struct addrinfo *src_addr;
         struct addrinfo *dst_addr;
-        int timeout;
         enum rdma_port_space port_space;
+        int timeout;
 
         struct r_addr_key_s *r_addr_key;
     } conn;

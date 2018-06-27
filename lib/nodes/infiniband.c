@@ -55,7 +55,7 @@ int ib_post_recv_wrs(struct node *n)
     return ret; 
 }
 
-static void ib_create_busy_poll(struct node *n, struct rdma_cm_id *id)
+static void ib_create_busy_poll(struct node *n)
 {
     struct infiniband *ib = (struct infiniband *) n->_vd;
     
@@ -67,7 +67,7 @@ static void ib_create_busy_poll(struct node *n, struct rdma_cm_id *id)
     //ToDo: Create poll pthread
 }
 
-static void ib_create_event(struct node *n, struct rdma_cm_id *id)
+static void ib_create_event(struct node *n)
 {
     int ret;
     struct infiniband *ib = (struct infiniband *) n->_vd;
@@ -95,7 +95,7 @@ static void ib_create_event(struct node *n, struct rdma_cm_id *id)
     //ToDo: Create poll pthread
 }
 
-static void ib_build_ibv(struct node *n, struct rdma_cm_id *id)
+static void ib_build_ibv(struct node *n)
 {
     struct infiniband *ib = (struct infiniband *) n->_vd;
     int ret;
@@ -109,10 +109,10 @@ static void ib_build_ibv(struct node *n, struct rdma_cm_id *id)
     switch(ib->poll.poll_mode)
     {
         case EVENT:
-            ib_create_event(n, id);
+            ib_create_event(n);
             break;
         case BUSY:
-            ib_create_busy_poll(n, id);
+            ib_create_busy_poll(n);
             break;
     }
 
@@ -123,7 +123,7 @@ static void ib_build_ibv(struct node *n, struct rdma_cm_id *id)
     //ToDo: Set maximum inline data
 
     // Create the actual QP
-    ret = rdma_create_qp(id, ib->ctx.pd, &ib->qp_init);
+    ret = rdma_create_qp(ib->id, ib->ctx.pd, &ib->qp_init);
     if(ret) 
         error("Failed to create Queue Pair in node %s.", node_name(n));
 
@@ -203,7 +203,7 @@ static void ib_build_ibv(struct node *n, struct rdma_cm_id *id)
     info("Filled the complete Receive Queue.");
 }
 
-static int ib_addr_resolved(struct node *n, struct rdma_cm_id *id)
+static int ib_addr_resolved(struct node *n)
 {
     struct infiniband *ib = (struct infiniband *) n->_vd;
     int ret;
@@ -211,10 +211,10 @@ static int ib_addr_resolved(struct node *n, struct rdma_cm_id *id)
     info("Successfully resolved address.");
 
     // Build all components from IB Verbs
-    ib_build_ibv(n, id);
+    ib_build_ibv(n);
 
     // Resolve address
-    ret = rdma_resolve_route(id, ib->conn.timeout);
+    ret = rdma_resolve_route(ib->id, ib->conn.timeout);
     if(ret) 
         error("Failed to resolve route in node %s.", node_name(n));
 
@@ -223,8 +223,9 @@ static int ib_addr_resolved(struct node *n, struct rdma_cm_id *id)
     return 0;
 }
 
-static int ib_route_resolved(struct node *n, struct rdma_cm_id *id)
+static int ib_route_resolved(struct node *n)
 {
+    struct infiniband *ib = (struct infiniband *) n->_vd;
     int ret;
 
     info("Successfully resolved route.");
@@ -235,7 +236,7 @@ static int ib_route_resolved(struct node *n, struct rdma_cm_id *id)
     memset(&cm_params, 0, sizeof(cm_params));
 
     // Send connection request
-    ret = rdma_connect(id, &cm_params);
+    ret = rdma_connect(ib->id, &cm_params);
     if(ret) 
         error("Failed to connect in node %s.", node_name(n));
 
@@ -251,15 +252,13 @@ static int ib_connect_request(struct node *n, struct rdma_cm_id *id)
     info("Received a connection request!");
 
     ib->id = id;
-    ib_build_ibv(n, id);
+    ib_build_ibv(n);
     
-    //ToDo: Post receive WRs
-
     struct rdma_conn_param cm_params;
     memset(&cm_params, 0, sizeof(cm_params));
 
     // Accept connection request
-    ret = rdma_accept(id, &cm_params);
+    ret = rdma_accept(ib->id, &cm_params);
     if(ret) 
         error("Failed to connect in node %s.", node_name(n));
 
@@ -275,12 +274,12 @@ static int ib_event(struct node *n, struct rdma_cm_event *event)
     switch(event->event)
     {
         case RDMA_CM_EVENT_ADDR_RESOLVED:
-            ret = ib_addr_resolved(n, event->id);
+            ret = ib_addr_resolved(n);
             break;
         case RDMA_CM_EVENT_ADDR_ERROR:
             error("Address resolution (rdma_resolve_addr) failed!");
         case RDMA_CM_EVENT_ROUTE_RESOLVED:
-            ret = ib_route_resolved(n, event->id);
+            ret = ib_route_resolved(n);
             break;
         case RDMA_CM_EVENT_ROUTE_ERROR:
             error("Route resolution (rdma_resovle_route) failed!");
@@ -437,9 +436,6 @@ int ib_start(struct node *n)
     }
     info("Succesfully created rdma_cm_id.");
 
-    // The ID will be overwritten for the target
-    ib->listen_id = ib->id;
-
     // Bind rdma_cm_id to the HCA
     ret = rdma_bind_addr(ib->id, ib->conn.src_addr->ai_addr);
     if(ret) {
@@ -462,6 +458,11 @@ int ib_start(struct node *n)
     }
     else
     {
+        // The ID will be overwritten for the target. If the event type is 
+        // RDMA_CM_EVENT_CONNECT_REQUEST, >then this references a new id for 
+        // that communication. 
+        ib->listen_id = ib->id;
+
         // Listen on rdma_cm_id for events
         ret = rdma_listen(ib->listen_id, 10);
         if(ret) {
