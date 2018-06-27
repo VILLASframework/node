@@ -44,16 +44,13 @@ enum poll_mode_e
     BUSY
 };
 
-struct payload_s {
-    int data;
-};
-
 struct r_addr_key_s {
     uint64_t remote_addr;
     uint32_t rkey;
 };
 
 struct infiniband {
+    struct rdma_cm_id *listen_id;
     struct rdma_cm_id *id;
     struct rdma_event_channel *ec;
 
