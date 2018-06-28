@@ -51,8 +51,13 @@ int ib_cleanup(struct node *n)
     pool_destroy(&ib->mem.p_send);
     info("Destroyed memory pools");
 
+    // Destroy RDMA CM ID
     rdma_destroy_id(ib->ctx.id);
     info("Destroyed rdma_cm_id");
+
+    // Destroy event channel
+    rdma_destroy_event_channel(ib->ctx.ec);
+    info("Destroyed event channel");
 
     return 0;
 }
@@ -531,16 +536,19 @@ int ib_destroy(struct node *n)
     return 0;
 }
 
-void * ib_stop_thread(void *n)
+void * ib_disconnect_thread(void *n)
 {
     struct node *node = (struct node *)n;
     struct infiniband *ib = (struct infiniband *)((struct node *)n)->_vd;
     struct rdma_cm_event *event;
+
     while(rdma_get_cm_event(ib->ctx.ec, &event) == 0)
     {
         if(event->event == RDMA_CM_EVENT_DISCONNECTED)
         {
+            rdma_ack_cm_event(event);
             ib->conn.rdma_disconnect_called = 1;
+
             node_stop(node);
             return NULL;
         }
@@ -621,7 +629,7 @@ int ib_start(struct node *n)
             break;
     }
 
-    ret = pthread_create(&ib->conn.stop_thread, NULL, ib_stop_thread, n);
+    ret = pthread_create(&ib->conn.stop_thread, NULL, ib_disconnect_thread, n);
     if(ret)
     {
         error("Failed to create thread to monitor disconnects in node %s: %s",
@@ -659,9 +667,9 @@ int ib_stop(struct node *n)
         ib->conn.rdma_disconnect_called = 1;
         rdma_get_cm_event(ib->ctx.ec, &event);
 
-        ib_event(n, event);
-
         rdma_ack_cm_event(event);
+
+        ib_event(n, event);
     }
 
     return 0;
