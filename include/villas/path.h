@@ -41,6 +41,10 @@
 #include "mapping.h"
 #include "task.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct stats;
 struct node;
@@ -52,7 +56,7 @@ struct path_source {
 	bool masked;
 
 	struct pool pool;
-	struct list mappings;			/**< List of mappings (struct mapping_entry). */
+	struct list mappings;            /**< List of mappings (struct mapping_entry). */
 };
 
 struct path_destination {
@@ -63,15 +67,15 @@ struct path_destination {
 
 /** The register mode determines under which condition the path is triggered. */
 enum path_mode {
-	PATH_MODE_ANY,				/**< The path is triggered whenever one of the sources receives samples. */
-	PATH_MODE_ALL				/**< The path is triggered only after all sources have received at least 1 sample. */
+	PATH_MODE_ANY,                /**< The path is triggered whenever one of the sources receives samples. */
+	PATH_MODE_ALL                /**< The path is triggered only after all sources have received at least 1 sample. */
 };
 
 /** The datastructure for a path. */
 struct path {
-	enum state state;			/**< Path state. */
+	enum state state;            /**< Path state. */
 
-	enum path_mode mode;		/**< Determines when this path is triggered. */
+	enum path_mode mode;        /**< Determines when this path is triggered. */
 
 	struct {
 		int nfds;
@@ -82,27 +86,27 @@ struct path {
 	struct sample *last_sample;
 	int last_sequence;
 
-	struct list sources;		/**< List of all incoming nodes (struct path_source). */
-	struct list destinations;	/**< List of all outgoing nodes (struct path_destination). */
-	struct list hooks;		/**< List of processing hooks (struct hook). */
+	struct list sources;        /**< List of all incoming nodes (struct path_source). */
+	struct list destinations;    /**< List of all outgoing nodes (struct path_destination). */
+	struct list hooks;        /**< List of processing hooks (struct hook). */
 
 	struct task timeout;
 
-	double rate;			/**< A timeout for */
-	int enabled;			/**< Is this path enabled. */
-	int poll;			/**< Weather or not to use poll(2). */
-	int reverse;			/**< This path as a matching reverse path. */
-	int builtin;			/**< This path should use built-in hooks by default. */
-	int queuelen;			/**< The queue length for each path_destination::queue */
-	int samplelen;			/**< Will be calculated based on path::sources.mappings */
+	double rate;            /**< A timeout for */
+	int enabled;            /**< Is this path enabled. */
+	int poll;            /**< Weather or not to use poll(2). */
+	int reverse;            /**< This path as a matching reverse path. */
+	int builtin;            /**< This path should use built-in hooks by default. */
+	int queuelen;            /**< The queue length for each path_destination::queue */
+	int samplelen;            /**< Will be calculated based on path::sources.mappings */
 
-	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
+	char *_name;            /**< Singleton: A string which is used to print this path to screen. */
 
-	struct bitset mask;		/**< A mask of path_sources which are enabled for poll(). */
-	struct bitset received;		/**< A mask of path_sources for which we already received samples. */
+	struct bitset mask;        /**< A mask of path_sources which are enabled for poll(). */
+	struct bitset received;        /**< A mask of path_sources for which we already received samples. */
 
-	pthread_t tid;			/**< The thread id for this path. */
-	json_t *cfg;			/**< A JSON object containing the configuration of the path. */
+	pthread_t tid;            /**< The thread id for this path. */
+	json_t *cfg;            /**< A JSON object containing the configuration of the path. */
 };
 
 /** Initialize internal data structures. */
@@ -150,7 +154,7 @@ void path_print_stats(struct path *p);
  * @param p A pointer to the path structure.
  * @return A pointer to a string containing a textual representation of the path.
  */
-const char * path_name(struct path *p);
+const char *path_name(struct path *p);
 
 /** Reverse a path */
 int path_reverse(struct path *p, struct path *r);
@@ -167,5 +171,9 @@ int path_uses_node(struct path *p, struct node *n);
  * @retval <0 Error. Something went wrong.
  */
 int path_parse(struct path *p, json_t *cfg, struct list *nodes);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

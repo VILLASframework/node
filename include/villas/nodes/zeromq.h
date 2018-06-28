@@ -35,8 +35,12 @@
 #include <villas/list.h>
 #include <villas/io.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if ZMQ_BUILD_DRAFT_API && (ZMQ_VERSION_MAJOR > 4 || (ZMQ_VERSION_MAJOR == 4 && ZMQ_VERSION_MINOR >= 2))
-  #define ZMQ_BUILD_DISH 1
+#define ZMQ_BUILD_DISH 1
 #endif
 
 /* Forward declarations */
@@ -68,19 +72,19 @@ struct zeromq {
 	} pattern;
 
 	struct {
-		void *socket;	/**< ZeroMQ socket. */
+		void *socket;    /**< ZeroMQ socket. */
 		void *mon_socket;
 		char *endpoint;
 	} subscriber;
 
 	struct {
-		void *socket;	/**< ZeroMQ socket. */
+		void *socket;    /**< ZeroMQ socket. */
 		struct list endpoints;
 	} publisher;
 };
 
 /** @see node_type::print */
-char * zeromq_print(struct node *n);
+char *zeromq_print(struct node *n);
 
 /** @see node_type::parse */
 int zeromq_parse(struct node *n, json_t *cfg);
@@ -102,5 +106,9 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_type::write */
 int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

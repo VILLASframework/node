@@ -28,39 +28,43 @@
 
 #include <jansson.h>
 
-#define HIST_HEIGHT	(LOG_WIDTH - 55)
-#define HIST_SEQ	17
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define HIST_HEIGHT    (LOG_WIDTH - 55)
+#define HIST_SEQ    17
 
 typedef uintmax_t hist_cnt_t;
 
 /** Histogram structure used to collect statistics. */
 struct hist {
-	double resolution;	/**< The distance between two adjacent buckets. */
+	double resolution;    /**< The distance between two adjacent buckets. */
 
-	double high;		/**< The value of the highest bucket. */
-	double low;		/**< The value of the lowest bucket. */
+	double high;        /**< The value of the highest bucket. */
+	double low;        /**< The value of the lowest bucket. */
 
-	double highest;		/**< The highest value observed (may be higher than #high). */
-	double lowest;		/**< The lowest value observed (may be lower than #low). */
-	double last;		/**< The last value which has been put into the buckets */
+	double highest;        /**< The highest value observed (may be higher than #high). */
+	double lowest;        /**< The lowest value observed (may be lower than #low). */
+	double last;        /**< The last value which has been put into the buckets */
 
-	int length;		/**< The number of buckets in #data. */
+	int length;        /**< The number of buckets in #data. */
 
-	hist_cnt_t total;	/**< Total number of counted values. */
-	hist_cnt_t warmup;	/**< Number of values which are used during warmup phase. */
+	hist_cnt_t total;    /**< Total number of counted values. */
+	hist_cnt_t warmup;    /**< Number of values which are used during warmup phase. */
 
-	hist_cnt_t higher;	/**< The number of values which are higher than #high. */
-	hist_cnt_t lower;	/**< The number of values which are lower than #low. */
+	hist_cnt_t higher;    /**< The number of values which are higher than #high. */
+	hist_cnt_t lower;    /**< The number of values which are lower than #low. */
 
-	hist_cnt_t *data;	/**< Pointer to dynamically allocated array of size length. */
+	hist_cnt_t *data;    /**< Pointer to dynamically allocated array of size length. */
 
-	double _m[2], _s[2];	/**< Private variables for online variance calculation */
+	double _m[2], _s[2];    /**< Private variables for online variance calculation */
 };
 
-#define hist_last(h)	((h)->last)
-#define hist_highest(h)	((h)->highest)
-#define hist_lowest(h)	((h)->lowest)
-#define hist_total(h)	((h)->total)
+#define hist_last(h)    ((h)->last)
+#define hist_highest(h)    ((h)->highest)
+#define hist_lowest(h)    ((h)->lowest)
+#define hist_total(h)    ((h)->total)
 
 /** Initialize struct hist with supplied values and allocate memory for buckets. */
 int hist_init(struct hist *h, int buckets, hist_cnt_t warmup);
@@ -93,7 +97,7 @@ void hist_plot(struct hist *h);
  *
  * @return The string containing the dump. The caller is responsible to free() the buffer.
  */
-char * hist_dump(struct hist *h);
+char *hist_dump(struct hist *h);
 
 /** Prints Matlab struct containing all infos to file. */
 int hist_dump_matlab(struct hist *h, FILE *f);
@@ -102,4 +106,8 @@ int hist_dump_matlab(struct hist *h, FILE *f);
 int hist_dump_json(struct hist *h, FILE *f);
 
 /** Build a libjansson / JSON object of the histogram. */
-json_t * hist_json(struct hist *h);
+json_t *hist_json(struct hist *h);
+
+#ifdef __cplusplus
+}
+#endif

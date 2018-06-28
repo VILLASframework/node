@@ -26,6 +26,10 @@
 
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int rt_init(int priority, int affinity);
 
 int rt_set_affinity(int affinity);
@@ -42,5 +46,9 @@ int rt_lock_memory();
  * @reval <>0 Kernel is not patched.
  */
 int rt_is_preemptible();
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

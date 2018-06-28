@@ -33,6 +33,10 @@
 #include <villas/io.h>
 #include <villas/task.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct test_rtt;
 struct node;
@@ -41,29 +45,29 @@ struct sample;
 struct test_rtt_case {
 	double rate;
 	int values;
-	int limit;		/**< The number of samples we take per test. */
+	int limit;        /**< The number of samples we take per test. */
 
 	char *filename;
 };
 
 struct test_rtt {
-	struct task task;	/**< The periodic task for test_rtt_read() */
-	struct io io;		/**< The format of the output file */
+	struct task task;    /**< The periodic task for test_rtt_read() */
+	struct io io;        /**< The format of the output file */
 	struct format_type *format;
 
-	double cooldown;	/**< Number of seconds to wait beween tests. */
+	double cooldown;    /**< Number of seconds to wait beween tests. */
 
-	int current;		/**< Index of current test in test_rtt::cases */
+	int current;        /**< Index of current test in test_rtt::cases */
 	int counter;
 
-	struct list cases;	/**< List of test cases */
+	struct list cases;    /**< List of test cases */
 
-	char *output;	/**< The directory where we place the results. */
-	char *prefix;	/**< An optional prefix in the filename. */
+	char *output;    /**< The directory where we place the results. */
+	char *prefix;    /**< An optional prefix in the filename. */
 };
 
 /** @see node_type::print */
-char * test_rtt_print(struct node *n);
+char *test_rtt_print(struct node *n);
 
 /** @see node_type::parse */
 int test_rtt_parse(struct node *n, json_t *cfg);
@@ -79,5 +83,9 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_type::write */
 int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

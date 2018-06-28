@@ -25,6 +25,10 @@
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /* Forward declarations */
 struct sample;
 struct io;
@@ -104,3 +108,7 @@ struct format_type {
 };
 
 struct format_type * format_type_lookup(const char *name);
+
+#ifdef __cplusplus
+}
+#endif

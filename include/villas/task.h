@@ -28,27 +28,31 @@
 
 #include <time.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** We can choose between two periodic task implementations */
 //#define PERIODIC_TASK_IMPL NANOSLEEP
-#define TIMERFD		1
-#define CLOCK_NANOSLEEP	2
-#define NANOSLEEP	3
+#define TIMERFD        1
+#define CLOCK_NANOSLEEP    2
+#define NANOSLEEP    3
 
 #if defined(__MACH__)
-  #define PERIODIC_TASK_IMPL NANOSLEEP
+#define PERIODIC_TASK_IMPL NANOSLEEP
 #elif defined(__linux__)
-  #define PERIODIC_TASK_IMPL TIMERFD
+#define PERIODIC_TASK_IMPL TIMERFD
 #else
-  #error "Platform not supported"
+#error "Platform not supported"
 #endif
 
 struct task {
-	int clock;			/**< CLOCK_{MONOTONIC,REALTIME} */
+	int clock;            /**< CLOCK_{MONOTONIC,REALTIME} */
 
-	struct timespec period;		/**< The period of periodic invations of this task */
-	struct timespec next;		/**< The timer value for the next invocation */
+	struct timespec period;        /**< The period of periodic invations of this task */
+	struct timespec next;        /**< The timer value for the next invocation */
 #if PERIODIC_TASK_IMPL == TIMERFD
-	int fd;				/**< The timerfd_create(2) file descriptior. */
+	int fd;                /**< The timerfd_create(2) file descriptior. */
 #endif
 };
 
@@ -73,3 +77,8 @@ int task_set_rate(struct task *t, double rate);
  * Note: currently not supported on all platforms.
  */
 int task_fd(struct task *t);
+
+#ifdef __cplusplus
+}
+#endif
+

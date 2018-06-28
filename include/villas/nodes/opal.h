@@ -41,6 +41,10 @@
 #include "AsyncApi.h"
 #include "OpalGenAsyncParamCtrl.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct opal {
 	int reply;
 	int mode;
@@ -68,7 +72,7 @@ int opal_deinit();
 int opal_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::print */
-char * opal_print(struct node *n);
+char *opal_print(struct node *n);
 
 /** Print global settings of the OPAL node type. */
 int opal_print_global();
@@ -84,5 +88,9 @@ int opal_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_type::write */
 int opal_write(struct node *n, struct sample *smps[], unsigned cnt);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

@@ -25,18 +25,22 @@
  * @{
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct table_column {
-	int width;	/**< Width of the column. */
-	char *title;	/**< The title as shown in the table header. */
-	char *format;	/**< The format which is used to print the table rows. */
-	char *unit;	/**< An optional unit which will be shown in the table header. */
+	int width;    /**< Width of the column. */
+	char *title;    /**< The title as shown in the table header. */
+	char *format;    /**< The format which is used to print the table rows. */
+	char *unit;    /**< An optional unit which will be shown in the table header. */
 
 	enum {
 		TABLE_ALIGN_LEFT,
 		TABLE_ALIGN_RIGHT
 	} align;
 
-	int _width;	/**< The real width of this column. Calculated by table_header() */
+	int _width;    /**< The real width of this column. Calculated by table_header() */
 };
 
 struct table {
@@ -53,5 +57,9 @@ void table_row(struct table *t, ...);
 
 /** Print the table footer. */
 void table_footer(struct table *t);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

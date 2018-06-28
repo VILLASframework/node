@@ -29,33 +29,37 @@
 #include "log.h"
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Global configuration */
 struct super_node {
-	int priority;		/**< Process priority (lower is better) */
-	int affinity;		/**< Process affinity of the server and all created threads */
-	int hugepages;		/**< Number of hugepages to reserve. */
-	double stats;		/**< Interval for path statistics. Set to 0 to disable them. */
+    int priority;        /**< Process priority (lower is better) */
+    int affinity;        /**< Process affinity of the server and all created threads */
+    int hugepages;        /**< Number of hugepages to reserve. */
+    double stats;        /**< Interval for path statistics. Set to 0 to disable them. */
 
-	struct list nodes;
-	struct list paths;
-	struct list plugins;
+    struct list nodes;
+    struct list paths;
+    struct list plugins;
 
-	struct log log;
-	struct api api;
-	struct web web;
+    struct log log;
+    struct api api;
+    struct web web;
 
-	char *name;		/**< A name of this super node. Usually the hostname. */
+    char *name;        /**< A name of this super node. Usually the hostname. */
 
-	enum state state;
+    enum state state;
 
-	char *uri;		/**< URI of configuration */
+    char *uri;        /**< URI of configuration */
 
-	json_t *cfg;		/**< JSON representation of the configuration. */
+    json_t *cfg;        /**< JSON representation of the configuration. */
 };
 
 /* Compatibility with libconfig < 1.5 */
 #if (LIBCONFIG_VER_MAJOR <= 1) && (LIBCONFIG_VER_MINOR < 5)
-  #define config_setting_lookup config_lookup_from
+#define config_setting_lookup config_lookup_from
 #endif
 
 /** Inititalize configuration object before parsing the configuration. */
@@ -83,3 +87,7 @@ int super_node_stop(struct super_node *sn);
 
 /** Desctroy configuration object. */
 int super_node_destroy(struct super_node *sn);
+
+#ifdef __cplusplus
+}
+#endif

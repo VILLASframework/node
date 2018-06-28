@@ -27,6 +27,10 @@
 
 #include "queue.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 enum queue_signalled_flags {
 	/* Mode */
 	QUEUE_SIGNALLED_AUTO		= (0 << 0), /**< We will choose the best method available on the platform */
@@ -80,3 +84,7 @@ int queue_signalled_close(struct queue_signalled *qs);
 
 /** Returns a file descriptor which can be used with poll / select to wait for new data */
 int queue_signalled_fd(struct queue_signalled *qs);
+
+#ifdef __cplusplus
+}
+#endif

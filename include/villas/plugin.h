@@ -31,6 +31,10 @@
 #include "node_type.h"
 #include "format_type.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /** @todo This is ugly as hell and broken on OS X / Clang anyway. */
 #define REGISTER_PLUGIN(p)					\
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {\
@@ -95,3 +99,7 @@ void plugin_dump(enum plugin_type type);
 
 /** Find registered and loaded plugin with given name and type. */
 struct plugin * plugin_lookup(enum plugin_type type, const char *name);
+
+#ifdef __cplusplus
+}
+#endif

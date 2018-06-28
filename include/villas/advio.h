@@ -28,6 +28,10 @@
 
 #include "crypt.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 struct advio {
 	CURL *curl;
 	FILE *file;
@@ -81,3 +85,7 @@ void arewind(AFILE *file);
 int adownload(AFILE *af, int resume);
 
 int aupload(AFILE *af, int resume);
+
+#ifdef __cplusplus
+}
+#endif

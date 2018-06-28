@@ -26,6 +26,7 @@
  * @{
  */
 
+
 #pragma once
 
 #include <sys/socket.h>
@@ -37,6 +38,10 @@
 #include "list.h"
 #include "queue.h"
 #include "common.h"
+
+#ifdef __cplusplus
+extern "C"{
+#endif
 
 struct node_direction {
 	int enabled;
@@ -157,5 +162,9 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt);
 int node_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 int node_fd(struct node *n);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

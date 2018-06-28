@@ -24,6 +24,10 @@
 
 #include <jansson.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct sample;
 
@@ -32,3 +36,7 @@ int json_sscan(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 
 int json_print(struct io *io, struct sample *smps[], unsigned cnt);
 int json_scan(struct io *io, struct sample *smps[], unsigned cnt);
+
+#ifdef __cplusplus
+}
+#endif

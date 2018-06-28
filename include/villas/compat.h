@@ -22,12 +22,24 @@
 
 #include <jansson.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if JANSSON_VERSION_HEX < 0x020A00
 size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags);
 #endif
 
+#ifdef __cplusplus
+}
+#endif
+
 #ifdef __MACH__
   #include <libkern/OSByteOrder.h>
+
+  #ifdef __cplusplus
+  extern "C"{
+  #endif
 
   #define le16toh(x) OSSwapLittleToHostInt16(x)
   #define le32toh(x) OSSwapLittleToHostInt32(x)
@@ -42,4 +54,8 @@ size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags);
   #define htobe16(x) OSSwapHostToBigInt16(x)
   #define htobe32(x) OSSwapHostToBigInt32(x)
   #define htobe64(x) OSSwapHostToBigInt64(x)
+
+  #ifdef __cplusplus
+  }
+  #endif
 #endif /* __MACH__ */

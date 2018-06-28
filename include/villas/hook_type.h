@@ -39,6 +39,10 @@
 
 #include <jansson.h>
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /* Forward declarations */
 struct hook;
 struct sample;
@@ -74,3 +78,6 @@ struct hook_type {
 
 struct hook_type * hook_type_lookup(const char *name);
 
+#ifdef __cplusplus
+}
+#endif

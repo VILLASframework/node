@@ -19,6 +19,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 #define LIST_CHUNKSIZE		16
 
 /** Static list initialization */
@@ -120,3 +124,7 @@ int list_set(struct list *l, int index, void *value);
  * @retval >=0 Entry \p value was found at returned index.
  */
 ssize_t list_index(struct list *l, void *value);
+
+#ifdef __cplusplus
+}
+#endif

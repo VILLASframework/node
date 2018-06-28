@@ -33,6 +33,10 @@
 #include <villas/list.h>
 #include <villas/io.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** The maximum length of a packet which contains stuct msg. */
 #define NANOMSG_MAX_PACKET_LEN 1500
 
@@ -55,7 +59,7 @@ struct nanomsg {
 };
 
 /** @see node_type::print */
-char * nanomsg_print(struct node *n);
+char *nanomsg_print(struct node *n);
 
 /** @see node_type::parse */
 int nanomsg_parse(struct node *n, json_t *cfg);
@@ -71,5 +75,9 @@ int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_type::write */
 int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

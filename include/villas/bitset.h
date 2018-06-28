@@ -26,6 +26,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct bitset {
 	char *set;
 	size_t dimension;
@@ -62,4 +66,8 @@ int bitset_test(struct bitset *b, size_t bit);
 int bitset_cmp(struct bitset *a, struct bitset *b);
 
 /** Return an human readable representation of the bit set */
-char * bitset_dump(struct bitset *b);
+char *bitset_dump(struct bitset *b);
+
+#ifdef __cplusplus
+}
+#endif

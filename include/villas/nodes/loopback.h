@@ -32,6 +32,10 @@
 #include <villas/queue_signalled.h>
 #include <villas/pool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct node;
 struct sample;
@@ -47,7 +51,7 @@ struct loopback {
 };
 
 /** @see node_type::print */
-char * loopback_print(struct node *n);
+char *loopback_print(struct node *n);
 
 /** @see node_type::parse */
 int loopback_parse(struct node *n, json_t *cfg);
@@ -63,5 +67,9 @@ int loopback_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_type::write */
 int loopback_write(struct node *n, struct sample *smps[], unsigned cnt);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

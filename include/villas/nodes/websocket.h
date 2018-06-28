@@ -38,56 +38,60 @@
 #include <villas/io.h>
 #include <villas/config.h>
 
-#define DEFAULT_WEBSOCKET_QUEUELEN	(DEFAULT_QUEUELEN * 64)
-#define DEFAULT_WEBSOCKET_SAMPLELEN	DEFAULT_SAMPLELEN
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define DEFAULT_WEBSOCKET_QUEUELEN    (DEFAULT_QUEUELEN * 64)
+#define DEFAULT_WEBSOCKET_SAMPLELEN    DEFAULT_SAMPLELEN
 
 /* Forward declaration */
 struct lws;
 
 /** Internal data per websocket node */
 struct websocket {
-	struct list destinations;		/**< List of websocket servers connect to in client mode (struct websocket_destination). */
+    struct list destinations;        /**< List of websocket servers connect to in client mode (struct websocket_destination). */
 
-	struct pool pool;
-	struct queue_signalled queue;		/**< For samples which are received from WebSockets */
+    struct pool pool;
+    struct queue_signalled queue;        /**< For samples which are received from WebSockets */
 };
 
 /* Internal datastructures */
 struct websocket_connection {
-	enum websocket_connection_state {
-		WEBSOCKET_CONNECTION_STATE_DESTROYED,
-		WEBSOCKET_CONNECTION_STATE_INITIALIZED,
-		WEBSOCKET_CONNECTION_STATE_CONNECTING,
-		WEBSOCKET_CONNECTION_STATE_RECONNECTING,
-		WEBSOCKET_CONNECTION_STATE_ESTABLISHED,
-		WEBSOCKET_CONNECTION_STATE_SHUTDOWN,
-		WEBSOCKET_CONNECTION_STATE_ERROR
-	} state;				/**< The current status of this connection. */
+    enum websocket_connection_state {
+        WEBSOCKET_CONNECTION_STATE_DESTROYED,
+        WEBSOCKET_CONNECTION_STATE_INITIALIZED,
+        WEBSOCKET_CONNECTION_STATE_CONNECTING,
+        WEBSOCKET_CONNECTION_STATE_RECONNECTING,
+        WEBSOCKET_CONNECTION_STATE_ESTABLISHED,
+        WEBSOCKET_CONNECTION_STATE_SHUTDOWN,
+        WEBSOCKET_CONNECTION_STATE_ERROR
+    } state;                /**< The current status of this connection. */
 
-	enum {
-		WEBSOCKET_MODE_CLIENT,
-		WEBSOCKET_MODE_SERVER,
-	} mode;
+    enum {
+        WEBSOCKET_MODE_CLIENT,
+        WEBSOCKET_MODE_SERVER,
+    } mode;
 
-	struct lws *wsi;
-	struct node *node;
-	struct io io;
-	struct queue queue;			/**< For samples which are sent to the WebSocket */
+    struct lws *wsi;
+    struct node *node;
+    struct io io;
+    struct queue queue;            /**< For samples which are sent to the WebSocket */
 
-	struct format_type *format;
-	struct websocket_destination *destination;
+    struct format_type *format;
+    struct websocket_destination *destination;
 
-	struct {
-		struct buffer recv;		/**< A buffer for reconstructing fragmented messags. */
-		struct buffer send;		/**< A buffer for contsructing messages before calling lws_write() */
-	} buffers;
+    struct {
+        struct buffer recv;        /**< A buffer for reconstructing fragmented messags. */
+        struct buffer send;        /**< A buffer for contsructing messages before calling lws_write() */
+    } buffers;
 
-	char *_name;
+    char *_name;
 };
 
 struct websocket_destination {
-	char *uri;
-	struct lws_client_connect_info info;
+    char *uri;
+    struct lws_client_connect_info info;
 };
 
 int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
@@ -112,5 +116,9 @@ int websocket_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_type::write */
 int websocket_write(struct node *n, struct sample *smps[], unsigned cnt);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

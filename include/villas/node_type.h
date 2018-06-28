@@ -24,6 +24,10 @@
  * @{
  *********************************************************************************/
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 #pragma once
 
 #include <jansson.h>
@@ -167,5 +171,9 @@ int node_type_stop(struct node_type *vt);
 const char * node_type_name(struct node_type *vt);
 
 struct node_type * node_type_lookup(const char *name);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

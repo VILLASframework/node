@@ -33,19 +33,23 @@
 #include <villas/node.h>
 #include <villas/task.h>
 
-#define FILE_MAX_PATHLEN	512
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define FILE_MAX_PATHLEN    512
 
 struct file {
-	struct io io;			/**< Format and file IO */
+	struct io io;            /**< Format and file IO */
 	struct format_type *format;
 
-	char *uri_tmpl;			/**< Format string for file name. */
-	char *uri;			/**< Real file name. */
-	char *mode;			/**< File access mode. */
+	char *uri_tmpl;            /**< Format string for file name. */
+	char *uri;            /**< Real file name. */
+	char *mode;            /**< File access mode. */
 
-	int flush;			/**< Flush / upload file contents after each write. */
-	struct task task;		/**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
-	double rate;			/**< The read rate. */
+	int flush;            /**< Flush / upload file contents after each write. */
+	struct task task;        /**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
+	double rate;            /**< The read rate. */
 
 	enum epoch_mode {
 		FILE_EPOCH_DIRECT,
@@ -53,21 +57,21 @@ struct file {
 		FILE_EPOCH_RELATIVE,
 		FILE_EPOCH_ABSOLUTE,
 		FILE_EPOCH_ORIGINAL
-	} epoch_mode;			/**< Specifies how file::offset is calculated. */
+	} epoch_mode;            /**< Specifies how file::offset is calculated. */
 
 	enum {
-		FILE_EOF_EXIT,		/**< Terminate when EOF is reached. */
-		FILE_EOF_REWIND,	/**< Rewind the file when EOF is reached. */
-		FILE_EOF_WAIT		/**< Blocking wait when EOF is reached. */
+		FILE_EOF_EXIT,        /**< Terminate when EOF is reached. */
+		FILE_EOF_REWIND,    /**< Rewind the file when EOF is reached. */
+		FILE_EOF_WAIT        /**< Blocking wait when EOF is reached. */
 	} eof;
 
-	struct timespec first;		/**< The first timestamp in the file file::{read,write}::uri */
-	struct timespec epoch;		/**< The epoch timestamp from the configuration. */
-	struct timespec offset;		/**< An offset between the timestamp in the input file and the current time */
+	struct timespec first;        /**< The first timestamp in the file file::{read,write}::uri */
+	struct timespec epoch;        /**< The epoch timestamp from the configuration. */
+	struct timespec offset;        /**< An offset between the timestamp in the input file and the current time */
 };
 
 /** @see node_type::print */
-char * file_print(struct node *n);
+char *file_print(struct node *n);
 
 /** @see node_type::parse */
 int file_parse(struct node *n, json_t *cfg);
@@ -84,4 +88,7 @@ int file_read(struct node *n, struct sample *smps[], unsigned cnt);
 /** @see node_type::write */
 int file_write(struct node *n, struct sample *smps[], unsigned cnt);
 
+#ifdef __cplusplus
+}
+#endif
 /** @} */

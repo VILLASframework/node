@@ -29,6 +29,10 @@
 #include "common.h"
 #include "list.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct stats;
 struct node;
@@ -38,8 +42,8 @@ struct list;
 struct mapping_entry {
 	struct node *node;
 
-	int offset;			/**< Offset of this mapping entry within sample::data */
-	int length;			/**< The number of values which is covered by this mapping entry. */
+	int offset;            /**< Offset of this mapping entry within sample::data */
+	int length;            /**< The number of values which is covered by this mapping entry. */
 
 	enum {
 		MAPPING_TYPE_DATA,
@@ -84,12 +88,17 @@ struct mapping_entry {
 	};
 };
 
-int mapping_remap(struct list *m, struct sample *remapped, struct sample *original, struct stats *s);
+int
+mapping_remap(struct list *m, struct sample *remapped, struct sample *original, struct stats *s);
 
-int mapping_update(struct mapping_entry *e, struct sample *remapped, struct sample *new, struct stats *s);
+int mapping_update(struct mapping_entry *e, struct sample *remapped, struct sample * new , struct stats *s ) ;
 
 int mapping_parse(struct mapping_entry *e, json_t *cfg, struct list *nodes);
 
 int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nodes);
 
 int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes);
+
+#ifdef __cplusplus
+}
+#endif

@@ -35,6 +35,10 @@
 #include <villas/list.h>
 #include <villas/io.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct format_type;
 
@@ -64,7 +68,7 @@ struct amqp {
 };
 
 /** @see node_type::print */
-char * amqp_print(struct node *n);
+char *amqp_print(struct node *n);
 
 /** @see node_type::parse */
 int amqp_parse(struct node *n, json_t *json);
@@ -80,5 +84,9 @@ int amqp_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_type::write */
 int amqp_write(struct node *n, struct sample *smps[], unsigned cnt);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

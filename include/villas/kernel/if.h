@@ -33,6 +33,10 @@
 
 #include <villas/list.h>
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 #define IF_IRQ_MAX	3	/**< Maxmimal number of IRQs of an interface */
 
 #ifndef SO_MARK
@@ -121,4 +125,8 @@ int if_get_irqs(struct interface *i);
  */
 int if_set_affinity(struct interface *i, int affinity);
 
+
+#ifdef __cplusplus
+}
+#endif
 /** @} */
