@@ -63,7 +63,6 @@ struct infiniband {
         struct ibv_cq *cq;
         struct ibv_comp_channel *comp_channel;
     } ctx;
-
     /* Work Completion related */
     struct poll_s {
         enum poll_mode_e poll_mode;
@@ -76,6 +75,8 @@ struct infiniband {
 
         /* Poll thread */
         pthread_t cq_poller_thread;
+
+        int stopThread;
     } poll;
 
     /* Connection specific variables */
@@ -86,6 +87,9 @@ struct infiniband {
         int timeout;
 
         struct r_addr_key_s *r_addr_key;
+
+        pthread_t stop_thread;
+        int rdma_disconnect_called;
     } conn;
 
     /* Memory related variables */
@@ -103,7 +107,6 @@ struct infiniband {
     /* Misc settings */
     int is_source;
     int cq_size;
-
 };
 
 /** @see node_type::reverse */
