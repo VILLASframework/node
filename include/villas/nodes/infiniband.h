@@ -90,6 +90,8 @@ struct infiniband {
 
         pthread_t stop_thread;
         int rdma_disconnect_called;
+
+        int used_recv_wrs;
     } conn;
 
     /* Memory related variables */
