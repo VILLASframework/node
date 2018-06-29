@@ -544,6 +544,11 @@ int node_fd(struct node *n)
 	return n->_vt->fd ? n->_vt->fd(n) : -1;
 }
 
+struct memtype * node_memtype(struct node *n, struct memtype *parent)
+{
+	return n->_vt->memtype ? n->_vt->memtype(n) : &memtype_huge;
+}
+
 int node_parse_list(struct list *list, json_t *cfg, struct list *all)
 {
 	struct node *node;

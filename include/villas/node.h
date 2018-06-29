@@ -158,4 +158,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 int node_fd(struct node *n);
 
+struct memtype * node_memtype(struct node *n, struct memtype *parent);
+
+
 /** @} */

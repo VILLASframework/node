@@ -30,6 +30,7 @@
 
 #include "list.h"
 #include "common.h"
+#include "memory.h"
 
 /* Forward declarations */
 struct node;
@@ -149,6 +150,9 @@ struct node_type {
 
 	/** Return a file descriptor which can be used by poll / select to detect the availability of new data. */
 	int (*fd)(struct node *n);
+
+	/** */
+	struct memtype * (*memtype)(struct node *n, struct memtype *parent);
 };
 
 /** Initialize all registered node type subsystems.
