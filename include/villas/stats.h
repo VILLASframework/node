@@ -21,8 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#ifndef _STATS_H_
-#define _STATS_H_
+#pragma once
 
 #include <stdint.h>
 #include <jansson.h>
@@ -90,7 +89,6 @@ void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose);
 
 enum stats_id stats_lookup_id(const char *name);
 
-#endif /* _STATS_H_ */
 #ifdef __cplusplus
 }
 #endif

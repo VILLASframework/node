@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#pragma once
+
 #include <jansson.h>
 
 #ifdef __cplusplus
@@ -30,16 +32,8 @@ extern "C" {
 size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags);
 #endif
 
-#ifdef __cplusplus
-}
-#endif
-
 #ifdef __MACH__
   #include <libkern/OSByteOrder.h>
-
-  #ifdef __cplusplus
-  extern "C"{
-  #endif
 
   #define le16toh(x) OSSwapLittleToHostInt16(x)
   #define le32toh(x) OSSwapLittleToHostInt32(x)
@@ -54,8 +48,8 @@ size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags);
   #define htobe16(x) OSSwapHostToBigInt16(x)
   #define htobe32(x) OSSwapHostToBigInt32(x)
   #define htobe64(x) OSSwapHostToBigInt64(x)
-
-  #ifdef __cplusplus
-  }
-  #endif
 #endif /* __MACH__ */
+
+#ifdef __cplusplus
+}
+#endif

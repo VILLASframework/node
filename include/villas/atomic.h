@@ -21,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#pragma once
 
 #include "common.h"
 
@@ -38,4 +39,4 @@ typedef std::atomic<enum state> atomic_state;
 
 typedef _Atomic enum state atomic_state;
 
-#endif
+#endif /* __cplusplus */
