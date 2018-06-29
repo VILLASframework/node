@@ -16,19 +16,16 @@ VILLASnode is a client/server application to connect simulation equipment and so
 by using protcols such as:
 
  - IEEE 802.2 Ethernet / IP / UDP,
- - ZeroMQ,
- - nanomsg,
+ - ZeroMQ & nanomsg,
+ - MQTT & AMQP
  - WebSockets
  - Shared Memory
  - Files
+ - IEC 61850 Sampled Values / GOOSE
+ - Analog/Digital IO via Comedi drivers
+ - Infiniband (ibverbs)
 
-Planned:
-
- - IEC 61850-9-2 Sampled Values,
- - IEC 61850-8-1 GOOSE,
- - AMQP
-
-It's designed with a focus on very low latency to achieve almost realtime exchange of simulation data.
+It's designed with a focus on very low latency to achieve real-time exchange of simulation data.
 VILLASnode is used in distributed- and co-simulation scenarios and developed for the field of power grid simulation at the EON Energy Research Center in Aachen, Germany.
 
 ## Documentation
@@ -37,7 +34,7 @@ User documentation is available here: <https://villas.fein-aachen.org/doc/node.h
 
 ## Copyright
 
-2017, Institute for Automation of Complex Power Systems, EONERC  
+2018, Institute for Automation of Complex Power Systems, EONERC  
 
 ## License
 
