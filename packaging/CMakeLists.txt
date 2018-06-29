@@ -44,10 +44,12 @@ add_custom_target(deploy-rpm
 configure_file(
 	${CMAKE_CURRENT_SOURCE_DIR}/libvillas.pc.in
 	${CMAKE_CURRENT_BINARY_DIR}/libvillas.pc
+	@ONLY
 )
 
 install(
 	FILES ${CMAKE_CURRENT_BINARY_DIR}/libvillas.pc
+	COMPONENT devel
 	DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig
 )
 

@@ -23,7 +23,7 @@
 set(DOCKER_FILE Dockerfile)
 set(DOCKER_IMAGE villas/node)
 set(DOCKER_TAG ${GIT_BRANCH})
-set(DOCKER_RUN_OPTS "--interactive --tty --publish 80:80 --publish 443:443 --publish 12000:12000/udp --publish 12001:12001/udp --privileged --security-opt seccomp:unconfined --volume \"${CMAKE_SOURCE_DIR}:/villas\"")
+set(DOCKER_RUN_OPTS --interactive --tty --publish 80:80 --publish 443:443 --publish 12000:12000/udp --publish 12001:12001/udp --privileged --security-opt seccomp:unconfined --volume \"${CMAKE_SOURCE_DIR}:/villas\")
 
 foreach(SUFFIX app dev dev-centos dev-ubuntu)
 	add_custom_target(deploy-docker-${SUFFIX}
@@ -56,6 +56,7 @@ endforeach()
 add_custom_target(docker DEPENDS docker-app
 	COMMAND docker tag ${DOCKER_IMAGE}-app:${DOCKER_TAG} ${DOCKER_IMAGE}:${DOCKER_TAG}
 	COMMAND docker tag ${DOCKER_IMAGE}-app:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+	DEPENDS docker-dev
 )
 
 add_custom_target(deploy-docker DEPENDS docker-app

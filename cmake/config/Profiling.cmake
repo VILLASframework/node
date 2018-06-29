@@ -51,8 +51,4 @@ mark_as_advanced(
     CMAKE_SHARED_LINKER_FLAGS_PROFILING
 )
 
-if(CMAKE_BUILD_TYPE STREQUAL "Profiling")
-    string(APPEND VARIANTS "-profile")
-endif()
-
 	

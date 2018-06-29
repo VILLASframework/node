@@ -22,6 +22,6 @@
 
 install(
 	DIRECTORY socket/
+	COMPONENT bin
 	DESTINATION share/villas/node/web
-	COMPONENT runtime
 )

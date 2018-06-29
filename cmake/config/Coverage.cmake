@@ -53,6 +53,4 @@ mark_as_advanced(
 
 if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
     target_link_libraries("gcov")
-
-	string(APPEND VARIANTS "-coverage")
 endif()

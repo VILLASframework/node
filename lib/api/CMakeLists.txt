@@ -43,3 +43,14 @@ set(API_SRC
 add_library(villas-api SHARED ${API_SRC})
 target_include_directories(villas-api PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas-api PUBLIC ${LIBRARIES})
+
+#set_target_properties(villas-api PROPERTIES
+#    VERSION ${PROJECT_VERSION}
+#    SOVERSION ${PROJECT_SOVERSION}
+#)
+
+install(
+    TARGETS villas-api
+    COMPONENT lib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)

@@ -27,6 +27,7 @@ set(FORMAT_SRC
     villas_human.c
     csv.c
     raw.c
+    msg.c
 )
 
 set(INCLUDE_DIRS
@@ -38,21 +39,19 @@ set(LIBRARIES
 )
 
 # Enable Google Protobuf format
-if(Protobuf_FOUND)
+if(ProtobufC_FOUND)
     list(APPEND FORMAT_SRC
         protobuf.c
         ${CMAKE_CURRENT_BINARY_DIR}/villas.pb-c.c
     )
 
     list(APPEND INCLUDE_DIRS
-        ${Protobuf_INCLUDE_DIRS}
-        ${Protobuf_PROTOC_INCLUDE_DIRS}
+        ${PROTOBUFC_INCLUDE_DIRS}
         ${CMAKE_CURRENT_BINARY_DIR}
     )
 
     list(APPEND LIBRARIES
-        ${Protobuf_LIBRARY}
-        ${Protobuf_PROTOC_LIBRARIES}
+        ${PROTOBUFC_LIBRARIES}
     )
 
     set_source_files_properties(villas.pb-c.h villas.pb-c.c
@@ -61,7 +60,7 @@ if(Protobuf_FOUND)
     )
 
     add_custom_command(
-        COMMAND ${Protobuf_PROTOC_EXECUTABLE} --c_out=${CMAKE_CURRENT_BINARY_DIR} villas.proto
+        COMMAND ${PROTOBUFC_COMPILER} --c_out=${CMAKE_CURRENT_BINARY_DIR} villas.proto
         OUTPUT
             villas.pb-c.c
             villas.pb-c.h
@@ -73,3 +72,14 @@ endif()
 add_library(villas-formats SHARED ${FORMAT_SRC})
 target_include_directories(villas-formats PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas-formats PUBLIC ${LIBRARIES})
+
+#set_target_properties(villas-formats PROPERTIES
+#    VERSION ${PROJECT_VERSION}
+#    SOVERSION ${PROJECT_SOVERSION}
+#)
+
+install(
+    TARGETS villas-formats
+    COMPONENT lib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)

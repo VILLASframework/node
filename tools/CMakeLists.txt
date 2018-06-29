@@ -21,9 +21,10 @@
 ###################################################################################
 
 if(LIBCONFIG_FOUND)
-    list(APPEND TOOLS conf2json)
     add_executable(conf2json conf2json.c)
     target_link_libraries(conf2json PUBLIC villas)
+
+    list(APPEND TOOLS conf2json)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -32,16 +33,29 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 
     add_executable(rmsem rmsem.c)
     target_link_libraries(rmsem PUBLIC pthread rt)
+
+    list(APPEND TOOLS rmsem rmshm)
 endif()
 
 if(LIBZMQ_FOUND)
     add_executable(zmq-keygen zmq-keygen.c)
     target_include_directories(zmq-keygen PUBLIC ${LIBZMQ_INCLUDE_DIRS})
-	target_link_libraries(zmq-keygen PUBLIC PkgConfig::LIBZMQ)
+    target_link_libraries(zmq-keygen PUBLIC PkgConfig::LIBZMQ)
+    
+    list(APPEND TOOLS zmq-keygen)
 endif()
 
 install(
+    TARGETS ${TOOLS}
+    COMPONENT tools
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(
     PROGRAMS villas.sh
+    COMPONENT bin
     DESTINATION ${CMAKE_INSTALL_BINDIR}
     RENAME villas
 )

@@ -20,6 +20,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-install(DIRECTORY .
-	DESTINATION etc/villas/node/
+install(
+	DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	COMPONENT bin
+	DESTINATION etc/villas/node
+	FILES_MATCHING
+		PATTERN "*.conf"
+		PATTERN "*.json"
 )

@@ -20,9 +20,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-set(PROJECT_AUTHOR "Steffen Vogel")
-set(PROJECT_COPYRIGHT "2018, Institute for Automation of Complex Power Systems, RWTH Aachen University")
-
 set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
 set(CPACK_PACKAGE_VENDOR ${PROJECT_AUTHOR})
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "This is VILLASnode, a gateway for processing and forwardning simulation data between real-time simulators.")
@@ -31,21 +28,34 @@ set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_MAJOR_VERSION})
 set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_MINOR_VERSION})
 set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_PATCH_VERSION})
 
-set(CPACK_RPM_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_RPM_COMPONENT_INSTALL ON)
+set(CPACK_RPM_MAIN_COMPONENT "bin")
+
+set(CPACK_RPM_LIB_PACKAGE_REQUIRES "openssl libconfig libnl3 libcurl jansson libwebsockets zeromq nanomsg libiec61850 librabbitmq mosquitto comedilib")
+set(CPACK_RPM_BIN_PACKAGE_REQUIRES "libvillas")
+set(CPACK_RPM_PLUGINS_PACKAGE_REQUIRES "libvillas")
+set(CPACK_RPM_TOOLS_PACKAGE_REQUIRES "libvillas")
+set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES "libvillas")
+
+set(CPACK_RPM_PACKAGE_RELEASE_DIST ON)
 set(CPACK_RPM_PACKAGE_RELEASE ${PROJECT_RELEASE})
 set(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64")
 set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
-set(CPACK_RPM_PACKAGE_URL "http://www.fein-aachen.org/projects/dpsim/")
-set(CPACK_RPM_PACKAGE_REQUIRES "openssl libconfig libnl3 libcurl jansson libwebsockets zeromq nanomsg libiec61850 librabbitmq mosquitto comedilib")
+set(CPACK_RPM_PACKAGE_URL "http://www.fein-aachen.org/projects/villas-node/")
 set(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
 
-# As close as possible to Fedoras naming
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}.${CPACK_RPM_PACKAGE_ARCHITECTURE}")
+set(SUFFIX "${CPACK_PACKAGE_VERSION}-${CPACK_RPM_PACKAGE_RELEASE}.${CPACK_RPM_PACKAGE_ARCHITECTURE}.rpm")
+set(CPACK_RPM_FILE_NAME "villas-node-${SUFFIX}")
+set(CPACK_RPM_TOOLS_FILE_NAME    "villas-node-tools-${SUFFIX}")
+set(CPACK_RPM_PLUGINS_FILE_NAME  "villas-node-plugins-${SUFFIX}")
+set(CPACK_RPM_DOC_FILE_NAME   "villas-node-doc-${SUFFIX}")
+set(CPACK_RPM_LIB_FILE_NAME   "libvillas-${SUFFIX}")
+set(CPACK_RPM_DEVEL_FILE_NAME "libvillas-devel-${SUFFIX}")
 
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING.md")
 set(CPACK_RESOURCE_FILE_README  "${CMAKE_SOURCE_DIR}/README.md")
 
-set(CPACK_SOURCE_IGNORE_FILES "build/;\\.gitmodules;\\.git/;\\.vscode;\\.editorconfig;\\.gitlab-ci.yml;\\.(docker|git)ignore;\\.DS_Store")
+set(CPACK_SOURCE_IGNORE_FILES "build/;\\\\.gitmodules;\\\\.git/;\\\\.vscode;\\\\.editorconfig;\\\\.gitlab-ci.yml;\\\\.(docker|git)ignore;\\\\.DS_Store")
 
 if(NOT DEFINED CPACK_GENERATOR)
     set(CPACK_GENERATOR "RPM;TGZ")

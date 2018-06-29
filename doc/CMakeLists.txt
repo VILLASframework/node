@@ -20,19 +20,45 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-add_custom_target(doc
-	COMMAND doxygen ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-	DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-)
+find_package(Doxygen)
 
-configure_file(
-	Doxyfile.in
-	${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-)
+if(DOXYGEN_FOUND)
+	set(DOXYGEN_PROJECT_LOGO doc/pictures/villas_node.svg)
+	set(DOXYGEN_WARN_LOGFILE ${CMAKE_CURRENT_BINARY_DIR}/warnings.log)
+	set(DOXYGEN_TAB_SIZE 8)
+	set(DOXYGEN_OPTIMIZE_OUTPUT_FOR_C YES)
+	set(DOXYGEN_LAYOUT_FILE doc/theme/layout.xml)
+	set(DOXYGEN_RECURSIVE YES)
+	set(DOXYGEN_EXAMPLE_PATH etc/)
+	set(DOXYGEN_EXAMPLE_RECURSIVE YES)
+	set(DOXYGEN_IMAGE_PATH doc/pictures)
+	set(DOXYGEN_USE_MDFILE_AS_MAINPAGE README.md)
+	set(DOXYGEN_SOURCE_BROWSER YES)
+	set(DOXYGEN_REFERENCED_BY_RELATION YES)
+	set(DOXYGEN_HTML_HEADER doc/theme/header.html)
+	set(DOXYGEN_HTML_EXTRA_STYLESHEET doc/theme/style.css)
+	set(DOXYGEN_HTML_EXTRA_FILES doc/pictures/acs_eonerc_logo.svg)
+	set(DOXYGEN_HTML_COLORSTYLE_HUE 209)
+	set(DOXYGEN_HTML_COLORSTYLE_SAT 88)
+	set(DOXYGEN_HTML_TIMESTAMP YES)
+	set(DOXYGEN_HTML_DYNAMIC_SECTIONS YES)
+	set(DOXYGEN_GENERATE_TREEVIEW YES)
+	set(DOXYGEN_TREEVIEW_WIDTH 280)
+	set(DOXYGEN_UML_LOOK YES)
+	set(DOXYGEN_CALL_GRAPH YES)
+	set(DOXYGEN_CALLER_GRAPH YES)
+	set(DOXYGEN_DOT_IMAGE_FORMAT svg)
+	set(DOXYGEN_INTERACTIVE_SVG YES)
+	set(DOXYGEN_DIAFILE_DIRS doc/figures/)
 
-install(
-	DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html
-	DESTINATION share/villas/node/doc
-	COMPONENT doc
-)
+	doxygen_add_docs(doc
+		README.md CONTRIBUTING.md COPYING.md src/ lib/ tests/ include/ doc/
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+	)
+
+	install(
+		DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html
+		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/villas/node
+		COMPONENT doc
+	)
+endif()

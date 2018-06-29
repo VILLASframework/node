@@ -27,6 +27,8 @@ add_executable(villas-node node.c)
 add_executable(villas-test-rtt test-rtt.c)
 add_executable(villas-test-shmem test-shmem.c)
 
+set(SRCS )
+
 if(WITH_IO)
     add_executable(villas-test-cmp test-cmp.c)
     
@@ -44,5 +46,6 @@ endif()
 
 install(
     TARGETS ${BUILDSYSTEM_TARGETS}
+    COMPONENT bin
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

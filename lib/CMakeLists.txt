@@ -129,17 +129,32 @@ add_library(villas SHARED ${LIB_SRC})
 target_include_directories(villas PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas PUBLIC ${LIBRARIES})
 
-set_target_properties(villas PROPERTIES
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_SOVERSION}
+#set_target_properties(villas PROPERTIES
+#    VERSION ${PROJECT_VERSION}
+#    SOVERSION ${PROJECT_SOVERSION}
+#)
+
+install(
+    TARGETS villas
+    EXPORT VILLASNodeConfig
+    COMPONENT lib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
-install(TARGETS villas EXPORT VILLASNodeConfig
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(
+    DIRECTORY ../include/villas/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/villas
+    COMPONENT devel
+    FILES_MATCHING
+        PATTERN "*.h"
+)
 
-install(DIRECTORY ../include/villas/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/villas/)
+#install(
+#    EXPORT VILLASNodeConfig
+#   DESTINATION share/VILLASNode/cmake
+#)
 
-#install(EXPORT VILLASNodeConfig DESTINATION share/VILLASNode/cmake)
-#export(TARGETS villas FILE VILLASNodeConfig.cmake)
+#export(
+#    TARGETS villas
+#    FILE VILLASNodeConfig.cmake
+#)

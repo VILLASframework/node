@@ -126,3 +126,14 @@ endif()
 add_library(villas-nodes SHARED ${NODE_SRC})
 target_include_directories(villas-nodes PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas-nodes PUBLIC ${LIBRARIES})
+
+#set_target_properties(villas-nodes PROPERTIES
+#    VERSION ${PROJECT_VERSION}
+#    SOVERSION ${PROJECT_SOVERSION}
+#)
+
+install(
+    TARGETS villas-nodes
+    COMPONENT lib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)

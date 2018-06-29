@@ -53,3 +53,14 @@ endif()
 add_library(villas-hooks SHARED ${HOOK_SRC})
 target_include_directories(villas-hooks PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas-hooks PUBLIC ${LIBRARIES})
+
+#set_target_properties(villas-hooks PROPERTIES
+#    VERSION ${PROJECT_VERSION}
+#    SOVERSION ${PROJECT_SOVERSION}
+#)
+
+install(
+    TARGETS villas-hooks
+    COMPONENT lib
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)

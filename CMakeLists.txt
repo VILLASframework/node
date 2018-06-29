@@ -20,7 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.3)
 
 project(VILLASnode C CXX)
 
@@ -38,9 +38,10 @@ include(FindPkgConfig)
 include(CheckIncludeFile)
 include(FeatureSummary)
 include(CheckCCompilerFlag)
-#include(CheckCxxCompilerFlag)
+include(CheckCXXCompilerFlag)
 include(GNUInstallDirs)
-include(VILLASnodePackaging)
+
+set(CMAKE_SKIP_RPATH ON)
 
 # Compiler flags
 if(BUILD32)
@@ -55,7 +56,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdiagnostics-color=auto -D_POSIX_C_SOURCE=2
 
 if(MSVC)
     check_c_compiler_flag("/W4 /WX" C_SUPPORTS_WERROR)
-#    check_cxx_compiler_flag("/W4 /WX" CXX_SUPPORTS_WERROR)
+    check_cxx_compiler_flag("/W4 /WX" CXX_SUPPORTS_WERROR)
 
 	if(C_SUPPORTS_WERROR)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4 /WX")
@@ -66,7 +67,7 @@ if(MSVC)
 	endif()
 else()
     check_c_compiler_flag("-Wall -Werror" C_SUPPORTS_WERROR)
-#	check_cxx_compiler_flag("-Wall -Werror" CXX_SUPPORTS_WERROR)
+	check_cxx_compiler_flag("-Wall -Werror" CXX_SUPPORTS_WERROR)
 
     if(C_SUPPORTS_WERROR)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
@@ -82,6 +83,14 @@ check_include_file("sys/eventfd.h" HAS_EVENTFD)
 check_include_file("semaphore.h" HAS_SEMAPHORE)
 check_include_file("sys/mman.h" HAS_MMAN)
 
+# Check packages
+find_package(PkgConfig REQUIRED)
+find_package(Libwebsockets REQUIRED)
+find_package(OpenSSL REQUIRED)
+find_package(CURL REQUIRED)
+find_package(ProtobufC)
+find_package(Opal)
+
 pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson)
 pkg_check_modules(LIBNL3_ROUTE IMPORTED_TARGET libnl-route-3.0)
 pkg_check_modules(LIBIEC61850 IMPORTED_TARGET libiec61850>=1.2.0)
@@ -94,12 +103,6 @@ if(NOT NANOMSG_FOUND)
     pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg)
 endif()
 
-find_package(Libwebsockets REQUIRED)
-find_package(OpenSSL REQUIRED)
-find_package(CURL REQUIRED)
-find_package(Protobuf)
-find_package(Opal)
-
 # Build options
 option(WITH_HOOKS   "Build with support for processing hook plugins"    ON)
 option(WITH_IO      "Build with support format plugins" ON)
@@ -110,7 +113,11 @@ option(WITH_CONFIG  "Build with support for libconfig configuration syntax" ON)
 set(V 2)
 set(PREFIX ${CMAKE_INSTALL_PREFIX})
 
-set(VARIANT "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+if(CMAKE_BUILD_TYPE)
+    string(TOLOWER "${CMAKE_BUILD_TYPE}" VARIANT)
+else()
+    set(VARIANT "release")
+endif()
 
 # Add more build configurations
 include(cmake/config/Debug.cmake)
@@ -119,6 +126,9 @@ include(cmake/config/Coverage.cmake)
 include(cmake/config/Profiling.cmake)
 
 # Add git revision and build variant defines
+set(PROJECT_AUTHOR "Steffen Vogel")
+set(PROJECT_COPYRIGHT "2018, Institute for Automation of Complex Power Systems, RWTH Aachen University")
+
 set(PROJECT_SOVERSION 1)
 
 execute_process(
@@ -128,7 +138,11 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-string(SUBSTRING ${PROJECT_VERSION_STR} 2 -1 PROJECT_VERSION)
+string(REGEX REPLACE "^v([0-9]+\\.[0-9]+\\.[0-9]+)$" "\\1"     PROJECT_VERSION       ${PROJECT_VERSION_STR})
+string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\1" PROJECT_MAJOR_VERSION ${PROJECT_VERSION_STR})
+string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\2" PROJECT_MINOR_VERSION ${PROJECT_VERSION_STR})
+string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\3" PROJECT_PATCH_VERSION ${PROJECT_VERSION_STR})
+
 string(TIMESTAMP BUILD_DATE "%Y%m%d")
 
 if(DEFINED ENV{CI})
@@ -160,7 +174,7 @@ else()
     set(PROJECT_RELEASE "1.${GIT_BRANCH_NORM}_${VARIANT_NORM}.${BUILD_DATE}git${GIT_REV}")
 endif()
 
-set(BUILDID "${PROJECT_VERSION_STR}-${GIT_REV}-${VARIANT}")
+set(BUILDID "v${PROJECT_MAJOR_VERSION}.${PROJECT_MINOR_VERSION}.${PROJECT_PATCH_VERSION}-${GIT_REV}-${VARIANT}")
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/include
@@ -193,4 +207,7 @@ add_feature_info(CONFIG WITH_CONFIG "Build with support for libconfig configurat
 if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
     feature_summary(WHAT ALL VAR FEATURES)
     message(STATUS "${FEATURES}")
+    message(STATUS "Building VILLASnode: ${BUILDID}")
 endif()
+
+include(VILLASnodePackaging)
