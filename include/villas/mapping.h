@@ -25,9 +25,9 @@
 
 #include <jansson.h>
 
-#include "stats.h"
-#include "common.h"
-#include "list.h"
+#include <villas/stats.h>
+#include <villas/common.h>
+#include <villas/list.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -37,8 +37,8 @@
 #include <stdint.h>
 #include <unistd.h>
 
-#include "atomic.h"
-#include "common.h"
+#include <villas/atomic.h>
+#include <villas/common.h>
 
 #ifdef __cplusplus
 extern "C"{

@@ -32,14 +32,14 @@
 #include <pthread.h>
 #include <jansson.h>
 
-#include "list.h"
-#include "queue.h"
-#include "pool.h"
-#include "bitset.h"
-#include "common.h"
-#include "hook.h"
-#include "mapping.h"
-#include "task.h"
+#include <villas/list.h>
+#include <villas/queue.h>
+#include <villas/pool.h>
+#include <villas/bitset.h>
+#include <villas/common.h>
+#include <villas/hook.h>
+#include <villas/mapping.h>
+#include <villas/task.h>
 
 #ifdef __cplusplus
 extern "C" {

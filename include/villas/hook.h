@@ -34,8 +34,8 @@
 
 #pragma once
 
-#include "hook_type.h"
-#include "common.h"
+#include <villas/hook_type.h>
+#include <villas/common.h>
 
 #ifdef __cplusplus
 extern "C" {

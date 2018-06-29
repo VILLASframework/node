@@ -26,7 +26,7 @@
 
 #include <curl/curl.h>
 
-#include "crypt.h"
+#include <villas/crypt.h>
 
 #ifdef __cplusplus
 extern "C"{

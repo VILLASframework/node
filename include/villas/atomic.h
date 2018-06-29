@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "common.h"
+#include <villas/common.h>
 
 #ifdef __cplusplus
 

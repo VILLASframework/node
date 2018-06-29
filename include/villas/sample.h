@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "atomic.h"
+#include <villas/atomic.h>
 
 #include <stddef.h>
 #include <stdlib.h>

@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <jansson.h>
 
-#include "hist.h"
+#include <villas/hist.h>
 
 #ifdef __cplusplus
 extern "C" {

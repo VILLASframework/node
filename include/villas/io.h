@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include "advio.h"
-#include "common.h"
-#include "node.h"
+#include <villas/advio.h>
+#include <villas/common.h>
+#include <villas/node.h>
 
 #ifdef __cplusplus
 extern "C" {

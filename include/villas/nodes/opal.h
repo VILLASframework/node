@@ -31,8 +31,8 @@
 
 #include <pthread.h>
 
-#include "node.h"
-#include "msg.h"
+#include <villas/node.h>
+#include <villas/msg.h>
 
 /* Define RTLAB before including OpalPrint.h for messages to be sent
  * to the OpalDisplay. Otherwise stdout will be used. */
