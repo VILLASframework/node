@@ -837,7 +837,8 @@ static struct plugin p = {
         .deinit         = ib_deinit,
         .read           = ib_read,
         .write          = ib_write,
-        .fd             = ib_fd
+        .fd             = ib_fd,
+        .memtype        = ib_memtype
     }
 };
 
