@@ -72,7 +72,7 @@ int opal_deinit();
 int opal_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::print */
-char *opal_print(struct node *n);
+char * opal_print(struct node *n);
 
 /** Print global settings of the OPAL node type. */
 int opal_print_global();

@@ -51,7 +51,7 @@ struct loopback {
 };
 
 /** @see node_type::print */
-char *loopback_print(struct node *n);
+char * loopback_print(struct node *n);
 
 /** @see node_type::parse */
 int loopback_parse(struct node *n, json_t *cfg);

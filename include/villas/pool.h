@@ -38,15 +38,15 @@ extern "C" {
 
 /** A thread-safe memory pool */
 struct pool {
-	off_t buffer_off; /**< Offset from the struct address to the underlying memory area */
+	off_t  buffer_off; /**< Offset from the struct address to the underlying memory area */
 	struct memtype *mem;
 
 	enum state state;
 
-	size_t len;        /**< Length of the underlying memory area */
+	size_t len;		/**< Length of the underlying memory area */
 
-	size_t blocksz;        /**< Length of a block in bytes */
-	size_t alignment;    /**< Alignment of a block in bytes */
+	size_t blocksz;		/**< Length of a block in bytes */
+	size_t alignment;	/**< Alignment of a block in bytes */
 
 	struct queue queue; /**< The queue which is used to keep track of free blocks */
 };
@@ -73,23 +73,27 @@ int pool_destroy(struct pool *p);
  *         This number can be smaller than the requested \p cnt blocks
  *         in case the pool currently holds less than \p cnt blocks.
  */
-INLINE ssize_t pool_get_many(struct pool *p, void *blocks[], size_t cnt) {
+INLINE ssize_t pool_get_many(struct pool *p, void *blocks[], size_t cnt)
+{
 	return queue_pull_many(&p->queue, blocks, cnt);
 }
 
 /** Push \p cnt values which are giving by the array values to the stack. */
-INLINE ssize_t pool_put_many(struct pool *p, void *blocks[], size_t cnt) {
+INLINE ssize_t pool_put_many(struct pool *p, void *blocks[], size_t cnt)
+{
 	return queue_push_many(&p->queue, blocks, cnt);
 }
 
 /** Get a free memory block from pool. */
-INLINE void *pool_get(struct pool *p) {
+INLINE void * pool_get(struct pool *p)
+{
 	void *ptr;
 	return queue_pull(&p->queue, &ptr) == 1 ? ptr : NULL;
 }
 
 /** Release a memory block back to the pool. */
-INLINE int pool_put(struct pool *p, void *buf) {
+INLINE int pool_put(struct pool *p, void *buf)
+{
 	return queue_push(&p->queue, buf);
 }
 

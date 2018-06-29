@@ -39,13 +39,13 @@ struct web {
 
 	enum state state;
 
-	struct lws_context *context;    /**< The libwebsockets server context. */
-	struct lws_vhost *vhost;    /**< The libwebsockets vhost. */
+	struct lws_context *context;	/**< The libwebsockets server context. */
+	struct lws_vhost *vhost;	/**< The libwebsockets vhost. */
 
-	int port;            /**< Port of the build in HTTP / WebSocket server. */
-	char *htdocs;            /**< The root directory for files served via HTTP. */
-	char *ssl_cert;            /**< Path to the SSL certitifcate for HTTPS / WSS. */
-	char *ssl_private_key;        /**< Path to the SSL private key for HTTPS / WSS. */
+	int port;			/**< Port of the build in HTTP / WebSocket server. */
+	char *htdocs;			/**< The root directory for files served via HTTP. */
+	char *ssl_cert;			/**< Path to the SSL certitifcate for HTTPS / WSS. */
+	char *ssl_private_key;		/**< Path to the SSL private key for HTTPS / WSS. */
 
 	pthread_t thread;
 };

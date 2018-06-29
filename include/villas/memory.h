@@ -21,16 +21,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#pragma once
+
 #include <stddef.h>
 #include <stdint.h>
-
-#pragma once
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define HUGEPAGESIZE    (1 << 21)
+#define HUGEPAGESIZE	(1 << 21)
 
 struct memtype;
 
@@ -38,10 +38,10 @@ typedef void *(*memzone_allocator_t)(struct memtype *mem, size_t len, size_t ali
 typedef int (*memzone_deallocator_t)(struct memtype *mem, void *ptr, size_t len);
 
 enum memtype_flags {
-	MEMORY_MMAP = (1 << 0),
-	MEMORY_DMA = (1 << 1),
-	MEMORY_HUGEPAGE = (1 << 2),
-	MEMORY_HEAP = (1 << 3)
+	MEMORY_MMAP	= (1 << 0),
+	MEMORY_DMA	= (1 << 1),
+	MEMORY_HUGEPAGE	= (1 << 2),
+	MEMORY_HEAP	= (1 << 3)
 };
 
 struct memtype {
@@ -86,13 +86,13 @@ int memory_init(int hugepages);
  * @retval NULL If allocation failed.
  * @retval <>0  If allocation was successful.
  */
-void *memory_alloc(struct memtype *m, size_t len);
+void * memory_alloc(struct memtype *m, size_t len);
 
-void *memory_alloc_aligned(struct memtype *m, size_t len, size_t alignment);
+void * memory_alloc_aligned(struct memtype *m, size_t len, size_t alignment);
 
 int memory_free(struct memtype *m, void *ptr, size_t len);
 
-struct memtype *memtype_managed_init(void *ptr, size_t len);
+struct memtype * memtype_managed_init(void *ptr, size_t len);
 
 extern struct memtype memtype_heap;
 extern struct memtype memtype_hugepage;

@@ -44,15 +44,15 @@ extern "C" {
  * @see node_type
  */
 struct shmem {
-	const char *out_name;    /**< Name of the shm object for the output queue. */
-	const char *in_name;        /**< Name of the shm object for the input queue. */
-	struct shmem_conf conf;    /**< Interface configuration struct. */
-	char **exec;                /**< External program to execute on start. */
-	struct shmem_int intf;    /**< Shmem interface */
+	const char* out_name;   	/**< Name of the shm object for the output queue. */
+	const char* in_name;    	/**< Name of the shm object for the input queue. */
+	struct shmem_conf conf; 	/**< Interface configuration struct. */
+	char **exec;            	/**< External program to execute on start. */
+	struct shmem_int intf;  	/**< Shmem interface */
 };
 
 /** @see node_type::print */
-char *shmem_print(struct node *n);
+char * shmem_print(struct node *n);
 
 /** @see node_type::parse */
 int shmem_parse(struct node *n, json_t *cfg);
@@ -69,8 +69,8 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt);
 /** @see node_type::write */
 int shmem_write(struct node *n, struct sample *smps[], unsigned cnt);
 
+/** @} */
+
 #ifdef __cplusplus
 }
 #endif
-
-/** @} */

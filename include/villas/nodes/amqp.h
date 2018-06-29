@@ -68,7 +68,7 @@ struct amqp {
 };
 
 /** @see node_type::print */
-char *amqp_print(struct node *n);
+char * amqp_print(struct node *n);
 
 /** @see node_type::parse */
 int amqp_parse(struct node *n, json_t *json);

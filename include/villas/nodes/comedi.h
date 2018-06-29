@@ -49,23 +49,22 @@ struct comedi_chanspec {
 };
 
 struct comedi_direction {
-	int subdevice;                        ///< Comedi subdevice
-	int buffer_size;                    ///< Comedi's kernel buffer size in kB
-	int sample_size;                    ///< Size of a single measurement sample
-	int sample_rate_hz;                    ///< Sample rate in Hz
-	bool present;                        ///< Config present
-	bool enabled;                        ///< Card is started successfully
-	bool running;                        ///< Card is actively transfering samples
-	struct timespec started;            ///< Timestamp when sampling started
-	struct timespec last_debug;            ///< Timestamp of last debug output
-	size_t counter;                        ///< Number of villas samples transfered
-	struct comedi_chanspec *chanspecs;    ///< Range and maxdata config of channels
-	unsigned *chanlist;                    ///< Channel list in comedi's packed format
-	size_t chanlist_len;                ///< Number of channels for this direction
+	int subdevice;				///< Comedi subdevice
+	int buffer_size;			///< Comedi's kernel buffer size in kB
+	int sample_size;			///< Size of a single measurement sample
+	int sample_rate_hz;			///< Sample rate in Hz
+	bool present;				///< Config present
+	bool enabled;				///< Card is started successfully
+	bool running;				///< Card is actively transfering samples
+	struct timespec started;		///< Timestamp when sampling started
+	struct timespec last_debug;		///< Timestamp of last debug output
+	size_t counter;				///< Number of villas samples transfered
+	struct comedi_chanspec *chanspecs;	///< Range and maxdata config of channels
+	unsigned *chanlist;			///< Channel list in comedi's packed format
+	size_t chanlist_len;			///< Number of channels for this direction
 
-
-	char *buffer;
-	char *bufptr;
+	char* buffer;
+	char* bufptr;
 };
 
 struct comedi {
@@ -77,16 +76,16 @@ struct comedi {
 	char *buf;
 	char *bufptr;
 #else
-    char *map;
-    size_t bufpos;
-    size_t front;
-    size_t back;
+	char *map;
+	size_t bufpos;
+	size_t front;
+	size_t back;
 #endif
 
 };
 
 /** @see node_type::print */
-char *comedi_print(struct node *n);
+char * comedi_print(struct node *n);
 
 /** @see node_type::parse */
 int comedi_parse(struct node *n, json_t *cfg);
@@ -103,8 +102,8 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt);
 /** @see node_type::write */
 int comedi_write(struct node *n, struct sample *smps[], unsigned cnt);
 
+/** @} */
+
 #ifdef __cplusplus
 }
 #endif
-
-/** @} */

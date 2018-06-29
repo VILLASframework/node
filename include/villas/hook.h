@@ -48,17 +48,17 @@ struct list;
 
 /** Descriptor for user defined hooks. See hooks[]. */
 struct hook {
-    enum state state;
+	enum state state;
 
-    struct path *path;
-    struct node *node;
+	struct path *path;
+	struct node *node;
 
-    struct hook_type *_vt;    /**< C++ like Vtable pointer. */
-    void *_vd;        /**< Private data for this hook. This pointer can be used to pass data between consecutive calls of the callback. */
+	struct hook_type *_vt;	/**< C++ like Vtable pointer. */
+	void *_vd;		/**< Private data for this hook. This pointer can be used to pass data between consecutive calls of the callback. */
 
-    int priority;        /**< A priority to change the order of execution within one type of hook. */
+	int priority;		/**< A priority to change the order of execution within one type of hook. */
 
-    json_t *cfg;        /**< A JSON object containing the configuration of the hook. */
+	json_t *cfg;		/**< A JSON object containing the configuration of the hook. */
 };
 
 int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node *n);

@@ -79,29 +79,29 @@ union sockaddr_union {
 };
 
 struct socket {
-	int sd;                /**< The socket descriptor */
-	int mark;            /**< Socket mark for netem, routing and filtering */
-	int verify_source;        /**< Verify the source address of incoming packets against socket::remote. */
+	int sd;				/**< The socket descriptor */
+	int mark;			/**< Socket mark for netem, routing and filtering */
+	int verify_source;		/**< Verify the source address of incoming packets against socket::remote. */
 
-	enum socket_layer layer;    /**< The OSI / IP layer which should be used for this socket */
+	enum socket_layer layer;	/**< The OSI / IP layer which should be used for this socket */
 
-	union sockaddr_union local;    /**< Local address of the socket */
-	union sockaddr_union remote;    /**< Remote address of the socket */
+	union sockaddr_union local;	/**< Local address of the socket */
+	union sockaddr_union remote;	/**< Remote address of the socket */
 
 	struct format_type *format;
 	struct io io;
 
 	/* Multicast options */
 	struct multicast {
-		int enabled;        /**< Is multicast enabled? */
-		unsigned char loop;    /** Loopback multicast packets to local host? */
-		unsigned char ttl;    /**< The time to live for multicast packets. */
-		struct ip_mreq mreq;    /**< A multicast group to join. */
+		int enabled;		/**< Is multicast enabled? */
+		unsigned char loop;	/** Loopback multicast packets to local host? */
+		unsigned char ttl;	/**< The time to live for multicast packets. */
+		struct ip_mreq mreq;	/**< A multicast group to join. */
 	} multicast;
 
 #ifdef WITH_NETEM
-    struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Network emulator queuing discipline */
-    struct rtnl_cls *tc_classifier;	/**< libnl3: Firewall mark classifier */
+	struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Network emulator queuing discipline */
+	struct rtnl_cls *tc_classifier;	/**< libnl3: Firewall mark classifier */
 #endif /* WITH_NETEM */
 };
 
@@ -128,7 +128,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt);
 int socket_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::print */
-char *socket_print(struct node *n);
+char * socket_print(struct node *n);
 
 /** Generate printable socket address depending on the address family
  *
@@ -138,7 +138,7 @@ char *socket_print(struct node *n);
  * @param sa	A pointer to the socket address.
  * @return	The buffer containing the textual representation of the address. The caller is responsible to free() this buffer!
  */
-char *socket_print_addr(struct sockaddr *saddr);
+char * socket_print_addr(struct sockaddr *saddr);
 
 /** Parse a socket address depending on the address family
  *
@@ -158,8 +158,8 @@ int socket_parse_addr(const char *str, struct sockaddr *sa, enum socket_layer la
 
 int socket_compare_addr(struct sockaddr *x, struct sockaddr *y);
 
+/** @} */
+
 #ifdef __cplusplus
 }
 #endif
-
-/** @} */

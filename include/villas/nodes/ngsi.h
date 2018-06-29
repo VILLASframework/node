@@ -50,22 +50,22 @@ extern "C" {
 struct node;
 
 struct ngsi {
-	const char *endpoint;        /**< The NGSI context broker endpoint URL. */
-	const char *entity_id;        /**< The context broker entity id related to this node */
-	const char *entity_type;    /**< The type of the entity */
-	const char *access_token;    /**< An optional authentication token which will be sent as HTTP header. */
+	const char *endpoint;		/**< The NGSI context broker endpoint URL. */
+	const char *entity_id;		/**< The context broker entity id related to this node */
+	const char *entity_type;	/**< The type of the entity */
+	const char *access_token;	/**< An optional authentication token which will be sent as HTTP header. */
 
-	double timeout;            /**< HTTP timeout in seconds */
-	double rate;            /**< Rate used for polling. */
+	double timeout;			/**< HTTP timeout in seconds */
+	double rate;			/**< Rate used for polling. */
 
-	struct task task;        /**< Timer for periodic events. */
-	int ssl_verify;            /**< Boolean flag whether SSL server certificates should be verified or not. */
+	struct task task;		/**< Timer for periodic events. */
+	int ssl_verify;			/**< Boolean flag whether SSL server certificates should be verified or not. */
 
-	struct curl_slist *headers;    /**< List of HTTP request headers for libcurl */
+	struct curl_slist *headers;	/**< List of HTTP request headers for libcurl */
 
-	CURL *curl;            /**< libcurl: handle */
+	CURL *curl;			/**< libcurl: handle */
 
-	struct list mapping;        /**< A mapping between indices of the VILLASnode samples and the attributes in ngsi::context */
+	struct list mapping;		/**< A mapping between indices of the VILLASnode samples and the attributes in ngsi::context */
 };
 
 /** Initialize global NGSI settings and maps shared memory regions.
@@ -84,7 +84,7 @@ int ngsi_deinit();
 int ngsi_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::print */
-char *ngsi_print(struct node *n);
+char * ngsi_print(struct node *n);
 
 /** @see node_type::open */
 int ngsi_start(struct node *n);
@@ -98,8 +98,8 @@ int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt);
 /** @see node_type::write */
 int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt);
 
+/** @} */
+
 #ifdef __cplusplus
 }
 #endif
-
-/** @} */

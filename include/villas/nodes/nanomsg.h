@@ -59,7 +59,7 @@ struct nanomsg {
 };
 
 /** @see node_type::print */
-char *nanomsg_print(struct node *n);
+char * nanomsg_print(struct node *n);
 
 /** @see node_type::parse */
 int nanomsg_parse(struct node *n, json_t *cfg);

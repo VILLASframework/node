@@ -53,7 +53,7 @@ struct influxdb {
 };
 
 /** @see node_type::print */
-char *influxdb_print(struct node *n);
+char * influxdb_print(struct node *n);
 
 /** @see node_type::parse */
 int influxdb_parse(struct node *n, json_t *cfg);
