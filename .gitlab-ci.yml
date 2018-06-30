@@ -12,6 +12,7 @@ variables:
 stages:
   - prepare
   - build
+  - build2
   - test
   - deploy
   - docker
@@ -67,11 +68,10 @@ build:docs:
     - tags
     - master
 
-build:packages:
-  stage: build
-  before_script:
-    - dnf -y config-manager --add-repo https://${DEPLOY_USER}:${DEPLOY_PASS}@${DEPLOY_HOST}/packages/villas.repo
-    - dnf -y --refresh install openssl-devel libconfig-devel libnl3-devel libcurl-devel jansson-devel libxil-devel libwebsockets-devel zeromq-devel nanomsg-devel
+build2:packages:
+  stage: build2
+  dependencies:
+    - build:docs
   script:
     - mkdir -p build && cd build
     - cmake ..
@@ -146,7 +146,7 @@ deploy:packages:
     - rsync ${RSYNC_OPTS} build/*.tar.gz ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/dist/
     - ssh ${DEPLOY_USER}@${DEPLOY_HOST} createrepo ${DEPLOY_PATH}/../packages
   dependencies:
-    - build:packages
+    - build2:packages
   tags:
     - villas-deploy
   only:
