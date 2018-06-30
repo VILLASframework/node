@@ -43,7 +43,7 @@ build:source:
     expire_in: 1 week
     name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
     paths:
-      - build/release/
+      - build/
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker
@@ -53,7 +53,7 @@ build:docs:
   artifacts:
     name: ${CI_PROJECT_NAME}-doc-${CI_BUILD_REF}
     paths:
-      - build/release/doc/
+      - build/doc/
   script:
     - mkdir -p build && cd build
     - cmake ..
