@@ -129,12 +129,10 @@ deploy:web:
   stage: deploy
   script:
     - ssh ${DEPLOY_USER}@${DEPLOY_HOST} mkdir -p ${DEPLOY_PATH}/{coverage,doc}/${CI_BUILD_REF_NAME}/
-#    - rsync ${RSYNC_OPTS} build/release-coverage/coverage/  ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/coverage/$CI_BUILD_REF_NAME/
     - rsync ${RSYNC_OPTS} build/doc/html/                   ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/doc/$CI_BUILD_REF_NAME/
     - rsync ${RSYNC_OPTS} web/                              ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/
   dependencies:
     - build:docs
-#    - test:coverage
   only:
     - tags
   tags:
@@ -153,11 +151,6 @@ deploy:packages:
     - villas-deploy
   only:
     - tags
-
-.deploy:git-mirror:
-  stage: deploy
-  script:
-    - git push --force --mirror https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/VILLASframework/VILLASnode.git
 
 # Stage: docker
 ##############################################################################
