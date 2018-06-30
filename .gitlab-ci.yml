@@ -93,23 +93,6 @@ build:packages:
 # Stage: test
 ##############################################################################
 
-#test:coverage:
-#  stage: test
-#  variables:
-#    COVERAGE: "1"
-#  script:
-#    - make coverage
-#  artifacts:
-#    name: ${CI_PROJECT_NAME}-coverage-${CI_BUILD_REF}
-#    paths:
-#      - build/release-coverage/coverage/
-#      - build/release-coverage/coverage.txt
-#      - build/release-coverage/coverage.xml
-#  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
-#  coverage: '/lines: (\d+\.\d+\%)/'
-#  tags:
-#    - docker
-
 test:unit:
   stage: test
   dependencies:
@@ -138,21 +121,6 @@ test:integration:
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker
-
-#test:valgrind:
-#  stage: test
-#  variables:
-#    DEBUG: "1"
-#  script:
-#    - mkdir -p build && cd build
-#    - cmake ..
-#    - make run-valgrind
-#  dependencies:
-#    - build:source
-#  allow_failure: true
-#  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
-#  tags:
-#    - docker
 
 # Stage: deploy
 ##############################################################################
