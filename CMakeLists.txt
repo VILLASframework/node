@@ -24,11 +24,12 @@ cmake_minimum_required(VERSION 3.3)
 
 project(VILLASnode C CXX)
 
+# Several CMake settings/defaults
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
-
+set(CMAKE_THREAD_PREFER_PTHREAD ON)
+set(CMAKE_SKIP_INSTALL_RPATH ON)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig")
 
 if(APPLE)
     set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/opt/local/lib/pkgconfig")
@@ -85,12 +86,16 @@ check_include_file("sys/mman.h" HAS_MMAN)
 
 # Check packages
 find_package(PkgConfig REQUIRED)
+find_package(Threads REQUIRED)
 find_package(Libwebsockets REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(CURL REQUIRED)
 find_package(ProtobufC)
 find_package(Opal)
 
+set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig")
+
+pkg_check_modules(CRITERION IMPORTED_TARGET criterion)
 pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson)
 pkg_check_modules(LIBNL3_ROUTE IMPORTED_TARGET libnl-route-3.0)
 pkg_check_modules(LIBIEC61850 IMPORTED_TARGET libiec61850>=1.2.0)

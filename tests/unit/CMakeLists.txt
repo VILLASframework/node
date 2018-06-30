@@ -20,31 +20,38 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-set(TEST_SRC
-	advio.c
-	bitset.c
-	config_json.c
-	hist.c
-	io.c
-	json.c
-	kernel.c
-	list.c
-	log.c
-	main.c
-	mapping.c
-	memory.c
-	pool.c
-	queue.c
-	queue_signalled.c
-	task.c
-	timing.c
-	utils.c
-)
+if(CRITERION_FOUND)
 
-add_executable(unit-tests ${TEST_SRC})
-target_link_libraries(unit-tests PUBLIC villas criterion pthread)
+	set(TEST_SRC
+		advio.c
+		bitset.c
+		config_json.c
+		hist.c
+		io.c
+		json.c
+		kernel.c
+		list.c
+		log.c
+		main.c
+		mapping.c
+		memory.c
+		pool.c
+		queue.c
+		queue_signalled.c
+		task.c
+		timing.c
+		utils.c
+	)
 
-add_custom_target(run-unit-tests
-	COMMAND $<TARGET_FILE:unit-tests> ${CRITERION_OPTS}
-	DEPENDS unit-tests
-)
+	add_executable(unit-tests ${TEST_SRC})
+	target_link_libraries(unit-tests PUBLIC
+		${CRITERION_LIBRARIES}
+		villas
+		Threads::Threads
+	)
+
+	add_custom_target(run-unit-tests
+		COMMAND $<TARGET_FILE:unit-tests> ${CRITERION_OPTS}
+		DEPENDS unit-tests
+	)
+endif()

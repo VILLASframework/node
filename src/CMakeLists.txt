@@ -30,12 +30,12 @@ add_executable(villas-test-shmem villas-test-shmem.c)
 set(SRCS )
 
 if(WITH_IO)
-    target_link_libraries(villas-pipe PUBLIC pthread)
     add_executable(villas-test-cmp villas-test-cmp.c)
     add_executable(villas-convert villas-convert.c)
     add_executable(villas-pipe villas-pipe.c)
     add_executable(villas-signal villas-signal.c)
 
+    target_link_libraries(villas-pipe PUBLIC Threads::Threads)
 endif()
 
 if(WITH_IO AND WITH_HOOKS)
