@@ -29,10 +29,10 @@ endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_executable(rmshm rmshm.c)
-    target_link_libraries(rmshm PUBLIC pthread rt)
+    target_link_libraries(rmshm PUBLIC Threads::Threads rt)
 
     add_executable(rmsem rmsem.c)
-    target_link_libraries(rmsem PUBLIC pthread rt)
+    target_link_libraries(rmsem PUBLIC Threads::Threads rt)
 
     list(APPEND TOOLS rmsem rmshm)
 endif()
