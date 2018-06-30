@@ -42,8 +42,6 @@ include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 include(GNUInstallDirs)
 
-set(CMAKE_SKIP_RPATH ON)
-
 # Compiler flags
 if(BUILD32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
@@ -90,11 +88,15 @@ find_package(Threads REQUIRED)
 find_package(Libwebsockets REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(CURL REQUIRED)
-find_package(ProtobufC)
 find_package(Opal)
+
+# Check programs
+find_program(PROTOBUFC_COMPILER NAMES protoc-c)
+find_program(PROTOBUF_COMPILER NAMES protoc)
 
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig")
 
+pkg_check_modules(PROTOBUFC IMPORTED_TARGET libprotobuf-c)
 pkg_check_modules(CRITERION IMPORTED_TARGET criterion)
 pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson)
 pkg_check_modules(LIBNL3_ROUTE IMPORTED_TARGET libnl-route-3.0)
@@ -114,6 +116,11 @@ option(WITH_IO      "Build with support format plugins" ON)
 option(WITH_WEB     "Build with internal webserver" ON)
 option(WITH_API     "Build with remote control API" ON)
 option(WITH_CONFIG  "Build with support for libconfig configuration syntax" ON)
+option(WITH_TOOLS   "Build auxilary tools" ON)
+option(WITH_TESTS   "Run tests" ON)
+option(WITH_PLUGINS "Build plugins" ON)
+option(WITH_CLIENTS "Build client applications" ON)
+option(WITH_DOC     "Build documentation" ON)
 
 set(V 2)
 set(PREFIX ${CMAKE_INSTALL_PREFIX})
@@ -186,16 +193,31 @@ include_directories(
     ${CMAKE_BINARY_DIR}/include
 )
 
+add_subdirectory(etc)
 add_subdirectory(lib)
 add_subdirectory(src)
-add_subdirectory(tools)
-add_subdirectory(plugins)
-add_subdirectory(etc)
-add_subdirectory(doc)
 add_subdirectory(web)
-add_subdirectory(clients)
-add_subdirectory(tests)
 add_subdirectory(packaging)
+
+if(WITH_TOOLS)
+    add_subdirectory(tools)
+endif()
+
+if(WITH_TOOLS)
+    add_subdirectory(plugins)
+endif()
+
+if(WITH_DOC)
+    add_subdirectory(doc)
+endif()
+
+if(WITH_CLIENTS)
+    add_subdirectory(clients)
+endif()
+
+if(WITH_TESTS)
+    add_subdirectory(tests)
+endif()
 
 configure_file(
     ${CMAKE_SOURCE_DIR}/include/villas/config.h.in
@@ -203,11 +225,16 @@ configure_file(
 )
 
 # Show feature summary
-add_feature_info(HOOKS  WITH_HOOKS  "Build with support for processing hook plugins")
-add_feature_info(IO     WITH_IO     "Build with support format plugins")
-add_feature_info(WEB    WITH_WEB    "Build with internal webserver")
-add_feature_info(API    WITH_API    "Build with remote control API")
-add_feature_info(CONFIG WITH_CONFIG "Build with support for libconfig configuration syntax")
+add_feature_info(HOOKS   WITH_HOOKS   "Build with support for processing hook plugins")
+add_feature_info(IO      WITH_IO      "Build with support format plugins")
+add_feature_info(WEB     WITH_WEB     "Build with internal webserver")
+add_feature_info(API     WITH_API     "Build with remote control API")
+add_feature_info(CONFIG  WITH_CONFIG  "Build with support for libconfig configuration syntax")
+add_feature_info(TOOLS   WITH_TOOLS   "Build auxilary tools")
+add_feature_info(TESTS   WITH_TESTS   "Run tests")
+add_feature_info(PLUGINS WITH_PLUGINS "Build plugins")
+add_feature_info(CLIENTS WITH_CLIENTS "Build client applications")
+add_feature_info(DOC     WITH_DOC     "Build documentation")
 
 if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
     feature_summary(WHAT ALL VAR FEATURES)
