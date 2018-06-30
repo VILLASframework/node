@@ -148,7 +148,7 @@ string(TIMESTAMP BUILD_DATE "%Y%m%d")
 if(DEFINED ENV{CI})
 	string(APPEND VARIANT "-ci")
     string(SUBSTRING $ENV{CI_COMMIT_SHA} 0 7 GIT_REV)
-	set(GIT_BRANCH ${CI_COMMIT_REF_NAME})
+	set(GIT_BRANCH $ENV{CI_COMMIT_REF_NAME})
 else()
     execute_process(
         COMMAND git rev-parse --short=7 HEAD
