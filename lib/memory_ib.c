@@ -20,12 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/memory.h>
-
-struct memory_ib {
-	struct ibv_pd *pd;
-	struct memtype *parent;
-};
+#include <villas/nodes/infiniband.h>
+#include <villas/memory_ib.h>
+#include <rdma/rdma_cma.h>
 
 struct ibv_mr * memory_ib_mr(void *ptr)
 {
@@ -36,14 +33,13 @@ struct ibv_mr * memory_ib_mr(void *ptr)
 
 void * memory_ib_alloc(struct memtype *m, size_t len, size_t alignment)
 {
-	struct memtype_ib *mi = (struct memtype_ib *) m->_vd;
+	struct memory_ib *mi = (struct memory_ib *) m->_vd;
 
-	struct ibv_mr **mr = memory_alloc_aligned(m->parent, len + sizeof(struct ibv_mr *), alignment);
+	struct ibv_mr **mr = memory_alloc_aligned(mi->parent, len + sizeof(struct ibv_mr *), alignment);
 	char *ptr = (char *) (mr + 1);
 
-	*mr = ibv_reg_mr(mi->pd, ptr, len,
-		IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
-    	if(!*mr) {
+	*mr = ibv_reg_mr(mi->pd, ptr, len, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
+	if(!*mr) {
 		free(ptr);
 		return NULL;
 	}
@@ -53,6 +49,7 @@ void * memory_ib_alloc(struct memtype *m, size_t len, size_t alignment)
 
 int memory_ib_free(struct memtype *m, void *ptr, size_t len)
 {
+	struct memory_ib *mi = (struct memory_ib *) m->_vd;
 	struct ibv_mr *mr = memory_ib_mr(ptr);
 
 	ibv_dereg_mr(mr);
@@ -60,7 +57,7 @@ int memory_ib_free(struct memtype *m, void *ptr, size_t len)
 	ptr -= sizeof(struct ibv_mr *);
 	len += sizeof(struct ibv_mr *);
 
-	memory_free(m->parent, ptr, len);
+	memory_free(mi->parent, ptr, len);
 
 	return 0;
 }
@@ -68,7 +65,7 @@ int memory_ib_free(struct memtype *m, void *ptr, size_t len)
 struct memtype * ib_memtype(struct node *n, struct memtype *parent)
 {
 	struct infiniband *i = (struct infiniband *) n->_vd;
-	struct memtype *mt = alloc(struct memtype);
+	struct memtype *mt = malloc(sizeof(struct memtype));
 
 	mt->name = "ib";
 	mt->flags = 0;
@@ -87,10 +84,12 @@ struct memtype * ib_memtype(struct node *n, struct memtype *parent)
 }
 
 /* Ausserhalb von lib/nodes/infiniband.c */
+/*
 struct pool p = { .state = STATE_DESTROYED };
 struct node *n = ..;
 
 pool_init(&p, 100, 32, node_get_memtype(n));
 
+*/
 
 

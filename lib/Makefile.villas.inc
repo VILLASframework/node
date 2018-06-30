@@ -28,7 +28,7 @@ LIB = $(BUILDDIR)/$(LIB_NAME).so.$(LIB_ABI_VERSION)
 LIB_SRCS += $(addprefix lib/kernel/, kernel.c rt.c) \
             $(addprefix lib/, sample.c path.c node.c hook.c log.c log_config.c \
                utils.c super_node.c hist.c timing.c pool.c list.c queue.c \
-               queue_signalled.c memory.c advio.c plugin.c node_type.c stats.c \
+               queue_signalled.c memory.c memory_ib.c advio.c plugin.c node_type.c stats.c \
                mapping.c shmem.c config_helper.c crypt.c compat.c \
                log_helper.c task.c buffer.c table.c bitset.c signal.c \
             )
