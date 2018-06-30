@@ -23,25 +23,23 @@
 # All executables link against libvillas
 link_libraries(villas)
 
-add_executable(villas-node node.c)
-add_executable(villas-test-rtt test-rtt.c)
-add_executable(villas-test-shmem test-shmem.c)
+add_executable(villas-node villas-node.c)
+add_executable(villas-test-rtt villas-test-rtt.c)
+add_executable(villas-test-shmem villas-test-shmem.c)
 
 set(SRCS )
 
 if(WITH_IO)
-    add_executable(villas-test-cmp test-cmp.c)
-    
-    add_executable(villas-convert convert.c)
-    
-    add_executable(villas-pipe pipe.c)
     target_link_libraries(villas-pipe PUBLIC pthread)
+    add_executable(villas-test-cmp villas-test-cmp.c)
+    add_executable(villas-convert villas-convert.c)
+    add_executable(villas-pipe villas-pipe.c)
+    add_executable(villas-signal villas-signal.c)
 
-    add_executable(villas-signal signal.c)
 endif()
 
 if(WITH_IO AND WITH_HOOKS)
-    add_executable(villas-hook hook.c)
+    add_executable(villas-hook villas-hook.c)
 endif()
 
 install(
