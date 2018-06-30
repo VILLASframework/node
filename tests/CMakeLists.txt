@@ -23,10 +23,6 @@
 add_subdirectory(unit)
 add_subdirectory(integration)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
-	#include tests/unit/Makefile.gcov.inc
-endif()
-
 add_custom_target(tests
 	DEPENDS unit-tests integration-tests
 )
