@@ -25,7 +25,7 @@ link_libraries(villas)
 include_directories("${CMAKE_SOURCE_DIR}/include")
 add_definitions("-DVILLAS")
 
-add_library(simple_circuit SHARED models/simple_circuit.c)
+add_library(simple_circuit MODULE models/simple_circuit.c)
 install(
     TARGETS simple_circuit
     COMPONENT plugins
@@ -33,7 +33,7 @@ install(
 )
 
 if(WITH_HOOKS)
-    add_library(example_hook SHARED hooks/example_hook.c)
+    add_library(example_hook MODULE hooks/example_hook.c)
     install(
         TARGETS example_hook
         COMPONENT plugins
