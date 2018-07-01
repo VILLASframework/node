@@ -82,14 +82,3 @@ struct memtype * ib_memtype(struct node *n, struct memtype *parent)
 
 	return mt;
 }
-
-/* Ausserhalb von lib/nodes/infiniband.c */
-/*
-struct pool p = { .state = STATE_DESTROYED };
-struct node *n = ..;
-
-pool_init(&p, 100, 32, node_get_memtype(n));
-
-*/
-
-
