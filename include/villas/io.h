@@ -23,9 +23,13 @@
 
 #pragma once
 
-#include "advio.h"
-#include "common.h"
-#include "node.h"
+#include <villas/advio.h>
+#include <villas/common.h>
+#include <villas/node.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Forward declarations */
 struct sample;
@@ -134,3 +138,7 @@ int io_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample
  * @retval <0		Something went wrong.
  */
 int io_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
+
+#ifdef __cplusplus
+}
+#endif

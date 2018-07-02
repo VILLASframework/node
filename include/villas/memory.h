@@ -21,10 +21,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#pragma once
+
 #include <stddef.h>
 #include <stdint.h>
 
-#pragma once
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define HUGEPAGESIZE	(1 << 21)
 
@@ -59,15 +63,15 @@ enum memblock_flags {
 /** Descriptor of a memory block. Associated block always starts at
  * &m + sizeof(struct memblock). */
 struct memblock {
-	struct memblock* prev;
-	struct memblock* next;
+	struct memblock *prev;
+	struct memblock *next;
 	size_t len; /**<Length of the block; doesn't include the descriptor itself */
 	int flags;
 };
 
 /** @todo Unused for now */
 struct memzone {
-	struct memtype * const type;
+	struct memtype *const type;
 
 	void *addr;
 	uintptr_t physaddr;
@@ -92,3 +96,7 @@ struct memtype * memtype_managed_init(void *ptr, size_t len);
 
 extern struct memtype memtype_heap;
 extern struct memtype memtype_hugepage;
+
+#ifdef __cplusplus
+}
+#endif

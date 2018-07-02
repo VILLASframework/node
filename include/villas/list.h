@@ -8,7 +8,22 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 20177, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
+*
+ * VILLASnode
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
 #pragma once
@@ -17,7 +32,11 @@
 #include <sys/types.h>
 #include <pthread.h>
 
-#include "common.h"
+#include <villas/common.h>
+
+#ifdef __cplusplus
+extern "C"{
+#endif
 
 #define LIST_CHUNKSIZE		16
 
@@ -45,12 +64,6 @@ __attribute__((destructor(105))) static void UNIQUE(__dtor)() {	\
 
 #define list_first(list)	list_at(list, 0)
 #define list_last(list)		list_at(list, (list)->length-1)
-
-/** Callback to destroy list elements.
- *
- * @param data A pointer to the data which should be freed.
- */
-typedef int (*dtor_cb_t)(void *);
 
 /** Callback to search or sort a list. */
 typedef int (*cmp_cb_t)(const void *, const void *);
@@ -120,3 +133,7 @@ int list_set(struct list *l, int index, void *value);
  * @retval >=0 Entry \p value was found at returned index.
  */
 ssize_t list_index(struct list *l, void *value);
+
+#ifdef __cplusplus
+}
+#endif

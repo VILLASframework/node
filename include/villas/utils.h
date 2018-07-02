@@ -33,6 +33,11 @@
 #include <villas/config.h>
 #include <villas/log.h>
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
+
 #ifdef __GNUC__
   #define LIKELY(x)	__builtin_expect((x),1)
   #define UNLIKELY(x)	__builtin_expect((x),0)
@@ -275,3 +280,8 @@ pid_t spawn(const char *name, char *const argv[]);
 
 /** Determines the string length as printed on the screen (ignores escable sequences). */
 size_t strlenp(const char *str);
+
+
+#ifdef __cplusplus
+}
+#endif

@@ -20,7 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#pragma once
+
 #include <jansson.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if JANSSON_VERSION_HEX < 0x020A00
 size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags);
@@ -43,3 +49,7 @@ size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags);
   #define htobe32(x) OSSwapHostToBigInt32(x)
   #define htobe64(x) OSSwapHostToBigInt64(x)
 #endif /* __MACH__ */
+
+#ifdef __cplusplus
+}
+#endif

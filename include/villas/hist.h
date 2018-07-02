@@ -28,6 +28,10 @@
 
 #include <jansson.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define HIST_HEIGHT	(LOG_WIDTH - 55)
 #define HIST_SEQ	17
 
@@ -103,3 +107,7 @@ int hist_dump_json(struct hist *h, FILE *f);
 
 /** Build a libjansson / JSON object of the histogram. */
 json_t * hist_json(struct hist *h);
+
+#ifdef __cplusplus
+}
+#endif

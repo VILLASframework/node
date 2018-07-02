@@ -78,7 +78,7 @@ RUN dnf -y install \
 	libiec61850-devel \
 	librabbitmq-devel \
 	mosquitto-devel \
-	comedilib-devel
+	comedilib-devel comedilib
 
 # IB Verbs Dependencies
 RUN dnf -y install \

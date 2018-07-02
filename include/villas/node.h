@@ -32,11 +32,15 @@
 #include <netinet/in.h>
 #include <jansson.h>
 
-#include "node_type.h"
-#include "sample.h"
-#include "list.h"
-#include "queue.h"
-#include "common.h"
+#include <villas/node_type.h>
+#include <villas/sample.h>
+#include <villas/list.h>
+#include <villas/queue.h>
+#include <villas/common.h>
+
+#ifdef __cplusplus
+extern "C"{
+#endif
 
 struct node_direction {
 	int enabled;
@@ -160,5 +164,8 @@ int node_fd(struct node *n);
 
 struct memtype * node_memtype(struct node *n, struct memtype *parent);
 
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

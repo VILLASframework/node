@@ -36,6 +36,10 @@
 #include <villas/config.h>
 #include <villas/shmem.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Node-type for shared memory communication.
  * @see node_type
  */
@@ -66,3 +70,7 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt);
 int shmem_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif

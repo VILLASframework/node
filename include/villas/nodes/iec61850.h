@@ -38,6 +38,10 @@
 #include <villas/node.h>
 #include <villas/list.h>
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 enum iec61850_type {
 	/* According to IEC 61850-7-2 */
 	IEC61850_TYPE_BOOLEAN,
@@ -106,5 +110,9 @@ int iec61850_receiver_start(struct iec61850_receiver *r);
 int iec61850_receiver_stop(struct iec61850_receiver *r);
 
 int iec61850_receiver_destroy(struct iec61850_receiver *r);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

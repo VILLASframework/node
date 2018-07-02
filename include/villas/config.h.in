@@ -26,6 +26,10 @@
 
 #pragma once
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /* Paths */
 #define PLUGIN_PATH		PREFIX "/share/villas/node/plugins"
 #define WEB_PATH		PREFIX "/share/villas/node/web"
@@ -56,3 +60,7 @@
 /* Required kernel version */
 #define KERNEL_VERSION_MAJ	3
 #define KERNEL_VERSION_MIN	6
+
+#ifdef __cplusplus
+}
+#endif

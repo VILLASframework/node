@@ -29,9 +29,18 @@ struct log;
 
 #include "log.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /** Parse logging configuration. */
 int log_parse(struct log *l, json_t *cfg);
 
 /** Print configuration error and exit. */
 void jerror(json_error_t *err, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
+
+
+#ifdef __cplusplus
+}
+#endif

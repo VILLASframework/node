@@ -33,13 +33,16 @@
 
 #pragma once
 
-
 #include <stddef.h>
 #include <stdint.h>
 #include <unistd.h>
 
-#include "atomic.h"
-#include "common.h"
+#include <villas/atomic.h>
+#include <villas/common.h>
+
+#ifdef __cplusplus
+extern "C"{
+#endif
 
 /* Forward declarations */
 struct memtype;
@@ -112,3 +115,7 @@ int queue_pull_many(struct queue *q, void *ptr[], size_t cnt);
  * @return -1 on failure.
  */
 int queue_close(struct queue *q);
+
+#ifdef __cplusplus
+}
+#endif

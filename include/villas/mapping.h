@@ -25,9 +25,13 @@
 
 #include <jansson.h>
 
-#include "stats.h"
-#include "common.h"
-#include "list.h"
+#include <villas/stats.h>
+#include <villas/common.h>
+#include <villas/list.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Forward declarations */
 struct stats;
@@ -93,3 +97,7 @@ int mapping_parse(struct mapping_entry *e, json_t *cfg, struct list *nodes);
 int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nodes);
 
 int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes);
+
+#ifdef __cplusplus
+}
+#endif

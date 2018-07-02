@@ -35,6 +35,10 @@
 #include <villas/list.h>
 #include <villas/timing.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // whether to use read() or mmap() kernel interface
 #define COMEDI_USE_READ (1)
 //#define COMEDI_USE_READ (0)
@@ -45,20 +49,19 @@ struct comedi_chanspec {
 };
 
 struct comedi_direction {
-	int subdevice;						///< Comedi subdevice
-	int buffer_size;					///< Comedi's kernel buffer size in kB
-	int sample_size;					///< Size of a single measurement sample
-	int sample_rate_hz;					///< Sample rate in Hz
-	bool present;						///< Config present
-	bool enabled;						///< Card is started successfully
-	bool running;						///< Card is actively transfering samples
-	struct timespec started;			///< Timestamp when sampling started
-	struct timespec last_debug;			///< Timestamp of last debug output
-	size_t counter;						///< Number of villas samples transfered
+	int subdevice;				///< Comedi subdevice
+	int buffer_size;			///< Comedi's kernel buffer size in kB
+	int sample_size;			///< Size of a single measurement sample
+	int sample_rate_hz;			///< Sample rate in Hz
+	bool present;				///< Config present
+	bool enabled;				///< Card is started successfully
+	bool running;				///< Card is actively transfering samples
+	struct timespec started;		///< Timestamp when sampling started
+	struct timespec last_debug;		///< Timestamp of last debug output
+	size_t counter;				///< Number of villas samples transfered
 	struct comedi_chanspec *chanspecs;	///< Range and maxdata config of channels
-	unsigned *chanlist;					///< Channel list in comedi's packed format
-	size_t chanlist_len;				///< Number of channels for this direction
-
+	unsigned *chanlist;			///< Channel list in comedi's packed format
+	size_t chanlist_len;			///< Number of channels for this direction
 
 	char* buffer;
 	char* bufptr;
@@ -70,8 +73,8 @@ struct comedi {
 	comedi_t *dev;
 
 #if COMEDI_USE_READ
-	char* buf;
-	char* bufptr;
+	char *buf;
+	char *bufptr;
 #else
 	char *map;
 	size_t bufpos;
@@ -100,3 +103,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt);
 int comedi_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif

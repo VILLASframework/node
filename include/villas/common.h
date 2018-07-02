@@ -23,6 +23,10 @@
 
 #pragma once
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /* Common states for most objects in VILLASnode (paths, nodes, hooks, plugins) */
 enum state {
 	STATE_DESTROYED		= 0,
@@ -36,3 +40,13 @@ enum state {
 	STATE_UNLOADED		= 5, /* alias for STATE_STARTED used by struct plugin */
 	STATE_CLOSED		= 5  /* alias for STATE_STARTED used by struct io */
 };
+
+/** Callback to destroy list elements.
+ *
+ * @param data A pointer to the data which should be freed.
+ */
+typedef int (*dtor_cb_t)(void *);
+
+#ifdef __cplusplus
+}
+#endif

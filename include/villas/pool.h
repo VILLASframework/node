@@ -28,9 +28,13 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-#include "queue.h"
-#include "common.h"
-#include "memory.h"
+#include <villas/queue.h>
+#include <villas/common.h>
+#include <villas/memory.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** A thread-safe memory pool */
 struct pool {
@@ -92,3 +96,7 @@ INLINE int pool_put(struct pool *p, void *buf)
 {
 	return queue_push(&p->queue, buf);
 }
+
+#ifdef __cplusplus
+}
+#endif

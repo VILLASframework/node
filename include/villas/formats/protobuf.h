@@ -25,6 +25,10 @@
 
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct sample;
 
@@ -33,3 +37,7 @@ int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct
 
 /** Read struct sample's from buffer \p buf into samples \p smps. */
 int protobuf_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
+
+#ifdef __cplusplus
+}
+#endif

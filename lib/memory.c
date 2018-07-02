@@ -147,7 +147,11 @@ static void * memory_hugepage_alloc(struct memtype *m, size_t len, size_t alignm
 
 static int memory_hugepage_free(struct memtype *m, void *ptr, size_t len)
 {
-	len = ALIGN(len, HUGEPAGESIZE); /* ugly see: https://lkml.org/lkml/2015/3/27/171 */
+	/** We must make sure that len is a multiple of the hugepage size
+	 *
+	 * See: https://lkml.org/lkml/2014/10/22/925
+	 */
+	len = ALIGN(len, HUGEPAGESIZE);
 
 	return munmap(ptr, len);
 }

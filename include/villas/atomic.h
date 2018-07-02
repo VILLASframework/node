@@ -21,7 +21,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "common.h"
+#pragma once
+
+#include <villas/common.h>
 
 #ifdef __cplusplus
 
@@ -37,4 +39,4 @@ typedef std::atomic<enum state> atomic_state;
 
 typedef _Atomic enum state atomic_state;
 
-#endif
+#endif /* __cplusplus */

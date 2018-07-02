@@ -33,6 +33,10 @@
 
 #include <villas/list.h>
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /* Forward declaration */
 struct cbuilder;
 
@@ -64,5 +68,9 @@ struct cbuilder {
 
 	int eventfd; /**< Eventfd for synchronizing cbuilder_read() / cbuilder_write() access. */
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

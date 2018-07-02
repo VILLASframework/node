@@ -33,6 +33,10 @@
 
 #include <villas/task.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct node;
 struct sample;
@@ -51,7 +55,7 @@ struct stats_node {
 int stats_node_init(struct super_node *sn);
 
 /** @see node_type::print */
-char * stats_node_print(struct node *n);
+char *stats_node_print(struct node *n);
 
 /** @see node_type::parse */
 int stats_node_parse(struct node *n, json_t *cfg);
@@ -64,5 +68,9 @@ int stats_node_stop(struct node *n);
 
 /** @see node_type::read */
 int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

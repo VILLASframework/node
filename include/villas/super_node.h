@@ -23,11 +23,15 @@
 
 #pragma once
 
-#include "list.h"
-#include "api.h"
-#include "web.h"
-#include "log.h"
-#include "common.h"
+#include <villas/list.h>
+#include <villas/api.h>
+#include <villas/web.h>
+#include <villas/log.h>
+#include <villas/common.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** Global configuration */
 struct super_node {
@@ -83,3 +87,7 @@ int super_node_stop(struct super_node *sn);
 
 /** Desctroy configuration object. */
 int super_node_destroy(struct super_node *sn);
+
+#ifdef __cplusplus
+}
+#endif

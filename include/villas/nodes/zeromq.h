@@ -35,6 +35,10 @@
 #include <villas/list.h>
 #include <villas/io.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if ZMQ_BUILD_DRAFT_API && (ZMQ_VERSION_MAJOR > 4 || (ZMQ_VERSION_MAJOR == 4 && ZMQ_VERSION_MINOR >= 2))
   #define ZMQ_BUILD_DISH 1
 #endif
@@ -104,3 +108,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt);
 int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif

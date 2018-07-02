@@ -33,6 +33,10 @@
 #include <villas/io.h>
 #include <villas/task.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct test_rtt;
 struct node;
@@ -81,3 +85,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt);
 int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif

@@ -33,6 +33,10 @@
 
 #include "api/session.h"
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 /* Forward declarations */
 struct lws;
 struct super_node;
@@ -81,3 +85,7 @@ int api_stop(struct api *a);
 int api_ws_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
 int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
+
+#ifdef __cplusplus
+}
+#endif

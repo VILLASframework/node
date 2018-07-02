@@ -309,6 +309,10 @@ int node_check(struct node *n)
 	if (ret)
 		return ret;
 
+	ret = n->_vt->check ? n->_vt->check(n) : 0;
+	if (ret)
+		return ret;
+
 	n->state = STATE_CHECKED;
 
 	return 0;

@@ -25,6 +25,12 @@
  * @{
  */
 
+#pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct table_column {
 	int width;	/**< Width of the column. */
 	char *title;	/**< The title as shown in the table header. */
@@ -55,3 +61,7 @@ void table_row(struct table *t, ...);
 void table_footer(struct table *t);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
