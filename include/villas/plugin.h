@@ -35,7 +35,17 @@
 extern "C"{
 #endif
 
-/** @todo This is ugly as hell and broken on OS X / Clang anyway. */
+/** (De-)Register a plugin by adding it to the global plugin list.
+ *
+ * We make use of GCC's / Clang's constructor/destructor function
+ * attributes to let the following code be executed by the loader.
+ * This works only when we compile libvillas as a shared library!
+ *
+ * The __attribute__((constructor)) / __attribute__((destructor))
+ * is currently only supported by GCC and Clang
+ *
+ * See: https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes
+ */
 #define REGISTER_PLUGIN(p)					\
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {\
 	if (plugins.state == STATE_DESTROYED)			\
