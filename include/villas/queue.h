@@ -61,7 +61,6 @@ struct queue {
 
 	atomic_state state;
 
-	struct memory_type *mem;
 	size_t buffer_mask;
 	off_t buffer_off; /**< Relative pointer to struct queue_cell[] */
 

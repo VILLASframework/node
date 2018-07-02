@@ -25,6 +25,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 #include <villas/memory_type.h>
 
@@ -35,26 +36,35 @@ extern "C" {
 /* Forward declarations */
 struct node;
 
-enum memblock_flags {
-	MEMBLOCK_USED = 1,
-};
-
 /** Descriptor of a memory block. Associated block always starts at
- * &m + sizeof(struct memblock). */
-struct memblock {
-	struct memblock *prev;
-	struct memblock *next;
-	size_t len; /**<Length of the block; doesn't include the descriptor itself */
-	int flags;
+ * &m + sizeof(struct memory_block). */
+struct memory_block {
+	struct memory_block *prev;
+	struct memory_block *next;
+	size_t length; /**< Length of the block; doesn't include the descriptor itself */
+	bool used;
 };
 
 /** @todo Unused for now */
-struct memzone {
-	struct memory_type *const type;
+struct memory_allocation {
+	struct memory_type *type;
 
-	void *addr;
-	uintptr_t physaddr;
-	size_t len;
+	struct memory_allocation *parent;
+
+	void *address;
+	size_t alignment;
+	size_t length;
+
+	union {
+#ifdef WITH_NODE_INFINIBAND
+		struct {
+			struct ibv_mr *mr;
+		} ib;
+#endif
+		struct {
+			struct memory_block *block;
+		} managed;
+	};
 };
 
 /** Initilialize memory subsystem */
@@ -69,7 +79,7 @@ void * memory_alloc(struct memory_type *m, size_t len);
 
 void * memory_alloc_aligned(struct memory_type *m, size_t len, size_t alignment);
 
-int memory_free(struct memory_type *m, void *ptr, size_t len);
+int memory_free(void *ptr);
 
 #ifdef __cplusplus
 }

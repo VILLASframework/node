@@ -38,15 +38,14 @@
 #endif
 
 #include <villas/log.h>
-#include <villas/memory_type.h>
+#include <villas/memory.h>
 #include <villas/utils.h>
 
-#define HUGEPAGESIZE	(1 << 21) /* 2 MiB */
+#define HUGEPAGESIZE	(1 << 22) /* 2 MiB */
 
 /** Allocate memory backed by hugepages with malloc() like interface */
-static void * memory_hugepage_alloc(struct memory_type *m, size_t len, size_t alignment)
+static struct memory_allocation * memory_hugepage_alloc(struct memory_type *m, size_t len, size_t alignment)
 {
-	void *ret;
 	int prot = PROT_READ | PROT_WRITE;
 	int flags = MAP_PRIVATE | MAP_ANONYMOUS;
 
@@ -59,22 +58,38 @@ static void * memory_hugepage_alloc(struct memory_type *m, size_t len, size_t al
 		flags |= MAP_LOCKED;
 #endif
 
-	ret = mmap(NULL, len, prot, flags, -1, 0);
-	if (ret == MAP_FAILED)
+	struct memory_allocation *ma = alloc(sizeof(struct memory_allocation));
+	if (!ma)
 		return NULL;
 
-	return ret;
-}
-
-static int memory_hugepage_free(struct memory_type *m, void *ptr, size_t len)
-{
 	/** We must make sure that len is a multiple of the hugepage size
 	 *
 	 * See: https://lkml.org/lkml/2014/10/22/925
 	 */
-	len = ALIGN(len, HUGEPAGESIZE);
+	ma->length = ALIGN(len, HUGEPAGESIZE);
+	ma->alignment = alignment;
+	ma->type = m;
 
-	return munmap(ptr, len);
+	ma->address = mmap(NULL, len, prot, flags, -1, 0);
+	if (ma->address == MAP_FAILED) {
+		free(ma);
+		return NULL;
+	}
+
+	return ma;
+}
+
+static int memory_hugepage_free(struct memory_type *m, struct memory_allocation *ma)
+{
+	int ret;
+
+	ret = munmap(ma->address, ma->length);
+	if (ret)
+		return ret;
+
+	free(ma);
+
+	return 0;
 }
 
 struct memory_type memory_hugepage = {

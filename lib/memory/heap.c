@@ -22,24 +22,37 @@
 
 #include <stdlib.h>
 
-#include <villas/memory_type.h>
+#include <villas/utils.h>
+#include <villas/memory.h>
 
-static void * memory_heap_alloc(struct memory_type *m, size_t len, size_t alignment)
+static struct memory_allocation * memory_heap_alloc(struct memory_type *m, size_t len, size_t alignment)
 {
-	void *ptr;
 	int ret;
 
-	if (alignment < sizeof(void *))
-		alignment = sizeof(void *);
+	struct memory_allocation *ma = alloc(sizeof(struct memory_allocation));
+	if (!ma)
+		return NULL;
 
-	ret = posix_memalign(&ptr, alignment, len);
+	ma->alignment = alignment;
+	ma->type = m;
+	ma->length = len;
 
-	return ret ? NULL : ptr;
+	if (ma->alignment < sizeof(void *))
+		ma->alignment = sizeof(void *);
+
+	ret = posix_memalign(&ma->address, ma->alignment, ma->length);
+	if (ret) {
+		free(ma);
+		return ret;
+	}
+
+	return ma;
 }
 
-int memory_heap_free(struct memory_type *m, void *ptr, size_t len)
+static int memory_heap_free(struct memory_type *m, struct memory_allocation *ma)
 {
-	free(ptr);
+	free(ma->address);
+	free(ma);
 
 	return 0;
 }

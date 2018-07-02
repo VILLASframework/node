@@ -20,10 +20,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#pragma once
+
 #include <pthread.h>
 #include <stdbool.h>
 
 #include <villas/common.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct hash_table_entry {
 	void *key;
@@ -73,3 +79,7 @@ void * hash_table_lookup(struct hash_table *ht, void *key);
 
 /** Dump the contents of the hash table in a human readable format to stdout. */
 void hash_table_dump(struct hash_table *ht);
+
+#ifdef __cplusplus
+}
+#endif

@@ -39,12 +39,10 @@ extern "C" {
 /** A thread-safe memory pool */
 struct pool {
 	off_t  buffer_off; /**< Offset from the struct address to the underlying memory area */
-	struct memory_type *mem;
 
 	enum state state;
 
 	size_t len;		/**< Length of the underlying memory area */
-
 	size_t blocksz;		/**< Length of a block in bytes */
 	size_t alignment;	/**< Alignment of a block in bytes */
 

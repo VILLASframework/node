@@ -31,10 +31,21 @@
 #include <villas/log.h>
 #include <villas/memory.h>
 #include <villas/utils.h>
+#include <villas/hash_table.h>
 #include <villas/kernel/kernel.h>
+
+static struct hash_table allocations = { .state = STATE_DESTROYED };
 
 int memory_init(int hugepages)
 {
+	int ret;
+
+	if (allocations.state == STATE_DESTROYED) {
+		ret = hash_table_init(&allocations, 100);
+		if (ret)
+			return ret;
+	}
+
 #ifdef __linux__
 	int ret, pagecnt, pagesz;
 	struct rlimit l;
@@ -71,25 +82,39 @@ int memory_init(int hugepages)
 
 void * memory_alloc(struct memory_type *m, size_t len)
 {
-	void *ptr = m->alloc(m, len, sizeof(void *));
-
-	debug(LOG_MEM | 5, "Allocated %#zx bytes of %s memory: %p", len, m->name, ptr);
-
-	return ptr;
+	return memory_alloc_aligned(m, len, sizeof(void *));
 }
 
 void * memory_alloc_aligned(struct memory_type *m, size_t len, size_t alignment)
 {
-	void *ptr = m->alloc(m, len, alignment);
+	struct memory_allocation *ma = m->alloc(m, len, alignment);
 
-	debug(LOG_MEM | 5, "Allocated %#zx bytes of %#zx-byte-aligned %s memory: %p", len, alignment, m->name, ptr);
+	hash_table_insert(&allocations, ma->address, ma);
 
-	return ptr;
+	debug(LOG_MEM | 5, "Allocated %#zx bytes of %#zx-byte-aligned %s memory: %p", ma->length, ma->alignment, ma->type->name, ma->address);
+
+	return ma->address;
 }
 
-int memory_free(struct memory_type *m, void *ptr, size_t len)
+int memory_free(void *ptr)
 {
-	debug(LOG_MEM | 5, "Releasing %#zx bytes of %s memory", len, m->name);
+	int ret;
 
-	return m->free(m, ptr, len);
+	/* Find corresponding memory allocation entry */
+	struct memory_allocation *ma = (struct memory_allocation *) hash_table_lookup(&allocations, ptr);
+	if (!ma)
+		return -1;
+
+	debug(LOG_MEM | 5, "Releasing %#zx bytes of %s memory", ma->length, ma->type->name);
+
+	ret = ma->type->free(ma->type, ma);
+	if (ret)
+		return ret;
+
+	/* Remove allocation entry */
+	ret = hash_table_delete(&allocations, ma->address);
+	if (ret)
+		return ret;
+
+	return 0;
 }

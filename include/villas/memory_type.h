@@ -30,10 +30,11 @@
 extern "C" {
 #endif
 
+/* Forward declaratio */
 struct memory_type;
 
-typedef void *(*memzone_allocator_t)(struct memory_type *mem, size_t len, size_t alignment);
-typedef int (*memzone_deallocator_t)(struct memory_type *mem, void *ptr, size_t len);
+typedef struct memory_allocation * (*memory_allocator_t)(struct memory_type *mem, size_t len, size_t alignment);
+typedef int (*memory_deallocator_t)(struct memory_type *mem, struct memory_allocation * ma);
 
 enum memory_type_flags {
 	MEMORY_MMAP	= (1 << 0),
@@ -48,8 +49,8 @@ struct memory_type {
 
 	size_t alignment;
 
-	memzone_allocator_t alloc;
-	memzone_deallocator_t free;
+	memory_allocator_t alloc;
+	memory_deallocator_t free;
 
 	void *_vd; /**< Virtual data for internal state */
 };

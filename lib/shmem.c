@@ -44,7 +44,7 @@ size_t shmem_total_size(int queuelen, int samplelen)
 		/* the size of the pool */
 		+ queuelen * kernel_get_cacheline_size() * CEIL(SAMPLE_LEN(samplelen), kernel_get_cacheline_size())
 		/* a memblock for each allocation (1 shmem_shared, 2 queues, 1 pool) */
-		+ 4 * sizeof(struct memblock)
+		+ 4 * sizeof(struct memory_block)
 		/* and some extra buffer for alignment */
 		+ 1024;
 }
@@ -144,7 +144,7 @@ retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 	if (base == MAP_FAILED)
 		return -10;
 
-	cptr = (char *) base + sizeof(struct memory_type) + sizeof(struct memblock);
+	cptr = (char *) base + sizeof(struct memory_type) + sizeof(struct memory_block);
 	shared = (struct shmem_shared *) cptr;
 	shm->read.base = base;
 	shm->read.name = rname;

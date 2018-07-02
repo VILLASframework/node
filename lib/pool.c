@@ -35,7 +35,6 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *m)
 	p->alignment = kernel_get_cacheline_size();
 	p->blocksz = p->alignment * CEIL(blocksz, p->alignment);
 	p->len = cnt * p->blocksz;
-	p->mem = m;
 
 	void *buffer = memory_alloc_aligned(m, p->len, p->alignment);
 	if (!buffer)
@@ -66,7 +65,7 @@ int pool_destroy(struct pool *p)
 	queue_destroy(&p->queue);
 
 	void *buffer = (char*) p + p->buffer_off;
-	ret = memory_free(p->mem, buffer, p->len);
+	ret = memory_free(buffer);
 	if (ret == 0)
 		p->state = STATE_DESTROYED;
 
