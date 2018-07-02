@@ -26,7 +26,7 @@ LIB = $(BUILDDIR)/$(LIB_NAME).so.$(LIB_ABI_VERSION)
 
 # Object files for libvillas
 LIB_SRCS += $(addprefix lib/kernel/, kernel.c rt.c) \
-			$(addprefix lib/memory/, heap.c hugepage.c ib.c managed.c) \
+			$(addprefix lib/memory/, heap.c hugepage.c managed.c) \
             $(addprefix lib/, sample.c path.c node.c hook.c log.c log_config.c \
                utils.c super_node.c hist.c timing.c pool.c list.c queue.c \
                queue_signalled.c memory.c advio.c plugin.c node_type.c stats.c \
