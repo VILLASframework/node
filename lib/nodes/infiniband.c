@@ -29,7 +29,7 @@
 #include <villas/format_type.h>
 #include <villas/memory.h>
 #include <villas/pool.h>
-#include <villas/memory_ib.h>
+#include <villas/memory.h>
 
 #include <rdma/rdma_cma.h>
 
@@ -240,7 +240,7 @@ static void ib_build_ibv(struct node *n)
     pool_init(&ib->mem.p_recv,
             ib->qp_init.cap.max_recv_wr,
             64*sizeof(double),
-            &memtype_heap);
+            &memory_type_heap);
     if(ret)
     {
         error("Failed to init recv memory pool of node %s: %s",
@@ -271,7 +271,7 @@ static void ib_build_ibv(struct node *n)
         pool_init(&ib->mem.p_send,
                 ib->qp_init.cap.max_send_wr,
                 sizeof(double),
-                &memtype_heap);
+                &memory_type_heap);
         if(ret)
         {
             error("Failed to init send memory of node %s: %s",
@@ -839,7 +839,7 @@ static struct plugin p = {
         .read           = ib_read,
         .write          = ib_write,
         .fd             = ib_fd,
-        .memtype        = ib_memtype
+        .memory_type    = memory_ib
     }
 };
 

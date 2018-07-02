@@ -164,7 +164,7 @@ struct node_type {
 	int (*fd)(struct node *n);
 
 	/** */
-	struct memtype * (*memtype)(struct node *n, struct memtype *parent);
+	struct memory_type * (*memory_type)(struct node *n, struct memory_type *parent);
 };
 
 /** Initialize all registered node type subsystems.

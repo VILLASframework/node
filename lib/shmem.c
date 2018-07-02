@@ -35,8 +35,8 @@
 
 size_t shmem_total_size(int queuelen, int samplelen)
 {
-	/* We have the constant const of the memtype header */
-	return sizeof(struct memtype)
+	/* We have the constant const of the memory_type header */
+	return sizeof(struct memory_type)
 		/* and the shared struct itself */
 		+ sizeof(struct shmem_shared)
 		/* the size of the actual queue and the queue for the pool */
@@ -55,7 +55,7 @@ int shmem_int_open(const char *wname, const char* rname, struct shmem_int *shm, 
 	int fd, ret;
 	size_t len;
 	void *base;
-	struct memtype *manager;
+	struct memory_type *manager;
 	struct shmem_shared *shared;
 	struct stat stat_buf;
 	sem_t *sem_own, *sem_other;
@@ -92,7 +92,7 @@ retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 
 	close(fd);
 
-	manager = memtype_managed_init(base, len);
+	manager = memory_managed(base, len);
 	shared = memory_alloc(manager, sizeof(struct shmem_shared));
 	if (!shared) {
 		errno = ENOMEM;
@@ -144,7 +144,7 @@ retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 	if (base == MAP_FAILED)
 		return -10;
 
-	cptr = (char *) base + sizeof(struct memtype) + sizeof(struct memblock);
+	cptr = (char *) base + sizeof(struct memory_type) + sizeof(struct memblock);
 	shared = (struct shmem_shared *) cptr;
 	shm->read.base = base;
 	shm->read.name = rname;

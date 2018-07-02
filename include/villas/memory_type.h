@@ -26,50 +26,43 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include <villas/memory_type.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Forward declarations */
+struct memory_type;
+
+typedef void *(*memzone_allocator_t)(struct memory_type *mem, size_t len, size_t alignment);
+typedef int (*memzone_deallocator_t)(struct memory_type *mem, void *ptr, size_t len);
+
+enum memory_type_flags {
+	MEMORY_MMAP	= (1 << 0),
+	MEMORY_DMA	= (1 << 1),
+	MEMORY_HUGEPAGE	= (1 << 2),
+	MEMORY_HEAP	= (1 << 3)
+};
+
+struct memory_type {
+	const char *name;
+	int flags;
+
+	size_t alignment;
+
+	memzone_allocator_t alloc;
+	memzone_deallocator_t free;
+
+	void *_vd; /**< Virtual data for internal state */
+};
+
+extern struct memory_type memory_type_heap;
+extern struct memory_type memory_hugepage;
+
+struct ibv_mr * memory_type_ib_mr(void *ptr);
+
 struct node;
 
-enum memblock_flags {
-	MEMBLOCK_USED = 1,
-};
-
-/** Descriptor of a memory block. Associated block always starts at
- * &m + sizeof(struct memblock). */
-struct memblock {
-	struct memblock *prev;
-	struct memblock *next;
-	size_t len; /**<Length of the block; doesn't include the descriptor itself */
-	int flags;
-};
-
-/** @todo Unused for now */
-struct memzone {
-	struct memory_type *const type;
-
-	void *addr;
-	uintptr_t physaddr;
-	size_t len;
-};
-
-/** Initilialize memory subsystem */
-int memory_init(int hugepages);
-
-/** Allocate \p len bytes memory of type \p m.
- *
- * @retval NULL If allocation failed.
- * @retval <>0  If allocation was successful.
- */
-void * memory_alloc(struct memory_type *m, size_t len);
-
-void * memory_alloc_aligned(struct memory_type *m, size_t len, size_t alignment);
-
-int memory_free(struct memory_type *m, void *ptr, size_t len);
+struct memory_type * memory_ib(struct node *n, struct memory_type *parent);
+struct memory_type * memory_managed(void *ptr, size_t len);
 
 #ifdef __cplusplus
 }

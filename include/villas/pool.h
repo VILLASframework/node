@@ -39,7 +39,7 @@ extern "C" {
 /** A thread-safe memory pool */
 struct pool {
 	off_t  buffer_off; /**< Offset from the struct address to the underlying memory area */
-	struct memtype *mem;
+	struct memory_type *mem;
 
 	enum state state;
 
@@ -62,7 +62,7 @@ struct pool {
  * @retval 0 The pool has been successfully initialized.
  * @retval <>0 There was an error during the pool initialization.
  */
-int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memtype *mem);
+int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *mem);
 
 /** Destroy and release memory used by pool. */
 int pool_destroy(struct pool *p);

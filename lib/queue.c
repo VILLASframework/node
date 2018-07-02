@@ -36,7 +36,7 @@
 #include <villas/memory.h>
 
 /** Initialize MPMC queue */
-int queue_init(struct queue *q, size_t size, struct memtype *mem)
+int queue_init(struct queue *q, size_t size, struct memory_type *mem)
 {
 	assert(q->state == STATE_DESTROYED);
 

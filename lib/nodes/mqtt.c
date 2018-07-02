@@ -301,11 +301,11 @@ int mqtt_start(struct node *n)
 	if (ret)
 		return ret;
 
-	ret = pool_init(&m->pool, 1024, SAMPLE_LEN(n->samplelen), &memtype_hugepage);
+	ret = pool_init(&m->pool, 1024, SAMPLE_LEN(n->samplelen), &memory_hugepage);
 	if (ret)
 		return ret;
 
-	ret = queue_signalled_init(&m->queue, 1024, &memtype_hugepage, 0);
+	ret = queue_signalled_init(&m->queue, 1024, &memory_hugepage, 0);
 	if (ret)
 		return ret;
 

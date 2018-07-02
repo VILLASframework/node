@@ -45,7 +45,7 @@ extern "C"{
 #endif
 
 /* Forward declarations */
-struct memtype;
+struct memory_type;
 
 #define CACHELINE_SIZE 64
 typedef char cacheline_pad_t[CACHELINE_SIZE];
@@ -61,7 +61,7 @@ struct queue {
 
 	atomic_state state;
 
-	struct memtype *mem;
+	struct memory_type *mem;
 	size_t buffer_mask;
 	off_t buffer_off; /**< Relative pointer to struct queue_cell[] */
 
@@ -77,7 +77,7 @@ struct queue {
 };
 
 /** Initialize MPMC queue */
-int queue_init(struct queue *q, size_t size, struct memtype *mem);
+int queue_init(struct queue *q, size_t size, struct memory_type *mem);
 
 /** Desroy MPMC queue and release memory */
 int queue_destroy(struct queue *q);

@@ -28,13 +28,15 @@
 #include <villas/memory.h>
 #include <villas/utils.h>
 
+#define HUGEPAGESIZE (1<<22)
+
 TheoryDataPoints(memory, aligned) = {
 	DataPoints(size_t, 1, 32, 55, 1 << 10, 1 << 20),
 	DataPoints(size_t, 1, 8, 1 << 12),
-	DataPoints(struct memtype *, &memtype_heap, &memtype_hugepage)
+	DataPoints(struct memory_type *, &memory_type_heap, &memory_hugepage)
 };
 
-Theory((size_t len, size_t align, struct memtype *m), memory, aligned) {
+Theory((size_t len, size_t align, struct memory_type *m), memory, aligned) {
 	int ret;
 	void *ptr;
 
@@ -43,7 +45,7 @@ Theory((size_t len, size_t align, struct memtype *m), memory, aligned) {
 
 	cr_assert(IS_ALIGNED(ptr, align));
 
-	if (m == &memtype_hugepage) {
+	if (m == &memory_hugepage) {
 		cr_assert(IS_ALIGNED(ptr, HUGEPAGESIZE));
 	}
 
@@ -57,15 +59,15 @@ Test(memory, manager) {
 
 	int ret;
 	void *p, *p1, *p2, *p3;
-	struct memtype *m;
+	struct memory_type *m;
 
 	total_size = 1 << 10;
-	max_block = total_size - sizeof(struct memtype) - sizeof(struct memblock);
+	max_block = total_size - sizeof(struct memory_type) - sizeof(struct memblock);
 
-	p = memory_alloc(&memtype_heap, total_size);
+	p = memory_alloc(&memory_type_heap, total_size);
 	cr_assert_not_null(p);
 
-	m = memtype_managed_init(p, total_size);
+	m = memory_managed(p, total_size);
 	cr_assert_not_null(m);
 
 	p1 = memory_alloc(m, 16);
@@ -100,6 +102,6 @@ Test(memory, manager) {
 	ret = memory_free(m, p1, max_block);
 	cr_assert(ret == 0);
 
-	ret = memory_free(&memtype_heap, p, total_size);
+	ret = memory_free(&memory_type_heap, p, total_size);
 	cr_assert(ret == 0);
 }
