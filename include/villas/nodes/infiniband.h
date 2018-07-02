@@ -40,7 +40,7 @@ typedef void  (*ib_on_completion)(struct node*, struct ibv_wc*, int*);
 typedef void* (*ib_poll_function)(void*);
 
 /* Enums */
-enum poll_mode_e 
+enum poll_mode_e
 {
     EVENT,
     BUSY
@@ -91,7 +91,7 @@ struct infiniband {
         pthread_t stop_thread;
         int rdma_disconnect_called;
 
-        int used_recv_wrs;
+        int available_recv_wrs;
     } conn;
 
     /* Memory related variables */

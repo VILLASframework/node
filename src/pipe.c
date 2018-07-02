@@ -204,8 +204,8 @@ static void * recv_loop(void *ctx)
 		ready = sample_alloc_many(&recvv.pool, smps, node->in.vectorize);
 		if (ready < 0)
 			error("Failed to allocate %u samples from receive pool.", node->in.vectorize);
-		else if (ready < node->in.vectorize)
-			warn("Receive pool underrun");
+//		else if (ready < node->in.vectorize)
+//			warn("Receive pool underrun");
 
 		recv = node_read(node, smps, ready);
 		if (recv < 0)
