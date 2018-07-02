@@ -31,6 +31,7 @@ LIB_SRCS += $(addprefix lib/kernel/, kernel.c rt.c) \
                queue_signalled.c memory.c advio.c plugin.c node_type.c stats.c \
                mapping.c shmem.c config_helper.c crypt.c compat.c \
                log_helper.c task.c buffer.c table.c bitset.c signal.c \
+			   hash_table.c \
             )
 
 LIB_LDFLAGS += -shared

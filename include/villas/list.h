@@ -32,7 +32,7 @@
 #include <sys/types.h>
 #include <pthread.h>
 
-#include "common.h"
+#include <villas/common.h>
 
 #ifdef __cplusplus
 extern "C"{
@@ -64,12 +64,6 @@ __attribute__((destructor(105))) static void UNIQUE(__dtor)() {	\
 
 #define list_first(list)	list_at(list, 0)
 #define list_last(list)		list_at(list, (list)->length-1)
-
-/** Callback to destroy list elements.
- *
- * @param data A pointer to the data which should be freed.
- */
-typedef int (*dtor_cb_t)(void *);
 
 /** Callback to search or sort a list. */
 typedef int (*cmp_cb_t)(const void *, const void *);

@@ -41,6 +41,12 @@ enum state {
 	STATE_CLOSED		= 5  /* alias for STATE_STARTED used by struct io */
 };
 
+/** Callback to destroy list elements.
+ *
+ * @param data A pointer to the data which should be freed.
+ */
+typedef int (*dtor_cb_t)(void *);
+
 #ifdef __cplusplus
 }
 #endif
