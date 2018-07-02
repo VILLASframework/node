@@ -88,6 +88,14 @@ struct node_type {
 	 */
 	int (*parse)(struct node *n, json_t *cfg);
 
+	/** Check the current node configuration for plausability and errors.
+	 *
+	 * @param n	A pointer to the node object.
+	 * @retval 0 	Success. Node configuration is good.
+	 * @retval <0	Error. The node configuration is bogus.
+	 */
+	int (*check)(struct node *n);
+
 	/** Parse node from command line arguments. */
 	int (*parse_cli)(struct node *n, int argc, char *argv[]);
 
