@@ -132,7 +132,7 @@ static void * send_loop(void *ctx)
 	struct sample *smps[node->out.vectorize];
 
 	/* Initialize memory */
-	ret = pool_init(&sendd.pool, LOG2_CEIL(node->out.vectorize), SAMPLE_LEN(DEFAULT_SAMPLELEN), node_memtype(node, &memtype_hugepage));
+	ret = pool_init(&sendd.pool, MAX(16384, 2*LOG2_CEIL(node->out.vectorize)), SAMPLE_LEN(DEFAULT_SAMPLELEN), node_memtype(node, &memtype_heap));
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 
@@ -196,7 +196,8 @@ static void * recv_loop(void *ctx)
 	struct sample *smps[node->in.vectorize];
 
 	/* Initialize memory */
-	ret = pool_init(&recvv.pool, LOG2_CEIL(node->in.vectorize), SAMPLE_LEN(DEFAULT_SAMPLELEN), node_memtype(node, &memtype_hugepage));
+	ret = pool_init(&recvv.pool, MAX(16*8192, 2*LOG2_CEIL(node->in.vectorize)), SAMPLE_LEN(DEFAULT_SAMPLELEN), node_memtype(node, &memtype_heap));
+
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 
@@ -204,8 +205,8 @@ static void * recv_loop(void *ctx)
 		ready = sample_alloc_many(&recvv.pool, smps, node->in.vectorize);
 		if (ready < 0)
 			error("Failed to allocate %u samples from receive pool.", node->in.vectorize);
-//		else if (ready < node->in.vectorize)
-//			warn("Receive pool underrun");
+		else if (ready < node->in.vectorize)
+			warn("Receive pool underrun");
 
 		recv = node_read(node, smps, ready);
 		if (recv < 0)
