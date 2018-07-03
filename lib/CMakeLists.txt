@@ -67,6 +67,7 @@ set(LIB_SRC
 )
 
 add_subdirectory(nodes)
+list(APPEND LIBRARIES villas-nodes)
 
 if(LIBCONFIG_FOUND)
     list(APPEND INCLUDE_DIRS ${LIBCONFIG_INCLUDE_DIRS})
