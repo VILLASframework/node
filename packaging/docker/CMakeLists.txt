@@ -40,10 +40,12 @@ foreach(SUFFIX app dev dev-centos dev-ubuntu)
 	add_custom_target(deploy-docker-${SUFFIX}
 		COMMAND docker push ${DOCKER_IMAGE}-${SUFFIX}:${DOCKER_TAG}
 		COMMAND docker push ${DOCKER_IMAGE}-${SUFFIX}:latest
+		COMMENT "Deploy Docker image: ${DOCKER_IMAGE}-${SUFFIX}:${DOCKER_TAG}"
 	)
 
 	add_custom_target(run-docker-${SUFFIX}
 		COMMAND docker run ${DOCKER_RUN_OPTS} ${DOCKER_IMAGE}-${SUFFIX}:${DOCKER_TAG}
+		COMMENT "Run Docker image: ${DOCKER_IMAGE}-${SUFFIX}:${DOCKER_TAG}"
 	)
 
 	add_custom_target(docker-${SUFFIX}
@@ -58,6 +60,7 @@ foreach(SUFFIX app dev dev-centos dev-ubuntu)
 			--build-arg VERSION=${PROJECT_VERSION}
 			--build-arg VARIANT=${VARIANT}
 			${DOCKER_BUILD_OPTS} ${CMAKE_SOURCE_DIR}
+		COMMENT "Build Docker image: ${DOCKER_IMAGE}-${SUFFIX}:${DOCKER_TAG}"
 	)
 
 	add_dependencies(deploy-docker-${SUFFIX} docker-${SUFFIX})
@@ -67,6 +70,7 @@ endforeach()
 # Special cases for 'docker'target
 add_custom_target(run-docker
 	COMMAND docker run ${DOCKER_RUN_OPTS} ${DOCKER_IMAGE}:${DOCKER_TAG} node -h
+	COMMENT "Run Docker image: ${DOCKER_IMAGE}:${DOCKER_TAG}"
 )
 
 add_custom_target(docker
@@ -80,5 +84,6 @@ add_custom_target(deploy-docker DEPENDS docker-app
 )
 
 add_dependencies(docker docker-app)
+add_dependencies(docker-app docker-dev)
 add_dependencies(deploy-docker deploy-docker-app)
 add_dependencies(run-docker docker)
