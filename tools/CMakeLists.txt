@@ -21,24 +21,24 @@
 ###################################################################################
 
 if(LIBCONFIG_FOUND)
-    add_executable(conf2json conf2json.c)
+    add_executable(conf2json conf2json.cpp)
     target_link_libraries(conf2json PUBLIC villas)
 
     list(APPEND TOOLS conf2json)
 endif()
 
-if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    add_executable(rmshm rmshm.c)
+if(CMAKE_SYSTEM_NAME STREQUAL Linux)
+    add_executable(rmshm rmshm.cpp)
     target_link_libraries(rmshm PUBLIC Threads::Threads rt)
 
-    add_executable(rmsem rmsem.c)
+    add_executable(rmsem rmsem.cpp)
     target_link_libraries(rmsem PUBLIC Threads::Threads rt)
 
     list(APPEND TOOLS rmsem rmshm)
 endif()
 
 if(LIBZMQ_FOUND)
-    add_executable(zmq-keygen zmq-keygen.c)
+    add_executable(zmq-keygen zmq-keygen.cpp)
     target_include_directories(zmq-keygen PUBLIC ${LIBZMQ_INCLUDE_DIRS})
     target_link_libraries(zmq-keygen PUBLIC PkgConfig::LIBZMQ)
     
