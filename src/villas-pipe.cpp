@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <pthread.h>
+#include <iostream>
 
 #include <villas/config.h>
 #include <villas/config_helper.h>
@@ -106,21 +107,21 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 static void usage()
 {
-	printf("Usage: villas-pipe [OPTIONS] CONFIG NODE\n");
-	printf("  CONFIG  path to a configuration file\n");
-	printf("  NODE    the name of the node to which samples are sent and received from\n");
-	printf("  OPTIONS are:\n");
-	printf("    -f FMT           set the format\n");
-	printf("    -d LVL           set debug log level to LVL\n");
-	printf("    -o OPTION=VALUE  overwrite options in config file\n");
-	printf("    -x               swap read / write endpoints\n");
-	printf("    -s               only read data from stdin and send it to node\n");
-	printf("    -r               only read data from node and write it to stdout\n");
-	printf("    -t NUM           terminate after NUM seconds\n");
-	printf("    -L NUM           terminate after NUM samples sent\n");
-	printf("    -l NUM           terminate after NUM samples received\n");
-	printf("    -h               show this usage information\n");
-	printf("    -V               show the version of the tool\n\n");
+	std::cout << "Usage: villas-pipe [OPTIONS] CONFIG NODE" << std::endl;
+	std::cout << "  CONFIG  path to a configuration file" << std::endl;
+	std::cout << "  NODE    the name of the node to which samples are sent and received from" << std::endl;
+	std::cout << "  OPTIONS are:" << std::endl;
+	std::cout << "    -f FMT           set the format" << std::endl;
+	std::cout << "    -d LVL           set debug log level to LVL" << std::endl;
+	std::cout << "    -o OPTION=VALUE  overwrite options in config file" << std::endl;
+	std::cout << "    -x               swap read / write endpoints" << std::endl;
+	std::cout << "    -s               only read data from stdin and send it to node" << std::endl;
+	std::cout << "    -r               only read data from node and write it to stdout" << std::endl;
+	std::cout << "    -t NUM           terminate after NUM seconds" << std::endl;
+	std::cout << "    -L NUM           terminate after NUM samples sent" << std::endl;
+	std::cout << "    -l NUM           terminate after NUM samples received" << std::endl;
+	std::cout << "    -h               show this usage information" << std::endl;
+	std::cout << "    -V               show the version of the tool" << std::endl << std::endl;
 
 	print_copyright();
 }

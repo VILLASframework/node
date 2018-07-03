@@ -24,6 +24,7 @@
  *********************************************************************************/
 
 #include <string.h>
+#include <iostream>
 
 #include <villas/config.h>
 #include <villas/log.h>
@@ -38,10 +39,10 @@ struct shmem_int shm;
 
 void usage()
 {
-	printf("Usage: villas-test-shmem WNAME VECTORIZE\n");
-	printf("  WNAME     name of the shared memory object for the output queue\n");
-	printf("  RNAME     name of the shared memory object for the input queue\n");
-	printf("  VECTORIZE maximum number of samples to read/write at a time\n");
+	std::cout << "Usage: villas-test-shmem WNAME VECTORIZE" << std::endl;
+	std::cout << "  WNAME     name of the shared memory object for the output queue" << std::endl;
+	std::cout << "  RNAME     name of the shared memory object for the input queue" << std::endl;
+	std::cout << "  VECTORIZE maximum number of samples to read/write at a time" << std::endl;
 }
 
 void quit(int sig)
@@ -83,7 +84,7 @@ int main(int argc, char* argv[])
 	while (1) {
 		readcnt = shmem_int_read(&shm, insmps, vectorize);
 		if (readcnt == -1) {
-			printf("Node stopped, exiting");
+			std::cout << "Node stopped, exiting" << std::endl;
 			break;
 		}
 

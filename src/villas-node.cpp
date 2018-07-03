@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <iostream>
+
 #include <villas/config.h>
 #include <villas/utils.h>
 #include <villas/super_node.h>
@@ -66,36 +68,36 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 static void usage()
 {
-	printf("Usage: villas-node [OPTIONS] [CONFIG]\n");
-	printf("  OPTIONS is one or more of the following options:\n");
-	printf("    -h      show this usage information\n");
-	printf("    -V      show the version of the tool\n\n");
-	printf("  CONFIG is the path to an optional configuration file\n");
-	printf("         if omitted, VILLASnode will start without a configuration\n");
-	printf("         and wait for provisioning over the web interface.\n\n");
+	std::cout << "Usage: villas-node [OPTIONS] [CONFIG]" << std::endl;
+	std::cout << "  OPTIONS is one or more of the following options:" << std::endl;
+	std::cout << "    -h      show this usage information" << std::endl;
+	std::cout << "    -V      show the version of the tool" << std::endl << std::endl;
+	std::cout << "  CONFIG is the path to an optional configuration file" << std::endl;
+	std::cout << "         if omitted, VILLASnode will start without a configuration" << std::endl;
+	std::cout << "         and wait for provisioning over the web interface." << std::endl << std::endl;
 #ifdef ENABLE_OPAL_ASYNC
-	printf("Usage: villas-node OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME\n");
-	printf("  This type of invocation is used by OPAL-RT Asynchronous processes.\n");
-	printf("  See in the RT-LAB User Guide for more information.\n\n");
+	std::cout << "Usage: villas-node OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME" << std::endl;
+	std::cout << "  This type of invocation is used by OPAL-RT Asynchronous processes." << std::endl;
+	std::cout << "  See in the RT-LAB User Guide for more information." << std::endl << std::endl;
 #endif /* ENABLE_OPAL_ASYNC */
 
-	printf("Supported node-types:\n");
+	std::cout << "Supported node-types:" << std::endl;
 	plugin_dump(PLUGIN_TYPE_NODE);
-	printf("\n");
+	std::cout << std::endl;
 
 #ifdef WITH_HOOKS
-	printf("Supported hooks:\n");
+	std::cout << "Supported hooks:" << std::endl;
 	plugin_dump(PLUGIN_TYPE_HOOK);
-	printf("\n");
+	std::cout << std::endl;
 #endif /* WITH_HOOKS */
 
-	printf("Supported API commands:\n");
+	std::cout << "Supported API commands:" << std::endl;
 	plugin_dump(PLUGIN_TYPE_API);
-	printf("\n");
+	std::cout << std::endl;
 
-	printf("Supported IO formats:\n");
+	std::cout << "Supported IO formats:" << std::endl;
 	plugin_dump(PLUGIN_TYPE_FORMAT);
-	printf("\n");
+	std::cout << std::endl;
 
 	print_copyright();
 

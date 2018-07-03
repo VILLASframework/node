@@ -27,6 +27,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <string.h>
+#include <iostream>
 
 #include <villas/io.h>
 #include <villas/utils.h>
@@ -46,28 +47,28 @@ struct sample *t;
 
 void usage()
 {
-	printf("Usage: villas-signal [OPTIONS] SIGNAL\n");
-	printf("  SIGNAL   is on of the following signal types:\n");
-	printf("    mixed\n");
-	printf("    random\n");
-	printf("    sine\n");
-	printf("    triangle\n");
-	printf("    square\n");
-	printf("    ramp\n");
-	printf("    constants\n");
-	printf("    counter\n");
-	printf("\n");
-	printf("  OPTIONS is one or more of the following options:\n");
-	printf("    -d LVL  set debug level\n");
-	printf("    -f FMT  set the format\n");
-	printf("    -v NUM  specifies how many values a message should contain\n");
-	printf("    -r HZ   how many messages per second\n");
-	printf("    -n      non real-time mode. do not throttle output.\n");
-	printf("    -F HZ   the frequency of the signal\n");
-	printf("    -a FLT  the amplitude\n");
-	printf("    -D FLT  the standard deviation for 'random' signals\n");
-	printf("    -o OFF  the DC bias\n");
-	printf("    -l NUM  only send LIMIT messages and stop\n\n");
+	std::cout << "Usage: villas-signal [OPTIONS] SIGNAL" << std::endl;
+	std::cout << "  SIGNAL   is on of the following signal types:" << std::endl;
+	std::cout << "    mixed" << std::endl;
+	std::cout << "    random" << std::endl;
+	std::cout << "    sine" << std::endl;
+	std::cout << "    triangle" << std::endl;
+	std::cout << "    square" << std::endl;
+	std::cout << "    ramp" << std::endl;
+	std::cout << "    constants" << std::endl;
+	std::cout << "    counter" << std::endl;
+	std::cout << "" << std::endl;
+	std::cout << "  OPTIONS is one or more of the following options:" << std::endl;
+	std::cout << "    -d LVL  set debug level" << std::endl;
+	std::cout << "    -f FMT  set the format" << std::endl;
+	std::cout << "    -v NUM  specifies how many values a message should contain" << std::endl;
+	std::cout << "    -r HZ   how many messages per second" << std::endl;
+	std::cout << "    -n      non real-time mode. do not throttle output." << std::endl;
+	std::cout << "    -F HZ   the frequency of the signal" << std::endl;
+	std::cout << "    -a FLT  the amplitude" << std::endl;
+	std::cout << "    -D FLT  the standard deviation for 'random' signals" << std::endl;
+	std::cout << "    -o OFF  the DC bias" << std::endl;
+	std::cout << "    -l NUM  only send LIMIT messages and stop" << std::endl << std::endl;
 
 	print_copyright();
 }

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdio.h>
+#include <iostream>
 #include <stdbool.h>
 #include <getopt.h>
 
@@ -45,26 +45,24 @@ struct side {
 
 void usage()
 {
-	printf("Usage: villas-test-cmp [OPTIONS] FILE1 FILE2 ... FILEn\n");
-	printf("  FILE     a list of files to compare\n");
-	printf("  OPTIONS is one or more of the following options:\n");
-	printf("    -d LVL  adjust the debug level\n");
-	printf("    -e EPS  set epsilon for floating point comparisons to EPS\n");
-	printf("    -v      ignore data values\n");
-	printf("    -t      ignore timestamp\n");
-	printf("    -s      ignore sequence no\n");
-	printf("    -f FMT  file format for all files\n");
-	printf("    -h      show this usage information\n");
-	printf("    -V      show the version of the tool\n\n");
-
-	printf("Return codes:\n");
-	printf("  0   files are equal\n");
-	printf("  1   file length not equal\n");
-	printf("  2   sequence no not equal\n");
-	printf("  3   timestamp not equal\n");
-	printf("  4   number of values is not equal\n");
-	printf("  5   data is not equal\n");
-	printf("\n");
+	std::cout << "Usage: villas-test-cmp [OPTIONS] FILE1 FILE2 ... FILEn" << std::endl;
+	std::cout << "  FILE     a list of files to compare" << std::endl;
+	std::cout << "  OPTIONS is one or more of the following options:" << std::endl;
+	std::cout << "    -d LVL  adjust the debug level" << std::endl;
+	std::cout << "    -e EPS  set epsilon for floating point comparisons to EPS" << std::endl;
+	std::cout << "    -v      ignore data values" << std::endl;
+	std::cout << "    -t      ignore timestamp" << std::endl;
+	std::cout << "    -s      ignore sequence no" << std::endl;
+	std::cout << "    -f FMT  file format for all files" << std::endl;
+	std::cout << "    -h      show this usage information" << std::endl;
+	std::cout << "    -V      show the version of the tool" << std::endl << std::endl;
+	std::cout << "Return codes:" << std::endl;
+	std::cout << "  0   files are equal" << std::endl;
+	std::cout << "  1   file length not equal" << std::endl;
+	std::cout << "  2   sequence no not equal" << std::endl;
+	std::cout << "  3   timestamp not equal" << std::endl;
+	std::cout << "  4   number of values is not equal" << std::endl;
+	std::cout << "  5   data is not equal" << std::endl << std::endl;
 
 	print_copyright();
 }
@@ -165,7 +163,7 @@ retry:		eofs = 0;
 			if (eofs == n)
 				ret = 0;
 			else {
-				printf("length unequal\n");
+				std::cout << "length unequal" << std::endl;
 				ret = 1;
 			}
 

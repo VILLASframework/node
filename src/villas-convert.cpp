@@ -24,6 +24,8 @@
  * @{
  *********************************************************************************/
 
+#include <iostream>
+
 #include <villas/utils.h>
 #include <villas/io.h>
 #include <villas/sample.h>
@@ -31,13 +33,13 @@
 
 static void usage()
 {
-	printf("Usage: villas-convert [OPTIONS]\n");
-	printf("  OPTIONS are:\n");
-	printf("    -i FMT           set the input format\n");
-	printf("    -o FMT           set the output format\n");
-	printf("    -d LVL           set debug log level to LVL\n");
-	printf("    -h               show this usage information\n");
-	printf("    -V               show the version of the tool\n\n");
+	std::cout << "Usage: villas-convert [OPTIONS]" << std::endl;
+	std::cout << "  OPTIONS are:" << std::endl;
+	std::cout << "    -i FMT           set the input format" << std::endl;
+	std::cout << "    -o FMT           set the output format" << std::endl;
+	std::cout << "    -d LVL           set debug log level to LVL" << std::endl;
+	std::cout << "    -h               show this usage information" << std::endl;
+	std::cout << "    -V               show the version of the tool" << std::endl << std::endl;
 
 	print_copyright();
 }

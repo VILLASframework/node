@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <iostream>
 
 #include <villas/config.h>
 #include <villas/super_node.h>
@@ -66,17 +67,16 @@ void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 void usage()
 {
-	printf("Usage: villas-test-rtt [OPTIONS] CONFIG NODE\n");
-	printf("  CONFIG  path to a configuration file\n");
-	printf("  NODE    name of the node which shoud be used\n");
-	printf("  OPTIONS is one or more of the following options:\n");
-	printf("    -c CNT  send CNT messages\n");
-	printf("    -f FD   use file descriptor FD for result output instead of stdout\n");
-	printf("    -b BKTS number of buckets for histogram\n");
-	printf("    -w WMUP duration of histogram warmup phase\n");
-	printf("    -h      show this usage information\n");
-	printf("    -V      show the version of the tool\n\n");
-	printf("\n");
+	std::cout << "Usage: villas-test-rtt [OPTIONS] CONFIG NODE" << std::endl;
+	std::cout << "  CONFIG  path to a configuration file" << std::endl;
+	std::cout << "  NODE    name of the node which shoud be used" << std::endl;
+	std::cout << "  OPTIONS is one or more of the following options:" << std::endl;
+	std::cout << "    -c CNT  send CNT messages" << std::endl;
+	std::cout << "    -f FD   use file descriptor FD for result output instead of stdout" << std::endl;
+	std::cout << "    -b BKTS number of buckets for histogram" << std::endl;
+	std::cout << "    -w WMUP duration of histogram warmup phase" << std::endl;
+	std::cout << "    -h      show this usage information" << std::endl;
+	std::cout << "    -V      show the version of the tool" << std::endl << std::endl;
 
 	print_copyright();
 }

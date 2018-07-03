@@ -21,7 +21,7 @@
  *********************************************************************************/
 
 #include <libgen.h>
-#include <stdio.h>
+#include <iostream>
 #include <jansson.h>
 #include <libconfig.h>
 
@@ -30,7 +30,7 @@
 
 void usage()
 {
-	printf("Usage: conf2json input.conf > output.json\n\n");
+	std::cout << "Usage: conf2json input.conf > output.json" << std::endl << std::endl;
 
 	print_copyright();
 }

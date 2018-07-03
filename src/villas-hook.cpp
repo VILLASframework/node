@@ -26,7 +26,7 @@
  * @{
  */
 
-#include <stdio.h>
+#include <iostream>
 #include <unistd.h>
 
 #include <villas/timing.h>
@@ -83,27 +83,27 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 static void usage()
 {
-	printf("Usage: villas-hook [OPTIONS] NAME [[PARAM1] [PARAM2] ...]\n");
-	printf("  NAME      the name of the hook function\n");
-	printf("  PARAM*    a string of configuration settings for the hook\n");
-	printf("  OPTIONS is one or more of the following options:\n");
-	printf("    -f FMT  the data format\n");
-	printf("    -d LVL  set debug level to LVL\n");
-	printf("    -v CNT  process CNT smps at once\n");
-	printf("    -h      show this help\n");
-	printf("    -V      show the version of the tool\n\n");
+	std::cout << "Usage: villas-hook [OPTIONS] NAME [[PARAM1] [PARAM2] ...]" << std::endl;
+	std::cout << "  NAME      the name of the hook function" << std::endl;
+	std::cout << "  PARAM*    a string of configuration settings for the hook" << std::endl;
+	std::cout << "  OPTIONS is one or more of the following options:" << std::endl;
+	std::cout << "    -f FMT  the data format" << std::endl;
+	std::cout << "    -d LVL  set debug level to LVL" << std::endl;
+	std::cout << "    -v CNT  process CNT smps at once" << std::endl;
+	std::cout << "    -h      show this help" << std::endl;
+	std::cout << "    -V      show the version of the tool" << std::endl << std::endl;
 
-	printf("The following hook functions are supported:\n");
+	std::cout << "Supported hooks:" << std::endl;
 	plugin_dump(PLUGIN_TYPE_HOOK);
-	printf("\n");
+	std::cout << std::endl;
 
-	printf("Supported IO formats:\n");
+	std::cout << "Supported IO formats:" << std::endl;
 	plugin_dump(PLUGIN_TYPE_FORMAT);
-	printf("\n");
+	std::cout << std::endl;
 
-	printf("Example:");
-	printf("  villas-signal random | villas-hook skip_first seconds=10\n");
-	printf("\n");
+	std::cout << "Example:" << std::endl;
+	std::cout << "  villas-signal random | villas-hook skip_first seconds=10" << std::endl;
+	std::cout << std::endl;
 
 	print_copyright();
 }
