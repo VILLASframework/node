@@ -22,6 +22,7 @@
 
 #include <villas/nodes/infiniband.h>
 #include <villas/memory.h>
+#include <villas/utils.h>
 #include <rdma/rdma_cma.h>
 
 struct memory_ib {
