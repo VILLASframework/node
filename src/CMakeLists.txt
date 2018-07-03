@@ -27,7 +27,11 @@ add_executable(villas-node villas-node.c)
 add_executable(villas-test-rtt villas-test-rtt.c)
 add_executable(villas-test-shmem villas-test-shmem.c)
 
-set(SRCS )
+install(
+    TARGETS villas-node villas-test-rtt villas-test-shmem
+    COMPONENT bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
 
 if(WITH_IO)
     add_executable(villas-test-cmp villas-test-cmp.c)
@@ -36,14 +40,21 @@ if(WITH_IO)
     add_executable(villas-signal villas-signal.c)
 
     target_link_libraries(villas-pipe PUBLIC Threads::Threads)
+
+    install(
+        TARGETS villas-convert villas-pipe villas-signal villas-test-cmp
+        COMPONENT bin
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
 endif()
 
 if(WITH_IO AND WITH_HOOKS)
     add_executable(villas-hook villas-hook.c)
+
+    install(
+        TARGETS villas-hook
+        COMPONENT bin
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
 endif()
 
-install(
-    TARGETS ${BUILDSYSTEM_TARGETS}
-    COMPONENT bin
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
