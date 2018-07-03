@@ -39,7 +39,6 @@
 #include <jansson.h>
 
 #include <villas/list.h>
-#include <villas/super_node.h>
 #include <villas/node.h>
 #include <villas/task.h>
 
@@ -47,6 +46,7 @@
 extern "C" {
 #endif
 
+/* Forward declarations */
 struct node;
 
 struct ngsi {
@@ -72,7 +72,7 @@ struct ngsi {
  *
  * @see node_type::type_start
  */
-int ngsi_type_start(struct super_node *sn);
+int ngsi_type_start();
 
 /** Free global NGSI settings and unmaps shared memory regions.
  *

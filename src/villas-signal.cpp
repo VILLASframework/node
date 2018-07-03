@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
 	}
 
 	// nt == n._vt
-	ret = node_type_start(nt, NULL);
+	ret = node_type_start(nt); /// @todo: Port to C++
 	if (ret)
 		error("Failed to initialize node type: %s", node_type_name(nt));
 

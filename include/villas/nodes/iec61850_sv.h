@@ -81,9 +81,6 @@ struct iec61850_sv {
 	} out;
 };
 
-/** @see node_type::type_start */
-int iec61850_sv_type_start(struct super_node *sn);
-
 /** @see node_type::type_stop */
 int iec61850_sv_type_stop();
 

@@ -25,6 +25,8 @@
 
 #include <pthread.h>
 
+#include <jansson.h>
+
 #include <villas/common.h>
 #include <villas/queue.h>
 

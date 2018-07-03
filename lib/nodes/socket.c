@@ -54,7 +54,7 @@ static struct plugin p;
 /* Private static storage */
 struct list interfaces = { .state = STATE_DESTROYED };
 
-int socket_type_start(struct super_node *sn)
+int socket_type_start()
 {
 #ifdef WITH_NETEM
 	int ret;

@@ -48,12 +48,13 @@ int opal_register_region(int argc, char *argv[])
 	print_shmem_name = argv[3];
 }
 
-int opal_init(struct super_node *sn)
+int opal_type_start() /// @todo: Port to C++
 {
 	int err;
 
-	if (sn->cli.argc != 4)
-		return -1;
+	/// @todo: Port to C++
+	//if (sn->cli.argc != 4)
+	//	return -1;
 
 	pthread_mutex_init(&lock, NULL);
 
@@ -98,7 +99,7 @@ int opal_init(struct super_node *sn)
 	return 0;
 }
 
-int opal_deinit()
+int opal_type_stop()
 {
 	int err;
 

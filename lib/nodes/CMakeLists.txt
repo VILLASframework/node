@@ -22,8 +22,8 @@
 
 set(NODE_SRC
     influxdb.c
-    stats.c
-    signal_generator.c
+#    stats.c
+    signal_generator.c    
     loopback.c
 )
 

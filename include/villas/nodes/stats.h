@@ -40,7 +40,6 @@ extern "C" {
 /* Forward declarations */
 struct node;
 struct sample;
-struct super_node;
 
 struct stats_node {
 	double rate;
@@ -52,7 +51,7 @@ struct stats_node {
 };
 
 /** @see node_type::print */
-int stats_node_type_start(struct super_node *sn);
+int stats_node_type_start();
 
 /** @see node_type::print */
 char *stats_node_print(struct node *n);

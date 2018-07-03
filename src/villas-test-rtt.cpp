@@ -38,7 +38,9 @@
 #include <villas/pool.h>
 #include <villas/kernel/rt.h>
 
-struct super_node sn; /** <The global configuration */
+using namespace villas::node;
+
+SuperNode sn; /** <The global configuration */
 
 static struct node *node;
 
@@ -115,7 +117,7 @@ int main(int argc, char *argv[])
 		continue;
 
 check:		if (optarg == endptr)
-			error("Failed to parse parse option argument '-%c %s'", c, optarg);
+				error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
 
 	if (argc != optind + 2) {
@@ -128,37 +130,25 @@ check:		if (optarg == endptr)
 
 	ret = signals_init(quit);
 	if (ret)
-		error("Failed to initialize signals");
+		error("Failed to initialize signals subsystem");
 
-	ret = log_init(&sn.log, 2, LOG_ALL);
-	if (ret)
-		return ret;
-
-	ret = super_node_init(&sn);
-	if (ret)
-		error("Failed to initialize super-node");
-
-	ret = super_node_parse_uri(&sn, configfile);
+	ret = sn.parseUri(configfile);
 	if (ret)
 		error("Failed to parse configuration");
 
-	ret = log_open(&sn.log);
+	ret = sn.init();
 	if (ret)
-		error("Failed to open log file");
+		error("Initialization failed!");
 
-	ret = rt_init(sn.priority, sn.affinity);
+	ret = log_open(sn.getLog());
 	if (ret)
-		return ret;
+		error("Failed to open log");
 
-	ret = memory_init(sn.hugepages);
-	if (ret)
-		error("Failed to stop node-type %s: reason=%d", node_type_name(node->_vt), ret);
-
-	node = (struct node *) list_lookup(&sn.nodes, nodestr);
+	node = sn.getNode(nodestr);
 	if (!node)
 		error("There's no node with the name '%s'", nodestr);
 
-	ret = node_type_start(node->_vt, &sn);
+	ret = node_type_start(node->_vt);//, &sn); // @todo: port to C++
 	if (ret)
 		error("Failed to start node-type %s: reason=%d", node_type_name(node->_vt), ret);
 
@@ -179,10 +169,6 @@ check:		if (optarg == endptr)
 	ret = node_type_stop(node->_vt);
 	if (ret)
 		error("Failed to stop node-type %s: reason=%d", node_type_name(node->_vt), ret);
-
-	ret = super_node_destroy(&sn);
-	if (ret)
-		error("Failed to destroy super-node");
 
 	return 0;
 }

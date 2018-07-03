@@ -89,14 +89,11 @@ static void stats_init_signals(struct node *n)
 	}
 }
 
-int stats_node_type_start(struct super_node *sn)
+int stats_node_type_start() /// @todo: Port to C++
 {
-	if (!sn)
-		return -1;
+	nodes = NULL;
 
-	nodes = &sn->nodes;
-
-	return 0;
+	return -1;
 }
 
 int stats_node_start(struct node *n)

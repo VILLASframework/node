@@ -28,7 +28,7 @@
 
 #include <libwebsockets.h>
 
-#include <villas/super_node.h>
+#include <villas/web.h>
 #include <villas/timing.h>
 #include <villas/utils.h>
 #include <villas/buffer.h>
@@ -369,11 +369,13 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 	return 0;
 }
 
-int websocket_type_start(struct super_node *sn)
+int websocket_type_start() /// @todo: Port to C++
 {
 	list_init(&connections);
 
-	web = &sn->web;
+	web = NULL; /// @todo: Port to C++ &sn->web;
+
+	return -1;
 
 	if (web->state != STATE_STARTED)
 		return -1;

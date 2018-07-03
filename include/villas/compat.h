@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <libconfig.h>
 #include <jansson.h>
 
 #ifdef __cplusplus
@@ -31,6 +32,11 @@ extern "C" {
 #if JANSSON_VERSION_HEX < 0x020A00
 size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags);
 #endif
+
+#if (LIBCONFIG_VER_MAJOR <= 1) && (LIBCONFIG_VER_MINOR < 5)
+  #define config_setting_lookup config_lookup_from
+#endif
+
 
 #ifdef __MACH__
   #include <libkern/OSByteOrder.h>

@@ -60,7 +60,7 @@ struct opal {
  *
  * @see node_type::type_start
  */
-int opal_type_start(struct super_node *sn);
+int opal_type_start();
 
 /** Free global OPAL settings and unmaps shared memory regions.
  *

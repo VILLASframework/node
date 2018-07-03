@@ -24,12 +24,11 @@
 
 #include <villas/sample.h>
 #include <villas/node.h>
-#include <villas/super_node.h>
 #include <villas/utils.h>
 #include <villas/config.h>
 #include <villas/plugin.h>
 
-int node_type_start(struct node_type *vt, struct super_node *sn)
+int node_type_start(struct node_type *vt)
 {
 	int ret;
 
@@ -37,10 +36,8 @@ int node_type_start(struct node_type *vt, struct super_node *sn)
 		return 0;
 
 	info("Initializing " CLR_YEL("%s") " node type which is used by %zu nodes", node_type_name(vt), list_length(&vt->instances));
-	{
-		ret = vt->type.start ? vt->type.start(sn) : 0;
-	}
 
+	ret = vt->type.start ? vt->type.start() : 0; // @todo: port to C++
 	if (ret == 0)
 		vt->state = STATE_STARTED;
 
@@ -55,10 +52,8 @@ int node_type_stop(struct node_type *vt)
 		return 0;
 
 	info("De-initializing " CLR_YEL("%s") " node type", node_type_name(vt));
-	{
-		ret = vt->type.stop ? vt->type.stop() : 0;
-	}
 
+	ret = vt->type.stop ? vt->type.stop() : 0;
 	if (ret == 0)
 		vt->state = STATE_DESTROYED;
 

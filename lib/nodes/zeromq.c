@@ -240,7 +240,7 @@ char * zeromq_print(struct node *n)
 	return buf;
 }
 
-int zeromq_type_start(struct super_node *sn)
+int zeromq_type_start() /// @todo: Port to C++
 {
 	context = zmq_ctx_new();
 

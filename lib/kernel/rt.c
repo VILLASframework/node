@@ -26,7 +26,6 @@
 
 #include <villas/config.h>
 #include <villas/utils.h>
-#include <villas/super_node.h>
 
 #include <villas/kernel/kernel.h>
 #include <villas/kernel/rt.h>

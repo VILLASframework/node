@@ -262,7 +262,7 @@ try_to_reuse:
 	return 0;
 }
 
-int api_init(struct api *a, struct super_node *sn)
+int api_init(struct api *a)//, struct super_node *sn) // @todo: port to C++
 {
 	int ret;
 
@@ -276,7 +276,7 @@ int api_init(struct api *a, struct super_node *sn)
 	if (ret)
 		return ret;
 
-	a->super_node = sn;
+	a->super_node = NULL; //sn; // @todo: port to C++
 	a->state = STATE_INITIALIZED;
 
 	return 0;

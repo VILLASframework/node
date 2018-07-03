@@ -95,7 +95,7 @@ struct websocket_destination {
 int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
 /** @see node_type::type_start */
-int websocket_type_start(struct super_node *sn);
+int websocket_type_start(); /// @todo: Port to C++
 
 /** @see node_type::type_stop */
 int websocket_type_stop();

@@ -45,22 +45,17 @@
   #include <villas/nodes/opal.h>
 #endif
 
-struct super_node sn;
+using namespace villas::node;
+
+SuperNode sn;
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
 	int ret;
 
-	if (sn.stats > 0)
-		stats_print_footer(STATS_FORMAT_HUMAN);
-
-	ret = super_node_stop(&sn);
+	ret = sn.stop();
 	if (ret)
 		error("Failed to stop super node");
-
-	ret = super_node_destroy(&sn);
-	if (ret)
-		error("Failed to destroy super node");
 
 	info(CLR_GRN("Goodbye!"));
 	exit(EXIT_SUCCESS);
@@ -149,40 +144,23 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to initialize signal subsystem");
 
-	ret = super_node_init(&sn);
-	if (ret)
-		error("Failed to initialize super node");
-
-	ret = super_node_parse_uri(&sn, uri);
+	ret = sn.parseUri(uri);
 	if (ret)
 		error("Failed to parse command line arguments");
 
-	ret = super_node_check(&sn);
+	ret = sn.init();
+	if (ret)
+		error("Failed to initialize super node");
+
+	ret = sn.check();
 	if (ret)
 		error("Failed to verify configuration");
 
-	ret = super_node_start(&sn);
+	ret = sn.start();
 	if (ret)
 		error("Failed to start super node");
 
-#ifdef WITH_HOOKS
-	if (sn.stats > 0) {
-		stats_print_header(STATS_FORMAT_HUMAN);
-
-		struct task t;
-
-		ret = task_init(&t, 1.0 / sn.stats, CLOCK_REALTIME);
-		if (ret)
-			error("Failed to create stats timer");
-
-		for (;;) {
-			task_wait(&t);
-			super_node_periodic(&sn);
-		}
-	}
-	else
-#endif /* WITH_HOOKS */
-		for (;;) pause();
+	sn.run();
 
 	return 0;
 }

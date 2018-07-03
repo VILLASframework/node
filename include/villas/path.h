@@ -48,7 +48,6 @@ extern "C" {
 /* Forward declarations */
 struct stats;
 struct node;
-struct super_node;
 
 struct path_source {
 	struct node *node;
