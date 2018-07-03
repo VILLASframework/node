@@ -153,160 +153,145 @@ void * ib_busy_poll_thread(void *n)
 
 static void ib_init_wc_poll(struct node *n)
 {
-    int ret;
-    struct infiniband *ib = (struct infiniband *) n->_vd;
-    ib->ctx.comp_channel = NULL;
+	int ret;
+	struct infiniband *ib = (struct infiniband *) n->_vd;
+	ib->ctx.comp_channel = NULL;
 
-    if(ib->poll.poll_mode == EVENT)
-    {
-        // Create completion channel
-        ib->ctx.comp_channel = ibv_create_comp_channel(ib->ctx.id->verbs);
-        if(!ib->ctx.comp_channel)
-            error("Could not create completion channel in node %s.", node_name(n));
-    }
+	if(ib->poll.poll_mode == EVENT)
+	{
+		// Create completion channel
+		ib->ctx.comp_channel = ibv_create_comp_channel(ib->ctx.id->verbs);
+		if(!ib->ctx.comp_channel)
+			error("Could not create completion channel in node %s.", node_name(n));
+	}
 
-    // Create completion queues and bind to channel (or NULL)
-    ib->ctx.recv_cq = ibv_create_cq(ib->ctx.id->verbs,
-                               ib->cq_size,
-                               NULL,
-                               NULL,
-                               0);
-    if(!ib->ctx.recv_cq)
-        error("Could not create receive completion queue in node %s.", node_name(n));
+	// Create completion queues and bind to channel (or NULL)
+	ib->ctx.recv_cq = ibv_create_cq(ib->ctx.id->verbs,
+					ib->cq_size,
+					NULL,
+					NULL,
+					0);
+	if(!ib->ctx.recv_cq)
+		error("Could not create receive completion queue in node %s.", node_name(n));
 
-    ib->ctx.send_cq = ibv_create_cq(ib->ctx.id->verbs,
-                               ib->cq_size,
-                               NULL,
-                               ib->ctx.comp_channel,
-                               0);
-    if(!ib->ctx.send_cq)
-        error("Could not create send completion queue in node %s.", node_name(n));
+	ib->ctx.send_cq = ibv_create_cq(ib->ctx.id->verbs,
+					ib->cq_size,
+					NULL,
+					ib->ctx.comp_channel,
+					0);
+	if(!ib->ctx.send_cq)
+		error("Could not create send completion queue in node %s.", node_name(n));
 
-    if(ib->poll.poll_mode == EVENT)
-    {
-        // Request notifications from completion queue
-        ret = ibv_req_notify_cq(ib->ctx.send_cq, 0);
-        if(ret)
-            error("Failed to request notifiy CQ in node %s: %s",
-                node_name(n), gai_strerror(ret));
-    }
+	if(ib->poll.poll_mode == EVENT)
+	{
+		// Request notifications from completion queue
+		ret = ibv_req_notify_cq(ib->ctx.send_cq, 0);
+		if(ret)
+			error("Failed to request notifiy CQ in node %s: %s",
+				node_name(n), gai_strerror(ret));
+	}
 
-    // Initialize polling pthread
-    //ToDo: Remove if(is_source)
-    if(ib->is_source)
-    {
-        ret = pthread_create(&ib->poll.cq_poller_thread, NULL, ib->poll.poll_func, n);
-        if(ret)
-        {
-            error("Failed to create poll thread of node %s: %s",
-                node_name(n), gai_strerror(ret));
-        }
-    }
+	// Initialize polling pthread for source
+	if(ib->is_source)
+	{
+		ret = pthread_create(&ib->poll.cq_poller_thread, NULL, ib->poll.poll_func, n);
+		if(ret)
+		{
+			error("Failed to create poll thread of node %s: %s",
+				node_name(n), gai_strerror(ret));
+		}
+	}
 }
 
 static void ib_build_ibv(struct node *n)
 {
-    struct infiniband *ib = (struct infiniband *) n->_vd;
-    int ret;
+	struct infiniband *ib = (struct infiniband *) n->_vd;
+	int ret;
 
-    //Allocate protection domain
-    ib->ctx.pd = ibv_alloc_pd(ib->ctx.id->verbs);
-    if(!ib->ctx.pd)
-        error("Could not allocate protection domain in node %s.", node_name(n));
-    info("Allocated Protection Domain");
+	//Allocate protection domain
+	ib->ctx.pd = ibv_alloc_pd(ib->ctx.id->verbs);
+	if(!ib->ctx.pd)
+		error("Could not allocate protection domain in node %s.", node_name(n));
+	info("Allocated Protection Domain");
 
-    // Initiate poll mode
-    ib_init_wc_poll(n);
+	// Initiate poll mode
+	ib_init_wc_poll(n);
 
-    // Prepare remaining Queue Pair (QP) attributes
-    ib->qp_init.send_cq = ib->ctx.send_cq;
-    ib->qp_init.recv_cq = ib->ctx.recv_cq;
+	// Prepare remaining Queue Pair (QP) attributes
+	ib->qp_init.send_cq = ib->ctx.send_cq;
+	ib->qp_init.recv_cq = ib->ctx.recv_cq;
 
-    //ToDo: Set maximum inline data
+	//ToDo: Set maximum inline data
 
-    // Create the actual QP
-    ret = rdma_create_qp(ib->ctx.id, ib->ctx.pd, &ib->qp_init);
-    if(ret)
-        error("Failed to create Queue Pair in node %s.", node_name(n));
+	// Create the actual QP
+	ret = rdma_create_qp(ib->ctx.id, ib->ctx.pd, &ib->qp_init);
+	if(ret)
+		error("Failed to create Queue Pair in node %s.", node_name(n));
 
-    info("Created Queue Pair with %i receive and %i send elements.",
-            ib->qp_init.cap.max_recv_wr, ib->qp_init.cap.max_send_wr);
+	info("Created Queue Pair with %i receive and %i send elements.",
+		ib->qp_init.cap.max_recv_wr, ib->qp_init.cap.max_send_wr);
 
-    // Allocate memory
-    ib->mem.p_recv.state = STATE_DESTROYED;
-    ib->mem.p_recv.queue.state = STATE_DESTROYED;
+	// Allocate memory
+	ib->mem.p_recv.state = STATE_DESTROYED;
+	ib->mem.p_recv.queue.state = STATE_DESTROYED;
 
-    // Set pool size to maximum size of Receive Queue
-    pool_init(&ib->mem.p_recv,
-            ib->qp_init.cap.max_recv_wr,
-            SAMPLE_DATA_LEN(DEFAULT_SAMPLELEN),
-            &memtype_heap);
-    if(ret)
-    {
-        error("Failed to init recv memory pool of node %s: %s",
-            node_name(n), gai_strerror(ret));
-    }
+	// Set pool size to maximum size of Receive Queue
+	pool_init(&ib->mem.p_recv,
+		ib->qp_init.cap.max_recv_wr,
+		SAMPLE_DATA_LEN(DEFAULT_SAMPLELEN),
+		&memtype_heap);
+	if(ret)
+	{
+		error("Failed to init recv memory pool of node %s: %s",
+			node_name(n), gai_strerror(ret));
+	}
 
-    //ToDo: initialize r_addr_key struct if mode is RDMA
+	//ToDo: initialize r_addr_key struct if mode is RDMA
 
-    // Register memory for IB Device. Not necessary if data is send
-    // exclusively inline
-    ib->mem.mr_recv = ibv_reg_mr(
-            ib->ctx.pd,
-            (char*)&ib->mem.p_recv+ib->mem.p_recv.buffer_off,
-            ib->mem.p_recv.len,
-            IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
-    if(!ib->mem.mr_recv) {
-        error("Failed to register mr_recv with ibv_reg_mr of node %s.",
-            node_name(n));
-    }
-    info("Allocated receive memory.");
+	// Register memory for IB Device. Not necessary if data is send
+	// exclusively inline
+	ib->mem.mr_recv = ibv_reg_mr(
+				ib->ctx.pd,
+				(char*)&ib->mem.p_recv+ib->mem.p_recv.buffer_off,
+				ib->mem.p_recv.len,
+				IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
+	if(!ib->mem.mr_recv) {
+		error("Failed to register mr_recv with ibv_reg_mr of node %s.",
+			node_name(n));
+	}
+	info("Allocated receive memory.");
 
-    if(ib->is_source)
-    {
-        ib->mem.p_send.state = STATE_DESTROYED;
-        ib->mem.p_send.queue.state = STATE_DESTROYED;
+	if(ib->is_source)
+	{
+		ib->mem.p_send.state = STATE_DESTROYED;
+		ib->mem.p_send.queue.state = STATE_DESTROYED;
 
-        // Set pool size to maximum size of Receive Queue
-        pool_init(&ib->mem.p_send,
-                ib->qp_init.cap.max_send_wr,
-                sizeof(double),
-                &memtype_heap);
-        if(ret)
-        {
-            error("Failed to init send memory of node %s: %s",
-                node_name(n), gai_strerror(ret));
-        }
+		// Set pool size to maximum size of Receive Queue
+		pool_init(&ib->mem.p_send,
+			ib->qp_init.cap.max_send_wr,
+			sizeof(double),
+			&memtype_heap);
+		if(ret)
+		{
+			error("Failed to init send memory of node %s: %s",
+				node_name(n), gai_strerror(ret));
+		}
 
-        //ToDo: initialize r_addr_key struct if mode is RDMA
+		//ToDo: initialize r_addr_key struct if mode is RDMA
 
-        // Register memory for IB Device. Not necessary if data is send
-        // exclusively inline
-        ib->mem.mr_send = ibv_reg_mr(
-                ib->ctx.pd,
-                (char*)&ib->mem.p_send+ib->mem.p_send.buffer_off,
-                ib->mem.p_send.len,
-                IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
-        if(!ib->mem.mr_send) {
-            error("Failed to register mr_send with ibv_reg_mr of node %s.",
-                node_name(n));
-        }
-        info("Allocated send memory.");
-
-    }
-
-    // Post Receive Work Requests to be able to receive data
-    // Fill complete Receive Queue during initialization
-    //for(int i=0; i<ib->qp_init.cap.max_recv_wr; i++)
-    //{
-    //    ret = ib_post_recv_wrs(n);
-    //    if(ret)
-    //    {
-    //        error("Failed to post initial receive Work Requests of node %s.",
-    //            node_name(n));
-    //    }
-    //}
-    //info("Filled the complete Receive Queue.");
+		// Register memory for IB Device. Not necessary if data is send
+		// exclusively inline
+		ib->mem.mr_send = ibv_reg_mr(
+					ib->ctx.pd,
+					(char*)&ib->mem.p_send+ib->mem.p_send.buffer_off,
+					ib->mem.p_send.len,
+					IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
+		if(!ib->mem.mr_send) {
+			error("Failed to register mr_send with ibv_reg_mr of node %s.",
+				node_name(n));
+		}
+		info("Allocated send memory.");
+	}
 }
 
 static int ib_addr_resolved(struct node *n)
@@ -333,8 +318,6 @@ static int ib_route_resolved(struct node *n)
 	int ret;
 
 	info("Successfully resolved route.");
-
-	//ToDo: Post receive WRs
 
 	struct rdma_conn_param cm_params;
 	memset(&cm_params, 0, sizeof(cm_params));
@@ -373,296 +356,291 @@ static int ib_connect_request(struct node *n, struct rdma_cm_id *id)
 
 static int ib_event(struct node *n, struct rdma_cm_event *event)
 {
-    int ret = 0;
+	int ret = 0;
 
-    switch(event->event)
-    {
-        case RDMA_CM_EVENT_ADDR_RESOLVED:
-            ret = ib_addr_resolved(n);
-            break;
-        case RDMA_CM_EVENT_ADDR_ERROR:
-            error("Address resolution (rdma_resolve_addr) failed!");
-        case RDMA_CM_EVENT_ROUTE_RESOLVED:
-            ret = ib_route_resolved(n);
-            break;
-        case RDMA_CM_EVENT_ROUTE_ERROR:
-            error("Route resolution (rdma_resovle_route) failed!");
-        case RDMA_CM_EVENT_CONNECT_REQUEST:
-            ret = ib_connect_request(n, event->id);
-            break;
-        case RDMA_CM_EVENT_CONNECT_ERROR:
-            error("An error has occurred trying to establish a connection!");
-        case RDMA_CM_EVENT_REJECTED:
-            error("Connection request or response was rejected by the remote end point!");
-        case RDMA_CM_EVENT_ESTABLISHED:
-            info("Connection established!");
-            ret = 1;
-            break;
-        case RDMA_CM_EVENT_DISCONNECTED:
-            ret = ib_cleanup(n);
-            break;
-        default:
-            error("Unknown event occurred: %u",
-                event->event);
-    }
+	switch(event->event)
+	{
+		case RDMA_CM_EVENT_ADDR_RESOLVED:
+			ret = ib_addr_resolved(n);
+			break;
+		case RDMA_CM_EVENT_ADDR_ERROR:
+			error("Address resolution (rdma_resolve_addr) failed!");
+		case RDMA_CM_EVENT_ROUTE_RESOLVED:
+			ret = ib_route_resolved(n);
+			break;
+		case RDMA_CM_EVENT_ROUTE_ERROR:
+			error("Route resolution (rdma_resovle_route) failed!");
+		case RDMA_CM_EVENT_CONNECT_REQUEST:
+			ret = ib_connect_request(n, event->id);
+			break;
+		case RDMA_CM_EVENT_CONNECT_ERROR:
+			error("An error has occurred trying to establish a connection!");
+		case RDMA_CM_EVENT_REJECTED:
+			error("Connection request or response was rejected by the remote end point!");
+		case RDMA_CM_EVENT_ESTABLISHED:
+			info("Connection established!");
+			ret = 1;
+			break;
+		case RDMA_CM_EVENT_DISCONNECTED:
+			ret = ib_cleanup(n);
+			break;
+		default:
+			error("Unknown event occurred: %u",
+				event->event);
+	}
 
-    return ret;
+	return ret;
 }
 
 int ib_reverse(struct node *n)
 {
-    return 0;
+	return 0;
 }
 
 int ib_parse(struct node *n, json_t *cfg)
 {
-    struct infiniband *ib = (struct infiniband *) n->_vd;
+	struct infiniband *ib = (struct infiniband *) n->_vd;
 
-    int ret;
-    char *local = NULL;
-    char *remote = NULL;
-    const char *port_space = "RDMA_PC_TCP";
-    const char *poll_mode = "BUSY";
-    const char *qp_type = "IBV_QPT_RC";
-    int timeout = 1000;
-    int cq_size = 128;
-    int max_send_wr = 128;
-    int max_recv_wr = 128;
+	int ret;
+	char *local = NULL;
+	char *remote = NULL;
+	const char *port_space = "RDMA_PC_TCP";
+	const char *poll_mode = "BUSY";
+	const char *qp_type = "IBV_QPT_RC";
+	int timeout = 1000;
+	int cq_size = 128;
+	int max_send_wr = 128;
+	int max_recv_wr = 128;
 
-    json_error_t err;
-    ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: i, \
-                                        s?: s, s?: i, s?: s, s?: i, s?: i}",
-        "remote", &remote,
-        "local", &local,
-        "rdma_port_space", &port_space,
-        "resolution_timeout", &timeout,
-        "poll_mode", &poll_mode,
-        "cq_size", &cq_size,
-        "qp_type", &qp_type,
-        "max_send_wr", &max_send_wr,
-        "max_recv_wr", &max_recv_wr
-    );
-    if(ret)
-        jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+	json_error_t err;
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: i, \
+					s?: s, s?: i, s?: s, s?: i, s?: i}",
+		"remote", &remote,
+		"local", &local,
+		"rdma_port_space", &port_space,
+		"resolution_timeout", &timeout,
+		"poll_mode", &poll_mode,
+		"cq_size", &cq_size,
+		"qp_type", &qp_type,
+		"max_send_wr", &max_send_wr,
+		"max_recv_wr", &max_recv_wr
+	);
+	if(ret)
+		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-    // Translate IP:PORT to a struct addrinfo
-    char* ip_adr = strtok(local, ":");
-    char* port = strtok(NULL, ":");
-    ret = getaddrinfo(ip_adr, port, NULL, &ib->conn.src_addr);
-    if(ret)
-    {
-        error("Failed to resolve local address '%s' of node %s: %s",
-            local, node_name(n), gai_strerror(ret));
-    }
+	// Translate IP:PORT to a struct addrinfo
+	char* ip_adr = strtok(local, ":");
+	char* port = strtok(NULL, ":");
+	ret = getaddrinfo(ip_adr, port, NULL, &ib->conn.src_addr);
+	if(ret)
+	{
+		error("Failed to resolve local address '%s' of node %s: %s",
+			local, node_name(n), gai_strerror(ret));
+	}
 
-    // Translate port space
-    if(strcmp(port_space, "RDMA_PS_IPOIB") == 0)    ib->conn.port_space = RDMA_PS_IPOIB;
-    else if(strcmp(port_space, "RDMA_PS_TCP") == 0) ib->conn.port_space = RDMA_PS_TCP;
-    else if(strcmp(port_space, "RDMA_PS_UDP") == 0) ib->conn.port_space = RDMA_PS_UDP;
-    else if(strcmp(port_space, "RDMA_PS_IB") == 0)  ib->conn.port_space = RDMA_PS_IB;
-    else {
-        error("Failed to translate rdma_port_space in node %s. %s is not a valid \
-            port space supported by rdma_cma.h!", node_name(n), port_space);
-    }
+	// Translate port space
+	if(strcmp(port_space, "RDMA_PS_IPOIB") == 0)    ib->conn.port_space = RDMA_PS_IPOIB;
+	else if(strcmp(port_space, "RDMA_PS_TCP") == 0) ib->conn.port_space = RDMA_PS_TCP;
+	else if(strcmp(port_space, "RDMA_PS_UDP") == 0) ib->conn.port_space = RDMA_PS_UDP;
+	else if(strcmp(port_space, "RDMA_PS_IB") == 0)  ib->conn.port_space = RDMA_PS_IB;
+	else {
+		error("Failed to translate rdma_port_space in node %s. %s is not a valid \
+			port space supported by rdma_cma.h!", node_name(n), port_space);
+	}
 
-    // Set timeout
-    ib->conn.timeout = timeout;
+	// Set timeout
+	ib->conn.timeout = timeout;
 
-    n->in.vectorize = 256;
+	n->in.vectorize = 256;
 
-    // Translate poll mode
-    if(strcmp(poll_mode, "EVENT") == 0)
-    {
-        ib->poll.poll_mode = EVENT;
-        ib->poll.poll_func = ib_event_thread;
+	// Translate poll mode
+	if(strcmp(poll_mode, "EVENT") == 0)
+	{
+		ib->poll.poll_mode = EVENT;
+		ib->poll.poll_func = ib_event_thread;
+	}
+	else if(strcmp(poll_mode, "BUSY") == 0)
+	{
+		ib->poll.poll_mode = BUSY;
+		ib->poll.poll_func = ib_busy_poll_thread;
+	}
+	else
+	{
+		error("Failed to translate poll_mode in node %s. %s is not a valid \
+			poll mode!", node_name(n), poll_mode);
+	}
 
-    }
-    else if(strcmp(poll_mode, "BUSY") == 0)
-    {
-        ib->poll.poll_mode = BUSY;
-        ib->poll.poll_func = ib_busy_poll_thread;
-    }
-    else
-    {
-        error("Failed to translate poll_mode in node %s. %s is not a valid \
-            poll mode!", node_name(n), poll_mode);
-    }
+	// Set completion queue size
+	ib->cq_size = cq_size;
 
-    // Set completion queue size
-    ib->cq_size = cq_size;
+	// Translate QP type
+	if(strcmp(qp_type, "IBV_QPT_RC") == 0)    ib->qp_init.qp_type = IBV_QPT_RC;
+	else if(strcmp(qp_type, "IBV_QPT_UC") == 0) ib->qp_init.qp_type = IBV_QPT_UC;
+	else if(strcmp(qp_type, "IBV_QPT_UD") == 0) ib->qp_init.qp_type = IBV_QPT_UD;
+	else {
+	    error("Failed to translate qp_type in node %s. %s is not a valid \
+	        qp_type!", node_name(n), qp_type);
+	}
 
-    // Translate QP type
-    if(strcmp(qp_type, "IBV_QPT_RC") == 0)    ib->qp_init.qp_type = IBV_QPT_RC;
-    else if(strcmp(qp_type, "IBV_QPT_UC") == 0) ib->qp_init.qp_type = IBV_QPT_UC;
-    else if(strcmp(qp_type, "IBV_QPT_UD") == 0) ib->qp_init.qp_type = IBV_QPT_UD;
-    else {
-        error("Failed to translate qp_type in node %s. %s is not a valid \
-            qp_type!", node_name(n), qp_type);
-    }
+	// Set max. send and receive Work Requests
+	// First check if the set value is a power of 2, and warn the user if this is not the case
+	int max_send_pow = (int) pow(2, ceil(log2(max_send_wr)));
+	int max_recv_pow = (int) pow(2, ceil(log2(max_recv_wr)));
 
-    // Set max. send and receive Work Requests
-    // First check if the set value is a power of 2, and warn the user if this is not the case
-    int max_send_pow = (int) pow(2, ceil(log2(max_send_wr)));
-    int max_recv_pow = (int) pow(2, ceil(log2(max_recv_wr)));
+	if(max_send_wr != max_send_pow)
+		warn("Max. number of send WRs (%i) is not a power of 2! The HCA will change this to a power of 2: %i",
+			max_send_wr, max_send_pow);
 
-    if(max_send_wr != max_send_pow)
-        warn("Max. number of send WRs (%i) is not a power of 2! The HCA will change this to a power of 2: %i",
-                max_send_wr, max_send_pow);
+	if(max_recv_wr != max_recv_pow)
+		warn("Max. number of recv WRs (%i) is not a power of 2! The HCA will change this to a power of 2: %i",
+			max_recv_wr, max_recv_pow);
 
-    if(max_recv_wr != max_recv_pow)
-        warn("Max. number of recv WRs (%i) is not a power of 2! The HCA will change this to a power of 2: %i",
-                max_recv_wr, max_recv_pow);
+	ib->qp_init.cap.max_send_wr = max_send_wr;
+	ib->qp_init.cap.max_recv_wr = max_recv_wr;
 
-    ib->qp_init.cap.max_send_wr = max_send_wr;
-    ib->qp_init.cap.max_recv_wr = max_recv_wr;
+	// Set available receive Work Requests to 0
+	ib->conn.available_recv_wrs = 0;
 
-    // Set available receive Work Requests to 0
-    ib->conn.available_recv_wrs = 0;
+	// Set remaining QP attributes
+	ib->qp_init.cap.max_send_sge = 1;
+	ib->qp_init.cap.max_recv_sge = 1;
 
-    // Set remaining QP attributes
-    ib->qp_init.cap.max_send_sge = 1;
-    ib->qp_init.cap.max_recv_sge = 1;
+	//Check if node is a source and connect to target
+	if(remote)
+	{
+		ib->is_source = 1;
 
-    //Check if node is a source and connect to target
-    if(remote)
-    {
-        ib->is_source = 1;
+		// Translate address info
+		char* ip_adr = strtok(remote, ":");
+		char* port = strtok(NULL, ":");
+		ret = getaddrinfo(ip_adr, port, NULL, &ib->conn.dst_addr);
+		if(ret)
+		{
+			error("Failed to resolve remote address '%s' of node %s: %s",
+				remote, node_name(n), gai_strerror(ret));
+		}
 
-        // Translate address info
-        char* ip_adr = strtok(remote, ":");
-        char* port = strtok(NULL, ":");
-        ret = getaddrinfo(ip_adr, port, NULL, &ib->conn.dst_addr);
-        if(ret)
-        {
-            error("Failed to resolve remote address '%s' of node %s: %s",
-                remote, node_name(n), gai_strerror(ret));
-        }
+		// Set correct Work Completion function
+		ib->poll.on_compl = ib_completion_source;
+	}
+	else
+	{
+		ib->is_source = 0;
 
-        // Set correct Work Completion function
-        ib->poll.on_compl = ib_completion_source;
-    }
-    else
-    {
-        ib->is_source = 0;
+		// Set correct Work Completion function
+		ib->poll.on_compl = ib_completion_target;
+	}
 
-        // Set correct Work Completion function
-        ib->poll.on_compl = ib_completion_target;
-    }
-
-    return 0;
+	return 0;
 }
 
 char * ib_print(struct node *n)
 {
-    return 0;
+	return 0;
 }
 
 int ib_destroy(struct node *n)
 {
-    return 0;
+	return 0;
 }
 
 void * ib_disconnect_thread(void *n)
 {
-    struct node *node = (struct node *)n;
-    struct infiniband *ib = (struct infiniband *)((struct node *)n)->_vd;
-    struct rdma_cm_event *event;
+	struct node *node = (struct node *)n;
+	struct infiniband *ib = (struct infiniband *)((struct node *)n)->_vd;
+	struct rdma_cm_event *event;
 
-    while(rdma_get_cm_event(ib->ctx.ec, &event) == 0)
-    {
-        if(event->event == RDMA_CM_EVENT_DISCONNECTED)
-        {
-            rdma_ack_cm_event(event);
-            ib->conn.rdma_disconnect_called = 1;
+	while(rdma_get_cm_event(ib->ctx.ec, &event) == 0)
+	{
+		if(event->event == RDMA_CM_EVENT_DISCONNECTED)
+		{
+			rdma_ack_cm_event(event);
+			ib->conn.rdma_disconnect_called = 1;
 
-            node_stop(node);
-            return NULL;
-        }
-    }
-    return NULL;
+			node_stop(node);
+			return NULL;
+		}
+	}
+	return NULL;
 }
 
 int ib_start(struct node *n)
 {
-    struct infiniband *ib = (struct infiniband *) n->_vd;
-    struct rdma_cm_event *event = NULL;
-    int ret;
+	struct infiniband *ib = (struct infiniband *) n->_vd;
+	struct rdma_cm_event *event = NULL;
+	int ret;
 
-    // Create event channel
-    ib->ctx.ec = rdma_create_event_channel();
-    if(!ib->ctx.ec) {
-        error("Failed to create event channel in node %s!",
-            node_name(n));
-    }
+	// Create event channel
+	ib->ctx.ec = rdma_create_event_channel();
+	if(!ib->ctx.ec)
+		error("Failed to create event channel in node %s!", node_name(n));
 
-    ret = rdma_create_id(ib->ctx.ec, &ib->ctx.id, NULL, ib->conn.port_space);
-    if(ret)
-    {
-        error("Failed to create rdma_cm_id of node %s: %s",
-            node_name(n), gai_strerror(ret));
-    }
-    info("Succesfully created rdma_cm_id.");
+	ret = rdma_create_id(ib->ctx.ec, &ib->ctx.id, NULL, ib->conn.port_space);
+	if(ret)
+	{
+		error("Failed to create rdma_cm_id of node %s: %s",
+			node_name(n), gai_strerror(ret));
+	}
+	info("Succesfully created rdma_cm_id.");
 
-    // Bind rdma_cm_id to the HCA
-    ret = rdma_bind_addr(ib->ctx.id, ib->conn.src_addr->ai_addr);
-    if(ret)
-    {
-        error("Failed to bind to local device of node %s: %s",
-            node_name(n), gai_strerror(ret));
-    }
-    info("Bound rdma_cm_id to Infiniband device.");
+	// Bind rdma_cm_id to the HCA
+	ret = rdma_bind_addr(ib->ctx.id, ib->conn.src_addr->ai_addr);
+	if(ret)
+	{
+		error("Failed to bind to local device of node %s: %s",
+			node_name(n), gai_strerror(ret));
+	}
+	info("Bound rdma_cm_id to Infiniband device.");
 
-    if(ib->is_source)
-    {
-        // Resolve address
-        ret = rdma_resolve_addr(ib->ctx.id,
-                                NULL,
-                                ib->conn.dst_addr->ai_addr,
-                                ib->conn.timeout);
-        if(ret)
-        {
-            error("Failed to resolve remote address after %ims of node %s: %s",
-                ib->conn.timeout, node_name(n), gai_strerror(ret));
-        }
-    }
-    else
-    {
-        // The ID will be overwritten for the target. If the event type is
-        // RDMA_CM_EVENT_CONNECT_REQUEST, >then this references a new id for
-        // that communication.
-        ib->ctx.listen_id = ib->ctx.id;
+	if(ib->is_source)
+	{
+		// Resolve address
+		ret = rdma_resolve_addr(ib->ctx.id,
+					NULL,
+					ib->conn.dst_addr->ai_addr,
+					ib->conn.timeout);
+		if(ret)
+		{
+			error("Failed to resolve remote address after %ims of node %s: %s",
+				ib->conn.timeout, node_name(n), gai_strerror(ret));
+		}
+	}
+	else
+	{
+		// The ID will be overwritten for the target. If the event type is
+		// RDMA_CM_EVENT_CONNECT_REQUEST, >then this references a new id for
+		// that communication.
+		ib->ctx.listen_id = ib->ctx.id;
 
-        // Listen on rdma_cm_id for events
-        ret = rdma_listen(ib->ctx.listen_id, 10);
-        if(ret)
-        {
-            error("Failed to listen to rdma_cm_id on node %s", node_name(n));
-        }
-    }
+		// Listen on rdma_cm_id for events
+		ret = rdma_listen(ib->ctx.listen_id, 10);
+		if(ret)
+			error("Failed to listen to rdma_cm_id on node %s", node_name(n));
+	}
 
-    // Several events should occur on the event channel, to make
-    // sure the nodes are succesfully connected.
-    info("Starting to monitor events on rdma_cm_id.");
+	// Several events should occur on the event channel, to make
+	// sure the nodes are succesfully connected.
+	info("Starting to monitor events on rdma_cm_id.");
 
-    while(rdma_get_cm_event(ib->ctx.ec, &event) == 0)
-    {
-        struct rdma_cm_event event_copy;
-        memcpy(&event_copy, event, sizeof(*event));
+	while(rdma_get_cm_event(ib->ctx.ec, &event) == 0)
+	{
+		struct rdma_cm_event event_copy;
+		memcpy(&event_copy, event, sizeof(*event));
 
-        rdma_ack_cm_event(event);
+		rdma_ack_cm_event(event);
 
-        if(ib_event(n, &event_copy))
-            break;
-    }
+		if(ib_event(n, &event_copy))
+			break;
+	}
 
-    ret = pthread_create(&ib->conn.stop_thread, NULL, ib_disconnect_thread, n);
-    if(ret)
-    {
-        error("Failed to create thread to monitor disconnects in node %s: %s",
-            node_name(n), gai_strerror(ret));
-    }
+	ret = pthread_create(&ib->conn.stop_thread, NULL, ib_disconnect_thread, n);
+	if(ret)
+	{
+		error("Failed to create thread to monitor disconnects in node %s: %s",
+			node_name(n), gai_strerror(ret));
+	}
 
-    return 0;
+	return 0;
 }
 
 int ib_stop(struct node *n)
