@@ -6,10 +6,10 @@
 #
 # This image can be used for developing VILLASnode
 # by running:
-#   make docker
+#   make docker-dev
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -30,10 +30,10 @@
 
 FROM fedora:28
 
-ARG GIT_REV=unkown
-ARG GIT_BRANCH=unkown
-ARG VERSION=unkown
-ARG VARIANT=unkown
+ARG GIT_REV=unknown
+ARG GIT_BRANCH=unknown
+ARG VERSION=unknown
+ARG VARIANT=unknown
 
 # Toolchain
 RUN dnf -y install \

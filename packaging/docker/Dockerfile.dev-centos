@@ -30,10 +30,10 @@
 
 FROM centos:7
 
-ARG GIT_REV=unkown
-ARG GIT_BRANCH=unkown
-ARG VERSION=unkown
-ARG VARIANT=unkown
+ARG GIT_REV=unknown
+ARG GIT_BRANCH=unknown
+ARG VERSION=unknown
+ARG VARIANT=unknown
 
 # Some of the dependencies are only available in our own repo
 ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
