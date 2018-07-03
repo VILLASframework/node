@@ -42,73 +42,73 @@ typedef void* (*ib_poll_function)(void*);
 /* Enums */
 enum poll_mode_e
 {
-    EVENT,
-    BUSY
+	EVENT,
+	BUSY
 };
 
 struct r_addr_key_s {
-    uint64_t remote_addr;
-    uint32_t rkey;
+	uint64_t remote_addr;
+	uint32_t rkey;
 };
 
 struct infiniband {
+	/* IBV/RDMA CM structs */
+	struct context_s {
+		struct rdma_cm_id *listen_id;
+		struct rdma_cm_id *id;
+		struct rdma_event_channel *ec;
 
-    /* IBV/RDMA CM structs */
-    struct context_s {
-        struct rdma_cm_id *listen_id;
-        struct rdma_cm_id *id;
-        struct rdma_event_channel *ec;
+		struct ibv_pd *pd;
+		struct ibv_cq *recv_cq;
+		struct ibv_cq *send_cq;
+		struct ibv_comp_channel *comp_channel;
+	} ctx;
+	/* Work Completion related */
+	struct poll_s {
+		enum poll_mode_e poll_mode;
 
-        struct ibv_pd *pd;
-        struct ibv_cq *cq;
-        struct ibv_comp_channel *comp_channel;
-    } ctx;
-    /* Work Completion related */
-    struct poll_s {
-        enum poll_mode_e poll_mode;
+		/* On completion function */
+		ib_on_completion on_compl;
 
-        /* On completion function */
-        ib_on_completion on_compl;
+		/* Busy poll or Event function */
+		ib_poll_function poll_func;
 
-        /* Busy poll or Event function */
-        ib_poll_function poll_func;
+		/* Poll thread */
+		pthread_t cq_poller_thread;
 
-        /* Poll thread */
-        pthread_t cq_poller_thread;
+		int stopThread;
+	} poll;
 
-        int stopThread;
-    } poll;
+	/* Connection specific variables */
+	struct connection_s {
+		struct addrinfo *src_addr;
+		struct addrinfo *dst_addr;
+		enum rdma_port_space port_space;
+		int timeout;
 
-    /* Connection specific variables */
-    struct connection_s {
-        struct addrinfo *src_addr;
-        struct addrinfo *dst_addr;
-        enum rdma_port_space port_space;
-        int timeout;
+		struct r_addr_key_s *r_addr_key;
 
-        struct r_addr_key_s *r_addr_key;
+		pthread_t stop_thread;
+		int rdma_disconnect_called;
 
-        pthread_t stop_thread;
-        int rdma_disconnect_called;
+		int available_recv_wrs;
+	} conn;
 
-        int available_recv_wrs;
-    } conn;
+	/* Memory related variables */
+	struct ib_memory {
+		struct pool p_recv;
+		struct pool p_send;
 
-    /* Memory related variables */
-    struct ib_memory {
-        struct pool p_recv;
-        struct pool p_send;
+		struct ibv_mr *mr_recv;
+		struct ibv_mr *mr_send;
+	} mem;
 
-        struct ibv_mr *mr_recv;
-        struct ibv_mr *mr_send;
-    } mem;
+	/* Queue Pair init variables */
+	struct ibv_qp_init_attr qp_init;
 
-    /* Queue Pair init variables */
-    struct ibv_qp_init_attr qp_init;
-
-    /* Misc settings */
-    int is_source;
-    int cq_size;
+	/* Misc settings */
+	int is_source;
+int cq_size;
 };
 
 /** @see node_type::reverse */
