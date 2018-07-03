@@ -57,7 +57,10 @@ endif()
 # Enable shared memory node-type
 if(HAS_SEMAPHORE AND HAS_MMAN)
     list(APPEND NODE_SRC shmem.c)
-    list(APPEND LIBRARIES "rt")
+    
+    if(CMAKE_SUSTEM_NAME STREQUAL Linux)
+        list(APPEND LIBRARIES rt)
+    endif()
 endif()
 
 # Enable IEC61850 node-types when libiec61850 is available
@@ -123,17 +126,6 @@ if(COMEDILIB_FOUND)
     list(APPEND LIBRARIES PkgConfig::COMEDILIB)
 endif()
 
-add_library(villas-nodes SHARED ${NODE_SRC})
-target_include_directories(villas-nodes PUBLIC ${INCLUDE_DIRS})
-target_link_libraries(villas-nodes PUBLIC ${LIBRARIES})
-
-#set_target_properties(villas-nodes PROPERTIES
-#    VERSION ${PROJECT_VERSION}
-#    SOVERSION ${PROJECT_SOVERSION}
-#)
-
-install(
-    TARGETS villas-nodes
-    COMPONENT lib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+add_library(nodes STATIC ${NODE_SRC})
+target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
+target_link_libraries(nodes LINK_PRIVATE ${LIBRARIES})

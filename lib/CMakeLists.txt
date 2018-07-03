@@ -20,6 +20,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
+add_compile_options(-fPIC)
+
 set(INCLUDE_DIRS
     ${JANSSON_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
@@ -67,7 +69,7 @@ set(LIB_SRC
 )
 
 add_subdirectory(nodes)
-list(APPEND LIBRARIES villas-nodes)
+list(APPEND WHOLE_ARCHIVES nodes)
 
 if(LIBCONFIG_FOUND)
     list(APPEND INCLUDE_DIRS ${LIBCONFIG_INCLUDE_DIRS})
@@ -81,7 +83,7 @@ if(WITH_IO)
     )
     
     add_subdirectory(formats)
-    list(APPEND LIBRARIES villas-formats)
+    list(APPEND WHOLE_ARCHIVES formats)
 endif()
 
 if(WITH_HOOKS)
@@ -91,7 +93,7 @@ if(WITH_HOOKS)
     )
 
     add_subdirectory(hooks)
-    list(APPEND LIBRARIES villas-hooks)
+    list(APPEND WHOLE_ARCHIVES hooks)
 endif()
 
 if(WITH_WEB)
@@ -109,7 +111,7 @@ if(WITH_API AND WITH_WEB)
     )
 
     add_subdirectory(api)
-    list(APPEND LIBRARIES villas-api)
+    list(APPEND WHOLE_ARCHIVES api)
 endif()
 
 # libnl3 is optional but required for network emulation and IRQ pinning
@@ -130,10 +132,17 @@ add_library(villas SHARED ${LIB_SRC})
 target_include_directories(villas PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(villas PUBLIC ${LIBRARIES})
 
-#set_target_properties(villas PROPERTIES
-#    VERSION ${PROJECT_VERSION}
-#    SOVERSION ${PROJECT_SOVERSION}
-#)
+if(APPLE)
+    target_link_libraries(villas PRIVATE -Wl,-all_load ${WHOLE_ARCHIVES} -Wl,-noall_load)
+else()
+    target_link_libraries(villas PRIVATE -Wl,--whole-archive ${WHOLE_ARCHIVES} -Wl,--no-whole-archive)
+endif()
+
+
+set_target_properties(villas PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_SOVERSION}
+)
 
 install(
     TARGETS villas
