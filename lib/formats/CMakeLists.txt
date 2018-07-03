@@ -38,6 +38,31 @@ set(LIBRARIES
     ${OPENSSL_LIBRARIES}
 )
 
+if(DEFINED PROTOBUF_COMPILER)
+	add_custom_target(protobuf ALL
+		COMMAND ${PROTOBUF_COMPILER}
+			--python_out=${CMAKE_CURRENT_BINARY_DIR}
+			#--php_out=${CMAKE_BINARY_DIR}
+			--js_out=${CMAKE_CURRENT_BINARY_DIR}
+			--cpp_out=${CMAKE_CURRENT_BINARY_DIR}
+			villas.proto
+        DEPENDS villas.proto
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	)
+endif()
+
+if(DEFINED PROTOBUFC_COMPILER)
+    add_custom_target(protobuf-c ALL
+        COMMAND ${PROTOBUFC_COMPILER}
+            --c_out=${CMAKE_CURRENT_BINARY_DIR}
+            villas.proto
+        DEPENDS villas.proto
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
+    add_dependencies(protobuf protobuf-c)
+endif()
+
 # Enable Google Protobuf format
 if(ProtobufC_FOUND)
     list(APPEND FORMAT_SRC
@@ -59,27 +84,9 @@ if(ProtobufC_FOUND)
             GENERATED TRUE
     )
 
-    add_custom_command(
-        COMMAND ${PROTOBUFC_COMPILER} --c_out=${CMAKE_CURRENT_BINARY_DIR} villas.proto
-        OUTPUT
-            villas.pb-c.c
-            villas.pb-c.h
-        MAIN_DEPENDENCY villas.proto
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    )
+    add_dependencies(formats protobuf-c)
 endif()
 
-add_library(villas-formats SHARED ${FORMAT_SRC})
-target_include_directories(villas-formats PUBLIC ${INCLUDE_DIRS})
-target_link_libraries(villas-formats PUBLIC ${LIBRARIES})
-
-#set_target_properties(villas-formats PROPERTIES
-#    VERSION ${PROJECT_VERSION}
-#    SOVERSION ${PROJECT_SOVERSION}
-#)
-
-install(
-    TARGETS villas-formats
-    COMPONENT lib
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+add_library(formats STATIC ${FORMAT_SRC})
+target_include_directories(formats PUBLIC ${INCLUDE_DIRS})
+target_link_libraries(formats INTERFACE ${LIBRARIES})

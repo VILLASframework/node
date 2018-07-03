@@ -20,8 +20,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-add_custom_command(OUTPUT villas_pb2.py
-	COMMAND protoc ${CMAKE_SOURCE_DIR}/lib/nodes/villas.proto
-	MAIN_DEPENDENCY villas.proto
-)
-	
+
