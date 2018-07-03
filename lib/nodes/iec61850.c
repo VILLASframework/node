@@ -25,7 +25,6 @@
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <netinet/ether.h>
 
 #include "villas/nodes/iec61850_sv.h"
 #include "villas/plugin.h"

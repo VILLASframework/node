@@ -36,7 +36,7 @@ enum queue_signalled_flags {
 	QUEUE_SIGNALLED_AUTO		= (0 << 0), /**< We will choose the best method available on the platform */
 	QUEUE_SIGNALLED_PTHREAD		= (1 << 0),
 	QUEUE_SIGNALLED_POLLING		= (2 << 0),
-#ifdef __linux__
+#ifdef HAS_EVENTFD
 	QUEUE_SIGNALLED_EVENTFD		= (3 << 0),
 #elif defined(__APPLE__)
 	QUEUE_SIGNALLED_PIPE		= (3 << 0),

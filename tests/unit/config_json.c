@@ -22,7 +22,7 @@
 
 #include <criterion/criterion.h>
 
-#ifdef WITH_LIBCONFIG
+#ifdef LIBCONFIG_FOUND
 
 #include <jansson.h>
 #include <libconfig.h>
@@ -117,4 +117,4 @@ Test(utils, json_to_config)
 	json_decref(json);
 }
 
-#endif
+#endif /* LIBCONFIG_FOUND */

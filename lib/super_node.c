@@ -103,7 +103,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 		/* Parse config */
 		sn->cfg = json_loadf(f, 0, &err);
 		if (sn->cfg == NULL) {
-#ifdef WITH_CONFIG
+#ifdef LIBCONFIG_FOUND
 			int ret;
 
 			config_t cfg;
@@ -150,7 +150,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 			config_destroy(&cfg);
 #else
 			jerror(&err, "Failed to parse configuration file");
-#endif /* WITH_CONFIG */
+#endif /* LIBCONFIG_FOUND */
 		}
 
 		/* Close configuration file */

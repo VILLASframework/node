@@ -25,13 +25,11 @@
 SCRIPT=$(realpath ${BASH_SOURCE[0]})
 SCRIPTPATH=$(dirname $SCRIPT)
 
-VARIANTS=${VARIANTS:-"release"}
-VARIANT=${VARIANT:-$(uname -s)-$(uname -m)-$(echo ${VARIANTS} | tr ' ' '_')}
 SRCDIR=${SRCDIR:-$(realpath ${SCRIPTPATH}/..)}
-BUILDDIR=${BUILDDIR:-${SRCDIR}/build/${VARIANT}}
+BUILDDIR=${BUILDDIR:-${SRCDIR}/build}
 
 LOGDIR=${BUILDDIR}/tests/integration
-PATH=${BUILDDIR}:${PATH}
+PATH=${BUILDDIR}/src:${PATH}
 
 export PATH SRCDIR BUILDDIR LOGDIR
 

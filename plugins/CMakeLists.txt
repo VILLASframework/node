@@ -1,0 +1,42 @@
+# CMakeLists.txt.
+#
+# @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+# @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
+# @license GNU General Public License (version 3)
+#
+# VILLASnode
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###################################################################################
+
+# Plugins
+link_libraries(villas)
+include_directories("${CMAKE_SOURCE_DIR}/include")
+add_definitions("-DVILLAS")
+
+add_library(simple_circuit MODULE models/simple_circuit.c)
+install(
+    TARGETS simple_circuit
+    COMPONENT plugins
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/villas/node/plugins
+)
+
+if(WITH_HOOKS)
+    add_library(example_hook MODULE hooks/example_hook.c)
+    install(
+        TARGETS example_hook
+        COMPONENT plugins
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/villas/node/plugins
+    )
+endif()

@@ -27,6 +27,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <signal.h>
 
 #include <villas/config.h>
 #include <villas/log.h>

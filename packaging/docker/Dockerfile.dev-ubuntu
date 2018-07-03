@@ -32,10 +32,10 @@
 FROM ubuntu:xenial
 #FROM debian:jessie
 
-ARG GIT_REV=unkown
-ARG GIT_BRANCH=unkown
-ARG VERSION=unkown
-ARG VARIANT=unkown
+ARG GIT_REV=unknown
+ARG GIT_BRANCH=unknown
+ARG VERSION=unknown
+ARG VARIANT=unknown
 
 # Toolchain
 RUN apt-get update && apt-get install -y \

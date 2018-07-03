@@ -61,6 +61,27 @@ extern "C"{
 #define KERNEL_VERSION_MAJ	3
 #define KERNEL_VERSION_MIN	6
 
+#cmakedefine BUILDID "@BUILDID@"
+#cmakedefine V @V@
+#cmakedefine PREFIX "@PREFIX@"
+
+/* Available Features */
+#cmakedefine WITH_WEB
+#cmakedefine WITH_API
+#cmakedefine WITH_HOOKS
+#cmakedefine WITH_IO
+
+/* OS Headers */
+#cmakedefine HAS_EVENTFD
+
+#cmakedefine HAS_SEMAPHORE
+
+#cmakedefine LIBWEBSOCKETS_FOUND
+#cmakedefine HDF5_FOUND
+#cmakedefine PROTOBUF_FOUND
+#cmakedefine LIBNL3_ROUTE_FOUND
+#cmakedefine LIBCONFIG_FOUND
+
 #ifdef __cplusplus
 }
 #endif

@@ -1,0 +1,60 @@
+# CMakeLists.
+#
+# @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+# @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
+# @license GNU General Public License (version 3)
+#
+# VILLASnode
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###################################################################################
+
+# All executables link against libvillas
+link_libraries(villas)
+
+add_executable(villas-node villas-node.c)
+add_executable(villas-test-rtt villas-test-rtt.c)
+add_executable(villas-test-shmem villas-test-shmem.c)
+
+install(
+    TARGETS villas-node villas-test-rtt villas-test-shmem
+    COMPONENT bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+if(WITH_IO)
+    add_executable(villas-test-cmp villas-test-cmp.c)
+    add_executable(villas-convert villas-convert.c)
+    add_executable(villas-pipe villas-pipe.c)
+    add_executable(villas-signal villas-signal.c)
+
+    target_link_libraries(villas-pipe PUBLIC Threads::Threads)
+
+    install(
+        TARGETS villas-convert villas-pipe villas-signal villas-test-cmp
+        COMPONENT bin
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+endif()
+
+if(WITH_IO AND WITH_HOOKS)
+    add_executable(villas-hook villas-hook.c)
+
+    install(
+        TARGETS villas-hook
+        COMPONENT bin
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+endif()
+

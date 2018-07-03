@@ -21,10 +21,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <villas/config.h>
 #include <villas/queue_signalled.h>
 #include <villas/log.h>
 
-#ifdef __linux__
+#ifdef HAS_EVENTFD
   #include <sys/eventfd.h>
 #endif
 
@@ -83,7 +84,7 @@ int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memtype
 	else if (qs->mode == QUEUE_SIGNALLED_POLLING) {
 		/* Nothing todo */
 	}
-#ifdef __linux__
+#ifdef HAS_EVENTFD
 	else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
 		qs->eventfd = eventfd(0, 0);
 		if (qs->eventfd < 0)
@@ -117,7 +118,7 @@ int queue_signalled_destroy(struct queue_signalled *qs)
 	else if (qs->mode == QUEUE_SIGNALLED_POLLING) {
 		/* Nothing todo */
 	}
-#ifdef __linux__
+#ifdef HAS_EVENTFD
 	else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
 		ret = close(qs->eventfd);
 		if (ret)
@@ -152,7 +153,7 @@ int queue_signalled_push(struct queue_signalled *qs, void *ptr)
 	else if (qs->mode == QUEUE_SIGNALLED_POLLING) {
 		/* Nothing todo */
 	}
-#ifdef __linux__
+#ifdef HAS_EVENTFD
 	else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
 		int ret;
 		uint64_t incr = 1;
@@ -191,7 +192,7 @@ int queue_signalled_push_many(struct queue_signalled *qs, void *ptr[], size_t cn
 	else if (qs->mode == QUEUE_SIGNALLED_POLLING) {
 		/* Nothing todo */
 	}
-#ifdef __linux__
+#ifdef HAS_EVENTFD
 	else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
 		int ret;
 		uint64_t incr = 1;
@@ -233,7 +234,7 @@ int queue_signalled_pull(struct queue_signalled *qs, void **ptr)
 				pthread_cond_wait(&qs->pthread.ready, &qs->pthread.mutex);
 			else if (qs->mode == QUEUE_SIGNALLED_POLLING)
 				continue; /* Try again */
-#ifdef __linux__
+#ifdef HAS_EVENTFD
 			else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
 				int ret;
 				uint64_t cntr;
@@ -282,7 +283,7 @@ int queue_signalled_pull_many(struct queue_signalled *qs, void *ptr[], size_t cn
 				pthread_cond_wait(&qs->pthread.ready, &qs->pthread.mutex);
 			else if (qs->mode == QUEUE_SIGNALLED_POLLING)
 				continue; /* Try again */
-#ifdef __linux__
+#ifdef HAS_EVENTFD
 			else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
 				int ret;
 				uint64_t cntr;
@@ -328,7 +329,7 @@ int queue_signalled_close(struct queue_signalled *qs)
 	else if (qs->mode == QUEUE_SIGNALLED_POLLING) {
 		/* Nothing todo */
 	}
-#ifdef __linux__
+#ifdef HAS_EVENTFD
 	else if (qs->mode == QUEUE_SIGNALLED_EVENTFD) {
 		int ret;
 		uint64_t incr = 1;
@@ -356,7 +357,7 @@ int queue_signalled_close(struct queue_signalled *qs)
 int queue_signalled_fd(struct queue_signalled *qs)
 {
 	switch (qs->mode) {
-#ifdef __linux__
+#ifdef HAS_EVENTFD
 		case QUEUE_SIGNALLED_EVENTFD:
 			return qs->eventfd;
 #elif defined(__APPLE__)

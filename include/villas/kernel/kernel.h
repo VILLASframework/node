@@ -21,7 +21,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup kernel Kernel @{ */
+/** @addtogroup kernel Kernel
+ * @{
+ */
 
 #pragma once
 

@@ -1,11 +1,11 @@
-# Dockerfile for VILLASnode dependencies.
+# Dockerfile
 #
-# This Dockerfile builds an image which contains all library dependencies
-# and tools to build VILLASnode.
-# However, VILLASnode itself it not part of the image.
+# This image can be used for running VILLASnode
+# by running:
+#   make docker
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
-# @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+# @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
 #
 # VILLASnode
@@ -25,45 +25,29 @@
 ###################################################################################
 
 ARG BUILDER_IMAGE=villas/node-dev
+ARG DOCKER_TAG=latest
+ARG GIT_REV=unknown
+ARG GIT_BRANCH=unknown
+ARG VERSION=unknown
+ARG VARIANT=unknown
 
 # This image is built by villas-node-git/packaging/docker/Dockerfile.dev
-FROM villas/node-dev:develop AS builder
+FROM $BUILDER_IMAGE AS builder
 
-COPY . /villas-node/
+COPY . /villas/
 
-RUN rm -rf /villas-node/build
-WORKDIR /villas-node
-
-#RUN dnf -y install
-
-RUN make -j2 rpm-villas-node
+RUN rm -rf /villas/build && mkdir /villas/build
+WORKDIR /villas/build
+RUN cmake -DCPACK_GENERATOR=RPM ..
+RUN make -j$(nproc) doc
+RUN make -j$(nproc) package
 
 FROM fedora:28
-
-ARG GIT_REV=unkown
-ARG GIT_BRANCH=unkown
-ARG VERSION=unkown
-ARG VARIANT=unkown
 	
 # Some of the dependencies are only available in our own repo
 ADD https://packages.fein-aachen.org/redhat/fein.repo /etc/yum.repos.d/
 
-# Usually the following dependecies would be resolved by dnf
-# when installing villas-node.
-# We add them here to utilise Dockers caching and layer feature
-# in order reduce bandwidth and space usage.
-RUN dnf -y install \
-	openssl \
-	libconfig \
-	libnl3 \
-	libcurl \
-	jansson \
-	iproute \
-	module-init-tools
-
-ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
-
-COPY --from=builder /villas-node/build/Linux-x86_64-release/packaging/rpm/RPMS/x86_64/*.rpm /tmp/
+COPY --from=builder /villas/build/*.rpm /tmp/
 RUN dnf -y install /tmp/*.rpm
 
 # For WebSocket / API access

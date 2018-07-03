@@ -27,7 +27,6 @@
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <netinet/ether.h>
 
 #include "villas/nodes/iec61850_sv.h"
 #include "villas/plugin.h"
@@ -166,8 +165,14 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 	if (interface)
 		i->interface = strdup(interface);
 
-	if (dst_address)
+	if (dst_address) {
+#ifdef __APPLE__
+		struct ether_addr *ether = ether_aton(dst_address);
+		memcpy(&i->dst_address, ether, sizeof(struct ether_addr));
+#else
 		ether_aton_r(dst_address, &i->dst_address);
+#endif
+	}
 
 	if (json_pub) {
 		i->publisher.enabled = true;
