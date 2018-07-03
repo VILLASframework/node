@@ -22,13 +22,16 @@
 
 cmake_minimum_required(VERSION 3.3)
 
+# Policies
+cmake_policy(SET CMP0068 NEW)
+
 project(VILLASnode C CXX)
 
 # Several CMake settings/defaults
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
-set(CMAKE_SKIP_INSTALL_RPATH ON)
+#set(CMAKE_SKIP_INSTALL_RPATH ON)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 if(APPLE)
@@ -38,43 +41,25 @@ endif()
 include(FindPkgConfig)
 include(CheckIncludeFile)
 include(FeatureSummary)
-include(CheckCCompilerFlag)
-include(CheckCXXCompilerFlag)
 include(GNUInstallDirs)
 
 # Compiler flags
 if(BUILD32)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -m32")
-    set(CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} -m32")
+    add_compile_options(-m32)
+    link_libraries(-m32)
 endif()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fdiagnostics-color=auto -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE=1")
+if(APPLE)
+    add_definitions(-D_DARWIN_C_SOURCE)
+endif()
+
+add_definitions(-D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE)
+add_compile_options(-fdiagnostics-color=auto)
 
 if(MSVC)
-    check_c_compiler_flag("/W4 /WX" C_SUPPORTS_WERROR)
-    check_cxx_compiler_flag("/W4 /WX" CXX_SUPPORTS_WERROR)
-
-	if(C_SUPPORTS_WERROR)
-		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /W4 /WX")
-	endif()
-
-    if(CXX_SUPPORTS_WERROR)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX")
-	endif()
+    add_compile_options(/W4 /WX)
 else()
-    check_c_compiler_flag("-Wall -Werror" C_SUPPORTS_WERROR)
-	check_cxx_compiler_flag("-Wall -Werror" CXX_SUPPORTS_WERROR)
-
-    if(C_SUPPORTS_WERROR)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
-    endif()
-
-	if(CXX_SUPPORTS_WERROR)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
-	endif()
+    add_compile_options(-Wall -Werror)
 endif()
 
 # Check OS
