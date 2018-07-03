@@ -258,7 +258,7 @@ int kernel_has_cap(cap_value_t cap)
 }
 #endif
 
-int kernel_irq_setaffinity(unsigned irq, uintmax_t new, uintmax_t *old)
+int kernel_irq_setaffinity(unsigned irq, uintmax_t aff, uintmax_t *old)
 {
 	char fn[64];
 	FILE *f;
@@ -273,7 +273,7 @@ int kernel_irq_setaffinity(unsigned irq, uintmax_t new, uintmax_t *old)
 	if (old)
 		ret = fscanf(f, "%jx", old);
 
-	fprintf(f, "%jx", new);
+	fprintf(f, "%jx", aff);
 	fclose(f);
 
 	return ret;
