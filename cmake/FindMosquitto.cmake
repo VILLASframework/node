@@ -31,7 +31,7 @@ find_library(MOSQUITTO_LIBRARY
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set VILLASNODE_FOUND to TRUE
 # if all listed variables are TRUE
-find_package_handle_standard_args(MOSQUITTO DEFAULT_MSG
+find_package_handle_standard_args(Mosquitto DEFAULT_MSG
     MOSQUITTO_LIBRARY MOSQUITTO_INCLUDE_DIR)
 
 mark_as_advanced(MOSQUITTO_INCLUDE_DIR MOSQUITTO_LIBRARY)

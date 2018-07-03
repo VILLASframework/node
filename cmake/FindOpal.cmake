@@ -29,9 +29,7 @@ find_library(OPAL_LIBRARY
 )
 
 include(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set VILLASNODE_FOUND to TRUE
-# if all listed variables are TRUE
-find_package_handle_standard_args(OPAL DEFAULT_MSG OPAL_LIBRARY OPAL_INCLUDE_DIR)
+find_package_handle_standard_args(Opal DEFAULT_MSG OPAL_LIBRARY OPAL_INCLUDE_DIR)
 
 mark_as_advanced(OPAL_INCLUDE_DIR OPAL_LIBRARY)
 
