@@ -131,7 +131,7 @@ check:		if (optarg == endptr)
 	rt_init(sn.priority, sn.affinity);
 	memory_init(sn.hugepages);
 
-	node = list_lookup(&sn.nodes, nodestr);
+	node = (struct node *) list_lookup(&sn.nodes, nodestr);
 	if (!node)
 		error("There's no node with the name '%s'", nodestr);
 

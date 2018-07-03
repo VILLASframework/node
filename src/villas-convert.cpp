@@ -45,8 +45,8 @@ static void usage()
 int main(int argc, char *argv[])
 {
 	int ret, level = V;
-	char *input_format = "villas.human";
-	char *output_format = "villas.human";
+	const char *input_format = "villas.human";
+	const char *output_format = "villas.human";
 
 	char c, *endptr;
 	while ((c = getopt(argc, argv, "Vhd:i:o:")) != -1) {
@@ -94,14 +94,14 @@ check:		if (optarg == endptr)
 		error("Failed to start log");
 
 	struct {
-		char *name;
+		const char *name;
 		struct io *io;
 	} dirs[] = {
 		{ input_format, &input },
 		{ output_format, &output },
 	};
 
-	for (int i = 0; i < ARRAY_LEN(dirs); i++) {
+	for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
 		fmt = format_type_lookup(dirs[i].name);
 		if (!fmt)
 			error("Invalid format: %s", dirs[i].name);
@@ -127,7 +127,7 @@ check:		if (optarg == endptr)
 		io_print(&output, &smp, 1);
 	}
 
-	for (int i = 0; i < ARRAY_LEN(dirs); i++) {
+	for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
 		ret = io_close(dirs[i].io);
 		if (ret)
 			error("Failed to close IO");

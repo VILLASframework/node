@@ -42,7 +42,6 @@ struct node n;
 struct log l;
 struct io io;
 struct pool q;
-
 struct sample *t;
 
 void usage()
@@ -111,7 +110,7 @@ int main(int argc, char *argv[])
 	struct node_type *nt;
 	struct format_type *ft;
 
-	char *format = "villas.human"; /** @todo hardcoded for now */
+	const char *format = "villas.human"; /** @todo hardcoded for now */
 
 	ret = log_init(&l, l.level, LOG_ALL);
 	if (ret)

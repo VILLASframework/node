@@ -55,9 +55,9 @@ int main(int argc, char* argv[])
 	struct log log;
 	int readcnt, writecnt, avail;
 	struct shmem_conf conf = {
-		.queuelen = DEFAULT_SHMEM_QUEUELEN,
-		.samplelen = DEFAULT_SHMEM_SAMPLELEN,
 		.polling = 0,
+		.queuelen = DEFAULT_SHMEM_QUEUELEN,
+		.samplelen = DEFAULT_SHMEM_SAMPLELEN
 	};
 
 	log_init(&log, V, LOG_ALL);

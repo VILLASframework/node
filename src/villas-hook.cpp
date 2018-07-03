@@ -111,7 +111,7 @@ static void usage()
 int main(int argc, char *argv[])
 {
 	int ret, recv, sent;
-	char *format = "villas.human";
+	const char *format = "villas.human";
 
 	struct format_type *ft;
 	struct hook_type *ht;
@@ -180,7 +180,7 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to initialize memory");
 
-	smps = alloc(cnt * sizeof(struct sample *));
+	smps = (struct sample **) alloc(cnt * sizeof(struct sample *));
 
 	ret = pool_init(&q, 10 * cnt, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
 	if (ret)

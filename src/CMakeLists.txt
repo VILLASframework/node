@@ -23,9 +23,9 @@
 # All executables link against libvillas
 link_libraries(villas)
 
-add_executable(villas-node villas-node.c)
-add_executable(villas-test-rtt villas-test-rtt.c)
-add_executable(villas-test-shmem villas-test-shmem.c)
+add_executable(villas-node villas-node.cpp)
+add_executable(villas-test-rtt villas-test-rtt.cpp)
+add_executable(villas-test-shmem villas-test-shmem.cpp)
 
 install(
     TARGETS villas-node villas-test-rtt villas-test-shmem
@@ -34,10 +34,10 @@ install(
 )
 
 if(WITH_IO)
-    add_executable(villas-test-cmp villas-test-cmp.c)
-    add_executable(villas-convert villas-convert.c)
-    add_executable(villas-pipe villas-pipe.c)
-    add_executable(villas-signal villas-signal.c)
+    add_executable(villas-test-cmp villas-test-cmp.cpp)
+    add_executable(villas-convert villas-convert.cpp)
+    add_executable(villas-pipe villas-pipe.cpp)
+    add_executable(villas-signal villas-signal.cpp)
 
     target_link_libraries(villas-pipe PUBLIC Threads::Threads)
 
@@ -49,7 +49,7 @@ if(WITH_IO)
 endif()
 
 if(WITH_IO AND WITH_HOOKS)
-    add_executable(villas-hook villas-hook.c)
+    add_executable(villas-hook villas-hook.cpp)
 
     install(
         TARGETS villas-hook

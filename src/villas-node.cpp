@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 
 	opal_register_region(argc, argv);
 
-	char *uri = "opal-shmem.conf";
+	const char *uri = "opal-shmem.conf";
 #else
 	char c;
 	while ((c = getopt(argc, argv, "hV")) != -1) {

@@ -232,12 +232,13 @@ int main(int argc, char *argv[])
 {
 	int ret, level = V, timeout = 0;
 	bool reverse = false;
-	char *format = "villas.human";
+	const char *format = "villas.human";
 
-	sendd = recvv = (struct dir) {
-		.enabled = true,
-		.limit = -1
-	};
+	sendd.enabled = true;
+	sendd.limit = -1;
+	
+	recvv.enabled = true;
+	recvv.limit = -1;
 
 	json_t *cfg_cli = json_object();
 
@@ -337,7 +338,7 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to open IO");
 
-	node = list_lookup(&sn.nodes, nodestr);
+	node = (struct node *) list_lookup(&sn.nodes, nodestr);
 	if (!node)
 		error("Node '%s' does not exist!", nodestr);
 
