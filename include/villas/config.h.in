@@ -81,6 +81,7 @@ extern "C"{
 #cmakedefine PROTOBUF_FOUND
 #cmakedefine LIBNL3_ROUTE_FOUND
 #cmakedefine LIBCONFIG_FOUND
+#cmakedefine IBVERBS_FOUND
 
 #ifdef __cplusplus
 }

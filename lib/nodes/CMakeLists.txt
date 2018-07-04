@@ -126,6 +126,13 @@ if(COMEDILIB_FOUND)
     list(APPEND LIBRARIES PkgConfig::COMEDILIB)
 endif()
 
+# Enable infiniband support
+if(IBVERBS_FOUND AND RDMACM_FOUND)
+    list(APPEND NODE_SRC infiniband.c)
+    list(APPEND INCLUDE_DIRS ${IBVERBS_INCLUDE_DIRS} ${RDMACM_INCLUDE_DIRS})
+    list(APPEND LIBRARIES ${IBVERBS_LIBRARIES} ${RDMACM_LIBRARIES})
+endif()
+
 add_library(nodes STATIC ${NODE_SRC})
 target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(nodes LINK_PRIVATE ${LIBRARIES})

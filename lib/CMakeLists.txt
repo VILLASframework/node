@@ -37,6 +37,9 @@ set(LIBRARIES
 set(LIB_SRC
     kernel/kernel.c
     kernel/rt.c
+    memory/heap.c
+    memory/hugepage.c
+    memory/managed.c
     sample.c
     path.c
     node.c
@@ -68,6 +71,10 @@ set(LIB_SRC
     bitset.c
     signal.c
 )
+
+if(IBVERBS_FOUND AND RDMACM_FOUND)
+    list(APPEND LIB_SRC memory/ib.c)
+endif()
 
 add_subdirectory(nodes)
 list(APPEND WHOLE_ARCHIVES nodes)

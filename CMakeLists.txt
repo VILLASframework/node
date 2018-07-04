@@ -75,6 +75,8 @@ find_package(OpenSSL 1.0.0 REQUIRED)
 find_package(CURL 7.29 REQUIRED)
 find_package(Mosquitto)
 find_package(Opal)
+find_package(IBverbs)
+find_package(RDMACM)
 
 # Check programs
 find_program(PROTOBUFC_COMPILER NAMES protoc-c)
