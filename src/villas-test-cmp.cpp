@@ -120,7 +120,7 @@ check:		if (optarg == endptr)
 	int n = argc - optind; /* The number of files which we compare */
 	struct side s[n];
 
-	ret = pool_init(&pool, n, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_heap);
+	ret = pool_init(&pool, n, SAMPLE_LEN(DEFAULT_SAMPLELEN), &memory_type_heap);
 	if (ret)
 		error("Failed to initialize pool");
 

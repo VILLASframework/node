@@ -37,7 +37,7 @@ static void queue_signalled_cleanup(void *p)
 		pthread_mutex_unlock(&qs->pthread.mutex);
 }
 
-int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memtype *mem, int flags)
+int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memory_type *mem, int flags)
 {
 	int ret;
 

@@ -68,7 +68,7 @@ struct queue_signalled {
 
 #define queue_signalled_available(q) queue_available(&((q)->queue))
 
-int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memtype *mem, int flags);
+int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memory_type *mem, int flags);
 
 int queue_signalled_destroy(struct queue_signalled *qs);
 

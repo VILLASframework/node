@@ -41,10 +41,8 @@ struct pool {
 	enum state state;
 
 	off_t  buffer_off; /**< Offset from the struct address to the underlying memory area */
-	struct memtype *mem;
 
 	size_t len;		/**< Length of the underlying memory area */
-
 	size_t blocksz;		/**< Length of a block in bytes */
 	size_t alignment;	/**< Alignment of a block in bytes */
 
@@ -62,7 +60,7 @@ struct pool {
  * @retval 0 The pool has been successfully initialized.
  * @retval <>0 There was an error during the pool initialization.
  */
-int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memtype *mem);
+int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *mem);
 
 /** Destroy and release memory used by pool. */
 int pool_destroy(struct pool *p);

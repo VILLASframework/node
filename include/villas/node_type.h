@@ -34,6 +34,7 @@ extern "C"{
 
 #include "list.h"
 #include "common.h"
+#include "memory.h"
 
 /* Forward declarations */
 struct node;
@@ -161,6 +162,9 @@ struct node_type {
 
 	/** Return a file descriptor which can be used by poll / select to detect the availability of new data. */
 	int (*fd)(struct node *n);
+
+	/** */
+	struct memory_type * (*memory_type)(struct node *n, struct memory_type *parent);
 };
 
 /** Initialize all registered node type subsystems.

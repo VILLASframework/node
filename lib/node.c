@@ -32,6 +32,7 @@
 #include <villas/mapping.h>
 #include <villas/timing.h>
 #include <villas/signal.h>
+#include <villas/memory.h>
 
 static int node_direction_init(struct node_direction *nd, struct node *n)
 {
@@ -547,6 +548,11 @@ int node_reverse(struct node *n)
 int node_fd(struct node *n)
 {
 	return n->_vt->fd ? n->_vt->fd(n) : -1;
+}
+
+struct memory_type * node_memory_type(struct node *n, struct memory_type *parent)
+{
+	return n->_vt->memory_type ? n->_vt->memory_type(n, parent) : &memory_hugepage;
 }
 
 int node_parse_list(struct list *list, json_t *cfg, struct list *all)

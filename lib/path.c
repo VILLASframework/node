@@ -46,7 +46,7 @@ static int path_source_init(struct path_source *ps)
 {
 	int ret;
 
-	ret = pool_init(&ps->pool, MAX(DEFAULT_QUEUELEN, ps->node->in.vectorize), SAMPLE_LEN(ps->node->samplelen), &memtype_hugepage);
+	ret = pool_init(&ps->pool, MAX(DEFAULT_QUEUELEN, ps->node->in.vectorize), SAMPLE_LEN(ps->node->samplelen), &memory_hugepage);
 	if (ret)
 		return ret;
 
@@ -148,7 +148,7 @@ static int path_destination_init(struct path_destination *pd, int queuelen)
 {
 	int ret;
 
-	ret = queue_init(&pd->queue, queuelen, &memtype_hugepage);
+	ret = queue_init(&pd->queue, queuelen, &memory_hugepage);
 	if (ret)
 		return ret;
 
@@ -430,7 +430,7 @@ int path_init2(struct path *p)
 	if (!p->samplelen)
 		p->samplelen = DEFAULT_SAMPLELEN;
 
-	ret = pool_init(&p->pool, MAX(1, list_length(&p->destinations)) * p->queuelen, SAMPLE_LEN(p->samplelen), &memtype_hugepage);
+	ret = pool_init(&p->pool, MAX(1, list_length(&p->destinations)) * p->queuelen, SAMPLE_LEN(p->samplelen), &memory_hugepage);
 	if (ret)
 		return ret;
 

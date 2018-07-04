@@ -28,26 +28,31 @@
 #include <villas/memory.h>
 #include <villas/utils.h>
 
+#define HUGEPAGESIZE (1 << 22)
+
 TheoryDataPoints(memory, aligned) = {
 	DataPoints(size_t, 1, 32, 55, 1 << 10, 1 << 20),
 	DataPoints(size_t, 1, 8, 1 << 12),
-	DataPoints(struct memtype *, &memtype_heap, &memtype_hugepage)
+	DataPoints(struct memory_type *, &memory_type_heap, &memory_hugepage)
 };
 
-Theory((size_t len, size_t align, struct memtype *m), memory, aligned) {
+Theory((size_t len, size_t align, struct memory_type *m), memory, aligned) {
 	int ret;
 	void *ptr;
+
+	ret = memory_init(100);
+	cr_assert(!ret);
 
 	ptr = memory_alloc_aligned(m, len, align);
 	cr_assert_neq(ptr, NULL, "Failed to allocate memory");
 
 	cr_assert(IS_ALIGNED(ptr, align));
 
-	if (m == &memtype_hugepage) {
+	if (m == &memory_hugepage) {
 		cr_assert(IS_ALIGNED(ptr, HUGEPAGESIZE));
 	}
 
-	ret = memory_free(m, ptr, len);
+	ret = memory_free(ptr);
 	cr_assert_eq(ret, 0, "Failed to release memory: ret=%d, ptr=%p, len=%zu: %s", ret, ptr, len, strerror(errno));
 }
 
@@ -57,15 +62,18 @@ Test(memory, manager) {
 
 	int ret;
 	void *p, *p1, *p2, *p3;
-	struct memtype *m;
+	struct memory_type *m;
 
 	total_size = 1 << 10;
-	max_block = total_size - sizeof(struct memtype) - sizeof(struct memblock);
+	max_block = total_size - sizeof(struct memory_type) - sizeof(struct memory_block);
 
-	p = memory_alloc(&memtype_heap, total_size);
+	ret = memory_init(0);
+	cr_assert(!ret);
+
+	p = memory_alloc(&memory_type_heap, total_size);
 	cr_assert_not_null(p);
 
-	m = memtype_managed_init(p, total_size);
+	m = memory_managed(p, total_size);
 	cr_assert_not_null(m);
 
 	p1 = memory_alloc(m, 16);
@@ -74,7 +82,7 @@ Test(memory, manager) {
 	p2 = memory_alloc(m, 32);
 	cr_assert_not_null(p2);
 
-	ret = memory_free(m, p1, 16);
+	ret = memory_free(p1);
 	cr_assert(ret == 0);
 
 	p1 = memory_alloc_aligned(m, 128, 128);
@@ -85,21 +93,21 @@ Test(memory, manager) {
 	cr_assert(p3);
 	cr_assert(IS_ALIGNED(p3, 256));
 
-	ret = memory_free(m, p2, 32);
+	ret = memory_free(p2);
 	cr_assert(ret == 0);
 
-	ret = memory_free(m, p1, 128);
+	ret = memory_free(p1);
 	cr_assert(ret == 0);
 
-	ret = memory_free(m, p3, 128);
+	ret = memory_free(p3);
 	cr_assert(ret == 0);
 
 	p1 = memory_alloc(m, max_block);
 	cr_assert_not_null(p1);
 
-	ret = memory_free(m, p1, max_block);
+	ret = memory_free(p1);
 	cr_assert(ret == 0);
 
-	ret = memory_free(&memtype_heap, p, total_size);
+	ret = memory_free(p);
 	cr_assert(ret == 0);
 }

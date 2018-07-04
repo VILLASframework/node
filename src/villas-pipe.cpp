@@ -133,7 +133,8 @@ static void * send_loop(void *ctx)
 	struct sample *smps[node->out.vectorize];
 
 	/* Initialize memory */
-	ret = pool_init(&sendd.pool, LOG2_CEIL(node->out.vectorize), SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
+	ret = pool_init(&sendd.pool, MAX(16384, 2*LOG2_CEIL(node->out.vectorize)), SAMPLE_LEN(DEFAULT_SAMPLELEN), node_memory_type(node, &memory_type_heap));
+
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 
@@ -197,7 +198,8 @@ static void * recv_loop(void *ctx)
 	struct sample *smps[node->in.vectorize];
 
 	/* Initialize memory */
-	ret = pool_init(&recvv.pool, LOG2_CEIL(node->in.vectorize), SAMPLE_LEN(DEFAULT_SAMPLELEN), &memtype_hugepage);
+	ret = pool_init(&recvv.pool, MAX(16*8192, 2*LOG2_CEIL(node->in.vectorize)), SAMPLE_LEN(DEFAULT_SAMPLELEN), node_memory_type(node, &memory_type_heap));
+
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
 
