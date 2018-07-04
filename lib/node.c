@@ -322,6 +322,7 @@ int node_start(struct node *n)
 	int ret;
 
 	assert(n->state == STATE_CHECKED);
+	assert(n->_vt->state == STATE_STARTED);
 
 	info("Starting node %s", node_name_long(n));
 	{ INDENT
