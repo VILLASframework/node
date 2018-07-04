@@ -744,10 +744,18 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 		for(int i=0; i<ret; i++)
 		{
-			if(wc[i].status != IBV_WC_SUCCESS)
+			if(wc[i].status == IBV_WC_WR_FLUSH_ERR)
+			{
+				//ToDo: create debug entry
+				ret = 0;
+			}
+			else if(wc[i].status != IBV_WC_SUCCESS)
+			{
 				warn("Work Completion status was not IBV_WC_SUCCES in node %s: %i",
 					node_name(n), wc[i].status);
-			else if(wc[i].opcode & IBV_WC_RECV && wc[i].status != IBV_WC_WR_FLUSH_ERR)
+				ret = 0;
+			}
+			else if(wc[i].opcode & IBV_WC_RECV)
 			{
 				smps[i] = (struct sample*)(wc[i].wr_id);
 				smps[i]->length = wc[i].byte_len/sizeof(double);
