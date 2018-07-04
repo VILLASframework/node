@@ -31,3 +31,4 @@ add_custom_target(run-integration-tests
 		villas-signal
 		villas-hook
 )
+add_dependencies(run-tests run-integration-tests)

@@ -20,14 +20,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
+add_custom_target(tests)
+add_custom_target(run-tests)
+
 add_subdirectory(unit)
 add_subdirectory(integration)
-
-add_custom_target(tests)
-add_dependencies(tests unit-tests)
-
-add_custom_target(run-tests)
-add_dependencies(run-tests run-unit-tests run-integration-tests)
 
 set(VALGRIND "valgrind --leak-check=full --show-leak-kinds=all --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/valgrind.supp")
 

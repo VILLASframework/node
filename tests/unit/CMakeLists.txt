@@ -55,5 +55,8 @@ if(CRITERION_FOUND)
 		USES_TERMINAL
 	)
 
+	add_dependencies(tests unit-tests)
+	add_dependencies(run-tests run-unit-tests)
+
 	add_dependencies(run-unit-tests unit-tests)
 endif()
