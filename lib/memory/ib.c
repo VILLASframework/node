@@ -24,7 +24,7 @@
 #include <villas/memory.h>
 #include <villas/utils.h>
 #include <rdma/rdma_cma.h>
-#include <villas/ib.h>
+#include <villas/memory/ib.h>
 
 
 struct ibv_mr * memory_ib_get_mr(struct sample *smps)

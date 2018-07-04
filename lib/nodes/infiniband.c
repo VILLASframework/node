@@ -30,7 +30,7 @@
 #include <villas/memory.h>
 #include <villas/pool.h>
 #include <villas/memory.h>
-#include <villas/ib.h>
+#include <villas/memory/ib.h>
 
 #include <rdma/rdma_cma.h>
 
