@@ -35,13 +35,12 @@
 #include <villas/queue_signalled.h>
 #include <rdma/rdma_cma.h>
 
-/* Function poitner typedefs */
-typedef void  (*ib_on_completion)(struct node*, struct ibv_wc*, int*);
-typedef void* (*ib_poll_function)(void*);
+/* Function pointer typedefs */
+typedef void  (*ib_on_completion) (struct node*, struct ibv_wc*, int*);
+typedef void * (*ib_poll_function) (void*);
 
 /* Enums */
-enum poll_mode_e
-{
+enum poll_mode_e {
 	EVENT,
 	BUSY
 };
@@ -63,6 +62,7 @@ struct infiniband {
 		struct ibv_cq *send_cq;
 		struct ibv_comp_channel *comp_channel;
 	} ctx;
+
 	/* Work Completion related */
 	struct poll_s {
 		enum poll_mode_e poll_mode;
@@ -108,7 +108,7 @@ struct infiniband {
 
 	/* Misc settings */
 	int is_source;
-int cq_size;
+	int cq_size;
 };
 
 /** @see node_type::reverse */

@@ -35,7 +35,7 @@ struct ibv_mr * memory_ib_get_mr(struct sample *smps)
 
 	p = sample_pool(smps);
 
-	ma = memory_get_allocation((char *)(p)+p->buffer_off);
+	ma = memory_get_allocation((char *) (p) + p->buffer_off);
 	mr = ma->ib.mr;
 	return mr;
 }
