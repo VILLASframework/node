@@ -35,6 +35,8 @@ extern "C" {
 
 /** Global configuration */
 struct super_node {
+	enum state state;
+
 	int priority;		/**< Process priority (lower is better) */
 	int affinity;		/**< Process affinity of the server and all created threads */
 	int hugepages;		/**< Number of hugepages to reserve. */
@@ -49,8 +51,6 @@ struct super_node {
 	struct web web;
 
 	char *name;		/**< A name of this super node. Usually the hostname. */
-
-	enum state state;
 
 	char *uri;		/**< URI of configuration */
 

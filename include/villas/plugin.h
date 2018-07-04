@@ -74,7 +74,6 @@ struct plugin {
 	char *path;
 
 	enum plugin_type type;
-
 	enum state state;
 
 	int (*load)(struct plugin *p);
