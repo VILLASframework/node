@@ -272,6 +272,7 @@ int api_init(struct api *a, struct super_node *sn)
 	if (ret)
 		return ret;
 
+	memory_init(0);
 	ret = queue_signalled_init(&a->pending, 1024, &memory_type_heap, 0);
 	if (ret)
 		return ret;
