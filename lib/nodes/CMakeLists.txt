@@ -99,8 +99,8 @@ if(CURL_FOUND)
 endif()
 
 # Enable WebSocket support
-if(LIBWEBSOCKETS_FOUND AND WITH_WEB AND WITH_IO)
-    list(APPEND NODE_SRC websockets.c)
+if(Libwebsockets_FOUND AND WITH_WEB AND WITH_IO)
+    list(APPEND NODE_SRC websocket.c)
     list(APPEND INCLUDE_DIRS ${LIBWEBSOCKETS_INCLUDE_DIRS})
     list(APPEND LIBRARIES websockets_shared)
 endif()
