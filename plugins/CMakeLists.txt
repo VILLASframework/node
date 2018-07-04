@@ -33,7 +33,7 @@ install(
 )
 
 if(WITH_HOOKS)
-    add_library(example_hook MODULE hooks/example_hook.cpp)
+    add_library(example_hook MODULE hooks/example_hook.c)
     install(
         TARGETS example_hook
         COMPONENT plugins
