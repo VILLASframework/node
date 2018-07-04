@@ -51,7 +51,7 @@ if(PROTOBUFC_FOUND)
     )
 
     list(APPEND LIBRARIES
-        ${PROTOBUFC_LIBRARIES}
+        PkgConfig::PROTOBUFC
     )
 
     set_source_files_properties(villas.pb-c.h villas.pb-c.c
