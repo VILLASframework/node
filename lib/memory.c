@@ -118,3 +118,9 @@ int memory_free(void *ptr)
 
 	return 0;
 }
+
+struct memory_allocation * memory_get_allocation(void *ptr)
+{
+	struct memory_allocation *ma = (struct memory_allocation *) hash_table_lookup(&allocations, ptr);
+	return ma;
+}

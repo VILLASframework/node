@@ -24,17 +24,20 @@
 #include <villas/memory.h>
 #include <villas/utils.h>
 #include <rdma/rdma_cma.h>
+#include <villas/ib.h>
 
-struct memory_ib {
-	struct ibv_pd *pd;
-	struct memory_type *parent;
-};
 
-struct ibv_mr * memory_ib_mr(void *ptr)
+struct ibv_mr * memory_ib_get_mr(struct sample *smps)
 {
-	struct ibv_mr *mr = (struct ibv_mr *) ptr;
+	struct memory_allocation *ma;
+	struct pool *p;
+	struct ibv_mr *mr;
 
-	return (mr - 1);
+	p = sample_pool(smps);
+
+	ma = memory_get_allocation((char *)(p)+p->buffer_off);
+	mr = ma->ib.mr;
+	return mr;
 }
 
 static struct memory_allocation * memory_ib_alloc(struct memory_type *m, size_t len, size_t alignment)

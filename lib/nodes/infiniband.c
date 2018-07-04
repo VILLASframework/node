@@ -30,6 +30,7 @@
 #include <villas/memory.h>
 #include <villas/pool.h>
 #include <villas/memory.h>
+#include <villas/ib.h>
 
 #include <rdma/rdma_cma.h>
 
@@ -695,15 +696,15 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt)
 	struct ibv_wc wc[n->in.vectorize];
 	struct ibv_recv_wr wr[cnt], *bad_wr = NULL;
     	struct ibv_sge sge[cnt];
-	struct ibv_mr ** mr;
-	struct pool *p;
+	struct ibv_mr * mr;
 	int ret;
+
+
 
 	if(ib->conn.available_recv_wrs <= ib->qp_init.cap.max_recv_wr && cnt==n->in.vectorize)
 	{
 		// Get Memory Region
-		p = sample_pool(smps[0]);
-		mr = (struct ibv_mr **)((char *)(p)+p->buffer_off-8);
+		mr = memory_ib_get_mr(smps[0]);
 
 		for(int i=0; i<cnt; i++)
 		{
@@ -713,7 +714,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt)
 			// Prepare receive Scatter/Gather element
     			sge[i].addr = (uint64_t)&smps[i]->data;
     			sge[i].length = SAMPLE_DATA_LEN(DEFAULT_SAMPLELEN);
-    			sge[i].lkey = (*mr)->lkey;
+    			sge[i].lkey = mr->lkey;
 
     			// Prepare a receive Work Request
     			wr[i].wr_id = (uintptr_t)smps[i];
@@ -744,7 +745,8 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt)
 		for(int i=0; i<ret; i++)
 		{
 			if(wc[i].status != IBV_WC_SUCCESS)
-				error("Work Completion status was not IBV_WC_SUCCES in node %s", node_name(n));
+				warn("Work Completion status was not IBV_WC_SUCCES in node %s: %i",
+					node_name(n), wc[i].status);
 			else if(wc[i].opcode & IBV_WC_RECV && wc[i].status != IBV_WC_WR_FLUSH_ERR)
 			{
 				smps[i] = (struct sample*)(wc[i].wr_id);
@@ -766,8 +768,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt)
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	struct ibv_send_wr wr[cnt], *bad_wr = NULL;
 	struct ibv_sge sge[cnt];
-	struct ibv_mr ** mr;
-	struct pool *p;
+	struct ibv_mr * mr;
 	int ret;
 
 	memset(&wr, 0, sizeof(wr));
@@ -776,8 +777,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt)
 	int send_inline = 1;
 
 	// Get Memory Region
-	p = sample_pool(smps[0]);
-	mr = (struct ibv_mr **)((char *)(p)+p->buffer_off-8);
+	mr = memory_ib_get_mr(smps[0]);
 
 	for(int i=0; i<cnt; i++)
 	{
@@ -787,7 +787,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt)
 		//Set Scatter/Gather element to data of sample
 		sge[i].addr = (uint64_t)&smps[i]->data;
 		sge[i].length = smps[i]->length*sizeof(double);
-		sge[i].lkey = (*mr)->lkey;
+		sge[i].lkey = mr->lkey;
 
 		// Set Send Work Request
 		wr[i].wr_id = (uintptr_t)smps[i]; //This way the sample can be release in WC
