@@ -43,29 +43,51 @@
 
 int memory_init(int hugepages)
 {
+	info("Initialize memory sub-system");
+
 #ifdef __linux__
 	int ret, pagecnt, pagesz;
 	struct rlimit l;
 
-	info("Initialize memory sub-system");
-
 	pagecnt = kernel_get_nr_hugepages();
 	if (pagecnt < hugepages) { INDENT
-		kernel_set_nr_hugepages(hugepages);
-		debug(LOG_MEM | 2, "Reserved %d hugepages (was %d)", hugepages, pagecnt);
+		if (getuid() == 0) {
+			kernel_set_nr_hugepages(hugepages);
+			debug(LOG_MEM | 2, "Increased number of reserved hugepages from %d to %d", pagecnt, hugepages);
+		}
+		else {
+			warn("Failed to reserved hugepages. Please re-run as super-user or reserve manually via:");
+			warn("   $ echo %d > /proc/sys/vm/nr_hugepages", hugepages);
+
+			return -1;
+		}
 	}
 
 	pagesz = kernel_get_hugepage_size();
 	if (pagesz < 0)
 		return -1;
 
+	/* Amount of memory which should be lockable */
+	size_t lock = pagesz * hugepages;
+
 	ret = getrlimit(RLIMIT_MEMLOCK, &l);
 	if (ret)
 		return ret;
 
-	if (l.rlim_cur < pagesz * pagecnt) { INDENT
-		l.rlim_cur = pagesz * pagecnt;
-		l.rlim_max = l.rlim_cur;
+	if (l.rlim_cur < lock) {
+		if (l.rlim_max < lock) {
+			if (getuid() != 0) {
+				warn("Failed to in increase ressource limit of locked memory from %zu to %zu bytes", l.rlim_cur, lock);
+				warn("Please re-run as super-user or raise manually via:");
+				warn("   $ ulimit -Hl %zu", lock);
+
+				return -1;
+			}
+
+			l.rlim_max = lock;
+		}
+
+		l.rlim_cur = lock;
 
 		ret = setrlimit(RLIMIT_MEMLOCK, &l);
 		if (ret)
