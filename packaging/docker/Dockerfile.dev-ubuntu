@@ -29,22 +29,20 @@
 ###################################################################################
 
 # You can choose between Debian and Ubuntu here
-FROM ubuntu:xenial
-#FROM debian:jessie
+FROM ubuntu:18.04
 
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown
 ARG VERSION=unknown
 ARG VARIANT=unknown
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Toolchain
 RUN apt-get update && apt-get install -y \
 	gcc g++ \
-	pkg-config make cmake \
-	autoconf automake autogen libtool \
-	flex bison \
-	texinfo \
-	git curl tar \
+	pkg-config cmake make ninja-build \
+	texinfo git curl tar \
 	protobuf-compiler protobuf-c-compiler
 
 # Several tools only needed for developement and testing
@@ -52,7 +50,7 @@ RUN apt-get update && apt-get install -y \
 	doxygen dia graphviz \
 	openssh-client \
 	jq \
-	iproute \
+	iproute2 \
 	python-pip \
 	valgrind gdb gdbserver \
 	xmlto asciidoctor
@@ -64,8 +62,6 @@ RUN pip install \
 
 # Dependencies
 RUN apt-get update && apt-get install -y \
-	libsodium-dev \
-	libpgm-dev \
 	libssl-dev \
 	libconfig-dev \
 	libnl-3-dev libnl-route-3-dev \
@@ -73,21 +69,32 @@ RUN apt-get update && apt-get install -y \
 	libjansson-dev \
 	libzmq3-dev \
 	libnanomsg-dev \
+	libprotobuf-dev \
 	libprotobuf-c-dev \
 	librabbitmq-dev \
-	libmosquitto-dev
+	libmosquitto-dev \
+	libcomedi-dev
 
 # Build & Install Criterion
-COPY thirdparty/criterion /tmp/criterion
-RUN mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && cmake .. && make install && rm -rf /tmp/*
+RUN cd /tmp && \
+	git clone --recursive https://github.com/Snaipe/Criterion && \
+	mkdir -p Criterion/build && cd Criterion/build && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	rm -rf /tmp/*
 
-# Build & Install libwebsockets
-COPY thirdparty/libwebsockets /tmp/libwebsockets
-RUN mkdir -p /tmp/libwebsockets/build && cd /tmp/libwebsockets/build && cmake -DLWS_IPV6=1 -DLWS_WITH_STATIC=0 -DLWS_WITHOUT_TESTAPPS=1 -DLWS_WITH_HTTP2=1 .. && make install && rm -rf /tmp/*
+# Build & Install Criterion
+RUN cd /tmp && \
+	git clone -b v2.4-stable http://github.com/warmcat/libwebsockets && \
+	mkdir -p libwebsockets/build && cd libwebsockets/build && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	rm -rf /tmp/*
 
 # Build & Install libiec61850
-COPY thirdparty/libiec61850 /tmp/libiec61850
-RUN mkdir -p /tmp/libiec61850/build && cd /tmp/libiec61850/build && cmake .. && make install && rm -rf /tmp/*
+RUN cd /tmp && \
+	git clone -b v1.2 https://github.com/mz-automation/libiec61850 && \
+	mkdir -p libiec61850/build && cd libiec61850/build && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	rm -rf /tmp/*
 
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
