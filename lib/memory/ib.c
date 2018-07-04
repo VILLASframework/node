@@ -1,7 +1,7 @@
-/** Memory allocators.
+/** Infiniband memory allocator.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -20,12 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <rdma/rdma_cma.h>
+
 #include <villas/nodes/infiniband.h>
 #include <villas/memory.h>
 #include <villas/utils.h>
-#include <rdma/rdma_cma.h>
 #include <villas/memory/ib.h>
-
 
 struct ibv_mr * memory_ib_get_mr(struct sample *smps)
 {
