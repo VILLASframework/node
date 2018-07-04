@@ -43,7 +43,7 @@ static struct memory_allocation * memory_heap_alloc(struct memory_type *m, size_
 	ret = posix_memalign(&ma->address, ma->alignment, ma->length);
 	if (ret) {
 		free(ma);
-		return ret;
+		return NULL;
 	}
 
 	return ma;
