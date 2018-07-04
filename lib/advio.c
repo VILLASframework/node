@@ -105,6 +105,7 @@ static char * advio_human_size(double s, char *buf, size_t len)
 	return buf;
 }
 
+#if LIBCURL_VERSION_NUM >= 0x072000
 static int advio_xferinfo(void *p, curl_off_t dl_total_bytes, curl_off_t dl_bytes, curl_off_t ul_total_bytes, curl_off_t ul_bytes)
 {
 	struct advio *af = (struct advio *) p;
@@ -168,6 +169,7 @@ static int advio_xferinfo(void *p, curl_off_t dl_total_bytes, curl_off_t dl_byte
 
 	return 0;
 }
+#endif /* LIBCURL_VERSION_NUM >= 0x072000 */
 
 int aislocal(const char *uri)
 {
@@ -236,8 +238,11 @@ AFILE * afopen(const char *uri, const char *mode)
 	curl_easy_setopt(af->curl, CURLOPT_DEBUGFUNCTION, advio_trace);
 	curl_easy_setopt(af->curl, CURLOPT_VERBOSE, 1);
 
-	curl_easy_setopt(af->curl, CURLOPT_XFERINFOFUNCTION, advio_xferinfo);
-	curl_easy_setopt(af->curl, CURLOPT_XFERINFODATA, af);
+/* CURLOPT_XFERINFOFUNCTION is only supported on libcurl >= 7.32.0 */
+#if LIBCURL_VERSION_NUM >= 0x072000
+		curl_easy_setopt(af->curl, CURLOPT_XFERINFOFUNCTION, advio_xferinfo);
+		curl_easy_setopt(af->curl, CURLOPT_XFERINFODATA, af);
+#endif
 
 	ret = adownload(af, 0);
 	if (ret)
