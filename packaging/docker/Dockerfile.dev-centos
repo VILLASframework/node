@@ -72,28 +72,29 @@ RUN yum -y install \
 	openssl openssl-devel \
 	libconfig-devel \
 	libnl3-devel \
+	libcurl-devel \
+	jansson-devel \
 	zeromq-devel \
 	nanomsg-devel \
+	protobuf-devel \
 	protobuf-c-devel \
 	libiec61850-devel \
 	librabbitmq-devel \
 	mosquitto-devel
 
 # Build & Install Criterion
-COPY thirdparty/criterion /tmp/criterion
-RUN cd /tmp/criterion && cmake . && make install && rm -rf /tmp/*
+RUN cd /tmp && \
+	git clone --recursive https://github.com/Snaipe/Criterion && \
+	mkdir -p Criterion/build && cd Criterion/build && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	rm -rf /tmp/*
 
-# Build & Install Jansson
-COPY thirdparty/jansson /tmp/jansson
-RUN cd /tmp/jansson && cmake -DJANSSON_BUILD_DOCS=OFF . && make install && rm -rf /tmp/*
-
-# Build & Install libwebsockets
-COPY thirdparty/libwebsockets /tmp/libwebsockets
-RUN cd /tmp/libwebsockets && cmake -DLWS_IPV6=1 -DLWS_WITH_STATIC=0 -DLWS_WITHOUT_TESTAPPS=1 -DLWS_WITH_HTTP2=1 . && make install && rm -rf /tmp/*
-
-# Build & Install libcurl
-COPY thirdparty/libcurl /tmp/libcurl
-RUN cd /tmp/libcurl/ && ./buildconf && ./configure && make install && rm -rf /tmp/*
+# Build & Install Criterion
+RUN cd /tmp && \
+	git clone -b v2.4-stable http://github.com/warmcat/libwebsockets && \
+	mkdir -p libwebsockets/build && cd libwebsockets/build && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	rm -rf /tmp/*
 
 # Workaround for libnl3's search path for netem distributions
 RUN ln -s /usr/lib64/tc /usr/lib/tc
