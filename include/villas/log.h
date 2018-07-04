@@ -57,7 +57,7 @@ extern "C" {
 enum log_facilities {
 	LOG_POOL =		(1L <<  8),
 	LOG_QUEUE =		(1L <<  9),
-	LOG_CONFIG =	(1L << 10),
+	LOG_CONFIG =		(1L << 10),
 	LOG_HOOK =		(1L << 11),
 	LOG_PATH =		(1L << 12),
 	LOG_NODE =		(1L << 13),
@@ -73,16 +73,17 @@ enum log_facilities {
 	LOG_ADVIO =		(1L << 23),
 
 	/* Node-types */
-	LOG_SOCKET =	(1L << 24),
+	LOG_SOCKET =		(1L << 24),
 	LOG_FILE =		(1L << 25),
 	LOG_FPGA =		(1L << 26),
 	LOG_NGSI =		(1L << 27),
-	LOG_WEBSOCKET =	(1L << 28),
+	LOG_WEBSOCKET =		(1L << 28),
 	LOG_OPAL =		(1L << 30),
-	LOG_COMEDI =	(1L << 31),
+	LOG_COMEDI =		(1L << 31),
+	LOG_IB =		(1L << 32),
 
 	/* Classes */
-	LOG_NODES =	LOG_NODE | LOG_SOCKET | LOG_FILE | LOG_FPGA | LOG_NGSI | LOG_WEBSOCKET | LOG_OPAL,
+	LOG_NODES =	LOG_NODE | LOG_SOCKET | LOG_FILE | LOG_FPGA | LOG_NGSI | LOG_WEBSOCKET | LOG_OPAL | LOG_IB,
 	LOG_KERNEL =	LOG_VFIO | LOG_PCI | LOG_TC | LOG_IF,
 	LOG_ALL =	~0xFF
 };

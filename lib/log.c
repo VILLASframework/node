@@ -85,6 +85,7 @@ static const char *facilities_strs[] = {
 	"ngsi",		/* LOG_NGSI */
 	"websocket",	/* LOG_WEBSOCKET */
 	"opal",		/* LOG_OPAL */
+	"ib",		/* LOG_IB */
 };
 
 #ifdef __GNUC__
