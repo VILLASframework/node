@@ -23,13 +23,11 @@
 add_subdirectory(unit)
 add_subdirectory(integration)
 
-add_custom_target(tests
-	DEPENDS unit-tests integration-tests
-)
+add_custom_target(tests)
+add_dependencies(tests unit-tests)
 
-add_custom_target(run-tests
-	DEPENDS run-unit-tests run-integration-tests
-)
+add_custom_target(run-tests)
+add_dependencies(run-tests run-unit-tests run-integration-tests)
 
 set(VALGRIND "valgrind --leak-check=full --show-leak-kinds=all --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/valgrind.supp")
 
@@ -38,5 +36,5 @@ add_custom_target(run-valgrind
 	COMMAND ${VALGRIND} $<TARGET_FILE:villas-pipe> -t 2 ${CMAKE_SOURCE_DIR}/etc/websocket-loopback.conf ws1
 	COMMAND ${VALGRIND} $<TARGET_FILE:villas-signal> mixed -v 4 -l 10
 	COMMAND ${VALGRIND} $<TARGET_FILE:villas-hook> stats < <($<TARGET_FILE:villas-signal> mixed -l 5)
-	DEPENDS villas-node villas-pipe villas-signal villas-hook
 )
+add_dependencies(run-valgrind villas-node villas-pipe villas-signal villas-hook)

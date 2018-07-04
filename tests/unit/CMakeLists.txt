@@ -52,6 +52,8 @@ if(CRITERION_FOUND)
 
 	add_custom_target(run-unit-tests
 		COMMAND $<TARGET_FILE:unit-tests> ${CRITERION_OPTS}
-		DEPENDS unit-tests
+		USES_TERMINAL
 	)
+
+	add_dependencies(run-unit-tests unit-tests)
 endif()
