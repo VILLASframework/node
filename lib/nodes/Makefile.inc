@@ -159,6 +159,7 @@ endif
 # Enable Infiniband support
 ifeq ($(WITH_NODE_INFINIBAND),1)
     LIB_SRCS    += lib/nodes/infiniband.c
+	LIB_SRCS    += lib/memory/ib.c
 	LIB_NODES   += infiniband
     LIB_LDLIBS  += -libverbs 
     LIB_LDLIBS  += -lrdmacm

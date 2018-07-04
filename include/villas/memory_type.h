@@ -1,4 +1,4 @@
-/** Node type: nanomsg
+/** Memory allocators.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -21,63 +21,50 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @addtogroup nanomsg nanomsg node type
- * @ingroup node
- * @{
- */
-
 #pragma once
 
-#include <villas/node.h>
-#include <villas/list.h>
-#include <villas/io.h>
+#include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/** The maximum length of a packet which contains stuct msg. */
-#define NANOMSG_MAX_PACKET_LEN 1500
+/* Forward declaratio */
+struct memory_type;
 
-/* Forward declarations */
-struct format_type;
+typedef struct memory_allocation * (*memory_allocator_t)(struct memory_type *mem, size_t len, size_t alignment);
+typedef int (*memory_deallocator_t)(struct memory_type *mem, struct memory_allocation * ma);
 
-struct nanomsg {
-	struct {
-		int socket;
-		struct list endpoints;
-	} publisher;
-
-	struct {
-		int socket;
-		struct list endpoints;
-	} subscriber;
-
-	struct format_type *format;
-	struct io io;
+enum memory_type_flags {
+	MEMORY_MMAP	= (1 << 0),
+	MEMORY_DMA	= (1 << 1),
+	MEMORY_HUGEPAGE	= (1 << 2),
+	MEMORY_HEAP	= (1 << 3)
 };
 
-/** @see node_type::print */
-char * nanomsg_print(struct node *n);
+struct memory_type {
+	const char *name;
+	int flags;
 
-/** @see node_type::parse */
-int nanomsg_parse(struct node *n, json_t *cfg);
+	size_t alignment;
 
-/** @see node_type::open */
-int nanomsg_start(struct node *n);
+	memory_allocator_t alloc;
+	memory_deallocator_t free;
 
-/** @see node_type::close */
-int nanomsg_stop(struct node *n);
+	void *_vd; /**< Virtual data for internal state */
+};
 
-/** @see node_type::read */
-int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt);
+extern struct memory_type memory_type_heap;
+extern struct memory_type memory_hugepage;
 
-/** @see node_type::write */
-int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt);
+struct ibv_mr * memory_type_ib_mr(void *ptr);
+
+struct node;
+
+struct memory_type * memory_ib(struct node *n, struct memory_type *parent);
+struct memory_type * memory_managed(void *ptr, size_t len);
 
 #ifdef __cplusplus
 }
 #endif
-
-/** @} */

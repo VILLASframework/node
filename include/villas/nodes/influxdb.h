@@ -31,6 +31,10 @@
 
 #include <villas/list.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct node;
 struct sample;
@@ -62,5 +66,9 @@ int influxdb_close(struct node *n);
 
 /** @see node_type::write */
 int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

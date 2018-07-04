@@ -30,6 +30,10 @@
 #include <villas/queue.h>
 #include <villas/buffer.h>
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 enum api_version {
 	API_VERSION_UNKOWN	= 0,
 	API_VERSION_1		= 1
@@ -70,3 +74,7 @@ int api_session_destroy(struct api_session *s);
 int api_session_run_command(struct api_session *s, json_t *req, json_t **resp);
 
 char * api_session_name(struct api_session *s);
+
+#ifdef __cplusplus
+}
+#endif

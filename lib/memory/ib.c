@@ -21,8 +21,14 @@
  *********************************************************************************/
 
 #include <villas/nodes/infiniband.h>
-#include <villas/memory_ib.h>
+#include <villas/memory.h>
+#include <villas/utils.h>
 #include <rdma/rdma_cma.h>
+
+struct memory_ib {
+	struct ibv_pd *pd;
+	struct memory_type *parent;
+};
 
 struct ibv_mr * memory_ib_mr(void *ptr)
 {
@@ -31,41 +37,51 @@ struct ibv_mr * memory_ib_mr(void *ptr)
 	return (mr - 1);
 }
 
-void * memory_ib_alloc(struct memtype *m, size_t len, size_t alignment)
+static struct memory_allocation * memory_ib_alloc(struct memory_type *m, size_t len, size_t alignment)
 {
 	struct memory_ib *mi = (struct memory_ib *) m->_vd;
 
-	struct ibv_mr **mr = memory_alloc_aligned(mi->parent, len + sizeof(struct ibv_mr *), alignment);
-	char *ptr = (char *) (mr + 1);
+	struct memory_allocation *ma = alloc(sizeof(struct memory_allocation));
+	if (!ma)
+		return NULL;
 
-	*mr = ibv_reg_mr(mi->pd, ptr, len, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
-	if(!*mr) {
-		free(ptr);
+	ma->type = m;
+	ma->length = len;
+	ma->alignment = alignment;
+
+	ma->parent = mi->parent->alloc(mi->parent, len + sizeof(struct ibv_mr *), alignment);
+	ma->address = ma->parent->address;
+
+	ma->ib.mr = ibv_reg_mr(mi->pd, ma->address, ma->length, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
+	if(!ma->ib.mr) {
+		mi->parent->free(mi->parent, ma->parent);
+		free(ma);
 		return NULL;
 	}
 
-	return ptr;
+	return ma;
 }
 
-int memory_ib_free(struct memtype *m, void *ptr, size_t len)
+static int memory_ib_free(struct memory_type *m, struct memory_allocation *ma)
 {
+	int ret;
 	struct memory_ib *mi = (struct memory_ib *) m->_vd;
-	struct ibv_mr *mr = memory_ib_mr(ptr);
 
-	ibv_dereg_mr(mr);
+	ibv_dereg_mr(ma->ib.mr);
 
-	ptr -= sizeof(struct ibv_mr *);
-	len += sizeof(struct ibv_mr *);
+	ret = mi->parent->free(mi->parent, ma->parent);
+	if (ret)
+		return ret;
 
-	memory_free(mi->parent, ptr, len);
+	free(ma);
 
 	return 0;
 }
 
-struct memtype * ib_memtype(struct node *n, struct memtype *parent)
+struct memory_type * memory_ib(struct node *n, struct memory_type *parent)
 {
 	struct infiniband *i = (struct infiniband *) n->_vd;
-	struct memtype *mt = malloc(sizeof(struct memtype));
+	struct memory_type *mt = malloc(sizeof(struct memory_type));
 
 	mt->name = "ib";
 	mt->flags = 0;

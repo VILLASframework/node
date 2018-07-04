@@ -21,57 +21,50 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stddef.h>
-#include <stdint.h>
-
 #pragma once
 
-#define HUGEPAGESIZE	(1 << 21)
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-struct memtype;
+#include <villas/memory_type.h>
 
-typedef void *(*memzone_allocator_t)(struct memtype *mem, size_t len, size_t alignment);
-typedef int (*memzone_deallocator_t)(struct memtype *mem, void *ptr, size_t len);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-enum memtype_flags {
-	MEMORY_MMAP	= (1 << 0),
-	MEMORY_DMA	= (1 << 1),
-	MEMORY_HUGEPAGE	= (1 << 2),
-	MEMORY_HEAP	= (1 << 3)
-};
-
-struct memtype {
-	const char *name;
-	int flags;
-
-	size_t alignment;
-
-	memzone_allocator_t alloc;
-	memzone_deallocator_t free;
-
-	void *_vd; /**<Virtual data for possible state */
-};
-
-enum memblock_flags {
-	MEMBLOCK_USED = 1,
-};
+/* Forward declarations */
+struct node;
 
 /** Descriptor of a memory block. Associated block always starts at
- * &m + sizeof(struct memblock). */
-struct memblock {
-	struct memblock* prev;
-	struct memblock* next;
-	size_t len; /**<Length of the block; doesn't include the descriptor itself */
-	int flags;
+ * &m + sizeof(struct memory_block). */
+struct memory_block {
+	struct memory_block *prev;
+	struct memory_block *next;
+	size_t length; /**< Length of the block; doesn't include the descriptor itself */
+	bool used;
 };
 
 /** @todo Unused for now */
-struct memzone {
-	struct memtype * const type;
+struct memory_allocation {
+	struct memory_type *type;
 
-	void *addr;
-	uintptr_t physaddr;
-	size_t len;
+	struct memory_allocation *parent;
+
+	void *address;
+	size_t alignment;
+	size_t length;
+
+	union {
+#ifdef WITH_NODE_INFINIBAND
+		struct {
+			struct ibv_mr *mr;
+		} ib;
+#endif
+		struct {
+			struct memory_block *block;
+		} managed;
+	};
 };
 
 /** Initilialize memory subsystem */
@@ -82,13 +75,12 @@ int memory_init(int hugepages);
  * @retval NULL If allocation failed.
  * @retval <>0  If allocation was successful.
  */
-void * memory_alloc(struct memtype *m, size_t len);
+void * memory_alloc(struct memory_type *m, size_t len);
 
-void * memory_alloc_aligned(struct memtype *m, size_t len, size_t alignment);
+void * memory_alloc_aligned(struct memory_type *m, size_t len, size_t alignment);
 
-int memory_free(struct memtype *m, void *ptr, size_t len);
+int memory_free(void *ptr);
 
-struct memtype * memtype_managed_init(void *ptr, size_t len);
-
-extern struct memtype memtype_heap;
-extern struct memtype memtype_hugepage;
+#ifdef __cplusplus
+}
+#endif

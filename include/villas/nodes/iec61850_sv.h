@@ -40,6 +40,10 @@
 #include <villas/list.h>
 #include <villas/nodes/iec61850.h>
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 struct iec61850_sv {
 	char *interface;
 	int app_id;
@@ -96,5 +100,9 @@ int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt);
 int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 int iec61850_sv_fd(struct node *n);
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

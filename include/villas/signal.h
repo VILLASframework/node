@@ -25,6 +25,10 @@
 
 #include <jansson.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct list;
 struct node;
@@ -46,3 +50,7 @@ int signal_parse(struct signal *s, json_t *cfg);
 int signal_parse_list(struct list *list, json_t *cfg);
 
 int signal_get_offset(const char *str, struct node *n);
+
+#ifdef __cplusplus
+}
+#endif

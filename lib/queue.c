@@ -36,7 +36,7 @@
 #include <villas/memory.h>
 
 /** Initialize MPMC queue */
-int queue_init(struct queue *q, size_t size, struct memtype *mem)
+int queue_init(struct queue *q, size_t size, struct memory_type *m)
 {
 	assert(q->state == STATE_DESTROYED);
 
@@ -47,9 +47,8 @@ int queue_init(struct queue *q, size_t size, struct memtype *mem)
 		warn("A queue size was changed from %lu to %lu", old_size, size);
 	}
 
-	q->mem = mem;
 	q->buffer_mask = size - 1;
-	struct queue_cell *buffer = (struct queue_cell *) memory_alloc(q->mem, sizeof(struct queue_cell) * size);
+	struct queue_cell *buffer = (struct queue_cell *) memory_alloc(m, sizeof(struct queue_cell) * size);
 	if (!buffer)
 		return -2;
 
@@ -74,8 +73,7 @@ int queue_destroy(struct queue *q)
 	if (q->state == STATE_DESTROYED)
 		return 0;
 
-	ret = memory_free(q->mem, buffer, (q->buffer_mask + 1) * sizeof(struct queue_cell));
-
+	ret = memory_free(buffer);
 	if (ret == 0)
 		q->state = STATE_DESTROYED;
 

@@ -29,9 +29,13 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct buffer {
 	enum state state;
-	
+
 	char *buf;
 	size_t len;
 	size_t size;
@@ -40,7 +44,7 @@ struct buffer {
 int buffer_init(struct buffer *b, size_t size);
 
 int buffer_destroy(struct buffer *b);
-	
+
 void buffer_clear(struct buffer *b);
 
 int buffer_append(struct buffer *b, const char *data, size_t len);
@@ -48,3 +52,7 @@ int buffer_append(struct buffer *b, const char *data, size_t len);
 int buffer_parse_json(struct buffer *b, json_t **j);
 
 int buffer_append_json(struct buffer *b, json_t *j);
+
+#ifdef __cplusplus
+}
+#endif

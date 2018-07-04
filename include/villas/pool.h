@@ -28,19 +28,21 @@
 #include <stddef.h>
 #include <sys/types.h>
 
-#include "queue.h"
-#include "common.h"
-#include "memory.h"
+#include <villas/queue.h>
+#include <villas/common.h>
+#include <villas/memory.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** A thread-safe memory pool */
 struct pool {
 	off_t  buffer_off; /**< Offset from the struct address to the underlying memory area */
-	struct memtype *mem;
 
 	enum state state;
 
 	size_t len;		/**< Length of the underlying memory area */
-
 	size_t blocksz;		/**< Length of a block in bytes */
 	size_t alignment;	/**< Alignment of a block in bytes */
 
@@ -58,7 +60,7 @@ struct pool {
  * @retval 0 The pool has been successfully initialized.
  * @retval <>0 There was an error during the pool initialization.
  */
-int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memtype *mem);
+int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *mem);
 
 /** Destroy and release memory used by pool. */
 int pool_destroy(struct pool *p);
@@ -92,3 +94,7 @@ INLINE int pool_put(struct pool *p, void *buf)
 {
 	return queue_push(&p->queue, buf);
 }
+
+#ifdef __cplusplus
+}
+#endif

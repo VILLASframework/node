@@ -38,6 +38,10 @@
 #include <villas/io.h>
 #include <villas/config.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DEFAULT_WEBSOCKET_QUEUELEN	(DEFAULT_QUEUELEN * 64)
 #define DEFAULT_WEBSOCKET_SAMPLELEN	DEFAULT_SAMPLELEN
 
@@ -114,3 +118,7 @@ int websocket_read(struct node *n, struct sample *smps[], unsigned cnt);
 int websocket_write(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif

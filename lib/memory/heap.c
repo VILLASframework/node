@@ -1,6 +1,5 @@
-/** Print fancy tables
+/** Memory allocators.
  *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -21,47 +20,48 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup table Print fancy tables
- * @{
- */
+#include <stdlib.h>
 
-#pragma once
+#include <villas/utils.h>
+#include <villas/memory.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+static struct memory_allocation * memory_heap_alloc(struct memory_type *m, size_t len, size_t alignment)
+{
+	int ret;
 
-struct table_column {
-	int width;	/**< Width of the column. */
-	char *title;	/**< The title as shown in the table header. */
-	char *format;	/**< The format which is used to print the table rows. */
-	char *unit;	/**< An optional unit which will be shown in the table header. */
+	struct memory_allocation *ma = alloc(sizeof(struct memory_allocation));
+	if (!ma)
+		return NULL;
 
-	enum {
-		TABLE_ALIGN_LEFT,
-		TABLE_ALIGN_RIGHT
-	} align;
+	ma->alignment = alignment;
+	ma->type = m;
+	ma->length = len;
 
-	int _width;	/**< The real width of this column. Calculated by table_header() */
-};
+	if (ma->alignment < sizeof(void *))
+		ma->alignment = sizeof(void *);
 
-struct table {
-	int ncols;
-	int width;
-	struct table_column *cols;
-};
+	ret = posix_memalign(&ma->address, ma->alignment, ma->length);
+	if (ret) {
+		free(ma);
+		return NULL;
+	}
 
-/** Print a table header consisting of \p n columns. */
-void table_header(struct table *t);
-
-/** Print table rows. */
-void table_row(struct table *t, ...);
-
-/** Print the table footer. */
-void table_footer(struct table *t);
-
-/** @} */
-
-#ifdef __cplusplus
+	return ma;
 }
-#endif
+
+static int memory_heap_free(struct memory_type *m, struct memory_allocation *ma)
+{
+	free(ma->address);
+	free(ma);
+
+	return 0;
+}
+
+/* List of available memory types */
+struct memory_type memory_type_heap = {
+	.name = "heap",
+	.flags = MEMORY_HEAP,
+	.alloc = memory_heap_alloc,
+	.free = memory_heap_free,
+	.alignment = 1
+};

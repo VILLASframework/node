@@ -50,6 +50,10 @@
 
 #include <villas/node.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct format_type;
 
@@ -155,3 +159,7 @@ int socket_parse_addr(const char *str, struct sockaddr *sa, enum socket_layer la
 int socket_compare_addr(struct sockaddr *x, struct sockaddr *y);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif

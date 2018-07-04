@@ -34,8 +34,12 @@
 
 #pragma once
 
-#include "hook_type.h"
-#include "common.h"
+#include <villas/hook_type.h>
+#include <villas/common.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Forward declarations */
 struct path;
@@ -96,3 +100,7 @@ int hook_cmp_priority(const void *a, const void *b);
  * }
  */
 int hook_parse_list(struct list *list, json_t *cfg, struct path *p, struct node *n);
+
+#ifdef __cplusplus
+}
+#endif

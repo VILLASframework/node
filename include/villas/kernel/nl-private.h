@@ -1,5 +1,9 @@
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SCH_NETEM_ATTR_DIST 0x2000
 
 struct rtnl_netem_corr
@@ -43,3 +47,7 @@ struct rtnl_netem
 };
 
 void *rtnl_tc_data(struct rtnl_tc *tc);
+
+#ifdef __cplusplus
+}
+#endif

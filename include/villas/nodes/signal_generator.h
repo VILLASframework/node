@@ -32,6 +32,10 @@
 #include <villas/timing.h>
 #include <villas/task.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct node;
 struct sample;
@@ -90,3 +94,7 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt);
 enum signal_generator_type signal_generator_lookup_type(const char *type);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif

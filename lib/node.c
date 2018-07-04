@@ -309,6 +309,10 @@ int node_check(struct node *n)
 	if (ret)
 		return ret;
 
+	ret = n->_vt->check ? n->_vt->check(n) : 0;
+	if (ret)
+		return ret;
+
 	n->state = STATE_CHECKED;
 
 	return 0;
@@ -545,9 +549,9 @@ int node_fd(struct node *n)
 	return n->_vt->fd ? n->_vt->fd(n) : -1;
 }
 
-struct memtype * node_memtype(struct node *n, struct memtype *parent)
+struct memory_type * node_memory_type(struct node *n, struct memory_type *parent)
 {
-	return n->_vt->memtype(n, parent) ? n->_vt->memtype(n, parent) : &memtype_hugepage;
+	return n->_vt->memory_type ? n->_vt->memory_type(n, parent) : &memory_hugepage;
 }
 
 int node_parse_list(struct list *list, json_t *cfg, struct list *all)

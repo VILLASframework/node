@@ -23,17 +23,17 @@
 
 #pragma once
 
-#include "atomic.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <villas/atomic.h>
 
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <time.h>
+
+#ifdef __cplusplus
+extern "C"{
+#endif
 
 /* Forward declarations */
 struct pool;

@@ -185,7 +185,7 @@ ParameterizedTest(char *fmt, io, lowlevel)
 	struct sample *smps[NUM_SAMPLES];
 	struct sample *smpt[NUM_SAMPLES];
 
-	ret = pool_init(&p, 2 * NUM_SAMPLES, SAMPLE_LEN(NUM_VALUES), &memtype_hugepage);
+	ret = pool_init(&p, 2 * NUM_SAMPLES, SAMPLE_LEN(NUM_VALUES), &memory_hugepage);
 	cr_assert_eq(ret, 0);
 
 	info("Running test for format = %s", fmt);
@@ -232,7 +232,7 @@ ParameterizedTest(char *fmt, io, highlevel)
 
 	info("Running test for format = %s", fmt);
 
-	ret = pool_init(&p, 2 * NUM_SAMPLES, SAMPLE_LEN(NUM_VALUES), &memtype_hugepage);
+	ret = pool_init(&p, 2 * NUM_SAMPLES, SAMPLE_LEN(NUM_VALUES), &memory_hugepage);
 	cr_assert_eq(ret, 0);
 
 	generate_samples(&p, smps, smpt, NUM_SAMPLES, NUM_VALUES);

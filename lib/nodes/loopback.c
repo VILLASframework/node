@@ -50,11 +50,11 @@ int loopback_open(struct node *n)
 	int ret;
 	struct loopback *l = (struct loopback *) n->_vd;
 
-	ret = pool_init(&l->pool, l->queuelen, SAMPLE_LEN(n->samplelen), &memtype_hugepage);
+	ret = pool_init(&l->pool, l->queuelen, SAMPLE_LEN(n->samplelen), &memory_hugepage);
 	if (ret)
 		return ret;
 
-	return queue_signalled_init(&l->queue, l->queuelen, &memtype_hugepage, QUEUE_SIGNALLED_EVENTFD);
+	return queue_signalled_init(&l->queue, l->queuelen, &memory_hugepage, QUEUE_SIGNALLED_EVENTFD);
 }
 
 int loopback_close(struct node *n)

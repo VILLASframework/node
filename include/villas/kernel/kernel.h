@@ -28,6 +28,10 @@
 #include <string.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct version;
 
@@ -85,6 +89,10 @@ int kernel_get_page_size();
 int kernel_get_hugepage_size();
 
 /** Set SMP affinity of IRQ */
-int kernel_irq_setaffinity(unsigned irq, uintmax_t new, uintmax_t *old);
+int kernel_irq_setaffinity(unsigned irq, uintmax_t new , uintmax_t *old );
+
+#ifdef __cplusplus
+}
+#endif
 
 /** @} */

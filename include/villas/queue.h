@@ -33,16 +33,19 @@
 
 #pragma once
 
-
 #include <stddef.h>
 #include <stdint.h>
 #include <unistd.h>
 
-#include "atomic.h"
-#include "common.h"
+#include <villas/atomic.h>
+#include <villas/common.h>
+
+#ifdef __cplusplus
+extern "C"{
+#endif
 
 /* Forward declarations */
-struct memtype;
+struct memory_type;
 
 #define CACHELINE_SIZE 64
 typedef char cacheline_pad_t[CACHELINE_SIZE];
@@ -58,7 +61,6 @@ struct queue {
 
 	atomic_state state;
 
-	struct memtype *mem;
 	size_t buffer_mask;
 	off_t buffer_off; /**< Relative pointer to struct queue_cell[] */
 
@@ -74,7 +76,7 @@ struct queue {
 };
 
 /** Initialize MPMC queue */
-int queue_init(struct queue *q, size_t size, struct memtype *mem);
+int queue_init(struct queue *q, size_t size, struct memory_type *mem);
 
 /** Desroy MPMC queue and release memory */
 int queue_destroy(struct queue *q);
@@ -112,3 +114,7 @@ int queue_pull_many(struct queue *q, void *ptr[], size_t cnt);
  * @return -1 on failure.
  */
 int queue_close(struct queue *q);
+
+#ifdef __cplusplus
+}
+#endif

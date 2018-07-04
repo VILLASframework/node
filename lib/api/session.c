@@ -40,11 +40,11 @@ int api_session_init(struct api_session *s, enum api_mode m)
 	if (ret)
 		return ret;
 
-	ret = queue_init(&s->request.queue, 128, &memtype_heap);
+	ret = queue_init(&s->request.queue, 128, &memory_type_heap);
 	if (ret)
 		return ret;
 
-	ret = queue_init(&s->response.queue, 128, &memtype_heap);
+	ret = queue_init(&s->response.queue, 128, &memory_type_heap);
 	if (ret)
 		return ret;
 

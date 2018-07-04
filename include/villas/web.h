@@ -25,7 +25,11 @@
 
 #include <pthread.h>
 
-#include "common.h"
+#include <villas/common.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Forward declarations */
 struct api;
@@ -60,3 +64,7 @@ int web_stop(struct web *w);
 
 /** Parse HTTPd and WebSocket related options */
 int web_parse(struct web *w, json_t *cfg);
+
+#ifdef __cplusplus
+}
+#endif

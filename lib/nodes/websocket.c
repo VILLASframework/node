@@ -81,7 +81,7 @@ static int websocket_connection_init(struct websocket_connection *c)
 
 	c->_name = NULL;
 
-	ret = queue_init(&c->queue, DEFAULT_QUEUELEN, &memtype_hugepage);
+	ret = queue_init(&c->queue, DEFAULT_QUEUELEN, &memory_hugepage);
 	if (ret)
 		return ret;
 
@@ -400,11 +400,11 @@ int websocket_start(struct node *n)
 	int ret;
 	struct websocket *w = (struct websocket *) n->_vd;
 
-	ret = pool_init(&w->pool, DEFAULT_WEBSOCKET_QUEUELEN, SAMPLE_LEN(DEFAULT_WEBSOCKET_SAMPLELEN), &memtype_hugepage);
+	ret = pool_init(&w->pool, DEFAULT_WEBSOCKET_QUEUELEN, SAMPLE_LEN(DEFAULT_WEBSOCKET_SAMPLELEN), &memory_hugepage);
 	if (ret)
 		return ret;
 
-	ret = queue_signalled_init(&w->queue, DEFAULT_WEBSOCKET_QUEUELEN, &memtype_hugepage, 0);
+	ret = queue_signalled_init(&w->queue, DEFAULT_WEBSOCKET_QUEUELEN, &memory_hugepage, 0);
 	if (ret)
 		return ret;
 

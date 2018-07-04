@@ -26,7 +26,7 @@ LIBEXT = $(BUILDDIR)/$(LIBEXT_NAME).so.$(LIBEXT_ABI_VERSION)
 
 LIBEXT_SRCS += $(addprefix lib/, sample.c queue.c queue_signalled.c \
                  memory.c log.c shmem.c utils.c kernel/kernel.c list.c \
-                 timing.c pool.c log_helper.c \
+                 timing.c pool.c log_helper.c hash_table.c memory/managed.c \
                )
 
 LIBEXT_LDFLAGS = -shared
