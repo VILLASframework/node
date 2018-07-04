@@ -45,18 +45,21 @@ In function return values we place the asterisk between spaces
 
 Good:
 ```c
-void * my_thread() {
+void * my_thread()
+{
     
 }
 ```
 
 Bad:
 ```c
-void *mythread() {
+void *mythread()
+{
     
 }
 
-void * mythread() {
+void * mythread()
+{
     
 }
 ```
