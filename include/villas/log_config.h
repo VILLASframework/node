@@ -33,6 +33,9 @@ struct log;
 extern "C"{
 #endif
 
+/** Wrapper for log_parse, to check if config file exists **/
+int log_parse_wrapper(struct log *l, json_t *cfg);
+
 /** Parse logging configuration. */
 int log_parse(struct log *l, json_t *cfg);
 

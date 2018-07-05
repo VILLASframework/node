@@ -31,6 +31,24 @@
 #include <villas/log_config.h>
 #include <villas/utils.h>
 
+int log_parse_wrapper(struct log *l, json_t *cfg)
+{
+	int ret;
+	json_t *json_logging = NULL;
+	json_error_t err;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{s?: o}",
+			"logging", &json_logging
+	);
+	if (ret)
+		jerror(&err, "Failed to parse global configuration");
+
+	if(json_logging)
+		log_parse(l, json_logging);
+
+	return 0;
+}
+
 int log_parse(struct log *l, json_t *cfg)
 {
 	const char *facilities = NULL;
