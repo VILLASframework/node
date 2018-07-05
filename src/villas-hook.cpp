@@ -165,6 +165,10 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to initialize log");
 
+	ret = log_parse_wrapper(&l, cfg_cli);
+	if (ret)
+		error("Failed to parse log");
+
 	ret = log_open(&l);
 	if (ret)
 		error("Failed to start log");

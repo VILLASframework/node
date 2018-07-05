@@ -127,6 +127,8 @@ check:		if (optarg == endptr)
 	super_node_init(&sn);
 	super_node_parse_uri(&sn, configfile);
 
+	log_open(&sn.log);
+
 	signals_init(quit);
 	rt_init(sn.priority, sn.affinity);
 	memory_init(sn.hugepages);
