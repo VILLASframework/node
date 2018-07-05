@@ -305,10 +305,6 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to initialize log");
 
-	ret = log_open(&sn.log);
-	if (ret)
-		error("Failed to start log");
-
 	ret = signals_init(quit);
 	if (ret)
 		error("Failed to initialize signals");
@@ -320,6 +316,10 @@ check:		if (optarg == endptr)
 	ret = super_node_parse_uri(&sn, configfile);
 	if (ret)
 		error("Failed to parse configuration");
+
+	ret = log_open(&sn.log);
+	if (ret)
+		error("Failed to start log");
 
 	ret = memory_init(sn.hugepages);
 	if (ret)
