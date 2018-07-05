@@ -416,8 +416,6 @@ int ib_parse(struct node *n, json_t *cfg)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 
-	n->in.vectorize = 256;
-
 	int ret;
 	char *local = NULL;
 	char *remote = NULL;
@@ -503,18 +501,6 @@ int ib_parse(struct node *n, json_t *cfg)
 	debug(LOG_IB | 4, "Set Queue Pair type to %s in node %s", qp_type, node_name(n));
 
 	// Set max. send and receive Work Requests
-	// First check if the set value is a power of 2, and warn the user if this is not the case
-	int max_send_pow = (int) pow(2, ceil(log2(max_send_wr)));
-	int max_recv_pow = (int) pow(2, ceil(log2(max_recv_wr)));
-
-	if (max_send_wr != max_send_pow)
-		warn("Max. number of send WRs (%i) is not a power of 2! The HCA will change this to a power of 2: %i",
-			max_send_wr, max_send_pow);
-
-	if (max_recv_wr != max_recv_pow)
-		warn("Max. number of recv WRs (%i) is not a power of 2! The HCA will change this to a power of 2: %i",
-			max_recv_wr, max_recv_pow);
-
 	ib->qp_init.cap.max_send_wr = max_send_wr;
 	ib->qp_init.cap.max_recv_wr = max_recv_wr;
 
@@ -556,6 +542,37 @@ int ib_parse(struct node *n, json_t *cfg)
 		// Set correct Work Completion function
 		ib->poll.on_compl = ib_completion_target;
 	}
+
+	return 0;
+}
+
+int ib_check(struct node *n)
+{
+	struct infiniband *ib = (struct infiniband *) n->_vd;
+
+	info("Starting check of node %s", node_name(n));
+
+	// Check if the set value is a power of 2, and warn the user if this is not the case
+	int max_send_pow = (int) pow(2, ceil(log2(ib->qp_init.cap.max_send_wr)));
+	int max_recv_pow = (int) pow(2, ceil(log2(ib->qp_init.cap.max_recv_wr)));
+
+	if (ib->qp_init.cap.max_send_wr != max_send_pow)
+		warn("Max nr. of send WRs (%i) is not a power of 2! The HCA will change it to the next power of 2: %i",
+			ib->qp_init.cap.max_send_wr, max_send_pow);
+
+	if (ib->qp_init.cap.max_recv_wr != max_recv_pow)
+		warn("Max nr. of recv WRs (%i) is not a power of 2! The HCA will change it to the next power of 2: %i",
+			ib->qp_init.cap.max_recv_wr, max_recv_pow);
+
+
+	// Check maximum size of max_recv_wr and max_send_wr
+	if (ib->qp_init.cap.max_send_wr > 8192)
+		warn("Max number of send WRs (%i) is bigger than send queue!", ib->qp_init.cap.max_send_wr);
+
+	if (ib->qp_init.cap.max_recv_wr > 8192)
+		warn("Max number of receive WRs (%i) is bigger than send queue!", ib->qp_init.cap.max_recv_wr);
+
+	info("Finished check of node %s", node_name(n));
 
 	return 0;
 }
@@ -870,6 +887,7 @@ static struct plugin p = {
 		.size           = sizeof(struct infiniband),
 		.reverse        = ib_reverse,
 		.parse          = ib_parse,
+		.check		= ib_check,
 		.print          = ib_print,
 		.start          = ib_start,
 		.destroy        = ib_destroy,
