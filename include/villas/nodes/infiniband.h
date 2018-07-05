@@ -55,7 +55,6 @@ struct infiniband {
 	struct context_s {
 		struct rdma_cm_id *listen_id;
 		struct rdma_cm_id *id;
-		struct rdma_event_channel *ec;
 
 		struct ibv_pd *pd;
 		struct ibv_cq *recv_cq;

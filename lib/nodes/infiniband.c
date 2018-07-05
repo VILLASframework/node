@@ -32,7 +32,7 @@
 #include <villas/memory.h>
 #include <villas/memory/ib.h>
 
-#include <rdma/rdma_cma.h>
+static struct rdma_event_channel *rdma_event_channel;
 
 int ib_cleanup(struct node *n)
 {
@@ -59,7 +59,7 @@ int ib_cleanup(struct node *n)
 	debug(LOG_IB | 3, "Destroyed rdma_cm_id");
 
 	// Destroy event channel
-	rdma_destroy_event_channel(ib->ctx.ec);
+	rdma_destroy_event_channel(rdma_event_channel);
 	debug(LOG_IB | 3, "Destroyed event channel");
 
 	return 0;
@@ -587,6 +587,27 @@ int ib_destroy(struct node *n)
 	return 0;
 }
 
+void * ib_rdma_cm_event_thread(void *n)
+{
+	struct node *node = (struct node *) n;
+	//struct infiniband *ib = (struct infiniband *) node->_vd;
+	struct rdma_cm_event *event;
+
+	debug(LOG_IB | 1, "Started rdma_cm_event thread of node %s", node_name(node));
+
+	while (rdma_get_cm_event(rdma_event_channel, &event) == 0) {
+		struct rdma_cm_event event_copy;
+
+		memcpy(&event_copy, event, sizeof(*event));
+		rdma_ack_cm_event(event);
+
+		if (ib_event(n, &event_copy))
+			break;
+	}
+
+	return NULL;
+}
+
 void * ib_disconnect_thread(void *n)
 {
 	struct node *node = (struct node *) n;
@@ -595,7 +616,7 @@ void * ib_disconnect_thread(void *n)
 
 	debug(LOG_IB | 1, "Started disconnect thread of node %s", node_name(node));
 
-	while (rdma_get_cm_event(ib->ctx.ec, &event) == 0) {
+	while (rdma_get_cm_event(rdma_event_channel, &event) == 0) {
 		if (event->event == RDMA_CM_EVENT_DISCONNECTED) {
 			debug(LOG_IB | 2, "Received RDMA_CM_EVENT_DISCONNECTED");
 
@@ -618,13 +639,13 @@ int ib_start(struct node *n)
 	debug(LOG_IB | 1, "Started ib_start");
 
 	// Create event channel
-	ib->ctx.ec = rdma_create_event_channel();
-	if (!ib->ctx.ec)
+	rdma_event_channel = rdma_create_event_channel();
+	if (!rdma_event_channel)
 		error("Failed to create event channel in node %s!", node_name(n));
 
 	debug(LOG_IB | 3, "Created event channel");
 
-	ret = rdma_create_id(ib->ctx.ec, &ib->ctx.id, NULL, ib->conn.port_space);
+	ret = rdma_create_id(rdma_event_channel, &ib->ctx.id, NULL, ib->conn.port_space);
 	if (ret)
 		error("Failed to create rdma_cm_id of node %s: %s",
 			node_name(n), gai_strerror(ret));
@@ -667,21 +688,15 @@ int ib_start(struct node *n)
 	// sure the nodes are succesfully connected.
 	debug(LOG_IB | 1, "Starting to monitor events on rdma_cm_id");
 
-	while (rdma_get_cm_event(ib->ctx.ec, &event) == 0) {
-		struct rdma_cm_event event_copy;
-
-		memcpy(&event_copy, event, sizeof(*event));
-
-		rdma_ack_cm_event(event);
-
-		if (ib_event(n, &event_copy))
-			break;
-	}
-
+	//Create thread to monitor rdma_cm_event channel
 	ret = pthread_create(&ib->conn.stop_thread, NULL, ib_disconnect_thread, n);
 	if (ret)
 		error("Failed to create thread to monitor disconnects in node %s: %s",
 			node_name(n), gai_strerror(ret));
+
+
+	//Wait until rdma_cm_event thread sets state to STARTED
+	while ( !(n->state == STATE_CONNECTED));
 
 	return 0;
 }
@@ -708,7 +723,7 @@ int ib_stop(struct node *n)
 	else {
 		// Else, wait for event to occur
 		ib->conn.rdma_disconnect_called = 1;
-		rdma_get_cm_event(ib->ctx.ec, &event);
+		rdma_get_cm_event(rdma_event_channel, &event);
 
 		rdma_ack_cm_event(event);
 
