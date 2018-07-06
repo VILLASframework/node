@@ -304,12 +304,14 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 	/* Timestamp & Severity */
 	strcatf(&buf, "%10.3f %-5s ", time_delta(&l->epoch, &ts), lvl);
 
-	/* Indention */
+	/* Indention in case we log to the terminal */
 #ifdef __GNUC__
-	for (int i = 0; i < indent; i++)
-		strcatf(&buf, "%s ", BOX_UD);
+	if (l->file == stderr || l->file == stdout) {
+		for (int i = 0; i < indent; i++)
+			strcatf(&buf, "%s ", BOX_UD);
 
-	strcatf(&buf, "%s ", BOX_UDR);
+		strcatf(&buf, "%s ", BOX_UDR);
+	}
 #endif
 
 	/* Format String */
@@ -319,7 +321,11 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 #ifdef ENABLE_OPAL_ASYNC
 	OpalPrint("VILLASnode: %s\n", buf);
 #endif
-	fprintf(l->file ? l->file : stderr, "%s\n", buf);
+	if (l->file)
+		fprintf(l->file, "%s\n", buf);
+
+	if (l->syslog)
+		vsyslog(LOG_INFO, fmt, ap);
 
 	free(buf);
 }
