@@ -210,7 +210,7 @@ static void * recv_loop(void *ctx)
 		else if (ready < node->in.vectorize)
 			warn("Receive pool underrun");
 
-		recv = node_read(node, smps, ready);
+		recv = node_read(node, smps, &ready);
 		if (recv < 0)
 			warn("Failed to receive samples from node %s: reason=%d", node_name(node), recv);
 
@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
 
 	sendd.enabled = true;
 	sendd.limit = -1;
-	
+
 	recvv.enabled = true;
 	recvv.limit = -1;
 

@@ -170,8 +170,9 @@ int main(int argc, char *argv[])
 	for (;;) {
 		t = sample_alloc(&q);
 
-		node_read(&n, &t, 1);
-		io_print(&io, &t, 1);
+		int one = 1;
+		node_read(&n, &t, &one);
+		io_print(&io, &t, one);
 
 		sample_put(t);
 	}

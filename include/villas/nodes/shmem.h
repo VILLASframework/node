@@ -64,7 +64,7 @@ int shmem_start(struct node *n);
 int shmem_stop(struct node *n);
 
 /** @see node_type::read */
-int shmem_read(struct node *n, struct sample *smps[], unsigned cnt);
+int shmem_read(struct node *n, struct sample *smps[], int *cnt);
 
 /** @see node_type::write */
 int shmem_write(struct node *n, struct sample *smps[], unsigned cnt);

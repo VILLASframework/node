@@ -467,14 +467,14 @@ int websocket_destroy(struct node *n)
 	return 0;
 }
 
-int websocket_read(struct node *n, struct sample *smps[], unsigned cnt)
+int websocket_read(struct node *n, struct sample *smps[], int *cnt)
 {
 	int avail;
 
 	struct websocket *w = (struct websocket *) n->_vd;
-	struct sample *cpys[cnt];
+	struct sample *cpys[*cnt];
 
-	avail = queue_signalled_pull_many(&w->queue, (void **) cpys, cnt);
+	avail = queue_signalled_pull_many(&w->queue, (void **) cpys, *cnt);
 	if (avail < 0)
 		return avail;
 

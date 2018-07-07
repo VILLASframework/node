@@ -419,7 +419,7 @@ int zeromq_destroy(struct node *n)
 	return 0;
 }
 
-int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt)
+int zeromq_read(struct node *n, struct sample *smps[], int *cnt)
 {
 	int recv, ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
@@ -446,7 +446,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (ret < 0)
 		return ret;
 
-	recv = io_sscan(&z->io, zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, cnt);
+	recv = io_sscan(&z->io, zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, *cnt);
 
 	ret = zmq_msg_close(&m);
 	if (ret)

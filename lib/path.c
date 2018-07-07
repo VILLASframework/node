@@ -84,7 +84,7 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 		warn("Pool underrun for path source %s", node_name(ps->node));
 
 	/* Read ready samples and store them to blocks pointed by smps[] */
-	recv = node_read(ps->node, read_smps, ready);
+	recv = node_read(ps->node, read_smps, &ready);
 	if (recv == 0)
 		goto out2;
 	else if (recv < 0)

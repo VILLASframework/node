@@ -730,12 +730,12 @@ int ib_deinit()
 	return 0;
 }
 
-int ib_read(struct node *n, struct sample *smps[], unsigned cnt)
+int ib_read(struct node *n, struct sample *smps[], int *cnt)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	struct ibv_wc wc[n->in.vectorize];
-	struct ibv_recv_wr wr[cnt], *bad_wr = NULL;
-    	struct ibv_sge sge[cnt];
+	struct ibv_recv_wr wr[*cnt], *bad_wr = NULL;
+    	struct ibv_sge sge[*cnt];
 	struct ibv_mr *mr;
 	int ret = 0;
 
@@ -743,11 +743,11 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 	if (n->state == STATE_CONNECTED) {
 
-		if (ib->conn.available_recv_wrs < ib->qp_init.cap.max_recv_wr && cnt==n->in.vectorize)	{
+		if (ib->conn.available_recv_wrs < ib->qp_init.cap.max_recv_wr && *cnt)	{
 			// Get Memory Region
 			mr = memory_ib_get_mr(smps[0]);
 
-			for (int i = 0; i < cnt; i++) {
+			for (int i = 0; i < *cnt; i++) {
 				// Increase refcnt of sample
 				sample_get(smps[i]);
 
@@ -764,7 +764,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 				ib->conn.available_recv_wrs++;
 
-				if (ib->conn.available_recv_wrs == ib->qp_init.cap.max_recv_wr || i==(cnt-1)) {
+				if (ib->conn.available_recv_wrs == ib->qp_init.cap.max_recv_wr || i==(*cnt-1)) {
 					debug(LOG_IB | 10, "Prepared %i new receive Work Requests", (i+1));
 
 					wr[i].next = NULL;

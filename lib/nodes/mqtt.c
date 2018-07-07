@@ -358,13 +358,13 @@ int mqtt_deinit()
 	return 0;
 }
 
-int mqtt_read(struct node *n, struct sample *smps[], unsigned cnt)
+int mqtt_read(struct node *n, struct sample *smps[], int *cnt)
 {
 	int pulled;
 	struct mqtt *m = (struct mqtt *) n->_vd;
-	struct sample *smpt[cnt];
+	struct sample *smpt[*cnt];
 
-	pulled = queue_signalled_pull_many(&m->queue, (void **) smpt, cnt);
+	pulled = queue_signalled_pull_many(&m->queue, (void **) smpt, *cnt);
 
 	sample_copy_many(smps, smpt, pulled);
 	sample_put_many(smpt, pulled);

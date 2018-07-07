@@ -154,7 +154,7 @@ char * node_name_long(struct node *n);
  */
 int node_reverse(struct node *n);
 
-int node_read(struct node *n, struct sample *smps[], unsigned cnt);
+int node_read(struct node *n, struct sample *smps[], int *cnt);
 
 int node_write(struct node *n, struct sample *smps[], unsigned cnt);
 

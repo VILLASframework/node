@@ -228,7 +228,7 @@ int nanomsg_deinit()
 	return 0;
 }
 
-int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt)
+int nanomsg_read(struct node *n, struct sample *smps[], int *cnt)
 {
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
 	int bytes;
@@ -239,7 +239,7 @@ int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (bytes < 0)
 		return -1;
 
-	return io_sscan(&m->io, data, bytes, NULL, smps, cnt);
+	return io_sscan(&m->io, data, bytes, NULL, smps, *cnt);
 }
 
 int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt)

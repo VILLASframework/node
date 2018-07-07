@@ -112,31 +112,31 @@ struct infiniband {
 };
 
 /** @see node_type::reverse */
-int infiniband_reverse(struct node *n);
+int ib_reverse(struct node *n);
 
 /** @see node_type::print */
-char * infiniband_print(struct node *n);
+char * ib_print(struct node *n);
 
 /** @see node_type::parse */
-int infiniband_parse(struct node *n, json_t *cfg);
+int ib_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::open */
-int infiniband_start(struct node *n);
+int ib_start(struct node *n);
 
 /** @see node_type::destroy */
-int infiniband_destroy(struct node *n);
+int ib_destroy(struct node *n);
 
 /** @see node_type::close */
-int infiniband_stop(struct node *n);
+int ib_stop(struct node *n);
 
 /** @see node_type::init */
-int infiniband_init(struct super_node *n);
+int ib_init(struct super_node *n);
 
 /** @see node_type::deinit */
-int infiniband_deinit();
+int ib_deinit();
 
 /** @see node_type::read */
-int infiniband_read(struct node *n, struct sample *smps[], unsigned cnt);
+int ib_read(struct node *n, struct sample *smps[], int *cnt);
 
 /** @see node_type::write */
 int infiniband_write(struct node *n, struct sample *smps[], unsigned cnt);

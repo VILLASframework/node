@@ -89,7 +89,7 @@ int signal_generator_start(struct node *n);
 int signal_generator_stop(struct node *n);
 
 /** @see node_type::read */
-int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt);
+int signal_generator_read(struct node *n, struct sample *smps[], int *cnt);
 
 enum signal_generator_type signal_generator_lookup_type(const char *type);
 

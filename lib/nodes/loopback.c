@@ -69,14 +69,14 @@ int loopback_close(struct node *n)
 	return queue_signalled_destroy(&l->queue);
 }
 
-int loopback_read(struct node *n, struct sample *smps[], unsigned cnt)
+int loopback_read(struct node *n, struct sample *smps[], int *cnt)
 {
 	int avail;
 
 	struct loopback *l = (struct loopback *) n->_vd;
-	struct sample *cpys[cnt];
+	struct sample *cpys[*cnt];
 
-	avail = queue_signalled_pull_many(&l->queue, (void **) cpys, cnt);
+	avail = queue_signalled_pull_many(&l->queue, (void **) cpys, *cnt);
 
 	for (int i = 0; i < avail; i++) {
 		sample_copy(smps[i], cpys[i]);

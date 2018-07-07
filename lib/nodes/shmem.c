@@ -110,14 +110,14 @@ int shmem_stop(struct node *n)
 	return shmem_int_close(&shm->intf);
 }
 
-int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
+int shmem_read(struct node *n, struct sample *smps[], int *cnt)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
 	int recv;
-	struct sample *shared_smps[cnt];
+	struct sample *shared_smps[*cnt];
 
 	do {
-		recv = shmem_int_read(&shm->intf, shared_smps, cnt);
+		recv = shmem_int_read(&shm->intf, shared_smps, *cnt);
 	} while (recv == 0);
 
 	if (recv < 0) {

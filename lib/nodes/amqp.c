@@ -301,7 +301,7 @@ int amqp_stop(struct node *n)
 	return 0;
 }
 
-int amqp_read(struct node *n, struct sample *smps[], unsigned cnt)
+int amqp_read(struct node *n, struct sample *smps[], int *cnt)
 {
 	int ret;
 	struct amqp *a = n->_vd;
@@ -312,7 +312,7 @@ int amqp_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
 		return -1;
 
-	ret = io_sscan(&a->io, env.message.body.bytes, env.message.body.len, NULL, smps, cnt);
+	ret = io_sscan(&a->io, env.message.body.bytes, env.message.body.len, NULL, smps, *cnt);
 
 	amqp_destroy_envelope(&env);
 

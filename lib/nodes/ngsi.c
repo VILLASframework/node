@@ -533,7 +533,7 @@ int ngsi_stop(struct node *n)
 	return ret;
 }
 
-int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt)
+int ngsi_read(struct node *n, struct sample *smps[], int *cnt)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
@@ -548,7 +548,7 @@ int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt)
 	if (ret)
 		goto out;
 
-	ret = ngsi_parse_entity(rentity, i, smps, cnt);
+	ret = ngsi_parse_entity(rentity, i, smps, *cnt);
 	if (ret)
 		goto out2;
 

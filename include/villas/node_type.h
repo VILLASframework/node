@@ -136,7 +136,7 @@ struct node_type {
 	 * @param cnt	The number of messages which should be received.
 	 * @return	The number of messages actually received.
 	 */
-	int (*read)(struct node *n, struct sample *smps[], unsigned cnt);
+	int (*read)(struct node *n, struct sample *smps[], int *cnt);
 
 	/** Send multiple messages in a single datagram / packet.
 	 *

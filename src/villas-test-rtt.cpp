@@ -166,8 +166,9 @@ void test_rtt() {
 	while (running && (count < 0 || count--)) {
 		clock_gettime(CLOCK_ID, &send);
 
-		node_write(node, &smp_send, 1); /* Ping */
-		node_read(node,  &smp_recv, 1); /* Pong */
+		int one = 1;
+		node_write(node, &smp_send, one); /* Ping */
+		node_read(node,  &smp_recv, &one); /* Pong */
 
 		clock_gettime(CLOCK_ID, &recv);
 

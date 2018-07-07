@@ -277,7 +277,7 @@ int test_rtt_stop(struct node *n)
 	return 0;
 }
 
-int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt)
+int test_rtt_read(struct node *n, struct sample *smps[], int *cnt)
 {
 	int i, ret, values;
 	uint64_t steps;
@@ -320,7 +320,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt)
 	struct timespec now = time_now();
 
 	/* Prepare samples */
-	for (i = 0; i < cnt; i++) {
+	for (i = 0; i < *cnt; i++) {
 		values = c->values;
 		if (smps[i]->capacity < values) {
 			values = smps[i]->capacity;

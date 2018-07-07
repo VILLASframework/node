@@ -71,7 +71,7 @@ int nanomsg_start(struct node *n);
 int nanomsg_stop(struct node *n);
 
 /** @see node_type::read */
-int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt);
+int nanomsg_read(struct node *n, struct sample *smps[], int *cnt);
 
 /** @see node_type::write */
 int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt);

@@ -408,7 +408,7 @@ int node_destroy(struct node *n)
 	return 0;
 }
 
-int node_read(struct node *n, struct sample *smps[], unsigned cnt)
+int node_read(struct node *n, struct sample *smps[], int *cnt)
 {
 	int readd, nread = 0;
 
@@ -416,9 +416,10 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 		return -1;
 
 	/* Send in parts if vector not supported */
-	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
-		while (cnt - nread > 0) {
-			readd = n->_vt->read(n, &smps[nread], MIN(cnt - nread, n->_vt->vectorize));
+	if (n->_vt->vectorize > 0 && n->_vt->vectorize < *cnt) {
+		int cnt_vec_min = MIN(*cnt - nread, n->_vt->vectorize);
+		while (*cnt - nread > 0) {
+			readd = n->_vt->read(n, &smps[nread], &cnt_vec_min);
 			if (readd < 0)
 				return readd;
 

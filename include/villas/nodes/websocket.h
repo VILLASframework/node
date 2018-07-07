@@ -112,7 +112,7 @@ int websocket_stop(struct node *n);
 int websocket_destroy(struct node *n);
 
 /** @see node_type::read */
-int websocket_read(struct node *n, struct sample *smps[], unsigned cnt);
+int websocket_read(struct node *n, struct sample *smps[], int *cnt);
 
 /** @see node_type::write */
 int websocket_write(struct node *n, struct sample *smps[], unsigned cnt);
