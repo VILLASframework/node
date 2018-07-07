@@ -77,8 +77,10 @@ struct infiniband {
 		/* Poll thread */
 		pthread_t cq_poller_thread;
 
-		int stopThread;
+		int stopThreads;
 	} poll;
+
+	int stopThreads;
 
 	/* Connection specific variables */
 	struct connection_s {
