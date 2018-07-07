@@ -96,7 +96,7 @@ int ngsi_stop(struct node *n);
 int ngsi_read(struct node *n, struct sample *smps[], int *cnt);
 
 /** @see node_type::write */
-int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt);
+int ngsi_write(struct node *n, struct sample *smps[], int *cnt);
 
 /** @} */
 

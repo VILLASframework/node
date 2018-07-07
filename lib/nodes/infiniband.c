@@ -818,11 +818,11 @@ int ib_read(struct node *n, struct sample *smps[], int *cnt)
 	return ret;
 }
 
-int ib_write(struct node *n, struct sample *smps[], unsigned cnt)
+int ib_write(struct node *n, struct sample *smps[], int *cnt)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
-	struct ibv_send_wr wr[cnt], *bad_wr = NULL;
-	struct ibv_sge sge[cnt];
+	struct ibv_send_wr wr[*cnt], *bad_wr = NULL;
+	struct ibv_sge sge[*cnt];
 	struct ibv_mr *mr;
 	int ret;
 
@@ -839,7 +839,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt)
 		// Get Memory Region
 		mr = memory_ib_get_mr(smps[0]);
 
-		for (int i = 0; i < cnt; i++) {
+		for (int i = 0; i < *cnt; i++) {
 			// Increase refcnt of sample
 			sample_get(smps[i]);
 
@@ -853,7 +853,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt)
 			wr[i].sg_list = &sge[i];
 			wr[i].num_sge = 1;
 
-			if (i == (cnt-1)) {
+			if (i == (*cnt-1)) {
 				debug(LOG_IB | 10, "Prepared %i send Work Requests", (i+1));
 				wr[i].next = NULL;
 			}
@@ -877,7 +877,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt)
 		debug(LOG_IB | 4, "Succesfully posted receive Work Requests");
 	}
 
-	return cnt;
+	return *cnt;
 }
 
 int ib_fd(struct node *n)

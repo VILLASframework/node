@@ -348,7 +348,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], int *cnt)
 	return i;
 }
 
-int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt)
+int test_rtt_write(struct node *n, struct sample *smps[], int *cnt)
 {
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
@@ -358,7 +358,7 @@ int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt)
 	struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, t->current);
 
 	int i;
-	for (i = 0; i < cnt; i++) {
+	for (i = 0; i < *cnt; i++) {
 		if (smps[i]->length != c->values) {
 			warn("Discarding invalid sample due to mismatching length: expecting=%d, has=%d", c->values, smps[i]->length);
 			continue;

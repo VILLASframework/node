@@ -82,7 +82,7 @@ int test_rtt_stop(struct node *n);
 int test_rtt_read(struct node *n, struct sample *smps[], int *cnt);
 
 /** @see node_type::write */
-int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt);
+int test_rtt_write(struct node *n, struct sample *smps[], int *cnt);
 
 /** @} */
 

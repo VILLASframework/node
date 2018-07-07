@@ -345,15 +345,15 @@ retry:	ret = io_scan(&f->io, smps, *cnt);
 	return *cnt;
 }
 
-int file_write(struct node *n, struct sample *smps[], unsigned cnt)
+int file_write(struct node *n, struct sample *smps[], int *cnt)
 {
 	struct file *f = (struct file *) n->_vd;
 
-	assert(cnt == 1);
+	assert(*cnt == 1);
 
-	io_print(&f->io, smps, cnt);
+	io_print(&f->io, smps, *cnt);
 
-	return cnt;
+	return *cnt;
 }
 
 int file_fd(struct node *n)

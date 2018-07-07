@@ -161,7 +161,7 @@ static void * send_loop(void *ctx)
 				smps[i]->sequence = last_sequenceno++;
 		}
 
-		sent = node_write(node, smps, scanned);
+		sent = node_write(node, smps, &scanned);
 		if (sent < 0)
 			warn("Failed to sent samples to node %s: reason=%d", node_name(node), sent);
 		else if (sent < scanned)

@@ -167,7 +167,7 @@ void test_rtt() {
 		clock_gettime(CLOCK_ID, &send);
 
 		int one = 1;
-		node_write(node, &smp_send, one); /* Ping */
+		node_write(node, &smp_send, &one); /* Ping */
 		node_read(node,  &smp_recv, &one); /* Pong */
 
 		clock_gettime(CLOCK_ID, &recv);

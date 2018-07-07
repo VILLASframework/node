@@ -119,7 +119,7 @@ int socket_start(struct node *n);
 int socket_stop(struct node *n);
 
 /** @see node_type::write */
-int socket_write(struct node *n, struct sample *smps[], unsigned cnt);
+int socket_write(struct node *n, struct sample *smps[], int *cnt);
 
 /** @see node_type::read */
 int socket_read(struct node *n, struct sample *smps[], int *cnt);

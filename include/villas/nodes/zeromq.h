@@ -105,7 +105,7 @@ int zeromq_stop(struct node *n);
 int zeromq_read(struct node *n, struct sample *smps[], int *cnt);
 
 /** @see node_type::write */
-int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt);
+int zeromq_write(struct node *n, struct sample *smps[], int *cnt);
 
 /** @} */
 

@@ -558,18 +558,18 @@ out:	json_decref(entity);
 	return ret;
 }
 
-int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt)
+int ngsi_write(struct node *n, struct sample *smps[], int *cnt)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
 
-	json_t *entity = ngsi_build_entity(i, smps, cnt, NGSI_ENTITY_VALUES);
+	json_t *entity = ngsi_build_entity(i, smps, *cnt, NGSI_ENTITY_VALUES);
 
 	ret = ngsi_request_context_update(i->curl, i->endpoint, "UPDATE", entity);
 
 	json_decref(entity);
 
-	return ret ? 0 : cnt;
+	return ret ? 0 : *cnt;
 }
 
 int ngsi_fd(struct node *n)

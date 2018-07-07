@@ -401,7 +401,7 @@ out:	free(buf);
 	return ret;
 }
 
-int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
+int socket_write(struct node *n, struct sample *smps[], int *cnt)
 {
 	struct socket *s = (struct socket *) n->_vd;
 
@@ -416,7 +416,7 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
 	if (!buf)
 		return -1;
 
-retry:	ret = io_sprint(&s->io, buf, buflen, &wbytes, smps, cnt);
+retry:	ret = io_sprint(&s->io, buf, buflen, &wbytes, smps, *cnt);
 	if (ret < 0)
 		goto out;
 

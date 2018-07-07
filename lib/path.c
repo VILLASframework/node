@@ -211,7 +211,7 @@ static void path_destination_write(struct path_destination *pd, struct path *p)
 
 		debug(LOG_PATH | 15, "Dequeued %u samples from queue of node %s which is part of path %s", available, node_name(pd->node), path_name(p));
 
-		sent = node_write(pd->node, smps, available);
+		sent = node_write(pd->node, smps, &available);
 		if (sent < 0)
 			error("Failed to sent %u samples to node %s", cnt, node_name(pd->node));
 		else if (sent < available)

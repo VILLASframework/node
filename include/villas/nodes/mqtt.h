@@ -98,7 +98,7 @@ int mqtt_deinit();
 int mqtt_read(struct node *n, struct sample *smps[], int *cnt);
 
 /** @see node_type::write */
-int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt);
+int mqtt_write(struct node *n, struct sample *smps[], int *cnt);
 
 #ifdef __cplusplus
 }

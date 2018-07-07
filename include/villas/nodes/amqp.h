@@ -83,7 +83,7 @@ int amqp_stop(struct node *n);
 int amqp_read(struct node *n, struct sample *smps[], int *cnt);
 
 /** @see node_type::write */
-int amqp_write(struct node *n, struct sample *smps[], unsigned cnt);
+int amqp_write(struct node *n, struct sample *smps[], int *cnt);
 
 #ifdef __cplusplus
 }

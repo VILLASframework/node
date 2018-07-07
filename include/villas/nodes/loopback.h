@@ -66,7 +66,7 @@ int loopback_close(struct node *n);
 int loopback_read(struct node *n, struct sample *smps[], int *cnt);
 
 /** @see node_type::write */
-int loopback_write(struct node *n, struct sample *smps[], unsigned cnt);
+int loopback_write(struct node *n, struct sample *smps[], int *cnt);
 
 #ifdef __cplusplus
 }

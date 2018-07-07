@@ -471,7 +471,7 @@ int node_read(struct node *n, struct sample *smps[], int *cnt)
 #endif /* WITH_HOOKS */
 }
 
-int node_write(struct node *n, struct sample *smps[], unsigned cnt)
+int node_write(struct node *n, struct sample *smps[], int *cnt)
 {
 	int sent, nsent = 0;
 
@@ -480,15 +480,16 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 #ifdef WITH_HOOKS
 	/* Run write hooks */
-	cnt = hook_write_list(&n->out.hooks, smps, cnt);
-	if (cnt <= 0)
-		return cnt;
+	*cnt = hook_write_list(&n->out.hooks, smps, *cnt);
+	if (*cnt <= 0)
+		return *cnt;
 #endif /* WITH_HOOKS */
 
 	/* Send in parts if vector not supported */
-	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
-		while (cnt - nsent > 0) {
-			sent = n->_vt->write(n, &smps[nsent], MIN(cnt - nsent, n->_vt->vectorize));
+	if (n->_vt->vectorize > 0 && n->_vt->vectorize < *cnt) {
+		int cnt_vec_min = MIN(*cnt - nsent, n->_vt->vectorize);
+		while (*cnt - nsent > 0) {
+			sent = n->_vt->write(n, &smps[nsent], &cnt_vec_min);
 			if (sent < 0)
 				return sent;
 

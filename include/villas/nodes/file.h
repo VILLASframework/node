@@ -86,7 +86,7 @@ int file_stop(struct node *n);
 int file_read(struct node *n, struct sample *smps[], int *cnt);
 
 /** @see node_type::write */
-int file_write(struct node *n, struct sample *smps[], unsigned cnt);
+int file_write(struct node *n, struct sample *smps[], int *cnt);
 
 /** @} */
 

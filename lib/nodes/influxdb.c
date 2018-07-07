@@ -114,14 +114,14 @@ int influxdb_close(struct node *n)
 	return 0;
 }
 
-int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt)
+int influxdb_write(struct node *n, struct sample *smps[], int *cnt)
 {
 	struct influxdb *i = (struct influxdb *) n->_vd;
 
 	char *buf = NULL;
 	ssize_t sentlen, buflen;
 
-	for (int k = 0; k < cnt; k++) {
+	for (int k = 0; k < *cnt; k++) {
 		/* Key */
 		strcatf(&buf, "%s", i->key);
 
@@ -156,7 +156,7 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	free(buf);
 
-	return cnt;
+	return *cnt;
 }
 
 char * influxdb_print(struct node *n)

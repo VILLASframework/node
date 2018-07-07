@@ -150,7 +150,7 @@ struct node_type {
 	 * @param cnt	The number of messages which should be sent.
 	 * @return	The number of messages actually sent.
 	 */
-	int (*write)(struct node *n, struct sample *smps[], unsigned cnt);
+	int (*write)(struct node *n, struct sample *smps[], int *cnt);
 
 	/** Reverse source and destination of a node.
 	 *

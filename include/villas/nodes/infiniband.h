@@ -139,6 +139,6 @@ int ib_deinit();
 int ib_read(struct node *n, struct sample *smps[], int *cnt);
 
 /** @see node_type::write */
-int infiniband_write(struct node *n, struct sample *smps[], unsigned cnt);
+int infiniband_write(struct node *n, struct sample *smps[], int *cnt);
 
 /** @} */

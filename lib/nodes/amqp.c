@@ -319,14 +319,14 @@ int amqp_read(struct node *n, struct sample *smps[], int *cnt)
 	return ret;
 }
 
-int amqp_write(struct node *n, struct sample *smps[], unsigned cnt)
+int amqp_write(struct node *n, struct sample *smps[], int *cnt)
 {
 	int ret;
 	struct amqp *a = n->_vd;
 	char data[1500];
 	size_t wbytes;
 
-	ret = io_sprint(&a->io, data, sizeof(data), &wbytes, smps, cnt);
+	ret = io_sprint(&a->io, data, sizeof(data), &wbytes, smps, *cnt);
 	if (ret <= 0)
 		return -1;
 
@@ -344,7 +344,7 @@ int amqp_write(struct node *n, struct sample *smps[], unsigned cnt)
 	if (ret != AMQP_STATUS_OK)
 		return -1;
 
-	return cnt;
+	return *cnt;
 }
 
 int amqp_fd(struct node *n)

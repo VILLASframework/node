@@ -372,7 +372,7 @@ int mqtt_read(struct node *n, struct sample *smps[], int *cnt)
 	return pulled;
 }
 
-int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt)
+int mqtt_write(struct node *n, struct sample *smps[], int *cnt)
 {
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
@@ -381,7 +381,7 @@ int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt)
 
 	char data[1500];
 
-	ret = io_sprint(&m->io, data, sizeof(data), &wbytes, smps, cnt);
+	ret = io_sprint(&m->io, data, sizeof(data), &wbytes, smps, *cnt);
 	if (ret < 0)
 		return ret;
 
@@ -391,7 +391,7 @@ int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt)
 		return -abs(ret);
 	}
 
-	return cnt;
+	return *cnt;
 }
 
 int mqtt_fd(struct node *n)
