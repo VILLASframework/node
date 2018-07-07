@@ -351,7 +351,7 @@ int node_stop(struct node *n)
 {
 	int ret;
 
-	if (n->state != STATE_STARTED)
+	if (n->state != STATE_STARTED && n->state != STATE_CONNECTED)
 		return 0;
 
 	info("Stopping node %s", node_name(n));
