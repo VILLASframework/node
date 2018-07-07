@@ -76,8 +76,6 @@ struct infiniband {
 
 		/* Poll thread */
 		pthread_t cq_poller_thread;
-
-		int stopThreads;
 	} poll;
 
 	int stopThreads;
