@@ -542,22 +542,15 @@ void * ib_rdma_cm_event_thread(void *n)
 	int ret = 0;
 
 
-	//debug(LOG_IB | 1, "Started rdma_cm_event thread of node %s", node_name(node));
-
-	info("EVENT: %p", ib->ctx.ec);
-	info("FD, i: %i", ib->ctx.ec->fd);
+	debug(LOG_IB | 1, "Started rdma_cm_event thread of node %s", node_name(node));
 
 	// Wait until node is completely started
-	//while (node->state != STATE_STARTED);
+	while (node->state != STATE_STARTED);
 
+	// Monitor event channel
 	while (rdma_get_cm_event(ib->ctx.ec, &event) == 0) {
-		struct rdma_cm_event event_copy;
 
-		//ToDo: check if copy is really necessary
-		memcpy(&event_copy, event, sizeof(*event));
-		rdma_ack_cm_event(event);
-
-		switch(event_copy.event) {
+		switch(event->event) {
 			case RDMA_CM_EVENT_ADDR_RESOLVED:
 				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_ADDR_RESOLVED");
 
@@ -585,7 +578,7 @@ void * ib_rdma_cm_event_thread(void *n)
 			case RDMA_CM_EVENT_CONNECT_REQUEST:
 				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_CONNECT_REQUEST");
 
-				ret = ib_connect_request(n, event_copy.id);
+				ret = ib_connect_request(n, event->id);
 				break;
 
 			case RDMA_CM_EVENT_CONNECT_ERROR:
@@ -602,7 +595,7 @@ void * ib_rdma_cm_event_thread(void *n)
 			case RDMA_CM_EVENT_ESTABLISHED:
 				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_ESTABLISHED");
 
-	//			node->state = STATE_CONNECTED;
+				node->state = STATE_CONNECTED;
 
 				info("Connection established in node %s", node_name(n));
 				break;
@@ -614,9 +607,10 @@ void * ib_rdma_cm_event_thread(void *n)
 				break;
 
 			default:
-				error("Unknown event occurred: %u", event_copy.event);
+				error("Unknown event occurred: %u", event->event);
 		}
 
+		rdma_ack_cm_event(event);
 
 		if (ret) //ToDo: Fix me
 			break;
