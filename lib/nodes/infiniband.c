@@ -84,47 +84,6 @@ int ib_post_recv_wrs(struct node *n)
 	return ret;
 }
 
-static void ib_init_wc_poll(struct node *n)
-{
-	int ret;
-	struct infiniband *ib = (struct infiniband *) n->_vd;
-	ib->ctx.comp_channel = NULL;
-
-	debug(LOG_IB | 1, "Starting to initialize completion queues");
-
-	if (ib->poll.poll_mode == EVENT) {
-		// Create completion channel
-		ib->ctx.comp_channel = ibv_create_comp_channel(ib->ctx.id->verbs);
-		if (!ib->ctx.comp_channel)
-			error("Could not create completion channel in node %s", node_name(n));
-
-		debug(LOG_IB | 3, "Created Completion channel");
-	}
-
-	// Create completion queues and bind to channel (or NULL)
-	ib->ctx.recv_cq = ibv_create_cq(ib->ctx.id->verbs, ib->cq_size, NULL, NULL, 0);
-	if (!ib->ctx.recv_cq)
-		error("Could not create receive completion queue in node %s", node_name(n));
-
-	debug(LOG_IB | 3, "Created receive Completion Queue");
-
-	ib->ctx.send_cq = ibv_create_cq(ib->ctx.id->verbs, ib->cq_size, NULL, ib->ctx.comp_channel, 0);
-	if (!ib->ctx.send_cq)
-		error("Could not create send completion queue in node %s", node_name(n));
-
-	debug(LOG_IB | 3, "Created send Completion Queue");
-
-	if (ib->poll.poll_mode == EVENT) {
-		// Request notifications from completion queue
-		ret = ibv_req_notify_cq(ib->ctx.send_cq, 0);
-		if (ret)
-			error("Failed to request notifiy CQ in node %s: %s",
-				node_name(n), gai_strerror(ret));
-
-		debug(LOG_IB | 3, "Called ibv_req_notificy_cq on send Completion Queue");
-	}
-}
-
 static void ib_build_ibv(struct node *n)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
@@ -132,8 +91,18 @@ static void ib_build_ibv(struct node *n)
 
 	debug(LOG_IB | 1, "Starting to build IBV components");
 
-	// Initiate poll mode
-	ib_init_wc_poll(n);
+	// Create completion queues. No completion channel!)
+	ib->ctx.recv_cq = ibv_create_cq(ib->ctx.id->verbs, ib->cq_size, NULL, NULL, 0);
+	if (!ib->ctx.recv_cq)
+		error("Could not create receive completion queue in node %s", node_name(n));
+
+	debug(LOG_IB | 3, "Created receive Completion Queue");
+
+	ib->ctx.send_cq = ibv_create_cq(ib->ctx.id->verbs, ib->cq_size, NULL, NULL, 0);
+	if (!ib->ctx.send_cq)
+		error("Could not create send completion queue in node %s", node_name(n));
+
+	debug(LOG_IB | 3, "Created send Completion Queue");
 
 	// Prepare remaining Queue Pair (QP) attributes
 	ib->qp_init.send_cq = ib->ctx.send_cq;
@@ -604,11 +573,10 @@ int ib_stop(struct node *n)
 	// Call RDMA disconnect function
 	// Will flush all outstanding WRs to the Completion Queue and
 	// will call RDMA_CM_EVENT_DISCONNECTED if that is done.
-	if(! ib->is_source && n->state == STATE_CONNECTED)
+	if (n->state == STATE_CONNECTED)
 		ret = rdma_disconnect(ib->ctx.id);
 	else
 		ret = rdma_disconnect(ib->ctx.listen_id);
-
 	if (ret)
 		error("Error while calling rdma_disconnect in node %s: %s",
 			node_name(n), gai_strerror(ret));
