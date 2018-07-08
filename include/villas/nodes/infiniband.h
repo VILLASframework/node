@@ -34,12 +34,6 @@
 #include <villas/io.h>
 #include <villas/queue_signalled.h>
 #include <rdma/rdma_cma.h>
-
-/* Function pointer typedefs */
-typedef void  (*ib_on_completion) (struct node*, struct ibv_wc*, int*);
-typedef void * (*ib_poll_function) (void*);
-typedef void * (*ib_event_function) (void*);
-
 /* Enums */
 enum poll_mode_e {
 	EVENT,
@@ -67,15 +61,6 @@ struct infiniband {
 	/* Work Completion related */
 	struct poll_s {
 		enum poll_mode_e poll_mode;
-
-		/* On completion function */
-		ib_on_completion on_compl;
-
-		/* Busy poll or Event function */
-		ib_poll_function poll_func;
-
-		/* Poll thread */
-		pthread_t cq_poller_thread;
 	} poll;
 
 	int stopThreads;
