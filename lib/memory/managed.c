@@ -152,8 +152,6 @@ static int memory_managed_free(struct memory_type *m, struct memory_allocation *
 		block->used = false;
 	}
 
-	free(ma);
-
 	return 0;
 }
 

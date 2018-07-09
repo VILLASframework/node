@@ -135,9 +135,11 @@ int memory_free(void *ptr)
 		return ret;
 
 	/* Remove allocation entry */
-	ret = hash_table_delete(&allocations, ma->address);
+	ret = hash_table_delete(&allocations, ptr);
 	if (ret)
 		return ret;
+
+	free(ma);
 
 	return 0;
 }

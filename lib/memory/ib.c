@@ -76,8 +76,6 @@ static int memory_ib_free(struct memory_type *m, struct memory_allocation *ma)
 	if (ret)
 		return ret;
 
-	free(ma);
-
 	return 0;
 }
 

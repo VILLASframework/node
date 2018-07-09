@@ -52,7 +52,6 @@ static struct memory_allocation * memory_heap_alloc(struct memory_type *m, size_
 static int memory_heap_free(struct memory_type *m, struct memory_allocation *ma)
 {
 	free(ma->address);
-	free(ma);
 
 	return 0;
 }

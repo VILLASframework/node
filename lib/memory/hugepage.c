@@ -87,8 +87,6 @@ static int memory_hugepage_free(struct memory_type *m, struct memory_allocation 
 	if (ret)
 		return ret;
 
-	free(ma);
-
 	return 0;
 }
 
