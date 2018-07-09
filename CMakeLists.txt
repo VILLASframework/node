@@ -20,10 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-cmake_minimum_required(VERSION 3.3)
-
-# Policies
-cmake_policy(SET CMP0068 NEW)
+cmake_minimum_required(VERSION 3.6)
 
 project(VILLASnode C CXX)
 
@@ -31,7 +28,6 @@ project(VILLASnode C CXX)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
-#set(CMAKE_SKIP_INSTALL_RPATH ON)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 if(APPLE)

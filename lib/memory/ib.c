@@ -55,6 +55,9 @@ static struct memory_allocation * memory_ib_alloc(struct memory_type *m, size_t 
 	ma->parent = mi->parent->alloc(mi->parent, len + sizeof(struct ibv_mr *), alignment);
 	ma->address = ma->parent->address;
 
+	if(!mi->pd)
+		error("Protection domain is not registered!");
+
 	ma->ib.mr = ibv_reg_mr(mi->pd, ma->address, ma->length, IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_WRITE);
 	if(!ma->ib.mr) {
 		mi->parent->free(mi->parent, ma->parent);

@@ -38,6 +38,7 @@
 /* Function pointer typedefs */
 typedef void  (*ib_on_completion) (struct node*, struct ibv_wc*, int*);
 typedef void * (*ib_poll_function) (void*);
+typedef void * (*ib_event_function) (void*);
 
 /* Enums */
 enum poll_mode_e {
@@ -75,9 +76,9 @@ struct infiniband {
 
 		/* Poll thread */
 		pthread_t cq_poller_thread;
-
-		int stopThread;
 	} poll;
+
+	int stopThreads;
 
 	/* Connection specific variables */
 	struct connection_s {
@@ -88,8 +89,7 @@ struct infiniband {
 
 		struct r_addr_key_s *r_addr_key;
 
-		pthread_t stop_thread;
-		int rdma_disconnect_called;
+		pthread_t rdma_cm_event_thread;
 
 		int available_recv_wrs;
 	} conn;
