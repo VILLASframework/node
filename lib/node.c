@@ -386,8 +386,12 @@ int node_destroy(struct node *n)
 	if (ret)
 		return ret;
 
-	if (n->_vt->destroy)
-		n->_vt->destroy(n);
+	if (n->_vt->destroy){
+		ret = (int) n->_vt->destroy(n);
+		if(ret){
+			return ret;
+		}
+	}
 
 	list_remove(&n->_vt->instances, n);
 
