@@ -2,6 +2,7 @@
 #define REGISTER_TYPES_H
 
 #include <stdint.h>
+#include <cstddef>
 
 union axilite_reg_status_t {
 	uint32_t value;
@@ -26,5 +27,15 @@ union reg_doorbell_t {
 		is_valid		: 1;
 	};
 };
+
+template<size_t N, typename T = uint32_t>
+struct Rtds2GpuMemoryBuffer {
+	static constexpr size_t valueCount = N;
+	static constexpr size_t dataOffset = offsetof(Rtds2GpuMemoryBuffer, data);
+	static constexpr size_t doorbellOffset = offsetof(Rtds2GpuMemoryBuffer, doorbell);
+
+	T data[N];
+	reg_doorbell_t doorbell;
+} __attribute__((packed));
 
 #endif // REGISTER_TYPES_H
