@@ -65,7 +65,7 @@ int influxdb_open(struct node *n);
 int influxdb_close(struct node *n);
 
 /** @see node_type::write */
-int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt);
+int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 #ifdef __cplusplus
 }

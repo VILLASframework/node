@@ -412,7 +412,7 @@ int node_destroy(struct node *n)
 	return 0;
 }
 
-int node_read(struct node *n, struct sample *smps[], unsigned cnt)
+int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int readd, nread = 0;
 
@@ -422,7 +422,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 	/* Send in parts if vector not supported */
 	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
 		while (cnt - nread > 0) {
-			readd = n->_vt->read(n, &smps[nread], MIN(cnt - nread, n->_vt->vectorize));
+			readd = n->_vt->read(n, &smps[nread], MIN(cnt - nread, n->_vt->vectorize), release);
 			if (readd < 0)
 				return readd;
 
@@ -430,7 +430,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 		}
 	}
 	else {
-		nread = n->_vt->read(n, smps, cnt);
+		nread = n->_vt->read(n, smps, cnt, release);
 		if (nread < 0)
 			return nread;
 	}
@@ -474,7 +474,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt)
 #endif /* WITH_HOOKS */
 }
 
-int node_write(struct node *n, struct sample *smps[], unsigned cnt)
+int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int sent, nsent = 0;
 
@@ -491,7 +491,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt)
 	/* Send in parts if vector not supported */
 	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
 		while (cnt - nsent > 0) {
-			sent = n->_vt->write(n, &smps[nsent], MIN(cnt - nsent, n->_vt->vectorize));
+			sent = n->_vt->write(n, &smps[nsent], MIN(cnt - nsent, n->_vt->vectorize), release);
 			if (sent < 0)
 				return sent;
 
@@ -500,7 +500,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt)
 		}
 	}
 	else {
-		nsent = n->_vt->write(n, smps, cnt);
+		nsent = n->_vt->write(n, smps, cnt, release);
 		if (nsent < 0)
 			return nsent;
 

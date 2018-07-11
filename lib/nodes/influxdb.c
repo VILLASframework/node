@@ -114,7 +114,7 @@ int influxdb_close(struct node *n)
 	return 0;
 }
 
-int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt)
+int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct influxdb *i = (struct influxdb *) n->_vd;
 

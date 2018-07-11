@@ -69,7 +69,7 @@ int loopback_close(struct node *n)
 	return queue_signalled_destroy(&l->queue);
 }
 
-int loopback_read(struct node *n, struct sample *smps[], unsigned cnt)
+int loopback_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int avail;
 
@@ -86,7 +86,7 @@ int loopback_read(struct node *n, struct sample *smps[], unsigned cnt)
 	return avail;
 }
 
-int loopback_write(struct node *n, struct sample *smps[], unsigned cnt)
+int loopback_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int copied;
 

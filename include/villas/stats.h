@@ -72,7 +72,7 @@ int stats_destroy(struct stats *s);
 
 void stats_update(struct stats *s, enum stats_id id, double val);
 
-void stats_collect(struct stats *s, struct sample *smps[], size_t cnt);
+void stats_collect(struct stats *s, struct sample *smps[], size_t *cnt);
 
 int stats_commit(struct stats *s);
 

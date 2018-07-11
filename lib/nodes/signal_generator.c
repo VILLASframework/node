@@ -212,7 +212,7 @@ int signal_generator_stop(struct node *n)
 	return 0;
 }
 
-int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt)
+int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 	struct sample *t = smps[0];

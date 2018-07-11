@@ -358,7 +358,7 @@ int mqtt_deinit()
 	return 0;
 }
 
-int mqtt_read(struct node *n, struct sample *smps[], unsigned cnt)
+int mqtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int pulled;
 	struct mqtt *m = (struct mqtt *) n->_vd;
@@ -372,7 +372,7 @@ int mqtt_read(struct node *n, struct sample *smps[], unsigned cnt)
 	return pulled;
 }
 
-int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt)
+int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;

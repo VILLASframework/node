@@ -67,7 +67,7 @@ int stats_node_start(struct node *n);
 int stats_node_stop(struct node *n);
 
 /** @see node_type::read */
-int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt);
+int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 #ifdef __cplusplus
 }

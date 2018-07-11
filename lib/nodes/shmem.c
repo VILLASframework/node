@@ -110,7 +110,7 @@ int shmem_stop(struct node *n)
 	return shmem_int_close(&shm->intf);
 }
 
-int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
+int shmem_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
 	int recv;
@@ -134,7 +134,7 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt)
 	return recv;
 }
 
-int shmem_write(struct node *n, struct sample *smps[], unsigned cnt)
+int shmem_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
 	struct sample *shared_smps[cnt]; /* Samples need to be copied to the shared pool first */

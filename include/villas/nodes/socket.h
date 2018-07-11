@@ -119,10 +119,10 @@ int socket_start(struct node *n);
 int socket_stop(struct node *n);
 
 /** @see node_type::write */
-int socket_write(struct node *n, struct sample *smps[], unsigned cnt);
+int socket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::read */
-int socket_read(struct node *n, struct sample *smps[], unsigned cnt);
+int socket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::parse */
 int socket_parse(struct node *n, json_t *cfg);

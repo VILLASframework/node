@@ -467,7 +467,7 @@ int websocket_destroy(struct node *n)
 	return 0;
 }
 
-int websocket_read(struct node *n, struct sample *smps[], unsigned cnt)
+int websocket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int avail;
 
@@ -484,7 +484,7 @@ int websocket_read(struct node *n, struct sample *smps[], unsigned cnt)
 	return avail;
 }
 
-int websocket_write(struct node *n, struct sample *smps[], unsigned cnt)
+int websocket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int avail;
 

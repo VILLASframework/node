@@ -57,7 +57,7 @@ int ib_disconnect(struct node *n)
 	// Set available receive work requests to zero
 	ib->conn.available_recv_wrs = 0;
 
-	return 0;
+	return ib->stopThreads;
 }
 
 int ib_post_recv_wrs(struct node *n)
@@ -84,108 +84,6 @@ int ib_post_recv_wrs(struct node *n)
 	return ret;
 }
 
-void ib_completion_target(struct node* n, struct ibv_wc* wc, int* size){}
-
-void ib_completion_source(struct node* n, struct ibv_wc* wc, int* size)
-{
-	for (int i = 0; i < *size; i++)	{
-		if (wc[i].status != IBV_WC_SUCCESS)
-			warn("Work Completion status was not IBV_WC_SUCCES in node %s: %i",
-				node_name(n), wc[i].status);
-
-		sample_put((struct sample *) wc[i].wr_id);
-	}
-}
-
-void * ib_event_thread(void *n)
-{
-	struct infiniband *ib = (struct infiniband *) ((struct node *) n)->_vd;
-	struct ibv_wc wc[ib->cq_size];
-	int size;
-
-	debug(LOG_IB | 1, "Initialized event based poll thread of node %s", node_name(n));
-
-	while (1) {
-		// Function blocks, until an event occurs
-		ibv_get_cq_event(ib->ctx.comp_channel, &ib->ctx.send_cq, NULL);
-
-		// Poll as long as WCs are available
-		while ((size = ibv_poll_cq(ib->ctx.send_cq, ib->cq_size, wc)))
-			ib->poll.on_compl(n, wc, &size);
-
-		// Request a new event in the CQ and acknowledge event
-		ibv_req_notify_cq(ib->ctx.send_cq, 0);
-		ibv_ack_cq_events(ib->ctx.send_cq, 1);
-	}
-}
-
-void * ib_busy_poll_thread(void *n)
-{
-	struct infiniband *ib = (struct infiniband *) ((struct node *) n)->_vd;
-	struct ibv_wc wc[ib->cq_size];
-	int size;
-
-	debug(LOG_IB | 1, "Initialized busy poll thread of node %s", node_name(n));
-
-	while (1) {
-		// Poll as long as WCs are available
-		while ((size = ibv_poll_cq(ib->ctx.send_cq, ib->cq_size, wc)))
-			ib->poll.on_compl(n, wc, &size);
-
-		if (ib->stopThreads)
-			return NULL;
-	}
-}
-
-static void ib_init_wc_poll(struct node *n)
-{
-	int ret;
-	struct infiniband *ib = (struct infiniband *) n->_vd;
-	ib->ctx.comp_channel = NULL;
-
-	debug(LOG_IB | 1, "Starting to initialize completion queues and threads");
-
-	if (ib->poll.poll_mode == EVENT) {
-		// Create completion channel
-		ib->ctx.comp_channel = ibv_create_comp_channel(ib->ctx.id->verbs);
-		if (!ib->ctx.comp_channel)
-			error("Could not create completion channel in node %s", node_name(n));
-
-		debug(LOG_IB | 3, "Created Completion channel");
-	}
-
-	// Create completion queues and bind to channel (or NULL)
-	ib->ctx.recv_cq = ibv_create_cq(ib->ctx.id->verbs, ib->cq_size, NULL, NULL, 0);
-	if (!ib->ctx.recv_cq)
-		error("Could not create receive completion queue in node %s", node_name(n));
-
-	debug(LOG_IB | 3, "Created receive Completion Queue");
-
-	ib->ctx.send_cq = ibv_create_cq(ib->ctx.id->verbs, ib->cq_size, NULL, ib->ctx.comp_channel, 0);
-	if (!ib->ctx.send_cq)
-		error("Could not create send completion queue in node %s", node_name(n));
-
-	debug(LOG_IB | 3, "Created send Completion Queue");
-
-	if (ib->poll.poll_mode == EVENT) {
-		// Request notifications from completion queue
-		ret = ibv_req_notify_cq(ib->ctx.send_cq, 0);
-		if (ret)
-			error("Failed to request notifiy CQ in node %s: %s",
-				node_name(n), gai_strerror(ret));
-
-		debug(LOG_IB | 3, "Called ibv_req_notificy_cq on send Completion Queue");
-	}
-
-	// Initialize polling pthread for source
-	if (ib->is_source) {
-		ret = pthread_create(&ib->poll.cq_poller_thread, NULL, ib->poll.poll_func, n);
-		if (ret)
-			error("Failed to create poll thread of node %s: %s",
-				node_name(n), gai_strerror(ret));
-	}
-}
-
 static void ib_build_ibv(struct node *n)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
@@ -193,8 +91,18 @@ static void ib_build_ibv(struct node *n)
 
 	debug(LOG_IB | 1, "Starting to build IBV components");
 
-	// Initiate poll mode
-	ib_init_wc_poll(n);
+	// Create completion queues. No completion channel!)
+	ib->ctx.recv_cq = ibv_create_cq(ib->ctx.id->verbs, ib->cq_size, NULL, NULL, 0);
+	if (!ib->ctx.recv_cq)
+		error("Could not create receive completion queue in node %s", node_name(n));
+
+	debug(LOG_IB | 3, "Created receive Completion Queue");
+
+	ib->ctx.send_cq = ibv_create_cq(ib->ctx.id->verbs, ib->cq_size, NULL, NULL, 0);
+	if (!ib->ctx.send_cq)
+		error("Could not create send completion queue in node %s", node_name(n));
+
+	debug(LOG_IB | 3, "Created send Completion Queue");
 
 	// Prepare remaining Queue Pair (QP) attributes
 	ib->qp_init.send_cq = ib->ctx.send_cq;
@@ -385,14 +293,10 @@ int ib_parse(struct node *n, json_t *cfg)
 	debug(LOG_IB | 4, "Set  timeout to %i in node %s", timeout, node_name(n));
 
 	// Translate poll mode
-	if (strcmp(poll_mode, "EVENT") == 0) {
+	if (strcmp(poll_mode, "EVENT") == 0)
 		ib->poll.poll_mode = EVENT;
-		ib->poll.poll_func = ib_event_thread;
-	}
-	else if (strcmp(poll_mode, "BUSY") == 0) {
+	else if (strcmp(poll_mode, "BUSY") == 0)
 		ib->poll.poll_mode = BUSY;
-		ib->poll.poll_func = ib_busy_poll_thread;
-	}
 	else
 		error("Failed to translate poll_mode in node %s. %s is not a valid \
 			poll mode!", node_name(n), poll_mode);
@@ -444,17 +348,11 @@ int ib_parse(struct node *n, json_t *cfg)
 				remote, node_name(n), gai_strerror(ret));
 
 		debug(LOG_IB | 4, "Translated %s:%s to a struct addrinfo", ip_adr, port);
-
-		// Set correct Work Completion function
-		ib->poll.on_compl = ib_completion_source;
 	}
 	else {
 		debug(LOG_IB | 3, "Node %s is set up as target", node_name(n));
 
 		ib->is_source = 0;
-
-		// Set correct Work Completion function
-		ib->poll.on_compl = ib_completion_target;
 	}
 
 	return 0;
@@ -507,7 +405,6 @@ void * ib_rdma_cm_event_thread(void *n)
 	struct infiniband *ib = (struct infiniband *) node->_vd;
 	struct rdma_cm_event *event;
 	int ret = 0;
-
 
 	debug(LOG_IB | 1, "Started rdma_cm_event thread of node %s", node_name(node));
 
@@ -586,7 +483,7 @@ void * ib_rdma_cm_event_thread(void *n)
 
 		rdma_ack_cm_event(event);
 
-		if (ret || ib->stopThreads)
+		if (ret)
 			break;
 	}
 
@@ -676,11 +573,10 @@ int ib_stop(struct node *n)
 	// Call RDMA disconnect function
 	// Will flush all outstanding WRs to the Completion Queue and
 	// will call RDMA_CM_EVENT_DISCONNECTED if that is done.
-	if(! ib->is_source && n->state == STATE_CONNECTED)
+	if (n->state == STATE_CONNECTED)
 		ret = rdma_disconnect(ib->ctx.id);
 	else
 		ret = rdma_disconnect(ib->ctx.listen_id);
-
 	if (ret)
 		error("Error while calling rdma_disconnect in node %s: %s",
 			node_name(n), gai_strerror(ret));
@@ -694,14 +590,6 @@ int ib_stop(struct node *n)
 		error("Error while joining rdma_cm_event_thread in node %s: %i", node_name(n), ret);
 
 	debug(LOG_IB | 3, "Joined rdma_cm_event_thread");
-
-	// Wait for polling thread to join
-	if (ib->is_source) {
-		ret = pthread_join(ib->poll.cq_poller_thread, NULL);
-		if (ret)
-			error("Error while joining cq_poller_thread in node %s: %i", node_name(n), ret);
-	}
-
 
 	// Destroy RDMA CM ID
 	rdma_destroy_id(ib->ctx.id);
@@ -730,7 +618,7 @@ int ib_deinit()
 	return 0;
 }
 
-int ib_read(struct node *n, struct sample *smps[], unsigned cnt)
+int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	struct ibv_wc wc[n->in.vectorize];
@@ -738,19 +626,19 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt)
     	struct ibv_sge sge[cnt];
 	struct ibv_mr *mr;
 	int ret = 0;
+	int i = 0; //Used for first loop: post receive Work Requests
+	int j = 0; //Used for second loop: get values from Completion Queue
+	int k = 0; //Used for third loop: reorder list
 
 	debug(LOG_IB | 15, "ib_read is called");
 
 	if (n->state == STATE_CONNECTED) {
 
-		if (ib->conn.available_recv_wrs < ib->qp_init.cap.max_recv_wr && cnt==n->in.vectorize)	{
+		if (ib->conn.available_recv_wrs < ib->qp_init.cap.max_recv_wr && cnt)	{
 			// Get Memory Region
 			mr = memory_ib_get_mr(smps[0]);
 
-			for (int i = 0; i < cnt; i++) {
-				// Increase refcnt of sample
-				sample_get(smps[i]);
-
+			for (i = 0; i < cnt; i++) {
 				// Prepare receive Scatter/Gather element
     				sge[i].addr = (uint64_t) &smps[i]->data;
     				sge[i].length = SAMPLE_DATA_LEN(DEFAULT_SAMPLELEN);
@@ -768,6 +656,8 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt)
 					debug(LOG_IB | 10, "Prepared %i new receive Work Requests", (i+1));
 
 					wr[i].next = NULL;
+					i++;
+
 					break;
 				}
 			}
@@ -779,7 +669,6 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt)
 				    node_name(n), ret, bad_wr->wr_id);
 
 			debug(LOG_IB | 10, "Succesfully posted receive Work Requests");
-
 		}
 
 		// Poll Completion Queue
@@ -790,47 +679,62 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 			ib->conn.available_recv_wrs -= ret;
 
-			for (int i = 0; i < ret; i++) {
-				if (wc[i].status == IBV_WC_WR_FLUSH_ERR) {
+			for (j = 0; j < ret; j++) {
+				if (wc[j].status == IBV_WC_WR_FLUSH_ERR) {
 					debug(LOG_IB | 5, "Received IBV_WC_WR_FLUSH_ERR (ib_read). Ignore it.");
 
 					ret = 0;
 				}
-				else if (wc[i].status != IBV_WC_SUCCESS) {
+				else if (wc[j].status != IBV_WC_SUCCESS) {
 					warn("Work Completion status was not IBV_WC_SUCCES in node %s: %i",
-						node_name(n), wc[i].status);
+						node_name(n), wc[j].status);
 					ret = 0;
 				}
-				else if (wc[i].opcode & IBV_WC_RECV) {
-					smps[i] = (struct sample*)(wc[i].wr_id);
-					smps[i]->length = wc[i].byte_len/sizeof(double);
+				else if (wc[j].opcode & IBV_WC_RECV) {
+					smps[j] = (struct sample *) (wc[j].wr_id);
+					smps[j]->length = wc[i].byte_len / sizeof(double);
 				}
 				else
 					ret = 0;
 
-				//Release sample
-				sample_put((struct sample *) (wc[i].wr_id));
-				debug(LOG_IB | 10, "Releasing sample %p", (struct sample *) (wc[i].wr_id));
 			}
 		}
-	}
 
+		// Reorder list
+		// The first part of the list is fine. It's filled with received values. Now append
+		// unused values.
+		//	* j ==> Values from completion queue
+		//	* i ==> Values posted to receive queue
+		//	* (cnt)  ==> Available values to post to receive queue
+		//
+		// Thus:
+		//	* (cnt - i) ==> number of unused values
+		int l;
+		for (k = j, l = 0; k < j + (cnt - i); k++, l++) {
+			smps[k] = smps[i + l];
+		}
+
+
+		*release = k;
+	}
 	return ret;
 }
 
-int ib_write(struct node *n, struct sample *smps[], unsigned cnt)
+int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *ready)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	struct ibv_send_wr wr[cnt], *bad_wr = NULL;
 	struct ibv_sge sge[cnt];
+	struct ibv_wc wc[ib->cq_size];
 	struct ibv_mr *mr;
 	int ret;
+	int i = 0; //Used for first loop: prepare work requests to post to send queue
+	int j = 0; //Used for second loop: get values from Completion Queue
 
 	debug(LOG_IB | 10, "ib_write is called");
 
 	if (n->state == STATE_CONNECTED) {
-		memset(&wr, 0, sizeof(wr));
-
+		// First, write
 		//ToDo: Place this into configuration and create checks if settings are valid
 		int send_inline = 1;
 
@@ -839,17 +743,14 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt)
 		// Get Memory Region
 		mr = memory_ib_get_mr(smps[0]);
 
-		for (int i = 0; i < cnt; i++) {
-			// Increase refcnt of sample
-			sample_get(smps[i]);
-
+		for (i = 0; i < cnt; i++) {
 			//Set Scatter/Gather element to data of sample
-			sge[i].addr = (uint64_t)&smps[i]->data;
+			sge[i].addr = (uint64_t) &smps[i]->data;
 			sge[i].length = smps[i]->length*sizeof(double);
 			sge[i].lkey = mr->lkey;
 
 			// Set Send Work Request
-			wr[i].wr_id = (uintptr_t)smps[i]; //This way the sample can be release in WC
+			wr[i].wr_id = (uintptr_t) smps[i]; //This way the sample can be release in WC
 			wr[i].sg_list = &sge[i];
 			wr[i].num_sge = 1;
 
@@ -875,9 +776,23 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt)
 		}
 
 		debug(LOG_IB | 4, "Succesfully posted receive Work Requests");
+
+
+		// Subsequently, check if something is available in completion queue
+		ret = ibv_poll_cq(ib->ctx.send_cq, ib->cq_size, wc);
+
+		for (j = 0; j < ret; j++) {
+			if (wc[j].status != IBV_WC_SUCCESS && wc[j].status != IBV_WC_WR_FLUSH_ERR)
+				warn("Work Completion status was not IBV_WC_SUCCES in node %s: %i",
+					node_name(n), wc[j].status);
+
+			smps[j] = (struct sample *) (wc[j].wr_id);
+		}
+
+		*ready = j;
 	}
 
-	return cnt;
+	return i;
 }
 
 int ib_fd(struct node *n)

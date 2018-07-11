@@ -419,7 +419,7 @@ int zeromq_destroy(struct node *n)
 	return 0;
 }
 
-int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt)
+int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int recv, ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
@@ -455,7 +455,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt)
 	return recv;
 }
 
-int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt)
+int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;

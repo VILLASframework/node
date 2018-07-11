@@ -277,7 +277,7 @@ int test_rtt_stop(struct node *n)
 	return 0;
 }
 
-int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt)
+int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int i, ret, values;
 	uint64_t steps;
@@ -348,7 +348,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt)
 	return i;
 }
 
-int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt)
+int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 

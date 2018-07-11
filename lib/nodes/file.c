@@ -278,7 +278,7 @@ int file_destroy(struct node *n)
 	return 0;
 }
 
-int file_read(struct node *n, struct sample *smps[], unsigned cnt)
+int file_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct file *f = (struct file *) n->_vd;
 	int ret;
@@ -345,7 +345,7 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 	return cnt;
 }
 
-int file_write(struct node *n, struct sample *smps[], unsigned cnt)
+int file_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct file *f = (struct file *) n->_vd;
 

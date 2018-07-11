@@ -336,7 +336,7 @@ int socket_destroy(struct node *n)
 	return 0;
 }
 
-int socket_read(struct node *n, struct sample *smps[], unsigned cnt)
+int socket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct socket *s = (struct socket *) n->_vd;
@@ -401,7 +401,7 @@ out:	free(buf);
 	return ret;
 }
 
-int socket_write(struct node *n, struct sample *smps[], unsigned cnt)
+int socket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct socket *s = (struct socket *) n->_vd;
 

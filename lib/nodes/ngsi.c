@@ -1,4 +1,4 @@
-/** Node type: OMA Next Generation Services Interface 10 (NGSI) (FIWARE context broker)
+/** Node type: OMA Next Generation Services Interface 9 (NGSI) (FIWARE context broker)
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
@@ -533,7 +533,7 @@ int ngsi_stop(struct node *n)
 	return ret;
 }
 
-int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt)
+int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
@@ -558,7 +558,7 @@ out:	json_decref(entity);
 	return ret;
 }
 
-int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt)
+int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;

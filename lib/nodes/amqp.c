@@ -301,7 +301,7 @@ int amqp_stop(struct node *n)
 	return 0;
 }
 
-int amqp_read(struct node *n, struct sample *smps[], unsigned cnt)
+int amqp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct amqp *a = n->_vd;
@@ -319,7 +319,7 @@ int amqp_read(struct node *n, struct sample *smps[], unsigned cnt)
 	return ret;
 }
 
-int amqp_write(struct node *n, struct sample *smps[], unsigned cnt)
+int amqp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct amqp *a = n->_vd;

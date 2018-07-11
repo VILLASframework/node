@@ -34,12 +34,6 @@
 #include <villas/io.h>
 #include <villas/queue_signalled.h>
 #include <rdma/rdma_cma.h>
-
-/* Function pointer typedefs */
-typedef void  (*ib_on_completion) (struct node*, struct ibv_wc*, int*);
-typedef void * (*ib_poll_function) (void*);
-typedef void * (*ib_event_function) (void*);
-
 /* Enums */
 enum poll_mode_e {
 	EVENT,
@@ -67,15 +61,6 @@ struct infiniband {
 	/* Work Completion related */
 	struct poll_s {
 		enum poll_mode_e poll_mode;
-
-		/* On completion function */
-		ib_on_completion on_compl;
-
-		/* Busy poll or Event function */
-		ib_poll_function poll_func;
-
-		/* Poll thread */
-		pthread_t cq_poller_thread;
 	} poll;
 
 	int stopThreads;
@@ -112,33 +97,33 @@ struct infiniband {
 };
 
 /** @see node_type::reverse */
-int infiniband_reverse(struct node *n);
+int ib_reverse(struct node *n);
 
 /** @see node_type::print */
-char * infiniband_print(struct node *n);
+char * ib_print(struct node *n);
 
 /** @see node_type::parse */
-int infiniband_parse(struct node *n, json_t *cfg);
+int ib_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::open */
-int infiniband_start(struct node *n);
+int ib_start(struct node *n);
 
 /** @see node_type::destroy */
-int infiniband_destroy(struct node *n);
+int ib_destroy(struct node *n);
 
 /** @see node_type::close */
-int infiniband_stop(struct node *n);
+int ib_stop(struct node *n);
 
 /** @see node_type::init */
-int infiniband_init(struct super_node *n);
+int ib_init(struct super_node *n);
 
 /** @see node_type::deinit */
-int infiniband_deinit();
+int ib_deinit();
 
 /** @see node_type::read */
-int infiniband_read(struct node *n, struct sample *smps[], unsigned cnt);
+int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int infiniband_write(struct node *n, struct sample *smps[], unsigned cnt);
+int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */
