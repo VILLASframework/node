@@ -110,14 +110,14 @@ int shmem_stop(struct node *n)
 	return shmem_int_close(&shm->intf);
 }
 
-int shmem_read(struct node *n, struct sample *smps[], int *cnt)
+int shmem_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
 	int recv;
-	struct sample *shared_smps[*cnt];
+	struct sample *shared_smps[cnt];
 
 	do {
-		recv = shmem_int_read(&shm->intf, shared_smps, *cnt);
+		recv = shmem_int_read(&shm->intf, shared_smps, cnt);
 	} while (recv == 0);
 
 	if (recv < 0) {
@@ -134,14 +134,14 @@ int shmem_read(struct node *n, struct sample *smps[], int *cnt)
 	return recv;
 }
 
-int shmem_write(struct node *n, struct sample *smps[], int *cnt)
+int shmem_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
-	struct sample *shared_smps[*cnt]; /* Samples need to be copied to the shared pool first */
+	struct sample *shared_smps[cnt]; /* Samples need to be copied to the shared pool first */
 	int avail, pushed, copied;
 
-	avail = sample_alloc_many(&shm->intf.write.shared->pool, shared_smps, *cnt);
-	if (avail != *cnt)
+	avail = sample_alloc_many(&shm->intf.write.shared->pool, shared_smps, cnt);
+	if (avail != cnt)
 		warn("Pool underrun for shmem node %s", shm->out_name);
 
 	copied = sample_copy_many(shared_smps, smps, avail);

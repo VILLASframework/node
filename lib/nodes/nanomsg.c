@@ -228,7 +228,7 @@ int nanomsg_deinit()
 	return 0;
 }
 
-int nanomsg_read(struct node *n, struct sample *smps[], int *cnt)
+int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
 	int bytes;
@@ -239,10 +239,10 @@ int nanomsg_read(struct node *n, struct sample *smps[], int *cnt)
 	if (bytes < 0)
 		return -1;
 
-	return io_sscan(&m->io, data, bytes, NULL, smps, *cnt);
+	return io_sscan(&m->io, data, bytes, NULL, smps, cnt);
 }
 
-int nanomsg_write(struct node *n, struct sample *smps[], int *cnt)
+int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
@@ -251,7 +251,7 @@ int nanomsg_write(struct node *n, struct sample *smps[], int *cnt)
 
 	char data[NANOMSG_MAX_PACKET_LEN];
 
-	ret = io_sprint(&m->io, data, sizeof(data), &wbytes, smps, *cnt);
+	ret = io_sprint(&m->io, data, sizeof(data), &wbytes, smps, cnt);
 	if (ret <= 0)
 		return -1;
 
@@ -259,7 +259,7 @@ int nanomsg_write(struct node *n, struct sample *smps[], int *cnt)
 	if (ret < 0)
 		return ret;
 
-	return *cnt;
+	return cnt;
 }
 
 int nanomsg_fd(struct node *n)

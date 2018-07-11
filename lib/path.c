@@ -70,7 +70,8 @@ static int path_source_destroy(struct path_source *ps)
 
 static void path_source_read(struct path_source *ps, struct path *p, int i)
 {
-	int recv, tomux, ready, cnt;
+	int recv, tomux, allocated, cnt;
+	unsigned release;
 
 	cnt = ps->node->in.vectorize;
 
@@ -79,18 +80,20 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 	struct sample **tomux_smps;
 
 	/* Fill smps[] free sample blocks from the pool */
-	ready = sample_alloc_many(&ps->pool, read_smps, cnt);
-	if (ready != cnt)
+	allocated = sample_alloc_many(&ps->pool, read_smps, cnt);
+	if (allocated != cnt)
 		warn("Pool underrun for path source %s", node_name(ps->node));
 
 	/* Read ready samples and store them to blocks pointed by smps[] */
-	recv = node_read(ps->node, read_smps, &ready);
+	release = allocated;
+
+	recv = node_read(ps->node, read_smps, allocated, &release);
 	if (recv == 0)
 		goto out2;
 	else if (recv < 0)
 		error("Failed to read samples from node %s", node_name(ps->node));
-	else if (recv < ready)
-		warn("Partial read for path %s: read=%u, expected=%u", path_name(p), recv, ready);
+	else if (recv < allocated)
+		warn("Partial read for path %s: read=%u, expected=%u", path_name(p), recv, allocated);
 
 	bitset_set(&p->received, i);
 
@@ -141,7 +144,7 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 	}
 
 	sample_put_many(muxed_smps, tomux);
-out2:	sample_put_many(read_smps, ready);
+out2:	sample_put_many(read_smps, release);
 }
 
 static int path_destination_init(struct path_destination *pd, int queuelen)
@@ -196,28 +199,31 @@ static void path_destination_write(struct path_destination *pd, struct path *p)
 {
 	int cnt = pd->node->out.vectorize;
 	int sent;
-	int available;
 	int released;
+	int allocated;
+	unsigned release;
 
 	struct sample *smps[cnt];
 
 	/* As long as there are still samples in the queue */
 	while (1) {
-		available = queue_pull_many(&pd->queue, (void **) smps, cnt);
-		if (available == 0)
+		allocated = queue_pull_many(&pd->queue, (void **) smps, cnt);
+		if (allocated == 0)
 			break;
-		else if (available < cnt)
-			debug(LOG_PATH | 5, "Queue underrun for path %s: available=%u expected=%u", path_name(p), available, cnt);
+		else if (allocated < cnt)
+			debug(LOG_PATH | 5, "Queue underrun for path %s: allocated=%u expected=%u", path_name(p), allocated, cnt);
 
-		debug(LOG_PATH | 15, "Dequeued %u samples from queue of node %s which is part of path %s", available, node_name(pd->node), path_name(p));
+		debug(LOG_PATH | 15, "Dequeued %u samples from queue of node %s which is part of path %s", allocated, node_name(pd->node), path_name(p));
 
-		sent = node_write(pd->node, smps, &available);
+		release = allocated;
+
+		sent = node_write(pd->node, smps, allocated, &release);
 		if (sent < 0)
 			error("Failed to sent %u samples to node %s", cnt, node_name(pd->node));
-		else if (sent < available)
-			warn("Partial write to node %s: written=%d, expected=%d", node_name(pd->node), sent, available);
+		else if (sent < allocated)
+			warn("Partial write to node %s: written=%d, expected=%d", node_name(pd->node), sent, allocated);
 
-		released = sample_put_many(smps, sent);
+		released = sample_put_many(smps, release);
 
 		debug(LOG_PATH | 15, "Released %d samples back to memory pool", released);
 	}

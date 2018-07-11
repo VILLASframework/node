@@ -119,12 +119,12 @@ int stats_node_destroy(struct node *n)
 	return 0;
 }
 
-int stats_node_read(struct node *n, struct sample *smps[], int *cnt)
+int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct stats_node *sn = (struct stats_node *) n->_vd;
 	struct stats *s = sn->node->stats;
 
-	if (!*cnt)
+	if (!cnt)
 		return 0;
 
 	if (!sn->node->stats)

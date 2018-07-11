@@ -467,14 +467,14 @@ int websocket_destroy(struct node *n)
 	return 0;
 }
 
-int websocket_read(struct node *n, struct sample *smps[], int *cnt)
+int websocket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int avail;
 
 	struct websocket *w = (struct websocket *) n->_vd;
-	struct sample *cpys[*cnt];
+	struct sample *cpys[cnt];
 
-	avail = queue_signalled_pull_many(&w->queue, (void **) cpys, *cnt);
+	avail = queue_signalled_pull_many(&w->queue, (void **) cpys, cnt);
 	if (avail < 0)
 		return avail;
 
@@ -484,16 +484,16 @@ int websocket_read(struct node *n, struct sample *smps[], int *cnt)
 	return avail;
 }
 
-int websocket_write(struct node *n, struct sample *smps[], int *cnt)
+int websocket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int avail;
 
 	struct websocket *w = (struct websocket *) n->_vd;
-	struct sample *cpys[*cnt];
+	struct sample *cpys[cnt];
 
 	/* Make copies of all samples */
-	avail = sample_alloc_many(&w->pool, cpys, *cnt);
-	if (avail < *cnt)
+	avail = sample_alloc_many(&w->pool, cpys, cnt);
+	if (avail < cnt)
 		warn("Pool underrun for node %s: avail=%u", node_name(n), avail);
 
 	sample_copy_many(cpys, smps, avail);
@@ -502,12 +502,12 @@ int websocket_write(struct node *n, struct sample *smps[], int *cnt)
 		struct websocket_connection *c = (struct websocket_connection *) list_at(&connections, i);
 
 		if (c->node == n)
-			websocket_connection_write(c, cpys, *cnt);
+			websocket_connection_write(c, cpys, cnt);
 	}
 
 	sample_put_many(cpys, avail);
 
-	return *cnt;
+	return cnt;
 }
 
 int websocket_parse(struct node *n, json_t *cfg)

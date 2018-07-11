@@ -136,7 +136,7 @@ struct node_type {
 	 * @param cnt	The number of messages which should be received.
 	 * @return	The number of messages actually received.
 	 */
-	int (*read)(struct node *n, struct sample *smps[], int *cnt);
+	int (*read)(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 	/** Send multiple messages in a single datagram / packet.
 	 *
@@ -150,7 +150,7 @@ struct node_type {
 	 * @param cnt	The number of messages which should be sent.
 	 * @return	The number of messages actually sent.
 	 */
-	int (*write)(struct node *n, struct sample *smps[], int *cnt);
+	int (*write)(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 	/** Reverse source and destination of a node.
 	 *

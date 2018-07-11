@@ -618,12 +618,12 @@ int ib_deinit()
 	return 0;
 }
 
-int ib_read(struct node *n, struct sample *smps[], int *cnt)
+int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	struct ibv_wc wc[n->in.vectorize];
-	struct ibv_recv_wr wr[*cnt], *bad_wr = NULL;
-    	struct ibv_sge sge[*cnt];
+	struct ibv_recv_wr wr[cnt], *bad_wr = NULL;
+    	struct ibv_sge sge[cnt];
 	struct ibv_mr *mr;
 	int ret = 0;
 	int i = 0; //Used for first loop: post receive Work Requests
@@ -634,11 +634,11 @@ int ib_read(struct node *n, struct sample *smps[], int *cnt)
 
 	if (n->state == STATE_CONNECTED) {
 
-		if (ib->conn.available_recv_wrs < ib->qp_init.cap.max_recv_wr && *cnt)	{
+		if (ib->conn.available_recv_wrs < ib->qp_init.cap.max_recv_wr && cnt)	{
 			// Get Memory Region
 			mr = memory_ib_get_mr(smps[0]);
 
-			for (i = 0; i < *cnt; i++) {
+			for (i = 0; i < cnt; i++) {
 				// Prepare receive Scatter/Gather element
     				sge[i].addr = (uint64_t) &smps[i]->data;
     				sge[i].length = SAMPLE_DATA_LEN(DEFAULT_SAMPLELEN);
@@ -652,7 +652,7 @@ int ib_read(struct node *n, struct sample *smps[], int *cnt)
 
 				ib->conn.available_recv_wrs++;
 
-				if (ib->conn.available_recv_wrs == ib->qp_init.cap.max_recv_wr || i==(*cnt-1)) {
+				if (ib->conn.available_recv_wrs == ib->qp_init.cap.max_recv_wr || i==(cnt-1)) {
 					debug(LOG_IB | 10, "Prepared %i new receive Work Requests", (i+1));
 
 					wr[i].next = NULL;
@@ -705,26 +705,26 @@ int ib_read(struct node *n, struct sample *smps[], int *cnt)
 		// unused values.
 		//	* j ==> Values from completion queue
 		//	* i ==> Values posted to receive queue
-		//	* (*cnt)  ==> Available values to post to receive queue
+		//	* (cnt)  ==> Available values to post to receive queue
 		//
 		// Thus:
-		//	* (*cnt - i) ==> number of unused values
+		//	* (cnt - i) ==> number of unused values
 		int l;
-		for (k = j, l = 0; k < j + (*cnt - i); k++, l++) {
+		for (k = j, l = 0; k < j + (cnt - i); k++, l++) {
 			smps[k] = smps[i + l];
 		}
 
 
-		*cnt = k;
+		*release = k;
 	}
 	return ret;
 }
 
-int ib_write(struct node *n, struct sample *smps[], int *cnt)
+int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *ready)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
-	struct ibv_send_wr wr[*cnt], *bad_wr = NULL;
-	struct ibv_sge sge[*cnt];
+	struct ibv_send_wr wr[cnt], *bad_wr = NULL;
+	struct ibv_sge sge[cnt];
 	struct ibv_wc wc[ib->cq_size];
 	struct ibv_mr *mr;
 	int ret;
@@ -743,7 +743,7 @@ int ib_write(struct node *n, struct sample *smps[], int *cnt)
 		// Get Memory Region
 		mr = memory_ib_get_mr(smps[0]);
 
-		for (i = 0; i < *cnt; i++) {
+		for (i = 0; i < cnt; i++) {
 			//Set Scatter/Gather element to data of sample
 			sge[i].addr = (uint64_t) &smps[i]->data;
 			sge[i].length = smps[i]->length*sizeof(double);
@@ -754,7 +754,7 @@ int ib_write(struct node *n, struct sample *smps[], int *cnt)
 			wr[i].sg_list = &sge[i];
 			wr[i].num_sge = 1;
 
-			if (i == (*cnt-1)) {
+			if (i == (cnt-1)) {
 				debug(LOG_IB | 10, "Prepared %i send Work Requests", (i+1));
 				wr[i].next = NULL;
 			}
@@ -786,11 +786,10 @@ int ib_write(struct node *n, struct sample *smps[], int *cnt)
 				warn("Work Completion status was not IBV_WC_SUCCES in node %s: %i",
 					node_name(n), wc[j].status);
 
-
 			smps[j] = (struct sample *) (wc[j].wr_id);
 		}
 
-		*cnt = j;
+		*ready = j;
 	}
 
 	return i;

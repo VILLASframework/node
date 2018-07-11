@@ -121,9 +121,9 @@ int ib_init(struct super_node *n);
 int ib_deinit();
 
 /** @see node_type::read */
-int ib_read(struct node *n, struct sample *smps[], int *cnt);
+int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int infiniband_write(struct node *n, struct sample *smps[], int *cnt);
+int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

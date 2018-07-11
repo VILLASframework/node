@@ -128,8 +128,8 @@ static void usage()
 
 static void * send_loop(void *ctx)
 {
-	unsigned last_sequenceno = 0;
-	int ret, scanned, sent, ready, cnt = 0;
+	unsigned last_sequenceno = 0, release;
+	int ret, scanned, sent, allocated, cnt = 0;
 	struct sample *smps[node->out.vectorize];
 
 	/* Initialize memory */
@@ -139,13 +139,13 @@ static void * send_loop(void *ctx)
 		error("Failed to allocate memory for receive pool.");
 
 	while (!io_eof(&io)) {
-		ready = sample_alloc_many(&sendd.pool, smps, node->out.vectorize);
+		allocated = sample_alloc_many(&sendd.pool, smps, node->out.vectorize);
 		if (ret < 0)
 			error("Failed to get %u samples out of send pool (%d).", node->out.vectorize, ret);
-		else if (ready < node->out.vectorize)
+		else if (allocated < node->out.vectorize)
 			warn("Send pool underrun");
 
-		scanned = io_scan(&io, smps, ready);
+		scanned = io_scan(&io, smps, allocated);
 		if (scanned < 0) {
 			continue;
 			warn("Failed to read samples from stdin");
@@ -161,13 +161,15 @@ static void * send_loop(void *ctx)
 				smps[i]->sequence = last_sequenceno++;
 		}
 
-		sent = node_write(node, smps, &scanned);
+		release = allocated;
+
+		sent = node_write(node, smps, scanned, &release);
 		if (sent < 0)
 			warn("Failed to sent samples to node %s: reason=%d", node_name(node), sent);
 		else if (sent < scanned)
 			warn("Failed to sent %d out of %d samples to node %s", scanned-sent, scanned, node_name(node));
 
-		sample_put_many(smps, ready);
+		sample_put_many(smps, release);
 
 		cnt += sent;
 		if (sendd.limit > 0 && cnt >= sendd.limit)
@@ -194,7 +196,8 @@ leave:	if (io_eof(&io)) {
 
 static void * recv_loop(void *ctx)
 {
-	int recv, ret, cnt = 0, ready = 0;
+	int recv, ret, cnt = 0, allocated = 0;
+	unsigned release;
 	struct sample *smps[node->in.vectorize];
 
 	/* Initialize memory */
@@ -204,19 +207,21 @@ static void * recv_loop(void *ctx)
 		error("Failed to allocate memory for receive pool.");
 
 	for (;;) {
-		ready = sample_alloc_many(&recvv.pool, smps, node->in.vectorize);
-		if (ready < 0)
+		allocated = sample_alloc_many(&recvv.pool, smps, node->in.vectorize);
+		if (allocated < 0)
 			error("Failed to allocate %u samples from receive pool.", node->in.vectorize);
-		else if (ready < node->in.vectorize)
+		else if (allocated < node->in.vectorize)
 			warn("Receive pool underrun");
 
-		recv = node_read(node, smps, &ready);
+		release = allocated;
+
+		recv = node_read(node, smps, allocated, &release);
 		if (recv < 0)
 			warn("Failed to receive samples from node %s: reason=%d", node_name(node), recv);
 
 		io_print(&io, smps, recv);
 
-		sample_put_many(smps, ready);
+		sample_put_many(smps, release);
 
 		cnt += recv;
 		if (recvv.limit > 0 && cnt >= recvv.limit)

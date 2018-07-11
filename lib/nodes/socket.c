@@ -336,7 +336,7 @@ int socket_destroy(struct node *n)
 	return 0;
 }
 
-int socket_read(struct node *n, struct sample *smps[], int *cnt)
+int socket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct socket *s = (struct socket *) n->_vd;
@@ -391,7 +391,7 @@ int socket_read(struct node *n, struct sample *smps[], int *cnt)
 		goto out;
 	}
 
-	ret = io_sscan(&s->io, ptr, bytes, &rbytes, smps, *cnt);
+	ret = io_sscan(&s->io, ptr, bytes, &rbytes, smps, cnt);
 
 	if (ret < 0 || bytes != rbytes)
 		warn("Received invalid packet from node: %s ret=%d, bytes=%zu, rbytes=%zu", node_name(n), ret, bytes, rbytes);
@@ -401,7 +401,7 @@ out:	free(buf);
 	return ret;
 }
 
-int socket_write(struct node *n, struct sample *smps[], int *cnt)
+int socket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct socket *s = (struct socket *) n->_vd;
 
@@ -416,7 +416,7 @@ int socket_write(struct node *n, struct sample *smps[], int *cnt)
 	if (!buf)
 		return -1;
 
-retry:	ret = io_sprint(&s->io, buf, buflen, &wbytes, smps, *cnt);
+retry:	ret = io_sprint(&s->io, buf, buflen, &wbytes, smps, cnt);
 	if (ret < 0)
 		goto out;
 

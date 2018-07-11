@@ -358,13 +358,13 @@ int mqtt_deinit()
 	return 0;
 }
 
-int mqtt_read(struct node *n, struct sample *smps[], int *cnt)
+int mqtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int pulled;
 	struct mqtt *m = (struct mqtt *) n->_vd;
-	struct sample *smpt[*cnt];
+	struct sample *smpt[cnt];
 
-	pulled = queue_signalled_pull_many(&m->queue, (void **) smpt, *cnt);
+	pulled = queue_signalled_pull_many(&m->queue, (void **) smpt, cnt);
 
 	sample_copy_many(smps, smpt, pulled);
 	sample_put_many(smpt, pulled);
@@ -372,7 +372,7 @@ int mqtt_read(struct node *n, struct sample *smps[], int *cnt)
 	return pulled;
 }
 
-int mqtt_write(struct node *n, struct sample *smps[], int *cnt)
+int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct mqtt *m = (struct mqtt *) n->_vd;
@@ -381,7 +381,7 @@ int mqtt_write(struct node *n, struct sample *smps[], int *cnt)
 
 	char data[1500];
 
-	ret = io_sprint(&m->io, data, sizeof(data), &wbytes, smps, *cnt);
+	ret = io_sprint(&m->io, data, sizeof(data), &wbytes, smps, cnt);
 	if (ret < 0)
 		return ret;
 
@@ -391,7 +391,7 @@ int mqtt_write(struct node *n, struct sample *smps[], int *cnt)
 		return -abs(ret);
 	}
 
-	return *cnt;
+	return cnt;
 }
 
 int mqtt_fd(struct node *n)

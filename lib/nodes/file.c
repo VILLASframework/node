@@ -278,15 +278,15 @@ int file_destroy(struct node *n)
 	return 0;
 }
 
-int file_read(struct node *n, struct sample *smps[], int *cnt)
+int file_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct file *f = (struct file *) n->_vd;
 	int ret;
 	uint64_t steps;
 
-	assert(*cnt == 1);
+	assert(cnt == 1);
 
-retry:	ret = io_scan(&f->io, smps, *cnt);
+retry:	ret = io_scan(&f->io, smps, cnt);
 	if (ret <= 0) {
 		if (io_eof(&f->io)) {
 			switch (f->eof) {
@@ -322,7 +322,7 @@ retry:	ret = io_scan(&f->io, smps, *cnt);
 
 	/* We dont wait in FILE_EPOCH_ORIGINAL mode */
 	if (f->epoch_mode == FILE_EPOCH_ORIGINAL)
-		return *cnt;
+		return cnt;
 
 	if (f->rate) {
 		steps = task_wait(&f->task);
@@ -342,18 +342,18 @@ retry:	ret = io_scan(&f->io, smps, *cnt);
 	else if (steps != 1)
 		warn("Missed steps: %" PRIu64, steps - 1);
 
-	return *cnt;
+	return cnt;
 }
 
-int file_write(struct node *n, struct sample *smps[], int *cnt)
+int file_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct file *f = (struct file *) n->_vd;
 
-	assert(*cnt == 1);
+	assert(cnt == 1);
 
-	io_print(&f->io, smps, *cnt);
+	io_print(&f->io, smps, cnt);
 
-	return *cnt;
+	return cnt;
 }
 
 int file_fd(struct node *n)

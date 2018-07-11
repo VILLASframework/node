@@ -408,7 +408,7 @@ int node_destroy(struct node *n)
 	return 0;
 }
 
-int node_read(struct node *n, struct sample *smps[], int *cnt)
+int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int readd, nread = 0;
 
@@ -416,10 +416,9 @@ int node_read(struct node *n, struct sample *smps[], int *cnt)
 		return -1;
 
 	/* Send in parts if vector not supported */
-	if (n->_vt->vectorize > 0 && n->_vt->vectorize < *cnt) {
-		int cnt_vec_min = MIN(*cnt - nread, n->_vt->vectorize);
-		while (*cnt - nread > 0) {
-			readd = n->_vt->read(n, &smps[nread], &cnt_vec_min);
+	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
+		while (cnt - nread > 0) {
+			readd = n->_vt->read(n, &smps[nread], MIN(cnt - nread, n->_vt->vectorize), release);
 			if (readd < 0)
 				return readd;
 
@@ -427,7 +426,7 @@ int node_read(struct node *n, struct sample *smps[], int *cnt)
 		}
 	}
 	else {
-		nread = n->_vt->read(n, smps, cnt);
+		nread = n->_vt->read(n, smps, cnt, release);
 		if (nread < 0)
 			return nread;
 	}
@@ -471,7 +470,7 @@ int node_read(struct node *n, struct sample *smps[], int *cnt)
 #endif /* WITH_HOOKS */
 }
 
-int node_write(struct node *n, struct sample *smps[], int *cnt)
+int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int sent, nsent = 0;
 
@@ -480,16 +479,15 @@ int node_write(struct node *n, struct sample *smps[], int *cnt)
 
 #ifdef WITH_HOOKS
 	/* Run write hooks */
-	*cnt = hook_write_list(&n->out.hooks, smps, *cnt);
-	if (*cnt <= 0)
-		return *cnt;
+	cnt = hook_write_list(&n->out.hooks, smps, cnt);
+	if (cnt <= 0)
+		return cnt;
 #endif /* WITH_HOOKS */
 
 	/* Send in parts if vector not supported */
-	if (n->_vt->vectorize > 0 && n->_vt->vectorize < *cnt) {
-		int cnt_vec_min = MIN(*cnt - nsent, n->_vt->vectorize);
-		while (*cnt - nsent > 0) {
-			sent = n->_vt->write(n, &smps[nsent], &cnt_vec_min);
+	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
+		while (cnt - nsent > 0) {
+			sent = n->_vt->write(n, &smps[nsent], MIN(cnt - nsent, n->_vt->vectorize), release);
 			if (sent < 0)
 				return sent;
 
@@ -498,7 +496,7 @@ int node_write(struct node *n, struct sample *smps[], int *cnt)
 		}
 	}
 	else {
-		nsent = n->_vt->write(n, smps, cnt);
+		nsent = n->_vt->write(n, smps, cnt, release);
 		if (nsent < 0)
 			return nsent;
 

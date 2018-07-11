@@ -94,7 +94,7 @@ int cbuilder_stop(struct node *n)
 	return 0;
 }
 
-int cbuilder_read(struct node *n, struct sample *smps[], int *cnt)
+int cbuilder_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct cbuilder *cb = (struct cbuilder *) n->_vd;
 	struct sample *smp = smps[0];
@@ -127,7 +127,7 @@ int cbuilder_read(struct node *n, struct sample *smps[], int *cnt)
 	return 1;
 }
 
-int cbuilder_write(struct node *n, struct sample *smps[], int *cnt)
+int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct cbuilder *cb = (struct cbuilder *) n->_vd;
 	struct sample *smp = smps[0];

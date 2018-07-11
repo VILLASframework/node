@@ -170,9 +170,10 @@ int main(int argc, char *argv[])
 	for (;;) {
 		t = sample_alloc(&q);
 
-		int one = 1;
-		node_read(&n, &t, &one);
-		io_print(&io, &t, one);
+		unsigned release = 1; // release = allocated
+
+		node_read(&n, &t, 1, &release);
+		io_print(&io, &t, 1);
 
 		sample_put(t);
 	}

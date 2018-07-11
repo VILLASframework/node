@@ -69,14 +69,14 @@ int loopback_close(struct node *n)
 	return queue_signalled_destroy(&l->queue);
 }
 
-int loopback_read(struct node *n, struct sample *smps[], int *cnt)
+int loopback_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int avail;
 
 	struct loopback *l = (struct loopback *) n->_vd;
-	struct sample *cpys[*cnt];
+	struct sample *cpys[cnt];
 
-	avail = queue_signalled_pull_many(&l->queue, (void **) cpys, *cnt);
+	avail = queue_signalled_pull_many(&l->queue, (void **) cpys, cnt);
 
 	for (int i = 0; i < avail; i++) {
 		sample_copy(smps[i], cpys[i]);
@@ -86,15 +86,15 @@ int loopback_read(struct node *n, struct sample *smps[], int *cnt)
 	return avail;
 }
 
-int loopback_write(struct node *n, struct sample *smps[], int *cnt)
+int loopback_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int copied;
 
 	struct loopback *l = (struct loopback *) n->_vd;
-	struct sample *copies[*cnt];
+	struct sample *copies[cnt];
 
-	copied = sample_alloc_many(&l->pool, copies, *cnt);
-	if (copied < *cnt)
+	copied = sample_alloc_many(&l->pool, copies, cnt);
+	if (copied < cnt)
 		warn("Pool underrun for node %s", node_name(n));
 
 	sample_copy_many(copies, smps, copied);

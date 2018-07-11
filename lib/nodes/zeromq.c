@@ -419,7 +419,7 @@ int zeromq_destroy(struct node *n)
 	return 0;
 }
 
-int zeromq_read(struct node *n, struct sample *smps[], int *cnt)
+int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int recv, ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
@@ -446,7 +446,7 @@ int zeromq_read(struct node *n, struct sample *smps[], int *cnt)
 	if (ret < 0)
 		return ret;
 
-	recv = io_sscan(&z->io, zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, *cnt);
+	recv = io_sscan(&z->io, zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, cnt);
 
 	ret = zmq_msg_close(&m);
 	if (ret)
@@ -455,7 +455,7 @@ int zeromq_read(struct node *n, struct sample *smps[], int *cnt)
 	return recv;
 }
 
-int zeromq_write(struct node *n, struct sample *smps[], int *cnt)
+int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
@@ -465,7 +465,7 @@ int zeromq_write(struct node *n, struct sample *smps[], int *cnt)
 
 	char data[4096];
 
-	ret = io_sprint(&z->io, data, sizeof(data), &wbytes, smps, *cnt);
+	ret = io_sprint(&z->io, data, sizeof(data), &wbytes, smps, cnt);
 	if (ret <= 0)
 		return -1;
 
@@ -497,7 +497,7 @@ int zeromq_write(struct node *n, struct sample *smps[], int *cnt)
 	if (ret < 0)
 		return ret;
 
-	return *cnt;
+	return cnt;
 
 fail:
 	zmq_msg_close(&m);

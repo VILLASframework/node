@@ -1,4 +1,4 @@
-/** Node type: OMA Next Generation Services Interface 10 (NGSI) (FIWARE context broker)
+/** Node type: OMA Next Generation Services Interface 9 (NGSI) (FIWARE context broker)
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
@@ -533,7 +533,7 @@ int ngsi_stop(struct node *n)
 	return ret;
 }
 
-int ngsi_read(struct node *n, struct sample *smps[], int *cnt)
+int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
@@ -548,7 +548,7 @@ int ngsi_read(struct node *n, struct sample *smps[], int *cnt)
 	if (ret)
 		goto out;
 
-	ret = ngsi_parse_entity(rentity, i, smps, *cnt);
+	ret = ngsi_parse_entity(rentity, i, smps, cnt);
 	if (ret)
 		goto out2;
 
@@ -558,18 +558,18 @@ out:	json_decref(entity);
 	return ret;
 }
 
-int ngsi_write(struct node *n, struct sample *smps[], int *cnt)
+int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 	int ret;
 
-	json_t *entity = ngsi_build_entity(i, smps, *cnt, NGSI_ENTITY_VALUES);
+	json_t *entity = ngsi_build_entity(i, smps, cnt, NGSI_ENTITY_VALUES);
 
 	ret = ngsi_request_context_update(i->curl, i->endpoint, "UPDATE", entity);
 
 	json_decref(entity);
 
-	return ret ? 0 : *cnt;
+	return ret ? 0 : cnt;
 }
 
 int ngsi_fd(struct node *n)
