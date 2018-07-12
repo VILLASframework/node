@@ -211,13 +211,14 @@ static void * recv_loop(void *ctx)
 		if (allocated < 0)
 			error("Failed to allocate %u samples from receive pool.", node->in.vectorize);
 		else if (allocated < node->in.vectorize)
-			warn("Receive pool underrun");
+			warn("Receive pool underrun: allocated only %i of %i samples", allocated, node->in.vectorize);
 
 		release = allocated;
 
 		recv = node_read(node, smps, allocated, &release);
 		if (recv < 0)
 			warn("Failed to receive samples from node %s: reason=%d", node_name(node), recv);
+
 
 		io_print(&io, smps, recv);
 
