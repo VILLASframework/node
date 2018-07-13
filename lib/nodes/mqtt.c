@@ -60,9 +60,15 @@ static void mqtt_connect_cb(struct mosquitto *mosq, void *userdata, int result)
 
 	info("MQTT: Node %s connected to broker %s", node_name(n), m->host);
 
-	ret = mosquitto_subscribe(m->client, NULL, m->subscribe, m->qos);
-	if (ret)
-		warn("MQTT: failed to subscribe to topic '%s' for node %s", m->subscribe, node_name(n));
+	if(m->subscribe){
+		ret = mosquitto_subscribe(m->client, NULL, m->subscribe, m->qos);
+		if (ret)
+			warn("MQTT: failed to subscribe to topic '%s' for node %s", m->subscribe, node_name(n));
+	}
+	else{
+        warn("MQTT: no subscribe for node %s as no subscribe topic is given", node_name(n));
+	}
+
 }
 
 static void mqtt_disconnect_cb(struct mosquitto *mosq, void *userdata, int result)
@@ -385,10 +391,16 @@ int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	if (ret < 0)
 		return ret;
 
-	ret = mosquitto_publish(m->client, NULL /* mid */, m->publish, wbytes, data, m->qos, m->retain);
-	if (ret != MOSQ_ERR_SUCCESS) {
-		warn("MQTT: publish failed for node %s: %s", node_name(n), mosquitto_strerror(ret));
-		return -abs(ret);
+	if(m->publish) {
+        ret = mosquitto_publish(m->client, NULL /* mid */, m->publish, wbytes, data, m->qos,
+                                m->retain);
+        if (ret != MOSQ_ERR_SUCCESS) {
+            warn("MQTT: publish failed for node %s: %s", node_name(n), mosquitto_strerror(ret));
+            return -abs(ret);
+        }
+    }
+    else{
+        warn("MQTT: no publish for node %s possible because no publish topic is given", node_name(n));
 	}
 
 	return cnt;
