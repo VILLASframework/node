@@ -108,8 +108,6 @@ static void ib_build_ibv(struct node *n)
 	ib->qp_init.send_cq = ib->ctx.send_cq;
 	ib->qp_init.recv_cq = ib->ctx.recv_cq;
 
-	//ToDo: Set maximum inline data
-
 	// Create the actual QP
 	ret = rdma_create_qp(ib->ctx.id, ib->ctx.pd, &ib->qp_init);
 	if (ret)
@@ -248,10 +246,13 @@ int ib_parse(struct node *n, json_t *cfg)
 	int cq_size = 128;
 	int max_send_wr = 128;
 	int max_recv_wr = 128;
+	int max_inline_data = 0;
+	int inline_mode = 1;
 
 	json_error_t err;
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: i, \
-					s?: s, s?: i, s?: s, s?: i, s?: i}",
+					s?: s, s?: i, s?: s, s?: i, s?: i, \
+					s?: i, s?: i}",
 		"remote", &remote,
 		"local", &local,
 		"rdma_port_space", &port_space,
@@ -260,7 +261,9 @@ int ib_parse(struct node *n, json_t *cfg)
 		"cq_size", &cq_size,
 		"qp_type", &qp_type,
 		"max_send_wr", &max_send_wr,
-		"max_recv_wr", &max_recv_wr
+		"max_recv_wr", &max_recv_wr,
+		"max_inline_data", &max_inline_data,
+		"inline_mode", &inline_mode
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
@@ -321,6 +324,11 @@ int ib_parse(struct node *n, json_t *cfg)
 
 	debug(LOG_IB | 4, "Set Queue Pair type to %s in node %s", qp_type, node_name(n));
 
+	// Translate inline mode
+	ib->conn.inline_mode = inline_mode;
+
+	debug(LOG_IB | 4, "Set inline_modee to %i in node %s", inline_mode, node_name(n));
+
 	// Set max. send and receive Work Requests
 	ib->qp_init.cap.max_send_wr = max_send_wr;
 	ib->qp_init.cap.max_recv_wr = max_recv_wr;
@@ -334,6 +342,9 @@ int ib_parse(struct node *n, json_t *cfg)
 	// Set remaining QP attributes
 	ib->qp_init.cap.max_send_sge = 1;
 	ib->qp_init.cap.max_recv_sge = 1;
+
+	// Set number of bytes to be send inline
+	ib->qp_init.cap.max_inline_data = max_inline_data;
 
 	//Check if node is a source and connect to target
 	if (remote) {
@@ -393,6 +404,10 @@ int ib_check(struct node *n)
 
 	if (ib->qp_init.cap.max_recv_wr > 8192)
 		warn("Max number of receive WRs (%i) is bigger than send queue!", ib->qp_init.cap.max_recv_wr);
+
+	// Warn user if he changed the default inline value
+	if (ib->qp_init.cap.max_inline_data != 0)
+		warn("You changed the default value of max_inline_data. This might influence the maximum number of outstanding Work Requests in the Queue Pair and can be a reason for the Queue Pair creation to fail");
 
 	info("Finished check of node %s", node_name(n));
 
@@ -738,10 +753,6 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 	if (n->state == STATE_CONNECTED) {
 		// First, write
-		//ToDo: Place this into configuration and create checks if settings are valid
-		int send_inline = 1;
-
-		debug(LOG_IB | 10, "Data will be send inline [0/1]: %i", send_inline);
 
 		// Get Memory Region
 		mr = memory_ib_get_mr(smps[0]);
@@ -751,6 +762,12 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 			sge[sent].addr = (uint64_t) &smps[sent]->data;
 			sge[sent].length = smps[sent]->length*sizeof(double);
 			sge[sent].lkey = mr->lkey;
+
+			// Check if data can be send inline
+			int send_inline = (sge[sent].length < ib->qp_init.cap.max_inline_data) ?
+				(ib->conn.inline_mode > 0) : 0;
+
+			debug(LOG_IB | 10, "Sample will be send inline [0/1]: %i", send_inline);
 
 			// Set Send Work Request
 			wr[sent].wr_id = send_inline ? 0 : (uintptr_t) smps[sent]; // This way the sample can be release in WC
