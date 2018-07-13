@@ -77,6 +77,12 @@ struct infiniband {
 		pthread_t rdma_cm_event_thread;
 
 		int available_recv_wrs;
+
+		struct send_wc_stack_s {
+			uint64_t* array;
+			unsigned top;
+		} send_wc_stack;
+
 	} conn;
 
 	/* Memory related variables */
