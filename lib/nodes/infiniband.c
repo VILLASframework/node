@@ -108,8 +108,6 @@ static void ib_build_ibv(struct node *n)
 	ib->qp_init.send_cq = ib->ctx.send_cq;
 	ib->qp_init.recv_cq = ib->ctx.recv_cq;
 
-	//ToDo: Set maximum inline data
-
 	// Create the actual QP
 	ret = rdma_create_qp(ib->ctx.id, ib->ctx.pd, &ib->qp_init);
 	if (ret)
@@ -117,6 +115,9 @@ static void ib_build_ibv(struct node *n)
 
 	debug(LOG_IB | 3, "Created Queue Pair with %i receive and %i send elements",
 		ib->qp_init.cap.max_recv_wr, ib->qp_init.cap.max_send_wr);
+
+	if (ib->conn.inline_mode)
+		info("Maximum inline size is set to %i byte", ib->qp_init.cap.max_inline_data);
 
 	// Allocate memory
 	ib->mem.p_recv.state = STATE_DESTROYED;
@@ -248,10 +249,13 @@ int ib_parse(struct node *n, json_t *cfg)
 	int cq_size = 128;
 	int max_send_wr = 128;
 	int max_recv_wr = 128;
+	int max_inline_data = 0;
+	int inline_mode = 1;
 
 	json_error_t err;
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: i, \
-					s?: s, s?: i, s?: s, s?: i, s?: i}",
+					s?: s, s?: i, s?: s, s?: i, s?: i, \
+					s?: i, s?: i}",
 		"remote", &remote,
 		"local", &local,
 		"rdma_port_space", &port_space,
@@ -260,7 +264,9 @@ int ib_parse(struct node *n, json_t *cfg)
 		"cq_size", &cq_size,
 		"qp_type", &qp_type,
 		"max_send_wr", &max_send_wr,
-		"max_recv_wr", &max_recv_wr
+		"max_recv_wr", &max_recv_wr,
+		"max_inline_data", &max_inline_data,
+		"inline_mode", &inline_mode
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
@@ -321,6 +327,11 @@ int ib_parse(struct node *n, json_t *cfg)
 
 	debug(LOG_IB | 4, "Set Queue Pair type to %s in node %s", qp_type, node_name(n));
 
+	// Translate inline mode
+	ib->conn.inline_mode = inline_mode;
+
+	debug(LOG_IB | 4, "Set inline_modee to %i in node %s", inline_mode, node_name(n));
+
 	// Set max. send and receive Work Requests
 	ib->qp_init.cap.max_send_wr = max_send_wr;
 	ib->qp_init.cap.max_recv_wr = max_recv_wr;
@@ -334,6 +345,9 @@ int ib_parse(struct node *n, json_t *cfg)
 	// Set remaining QP attributes
 	ib->qp_init.cap.max_send_sge = 1;
 	ib->qp_init.cap.max_recv_sge = 1;
+
+	// Set number of bytes to be send inline
+	ib->qp_init.cap.max_inline_data = max_inline_data;
 
 	//Check if node is a source and connect to target
 	if (remote) {
@@ -393,6 +407,14 @@ int ib_check(struct node *n)
 
 	if (ib->qp_init.cap.max_recv_wr > 8192)
 		warn("Max number of receive WRs (%i) is bigger than send queue!", ib->qp_init.cap.max_recv_wr);
+
+	// Warn user if he changed the default inline value
+	if (ib->qp_init.cap.max_inline_data != 0)
+		warn("You changed the default value of max_inline_data. This might influence the maximum number of outstanding Work Requests in the Queue Pair and can be a reason for the Queue Pair creation to fail");
+
+	// Check if inline mode is set to a valid value
+	if (ib->conn.inline_mode != 0 && ib->conn.inline_mode != 1)
+		error("inline_mode has to be set to either 0 or 1! %i is not a valid value", ib->conn.inline_mode);
 
 	info("Finished check of node %s", node_name(n));
 
@@ -738,10 +760,6 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 	if (n->state == STATE_CONNECTED) {
 		// First, write
-		//ToDo: Place this into configuration and create checks if settings are valid
-		int send_inline = 1;
-
-		debug(LOG_IB | 10, "Data will be send inline [0/1]: %i", send_inline);
 
 		// Get Memory Region
 		mr = memory_ib_get_mr(smps[0]);
@@ -752,22 +770,25 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 			sge[sent].length = smps[sent]->length*sizeof(double);
 			sge[sent].lkey = mr->lkey;
 
+			// Check if data can be send inline
+			int send_inline = (sge[sent].length < ib->qp_init.cap.max_inline_data) ?
+				ib->conn.inline_mode : 0;
+
+			debug(LOG_IB | 10, "Sample will be send inline [0/1]: %i", send_inline);
+
 			// Set Send Work Request
 			wr[sent].wr_id = send_inline ? 0 : (uintptr_t) smps[sent]; // This way the sample can be release in WC
 			wr[sent].sg_list = &sge[sent];
 			wr[sent].num_sge = 1;
-
-			if (sent == (cnt-1)) {
-				debug(LOG_IB | 10, "Prepared %i send Work Requests", (sent+1));
-				wr[sent].next = NULL;
-			}
-			else
-				wr[sent].next = &wr[sent+1];
+			wr[sent].next = &wr[sent+1];
 
 			wr[sent].send_flags = IBV_SEND_SIGNALED | (send_inline << 3);
 			wr[sent].imm_data = htonl(0); //ToDo: set this to a useful value
 			wr[sent].opcode = IBV_WR_SEND_WITH_IMM;
 		}
+
+		debug(LOG_IB | 10, "Prepared %i send Work Requests", cnt);
+		wr[cnt-1].next = NULL;
 
 		// Send linked list of Work Requests
 		ret = ibv_post_send(ib->ctx.id->qp, wr, &bad_wr);
