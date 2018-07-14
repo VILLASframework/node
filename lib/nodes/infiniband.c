@@ -22,6 +22,7 @@
 
 #include <string.h>
 #include <math.h>
+#include <termios.h>
 
 #include <villas/nodes/infiniband.h>
 #include <villas/plugin.h>
@@ -56,6 +57,9 @@ int ib_disconnect(struct node *n)
 
 	// Set available receive work requests to zero
 	ib->conn.available_recv_wrs = 0;
+
+	// Reset stack top pointer
+	ib->conn.send_wc_stack.top = 0;
 
 	return ib->stopThreads;
 }
@@ -431,12 +435,22 @@ int ib_destroy(struct node *n)
 	return 0;
 }
 
+static void sigHandler(int signo)
+{
+	info("Node was already disconnected. Exiting thread with pthread_exit()");
+	pthread_exit(NULL);
+}
 void * ib_rdma_cm_event_thread(void *n)
 {
 	struct node *node = (struct node *) n;
 	struct infiniband *ib = (struct infiniband *) node->_vd;
 	struct rdma_cm_event *event;
+	struct sigaction sa;
 	int ret = 0;
+
+	// Register signal handler, in case event channel blocks and we can't exit thread
+	sa.sa_handler = sigHandler;
+	sigaction(SIGUSR1, &sa, NULL);
 
 	debug(LOG_IB | 1, "Started rdma_cm_event thread of node %s", node_name(node));
 
@@ -502,7 +516,8 @@ void * ib_rdma_cm_event_thread(void *n)
 				node->state = STATE_STARTED;
 				ret = ib_disconnect(n);
 
-				info("Host disconnected. Ready to accept new connections.");
+				if (!ret)
+					info("Host disconnected. Ready to accept new connections.");
 
 				break;
 
@@ -610,16 +625,22 @@ int ib_stop(struct node *n)
 	// Call RDMA disconnect function
 	// Will flush all outstanding WRs to the Completion Queue and
 	// will call RDMA_CM_EVENT_DISCONNECTED if that is done.
-	if (n->state == STATE_CONNECTED)
+	if (n->state == STATE_CONNECTED) {
 		ret = rdma_disconnect(ib->ctx.id);
-	else
-		ret = rdma_disconnect(ib->ctx.listen_id);
-	if (ret)
-		error("Error while calling rdma_disconnect in node %s: %s",
-			node_name(n), gai_strerror(ret));
 
-	debug(LOG_IB | 3, "Called rdma_disconnect");
-	info("Disconnecting... Please give me a few seconds.");
+		if (ret)
+			error("Error while calling rdma_disconnect in node %s: %s",
+				node_name(n), gai_strerror(ret));
+
+		debug(LOG_IB | 3, "Called rdma_disconnect");
+	}
+	else {
+		pthread_kill(ib->conn.rdma_cm_event_thread, SIGUSR1);
+
+		debug(LOG_IB | 3, "Called pthread_kill()");
+	}
+
+	info("Disconnecting... Waiting for threads to join.");
 
 	// Wait for event thread to join
 	ret = pthread_join(ib->conn.rdma_cm_event_thread, NULL);
