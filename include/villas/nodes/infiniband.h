@@ -76,13 +76,15 @@ struct infiniband {
 
 		pthread_t rdma_cm_event_thread;
 
-		int inline_mode;
+		int send_inline;
 
 		int available_recv_wrs;
 		struct send_wc_stack_s {
 			uint64_t* array;
 			unsigned top;
 		} send_wc_stack;
+
+		int buffer_subtraction;
 
 	} conn;
 
@@ -100,7 +102,8 @@ struct infiniband {
 
 	/* Misc settings */
 	int is_source;
-	int cq_size;
+	int recv_cq_size;
+	int send_cq_size;
 };
 
 /** @see node_type::reverse */
