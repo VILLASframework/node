@@ -476,11 +476,64 @@ int ib_destroy(struct node *n)
 	return 0;
 }
 
+void ib_create_bind_id(struct node *n)
+{
+	struct infiniband *ib = (struct infiniband *) n->_vd;
+	int ret;
+
+	ret = rdma_create_id(ib->ctx.ec, &ib->ctx.id, NULL, ib->conn.port_space);
+	if (ret)
+		error("Failed to create rdma_cm_id of node %s: %s", node_name(n), gai_strerror(ret));
+
+	debug(LOG_IB | 3, "Created rdma_cm_id");
+
+	// Bind rdma_cm_id to the HCA
+	ret = rdma_bind_addr(ib->ctx.id, ib->conn.src_addr->ai_addr);
+	if (ret)
+		error("Failed to bind to local device of node %s: %s",
+			node_name(n), gai_strerror(ret));
+
+	debug(LOG_IB | 3, "Bound rdma_cm_id to Infiniband device");
+
+	// The ID will be overwritten for the target. If the event type is
+	// RDMA_CM_EVENT_CONNECT_REQUEST, >then this references a new id for
+	// that communication.
+	ib->ctx.listen_id = ib->ctx.id;
+}
+
+void ib_continue_as_listen(struct node *n, struct rdma_cm_event *event)
+{
+	struct infiniband *ib = (struct infiniband *) n->_vd;
+	int ret;
+
+	warn("Trying to continue as listening node");
+
+	// Acknowledge event
+	rdma_ack_cm_event(event);
+
+	// Destroy ID
+	rdma_destroy_id(ib->ctx.listen_id);
+
+	// Create rdma_cm_id and bind to device
+	ib_create_bind_id(n);
+
+	// Listen to id for events
+	ret = rdma_listen(ib->ctx.listen_id, 10);
+	if (ret)
+		error("Failed to listen to rdma_cm_id on node %s", node_name(n));
+
+	// Node is not a source (and will not send data)
+	ib->is_source = 0;
+
+	info("Node %s is set to listening mode", node_name(n));
+}
+
 static void sigHandler(int signo)
 {
 	info("Node was already disconnected. Exiting thread with pthread_exit()");
 	pthread_exit(NULL);
 }
+
 void * ib_rdma_cm_event_thread(void *n)
 {
 	struct node *node = (struct node *) n;
@@ -510,8 +563,10 @@ void * ib_rdma_cm_event_thread(void *n)
 
 			case RDMA_CM_EVENT_ADDR_ERROR:
 				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_ADDR_ERROR");
+				warn("Address resolution (rdma_resolve_addr) failed!");
 
-				error("Address resolution (rdma_resolve_addr) failed!");
+				ib_continue_as_listen(n, event);
+
 				break;
 
 			case RDMA_CM_EVENT_ROUTE_RESOLVED:
@@ -522,8 +577,10 @@ void * ib_rdma_cm_event_thread(void *n)
 
 			case RDMA_CM_EVENT_ROUTE_ERROR:
 				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_ROUTE_ERROR");
+				warn("Route resolution (rdma_resovle_route) failed!");
 
-				error("Route resolution (rdma_resovle_route) failed!");
+				ib_continue_as_listen(n, event);
+
 				break;
 
 			case RDMA_CM_EVENT_CONNECT_REQUEST:
@@ -534,15 +591,20 @@ void * ib_rdma_cm_event_thread(void *n)
 
 			case RDMA_CM_EVENT_CONNECT_ERROR:
 				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_CONNECT_ERROR");
+				warn("An error has occurred trying to establish a connection!");
 
-				error("An error has occurred trying to establish a connection!");
+				ib_continue_as_listen(n, event);
+
 				break;
 
 			case RDMA_CM_EVENT_REJECTED:
 				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_REJECTED");
+				warn("Connection request or response was rejected by the remote end point!");
 
-				error("Connection request or response was rejected by the remote end point!");
+				ib_continue_as_listen(n, event);
+
 				break;
+
 			case RDMA_CM_EVENT_ESTABLISHED:
 				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_ESTABLISHED");
 
@@ -592,24 +654,8 @@ int ib_start(struct node *n)
 
 	debug(LOG_IB | 3, "Created event channel");
 
-	ret = rdma_create_id(ib->ctx.ec, &ib->ctx.id, NULL, ib->conn.port_space);
-	if (ret)
-		error("Failed to create rdma_cm_id of node %s: %s", node_name(n), gai_strerror(ret));
-
-	debug(LOG_IB | 3, "Created rdma_cm_id");
-
-	// Bind rdma_cm_id to the HCA
-	ret = rdma_bind_addr(ib->ctx.id, ib->conn.src_addr->ai_addr);
-	if (ret)
-		error("Failed to bind to local device of node %s: %s",
-			node_name(n), gai_strerror(ret));
-
-	debug(LOG_IB | 3, "Bound rdma_cm_id to Infiniband device");
-
-	// The ID will be overwritten for the target. If the event type is
-	// RDMA_CM_EVENT_CONNECT_REQUEST, >then this references a new id for
-	// that communication.
-	ib->ctx.listen_id = ib->ctx.id;
+	// Create rdma_cm_id and bind to device
+	ib_create_bind_id(n);
 
 	// Initialize send Work Completion stack
 	ib->conn.send_wc_stack.top = 0;
