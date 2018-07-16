@@ -236,6 +236,10 @@ static int ib_connect_request(struct node *n, struct rdma_cm_id *id)
 
 int ib_reverse(struct node *n)
 {
+	struct infiniband *ib = (struct infiniband *) n->_vd;
+
+	SWAP(ib->conn.src_addr, ib->conn.dst_addr);
+
 	return 0;
 }
 
