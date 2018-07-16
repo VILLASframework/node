@@ -886,23 +886,23 @@ int ib_fd(struct node *n)
 }
 
 static struct plugin p = {
-	.name           = "infiniband",
-	.description    = "Infiniband",
-	.type           = PLUGIN_TYPE_NODE,
-	.node           = {
-		.vectorize      = 0,
-		.size           = sizeof(struct infiniband),
-		.reverse        = ib_reverse,
-		.parse          = ib_parse,
+	.name		= "infiniband",
+	.description	= "Infiniband interface (libibverbs, librdmacm)",
+	.type		= PLUGIN_TYPE_NODE,
+	.node		= {
+		.vectorize	= 0,
+		.size		= sizeof(struct infiniband),
+		.reverse	= ib_reverse,
+		.parse		= ib_parse,
 		.check		= ib_check,
-		.print          = ib_print,
-		.start          = ib_start,
-		.destroy        = ib_destroy,
-		.stop           = ib_stop,
-		.read           = ib_read,
-		.write          = ib_write,
-		.fd             = ib_fd,
-		.memory_type    = memory_ib
+		.print		= ib_print,
+		.start		= ib_start,
+		.destroy	= ib_destroy,
+		.stop		= ib_stop,
+		.read		= ib_read,
+		.write		= ib_write,
+		.fd		= ib_fd,
+		.memory_type	= memory_ib
 	}
 };
 
