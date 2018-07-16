@@ -523,7 +523,7 @@ int comedi_stop(struct node *n)
 
 #if COMEDI_USE_READ
 
-int comedi_read(struct node *n, struct sample *smps[], unsigned cnt)
+int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -646,7 +646,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 #else
 
-int comedi_read(struct node *n, struct sample *smps[], unsigned cnt)
+int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -831,7 +831,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt)
 
 #endif
 
-int comedi_write(struct node *n, struct sample *smps[], unsigned cnt)
+int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;

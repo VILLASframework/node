@@ -20,7 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-set(FORMAT_SRC
+list(APPEND FORMAT_SRC
     json.c
     json_reserve.c
     villas_binary.c
@@ -28,14 +28,6 @@ set(FORMAT_SRC
     csv.c
     raw.c
     msg.c
-)
-
-set(INCLUDE_DIRS
-    ${OPENSSL_INCLUDE_DIR}
-)
-
-set(LIBRARIES
-    ${OPENSSL_LIBRARIES}
 )
 
 # Enable Google Protobuf format

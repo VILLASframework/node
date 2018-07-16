@@ -22,10 +22,12 @@
 
 add_compile_options(-fPIC)
 
-set(INCLUDE_DIRS
+list(APPEND INCLUDE_DIRS
     ${JANSSON_INCLUDE_DIRS}
     ${OPENSSL_INCLUDE_DIR}
     ${CURL_INCLUDE_DIRS}
+    ${VILLASnode_BINARY_DIR}/include
+    ${VILLASnode_SOURCE_DIR}/include
 )
 
 set(LIBRARIES

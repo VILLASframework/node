@@ -130,7 +130,7 @@ set(PROJECT_SOVERSION 1)
 
 execute_process(
     COMMAND git describe --tags --abbrev=0 --match "v*"
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     OUTPUT_VARIABLE PROJECT_VERSION_STR
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
@@ -149,14 +149,14 @@ if(DEFINED ENV{CI})
 else()
     execute_process(
         COMMAND git rev-parse --short=7 HEAD
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         OUTPUT_VARIABLE GIT_REV
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     
     execute_process(
         COMMAND git rev-parse --abbrev-ref HEAD
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
         OUTPUT_VARIABLE GIT_BRANCH
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
@@ -172,11 +172,6 @@ else()
 endif()
 
 set(BUILDID "v${PROJECT_MAJOR_VERSION}.${PROJECT_MINOR_VERSION}.${PROJECT_PATCH_VERSION}-${GIT_REV}-${VARIANT}")
-
-include_directories(
-    ${CMAKE_SOURCE_DIR}/include
-    ${CMAKE_BINARY_DIR}/include
-)
 
 add_subdirectory(etc)
 add_subdirectory(lib)
@@ -205,8 +200,8 @@ if(WITH_TESTS)
 endif()
 
 configure_file(
-    ${CMAKE_SOURCE_DIR}/include/villas/config.h.in
-    ${CMAKE_BINARY_DIR}/include/villas/config.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/villas/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/villas/config.h
 )
 
 # Show feature summary

@@ -21,14 +21,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-set(INCLUDE_DIRS
-    ${OPENSSL_INCLUDE_DIR}
-)
-
-set(LIBRARIES
-    ${OPENSSL_LIBRARIES}
-)
-
 set(API_SRC
     session.c
     actions/capabiltities.c

@@ -97,10 +97,10 @@ int comedi_start(struct node *n);
 int comedi_stop(struct node *n);
 
 /** @see node_type::read */
-int comedi_read(struct node *n, struct sample *smps[], unsigned cnt);
+int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int comedi_write(struct node *n, struct sample *smps[], unsigned cnt);
+int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */
 

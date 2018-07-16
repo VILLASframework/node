@@ -22,7 +22,6 @@
 
 # Plugins
 link_libraries(villas)
-include_directories("${CMAKE_SOURCE_DIR}/include")
 add_definitions("-DVILLAS")
 
 add_library(simple_circuit MODULE models/simple_circuit.c)
