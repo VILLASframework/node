@@ -20,14 +20,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-set(INCLUDE_DIRS
-    ${JANSSON_INCLUDE_DIRS}
-)
-
-set(LIBRARIES
-    PkgConfig::JANSSON
-)
-
 set(NODE_SRC
     influxdb.c
     stats.c

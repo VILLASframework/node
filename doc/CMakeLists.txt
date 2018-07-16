@@ -53,7 +53,7 @@ if(DOXYGEN_FOUND)
 
 	doxygen_add_docs(doc
 		README.md CONTRIBUTING.md COPYING.md src/ lib/ tests/ include/ doc/
-		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		WORKING_DIRECTORY ${PROJECT_DIR}
 	)
 
 	install(
