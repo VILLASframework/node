@@ -218,17 +218,24 @@ int socket_start(struct node *n)
 	if (s->sd < 0)
 		serror("Failed to create socket");
 
-	/* Bind socket for receiving */
-	socklen_t addrlen = 0;
+	/* Delete Unix domain socket if already existing */
 	if (s->layer == SOCKET_LAYER_UNIX) {
 		ret = unlink(s->local.sun.sun_path);
 		if (ret && errno != ENOENT)
 			return ret;
-
-		addrlen = SUN_LEN(&s->local.sun);
 	}
-	else
-		addrlen = sizeof(s->local);
+
+	/* Bind socket for receiving */
+	socklen_t addrlen = 0;
+	switch(s->local.ss.ss_family) {
+		case AF_INET:   addrlen = sizeof(struct sockaddr_in); break;
+		case AF_INET6:  addrlen = sizeof(struct sockaddr_in6); break;
+		case AF_UNIX:   addrlen = SUN_LEN(&s->local.sun); break;
+#ifdef __linux__
+		case AF_PACKET: addrlen = sizeof(struct sockaddr_ll); break;
+#endif
+		default:        addrlen = sizeof(s->local); break;
+	}
 
 	ret = bind(s->sd, (struct sockaddr *) &s->local, addrlen);
 	if (ret < 0)
@@ -431,11 +438,14 @@ retry:	ret = io_sprint(&s->io, buf, buflen, &wbytes, smps, cnt);
 
 	/* Send message */
 	socklen_t addrlen = 0;
-	switch (s->layer) {
-		case SOCKET_LAYER_UDP:
-		case SOCKET_LAYER_IP:
-		case SOCKET_LAYER_ETH:	addrlen = sizeof(s->remote); break;
-		case SOCKET_LAYER_UNIX:	addrlen = SUN_LEN(&s->remote.sun); break;
+	switch(s->local.ss.ss_family) {
+		case AF_INET:   addrlen = sizeof(struct sockaddr_in); break;
+		case AF_INET6:  addrlen = sizeof(struct sockaddr_in6); break;
+		case AF_UNIX:   addrlen = SUN_LEN(&s->local.sun); break;
+#ifdef __linux__
+		case AF_PACKET: addrlen = sizeof(struct sockaddr_ll); break;
+#endif
+		default:        addrlen = sizeof(s->local); break;
 	}
 
 	bytes = sendto(s->sd, buf, wbytes, MSG_DONTWAIT, (struct sockaddr *) &s->remote, addrlen);
