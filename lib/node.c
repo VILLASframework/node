@@ -556,7 +556,7 @@ int node_fd(struct node *n)
 
 struct node_type * node_type(struct node *n)
 {
-	assert(n->state == STATE_INITIALIZED);
+	assert(n->state != STATE_DESTROYED);
 
 	return n->_vt;
 }
