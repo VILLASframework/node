@@ -20,18 +20,32 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-list(APPEND FORMAT_SRC
-    json.c
-    json_reserve.c
-    villas_binary.c
-    villas_human.c
-    csv.c
-    raw.c
-    msg.c
-)
+if(DEFINED PROTOBUF_COMPILER AND PROTOBUF_FOUND)
+    add_custom_command(
+        OUTPUT
+            villas.pb.cc villas.pb.h villas_pb2.py
+            message.js sample.js timestamp.js value.js
+        COMMAND ${PROTOBUF_COMPILER}
+            --python_out=${CMAKE_CURRENT_BINARY_DIR}
+            --js_out=${CMAKE_CURRENT_BINARY_DIR}
+            --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
+            villas.proto
+        MAIN_DEPENDENCY villas.proto
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+endif()
 
-# Enable Google Protobuf format
-if(PROTOBUFC_FOUND)
+if(DEFINED PROTOBUFC_COMPILER AND PROTOBUFC_FOUND)
+    add_custom_command(
+        OUTPUT
+            villas.pb-c.c villas.pb-c.h
+        COMMAND ${PROTOBUF_COMPILER}
+            --c_out=${CMAKE_CURRENT_BINARY_DIR}
+            villas.proto
+        MAIN_DEPENDENCY villas.proto
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
     list(APPEND FORMAT_SRC
         protobuf.c
         ${CMAKE_CURRENT_BINARY_DIR}/villas.pb-c.c
@@ -45,40 +59,18 @@ if(PROTOBUFC_FOUND)
     list(APPEND LIBRARIES
         PkgConfig::PROTOBUFC
     )
-
-    set_source_files_properties(villas.pb-c.h villas.pb-c.c
-        PROPERTIES
-            GENERATED TRUE
-    )
 endif()
+
+list(APPEND FORMAT_SRC
+    json.c
+    json_reserve.c
+    villas_binary.c
+    villas_human.c
+    csv.c
+    raw.c
+    msg.c
+)
 
 add_library(formats STATIC ${FORMAT_SRC})
 target_include_directories(formats PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(formats INTERFACE ${LIBRARIES})
-
-if(DEFINED PROTOBUF_COMPILER AND PROTOBUF_FOUND)
-	add_custom_target(protobuf ALL
-		COMMAND ${PROTOBUF_COMPILER}
-			--python_out=${CMAKE_CURRENT_BINARY_DIR}
-			#--php_out=${CMAKE_BINARY_DIR}
-			--js_out=${CMAKE_CURRENT_BINARY_DIR}
-			--cpp_out=${CMAKE_CURRENT_BINARY_DIR}
-			villas.proto
-        DEPENDS villas.proto
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    )
-    
-    add_dependencies(formats protobuf)
-endif()
-
-if(DEFINED PROTOBUFC_COMPILER AND PROTOBUFC_FOUND)
-    add_custom_target(protobuf-c ALL
-        COMMAND ${PROTOBUFC_COMPILER}
-            --c_out=${CMAKE_CURRENT_BINARY_DIR}
-            villas.proto
-        DEPENDS villas.proto
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    )
-
-    add_dependencies(formats protobuf-c)
-endif()
