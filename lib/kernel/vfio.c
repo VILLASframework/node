@@ -335,7 +335,7 @@ int vfio_pci_reset(struct vfio_device *d)
 		return ret;
 
 	debug(5, "VFIO: dependent devices for hot-reset:");
-	for (int i = 0; i < reset_info->count; i++) { INDENT
+	for (int i = 0; i < reset_info->count; i++) {
 		struct vfio_pci_dependent_device *dd = &reset_info->devices[i];
 		debug(5, "%04x:%02x:%02x.%01x: iommu_group=%u", dd->segment, dd->bus, PCI_SLOT(dd->devfn), PCI_FUNC(dd->devfn), dd->group_id);
 
@@ -508,7 +508,7 @@ void vfio_dump(struct vfio_container *v)
 		);
 
 
-		for (size_t i = 0; i < list_length(&g->devices); i++) { INDENT
+		for (size_t i = 0; i < list_length(&g->devices); i++) {
 			struct vfio_device *d = (struct vfio_device *) list_at(&g->devices, i);
 
 			info("Device %s: regions=%u, irqs=%u, flags=%#x", d->name,
@@ -517,7 +517,7 @@ void vfio_dump(struct vfio_container *v)
 				d->info.flags
 			);
 
-			for (int i = 0; i < d->info.num_regions && i < 8; i++) { INDENT
+			for (int i = 0; i < d->info.num_regions && i < 8; i++) {
 				struct vfio_region_info *region = &d->regions[i];
 
 				if (region->size > 0)
@@ -529,7 +529,7 @@ void vfio_dump(struct vfio_container *v)
 					);
 			}
 
-			for (int i = 0; i < d->info.num_irqs; i++) { INDENT
+			for (int i = 0; i < d->info.num_irqs; i++) {
 				struct vfio_irq_info *irq = &d->irqs[i];
 
 				if (irq->count > 0)

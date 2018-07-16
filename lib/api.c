@@ -330,7 +330,7 @@ int api_stop(struct api *a)
 		lws_callback_on_writable(s->wsi);
 	}
 
-	for (int i = 0; i < 10 && list_length(&a->sessions) > 0; i++) { INDENT
+	for (int i = 0; i < 10 && list_length(&a->sessions) > 0; i++) {
 		info("Wait for API sessions to close");
 		usleep(1 * 1e6);
 	}

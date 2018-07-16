@@ -89,30 +89,6 @@ static const char *facilities_strs[] = {
 	"ib",		/* LOG_IB */
 };
 
-#ifdef __GNUC__
-/** The current log indention level (per thread!). */
-static __thread int indent = 0;
-
-int log_indent(int levels)
-{
-	int old = indent;
-	indent += levels;
-	return old;
-}
-
-int log_noindent()
-{
-	int old = indent;
-	indent = 0;
-	return old;
-}
-
-void log_outdent(int *old)
-{
-	indent = *old;
-}
-#endif
-
 static void log_resize(int signal, siginfo_t *sinfo, void *ctx)
 {
 	int ret;
@@ -303,16 +279,6 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 
 	/* Timestamp & Severity */
 	strcatf(&buf, "%10.3f %-5s ", time_delta(&l->epoch, &ts), lvl);
-
-	/* Indention in case we log to the terminal */
-#ifdef __GNUC__
-	if (l->file == stderr || l->file == stdout) {
-		for (int i = 0; i < indent; i++)
-			strcatf(&buf, "%s ", BOX_UD);
-
-		strcatf(&buf, "%s ", BOX_UDR);
-	}
-#endif
 
 	/* Format String */
 	vstrcatf(&buf, fmt, ap);

@@ -54,7 +54,7 @@ int memory_init(int hugepages)
 	struct rlimit l;
 
 	pagecnt = kernel_get_nr_hugepages();
-	if (pagecnt < hugepages) { INDENT
+	if (pagecnt < hugepages) {
 		if (getuid() == 0) {
 			kernel_set_nr_hugepages(hugepages);
 			debug(LOG_MEM | 2, "Increased number of reserved hugepages from %d to %d", pagecnt, hugepages);

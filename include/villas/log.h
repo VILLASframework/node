@@ -35,14 +35,6 @@ extern "C" {
 #include "common.h"
 #include "log_config.h"
 
-#ifdef __GNUC__
-  #define INDENT	int __attribute__ ((__cleanup__(log_outdent), unused)) _old_indent = log_indent(1);
-  #define NOINDENT	int __attribute__ ((__cleanup__(log_outdent), unused)) _old_indent = log_noindent();
-#else
-  #define INDENT	;
-  #define NOINDENT	;
-#endif
-
 /* The log level which is passed as first argument to print() */
 #define LOG_LVL_DEBUG	CLR_GRY("Debug")
 #define LOG_LVL_INFO	CLR_WHT("Info ")
@@ -121,22 +113,6 @@ int log_close(struct log *l);
 
 /** Destroy log object */
 int log_destroy(struct log *l);
-
-/** Change log indention  for current thread.
- *
- * The argument level can be negative!
- */
-int log_indent(int levels);
-
-/** Disable log indention of current thread. */
-int log_noindent();
-
-/** A helper function the restore the previous log indention level.
- *
- * This function is usually called by a __cleanup__ handler (GCC C Extension).
- * See INDENT macro.
- */
-void log_outdent(int *);
 
 /** Set logging facilities based on expression.
  *

@@ -326,7 +326,7 @@ int node_start(struct node *n)
 	assert(node_type(n)->state == STATE_STARTED);
 
 	info("Starting node %s", node_name_long(n));
-	{ INDENT
+	{
 		ret = node_direction_start(&n->in, n);
 		if (ret)
 			return ret;
@@ -355,7 +355,7 @@ int node_stop(struct node *n)
 		return 0;
 
 	info("Stopping node %s", node_name(n));
-	{ INDENT
+	{
 		ret = node_direction_stop(&n->in, n);
 		if (ret)
 			return ret;

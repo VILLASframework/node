@@ -35,7 +35,7 @@ int rt_init(int priority, int affinity)
 {
 	info("Initialize real-time sub-system");
 
-	{ INDENT
+	{
 #ifdef __linux__
 	int is_rt;
 

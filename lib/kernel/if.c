@@ -71,7 +71,7 @@ int if_start(struct interface *i)
 {
 	info("Starting interface '%s' which is used by %zu sockets", rtnl_link_get_name(i->nl_link), list_length(&i->sockets));
 
-	{ INDENT
+	{
 		/* Set affinity for network interfaces (skip _loopback_ dev) */
 		//if_set_affinity(i, i->affinity);
 
@@ -124,12 +124,10 @@ int if_stop(struct interface *i)
 {
 	info("Stopping interface '%s'", rtnl_link_get_name(i->nl_link));
 
-	{ INDENT
-		if_set_affinity(i, -1L);
+	if_set_affinity(i, -1L);
 
-		if (i->tc_qdisc)
-			tc_reset(i);
-	}
+	if (i->tc_qdisc)
+		tc_reset(i);
 
 	return 0;
 }

@@ -61,7 +61,7 @@ static int table_resize(struct table *t, int width)
 }
 
 void table_header(struct table *t)
-{ NOINDENT
+{
 	struct log *l = global_log ? global_log : &default_log;
 
 	if (t->width != l->width)
@@ -120,7 +120,7 @@ void table_header(struct table *t)
 }
 
 void table_row(struct table *t, ...)
-{ NOINDENT
+{
 	struct log *l = global_log ? global_log : &default_log;
 
 	if (t->width != l->width) {
@@ -155,7 +155,7 @@ void table_row(struct table *t, ...)
 }
 
 void table_footer(struct table *t)
-{ NOINDENT
+{
 	struct log *l = global_log ? global_log : &default_log;
 
 	if (t->width != l->width)

@@ -89,7 +89,7 @@ void jerror(json_error_t *err, const char *fmt, ...)
 	va_end(ap);
 
 	log_print(l, LOG_LVL_ERROR, "%s:", buf);
-	{ INDENT
+	{
 		log_print(l, LOG_LVL_ERROR, "%s in %s:%d:%d", err->text, err->source, err->line, err->column);
 
 		if (l->syslog)

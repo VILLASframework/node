@@ -79,7 +79,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 
 	info("Parsing configuration");
 
-	if (uri) { INDENT
+	if (uri) {
 		FILE *f;
 		AFILE *af;
 
@@ -110,7 +110,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 			config_setting_t *json_root = NULL;
 
 			warn("Failed to parse JSON configuration. Re-trying with old libconfig format.");
-			{ INDENT
+			{
 				warn("Please consider migrating to the new format using the 'conf2json' command.");
 			}
 
@@ -134,7 +134,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 
 			ret = config_read(&cfg, f);
 			if (ret != CONFIG_TRUE) {
-				{ INDENT
+				{
 					warn("conf: %s in %s:%d", config_error_text(&cfg), uri, config_error_line(&cfg));
 					warn("json: %s in %s:%d:%d", err.text, err.source, err.line, err.column);
 				}
@@ -163,7 +163,7 @@ int super_node_parse_uri(struct super_node *sn, const char *uri)
 
 		return super_node_parse_json(sn, sn->cfg);
 	}
-	else { INDENT
+	else {
 		warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 	}
 
@@ -355,7 +355,7 @@ int super_node_start(struct super_node *sn)
 #endif
 
 	info("Starting node-types");
-	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
+	for (size_t i = 0; i < list_length(&sn->nodes); i++) {
 		struct node *n = (struct node *) list_at(&sn->nodes, i);
 
 		ret = node_type_start(n->_vt, sn);
@@ -364,11 +364,11 @@ int super_node_start(struct super_node *sn)
 	}
 
 	info("Starting nodes");
-	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
+	for (size_t i = 0; i < list_length(&sn->nodes); i++) {
 		struct node *n = (struct node *) list_at(&sn->nodes, i);
 
 		int refs = list_count(&sn->paths, (cmp_cb_t) path_uses_node, n);
-		if (refs > 0) { INDENT
+		if (refs > 0) {
 			ret = node_start(n);
 			if (ret)
 				error("Failed to start node: %s", node_name(n));
@@ -378,10 +378,10 @@ int super_node_start(struct super_node *sn)
 	}
 
 	info("Starting paths");
-	for (size_t i = 0; i < list_length(&sn->paths); i++) { INDENT
+	for (size_t i = 0; i < list_length(&sn->paths); i++) {
 		struct path *p = (struct path *) list_at(&sn->paths, i);
 
-		if (p->enabled) { INDENT
+		if (p->enabled) {
 			ret = path_init2(p);
 			if (ret)
 				error("Failed to start path: %s", path_name(p));
@@ -404,7 +404,7 @@ int super_node_stop(struct super_node *sn)
 	int ret;
 
 	info("Stopping paths");
-	for (size_t i = 0; i < list_length(&sn->paths); i++) { INDENT
+	for (size_t i = 0; i < list_length(&sn->paths); i++) {
 		struct path *p = (struct path *) list_at(&sn->paths, i);
 
 		ret = path_stop(p);
@@ -413,7 +413,7 @@ int super_node_stop(struct super_node *sn)
 	}
 
 	info("Stopping nodes");
-	for (size_t i = 0; i < list_length(&sn->nodes); i++) { INDENT
+	for (size_t i = 0; i < list_length(&sn->nodes); i++) {
 		struct node *n = (struct node *) list_at(&sn->nodes, i);
 
 		ret = node_stop(n);
@@ -422,7 +422,7 @@ int super_node_stop(struct super_node *sn)
 	}
 
 	info("Stopping node-types");
-	for (size_t i = 0; i < list_length(&plugins); i++) { INDENT
+	for (size_t i = 0; i < list_length(&plugins); i++) {
 		struct plugin *p = (struct plugin *) list_at(&plugins, i);
 
 		if (p->type == PLUGIN_TYPE_NODE) {

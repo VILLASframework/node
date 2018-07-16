@@ -242,7 +242,7 @@ int web_start(struct web *w)
 
 	info("Starting Web sub-system: webroot=%s", w->htdocs);
 
-	{ INDENT
+	{
 		/* update web root of mount point */
 		mounts[0].origin = w->htdocs;
 
@@ -273,7 +273,7 @@ int web_stop(struct web *w)
 
 	info("Stopping Web sub-system");
 
-	{ INDENT
+	{
 		lws_cancel_service(w->context);
 
 		/** @todo Wait for all connections to be closed */
@@ -297,7 +297,7 @@ int web_destroy(struct web *w)
 	if (w->state == STATE_DESTROYED)
 		return 0;
 
-	if (w->context) { INDENT
+	if (w->context) {
 		lws_context_destroy(w->context);
 	}
 

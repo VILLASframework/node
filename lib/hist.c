@@ -135,7 +135,7 @@ double hist_stddev(struct hist *h)
 }
 
 void hist_print(struct hist *h, int details)
-{ INDENT
+{
 	if (h->total > 0) {
 		hist_cnt_t missed = h->total - h->higher - h->lower;
 
