@@ -64,7 +64,8 @@ static int ib_disconnect(struct node *n)
 		sample_put((struct sample *) ib->conn.send_wc_stack.array[ib->conn.send_wc_stack.top]);
 	}
 
-	info("WCS: %i", ib->conn.available_recv_wrs);
+	if (ib->conn.available_recv_wrs != 0)
+		warn("Was not able to return all samples! %i samples are still blocked ", ib->conn.available_recv_wrs);
 
 	// Destroy QP
 	rdma_destroy_qp(ib->ctx.id);
