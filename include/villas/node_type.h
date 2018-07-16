@@ -140,10 +140,11 @@ struct node_type {
 	 * Indexes used to address @p m will wrap around after len messages.
 	 * Some node-types might only support to receive one message at a time.
 	 *
-	 * @param n	A pointer to the node object.
-	 * @param smps	An array of pointers to memory blocks where the function should store received samples.
-	 * @param cnt	The number of messages which should be received.
-	 * @return	The number of messages actually received.
+	 * @param n		    A pointer to the node object.
+	 * @param smps		An array of pointers to memory blocks where the function should store received samples.
+	 * @param cnt		The number of samples that are allocated by the calling function.
+	 * @param release	The number of samples that should be released after read is called.
+	 * @return		    The number of messages actually received.
 	 */
 	int (*read)(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
@@ -154,10 +155,11 @@ struct node_type {
 	 * The messages have to be stored in a circular buffer / array m.
 	 * So the indexes will wrap around after len.
 	 *
-	 * @param n	A pointer to the node object.
-	 * @param smps	An array of pointers to memory blocks where samples read from.
-	 * @param cnt	The number of messages which should be sent.
-	 * @return	The number of messages actually sent.
+	 * @param n		    A pointer to the node object.
+	 * @param smps		An array of pointers to memory blocks where samples read from.
+	 * @param cnt		The number of samples that are allocated by the calling function.
+	 * @param release	The number of samples that should be released after write is called
+	 * @return		    The number of messages actually sent.
 	 */
 	int (*write)(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
