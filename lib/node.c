@@ -133,9 +133,9 @@ static int node_direction_check(struct node_direction *nd, struct node *n)
 	if (nd->vectorize <= 0)
 		error("Invalid `vectorize` value %d for node %s. Must be natural number!", nd->vectorize, node_name(n));
 
-	if (n->_vt->vectorize && n->_vt->vectorize < nd->vectorize)
+	if (node_type(n)->vectorize && node_type(n)->vectorize < nd->vectorize)
 		error("Invalid value for `vectorize`. Node type requires a number smaller than %d!",
-			n->_vt->vectorize);
+			node_type(n)->vectorize);
 
 	return 0;
 }
@@ -227,7 +227,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 		jerror(&err, "Failed to parse node '%s'", node_name(n));
 
 	nt = node_type_lookup(type);
-	assert(nt == n->_vt);
+	assert(nt == node_type(n));
 
 	struct {
 		const char *str;
@@ -260,7 +260,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 			error("Failed to parse %s direction of node '%s'", dirs[j].str, node_name(n));
 	}
 
-	ret = n->_vt->parse ? n->_vt->parse(n, json) : 0;
+	ret = node_type(n)->parse ? node_type(n)->parse(n, json) : 0;
 	if (ret)
 		error("Failed to parse node '%s'", node_name(n));
 
@@ -274,12 +274,12 @@ int node_parse_cli(struct node *n, int argc, char *argv[])
 {
 	int ret;
 
-	assert(n->_vt);
+	assert(node_type(n));
 
-	if (n->_vt->parse_cli) {
+	if (node_type(n)->parse_cli) {
 		n->name = strdup("cli");
 
-		ret = n->_vt->parse_cli(n, argc, argv);
+		ret = node_type(n)->parse_cli(n, argc, argv);
 		if (ret)
 			return ret;
 
@@ -309,7 +309,7 @@ int node_check(struct node *n)
 	if (ret)
 		return ret;
 
-	ret = n->_vt->check ? n->_vt->check(n) : 0;
+	ret = node_type(n)->check ? node_type(n)->check(n) : 0;
 	if (ret)
 		return ret;
 
@@ -323,7 +323,7 @@ int node_start(struct node *n)
 	int ret;
 
 	assert(n->state == STATE_CHECKED);
-	assert(n->_vt->state == STATE_STARTED);
+	assert(node_type(n)->state == STATE_STARTED);
 
 	info("Starting node %s", node_name_long(n));
 	{ INDENT
@@ -335,7 +335,7 @@ int node_start(struct node *n)
 		if (ret)
 			return ret;
 
-		ret = n->_vt->start ? n->_vt->start(n) : 0;
+		ret = node_type(n)->start ? node_type(n)->start(n) : 0;
 		if (ret)
 			return ret;
 	}
@@ -364,7 +364,7 @@ int node_stop(struct node *n)
 		if (ret)
 			return ret;
 
-		ret = n->_vt->stop ? n->_vt->stop(n) : 0;
+		ret = node_type(n)->stop ? node_type(n)->stop(n) : 0;
 	}
 
 	if (ret == 0)
@@ -386,14 +386,14 @@ int node_destroy(struct node *n)
 	if (ret)
 		return ret;
 
-	if (n->_vt->destroy){
-		ret = (int) n->_vt->destroy(n);
+	if (node_type(n)->destroy){
+		ret = (int) node_type(n)->destroy(n);
 		if(ret){
 			return ret;
 		}
 	}
 
-	list_remove(&n->_vt->instances, n);
+	list_remove(&node_type(n)->instances, n);
 
 	if (n->_vd)
 		free(n->_vd);
@@ -420,9 +420,9 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 		return -1;
 
 	/* Send in parts if vector not supported */
-	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
+	if (node_type(n)->vectorize > 0 && node_type(n)->vectorize < cnt) {
 		while (cnt - nread > 0) {
-			readd = n->_vt->read(n, &smps[nread], MIN(cnt - nread, n->_vt->vectorize), release);
+			readd = node_type(n)->read(n, &smps[nread], MIN(cnt - nread, node_type(n)->vectorize), release);
 			if (readd < 0)
 				return readd;
 
@@ -430,7 +430,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 		}
 	}
 	else {
-		nread = n->_vt->read(n, smps, cnt, release);
+		nread = node_type(n)->read(n, smps, cnt, release);
 		if (nread < 0)
 			return nread;
 	}
@@ -489,9 +489,9 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 #endif /* WITH_HOOKS */
 
 	/* Send in parts if vector not supported */
-	if (n->_vt->vectorize > 0 && n->_vt->vectorize < cnt) {
+	if (node_type(n)->vectorize > 0 && node_type(n)->vectorize < cnt) {
 		while (cnt - nsent > 0) {
-			sent = n->_vt->write(n, &smps[nsent], MIN(cnt - nsent, n->_vt->vectorize), release);
+			sent = node_type(n)->write(n, &smps[nsent], MIN(cnt - nsent, node_type(n)->vectorize), release);
 			if (sent < 0)
 				return sent;
 
@@ -500,7 +500,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		}
 	}
 	else {
-		nsent = n->_vt->write(n, smps, cnt, release);
+		nsent = node_type(n)->write(n, smps, cnt, release);
 		if (nsent < 0)
 			return nsent;
 
@@ -513,7 +513,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 char * node_name(struct node *n)
 {
 	if (!n->_name)
-		strcatf(&n->_name, CLR_RED("%s") "(" CLR_YEL("%s") ")", n->name, plugin_name(n->_vt));
+		strcatf(&n->_name, CLR_RED("%s") "(" CLR_YEL("%s") ")", n->name, plugin_name(node_type(n)));
 
 	return n->_name;
 }
@@ -521,8 +521,8 @@ char * node_name(struct node *n)
 char * node_name_long(struct node *n)
 {
 	if (!n->_name_long) {
-		if (n->_vt->print) {
-			struct node_type *vt = n->_vt;
+		if (node_type(n)->print) {
+			struct node_type *vt = node_type(n);
 			char *name_long = vt->print(n);
 			strcatf(&n->_name_long, "%s: #in.hooks=%zu, in.vectorize=%d, #out.hooks=%zu, out.vectorize=%d, samplelen=%d, %s",
 				node_name(n),
@@ -546,17 +546,17 @@ const char * node_name_short(struct node *n)
 
 int node_reverse(struct node *n)
 {
-	return n->_vt->reverse ? n->_vt->reverse(n) : -1;
+	return node_type(n)->reverse ? node_type(n)->reverse(n) : -1;
 }
 
 int node_fd(struct node *n)
 {
-	return n->_vt->fd ? n->_vt->fd(n) : -1;
+	return node_type(n)->fd ? node_type(n)->fd(n) : -1;
 }
 
 struct memory_type * node_memory_type(struct node *n, struct memory_type *parent)
 {
-	return n->_vt->memory_type ? n->_vt->memory_type(n, parent) : &memory_hugepage;
+	return node_type(n)->memory_type ? node_type(n)->memory_type(n, parent) : &memory_hugepage;
 }
 
 int node_parse_list(struct list *list, json_t *cfg, struct list *all)
