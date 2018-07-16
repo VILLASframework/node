@@ -1,0 +1,832 @@
+%% User Model Definition File (V1.2)
+%% Generated from : ucm_def_file_templ_en.sh Version 1.5
+%% Hypersim (Ucm) : (c) Hydro-Quebec -- 2005
+%%
+%% -----------------------------------------------------------------------------
+%% Model : server -- Fri Jun 15 12:07:11 PDT 2018
+%% -----------------------------------------------------------------------------
+%%
+%% Definition of a user's created Hypersim model
+%% ---------------------------------------------
+%%
+%% Comments used by the definition file are preceded by this string: "%%"
+%%
+%%                     ***************************
+%%                     * DO NOT MODIFY COMMENTS! *
+%%                     ***************************
+%%
+%% Only edit zones between comments.
+%% Follow directives describing format of data.
+%%
+%% This file is divided en 3 major sections : "General description",
+%% "Preparatory data preprocessing" and "Model simulation".
+%%
+%% Here is the file general structure :
+%%
+%% I- Model description.
+%%   1- General informations or parameters.
+%%   2- Model's documentation.
+%%   3- Form parameters (tunables).
+%%     3.1- General parameters table.
+%%     3.2- (Load Flow parameters table. NOT IMPLEMENTED!!!)
+%%   4- Control IOs.
+%%   5- Network nodes.
+%%   6- Current sources.
+%%   7- Historical currents.
+%%
+%% II- Preparatory data preprocessing.
+%%   8- Calculated values.
+%%     8.1- Calculated parameters table.
+%%     8.2- (Calculated Load Flow values. NOT IMPLEMENTED!!!)
+%%     8.3- Preparation function code.
+%%       8.3.1- Function's global code.
+%%       8.3.2- Parameters & initial admittance matrix (Yini) calculation code.
+%%       8.3.3- (Load Flow results calculation code. NOT IMPLEMENTED!!!)
+%%     8.4- "Includes" paths list.
+%%     8.5- Required dependency libraries pathnames list.
+%%     8.6- Required libraries for preparatory functions.
+%%
+%% III- Model simulation.
+%%   9- Simulation code.
+%%     9.1-  Historical values table.
+%%     9.2-  Test points table.
+%%     9.3-  Simulation functions global code.
+%%     9.4-  Simulation initialization function.
+%%     9.5-  Before "nodes voltage calculation" function code.
+%%       9.5.1- Sources calculation.
+%%       9.5.2- Command selection.
+%%       9.5.3- Admittances matrix calculation (YMadd).
+%%     9.6-  After "nodes voltage calculation" function code.
+%%       9.6.1- Historical values calculation.
+%%       9.6.2- Commands outputs calculation.
+%%       9.6.3- Determine nodes to recalculate.
+%%     9.7- "Includes" paths list.
+%%     9.8- Required simulation dependency libraries pathnames list.
+%%     9.9- Libraries required by simulation functions.
+%%    10.0- Simulation finalization function.
+%%
+%% -----------------------------------------------------------------------------
+%% Beginning of model definition:
+%% -----------------------------------------------------------------------------
+%%
+%% I- Model description.
+%%
+%%   1- General informations or parameters.
+%%      -----------------------------------
+%%
+%%      UCM_NAME:      Model Unique Name, already assigned
+%%      UCM_TYPE:      Model type (Choice of NetworkElement or CommandBlock)
+%%                     Default: NetworkElement.
+%%      UCM_CATEGORY:  Model category (Breaker, Transformer, etc.)
+%%                     Default : User
+%%      UCM_VERSION:   User's model version number (in a string)
+%%      UCM_EXEC_TIME: Estimated model's average simulation step time.
+%%                     Default: 5.0e-6 s.
+%%      UCM_DESCRIPTION: Short description of model (one phrase).
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN GENERAL INFORMATION -- Enter or modify general information
+
+UCM_NAME        = server
+UCM_TYPE        = NetworkElement
+UCM_CATEGORY    = User
+UCM_VERSION     = "1.0"
+UCM_EXEC_TIME   = 50.0e-6
+UCM_DESCRIPTION = "Description of server"
+
+%% END GENERAL INFORMATION
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%   2- Model's documentation.
+%%      ----------------------
+%%
+%%      Enter text or reference after comments.
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN DOCUMENTATION -- Enter model's documentation after this line...
+
+%% END DOCUMENTATION
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%   3- Form parameters (tunables).
+%%
+%%      Form parameters can be changed by the user, through an editable form
+%%      or by any other public mean. Parameters definitions
+%%      are in a tabular form.
+%%
+%%     3.1- General parameters table (10 columns).
+%%          Contains the general parameters of the model.
+%%
+%%      Format: ( 10 columns records)
+%%
+%%      Name  Tag  Units  Type  Size  Default Min Max Flags   Description
+%%      ----  ---  -----  ----  ----  ------- --- --- ------  -----------
+%%
+%%      Columns descriptions:
+%%
+%%      Name        :  Unique name of parameter (in model's scope).
+%%      Tag         :  Descriptive name to use in forms.
+%%                     SHOULD BE BETWEEN QUOTES!!! ("Tag")
+%%      Units       :  Parameter's units.
+%%                     Text field : Must follows the SI symbols definitions.
+%%                     Enter a "-" when not used
+%%      Type        :  Type of parameter
+%%                     Enter:   int	Integer value(s)
+%%                              double  Real value(s)
+%%      Size        :  Parameter size (1->n).
+%%                     1 defines a scalar.
+%%      Default     :  Default value(s) of parameter.
+%%                     v : Default value for a scalar or an array.
+%%                         (all array's cell will have the same value).
+%%                     [v1 v2 v3 ... vn] : Default values for an array.
+%%                     The last value will be propagated to remaining of array
+%%                     if the default value set is smaller than the array.
+%%      Min         :  Minimum value allowed.
+%%      Max         :  Maximum value allowed.
+%%      Flags       :  Ored values of flags definitions or '-'.
+%%                     Available values : 
+%%                       NOT_SIMUL_MOD : Cannot be modified during simulation.
+%%      Description :  Short description of parameter (BETWEEN DOUBLE QUOTES)
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN TUNABLE PARAMETERS -- Enter parameters table after this line...
+
+%% END TUNABLE PARAMETERS
+
+%%     3.2- Load Flow parameters NOT IMPLEMENTED!!!
+
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%   4- Control IOs.
+%%      ------------
+%%
+%%      Control IOs will be visible on network schematics as inputs
+%%      and outputs connectors.
+%%
+%%      Control IOs definitions table (7 columns).
+%%
+%%      Format: ( 7 fields records)
+%%
+%%      NOTE: All control connectors have a UNITARY width
+%%            but they can be grouped.
+%%
+%%      Name  Units  Type  Direction  Position Group  Description
+%%      ----  -----  ----  ---------  -------- -----  -----------
+%%
+%%      Fields descriptions:
+%%
+%%      Name           :  Connector's unique identifier (tag).
+%%             
+%%      Units          :  Signal's units.
+%%                        Text field: use the official SI symbols.
+%%                        Enter a "-" when not used
+%%      Type           :  Signal type
+%%                        Enter:   int    : Integer
+%%                                 double : Real double precision
+%%      Direction      :  Enter: in    For model's input signal
+%%                               out   For model's output signal
+%%      Position       :  Position of connector around the Ucm box
+%%                        in schematic.
+%%                        Choice of :
+%%                          left, right, top, bottom, auto
+%%      Group          :  Group name or "-" for "no group".
+%%                        All the connectors with the same group name
+%%                        will use a single "multiplexed" connector
+%%                        bearing the group name.
+%%      Description    :  Short description of connector.
+%%                        (BETWEEN DOUBLE QUOTES)
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN CONTROL IOS -- Enter control IOs table after this line...
+datain no double in auto I "Data Input" 
+
+switchr no int in auto S "Data Input"
+switchs no int in auto S "Data Input"
+
+dataout no double out auto O "Data Output"
+
+
+%% END CONTROL IOS
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%   5- Model nodes definitions table (6 columns).
+%%
+%%
+%%      Format: ( 6 fields records)
+%%
+%%      Name  Phases    IntExt  Position Connect NL element  Description
+%%      ----  --------  ------  -------- ------------------  -----------
+%%
+%%      Fields descriptions:
+%%
+%%      Name           :  Node's unique identifier.
+%%             
+%%      Phases         :  Number of phases.
+%%                        Text field: Enter a number (1, 3) or
+%%                                    0 for dynamic number of phases.
+%%      IntExt         :  Nodes can be internal or external.
+%%                        An external node has a connection to the network
+%%                        and will be visible as a "network connector"
+%%                        on the schematic.
+%%                        Values : intern/extern
+%%      Position       :  Position of connector around the Ucm box
+%%                        in schematic (external nodes only!).
+%%                        Choice of :
+%%                          left, right, top, bottom, auto
+%%                          or '-' : Non applicable.
+%%      Connect NL element :
+%%                        Indicates if a non linear element is connected
+%%                        to this node.
+%%                        Text field : Enter "yes" or "no".
+%%      Description    :  Short description of node.
+%%                        (BETWEEN DOUBLE QUOTES)
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN NODES DEFINITIONS -- Enter nodes table after this line...
+
+%% END NODES DEFINITIONS
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%   6- Current sources definitions table (single phase).
+%%
+%%
+%%      Format: ( 3 fields records)                             [1]  o +
+%%                                                                   |
+%%      Name  Pos. End conn.  Neg. End conn.                         |
+%%      ----  --------------  --------------                        _|_
+%%                                                                 / ^ \ I
+%%      Fields descriptions:                                       \_|_/
+%%                                                                   |
+%%      Name           :  Current source unique identifier.          |
+%%                        (Append phase suffix : _a, _b, etc.)  [2]  o -
+%%                        if applicable.
+%%      Pos. End conn. :  Positive end connection point [1].
+%%      Neg. End conn. :  Negative end connection point [2].
+%%
+%%      Connections points accepted values:
+%%
+%%        Node name    :  The name of a node defined in section 4.
+%%        ground       :  Connected to ground.
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN CURRENT SOURCES -- Enter sources table after this line...
+
+%% END CURRENT SOURCES
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%   7- Historical currents definitions table (single phase).
+%%
+%%
+%%      Format: ( 3 fields records)                             [1]  o +
+%%                                                                   |
+%%      Name  Pos. End conn.  Neg. End conn.                         |
+%%      ----  --------------  --------------                        _|_
+%%                                                                 / ^ \ I
+%%      Fields descriptions:                                       \_|_/
+%%                                                                   |
+%%      Name           :  Historical current unique identifier.      |
+%%                        (Append phase suffix : _a, _b, etc.)  [2]  o -
+%%                        if applicable.
+%%      Pos. End conn. :  Positive end connection point [1].
+%%      Neg. End conn. :  Negative end connection point [2].
+%%
+%%      Connections points accepted values:
+%%
+%%        Node name    :  The name of a node defined in section 4.
+%%        ground       :  Connected to ground.
+%%        -            :  Not connected
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN HISTORICAL CURRENTS -- Enter historical currents table after this...
+
+%% END HISTORICAL CURRENTS
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%% II- Preparatory data preprocessing.
+%%
+%%     Due to performances issues, we must do as much work as possible
+%%     before simulation starts. This part never runs in real time.
+%%
+%%   8- Calculated values (used as parameters).
+%%      ---------------------------------------
+%%
+%%      Values to calculate before the simulation starts.
+%%      Simulation tasks will use results of this calculations.
+%%
+%%     8.1- Calculated parameters table. (5 columns).
+%%          Contains the calculated parameters definitions.
+%%
+%%      Format: ( 5 columns records)
+%%
+%%      Name  Units  Type  Size  Description
+%%      ----  -----  ----  ----  -----------
+%%
+%%      Columns descriptions:
+%%
+%%      Name        :  Unique name of parameter (in model's scope).
+%%      Units       :  Parameter's units.
+%%                     Text field : Must follows the SI symbols definitions.
+%%                     Enter a "-" when not used
+%%      Type        :  Type of parameter
+%%                     Enter:   int	Integer value(s)
+%%                              double  Real value(s)
+%%      Size        :  Parameter size (1->n).
+%%                     1 defines a scalar.
+%%      Description :  Short description of parameter (BETWEEN DOUBLE QUOTES)
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN CALCULATED PARAMETERS -- Enter parameters table after this line...
+
+%% END CALCULATED PARAMETERS
+
+%%     8.2- Calculated Load Flow values. NOT IMPLEMENTED!!!
+
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%     8.3- Preparation function code.
+%%          Contains the code to produce the calculated values .
+%%
+%%       8.3.1- Functions global code.
+%%              The following code will be at the beginning of the
+%%              preparatory code file.
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN PREPARATORY GLOBAL CODE -- Enter code under the appropriate comment...
+
+/* 8.3.1.1 -- User includes */
+
+/* 8.3.1.2 -- Definitions */
+
+
+
+
+/* 8.3.1.3 -- Declarations */
+
+/* 8.3.1.4 -- Local functions (static) */
+
+%% END PREPARATORY GLOBAL CODE
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%       8.3.2- Parameters & initial admittance matrix (Yini) calculation code.
+%%
+%%       Enter code here to calculate the initial admittance matrix
+%%       and the calculated parameters.
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN PREPARATION FUNCTION CODE -- Enter code after this line...
+
+%% END PREPARATION FUNCTION CODE
+
+%%       8.3.3- Load Flow results function code. NOT IMPLEMENTED!!!
+
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%     8.4- "Includes" paths list.
+%%           Enter paths of your include files separated by spaces after "=".
+%%           Put an "\" at end of line to continue list on next line.
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN PREPARATORY INCLUDES PATHS LIST -- Modify the following list...
+
+UCM_PREP_INCLUDES_PATHS = 
+
+%% END PREPARATORY INCLUDES PATHS LIST
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%     8.5- Required dependency libraries pathnames list.
+%%          
+%%          Enter the pathnames of your dependency libraries
+%%          separated by spaces after "=".
+%%          Put an "\" at end of line to continue list on next line.
+%%
+%%          NOTE :
+%%
+%%          Use the following special names to select the proper paths and/or
+%%          libraries names if needed. They will be replaced according to
+%%          the system architecture.
+%%
+%%          <UCMA_DIR>        :  Will be replaced by a directory name
+%%                               according to the computer/os
+%%                               combination you have.
+%%          <UCMA_LIB_SUFFX>  :  Current library name suffix (Ex.: .a).
+%%          <UCMA_LIB_RSUFFX> :  Current dynamic library name suffix
+%%                               (Ex. : .so).
+%%          <UCMA_LIB_PREFX>  :  Current library name prefix (Ex.: lib).
+%%
+%%          Exemples :
+%%
+%%            UCM_PREP_DEP_LIBS_PATHNAMES = \	! Always the same library
+%%               /usr/ucm/libmath.a
+%%
+%%            UCM_PREP_DEP_LIBS_PATHNAMES = \	! Changes with architecture
+%%               /user/ucm/libs/<UCMA_DIR>/<UCMA_LIB_PREFX>math<UCMA_LIB_SUFFX>
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN PREPARATORY DEPENDANT LIBRARIES LIST -- Modify the following list...
+
+UCM_PREP_DEP_LIBS_PATHNAMES = 
+
+%% END PREPARATORY DEPENDANT LIBRARIES LIST
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%     8.6- Required libraries for preparatory functions.
+%%          Enter full paths or lib notation (-Lpath -llibrary) of your
+%%          libraries separated by spaces after "=".
+%%          Put an "\" at end of line to continue list on next line.
+%%
+%%          ARCHITECTURE DEPENDANT PATHS: See NOTE in section 8.5
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN PREPARATORY LIBRARIES LIST -- Modify the following list...
+
+UCM_PREP_LIBRARIES = 
+
+%% END PREPARATORY LIBRARIES LIST
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%% III- Model simulation.
+%%
+%%   This sections deals with model's simulation topics.
+%%
+%%   9- Simulation code.
+%%
+%%      Code to simulate the model can be executed before or after the nodes
+%%      voltages calculations. Code that change topology and cause
+%%      recalculation of admittances matrix (YMadd) must be executed before.
+%%
+%%     9.1-  Historical values table.
+%%
+%%           Contains the historical values of the model.
+%%           Historical values are used to keep data from step to step.
+%%
+%%      Format: ( 5 columns records)
+%%
+%%      Name  Type  Size  Default Description
+%%      ----  ----  ----  ------- -----------
+%%
+%%      Columns descriptions:
+%%
+%%      Name        :  Unique name of historical (in model's scope).
+%%      Type        :  Type of historical value
+%%                     Enter:   int	Integer value(s)
+%%                              double  Real value(s)
+%%      Size        :  Historical value size (1->n).
+%%                     1 defines a scalar.
+%%      Default     :  Default value(s).
+%%                     v : Default value for a scalar or an array.
+%%                         (all array's cell will have the same value).
+%%                     [v1 v2 v3 ... vn] : Default values for an array.
+%%                     The last value will be propagated to remaining of array
+%%                     if the default value set is smaller than the array.
+%%      Description :  Short description of historical value
+%%                     (BETWEEN DOUBLE QUOTES)
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN HISTORICAL VALUES -- Enter the table after this line...
+
+%% END HISTORICAL VALUES
+
+%%     9.2-  (Test points table. NOT IMPLEMENTED!!!)
+
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%     9.3-  Simulation functions global code.
+%%           The following code will be at the beginning of the
+%%           simulation functions file.
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN SIMULATION GLOBAL CODE -- Enter code under the appropriate comment...
+
+/* 9.3.1 -- User includes */
+
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <math.h>
+#include <stdint.h>
+#include <pthread.h>
+#include <time.h>
+ 
+#define PORT     12001
+
+#define MAXLINE 1024
+#define MAX_VALUES	64
+#define noSendData 3
+
+#define MSG_VERSION		2
+#define REMOTE_ADR "192.168.1.188"
+
+/** @todo Implement more message types */
+#define MSG_TYPE_DATA		0 /**< Message contains float values */
+#define MSG_TYPE_START		1 /**< Message marks the beginning of a new simulation case */
+#define MSG_TYPE_STOP		2 /**< Message marks the end of a simulation case */
+
+/** The total size in bytes of a message */
+#define MSG_LEN(values)		(sizeof(struct msg) + MSG_DATA_LEN(values))
+
+/** The length of \p values values in bytes. */
+#define MSG_DATA_LEN(values)	(sizeof(float) * (values))
+
+/** The offset to the first data value in a message. */
+#define MSG_DATA_OFFSET(msg)	((char *) (msg) + offsetof(struct msg, data))
+
+/** Initialize a message with default values */
+#define MSG_INIT(len, seq) (struct msg) {\
+	.version  = MSG_VERSION,	\
+	.type     = MSG_TYPE_DATA,	\
+	.length   = len,	 	\
+	.sequence = seq,		\
+	.id       = 0			\
+}
+
+/** The timestamp of a message in struct timespec format */
+#define MSG_TS(msg) (struct timespec) {	\
+	.tv_sec  = (msg)->ts.sec,	\
+	.tv_nsec = (msg)->ts.nsec	\
+}
+
+/** This message format is used by all clients
+ *
+ * @diafile msg_format.dia
+ **/
+struct msg
+{
+#if BYTE_ORDER == BIG_ENDIAN
+	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
+	unsigned type	: 2;	/**< Data or control message (see MSG_TYPE_*) */
+	unsigned rsvd1	: 2;	/**< Reserved bits */
+#elif BYTE_ORDER == LITTLE_ENDIAN
+	unsigned rsvd1	: 2;	/**< Reserved bits */
+	unsigned type	: 2;	/**< Data or control message (see MSG_TYPE_*) */
+	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
+#else
+  #error Invalid byte-order
+#endif
+
+	uint8_t id;		/**< An id which identifies the source of this sample */
+	uint16_t length;	/**< The number of values in msg::data[]. */
+	uint32_t sequence;	/**< The sequence number is incremented by one for consecutive messages. */
+
+	/** A timestamp per message. */
+	struct {
+		uint32_t sec;	/**< Seconds since 1970-01-01 00:00:00 */
+		uint32_t nsec;	/**< Nanoseconds of the current second. */
+	} ts;
+
+	/** The message payload. */
+	union {
+		float    f;	/**< Floating point values. */
+		uint32_t i;	/**< Integer values. */
+	} data[];
+} __attribute__((packed));
+
+
+
+/* 9.3.2 -- Definitions */
+#if defined(_WIN32)
+  #include <winsock.h>
+#elif defined(__linux__) || defined(__MACH__)
+  #include <sys/types.h>
+  #include <sys/socket.h>
+ #include <netinet/in.h>
+ #include <arpa/inet.h>
+#endif
+
+#define MAXLEN 65536
+#if defined(_WIN32)
+	SOCKET sockfd,sockfds;
+#elif defined(__linux__) || defined(__MACH__)
+    int sockfd,sockfds;
+#endif
+
+
+/* 9.3.3 -- Declarations */
+
+struct sockaddr_in send_addr;
+struct sockaddr_in rec_addr;
+
+
+%% END SIMULATION GLOBAL CODE
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%     9.4-  Simulation initialization function.
+%%           Code executed once before simulation starts.
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN SIMULATION INITIALIZATION FUNCTION CODE -- Enter code ->...
+	int ret;
+	pthread_t tid_send, tid_recv;
+	struct ip_mreq mreq;
+	unsigned char TTL = 1;
+	unsigned int yes=1; 
+
+	
+	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) 
+	{
+        perror("socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+
+	if ((sockfds = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) 
+	{
+        perror("socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+    
+	memset(&rec_addr, 0, sizeof(rec_addr));
+	rec_addr.sin_family    = AF_INET; // IPv4
+    rec_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    rec_addr.sin_port = htons(PORT);
+
+	memset(&send_addr, 0, sizeof(send_addr));
+	send_addr.sin_family    = AF_INET; // IPv4
+    send_addr.sin_addr.s_addr = inet_addr(REMOTE_ADR);
+    send_addr.sin_port = htons(PORT);
+
+	if (bind(sockfd, (struct sockaddr*)&rec_addr, sizeof(struct sockaddr_in)) < 0) 
+		fprintf(stdout,"ERROR DETECTED !!! There is a problem in binding");
+
+	if (connect(sockfds, (struct sockaddr*)&send_addr, sizeof(struct sockaddr_in)) < 0) 
+		fprintf(stdout,"ERROR DETECTED !!! There is a problem in connecting");
+
+	
+	
+	/*	 if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes)) < 0) 
+		 {
+			perror("Reusing ADDR failed");
+			exit(1);
+       }
+	 mreq.imr_multiaddr.s_addr=inet_addr("255");
+     mreq.imr_interface.s_addr=htonl(INADDR_ANY);
+	
+		ret = setsockopt(sockfd,IPPROTO_IP,IP_ADD_MEMBERSHIP,&mreq,sizeof(mreq));
+		if (ret == -1) 
+		{
+			fprintf(stdout,"Could not set TTL for multicast send\n");
+			//return EIO;
+		}*/
+
+			
+
+	
+
+%% END SIMULATION INITIALIZATION FUNCTION CODE
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%     9.5-  Before "nodes voltage calculation" function code.
+%%           Code executed before "nodes voltages calculations".
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN BEFORE VOLTAGE CALCULATION CODE -- Enter code ->...
+
+	
+%% END BEFORE VOLTAGE CALCULATION CODE
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%     9.6-  After "nodes voltage calculation" function code.
+%%           Code executed before "nodes voltages calculations".
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN AFTER VOLTAGE CALCULATION -- Enter code ->...
+	
+	//pthread_t tid_send, tid_recv;
+    int ret,n;
+	struct timeval tv;
+	char buf[MSG_LEN(MAX_VALUES)];
+    struct msg *msg = (struct msg *) buf;
+	char bufr[MSG_LEN(MAX_VALUES)];
+    struct msg *msgr = (struct msg *) bufr;
+	struct sockaddr_in cli_addr;
+	float mdldata;
+	int client_ad_size = sizeof(cli_addr);
+	fd_set sd_set;
+	double timeout=1;
+	
+
+	struct timespec now;
+	unsigned int ModelState, SendID, Sequence = 0;
+	int nbSend = 0;
+
+	if(switchr==1)
+	{
+		
+				
+		memset(&cli_addr, 0, sizeof(cli_addr));
+		memset((char *)msgr, 0, sizeof(bufr));
+		n = recvfrom(sockfd, (char *)msgr, sizeof(bufr), 0, (struct sockaddr *)&cli_addr, &client_ad_size);
+		
+		msgr->length   = htons(msgr->length);
+		msgr->sequence = htonl(msgr->sequence);
+		msgr->ts.sec   = htonl(msgr->ts.sec);
+		msgr->ts.nsec  = htonl(msgr->ts.nsec);
+		msgr->data[0].i = ntohl(msgr->data[0].i);
+		dataout=(float) msgr->data[0].f;
+		
+	}
+
+	if(switchs==1)
+	{
+
+		clock_gettime(CLOCK_REALTIME, &now);
+
+		msg->version = MSG_VERSION;
+		msg->type = MSG_TYPE_DATA;
+		msg->rsvd1 = 0;
+		msg->id = 0;
+		msg->length = noSendData;
+		msg->sequence = Sequence++;
+		msg->ts.sec = now.tv_sec;
+		msg->ts.nsec = now.tv_nsec;
+
+		msg->data[0].f = datain;
+		
+		msg->data[0].i = htonl(msg->data[0].i);
+
+
+		msg->length   = htons(msg->length);
+		msg->sequence = htonl(msg->sequence);
+		msg->ts.sec   = htonl(msg->ts.sec);
+		msg->ts.nsec  = htonl(msg->ts.nsec);
+		ret = sendto(sockfds, (char *)msg, sizeof(buf), 0, (struct sockaddr *) &send_addr, sizeof(send_addr));
+		
+	}
+
+// RECEVING DATA
+
+	
+
+	
+
+
+// SENDING DATA
+
+				
+
+%% END AFTER VOLTAGE CALCULATION CODE
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%     9.7-  "Includes" paths list.
+%%           Enter paths of your include files separated by spaces after "=".
+%%           Put an "\" at end of line to continue list on next line.
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN SIMULATION INCLUDES PATHS LIST -- Modify the following list...
+
+UCM_SIMULATION_INCLUDES_PATHS = 
+
+%% END SIMULATION INCLUDES PATHS LIST
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%     9.8-  Required simulation dependency libraries pathnames list.
+%%           Enter the pathnames of your libraries separated
+%%           by spaces after "=".
+%%           Put an "\" at end of line to continue list on next line.
+%%
+%%           ARCHITECTURE DEPENDANT PATHS: See NOTE in section 8.5
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN SIMULATION DEP LIBS LIST -- Modify the following list...
+
+UCM_SIMULATION_DEP_LIBS_PATHNAMES = 
+
+%% END SIMULATION DEP LIBS LIST
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%     9.9- Libraries required by simulation functions.
+%%          Enter full paths or lib notation (-Lpath -llibrary) of your
+%%          libraries separated by spaces after "=".
+%%          Put an "\" at end of line to continue list on next line.
+%%
+%%          ARCHITECTURE DEPENDANT PATHS: See NOTE in section 8.5
+%%
+%%          UCM_SIMULATION_LIBRARIES_<ARCH>: use for compiler dependant librairies 
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN SIMULATION LIBRARIES LIST -- Modify the following list...
+
+UCM_SIMULATION_LIBRARIES = 
+UCM_SIMULATION_LIBRARIES_WINDOWS = 
+UCM_SIMULATION_LIBRARIES_LINUX_RHEL5_32 =  
+UCM_SIMULATION_LIBRARIES_LINUX_RHEL6_64 = 
+UCM_SIMULATION_LIBRARIES_LINUX_SLES9_ia64 = 
+UCM_SIMULATION_LIBRARIES_LINUX_SLES10_ia64 = 
+UCM_SIMULATION_LIBRARIES_LINUX_SLES11SP1_x86_64 = 
+UCM_SIMULATION_LIBRARIES_LINUX_SLES11SP3_x86_64 = 
+UCM_SIMULATION_LIBRARIES_LINUX_SLES12SP1_x86_64 = 
+
+%% END SIMULATION LIBRARIES LIST
+%%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+%%
+%%    10.0-  Simulation finalization function.
+%%           Code executed once before simulation stops.
+%%
+%%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+%% BEGIN SIMULATION FINALIZATION FUNCTION CODE -- Enter code ->...
+close(sockfd);
+close(sockfds);
+
+%% END SIMULATION FINALIZATION FUNCTION CODE
+%% END OF FILE
