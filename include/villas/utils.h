@@ -37,10 +37,6 @@ extern "C" {
 #include <villas/config.h>
 #include <villas/log.h>
 
-#ifdef __cplusplus
-extern "C"{
-#endif
-
 
 #ifdef __GNUC__
   #define LIKELY(x)	__builtin_expect((x),1)
@@ -264,7 +260,8 @@ __attribute__((always_inline)) static inline uint64_t rdtsc()
 }
 
 /** Get log2 of long long integers */
-static inline int log2i(long long x) {
+static inline int log2i(long long x)
+{
 	if (x == 0)
 		return 1;
 
