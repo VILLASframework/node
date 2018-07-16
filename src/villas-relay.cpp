@@ -42,8 +42,8 @@ static lws_vhost *vhost;
 
 /* Forward declarations */
 lws_callback_function protocol_cb;
-struct Session;
-struct Connection;
+class Session;
+class Connection;
 
 static std::map<std::string, std::shared_ptr<Session>> sessions;
 
@@ -101,7 +101,7 @@ public:
 		}
 		else {
 			info("Reusing existing session: %s", sid.c_str());
-			
+
 			return it->second;
 		}
 	}
@@ -125,7 +125,7 @@ protected:
 
 	std::shared_ptr<Frame> currentFrame;
 
-	std::queue<std::shared_ptr<Frame>> outgoingFrames;	
+	std::queue<std::shared_ptr<Frame>> outgoingFrames;
 
 	std::shared_ptr<Session> session;
 
@@ -135,7 +135,7 @@ public:
 		currentFrame(std::make_shared<Frame>()),
 		outgoingFrames()
 	{
-		session = Session::get(sid);
+		session = Session::get(wsi);
 		session->connections[wsi] = std::shared_ptr<Connection>(this);
 
 		info("New connection established to session: %s", session->identifier.c_str());
@@ -162,7 +162,7 @@ public:
 
 		if (lws_is_final_fragment(wsi)) {
 			debug(5, "Received frame, relaying to %zu connections", session->connections.size() - (opts.loopback ? 0 : 1));
-			
+
 			for (auto p : session->connections) {
 				auto c = p.second;
 
@@ -232,7 +232,7 @@ int protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in
 
 	switch (reason) {
 
-		case LWS_CALLBACK_ESTABLISHED:
+		case LWS_CALLBACK_ESTABLISHED: {
 			auto s = Session::get(wsi);
 
 			try {
@@ -243,6 +243,7 @@ int protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in
 				return -1;
 			}
 			break;
+		}
 
 		case LWS_CALLBACK_CLOSED:
 			c->~Connection();

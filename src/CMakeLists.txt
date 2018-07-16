@@ -23,6 +23,7 @@
 # All executables link against libvillas
 link_libraries(villas)
 
+add_executable(villas-relay villas-relay.cpp)
 add_executable(villas-node villas-node.cpp)
 add_executable(villas-test-rtt villas-test-rtt.cpp)
 add_executable(villas-test-shmem villas-test-shmem.cpp)
