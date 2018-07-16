@@ -416,8 +416,8 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 {
 	int readd, nread = 0;
 
-	if (!n->_vt->read)
-		return -1;
+	assert(n->state == STATE_STARTED);
+	assert(node_type(n)->read);
 
 	/* Send in parts if vector not supported */
 	if (node_type(n)->vectorize > 0 && node_type(n)->vectorize < cnt) {
@@ -478,8 +478,8 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 {
 	int sent, nsent = 0;
 
-	if (!n->_vt->write)
-		return -1;
+	assert(n->state == STATE_STARTED);
+	assert(node_type(n)->write);
 
 #ifdef WITH_HOOKS
 	/* Run write hooks */
