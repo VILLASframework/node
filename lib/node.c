@@ -554,6 +554,13 @@ int node_fd(struct node *n)
 	return node_type(n)->fd ? node_type(n)->fd(n) : -1;
 }
 
+struct node_type * node_type(struct node *n)
+{
+	assert(n->state == STATE_INITIALIZED);
+
+	return n->_vt;
+}
+
 struct memory_type * node_memory_type(struct node *n, struct memory_type *parent)
 {
 	return node_type(n)->memory_type ? node_type(n)->memory_type(n, parent) : &memory_hugepage;
