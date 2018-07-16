@@ -226,7 +226,7 @@ static int comedi_start_in(struct node *n)
 	if (ret < 0)
 		error("Invalid command for input subdevice of node '%s'", node_name(n));
 
-	info("Input command:")
+	info("Input command:");
 	comedi_dump_cmd(&cmd, 1);
 
 	ret = comedi_command(c->dev, &cmd);
@@ -318,7 +318,7 @@ static int comedi_start_out(struct node *n)
 	if (ret < 0)
 		error("Invalid command for input subdevice of node '%s'", node_name(n));
 
-	info("Output command:")
+	info("Output command:");
 	comedi_dump_cmd(&cmd, 1);
 
 	ret = comedi_command(c->dev, &cmd);
