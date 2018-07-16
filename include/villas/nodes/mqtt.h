@@ -88,11 +88,11 @@ int mqtt_destroy(struct node *n);
 /** @see node_type::close */
 int mqtt_stop(struct node *n);
 
-/** @see node_type::init */
-int mqtt_init();
+/** @see node_type::type_start */
+int mqtt_type_start();
 
-/** @see node_type::deinit */
-int mqtt_deinit();
+/** @see node_type::type_stop */
+int mqtt_type_stop();
 
 /** @see node_type::read */
 int mqtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);

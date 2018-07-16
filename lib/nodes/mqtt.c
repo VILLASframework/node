@@ -342,7 +342,7 @@ int mqtt_stop(struct node *n)
 	return 0;
 }
 
-int mqtt_init()
+int mqtt_type_start()
 {
 	int ret;
 
@@ -353,7 +353,7 @@ int mqtt_init()
 	return 0;
 }
 
-int mqtt_deinit()
+int mqtt_type_stop()
 {
 	int ret;
 
@@ -420,14 +420,14 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0,
 		.size		= sizeof(struct mqtt),
+		.type.start	= mqtt_type_start,
+		.type.stop	= mqtt_type_stop,
 		.reverse	= mqtt_reverse,
 		.parse		= mqtt_parse,
 		.print		= mqtt_print,
 		.start		= mqtt_start,
 		.destroy	= mqtt_destroy,
 		.stop		= mqtt_stop,
-		.init		= mqtt_init,
-		.deinit		= mqtt_deinit,
 		.read		= mqtt_read,
 		.write		= mqtt_write,
 		.fd		= mqtt_fd

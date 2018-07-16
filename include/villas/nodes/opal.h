@@ -58,15 +58,15 @@ struct opal {
 
 /** Initialize global OPAL settings and maps shared memory regions.
  *
- * @see node_type::init
+ * @see node_type::type_start
  */
-int opal_init(struct super_node *sn);
+int opal_type_start(struct super_node *sn);
 
 /** Free global OPAL settings and unmaps shared memory regions.
  *
- * @see node_type::deinit
+ * @see node_type::type_stop
  */
-int opal_deinit();
+int opal_type_stop();
 
 /** @see node_type::parse */
 int opal_parse(struct node *n, json_t *cfg);

@@ -145,7 +145,7 @@ int iec61850_parse_mapping(json_t *json_mapping, struct list *mapping)
 	return total_size;
 }
 
-int iec61850_init(struct super_node *sn)
+int iec61850_type_start(struct super_node *sn)
 {
 	int ret;
 
@@ -162,7 +162,7 @@ int iec61850_init(struct super_node *sn)
 	return 0;
 }
 
-int iec61850_deinit()
+int iec61850_type_stop()
 {
 	int ret;
 

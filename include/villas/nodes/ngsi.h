@@ -70,15 +70,15 @@ struct ngsi {
 
 /** Initialize global NGSI settings and maps shared memory regions.
  *
- * @see node_type::init
+ * @see node_type::type_start
  */
-int ngsi_init(struct super_node *sn);
+int ngsi_type_start(struct super_node *sn);
 
 /** Free global NGSI settings and unmaps shared memory regions.
  *
- * @see node_type::deinit
+ * @see node_type::type_stop
  */
-int ngsi_deinit();
+int ngsi_type_stop();
 
 /** @see node_type::parse */
 int ngsi_parse(struct node *n, json_t *cfg);

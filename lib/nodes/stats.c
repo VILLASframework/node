@@ -38,7 +38,7 @@
 
 static struct list *nodes; /** The global list of nodes */
 
-int stats_node_init(struct super_node *sn)
+int stats_node_type_start(struct super_node *sn)
 {
 	if (!sn)
 		return -1;
@@ -161,16 +161,16 @@ static struct plugin p = {
 	.description	= "Send statistics to another node",
 	.type		= PLUGIN_TYPE_NODE,
 	.node		= {
-		.vectorize = 1,
-		.size	= sizeof(struct stats_node),
-		.init	= stats_node_init,
-		.parse	= stats_node_parse,
-		.destroy= stats_node_destroy,
-		.print	= stats_node_print,
-		.start	= stats_node_start,
-		.stop	= stats_node_stop,
-		.read	= stats_node_read,
-		.fd	= stats_node_fd
+		.vectorize	= 1,
+		.size		= sizeof(struct stats_node),
+		.type.start	= stats_node_type_start,
+		.parse		= stats_node_parse,
+		.destroy	= stats_node_destroy,
+		.print		= stats_node_print,
+		.start		= stats_node_start,
+		.stop		= stats_node_stop,
+		.read		= stats_node_read,
+		.fd		= stats_node_fd
 	}
 };
 

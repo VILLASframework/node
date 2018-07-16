@@ -309,14 +309,14 @@ static struct plugin p = {
 	.node		= {
 		.vectoroize	= 1,
 		.size		= sizeof(struct opal),
+		.type.start	= opal_type_start,
+		.type.stop	= opal_type_stop,
 		.parse		= opal_parse,
 		.print		= opal_print,
 		.start		= opal_start,
 		.stop		= opal_stop,
 		.read		= opal_read,
-		.write		= opal_write,
-		.init		= opal_init,
-		.deinit		= opal_deinit
+		.write		= opal_write
 	}
 };
 

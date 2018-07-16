@@ -52,7 +52,7 @@ struct stats_node {
 };
 
 /** @see node_type::print */
-int stats_node_init(struct super_node *sn);
+int stats_node_type_start(struct super_node *sn);
 
 /** @see node_type::print */
 char *stats_node_print(struct node *n);

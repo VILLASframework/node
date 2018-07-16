@@ -106,11 +106,11 @@ struct socket {
 };
 
 
-/** @see node_vtable::init */
-int socket_init(struct super_node *sn);
+/** @see node_vtable::type_start */
+int socket_type_start(struct super_node *sn);
 
-/** @see node_type::deinit */
-int socket_deinit();
+/** @see node_type::type_stop */
+int socket_type_stop();
 
 /** @see node_type::open */
 int socket_start(struct node *n);

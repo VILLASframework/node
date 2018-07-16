@@ -52,7 +52,7 @@ static struct plugin p;
 /* Private static storage */
 struct list interfaces = { .state = STATE_DESTROYED };
 
-int socket_init(struct super_node *sn)
+int socket_type_start(struct super_node *sn)
 {
 #ifdef WITH_NETEM
 	int ret;
@@ -111,7 +111,7 @@ found:		list_push(&i->sockets, s);
 	return 0;
 }
 
-int socket_deinit()
+int socket_type_stop()
 {
 #ifdef WITH_NETEM
 	for (size_t j = 0; j < list_length(&interfaces); j++) {
@@ -789,6 +789,8 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0,
 		.size		= sizeof(struct socket),
+		.type.start	= socket_type_start,
+		.type.stop	= socket_type_stop,
 		.destroy	= socket_destroy,
 		.reverse	= socket_reverse,
 		.parse		= socket_parse,
@@ -797,8 +799,6 @@ static struct plugin p = {
 		.stop		= socket_stop,
 		.read		= socket_read,
 		.write		= socket_write,
-		.init		= socket_init,
-		.deinit		= socket_deinit,
 		.fd		= socket_fd
 	}
 };

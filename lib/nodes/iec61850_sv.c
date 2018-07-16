@@ -344,7 +344,7 @@ int iec61850_sv_destroy(struct node *n)
 	return 0;
 }
 
-int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt)
+int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int pulled;
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
@@ -361,7 +361,7 @@ int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt)
 	return pulled;
 }
 
-int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt)
+int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
@@ -429,8 +429,8 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0,
 		.size		= sizeof(struct iec61850_sv),
-		.init		= iec61850_init,
-		.deinit		= iec61850_deinit,
+		.type.start	= iec61850_type_start,
+		.type.stop	= iec61850_type_stop,
 		.parse		= iec61850_sv_parse,
 		.print		= iec61850_sv_print,
 		.start		= iec61850_sv_start,

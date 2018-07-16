@@ -99,9 +99,11 @@ struct iec61850_receiver {
 	};
 };
 
-int iec61850_init(struct super_node *sn);
+/** @see node_type::type_start */
+int iec61850_type_start(struct super_node *sn);
 
-int iec61850_deinit();
+/** @see node_type::type_stop */
+int iec61850_type_stop();
 
 const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name, char fmt);
 

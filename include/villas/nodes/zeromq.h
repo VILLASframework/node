@@ -89,11 +89,11 @@ char * zeromq_print(struct node *n);
 /** @see node_type::parse */
 int zeromq_parse(struct node *n, json_t *cfg);
 
-/** @see node_type::init */
-int zeromq_init();
+/** @see node_type::type_start */
+int zeromq_type_start();
 
-/** @see node_type::deinit */
-int zeromq_deinit();
+/** @see node_type::type_stop */
+int zeromq_type_stop();
 
 /** @see node_type::open */
 int zeromq_start(struct node *n);

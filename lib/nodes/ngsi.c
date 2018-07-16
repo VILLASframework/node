@@ -389,12 +389,12 @@ out:	json_decref(request);
 	return ret;
 }
 
-int ngsi_init(struct super_node *sn)
+int ngsi_type_start(struct super_node *sn)
 {
 	return curl_global_init(CURL_GLOBAL_ALL);
 }
 
-int ngsi_deinit()
+int ngsi_type_stop()
 {
 	free(name);
 
@@ -586,14 +586,14 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0, /* unlimited */
 		.size		= sizeof(struct ngsi),
+		.type.start	= ngsi_type_start,
+		.type.stop	= ngsi_type_stop,
 		.parse		= ngsi_parse,
 		.print		= ngsi_print,
 		.start		= ngsi_start,
 		.stop		= ngsi_stop,
 		.read		= ngsi_read,
 		.write		= ngsi_write,
-		.init		= ngsi_init,
-		.deinit		= ngsi_deinit,
 		.fd		= ngsi_fd
 	}
 };

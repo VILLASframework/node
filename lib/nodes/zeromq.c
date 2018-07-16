@@ -232,14 +232,14 @@ char * zeromq_print(struct node *n)
 	return buf;
 }
 
-int zeromq_init(struct super_node *sn)
+int zeromq_type_start(struct super_node *sn)
 {
 	context = zmq_ctx_new();
 
 	return context == NULL;
 }
 
-int zeromq_deinit()
+int zeromq_type_stop()
 {
 	return zmq_ctx_term(context);
 }
@@ -527,14 +527,14 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0,
 		.size		= sizeof(struct zeromq),
+		.type.start	= zeromq_type_start,
+		.type.stop	= zeromq_type_stop,
 		.reverse	= zeromq_reverse,
 		.parse		= zeromq_parse,
 		.print		= zeromq_print,
 		.start		= zeromq_start,
 		.stop		= zeromq_stop,
 		.destroy	= zeromq_destroy,
-		.init		= zeromq_init,
-		.deinit		= zeromq_deinit,
 		.read		= zeromq_read,
 		.write		= zeromq_write,
 		.fd		= zeromq_fd

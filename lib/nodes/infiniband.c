@@ -670,16 +670,6 @@ int ib_stop(struct node *n)
 	return 0;
 }
 
-int ib_init(struct super_node *n)
-{
-	return 0;
-}
-
-int ib_deinit()
-{
-	return 0;
-}
-
 int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
@@ -909,8 +899,6 @@ static struct plugin p = {
 		.start          = ib_start,
 		.destroy        = ib_destroy,
 		.stop           = ib_stop,
-		.init           = ib_init,
-		.deinit         = ib_deinit,
 		.read           = ib_read,
 		.write          = ib_write,
 		.fd             = ib_fd,

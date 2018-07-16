@@ -50,29 +50,38 @@ struct node_type {
 
 	enum state state;
 
-	/** Global initialization per node type.
-	 *
-	 * This callback is invoked once per node-type.
-	 *
-	 * @retval 0	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
-	 */
-	int (*init)(struct super_node *sn);
+	struct {
+		/** Global initialization per node type.
+		 *
+		 * This callback is invoked once per node-type.
+		 *
+		 * @retval 0	Success. Everything went well.
+		 * @retval <0	Error. Something went wrong.
+		 */
+		int (*start)(struct super_node *sn);
 
-	/** Global de-initialization per node type.
-	 *
-	 * This callback is invoked once per node-type.
-	 *
-	 * @retval 0	Success. Everything went well.
-	 * @retval <0	Error. Something went wrong.
-	 */
-	int (*deinit)();
+		/** Global de-initialization per node type.
+		 *
+		 * This callback is invoked once per node-type.
+		 *
+		 * @retval 0	Success. Everything went well.
+		 * @retval <0	Error. Something went wrong.
+		 */
+		int (*stop)();
+	} type;
 
 	/** Allocate memory for an instance of this type.
 	 *
 	 * @return A pointer to the node-type specific private data.
 	 */
 	void * (*create)();
+
+	/** Initialize a new node instance.
+	 *
+	 * @retval 0	Success. Everything went well.
+	 * @retval <0	Error. Something went wrong.
+	 */
+	int (*init)();
 
 	/** Free memory of an instance of this type.
 	 *

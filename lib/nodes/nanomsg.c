@@ -221,7 +221,7 @@ int nanomsg_destroy(struct node *n)
 	return 0;
 }
 
-int nanomsg_deinit()
+int nanomsg_type_stop()
 {
 	nn_term();
 
@@ -284,13 +284,13 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0,
 		.size		= sizeof(struct nanomsg),
+		.type.start	= nanomsg_type_stop,
 		.reverse	= nanomsg_reverse,
 		.parse		= nanomsg_parse,
 		.print		= nanomsg_print,
 		.start		= nanomsg_start,
 		.stop		= nanomsg_stop,
 		.destroy	= nanomsg_destroy,
-		.deinit		= nanomsg_deinit,
 		.read		= nanomsg_read,
 		.write		= nanomsg_write,
 		.fd		= nanomsg_fd
