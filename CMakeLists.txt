@@ -30,6 +30,10 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+if(CMAKE_SOURCE_DIR STREQUAL VILLASnode_SOURCE_DIR)
+    set(TOPLEVEL_PROJECT ON)
+endif()
+
 if(APPLE)
     set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/opt/local/lib/pkgconfig")
 endif()
@@ -96,16 +100,17 @@ if(NOT NANOMSG_FOUND)
 endif()
 
 # Build options
-option(WITH_HOOKS   "Build with support for processing hook plugins"    ON)
+option(WITH_HOOKS   "Build with support for processing hook plugins" ON)
 option(WITH_IO      "Build with support format plugins" ON)
 option(WITH_WEB     "Build with internal webserver" ON)
 option(WITH_API     "Build with remote control API" ON)
 option(WITH_CONFIG  "Build with support for libconfig configuration syntax" ON)
-option(WITH_TOOLS   "Build auxilary tools" ON)
-option(WITH_TESTS   "Run tests" ON)
-option(WITH_PLUGINS "Build plugins" ON)
-option(WITH_CLIENTS "Build client applications" ON)
-option(WITH_DOC     "Build documentation" ON)
+option(WITH_SRC     "Build villas-* executables" ${TOPLEVEL_PROJECT})
+option(WITH_TOOLS   "Build auxilary tools" ${TOPLEVEL_PROJECT})
+option(WITH_TESTS   "Run tests" ${TOPLEVEL_PROJECT})
+option(WITH_PLUGINS "Build plugins" ${TOPLEVEL_PROJECT})
+option(WITH_CLIENTS "Build client applications" ${TOPLEVEL_PROJECT})
+option(WITH_DOC     "Build documentation" ${TOPLEVEL_PROJECT})
 
 set(V 2)
 set(PREFIX ${CMAKE_INSTALL_PREFIX})
@@ -175,15 +180,18 @@ set(BUILDID "v${PROJECT_MAJOR_VERSION}.${PROJECT_MINOR_VERSION}.${PROJECT_PATCH_
 
 add_subdirectory(etc)
 add_subdirectory(lib)
-add_subdirectory(src)
 add_subdirectory(web)
 add_subdirectory(packaging)
+
+if(WITH_SRC)
+    add_subdirectory(src)
+endif()
 
 if(WITH_TOOLS)
     add_subdirectory(tools)
 endif()
 
-if(WITH_TOOLS)
+if(WITH_PLUGINS)
     add_subdirectory(plugins)
 endif()
 
