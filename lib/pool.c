@@ -64,7 +64,7 @@ int pool_destroy(struct pool *p)
 
 	queue_destroy(&p->queue);
 
-	void *buffer = (char*) p + p->buffer_off;
+	void *buffer = (char *) p + p->buffer_off;
 	ret = memory_free(buffer);
 	if (ret == 0)
 		p->state = STATE_DESTROYED;

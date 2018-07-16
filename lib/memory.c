@@ -128,7 +128,7 @@ int memory_free(void *ptr)
 	if (!ma)
 		return -1;
 
-	debug(LOG_MEM | 5, "Releasing %#zx bytes of %s memory", ma->length, ma->type->name);
+	debug(LOG_MEM | 5, "Releasing %#zx bytes of %s memory: %p", ma->length, ma->type->name, ma->address);
 
 	ret = ma->type->free(ma->type, ma);
 	if (ret)
