@@ -160,6 +160,13 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 int node_fd(struct node *n);
 
+struct node_type * node_type(struct node *n);
+{
+	assert(n->type == STATE_INITIALIZED);
+
+	return n->_vt;
+}
+
 struct memory_type * node_memory_type(struct node *n, struct memory_type *parent);
 
 #ifdef __cplusplus
