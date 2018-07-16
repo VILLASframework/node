@@ -70,7 +70,7 @@ static struct memory_allocation * memory_hugepage_alloc(struct memory_type *m, s
 	ma->alignment = alignment;
 	ma->type = m;
 
-	ma->address = mmap(NULL, len, prot, flags, -1, 0);
+	ma->address = mmap(NULL, ma->length, prot, flags, -1, 0);
 	if (ma->address == MAP_FAILED) {
 		free(ma);
 		return NULL;
