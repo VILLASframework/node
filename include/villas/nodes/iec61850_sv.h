@@ -95,9 +95,9 @@ int iec61850_sv_stop(struct node *n);
 
 int iec61850_sv_destroy(struct node *n);
 
-int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt);
+int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *released);
 
-int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt);
+int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *released);
 
 int iec61850_sv_fd(struct node *n);
 

@@ -344,7 +344,7 @@ int iec61850_sv_destroy(struct node *n)
 	return 0;
 }
 
-int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt)
+int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *released)
 {
 	int pulled;
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
@@ -361,7 +361,7 @@ int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt)
 	return pulled;
 }
 
-int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt)
+int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *released)
 {
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
