@@ -40,11 +40,6 @@ enum poll_mode_e {
 	BUSY
 };
 
-struct r_addr_key_s {
-	uint64_t remote_addr;
-	uint32_t rkey;
-};
-
 struct infiniband {
 	/* IBV/RDMA CM structs */
 	struct context_s {
@@ -58,11 +53,7 @@ struct infiniband {
 		struct ibv_comp_channel *comp_channel;
 	} ctx;
 
-	/* Work Completion related */
-	struct poll_s {
-		enum poll_mode_e poll_mode;
-	} poll;
-
+	/* Set if threads should be aborted */
 	int stopThreads;
 
 	/* Connection specific variables */
@@ -72,35 +63,25 @@ struct infiniband {
 		enum rdma_port_space port_space;
 		int timeout;
 
-		struct r_addr_key_s *r_addr_key;
-
 		pthread_t rdma_cm_event_thread;
 
 		int send_inline;
 
-		int available_recv_wrs;
 		struct send_wc_stack_s {
 			uint64_t* array;
 			unsigned top;
 		} send_wc_stack;
 
+		int available_recv_wrs;
 		int buffer_subtraction;
 
 	} conn;
-
-	/* Memory related variables */
-	struct ib_memory {
-		struct pool p_recv;
-		struct pool p_send;
-
-		struct ibv_mr *mr_recv;
-		struct ibv_mr *mr_send;
-	} mem;
 
 	/* Queue Pair init variables */
 	struct ibv_qp_init_attr qp_init;
 
 	/* Misc settings */
+	enum poll_mode_e poll_mode;
 	int is_source;
 	int recv_cq_size;
 	int send_cq_size;
