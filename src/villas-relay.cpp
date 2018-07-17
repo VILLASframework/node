@@ -30,9 +30,12 @@
 
 #include <string.h>
 
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_sinks.h>
+
 #include <libwebsockets.h>
 
-#include <villas/utils.h>
+auto console = spdlog::stdout_color_mt("console");
 
 /** The libwebsockets server context. */
 static lws_context *context;
@@ -95,12 +98,12 @@ public:
 
 			sessions[sid] = s;
 
-			info("Creating new session: %s", sid.c_str());
+			console->info("Creating new session: {}", sid);
 
 			return s;
 		}
 		else {
-			info("Reusing existing session: %s", sid.c_str());
+			console->info("Reusing existing session: ", sid);
 
 			return it->second;
 		}
@@ -138,11 +141,11 @@ public:
 		session = Session::get(wsi);
 		session->connections[wsi] = std::shared_ptr<Connection>(this);
 
-		info("New connection established to session: %s", session->identifier.c_str());
+		console->info("New connection established to session: {}", session->identifier);
 	}
 
 	~Connection() {
-		info("Connection closed");
+		console->info("Connection closed");
 
 		session->connections.erase(wsi);
 	}
@@ -161,7 +164,7 @@ public:
 		currentFrame->insert(currentFrame->end(), (uint8_t *) in, (uint8_t *) in + len);
 
 		if (lws_is_final_fragment(wsi)) {
-			debug(5, "Received frame, relaying to %zu connections", session->connections.size() - (opts.loopback ? 0 : 1));
+			console->debug("Received frame, relaying to {} connections", session->connections.size() - (opts.loopback ? 0 : 1));
 
 			for (auto p : session->connections) {
 				auto c = p.second;
@@ -207,9 +210,9 @@ static const lws_extension extensions[] = {
 	{ NULL /* terminator */ }
 };
 
-extern log *global_log;
-
 static void logger(int level, const char *msg) {
+	auto log = spdlog::get("lws");
+
 	int len = strlen(msg);
 	if (strchr(msg, '\n'))
 		len -= 1;
@@ -219,10 +222,10 @@ static void logger(int level, const char *msg) {
 		level = LLL_WARN;
 
 	switch (level) {
-		case LLL_ERR:   log_print(global_log, CLR_RED("Web  "), "%.*s", len, msg); break;
-		case LLL_WARN:	log_print(global_log, CLR_YEL("Web  "), "%.*s", len, msg); break;
-		case LLL_INFO:	log_print(global_log, CLR_WHT("Web  "), "%.*s", len, msg); break;
-		default:        log_print(global_log,         "Web  ",  "%.*s", len, msg); break;
+		case LLL_ERR:   log->error("{}", msg); break;
+		case LLL_WARN:	log->warn( "{}", msg); break;
+		case LLL_INFO:	log->info( "{}", msg); break;
+		default:        log->debug("{}", msg); break;
 	}
 }
 
@@ -270,16 +273,17 @@ void usage()
 	std::cout << "  OPTIONS is one or more of the following options:" << std::endl;
 	std::cout << "    -d LVL    set debug level" << std::endl;
 	std::cout << "    -p PORT   the port number to listen on" << std::endl;
-	std::cout << "    -p PROT   the websocket protocol" << std::endl;
+	std::cout << "    -P PROT   the websocket protocol" << std::endl;
 	std::cout << "    -V        show version and exit" << std::endl;
 	std::cout << "    -h        show usage and exit" << std::endl;
 	std::cout << std::endl;
 
-	print_copyright();
+	//print_copyright();
 }
 
 int main(int argc, char *argv[])
 {
+	spdlog::stdout_color_mt("lws");
 	lws_set_log_level((1 << LLL_COUNT) - 1, logger);
 
 	/* Start server */
@@ -305,7 +309,7 @@ int main(int argc, char *argv[])
 				opts.loopback = true;
 				break;
 			case 'V':
-				print_version();
+				//print_version();
 				exit(EXIT_SUCCESS);
 			case 'h':
 			case '?':
@@ -316,7 +320,8 @@ int main(int argc, char *argv[])
 		continue;
 
 check:	if (optarg == endptr)
-			error("Failed to parse parse option argument '-%c %s'", c, optarg);
+		console->error("Failed to parse parse option argument '-{} {}'", c, optarg);
+		exit(EXIT_FAILURE);
 	}
 
 	if (argc - optind < 0) {
@@ -325,12 +330,16 @@ check:	if (optarg == endptr)
 	}
 
 	context = lws_create_context(&ctx_info);
-	if (context == NULL)
-		error("WebSocket: failed to initialize server context");
+	if (context == NULL) {
+		console->error("WebSocket: failed to initialize server context");
+		exit(EXIT_FAILURE);
+	}
 
 	vhost = lws_create_vhost(context, &ctx_info);
-	if (vhost == NULL)
-		error("WebSocket: failed to initialize virtual host");
+	if (vhost == NULL) {
+		console->error("WebSocket: failed to initialize virtual host");
+		exit(EXIT_FAILURE);
+	}
 
 	for (;;)
 		lws_service(context, 100);

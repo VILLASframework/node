@@ -77,6 +77,7 @@ find_package(Mosquitto)
 find_package(Opal)
 find_package(IBVerbs)
 find_package(RDMACM)
+find_package(spdlog)
 
 # Check programs
 find_program(PROTOBUFC_COMPILER NAMES protoc-c)
