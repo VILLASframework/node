@@ -84,11 +84,11 @@ static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct
 	int ret;
 	struct node *n = (struct node *) userdata;
 	struct mqtt *m = (struct mqtt *) n->_vd;
-    struct sample *smps[n->in.vectorize];
+    	struct sample *smps[n->in.vectorize];
 
 	debug(5, "MQTT: Node %s received a message of %d bytes from broker %s", node_name(n), msg->payloadlen, m->host);
 
-    ret = sample_alloc_many(&m->pool, smps, n->in.vectorize);
+    	ret = sample_alloc_many(&m->pool, smps, n->in.vectorize);
 	if (ret<0) {
 		warn("Pool underrun in subscriber of %s", node_name(n));
 		return;
