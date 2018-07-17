@@ -5,20 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.6.2] - Unreleased
+## [0.6.5] - Unrelease
 
 ### Changed
 
-- Format identifiers such as `raw-flt32` now use dots instead of hyphens in their name.
-  Please update your configuration files accordingly.
+- The configuration of many node-types is now splitted into seperate `in` and `out` sections. Please update your configuration files accordingly.
+
+## [0.6.4] - 2018-07-18
+
+### Added
+
+- New client User Code Model (UCM) for OPAL-RT HYPERSIM digital real-time simulator
+- New node-types:
+  - `infiniband` is using the Infiniband IBverbs and RDMA CM APIs for a low latency interface between simualation nodes.
+  - `comedi` adds support for ADC and DAC cards supported by the [Comedi Linux control and measurment device interface](http://comedi.org).
+- All header files can now be imported into C++ code. Missing `extern "C"` declarations have been added.
+
+### Changed
+
+- The VILLASnode project is now built with [CMake](http://cmake.org). The old Makefile have been removed.
+- The VILLASnode project will be gradually ported to C++. The tools (`/tools/`), executables (`/src/`) and plugins (`/plugins/`) have already been convert to C++ code.
+
+## [0.6.3] - 2018-06-04
+
+### Added
+
+- The `csv` IO format has been splitted into a similar `tsv` IO format which uses tabulators instead of commas.
+- The `struct queue_signalled` supports now synchronization under Mac OS X.
+- A new `poll` setting allows the user to enable/disable the usage of `poll(2)` when reading from multiple source nodes.
+
+### Changed
+
+- Started splitting the node configuration into a send and receive side. This changes will be soon also reflected in a changed configuration file syntax.
+- Docker images are now based on Fedora 28.
+
+### Fixed
+
+- We now correctly determine with terminal size when executed in GDB or by the CI runner.
+
+## [0.6.2] - 2018-05-14
+
+### Added
+
+- A Docker application image can now be build in a single step using `make docker`. 
+
+### Changed
+
+- The IO format names have changed. They now use dots (`raw.flt32`) instead of hyphens (`raw-flt32`) in their name. Please update your configuration files accordingly.
 
 ## [0.6.1] - 2018-02-17
+
+### Changed
+
+- Rewrite of IO formatting subsystem/
 
 ### Added
 
 - New node-types:
   - `mqtt` for MQTT / Mosquitto
-- `make help` target
+- A new `make help` target shows the current build configuration and available targets.
 
 ### Fixed
 
