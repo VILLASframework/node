@@ -509,15 +509,18 @@ UCM_PREP_LIBRARIES =
 #include <stdint.h>
 #include <pthread.h>
 #include <time.h>
- 
-#define PORT     12001
 
-#define MAXLINE 1024
-#define MAX_VALUES	64
-#define noSendData 3
+/***** User Settings Start ******/
+
+#define PORT			12001
+#define REMOTE_ADR		"192.168.1.188"
+
+#define MAX_VALUES		64
+#define NO_SEND_DATA	3
+
+/***** User Settings End ******/
 
 #define MSG_VERSION		2
-#define REMOTE_ADR "192.168.1.188"
 
 /** @todo Implement more message types */
 #define MSG_TYPE_DATA		0 /**< Message contains float values */
@@ -584,7 +587,6 @@ struct msg
 } __attribute__((packed));
 
 
-
 /* 9.3.2 -- Definitions */
 #if defined(_WIN32)
   #include <winsock.h>
@@ -618,31 +620,26 @@ struct sockaddr_in rec_addr;
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN SIMULATION INITIALIZATION FUNCTION CODE -- Enter code ->...
 	int ret;
-	pthread_t tid_send, tid_recv;
 	struct ip_mreq mreq;
-	unsigned char TTL = 1;
-	unsigned int yes=1; 
+	unsigned int yes = 1; 
 
-	
-	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) 
-	{
+	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
 
-	if ((sockfds = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) 
-	{
+	if ((sockfds = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
         perror("socket creation failed");
         exit(EXIT_FAILURE);
     }
     
 	memset(&rec_addr, 0, sizeof(rec_addr));
-	rec_addr.sin_family    = AF_INET; // IPv4
+	rec_addr.sin_family = AF_INET; // IPv4
     rec_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     rec_addr.sin_port = htons(PORT);
 
 	memset(&send_addr, 0, sizeof(send_addr));
-	send_addr.sin_family    = AF_INET; // IPv4
+	send_addr.sin_family = AF_INET; // IPv4
     send_addr.sin_addr.s_addr = inet_addr(REMOTE_ADR);
     send_addr.sin_port = htons(PORT);
 
@@ -651,27 +648,23 @@ struct sockaddr_in rec_addr;
 
 	if (connect(sockfds, (struct sockaddr*)&send_addr, sizeof(struct sockaddr_in)) < 0) 
 		fprintf(stdout,"ERROR DETECTED !!! There is a problem in connecting");
+	
+#if 0
+	// Join a multicast group
+	mreq.imr_multiaddr.s_addr=inet_addr("255");
+	mreq.imr_interface.s_addr=htonl(INADDR_ANY);
 
-	
-	
-	/*	 if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(yes)) < 0) 
-		 {
-			perror("Reusing ADDR failed");
-			exit(1);
-       }
-	 mreq.imr_multiaddr.s_addr=inet_addr("255");
-     mreq.imr_interface.s_addr=htonl(INADDR_ANY);
-	
-		ret = setsockopt(sockfd,IPPROTO_IP,IP_ADD_MEMBERSHIP,&mreq,sizeof(mreq));
-		if (ret == -1) 
-		{
-			fprintf(stdout,"Could not set TTL for multicast send\n");
-			//return EIO;
-		}*/
+	if (setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq) < 0)  {
+		perror("Could not join Multicast group");
+		exit(1);
+	}
 
-			
+	if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0) {
+		perror("Reusing ADDR failed");
+		exit(1);
+	}
+#endif
 
-	
 
 %% END SIMULATION INITIALIZATION FUNCTION CODE
 %%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -692,77 +685,59 @@ struct sockaddr_in rec_addr;
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN AFTER VOLTAGE CALCULATION -- Enter code ->...
 	
-	//pthread_t tid_send, tid_recv;
-    int ret,n;
-	struct timeval tv;
-	char buf[MSG_LEN(MAX_VALUES)];
-    struct msg *msg = (struct msg *) buf;
-	char bufr[MSG_LEN(MAX_VALUES)];
-    struct msg *msgr = (struct msg *) bufr;
-	struct sockaddr_in cli_addr;
-	float mdldata;
-	int client_ad_size = sizeof(cli_addr);
-	fd_set sd_set;
-	double timeout=1;
+	int ret;
 	
+	/* Receiving data */
+	char bufr[MSG_LEN(MAX_VALUES)];
+	struct msg *msgr = (struct msg *) bufr;
 
-	struct timespec now;
-	unsigned int ModelState, SendID, Sequence = 0;
-	int nbSend = 0;
+	struct sockaddr_in cli_addr;
+	int cli_addrlen = sizeof(cli_addr);
 
-	if(switchr==1)
-	{
-		
-				
+	if (switchr == 1) {	
 		memset(&cli_addr, 0, sizeof(cli_addr));
-		memset((char *)msgr, 0, sizeof(bufr));
-		n = recvfrom(sockfd, (char *)msgr, sizeof(bufr), 0, (struct sockaddr *)&cli_addr, &client_ad_size);
+		memset((char *) msgr, 0, sizeof(bufr));
+		
+		ret = recvfrom(sockfd, (char *) msgr, sizeof(bufr), 0, (struct sockaddr *) &cli_addr, &cli_addrlen);
 		
 		msgr->length   = htons(msgr->length);
 		msgr->sequence = htonl(msgr->sequence);
 		msgr->ts.sec   = htonl(msgr->ts.sec);
 		msgr->ts.nsec  = htonl(msgr->ts.nsec);
 		msgr->data[0].i = ntohl(msgr->data[0].i);
-		dataout=(float) msgr->data[0].f;
 		
+		dataout = (float) msgr->data[0].f;
 	}
 
-	if(switchs==1)
-	{
+	/* Sending data */
+	char buf[MSG_LEN(MAX_VALUES)];
+	struct msg *msg = (struct msg *) buf;
 
+	struct timespec now;
+	unsigned int sequence = 0;
+
+	if (switchs == 1) {
 		clock_gettime(CLOCK_REALTIME, &now);
 
 		msg->version = MSG_VERSION;
 		msg->type = MSG_TYPE_DATA;
 		msg->rsvd1 = 0;
 		msg->id = 0;
-		msg->length = noSendData;
-		msg->sequence = Sequence++;
+		msg->length = NO_SEND_DATA;
+		msg->sequence = sequence++;
 		msg->ts.sec = now.tv_sec;
 		msg->ts.nsec = now.tv_nsec;
 
-		msg->data[0].f = datain;
-		
+		msg->data[0].f = datain;		
 		msg->data[0].i = htonl(msg->data[0].i);
-
 
 		msg->length   = htons(msg->length);
 		msg->sequence = htonl(msg->sequence);
 		msg->ts.sec   = htonl(msg->ts.sec);
 		msg->ts.nsec  = htonl(msg->ts.nsec);
-		ret = sendto(sockfds, (char *)msg, sizeof(buf), 0, (struct sockaddr *) &send_addr, sizeof(send_addr));
 		
-	}
-
-// RECEVING DATA
-
-	
-
-	
-
-
-// SENDING DATA
-
+		ret = sendto(sockfds, (char *) msg, sizeof(buf), 0, (struct sockaddr *) &send_addr, sizeof(send_addr));
+}
 				
 
 %% END AFTER VOLTAGE CALCULATION CODE
