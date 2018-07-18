@@ -36,19 +36,6 @@
 
 pthread_t main_thread;
 
-void print_copyright()
-{
-	printf("VILLASnode %s (built on %s %s)\n",
-		CLR_BLU(BUILDID), CLR_MAG(__DATE__), CLR_MAG(__TIME__));
-	printf(" Copyright 2014-2017, Institute for Automation of Complex Power Systems, EONERC\n");
-	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
-}
-
-void print_version()
-{
-	printf("%s\n", BUILDID);
-}
-
 int version_parse(const char *s, struct version *v)
 {
 	return sscanf(s, "%u.%u", &v->major, &v->minor) != 2;

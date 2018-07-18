@@ -72,6 +72,7 @@ set(LIB_SRC
     table.c
     bitset.c
     signal.c
+    copyright.c
 )
 
 if(IBVERBS_FOUND AND RDMACM_FOUND)
