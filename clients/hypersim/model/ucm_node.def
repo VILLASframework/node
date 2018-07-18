@@ -3,7 +3,7 @@
 %% Hypersim (Ucm) : (c) Hydro-Quebec -- 2005
 %%
 %% -----------------------------------------------------------------------------
-%% Model : server -- Fri Jun 15 12:07:11 PDT 2018
+%% Model : villas -- Fri Jun 15 12:07:11 PDT 2018
 %% -----------------------------------------------------------------------------
 %%
 %% Definition of a user's created Hypersim model
@@ -87,12 +87,12 @@
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN GENERAL INFORMATION -- Enter or modify general information
 
-UCM_NAME        = server
+UCM_NAME        = villas
 UCM_TYPE        = NetworkElement
 UCM_CATEGORY    = User
 UCM_VERSION     = "1.0"
 UCM_EXEC_TIME   = 50.0e-6
-UCM_DESCRIPTION = "Description of server"
+UCM_DESCRIPTION = "An interface the VILLASnode gateway"
 
 %% END GENERAL INFORMATION
 %%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -104,6 +104,20 @@ UCM_DESCRIPTION = "Description of server"
 %%
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN DOCUMENTATION -- Enter model's documentation after this line...
+
+Full documentation of this model is available at:
+https://villas.fein-aachen.org/doc/node-client-hypersim.html
+
+Author:
+
+## Author
+
+- Anju Meghwani <meghwani@iitk.ac.in>
+
+Anju Meghwani is a Research Establishment Officer at Indian Institute of Kanpur, India and worked in Washington State University, Pullman as visiting scholar in Summer 2018.
+During her visit, she developed an interfacing framework for VILLASnode and HYPERSIM.
+This work was based on requirements of projects CREDC and UI-ASSIST.
+UI-ASSIST is a joint research project between India and the US.
 
 %% END DOCUMENTATION
 %%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -198,13 +212,12 @@ UCM_DESCRIPTION = "Description of server"
 %%
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN CONTROL IOS -- Enter control IOs table after this line...
+
+switchr no int in auto S "Receive Data"
+switchs no int in auto S "Send Data"
+
 datain no double in auto I "Data Input" 
-
-switchr no int in auto S "Data Input"
-switchs no int in auto S "Data Input"
-
 dataout no double out auto O "Data Output"
-
 
 %% END CONTROL IOS
 %%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -357,9 +370,6 @@ dataout no double out auto O "Data Output"
 
 /* 8.3.1.2 -- Definitions */
 
-
-
-
 /* 8.3.1.3 -- Declarations */
 
 /* 8.3.1.4 -- Local functions (static) */
@@ -499,8 +509,6 @@ UCM_PREP_LIBRARIES =
 
 /* 9.3.1 -- User includes */
 
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -619,8 +627,8 @@ struct sockaddr_in rec_addr;
 %%
 %%vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 %% BEGIN SIMULATION INITIALIZATION FUNCTION CODE -- Enter code ->...
+	
 	int ret;
-	struct ip_mreq mreq;
 	unsigned int yes = 1; 
 
 	if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
@@ -651,8 +659,9 @@ struct sockaddr_in rec_addr;
 	
 #if 0
 	// Join a multicast group
-	mreq.imr_multiaddr.s_addr=inet_addr("255");
-	mreq.imr_interface.s_addr=htonl(INADDR_ANY);
+	struct ip_mreq mreq;
+	mreq.imr_multiaddr.s_addr = inet_addr("255");
+	mreq.imr_interface.s_addr = htonl(INADDR_ANY);
 
 	if (setsockopt(sockfd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq) < 0)  {
 		perror("Could not join Multicast group");

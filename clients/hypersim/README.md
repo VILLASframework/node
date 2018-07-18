@@ -8,4 +8,4 @@ Detailed information for installation and usage of the UCM is provided in the [u
 
 ## Author
 
-- Anju Meghwani <ameghwani@gmail.com>
+- Anju Meghwani <meghwani@iitk.ac.in>
