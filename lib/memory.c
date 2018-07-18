@@ -34,7 +34,7 @@
 #include <villas/hash_table.h>
 #include <villas/kernel/kernel.h>
 
-static struct hash_table allocations = { .state = STATE_DESTROYED };
+struct hash_table allocations = { .state = STATE_DESTROYED };
 
 int memory_init(int hugepages)
 {
@@ -109,10 +109,18 @@ void * memory_alloc(struct memory_type *m, size_t len)
 }
 
 void * memory_alloc_aligned(struct memory_type *m, size_t len, size_t alignment)
-{
-	struct memory_allocation *ma = m->alloc(m, len, alignment);
+{	
+	int ret;
 
-	hash_table_insert(&allocations, ma->address, ma);
+	struct memory_allocation *ma = m->alloc(m, len, alignment);
+	if(ma == NULL){
+		warn("memory_alloc_aligned: allocating memory for memory_allocation failed for memory type %s. Reason: %s", m->name, strerror(errno) );
+	}
+
+	ret = hash_table_insert(&allocations, ma->address, ma);
+	if(ret){
+		warn("memory_alloc_aligned: Inserting into hash table failed!");
+	}
 
 	debug(LOG_MEM | 5, "Allocated %#zx bytes of %#zx-byte-aligned %s memory: %p", ma->length, ma->alignment, ma->type->name, ma->address);
 
