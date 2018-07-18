@@ -72,8 +72,27 @@ static struct memory_allocation * memory_hugepage_alloc(struct memory_type *m, s
 
 	ma->address = mmap(NULL, ma->length, prot, flags, -1, 0);
 	if (ma->address == MAP_FAILED) {
-		free(ma);
-		return NULL;
+		//try again without hugepages as fallback solution, warn the user
+		
+		prot= PROT_READ | PROT_WRITE;
+		//same flags as above without hugepages
+		flags = MAP_PRIVATE | MAP_ANONYMOUS;
+#ifdef __linux__
+		if(getuid() == 0){
+			flags |= MAP_LOCKED;
+		}
+#endif
+		//length has to be aligned with pagesize
+		ma->length = ALIGN(len, getpagesize());
+		//try mmap again
+		ma->address = mmap(NULL, ma->length, prot, flags, -1, 0);
+		if(ma->address == MAP_FAILED){
+			free(ma);
+			return NULL;
+		}
+		else{
+			warn("memory_hugepage_alloc: hugepage could not be mapped, mapped without hugepages instead!");
+		}
 	}
 
 	return ma;
