@@ -351,20 +351,20 @@ check:		if (optarg == endptr)
 	if (!node)
 		error("Node '%s' does not exist!", nodestr);
 
-#ifdef LIBWEBSOCKETS_FOUND
+#ifdef Libwebsockets_FOUND
 	/* Only start web subsystem if villas-pipe is used with a websocket node */
-	if (node->_vt->start == websocket_start) {
+	if (node_type(node)->start == websocket_start) {
 		web_start(&sn.web);
 		api_start(&sn.api);
 	}
-#endif /* LIBWEBSOCKETS_FOUND */
+#endif /* Libwebsockets_FOUND */
 
 	if (reverse)
 		node_reverse(node);
 
-	ret = node_type_start(node->_vt, &sn);
+	ret = node_type_start(node_type(node), &sn);
 	if (ret)
-		error("Failed to intialize node type: %s", node_type_name(node->_vt));
+		error("Failed to intialize node type: %s", node_type_name(node_type(node)));
 
 	ret = node_check(node);
 	if (ret)

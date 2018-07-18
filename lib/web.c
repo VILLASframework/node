@@ -58,14 +58,14 @@ struct lws_protocols protocols[] = {
 		.rx_buffer_size = 0
 	},
 #endif /* WITH_API */
-#ifdef LIBWEBSOCKETS_FOUND
+#ifdef Libwebsockets_FOUND
 	{
 		.name = "live",
 		.callback = websocket_protocol_cb,
 		.per_session_data_size = sizeof(struct websocket_connection),
 		.rx_buffer_size = 0
 	},
-#endif /* LIBWEBSOCKETS_FOUND */
+#endif /* Libwebsockets_FOUND */
 #if 0 /* not supported yet */
 	{
 		.name = "log",
