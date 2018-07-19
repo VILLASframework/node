@@ -416,7 +416,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 {
 	int readd, nread = 0;
 
-	assert(n->state == STATE_STARTED);
+	assert(n->state == STATE_STARTED || n->state == STATE_CONNECTED);
 	assert(node_type(n)->read);
 
 	/* Send in parts if vector not supported */
@@ -478,7 +478,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 {
 	int sent, nsent = 0;
 
-	assert(n->state == STATE_STARTED);
+	assert(n->state == STATE_STARTED || n->state == STATE_CONNECTED);
 	assert(node_type(n)->write);
 
 #ifdef WITH_HOOKS
