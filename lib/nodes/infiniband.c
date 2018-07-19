@@ -160,7 +160,6 @@ int ib_parse(struct node *n, json_t *cfg)
 	char *remote = NULL;
 	const char *port_space = "RDMA_PS_TCP";
 	const char *poll_mode = "BUSY";
-	const char *qp_type = "IBV_QPT_RC";
 	int timeout = 1000;
 	int recv_cq_size = 128;
 	int send_cq_size = 128;
@@ -180,7 +179,6 @@ int ib_parse(struct node *n, json_t *cfg)
 	ret = json_unpack_ex(cfg, &err, 0, "{s?: o, s?: o, s?: s, s?: s}",
 		"in", &json_in,
 		"out", &json_out,
-		"qp_type", &qp_type,
 		"rdma_port_space", &port_space
 	);
 	if (ret)
@@ -244,13 +242,19 @@ int ib_parse(struct node *n, json_t *cfg)
 	debug(LOG_IB | 4, "Translated %s:%s to a struct addrinfo in node %s", ip_adr, port, node_name(n));
 
 	// Translate port space
-	if (strcmp(port_space, "RDMA_PS_IPOIB") == 0)		ib->conn.port_space = RDMA_PS_IPOIB;
-	else if (strcmp(port_space, "RDMA_PS_TCP") == 0) 	ib->conn.port_space = RDMA_PS_TCP;
-	else if (strcmp(port_space, "RDMA_PS_UDP") == 0) 	ib->conn.port_space = RDMA_PS_UDP;
-	else if (strcmp(port_space, "RDMA_PS_IB") == 0)  	ib->conn.port_space = RDMA_PS_IB;
+	if (strcmp(port_space, "RDMA_PS_TCP") == 0) {
+		ib->conn.port_space = RDMA_PS_TCP;
+		ib->qp_init.qp_type = IBV_QPT_RC;
+	}
+	else if (strcmp(port_space, "RDMA_PS_UDP") == 0) {
+		ib->conn.port_space = RDMA_PS_UDP;
+		ib->qp_init.qp_type = IBV_QPT_UC;
+	}
+	else if (strcmp(port_space, "RDMA_PS_IB") == 0 || strcmp(port_space, "RDMA_PS_IPOIB"))
+		error("Although RDMA_PS_IB and RDMA_PS_IPOIB are valid in rdma_cma.h, they are not supported by VILLAS!");
 	else
-		error("Failed to translate rdma_port_space in node %s. %s is not a valid \
-			port space supported by rdma_cma.h!", node_name(n), port_space);
+		error("rdma_port_space (%s) is not a valid port space supported by rdma_cma.h in node %s!",
+				port_space, node_name(n));
 
 	debug(LOG_IB | 4, "Translated %s to  enum rdma_port_space in node %s", port_space, node_name(n));
 
@@ -277,15 +281,6 @@ int ib_parse(struct node *n, json_t *cfg)
 	debug(LOG_IB | 4, "Set Completion Queue size to %i & %i (in & out) in node %s",
 			recv_cq_size, send_cq_size, node_name(n));
 
-	// Translate QP type
-	if (strcmp(qp_type, "IBV_QPT_RC") == 0)		ib->qp_init.qp_type = IBV_QPT_RC;
-	else if (strcmp(qp_type, "IBV_QPT_UC") == 0)	ib->qp_init.qp_type = IBV_QPT_UC;
-	else if (strcmp(qp_type, "IBV_QPT_UD") == 0)	ib->qp_init.qp_type = IBV_QPT_UD;
-	else
-		error("Failed to translate qp_type in node %s. %s is not a valid \
-			qp_type!", node_name(n), qp_type);
-
-	debug(LOG_IB | 4, "Set Queue Pair type to %s in node %s", qp_type, node_name(n));
 
 	// Translate inline mode
 	ib->conn.send_inline = send_inline;
