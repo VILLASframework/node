@@ -497,6 +497,12 @@ void * ib_rdma_cm_event_thread(void *n)
 
 				break;
 
+			case RDMA_CM_EVENT_UNREACHABLE:
+				warn("Remote server unreachable!");
+
+				ib_continue_as_listen(n, event);
+				break;
+
 			case RDMA_CM_EVENT_CONNECT_REQUEST:
 				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_CONNECT_REQUEST");
 
@@ -521,6 +527,10 @@ void * ib_rdma_cm_event_thread(void *n)
 
 			case RDMA_CM_EVENT_ESTABLISHED:
 				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_ESTABLISHED");
+
+				// If the connection is unreliable connectionless, set appropriate variables
+				if (ib->conn.port_space == RDMA_PS_UDP)
+					ib->conn.ud = event->param.ud;
 
 				node->state = STATE_CONNECTED;
 
@@ -765,6 +775,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	struct ibv_sge sge[cnt];
 	struct ibv_wc wc[cnt];
 	struct ibv_mr *mr;
+	struct ibv_ah *ah;
 
 	int ret;
 	int sent = 0; //Used for first loop: prepare work requests to post to send queue
@@ -779,11 +790,22 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 		// Get Memory Region
 		mr = memory_ib_get_mr(smps[0]);
 
+		// Create address handle
+		ah = (ib->conn.port_space == RDMA_PS_UDP) ? ibv_create_ah(ib->ctx.pd, &ib->conn.ud.ah_attr) : NULL;
+
 		for (sent = 0; sent < cnt; sent++) {
 			// Set Scatter/Gather element to data of sample
 			sge[sent].addr = (uint64_t) &smps[sent]->data;
 			sge[sent].length = smps[sent]->length*sizeof(double);
 			sge[sent].lkey = mr->lkey;
+
+			// Check if connection is connected or unconnected and set appropriate values
+			if (ah) {
+				info("DLID: %i", ib->conn.ud.ah_attr.dlid);
+				wr[sent].wr.ud.ah = ah;
+				wr[sent].wr.ud.remote_qkey = ib->conn.ud.qkey;
+				wr[sent].wr.ud.remote_qpn = ib->conn.ud.qp_num;
+			}
 
 			// Check if data can be send inline
 			int send_inline = (sge[sent].length < ib->qp_init.cap.max_inline_data) ?
