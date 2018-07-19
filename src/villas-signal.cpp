@@ -157,6 +157,11 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	// nt == n._vt
+	ret = node_type_start(nt, NULL);
+	if (ret)
+		error("Failed to initialize node type: %s", node_type_name(nt));
+
 	ret = node_check(&n);
 	if (ret)
 		error("Failed to verify node configuration");
