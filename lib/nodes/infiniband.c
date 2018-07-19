@@ -775,7 +775,6 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	struct ibv_sge sge[cnt];
 	struct ibv_wc wc[cnt];
 	struct ibv_mr *mr;
-	struct ibv_ah *ah;
 
 	int ret;
 	int sent = 0; //Used for first loop: prepare work requests to post to send queue
@@ -790,9 +789,6 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 		// Get Memory Region
 		mr = memory_ib_get_mr(smps[0]);
 
-		// Create address handle
-		ah = (ib->conn.port_space == RDMA_PS_UDP) ? ibv_create_ah(ib->ctx.pd, &ib->conn.ud.ah_attr) : NULL;
-
 		for (sent = 0; sent < cnt; sent++) {
 			// Set Scatter/Gather element to data of sample
 			sge[sent].addr = (uint64_t) &smps[sent]->data;
@@ -800,9 +796,8 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 			sge[sent].lkey = mr->lkey;
 
 			// Check if connection is connected or unconnected and set appropriate values
-			if (ah) {
-				info("DLID: %i", ib->conn.ud.ah_attr.dlid);
-				wr[sent].wr.ud.ah = ah;
+			if (ib->conn.port_space == RDMA_PS_UDP) {
+				wr[sent].wr.ud.ah = ibv_create_ah(ib->ctx.pd, &ib->conn.ud.ah_attr);
 				wr[sent].wr.ud.remote_qkey = ib->conn.ud.qkey;
 				wr[sent].wr.ud.remote_qpn = ib->conn.ud.qp_num;
 			}
