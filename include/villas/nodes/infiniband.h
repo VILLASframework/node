@@ -53,38 +53,55 @@ struct infiniband {
 		struct ibv_comp_channel *comp_channel;
 	} ctx;
 
-	/* Set if threads should be aborted */
+	/* Queue Pair init variables */
+	struct ibv_qp_init_attr qp_init;
+
+	/* Size of receive and send completion queue */
+	int recv_cq_size;
+	int send_cq_size;
+
+	/* Bool, set if threads should be aborted */
 	int stopThreads;
 
 	/* Connection specific variables */
 	struct connection_s {
 		struct addrinfo *src_addr;
 		struct addrinfo *dst_addr;
+
+		/* RDMA_PS_TCP or RDMA_PS_UDP */
 		enum rdma_port_space port_space;
+
+		/* Timeout for rdma_resolve_route */
 		int timeout;
 
+		/* Thread to monitor RDMA CM Event threads */
 		pthread_t rdma_cm_event_thread;
 
+		/* Bool, should data be send inline if possible? */
 		int send_inline;
 
+		/* Stack to temporarily save sent sample */
 		struct send_wc_stack_s {
 			uint64_t* array;
 			unsigned top;
 		} send_wc_stack;
 
+		/* Counter to keep track of available recv. WRs */
 		int available_recv_wrs;
+
+		/* Fixed number to substract from min. number available
+		 * WRs in receive queue */
 		int buffer_subtraction;
+
+		/* Unrealiable connectionless data */
+		struct rdma_ud_param ud;
 
 	} conn;
 
-	/* Queue Pair init variables */
-	struct ibv_qp_init_attr qp_init;
-
 	/* Misc settings */
 	enum poll_mode_e poll_mode;
+
 	int is_source;
-	int recv_cq_size;
-	int send_cq_size;
 };
 
 /** @see node_type::reverse */
