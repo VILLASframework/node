@@ -39,7 +39,7 @@ if(DEFINED PROTOBUFC_COMPILER AND PROTOBUFC_FOUND)
     add_custom_command(
         OUTPUT
             villas.pb-c.c villas.pb-c.h
-        COMMAND ${PROTOBUF_COMPILER}
+        COMMAND ${PROTOBUFC_COMPILER}
             --c_out=${CMAKE_CURRENT_BINARY_DIR}
             villas.proto
         MAIN_DEPENDENCY villas.proto
