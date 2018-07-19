@@ -95,6 +95,8 @@ struct infiniband {
 
 		/* Unrealiable connectionless data */
 		struct rdma_ud_param ud;
+		void *grh_ptr;
+		struct ibv_mr *grh_mr;
 
 	} conn;
 
