@@ -141,6 +141,8 @@ int main(int argc, char *argv[])
 	if (!ft)
 		error("Invalid output format '%s'", format);
 
+	memory_init(0); // Otherwise, ht->size in hash_table_hash() will be zero
+
 	ret = io_init(&io, ft, NULL, IO_FLUSH | (SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET));
 	if (ret)
 		error("Failed to initialize output");
