@@ -37,14 +37,16 @@ int log_parse_wrapper(struct log *l, json_t *cfg)
 	json_t *json_logging = NULL;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{s?: o}",
-			"logging", &json_logging
-	);
-	if (ret)
-		jerror(&err, "Failed to parse global configuration");
+	if(cfg) {
+		ret = json_unpack_ex(cfg, &err, 0, "{s?: o}",
+				"logging", &json_logging
+		);
+		if (ret)
+			jerror(&err, "Failed to parse logging from global configuration");
 
-	if(json_logging)
-		log_parse(l, json_logging);
+		if(json_logging)
+			log_parse(l, json_logging);
+	}
 
 	return 0;
 }
