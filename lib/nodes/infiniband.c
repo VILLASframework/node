@@ -248,7 +248,7 @@ int ib_parse(struct node *n, json_t *cfg)
 	}
 	else if (strcmp(port_space, "RDMA_PS_UDP") == 0) {
 		ib->conn.port_space = RDMA_PS_UDP;
-		ib->qp_init.qp_type = IBV_QPT_UC;
+		ib->qp_init.qp_type = IBV_QPT_UD;
 	}
 	else if (strcmp(port_space, "RDMA_PS_IB") == 0 || strcmp(port_space, "RDMA_PS_IPOIB"))
 		error("Although RDMA_PS_IB and RDMA_PS_IPOIB are valid in rdma_cma.h, they are not supported by VILLAS!");
