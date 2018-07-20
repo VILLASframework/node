@@ -62,6 +62,8 @@ private:
 
 class GpuAllocator : public BaseAllocator<GpuAllocator> {
 public:
+	static constexpr size_t GpuPageSize = 64UL << 10;
+
 	GpuAllocator(Gpu& gpu);
 
 	std::string getName() const;
@@ -71,6 +73,8 @@ public:
 
 private:
 	Gpu& gpu;
+	// TODO: replace by multimap (key is available memory)
+	std::list<std::unique_ptr<LinearAllocator>> chunks;
 };
 
 class GpuFactory : public Plugin {
