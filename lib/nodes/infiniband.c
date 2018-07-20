@@ -611,7 +611,7 @@ int ib_start(struct node *n)
 
 	debug(LOG_IB | 3, "Allocated Protection Domain");
 
-	//ToDo: This is a temporary solution since we don't use the GRH at this moment
+	// Allocate space for 40 Byte GHR. We don't use this.
 	if (ib->conn.port_space == RDMA_PS_UDP) {
 		ib->conn.grh_ptr = alloc(40);
 		ib->conn.grh_mr = ibv_reg_mr(ib->ctx.pd, ib->conn.grh_ptr, 40, IBV_ACCESS_LOCAL_WRITE);
@@ -730,23 +730,27 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 
 		for (int i = 0; i < max_wr_post; i++) {
 			// Prepare receive Scatter/Gather element
+			int j = 0;
 
 			if (ib->conn.port_space == RDMA_PS_UDP) {
-				sge[i][0].addr = (uint64_t) ib->conn.grh_ptr;
-    				sge[i][0].length = 40;
-    				sge[i][0].lkey = ib->conn.grh_mr->lkey;
+				sge[i][j].addr = (uint64_t) ib->conn.grh_ptr;
+    				sge[i][j].length = 40;
+    				sge[i][j].lkey = ib->conn.grh_mr->lkey;
+
+				j++;
 			}
 
-			// [0] if it is TCP, otherwise [1]
-    			sge[i][(ib->conn.port_space == RDMA_PS_UDP)].addr = (uint64_t) &smps[i]->data;
-    			sge[i][(ib->conn.port_space == RDMA_PS_UDP)].length = SAMPLE_DATA_LEN(DEFAULT_SAMPLELEN);
-    			sge[i][(ib->conn.port_space == RDMA_PS_UDP)].lkey = mr->lkey;
+    			sge[i][j].addr = (uint64_t) &smps[i]->data;
+    			sge[i][j].length = SAMPLE_DATA_LEN(DEFAULT_SAMPLELEN);
+    			sge[i][j].lkey = mr->lkey;
+
+			j++;
 
     			// Prepare a receive Work Request
     			wr[i].wr_id = (uintptr_t) smps[i];
 			wr[i].next = &wr[i+1];
     			wr[i].sg_list = sge[i];
-    			wr[i].num_sge = (ib->conn.port_space == RDMA_PS_UDP) ? 2 : 1;
+    			wr[i].num_sge = j;
 		}
 
 		wr[max_wr_post-1].next = NULL;
