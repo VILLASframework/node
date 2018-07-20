@@ -136,6 +136,12 @@ public:
 	MemoryAccessor<T>
 	allocate(size_t num)
 	{
+		if(num == 0) {
+			// doesn't make sense to allocate an empty block
+			logger->error("Trying to allocate empty memory");
+			throw std::bad_alloc();
+		}
+
 		const size_t size = num * sizeof(T);
 		auto mem = allocateBlock(size);
 
