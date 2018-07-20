@@ -488,16 +488,14 @@ void * ib_rdma_cm_event_thread(void *n)
 
 	// Monitor event channel
 	while (rdma_get_cm_event(ib->ctx.ec, &event) == 0) {
+		debug(LOG_IB | 2, "Received communication event: %s", rdma_event_str(event->event));
 
 		switch(event->event) {
 			case RDMA_CM_EVENT_ADDR_RESOLVED:
-				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_ADDR_RESOLVED");
-
 				ret = ib_addr_resolved(n);
 				break;
 
 			case RDMA_CM_EVENT_ADDR_ERROR:
-				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_ADDR_ERROR");
 				warn("Address resolution (rdma_resolve_addr) failed!");
 
 				ib_continue_as_listen(n, event);
@@ -505,13 +503,10 @@ void * ib_rdma_cm_event_thread(void *n)
 				break;
 
 			case RDMA_CM_EVENT_ROUTE_RESOLVED:
-				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_ROUTE_RESOLVED");
-
 				ret = ib_route_resolved(n);
 				break;
 
 			case RDMA_CM_EVENT_ROUTE_ERROR:
-				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_ROUTE_ERROR");
 				warn("Route resolution (rdma_resovle_route) failed!");
 
 				ib_continue_as_listen(n, event);
@@ -519,13 +514,10 @@ void * ib_rdma_cm_event_thread(void *n)
 				break;
 
 			case RDMA_CM_EVENT_CONNECT_REQUEST:
-				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_CONNECT_REQUEST");
-
 				ret = ib_connect_request(n, event->id);
 				break;
 
 			case RDMA_CM_EVENT_CONNECT_ERROR:
-				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_CONNECT_ERROR");
 				warn("An error has occurred trying to establish a connection!");
 
 				ib_continue_as_listen(n, event);
@@ -533,7 +525,6 @@ void * ib_rdma_cm_event_thread(void *n)
 				break;
 
 			case RDMA_CM_EVENT_REJECTED:
-				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_REJECTED");
 				warn("Connection request or response was rejected by the remote end point!");
 
 				ib_continue_as_listen(n, event);
@@ -541,15 +532,12 @@ void * ib_rdma_cm_event_thread(void *n)
 				break;
 
 			case RDMA_CM_EVENT_ESTABLISHED:
-				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_ESTABLISHED");
-
 				node->state = STATE_CONNECTED;
 
 				info("Connection established in node %s", node_name(n));
 				break;
 
 			case RDMA_CM_EVENT_DISCONNECTED:
-				debug(LOG_IB | 2, "Received RDMA_CM_EVENT_DISCONNECTED");
 				node->state = STATE_STARTED;
 
 				ret = ib_disconnect(n);
