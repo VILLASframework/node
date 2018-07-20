@@ -22,7 +22,6 @@
 
 #include <string.h>
 #include <math.h>
-#include <unistd.h>
 
 #include <villas/nodes/infiniband.h>
 #include <villas/plugin.h>
@@ -40,12 +39,11 @@ static int ib_disconnect(struct node *n)
 
 	rdma_disconnect(ib->ctx.id);
 
-	// Give the Completion Queues a chance to fill after rdma_disconnect
-	usleep(50000);
-
 	// If there is anything in the Completion Queue, it should be given back to the framework
 	// Receive Queue
-	while ((wcs = ibv_poll_cq(ib->ctx.recv_cq, ib->recv_cq_size, wc))) {
+	while (ib->conn.available_recv_wrs) {
+		wcs = ibv_poll_cq(ib->ctx.recv_cq, ib->recv_cq_size, wc);
+
 		ib->conn.available_recv_wrs -= wcs;
 
 		for (int j = 0; j < wcs; j++)
@@ -63,9 +61,6 @@ static int ib_disconnect(struct node *n)
 		ib->conn.send_wc_stack.top--;
 		sample_put((struct sample *) ib->conn.send_wc_stack.array[ib->conn.send_wc_stack.top]);
 	}
-
-	if (ib->conn.available_recv_wrs != 0)
-		warn("Was not able to return all samples! %i samples are still blocked ", ib->conn.available_recv_wrs);
 
 	// Destroy QP
 	rdma_destroy_qp(ib->ctx.id);
