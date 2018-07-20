@@ -123,6 +123,12 @@ public:
 		};
 	}
 
+	BaseAllocator(std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> mem) :
+	    BaseAllocator(mem->getAddrSpaceId())
+	{
+		memoryBlock = std::move(mem);
+	}
+
 	virtual std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
 	allocateBlock(size_t size) = 0;
 
@@ -174,6 +180,9 @@ protected:
 	MemoryBlock::deallocator_fn free;
 	SpdLogger logger;
 
+	// optional, if allocator should own the memory block
+	std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> memoryBlock;
+
 private:
 	MemoryManager::AddressSpaceId memoryAddrSpaceId;
 	DerivedAllocator* derivedAlloc;
@@ -194,6 +203,12 @@ public:
 	LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId,
 	                size_t memorySize,
 	                size_t internalOffset = 0);
+
+	LinearAllocator(std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> mem) :
+	    LinearAllocator(mem->getAddrSpaceId(), mem->getSize())
+	{
+		memoryBlock = std::move(mem);
+	}
 
 	size_t getAvailableMemory() const
 	{ return memorySize - nextFreeAddress; }
