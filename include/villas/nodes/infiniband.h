@@ -67,10 +67,7 @@ struct infiniband {
 
 		int send_inline;
 
-		struct send_wc_stack_s {
-			uint64_t* array;
-			unsigned top;
-		} send_wc_stack;
+		struct queue send_wc_buffer;
 
 		int available_recv_wrs;
 		int buffer_subtraction;
