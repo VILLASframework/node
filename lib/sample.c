@@ -215,7 +215,7 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	/* Compare sequence no */
 	if (flags & SAMPLE_HAS_SEQUENCE) {
 		if (a->sequence != b->sequence) {
-			printf("sequence no: %d != %d\n", a->sequence, b->sequence);
+			printf("sequence no: %ld != %ld\n", a->sequence, b->sequence);
 			return 2;
 		}
 	}

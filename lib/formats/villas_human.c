@@ -45,7 +45,7 @@ static size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, s
 		off += snprintf(buf + off, len - off, "%+e", time_delta(&s->ts.origin, &s->ts.received));
 
 	if (io->flags & SAMPLE_HAS_SEQUENCE)
-		off += snprintf(buf + off, len - off, "(%u)", s->sequence);
+		off += snprintf(buf + off, len - off, "(%lu)", s->sequence);
 
 	if (io->flags & SAMPLE_HAS_VALUES) {
 		for (int i = 0; i < s->length; i++) {

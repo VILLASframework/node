@@ -73,7 +73,7 @@ enum sample_flags {
 };
 
 struct sample {
-	int sequence;		/**< The sequence number of this sample. */
+	uint64_t sequence;	/**< The sequence number of this sample. */
 	int length;		/**< The number of values in sample::values which are valid. */
 	int capacity;		/**< The number of values in sample::values for which memory is reserved. */
 	int flags;		/**< Flags are used to store binary properties of a sample. */

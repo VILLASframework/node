@@ -66,7 +66,7 @@ static int restart_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 		if (prev) {
 			/* A wrap around of the sequence no should not be treated as a simulation restart */
 			if (cur->sequence == 0 && prev->sequence <= (int) (UINT32_MAX - 128)) {
-				warn("Simulation from node %s restarted (previous->seq=%u, current->seq=%u)",
+				warn("Simulation from node %s restarted (previous->seq=%lu, current->seq=%lu)",
 					node_name(h->node), prev->sequence, cur->sequence);
 
 				cur->flags |= SAMPLE_IS_FIRST;

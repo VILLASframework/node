@@ -46,7 +46,7 @@ static size_t csv_sprint_single(struct io *io, char *buf, size_t len, struct sam
 		off += snprintf(buf + off, len - off, "%cnan", io->separator);
 
 	if (io->flags & SAMPLE_HAS_SEQUENCE)
-		off += snprintf(buf + off, len - off, "%c%u", io->separator, s->sequence);
+		off += snprintf(buf + off, len - off, "%c%lu", io->separator, s->sequence);
 	else
 		off += snprintf(buf + off, len - off, "%cnan", io->separator);
 

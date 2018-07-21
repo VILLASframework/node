@@ -185,7 +185,7 @@ void test_rtt() {
 
 		smp_send->sequence++;
 
-		fprintf(stdout, "%10lu.%06lu%5u%10.3f%10.3f%10.3f%10.3f%10.3f\n",
+		fprintf(stdout, "%10lu.%06lu%5lu%10.3f%10.3f%10.3f%10.3f%10.3f\n",
 			recv.tv_sec, recv.tv_nsec / 1000, smp_send->sequence,
 			1e3 * rtt, 1e3 * hist.lowest, 1e3 * hist.highest,
 			1e3 * hist_mean(&hist), 1e3 * hist_stddev(&hist));
