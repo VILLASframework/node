@@ -822,8 +822,10 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 				warn("Work Completion status was not IBV_WC_SUCCES in node %s: %i",
 					node_name(n), wc[j].status);
 
-			// Lenght includes a 40 byte global routing header. Substract it
-			int correction = (ib->conn.port_space == RDMA_PS_UDP) ? 40 : 0;
+			// 32 byte of meta data is always transferred. We should substract it.
+			// Furthermore, in case of an unreliable connection, a 40 byte
+			// global routing header is transferred. This should be substracted as well.
+			int correction = (ib->conn.port_space == RDMA_PS_UDP) ? 72 : 32;
 
 			smps[j] = (struct sample *) (wc[j].wr_id);
 			smps[j]->length = (wc[j].byte_len - correction) / sizeof(double);
@@ -896,7 +898,8 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 			}
 
 			// Check if data can be send inline
-			int send_inline = (sge[sent][j-1].length < ib->qp_init.cap.max_inline_data) ?
+			// 32 byte meta data is always send.
+			int send_inline = ( (sge[sent][j-1].length + 32) < ib->qp_init.cap.max_inline_data) ?
 				ib->conn.send_inline : 0;
 
 
