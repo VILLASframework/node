@@ -80,11 +80,7 @@ struct infiniband {
 		/* Bool, should data be send inline if possible? */
 		int send_inline;
 
-		/* Stack to temporarily save sent sample */
-		struct send_wc_stack_s {
-			uint64_t* array;
-			unsigned top;
-		} send_wc_stack;
+		struct queue send_wc_buffer;
 
 		/* Counter to keep track of available recv. WRs */
 		int available_recv_wrs;
