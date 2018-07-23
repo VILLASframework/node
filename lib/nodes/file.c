@@ -90,14 +90,16 @@ int file_parse(struct node *n, json_t *cfg)
 	f->epoch_mode = FILE_EPOCH_DIRECT;
 	f->flush = 0;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: b, s?: s, s?: F, s?: s, s?: F, s?: s }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s: { s?: s, s?: F, s?: s, s?: F }, s: { s?: b }",
 		"uri", &uri_tmpl,
-		"flush", &f->flush,
-		"eof", &eof,
-		"rate", &f->rate,
-		"epoch_mode", &epoch_mode,
-		"epoch", &epoch_flt,
-		"format", &format
+		"format", &format,
+		"in",
+			"eof", &eof,
+			"rate", &f->rate,
+			"epoch_mode", &epoch_mode,
+			"epoch", &epoch_flt,
+		"out",
+			"flush", &f->flush
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
