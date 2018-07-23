@@ -326,7 +326,7 @@ int ib_parse(struct node *n, json_t *cfg)
 
 	// Set remaining QP attributes
 	ib->qp_init.cap.max_send_sge = 4;
-	ib->qp_init.cap.max_recv_sge = (ib->conn.port_space == RDMA_PS_UDP) ? 4 : 5;
+	ib->qp_init.cap.max_recv_sge = (ib->conn.port_space == RDMA_PS_UDP) ? 5 : 4;
 
 	// Set number of bytes to be send inline
 	ib->qp_init.cap.max_inline_data = max_inline_data;
@@ -850,9 +850,9 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 	debug(LOG_IB | 10, "ib_write is called");
 
-	*release = 0;
-
 	if (n->state == STATE_CONNECTED) {
+		*release = 0;
+
 		// First, write
 
 		// Get Memory Region
