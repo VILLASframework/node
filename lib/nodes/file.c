@@ -90,7 +90,7 @@ int file_parse(struct node *n, json_t *cfg)
 	f->epoch_mode = FILE_EPOCH_DIRECT;
 	f->flush = 0;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s: { s?: s, s?: F, s?: s, s?: F }, s: { s?: b }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s: { s?: s, s?: F, s?: s, s?: F }, s: { s?: b } }",
 		"uri", &uri_tmpl,
 		"format", &format,
 		"in",
