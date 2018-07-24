@@ -49,6 +49,7 @@ int super_node_init(struct super_node *sn)
 
 	log_init(&sn->log, V, LOG_ALL);
 #ifdef WITH_API
+	memory_init(0);
 	api_init(&sn->api, sn);
 #endif /* WITH_API */
 #ifdef WITH_WEB
