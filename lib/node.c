@@ -464,11 +464,11 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 		stats_update(n->stats, STATS_SKIPPED, skipped);
 	}
 
-	debug(LOG_NODES | 5, "Received %u samples from node %s of which %d have been skipped", nread, node_name(n), skipped);
+	debug(LOG_NODE | 5, "Received %u samples from node %s of which %d have been skipped", nread, node_name(n), skipped);
 
 	return rread;
 #else
-	debug(LOG_NODES | 5, "Received %u samples from node %s", nread, node_name(n));
+	debug(LOG_NODE | 5, "Received %u samples from node %s", nread, node_name(n));
 
 	return nread;
 #endif /* WITH_HOOKS */
@@ -496,7 +496,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 				return sent;
 
 			nsent += sent;
-			debug(LOG_NODES | 5, "Sent %u samples to node %s", sent, node_name(n));
+			debug(LOG_NODE | 5, "Sent %u samples to node %s", sent, node_name(n));
 		}
 	}
 	else {
@@ -504,7 +504,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		if (nsent < 0)
 			return nsent;
 
-		debug(LOG_NODES | 5, "Sent %u samples to node %s", nsent, node_name(n));
+		debug(LOG_NODE | 5, "Sent %u samples to node %s", nsent, node_name(n));
 	}
 
 	return nsent;
