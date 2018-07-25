@@ -23,8 +23,14 @@
 ##################################################################################
 
 # Check if user is superuser. SU is used for namespace
-if [ "$EUID" -ne 0 ]
-    then echo "Please run as root"
+if [[ "$EUID" -ne 0 ]]; then
+    echo "Please run as root"
+    exit 99
+fi
+
+# Check if Infiniband card is present
+if [[ $(lspci | grep Infiniband) == 0 ]]; then
+    echo "Found no Infiniband cards in system"
     exit 99
 fi
 
