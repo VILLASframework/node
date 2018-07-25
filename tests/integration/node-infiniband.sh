@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Integration loopback test using villas-node.
+# Integration Infiniband test using villas-node.
 #
 # @author Dennis Potter <dennis@dennispotter.eu>
 # @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
@@ -29,7 +29,7 @@ if [[ "$EUID" -ne 0 ]]; then
 fi
 
 # Check if Infiniband card is present
-if [[ $(lspci | grep Infiniband) == 0 ]]; then
+if [[ ! $(lspci | grep Infiniband) ]]; then
     echo "Found no Infiniband cards in system"
     exit 99
 fi
