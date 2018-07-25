@@ -196,7 +196,7 @@ int ib_parse(struct node *n, json_t *cfg)
 	int send_inline = 1;
 	int vectorize_in = 1;
 	int vectorize_out = 1;
-	int buffer_subtraction = 2;
+	int buffer_subtraction = 16;
 
 	// Parse JSON files and copy to local variables
 	json_t *json_in = NULL;
@@ -238,9 +238,11 @@ int ib_parse(struct node *n, json_t *cfg)
 		if (ret)
 			jerror(&err, "Failed to parse output configuration of node %s", node_name(n));
 
-		ib->is_source = 1;
+		if (remote) {
+			ib->is_source = 1;
 
-		debug(LOG_IB | 3, "Node %s is up as source and target", node_name(n));
+			debug(LOG_IB | 3, "Node %s is up as source and target", node_name(n));
+		}
 	}
 	else {
 		ib->is_source = 0;
@@ -359,7 +361,7 @@ int ib_check(struct node *n)
 		error("The buffer substraction value must be bigger than 2 * in.vectorize");
 
 	if (ib->conn.buffer_subtraction >= ib->qp_init.cap.max_recv_wr - n->in.vectorize)
-		error("The buffer substraction value cannot be smaller than in.max_wrs - in.vectorize");
+		error("The buffer substraction value cannot be bigger than in.max_wrs - in.vectorize");
 
 	// Check if the set value is a power of 2, and warn the user if this is not the case
 	int max_send_pow = (int) pow(2, ceil(log2(ib->qp_init.cap.max_send_wr)));
