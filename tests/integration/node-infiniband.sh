@@ -37,21 +37,10 @@ CONFIG_FILE_TARGET=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
-NUM_SAMPLES=${NUM_SAMPLES:-100}
+NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 cat > ${CONFIG_FILE} <<EOF
 nodes: {
-    results = {
-        type = "file",
-        
-        uri = "/dev/null",
-
-        in = {
-        },
-        out = {
-        },
-    },
-
     ib_node_source = {
         type = "infiniband",
 
