@@ -39,8 +39,23 @@ OUTPUT_FILE=$(mktemp)
 
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
+## Generate test data for TCP and UDP test
+VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
+villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
+
+echo "#############################"
+echo "#############################"
+echo "##       START TCP         ##"
+echo "#############################"
+echo "#############################"
+
 cat > ${CONFIG_FILE} <<EOF
 nodes: {
+    results = {
+        type = "file",
+        uri = "${OUTPUT_FILE}",
+    },
+
     ib_node_source = {
         type = "infiniband",
 
@@ -52,8 +67,6 @@ nodes: {
             max_wrs = 8192,
             cq_size = 8192,
 
-            vectorize = 1,
-
             poll_mode = "BUSY",
             buffer_subtraction = 128,
         },
@@ -63,8 +76,6 @@ nodes: {
             
             max_wrs = 8192,
             cq_size = 256,
-
-            vectorize = 1,
 
             send_inline = 1,
             max_inline_data = 60,
@@ -83,28 +94,10 @@ nodes: {
             max_wrs = 8192,
             cq_size = 8192,
 
-            vectorize = 1,
-
             poll_mode = "BUSY",
             buffer_subtraction = 128,
-
-            hooks = (
-                { type = "stats", verbose = true }
-            )
-        },
-        out = {
-            address = "10.0.0.2:1337",
-            resolution_timeout = 1000,
-            
-            max_wrs = 8192,
-            cq_size = 256,
-
-            vectorize = 1,
-
-            send_inline = 1,
-            max_inline_data = 60,
         }
-	}
+    }
 }
 EOF
 
@@ -113,18 +106,10 @@ $(<${CONFIG_FILE})
 paths = (
     {
         in = "ib_node_target",
-        out = "ib_node_target"
-
-		hooks : (
-			{ type = "print" }
-        )
+        out = "results",
     }
 )
 EOF
-
-## Generate test data
-VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
-villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 # Start receiving node
 VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
@@ -143,6 +128,7 @@ fi
 # Start sending pipe
 VILLAS_LOG_PREFIX=$(colorize "[Pipe]  ") \
 ip netns exec namespace0 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} ib_node_source >${OUTPUT_FILE} <${DATAFIFO} & 
+node_pipe=$!
 
 # Keep pipe alive
 sleep 5 >${DATAFIFO} &
@@ -157,7 +143,67 @@ cat ${INPUT_FILE} >${DATAFIFO} &
 sleep 2
 
 # Stop node
-kill %1
+kill -9 $node_pipe 
+kill -9 $node_proc
+
+# Compare data
+villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
+RC=$?
+
+if [[ $RC != 0 ]]; then
+    rm ${CONFIG_FILE} ${CONFIG_FILE_TARGET} ${INPUT_FILE} ${OUTPUT_FILE} ${DATAFIFO}
+
+    exit $RC
+fi
+echo "#############################"
+echo "#############################"
+echo "##       STOP  TCP         ##"
+echo "#############################"
+echo "#############################"
+echo ""
+echo "#############################"
+echo "#############################"
+echo "##       START UDP         ##"
+echo "#############################"
+echo "#############################"
+
+# Set mode to UDP
+sed -i -e 's/RDMA_PS_TCP/RDMA_PS_UDP/g' ${CONFIG_FILE}
+sed -i -e 's/RDMA_PS_TCP/RDMA_PS_UDP/g' ${CONFIG_FILE_TARGET}
+
+# Start receiving node
+VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
+villas-node ${CONFIG_FILE_TARGET} &
+node_proc=$!
+
+# Wait for node to complete init
+sleep 1
+
+# Preprare fifo
+DATAFIFO=/tmp/datafifo
+if [[ ! -p ${DATAFIFO} ]]; then
+    mkfifo ${DATAFIFO}
+fi
+
+# Start sending pipe
+VILLAS_LOG_PREFIX=$(colorize "[Pipe]  ") \
+ip netns exec namespace0 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} ib_node_source >${OUTPUT_FILE} <${DATAFIFO} & 
+node_pipe=$!
+
+# Keep pipe alive
+sleep 5 >${DATAFIFO} &
+
+# Wait for pipe to connect to node
+sleep 3
+
+# Write data to pipe
+cat ${INPUT_FILE} >${DATAFIFO} &
+
+# Wait for node to handle samples
+sleep 2
+
+# Stop node
+kill -9 $node_pipe 
 kill -9 $node_proc
 
 # Compare data
@@ -165,5 +211,10 @@ villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${CONFIG_FILE} ${CONFIG_FILE_TARGET} ${INPUT_FILE} ${OUTPUT_FILE} ${DATAFIFO}
+echo "#############################"
+echo "#############################"
+echo "##       STOP  UDP         ##"
+echo "#############################"
+echo "#############################"
 
 exit $RC
