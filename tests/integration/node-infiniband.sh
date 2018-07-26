@@ -30,33 +30,33 @@ fi
 
 # Check if Infiniband card is present
 if [[ ! $(lspci | grep Infiniband) ]]; then
-    echo "Found no Infiniband cards in system"
+    echo "Did not find any Infiniband cards in system"
     exit 99
 fi
+
 
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname ${SCRIPT})
 source ${SCRIPTPATH}/../../tools/integration-tests-helper.sh
 
-CONFIG_FILE=$(mktemp)
-CONFIG_FILE_TARGET=$(mktemp)
+CONFIG_FILE=$(mktemp /tmp/ib-configuration-XXXX.conf)
+CONFIG_FILE_TARGET=$(mktemp /tmp/ib-configuration-target-XXXX.conf)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
-NUM_SAMPLES=${NUM_SAMPLES:-10}
+chmod 775 ${CONFIG_FILE}
+chmod 775 ${CONFIG_FILE_TARGET}
 
-## Generate test data for TCP and UDP test
+NUM_SAMPLES=${NUM_SAMPLES:-10}
+RC = 0
+
+# Generate test data for TCP and UDP test
 VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
 villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
-echo "#############################"
-echo "#############################"
-echo "##       START TCP         ##"
-echo "#############################"
-echo "#############################"
-
+# Set config file with a MODE flag
 cat > ${CONFIG_FILE} <<EOF
-nodes: {
+nodes = {
     results = {
         type = "file",
         uri = "${OUTPUT_FILE}",
@@ -65,7 +65,7 @@ nodes: {
     ib_node_source = {
         type = "infiniband",
 
-        rdma_port_space = "RDMA_PS_TCP",
+        rdma_port_space = "RDMA_PS_MODE",
         
         in = {
             address = "10.0.0.2:1337",
@@ -92,7 +92,7 @@ nodes: {
     ib_node_target = {
         type = "infiniband",
 
-        rdma_port_space = "RDMA_PS_TCP",
+        rdma_port_space = "RDMA_PS_MODE",
         
         in = {
             address = "10.0.0.1:1337",
@@ -107,120 +107,89 @@ nodes: {
 }
 EOF
 
+# Set target config file, which is the same for both runs
 cat > ${CONFIG_FILE_TARGET} <<EOF
-$(<${CONFIG_FILE})
+@include "${CONFIG_FILE//\/tmp\/}"
+
 paths = (
     {
         in = "ib_node_target",
-        out = "results",
+        out = "results"
     }
 )
 EOF
 
-# Start receiving node
-VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
-villas-node ${CONFIG_FILE_TARGET} &
-node_proc=$!
+# Declare modes
+MODES=("TCP" "UDP")
 
-# Wait for node to complete init
-sleep 1
+# Run through modes
+for MODE in "${MODES[@]}"
+do
 
-# Preprare fifo
-DATAFIFO=/tmp/datafifo
-if [[ ! -p ${DATAFIFO} ]]; then
-    mkfifo ${DATAFIFO}
-fi
+    echo "#############################"
+    echo "#############################"
+    echo "##       START ${MODE}         ##"
+    echo "#############################"
+    echo "#############################"
 
-# Start sending pipe
-VILLAS_LOG_PREFIX=$(colorize "[Pipe]  ") \
-ip netns exec namespace0 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} ib_node_source >${OUTPUT_FILE} <${DATAFIFO} & 
-node_pipe=$!
+	sed -i -e 's/RDMA_PS_MODE/RDMA_PS_'${MODE}'/g' ${CONFIG_FILE}    
 
-# Keep pipe alive
-sleep 5 >${DATAFIFO} &
+    # Start receiving node
+    VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
+    villas-node ${CONFIG_FILE_TARGET} &
+    node_proc=$!
+    
+    # Wait for node to complete init
+    sleep 1
+    
+    # Preprare fifo
+    DATAFIFO=/tmp/datafifo
+    if [[ ! -p ${DATAFIFO} ]]; then
+        mkfifo ${DATAFIFO}
+    fi
+    
+    # Start sending pipe
+    VILLAS_LOG_PREFIX=$(colorize "[Pipe]  ") \
+    ip netns exec namespace0 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} ib_node_source >${OUTPUT_FILE} <${DATAFIFO} & 
+    node_pipe=$!
+    
+    # Keep pipe alive
+    sleep 5 >${DATAFIFO} &
+    
+    # Wait for pipe to connect to node
+    sleep 3
+    
+    # Write data to pipe
+    cat ${INPUT_FILE} >${DATAFIFO} &
+    
+    # Wait for node to handle samples
+    sleep 2
+    
+    # Stop node
+    kill -9 $node_pipe 
+    kill -9 $node_proc
+    
+    # Compare data
+    villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
+    RC=$?
 
-# Wait for pipe to connect to node
-sleep 3
+    # Exit, if an error occurs
+    if [[ $RC != 0 ]]; then
+        rm ${CONFIG_FILE} ${CONFIG_FILE_TARGET} ${INPUT_FILE} ${OUTPUT_FILE} ${DATAFIFO}
+    
+        exit $RC
+    fi
 
-# Write data to pipe
-cat ${INPUT_FILE} >${DATAFIFO} &
+    echo "#############################"
+    echo "#############################"
+    echo "##       STOP  $MODE         ##"
+    echo "#############################"
+    echo "#############################"
+    echo ""
 
-# Wait for node to handle samples
-sleep 2
-
-# Stop node
-kill -9 $node_pipe 
-kill -9 $node_proc
-
-# Compare data
-villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
-RC=$?
-
-if [[ $RC != 0 ]]; then
-    rm ${CONFIG_FILE} ${CONFIG_FILE_TARGET} ${INPUT_FILE} ${OUTPUT_FILE} ${DATAFIFO}
-
-    exit $RC
-fi
-echo "#############################"
-echo "#############################"
-echo "##       STOP  TCP         ##"
-echo "#############################"
-echo "#############################"
-echo ""
-echo "#############################"
-echo "#############################"
-echo "##       START UDP         ##"
-echo "#############################"
-echo "#############################"
-
-# Set mode to UDP
-sed -i -e 's/RDMA_PS_TCP/RDMA_PS_UDP/g' ${CONFIG_FILE}
-sed -i -e 's/RDMA_PS_TCP/RDMA_PS_UDP/g' ${CONFIG_FILE_TARGET}
-
-# Start receiving node
-VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
-villas-node ${CONFIG_FILE_TARGET} &
-node_proc=$!
-
-# Wait for node to complete init
-sleep 1
-
-# Preprare fifo
-DATAFIFO=/tmp/datafifo
-if [[ ! -p ${DATAFIFO} ]]; then
-    mkfifo ${DATAFIFO}
-fi
-
-# Start sending pipe
-VILLAS_LOG_PREFIX=$(colorize "[Pipe]  ") \
-ip netns exec namespace0 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} ib_node_source >${OUTPUT_FILE} <${DATAFIFO} & 
-node_pipe=$!
-
-# Keep pipe alive
-sleep 5 >${DATAFIFO} &
-
-# Wait for pipe to connect to node
-sleep 3
-
-# Write data to pipe
-cat ${INPUT_FILE} >${DATAFIFO} &
-
-# Wait for node to handle samples
-sleep 2
-
-# Stop node
-kill -9 $node_pipe 
-kill -9 $node_proc
-
-# Compare data
-villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
-RC=$?
+	sed -i -e 's/RDMA_PS_'${MODE}'/RDMA_PS_MODE/g' ${CONFIG_FILE}    
+done
 
 rm ${CONFIG_FILE} ${CONFIG_FILE_TARGET} ${INPUT_FILE} ${OUTPUT_FILE} ${DATAFIFO}
-echo "#############################"
-echo "#############################"
-echo "##       STOP  UDP         ##"
-echo "#############################"
-echo "#############################"
 
 exit $RC
