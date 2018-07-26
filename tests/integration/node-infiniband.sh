@@ -166,8 +166,8 @@ do
     sleep 2
     
     # Stop node
-    kill -9 $node_pipe 
-    kill -9 $node_proc
+    kill $node_pipe 
+    kill $node_proc
     
     # Compare data
     villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}

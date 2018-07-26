@@ -723,7 +723,9 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 		// Poll Completion Queue
 		// If we've already posted enough receive WRs, try to pull cnt
 		if (ib->conn.available_recv_wrs >= (ib->qp_init.cap.max_recv_wr - ib->conn.buffer_subtraction) ) {
-			while(1) {
+			for (int i = 0;; i++) {
+				if (i % 2048 == 2047) pthread_testcancel();
+
 				if (n->state != STATE_CONNECTED) return 0;
 
 				wcs = ibv_poll_cq(ib->ctx.recv_cq, cnt, wc);
