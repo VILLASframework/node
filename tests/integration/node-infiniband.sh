@@ -45,7 +45,7 @@ INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
 NUM_SAMPLES=${NUM_SAMPLES:-10}
-RC = 0
+RC=0
 
 # Generate test data for TCP and UDP test
 VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
