@@ -44,9 +44,6 @@ CONFIG_FILE_TARGET=$(mktemp /tmp/ib-configuration-target-XXXX.conf)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
-chmod 775 ${CONFIG_FILE}
-chmod 775 ${CONFIG_FILE_TARGET}
-
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 RC = 0
 
