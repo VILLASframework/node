@@ -36,7 +36,7 @@ fi
 
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../tools/integration-tests-helper.sh
+source ${SCRIPTPATH}/../../tools/integration-tests-helper.sh
 
 
 CONFIG_FILE=$(mktemp /tmp/ib-configuration-XXXX.conf)
@@ -52,7 +52,6 @@ TIME_TO_RUN=30
 
 # Declare modes
 MODES=("TCP" "UDP")
-
 
 # Initialize counter
 COUNT=0
@@ -78,8 +77,9 @@ nodes = {
 
     results = {
         type = "file",
-        
-        uri = "${LOG_DIR}/COUNT_MODE-NUM_VALUES-RATE_SAMPLES-NUM_SAMPLES.log",
+
+        format = "csv",
+        uri = "${LOG_DIR}/COUNT_MODE-NUM_VALUES-RATE_SAMPLES-NUM_SAMPLES.csv",
     },
 
     ib_node_source = {
@@ -176,7 +176,7 @@ do
             
             # Start receiving node
             VILLAS_LOG_PREFIX=$(colorize "[Target Node]  ") \
-            villas-node ${CONFIG_FILE_TARGET}  &
+            villas-node ${CONFIG_FILE_TARGET} &
             target_node_proc=$!
             
             # Wait for node to complete init
@@ -184,7 +184,7 @@ do
             
             # Start sending pipe
             VILLAS_LOG_PREFIX=$(colorize "[Source Node]  ") \
-            ip netns exec namespace0 villas-node ${CONFIG_FILE_SOURCE} &
+            ip netns exec namespace0 villas-node ${CONFIG_FILE_SOURCE} &>${LOG_DIR}/${COUNT}_source_node.log &
             source_node_proc=$!
             
             sleep $((${TIME_TO_RUN} + 1))
