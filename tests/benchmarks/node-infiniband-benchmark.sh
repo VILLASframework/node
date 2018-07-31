@@ -46,12 +46,15 @@ INPUT_FILE=$(mktemp)
 LOG_DIR=benchmarks_$(date +%Y%m%d_%H-%M-%S)
 mkdir ${LOG_DIR}
 
-NUM_VALUES=(3 5 10 25 50)
-RATE_SAMPLES=(10 100 1000 10000 100000 200000)
-TIME_TO_RUN=30
+#NUM_VALUES=(3 5 10 25 50)
+#RATE_SAMPLES=(10 100 1000 10000 100000 200000)
+NUM_VALUES=(3)
+RATE_SAMPLES=(100000)
+TIME_TO_RUN=10
 
 # Declare modes
-MODES=("TCP" "UDP")
+#MODES=("TCP" "UDP")
+MODES=("TCP")
 
 # Initialize counter
 COUNT=0
@@ -176,7 +179,7 @@ do
             
             # Start receiving node
             VILLAS_LOG_PREFIX=$(colorize "[Target Node]  ") \
-            villas-node ${CONFIG_FILE_TARGET} &
+            villas-node ${CONFIG_FILE_TARGET}  &
             target_node_proc=$!
             
             # Wait for node to complete init
