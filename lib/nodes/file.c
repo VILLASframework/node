@@ -90,7 +90,7 @@ int file_parse(struct node *n, json_t *cfg)
 	f->epoch_mode = FILE_EPOCH_DIRECT;
 	f->flush = 0;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s: { s?: s, s?: F, s?: s, s?: F }, s: { s?: b } }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s?: { s?: s, s?: F, s?: s, s?: F }, s?: { s?: b } }",
 		"uri", &uri_tmpl,
 		"format", &format,
 		"in",
@@ -263,19 +263,11 @@ int file_stop(struct node *n)
 	if (ret)
 		return ret;
 
-	free(f->uri);
-
-	return 0;
-}
-
-int file_destroy(struct node *n)
-{
-	int ret;
-	struct file *f = (struct file *) n->_vd;
-
 	ret = io_destroy(&f->io);
 	if (ret)
 		return ret;
+
+	free(f->uri);
 
 	return 0;
 }
@@ -383,7 +375,6 @@ static struct plugin p = {
 		.print		= file_print,
 		.start		= file_start,
 		.stop		= file_stop,
-		.destroy	= file_destroy,
 		.read		= file_read,
 		.write		= file_write,
 		.fd		= file_fd

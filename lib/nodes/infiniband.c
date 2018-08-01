@@ -547,8 +547,10 @@ void * ib_rdma_cm_event_thread(void *n)
 
 			case RDMA_CM_EVENT_ESTABLISHED:
 				// If the connection is unreliable connectionless, set appropriate variables
-				if (ib->conn.port_space == RDMA_PS_UDP)
-					ib->conn.ud = event->param.ud;
+				if (ib->conn.port_space == RDMA_PS_UDP) {
+					ib->conn.ud.ud = event->param.ud;
+					ib->conn.ud.ah = ibv_create_ah(ib->ctx.pd, &ib->conn.ud.ud.ah_attr);
+				}
 
 				node->state = STATE_CONNECTED;
 
@@ -630,8 +632,8 @@ int ib_start(struct node *n)
 
 	// Allocate space for 40 Byte GHR. We don't use this.
 	if (ib->conn.port_space == RDMA_PS_UDP) {
-		ib->conn.grh_ptr = alloc(40);
-		ib->conn.grh_mr = ibv_reg_mr(ib->ctx.pd, ib->conn.grh_ptr, 40, IBV_ACCESS_LOCAL_WRITE);
+		ib->conn.ud.grh_ptr = alloc(40);
+		ib->conn.ud.grh_mr = ibv_reg_mr(ib->ctx.pd, ib->conn.ud.grh_ptr, 40, IBV_ACCESS_LOCAL_WRITE);
 	}
 
 	// Several events should occur on the event channel, to make
@@ -659,7 +661,7 @@ int ib_stop(struct node *n)
 	// Call RDMA disconnect function
 	// Will flush all outstanding WRs to the Completion Queue and
 	// will call RDMA_CM_EVENT_DISCONNECTED if that is done.
-	if (n->state == STATE_CONNECTED) {
+	if (n->state == STATE_CONNECTED && ib->conn.port_space == RDMA_PS_TCP) {
 		ret = rdma_disconnect(ib->ctx.id);
 
 		if (ret)
@@ -721,7 +723,9 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 		// Poll Completion Queue
 		// If we've already posted enough receive WRs, try to pull cnt
 		if (ib->conn.available_recv_wrs >= (ib->qp_init.cap.max_recv_wr - ib->conn.buffer_subtraction) ) {
-			while(1) {
+			for (int i = 0;; i++) {
+				if (i % 2048 == 2047) pthread_testcancel();
+
 				if (n->state != STATE_CONNECTED) return 0;
 
 				wcs = ibv_poll_cq(ib->ctx.recv_cq, cnt, wc);
@@ -758,9 +762,9 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 
 			// First 40 byte of UD data are GRH and unused in our case
 			if (ib->conn.port_space == RDMA_PS_UDP) {
-				sge[i][j].addr = (uint64_t) ib->conn.grh_ptr;
+				sge[i][j].addr = (uint64_t) ib->conn.ud.grh_ptr;
     				sge[i][j].length = 40;
-    				sge[i][j].lkey = ib->conn.grh_mr->lkey;
+    				sge[i][j].lkey = ib->conn.ud.grh_mr->lkey;
 
 				j++;
 			}
@@ -894,9 +898,9 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 			// Check if connection is connected or unconnected and set appropriate values
 			if (ib->conn.port_space == RDMA_PS_UDP) {
-				wr[sent].wr.ud.ah = ibv_create_ah(ib->ctx.pd, &ib->conn.ud.ah_attr);
-				wr[sent].wr.ud.remote_qkey = ib->conn.ud.qkey;
-				wr[sent].wr.ud.remote_qpn = ib->conn.ud.qp_num;
+				wr[sent].wr.ud.ah = ib->conn.ud.ah;
+				wr[sent].wr.ud.remote_qkey = ib->conn.ud.ud.qkey;
+				wr[sent].wr.ud.remote_qpn = ib->conn.ud.ud.qp_num;
 			}
 
 			// Check if data can be send inline

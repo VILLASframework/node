@@ -90,9 +90,12 @@ struct infiniband {
 		int buffer_subtraction;
 
 		/* Unrealiable connectionless data */
-		struct rdma_ud_param ud;
-		void *grh_ptr;
-		struct ibv_mr *grh_mr;
+		struct ud_s {
+			struct rdma_ud_param ud;
+			struct ibv_ah *ah;
+			void *grh_ptr;
+			struct ibv_mr *grh_mr;
+		} ud;
 
 	} conn;
 
