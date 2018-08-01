@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <complex.h>
 #include <time.h>
 
 #ifdef __cplusplus
@@ -87,6 +88,8 @@ struct sample {
 	union {
 		double  f;	/**< Floating point values. */
 		int64_t i;	/**< Integer values. */
+		bool	b;	/**< Boolean values. */
+		float complex z; /**< Complex values. */
 	} data[];		/**< Data is in host endianess! */
 };
 
