@@ -34,7 +34,6 @@ int sample_init(struct sample *s)
 	struct pool *p = sample_pool(s);
 
 	s->length = 0;
-	s->format = 0; /* all sample values are float by default */
 	s->capacity = (p->blocksz - sizeof(struct sample)) / sizeof(s->data[0]);
 	s->refcnt = ATOMIC_VAR_INIT(1);
 
@@ -69,7 +68,6 @@ struct sample * sample_alloc_mem(int capacity)
 	s->pool_off = SAMPLE_NON_POOL;
 
 	s->length = 0;
-	s->format = 0; /* all sample values are float by default */
 	s->capacity = capacity;
 	s->refcnt = ATOMIC_VAR_INIT(1);
 
@@ -150,7 +148,6 @@ int sample_copy(struct sample *dst, struct sample *src)
 	dst->length = MIN(src->length, dst->capacity);
 
 	dst->sequence = src->sequence;
-	dst->format = src->format;
 	dst->source = src->source;
 	dst->flags = src->flags;
 	dst->ts = src->ts;
@@ -235,11 +232,6 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 			return 4;
 		}
 
-		if (a->format != b->format) {
-			printf("format: %#" PRIx64 " != %#" PRIx64 "\n", a->format, b->format);
-			return 6;
-		}
-
 		for (int i = 0; i < a->length; i++) {
 			switch (sample_get_data_format(a, i)) {
 				case SAMPLE_DATA_FORMAT_FLOAT:
@@ -260,25 +252,4 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	}
 
 	return 0;
-}
-
-int sample_set_data_format(struct sample *s, int idx, enum sample_data_format fmt)
-{
-	if (idx >= sizeof(s->format) * 8)
-		return 0; /* we currently can only control the format of the first 64 values. */
-
-	switch (fmt) {
-		case SAMPLE_DATA_FORMAT_FLOAT: s->format &= ~(1   << idx); break;
-		case SAMPLE_DATA_FORMAT_INT:   s->format |=  (fmt << idx); break;
-	}
-
-	return 0;
-}
-
-int sample_get_data_format(struct sample *s, int idx)
-{
-	if (idx >= sizeof(s->format) * 8)
-		return -1; /* we currently can only control the format of the first 64 values. */
-
-	return (s->format >> idx) & 0x1;
 }

@@ -47,22 +47,15 @@ struct pool;
 /** The offset to the beginning of the data section. */
 #define SAMPLE_DATA_OFFSET(smp)	((char *) (smp) + offsetof(struct sample, data))
 
-enum sample_data_format {
-	SAMPLE_DATA_FORMAT_FLOAT = 0,
-	SAMPLE_DATA_FORMAT_INT   = 1
-};
-
 /** Parts of a sample that can be serialized / de-serialized by the IO formats */
 enum sample_flags {
 	SAMPLE_HAS_ORIGIN	= (1 << 0), /**< Include origin timestamp in output. */
 	SAMPLE_HAS_RECEIVED	= (1 << 1), /**< Include receive timestamp in output. */
 	SAMPLE_HAS_OFFSET	= (1 << 2), /**< Include offset (received - origin timestamp) in output. */
-	SAMPLE_HAS_SOURCE	= (1 << 3), /**< This sample has a valid sample::source field. */
-	SAMPLE_HAS_ID		= (1 << 4), /**< This sample has a valid sample::id field. */
-	SAMPLE_HAS_SEQUENCE	= (1 << 5), /**< Include sequence number in output. */
-	SAMPLE_HAS_VALUES	= (1 << 6), /**< Include values in output. */
-	SAMPLE_HAS_FORMAT	= (1 << 7), /**< This sample has a valid sample::format field. */
-	SAMPLE_HAS_ALL		= (1 << 7) - 1, /**< Enable all output options. */
+	SAMPLE_HAS_ID		= (1 << 3), /**< This sample has a valid sample::id field. */
+	SAMPLE_HAS_SEQUENCE	= (1 << 4), /**< Include sequence number in output. */
+	SAMPLE_HAS_VALUES	= (1 << 5), /**< Include values in output. */
+	SAMPLE_HAS_ALL		= (1 << 5) - 1, /**< Enable all output options. */
 
 	SAMPLE_IS_FIRST		= (1 << 16), /**< This sample is the first of a new simulation case */
 	SAMPLE_IS_LAST		= (1 << 17), /**< This sample is the last of a running simulation case */
@@ -83,12 +76,6 @@ struct sample {
 
 	atomic_int refcnt;	/**< Reference counter. */
 	ptrdiff_t pool_off;	/**< This sample belongs to this memory pool (relative pointer). See sample_pool(). */
-
-	/** A long bitfield indicating the number representation of the first 64 values in sample::data[].
-	 *
-	 * @see sample_data_format
-	 */
-	uint64_t format;
 
 	/** All timestamps are seconds / nano seconds after 1.1.1970 UTC */
 	struct {
@@ -140,12 +127,6 @@ int sample_clone_many(struct sample *clones[], struct sample *origs[], int cnt);
 int sample_copy_many(struct sample *dsts[], struct sample *srcs[], int cnt);
 int sample_get_many(struct sample *smps[], int cnt);
 int sample_put_many(struct sample *smps[], int cnt);
-
-/** Get number representation for a single value of a sample. */
-int sample_get_data_format(struct sample *s, int idx);
-
-/** Set number representation for a single value of a sample. */
-int sample_set_data_format(struct sample *s, int idx, enum sample_data_format fmt);
 
 #ifdef __cplusplus
 }
