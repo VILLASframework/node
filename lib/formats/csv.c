@@ -113,7 +113,7 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 			next_seperator = strchr(ptr, io->delimiter);
 		}
 
-		char *number = malloc(next_seperator - ptr);
+		char number[100];
 		strncpy(number, ptr, next_seperator-ptr);
 		char * contains_dot = strstr(number, ".");
 		if(contains_dot == NULL){
@@ -127,7 +127,6 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 			s->data[s->length].f = strtod(ptr, &end);
 			sample_set_data_format(s, s->length, SAMPLE_DATA_FORMAT_FLOAT);
 		}
-		free(number);
 
 
 		/* There are no valid values anymore. */

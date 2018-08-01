@@ -138,7 +138,7 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 			next_seperator = strchr(ptr, io->delimiter);
 		}
 
-		char *number = malloc(next_seperator - ptr);
+		char number[100];
 		strncpy(number, ptr, next_seperator-ptr);
 		char * contains_dot = strstr(number, ".");
 		if(contains_dot == NULL){
@@ -152,7 +152,6 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 			s->data[s->length].f = strtod(ptr, &end);
 			sample_set_data_format(s, s->length, SAMPLE_DATA_FORMAT_FLOAT);
 		}
-		free(number);
 
 		 /* There are no valid values anymore. */
 		if (end == ptr)
