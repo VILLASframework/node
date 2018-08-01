@@ -164,7 +164,7 @@ static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *sm
 				break;
 
 			case JSON_INTEGER:
-				smp->data[i].f = json_integer_value(json_value);
+				smp->data[i].i = json_integer_value(json_value);
 				sample_set_data_format(smp, i, SAMPLE_DATA_FORMAT_INT);
 				break;
 
