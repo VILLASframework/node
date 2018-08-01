@@ -632,8 +632,8 @@ int ib_start(struct node *n)
 
 	// Allocate space for 40 Byte GHR. We don't use this.
 	if (ib->conn.port_space == RDMA_PS_UDP) {
-		ib->conn.ud.grh_ptr = alloc(40);
-		ib->conn.ud.grh_mr = ibv_reg_mr(ib->ctx.pd, ib->conn.ud.grh_ptr, 40, IBV_ACCESS_LOCAL_WRITE);
+		ib->conn.ud.grh_ptr = alloc(GRH_SIZE);
+		ib->conn.ud.grh_mr = ibv_reg_mr(ib->ctx.pd, ib->conn.ud.grh_ptr, GRH_SIZE, IBV_ACCESS_LOCAL_WRITE);
 	}
 
 	// Several events should occur on the event channel, to make
@@ -724,7 +724,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 		// If we've already posted enough receive WRs, try to pull cnt
 		if (ib->conn.available_recv_wrs >= (ib->qp_init.cap.max_recv_wr - ib->conn.buffer_subtraction) ) {
 			for (int i = 0;; i++) {
-				if (i % 2048 == 2047) pthread_testcancel();
+				if (i % CHK_PER_ITER == CHK_PER_ITER - 1) pthread_testcancel();
 
 				if (n->state != STATE_CONNECTED) return 0;
 
@@ -763,7 +763,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 			// First 40 byte of UD data are GRH and unused in our case
 			if (ib->conn.port_space == RDMA_PS_UDP) {
 				sge[i][j].addr = (uint64_t) ib->conn.ud.grh_ptr;
-    				sge[i][j].length = 40;
+    				sge[i][j].length = GRH_SIZE;
     				sge[i][j].lkey = ib->conn.ud.grh_mr->lkey;
 
 				j++;
@@ -831,7 +831,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 			// 32 byte of meta data is always transferred. We should substract it.
 			// Furthermore, in case of an unreliable connection, a 40 byte
 			// global routing header is transferred. This should be substracted as well.
-			int correction = (ib->conn.port_space == RDMA_PS_UDP) ? 72 : 32;
+			int correction = (ib->conn.port_space == RDMA_PS_UDP) ? META_GRH_SIZE : META_SIZE;
 
 			smps[j] = (struct sample *) (wc[j].wr_id);
 			smps[j]->length = (wc[j].byte_len - correction) / sizeof(double);
@@ -905,7 +905,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 			// Check if data can be send inline
 			// 32 byte meta data is always send.
-			int send_inline = ( (sge[sent][j-1].length + 32) < ib->qp_init.cap.max_inline_data) ?
+			int send_inline = ( (sge[sent][j-1].length + META_SIZE) < ib->qp_init.cap.max_inline_data) ?
 				ib->conn.send_inline : 0;
 
 
@@ -918,8 +918,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 			wr[sent].next = &wr[sent+1];
 
 			wr[sent].send_flags = IBV_SEND_SIGNALED | (send_inline << 3);
-			wr[sent].imm_data = htonl(0); //ToDo: set this to a useful value
-			wr[sent].opcode = IBV_WR_SEND_WITH_IMM;
+			wr[sent].opcode = IBV_WR_SEND;
 		}
 
 		debug(LOG_IB | 10, "Prepared %i send Work Requests", cnt);

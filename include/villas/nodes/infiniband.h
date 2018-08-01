@@ -34,6 +34,13 @@
 #include <villas/io.h>
 #include <villas/queue_signalled.h>
 #include <rdma/rdma_cma.h>
+
+/* Constants */
+#define META_SIZE 32
+#define GRH_SIZE 40
+#define META_GRH_SIZE META_SIZE + GRH_SIZE
+#define CHK_PER_ITER 2048
+
 /* Enums */
 enum poll_mode_e {
 	EVENT,
