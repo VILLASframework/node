@@ -33,15 +33,21 @@ extern "C" {
 struct list;
 struct node;
 
+enum signal_format {
+	SIGNAL_FORMAT_FLOAT	= 0,
+	SIGNAL_FORMAT_INT	= 1,
+	SIGNAL_FORMAT_BOOL 	= 2,
+	SIGNAL_FORMAT_UNKNOWN	= -1
+};
+
 struct signal {
 	char *name;	/**< The name of the signal. */
 	char *unit;
 	int enabled;
-	enum {
-		SIGNAL_FORMAT_INTEGER,
-		SIGNAL_FORMAT_REAL
-	} format;
+	enum signal_format format;
 };
+
+int signal_init(struct signal *s);
 
 int signal_destroy(struct signal *s);
 

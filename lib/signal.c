@@ -27,6 +27,13 @@
 #include "villas/utils.h"
 #include "villas/node.h"
 
+int signal_init(struct signal *s)
+{
+	s->format = SIGNAL_FORMAT_UNKNOWN;
+
+	return 0;
+}
+
 int signal_destroy(struct signal *s)
 {
 	if (s->name)
