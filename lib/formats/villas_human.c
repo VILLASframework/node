@@ -129,16 +129,32 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 		if (*end == io->delimiter)
 			break;
 
-		switch (s->format & (1 << s->length)) {
-			case SAMPLE_DATA_FORMAT_FLOAT:
-				s->data[s->length].f = strtod(ptr, &end);
-				break;
-			case SAMPLE_DATA_FORMAT_INT:
-				s->data[s->length].i = strtol(ptr, &end, 10);
-				break;
+		//determine format (int or double) of current number starting at ptr
+		//sko: not sure why ptr+1 is required in the following line to make it work...
+		//sko: it seems there is an additional space after each separator before a new value
+		char * next_seperator = strchr(ptr+1, io->separator);
+		if(next_seperator == NULL){
+			//the last element of a row
+			next_seperator = strchr(ptr, io->delimiter);
 		}
 
-		 /* There are no valid FP values anymore. */
+		char *number = malloc(next_seperator - ptr);
+		strncpy(number, ptr, next_seperator-ptr);
+		char * contains_dot = strstr(number, ".");
+		if(contains_dot == NULL){
+			//no dot in string number --> number is an integer
+			s->data[s->length].i = strtol(ptr, &end, 10);
+			sample_set_data_format(s, s->length, SAMPLE_DATA_FORMAT_INT);
+		}
+
+		else{
+			//dot in string number --> number is a floating point value
+			s->data[s->length].f = strtod(ptr, &end);
+			sample_set_data_format(s, s->length, SAMPLE_DATA_FORMAT_FLOAT);
+		}
+		free(number);
+
+		 /* There are no valid values anymore. */
 		if (end == ptr)
 			break;
 	}
