@@ -245,6 +245,8 @@ static void * path_run_single(void *arg)
 
 			path_destination_write(pd, p);
 		}
+
+		pthread_testcancel();
 	}
 
 	return NULL;
