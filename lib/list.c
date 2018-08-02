@@ -231,3 +231,9 @@ found:	pthread_mutex_unlock(&l->lock);
 
 	return f;
 }
+
+void list_extend(struct list *l, size_t len, void *val)
+{
+	while (list_length(l) < len)
+		list_push(l, val);
+}

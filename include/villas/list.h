@@ -134,6 +134,9 @@ int list_set(struct list *l, int index, void *value);
  */
 ssize_t list_index(struct list *l, void *value);
 
+/** Extend the list to the given length by filling new slots with given value. */
+void list_extend(struct list *l, size_t len, void *val);
+
 #ifdef __cplusplus
 }
 #endif
