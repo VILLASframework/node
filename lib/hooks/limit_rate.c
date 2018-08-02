@@ -26,10 +26,10 @@
 
 #include <string.h>
 
-#include "villas/hook.h"
-#include "villas/plugin.h"
-#include "villas/timing.h"
-#include "villas/sample.h"
+#include <villas/hook.h>
+#include <villas/plugin.h>
+#include <villas/timing.h>
+#include <villas/sample.h>
 
 struct limit_rate {
 	enum {

@@ -22,10 +22,10 @@
 
 #include <string.h>
 
-#include "villas/signal.h"
-#include "villas/list.h"
-#include "villas/utils.h"
-#include "villas/node.h"
+#include <villas/signal.h>
+#include <villas/list.h>
+#include <villas/utils.h>
+#include <villas/node.h>
 
 int signal_init(struct signal *s)
 {
