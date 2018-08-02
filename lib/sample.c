@@ -148,7 +148,6 @@ int sample_copy(struct sample *dst, struct sample *src)
 	dst->length = MIN(src->length, dst->capacity);
 
 	dst->sequence = src->sequence;
-	dst->source = src->source;
 	dst->flags = src->flags;
 	dst->ts = src->ts;
 

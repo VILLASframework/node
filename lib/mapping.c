@@ -355,7 +355,6 @@ int mapping_remap(struct list *m, struct sample *remapped, struct sample *origin
 
 	/* We copy all the header fields */
 	remapped->sequence = original->sequence;
-	remapped->source   = original->source;
 	remapped->ts       = original->ts;
 
 	for (size_t i = 0; i < list_length(m); i++) {

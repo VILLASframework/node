@@ -113,9 +113,6 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 #else
 	if (io->output.node)
 		json_object_set_new(*j, "target", json_string(io->output.node->name));
-
-	if (smp->source)
-		json_object_set_new(*j, "origin", json_string(smp->source->name));
 #endif
 
 	return 0;

@@ -437,8 +437,6 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 
 	/* Add missing fields */
 	for (int i = 0; i < nread; i++) {
-		smps[i]->source = n;
-
 		if (!(smps[i]->flags & SAMPLE_HAS_SEQUENCE))
 			smps[i]->sequence = n->sequence++;
 
