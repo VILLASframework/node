@@ -402,11 +402,11 @@ int websocket_start(struct node *n)
 	int ret;
 	struct websocket *w = (struct websocket *) n->_vd;
 
-	ret = pool_init(&w->pool, DEFAULT_WEBSOCKET_QUEUELEN, SAMPLE_LENGTH(DEFAULT_WEBSOCKET_SAMPLELEN), &memory_hugepage);
+	ret = pool_init(&w->pool, DEFAULT_WEBSOCKET_QUEUE_LENGTH, SAMPLE_LENGTH(DEFAULT_WEBSOCKET_SAMPLE_LENGTH), &memory_hugepage);
 	if (ret)
 		return ret;
 
-	ret = queue_signalled_init(&w->queue, DEFAULT_WEBSOCKET_QUEUELEN, &memory_hugepage, 0);
+	ret = queue_signalled_init(&w->queue, DEFAULT_WEBSOCKET_QUEUE_LENGTH, &memory_hugepage, 0);
 	if (ret)
 		return ret;
 
