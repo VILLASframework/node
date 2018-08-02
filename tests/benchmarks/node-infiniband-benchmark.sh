@@ -103,8 +103,10 @@ nodes = {
             max_wrs = 8192,
             cq_size = 256,
 
-            send_inline = 1,
+            send_inline = true,
             max_inline_data = 60,
+
+            use_fallback = true,
         }
     
     }
@@ -174,13 +176,15 @@ do
 	        sed -i -e 's/RATE_SAMPLES/'${RATE_SAMPLE}'/g' ${CONFIG_FILE}    
             sed -i -e 's/NUM_SAMPLES/'${NUM_SAMPLE}'/g' ${CONFIG_FILE}
             
+            sleep 1
+
             # Start receiving node
             VILLAS_LOG_PREFIX=$(colorize "[Target Node]  ") \
-            villas-node ${CONFIG_FILE_TARGET}  &
+            villas-node ${CONFIG_FILE_TARGET} &
             target_node_proc=$!
             
             # Wait for node to complete init
-            sleep 2
+            sleep 4
             
             # Start sending pipe
             VILLAS_LOG_PREFIX=$(colorize "[Source Node]  ") \
@@ -210,6 +214,8 @@ do
             sed -i -e 's/-'${NUM_SAMPLE}'/-NUM_SAMPLES/g' ${CONFIG_FILE}
 
             ((COUNT++))
+
+            sleep 4
         done
     done
 done

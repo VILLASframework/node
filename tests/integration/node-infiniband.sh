@@ -80,8 +80,10 @@ nodes = {
             max_wrs = 8192,
             cq_size = 256,
 
-            send_inline = 1,
+            send_inline = true,
             max_inline_data = 60,
+
+            use_fallback = true,
         }
     
     }
