@@ -98,6 +98,8 @@ int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nod
 
 int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes);
 
+int mapping_to_str(struct mapping_entry *me, unsigned index, char **str);
+
 #ifdef __cplusplus
 }
 #endif

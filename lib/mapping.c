@@ -369,3 +369,59 @@ int mapping_remap(struct list *m, struct sample *remapped, struct sample *origin
 
 	return 0;
 }
+
+int mapping_to_str(struct mapping_entry *me, unsigned index, char **str)
+{
+	const char *type;
+
+	assert(me->length == 0 || index < me->length);
+
+	if (me->node)
+		strcatf(str, "%s.", node_name(me->node));
+
+	switch (me->type) {
+		case MAPPING_TYPE_STATS:
+			switch (me->stats.type) {
+				case MAPPING_STATS_TYPE_TOTAL:	type = "total"; break
+				case MAPPING_STATS_TYPE_LAST:	type = "last"; break
+				case MAPPING_STATS_TYPE_LOWEST:	type = "lowest"; break
+				case MAPPING_STATS_TYPE_HIGHEST:type = "highest"; break
+				case MAPPING_STATS_TYPE_MEAN:	type = "mean"; break
+				case MAPPING_STATS_TYPE_VAR:	type = "var"; break
+				case MAPPING_STATS_TYPE_STDDEV:	type = "stddev"; break
+			}
+
+			strcatf(str, "stats.%s", type);
+			break;
+
+		case MAPPING_TYPE_HEADER:
+			switch (me->hdr.type) {
+				case MAPPING_HEADER_TYPE_LENGTH:   type = "length"; break;
+				case MAPPING_HEADER_TYPE_SEQUENCE: type = "sequence"; break;
+			}
+
+			strcatf(str, "hdr.%s", type);
+			break;
+
+		case MAPPING_TYPE_TIMESTAMP:
+			switch (me->stats.type) {
+				case MAPPING_TIMESTAMP_TYPE_ORIGIN:   type = "origin"; break;
+				case MAPPING_TIMESTAMP_TYPE_RECEIVED: type = "received"; break;
+			}
+
+			strcatf(str, "ts.%s.%s", type, index == 0 ? "sec" : "nsec");
+			break;
+
+		case MAPPING_TYPE_DATA:
+			if (me->node && index < list_length(&me->node->signals)) {
+				struct signal *s = list_at(&me->node->signals, index);
+
+				strcatf(str, "data[%s]", s->name);
+			}
+			else
+				strcatf(str, "data[%u]", index);
+			break;
+	}
+
+	return 0;
+}
