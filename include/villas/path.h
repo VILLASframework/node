@@ -89,6 +89,7 @@ struct path {
 	struct list sources;		/**< List of all incoming nodes (struct path_source). */
 	struct list destinations;	/**< List of all outgoing nodes (struct path_destination). */
 	struct list hooks;		/**< List of processing hooks (struct hook). */
+	struct list signals;		/**< List of signals which this path creates (struct signal). */
 
 	struct task timeout;
 

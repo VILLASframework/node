@@ -302,6 +302,7 @@ int path_init(struct path *p)
 
 	list_init(&p->destinations);
 	list_init(&p->sources);
+	list_init(&p->signals);
 
 	p->_name = NULL;
 
@@ -794,6 +795,7 @@ int path_destroy(struct path *p)
 #endif
 	list_destroy(&p->sources, (dtor_cb_t) path_source_destroy, true);
 	list_destroy(&p->destinations, (dtor_cb_t) path_destination_destroy, true);
+	list_destroy(&p->signals, (dtor_cb_t) signal_destroy, true);
 
 	if (p->reader.pfds)
 		free(p->reader.pfds);
