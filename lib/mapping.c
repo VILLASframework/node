@@ -223,22 +223,21 @@ int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes)
 
 	off = 0;
 	json_array_foreach(json_mapping, i, json_entry) {
-		struct mapping_entry *e = (struct mapping_entry *) alloc(sizeof(struct mapping_entry));
+		struct mapping_entry *me = (struct mapping_entry *) alloc(sizeof(struct mapping_entry));
 
-		ret = mapping_parse(e, json_entry, nodes);
+		ret = mapping_parse(me, json_entry, nodes);
 		if (ret)
 			goto out;
 
-		e->offset = off;
-		off += e->length;
+		me->offset = off;
+		off += me->length;
 
-		list_push(l, e);
+		list_push(l, me);
 	}
 
 	ret = 0;
 
-out:
-	json_decref(json_mapping);
+out:	json_decref(json_mapping);
 
 	return ret;
 }

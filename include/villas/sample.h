@@ -86,11 +86,11 @@ struct sample {
 
 	/** The values. */
 	union {
-		double  f;	/**< Floating point values. */
-		int64_t i;	/**< Integer values. */
-		bool	b;	/**< Boolean values. */
-		float complex z; /**< Complex values. */
-	} data[];		/**< Data is in host endianess! */
+		double f;			/**< Floating point values. */
+		int64_t i;			/**< Integer values. */
+		bool b;				/**< Boolean values. */
+		float complex z;		/**< Complex values. */
+	} data[];				/**< Data is in host endianess! */
 };
 
 #define SAMPLE_NON_POOL PTRDIFF_MIN
@@ -121,7 +121,6 @@ int sample_get(struct sample *s);
 int sample_put(struct sample *s);
 
 int sample_copy(struct sample *dst, struct sample *src);
-
 
 /** Compare two samples */
 int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags);

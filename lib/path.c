@@ -524,7 +524,6 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 
 	for (size_t i = 0; i < list_length(&sources); i++) {
 		struct mapping_entry *me = (struct mapping_entry *) list_at(&sources, i);
-
 		struct path_source *ps = NULL;
 
 		/* Check if there is already a path_source for this source */
@@ -537,6 +536,7 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 			}
 		}
 
+		/* Create new path_source of not existing */
 		if (!ps) {
 			ps = alloc(sizeof(struct path_source));
 
@@ -626,7 +626,7 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 			  && node_fd(ps->node) != 1;
 	}
 
-	ret = list_destroy(&sources, NULL, false);
+out:	ret = list_destroy(&sources, NULL, false);
 	if (ret)
 		return ret;
 
