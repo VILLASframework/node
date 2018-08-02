@@ -135,7 +135,7 @@ static void * send_loop(void *ctx)
 	/* Initialize memory */
 	unsigned pool_cnt = (strcmp(node_type_name(node->_vt), "infiniband") == 0 ? 8192 : LOG2_CEIL(node->out.vectorize));
 
-	ret = pool_init(&sendd.pool, pool_cnt, SAMPLE_LENGTH(DEFAULT_SAMPLELEN), node_memory_type(node, &memory_hugepage));
+	ret = pool_init(&sendd.pool, pool_cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), node_memory_type(node, &memory_hugepage));
 
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
@@ -205,7 +205,7 @@ static void * recv_loop(void *ctx)
 	/* Initialize memory */
 	unsigned pool_cnt = (strcmp(node_type_name(node->_vt), "infiniband") == 0 ? 8192 : LOG2_CEIL(node->in.vectorize));
 
-	ret = pool_init(&recvv.pool, pool_cnt, SAMPLE_LENGTH(DEFAULT_SAMPLELEN), node_memory_type(node, &memory_hugepage));
+	ret = pool_init(&recvv.pool, pool_cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), node_memory_type(node, &memory_hugepage));
 
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");

@@ -117,7 +117,7 @@ check:		if (optarg == endptr)
 			error("Failed to open IO");
 	}
 
-	struct sample *smp = sample_alloc_mem(DEFAULT_SAMPLELEN);
+	struct sample *smp = sample_alloc_mem(DEFAULT_SAMPLE_LENGTH);
 
 	for (;;) {
 		ret = io_scan(&input, &smp, 1);

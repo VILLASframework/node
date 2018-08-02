@@ -45,7 +45,7 @@ static void path_destination_enqueue(struct path *p, struct sample *smps[], unsi
 static int path_source_init(struct path_source *ps)
 {
 	int ret;
-	unsigned pool_cnt = (strcmp(node_type_name(ps->node->_vt), "infiniband") == 0 ? 8192 : (unsigned) MAX(DEFAULT_QUEUELEN, ps->node->in.vectorize));
+	unsigned pool_cnt = (strcmp(node_type_name(ps->node->_vt), "infiniband") == 0 ? 8192 : (unsigned) MAX(DEFAULT_QUEUE_LENGTH, ps->node->in.vectorize));
 
 	ret = pool_init(&ps->pool, pool_cnt, SAMPLE_LENGTH(ps->node->samplelen), node_memory_type(ps->node, &memory_hugepage));
 	if (ret)
@@ -313,7 +313,7 @@ int path_init(struct path *p)
 	p->reverse = 0;
 	p->enabled = 1;
 	p->poll = -1;
-	p->queuelen = DEFAULT_QUEUELEN;
+	p->queuelen = DEFAULT_QUEUE_LENGTH;
 
 #ifdef WITH_HOOKS
 	/* Add internal hooks if they are not already in the list */
@@ -446,7 +446,7 @@ int path_init2(struct path *p)
 	}
 
 	if (!p->samplelen)
-		p->samplelen = DEFAULT_SAMPLELEN;
+		p->samplelen = DEFAULT_SAMPLE_LENGTH;
 
 	ret = pool_init(&p->pool, pool_cnt, SAMPLE_LENGTH(p->samplelen), pool_mem_type);
 	if (ret)

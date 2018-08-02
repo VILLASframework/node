@@ -121,7 +121,7 @@ check:		if (optarg == endptr)
 	struct side s[n];
 
 	memory_init(0);
-	ret = pool_init(&pool, n, SAMPLE_LENGTH(DEFAULT_SAMPLELEN), &memory_type_heap);
+	ret = pool_init(&pool, n, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_type_heap);
 	if (ret)
 		error("Failed to initialize pool");
 

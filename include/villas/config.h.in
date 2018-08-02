@@ -37,8 +37,8 @@ extern "C"{
 #define PROCFS_PATH		"/proc"
 
 /** Default number of values in a sample */
-#define DEFAULT_SAMPLELEN	64
-#define DEFAULT_QUEUELEN	1024
+#define DEFAULT_SAMPLE_LENGTH	64
+#define DEFAULT_QUEUE_LENGTH	1024
 
 /** Number of hugepages which are requested from the the kernel.
  * @see https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt */

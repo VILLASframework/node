@@ -83,7 +83,7 @@ static int websocket_connection_init(struct websocket_connection *c)
 
 	c->_name = NULL;
 
-	ret = queue_init(&c->queue, DEFAULT_QUEUELEN, &memory_hugepage);
+	ret = queue_init(&c->queue, DEFAULT_QUEUE_LENGTH, &memory_hugepage);
 	if (ret)
 		return ret;
 

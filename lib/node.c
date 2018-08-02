@@ -191,7 +191,7 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_name_long = NULL;
 
 	/* Default values */
-	n->samplelen = DEFAULT_SAMPLELEN;
+	n->samplelen = DEFAULT_SAMPLE_LENGTH;
 
 	ret = node_direction_init(&n->in, n);
 	if (ret)

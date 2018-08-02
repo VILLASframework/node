@@ -34,7 +34,7 @@ int loopback_parse(struct node *n, json_t *cfg)
 	int ret;
 
 	/* Default values */
-	l->queuelen = DEFAULT_QUEUELEN;
+	l->queuelen = DEFAULT_QUEUE_LENGTH;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i }",
 		"queuelen", &l->queuelen

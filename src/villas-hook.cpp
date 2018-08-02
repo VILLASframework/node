@@ -186,7 +186,7 @@ check:		if (optarg == endptr)
 
 	smps = (struct sample **) alloc(cnt * sizeof(struct sample *));
 
-	ret = pool_init(&q, 10 * cnt, SAMPLE_LENGTH(DEFAULT_SAMPLELEN), &memory_hugepage);
+	ret = pool_init(&q, 10 * cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_hugepage);
 	if (ret)
 		error("Failed to initilize memory pool");
 
