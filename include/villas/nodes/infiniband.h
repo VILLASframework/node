@@ -87,6 +87,10 @@ struct infiniband {
 		/* Bool, should data be send inline if possible? */
 		int send_inline;
 
+		/* Bool, should node have a fallback if it can't connect to a remote host? */
+		int use_fallback;
+
+		/* Buffer, used to temporarily store Work Completions from send queue */
 		struct queue send_wc_buffer;
 
 		/* Counter to keep track of available recv. WRs */

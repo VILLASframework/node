@@ -197,6 +197,7 @@ int ib_parse(struct node *n, json_t *cfg)
 	int vectorize_in = 1;
 	int vectorize_out = 1;
 	int buffer_subtraction = 16;
+	int use_fallback = 1;
 
 	// Parse JSON files and copy to local variables
 	json_t *json_in = NULL;
@@ -226,14 +227,15 @@ int ib_parse(struct node *n, json_t *cfg)
 	}
 
 	if (json_out) {
-		ret = json_unpack_ex(json_out, &err, 0, "{ s?: s, s?: i, s?: i, s?: i, s?: i, s?: i, s?: i,}",
+		ret = json_unpack_ex(json_out, &err, 0, "{ s?: s, s?: i, s?: i, s?: i, s?: i, s?: b, s?: i, s?: b}",
 			"address", &remote,
 			"resolution_timeout", &timeout,
 			"cq_size", &send_cq_size,
 			"max_wrs", &max_send_wr,
 			"max_inline_data", &max_inline_data,
 			"send_inline", &send_inline,
-			"vectorize", &vectorize_out
+			"vectorize", &vectorize_out,
+			"use_fallback", &use_fallback
 		);
 		if (ret)
 			jerror(&err, "Failed to parse output configuration of node %s", node_name(n));
@@ -249,6 +251,9 @@ int ib_parse(struct node *n, json_t *cfg)
 
 		debug(LOG_IB | 3, "Node %s is up as target", node_name(n));
 	}
+
+	// Set fallback mode
+	ib->conn.use_fallback = use_fallback;
 
 	// Set vectorize mode. Do not print, since framework will print this information
 	n->in.vectorize = vectorize_in;
@@ -392,11 +397,8 @@ int ib_check(struct node *n)
 
 	// Warn user if he changed the default inline value
 	if (ib->qp_init.cap.max_inline_data != 0)
-		warn("You changed the default value of max_inline_data. This might influence the maximum number of outstanding Work Requests in the Queue Pair and can be a reason for the Queue Pair creation to fail");
-
-	// Check if inline mode is set to a valid value
-	if (ib->conn.send_inline != 0 && ib->conn.send_inline != 1)
-		error("send_inline has to be set to either 0 or 1! %i is not a valid value", ib->conn.send_inline);
+		warn("You changed the default value of max_inline_data. This might influence the maximum number "
+			"of outstanding Work Requests in the Queue Pair and can be a reason for the Queue Pair creation to fail");
 
 	info("Finished check of node %s", node_name(n));
 
@@ -444,7 +446,13 @@ static void ib_continue_as_listen(struct node *n, struct rdma_cm_event *event)
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	int ret;
 
-	warn("Trying to continue as listening node");
+	if (ib->conn.use_fallback)
+		warn("Trying to continue as listening node");
+	else
+		error("Cannot establish a connection with remote host! If you want that %s tries to "
+			"continue as listening node in such cases, set use_fallback = true in the configuration",
+			node_name(n));
+
 
 	// Acknowledge event
 	rdma_ack_cm_event(event);
@@ -906,7 +914,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 			// Check if data can be send inline
 			// 32 byte meta data is always send.
 			int send_inline = ( (sge[sent][j-1].length + META_SIZE) < ib->qp_init.cap.max_inline_data) ?
-				ib->conn.send_inline : 0;
+						ib->conn.send_inline : 0;
 
 
 			debug(LOG_IB | 10, "Sample will be send inline [0/1]: %i", send_inline);
