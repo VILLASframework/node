@@ -29,8 +29,6 @@
 
 #pragma once
 
-#include <libwebsockets.h>
-
 #include <villas/node.h>
 #include <villas/pool.h>
 #include <villas/queue_signalled.h>

@@ -26,6 +26,8 @@
 #include <string.h>
 #include <signal.h>
 
+#include <libwebsockets.h>
+
 #include <villas/super_node.h>
 #include <villas/timing.h>
 #include <villas/utils.h>

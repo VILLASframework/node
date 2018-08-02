@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include <libwebsockets.h>
 #include <jansson.h>
 #include <pthread.h>
 
@@ -39,6 +38,7 @@ extern "C"{
 
 /* Forward declarations */
 struct lws;
+enum lws_callback_reasons;
 struct super_node;
 
 struct api;
@@ -58,7 +58,7 @@ struct api {
 
 	struct list sessions;		/**< List of currently active connections */
 	struct queue_signalled pending;	/**< A queue of api_sessions which have pending requests. */
-	
+
 	pthread_t thread;
 
 	struct super_node *super_node;
