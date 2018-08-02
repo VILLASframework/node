@@ -402,7 +402,7 @@ int websocket_start(struct node *n)
 	int ret;
 	struct websocket *w = (struct websocket *) n->_vd;
 
-	ret = pool_init(&w->pool, DEFAULT_WEBSOCKET_QUEUELEN, SAMPLE_LEN(DEFAULT_WEBSOCKET_SAMPLELEN), &memory_hugepage);
+	ret = pool_init(&w->pool, DEFAULT_WEBSOCKET_QUEUELEN, SAMPLE_LENGTH(DEFAULT_WEBSOCKET_SAMPLELEN), &memory_hugepage);
 	if (ret)
 		return ret;
 

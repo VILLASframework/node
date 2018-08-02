@@ -42,7 +42,7 @@ size_t shmem_total_size(int queuelen, int samplelen)
 		/* the size of the actual queue and the queue for the pool */
 		+ queuelen * (2 * sizeof(struct queue_cell))
 		/* the size of the pool */
-		+ queuelen * kernel_get_cacheline_size() * CEIL(SAMPLE_LEN(samplelen), kernel_get_cacheline_size())
+		+ queuelen * kernel_get_cacheline_size() * CEIL(SAMPLE_LENGTH(samplelen), kernel_get_cacheline_size())
 		/* a memblock for each allocation (1 shmem_shared, 2 queues, 1 pool) */
 		+ 4 * sizeof(struct memory_block)
 		/* and some extra buffer for alignment */
@@ -114,7 +114,7 @@ retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 		return -6;
 	}
 
-	ret = pool_init(&shared->pool, conf->queuelen, SAMPLE_LEN(conf->samplelen), manager);
+	ret = pool_init(&shared->pool, conf->queuelen, SAMPLE_LENGTH(conf->samplelen), manager);
 	if (ret) {
 		errno = ENOMEM;
 		return -7;

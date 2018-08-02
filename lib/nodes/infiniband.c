@@ -841,7 +841,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 			j++;
 
     			sge[i][j].addr = (uint64_t) &smps[i]->data;
-    			sge[i][j].length = SAMPLE_DATA_LEN(DEFAULT_SAMPLELEN);
+    			sge[i][j].length = SAMPLE_DATA_LENGTH(DEFAULT_SAMPLELEN);
     			sge[i][j].lkey = mr->lkey;
 
 			j++;

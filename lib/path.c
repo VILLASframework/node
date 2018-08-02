@@ -47,7 +47,7 @@ static int path_source_init(struct path_source *ps)
 	int ret;
 	unsigned pool_cnt = (strcmp(node_type_name(ps->node->_vt), "infiniband") == 0 ? 8192 : (unsigned) MAX(DEFAULT_QUEUELEN, ps->node->in.vectorize));
 
-	ret = pool_init(&ps->pool, pool_cnt, SAMPLE_LEN(ps->node->samplelen), node_memory_type(ps->node, &memory_hugepage));
+	ret = pool_init(&ps->pool, pool_cnt, SAMPLE_LENGTH(ps->node->samplelen), node_memory_type(ps->node, &memory_hugepage));
 	if (ret)
 		return ret;
 
@@ -448,7 +448,7 @@ int path_init2(struct path *p)
 	if (!p->samplelen)
 		p->samplelen = DEFAULT_SAMPLELEN;
 
-	ret = pool_init(&p->pool, pool_cnt, SAMPLE_LEN(p->samplelen), pool_mem_type);
+	ret = pool_init(&p->pool, pool_cnt, SAMPLE_LENGTH(p->samplelen), pool_mem_type);
 	if (ret)
 		return ret;
 

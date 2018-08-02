@@ -156,8 +156,8 @@ void test_rtt() {
 
 	struct timespec send, recv;
 
-	struct sample *smp_send = (struct sample *) alloc(SAMPLE_LEN(2));
-	struct sample *smp_recv = (struct sample *) alloc(SAMPLE_LEN(2));
+	struct sample *smp_send = (struct sample *) alloc(SAMPLE_LENGTH(2));
+	struct sample *smp_recv = (struct sample *) alloc(SAMPLE_LENGTH(2));
 
 	hist_init(&hist, 20, 100);
 

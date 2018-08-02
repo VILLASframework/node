@@ -57,7 +57,7 @@ struct sample * sample_alloc(struct pool *p)
 
 struct sample * sample_alloc_mem(int capacity)
 {
-	size_t sz = SAMPLE_LEN(capacity);
+	size_t sz = SAMPLE_LENGTH(capacity);
 
 	char *b = alloc(sz);
 	if (!b)
@@ -152,7 +152,7 @@ int sample_copy(struct sample *dst, struct sample *src)
 	dst->flags = src->flags;
 	dst->ts = src->ts;
 
-	memcpy(&dst->data, &src->data, SAMPLE_DATA_LEN(dst->length));
+	memcpy(&dst->data, &src->data, SAMPLE_DATA_LENGTH(dst->length));
 
 	return 0;
 }

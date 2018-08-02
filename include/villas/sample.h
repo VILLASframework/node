@@ -40,10 +40,10 @@ extern "C"{
 struct pool;
 
 /** The length of a sample datastructure with \p values values in bytes. */
-#define SAMPLE_LEN(len)	(sizeof(struct sample) + SAMPLE_DATA_LEN(len))
+#define SAMPLE_LENGTH(len)	(sizeof(struct sample) + SAMPLE_DATA_LENGTH(len))
 
 /** The length of a sample data portion of a sample datastructure with \p values values in bytes. */
-#define SAMPLE_DATA_LEN(len)	((len) * sizeof(double))
+#define SAMPLE_DATA_LENGTH(len)	((len) * sizeof(double))
 
 /** The offset to the beginning of the data section. */
 #define SAMPLE_DATA_OFFSET(smp)	((char *) (smp) + offsetof(struct sample, data))

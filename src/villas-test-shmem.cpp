@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
 			outsmps[i]->ts = insmps[i]->ts;
 
 			int len = MIN(insmps[i]->length, outsmps[i]->capacity);
-			memcpy(outsmps[i]->data, insmps[i]->data, SAMPLE_DATA_LEN(len));
+			memcpy(outsmps[i]->data, insmps[i]->data, SAMPLE_DATA_LENGTH(len));
 
 			outsmps[i]->length = len;
 		}

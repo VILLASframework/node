@@ -299,7 +299,7 @@ int iec61850_sv_start(struct node *n)
 		SVReceiver_addSubscriber(i->subscriber.receiver, i->subscriber.subscriber);
 
 		/* Initialize pool and queue to pass samples between threads */
-		ret = pool_init(&i->subscriber.pool, 1024, SAMPLE_LEN(n->samplelen), &memory_hugepage);
+		ret = pool_init(&i->subscriber.pool, 1024, SAMPLE_LENGTH(n->samplelen), &memory_hugepage);
 		if (ret)
 			return ret;
 
