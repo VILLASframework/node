@@ -26,10 +26,63 @@
 #include <villas/list.h>
 #include <villas/utils.h>
 #include <villas/node.h>
+#include <villas/mapping.h>
 
 int signal_init(struct signal *s)
 {
 	s->format = SIGNAL_FORMAT_UNKNOWN;
+
+	return 0;
+}
+
+int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, unsigned index)
+{
+	int ret;
+
+	ret = signal_init(s);
+	if (ret)
+		return ret;
+
+	ret = mapping_to_str(me, index, &s->name);
+	if (ret)
+		return ret;
+
+	switch (me->type) {
+		case MAPPING_TYPE_STATS:
+			switch (me->stats.type) {
+				case MAPPING_STATS_TYPE_TOTAL:
+					s->format = SIGNAL_FORMAT_INT;
+					break;
+
+				case MAPPING_STATS_TYPE_LAST:
+				case MAPPING_STATS_TYPE_LOWEST:
+				case MAPPING_STATS_TYPE_HIGHEST:
+				case MAPPING_STATS_TYPE_MEAN:
+				case MAPPING_STATS_TYPE_VAR:
+				case MAPPING_STATS_TYPE_STDDEV:
+					s->format = SIGNAL_FORMAT_FLOAT;
+					break;
+			}
+			break;
+
+		case MAPPING_TYPE_HEADER:
+			switch (me->hdr.type) {
+				case MAPPING_HEADER_TYPE_LENGTH:
+				case MAPPING_HEADER_TYPE_SEQUENCE:
+					s->format = SIGNAL_FORMAT_INT;
+					break;
+			}
+			break;
+
+		case MAPPING_TYPE_TIMESTAMP:
+			s->format = SIGNAL_FORMAT_INT;
+			break;
+
+		case MAPPING_TYPE_DATA:
+			s->format = me->signal->format;
+			s->unit = me->signal->unit;
+			break;
+	}
 
 	return 0;
 }

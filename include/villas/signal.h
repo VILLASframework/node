@@ -32,6 +32,7 @@ extern "C" {
 /* Forward declarations */
 struct list;
 struct node;
+struct mapping_entry;
 
 enum signal_format {
 	SIGNAL_FORMAT_FLOAT	= 0,
@@ -49,6 +50,8 @@ struct signal {
 };
 
 int signal_init(struct signal *s);
+
+int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, unsigned index);
 
 int signal_destroy(struct signal *s);
 
