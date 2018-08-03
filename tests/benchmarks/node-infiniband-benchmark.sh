@@ -46,8 +46,8 @@ INPUT_FILE=$(mktemp)
 LOG_DIR=benchmarks_$(date +%Y%m%d_%H-%M-%S)
 mkdir ${LOG_DIR}
 
-NUM_VALUES=(3 5 10 25 50)
-RATE_SAMPLES=(10 100 1000 10000 100000 200000)
+NUM_VALUES=(3)
+RATE_SAMPLES=(50000)
 TIME_TO_RUN=10
 
 # Declare modes
@@ -56,36 +56,87 @@ MODES=("TCP" "UDP")
 # Initialize counter
 COUNT=0
 
-# Set config file with a MODE flag
-# NUM_VALUES, RATE_SAMPLES, NUM_SAMPLES, and MODE will be replaced in loop
+# Set target and source config file, which is the same for both runs
+cat > ${CONFIG_FILE_TARGET} <<EOF
+@include "${CONFIG_FILE//\/tmp\/}"
+
+paths = (
+    {
+        in = "ib_node_target",
+        out = "results_output"
+    }
+)
+EOF
+
+cat > ${CONFIG_FILE_SOURCE} <<EOF
+@include "${CONFIG_FILE//\/tmp\/}"
+
+paths = (
+    {
+        in = "siggen",
+        out = ("ib_node_source", "results_input")
+    }
+)
+EOF
+
+# Run through modes
+for MODE in "${MODES[@]}"
+do
+    for NUM_VALUE in "${NUM_VALUES[@]}"
+    do
+        for RATE_SAMPLE in "${RATE_SAMPLES[@]}"
+        do
+            NUM_SAMPLE=$((${RATE_SAMPLE} * ${TIME_TO_RUN}))
+
+            echo "########################################################"
+            echo "########################################################"
+            echo "## START ${MODE}"
+            echo "## NUM_VALUES: ${NUM_VALUE}"
+            echo "## RATE_SAMPLES: ${RATE_SAMPLE}"
+            echo "## NUM_SAMPLES: ${NUM_SAMPLE}"
+            echo "########################################################"
+            echo "########################################################"
+
+            # Set config file with a MODE flag
 cat > ${CONFIG_FILE} <<EOF
 logging = {
     level = 0,
     facilities = "ib",
 }
 
+http = {
+    enabled = false,
+},
+
 nodes = {
     siggen = {
         type = "signal",
 
         signal = "mixed",
-        values = NUM_VALUES,
+        values = ${NUM_VALUE},
         frequency = 3,
-        rate = RATE_SAMPLES,
-        limit = NUM_SAMPLES,
+        rate = ${RATE_SAMPLE},
+        limit = ${NUM_SAMPLE},
     },
 
-    results = {
+    results_input = {
         type = "file",
 
         format = "csv",
-        uri = "${LOG_DIR}/COUNT_MODE-NUM_VALUES-RATE_SAMPLES-NUM_SAMPLES.csv",
+        uri = "${LOG_DIR}/${COUNT}_${MODE}-${NUM_VALUE}-${RATE_SAMPLE}-${NUM_SAMPLE}_input.csv",
+    },
+
+    results_output = {
+        type = "file",
+
+        format = "csv",
+        uri = "${LOG_DIR}/${COUNT}_${MODE}-${NUM_VALUE}-${RATE_SAMPLE}-${NUM_SAMPLE}_output.csv",
     },
 
     ib_node_source = {
         type = "infiniband",
 
-        rdma_port_space = "RDMA_PS_MODE",
+        rdma_port_space = "RDMA_PS_${MODE}",
         
         in = {
             address = "10.0.0.2:1337",
@@ -114,7 +165,7 @@ nodes = {
     ib_node_target = {
         type = "infiniband",
 
-        rdma_port_space = "RDMA_PS_MODE",
+        rdma_port_space = "RDMA_PS_${MODE}",
         
         in = {
             address = "10.0.0.1:1337",
@@ -129,53 +180,6 @@ nodes = {
 }
 EOF
 
-# Set target and source config file, which is the same for both runs
-cat > ${CONFIG_FILE_TARGET} <<EOF
-@include "${CONFIG_FILE//\/tmp\/}"
-
-paths = (
-    {
-        in = "ib_node_target",
-        out = "results"
-    }
-)
-EOF
-
-cat > ${CONFIG_FILE_SOURCE} <<EOF
-@include "${CONFIG_FILE//\/tmp\/}"
-
-paths = (
-    {
-        in = "siggen",
-        out = "ib_node_source"
-    }
-)
-EOF
-
-# Run through modes
-for MODE in "${MODES[@]}"
-do
-    for NUM_VALUE in "${NUM_VALUES[@]}"
-    do
-        for RATE_SAMPLE in "${RATE_SAMPLES[@]}"
-        do
-            NUM_SAMPLE=$((${RATE_SAMPLE} * ${TIME_TO_RUN}))
-
-            echo "########################################################"
-            echo "########################################################"
-            echo "## START ${MODE}"
-            echo "## NUM_VALUES: ${NUM_VALUE}"
-            echo "## RATE_SAMPLES: ${RATE_SAMPLE}"
-            echo "## NUM_SAMPLES: ${NUM_SAMPLE}"
-            echo "########################################################"
-            echo "########################################################"
-
-	        sed -i -e 's/COUNT/'${COUNT}'/g' ${CONFIG_FILE}    
-	        sed -i -e 's/MODE/'${MODE}'/g' ${CONFIG_FILE}    
-	        sed -i -e 's/NUM_VALUES/'${NUM_VALUE}'/g' ${CONFIG_FILE}    
-	        sed -i -e 's/RATE_SAMPLES/'${RATE_SAMPLE}'/g' ${CONFIG_FILE}    
-            sed -i -e 's/NUM_SAMPLES/'${NUM_SAMPLE}'/g' ${CONFIG_FILE}
-            
             sleep 1
 
             # Start receiving node
@@ -184,38 +188,29 @@ do
             target_node_proc=$!
             
             # Wait for node to complete init
-            sleep 4
+            sleep 2
             
             # Start sending pipe
             VILLAS_LOG_PREFIX=$(colorize "[Source Node]  ") \
-            ip netns exec namespace0 villas-node ${CONFIG_FILE_SOURCE} &>${LOG_DIR}/${COUNT}_source_node.log &
+            ip netns exec namespace0 villas-node ${CONFIG_FILE_SOURCE} &
             source_node_proc=$!
             
-            sleep $((${TIME_TO_RUN} + 1))
+            sleep $((${TIME_TO_RUN} + 5))
+            #sleep 5
             
             # Stop node
             kill $target_node_proc
             
-            sleep 3
-            #ToDo: Add checks
+            sleep 1
 
             echo "########################################################"
             echo "## STOP $MODE"-${NUM_VALUE}-${RATE_SAMPLE}-${NUM_SAMPLE}
             echo "########################################################"
             echo ""
 
-	        sed -i -e 's/\/'${COUNT}'_/\/COUNT_/g' ${CONFIG_FILE}    
-	        sed -i -e 's/'${MODE}'/MODE/g' ${CONFIG_FILE}    
-	        sed -i -e 's/values\ =\ '${NUM_VALUE}'/values\ =\ NUM_VALUES/g' ${CONFIG_FILE}    
-            sed -i -e 's/rate\ =\ '${RATE_SAMPLE}'/rate\ =\ RATE_SAMPLES/g' ${CONFIG_FILE}
-            sed -i -e 's/limit\ =\ '${NUM_SAMPLE}'/limit\ =\ NUM_SAMPLES/g' ${CONFIG_FILE}
-	        sed -i -e 's/-'${NUM_VALUE}'/-NUM_VALUES/g' ${CONFIG_FILE}    
-            sed -i -e 's/-'${RATE_SAMPLE}'/-RATE_SAMPLES/g' ${CONFIG_FILE}
-            sed -i -e 's/-'${NUM_SAMPLE}'/-NUM_SAMPLES/g' ${CONFIG_FILE}
-
             ((COUNT++))
 
-            sleep 4
+            sleep 1
         done
     done
 done
