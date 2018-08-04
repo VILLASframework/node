@@ -46,9 +46,9 @@ INPUT_FILE=$(mktemp)
 LOG_DIR=benchmarks_$(date +%Y%m%d_%H-%M-%S)
 mkdir ${LOG_DIR}
 
-NUM_VALUES=(3)
-RATE_SAMPLES=(50000)
-TIME_TO_RUN=10
+NUM_VALUES=(2 4 8 16 32 64)
+RATE_SAMPLES=(10 100 1000 10000 50000)
+TIME_TO_RUN=30
 
 # Declare modes
 MODES=("TCP" "UDP")
