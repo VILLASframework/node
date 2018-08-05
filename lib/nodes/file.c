@@ -91,17 +91,17 @@ int file_parse(struct node *n, json_t *cfg)
 	f->flush = 0;
 	f->buffer_size = 0;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s?: { s?: s, s?: F, s?: s, s?: F }, s?: { s?: b, s?: i } }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s?: i, s?: { s?: s, s?: F, s?: s, s?: F }, s?: { s?: b } }",
 		"uri", &uri_tmpl,
 		"format", &format,
+		"buffer_size", &f->buffer_size,
 		"in",
 			"eof", &eof,
 			"rate", &f->rate,
 			"epoch_mode", &epoch_mode,
 			"epoch", &epoch_flt,
 		"out",
-			"flush", &f->flush,
-			"buffer_size", &f->buffer_size
+			"flush", &f->flush
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
