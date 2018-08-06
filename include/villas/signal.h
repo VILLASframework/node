@@ -25,6 +25,8 @@
 
 #include <jansson.h>
 
+#include <villas/atomic.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -47,15 +49,23 @@ enum signal_format {
  * This data structure contains meta data about samples values in struct sample::data
  */
 struct signal {
-	char *name;	/**< The name of the signal. */
-	char *unit;	/**< The unit of the signal. */
+	char *name;		/**< The name of the signal. */
+	char *unit;		/**< The unit of the signal. */
 
 	int enabled;
+
+	atomic_int refcnt;	/**< Reference counter. */
 
 	enum signal_format format;
 };
 
 int signal_init(struct signal *s);
+
+/** Increase reference counter. */
+int signal_get(struct signal *s);
+
+/** Decrease reference counter. */
+int signal_put(struct signal *s);
 
 int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, unsigned index);
 

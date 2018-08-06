@@ -30,7 +30,11 @@
 
 int signal_init(struct signal *s)
 {
+	s->name = NULL;
+	s->unit = NULL;
 	s->format = SIGNAL_FORMAT_UNKNOWN;
+
+	s->refcnt = ATOMIC_VAR_INIT(1);
 
 	return 0;
 }
@@ -93,6 +97,22 @@ int signal_destroy(struct signal *s)
 		free(s->name);
 
 	return 0;
+}
+
+int signal_get(struct signal *s)
+{
+	return atomic_fetch_add(&s->refcnt, 1) + 1;
+}
+
+int signal_put(struct signal *s)
+{
+	int prev = atomic_fetch_sub(&s->refcnt, 1);
+
+	/* Did we had the last reference? */
+	if (prev == 1)
+		signal_destroy(s);
+
+	return prev - 1;
 }
 
 int signal_parse(struct signal *s, json_t *cfg)
