@@ -50,7 +50,8 @@ struct file {
 	int flush;			/**< Flush / upload file contents after each write. */
 	struct task task;		/**< Timer file descriptor. Blocks until 1 / rate seconds are elapsed. */
 	double rate;			/**< The read rate. */
-	size_t buffer_size;		/**< Defines size of stream buffer. No buffer is created if value is set to zero. */
+	size_t buffer_size_out;		/**< Defines size of output stream buffer. No buffer is created if value is set to zero. */
+	size_t buffer_size_in;		/**< Defines size of input stream buffer. No buffer is created if value is set to zero. */
 
 	enum epoch_mode {
 		FILE_EPOCH_DIRECT,
