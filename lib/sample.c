@@ -252,3 +252,12 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 
 	return 0;
 }
+
+enum signal_format sample_format(const struct sample *s, unsigned idx)
+{
+	struct signal *sig;
+
+	sig = (struct signal *) list_at_safe(s->signals, idx);
+
+	return sig ? sig->format : SIGNAL_FORMAT_UNKNOWN;
+}

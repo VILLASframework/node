@@ -76,6 +76,7 @@ struct sample {
 	int capacity;		/**< The number of values in sample::values for which memory is reserved. */
 	int flags;		/**< Flags are used to store binary properties of a sample. */
 
+	struct list *signals;	/**< The list of signal descriptors. */
 
 	atomic_int refcnt;	/**< Reference counter. */
 	ptrdiff_t pool_off;	/**< This sample belongs to this memory pool (relative pointer). See sample_pool(). */
@@ -91,7 +92,7 @@ struct sample {
 		double f;			/**< Floating point values. */
 		int64_t i;			/**< Integer values. */
 		bool b;				/**< Boolean values. */
-		float complex z;		/**< Complex values. */
+		float _Complex z;		/**< Complex values. */
 	} data[];				/**< Data is in host endianess! */
 };
 
@@ -131,6 +132,8 @@ int sample_clone_many(struct sample *clones[], struct sample *origs[], int cnt);
 int sample_copy_many(struct sample *dsts[], struct sample *srcs[], int cnt);
 int sample_get_many(struct sample *smps[], int cnt);
 int sample_put_many(struct sample *smps[], int cnt);
+
+enum signal_format sample_format(const struct sample *s, unsigned idx);
 
 #ifdef __cplusplus
 }
