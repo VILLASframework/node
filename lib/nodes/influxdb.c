@@ -22,6 +22,9 @@
 
 #include <string.h>
 #include <inttypes.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
 
 #include <villas/node.h>
 #include <villas/plugin.h>

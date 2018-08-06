@@ -25,6 +25,7 @@
 
 #include <jansson.h>
 #include <pthread.h>
+#include <libwebsockets.h>
 
 #include <villas/list.h>
 #include <villas/common.h>
@@ -36,8 +37,6 @@ extern "C" {
 #endif
 
 /* Forward declarations */
-struct lws;
-enum lws_callback_reasons;
 struct super_node;
 
 struct api;

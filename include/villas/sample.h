@@ -23,14 +23,21 @@
 
 #pragma once
 
-#include <villas/atomic.h>
-
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <complex.h>
+#include <stdbool.h>
 #include <time.h>
+
+/* "I" defined by complex.h collides with a define in OpenSSL */
+#undef I
+#define J _Complex_I
+
+
+#include <villas/atomic.h>
+#include <villas/signal.h>
 
 #ifdef __cplusplus
 extern "C" {
