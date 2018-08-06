@@ -65,7 +65,7 @@ Test(mapping, parse_nodes)
 	ret = mapping_parse_str(&m, "apple.ts.origin", &nodes);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, list_lookup(&nodes, "apple"));
-	cr_assert_eq(m.type, MAPPING_TYPE_TS);
+	cr_assert_eq(m.type, MAPPING_TYPE_TIMESTAMP);
 	cr_assert_eq(m.ts.id, MAPPING_TS_ORIGIN);
 
 	ret = mapping_parse_str(&m, "cherry.stats.owd.mean", &nodes);
@@ -114,12 +114,12 @@ Test(mapping, parse)
 
 	ret = mapping_parse_str(&m, "ts.origin", NULL);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.type, MAPPING_TYPE_TS);
+	cr_assert_eq(m.type, MAPPING_TYPE_TIMESTAMP);
 	cr_assert_eq(m.ts.id, MAPPING_TS_ORIGIN);
 
 	ret = mapping_parse_str(&m, "hdr.sequence", NULL);
 	cr_assert_eq(ret, 0);
-	cr_assert_eq(m.type, MAPPING_TYPE_HDR);
+	cr_assert_eq(m.type, MAPPING_TYPE_HEADER);
 	cr_assert_eq(m.hdr.id, MAPPING_HDR_SEQUENCE);
 
 	ret = mapping_parse_str(&m, "stats.owd.mean", NULL);

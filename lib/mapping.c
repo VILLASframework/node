@@ -96,7 +96,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 			goto invalid_format;
 	}
 	else if (!strcmp(type, "hdr")) {
-		me->type = MAPPING_TYPE_HDR;
+		me->type = MAPPING_TYPE_HEADER;
 		me->length = 1;
 
 		field = strtok(NULL, ".");
@@ -104,16 +104,14 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 			goto invalid_format;
 
 		if      (!strcmp(field, "sequence"))
-			me->hdr.id = MAPPING_HDR_SEQUENCE;
+			me->header.type = MAPPING_HEADER_TYPE_SEQUENCE;
 		else if (!strcmp(field, "length"))
-			me->hdr.id = MAPPING_HDR_LENGTH;
-		else if (!strcmp(field, "format"))
-			me->hdr.id = MAPPING_HDR_FORMAT;
+			me->header.type = MAPPING_HEADER_TYPE_LENGTH;
 		else
 			goto invalid_format;
 	}
 	else if (!strcmp(type, "ts")) {
-		me->type = MAPPING_TYPE_TS;
+		me->type = MAPPING_TYPE_TIMESTAMP;
 		me->length = 2;
 
 		field = strtok(NULL, ".");
@@ -121,11 +119,11 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 			goto invalid_format;
 
 		if      (!strcmp(field, "origin"))
-			me->ts.id = MAPPING_TS_ORIGIN;
+			me->timestamp.type = MAPPING_TIMESTAMP_TYPE_ORIGIN;
 		else if (!strcmp(field, "received"))
-			me->ts.id = MAPPING_TS_RECEIVED;
+			me->timestamp.type = MAPPING_TIMESTAMP_TYPE_RECEIVED;
 		else if (!strcmp(field, "sent"))
-			me->ts.id = MAPPING_TS_SEND;
+			me->timestamp.type = MAPPING_TIMESTAMP_TYPE_SEND;
 		else
 			goto invalid_format;
 	}
@@ -289,14 +287,14 @@ int mapping_update(struct mapping_entry *me, struct sample *remapped, struct sam
 			}
 		}
 
-		case MAPPING_TYPE_TS: {
+		case MAPPING_TYPE_TIMESTAMP: {
 			struct timespec *ts;
 
-			switch (me->ts.id) {
-				case MAPPING_TS_RECEIVED:
+			switch (me->timestamp.type) {
+				case MAPPING_TIMESTAMP_TYPE_RECEIVED:
 					ts = &original->ts.received;
 					break;
-				case MAPPING_TS_ORIGIN:
+				case MAPPING_TIMESTAMP_TYPE_ORIGIN:
 					ts = &original->ts.origin;
 					break;
 				default:
@@ -312,14 +310,14 @@ int mapping_update(struct mapping_entry *me, struct sample *remapped, struct sam
 			break;
 		}
 
-		case MAPPING_TYPE_HDR:
 			sample_set_data_format(remapped, off, SAMPLE_DATA_FORMAT_INT);
+		case MAPPING_TYPE_HEADER:
 
-			switch (me->hdr.id) {
-				case MAPPING_HDR_LENGTH:
+			switch (me->header.type) {
+				case MAPPING_HEADER_TYPE_LENGTH:
 					remapped->data[off++].i = original->length;
 					break;
-				case MAPPING_HDR_SEQUENCE:
+				case MAPPING_HEADER_TYPE_SEQUENCE:
 					remapped->data[off++].i = original->sequence;
 					break;
 				case MAPPING_HDR_FORMAT:
@@ -393,7 +391,7 @@ int mapping_to_str(struct mapping_entry *me, unsigned index, char **str)
 			break;
 
 		case MAPPING_TYPE_HEADER:
-			switch (me->hdr.type) {
+			switch (me->header.type) {
 				case MAPPING_HEADER_TYPE_LENGTH:   type = "length"; break;
 				case MAPPING_HEADER_TYPE_SEQUENCE: type = "sequence"; break;
 			}
@@ -402,7 +400,7 @@ int mapping_to_str(struct mapping_entry *me, unsigned index, char **str)
 			break;
 
 		case MAPPING_TYPE_TIMESTAMP:
-			switch (me->stats.type) {
+			switch (me->timestamp.type) {
 				case MAPPING_TIMESTAMP_TYPE_ORIGIN:   type = "origin"; break;
 				case MAPPING_TIMESTAMP_TYPE_RECEIVED: type = "received"; break;
 			}

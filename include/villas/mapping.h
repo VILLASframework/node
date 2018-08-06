@@ -27,64 +27,75 @@
 
 #include <villas/stats.h>
 #include <villas/common.h>
-#include <villas/list.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Forward declarations */
-struct stats;
 struct node;
 struct sample;
+struct signal;
 struct list;
 
+enum mapping_type {
+	MAPPING_TYPE_DATA,
+	MAPPING_TYPE_STATS,
+	MAPPING_TYPE_HEADER,
+	MAPPING_TYPE_TIMESTAMP
+};
+
+enum mapping_stats_type {
+	MAPPING_STATS_TYPE_LAST,
+	MAPPING_STATS_TYPE_HIGHEST,
+	MAPPING_STATS_TYPE_LOWEST,
+	MAPPING_STATS_TYPE_MEAN,
+	MAPPING_STATS_TYPE_VAR,
+	MAPPING_STATS_TYPE_STDDEV,
+	MAPPING_STATS_TYPE_TOTAL
+};
+
+enum mapping_header_type {
+	MAPPING_HEADER_TYPE_LENGTH,
+	MAPPING_HEADER_TYPE_SEQUENCE
+};
+
+enum mapping_timestamp_type {
+	MAPPING_TIMESTAMP_TYPE_ORIGIN,
+	MAPPING_TIMESTAMP_TYPE_RECEIVED,
+	MAPPING_TIMESTAMP_TYPE_SEND
+};
+
 struct mapping_entry {
-	struct node *node;
+	struct node *node;		/**< The node to which this mapping refers. */
 
+	enum mapping_type type;		/**< The mapping type. Selects one of the union fields below. */
+
+	/** The number of values which is covered by this mapping entry.
+	 *
+	 * A value of 0 indicates that all remaining values starting from the offset of a sample should be mapped.
+	 */
+	int length;
 	int offset;			/**< Offset of this mapping entry within sample::data */
-	int length;			/**< The number of values which is covered by this mapping entry. */
-
-	enum {
-		MAPPING_TYPE_DATA,
-		MAPPING_TYPE_STATS,
-		MAPPING_TYPE_HDR,
-		MAPPING_TYPE_TS
-	} type;
 
 	union {
 		struct {
 			int offset;
+			struct signal *signal;
 		} data;
 
 		struct {
 			enum stats_id id;
-			enum stats_type {
-				MAPPING_STATS_TYPE_LAST,
-				MAPPING_STATS_TYPE_HIGHEST,
-				MAPPING_STATS_TYPE_LOWEST,
-				MAPPING_STATS_TYPE_MEAN,
-				MAPPING_STATS_TYPE_VAR,
-				MAPPING_STATS_TYPE_STDDEV,
-				MAPPING_STATS_TYPE_TOTAL
-			} type;
+			enum mapping_stats_type type;
 		} stats;
 
 		struct {
-			enum header_type {
-				MAPPING_HDR_LENGTH,
-				MAPPING_HDR_SEQUENCE,
-				MAPPING_HDR_FORMAT
-			} id;
-		} hdr;
+			enum mapping_header_type type;
+		} header;
 
 		struct {
-			enum timestamp_type {
-				MAPPING_TS_ORIGIN,
-				MAPPING_TS_RECEIVED,
-				MAPPING_TS_SEND
-			} id;
-		} ts;
+			enum mapping_timestamp_type type;
+		} timestamp;
 	};
 };
 
