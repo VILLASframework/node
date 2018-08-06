@@ -61,9 +61,6 @@ enum sample_flags {
 	SAMPLE_IS_FIRST		= (1 << 16), /**< This sample is the first of a new simulation case */
 	SAMPLE_IS_LAST		= (1 << 17), /**< This sample is the last of a running simulation case */
 	SAMPLE_IS_REORDERED	= (1 << 18), /**< This sample is reordered. */
-
-//	SAMPLE_DO_DROP		= (1 << 19),  /**< This sample should be dropped. */
-//	SAMPLE_DO_SKIP		= (1 << 20)  /**< This sample was skipped by a previous hook. */
 };
 
 struct sample {

@@ -378,13 +378,33 @@ int mapping_to_str(struct mapping_entry *me, unsigned index, char **str)
 	switch (me->type) {
 		case MAPPING_TYPE_STATS:
 			switch (me->stats.type) {
-				case MAPPING_STATS_TYPE_TOTAL:	type = "total"; break
-				case MAPPING_STATS_TYPE_LAST:	type = "last"; break
-				case MAPPING_STATS_TYPE_LOWEST:	type = "lowest"; break
-				case MAPPING_STATS_TYPE_HIGHEST:type = "highest"; break
-				case MAPPING_STATS_TYPE_MEAN:	type = "mean"; break
-				case MAPPING_STATS_TYPE_VAR:	type = "var"; break
-				case MAPPING_STATS_TYPE_STDDEV:	type = "stddev"; break
+				case MAPPING_STATS_TYPE_TOTAL:
+					type = "total";
+					break;
+
+				case MAPPING_STATS_TYPE_LAST:
+					type = "last";
+					break;
+
+				case MAPPING_STATS_TYPE_LOWEST:
+					type = "lowest";
+					break;
+
+				case MAPPING_STATS_TYPE_HIGHEST:
+					type = "highest";
+					break;
+
+				case MAPPING_STATS_TYPE_MEAN:
+					type = "mean";
+					break;
+
+				case MAPPING_STATS_TYPE_VAR:
+					type = "var";
+					break;
+
+				case MAPPING_STATS_TYPE_STDDEV:
+					type = "stddev";
+					break;
 			}
 
 			strcatf(str, "stats.%s", type);

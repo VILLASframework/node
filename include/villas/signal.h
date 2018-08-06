@@ -42,10 +42,16 @@ enum signal_format {
 	SIGNAL_FORMAT_UNKNOWN	= -1
 };
 
+/** Signal descriptor.
+ *
+ * This data structure contains meta data about samples values in struct sample::data
+ */
 struct signal {
 	char *name;	/**< The name of the signal. */
-	char *unit;
+	char *unit;	/**< The unit of the signal. */
+
 	int enabled;
+
 	enum signal_format format;
 };
 

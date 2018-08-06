@@ -600,7 +600,8 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 			ps->masked = true;
 		}
 	}
-	else {/* Enable all by default */
+	/* Enable all by default */
+	else {
 		for (size_t i = 0; i < list_length(&p->sources); i++) {
 			struct path_source *ps = (struct path_source *) list_at(&p->sources, i);
 
@@ -627,7 +628,7 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 			  && node_fd(ps->node) != 1;
 	}
 
-out:	ret = list_destroy(&sources, NULL, false);
+	ret = list_destroy(&sources, NULL, false);
 	if (ret)
 		return ret;
 
