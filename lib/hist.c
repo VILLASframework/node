@@ -119,22 +119,22 @@ void hist_reset(struct hist *h)
 		memset(h->data, 0, h->length * sizeof(unsigned));
 }
 
-double hist_mean(struct hist *h)
+double hist_mean(const struct hist *h)
 {
 	return (h->total > 0) ? h->_m[0] : NAN;
 }
 
-double hist_var(struct hist *h)
+double hist_var(const struct hist *h)
 {
 	return (h->total > 1) ? h->_s[0] / (h->total - 1) : NAN;
 }
 
-double hist_stddev(struct hist *h)
+double hist_stddev(const struct hist *h)
 {
 	return sqrt(hist_var(h));
 }
 
-void hist_print(struct hist *h, int details)
+void hist_print(const struct hist *h, int details)
 {
 	if (h->total > 0) {
 		hist_cnt_t missed = h->total - h->higher - h->lower;
@@ -159,7 +159,7 @@ void hist_print(struct hist *h, int details)
 		stats("Counted values: %ju", h->total);
 }
 
-void hist_plot(struct hist *h)
+void hist_plot(const struct hist *h)
 {
 	hist_cnt_t max = 1;
 
@@ -200,7 +200,7 @@ void hist_plot(struct hist *h)
 	table_footer(&table);
 }
 
-char * hist_dump(struct hist *h)
+char * hist_dump(const struct hist *h)
 {
 	char *buf = alloc(128);
 
@@ -214,7 +214,7 @@ char * hist_dump(struct hist *h)
 	return buf;
 }
 
-json_t * hist_json(struct hist *h)
+json_t * hist_json(const struct hist *h)
 {
 	json_t *json_buckets, *json_hist;
 
@@ -248,7 +248,7 @@ json_t * hist_json(struct hist *h)
 	return json_hist;
 }
 
-int hist_dump_json(struct hist *h, FILE *f)
+int hist_dump_json(const struct hist *h, FILE *f)
 {
 	json_t *j = hist_json(h);
 
@@ -259,7 +259,7 @@ int hist_dump_json(struct hist *h, FILE *f)
 	return ret;
 }
 
-int hist_dump_matlab(struct hist *h, FILE *f)
+int hist_dump_matlab(const struct hist *h, FILE *f)
 {
 	fprintf(f, "struct(");
 	fprintf(f, "'low', %f, ", h->low);

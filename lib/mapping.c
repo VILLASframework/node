@@ -240,7 +240,7 @@ out:	json_decref(json_mapping);
 	return ret;
 }
 
-int mapping_update(struct mapping_entry *me, struct sample *remapped, struct sample *original, struct stats *s)
+int mapping_update(const struct mapping_entry *me, struct sample *remapped, const struct sample *original, const struct stats *s)
 {
 	int len = me->length;
 	int off = me->offset;
@@ -257,7 +257,7 @@ int mapping_update(struct mapping_entry *me, struct sample *remapped, struct sam
 
 	switch (me->type) {
 		case MAPPING_TYPE_STATS: {
-			struct hist *h = &s->histograms[me->stats.id];
+			const struct hist *h = &s->histograms[me->stats.id];
 
 			switch (me->stats.type) {
 				case MAPPING_STATS_TYPE_TOTAL:
@@ -288,7 +288,7 @@ int mapping_update(struct mapping_entry *me, struct sample *remapped, struct sam
 		}
 
 		case MAPPING_TYPE_TIMESTAMP: {
-			struct timespec *ts;
+			const struct timespec *ts;
 
 			switch (me->timestamp.type) {
 				case MAPPING_TIMESTAMP_TYPE_RECEIVED:
@@ -347,7 +347,7 @@ int mapping_update(struct mapping_entry *me, struct sample *remapped, struct sam
 	return 0;
 }
 
-int mapping_remap(struct list *m, struct sample *remapped, struct sample *original, struct stats *s)
+int mapping_remap(const struct list *m, struct sample *remapped, const struct sample *original, const struct stats *s)
 {
 	int ret;
 
@@ -366,7 +366,7 @@ int mapping_remap(struct list *m, struct sample *remapped, struct sample *origin
 	return 0;
 }
 
-int mapping_to_str(struct mapping_entry *me, unsigned index, char **str)
+int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
 {
 	const char *type;
 

@@ -79,34 +79,34 @@ void hist_reset(struct hist *h);
 void hist_put(struct hist *h, double value);
 
 /** Calcluate the variance of all counted values. */
-double hist_var(struct hist *h);
+double hist_var(const struct hist *h);
 
 /** Calculate the mean average of all counted values. */
-double hist_mean(struct hist *h);
+double hist_mean(const struct hist *h);
 
 /** Calculate the standard derivation of all counted values. */
-double hist_stddev(struct hist *h);
+double hist_stddev(const struct hist *h);
 
 /** Print all statistical properties of distribution including a graphilcal plot of the histogram. */
-void hist_print(struct hist *h, int details);
+void hist_print(const struct hist *h, int details);
 
 /** Print ASCII style plot of histogram */
-void hist_plot(struct hist *h);
+void hist_plot(const struct hist *h);
 
 /** Dump histogram data in Matlab format.
  *
  * @return The string containing the dump. The caller is responsible to free() the buffer.
  */
-char * hist_dump(struct hist *h);
+char * hist_dump(const struct hist *h);
 
 /** Prints Matlab struct containing all infos to file. */
-int hist_dump_matlab(struct hist *h, FILE *f);
+int hist_dump_matlab(const struct hist *h, FILE *f);
 
 /** Write the histogram in JSON format to fiel \p f. */
-int hist_dump_json(struct hist *h, FILE *f);
+int hist_dump_json(const struct hist *h, FILE *f);
 
 /** Build a libjansson / JSON object of the histogram. */
-json_t * hist_json(struct hist *h);
+json_t * hist_json(const struct hist *h);
 
 #ifdef __cplusplus
 }

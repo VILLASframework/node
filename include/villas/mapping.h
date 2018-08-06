@@ -99,9 +99,9 @@ struct mapping_entry {
 	};
 };
 
-int mapping_remap(struct list *m, struct sample *remapped, struct sample *original, struct stats *s);
+int mapping_remap(const struct list *m, struct sample *remapped, const struct sample *original, const struct stats *s);
 
-int mapping_update(struct mapping_entry *e, struct sample *remapped, struct sample *original, struct stats *s);
+int mapping_update(const struct mapping_entry *e, struct sample *remapped, const struct sample *original, const struct stats *s);
 
 int mapping_parse(struct mapping_entry *e, json_t *cfg, struct list *nodes);
 
@@ -109,7 +109,7 @@ int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nod
 
 int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes);
 
-int mapping_to_str(struct mapping_entry *me, unsigned index, char **str);
+int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str);
 
 #ifdef __cplusplus
 }
