@@ -11,18 +11,15 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
-
 #include <sys/ioctl.h>
 #include <sys/eventfd.h>
 
-#include "utils.h"
-#include "log.h"
-
-#include "config.h"
-
-#include "kernel/kernel.h"
-#include "kernel/vfio.h"
-#include "kernel/pci.h"
+#include <villas/utils.h>
+#include <villas/log.h>
+#include <villas/config.h>
+#include <villas/kernel/kernel.h>
+#include <villas/kernel/vfio.h>
+#include <villas/kernel/pci.h>
 
 static const char *vfio_pci_region_names[] = {
 	"PCI_BAR0",		// VFIO_PCI_BAR0_REGION_INDEX,

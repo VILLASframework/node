@@ -33,10 +33,10 @@
 extern "C" {
 #endif
 
-#include "pool.h"
-#include "queue.h"
-#include "queue_signalled.h"
-#include "sample.h"
+#include <villas/pool.h>
+#include <villas/queue.h>
+#include <villas/queue_signalled.h>
+#include <villas/sample.h>
 
 #define DEFAULT_SHMEM_QUEUELEN	512
 #define DEFAULT_SHMEM_SAMPLELEN	64

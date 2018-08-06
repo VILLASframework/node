@@ -32,9 +32,9 @@ extern "C" {
 
 #include <jansson.h>
 
-#include "list.h"
-#include "common.h"
-#include "memory.h"
+#include <villas/list.h>
+#include <villas/common.h>
+#include <villas/memory.h>
 
 /* Forward declarations */
 struct node;

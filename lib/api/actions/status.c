@@ -24,13 +24,12 @@
 
 #include <jansson.h>
 
-#include "plugin.h"
-#include "node.h"
-#include "super_node.h"
-#include "utils.h"
-#include "stats.h"
-
-#include "api.h"
+#include <villas/plugin.h>
+#include <villas/node.h>
+#include <villas/super_node.h>
+#include <villas/api.h>
+#include <villas/utils.h>
+#include <villas/stats.h>
 
 static int api_status(struct api_action *r, json_t *args, json_t **resp, struct api_session *s)
 {

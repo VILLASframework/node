@@ -31,9 +31,9 @@ extern "C" {
 #include <time.h>
 #include <sys/ioctl.h>
 
-#include "advio.h"
-#include "common.h"
-#include "log_config.h"
+#include <villas/advio.h>
+#include <villas/common.h>
+#include <villas/log_config.h>
 
 /* The log level which is passed as first argument to print() */
 #define LOG_LVL_DEBUG	CLR_GRY("Debug")

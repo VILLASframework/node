@@ -25,7 +25,7 @@
 #include <jansson.h>
 #include <libconfig.h>
 
-#include "sample.h"
+#include <villas/sample.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -27,7 +27,7 @@
 
 #include <jansson.h>
 
-#include "common.h"
+#include <villas/common.h>
 
 #ifdef __cplusplus
 extern "C" {

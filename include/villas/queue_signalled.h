@@ -25,7 +25,7 @@
 
 #include <pthread.h>
 
-#include "queue.h"
+#include <villas/queue.h>
 
 #ifdef __cplusplus
 extern "C" {

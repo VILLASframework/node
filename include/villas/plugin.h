@@ -23,13 +23,13 @@
 
 #pragma once
 
-#include "common.h"
-#include "utils.h"
-#include "api.h"
-#include "nodes/cbuilder.h"
-#include "hook_type.h"
-#include "node_type.h"
-#include "format_type.h"
+#include <villas/common.h>
+#include <villas/utils.h>
+#include <villas/api.h>
+#include <villas/nodes/cbuilder.h>
+#include <villas/hook_type.h>
+#include <villas/node_type.h>
+#include <villas/format_type.h>
 
 #ifdef __cplusplus
 extern "C" {

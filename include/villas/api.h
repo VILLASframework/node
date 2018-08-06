@@ -26,11 +26,10 @@
 #include <jansson.h>
 #include <pthread.h>
 
-#include "list.h"
-#include "common.h"
-#include "queue_signalled.h"
-
-#include "api/session.h"
+#include <villas/list.h>
+#include <villas/common.h>
+#include <villas/queue_signalled.h>
+#include <villas/api/session.h>
 
 #ifdef __cplusplus
 extern "C" {
