@@ -39,7 +39,7 @@
 #include <villas/common.h>
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 struct node_direction {

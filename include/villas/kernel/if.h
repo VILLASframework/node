@@ -36,7 +36,7 @@
 #include <villas/list.h>
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 #define IF_IRQ_MAX	3	/**< Maxmimal number of IRQs of an interface */

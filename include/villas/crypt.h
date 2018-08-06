@@ -26,7 +26,7 @@
 #include <openssl/sha.h>
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 /** Calculate SHA1 hash of complete file \p f and place it into \p sha1.

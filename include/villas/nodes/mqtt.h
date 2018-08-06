@@ -35,7 +35,7 @@
 #include <villas/queue_signalled.h>
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 /* Forward declarations */

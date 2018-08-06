@@ -40,7 +40,7 @@
 #include <jansson.h>
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 typedef uint32_t tc_hdl_t;

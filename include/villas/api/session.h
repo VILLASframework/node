@@ -31,7 +31,7 @@
 #include <villas/buffer.h>
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 enum api_version {

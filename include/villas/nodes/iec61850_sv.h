@@ -41,7 +41,7 @@
 #include <villas/nodes/iec61850.h>
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 struct iec61850_sv {

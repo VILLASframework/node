@@ -45,7 +45,7 @@
 #include <villas/list.h>
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 enum iec61850_type {

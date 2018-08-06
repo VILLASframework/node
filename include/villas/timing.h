@@ -29,7 +29,7 @@
 #include <time.h>
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 /** Get delta between two timespec structs */

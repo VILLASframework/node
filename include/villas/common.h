@@ -24,7 +24,7 @@
 #pragma once
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 /* Common states for most objects in VILLASnode (paths, nodes, hooks, plugins) */

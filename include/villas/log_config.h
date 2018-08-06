@@ -30,7 +30,7 @@ struct log;
 #include "log.h"
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 /** Wrapper for log_parse, to check if config file exists **/

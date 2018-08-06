@@ -35,7 +35,7 @@
 #include <villas/common.h>
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 #define LIST_CHUNKSIZE		16

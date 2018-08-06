@@ -32,7 +32,7 @@
 #include "format_type.h"
 
 #ifdef __cplusplus
-extern "C"{
+extern "C" {
 #endif
 
 /** (De-)Register a plugin by adding it to the global plugin list.
