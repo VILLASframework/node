@@ -25,7 +25,6 @@ set(HOOK_SRC
     decimate.c
     drop.c
     jitter_calc.c
-    map.c
     restart.c
     shift_seq.c
     shift_ts.c
