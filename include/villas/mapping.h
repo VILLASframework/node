@@ -62,8 +62,7 @@ enum mapping_header_type {
 
 enum mapping_timestamp_type {
 	MAPPING_TIMESTAMP_TYPE_ORIGIN,
-	MAPPING_TIMESTAMP_TYPE_RECEIVED,
-	MAPPING_TIMESTAMP_TYPE_SEND
+	MAPPING_TIMESTAMP_TYPE_RECEIVED
 };
 
 struct mapping_entry {

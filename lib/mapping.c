@@ -122,8 +122,6 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 			me->timestamp.type = MAPPING_TIMESTAMP_TYPE_ORIGIN;
 		else if (!strcmp(field, "received"))
 			me->timestamp.type = MAPPING_TIMESTAMP_TYPE_RECEIVED;
-		else if (!strcmp(field, "sent"))
-			me->timestamp.type = MAPPING_TIMESTAMP_TYPE_SEND;
 		else
 			goto invalid_format;
 	}
