@@ -711,7 +711,7 @@ int ib_stop(struct node *n)
 	// Call RDMA disconnect function
 	// Will flush all outstanding WRs to the Completion Queue and
 	// will call RDMA_CM_EVENT_DISCONNECTED if that is done.
-	if (n->state == STATE_CONNECTED && ib->conn.port_space == RDMA_PS_TCP) {
+	if (n->state == STATE_CONNECTED && ib->conn.port_space != RDMA_PS_UDP) {
 		ret = rdma_disconnect(ib->ctx.id);
 
 		if (ret)
