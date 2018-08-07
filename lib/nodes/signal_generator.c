@@ -100,82 +100,6 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-int signal_generator_parse_cli(struct node *n, int argc, char *argv[])
-{
-	char *type;
-
-	struct signal_generator *s = (struct signal_generator *) n->_vd;
-
-	/* Default values */
-	s->rate = 10;
-	s->frequency = 1;
-	s->amplitude = 1;
-	s->stddev = 0.02;
-	s->type = SIGNAL_GENERATOR_TYPE_MIXED;
-	s->rt = 1;
-	s->values = 1;
-	s->limit = -1;
-	s->offset = 0;
-	s->monitor_missed = 1;
-
-	/* Parse optional command line arguments */
-	char c, *endptr;
-	while ((c = getopt(argc, argv, "v:r:f:l:a:D:no:m")) != -1) {
-		switch (c) {
-			case 'n':
-				s->rt = 0;
-				break;
-			case 'l':
-				s->limit = strtoul(optarg, &endptr, 10);
-				goto check;
-			case 'v':
-				s->values = strtoul(optarg, &endptr, 10);
-				goto check;
-			case 'r':
-				s->rate = strtof(optarg, &endptr);
-				goto check;
-			case 'o':
-				s->offset = strtof(optarg, &endptr);
-				goto check;
-			case 'f':
-				s->frequency = strtof(optarg, &endptr);
-				goto check;
-			case 'a':
-				s->amplitude = strtof(optarg, &endptr);
-				goto check;
-			case 'D':
-				s->stddev = strtof(optarg, &endptr);
-				goto check;
-			case 'm':
-				s->monitor_missed = 0;
-				goto check;
-			case '?':
-				break;
-		}
-
-		continue;
-
-check:		if (optarg == endptr)
-			warn("Failed to parse parse option argument '-%c %s'", c, optarg);
-	}
-
-	if (argc != optind + 1)
-		return -1;
-
-	type = argv[optind];
-
-	int t = signal_generator_lookup_type(type);
-	if (t == -1)
-		error("Invalid signal type: %s", type);
-
-	s->type = t;
-
-	/* We know the expected number of values. */
-	n->samplelen = s->values;
-
-	return 0;
-}
-
 int signal_generator_start(struct node *n)
 {
 	int ret;
@@ -319,15 +243,14 @@ static struct plugin p = {
 	.description = "Signal generator",
 	.type = PLUGIN_TYPE_NODE,
 	.node = {
-		.vectorize = 1,
-		.size  = sizeof(struct signal_generator),
-		.parse = signal_generator_parse,
-		.parse_cli = signal_generator_parse_cli,
-		.print = signal_generator_print,
-		.start = signal_generator_start,
-		.stop  = signal_generator_stop,
-		.read  = signal_generator_read,
-		.fd    = signal_generator_fd
+		.vectorize	= 1,
+		.size		= sizeof(struct signal_generator),
+		.parse		= signal_generator_parse,
+		.print		= signal_generator_print,
+		.start		= signal_generator_start,
+		.stop		= signal_generator_stop,
+		.read		= signal_generator_read,
+		.fd		= signal_generator_fd
 	}
 };
 

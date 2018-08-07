@@ -270,32 +270,6 @@ int node_parse(struct node *n, json_t *json, const char *name)
 	return ret;
 }
 
-int node_parse_cli(struct node *n, int argc, char *argv[])
-{
-	int ret;
-
-	assert(node_type(n));
-
-	if (node_type(n)->parse_cli) {
-		n->name = strdup("cli");
-
-		ret = node_type(n)->parse_cli(n, argc, argv);
-		if (ret)
-			return ret;
-
-		n->state = STATE_PARSED;
-	}
-	else {
-		n->cfg = json_load_cli(argc, argv);
-		if (!n->cfg)
-			return -1;
-
-		ret = node_parse(n, n->cfg, "cli");
-	}
-
-	return ret;
-}
-
 int node_check(struct node *n)
 {
 	int ret;

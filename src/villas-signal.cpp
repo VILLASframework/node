@@ -45,6 +45,84 @@ struct io io;
 struct pool q;
 struct sample *t;
 
+json_t * parse_cli(int argc, char *argv[])
+{
+	/* Default values */
+	double rate = 10;
+	double frequency = 1;
+	double amplitude = 1;
+	double stddev = 0.02;
+	double offset = 0;
+	char *type;
+	int rt = 1;
+	int values = 1;
+	int limit = -1;
+
+	/* Parse optional command line arguments */
+	char c, *endptr;
+	while ((c = getopt(argc, argv, "v:r:f:l:a:D:no:")) != -1) {
+		switch (c) {
+			case 'n':
+				rt = 0;
+				break;
+
+			case 'l':
+				limit = strtoul(optarg, &endptr, 10);
+				goto check;
+
+			case 'v':
+				values = strtoul(optarg, &endptr, 10);
+				goto check;
+
+			case 'r':
+				rate = strtof(optarg, &endptr);
+				goto check;
+
+			case 'o':
+				offset = strtof(optarg, &endptr);
+				goto check;
+
+			case 'f':
+				frequency = strtof(optarg, &endptr);
+				goto check;
+
+			case 'a':
+				amplitude = strtof(optarg, &endptr);
+				goto check;
+
+			case 'D':
+				stddev = strtof(optarg, &endptr);
+				goto check;
+
+			case '?':
+				break;
+		}
+
+		continue;
+
+check:		if (optarg == endptr)
+			warn("Failed to parse parse option argument '-%c %s'", c, optarg);
+	}
+
+	if (argc != optind + 1)
+		return NULL;
+
+	type = argv[optind];
+
+	return json_pack("{ s: s, s: s, s: f, s: f, s: f, s: f, s: f, s: b, s: i, s: i }",
+		"type", "signal",
+		"signal", type,
+		"rate", rate,
+		"frequency", frequency,
+		"amplitude", amplitude,
+		"stddev", stddev,
+		"offset", offset,
+		"realtime", rt,
+		"values", values,
+		"limit", limit
+	);
+}
+
 void usage()
 {
 	std::cout << "Usage: villas-signal [OPTIONS] SIGNAL" << std::endl;
@@ -150,8 +228,13 @@ int main(int argc, char *argv[])
 	ret = io_open(&io, NULL);
 	if (ret)
 		error("Failed to open output");
+	cfg = parse_cli(argc, argv);
+	if (!cfg) {
+		usage();
+		exit(EXIT_FAILURE);
+	}
 
-	ret = node_parse_cli(&n, argc, argv);
+	ret = node_parse(&n, cfg, "cli");
 	if (ret) {
 		usage();
 		exit(EXIT_FAILURE);

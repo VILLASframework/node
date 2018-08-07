@@ -107,9 +107,6 @@ struct node_type {
 	 */
 	int (*check)(struct node *n);
 
-	/** Parse node from command line arguments. */
-	int (*parse_cli)(struct node *n, int argc, char *argv[]);
-
 	/** Returns a string with a textual represenation of this node.
 	 *
 	 * @param n	A pointer to the node object.

@@ -64,7 +64,6 @@ struct hook {
 int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node *n);
 
 int hook_parse(struct hook *h, json_t *cfg);
-int hook_parse_cli(struct hook *h, int argc, char *argv[]);
 
 int hook_destroy(struct hook *h);
 

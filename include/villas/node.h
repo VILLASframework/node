@@ -91,9 +91,6 @@ int node_init(struct node *n, struct node_type *vt);
  */
 int node_parse(struct node *n, json_t *cfg, const char *name);
 
-/** Parse settings of a node from cmdline. */
-int node_parse_cli(struct node *n, int argc, char *argv[]);
-
 /** Parse an array or single node and checks if they exist in the "nodes" section.
  *
  * Examples:

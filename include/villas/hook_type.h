@@ -60,7 +60,6 @@ struct hook_type {
 	size_t size;		/**< Size of allocation for struct hook::_vd */
 
 	int (*parse)(struct hook *h, json_t *cfg);
-	int (*parse_cli)(struct hook *h, int argc, char *argv[]);
 
 	int (*init)(struct hook *h);	/**< Called before path is started to parseHOOK_DESTROYs. */
 	int (*destroy)(struct hook *h);	/**< Called after path has been stopped to release memory allocated by HOOK_INIT */

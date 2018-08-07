@@ -84,28 +84,6 @@ int hook_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-int hook_parse_cli(struct hook *h, int argc, char *argv[])
-{
-	int ret;
-
-	if (h->_vt->parse_cli) {
-		ret = h->_vt->parse_cli(h, argc, argv);
-		if (ret)
-			return ret;
-
-		h->state = STATE_PARSED;
-	}
-	else {
-		h->cfg = json_load_cli(argc, argv);
-		if (!h->cfg)
-			return -1;
-
-		ret = hook_parse(h, h->cfg);
-	}
-
-	return ret;
-}
-
 int hook_destroy(struct hook *h)
 {
 	int ret;
