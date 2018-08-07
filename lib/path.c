@@ -147,8 +147,8 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 		}
 	}
 
-	sample_put_many(muxed_smps, tomux);
-out2:	sample_put_many(read_smps, release);
+	sample_decref_many(muxed_smps, tomux);
+out2:	sample_decref_many(read_smps, release);
 }
 
 static int path_destination_init(struct path_destination *pd, int queuelen)
@@ -191,12 +191,12 @@ static void path_destination_enqueue(struct path *p, struct sample *smps[], unsi
 			warn("Queue overrun for path %s", path_name(p));
 
 		/* Increase reference counter of these samples as they are now also owned by the queue. */
-		sample_get_many(clones, cloned);
+		sample_incref_many(clones, cloned);
 
 		debug(LOG_PATH | 15, "Enqueued %u samples to destination %s of path %s", enqueued, node_name(pd->node), path_name(p));
 	}
 
-	sample_put_many(clones, cloned);
+	sample_decref_many(clones, cloned);
 }
 
 static void path_destination_write(struct path_destination *pd, struct path *p)
@@ -227,7 +227,7 @@ static void path_destination_write(struct path_destination *pd, struct path *p)
 		else if (sent < allocated)
 			warn("Partial write to node %s: written=%d, expected=%d", node_name(pd->node), sent, allocated);
 
-		released = sample_put_many(smps, release);
+		released = sample_decref_many(smps, release);
 
 		debug(LOG_PATH | 15, "Released %d samples back to memory pool", released);
 	}

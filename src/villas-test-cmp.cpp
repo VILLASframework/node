@@ -200,7 +200,7 @@ out:	for (int i = 0; i < n; i++) {
 		if (ret)
 			error("Failed to destroy IO");
 
-		sample_put(s[i].sample);
+		sample_decref(s[i].sample);
 	}
 
 	ret = pool_destroy(&pool);

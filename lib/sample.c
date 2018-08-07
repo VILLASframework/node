@@ -107,32 +107,32 @@ void sample_free_many(struct sample *smps[], int cnt)
 		sample_free(smps[i]);
 }
 
-int sample_put_many(struct sample *smps[], int cnt)
+int sample_decref_many(struct sample *smps[], int cnt)
 {
 	int released = 0;
 
 	for (int i = 0; i < cnt; i++) {
-		if (sample_put(smps[i]) == 0)
+		if (sample_decref(smps[i]) == 0)
 			released++;
 	}
 
 	return released;
 }
 
-int sample_get_many(struct sample *smps[], int cnt)
+int sample_incref_many(struct sample *smps[], int cnt)
 {
 	for (int i = 0; i < cnt; i++)
-		sample_get(smps[i]);
+		sample_incref(smps[i]);
 
 	return cnt;
 }
 
-int sample_get(struct sample *s)
+int sample_incref(struct sample *s)
 {
 	return atomic_fetch_add(&s->refcnt, 1) + 1;
 }
 
-int sample_put(struct sample *s)
+int sample_decref(struct sample *s)
 {
 	int prev = atomic_fetch_sub(&s->refcnt, 1);
 

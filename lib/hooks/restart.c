@@ -49,7 +49,7 @@ static int restart_stop(struct hook *h)
 	struct restart *r = (struct restart *) h->_vd;
 
 	if (r->prev)
-		sample_put(r->prev);
+		sample_decref(r->prev);
 
 	return 0;
 }
@@ -90,9 +90,9 @@ static int restart_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 	}
 
 	if (cur)
-		sample_get(cur);
+		sample_incref(cur);
 	if (r->prev)
-		sample_put(r->prev);
+		sample_decref(r->prev);
 
 	r->prev = cur;
 

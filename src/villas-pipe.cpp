@@ -171,7 +171,7 @@ static void * send_loop(void *ctx)
 		else if (sent < scanned)
 			warn("Failed to sent %d out of %d samples to node %s", scanned-sent, scanned, node_name(node));
 
-		sample_put_many(smps, release);
+		sample_decref_many(smps, release);
 
 		cnt += sent;
 		if (sendd.limit > 0 && cnt >= sendd.limit)
@@ -226,7 +226,7 @@ static void * recv_loop(void *ctx)
 
 		io_print(&io, smps, recv);
 
-		sample_put_many(smps, release);
+		sample_decref_many(smps, release);
 
 		cnt += recv;
 		if (recvv.limit > 0 && cnt >= recvv.limit)

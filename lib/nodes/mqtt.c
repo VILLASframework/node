@@ -102,7 +102,7 @@ static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct
 	}
 	if (ret == 0) {
 		debug(4, "MQTT: skip empty message for node %s", node_name(n));
-		sample_put_many(smps, n->in.vectorize);
+		sample_decref_many(smps, n->in.vectorize);
 		return;
 	}
 
@@ -373,7 +373,7 @@ int mqtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	pulled = queue_signalled_pull_many(&m->queue, (void **) smpt, cnt);
 
 	sample_copy_many(smps, smpt, pulled);
-	sample_put_many(smpt, pulled);
+	sample_decref_many(smpt, pulled);
 
 	return pulled;
 }

@@ -99,12 +99,12 @@ int signal_destroy(struct signal *s)
 	return 0;
 }
 
-int signal_get(struct signal *s)
+int signal_incref(struct signal *s)
 {
 	return atomic_fetch_add(&s->refcnt, 1) + 1;
 }
 
-int signal_put(struct signal *s)
+int signal_decref(struct signal *s)
 {
 	int prev = atomic_fetch_sub(&s->refcnt, 1);
 

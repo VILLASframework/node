@@ -48,14 +48,14 @@ static int ib_disconnect(struct node *n)
 		ib->conn.available_recv_wrs -= wcs;
 
 		for (int j = 0; j < wcs; j++)
-			sample_put((struct sample *) (wc[j].wr_id));
+			sample_decref((struct sample *) (wc[j].wr_id));
 	}
 
 	// Send Queue
 	while ((wcs = ibv_poll_cq(ib->ctx.send_cq, ib->send_cq_size, wc)))
 		for (int j = 0; j < wcs; j++)
 			if (wc[j].wr_id > 0)
-				sample_put((struct sample *) (wc[j].wr_id));
+				sample_decref((struct sample *) (wc[j].wr_id));
 
 	// Send Queue Stack
 
@@ -65,7 +65,7 @@ static int ib_disconnect(struct node *n)
 		// to double check return of queue_pull.
 		queue_pull(&ib->conn.send_wc_buffer, (void **) &smp);
 
-		sample_put(smp);
+		sample_decref(smp);
 	}
 
 	// Destroy QP

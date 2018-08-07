@@ -80,7 +80,7 @@ int loopback_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 
 	for (int i = 0; i < avail; i++) {
 		sample_copy(smps[i], cpys[i]);
-		sample_put(cpys[i]);
+		sample_decref(cpys[i]);
 	}
 
 	return avail;

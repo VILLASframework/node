@@ -117,7 +117,7 @@ static int websocket_connection_destroy(struct websocket_connection *c)
 	int avail;
 	struct sample *smp;
 	while ((avail = queue_pull(&c->queue, (void **) &smp)))
-		sample_put(smp);
+		sample_decref(smp);
 
 	ret = queue_destroy(&c->queue);
 	if (ret)
@@ -154,7 +154,7 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 	if (pushed < cnt)
 		warn("Queue overrun in WebSocket connection: %s", websocket_connection_name(c));
 
-	sample_get_many(smps, pushed);
+	sample_incref_many(smps, pushed);
 
 	debug(LOG_WEBSOCKET | 10, "Enqueued %u samples to %s", pushed, websocket_connection_name(c));
 
@@ -283,7 +283,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 				ret = lws_write(wsi, (unsigned char *) c->buffers.send.buf + LWS_PRE, wbytes, c->io.flags & FORMAT_TYPE_BINARY ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
 
-				sample_put_many(smps, pulled);
+				sample_decref_many(smps, pulled);
 
 				debug(LOG_WEBSOCKET | 10, "Send %d samples to connection: %s, bytes=%d", pulled, websocket_connection_name(c), ret);
 			}
@@ -341,7 +341,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 				/* Release unused samples back to pool */
 				if (enqueued < avail)
-					sample_put_many(&smps[enqueued], avail - enqueued);
+					sample_decref_many(&smps[enqueued], avail - enqueued);
 
 				buffer_clear(&c->buffers.recv);
 
@@ -481,7 +481,7 @@ int websocket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 		return avail;
 
 	sample_copy_many(smps, cpys, avail);
-	sample_put_many(cpys, avail);
+	sample_decref_many(cpys, avail);
 
 	return avail;
 }
@@ -507,7 +507,7 @@ int websocket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigne
 			websocket_connection_write(c, cpys, cnt);
 	}
 
-	sample_put_many(cpys, avail);
+	sample_decref_many(cpys, avail);
 
 	return cnt;
 }

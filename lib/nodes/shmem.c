@@ -129,7 +129,7 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	}
 
 	sample_copy_many(smps, shared_smps, recv);
-	sample_put_many(shared_smps, recv);
+	sample_decref_many(shared_smps, recv);
 
 	return recv;
 }

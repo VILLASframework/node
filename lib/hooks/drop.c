@@ -50,7 +50,7 @@ static int drop_stop(struct hook *h)
 	struct drop *d = (struct drop *) h->_vd;
 
 	if (d->prev)
-		sample_put(d->prev);
+		sample_decref(d->prev);
 
 	return 0;
 }
@@ -91,9 +91,9 @@ ok:		/* To discard the first X samples in 'smps[]' we must
 	}
 
 	if (cur)
-		sample_get(cur);
+		sample_incref(cur);
 	if (d->prev)
-		sample_put(d->prev);
+		sample_decref(d->prev);
 
 	d->prev = cur;
 
@@ -107,7 +107,7 @@ static int drop_restart(struct hook *h)
 	struct drop *d = (struct drop *) h->_vd;
 
 	if (d->prev) {
-		sample_put(d->prev);
+		sample_decref(d->prev);
 		d->prev = NULL;
 	}
 

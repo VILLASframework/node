@@ -178,10 +178,10 @@ static int stats_collect_read(struct hook *h, struct sample *smps[], unsigned *c
 	}
 
 	if (p->last)
-		sample_put(p->last);
+		sample_decref(p->last);
 
 	if (previous)
-		sample_get(previous);
+		sample_incref(previous);
 
 	p->last = previous;
 

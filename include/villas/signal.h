@@ -62,10 +62,10 @@ struct signal {
 int signal_init(struct signal *s);
 
 /** Increase reference counter. */
-int signal_get(struct signal *s);
+int signal_incref(struct signal *s);
 
 /** Decrease reference counter. */
-int signal_put(struct signal *s);
+int signal_decref(struct signal *s);
 
 int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, unsigned index);
 

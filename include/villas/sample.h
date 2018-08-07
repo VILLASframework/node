@@ -111,17 +111,17 @@ void sample_free(struct sample *s);
 
 /** Request \p cnt samples from memory pool \p p and initialize them.
  *  The reference count will already be set to 1.
- *  Use the sample_get() function to increase it. */
+ *  Use the sample_incref() function to increase it. */
 int sample_alloc_many(struct pool *p, struct sample *smps[], int cnt);
 
 /** Release an array of samples back to their pools */
 void sample_free_many(struct sample *smps[], int cnt);
 
 /** Increase reference count of sample */
-int sample_get(struct sample *s);
+int sample_incref(struct sample *s);
 
 /** Decrease reference count and release memory if last reference was held. */
-int sample_put(struct sample *s);
+int sample_decref(struct sample *s);
 
 int sample_copy(struct sample *dst, struct sample *src);
 
@@ -130,8 +130,8 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags);
 
 int sample_clone_many(struct sample *clones[], struct sample *origs[], int cnt);
 int sample_copy_many(struct sample *dsts[], struct sample *srcs[], int cnt);
-int sample_get_many(struct sample *smps[], int cnt);
-int sample_put_many(struct sample *smps[], int cnt);
+int sample_incref_many(struct sample *smps[], int cnt);
+int sample_decref_many(struct sample *smps[], int cnt);
 
 enum signal_format sample_format(const struct sample *s, unsigned idx);
 

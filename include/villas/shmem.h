@@ -95,7 +95,7 @@ int shmem_int_close(struct shmem_int *shm);
  *
  * @param shm The shared memory interface.
  * @param smps  An array where the pointers to the samples will be written. The samples
- * must be freed with sample_put after use.
+ * must be freed with sample_decref after use.
  * @param cnt  Number of samples to be read.
  * @retval >=0 Number of samples that were read. Can be less than cnt (including 0) in case not enough samples were available.
  * @retval -1 The other process closed the interface; no samples can be read anymore.
@@ -114,7 +114,7 @@ int shmem_int_write(struct shmem_int *shm, struct sample *smps[], unsigned cnt);
 
 /** Allocate samples to be written to the interface.
  *
- * The writing process must not free the samples; only the receiving process should free them using sample_put after use.
+ * The writing process must not free the samples; only the receiving process should free them using sample_decref after use.
  * @param shm The shared memory interface.
  * @param smps Array where pointers to newly allocated samples will be returned.
  * @param cnt Number of samples to allocate.

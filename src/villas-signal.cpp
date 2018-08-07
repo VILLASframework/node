@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 		node_read(&n, &t, 1, &release);
 		io_print(&io, &t, 1);
 
-		sample_put(t);
+		sample_decref(t);
 	}
 
 	return 0;

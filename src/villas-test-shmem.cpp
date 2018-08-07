@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
 		}
 
 		for (int i = 0; i < readcnt; i++)
-			sample_put(insmps[i]);
+			sample_decref(insmps[i]);
 
 		writecnt = shmem_int_write(&shm, outsmps, avail);
 		if (writecnt < avail)
