@@ -101,7 +101,7 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	const char *filter = NULL;
 	const char *format = "villas.human";
 
-	size_t index;
+	size_t i;
 	json_t *json_pub = NULL;
 	json_t *json_curve = NULL;
 	json_t *json_val;
@@ -134,7 +134,7 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	if (json_pub) {
 		switch (json_typeof(json_pub)) {
 			case JSON_ARRAY:
-				json_array_foreach(json_pub, index, json_val) {
+				json_array_foreach(json_pub, i, json_val) {
 					ep = json_string_value(json_pub);
 					if (!ep)
 						error("All 'publish' settings must be strings");

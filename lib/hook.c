@@ -224,9 +224,9 @@ int hook_parse_list(struct list *list, json_t *cfg, struct path *o, struct node 
 	if (!json_is_array(cfg))
 		error("Hooks must be configured as a list of objects");
 
-	size_t index;
+	size_t i;
 	json_t *json_hook;
-	json_array_foreach(cfg, index, json_hook) {
+	json_array_foreach(cfg, i, json_hook) {
 		int ret;
 		const char *type;
 		struct hook_type *ht;

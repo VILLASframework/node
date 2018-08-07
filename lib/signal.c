@@ -149,9 +149,9 @@ int signal_parse_list(struct list *list, json_t *cfg)
 	if (!json_is_array(cfg))
 		return -1;
 
-	size_t index;
+	size_t i;
 	json_t *json_signal;
-	json_array_foreach(cfg, index, json_signal) {
+	json_array_foreach(cfg, i, json_signal) {
 		s = alloc(sizeof(struct signal));
 		if (!s)
 			return -1;

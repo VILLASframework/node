@@ -21,7 +21,7 @@ int cbuilder_parse(struct node *n, json_t *cfg)
 	const char *model;
 
 	int ret;
-	size_t index;
+	size_t i;
 	json_error_t err;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: F, s: s, s: b }",
@@ -43,11 +43,11 @@ int cbuilder_parse(struct node *n, json_t *cfg)
 		cb->paramlen = json_array_size(json_params);
 		cb->params = alloc(cb->paramlen * sizeof(double));
 
-		json_array_foreach(json_params, index, json_param) {
+		json_array_foreach(json_params, i, json_param) {
 			if (json_is_number(json_param))
 				error("Setting 'parameters' of node %s must be an JSON array of numbers!", node_name(n));
 
-			cb->params[index] = json_number_value(json_params);
+			cb->params[i] = json_number_value(json_params);
 
 		}
 	}

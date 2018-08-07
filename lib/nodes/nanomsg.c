@@ -50,12 +50,12 @@ static int nanomsg_parse_endpoints(struct list *l, json_t *cfg)
 {
 	const char *ep;
 
-	size_t index;
+	size_t i;
 	json_t *json_val;
 
 	switch (json_typeof(cfg)) {
 		case JSON_ARRAY:
-			json_array_foreach(cfg, index, json_val) {
+			json_array_foreach(cfg, i, json_val) {
 				ep = json_string_value(json_val);
 				if (!ep)
 					return -1;

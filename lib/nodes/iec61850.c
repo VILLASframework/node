@@ -109,9 +109,9 @@ int iec61850_parse_mapping(json_t *json_mapping, struct list *mapping)
 
 	if (json_is_array(json_mapping)) {
 		json_t *json_field;
-		size_t index;
+		size_t i;
 
-		json_array_foreach(json_mapping, index, json_field) {
+		json_array_foreach(json_mapping, i, json_field) {
 			const struct iec61850_type_descriptor *m;
 			const char *type = json_string_value(json_field);
 

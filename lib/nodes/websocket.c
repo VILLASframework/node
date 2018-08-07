@@ -517,7 +517,7 @@ int websocket_parse(struct node *n, json_t *cfg)
 	struct websocket *w = (struct websocket *) n->_vd;
 	int ret;
 
-	size_t index;
+	size_t i;
 	json_t *json_dests = NULL;
 	json_t *json_dest;
 	json_error_t err;
@@ -532,7 +532,7 @@ int websocket_parse(struct node *n, json_t *cfg)
 		if (!json_is_array(json_dests))
 			error("The 'destinations' setting of node %s must be an array of URLs", node_name(n));
 
-		json_array_foreach(json_dests, index, json_dest) {
+		json_array_foreach(json_dests, i, json_dest) {
 			const char *uri, *prot, *ads, *path;
 
 			uri = json_string_value(json_dest);

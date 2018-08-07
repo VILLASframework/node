@@ -83,7 +83,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 	int numrates = 0;
 	int numvalues = 0;
 
-	size_t index;
+	size_t i;
 	json_t *json_cases, *json_case, *json_val;
 	json_t *json_rates = NULL, *json_values = NULL;
 	json_error_t err;
@@ -116,7 +116,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 	if (!json_is_array(json_cases))
 		error("The 'cases' setting of node %s must be an array.", node_name(n));
 
-	json_array_foreach(json_cases, index, json_case) {
+	json_array_foreach(json_cases, i, json_case) {
 		int limit = -1;
 		double duration = -1; /* in secs */
 
@@ -148,23 +148,25 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 		values = realloc(values, sizeof(values[0]) * numvalues);
 
 		if (json_is_array(json_rates)) {
-			json_array_foreach(json_rates, index, json_val) {
+			size_t j;
+			json_array_foreach(json_rates, j, json_val) {
 				if (!json_is_number(json_val))
 					error("The 'rates' setting of node %s must be an array of real numbers", node_name(n));
 
-				rates[index] = json_integer_value(json_val);
+				rates[i] = json_integer_value(json_val);
 			}
 		}
 		else
 			rates[0] = json_number_value(json_rates);
 
 		if (json_is_array(json_values)) {
-			json_array_foreach(json_values, index, json_val) {
+			size_t j;
+			json_array_foreach(json_values, j, json_val) {
 				if (!json_is_integer(json_val))
 					error("The 'values' setting of node %s must be an array of integers", node_name(n));
 
-				values[index] = json_integer_value(json_val);
-				if (values[index] < 2)
+				values[j] = json_integer_value(json_val);
+				if (values[j] < 2)
 					error("Each 'values' entry must be at least 2 or larger");
 			}
 		}

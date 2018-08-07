@@ -220,9 +220,9 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 		if (!json_is_array(json_plugins))
 			error("Setting 'plugins' must be a list of strings");
 
-		size_t index;
+		size_t i;
 		json_t *json_plugin;
-		json_array_foreach(json_plugins, index, json_plugin) {
+		json_array_foreach(json_plugins, i, json_plugin) {
 			struct plugin *p = (struct plugin *) alloc(sizeof(struct plugin));
 
 			ret = plugin_init(p);
@@ -275,9 +275,9 @@ int super_node_parse_json(struct super_node *sn, json_t *cfg)
 		if (!json_is_array(json_paths))
 			warn("Setting 'paths' must be a list.");
 
-		size_t index;
+		size_t i;
 		json_t *json_path;
-		json_array_foreach(json_paths, index, json_path) {
+		json_array_foreach(json_paths, i, json_path) {
 			struct path *p = (struct path *) alloc(sizeof(struct path));
 
 			ret = path_init(p);

@@ -67,17 +67,17 @@ int shmem_parse(struct node *n, json_t *cfg)
 
 		shm->exec = alloc(sizeof(char *) * (json_array_size(json_exec) + 1));
 
-		size_t index;
+		size_t i;
 		json_t *json_val;
-		json_array_foreach(json_exec, index, json_val) {
+		json_array_foreach(json_exec, i, json_val) {
 			val = json_string_value(json_val);
 			if (!val)
 				error("Setting 'exec' of node %s must be an array of strings", node_name(n));
 
-			shm->exec[index] = strdup(val);
+			shm->exec[i] = strdup(val);
 		}
 
-		shm->exec[index] = NULL;
+		shm->exec[i] = NULL;
 	}
 
 	return 0;

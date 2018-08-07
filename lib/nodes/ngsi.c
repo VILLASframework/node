@@ -124,7 +124,7 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 	int ret;
 	const char *id, *name, *type;
 
-	size_t index;
+	size_t l;
 	json_t *attribute, *attributes;
 
 	ret = json_unpack(entity, "{ s: s, s: s, s: o }",
@@ -141,7 +141,7 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 	for (int k = 0; k < cnt; k++)
 		smps[k]->length = json_array_size(attributes);
 
-	json_array_foreach(attributes, index, attribute) {
+	json_array_foreach(attributes, l, attribute) {
 		struct ngsi_attribute *map;
 		json_t *metadata, *values, *tuple;
 
@@ -203,10 +203,10 @@ static int ngsi_parse_mapping(struct list *mapping, json_t *cfg)
 
 	list_init(mapping);
 
-	size_t index;
+	size_t j;
 	json_t *json_token;
 
-	json_array_foreach(cfg, index, json_token) {
+	json_array_foreach(cfg, j, json_token) {
 		const char *token;
 
 		token = json_string_value(json_token);
@@ -215,7 +215,7 @@ static int ngsi_parse_mapping(struct list *mapping, json_t *cfg)
 
 		struct ngsi_attribute *a = (struct ngsi_attribute *) alloc(sizeof(struct ngsi_attribute));
 
-		a->index = index;
+		a->index = j;
 
 		/* Parse Attribute: AttributeName(AttributeType) */
 		int bytes;
@@ -245,7 +245,7 @@ static int ngsi_parse_mapping(struct list *mapping, json_t *cfg)
 			.name = "index",
 			.type = "integer"
 		};
-		assert(asprintf(&i.value, "%zu", index));
+		assert(asprintf(&i.value, "%zu", j));
 
 		list_push(&a->metadata, memdup(&s, sizeof(s)));
 		list_push(&a->metadata, memdup(&i, sizeof(i)));
