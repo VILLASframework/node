@@ -118,7 +118,7 @@ nodes = {
         rate = ${RATE_SAMPLE},
         limit = ${NUM_SAMPLE},
 
-        missed_signals = false,
+        monitor_missed = false,
     },
 
     results_input = {
