@@ -450,8 +450,12 @@ static void ib_create_bind_id(struct node *n)
 	 *         struct rdma_cm_id **id, void *context,
 	 *         enum rdma_port_space ps, enum ibv_qp_type qp_type);
 	 *
-	 * 4. ./build.sh
-	 * 5. cd build && sudo make install
+	 * 4. Edit librdmacm/librdmacm.map and add a new line with:
+	 *
+	 *     rdma_create_id2
+	 *
+	 * 5. ./build.sh
+	 * 6. cd build && sudo make install
 	 *
 	 */
 #ifdef RDMA_CMA_H_CUSTOM
