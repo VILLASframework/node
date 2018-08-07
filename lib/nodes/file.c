@@ -89,8 +89,10 @@ int file_parse(struct node *n, json_t *cfg)
 	f->eof = FILE_EOF_EXIT;
 	f->epoch_mode = FILE_EPOCH_DIRECT;
 	f->flush = 0;
+	f->buffer_size_in = 0;
+	f->buffer_size_out = 0;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s?: { s?: s, s?: F, s?: s, s?: F }, s?: { s?: b } }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s?: { s?: s, s?: F, s?: s, s?: F, s?: i }, s?: { s?: b, s?: i } }",
 		"uri", &uri_tmpl,
 		"format", &format,
 		"in",
@@ -98,8 +100,10 @@ int file_parse(struct node *n, json_t *cfg)
 			"rate", &f->rate,
 			"epoch_mode", &epoch_mode,
 			"epoch", &epoch_flt,
+			"buffer_size", &f->buffer_size_in,
 		"out",
-			"flush", &f->flush
+			"flush", &f->flush,
+			"buffer_size", &f->buffer_size_out
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
@@ -218,6 +222,18 @@ int file_start(struct node *n)
 	ret = io_open(&f->io, f->uri);
 	if (ret)
 		return ret;
+
+	if (f->buffer_size_in) {
+		ret = setvbuf(f->io.input.stream.std, NULL, _IOFBF, f->buffer_size_in);
+		if(ret)
+			return ret;
+	}
+
+	if (f->buffer_size_out) {
+		ret = setvbuf(f->io.output.stream.std, NULL, _IOFBF, f->buffer_size_out);
+		if(ret)
+			return ret;
+	}
 
 	/* Create timer */
 	ret = task_init(&f->task, f->rate, CLOCK_REALTIME);

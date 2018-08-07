@@ -67,8 +67,9 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 	s->amplitude = 1;
 	s->stddev = 0.2;
 	s->offset = 0;
+	s->monitor_missed = 1;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: F, s?: F, s?: F, s?: F, s?: F }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s?: i, s?: i, s?: F, s?: F, s?: F, s?: F, s?: F, s?: b}",
 		"signal", &type,
 		"realtime", &s->rt,
 		"limit", &s->limit,
@@ -77,7 +78,8 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 		"frequency", &s->frequency,
 		"amplitude", &s->amplitude,
 		"stddev", &s->stddev,
-		"offset", &s->offset
+		"offset", &s->offset,
+		"monitor_missed", &s->monitor_missed
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
@@ -114,10 +116,11 @@ int signal_generator_parse_cli(struct node *n, int argc, char *argv[])
 	s->values = 1;
 	s->limit = -1;
 	s->offset = 0;
+	s->monitor_missed = 1;
 
 	/* Parse optional command line arguments */
 	char c, *endptr;
-	while ((c = getopt(argc, argv, "v:r:f:l:a:D:no:")) != -1) {
+	while ((c = getopt(argc, argv, "v:r:f:l:a:D:no:m")) != -1) {
 		switch (c) {
 			case 'n':
 				s->rt = 0;
@@ -142,6 +145,9 @@ int signal_generator_parse_cli(struct node *n, int argc, char *argv[])
 				goto check;
 			case 'D':
 				s->stddev = strtof(optarg, &endptr);
+				goto check;
+			case 'm':
+				s->monitor_missed = 0;
 				goto check;
 			case '?':
 				break;
@@ -204,7 +210,7 @@ int signal_generator_stop(struct node *n)
 			return ret;
 	}
 
-	if (s->missed_steps > 0)
+	if (s->missed_steps > 0 && s->monitor_missed)
 		warn("Node %s missed a total of %d steps.", node_name(n), s->missed_steps);
 
 	free(s->last);
@@ -226,7 +232,7 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 	if (s->rt) {
 		/* Block until 1/p->rate seconds elapsed */
 		steps = task_wait(&s->task);
-		if (steps > 1) {
+		if (steps > 1 && s->monitor_missed) {
 			warn("Missed steps: %u", steps-1);
 			s->missed_steps += steps-1;
 		}

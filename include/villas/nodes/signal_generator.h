@@ -65,6 +65,7 @@ struct signal_generator {
 	double amplitude;		/**< Amplitude of the generated signals. */
 	double stddev;			/**< Standard deviation of random signals (normal distributed). */
 	double offset;			/**< A constant bias. */
+	int monitor_missed;		/**< Boolean, if set, node counts missed steps and warns user. */
 
 	double *last;			/**< The values from the previous period which are required for random walk. */
 
