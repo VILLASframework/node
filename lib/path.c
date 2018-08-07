@@ -45,9 +45,12 @@ static void path_destination_enqueue(struct path *p, struct sample *smps[], unsi
 static int path_source_init(struct path_source *ps)
 {
 	int ret;
-	unsigned pool_cnt = (strcmp(node_type_name(ps->node->_vt), "infiniband") == 0 ? 8192 : (unsigned) MAX(DEFAULT_QUEUE_LENGTH, ps->node->in.vectorize));
+	int pool_size = MAX(DEFAULT_QUEUE_LENGTH, ps->node->in.vectorize);
 
-	ret = pool_init(&ps->pool, pool_cnt, SAMPLE_LENGTH(ps->node->samplelen), node_memory_type(ps->node, &memory_hugepage));
+	if (ps->node->_vt->pool_size)
+		pool_size = ps->node->_vt->pool_size;
+
+	ret = pool_init(&ps->pool, pool_size, SAMPLE_LENGTH(ps->node->in.samplelen), node_memory_type(ps->node, &memory_hugepage));
 	if (ret)
 		return ret;
 
@@ -398,16 +401,17 @@ int path_init2(struct path *p)
 #endif /* WITH_HOOKS */
 
 	/* Initialize destinations */
-	struct memory_type *pool_mem_type = &memory_hugepage;
-	unsigned pool_cnt = (unsigned) MAX(1, list_length(&p->destinations) * p->queuelen);
+	struct memory_type *pool_mt = &memory_hugepage;
+	int pool_size = (unsigned) MAX(1, list_length(&p->destinations) * p->queuelen);
 
 	for (size_t i = 0; i < list_length(&p->destinations); i++) {
 		struct path_destination *pd = (struct path_destination *) list_at(&p->destinations, i);
 
-		if (strcmp(node_type_name(pd->node->_vt), "infiniband") == 0) {
-			pool_cnt = 8192;
-			pool_mem_type = node_memory_type(pd->node, &memory_hugepage);
-		}
+		if (pd->node->_vt->pool_size > pool_size)
+			pool_size = pd->node->_vt->pool_size;
+
+		if (pd->node->_vt->memory_type)
+			pool_mt = node_memory_type(pd->node, &memory_hugepage);
 
 		ret = path_destination_init(pd, p->queuelen);
 		if (ret)
@@ -449,7 +453,7 @@ int path_init2(struct path *p)
 	if (!p->samplelen)
 		p->samplelen = DEFAULT_SAMPLE_LENGTH;
 
-	ret = pool_init(&p->pool, pool_cnt, SAMPLE_LENGTH(p->samplelen), pool_mem_type);
+	ret = pool_init(&p->pool, pool_size, SAMPLE_LENGTH(p->samplelen), pool_mt);
 	if (ret)
 		return ret;
 
