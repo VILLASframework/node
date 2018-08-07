@@ -51,7 +51,7 @@ RATE_SAMPLES=(10 100 1000 10000 50000)
 TIME_TO_RUN=30
 
 # Declare modes
-MODES=("TCP" "UDP")
+MODES=("RC" "UC" "UD")
 
 # Initialize counter
 COUNT=0
@@ -117,6 +117,8 @@ nodes = {
         frequency = 3,
         rate = ${RATE_SAMPLE},
         limit = ${NUM_SAMPLE},
+
+        monitor_missed = false,
     },
 
     results_input = {
@@ -124,6 +126,8 @@ nodes = {
 
         format = "csv",
         uri = "${LOG_DIR}/${COUNT}_${MODE}-${NUM_VALUE}-${RATE_SAMPLE}-${NUM_SAMPLE}_input.csv",
+
+        buffer_size = 2000000000,
     },
 
     results_output = {
@@ -131,6 +135,8 @@ nodes = {
 
         format = "csv",
         uri = "${LOG_DIR}/${COUNT}_${MODE}-${NUM_VALUE}-${RATE_SAMPLE}-${NUM_SAMPLE}_output.csv",
+
+        buffer_size = 2000000000,
     },
 
     ib_node_source = {

@@ -47,12 +47,21 @@ OUTPUT_FILE=$(mktemp)
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 RC=0
 
-# Generate test data for TCP and UDP test
+# Generate test data for RC, UC, and UD test
 VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
 villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 # Set config file with a MODE flag
 cat > ${CONFIG_FILE} <<EOF
+logging = {
+    level = 0,
+    facilities = "ib",
+},
+
+http = {
+    enabled = false,
+},
+
 nodes = {
     results = {
         type = "file",
@@ -62,7 +71,7 @@ nodes = {
     ib_node_source = {
         type = "infiniband",
 
-        rdma_port_space = "RDMA_PS_MODE",
+        rdma_port_space = "MODE",
         
         in = {
             address = "10.0.0.2:1337",
@@ -91,7 +100,7 @@ nodes = {
     ib_node_target = {
         type = "infiniband",
 
-        rdma_port_space = "RDMA_PS_MODE",
+        rdma_port_space = "MODE",
         
         in = {
             address = "10.0.0.1:1337",
@@ -119,7 +128,7 @@ paths = (
 EOF
 
 # Declare modes
-MODES=("TCP" "UDP")
+MODES=("RC" "UC" "UD")
 
 # Run through modes
 for MODE in "${MODES[@]}"
@@ -131,7 +140,7 @@ do
     echo "#############################"
     echo "#############################"
 
-	sed -i -e 's/RDMA_PS_MODE/RDMA_PS_'${MODE}'/g' ${CONFIG_FILE}    
+	sed -i -e 's/MODE/'${MODE}'/g' ${CONFIG_FILE} 
 
     # Start receiving node
     VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \
@@ -186,7 +195,7 @@ do
     echo "#############################"
     echo ""
 
-	sed -i -e 's/RDMA_PS_'${MODE}'/RDMA_PS_MODE/g' ${CONFIG_FILE}    
+	sed -i -e 's/'${MODE}'/MODE/g' ${CONFIG_FILE} 
 done
 
 rm ${CONFIG_FILE} ${CONFIG_FILE_TARGET} ${INPUT_FILE} ${OUTPUT_FILE} ${DATAFIFO}
