@@ -214,7 +214,7 @@ endif()
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/villas/config.h.in
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/villas/config.h
+    ${CMAKE_CURRENT_BINARY_DIR}/include/villas/config.h
 )
 
 # Show feature summary
