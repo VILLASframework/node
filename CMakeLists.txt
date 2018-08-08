@@ -63,7 +63,12 @@ else()
 endif()
 
 # Check OS
-check_include_file("sys/eventfd.h" HAS_EVENTFD)
+# Use the switch NO_EVENTFD to deactivate eventfd usage indepentent of availability on OS
+if(NOT ${NO_EVENTFD} MATCHES "1")
+    check_include_file("sys/eventfd.h" HAS_EVENTFD)
+else()
+    set(HAS_EVENTFD 0)
+endif()
 check_include_file("semaphore.h" HAS_SEMAPHORE)
 check_include_file("sys/mman.h" HAS_MMAN)
 

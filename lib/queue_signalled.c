@@ -47,8 +47,13 @@ int queue_signalled_init(struct queue_signalled *qs, size_t size, struct memory_
 #ifdef __linux__
 		if (flags & QUEUE_SIGNALLED_PROCESS_SHARED)
 			qs->mode = QUEUE_SIGNALLED_PTHREAD;
-		else
+		else {
+#ifdef HAS_EVENTFD
 			qs->mode = QUEUE_SIGNALLED_EVENTFD;
+#else
+			qs->mode = QUEUE_SIGNALLED_PTHREAD;
+#endif
+		}
 #elif defined(__APPLE__)
 		if (flags & QUEUE_SIGNALLED_PROCESS_SHARED)
 			qs->mode = QUEUE_SIGNALLED_PTHREAD;
