@@ -286,7 +286,7 @@ int ib_parse(struct node *n, json_t *cfg)
 		ib->qp_init.qp_type = IBV_QPT_UC;
 #else
 		error("Unreliable Connected (UC) mode is only available with an adapted version of librdma. Please"
-				"read the Infiniband node type Documentation for more information on UC!",
+				"read the Infiniband node type Documentation for more information on UC!");
 #endif
 	}
 	else if (strcmp(transport_mode, "UD") == 0) {
