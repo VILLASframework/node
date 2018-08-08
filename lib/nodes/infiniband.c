@@ -185,7 +185,7 @@ int ib_parse(struct node *n, json_t *cfg)
 	int ret;
 	char *local = NULL;
 	char *remote = NULL;
-	const char *port_space = "RDMA_PS_TCP";
+	const char *transport_mode = "RC";
 	const char *poll_mode = "BUSY";
 	int timeout = 1000;
 	int recv_cq_size = 128;
@@ -207,7 +207,7 @@ int ib_parse(struct node *n, json_t *cfg)
 	ret = json_unpack_ex(cfg, &err, 0, "{s?: o, s?: o, s?: s, s?: s}",
 		"in", &json_in,
 		"out", &json_out,
-		"rdma_port_space", &port_space
+		"rdma_transport_mode", &transport_mode
 	);
 	if (ret)
 		jerror(&err, "Failed to parse in/out json blocks");
@@ -276,21 +276,28 @@ int ib_parse(struct node *n, json_t *cfg)
 	debug(LOG_IB | 4, "Translated %s:%s to a struct addrinfo in node %s", ip_adr, port, node_name(n));
 
 	// Translate port space
-	if (strcmp(port_space, "RDMA_PS_TCP") == 0) {
+	if (strcmp(transport_mode, "RC") == 0) {
 		ib->conn.port_space = RDMA_PS_TCP;
 		ib->qp_init.qp_type = IBV_QPT_RC;
 	}
-	else if (strcmp(port_space, "RDMA_PS_UDP") == 0) {
+	else if (strcmp(transport_mode, "UC") == 0) {
+#ifdef RDMA_CMA_H_CUSTOM
+		ib->conn.port_space = RDMA_PS_IB;
+		ib->qp_init.qp_type = IBV_QPT_UC;
+#else
+		error("Unreliable Connected (UC) mode is only available with an adapted version of librdma. Please"
+				"read the Infiniband node type Documentation for more information on UC!",
+#endif
+	}
+	else if (strcmp(transport_mode, "UD") == 0) {
 		ib->conn.port_space = RDMA_PS_UDP;
 		ib->qp_init.qp_type = IBV_QPT_UD;
 	}
-	else if (strcmp(port_space, "RDMA_PS_IB") == 0 || strcmp(port_space, "RDMA_PS_IPOIB"))
-		error("Although RDMA_PS_IB and RDMA_PS_IPOIB are valid in rdma_cma.h, they are not supported by VILLAS!");
 	else
-		error("rdma_port_space (%s) is not a valid port space supported by rdma_cma.h in node %s!",
-				port_space, node_name(n));
+		error("transport_mode = %s is not a valid transport mode in node %s!",
+				transport_mode, node_name(n));
 
-	debug(LOG_IB | 4, "Translated %s to  enum rdma_port_space in node %s", port_space, node_name(n));
+	debug(LOG_IB | 4, "Set transport mode to %s in node %s", transport_mode, node_name(n));
 
 	// Set timeout
 	ib->conn.timeout = timeout;
@@ -421,7 +428,41 @@ static void ib_create_bind_id(struct node *n)
 	int ret;
 
 	// Create rdma_cm_id
+	/**
+	 * The unreliable connected mode is officially not supported by the rdma_cm library. Only the Reliable
+	 * Connected mode (RDMA_PS_TCP) and the Unreliable Datagram mode (RDMA_PS_UDP). Although it is not officially
+	 * supported, it is possible to use it with a few small adaptions to the sourcecode. To enable the
+	 * support for UC connections follow the steps below:
+	 *
+	 * 1. git clone https://github.com/linux-rdma/rdma-core
+	 * 2. cd rdma-core
+	 * 2. Edit librdmacm/cma.c and remove the keyword 'static' in front of:
+	 *
+	 *     static int rdma_create_id2(struct rdma_event_channel *channel,
+         *         struct rdma_cm_id **id, void *context,
+         *         enum rdma_port_space ps, enum ibv_qp_type qp_type)
+	 *
+	 * 3. Edit librdmacm/rdma_cma.h and add the following two entries to the file:
+	 *
+	 *     #define RDMA_CMA_H_CUSTOM
+	 *
+	 *     int rdma_create_id2(struct rdma_event_channel *channel,
+	 *         struct rdma_cm_id **id, void *context,
+	 *         enum rdma_port_space ps, enum ibv_qp_type qp_type);
+	 *
+	 * 4. Edit librdmacm/librdmacm.map and add a new line with:
+	 *
+	 *     rdma_create_id2
+	 *
+	 * 5. ./build.sh
+	 * 6. cd build && sudo make install
+	 *
+	 */
+#ifdef RDMA_CMA_H_CUSTOM
+	ret = rdma_create_id2(ib->ctx.ec, &ib->ctx.id, NULL, ib->conn.port_space, ib->qp_init.qp_type);
+#else
 	ret = rdma_create_id(ib->ctx.ec, &ib->ctx.id, NULL, ib->conn.port_space);
+#endif
 	if (ret)
 		error("Failed to create rdma_cm_id of node %s: %s", node_name(n), gai_strerror(ret));
 
@@ -670,7 +711,7 @@ int ib_stop(struct node *n)
 	// Call RDMA disconnect function
 	// Will flush all outstanding WRs to the Completion Queue and
 	// will call RDMA_CM_EVENT_DISCONNECTED if that is done.
-	if (n->state == STATE_CONNECTED && ib->conn.port_space == RDMA_PS_TCP) {
+	if (n->state == STATE_CONNECTED && ib->conn.port_space != RDMA_PS_UDP) {
 		ret = rdma_disconnect(ib->ctx.id);
 
 		if (ret)
