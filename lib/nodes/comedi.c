@@ -31,7 +31,7 @@
 #include <villas/nodes/comedi.h>
 #include <villas/utils.h>
 
-// utility functions to dump a comedi_cmd graciously taken from comedilib demo
+/* Utility functions to dump a comedi_cmd graciously taken from comedilib demo */
 static char* comedi_cmd_trigger_src(unsigned int src, char *buf);
 static void comedi_dump_cmd(comedi_cmd *cmd, int debug_level);
 
@@ -42,7 +42,7 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 	json_t *json_chans;
 	json_error_t err;
 
-	// default values
+	/* Default values */
 	d->subdevice = -1;
 	d->buffer_size = 16;
 
@@ -58,22 +58,22 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 	if (!json_is_array(json_chans))
 		return -1;
 
-	// convert kilobytes to bytes
+	/* Convert kilobytes to bytes */
 	d->buffer_size = d->buffer_size << 10;
 
 	size_t i;
 	json_t *json_chan;
 
 	d->chanlist_len = json_array_size(json_chans);
-	if(d->chanlist_len == 0) {
+	if (d->chanlist_len == 0) {
 		error("No channels configured");
 		return 0;
 	}
 
-	d->chanlist = malloc(d->chanlist_len * sizeof(*d->chanlist));
+	d->chanlist = alloc(d->chanlist_len * sizeof(*d->chanlist));
 	assert(d->chanlist != NULL);
 
-	d->chanspecs = malloc(d->chanlist_len * sizeof(*d->chanspecs));
+	d->chanspecs = alloc(d->chanlist_len * sizeof(*d->chanspecs));
 	assert(d->chanspecs != NULL);
 
 	json_array_foreach(json_chans, i, json_chan) {
@@ -85,7 +85,7 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 		if (ret)
 			jerror(&err, "Failed to parse configuration");
 
-		if(aref < AREF_GROUND || aref > AREF_OTHER)
+		if (aref < AREF_GROUND || aref > AREF_OTHER)
 			error("Invalid value for analog reference: aref=%d", aref);
 
 		d->chanlist[i] = CR_PACK(num, range, aref);
@@ -94,7 +94,6 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 	return 0;
 }
 
-
 static int comedi_start_common(struct node *n)
 {
 	struct comedi *c = (struct comedi *) n->_vd;
@@ -102,25 +101,24 @@ static int comedi_start_common(struct node *n)
 
 	comedi_set_global_oor_behavior(COMEDI_OOR_NAN);
 
-
-	for(int dirIdx = 0; dirIdx < 2; dirIdx++) {
+	for (int dirIdx = 0; dirIdx < 2; dirIdx++) {
 		struct comedi_direction* d = directions[dirIdx];
 		int ret;
 
-		if(!d->present)
+		if (!d->present)
 			continue;
 
-		// sanity-check channel config and populate chanspec for later
-		for(int i = 0; i < d->chanlist_len; i++) {
+		/* Sanity-check channel config and populate chanspec for later */
+		for (int i = 0; i < d->chanlist_len; i++) {
 			const unsigned int channel = CR_CHAN(d->chanlist[i]);
 			const int range = CR_RANGE(d->chanlist[i]);
 
 			ret = comedi_get_n_ranges(c->dev, d->subdevice, channel);
-			if(ret < 0)
+			if (ret < 0)
 				error("Failed to get ranges for channel %d on subdevice %d",
 				      channel, d->subdevice);
 
-			if(range >= ret)
+			if (range >= ret)
 				error("Invalid range for channel %d on subdevice %d: range=%d",
 				      channel, d->subdevice, range);
 
@@ -137,7 +135,6 @@ static int comedi_start_common(struct node *n)
 			     (d == &c->in ? "Input" : "Output"), channel,
 			     CR_AREF(d->chanlist[i]), range, d->chanspecs[i].maxdata);
 		}
-
 
 		const int flags = comedi_get_subdevice_flags(c->dev, d->subdevice);
 		d->sample_size = (flags & SDF_LSAMPL) ? sizeof(lsampl_t) : sizeof(sampl_t);
@@ -159,19 +156,19 @@ static int comedi_start_common(struct node *n)
 	return 0;
 }
 
-
 static int comedi_start_in(struct node *n)
 {
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
 	struct comedi_direction *d = &c->in;
 
-	// try to find first analog input subdevice if not specified in config
+	/* Try to find first analog input subdevice if not specified in config */
 	if (d->subdevice < 0) {
 		d->subdevice = comedi_find_subdevice_by_type(c->dev, COMEDI_SUBD_AI, 0);
 		if (d->subdevice < 0)
 			error("Cannot find analog input device for node '%s'", node_name(n));
-	} else {
+	}
+	else {
 		/* Check if subdevice is usable */
 		ret = comedi_get_subdevice_type(c->dev, d->subdevice);
 		if (ret != COMEDI_SUBD_AI)
@@ -181,7 +178,6 @@ static int comedi_start_in(struct node *n)
 	ret = comedi_get_subdevice_flags(c->dev, d->subdevice);
 	if (ret < 0 || !(ret & SDF_CMD_READ))
 		error("Input subdevice of node '%s' does not support 'read' commands", node_name(n));
-
 
 	comedi_set_read_subdevice(c->dev, d->subdevice);
 	ret = comedi_get_read_subdevice(c->dev);
@@ -194,33 +190,32 @@ static int comedi_start_in(struct node *n)
 
 	cmd.subdev = d->subdevice;
 
-	// make card send interrupts after every sample, not only when fifo is half
-	// full (TODO: evaluate if this makes sense, leave as reminder)
+	/* Make card send interrupts after every sample, not only when fifo is half
+	 * full (TODO: evaluate if this makes sense, leave as reminder) /*
 	//cmd.flags = TRIG_WAKE_EOS;
 
-	// start right now
+	/* Start right now *
 	cmd.start_src = TRIG_NOW;
 
-	// trigger scans periodically
+	/* Trigger scans periodically */
 	cmd.scan_begin_src = TRIG_TIMER;
 	cmd.scan_begin_arg = 1e9 / d->sample_rate_hz;
 
-	// do conversions in serial with 1ns inter-conversion delay
+	/* Do conversions in serial with 1ns inter-conversion delay */
 	cmd.convert_src = TRIG_TIMER;
-	cmd.convert_arg = 1;	// inter-conversion delay in nanoseconds
+	cmd.convert_arg = 1;	/* Inter-conversion delay in nanoseconds */
 
-	// terminate scan after each channel has been converted
+	/* Terminate scan after each channel has been converted */
 	cmd.scan_end_src = TRIG_COUNT;
 	cmd.scan_end_arg = d->chanlist_len;
 
-	// contionous sampling
+	/* Contionous sampling */
 	cmd.stop_src = TRIG_NONE;
 
 	cmd.chanlist = d->chanlist;
 	cmd.chanlist_len = d->chanlist_len;
 
-
-	// first run might change command, second should return successfully
+	/* First run might change command, second should return successfully */
 	ret = comedi_command_test(c->dev, &cmd);
 	ret = comedi_command_test(c->dev, &cmd);
 	if (ret < 0)
@@ -237,10 +232,9 @@ static int comedi_start_in(struct node *n)
 	d->counter = 0;
 	d->running = true;
 
-
 #if COMEDI_USE_READ
-	// be prepared to consume one entire buffer
-	c->buf = malloc(c->in.buffer_size);
+	/* Be prepared to consume one entire buffer */
+	c->buf = alloc(c->in.buffer_size);
 	c->bufptr = c->buf;
 	assert(c->bufptr != NULL);
 
@@ -258,12 +252,13 @@ static int comedi_start_out(struct node *n)
 	struct comedi *c = (struct comedi *) n->_vd;
 	struct comedi_direction *d = &c->out;
 
-	// try to find first analog output subdevice if not specified in config
+	/* Try to find first analog output subdevice if not specified in config */
 	if (d->subdevice < 0) {
 		d->subdevice = comedi_find_subdevice_by_type(c->dev, COMEDI_SUBD_AO, 0);
 		if (d->subdevice < 0)
 			error("Cannot find analog output device for node '%s'", node_name(n));
-	} else {
+	}
+	else {
 		ret = comedi_get_subdevice_type(c->dev, d->subdevice);
 		if (ret != COMEDI_SUBD_AO)
 			error("Output subdevice of node '%s' is not an analog output", node_name(n));
@@ -273,13 +268,11 @@ static int comedi_start_out(struct node *n)
 	if (ret < 0 || !(ret & SDF_CMD_WRITE))
 		error("Output subdevice of node '%s' does not support 'write' commands", node_name(n));
 
-
 	comedi_set_write_subdevice(c->dev, d->subdevice);
 	ret = comedi_get_write_subdevice(c->dev);
 	if (ret < 0 || ret != d->subdevice)
 		error("Failed to change 'write' subdevice from %d to %d of node '%s'",
 		      ret, d->subdevice, node_name(n));
-
 
 	comedi_cmd cmd;
 	memset(&cmd, 0, sizeof(cmd));
@@ -288,7 +281,7 @@ static int comedi_start_out(struct node *n)
 
 	cmd.flags = CMDF_WRITE;
 
-	// wait for internal trigger, we will have to fill the buffer first
+	/* Wait for internal trigger, we will have to fill the buffer first */
 	cmd.start_src = TRIG_INT;
 	cmd.start_arg = 0;
 
@@ -301,15 +294,14 @@ static int comedi_start_out(struct node *n)
 	cmd.scan_end_src = TRIG_COUNT;
 	cmd.scan_end_arg = d->chanlist_len;
 
-	// continous sampling
+	/* Continous sampling */
 	cmd.stop_src = TRIG_NONE;
 	cmd.stop_arg = 0;
 
 	cmd.chanlist = d->chanlist;
 	cmd.chanlist_len = d->chanlist_len;
 
-
-	// first run might change command, second should return successfully
+	/* First run might change command, second should return successfully */
 	ret = comedi_command_test(c->dev, &cmd);
 	if (ret < 0)
 		error("Invalid command for input subdevice of node '%s'", node_name(n));
@@ -325,34 +317,33 @@ static int comedi_start_out(struct node *n)
 	if (ret < 0)
 		error("Failed to issue command to input subdevice of node '%s'", node_name(n));
 
-	// output will only start after the internal trigger
+	/* Output will only start after the internal trigger */
 	d->running = false;
 	d->last_debug = time_now();
 
-	// allocate buffer for one complete villas sample
-	// TODO: maybe increase buffer size according to c->vectorize
+	/* Allocate buffer for one complete villas sample */
+	/** @todo: maybe increase buffer size according to c->vectorize */
 	const size_t local_buffer_size = d->sample_size * d->chanlist_len;
-	d->buffer = malloc(local_buffer_size);
+	d->buffer = alloc(local_buffer_size);
 	d->bufptr = d->buffer;
 	assert(d->buffer != NULL);
 
-	// initialize local buffer used for write() syscalls
-	for(int channel = 0; channel < d->chanlist_len; channel++) {
+	/* Initialize local buffer used for write() syscalls */
+	for (int channel = 0; channel < d->chanlist_len; channel++) {
 		const unsigned raw = comedi_from_phys(0.0f, d->chanspecs[channel].range, d->chanspecs[channel].maxdata);
 
-		if(d->sample_size == sizeof(sampl_t)) {
+		if (d->sample_size == sizeof(sampl_t))
 			*((sampl_t *)d->bufptr) = raw;
-		} else {
+		else
 			*((lsampl_t *)d->bufptr) = raw;
-		}
 
 		d->bufptr += d->sample_size;
 	}
 
-	// preload comedi output buffer
-	for(int i = 0; i < d->buffer_size / local_buffer_size; i++) {
+	/* Preload comedi output buffer */
+	for (int i = 0; i < d->buffer_size / local_buffer_size; i++) {
 		ret = write(comedi_fileno(c->dev), d->buffer, local_buffer_size);
-		if(ret != local_buffer_size) {
+		if (ret != local_buffer_size) {
 			error("Cannot preload Comedi buffer");
 		}
 	}
@@ -421,7 +412,6 @@ int comedi_parse(struct node *n, json_t *cfg)
 	c->out.enabled = false;
 	c->out.running = false;
 
-
 	if (c->in.present) {
 		ret = comedi_parse_direction(c, &c->in, json_in);
 		if (ret)
@@ -465,27 +455,27 @@ int comedi_start(struct node *n)
 		error("Failed to open device: %s", err);
 	}
 
-	// enable non-blocking syscalls
-	// TODO: verify if this works with both input and output, so comment out
+	/* Enable non-blocking syscalls */
+	/** @todo: verify if this works with both input and output, so comment out */
 	//if (fcntl(comedi_fileno(c->dev), F_SETFL, O_NONBLOCK))
 	//	error("Failed to set non-blocking flag in Comedi FD of node '%s'", node_name(n));
 
 	comedi_start_common(n);
 
-	if(c->in.present) {
+	if (c->in.present) {
 		int ret = comedi_start_in(n);
-		if(ret)
+		if (ret)
 			return ret;
-		else
-			c->in.enabled = true;
+
+		c->in.enabled = true;
 	}
 
-	if(c->out.present) {
+	if (c->out.present) {
 		int ret = comedi_start_out(n);
-		if(ret)
+		if (ret)
 			return ret;
-		else
-			c->out.enabled = true;
+
+		c->out.enabled = true;
 	}
 
 #if !COMEDI_USE_READ
@@ -507,10 +497,10 @@ int comedi_stop(struct node *n)
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
 
-	if(c->in.enabled)
+	if (c->in.enabled)
 		comedi_stop_in(n);
 
-	if(c->out.enabled)
+	if (c->out.enabled)
 		comedi_stop_out(n);
 
 	ret = comedi_close(c->dev);
@@ -519,7 +509,6 @@ int comedi_stop(struct node *n)
 
 	return 0;
 }
-
 
 #if COMEDI_USE_READ
 
@@ -531,12 +520,11 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	const size_t villas_sample_size = d->chanlist_len * d->sample_size;
 
 	ret = comedi_get_buffer_contents(c->dev, d->subdevice);
-	if(ret < 0) {
-		if(comedi_errno() == EBUF_OVR)
+	if (ret < 0) {
+		if (comedi_errno() == EBUF_OVR)
 			error("Comedi buffer overflow");
-		else {
+		else
 			error("Comedi error: %s", comedi_strerror(comedi_errno()));
-		}
 	}
 
 	fd_set rdset;
@@ -548,30 +536,27 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	timeout.tv_usec = 5000;
 
 	ret = select(comedi_fileno(c->dev) + 1, &rdset, NULL, NULL, &timeout);
-	if(ret < 0) {
+	if (ret < 0)
 		error("select");
-	} else if(ret == 0) {
-		/* hit timeout */
+	else if (ret == 0) /* hit timeout */
 		return 0;
-	} else if(FD_ISSET(comedi_fileno(c->dev), &rdset)) {
-		/* comedi file descriptor became ready */
-
+	else if (FD_ISSET(comedi_fileno(c->dev), &rdset)) { /* comedi file descriptor became ready */
 		const size_t buffer_bytes_free = d->buffer_size - (c->bufptr - c->buf);
 		const size_t bytes_requested = cnt * villas_sample_size;
 
 		ret = read(comedi_fileno(c->dev), c->bufptr, MIN(bytes_requested, buffer_bytes_free));
-		if(ret < 0) {
-			if(errno == EAGAIN) {
+		if (ret < 0) {
+			if (errno == EAGAIN)
 				error("read");
-			} else {
+			else
 				return 0;
-			}
-
-		} else if(ret == 0) {
+		}
+		else if (ret == 0) {
 			warn("select timeout, no samples available");
 			return 0;
-		} else {
-			// sample handling here
+		}
+		else {
+			/* Sample handling here */
 			const size_t bytes_available = ret;
 			const size_t raw_samples_available = bytes_available / d->sample_size;
 			const size_t villas_samples_available = raw_samples_available / d->chanlist_len;
@@ -582,10 +567,10 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 			info("there are %ld kB available (%ld kB requested)",
 			     bytes_available / 1024, bytes_requested / 1024);
 
-			if(cnt > villas_samples_available)
+			if (cnt > villas_samples_available)
 				cnt = villas_samples_available;
 
-			for(size_t i = 0; i < cnt; i++) {
+			for (size_t i = 0; i < cnt; i++) {
 				d->counter++;
 
 				smps[i]->flags = SAMPLE_HAS_ORIGIN | SAMPLE_HAS_VALUES | SAMPLE_HAS_SEQUENCE;
@@ -596,47 +581,46 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 				smps[i]->length = d->chanlist_len;
 
-				if(smps[i]->capacity < d->chanlist_len)
+				if (smps[i]->capacity < d->chanlist_len) {
 					error("Sample has insufficient capacity: %d < %ld",
 					      smps[i]->capacity, d->chanlist_len);
+				}
 
-
-				for(int si = 0; si < d->chanlist_len; si++) {
+				for (int si = 0; si < d->chanlist_len; si++) {
 					unsigned int raw;
 
-					if (d->sample_size == sizeof(sampl_t)) {
+					if (d->sample_size == sizeof(sampl_t))
 						raw = *((sampl_t *)(c->bufptr));
-					} else {
+					else
 						raw = *((lsampl_t *)(c->bufptr));
-					}
 
 					c->bufptr += d->sample_size;
 
 					smps[i]->data[si].f = comedi_to_phys(raw, d->chanspecs[si].range, d->chanspecs[si].maxdata);
 					sample_set_data_format(smps[i], si, SAMPLE_DATA_FORMAT_FLOAT);
 
-					if(isnan(smps[i]->data[si].f)) {
+					if (isnan(smps[i]->data[si].f))
 						warn("Input: channel %d clipped", CR_CHAN(d->chanlist[si]));
-					}
 				}
 			}
 
 			const size_t bytes_consumed = cnt * villas_sample_size;
 			const size_t bytes_left = bytes_available - bytes_consumed;
-			if(bytes_left > 0) {
-				// move leftover bytes to the beginning of buffer
-				// TODO: optimize?
+			if (bytes_left > 0) {
+				/* Move leftover bytes to the beginning of buffer */
+				/** @todo: optimize? */
 				memmove(c->buf, c->bufptr, bytes_left);
 			}
 
 			info("consumed %ld bytes", bytes_consumed);
 
-			// start at the beginning again
+			/* Start at the beginning again */
 			c->bufptr = c->buf;
 
 			return cnt;
 		}
-	} else {
+	}
+	else {
 		/* unknown file descriptor became ready */
 		printf("unknown file descriptor ready\n");
 	}
@@ -658,80 +642,81 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 	info("current bufpos=%ld", c->bufpos);
 
-//	if(c->bufpos > (d->buffer_size - villas_sample_size)) {
-//		ret = comedi_get_buffer_read_offset(c->dev, d->subdevice);
-//		if(ret < 0)
-//			error("Canot get offset");
+#if 0
+	if (c->bufpos > (d->buffer_size - villas_sample_size)) {
+		ret = comedi_get_buffer_read_offset(c->dev, d->subdevice);
+		if (ret < 0)
+			error("Canot get offset");
 
-//		c->bufpos = ret;
-//		info("change bufpos=%ld", c->bufpos);
-//	}
+		c->bufpos = ret;
+		info("change bufpos=%ld", c->bufpos);
+	}
+#endif
 
 	ret = comedi_get_buffer_contents(c->dev, d->subdevice);
-	if (ret == 0) {
+	if (ret == 0)
 		return 0;
-	} else if(ret < 0) {
-		if(comedi_errno() == EBUF_OVR)
+	else if (ret < 0) {
+		if (comedi_errno() == EBUF_OVR)
 			error("Comedi buffer overflow");
-		else {
+		else
 			error("Comedi error: %s", comedi_strerror(comedi_errno()));
-		}
 	}
 
 	const size_t bytes_available = ret;
 	const size_t raw_sample_count = bytes_available / d->sample_size;
 	size_t villas_sample_count = raw_sample_count / d->chanlist_len;
-	if(villas_sample_count == 0)
+	if (villas_sample_count == 0)
 		return 0;
 
 	info("there are %ld villas samples (%ld raw bytes, %ld channels)", villas_sample_count, bytes_available, d->chanlist_len);
 
-//	if(villas_sample_count == 1) {
-//		info("front=%ld back=%ld bufpos=%ld", c->front, c->back, c->bufpos);
-//	}
+#if 0
+	if (villas_sample_count == 1)
+		info("front=%ld back=%ld bufpos=%ld", c->front, c->back, c->bufpos);
 
+	if ((c->bufpos + bytes_available) >= d->buffer_size) {
+		/* Let comedi do the wraparound, only consume until end of buffer */
+		villas_sample_count = (d->buffer_size - c->bufpos) / villas_sample_size;
+		warn("Reducing consumption from %d to %ld bytes", ret, bytes_available);
+		warn("Only consume %ld villas samples b/c of buffer wraparound", villas_sample_count);
+	}
+#endif
 
-
-//	if((c->bufpos + bytes_available) >= d->buffer_size) {
-//		// let comedi do the wraparound, only consume until end of buffer
-//		villas_sample_count = (d->buffer_size - c->bufpos) / villas_sample_size;
-////		warn("Reducing consumption from %d to %ld bytes", ret, bytes_available);
-//		warn("Only consume %ld villas samples b/c of buffer wraparound", villas_sample_count);
-//	}
-
-	if(cnt > villas_sample_count)
+	if (cnt > villas_sample_count)
 		cnt = villas_sample_count;
 
-//	if(bytes_available != 0 && bytes_available < villas_sample_size) {
-//		warn("Cannot consume samples, only %d bytes available, throw away", ret);
+#if 0
+	if (bytes_available != 0 && bytes_available < villas_sample_size) {
+		warn("Cannot consume samples, only %d bytes available, throw away", ret);
 
-//		ret = comedi_mark_buffer_read(c->dev, d->subdevice, bytes_available);
-//		if(ret != bytes_available)
-//			error("Cannot throw away %ld bytes, returned %d, wtf comedi?!",
-//			      bytes_available, ret);
+		ret = comedi_mark_buffer_read(c->dev, d->subdevice, bytes_available);
+		if (ret != bytes_available)
+			error("Cannot throw away %ld bytes, returned %d, wtf comedi?!",
+			      bytes_available, ret);
 
-//		return 0;
-//	}
-
-
+		return 0;
+	}
+#endif
 
 	const size_t samples_total_bytes = cnt * villas_sample_size;
 
 	ret = comedi_mark_buffer_read(c->dev, d->subdevice, samples_total_bytes);
-	if(ret == 0) {
+	if (ret == 0) {
 		warn("Marking read buffer (%ld bytes) not working, try again later", samples_total_bytes);
 		return 0;
-	} else if(ret != samples_total_bytes) {
+	}
+	else if (ret != samples_total_bytes) {
 		warn("Can only mark %d bytes as read, reducing samples", ret);
 		return 0;
-	} else {
-		info("Consume %d bytes", ret);
 	}
+	else
+		info("Consume %d bytes", ret);
 
-	// align front to whole samples
+	/* Align front to whole samples */
 	c->front = c->back + samples_total_bytes;
 
-	for(size_t i = 0; i < cnt; i++) {
+	for (size_t i = 0; i < cnt; i++) {
 		d->counter++;
 
 		smps[i]->flags = SAMPLE_HAS_ORIGIN | SAMPLE_HAS_VALUES | SAMPLE_HAS_SEQUENCE;
@@ -742,32 +727,29 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 		smps[i]->length = d->chanlist_len;
 
-		if(smps[i]->capacity < d->chanlist_len)
+		if (smps[i]->capacity < d->chanlist_len)
 			error("Sample has insufficient capacity: %d < %ld",
 			      smps[i]->capacity, d->chanlist_len);
 
-
-		for(int si = 0; si < d->chanlist_len; si++) {
+		for (int si = 0; si < d->chanlist_len; si++) {
 			unsigned int raw;
 
-			if (d->sample_size == sizeof(sampl_t)) {
+			if (d->sample_size == sizeof(sampl_t))
 				raw = *((sampl_t *)(c->map + c->bufpos));
-			} else {
+			else
 				raw = *((lsampl_t *)(c->map + c->bufpos));
-			}
 
 			smps[i]->data[si].f = comedi_to_phys(raw, d->chanspecs[si].range, d->chanspecs[si].maxdata);
 			sample_set_data_format(smps[i], si, SAMPLE_DATA_FORMAT_FLOAT);
 
-			if(isnan(smps[i]->data[si].f)) {
+			if (isnan(smps[i]->data[si].f)) {
 				error("got nan");
 			}
 
 //			smps[i]->data[si].i = raw;
-//			sample_set_data_format(smps[i], si, SAMPLE_DATA_FORMAT_INT);
 
 			c->bufpos += d->sample_size;
-			if(c->bufpos >= d->buffer_size) {
+			if (c->bufpos >= d->buffer_size) {
 				warn("read buffer wraparound");
 //				c->bufpos = 0;
 			}
@@ -778,10 +760,9 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 //	info("advance comedi buffer by %ld bytes", bytes_consumed);
 
-
 	ret = comedi_get_buffer_read_offset(c->dev, d->subdevice);
-	if(ret < 0) {
-		if(comedi_errno() != EPIPE)
+	if (ret < 0) {
+		if (comedi_errno() != EPIPE)
 			error("Failed to get read buffer offset: %d, comedi errno %d", ret, comedi_errno());
 		else
 			ret = c->bufpos;
@@ -792,27 +773,27 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 #if 0
 	ret = comedi_mark_buffer_read(c->dev, d->subdevice, bytes_consumed);
-	if (ret < 0) { //!= bytes_consumed) {
+	if (ret < 0) //!= bytes_consumed)
 		error("Failed to mark buffer position (ret=%d) for input stream of node '%s'", ret, node_name(n));
-//	} else if(ret == 0) {
-	} else {
+//	else if (ret == 0) {
+	else {
 		info("consumed %ld bytes", bytes_consumed);
 		info("mark buffer returned %d", ret);
 
-		if(ret == 0) {
+		if (ret == 0) {
 			ret = comedi_mark_buffer_read(c->dev, d->subdevice, bytes_consumed);
 			info("trying again, mark buffer returned now %d", ret);
 		}
 
-
-		if(ret > 0) {
+		if (ret > 0) {
 			ret = comedi_get_buffer_read_offset(c->dev, d->subdevice);
-			if(ret < 0)
+			if (ret < 0)
 				error("Failed to get read buffer offset");
 
 			warn("change bufpos1: %ld to %d", c->bufpos, ret);
 			c->bufpos = ret;
-		} else {
+		}
+		else {
 //			warn("change bufpos2: %ld to %ld", c->bufpos, c->);
 //			c->bufpos += bytes_consumed;
 			warn("keep bufpos=%ld", c->bufpos);
@@ -837,15 +818,15 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 	struct comedi *c = (struct comedi *) n->_vd;
 	struct comedi_direction *d = &c->out;
 
-	if(!d->enabled) {
+	if (!d->enabled) {
 		warn("Attempting to write, but output is not enabled");
 		return 0;
 	}
 
-	if(!d->running) {
-		// output was not yet running, so start now
+	if (!d->running) {
+		/* Output was not yet running, so start now */
 		ret = comedi_internal_trigger(c->dev, d->subdevice, 0);
-		if(ret < 0)
+		if (ret < 0)
 			error("Failed to trigger-start output");
 
 		d->started = time_now();
@@ -859,28 +840,25 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 	const size_t buffer_capacity_villas = buffer_capacity_raw / d->chanlist_len;
 	const size_t villas_sample_size = d->sample_size * d->chanlist_len;
 
-
 	ret = comedi_get_buffer_contents(c->dev, d->subdevice);
-	if(ret < 0) {
-		if(comedi_errno() == EBUF_OVR) {
+	if (ret < 0) {
+		if (comedi_errno() == EBUF_OVR)
 			error("Comedi buffer overflow");
-		}
-		else {
+		else
 			error("Comedi error: %s", comedi_strerror(comedi_errno()));
-		}
 	}
 
 	const size_t bytes_in_buffer = ret;
 	const size_t raw_samples_in_buffer = bytes_in_buffer / d->sample_size;
 	const size_t villas_samples_in_buffer = raw_samples_in_buffer / d->chanlist_len;
 
-
-	if(villas_samples_in_buffer == buffer_capacity_villas) {
+	if (villas_samples_in_buffer == buffer_capacity_villas) {
 		warn("Comedi buffer is full");
 		return 0;
-	} else {
+	}
+	else {
 		struct timespec now = time_now();
-		if(time_delta(&d->last_debug, &now) >= 1) {
+		if (time_delta(&d->last_debug, &now) >= 1) {
 			debug(LOG_COMEDI | 2, "Comedi write buffer: %4ld villas samples (%2.0f%% of buffer)",
 			      villas_samples_in_buffer,
 			      (100.0f * villas_samples_in_buffer / buffer_capacity_villas));
@@ -891,16 +869,16 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 
 	size_t villas_samples_written = 0;
 
-	while(villas_samples_written < cnt) {
+	while (villas_samples_written < cnt) {
 		struct sample *sample = smps[villas_samples_written];
-		if(sample->length != d->chanlist_len)
+		if (sample->length != d->chanlist_len)
 			error("Value count in sample (%d) != configured output channels (%ld)",
 			      sample->length, d->chanlist_len);
 
 		d->bufptr = d->buffer;
 
-		// move samples from villas into local buffer for comedi
-		for(int si = 0; si < sample->length; si++) {
+		/* Move samples from villas into local buffer for comedi */
+		for (int si = 0; si < sample->length; si++) {
 			unsigned raw_value = 0;
 
 			switch(sample_get_data_format(sample, si)) {
@@ -913,28 +891,27 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 				break;
 			}
 
-			if(d->sample_size == sizeof(sampl_t)) {
+			if (d->sample_size == sizeof(sampl_t))
 				*((sampl_t *)d->bufptr) = raw_value;
-			} else {
+			else
 				*((lsampl_t *)d->bufptr) = raw_value;
-			}
 
 			d->bufptr += d->sample_size;
 		}
 
-		// try to write one complete villas sample to comedi
+		/* Try to write one complete villas sample to comedi */
 		ret = write(comedi_fileno(c->dev), d->buffer, villas_sample_size);
-		if(ret < 0)
+		if (ret < 0)
 			error("write");
-		else if(ret == 0)
-			break;	// comedi doesn't accept any more samples at the moment
-		else if(ret == villas_sample_size)
+		else if (ret == 0)
+			break;	/* Comedi doesn't accept any more samples at the moment */
+		else if (ret == villas_sample_size)
 			villas_samples_written++;
 		else
 			error("Only partial sample written (%d bytes), oops", ret);
 	}
 
-	if(villas_samples_written == 0) {
+	if (villas_samples_written == 0) {
 		warn("Nothing done");
 	}
 
@@ -943,28 +920,26 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 	return villas_samples_written;
 }
 
-
 char* comedi_cmd_trigger_src(unsigned int src, char *buf)
 {
 	buf[0] = 0;
 
-	if(src & TRIG_NONE)		strcat(buf, "none|");
-	if(src & TRIG_NOW)		strcat(buf, "now|");
-	if(src & TRIG_FOLLOW)	strcat(buf, "follow|");
-	if(src & TRIG_TIME)		strcat(buf, "time|");
-	if(src & TRIG_TIMER)	strcat(buf, "timer|");
-	if(src & TRIG_COUNT)	strcat(buf, "count|");
-	if(src & TRIG_EXT)		strcat(buf, "ext|");
-	if(src & TRIG_INT)		strcat(buf, "int|");
+	if (src & TRIG_NONE)		strcat(buf, "none|");
+	if (src & TRIG_NOW)		strcat(buf, "now|");
+	if (src & TRIG_FOLLOW)	strcat(buf, "follow|");
+	if (src & TRIG_TIME)		strcat(buf, "time|");
+	if (src & TRIG_TIMER)	strcat(buf, "timer|");
+	if (src & TRIG_COUNT)	strcat(buf, "count|");
+	if (src & TRIG_EXT)		strcat(buf, "ext|");
+	if (src & TRIG_INT)		strcat(buf, "int|");
 #ifdef TRIG_OTHER
-	if(src & TRIG_OTHER)	strcat(buf, "other|");
+	if (src & TRIG_OTHER)	strcat(buf, "other|");
 #endif
 
-	if(strlen(buf) == 0) {
+	if (strlen(buf) == 0)
 		sprintf(buf, "unknown(0x%08x)", src);
-	} else {
+	else
 		buf[strlen(buf) - 1] = 0;
-	}
 
 	return buf;
 }
@@ -991,7 +966,6 @@ void comedi_dump_cmd(comedi_cmd *cmd, int debug_level)
 	src = comedi_cmd_trigger_src(cmd->stop_src,buf);
 	debug(LOG_COMEDI | debug_level, "stop:       %-8s %u", src, cmd->stop_arg);
 }
-
 
 int comedi_fd(struct node *n)
 {
