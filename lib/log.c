@@ -78,6 +78,7 @@ static const char *facilities_strs[] = {
 	"tc",		/* LOG_TC */
 	"if",		/* LOG_IF */
 	"advio",	/* LOG_ADVIO */
+	"io",		/* LOG_IO */
 
 	/* Node-types */
 	"socket",	/* LOG_SOCKET */
