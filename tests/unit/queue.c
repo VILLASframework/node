@@ -320,13 +320,13 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20)
 
 	sleep(0.2);
 
-	start_tsc_time = rdtsc();
+	start_tsc_time = rdtscp();
 	p->start = 1;
 
 	for (int i = 0; i < p->thread_count; ++i)
 		pthread_join(threads[i], NULL);
 
-	end_tsc_time = rdtsc();
+	end_tsc_time = rdtscp();
 	cycpop = (end_tsc_time - start_tsc_time) / p->iter_count;
 
 	if (cycpop < 400)

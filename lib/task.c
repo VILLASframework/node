@@ -30,6 +30,8 @@
 
 #if PERIODIC_TASK_IMPL == TIMERFD
   #include <sys/timerfd.h>
+#elif PERIODIC_TASK_IMPL == RDTSC
+  #include <villas/rdtsc.h>
 #endif
 
 int task_init(struct task *t, double rate, int clock)
@@ -42,6 +44,10 @@ int task_init(struct task *t, double rate, int clock)
 	t->fd = timerfd_create(t->clock, 0);
 	if (t->fd < 0)
 		return -1;
+#elif PERIODIC_TASK_IMPL == RDTSC
+	ret = rdtsc_init(&t->frequency);
+	if (ret)
+		return ret;
 #endif
 
 	ret = task_set_rate(t, rate);
@@ -65,9 +71,13 @@ int task_set_timeout(struct task *t, double to)
 
 int task_set_next(struct task *t, struct timespec *next)
 {
+
+#if PERIODIC_TASK_IMPL == RDTSC
+
+#else
 	t->next = *next;
 
-#if PERIODIC_TASK_IMPL == TIMERFD
+  #if PERIODIC_TASK_IMPL == TIMERFD
 	int ret;
 	struct itimerspec its = {
 		.it_interval = (struct timespec) { 0, 0 },
@@ -77,6 +87,7 @@ int task_set_next(struct task *t, struct timespec *next)
 	ret = timerfd_settime(t->fd, TFD_TIMER_ABSTIME, &its, NULL);
 	if (ret)
 		return ret;
+  #endif
 #endif
 
 	return 0;
@@ -84,10 +95,14 @@ int task_set_next(struct task *t, struct timespec *next)
 
 int task_set_rate(struct task *t, double rate)
 {
+
+#if PERIODIC_TASK_IMPL == RDTSC
+	t->period = t->frequency / rate;
+#else
 	/* A rate of 0 will disarm the timer */
 	t->period = rate ? time_from_double(1.0 / rate) : (struct timespec) { 0, 0 };
 
-#if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
+  #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
 	struct timespec now, next;
 
 	clock_gettime(t->clock, &now);
@@ -95,7 +110,7 @@ int task_set_rate(struct task *t, double rate)
 	next = time_add(&now, &t->period);
 
 	return task_set_next(t, &next);
-#elif PERIODIC_TASK_IMPL == TIMERFD
+  #elif PERIODIC_TASK_IMPL == TIMERFD
 	int ret;
 	struct itimerspec its = {
 		.it_interval = t->period,
@@ -105,6 +120,7 @@ int task_set_rate(struct task *t, double rate)
 	ret = timerfd_settime(t->fd, 0, &its, NULL);
 	if (ret)
 		return ret;
+  #endif
 #endif
 
 	return 0;
@@ -167,6 +183,15 @@ uint64_t task_wait(struct task *t)
 	ret = read(t->fd, &runs, sizeof(runs));
 	if (ret < 0)
 		return 0;
+#elif PERIODIC_TASK_IMPL == RDTSC
+	uint64_t now;
+
+	do {
+		now = rdtscp();
+	} while (now < t->next);
+
+	for (runs = 0; t->next < now; runs++)
+		t->next += t->period;
 #else
   #error "Invalid period task implementation"
 #endif

@@ -30,6 +30,7 @@
 Test(task, rate, .timeout = 10)
 {
 	int ret;
+	int runs = 10;
 	double rate = 5, waited;
 	struct timespec start, end;
 	struct task task;
@@ -38,7 +39,7 @@ Test(task, rate, .timeout = 10)
 	cr_assert_eq(ret, 0);
 
 	int i;
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < runs; i++) {
 		clock_gettime(CLOCK_MONOTONIC, &start);
 
 		task_wait(&task);
@@ -51,7 +52,7 @@ Test(task, rate, .timeout = 10)
 			break;
 	}
 
-	if (i < 10)
+	if (i < runs)
 		cr_assert_float_eq(waited, 1.0 / rate, 1e-2, "We slept for %f instead of %f secs in round %d", waited, 1.0 / rate, i);
 
 	ret = task_destroy(&task);

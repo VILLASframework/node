@@ -37,6 +37,7 @@ extern "C" {
 #define TIMERFD		1
 #define CLOCK_NANOSLEEP	2
 #define NANOSLEEP	3
+#define RDTSC		4
 
 #if defined(__MACH__)
   #define PERIODIC_TASK_IMPL NANOSLEEP
@@ -49,8 +50,16 @@ extern "C" {
 struct task {
 	int clock;			/**< CLOCK_{MONOTONIC,REALTIME} */
 
+#if PERIODIC_TASK_IMPL == RDTSC		/* We use cycle counts in RDTSC mode */
+	uint64_t frequency;
+
+	uint64_t period;
+	uint64_t next;
+#else
 	struct timespec period;		/**< The period of periodic invations of this task */
 	struct timespec next;		/**< The timer value for the next invocation */
+#endif
+
 #if PERIODIC_TASK_IMPL == TIMERFD
 	int fd;				/**< The timerfd_create(2) file descriptior. */
 #endif

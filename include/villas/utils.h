@@ -244,21 +244,6 @@ int version_parse(const char *s, struct version *v);
 /** Fill buffer with random data */
 ssize_t read_random(char *buf, size_t len);
 
-/** Get CPU timestep counter */
-__attribute__((always_inline)) static inline uint64_t rdtsc()
-{
-	uint64_t tsc;
-
-	__asm__ ("rdtsc;"
-		 "shl $32, %%rdx;"
-		 "or %%rdx,%%rax"
-		: "=a" (tsc)
-		:
-		: "%rcx", "%rdx", "memory");
-
-	return tsc;
-}
-
 /** Get log2 of long long integers */
 static inline int log2i(long long x) {
 	if (x == 0)
@@ -266,9 +251,6 @@ static inline int log2i(long long x) {
 
 	return sizeof(x) * 8 - __builtin_clzll(x) - 1;
 }
-
-/** Sleep with rdtsc */
-void rdtsc_sleep(uint64_t nanosecs, uint64_t start);
 
 /** Register a exit callback for program termination: SIGINT, SIGKILL & SIGALRM. */
 int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx));
