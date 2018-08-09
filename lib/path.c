@@ -800,7 +800,7 @@ int path_destroy(struct path *p)
 #endif
 	list_destroy(&p->sources, (dtor_cb_t) path_source_destroy, true);
 	list_destroy(&p->destinations, (dtor_cb_t) path_destination_destroy, true);
-	list_destroy(&p->signals, (dtor_cb_t) signal_destroy, true);
+	list_destroy(&p->signals, (dtor_cb_t) signal_decref, true);
 
 	if (p->reader.pfds)
 		free(p->reader.pfds);

@@ -77,7 +77,7 @@ static int node_direction_destroy(struct node_direction *nd, struct node *n)
 {
 	int ret;
 
-	ret = list_destroy(&nd->signals, (dtor_cb_t) signal_destroy, true);
+	ret = list_destroy(&nd->signals, (dtor_cb_t) signal_decref, true);
 	if (ret)
 		return ret;
 
