@@ -73,7 +73,6 @@ int task_set_next(struct task *t, struct timespec *next)
 {
 
 #if PERIODIC_TASK_IMPL == RDTSC
-
 #else
 	t->next = *next;
 
@@ -97,7 +96,8 @@ int task_set_rate(struct task *t, double rate)
 {
 
 #if PERIODIC_TASK_IMPL == RDTSC
-	t->period = t->frequency / rate;
+	t->period = t->frequency / rate * 1000;
+	t->next = rdtscp() + t->period;
 #else
 	/* A rate of 0 will disarm the timer */
 	t->period = rate ? time_from_double(1.0 / rate) : (struct timespec) { 0, 0 };
@@ -191,6 +191,7 @@ uint64_t task_wait(struct task *t)
 	do {
 		now = rdtscp();
 	} while (now < t->next);
+
 
 	for (runs = 0; t->next < now; runs++)
 		t->next += t->period;
