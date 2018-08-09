@@ -284,21 +284,6 @@ ssize_t read_random(char *buf, size_t len)
 	return bytes;
 }
 
-void rdtsc_sleep(uint64_t nanosecs, uint64_t start)
-{
-	uint64_t cycles;
-
-	/** @todo Replace the hard coded CPU clock frequency */
-	cycles = (double) nanosecs / (1e9 / 3392389000);
-
-	if (start == 0)
-		start = rdtsc();
-
-	do {
-		__asm__("nop");
-	} while (rdtsc() - start < cycles);
-}
-
 /* Setup exit handler */
 int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 {
