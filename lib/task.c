@@ -150,9 +150,9 @@ static int time_lt(const struct timespec *lhs, const struct timespec *rhs)
 uint64_t task_wait(struct task *t)
 {
 	uint64_t runs;
-	int ret;
 
 #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
+	int ret;
 	struct timespec now;
 
   #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP
@@ -180,6 +180,8 @@ uint64_t task_wait(struct task *t)
 	for (runs = 0; time_lt(&t->next, &now); runs++)
 		t->next = time_add(&t->next, &t->period);
 #elif PERIODIC_TASK_IMPL == TIMERFD
+	int ret;
+
 	ret = read(t->fd, &runs, sizeof(runs));
 	if (ret < 0)
 		return 0;
