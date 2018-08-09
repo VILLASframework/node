@@ -33,10 +33,9 @@
 /* Required to allocate hugepages on Apple OS X */
 #ifdef __MACH__
   #include <mach/vm_statistics.h>
-#elif defined(__linux__)
-  #include <villas/kernel/kernel.h>
 #endif
 
+#include <villas/kernel/kernel.h>
 #include <villas/log.h>
 #include <villas/memory.h>
 #include <villas/utils.h>
@@ -73,7 +72,7 @@ static struct memory_allocation * memory_hugepage_alloc(struct memory_type *m, s
 	ma->address = mmap(NULL, ma->length, prot, flags, -1, 0);
 	if (ma->address == MAP_FAILED) {
 		//try again without hugepages as fallback solution, warn the user
-		
+
 		prot= PROT_READ | PROT_WRITE;
 		//same flags as above without hugepages
 		flags = MAP_PRIVATE | MAP_ANONYMOUS;
@@ -83,7 +82,7 @@ static struct memory_allocation * memory_hugepage_alloc(struct memory_type *m, s
 		}
 #endif
 		//length has to be aligned with pagesize
-		ma->length = ALIGN(len, getpagesize());
+		ma->length = ALIGN(len, kernel_get_page_size());
 		//try mmap again
 		ma->address = mmap(NULL, ma->length, prot, flags, -1, 0);
 		if(ma->address == MAP_FAILED){

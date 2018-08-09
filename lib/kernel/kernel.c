@@ -44,6 +44,13 @@ int kernel_get_cacheline_size()
 #endif
 }
 
+#if defined(__linux__) || defined(__APPLE__)
+int kernel_get_page_size()
+{
+	return sysconf(_SC_PAGESIZE);
+}
+#endif
+
 #ifdef __linux__
 
 int kernel_module_set_param(const char *module, const char *param, const char *value)
@@ -162,11 +169,6 @@ out:
 	fclose(f);
 
 	return -1; /* not found or error */
-}
-
-int kernel_get_page_size()
-{
-	return sysconf(_SC_PAGESIZE);
 }
 
 /* There is no sysconf interface to get the hugepage size */
