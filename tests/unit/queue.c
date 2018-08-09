@@ -34,6 +34,7 @@
 #include <villas/utils.h>
 #include <villas/queue.h>
 #include <villas/memory.h>
+#include <villas/rdtsc.h>
 
 #define SIZE	(1 << 10)
 

@@ -25,12 +25,18 @@
 
 #include <stdint.h>
 #include <cpuid.h>
+#include <inttypes.h>
 
 #include <stdio.h>
 
 #ifdef __APPLE__
   #include <sys/types.h>
   #include <sys/sysctl.h>
+#endif
+
+
+#ifndef bit_TSC
+  #define bit_TSC (1 << 4)
 #endif
 
 #define bit_TSC_INVARIANT	(1 << 8)
@@ -56,7 +62,8 @@ static inline uint64_t rdtscp()
 	return tsc;
 }
 
-int rdtsc_init(uint64_t *freq)
+static int rdtsc_init(uint64_t *freq) __attribute__((unused));
+static int rdtsc_init(uint64_t *freq)
 {
 	uint32_t eax, ebx, ecx, edx;
 
@@ -89,7 +96,7 @@ int rdtsc_init(uint64_t *freq)
 		if (!f)
 			return -1;
 
-		ret = fscanf(f, "%d", freq);
+		ret = fscanf(f, "%" PRIu64, freq);
 
 		fclose(f);
 
