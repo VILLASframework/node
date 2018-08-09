@@ -47,7 +47,7 @@ struct io {
 	char delimiter;				/**< Newline delimiter. */
 	char separator;				/**< Column separator (used by csv and villas.human formats only) */
 
-	struct {
+	struct io_direction {
 		/** A format type can use this file handle or overwrite the
 		 * format::{open,close,eof,rewind} functions and the private
 		 * data in io::_vd.
@@ -62,7 +62,7 @@ struct io {
 
 		struct list *signals;
 		struct node *node;
-	} input, output;
+	} in, out;
 
 	enum {
 		IO_MODE_STDIO,

@@ -275,7 +275,7 @@ ParameterizedTest(char *fmt, io, highlevel)
 	io_rewind(&io);
 
 	if (io.mode == IO_MODE_ADVIO)
-		adownload(io.input.stream.adv, 0);
+		adownload(io.in.stream.adv, 0);
 
 	cnt = io_scan(&io, smpt, NUM_SAMPLES);
 	cr_assert_gt(cnt, 0, "Failed to read samples back: cnt=%d", cnt);

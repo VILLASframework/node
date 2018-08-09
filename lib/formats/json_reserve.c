@@ -49,8 +49,8 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 	json_data = json_array();
 
 	for (int i = 0; i < smp->length; i++) {
-		if (io->output.signals)
-			sig = (struct signal *) list_at_safe(io->output.signals, i);
+		if (io->out.signals)
+			sig = (struct signal *) list_at_safe(io->out.signals, i);
 		else
 			sig = NULL;
 
@@ -98,9 +98,9 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 		return -1;
 
 #ifdef JSON_RESERVE_INTEGER_TARGET
-	if (io->output.node) {
+	if (io->out.node) {
 		char *endptr;
-		char *id_str = strrchr(io->output.node->name, '_');
+		char *id_str = strrchr(io->out.node->name, '_');
 		if (!id_str)
 			return -1;
 
@@ -111,8 +111,8 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 		json_object_set_new(*j, "target", json_integer(id));
 	}
 #else
-	if (io->output.node)
-		json_object_set_new(*j, "target", json_string(io->output.node->name));
+	if (io->out.node)
+		json_object_set_new(*j, "target", json_string(io->out.node->name));
 #endif
 
 	return 0;
@@ -137,12 +137,12 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 		return -1;
 
 #ifdef JSON_RESERVE_INTEGER_TARGET
-	if (json_target && io->input.node) {
+	if (json_target && io->in.node) {
 		if (!json_is_integer(json_target))
 			return -1;
 
 		char *endptr;
-		char *id_str = strrchr(io->input.node->name, '_');
+		char *id_str = strrchr(io->in.node->name, '_');
 		if (!id_str)
 			return -1;
 
@@ -154,12 +154,12 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 			return 0;
 	}
 #else
-	if (json_target && io->input.node) {
+	if (json_target && io->in.node) {
 		const char *target = json_string_value(json_target);
 		if (!target)
 			return -1;
 
-		if (strcmp(target, io->input.node->name))
+		if (strcmp(target, io->in.node->name))
 			return 0;
 	}
 #endif
@@ -185,12 +185,12 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 
 		struct signal *sig;
 
-		sig = (struct signal *) list_lookup(io->input.signals, name);
+		sig = (struct signal *) list_lookup(io->in.signals, name);
 		if (sig) {
 			if (!sig->enabled)
 				continue;
 
-			idx = list_index(io->input.signals, sig);
+			idx = list_index(io->in.signals, sig);
 		}
 		else {
 			ret = sscanf(name, "signal_%d", &idx);
