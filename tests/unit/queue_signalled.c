@@ -115,7 +115,7 @@ ParameterizedTestParameters(queue_signalled, simple)
 		{ QUEUE_SIGNALLED_PTHREAD, consumer },
 		{ QUEUE_SIGNALLED_PTHREAD | QUEUE_SIGNALLED_PROCESS_SHARED, consumer },
 		{ QUEUE_SIGNALLED_POLLING, consumer },
-#ifdef __linux__
+#if defined(__linux__) && defined(HAS_EVENTFD)
 		{ QUEUE_SIGNALLED_EVENTFD, consumer },
 		{ QUEUE_SIGNALLED_EVENTFD, polled_consumer }
 #endif
