@@ -24,6 +24,8 @@
  * @{
  */
 
+#include <inttypes.h>
+
 #include <villas/hook.h>
 #include <villas/plugin.h>
 #include <villas/stats.h>
@@ -68,7 +70,7 @@ static int drop_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 			if (dist <= 0) {
 				cur->flags |= SAMPLE_IS_REORDERED;
 
-				debug(10, "Dropping reordered sample: sequence=%llu, distance=%d", cur->sequence, dist);
+				debug(10, "Dropping reordered sample: sequence=%" PRIu64 ", distance=%d", cur->sequence, dist);
 			}
 			else
 				goto ok;

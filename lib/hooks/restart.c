@@ -24,6 +24,8 @@
  * @{
  */
 
+#include <inttypes.h>
+
 #include <villas/hook.h>
 #include <villas/plugin.h>
 #include <villas/node.h>
@@ -66,7 +68,7 @@ static int restart_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 		if (prev) {
 			/* A wrap around of the sequence no should not be treated as a simulation restart */
 			if (cur->sequence == 0 && prev->sequence <= (int) (UINT32_MAX - 128)) {
-				warn("Simulation from node %s restarted (previous->seq=%llu, current->seq=%llu)",
+				warn("Simulation from node %s restarted (previous->seq=%" PRIu64 ", current->seq=%" PRIu64 ")",
 					node_name(h->node), prev->sequence, cur->sequence);
 
 				cur->flags |= SAMPLE_IS_FIRST;
