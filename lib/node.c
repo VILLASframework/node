@@ -109,7 +109,7 @@ static int node_direction_parse(struct node_direction *nd, struct node *n, json_
 		"enabled", &nd->enabled
 	);
 	if (ret)
-		jerror(&err, "Failed to parse node '%s'", node_name(n));
+		jerror(&err, "Failed to parse node %s", node_name(n));
 
 #ifdef WITH_HOOKS
 	if (json_hooks) {
@@ -131,10 +131,10 @@ static int node_direction_parse(struct node_direction *nd, struct node *n, json_
 static int node_direction_check(struct node_direction *nd, struct node *n)
 {
 	if (nd->vectorize <= 0)
-		error("Invalid `vectorize` value %d for node %s. Must be natural number!", nd->vectorize, node_name(n));
+		error("Invalid setting 'vectorize' with value %d for node %s. Must be natural number!", nd->vectorize, node_name(n));
 
 	if (node_type(n)->vectorize && node_type(n)->vectorize < nd->vectorize)
-		error("Invalid value for `vectorize`. Node type requires a number smaller than %d!",
+		error("Invalid value for setting 'vectorize'. Node type requires a number smaller than %d!",
 			node_type(n)->vectorize);
 
 	return 0;
@@ -257,12 +257,12 @@ int node_parse(struct node *n, json_t *json, const char *name)
 
 		ret = node_direction_parse(dirs[j].dir, n, json_dir);
 		if (ret)
-			error("Failed to parse %s direction of node '%s'", dirs[j].str, node_name(n));
+			error("Failed to parse %s direction of node %s", dirs[j].str, node_name(n));
 	}
 
 	ret = node_type(n)->parse ? node_type(n)->parse(n, json) : 0;
 	if (ret)
-		error("Failed to parse node '%s'", node_name(n));
+		error("Failed to parse node %s", node_name(n));
 
 	n->cfg = json;
 	n->state = STATE_PARSED;
@@ -588,7 +588,7 @@ invalid2:
 		strcatf(&allstr, " %s", node_name_short(n));
 	}
 
-	error("Unknown node '%s'. Choose of one of: %s", str, allstr);
+	error("Unknown node %s. Choose of one of: %s", str, allstr);
 
 	return 0;
 }

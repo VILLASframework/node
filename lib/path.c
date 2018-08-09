@@ -657,14 +657,14 @@ int path_check(struct path *p)
 		struct path_source *ps = (struct path_source *) list_at(&p->sources, i);
 
 		if (!ps->node->_vt->read)
-			error("Source node '%s' is not supported as a source for path '%s'", node_name(ps->node), path_name(p));
+			error("Source node %s is not supported as a source for path %s", node_name(ps->node), path_name(p));
 	}
 
 	for (size_t i = 0; i < list_length(&p->destinations); i++) {
 		struct path_destination *pd = (struct path_destination *) list_at(&p->destinations, i);
 
 		if (!pd->node->_vt->write)
-			error("Destiation node '%s' is not supported as a sink for path '%s'", node_name(pd->node), path_name(p));
+			error("Destiation node %s is not supported as a sink for path %s", node_name(pd->node), path_name(p));
 	}
 
 	if (!IS_POW2(p->queuelen)) {

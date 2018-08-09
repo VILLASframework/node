@@ -353,7 +353,7 @@ check:		if (optarg == endptr)
 
 	node = (struct node *) list_lookup(&sn.nodes, nodestr);
 	if (!node)
-		error("Node '%s' does not exist!", nodestr);
+		error("Node %s does not exist!", nodestr);
 
 #ifdef LIBWEBSOCKETS_FOUND
 	/* Only start web subsystem if villas-pipe is used with a websocket node */
