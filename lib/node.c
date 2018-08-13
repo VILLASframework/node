@@ -351,7 +351,7 @@ int node_stop(struct node *n)
 {
 	int ret;
 
-	if (n->state != STATE_STARTED && n->state != STATE_CONNECTED)
+	if (n->state != STATE_STARTED && n->state != STATE_CONNECTED && n->state != STATE_PENDING_CONNECT)
 		return 0;
 
 	info("Stopping node %s", node_name(n));
@@ -416,7 +416,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 {
 	int readd, nread = 0;
 
-	assert(n->state == STATE_STARTED || n->state == STATE_CONNECTED);
+	assert(n->state == STATE_STARTED || n->state == STATE_CONNECTED || n->state == STATE_PENDING_CONNECT);
 	assert(node_type(n)->read);
 
 	/* Send in parts if vector not supported */
