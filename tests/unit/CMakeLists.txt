@@ -42,6 +42,7 @@ if(CRITERION_FOUND)
 		timing.c
 		utils.c
 		tsc.c
+		hash_table.c
 	)
 
 	add_executable(unit-tests ${TEST_SRC})
