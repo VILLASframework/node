@@ -41,7 +41,7 @@ if(CRITERION_FOUND)
 		task.c
 		timing.c
 		utils.c
-		rdtsc.c
+		tsc.c
 	)
 
 	add_executable(unit-tests ${TEST_SRC})
