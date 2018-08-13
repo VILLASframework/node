@@ -87,4 +87,16 @@ Test(kernel, module, .disabled = true)
 	cr_assert_neq(ret, 0);
 }
 
+Test(kernel, frequency)
+{
+	int ret;
+	uint64_t freq;
+
+	ret = kernel_get_cpu_frequency(&freq);
+	cr_assert_eq(ret, 0);
+
+	/* Check for plausability only */
+	cr_assert(freq > 1e9 && freq < 5e9);
+}
+
 #endif /* __linux__ */

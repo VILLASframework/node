@@ -129,6 +129,19 @@ Test(utils, is_pow2)
 	cr_assert(!IS_POW2(-1));
 }
 
+Test(utils, strf)
+{
+	char *buf = NULL;
+
+	buf = strf("Hallo %s", "Steffen.");
+	cr_assert_str_eq(buf, "Hallo Steffen.");
+
+	strcatf(&buf, " Its Monday %uth %s %u.", 13, "August", 2018);
+	cr_assert_str_eq(buf, "Hallo Steffen. Its Monday 13th August 2018.");
+
+	free(buf);
+}
+
 struct version_param {
 	const char *v1, *v2;
 	int result;
