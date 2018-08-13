@@ -51,8 +51,6 @@ struct task {
 	int clock;			/**< CLOCK_{MONOTONIC,REALTIME} */
 
 #if PERIODIC_TASK_IMPL == RDTSC		/* We use cycle counts in RDTSC mode */
-	uint64_t frequency;
-
 	uint64_t period;
 	uint64_t next;
 #else
@@ -62,6 +60,8 @@ struct task {
 
 #if PERIODIC_TASK_IMPL == TIMERFD
 	int fd;				/**< The timerfd_create(2) file descriptior. */
+#elif PERIODIC_TASK_IMPL == RDTSC
+	struct rdtsc tsc;		/**< Initialized by tsc_init(). */
 #endif
 };
 

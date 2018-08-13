@@ -31,7 +31,7 @@
 #if PERIODIC_TASK_IMPL == TIMERFD
   #include <sys/timerfd.h>
 #elif PERIODIC_TASK_IMPL == RDTSC
-  #include <villas/rdtsc.h>
+  #include <villas/tsc.h>
 #endif
 
 int task_init(struct task *t, double rate, int clock)
@@ -45,7 +45,7 @@ int task_init(struct task *t, double rate, int clock)
 	if (t->fd < 0)
 		return -1;
 #elif PERIODIC_TASK_IMPL == RDTSC
-	ret = rdtsc_init(&t->frequency);
+	ret = tsc_init(&t->tsc);
 	if (ret)
 		return ret;
 #endif
@@ -96,8 +96,8 @@ int task_set_rate(struct task *t, double rate)
 {
 
 #if PERIODIC_TASK_IMPL == RDTSC
-	t->period = t->frequency / rate * 1000;
-	t->next = rdtscp() + t->period;
+	t->period = tsc_rate_to_cycles(&t->tsc, rate);
+	t->next = tsc_now(&t->tsc) + t->period;
 #else
 	/* A rate of 0 will disarm the timer */
 	t->period = rate ? time_from_double(1.0 / rate) : (struct timespec) { 0, 0 };

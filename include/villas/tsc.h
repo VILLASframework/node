@@ -23,17 +23,16 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <stdbool.h>
 #include <cpuid.h>
 #include <inttypes.h>
 
-#include <stdio.h>
+#include <villas/kernel/kernel.h>
 
 #ifdef __APPLE__
   #include <sys/types.h>
   #include <sys/sysctl.h>
 #endif
-
 
 #ifndef bit_TSC
   #define bit_TSC (1 << 4)
@@ -46,73 +45,51 @@
   #error this header is for x86 only
 #endif
 
+struct tsc {
+	uint64_t frequency;
+
+	bool rdtscp_supported;
+	bool is_invariant;
+};
+
 /** Get CPU timestep counter */
-__attribute__((always_inline))
+__attribute__((unused,always_inline))
 static inline uint64_t rdtscp()
 {
 	uint64_t tsc;
 
-	__asm__ __volatile__("rdtscp;"
+	__asm__ __volatile__(
+		 "rdtscp;"
 		 "shl $32, %%rdx;"
 		 "or %%rdx,%%rax"
 		: "=a" (tsc)
 		:
-		: "%rcx", "%rdx", "memory");
+		: "%rcx", "%rdx", "memory"
+	);
 
 	return tsc;
 }
 
-static int rdtsc_init(uint64_t *freq) __attribute__((unused));
-static int rdtsc_init(uint64_t *freq)
+__attribute__((unused,always_inline))
+static inline uint64_t rdtsc()
 {
-	uint32_t eax, ebx, ecx, edx;
+	uint64_t tsc;
 
-	/** Check if TSC is supported */
-	__get_cpuid(0x1, &eax, &ebx, &ecx, &edx);
-	if (!(edx & bit_TSC))
-		return -1;
+	__asm__ __volatile__(
+		 "lfence;"
+		 "rdtsc;"
+		 "shl $32, %%rdx;"
+		 "or %%rdx,%%rax"
+		: "=a" (tsc)
+		:
+		: "%rcx", "%rdx", "memory"
+	);
 
-	/** Check if RDTSCP instruction is supported */
-	__get_cpuid(0x80000001, &eax, &ebx, &ecx, &edx);
-	if (!(edx & bit_RDTSCP))
-		return -1;
-
-	/** Check if TSC is invariant */
-	__get_cpuid(0x80000007, &eax, &ebx, &ecx, &edx);
-	if (!(edx & bit_TSC_INVARIANT))
-		return -1;
-
-	/** Intel SDM Vol 3, Section 18.7.3:
-	 * Nominal TSC frequency = CPUID.15H.ECX[31:0] * CPUID.15H.EBX[31:0] ) ÷ CPUID.15H.EAX[31:0]
-	 */
-	__get_cpuid(0x15, &eax, &ebx, &ecx, &edx);
-
-	if (ecx != 0)
-		*freq = ecx * ebx / eax;
-	else {
-		int ret;
-#ifdef __linux__
-		FILE *f = fopen(SYSFS_PATH "/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "r");
-		if (!f)
-			return -1;
-
-		ret = fscanf(f, "%" PRIu64, freq);
-
-		fclose(f);
-
-		if (ret != 1)
-			return -1;
-#elif defined(__APPLE__)
-		int64_t tscfreq;
-		size_t lenp = sizeof(tscfreq);
-
-		ret = sysctlbyname("machdep.tsc.frequency", &tscfreq, &lenp, NULL, 0);
-		if (ret)
-			return ret;
-
-		*freq = tscfreq;
-#endif
-	}
-
-	return 0;
+	return tsc;
 }
+
+int tsc_init(struct tsc *t);
+
+uint64_t tsc_rate_to_cyles(struct tsc *t, double rate);
+
+uint64_t tsc_now(struct tsc *t);

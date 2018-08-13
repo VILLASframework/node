@@ -23,44 +23,52 @@
 #include <criterion/criterion.h>
 
 #include <villas/utils.h>
-#include <villas/rdtsc.h>
+#include <villas/tsc.h>
 #include <villas/timing.h>
 
-Test(rdtsc, increasing)
+#define CNT (1 << 18)
+
+Test(tsc, increasing)
 {
+	int ret;
+	struct tsc tsc;
 	uint64_t *cntrs;
 
-	cntrs = alloc(sizeof(uint64_t) << 18);
+	ret = tsc_init(&tsc);
+	cr_assert_eq(ret, 0);
+
+	cntrs = alloc(sizeof(uint64_t) * CNT);
 	cr_assert_not_null(cntrs);
 
-	for (int i = 0; i < ARRAY_LEN(cntrs); i++)
-		cntrs[i] = rdtscp();
+	for (int i = 0; i < CNT; i++)
+		cntrs[i] = tsc_now(&tsc);
 
-	for (int i = 1; i < ARRAY_LEN(cntrs); i++)
+	for (int i = 1; i < CNT; i++)
 		cr_assert_lt(cntrs[i-1], cntrs[i]);
 
 	free(cntrs);
 }
 
-Test(rdtsc, sleep)
+Test(tsc, sleep)
 {
 	int ret;
 	double delta, duration = 1;
 	struct timespec start, stop;
-	uint64_t freq, start_cycles, end_cycles;
+	struct tsc tsc;
+	uint64_t start_cycles, end_cycles;
 
-	ret = rdtsc_init(&freq);
+	ret = tsc_init(&tsc);
 	cr_assert_eq(ret, 0);
 
 	clock_gettime(CLOCK_MONOTONIC, &start);
 
-	start_cycles = rdtscp();
-	end_cycles = start_cycles + duration * freq;
+	start_cycles = tsc_now(&tsc);
+	end_cycles = start_cycles + duration * tsc.frequency;
 
-	while (rdtscp() < end_cycles);
+	while (tsc_now(&tsc) < end_cycles);
 
 	clock_gettime(CLOCK_MONOTONIC, &stop);
 	delta = time_delta(&start, &stop);
 
-	cr_assert_float_eq(delta, duration, 1e-3, "Error: %f, Delta: %lf, Freq: %llu", delta - duration, delta, freq);
+	cr_assert_float_eq(delta, duration, 1e-4, "Error: %f, Delta: %lf, Freq: %llu", delta - duration, delta, tsc.frequency);
 }
