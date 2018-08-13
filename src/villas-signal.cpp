@@ -249,7 +249,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to verify node configuration");
 
-	ret = pool_init(&q, 16, SAMPLE_LENGTH(n.samplelen), &memory_type_heap);
+	ret = pool_init(&q, 16, SAMPLE_LENGTH(n.in.samplelen), &memory_heap);
 	if (ret)
 		error("Failed to initialize pool");
 

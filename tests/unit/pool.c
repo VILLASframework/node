@@ -38,10 +38,10 @@ struct param {
 ParameterizedTestParameters(pool, basic)
 {
 	static struct param params[] = {
-		{ 1,	4096,	150,	&memory_type_heap },
+		{ 1,	4096,	150,	&memory_heap },
 		{ 1,	128,	8,	&memory_hugepage },
 		{ 1,	4,	8192,	&memory_hugepage },
-		{ 1,	1 << 13, 4,	&memory_type_heap }
+		{ 1,	1 << 13, 4,	&memory_heap }
 	};
 
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));

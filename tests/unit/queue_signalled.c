@@ -132,7 +132,7 @@ ParameterizedTest(struct param *param, queue_signalled, simple, .timeout = 5)
 
 	pthread_t t1, t2;
 
-	ret = queue_signalled_init(&q, LOG2_CEIL(NUM_ELEM), &memory_type_heap, param->flags);
+	ret = queue_signalled_init(&q, LOG2_CEIL(NUM_ELEM), &memory_heap, param->flags);
 	cr_assert_eq(ret, 0, "Failed to initialize queue: flags=%#x, ret=%d", param->flags, ret);
 
 	ret = pthread_create(&t1, NULL, producer, &q);

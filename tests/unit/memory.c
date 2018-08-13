@@ -70,7 +70,7 @@ Test(memory, manager) {
 	ret = memory_init(0);
 	cr_assert(!ret);
 
-	p = memory_alloc(&memory_type_heap, total_size);
+	p = memory_alloc(&memory_heap, total_size);
 	cr_assert_not_null(p);
 
 	m = memory_managed(p, total_size);

@@ -244,7 +244,7 @@ Test(queue, single_threaded)
 		.start = 1 /* we start immeadiatly */
 	};
 
-	ret = queue_init(&p.queue, p.queue_size, &memory_type_heap);
+	ret = queue_init(&p.queue, p.queue_size, &memory_heap);
 	cr_assert_eq(ret, 0, "Failed to create queue");
 
 	producer(&p);
@@ -266,28 +266,28 @@ ParameterizedTestParameters(queue, multi_threaded)
 			.thread_count = 32,
 			.thread_func = producer_consumer_many,
 			.batch_size = 10,
-			.memory_type = &memory_type_heap
+			.memory_type = &memory_heap
 		}, {
 			.iter_count = 1 << 8,
 			.queue_size = 1 << 9,
 			.thread_count = 4,
 			.thread_func = producer_consumer_many,
 			.batch_size = 100,
-			.memory_type = &memory_type_heap
+			.memory_type = &memory_heap
 		}, {
 			.iter_count = 1 << 16,
 			.queue_size = 1 << 14,
 			.thread_count = 16,
 			.thread_func = producer_consumer_many,
 			.batch_size = 100,
-			.memory_type = &memory_type_heap
+			.memory_type = &memory_heap
 		}, {
 			.iter_count = 1 << 8,
 			.queue_size = 1 << 9,
 			.thread_count = 4,
 			.thread_func = producer_consumer_many,
 			.batch_size = 10,
-			.memory_type = &memory_type_heap
+			.memory_type = &memory_heap
 		}, {
 			.iter_count = 1 << 16,
 			.queue_size = 1 << 9,
@@ -309,7 +309,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20)
 
 	p->start = 0;
 
-	ret = queue_init(&p->queue, p->queue_size, &memory_type_heap);
+	ret = queue_init(&p->queue, p->queue_size, &memory_heap);
 	cr_assert_eq(ret, 0, "Failed to create queue");
 
 	uint64_t start_tsc_time, end_tsc_time;
@@ -351,7 +351,7 @@ Test(queue, init_destroy)
 	int ret;
 	struct queue q = { .state = STATE_DESTROYED };
 
-	ret = queue_init(&q, 1024, &memory_type_heap);
+	ret = queue_init(&q, 1024, &memory_heap);
 	cr_assert_eq(ret, 0); /* Should succeed */
 
 	ret = queue_destroy(&q);

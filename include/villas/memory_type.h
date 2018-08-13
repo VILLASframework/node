@@ -55,7 +55,7 @@ struct memory_type {
 	void *_vd; /**< Virtual data for internal state */
 };
 
-extern struct memory_type memory_type_heap;
+extern struct memory_type memory_heap;
 extern struct memory_type memory_hugepage;
 
 struct ibv_mr * memory_type_ib_mr(void *ptr);

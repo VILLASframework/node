@@ -652,7 +652,7 @@ int ib_start(struct node *n)
 	ib_create_bind_id(n);
 
 	// Initialize send Work Completion queue
-	queue_init(&ib->conn.send_wc_buffer, ib->qp_init.cap.max_send_wr, &memory_type_heap);
+	queue_init(&ib->conn.send_wc_buffer, ib->qp_init.cap.max_send_wr, &memory_heap);
 
 	debug(LOG_IB | 3, "Initialized Work Completion Buffer");
 
