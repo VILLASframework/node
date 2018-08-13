@@ -26,15 +26,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <stdint.h>
-#include <complex.h>
-#include <stdbool.h>
 #include <time.h>
-
-/* "I" defined by complex.h collides with a define in OpenSSL */
-#undef I
-#define J _Complex_I
-
 
 #include <villas/atomic.h>
 #include <villas/signal.h>
@@ -87,13 +79,17 @@ struct sample {
 		struct timespec received;	/**< The point in time when this data was received. */
 	} ts;
 
-	/** The values. */
-	union {
-		double f;			/**< Floating point values. */
-		int64_t i;			/**< Integer values. */
-		bool b;				/**< Boolean values. */
-		float _Complex z;		/**< Complex values. */
-	} data[];				/**< Data is in host endianess! */
+	/** The sample signal values.
+	 *
+	 * This variable length array (VLA) extends over the end of struct sample.
+	 * Make sure that pointers to struct sample point to memory blocks of adequate size.
+	 * Use the SAMPLE_LENGTH() macro to calculate the required size.
+	 *
+	 * Metadata describing the details of signal values (such as name, unit, data type and more)
+	 * are stored in the struct sample::signals list. Each entry in this list corresponedents
+	 * to an entry in the struct sample::data array.
+	 */
+	union signal_data data[];
 };
 
 #define SAMPLE_NON_POOL PTRDIFF_MIN
