@@ -90,6 +90,9 @@ int kernel_get_page_size();
 /** Get the size of a huge page in bytes. */
 int kernel_get_hugepage_size();
 
+/** Get CPU base frequency */
+int kernel_get_cpu_frequency(uint64_t *freq);
+
 /** Set SMP affinity of IRQ */
 int kernel_irq_setaffinity(unsigned irq, uintmax_t aff , uintmax_t *old );
 
