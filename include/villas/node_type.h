@@ -45,11 +45,12 @@ struct sample;
 struct node_type {
 	int vectorize;			/**< Maximal vector length supported by this node type. Zero is unlimited. */
 
+	enum state state;		/**< State of this node-type. */
+
 	struct list instances;		/**< A list of all existing nodes of this type. */
+
 	size_t size;			/**< Size of private data bock. @see node::_vd */
 	size_t pool_size;
-
-	enum state state;
 
 	struct {
 		/** Global initialization per node type.
@@ -172,7 +173,7 @@ struct node_type {
 	/** Return a file descriptor which can be used by poll / select to detect the availability of new data. */
 	int (*fd)(struct node *n);
 
-	/** */
+	/** Return a memory allocator which should be used for sample pools passed to this node. */
 	struct memory_type * (*memory_type)(struct node *n, struct memory_type *parent);
 };
 

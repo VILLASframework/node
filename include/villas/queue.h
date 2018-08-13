@@ -62,7 +62,7 @@ struct queue {
 	atomic_state state;
 
 	size_t buffer_mask;
-	off_t buffer_off; /**< Relative pointer to struct queue_cell[] */
+	off_t buffer_off;	/**< Relative pointer to struct queue_cell[] */
 
 	cacheline_pad_t	_pad1;	/**< Producer area: only producers read & write */
 

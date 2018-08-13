@@ -192,10 +192,13 @@ void hash_table_dump(struct hash_table *ht)
 	pthread_mutex_lock(&ht->lock);
 
 	for (int i = 0; i < ht->size; i++) {
-		printf("%i: ", i);
+		char *strlst = NULL;
+
 		for (hte = ht->table[i]; hte; hte = hte->next)
-			printf("%p->%p ", hte->key, hte->data);
-		printf("\n");
+			strcatf(&strlst, "%p->%p ", hte->key, hte->data);
+
+		info("%i: %s", i, strlst);
+		free(strlst);
 	}
 
 	pthread_mutex_unlock(&ht->lock);
