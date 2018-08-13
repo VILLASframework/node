@@ -27,13 +27,17 @@
 
 #include <villas/memory.h>
 #include <villas/utils.h>
+#include <villas/log.h>
 
-#define HUGEPAGESIZE (1 << 22)
+extern void init_memory();
+
+#define PAGESIZE (1 << 12)
+#define HUGEPAGESIZE (1 << 21)
 
 TheoryDataPoints(memory, aligned) = {
-	DataPoints(size_t, 1, 32, 55, 1 << 10, 1 << 20),
-	DataPoints(size_t, 1, 8, 1 << 12),
-	DataPoints(struct memory_type *, &memory_type_heap, &memory_hugepage)
+	DataPoints(size_t, 1, 32, 55, 1 << 10, PAGESIZE, HUGEPAGESIZE),
+	DataPoints(size_t, 1, 8, PAGESIZE, PAGESIZE),
+	DataPoints(struct memory_type *, &memory_heap, &memory_hugepage, &memory_hugepage)
 };
 
 Theory((size_t len, size_t align, struct memory_type *m), memory, aligned, .init = init_memory) {
@@ -41,12 +45,12 @@ Theory((size_t len, size_t align, struct memory_type *m), memory, aligned, .init
 	void *ptr;
 
 	ptr = memory_alloc_aligned(m, len, align);
-	cr_assert_neq(ptr, NULL, "Failed to allocate memory");
+	cr_assert_not_null(ptr, "Failed to allocate memory");
 
-	cr_assert(IS_ALIGNED(ptr, align));
+	cr_assert(IS_ALIGNED(ptr, align), "Memory at %p is not alligned to %#zx byte bounary", ptr, align);
 
 	if (m == &memory_hugepage) {
-		cr_assert(IS_ALIGNED(ptr, HUGEPAGESIZE));
+		cr_assert(IS_ALIGNED(ptr, HUGEPAGESIZE), "Memory at %p is not alligned to %#x byte bounary", ptr, HUGEPAGESIZE);
 	}
 
 	ret = memory_free(ptr);

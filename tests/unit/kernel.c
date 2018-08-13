@@ -27,19 +27,32 @@
 
 #ifdef __linux__
 
+#if defined(__x86_64__) || defined(__i386__)
+  #define PAGESIZE (1 << 12)
+  #define CACHELINESIZE 64
+
+  #if defined(__x86_64__)
+    #define HUGEPAGESIZE (1 << 21)
+  #elif defined(__i386__)
+    #define HUGEPAGESIZE (1 << 22)
+  #endif
+#else
+  #error "Unsupported architecture"
+#endif
+
 /* This test is not portable, but we currently support x86 only */
 Test(kernel, sizes)
 {
 	int sz;
 
 	sz = kernel_get_page_size();
-	cr_assert_eq(sz, 1 << 12);
+	cr_assert_eq(sz, PAGESIZE);
 
 	sz = kernel_get_hugepage_size();
-	cr_assert(sz == 1 << 22 || sz == 1 << 21);
+	cr_assert(sz == HUGEPAGESIZE);
 
 	sz = kernel_get_cacheline_size();
-	cr_assert_eq(sz, 64);
+	cr_assert_eq(sz, CACHELINESIZE);
 }
 
 Test(kernel, hugepages)
@@ -57,7 +70,6 @@ Test(kernel, hugepages)
 
 	ret = kernel_get_nr_hugepages();
 	cr_assert_eq(ret, 10);
-
 }
 
 Test(kernel, version)

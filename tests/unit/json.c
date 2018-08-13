@@ -28,9 +28,8 @@
 #include <villas/config_helper.h>
 
 struct param {
-	const char *desc;
-	const char *json;
 	char *argv[32];
+	const char *json;
 };
 
 ParameterizedTestParameters(json, json_load_cli)
