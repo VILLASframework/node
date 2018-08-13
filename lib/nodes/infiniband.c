@@ -803,7 +803,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 		}
 
 		// Get Memory Region
-		mr = memory_ib_get_mr( pool_buffer( sample_pool(smps[0]) ) );
+		mr = memory_ib_get_mr(pool_buffer(sample_pool(smps[0])));
 
 		for (int i = 0; i < max_wr_post; i++) {
 			int j = 0;
@@ -915,7 +915,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 		// First, write
 
 		// Get Memory Region
-		mr = memory_ib_get_mr( pool_buffer( sample_pool(smps[0]) ) );
+		mr = memory_ib_get_mr(pool_buffer(sample_pool(smps[0])));
 
 		for (sent = 0; sent < cnt; sent++) {
 			int j = 0;
