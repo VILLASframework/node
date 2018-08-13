@@ -118,7 +118,7 @@ int jitter_calc_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 		stats("%s: jitter=%" PRId64 " usec, moving average=%" PRId64 " usec, moving variance=%" PRId64 " usec", __FUNCTION__, j->jitter_val[(j->curr_count + 1) % GPS_NTP_DELAY_WIN_SIZE], j->moving_avg[j->curr_count], j->moving_var[j->curr_count]);
 
 		j->curr_count++;
-		if(j->curr_count >= GPS_NTP_DELAY_WIN_SIZE)
+		if (j->curr_count >= GPS_NTP_DELAY_WIN_SIZE)
 			j->curr_count = 0;
 	}
 

@@ -37,14 +37,14 @@ int log_parse_wrapper(struct log *l, json_t *cfg)
 	json_t *json_logging = NULL;
 	json_error_t err;
 
-	if(cfg) {
+	if (cfg) {
 		ret = json_unpack_ex(cfg, &err, 0, "{s?: o}",
 				"logging", &json_logging
 		);
 		if (ret)
 			jerror(&err, "Failed to parse logging from global configuration");
 
-		if(json_logging)
+		if (json_logging)
 			log_parse(l, json_logging);
 	}
 
@@ -91,12 +91,7 @@ void jerror(json_error_t *err, const char *fmt, ...)
 	va_end(ap);
 
 	log_print(l, LOG_LVL_ERROR, "%s:", buf);
-	{
-		log_print(l, LOG_LVL_ERROR, "%s in %s:%d:%d", err->text, err->source, err->line, err->column);
-
-		if (l->syslog)
-			syslog(LOG_ERR, "%s in %s:%d:%d", err->text, err->source, err->line, err->column);
-	}
+	log_print(l, LOG_LVL_ERROR, "   %s in %s:%d:%d", err->text, err->source, err->line, err->column);
 
 	free(buf);
 

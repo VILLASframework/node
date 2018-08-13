@@ -264,7 +264,7 @@ int tc_netem_set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json)
 {
 	if (json_is_string(json))
 		return rtnl_netem_set_delay_distribution(qdisc, json_string_value(json));
-	else if (json_is_array(json)){
+	else if (json_is_array(json)) {
 		json_t *elm;
 		size_t idx;
 		size_t len = json_array_size(json);
