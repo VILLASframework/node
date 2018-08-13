@@ -30,6 +30,8 @@
 #include <villas/memory.h>
 #include <villas/queue_signalled.h>
 
+extern void init_memory();
+
 #define NUM_ELEM 1000
 
 struct param {
@@ -124,7 +126,7 @@ ParameterizedTestParameters(queue_signalled, simple)
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
 }
 
-ParameterizedTest(struct param *param, queue_signalled, simple, .timeout = 5)
+ParameterizedTest(struct param *param, queue_signalled, simple, .timeout = 5, .init = init_memory)
 {
 	int ret;
 	void *r1, *r2;

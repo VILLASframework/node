@@ -34,7 +34,9 @@
 #include <villas/utils.h>
 #include <villas/queue.h>
 #include <villas/memory.h>
-#include <villas/rdtsc.h>
+#include <villas/tsc.h>
+
+extern void init_memory();
 
 #define SIZE	(1 << 10)
 
@@ -235,7 +237,7 @@ void * producer_consumer_many(void *ctx)
 }
 #endif /* _POSIX_BARRIERS */
 
-Test(queue, single_threaded)
+Test(queue, single_threaded, .init = init_memory)
 {
 	int ret;
 	struct param p = {
@@ -301,7 +303,7 @@ ParameterizedTestParameters(queue, multi_threaded)
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
 }
 
-ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20)
+ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init = init_memory)
 {
 	int ret, cycpop;
 
@@ -346,7 +348,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20)
 }
 #endif /* _POSIX_BARRIERS */
 
-Test(queue, init_destroy)
+Test(queue, init_destroy, .init = init_memory)
 {
 	int ret;
 	struct queue q = { .state = STATE_DESTROYED };

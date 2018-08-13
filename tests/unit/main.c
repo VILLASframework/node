@@ -27,6 +27,11 @@
 #include <villas/memory.h>
 #include <villas/config.h>
 
+void init_memory()
+{
+	memory_init(DEFAULT_NR_HUGEPAGES);
+}
+
 int main(int argc, char *argv[])
 {
 	int ret;
@@ -41,10 +46,6 @@ int main(int argc, char *argv[])
 	ret = log_open(&log);
 	if (ret)
 		error("Failed to start logging sub-system");
-
-	ret = memory_init(DEFAULT_NR_HUGEPAGES);
-	if (ret)
-		error("Failed to initialize memory sub-system");
 
 	/* Run criterion tests */
 	tests = criterion_initialize();

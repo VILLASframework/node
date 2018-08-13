@@ -36,12 +36,9 @@ TheoryDataPoints(memory, aligned) = {
 	DataPoints(struct memory_type *, &memory_type_heap, &memory_hugepage)
 };
 
-Theory((size_t len, size_t align, struct memory_type *m), memory, aligned) {
+Theory((size_t len, size_t align, struct memory_type *m), memory, aligned, .init = init_memory) {
 	int ret;
 	void *ptr;
-
-	ret = memory_init(100);
-	cr_assert(!ret);
 
 	ptr = memory_alloc_aligned(m, len, align);
 	cr_assert_neq(ptr, NULL, "Failed to allocate memory");
@@ -56,7 +53,7 @@ Theory((size_t len, size_t align, struct memory_type *m), memory, aligned) {
 	cr_assert_eq(ret, 0, "Failed to release memory: ret=%d, ptr=%p, len=%zu: %s", ret, ptr, len, strerror(errno));
 }
 
-Test(memory, manager) {
+Test(memory, manager, .init = init_memory) {
 	size_t total_size;
 	size_t max_block;
 
@@ -66,9 +63,6 @@ Test(memory, manager) {
 
 	total_size = 1 << 10;
 	max_block = total_size - sizeof(struct memory_type) - sizeof(struct memory_block);
-
-	ret = memory_init(0);
-	cr_assert(!ret);
 
 	p = memory_alloc(&memory_heap, total_size);
 	cr_assert_not_null(p);

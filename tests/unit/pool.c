@@ -28,6 +28,8 @@
 #include <villas/pool.h>
 #include <villas/utils.h>
 
+extern void init_memory();
+
 struct param {
 	int thread_count;
 	int pool_size;
@@ -47,7 +49,7 @@ ParameterizedTestParameters(pool, basic)
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
 }
 
-ParameterizedTest(struct param *p, pool, basic)
+ParameterizedTest(struct param *p, pool, basic, .init = init_memory)
 {
 	int ret;
 	struct pool pool = { .state = STATE_DESTROYED };
