@@ -32,12 +32,7 @@
 #include <villas/node.h>
 #include <villas/table.h>
 
-static struct stats_desc {
-	const char *name;
-	const char *unit;
-	const char *desc;
-	int hist_buckets;
-} stats_metrics[] = {
+struct stats_desc stats_metrics[] = {
 	{ "skipped",	  "samples", "Skipped samples and the distance between them",			25 },
 	{ "proc_time",	  "seconds", "The processing time per sample within VILLAsnode",		25 },
 	{ "reordered",	  "samples", "Reordered samples and the distance between them",			25 },

@@ -52,6 +52,13 @@ enum stats_id {
 	STATS_COUNT		/**< Just here to have an updated number of statistics. */
 };
 
+struct stats_desc {
+	const char *name;
+	const char *unit;
+	const char *desc;
+	int hist_buckets;
+};
+
 struct stats_delta {
 	double values[STATS_COUNT];
 
@@ -63,6 +70,9 @@ struct stats {
 
 	struct stats_delta *delta;
 };
+
+extern
+struct stats_desc stats_metrics[];
 
 int stats_lookup_format(const char *str);
 
