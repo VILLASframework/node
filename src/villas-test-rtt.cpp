@@ -138,8 +138,17 @@ check:		if (optarg == endptr)
 	if (!node)
 		error("There's no node with the name '%s'", nodestr);
 
-	node_type_start(node->_vt, &sn);
-	node_start(node);
+	ret = node_type_start(node->_vt, &sn);
+	if (ret)
+		error("Failed to start node-type %s: reason=%d", plugin_name(node->_vt), ret);
+
+	ret = node_init2(node);
+	if (ret)
+		error("Failed to start node %s: reason=%d", node_name(node), ret);
+
+	ret = node_start(node);
+	if (ret)
+		error("Failed to start node %s: reason=%d", node_name(node), ret);
 
 	test_rtt();
 

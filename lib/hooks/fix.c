@@ -64,9 +64,9 @@ static struct plugin p = {
 	.description	= "Fix received data by adding missing fields",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
-		.flags		= HOOK_BUILTIN | HOOK_NODE,
+		.flags		= HOOK_BUILTIN | HOOK_NODE_READ,
 		.priority	= 1,
-		.process		= fix_process
+		.process	= fix_process
 	}
 };
 

@@ -42,7 +42,8 @@ int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node 
 
 	/* Node hooks can only used with nodes,
 	   Path hooks only with paths.. */
-	if ((!(vt->flags & HOOK_NODE) && n) ||
+	if ((!(vt->flags & HOOK_NODE_READ) && n) ||
+	    (!(vt->flags & HOOK_NODE_WRITE) && n) ||
 	    (!(vt->flags & HOOK_PATH) && p))
 		return -1;
 
@@ -182,7 +183,7 @@ int hook_cmp_priority(const void *a, const void *b)
 	return ha->priority - hb->priority;
 }
 
-int hook_parse_list(struct list *list, json_t *cfg, struct path *o, struct node *n)
+int hook_parse_list(struct list *list, json_t *cfg, int mask, struct path *o, struct node *n)
 {
 	if (!json_is_array(cfg))
 		error("Hooks must be configured as a list of objects");
@@ -203,6 +204,9 @@ int hook_parse_list(struct list *list, json_t *cfg, struct path *o, struct node 
 		if (!ht)
 			jerror(&err, "Unkown hook type '%s'", type);
 
+		if (!(ht->flags & mask))
+			error("Hook %s not allowed here.", type);
+
 		struct hook *h = (struct hook *) alloc(sizeof(struct hook));
 
 		ret = hook_init(h, ht, o, n);
@@ -214,6 +218,43 @@ int hook_parse_list(struct list *list, json_t *cfg, struct path *o, struct node 
 			jerror(&err, "Failed to parse hook configuration");
 
 		list_push(list, h);
+	}
+
+	return 0;
+}
+
+int hook_init_builtin_list(struct list *l, bool builtin, int mask, struct path *p, struct node *n)
+{
+	int ret;
+
+	ret = list_init(l);
+	if (ret)
+		return ret;
+
+	if (!builtin)
+		return 0;
+
+	for (size_t i = 0; i < list_length(&plugins); i++) {
+		struct plugin *q = (struct plugin *) list_at(&plugins, i);
+
+		struct hook *h;
+		struct hook_type *vt = &q->hook;
+
+		if (q->type != PLUGIN_TYPE_HOOK)
+			continue;
+
+		if (vt->flags & mask)
+			continue;
+
+		h = (struct hook *) alloc(sizeof(struct hook));
+		if (!h)
+			return -1;
+
+		ret = hook_init(h, vt, p, n);
+		if (ret)
+			return ret;
+
+		list_push(l, h);
 	}
 
 	return 0;

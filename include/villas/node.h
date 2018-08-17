@@ -81,7 +81,11 @@ struct node
 	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
 };
 
+/** Initialize node with default values */
 int node_init(struct node *n, struct node_type *vt);
+
+/** Do initialization after parsing the configuration */
+int node_init2(struct node *n);
 
 /** Parse settings of a node.
  *

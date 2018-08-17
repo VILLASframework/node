@@ -374,6 +374,10 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Invalid node configuration");
 
+	ret = node_init2(node);
+	if (ret)
+		error("Failed to start node %s: reason=%d", node_name(node), ret);
+
 	ret = node_start(node);
 	if (ret)
 		error("Failed to start node %s: reason=%d", node_name(node), ret);

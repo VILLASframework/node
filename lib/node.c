@@ -34,41 +34,28 @@
 #include <villas/signal.h>
 #include <villas/memory.h>
 
+static int node_direction_init2(struct node_direction *nd, struct node *n)
+{
+#ifdef WITH_HOOKS
+	int ret;
+	int m = nd == &n->out
+		? HOOK_NODE_WRITE
+		: HOOK_NODE_READ;
+
+	/* Add internal hooks if they are not already in the list */
+	ret = hook_init_builtin_list(&nd->hooks, nd->builtin, m, NULL, n);
+	if (ret)
+		return ret;
+#endif /* WITH_HOOKS */
+
+	return 0;
+}
+
 static int node_direction_init(struct node_direction *nd, struct node *n)
 {
 	nd->enabled = 0;
 	nd->vectorize = 1;
 	nd->builtin = 1;
-
-	list_init(&nd->signals);
-
-#ifdef WITH_HOOKS
-	/* Add internal hooks if they are not already in the list */
-	list_init(&nd->hooks);
-
-	if (nd->builtin) {
-		int ret;
-		for (size_t i = 0; i < list_length(&plugins); i++) {
-			struct plugin *q = (struct plugin *) list_at(&plugins, i);
-
-			if (q->type != PLUGIN_TYPE_HOOK)
-				continue;
-
-			struct hook_type *vt = &q->hook;
-
-			if (!(vt->flags & HOOK_NODE) || !(vt->flags & HOOK_BUILTIN))
-				continue;
-
-			struct hook *h = (struct hook *) alloc(sizeof(struct hook));
-
-			ret = hook_init(h, vt, NULL, n);
-			if (ret)
-				return ret;
-
-			list_push(&nd->hooks, h);
-		}
-	}
-#endif /* WITH_HOOKS */
 
 	return 0;
 }

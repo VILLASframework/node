@@ -253,6 +253,10 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to initialize pool");
 
+	ret = node_init2(&n);
+	if (ret)
+		error("Failed to start node %s: reason=%d", node_name(&n), ret);
+
 	ret = node_start(&n);
 	if (ret)
 		serror("Failed to start node");

@@ -319,34 +319,6 @@ int path_init(struct path *p)
 	p->poll = -1;
 	p->queuelen = DEFAULT_QUEUE_LENGTH;
 
-#ifdef WITH_HOOKS
-	/* Add internal hooks if they are not already in the list */
-	list_init(&p->hooks);
-	if (p->builtin) {
-		int ret;
-
-		for (size_t i = 0; i < list_length(&plugins); i++) {
-			struct plugin *q = (struct plugin *) list_at(&plugins, i);
-
-			if (q->type != PLUGIN_TYPE_HOOK)
-				continue;
-
-			struct hook_type *vt = &q->hook;
-
-			if (!(vt->flags & HOOK_PATH) || !(vt->flags & HOOK_BUILTIN))
-				continue;
-
-			struct hook *h = (struct hook *) alloc(sizeof(struct hook));
-
-			ret = hook_init(h, vt, p, NULL);
-			if (ret)
-				return ret;
-
-			list_push(&p->hooks, h);
-		}
-	}
-#endif /* WITH_HOOKS */
-
 	p->state = STATE_INITIALIZED;
 
 	return 0;
@@ -396,6 +368,11 @@ int path_init2(struct path *p)
 	assert(p->state == STATE_CHECKED);
 
 #ifdef WITH_HOOKS
+	/* Add internal hooks if they are not already in the list */
+	ret = hook_init_builtin_list(&p->hooks, p->builtin, HOOK_PATH, p, NULL);
+	if (ret)
+		return ret;
+
 	/* We sort the hooks according to their priority before starting the path */
 	list_sort(&p->hooks, hook_cmp_priority);
 #endif /* WITH_HOOKS */

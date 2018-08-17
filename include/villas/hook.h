@@ -62,6 +62,7 @@ struct hook {
 };
 
 int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node *n);
+int hook_init_builtin_list(struct list *l, bool builtin, int mask, struct path *p, struct node *n);
 
 int hook_parse(struct hook *h, json_t *cfg);
 
@@ -93,7 +94,7 @@ int hook_cmp_priority(const void *a, const void *b);
  *    hooks = [ "print" ]
  * }
  */
-int hook_parse_list(struct list *list, json_t *cfg, struct path *p, struct node *n);
+int hook_parse_list(struct list *list, json_t *cfg, int mask, struct path *p, struct node *n);
 
 #ifdef __cplusplus
 }

@@ -42,7 +42,7 @@ static struct plugin p = {
 	.description	= "Overwrite origin timestamp of samples with receive timestamp",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
-		.flags		= HOOK_NODE,
+		.flags		= HOOK_NODE_READ,
 		.priority	= 99,
 		.process	= ts_process
 	}
