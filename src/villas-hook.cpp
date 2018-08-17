@@ -127,20 +127,25 @@ int main(int argc, char *argv[])
 			case 'V':
 				print_version();
 				exit(EXIT_SUCCESS);
+
 			case 'f':
 				format = optarg;
 				break;
+
 			case 'v':
 				cnt = strtoul(optarg, &endptr, 0);
 				goto check;
+
 			case 'd':
 				l.level = strtoul(optarg, &endptr, 0);
 				goto check;
+
 			case 'o':
 				ret = json_object_extend_str(cfg_cli, optarg);
 				if (ret)
 					error("Invalid option: %s", optarg);
 				break;
+
 			case '?':
 			case 'h':
 				usage();
