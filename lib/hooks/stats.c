@@ -190,21 +190,6 @@ static int stats_collect_process(struct hook *h, struct sample *smps[], unsigned
 	return 0;
 }
 
-__attribute__((unused))
-static int stats_collect_write(struct hook *h, struct sample *smps[], unsigned *cnt)
-{
-	struct stats_collect *p = (struct stats_collect *) h->_vd;
-
-	struct timespec ts_sent = time_now();
-
-	for (int i = 0; i < *cnt; i++)
-		stats_update(&p->stats, STATS_TIME, time_delta(&smps[i]->ts.received, &ts_sent));
-
-	stats_commit(&p->stats);
-
-	return 0;
-}
-
 static struct plugin p = {
 	.name		= "stats",
 	.description	= "Collect statistics for the current path",

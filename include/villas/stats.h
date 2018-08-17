@@ -44,7 +44,6 @@ enum stats_format {
 
 enum stats_id {
 	STATS_SKIPPED,		/**< Counter for skipped samples due to hooks. */
-	STATS_TIME,		/**< The processing time per sample within VILLAsnode. */
 	STATS_REORDERED,	/**< Counter for reordered samples. */
 	STATS_GAP_SAMPLE,	/**< Histogram for inter sample timestamps (as sent by remote). */
 	STATS_GAP_RECEIVED,	/**< Histogram for inter sample arrival time (as seen by this instance). */

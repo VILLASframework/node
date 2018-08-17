@@ -34,7 +34,6 @@
 
 struct stats_desc stats_metrics[] = {
 	{ "skipped",	  "samples", "Skipped samples and the distance between them",			25 },
-	{ "proc_time",	  "seconds", "The processing time per sample within VILLAsnode",		25 },
 	{ "reordered",	  "samples", "Reordered samples and the distance between them",			25 },
 	{ "gap_sent",	  "seconds", "Inter-message timestamps (as sent by remote)",			25 },
 	{ "gap_received", "seconds", "Inter-message arrival time (as received by this instance)",	25 },
@@ -107,10 +106,9 @@ json_t * stats_json(struct stats *s)
 
 json_t * stats_json_periodic(struct stats *s, struct node *n)
 {
-	return json_pack("{ s: s, s: i, s: i, s: f, s: f, s: i, s: i }",
+	return json_pack("{ s: s, s: i, s: f, s: f, s: i, s: i }",
 		"node", node_name(n),
-		"received", hist_total(&s->histograms[STATS_OWD]),
-		"sent", hist_total(&s->histograms[STATS_TIME]),
+		"processed", hist_total(&s->histograms[STATS_OWD]),
 		"owd", hist_last(&s->histograms[STATS_OWD]),
 		"rate", 1.0 / hist_last(&s->histograms[STATS_GAP_SAMPLE]),
 		"dropped", hist_total(&s->histograms[STATS_REORDERED]),
@@ -133,8 +131,7 @@ static struct table_column stats_cols[] = {
 	{ 10, "Rate last",	"%f",	"pkt/sec",	TABLE_ALIGN_RIGHT },
 	{ 10, "Rate mean",	"%f",	"pkt/sec",	TABLE_ALIGN_RIGHT },
 	{ 10, "Drop",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
-	{ 10, "Skip",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
-	{ 10, "Time",		"%f",	"secs",		TABLE_ALIGN_RIGHT }
+	{ 10, "Skip",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT }
 };
 
 static struct table stats_table = {
@@ -171,14 +168,12 @@ void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int v
 			table_row(&stats_table,
 				node_name_short(n),
 				hist_total(&s->histograms[STATS_OWD]),
-				hist_total(&s->histograms[STATS_TIME]),
 				hist_last(&s->histograms[STATS_OWD]),
 				hist_mean(&s->histograms[STATS_OWD]),
 				1.0 / hist_last(&s->histograms[STATS_GAP_RECEIVED]),
 				1.0 / hist_mean(&s->histograms[STATS_GAP_RECEIVED]),
 				hist_total(&s->histograms[STATS_REORDERED]),
-				hist_total(&s->histograms[STATS_SKIPPED]),
-				hist_mean(&s->histograms[STATS_TIME])
+				hist_total(&s->histograms[STATS_SKIPPED])
 			);
 			break;
 
