@@ -105,7 +105,7 @@ int hook_destroy(struct hook *h)
 int hook_start(struct hook *h)
 {
 	if (h->_vt->start) {
-		debug(LOG_HOOK | 10, "Running hook %s: type=start, priority=%d", plugin_name(h->_vt), h->priority);
+		debug(LOG_HOOK | 10, "Start hook %s: priority=%d", plugin_name(h->_vt), h->priority);
 
 		return h->_vt->start(h);
 	}
@@ -116,7 +116,7 @@ int hook_start(struct hook *h)
 int hook_stop(struct hook *h)
 {
 	if (h->_vt->stop) {
-		debug(LOG_HOOK | 10, "Running hook %s: type=stop, priority=%d", plugin_name(h->_vt), h->priority);
+		debug(LOG_HOOK | 10, "Stopping hook %s: priority=%d", plugin_name(h->_vt), h->priority);
 
 		return h->_vt->stop(h);
 	}
@@ -127,7 +127,7 @@ int hook_stop(struct hook *h)
 int hook_periodic(struct hook *h)
 {
 	if (h->_vt->periodic) {
-		debug(LOG_HOOK | 10, "Running hook %s: type=periodic, priority=%d", plugin_name(h->_vt), h->priority);
+		debug(LOG_HOOK | 10, "Periodic hook %s: priority=%d", plugin_name(h->_vt), h->priority);
 
 		return h->_vt->periodic(h);
 	}
@@ -138,20 +138,9 @@ int hook_periodic(struct hook *h)
 int hook_restart(struct hook *h)
 {
 	if (h->_vt->restart) {
-		debug(LOG_HOOK | 10, "Running hook %s: type=restart, priority=%d", plugin_name(h->_vt), h->priority);
+		debug(LOG_HOOK | 10, "Restarting hook %s: priority=%d", plugin_name(h->_vt), h->priority);
 
 		return h->_vt->restart(h);
-	}
-	else
-		return 0;
-}
-
-int hook_read(struct hook *h, struct sample *smps[], unsigned *cnt)
-{
-	if (h->_vt->read) {
-		debug(LOG_HOOK | 10, "Running hook %s: type=read, priority=%d", plugin_name(h->_vt), h->priority);
-
-		return h->_vt->read(h, smps, cnt);
 	}
 	else
 		return 0;
@@ -160,7 +149,7 @@ int hook_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	if (h->_vt->process) {
-		debug(LOG_HOOK | 10, "Running hook %s: type=process, priority=%d", plugin_name(h->_vt), h->priority);
+		debug(LOG_HOOK | 10, "Process hook %s: priority=%d, cnt=%d", plugin_name(h->_vt), h->priority, *cnt);
 
 		return h->_vt->process(h, smps, cnt);
 	}
@@ -168,25 +157,14 @@ int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 		return 0;
 }
 
-int hook_write(struct hook *h, struct sample *smps[], unsigned *cnt)
-{
-	if (h->_vt->write) {
-		debug(LOG_HOOK | 10, "Running hook %s: type=write, priority=%d", plugin_name(h->_vt), h->priority);
-
-		return h->_vt->write(h, smps, cnt);
-	}
-	else
-		return 0;
-}
-
-static int hook_run_list(struct list *hs, struct sample *smps[], unsigned cnt, int (*func)(struct hook *, struct sample **, unsigned *))
+int hook_process_list(struct list *hs, struct sample *smps[], unsigned cnt)
 {
 	unsigned ret;
 
 	for (size_t i = 0; i < list_length(hs); i++) {
 		struct hook *h = (struct hook *) list_at(hs, i);
 
-		ret = func(h, smps, &cnt);
+		ret = hook_process(h, smps, &cnt);
 		if (ret || !cnt)
 			/* Abort hook processing if earlier hooks removed all samples
 			 * or they returned something non-zero */
@@ -194,21 +172,6 @@ static int hook_run_list(struct list *hs, struct sample *smps[], unsigned cnt, i
 	}
 
 	return cnt;
-}
-
-int hook_read_list(struct list *hs, struct sample *smps[], unsigned cnt)
-{
-	return hook_run_list(hs, smps, cnt, hook_read);
-}
-
-int hook_process_list(struct list *hs, struct sample *smps[], unsigned cnt)
-{
-	return hook_run_list(hs, smps, cnt, hook_process);
-}
-
-int hook_write_list(struct list *hs, struct sample *smps[], unsigned cnt)
-{
-	return hook_run_list(hs, smps, cnt, hook_write);
 }
 
 int hook_cmp_priority(const void *a, const void *b)
