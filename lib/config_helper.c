@@ -31,14 +31,25 @@
 static int json_to_config_type(int type)
 {
 	switch (type) {
-		case JSON_OBJECT:	return CONFIG_TYPE_GROUP;
-		case JSON_ARRAY:	return CONFIG_TYPE_LIST;
-		case JSON_STRING:	return CONFIG_TYPE_STRING;
-		case JSON_INTEGER:	return CONFIG_TYPE_INT64;
-		case JSON_REAL:		return CONFIG_TYPE_FLOAT;
+		case JSON_OBJECT:
+			return CONFIG_TYPE_GROUP;
+
+		case JSON_ARRAY:
+			return CONFIG_TYPE_LIST;
+
+		case JSON_STRING:
+			return CONFIG_TYPE_STRING;
+
+		case JSON_INTEGER:
+			return CONFIG_TYPE_INT64;
+
+		case JSON_REAL:
+			return CONFIG_TYPE_FLOAT;
+
 		case JSON_TRUE:
 		case JSON_FALSE:
-		case JSON_NULL:		return CONFIG_TYPE_BOOL;
+		case JSON_NULL:
+			return CONFIG_TYPE_BOOL;
 	}
 
 	return -1;
@@ -47,11 +58,20 @@ static int json_to_config_type(int type)
 json_t * config_to_json(config_setting_t *cfg)
 {
 	switch (config_setting_type(cfg)) {
-		case CONFIG_TYPE_INT:	 return json_integer(config_setting_get_int(cfg));
-		case CONFIG_TYPE_INT64:	 return json_integer(config_setting_get_int64(cfg));
-		case CONFIG_TYPE_FLOAT:  return json_real(config_setting_get_float(cfg));
-		case CONFIG_TYPE_STRING: return json_string(config_setting_get_string(cfg));
-		case CONFIG_TYPE_BOOL:	 return json_boolean(config_setting_get_bool(cfg));
+		case CONFIG_TYPE_INT:
+			return json_integer(config_setting_get_int(cfg));
+
+		case CONFIG_TYPE_INT64:
+			return json_integer(config_setting_get_int64(cfg));
+
+		case CONFIG_TYPE_FLOAT:
+			return json_real(config_setting_get_float(cfg));
+
+		case CONFIG_TYPE_STRING:
+			return json_string(config_setting_get_string(cfg));
+
+		case CONFIG_TYPE_BOOL:
+			return json_boolean(config_setting_get_bool(cfg));
 
 		case CONFIG_TYPE_ARRAY:
 		case CONFIG_TYPE_LIST: {

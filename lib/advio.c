@@ -47,24 +47,31 @@ static int advio_trace(CURL *handle, curl_infotype type, char *data, size_t size
 		case CURLINFO_TEXT:
 			text = "info";
 			break;
+
 		case CURLINFO_HEADER_OUT:
 			text = "send header";
 			break;
+
 		case CURLINFO_DATA_OUT:
 			text = "send data";
 			break;
+
 		case CURLINFO_HEADER_IN:
 			text = "recv header";
 			break;
+
 		case CURLINFO_DATA_IN:
 			text = "recv data";
 			break;
+
 		case CURLINFO_SSL_DATA_IN:
 			text = "recv SSL data";
 			break;
+
 		case CURLINFO_SSL_DATA_OUT:
 			text = "send SSL data";
 			break;
+
 		default: /* in case a new one is introduced to shock us */
 			return 0;
 	}

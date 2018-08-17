@@ -134,10 +134,21 @@ char * socket_print(struct node *n)
 	char *layer = NULL, *buf;
 
 	switch (s->layer) {
-		case SOCKET_LAYER_UDP:	layer = "udp";	break;
-		case SOCKET_LAYER_IP:	layer = "ip";	break;
-		case SOCKET_LAYER_ETH:	layer = "eth";	break;
-		case SOCKET_LAYER_UNIX:	layer = "unix";	break;
+		case SOCKET_LAYER_UDP:
+			layer = "udp";
+			break;
+
+		case SOCKET_LAYER_IP:
+			layer = "ip";
+			break;
+
+		case SOCKET_LAYER_ETH:
+			layer = "eth";
+			break;
+
+		case SOCKET_LAYER_UNIX:
+			layer = "unix";
+			break;
 	}
 
 	char *local = socket_print_addr((struct sockaddr *) &s->local);
@@ -207,12 +218,24 @@ int socket_start(struct node *n)
 
 	/* Create socket */
 	switch (s->layer) {
-		case SOCKET_LAYER_UDP:	s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM,	IPPROTO_UDP); break;
-		case SOCKET_LAYER_IP:	s->sd = socket(s->local.sa.sa_family, SOCK_RAW,		ntohs(s->local.sin.sin_port)); break;
+		case SOCKET_LAYER_UDP:
+			s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
+			break;
+
+		case SOCKET_LAYER_IP:
+			s->sd = socket(s->local.sa.sa_family, SOCK_RAW, ntohs(s->local.sin.sin_port));
+			break;
+
 #ifdef __linux__
-		case SOCKET_LAYER_ETH:	s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM,	s->local.sll.sll_protocol); break;
+		case SOCKET_LAYER_ETH:
+			s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM, s->local.sll.sll_protocol);
+			break;
 #endif /* __linux__ */
-		case SOCKET_LAYER_UNIX:	s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM,	0); break;
+
+		case SOCKET_LAYER_UNIX:
+			s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM, 0);
+			break;
+
 		default:
 			error("Invalid socket type!");
 	}
@@ -230,13 +253,25 @@ int socket_start(struct node *n)
 	/* Bind socket for receiving */
 	socklen_t addrlen = 0;
 	switch(s->local.ss.ss_family) {
-		case AF_INET:   addrlen = sizeof(struct sockaddr_in); break;
-		case AF_INET6:  addrlen = sizeof(struct sockaddr_in6); break;
-		case AF_UNIX:   addrlen = SUN_LEN(&s->local.sun); break;
+		case AF_INET:
+			addrlen = sizeof(struct sockaddr_in);
+			break;
+
+		case AF_INET6:
+			addrlen = sizeof(struct sockaddr_in6);
+			break;
+
+		case AF_UNIX:
+			addrlen = SUN_LEN(&s->local.sun);
+			break;
+
 #ifdef __linux__
-		case AF_PACKET: addrlen = sizeof(struct sockaddr_ll); break;
+		case AF_PACKET:
+			addrlen = sizeof(struct sockaddr_ll);
+			break;
 #endif
-		default:        addrlen = sizeof(s->local); break;
+		default:
+			addrlen = sizeof(s->local);
 	}
 
 	ret = bind(s->sd, (struct sockaddr *) &s->local, addrlen);
@@ -386,8 +421,13 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	 * So we simply set it ourself. */
 	if (s->layer == SOCKET_LAYER_IP) {
 		switch (src.sa.sa_family) {
-			case AF_INET:  src.sin.sin_port   = s->remote.sin.sin_port;   break;
-			case AF_INET6: src.sin6.sin6_port = s->remote.sin6.sin6_port; break;
+			case AF_INET:
+				src.sin.sin_port = s->remote.sin.sin_port;
+				break;
+
+			case AF_INET6:
+				src.sin6.sin6_port = s->remote.sin6.sin6_port;
+				break;
 		}
 	}
 
@@ -441,13 +481,25 @@ retry:	ret = io_sprint(&s->io, buf, buflen, &wbytes, smps, cnt);
 	/* Send message */
 	socklen_t addrlen = 0;
 	switch(s->local.ss.ss_family) {
-		case AF_INET:   addrlen = sizeof(struct sockaddr_in); break;
-		case AF_INET6:  addrlen = sizeof(struct sockaddr_in6); break;
-		case AF_UNIX:   addrlen = SUN_LEN(&s->local.sun); break;
+		case AF_INET:
+			addrlen = sizeof(struct sockaddr_in);
+			break;
+
+		case AF_INET6:
+			addrlen = sizeof(struct sockaddr_in6);
+			break;
+
+		case AF_UNIX:
+			addrlen = SUN_LEN(&s->local.sun);
+			break;
+
 #ifdef __linux__
-		case AF_PACKET: addrlen = sizeof(struct sockaddr_ll); break;
+		case AF_PACKET:
+			addrlen = sizeof(struct sockaddr_ll);
+			break;
 #endif
-		default:        addrlen = sizeof(s->local); break;
+		default:
+			addrlen = sizeof(s->local);
 	}
 
 	bytes = sendto(s->sd, buf, wbytes, MSG_DONTWAIT, (struct sockaddr *) &s->remote, addrlen);
