@@ -99,8 +99,12 @@ static int node_direction_parse(struct node_direction *nd, struct node *n, json_
 		jerror(&err, "Failed to parse node %s", node_name(n));
 
 #ifdef WITH_HOOKS
+	int m = nd == &n->out
+		? HOOK_NODE_WRITE
+		: HOOK_NODE_READ;
+
 	if (json_hooks) {
-		ret = hook_parse_list(&nd->hooks, json_hooks, NULL, n);
+		ret = hook_parse_list(&nd->hooks, json_hooks, m, NULL, n);
 		if (ret < 0)
 			return ret;
 	}

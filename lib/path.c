@@ -592,7 +592,7 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 
 #ifdef WITH_HOOKS
 	if (json_hooks) {
-		ret = hook_parse_list(&p->hooks, json_hooks, p, NULL);
+		ret = hook_parse_list(&p->hooks, json_hooks, HOOK_PATH, p, NULL);
 		if (ret)
 			return ret;
 	}
