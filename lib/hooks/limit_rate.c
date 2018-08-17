@@ -126,14 +126,14 @@ static struct plugin p = {
 	.description	= "Limit sending rate",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
-		.flags	= HOOK_NODE | HOOK_PATH,
-		.priority = 99,
-		.init	= limit_rate_init,
-		.parse	= limit_rate_parse,
-		.read	= limit_rate_write,
-		.write	= limit_rate_write,
-		.process= limit_rate_write,
-		.size	= sizeof(struct limit_rate)
+		.flags		= HOOK_NODE | HOOK_PATH,
+		.priority	= 99,
+		.init		= limit_rate_init,
+		.parse		= limit_rate_parse,
+		.read		= limit_rate_write,
+		.write		= limit_rate_write,
+		.process	= limit_rate_write,
+		.size		= sizeof(struct limit_rate)
 	}
 };
 

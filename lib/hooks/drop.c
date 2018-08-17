@@ -119,13 +119,13 @@ static struct plugin p = {
 	.description	= "Drop messages with reordered sequence numbers",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
-		.flags	= HOOK_BUILTIN | HOOK_NODE,
-		.priority = 3,
-		.read	= drop_read,
-		.start	= drop_start,
-		.stop	= drop_stop,
-		.restart= drop_restart,
-		.size	= sizeof(struct drop)
+		.flags		= HOOK_BUILTIN | HOOK_NODE,
+		.priority	= 3,
+		.read		= drop_read,
+		.start		= drop_start,
+		.stop		= drop_stop,
+		.restart	= drop_restart,
+		.size		= sizeof(struct drop)
 	}
 };
 

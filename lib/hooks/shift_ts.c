@@ -102,12 +102,13 @@ static struct plugin p = {
 	.description	= "Shift timestamps of samples",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
-		.flags	= HOOK_NODE | HOOK_PATH,
-		.priority = 99,
-		.init	= shift_ts_init,
-		.parse	= shift_ts_parse,
-		.read	= shift_ts_read,
-		.size	= sizeof(struct shift_ts)
+		.flags		= HOOK_NODE | HOOK_PATH,
+		.priority 	= 99,
+		.init		= shift_ts_init,
+		.parse		= shift_ts_parse,
+		.read		= shift_ts_read,
+		.process	= shift_ts_read,
+		.size		= sizeof(struct shift_ts)
 	}
 };
 

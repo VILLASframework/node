@@ -149,13 +149,14 @@ static struct plugin p = {
 	.description	= "Skip the first samples",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
-		.flags	= HOOK_NODE | HOOK_PATH,
-		.priority = 99,
-		.parse	= skip_first_parse,
-		.start	= skip_first_restart,
-		.restart = skip_first_restart,
-		.read	= skip_first_read,
-		.size	= sizeof(struct skip_first)
+		.flags		= HOOK_NODE | HOOK_PATH,
+		.priority	= 99,
+		.parse		= skip_first_parse,
+		.start		= skip_first_restart,
+		.restart	= skip_first_restart,
+		.read		= skip_first_read,
+		.process	= skip_first_read,
+		.size		= sizeof(struct skip_first)
 	}
 };
 

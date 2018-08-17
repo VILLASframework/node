@@ -88,12 +88,12 @@ static struct plugin p = {
 	.description	= "Scale all signals by and add offset",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
-		.flags	= HOOK_PATH,
-		.priority = 99,
-		.init	= scale_init,
-		.parse	= scale_parse,
-		.process= scale_process,
-		.size	= sizeof(struct scale)
+		.flags		= HOOK_PATH,
+		.priority	= 99,
+		.init		= scale_init,
+		.parse		= scale_parse,
+		.process	= scale_process,
+		.size		= sizeof(struct scale)
 	}
 };
 

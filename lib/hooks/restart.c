@@ -104,12 +104,12 @@ static struct plugin p = {
 	.description	= "Call restart hooks for current node",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
-		.flags	= HOOK_NODE | HOOK_BUILTIN,
-		.priority = 1,
-		.read	= restart_read,
-		.start	= restart_start,
-		.stop	= restart_stop,
-		.size	= sizeof(struct restart)
+		.flags		= HOOK_NODE | HOOK_BUILTIN,
+		.priority 	= 1,
+		.read		= restart_read,
+		.start		= restart_start,
+		.stop		= restart_stop,
+		.size		= sizeof(struct restart)
 	}
 };
 

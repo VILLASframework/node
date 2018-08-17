@@ -174,17 +174,17 @@ static struct plugin p = {
 	.description	= "Print the message to stdout",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
-		.flags	= HOOK_NODE | HOOK_PATH,
-		.priority = 99,
-		.init	= print_init,
-		.parse	= print_parse,
-		.destroy= print_destroy,
-		.start	= print_start,
-		.stop	= print_stop,
-		.read   = print_read,
-		.write  = print_write,
-		.process= print_process,
-		.size	= sizeof(struct print)
+		.flags		= HOOK_NODE | HOOK_PATH,
+		.priority	= 99,
+		.init		= print_init,
+		.parse		= print_parse,
+		.destroy	= print_destroy,
+		.start		= print_start,
+		.stop		= print_stop,
+		.read   	= print_read,
+		.write  	= print_write,
+		.process	= print_process,
+		.size		= sizeof(struct print)
 	}
 };
 
