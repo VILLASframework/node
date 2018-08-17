@@ -45,20 +45,36 @@
 
 int super_node_init(struct super_node *sn)
 {
+	int ret;
+
 	assert(sn->state == STATE_DESTROYED);
 
-	log_init(&sn->log, V, LOG_ALL);
+	ret = log_init(&sn->log, V, LOG_ALL);
+	if (ret)
+		return ret;
+
 #ifdef WITH_API
-	memory_init(0);
-	api_init(&sn->api, sn);
+	ret = api_init(&sn->api, sn);
+	if (ret)
+		return ret;
 #endif /* WITH_API */
 #ifdef WITH_WEB
-	web_init(&sn->web, &sn->api);
+	ret = web_init(&sn->web, &sn->api);
+	if (ret)
+		return ret;
 #endif /* WITH_WEB */
 
-	list_init(&sn->nodes);
-	list_init(&sn->paths);
-	list_init(&sn->plugins);
+	ret = list_init(&sn->nodes);
+	if (ret)
+		return ret;
+
+	ret = list_init(&sn->paths);
+	if (ret)
+		return ret;
+
+	ret = list_init(&sn->plugins);
+	if (ret)
+		return ret;
 
 	/* Default values */
 	sn->affinity = 0;

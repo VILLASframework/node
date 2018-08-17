@@ -84,6 +84,8 @@ void usage()
 
 int main(int argc, char *argv[])
 {
+	int ret;
+
 	/* Parse Arguments */
 	char c, *endptr;
 	while ((c = getopt (argc, argv, "w:h:r:f:c:b:V")) != -1) {
@@ -123,16 +125,33 @@ check:		if (optarg == endptr)
 	char *configfile = argv[optind];
 	char *nodestr    = argv[optind + 1];
 
-	log_init(&sn.log, V, LOG_ALL);
+	ret = signals_init(quit);
+	if (ret)
+		error("Failed to initialize signals");
 
-	super_node_init(&sn);
-	super_node_parse_uri(&sn, configfile);
+	ret = log_init(&sn.log, V, LOG_ALL);
+	if (ret)
+		return ret;
 
-	log_open(&sn.log);
+	ret = super_node_init(&sn);
+	if (ret)
+		error("Failed to initialize super-node");
 
-	signals_init(quit);
-	rt_init(sn.priority, sn.affinity);
-	memory_init(sn.hugepages);
+	ret = super_node_parse_uri(&sn, configfile);
+	if (ret)
+		error("Failed to parse configuration");
+
+	ret = log_open(&sn.log);
+	if (ret)
+		error("Failed to open log file");
+
+	ret = rt_init(sn.priority, sn.affinity);
+	if (ret)
+		return ret;
+
+	ret = memory_init(sn.hugepages);
+	if (ret)
+		error("Failed to stop node-type %s: reason=%d", node_type_name(node->_vt), ret);
 
 	node = (struct node *) list_lookup(&sn.nodes, nodestr);
 	if (!node)
@@ -152,10 +171,17 @@ check:		if (optarg == endptr)
 
 	test_rtt();
 
-	node_stop(node);
-	node_type_stop(node->_vt);
+	ret = node_stop(node);
+	if (ret)
+		error("Failed to stop node %s: reason=%d", node_name(node), ret);
 
-	super_node_destroy(&sn);
+	ret = node_type_stop(node->_vt);
+	if (ret)
+		error("Failed to stop node-type %s: reason=%d", node_type_name(node->_vt), ret);
+
+	ret = super_node_destroy(&sn);
+	if (ret)
+		error("Failed to destroy super-node");
 
 	return 0;
 }
