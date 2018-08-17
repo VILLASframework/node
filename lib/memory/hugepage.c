@@ -41,7 +41,7 @@
 #include <villas/utils.h>
 #include <villas/kernel/kernel.h>
 
-#define HUGEPAGESIZE	(1 << 22) /* 2 MiB */
+#define HUGEPAGESIZE	(1 << 21) /* 2 MiB */
 
 /** Allocate memory backed by hugepages with malloc() like interface */
 static struct memory_allocation * memory_hugepage_alloc(struct memory_type *m, size_t len, size_t alignment)
