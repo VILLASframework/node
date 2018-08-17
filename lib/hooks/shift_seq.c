@@ -48,7 +48,7 @@ static int shift_seq_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int shift_seq_read(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int shift_seq_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct shift *p = (struct shift *) h->_vd;
 
@@ -66,8 +66,7 @@ static struct plugin p = {
 		.flags		= HOOK_NODE | HOOK_PATH,
 		.priority	= 99,
 		.parse		= shift_seq_parse,
-		.read		= shift_seq_read,
-		.process	= shift_seq_read,
+		.process	= shift_seq_process,
 		.size		= sizeof(struct shift),
 	}
 };

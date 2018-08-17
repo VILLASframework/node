@@ -55,7 +55,7 @@ static int drop_stop(struct hook *h)
 	return 0;
 }
 
-static int drop_read(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int drop_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	int i, ok, dist;
 
@@ -121,7 +121,7 @@ static struct plugin p = {
 	.hook		= {
 		.flags		= HOOK_BUILTIN | HOOK_NODE,
 		.priority	= 3,
-		.read		= drop_read,
+		.process	= drop_process,
 		.start		= drop_start,
 		.stop		= drop_stop,
 		.restart	= drop_restart,

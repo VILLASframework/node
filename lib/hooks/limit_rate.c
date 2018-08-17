@@ -87,7 +87,7 @@ static int limit_rate_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int limit_rate_write(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int limit_rate_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct limit_rate *p = (struct limit_rate *) h->_vd;
 
@@ -130,9 +130,7 @@ static struct plugin p = {
 		.priority	= 99,
 		.init		= limit_rate_init,
 		.parse		= limit_rate_parse,
-		.read		= limit_rate_write,
-		.write		= limit_rate_write,
-		.process	= limit_rate_write,
+		.process	= limit_rate_process,
 		.size		= sizeof(struct limit_rate)
 	}
 };

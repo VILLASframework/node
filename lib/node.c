@@ -411,7 +411,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 
 #ifdef WITH_HOOKS
 	/* Run read hooks */
-	int rread = hook_read_list(&n->in.hooks, smps, nread);
+	int rread = hook_process_list(&n->in.hooks, smps, nread);
 	int skipped = nread - rread;
 
 	if (skipped > 0 && n->stats != NULL) {
@@ -437,7 +437,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 #ifdef WITH_HOOKS
 	/* Run write hooks */
-	cnt = hook_write_list(&n->out.hooks, smps, cnt);
+	cnt = hook_process_list(&n->out.hooks, smps, cnt);
 	if (cnt <= 0)
 		return cnt;
 #endif /* WITH_HOOKS */

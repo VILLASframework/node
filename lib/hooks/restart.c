@@ -54,7 +54,7 @@ static int restart_stop(struct hook *h)
 	return 0;
 }
 
-static int restart_read(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int restart_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	unsigned i;
 	struct restart *r = (struct restart *) h->_vd;
@@ -67,7 +67,7 @@ static int restart_read(struct hook *h, struct sample *smps[], unsigned *cnt)
 
 		if (prev) {
 			/* A wrap around of the sequence no should not be treated as a simulation restart */
-			if (cur->sequence == 0 && prev->sequence <= (int) (UINT32_MAX - 128)) {
+			if (cur->sequence == 0 && prev->sequence != 0 && prev->sequence > UINT64_MAX - 16) {
 				warn("Simulation from node %s restarted (previous->sequence=%" PRIu64 ", current->sequence=%" PRIu64 ")",
 					node_name(h->node), prev->sequence, cur->sequence);
 
@@ -106,7 +106,7 @@ static struct plugin p = {
 	.hook		= {
 		.flags		= HOOK_NODE | HOOK_BUILTIN,
 		.priority 	= 1,
-		.read		= restart_read,
+		.process		= restart_process,
 		.start		= restart_start,
 		.stop		= restart_stop,
 		.size		= sizeof(struct restart)

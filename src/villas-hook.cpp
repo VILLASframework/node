@@ -239,9 +239,7 @@ check:		if (optarg == endptr)
 
 		unsigned send = recv;
 
-		hook_read(&h, smps, (unsigned *) &send);
 		hook_process(&h, smps, (unsigned *) &send);
-		hook_write(&h, smps, (unsigned *) &send);
 
 		sent = io_print(&io, smps, send);
 		if (sent < 0)

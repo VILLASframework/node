@@ -77,7 +77,7 @@ static int shift_ts_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int shift_ts_read(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int shift_ts_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct shift_ts *p = (struct shift_ts *) h->_vd;
 
@@ -106,8 +106,7 @@ static struct plugin p = {
 		.priority 	= 99,
 		.init		= shift_ts_init,
 		.parse		= shift_ts_parse,
-		.read		= shift_ts_read,
-		.process	= shift_ts_read,
+		.process	= shift_ts_process,
 		.size		= sizeof(struct shift_ts)
 	}
 };

@@ -155,7 +155,7 @@ static int stats_collect_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int stats_collect_read(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int stats_collect_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct stats_collect *p = (struct stats_collect *) h->_vd;
 	struct stats *s = &p->stats;
@@ -190,6 +190,7 @@ static int stats_collect_read(struct hook *h, struct sample *smps[], unsigned *c
 	return 0;
 }
 
+__attribute__((unused))
 static int stats_collect_write(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct stats_collect *p = (struct stats_collect *) h->_vd;
@@ -215,8 +216,7 @@ static struct plugin p = {
 		.destroy	= stats_collect_destroy,
 		.start		= stats_collect_start,
 		.stop		= stats_collect_stop,
-		.read		= stats_collect_read,
-		.write		= stats_collect_write,
+		.process	= stats_collect_process,
 		.restart	= stats_collect_restart,
 		.periodic	= stats_collect_periodic,
 		.parse		= stats_collect_parse,

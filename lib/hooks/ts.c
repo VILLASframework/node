@@ -29,7 +29,7 @@
 #include <villas/timing.h>
 #include <villas/sample.h>
 
-static int ts_read(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int ts_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	for (int i = 0; i < *cnt; i++)
 		smps[i]->ts.origin = smps[i]->ts.received;
@@ -44,7 +44,7 @@ static struct plugin p = {
 	.hook		= {
 		.flags		= HOOK_NODE,
 		.priority	= 99,
-		.read		= ts_read
+		.process	= ts_process
 	}
 };
 

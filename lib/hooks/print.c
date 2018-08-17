@@ -109,42 +109,16 @@ static int print_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int print_read(struct hook *h, struct sample *smps[], unsigned *cnt)
-{
-	struct print *p = (struct print *) h->_vd;
-
-	if (p->prefix)
-		printf("%s", p->prefix);
-	else if (h->node)
-		printf("Node %s read: ", node_name(h->node));
-
-	io_print(&p->io, smps, *cnt);
-
-	return 0;
-}
-
-static int print_write(struct hook *h, struct sample *smps[], unsigned *cnt)
-{
-	struct print *p = (struct print *) h->_vd;
-
-	if (p->prefix)
-		printf("%s", p->prefix);
-	else if (h->node)
-		printf("Node %s write: ", node_name(h->node));
-
-	io_print(&p->io, smps, *cnt);
-
-	return 0;
-}
-
 static int print_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct print *p = (struct print *) h->_vd;
 
 	if (p->prefix)
 		printf("%s", p->prefix);
+	else if (h->node)
+		printf("Node %s: ", node_name(h->node));
 	else if (h->path)
-		printf("Path %s process: ", path_name(h->path));
+		printf("Path %s: ", path_name(h->path));
 
 	io_print(&p->io, smps, *cnt);
 
@@ -181,8 +155,6 @@ static struct plugin p = {
 		.destroy	= print_destroy,
 		.start		= print_start,
 		.stop		= print_stop,
-		.read   	= print_read,
-		.write  	= print_write,
 		.process	= print_process,
 		.size		= sizeof(struct print)
 	}

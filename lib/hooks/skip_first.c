@@ -89,7 +89,7 @@ static int skip_first_restart(struct hook *h)
 	return 0;
 }
 
-static int skip_first_read(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int skip_first_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct skip_first *p = (struct skip_first *) h->_vd;
 
@@ -154,8 +154,7 @@ static struct plugin p = {
 		.parse		= skip_first_parse,
 		.start		= skip_first_restart,
 		.restart	= skip_first_restart,
-		.read		= skip_first_read,
-		.process	= skip_first_read,
+		.process	= skip_first_process,
 		.size		= sizeof(struct skip_first)
 	}
 };

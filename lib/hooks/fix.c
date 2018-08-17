@@ -33,7 +33,7 @@
 #include <villas/sample.h>
 #include <villas/timing.h>
 
-static int fix_read(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int fix_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct timespec now = time_now();
 
@@ -66,7 +66,7 @@ static struct plugin p = {
 	.hook		= {
 		.flags		= HOOK_BUILTIN | HOOK_NODE,
 		.priority	= 1,
-		.read		= fix_read
+		.process		= fix_process
 	}
 };
 

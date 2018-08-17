@@ -57,7 +57,7 @@ static int decimate_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int decimate_read(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int decimate_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
 	struct decimate *p = (struct decimate *) h->_vd;
 
@@ -86,8 +86,7 @@ static struct plugin p = {
 		.priority	= 99,
 		.init		= decimate_init,
 		.parse		= decimate_parse,
-		.read		= decimate_read,
-		.process	= decimate_read,
+		.process	= decimate_process,
 		.size		= sizeof(struct decimate)
 	}
 };
