@@ -409,24 +409,6 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 			return nread;
 	}
 
-	/* Add missing fields */
-	for (int i = 0; i < nread; i++) {
-		if (!(smps[i]->flags & SAMPLE_HAS_SEQUENCE))
-			smps[i]->sequence = n->sequence++;
-
-		if (!(smps[i]->flags & SAMPLE_HAS_ORIGIN) ||
-		    !(smps[i]->flags & SAMPLE_HAS_RECEIVED)) {
-
-			struct timespec now = time_now();
-
-			if (!(smps[i]->flags & SAMPLE_HAS_RECEIVED))
-				smps[i]->ts.received = now;
-
-			if (!(smps[i]->flags & SAMPLE_HAS_ORIGIN))
-				smps[i]->ts.origin = now;
-		}
-	}
-
 #ifdef WITH_HOOKS
 	/* Run read hooks */
 	int rread = hook_read_list(&n->in.hooks, smps, nread);

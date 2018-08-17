@@ -32,6 +32,7 @@ set(HOOK_SRC
     ts.c
     limit_rate.c
     scale.c
+    fix.c
 )
 
 if(WITH_IO)
