@@ -22,9 +22,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
-# We skip this test for now, as we dont have a AMQP broker in the CI environment
-exit 99
-
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname ${SCRIPT})
 source ${SCRIPTPATH}/../../tools/integration-tests-helper.sh
@@ -38,16 +35,8 @@ NUM_SAMPLES=${NUM_SAMPLES:-100}
 # Generate test data
 villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
-for FORMAT in villas.human villas.binary villas.web csv json gtnet.fake raw.flt32; do
-	
-VECTORIZES="1"
-
-# The raw format does not support vectors
-if villas_format_supports_vectorize ${FORMAT}; then
-	VECTORIZES="${VECTORIZES} 10"
-fi
-
-for VECTORIZE	in ${VECTORIZES}; do	
+FORMAT="protobuf"
+VECTORIZE="10"
 
 cat > ${CONFIG_FILE} << EOF
 {
@@ -57,7 +46,8 @@ cat > ${CONFIG_FILE} << EOF
 			"format" : "${FORMAT}",
 			"vectorize" : ${VECTORIZE},
 
-			"uri" : "amqp://broker",
+			"uri" : "amqp://localhost",
+			"port" : 5672,
 
 			"exchange" : "mytestexchange",
 			"routing_key" : "abc",
@@ -75,30 +65,17 @@ cat > ${CONFIG_FILE} << EOF
 }
 EOF
 
+rabbitmq-server -detached
+
+sleep 5
+
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
-# Ignore timestamp and seqeunce no if in raw format 
-if villas_format_supports_header ${FORMAT}; then
-	CMPFLAGS=-ts
-fi
+rabbitmqctl stop
 
 # Compare data
 villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
-
-if (( ${RC} != 0 )); then
-	echo "=========== Sub-test failed for: format=${FORMAT}, vectorize=${VECTORIZE}"
-	cat ${CONFIG_FILE}
-	echo
-	cat ${INPUT_FILE}
-	echo
-	cat ${OUTPUT_FILE}
-	exit ${RC}
-else
-	echo "=========== Sub-test succeeded for: format=${FORMAT}, vectorize=${VECTORIZE}"
-fi
-
-done; done
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
 
