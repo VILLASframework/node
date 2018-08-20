@@ -45,12 +45,12 @@ build:source:
 # Stage: test
 ##############################################################################
 
-#test:unit:
-#  stage: test
-#  dependencies:
-#    - build:source
-#  script:
-#    - build/tests/unit-tests --filter 'graph/*'
-#  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
-#  tags:
-#    - docker
+test:unit:
+  stage: test
+  dependencies:
+    - build:source
+  script:
+    - build/tests/unit-tests
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+  tags:
+    - docker
