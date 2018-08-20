@@ -47,16 +47,17 @@ Test(mapping, parse_nodes)
 		struct node *n = alloc(sizeof(struct node));
 
 		n->name = node_names[i];
-		n->in.signals.state = STATE_DESTROYED;
+		n->signals.state = STATE_DESTROYED;
 
-		list_init(&n->in.signals);
+		list_init(&n->signals);
 
 		for (int j = 0; j < ARRAY_LEN(signal_names[i]); j++) {
-			struct signal *s = alloc(sizeof(struct signal *));
+			struct signal *sig;
 
-			s->name = signal_names[i][j];
+			sig = signal_create(signal_names[i][j], NULL, SIGNAL_TYPE_AUTO);
+			cr_assert_not_null(sig);
 
-			list_push(&n->in.signals, s);
+			list_push(&n->signals, sig);
 		}
 
 		list_push(&nodes, n);
@@ -66,7 +67,7 @@ Test(mapping, parse_nodes)
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, list_lookup(&nodes, "apple"));
 	cr_assert_eq(m.type, MAPPING_TYPE_TIMESTAMP);
-	cr_assert_eq(m.ts.id, MAPPING_TS_ORIGIN);
+	cr_assert_eq(m.timestamp.type, MAPPING_TIMESTAMP_TYPE_ORIGIN);
 
 	ret = mapping_parse_str(&m, "cherry.stats.owd.mean", &nodes);
 	cr_assert_eq(ret, 0);
@@ -87,7 +88,7 @@ Test(mapping, parse_nodes)
 	cr_assert_eq(m.node, list_lookup(&nodes, "carrot"));
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 0);
-	cr_assert_eq(m.length, 0);
+	cr_assert_eq(m.length, list_length(&m.node->signals));
 
 	ret = mapping_parse_str(&m, "carrot.data[sole]", &nodes);
 	cr_assert_eq(ret, 0);
@@ -115,12 +116,12 @@ Test(mapping, parse)
 	ret = mapping_parse_str(&m, "ts.origin", NULL);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_TIMESTAMP);
-	cr_assert_eq(m.ts.id, MAPPING_TS_ORIGIN);
+	cr_assert_eq(m.timestamp.type, MAPPING_TIMESTAMP_TYPE_ORIGIN);
 
 	ret = mapping_parse_str(&m, "hdr.sequence", NULL);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_HEADER);
-	cr_assert_eq(m.hdr.id, MAPPING_HDR_SEQUENCE);
+	cr_assert_eq(m.header.type, MAPPING_HEADER_TYPE_SEQUENCE);
 
 	ret = mapping_parse_str(&m, "stats.owd.mean", NULL);
 	cr_assert_eq(ret, 0);
