@@ -51,7 +51,6 @@ struct sample;
 struct zeromq {
 	int ipv6;
 
-	char *filter;
 
 	struct format_type *format;
 	struct io io;
@@ -75,12 +74,14 @@ struct zeromq {
 		void *socket;	/**< ZeroMQ socket. */
 		void *mon_socket;
 		char *endpoint;
-	} subscriber;
+		char *filter;
+	} in;
 
 	struct {
 		void *socket;	/**< ZeroMQ socket. */
 		struct list endpoints;
-	} publisher;
+		char *filter;
+	} out;
 };
 
 /** @see node_type::print */
