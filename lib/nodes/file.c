@@ -215,7 +215,11 @@ int file_start(struct node *n)
 	if (f->flush)
 		flags |= IO_FLUSH;
 
-	ret = io_init(&f->io, f->format, n, flags);
+	ret = io_init(&f->io, f->format, &n->signals, flags);
+	if (ret)
+		return ret;
+
+	ret = io_check(&f->io);
 	if (ret)
 		return ret;
 
@@ -224,14 +228,14 @@ int file_start(struct node *n)
 		return ret;
 
 	if (f->buffer_size_in) {
-		ret = setvbuf(f->io.input.stream.std, NULL, _IOFBF, f->buffer_size_in);
-		if(ret)
+		ret = setvbuf(f->io.in.stream.std, NULL, _IOFBF, f->buffer_size_in);
+		if (ret)
 			return ret;
 	}
 
 	if (f->buffer_size_out) {
-		ret = setvbuf(f->io.output.stream.std, NULL, _IOFBF, f->buffer_size_out);
-		if(ret)
+		ret = setvbuf(f->io.out.stream.std, NULL, _IOFBF, f->buffer_size_out);
+		if (ret)
 			return ret;
 	}
 
@@ -297,7 +301,7 @@ int file_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	assert(cnt == 1);
 
 retry:	ret = io_scan(&f->io, smps, cnt);
-	if (ret <= 0) {
+	if (ret = 0) {
 		if (io_eof(&f->io)) {
 			switch (f->eof) {
 				case FILE_EOF_REWIND:
@@ -357,11 +361,14 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 
 int file_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
+	int ret;
 	struct file *f = (struct file *) n->_vd;
 
 	assert(cnt == 1);
 
-	io_print(&f->io, smps, cnt);
+	ret = io_print(&f->io, smps, cnt);
+	if (ret < 0)
+		return ret;
 
 	return cnt;
 }
