@@ -105,7 +105,7 @@ for TEST in ${TESTS}; do
 			PASSED=$((${PASSED} + 1))
 			;;
 		99)
-			echo -e "\e[93m[SKIP] \e[39m ${TESTNAME}"
+			echo -e "\e[93m[SKIP] \e[39m ${TESTNAME}: $(head -n1 ${LOGDIR}/${TESTNAME}.log)"
 			SKIPPED=$((${SKIPPED} + 1))
 			;;
 		124)
