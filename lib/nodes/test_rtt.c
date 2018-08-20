@@ -216,10 +216,6 @@ int test_rtt_destroy(struct node *n)
 	if (ret)
 		return ret;
 
-	ret = io_destroy(&t->io);
-	if (ret)
-		return ret;
-
 	if (t->output)
 		free(t->output);
 
@@ -251,7 +247,15 @@ int test_rtt_start(struct node *n)
 			return ret;
 	}
 
-	ret = io_init(&t->io, t->format, n, SAMPLE_HAS_ALL & ~SAMPLE_HAS_VALUES);
+	ret = io_init(&t->io, t->format, &n->signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_DATA);
+	if (ret)
+		return ret;
+
+	ret = io_check(&t->io);
+	if (ret)
+		return ret;
+
+	ret = io_check(&t->io);
 	if (ret)
 		return ret;
 
@@ -275,6 +279,10 @@ int test_rtt_stop(struct node *n)
 		if (ret)
 			return ret;
 	}
+
+	ret = io_destroy(&t->io);
+	if (ret)
+		return ret;
 
 	return 0;
 }
@@ -332,7 +340,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 		smps[i]->length = values;
 		smps[i]->sequence = t->counter;
 		smps[i]->ts.origin = now;
-		smps[i]->flags = SAMPLE_HAS_VALUES | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_ORIGIN;
+		smps[i]->flags = SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_TS_ORIGIN;
 
 		t->counter++;
 	}
@@ -385,6 +393,7 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_NODE,
 	.node		= {
 		.vectorize	= 0,
+		.flags		= NODE_TYPE_PROVIDES_SIGNALS,
 		.size		= sizeof(struct test_rtt),
 		.parse		= test_rtt_parse,
 		.destroy	= test_rtt_destroy,
