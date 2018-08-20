@@ -144,9 +144,16 @@ char * api_session_name(struct api_session *s)
 		char *mode;
 
 		switch (s->mode) {
-			case API_MODE_WS:   mode = "ws"; break;
-			case API_MODE_HTTP: mode = "http"; break;
-			default:            mode = "unknown"; break;
+			case API_MODE_WS:
+				mode = "ws";
+				break;
+
+			case API_MODE_HTTP:
+				mode = "http";
+				break;
+
+			default:
+				mode = "unknown";
 		}
 
 		strcatf(&s->_name, "version=%d, mode=%s", s->version, mode);
