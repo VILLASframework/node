@@ -125,29 +125,51 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 	ssize_t sentlen, buflen;
 
 	for (int k = 0; k < cnt; k++) {
+		struct sample *smp = smps[k];
+
 		/* Key */
 		strcatf(&buf, "%s", i->key);
 
 		/* Fields */
-		for (int j = 0; j < smps[k]->length; j++) {
+		for (int j = 0; j < smp->length; j++) {
+			struct signal *sig;
+			union signal_data *data = &smp->data[k];
+
+			if (sig->type == SIGNAL_TYPE_AUTO || sig->type == SIGNAL_TYPE_COMPLEX) {
+				warn("Unsupported signal format for node %s. Skipping", node_name(n));
+				continue;
+			}
+
 			strcatf(&buf, "%c", j == 0 ? ' ' : ',');
 
-			if (j < list_length(&n->out.signals)) {
-				struct signal *sig = (struct signal *) list_at(&n->out.signals, j);
+			sig = (struct signal *) list_at(smp->signals, j);
+			if (!sig)
+				return -1;
 
+			if (sig->name)
 				strcatf(&buf, "%s=", sig->name);
-			}
 			else
 				strcatf(&buf, "value%d=", j);
 
-			switch (sample_get_data_format(smps[k], j)) {
-				case SAMPLE_DATA_FORMAT_FLOAT:	strcatf(&buf, "%f", smps[k]->data[j].f); break;
-				case SAMPLE_DATA_FORMAT_INT:	strcatf(&buf, "%" PRIi64, smps[k]->data[j].i); break;
+			switch (sig->type) {
+				case SIGNAL_TYPE_BOOLEAN:
+					strcatf(&buf, "%s", data->b ? "true" : "false");
+					break;
+
+				case SIGNAL_TYPE_FLOAT:
+					strcatf(&buf, "%f", data->f);
+					break;
+
+				case SIGNAL_TYPE_INTEGER:
+					strcatf(&buf, "%" PRIi64, data->i);
+					break;
+
+				default: { }
 			}
 		}
 
 		/* Timestamp */
-		strcatf(&buf, " %ld%09ld\n", smps[k]->ts.origin.tv_sec, smps[k]->ts.origin.tv_nsec);
+		strcatf(&buf, " %ld%09ld\n", smp->ts.origin.tv_sec, smp->ts.origin.tv_nsec);
 	}
 
 	buflen = strlen(buf) + 1;
