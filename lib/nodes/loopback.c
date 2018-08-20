@@ -45,19 +45,19 @@ int loopback_parse(struct node *n, json_t *cfg)
 	return 0;
 }
 
-int loopback_open(struct node *n)
+int loopback_start(struct node *n)
 {
 	int ret;
 	struct loopback *l = (struct loopback *) n->_vd;
 
-	ret = pool_init(&l->pool, l->queuelen, SAMPLE_LENGTH(n->samplelen), &memory_hugepage);
+	ret = pool_init(&l->pool, l->queuelen, SAMPLE_LENGTH(list_length(&n->signals)), &memory_hugepage);
 	if (ret)
 		return ret;
 
 	return queue_signalled_init(&l->queue, l->queuelen, &memory_hugepage, QUEUE_SIGNALLED_EVENTFD);
 }
 
-int loopback_close(struct node *n)
+int loopback_stop(struct node *n)
 {
 	int ret;
 	struct loopback *l= (struct loopback *) n->_vd;
@@ -125,11 +125,12 @@ static struct plugin p = {
 	.type = PLUGIN_TYPE_NODE,
 	.node = {
 		.vectorize = 0,
+		.flags	= NODE_TYPE_PROVIDES_SIGNALS,
 		.size	= sizeof(struct loopback),
 		.parse	= loopback_parse,
 		.print	= loopback_print,
-		.start	= loopback_open,
-		.stop	= loopback_close,
+		.start	= loopback_start,
+		.stop	= loopback_stop,
 		.read	= loopback_read,
 		.write	= loopback_write,
 		.fd	= loopback_fd
