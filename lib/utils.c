@@ -384,3 +384,36 @@ size_t strlenp(const char *str)
 
 	return sz;
 }
+
+char * decolor(char *str)
+{
+	char *p, *q;
+	bool inseq = false;
+
+	for (p = q = str; *p; p++) {
+		switch (*p) {
+			case 0x1b:
+				if (*(++p) == '[') {
+					inseq = true;
+					continue;
+				}
+				break;
+
+			case 'm':
+				if (inseq) {
+					inseq = false;
+					continue;
+				}
+				break;
+		}
+
+		if (!inseq) {
+			*q = *p;
+			q++;
+		}
+	}
+
+	*q = '\0';
+
+	return str;
+}

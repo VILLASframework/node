@@ -184,3 +184,13 @@ Test(utils, sha1sum)
 
 	fclose(f);
 }
+
+Test(utils, decolor)
+{
+	char str[] = "This " CLR_RED("is") " a " CLR_BLU("colored") " " CLR_BLD("text!");
+	char expect[] = "This is a colored text!";
+
+	decolor(str);
+
+	cr_assert_str_eq(str, expect);
+}

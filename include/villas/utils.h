@@ -263,6 +263,9 @@ pid_t spawn(const char *name, char *const argv[]);
 /** Determines the string length as printed on the screen (ignores escable sequences). */
 size_t strlenp(const char *str);
 
+/** Remove ANSI control sequences for colored output. */
+char * decolor(char *str);
+
 
 #ifdef __cplusplus
 }
