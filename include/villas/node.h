@@ -48,7 +48,6 @@ struct node_direction {
 	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
 
 	struct list hooks;	/**< List of write hooks (struct hook). */
-	struct list signals;	/**< List of signal meta data such as signal names */
 
 	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
 };
@@ -65,13 +64,14 @@ struct node
 	char *_name_long;	/**< Singleton: A string used to print to screen. */
 
 	int affinity;		/**< CPU Affinity of this node */
-	int samplelen;		/**< The maximum number of values this node can receive. */
 
-	unsigned sequence;	/**< This is a counter of received samples, in case the node-type does not generate sequence numbers itself. */
+	uint64_t sequence;	/**< This is a counter of received samples, in case the node-type does not generate sequence numbers itself. */
 
 	struct stats *stats;	/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 
 	struct node_direction in, out;
+
+	struct list signals;	/**< Signal meta data for data which is __received__ by node_read(). */
 
 	enum state state;
 

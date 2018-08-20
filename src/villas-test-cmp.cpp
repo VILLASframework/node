@@ -69,12 +69,12 @@ void usage()
 
 int main(int argc, char *argv[])
 {
-	int ret;
+	int ret, rc = 0;
 
 	/* Default values */
 	double epsilon = 1e-9;
 	const char *format = "villas.human";
-	int flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_VALUES | SAMPLE_HAS_ORIGIN;
+	int flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA | SAMPLE_HAS_TS_ORIGIN;
 
 	struct pool pool = { .state = STATE_DESTROYED };
 
@@ -86,10 +86,10 @@ int main(int argc, char *argv[])
 				epsilon = strtod(optarg, &endptr);
 				goto check;
 			case 'v':
-				flags &= ~SAMPLE_HAS_VALUES;
+				flags &= ~SAMPLE_HAS_DATA;
 				break;
 			case 't':
-				flags &= ~SAMPLE_HAS_ORIGIN;
+				flags &= ~SAMPLE_HAS_TS_ORIGIN;
 				break;
 			case 's':
 				flags &= ~SAMPLE_HAS_SEQUENCE;
@@ -138,9 +138,13 @@ check:		if (optarg == endptr)
 		if (!s[i].fmt)
 			error("Invalid IO format: %s", s[i].format);
 
-		ret = io_init(&s[i].io, s[i].fmt, NULL, 0);
+		ret = io_init_auto(&s[i].io, s[i].fmt, DEFAULT_SAMPLE_LENGTH, 0);
 		if (ret)
 			error("Failed to initialize IO");
+
+		ret = io_check(&s[i].io);
+		if (ret)
+			error("Failed to validate IO configuration");
 
 		ret = io_open(&s[i].io, s[i].path);
 		if (ret)
@@ -168,7 +172,7 @@ retry:		eofs = 0;
 				ret = 0;
 			else {
 				std::cout << "length unequal" << std::endl;
-				ret = 1;
+				rc = 1;
 			}
 
 			goto out;
@@ -180,15 +184,16 @@ retry:		eofs = 0;
 			if (ret <= 0)
 				failed++;
 		}
-
 		if (failed)
 			goto retry;
 
 		/* We compare all files against the first one */
 		for (int i = 1; i < n; i++) {
 			ret = sample_cmp(s[0].sample, s[i].sample, epsilon, flags);
-			if (ret)
+			if (ret) {
+				rc = ret;
 				goto out;
+			}
 		}
 
 		line++;
@@ -210,5 +215,5 @@ out:	for (int i = 0; i < n; i++) {
 	if (ret)
 		error("Failed to destroy pool");
 
-	return ret;
+	return rc;
 }

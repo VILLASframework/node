@@ -32,7 +32,7 @@ extern "C" {
 struct sample;
 
 int json_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
-int json_sscan(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
+int json_sscan(struct io *io, const char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
 
 int json_print(struct io *io, struct sample *smps[], unsigned cnt);
 int json_scan(struct io *io, struct sample *smps[], unsigned cnt);

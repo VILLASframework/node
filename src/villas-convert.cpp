@@ -108,9 +108,13 @@ check:		if (optarg == endptr)
 		if (!fmt)
 			error("Invalid format: %s", dirs[i].name);
 
-		ret = io_init(dirs[i].io, fmt, NULL, SAMPLE_HAS_ALL);
+		ret = io_init_auto(dirs[i].io, fmt, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
 		if (ret)
 			error("Failed to initialize IO: %s", dirs[i].name);
+
+		ret = io_check(dirs[i].io);
+		if (ret)
+			error("Failed to validate IO configuration");
 
 		ret = io_open(dirs[i].io, NULL);
 		if (ret)

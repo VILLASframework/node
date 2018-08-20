@@ -28,6 +28,8 @@
 #include <villas/sample.h>
 #include <villas/utils.h>
 #include <villas/timing.h>
+#include <villas/signal.h>
+#include <villas/list.h>
 
 int sample_init(struct sample *s)
 {
@@ -150,6 +152,7 @@ int sample_copy(struct sample *dst, struct sample *src)
 	dst->sequence = src->sequence;
 	dst->flags = src->flags;
 	dst->ts = src->ts;
+	dst->signals = src->signals;
 
 	memcpy(&dst->data, &src->data, SAMPLE_DATA_LENGTH(dst->length));
 
@@ -217,7 +220,7 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	}
 
 	/* Compare timestamp */
-	if (flags & SAMPLE_HAS_ORIGIN) {
+	if (flags & SAMPLE_HAS_TS_ORIGIN) {
 		if (time_delta(&a->ts.origin, &b->ts.origin) > epsilon) {
 			printf("ts.origin: %f != %f\n", time_to_double(&a->ts.origin), time_to_double(&b->ts.origin));
 			return 3;
@@ -225,27 +228,47 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	}
 
 	/* Compare data */
-	if (flags & SAMPLE_HAS_VALUES) {
+	if (flags & SAMPLE_HAS_DATA) {
 		if (a->length != b->length) {
 			printf("length: %d != %d\n", a->length, b->length);
 			return 4;
 		}
 
 		for (int i = 0; i < a->length; i++) {
-			switch (sample_get_data_format(a, i)) {
-				case SAMPLE_DATA_FORMAT_FLOAT:
+			/* Compare format */
+			if (sample_format(a, i) != sample_format(b, i))
+				return 6;
+
+			switch (sample_format(a, i)) {
+				case SIGNAL_TYPE_FLOAT:
 					if (fabs(a->data[i].f - b->data[i].f) > epsilon) {
 						printf("data[%d].f: %f != %f\n", i, a->data[i].f, b->data[i].f);
 						return 5;
 					}
 					break;
 
-				case SAMPLE_DATA_FORMAT_INT:
+				case SIGNAL_TYPE_INTEGER:
 					if (a->data[i].i != b->data[i].i) {
 						printf("data[%d].i: %" PRId64 " != %" PRId64 "\n", i, a->data[i].i, b->data[i].i);
 						return 5;
 					}
 					break;
+
+				case SIGNAL_TYPE_BOOLEAN:
+					if (a->data[i].b != b->data[i].b) {
+						printf("data[%d].b: %s != %s\n", i, a->data[i].b ? "true" : "false", b->data[i].b ? "true" : "false");
+						return 5;
+					}
+					break;
+
+				case SIGNAL_TYPE_COMPLEX:
+					if (cabs(a->data[i].z - b->data[i].z) > epsilon) {
+						printf("data[%d].z: %f+%fi != %f+%fi\n", i, creal(a->data[i].z), cimag(a->data[i].z), creal(b->data[i].z), cimag(b->data[i].z));
+						return 5;
+					}
+					break;
+
+				default: { }
 			}
 		}
 	}
@@ -253,11 +276,11 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 	return 0;
 }
 
-enum signal_format sample_format(const struct sample *s, unsigned idx)
+enum signal_type sample_format(const struct sample *s, unsigned idx)
 {
 	struct signal *sig;
 
 	sig = (struct signal *) list_at_safe(s->signals, idx);
 
-	return sig ? sig->format : SIGNAL_FORMAT_UNKNOWN;
+	return sig ? sig->type : SIGNAL_TYPE_AUTO;
 }

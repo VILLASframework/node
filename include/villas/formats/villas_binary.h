@@ -42,7 +42,7 @@ enum villas_binary_flags {
 int villas_binary_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
 
 /** Read struct sample's from buffer \p buf into samples \p smps. */
-int villas_binary_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
+int villas_binary_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
 
 #ifdef __cplusplus
 }

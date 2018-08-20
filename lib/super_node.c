@@ -384,12 +384,12 @@ int super_node_start(struct super_node *sn)
 	for (size_t i = 0; i < list_length(&sn->nodes); i++) {
 		struct node *n = (struct node *) list_at(&sn->nodes, i);
 
+		ret = node_init2(n);
+		if (ret)
+			error("Failed to prepare node: %s", node_name(n));
+
 		int refs = list_count(&sn->paths, (cmp_cb_t) path_uses_node, n);
 		if (refs > 0) {
-			ret = node_init2(n);
-			if (ret)
-				error("Failed to start node: %s", node_name(n));
-
 			ret = node_start(n);
 			if (ret)
 				error("Failed to start node: %s", node_name(n));
@@ -405,7 +405,7 @@ int super_node_start(struct super_node *sn)
 		if (p->enabled) {
 			ret = path_init2(p);
 			if (ret)
-				error("Failed to start path: %s", path_name(p));
+				error("Failed to prepare path: %s", path_name(p));
 
 			ret = path_start(p);
 			if (ret)

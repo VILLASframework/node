@@ -186,6 +186,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 int main(int argc, char *argv[])
 {
 	int ret;
+	json_t *cfg;
 	struct node_type *nt;
 	struct format_type *ft;
 
@@ -207,6 +208,12 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to intialize signals");
 
+	ft = format_type_lookup(format);
+	if (!ft)
+		error("Invalid output format '%s'", format);
+
+	memory_init(0); // Otherwise, ht->size in hash_table_hash() will be zero
+
 	nt = node_type_lookup("signal");
 	if (!nt)
 		error("Signal generation is not supported.");
@@ -215,19 +222,6 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to initialize node");
 
-	ft = format_type_lookup(format);
-	if (!ft)
-		error("Invalid output format '%s'", format);
-
-	memory_init(0); // Otherwise, ht->size in hash_table_hash() will be zero
-
-	ret = io_init(&io, ft, NULL, IO_FLUSH | (SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET));
-	if (ret)
-		error("Failed to initialize output");
-
-	ret = io_open(&io, NULL);
-	if (ret)
-		error("Failed to open output");
 	cfg = parse_cli(argc, argv);
 	if (!cfg) {
 		usage();
@@ -249,7 +243,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		error("Failed to verify node configuration");
 
-	ret = pool_init(&q, 16, SAMPLE_LENGTH(n.in.samplelen), &memory_heap);
+	ret = pool_init(&q, 16, SAMPLE_LENGTH(list_length(&n.signals)), &memory_heap);
 	if (ret)
 		error("Failed to initialize pool");
 
@@ -259,7 +253,19 @@ int main(int argc, char *argv[])
 
 	ret = node_start(&n);
 	if (ret)
-		serror("Failed to start node");
+		error("Failed to start node %s: reason=%d", node_name(&n), ret);
+
+	ret = io_init(&io, ft, &n.signals, IO_FLUSH | (SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET));
+	if (ret)
+		error("Failed to initialize output");
+
+	ret = io_check(&io);
+	if (ret)
+		error("Failed to validate IO configuration");
+
+	ret = io_open(&io, NULL);
+	if (ret)
+		error("Failed to open output");
 
 	for (;;) {
 		t = sample_alloc(&q);

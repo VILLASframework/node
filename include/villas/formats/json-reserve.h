@@ -33,7 +33,7 @@ struct sample;
 struct io;
 
 int json_reserve_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
-int json_reserve_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
+int json_reserve_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
 
 int json_reserve_print(struct io *io, struct sample *smps[], unsigned cnt);
 int json_reserve_scan(struct io *io, struct sample *smps[], unsigned cnt);

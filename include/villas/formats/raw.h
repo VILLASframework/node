@@ -29,39 +29,33 @@
 extern "C" {
 #endif
 
+/* float128 is currently not yet supported as htole128() functions a missing */
+#if 0 && defined(__GNUC__) && defined(__linux__)
+  #define HAS_128BIT
+#endif
+
 /* Forward declarations */
 struct sample;
 
 enum raw_flags {
-	RAW_FAKE	= (1 << 16), /**< Treat the first three values as: sequenceno, seconds, nanoseconds */
+	/** Treat the first three values as: sequenceno, seconds, nanoseconds */
+	RAW_FAKE_HEADER	= (1 << 16) | SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE,
+	RAW_BIG_ENDIAN	= (1 << 7),	/**< Encode data in big-endian byte order */
 
-	RAW_BE_INT	= (1 << 17), /**< Byte-order for integer data: big-endian if set. */
-	RAW_BE_FLT	= (1 << 18), /**< Byte-order for floating point data: big-endian if set. */
-	RAW_BE_HDR	= (1 << 19), /**< Byte-order for fake header fields: big-endian if set. */
-
-	/** Byte-order for all fields: big-endian if set. */
-	RAW_BE		= RAW_BE_INT | RAW_BE_FLT | RAW_BE_HDR,
-
-	/** Mix floating and integer types.
-	 *
-	 * io_raw_sscan()  parses all values as single / double precission fp.
-	 * io_raw_sprint() uses sample::format to determine the type.
-	 */
-	RAW_AUTO	= (1 << 22),
-	RAW_FLT		= (1 << 23), /**< Data-type: floating point otherwise integer. */
-
-	//RAW_1	= (0 << 24), /**< Pack each value as a single bit. */
-	RAW_8		= (3 << 24), /**< Pack each value as a byte. */
-	RAW_16		= (4 << 24), /**< Pack each value as a word. */
-	RAW_32		= (5 << 24), /**< Pack each value as a double word. */
-	RAW_64		= (6 << 24)  /**< Pack each value as a quad word. */
+	RAW_BITS_8	= (3 << 24),	/**< Pack each value as a byte. */
+	RAW_BITS_16	= (4 << 24),	/**< Pack each value as a word. */
+	RAW_BITS_32	= (5 << 24),	/**< Pack each value as a double word. */
+	RAW_BITS_64	= (6 << 24), 	/**< Pack each value as a quad word. */
+#ifdef HAS_128BIT
+	RAW_128		= (7 << 24)  /**< Pack each value as a double quad word. */
+#endif
 };
 
 /** Copy / read struct msg's from buffer \p buf to / fram samples \p smps. */
 int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
 
 /** Read struct sample's from buffer \p buf into samples \p smps. */
-int raw_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
+int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
 
 #ifdef __cplusplus
 }

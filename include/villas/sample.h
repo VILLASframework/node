@@ -49,12 +49,11 @@ struct pool;
 
 /** Parts of a sample that can be serialized / de-serialized by the IO formats */
 enum sample_flags {
-	SAMPLE_HAS_ORIGIN	= (1 << 0), /**< Include origin timestamp in output. */
-	SAMPLE_HAS_RECEIVED	= (1 << 1), /**< Include receive timestamp in output. */
+	SAMPLE_HAS_TS_ORIGIN	= (1 << 0), /**< Include origin timestamp in output. */
+	SAMPLE_HAS_TS_RECEIVED	= (1 << 1), /**< Include receive timestamp in output. */
 	SAMPLE_HAS_OFFSET	= (1 << 2), /**< Include offset (received - origin timestamp) in output. */
-	SAMPLE_HAS_ID		= (1 << 3), /**< This sample has a valid sample::id field. */
-	SAMPLE_HAS_SEQUENCE	= (1 << 4), /**< Include sequence number in output. */
-	SAMPLE_HAS_VALUES	= (1 << 5), /**< Include values in output. */
+	SAMPLE_HAS_SEQUENCE	= (1 << 3), /**< Include sequence number in output. */
+	SAMPLE_HAS_DATA		= (1 << 4), /**< Include values in output. */
 	SAMPLE_HAS_ALL		= (1 << 5) - 1, /**< Enable all output options. */
 
 	SAMPLE_IS_FIRST		= (1 << 16), /**< This sample is the first of a new simulation case */
@@ -129,7 +128,7 @@ int sample_copy_many(struct sample *dsts[], struct sample *srcs[], int cnt);
 int sample_incref_many(struct sample *smps[], int cnt);
 int sample_decref_many(struct sample *smps[], int cnt);
 
-enum signal_format sample_format(const struct sample *s, unsigned idx);
+enum signal_type sample_format(const struct sample *s, unsigned idx);
 
 #ifdef __cplusplus
 }

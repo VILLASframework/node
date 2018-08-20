@@ -38,6 +38,7 @@
 #include <villas/memory.h>
 #include <villas/stats.h>
 #include <villas/node.h>
+#include <villas/signal.h>
 
 /* Forward declaration */
 static void path_destination_enqueue(struct path *p, struct sample *smps[], unsigned cnt);
@@ -50,7 +51,7 @@ static int path_source_init(struct path_source *ps)
 	if (ps->node->_vt->pool_size)
 		pool_size = ps->node->_vt->pool_size;
 
-	ret = pool_init(&ps->pool, pool_size, SAMPLE_LENGTH(ps->node->in.samplelen), node_memory_type(ps->node, &memory_hugepage));
+	ret = pool_init(&ps->pool, pool_size, SAMPLE_LENGTH(list_length(&ps->node->signals)), node_memory_type(ps->node, &memory_hugepage));
 	if (ret)
 		return ret;
 
@@ -115,7 +116,8 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 			? sample_clone(p->last_sample)
 			: sample_clone(muxed_smps[i-1]);
 
-		muxed_smps[i]->sequence = p->last_sequence + 1;
+		muxed_smps[i]->sequence = p->last_sequence++;
+		muxed_smps[i]->ts       = tomux_smps[i]->ts;
 
 		mapping_remap(&ps->mappings, muxed_smps[i], tomux_smps[i], NULL);
 	}
@@ -301,11 +303,25 @@ static void * path_run_poll(void *arg)
 
 int path_init(struct path *p)
 {
+	int ret;
+
 	assert(p->state == STATE_DESTROYED);
 
-	list_init(&p->destinations);
-	list_init(&p->sources);
-	list_init(&p->signals);
+	ret = list_init(&p->destinations);
+	if (ret)
+		return ret;
+
+	ret = list_init(&p->sources);
+	if (ret)
+		return ret;
+
+	ret = list_init(&p->signals);
+	if (ret)
+		return ret;
+
+	ret = list_init(&p->hooks);
+	if (ret)
+		return ret;
 
 	p->_name = NULL;
 
@@ -379,7 +395,7 @@ int path_init2(struct path *p)
 
 	/* Initialize destinations */
 	struct memory_type *pool_mt = &memory_hugepage;
-	int pool_size = (unsigned) MAX(1, list_length(&p->destinations) * p->queuelen);
+	int pool_size = MAX(1, list_length(&p->destinations)) * p->queuelen;
 
 	for (size_t i = 0; i < list_length(&p->destinations); i++) {
 		struct path_destination *pd = (struct path_destination *) list_at(&p->destinations, i);
@@ -395,6 +411,9 @@ int path_init2(struct path *p)
 			return ret;
 	}
 
+	bitset_init(&p->received, list_length(&p->sources));
+	bitset_init(&p->mask, list_length(&p->sources));
+
 	/* Initialize sources */
 	for (size_t i = 0; i < list_length(&p->sources); i++) {
 		struct path_source *ps = (struct path_source *) list_at(&p->sources, i);
@@ -402,16 +421,6 @@ int path_init2(struct path *p)
 		ret = path_source_init(ps);
 		if (ret)
 			return ret;
-	}
-
-	bitset_init(&p->received, list_length(&p->sources));
-	bitset_init(&p->mask, list_length(&p->sources));
-
-	/* Calc sample length of path and initialize bitset */
-	p->samplelen = 0;
-
-	for (size_t i = 0; i < list_length(&p->sources); i++) {
-		struct path_source *ps = (struct path_source *) list_at(&p->sources, i);
 
 		if (ps->masked)
 			bitset_set(&p->mask, i);
@@ -419,24 +428,41 @@ int path_init2(struct path *p)
 		for (size_t i = 0; i < list_length(&ps->mappings); i++) {
 			struct mapping_entry *me = (struct mapping_entry *) list_at(&ps->mappings, i);
 
-			int len = me->length;
 			int off = me->offset;
+			int len = me->length;
 
-			if (off + len > p->samplelen)
-				p->samplelen = off + len;
+			for (int j = 0; j < len; j++) {
+				struct signal *sig;
+
+				/* For data mappings we simple refer to the existing
+				 * signal descriptors of the source node. */
+				if (me->type == MAPPING_TYPE_DATA) {
+					sig = (struct signal *) list_at_safe(&me->node->signals, me->data.offset + j);
+					if (!sig) {
+						warn("Failed to create signal description for path %s", path_name(p));
+						continue;
+					}
+
+					signal_incref(sig);
+				}
+				/* For other mappings we create new signal descriptors */
+				else {
+					sig = alloc(sizeof(struct signal));
+
+					ret = signal_init_from_mapping(sig, me, j);
+					if (ret)
+						return -1;
+				}
+
+				list_extend(&p->signals, off + j + 1, NULL);
+				list_set(&p->signals, off + j, sig);
+			}
 		}
 	}
 
-	if (!p->samplelen)
-		p->samplelen = DEFAULT_SAMPLE_LENGTH;
-
-	ret = pool_init(&p->pool, pool_size, SAMPLE_LENGTH(p->samplelen), pool_mt);
+	ret = pool_init(&p->pool, pool_size, SAMPLE_LENGTH(list_length(&p->signals)), pool_mt);
 	if (ret)
 		return ret;
-
-	p->last_sample = sample_alloc(&p->pool);
-	if (!p->last_sample)
-		return -1;
 
 	/* Prepare poll() */
 	if (p->poll) {
@@ -669,15 +695,16 @@ int path_start(struct path *p)
 
 	mask = bitset_dump(&p->mask);
 
-	info("Starting path %s: mode=%s, poll=%s, mask=%s, rate=%.2f, enabled=%s, reversed=%s, queuelen=%d, samplelen=%d, #hooks=%zu, #sources=%zu, #destinations=%zu",
+	info("Starting path %s: #signals=%zu, mode=%s, poll=%s, mask=%s, rate=%.2f, enabled=%s, reversed=%s, queuelen=%d, #hooks=%zu, #sources=%zu, #destinations=%zu",
 		path_name(p),
+		list_length(&p->signals),
 		mode,
 		p->poll ? "yes" : "no",
 		mask,
 		p->rate,
 		p->enabled ? "yes" : "no",
 		p->reverse ? "yes" : "no",
-		p->queuelen, p->samplelen,
+		p->queuelen,
 		list_length(&p->hooks),
 		list_length(&p->sources),
 		list_length(&p->destinations)
@@ -699,25 +726,20 @@ int path_start(struct path *p)
 
 	bitset_clear_all(&p->received);
 
-	/* We initialize the intial sample with zeros */
-	for (size_t i = 0; i < list_length(&p->sources); i++) {
-		struct path_source *ps = (struct path_source *) list_at(&p->sources, i);
+	/* We initialize the intial sample */
+	p->last_sample = sample_alloc(&p->pool);
+	if (!p->last_sample)
+		return -1;
 
-		for (size_t j = 0; j < list_length(&ps->mappings); j++) {
-			struct mapping_entry *me = (struct mapping_entry *) list_at(&ps->mappings, j);
+	p->last_sample->length = list_length(&p->signals);
+	p->last_sample->signals = &p->signals;
+	p->last_sample->sequence = 0;
+	p->last_sample->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_DATA;
 
-			int len = me->length;
-			int off = me->offset;
+	for (size_t i = 0; i < p->last_sample->length; i++) {
+		struct signal *sig = (struct signal *) list_at(p->last_sample->signals, i);
 
-			if (len + off > p->last_sample->length)
-				p->last_sample->length = len + off;
-
-			for (int k = off; k < off + len; k++) {
-				p->last_sample->data[k].f = 0;
-
-				sample_set_data_format(p->last_sample, k, SAMPLE_DATA_FORMAT_FLOAT);
-			}
-		}
+		p->last_sample->data[i] = sig->init;
 	}
 
 	/* Start one thread per path for sending to destinations
@@ -762,6 +784,8 @@ int path_stop(struct path *p)
 	}
 #endif /* WITH_HOOKS */
 
+	sample_decref(p->last_sample);
+
 	p->state = STATE_STOPPED;
 
 	return 0;
@@ -777,7 +801,7 @@ int path_destroy(struct path *p)
 #endif
 	list_destroy(&p->sources, (dtor_cb_t) path_source_destroy, true);
 	list_destroy(&p->destinations, (dtor_cb_t) path_destination_destroy, true);
-	list_destroy(&p->signals, (dtor_cb_t) signal_decref, true);
+	list_destroy(&p->signals, (dtor_cb_t) signal_decref, false);
 
 	if (p->reader.pfds)
 		free(p->reader.pfds);

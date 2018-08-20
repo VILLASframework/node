@@ -33,10 +33,6 @@ extern "C" {
 struct sample;
 struct io;
 
-enum format_type_flags {
-	FORMAT_TYPE_BINARY	= (1 << 8)
-};
-
 struct format_type {
 	int (*init)(struct io *io);
 	int (*destroy)(struct io *io);
@@ -82,7 +78,7 @@ struct format_type {
 	int (*scan)( struct io *io, struct sample *smps[], unsigned cnt);
 
 	/** Print a header. */
-	void (*header)(struct io *io);
+	void (*header)(struct io *io, const struct sample *smp);
 
 	/** Print a footer. */
 	void (*footer)(struct io *io);
@@ -94,7 +90,7 @@ struct format_type {
 	 */
 
 	/** @see format_type_sscan */
-	int (*sscan)(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
+	int (*sscan)(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
 
 	/** @see format_type_sprint */
 	int (*sprint)(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);

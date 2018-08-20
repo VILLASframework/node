@@ -99,7 +99,6 @@ struct path {
 	int reverse;			/**< This path as a matching reverse path. */
 	int builtin;			/**< This path should use built-in hooks by default. */
 	int queuelen;			/**< The queue length for each path_destination::queue */
-	int samplelen;			/**< Will be calculated based on path::sources.mappings */
 
 	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
 

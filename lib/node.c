@@ -46,6 +46,9 @@ static int node_direction_init2(struct node_direction *nd, struct node *n)
 	ret = hook_init_builtin_list(&nd->hooks, nd->builtin, m, NULL, n);
 	if (ret)
 		return ret;
+
+	/* We sort the hooks according to their priority before starting the path */
+	list_sort(&nd->hooks, hook_cmp_priority);
 #endif /* WITH_HOOKS */
 
 	return 0;
@@ -53,9 +56,15 @@ static int node_direction_init2(struct node_direction *nd, struct node *n)
 
 static int node_direction_init(struct node_direction *nd, struct node *n)
 {
+	int ret;
+
 	nd->enabled = 0;
 	nd->vectorize = 1;
 	nd->builtin = 1;
+
+	ret = list_init(&nd->hooks);
+	if (ret)
+		return ret;
 
 	return 0;
 }
@@ -63,10 +72,6 @@ static int node_direction_init(struct node_direction *nd, struct node *n)
 static int node_direction_destroy(struct node_direction *nd, struct node *n)
 {
 	int ret;
-
-	ret = list_destroy(&nd->signals, (dtor_cb_t) signal_decref, true);
-	if (ret)
-		return ret;
 
 #ifdef WITH_HOOKS
 	ret = list_destroy(&nd->hooks, (dtor_cb_t) hook_destroy, true);
@@ -83,14 +88,12 @@ static int node_direction_parse(struct node_direction *nd, struct node *n, json_
 
 	json_error_t err;
 	json_t *json_hooks = NULL;
-	json_t *json_signals = NULL;
 
 	nd->cfg = cfg;
 	nd->enabled = 1;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: i, s?: b, s?: b }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: i, s?: b, s?: b }",
 		"hooks", &json_hooks,
-		"signals", &json_signals,
 		"vectorize", &nd->vectorize,
 		"builtin", &nd->builtin,
 		"enabled", &nd->enabled
@@ -109,12 +112,6 @@ static int node_direction_parse(struct node_direction *nd, struct node *n, json_
 			return ret;
 	}
 #endif /* WITH_HOOKS */
-
-	if (json_signals) {
-		ret = signal_parse_list(&nd->signals, json_signals);
-		if (ret)
-			error("Failed to parse signal definition of node '%s'", node_name(n));
-	}
 
 	return 0;
 }
@@ -135,9 +132,6 @@ static int node_direction_start(struct node_direction *nd, struct node *n)
 {
 #ifdef WITH_HOOKS
 	int ret;
-
-	/* We sort the hooks according to their priority before starting the path */
-	list_sort(&nd->hooks, hook_cmp_priority);
 
 	for (size_t i = 0; i < list_length(&nd->hooks); i++) {
 		struct hook *h = (struct hook *) list_at(&nd->hooks, i);
@@ -181,9 +175,9 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_name = NULL;
 	n->_name_long = NULL;
 
-	/* Default values */
-	n->samplelen = DEFAULT_SAMPLE_LENGTH;
+	list_init(&n->signals);
 
+	/* Default values */
 	ret = node_direction_init(&n->in, n);
 	if (ret)
 		return ret;
@@ -199,26 +193,60 @@ int node_init(struct node *n, struct node_type *vt)
 	return 0;
 }
 
+int node_init2(struct node *n)
+{
+	int ret;
+
+	assert(n->state == STATE_CHECKED);
+
+	ret = node_direction_init2(&n->in, n);
+	if (ret)
+		return ret;
+
+	ret = node_direction_init2(&n->out, n);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
 int node_parse(struct node *n, json_t *json, const char *name)
 {
 	struct node_type *nt;
-	int ret;
+	int ret, samplelen = DEFAULT_SAMPLE_LENGTH;
 
 	json_error_t err;
+	json_t *json_signals = NULL;
 
 	const char *type;
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: i }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o, s?: i } }",
 		"type", &type,
-		"samplelen", &n->samplelen
+		"in",
+			"signals", &json_signals,
+			"samplelen", &samplelen
 	);
 	if (ret)
-		jerror(&err, "Failed to parse node '%s'", node_name(n));
+		jerror(&err, "Failed to parse node %s", node_name(n));
 
 	nt = node_type_lookup(type);
 	assert(nt == node_type(n));
+
+	if (nt->flags & NODE_TYPE_PROVIDES_SIGNALS) {
+		if (json_signals)
+			error("Node %s does not support signal definitions", node_name(n));
+	}
+	else {
+		if (json_signals) {
+			ret = signal_list_parse(&n->signals, json_signals);
+			if (ret)
+				error("Failed to parse signal definition of node %s", node_name(n));
+		}
+		else
+			signal_list_generate(&n->signals, samplelen, SIGNAL_TYPE_AUTO);
+	}
 
 	struct {
 		const char *str;
@@ -228,10 +256,10 @@ int node_parse(struct node *n, json_t *json, const char *name)
 		{ "out", &n->out }
 	};
 
-	const char *fields[] = { "builtin", "vectorize", "signals", "hooks" };
+	const char *fields[] = { "builtin", "vectorize", "hooks" };
 
 	for (int j = 0; j < ARRAY_LEN(dirs); j++) {
-		json_t *json_dir = json_object_get(json, dirs	[j].str);
+		json_t *json_dir = json_object_get(json, dirs[j].str);
 
 		// Skip if direction is unused
 		if (!json_dir)
@@ -291,22 +319,20 @@ int node_start(struct node *n)
 	assert(node_type(n)->state == STATE_STARTED);
 
 	info("Starting node %s", node_name_long(n));
-	{
-		ret = node_direction_start(&n->in, n);
-		if (ret)
-			return ret;
 
-		ret = node_direction_start(&n->out, n);
-		if (ret)
-			return ret;
+	ret = node_direction_start(&n->in, n);
+	if (ret)
+		return ret;
 
-		ret = node_type(n)->start ? node_type(n)->start(n) : 0;
-		if (ret)
-			return ret;
-	}
+	ret = node_direction_start(&n->out, n);
+	if (ret)
+		return ret;
+
+	ret = node_type(n)->start ? node_type(n)->start(n) : 0;
+	if (ret)
+		return ret;
 
 	n->state = STATE_STARTED;
-
 	n->sequence = 0;
 
 	return ret;
@@ -343,6 +369,10 @@ int node_destroy(struct node *n)
 	int ret;
 	assert(n->state != STATE_DESTROYED && n->state != STATE_STARTED);
 
+	ret = list_destroy(&n->signals, (dtor_cb_t) signal_decref, false);
+	if (ret)
+		return ret;
+
 	ret = node_direction_destroy(&n->in, n);
 	if (ret)
 		return ret;
@@ -351,11 +381,10 @@ int node_destroy(struct node *n)
 	if (ret)
 		return ret;
 
-	if (node_type(n)->destroy){
+	if (node_type(n)->destroy) {
 		ret = (int) node_type(n)->destroy(n);
-		if(ret){
+		if (ret)
 			return ret;
-		}
 	}
 
 	list_remove(&node_type(n)->instances, n);
@@ -469,11 +498,13 @@ char * node_name_long(struct node *n)
 		if (node_type(n)->print) {
 			struct node_type *vt = node_type(n);
 			char *name_long = vt->print(n);
-			strcatf(&n->_name_long, "%s: #in.hooks=%zu, in.vectorize=%d, #out.hooks=%zu, out.vectorize=%d, samplelen=%d, %s",
+			strcatf(&n->_name_long, "%s: #in.signals=%zu, #in.hooks=%zu, in.vectorize=%d, #out.hooks=%zu, out.vectorize=%d, %s",
 				node_name(n),
+				list_length(&n->signals),
 				list_length(&n->in.hooks), n->in.vectorize,
 				list_length(&n->out.hooks), n->out.vectorize,
-				n->samplelen, name_long);
+				name_long
+			);
 
 			free(name_long);
 		}

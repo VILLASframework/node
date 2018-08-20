@@ -34,7 +34,7 @@ int signal_init(struct signal *s)
 
 	s->name = NULL;
 	s->unit = NULL;
-	s->format = SIGNAL_FORMAT_AUTO;
+	s->type = SIGNAL_TYPE_AUTO;
 
 	s->refcnt = ATOMIC_VAR_INIT(1);
 
@@ -57,7 +57,7 @@ int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, u
 		case MAPPING_TYPE_STATS:
 			switch (me->stats.type) {
 				case MAPPING_STATS_TYPE_TOTAL:
-					s->format = SIGNAL_FORMAT_INT;
+					s->type = SIGNAL_TYPE_INTEGER;
 					break;
 
 				case MAPPING_STATS_TYPE_LAST:
@@ -66,7 +66,7 @@ int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, u
 				case MAPPING_STATS_TYPE_MEAN:
 				case MAPPING_STATS_TYPE_VAR:
 				case MAPPING_STATS_TYPE_STDDEV:
-					s->format = SIGNAL_FORMAT_FLOAT;
+					s->type = SIGNAL_TYPE_FLOAT;
 					break;
 			}
 			break;
@@ -75,13 +75,13 @@ int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, u
 			switch (me->header.type) {
 				case MAPPING_HEADER_TYPE_LENGTH:
 				case MAPPING_HEADER_TYPE_SEQUENCE:
-					s->format = SIGNAL_FORMAT_INT;
+					s->type = SIGNAL_TYPE_INTEGER;
 					break;
 			}
 			break;
 
 		case MAPPING_TYPE_TIMESTAMP:
-			s->format = SIGNAL_FORMAT_INT;
+			s->type = SIGNAL_TYPE_INTEGER;
 			break;
 
 		case MAPPING_TYPE_DATA:
@@ -103,7 +103,7 @@ int signal_destroy(struct signal *s)
 	return 0;
 }
 
-struct signal * signal_create(const char *name, const char *unit, enum signal_format fmt)
+struct signal * signal_create(const char *name, const char *unit, enum signal_type fmt)
 {
 	int ret;
 	struct signal *sig;
@@ -122,7 +122,7 @@ struct signal * signal_create(const char *name, const char *unit, enum signal_fo
 	if (unit)
 		sig->unit = strdup(unit);
 
-	sig->format = fmt;
+	sig->type = fmt;
 
 	return sig;
 }
@@ -156,6 +156,29 @@ int signal_decref(struct signal *s)
 	return prev - 1;
 }
 
+struct signal * signal_copy(struct signal *s)
+{
+	struct signal *ns;
+
+	ns = alloc(sizeof(struct signal));
+	if (!ns)
+		return NULL;
+
+	signal_init(ns);
+
+	ns->type = s->type;
+	ns->init = s->init;
+	ns->enabled = s->enabled;
+
+	if (s->name)
+		ns->name = strdup(s->name);
+
+	if (s->unit)
+		ns->name = strdup(s->unit);
+
+	return ns;
+}
+
 int signal_parse(struct signal *s, json_t *cfg)
 {
 	int ret;
@@ -163,12 +186,12 @@ int signal_parse(struct signal *s, json_t *cfg)
 	json_t *json_init = NULL;
 	const char *name = NULL;
 	const char *unit = NULL;
-	const char *format = NULL;
+	const char *type = NULL;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: o, s?: b }",
 		"name", &name,
 		"unit", &unit,
-		"format", &format,
+		"type", &type,
 		"init", &json_init,
 		"enabled", &s->enabled
 	);
@@ -181,9 +204,9 @@ int signal_parse(struct signal *s, json_t *cfg)
 	if (unit)
 		s->unit = strdup(unit);
 
-	if (format) {
-		s->format = signal_format_from_str(format);
-		if (s->format == SIGNAL_FORMAT_INVALID)
+	if (type) {
+		s->type = signal_type_from_str(type);
+		if (s->type == SIGNAL_TYPE_INVALID)
 			return -1;
 	}
 
@@ -229,7 +252,7 @@ int signal_list_parse(struct list *list, json_t *cfg)
 	return 0;
 }
 
-int signal_list_generate(struct list *list, unsigned len, enum signal_format fmt)
+int signal_list_generate(struct list *list, unsigned len, enum signal_type fmt)
 {
 	for (int i = 0; i < len; i++) {
 		char name[32];
@@ -253,126 +276,126 @@ void signal_list_dump(const struct list *list)
 		struct signal *sig = list_at(list, i);
 
 		if (sig->unit)
-			info("  %d: %s [%s] = %s", i, sig->name, sig->unit, signal_format_to_str(sig->format));
+			info("  %d: %s [%s] = %s", i, sig->name, sig->unit, signal_type_to_str(sig->type));
 		else
-			info("  %d: %s = %s", i, sig->name, signal_format_to_str(sig->format));
+			info("  %d: %s = %s", i, sig->name, signal_type_to_str(sig->type));
 	}
 }
 
-/* Signal format */
+/* Signal type */
 
-enum signal_format signal_format_from_str(const char *str)
+enum signal_type signal_type_from_str(const char *str)
 {
 	if      (!strcmp(str, "boolean"))
-		return SIGNAL_FORMAT_BOOL;
+		return SIGNAL_TYPE_BOOLEAN;
 	else if (!strcmp(str, "complex"))
-		return SIGNAL_FORMAT_COMPLEX;
+		return SIGNAL_TYPE_COMPLEX;
 	else if (!strcmp(str, "float"))
-		return SIGNAL_FORMAT_FLOAT;
+		return SIGNAL_TYPE_FLOAT;
 	else if (!strcmp(str, "integer"))
-		return SIGNAL_FORMAT_INT;
+		return SIGNAL_TYPE_INTEGER;
 	else if (!strcmp(str, "auto"))
-		return SIGNAL_FORMAT_AUTO;
+		return SIGNAL_TYPE_AUTO;
 	else
-		return SIGNAL_FORMAT_INVALID;
+		return SIGNAL_TYPE_INVALID;
 }
 
-const char * signal_format_to_str(enum signal_format fmt)
+const char * signal_type_to_str(enum signal_type fmt)
 {
 	switch (fmt) {
-		case SIGNAL_FORMAT_BOOL:
+		case SIGNAL_TYPE_BOOLEAN:
 			return "boolean";
 
-		case SIGNAL_FORMAT_COMPLEX:
+		case SIGNAL_TYPE_COMPLEX:
 			return "complex";
 
-		case SIGNAL_FORMAT_FLOAT:
+		case SIGNAL_TYPE_FLOAT:
 			return "float";
 
-		case SIGNAL_FORMAT_INT:
+		case SIGNAL_TYPE_INTEGER:
 			return "integer";
 
-		case SIGNAL_FORMAT_AUTO:
+		case SIGNAL_TYPE_AUTO:
 			return "auto";
 
-		case SIGNAL_FORMAT_INVALID:
+		case SIGNAL_TYPE_INVALID:
 			return "invalid";
 	}
 
 	return NULL;
 }
 
-enum signal_format signal_format_detect(const char *val)
+enum signal_type signal_type_detect(const char *val)
 {
 	char *brk;
 	int len;
 
-	debug(LOG_IO | 5, "Attempt to detect format of: %s", val);
+	debug(LOG_IO | 5, "Attempt to detect type of: %s", val);
 
 	brk = strchr(val, 'i');
 	if (brk)
-		return SIGNAL_FORMAT_COMPLEX;
+		return SIGNAL_TYPE_COMPLEX;
 
 	brk = strchr(val, '.');
 	if (brk)
-		return SIGNAL_FORMAT_FLOAT;
+		return SIGNAL_TYPE_FLOAT;
 
 	len = strlen(val);
 	if (len == 1 && (val[0] == '1' || val[0] == '0'))
-		return SIGNAL_FORMAT_BOOL;
+		return SIGNAL_TYPE_BOOLEAN;
 
-	return SIGNAL_FORMAT_INT;
+	return SIGNAL_TYPE_INTEGER;
 }
 
 /* Signal data */
 
 void signal_data_set(union signal_data *data, const struct signal *sig, double val)
 {
-	switch (sig->format) {
-		case SIGNAL_FORMAT_BOOL:
+	switch (sig->type) {
+		case SIGNAL_TYPE_BOOLEAN:
 			data->b = val;
 			break;
 
-		case SIGNAL_FORMAT_FLOAT:
+		case SIGNAL_TYPE_FLOAT:
 			data->f = val;
 			break;
 
-		case SIGNAL_FORMAT_INT:
+		case SIGNAL_TYPE_INTEGER:
 			data->i = val;
 			break;
 
-		case SIGNAL_FORMAT_COMPLEX:
+		case SIGNAL_TYPE_COMPLEX:
 			data->z = val;
 			break;
 
-		case SIGNAL_FORMAT_INVALID:
-		case SIGNAL_FORMAT_AUTO:
+		case SIGNAL_TYPE_INVALID:
+		case SIGNAL_TYPE_AUTO:
 			memset(data, 0, sizeof(union signal_data));
 			break;
 	}
 }
 
-void signal_data_convert(union signal_data *data, const struct signal *from, const struct signal *to)
+void signal_data_cast(union signal_data *data, const struct signal *from, const struct signal *to)
 {
-	if (from == to) /* Nothing to do */
+	if (from->type == to->type) /* Nothing to do */
 		return;
 
-	switch (to->format) {
-		case SIGNAL_FORMAT_BOOL:
-			switch(from->format) {
-				case SIGNAL_FORMAT_BOOL:
+	switch (to->type) {
+		case SIGNAL_TYPE_BOOLEAN:
+			switch(from->type) {
+				case SIGNAL_TYPE_BOOLEAN:
 					data->b = data->b;
 					break;
 
-				case SIGNAL_FORMAT_INT:
+				case SIGNAL_TYPE_INTEGER:
 					data->b = data->i;
 					break;
 
-				case SIGNAL_FORMAT_FLOAT:
+				case SIGNAL_TYPE_FLOAT:
 					data->b = data->f;
 					break;
 
-				case SIGNAL_FORMAT_COMPLEX:
+				case SIGNAL_TYPE_COMPLEX:
 					data->b = creal(data->z);
 					break;
 
@@ -380,21 +403,21 @@ void signal_data_convert(union signal_data *data, const struct signal *from, con
 			}
 			break;
 
-		case SIGNAL_FORMAT_INT:
-			switch(from->format) {
-				case SIGNAL_FORMAT_BOOL:
+		case SIGNAL_TYPE_INTEGER:
+			switch(from->type) {
+				case SIGNAL_TYPE_BOOLEAN:
 					data->i = data->b;
 					break;
 
-				case SIGNAL_FORMAT_INT:
+				case SIGNAL_TYPE_INTEGER:
 					data->i = data->i;
 					break;
 
-				case SIGNAL_FORMAT_FLOAT:
+				case SIGNAL_TYPE_FLOAT:
 					data->i = data->f;
 					break;
 
-				case SIGNAL_FORMAT_COMPLEX:
+				case SIGNAL_TYPE_COMPLEX:
 					data->i = creal(data->z);
 					break;
 
@@ -402,21 +425,21 @@ void signal_data_convert(union signal_data *data, const struct signal *from, con
 			}
 			break;
 
-		case SIGNAL_FORMAT_FLOAT:
-			switch(from->format) {
-				case SIGNAL_FORMAT_BOOL:
+		case SIGNAL_TYPE_FLOAT:
+			switch(from->type) {
+				case SIGNAL_TYPE_BOOLEAN:
 					data->f = data->b;
 					break;
 
-				case SIGNAL_FORMAT_INT:
+				case SIGNAL_TYPE_INTEGER:
 					data->f = data->i;
 					break;
 
-				case SIGNAL_FORMAT_FLOAT:
+				case SIGNAL_TYPE_FLOAT:
 					data->f = data->f;
 					break;
 
-				case SIGNAL_FORMAT_COMPLEX:
+				case SIGNAL_TYPE_COMPLEX:
 					data->f = creal(data->z);
 					break;
 
@@ -424,21 +447,21 @@ void signal_data_convert(union signal_data *data, const struct signal *from, con
 			}
 			break;
 
-		case SIGNAL_FORMAT_COMPLEX:
-			switch(from->format) {
-				case SIGNAL_FORMAT_BOOL:
+		case SIGNAL_TYPE_COMPLEX:
+			switch(from->type) {
+				case SIGNAL_TYPE_BOOLEAN:
 					data->z = CMPLXF(data->b, 0);
 					break;
 
-				case SIGNAL_FORMAT_INT:
+				case SIGNAL_TYPE_INTEGER:
 					data->z = CMPLXF(data->i, 0);
 					break;
 
-				case SIGNAL_FORMAT_FLOAT:
+				case SIGNAL_TYPE_FLOAT:
 					data->z = CMPLXF(data->f, 0);
 					break;
 
-				case SIGNAL_FORMAT_COMPLEX:
+				case SIGNAL_TYPE_COMPLEX:
 					data->z = data->z;
 					break;
 
@@ -452,20 +475,20 @@ void signal_data_convert(union signal_data *data, const struct signal *from, con
 
 int signal_data_parse_str(union signal_data *data, const struct signal *sig, const char *ptr, char **end)
 {
-	switch (sig->format) {
-		case SIGNAL_FORMAT_FLOAT:
+	switch (sig->type) {
+		case SIGNAL_TYPE_FLOAT:
 			data->f = strtod(ptr, end);
 			break;
 
-		case SIGNAL_FORMAT_INT:
+		case SIGNAL_TYPE_INTEGER:
 			data->i = strtol(ptr, end, 10);
 			break;
 
-		case SIGNAL_FORMAT_BOOL:
+		case SIGNAL_TYPE_BOOLEAN:
 			data->b = strtol(ptr, end, 10);
 			break;
 
-		case SIGNAL_FORMAT_COMPLEX: {
+		case SIGNAL_TYPE_COMPLEX: {
 			float real, imag;
 
 			real = strtod(ptr, end);
@@ -487,8 +510,8 @@ int signal_data_parse_str(union signal_data *data, const struct signal *sig, con
 			break;
 		}
 
-		case SIGNAL_FORMAT_AUTO:
-		case SIGNAL_FORMAT_INVALID:
+		case SIGNAL_TYPE_AUTO:
+		case SIGNAL_TYPE_INVALID:
 			return -1;
 	}
 
@@ -499,20 +522,20 @@ int signal_data_parse_json(union signal_data *data, const struct signal *sig, js
 {
 	int ret;
 
-	switch (sig->format) {
-		case SIGNAL_FORMAT_FLOAT:
+	switch (sig->type) {
+		case SIGNAL_TYPE_FLOAT:
 			data->f = json_real_value(cfg);
 			break;
 
-		case SIGNAL_FORMAT_INT:
+		case SIGNAL_TYPE_INTEGER:
 			data->i = json_integer_value(cfg);
 			break;
 
-		case SIGNAL_FORMAT_BOOL:
+		case SIGNAL_TYPE_BOOLEAN:
 			data->b = json_boolean_value(cfg);
 			break;
 
-		case SIGNAL_FORMAT_COMPLEX: {
+		case SIGNAL_TYPE_COMPLEX: {
 			double real, imag;
 
 			ret = json_unpack(cfg, "{ s: F, s: F }",
@@ -526,8 +549,8 @@ int signal_data_parse_json(union signal_data *data, const struct signal *sig, js
 			break;
 		}
 
-		case SIGNAL_FORMAT_INVALID:
-		case SIGNAL_FORMAT_AUTO:
+		case SIGNAL_TYPE_INVALID:
+		case SIGNAL_TYPE_AUTO:
 			return -1;
 	}
 
@@ -536,17 +559,17 @@ int signal_data_parse_json(union signal_data *data, const struct signal *sig, js
 
 int signal_data_snprint(const union signal_data *data, const struct signal *sig, char *buf, size_t len)
 {
-	switch (sig->format) {
-		case SIGNAL_FORMAT_FLOAT:
+	switch (sig->type) {
+		case SIGNAL_TYPE_FLOAT:
 			return snprintf(buf, len, "%.6f", data->f);
 
-		case SIGNAL_FORMAT_INT:
+		case SIGNAL_TYPE_INTEGER:
 			return snprintf(buf, len, "%" PRIi64, data->i);
 
-		case SIGNAL_FORMAT_BOOL:
+		case SIGNAL_TYPE_BOOLEAN:
 			return snprintf(buf, len, "%u", data->b);
 
-		case SIGNAL_FORMAT_COMPLEX:
+		case SIGNAL_TYPE_COMPLEX:
 			return snprintf(buf, len, "%.6f%+.6fi", creal(data->z), cimag(data->z));
 
 		default:

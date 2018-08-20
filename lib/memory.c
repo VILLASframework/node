@@ -34,23 +34,27 @@
 #include <villas/hash_table.h>
 #include <villas/kernel/kernel.h>
 
-struct hash_table allocations = { .state = STATE_DESTROYED };
+static struct hash_table allocations = { .state = STATE_DESTROYED };
+
+__attribute__((constructor))
+static void init_allocations()
+{
+	hash_table_init(&allocations, 100);
+}
+
+__attribute__((destructor))
+static void destroy_allocations()
+{
+	/** @todo: Release remaining allocations? */
+	hash_table_destroy(&allocations, NULL, false);
+}
 
 int memory_init(int hugepages)
 {
-	int ret;
-
-	info("Initialize memory sub-system");
-
-
-	if (allocations.state == STATE_DESTROYED) {
-		ret = hash_table_init(&allocations, 100);
-		if (ret)
-			return ret;
-	}
+	info("Initialize memory sub-system: #hugepages=%d", hugepages);
 
 #ifdef __linux__
-	int pagecnt, pagesz;
+	int pagecnt, pagesz, ret;
 	struct rlimit l;
 
 	pagecnt = kernel_get_nr_hugepages();
@@ -109,17 +113,19 @@ void * memory_alloc(struct memory_type *m, size_t len)
 }
 
 void * memory_alloc_aligned(struct memory_type *m, size_t len, size_t alignment)
-{	
+{
 	int ret;
 
 	struct memory_allocation *ma = m->alloc(m, len, alignment);
-	if(ma == NULL){
+	if (ma == NULL) {
 		warn("memory_alloc_aligned: allocating memory for memory_allocation failed for memory type %s. Reason: %s", m->name, strerror(errno) );
+		return NULL;
 	}
 
 	ret = hash_table_insert(&allocations, ma->address, ma);
-	if(ret){
+	if (ret) {
 		warn("memory_alloc_aligned: Inserting into hash table failed!");
+		return NULL;
 	}
 
 	debug(LOG_MEM | 5, "Allocated %#zx bytes of %#zx-byte-aligned %s memory: %p", ma->length, ma->alignment, ma->type->name, ma->address);

@@ -79,7 +79,7 @@ skip:		bytes = getdelim(&io->in.buffer, &io->in.buflen, io->delimiter, f);
 	return i;
 }
 
-int io_init(struct io *io, struct format_type *fmt, struct node *n, int flags)
+int io_init(struct io *io, const struct format_type *fmt, struct list *signals, int flags)
 {
 	int ret;
 
@@ -88,9 +88,9 @@ int io_init(struct io *io, struct format_type *fmt, struct node *n, int flags)
 	io->_vt = fmt;
 	io->_vd = alloc(fmt->size);
 
-	io->flags = flags | io->_vt->flags;
-	io->delimiter = io->_vt->delimiter ? io->_vt->delimiter : '\n';
-	io->separator = io->_vt->separator ? io->_vt->separator : '\t';
+	io->flags = flags | (io_type(io)->flags & ~SAMPLE_HAS_ALL);
+	io->delimiter = io_type(io)->delimiter ? io_type(io)->delimiter : '\n';
+	io->separator = io_type(io)->separator ? io_type(io)->separator : '\t';
 
 	io->in.buflen =
 	io->out.buflen = 4096;
@@ -98,19 +98,9 @@ int io_init(struct io *io, struct format_type *fmt, struct node *n, int flags)
 	io->in.buffer = alloc(io->in.buflen);
 	io->out.buffer = alloc(io->out.buflen);
 
-	io->input.node = n;
-	io->output.node = n;
+	io->signals = signals;
 
-	if (n) {
-		io->input.signals = &n->in.signals;
-		io->output.signals = &n->out.signals;
-	}
-	else {
-		io->input.signals = NULL;
-		io->output.signals = NULL;
-	}
-
-	ret = io->_vt->init ? io->_vt->init(io) : 0;
+	ret = io_type(io)->init ? io_type(io)->init(io) : 0;
 	if (ret)
 		return ret;
 
@@ -119,13 +109,35 @@ int io_init(struct io *io, struct format_type *fmt, struct node *n, int flags)
 	return 0;
 }
 
+int io_init_auto(struct io *io, const struct format_type *fmt, int len, int flags)
+{
+	int ret;
+	struct list *signals;
+
+	signals = alloc(sizeof(struct list));
+
+	signals->state = STATE_DESTROYED;
+
+	ret = list_init(signals);
+	if (ret)
+		return ret;
+
+	ret = signal_list_generate(signals, len, SIGNAL_TYPE_AUTO);
+	if (ret)
+		return ret;
+
+	flags |= IO_DESTROY_SIGNALS;
+
+	return io_init(io, fmt, signals, flags);
+}
+
 int io_destroy(struct io *io)
 {
 	int ret;
 
-	assert(io->state == STATE_CLOSED || io->state == STATE_INITIALIZED);
+	assert(io->state == STATE_CLOSED || io->state == STATE_INITIALIZED || io->state == STATE_CHECKED);
 
-	ret = io->_vt->destroy ? io->_vt->destroy(io) : 0;
+	ret = io_type(io)->destroy ? io_type(io)->destroy(io) : 0;
 	if (ret)
 		return ret;
 
@@ -133,7 +145,33 @@ int io_destroy(struct io *io)
 	free(io->in.buffer);
 	free(io->out.buffer);
 
+	if (io->flags & IO_DESTROY_SIGNALS) {
+		ret = list_destroy(io->signals, (dtor_cb_t) signal_decref, false);
+		if (ret)
+			return ret;
+	}
+
 	io->state = STATE_DESTROYED;
+
+	return 0;
+}
+
+int io_check(struct io *io)
+{
+	assert(io->state != STATE_DESTROYED);
+
+	for (size_t i = 0; i < list_length(io->signals); i++) {
+		struct signal *sig = (struct signal *) list_at(io->signals, i);
+
+		if (sig->type == SIGNAL_TYPE_AUTO) {
+			if (io_type(io)->flags & IO_AUTO_DETECT_FORMAT)
+				continue;
+
+			return -1;
+		}
+	}
+
+	io->state = STATE_CHECKED;
 
 	return 0;
 }
@@ -306,17 +344,16 @@ int io_open(struct io *io, const char *uri)
 {
 	int ret;
 
-	assert(io->state == STATE_INITIALIZED);
+	assert(io->state == STATE_CHECKED);
 
-	ret = io->_vt->open
-		? io->_vt->open(io, uri)
+	ret = io_type(io)->open
+		? io_type(io)->open(io, uri)
 		: io_stream_open(io, uri);
 	if (ret)
 		return ret;
 
+	io->header_printed = false;
 	io->state = STATE_OPENED;
-
-	io_header(io);
 
 	return 0;
 }
@@ -329,8 +366,8 @@ int io_close(struct io *io)
 
 	io_footer(io);
 
-	ret = io->_vt->close
-		? io->_vt->close(io)
+	ret = io_type(io)->close
+		? io_type(io)->close(io)
 	 	: io_stream_close(io);
 	if (ret)
 		return ret;
@@ -344,8 +381,8 @@ int io_flush(struct io *io)
 {
 	assert(io->state == STATE_OPENED);
 
-	return io->_vt->flush
-		? io->_vt->flush(io)
+	return io_type(io)->flush
+		? io_type(io)->flush(io)
 		: io_stream_flush(io);
 }
 
@@ -353,8 +390,8 @@ int io_eof(struct io *io)
 {
 	assert(io->state == STATE_OPENED);
 
-	return io->_vt->eof
-		? io->_vt->eof(io)
+	return io_type(io)->eof
+		? io_type(io)->eof(io)
 		: io_stream_eof(io);
 }
 
@@ -362,8 +399,8 @@ void io_rewind(struct io *io)
 {
 	assert(io->state == STATE_OPENED);
 
-	if (io->_vt->rewind)
-		io->_vt->rewind(io);
+	if (io_type(io)->rewind)
+		io_type(io)->rewind(io);
 	else
 		io_stream_rewind(io);
 }
@@ -372,25 +409,32 @@ int io_fd(struct io *io)
 {
 	assert(io->state == STATE_OPENED);
 
-	return io->_vt->fd
-		? io->_vt->fd(io)
+	return io_type(io)->fd
+		? io_type(io)->fd(io)
 		: io_stream_fd(io);
 }
 
-void io_header(struct io *io)
+const struct format_type * io_type(struct io *io)
+{
+	return io->_vt;
+}
+
+void io_header(struct io *io, const struct sample *smp)
 {
 	assert(io->state == STATE_OPENED);
 
-	if (io->_vt->header)
-		io->_vt->header(io);
+	if (io_type(io)->header)
+		io_type(io)->header(io, smp);
+
+	io->header_printed = true;
 }
 
 void io_footer(struct io *io)
 {
 	assert(io->state == STATE_OPENED);
 
-	if (io->_vt->footer)
-		io->_vt->footer(io);
+	if (io_type(io)->footer)
+		io_type(io)->footer(io);
 }
 
 int io_print(struct io *io, struct sample *smps[], unsigned cnt)
@@ -399,11 +443,14 @@ int io_print(struct io *io, struct sample *smps[], unsigned cnt)
 
 	assert(io->state == STATE_OPENED);
 
+	if (!io->header_printed && cnt > 0)
+		io_header(io, smps[0]);
+
 	if (io->flags & IO_NEWLINES)
 		ret = io_print_lines(io, smps, cnt);
-	else if (io->_vt->print)
-		ret = io->_vt->print(io, smps, cnt);
-	else if (io->_vt->sprint) {
+	else if (io_type(io)->print)
+		ret = io_type(io)->print(io, smps, cnt);
+	else if (io_type(io)->sprint) {
 		FILE *f = io_stream_output(io);
 		size_t wbytes;
 
@@ -428,9 +475,9 @@ int io_scan(struct io *io, struct sample *smps[], unsigned cnt)
 
 	if (io->flags & IO_NEWLINES)
 		ret = io_scan_lines(io, smps, cnt);
-	else if (io->_vt->scan)
-		ret = io->_vt->scan(io, smps, cnt);
-	else if (io->_vt->sscan) {
+	else if (io_type(io)->scan)
+		ret = io_type(io)->scan(io, smps, cnt);
+	else if (io_type(io)->sscan) {
 		FILE *f = io_stream_input(io);
 		size_t bytes, rbytes;
 
@@ -462,16 +509,16 @@ FILE * io_stream_input(struct io *io) {
 		: io->in.stream.std;
 }
 
-int io_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
+int io_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
-	struct format_type *fmt = io->_vt;
+	assert(io->state == STATE_CHECKED || io->state == STATE_OPENED);
 
-	return fmt->sscan ? fmt->sscan(io, buf, len, rbytes, smps, cnt) : -1;
+	return io_type(io)->sscan ? io_type(io)->sscan(io, buf, len, rbytes, smps, cnt) : -1;
 }
 
 int io_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
 {
-	struct format_type *fmt = io->_vt;
+	assert(io->state == STATE_CHECKED || io->state == STATE_OPENED);
 
-	return fmt->sprint ? fmt->sprint(io, buf, len, wbytes, smps, cnt) : -1;
+	return io_type(io)->sprint ? io_type(io)->sprint(io, buf, len, wbytes, smps, cnt) : -1;
 }

@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <string.h>
 #include <signal.h>
 #include <pthread.h>
 #include <iostream>
@@ -205,7 +206,7 @@ static void * recv_loop(void *ctx)
 	/* Initialize memory */
 	unsigned pool_size = node_type(node)->pool_size ? node_type(node)->pool_size : LOG2_CEIL(node->in.vectorize);
 
-	ret = pool_init(&recvv.pool, pool_size, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), node_memory_type(node, &memory_hugepage));
+	ret = pool_init(&recvv.pool, pool_size, SAMPLE_LENGTH(list_length(&node->signals)), node_memory_type(node, &memory_hugepage));
 
 	if (ret < 0)
 		error("Failed to allocate memory for receive pool.");
@@ -222,16 +223,15 @@ static void * recv_loop(void *ctx)
 		recv = node_read(node, smps, allocated, &release);
 		if (recv < 0)
 			warn("Failed to receive samples from node %s: reason=%d", node_name(node), recv);
+		else {
+			io_print(&io, smps, recv);
 
-
-		io_print(&io, smps, recv);
+			cnt += recv;
+			if (recvv.limit > 0 && cnt >= recvv.limit)
+				goto leave;
+		}
 
 		sample_decref_many(smps, release);
-
-		cnt += recv;
-		if (recvv.limit > 0 && cnt >= recvv.limit)
-			goto leave;
-
 		pthread_testcancel();
 	}
 
@@ -343,9 +343,13 @@ check:		if (optarg == endptr)
 	if (!fmt)
 		error("Invalid format: %s", format);
 
-	ret = io_init(&io, fmt, NULL, SAMPLE_HAS_ALL);
+	ret = io_init_auto(&io, fmt, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
 	if (ret)
 		error("Failed to initialize IO");
+
+	ret = io_check(&io);
+	if (ret)
+		error("Failed to validate IO configuration");
 
 	ret = io_open(&io, NULL);
 	if (ret)
@@ -358,8 +362,13 @@ check:		if (optarg == endptr)
 #ifdef Libwebsockets_FOUND
 	/* Only start web subsystem if villas-pipe is used with a websocket node */
 	if (node->_vt->start == websocket_start) {
-		web_start(&sn.web);
-		api_start(&sn.api);
+		ret = web_start(&sn.web);
+		if (ret)
+			error("Failed to start web subsystem");
+
+		ret = api_start(&sn.api);
+		if (ret)
+			error("Failed to start API subsystem");
 	}
 #endif /* Libwebsockets_FOUND */
 
@@ -368,7 +377,7 @@ check:		if (optarg == endptr)
 
 	ret = node_type_start(node->_vt, &sn);
 	if (ret)
-		error("Failed to intialize node type: %s", node_type_name(node->_vt));
+		error("Failed to intialize node type %s: reason=%d", node_type_name(node->_vt), ret);
 
 	ret = node_check(node);
 	if (ret)

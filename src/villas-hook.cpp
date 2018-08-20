@@ -200,9 +200,13 @@ check:		if (optarg == endptr)
 	if (!ft)
 		error("Unknown IO format '%s'", format);
 
-	ret = io_init(&io, ft, NULL, SAMPLE_HAS_ALL);
+	ret = io_init_auto(&io, ft, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
 	if (ret)
 		error("Failed to initialize IO");
+
+	ret = io_check(&io);
+	if (ret)
+		error("Failed to validate IO configuration");
 
 	ret = io_open(&io, NULL);
 	if (ret)

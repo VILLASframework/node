@@ -41,12 +41,16 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 
 	if (nodes) {
 		node = strtok(cpy, ".");
-		if (!node)
+		if (!node) {
+			warn("Missing node name");
 			goto invalid_format;
+		}
 
 		me->node = list_lookup(nodes, node);
-		if (!me->node)
+		if (!me->node) {
+			warn("Unknown node %s", node);
 			goto invalid_format;
+		}
 
 		type = strtok(NULL, ".[");
 		if (!type)
@@ -65,16 +69,22 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 		me->length = 1;
 
 		field = strtok(NULL, ".");
-		if (!field)
+		if (!field) {
+			warn("Missing stats type");
 			goto invalid_format;
+		}
 
 		subfield = strtok(NULL, ".");
-		if (!subfield)
+		if (!subfield) {
+			warn("Missing stats sub-type");
 			goto invalid_format;
+		}
 
 		id = stats_lookup_id(field);
-		if (id < 0)
+		if (id < 0) {
+			warn("Invalid stats type");
 			goto invalid_format;
+		}
 
 		me->stats.id = id;
 
@@ -92,38 +102,48 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 			me->stats.type = MAPPING_STATS_TYPE_VAR;
 		else if (!strcmp(subfield, "stddev"))
 			me->stats.type = MAPPING_STATS_TYPE_STDDEV;
-		else
+		else {
+			warn("Invalid stats sub-type");
 			goto invalid_format;
+		}
 	}
 	else if (!strcmp(type, "hdr")) {
 		me->type = MAPPING_TYPE_HEADER;
 		me->length = 1;
 
 		field = strtok(NULL, ".");
-		if (!field)
+		if (!field) {
+			warn("Missing header type");
 			goto invalid_format;
+		}
 
 		if      (!strcmp(field, "sequence"))
 			me->header.type = MAPPING_HEADER_TYPE_SEQUENCE;
 		else if (!strcmp(field, "length"))
 			me->header.type = MAPPING_HEADER_TYPE_LENGTH;
-		else
+		else {
+			warn("Invalid header type");
 			goto invalid_format;
+		}
 	}
 	else if (!strcmp(type, "ts")) {
 		me->type = MAPPING_TYPE_TIMESTAMP;
 		me->length = 2;
 
 		field = strtok(NULL, ".");
-		if (!field)
+		if (!field) {
+			warn("Missing timestamp type");
 			goto invalid_format;
+		}
 
 		if      (!strcmp(field, "origin"))
 			me->timestamp.type = MAPPING_TIMESTAMP_TYPE_ORIGIN;
 		else if (!strcmp(field, "received"))
 			me->timestamp.type = MAPPING_TIMESTAMP_TYPE_RECEIVED;
-		else
+		else {
+			warn("Invalid timestamp type");
 			goto invalid_format;
+		}
 	}
 	else if (!strcmp(type, "data")) {
 		char *first_str, *last_str;
@@ -134,31 +154,36 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 		first_str = strtok(NULL, "-]");
 		if (first_str) {
 			if (me->node)
-				first = list_lookup_index(&me->node->in.signals, first_str);
+				first = list_lookup_index(&me->node->signals, first_str);
 
 			if (first < 0) {
 				char *endptr;
 				first = strtoul(first_str, &endptr, 10);
-				if (endptr != first_str + strlen(first_str))
+				if (endptr != first_str + strlen(first_str)) {
+					warn("Failed to parse data range");
 					goto invalid_format;
+				}
 			}
 		}
 		else {
+			/* Map all signals */
 			me->data.offset = 0;
-			me->length = 0;
+			me->length = me->node ? list_length(&me->node->signals) : 0;
 			goto end;
 		}
 
 		last_str = strtok(NULL, "]");
 		if (last_str) {
 			if (me->node)
-				last = list_lookup_index(&me->node->in.signals, last_str);
+				last = list_lookup_index(&me->node->signals, last_str);
 
 			if (last < 0) {
 				char *endptr;
 				last = strtoul(last_str, &endptr, 10);
-				if (endptr != last_str + strlen(last_str))
+				if (endptr != last_str + strlen(last_str)) {
+					warn("Failed to parse data range");
 					goto invalid_format;
+				}
 			}
 		}
 		else
@@ -189,11 +214,11 @@ invalid_format:
 	return -1;
 }
 
-int mapping_parse(struct mapping_entry *me, json_t *j, struct list *nodes)
+int mapping_parse(struct mapping_entry *me, json_t *cfg, struct list *nodes)
 {
 	const char *str;
 
-	str = json_string_value(j);
+	str = json_string_value(cfg);
 	if (!str)
 		return -1;
 
@@ -250,17 +275,13 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 	if (len + off > remapped->capacity)
 		return -1;
 
-	if (len + off > remapped->length)
-		remapped->length = len + off;
-
 	switch (me->type) {
 		case MAPPING_TYPE_STATS: {
 			const struct hist *h = &s->histograms[me->stats.id];
 
 			switch (me->stats.type) {
 				case MAPPING_STATS_TYPE_TOTAL:
-					sample_set_data_format(remapped, off, SAMPLE_DATA_FORMAT_INT);
-					remapped->data[off++].f = h->total;
+					remapped->data[off++].i = h->total;
 					break;
 				case MAPPING_STATS_TYPE_LAST:
 					remapped->data[off++].f = h->last;
@@ -299,27 +320,19 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 					return -1;
 			}
 
-			sample_set_data_format(remapped, off,   SAMPLE_DATA_FORMAT_INT);
-			sample_set_data_format(remapped, off+1, SAMPLE_DATA_FORMAT_INT);
-
 			remapped->data[off++].i = ts->tv_sec;
 			remapped->data[off++].i = ts->tv_nsec;
 
 			break;
 		}
 
-			sample_set_data_format(remapped, off, SAMPLE_DATA_FORMAT_INT);
 		case MAPPING_TYPE_HEADER:
-
 			switch (me->header.type) {
 				case MAPPING_HEADER_TYPE_LENGTH:
 					remapped->data[off++].i = original->length;
 					break;
 				case MAPPING_HEADER_TYPE_SEQUENCE:
 					remapped->data[off++].i = original->sequence;
-					break;
-				case MAPPING_HDR_FORMAT:
-					remapped->data[off++].i = original->format;
 					break;
 				default:
 					return -1;
@@ -329,14 +342,10 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 
 		case MAPPING_TYPE_DATA:
 			for (int j = me->data.offset; j < len + me->data.offset; j++) {
-				if (j >= original->length) {
-					sample_set_data_format(remapped, off, SAMPLE_DATA_FORMAT_FLOAT);
+				if (j >= original->length)
 					remapped->data[off++].f = 0;
-				}
-				else {
-					sample_set_data_format(remapped, off, sample_get_data_format(original, j));
+				else
 					remapped->data[off++] = original->data[j];
-				}
 			}
 
 			break;
@@ -348,10 +357,6 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 int mapping_remap(const struct list *m, struct sample *remapped, const struct sample *original, const struct stats *s)
 {
 	int ret;
-
-	/* We copy all the header fields */
-	remapped->sequence = original->sequence;
-	remapped->ts       = original->ts;
 
 	for (size_t i = 0; i < list_length(m); i++) {
 		struct mapping_entry *me = (struct mapping_entry *) list_at(m, i);
@@ -371,7 +376,7 @@ int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
 	assert(me->length == 0 || index < me->length);
 
 	if (me->node)
-		strcatf(str, "%s.", node_name(me->node));
+		strcatf(str, "%s.", node_name_short(me->node));
 
 	switch (me->type) {
 		case MAPPING_TYPE_STATS:

@@ -29,6 +29,7 @@ extern "C" {
 /* Forward declaration */
 struct msg;
 struct sample;
+struct list;
 
 /** Convert msg from network to host byteorder */
 void msg_ntoh(struct msg *m);
@@ -53,10 +54,10 @@ void msg_hdr_ntoh(struct msg *m);
 int msg_verify(struct msg *m);
 
 /** Copy fields from \p msg into \p smp. */
-int msg_to_sample(struct msg *msg, struct sample *smp);
+int msg_to_sample(struct msg *msg, struct sample *smp, struct list *signals);
 
 /** Copy fields form \p smp into \p msg. */
-int msg_from_sample(struct msg *msg, struct sample *smp);
+int msg_from_sample(struct msg *msg, struct sample *smp, struct list *signals);
 
 #ifdef __cplusplus
 }
