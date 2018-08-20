@@ -38,6 +38,57 @@
 
 static struct list *nodes; /** The global list of nodes */
 
+static void stats_init_signals(struct node *n)
+{
+	struct stats_desc *desc;
+	struct signal *sig;
+
+	for (int i = 0; i < STATS_COUNT; i++) {
+		desc = &stats_metrics[i];
+
+		/* Total */
+		sig = alloc(sizeof(struct signal));
+		sig->name = strf("%s.%s", desc->name, "total");
+		sig->type = SIGNAL_TYPE_INTEGER;
+		list_push(&n->signals, sig);
+
+		/* Last */
+		sig = alloc(sizeof(struct signal));
+		sig->name = strf("%s.%s", desc->name, "last");
+		sig->unit = strdup(desc->unit);
+		sig->type = SIGNAL_TYPE_FLOAT;
+		list_push(&n->signals, sig);
+
+		/* Highest */
+		sig = alloc(sizeof(struct signal));
+		sig->name = strf("%s.%s", desc->name, "highest");
+		sig->unit = strdup(desc->unit);
+		sig->type = SIGNAL_TYPE_FLOAT;
+		list_push(&n->signals, sig);
+
+		/* Lowest */
+		sig = alloc(sizeof(struct signal));
+		sig->name = strf("%s.%s", desc->name, "lowest");
+		sig->unit = strdup(desc->unit);
+		sig->type = SIGNAL_TYPE_FLOAT;
+		list_push(&n->signals, sig);
+
+		/* Mean */
+		sig = alloc(sizeof(struct signal));
+		sig->name = strf("%s.%s", desc->name, "mean");
+		sig->unit = strdup(desc->unit);
+		sig->type = SIGNAL_TYPE_FLOAT;
+		list_push(&n->signals, sig);
+
+		/* Variance */
+		sig = alloc(sizeof(struct signal));
+		sig->name = strf("%s.%s", desc->name, "var");
+		sig->unit = strf("%s^2", desc->unit); // variance has squared unit of variable
+		sig->type = SIGNAL_TYPE_FLOAT;
+		list_push(&n->signals, sig);
+	}
+}
+
 int stats_node_type_start(struct super_node *sn)
 {
 	if (!sn)
@@ -104,7 +155,7 @@ int stats_node_parse(struct node *n, json_t *cfg)
 
 	s->node_str = strdup(node);
 
-	n->samplelen = STATS_COUNT * STATS_METRICS;
+	stats_init_signals(n);
 
 	return 0;
 }
@@ -133,7 +184,7 @@ int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigne
 	task_wait(&sn->task);
 
 	smps[0]->length = MIN(STATS_COUNT * 6, smps[0]->capacity);
-	smps[0]->flags = SAMPLE_HAS_VALUES;
+	smps[0]->flags = SAMPLE_HAS_DATA;
 
 	for (int i = 0; i < 6 && (i+1)*STATS_METRICS <= smps[0]->length; i++) {
 		int tot = hist_total(&s->histograms[i]);
@@ -162,6 +213,7 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_NODE,
 	.node		= {
 		.vectorize	= 1,
+		.flags		= NODE_TYPE_PROVIDES_SIGNALS,
 		.size		= sizeof(struct stats_node),
 		.type.start	= stats_node_type_start,
 		.parse		= stats_node_parse,
