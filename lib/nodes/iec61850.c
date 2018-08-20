@@ -28,6 +28,7 @@
 
 #include <villas/nodes/iec61850_sv.h>
 #include <villas/plugin.h>
+#include <villas/signal.h>
 
 #define CONFIG_SV_DEFAULT_APPID 0x4000
 #define CONFIG_SV_DEFAULT_DST_ADDRESS CONFIG_GOOSE_DEFAULT_DST_ADDRESS
@@ -35,27 +36,27 @@
 #define CONFIG_SV_DEFAULT_VLAN_ID 0
 
 const struct iec61850_type_descriptor type_descriptors[] = {
-	/* name,              fmt, type,                        size, supported */
-	{ "boolean",          'b', IEC61850_TYPE_BOOLEAN,          1, false, false },
-	{ "int8",             'o', IEC61850_TYPE_INT8,             1, false, false },
-	{ "int16",            'w', IEC61850_TYPE_INT16,            2, false, false },
-	{ "int32",            'd', IEC61850_TYPE_INT32,            4, false, false },
-	{ "int64",            'g', IEC61850_TYPE_INT64,            8, false, false },
-	{ "int8u",            'O', IEC61850_TYPE_INT8U,            1, false, false },
-	{ "int16u",           'W', IEC61850_TYPE_INT16U,           2, false, false },
-	{ "int32u",           'D', IEC61850_TYPE_INT32U,           4, false, false },
-	{ "int64u",           'G', IEC61850_TYPE_INT64U,           8, false, false },
-	{ "float32",          'f', IEC61850_TYPE_FLOAT32,          4, false, false },
-	{ "float64",          'F', IEC61850_TYPE_FLOAT64,          8, false, false },
-	{ "enumerated",       'e', IEC61850_TYPE_ENUMERATED,       4, false, false },
-	{ "coded_enum",       'c', IEC61850_TYPE_CODED_ENUM,       4, false, false },
-	{ "octet_string",     's', IEC61850_TYPE_OCTET_STRING,    20, false, false },
-	{ "visible_string",   'S', IEC61850_TYPE_VISIBLE_STRING,  35, false, false },
-	{ "objectname",       'n', IEC61850_TYPE_OBJECTNAME,      20, false, false },
-	{ "objectreference",  'r', IEC61850_TYPE_OBJECTREFERENCE, 20, false, false },
-	{ "timestamp",        't', IEC61850_TYPE_TIMESTAMP,        8, false, false },
-	{ "entrytime",        'e', IEC61850_TYPE_ENTRYTIME,        6, false, false },
-	{ "bitstring",        'B', IEC61850_TYPE_BITSTRING,        4, false, false }
+	/* name,              type,                             format,               size, supported */
+	{ "boolean",          IEC61850_TYPE_BOOLEAN,		SIGNAL_TYPE_BOOLEAN,	 1, false, false },
+	{ "int8",             IEC61850_TYPE_INT8,		SIGNAL_TYPE_INTEGER,	 1, false, false },
+	{ "int16",            IEC61850_TYPE_INT16,		SIGNAL_TYPE_INTEGER,	 2, false, false },
+	{ "int32",            IEC61850_TYPE_INT32,		SIGNAL_TYPE_INTEGER,	 4, false, false },
+	{ "int64",            IEC61850_TYPE_INT64,		SIGNAL_TYPE_INTEGER,	 8, false, false },
+	{ "int8u",            IEC61850_TYPE_INT8U,		SIGNAL_TYPE_INTEGER,	 1, false, false },
+	{ "int16u",           IEC61850_TYPE_INT16U,		SIGNAL_TYPE_INTEGER,	 2, false, false },
+	{ "int32u",           IEC61850_TYPE_INT32U,		SIGNAL_TYPE_INTEGER,	 4, false, false },
+	{ "int64u",           IEC61850_TYPE_INT64U,		SIGNAL_TYPE_INTEGER,	 8, false, false },
+	{ "float32",          IEC61850_TYPE_FLOAT32,		SIGNAL_TYPE_FLOAT,	 4, false, false },
+	{ "float64",          IEC61850_TYPE_FLOAT64,		SIGNAL_TYPE_FLOAT,	 8, false, false },
+	{ "enumerated",       IEC61850_TYPE_ENUMERATED,		SIGNAL_TYPE_INVALID,	 4, false, false },
+	{ "coded_enum",       IEC61850_TYPE_CODED_ENUM,		SIGNAL_TYPE_INVALID,	 4, false, false },
+	{ "octet_string",     IEC61850_TYPE_OCTET_STRING,	SIGNAL_TYPE_INVALID,	20, false, false },
+	{ "visible_string",   IEC61850_TYPE_VISIBLE_STRING,	SIGNAL_TYPE_INVALID,	35, false, false },
+	{ "objectname",       IEC61850_TYPE_OBJECTNAME,		SIGNAL_TYPE_INVALID,	20, false, false },
+	{ "objectreference",  IEC61850_TYPE_OBJECTREFERENCE,	SIGNAL_TYPE_INVALID,	20, false, false },
+	{ "timestamp",        IEC61850_TYPE_TIMESTAMP,		SIGNAL_TYPE_INVALID,	 8, false, false },
+	{ "entrytime",        IEC61850_TYPE_ENTRYTIME,		SIGNAL_TYPE_INVALID,	 6, false, false },
+	{ "bitstring",        IEC61850_TYPE_BITSTRING,		SIGNAL_TYPE_INVALID,	 4, false, false }
 };
 
 /** Each network interface needs a separate receiver */
@@ -86,60 +87,69 @@ static void * iec61850_thread(void *ctx)
 	return NULL;
 }
 
-const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name, char fmt)
+const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name)
 {
-	/* Either name or fmt argument must be given */
-	if ((fmt && name) || (!fmt && !name))
-		return NULL;
-
 	for (unsigned i = 0; i < ARRAY_LEN(type_descriptors); i++) {
-		if ((name && !strcmp(name, type_descriptors[i].name)) ||
-		    (fmt  && fmt == type_descriptors[i].format))
+		if (!strcmp(name, type_descriptors[i].name))
 			return &type_descriptors[i];
 	}
 
 	return NULL;
 }
 
-int iec61850_parse_mapping(json_t *json_mapping, struct list *mapping)
+int iec61850_parse_signals(json_t *json_signals, struct list *signals, struct list *node_signals)
 {
-	int total_size = 0;
+	int ret, total_size = 0;
+	const char *iec_type;
 
-	list_init(mapping);
+	ret = list_init(signals);
+	if (ret)
+		return ret;
 
-	if (json_is_array(json_mapping)) {
-		json_t *json_field;
-		size_t i;
+	json_t *json_signal;
+	size_t i;
+	json_array_foreach(json_signals, i, json_signal) {
+		const struct iec61850_type_descriptor *td;
+		struct signal *sig;
 
-		json_array_foreach(json_mapping, i, json_field) {
-			const struct iec61850_type_descriptor *m;
-			const char *type = json_string_value(json_field);
+		json_unpack(json_signal, "{ s?: s }",
+			"iec_type", &iec_type
+		);
 
-			if (!json_is_string(json_field))
+		/* Try to deduct the IEC 61850 data type from VILLAS signal format */
+		if (!iec_type) {
+			if (!node_signals)
 				return -1;
 
-			m = iec61850_lookup_type(type, 0);
-			if (!m)
+			sig = list_at(node_signals, i);
+			if (!sig)
 				return -1;
 
-			list_push(mapping, (void *) m);
+			switch (sig->type) {
+				case SIGNAL_TYPE_BOOLEAN:
+					iec_type = "boolean";
+					break;
 
-			total_size += m->size;
+				case SIGNAL_TYPE_FLOAT:
+					iec_type = "float64";
+					break;
+
+				case SIGNAL_TYPE_INTEGER:
+					iec_type = "int64";
+					break;
+
+				default:
+					return -1;
+			}
 		}
-	}
-	else if (json_is_string(json_mapping)) {
-		const struct iec61850_type_descriptor *m;
-		const char *format_str = json_string_value(json_mapping);
 
-		for (int i = 0; format_str[i]; i++) {
-			m = iec61850_lookup_type(NULL, format_str[i]);
-			if (!m)
-				return -1;
+		td = iec61850_lookup_type(iec_type);
+		if (!td)
+			return -1;
 
-			list_push(mapping, (void *) m);
+		list_push(signals, (void *) td);
 
-			total_size += m->size;
-		}
+		total_size += td->size;
 	}
 
 	return total_size;
@@ -193,8 +203,13 @@ int iec61850_type_stop()
 int iec61850_receiver_start(struct iec61850_receiver *r)
 {
 	switch (r->type) {
-		case IEC61850_RECEIVER_GOOSE:	r->socket = GooseReceiver_startThreadless(r->goose); break;
-		case IEC61850_RECEIVER_SV:	r->socket = SVReceiver_startThreadless(r->sv); break;
+		case IEC61850_RECEIVER_GOOSE:
+			r->socket = GooseReceiver_startThreadless(r->goose);
+			break;
+
+		case IEC61850_RECEIVER_SV:
+			r->socket = SVReceiver_startThreadless(r->sv);
+			break;
 	}
 
 	EthernetHandleSet_addSocket(hset, r->socket);
@@ -207,8 +222,13 @@ int iec61850_receiver_stop(struct iec61850_receiver *r)
 	EthernetHandleSet_removeSocket(hset, r->socket);
 
 	switch (r->type) {
-		case IEC61850_RECEIVER_GOOSE:	GooseReceiver_stopThreadless(r->goose); break;
-		case IEC61850_RECEIVER_SV:	SVReceiver_stopThreadless(r->sv); break;
+		case IEC61850_RECEIVER_GOOSE:
+			GooseReceiver_stopThreadless(r->goose);
+			break;
+
+		case IEC61850_RECEIVER_SV:
+			SVReceiver_stopThreadless(r->sv);
+			break;
 	}
 
 	return 0;
@@ -217,8 +237,13 @@ int iec61850_receiver_stop(struct iec61850_receiver *r)
 int iec61850_receiver_destroy(struct iec61850_receiver *r)
 {
 	switch (r->type) {
-		case IEC61850_RECEIVER_GOOSE:	GooseReceiver_destroy(r->goose); break;
-		case IEC61850_RECEIVER_SV:	SVReceiver_destroy(r->sv); break;
+		case IEC61850_RECEIVER_GOOSE:
+			GooseReceiver_destroy(r->goose);
+			break;
+
+		case IEC61850_RECEIVER_SV:
+			SVReceiver_destroy(r->sv);
+			break;
 	}
 
 	free(r->interface);

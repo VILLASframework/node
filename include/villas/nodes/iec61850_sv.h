@@ -58,9 +58,9 @@ struct iec61850_sv {
 		struct queue_signalled queue;
 		struct pool pool;
 
-		struct list mapping;		/**< Mappings of type struct iec61850_type_descriptor */
+		struct list signals;		/**< Mappings of type struct iec61850_type_descriptor */
 		int total_size;
-	} subscriber;
+	} in;
 
 	struct {
 		bool enabled;
@@ -76,9 +76,9 @@ struct iec61850_sv {
 		int smprate;
 		int confrev;
 
-		struct list mapping;		/**< Mappings of type struct iec61850_type_descriptor */
+		struct list signals;		/**< Mappings of type struct iec61850_type_descriptor */
 		int total_size;
-	} publisher;
+	} out;
 };
 
 /** @see node_type::type_start */

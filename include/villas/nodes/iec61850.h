@@ -43,6 +43,7 @@
 
 #include <villas/node.h>
 #include <villas/list.h>
+#include <villas/signal.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -76,8 +77,8 @@ enum iec61850_type {
 
 struct iec61850_type_descriptor {
 	const char *name;
-	char format;
 	enum iec61850_type type;
+	enum signal_type format;
 	unsigned size;
 	bool publisher;
 	bool subscriber;
@@ -105,9 +106,9 @@ int iec61850_type_start(struct super_node *sn);
 /** @see node_type::type_stop */
 int iec61850_type_stop();
 
-const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name, char fmt);
+const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name);
 
-int iec61850_parse_mapping(json_t *json_mapping, struct list *mapping);
+int iec61850_parse_signals(json_t *json_signals, struct list *signals, struct list *node_signals);
 
 struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver_type t, const char *intf);
 

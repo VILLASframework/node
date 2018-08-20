@@ -45,11 +45,13 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	const char* svid = SVSubscriber_ASDU_getSvId(asdu);
 	int smpcnt       = SVSubscriber_ASDU_getSmpCnt(asdu);
 	int confrev      = SVSubscriber_ASDU_getConfRev(asdu);
+	int sz;
 
 	debug(10, "Received SV: svid=%s, smpcnt=%i, confrev=%u", svid, smpcnt, confrev);
 
-	if (SVSubscriber_ASDU_getDataSize(asdu) < i->subscriber.total_size) {
-		warn("Received truncated ASDU: size=%d, expected=%d", SVSubscriber_ASDU_getDataSize(asdu), i->subscriber.total_size);
+	sz = SVSubscriber_ASDU_getDataSize(asdu);
+	if (sz < i->in.total_size) {
+		warn("Received truncated ASDU: size=%d, expected=%d", SVSubscriber_ASDU_getDataSize(asdu), i->in.total_size);
 		return;
 	}
 
@@ -63,45 +65,31 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	 * data block of the SV message before accessing the data.
 	 */
 
-	smp = sample_alloc(&i->subscriber.pool);
+	smp = sample_alloc(&i->in.pool);
 	if (!smp) {
 		warn("Pool underrun in subscriber of %s", node_name(n));
 		return;
 	}
 
 	smp->sequence = smpcnt;
-
-	smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_VALUES;
+	smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
 	smp->length = 0;
+	smp->signals = &n->signals;
 
 	if (SVSubscriber_ASDU_hasRefrTm(asdu)) {
 		uint64_t refrtm = SVSubscriber_ASDU_getRefrTmAsMs(asdu);
 
 		smp->ts.origin.tv_sec = refrtm / 1000;
 		smp->ts.origin.tv_nsec = (refrtm % 1000) * 1000000;
-		smp->flags |= SAMPLE_HAS_ORIGIN;
+		smp->flags |= SAMPLE_HAS_TS_ORIGIN;
 	}
 
 	unsigned offset = 0;
-	for (size_t j = 0; j < list_length(&i->subscriber.mapping); j++) {
-		struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) list_at(&i->subscriber.mapping, j);
-
-		switch (td->type) {
-			case IEC61850_TYPE_INT8:
-			case IEC61850_TYPE_INT16:
-			case IEC61850_TYPE_INT32:
-			case IEC61850_TYPE_INT8U:
-			case IEC61850_TYPE_INT16U:
-			case IEC61850_TYPE_INT32U:
-				sample_set_data_format(smp, j, SAMPLE_DATA_FORMAT_INT);
-				break;
-
-			case IEC61850_TYPE_FLOAT32:
-			case IEC61850_TYPE_FLOAT64:
-				sample_set_data_format(smp, j, SAMPLE_DATA_FORMAT_FLOAT);
-				break;
-			default: { }
-		}
+	for (size_t j = 0; j < list_length(&i->in.signals); j++) {
+		struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) list_at(&i->in.signals, j);
+		struct signal *sig = (struct signal *) list_at_safe(smp->signals, j);
+		if (!sig)
+			continue;
 
 		switch (td->type) {
 			case IEC61850_TYPE_INT8:    smp->data[j].i = SVSubscriber_ASDU_getINT8(asdu,    offset); break;
@@ -120,7 +108,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 		smp->length++;
 	}
 
-	queue_signalled_push(&i->subscriber.queue, smp);
+	queue_signalled_push(&i->in.queue, smp);
 }
 
 int iec61850_sv_parse(struct node *n, json_t *json)
@@ -133,19 +121,19 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 	const char *svid = NULL;
 	const char *smpmod = NULL;
 
-	json_t *json_sub = NULL;
-	json_t *json_pub = NULL;
-	json_t *json_mapping = NULL;
+	json_t *json_in = NULL;
+	json_t *json_out = NULL;
+	json_t *json_signals = NULL;
 	json_error_t err;
 
 	/* Default values */
-	i->publisher.enabled = false;
-	i->subscriber.enabled = false;
-	i->publisher.smpmod = -1; /* do not set smpmod */
-	i->publisher.smprate = -1; /* do not set smpmod */
-	i->publisher.confrev = 1;
-	i->publisher.vlan_priority = CONFIG_SV_DEFAULT_PRIORITY;
-	i->publisher.vlan_id = CONFIG_SV_DEFAULT_VLAN_ID;
+	i->out.enabled = false;
+	i->in.enabled = false;
+	i->out.smpmod = -1; /* do not set smpmod */
+	i->out.smprate = -1; /* do not set smpmod */
+	i->out.confrev = 1;
+	i->out.vlan_priority = CONFIG_SV_DEFAULT_PRIORITY;
+	i->out.vlan_id = CONFIG_SV_DEFAULT_VLAN_ID;
 
 	i->app_id = CONFIG_SV_DEFAULT_APPID;
 
@@ -153,8 +141,8 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 	memcpy(i->dst_address.ether_addr_octet, tmp, sizeof(i->dst_address.ether_addr_octet));
 
 	ret = json_unpack_ex(json, &err, 0, "{ s?: o, s?: o, s: s, s?: i, s?: s }",
-		"publish", &json_pub,
-		"subscribe", &json_sub,
+		"out", &json_out,
+		"in", &json_in,
 		"interface", &interface,
 		"app_id", &i->app_id,
 		"dst_address", &dst_address
@@ -174,55 +162,56 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 #endif
 	}
 
-	if (json_pub) {
-		i->publisher.enabled = true;
+	if (json_out) {
+		i->out.enabled = true;
 
-		ret = json_unpack_ex(json_pub, &err, 0, "{ s: o, s: s, s?: i, s?: s, s?: i, s?: i, s?: i }",
-			"fields", &json_mapping,
+		ret = json_unpack_ex(json_out, &err, 0, "{ s: o, s: s, s?: i, s?: s, s?: i, s?: i, s?: i }",
+			"signals", &json_signals,
 			"svid", &svid,
-			"confrev", &i->publisher.confrev,
+			"confrev", &i->out.confrev,
 			"smpmod", &smpmod,
-			"smprate", &i->publisher.smprate,
-			"vlan_id", &i->publisher.vlan_id,
-			"vlan_priority", &i->publisher.vlan_priority
+			"smprate", &i->out.smprate,
+			"vlan_id", &i->out.vlan_id,
+			"vlan_priority", &i->out.vlan_priority
 		);
 		if (ret)
 			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 		if (smpmod) {
 			if      (!strcmp(smpmod, "per_nominal_period"))
-				i->publisher.smpmod = IEC61850_SV_SMPMOD_PER_NOMINAL_PERIOD;
+				i->out.smpmod = IEC61850_SV_SMPMOD_PER_NOMINAL_PERIOD;
 			else if (!strcmp(smpmod, "samples_per_second"))
-				i->publisher.smpmod = IEC61850_SV_SMPMOD_SAMPLES_PER_SECOND;
+				i->out.smpmod = IEC61850_SV_SMPMOD_SAMPLES_PER_SECOND;
 			else if (!strcmp(smpmod, "seconds_per_sample"))
-				i->publisher.smpmod = IEC61850_SV_SMPMOD_SECONDS_PER_SAMPLE;
+				i->out.smpmod = IEC61850_SV_SMPMOD_SECONDS_PER_SAMPLE;
 			else
 				error("Invalid value '%s' for setting 'smpmod'", smpmod);
 		}
 
-		i->publisher.svid = svid ? strdup(svid) : NULL;
+		i->out.svid = svid ? strdup(svid) : NULL;
 
-		ret = iec61850_parse_mapping(json_mapping, &i->publisher.mapping);
+		ret = iec61850_parse_signals(json_signals, &i->out.signals, NULL);
 		if (ret <= 0)
-			error("Failed to parse setting 'fields' of node %s", node_name(n));
+			error("Failed to parse setting 'signals' of node %s", node_name(n));
 
-		i->publisher.total_size = ret;
+		i->out.total_size = ret;
 	}
 
-	if (json_sub) {
-		i->subscriber.enabled = true;
+	if (json_in) {
+		i->in.enabled = true;
 
-		ret = json_unpack_ex(json_sub, &err, 0, "{ s: o }",
-			"fields", &json_mapping
+		json_signals = NULL;
+		ret = json_unpack_ex(json_in, &err, 0, "{ s: o }",
+			"signals", &json_signals
 		);
 		if (ret)
 			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-		ret = iec61850_parse_mapping(json_mapping, &i->subscriber.mapping);
+		ret = iec61850_parse_signals(json_signals, &i->in.signals, &n->signals);
 		if (ret <= 0)
-			error("Failed to parse setting 'fields' of node %s", node_name(n));
+			error("Failed to parse setting 'signals' of node %s", node_name(n));
 
-		i->subscriber.total_size = ret;
+		i->in.total_size = ret;
 	}
 
 	return 0;
@@ -236,19 +225,19 @@ char * iec61850_sv_print(struct node *n)
 	buf = strf("interface=%s, app_id=%#x, dst_address=%s", i->interface, i->app_id, ether_ntoa(&i->dst_address));
 
 	/* Publisher part */
-	if (i->publisher.enabled) {
+	if (i->out.enabled) {
 		strcatf(&buf, ", pub.svid=%s, pub.vlan_prio=%d, pub.vlan_id=%#x, pub.confrev=%d, pub.#fields=%zu",
-			i->publisher.svid,
-			i->publisher.vlan_priority,
-			i->publisher.vlan_id,
-			i->publisher.confrev,
-			list_length(&i->publisher.mapping)
+			i->out.svid,
+			i->out.vlan_priority,
+			i->out.vlan_id,
+			i->out.confrev,
+			list_length(&i->out.signals)
 		);
 	}
 
 	/* Subscriber part */
-	if (i->subscriber.enabled)
-		strcatf(&buf, ", sub.#fields=%zu", list_length(&i->subscriber.mapping));
+	if (i->in.enabled)
+		strcatf(&buf, ", sub.#fields=%zu", list_length(&i->in.signals));
 
 	return buf;
 }
@@ -259,53 +248,63 @@ int iec61850_sv_start(struct node *n)
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
 	/* Initialize publisher */
-	if (i->publisher.enabled) {
-		i->publisher.publisher = SVPublisher_create(NULL, i->interface);
-		i->publisher.asdu = SVPublisher_addASDU(i->publisher.publisher, i->publisher.svid, node_name_short(n), i->publisher.confrev);
+	if (i->out.enabled) {
+		i->out.publisher = SVPublisher_create(NULL, i->interface);
+		i->out.asdu = SVPublisher_addASDU(i->out.publisher, i->out.svid, node_name_short(n), i->out.confrev);
 
-		for (unsigned k = 0; k < list_length(&i->publisher.mapping); k++) {
-			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) list_at(&i->publisher.mapping, k);
+		for (unsigned k = 0; k < list_length(&i->out.signals); k++) {
+			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) list_at(&i->out.signals, k);
 
 			switch (m->type) {
-				case IEC61850_TYPE_INT8:    SVPublisher_ASDU_addINT8(i->publisher.asdu); break;
-				case IEC61850_TYPE_INT32:   SVPublisher_ASDU_addINT32(i->publisher.asdu); break;
-				case IEC61850_TYPE_FLOAT32: SVPublisher_ASDU_addFLOAT(i->publisher.asdu); break;
-				case IEC61850_TYPE_FLOAT64: SVPublisher_ASDU_addFLOAT64(i->publisher.asdu); break;
+				case IEC61850_TYPE_INT8:    SVPublisher_ASDU_addINT8(i->out.asdu); break;
+				case IEC61850_TYPE_INT32:   SVPublisher_ASDU_addINT32(i->out.asdu); break;
+				case IEC61850_TYPE_FLOAT32: SVPublisher_ASDU_addFLOAT(i->out.asdu); break;
+				case IEC61850_TYPE_FLOAT64: SVPublisher_ASDU_addFLOAT64(i->out.asdu); break;
 				default: { }
 			}
 		}
 
-		if (i->publisher.smpmod >= 0)
-			SVPublisher_ASDU_setSmpMod(i->publisher.asdu, i->publisher.smpmod);
+		if (i->out.smpmod >= 0)
+			SVPublisher_ASDU_setSmpMod(i->out.asdu, i->out.smpmod);
 
-//		if (s->publisher.smprate >= 0)
-//			SV_ASDU_setSmpRate(i->publisher.asdu, i->publisher.smprate);
+//		if (s->out.smprate >= 0)
+//			SV_ASDU_setSmpRate(i->out.asdu, i->out.smprate);
 
 		/* Start publisher */
-		SVPublisher_setupComplete(i->publisher.publisher);
+		SVPublisher_setupComplete(i->out.publisher);
 	}
 
 	/* Start subscriber */
-	if (i->subscriber.enabled) {
+	if (i->in.enabled) {
 		struct iec61850_receiver *r = iec61850_receiver_create(IEC61850_RECEIVER_SV, i->interface);
 
-		i->subscriber.receiver = r->sv;
-		i->subscriber.subscriber = SVSubscriber_create(i->dst_address.ether_addr_octet, i->app_id);
+		i->in.receiver = r->sv;
+		i->in.subscriber = SVSubscriber_create(i->dst_address.ether_addr_octet, i->app_id);
 
 		/* Install a callback handler for the subscriber */
-		SVSubscriber_setListener(i->subscriber.subscriber, iec61850_sv_listener, n);
+		SVSubscriber_setListener(i->in.subscriber, iec61850_sv_listener, n);
 
 		/* Connect the subscriber to the receiver */
-		SVReceiver_addSubscriber(i->subscriber.receiver, i->subscriber.subscriber);
+		SVReceiver_addSubscriber(i->in.receiver, i->in.subscriber);
 
 		/* Initialize pool and queue to pass samples between threads */
-		ret = pool_init(&i->subscriber.pool, 1024, SAMPLE_LENGTH(n->samplelen), &memory_hugepage);
+		ret = pool_init(&i->in.pool, 1024, SAMPLE_LENGTH(list_length(&n->signals)), &memory_hugepage);
 		if (ret)
 			return ret;
 
-		ret = queue_signalled_init(&i->subscriber.queue, 1024, &memory_hugepage, 0);
+		ret = queue_signalled_init(&i->in.queue, 1024, &memory_hugepage, 0);
 		if (ret)
 			return ret;
+
+		for (unsigned k = 0; k < list_length(&i->in.signals); k++) {
+			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) list_at(&i->in.signals, k);
+			struct signal *sig = (struct signal *) list_at(&n->signals, k);
+
+			if (sig->type == SIGNAL_TYPE_AUTO)
+				sig->type = m->format;
+			else if (sig->type != m->format)
+				return -1;
+		}
 	}
 
 	return 0;
@@ -315,8 +314,8 @@ int iec61850_sv_stop(struct node *n)
 {
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
-	if (i->subscriber.enabled)
-		SVReceiver_removeSubscriber(i->subscriber.receiver, i->subscriber.subscriber);
+	if (i->in.enabled)
+		SVReceiver_removeSubscriber(i->in.receiver, i->in.subscriber);
 
 	return 0;
 }
@@ -327,16 +326,16 @@ int iec61850_sv_destroy(struct node *n)
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
 	/* Deinitialize publisher */
-	if (i->publisher.enabled && i->publisher.publisher)
-		SVPublisher_destroy(i->publisher.publisher);
+	if (i->out.enabled && i->out.publisher)
+		SVPublisher_destroy(i->out.publisher);
 
 	/* Deinitialise subscriber */
-	if (i->subscriber.enabled) {
-		ret = queue_signalled_destroy(&i->subscriber.queue);
+	if (i->in.enabled) {
+		ret = queue_signalled_destroy(&i->in.queue);
 		if (ret)
 			return ret;
 
-		ret = pool_destroy(&i->subscriber.pool);
+		ret = pool_destroy(&i->in.pool);
 		if (ret)
 			return ret;
 	}
@@ -350,10 +349,10 @@ int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt, unsign
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 	struct sample *smpt[cnt];
 
-	if (!i->subscriber.enabled)
+	if (!i->in.enabled)
 		return 0;
 
-	pulled = queue_signalled_pull_many(&i->subscriber.queue, (void **) smpt, cnt);
+	pulled = queue_signalled_pull_many(&i->in.queue, (void **) smpt, cnt);
 
 	sample_copy_many(smps, smpt, pulled);
 	sample_decref_many(smpt, pulled);
@@ -365,13 +364,13 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsig
 {
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
-	if (!i->publisher.enabled)
+	if (!i->out.enabled)
 		return 0;
 
 	for (unsigned j = 0; j < cnt; j++) {
 		unsigned offset = 0;
-		for (unsigned k = 0; k < MIN(smps[j]->length, list_length(&i->publisher.mapping)); k++) {
-			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) list_at(&i->publisher.mapping, k);
+		for (unsigned k = 0; k < MIN(smps[j]->length, list_length(&i->out.signals)); k++) {
+			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) list_at(&i->out.signals, k);
 
 			int ival = 0;
 			double fval = 0;
@@ -379,37 +378,37 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsig
 			switch (m->type) {
 				case IEC61850_TYPE_INT8:
 				case IEC61850_TYPE_INT32:
-					ival = sample_get_data_format(smps[j], k) == SAMPLE_DATA_FORMAT_FLOAT ? smps[j]->data[k].f : smps[j]->data[k].i;
+					ival = sample_format(smps[j], k) == SIGNAL_TYPE_FLOAT ? smps[j]->data[k].f : smps[j]->data[k].i;
 					break;
 
 				case IEC61850_TYPE_FLOAT32:
 				case IEC61850_TYPE_FLOAT64:
-					fval = sample_get_data_format(smps[j], k) == SAMPLE_DATA_FORMAT_FLOAT ? smps[j]->data[k].f : smps[j]->data[k].i;
+					fval = sample_format(smps[j], k) == SIGNAL_TYPE_FLOAT ? smps[j]->data[k].f : smps[j]->data[k].i;
 					break;
 
 				default: { }
 			}
 
 			switch (m->type) {
-				case IEC61850_TYPE_INT8:    SVPublisher_ASDU_setINT8(i->publisher.asdu,    offset, ival); break;
-				case IEC61850_TYPE_INT32:   SVPublisher_ASDU_setINT32(i->publisher.asdu,   offset, ival); break;
-				case IEC61850_TYPE_FLOAT32: SVPublisher_ASDU_setFLOAT(i->publisher.asdu,   offset, fval); break;
-				case IEC61850_TYPE_FLOAT64: SVPublisher_ASDU_setFLOAT64(i->publisher.asdu, offset, fval); break;
+				case IEC61850_TYPE_INT8:    SVPublisher_ASDU_setINT8(i->out.asdu,    offset, ival); break;
+				case IEC61850_TYPE_INT32:   SVPublisher_ASDU_setINT32(i->out.asdu,   offset, ival); break;
+				case IEC61850_TYPE_FLOAT32: SVPublisher_ASDU_setFLOAT(i->out.asdu,   offset, fval); break;
+				case IEC61850_TYPE_FLOAT64: SVPublisher_ASDU_setFLOAT64(i->out.asdu, offset, fval); break;
 				default: { }
 			}
 
 			offset += m->size;
 		}
 
-		SVPublisher_ASDU_setSmpCnt(i->publisher.asdu, smps[j]->sequence);
+		SVPublisher_ASDU_setSmpCnt(i->out.asdu, smps[j]->sequence);
 
-		if (smps[j]->flags & SAMPLE_HAS_ORIGIN) {
+		if (smps[j]->flags & SAMPLE_HAS_TS_ORIGIN) {
 			uint64_t refrtm = smps[j]->ts.origin.tv_sec * 1000 + smps[j]->ts.origin.tv_nsec / 1000000;
 
-			SVPublisher_ASDU_setRefrTm(i->publisher.asdu, refrtm);
+			SVPublisher_ASDU_setRefrTm(i->out.asdu, refrtm);
 		}
 
-		SVPublisher_publish(i->publisher.publisher);
+		SVPublisher_publish(i->out.publisher);
 	}
 
 	return cnt;
@@ -419,7 +418,7 @@ int iec61850_sv_fd(struct node *n)
 {
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
-	return queue_signalled_fd(&i->subscriber.queue);
+	return queue_signalled_fd(&i->in.queue);
 }
 
 static struct plugin p = {
