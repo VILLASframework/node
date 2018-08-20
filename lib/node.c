@@ -1,7 +1,7 @@
 /** Nodes.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -487,7 +487,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 char * node_name(struct node *n)
 {
 	if (!n->_name)
-		strcatf(&n->_name, CLR_RED("%s") "(" CLR_YEL("%s") ")", n->name, plugin_name(node_type(n)));
+		strcatf(&n->_name, CLR_RED("%s") "(" CLR_YEL("%s") ")", n->name, node_type_name(n->vt)));
 
 	return n->_name;
 }
