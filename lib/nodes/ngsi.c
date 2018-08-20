@@ -286,7 +286,7 @@ static size_t ngsi_request_writer(void *contents, size_t size, size_t nmemb, voi
 	struct ngsi_response *mem = (struct ngsi_response *) userp;
 
 	mem->data = realloc(mem->data, mem->len + realsize + 1);
-	if(mem->data == NULL) /* out of memory! */
+	if (mem->data == NULL) /* out of memory! */
 		error("Not enough memory (realloc returned NULL)");
 
 	memcpy(&(mem->data[mem->len]), contents, realsize);
