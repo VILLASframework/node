@@ -38,8 +38,12 @@ cat > ${CONFIG_FILE} <<EOF
 			"type" : "socket",
 			"dummy" : "value2",
 
-			"local" : "*:12001",
-			"remote" : "localhost:12000"
+			"in" : {
+				"address" : "*:12001"
+			},
+			"out" : {
+				"address" : "localhost:12000"
+			}
 		}
 	}
 }
@@ -58,7 +62,7 @@ curl -sX POST --data '{ "action" : "nodes", "id" : "5a786626-fbc6-4c04-98c2-4802
 kill $!
 
 # Compare local config with the fetched one
-jq -e '.response[0].name == "testnode1" and .response[0].type == "websocket" and .response[0].id == 0 and (.response | length == 2)' ${FETCHED_NODES} > /dev/null
+jq -e '.response[0].name == "testnode1" and .response[0].type == "websocket" and (.response | length == 2)' ${FETCHED_NODES} > /dev/null
 RC=$?
 
 rm -f ${CONFIG_FILE} ${FETCHED_NODES}

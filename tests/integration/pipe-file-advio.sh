@@ -35,7 +35,7 @@ NUM_SAMPLES=${NUM_SAMPLES:-10}
 URI=https://1Nrd46fZX8HbggT:badpass@rwth-aachen.sciebo.de/public.php/webdav/node/tests/pipe
 
 # WebDav / OwnCloud / Sciebo do not support partial upload
-# So we disable flusing the output
+# So we do not flush the output
 cat > ${CONFIG_FILE} <<EOF
 {
 	"nodes" : {
@@ -43,9 +43,14 @@ cat > ${CONFIG_FILE} <<EOF
 			"type" : "file",
 
 			"uri" : "${URI}",
-			"flush" : false,
-			"epoch_mode" : "original",
-			"eof" : "exit"
+
+			"in" : {
+				"epoch_mode" : "original",
+				"eof" : "exit"
+			},
+			"out" : {
+				"flush" : false
+			}
 		}
 	}
 }
@@ -54,15 +59,19 @@ EOF
 # Delete old file
 curl -sX DELETE ${URI} > /dev/null
 
+# Generate test data
 VILLAS_LOG_PREFIX=$(colorize "[Signal] ") \
 villas-signal random -n -l ${NUM_SAMPLES} > ${INPUT_FILE}
 
+# Upload data to cloud
 VILLAS_LOG_PREFIX=$(colorize "[Send]  ") \
 villas-pipe -s ${CONFIG_FILE} remote_file < ${INPUT_FILE}
 
+# Download data from the cloud
 VILLAS_LOG_PREFIX=$(colorize "[Recv]  ") \
 villas-pipe -r -l ${NUM_SAMPLES} ${CONFIG_FILE} remote_file > ${OUTPUT_FILE}
 
+# Compare results
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 

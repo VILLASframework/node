@@ -36,11 +36,14 @@ cat > ${CONFIG_FILE} << EOF
 			"type" : "file",
 
 			"uri"   : "${NODE_FILE}",
-			"mode"  : "w+",
 
-			"epoch_mode" : "original",
-			"eof"   : "wait",
-			"flush" : true
+			"in" : {
+				"epoch_mode" : "original",
+				"eof" : "wait"
+			},
+			"out" : {
+				"flush" : true
+			}
 		}
 	}
 }
@@ -54,10 +57,6 @@ villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FI
 # Compare data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
-
-cat ${OUTPUT_FILE}
-echo
-cat ${INPUT_FILE}
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${NODE_FILE}
 

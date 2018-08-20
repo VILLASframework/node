@@ -43,19 +43,31 @@ cat > ${CONFIG_FILE} << EOF
 		
 			"interface" : "lo",
 		
-			"publish" : {
+			"out" : {
 				"svid" : "1234",
-				"fields" : [ "float32", "float32", "float32", "float32" ]
+				"signals" : [
+					{ "iec_type" : "float32" },
+					{ "iec_type" : "float32" },
+					{ "iec_type" : "float32" },
+					{ "iec_type" : "float32" }
+				]
 			},
-			"subscribe" : {
-				"fields" : [ "float32", "float32", "float32", "float32" ]
+			"in" : {
+				"signals" : [
+					{ "iec_type" : "float32" },
+					{ "iec_type" : "float32" },
+					{ "iec_type" : "float32" },
+					{ "iec_type" : "float32" }
+				]
 			}
 		}
 	}
 }
 EOF
 
-villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < <(sleep 1; cat ${INPUT_FILE}; sleep 1)
+cat ${CONFIG_FILE}
+
+villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
 # Compare data
 villas-test-cmp -t ${INPUT_FILE} ${OUTPUT_FILE}

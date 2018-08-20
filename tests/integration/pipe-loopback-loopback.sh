@@ -39,11 +39,11 @@ cat > ${CONFIG_FILE} << EOF
 EOF
 
 # Generate test data
-villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
+villas-signal mixed -v 5 -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
-# Comapre data
+# Compare data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 

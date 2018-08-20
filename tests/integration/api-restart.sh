@@ -32,14 +32,23 @@ cat <<EOF > ${LOCAL_CONF}
 	"nodes" : {
 		"node1" : {
 			"type"   : "socket",
-			"local"  : "*:12000",
-			"remote" : "127.0.0.1:12001"
+			"format" : "csv",
+			
+			"in" : {
+				"address"  : "*:12000"
+			},
+			"out" : {
+				"address" : "127.0.0.1:12001"
+			}
 		}
 	},
 	"paths" : [
 		{
-			"in" : "node1", "out" : "node1",
-			"hooks" : [ { "type" : "print" } ]
+			"in" : "node1",
+			"out" : "node1",
+			"hooks" : [
+				{ "type" : "print" }
+			]
 		}
 	]
 }
@@ -62,7 +71,6 @@ curl -sX POST --data '{ "action" : "config", "id" : "5a786626-fbc6-4c04-98c2-480
 
 # Shutdown VILLASnode
 kill %%
-
 
 # Compare local config with the fetched one
 diff -u <(jq -S .response < ${FETCHED_CONF}) <(jq -S . < ${LOCAL_CONF})

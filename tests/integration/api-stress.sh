@@ -27,7 +27,6 @@ SCRIPTPATH=$(dirname ${SCRIPT})
 
 LOCAL_CONF=${SCRIPTPATH}/../../etc/loopback.json
 
-
 # Start VILLASnode instance with local config (via advio)
 villas-node file://${LOCAL_CONF} &
 PID=$!
@@ -35,6 +34,7 @@ PID=$!
 # Wait for node to complete init
 sleep 1
 
+RUNS=100
 FAILED=0
 SUCCESS=0
 
@@ -44,11 +44,12 @@ mkfifo ${FIFO}
 
 # Fifo must be opened in both directions!
 # https://www.gnu.org/software/libc/manual/html_node/FIFO-Special-Files.html#FIFO-Special-Files
-# Quote: "However, it has to be open at both ends simultaneously before you can proceed to do any input or output operations on it"
+# Quote: "However, it has to be open at both ends simultaneously before you can proceed to
+#            do any input or output operations on it"
 exec 5<>${FIFO}
 
 JOBS=""
-for J in {1..100}; do
+for J in {1..${RUNS}}; do
 	(
 		set -e
 		trap "echo error-trap >> ${FIFO}" ERR
@@ -76,7 +77,7 @@ wait $PID
 echo "Check return codes"
 FAILED=0
 SUCCESS=0
-for J in {1..100}; do
+for J in {1..${RUNS}}; do
 	read status <&5
 	
 	if [ "$status" == "success" ]; then
@@ -86,7 +87,9 @@ for J in {1..100}; do
 	fi
 done
 
-echo "Success: ${SUCCESS} / 100"
+echo "Success: ${SUCCESS} / ${RUNS}"
+echo "Failed:  ${FAILED} / ${RUNS}"
+
 if [ "$FAILED" -gt "0" ]; then
 	exit 1;
 fi

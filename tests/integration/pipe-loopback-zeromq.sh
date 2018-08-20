@@ -33,18 +33,10 @@ OUTPUT_FILE=$(mktemp)
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 # Generate test data
-villas-signal random -l ${NUM_SAMPLES} -n -v 10 > ${INPUT_FILE}
-
-for FORMAT in villas.human villas.binary villas.web csv json gtnet.fake raw.flt32; do
+villas-signal random -l ${NUM_SAMPLES} -n -v 5 > ${INPUT_FILE}
 	
-VECTORIZES="1"
-
-# The raw format does not support vectors
-if villas_format_supports_vectorize ${FORMAT}; then
-	VECTORIZES="${VECTORIZES} 10"
-fi
-
-for VECTORIZE	in ${VECTORIZES}; do
+VECTORIZE="10"
+FORMAT="protobuf"
 
 cat > ${CONFIG_FILE} << EOF
 {
@@ -55,8 +47,19 @@ cat > ${CONFIG_FILE} << EOF
 			"format" : "${FORMAT}",
 			"vectorize" : ${VECTORIZE},
 			"pattern" : "pubsub",
-			"subscribe" : "tcp://127.0.0.1:12000",
-			"publish" : "tcp://127.0.0.1:12000"
+			"out" : {
+				"publish" : "tcp://127.0.0.1:12000"
+			},
+			"in" : {
+				"subscribe" : "tcp://127.0.0.1:12000",
+				"signals" : [
+					{ "type" : "float" },
+					{ "type" : "float" },
+					{ "type" : "float" },
+					{ "type" : "float" },
+					{ "type" : "float" }
+				]
+			}
 		}
 	}
 }
@@ -64,28 +67,9 @@ EOF
 
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
-# Ignore timestamp and seqeunce no if in raw format 
-if villas_format_supports_header ${FORMAT}; then
-	CMPFLAGS=-ts
-fi
-
 # Compare data
-villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
+villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
-
-if (( ${RC} != 0 )); then
-	echo "=========== Sub-test failed for: format=${FORMAT}, vectorize=${VECTORIZE}"
-	cat ${CONFIG_FILE}
-	echo
-	cat ${INPUT_FILE}
-	echo
-	cat ${OUTPUT_FILE}
-	exit ${RC}
-else
-	echo "=========== Sub-test succeeded for: format=${FORMAT}, vectorize=${VECTORIZE}"
-fi
-
-done; done
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
 

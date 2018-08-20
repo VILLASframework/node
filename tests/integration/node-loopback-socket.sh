@@ -37,17 +37,28 @@ cat > ${CONFIG_FILE} <<EOF
 	"nodes": {
 		"node1": {
 			"type": "socket",
-			"layer": "udp",
-			"local": "*:12000",
-			"remote": "127.0.0.1:12001",
-			"vectorize" : 10
+			"out" : {
+				"address": "127.0.0.1:12001"
+			},
+			"in" : {
+				"address": "*:12000",
+				"signals" : [
+					{ "type" : "float" }
+				]
+			}
 		},
 		"node2": {
 			"type": "socket",
-			"layer": "udp",
-			"local": "*:12001",
-			"remote": "127.0.0.1:12000",
-			"vectorize" : 1
+			
+			"out" : {
+				"address": "127.0.0.1:12000"
+			},
+			"in" : {
+				"address" : "*:12001",
+				"signals" : [
+					{ "type" : "float" }
+				]
+			}
 		}
 	},
 	"paths": [

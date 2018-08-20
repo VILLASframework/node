@@ -33,16 +33,20 @@ cat > ${CONFIG_FILE} << EOF
 	"nodes" : {
 		"node1" : {
 			"type"   : "socket",
-			"layer"  : "udp",
+			"format" : "protobuf",
 
-			"local"  : "*:12000",
-			"remote" : "224.1.2.3:12000",
+			"in" : {
+				"address" : "*:12000",
+				
+				"multicast" : {
+					"enabled" : true,
 
-			"multicast" : {
-				"enabled" : true,
-
-				"group"   : "224.1.2.3",
-				"loop"    : true
+					"group"   : "224.1.2.3",
+					"loop"    : true
+				}
+			},
+			"out" : {
+				"address" : "224.1.2.3:12000"
 			}
 		}
 	}
@@ -54,7 +58,7 @@ villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
-# Comapre data
+# Compare data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 

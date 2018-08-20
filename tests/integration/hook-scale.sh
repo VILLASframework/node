@@ -52,7 +52,7 @@ cat <<EOF > ${EXPECT_FILE}
 1490500400.676379108-1.490500e+09(9)	-15.877850	-15.877850	-15.877850	-15.877850
 EOF
 
-villas-hook scale -p -o scale=10 -o offset=-10 < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas-hook scale -o scale=10 -o offset=-10 < ${INPUT_FILE} > ${OUTPUT_FILE}
 
 # Compare only the data values
 villas-test-cmp ${OUTPUT_FILE} ${EXPECT_FILE}

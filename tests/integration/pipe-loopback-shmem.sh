@@ -40,8 +40,12 @@ cat > ${CONFIG_FILE} << EOF
 	"nodes" : {
 		"node1" : {
 			"type" : "shmem",
-			"out_name" : "/villas-test",
-			"in_name" : "/villas-test",
+			"out" : {
+				"name" : "/villas-test"
+			},
+			"in" : {
+				"name" : "/villas-test"	
+			},
 			"samplelen" : ${SAMPLELEN},
 			"queuelen" : 1024,
 			"polling" : ${POLLING},
@@ -56,7 +60,7 @@ villas-signal random -l ${NUM_SAMPLES} -v ${SAMPLELEN} -n > ${INPUT_FILE}
 
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
-# Comapre data
+# Compare data
 villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 

@@ -37,7 +37,7 @@ NUM_VALUES=${NUM_VALUES:-4}
 # Generate test data
 villas-signal random -v ${NUM_VALUES} -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
-for FORMAT in villas.human villas.binary villas.web csv json gtnet.fake raw.flt32 protobuf; do
+for FORMAT in villas.human villas.binary villas.web csv json gtnet.fake raw.32.le raw.64.be protobuf; do
 for LAYER in udp ip eth unix; do
 for VERIFY_SOURCE in true false; do
 	
@@ -83,10 +83,20 @@ cat > ${CONFIG_FILE} << EOF
 			"vectorize" : ${VECTORIZE},
 			"format" : "${FORMAT}",
 			"layer" : "${LAYER}",
-			"verify_source" : ${VERIFY_SOURCE},
 
-			"local" : "${LOCAL}",
-			"remote" : "${REMOTE}"
+			"out" : {
+				"address" : "${REMOTE}"
+			},
+			"in" : {
+				"address" : "${LOCAL}",
+				"verify_source" : ${VERIFY_SOURCE},
+				"signals" : [
+					{ "type" : "float" },
+					{ "type" : "float" },
+					{ "type" : "float" },
+					{ "type" : "float" }
+				]
+			}
 		}
 	}
 }

@@ -41,29 +41,24 @@ cat > ${CONFIG_FILE} <<EOF
 			"type": "signal",
 			"limit": 100,
 			"rate": 10.0,
-			"hooks": [
-				{
-					"type": "stats",
-					"verbose": true
-				}
-			]
+			"in" : {
+				"hooks": [
+					{ "type": "stats", "verbose": true }
+				]
+			}
 		}
 	},
 	"paths": [
 		{
 			"in": "signal_1",
 			"hooks" : [
-				{
-					"type" : "print"
-				}
+				{ "type" : "print", "enabled" : false }
 			]
 		},
 		{
 			"in": "stats_1",
 			"hooks" : [
-				{
-					"type" : "print"
-				}
+				{ "type" : "print" }
 			]
 		}
 	]

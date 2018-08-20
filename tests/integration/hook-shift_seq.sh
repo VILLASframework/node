@@ -23,13 +23,11 @@
 ##################################################################################
 
 OUTPUT_FILE=$(mktemp)
-INPUT_FILE=$(mktemp)
 
 OFFSET=100
 
-villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
-
-villas-hook shift_seq -o offset=${OFFSET} > ${OUTPUT_FILE} < ${INPUT_FILE}
+villas-signal random -l ${NUM_SAMPLES} -n | \
+villas-hook shift_seq -o offset=${OFFSET} > ${OUTPUT_FILE}
 
 # Compare shifted sequence no
 diff -u \
@@ -38,6 +36,6 @@ diff -u \
 
 RC=$?
 
-rm -f ${OUTPUT_FILE} ${INPUT_FILE}
+rm -f ${OUTPUT_FILE}
 
 exit $RC

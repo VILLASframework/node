@@ -60,12 +60,18 @@ cat > ${CONFIG_FILE} << EOF
 			"layer": "${LAYER}",
 			"format" : "${FORMAT}",
 
-			"local" : "${LOCAL}",
-			"remote" : "${REMOTE}"
+			"in" : {
+				"address" : "${LOCAL}"
+			},
+			"out" : {
+				"address" : "${REMOTE}"
+			}
 		}
 	}
 }
 EOF
+
+export PYTHONPATH=${BUILDDIR}/clients/python
 
 # Start Python client in background
 python ${SRCDIR}/clients/python/villas.py unix &
@@ -73,9 +79,11 @@ CPID=$!
 
 # Wait for client to be ready
 if [ "${LAYER}" = "unix" ]; then
-	while [ ! -S "${REMOTE}" ]; do sleep 0.1; done
+	while [ ! -S "${REMOTE}" ]; do
+		sleep 1
+	done
 fi
-sleep 0.2
+sleep 1
 
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} py-client > ${OUTPUT_FILE} < ${INPUT_FILE}
 

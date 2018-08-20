@@ -22,6 +22,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
+# Check if tools are present
+if ! command -v lspci; then
+    echo "lspci tool is missing"
+    exit 99
+fi
+
 # Check if user is superuser. SU is used for namespace
 if [[ "$EUID" -ne 0 ]]; then
     echo "Please run as root"

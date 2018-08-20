@@ -39,7 +39,7 @@ cat > ${CONFIG_FILE} <<EOF
 			"values" : 4,
 			"offset" : 0.0,
 			"rate" : 10.0,
-			"limit" : 10
+			"limit" : 20
 		},
 		"sig_2": {
 			"type": "signal",
@@ -70,18 +70,17 @@ cat > ${CONFIG_FILE} <<EOF
 	"paths": [
 		{
 			"in": [
-				"sig_1.data[0-1]",
-				"sig_2.data[0-1]",
-				"sig_3.data[0-1]",
+				"sig_1.data[counter]",
+				"sig_2.data[counter]",
+				"sig_3.data[counter]",
 				"sig_1.hdr.length",
-				"sig_1.hdr.id",
 				"sig_1.hdr.sequence",
-				"sig_1.ts.origin",
-				"sig_1.ts.received"
+				"sig_1.ts.origin"
 			],
 			"hooks" : [
 				{ "type" : "print" }
-			]
+			],
+			"mode" : "all"
 		}
 	]
 }
