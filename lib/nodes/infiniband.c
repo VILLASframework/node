@@ -826,13 +826,6 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 
 			j++;
 
-			// Format
-			sge[i][j].addr = (uint64_t) &smps[i]->format;
-			sge[i][j].length = sizeof(smps[i]->format);
-			sge[i][j].lkey = mr->lkey;
-
-			j++;
-
 			// Timespec origin
 			sge[i][j].addr = (uint64_t) &smps[i]->ts.origin;
 			sge[i][j].length = sizeof(smps[i]->ts.origin);
@@ -890,7 +883,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 			smps[j]->length = (wc[j].byte_len - correction) / sizeof(double);
 
 			smps[j]->ts.received = ts_receive;
-			smps[j]->flags = (SAMPLE_HAS_ORIGIN | SAMPLE_HAS_RECEIVED | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_FORMAT);
+			smps[j]->flags = (SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_TS_RECEIVED | SAMPLE_HAS_SEQUENCE);
 		}
 	}
 	return read_values;
@@ -924,13 +917,6 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 			// Sequence
 			sge[sent][j].addr = (uint64_t) &smps[sent]->sequence;
 			sge[sent][j].length = sizeof(smps[sent]->sequence);
-			sge[sent][j].lkey = mr->lkey;
-
-			j++;
-
-			// Format
-			sge[sent][j].addr = (uint64_t) &smps[sent]->format;
-			sge[sent][j].length = sizeof(smps[sent]->format);
 			sge[sent][j].lkey = mr->lkey;
 
 			j++;
@@ -1064,6 +1050,7 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0,
 		.size		= sizeof(struct infiniband),
+		.pool_size	= 8192,
 		.reverse	= ib_reverse,
 		.parse		= ib_parse,
 		.check		= ib_check,
