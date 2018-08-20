@@ -27,16 +27,14 @@
 #include <villas/utils.h>
 #include <villas/memory/ib.h>
 
-struct ibv_mr * memory_ib_get_mr(struct sample *smps)
+struct ibv_mr * memory_ib_get_mr(void *ptr)
 {
 	struct memory_allocation *ma;
-	struct pool *p;
 	struct ibv_mr *mr;
 
-	p = sample_pool(smps);
-
-	ma = memory_get_allocation((char *) (p) + p->buffer_off);
+	ma = memory_get_allocation(ptr);
 	mr = ma->ib.mr;
+
 	return mr;
 }
 

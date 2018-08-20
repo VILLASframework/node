@@ -28,4 +28,4 @@ struct memory_ib {
     struct memory_type *parent;
 };
 
-struct ibv_mr * memory_ib_get_mr(struct sample *smps);
+struct ibv_mr * memory_ib_get_mr(void *ptr);

@@ -50,6 +50,7 @@ struct pool {
 };
 
 #define INLINE static inline __attribute__((unused))
+#define pool_buffer(p) ((char *) (p) + (p)->buffer_off)
 
 /** Initiazlize a pool
  *
