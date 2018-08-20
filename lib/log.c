@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <signal.h>
+#include <threads.h>
 
 #include <villas/config.h>
 #include <villas/log.h>
@@ -170,11 +171,13 @@ int log_open(struct log *l)
 	else
 		l->file = stderr;
 
-	l->state = STATE_OPENED;
+	l->tty = isatty(fileno(l->file));
 
 	if (l->syslog) {
 		openlog(NULL, LOG_PID, LOG_DAEMON);
 	}
+
+	l->state = STATE_OPENED;
 
 	debug(LOG_LOG | 5, "Log sub-system started: level=%d, faciltities=%#lx, path=%s", l->level, l->facilities, l->path);
 
@@ -272,7 +275,7 @@ void log_print(struct log *l, const char *lvl, const char *fmt, ...)
 void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 {
 	struct timespec ts = time_now();
-	char *buf = alloc(512);
+	thread_local char buf[1024];
 
 	/* Optional prefix */
 	if (l->prefix)
@@ -288,11 +291,17 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 #ifdef ENABLE_OPAL_ASYNC
 	OpalPrint("VILLASnode: %s\n", buf);
 #endif
-	if (l->file)
+	if (l->file) {
+		if (l->tty == false)
+			decolor(buf);
+
 		fprintf(l->file, "%s\n", buf);
+	}
 
-	if (l->syslog)
+	if (l->syslog) {
+		if (l->tty == true) // Only decolor if not done before
+			decolor(buf);
+
 		vsyslog(LOG_INFO, fmt, ap);
-
-	free(buf);
+	}
 }

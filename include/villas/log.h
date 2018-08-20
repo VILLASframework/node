@@ -28,6 +28,7 @@ extern "C" {
 #endif
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <time.h>
 #include <sys/ioctl.h>
 
@@ -97,6 +98,7 @@ struct log {
 	const char *path;	/**< Path of the log file. */
 	char *prefix;		/**< Prefix each line with this string. */
 	int syslog;		/**< Whether or not to log to syslogd. */
+	bool tty;		/**< Is the log file a tty? */
 
 	FILE *file;		/**< Send all log output to this file / stdout / stderr. */
 };
