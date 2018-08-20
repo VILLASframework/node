@@ -47,12 +47,7 @@ struct nanomsg {
 	struct {
 		int socket;
 		struct list endpoints;
-	} publisher;
-
-	struct {
-		int socket;
-		struct list endpoints;
-	} subscriber;
+	} in, out;
 
 	struct format_type *format;
 	struct io io;
