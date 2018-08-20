@@ -48,9 +48,9 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: i, s: o, s: i }",
 		"subdevice", &d->subdevice,
-	    "bufsize", &d->buffer_size,
-	    "signals", &json_chans,
-	    "rate", &d->sample_rate_hz
+		"bufsize", &d->buffer_size,
+		"signals", &json_chans,
+		"rate", &d->sample_rate_hz
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration");
@@ -191,10 +191,10 @@ static int comedi_start_in(struct node *n)
 	cmd.subdev = d->subdevice;
 
 	/* Make card send interrupts after every sample, not only when fifo is half
-	 * full (TODO: evaluate if this makes sense, leave as reminder) /*
+	 * full (TODO: evaluate if this makes sense, leave as reminder) */
 	//cmd.flags = TRIG_WAKE_EOS;
 
-	/* Start right now *
+	/* Start right now */
 	cmd.start_src = TRIG_NOW;
 
 	/* Trigger scans periodically */
@@ -426,8 +426,6 @@ int comedi_parse(struct node *n, json_t *cfg)
 
 	c->device = strdup(device);
 
-	n->samplelen = c->in.chanlist_len;
-
 	return 0;
 }
 
@@ -573,7 +571,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 			for (size_t i = 0; i < cnt; i++) {
 				d->counter++;
 
-				smps[i]->flags = SAMPLE_HAS_ORIGIN | SAMPLE_HAS_VALUES | SAMPLE_HAS_SEQUENCE;
+				smps[i]->flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE;
 				smps[i]->sequence = d->counter / d->chanlist_len;
 
 				struct timespec offset = time_from_double(d->counter * 1.0 / d->sample_rate_hz);
@@ -597,7 +595,6 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 					c->bufptr += d->sample_size;
 
 					smps[i]->data[si].f = comedi_to_phys(raw, d->chanspecs[si].range, d->chanspecs[si].maxdata);
-					sample_set_data_format(smps[i], si, SAMPLE_DATA_FORMAT_FLOAT);
 
 					if (isnan(smps[i]->data[si].f))
 						warn("Input: channel %d clipped", CR_CHAN(d->chanlist[si]));
@@ -719,7 +716,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	for (size_t i = 0; i < cnt; i++) {
 		d->counter++;
 
-		smps[i]->flags = SAMPLE_HAS_ORIGIN | SAMPLE_HAS_VALUES | SAMPLE_HAS_SEQUENCE;
+		smps[i]->flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE;
 		smps[i]->sequence = d->counter / d->chanlist_len;
 
 		struct timespec offset = time_from_double(d->counter * 1.0 / d->sample_rate_hz);
@@ -740,7 +737,6 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 				raw = *((lsampl_t *)(c->map + c->bufpos));
 
 			smps[i]->data[si].f = comedi_to_phys(raw, d->chanspecs[si].range, d->chanspecs[si].maxdata);
-			sample_set_data_format(smps[i], si, SAMPLE_DATA_FORMAT_FLOAT);
 
 			if (isnan(smps[i]->data[si].f)) {
 				error("got nan");
@@ -881,14 +877,29 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 		for (int si = 0; si < sample->length; si++) {
 			unsigned raw_value = 0;
 
-			switch(sample_get_data_format(sample, si)) {
-			case SAMPLE_DATA_FORMAT_FLOAT:
-				raw_value = comedi_from_phys(sample->data[si].f, d->chanspecs[si].range, d->chanspecs[si].maxdata);
-				break;
-			case SAMPLE_DATA_FORMAT_INT:
-				// treat sample as already raw DAC value
-				raw_value = sample->data[si].i;
-				break;
+			switch (sample_format(sample, si)) {
+				case SIGNAL_TYPE_FLOAT:
+					raw_value = comedi_from_phys(sample->data[si].f, d->chanspecs[si].range, d->chanspecs[si].maxdata);
+					break;
+
+				case SIGNAL_TYPE_INTEGER:
+					/* Treat sample as already raw DAC value */
+					raw_value = sample->data[si].i;
+					break;
+
+				case SIGNAL_TYPE_BOOLEAN:
+					raw_value = comedi_from_phys(sample->data[si].b ? 1 : 0, d->chanspecs[si].range, d->chanspecs[si].maxdata);
+					break;
+
+				case SIGNAL_TYPE_COMPLEX:
+					/* We only output the real part */
+					raw_value = comedi_from_phys(creal(sample->data[si].z), d->chanspecs[si].range, d->chanspecs[si].maxdata);
+					break;
+
+				case SIGNAL_TYPE_INVALID:
+				case SIGNAL_TYPE_AUTO:
+					raw_value = 0;
+					break;
 			}
 
 			if (d->sample_size == sizeof(sampl_t))
