@@ -1,0 +1,56 @@
+variables:
+  GIT_STRATEGY: fetch
+  GIT_SUBMODULE_STRATEGY: recursive
+  PREFIX: /usr/
+  DOCKER_TAG_DEV: ${CI_BUILD_REF_SLUG}
+  DOCKER_IMAGE_DEV: villas/common-dev
+
+# For some reason, GitLab CI prunes the contents of the submodules so we need to restore them.
+before_script:
+  - git submodule foreach git checkout .
+
+stages:
+  - prepare
+  - build
+  - test
+
+# Stage: prepare
+##############################################################################
+
+# Build docker image which is used to build & test VILLASnode
+docker-dev:
+  stage: prepare
+  script:
+    - docker build -t ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV} .
+  tags:
+    - shell
+    - linux
+
+# Stage: build
+##############################################################################
+
+build:source:
+  stage: build
+  script:
+    - mkdir build && cd build && cmake .. && make -j8
+  artifacts:
+    expire_in: 1 week
+    name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
+    paths:
+      - build/
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+  tags:
+    - docker
+
+# Stage: test
+##############################################################################
+
+#test:unit:
+#  stage: test
+#  dependencies:
+#    - build:source
+#  script:
+#    - build/tests/unit-tests --filter 'graph/*'
+#  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+#  tags:
+#    - docker
