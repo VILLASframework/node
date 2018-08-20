@@ -38,6 +38,7 @@ int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node 
 
 	assert(h->state == STATE_DESTROYED);
 
+	h->enabled = 1;
 	h->priority = vt->priority;
 
 	/* Node hooks can only used with nodes,
@@ -69,8 +70,9 @@ int hook_parse(struct hook *h, json_t *cfg)
 
 	assert(h->state != STATE_DESTROYED);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i }",
-		"priority", &h->priority
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: b }",
+		"priority", &h->priority,
+		"enabled", &h->enabled
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
@@ -105,6 +107,9 @@ int hook_destroy(struct hook *h)
 
 int hook_start(struct hook *h)
 {
+	if (!h->enabled)
+		return 0;
+
 	if (h->_vt->start) {
 		debug(LOG_HOOK | 10, "Start hook %s: priority=%d", plugin_name(h->_vt), h->priority);
 
@@ -116,6 +121,9 @@ int hook_start(struct hook *h)
 
 int hook_stop(struct hook *h)
 {
+	if (!h->enabled)
+		return 0;
+
 	if (h->_vt->stop) {
 		debug(LOG_HOOK | 10, "Stopping hook %s: priority=%d", plugin_name(h->_vt), h->priority);
 
@@ -127,6 +135,9 @@ int hook_stop(struct hook *h)
 
 int hook_periodic(struct hook *h)
 {
+	if (!h->enabled)
+		return 0;
+
 	if (h->_vt->periodic) {
 		debug(LOG_HOOK | 10, "Periodic hook %s: priority=%d", plugin_name(h->_vt), h->priority);
 
@@ -138,6 +149,9 @@ int hook_periodic(struct hook *h)
 
 int hook_restart(struct hook *h)
 {
+	if (!h->enabled)
+		return 0;
+
 	if (h->_vt->restart) {
 		debug(LOG_HOOK | 10, "Restarting hook %s: priority=%d", plugin_name(h->_vt), h->priority);
 
@@ -149,6 +163,9 @@ int hook_restart(struct hook *h)
 
 int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
+	if (!h->enabled)
+		return 0;
+
 	if (h->_vt->process) {
 		debug(LOG_HOOK | 10, "Process hook %s: priority=%d, cnt=%d", plugin_name(h->_vt), h->priority, *cnt);
 

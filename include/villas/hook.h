@@ -50,13 +50,14 @@ struct list;
 struct hook {
 	enum state state;
 
+	int enabled;		/**< Is this hook active? */
+	int priority;		/**< A priority to change the order of execution within one type of hook. */
+
 	struct path *path;
 	struct node *node;
 
 	struct hook_type *_vt;	/**< C++ like Vtable pointer. */
 	void *_vd;		/**< Private data for this hook. This pointer can be used to pass data between consecutive calls of the callback. */
-
-	int priority;		/**< A priority to change the order of execution within one type of hook. */
 
 	json_t *cfg;		/**< A JSON object containing the configuration of the hook. */
 };
