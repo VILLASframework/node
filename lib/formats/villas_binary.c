@@ -42,7 +42,7 @@ int villas_binary_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, s
 		if (ptr + MSG_LEN(smp->length) > buf + len)
 			break;
 
-		ret = msg_from_sample(msg, smp);
+		ret = msg_from_sample(msg, smp, smp->signals);
 		if (ret)
 			return ret;
 
@@ -61,10 +61,10 @@ int villas_binary_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, s
 	return i;
 }
 
-int villas_binary_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
+int villas_binary_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
 	int ret, i = 0, values;
-	char *ptr = buf;
+	const char *ptr = buf;
 
 	if (len % 4 != 0) {
 		warn("Packet size is invalid: %zd Must be multiple of 4 bytes.", len);
@@ -74,6 +74,8 @@ int villas_binary_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, st
 	for (i = 0; i < cnt; i++) {
 		struct msg *msg = (struct msg *) ptr;
 		struct sample *smp = smps[i];
+
+		smp->signals = io->signals;
 
 		/* Complete buffer has been parsed */
 		if (ptr == buf + len)
@@ -99,7 +101,7 @@ int villas_binary_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, st
 		else
 			msg_ntoh(msg);
 
-		ret = msg_to_sample(msg, smp);
+		ret = msg_to_sample(msg, smp, io->signals);
 		if (ret) {
 			warn("Invalid msg received: reason=3, ret=%d", ret);
 			break;
@@ -122,7 +124,8 @@ static struct plugin p1 = {
 		.sprint	= villas_binary_sprint,
 		.sscan	= villas_binary_sscan,
 		.size	= 0,
-		.flags	= FORMAT_TYPE_BINARY
+		.flags	= IO_HAS_BINARY_PAYLOAD |
+		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA
 	},
 };
 
@@ -135,7 +138,8 @@ static struct plugin p2 = {
 		.sprint	= villas_binary_sprint,
 		.sscan	= villas_binary_sscan,
 		.size	= 0,
-		.flags	= FORMAT_TYPE_BINARY | VILLAS_BINARY_WEB
+		.flags	= IO_HAS_BINARY_PAYLOAD | VILLAS_BINARY_WEB |
+		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA
 	},
 };
 

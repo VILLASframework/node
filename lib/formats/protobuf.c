@@ -24,8 +24,31 @@
 #include <villas.pb-c.h>
 
 #include <villas/sample.h>
+#include <villas/signal.h>
+#include <villas/io.h>
 #include <villas/plugin.h>
 #include <villas/formats/protobuf.h>
+
+static enum signal_type protobuf_detect_format(Villas__Node__Value *val)
+{
+	switch (val->value_case) {
+		case VILLAS__NODE__VALUE__VALUE_F:
+			return SIGNAL_TYPE_FLOAT;
+
+		case VILLAS__NODE__VALUE__VALUE_I:
+			return SIGNAL_TYPE_INTEGER;
+
+		case VILLAS__NODE__VALUE__VALUE_B:
+			return SIGNAL_TYPE_BOOLEAN;
+
+		case VILLAS__NODE__VALUE__VALUE_Z:
+			return SIGNAL_TYPE_COMPLEX;
+
+		case VILLAS__NODE__VALUE__VALUE__NOT_SET:
+		default:
+			return SIGNAL_TYPE_INVALID;
+	}
+}
 
 int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)
 {
@@ -50,7 +73,7 @@ int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct
 			pb_smp->sequence = smp->sequence;
 		}
 
-		if (smp->flags & SAMPLE_HAS_ORIGIN) {
+		if (smp->flags & SAMPLE_HAS_TS_ORIGIN) {
 			pb_smp->timestamp = alloc(sizeof(Villas__Node__Timestamp));
 			villas__node__timestamp__init(pb_smp->timestamp);
 
@@ -65,12 +88,37 @@ int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct
 			Villas__Node__Value *pb_val = pb_smp->values[j] = alloc(sizeof(Villas__Node__Value));
 			villas__node__value__init(pb_val);
 
-			enum sample_data_format fmt = sample_get_data_format(smp, j);
-
+			enum signal_type fmt = sample_format(smp, j);
 			switch (fmt) {
-				case SAMPLE_DATA_FORMAT_FLOAT:	pb_val->value_case = VILLAS__NODE__VALUE__VALUE_F; pb_val->f = smp->data[j].f;	break;
-				case SAMPLE_DATA_FORMAT_INT:	pb_val->value_case = VILLAS__NODE__VALUE__VALUE_I; pb_val->i = smp->data[j].i;	break;
-				default:			pb_val->value_case = VILLAS__NODE__VALUE__VALUE__NOT_SET;			break;
+				case SIGNAL_TYPE_FLOAT:
+					pb_val->value_case = VILLAS__NODE__VALUE__VALUE_F;
+					pb_val->f = smp->data[j].f;
+					break;
+
+				case SIGNAL_TYPE_INTEGER:
+					pb_val->value_case = VILLAS__NODE__VALUE__VALUE_I;
+					pb_val->i = smp->data[j].i;
+					break;
+
+				case SIGNAL_TYPE_BOOLEAN:
+					pb_val->value_case = VILLAS__NODE__VALUE__VALUE_B;
+					pb_val->b = smp->data[j].b;
+					break;
+
+				case SIGNAL_TYPE_COMPLEX:
+					pb_val->value_case = VILLAS__NODE__VALUE__VALUE_Z;
+					pb_val->z = alloc(sizeof(Villas__Node__Complex));
+
+					villas__node__complex__init(pb_val->z);
+
+					pb_val->z->real = creal(smp->data[j].z);
+					pb_val->z->imag = cimag(smp->data[j].z);
+					break;
+
+				case SIGNAL_TYPE_AUTO:
+				case SIGNAL_TYPE_INVALID:
+					pb_val->value_case = VILLAS__NODE__VALUE__VALUE__NOT_SET;
+					break;
 			}
 		}
 	}
@@ -93,22 +141,24 @@ out:
 	return -1;
 }
 
-int protobuf_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
+int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
 	unsigned i, j;
 	Villas__Node__Message *pb_msg;
 
 	pb_msg = villas__node__message__unpack(NULL, len, (uint8_t *) buf);
+	if (!pb_msg)
+		return -1;
 
 	for (i = 0; i < MIN(pb_msg->n_samples, cnt); i++) {
 		struct sample *smp = smps[i];
 		Villas__Node__Sample *pb_smp = pb_msg->samples[i];
 
-		smp->flags = SAMPLE_HAS_FORMAT;
+		smp->signals = io->signals;
 
 		if (pb_smp->type != VILLAS__NODE__SAMPLE__TYPE__DATA) {
-			warn("Parsed non supported message type");
-			break;
+			warn("Parsed non supported message type. Skipping");
+			continue;
 		}
 
 		if (pb_smp->has_sequence) {
@@ -117,7 +167,7 @@ int protobuf_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct 
 		}
 
 		if (pb_smp->timestamp) {
-			smp->flags |= SAMPLE_HAS_ORIGIN;
+			smp->flags |= SAMPLE_HAS_TS_ORIGIN;
 			smp->ts.origin.tv_sec = pb_smp->timestamp->sec;
 			smp->ts.origin.tv_nsec = pb_smp->timestamp->nsec;
 		}
@@ -125,21 +175,45 @@ int protobuf_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct 
 		for (j = 0; j < MIN(pb_smp->n_values, smp->capacity); j++) {
 			Villas__Node__Value *pb_val = pb_smp->values[j];
 
-			enum sample_data_format fmt = pb_val->value_case == VILLAS__NODE__VALUE__VALUE_F
-							? SAMPLE_DATA_FORMAT_FLOAT
-							: SAMPLE_DATA_FORMAT_INT;
+			enum signal_type fmt = protobuf_detect_format(pb_val);
 
-			switch (fmt) {
-				case SAMPLE_DATA_FORMAT_FLOAT:	smp->data[j].f = pb_val->f; break;
-				case SAMPLE_DATA_FORMAT_INT:	smp->data[j].i = pb_val->i; break;
-				default: { }
+			struct signal *sig = (struct signal *) list_at_safe(smp->signals, j);
+			if (!sig)
+				return -1;
+
+			if (sig->type == SIGNAL_TYPE_AUTO) {
+				debug(LOG_IO | 5, "Learned data type for index %u: %s", j, signal_type_to_str(fmt));
+				sig->type = fmt;
+			}
+			else if (sig->type != fmt) {
+				error("Received invalid data type in Protobuf payload: Received %s, expected %s for signal %s (index %u).",
+					signal_type_to_str(fmt), signal_type_to_str(sig->type), sig->name, i);
+				return -2;
 			}
 
-			sample_set_data_format(smp, j, fmt);
+			switch (sig->type) {
+				case SIGNAL_TYPE_FLOAT:
+					smp->data[j].f = pb_val->f;
+					break;
+
+				case SIGNAL_TYPE_INTEGER:
+					smp->data[j].i = pb_val->i;
+					break;
+
+				case SIGNAL_TYPE_BOOLEAN:
+					smp->data[j].b = pb_val->b;
+					break;
+
+				case SIGNAL_TYPE_COMPLEX:
+					smp->data[j].z = CMPLXF(pb_val->z->real, pb_val->z->imag);
+					break;
+
+				default: { }
+			}
 		}
 
 		if (pb_smp->n_values > 0)
-			smp->flags |= SAMPLE_HAS_VALUES;
+			smp->flags |= SAMPLE_HAS_DATA;
 
 		smp->length = j;
 	}
@@ -158,7 +232,9 @@ static struct plugin p = {
 	.type = PLUGIN_TYPE_FORMAT,
 	.format = {
 		.sprint = protobuf_sprint,
-		.sscan  = protobuf_sscan
+		.sscan  = protobuf_sscan,
+		.flags  = IO_AUTO_DETECT_FORMAT | IO_HAS_BINARY_PAYLOAD |
+		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA
 	}
 };
 REGISTER_PLUGIN(&p);

@@ -31,33 +31,34 @@
 #include <villas/signal.h>
 #include <villas/timing.h>
 
-static size_t csv_sprint_single(struct io *io, char *buf, size_t len, struct sample *s)
+static size_t csv_sprint_single(struct io *io, char *buf, size_t len, const struct sample *smp)
 {
 	size_t off = 0;
+	struct signal *sig;
 
-	if (io->flags & SAMPLE_HAS_ORIGIN)
-		off += snprintf(buf + off, len - off, "%ld%c%09ld", s->ts.origin.tv_sec, io->separator, s->ts.origin.tv_nsec);
+	if (io->flags & SAMPLE_HAS_TS_ORIGIN)
+		off += snprintf(buf + off, len - off, "%ld%c%09ld", smp->ts.origin.tv_sec, io->separator, smp->ts.origin.tv_nsec);
 	else
 		off += snprintf(buf + off, len - off, "nan%cnan", io->separator);
 
-	if (io->flags & SAMPLE_HAS_RECEIVED)
-		off += snprintf(buf + off, len - off, "%c%.09f", io->separator, time_delta(&s->ts.origin, &s->ts.received));
+	if (io->flags & SAMPLE_HAS_TS_RECEIVED)
+		off += snprintf(buf + off, len - off, "%c%.09f", io->separator, time_delta(&smp->ts.origin, &smp->ts.received));
 	else
 		off += snprintf(buf + off, len - off, "%cnan", io->separator);
 
 	if (io->flags & SAMPLE_HAS_SEQUENCE)
-		off += snprintf(buf + off, len - off, "%c%" PRIu64, io->separator, s->sequence);
+		off += snprintf(buf + off, len - off, "%c%" PRIu64, io->separator, smp->sequence);
 	else
 		off += snprintf(buf + off, len - off, "%cnan", io->separator);
 
-	for (int i = 0; i < s->length; i++) {
-		switch ((s->format >> i) & 0x1) {
-			case SAMPLE_DATA_FORMAT_FLOAT:
-				off += snprintf(buf + off, len - off, "%c%.6f", io->separator, s->data[i].f);
+	if (io->flags & SAMPLE_HAS_DATA) {
+		for (int i = 0; i < smp->length; i++) {
+			sig = list_at_safe(smp->signals, i);
+			if (!sig)
 				break;
-			case SAMPLE_DATA_FORMAT_INT:
-				off += snprintf(buf + off, len - off, "%c%" PRId64, io->separator, s->data[i].i);
-				break;
+
+			off += snprintf(buf + off, len - off, "%c", io->separator);
+			off += signal_data_snprint(&smp->data[i], sig, buf + off, len - off);
 		}
 	}
 
@@ -66,26 +67,28 @@ static size_t csv_sprint_single(struct io *io, char *buf, size_t len, struct sam
 	return off;
 }
 
-static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struct sample *s)
+static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struct sample *smp)
 {
+	int ret, i = 0;
 	const char *ptr = buf;
-	char *end;
+	char *end, *next;
 
-	s->flags = 0;
+	smp->flags = 0;
+	smp->signals = io->signals;
 
-	s->ts.origin.tv_sec = strtoul(ptr, &end, 10);
+	smp->ts.origin.tv_sec = strtoul(ptr, &end, 10);
 	if (end == ptr || *end == io->delimiter)
 		goto out;
 
 	ptr = end + 1;
 
-	s->ts.origin.tv_nsec = strtoul(ptr, &end, 10);
+	smp->ts.origin.tv_nsec = strtoul(ptr, &end, 10);
 	if (end == ptr || *end == io->delimiter)
 		goto out;
 
 	ptr = end + 1;
 
-	s->flags |= SAMPLE_HAS_ORIGIN;
+	smp->flags |= SAMPLE_HAS_TS_ORIGIN;
 
 	double offset __attribute__((unused)) = strtof(ptr, &end);
 	if (end == ptr || *end == io->delimiter)
@@ -93,52 +96,51 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 
 	ptr = end + 1;
 
-	s->sequence = strtoul(ptr, &end, 10);
+	smp->sequence = strtoul(ptr, &end, 10);
 	if (end == ptr || *end == io->delimiter)
 		goto out;
 
-	s->flags |= SAMPLE_HAS_SEQUENCE;
+	smp->flags |= SAMPLE_HAS_SEQUENCE;
 
-	for (ptr = end + 1, s->length = 0;
-	                    s->length < s->capacity;
-	     ptr = end + 1, s->length++) {
+	for (ptr = end + 1, i = 0; i < smp->capacity; ptr = end + 1, i++) {
 
 		if (*end == io->delimiter)
 			goto out;
 
-		//determine format (int or double) of current number starting at ptr
-		char * next_seperator = strchr(ptr, io->separator);
-		if(next_seperator == NULL){
-			//the last element of a row
-			next_seperator = strchr(ptr, io->delimiter);
+		struct signal *sig = (struct signal *) list_at_safe(smp->signals, i);
+		if (!sig)
+			goto out;
+
+		/* Perform signal detection only once */
+		if (sig->type == SIGNAL_TYPE_AUTO) {
+
+			/* Find end of the current column */
+			next = strpbrk(ptr, (char[]) { io->separator, io->delimiter, 0 });
+			if (next == NULL)
+				goto out;
+
+			/* Copy value to temporary '\0' terminated buffer */
+			size_t len = next - ptr;
+			char val[len+1];
+			strncpy(val, ptr, len);
+			val[len] = '\0';
+
+			sig->type = signal_type_detect(val);
+
+			debug(LOG_IO | 5, "Learned data type for index %u: %s", i, signal_type_to_str(sig->type));
 		}
 
-		char number[100];
-		strncpy(number, ptr, next_seperator-ptr);
-		char * contains_dot = strstr(number, ".");
-		if(contains_dot == NULL){
-			//no dot in string number --> number is an integer
-			s->data[s->length].i = strtol(ptr, &end, 10);
-			sample_set_data_format(s, s->length, SAMPLE_DATA_FORMAT_INT);
-		}
-
-		else{
-			//dot in string number --> number is a floating point value
-			s->data[s->length].f = strtod(ptr, &end);
-			sample_set_data_format(s, s->length, SAMPLE_DATA_FORMAT_FLOAT);
-		}
-
-
-		/* There are no valid values anymore. */
-		if (end == ptr)
+		ret = signal_data_parse_str(&smp->data[i], sig, ptr, &end);
+		if (ret || end == ptr) /* There are no valid values anymore. */
 			goto out;
 	}
 
 out:	if (*end == io->delimiter)
 		end++;
 
-	if (s->length > 0)
-		s->flags |= SAMPLE_HAS_VALUES;
+	smp->length = i;
+	if (smp->length > 0)
+		smp->flags |= SAMPLE_HAS_DATA;
 
 	return end - buf;
 }
@@ -157,7 +159,7 @@ int csv_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 	return i;
 }
 
-int csv_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
+int csv_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
 	int i;
 	size_t off = 0;
@@ -171,24 +173,23 @@ int csv_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sampl
 	return i;
 }
 
-void csv_header(struct io *io)
+void csv_header(struct io *io, const struct sample *smp)
 {
 	FILE *f = io_stream_output(io);
 
 	fprintf(f, "# secs%cnsecs%coffset%csequence", io->separator, io->separator, io->separator);
 
-	if (io->output.signals) {
-		for (int i = 0; i < list_length(io->output.signals); i++) {
-			struct signal *s = (struct signal *) list_at(io->output.signals, i);
+	for (int i = 0; i < smp->length; i++) {
+		struct signal *sig = (struct signal *) list_at(smp->signals, i);
 
-			fprintf(f, "%c%s", io->separator, s->name);
+		if (sig->name)
+			fprintf(f, "%c%s", io->separator, sig->name);
+		else
+			fprintf(f, "%csignal%d", io->separator, i);
 
-			if (s->unit)
-				fprintf(f, "[%s]", s->unit);
-		}
+		if (sig->unit)
+			fprintf(f, "[%s]", sig->unit);
 	}
-	else
-		fprintf(f, "%cdata[]", io->separator);
 
 	fprintf(f, "%c", io->delimiter);
 }
@@ -216,7 +217,8 @@ static struct plugin p2 = {
 		.sscan	= csv_sscan,
 		.header	= csv_header,
 		.size 	= 0,
-		.flags	= IO_NEWLINES,
+		.flags	= IO_NEWLINES | IO_AUTO_DETECT_FORMAT |
+		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA,
 		.separator = ','
 	}
 };

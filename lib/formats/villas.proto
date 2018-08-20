@@ -37,7 +37,7 @@ message Sample {
 	};
 
 	required Type type = 1 [default = DATA];
-	optional uint32 sequence = 2;			// The sequence number is incremented by one for consecutive messages.
+	optional uint64 sequence = 2;			// The sequence number is incremented by one for consecutive messages.
 	optional Timestamp timestamp = 4;
 	repeated Value values = 5;
 }
@@ -49,7 +49,14 @@ message Timestamp {
 
 message Value {
 	oneof value {
-		float f = 1;				// Floating point values.
-		int32 i = 2;                            // Integer values.
+		double f = 1;				// Floating point values.
+		int64 i = 2;                            // Integer values.
+		bool b = 3;				// Boolean values.
+		Complex z = 4;				// Complex values.
 	}
+}
+
+message Complex {
+	required float real = 1;			// Real component
+	required float imag = 2;			// Imaginary component
 }

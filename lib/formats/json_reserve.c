@@ -38,9 +38,8 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 	json_error_t err;
 	json_t *json_data, *json_name, *json_unit, *json_value;
 	json_t *json_created = NULL, *json_sequence = NULL;
-	struct signal *sig;
 
-	if (smp->flags & SAMPLE_HAS_ORIGIN)
+	if (smp->flags & SAMPLE_HAS_TS_ORIGIN)
 		json_created = json_integer(time_to_double(&smp->ts.origin) * 1e3);
 
 	if (smp->flags & SAMPLE_HAS_SEQUENCE)
@@ -49,25 +48,25 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 	json_data = json_array();
 
 	for (int i = 0; i < smp->length; i++) {
-		if (io->out.signals)
-			sig = (struct signal *) list_at_safe(io->out.signals, i);
-		else
-			sig = NULL;
+		struct signal *sig;
 
-		if (sig) {
-			if (!sig->enabled)
-				continue;
+		sig = list_at_safe(smp->signals, i);
+		if (!sig)
+			return -1;
 
+		if (sig->name)
 			json_name = json_string(sig->name);
-			json_unit = json_string(sig->unit);
-		}
 		else {
 			char name[32];
 			snprintf(name, 32, "signal_%d", i);
 
 			json_name = json_string(name);
-			json_unit = NULL;
 		}
+
+		if (sig->unit)
+			json_unit = json_string(sig->unit);
+		else
+			json_unit = NULL;
 
 		json_value = json_pack_ex(&err, 0, "{ s: o, s: f }",
 			"name", json_name,
@@ -96,7 +95,7 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 	);
 	if (*j == NULL)
 		return -1;
-
+#if 0
 #ifdef JSON_RESERVE_INTEGER_TARGET
 	if (io->out.node) {
 		char *endptr;
@@ -113,6 +112,7 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 #else
 	if (io->out.node)
 		json_object_set_new(*j, "target", json_string(io->out.node->name));
+#endif
 #endif
 
 	return 0;
@@ -136,6 +136,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 	if (ret)
 		return -1;
 
+#if 0
 #ifdef JSON_RESERVE_INTEGER_TARGET
 	if (json_target && io->in.node) {
 		if (!json_is_integer(json_target))
@@ -163,7 +164,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 			return 0;
 	}
 #endif
-
+#endif
 	if (!json_data || !json_is_array(json_data))
 		return -1;
 
@@ -185,12 +186,12 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 
 		struct signal *sig;
 
-		sig = (struct signal *) list_lookup(io->in.signals, name);
+		sig = (struct signal *) list_lookup(io->signals, name);
 		if (sig) {
 			if (!sig->enabled)
 				continue;
 
-			idx = list_index(io->in.signals, sig);
+			idx = list_index(io->signals, sig);
 		}
 		else {
 			ret = sscanf(name, "signal_%d", &idx);
@@ -207,11 +208,11 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 	}
 
 	if (smp->length > 0)
-		smp->flags |= SAMPLE_HAS_VALUES;
+		smp->flags |= SAMPLE_HAS_DATA;
 
 	if (created > 0) {
 		smp->ts.origin = time_from_double(created * 1e-3);
-		smp->flags |= SAMPLE_HAS_ORIGIN;
+		smp->flags |= SAMPLE_HAS_TS_ORIGIN;
 	}
 
 	return smp->length > 0 ? 1 : 0;
@@ -243,7 +244,7 @@ int json_reserve_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, st
 	return ret;
 }
 
-int json_reserve_sscan(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
+int json_reserve_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
 {
 	int ret;
 	json_t *json;

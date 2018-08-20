@@ -25,7 +25,9 @@
 #include <villas/formats/msg.h>
 #include <villas/formats/msg_format.h>
 #include <villas/sample.h>
+#include <villas/signal.h>
 #include <villas/utils.h>
+#include <villas/list.h>
 
 void msg_ntoh(struct msg *m)
 {
@@ -63,7 +65,7 @@ int msg_verify(struct msg *m)
 {
 	if      (m->version != MSG_VERSION)
 		return -1;
-	else if (m->type    != MSG_TYPE_DATA)
+	else if (m->type != MSG_TYPE_DATA)
 		return -2;
 	else if (m->rsvd1 != 0)
 		return -3;
@@ -71,7 +73,7 @@ int msg_verify(struct msg *m)
 		return 0;
 }
 
-int msg_to_sample(struct msg *msg, struct sample *smp)
+int msg_to_sample(struct msg *msg, struct sample *smp, struct list *signals)
 {
 	int ret;
 
@@ -79,23 +81,32 @@ int msg_to_sample(struct msg *msg, struct sample *smp)
 	if (ret)
 		return -1;
 
-	smp->flags = SAMPLE_HAS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_VALUES | SAMPLE_HAS_ID;
+	smp->flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
 	smp->length = MIN(msg->length, smp->capacity);
 	smp->sequence = msg->sequence;
 	smp->ts.origin = MSG_TS(msg);
-	smp->format = 0;
 
 	for (int i = 0; i < smp->length; i++) {
-		switch (sample_get_data_format(smp, i)) {
-			case SAMPLE_DATA_FORMAT_FLOAT: smp->data[i].f = msg->data[i].f; break;
-			case SAMPLE_DATA_FORMAT_INT:   smp->data[i].i = msg->data[i].i; break;
+		struct signal *sig = list_at(signals, i);
+
+		switch (sig->type) {
+			case SIGNAL_TYPE_FLOAT:
+				smp->data[i].f = msg->data[i].f;
+				break;
+
+			case SIGNAL_TYPE_INTEGER:
+				smp->data[i].i = msg->data[i].i;
+				break;
+
+			default:
+				return -1;
 		}
 	}
 
 	return 0;
 }
 
-int msg_from_sample(struct msg *msg, struct sample *smp)
+int msg_from_sample(struct msg *msg, struct sample *smp, struct list *signals)
 {
 	*msg = MSG_INIT(smp->length, smp->sequence);
 
@@ -103,9 +114,19 @@ int msg_from_sample(struct msg *msg, struct sample *smp)
 	msg->ts.nsec = smp->ts.origin.tv_nsec;
 
 	for (int i = 0; i < smp->length; i++) {
-		switch (sample_get_data_format(smp, i)) {
-			case SAMPLE_DATA_FORMAT_FLOAT: msg->data[i].f = smp->data[i].f; break;
-			case SAMPLE_DATA_FORMAT_INT:   msg->data[i].i = smp->data[i].i; break;
+		struct signal *sig = list_at(signals, i);
+
+		switch (sig->type) {
+			case SIGNAL_TYPE_FLOAT:
+				msg->data[i].f = smp->data[i].f;
+				break;
+
+			case SIGNAL_TYPE_INTEGER:
+				msg->data[i].i = smp->data[i].i;
+				break;
+
+			default:
+				return -1;
 		}
 	}
 
