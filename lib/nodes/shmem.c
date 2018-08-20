@@ -47,13 +47,15 @@ int shmem_parse(struct node *n, json_t *cfg)
 
 	/* Default values */
 	shm->conf.queuelen = MAX(DEFAULT_SHMEM_QUEUELEN, n->in.vectorize);
-	shm->conf.samplelen = n->samplelen;
+	shm->conf.samplelen = list_length(&n->signals);
 	shm->conf.polling = false;
 	shm->exec = NULL;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: s, s?: i, s?: b, s?: o }",
-		"out_name", &shm->out_name,
-		"in_name", &shm->in_name,
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: { s: s }, s: { s: s }, s?: i, s?: b, s?: o }",
+		"out",
+			"name", &shm->out_name,
+		"in",
+			"name", &shm->in_name,
 		"queuelen", &shm->conf.queuelen,
 		"polling", &shm->conf.polling,
 		"exec", &json_exec
@@ -145,14 +147,10 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 		warn("Pool underrun for shmem node %s", shm->out_name);
 
 	copied = sample_copy_many(shared_smps, smps, avail);
+	if (copied < avail)
+		warn("Outgoing pool underrun for node %s", node_name(n));
 
-	for (int i = 0; i < copied; i++) {
-		/* Since the node isn't in shared memory, the source can't be accessed */
-		shared_smps[i]->source = NULL;
-		shared_smps[i]->flags &= ~SAMPLE_HAS_SOURCE;
-	}
-
-	pushed = shmem_int_write(&shm->intf, shared_smps, avail);
+	pushed = shmem_int_write(&shm->intf, shared_smps, copied);
 	if (pushed != avail)
 		warn("Outgoing queue overrun for node %s", node_name(n));
 
