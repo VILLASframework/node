@@ -301,7 +301,7 @@ int file_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	assert(cnt == 1);
 
 retry:	ret = io_scan(&f->io, smps, cnt);
-	if (ret = 0) {
+	if (ret <= 0) {
 		if (io_eof(&f->io)) {
 			switch (f->eof) {
 				case FILE_EOF_REWIND:
