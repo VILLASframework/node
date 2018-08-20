@@ -20,8 +20,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##############################################################################
 
-add_subdirectory(common)
-
 set(SOURCES
 	vlnv.cpp
 	card.cpp
@@ -87,6 +85,7 @@ target_link_libraries(villas-fpga PUBLIC
 	${CMAKE_THREAD_LIBS_INIT}
 	${CMAKE_DL_LIBS}
 	m
+	villas-common
 )
 
 include(GNUInstallDirs)

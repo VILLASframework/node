@@ -26,13 +26,13 @@ project(VILLASfpga C CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
-set (CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 
-include_directories(thirdparty/spdlog/include)
 include_directories(thirdparty/CLI11)
 include_directories(thirdparty/rang)
 
+add_subdirectory(common)
 add_subdirectory(lib)
 add_subdirectory(src)
 add_subdirectory(tests)
@@ -52,10 +52,10 @@ configure_file("libvillas-fpga.pc.in" "libvillas-fpga.pc" @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/libvillas-fpga.pc" DESTINATION "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}/pkgconfig")
 
 # CPack
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION})
-SET(CPACK_PACKAGE_VENDOR ${PROJECT_VENDOR})
-SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
-SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING.md")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY ${PROJECT_DESCRIPTION})
+set(CPACK_PACKAGE_VENDOR ${PROJECT_VENDOR})
+set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING.md")
 set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 
 set(CPACK_PACKAGE_NAME "villas-fpga")

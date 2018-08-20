@@ -28,7 +28,6 @@ set(SOURCES
 	fifo.cpp
 	rtds.cpp
 	timer.cpp
-	graph.cpp
 )
 
 if(CMAKE_CUDA_COMPILER)
