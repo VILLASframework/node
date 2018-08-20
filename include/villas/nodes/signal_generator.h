@@ -92,8 +92,6 @@ int signal_generator_stop(struct node *n);
 /** @see node_type::read */
 int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
-enum signal_generator_type signal_generator_lookup_type(const char *type);
-
 /** @} */
 
 #ifdef __cplusplus

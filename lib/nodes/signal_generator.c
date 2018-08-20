@@ -28,7 +28,7 @@
 #include <villas/plugin.h>
 #include <villas/nodes/signal_generator.h>
 
-enum signal_generator_type signal_generator_lookup_type(const char *type)
+static enum signal_generator_type signal_generator_lookup_type(const char *type)
 {
 	if      (!strcmp(type, "random"))
 		return SIGNAL_GENERATOR_TYPE_RANDOM;
@@ -48,6 +48,56 @@ enum signal_generator_type signal_generator_lookup_type(const char *type)
 		return SIGNAL_GENERATOR_TYPE_MIXED;
 	else
 		return -1;
+}
+
+static const char * signal_generator_type_str(enum signal_generator_type type)
+{
+	switch (type) {
+		case SIGNAL_GENERATOR_TYPE_CONSTANT:
+			return "constant";
+
+		case SIGNAL_GENERATOR_TYPE_SINE:
+			return "sine";
+
+		case SIGNAL_GENERATOR_TYPE_TRIANGLE:
+			return "triangle";
+
+		case SIGNAL_GENERATOR_TYPE_SQUARE:
+			return "square";
+
+		case SIGNAL_GENERATOR_TYPE_RAMP:
+			return "ramp";
+
+		case SIGNAL_GENERATOR_TYPE_COUNTER:
+			return "counter";
+
+		case SIGNAL_GENERATOR_TYPE_RANDOM:
+			return "random";
+
+		case SIGNAL_GENERATOR_TYPE_MIXED:
+			return "mixed";
+
+		default:
+			return NULL;
+	}
+}
+
+static void signal_generator_init_signals(struct node *n)
+{
+	struct signal_generator *s = (struct signal_generator *) n->_vd;
+
+	assert(list_length(&n->signals) == 0);
+
+	for (int i = 0; i < s->values; i++) {
+		struct signal *sig = alloc(sizeof(struct signal));
+
+		int rtype = s->type == SIGNAL_GENERATOR_TYPE_MIXED ? i % 7 : s->type;
+
+		sig->name = strdup(signal_generator_type_str(rtype));
+		sig->type = SIGNAL_TYPE_FLOAT; /* All generated sinals are of type float */
+
+		list_push(&n->signals, sig);
+	}
 }
 
 int signal_generator_parse(struct node *n, json_t *cfg)
@@ -94,8 +144,7 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 	else
 		s->type = SIGNAL_GENERATOR_TYPE_MIXED;
 
-	/* We know the expected number of values. */
-	n->samplelen = s->values;
+	signal_generator_init_signals(n);
 
 	return 0;
 }
@@ -173,20 +222,40 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 
 	double running = time_delta(&s->started, &ts);
 
-	t->flags = SAMPLE_HAS_ORIGIN | SAMPLE_HAS_VALUES | SAMPLE_HAS_SEQUENCE;
+	t->flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE;
 	t->ts.origin = ts;
 	t->sequence = s->counter;
-	t->length = n->samplelen;
+	t->length = MIN(s->values, t->capacity);
+	t->signals = &n->signals;
 
 	for (int i = 0; i < MIN(s->values, t->capacity); i++) {
 		int rtype = (s->type != SIGNAL_GENERATOR_TYPE_MIXED) ? s->type : i % 7;
+
 		switch (rtype) {
-			case SIGNAL_GENERATOR_TYPE_CONSTANT: t->data[i].f = s->offset + s->amplitude;                                                           break;
-			case SIGNAL_GENERATOR_TYPE_SINE:	   t->data[i].f = s->offset + s->amplitude *        sin(running * s->frequency * 2 * M_PI);           break;
-			case SIGNAL_GENERATOR_TYPE_TRIANGLE: t->data[i].f = s->offset + s->amplitude * (fabs(fmod(running * s->frequency, 1) - .5) - 0.25) * 4; break;
-			case SIGNAL_GENERATOR_TYPE_SQUARE:   t->data[i].f = s->offset + s->amplitude * (    (fmod(running * s->frequency, 1) < .5) ? -1 : 1);   break;
-			case SIGNAL_GENERATOR_TYPE_RAMP:     t->data[i].f = s->offset + s->amplitude *       fmod(running, s->frequency);                       break;
-			case SIGNAL_GENERATOR_TYPE_COUNTER:  t->data[i].f = s->offset + s->amplitude * s->counter;                                              break;
+			case SIGNAL_GENERATOR_TYPE_CONSTANT:
+				t->data[i].f = s->offset + s->amplitude;
+				break;
+
+			case SIGNAL_GENERATOR_TYPE_SINE:
+				t->data[i].f = s->offset + s->amplitude *        sin(running * s->frequency * 2 * M_PI);
+				break;
+
+			case SIGNAL_GENERATOR_TYPE_TRIANGLE:
+				t->data[i].f = s->offset + s->amplitude * (fabs(fmod(running * s->frequency, 1) - .5) - 0.25) * 4;
+				break;
+
+			case SIGNAL_GENERATOR_TYPE_SQUARE:
+				t->data[i].f = s->offset + s->amplitude * (    (fmod(running * s->frequency, 1) < .5) ? -1 : 1);
+				break;
+
+			case SIGNAL_GENERATOR_TYPE_RAMP:
+				t->data[i].f = s->offset + s->amplitude *       fmod(running, s->frequency);
+				break;
+
+			case SIGNAL_GENERATOR_TYPE_COUNTER:
+				t->data[i].f = s->offset + s->amplitude * s->counter;
+				break;
+
 			case SIGNAL_GENERATOR_TYPE_RANDOM:
 				s->last[i] += box_muller(0, s->stddev);
 				t->data[i].f = s->last[i];
@@ -208,19 +277,8 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 char * signal_generator_print(struct node *n)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
-	char *type, *buf = NULL;
-
-	switch (s->type) {
-		case SIGNAL_GENERATOR_TYPE_MIXED:    type = "mixed";    break;
-		case SIGNAL_GENERATOR_TYPE_RAMP:     type = "ramp";     break;
-		case SIGNAL_GENERATOR_TYPE_COUNTER:  type = "counter";  break;
-		case SIGNAL_GENERATOR_TYPE_TRIANGLE: type = "triangle"; break;
-		case SIGNAL_GENERATOR_TYPE_SQUARE:   type = "square";   break;
-		case SIGNAL_GENERATOR_TYPE_SINE:     type = "sine";     break;
-		case SIGNAL_GENERATOR_TYPE_RANDOM:   type = "random";   break;
-		case SIGNAL_GENERATOR_TYPE_CONSTANT: type = "constant"; break;
-		default: return NULL;
-	}
+	char *buf = NULL;
+	const char *type = signal_generator_type_str(s->type);
 
 	strcatf(&buf, "signal=%s, rt=%s, rate=%.2f, values=%d, frequency=%.2f, amplitude=%.2f, stddev=%.2f, offset=%.2f",
 		type, s->rt ? "yes" : "no", s->rate, s->values, s->frequency, s->amplitude, s->stddev, s->offset);
@@ -244,6 +302,7 @@ static struct plugin p = {
 	.type = PLUGIN_TYPE_NODE,
 	.node = {
 		.vectorize	= 1,
+		.flags		= NODE_TYPE_PROVIDES_SIGNALS,
 		.size		= sizeof(struct signal_generator),
 		.parse		= signal_generator_parse,
 		.print		= signal_generator_print,
