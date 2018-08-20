@@ -154,7 +154,7 @@ char * socket_print_addr(struct sockaddr *saddr);
  * @retval 0	Success. Everything went well.
  * @retval <0	Error. Something went wrong.
  */
-int socket_parse_addr(const char *str, struct sockaddr *sa, enum socket_layer layer, int flags);
+int socket_parse_address(const char *str, struct sockaddr *sa, enum socket_layer layer, int flags);
 
 int socket_compare_addr(struct sockaddr *x, struct sockaddr *y);
 
