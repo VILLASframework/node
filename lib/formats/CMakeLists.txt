@@ -23,10 +23,9 @@
 if(DEFINED PROTOBUF_COMPILER AND PROTOBUF_FOUND)
     add_custom_command(
         OUTPUT
-            villas.pb.cc villas.pb.h villas_pb2.py
+            villas.pb.cc villas.pb.h
             message.js sample.js timestamp.js value.js
         COMMAND ${PROTOBUF_COMPILER}
-            --python_out=${CMAKE_CURRENT_BINARY_DIR}
             --js_out=${CMAKE_CURRENT_BINARY_DIR}
             --cpp_out=${CMAKE_CURRENT_BINARY_DIR}
             villas.proto

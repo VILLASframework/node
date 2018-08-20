@@ -20,4 +20,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
+if(DEFINED PROTOBUF_COMPILER AND PROTOBUF_FOUND)
+    add_custom_command(
+        OUTPUT
+            villas_pb2.py
+        COMMAND ${PROTOBUF_COMPILER}
+            --python_out=${CMAKE_CURRENT_BINARY_DIR}
+            villas.proto
+        MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/lib/formats/villas.proto
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/lib/formats
+    )
 
+    add_custom_target(python ALL
+        DEPENDS
+            villas_pb2.py
+    )
+endif()
