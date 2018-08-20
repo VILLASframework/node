@@ -70,19 +70,19 @@ static int scale_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 		for (int k = 0; k < smps[i]->length; k++) {
 
 			switch (sample_format(smps[i], k)) {
-				case SIGNAL_FORMAT_INTEGER:
+				case SIGNAL_TYPE_INTEGER:
 					smps[i]->data[k].i = smps[i]->data[k].i * p->scale + p->offset;
 					break;
 
-				case SIGNAL_FORMAT_FLOAT:
+				case SIGNAL_TYPE_FLOAT:
 					smps[i]->data[k].f = smps[i]->data[k].f * p->scale + p->offset;
 					break;
 
-				case SIGNAL_FORMAT_COMPLEX:
+				case SIGNAL_TYPE_COMPLEX:
 					smps[i]->data[k].z = smps[i]->data[k].z * p->scale + p->offset;
 					break;
 
-				case SIGNAL_FORMAT_BOOLEAN:
+				case SIGNAL_TYPE_BOOLEAN:
 					smps[i]->data[k].b = smps[i]->data[k].b * p->scale + p->offset;
 					break;
 

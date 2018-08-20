@@ -56,7 +56,22 @@ static int print_start(struct hook *h)
 	struct print *p = (struct print *) h->_vd;
 	int ret;
 
-	ret = io_init(&p->io, p->format, h->node, SAMPLE_HAS_ALL);
+	struct list *signals;
+
+	if (h->node)
+		signals = &h->node->signals;
+	else if (h->path)
+		signals = &h->path->signals;
+	else
+		signals = NULL;
+
+	ret = signals
+		? io_init(&p->io, p->format, signals, SAMPLE_HAS_ALL)
+		: io_init_auto(&p->io, p->format, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
+	if (ret)
+		return ret;
+
+	ret = io_check(&p->io);
 	if (ret)
 		return ret;
 
@@ -73,6 +88,10 @@ static int print_stop(struct hook *h)
 	int ret;
 
 	ret = io_close(&p->io);
+	if (ret)
+		return ret;
+
+	ret = io_destroy(&p->io);
 	if (ret)
 		return ret;
 
@@ -127,7 +146,6 @@ static int print_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 
 static int print_destroy(struct hook *h)
 {
-	int ret;
 	struct print *p = (struct print *) h->_vd;
 
 	if (p->uri)
@@ -135,10 +153,6 @@ static int print_destroy(struct hook *h)
 
 	if (p->prefix)
 		free(p->prefix);
-
-	ret = io_destroy(&p->io);
-	if (ret)
-		return ret;
 
 	return 0;
 }
