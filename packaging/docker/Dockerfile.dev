@@ -52,7 +52,8 @@ RUN dnf -y install \
 	python-pip \
 	valgrind gdb gdb-gdbserver \
 	xmlto dblatex rubygem-asciidoctor \
-	psmisc procps-ng
+	psmisc procps-ng \
+	rabbitmq-server mosquitto
 
 # Tools for debugging, coverage, profiling
 RUN pip install \

@@ -60,7 +60,8 @@ RUN yum -y install \
 	iproute \
 	python-pip \
 	valgrind gdb gdb-gdbserver \
-	xmlto rubygem-asciidoctor
+	xmlto rubygem-asciidoctor \
+	rabbitmq-server mosquitto
 
 # Tools for debugging, coverage, profiling
 RUN pip install \

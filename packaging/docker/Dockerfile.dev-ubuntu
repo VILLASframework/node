@@ -53,7 +53,8 @@ RUN apt-get update && apt-get install -y \
 	iproute2 \
 	python-pip \
 	valgrind gdb gdbserver \
-	xmlto asciidoctor
+	xmlto asciidoctor \
+	rabbitmq-server mosquitto
 
 # Tools for debugging, coverage, profiling
 RUN pip install \
