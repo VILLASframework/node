@@ -61,7 +61,7 @@ static int shift_ts_parse(struct hook *h, json_t *cfg)
 		"offset", &offset
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
+		jerror(&err, "Failed to parse configuration of hook '%s'", hook_type_name(h->_vt));
 
 	if (mode) {
 		if      (!strcmp(mode, "origin"))
@@ -69,7 +69,7 @@ static int shift_ts_parse(struct hook *h, json_t *cfg)
 		else if (!strcmp(mode, "received"))
 			p->mode = SHIFT_RECEIVED;
 		else
-			jerror(&err, "Invalid mode parameter '%s' for hook '%s'", mode, plugin_name(h->_vt));
+			jerror(&err, "Invalid mode parameter '%s' for hook '%s'", mode, hook_type_name(h->_vt));
 	}
 
 	p->offset = time_from_double(offset);

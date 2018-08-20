@@ -125,7 +125,7 @@ char * nanomsg_print(struct node *n)
 
 	char *buf = NULL;
 
-	strcatf(&buf, "format=%s, subscribe=[ ", plugin_name(m->format));
+	strcatf(&buf, "format=%s, in.endpoints=[ ", format_type_name(m->format));
 
 	for (size_t i = 0; i < list_length(&m->subscriber.endpoints); i++) {
 		char *ep = (char *) list_at(&m->subscriber.endpoints, i);

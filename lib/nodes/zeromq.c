@@ -211,7 +211,7 @@ char * zeromq_print(struct node *n)
 	}
 
 	strcatf(&buf, "format=%s, pattern=%s, ipv6=%s, crypto=%s, subscribe=%s, publish=[ ",
-		plugin_name(z->format),
+		format_type_name(z->format),
 		pattern,
 		z->ipv6 ? "yes" : "no",
 		z->curve.enabled ? "yes" : "no",

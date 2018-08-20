@@ -154,7 +154,7 @@ char * socket_print(struct node *n)
 	char *local = socket_print_addr((struct sockaddr *) &s->local);
 	char *remote = socket_print_addr((struct sockaddr *) &s->remote);
 
-	buf = strf("layer=%s, format=%s, local=%s, remote=%s", layer, plugin_name(s->format), local, remote);
+	buf = strf("layer=%s, format=%s, in.address=%s, out.address=%s", layer, format_type_name(s->format), local, remote);
 
 	if (s->multicast.enabled) {
 		char group[INET_ADDRSTRLEN];

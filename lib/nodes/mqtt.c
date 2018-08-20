@@ -219,7 +219,7 @@ char * mqtt_print(struct node *n)
 
 	char *buf = NULL;
 
-	strcatf(&buf, "format=%s, host=%s, port=%d, keepalive=%s, ssl=%s", plugin_name(m->format),
+	strcatf(&buf, "format=%s, host=%s, port=%d, keepalive=%s, ssl=%s", format_type_name(m->format),
 		m->host,
 		m->port,
 		m->keepalive ? "yes" : "no",

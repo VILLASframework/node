@@ -159,7 +159,7 @@ check:		if (optarg == endptr)
 
 	ret = node_type_start(node->_vt, &sn);
 	if (ret)
-		error("Failed to start node-type %s: reason=%d", plugin_name(node->_vt), ret);
+		error("Failed to start node-type %s: reason=%d", node_type_name(node->_vt), ret);
 
 	ret = node_init2(node);
 	if (ret)

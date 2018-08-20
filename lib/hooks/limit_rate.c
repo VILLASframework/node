@@ -69,7 +69,7 @@ static int limit_rate_parse(struct hook *h, json_t *cfg)
 		"mode", &mode
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
+		jerror(&err, "Failed to parse configuration of hook '%s'", hook_type_name(h->_vt));
 
 	if (mode) {
 		if (!strcmp(mode, "origin"))

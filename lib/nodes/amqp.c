@@ -199,7 +199,7 @@ char * amqp_print(struct node *n)
 
 	char *buf = NULL;
 
-	strcatf(&buf, "format=%s, uri=%s://%s:%s@%s:%d%s, exchange=%s, routing_key=%s", plugin_name(a->format),
+	strcatf(&buf, "format=%s, uri=%s://%s:%s@%s:%d%s, exchange=%s, routing_key=%s", format_type_name(a->format),
 		a->connection_info.ssl ? "amqps" : "amqp",
 		a->connection_info.user,
 		a->connection_info.password,

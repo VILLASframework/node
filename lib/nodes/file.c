@@ -170,7 +170,7 @@ char * file_print(struct node *n)
 
 	strcatf(&buf, "uri=%s, format=%s, flush=%s, eof=%s, epoch_mode=%s, epoch=%.2f",
 		f->uri ? f->uri : f->uri_tmpl,
-		plugin_name(f->format),
+		format_type_name(f->format),
 		f->flush ? "yes" : "no",
 		eof_str,
 		epoch_str,

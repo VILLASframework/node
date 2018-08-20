@@ -92,7 +92,7 @@ static int print_parse(struct hook *h, json_t *cfg)
 		"format", &format
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
+		jerror(&err, "Failed to parse configuration of hook '%s'", hook_type_name(h->_vt));
 
 	if (prefix)
 		p->prefix = strdup(prefix);

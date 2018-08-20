@@ -377,7 +377,7 @@ int super_node_start(struct super_node *sn)
 
 		ret = node_type_start(n->_vt, sn);
 		if (ret)
-			error("Failed to start node-type: %s", plugin_name(n->_vt));
+			error("Failed to start node-type: %s", node_type_name(n->_vt));
 	}
 
 	info("Starting nodes");
@@ -449,7 +449,7 @@ int super_node_stop(struct super_node *sn)
 		if (p->type == PLUGIN_TYPE_NODE) {
 			ret = node_type_stop(&p->node);
 			if (ret)
-				error("Failed to stop node-type: %s", plugin_name(p));
+				error("Failed to stop node-type: %s", node_type_name(p));
 		}
 	}
 

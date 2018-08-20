@@ -75,7 +75,7 @@ static int skip_first_parse(struct hook *h, json_t *cfg)
 		return 0;
 	}
 
-	jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
+	jerror(&err, "Failed to parse configuration of hook '%s'", hook_type_name(h->_vt));
 
 	return -1;
 }

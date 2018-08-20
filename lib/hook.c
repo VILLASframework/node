@@ -75,7 +75,7 @@ int hook_parse(struct hook *h, json_t *cfg)
 		"enabled", &h->enabled
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of hook '%s'", plugin_name(h->_vt));
+		jerror(&err, "Failed to parse configuration of hook '%s'", hook_type_name(h->_vt));
 
 	ret = h->_vt->parse ? h->_vt->parse(h, cfg) : 0;
 	if (ret)
@@ -111,7 +111,7 @@ int hook_start(struct hook *h)
 		return 0;
 
 	if (h->_vt->start) {
-		debug(LOG_HOOK | 10, "Start hook %s: priority=%d", plugin_name(h->_vt), h->priority);
+		debug(LOG_HOOK | 10, "Start hook %s: priority=%d", hook_type_name(h->_vt), h->priority);
 
 		return h->_vt->start(h);
 	}
@@ -125,7 +125,7 @@ int hook_stop(struct hook *h)
 		return 0;
 
 	if (h->_vt->stop) {
-		debug(LOG_HOOK | 10, "Stopping hook %s: priority=%d", plugin_name(h->_vt), h->priority);
+		debug(LOG_HOOK | 10, "Stopping hook %s: priority=%d", hook_type_name(h->_vt), h->priority);
 
 		return h->_vt->stop(h);
 	}
@@ -139,7 +139,7 @@ int hook_periodic(struct hook *h)
 		return 0;
 
 	if (h->_vt->periodic) {
-		debug(LOG_HOOK | 10, "Periodic hook %s: priority=%d", plugin_name(h->_vt), h->priority);
+		debug(LOG_HOOK | 10, "Periodic hook %s: priority=%d", hook_type_name(h->_vt), h->priority);
 
 		return h->_vt->periodic(h);
 	}
@@ -153,7 +153,7 @@ int hook_restart(struct hook *h)
 		return 0;
 
 	if (h->_vt->restart) {
-		debug(LOG_HOOK | 10, "Restarting hook %s: priority=%d", plugin_name(h->_vt), h->priority);
+		debug(LOG_HOOK | 10, "Restarting hook %s: priority=%d", hook_type_name(h->_vt), h->priority);
 
 		return h->_vt->restart(h);
 	}
@@ -167,7 +167,7 @@ int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 		return 0;
 
 	if (h->_vt->process) {
-		debug(LOG_HOOK | 10, "Process hook %s: priority=%d, cnt=%d", plugin_name(h->_vt), h->priority, *cnt);
+		debug(LOG_HOOK | 10, "Process hook %s: priority=%d, cnt=%d", hook_type_name(h->_vt), h->priority, *cnt);
 
 		return h->_vt->process(h, smps, cnt);
 	}
@@ -275,4 +275,9 @@ int hook_init_builtin_list(struct list *l, bool builtin, int mask, struct path *
 	}
 
 	return 0;
+}
+
+const char * hook_type_name(struct hook_type *vt)
+{
+	return plugin_name(vt);
 }

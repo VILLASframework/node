@@ -36,3 +36,8 @@ struct format_type * format_type_lookup(const char *name)
 
 	return &p->format;
 }
+
+const char * format_type_name(struct format_type *vt)
+{
+	return plugin_name(vt);
+}

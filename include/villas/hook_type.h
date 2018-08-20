@@ -76,6 +76,9 @@ struct hook_type {
 
 struct hook_type * hook_type_lookup(const char *name);
 
+/** Return a printable representation of the hook-type. */
+const char * hook_type_name(struct hook_type *vt);
+
 #ifdef __cplusplus
 }
 #endif
