@@ -88,6 +88,9 @@ int super_node_stop(struct super_node *sn);
 /** Desctroy configuration object. */
 int super_node_destroy(struct super_node *sn);
 
+/** Run periodic hooks of this super node. */
+int super_node_periodic(struct super_node *sn);
+
 #ifdef __cplusplus
 }
 #endif

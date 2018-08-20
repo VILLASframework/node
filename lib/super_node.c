@@ -491,3 +491,48 @@ int super_node_destroy(struct super_node *sn)
 
 	return 0;
 }
+
+int super_node_periodic(struct super_node *sn)
+{
+	int ret;
+
+	for (size_t i = 0; i < list_length(&sn->paths); i++) {
+		struct path *p = (struct path *) list_at(&sn->paths, i);
+
+		if (p->state != STATE_STARTED)
+			continue;
+
+		for (size_t j = 0; j < list_length(&p->hooks); j++) {
+			struct hook *h = (struct hook *) list_at(&p->hooks, j);
+
+			ret = hook_periodic(h);
+			if (ret)
+				return ret;
+		}
+	}
+
+	for (size_t i = 0; i < list_length(&sn->nodes); i++) {
+		struct node *n = (struct node *) list_at(&sn->nodes, i);
+
+		if (n->state != STATE_STARTED)
+			continue;
+
+		for (size_t j = 0; j < list_length(&n->in.hooks); j++) {
+			struct hook *h = (struct hook *) list_at(&n->in.hooks, j);
+
+			ret = hook_periodic(h);
+			if (ret)
+				return ret;
+		}
+
+		for (size_t j = 0; j < list_length(&n->out.hooks); j++) {
+			struct hook *h = (struct hook *) list_at(&n->out.hooks, j);
+
+			ret = hook_periodic(h);
+			if (ret)
+				return ret;
+		}
+	}
+
+	return 0;
+}
