@@ -28,7 +28,6 @@
 #include <unistd.h>
 #include <syslog.h>
 #include <signal.h>
-#include <threads.h>
 
 #include <villas/config.h>
 #include <villas/log.h>
@@ -275,17 +274,20 @@ void log_print(struct log *l, const char *lvl, const char *fmt, ...)
 void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 {
 	struct timespec ts = time_now();
-	thread_local char buf[1024];
+	static __thread char buf[1024];
+
+	int off = 0;
+	int len = sizeof(buf);
 
 	/* Optional prefix */
 	if (l->prefix)
-		strcatf(&buf, "%s", l->prefix);
+		off += snprintf(buf + off, len - off, "%s", l->prefix);
 
 	/* Timestamp & Severity */
-	strcatf(&buf, "%10.3f %-5s ", time_delta(&l->epoch, &ts), lvl);
+	off += snprintf(buf + off, len - off, "%10.3f %-5s ", time_delta(&l->epoch, &ts), lvl);
 
 	/* Format String */
-	vstrcatf(&buf, fmt, ap);
+	off += vsnprintf(buf + off, len - off, fmt, ap);
 
 	/* Output */
 #ifdef ENABLE_OPAL_ASYNC
