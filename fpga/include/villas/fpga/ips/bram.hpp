@@ -26,8 +26,8 @@
 
 #pragma once
 
-#include "memory.hpp"
-#include "fpga/ip.hpp"
+#include <villas/memory.hpp>
+#include <villas/fpga/ip.hpp>
 
 namespace villas {
 namespace fpga {

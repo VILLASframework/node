@@ -24,9 +24,9 @@
 #include "log_config.h"
 #include "plugin.h"
 
-#include "fpga/ip.h"
-#include "fpga/card.h"
-#include "fpga/ips/dft.h"
+#include <villas/fpga/ip.h>
+#include <villas/fpga/card.h>
+#include <villas/fpga/ips/dft.h>
 
 int dft_parse(struct fpga_ip *c, json_t *cfg)
 {

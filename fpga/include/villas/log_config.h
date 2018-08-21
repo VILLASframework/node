@@ -27,7 +27,7 @@ struct log;
 
 #include <jansson.h>
 
-#include "log.h"
+#include <villas/log.h>
 
 /** Parse logging configuration. */
 int log_parse(struct log *l, json_t *cfg);

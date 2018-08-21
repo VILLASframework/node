@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "fpga/ips/bram.hpp"
+#include <villas/fpga/ips/bram.hpp>
 
 namespace villas {
 namespace fpga {

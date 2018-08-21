@@ -31,8 +31,8 @@ extern "C" {
 #include <time.h>
 #include <sys/ioctl.h>
 
-#include "common.h"
-#include "log_config.h"
+#include <villas/common.h>
+#include <villas/log_config.h>
 
 #ifdef __GNUC__
   #define INDENT	int __attribute__ ((__cleanup__(log_outdent), unused)) _old_indent = log_indent(1);

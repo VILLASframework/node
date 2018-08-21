@@ -16,7 +16,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 
-#include "common.h"
+#include <villas/common.h>
 
 #define LIST_CHUNKSIZE		16
 

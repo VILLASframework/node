@@ -30,7 +30,7 @@
 #include <signal.h>
 #include <sys/types.h>
 
-#include "log.h"
+#include <villas/log.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -30,9 +30,9 @@
 #include "log_config.h"
 #include "plugin.h"
 
-#include "fpga/ip.h"
-#include "fpga/card.h"
-#include "fpga/ips/model.h"
+#include <villas/fpga/ip.h>
+#include <villas/fpga/card.h>
+#include <villas/fpga/ips/model.h>
 
 static int model_parameter_destroy(struct model_parameter *p)
 {

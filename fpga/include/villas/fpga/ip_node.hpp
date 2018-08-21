@@ -37,7 +37,7 @@
 
 #include <villas/fpga/ip.hpp>
 
-#include <villas/directed_graph.hpp>
+#include <villas/graph/directed.hpp>
 
 namespace villas {
 namespace fpga {
