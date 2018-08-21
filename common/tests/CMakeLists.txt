@@ -26,16 +26,16 @@ set(SOURCES
 	graph.cpp
 )
 
-add_executable(unit-tests ${SOURCES})
+add_executable(unit-tests-common ${SOURCES})
 
 find_package(Criterion REQUIRED)
 
-target_include_directories(unit-tests PUBLIC
+target_include_directories(unit-tests-common PUBLIC
 	${PROJECT_SOURCE_DIR}/include
 	${CRITERION_INCLUDE_DIRECTORIES}
 )
 
-target_link_libraries(unit-tests PUBLIC
+target_link_libraries(unit-tests-common PUBLIC
 	villas-common
 	${CRITERION_LIBRARIES}
 )
