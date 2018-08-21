@@ -34,16 +34,6 @@ set(SOURCES
 	ips/dma.cpp
 	ips/bram.cpp
 	ips/rtds.cpp
-
-	kernel/kernel.c
-	kernel/pci.c
-	kernel/vfio.cpp
-
-	utils.c
-	list.c
-	log.c
-	log_config.c
-	log_helper.c
 )
 
 include(FindPkgConfig)
@@ -60,6 +50,7 @@ target_link_libraries(villas-fpga PUBLIC villas-common)
 # GPU library is optional, check for CUDA presence
 include(CheckLanguage)
 check_language(CUDA)
+
 if(CMAKE_CUDA_COMPILER)
 	add_subdirectory(gpu)
 	target_link_libraries(villas-fpga PUBLIC villas-gpu)

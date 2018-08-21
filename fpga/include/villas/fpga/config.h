@@ -1,4 +1,4 @@
-/** Static server configuration
+/** Compile time configuration
  *
  * This file contains some compiled-in settings.
  * This settings are not part of the configuration file.
@@ -25,41 +25,6 @@
  *********************************************************************************/
 
 #pragma once
-
-#ifndef V
-  #define V 2
-#endif
-
-/* Paths */
-#define PLUGIN_PATH		PREFIX "/share/villas/node/plugins"
-#define WEB_PATH		PREFIX "/share/villas/node/web"
-#define SYSFS_PATH		"/sys"
-#define PROCFS_PATH		"/proc"
-
-/** Default number of values in a sample */
-#define DEFAULT_SAMPLELEN	64
-#define DEFAULT_QUEUELEN	1024
-
-/** Number of hugepages which are requested from the the kernel.
- * @see https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt */
-#define DEFAULT_NR_HUGEPAGES	100
-
-/** Width of log output in characters */
-#define LOG_WIDTH		80
-#define LOG_HEIGHT		25
-
-/** Socket priority */
-#define SOCKET_PRIO		7
-
-/* Protocol numbers */
-#define IPPROTO_VILLAS		137
-#define ETH_P_VILLAS		0xBABE
-
-#define USER_AGENT		"VILLASfpga (" BUILDID ")"
-
-/* Required kernel version */
-#define KERNEL_VERSION_MAJ	3
-#define KERNEL_VERSION_MIN	6
 
 /** PCIe BAR number of VILLASfpga registers */
 #define FPGA_PCI_BAR		0

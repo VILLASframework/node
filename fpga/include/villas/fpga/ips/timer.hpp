@@ -32,8 +32,7 @@
 #include <cstdint>
 #include <xilinx/xtmrctr.h>
 
-#include <villas/config.h>
-
+#include <villas/fpga/config.h>
 #include <villas/fpga/ip.hpp>
 
 namespace villas {

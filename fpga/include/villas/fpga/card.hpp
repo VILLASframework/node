@@ -36,12 +36,12 @@
 #include <jansson.h>
 
 #include <villas/plugin.hpp>
-#include <villas/config.h>
 #include <villas/memory.hpp>
 
 #include <villas/kernel/pci.h>
 #include <villas/kernel/vfio.hpp>
 
+#include <villas/fpga/config.h>
 #include <villas/fpga/ip.hpp>
 
 #define PCI_FILTER_DEFAULT_FPGA {		\
