@@ -34,7 +34,6 @@
 #include <villas/utils.h>
 #include <villas/utils.hpp>
 
-
 #include <villas/fpga/ip.hpp>
 #include <villas/fpga/card.hpp>
 #include <villas/fpga/vlnv.hpp>
@@ -189,10 +188,12 @@ int main(int argc, char* argv[])
 	dma->connect(dma->getMasterPort(dma->mm2sPort),
 	             rtds->getSlavePort(rtds->slavePort));
 
-	auto mem = villas::HostRam::allocate<int32_t>(0x100 / sizeof(int32_t));
+	auto alloc = villas::HostRam::getAllocator();
+	auto mem = alloc.allocate<int32_t>(0x100 / sizeof(int32_t));
+	auto block = mem.getMemoryBlock();
 
 	while(true) {
-		dma->read(mem, mem.getSize());
+		dma->read(block, block.getSize());
 		const size_t bytesRead = dma->readComplete();
 		const size_t valuesRead = bytesRead / sizeof(int32_t);
 
@@ -214,7 +215,7 @@ int main(int argc, char* argv[])
 			mem[memIdx++] = number;
 		}
 
-		dma->write(mem, memIdx * sizeof(int32_t));
+		dma->write(block, memIdx * sizeof(int32_t));
 	}
 
 	return 0;
