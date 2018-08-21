@@ -147,10 +147,8 @@ int main(int argc, char* argv[])
 	}
 
 	/* Logging setup */
-
 	spdlog::set_level(spdlog::level::debug);
 	setupColorHandling();
-
 
 	fpga::PCIeCard& card = setupFpgaCard(configFile, fpgaName);
 
@@ -162,7 +160,6 @@ int main(int argc, char* argv[])
 
 	auto fifo = reinterpret_cast<fpga::ip::Fifo*>
 	           (card.lookupIp(fpga::Vlnv("xilinx.com:ip:axi_fifo_mm_s:")));
-
 
 	if(rtds == nullptr) {
 		logger->error("No RTDS interface found on FPGA");
@@ -178,7 +175,6 @@ int main(int argc, char* argv[])
 		logger->error("No Fifo found on FPGA ");
 		return 1;
 	}
-
 
 	rtds->dump();
 

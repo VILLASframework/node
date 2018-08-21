@@ -20,11 +20,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##############################################################################
 
-add_executable(streamer streamer.cpp)
+add_executable(villas-fpga-pipe villas-fpga-pipe.cpp)
 
-add_executable(pcimem pcimem.c)
-
-target_link_libraries(streamer PUBLIC
+target_link_libraries(villas-fpga-pipe PUBLIC
 	villas-fpga
 )
 
+add_executable(pcimem pcimem.c)
