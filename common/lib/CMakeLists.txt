@@ -44,11 +44,10 @@ endif()
 target_include_directories(villas-common PUBLIC
 	${villas-common_SOURCE_DIR}/include
 	${villas-common_SOURCE_DIR}/thirdparty/spdlog/include
-	${JANSSON_INCLUDE_DIRS}
 )
 
 target_link_libraries(villas-common PUBLIC
-	${JANSSON_LIBRARIES}
+	PkgConfig::JANSSON
 	${CMAKE_DL_LIBS}
 )
 

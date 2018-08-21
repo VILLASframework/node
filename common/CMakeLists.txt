@@ -31,7 +31,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 include(FindPkgConfig)
 
-pkg_check_modules(JANSSON jansson)
+pkg_check_modules(JANSSON IMPORTED_TARGET jansson)
 
 add_subdirectory(lib)
 add_subdirectory(tests)
