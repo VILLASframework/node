@@ -374,6 +374,13 @@ void Gpu::memcpyKernel(const MemoryBlock& src, const MemoryBlock& dst, size_t si
 	cudaDeviceSynchronize();
 }
 
+MemoryTranslation
+Gpu::translate(const MemoryBlock& dst)
+{
+	auto& mm = MemoryManager::get();
+	return mm.getTranslation(masterPciEAddrSpaceId, dst.getAddrSpaceId());
+}
+
 
 std::unique_ptr<villas::MemoryBlock, villas::MemoryBlock::deallocator_fn>
 GpuAllocator::allocateBlock(size_t size)
@@ -381,29 +388,53 @@ GpuAllocator::allocateBlock(size_t size)
 	cudaSetDevice(gpu.gpuId);
 
 	void* addr;
-	if(cudaSuccess != cudaMalloc(&addr, size)) {
-		logger->error("cudaMalloc(..., size={}) failed", size);
-		throw std::bad_alloc();
-	}
-
 	auto& mm = MemoryManager::get();
 
-	// assemble name for this block
-	std::stringstream name;
-	name << std::showbase << std::hex << reinterpret_cast<uintptr_t>(addr);
+	// search for an existing chunk that has enough free memory
+	auto chunk = std::find_if(chunks.begin(), chunks.end(), [&](const auto& chunk) {
+		return chunk->getAvailableMemory() >= size;
+	});
 
-	auto blockName = mm.getSlaveAddrSpaceName(getName(), name.str());
-	auto blockAddrSpaceId = mm.getOrCreateAddressSpace(blockName);
 
-	const auto localAddr = reinterpret_cast<uintptr_t>(addr);
-	std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
-	        mem(new MemoryBlock(localAddr, size, blockAddrSpaceId), this->free);
+	if(chunk != chunks.end()) {
+		logger->debug("Found existing chunk that can host the requested block");
 
-	insertMemoryBlock(*mem);
+		return (*chunk)->allocateBlock(size);
 
-	gpu.makeAccessibleToPCIeAndVA(*mem);
+	} else {
+		// allocate a new chunk
 
-	return mem;
+		// rounded-up multiple of GPU page size
+		const size_t chunkSize = size - (size & (GpuPageSize - 1)) + GpuPageSize;
+		logger->debug("Allocate new chunk of {:#x} bytes", chunkSize);
+
+		if(cudaSuccess != cudaMalloc(&addr, chunkSize)) {
+			logger->error("cudaMalloc(..., size={}) failed", chunkSize);
+			throw std::bad_alloc();
+		}
+
+		// assemble name for this block
+		std::stringstream name;
+		name << std::showbase << std::hex << reinterpret_cast<uintptr_t>(addr);
+
+		auto blockName = mm.getSlaveAddrSpaceName(getName(), name.str());
+		auto blockAddrSpaceId = mm.getOrCreateAddressSpace(blockName);
+
+		const auto localAddr = reinterpret_cast<uintptr_t>(addr);
+		std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
+		        mem(new MemoryBlock(localAddr, chunkSize, blockAddrSpaceId), this->free);
+
+		insertMemoryBlock(*mem);
+
+		// already make accessible to CPU
+		gpu.makeAccessibleToPCIeAndVA(*mem);
+
+		// create a new allocator to manage the chunk and push to chunk list
+		chunks.push_front(std::make_unique<LinearAllocator>(std::move(mem)));
+
+		// call again, this time there's a large enough chunk
+		return allocateBlock(size);
+	}
 }
 
 

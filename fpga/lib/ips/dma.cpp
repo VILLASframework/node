@@ -165,7 +165,7 @@ Dma::write(const MemoryBlock& mem, size_t len)
 	                                     mem.getAddrSpaceId());
 	const void* buf = reinterpret_cast<void*>(translation.getLocalAddr(0));
 
-	logger->debug("Write to address: {:p}", buf);
+	logger->debug("Write to stream from address {:p}", buf);
 	return hasScatterGather() ? writeSG(buf, len) : writeSimple(buf, len);
 }
 
@@ -180,7 +180,7 @@ Dma::read(const MemoryBlock& mem, size_t len)
 	                                     mem.getAddrSpaceId());
 	void* buf = reinterpret_cast<void*>(translation.getLocalAddr(0));
 
-	logger->debug("Read from address: {:p}", buf);
+	logger->debug("Read from stream and write to address {:p}", buf);
 	return hasScatterGather() ? readSG(buf, len) : readSimple(buf, len);
 }
 

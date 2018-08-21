@@ -27,11 +27,13 @@ set(SOURCES
 	dma.cpp
 	fifo.cpp
 	rtds.cpp
+	rtds2gpu.cpp
 	timer.cpp
 )
 
 if(CMAKE_CUDA_COMPILER)
-	list(APPEND SOURCES gpu.cpp)
+	enable_language(CUDA)
+	list(APPEND SOURCES gpu.cpp gpu_kernels.cu)
 endif()
 
 add_executable(unit-tests ${SOURCES})

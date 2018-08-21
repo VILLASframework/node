@@ -41,7 +41,7 @@ IpNode::streamGraph;
 bool
 IpNodeFactory::configureJson(IpCore& ip, json_t* json_ip)
 {
-	auto& ipNode = reinterpret_cast<IpNode&>(ip);
+	auto& ipNode = dynamic_cast<IpNode&>(ip);
 	auto logger = getLogger();
 
 	json_t* json_ports = json_object_get(json_ip, "ports");
@@ -216,7 +216,7 @@ IpNode::connectLoopback()
 	logger->debug("switch at: {}", portMaster->nodeName);
 
 	// TODO: verify this is really a switch!
-	auto axiStreamSwitch = reinterpret_cast<ip::AxiStreamSwitch*>(
+	auto axiStreamSwitch = dynamic_cast<ip::AxiStreamSwitch*>(
 	                            card->lookupIp(portMaster->nodeName));
 
 	if(axiStreamSwitch == nullptr) {

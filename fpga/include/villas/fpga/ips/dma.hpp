@@ -43,7 +43,10 @@ public:
 	bool init();
 	bool reset();
 
+	// memory-mapped to stream (MM2S)
 	bool write(const MemoryBlock& mem, size_t len);
+
+	// stream to memory-mapped (S2MM)
 	bool read(const MemoryBlock& mem, size_t len);
 
 	size_t writeComplete()

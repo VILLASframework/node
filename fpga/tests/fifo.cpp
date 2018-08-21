@@ -46,7 +46,7 @@ Test(fpga, fifo, .description = "FIFO")
 
 		logger->info("Testing {}", *ip);
 
-		auto fifo = reinterpret_cast<villas::fpga::ip::Fifo&>(*ip);
+		auto fifo = dynamic_cast<villas::fpga::ip::Fifo&>(*ip);
 
 		if(not fifo.connectLoopback()) {
 			continue;
