@@ -1,10 +1,9 @@
 #include <unistd.h>
 #include <cstring>
 
+#include <villas/log.hpp>
 #include <villas/memory_manager.hpp>
 #include <villas/fpga/ips/rtds2gpu.hpp>
-
-#include "log.hpp"
 
 namespace villas {
 namespace fpga {

@@ -20,9 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include "log.h"
-#include "log_config.h"
-#include "plugin.h"
+#include <villas/log.h>
+#include <villas/log_config.h>
+#include <villas/plugin.h>
 
 #include <villas/fpga/ip.h>
 #include <villas/fpga/card.h>

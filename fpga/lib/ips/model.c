@@ -25,10 +25,10 @@
 #include <string.h>
 #include <math.h>
 
-#include "utils.h"
-#include "log.h"
-#include "log_config.h"
-#include "plugin.h"
+#include <villas/utils.h>
+#include <villas/log.h>
+#include <villas/log_config.h>
+#include <villas/plugin.h>
 
 #include <villas/fpga/ip.h>
 #include <villas/fpga/card.h>
