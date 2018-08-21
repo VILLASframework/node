@@ -59,22 +59,11 @@ build:source:
 # Stage: test
 ##############################################################################
 
-test:unit-software:
+test:unit:
   stage: test
-  dependencies:
-    - build:source
-  script:
-    - build/tests/unit-tests --filter 'graph/*'
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
-  tags:
-    - docker
-
-test:unit-hardware:
-  stage: test
-#  dependencies:
-#    - build:source
   tags:
     - villas-fpga
+  allow_failure: true
   script: |
     rm -r build && mkdir build && cd build && cmake3 .. && make unit-tests -j8
     if [ "$(who | wc -l)" -eq "0" ]; then
