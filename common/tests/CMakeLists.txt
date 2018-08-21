@@ -32,7 +32,7 @@ find_package(Criterion REQUIRED)
 
 target_include_directories(unit-tests-common PUBLIC
 	${PROJECT_SOURCE_DIR}/include
-	${CRITERION_INCLUDE_DIRECTORIES}
+	${CRITERION_INCLUDE_DIRS}
 )
 
 target_link_libraries(unit-tests-common PUBLIC

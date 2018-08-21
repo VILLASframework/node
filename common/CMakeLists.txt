@@ -33,5 +33,7 @@ include(FindPkgConfig)
 
 pkg_check_modules(JANSSON IMPORTED_TARGET jansson)
 
+find_package(Criterion)
+
 add_subdirectory(lib)
 add_subdirectory(tests)
