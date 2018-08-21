@@ -184,7 +184,7 @@ int main(int argc, char* argv[])
 	dma->connect(dma->getMasterPort(dma->mm2sPort),
 	             rtds->getSlavePort(rtds->slavePort));
 
-	auto alloc = villas::HostRam::getAllocator();
+	auto &alloc = villas::HostRam::getAllocator();
 	auto mem = alloc.allocate<int32_t>(0x100 / sizeof(int32_t));
 	auto block = mem.getMemoryBlock();
 
