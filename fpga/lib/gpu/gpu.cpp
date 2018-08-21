@@ -31,7 +31,7 @@
 #include <villas/gpu.hpp>
 #include <villas/log.hpp>
 #include <villas/kernel/pci.h>
-#include <memory_manager.hpp>
+#include <villas/memory_manager.hpp>
 
 #include <cuda.h>
 #include <cuda_runtime.h>

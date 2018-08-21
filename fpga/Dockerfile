@@ -50,7 +50,7 @@ RUN yum -y install epel-release centos-release-scl
 
 # Toolchain
 RUN yum -y install \
-	gcc gcc-c++ \
+	devtoolset-7-toolchain \
 	pkgconfig make cmake3 \
 	autoconf automake autogen libtool \
 	texinfo git curl tar
@@ -67,9 +67,9 @@ RUN yum -y install \
 
 # Build & Install Criterion
 COPY thirdparty/criterion /tmp/criterion
-RUN mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && cmake .. && make install && rm -rf /tmp/*
+RUN mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && cmake3 .. && make install && rm -rf /tmp/*
 
 ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
 
 WORKDIR /fpga
-ENTRYPOINT bash
+ENTRYPOINT scl enable devtoolset-7 bash

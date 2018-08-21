@@ -39,7 +39,7 @@ set_source_files_properties(gpu.cpp PROPERTIES
 target_include_directories(villas-gpu PRIVATE /opt/cuda/include)
 
 target_link_libraries(villas-gpu
-	PRIVATE villas-common gdrapi cuda)
+	PUBLIC villas-common gdrapi cuda)
 
 target_include_directories(villas-gpu
 	PUBLIC

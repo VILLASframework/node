@@ -25,11 +25,10 @@
 
 #include <sstream>
 
-#include <plugin.hpp>
-#include <memory_manager.hpp>
-#include <memory.hpp>
+#include <villas/plugin.hpp>
+#include <villas/memory_manager.hpp>
+#include <villas/memory.hpp>
 #include <villas/log.hpp>
-
 
 namespace villas {
 namespace gpu {
