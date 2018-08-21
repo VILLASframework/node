@@ -26,16 +26,20 @@ add_library(villas-common SHARED
 	memory.cpp
 	memory_manager.cpp
 
-	kernel/kernel.c
-	kernel/pci.c
-	kernel/vfio.cpp
-
 	utils.c
 	list.c
 	log.c
 	log_config.c
 	log_helper.c
 )
+
+if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
+	target_sources(villas-common
+		kernel/kernel.c
+		kernel/pci.c
+		kernel/vfio.cpp
+	)
+endif()
 
 target_include_directories(villas-common PUBLIC
 	${villas-common_SOURCE_DIR}/include
