@@ -39,8 +39,12 @@ HostRam::HostRamAllocator::allocateBlock(size_t size)
 		size &= size_t(~0xFFF);
 	}
 
-	const int mmap_flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT;
+	const int mmap_flags = MAP_PRIVATE | MAP_ANONYMOUS;
 	const int mmap_protection = PROT_READ | PROT_WRITE;
+
+#ifdef __linux__
+	mmap_flags |= MAP_32BIT;
+#endif
 
 	const void* addr = mmap(nullptr, size, mmap_protection, mmap_flags, 0, 0);
 	if(addr == nullptr) {
