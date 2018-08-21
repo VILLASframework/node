@@ -15,4 +15,4 @@
 	url = ../VILLASfpga-hardware.git
 [submodule "common"]
 	path = common
-	url = git@git.rwth-aachen.de:acs/public/villas/VILLAScommon.git
+	url = ../VILLAScommon.git
