@@ -85,6 +85,8 @@ public:
 	MemoryAccessor(const MemoryBlock& mem) :
 	    translation(MemoryManager::get().getTranslationFromProcess(mem.getAddrSpaceId())) {}
 
+	MemoryAccessor(const MemoryTranslation& translation) :
+	    translation(translation) {}
 
 	T& operator*() const {
 		return *reinterpret_cast<T*>(translation.getLocalAddr(0));
@@ -144,6 +146,12 @@ public:
 		};
 	}
 
+	BaseAllocator(std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> mem) :
+	    BaseAllocator(mem->getAddrSpaceId())
+	{
+		memoryBlock = std::move(mem);
+	}
+
 	virtual std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
 	allocateBlock(size_t size) = 0;
 
@@ -151,6 +159,12 @@ public:
 	MemoryAccessor<T>
 	allocate(size_t num)
 	{
+		if(num == 0) {
+			// doesn't make sense to allocate an empty block
+			logger->error("Trying to allocate empty memory");
+			throw std::bad_alloc();
+		}
+
 		const size_t size = num * sizeof(T);
 		auto mem = allocateBlock(size);
 
@@ -195,6 +209,9 @@ protected:
 	MemoryBlock::deallocator_fn free;
 	SpdLogger logger;
 
+	// optional, if allocator should own the memory block
+	std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> memoryBlock;
+
 private:
 	MemoryManager::AddressSpaceId memoryAddrSpaceId;
 	DerivedAllocator* derivedAlloc;
@@ -215,6 +232,12 @@ public:
 	LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId,
 	                size_t memorySize,
 	                size_t internalOffset = 0);
+
+	LinearAllocator(std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> mem) :
+	    LinearAllocator(mem->getAddrSpaceId(), mem->getSize())
+	{
+		memoryBlock = std::move(mem);
+	}
 
 	size_t getAvailableMemory() const
 	{ return memorySize - nextFreeAddress; }

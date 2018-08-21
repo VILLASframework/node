@@ -754,6 +754,7 @@ VfioGroup::attach(VfioContainer& container, int groupIndex)
 	          << (container.isIommuEnabled() ? "" : "noiommu-")
 	          << groupIndex;
 
+	logger->debug("path: {}", groupPath.str().c_str());
 	group->fd = open(groupPath.str().c_str(), O_RDWR);
 	if (group->fd < 0) {
 		logger->error("Failed to open VFIO group {}", group->index);
