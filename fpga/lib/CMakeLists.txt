@@ -55,13 +55,6 @@ add_library(villas-fpga SHARED ${SOURCES})
 
 target_link_libraries(villas-fpga PUBLIC villas-common)
 
-if(CMAKE_CUDA_COMPILER)
-	add_subdirectory(gpu)
-	target_link_libraries(villas-fpga PUBLIC villas-gpu)
-else()
-	message("No CUDA support, not building GPU library")
-endif()
-
 target_compile_definitions(villas-fpga PRIVATE
 	BUILDID=\"abc\"
 	_GNU_SOURCE
@@ -82,6 +75,10 @@ target_link_libraries(villas-fpga PUBLIC
 	m
 	villas-common
 )
+
+if(CMAKE_CUDA_COMPILER)
+	target_link_libraries(villas-fpga PUBLIC villas-gpu)
+endif()
 
 include(GNUInstallDirs)
 

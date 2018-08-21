@@ -24,10 +24,11 @@
  #include <stdio.h>
 
 #include <villas/gpu.hpp>
-#include "kernels.hpp"
 
-#include "cuda_runtime.h"
+#include <cuda_runtime.h>
 #include <cuda.h>
+
+#include "kernels.hpp"
 
 namespace villas {
 namespace gpu {

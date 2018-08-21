@@ -33,6 +33,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 include(CheckLanguage)
 check_language(CUDA)
 
+if(CMAKE_CUDA_COMPILER)
+	add_subdirectory(gpu)
+else()
+	message("No CUDA support, not building GPU library")
+endif()
+
 include_directories(thirdparty/CLI11)
 include_directories(thirdparty/rang)
 
