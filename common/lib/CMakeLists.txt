@@ -28,8 +28,8 @@ add_library(villas-common SHARED
 )
 
 target_include_directories(villas-common PUBLIC
-	${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/thirdparty/spdlog/include
+	${villas-common_SOURCE_DIR}/include
+	${villas-common_SOURCE_DIR}/thirdparty/spdlog/include
 	${JANSSON_INCLUDE_DIRS}
 )
 
