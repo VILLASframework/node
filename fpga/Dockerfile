@@ -28,7 +28,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM fedora:28
+FROM nvidia/cuda:9.2-devel-centos7
 
 LABEL \
 	org.label-schema.schema-version="1.0" \
@@ -42,22 +42,25 @@ LABEL \
 	org.label-schema.vcs-url="https://git.rwth-aachen.de/VILLASframework/VILLASfpga" \
 	org.label-schema.usage="https://villas.fein-aachen.org/doc/fpga.html"
 
+# Some of the dependencies are only available in our own repo
+ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
+
+# Enable Extra Packages for Enterprise Linux (EPEL) and Software collection repo
+RUN yum -y install epel-release centos-release-scl
+
 # Toolchain
-RUN dnf -y install \
+RUN yum -y install \
 	gcc gcc-c++ \
-	pkgconfig make cmake \
+	pkgconfig make cmake3 \
 	autoconf automake autogen libtool \
 	texinfo git curl tar
 
 # Several tools only needed for developement and testing
-RUN dnf -y install \
+RUN yum -y install \
 	rpmdevtools rpm-build
 
-# Some of the dependencies are only available in our own repo
-ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
-
 # Dependencies
-RUN dnf -y install \
+RUN yum -y install \
 	jansson-devel \
 	libxil-devel \
 	lapack-devel
@@ -68,5 +71,5 @@ RUN mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && cmake .. && make
 
 ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
 
-WORKDIR /villas
+WORKDIR /fpga
 ENTRYPOINT bash

@@ -33,7 +33,7 @@ docker-dev:
 build:source:
   stage: build
   script:
-    - mkdir build && cd build && cmake .. && make -j8
+    - mkdir build && cd build && cmake3 .. && make -j8
   artifacts:
     expire_in: 1 week
     name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
@@ -46,7 +46,7 @@ build:source:
 #build:packages:
 #  stage: build
 #  script:
-#    - mkdir build && cd build && cmake .. && make package
+#    - mkdir build && cd build && cmake3 .. && make package
 #  artifacts:
 #    expire_in: 1 week
 #    name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
@@ -76,7 +76,7 @@ test:unit-hardware:
   tags:
     - villas-fpga
   script: |
-    rm -r build && mkdir build && cd build && cmake .. && make unit-tests -j8
+    rm -r build && mkdir build && cd build && cmake3 .. && make unit-tests -j8
     if [ "$(who | wc -l)" -eq "0" ]; then
       tests/unit-tests --jobs 1 --filter 'fpga/*'
     else
