@@ -4,7 +4,7 @@
  * @copyright 2017-2018, Steffen Vogel
  * @license GNU General Public License (version 3)
  *
- * VILLASfpga
+ * VILLAScommon
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

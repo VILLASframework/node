@@ -17,7 +17,7 @@ stages:
 # Stage: prepare
 ##############################################################################
 
-# Build docker image which is used to build & test VILLASnode
+# Build docker image which is used to build & test VILLAScommon
 docker-dev:
   stage: prepare
   script:
