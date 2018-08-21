@@ -31,12 +31,13 @@ set(SOURCES
 	timer.cpp
 )
 
+add_executable(unit-tests ${SOURCES})
+
 if(CMAKE_CUDA_COMPILER)
 	enable_language(CUDA)
-	list(APPEND SOURCES gpu.cpp gpu_kernels.cu)
+	target_sources(unit-tests PRIVATE
+		gpu.cpp gpu_kernels.cu)
 endif()
-
-add_executable(unit-tests ${SOURCES})
 
 find_package(Criterion REQUIRED)
 

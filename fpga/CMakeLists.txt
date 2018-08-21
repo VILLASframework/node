@@ -29,6 +29,10 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 
+# GPU library is optional, check for CUDA presence
+include(CheckLanguage)
+check_language(CUDA)
+
 include_directories(thirdparty/CLI11)
 include_directories(thirdparty/rang)
 

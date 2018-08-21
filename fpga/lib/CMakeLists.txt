@@ -55,10 +55,6 @@ add_library(villas-fpga SHARED ${SOURCES})
 
 target_link_libraries(villas-fpga PUBLIC villas-common)
 
-# GPU library is optional, check for CUDA presence
-include(CheckLanguage)
-check_language(CUDA)
-
 if(CMAKE_CUDA_COMPILER)
 	add_subdirectory(gpu)
 	target_link_libraries(villas-fpga PUBLIC villas-gpu)
