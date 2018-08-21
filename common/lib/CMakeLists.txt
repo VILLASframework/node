@@ -25,6 +25,16 @@ add_library(villas-common SHARED
 	utils.cpp
 	memory.cpp
 	memory_manager.cpp
+
+	kernel/kernel.c
+	kernel/pci.c
+	kernel/vfio.cpp
+
+	utils.c
+	list.c
+	log.c
+	log_config.c
+	log_helper.c
 )
 
 target_include_directories(villas-common PUBLIC
@@ -36,4 +46,9 @@ target_include_directories(villas-common PUBLIC
 target_link_libraries(villas-common PUBLIC
 	${JANSSON_LIBRARIES}
 	${CMAKE_DL_LIBS}
+)
+
+target_compile_definitions(villas-common PRIVATE
+	BUILDID=\"abc\"
+	_GNU_SOURCE
 )
