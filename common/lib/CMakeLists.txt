@@ -35,5 +35,5 @@ target_include_directories(villas-common PUBLIC
 
 target_link_libraries(villas-common PUBLIC
 	${JANSSON_LIBRARIES}
-	-ldl
+	${CMAKE_DL_LIBS}
 )
