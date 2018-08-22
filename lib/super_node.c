@@ -494,6 +494,7 @@ int super_node_destroy(struct super_node *sn)
 
 int super_node_periodic(struct super_node *sn)
 {
+#ifdef WITH_HOOKS
 	int ret;
 
 	for (size_t i = 0; i < list_length(&sn->paths); i++) {
@@ -533,6 +534,6 @@ int super_node_periodic(struct super_node *sn)
 				return ret;
 		}
 	}
-
+#endif
 	return 0;
 }
