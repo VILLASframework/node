@@ -260,14 +260,14 @@ void * memdup(const void *src, size_t bytes)
 	return dst;
 }
 
-size_t read_random(char *buf, size_t len)
+ssize_t read_random(char *buf, size_t len)
 {
 	int fd;
 	ssize_t bytes, total;
 
 	fd = open("/dev/urandom", O_RDONLY);
 	if (fd < 0)
-		return 0;
+		return -1;
 
 	bytes = 0;
 	total = 0;
@@ -282,21 +282,6 @@ size_t read_random(char *buf, size_t len)
 	close(fd);
 
 	return bytes;
-}
-
-void rdtsc_sleep(uint64_t nanosecs, uint64_t start)
-{
-	uint64_t cycles;
-
-	/** @todo Replace the hard coded CPU clock frequency */
-	cycles = (double) nanosecs / (1e9 / 3392389000);
-
-	if (start == 0)
-		start = rdtsc();
-
-	do {
-		__asm__("nop");
-	} while (rdtsc() - start < cycles);
 }
 
 /* Setup exit handler */
@@ -398,4 +383,37 @@ size_t strlenp(const char *str)
 	}
 
 	return sz;
+}
+
+char * decolor(char *str)
+{
+	char *p, *q;
+	bool inseq = false;
+
+	for (p = q = str; *p; p++) {
+		switch (*p) {
+			case 0x1b:
+				if (*(++p) == '[') {
+					inseq = true;
+					continue;
+				}
+				break;
+
+			case 'm':
+				if (inseq) {
+					inseq = false;
+					continue;
+				}
+				break;
+		}
+
+		if (!inseq) {
+			*q = *p;
+			q++;
+		}
+	}
+
+	*q = '\0';
+
+	return str;
 }

@@ -1,5 +1,6 @@
-/** Some common defines, enums and datastructures.
+/** Linux specific real-time optimizations
  *
+ * @see: https://wiki.linuxfoundation.org/realtime/documentation/howto/applications/application_base
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
@@ -21,34 +22,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+/** @addtogroup kernel Kernel
+ * @{
+ */
+
 #pragma once
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Common states for most objects in VILLAScommon (paths, nodes, hooks, plugins) */
-enum state {
-	STATE_DESTROYED		= 0,
-	STATE_INITIALIZED	= 1,
-	STATE_PARSED		= 2,
-	STATE_CHECKED		= 3,
-	STATE_STARTED		= 4,
-	STATE_LOADED		= 4, /* alias for STATE_STARTED used by struct plugin */
-	STATE_OPENED		= 4, /* alias for STATE_STARTED used by struct io */
-	STATE_STOPPED		= 5,
-	STATE_UNLOADED		= 5, /* alias for STATE_STARTED used by struct plugin */
-	STATE_CLOSED		= 5, /* alias for STATE_STARTED used by struct io */
-	STATE_PENDING_CONNECT	= 6,
-	STATE_CONNECTED		= 7
-};
+int rt_init(int priority, int affinity);
 
-/** Callback to destroy list elements.
+int rt_set_affinity(int affinity);
+
+int rt_set_priority(int priority);
+
+int rt_lock_memory();
+
+/** Checks for realtime (PREEMPT_RT) patched kernel.
  *
- * @param data A pointer to the data which should be freed.
+ * See https://rt.wiki.kernel.org
+ *
+ * @retval 0 Kernel is patched.
+ * @reval <>0 Kernel is not patched.
  */
-typedef int (*dtor_cb_t)(void *);
+int rt_is_preemptible();
 
 #ifdef __cplusplus
 }
 #endif
+
+/** @} */

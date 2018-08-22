@@ -23,7 +23,20 @@
 set(SOURCES
 	main.cpp
 	logging.cpp
+	
 	graph.cpp
+
+	advio.c
+	bitset.c
+	hash_table.c
+	hist.c
+	kernel.c
+	list.c
+	log.c
+	task.c
+	timing.c
+	tsc.c
+	utils.c
 )
 
 add_executable(unit-tests-common ${SOURCES})

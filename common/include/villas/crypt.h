@@ -1,6 +1,5 @@
-/** Some common defines, enums and datastructures.
+/** Crypto helpers.
  *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -23,31 +22,19 @@
 
 #pragma once
 
+#include <stdio.h>
+#include <openssl/sha.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Common states for most objects in VILLAScommon (paths, nodes, hooks, plugins) */
-enum state {
-	STATE_DESTROYED		= 0,
-	STATE_INITIALIZED	= 1,
-	STATE_PARSED		= 2,
-	STATE_CHECKED		= 3,
-	STATE_STARTED		= 4,
-	STATE_LOADED		= 4, /* alias for STATE_STARTED used by struct plugin */
-	STATE_OPENED		= 4, /* alias for STATE_STARTED used by struct io */
-	STATE_STOPPED		= 5,
-	STATE_UNLOADED		= 5, /* alias for STATE_STARTED used by struct plugin */
-	STATE_CLOSED		= 5, /* alias for STATE_STARTED used by struct io */
-	STATE_PENDING_CONNECT	= 6,
-	STATE_CONNECTED		= 7
-};
-
-/** Callback to destroy list elements.
+/** Calculate SHA1 hash of complete file \p f and place it into \p sha1.
  *
- * @param data A pointer to the data which should be freed.
+ * @param sha1[out] Must be SHA_DIGEST_LENGTH (20) in size.
+ * @retval 0 Everything was okay.
  */
-typedef int (*dtor_cb_t)(void *);
+int sha1sum(FILE *f, unsigned char *sha1);
 
 #ifdef __cplusplus
 }

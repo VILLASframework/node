@@ -1,6 +1,5 @@
-/** Some common defines, enums and datastructures.
+/** Crypto helpers.
  *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -21,34 +20,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#pragma once
+#include <villas/crypt.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+int sha1sum(FILE *f, unsigned char *sha1)
+{
+	SHA_CTX c;
+	char buf[512];
+	ssize_t bytes;
+	long seek;
 
-/* Common states for most objects in VILLAScommon (paths, nodes, hooks, plugins) */
-enum state {
-	STATE_DESTROYED		= 0,
-	STATE_INITIALIZED	= 1,
-	STATE_PARSED		= 2,
-	STATE_CHECKED		= 3,
-	STATE_STARTED		= 4,
-	STATE_LOADED		= 4, /* alias for STATE_STARTED used by struct plugin */
-	STATE_OPENED		= 4, /* alias for STATE_STARTED used by struct io */
-	STATE_STOPPED		= 5,
-	STATE_UNLOADED		= 5, /* alias for STATE_STARTED used by struct plugin */
-	STATE_CLOSED		= 5, /* alias for STATE_STARTED used by struct io */
-	STATE_PENDING_CONNECT	= 6,
-	STATE_CONNECTED		= 7
-};
+	seek = ftell(f);
+	fseek(f, 0, SEEK_SET);
 
-/** Callback to destroy list elements.
- *
- * @param data A pointer to the data which should be freed.
- */
-typedef int (*dtor_cb_t)(void *);
+	SHA1_Init(&c);
 
-#ifdef __cplusplus
+	bytes = fread(buf, 1, 512, f);
+	while (bytes > 0) {
+		SHA1_Update(&c, buf, bytes);
+		bytes = fread(buf, 1, 512, f);
+	}
+
+	SHA1_Final(sha1, &c);
+
+	fseek(f, seek, SEEK_SET);
+
+	return 0;
 }
-#endif
+

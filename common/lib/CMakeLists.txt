@@ -21,33 +21,49 @@
 ##############################################################################
 
 add_library(villas-common SHARED
-	plugin.cpp
-	utils.cpp
-	memory.cpp
-	memory_manager.cpp
-
-	utils.c
+	advio.c
+    bitset.c
+    buffer.c
+	compat.c
+    crypt.c
+    hash_table.c
+    hist.c
+	kernel/kernel.c
+	kernel/rt.c
 	list.c
 	log.c
 	log_config.c
 	log_helper.c
+	memory.cpp
+	memory_manager.cpp
+	plugin.cpp
+	table.c
+    task.c
+    timing.c
+    tsc.c
+	utils.c
+	utils.cpp
 )
 
-if(${CMAKE_SYSTEM_NAME} STREQUAL Linux)
-	target_sources(villas-common
-		kernel/kernel.c
+if(CMAKE_SYSTEM_NAME STREQUAL Linux)
+	target_sources(villas-common PRIVATE
 		kernel/pci.c
 		kernel/vfio.cpp
 	)
 endif()
 
 target_include_directories(villas-common PUBLIC
-	${villas-common_SOURCE_DIR}/include
-	${villas-common_SOURCE_DIR}/thirdparty/spdlog/include
+	${OPENSSL_INCLUDE_DIR}
+	${CURL_INCLUDE_DIRS}
+	${CMAKE_BINARY_DIR}/include
+	${CMAKE_SOURCE_DIR}/include
+	${PROJECT_SOURCE_DIR}/thirdparty/spdlog/include
 )
 
 target_link_libraries(villas-common PUBLIC
 	PkgConfig::JANSSON
+	${OPENSSL_LIBRARIES}
+	${CURL_LIBRARIES}
 	${CMAKE_DL_LIBS}
 )
 

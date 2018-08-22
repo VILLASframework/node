@@ -21,7 +21,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup fpga Kernel @{ */
+/** @addtogroup kernel Kernel
+ * @{
+ */
 
 #pragma once
 
@@ -35,14 +37,16 @@ extern "C" {
 /* Forward declarations */
 struct version;
 
-//#include <sys/capability.h>
+#if WITH_CAP
+#include <sys/capability.h>
 
 /** Check if current process has capability \p cap.
  *
  * @retval 0 If capabilty is present.
  * @retval <0 If capability is not present.
  */
-//int kernel_check_cap(cap_value_t cap);
+int kernel_check_cap(cap_value_t cap);
+#endif
 
 /** Get number of reserved hugepages. */
 int kernel_get_nr_hugepages();
@@ -88,8 +92,11 @@ int kernel_get_page_size();
 /** Get the size of a huge page in bytes. */
 int kernel_get_hugepage_size();
 
+/** Get CPU base frequency */
+int kernel_get_cpu_frequency(uint64_t *freq);
+
 /** Set SMP affinity of IRQ */
-int kernel_irq_setaffinity(unsigned irq, uintmax_t affinity, uintmax_t *old);
+int kernel_irq_setaffinity(unsigned irq, uintmax_t aff , uintmax_t *old);
 
 #ifdef __cplusplus
 }

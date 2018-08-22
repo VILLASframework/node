@@ -1,4 +1,4 @@
-/** Some common defines, enums and datastructures.
+/** A simple growing buffer.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -23,31 +23,35 @@
 
 #pragma once
 
+#include <stdlib.h>
+
+#include <jansson.h>
+
+#include <villas/common.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Common states for most objects in VILLAScommon (paths, nodes, hooks, plugins) */
-enum state {
-	STATE_DESTROYED		= 0,
-	STATE_INITIALIZED	= 1,
-	STATE_PARSED		= 2,
-	STATE_CHECKED		= 3,
-	STATE_STARTED		= 4,
-	STATE_LOADED		= 4, /* alias for STATE_STARTED used by struct plugin */
-	STATE_OPENED		= 4, /* alias for STATE_STARTED used by struct io */
-	STATE_STOPPED		= 5,
-	STATE_UNLOADED		= 5, /* alias for STATE_STARTED used by struct plugin */
-	STATE_CLOSED		= 5, /* alias for STATE_STARTED used by struct io */
-	STATE_PENDING_CONNECT	= 6,
-	STATE_CONNECTED		= 7
+struct buffer {
+	enum state state;
+
+	char *buf;
+	size_t len;
+	size_t size;
 };
 
-/** Callback to destroy list elements.
- *
- * @param data A pointer to the data which should be freed.
- */
-typedef int (*dtor_cb_t)(void *);
+int buffer_init(struct buffer *b, size_t size);
+
+int buffer_destroy(struct buffer *b);
+
+void buffer_clear(struct buffer *b);
+
+int buffer_append(struct buffer *b, const char *data, size_t len);
+
+int buffer_parse_json(struct buffer *b, json_t **j);
+
+int buffer_append_json(struct buffer *b, json_t *j);
 
 #ifdef __cplusplus
 }

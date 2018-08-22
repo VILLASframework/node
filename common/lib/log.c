@@ -24,12 +24,16 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <signal.h>
 
 #include <villas/config.h>
 #include <villas/log.h>
 #include <villas/utils.h>
+#include <villas/timing.h>
+#include <villas/config.h>
 
 #ifdef ENABLE_OPAL_ASYNC
 /* Define RTLAB before including OpalPrint.h for messages to be sent
@@ -39,7 +43,6 @@
 #endif
 
 struct log *global_log;
-struct log default_log;
 
 /* We register a default log instance */
 __attribute__((constructor))
@@ -52,7 +55,7 @@ void register_default_log()
 	if (ret)
 		error("Failed to initalize log");
 
-	ret = log_start(&default_log);
+	ret = log_open(&default_log);
 	if (ret)
 		error("Failed to start log");
 }
@@ -75,6 +78,7 @@ static const char *facilities_strs[] = {
 	"tc",		/* LOG_TC */
 	"if",		/* LOG_IF */
 	"advio",	/* LOG_ADVIO */
+	"io",		/* LOG_IO */
 
 	/* Node-types */
 	"socket",	/* LOG_SOCKET */
@@ -83,31 +87,9 @@ static const char *facilities_strs[] = {
 	"ngsi",		/* LOG_NGSI */
 	"websocket",	/* LOG_WEBSOCKET */
 	"opal",		/* LOG_OPAL */
+	"comedi",	/* LOG_COMEDI */
+	"ib",		/* LOG_IB */
 };
-
-#ifdef __GNUC__
-/** The current log indention level (per thread!). */
-static __thread int indent = 0;
-
-int log_indent(int levels)
-{
-	int old = indent;
-	indent += levels;
-	return old;
-}
-
-int log_noindent()
-{
-	int old = indent;
-	indent = 0;
-	return old;
-}
-
-void log_outdent(int *old)
-{
-	indent = *old;
-}
-#endif
 
 static void log_resize(int signal, siginfo_t *sinfo, void *ctx)
 {
@@ -137,6 +119,7 @@ int log_init(struct log *l, int level, long facilitites)
 	l->file = stderr;
 	l->path = NULL;
 
+	l->epoch = time_now();
 	l->prefix = getenv("VILLAS_LOG_PREFIX");
 
 	/* Register signal handler which is called whenever the
@@ -154,7 +137,13 @@ int log_init(struct log *l, int level, long facilitites)
 			return ret;
 
 		/* Try to get initial window size */
-		ioctl(STDERR_FILENO, TIOCGWINSZ, &global_log->window);
+		ioctl(STDERR_FILENO, TIOCGWINSZ, &l->window);
+
+		/* Fallback if for some reason we can not determine a prober window size */
+		if (l->window.ws_col == 0)
+			l->window.ws_col = 150;
+		if (l->window.ws_row == 0)
+			l->window.ws_row = 50;
 	}
 	else {
 		l->window.ws_col = LOG_WIDTH;
@@ -170,7 +159,7 @@ int log_init(struct log *l, int level, long facilitites)
 	return 0;
 }
 
-int log_start(struct log *l)
+int log_open(struct log *l)
 {
 	if (l->path) {
 		l->file = fopen(l->path, "a+");;
@@ -182,20 +171,22 @@ int log_start(struct log *l)
 	else
 		l->file = stderr;
 
-	l->state = STATE_STARTED;
+	l->tty = isatty(fileno(l->file));
 
 	if (l->syslog) {
 		openlog(NULL, LOG_PID, LOG_DAEMON);
 	}
+
+	l->state = STATE_OPENED;
 
 	debug(LOG_LOG | 5, "Log sub-system started: level=%d, faciltities=%#lx, path=%s", l->level, l->facilities, l->path);
 
 	return 0;
 }
 
-int log_stop(struct log *l)
+int log_close(struct log *l)
 {
-	if (l->state != STATE_STARTED)
+	if (l->state != STATE_OPENED)
 		return 0;
 
 	if (l->file != stderr && l->file != stdout) {
@@ -206,7 +197,7 @@ int log_stop(struct log *l)
 		closelog();
 	}
 
-	l->state = STATE_STOPPED;
+	l->state = STATE_CLOSED;
 
 	return 0;
 }
@@ -283,28 +274,37 @@ void log_print(struct log *l, const char *lvl, const char *fmt, ...)
 
 void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 {
-	char *buf = alloc(512);
+	struct timespec ts = time_now();
+	static __thread char buf[1024];
+
+	int off = 0;
+	int len = sizeof(buf);
 
 	/* Optional prefix */
 	if (l->prefix)
-		strcatf(&buf, "%s", l->prefix);
+		off += snprintf(buf + off, len - off, "%s", l->prefix);
 
-	/* Indention */
-#ifdef __GNUC__
-	for (int i = 0; i < indent; i++)
-		strcatf(&buf, "%s ", BOX_UD);
-
-	strcatf(&buf, "%s ", BOX_UDR);
-#endif
+	/* Timestamp & Severity */
+	off += snprintf(buf + off, len - off, "%10.3f %-5s ", time_delta(&l->epoch, &ts), lvl);
 
 	/* Format String */
-	vstrcatf(&buf, fmt, ap);
+	off += vsnprintf(buf + off, len - off, fmt, ap);
 
 	/* Output */
 #ifdef ENABLE_OPAL_ASYNC
-	OpalPrint("VILLASfpga: %s\n", buf);
+	OpalPrint("VILLASnode: %s\n", buf);
 #endif
-	fprintf(l->file ? l->file : stderr, "%s\n", buf);
+	if (l->file) {
+		if (l->tty == false)
+			decolor(buf);
 
-	free(buf);
+		fprintf(l->file, "%s\n", buf);
+	}
+
+	if (l->syslog) {
+		if (l->tty == true) // Only decolor if not done before
+			decolor(buf);
+
+		vsyslog(LOG_INFO, fmt, ap);
+	}
 }
