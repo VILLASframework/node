@@ -71,7 +71,7 @@ static int node_direction_init(struct node_direction *nd, struct node *n)
 
 static int node_direction_destroy(struct node_direction *nd, struct node *n)
 {
-	int ret;
+	int ret = 0;
 
 #ifdef WITH_HOOKS
 	ret = list_destroy(&nd->hooks, (dtor_cb_t) hook_destroy, true);
@@ -79,7 +79,7 @@ static int node_direction_destroy(struct node_direction *nd, struct node *n)
 		return ret;
 #endif
 
-	return 0;
+	return ret;
 }
 
 static int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
