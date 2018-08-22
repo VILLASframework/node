@@ -46,12 +46,12 @@ int rt_init(int priority, int affinity)
 	if (priority)
 		rt_set_priority(priority);
 	else
-		warn("You might want to use the 'priority' setting to increase VILLASnode's process priority");
+		warn("You might want to use the 'priority' setting to increase " PROJECT_NAME "'s process priority");
 
 	if (affinity)
 		rt_set_affinity(affinity);
 	else
-		warn("You might want to use the 'affinity' setting to pin VILLASnode to dedicate CPU cores");
+		warn("You might want to use the 'affinity' setting to pin " PROJECT_NAME " to dedicate CPU cores");
 
 	rt_lock_memory();
 #else
@@ -89,7 +89,7 @@ int rt_set_affinity(int affinity)
 
 	is_isol = kernel_get_cmdline_param("isolcpus", isolcpus, sizeof(isolcpus));
 	if (is_isol) {
-		warn("You should reserve some cores for VILLASnode (see 'isolcpus')");
+		warn("You should reserve some cores for " PROJECT_NAME " (see 'isolcpus')");
 
 		CPU_ZERO(&cset_isol);
 	}

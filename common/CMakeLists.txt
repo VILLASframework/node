@@ -22,7 +22,10 @@
 
 cmake_minimum_required(VERSION 3.7)
 
-project(villas-common CXX)
+project(villas-common
+    DESCRIPTION "VILLAScommon"
+    LANGUAGES C CXX
+)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
@@ -42,3 +45,8 @@ pkg_check_modules(JANSSON IMPORTED_TARGET jansson)
 
 add_subdirectory(lib)
 add_subdirectory(tests)
+
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/villas/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/villas/config.h
+)
