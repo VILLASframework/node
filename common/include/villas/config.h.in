@@ -30,6 +30,9 @@
   #define V 2
 #endif
 
+#define PROJECT_URL		"@CMAKE_PROJECT_HOMEPAGE_URL@"
+#define PROJECT_NAME	"@CMAKE_PROJECT_DESCRIPTION@"
+
 /* Paths */
 #define PLUGIN_PATH		PREFIX "/share/villas/node/plugins"
 #define WEB_PATH		PREFIX "/share/villas/node/web"
@@ -55,7 +58,7 @@
 #define IPPROTO_VILLAS		137
 #define ETH_P_VILLAS		0xBABE
 
-#define USER_AGENT		"VILLASfpga (" BUILDID ")"
+#define USER_AGENT		PROJECT_NAME " (" BUILDID ")"
 
 /* Required kernel version */
 #define KERNEL_VERSION_MAJ	3

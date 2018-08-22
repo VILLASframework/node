@@ -292,7 +292,7 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 
 	/* Output */
 #ifdef ENABLE_OPAL_ASYNC
-	OpalPrint("VILLASnode: %s\n", buf);
+	OpalPrint(PROJECT_NAME ": %s\n", buf);
 #endif
 	if (l->file) {
 		if (l->tty == false)
