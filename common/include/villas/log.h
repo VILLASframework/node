@@ -28,19 +28,12 @@ extern "C" {
 #endif
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <time.h>
 #include <sys/ioctl.h>
 
 #include <villas/common.h>
 #include <villas/log_config.h>
-
-#ifdef __GNUC__
-  #define INDENT	int __attribute__ ((__cleanup__(log_outdent), unused)) _old_indent = log_indent(1);
-  #define NOINDENT	int __attribute__ ((__cleanup__(log_outdent), unused)) _old_indent = log_noindent();
-#else
-  #define INDENT	;
-  #define NOINDENT	;
-#endif
 
 /* The log level which is passed as first argument to print() */
 #define LOG_LVL_DEBUG	CLR_GRY("Debug")
@@ -54,35 +47,38 @@ extern "C" {
  * To be or-ed with the debug level
  */
 enum log_facilities {
-	LOG_POOL =	(1L <<  8),
-	LOG_QUEUE =	(1L <<  9),
-	LOG_CONFIG =	(1L << 10),
-	LOG_HOOK =	(1L << 11),
-	LOG_PATH =	(1L << 12),
-	LOG_NODE =	(1L << 13),
-	LOG_MEM =	(1L << 14),
-	LOG_WEB =	(1L << 15),
-	LOG_API =	(1L << 16),
-	LOG_LOG =	(1L << 17),
-	LOG_VFIO =	(1L << 18),
-	LOG_PCI =	(1L << 19),
-	LOG_XIL =	(1L << 20),
-	LOG_TC =	(1L << 21),
-	LOG_IF =	(1L << 22),
-	LOG_ADVIO =	(1L << 23),
+	LOG_POOL =		(1L <<  8),
+	LOG_QUEUE =		(1L <<  9),
+	LOG_CONFIG =		(1L << 10),
+	LOG_HOOK =		(1L << 11),
+	LOG_PATH =		(1L << 12),
+	LOG_NODE =		(1L << 13),
+	LOG_MEM =		(1L << 14),
+	LOG_WEB =		(1L << 15),
+	LOG_API =		(1L << 16),
+	LOG_LOG =		(1L << 17),
+	LOG_VFIO =		(1L << 18),
+	LOG_PCI =		(1L << 19),
+	LOG_XIL =		(1L << 20),
+	LOG_TC =		(1L << 21),
+	LOG_IF =		(1L << 22),
+	LOG_ADVIO =		(1L << 23),
+	LOG_IO =		(1L << 24),
 
 	/* Node-types */
-	LOG_SOCKET =	(1L << 24),
-	LOG_FILE =	(1L << 25),
-	LOG_FPGA =	(1L << 26),
-	LOG_NGSI =	(1L << 27),
-	LOG_WEBSOCKET =	(1L << 28),
-	LOG_OPAL =	(1L << 30),
+	LOG_SOCKET =		(1L << 25),
+	LOG_FILE =		(1L << 26),
+	LOG_FPGA =		(1L << 27),
+	LOG_NGSI =		(1L << 28),
+	LOG_WEBSOCKET =		(1L << 29),
+	LOG_OPAL =		(1L << 30),
+	LOG_COMEDI =		(1L << 31),
+	LOG_IB =		(1L << 32),
 
 	/* Classes */
-	LOG_NODES =	LOG_NODE | LOG_SOCKET | LOG_FILE | LOG_FPGA | LOG_NGSI | LOG_WEBSOCKET | LOG_OPAL,
-	LOG_KERNEL =	LOG_VFIO | LOG_PCI | LOG_TC | LOG_IF,
-	LOG_ALL =	~0xFF
+	LOG_NODES = LOG_NODE | LOG_SOCKET | LOG_FILE | LOG_FPGA | LOG_NGSI | LOG_WEBSOCKET | LOG_OPAL | LOG_COMEDI | LOG_IB,
+	LOG_KERNEL = LOG_VFIO | LOG_PCI | LOG_TC | LOG_IF,
+	LOG_ALL = ~0xFF
 };
 
 struct log {
@@ -101,39 +97,24 @@ struct log {
 	const char *path;	/**< Path of the log file. */
 	char *prefix;		/**< Prefix each line with this string. */
 	int syslog;		/**< Whether or not to log to syslogd. */
+	bool tty;		/**< Is the log file a tty? */
 
 	FILE *file;		/**< Send all log output to this file / stdout / stderr. */
 };
 
 /** The global log instance. */
-extern struct log *global_log;
-extern struct log default_log;
+struct log *global_log;
+struct log default_log;
 
 /** Initialize log object */
 int log_init(struct log *l, int level, long faciltities);
 
-int log_start(struct log *l);
+int log_open(struct log *l);
 
-int log_stop(struct log *l);
+int log_close(struct log *l);
 
 /** Destroy log object */
 int log_destroy(struct log *l);
-
-/** Change log indention  for current thread.
- *
- * The argument level can be negative!
- */
-int log_indent(int levels);
-
-/** Disable log indention of current thread. */
-int log_noindent();
-
-/** A helper function the restore the previous log indention level.
- *
- * This function is usually called by a __cleanup__ handler (GCC C Extension).
- * See INDENT macro.
- */
-void log_outdent(int *);
 
 /** Set logging facilities based on expression.
  *

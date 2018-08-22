@@ -25,7 +25,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <errno.h>
+#include <inttypes.h>
 
 #include <sys/types.h>
 #include <sys/utsname.h>
@@ -44,6 +44,13 @@ int kernel_get_cacheline_size()
 	return 64; /** @todo fixme */
 #endif
 }
+
+#if defined(__linux__) || defined(__APPLE__)
+int kernel_get_page_size()
+{
+	return sysconf(_SC_PAGESIZE);
+}
+#endif
 
 #ifdef __linux__
 
@@ -152,7 +159,7 @@ int kernel_get_cmdline_param(const char *param, char *buf, size_t len)
 
 			if (strcmp(param, key) == 0) {
 				if (ret >= 2 && buf)
-					strncpy(buf, value, len);
+					snprintf(buf, len, "%s", value);
 
 				return 0; /* found */
 			}
@@ -163,11 +170,6 @@ out:
 	fclose(f);
 
 	return -1; /* not found or error */
-}
-
-int kernel_get_page_size()
-{
-	return sysconf(_SC_PAGESIZE);
 }
 
 /* There is no sysconf interface to get the hugepage size */
@@ -259,7 +261,7 @@ int kernel_has_cap(cap_value_t cap)
 }
 #endif
 
-int kernel_irq_setaffinity(unsigned irq, uintmax_t affinity, uintmax_t *old)
+int kernel_irq_setaffinity(unsigned irq, uintmax_t aff, uintmax_t *old)
 {
 	char fn[64];
 	FILE *f;
@@ -269,15 +271,75 @@ int kernel_irq_setaffinity(unsigned irq, uintmax_t affinity, uintmax_t *old)
 
 	f = fopen(fn, "w+");
 	if (!f)
-		return errno;
+		return -1; /* IRQ does not exist */
 
 	if (old)
 		ret = fscanf(f, "%jx", old);
 
-	fprintf(f, "%jx", affinity);
+	fprintf(f, "%jx", aff);
 	fclose(f);
 
 	return ret;
 }
 
+int kernel_get_cpu_frequency(uint64_t *freq)
+{
+	char *line = NULL, *sep, *end;
+	size_t len = 0;
+	double dfreq;
+	int ret;
+	FILE *f;
+
+	/* Try to get CPU frequency from cpufreq module */
+	f = fopen(SYSFS_PATH "/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq", "r");
+	if (!f)
+		goto cpuinfo;
+
+	ret = fscanf(f, "%" PRIu64, freq);
+	fclose(f);
+	if (ret != 1)
+		return -1;
+
+	/* cpufreq reports kHz */
+	*freq = *freq * 1000;
+
+	return 0;
+
+cpuinfo:
+	/* Try to read CPU frequency from /proc/cpuinfo */
+	f = fopen(PROCFS_PATH "/cpuinfo", "r");
+	if (!f)
+		return -1; /* We give up here */
+
+	ret = -1;
+	while (getline(&line, &len, f) >= 0) {
+		if (strstr(line,  "cpu MHz") == line) {
+			ret = 0;
+			break;
+		}
+	}
+	if (ret)
+		goto out;
+
+	sep = strchr(line, ':');
+	if (!sep) {
+		ret = -1;
+		goto out;
+	}
+
+	dfreq = strtod(sep+1, &end);
+
+	if (end == sep+1) {
+		ret = -1;
+		goto out;
+	}
+
+	/* Frequency is given in MHz */
+	*freq = dfreq * 1e6;
+
+out:	fclose(f);
+	free(line);
+
+	return ret;
+}
 #endif /* __linux__ */

@@ -1,6 +1,5 @@
-/** Some common defines, enums and datastructures.
+/** Unit tests for histogram
  *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -21,34 +20,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#pragma once
+#include <criterion/criterion.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <villas/hist.h>
+#include <villas/utils.h>
 
-/* Common states for most objects in VILLAScommon (paths, nodes, hooks, plugins) */
-enum state {
-	STATE_DESTROYED		= 0,
-	STATE_INITIALIZED	= 1,
-	STATE_PARSED		= 2,
-	STATE_CHECKED		= 3,
-	STATE_STARTED		= 4,
-	STATE_LOADED		= 4, /* alias for STATE_STARTED used by struct plugin */
-	STATE_OPENED		= 4, /* alias for STATE_STARTED used by struct io */
-	STATE_STOPPED		= 5,
-	STATE_UNLOADED		= 5, /* alias for STATE_STARTED used by struct plugin */
-	STATE_CLOSED		= 5, /* alias for STATE_STARTED used by struct io */
-	STATE_PENDING_CONNECT	= 6,
-	STATE_CONNECTED		= 7
-};
+const double test_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-/** Callback to destroy list elements.
- *
- * @param data A pointer to the data which should be freed.
- */
-typedef int (*dtor_cb_t)(void *);
+/* Histogram of test_data with 200 buckets between -100 and 100 */
+const int hist_result[] = {};
 
-#ifdef __cplusplus
+Test(hist, simple) {
+	struct hist h;
+	int ret;
+
+	ret = hist_init(&h, 0, 0);
+	cr_assert_eq(ret, 0);
+
+	for (int i = 0; i < ARRAY_LEN(test_data); i++)
+		hist_put(&h, test_data[i]);
+
+	cr_assert_float_eq(hist_mean(&h), 5.5, 1e-6);
+	cr_assert_float_eq(hist_var(&h), 9.1666, 1e-3,);
+	cr_assert_float_eq(hist_stddev(&h), 3.027650, 1e-6);
+
+//	for (int i = 0; i < ARRAY_LEN(hist_result); i++)
+//		cr_assert_eq()
+
+	hist_destroy(&h);
 }
-#endif

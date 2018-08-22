@@ -56,7 +56,6 @@ int list_init(struct list *l)
 	l->length = 0;
 	l->capacity = 0;
 	l->array = NULL;
-
 	l->state = STATE_INITIALIZED;
 
 	return 0;
@@ -69,25 +68,23 @@ int list_destroy(struct list *l, dtor_cb_t destructor, bool release)
 	assert(l->state != STATE_DESTROYED);
 
 	for (size_t i = 0; i < list_length(l); i++) {
-		void *p = list_at(l, i);
+		void *e = list_at(l, i);
 
 		if (destructor)
-			destructor(p);
+			destructor(e);
 		if (release)
-			free(p);
+			free(e);
 	}
 
 	free(l->array);
 
-	l->array = NULL;
-
 	l->length = -1;
 	l->capacity = 0;
+	l->array = NULL;
+	l->state = STATE_DESTROYED;
 
 	pthread_mutex_unlock(&l->lock);
 	pthread_mutex_destroy(&l->lock);
-
-	l->state = STATE_DESTROYED;
 
 	return 0;
 }
@@ -119,10 +116,10 @@ void list_remove(struct list *l, void *p)
 	assert(l->state == STATE_INITIALIZED);
 
 	for (size_t i = 0; i < list_length(l); i++) {
-		if (l->array[i] == p)
+		if (list_at(l, i) == p)
 			removed++;
 		else
-			l->array[i - removed] = l->array[i];
+			l->array[i - removed] = list_at(l, i);
 	}
 
 	l->length -= removed;
@@ -135,6 +132,15 @@ void * list_lookup(struct list *l, const char *name)
 	return list_search(l, cmp_lookup, (void *) name);
 }
 
+ssize_t list_lookup_index(struct list *l, const char *name)
+{
+	void *ptr = list_lookup(l, name);
+	if (!ptr)
+		return -1;
+
+	return list_index(l, ptr);
+}
+
 int list_contains(struct list *l, void *p)
 {
 	return list_count(l, cmp_contains, p);
@@ -143,14 +149,14 @@ int list_contains(struct list *l, void *p)
 int list_count(struct list *l, cmp_cb_t cmp, void *ctx)
 {
 	int c = 0;
+	void *e;
 
 	pthread_mutex_lock(&l->lock);
 
 	assert(l->state == STATE_INITIALIZED);
 
 	for (size_t i = 0; i < list_length(l); i++) {
-		void *e = list_at(l, i);
-
+		e = list_at(l, i);
 		if (cmp(e, ctx) == 0)
 			c++;
 	}
@@ -200,4 +206,34 @@ int list_set(struct list *l, int index, void *value)
 	l->array[index] = value;
 
 	return 0;
+}
+
+ssize_t list_index(struct list *l, void *p)
+{
+	void *e;
+	ssize_t f;
+
+	pthread_mutex_lock(&l->lock);
+
+	assert(l->state == STATE_INITIALIZED);
+
+	for (size_t i = 0; i < list_length(l); i++) {
+		e = list_at(l, i);
+		if (e == p) {
+			f = i;
+			goto found;
+		}
+	}
+
+	f = -1;
+
+found:	pthread_mutex_unlock(&l->lock);
+
+	return f;
+}
+
+void list_extend(struct list *l, size_t len, void *val)
+{
+	while (list_length(l) < len)
+		list_push(l, val);
 }

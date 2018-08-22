@@ -4,7 +4,7 @@
  * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
- * VILLAScommon
+ * VILLASconfig
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,6 +30,26 @@
 #include <villas/log.h>
 #include <villas/log_config.h>
 #include <villas/utils.h>
+
+int log_parse_wrapper(struct log *l, json_t *cfg)
+{
+	int ret;
+	json_t *json_logging = NULL;
+	json_error_t err;
+
+	if (cfg) {
+		ret = json_unpack_ex(cfg, &err, 0, "{s?: o}",
+				"logging", &json_logging
+		);
+		if (ret)
+			jerror(&err, "Failed to parse logging from global configuration");
+
+		if (json_logging)
+			log_parse(l, json_logging);
+	}
+
+	return 0;
+}
 
 int log_parse(struct log *l, json_t *cfg)
 {
@@ -71,12 +91,7 @@ void jerror(json_error_t *err, const char *fmt, ...)
 	va_end(ap);
 
 	log_print(l, LOG_LVL_ERROR, "%s:", buf);
-	{ INDENT
-		log_print(l, LOG_LVL_ERROR, "%s in %s:%d:%d", err->text, err->source, err->line, err->column);
-
-		if (l->syslog)
-			syslog(LOG_ERR, "%s in %s:%d:%d", err->text, err->source, err->line, err->column);
-	}
+	log_print(l, LOG_LVL_ERROR, "   %s in %s:%d:%d", err->text, err->source, err->line, err->column);
 
 	free(buf);
 

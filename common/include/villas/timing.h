@@ -1,4 +1,4 @@
-/** Some common defines, enums and datastructures.
+/** Time related functions.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -23,31 +23,32 @@
 
 #pragma once
 
+#include <stdio.h>
+#include <stdint.h>
+
+#include <time.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Common states for most objects in VILLAScommon (paths, nodes, hooks, plugins) */
-enum state {
-	STATE_DESTROYED		= 0,
-	STATE_INITIALIZED	= 1,
-	STATE_PARSED		= 2,
-	STATE_CHECKED		= 3,
-	STATE_STARTED		= 4,
-	STATE_LOADED		= 4, /* alias for STATE_STARTED used by struct plugin */
-	STATE_OPENED		= 4, /* alias for STATE_STARTED used by struct io */
-	STATE_STOPPED		= 5,
-	STATE_UNLOADED		= 5, /* alias for STATE_STARTED used by struct plugin */
-	STATE_CLOSED		= 5, /* alias for STATE_STARTED used by struct io */
-	STATE_PENDING_CONNECT	= 6,
-	STATE_CONNECTED		= 7
-};
+/** Get delta between two timespec structs */
+struct timespec time_diff(const struct timespec *start, const struct timespec *end);
 
-/** Callback to destroy list elements.
- *
- * @param data A pointer to the data which should be freed.
- */
-typedef int (*dtor_cb_t)(void *);
+/** Get sum of two timespec structs */
+struct timespec time_add(const struct timespec *start, const struct timespec *end);
+
+/** Return current time as a struct timespec. */
+struct timespec time_now();
+
+/** Return the diffrence off two timestamps as double value in seconds. */
+double time_delta(const struct timespec *start, const struct timespec *end);
+
+/** Convert timespec to double value representing seconds */
+double time_to_double(const struct timespec *ts);
+
+/** Convert double containing seconds after 1970 to timespec. */
+struct timespec time_from_double(double secs);
 
 #ifdef __cplusplus
 }

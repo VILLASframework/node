@@ -1,7 +1,7 @@
 /** Linux PCI helpers
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2017-2018, Steffen Vogel
+ * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLAScommon
@@ -28,9 +28,8 @@
 
 #include <villas/log.h>
 #include <villas/utils.h>
-
-#include <villas/kernel/pci.h>
 #include <villas/config.h>
+#include <villas/kernel/pci.h>
 
 int pci_init(struct pci *p)
 {
@@ -373,7 +372,6 @@ int pci_get_iommu_group(const struct pci_device *d)
 {
 	int ret;
 	char *group, link[1024], sysfs[1024];
-	memset(link, 0, sizeof(link));
 
 	snprintf(sysfs, sizeof(sysfs), "%s/bus/pci/devices/%04x:%02x:%02x.%x/iommu_group", SYSFS_PATH,
 		d->slot.domain, d->slot.bus, d->slot.device, d->slot.function);
