@@ -23,30 +23,16 @@
 if(CRITERION_FOUND)
 
 	set(TEST_SRC
-		advio.c
-		bitset.c
 		config_json.c
-		hist.c
 		io.c
 		json.c
-		kernel.c
-		list.c
-		log.c
 		main.c
 		mapping.c
 		memory.c
 		pool.c
 		queue.c
 		queue_signalled.c
-		task.c
-		timing.c
-		utils.c
-		hash_table.c
 	)
-
-	if(ARCH STREQUAL "x86_64")
-		list(APPEND TEST_SRC tsc.c)
-	endif()
 
 	add_executable(unit-tests ${TEST_SRC})
 	target_link_libraries(unit-tests PUBLIC

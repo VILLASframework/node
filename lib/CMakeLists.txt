@@ -39,41 +39,23 @@ set(LIBRARIES
 
 set(LIB_SRC
     super_node.cpp
-    kernel/kernel.c
-    kernel/rt.c
     memory/heap.c
     memory/hugepage.c
     memory/managed.c
     sample.c
     path.c
     node.c
-    log.c
-    log_config.c
-    utils.c
-    hist.c
-    timing.c
-    pool.c
-    list.c
-    hash_table.c
-    queue.c
-    queue_signalled.c
     memory.c
-    advio.c
     plugin.c
     node_type.c
     stats.c
     mapping.c
     shmem.c
     config_helper.c
-    crypt.c
-    compat.c
-    log_helper.c
-    task.c
-    buffer.c
-    table.c
-    bitset.c
     signal.c
-    common.c
+    pool.c
+    queue.c
+	queue_signalled.c
 )
 
 
