@@ -43,22 +43,32 @@
 #endif
 
 struct log *global_log;
+struct log default_log;
 
 /* We register a default log instance */
 __attribute__((constructor))
 void register_default_log()
 {
 	int ret;
-	static struct log default_log;
 
-	ret = log_init(&default_log, V, LOG_ALL);
+	ret = log_init(&default_log, "default", V, LOG_ALL);
 	if (ret)
 		error("Failed to initalize log");
 
 	ret = log_open(&default_log);
 	if (ret)
 		error("Failed to start log");
+
+	global_log = &default_log;
 }
+
+static const char *level_strs[] = {
+	CLR_GRY("Debug"),	/* LOG_LVL_DEBUG */
+	CLR_WHT("Info "),	/* LOG_LVL_INFO */
+	CLR_YEL("Warn "),	/* LOG_LVL_WARN */
+	CLR_RED("Error"),	/* LOG_LVL_ERROR */
+	CLR_MAG("Stats")	/* LOG_LVL_STATS */
+};
 
 /** List of debug facilities as strings */
 static const char *facilities_strs[] = {
@@ -106,18 +116,20 @@ static void log_resize(int signal, siginfo_t *sinfo, void *ctx)
 	debug(LOG_LOG | 15, "New terminal size: %dx%x", global_log->window.ws_row, global_log->window.ws_col);
 }
 
-int log_init(struct log *l, int level, long facilitites)
+int log_init(struct log *l, const char *name, int level, long facilitites)
 {
 	int ret;
 
 	/* Register this log instance globally */
 	global_log = l;
 
+	l->name = name;
 	l->level = level;
 	l->syslog = 0;
 	l->facilities = facilitites;
 	l->file = stderr;
 	l->path = NULL;
+	l->callback = NULL;
 
 	l->epoch = time_now();
 	l->prefix = getenv("VILLAS_LOG_PREFIX");
@@ -157,6 +169,11 @@ int log_init(struct log *l, int level, long facilitites)
 	l->state = STATE_INITIALIZED;
 
 	return 0;
+}
+
+void log_set_callback(struct log *l, log_cb_t cb)
+{
+	l->callback = cb;
 }
 
 int log_open(struct log *l)
@@ -263,7 +280,7 @@ found:		if (negate)
 	return l->facilities;
 }
 
-void log_print(struct log *l, const char *lvl, const char *fmt, ...)
+void log_print(struct log *l, enum log_level lvl, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -272,10 +289,15 @@ void log_print(struct log *l, const char *lvl, const char *fmt, ...)
 	va_end(ap);
 }
 
-void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
+void log_vprint(struct log *l, enum log_level lvl, const char *fmt, va_list ap)
 {
 	struct timespec ts = time_now();
 	static __thread char buf[1024];
+
+	if (l->callback) {
+		l->callback(l, lvl, fmt, ap);
+		return;
+	}
 
 	int off = 0;
 	int len = sizeof(buf);
@@ -285,7 +307,7 @@ void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list ap)
 		off += snprintf(buf + off, len - off, "%s", l->prefix);
 
 	/* Timestamp & Severity */
-	off += snprintf(buf + off, len - off, "%10.3f %-5s ", time_delta(&l->epoch, &ts), lvl);
+	off += snprintf(buf + off, len - off, "%10.3f %-5s ", time_delta(&l->epoch, &ts), level_strs[lvl]);
 
 	/* Format String */
 	off += vsnprintf(buf + off, len - off, fmt, ap);
