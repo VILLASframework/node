@@ -45,8 +45,8 @@ int cnt;
 
 struct sample **smps;
 
-struct log  l = { .state = STATE_DESTROYED };
-struct pool q = { .state = STATE_DESTROYED };
+struct log l = { .state = STATE_DESTROYED };
+struct pool p = { .state = STATE_DESTROYED };
 struct hook h = { .state = STATE_DESTROYED };
 struct io  io = { .state = STATE_DESTROYED };
 
@@ -72,7 +72,7 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 	sample_free_many(smps, cnt);
 
-	ret = pool_destroy(&q);
+	ret = pool_destroy(&p);
 	if (ret)
 		error("Failed to destroy memory pool");
 
@@ -192,7 +192,7 @@ check:		if (optarg == endptr)
 
 	smps = (struct sample **) alloc(cnt * sizeof(struct sample *));
 
-	ret = pool_init(&q, 10 * cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_hugepage);
+	ret = pool_init(&p, 10 * cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_hugepage);
 	if (ret)
 		error("Failed to initilize memory pool");
 
@@ -231,7 +231,7 @@ check:		if (optarg == endptr)
 		error("Failed to start hook");
 
 	for (;;) {
-		ret = sample_alloc_many(&q, smps, cnt);
+		ret = sample_alloc_many(&p, smps, cnt);
 		if (ret != cnt)
 			error("Failed to allocate %d smps from pool", cnt);
 
