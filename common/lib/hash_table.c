@@ -25,7 +25,7 @@
 #include <villas/utils.h>
 #include <villas/hash_table.h>
 
-static int hash_table_hash(struct hash_table *ht, void *key)
+static int hash_table_hash(struct hash_table *ht, const void *key)
 {
 	uintptr_t ptr = (uintptr_t) key;
 
@@ -89,7 +89,7 @@ int hash_table_destroy(struct hash_table *ht, dtor_cb_t dtor, bool release)
 	return 0;
 }
 
-int hash_table_insert(struct hash_table *ht, void *key, void *data)
+int hash_table_insert(struct hash_table *ht, const void *key, void *data)
 {
 	int ret, ikey = hash_table_hash(ht, key);
 	struct hash_table_entry *hte, *cur;
@@ -130,7 +130,7 @@ int hash_table_insert(struct hash_table *ht, void *key, void *data)
 
 #include <stdio.h>
 
-int hash_table_delete(struct hash_table *ht, void *key)
+int hash_table_delete(struct hash_table *ht, const void *key)
 {
 	int ret, ikey = hash_table_hash(ht, key);
 	struct hash_table_entry *cur, *prev;
@@ -163,7 +163,7 @@ int hash_table_delete(struct hash_table *ht, void *key)
 	return ret;
 }
 
-void * hash_table_lookup(struct hash_table *ht, void *key)
+void * hash_table_lookup(struct hash_table *ht, const void *key)
 {
 	int ikey = hash_table_hash(ht, key);
 	struct hash_table_entry *hte;
