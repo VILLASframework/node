@@ -34,8 +34,8 @@ Test(mapping, parse_nodes)
 	struct mapping_entry m;
 	struct list nodes = { .state = STATE_DESTROYED };
 
-	char *node_names[3] = { "apple", "cherry", "carrot" };
-	char *signal_names[3][4] = {
+	const char *node_names[3] = { "apple", "cherry", "carrot" };
+	const char *signal_names[3][4] = {
 		{ "abra", "kadabra", "simsala", "bimm" },
 		{ "this", "is", "a", "test" },
 		{ "o",  "sole", "mio", "italia" }
@@ -43,15 +43,15 @@ Test(mapping, parse_nodes)
 
 	list_init(&nodes);
 
-	for (int i = 0; i < ARRAY_LEN(node_names); i++) {
-		struct node *n = alloc(sizeof(struct node));
+	for (unsigned i = 0; i < ARRAY_LEN(node_names); i++) {
+		struct node *n = new struct node;
 
-		n->name = node_names[i];
+		n->name = strdup(node_names[i]);
 		n->signals.state = STATE_DESTROYED;
 
 		list_init(&n->signals);
 
-		for (int j = 0; j < ARRAY_LEN(signal_names[i]); j++) {
+		for (unsigned j = 0; j < ARRAY_LEN(signal_names[i]); j++) {
 			struct signal *sig;
 
 			sig = signal_create(signal_names[i][j], NULL, SIGNAL_TYPE_AUTO);

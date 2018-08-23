@@ -23,15 +23,15 @@
 if(CRITERION_FOUND)
 
 	set(TEST_SRC
-		config_json.c
-		io.c
-		json.c
-		main.c
-		mapping.c
-		memory.c
-		pool.c
-		queue.c
-		queue_signalled.c
+		config_json.cpp
+		io.cpp
+		json.cpp
+		main.cpp
+		mapping.cpp
+		memory.cpp
+		pool.cpp
+		queue.cpp
+		queue_signalled.cpp
 	)
 
 	add_executable(unit-tests ${TEST_SRC})

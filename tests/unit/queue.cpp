@@ -40,21 +40,21 @@ extern void init_memory();
 
 #define SIZE	(1 << 10)
 
-static struct queue q = { .state = STATE_DESTROYED };
+static struct queue q = { .state = ATOMIC_VAR_INIT(STATE_DESTROYED) };
 
 #if defined(_POSIX_BARRIERS) && _POSIX_BARRIERS > 0
 static pthread_barrier_t barrier;
 #endif
 
 struct param {
-	int volatile start;
-	int thread_count;
-	int queue_size;
 	int iter_count;
-	int batch_size;
+	int queue_size;
+	int thread_count;
 	bool many;
-	struct queue queue;
+	int batch_size;
 	enum memory_type_flags memory_type;
+	volatile int start;
+	struct queue queue;
 };
 
 /** Get thread id as integer
@@ -84,7 +84,7 @@ __attribute__((always_inline)) static inline void nop()
 static void * producer(void *ctx)
 {
 	int ret;
-	struct param *p = ctx;
+	struct param *p = (struct param *) ctx;
 
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
@@ -108,7 +108,7 @@ static void * producer(void *ctx)
 	//cr_log_info("producer: start pushing");
 
 	/* Enqueue */
-	for (unsigned long count = 0; count < p->iter_count; count++) {
+	for (intptr_t count = 0; count < p->iter_count; count++) {
 		do {
 			ret = queue_push(&p->queue, (void *) count);
 			pthread_yield();
@@ -123,7 +123,7 @@ static void * producer(void *ctx)
 static void * consumer(void *ctx)
 {
 	int ret;
-	struct param *p = ctx;
+	struct param *p = (struct param *) ctx;
 
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
@@ -143,11 +143,11 @@ static void * consumer(void *ctx)
 	//cr_log_info("consumer: start pulling");
 
 	/* Dequeue */
-	for (unsigned long count = 0; count < p->iter_count; count++) {
-		void *ptr;
+	for (intptr_t count = 0; count < p->iter_count; count++) {
+		intptr_t ptr;
 
 		do {
-			ret = queue_pull(&p->queue, &ptr);
+			ret = queue_pull(&p->queue, (void **) &ptr);
 		} while (ret != 1);
 
 		//cr_log_info("consumer: %lu\n", count);
@@ -163,7 +163,7 @@ static void * consumer(void *ctx)
 #if defined(_POSIX_BARRIERS) && _POSIX_BARRIERS > 0
 void * producer_consumer(void *ctx)
 {
-	struct param *p = ctx;
+	struct param *p = (struct param *) ctx;
 
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
@@ -179,13 +179,13 @@ void * producer_consumer(void *ctx)
 	for (int iter = 0; iter < p->iter_count; ++iter) {
 		pthread_barrier_wait(&barrier);
 
-		for (size_t i = 0; i < p->batch_size; i++) {
+		for (intptr_t i = 0; i < p->batch_size; i++) {
 			void *ptr = (void *) (iter * p->batch_size + i);
 			while (!queue_push(&p->queue, ptr))
 				pthread_yield(); /* queue full, let other threads proceed */
 		}
 
-		for (size_t i = 0; i < p->batch_size; i++) {
+		for (intptr_t i = 0; i < p->batch_size; i++) {
 			void *ptr;
 			while (!queue_pull(&p->queue, &ptr))
 				pthread_yield(); /* queue empty, let other threads proceed */
@@ -197,7 +197,7 @@ void * producer_consumer(void *ctx)
 
 void * producer_consumer_many(void *ctx)
 {
-	struct param *p = ctx;
+	struct param *p = (struct param *) ctx;
 
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
@@ -213,7 +213,7 @@ void * producer_consumer_many(void *ctx)
 	void *ptrs[p->batch_size];
 
 	for (int iter = 0; iter < p->iter_count; ++iter) {
-		for (size_t i = 0; i < p->batch_size; i++)
+		for (intptr_t i = 0; i < p->batch_size; i++)
 			ptrs[i] = (void *) (iter * p->batch_size + i);
 
 		pthread_barrier_wait(&barrier);
@@ -358,7 +358,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 Test(queue, init_destroy, .init = init_memory)
 {
 	int ret;
-	struct queue q = { .state = STATE_DESTROYED };
+	struct queue q = { .state = ATOMIC_VAR_INIT(STATE_DESTROYED) };
 
 	ret = queue_init(&q, 1024, &memory_heap);
 	cr_assert_eq(ret, 0); /* Should succeed */

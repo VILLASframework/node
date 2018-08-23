@@ -28,7 +28,7 @@
 #include <villas/config_helper.h>
 
 struct param {
-	char *argv[32];
+	const char *argv[32];
 	const char *json;
 };
 

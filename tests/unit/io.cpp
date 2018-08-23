@@ -72,31 +72,37 @@ void fill_sample_data(struct list *signals, struct sample *smps[], unsigned cnt)
 	now = time_now();
 	delta = time_from_double(50e-6);
 
-	for (int i = 0; i < cnt; i++) {
+	for (unsigned i = 0; i < cnt; i++) {
+		struct sample *smp = smps[i];
+
 		smps[i]->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA | SAMPLE_HAS_TS_ORIGIN;
 		smps[i]->length = list_length(signals);
 		smps[i]->sequence = 235 + i;
 		smps[i]->ts.origin = now;
 		smps[i]->signals = signals;
 
-		for (int j = 0; j < list_length(signals); j++) {
+		for (size_t j = 0; j < list_length(signals); j++) {
 			struct signal *sig = (struct signal *) list_at(signals, j);
+			union signal_data *data = &smp->data[j];
 
 			switch (sig->type) {
 				case SIGNAL_TYPE_BOOLEAN:
-					smps[i]->data[j].b = j * 0.1 + i * 100;
+					data->b = j * 0.1 + i * 100;
 					break;
 
-				case SIGNAL_TYPE_COMPLEX:
-					smps[i]->data[j].z = CMPLXF(j * 0.1, i * 100);
+				case SIGNAL_TYPE_COMPLEX: {
+					/** @todo: Port to proper C++ */
+					std::complex<float> z = { j * 0.1f, i * 100.0f };
+					memcpy(&data->z, &z, sizeof(data->z));
 					break;
+				}
 
 				case SIGNAL_TYPE_FLOAT:
-					smps[i]->data[j].f = j * 0.1 + i * 100;
+					data->f = j * 0.1 + i * 100;
 					break;
 
 				case SIGNAL_TYPE_INTEGER:
-					smps[i]->data[j].i = j + i * 1000;
+					data->i = j + i * 1000;
 					break;
 
 				default: { }
@@ -203,7 +209,8 @@ ParameterizedTestParameters(io, lowlevel)
 
 ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
 {
-	int ret, cnt;
+	int ret;
+	unsigned cnt;
 	char buf[8192];
 	size_t wbytes, rbytes;
 
@@ -248,7 +255,7 @@ ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
 
 	cr_assert_eq(rbytes, wbytes, "rbytes != wbytes: %#zx != %#zx", rbytes, wbytes);
 
-	for (int i = 0; i < cnt; i++) {
+	for (unsigned i = 0; i < cnt; i++) {
 		if (p->bits)
 			cr_assert_eq_sample_raw(smps[i], smpt[i], f->flags, p->bits);
 		else

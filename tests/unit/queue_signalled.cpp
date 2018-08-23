@@ -42,7 +42,7 @@ struct param {
 static void * producer(void * ctx)
 {
 	int ret;
-	struct queue_signalled *q = ctx;
+	struct queue_signalled *q = (struct queue_signalled *) ctx;
 
 	for (intptr_t i = 0; i < NUM_ELEM; i++) {
 		ret = queue_signalled_push(q, (void *) i);
@@ -58,7 +58,7 @@ static void * producer(void * ctx)
 static void * consumer(void * ctx)
 {
 	int ret;
-	struct queue_signalled *q = ctx;
+	struct queue_signalled *q = (struct queue_signalled *) ctx;
 
 	void *data[NUM_ELEM];
 
@@ -79,7 +79,7 @@ static void * consumer(void * ctx)
  void * polled_consumer(void *ctx)
 {
 	int ret, fd;
-	struct queue_signalled *q = ctx;
+	struct queue_signalled *q = (struct queue_signalled *) ctx;
 
 	fd = queue_signalled_fd(q);
 	cr_assert_geq(fd, 0);
@@ -130,7 +130,8 @@ ParameterizedTest(struct param *param, queue_signalled, simple, .timeout = 5, .i
 {
 	int ret;
 	void *r1, *r2;
-	struct queue_signalled q = { .queue.state = STATE_DESTROYED };
+	struct queue_signalled q;
+	q.queue.state = STATE_DESTROYED;
 
 	pthread_t t1, t2;
 
