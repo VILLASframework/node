@@ -27,26 +27,58 @@ project(villas-common
     LANGUAGES C CXX
 )
 
+# Some more project settings
+set(PROJECT_AUTHOR "Steffen Vogel")
+set(PROJECT_COPYRIGHT "2018, Institute for Automation of Complex Power Systems, RWTH Aachen University")
+set(PROJECT_HOMEPAGE_URL "https://git.rwth-aachen.de/acs/public/villas/VILLAScommon")
+
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    set(TOPLEVEL_PROJECT ON)
+else()
+    set(TOPLEVEL_PROJECT OFF)
+endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
-add_definitions(-D__STDC_FORMAT_MACROS -D_GNU_SOURCE)
+include(FindPkgConfig)
+include(FeatureSummary)
+include(GetVersion)
+
+# Get version info and buildid from Git
+if(TOPLEVEL_PROJECT)
+    GetVersion(${PROJECT_SOURCE_DIR} "CMAKE_PROJECT")
+endif()
 
 # Check packages
 find_package(OpenSSL 1.0.0 REQUIRED)
 find_package(CURL 7.29 REQUIRED)
 find_package(Criterion)
 
-include(FindPkgConfig)
 
-pkg_check_modules(JANSSON IMPORTED_TARGET jansson)
+pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson>=2.7)
 
 add_subdirectory(lib)
-add_subdirectory(tests)
+if(CRITERION_FOUND)
+    add_subdirectory(tests)
+endif()
 
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/villas/config.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/include/villas/config.h
 )
+
+if(TOPLEVEL_PROJECT)
+    feature_summary(WHAT ALL VAR FEATURES)
+    message(STATUS "${FEATURES}")
+    message(STATUS "Building ${PROJECT_DESCRIPTION}:")
+    message(STATUS "  VERSION:         ${CMAKE_PROJECT_VERSION}")
+    message(STATUS "  RELEASE:         ${CMAKE_PROJECT_RELEASE}")
+    message(STATUS "  GIT_REV:         ${CMAKE_PROJECT_GIT_REV}")
+    message(STATUS "  GIT_BRANCH:      ${CMAKE_PROJECT_GIT_BRANCH}")
+    message(STATUS "  VARIANT:         ${CMAKE_PROJECT_VARIANT}")
+    message(STATUS "  BUILD_ID:        ${CMAKE_PROJECT_BUILD_ID}")
+    message(STATUS "  BUILD_DATE:      ${CMAKE_PROJECT_BUILD_DATE}")
+endif()

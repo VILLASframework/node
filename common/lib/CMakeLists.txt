@@ -67,7 +67,6 @@ target_link_libraries(villas-common PUBLIC
 	${CMAKE_DL_LIBS}
 )
 
-target_compile_definitions(villas-common PRIVATE
-	BUILDID=\"abc\"
-	_GNU_SOURCE
+target_compile_definitions(villas-common PUBLIC
+	-D__STDC_FORMAT_MACROS -D_GNU_SOURCE
 )
