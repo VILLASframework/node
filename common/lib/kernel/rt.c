@@ -34,7 +34,6 @@ int rt_init(int priority, int affinity)
 {
 	info("Initialize real-time sub-system");
 
-	{
 #ifdef __linux__
 	int is_rt;
 
@@ -57,7 +56,6 @@ int rt_init(int priority, int affinity)
 #else
 	warn("This platform is not optimized for real-time execution");
 #endif
-	}
 
 	return 0;
 }
