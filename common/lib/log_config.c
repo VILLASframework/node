@@ -84,14 +84,12 @@ void jerror(json_error_t *err, const char *fmt, ...)
 	va_list ap;
 	char *buf = NULL;
 
-	struct log *l = global_log ? global_log : &default_log;
-
 	va_start(ap, fmt);
 	vstrcatf(&buf, fmt, ap);
 	va_end(ap);
 
-	log_print(l, LOG_LVL_ERROR, "%s:", buf);
-	log_print(l, LOG_LVL_ERROR, "   %s in %s:%d:%d", err->text, err->source, err->line, err->column);
+	log_print(global_log, LOG_LVL_ERROR, "%s:", buf);
+	log_print(global_log, LOG_LVL_ERROR, "   %s in %s:%d:%d", err->text, err->source, err->line, err->column);
 
 	free(buf);
 

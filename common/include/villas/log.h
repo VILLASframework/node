@@ -36,11 +36,15 @@ extern "C" {
 #include <villas/log_config.h>
 
 /* The log level which is passed as first argument to print() */
-#define LOG_LVL_DEBUG	CLR_GRY("Debug")
-#define LOG_LVL_INFO	CLR_WHT("Info ")
-#define LOG_LVL_WARN	CLR_YEL("Warn ")
-#define LOG_LVL_ERROR	CLR_RED("Error")
-#define LOG_LVL_STATS	CLR_MAG("Stats")
+enum log_level {
+	LOG_LVL_DEBUG,
+	LOG_LVL_INFO,
+	LOG_LVL_WARN,
+	LOG_LVL_ERROR,
+	LOG_LVL_STATS,
+};
+
+typedef void (*log_cb_t)(struct log *l, enum log_level lvl, const char *fmt, va_list va);
 
 /** Debug facilities.
  *
@@ -84,6 +88,8 @@ enum log_facilities {
 struct log {
 	enum state state;
 
+	const char *name;
+
 	struct timespec epoch;	/**< A global clock used to prefix the log messages. */
 
 	struct winsize window;	/**< Size of the terminal window. */
@@ -99,15 +105,18 @@ struct log {
 	int syslog;		/**< Whether or not to log to syslogd. */
 	bool tty;		/**< Is the log file a tty? */
 
+	log_cb_t callback;
+
 	FILE *file;		/**< Send all log output to this file / stdout / stderr. */
 };
 
 /** The global log instance. */
-struct log *global_log;
-struct log default_log;
+extern struct log *global_log;
 
 /** Initialize log object */
-int log_init(struct log *l, int level, long faciltities);
+int log_init(struct log *l, const char *name, int level, long faciltities);
+
+void log_set_callback(struct log *l, log_cb_t cb);
 
 int log_open(struct log *l);
 
@@ -135,7 +144,7 @@ int log_set_facility_expression(struct log *l, const char *expression);
  * @param lvl The log level
  * @param fmt The format string (printf alike)
  */
-void log_print(struct log *l, const char *lvl, const char *fmt, ...)
+void log_print(struct log *l, enum log_level lvl, const char *fmt, ...)
 	__attribute__ ((format(printf, 3, 4)));
 
 /** Logs variadic messages to stdout.
@@ -144,7 +153,7 @@ void log_print(struct log *l, const char *lvl, const char *fmt, ...)
  * @param fmt The format string (printf alike)
  * @param va The variadic argument list (see stdarg.h)
  */
-void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list va);
+void log_vprint(struct log *l, enum log_level lvl, const char *fmt, va_list va);
 
 /** Printf alike debug message with level. */
 void debug(long lvl, const char *fmt, ...)
