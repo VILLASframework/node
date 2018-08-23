@@ -27,12 +27,13 @@
 
 #include <spdlog/spdlog.h>
 
+void init_logging();
+
 int main(int argc, char *argv[])
 {
 	int ret;
 
-	spdlog::set_level(spdlog::level::debug);
-	spdlog::set_pattern("[%T] [%l] [%n] %v");
+	init_logging();
 
 	/* Run criterion tests */
 	auto tests = criterion_initialize();

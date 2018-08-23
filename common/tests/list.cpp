@@ -27,21 +27,29 @@
 #include <villas/utils.h>
 #include <villas/list.h>
 
-static char *nouns[] = { "time", "person", "year", "way", "day", "thing", "man", "world", "life", "hand", "part", "child", "eye", "woman", "place", "work", "week", "case", "point", "government", "company", "number", "group", "problem", "fact" };
+static const char *nouns[] = { "time", "person", "year", "way", "day", "thing", "man", "world", "life", "hand", "part", "child", "eye", "woman", "place", "work", "week", "case", "point", "government", "company", "number", "group", "problem", "fact" };
 
 struct data {
-	char *tag;
+	const char *tag;
 	int data;
 };
 
+void init_logging();
+
+TestSuite(list,
+	.description = "List datastructure",
+	.init = init_logging
+);
+
 Test(list, list_lookup)
 {
-	struct list l = { .state = STATE_DESTROYED };
+	struct list l;
+	l.state = STATE_DESTROYED;
 
 	list_init(&l);
 
-	for (int i = 0; i < ARRAY_LEN(nouns); i++) {
-		struct data *d = malloc(sizeof(struct data));
+	for (unsigned i = 0; i < ARRAY_LEN(nouns); i++) {
+		struct data *d = new struct data;
 
 		d->tag = nouns[i];
 		d->data = i;
@@ -49,7 +57,7 @@ Test(list, list_lookup)
 		list_push(&l, d);
 	}
 
-	struct data *found = list_lookup(&l, "woman");
+	struct data *found = (struct data *) list_lookup(&l, "woman");
 
 	cr_assert_eq(found->data, 13);
 
@@ -58,13 +66,14 @@ Test(list, list_lookup)
 
 Test(list, list_search)
 {
-	struct list l = { .state = STATE_DESTROYED };
+	struct list l;
+	l.state = STATE_DESTROYED;
 
 	list_init(&l);
 
 	/* Fill list */
-	for (int i = 0; i < ARRAY_LEN(nouns); i++)
-		list_push(&l, nouns[i]);
+	for (unsigned i = 0; i < ARRAY_LEN(nouns); i++)
+		list_push(&l, (void *) nouns[i]);
 
 	cr_assert_eq(list_length(&l), ARRAY_LEN(nouns));
 
@@ -72,7 +81,7 @@ Test(list, list_search)
 	char positive[] = "woman";
 	char negative[] = "dinosaurrier";
 
-	char *found = list_search(&l, (cmp_cb_t) strcmp, positive);
+	char *found = (char *) list_search(&l, (cmp_cb_t) strcmp, positive);
 	cr_assert_not_null(found);
 	cr_assert_eq(found, nouns[13], "found = %p, nouns[13] = %p", found, nouns[13]);
 	cr_assert_str_eq(found, positive);
@@ -98,8 +107,11 @@ static int dtor(void *ptr)
 
 Test(list, destructor)
 {
-	struct list l = { .state = STATE_DESTROYED };
-	struct content elm = { .destroyed = 0 };
+	struct list l;
+	l.state = STATE_DESTROYED;
+
+	struct content elm;
+	elm.destroyed = 0;
 
 	list_init(&l);
 	list_push(&l, &elm);
@@ -112,14 +124,15 @@ Test(list, destructor)
 }
 
 static int compare(const void *a, const void *b) {
-	return b - a;
+	return (intptr_t) b - (intptr_t) a;
 }
 
 Test(list, basics)
 {
 	intptr_t i;
 	int ret;
-	struct list l = { .state = STATE_DESTROYED };
+	struct list l;
+	l.state = STATE_DESTROYED;
 
 	list_init(&l);
 

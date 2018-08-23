@@ -28,6 +28,13 @@
 
 #define CNT (1 << 18)
 
+void init_logging();
+
+TestSuite(tsc,
+	.description = "Timestamp counters",
+	.init = init_logging
+);
+
 Test(tsc, increasing)
 {
 	int ret;
@@ -37,16 +44,16 @@ Test(tsc, increasing)
 	ret = tsc_init(&tsc);
 	cr_assert_eq(ret, 0);
 
-	cntrs = alloc(sizeof(uint64_t) * CNT);
+	cntrs = new uint64_t[CNT];
 	cr_assert_not_null(cntrs);
 
-	for (int i = 0; i < CNT; i++)
+	for (unsigned i = 0; i < CNT; i++)
 		cntrs[i] = tsc_now(&tsc);
 
-	for (int i = 1; i < CNT; i++)
+	for (unsigned i = 1; i < CNT; i++)
 		cr_assert_lt(cntrs[i-1], cntrs[i]);
 
-	free(cntrs);
+	delete cntrs;
 }
 
 Test(tsc, sleep)

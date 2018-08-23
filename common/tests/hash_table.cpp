@@ -25,31 +25,39 @@
 #include <villas/utils.h>
 #include <villas/hash_table.h>
 
-static char *keys[]   = { "able",   "achieve", "acoustics", "action", "activity", "aftermath", "afternoon", "afterthought", "apparel",  "appliance", "beginner", "believe",   "bomb",   "border",  "boundary",   "breakfast", "cabbage",  "cable",  "calculator", "calendar",  "caption", "carpenter", "cemetery", "channel", "circle", "creator", "creature", "education", "faucet", "feather", "friction", "fruit",     "fuel",    "galley", "guide",    "guitar", "health", "heart",   "idea",   "kitten",  "laborer",    "language" };
-static char *values[] = { "lawyer", "linen",   "locket",    "lumber", "magic",    "minister",  "mitten",    "money",        "mountain", "music",     "partner",  "passenger", "pickle", "picture", "plantation", "plastic",   "pleasure", "pocket", "police",     "pollution", "railway", "recess",    "reward",   "route",   "scene",  "scent",   "squirrel", "stranger",  "suit",   "sweater", "temper",   "territory", "texture", "thread", "treatment", "veil",  "vein",   "volcano", "wealth", "weather", "wilderness", "wren" };
+static const char *keys[]   = { "able",   "achieve", "acoustics", "action", "activity", "aftermath", "afternoon", "afterthought", "apparel",  "appliance", "beginner", "believe",   "bomb",   "border",  "boundary",   "breakfast", "cabbage",  "cable",  "calculator", "calendar",  "caption", "carpenter", "cemetery", "channel", "circle", "creator", "creature", "education", "faucet", "feather", "friction", "fruit",     "fuel",    "galley", "guide",    "guitar", "health", "heart",   "idea",   "kitten",  "laborer",    "language" };
+static const char *values[] = { "lawyer", "linen",   "locket",    "lumber", "magic",    "minister",  "mitten",    "money",        "mountain", "music",     "partner",  "passenger", "pickle", "picture", "plantation", "plastic",   "pleasure", "pocket", "police",     "pollution", "railway", "recess",    "reward",   "route",   "scene",  "scent",   "squirrel", "stranger",  "suit",   "sweater", "temper",   "territory", "texture", "thread", "treatment", "veil",  "vein",   "volcano", "wealth", "weather", "wilderness", "wren" };
+
+void init_logging();
+
+TestSuite(hash_table,
+	.description = "Hash table datastructure",
+	.init = init_logging
+);
 
 Test(hash_table, hash_table_lookup)
 {
 	int ret;
-	struct hash_table ht = { .state = STATE_DESTROYED };
+	struct hash_table ht;
+	ht.state = STATE_DESTROYED;
 
 	ret = hash_table_init(&ht, 20);
 	cr_assert(!ret);
 
 	/* Insert */
-	for (int i = 0; i < ARRAY_LEN(keys); i++) {
-		ret = hash_table_insert(&ht, keys[i], values[i]);
+	for (unsigned i = 0; i < ARRAY_LEN(keys); i++) {
+		ret = hash_table_insert(&ht, keys[i], (void *) values[i]);
 		cr_assert(!ret);
 	}
 
 	/* Lookup */
-	for (int i = 0; i < ARRAY_LEN(keys); i++) {
-		char *value = hash_table_lookup(&ht, keys[i]);
+	for (unsigned i = 0; i < ARRAY_LEN(keys); i++) {
+		char *value = (char *) hash_table_lookup(&ht, keys[i]);
 		cr_assert_eq(values[i], value);
 	}
 
 	/* Inserting the same key twice should fail */
-	ret = hash_table_insert(&ht, keys[0], values[0]);
+	ret = hash_table_insert(&ht, keys[0], (void *) values[0]);
 	cr_assert(ret);
 
 	hash_table_dump(&ht);
@@ -63,7 +71,7 @@ Test(hash_table, hash_table_lookup)
 	cr_assert(ret);
 
 	/* After removing, we should be able to insert it again */
-	ret = hash_table_insert(&ht, keys[0], values[0]);
+	ret = hash_table_insert(&ht, keys[0], (void *) values[0]);
 	cr_assert(!ret);
 
 	ret = hash_table_destroy(&ht, NULL, false);

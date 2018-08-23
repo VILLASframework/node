@@ -27,21 +27,31 @@
 #include <villas/utils.h>
 
 struct param {
-	char *expression;
+	const char *expression;
 	long expected;
 };
 
-static struct log l;
+static struct log log;
+
+void init_logging();
 
 static void init()
 {
-	log_init(&l, V, LOG_ALL);
+	log_init(&log, "test_logger", V, LOG_ALL);
+
+	init_logging();
 }
 
 static void fini()
 {
-	log_destroy(&l);
+	log_destroy(&log);
 }
+
+TestSuite(log,
+	.description = "Log system",
+	.init = init,
+	.fini = fini
+);
 
 ParameterizedTestParameters(log, facility_expression)
 {
@@ -59,9 +69,9 @@ ParameterizedTestParameters(log, facility_expression)
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
 }
 
-ParameterizedTest(struct param *p, log, facility_expression, .init = init, .fini = fini)
+ParameterizedTest(struct param *p, log, facility_expression)
 {
-	log_set_facility_expression(&l, p->expression);
+	log_set_facility_expression(&log, p->expression);
 
-	cr_assert_eq(l.facilities, p->expected, "log.faciltities is %#lx not %#lx", l.facilities, p->expected);
+	cr_assert_eq(log.facilities, p->expected, "log.faciltities is %#lx not %#lx", log.facilities, p->expected);
 }

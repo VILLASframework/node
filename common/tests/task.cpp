@@ -27,6 +27,13 @@
 #include <villas/task.h>
 #include <villas/timing.h>
 
+void init_logging();
+
+TestSuite(task,
+	.description = "Periodic timer tasks",
+	.init = init_logging
+);
+
 Test(task, rate, .timeout = 10)
 {
 	int ret;

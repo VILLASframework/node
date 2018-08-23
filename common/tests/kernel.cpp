@@ -25,6 +25,13 @@
 #include <villas/kernel/kernel.h>
 #include <villas/utils.h>
 
+void init_logging();
+
+TestSuite(kernel,
+	.description = "Kernel features",
+	.init = init_logging
+);
+
 #ifdef __linux__
 
 #if defined(__x86_64__) || defined(__i386__)
@@ -77,14 +84,16 @@ Test(kernel, version)
 	int ret;
 
 	struct version ver;
+	struct version ver1 = { 100, 5 };
+	struct version ver2 = { 2, 6 };
 
 	ret = kernel_get_version(&ver);
 	cr_assert_eq(ret, 0);
 
-	ret = version_cmp(&ver, &(struct version) { 100, 5 });
+	ret = version_cmp(&ver, &ver1);
 	cr_assert_lt(ret, 0);
 
-	ret = version_cmp(&ver, &(struct version) { 2, 6 });
+	ret = version_cmp(&ver, &ver2);
 	cr_assert_gt(ret, 0);
 }
 
