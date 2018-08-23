@@ -20,10 +20,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##############################################################################
 
-set(SOURCES
+add_executable(unit-tests-common
 	main.cpp
 	logging.cpp
-	
+
 	advio.cpp
 	bitset.cpp
 	graph.cpp
@@ -38,10 +38,6 @@ set(SOURCES
 	utils.cpp
 )
 
-add_executable(unit-tests-common ${SOURCES})
-
-find_package(Criterion REQUIRED)
-
 target_include_directories(unit-tests-common PUBLIC
 	${PROJECT_SOURCE_DIR}/include
 	${CRITERION_INCLUDE_DIRS}
@@ -51,3 +47,8 @@ target_link_libraries(unit-tests-common PUBLIC
 	villas-common
 	${CRITERION_LIBRARIES}
 )
+
+add_custom_target(run-unit-tests-common
+		COMMAND $<TARGET_FILE:unit-tests-common> ${CRITERION_OPTS}
+		USES_TERMINAL
+	)

@@ -39,14 +39,14 @@ pthread_t main_thread;
 void print_copyright()
 {
 	printf(PROJECT_NAME " %s (built on %s %s)\n",
-		CLR_BLU(BUILDID), CLR_MAG(__DATE__), CLR_MAG(__TIME__));
+		CLR_BLU(PROJECT_BUILD_ID), CLR_MAG(__DATE__), CLR_MAG(__TIME__));
 	printf(" Copyright 2014-2017, Institute for Automation of Complex Power Systems, EONERC\n");
 	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
 }
 
 void print_version()
 {
-	printf("%s\n", BUILDID);
+	printf("%s\n", PROJECT_BUILD_ID);
 }
 
 int version_parse(const char *s, struct version *v)
