@@ -167,7 +167,7 @@ check:		if (optarg == endptr)
 
 	char *hook = argv[optind];
 
-	ret = log_init(&l, l.level, LOG_ALL);
+	ret = log_init(&l, "hook", l.level, LOG_ALL);
 	if (ret)
 		error("Failed to initialize log");
 

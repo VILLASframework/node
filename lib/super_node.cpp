@@ -66,7 +66,7 @@ int SuperNode::init()
 {
 	int ret;
 
-	ret = log_init(&log, 2, LOG_ALL);
+	ret = log_init(&log, name, 2, LOG_ALL);
 	if (ret)
 		return ret;
 

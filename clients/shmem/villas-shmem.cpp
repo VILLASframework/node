@@ -61,9 +61,8 @@ int main(int argc, char* argv[])
 		.samplelen = DEFAULT_SHMEM_SAMPLELEN
 	};
 
-	log_init(&log, 2, LOG_ALL);
+	log_init(&log, "test-shmem", 2, LOG_ALL);
 	log_open(&log);
-
 
 	if (argc != 4) {
 		usage();

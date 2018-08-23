@@ -88,7 +88,7 @@ check:		if (optarg == endptr)
 	struct io input = { .state = STATE_DESTROYED };
 	struct io output = { .state = STATE_DESTROYED };
 
-	ret = log_init(&log, level, LOG_ALL);
+	ret = log_init(&log, "convert", level, LOG_ALL);
 	if (ret)
 		error("Failed to initialize log");
 

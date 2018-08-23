@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
 
 	const char *format = "villas.human"; /** @todo hardcoded for now */
 
-	ret = log_init(&l, l.level, LOG_ALL);
+	ret = log_init(&l, "signal", l.level, LOG_ALL);
 	if (ret)
 		error("Failed to initialize log");
 
