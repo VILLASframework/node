@@ -27,11 +27,15 @@
 #include <cpuid.h>
 #include <inttypes.h>
 
-#include <villas/kernel/kernel.h>
-
 #ifdef __APPLE__
   #include <sys/types.h>
   #include <sys/sysctl.h>
+#endif
+
+#include <villas/kernel/kernel.h>
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #ifndef bit_TSC
@@ -93,3 +97,7 @@ int tsc_init(struct tsc *t);
 uint64_t tsc_rate_to_cyles(struct tsc *t, double rate);
 
 uint64_t tsc_now(struct tsc *t);
+
+#ifdef __cplusplus
+}
+#endif
