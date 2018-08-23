@@ -55,8 +55,8 @@ endif()
 target_include_directories(villas-common PUBLIC
 	${OPENSSL_INCLUDE_DIR}
 	${CURL_INCLUDE_DIRS}
-	${CMAKE_BINARY_DIR}/include
-	${CMAKE_SOURCE_DIR}/include
+	${PROJECT_BINARY_DIR}/include
+	${PROJECT_SOURCE_DIR}/include
 	${PROJECT_SOURCE_DIR}/thirdparty/spdlog/include
 )
 
