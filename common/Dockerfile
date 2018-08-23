@@ -63,8 +63,11 @@ RUN dnf -y install \
 	openssl-devel openssl
 
 # Build & Install Criterion
-COPY thirdparty/criterion /tmp/criterion
-RUN mkdir -p /tmp/criterion/build && cd /tmp/criterion/build && cmake .. && make install && rm -rf /tmp/*
+RUN cd /tmp && \
+	git clone --recursive https://github.com/Snaipe/Criterion && \
+	mkdir -p Criterion/build && cd Criterion/build && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	rm -rf /tmp/*
 
 ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
 
