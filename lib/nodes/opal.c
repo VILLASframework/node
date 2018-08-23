@@ -92,7 +92,7 @@ int opal_type_start() /// @todo: Port to C++
 
 	info("Started as OPAL Asynchronous process");
 	info("This is VILLASnode %s (built on %s, %s)",
-		BUILDID, __DATE__, __TIME__);
+		PROJECT_BUILD_ID, __DATE__, __TIME__);
 
 	opal_print_global();
 

@@ -22,9 +22,9 @@
 
 add_custom_target(run-integration-tests
 	COMMAND
-		SRCDIR=${CMAKE_SOURCE_DIR}
-		BUILDDIR=${CMAKE_BINARY_DIR}
-		${CMAKE_SOURCE_DIR}/tools/integration-tests.sh
+		SRCDIR=${PROJECT_SOURCE_DIR}
+		BUILDDIR=${PROJECT_BINARY_DIR}
+		${PROJECT_SOURCE_DIR}/tools/integration-tests.sh
 	DEPENDS
 		villas-node
 		villas-pipe

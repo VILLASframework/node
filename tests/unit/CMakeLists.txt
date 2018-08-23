@@ -20,34 +20,31 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-if(CRITERION_FOUND)
+set(TEST_SRC
+	config_json.cpp
+	io.cpp
+	json.cpp
+	main.cpp
+	mapping.cpp
+	memory.cpp
+	pool.cpp
+	queue.cpp
+	queue_signalled.cpp
+)
 
-	set(TEST_SRC
-		config_json.cpp
-		io.cpp
-		json.cpp
-		main.cpp
-		mapping.cpp
-		memory.cpp
-		pool.cpp
-		queue.cpp
-		queue_signalled.cpp
-	)
+add_executable(unit-tests ${TEST_SRC})
+target_link_libraries(unit-tests PUBLIC
+	PkgConfig::CRITERION
+	villas
+	Threads::Threads
+)
 
-	add_executable(unit-tests ${TEST_SRC})
-	target_link_libraries(unit-tests PUBLIC
-		PkgConfig::CRITERION
-		villas
-		Threads::Threads
-	)
+add_custom_target(run-unit-tests
+	COMMAND $<TARGET_FILE:unit-tests> ${CRITERION_OPTS}
+	USES_TERMINAL
+)
 
-	add_custom_target(run-unit-tests
-		COMMAND $<TARGET_FILE:unit-tests> ${CRITERION_OPTS}
-		USES_TERMINAL
-	)
+add_dependencies(tests unit-tests)
+add_dependencies(run-tests run-unit-tests)
 
-	add_dependencies(tests unit-tests)
-	add_dependencies(run-tests run-unit-tests)
-
-	add_dependencies(run-unit-tests unit-tests)
-endif()
+add_dependencies(run-unit-tests unit-tests)

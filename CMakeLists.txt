@@ -27,14 +27,21 @@ project(villas-node
     LANGUAGES C CXX
 )
 
+# Some more project settings
+set(PROJECT_AUTHOR "Steffen Vogel")
+set(PROJECT_COPYRIGHT "2018, Institute for Automation of Complex Power Systems, RWTH Aachen University")
+set(PROJECT_HOMEPAGE_URL "https://www.fein-aachen.org/projects/villas-node/")
+
 # Several CMake settings/defaults
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
-set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake;${PROJECT_SOURCE_DIR}/common/cmake")
 
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     set(TOPLEVEL_PROJECT ON)
+else()
+    set(TOPLEVEL_PROJECT OFF)
 endif()
 
 if(APPLE)
@@ -45,6 +52,7 @@ include(FindPkgConfig)
 include(CheckIncludeFile)
 include(FeatureSummary)
 include(GNUInstallDirs)
+include(GetVersion)
 
 # Compiler flags
 if(BUILD32)
@@ -119,72 +127,14 @@ option(WITH_PLUGINS "Build plugins" ${TOPLEVEL_PROJECT})
 option(WITH_CLIENTS "Build client applications" ${TOPLEVEL_PROJECT})
 option(WITH_DOC     "Build documentation" ${TOPLEVEL_PROJECT})
 
-set(V 2)
-set(PREFIX ${CMAKE_INSTALL_PREFIX})
-
-if(CMAKE_BUILD_TYPE)
-    string(TOLOWER "${CMAKE_BUILD_TYPE}" VARIANT)
-else()
-    set(VARIANT "release")
-endif()
-
 # Add more build configurations
 include(cmake/config/Debug.cmake)
 include(cmake/config/Release.cmake)
 include(cmake/config/Coverage.cmake)
 include(cmake/config/Profiling.cmake)
 
-# Add git revision and build variant defines
-set(PROJECT_AUTHOR "Steffen Vogel")
-set(PROJECT_COPYRIGHT "2018, Institute for Automation of Complex Power Systems, RWTH Aachen University")
-
-set(PROJECT_SOVERSION 1)
-
-execute_process(
-    COMMAND git describe --tags --abbrev=0 --match "v*"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    OUTPUT_VARIABLE PROJECT_VERSION_STR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-string(REGEX REPLACE "^v([0-9]+\\.[0-9]+\\.[0-9]+)$" "\\1"     PROJECT_VERSION       ${PROJECT_VERSION_STR})
-string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\1" PROJECT_MAJOR_VERSION ${PROJECT_VERSION_STR})
-string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\2" PROJECT_MINOR_VERSION ${PROJECT_VERSION_STR})
-string(REGEX REPLACE "^v([0-9]+)\\.([0-9]+)\\.([0-9]+)$" "\\3" PROJECT_PATCH_VERSION ${PROJECT_VERSION_STR})
-
-string(TIMESTAMP BUILD_DATE "%Y%m%d")
-
-if(DEFINED ENV{CI})
-	string(APPEND VARIANT "-ci")
-    string(SUBSTRING $ENV{CI_COMMIT_SHA} 0 7 GIT_REV)
-	set(GIT_BRANCH $ENV{CI_COMMIT_REF_NAME})
-else()
-    execute_process(
-        COMMAND git rev-parse --short=7 HEAD
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        OUTPUT_VARIABLE GIT_REV
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-
-    execute_process(
-        COMMAND git rev-parse --abbrev-ref HEAD
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-        OUTPUT_VARIABLE GIT_BRANCH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-    )
-endif()
-
-set(PROJECT_RELEASE_NUM 3)
-if(DEFINED ENV{CI_COMMIT_TAG})
-		set(PROJECT_RELEASE "${PROJECT_RELEASE_NUM}")
-else()
-    string(REPLACE "-" "_" GIT_BRANCH_NORM ${GIT_BRANCH})
-    string(REPLACE "-" "_" VARIANT_NORM    ${VARIANT})
-
-    set(PROJECT_RELEASE "${PROJECT_RELEASE_NUM}.${GIT_BRANCH_NORM}_${VARIANT_NORM}.${BUILD_DATE}git${GIT_REV}")
-endif()
-
-set(BUILDID "v${PROJECT_MAJOR_VERSION}.${PROJECT_MINOR_VERSION}.${PROJECT_PATCH_VERSION}-${GIT_REV}-${VARIANT}")
+# Get version info and buildid from Git
+GetVersion(${PROJECT_SOURCE_DIR} "CMAKE_PROJECT")
 
 add_subdirectory(common)
 add_subdirectory(etc)
@@ -233,10 +183,17 @@ add_feature_info(PLUGINS WITH_PLUGINS "Build plugins")
 add_feature_info(CLIENTS WITH_CLIENTS "Build client applications")
 add_feature_info(DOC     WITH_DOC     "Build documentation")
 
-if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
+if(TOPLEVEL_PROJECT)
     feature_summary(WHAT ALL VAR FEATURES)
     message(STATUS "${FEATURES}")
-    message(STATUS "Building VILLASnode: ${BUILDID}")
+    message(STATUS "Building ${CMAKE_PROJECT_DESCRIPTION}:")
+    message(STATUS "  VERSION:         ${CMAKE_PROJECT_VERSION}")
+    message(STATUS "  RELEASE:         ${CMAKE_PROJECT_RELEASE}")
+    message(STATUS "  GIT_REV:         ${CMAKE_PROJECT_GIT_REV}")
+    message(STATUS "  GIT_BRANCH:      ${CMAKE_PROJECT_GIT_BRANCH}")
+    message(STATUS "  VARIANT:         ${CMAKE_PROJECT_VARIANT}")
+    message(STATUS "  BUILD_ID:        ${CMAKE_PROJECT_BUILD_ID}")
+    message(STATUS "  BUILD_DATE:      ${CMAKE_PROJECT_BUILD_DATE}")
 endif()
 
 include(VILLASnodePackaging)

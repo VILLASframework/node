@@ -27,8 +27,8 @@ if(DEFINED PROTOBUF_COMPILER AND PROTOBUF_FOUND)
         COMMAND ${PROTOBUF_COMPILER}
             --python_out=${CMAKE_CURRENT_BINARY_DIR}
             villas.proto
-        MAIN_DEPENDENCY ${CMAKE_SOURCE_DIR}/lib/formats/villas.proto
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/lib/formats
+        MAIN_DEPENDENCY ${PROJECT_SOURCE_DIR}/lib/formats/villas.proto
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/lib/formats
     )
 
     add_custom_target(python ALL

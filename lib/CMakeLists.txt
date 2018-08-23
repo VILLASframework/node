@@ -136,8 +136,8 @@ endif()
 
 
 set_target_properties(villas PROPERTIES
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_SOVERSION}
+    VERSION ${CMAKE_PROJECT_VERSION}
+    SOVERSION 1
 )
 
 install(
