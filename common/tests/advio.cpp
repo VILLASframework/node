@@ -84,7 +84,7 @@ Test(advio, download)
 	len = afread(buffer, 1, sizeof(buffer), af);
 	cr_assert_gt(len, 0, "len=%zu, feof=%u", len, afeof(af));
 
-	cr_assert_arr_eq(buffer, expect, sizeof(expect));
+	cr_assert_arr_eq(buffer, expect, 64);
 
 	ret = afclose(af);
 	cr_assert_eq(ret, 0, "Failed to close file");
