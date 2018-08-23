@@ -60,6 +60,7 @@ ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
 RUN dnf -y install \
 	jansson-devel \
 	libcurl-devel \
+	libconfig-devel \
 	openssl-devel openssl
 
 # Build & Install Criterion

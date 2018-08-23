@@ -59,6 +59,7 @@ find_package(Criterion)
 
 
 pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson>=2.7)
+pkg_check_modules(LIBCONFIG IMPORTED_TARGET libconfig>=1.4.9)
 
 add_subdirectory(lib)
 if(CRITERION_FOUND)
