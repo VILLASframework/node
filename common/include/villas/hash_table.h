@@ -32,7 +32,7 @@ extern "C" {
 #endif
 
 struct hash_table_entry {
-	void *key;
+	const void *key;
 	void *data;
 
 	struct hash_table_entry *next;
@@ -62,20 +62,20 @@ int hash_table_destroy(struct hash_table *ht, dtor_cb_t dtor, bool release);
 /** Insert a new key/value pair into the hash table.
  *
  */
-int hash_table_insert(struct hash_table *ht, void *key, void *data);
+int hash_table_insert(struct hash_table *ht, const void *key, void *data);
 
 /** Delete a key from the hash table.
  *
  *
  */
-int hash_table_delete(struct hash_table *ht, void *key);
+int hash_table_delete(struct hash_table *ht, const void *key);
 
 /** Perform a lookup in the hash table.
  *
  * @retval != NULL The value for the given key.
  * @retval NULL The given key is not stored in the hash table.
  */
-void * hash_table_lookup(struct hash_table *ht, void *key);
+void * hash_table_lookup(struct hash_table *ht, const void *key);
 
 /** Dump the contents of the hash table in a human readable format to stdout. */
 void hash_table_dump(struct hash_table *ht);
