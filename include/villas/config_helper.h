@@ -43,7 +43,7 @@ int json_to_config(json_t *json, config_setting_t *parent);
 #endif /* LIBCONFIG_FOUND */
 
 /* Create a JSON object from command line parameters. */
-json_t *json_load_cli(int argc, char *argv[]);
+json_t *json_load_cli(int argc, const char *argv[]);
 
 int json_object_extend_str(json_t *orig, const char *str);
 

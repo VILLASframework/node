@@ -248,12 +248,13 @@ success:
 		json_object_set(subobj, key1, new);
 }
 
-json_t * json_load_cli(int argc, char *argv[])
+json_t * json_load_cli(int argc, const char *argv[])
 {
-	char *opt;
-	char *key = NULL;
-	char *value = NULL;
-	char *sep, *cpy;
+	const char *opt;
+	const char *key = NULL;
+	const char *value = NULL;
+	const char *sep;
+	char *cpy;
 
 	json_t *json = json_object();
 
