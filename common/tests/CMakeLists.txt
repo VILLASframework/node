@@ -24,19 +24,18 @@ set(SOURCES
 	main.cpp
 	logging.cpp
 	
+	advio.cpp
+	bitset.cpp
 	graph.cpp
-
-	advio.c
-	bitset.c
-	hash_table.c
-	hist.c
-	kernel.c
-	list.c
-	log.c
-	task.c
-	timing.c
-	tsc.c
-	utils.c
+	hash_table.cpp
+	hist.cpp
+	kernel.cpp
+	list.cpp
+	log.cpp
+	task.cpp
+	timing.cpp
+	tsc.cpp
+	utils.cpp
 )
 
 add_executable(unit-tests-common ${SOURCES})

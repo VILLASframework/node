@@ -25,6 +25,13 @@
 #include <villas/crypt.h>
 #include <villas/utils.h>
 
+void init_logging();
+
+TestSuite(utils,
+	.description = "Utilities",
+	.init = init_logging
+);
+
 /* Simple normality test for 1,2,3s intervals */
 Test(utils, box_muller)
 {
@@ -32,7 +39,7 @@ Test(utils, box_muller)
 	unsigned sigma[3] = { 0 };
 	unsigned iter = 1000000;
 
-	for (int i = 0; i < iter; i++) {
+	for (unsigned i = 0; i < iter; i++) {
 		n = box_muller(0, 1);
 
 		if      (n > 2 || n < -2) sigma[2]++;
@@ -89,7 +96,7 @@ Test(utils, memdup)
 	len = read_random(orig, sizeof(orig));
 	cr_assert_eq(len, sizeof(orig));
 
-	copy = memdup(orig, sizeof(orig));
+	copy = (char *) memdup(orig, sizeof(orig));
 	cr_assert_not_null(copy);
 	cr_assert_arr_eq(copy, orig, sizeof(orig));
 
@@ -133,7 +140,7 @@ Test(utils, strf)
 {
 	char *buf = NULL;
 
-	buf = strf("Hallo %s", "Steffen.");
+	buf = strcatf(&buf, "Hallo %s", "Steffen.");
 	cr_assert_str_eq(buf, "Hallo Steffen.");
 
 	strcatf(&buf, " Its Monday %uth %s %u.", 13, "August", 2018);

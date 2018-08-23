@@ -30,6 +30,13 @@ const double test_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 /* Histogram of test_data with 200 buckets between -100 and 100 */
 const int hist_result[] = {};
 
+void init_logging();
+
+TestSuite(hist,
+	.description = "Histogram",
+	.init = init_logging
+);
+
 Test(hist, simple) {
 	struct hist h;
 	int ret;
@@ -37,7 +44,7 @@ Test(hist, simple) {
 	ret = hist_init(&h, 0, 0);
 	cr_assert_eq(ret, 0);
 
-	for (int i = 0; i < ARRAY_LEN(test_data); i++)
+	for (unsigned i = 0; i < ARRAY_LEN(test_data); i++)
 		hist_put(&h, test_data[i]);
 
 	cr_assert_float_eq(hist_mean(&h), 5.5, 1e-6);

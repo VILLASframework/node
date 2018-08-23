@@ -26,6 +26,13 @@
 
 #include <villas/timing.h>
 
+void init_logging();
+
+TestSuite(timing,
+	.description = "Time measurements",
+	.init = init_logging
+);
+
 Test(timing, time_now)
 {
 	struct timespec now1 = time_now();
