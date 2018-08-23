@@ -29,7 +29,7 @@ set(NODE_SRC
 
 if(LIBNL3_ROUTE_FOUND)
     list(APPEND LIBRARIES PkgConfig::LIBNL3_ROUTE)
-    list(APPEND INCLUDE_DIRS LIBNL3_ROUTE_INCLUDE_DIRS)
+    list(APPEND INCLUDE_DIRS ${LIBNL3_ROUTE_INCLUDE_DIRS})
 endif()
 
 if(WITH_IO)
@@ -127,4 +127,4 @@ endif()
 
 add_library(nodes STATIC ${NODE_SRC})
 target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
-target_link_libraries(nodes LINK_PRIVATE ${LIBRARIES})
+target_link_libraries(nodes INTERFACE ${LIBRARIES} PUBLIC villas-common)

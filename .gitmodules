@@ -1,3 +1,6 @@
 [submodule "web/socket/flot"]
 	path = web/socket/flot
 	url = https://github.com/flot/flot.git
+[submodule "common"]
+	path = common
+	url = ../VILLAScommon.git

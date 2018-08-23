@@ -24,16 +24,13 @@ add_compile_options(-fPIC)
 
 list(APPEND INCLUDE_DIRS
     ${JANSSON_INCLUDE_DIRS}
-    ${OPENSSL_INCLUDE_DIR}
-    ${CURL_INCLUDE_DIRS}
-    ${VILLASnode_BINARY_DIR}/include
-    ${VILLASnode_SOURCE_DIR}/include
+    ${PROJECT_BINARY_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include
 )
 
 set(LIBRARIES
     PkgConfig::JANSSON
-    ${OPENSSL_LIBRARIES}
-    ${CURL_LIBRARIES}
+    villas-common
     m
 )
 
@@ -129,7 +126,7 @@ endif()
 add_library(villas SHARED ${LIB_SRC})
 
 target_include_directories(villas PUBLIC ${INCLUDE_DIRS})
-target_link_libraries(villas PUBLIC ${LIBRARIES})
+target_link_libraries(villas PUBLIC ${LIBRARIES} villas-common)
 
 if(APPLE)
     target_link_libraries(villas PRIVATE -Wl,-all_load ${WHOLE_ARCHIVES} -Wl,-noall_load)

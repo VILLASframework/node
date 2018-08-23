@@ -81,8 +81,7 @@ endif()
 # Check packages
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
-find_package(OpenSSL 1.0.0 REQUIRED)
-find_package(CURL 7.29 REQUIRED)
+find_package(Libwebsockets 2.3.0 REQUIRED)
 find_package(Mosquitto)
 find_package(Opal)
 find_package(IBVerbs)
@@ -190,6 +189,7 @@ endif()
 
 set(BUILDID "v${PROJECT_MAJOR_VERSION}.${PROJECT_MINOR_VERSION}.${PROJECT_PATCH_VERSION}-${GIT_REV}-${VARIANT}")
 
+add_subdirectory(common)
 add_subdirectory(etc)
 add_subdirectory(lib)
 add_subdirectory(web)

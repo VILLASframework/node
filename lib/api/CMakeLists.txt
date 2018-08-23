@@ -36,4 +36,5 @@ set(API_SRC
 
 add_library(api STATIC ${API_SRC})
 target_include_directories(api PUBLIC ${INCLUDE_DIRS})
-target_link_libraries(api INTERFACE ${LIBRARIES})
+target_link_libraries(api INTERFACE ${LIBRARIES} PUBLIC villas-common)
+
