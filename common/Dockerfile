@@ -58,7 +58,9 @@ ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
 
 # Dependencies
 RUN dnf -y install \
-	jansson-devel
+	jansson-devel \
+	libcurl-devel \
+	openssl-devel openssl
 
 # Build & Install Criterion
 COPY thirdparty/criterion /tmp/criterion
