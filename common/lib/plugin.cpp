@@ -28,41 +28,23 @@
 
 #include <villas/plugin.hpp>
 
-namespace villas {
+using namespace villas::plugin;
 
-// list of all registered plugins
-Plugin::PluginList&
-Plugin::pluginList = reinterpret_cast<Plugin::PluginList&>(Plugin::pluginListBuffer);
+List<> * Registry::plugins;
 
-Plugin::PluginListBuffer
-Plugin::pluginListBuffer;
-
-// relies on zero initialization
-int Plugin::pluginListNiftyCounter;
-
-
-Plugin::Plugin(Type type, const std::string& name) :
-    pluginType(type),
+Plugin::Plugin(const std::string& name, const std::string& desc) :
     name(name),
-    description(""),
-    path(""),
-    state(STATE_INITIALIZED)
+    description(desc)
 {
-	// see comment in plugin.hpp on why we need to do this (Nifty Counter Idiom)
-	if(pluginListNiftyCounter++ == 0)
-		new (&pluginList) PluginList;
-
-	// push to global plugin list
-	pluginList.push_back(this);
+	Registry::add(this);
 }
 
 Plugin::~Plugin()
 {
-	// clean from global plugin list
-	pluginList.remove(this);
+	Registry::remove(this);
 }
 
-
+#if 0
 int
 Plugin::parse(json_t *cfg)
 {
@@ -109,52 +91,32 @@ Plugin::unload()
 
 	return 0;
 }
+#endif
 
 void
 Plugin::dump()
 {
-	auto logger = getStaticLogger();
+	auto logger = Registry::getLogger();
 	logger->info("Name: '{}' Description: '{}'", name, description);
 }
 
 void
-Plugin::dumpList()
+Registry::dump()
 {
-	auto logger = getStaticLogger();
+	auto logger = Registry::getLogger();
 
 	logger->info("Registered plugins:");
-	for(auto& p : pluginList) {
-		logger->info(" - {}", p->name);
+	for(auto p : *plugins) {
+		logger->info(" - {}", p->getName());
 	}
 }
 
-Plugin*
-Plugin::lookup(Plugin::Type type, std::string name)
+std::string Plugin::getName()
 {
-	for(auto& p : pluginList) {
-		if(p->pluginType == type and (name.empty() or p->name == name))
-			return p;
-	}
-
-	return nullptr;
+	return name;
 }
 
-std::list<Plugin*>
-Plugin::lookup(Plugin::Type type)
+std::string Plugin::getDescription()
 {
-	std::list<Plugin*> list;
-	for(auto& p : pluginList) {
-		if(p->pluginType == type)
-			list.push_back(p);
-	}
-
-	return list;
+	return description;
 }
-
-bool
-Plugin::operator==(const Plugin &other) const
-{
-	return (this->pluginType == other.pluginType) and (this->name == other.name);
-}
-
-} // namespace villas
