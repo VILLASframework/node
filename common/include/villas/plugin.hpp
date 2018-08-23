@@ -32,82 +32,106 @@
 #include <villas/common.h>
 
 namespace villas {
+namespace plugin {
 
-class Plugin {
+/* Forward declarations */
+class Plugin;
+
+template<typename T = Plugin>
+using List = std::list<T *>;
+
+class Registry {
+
+protected:
+	static List<> *plugins;
+
 public:
 
-	enum class Type {
-		Unknown,
-		FpgaIp,
-		FpgaCard,
-		Gpu
-	};
+	static SpdLogger
+	getLogger()
+	{ return loggerGetOrCreate("plugin:registry"); }
 
-	Plugin(Type type, const std::string& name);
-	virtual ~Plugin();
+	static void dump();
 
-	// copying a plugin doesn't make sense, so explicitly deny it
-	Plugin(Plugin const&)  = delete;
-	void operator=(Plugin const&) = delete;
+	static void add(Plugin *p)
+	{
+		if (plugins == nullptr)
+			plugins = new List<>;
 
-	int load();
+		plugins->push_back(p);
+	}
+
+	static void remove(Plugin *p)
+	{
+		plugins->remove(p);
+	}
+
+	template<typename T = Plugin>
+	static T *
+	lookup(const std::string &name)
+	{
+		for (Plugin *p : *plugins) {
+			T *t = dynamic_cast<T *>(p);
+			if (!t || t->name != name)
+				continue;
+
+			return t;
+		}
+
+		return nullptr;
+	}
+
+	template<typename T = Plugin>
+	static List<T>
+	lookup()
+	{
+		List<T> list;
+
+		for (Plugin *p : *plugins) {
+			T *t = dynamic_cast<T *>(p);
+			if (t)
+				list.push_back(t);
+		}
+
+		return list;
+	}
+};
+
+class Loader {
+
+public:
+	int load(const std::string &path);
 	int unload();
 
 	virtual int parse(json_t *cfg);
+};
+
+class Plugin {
+
+	friend plugin::Registry;
+
+public:
+	Plugin(const std::string& name, const std::string &desc);
+	virtual ~Plugin();
+
+	// copying a plugin doesn't make sense, so explicitly deny it
+	Plugin(Plugin const&) = delete;
+	void operator=(Plugin const&) = delete;
+
 	virtual void dump();
 
-	static void
-	dumpList();
+	std::string getName();
+	std::string getDescription();
 
-	/// Find plugin by type and (optional if empty) by name. If more match, it
-	/// is not defined which one will be returned.
-	static Plugin *
-	lookup(Type type, std::string name);
-
-	/// Get all plugins of a given type.
-	static std::list<Plugin*>
-	lookup(Type type);
-
-	// TODO: check if this makes sense! (no intermediate plugins)
-	bool
-	operator==(const Plugin& other) const;
-
-	Type pluginType;
+protected:
 	std::string name;
 	std::string description;
 	std::string path;
-	void *handle;
-	enum state state;
 
-protected:
-	static SpdLogger
-	getStaticLogger()
-	{ return loggerGetOrCreate("plugin"); }
-
-private:
-	/* Just using a standard std::list<> to hold plugins is problematic, because
-	   we want to push Plugins to the list from within each Plugin's constructor
-	   that is executed during static initialization. Since the order of static
-	   initialization is undefined in C++, it may happen that a Plugin
-	   constructor is executed before the list could be initialized. Therefore,
-	   we use the Nifty Counter Idiom [1] to initialize the list ourself before
-	   the first usage.
-
-		In short:
-		- allocate a buffer for the list
-		- initialize list before first usage
-		- (complicatedly) declaring a buffer is neccessary in order to avoid
-		  that the constructor of the static list is executed again
-
-	   [1] https://en.wikibooks.org/wiki/More_C%2B%2B_Idioms/Nifty_Counter
-	*/
-
-	using PluginList = std::list<Plugin *>;
-	using PluginListBuffer = typename std::aligned_storage<sizeof (Plugin::PluginList), alignof (Plugin::PluginList)>::type;
-
-	static PluginListBuffer pluginListBuffer;	///< buffer to hold a PluginList
-	static PluginList& pluginList;		///< reference to pluginListBuffer
-	static int pluginListNiftyCounter;	///< track if pluginList has been initialized
+	SpdLogger
+	getLogger()
+	{ return loggerGetOrCreate("plugin:" + name); }
 };
 
+} // namespace plugin
 } // namespace villas
