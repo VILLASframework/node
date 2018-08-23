@@ -22,7 +22,10 @@
 
 cmake_minimum_required(VERSION 3.6)
 
-project(VILLASnode C CXX)
+project(villas-node 
+    DESCRIPTION "VILLASnode"
+    LANGUAGES C CXX
+)
 
 # Several CMake settings/defaults
 set(CMAKE_C_STANDARD 11)
@@ -30,7 +33,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-if(CMAKE_SOURCE_DIR STREQUAL VILLASnode_SOURCE_DIR)
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     set(TOPLEVEL_PROJECT ON)
 endif()
 
@@ -54,13 +57,7 @@ if(APPLE)
 endif()
 
 add_definitions(-D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE)
-add_compile_options(-fdiagnostics-color=auto)
-
-if(MSVC)
-    add_compile_options(/W4 /WX)
-else()
-    add_compile_options(-Wall -Werror)
-endif()
+add_compile_options(-Wall -Werror -fdiagnostics-color=auto)
 
 execute_process(
 	COMMAND uname -m

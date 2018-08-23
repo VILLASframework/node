@@ -33,7 +33,7 @@ set(DOCKER_RUN_OPTS
 	--publish 2345:2345
 	--privileged
 	--security-opt seccomp:unconfined
-	--volume \"${VILLASnode_SOURCE_DIR}:/villas\"
+	--volume \"${PROJECT_SOURCE_DIR}:/villas\"
 )
 
 foreach(SUFFIX app dev dev-centos dev-ubuntu)
@@ -59,7 +59,7 @@ foreach(SUFFIX app dev dev-centos dev-ubuntu)
 			--build-arg GIT_REV=${GIT_REV}
 			--build-arg VERSION=${PROJECT_VERSION}
 			--build-arg VARIANT=${VARIANT}
-			${DOCKER_BUILD_OPTS} ${VILLASnode_SOURCE_DIR}
+			${DOCKER_BUILD_OPTS} ${PROJECT_SOURCE_DIR}
 		COMMENT "Build Docker image: ${DOCKER_IMAGE}-${SUFFIX}:${DOCKER_TAG}"
 	)
 
