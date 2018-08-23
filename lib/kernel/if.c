@@ -27,7 +27,7 @@
 
 #include <netlink/route/link.h>
 
-#include <villas/config.h>
+#include <villas/node/config.h>
 #include <villas/utils.h>
 
 #include <villas/kernel/if.h>

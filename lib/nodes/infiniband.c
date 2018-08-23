@@ -23,6 +23,7 @@
 #include <string.h>
 #include <math.h>
 
+#include <villas/node/config.h>
 #include <villas/nodes/infiniband.h>
 #include <villas/plugin.h>
 #include <villas/utils.h>

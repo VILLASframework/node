@@ -32,7 +32,7 @@
 #include <villas/utils.h>
 #include <villas/timing.h>
 #include <villas/plugin.h>
-#include <villas/config.h>
+#include <villas/node/config.h>
 
 /* Some global settings */
 static char *name = NULL;

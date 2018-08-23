@@ -30,7 +30,7 @@
 #include <villas/hook.h>
 #include <villas/plugin.h>
 #include <villas/stats.h>
-#include <villas/super_node.h>
+#include <villas/super_node.hpp>
 #include <villas/sample.h>
 #include <villas/node.h>
 

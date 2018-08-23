@@ -24,7 +24,7 @@
 #include <math.h>
 
 #include <villas/timing.h>
-#include <villas/config.h>
+#include <villas/node/config.h>
 #include <villas/hook.h>
 #include <villas/path.h>
 #include <villas/utils.h>

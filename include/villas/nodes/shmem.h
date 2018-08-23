@@ -33,7 +33,7 @@
 #include <villas/memory.h>
 #include <villas/pool.h>
 #include <villas/queue.h>
-#include <villas/config.h>
+#include <villas/node/config.h>
 #include <villas/shmem.h>
 
 #ifdef __cplusplus

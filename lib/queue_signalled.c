@@ -21,7 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/config.h>
+#include <villas/node/config.h>
 #include <villas/queue_signalled.h>
 #include <villas/log.h>
 

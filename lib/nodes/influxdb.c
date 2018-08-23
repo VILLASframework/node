@@ -29,7 +29,7 @@
 #include <villas/node.h>
 #include <villas/plugin.h>
 #include <villas/signal.h>
-#include <villas/config.h>
+#include <villas/node/config.h>
 #include <villas/nodes/influxdb.h>
 #include <villas/memory.h>
 

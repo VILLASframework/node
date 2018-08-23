@@ -22,7 +22,7 @@
 
 #include <string.h>
 
-#include <villas/config.h>
+#include <villas/node/config.h>
 #include <villas/hook.h>
 #include <villas/sample.h>
 #include <villas/node.h>

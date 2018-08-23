@@ -25,7 +25,7 @@
 
 #include <iostream>
 
-#include <villas/config.h>
+#include <villas/node/config.h>
 #include <villas/utils.h>
 #include <villas/super_node.h>
 #include <villas/memory.h>
@@ -39,7 +39,6 @@
 #include <villas/kernel/rt.h>
 #include <villas/hook.h>
 #include <villas/stats.h>
-#include <villas/config.h>
 
 #ifdef ENABLE_OPAL_ASYNC
   #include <villas/nodes/opal.h>

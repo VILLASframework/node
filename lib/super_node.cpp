@@ -25,7 +25,6 @@
 #include <libgen.h>
 #include <unistd.h>
 
-#include <villas/config.h>
 #include <villas/super_node.h>
 #include <villas/node.h>
 #include <villas/path.h>
@@ -38,7 +37,7 @@
 #include <villas/api.h>
 #include <villas/plugin.h>
 #include <villas/memory.h>
-#include <villas/config.h>
+#include <villas/node/config.h>
 #include <villas/config_helper.h>
 
 #include <villas/kernel/rt.h>

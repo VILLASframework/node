@@ -34,7 +34,6 @@
 #endif
 
 #include <villas/nodes/socket.h>
-#include <villas/config.h>
 #include <villas/utils.h>
 #include <villas/format_type.h>
 #include <villas/sample.h>

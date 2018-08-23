@@ -32,7 +32,7 @@
 #include <pthread.h>
 #include <iostream>
 
-#include <villas/config.h>
+#include <villas/node/config.h>
 #include <villas/config_helper.h>
 #include <villas/super_node.h>
 #include <villas/utils.h>

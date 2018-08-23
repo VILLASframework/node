@@ -29,8 +29,8 @@
 #include <inttypes.h>
 #include <iostream>
 
-#include <villas/config.h>
 #include <villas/super_node.h>
+#include <villas/node/config.h>
 #include <villas/node.h>
 #include <villas/utils.h>
 #include <villas/hist.h>

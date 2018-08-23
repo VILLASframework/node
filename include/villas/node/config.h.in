@@ -26,15 +26,7 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* Paths */
-#define PLUGIN_PATH		PREFIX "/share/villas/node/plugins"
-#define WEB_PATH		PREFIX "/share/villas/node/web"
-#define SYSFS_PATH		"/sys"
-#define PROCFS_PATH		"/proc"
+#include <villas/config.h>
 
 /** Default number of values in a sample */
 #define DEFAULT_SAMPLE_LENGTH	64
@@ -44,10 +36,6 @@ extern "C" {
  * @see https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt */
 #define DEFAULT_NR_HUGEPAGES	100
 
-/** Width of log output in characters */
-#define LOG_WIDTH		80
-#define LOG_HEIGHT		25
-
 /** Socket priority */
 #define SOCKET_PRIO		7
 
@@ -55,21 +43,9 @@ extern "C" {
 #define IPPROTO_VILLAS		137
 #define ETH_P_VILLAS		0xBABE
 
-#define USER_AGENT		"VILLASnode (" BUILDID ")"
-
-/* Hard-coded cache line size */
-#if defined(__x86_64__) || defined(__i386__) || defined(__arm__)
-  #define CACHELINE_SIZE 64
-#else
-  #error "Unsupported architecture"
-#endif
-
 /* Required kernel version */
 #define KERNEL_VERSION_MAJ	3
 #define KERNEL_VERSION_MIN	6
-
-#cmakedefine BUILDID "@BUILDID@"
-#cmakedefine PREFIX "@PREFIX@"
 
 /* Available Features */
 #cmakedefine WITH_WEB
@@ -79,16 +55,11 @@ extern "C" {
 
 /* OS Headers */
 #cmakedefine HAS_EVENTFD
-
 #cmakedefine HAS_SEMAPHORE
 
+/* Available Libraries */
 #cmakedefine LIBWEBSOCKETS_FOUND
 #cmakedefine HDF5_FOUND
 #cmakedefine PROTOBUF_FOUND
 #cmakedefine LIBNL3_ROUTE_FOUND
-#cmakedefine LIBCONFIG_FOUND
 #cmakedefine IBVERBS_FOUND
-
-#ifdef __cplusplus
-}
-#endif

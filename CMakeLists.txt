@@ -217,8 +217,8 @@ if(WITH_TESTS)
 endif()
 
 configure_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/villas/config.h.in
-    ${CMAKE_CURRENT_BINARY_DIR}/include/villas/config.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/villas/node/config.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/villas/node/config.h
 )
 
 # Show feature summary

@@ -24,7 +24,7 @@
 
 #include <villas/node.h>
 #include <villas/plugin.h>
-#include <villas/config.h>
+#include <villas/node/config.h>
 #include <villas/nodes/loopback.h>
 #include <villas/memory.h>
 

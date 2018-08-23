@@ -26,7 +26,7 @@
 #include <string.h>
 #include <iostream>
 
-#include <villas/config.h>
+#include <villas/node/config.h>
 #include <villas/log.h>
 #include <villas/node.h>
 #include <villas/pool.h>

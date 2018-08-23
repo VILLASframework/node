@@ -25,7 +25,7 @@
 
 #include <villas/log.h>
 #include <villas/memory.h>
-#include <villas/config.h>
+#include <villas/node/config.h>
 
 void init_memory()
 {

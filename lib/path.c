@@ -27,7 +27,7 @@
 #include <inttypes.h>
 #include <poll.h>
 
-#include <villas/config.h>
+#include <villas/node/config.h>
 #include <villas/utils.h>
 #include <villas/path.h>
 #include <villas/timing.h>

@@ -37,7 +37,7 @@
   #include <linux/if_packet.h>
 #endif
 
-#include <villas/config.h>
+#include <villas/node/config.h>
 #include <villas/io.h>
 
 #if defined(LIBNL3_ROUTE_FOUND) && defined(__linux__)
