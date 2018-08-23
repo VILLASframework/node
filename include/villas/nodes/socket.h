@@ -33,11 +33,8 @@
 #include <sys/un.h>
 #include <netinet/in.h>
 
-#ifdef __linux__
-  #include <linux/if_packet.h>
-#endif
-
 #include <villas/node/config.h>
+#include <villas/node.h>
 #include <villas/io.h>
 
 #if defined(LIBNL3_ROUTE_FOUND) && defined(__linux__)
@@ -46,10 +43,11 @@
   #include <villas/kernel/tc.h>
 
   #define WITH_NETEM
-  #define WITH_AF_PACKET
-#endif
+  #define WITH_SOCKET_LAYER_ETH
 
-#include <villas/node.h>
+  #include <linux/if_packet.h>
+#endif /* LIBNL3_ROUTE_FOUND */
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,7 +72,7 @@ union sockaddr_union {
 	struct sockaddr_in sin;
 	struct sockaddr_in6 sin6;
 	struct sockaddr_un sun;
-#ifdef __linux__
+#ifdef WITH_SOCKET_LAYER_ETH
 	struct sockaddr_ll sll;
 #endif
 };

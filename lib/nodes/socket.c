@@ -29,10 +29,6 @@
 #include <arpa/inet.h>
 #include <errno.h>
 
-#if defined(__linux__)
-  #include <netinet/ether.h>
-#endif
-
 #include <villas/nodes/socket.h>
 #include <villas/utils.h>
 #include <villas/format_type.h>
@@ -40,6 +36,10 @@
 #include <villas/queue.h>
 #include <villas/plugin.h>
 #include <villas/compat.h>
+
+#ifdef WITH_SOCKET_LAYER_ETH
+  #include <netinet/ether.h>
+#endif /* WITH_SOCKET_LAYER_ETH */
 
 #ifdef WITH_NETEM
   #include <villas/kernel/if.h>
@@ -189,7 +189,7 @@ int socket_check(struct node *n)
 		if (ntohs(s->local.sin.sin_port) != ntohs(s->remote.sin.sin_port))
 			error("IP protocol numbers of local and remote must match!");
 	}
-#ifdef __linux__
+#ifdef WITH_SOCKET_LAYER_ETH
 	else if (s->layer == SOCKET_LAYER_ETH) {
 		if (ntohs(s->local.sll.sll_protocol) != ntohs(s->remote.sll.sll_protocol))
 			error("Ethertypes of local and remote must match!");
@@ -197,7 +197,7 @@ int socket_check(struct node *n)
 		if (ntohs(s->local.sll.sll_protocol) <= 0x5DC)
 			error("Ethertype must be large than %d or it is interpreted as an IEEE802.3 length field!", 0x5DC);
 	}
-#endif /* __linux__ */
+#endif /* WITH_SOCKET_LAYER_ETH */
 
 	if (s->multicast.enabled) {
 		if (s->local.sa.sa_family != AF_INET)
@@ -235,11 +235,11 @@ int socket_start(struct node *n)
 			s->sd = socket(s->local.sa.sa_family, SOCK_RAW, ntohs(s->local.sin.sin_port));
 			break;
 
-#ifdef __linux__
+#ifdef WITH_SOCKET_LAYER_ETH
 		case SOCKET_LAYER_ETH:
 			s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM, s->local.sll.sll_protocol);
 			break;
-#endif /* __linux__ */
+#endif /* WITH_SOCKET_LAYER_ETH */
 
 		case SOCKET_LAYER_UNIX:
 			s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM, 0);
@@ -274,11 +274,11 @@ int socket_start(struct node *n)
 			addrlen = SUN_LEN(&s->local.sun);
 			break;
 
-#ifdef WITH_AF_PACKET
+#ifdef WITH_SOCKET_LAYER_ETH
 		case AF_PACKET:
 			addrlen = sizeof(struct sockaddr_ll);
 			break;
-#endif /* WITH_AF_PACKET */
+#endif /* WITH_SOCKET_LAYER_ETH */
 		default:
 			addrlen = sizeof(s->local);
 	}
@@ -501,11 +501,11 @@ retry:	ret = io_sprint(&s->io, s->out.buf, s->out.buflen, &wbytes, smps, cnt);
 			addrlen = SUN_LEN(&s->local.sun);
 			break;
 
-#ifdef WITH_AF_PACKET
+#ifdef WITH_SOCKET_LAYER_ETH
 		case AF_PACKET:
 			addrlen = sizeof(struct sockaddr_ll);
 			break;
-#endif /* WITH_AF_PACKET */
+#endif /* WITH_SOCKET_LAYER_ETH */
 		default:
 			addrlen = sizeof(s->local);
 	}
@@ -573,10 +573,10 @@ int socket_parse(struct node *n, json_t *cfg)
 	if (layer) {
 		if (!strcmp(layer, "ip"))
 			s->layer = SOCKET_LAYER_IP;
-#ifdef __linux__
+#ifdef WITH_SOCKET_LAYER_ETH
 		else if (!strcmp(layer, "eth"))
 			s->layer = SOCKET_LAYER_ETH;
-#endif /*__linux__ */
+#endif /* WITH_SOCKET_LAYER_ETH */
 		else if (!strcmp(layer, "udp"))
 			s->layer = SOCKET_LAYER_UDP;
 		else if (!strcmp(layer, "unix") || !strcmp(layer, "local"))
@@ -664,13 +664,13 @@ char * socket_print_addr(struct sockaddr *saddr)
 			inet_ntop(AF_INET, &sa->sin.sin_addr, buf, 64);
 			break;
 
-#ifdef WITH_AF_PACKET
+#ifdef WITH_SOCKET_LAYER_ETH
 		case AF_PACKET:
 			strcatf(&buf, "%02x", sa->sll.sll_addr[0]);
 			for (int i = 1; i < sa->sll.sll_halen; i++)
 				strcatf(&buf, ":%02x", sa->sll.sll_addr[i]);
 			break;
-#endif /* WITH_AF_PACKET */
+#endif /* WITH_SOCKET_LAYER_ETH */
 		case AF_UNIX:
 			strcatf(&buf, "%s", sa->sun.sun_path);
 			break;
@@ -686,7 +686,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 			strcatf(&buf, ":%hu", ntohs(sa->sin.sin_port));
 			break;
 
-#ifdef WITH_AF_PACKET
+#ifdef WITH_SOCKET_LAYER_ETH
 		case AF_PACKET: {
 			struct nl_cache *cache = nl_cache_mngt_require("route/link");
 			struct rtnl_link *link = rtnl_link_get(cache, sa->sll.sll_ifindex);
@@ -697,7 +697,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 			strcatf(&buf, ":%hu", ntohs(sa->sll.sll_protocol));
 			break;
 		}
-#endif /* WITH_AF_PACKET */
+#endif /* WITH_SOCKET_LAYER_ETH */
 	}
 
 	return buf;
@@ -721,7 +721,7 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum socket_l
 
 		ret = 0;
 	}
-#ifdef __linux__
+#ifdef WITH_SOCKET_LAYER_ETH
 	else if (layer == SOCKET_LAYER_ETH) { /* Format: "ab:cd:ef:12:34:56%ifname:protocol" */
 		/* Split string */
 		char *node = strtok(copy, "%");
@@ -749,7 +749,7 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum socket_l
 
 		ret = 0;
 	}
-#endif /* WITH_AF_PACKET */
+#endif /* WITH_SOCKET_LAYER_ETH */
 	else {	/* Format: "192.168.0.10:12001" */
 		struct addrinfo hint = {
 			.ai_flags = flags,
@@ -827,7 +827,7 @@ int socket_compare_addr(struct sockaddr *x, struct sockaddr *y)
 
 			return memcmp(xu->sin6.sin6_addr.s6_addr, yu->sin6.sin6_addr.s6_addr, sizeof(xu->sin6.sin6_addr.s6_addr));
 
-#ifdef WITH_AF_PACKET
+#ifdef WITH_SOCKET_LAYER_ETH
 		case AF_PACKET:
 			CMP(ntohs(xu->sll.sll_protocol), ntohs(yu->sll.sll_protocol));
 			CMP(xu->sll.sll_ifindex, yu->sll.sll_ifindex);
@@ -836,7 +836,7 @@ int socket_compare_addr(struct sockaddr *x, struct sockaddr *y)
 
 			CMP(xu->sll.sll_halen, yu->sll.sll_halen);
 			return memcmp(xu->sll.sll_addr, yu->sll.sll_addr, xu->sll.sll_halen);
-#endif /* WITH_AF_PACKET */
+#endif /* WITH_SOCKET_LAYER_ETH */
 
 		default:
 			return -1;
