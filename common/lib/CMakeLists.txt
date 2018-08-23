@@ -57,7 +57,6 @@ target_include_directories(villas-common PUBLIC
 	${CURL_INCLUDE_DIRS}
 	${PROJECT_BINARY_DIR}/include
 	${PROJECT_SOURCE_DIR}/include
-	${PROJECT_SOURCE_DIR}/thirdparty/spdlog/include
 )
 
 target_link_libraries(villas-common PUBLIC
@@ -66,6 +65,7 @@ target_link_libraries(villas-common PUBLIC
 	${OPENSSL_LIBRARIES}
 	${CURL_LIBRARIES}
 	${CMAKE_DL_LIBS}
+	spdlog
 )
 
 target_compile_definitions(villas-common PUBLIC

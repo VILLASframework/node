@@ -57,6 +57,10 @@ find_package(OpenSSL 1.0.0 REQUIRED)
 find_package(CURL 7.29 REQUIRED)
 find_package(Criterion)
 
+set(SPDLOG_BUILD_EXAMPLES OFF)
+set(SPDLOG_BUILD_TESTING OFF)
+set(SPDLOG_BUILD_BENCH OFF)
+add_subdirectory(thirdparty/spdlog)
 
 pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson>=2.7)
 pkg_check_modules(LIBCONFIG IMPORTED_TARGET libconfig>=1.4.9)
