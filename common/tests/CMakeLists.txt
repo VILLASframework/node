@@ -25,6 +25,7 @@ add_executable(unit-tests-common
 	logging.cpp
 
 	advio.cpp
+	json_buffer.cpp
 	bitset.cpp
 	graph.cpp
 	hash_table.cpp
