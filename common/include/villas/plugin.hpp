@@ -51,8 +51,6 @@ public:
 	getLogger()
 	{ return loggerGetOrCreate("plugin:registry"); }
 
-	static void dump();
-
 	static void add(Plugin *p)
 	{
 		if (plugins == nullptr)

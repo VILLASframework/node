@@ -100,17 +100,6 @@ Plugin::dump()
 	logger->info("Name: '{}' Description: '{}'", name, description);
 }
 
-void
-Registry::dump()
-{
-	auto logger = Registry::getLogger();
-
-	logger->info("Registered plugins:");
-	for(auto p : *plugins) {
-		logger->info(" - {}", p->getName());
-	}
-}
-
 std::string Plugin::getName()
 {
 	return name;
