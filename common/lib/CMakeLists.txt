@@ -24,6 +24,7 @@ add_library(villas-common SHARED
 	advio.c
     bitset.c
     buffer.c
+	json_buffer.cpp
 	compat.c
     crypt.c
     hash_table.c
