@@ -27,6 +27,7 @@
 
 #define SPDLOG_LEVEL_NAMES { "trace", "debug", "info ",  "warn ", "error", "crit ", "off   " }
 #define SPDLOG_NAME_WIDTH 17
+#define SPDLOG_FMT_EXTERNAL
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
