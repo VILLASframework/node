@@ -24,37 +24,49 @@
 #include <unistd.h>
 #include <sys/mman.h>
 
+#include <villas/log.hpp>
+#include <villas/cpuset.hpp>
 #include <villas/config.h>
 #include <villas/utils.h>
+#include <villas/exceptions.hpp>
 
 #include <villas/kernel/kernel.h>
-#include <villas/kernel/rt.h>
+#include <villas/kernel/kernel.hpp>
+#include <villas/kernel/rt.hpp>
 
-int rt_init(int priority, int affinity)
+using villas::utils::CpuSet;
+
+namespace villas {
+namespace kernel {
+namespace rt {
+
+static auto logger = logging.get("kernel:rt");
+
+int init(int priority, int affinity)
 {
-	info("Initialize real-time sub-system");
+	logger->info("Initialize real-time sub-system");
 
 #ifdef __linux__
 	int is_rt;
 
 	/* Use FIFO scheduler with real time priority */
-	is_rt = rt_is_preemptible();
+	is_rt = isPreemptible();
 	if (is_rt)
-		warn("We recommend to use an PREEMPT_RT patched kernel!");
+		logger->warn("We recommend to use an PREEMPT_RT patched kernel!");
 
 	if (priority)
-		rt_set_priority(priority);
+		setPriority(priority);
 	else
-		warn("You might want to use the 'priority' setting to increase " PROJECT_NAME "'s process priority");
+		logger->warn("You might want to use the 'priority' setting to increase " PROJECT_NAME "'s process priority");
 
 	if (affinity)
-		rt_set_affinity(affinity);
+		setAffinity(affinity);
 	else
-		warn("You might want to use the 'affinity' setting to pin " PROJECT_NAME " to dedicate CPU cores");
+		logger->warn("You might want to use the 'affinity' setting to pin " PROJECT_NAME " to dedicate CPU cores");
 
-	rt_lock_memory();
+	lockMemory();
 #else
-	warn("This platform is not optimized for real-time execution");
+	logger->warn("This platform is not optimized for real-time execution");
 #endif
 
 	return 0;
@@ -62,64 +74,53 @@ int rt_init(int priority, int affinity)
 
 #ifdef __linux__
 
-int rt_lock_memory()
+int lockMemory()
 {
 	int ret;
 
 #ifdef _POSIX_MEMLOCK
 	ret = mlockall(MCL_CURRENT | MCL_FUTURE);
 	if (ret)
-		error("Failed to lock memory");
+		throw new SystemError("Failed to lock memory");
 #endif
 
 	return 0;
 }
 
-int rt_set_affinity(int affinity)
+int setAffinity(int affinity)
 {
 	char isolcpus[255];
 	int is_isol, ret;
 
 	/* Pin threads to CPUs by setting the affinity */
-	cpu_set_t cset_pin, cset_isol, cset_non_isol;
+	CpuSet cset_pin, cset_isol, cset_non_isol;
 
-	cpuset_from_integer(affinity, &cset_pin);
+	cset_pin = CpuSet(affinity);
 
 	is_isol = kernel_get_cmdline_param("isolcpus", isolcpus, sizeof(isolcpus));
 	if (is_isol) {
-		warn("You should reserve some cores for " PROJECT_NAME " (see 'isolcpus')");
+		logger->warn("You should reserve some cores for " PROJECT_NAME " (see 'isolcpus')");
 
-		CPU_ZERO(&cset_isol);
+		cset_isol.zero();
 	}
 	else {
-		ret = cpulist_parse(isolcpus, &cset_isol, 0);
-		if (ret)
-			error("Invalid isolcpus cmdline parameter: %s", isolcpus);
+		cset_isol = CpuSet(isolcpus);
+		cset_non_isol = cset_isol ^ cset_pin;
 
-		CPU_XOR(&cset_non_isol, &cset_isol, &cset_pin);
-		if (CPU_COUNT(&cset_non_isol) > 0) {
-			char isol[128], pin[128];
-
-			cpulist_create(isol, sizeof(isol), &cset_isol);
-			cpulist_create(pin, sizeof(pin), &cset_pin);
-
-			warn("Affinity setting includes cores which are not isolated: affinity=%s isolcpus=%s", pin, isol);
-		}
+		if (cset_non_isol.count() > 0)
+			logger->warn("Affinity setting includes cores which are not isolated: affinity={} isolcpus={}", (std::string) cset_pin, (std::string) cset_isol);
 	}
 
-	char list[128];
-	cpulist_create(list, sizeof(list), &cset_pin);
-
-	ret = sched_setaffinity(0, sizeof(cpu_set_t), &cset_pin);
+	ret = sched_setaffinity(0, cset_pin.size(), cset_pin);
 	if (ret)
-		serror("Failed to set CPU affinity to %s", list);
+		throw new SystemError("Failed to set CPU affinity to {}", (std::string) cset_pin);
 
-	debug(LOG_KERNEL | 3, "Set affinity to %s", list);
+	logger->debug("Set affinity to {}", (std::string) cset_pin);
 
 	return 0;
 }
 
-int rt_set_priority(int priority)
+int setPriority(int priority)
 {
 	int ret;
 	struct sched_param param = {
@@ -128,16 +129,20 @@ int rt_set_priority(int priority)
 
 	ret = sched_setscheduler(0, SCHED_FIFO, &param);
 	if (ret)
-		serror("Failed to set real time priority");
+		throw new SystemError("Failed to set real time priority");
 
-	debug(LOG_KERNEL | 3, "Task priority set to %u", priority);
+	logger->debug("Task priority set to {}", priority);
 
 	return 0;
 }
 
-int rt_is_preemptible()
+int isPreemptible()
 {
 	return access(SYSFS_PATH "/kernel/realtime", R_OK);
 }
 
 #endif /* __linux__ */
+
+} // namespace villas
+} // namespace kernel
+} // namespace rt
