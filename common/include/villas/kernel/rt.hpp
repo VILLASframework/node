@@ -28,17 +28,17 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace villas {
+namespace kernel {
+namespace rt {
 
-int rt_init(int priority, int affinity);
+int init(int priority, int affinity);
 
-int rt_set_affinity(int affinity);
+int setAffinity(int affinity);
 
-int rt_set_priority(int priority);
+int setPriority(int priority);
 
-int rt_lock_memory();
+int lockMemory();
 
 /** Checks for realtime (PREEMPT_RT) patched kernel.
  *
@@ -47,10 +47,10 @@ int rt_lock_memory();
  * @retval 0 Kernel is patched.
  * @reval <>0 Kernel is not patched.
  */
-int rt_is_preemptible();
+int isPreemptible();
 
-#ifdef __cplusplus
-}
-#endif
+} // namespace villas
+} // namespace kernel
+} // namespace rt
 
 /** @} */
