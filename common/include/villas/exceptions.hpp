@@ -1,0 +1,122 @@
+/** Custom exceptions.
+ *
+ * @file
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
+ * @license GNU General Public License (version 3)
+ *
+ * VILLASnode
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *********************************************************************************/
+
+#pragma once
+
+#include <string>
+#include <sstream>
+#include <system_error>
+#include <utility>
+#include <cerrno>
+
+#include <fmt/core.h>
+#include <jansson.h>
+
+namespace villas {
+
+class SystemError : public std::system_error {
+
+public:
+	SystemError(const std::string &what) :
+		std::system_error(
+			errno,
+			std::system_category(),
+			what
+		)
+	{ }
+
+	template<typename... Args>
+	SystemError(const std::string &what, Args&&... args) :
+		SystemError(fmt::format(what, std::forward<Args>(args)...))
+	{ }
+};
+
+class RuntimeError : public std::runtime_error {
+
+public:
+	template<typename... Args>
+	RuntimeError(const std::string &what, Args&&... args) :
+		std::runtime_error(fmt::format(what, std::forward<Args>(args)...))
+	{ }
+};
+
+class JsonError : public std::runtime_error {
+
+protected:
+	json_error_t error;
+
+public:
+	JsonError(const json_error_t &err) :
+		std::runtime_error("Failed to decode JSON document"),
+		error(err)
+	{ }
+
+	template<typename... Args>
+	JsonError(const json_error_t &err, const std::string &what, Args&&... args) :
+		std::runtime_error(fmt::format(what, std::forward<Args>(args)...))
+	{ }
+
+	virtual const char * what()
+	{
+		return fmt::format("{}: {} in {}:{}:{}",
+			std::runtime_error::what(),
+			error.text, error.source, error.line, error.column
+		).c_str();
+	}
+};
+
+class ConfigError : public std::runtime_error {
+
+protected:
+
+	std::string id;
+	json_t *setting;
+
+public:
+	template<typename... Args>
+	ConfigError(json_t *s, const std::string &i, const std::string &what, Args&&... args) :
+		std::runtime_error(fmt::format(what, std::forward<Args>(args)...)),
+		id(i),
+		setting(s)
+	{ }
+
+	std::string docUri()
+	{
+		std::string baseUri = "https://villas.fein-aachen.org/doc/jump?";
+
+		return baseUri + id;
+	}
+
+	virtual const char * what()
+	{
+		std::stringstream ss;
+
+		ss << "Invalid configuration setting: " << std::endl;
+		ss << " Please consult the user documentation for details:" << std::endl;
+		ss << "   " << docUri() << std::endl;
+
+		return ss.str().c_str();
+	}
+};
+
+} // namespace villas
