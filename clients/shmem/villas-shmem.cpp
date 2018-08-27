@@ -39,10 +39,10 @@ struct shmem_int shm;
 
 void usage()
 {
-	std::cout << "Usage: villas-test-shmem WNAME VECTORIZE" << std::endl;
-	std::cout << "  WNAME     name of the shared memory object for the output queue" << std::endl;
-	std::cout << "  RNAME     name of the shared memory object for the input queue" << std::endl;
-	std::cout << "  VECTORIZE maximum number of samples to read/write at a time" << std::endl;
+	std::cout << "Usage: villas-test-shmem WNAME VECTORIZE" << std::endl
+	          << "  WNAME     name of the shared memory object for the output queue" << std::endl
+	          << "  RNAME     name of the shared memory object for the input queue" << std::endl
+	          << "  VECTORIZE maximum number of samples to read/write at a time" << std::endl;
 }
 
 void quit(int sig)

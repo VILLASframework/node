@@ -45,24 +45,24 @@ struct side {
 
 void usage()
 {
-	std::cout << "Usage: villas-test-cmp [OPTIONS] FILE1 FILE2 ... FILEn" << std::endl;
-	std::cout << "  FILE     a list of files to compare" << std::endl;
-	std::cout << "  OPTIONS is one or more of the following options:" << std::endl;
-	std::cout << "    -d LVL  adjust the debug level" << std::endl;
-	std::cout << "    -e EPS  set epsilon for floating point comparisons to EPS" << std::endl;
-	std::cout << "    -v      ignore data values" << std::endl;
-	std::cout << "    -t      ignore timestamp" << std::endl;
-	std::cout << "    -s      ignore sequence no" << std::endl;
-	std::cout << "    -f FMT  file format for all files" << std::endl;
-	std::cout << "    -h      show this usage information" << std::endl;
-	std::cout << "    -V      show the version of the tool" << std::endl << std::endl;
-	std::cout << "Return codes:" << std::endl;
-	std::cout << "  0   files are equal" << std::endl;
-	std::cout << "  1   file length not equal" << std::endl;
-	std::cout << "  2   sequence no not equal" << std::endl;
-	std::cout << "  3   timestamp not equal" << std::endl;
-	std::cout << "  4   number of values is not equal" << std::endl;
-	std::cout << "  5   data is not equal" << std::endl << std::endl;
+	std::cout << "Usage: villas-test-cmp [OPTIONS] FILE1 FILE2 ... FILEn" << std::endl
+	          << "  FILE     a list of files to compare" << std::endl
+	          << "  OPTIONS is one or more of the following options:" << std::endl
+	          << "    -d LVL  adjust the debug level" << std::endl
+	          << "    -e EPS  set epsilon for floating point comparisons to EPS" << std::endl
+	          << "    -v      ignore data values" << std::endl
+	          << "    -t      ignore timestamp" << std::endl
+	          << "    -s      ignore sequence no" << std::endl
+	          << "    -f FMT  file format for all files" << std::endl
+	          << "    -h      show this usage information" << std::endl
+	          << "    -V      show the version of the tool" << std::endl << std::endl
+	          << "Return codes:" << std::endl
+	          << "  0   files are equal" << std::endl
+	          << "  1   file length not equal" << std::endl
+	          << "  2   sequence no not equal" << std::endl
+	          << "  3   timestamp not equal" << std::endl
+	          << "  4   number of values is not equal" << std::endl
+	          << "  5   data is not equal" << std::endl << std::endl;
 
 	print_copyright();
 }

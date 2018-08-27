@@ -62,20 +62,20 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 static void usage()
 {
-	std::cout << "Usage: villas-node [OPTIONS] [CONFIG]" << std::endl;
-	std::cout << "  OPTIONS is one or more of the following options:" << std::endl;
-	std::cout << "    -h      show this usage information" << std::endl;
-	std::cout << "    -V      show the version of the tool" << std::endl << std::endl;
-	std::cout << "  CONFIG is the path to an optional configuration file" << std::endl;
-	std::cout << "         if omitted, VILLASnode will start without a configuration" << std::endl;
-	std::cout << "         and wait for provisioning over the web interface." << std::endl << std::endl;
+	std::cout << "Usage: villas-node [OPTIONS] [CONFIG]" << std::endl
+	          << "  OPTIONS is one or more of the following options:" << std::endl
+	          << "    -h      show this usage information" << std::endl
+	          << "    -V      show the version of the tool" << std::endl << std::endl
+	          << "  CONFIG is the path to an optional configuration file" << std::endl
+	          << "         if omitted, VILLASnode will start without a configuration" << std::endl
+	          << "         and wait for provisioning over the web interface." << std::endl << std::endl
 #ifdef ENABLE_OPAL_ASYNC
-	std::cout << "Usage: villas-node OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME" << std::endl;
-	std::cout << "  This type of invocation is used by OPAL-RT Asynchronous processes." << std::endl;
-	std::cout << "  See in the RT-LAB User Guide for more information." << std::endl << std::endl;
+	          << "Usage: villas-node OPAL_ASYNC_SHMEM_NAME OPAL_ASYNC_SHMEM_SIZE OPAL_PRINT_SHMEM_NAME" << std::endl
+	          << "  This type of invocation is used by OPAL-RT Asynchronous processes." << std::endl
+	          << "  See in the RT-LAB User Guide for more information." << std::endl << std::endl
 #endif /* ENABLE_OPAL_ASYNC */
 
-	std::cout << "Supported node-types:" << std::endl;
+	          << "Supported node-types:" << std::endl;
 	plugin_dump(PLUGIN_TYPE_NODE);
 	std::cout << std::endl;
 

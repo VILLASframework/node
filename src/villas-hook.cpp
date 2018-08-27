@@ -83,15 +83,15 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 static void usage()
 {
-	std::cout << "Usage: villas-hook [OPTIONS] NAME [[PARAM1] [PARAM2] ...]" << std::endl;
-	std::cout << "  NAME      the name of the hook function" << std::endl;
-	std::cout << "  PARAM*    a string of configuration settings for the hook" << std::endl;
-	std::cout << "  OPTIONS is one or more of the following options:" << std::endl;
-	std::cout << "    -f FMT  the data format" << std::endl;
-	std::cout << "    -d LVL  set debug level to LVL" << std::endl;
-	std::cout << "    -v CNT  process CNT smps at once" << std::endl;
-	std::cout << "    -h      show this help" << std::endl;
-	std::cout << "    -V      show the version of the tool" << std::endl << std::endl;
+	std::cout << "Usage: villas-hook [OPTIONS] NAME [[PARAM1] [PARAM2] ...]" << std::endl
+	          << "  NAME      the name of the hook function" << std::endl
+	          << "  PARAM*    a string of configuration settings for the hook" << std::endl
+	          << "  OPTIONS is one or more of the following options:" << std::endl
+	          << "    -f FMT  the data format" << std::endl
+	          << "    -d LVL  set debug level to LVL" << std::endl
+	          << "    -v CNT  process CNT smps at once" << std::endl
+	          << "    -h      show this help" << std::endl
+	          << "    -V      show the version of the tool" << std::endl << std::endl;
 
 	std::cout << "Supported hooks:" << std::endl;
 	plugin_dump(PLUGIN_TYPE_HOOK);

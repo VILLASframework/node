@@ -106,20 +106,20 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 static void usage()
 {
-	std::cout << "Usage: villas-pipe [OPTIONS] CONFIG NODE" << std::endl;
-	std::cout << "  CONFIG  path to a configuration file" << std::endl;
-	std::cout << "  NODE    the name of the node to which samples are sent and received from" << std::endl;
-	std::cout << "  OPTIONS are:" << std::endl;
-	std::cout << "    -f FMT           set the format" << std::endl;
-	std::cout << "    -o OPTION=VALUE  overwrite options in config file" << std::endl;
-	std::cout << "    -x               swap read / write endpoints" << std::endl;
-	std::cout << "    -s               only read data from stdin and send it to node" << std::endl;
-	std::cout << "    -r               only read data from node and write it to stdout" << std::endl;
-	std::cout << "    -t NUM           terminate after NUM seconds" << std::endl;
-	std::cout << "    -L NUM           terminate after NUM samples sent" << std::endl;
-	std::cout << "    -l NUM           terminate after NUM samples received" << std::endl;
-	std::cout << "    -h               show this usage information" << std::endl;
-	std::cout << "    -V               show the version of the tool" << std::endl << std::endl;
+	std::cout << "Usage: villas-pipe [OPTIONS] CONFIG NODE" << std::endl
+	          << "  CONFIG  path to a configuration file" << std::endl
+	          << "  NODE    the name of the node to which samples are sent and received from" << std::endl
+	          << "  OPTIONS are:" << std::endl
+	          << "    -f FMT           set the format" << std::endl
+	          << "    -o OPTION=VALUE  overwrite options in config file" << std::endl
+	          << "    -x               swap read / write endpoints" << std::endl
+	          << "    -s               only read data from stdin and send it to node" << std::endl
+	          << "    -r               only read data from node and write it to stdout" << std::endl
+	          << "    -t NUM           terminate after NUM seconds" << std::endl
+	          << "    -L NUM           terminate after NUM samples sent" << std::endl
+	          << "    -l NUM           terminate after NUM samples received" << std::endl
+	          << "    -h               show this usage information" << std::endl
+	          << "    -V               show the version of the tool" << std::endl << std::endl;
 
 	print_copyright();
 }

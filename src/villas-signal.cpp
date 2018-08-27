@@ -126,28 +126,27 @@ check:		if (optarg == endptr)
 
 void usage()
 {
-	std::cout << "Usage: villas-signal [OPTIONS] SIGNAL" << std::endl;
-	std::cout << "  SIGNAL   is on of the following signal types:" << std::endl;
-	std::cout << "    mixed" << std::endl;
-	std::cout << "    random" << std::endl;
-	std::cout << "    sine" << std::endl;
-	std::cout << "    triangle" << std::endl;
-	std::cout << "    square" << std::endl;
-	std::cout << "    ramp" << std::endl;
-	std::cout << "    constants" << std::endl;
-	std::cout << "    counter" << std::endl;
-	std::cout << "" << std::endl;
-	std::cout << "  OPTIONS is one or more of the following options:" << std::endl;
-	std::cout << "    -d LVL  set debug level" << std::endl;
-	std::cout << "    -f FMT  set the format" << std::endl;
-	std::cout << "    -v NUM  specifies how many values a message should contain" << std::endl;
-	std::cout << "    -r HZ   how many messages per second" << std::endl;
-	std::cout << "    -n      non real-time mode. do not throttle output." << std::endl;
-	std::cout << "    -F HZ   the frequency of the signal" << std::endl;
-	std::cout << "    -a FLT  the amplitude" << std::endl;
-	std::cout << "    -D FLT  the standard deviation for 'random' signals" << std::endl;
-	std::cout << "    -o OFF  the DC bias" << std::endl;
-	std::cout << "    -l NUM  only send LIMIT messages and stop" << std::endl << std::endl;
+	std::cout << "Usage: villas-signal [OPTIONS] SIGNAL" << std::endl
+	          << "  SIGNAL   is on of the following signal types:" << std::endl
+	          << "    mixed" << std::endl
+	          << "    random" << std::endl
+	          << "    sine" << std::endl
+	          << "    triangle" << std::endl
+	          << "    square" << std::endl
+	          << "    ramp" << std::endl
+	          << "    constants" << std::endl
+	          << "    counter" << std::endl << std::endl
+	          << "  OPTIONS is one or more of the following options:" << std::endl
+	          << "    -d LVL  set debug level" << std::endl
+	          << "    -f FMT  set the format" << std::endl
+	          << "    -v NUM  specifies how many values a message should contain" << std::endl
+	          << "    -r HZ   how many messages per second" << std::endl
+	          << "    -n      non real-time mode. do not throttle output." << std::endl
+	          << "    -F HZ   the frequency of the signal" << std::endl
+	          << "    -a FLT  the amplitude" << std::endl
+	          << "    -D FLT  the standard deviation for 'random' signals" << std::endl
+	          << "    -o OFF  the DC bias" << std::endl
+	          << "    -l NUM  only send LIMIT messages and stop" << std::endl << std::endl;
 
 	print_copyright();
 }
