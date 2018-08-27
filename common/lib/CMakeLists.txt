@@ -44,6 +44,8 @@ add_library(villas-common SHARED
     tsc.c
 	utils.c
 	utils.cpp
+	cpuset.cpp
+	version.cpp
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)

@@ -1,8 +1,6 @@
-/** Utilities.
+/** Version.
  *
- * @file
  * @author Steffen Vogel <github@daniel-krebs.net>
- * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
@@ -22,43 +20,51 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#pragma once
-
+#include <stdexcept>
 #include <string>
-#include <vector>
 
-#include <signal.h>
+#include <villas/log.hpp>
+#include <villas/utils.hpp>
+#include <villas/version.hpp>
 
-namespace villas {
-namespace utils {
+using namespace villas::utils;
 
-std::vector<std::string>
-tokenize(std::string s, std::string delimiter);
-
-
-template<typename T>
-void
-assertExcept(bool condition, const T& exception)
+Version::Version(const std::string &str)
 {
-	if(not condition)
-		throw exception;
+	size_t endpos;
+
+	auto comp = tokenize(str, ".");
+
+	if (comp.size() > 3)
+		throw new std::invalid_argument("Not a valid version string");
+
+	for (unsigned i = 0; i < 3; i++) {
+		if (i < comp.size()) {
+			components[i] = std::stoi(comp[i], &endpos, 10);
+
+			if (comp[i].begin() + endpos != comp[i].end())
+				throw new std::invalid_argument("Not a valid version string");
+		}
+		else
+			components[i] = 0;
+	}
 }
 
-/** Print copyright message to stdout. */
-void print_copyright();
+Version::Version(int maj, int min, int pat) :
+	components{maj, min, pat}
+{
 
-/** Print version to stdout. */
-void print_version();
+}
 
-/** Register a exit callback for program termination: SIGINT, SIGKILL & SIGALRM. */
-int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx));
+int Version::cmp(const Version& lhs, const Version& rhs)
+{
+	int d;
 
-/** Fill buffer with random data */
-ssize_t read_random(char *buf, size_t len);
+	for (int i = 0; i < 3; i++) {
+		d = lhs.components[i] - rhs.components[i];
+		if (d)
+			return d;
+	}
 
-/** Remove ANSI control sequences for colored output. */
-char * decolor(char *str);
-
-} // namespace utils
-} // namespace villas
-
+	return 0;
+}

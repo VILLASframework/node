@@ -27,7 +27,6 @@
 #include <stdint.h>
 #include <sched.h>
 #include <assert.h>
-#include <signal.h>
 #include <sys/types.h>
 
 #include <villas/config.h>
@@ -36,6 +35,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern pthread_t main_thread;
 
 #ifdef __GNUC__
   #define LIKELY(x)	__builtin_expect((x),1)
@@ -137,15 +138,6 @@ extern "C" {
 #define BITMASK(h, l)		(((~0ULL) << (l)) & (~0ULL >> (BITS_PER_LONGLONG - 1 - (h))))
 #define BIT(nr)			(1UL << (nr))
 
-/* Forward declarations */
-struct timespec;
-
-/** Print copyright message to stdout. */
-void print_copyright();
-
-/** Print version to stdout. */
-void print_version();
-
 /** Normal random variate generator using the Box-Muller method
  *
  * @param m Mean
@@ -178,38 +170,6 @@ char * vstrcatf(char **dest, const char *fmt, va_list va)
 #define strf(fmt, ...) strcatf(&(char *) { NULL }, fmt, ##__VA_ARGS__)
 #define vstrf(fmt, va) vstrcatf(&(char *) { NULL }, fmt, va)
 
-#ifdef __linux__
-/** Convert integer to cpu_set_t.
- *
- * @param set An integer number which is used as the mask
- * @param cset A pointer to the cpu_set_t datastructure
- */
-void cpuset_from_integer(uintmax_t set, cpu_set_t *cset);
-
-/** Convert cpu_set_t to an integer. */
-void cpuset_to_integer(cpu_set_t *cset, uintmax_t *set);
-
-/** Parses string with list of CPU ranges.
- *
- * From: https://github.com/mmalecki/util-linux/blob/master/lib/cpuset.c
- *
- * @retval 0 On success.
- * @retval 1 On error.
- * @retval 2 If fail is set and a cpu number passed in the list doesn't fit
- * into the cpu_set. If fail is not set cpu numbers that do not fit are
- * ignored and 0 is returned instead.
- */
-int cpulist_parse(const char *str, cpu_set_t *set, int fail);
-
-/** Returns human readable representation of the cpuset.
- *
- * From: https://github.com/mmalecki/util-linux/blob/master/lib/cpuset.c
- *
- * The output format is a list of CPUs with ranges (for example, "0,1,3-9").
- */
-char * cpulist_create(char *str, size_t len, cpu_set_t *set);
-#endif
-
 /** Allocate and initialize memory. */
 void * alloc(size_t bytes);
 
@@ -218,18 +178,6 @@ void * memdup(const void *src, size_t bytes);
 
 /** Call quit() in the main thread. */
 void die();
-
-/** Used by version_parse(), version_compare() */
-struct version {
-	int major;
-	int minor;
-};
-
-/** Compare two versions. */
-int version_cmp(struct version *a, struct version *b);
-
-/** Parse a dotted version string. */
-int version_parse(const char *s, struct version *v);
 
 /** Check assertion and exit if failed. */
 #ifndef assert
@@ -240,9 +188,6 @@ int version_parse(const char *s, struct version *v);
 	} while (0)
 #endif
 
-/** Fill buffer with random data */
-ssize_t read_random(char *buf, size_t len);
-
 /** Get log2 of long long integers */
 static inline int log2i(long long x) {
 	if (x == 0)
@@ -251,9 +196,6 @@ static inline int log2i(long long x) {
 	return sizeof(x) * 8 - __builtin_clzll(x) - 1;
 }
 
-/** Register a exit callback for program termination: SIGINT, SIGKILL & SIGALRM. */
-int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx));
-
 /** Send signal \p sig to main thread. */
 void killme(int sig);
 
@@ -261,10 +203,6 @@ pid_t spawn(const char *name, char *const argv[]);
 
 /** Determines the string length as printed on the screen (ignores escable sequences). */
 size_t strlenp(const char *str);
-
-/** Remove ANSI control sequences for colored output. */
-char * decolor(char *str);
-
 
 #ifdef __cplusplus
 }
