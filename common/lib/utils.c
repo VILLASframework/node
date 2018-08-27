@@ -23,43 +23,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 #include <math.h>
 #include <pthread.h>
-#include <fcntl.h>
 #include <ctype.h>
+#include <signal.h>
 
 #include <villas/config.h>
 #include <villas/utils.h>
 
 pthread_t main_thread;
-
-void print_copyright()
-{
-	printf(PROJECT_NAME " %s (built on %s %s)\n",
-		CLR_BLU(PROJECT_BUILD_ID), CLR_MAG(__DATE__), CLR_MAG(__TIME__));
-	printf(" Copyright 2014-2017, Institute for Automation of Complex Power Systems, EONERC\n");
-	printf(" Steffen Vogel <StVogel@eonerc.rwth-aachen.de>\n");
-}
-
-void print_version()
-{
-	printf("%s\n", PROJECT_BUILD_ID);
-}
-
-int version_parse(const char *s, struct version *v)
-{
-	return sscanf(s, "%u.%u", &v->major, &v->minor) != 2;
-}
-
-int version_cmp(struct version *a, struct version *b) {
-	int major = a->major - b->major;
-	int minor = a->minor - b->minor;
-
-	return major ? major : minor;
-}
 
 double box_muller(float m, float s)
 {
@@ -118,128 +94,6 @@ char * vstrcatf(char **dest, const char *fmt, va_list ap)
 	return *dest;
 }
 
-#ifdef __linux__
-
-void cpuset_to_integer(cpu_set_t *cset, uintmax_t *set)
-{
-	*set = 0;
-	for (int i = 0; i < MIN(sizeof(*set) * 8, CPU_SETSIZE); i++) {
-		if (CPU_ISSET(i, cset))
-			*set |= 1ULL << i;
-	}
-}
-
-void cpuset_from_integer(uintmax_t set, cpu_set_t *cset)
-{
-	CPU_ZERO(cset);
-	for (int i = 0; i < MIN(sizeof(set) * 8, CPU_SETSIZE); i++) {
-		if (set & (1L << i))
-			CPU_SET(i, cset);
-	}
-}
-
-/* From: https://github.com/mmalecki/util-linux/blob/master/lib/cpuset.c */
-static const char *nexttoken(const char *q,  int sep)
-{
-	if (q)
-		q = strchr(q, sep);
-	if (q)
-		q++;
-	return q;
-}
-
-int cpulist_parse(const char *str, cpu_set_t *set, int fail)
-{
-	const char *p, *q;
-	int r = 0;
-
-	q = str;
-	CPU_ZERO(set);
-
-	while (p = q, q = nexttoken(q, ','), p) {
-		unsigned int a;	/* beginning of range */
-		unsigned int b;	/* end of range */
-		unsigned int s;	/* stride */
-		const char *c1, *c2;
-		char c;
-
-		if ((r = sscanf(p, "%u%c", &a, &c)) < 1)
-			return 1;
-		b = a;
-		s = 1;
-
-		c1 = nexttoken(p, '-');
-		c2 = nexttoken(p, ',');
-		if (c1 != NULL && (c2 == NULL || c1 < c2)) {
-			if ((r = sscanf(c1, "%u%c", &b, &c)) < 1)
-				return 1;
-			c1 = nexttoken(c1, ':');
-			if (c1 != NULL && (c2 == NULL || c1 < c2)) {
-				if ((r = sscanf(c1, "%u%c", &s, &c)) < 1)
-					return 1;
-				if (s == 0)
-					return 1;
-			}
-		}
-
-		if (!(a <= b))
-			return 1;
-		while (a <= b) {
-			if (fail && (a >= CPU_SETSIZE))
-				return 2;
-			CPU_SET(a, set);
-			a += s;
-		}
-	}
-
-	if (r == 2)
-		return 1;
-
-	return 0;
-}
-
-char *cpulist_create(char *str, size_t len, cpu_set_t *set)
-{
-	size_t i;
-	char *ptr = str;
-	int entry_made = 0;
-
-	for (i = 0; i < CPU_SETSIZE; i++) {
-		if (CPU_ISSET(i, set)) {
-			int rlen;
-			size_t j, run = 0;
-			entry_made = 1;
-			for (j = i + 1; j < CPU_SETSIZE; j++) {
-				if (CPU_ISSET(j, set))
-					run++;
-				else
-					break;
-			}
-			if (!run)
-				rlen = snprintf(ptr, len, "%zd,", i);
-			else if (run == 1) {
-				rlen = snprintf(ptr, len, "%zd,%zd,", i, i + 1);
-				i++;
-			} else {
-				rlen = snprintf(ptr, len, "%zd-%zd,", i, i + run);
-				i += run;
-			}
-			if (rlen < 0 || (size_t) rlen + 1 > len)
-				return NULL;
-			ptr += rlen;
-			if (rlen > 0 && len > (size_t) rlen)
-				len -= rlen;
-			else
-				len = 0;
-		}
-	}
-	ptr -= entry_made;
-	*ptr = '\0';
-
-	return str;
-}
-#endif /* __linux__ */
-
 void * alloc(size_t bytes)
 {
 	void *p = malloc(bytes);
@@ -258,70 +112,6 @@ void * memdup(const void *src, size_t bytes)
 	memcpy(dst, src, bytes);
 
 	return dst;
-}
-
-ssize_t read_random(char *buf, size_t len)
-{
-	int fd;
-	ssize_t bytes, total;
-
-	fd = open("/dev/urandom", O_RDONLY);
-	if (fd < 0)
-		return -1;
-
-	bytes = 0;
-	total = 0;
-	while (total < len) {
-		bytes = read(fd, buf + total, len - total);
-		if (bytes < 0)
-			break;
-
-		total += bytes;
-	}
-
-	close(fd);
-
-	return bytes;
-}
-
-/* Setup exit handler */
-int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
-{
-	int ret;
-
-	info("Initialize signals");
-
-	struct sigaction sa_quit = {
-		.sa_flags = SA_SIGINFO | SA_NODEFER,
-		.sa_sigaction = cb
-	};
-
-	struct sigaction sa_chld = {
-		.sa_flags = 0,
-		.sa_handler = SIG_IGN
-	};
-
-	main_thread = pthread_self();
-
-	sigemptyset(&sa_quit.sa_mask);
-
-	ret = sigaction(SIGINT, &sa_quit, NULL);
-	if (ret)
-		return ret;
-
-	ret = sigaction(SIGTERM, &sa_quit, NULL);
-	if (ret)
-		return ret;
-
-	ret = sigaction(SIGALRM, &sa_quit, NULL);
-	if (ret)
-		return ret;
-
-	ret = sigaction(SIGCHLD, &sa_chld, NULL);
-	if (ret)
-		return ret;
-
-	return 0;
 }
 
 void killme(int sig)
@@ -383,37 +173,4 @@ size_t strlenp(const char *str)
 	}
 
 	return sz;
-}
-
-char * decolor(char *str)
-{
-	char *p, *q;
-	bool inseq = false;
-
-	for (p = q = str; *p; p++) {
-		switch (*p) {
-			case 0x1b:
-				if (*(++p) == '[') {
-					inseq = true;
-					continue;
-				}
-				break;
-
-			case 'm':
-				if (inseq) {
-					inseq = false;
-					continue;
-				}
-				break;
-		}
-
-		if (!inseq) {
-			*q = *p;
-			q++;
-		}
-	}
-
-	*q = '\0';
-
-	return str;
 }

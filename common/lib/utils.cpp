@@ -22,8 +22,14 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
 
+#include <fcntl.h>
+#include <unistd.h>
+
+#include <villas/utils.h>
 #include <villas/utils.hpp>
+#include <villas/config.h>
 
 namespace villas {
 namespace utils {
@@ -51,6 +57,113 @@ tokenize(std::string s, std::string delimiter)
 	}
 
 	return tokens;
+}
+
+void print_copyright()
+{
+	std::cout << PROJECT_NAME " " << CLR_BLU(PROJECT_BUILD_ID)
+	          << " (built on " CLR_MAG(__DATE__) " " CLR_MAG(__TIME__) ")" << std::endl
+	          << " Copyright 2014-2017, Institute for Automation of Complex Power Systems, EONERC" << std::endl
+	          << " Steffen Vogel <StVogel@eonerc.rwth-aachen.de>" << std::endl;
+}
+
+void print_version()
+{
+	std::cout << PROJECT_BUILD_ID << std::endl;
+}
+
+ssize_t read_random(char *buf, size_t len)
+{
+	int fd;
+	ssize_t bytes;
+
+	fd = open("/dev/urandom", O_RDONLY);
+	if (fd < 0)
+		return -1;
+
+	while (len) {
+		bytes = read(fd, buf, len);
+		if (bytes < 0)
+			break;
+
+		len -= bytes;
+		buf += bytes;
+	}
+
+	close(fd);
+
+	return bytes;
+}
+
+/* Setup exit handler */
+int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
+{
+	int ret;
+
+	info("Initialize signals");
+
+	struct sigaction sa_quit;
+	sa_quit.sa_flags = SA_SIGINFO | SA_NODEFER;
+	sa_quit.sa_sigaction = cb;
+
+	struct sigaction sa_chld;
+	sa_chld.sa_flags = 0;
+	sa_chld.sa_handler = SIG_IGN;
+
+	main_thread = pthread_self();
+
+	sigemptyset(&sa_quit.sa_mask);
+
+	ret = sigaction(SIGINT, &sa_quit, NULL);
+	if (ret)
+		return ret;
+
+	ret = sigaction(SIGTERM, &sa_quit, NULL);
+	if (ret)
+		return ret;
+
+	ret = sigaction(SIGALRM, &sa_quit, NULL);
+	if (ret)
+		return ret;
+
+	ret = sigaction(SIGCHLD, &sa_chld, NULL);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+char * decolor(char *str)
+{
+	char *p, *q;
+	bool inseq = false;
+
+	for (p = q = str; *p; p++) {
+		switch (*p) {
+			case 0x1b:
+				if (*(++p) == '[') {
+					inseq = true;
+					continue;
+				}
+				break;
+
+			case 'm':
+				if (inseq) {
+					inseq = false;
+					continue;
+				}
+				break;
+		}
+
+		if (!inseq) {
+			*q = *p;
+			q++;
+		}
+	}
+
+	*q = '\0';
+
+	return str;
 }
 
 } // namespace utils

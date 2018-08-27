@@ -1,8 +1,7 @@
-/** Utilities.
+/** Version.
  *
  * @file
  * @author Steffen Vogel <github@daniel-krebs.net>
- * @author Daniel Krebs <github@daniel-krebs.net>
  * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
@@ -25,40 +24,30 @@
 #pragma once
 
 #include <string>
-#include <vector>
-
-#include <signal.h>
 
 namespace villas {
 namespace utils {
 
-std::vector<std::string>
-tokenize(std::string s, std::string delimiter);
+class Version {
 
+protected:
+	int components[3];
 
-template<typename T>
-void
-assertExcept(bool condition, const T& exception)
-{
-	if(not condition)
-		throw exception;
-}
+	static int cmp(const Version& lhs, const Version& rhs);
 
-/** Print copyright message to stdout. */
-void print_copyright();
+public:
+	/** Parse a dotted version string. */
+	Version(const std::string &s);
 
-/** Print version to stdout. */
-void print_version();
+	Version(int maj, int min = 0, int pat = 0);
 
-/** Register a exit callback for program termination: SIGINT, SIGKILL & SIGALRM. */
-int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx));
+	inline bool operator==(const Version& rhs) { return cmp(*this, rhs) == 0; }
+	inline bool operator!=(const Version& rhs) { return cmp(*this, rhs) != 0; }
+	inline bool operator< (const Version& rhs) { return cmp(*this, rhs) <  0; }
+	inline bool operator> (const Version& rhs) { return cmp(*this, rhs) >  0; }
+	inline bool operator<=(const Version& rhs) { return cmp(*this, rhs) <= 0; }
+	inline bool operator>=(const Version& rhs) { return cmp(*this, rhs) >= 0; }
+};
 
-/** Fill buffer with random data */
-ssize_t read_random(char *buf, size_t len);
-
-/** Remove ANSI control sequences for colored output. */
-char * decolor(char *str);
-
-} // namespace utils
 } // namespace villas
-
+} // namespace utils
