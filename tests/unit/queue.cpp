@@ -117,7 +117,7 @@ static void * producer(void *ctx)
 
 	//cr_log_info("producer: finished");
 
-	return NULL;
+	return nullptr;
 }
 
 static void * consumer(void *ctx)
@@ -157,7 +157,7 @@ static void * consumer(void *ctx)
 
 	//cr_log_info("consumer: finished");
 
-	return NULL;
+	return nullptr;
 }
 
 #if defined(_POSIX_BARRIERS) && _POSIX_BARRIERS > 0
@@ -319,13 +319,12 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 
 	uint64_t start_tsc_time, end_tsc_time;
 
-	pthread_barrier_init(&barrier, NULL, p->thread_count);
+	pthread_barrier_init(&barrier, nullptr, p->thread_count);
 
 	for (int i = 0; i < p->thread_count; ++i)
-		pthread_create(&threads[i], NULL, p->many ? producer_consumer_many : producer_consumer, p);
+		pthread_create(&threads[i], nullptr, p->many ? producer_consumer_many : producer_consumer, p);
 
 	sleep(0.2);
-
 
 	ret = tsc_init(&tsc);
 	cr_assert(!ret);
@@ -334,7 +333,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 	p->start = 1;
 
 	for (int i = 0; i < p->thread_count; ++i)
-		pthread_join(threads[i], NULL);
+		pthread_join(threads[i], nullptr);
 
 	end_tsc_time = tsc_now(&tsc);
 	cycpop = (end_tsc_time - start_tsc_time) / p->iter_count;

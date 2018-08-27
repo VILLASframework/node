@@ -101,7 +101,7 @@ Test(utils, json_to_config)
 
 	cfg_root = config_root_setting(&cfg);
 
-	json = json_loads(json_example, 0, NULL);
+	json = json_loads(json_example, 0, nullptr);
 	cr_assert_not_null(json);
 
 	json_to_config(json, cfg_root);

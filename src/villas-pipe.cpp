@@ -191,7 +191,7 @@ leave:	if (io_eof(&io)) {
 		killme(SIGTERM);
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 static void * recv_loop(void *ctx)
@@ -235,7 +235,7 @@ static void * recv_loop(void *ctx)
 leave:	info("Reached receive limit. Terminating...");
 	killme(SIGTERM);
 
-	return NULL;
+	return nullptr;
 }
 
 int main(int argc, char *argv[])
@@ -334,7 +334,7 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to validate IO configuration");
 
-	ret = io_open(&io, NULL);
+	ret = io_open(&io, nullptr);
 	if (ret)
 		error("Failed to open IO");
 

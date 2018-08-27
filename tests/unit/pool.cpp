@@ -62,7 +62,7 @@ ParameterizedTest(struct param *p, pool, basic, .init = init_memory)
 	cr_assert_eq(ret, 0, "Failed to create pool");
 
 	ptr = pool_get(&pool);
-	cr_assert_neq(ptr, NULL);
+	cr_assert_neq(ptr, nullptr);
 
 	memset(ptr, 1, p->block_size); /* check that we dont get a seg fault */
 
@@ -70,15 +70,15 @@ ParameterizedTest(struct param *p, pool, basic, .init = init_memory)
 	for (i = 1; i < p->pool_size; i++) {
 		ptrs[i] = pool_get(&pool);
 
-		if (ptrs[i] == NULL)
+		if (ptrs[i] == nullptr)
 			break;
 	}
 
 	if (i < p->pool_size)
-		cr_assert_neq(ptrs[i], NULL);
+		cr_assert_neq(ptrs[i], nullptr);
 
 	ptr = pool_get(&pool);
-	cr_assert_eq(ptr, NULL);
+	cr_assert_eq(ptr, nullptr);
 
 	ret = pool_destroy(&pool);
 	cr_assert_eq(ret, 0, "Failed to destroy pool");

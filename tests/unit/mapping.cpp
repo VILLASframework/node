@@ -54,7 +54,7 @@ Test(mapping, parse_nodes)
 		for (unsigned j = 0; j < ARRAY_LEN(signal_names[i]); j++) {
 			struct signal *sig;
 
-			sig = signal_create(signal_names[i][j], NULL, SIGNAL_TYPE_AUTO);
+			sig = signal_create(signal_names[i][j], nullptr, SIGNAL_TYPE_AUTO);
 			cr_assert_not_null(sig);
 
 			list_push(&n->signals, sig);
@@ -104,7 +104,7 @@ Test(mapping, parse_nodes)
 	cr_assert_eq(m.data.offset, 1);
 	cr_assert_eq(m.length, 2);
 
-	ret = list_destroy(&nodes, NULL, true);
+	ret = list_destroy(&nodes, nullptr, true);
 	cr_assert_eq(ret, 0);
 }
 
@@ -113,74 +113,74 @@ Test(mapping, parse)
 	int ret;
 	struct mapping_entry m;
 
-	ret = mapping_parse_str(&m, "ts.origin", NULL);
+	ret = mapping_parse_str(&m, "ts.origin", nullptr);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_TIMESTAMP);
 	cr_assert_eq(m.timestamp.type, MAPPING_TIMESTAMP_TYPE_ORIGIN);
 
-	ret = mapping_parse_str(&m, "hdr.sequence", NULL);
+	ret = mapping_parse_str(&m, "hdr.sequence", nullptr);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_HEADER);
 	cr_assert_eq(m.header.type, MAPPING_HEADER_TYPE_SEQUENCE);
 
-	ret = mapping_parse_str(&m, "stats.owd.mean", NULL);
+	ret = mapping_parse_str(&m, "stats.owd.mean", nullptr);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_STATS);
 	cr_assert_eq(m.stats.id, STATS_OWD);
 	cr_assert_eq(m.stats.type, MAPPING_STATS_TYPE_MEAN);
 
-	ret = mapping_parse_str(&m, "data[1-2]", NULL);
+	ret = mapping_parse_str(&m, "data[1-2]", nullptr);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 1);
 	cr_assert_eq(m.length, 2);
 
-	ret = mapping_parse_str(&m, "data[5-5]", NULL);
+	ret = mapping_parse_str(&m, "data[5-5]", nullptr);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 5);
 	cr_assert_eq(m.length, 1);
 
-	ret = mapping_parse_str(&m, "data[22]", NULL);
+	ret = mapping_parse_str(&m, "data[22]", nullptr);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 22);
 	cr_assert_eq(m.length, 1);
 
-	ret = mapping_parse_str(&m, "data", NULL);
+	ret = mapping_parse_str(&m, "data", nullptr);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 0);
 	cr_assert_eq(m.length, 0);
 
-	ret = mapping_parse_str(&m, "data[]", NULL);
+	ret = mapping_parse_str(&m, "data[]", nullptr);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 0);
 	cr_assert_eq(m.length, 0);
 
-	ret = mapping_parse_str(&m, "data[1.1-2f]", NULL);
+	ret = mapping_parse_str(&m, "data[1.1-2f]", nullptr);
 	cr_assert_neq(ret, 0);
 
 	/* Missing parts */
-	ret = mapping_parse_str(&m, "stats.owd", NULL);
+	ret = mapping_parse_str(&m, "stats.owd", nullptr);
 	cr_assert_neq(ret, 0);
 
 	/* This a type */
-	ret = mapping_parse_str(&m, "hdr.sequences", NULL);
+	ret = mapping_parse_str(&m, "hdr.sequences", nullptr);
 	cr_assert_neq(ret, 0);
 
 	/* Check for superfluous chars at the end */
-	ret = mapping_parse_str(&m, "stats.ts.origin.bla", NULL);
+	ret = mapping_parse_str(&m, "stats.ts.origin.bla", nullptr);
 	cr_assert_neq(ret, 0);
 
-	ret = mapping_parse_str(&m, "stats.ts.origin.", NULL);
+	ret = mapping_parse_str(&m, "stats.ts.origin.", nullptr);
 	cr_assert_neq(ret, 0);
 
-	ret = mapping_parse_str(&m, "data[1-2]bla", NULL);
+	ret = mapping_parse_str(&m, "data[1-2]bla", nullptr);
 	cr_assert_neq(ret, 0);
 
 	/* Negative length of chunk */
-	ret = mapping_parse_str(&m, "data[5-3]", NULL);
+	ret = mapping_parse_str(&m, "data[5-3]", nullptr);
 	cr_assert_eq(ret, -1);
 }

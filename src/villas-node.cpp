@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 		continue;
 	}
 
-	char *uri = argc == optind + 1 ? argv[optind] : NULL;
+	char *uri = argc == optind + 1 ? argv[optind] : nullptr;
 #endif /* ENABLE_OPAL_ASYNC */
 
 	info("This is VILLASnode %s (built on %s, %s)", CLR_BLD(CLR_YEL(PROJECT_BUILD_ID)),

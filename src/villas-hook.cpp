@@ -209,7 +209,7 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to validate IO configuration");
 
-	ret = io_open(&io, NULL);
+	ret = io_open(&io, nullptr);
 	if (ret)
 		error("Failed to open IO");
 
@@ -218,7 +218,7 @@ check:		if (optarg == endptr)
 	if (!ht)
 		error("Unknown hook function '%s'", hook);
 
-	ret = hook_init(&h, ht, NULL, NULL);
+	ret = hook_init(&h, ht, nullptr, nullptr);
 	if (ret)
 		error("Failed to initialize hook");
 

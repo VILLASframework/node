@@ -37,37 +37,37 @@ ParameterizedTestParameters(json, json_load_cli)
 	static struct param params[] = {
 		// Combined long option
 		{
-			.argv = { "dummy", "--option=value", NULL },
+			.argv = { "dummy", "--option=value", nullptr },
 			.json = "{ \"option\" : \"value\" }"
 		},
 		// Separated long option
 		{
-			.argv = { "dummy", "--option", "value", NULL },
+			.argv = { "dummy", "--option", "value", nullptr },
 			.json = "{ \"option\" : \"value\" }"
 		},
 		// All kinds of data types
 		{
-			.argv = { "dummy", "--integer", "1", "--real", "1.1", "--bool", "true", "--null", "null", "--string", "hello world", NULL },
+			.argv = { "dummy", "--integer", "1", "--real", "1.1", "--bool", "true", "--null", "null", "--string", "hello world", nullptr },
 			.json = "{ \"integer\" : 1, \"real\" : 1.1, \"bool\" : true, \"null\" : null, \"string\" : \"hello world\" }"
 		},
 		// Array generation
 		{
-			.argv = { "dummy", "--bool", "true", "--bool", "false", NULL },
+			.argv = { "dummy", "--bool", "true", "--bool", "false", nullptr },
 			.json = "{ \"bool\" : [ true, false ] }"
 		},
 		// Dots in the option name generate sub objects
 		{
-			.argv = { "dummy", "--sub.option", "value", NULL },
+			.argv = { "dummy", "--sub.option", "value", nullptr },
 			.json = "{ \"sub\" : { \"option\" : \"value\" } }"
 		},
 		// Nesting is possible
 		{
-			.argv = { "dummy", "--sub.sub.option", "value", NULL },
+			.argv = { "dummy", "--sub.sub.option", "value", nullptr },
 			.json = "{ \"sub\" : { \"sub\" : { \"option\" : \"value\" } } }"
 		},
 		// Multiple subgroups are merged
 		{
-			.argv = { "dummy", "--sub.sub.option", "value1", "--sub.option", "value2", NULL },
+			.argv = { "dummy", "--sub.sub.option", "value1", "--sub.option", "value2", nullptr },
 			.json = "{ \"sub\" : { \"option\" : \"value2\", \"sub\" : { \"option\" : \"value1\" } } }"
 		}
 	};

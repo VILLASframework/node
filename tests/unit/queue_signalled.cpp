@@ -52,7 +52,7 @@ static void * producer(void * ctx)
 		usleep(0.1e-3 * 1e6); /* 1 ms */
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 static void * consumer(void * ctx)
@@ -73,7 +73,7 @@ static void * consumer(void * ctx)
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
  void * polled_consumer(void *ctx)
@@ -106,7 +106,7 @@ again:		ret = poll(&pfd, 1, -1);
 			return (void *) 2; /* Indicates an error to the parent thread */
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 ParameterizedTestParameters(queue_signalled, simple)
@@ -138,10 +138,10 @@ ParameterizedTest(struct param *param, queue_signalled, simple, .timeout = 5, .i
 	ret = queue_signalled_init(&q, LOG2_CEIL(NUM_ELEM), &memory_heap, param->flags);
 	cr_assert_eq(ret, 0, "Failed to initialize queue: flags=%#x, ret=%d", param->flags, ret);
 
-	ret = pthread_create(&t1, NULL, producer, &q);
+	ret = pthread_create(&t1, nullptr, producer, &q);
 	cr_assert_eq(ret, 0);
 
-	ret = pthread_create(&t2, NULL, param->polled ? polled_consumer : consumer, &q);
+	ret = pthread_create(&t2, nullptr, param->polled ? polled_consumer : consumer, &q);
 	cr_assert_eq(ret, 0);
 
 	ret = pthread_join(t1, &r1);

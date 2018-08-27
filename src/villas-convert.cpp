@@ -117,7 +117,7 @@ check:		if (optarg == endptr)
 		if (ret)
 			error("Failed to validate IO configuration");
 
-		ret = io_open(dirs[i].io, NULL);
+		ret = io_open(dirs[i].io, nullptr);
 		if (ret)
 			error("Failed to open IO");
 	}

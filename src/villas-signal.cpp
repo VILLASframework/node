@@ -106,7 +106,7 @@ check:		if (optarg == endptr)
 	}
 
 	if (argc != optind + 1)
-		return NULL;
+		return nullptr;
 
 	type = argv[optind];
 

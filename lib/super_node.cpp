@@ -192,15 +192,15 @@ int SuperNode::parseUri(const char *u)
 int SuperNode::parseJson(json_t *j)
 {
 	int ret;
-	const char *nme = NULL;
+	const char *nme = nullptr;
 
 	assert(state != STATE_STARTED);
 
-	json_t *json_nodes = NULL;
-	json_t *json_paths = NULL;
-	json_t *json_plugins = NULL;
-	json_t *json_logging = NULL;
-	json_t *json_web = NULL;
+	json_t *json_nodes = nullptr;
+	json_t *json_paths = nullptr;
+	json_t *json_plugins = nullptr;
+	json_t *json_logging = nullptr;
+	json_t *json_web = nullptr;
 
 	json_error_t err;
 
