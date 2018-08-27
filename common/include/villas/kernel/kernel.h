@@ -34,9 +34,6 @@
 extern "C" {
 #endif
 
-/* Forward declarations */
-struct version;
-
 #if WITH_CAP
 #include <sys/capability.h>
 
@@ -65,9 +62,6 @@ int kernel_set_nr_hugepages(int nr);
  * @reval <>0 Kernel was not booted with parameter \p key
  */
 int kernel_get_cmdline_param(const char *param, char *buf, size_t len);
-
-/** Get the version of the kernel. */
-int kernel_get_version(struct version *v);
 
 /** Checks if a kernel module is loaded
  *

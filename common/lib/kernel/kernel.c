@@ -28,7 +28,6 @@
 #include <inttypes.h>
 
 #include <sys/types.h>
-#include <sys/utsname.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -119,19 +118,6 @@ int kernel_module_loaded(const char *module)
 	fclose(f);
 
 	return ret;
-}
-
-int kernel_get_version(struct version *v)
-{
-	struct utsname uts;
-
-	if (uname(&uts) < 0)
-		return -1;
-
-	if (version_parse(uts.release, v))
-		return -1;
-
-	return 0;
 }
 
 int kernel_get_cmdline_param(const char *param, char *buf, size_t len)
