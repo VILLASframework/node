@@ -86,18 +86,23 @@ int main(int argc, char *argv[])
 			case 'e':
 				epsilon = strtod(optarg, &endptr);
 				goto check;
+
 			case 'v':
 				flags &= ~SAMPLE_HAS_DATA;
 				break;
+
 			case 't':
 				flags &= ~SAMPLE_HAS_TS_ORIGIN;
 				break;
+
 			case 's':
 				flags &= ~SAMPLE_HAS_SEQUENCE;
 				break;
+
 			case 'f':
 				format = optarg;
 				break;
+
 			case 'V':
 				print_version();
 				exit(EXIT_SUCCESS);

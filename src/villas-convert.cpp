@@ -57,12 +57,15 @@ int main(int argc, char *argv[])
 			case 'V':
 				print_version();
 				exit(EXIT_SUCCESS);
+
 			case 'i':
 				input_format = optarg;
 				break;
+
 			case 'o':
 				output_format = optarg;
 				break;
+
 			case 'd':
 				level = strtoul(optarg, &endptr, 10);
 				goto check;

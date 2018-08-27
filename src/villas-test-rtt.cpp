@@ -96,15 +96,19 @@ int main(int argc, char *argv[])
 			case 'c':
 				count = strtoul(optarg, &endptr, 10);
 				goto check;
+
 			case 'f':
 				fd = strtoul(optarg, &endptr, 10);
 				goto check;
+
 			case 'w':
 				hist_warmup = strtoul(optarg, &endptr, 10);
 				goto check;
+
 			case 'b':
 				hist_buckets = strtoul(optarg, &endptr, 10);
 				goto check;
+
 			case 'V':
 				print_version();
 				exit(EXIT_SUCCESS);

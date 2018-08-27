@@ -259,27 +259,35 @@ int main(int argc, char *argv[])
 			case 'V':
 				print_version();
 				exit(EXIT_SUCCESS);
+
 			case 'f':
 				format = optarg;
 				break;
+
 			case 'x':
 				reverse = true;
 				break;
+
 			case 's':
 				recvv.enabled = false; // send only
 				break;
+
 			case 'r':
 				sendd.enabled = false; // receive only
 				break;
+
 			case 'l':
 				recvv.limit = strtoul(optarg, &endptr, 10);
 				goto check;
+
 			case 'L':
 				sendd.limit = strtoul(optarg, &endptr, 10);
 				goto check;
+
 			case 't':
 				timeout = strtoul(optarg, &endptr, 10);
 				goto check;
+
 			case 'o':
 				ret = json_object_extend_str(cfg_cli, optarg);
 				if (ret)
