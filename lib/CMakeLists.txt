@@ -163,7 +163,15 @@ install(
 )
 
 install(
-    DIRECTORY ../include/villas/
+    DIRECTORY ${PROJECT_SOURCE_DIR}/include/villas/
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/villas
+    COMPONENT devel
+    FILES_MATCHING
+        PATTERN "*.h"
+)
+
+install(
+    DIRECTORY ${PROJECT_BINARY_DIR}/include/villas/
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/villas
     COMPONENT devel
     FILES_MATCHING
