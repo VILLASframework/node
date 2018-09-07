@@ -379,9 +379,9 @@ int socket_stop(struct node *n)
 
 int socket_destroy(struct node *n)
 {
+#ifdef WITH_NETEM
 	struct socket *s = (struct socket *) n->_vd;
 
-#ifdef WITH_NETEM
 	rtnl_qdisc_put(s->tc_qdisc);
 	rtnl_cls_put(s->tc_classifier);
 #endif /* WITH_NETEM */
