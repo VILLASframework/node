@@ -33,11 +33,11 @@ if (NOT DEFINED DEPLOY_PATH)
 endif()
 
 add_custom_target(deploy-dist
-	COMMAND rsync ${CMAKE_BINARY_DIR}/*.tar.gz ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/src
+	COMMAND rsync ${PROJECT_BINARY_DIR}/*.tar.gz ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/src
 )
 	
 add_custom_target(deploy-rpm
-	COMMAND rsync -a --progress ${CMAKE_BINARY_DIR}/*.rpm ${DEPLOY_USER}@${DEPLOY_HOST}:/var/www/packages/redhat/
+	COMMAND rsync -a --progress ${PROJECT_BINARY_DIR}/*.rpm ${DEPLOY_USER}@${DEPLOY_HOST}:/var/www/packages/redhat/
 	COMMAND ssh ${DEPLOY_USER}@${DEPLOY_HOST} createrepo /var/www/packages/redhat
 )
 
