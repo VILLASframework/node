@@ -58,7 +58,6 @@ static int ib_disconnect(struct node *n)
 				sample_decref((struct sample *) (wc[j].wr_id));
 
 	// Send Queue Stack
-
 	struct sample *smp = NULL;
 	while (queue_available(&ib->conn.send_wc_buffer)) {
 		// Because of queue_available, queue_pull should always return. No need
@@ -285,8 +284,8 @@ int ib_parse(struct node *n, json_t *cfg)
 		ib->conn.port_space = RDMA_PS_IB;
 		ib->qp_init.qp_type = IBV_QPT_UC;
 #else
-		error("Unreliable Connected (UC) mode is only available with an adapted version of librdma. Please"
-				"read the Infiniband node type Documentation for more information on UC!");
+		error("Unreliable Connected (UC) mode is only available with an adapted version of librdma. "
+			"Please read the Infiniband node type Documentation for more information on UC!");
 #endif
 	}
 	else if (strcmp(transport_mode, "UD") == 0) {
@@ -516,23 +515,12 @@ static void ib_continue_as_listen(struct node *n, struct rdma_cm_event *event)
 	info("Node %s is set to listening mode", node_name(n));
 }
 
-static void sigHandler(int signo)
-{
-	info("Node was already disconnected. Exiting thread with pthread_exit()");
-	pthread_exit(NULL);
-}
-
 void * ib_rdma_cm_event_thread(void *n)
 {
 	struct node *node = (struct node *) n;
 	struct infiniband *ib = (struct infiniband *) node->_vd;
 	struct rdma_cm_event *event;
-	struct sigaction sa;
 	int ret = 0;
-
-	// Register signal handler, in case event channel blocks and we can't exit thread
-	sa.sa_handler = sigHandler;
-	sigaction(SIGUSR1, &sa, NULL);
 
 	debug(LOG_IB | 1, "Started rdma_cm_event thread of node %s", node_name(node));
 
@@ -725,11 +713,9 @@ int ib_stop(struct node *n)
 		debug(LOG_IB | 3, "Called rdma_disconnect");
 	}
 	else {
-		// Since cannot use an event to unblock rdma_cm_get_event, we send
-		// SIGUSR1 to the thread and kill it.
-		pthread_kill(ib->conn.rdma_cm_event_thread, SIGUSR1);
+		pthread_cancel(ib->conn.rdma_cm_event_thread);
 
-		debug(LOG_IB | 3, "Called pthread_kill()");
+		debug(LOG_IB | 3, "Called pthread_cancel() on communication management thread.");
 	}
 
 	info("Disconnecting... Waiting for threads to join.");
@@ -780,8 +766,8 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 			for (int i = 0;; i++) {
 				if (i % CHK_PER_ITER == CHK_PER_ITER - 1) pthread_testcancel();
 
-				// If IB node disconnects or if it is still in STATE_PENDING_CONNECT, ib_read should
-				// return immediately if this condition holds
+				// If IB node disconnects or if it is still in STATE_PENDING_CONNECT, ib_read
+				// should return immediately if this condition holds
 				if (n->state != STATE_CONNECTED) return 0;
 
 				wcs = ibv_poll_cq(ib->ctx.recv_cq, cnt, wc);
