@@ -260,12 +260,9 @@ function wsConnect(node)
 			.text('Disconnected' + (error.reason != '' ? ' (' + error.reason + ')' : ''))
 			.css('color', 'red');
 
-		/* Try connect if close reason was CLOSE_NORMAL */
-		if (error.code == 1000 || error.code == 1001) {
-			setTimeout(function() {
-				wsConnect(currentNode);
-			}, 1000);
-		}
+		setTimeout(function() {
+			wsConnect(currentNode);
+		}, 1000);
 	};
 
 	conn.onerror = function(error) {
