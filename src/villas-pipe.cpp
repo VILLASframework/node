@@ -243,7 +243,7 @@ leave:	info("Reached receive limit. Terminating...");
 
 int main(int argc, char *argv[])
 {
-	int ret, level = V, timeout = 0;
+	int ret, level = 2, timeout = 0;
 	bool reverse = false;
 	const char *format = "villas.human";
 

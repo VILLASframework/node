@@ -129,7 +129,7 @@ check:		if (optarg == endptr)
 	if (ret)
 		error("Failed to initialize signals");
 
-	ret = log_init(&sn.log, V, LOG_ALL);
+	ret = log_init(&sn.log, 2, LOG_ALL);
 	if (ret)
 		return ret;
 

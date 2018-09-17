@@ -62,7 +62,6 @@ extern "C" {
 #define KERNEL_VERSION_MIN	6
 
 #cmakedefine BUILDID "@BUILDID@"
-#cmakedefine V @V@
 #cmakedefine PREFIX "@PREFIX@"
 
 /* Available Features */

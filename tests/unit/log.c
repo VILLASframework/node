@@ -35,7 +35,7 @@ static struct log l;
 
 static void init()
 {
-	log_init(&l, V, LOG_ALL);
+	log_init(&l, 2, LOG_ALL);
 }
 
 static void fini()

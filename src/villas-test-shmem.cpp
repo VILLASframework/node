@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
 		.samplelen = DEFAULT_SHMEM_SAMPLELEN
 	};
 
-	log_init(&log, V, LOG_ALL);
+	log_init(&log, 2, LOG_ALL);
 	log_open(&log);
 
 

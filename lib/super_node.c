@@ -49,7 +49,7 @@ int super_node_init(struct super_node *sn)
 
 	assert(sn->state == STATE_DESTROYED);
 
-	ret = log_init(&sn->log, V, LOG_ALL);
+	ret = log_init(&sn->log, 2, LOG_ALL);
 	if (ret)
 		return ret;
 

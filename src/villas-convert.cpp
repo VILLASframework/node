@@ -46,7 +46,7 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	int ret, level = V;
+	int ret, level = 2;
 	const char *input_format = "villas.human";
 	const char *output_format = "villas.human";
 

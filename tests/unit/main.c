@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 	struct criterion_test_set *tests;
 	struct log log;
 
-	ret = log_init(&log, V, LOG_ALL);
+	ret = log_init(&log, 2, LOG_ALL);
 	if (ret)
 		error("Failed to initialize logging sub-system");
 

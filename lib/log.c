@@ -51,7 +51,7 @@ void register_default_log()
 	int ret;
 	static struct log default_log;
 
-	ret = log_init(&default_log, V, LOG_ALL);
+	ret = log_init(&default_log, 2, LOG_ALL);
 	if (ret)
 		error("Failed to initalize log");
 
