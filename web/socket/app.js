@@ -309,12 +309,17 @@ function wsUrl(endpoint)
 	var l = window.location;
 	var url = '';
 
-	if (l.protocol === 'https:')
-		url += 'wss://';
-	else
-		url += 'ws://';
+	if (l.protocol == 'file:') {
+		url += 'ws://localhost';
+	}
+	else {
+		if (l.protocol === 'https:')
+			url += 'wss://';
+		else
+			url += 'ws://';
 
-	url += l.hostname;
+		url += l.hostname;
+	}
 
 	if ((l.port) && (l.port != 80) && (l.port != 443))
 		url += ':'+ l.port;
