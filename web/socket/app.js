@@ -202,8 +202,10 @@ function updatePlot()
 			}
 		}
 
-		if (currentNode.series !== undefined && currentNode.series[i] !== undefined)
-			$.extend(true, data[i], currentNode.series[i]);
+		if (currentNode.out.signals !== undefined && currentNode.out.signals[i] !== undefined)
+			$.extend(true, data[i], {
+				label : currentNode.out.signals[i].name
+			});
 	}
 
 	var options = {
