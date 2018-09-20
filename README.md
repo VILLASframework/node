@@ -40,6 +40,11 @@ User documentation is available here: <https://villas.fein-aachen.org/doc/node.h
 
 This project is released under the terms of the [GPL version 3](COPYING.md).
 
+We kindly ask all academic publications employing components of VILLASframework to cite one of the following papers:
+
+- A. Monti et al., "[A Global Real-Time Superlab: Enabling High Penetration of Power Electronics in the Electric Grid](https://ieeexplore.ieee.org/document/8458285/)," in IEEE Power Electronics Magazine, vol. 5, no. 3, pp. 35-44, Sept. 2018.
+- S. Vogel, M. Mirz, L. Razik and A. Monti, "[An open solution for next-generation real-time power system simulation](http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8245739&isnumber=8244404)," 2017 IEEE Conference on Energy Internet and Energy System Integration (EI2), Beijing, 2017, pp. 1-6.
+
 ```
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
