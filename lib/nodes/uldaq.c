@@ -88,35 +88,35 @@ int uldaq_init(struct node *n)
 	u->in.queues = alloc(sizeof(struct AiQueueElement) * u->in.queue_len);
 
 	// set some variables that are used to acquire data
-	int samplesPerChannel = 10000;
-	double rate = 1000;
-	ScanOption scanOptions = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS);
-	AInScanFlag flags = AINSCAN_FF_DEFAULT;
+	int u->sample_count = 10000;
+	double u->sample_rate = 1000;
+	ScanOption u->scanOptions = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS);
+	AInScanFlag u->flags = AINSCAN_FF_DEFAULT;
 }
 
 int uldaq_start(struct node *n)
 {
 	int ret;
+	struct uldaq *u = (struct uldaq *) n->_vd;
 
-    Range ranges[MAX_RANGE_COUNT];
-    DaqDeviceDescriptor devDescriptors[MAX_DEV_COUNT];
-    DaqDeviceInterface interfaceType = ANY_IFC;
-    DaqDeviceHandle daqDeviceHandle = 0;
-    int numRanges = 0;
-    int descriptorIndex = 0;
-    unsigned int numDevs = MAX_DEV_COUNT;
-    UlError err = ERR_NO_ERROR;
-    AiInputMode inputMode = AI_SINGLE_ENDED;
-    int samplesPerChannel = 10000;
-    int chanCount = 1;//change this to use more than one channel
-    ScanOption scanOptions = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS);
-    AInScanFlag flags = AINSCAN_FF_DEFAULT;
-    int index = 0;
-    AiQueueElement queueArray[MAX_QUEUE_SIZE];
+
+
+
+	Range ranges[MAX_RANGE_COUNT];
+	DaqDeviceDescriptor u->devDescriptors[MAX_DEV_COUNT];
+	DaqDeviceInterface u->interfaceType = ANY_IFC;
+	DaqDeviceHandle u->daqDeviceHandle = 0;
+	int numRanges = 0;
+	int descriptorIndex = 0;
+	unsigned int numDevs = MAX_DEV_COUNT;
+	UlError err = ERR_NO_ERROR;
+	AiInputMode u->inputMode = AI_SINGLE_ENDED;
+	int chanCount = 1;//change this to use more than one channel
+	int index = 0;
 
 
 	// allocate a buffer to receive the data
-	double *buffer = (double*) malloc(chanCount * samplesPerChannel * sizeof(double));
+	double *buffer = (double*) malloc(chanCount * u->sample_count * sizeof(double));
 	if(buffer == 0)
 	{
 		//printf("\nOut of memory, unable to create scan buffer\n");
@@ -124,10 +124,10 @@ int uldaq_start(struct node *n)
 	}
 
 	// Get descriptors for all of the available DAQ devices
-	err = ulGetDaqDeviceInventory(interfaceType, devDescriptors, &numDevs);
+	err = ulGetDaqDeviceInventory(u->interfaceType, u->devDescriptors, &numDevs);
 
 	if(err != ERR_NO_ERROR)
-        ret = -1;
+		ret = -1;
 
 	// verify at least one DAQ device is detected
 	if (numDevs == 0)
@@ -137,42 +137,34 @@ int uldaq_start(struct node *n)
 	}
 
 	// get a handle to the DAQ device associated with the first descriptor
-	daqDeviceHandle = ulCreateDaqDevice(devDescriptors[0]);
+	u->daqDeviceHandle = ulCreateDaqDevice(u->devDescriptors[0]);
 
-	if (daqDeviceHandle == 0)
+	if (u->daqDeviceHandle == 0)
 	{
 		//printf ("\nUnable to create a handle to the specified DAQ device\n");
 		ret = -1;
 	}
 
 	// get the analog input ranges
-	err = getAiInfoRanges(daqDeviceHandle, inputMode, &numRanges, ranges);
+	err = getAiInfoRanges(u->daqDeviceHandle, u->inputMode, &numRanges, ranges);
 
-	err = ulConnectDaqDevice(daqDeviceHandle);
+	err = ulConnectDaqDevice(u->daqDeviceHandle);
 	if (err != ERR_NO_ERROR)
 		ret = -1;
 
 
-    
-	for (i=0; i<chanCount; i++)
-	{
-		queueArray[i].channel = i;
-		queueArray[i].inputMode = inputMode;
-		queueArray[i].range = ranges[i % numRanges];
-	}
-
-	err = ulAInLoadQueue(daqDeviceHandle, queueArray, chanCount);
+	err = ulAInLoadQueue(u->daqDeviceHandle, u->queues, chanCount);
 	if (err != ERR_NO_ERROR)
 		ret = -1;
 
 
-    Range range;//will be ignored when in queue mode
-    int lowChan,highChan;//will be ignored when in queue mode
+	Range range;//will be ignored when in queue mode
+	int lowChan,highChan;//will be ignored when in queue mode
 	// start the acquisition
 	//
-	// when using the queue, the lowChan, highChan, inputMode, and range
-	// parameters are ignored since they are specified in queueArray
-    err = ulAInScan(daqDeviceHandle, lowChan, highChan, inputMode, range, samplesPerChannel, &rate, scanOptions, flags, buffer);
+	// when using the queue, the lowChan, highChan, u->inputMode, and range
+	// parameters are ignored since they are specified in u->queues
+	err = ulAInScan(u->daqDeviceHandle, lowChan, highChan, u->inputMode, range, u->sample_count, &(u->sample_rate), u->scanOptions, u->flags, buffer);
 
 
 	if(err == ERR_NO_ERROR)
@@ -181,9 +173,9 @@ int uldaq_start(struct node *n)
 		TransferStatus transferStatus;
 
 		// get the initial status of the acquisition
-		ulAInScanStatus(daqDeviceHandle, &status, &transferStatus);
-    
-    }
+		ulAInScanStatus(u->daqDeviceHandle, &status, &transferStatus);
+	
+	}
 
 
 	if (ret)
@@ -195,17 +187,18 @@ int uldaq_start(struct node *n)
 int uldaq_stop(struct node *n)
 {
 	int ret;
+	struct uldaq *u = (struct uldaq *) n->_vd;
 
 
-    // stop the acquisition if it is still running
-    if (status == SS_RUNNING && err == ERR_NO_ERROR)
-    {
-        ulAInScanStop(daqDeviceHandle);
-    }
+	// stop the acquisition if it is still running
+	if (status == SS_RUNNING && err == ERR_NO_ERROR)
+	{
+		ulAInScanStop(u->daqDeviceHandle);
+	}
 
-    ulDisconnectDaqDevice(daqDeviceHandle);
+	ulDisconnectDaqDevice(u->daqDeviceHandle);
 
-    ulReleaseDaqDevice(daqDeviceHandle);
+	ulReleaseDaqDevice(u->daqDeviceHandle);
 
 	if (ret)
 		return ret;
@@ -216,20 +209,21 @@ int uldaq_stop(struct node *n)
 int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int avail;
+	struct uldaq *u = (struct uldaq *) n->_vd;
 
-    if(status == SS_RUNNING && err == ERR_NO_ERROR)
-    {
-        // get the current status of the acquisition
-        err = ulAInScanStatus(daqDeviceHandle, &status, &transferStatus);
+	if(status == SS_RUNNING && err == ERR_NO_ERROR)
+	{
+		// get the current status of the acquisition
+		err = ulAInScanStatus(u->daqDeviceHandle, &status, &transferStatus);
 
-        if(err == ERR_NO_ERROR)
-        {
-            index = transferStatus.currentIndex;
-            int i=0;//we only read one channel
-            double currentVal = buffer[index + i];
-        }
+		if(err == ERR_NO_ERROR)
+		{
+			index = transferStatus.currentIndex;
+			int i=0;//we only read one channel
+			double currentVal = buffer[index + i];
+		}
 
-    }
+	}
 	return avail;
 }
 
@@ -240,7 +234,7 @@ static struct plugin p = {
 	.type = PLUGIN_TYPE_NODE,
 	.node = {
 		.vectorize = 0,
-		.flags	= NODE_TYPE_PROVIDES_SIGNALS,
+		.u->flags	= NODE_TYPE_PROVIDES_SIGNALS,
 		.size	= sizeof(struct uldaq),
 		.parse	= loopback_parse,
 		.print	= loopback_print,

@@ -46,6 +46,10 @@ struct uldaq {
 		ScanOption scan_options;
 		AInScanFlag flags;
 		AiQueueElement queues;
+        AiInputMode inputMode;
+        DaqDeviceDescriptor devDescriptor;
+        DaqDeviceInterface interfaceType = ANY_IFC;
+        DaqDeviceHandle daqDeviceHandle = 0;
 	} in;
 
 	struct {
