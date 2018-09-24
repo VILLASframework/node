@@ -37,6 +37,22 @@
 extern "C" {
 #endif
 
+#include <uldaq.h>
+
+struct uldaq {
+	struct {
+		int sample_count;
+		double sample_rate;
+		ScanOption scan_options;
+		AInScanFlag flags;
+		AiQueueElement queues;
+	} in;
+
+	struct {
+		// TODO
+	} out;
+};
+
 #ifdef __cplusplus
 }
 #endif
