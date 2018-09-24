@@ -32,6 +32,31 @@ int uldaq_start(struct node *n)
 {
 	int ret;
 
+    Range ranges[MAX_RANGE_COUNT];
+    DaqDeviceDescriptor devDescriptors[MAX_DEV_COUNT];
+    DaqDeviceInterface interfaceType = ANY_IFC;
+    DaqDeviceHandle daqDeviceHandle = 0;
+    int numRanges = 0;
+    int descriptorIndex = 0;
+    unsigned int numDevs = MAX_DEV_COUNT;
+    UlError err = ERR_NO_ERROR;
+    AiInputMode inputMode = AI_SINGLE_ENDED;
+    int samplesPerChannel = 10000;
+    int chanCount = 1;//change this to use more than one channel
+    ScanOption scanOptions = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS);
+    AInScanFlag flags = AINSCAN_FF_DEFAULT;
+    int index = 0;
+    AiQueueElement queueArray[MAX_QUEUE_SIZE];
+
+
+	// allocate a buffer to receive the data
+	double *buffer = (double*) malloc(chanCount * samplesPerChannel * sizeof(double));
+	if(buffer == 0)
+	{
+		//printf("\nOut of memory, unable to create scan buffer\n");
+		ret = -1;
+	}
+
 	// Get descriptors for all of the available DAQ devices
 	err = ulGetDaqDeviceInventory(interfaceType, devDescriptors, &numDevs);
 
@@ -54,12 +79,15 @@ int uldaq_start(struct node *n)
 		ret = -1;
 	}
 
+	// get the analog input ranges
+	err = getAiInfoRanges(daqDeviceHandle, inputMode, &numRanges, ranges);
+
 	err = ulConnectDaqDevice(daqDeviceHandle);
 	if (err != ERR_NO_ERROR)
 		ret = -1;
 
-    int chanCount = 0;//change this to use more than one channel
-    AiQueueElement queueArray[MAX_QUEUE_SIZE];
+
+    
 	for (i=0; i<chanCount; i++)
 	{
 		queueArray[i].channel = i;
@@ -72,7 +100,6 @@ int uldaq_start(struct node *n)
 		ret = -1;
 
 
-    AiInputMode inputMode;//will be ignored when in queue mode
     Range range;//will be ignored when in queue mode
     int lowChan,highChan;//will be ignored when in queue mode
 	// start the acquisition
@@ -89,19 +116,6 @@ int uldaq_start(struct node *n)
 
 		// get the initial status of the acquisition
 		ulAInScanStatus(daqDeviceHandle, &status, &transferStatus);
-    
-
-        while(status == SS_RUNNING && err == ERR_NO_ERROR && !enter_press())
-		{
-			// get the current status of the acquisition
-			err = ulAInScanStatus(daqDeviceHandle, &status, &transferStatus);
-
-			if(err == ERR_NO_ERROR)
-			{
-
-            }
-
-        }
     
     }
 
@@ -137,16 +151,19 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 {
 	int avail;
 
-	struct loopback *l = (struct loopback *) n->_vd;
-	struct sample *cpys[cnt];
+    if(status == SS_RUNNING && err == ERR_NO_ERROR)
+    {
+        // get the current status of the acquisition
+        err = ulAInScanStatus(daqDeviceHandle, &status, &transferStatus);
 
-	avail = queue_signalled_pull_many(&l->queue, (void **) cpys, cnt);
+        if(err == ERR_NO_ERROR)
+        {
+            index = transferStatus.currentIndex;
+            int i=0;//we only read one channel
+            double currentVal = buffer[index + i];
+        }
 
-	for (int i = 0; i < avail; i++) {
-		sample_copy(smps[i], cpys[i]);
-		sample_decref(cpys[i]);
-	}
-
+    }
 	return avail;
 }
 
