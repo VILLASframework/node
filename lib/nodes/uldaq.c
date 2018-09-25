@@ -174,6 +174,12 @@ int uldaq_parse(struct node *n, json_t *cfg)
 	return ret;
 }
 
+
+char * uldaq_print(struct node *n)
+{
+	return strf("TODO");
+}
+
 int uldaq_check(struct node *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
@@ -186,11 +192,6 @@ int uldaq_check(struct node *n)
 	}
 
 	return 0;
-}
-
-char * uldaq_print(struct node *n)
-{
-	return "TODO";
 }
 
 int uldaq_start(struct node *n)
