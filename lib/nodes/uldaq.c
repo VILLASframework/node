@@ -30,6 +30,25 @@
 
 static const struct {
 	const char *name;
+	AiInputMode mode;
+} input_modes[] = {
+	{ "differential", AI_DIFFERENTIAL },
+	{ "single-ended", AI_SINGLE_ENDED },
+	{ "pseudo-differential", AI_PSEUDO_DIFFERENTIAL }
+};
+
+static const struct {
+	const char *name;
+	DaqDeviceInterface interface;
+} interface_types[] = {
+	{ "usb", USB_IFC },
+	{ "bluetooth", BLUETOOTH_IFC },
+	{ "ethernet", ETHERNET_IFC },
+	{ "any", ANY_IFC }
+};
+
+static const struct {
+	const char *name;
 	Range range;
 	float min, max;
 } ranges[] = {
@@ -78,43 +97,65 @@ static const struct {
 	{ "unipolar-0.005", UNIPT005VOLTS, 0.0,   +0.005 }
 };
 
-static UlError uldag_range_info(DaqDeviceHandle daqDeviceHandle, AiInputMode inputMode, int *numberOfRanges, Range* ranges)
+__attribute__((unused))
+static UlError uldag_range_info(DaqDeviceHandle device_handle, AiInputMode input_mode, int *number_of_ranges, Range* ranges)
 {
-	UlError err = ERR_NO_ERROR;
-	int i = 0;
-	long long numRanges = 0;
-	long long rng;
+	UlError err;
+	long long num_ranges = 0;
+	long long range;
 
-	if (inputMode == AI_SINGLE_ENDED)
-	{
-		err = ulAIGetInfo(daqDeviceHandle, AI_INFO_NUM_SE_RANGES, 0, &numRanges);
-	}
-	else
-	{
-		err = ulAIGetInfo(daqDeviceHandle, AI_INFO_NUM_DIFF_RANGES, 0, &numRanges);
-	}
+	err = input_mode == AI_SINGLE_ENDED
+		? ulAIGetInfo(device_handle, AI_INFO_NUM_SE_RANGES, 0, &num_ranges)
+		: ulAIGetInfo(device_handle, AI_INFO_NUM_DIFF_RANGES, 0, &num_ranges);
+	if (err != ERR_NO_ERROR)
+		return err;
 
-	for (i=0; i<numRanges; i++)
-	{
-		if (inputMode == AI_SINGLE_ENDED)
-		{
-			err = ulAIGetInfo(daqDeviceHandle, AI_INFO_SE_RANGE, i, &rng);
-		}
-		else
-		{
-			err = ulAIGetInfo(daqDeviceHandle, AI_INFO_DIFF_RANGE, i, &rng);
-		}
+	for (int i = 0; i < num_ranges; i++) {
+		err = input_mode == AI_SINGLE_ENDED
+			? ulAIGetInfo(device_handle, AI_INFO_SE_RANGE, i, &range)
+			: ulAIGetInfo(device_handle, AI_INFO_DIFF_RANGE, i, &range);
+		if (err != ERR_NO_ERROR)
+			return err;
 
-		ranges[i] = (Range)rng;
+		ranges[i] = (Range) range;
 	}
 
-	*numberOfRanges = (int)numRanges;
+	*number_of_ranges = (int) num_ranges;
 
-	return err;
+	return ERR_NO_ERROR;
 }
 
-__attribute__((unused))
-static Range uldaq_range_parse(const char *str)
+static AiInputMode uldaq_parse_input_mode(const char *str)
+{
+	for (int i = 0; i < ARRAY_LEN(input_modes); i++) {
+		if (!strcmp(input_modes[i].name, str))
+			return input_modes[i].mode;
+	}
+
+	return -1;
+}
+
+static DaqDeviceInterface uldaq_parse_interface_type(const char *str)
+{
+	for (int i = 0; i < ARRAY_LEN(interface_types); i++) {
+		if (!strcmp(interface_types[i].name, str))
+			return interface_types[i].interface;
+	}
+
+	return -1;
+}
+
+static const char * uldaq_print_interface_type(DaqDeviceInterface iftype)
+{
+	for (int i = 0; i < ARRAY_LEN(interface_types); i++) {
+		if (interface_types[i].interface == iftype)
+			return interface_types[i].name;
+	}
+
+	return NULL;
+}
+
+static Range uldaq_parse_range(const char *str)
 {
 	for (int i = 0; i < ARRAY_LEN(ranges); i++) {
 		if (!strcmp(ranges[i].name, str))
@@ -127,6 +168,8 @@ static Range uldaq_range_parse(const char *str)
 int uldaq_init(struct node *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
+
+	u->device_interface_type = ANY_IFC;
 
 	u->in.queues = NULL;
 	u->in.sample_rate = 1000;
@@ -151,35 +194,92 @@ int uldaq_parse(struct node *n, json_t *cfg)
 	int ret;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-	const char *range = NULL;
+	const char *default_range_str = NULL;
+	const char *default_input_mode_str = NULL;
+	const char *interface_type = NULL;
 
 	size_t i;
 	json_t *json_signals;
 	json_t *json_signal;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: { s: o, s: F } }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: { s: o, s: F, s?: s, s?: s } }",
+		"interface_type", &interface_type,
 		"in",
 			"signals", &json_signals,
 			"sample_rate", &u->in.sample_rate,
-			"range", &range
+			"range", &default_range_str,
+			"input_mode", &default_input_mode_str
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
+	if (interface_type) {
+		int iftype = uldaq_parse_interface_type(interface_type);
+		if (iftype < 0)
+			error("Invalid interface type: %s for node '%s'", interface_type, node_name(n));
+
+		u->device_interface_type = iftype;
+	}
+
 	u->in.queues = realloc(u->in.queues, sizeof(struct AiQueueElement) * list_length(&n->signals));
 
 	json_array_foreach(json_signals, i, json_signal) {
+		const char *range_str = NULL, *input_mode_str = NULL;
+		int channel = -1, input_mode, range;
 
+		json_unpack_ex(json_signal, &err, 0, "{ s?: s, s?: s, s?: i }",
+			"range", &range,
+			"input_mode", &input_mode,
+			"channel", &channel
+		);
+		if (ret)
+			jerror(&err, "Failed to parse signal configuration of node %s", node_name(n));
+
+		if (!range_str)
+			range_str = default_range_str;
+
+		if (!input_mode_str)
+			input_mode_str = default_input_mode_str;
+
+		if (channel < 0)
+			channel = i;
+
+		if (!range_str)
+			error("No input range specified for signal %zu of node %s.", i, node_name(n));
+
+		if (!input_mode_str)
+			error("No input mode specified for signal %zu of node %s.", i, node_name(n));
+
+		range = uldaq_parse_range(range_str);
+		if (range < 0)
+			error("Invalid input range specified for signal %zu of node %s.", i, node_name(n));
+
+		input_mode = uldaq_parse_input_mode(input_mode_str);
+		if (input_mode < 0)
+			error("Invalid input mode specified for signal %zu of node %s.", i, node_name(n));
+
+		u->in.queues[i].range = range;
+		u->in.queues[i].inputMode = input_mode;
+		u->in.queues[i].channel = channel;
 	}
 
 	return ret;
 }
 
-
 char * uldaq_print(struct node *n)
 {
-	return strf("TODO");
+	struct uldaq *u = (struct uldaq *) n->_vd;
+
+	char *buf = NULL;
+	char *uid = u->device_descriptor.uniqueId;
+	char *name = u->device_descriptor.productName;
+	const char *iftype = uldaq_print_interface_type(u->device_interface_type);
+
+	buf = strcatf(&buf, "device=%s (%s), interface=%s", uid, name, iftype);
+	buf = strcatf(&buf, ", in.sample_rate=%f", u->in.sample_rate);
+
+	return buf;
 }
 
 int uldaq_check(struct node *n)
@@ -210,11 +310,9 @@ int uldaq_start(struct node *n)
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	DaqDeviceDescriptor descriptors[ULDAQ_MAX_DEV_COUNT];
-	Range ranges[ULDAQ_MAX_RANGE_COUNT];
 
 	UlError err;
 	unsigned num_devs;
-	int num_ranges;
 
 	// allocate a buffer to receive the data
 	u->in.buffer = (double *) alloc(list_length(&n->signals) * n->in.vectorize * sizeof(double));
@@ -228,23 +326,27 @@ int uldaq_start(struct node *n)
 	if (err != ERR_NO_ERROR)
 		return -1;
 
-	// verify at least one DAQ device is detected
+	/* Verify at least one DAQ device is detected */
 	if (num_devs == 0) {
 		warn("No DAQ devices are connected");
 		return -1;
 	}
 
-	// get a handle to the DAQ device associated with the first descriptor
+	/* Get a handle to the DAQ device associated with the first descriptor */
 	u->device_handle = ulCreateDaqDevice(descriptors[0]);
 	if (u->device_handle == 0) {
 		warn ("Unable to create a handle to the specified DAQ device");
 		return -1;
 	}
 
-	// get the analog input ranges
+#if 0
+	int num_ranges;
+	Range ranges[ULDAQ_MAX_RANGE_COUNT];
+	/* Get the analog input ranges */
 	err = uldag_range_info(u->device_handle, u->in.input_mode, &num_ranges, ranges);
 	if (err != ERR_NO_ERROR)
 		return -1;
+#endif
 
 	err = ulConnectDaqDevice(u->device_handle);
 	if (err != ERR_NO_ERROR)
@@ -254,17 +356,19 @@ int uldaq_start(struct node *n)
 	if (err != ERR_NO_ERROR)
 		return -1;
 
-	// start the acquisition
-	// when using the queue, the lowChan, highChan, u->in.input_mode, and range
-	// parameters are ignored since they are specified in u->queues
-	err = ulAInScan(u->device_handle, 0, 0, u->in.input_mode, 0, u->in.sample_count, &(u->in.sample_rate), u->in.scan_options, u->in.flags, u->in.buffer);
-	if (err == ERR_NO_ERROR) {
-		ScanStatus status;
-		TransferStatus transferStatus;
+	/* Start the acquisition */
+	err = ulAInScan(u->device_handle, 0, 0, 0, 0, n->in.vectorize, &u->in.sample_rate, u->in.scan_options, u->in.flags, u->in.buffer);
+	if (err != ERR_NO_ERROR)
+		return -1;
 
-		// get the initial status of the acquisition
-		ulAInScanStatus(u->device_handle, &status, &transferStatus);
-	}
+	ScanStatus status;
+	TransferStatus transfer_status;
+
+	/* Get the initial status of the acquisition */
+	ulAInScanStatus(u->device_handle, &status, &transfer_status);
+
+	if (status != SS_RUNNING)
+		return -1;
 
 	return 0;
 }
@@ -273,19 +377,29 @@ int uldaq_stop(struct node *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-	UlError err = ERR_NO_ERROR;
+	UlError err;
 	ScanStatus status;
 	TransferStatus transferStatus;
-	// get the current status of the acquisition
+
+	/* Get the current status of the acquisition */
 	err = ulAInScanStatus(u->device_handle, &status, &transferStatus);
+	if (err != ERR_NO_ERROR)
+		return -1;
 
-	// stop the acquisition if it is still running
-	if (status == SS_RUNNING && err == ERR_NO_ERROR)
-		ulAInScanStop(u->device_handle);
+	/* Stop the acquisition if it is still running */
+	if (status == SS_RUNNING) {
+		err = ulAInScanStop(u->device_handle);
+		if (err != ERR_NO_ERROR)
+			return -1;
+	}
 
-	// TODO: error handling
-	ulDisconnectDaqDevice(u->device_handle);
-	ulReleaseDaqDevice(u->device_handle);
+	err = ulDisconnectDaqDevice(u->device_handle);
+	if (err != ERR_NO_ERROR)
+		return -1;
+
+	err = ulReleaseDaqDevice(u->device_handle);
+	if (err != ERR_NO_ERROR)
+		return -1;
 
 	return 0;
 }
@@ -294,20 +408,26 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-	UlError err = ERR_NO_ERROR;
+	UlError err;
 	ScanStatus status;
 	TransferStatus transferStatus;
-	// get the current status of the acquisition
+
+	/* Get the current status of the acquisition */
 	err = ulAInScanStatus(u->device_handle, &status, &transferStatus);
-	if (status == SS_RUNNING && err == ERR_NO_ERROR) {
-		if (err == ERR_NO_ERROR) {
-			//int index = transferStatus.currentIndex;
-			//int i=0;//we only read one channel
-			//double currentVal = u->in.buffer[index + i];
+	if (err != ERR_NO_ERROR)
+		return -1;
+
+	if (status == SS_RUNNING) {
+		int index = transferStatus.currentIndex;
+
+		struct sample *smp = smps[0];
+
+		for (int i = 0; i < list_length(&n->signals); i++) {
+			smp->data[i].f = u->in.buffer[index + i];
 		}
 	}
 
-	return 0;
+	return 1;
 }
 
 
