@@ -186,6 +186,10 @@ int node_init(struct node *n, struct node_type *vt)
 	if (ret)
 		return ret;
 
+	ret = node_type(n)->init ? node_type(n)->init(n) : 0;
+	if (ret)
+		return ret;
+
 	n->state = STATE_INITIALIZED;
 
 	list_push(&vt->instances, n);
