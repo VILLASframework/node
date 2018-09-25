@@ -25,7 +25,7 @@
 #include <villas/node.h>
 #include <villas/plugin.h>
 #include <villas/config.h>
-#include <villas/nodes/loopback.h>
+#include <villas/nodes/uldaq.h>
 #include <villas/memory.h>
 
 static const struct {
@@ -91,7 +91,7 @@ int uldaq_init(struct node *n)
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	u->in.queue_len = 0;
-	u->in.queues = NULL;
+	u->in.in.queues = NULL;
 	u->in.sample_count = 10000;
 	u->in.sample_rate = 1000;
 	u->in.scan_options = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS);
@@ -120,11 +120,12 @@ int uldaq_parse(struct node *n, json_t *cfg)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 	u->in.queue_len = list_length(&n->in.signals);
-	u->in.queues = realloc(sizeof(struct AiQueueElement) * u->in.queue_len);
+	u->in.in.queues = realloc(sizeof(struct AiQueueElement) * u->in.queue_len);
 
 	json_array_foreach(json_signals, i, json_signal) {
 
 	}
+	return ret;
 }
 
 int uldaq_check(struct node *n)
@@ -139,6 +140,11 @@ int uldaq_check(struct node *n)
 	}
 
 	return 0;
+}
+
+char * uldaq_print(struct node *n)
+{
+	return "TODO";
 }
 
 int uldaq_start(struct node *n)
@@ -189,7 +195,7 @@ int uldaq_start(struct node *n)
 	if (err != ERR_NO_ERROR)
 		return -1;
 
-	err = ulAInLoadQueue(u->device_handle, u->queues, chanCount);
+	err = ulAInLoadQueue(u->device_handle, u->in.queues, chanCount);
 	if (err != ERR_NO_ERROR)
 		return -1;
 
@@ -213,9 +219,11 @@ int uldaq_stop(struct node *n)
 	int ret;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
+	UlError err = ERR_NO_ERROR;
+	ScanStatus status;
 	// get the current status of the acquisition
 	err = ulAInScanStatus(u->device_handle, &status, &transferStatus);
-	UlError err = ERR_NO_ERROR;
+
 	// stop the acquisition if it is still running
 	if (status == SS_RUNNING && err == ERR_NO_ERROR)
 		ulAInScanStop(u->device_handle);
@@ -224,9 +232,7 @@ int uldaq_stop(struct node *n)
 	ulDisconnectDaqDevice(u->device_handle);
 	ulReleaseDaqDevice(u->device_handle);
 
-	free(u->in.buffer);
-
-	return 0;
+	return ret;
 }
 
 int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
@@ -235,17 +241,17 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	UlError err = ERR_NO_ERROR;
+	ScanStatus status;
+	// get the current status of the acquisition
+	err = ulAInScanStatus(u->device_handle, &status, &transferStatus);
 	if (status == SS_RUNNING && err == ERR_NO_ERROR) {
-		// get the current status of the acquisition
-		err = ulAInScanStatus(u->device_handle, &status, &transferStatus);
-
 		if (err == ERR_NO_ERROR) {
 			index = transferStatus.currentIndex;
 			int i=0;//we only read one channel
-			double currentVal = buffer[index + i];
+			double currentVal = u->in.buffer[index + i];
 		}
-
 	}
+
 	return avail;
 }
 
@@ -256,7 +262,7 @@ static struct plugin p = {
 	.type = PLUGIN_TYPE_NODE,
 	.node = {
 		.vectorize = 0,
-		.u->flags	= NODE_TYPE_PROVIDES_SIGNALS,
+		.flags	= NODE_TYPE_PROVIDES_SIGNALS,
 		.size	= sizeof(struct uldaq),
 		.parse	= uldaq_parse,
 		.init	= uldaq_init,
