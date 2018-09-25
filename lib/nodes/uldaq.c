@@ -470,6 +470,8 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 			smp->data[i].f = u->in.buffer[channel_index];
 		}
+		smp->length = 1;
+		smp->signals = &n->signals;
 	}
 
 	pthread_mutex_unlock(&u->in.mutex);
