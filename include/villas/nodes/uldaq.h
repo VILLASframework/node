@@ -30,6 +30,8 @@
 
 #pragma once
 
+#include <pthread.h>
+
 #include <villas/queue_signalled.h>
 #include <villas/pool.h>
 
@@ -48,12 +50,19 @@ struct uldaq {
 	DaqDeviceInterface device_interface_type;
 
 	struct {
-		double *buffer;
 		double sample_rate;
+		double *buffer;
+		unsigned buffer_len;
+		unsigned channel_count;
 
 		ScanOption scan_options;
 		AInScanFlag flags;
 		AiQueueElement *queues;
+		ScanStatus status; // protected by mutex
+		TransferStatus transfer_status; // protected by mutex
+
+		pthread_mutex_t mutex;
+		pthread_cond_t cv;
 	} in;
 
 	struct {
