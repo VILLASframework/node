@@ -475,7 +475,7 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 		smp->length = u->in.channel_count;
 		smp->signals = &n->signals;
-		smp->sequence = start_index / u->in.channel_count;
+		smp->sequence = scan_index / u->in.channel_count;
 		smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
 
 		debug(2, "sequence no: %zu", smp->sequence);
