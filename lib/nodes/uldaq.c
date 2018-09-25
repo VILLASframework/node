@@ -156,7 +156,7 @@ int uldaq_parse(struct node *n, json_t *cfg)
 	json_t *json_signal;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: { s: o, s: d } }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: { s: o, s: F } }",
 		"in",
 			"signals", &json_signals,
 			"sample_rate", &u->in.sample_rate,
@@ -305,7 +305,7 @@ static struct plugin p = {
 	.type = PLUGIN_TYPE_NODE,
 	.node = {
 		.vectorize = 0,
-		.flags	= NODE_TYPE_PROVIDES_SIGNALS,
+		.flags	= 0,
 		.size	= sizeof(struct uldaq),
 		.parse	= uldaq_parse,
 		.init	= uldaq_init,
