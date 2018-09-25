@@ -49,13 +49,11 @@ struct uldaq {
 
 	struct {
 		double *buffer;
-		int sample_count;
 		double sample_rate;
 
 		ScanOption scan_options;
 		AInScanFlag flags;
 		AiQueueElement *queues;
-		AiInputMode input_mode;
 	} in;
 
 	struct {
