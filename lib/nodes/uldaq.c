@@ -29,9 +29,9 @@
 #include <villas/memory.h>
 
 static const struct {
-	const char *name,
-	Range range
-} ranges[] {
+	const char *name;
+	Range range;
+} ranges[] = {
 	{ "bipolar-60", BIP60VOLTS },		// -60    to +60 Volts
 	{ "bipolar-30", BIP30VOLTS },		// -30    to +30 Volts
 	{ "bipolar-15", BIP15VOLTS },		// -15    to +15 Volts
@@ -90,12 +90,21 @@ int uldaq_init(struct node *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-	u->in.queue_len = 0;
-	u->in.in.queues = NULL;
+	u->in.queues = NULL;
 	u->in.sample_count = 10000;
 	u->in.sample_rate = 1000;
 	u->in.scan_options = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS);
 	u->in.flags = AINSCAN_FF_DEFAULT;
+}
+
+int uldaq_destroy(struct node *n)
+{
+	struct uldaq *u = (struct uldaq *) n->_vd;
+
+	if (u->in.queues)
+		free(u->in.queues);
+
+	return 0;
 }
 
 int uldaq_parse(struct node *n, json_t *cfg)
@@ -108,6 +117,7 @@ int uldaq_parse(struct node *n, json_t *cfg)
 	size_t i;
 	json_t *json_signals;
 	json_t *json_signal;
+	json_error_t err;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: { s: o, s: i, s: d } }",
 		"in",
@@ -119,12 +129,12 @@ int uldaq_parse(struct node *n, json_t *cfg)
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-	u->in.queue_len = list_length(&n->in.signals);
-	u->in.in.queues = realloc(sizeof(struct AiQueueElement) * u->in.queue_len);
+	u->in.queues = realloc(sizeof(struct AiQueueElement) * list_length(&n->signals));
 
 	json_array_foreach(json_signals, i, json_signal) {
 
 	}
+
 	return ret;
 }
 
@@ -158,7 +168,7 @@ int uldaq_start(struct node *n)
 	int chanCount = 1;//change this to use more than one channel
 
 	// allocate a buffer to receive the data
-	u->in.buffer = (double *) alloc(list_length(&n->in.signals) * n->in.vectorize * sizeof(double));
+	u->in.buffer = (double *) alloc(list_length(&n->signals) * n->in.vectorize * sizeof(double));
 	if (u->in.buffer == 0) {
 		warn("Out of memory, unable to create scan buffer");
 		return -1;
@@ -264,6 +274,7 @@ static struct plugin p = {
 		.size	= sizeof(struct uldaq),
 		.parse	= uldaq_parse,
 		.init	= uldaq_init,
+		.destroy= uldaq_destroy,
 		.parse	= uldaq_parse,
 		.print	= uldaq_print,
 		.start	= uldaq_start,
