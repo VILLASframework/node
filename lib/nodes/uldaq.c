@@ -195,14 +195,14 @@ char * uldaq_print(struct node *n)
 
 int uldaq_start(struct node *n)
 {
-	int ret;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	DaqDeviceDescriptor descriptors[ULDAQ_MAX_DEV_COUNT];
 	Range ranges[ULDAQ_MAX_RANGE_COUNT];
 
-	UlError err = ERR_NO_ERROR;
-	int chanCount = 1;//change this to use more than one channel
+	UlError err;
+	unsigned num_devs;
+	int num_ranges;
 
 	// allocate a buffer to receive the data
 	u->in.buffer = (double *) alloc(list_length(&n->signals) * n->in.vectorize * sizeof(double));
@@ -230,7 +230,7 @@ int uldaq_start(struct node *n)
 	}
 
 	// get the analog input ranges
-	err = getAiInfoRanges(u->device_handle, u->in.input_mode, &num_ranges, ranges);
+	err = uldag_range_info(u->device_handle, u->in.input_mode, &num_ranges, ranges);
 	if (err != ERR_NO_ERROR)
 		return -1;
 
@@ -238,7 +238,7 @@ int uldaq_start(struct node *n)
 	if (err != ERR_NO_ERROR)
 		return -1;
 
-	err = ulAInLoadQueue(u->device_handle, u->in.queues, chanCount);
+	err = ulAInLoadQueue(u->device_handle, u->in.queues, list_length(&n->signals));
 	if (err != ERR_NO_ERROR)
 		return -1;
 
@@ -254,12 +254,11 @@ int uldaq_start(struct node *n)
 		ulAInScanStatus(u->device_handle, &status, &transferStatus);
 	}
 
-	return ret;
+	return 0;
 }
 
 int uldaq_stop(struct node *n)
 {
-	int ret;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	UlError err = ERR_NO_ERROR;
@@ -276,12 +275,11 @@ int uldaq_stop(struct node *n)
 	ulDisconnectDaqDevice(u->device_handle);
 	ulReleaseDaqDevice(u->device_handle);
 
-	return ret;
+	return 0;
 }
 
 int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	int avail;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	UlError err = ERR_NO_ERROR;
@@ -297,7 +295,7 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		}
 	}
 
-	return avail;
+	return 0;
 }
 
 
