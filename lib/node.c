@@ -186,7 +186,7 @@ int node_init(struct node *n, struct node_type *vt)
 	if (ret)
 		return ret;
 
-	ret = node_type(n)->init ? node_type(n)->init(n) : 0;
+	ret = vt->init ? vt->init(n) : 0;
 	if (ret)
 		return ret;
 
