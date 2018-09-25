@@ -315,7 +315,8 @@ int uldaq_check(struct node *n)
 void uldaq_data_available(DaqDeviceHandle device_handle, DaqEventType event_type, unsigned long long event_data, void *ctx)
 {
 	UlError err;
-	struct uldaq *u = (struct uldaq *) ctx;
+	struct node *n = (struct node *) ctx;
+	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	pthread_mutex_lock(&u->in.mutex);
 
@@ -387,7 +388,7 @@ int uldaq_start(struct node *n)
 	}
 
 	/* Enable the event to be notified every time samples are available */
-	err = ulEnableEvent(u->device_handle, DE_ON_DATA_AVAILABLE, n->in.vectorize, uldaq_data_available, u);
+	err = ulEnableEvent(u->device_handle, DE_ON_DATA_AVAILABLE, n->in.vectorize, uldaq_data_available, n);
 
 	/* Start the acquisition */
 	err = ulAInScan(u->device_handle, 0, 0, 0, 0, n->in.vectorize, &u->in.sample_rate, u->in.scan_options, u->in.flags, u->in.buffer);
@@ -432,6 +433,7 @@ int uldaq_stop(struct node *n)
 	}
 
 	pthread_mutex_unlock(&u->in.mutex);
+	pthread_cond_broadcast(&u->in.cv);
 
 	err = ulDisconnectDaqDevice(u->device_handle);
 	if (err != ERR_NO_ERROR)
@@ -470,8 +472,11 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 			smp->data[i].f = u->in.buffer[channel_index];
 		}
-		smp->length = 1;
+
+		smp->length = u->in.channel_count;
 		smp->signals = &n->signals;
+		smp->sequence = u->in.transfer_status.currentTotalCount / u->in.channel_count;
+		smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
 	}
 
 	pthread_mutex_unlock(&u->in.mutex);
