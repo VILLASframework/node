@@ -50,7 +50,7 @@ endif()
 if(ULDAQ_FOUND)
     list(APPEND NODE_SRC uldaq.c)
     list(APPEND INCLUDE_DIRS ${ULDAQ_INCLUDE_DIRS})
-    list(APPEND LIBRARIES PkgConfig::ULDAQ)
+    list(APPEND LIBRARIES uldaq)
 endif()
 
 # Enable shared memory node-type
