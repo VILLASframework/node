@@ -221,7 +221,7 @@ int uldaq_start(struct node *n)
 		ulAInScanStatus(u->device_handle, &status, &transferStatus);
 	}
 
-	return 0;
+	return ret;
 }
 
 int uldaq_stop(struct node *n)
@@ -231,6 +231,7 @@ int uldaq_stop(struct node *n)
 
 	UlError err = ERR_NO_ERROR;
 	ScanStatus status;
+	TransferStatus transferStatus;
 	// get the current status of the acquisition
 	err = ulAInScanStatus(u->device_handle, &status, &transferStatus);
 
@@ -252,11 +253,12 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 	UlError err = ERR_NO_ERROR;
 	ScanStatus status;
+	TransferStatus transferStatus;
 	// get the current status of the acquisition
 	err = ulAInScanStatus(u->device_handle, &status, &transferStatus);
 	if (status == SS_RUNNING && err == ERR_NO_ERROR) {
 		if (err == ERR_NO_ERROR) {
-			index = transferStatus.currentIndex;
+			int index = transferStatus.currentIndex;
 			int i=0;//we only read one channel
 			double currentVal = u->in.buffer[index + i];
 		}
