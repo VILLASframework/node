@@ -191,6 +191,15 @@ int uldaq_check(struct node *n)
 		return -1;
 	}
 
+	for (size_t i = 0; i < list_length(&n->signals); i++) {
+		struct signal *s = (struct signal *) list_at(&n->signals, i);
+
+		if (s->type != SIGNAL_TYPE_FLOAT) {
+			warn("Node '%s' only supports signals of type = float!", node_name(n));
+			return -1;
+		}
+	}
+
 	return 0;
 }
 
