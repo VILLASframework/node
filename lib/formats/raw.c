@@ -69,126 +69,123 @@ int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 
 	int bits = 1 << (io->flags >> 24);
 
-	/* The raw format can not encode multiple samples in one buffer
-	 * as there is no support for framing. */
-	struct sample *smp = smps[0];
+	for (int i = 0; i < cnt; i++) {
+		struct sample *smp = smps[i];
 
-	if (cnt > 1)
-		return -1;
+		/* First three values are sequence, seconds and nano-seconds timestamps
+		*
+		* These fields are always encoded as integers!
+		*/
+		if (io->flags & RAW_FAKE_HEADER) {
+			/* Check length */
+			nlen = (o + 3) * (bits / 8);
+			if (nlen >= len)
+				goto out;
 
-	/* First three values are sequence, seconds and nano-seconds timestamps
-	 *
-	 * These fields are always encoded as integers!
-	 */
-	if (io->flags & RAW_FAKE_HEADER) {
-		/* Check length */
-		nlen = (o + 3) * (bits / 8);
-		if (nlen >= len)
-			goto out;
+			switch (bits) {
+				case 8:
+					i8[o++] = smp->sequence;
+					i8[o++] = smp->ts.origin.tv_sec;
+					i8[o++] = smp->ts.origin.tv_nsec;
+					break;
 
-		switch (bits) {
-			case 8:
-				i8[o++] = smp->sequence;
-				i8[o++] = smp->ts.origin.tv_sec;
-				i8[o++] = smp->ts.origin.tv_nsec;
-				break;
+				case 16:
+					i16[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 16, smp->sequence);
+					i16[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 16, smp->ts.origin.tv_sec);
+					i16[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 16, smp->ts.origin.tv_nsec);
+					break;
 
-			case 16:
-				i16[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 16, smp->sequence);
-				i16[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 16, smp->ts.origin.tv_sec);
-				i16[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 16, smp->ts.origin.tv_nsec);
-				break;
+				case 32:
+					i32[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 32, smp->sequence);
+					i32[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 32, smp->ts.origin.tv_sec);
+					i32[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 32, smp->ts.origin.tv_nsec);
+					break;
 
-			case 32:
-				i32[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 32, smp->sequence);
-				i32[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 32, smp->ts.origin.tv_sec);
-				i32[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 32, smp->ts.origin.tv_nsec);
-				break;
-
-			case 64:
-				i64[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 64, smp->sequence);
-				i64[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 64, smp->ts.origin.tv_sec);
-				i64[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 64, smp->ts.origin.tv_nsec);
-				break;
+				case 64:
+					i64[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 64, smp->sequence);
+					i64[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 64, smp->ts.origin.tv_sec);
+					i64[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 64, smp->ts.origin.tv_nsec);
+					break;
 
 #ifdef HAS_128BIT
-			case 128:
-				i128[o++] = SWAP_INT_TO_LE(io->flags & RAW_BIG_ENDIAN, 128, smp->sequence);
-				i128[o++] = SWAP_INT_TO_LE(io->flags & RAW_BIG_ENDIAN, 128, smp->ts.origin.tv_sec);
-				i128[o++] = SWAP_INT_TO_LE(io->flags & RAW_BIG_ENDIAN, 128, smp->ts.origin.tv_nsec);
-				break;
+				case 128:
+					i128[o++] = SWAP_INT_TO_LE(io->flags & RAW_BIG_ENDIAN, 128, smp->sequence);
+					i128[o++] = SWAP_INT_TO_LE(io->flags & RAW_BIG_ENDIAN, 128, smp->ts.origin.tv_sec);
+					i128[o++] = SWAP_INT_TO_LE(io->flags & RAW_BIG_ENDIAN, 128, smp->ts.origin.tv_nsec);
+					break;
 #endif
+			}
 		}
-	}
 
-	for (int j = 0; j < smp->length; j++) {
-		enum signal_type fmt = sample_format(smp, j);
-		union signal_data *data = &smp->data[j];
+		for (int j = 0; j < smp->length; j++) {
+			enum signal_type fmt = sample_format(smp, j);
+			union signal_data *data = &smp->data[j];
 
-		/* Check length */
-		nlen = (o + fmt == SIGNAL_TYPE_COMPLEX ? 2 : 1) * (bits / 8);
-		if (nlen >= len)
-			goto out;
+			/* Check length */
+			nlen = (o + fmt == SIGNAL_TYPE_COMPLEX ? 2 : 1) * (bits / 8);
+			if (nlen >= len)
+				goto out;
 
-		switch (fmt) {
-			case SIGNAL_TYPE_FLOAT:
-				switch (bits) {
-					case  8:  i8 [o++]  = -1; break; /* Not supported */
-					case 16:  i16[o++]  = -1; break; /* Not supported */
+			switch (fmt) {
+				case SIGNAL_TYPE_FLOAT:
+					switch (bits) {
+						case  8:  i8 [o++]  = -1; break; /* Not supported */
+						case 16:  i16[o++]  = -1; break; /* Not supported */
 
-					case 32:  f32[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  32, data->f); break;
-					case 64:  f64[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  64, data->f); break;
+						case 32:  f32[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  32, data->f); break;
+						case 64:  f64[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  64, data->f); break;
 #ifdef HAS_128BIT
-					case 128: f128[o++] = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, data->f); break;
+						case 128: f128[o++] = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, data->f); break;
 #endif
-				}
-				break;
+					}
+					break;
 
-			case SIGNAL_TYPE_INTEGER:
-				switch (bits) {
-					case  8:  i8 [o++]  =                                                 data->i;  break;
-					case 16:  i16[o++]  = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 16,  data->i); break;
-					case 32:  i32[o++]  = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 32,  data->i); break;
-					case 64:  i64[o++]  = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 64,  data->i); break;
+				case SIGNAL_TYPE_INTEGER:
+					switch (bits) {
+						case  8:  i8 [o++]  =                                                 data->i;  break;
+						case 16:  i16[o++]  = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 16,  data->i); break;
+						case 32:  i32[o++]  = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 32,  data->i); break;
+						case 64:  i64[o++]  = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 64,  data->i); break;
 #ifdef HAS_128BIT
-					case 128: i128[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, data->i); break;
+						case 128: i128[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, data->i); break;
 #endif
-				}
-				break;
+					}
+					break;
 
-			case SIGNAL_TYPE_BOOLEAN:
-				switch (bits) {
-					case  8:  i8 [o++]  =                                                 data->b ? 1 : 0;  break;
-					case 16:  i16[o++]  = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 16,  data->b ? 1 : 0); break;
-					case 32:  i32[o++]  = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 32,  data->b ? 1 : 0); break;
-					case 64:  i64[o++]  = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 64,  data->b ? 1 : 0); break;
+				case SIGNAL_TYPE_BOOLEAN:
+					switch (bits) {
+						case  8:  i8 [o++]  =                                                 data->b ? 1 : 0;  break;
+						case 16:  i16[o++]  = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 16,  data->b ? 1 : 0); break;
+						case 32:  i32[o++]  = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 32,  data->b ? 1 : 0); break;
+						case 64:  i64[o++]  = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 64,  data->b ? 1 : 0); break;
 #ifdef HAS_128BIT
-					case 128: i128[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, data->b ? 1 : 0); break;
+						case 128: i128[o++] = SWAP_INT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, data->b ? 1 : 0); break;
 #endif
-				}
-				break;
+					}
+					break;
 
-			case SIGNAL_TYPE_COMPLEX:
-				switch (bits) {
-					case  8:  i8 [o++]  = -1; /* Not supported */
-					          i8 [o++]  = -1; break;
-					case 16:  i16[o++]  = -1; /* Not supported */
-					          i16[o++]  = -1; break;
+				case SIGNAL_TYPE_COMPLEX:
+					switch (bits) {
+						case  8:  i8 [o++]  = -1; /* Not supported */
+							  i8 [o++]  = -1; break;
+						case 16:  i16[o++]  = -1; /* Not supported */
+							  i16[o++]  = -1; break;
 
-					case 32:  f32[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  32, creal(data->z));
-					          f32[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  32, cimag(data->z)); break;
-					case 64:  f64[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  64, creal(data->z));
-					          f64[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  64, cimag(data->z)); break;
+						case 32:  f32[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  32, creal(data->z));
+							  f32[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  32, cimag(data->z)); break;
+						case 64:  f64[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  64, creal(data->z));
+							  f64[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  64, cimag(data->z)); break;
 #ifdef HAS_128BIT
-					case 128: f128[o++] = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, creal(data->z);
-					          f128[o++] = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, cimag(data->z); break;
+						case 128: f128[o++] = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, creal(data->z);
+							  f128[o++] = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, cimag(data->z); break;
 #endif
-				}
-				break;
+					}
+					break;
 
-			case SIGNAL_TYPE_AUTO:
-			case SIGNAL_TYPE_INVALID:
-				return -1;
+				case SIGNAL_TYPE_AUTO:
+				case SIGNAL_TYPE_INVALID:
+					return -1;
+			}
 		}
 	}
 
