@@ -39,18 +39,23 @@ extern "C" {
 
 #include <uldaq.h>
 
+#define ULDAQ_MAX_DEV_COUNT 100
+#define ULDAQ_MAX_RANGE_COUNT 8
+
 struct uldaq {
+	DaqDeviceHandle device_handle;
+	DaqDeviceDescriptor device_descriptor;
+	DaqDeviceInterface device_interface_type;
+
 	struct {
-	int sample_count;
-	double sample_rate;
-	ScanOption scan_options;
-	AInScanFlag flags;
-	AiQueueElement queues;
-	AiInputMode inputMode;
-	DaqDeviceDescriptor devDescriptor;
-	DaqDeviceInterface interfaceType;
-	DaqDeviceHandle daqDeviceHandle
-	double* buffer;
+		double *buffer;
+		int sample_count;
+		double sample_rate;
+
+		ScanOption scan_options;
+		AInScanFlag flags;
+		AiQueueElement *queues;
+		AiInputMode input_mode;
 	} in;
 
 	struct {
