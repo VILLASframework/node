@@ -25,7 +25,7 @@
 #include <villas/node.h>
 #include <villas/plugin.h>
 #include <villas/config.h>
-#include <villas/nodes/loopback.h>
+#include <villas/nodes/uldaq.h>
 #include <villas/memory.h>
 
 static const struct {
@@ -91,7 +91,7 @@ int uldaq_init(struct node *n)
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	u->in.queue_len = 0;
-	u->in.queues = NULL;
+	u->in.in.queues = NULL;
 	u->in.sample_count = 10000;
 	u->in.sample_rate = 1000;
 	u->in.scan_options = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS);
@@ -120,11 +120,12 @@ int uldaq_parse(struct node *n, json_t *cfg)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 	u->in.queue_len = list_length(&n->in.signals);
-	u->in.queues = realloc(sizeof(struct AiQueueElement) * u->in.queue_len);
+	u->in.in.queues = realloc(sizeof(struct AiQueueElement) * u->in.queue_len);
 
 	json_array_foreach(json_signals, i, json_signal) {
 
 	}
+	return ret;
 }
 
 int uldaq_start(struct node *n)
@@ -140,15 +141,15 @@ int uldaq_start(struct node *n)
 	int descriptorIndex = 0;
 	unsigned int numDevs = 1;
 	UlError err = ERR_NO_ERROR;
-	AiInputMode u->inputMode = AI_SINGLE_ENDED;
+	Aiin.InputMode u->in.inputMode = AI_SINGLE_ENDED;
 	int chanCount = 1;//change this to use more than one channel
 	int index = 0;
 
 
-	// allocate a buffer to receive the data
-	double *buffer = (double *) alloc(chanCount * u->sample_count * sizeof(double));
-	if (buffer == 0) {
-		warn("Out of memory, unable to create scan buffer");
+	// allocate ain buffer to receive the data
+	double *u->in.buffer = (double *) alloc(chanCount * u->sample_count * sizeof(double));
+	if (u->in.buffer == 0) {
+		warn("Out of memory, unable to create scan u->in.buffer");
 		ret = -1;
 	}
 
@@ -165,22 +166,22 @@ int uldaq_start(struct node *n)
 	}
 
 	// get a handle to the DAQ device associated with the first descriptor
-	u->daqDeviceHandle = ulCreateDaqDevice(u->devDescriptors[0]);
-	if (u->daqDeviceHandle == 0) {
+	u->in.daqDeviceHandle = ulCreateDaqDevice(u->devDescriptors[0]);
+	if (u->in.daqDeviceHandle == 0) {
 		warn ("Unable to create a handle to the specified DAQ device");
 		ret = -1;
 	}
 
 	// get the analog input ranges
-	err = getAiInfoRanges(u->daqDeviceHandle, u->inputMode, &numRanges, ranges);
+	err = getAiInfoRanges(u->in.daqDeviceHandle, u->in.inputMode, &numRanges, ranges);
 	if (err != ERR_NO_ERROR)
 		ret = -1;
 
-	err = ulConnectDaqDevice(u->daqDeviceHandle);
+	err = ulConnectDaqDevice(u->in.daqDeviceHandle);
 	if (err != ERR_NO_ERROR)
 		ret = -1;
 
-	err = ulAInLoadQueue(u->daqDeviceHandle, u->queues, chanCount);
+	err = ulAInLoadQueue(u->in.daqDeviceHandle, u->in.queues, chanCount);
 	if (err != ERR_NO_ERROR)
 		ret = -1;
 
@@ -190,21 +191,21 @@ int uldaq_start(struct node *n)
 
 	// start the acquisition
 	//
-	// when using the queue, the lowChan, highChan, u->inputMode, and range
-	// parameters are ignored since they are specified in u->queues
-	err = ulAInScan(u->daqDeviceHandle, lowChan, highChan, u->inputMode, range, u->sample_count, &(u->sample_rate), u->scanOptions, u->flags, buffer);
+	// when using the queue, the lowChan, highChan, u->in.inputMode, and range
+	// parameters are ignored since they are specified in u->in.queues
+	err = ulAInScan(u->in.daqDeviceHandle, lowChan, highChan, u->in.inputMode, range, u->sample_count, &(u->sample_rate), u->scanOptions, u->flags, u->in.buffer);
 	if (err == ERR_NO_ERROR) {
 		ScanStatus status;
 		TransferStatus transferStatus;
 
 		// get the initial status of the acquisition
-		ulAInScanStatus(u->daqDeviceHandle, &status, &transferStatus);
+		ulAInScanStatus(u->in.daqDeviceHandle, &status, &transferStatus);
 	}
 
 	if (ret)
 		return ret;
 
-	return queue_signalled_init(&l->queue, l->queuelen, &memory_hugepage, QUEUE_SIGNALLED_EVENTFD);
+	return ret;
 }
 
 int uldaq_stop(struct node *n)
@@ -212,19 +213,20 @@ int uldaq_stop(struct node *n)
 	int ret;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-
+	UlError err = ERR_NO_ERROR;
+	ScanStatus status;
 	// get the current status of the acquisition
-	err = ulAInScanStatus(u->daqDeviceHandle, &status, &transferStatus);
-    	UlError err = ERR_NO_ERROR;
+	err = ulAInScanStatus(u->in.daqDeviceHandle, &status, &transferStatus);
+
 	// stop the acquisition if it is still running
 	if (status == SS_RUNNING && err == ERR_NO_ERROR)
-		ulAInScanStop(u->daqDeviceHandle);
+		ulAInScanStop(u->in.daqDeviceHandle);
 
 	// TODO: error handling
-	ulDisconnectDaqDevice(u->daqDeviceHandle);
-	ulReleaseDaqDevice(u->daqDeviceHandle);
+	ulDisconnectDaqDevice(u->in.daqDeviceHandle);
+	ulReleaseDaqDevice(u->in.daqDeviceHandle);
 
-	return queue_signalled_destroy(&l->queue);
+	return ret;
 }
 
 int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
@@ -232,15 +234,17 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	int avail;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-    	UlError err = ERR_NO_ERROR;
+	UlError err = ERR_NO_ERROR;
+	ScanStatus status;
+	// get the current status of the acquisition
+	err = ulAInScanStatus(u->in.daqDeviceHandle, &status, &transferStatus);
 	if (status == SS_RUNNING && err == ERR_NO_ERROR) {
-		// get the current status of the acquisition
-		err = ulAInScanStatus(u->daqDeviceHandle, &status, &transferStatus);
+
 
 		if (err == ERR_NO_ERROR) {
 			index = transferStatus.currentIndex;
 			int i=0;//we only read one channel
-			double currentVal = buffer[index + i];
+			double currentVal = u->in.buffer[index + i];
 		}
 
 	}
@@ -254,10 +258,9 @@ static struct plugin p = {
 	.type = PLUGIN_TYPE_NODE,
 	.node = {
 		.vectorize = 0,
-		.u->flags	= NODE_TYPE_PROVIDES_SIGNALS,
+		.flags	= NODE_TYPE_PROVIDES_SIGNALS,
 		.size	= sizeof(struct uldaq),
-		.parse	= loopback_parse,
-		.print	= loopback_print,
+		.parse	= uldaq_parse,
 		.start	= uldaq_start,
 		.stop	= uldaq_stop,
 		.read	= uldaq_read

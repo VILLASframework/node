@@ -49,7 +49,7 @@ struct uldaq {
 	AiInputMode inputMode;
 	DaqDeviceDescriptor devDescriptor;
 	DaqDeviceInterface interfaceType;
-	DaqDeviceHandle daqDeviceHandle
+	DaqDeviceHandle daqDeviceHandle;
 	double* buffer;
 	} in;
 
