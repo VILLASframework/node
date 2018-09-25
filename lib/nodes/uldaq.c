@@ -228,7 +228,7 @@ int uldaq_parse(struct node *n, json_t *cfg)
 		const char *range_str = NULL, *input_mode_str = NULL;
 		int channel = -1, input_mode, range;
 
-		json_unpack_ex(json_signal, &err, 0, "{ s?: s, s?: s, s?: i }",
+		ret = json_unpack_ex(json_signal, &err, 0, "{ s?: s, s?: s, s?: i }",
 			"range", &range,
 			"input_mode", &input_mode,
 			"channel", &channel
