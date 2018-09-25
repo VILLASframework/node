@@ -314,15 +314,19 @@ int uldaq_check(struct node *n)
 
 void uldaq_data_available(DaqDeviceHandle device_handle, DaqEventType event_type, unsigned long long event_data, void *ctx)
 {
-	UlError err;
 	struct node *n = (struct node *) ctx;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	pthread_mutex_lock(&u->in.mutex);
 
+#if 1
+	UlError err;
 	err = ulAInScanStatus(device_handle, &u->in.status, &u->in.transfer_status);
 	if (err != ERR_NO_ERROR)
 		warn("Failed to retrieve scan status in event callback");
+#else
+	u->in.transfer_status.currentIndex = (event_data - 1) * u->in.channel_count;
+#endif
 
 	pthread_mutex_unlock(&u->in.mutex);
 
@@ -393,7 +397,7 @@ int uldaq_start(struct node *n)
 	err = ulEnableEvent(u->device_handle, DE_ON_DATA_AVAILABLE, n->in.vectorize, uldaq_data_available, n);
 
 	/* Start the acquisition */
-	err = ulAInScan(u->device_handle, 0, 0, 0, 0, n->in.vectorize, &u->in.sample_rate, u->in.scan_options, u->in.flags, u->in.buffer);
+	err = ulAInScan(u->device_handle, 0, 0, 0, 0, u->in.buffer_len / u->in.channel_count, &u->in.sample_rate, u->in.scan_options, u->in.flags, u->in.buffer);
 	if (err != ERR_NO_ERROR) {
 		warn("Failed to start acquisition on DAQ device for node '%s'", node_name(n));
 		return -1;
@@ -462,9 +466,17 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		return -1;
 
 	long long start_index = u->in.transfer_status.currentIndex - (n->in.vectorize-1) * u->in.channel_count;
+	if(start_index < 0){
+		start_index += u->in.buffer_len;
+	}
+
+#if 0
 	debug(2, "total count = %lld", u->in.transfer_status.currentTotalCount);
 	debug(2, "index  = %lld", u->in.transfer_status.currentIndex);
 	debug(2, "scan count = %lld", u->in.transfer_status.currentScanCount);
+	debug(2, "start index= %lld", start_index);
+#endif
+
 	for (int j = 0; j < n->in.vectorize; j++) {
 		struct sample *smp = smps[j];
 
@@ -474,8 +486,6 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 			long long channel_index = (scan_index + i) % u->in.buffer_len;
 
 			smp->data[i].f = u->in.buffer[channel_index];
-			debug(2, "challenidx = %lld", channel_index);
-
 		}
 
 		smp->length = u->in.channel_count;
