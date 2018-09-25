@@ -418,7 +418,7 @@ int uldaq_stop(struct node *n)
 
 	UlError err;
 
-	pthread_mutex_lock(&u->in.mutex);
+	//pthread_mutex_lock(&u->in.mutex);
 
 	/* Get the current status of the acquisition */
 	err = ulAInScanStatus(u->device_handle, &u->in.status, &u->in.transfer_status);
@@ -432,8 +432,7 @@ int uldaq_stop(struct node *n)
 			return -1;
 	}
 
-	pthread_mutex_unlock(&u->in.mutex);
-	pthread_cond_broadcast(&u->in.cv);
+	//pthread_mutex_unlock(&u->in.mutex);
 
 	err = ulDisconnectDaqDevice(u->device_handle);
 	if (err != ERR_NO_ERROR)
@@ -477,11 +476,7 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		smp->signals = &n->signals;
 		smp->sequence = scan_index / u->in.channel_count;
 		smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
-
-		debug(2, "sequence no: %zu", smp->sequence);
 	}
-
-	debug(2, "cnt: %u", cnt);
 
 	pthread_mutex_unlock(&u->in.mutex);
 
