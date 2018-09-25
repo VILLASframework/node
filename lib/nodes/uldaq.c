@@ -440,6 +440,8 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		for (int i = 0; i < list_length(&n->signals); i++) {
 			smp->data[i].f = u->in.buffer[index + i];
 		}
+		smp->length = 1;
+		smp->signals = &n->signals;
 	}
 
 	return 1;
