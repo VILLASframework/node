@@ -465,7 +465,7 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	for (int j = 0; j < n->in.vectorize; j++) {
 		struct sample *smp = smps[j];
 
-		long long scan_index = start_index + j + u->in.channel_count;
+		long long scan_index = start_index + j * u->in.channel_count;
 
 		for (int i = 0; i < u->in.channel_count; i++) {
 			long long channel_index = (scan_index + i) % u->in.buffer_len;
@@ -475,7 +475,7 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 		smp->length = u->in.channel_count;
 		smp->signals = &n->signals;
-		smp->sequence = u->in.transfer_status.currentTotalCount / u->in.channel_count;
+		smp->sequence = start_index / u->in.channel_count;
 		smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
 	}
 
