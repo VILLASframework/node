@@ -97,6 +97,16 @@ int uldaq_init(struct node *n)
 	u->in.flags = AINSCAN_FF_DEFAULT;
 }
 
+int uldaq_destroy(struct node *n)
+{
+	struct uldaq *u = (struct uldaq *) n->_vd;
+
+	if (u->in.queues)
+		free(u->in.queues);
+
+	return 0;
+}
+
 int uldaq_parse(struct node *n, json_t *cfg)
 {
 	int ret;
@@ -266,6 +276,7 @@ static struct plugin p = {
 		.size	= sizeof(struct uldaq),
 		.parse	= uldaq_parse,
 		.init	= uldaq_init,
+		.destroy= uldaq_destroy,
 		.parse	= uldaq_parse,
 		.print	= uldaq_print,
 		.start	= uldaq_start,
