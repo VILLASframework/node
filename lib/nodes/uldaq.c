@@ -309,10 +309,12 @@ int uldaq_start(struct node *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-	DaqDeviceDescriptor descriptors[ULDAQ_MAX_DEV_COUNT];
+	unsigned num_devs = ULDAQ_MAX_DEV_COUNT;
+	DaqDeviceDescriptor descriptors[num_devs];
+		ScanStatus status;
+	TransferStatus transfer_status;
 
 	UlError err;
-	unsigned num_devs;
 
 	// allocate a buffer to receive the data
 	u->in.buffer = (double *) alloc(list_length(&n->signals) * n->in.vectorize * sizeof(double));
@@ -323,19 +325,21 @@ int uldaq_start(struct node *n)
 
 	// Get descriptors for all of the available DAQ devices
 	err = ulGetDaqDeviceInventory(u->device_interface_type, descriptors, &num_devs);
-	if (err != ERR_NO_ERROR)
+	if (err != ERR_NO_ERROR) {
+		warn("Failed to retrieve DAQ device list for node '%s'", node_name(n));
 		return -1;
+	}
 
 	/* Verify at least one DAQ device is detected */
 	if (num_devs == 0) {
-		warn("No DAQ devices are connected");
+		warn("No DAQ devices found for node '%s'", node_name(n));
 		return -1;
 	}
 
 	/* Get a handle to the DAQ device associated with the first descriptor */
 	u->device_handle = ulCreateDaqDevice(descriptors[0]);
 	if (u->device_handle == 0) {
-		warn ("Unable to create a handle to the specified DAQ device");
+		warn("Unabled to create handle for DAQ device for node '%s'", node_name(n));
 		return -1;
 	}
 
@@ -349,26 +353,35 @@ int uldaq_start(struct node *n)
 #endif
 
 	err = ulConnectDaqDevice(u->device_handle);
-	if (err != ERR_NO_ERROR)
+	if (err != ERR_NO_ERROR) {
+		warn("Failed to connect to DAQ device for node '%s'", node_name(n));
 		return -1;
+	}
 
 	err = ulAInLoadQueue(u->device_handle, u->in.queues, list_length(&n->signals));
-	if (err != ERR_NO_ERROR)
+	if (err != ERR_NO_ERROR) {
+		warn("Failed to load input queue to DAQ device for node '%s'", node_name(n));
 		return -1;
+	}
 
 	/* Start the acquisition */
 	err = ulAInScan(u->device_handle, 0, 0, 0, 0, n->in.vectorize, &u->in.sample_rate, u->in.scan_options, u->in.flags, u->in.buffer);
-	if (err != ERR_NO_ERROR)
+	if (err != ERR_NO_ERROR) {
+		warn("Failed to start acquisition on DAQ device for node '%s'", node_name(n));
 		return -1;
-
-	ScanStatus status;
-	TransferStatus transfer_status;
+	}
 
 	/* Get the initial status of the acquisition */
-	ulAInScanStatus(u->device_handle, &status, &transfer_status);
-
-	if (status != SS_RUNNING)
+	err = ulAInScanStatus(u->device_handle, &status, &transfer_status);
+	if (err != ERR_NO_ERROR) {
+		warn("Failed to retrieve scan status on DAQ device for node '%s'", node_name(n));
 		return -1;
+	}
+
+	if (status != SS_RUNNING) {
+		warn ("Acquisition did not start on DAQ device for node '%s'", node_name(n));
+		return -1;
+	}
 
 	return 0;
 }
