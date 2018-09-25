@@ -31,49 +31,51 @@
 static const struct {
 	const char *name;
 	Range range;
+	float min, max;
 } ranges[] = {
-	{ "bipolar-60", BIP60VOLTS },		// -60    to +60 Volts
-	{ "bipolar-30", BIP30VOLTS },		// -30    to +30 Volts
-	{ "bipolar-15", BIP15VOLTS },		// -15    to +15 Volts
-	{ "bipolar-20", BIP20VOLTS },		// -20    to +20 Volts
-	{ "bipolar-10", BIP10VOLTS },		// -10    to +10 Volts
-	{ "bipolar-5", BIP5VOLTS },		// -5     to +5 Volts
-	{ "bipolar-4", BIP4VOLTS },		// -4     to +4 Volts
-	{ "bipolar-2.5", BIP2PT5VOLTS },	// -2.5   to +2.5 Volts
-	{ "bipolar-2", BIP2VOLTS },		// -2     to +2.0 Volts
-	{ "bipolar-1.25", BIP1PT25VOLTS },	// -1.25  to +1.25 Volts
-	{ "bipolar-1", BIP1VOLTS },		// -1     to +1 Volts
-	{ "bipolar-0.625", BIPPT625VOLTS },	// -0.625 to +.625 Volts
-	{ "bipolar-0.5", BIPPT5VOLTS },		// -0.5   to +.5 Volts
-	{ "bipolar-0.25", BIPPT25VOLTS },	// -0.25  to +0.25 Volts
-	{ "bipolar-0.125", BIPPT125VOLTS },	// -0.125 to +0.125 Volts
-	{ "bipolar-0.2", BIPPT2VOLTS },		// -0.2   to +0.2 Volts
-	{ "bipolar-0.1", BIPPT1VOLTS },		// -0.1   to +.1 Volts
-	{ "bipolar-0.078", BIPPT078VOLTS },	// -0.078 to +0.078 Volts
-	{ "bipolar-0.05", BIPPT05VOLTS },	// -0.05  to +.05 Volts
-	{ "bipolar-0.01", BIPPT01VOLTS },	// -0.01  to +.01 Volts
-	{ "bipolar-0.005", BIPPT005VOLTS },	// -0.005 to +.005 Volts
-	{ "unipolar-60", UNI60VOLTS },		//  0.0   to +60 Volts
-	{ "unipolar-30", UNI30VOLTS },		//  0.0   to +30 Volts
-	{ "unipolar-15", UNI15VOLTS },		//  0.0   to +15 Volts
-	{ "unipolar-20", UNI20VOLTS },		//  0.0   to +20 Volts
-	{ "unipolar-10", UNI10VOLTS },		//  0.0   to +10 Volts
-	{ "unipolar-5", UNI5VOLTS },		//  0.0   to +5 Volts
-	{ "unipolar-4", UNI4VOLTS },		//  0.0   to +4 Volts
-	{ "unipolar-2.5", UNI2PT5VOLTS },	//  0.0   to +2.5 Volts
-	{ "unipolar-2", UNI2VOLTS },		//  0.0   to +2.0 Volts
-	{ "unipolar-1.25", UNI1PT25VOLTS },	//  0.0   to +1.25 Volts
-	{ "unipolar-1", UNI1VOLTS },		//  0.0   to +1 Volts
-	{ "unipolar-0.625", UNIPT625VOLTS },	//  0.0   to +.625 Volts
-	{ "unipolar-0.5", UNIPT5VOLTS },	//  0.0   to +.5 Volts
-	{ "unipolar-0.25", UNIPT25VOLTS },	//  0.0   to +0.25 Volts
-	{ "unipolar-0.125", UNIPT125VOLTS },	//  0.0   to +0.125 Volts
-	{ "unipolar-0.2", UNIPT2VOLTS },	//  0.0   to +0.2 Volts
-	{ "unipolar-0.1", UNIPT1VOLTS },	//  0.0   to +.1 Volts
-	{ "unipolar-0.078", UNIPT078VOLTS },	//  0.0   to +0.078 Volts
-	{ "unipolar-0.05", UNIPT05VOLTS },	//  0.0   to +.05 Volts
-	{ "unipolar-0.01", UNIPT01VOLTS },	//  0.0   to +.01 Volts
-	{ "unipolar-0.005", UNIPT005VOLTS }	//  0.0   to +.005 Volts
+	{ "bipolar-60", BIP60VOLTS,      -60.0,  +60.0   },
+	{ "bipolar-60", BIP60VOLTS,      -60.0,  +60.0   },
+	{ "bipolar-30", BIP30VOLTS,      -30.0,  +30.0   },
+	{ "bipolar-15", BIP15VOLTS,      -15.0,  +15.0   },
+	{ "bipolar-20", BIP20VOLTS,      -20.0,  +20.0   },
+	{ "bipolar-10", BIP10VOLTS,      -10.0,  +10.0   },
+	{ "bipolar-5", BIP5VOLTS,         -5.0,   +5.0   },
+	{ "bipolar-4", BIP4VOLTS,         -4.0,   +4.0   },
+	{ "bipolar-2.5", BIP2PT5VOLTS,    -2.5,   +2.5   },
+	{ "bipolar-2", BIP2VOLTS,         -2.0,   +2.0   },
+	{ "bipolar-1.25", BIP1PT25VOLTS,  -1.25,  +1.25  },
+	{ "bipolar-1", BIP1VOLTS,         -1.0,   +1.0   },
+	{ "bipolar-0.625", BIPPT625VOLTS, -0.625, +0.625 },
+	{ "bipolar-0.5", BIPPT5VOLTS,     -0.5,   +0.5   },
+	{ "bipolar-0.25", BIPPT25VOLTS,   -0.25,  +0.25  },
+	{ "bipolar-0.125", BIPPT125VOLTS, -0.125, +0.125 },
+	{ "bipolar-0.2", BIPPT2VOLTS,     -0.2,   +0.2   },
+	{ "bipolar-0.1", BIPPT1VOLTS,     -0.1,   +0.1   },
+	{ "bipolar-0.078", BIPPT078VOLTS, -0.078, +0.078 },
+	{ "bipolar-0.05", BIPPT05VOLTS,   -0.05,  +0.05  },
+	{ "bipolar-0.01", BIPPT01VOLTS,   -0.01,  +0.01  },
+	{ "bipolar-0.005", BIPPT005VOLTS, -0.005, +0.005 },
+	{ "unipolar-60", UNI60VOLTS ,      0.0,  +60.0   },
+	{ "unipolar-30", UNI30VOLTS ,      0.0,  +30.0   },
+	{ "unipolar-15", UNI15VOLTS ,      0.0,  +15.0   },
+	{ "unipolar-20", UNI20VOLTS ,      0.0,  +20.0   },
+	{ "unipolar-10", UNI10VOLTS ,      0.0,  +10.0   },
+	{ "unipolar-5", UNI5VOLTS ,        0.0,   +5.0   },
+	{ "unipolar-4", UNI4VOLTS ,        0.0,   +4.0   },
+	{ "unipolar-2.5", UNI2PT5VOLTS,    0.0,   +2.5   },
+	{ "unipolar-2", UNI2VOLTS ,        0.0,   +2.0   },
+	{ "unipolar-1.25", UNI1PT25VOLTS,  0.0,   +1.25  },
+	{ "unipolar-1", UNI1VOLTS ,        0.0,   +1.0   },
+	{ "unipolar-0.625", UNIPT625VOLTS, 0.0,   +0.625 },
+	{ "unipolar-0.5", UNIPT5VOLTS,     0.0,   +0.5   },
+	{ "unipolar-0.25", UNIPT25VOLTS,   0.0,   +0.25  },
+	{ "unipolar-0.125", UNIPT125VOLTS, 0.0,   +0.125 },
+	{ "unipolar-0.2", UNIPT2VOLTS,     0.0,   +0.2   },
+	{ "unipolar-0.1", UNIPT1VOLTS,     0.0,   +0.1   },
+	{ "unipolar-0.078", UNIPT078VOLTS, 0.0,   +0.078 },
+	{ "unipolar-0.05", UNIPT05VOLTS,   0.0,   +0.05  },
+	{ "unipolar-0.01", UNIPT01VOLTS,   0.0,   +0.01  },
+	{ "unipolar-0.005", UNIPT005VOLTS, 0.0,   +0.005 }
 };
 
 static UlError uldag_range_info(DaqDeviceHandle daqDeviceHandle, AiInputMode inputMode, int *numberOfRanges, Range* ranges)
