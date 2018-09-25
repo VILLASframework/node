@@ -339,7 +339,7 @@ int uldaq_start(struct node *n)
 	UlError err;
 
 	/* Allocate a buffer to receive the data */
-	u->in.buffer_len = u->in.channel_count * n->in.vectorize;
+	u->in.buffer_len = u->in.channel_count * n->in.vectorize * 5;
 	u->in.buffer = (double *) alloc(u->in.buffer_len * sizeof(double));
 	if (!u->in.buffer) {
 		warn("Out of memory, unable to create scan buffer");
