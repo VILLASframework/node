@@ -91,10 +91,11 @@ int uldaq_init(struct node *n)
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	u->in.queues = NULL;
-	u->in.sample_count = 10000;
 	u->in.sample_rate = 1000;
 	u->in.scan_options = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS);
 	u->in.flags = AINSCAN_FF_DEFAULT;
+
+	return 0;
 }
 
 int uldaq_destroy(struct node *n)
@@ -119,17 +120,16 @@ int uldaq_parse(struct node *n, json_t *cfg)
 	json_t *json_signal;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: { s: o, s: i, s: d } }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: { s: o, s: d } }",
 		"in",
 			"signals", &json_signals,
-			"sample_count", &u->in.sample_count,
 			"sample_rate", &u->in.sample_rate,
 			"range", &range
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-	u->in.queues = realloc(sizeof(struct AiQueueElement) * list_length(&n->signals));
+	u->in.queues = realloc(u->in.queues, sizeof(struct AiQueueElement) * list_length(&n->signals));
 
 	json_array_foreach(json_signals, i, json_signal) {
 
@@ -142,7 +142,7 @@ int uldaq_check(struct node *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-	(void *) u; // unused for now
+	(void) u; // unused for now
 
 	if (n->in.vectorize < 100) {
 		warn("vectorize setting of node '%s' must be larger than 100", node_name(n));
@@ -162,7 +162,7 @@ int uldaq_start(struct node *n)
 	int ret;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-	DaqDeviceDescriptor devDescriptors[ULDAQ_MAX_DEV_COUNT];
+	DaqDeviceDescriptor descriptors[ULDAQ_MAX_DEV_COUNT];
 	Range ranges[ULDAQ_MAX_RANGE_COUNT];
 
 	unsigned int num_devs = 1, num_ranges = 0;;
@@ -179,25 +179,25 @@ int uldaq_start(struct node *n)
 	}
 
 	// Get descriptors for all of the available DAQ devices
-	err = ulGetDaqDeviceInventory(u->device_interface_type, u->devDescriptors, &numDevs);
+	err = ulGetDaqDeviceInventory(u->device_interface_type, descriptors, &num_devs);
 	if (err != ERR_NO_ERROR)
 		return -1;
 
 	// verify at least one DAQ device is detected
-	if (numDevs == 0) {
+	if (num_devs == 0) {
 		warn("No DAQ devices are connected");
 		return -1;
 	}
 
 	// get a handle to the DAQ device associated with the first descriptor
-	u->device_handle = ulCreateDaqDevice(u->devDescriptors[0]);
+	u->device_handle = ulCreateDaqDevice(descriptors[0]);
 	if (u->device_handle == 0) {
 		warn ("Unable to create a handle to the specified DAQ device");
 		return -1;
 	}
 
 	// get the analog input ranges
-	err = getAiInfoRanges(u->device_handle, u->inputMode, &numRanges, ranges);
+	err = getAiInfoRanges(u->device_handle, u->in.input_mode, &num_ranges, ranges);
 	if (err != ERR_NO_ERROR)
 		return -1;
 
@@ -210,9 +210,9 @@ int uldaq_start(struct node *n)
 		return -1;
 
 	// start the acquisition
-	// when using the queue, the lowChan, highChan, u->inputMode, and range
+	// when using the queue, the lowChan, highChan, u->in.input_mode, and range
 	// parameters are ignored since they are specified in u->queues
-	err = ulAInScan(u->device_handle, 0, 0, u->inputMode, 0, u->sample_count, &(u->sample_rate), u->scanOptions, u->flags, buffer);
+	err = ulAInScan(u->device_handle, 0, 0, u->in.input_mode, 0, n->in.vectorize, &(u->in.sample_rate), u->in.scan_options, u->in.flags, u->in.buffer);
 	if (err == ERR_NO_ERROR) {
 		ScanStatus status;
 		TransferStatus transferStatus;
@@ -258,9 +258,9 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	err = ulAInScanStatus(u->device_handle, &status, &transferStatus);
 	if (status == SS_RUNNING && err == ERR_NO_ERROR) {
 		if (err == ERR_NO_ERROR) {
-			int index = transferStatus.currentIndex;
-			int i=0;//we only read one channel
-			double currentVal = u->in.buffer[index + i];
+			//int index = transferStatus.currentIndex;
+			//int i=0;//we only read one channel
+			//double currentVal = u->in.buffer[index + i];
 		}
 	}
 
@@ -279,7 +279,6 @@ static struct plugin p = {
 		.parse	= uldaq_parse,
 		.init	= uldaq_init,
 		.destroy= uldaq_destroy,
-		.parse	= uldaq_parse,
 		.print	= uldaq_print,
 		.start	= uldaq_start,
 		.stop	= uldaq_stop,
