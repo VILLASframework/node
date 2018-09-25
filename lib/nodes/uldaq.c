@@ -152,14 +152,10 @@ int uldaq_start(struct node *n)
 	int ret;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-	DaqDeviceDescriptor devDescriptors[ULDAQ_MAX_DEV_COUNT];
 	Range ranges[ULDAQ_MAX_RANGE_COUNT];
 
-	unsigned int num_devs = 1, num_ranges = 0;;
-	int descriptor_index = 0;
 	UlError err = ERR_NO_ERROR;
 	int chanCount = 1;//change this to use more than one channel
-	int index = 0;
 
 	// allocate a buffer to receive the data
 	u->in.buffer = (double *) alloc(list_length(&n->in.signals) * n->in.vectorize * sizeof(double));
@@ -202,7 +198,7 @@ int uldaq_start(struct node *n)
 	// start the acquisition
 	// when using the queue, the lowChan, highChan, u->inputMode, and range
 	// parameters are ignored since they are specified in u->queues
-	err = ulAInScan(u->device_handle, 0, 0, u->inputMode, 0, u->sample_count, &(u->sample_rate), u->scanOptions, u->flags, buffer);
+	err = ulAInScan(u->device_handle, 0, 0, u->in.input_mode, 0, u->in.sample_count, &(u->in.sample_rate), u->in.scan_options, u->in.flags, buffer);
 	if (err == ERR_NO_ERROR) {
 		ScanStatus status;
 		TransferStatus transferStatus;
