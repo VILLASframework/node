@@ -136,12 +136,9 @@ int uldaq_start(struct node *n)
 
 
 	Range ranges[MAX_RANGE_COUNT];
-	DaqDeviceDescriptor u->devDescriptors[MAX_DEV_COUNT];
-	DaqDeviceInterface u->interfaceType = ANY_IFC;
-	DaqDeviceHandle u->daqDeviceHandle = 0;
 	int numRanges = 0;
 	int descriptorIndex = 0;
-	unsigned int numDevs = MAX_DEV_COUNT;
+	unsigned int numDevs = 1;
 	UlError err = ERR_NO_ERROR;
 	AiInputMode u->inputMode = AI_SINGLE_ENDED;
 	int chanCount = 1;//change this to use more than one channel
@@ -216,6 +213,9 @@ int uldaq_stop(struct node *n)
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 
+	// get the current status of the acquisition
+	err = ulAInScanStatus(u->daqDeviceHandle, &status, &transferStatus);
+    	UlError err = ERR_NO_ERROR;
 	// stop the acquisition if it is still running
 	if (status == SS_RUNNING && err == ERR_NO_ERROR)
 		ulAInScanStop(u->daqDeviceHandle);
@@ -232,6 +232,7 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	int avail;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
+    	UlError err = ERR_NO_ERROR;
 	if (status == SS_RUNNING && err == ERR_NO_ERROR) {
 		// get the current status of the acquisition
 		err = ulAInScanStatus(u->daqDeviceHandle, &status, &transferStatus);

@@ -41,15 +41,16 @@ extern "C" {
 
 struct uldaq {
 	struct {
-		int sample_count;
-		double sample_rate;
-		ScanOption scan_options;
-		AInScanFlag flags;
-		AiQueueElement queues;
-        AiInputMode inputMode;
-        DaqDeviceDescriptor devDescriptor;
-        DaqDeviceInterface interfaceType = ANY_IFC;
-        DaqDeviceHandle daqDeviceHandle = 0;
+	int sample_count;
+	double sample_rate;
+	ScanOption scan_options;
+	AInScanFlag flags;
+	AiQueueElement queues;
+	AiInputMode inputMode;
+	DaqDeviceDescriptor devDescriptor;
+	DaqDeviceInterface interfaceType;
+	DaqDeviceHandle daqDeviceHandle
+	double* buffer;
 	} in;
 
 	struct {
