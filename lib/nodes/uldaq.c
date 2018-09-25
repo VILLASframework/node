@@ -76,7 +76,43 @@ static const struct {
 	{ "unipolar-0.005", UNIPT005VOLTS }	//  0.0   to +.005 Volts
 };
 
-static Range uldaq_parse_range(const char *str)
+static UlError uldag_range_info(DaqDeviceHandle daqDeviceHandle, AiInputMode inputMode, int *numberOfRanges, Range* ranges)
+{
+	UlError err = ERR_NO_ERROR;
+	int i = 0;
+	long long numRanges = 0;
+	long long rng;
+
+	if (inputMode == AI_SINGLE_ENDED)
+	{
+		err = ulAIGetInfo(daqDeviceHandle, AI_INFO_NUM_SE_RANGES, 0, &numRanges);
+	}
+	else
+	{
+		err = ulAIGetInfo(daqDeviceHandle, AI_INFO_NUM_DIFF_RANGES, 0, &numRanges);
+	}
+
+	for (i=0; i<numRanges; i++)
+	{
+		if (inputMode == AI_SINGLE_ENDED)
+		{
+			err = ulAIGetInfo(daqDeviceHandle, AI_INFO_SE_RANGE, i, &rng);
+		}
+		else
+		{
+			err = ulAIGetInfo(daqDeviceHandle, AI_INFO_DIFF_RANGE, i, &rng);
+		}
+
+		ranges[i] = (Range)rng;
+	}
+
+	*numberOfRanges = (int)numRanges;
+
+	return err;
+}
+
+__attribute__((unused))
+static Range uldaq_range_parse(const char *str)
 {
 	for (int i = 0; i < ARRAY_LEN(ranges); i++) {
 		if (!strcmp(ranges[i].name, str))
