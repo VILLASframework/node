@@ -334,12 +334,14 @@ int uldaq_start(struct node *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
+	u->sequence = 0;
+
 	unsigned num_devs = ULDAQ_MAX_DEV_COUNT;
 	DaqDeviceDescriptor descriptors[num_devs];
 	UlError err;
 
 	/* Allocate a buffer to receive the data */
-	u->in.buffer_len = u->in.channel_count * n->in.vectorize * 5;
+	u->in.buffer_len = u->in.channel_count * n->in.vectorize * 50;
 	u->in.buffer = (double *) alloc(u->in.buffer_len * sizeof(double));
 	if (!u->in.buffer) {
 		warn("Out of memory, unable to create scan buffer");
@@ -459,8 +461,10 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	if (cnt != n->in.vectorize)
 		return -1;
 
-	long long start_index = u->in.transfer_status.currentTotalCount - n->in.vectorize * u->in.channel_count;
-
+	long long start_index = u->in.transfer_status.currentIndex - (n->in.vectorize-1) * u->in.channel_count;
+	debug(2, "total count = %lld", u->in.transfer_status.currentTotalCount);
+	debug(2, "index  = %lld", u->in.transfer_status.currentIndex);
+	debug(2, "scan count = %lld", u->in.transfer_status.currentScanCount);
 	for (int j = 0; j < n->in.vectorize; j++) {
 		struct sample *smp = smps[j];
 
@@ -470,11 +474,13 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 			long long channel_index = (scan_index + i) % u->in.buffer_len;
 
 			smp->data[i].f = u->in.buffer[channel_index];
+			debug(2, "challenidx = %lld", channel_index);
+
 		}
 
 		smp->length = u->in.channel_count;
 		smp->signals = &n->signals;
-		smp->sequence = scan_index / u->in.channel_count;
+		smp->sequence = u->sequence++;
 		smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
 	}
 

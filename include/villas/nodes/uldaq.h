@@ -49,6 +49,8 @@ struct uldaq {
 	DaqDeviceDescriptor device_descriptor;
 	DaqDeviceInterface device_interface_type;
 
+	uint64_t sequence;
+
 	struct {
 		double sample_rate;
 		double *buffer;
