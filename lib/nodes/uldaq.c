@@ -309,9 +309,11 @@ int uldaq_start(struct node *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
+	u->in.scan_options = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS);//it looks like the init function is not called
+
 	unsigned num_devs = ULDAQ_MAX_DEV_COUNT;
 	DaqDeviceDescriptor descriptors[num_devs];
-		ScanStatus status;
+	ScanStatus status;
 	TransferStatus transfer_status;
 
 	UlError err;
