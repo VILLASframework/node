@@ -192,7 +192,7 @@ int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 out:	if (wbytes)
 		*wbytes = o * (bits / 8);
 
-	return 1;
+	return cnt;
 }
 
 int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt)
