@@ -62,6 +62,12 @@ else()
     add_compile_options(-Wall -Werror)
 endif()
 
+execute_process( 
+	COMMAND uname -m
+	COMMAND tr -d '\n'
+	OUTPUT_VARIABLE ARCH
+)
+
 # Check OS
 check_include_file("sys/eventfd.h" HAS_EVENTFD)
 check_include_file("semaphore.h" HAS_SEMAPHORE)

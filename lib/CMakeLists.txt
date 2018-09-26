@@ -73,8 +73,12 @@ set(LIB_SRC
     table.c
     bitset.c
     signal.c
-    tsc.c
 )
+
+
+if(ARCH STREQUAL "x86_64")
+	list(APPEND LIB_SRC tsc.c)
+endif()
 
 if(IBVERBS_FOUND AND RDMACM_FOUND)
     list(APPEND LIB_SRC memory/ib.c)
