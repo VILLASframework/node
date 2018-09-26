@@ -53,7 +53,7 @@ int memory_init(int hugepages)
 {
 	info("Initialize memory sub-system: #hugepages=%d", hugepages);
 
-#ifdef __linux__
+#if defined(__linux__) && defined(__x86_64__)
 	int pagecnt, pagesz, ret;
 	struct rlimit l;
 
