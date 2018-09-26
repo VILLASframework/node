@@ -319,7 +319,7 @@ void uldaq_data_available(DaqDeviceHandle device_handle, DaqEventType event_type
 
 	pthread_mutex_lock(&u->in.mutex);
 
-#if 1
+#if 0
 	UlError err;
 	err = ulAInScanStatus(device_handle, &u->in.status, &u->in.transfer_status);
 	if (err != ERR_NO_ERROR)
@@ -339,6 +339,7 @@ int uldaq_start(struct node *n)
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	u->sequence = 0;
+	u->buffer_pos = 0;
 
 	unsigned num_devs = ULDAQ_MAX_DEV_COUNT;
 	DaqDeviceDescriptor descriptors[num_devs];
@@ -465,7 +466,8 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	if (cnt != n->in.vectorize)
 		return -1;
 
-	long long start_index = u->in.transfer_status.currentIndex - (n->in.vectorize-1) * u->in.channel_count;
+	//long long start_index = u->in.transfer_status.currentIndex - (n->in.vectorize-1) * u->in.channel_count;
+	long long start_index = u->buffer_pos;
 	if(start_index < 0){
 		start_index += u->in.buffer_len;
 	}
@@ -493,7 +495,7 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		smp->sequence = u->sequence++;
 		smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
 	}
-
+	u->buffer_pos += u->in.channel_count * n->in.vectorize;
 	pthread_mutex_unlock(&u->in.mutex);
 
 	return cnt;
