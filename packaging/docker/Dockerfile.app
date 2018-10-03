@@ -42,7 +42,7 @@ RUN cmake -DCPACK_GENERATOR=RPM ..
 RUN make -j$(nproc) doc
 RUN make -j$(nproc) package
 
-FROM fedora:28
+FROM fedora:29
 	
 # Some of the dependencies are only available in our own repo
 ADD https://packages.fein-aachen.org/redhat/fein.repo /etc/yum.repos.d/
