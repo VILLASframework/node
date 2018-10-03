@@ -113,7 +113,7 @@ if(WITH_WEB)
     )
     
     list(APPEND INCLUDE_DIRS ${LIBWEBSOCKETS_INCLUDE_DIRS})
-    list(APPEND LIBRARIES websockets_shared)
+    list(APPEND LIBRARIES PkgConfig::LIBWEBSOCKETS)
 endif()
 
 if(WITH_API AND WITH_WEB)
