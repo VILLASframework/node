@@ -27,7 +27,7 @@
 #include <villas/utils.h>
 #include <villas/log.h>
 
-void debug(long class, const char *fmt, ...)
+void debug(long long class, const char *fmt, ...)
 {
 	va_list ap;
 

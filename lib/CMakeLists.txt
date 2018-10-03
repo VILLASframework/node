@@ -34,6 +34,7 @@ set(LIBRARIES
     PkgConfig::JANSSON
     ${OPENSSL_LIBRARIES}
     ${CURL_LIBRARIES}
+    m
 )
 
 set(LIB_SRC
@@ -72,8 +73,12 @@ set(LIB_SRC
     table.c
     bitset.c
     signal.c
-    tsc.c
 )
+
+
+if(ARCH STREQUAL "x86_64")
+	list(APPEND LIB_SRC tsc.c)
+endif()
 
 if(IBVERBS_FOUND AND RDMACM_FOUND)
     list(APPEND LIB_SRC memory/ib.c)
@@ -113,7 +118,7 @@ if(WITH_WEB)
     )
     
     list(APPEND INCLUDE_DIRS ${LIBWEBSOCKETS_INCLUDE_DIRS})
-    list(APPEND LIBRARIES websockets_shared)
+    list(APPEND LIBRARIES PkgConfig::LIBWEBSOCKETS)
 endif()
 
 if(WITH_API AND WITH_WEB)

@@ -74,7 +74,7 @@ enum log_facilities {
 	LOG_WEBSOCKET =		(1L << 29),
 	LOG_OPAL =		(1L << 30),
 	LOG_COMEDI =		(1L << 31),
-	LOG_IB =		(1L << 32),
+	LOG_IB =		(1LL << 32),
 
 	/* Classes */
 	LOG_NODES =	LOG_NODE | LOG_SOCKET | LOG_FILE | LOG_FPGA | LOG_NGSI | LOG_WEBSOCKET | LOG_OPAL | LOG_IB,
@@ -148,7 +148,7 @@ void log_print(struct log *l, const char *lvl, const char *fmt, ...)
 void log_vprint(struct log *l, const char *lvl, const char *fmt, va_list va);
 
 /** Printf alike debug message with level. */
-void debug(long lvl, const char *fmt, ...)
+void debug(long long lvl, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
 
 /** Printf alike info message. */
