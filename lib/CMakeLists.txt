@@ -34,6 +34,7 @@ set(LIBRARIES
     PkgConfig::JANSSON
     ${OPENSSL_LIBRARIES}
     ${CURL_LIBRARIES}
+    m
 )
 
 set(LIB_SRC
