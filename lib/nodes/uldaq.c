@@ -28,6 +28,9 @@
 #include <villas/nodes/uldaq.h>
 #include <villas/memory.h>
 
+static unsigned num_devs = ULDAQ_MAX_DEV_COUNT;
+static DaqDeviceDescriptor descriptors[ULDAQ_MAX_DEV_COUNT];
+
 static const struct {
 	const char *name;
 	AiInputMode mode;
@@ -97,34 +100,6 @@ static const struct {
 	{ "unipolar-0.005", UNIPT005VOLTS, 0.0,   +0.005 }
 };
 
-__attribute__((unused))
-static UlError uldag_range_info(DaqDeviceHandle device_handle, AiInputMode input_mode, int *number_of_ranges, Range* ranges)
-{
-	UlError err;
-	long long num_ranges = 0;
-	long long range;
-
-	err = input_mode == AI_SINGLE_ENDED
-		? ulAIGetInfo(device_handle, AI_INFO_NUM_SE_RANGES, 0, &num_ranges)
-		: ulAIGetInfo(device_handle, AI_INFO_NUM_DIFF_RANGES, 0, &num_ranges);
-	if (err != ERR_NO_ERROR)
-		return err;
-
-	for (int i = 0; i < num_ranges; i++) {
-		err = input_mode == AI_SINGLE_ENDED
-			? ulAIGetInfo(device_handle, AI_INFO_SE_RANGE, i, &range)
-			: ulAIGetInfo(device_handle, AI_INFO_DIFF_RANGE, i, &range);
-		if (err != ERR_NO_ERROR)
-			return err;
-
-		ranges[i] = (Range) range;
-	}
-
-	*number_of_ranges = (int) num_ranges;
-
-	return ERR_NO_ERROR;
-}
-
 static AiInputMode uldaq_parse_input_mode(const char *str)
 {
 	for (int i = 0; i < ARRAY_LEN(input_modes); i++) {
@@ -165,10 +140,83 @@ static Range uldaq_parse_range(const char *str)
 	return -1;
 }
 
-int uldaq_init(struct node *n)
+static int uldaq_connect(struct node *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
+	UlError err;
 
+	if (!u->device_descriptor) {
+		if (u->device_id) {
+			for (int i = 0; i < num_devs; i++) {
+				if (!strcmp(u->device_id, descriptors[i].uniqueId)) {
+					u->device_descriptor = &descriptors[i];
+					break;
+				}
+			}
+		}
+		else {
+			if (num_devs > 0)
+				u->device_descriptor = &descriptors[0];
+		}
+
+		if (!u->device_descriptor) {
+			warn("Unable to find a matching device for node '%s'", node_name(n));
+			return -1;
+		}
+	}
+
+	if (!u->device_handle) {
+		/* Get a handle to the DAQ device associated with the first descriptor */
+		u->device_handle = ulCreateDaqDevice(descriptors[0]);
+		if (!u->device_handle) {
+			warn("Unable to create handle for DAQ device for node '%s'", node_name(n));
+			return -1;
+		}
+	}
+
+	int connected;
+	err = ulIsDaqDeviceConnected(u->device_handle, &connected);
+	if (err != ERR_NO_ERROR)
+		return -1;
+
+	if (!connected) {
+		err = ulConnectDaqDevice(u->device_handle);
+		if (err != ERR_NO_ERROR) {
+			warn("Failed to connect to DAQ device for node '%s'", node_name(n));
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+int uldaq_type_start(struct super_node *sn)
+{
+	UlError err;
+
+	/* Get descriptors for all of the available DAQ devices */
+	err = ulGetDaqDeviceInventory(ANY_IFC, descriptors, &num_devs);
+	if (err != ERR_NO_ERROR) {
+		warn("Failed to retrieve DAQ device list");
+		return -1;
+	}
+
+	info("Found %d DAQ devices", num_devs);
+	for (int i = 0; i < num_devs; i++) {
+		DaqDeviceDescriptor *desc = &descriptors[i];
+
+		info("  %d: %s %s", i, desc->uniqueId, desc->devString);
+	}
+
+	return 0;
+}
+
+int uldaq_init(struct node *n)
+{
+	int ret;
+	struct uldaq *u = (struct uldaq *) n->_vd;
+
+	u->device_id = NULL;
 	u->device_interface_type = ANY_IFC;
 
 	u->in.queues = NULL;
@@ -176,21 +224,32 @@ int uldaq_init(struct node *n)
 	u->in.scan_options = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS);
 	u->in.flags = AINSCAN_FF_DEFAULT;
 
-	pthread_mutex_init(&u->in.mutex, NULL);
-	pthread_cond_init(&u->in.cv, NULL);
+	ret = pthread_mutex_init(&u->in.mutex, NULL);
+	if (ret)
+		return ret;
+
+	ret = pthread_cond_init(&u->in.cv, NULL);
+	if (ret)
+		return ret;
 
 	return 0;
 }
 
 int uldaq_destroy(struct node *n)
 {
+	int ret;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	if (u->in.queues)
 		free(u->in.queues);
 
-	pthread_mutex_destroy(&u->in.mutex);
-	pthread_cond_destroy(&u->in.cv);
+	ret = pthread_mutex_destroy(&u->in.mutex);
+	if (ret)
+		return ret;
+
+	ret = pthread_cond_destroy(&u->in.cv);
+	if (ret)
+		return ret;
 
 	return 0;
 }
@@ -209,8 +268,9 @@ int uldaq_parse(struct node *n, json_t *cfg)
 	json_t *json_signal;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: { s: o, s: F, s?: s, s?: s } }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s: { s: o, s: F, s?: s, s?: s } }",
 		"interface_type", &interface_type,
+		"device_id", &u->device_id,
 		"in",
 			"signals", &json_signals,
 			"sample_rate", &u->in.sample_rate,
@@ -279,8 +339,8 @@ char * uldaq_print(struct node *n)
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	char *buf = NULL;
-	char *uid = u->device_descriptor.uniqueId;
-	char *name = u->device_descriptor.productName;
+	char *uid = u->device_descriptor->uniqueId;
+	char *name = u->device_descriptor->productName;
 	const char *iftype = uldaq_print_interface_type(u->device_interface_type);
 
 	buf = strcatf(&buf, "device=%s (%s), interface=%s", uid, name, iftype);
@@ -291,20 +351,108 @@ char * uldaq_print(struct node *n)
 
 int uldaq_check(struct node *n)
 {
+	int ret;
+	long long has_ai, event_types, max_channel, scan_options, num_ranges_se, num_ranges_diff;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-	(void) u; // unused for now
+	UlError err;
 
 	if (n->in.vectorize < 100) {
 		warn("vectorize setting of node '%s' must be larger than 100", node_name(n));
 		return -1;
 	}
 
+	ret = uldaq_connect(n);
+	if (ret)
+		return ret;
+
+	err = ulDevGetInfo(u->device_handle, DEV_INFO_HAS_AI_DEV, 0, &has_ai);
+	if (err != ERR_NO_ERROR)
+		return -1;
+
+	err = ulDevGetInfo(u->device_handle, DEV_INFO_DAQ_EVENT_TYPES, 0, &event_types);
+	if (err != ERR_NO_ERROR)
+		return -1;
+
+	err = ulAIGetInfo(u->device_handle, AI_INFO_NUM_CHANS, 0, &max_channel);
+	if (err != ERR_NO_ERROR)
+		return -1;
+
+	err = ulAIGetInfo(u->device_handle, AI_INFO_SCAN_OPTIONS, 0, &scan_options);
+	if (err != ERR_NO_ERROR)
+		return -1;
+
+	err = ulAIGetInfo(u->device_handle, AI_INFO_NUM_DIFF_RANGES, 0, &num_ranges_diff);
+	if (err != ERR_NO_ERROR)
+		return -1;
+
+	err = ulAIGetInfo(u->device_handle, AI_INFO_NUM_SE_RANGES, 0, &num_ranges_se);
+	if (err != ERR_NO_ERROR)
+		return -1;
+
+	Range ranges_diff[num_ranges_diff];
+	Range ranges_se[num_ranges_se];
+
+	for (int i = 0; i < num_ranges_diff; i++) {
+		long long rng;
+
+		err = ulAIGetInfo(u->device_handle, AI_INFO_DIFF_RANGE, i, &rng);
+
+		ranges_diff[i] = *(Range *) rng;
+	}
+
+	for (int i = 0; i < num_ranges_se; i++) {
+		long long rng;
+
+		err = ulAIGetInfo(u->device_handle, AI_INFO_SE_RANGE, i, &rng);
+
+		ranges_se[i] = *(Range *) rng;
+	}
+
+	if (!has_ai) {
+		warn("DAQ device has no analog input channels");
+		return -1;
+	}
+
+	if (!(event_types & DE_ON_DATA_AVAILABLE)) {
+		warn("DAQ device does not support events");
+		return -1;
+	}
+
+	if (!(scan_options & SO_CONTINUOUS)) {
+		warn("DAQ device does not support continous scanning mode");
+		return -1;
+	}
+
 	for (size_t i = 0; i < list_length(&n->signals); i++) {
 		struct signal *s = (struct signal *) list_at(&n->signals, i);
+		AiQueueElement *q = &u->in.queues[i];
 
 		if (s->type != SIGNAL_TYPE_FLOAT) {
 			warn("Node '%s' only supports signals of type = float!", node_name(n));
+			return -1;
+		}
+
+		switch (q->inputMode) {
+			case AI_DIFFERENTIAL:
+				for (int i = 0; i < num_ranges_diff; i++) {
+					// TODO
+				}
+				break;
+
+			case AI_SINGLE_ENDED:
+				for (int i = 0; i < num_ranges_se; i++) {
+					// TODO
+				}
+				break;
+
+			case AI_PSEUDO_DIFFERENTIAL:
+				break;
+
+		}
+
+		if (q->channel > max_channel) {
+			warn("DAQ device does not support more than %lld channels", max_channel);
 			return -1;
 		}
 	}
@@ -319,14 +467,10 @@ void uldaq_data_available(DaqDeviceHandle device_handle, DaqEventType event_type
 
 	pthread_mutex_lock(&u->in.mutex);
 
-#if 0
 	UlError err;
 	err = ulAInScanStatus(device_handle, &u->in.status, &u->in.transfer_status);
 	if (err != ERR_NO_ERROR)
 		warn("Failed to retrieve scan status in event callback");
-#else
-	u->in.transfer_status.currentIndex = (event_data - 1) * u->in.channel_count;
-#endif
 
 	pthread_mutex_unlock(&u->in.mutex);
 
@@ -339,10 +483,9 @@ int uldaq_start(struct node *n)
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	u->sequence = 0;
-	u->buffer_pos = 0;
+	u->in.buffer_pos = 0;
 
-	unsigned num_devs = ULDAQ_MAX_DEV_COUNT;
-	DaqDeviceDescriptor descriptors[num_devs];
+	int ret;
 	UlError err;
 
 	/* Allocate a buffer to receive the data */
@@ -353,40 +496,9 @@ int uldaq_start(struct node *n)
 		return -1;
 	}
 
-	/* Get descriptors for all of the available DAQ devices */
-	err = ulGetDaqDeviceInventory(u->device_interface_type, descriptors, &num_devs);
-	if (err != ERR_NO_ERROR) {
-		warn("Failed to retrieve DAQ device list for node '%s'", node_name(n));
-		return -1;
-	}
-
-	/* Verify at least one DAQ device is detected */
-	if (num_devs == 0) {
-		warn("No DAQ devices found for node '%s'", node_name(n));
-		return -1;
-	}
-
-	/* Get a handle to the DAQ device associated with the first descriptor */
-	u->device_handle = ulCreateDaqDevice(descriptors[0]);
-	if (u->device_handle == 0) {
-		warn("Unabled to create handle for DAQ device for node '%s'", node_name(n));
-		return -1;
-	}
-
-#if 0
-	int num_ranges;
-	Range ranges[ULDAQ_MAX_RANGE_COUNT];
-	/* Get the analog input ranges */
-	err = uldag_range_info(u->device_handle, u->in.input_mode, &num_ranges, ranges);
-	if (err != ERR_NO_ERROR)
-		return -1;
-#endif
-
-	err = ulConnectDaqDevice(u->device_handle);
-	if (err != ERR_NO_ERROR) {
-		warn("Failed to connect to DAQ device for node '%s'", node_name(n));
-		return -1;
-	}
+	ret = uldaq_connect(n);
+	if (ret)
+		return ret;
 
 	err = ulAInLoadQueue(u->device_handle, u->in.queues, list_length(&n->signals));
 	if (err != ERR_NO_ERROR) {
@@ -425,6 +537,7 @@ int uldaq_stop(struct node *n)
 
 	UlError err;
 
+	// @todo: fix deadlock
 	//pthread_mutex_lock(&u->in.mutex);
 
 	/* Get the current status of the acquisition */
@@ -456,9 +569,20 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-	/* Wait for data available condition triggered by event callback */
+	size_t buffer_incr = n->in.vectorize * u->in.channel_count;
+
 	pthread_mutex_lock(&u->in.mutex);
-	pthread_cond_wait(&u->in.cv, &u->in.mutex);
+
+	/* Wait for data available condition triggered by event callback */
+	if (u->in.buffer_pos + buffer_incr < u->in.transfer_status.currentIndex)
+		pthread_cond_wait(&u->in.cv, &u->in.mutex);
+
+#if 1
+	debug(2, "Total count = %lld", u->in.transfer_status.currentTotalCount);
+	debug(2, "Index  = %lld", u->in.transfer_status.currentIndex);
+	debug(2, "Scan count = %lld", u->in.transfer_status.currentScanCount);
+	debug(2, "Buffer pos = %zu", u->in.buffer_pos);
+#endif
 
 	if (u->in.status != SS_RUNNING)
 		return -1;
@@ -466,19 +590,7 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	if (cnt != n->in.vectorize)
 		return -1;
 
-	//long long start_index = u->in.transfer_status.currentIndex - (n->in.vectorize-1) * u->in.channel_count;
-	long long start_index = u->buffer_pos;
-	if(start_index < 0){
-		start_index += u->in.buffer_len;
-	}
-
-#if 0
-	debug(2, "total count = %lld", u->in.transfer_status.currentTotalCount);
-	debug(2, "index  = %lld", u->in.transfer_status.currentIndex);
-	debug(2, "scan count = %lld", u->in.transfer_status.currentScanCount);
-	debug(2, "start index= %lld", start_index);
-#endif
-
+	long long start_index = u->in.buffer_pos;
 	for (int j = 0; j < n->in.vectorize; j++) {
 		struct sample *smp = smps[j];
 
@@ -495,7 +607,9 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		smp->sequence = u->sequence++;
 		smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
 	}
+
 	u->buffer_pos += u->in.channel_count * n->in.vectorize;
+
 	pthread_mutex_unlock(&u->in.mutex);
 
 	return cnt;
@@ -506,16 +620,17 @@ static struct plugin p = {
 	.description = "Read USB analog to digital converters like UL201",
 	.type = PLUGIN_TYPE_NODE,
 	.node = {
-		.vectorize = 0,
-		.flags	= 0,
-		.size	= sizeof(struct uldaq),
-		.parse	= uldaq_parse,
-		.init	= uldaq_init,
-		.destroy= uldaq_destroy,
-		.print	= uldaq_print,
-		.start	= uldaq_start,
-		.stop	= uldaq_stop,
-		.read	= uldaq_read
+		.vectorize	= 0,
+		.flags		= 0,
+		.size		= sizeof(struct uldaq),
+		.type.start	= uldaq_type_start,
+		.parse		= uldaq_parse,
+		.init		= uldaq_init,
+		.destroy	= uldaq_destroy,
+		.print		= uldaq_print,
+		.start		= uldaq_start,
+		.stop		= uldaq_stop,
+		.read		= uldaq_read
 	}
 };
 

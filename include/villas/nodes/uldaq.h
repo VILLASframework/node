@@ -45,8 +45,10 @@ extern "C" {
 #define ULDAQ_MAX_RANGE_COUNT 8
 
 struct uldaq {
+	const char *device_id;
+
 	DaqDeviceHandle device_handle;
-	DaqDeviceDescriptor device_descriptor;
+	DaqDeviceDescriptor *device_descriptor;
 	DaqDeviceInterface device_interface_type;
 
 	uint64_t sequence;
@@ -55,8 +57,9 @@ struct uldaq {
 	struct {
 		double sample_rate;
 		double *buffer;
-		unsigned buffer_len;
-		unsigned channel_count;
+		size_t buffer_len;
+		size_t buffer_pos;
+		size_t channel_count;
 
 		ScanOption scan_options;
 		AInScanFlag flags;
