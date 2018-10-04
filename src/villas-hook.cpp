@@ -122,6 +122,7 @@ int main(int argc, char *argv[])
 	json_t *cfg_cli = json_object();
 
 	char c, *endptr;
+	/* Parse optional command line arguments */
 	while ((c = getopt(argc, argv, "Vhv:d:f:o:")) != -1) {
 		switch (c) {
 			case 'V':

@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
 	const char *output_format = "villas.human";
 
 	char c, *endptr;
+	/* Parse optional command line arguments */
 	while ((c = getopt(argc, argv, "Vhd:i:o:")) != -1) {
 		switch (c) {
 			case 'V':
