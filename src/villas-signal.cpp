@@ -59,7 +59,8 @@ json_t * parse_cli(int argc, char *argv[])
 	int limit = -1;
 
 	/* Parse optional command line arguments */
-	char c, *endptr;
+	int c;
+	char *endptr;
 	while ((c = getopt(argc, argv, "v:r:f:l:a:D:no:")) != -1) {
 		switch (c) {
 			case 'n':
