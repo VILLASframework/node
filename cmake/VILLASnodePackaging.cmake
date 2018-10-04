@@ -60,7 +60,7 @@ set(CPACK_RPM_LIB_PACKAGE_REQUIRES "openssl libconfig libnl3 libcurl jansson lib
 set(CPACK_RPM_BIN_PACKAGE_REQUIRES     ${CPACK_RPM_LIB_PACKAGE_NAME})
 set(CPACK_RPM_PLUGINS_PACKAGE_REQUIRES ${CPACK_RPM_LIB_PACKAGE_NAME})
 set(CPACK_RPM_TOOLS_PACKAGE_REQUIRES   ${CPACK_RPM_LIB_PACKAGE_NAME})
-set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES   "${CPACK_RPM_LIB_PACKAGE_NAME} openssl openssl-devel libconfig-devel libnl3-devel libcurl-devel jansson-devel zeromq-devel nanomsg-devel protobuf-devel protobuf-c-devel libiec61850-devel librabbitmq-devel mosquitto-devel comedilib-devel comedilib libibverbs-devel librdmacm-devel")
+set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES   "${CPACK_RPM_LIB_PACKAGE_NAME} openssl openssl-devel libconfig-devel libnl3-devel libcurl-devel jansson-devel zeromq-devel protobuf-devel protobuf-c-devel librabbitmq-devel mosquitto-devel comedilib-devel comedilib libibverbs-devel librdmacm-devel nanomsg libiec61850")
 
 set(CPACK_RPM_BIN_PACKAGE_SUGGESTS "villas-node-tools villas-node-plugins villas-node-doc")
 
