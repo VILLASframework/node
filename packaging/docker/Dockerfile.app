@@ -45,7 +45,7 @@ RUN make -j$(nproc) package
 FROM fedora:29
 	
 # Some of the dependencies are only available in our own repo
-ADD https://packages.fein-aachen.org/redhat/fein.repo /etc/yum.repos.d/
+ADD https://packages.fein-aachen.org/fedora/fein.repo /etc/yum.repos.d/
 
 COPY --from=builder /villas/build/*.rpm /tmp/
 RUN dnf -y install /tmp/*.rpm
