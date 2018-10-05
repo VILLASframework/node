@@ -47,10 +47,10 @@ if(HAS_EVENTFD)
 endif()
 
 # Enable Universal Library for Linux DAQ devices (libuldaq)
-if(ULDAQ_FOUND)
+if(LIBULDAQ_FOUND)
     list(APPEND NODE_SRC uldaq.c)
     list(APPEND INCLUDE_DIRS ${ULDAQ_INCLUDE_DIRS})
-    list(APPEND LIBRARIES uldaq)
+    list(APPEND LIBRARIES PkgConfig::LIBULDAQ)
 endif()
 
 # Enable shared memory node-type
@@ -66,7 +66,7 @@ endif()
 if(LIBIEC61850_FOUND)
     list(APPEND NODE_SRC iec61850_sv.c iec61850.c)
     list(APPEND INCLUDE_DIRS ${LIBIEC61850_INCLUDE_DIRS})
-    list(APPEND LIBRARIES ${LIBIEC61850_LIBRARIES} PkgConfig::LIBIEC61850)
+    list(APPEND LIBRARIES PkgConfig::LIBIEC61850)
 endif()
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
