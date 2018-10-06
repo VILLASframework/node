@@ -38,7 +38,7 @@
 
 int kernel_get_cacheline_size()
 {
-#ifdef __linux__
+#if defined(__linux__) && defined(__x86_64__)
 	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
 #else
 	return 64; /** @todo fixme */

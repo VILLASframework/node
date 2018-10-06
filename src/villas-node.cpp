@@ -117,7 +117,9 @@ int main(int argc, char *argv[])
 
 	const char *uri = "opal-shmem.conf";
 #else
-	char c;
+
+	/* Parse optional command line arguments */
+	int c;
 	while ((c = getopt(argc, argv, "hV")) != -1) {
 		switch (c) {
 			case 'V':

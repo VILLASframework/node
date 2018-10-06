@@ -216,7 +216,7 @@ int log_set_facility_expression(struct log *l, const char *expression)
 {
 	bool negate;
 	char *copy, *token;
-	long mask = 0, facilities = 0;
+	long long mask = 0, facilities = 0;
 
 	copy = strdup(expression);
 	token = strtok(copy, ",");

@@ -62,6 +62,12 @@ else()
     add_compile_options(-Wall -Werror)
 endif()
 
+execute_process( 
+	COMMAND uname -m
+	COMMAND tr -d '\n'
+	OUTPUT_VARIABLE ARCH
+)
+
 # Check OS
 check_include_file("sys/eventfd.h" HAS_EVENTFD)
 check_include_file("semaphore.h" HAS_SEMAPHORE)
@@ -75,7 +81,6 @@ endif()
 # Check packages
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
-find_package(Libwebsockets 2.3.0 REQUIRED)
 find_package(OpenSSL 1.0.0 REQUIRED)
 find_package(CURL 7.29 REQUIRED)
 find_package(Mosquitto)
@@ -99,7 +104,8 @@ pkg_check_modules(LIBCONFIG IMPORTED_TARGET libconfig>=1.4.9)
 pkg_check_modules(RABBITMQ_C IMPORTED_TARGET librabbitmq>=0.8.0)
 pkg_check_modules(COMEDILIB IMPORTED_TARGET comedilib>=0.11.0)
 pkg_check_modules(LIBZMQ IMPORTED_TARGET libzmq>=2.2.0)
-pkg_check_modules(ULDAQ IMPORTED_TARGET libuldaq>=1.0.0)
+pkg_check_modules(LIBULDAQ IMPORTED_TARGET libuldaq>=1.0.0)
+pkg_check_modules(LIBWEBSOCKETS IMPORTED_TARGET libwebsockets>=2.3.0)
 pkg_check_modules(NANOMSG IMPORTED_TARGET nanomsg)
 if(NOT NANOMSG_FOUND)
     pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg>=1.0.0)

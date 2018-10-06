@@ -53,7 +53,7 @@ int memory_init(int hugepages)
 {
 	info("Initialize memory sub-system: #hugepages=%d", hugepages);
 
-#ifdef __linux__
+#if defined(__linux__) && defined(__x86_64__)
 	int pagecnt, pagesz, ret;
 	struct rlimit l;
 
@@ -85,7 +85,7 @@ int memory_init(int hugepages)
 	if (l.rlim_cur < lock) {
 		if (l.rlim_max < lock) {
 			if (getuid() != 0) {
-				warn("Failed to in increase ressource limit of locked memory from %zu to %zu bytes", l.rlim_cur, lock);
+				warn("Failed to in increase ressource limit of locked memory from %lu to %zu bytes", l.rlim_cur, lock);
 				warn("Please re-run as super-user or raise manually via:");
 				warn("   $ ulimit -Hl %zu", lock);
 

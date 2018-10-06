@@ -28,7 +28,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM fedora:28
+FROM fedora:29
 
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown
@@ -36,12 +36,7 @@ ARG VERSION=unknown
 ARG VARIANT=unknown
 
 # Some of the dependencies are only available in our own repo
-ADD https://packages.fein-aachen.org/redhat/fein.repo /etc/yum.repos.d/
-
-# We need to use our own RPM packages of libwebsockets
-# as the official ones do contain the CMake files
-RUN dnf -y install --repo=fein \
-	libwebsockets-2.4.2
+ADD https://packages.fein-aachen.org/fedora/fein.repo /etc/yum.repos.d/
 
 # Toolchain
 RUN dnf -y install \
@@ -76,15 +71,16 @@ RUN dnf -y install \
 	libcurl-devel \
 	jansson-devel \
 	zeromq-devel \
-	nanomsg-devel \
 	protobuf-devel \
 	protobuf-c-devel \
-	libiec61850-devel \
 	librabbitmq-devel \
 	mosquitto-devel \
 	comedilib-devel comedilib \
 	libibverbs-devel \
-	librdmacm-devel
+	librdmacm-devel \
+	libwebsockets-devel \
+	nanomsg \
+	libiec61850
 
 # Build & Install Criterion
 RUN cd /tmp && \
