@@ -36,7 +36,7 @@
 #include <rdma/rdma_cma.h>
 
 /* Constants */
-#define META_SIZE 32
+#define META_SIZE 24
 #define GRH_SIZE 40
 #define META_GRH_SIZE META_SIZE + GRH_SIZE
 #define CHK_PER_ITER 2048

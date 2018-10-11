@@ -852,7 +852,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 
 		debug(LOG_IB | 10, "Succesfully posted receive Work Requests");
 
-		// Doesn't start, if wcs == 0
+		// Doesn't start if wcs == 0
 		for (int j = 0; j < wcs; j++) {
 			if ( !( (wc[j].opcode & IBV_WC_RECV) && wc[j].status == IBV_WC_SUCCESS) ) {
 				// Drop all values, we don't know where the error occured
@@ -872,11 +872,11 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 
 			smps[j] = (struct sample *) (wc[j].wr_id);
 
-			smps[j]->length = (wc[j].byte_len - correction) / sizeof(double);
-
+			smps[j]->length = SAMPLE_NUMBER_OF_VALUES(wc[j].byte_len - correction);
 			smps[j]->ts.received = ts_receive;
 			smps[j]->flags = (SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_TS_RECEIVED | SAMPLE_HAS_SEQUENCE);
 		}
+
 	}
 	return read_values;
 }
@@ -922,7 +922,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 			// Actual Payload
 			sge[sent][j].addr = (uint64_t) &smps[sent]->data;
-			sge[sent][j].length = smps[sent]->length*sizeof(double);
+			sge[sent][j].length = SAMPLE_DATA_LENGTH(smps[sent]->length);
 			sge[sent][j].lkey = mr->lkey;
 
 			j++;
