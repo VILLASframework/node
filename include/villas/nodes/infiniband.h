@@ -41,12 +41,6 @@
 #define META_GRH_SIZE META_SIZE + GRH_SIZE
 #define CHK_PER_ITER 2048
 
-/* Enums */
-enum poll_mode_e {
-	EVENT,
-	BUSY
-};
-
 struct infiniband {
 	/* IBV/RDMA CM structs */
 	struct context_s {
@@ -111,8 +105,6 @@ struct infiniband {
 	} conn;
 
 	/* Misc settings */
-	enum poll_mode_e poll_mode;
-
 	int is_source;
 };
 
