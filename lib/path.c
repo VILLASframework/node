@@ -116,7 +116,7 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 			? sample_clone(p->last_sample)
 			: sample_clone(muxed_smps[i-1]);
 
-		muxed_smps[i]->sequence = p->last_sequence++;
+		muxed_smps[i]->sequence = p->original_sequence_no ? tomux_smps[i]->sequence : p->last_sequence++;
 		muxed_smps[i]->ts       = tomux_smps[i]->ts;
 
 		mapping_remap(&ps->mappings, muxed_smps[i], tomux_smps[i], NULL);
@@ -334,6 +334,7 @@ int path_init(struct path *p)
 	p->enabled = 1;
 	p->poll = -1;
 	p->queuelen = DEFAULT_QUEUE_LENGTH;
+	p->original_sequence_no = 0;
 
 	p->state = STATE_INITIALIZED;
 
@@ -492,7 +493,7 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 	list_init(&sources);
 	list_init(&destinations);
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: b, s?: i, s?: s, s?: b, s?: F, s?: o }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: b, s?: i, s?: s, s?: b, s?: F, s?: o, s?: b}",
 		"in", &json_in,
 		"out", &json_out,
 		"hooks", &json_hooks,
@@ -503,7 +504,9 @@ int path_parse(struct path *p, json_t *cfg, struct list *nodes)
 		"mode", &mode,
 		"poll", &p->poll,
 		"rate", &p->rate,
-		"mask", &json_mask
+		"mask", &json_mask,
+		"original_sequence_no", &p->original_sequence_no
+
 	);
 	if (ret)
 		jerror(&err, "Failed to parse path configuration");
@@ -695,7 +698,7 @@ int path_start(struct path *p)
 
 	mask = bitset_dump(&p->mask);
 
-	info("Starting path %s: #signals=%zu, mode=%s, poll=%s, mask=%s, rate=%.2f, enabled=%s, reversed=%s, queuelen=%d, #hooks=%zu, #sources=%zu, #destinations=%zu",
+	info("Starting path %s: #signals=%zu, mode=%s, poll=%s, mask=%s, rate=%.2f, enabled=%s, reversed=%s, queuelen=%d, #hooks=%zu, #sources=%zu, #destinations=%zu, #original_sequence_no=%s",
 		path_name(p),
 		list_length(&p->signals),
 		mode,
@@ -707,7 +710,8 @@ int path_start(struct path *p)
 		p->queuelen,
 		list_length(&p->hooks),
 		list_length(&p->sources),
-		list_length(&p->destinations)
+		list_length(&p->destinations),
+		p->original_sequence_no ? "yes" : "no"
 	);
 
 	free(mask);

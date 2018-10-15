@@ -185,7 +185,6 @@ int ib_parse(struct node *n, json_t *cfg)
 	char *local = NULL;
 	char *remote = NULL;
 	const char *transport_mode = "RC";
-	const char *poll_mode = "BUSY";
 	int timeout = 1000;
 	int recv_cq_size = 128;
 	int send_cq_size = 128;
@@ -213,9 +212,8 @@ int ib_parse(struct node *n, json_t *cfg)
 
 
 	if (json_in) {
-		ret = json_unpack_ex(json_in, &err, 0, "{ s?: s, s?: s, s?: i, s?: i, s?: i, s?: i}",
+		ret = json_unpack_ex(json_in, &err, 0, "{ s?: s, s?: i, s?: i, s?: i, s?: i}",
 			"address", &local,
-			"poll_mode", &poll_mode,
 			"cq_size", &recv_cq_size,
 			"max_wrs", &max_recv_wr,
 			"vectorize", &vectorize_in,
@@ -302,17 +300,6 @@ int ib_parse(struct node *n, json_t *cfg)
 	ib->conn.timeout = timeout;
 
 	debug(LOG_IB | 4, "Set  timeout to %i in node %s", timeout, node_name(n));
-
-	// Translate poll mode
-	if (strcmp(poll_mode, "EVENT") == 0)
-		ib->poll_mode = EVENT;
-	else if (strcmp(poll_mode, "BUSY") == 0)
-		ib->poll_mode = BUSY;
-	else
-		error("Failed to translate poll_mode in node %s. %s is not a valid \
-			poll mode!", node_name(n), poll_mode);
-
-	debug(LOG_IB | 4, "Set poll mode to %s in node %s", poll_mode, node_name(n));
 
 	// Set completion queue size
 	ib->recv_cq_size = recv_cq_size;
@@ -852,7 +839,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 
 		debug(LOG_IB | 10, "Succesfully posted receive Work Requests");
 
-		// Doesn't start, if wcs == 0
+		// Doesn't start if wcs == 0
 		for (int j = 0; j < wcs; j++) {
 			if ( !( (wc[j].opcode & IBV_WC_RECV) && wc[j].status == IBV_WC_SUCCESS) ) {
 				// Drop all values, we don't know where the error occured
@@ -872,11 +859,11 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 
 			smps[j] = (struct sample *) (wc[j].wr_id);
 
-			smps[j]->length = (wc[j].byte_len - correction) / sizeof(double);
-
+			smps[j]->length = SAMPLE_NUMBER_OF_VALUES(wc[j].byte_len - correction);
 			smps[j]->ts.received = ts_receive;
 			smps[j]->flags = (SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_TS_RECEIVED | SAMPLE_HAS_SEQUENCE);
 		}
+
 	}
 	return read_values;
 }
@@ -922,7 +909,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 			// Actual Payload
 			sge[sent][j].addr = (uint64_t) &smps[sent]->data;
-			sge[sent][j].length = smps[sent]->length*sizeof(double);
+			sge[sent][j].length = SAMPLE_DATA_LENGTH(smps[sent]->length);
 			sge[sent][j].lkey = mr->lkey;
 
 			j++;

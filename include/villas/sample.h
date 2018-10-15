@@ -44,6 +44,9 @@ struct pool;
 /** The length of a sample data portion of a sample datastructure with \p values values in bytes. */
 #define SAMPLE_DATA_LENGTH(len)	((len) * sizeof(double))
 
+/** The number of values in a sample datastructure. */
+#define SAMPLE_NUMBER_OF_VALUES(len)	((len) / sizeof(double))
+
 /** The offset to the beginning of the data section. */
 #define SAMPLE_DATA_OFFSET(smp)	((char *) (smp) + offsetof(struct sample, data))
 
