@@ -43,7 +43,7 @@ extern "C" {
 #if defined(__MACH__)
   #define PERIODIC_TASK_IMPL NANOSLEEP
 #elif defined(__linux__)
-  #define PERIODIC_TASK_IMPL RDTSC
+  #define PERIODIC_TASK_IMPL TIMERFD
 #else
   #error "Platform not supported"
 #endif
