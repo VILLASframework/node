@@ -27,6 +27,7 @@
 #include <stdint.h>
 
 #include <time.h>
+#include <villas/tsc.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +43,7 @@ extern "C" {
 #if defined(__MACH__)
   #define PERIODIC_TASK_IMPL NANOSLEEP
 #elif defined(__linux__)
-  #define PERIODIC_TASK_IMPL TIMERFD
+  #define PERIODIC_TASK_IMPL RDTSC
 #else
   #error "Platform not supported"
 #endif
@@ -61,7 +62,7 @@ struct task {
 #if PERIODIC_TASK_IMPL == TIMERFD
 	int fd;				/**< The timerfd_create(2) file descriptior. */
 #elif PERIODIC_TASK_IMPL == RDTSC
-	struct rdtsc tsc;		/**< Initialized by tsc_init(). */
+	struct tsc tsc;		/**< Initialized by tsc_init(). */
 #endif
 };
 

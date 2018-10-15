@@ -90,6 +90,6 @@ static inline uint64_t rdtsc()
 
 int tsc_init(struct tsc *t);
 
-uint64_t tsc_rate_to_cyles(struct tsc *t, double rate);
+uint64_t tsc_rate_to_cycles(struct tsc *t, double rate);
 
 uint64_t tsc_now(struct tsc *t);
