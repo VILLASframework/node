@@ -50,12 +50,12 @@ int loopback_parse(struct node *n, json_t *cfg)
 			l->queueflags = QUEUE_SIGNALLED_EVENTFD;
 		else if (!strcmp(mode_str, "pthread"))
 			l->queueflags = QUEUE_SIGNALLED_PTHREAD;
-#ifdef __APPLE__
 		else if (!strcmp(mode_str, "polling"))
 			l->queueflags = QUEUE_SIGNALLED_POLLING;
-#endif /* __APPLE__ */
+#ifdef __APPLE__
 		else if (!strcmp(mode_str, "pipe"))
 			l->queueflags = QUEUE_SIGNALLED_PIPE;
+#endif /* __APPLE__ */
 		else
 			error("Unknown mode '%s' in node %s", mode_str, node_name(n));
 	}
