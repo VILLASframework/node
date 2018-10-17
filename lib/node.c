@@ -213,7 +213,7 @@ int node_init2(struct node *n)
 int node_parse(struct node *n, json_t *json, const char *name)
 {
 	struct node_type *nt;
-	int ret, samplelen = DEFAULT_SAMPLE_LENGTH;
+	int ret;
 
 	json_error_t err;
 	json_t *json_signals = NULL;
@@ -222,11 +222,10 @@ int node_parse(struct node *n, json_t *json, const char *name)
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o, s?: i } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o } }",
 		"type", &type,
 		"in",
-			"signals", &json_signals,
-			"samplelen", &samplelen
+			"signals", &json_signals
 	);
 	if (ret)
 		jerror(&err, "Failed to parse node %s", node_name(n));
@@ -238,14 +237,32 @@ int node_parse(struct node *n, json_t *json, const char *name)
 		if (json_signals)
 			error("Node %s does not support signal definitions", node_name(n));
 	}
-	else {
-		if (json_signals) {
+	else if (json_signals) {
+		if (json_is_array(json_signals)) {
 			ret = signal_list_parse(&n->signals, json_signals);
 			if (ret)
 				error("Failed to parse signal definition of node %s", node_name(n));
 		}
-		else
-			signal_list_generate(&n->signals, samplelen, SIGNAL_TYPE_AUTO);
+		else {
+			int count;
+			const char *type_str;
+
+			json_unpack_ex(json_signals, &err, 0, "{ s: i, s: s }",
+				"count", &count,
+				"type", &type_str
+			);
+
+			int type = signal_type_from_str(type_str);
+			if (type < 0)
+				error("Invalid signal type %s", type_str);
+
+			signal_list_generate(&n->signals, count, type);
+		}
+	}
+	else {
+		warn("No signal definition found for node %s. Using the default config of %d floating point signals.", node_name(n), DEFAULT_SAMPLE_LENGTH);
+
+		signal_list_generate(&n->signals, DEFAULT_SAMPLE_LENGTH, SIGNAL_TYPE_FLOAT);
 	}
 
 	struct {
