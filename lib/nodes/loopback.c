@@ -29,18 +29,36 @@
 int loopback_parse(struct node *n, json_t *cfg)
 {
 	struct loopback *l = (struct loopback *) n->_vd;
+	const char *mode_str = NULL;
 
 	json_error_t err;
 	int ret;
 
 	/* Default values */
+	l->queueflags = QUEUE_SIGNALLED_AUTO;
 	l->queuelen = DEFAULT_QUEUE_LENGTH;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i }",
-		"queuelen", &l->queuelen
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: i, s?: s }",
+		"queuelen", &l->queuelen,
+		"mode", &mode_str
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+
+	if (mode_str) {
+		if (!strcmp(mode_str, "eventfd"))
+			l->queueflags = QUEUE_SIGNALLED_EVENTFD;
+		else if (!strcmp(mode_str, "pthread"))
+			l->queueflags = QUEUE_SIGNALLED_PTHREAD;
+#ifdef __APPLE__
+		else if (!strcmp(mode_str, "polling"))
+			l->queueflags = QUEUE_SIGNALLED_POLLING;
+#endif /* __APPLE__ */
+		else if (!strcmp(mode_str, "pipe"))
+			l->queueflags = QUEUE_SIGNALLED_PIPE;
+		else
+			error("Unknown mode '%s' in node %s", mode_str, node_name(n));
+	}
 
 	return 0;
 }
@@ -54,7 +72,7 @@ int loopback_start(struct node *n)
 	if (ret)
 		return ret;
 
-	return queue_signalled_init(&l->queue, l->queuelen, &memory_hugepage, QUEUE_SIGNALLED_EVENTFD);
+	return queue_signalled_init(&l->queue, l->queuelen, &memory_hugepage, l->queueflags);
 }
 
 int loopback_stop(struct node *n)
