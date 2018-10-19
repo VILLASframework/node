@@ -47,7 +47,7 @@ if(CRITERION_FOUND)
 
 	add_executable(unit-tests ${TEST_SRC})
 	target_link_libraries(unit-tests PUBLIC
-		${CRITERION_LIBRARIES}
+		PkgConfig::CRITERION
 		villas
 		Threads::Threads
 	)
