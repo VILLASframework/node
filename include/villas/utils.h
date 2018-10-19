@@ -89,6 +89,9 @@ extern "C" {
 #define CONCAT(x, y)		CONCAT_DETAIL(x, y)
 #define UNIQUE(x)		CONCAT(x, __COUNTER__)
 
+#ifdef ALIGN
+  #undef ALIGN
+#endif
 #define ALIGN(x, a)	 ALIGN_MASK(x, (uintptr_t) (a) - 1)
 #define ALIGN_MASK(x, m) (((uintptr_t) (x) + (m)) & ~(m))
 #define IS_ALIGNED(x, a) (ALIGN(x, a) == (uintptr_t) x)
@@ -113,11 +116,17 @@ extern "C" {
 #define ARRAY_LEN(a)	( sizeof (a) / sizeof (a)[0] )
 
 /* Return the bigger value */
+#ifdef MAX
+  #undef MAX
+#endif
 #define MAX(a, b)	({ __typeof__ (a) _a = (a); \
 			   __typeof__ (b) _b = (b); \
 			   _a > _b ? _a : _b; })
 
 /* Return the smaller value */
+#ifdef MIN
+  #undef MIN
+#endif
 #define MIN(a, b)	({ __typeof__ (a) _a = (a); \
 			   __typeof__ (b) _b = (b); \
 			   _a < _b ? _a : _b; })
