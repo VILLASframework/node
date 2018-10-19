@@ -56,7 +56,7 @@ Test(list, list_lookup)
 
 	cr_assert_eq(found->data, 13);
 
-	list_destroy(&l, NULL, true);
+	list_destroy(&l, nullptr, true);
 }
 
 Test(list, list_search)
@@ -84,7 +84,7 @@ Test(list, list_search)
 	char *not_found = (char *) list_search(&l, (cmp_cb_t) strcmp, negative);
 	cr_assert_null(not_found);
 
-	list_destroy(&l, NULL, false);
+	list_destroy(&l, nullptr, false);
 }
 
 struct content {
@@ -137,7 +137,7 @@ Test(list, basics)
 		list_push(&l, (void *) i);
 	}
 
-	cr_assert_eq(list_at_safe(&l, 555), NULL);
+	cr_assert_eq(list_at_safe(&l, 555), nullptr);
 	cr_assert_eq(list_last(&l), (void *) 99);
 	cr_assert_eq(list_first(&l), (void *) 0);
 
@@ -164,7 +164,7 @@ Test(list, basics)
 	ret = list_contains(&l, (void *) 55);
 	cr_assert(!ret);
 
-	list_destroy(&l, NULL, false);
+	list_destroy(&l, nullptr, false);
 
 	ret = list_length(&l);
 	cr_assert_eq(ret, -1, "List not properly destroyed: l.length = %zd", l.length);

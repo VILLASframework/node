@@ -69,6 +69,6 @@ Test(hash_table, hash_table_lookup)
 	ret = hash_table_insert(&ht, keys[0], (void *) values[0]);
 	cr_assert(!ret);
 
-	ret = hash_table_destroy(&ht, NULL, false);
+	ret = hash_table_destroy(&ht, nullptr, false);
 	cr_assert(!ret);
 }
