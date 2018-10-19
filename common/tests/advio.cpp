@@ -25,7 +25,10 @@
 #include <criterion/criterion.h>
 
 #include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/advio.h>
+
+using namespace villas;
 
 /** This URI points to a Sciebo share which contains some test files.
  * The Sciebo share is read/write accessible via WebDAV. */
@@ -176,7 +179,7 @@ Test(advio, upload)
 	char buffer[64];
 
 	/* Get some random data to upload */
-	len = read_random(upload, sizeof(upload));
+	len = utils::read_random(upload, sizeof(upload));
 	cr_assert_eq(len, sizeof(upload));
 
 	/* Open file for writing */

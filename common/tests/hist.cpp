@@ -27,9 +27,6 @@
 
 const double test_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-/* Histogram of test_data with 200 buckets between -100 and 100 */
-const int hist_result[] = {};
-
 TestSuite(hist, .description = "Histogram");
 
 Test(hist, simple) {
@@ -45,9 +42,6 @@ Test(hist, simple) {
 	cr_assert_float_eq(hist_mean(&h), 5.5, 1e-6);
 	cr_assert_float_eq(hist_var(&h), 9.1666, 1e-3,);
 	cr_assert_float_eq(hist_stddev(&h), 3.027650, 1e-6);
-
-//	for (int i = 0; i < ARRAY_LEN(hist_result); i++)
-//		cr_assert_eq()
 
 	hist_destroy(&h);
 }
