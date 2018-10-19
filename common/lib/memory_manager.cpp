@@ -233,7 +233,7 @@ MemoryTranslation::operator+=(const MemoryTranslation& other)
 	this->dst = other.dst;
 
 	// the source stays the same and can only increase with merged translations
-	this->src = this->src;
+	//this->src = this->src;
 
 	if(otherSrcIsSmaller) {
 		// other mapping starts at lower addresses, so we actually arrive at

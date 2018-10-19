@@ -74,9 +74,11 @@ public:
 	template<typename... Args>
 	JsonError(const json_error_t &err, const std::string &what, Args&&... args) :
 		std::runtime_error(fmt::format(what, std::forward<Args>(args)...))
-	{ }
+	{
+		(void) err;
+	}
 
-	virtual const char * what()
+	virtual const char * what() const noexcept
 	{
 		return fmt::format("{}: {} in {}:{}:{}",
 			std::runtime_error::what(),
@@ -100,14 +102,14 @@ public:
 		setting(s)
 	{ }
 
-	std::string docUri()
+	std::string docUri() const
 	{
 		std::string baseUri = "https://villas.fein-aachen.org/doc/jump?";
 
 		return baseUri + id;
 	}
 
-	virtual const char * what()
+	virtual const char * what() const noexcept
 	{
 		std::stringstream ss;
 

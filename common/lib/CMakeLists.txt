@@ -30,7 +30,8 @@ add_library(villas-common SHARED
     hash_table.c
     hist.c
 	kernel/kernel.c
-	kernel/rt.c
+	kernel/kernel.cpp
+	kernel/rt.cpp
 	list.c
 	log.cpp
 	log_legacy.cpp
@@ -44,6 +45,7 @@ add_library(villas-common SHARED
 	utils.c
 	utils.cpp
 	cpuset.cpp
+	terminal.cpp
 	version.cpp
 )
 
