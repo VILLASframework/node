@@ -34,7 +34,9 @@
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/rt.hpp>
 
-using villas::utils::CpuSet;
+#ifdef __linux__
+  using villas::utils::CpuSet;
+#endif /* __linux__ */
 
 namespace villas {
 namespace kernel {
@@ -67,6 +69,8 @@ int init(int priority, int affinity)
 	lockMemory();
 #else
 	logger->warn("This platform is not optimized for real-time execution");
+	(void) affinity;
+	(void) priority;
 #endif
 
 	return 0;

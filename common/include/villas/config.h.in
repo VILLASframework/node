@@ -26,10 +26,6 @@
 
 #pragma once
 
-#ifndef V
-  #define V 2
-#endif
-
 #define PROJECT_VERSION_STR	"@CMAKE_PROJECT_VERSION_STR@"
 #define PROJECT_VERSION		"@CMAKE_PROJECT_VERSION@"
 #define PROJECT_MAJOR_VERSION	 @CMAKE_PROJECT_MAJOR_VERSION@
@@ -52,6 +48,7 @@
 #cmakedefine LIBCONFIG_FOUND
 
 /* Paths */
+#define PREFIX			"@CMAKE_INSTALL_PREFIX@"
 #define PLUGIN_PATH		"@CMAKE_INSTALL_PREFIX@/share/villas/node/plugins"
 #define WEB_PATH		"@CMAKE_INSTALL_PREFIX@/share/villas/node/web"
 #define SYSFS_PATH		"/sys"

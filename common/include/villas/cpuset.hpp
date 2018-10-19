@@ -191,10 +191,7 @@ public:
 	}
 };
 
-#endif
-
 } // namespace villas
 } // namespace utils
 
-
-#include <fmt/format.h>
+#endif
