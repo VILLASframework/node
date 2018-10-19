@@ -134,7 +134,7 @@ Test(utils, is_pow2)
 
 Test(utils, strf)
 {
-	char *buf = NULL;
+	char *buf = nullptr;
 
 	buf = strcatf(&buf, "Hallo %s", "Steffen.");
 	cr_assert_str_eq(buf, "Hallo Steffen.");

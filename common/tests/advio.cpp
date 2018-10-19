@@ -53,7 +53,7 @@ Test(advio, local)
 {
 	AFILE *af;
 	int ret;
-	char *buf = NULL;
+	char *buf = nullptr;
 	size_t buflen = 0;
 
 	/* We open this file and check the first line */
@@ -119,7 +119,7 @@ Test(advio, resume)
 	AFILE *af1, *af2;
 	char *fn, dir[] = "/tmp/temp.XXXXXX";
 	char line1[32];
-	char *line2 = NULL;
+	char *line2 = nullptr;
 	size_t linelen = 0;
 
 	retp = mkdtemp(dir);

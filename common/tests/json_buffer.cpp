@@ -45,7 +45,7 @@ Test(json_buffer, decode)
 
 	buf.insert(buf.begin(), e, e+len);
 
-	k = json_loads(e, 0, NULL);
+	k = json_loads(e, 0, nullptr);
 	cr_assert_not_null(k);
 
 	j = buf.decode();
@@ -61,7 +61,7 @@ Test(json_buffer, encode)
 
 	const char *e = "{\"id\": \"5a786626-fbc6-4c04-98c2-48027e68c2fa\"}";
 
-	k = json_loads(e, 0, NULL);
+	k = json_loads(e, 0, nullptr);
 	cr_assert_not_null(k);
 
 	ret = buf.encode(k);
@@ -84,7 +84,7 @@ Test(json_buffer, encode_decode)
 
 	const char *e = "{\"id\": \"5a786626-fbc6-4c04-98c2-48027e68c2fa\"}";
 
-	k = json_loads(e, 0, NULL);
+	k = json_loads(e, 0, nullptr);
 	cr_assert_not_null(k);
 
 	ret = buf.encode(k);
