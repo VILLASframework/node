@@ -41,14 +41,6 @@ extern "C" {
 #define LIST_CHUNKSIZE		16
 
 /** Static list initialization */
-#define LIST_INIT() {				\
-	.array = NULL,				\
-	.length = 0,				\
-	.capacity = 0,				\
-	.lock = PTHREAD_MUTEX_INITIALIZER,	\
-	.state = STATE_INITIALIZED		\
-}
-
 #define LIST_INIT_STATIC(l)					\
 __attribute__((constructor(105))) static void UNIQUE(__ctor)() {\
 	if ((l)->state == STATE_DESTROYED)			\

@@ -60,10 +60,12 @@ const struct iec61850_type_descriptor type_descriptors[] = {
 };
 
 /** Each network interface needs a separate receiver */
-static struct list receivers = LIST_INIT();
+static struct list receivers;
 static pthread_t thread;
 static EthernetHandleSet hset;
 static int users = 0;
+
+LIST_INIT_STATIC(&receivers);
 
 static void * iec61850_thread(void *ctx)
 {
