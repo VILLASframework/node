@@ -24,7 +24,12 @@
 
 #include <villas/crypt.h>
 #include <villas/utils.h>
+#include <villas/utils.hpp>
+#include <villas/version.hpp>
+#include <villas/cpuset.hpp>
+#include <villas/log.hpp>
 
+using namespace villas::utils;
 
 TestSuite(utils, .description = "Utilities");
 
@@ -61,26 +66,55 @@ Test(utils, box_muller)
 #ifdef __linux__
 Test(utils, cpuset)
 {
-	int ret;
-	char str[512];
+	using villas::utils::CpuSet;
 
-	cpu_set_t cset1;
-	cpu_set_t cset2;
 	uintmax_t int1 = 0x1234567890ABCDEFULL;
-	uintmax_t int2 = 0;
 
-	cpuset_from_integer(int1, &cset1);
+	CpuSet cset1(int1);
 
-	cpulist_create(str, sizeof(str), &cset1);
+	std::string cset1_str = cset1;
 
-	ret = cpulist_parse(str, &cset2, 1);
-	cr_assert_eq(ret, 0);
+	CpuSet cset2(cset1_str);
 
-	cr_assert(CPU_EQUAL(&cset1, &cset2));
+	cr_assert_eq(cset1, cset2);
 
-	cpuset_to_integer(&cset2, &int2);
+	uintmax_t int2 = cset2;
 
 	cr_assert_eq(int1, int2);
+
+	CpuSet cset3("1-5");
+	CpuSet cset4("1,2,3,4,5");
+
+	cr_assert_eq(cset3, cset4);
+	cr_assert_eq(cset3.count(), 5);
+
+	cr_assert(cset3.isset(3));
+	cr_assert_not(cset3.isset(6));
+
+	cr_assert(cset3[3]);
+	cr_assert_not(cset3[6]);
+
+	cset4.set(6);
+	cr_assert(cset4[6]);
+
+	cset4.clear(6);
+	cr_assert_not(cset4[6]);
+
+	cr_assert_str_eq(static_cast<std::string>(cset4).c_str(), "1-5");
+
+	cr_assert_any_throw(CpuSet cset5("0-"));
+
+	CpuSet cset6;
+	cr_assert(cset6.empty());
+	cr_assert_eq(cset6.count(), 0);
+
+	cr_assert((~cset6).full());
+	cr_assert((cset1 | ~cset1).full());
+	cr_assert((cset1 ^ cset1).empty());
+	cr_assert((cset1 & cset6).empty());
+
+	cset1.zero();
+	cr_assert(cset1.empty());
 }
 #endif /* __linux__ */
 
@@ -145,24 +179,24 @@ Test(utils, strf)
 	free(buf);
 }
 
-struct version_param {
-	const char *v1, *v2;
-	int result;
-};
-
 Test(utils, version)
 {
-	struct version v1, v2, v3, v4;
+	using villas::utils::Version;
 
-	version_parse("1.2", &v1);
-	version_parse("1.3", &v2);
-	version_parse("55",  &v3);
-	version_parse("66",  &v4);
+	Version v1 = Version("1.2");
+	Version v2 = Version("1.3");
+	Version v3 = Version("55");
+	Version v4 = Version("66");
+	Version v5 = Version(66);
+	Version v6 = Version(1, 2, 5);
+	Version v7 = Version("1.2.5");
 
-	cr_assert_lt(version_cmp(&v1, &v2), 0);
-	cr_assert_eq(version_cmp(&v1, &v1), 0);
-	cr_assert_gt(version_cmp(&v2, &v1), 0);
-	cr_assert_lt(version_cmp(&v3, &v4), 0);
+	cr_assert_lt(v1, v2);
+	cr_assert_eq(v1, v1);
+	cr_assert_gt(v2, v1);
+	cr_assert_lt(v3, v4);
+	cr_assert_eq(v4, v5);
+	cr_assert_eq(v6, v7);
 }
 
 Test(utils, sha1sum)

@@ -124,7 +124,7 @@ static int compare(const void *a, const void *b) {
 
 Test(list, basics)
 {
-	intptr_t i;
+	uintptr_t i;
 	int ret;
 	struct list l;
 	l.state = STATE_DESTROYED;

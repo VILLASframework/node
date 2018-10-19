@@ -23,7 +23,7 @@
 #include <criterion/criterion.h>
 
 #include <villas/kernel/kernel.h>
-#include <villas/utils.h>
+#include <villas/kernel/kernel.hpp>
 
 TestSuite(kernel, .description = "Kernel features");
 
@@ -76,20 +76,14 @@ Test(kernel, hugepages)
 
 Test(kernel, version)
 {
-	int ret;
+	using villas::utils::Version;
 
-	struct version ver;
-	struct version ver1 = { 100, 5 };
-	struct version ver2 = { 2, 6 };
+	Version ver = villas::kernel::getVersion();
+	Version ver1 = { 100, 5 };
+	Version ver2 = { 2, 6 };
 
-	ret = kernel_get_version(&ver);
-	cr_assert_eq(ret, 0);
-
-	ret = version_cmp(&ver, &ver1);
-	cr_assert_lt(ret, 0);
-
-	ret = version_cmp(&ver, &ver2);
-	cr_assert_gt(ret, 0);
+	cr_assert_lt(ver, ver1);
+	cr_assert_gt(ver, ver2);
 }
 
 Test(kernel, module, .disabled = true)
