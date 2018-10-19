@@ -27,11 +27,8 @@
 
 #define LEN 1027
 
-void init_logging();
-
 TestSuite(bitset,
-	.description = "Bitset datastructure",
-	.init = init_logging
+	.description = "Bitset datastructure"
 );
 
 Test(bitset, simple)

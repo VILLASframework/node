@@ -135,7 +135,7 @@ public:
 	{
 		// CRTP
 		derivedAlloc = static_cast<DerivedAllocator*>(this);
-		logger = loggerGetOrCreate(derivedAlloc->getName());
+		logger = logging.get(derivedAlloc->getName());
 
 		// default deallocation callback
 		free = [&](MemoryBlock* mem) {
@@ -207,7 +207,7 @@ protected:
 
 protected:
 	MemoryBlock::deallocator_fn free;
-	SpdLogger logger;
+	Logger logger;
 
 	// optional, if allocator should own the memory block
 	std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> memoryBlock;

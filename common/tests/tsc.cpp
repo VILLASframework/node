@@ -28,12 +28,7 @@
 
 #define CNT (1 << 18)
 
-void init_logging();
-
-TestSuite(tsc,
-	.description = "Timestamp counters",
-	.init = init_logging
-);
+TestSuite(tsc, .description = "Timestamp counters");
 
 Test(tsc, increasing)
 {

@@ -1,8 +1,8 @@
-/** Logging routines that depend on jansson.
+/** Log sink for OPAL-RTs OpalPrint().
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLAScommon
@@ -23,15 +23,43 @@
 
 #pragma once
 
-struct log;
+#include <mutex>
 
-#include <jansson.h>
+#include <villas/log.hpp>
 
-#include <villas/log.h>
+#include <spdlog/sinks/base_sink.h>
+#include <spdlog/details/null_mutex.h>
 
-/** Parse logging configuration. */
-int log_parse(struct log *l, json_t *cfg);
+namespace villas {
+namespace node {
 
-/** Print configuration error and exit. */
-void jerror(json_error_t *err, const char *fmt, ...)
-	__attribute__ ((format(printf, 2, 3)));
+template<typename Mutex>
+class OpalSink : public spdlog::sinks::base_sink<Mutex>
+{
+
+protected:
+	void sink_it_(const spdlog::details::log_msg& msg) override
+	{
+#ifdef ENABLE_OPAL_ASYNC
+		fmt::memory_buffer formatted;
+
+		sink::formatter_->format(msg, formatted);
+
+		auto str = fmt::to_string(formatted).c_str();
+
+		OpalPrint(PROJECT_NAME ": %s\n", str);
+#endif
+	}
+
+	void flush_() override
+	{
+		/* nothing to do */
+	}
+};
+
+using OpalSink_mt = OpalSink<std::mutex>;
+using OpalSink_st = OpalSink<spdlog::details::null_mutex>;
+
+
+} // namespace node
+} // namespace villas

@@ -189,7 +189,7 @@ MemoryTranslation::getForeignAddr(uintptr_t addrInLocalAddrSpace) const
 MemoryTranslation&
 MemoryTranslation::operator+=(const MemoryTranslation& other)
 {
-	auto logger = loggerGetOrCreate("MemoryTranslation");
+	auto logger = logging.get("MemoryTranslation");
 	// set level to debug to enable debug output
 	logger->set_level(spdlog::level::info);
 

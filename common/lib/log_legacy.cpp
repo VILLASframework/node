@@ -20,96 +20,98 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <errno.h>
 #include <unistd.h>
-#include <syslog.h>
+#include <cstdio>
+#include <cerrno>
 
 #include <villas/utils.h>
-#include <villas/log.h>
+#include <villas/log.hpp>
 
-void debug(long class, const char *fmt, ...)
+using namespace villas;
+
+int log_get_width()
+{
+	return logging.getWidth();
+}
+
+void debug(long long, const char *fmt, ...)
 {
 	va_list ap;
 
-	struct log *l = global_log;
+	auto logger = logging.get("default");
+	char *buf;
 
-	int lvl = class &  0xFF;
-	int fac = class & ~0xFF;
+	va_start(ap, fmt);
+	vasprintf(&buf, fmt, ap);
+	va_end(ap);
 
-	if (((fac == 0) || (fac & l->facilities)) && (lvl <= l->level)) {
-		va_start(ap, fmt);
+	logger->debug(buf);
 
-		log_vprint(l, LOG_LVL_DEBUG, fmt, ap);
-
-		if (l->syslog)
-			syslog(LOG_DEBUG, fmt, ap);
-
-		va_end(ap);
-	}
+	free(buf);
 }
 
 void info(const char *fmt, ...)
 {
 	va_list ap;
 
-	struct log *l = global_log;
+	auto logger = logging.get("default");
+	char *buf;
 
 	va_start(ap, fmt);
-
-	log_vprint(l, LOG_LVL_INFO, fmt, ap);
-
-	if (l->syslog)
-		syslog(LOG_INFO, fmt, ap);
-
+	vasprintf(&buf, fmt, ap);
 	va_end(ap);
+
+	logger->info(buf);
+
+	free(buf);
 }
 
 void warn(const char *fmt, ...)
 {
 	va_list ap;
 
-	struct log *l = global_log;
+	auto logger = logging.get("default");
+	char *buf;
 
 	va_start(ap, fmt);
-
-	log_vprint(l, LOG_LVL_WARN, fmt, ap);
-
-	if (l->syslog)
-		syslog(LOG_WARNING, fmt, ap);
-
+	vasprintf(&buf, fmt, ap);
 	va_end(ap);
+
+	logger->warn(buf);
+
+	free(buf);
 }
 
 void stats(const char *fmt, ...)
 {
 	va_list ap;
 
-	struct log *l = global_log;
+	auto logger = logging.get("default");
+	char *buf;
 
 	va_start(ap, fmt);
-
-	log_vprint(l, LOG_LVL_STATS, fmt, ap);
-
-	if (l->syslog)
-		syslog(LOG_INFO, fmt, ap);
-
+	vasprintf(&buf, fmt, ap);
 	va_end(ap);
+
+	logger->info(buf);
+
+	free(buf);
 }
 
 void error(const char *fmt, ...)
 {
 	va_list ap;
 
-	struct log *l = global_log;
+	auto logger = logging.get("default");
+	char *buf;
 
 	va_start(ap, fmt);
-
-	log_vprint(l, LOG_LVL_ERROR, fmt, ap);
-
-	if (l->syslog)
-		syslog(LOG_ERR, fmt, ap);
-
+	vasprintf(&buf, fmt, ap);
 	va_end(ap);
+
+	logger->error(buf);
+
+	free(buf);
 
 	killme(SIGABRT);
 	pause();
@@ -118,18 +120,35 @@ void error(const char *fmt, ...)
 void serror(const char *fmt, ...)
 {
 	va_list ap;
-	char *buf = NULL;
 
-	struct log *l = global_log;
+	auto logger = logging.get("default");
+	char *buf;
 
 	va_start(ap, fmt);
-	vstrcatf(&buf, fmt, ap);
+	vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
-	log_print(l, LOG_LVL_ERROR, "%s: %m (%u)", buf, errno);
+	logger->error(buf);
 
-	if (l->syslog)
-		syslog(LOG_ERR, "%s: %m (%u)", buf, errno);
+	free(buf);
+
+	killme(SIGABRT);
+	pause();
+}
+
+void jerror(json_error_t *err, const char *fmt, ...)
+{
+	va_list ap;
+
+	auto logger = logging.get("default");
+	char *buf;
+
+	va_start(ap, fmt);
+	vasprintf(&buf, fmt, ap);
+	va_end(ap);
+
+	logger->error("{}:", buf);
+	logger->error("   {} in {}:{}:{}", err->text, err->source, err->line, err->column);
 
 	free(buf);
 

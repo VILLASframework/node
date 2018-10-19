@@ -97,7 +97,7 @@ private:
 	// This is a singleton, so private constructor ...
 	MemoryManager() :
 	    memoryGraph("MemoryGraph"),
-	    logger(loggerGetOrCreate("MemoryManager"))
+	    logger(logging.get("MemoryManager"))
 	{
 		pathCheckFunc = [&](const MemoryGraph::Path& path) {
 			return this->pathCheck(path);
@@ -262,7 +262,7 @@ private:
 	std::map<std::string, AddressSpaceId> addrSpaceLookup;
 
 	/// Logger for universal access in this class
-	SpdLogger logger;
+	Logger logger;
 
 	MemoryGraph::check_path_fn pathCheckFunc;
 

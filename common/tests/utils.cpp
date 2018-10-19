@@ -25,12 +25,8 @@
 #include <villas/crypt.h>
 #include <villas/utils.h>
 
-void init_logging();
 
-TestSuite(utils,
-	.description = "Utilities",
-	.init = init_logging
-);
+TestSuite(utils, .description = "Utilities");
 
 /* Simple normality test for 1,2,3s intervals */
 Test(utils, box_muller)

@@ -26,12 +26,7 @@
 
 #include <villas/timing.h>
 
-void init_logging();
-
-TestSuite(timing,
-	.description = "Time measurements",
-	.init = init_logging
-);
+TestSuite(timing, .description = "Time measurements");
 
 Test(timing, time_now)
 {

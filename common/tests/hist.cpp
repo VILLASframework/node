@@ -30,12 +30,7 @@ const double test_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 /* Histogram of test_data with 200 buckets between -100 and 100 */
 const int hist_result[] = {};
 
-void init_logging();
-
-TestSuite(hist,
-	.description = "Histogram",
-	.init = init_logging
-);
+TestSuite(hist, .description = "Histogram");
 
 Test(hist, simple) {
 	struct hist h;

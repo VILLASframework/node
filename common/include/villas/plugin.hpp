@@ -47,9 +47,11 @@ protected:
 
 public:
 
-	static SpdLogger
+	static Logger
 	getLogger()
-	{ return loggerGetOrCreate("plugin:registry"); }
+	{
+		return logging.get("plugin:registry");
+	}
 
 	static void add(Plugin *p)
 	{
@@ -126,9 +128,11 @@ protected:
 	std::string description;
 	std::string path;
 
-	SpdLogger
+	Logger
 	getLogger()
-	{ return loggerGetOrCreate("plugin:" + name); }
+	{
+		return logging.get("plugin:" + name);
+	}
 };
 
 } // namespace plugin

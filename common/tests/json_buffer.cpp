@@ -30,14 +30,9 @@
 
 using namespace villas;
 
-void init_logging();
-
 using villas::Buffer;
 
-TestSuite(buffer,
-	.description = "Buffer datastructure",
-	.init = init_logging
-);
+TestSuite(buffer, .description = "Buffer datastructure");
 
 Test(json_buffer, decode)
 {

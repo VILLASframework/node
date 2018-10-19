@@ -32,9 +32,8 @@ add_library(villas-common SHARED
 	kernel/kernel.c
 	kernel/rt.c
 	list.c
-	log.c
-	log_config.c
-	log_helper.c
+	log.cpp
+	log_legacy.cpp
 	memory.cpp
 	memory_manager.cpp
 	plugin.cpp

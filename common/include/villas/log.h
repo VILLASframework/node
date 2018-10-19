@@ -23,17 +23,13 @@
 
 #pragma once
 
+#include <stdarg.h>
+
+#include <jansson.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <stdarg.h>
-#include <stdbool.h>
-#include <time.h>
-#include <sys/ioctl.h>
-
-#include <villas/common.h>
-#include <villas/log_config.h>
 
 /* The log level which is passed as first argument to print() */
 enum log_level {
@@ -43,8 +39,6 @@ enum log_level {
 	LOG_LVL_ERROR,
 	LOG_LVL_STATS,
 };
-
-typedef void (*log_cb_t)(struct log *l, enum log_level lvl, const char *fmt, va_list va);
 
 /** Debug facilities.
  *
@@ -77,7 +71,7 @@ enum log_facilities {
 	LOG_WEBSOCKET =		(1L << 29),
 	LOG_OPAL =		(1L << 30),
 	LOG_COMEDI =		(1L << 31),
-	LOG_IB =		(1L << 32),
+	LOG_IB =		(1LL << 32),
 
 	/* Classes */
 	LOG_NODES = LOG_NODE | LOG_SOCKET | LOG_FILE | LOG_FPGA | LOG_NGSI | LOG_WEBSOCKET | LOG_OPAL | LOG_COMEDI | LOG_IB,
@@ -85,78 +79,10 @@ enum log_facilities {
 	LOG_ALL = ~0xFF
 };
 
-struct log {
-	enum state state;
-
-	const char *name;
-
-	struct timespec epoch;	/**< A global clock used to prefix the log messages. */
-
-	struct winsize window;	/**< Size of the terminal window. */
-	int width;		/**< The real usable log output width which fits into one line. */
-
-	/** Debug level used by the debug() macro.
-	 * It defaults to V (defined by the Makefile) and can be
-	 * overwritten by the 'debug' setting in the configuration file. */
-	int level;
-	long facilities;	/**< Debug facilities used by the debug() macro. */
-	const char *path;	/**< Path of the log file. */
-	char *prefix;		/**< Prefix each line with this string. */
-	int syslog;		/**< Whether or not to log to syslogd. */
-	bool tty;		/**< Is the log file a tty? */
-
-	log_cb_t callback;
-
-	FILE *file;		/**< Send all log output to this file / stdout / stderr. */
-};
-
-/** The global log instance. */
-extern struct log *global_log;
-
-/** Initialize log object */
-int log_init(struct log *l, const char *name, int level, long faciltities);
-
-void log_set_callback(struct log *l, log_cb_t cb);
-
-int log_open(struct log *l);
-
-int log_close(struct log *l);
-
-/** Destroy log object */
-int log_destroy(struct log *l);
-
-/** Set logging facilities based on expression.
- *
- * Currently we support two types of expressions:
- *  1. A comma seperated list of logging facilities
- *  2. A comma seperated list of logging facilities which is prefixes with an exclamation mark '!'
- *
- * The first case enables only faciltities which are in the list.
- * The second case enables all faciltities with exception of those which are in the list.
- *
- * @param expression The expression
- * @return The new facilties mask (see enum log_faciltities)
- */
-int log_set_facility_expression(struct log *l, const char *expression);
-
-/** Logs variadic messages to stdout.
- *
- * @param lvl The log level
- * @param fmt The format string (printf alike)
- */
-void log_print(struct log *l, enum log_level lvl, const char *fmt, ...)
-	__attribute__ ((format(printf, 3, 4)));
-
-/** Logs variadic messages to stdout.
- *
- * @param lvl The log level
- * @param fmt The format string (printf alike)
- * @param va The variadic argument list (see stdarg.h)
- */
-void log_vprint(struct log *l, enum log_level lvl, const char *fmt, va_list va);
+int log_get_width();
 
 /** Printf alike debug message with level. */
-void debug(long lvl, const char *fmt, ...)
+void debug(long long lvl, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
 
 /** Printf alike info message. */
@@ -178,6 +104,10 @@ void error(const char *fmt, ...)
 /** Print error and strerror(errno). */
 void serror(const char *fmt, ...)
 	__attribute__ ((format(printf, 1, 2)));
+
+/** Print configuration error and exit. */
+void jerror(json_error_t *err, const char *fmt, ...)
+	__attribute__ ((format(printf, 2, 3)));
 
 #ifdef __cplusplus
 }

@@ -21,7 +21,6 @@
 ##############################################################################
 
 add_executable(unit-tests-common
-	main.cpp
 	logging.cpp
 
 	advio.cpp

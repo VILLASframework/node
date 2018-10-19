@@ -26,9 +26,9 @@
 #include <criterion/logging.h>
 #include <criterion/options.h>
 
-#include <villas/log.h>
 #include <villas/log.hpp>
-#include <spdlog/spdlog.h>
+
+using namespace villas;
 
 extern "C" {
 	/* We override criterions function here */
@@ -40,8 +40,8 @@ extern "C" {
 static const char *color_reset = "\e[0m";
 
 struct criterion_prefix_data {
-    const char *prefix;
-    const char *color;
+	const char *prefix;
+	const char *color;
 };
 
 static int format_msg(char *buf, size_t buflen, const char *msg, va_list args)
@@ -58,7 +58,7 @@ static int format_msg(char *buf, size_t buflen, const char *msg, va_list args)
 
 void criterion_log_noformat(enum criterion_severity severity, const char *msg)
 {
-	auto logger = loggerGetOrCreate("criterion");
+	auto logger = logging.get("criterion");
 
 	switch (severity) {
 		case CR_LOG_WARNING:
@@ -84,7 +84,7 @@ void criterion_vlog(enum criterion_logging_level /* level */, const char *msg, v
 
 	format_msg(formatted_msg, sizeof(formatted_msg), msg, args);
 
-	auto logger = loggerGetOrCreate("tests");
+	auto logger = logging.get("test");
 	logger->info(formatted_msg);
 }
 
@@ -101,7 +101,7 @@ void criterion_plog(enum criterion_logging_level /* level */, const struct crite
 	format_msg(formatted_msg, sizeof(formatted_msg), msg, args);
 	va_end(args);
 
-	auto logger = loggerGetOrCreate("tests");
+	auto logger = logging.get("test");
 
 	if      (!strcmp(prefix->prefix, "----") && !strcmp(prefix->color, "\33[0;34m"))
 		logger->info(formatted_msg);
@@ -123,47 +123,4 @@ void criterion_plog(enum criterion_logging_level /* level */, const struct crite
 		logger->error("{}Fail:{} {}", prefix->color, color_reset, formatted_msg);
 	else
 		logger->info(formatted_msg);
-}
-
-extern "C"
-void log_cb(struct log *l, enum log_level lvl, const char *fmt, va_list args)
-{
-	char formatted_msg[1024];
-
-	auto logger = loggerGetOrCreate(l->name);
-
-	//if (level < criterion_options.logging_threshold)
-	//	return;
-
-	format_msg(formatted_msg, sizeof(formatted_msg), fmt, args);
-
-	switch (lvl) {
-		case LOG_LVL_DEBUG:
-			logger->debug(formatted_msg);
-			break;
-
-		case LOG_LVL_INFO:
-			logger->info(formatted_msg);
-			break;
-
-		case LOG_LVL_WARN:
-			logger->warn(formatted_msg);
-			break;
-
-		case LOG_LVL_ERROR:
-			logger->error(formatted_msg);
-			break;
-
-		case LOG_LVL_STATS:
-			logger->info("Stats: {}", formatted_msg);
-			break;
-	}
-}
-
-void init_logging()
-{
-	log_set_callback(global_log, log_cb);
-
-	spdlog::set_level(spdlog::level::trace);
-	spdlog::set_pattern("[%T] [%^%l%$] [%n] %v");
 }
