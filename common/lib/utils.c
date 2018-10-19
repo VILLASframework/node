@@ -30,7 +30,6 @@
 #include <math.h>
 #include <pthread.h>
 #include <ctype.h>
-#include <signal.h>
 
 #include <villas/config.h>
 #include <villas/utils.h>
