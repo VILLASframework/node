@@ -62,8 +62,8 @@ static int table_resize(struct table *t, int width)
 
 void table_header(struct table *t)
 {
-	if (t->width != global_log->width)
-		table_resize(t, global_log->width);
+	if (t->width != log_get_width())
+		table_resize(t, log_get_width());
 
 	char *line0 = strf("\b");
 	char *line1 = strf("\b\b" BOX_UD);
@@ -119,8 +119,8 @@ void table_header(struct table *t)
 
 void table_row(struct table *t, ...)
 {
-	if (t->width != global_log->width) {
-		table_resize(t, global_log->width);
+	if (t->width != log_get_width()) {
+		table_resize(t, log_get_width());
 		table_header(t);
 	}
 
@@ -152,8 +152,8 @@ void table_row(struct table *t, ...)
 
 void table_footer(struct table *t)
 {
-	if (t->width != global_log->width)
-		table_resize(t, global_log->width);
+	if (t->width != log_get_width())
+		table_resize(t, log_get_width());
 
 	char *line = strf("\b");
 
