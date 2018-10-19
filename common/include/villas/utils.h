@@ -28,6 +28,7 @@
 #include <sched.h>
 #include <assert.h>
 #include <sys/types.h>
+#include <signal.h>
 
 #include <villas/config.h>
 #include <villas/log.h>
