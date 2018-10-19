@@ -27,16 +27,13 @@
 #include <villas/log.hpp>
 #include <villas/memory_manager.hpp>
 
-void init_logging();
+using namespace villas;
 
-TestSuite(graph,
-	.init = init_logging,
-	.description = "Graph library"
-);
+TestSuite(graph, .description = "Graph library");
 
 Test(graph, basic, .description = "DirectedGraph")
 {
-	auto logger = loggerGetOrCreate("test:graph:basic");
+	auto logger = logging.get("test:graph:basic");
 	villas::graph::DirectedGraph<> g("test:graph:basic");
 
 	logger->info("Testing basic graph construction and modification");
@@ -67,7 +64,7 @@ Test(graph, basic, .description = "DirectedGraph")
 
 Test(graph, path, .description = "Find path")
 {
-	auto logger = loggerGetOrCreate("test:graph:path");
+	auto logger = logging.get("test:graph:path");
 	logger->info("Testing path finding algorithm");
 
 	using Graph = villas::graph::DirectedGraph<>;
@@ -131,7 +128,7 @@ Test(graph, path, .description = "Find path")
 
 Test(graph, memory_manager, .description = "Global Memory Manager")
 {
-	auto logger = loggerGetOrCreate("test:graph:mm");
+	auto logger = logging.get("test:graph:mm");
 	auto& mm = villas::MemoryManager::get();
 
 	logger->info("Create address spaces");

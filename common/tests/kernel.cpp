@@ -25,12 +25,7 @@
 #include <villas/kernel/kernel.h>
 #include <villas/utils.h>
 
-void init_logging();
-
-TestSuite(kernel,
-	.description = "Kernel features",
-	.init = init_logging
-);
+TestSuite(kernel, .description = "Kernel features");
 
 #ifdef __linux__
 

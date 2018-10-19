@@ -52,7 +52,7 @@ public:
 	DirectedGraph(const std::string& name = "DirectedGraph") :
 	    lastVertexId(0), lastEdgeId(0)
 	{
-		logger = loggerGetOrCreate(name);
+		logger = logging.get(name);
 	}
 
 	std::shared_ptr<VertexType> getVertex(VertexIdentifier vertexId) const
@@ -290,7 +290,7 @@ protected:
 	std::map<VertexIdentifier, std::shared_ptr<VertexType>> vertices;
 	std::map<EdgeIdentifier, std::shared_ptr<EdgeType>> edges;
 
-	SpdLogger logger;
+	Logger logger;
 };
 
 } // namespacae graph

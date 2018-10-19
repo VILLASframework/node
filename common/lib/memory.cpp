@@ -192,7 +192,7 @@ HostDmaRam::HostDmaRamAllocator::HostDmaRamAllocator(int num) :
     num(num)
 {
 	auto& mm = MemoryManager::get();
-	logger = loggerGetOrCreate(getName());
+	logger = logging.get(getName());
 
 	if(getSize() == 0) {
 		logger->error("Zero-sized DMA buffer not supported, is the kernel module loaded?");

@@ -23,7 +23,6 @@
 #include <unistd.h>
 
 #include <criterion/criterion.h>
-#include <criterion/logging.h>
 
 #include <villas/utils.h>
 #include <villas/advio.h>
@@ -32,13 +31,9 @@
  * The Sciebo share is read/write accessible via WebDAV. */
 #define BASE_URI "https://1Nrd46fZX8HbggT:badpass@rwth-aachen.sciebo.de/public.php/webdav/node/tests"
 
-void init_logging();
-
 TestSuite(advio,
-	.description = "Advanced file IO",
-	.init = init_logging
+	.description = "Advanced file IO"
 );
-
 
 Test(advio, islocal)
 {

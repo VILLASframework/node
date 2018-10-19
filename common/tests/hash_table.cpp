@@ -28,12 +28,7 @@
 static const char *keys[]   = { "able",   "achieve", "acoustics", "action", "activity", "aftermath", "afternoon", "afterthought", "apparel",  "appliance", "beginner", "believe",   "bomb",   "border",  "boundary",   "breakfast", "cabbage",  "cable",  "calculator", "calendar",  "caption", "carpenter", "cemetery", "channel", "circle", "creator", "creature", "education", "faucet", "feather", "friction", "fruit",     "fuel",    "galley", "guide",    "guitar", "health", "heart",   "idea",   "kitten",  "laborer",    "language" };
 static const char *values[] = { "lawyer", "linen",   "locket",    "lumber", "magic",    "minister",  "mitten",    "money",        "mountain", "music",     "partner",  "passenger", "pickle", "picture", "plantation", "plastic",   "pleasure", "pocket", "police",     "pollution", "railway", "recess",    "reward",   "route",   "scene",  "scent",   "squirrel", "stranger",  "suit",   "sweater", "temper",   "territory", "texture", "thread", "treatment", "veil",  "vein",   "volcano", "wealth", "weather", "wilderness", "wren" };
 
-void init_logging();
-
-TestSuite(hash_table,
-	.description = "Hash table datastructure",
-	.init = init_logging
-);
+TestSuite(hash_table, .description = "Hash table datastructure");
 
 Test(hash_table, hash_table_lookup)
 {

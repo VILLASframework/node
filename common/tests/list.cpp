@@ -34,12 +34,7 @@ struct data {
 	int data;
 };
 
-void init_logging();
-
-TestSuite(list,
-	.description = "List datastructure",
-	.init = init_logging
-);
+TestSuite(list, .description = "List datastructure");
 
 Test(list, list_lookup)
 {

@@ -44,7 +44,9 @@
 #include <villas/kernel/kernel.h>
 #include <villas/kernel/vfio.hpp>
 
-static auto logger = loggerGetOrCreate("Vfio");
+using namespace villas;
+
+static auto logger = logging.get("kernel:vfio");
 
 static const char *vfio_pci_region_names[] = {
     "PCI_BAR0",		// VFIO_PCI_BAR0_REGION_INDEX,

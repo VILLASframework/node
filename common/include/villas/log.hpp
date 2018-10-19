@@ -25,33 +25,51 @@
 
 #include <string>
 
-#define SPDLOG_LEVEL_NAMES { "trace", "debug", "info ",  "warn ", "error", "crit ", "off   " }
-#define SPDLOG_NAME_WIDTH 17
 #define SPDLOG_FMT_EXTERNAL
 
 #include <spdlog/spdlog.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/sinks/dist_sink.h>
 #include <spdlog/fmt/ostr.h>
 
-#define _ESCAPE	"\x1b"
-#define TXT_RESET_ALL	_ESCAPE "[0m"
+#include <jansson.h>
 
-#define TXT_RESET_BOLD	_ESCAPE "[21m"
-#define TXT_BOLD(s)		_ESCAPE "[1m" + std::string(s)  + TXT_RESET_BOLD
+#include <villas/terminal.hpp>
 
-#define TXT_RESET_COLOR	_ESCAPE "[39m"
-#define TXT_RED(s)		_ESCAPE "[31m" + std::string(s) + TXT_RESET_COLOR
-#define TXT_GREEN(s)	_ESCAPE "[32m" + std::string(s) + TXT_RESET_COLOR
-#define TXT_YELLOW(s)	_ESCAPE "[33m" + std::string(s) + TXT_RESET_COLOR
-#define TXT_BLUE(s)		_ESCAPE "[34m" + std::string(s) + TXT_RESET_COLOR
+namespace villas {
 
-using SpdLogger = std::shared_ptr<spdlog::logger>;
+/* Forward declarations */
+class Log;
 
-inline SpdLogger loggerGetOrCreate(const std::string& logger_name)
-{
-    auto logger = spdlog::get(logger_name);
-    if(not logger) {
-        logger = spdlog::stdout_color_mt(logger_name);
-    }
-    return logger;
-}
+using Logger = std::shared_ptr<spdlog::logger>;
+
+extern Log logging;
+
+class Log {
+
+public:
+	using DistSink = std::shared_ptr<spdlog::sinks::dist_sink_mt>;
+	using Level = spdlog::level::level_enum;
+
+protected:
+	Logger logger = logging.get("log");
+	DistSink sinks;
+
+	std::string pattern;		/**< Logging format. */
+	std::string prefix;		/**< Prefix each line with this string. */
+
+public:
+
+	Log(Level level = Level::info);
+
+	/**< Get the real usable log output width which fits into one line. */
+	int getWidth();
+
+	void parse(json_t *cfg);
+
+	Logger get(const std::string &name);
+
+	void setLevel(Level lvl);
+	void setLevel(const std::string &lvl);
+};
+
+} // namespace villas
