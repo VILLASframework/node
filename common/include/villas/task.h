@@ -26,6 +26,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include <villas/tsc.h>
+
 #include <time.h>
 
 #ifdef __cplusplus
@@ -61,7 +63,7 @@ struct task {
 #if PERIODIC_TASK_IMPL == TIMERFD
 	int fd;				/**< The timerfd_create(2) file descriptior. */
 #elif PERIODIC_TASK_IMPL == RDTSC
-	struct rdtsc tsc;		/**< Initialized by tsc_init(). */
+	struct tsc tsc;			/**< Initialized by tsc_init(). */
 #endif
 };
 
