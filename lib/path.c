@@ -116,8 +116,18 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 			? sample_clone(p->last_sample)
 			: sample_clone(muxed_smps[i-1]);
 
-		muxed_smps[i]->sequence = p->original_sequence_no ? tomux_smps[i]->sequence : p->last_sequence++;
-		muxed_smps[i]->ts       = tomux_smps[i]->ts;
+		muxed_smps[i]->flags = 0;
+		if (p->original_sequence_no) {
+			muxed_smps[i]->sequence = tomux_smps[i]->sequence;
+			muxed_smps[i]->flags |= tomux_smps[i]->flags & SAMPLE_HAS_SEQUENCE;
+		}
+		else {
+			muxed_smps[i]->sequence = p->last_sequence++;
+			muxed_smps[i]->flags |= SAMPLE_HAS_SEQUENCE;
+		}
+
+		muxed_smps[i]->ts = tomux_smps[i]->ts;
+		muxed_smps[i]->flags |= tomux_smps[i]->flags & (SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_TS_RECEIVED);
 
 		mapping_remap(&ps->mappings, muxed_smps[i], tomux_smps[i], NULL);
 	}
@@ -738,7 +748,7 @@ int path_start(struct path *p)
 	p->last_sample->length = list_length(&p->signals);
 	p->last_sample->signals = &p->signals;
 	p->last_sample->sequence = 0;
-	p->last_sample->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_DATA;
+	p->last_sample->flags = 0;
 
 	for (size_t i = 0; i < p->last_sample->length; i++) {
 		struct signal *sig = (struct signal *) list_at(p->last_sample->signals, i);
