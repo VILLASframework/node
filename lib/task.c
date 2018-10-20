@@ -172,7 +172,7 @@ uint64_t task_wait(struct task *t)
 	uint64_t now;
 
 	do {
-		now = rdtscp();
+		now = tsc_now(&t->tsc);
 	} while (now < t->next);
 
 

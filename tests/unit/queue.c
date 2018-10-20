@@ -306,6 +306,7 @@ ParameterizedTestParameters(queue, multi_threaded)
 ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init = init_memory)
 {
 	int ret, cycpop;
+	struct tsc tsc;
 
 	pthread_t threads[p->thread_count];
 
@@ -323,13 +324,17 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 
 	sleep(0.2);
 
-	start_tsc_time = rdtscp();
+
+	ret = tsc_init(&tsc);
+	cr_assert(!ret);
+
+	start_tsc_time = tsc_now(&tsc);
 	p->start = 1;
 
 	for (int i = 0; i < p->thread_count; ++i)
 		pthread_join(threads[i], NULL);
 
-	end_tsc_time = rdtscp();
+	end_tsc_time = tsc_now(&tsc);
 	cycpop = (end_tsc_time - start_tsc_time) / p->iter_count;
 
 	if (cycpop < 400)
