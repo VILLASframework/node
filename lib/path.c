@@ -128,11 +128,11 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 
 #ifdef WITH_HOOKS
 	int toenqueue = hook_process_list(&p->hooks, muxed_smps, tomux);
-        if (toenqueue != tomux) {
-                int skipped = tomux - toenqueue;
+	if (toenqueue != tomux) {
+		int skipped = tomux - toenqueue;
 
-                debug(LOG_NODES | 10, "Hooks skipped %u out of %u samples for path %s", skipped, tomux, path_name(p));
-        }
+		debug(LOG_NODES | 10, "Hooks skipped %u out of %u samples for path %s", skipped, tomux, path_name(p));
+	}
 #else
 	int toenqueue = tomux;
 #endif
