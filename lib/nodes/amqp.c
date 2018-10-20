@@ -239,7 +239,7 @@ int amqp_start(struct node *n)
 	amqp_rpc_reply_t rep;
 	amqp_queue_declare_ok_t *r;
 
-	ret = io_init(&a->io, a->format, &n->signals, SAMPLE_HAS_ALL);
+	ret = io_init(&a->io, a->format, &n->signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
 	if (ret)
 		return ret;
 

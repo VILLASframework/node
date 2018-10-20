@@ -299,7 +299,7 @@ int mqtt_start(struct node *n)
 	mosquitto_message_callback_set(m->client, mqtt_message_cb);
 	mosquitto_subscribe_callback_set(m->client, mqtt_subscribe_cb);
 
-	ret = io_init(&m->io, m->format, &n->signals, SAMPLE_HAS_ALL);
+	ret = io_init(&m->io, m->format, &n->signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
 	if (ret)
 		return ret;
 
