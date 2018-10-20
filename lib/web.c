@@ -254,18 +254,24 @@ int web_start(struct web *w)
 
 	info("Starting Web sub-system: webroot=%s", w->htdocs);
 
-	{
-		/* update web root of mount point */
-		mounts[0].origin = w->htdocs;
+	/* update web root of mount point */
+	mounts[0].origin = w->htdocs;
 
-		w->context = lws_create_context(&ctx_info);
-		if (w->context == NULL)
-			error("WebSocket: failed to initialize server context");
+	w->context = lws_create_context(&ctx_info);
+	if (w->context == NULL)
+		error("WebSocket: failed to initialize server context");
 
+	for (int tries = 10; tries > 0; tries--) {
 		w->vhost = lws_create_vhost(w->context, &ctx_info);
-		if (w->vhost == NULL)
-			error("WebSocket: failed to initialize virtual host");
+		if (w->vhost)
+			break;
+
+		ctx_info.port++;
+		warn("WebSocket: failed to setup vhost. Trying another port: %d", ctx_info.port);
 	}
+
+	if (w->vhost == NULL)
+		error("WebSocket: failed to initialize virtual host");
 
 	ret = pthread_create(&w->thread, NULL, web_worker, w);
 	if (ret)
