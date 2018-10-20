@@ -23,6 +23,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <inttypes.h>
+#include <libgen.h>
+#include <sys/stat.h>
 
 #include <villas/nodes/file.h>
 #include <villas/utils.h>
@@ -209,6 +211,20 @@ int file_start(struct node *n)
 
 	/* Prepare file name */
 	f->uri = file_format_name(f->uri_tmpl, &now);
+
+	/* Check if directory exists */
+	struct stat sb;
+	char *dir = dirname(f->uri);
+
+	ret = stat(dir, &sb);
+	if (ret)
+		serror("Failed to stat");
+
+	if (!S_ISDIR(sb.st_mode)) {
+		ret = mkdir(dir, 0644);
+		if (ret)
+			serror("Failed to create directory");
+	}
 
 	/* Open file */
 	flags = SAMPLE_HAS_ALL;
