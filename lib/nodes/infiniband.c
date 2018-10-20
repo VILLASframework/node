@@ -22,6 +22,7 @@
 
 #include <string.h>
 #include <math.h>
+#include <netdb.h>
 
 #include <villas/node/config.h>
 #include <villas/nodes/infiniband.h>
