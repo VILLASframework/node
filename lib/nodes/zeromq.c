@@ -36,7 +36,7 @@
 
 static void *context;
 
-#ifdef ZMQ_BUILD_DRAFT_API
+#if defined(ZMQ_BUILD_DRAFT_API) && ZMQ_VERSION >= 040203
 /**  Read one event off the monitor socket; return value and address
  * by reference, if not null, and event number by value.
  *
@@ -345,9 +345,9 @@ int zeromq_start(struct node *n)
 			goto fail;
 	}
 
-#ifdef ZMQ_BUILD_DRAFT_API
+#if defined(ZMQ_BUILD_DRAFT_API) && ZMQ_VERSION >= 040203
 	/* Monitor handshake events on the server */
-	ret = zmq_socket_monitor(z->in.socket, "inproc://monitor-server", ZMQ_EVENT_HANDSHAKE_SUCCEED | ZMQ_EVENT_HANDSHAKE_FAILED);
+	ret = zmq_socket_monitor(z->in.socket, "inproc://monitor-server", ZMQ_EVENT_HANDSHAKE_SUCCEEDED | ZMQ_EVENT_HANDSHAKE_FAILED_NO_DETAIL | ZMQ_EVENT_HANDSHAKE_FAILED_PROTOCOL | ZMQ_EVENT_HANDSHAKE_FAILED_AUTH);
 	if (ret < 0)
 		goto fail;
 
@@ -382,10 +382,10 @@ int zeromq_start(struct node *n)
 		}
 	}
 
-#ifdef ZMQ_BUILD_DRAFT_API
+#if defined(ZMQ_BUILD_DRAFT_API) && ZMQ_VERSION >= 040203
 	if (z->curve.enabled) {
 		ret = get_monitor_event(z->in.mon_socket, NULL, NULL);
-		return ret == ZMQ_EVENT_HANDSHAKE_SUCCEED;
+		return ret == ZMQ_EVENT_HANDSHAKE_SUCCEEDED;
 	}
 	else
 		return 0; /* The handshake events are only emitted for CurveZMQ sessions. */
@@ -408,7 +408,7 @@ int zeromq_stop(struct node *n)
 	if (ret)
 		return ret;
 
-#ifdef ZMQ_BUILD_DRAFT_API
+#if defined(ZMQ_BUILD_DRAFT_API) && ZMQ_VERSION >= 040203
 	ret = zmq_close(z->in.mon_socket);
 	if (ret)
 		return ret;
