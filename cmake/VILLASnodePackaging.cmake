@@ -71,8 +71,8 @@ set(CPACK_RPM_PACKAGE_LICENSE "GPLv3")
 set(CPACK_RPM_PACKAGE_URL ${PROJECT_HOMEPAGE_URL})
 set(CPACK_RPM_PACKAGE_GROUP "Development/Libraries")
 
-set(CPACK_RESOURCE_FILE_LICENSE "${VILLASnode_SOURCE_DIR}/COPYING.md")
-set(CPACK_RESOURCE_FILE_README  "${VILLASnode_SOURCE_DIR}/README.md")
+set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/COPYING.md")
+set(CPACK_RESOURCE_FILE_README  "${PROJECT_SOURCE_DIR}/README.md")
 
 set(CPACK_SOURCE_IGNORE_FILES "build/;\\\\.gitmodules;\\\\.git/;\\\\.vscode;\\\\.editorconfig;\\\\.gitlab-ci.yml;\\\\.(docker|git)ignore;\\\\.DS_Store")
 
