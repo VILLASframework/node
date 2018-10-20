@@ -48,6 +48,14 @@ struct timespec time_add(const struct timespec *start, const struct timespec *en
 	return sum;
 }
 
+ssize_t time_cmp(const struct timespec *a, const struct timespec *b)
+{
+	ssize_t sd = a->tv_sec - b->tv_sec;
+	ssize_t nsd = a->tv_nsec - b->tv_nsec;
+
+	return sd != 0 ? sd : nsd;
+}
+
 struct timespec time_diff(const struct timespec *start, const struct timespec *end)
 {
 	struct timespec diff = {
