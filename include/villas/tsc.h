@@ -88,8 +88,14 @@ static inline uint64_t rdtsc()
 	return tsc;
 }
 
+__attribute__((unused,always_inline))
+static uint64_t tsc_now(struct tsc *t)
+{
+	return t->rdtscp_supported
+		? rdtscp()
+		: rdtsc();
+}
+
 int tsc_init(struct tsc *t);
 
 uint64_t tsc_rate_to_cycles(struct tsc *t, double rate);
-
-uint64_t tsc_now(struct tsc *t);

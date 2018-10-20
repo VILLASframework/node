@@ -75,10 +75,3 @@ uint64_t tsc_rate_to_cycles(struct tsc *t, double rate)
 {
 	return t->frequency / rate;
 }
-
-uint64_t tsc_now(struct tsc *t)
-{
-	return t->rdtscp_supported
-		? rdtscp()
-		: rdtsc();
-}
