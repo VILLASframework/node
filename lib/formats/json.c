@@ -50,14 +50,14 @@ static enum signal_type json_detect_format(json_t *val)
 	}
 }
 
-static json_t * json_pack_timestamps(struct sample *smp)
+static json_t * json_pack_timestamps(struct io *io, struct sample *smp)
 {
 	json_t *json_ts = json_object();
 
-	if (smp->flags & SAMPLE_HAS_TS_ORIGIN)
+	if (io->flags & smp->flags & SAMPLE_HAS_TS_ORIGIN)
 		json_object_set(json_ts, "origin", json_pack("[ I, I ]", smp->ts.origin.tv_sec, smp->ts.origin.tv_nsec));
 
-	if (smp->flags & SAMPLE_HAS_TS_RECEIVED)
+	if (io->flags & smp->flags & SAMPLE_HAS_TS_RECEIVED)
 		json_object_set(json_ts, "received", json_pack("[ I, I ]", smp->ts.received.tv_sec, smp->ts.received.tv_nsec));
 
 	return json_ts;
@@ -98,15 +98,15 @@ static int json_pack_sample(struct io *io, json_t **j, struct sample *smp)
 	json_t *json_smp;
 	json_error_t err;
 
-	json_smp = json_pack_ex(&err, 0, "{ s: o }", "ts", json_pack_timestamps(smp));
+	json_smp = json_pack_ex(&err, 0, "{ s: o }", "ts", json_pack_timestamps(io, smp));
 
-	if (smp->flags & SAMPLE_HAS_SEQUENCE) {
+	if (io->flags & smp->flags & SAMPLE_HAS_SEQUENCE) {
 		json_t *json_sequence = json_integer(smp->sequence);
 
 		json_object_set(json_smp, "sequence", json_sequence);
 	}
 
-	if (smp->flags & SAMPLE_HAS_DATA) {
+	if (io->flags & smp->flags & SAMPLE_HAS_DATA) {
 		json_t *json_data = json_array();
 
 		for (int i = 0; i < smp->length; i++) {

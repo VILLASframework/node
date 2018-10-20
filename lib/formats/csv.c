@@ -36,20 +36,26 @@ static size_t csv_sprint_single(struct io *io, char *buf, size_t len, const stru
 	size_t off = 0;
 	struct signal *sig;
 
-	if (io->flags & SAMPLE_HAS_TS_ORIGIN)
-		off += snprintf(buf + off, len - off, "%ld%c%09ld", smp->ts.origin.tv_sec, io->separator, smp->ts.origin.tv_nsec);
-	else
-		off += snprintf(buf + off, len - off, "nan%cnan", io->separator);
+	if (io->flags & SAMPLE_HAS_TS_ORIGIN) {
+		if (io->flags & SAMPLE_HAS_TS_ORIGIN)
+			off += snprintf(buf + off, len - off, "%ld%c%09ld", smp->ts.origin.tv_sec, io->separator, smp->ts.origin.tv_nsec);
+		else
+			off += snprintf(buf + off, len - off, "nan%cnan", io->separator);
+	}
 
-	if (io->flags & SAMPLE_HAS_TS_RECEIVED)
-		off += snprintf(buf + off, len - off, "%c%.09f", io->separator, time_delta(&smp->ts.origin, &smp->ts.received));
-	else
-		off += snprintf(buf + off, len - off, "%cnan", io->separator);
+	if (io->flags & SAMPLE_HAS_OFFSET) {
+		if (smp->flags & SAMPLE_HAS_TS_RECEIVED)
+			off += snprintf(buf + off, len - off, "%c%.09f", io->separator, time_delta(&smp->ts.origin, &smp->ts.received));
+		else
+			off += snprintf(buf + off, len - off, "%cnan", io->separator);
+	}
 
-	if (io->flags & SAMPLE_HAS_SEQUENCE)
-		off += snprintf(buf + off, len - off, "%c%" PRIu64, io->separator, smp->sequence);
-	else
-		off += snprintf(buf + off, len - off, "%cnan", io->separator);
+	if (io->flags & SAMPLE_HAS_SEQUENCE) {
+		if (smp->flags & SAMPLE_HAS_SEQUENCE)
+			off += snprintf(buf + off, len - off, "%c%" PRIu64, io->separator, smp->sequence);
+		else
+			off += snprintf(buf + off, len - off, "%cnan", io->separator);
+	}
 
 	if (io->flags & SAMPLE_HAS_DATA) {
 		for (int i = 0; i < smp->length; i++) {
@@ -177,18 +183,31 @@ void csv_header(struct io *io, const struct sample *smp)
 {
 	FILE *f = io_stream_output(io);
 
-	fprintf(f, "# secs%cnsecs%coffset%csequence", io->separator, io->separator, io->separator);
+	fprintf(f, "# ");
+	if (io->flags & SAMPLE_HAS_TS_ORIGIN)
+		fprintf(f, "secs%cnsecs%c", io->separator, io->separator);
 
-	for (int i = 0; i < smp->length; i++) {
-		struct signal *sig = (struct signal *) list_at(smp->signals, i);
+	if (io->flags & SAMPLE_HAS_OFFSET)
+		fprintf(f, "offset%c", io->separator);
 
-		if (sig->name)
-			fprintf(f, "%c%s", io->separator, sig->name);
-		else
-			fprintf(f, "%csignal%d", io->separator, i);
+	if (io->flags & SAMPLE_HAS_SEQUENCE)
+		fprintf(f, "sequence%c", io->separator);
 
-		if (sig->unit)
-			fprintf(f, "[%s]", sig->unit);
+	if (io->flags & SAMPLE_HAS_DATA) {
+		for (int i = 0; i < smp->length; i++) {
+			struct signal *sig = (struct signal *) list_at(smp->signals, i);
+
+			if (sig->name)
+				fprintf(f, "%s", sig->name);
+			else
+				fprintf(f, "signal%d", i);
+
+			if (sig->unit)
+				fprintf(f, "[%s]", sig->unit);
+
+			if (i+1 < smp->length)
+				fprintf(f, "%c", io->separator);
+		}
 	}
 
 	fprintf(f, "%c", io->delimiter);

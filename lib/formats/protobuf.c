@@ -68,12 +68,12 @@ int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct
 
 		pb_smp->type = VILLAS__NODE__SAMPLE__TYPE__DATA;
 
-		if (smp->flags & SAMPLE_HAS_SEQUENCE) {
+		if (io->flags & smp->flags & SAMPLE_HAS_SEQUENCE) {
 			pb_smp->has_sequence = 1;
 			pb_smp->sequence = smp->sequence;
 		}
 
-		if (smp->flags & SAMPLE_HAS_TS_ORIGIN) {
+		if (io->flags & smp->flags & SAMPLE_HAS_TS_ORIGIN) {
 			pb_smp->timestamp = alloc(sizeof(Villas__Node__Timestamp));
 			villas__node__timestamp__init(pb_smp->timestamp);
 

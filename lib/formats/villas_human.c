@@ -38,15 +38,23 @@ static size_t villas_human_sprint_single(struct io *io, char *buf, size_t len, c
 	struct signal *sig;
 
 	if (io->flags & SAMPLE_HAS_TS_ORIGIN) {
-		off += snprintf(buf + off, len - off, "%llu", (unsigned long long) smp->ts.origin.tv_sec);
-		off += snprintf(buf + off, len - off, ".%09llu", (unsigned long long) smp->ts.origin.tv_nsec);
+		if (smp->flags & SAMPLE_HAS_TS_ORIGIN) {
+			off += snprintf(buf + off, len - off, "%llu", (unsigned long long) smp->ts.origin.tv_sec);
+			off += snprintf(buf + off, len - off, ".%09llu", (unsigned long long) smp->ts.origin.tv_nsec);
+		}
+		else
+			off += snprintf(buf + off, len - off, "nan.nan");
 	}
 
-	if (io->flags & SAMPLE_HAS_TS_RECEIVED)
-		off += snprintf(buf + off, len - off, "%+e", time_delta(&smp->ts.origin, &smp->ts.received));
+	if (io->flags & SAMPLE_HAS_OFFSET) {
+		if (smp->flags & SAMPLE_HAS_TS_RECEIVED)
+			off += snprintf(buf + off, len - off, "%+e", time_delta(&smp->ts.origin, &smp->ts.received));
+	}
 
-	if (io->flags & SAMPLE_HAS_SEQUENCE)
-		off += snprintf(buf + off, len - off, "(%" PRIu64 ")", smp->sequence);
+	if (io->flags & SAMPLE_HAS_SEQUENCE) {
+		if (io->flags & SAMPLE_HAS_SEQUENCE)
+			off += snprintf(buf + off, len - off, "(%" PRIu64 ")", smp->sequence);
+	}
 
 	if (io->flags & SAMPLE_HAS_DATA) {
 		for (int i = 0; i < smp->length; i++) {
@@ -207,18 +215,29 @@ void villas_human_header(struct io *io, const struct sample *smp)
 {
 	FILE *f = io_stream_output(io);
 
-	fprintf(f, "# %-20s", "seconds.nanoseconds+offset(sequence)");
+	fprintf(f, "# ");
 
-	for (int i = 0; i < smp->length; i++) {
-		struct signal *sig = (struct signal *) list_at(smp->signals, i);
+	if (io->flags & SAMPLE_HAS_TS_ORIGIN)
+		fprintf(f, "seconds.nanoseconds");
 
-		if (sig->name)
-			fprintf(f, "%c%s", io->separator, sig->name);
-		else
-			fprintf(f, "%csignal%d", io->separator, i);
+	if (io->flags & SAMPLE_HAS_OFFSET)
+		fprintf(f, "+offset");
 
-		if (sig->unit)
-			fprintf(f, "[%s]", sig->unit);
+	if (io->flags & SAMPLE_HAS_SEQUENCE)
+		fprintf(f, "(sequence)");
+
+	if (io->flags & SAMPLE_HAS_DATA) {
+		for (int i = 0; i < smp->length; i++) {
+			struct signal *sig = (struct signal *) list_at(smp->signals, i);
+
+			if (sig->name)
+				fprintf(f, "%c%s", io->separator, sig->name);
+			else
+				fprintf(f, "%csignal%d", io->separator, i);
+
+			if (sig->unit)
+				fprintf(f, "[%s]", sig->unit);
+		}
 	}
 
 	fprintf(f, "%c", io->delimiter);
