@@ -50,7 +50,7 @@ RUN dnf -y install \
 	doxygen dia graphviz \
 	openssh-clients \
 	rpmdevtools rpm-build \
-	jq \
+	jq netcat \
 	iproute \
 	python-pip \
 	valgrind gdb gdb-gdbserver \

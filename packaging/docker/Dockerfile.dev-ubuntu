@@ -49,7 +49,7 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get update && apt-get install -y \
 	doxygen dia graphviz \
 	openssh-client \
-	jq \
+	jq netcat \
 	iproute2 \
 	python-pip \
 	valgrind gdb gdbserver \
