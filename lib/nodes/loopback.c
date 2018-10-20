@@ -46,7 +46,9 @@ int loopback_parse(struct node *n, json_t *cfg)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 	if (mode_str) {
-		if (!strcmp(mode_str, "eventfd"))
+		if (!strcmp(mode_str, "auto"))
+			l->queueflags = QUEUE_SIGNALLED_AUTO;
+		else if (!strcmp(mode_str, "eventfd"))
 			l->queueflags = QUEUE_SIGNALLED_EVENTFD;
 		else if (!strcmp(mode_str, "pthread"))
 			l->queueflags = QUEUE_SIGNALLED_PTHREAD;
