@@ -33,6 +33,7 @@
 #include <villas/pool.h>
 #include <villas/queue_signalled.h>
 #include <villas/common.h>
+#include <villas/buffer.h>
 #include <villas/io.h>
 #include <villas/node/config.h>
 
