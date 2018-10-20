@@ -1,0 +1,65 @@
+{
+    "3d_plot": {
+        "enabled": true,
+        "ticks": {
+            "x": [100, 1000, 10000, 25000, 50000],
+            "y": [1, 2, 4, 8, 16, 32, 64],
+            "z": [0, 1, 2, 3, 4, 5, 6, 7]
+        },
+        "axis_labels": {
+            "x": "rate",
+            "y": "number of values in sample",
+            "z": "$\\tilde{t}_{lat}$ [µs]"
+        },
+        "dimensions": {
+            "legend": [3.0, 0.3]
+        },
+
+        "legend_columns": 3
+    },
+
+    "median_plot": {
+        "export_figures": true,
+        "labels": [
+            "RC",
+            "UC",
+            "UD"
+        ],
+        "axis_labels": {
+            "x": "number of values in sample",
+            "y": "$\\tilde{t}_{lat}$ [µs]"
+        },
+        "ticks": {
+            "x": [1, 2, 4, 8, 16, 32, 64],
+            "y": [0, 1, 2, 3, 4, 5, 6]
+        },
+
+        "colors": [
+             "#000000",
+             "#00549f",
+             "#8ebae5"
+        ],
+
+        "dimensions": {
+            "legend": [2.0, 0.3]
+        },
+
+        "legend_columns": 3
+    },
+
+    "histograms": {
+        "export_figures": true,
+        "labels": [
+            "$\\mathtt{t_{lat} = t_{recv}-t_{generation}}$"
+        ],
+        "axis_labels": {
+            "x": "$t_{lat}$ [µs]",
+            "y": "frequency"
+        },
+        "dimensions": {
+            "legend": [1.70, 0.3]
+        },
+
+        "legend_columns": 1
+    }
+}
