@@ -27,13 +27,13 @@
 
 #include <villas/config.h>
 #include <villas/config_helper.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 void usage()
 {
 	std::cout << "Usage: conf2json input.conf > output.json" << std::endl << std::endl;
 
-	print_copyright();
+	villas::utils::print_copyright();
 }
 
 int main(int argc, char *argv[])
@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 	}
 
 	FILE *f = fopen(argv[1], "r");
-	if(f == NULL)
+	if(f == nullptr)
 		return -1;
 
 	const char *confdir = dirname(argv[1]);
