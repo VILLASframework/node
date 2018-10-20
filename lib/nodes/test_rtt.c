@@ -73,7 +73,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 	int ret;
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
-	const char *format = "villas.human";
+	const char *format = "villas.binary";
 	const char *output = ".";
 	const char *prefix = node_name_short(n);
 
