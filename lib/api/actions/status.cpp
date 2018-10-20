@@ -1,4 +1,4 @@
-/** The "config" API ressource.
+/** The "stats" API action.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
@@ -20,23 +20,42 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/api.h>
-#include <villas/utils.h>
-#include <villas/plugin.h>
-#include <villas/super_node.h>
+#ifdef LWS_WITH_SERVER_STATUS
 
-static int api_config(struct api_action *h, json_t *args, json_t **resp, struct api_session *s)
-{
-	*resp = json_incref(s->api->super_node->cfg);
+#include <jansson.h>
 
-	return 0;
-}
+#include <villas/api/action.hpp>
 
-static struct plugin p = {
-	.name = "config",
-	.description = "retrieve current VILLASnode configuration",
-	.type = PLUGIN_TYPE_API,
-	.api.cb = api_config
+namespace villas {
+namespace node {
+namespace api {
+
+class StatusAction : public Action {
+
+public:
+	using Action::Action;
+	virtual int execute(json_t *args, json_t **resp)
+	{
+		int ret;
+		struct lws_context *ctx = lws_get_context(s->wsi);
+		char buf[4096];
+
+		ret = lws_json_dump_context(ctx, buf, sizeof(buf), 0);
+
+		*resp = json_loads(buf, 0, nullptr);
+
+		return ret;
+	}
 };
 
-REGISTER_PLUGIN(&p)
+/* Register action */
+static ActionPlugin<StatusAction> p(
+	"status",
+	"get status and statistics of web server"
+);
+
+} // api
+} // node
+} // villas
+
+#endif /* LWS_WITH_SERVER_STATUS */

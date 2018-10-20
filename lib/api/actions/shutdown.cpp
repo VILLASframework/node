@@ -1,4 +1,4 @@
-/** The "paths" API ressource.
+/** The "shutdown" API action.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
@@ -20,42 +20,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <jansson.h>
+#include <signal.h>
 
-#include <villas/plugin.h>
-#include <villas/path.h>
 #include <villas/utils.h>
-#include <villas/super_node.h>
-#include <villas/api.h>
+#include <villas/api/action.hpp>
 
-static int api_paths(struct api_action *r, json_t *args, json_t **resp, struct api_session *s)
-{
-	json_t *json_paths = json_array();
+namespace villas {
+namespace node {
+namespace api {
 
-	for (size_t i = 0; i < list_length(&s->api->super_node->paths); i++) {
-		struct path *p = (struct path *) list_at(&s->api->super_node->paths, i);
+class ShutdownAction : public Action {
 
-		json_t *json_path = json_pack("{ s: i }",
-			"state",	p->state
-		);
+public:
+	using Action::Action;
+	virtual int execute(json_t *args, json_t **resp)
+	{
+		killme(SIGTERM);
 
-		/* Add all additional fields of node here.
-		 * This can be used for metadata */
-		json_object_update(json_path, p->cfg);
-
-		json_array_append_new(json_paths, json_path);
+		return 0;
 	}
-
-	*resp = json_paths;
-
-	return 0;
-}
-
-static struct plugin p = {
-	.name = "paths",
-	.description = "retrieve list of all paths with details",
-	.type = PLUGIN_TYPE_API,
-	.api.cb = api_paths
 };
 
-REGISTER_PLUGIN(&p)
+/* Register action */
+static ActionPlugin<ShutdownAction> p(
+	"shutdown",
+	"quit VILLASnode"
+);
+
+} // api
+} // node
+} // villas

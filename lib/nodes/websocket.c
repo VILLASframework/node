@@ -28,7 +28,7 @@
 
 #include <libwebsockets.h>
 
-#include <villas/web.h>
+#include <villas/web.hpp>
 #include <villas/timing.h>
 #include <villas/utils.h>
 #include <villas/buffer.h>

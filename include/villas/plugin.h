@@ -25,7 +25,6 @@
 
 #include <villas/common.h>
 #include <villas/utils.h>
-#include <villas/api.h>
 #include <villas/nodes/cbuilder.h>
 #include <villas/hook_type.h>
 #include <villas/node_type.h>
@@ -83,13 +82,12 @@ struct plugin {
 		struct format_type	format;
 		struct node_type	node;
 		struct hook_type	hook;
-		struct api_action	api;
 		struct cbuilder_model	cb;
 	};
 };
 
 /** Return a pointer to the plugin structure */
-#define plugin(vt) ((struct plugin *) ((char *) (vt) - offsetof(struct plugin, api)))
+#define plugin(vt) ((struct plugin *) ((char *) (vt) - offsetof(struct plugin, format)))
 
 #define plugin_name(vt) plugin(vt)->name
 #define plugin_description(vt) plugin(vt)->description

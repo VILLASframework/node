@@ -25,38 +25,42 @@
 #include <libgen.h>
 #include <unistd.h>
 
-#include <villas/super_node.h>
+#include <villas/super_node.hpp>
 #include <villas/node.h>
 #include <villas/path.h>
 #include <villas/utils.h>
 #include <villas/list.h>
 #include <villas/hook.h>
 #include <villas/advio.h>
-#include <villas/web.h>
-#include <villas/log.h>
-#include <villas/api.h>
 #include <villas/plugin.h>
 #include <villas/memory.h>
-#include <villas/node/config.h>
 #include <villas/config_helper.h>
+#include <villas/log.hpp>
+#include <villas/exceptions.hpp>
+#include <villas/kernel/rt.hpp>
 
-#include <villas/kernel/rt.h>
-
+using namespace villas;
 using namespace villas::node;
+
+Logger SuperNode::logger = logging.get("super_node");
 
 SuperNode::SuperNode() :
 	state(STATE_INITIALIZED),
 	priority(0),
 	affinity(0),
 	hugepages(DEFAULT_NR_HUGEPAGES),
-	stats(0)
+	stats(0),
+	api(this),
+	web(&api)
 {
 	list_init(&nodes);
 	list_init(&paths);
 	list_init(&plugins);
 
-	name = (char *) alloc(128);
-	gethostname(name, 128);
+	char hname[128];
+	gethostname(hname, 128);
+
+	name = hname;
 
 	init();
 }
@@ -65,11 +69,7 @@ int SuperNode::init()
 {
 	int ret;
 
-	ret = log_init(&log, name, 2, LOG_ALL);
-	if (ret)
-		return ret;
-
-	ret = rt_init(priority, affinity);
+	ret = kernel::rt::init(priority, affinity);
 	if (ret)
 		return ret;
 
@@ -77,114 +77,94 @@ int SuperNode::init()
 	if (ret)
 		return ret;
 
-#ifdef WITH_API
-	ret = api_init(&api);//, this); // @todo: port to C++
-	if (ret)
-		return ret;
-#endif /* WITH_API */
-
-#ifdef WITH_WEB
-	ret = web_init(&web, &api);
-	if (ret)
-		return ret;
-#endif /* WITH_WEB */
-
 	return 0;
 }
 
-int SuperNode::parseUri(const char *u)
+int SuperNode::parseUri(const std::string &u)
 {
 	json_error_t err;
 
-	info("Parsing configuration");
+	logger->info("Parsing configuration");
 
-	if (u) {
-		FILE *f;
-		AFILE *af;
+	FILE *f;
+	AFILE *af;
 
-		/* Via stdin */
-		if (!strcmp("-", u)) {
-			info("Reading configuration from stdin");
+	/* Via stdin */
+	if (u == "-") {
+		logger->info("Reading configuration from standard input");
 
-			af = NULL;
-			f = stdin;
-		}
-		else {
-			info("Reading configuration from URI: %s", u);
+		af = nullptr;
+		f = stdin;
+	}
+	else {
+		logger->info("Reading configuration from URI: {}", u);
 
-			af = afopen(u, "r");
-			if (!af)
-				error("Failed to open configuration from: %s", u);
+		af = afopen(u.c_str(), "r");
+		if (!af)
+			throw new RuntimeError("Failed to open configuration from: {}", u);
 
-			f = af->file;
-		}
+		f = af->file;
+	}
 
-		/* Parse config */
-		json = json_loadf(f, 0, &err);
-		if (json == NULL) {
+	/* Parse config */
+	json = json_loadf(f, 0, &err);
+	if (json == nullptr) {
 #ifdef LIBCONFIG_FOUND
-			int ret;
+		int ret;
 
-			config_t cfg;
-			config_setting_t *json_root = NULL;
+		config_t cfg;
+		config_setting_t *json_root = nullptr;
 
-			warn("Failed to parse JSON configuration. Re-trying with old libconfig format.");
-			{
-				warn("Please consider migrating to the new format using the 'conf2json' command.");
-			}
+		logger->warn("Failed to parse JSON configuration. Re-trying with old libconfig format.");
+		logger->warn("  Please consider migrating to the new format using the 'conf2json' command.");
 
-			config_init(&cfg);
-			config_set_auto_convert(&cfg, 1);
+		config_init(&cfg);
+		config_set_auto_convert(&cfg, 1);
 
-			/* Setup libconfig include path.
-			 * This is only supported for local files */
-			if (access(uri, F_OK) != -1) {
-				char *cpy = strdup(uri);
+		/* Setup libconfig include path.
+		 * This is only supported for local files */
+		if (access(u.c_str(), F_OK) != -1) {
+			char *cpy = strdup(u.c_str());
 
-				config_set_include_dir(&cfg, dirname(cpy));
+			config_set_include_dir(&cfg, dirname(cpy));
 
-				free(cpy);
-			}
+			free(cpy);
+		}
 
-			if (af)
-				arewind(af);
-			else
-				rewind(f);
+		if (af)
+			arewind(af);
+		else
+			rewind(f);
 
-			ret = config_read(&cfg, f);
-			if (ret != CONFIG_TRUE) {
-				{
-					warn("conf: %s in %s:%d", config_error_text(&cfg), uri, config_error_line(&cfg));
-					warn("json: %s in %s:%d:%d", err.text, err.source, err.line, err.column);
-				}
-				error("Failed to parse configuration");
-			}
+		ret = config_read(&cfg, f);
+		if (ret != CONFIG_TRUE) {
+			logger->warn("conf: {} in {}:{}", config_error_text(&cfg), u.c_str(), config_error_line(&cfg));
+			logger->warn("json: {} in {}:{}:{}", err.text, err.source, err.line, err.column);
+			logger->error("Failed to parse configuration");
+			killme(SIGABRT);
+		}
 
-			json_root = config_root_setting(&cfg);
+		json_root = config_root_setting(&cfg);
 
-			json = config_to_json(json_root);
-			if (json == NULL)
-				error("Failed to convert JSON to configuration file");
+		json = config_to_json(json_root);
+		if (json == nullptr)
+			throw new RuntimeError("Failed to convert JSON to configuration file");
 
-			config_destroy(&cfg);
+		config_destroy(&cfg);
 #else
-			jerror(&err, "Failed to parse configuration file");
+		throw new JsonError(err, "Failed to parse configuration file");
 #endif /* LIBCONFIG_FOUND */
 		}
 
-		/* Close configuration file */
-		if (af)
-			afclose(af);
-		else if (f != stdin)
-			fclose(f);
+	/* Close configuration file */
+	if (af)
+		afclose(af);
+	else if (f != stdin)
+		fclose(f);
 
-		uri = strdup(u);
+	uri = u;
 
-		return parseJson(json);
-	}
-	else {
-		warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
-	}
+	return parseJson(json);
 
 	return 0;
 }
@@ -217,38 +197,36 @@ int SuperNode::parseJson(json_t *j)
 		"name", &nme
 	);
 	if (ret)
-		jerror(&err, "Failed to parse global configuration");
+		throw new JsonError(err, "Failed to parse global configuration");
 
-	if (nme) {
-		name = (char *) realloc(name, strlen(nme)+1);
-		sprintf(name, "%s", nme);
-	}
+	if (nme)
+		name = nme;
 
 #ifdef WITH_WEB
 	if (json_web)
-		web_parse(&web, json_web);
+		web.parse(json_web);
 #endif /* WITH_WEB */
 
 	if (json_logging)
-		log_parse(&log, json_logging);
+		logging.parse(json_logging);
 
 	/* Parse plugins */
 	if (json_plugins) {
 		if (!json_is_array(json_plugins))
-			error("Setting 'plugins' must be a list of strings");
+			throw new ConfigError(json_plugins, "node-config-plugins", "Setting 'plugins' must be a list of strings");
 
 		size_t i;
 		json_t *json_plugin;
 		json_array_foreach(json_plugins, i, json_plugin) {
-			struct plugin *p = (struct plugin *) alloc(sizeof(struct plugin));
+			auto *p = (plugin *) alloc(sizeof(plugin));
 
 			ret = plugin_init(p);
 			if (ret)
-				error("Failed to initialize plugin");
+				throw new RuntimeError("Failed to initialize plugin");
 
 			ret = plugin_parse(p, json_plugin);
 			if (ret)
-				error("Failed to parse plugin");
+				throw new RuntimeError("Failed to parse plugin");
 
 			list_push(&plugins, p);
 		}
@@ -257,7 +235,7 @@ int SuperNode::parseJson(json_t *j)
 	/* Parse nodes */
 	if (json_nodes) {
 		if (!json_is_object(json_nodes))
-			error("Setting 'nodes' must be a group with node name => group mappings.");
+			throw new ConfigError(json_nodes, "node-config-nodes", "Setting 'nodes' must be a group with node name => group mappings.");
 
 		const char *name;
 		json_t *json_node;
@@ -267,21 +245,21 @@ int SuperNode::parseJson(json_t *j)
 
 			ret = json_unpack_ex(json_node, &err, 0, "{ s: s }", "type", &type);
 			if (ret)
-				jerror(&err, "Failed to parse node");
+				throw new JsonError(err, "Failed to parse node");
 
 			nt = node_type_lookup(type);
 			if (!nt)
-				error("Invalid node type: %s", type);
+				throw new RuntimeError("Invalid node type: {}", type);
 
-			struct node *n = (struct node *) alloc(sizeof(struct node));
+			auto *n = (struct node *) alloc(sizeof(struct node));
 
 			ret = node_init(n, nt);
 			if (ret)
-				error("Failed to initialize node");
+				throw new RuntimeError("Failed to initialize node");
 
 			ret = node_parse(n, json_node, name);
 			if (ret)
-				error("Failed to parse node");
+				throw new RuntimeError("Failed to parse node");
 
 			list_push(&nodes, n);
 		}
@@ -290,33 +268,33 @@ int SuperNode::parseJson(json_t *j)
 	/* Parse paths */
 	if (json_paths) {
 		if (!json_is_array(json_paths))
-			warn("Setting 'paths' must be a list.");
+			logger->warn("Setting 'paths' must be a list of objects");
 
 		size_t i;
 		json_t *json_path;
 		json_array_foreach(json_paths, i, json_path) {
-			struct path *p = (struct path *) alloc(sizeof(struct path));
+			path *p = (path *) alloc(sizeof(path));
 
 			ret = path_init(p);
 			if (ret)
-				error("Failed to initialize path");
+				throw new RuntimeError("Failed to initialize path");
 
 			ret = path_parse(p, json_path, &nodes);
 			if (ret)
-				error("Failed to parse path");
+				throw new RuntimeError("Failed to parse path");
 
 			list_push(&paths, p);
 
 			if (p->reverse) {
-				struct path *r = (struct path *) alloc(sizeof(struct path));
+				path *r = (path *) alloc(sizeof(path));
 
 				ret = path_init(r);
 				if (ret)
-					error("Failed to init path");
+					throw new RuntimeError("Failed to init path");
 
 				ret = path_reverse(p, r);
 				if (ret)
-					error("Failed to reverse path %s", path_name(p));
+					throw new RuntimeError("Failed to reverse path {}", path_name(p));
 
 				list_push(&paths, r);
 			}
@@ -334,22 +312,22 @@ int SuperNode::check()
 {
 	int ret;
 
-	assert(state == STATE_PARSED || state == STATE_PARSED || state == STATE_CHECKED);
+	assert(state == STATE_INITIALIZED || state == STATE_PARSED || state == STATE_CHECKED);
 
 	for (size_t i = 0; i < list_length(&nodes); i++) {
-		struct node *n = (struct node *) list_at(&nodes, i);
+		auto *n = (struct node *) list_at(&nodes, i);
 
 		ret = node_check(n);
 		if (ret)
-			error("Invalid configuration for node %s", node_name(n));
+			throw new RuntimeError("Invalid configuration for node {}", node_name(n));
 	}
 
 	for (size_t i = 0; i < list_length(&paths); i++) {
-		struct path *p = (struct path *) list_at(&paths, i);
+		auto *p = (struct path *) list_at(&paths, i);
 
 		ret = path_check(p);
 		if (ret)
-			error("Invalid configuration for path %s", path_name(p));
+			throw new RuntimeError("Invalid configuration for path {}", path_name(p));
 	}
 
 	state = STATE_CHECKED;
@@ -364,59 +342,69 @@ int SuperNode::start()
 	assert(state == STATE_CHECKED);
 
 	memory_init(hugepages);
-	rt_init(priority, affinity);
+	kernel::rt::init(priority, affinity);
 
-	log_open(&log);
 #ifdef WITH_API
-	api_start(&api);
-#endif
-#ifdef WITH_WEB
-	web_start(&web);
+	api.start();
 #endif
 
-	info("Starting node-types");
+#ifdef WITH_WEB
+	web.start();
+#endif
+
+	logger->info("Starting node-types");
 	for (size_t i = 0; i < list_length(&nodes); i++) {
-		struct node *n = (struct node *) list_at(&nodes, i);
+		auto *n = (struct node *) list_at(&nodes, i);
 
 		ret = node_type_start(n->_vt);//, this); // @todo: port to C++
 		if (ret)
-			error("Failed to start node-type: %s", node_type_name(n->_vt));
+			throw new RuntimeError("Failed to start node-type: {}", node_type_name(n->_vt));
 	}
 
-	info("Starting nodes");
+	logger->info("Starting nodes");
 	for (size_t i = 0; i < list_length(&nodes); i++) {
-		struct node *n = (struct node *) list_at(&nodes, i);
+		auto *n = (struct node *) list_at(&nodes, i);
 
 		ret = node_init2(n);
 		if (ret)
-			error("Failed to prepare node: %s", node_name(n));
+			throw new RuntimeError("Failed to prepare node: {}", node_name(n));
 
 		int refs = list_count(&paths, (cmp_cb_t) path_uses_node, n);
 		if (refs > 0) {
 			ret = node_start(n);
 			if (ret)
-				error("Failed to start node: %s", node_name(n));
+				throw new RuntimeError("Failed to start node: {}", node_name(n));
 		}
 		else
-			warn("No path is using the node %s. Skipping...", node_name(n));
+			logger->warn("No path is using the node {}. Skipping...", node_name(n));
 	}
 
-	info("Starting paths");
+	logger->info("Starting paths");
 	for (size_t i = 0; i < list_length(&paths); i++) {
-		struct path *p = (struct path *) list_at(&paths, i);
+		auto *p = (struct path *) list_at(&paths, i);
 
 		if (p->enabled) {
 			ret = path_init2(p);
 			if (ret)
-				error("Failed to prepare path: %s", path_name(p));
+				throw new RuntimeError("Failed to prepare path: {}", path_name(p));
 
 			ret = path_start(p);
 			if (ret)
-				error("Failed to start path: %s", path_name(p));
+				throw new RuntimeError("Failed to start path: {}", path_name(p));
 		}
 		else
-			warn("Path %s is disabled. Skipping...", path_name(p));
+			logger->warn("Path {} is disabled. Skipping...", path_name(p));
 	}
+
+#ifdef WITH_HOOKS
+	if (stats > 0) {
+		stats_print_header(STATS_FORMAT_HUMAN);
+
+		ret = task_init(&task, 1.0 / stats, CLOCK_REALTIME);
+		if (ret)
+			throw new RuntimeError("Failed to create stats timer");
+	}
+#endif /* WITH_HOOKS */
 
 	state = STATE_STARTED;
 
@@ -427,45 +415,51 @@ int SuperNode::stop()
 {
 	int ret;
 
-	if (stats > 0)
+#ifdef WITH_HOOKS
+	if (stats > 0) {
 		stats_print_footer(STATS_FORMAT_HUMAN);
 
-	info("Stopping paths");
+		ret = task_destroy(&task);
+		if (ret)
+			throw new RuntimeError("Failed to stop stats timer");
+	}
+#endif /* WITH_HOOKS */
+
+	logger->info("Stopping paths");
 	for (size_t i = 0; i < list_length(&paths); i++) {
-		struct path *p = (struct path *) list_at(&paths, i);
+		auto *p = (struct path *) list_at(&paths, i);
 
 		ret = path_stop(p);
 		if (ret)
-			error("Failed to stop path: %s", path_name(p));
+			throw new RuntimeError("Failed to stop path: {}", path_name(p));
 	}
 
-	info("Stopping nodes");
+	logger->info("Stopping nodes");
 	for (size_t i = 0; i < list_length(&nodes); i++) {
-		struct node *n = (struct node *) list_at(&nodes, i);
+		auto *n = (struct node *) list_at(&nodes, i);
 
 		ret = node_stop(n);
 		if (ret)
-			error("Failed to stop node: %s", node_name(n));
+			throw new RuntimeError("Failed to stop node: {}", node_name(n));
 	}
 
-	info("Stopping node-types");
+	logger->info("Stopping node-types");
 	for (size_t i = 0; i < list_length(&plugins); i++) {
-		struct plugin *p = (struct plugin *) list_at(&plugins, i);
+		auto *p = (struct plugin *) list_at(&plugins, i);
 
 		if (p->type == PLUGIN_TYPE_NODE) {
 			ret = node_type_stop(&p->node);
 			if (ret)
-				error("Failed to stop node-type: %s", node_type_name(&p->node));
+				throw new RuntimeError("Failed to stop node-type: {}", node_type_name(&p->node));
 		}
 	}
 
 #ifdef WITH_API
-	api_stop(&api);
+	api.stop();
 #endif
 #ifdef WITH_WEB
-	web_stop(&web);
+	web.stop();
 #endif
-	log_close(&log);
 
 	state = STATE_STOPPED;
 
@@ -475,49 +469,22 @@ int SuperNode::stop()
 void SuperNode::run()
 {
 #ifdef WITH_HOOKS
-	int ret;
-
-	if (stats > 0) {
-		stats_print_header(STATS_FORMAT_HUMAN);
-
-		struct task t;
-
-		ret = task_init(&t, 1.0 / stats, CLOCK_REALTIME);
-		if (ret)
-			error("Failed to create stats timer");
-
-		for (;;) {
-			task_wait(&t);
-
-			periodic();
-		}
-	}
-	else
+	task_wait(&task);
+	periodic();
+#else
+	pause();
 #endif /* WITH_HOOKS */
-		for (;;) pause();
 }
 
 SuperNode::~SuperNode()
 {
-	assert(state == STATE_STOPPED);
+	assert(state != STATE_STARTED);
 
 	list_destroy(&plugins, (dtor_cb_t) plugin_destroy, false);
 	list_destroy(&paths,   (dtor_cb_t) path_destroy, true);
 	list_destroy(&nodes,   (dtor_cb_t) node_destroy, true);
 
-#ifdef WITH_WEB
-	web_destroy(&web);
-#endif /* WITH_WEB */
-
-#ifdef WITH_API
-	api_destroy(&api);
-#endif /* WITH_API */
-
 	json_decref(json);
-	log_destroy(&log);
-
-	if (name)
-		free(name);
 }
 
 int SuperNode::periodic()
@@ -526,13 +493,13 @@ int SuperNode::periodic()
 	int ret;
 
 	for (size_t i = 0; i < list_length(&paths); i++) {
-		struct path *p = (struct path *) list_at(&paths, i);
+		auto *p = (struct path *) list_at(&paths, i);
 
 		if (p->state != STATE_STARTED)
 			continue;
 
 		for (size_t j = 0; j < list_length(&p->hooks); j++) {
-			struct hook *h = (struct hook *) list_at(&p->hooks, j);
+			hook *h = (struct hook *) list_at(&p->hooks, j);
 
 			ret = hook_periodic(h);
 			if (ret)
@@ -541,13 +508,13 @@ int SuperNode::periodic()
 	}
 
 	for (size_t i = 0; i < list_length(&nodes); i++) {
-		struct node *n = (struct node *) list_at(&nodes, i);
+		auto *n = (struct node *) list_at(&nodes, i);
 
 		if (n->state != STATE_STARTED)
 			continue;
 
 		for (size_t j = 0; j < list_length(&n->in.hooks); j++) {
-			struct hook *h = (struct hook *) list_at(&n->in.hooks, j);
+			auto *h = (struct hook *) list_at(&n->in.hooks, j);
 
 			ret = hook_periodic(h);
 			if (ret)
@@ -555,7 +522,7 @@ int SuperNode::periodic()
 		}
 
 		for (size_t j = 0; j < list_length(&n->out.hooks); j++) {
-			struct hook *h = (struct hook *) list_at(&n->out.hooks, j);
+			auto *h = (struct hook *) list_at(&n->out.hooks, j);
 
 			ret = hook_periodic(h);
 			if (ret)

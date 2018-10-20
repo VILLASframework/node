@@ -1,5 +1,6 @@
-/** The "shutdown" API action.
+/** Socket API endpoint.
  *
+ * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -20,21 +21,54 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/plugin.h>
-#include <villas/api.h>
+#pragma once
 
-static int api_shutdown(struct api_action *h, json_t *args, json_t **resp, struct api_session *s)
-{
-	killme(SIGTERM);
+#include <string>
+#include <vector>
 
-	return 0;
-}
+#include <poll.h>
 
-static struct plugin p = {
-	.name = "shutdown",
-	.description = "quit VILLASnode",
-	.type = PLUGIN_TYPE_API,
-	.api.cb = api_shutdown
+#include <villas/common.h>
+
+namespace villas {
+namespace node {
+
+/* Forward declarations */
+class Api;
+
+namespace api {
+namespace sessions {
+
+/* Forward declarations */
+class Socket;
+
+} // namespace sessions
+
+class Server {
+
+protected:
+	enum state state;
+
+	Api *api;
+
+	int sd;
+
+	std::vector<pollfd> pfds;
+	std::vector<sessions::Socket *> sessions;
+
+	void acceptNewSession();
+	void closeSession(sessions::Socket *s);
+
+public:
+	Server(Api *a);
+	~Server();
+
+	void start();
+	void stop();
+
+	void run(int timeout = 100);
 };
 
-REGISTER_PLUGIN(&p)
+} // namespace api
+} // namespace node
+} // namespace villas

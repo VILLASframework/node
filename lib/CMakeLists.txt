@@ -55,11 +55,6 @@ set(LIB_SRC
 	queue_signalled.c
 )
 
-
-if(ARCH STREQUAL "x86_64")
-	list(APPEND LIB_SRC tsc.c)
-endif()
-
 if(IBVERBS_FOUND AND RDMACM_FOUND)
     list(APPEND LIB_SRC memory/ib.c)
 endif()
@@ -94,7 +89,7 @@ endif()
 
 if(WITH_WEB)
     list(APPEND LIB_SRC
-        web.c
+        web.cpp
     )
     
     list(APPEND INCLUDE_DIRS ${LIBWEBSOCKETS_INCLUDE_DIRS})
@@ -103,7 +98,7 @@ endif()
 
 if(WITH_API AND WITH_WEB)
     list(APPEND LIB_SRC
-        api.c
+        api.cpp
     )
 
     add_subdirectory(api)
@@ -133,7 +128,6 @@ if(APPLE)
 else()
     target_link_libraries(villas PRIVATE -Wl,--whole-archive ${WHOLE_ARCHIVES} -Wl,--no-whole-archive)
 endif()
-
 
 set_target_properties(villas PROPERTIES
     VERSION ${CMAKE_PROJECT_VERSION}

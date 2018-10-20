@@ -1,5 +1,6 @@
-/** The "stats" API action.
+/** WebSockets API session.
  *
+ * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -20,37 +21,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#ifdef LWS_WITH_SERVER_STATUS
+#pragma once
 
-#include <jansson.h>
+#include <villas/api/sessions/wsi.hpp>
 
-#include <villas/plugin.h>
-#include <villas/node.h>
-#include <villas/super_node.h>
-#include <villas/api.h>
-#include <villas/utils.h>
-#include <villas/stats.h>
+extern "C" int api_ws_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len);
 
-static int api_status(struct api_action *r, json_t *args, json_t **resp, struct api_session *s)
-{
-	int ret;
-	struct lws_context *ctx = lws_get_context(s->wsi);
-	char buf[4096];
+namespace villas {
+namespace node {
 
-	ret = lws_json_dump_context(ctx, buf, sizeof(buf), 0);
+/* Forward declarations */
+class Api;
 
-	*resp = json_loads(buf, 0, NULL);
+namespace api {
+namespace sessions {
 
-	return ret;
-}
+class WebSocket : public Wsi {
 
-static struct plugin p = {
-	.name = "status",
-	.description = "get status and statistics of web server",
-	.type = PLUGIN_TYPE_API,
-	.api.cb = api_status
+public:
+	WebSocket(Api *a, lws *w);
+
+	virtual ~WebSocket();
+
+	virtual std::string getName();
+
+	int read(void *in, size_t len);
+
+	int write();
 };
 
-REGISTER_PLUGIN(&p)
-
-#endif /* LWS_WITH_SERVER_STATUS */
+} // sessions
+} // api
+} // node
+} // villas

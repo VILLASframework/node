@@ -22,16 +22,23 @@
 ###################################################################################
 
 set(API_SRC
-    session.c
-    actions/capabiltities.c
-    actions/shutdown.c
-    actions/status.c
-# @todo: port to C++
-#    actions/node.c
-#    actions/config.c
-#    actions/nodes.c
-#    actions/paths.c
-#    actions/restart.c
+    session.cpp
+    action.cpp
+    server.cpp
+
+    sessions/socket.cpp
+    sessions/wsi.cpp
+    sessions/http.cpp
+    sessions/websocket.cpp
+
+    actions/capabiltities.cpp
+    actions/shutdown.cpp
+    actions/status.cpp
+    actions/config.cpp
+    actions/nodes.cpp
+    actions/paths.cpp
+    actions/restart.cpp
+    actions/node.cpp
 )
 
 add_library(api STATIC ${API_SRC})

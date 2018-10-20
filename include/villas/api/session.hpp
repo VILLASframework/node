@@ -26,55 +26,72 @@
 #include <stdbool.h>
 #include <jansson.h>
 
-#include <villas/common.h>
 #include <villas/queue.h>
-#include <villas/buffer.h>
+#include <villas/json_buffer.hpp>
+#include <villas/api.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace villas {
+namespace node {
 
-enum api_version {
-	API_VERSION_UNKOWN	= 0,
-	API_VERSION_1		= 1
-};
+/* Forward declarations */
+class SuperNode;
+class Api;
 
-enum api_mode {
-	API_MODE_WS,	/**< This API session was established over a WebSocket connection. */
-	API_MODE_HTTP	/**< This API session was established via a HTTP REST request. */
-};
+namespace api {
 
 /** A connection via HTTP REST or WebSockets to issue API actions. */
-struct api_session {
-	enum {
-		API_SESSION_STATE_ESTABLISHED,
-		API_SESSION_STATE_SHUTDOWN
-	} state;
+class Session {
 
-	enum api_version version;
-	enum api_mode mode;
+public:
+	enum State {
+		ESTABLISHED,
+		SHUTDOWN
+	};
+
+	enum Version {
+		UNKOWN		= 0,
+		VERSION_1	= 1
+	};
+
+protected:
+	enum State state;
+	enum Version version;
+
+	static Logger logger;
 
 	int runs;
 
 	struct {
-		struct buffer buffer;
+		JsonBuffer buffer;
 		struct queue queue;
 	} request, response;
 
-	struct lws *wsi;
-	struct api *api;
+	Api *api;
 
-	char *_name;
+public:
+	Session(Api *a);
+
+	virtual ~Session();
+
+	int runAction(json_t *req, json_t **resp);
+	virtual void runPendingActions();
+
+	virtual std::string getName();
+
+	int getRuns()
+	{
+		return runs;
+	}
+
+	SuperNode * getSuperNode()
+	{
+		return api->getSuperNode();
+	}
+
+	virtual void shutdown()
+	{ }
 };
 
-int api_session_init(struct api_session *s, enum api_mode m);
-
-int api_session_destroy(struct api_session *s);
-
-int api_session_run_action(struct api_session *s, json_t *req, json_t **resp);
-
-char * api_session_name(struct api_session *s);
-
-#ifdef __cplusplus
-}
-#endif
+} // api
+} // node
+} // villas

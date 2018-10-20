@@ -24,10 +24,11 @@
 #pragma once
 
 #include <villas/list.h>
-#include <villas/api.h>
-#include <villas/web.h>
-#include <villas/log.h>
+#include <villas/api.hpp>
+#include <villas/web.hpp>
+#include <villas/log.hpp>
 #include <villas/node.h>
+#include <villas/task.h>
 #include <villas/common.h>
 
 namespace villas {
@@ -44,17 +45,24 @@ protected:
 	int hugepages;		/**< Number of hugepages to reserve. */
 	double stats;		/**< Interval for path statistics. Set to 0 to disable them. */
 
+	static Logger logger;
+
 	struct list nodes;
 	struct list paths;
 	struct list plugins;
 
-	struct log log;
-	struct api api;
-	struct web web;
+#ifdef WITH_API
+	Api api;
+#endif
 
-	char *name;		/**< A name of this super node. Usually the hostname. */
+#ifdef WITH_WEB
+	Web web;
+#endif
 
-	char *uri;		/**< URI of configuration */
+	struct task task;	/**< Task for periodic stats output */
+
+	std::string name;	/**< A name of this super node. Usually the hostname. */
+	std::string uri;	/**< URI of configuration */
 
 	json_t *json;		/**< JSON representation of the configuration. */
 
@@ -65,7 +73,7 @@ public:
 	int init();
 
 	/** Wrapper for super_node_parse() */
-	int parseUri(const char *uri);
+	int parseUri(const std::string &name);
 
 	/** Parse super-node configuration.
 	 *
@@ -86,15 +94,48 @@ public:
 	/** Run periodic hooks of this super node. */
 	int periodic();
 
-	struct node * getNode(const char *name) { return (struct node *) list_lookup(&nodes, name); }
+	struct node * getNode(const std::string &name)
+	{
+		return (struct node *) list_lookup(&nodes, name.c_str());
+	}
 
-	struct list * getNodes() { return &nodes; }
-	struct list * getPaths() { return &paths; }
-	struct web * getWeb() { return &web; }
-	struct api * getApi() { return &api; }
-	struct log * getLog() { return &log; }
+	struct list * getNodes()
+	{
+		return &nodes;
+	}
 
-	/** Desctroy configuration object. */
+	struct list * getPaths() {
+		return &paths;
+	}
+
+#ifdef WITH_API
+	Api * getApi() {
+		return &api;
+	}
+#endif
+
+#ifdef WITH_WEB
+	Web * getWeb() {
+		return &web;
+	}
+#endif
+
+	json_t * getConfig()
+	{
+		return json;
+	}
+
+	std::string getConfigUri()
+	{
+		return uri;
+	}
+
+	std::string getName()
+	{
+		return name;
+	}
+
+	/** Destroy configuration object. */
 	~SuperNode();
 };
 
