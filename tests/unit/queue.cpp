@@ -28,13 +28,15 @@
 #include <pthread.h>
 
 #include <criterion/criterion.h>
-#include <criterion/logging.h>
 #include <criterion/parameterized.h>
 
 #include <villas/utils.h>
 #include <villas/queue.h>
 #include <villas/memory.h>
 #include <villas/tsc.h>
+#include <villas/log.hpp>
+
+using namespace villas;
 
 extern void init_memory();
 
@@ -86,11 +88,12 @@ static void * producer(void *ctx)
 	int ret;
 	struct param *p = (struct param *) ctx;
 
+	Logger logger = logging.get("test:queue:producer");
+
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
 
-	/** @todo Criterion cr_log() is broken for multi-threaded programs */
-	//cr_log_info("producer: tid = %lu", thread_get_id());
+	//logger->info("tid = {}", thread_get_id());
 
 #ifdef __APPLE__
   #define pthread_yield pthread_yield_np
@@ -99,13 +102,13 @@ static void * producer(void *ctx)
 	while (p->start == 0)
 		pthread_yield();
 
-	//cr_log_info("producer: wait for %zd nops", nops);
+	//logger->info("wait for {} nops", nops);
 
 	/* Wait for a random time */
 	for (size_t i = 0; i != nops; i += 1)
 		nop();
 
-	//cr_log_info("producer: start pushing");
+	//logger->info("start pushing");
 
 	/* Enqueue */
 	for (intptr_t count = 0; count < p->iter_count; count++) {
@@ -115,7 +118,7 @@ static void * producer(void *ctx)
 		} while (ret != 1);
 	}
 
-	//cr_log_info("producer: finished");
+	//logger->info("finished");
 
 	return nullptr;
 }
@@ -128,19 +131,21 @@ static void * consumer(void *ctx)
 	srand((unsigned) time(0) + thread_get_id());
 	size_t nops = rand() % 1000;
 
-	//cr_log_info("consumer: tid = %lu", thread_get_id());
+	Logger logger = logging.get("test:queue:consumer");
+
+	//logger->info("tid = {}", thread_get_id());
 
 	/* Wait for global start signal */
 	while (p->start == 0)
 		pthread_yield();
 
-	//cr_log_info("consumer: wait for %zd nops", nops);
+	//logger->info("wait for {} nops", nops);
 
 	/* Wait for a random time */
 	for (size_t i = 0; i != nops; i += 1)
 		nop();
 
-	//cr_log_info("consumer: start pulling");
+	//logger->info("start pulling");
 
 	/* Dequeue */
 	for (intptr_t count = 0; count < p->iter_count; count++) {
@@ -150,12 +155,12 @@ static void * consumer(void *ctx)
 			ret = queue_pull(&p->queue, (void **) &ptr);
 		} while (ret != 1);
 
-		//cr_log_info("consumer: %lu\n", count);
+		//logger->info("consumer: {}", count);
 
 		//cr_assert_eq((intptr_t) ptr, count);
 	}
 
-	//cr_log_info("consumer: finished");
+	//logger->info("finished");
 
 	return nullptr;
 }
@@ -308,6 +313,8 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 	int ret, cycpop;
 	struct tsc tsc;
 
+	Logger logger = logging.get("test:queue:multi_threaded");
+
 	pthread_t threads[p->thread_count];
 
 	p->start = 0;
@@ -339,9 +346,9 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 	cycpop = (end_tsc_time - start_tsc_time) / p->iter_count;
 
 	if (cycpop < 400)
-		cr_log_info("cycles/op: %u\n", cycpop);
+		logger->debug("cycles/op: {}", cycpop);
 	else
-		cr_log_warn("cycles/op are very high (%u). Are you running on a hypervisor?\n", cycpop);
+		logger->warn("cycles/op are very high ({}). Are you running on a hypervisor?", cycpop);
 
 	ret = queue_available(&q);
 	cr_assert_eq(ret, 0);

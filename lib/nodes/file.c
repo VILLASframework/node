@@ -25,6 +25,7 @@
 #include <inttypes.h>
 #include <libgen.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #include <villas/nodes/file.h>
 #include <villas/utils.h>

@@ -20,41 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <criterion/criterion.h>
-#include <criterion/logging.h>
-
-#include <villas/log.h>
 #include <villas/memory.h>
-#include <villas/node/config.h>
 
 void init_memory()
 {
 	memory_init(DEFAULT_NR_HUGEPAGES);
-}
-
-int main(int argc, char *argv[])
-{
-	int ret;
-
-	struct criterion_test_set *tests;
-	struct log log;
-
-	ret = log_init(&log, "test_logger", 2, LOG_ALL);
-	if (ret)
-		error("Failed to initialize logging sub-system");
-
-	ret = log_open(&log);
-	if (ret)
-		error("Failed to start logging sub-system");
-
-	/* Run criterion tests */
-	tests = criterion_initialize();
-
-	int result = 0;
-	if (criterion_handle_args(argc, argv, true))
-		result = !criterion_run_all_tests(tests);
-
-	criterion_finalize(tests);
-
-	return result;
 }

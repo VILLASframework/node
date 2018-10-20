@@ -27,7 +27,7 @@
 
 #include <villas/memory.h>
 #include <villas/utils.h>
-#include <villas/log.h>
+#include <villas/log.hpp>
 
 extern void init_memory();
 
