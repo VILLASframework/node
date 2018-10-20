@@ -24,19 +24,25 @@
 #include <unistd.h>
 
 #include <iostream>
+#include <exception>
+#include <atomic>
 
 #include <villas/node/config.h>
-#include <villas/utils.h>
-#include <villas/super_node.h>
+#include <villas/version.hpp>
+#include <villas/utils.hpp>
+#include <villas/super_node.hpp>
+#include <villas/plugin.hpp>
+#include <villas/api/action.hpp>
 #include <villas/memory.h>
 #include <villas/node.h>
 #include <villas/path.h>
-#include <villas/api.h>
-#include <villas/web.h>
-#include <villas/task.h>
+#include <villas/api.hpp>
+#include <villas/web.hpp>
+#include <villas/log.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/plugin.h>
-#include <villas/kernel/kernel.h>
-#include <villas/kernel/rt.h>
+#include <villas/kernel/kernel.hpp>
+#include <villas/kernel/rt.hpp>
 #include <villas/hook.h>
 #include <villas/stats.h>
 
@@ -44,20 +50,18 @@
   #include <villas/nodes/opal.h>
 #endif
 
+using namespace villas;
 using namespace villas::node;
+using namespace villas::plugin;
 
-SuperNode sn;
+static SuperNode sn;
+static Logger logger = logging.get("node");
+
+static std::atomic<bool> stop(false);
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
-	int ret;
-
-	ret = sn.stop();
-	if (ret)
-		error("Failed to stop super node");
-
-	info(CLR_GRN("Goodbye!"));
-	exit(EXIT_SUCCESS);
+	stop = true;
 }
 
 static void usage()
@@ -65,6 +69,7 @@ static void usage()
 	std::cout << "Usage: villas-node [OPTIONS] [CONFIG]" << std::endl
 	          << "  OPTIONS is one or more of the following options:" << std::endl
 	          << "    -h      show this usage information" << std::endl
+	          << "    -d LVL  set logging level" << std::endl
 	          << "    -V      show the version of the tool" << std::endl << std::endl
 	          << "  CONFIG is the path to an optional configuration file" << std::endl
 	          << "         if omitted, VILLASnode will start without a configuration" << std::endl
@@ -85,15 +90,18 @@ static void usage()
 	std::cout << std::endl;
 #endif /* WITH_HOOKS */
 
+#ifdef WITH_API
 	std::cout << "Supported API commands:" << std::endl;
-	plugin_dump(PLUGIN_TYPE_API);
+	for (Plugin *p : Registry::lookup<api::ActionFactory>())
+		std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
 	std::cout << std::endl;
+#endif /* WITH_API */
 
 	std::cout << "Supported IO formats:" << std::endl;
 	plugin_dump(PLUGIN_TYPE_FORMAT);
 	std::cout << std::endl;
 
-	print_copyright();
+	utils::print_copyright();
 
 	exit(EXIT_FAILURE);
 }
@@ -101,6 +109,8 @@ static void usage()
 int main(int argc, char *argv[])
 {
 	int ret;
+
+	try {
 
 	/* Check arguments */
 #ifdef ENABLE_OPAL_ASYNC
@@ -112,11 +122,15 @@ int main(int argc, char *argv[])
 	const char *uri = "opal-shmem.conf";
 #else
 	int c;
-	while ((c = getopt(argc, argv, "hV")) != -1) {
+	while ((c = getopt(argc, argv, "hVd:")) != -1) {
 		switch (c) {
 			case 'V':
-				print_version();
+				utils::print_version();
 				exit(EXIT_SUCCESS);
+
+			case 'd':
+				logging.setLevel(optarg);
+				break;
 
 			case 'h':
 			case '?':
@@ -130,37 +144,54 @@ int main(int argc, char *argv[])
 	char *uri = argc == optind + 1 ? argv[optind] : nullptr;
 #endif /* ENABLE_OPAL_ASYNC */
 
-	info("This is VILLASnode %s (built on %s, %s)", CLR_BLD(CLR_YEL(PROJECT_BUILD_ID)),
+	logger->info("This is VILLASnode {} (built on {}, {})",
+		CLR_BLD(CLR_YEL(PROJECT_BUILD_ID)),
 		CLR_BLD(CLR_MAG(__DATE__)), CLR_BLD(CLR_MAG(__TIME__)));
 
 #ifdef __linux__
 	/* Checks system requirements*/
-	struct version kver, reqv = { KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN };
-	if (kernel_get_version(&kver) == 0 && version_cmp(&kver, &reqv) < 0)
-		error("Your kernel version is to old: required >= %u.%u", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
+	auto required = utils::Version(KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
+	if (kernel::getVersion() < required)
+		throw new RuntimeError("Your kernel version is to old: required >= {}.{}", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
 #endif /* __linux__ */
 
-	ret = signals_init(quit);
+	ret = utils::signals_init(quit);
 	if (ret)
-		error("Failed to initialize signal subsystem");
+		throw new RuntimeError("Failed to initialize signal subsystem");
 
-	ret = sn.parseUri(uri);
-	if (ret)
-		error("Failed to parse command line arguments");
+	if (uri) {
+		ret = sn.parseUri(uri);
+		if (ret)
+			throw new RuntimeError("Failed to parse command line arguments");
+	}
+	else
+		logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
 	ret = sn.init();
 	if (ret)
-		error("Failed to initialize super node");
+		throw new RuntimeError("Failed to initialize super node");
 
 	ret = sn.check();
 	if (ret)
-		error("Failed to verify configuration");
+		throw new RuntimeError("Failed to verify configuration");
 
 	ret = sn.start();
 	if (ret)
-		error("Failed to start super node");
+		throw new RuntimeError("Failed to start super node");
 
-	sn.run();
+	while (!stop)
+		sn.run();
+
+	ret = sn.stop();
+	if (ret)
+		throw new RuntimeError("Failed to stop super node");
+
+	logger->info(CLR_GRN("Goodbye!"));
 
 	return 0;
+
+	}
+	catch (std::exception *e) {
+		logger->error(e->what());
+	}
 }

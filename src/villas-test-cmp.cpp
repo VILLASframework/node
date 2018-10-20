@@ -29,18 +29,62 @@
 #include <villas/sample.h>
 #include <villas/io.h>
 #include <villas/format_type.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
+#include <villas/log.hpp>
 #include <villas/pool.h>
+#include <villas/exceptions.hpp>
 #include <villas/node/config.h>
 
-struct side {
-	char *path;
-	const char *format;
+using namespace villas;
+
+class Side {
+
+public:
+	std::string path;
 
 	struct sample *sample;
 
 	struct io io;
-	struct format_type *fmt;
+	struct format_type *format;
+
+	Side(const std::string &pth, struct format_type *fmt, struct pool *p) :
+		path(pth),
+		format(fmt)
+	{
+		int ret;
+
+		io.state = STATE_DESTROYED;
+		ret = io_init_auto(&io, format, DEFAULT_SAMPLE_LENGTH, 0);
+		if (ret)
+			throw new RuntimeError("Failed to initialize IO");
+
+		ret = io_check(&io);
+		if (ret)
+			throw new RuntimeError("Failed to validate IO configuration");
+
+		ret = io_open(&io, path.c_str());
+		if (ret)
+			throw new RuntimeError("Failed to open file: {}", path);
+
+		sample = sample_alloc(p);
+		if (!sample)
+			throw new RuntimeError("Failed to allocate samples");
+	}
+
+	~Side() noexcept(false)
+	{
+		int ret;
+
+		ret = io_close(&io);
+		if (ret)
+			throw new RuntimeError("Failed to close IO");
+
+		ret = io_destroy(&io);
+		if (ret)
+			throw new RuntimeError("Failed to destroy IO");
+
+		sample_decref(sample);
+	}
 };
 
 void usage()
@@ -64,7 +108,7 @@ void usage()
 	          << "  4   number of values is not equal" << std::endl
 	          << "  5   data is not equal" << std::endl << std::endl;
 
-	print_copyright();
+	utils::print_copyright();
 }
 
 int main(int argc, char *argv[])
@@ -81,7 +125,7 @@ int main(int argc, char *argv[])
 	/* Parse Arguments */
 	int c;
 	char *endptr;
-	while ((c = getopt (argc, argv, "he:vtsf:V")) != -1) {
+	while ((c = getopt (argc, argv, "he:vtsf:Vd:")) != -1) {
 		switch (c) {
 			case 'e':
 				epsilon = strtod(optarg, &endptr);
@@ -104,8 +148,13 @@ int main(int argc, char *argv[])
 				break;
 
 			case 'V':
-				print_version();
+				utils::print_version();
 				exit(EXIT_SUCCESS);
+
+			case 'd':
+				logging.setLevel(optarg);
+				break;
+
 			case 'h':
 			case '?':
 				usage();
@@ -115,7 +164,7 @@ int main(int argc, char *argv[])
 		continue;
 
 check:		if (optarg == endptr)
-			error("Failed to parse parse option argument '-%c %s'", c, optarg);
+			throw new RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
 	}
 
 	if (argc - optind < 2) {
@@ -123,52 +172,32 @@ check:		if (optarg == endptr)
 		exit(EXIT_FAILURE);
 	}
 
+	int eofs, line, failed;
 	int n = argc - optind; /* The number of files which we compare */
-	struct side s[n];
+	Side *s[n];
 
 	ret = memory_init(0);
 	if (ret)
-		error("Failed to initialize memory system");
+		throw new RuntimeError("Failed to initialize memory system");
 
 	ret = pool_init(&pool, n, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_heap);
 	if (ret)
-		error("Failed to initialize pool");
+		throw new RuntimeError("Failed to initialize pool");
+
+	struct format_type *fmt = format_type_lookup(format);
+	if (!fmt)
+		throw new RuntimeError("Invalid IO format: {}", format);
 
 	/* Open files */
-	for (int i = 0; i < n; i++) {
-		s[i].format = format;
-		s[i].path = argv[optind + i];
-		s[i].io.state = STATE_DESTROYED;
-
-		s[i].fmt = format_type_lookup(s[i].format);
-		if (!s[i].fmt)
-			error("Invalid IO format: %s", s[i].format);
-
-		ret = io_init_auto(&s[i].io, s[i].fmt, DEFAULT_SAMPLE_LENGTH, 0);
-		if (ret)
-			error("Failed to initialize IO");
-
-		ret = io_check(&s[i].io);
-		if (ret)
-			error("Failed to validate IO configuration");
-
-		ret = io_open(&s[i].io, s[i].path);
-		if (ret)
-			error("Failed to open file: %s", s[i].path);
-
-		s[i].sample = sample_alloc(&pool);
-		if (!s[i].sample)
-			error("Failed to allocate samples");
-	}
-
-	int eofs, line, failed;
+	for (int i = 0; i < n; i++)
+		s[i] = new Side(argv[optind + i], fmt, &pool);
 
 	line = 0;
 	for (;;) {
 		/* Read next sample from all files */
 retry:		eofs = 0;
 		for (int i = 0; i < n; i++) {
-			ret = io_eof(&s[i].io);
+			ret = io_eof(&s[i]->io);
 			if (ret)
 				eofs++;
 		}
@@ -186,7 +215,7 @@ retry:		eofs = 0;
 
 		failed = 0;
 		for (int i = 0; i < n; i++) {
-			ret = io_scan(&s[i].io, &s[i].sample, 1);
+			ret = io_scan(&s[i]->io, &s[i]->sample, 1);
 			if (ret <= 0)
 				failed++;
 		}
@@ -195,7 +224,7 @@ retry:		eofs = 0;
 
 		/* We compare all files against the first one */
 		for (int i = 1; i < n; i++) {
-			ret = sample_cmp(s[0].sample, s[i].sample, epsilon, flags);
+			ret = sample_cmp(s[0]->sample, s[i]->sample, epsilon, flags);
 			if (ret) {
 				rc = ret;
 				goto out;
@@ -205,21 +234,12 @@ retry:		eofs = 0;
 		line++;
 	}
 
-out:	for (int i = 0; i < n; i++) {
-		ret = io_close(&s[i].io);
-		if (ret)
-			error("Failed to close IO");
-
-		ret = io_destroy(&s[i].io);
-		if (ret)
-			error("Failed to destroy IO");
-
-		sample_decref(s[i].sample);
-	}
+out:	for (int i = 0; i < n; i++)
+		delete s[i];
 
 	ret = pool_destroy(&pool);
 	if (ret)
-		error("Failed to destroy pool");
+		throw new RuntimeError("Failed to destroy pool");
 
 	return rc;
 }

@@ -31,77 +31,56 @@
 #include <signal.h>
 #include <pthread.h>
 #include <iostream>
+#include <atomic>
 
 #include <villas/node/config.h>
 #include <villas/config_helper.h>
-#include <villas/super_node.h>
+#include <villas/super_node.hpp>
+#include <villas/utils.hpp>
 #include <villas/utils.h>
+#include <villas/log.hpp>
 #include <villas/node.h>
 #include <villas/timing.h>
 #include <villas/pool.h>
 #include <villas/io.h>
-#include <villas/kernel/rt.h>
-#include <villas/plugin.h>
-
+#include <villas/kernel/rt.hpp>
+#include <villas/exceptions.hpp>
+#include <villas/format_type.h>
 #include <villas/nodes/websocket.h>
 
+using namespace villas;
 using namespace villas::node;
 
 static SuperNode sn; /**< The global configuration */
-static struct io io = { .state = STATE_DESTROYED };
+static Logger logger = logging.get("pipe");
 
-static struct dir {
+class Direction {
+
+public:
+	Direction(struct io *i) :
+		io(i),
+		enabled(true),
+		limit(-1)
+	{ }
+
 	struct pool pool;
+	struct node *node;
+	struct io *io;
+
 	pthread_t thread;
+
 	bool enabled;
 	int limit;
-} sendd, recvv;
+};
 
-struct node *node;
+static std::atomic<bool> stop(false);
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
-	int ret;
-
 	if (signal == SIGALRM)
-		info("Reached timeout. Terminating...");
+		logger->info("Reached timeout. Terminating...");
 
-	if (recvv.enabled) {
-		pthread_cancel(recvv.thread);
-		pthread_join(recvv.thread, NULL);
-	}
-
-	if (sendd.enabled) {
-		pthread_cancel(sendd.thread);
-		pthread_join(sendd.thread, NULL);
-	}
-
-	ret = sn.stop();
-	if (ret)
-		error("Failed to stop super node");
-
-	if (recvv.enabled) {
-		ret = pool_destroy(&recvv.pool);
-		if (ret)
-			error("Failed to destroy pool");
-	}
-
-	if (sendd.enabled) {
-		ret = pool_destroy(&sendd.pool);
-		if (ret)
-			error("Failed to destroy pool");
-	}
-
-	ret = io_close(&io);
-	if (ret)
-		error("Failed to close IO");
-
-	ret = io_destroy(&io);
-	if (ret)
-		error("Failed to destroy IO");
-
-	info(CLR_GRN("Goodbye!"));
-	exit(EXIT_SUCCESS);
+	stop = true;
 }
 
 static void usage()
@@ -119,36 +98,40 @@ static void usage()
 	          << "    -L NUM           terminate after NUM samples sent" << std::endl
 	          << "    -l NUM           terminate after NUM samples received" << std::endl
 	          << "    -h               show this usage information" << std::endl
+	          << "    -d               set logging level" << std::endl
 	          << "    -V               show the version of the tool" << std::endl << std::endl;
 
-	print_copyright();
+	utils::print_copyright();
 }
 
 static void * send_loop(void *ctx)
 {
+	Direction *d = static_cast<Direction *>(ctx);
+
 	unsigned last_sequenceno = 0, release;
 	int ret, scanned, sent, allocated, cnt = 0;
-	struct sample *smps[node->out.vectorize];
+
+	struct sample *smps[d->node->out.vectorize];
 
 	/* Initialize memory */
-	unsigned pool_size = node_type(node)->pool_size ? node_type(node)->pool_size : LOG2_CEIL(node->out.vectorize);
+	unsigned pool_size = node_type(d->node)->pool_size ? node_type(d->node)->pool_size : LOG2_CEIL(d->node->out.vectorize);
 
-	ret = pool_init(&sendd.pool, pool_size, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), node_memory_type(node, &memory_hugepage));
+	ret = pool_init(&d->pool, pool_size, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), node_memory_type(d->node, &memory_hugepage));
 
 	if (ret < 0)
-		error("Failed to allocate memory for receive pool.");
+		throw new RuntimeError("Failed to allocate memory for receive pool.");
 
-	while (!io_eof(&io)) {
-		allocated = sample_alloc_many(&sendd.pool, smps, node->out.vectorize);
+	while (!io_eof(d->io)) {
+		allocated = sample_alloc_many(&d->pool, smps, d->node->out.vectorize);
 		if (ret < 0)
-			error("Failed to get %u samples out of send pool (%d).", node->out.vectorize, ret);
-		else if (allocated < node->out.vectorize)
-			warn("Send pool underrun");
+			throw new RuntimeError("Failed to get {} samples out of send pool ({}).", d->node->out.vectorize, ret);
+		else if (allocated < d->node->out.vectorize)
+			logger->warn("Send pool underrun");
 
-		scanned = io_scan(&io, smps, allocated);
+		scanned = io_scan(d->io, smps, allocated);
 		if (scanned < 0) {
+			logger->warn("Failed to read samples from stdin");
 			continue;
-			warn("Failed to read samples from stdin");
 		}
 		else if (scanned == 0)
 			continue;
@@ -163,31 +146,31 @@ static void * send_loop(void *ctx)
 
 		release = allocated;
 
-		sent = node_write(node, smps, scanned, &release);
+		sent = node_write(d->node, smps, scanned, &release);
 		if (sent < 0)
-			warn("Failed to sent samples to node %s: reason=%d", node_name(node), sent);
+			logger->warn("Failed to sent samples to node {}: reason={}", node_name(d->node), sent);
 		else if (sent < scanned)
-			warn("Failed to sent %d out of %d samples to node %s", scanned-sent, scanned, node_name(node));
+			logger->warn("Failed to sent {} out of {} samples to node {}", scanned-sent, scanned, node_name(d->node));
 
 		sample_decref_many(smps, release);
 
 		cnt += sent;
-		if (sendd.limit > 0 && cnt >= sendd.limit)
+		if (d->limit > 0 && cnt >= d->limit)
 			goto leave;
 
 		pthread_testcancel();
 	}
 
-leave:	if (io_eof(&io)) {
-		if (recvv.limit < 0) {
-			info("Reached end-of-file. Terminating...");
+leave:	if (io_eof(d->io)) {
+		if (d->limit < 0) {
+			logger->info("Reached end-of-file. Terminating...");
 			killme(SIGTERM);
 		}
 		else
-			info("Reached end-of-file. Wait for receive side...");
+			logger->info("Reached end-of-file. Wait for receive side...");
 	}
 	else {
-		info("Reached send limit. Terminating...");
+		logger->info("Reached send limit. Terminating...");
 		killme(SIGTERM);
 	}
 
@@ -196,35 +179,37 @@ leave:	if (io_eof(&io)) {
 
 static void * recv_loop(void *ctx)
 {
+	Direction *d = static_cast<Direction *>(ctx);
+
 	int recv, ret, cnt = 0, allocated = 0;
 	unsigned release;
-	struct sample *smps[node->in.vectorize];
+	struct sample *smps[d->node->in.vectorize];
 
 	/* Initialize memory */
-	unsigned pool_size = node_type(node)->pool_size ? node_type(node)->pool_size : LOG2_CEIL(node->in.vectorize);
+	unsigned pool_size = node_type(d->node)->pool_size ? node_type(d->node)->pool_size : LOG2_CEIL(d->node->in.vectorize);
 
-	ret = pool_init(&recvv.pool, pool_size, SAMPLE_LENGTH(list_length(&node->signals)), node_memory_type(node, &memory_hugepage));
+	ret = pool_init(&d->pool, pool_size, SAMPLE_LENGTH(list_length(&d->node->signals)), node_memory_type(d->node, &memory_hugepage));
 
 	if (ret < 0)
-		error("Failed to allocate memory for receive pool.");
+		throw new RuntimeError("Failed to allocate memory for receive pool.");
 
 	for (;;) {
-		allocated = sample_alloc_many(&recvv.pool, smps, node->in.vectorize);
+		allocated = sample_alloc_many(&d->pool, smps, d->node->in.vectorize);
 		if (allocated < 0)
-			error("Failed to allocate %u samples from receive pool.", node->in.vectorize);
-		else if (allocated < node->in.vectorize)
-			warn("Receive pool underrun: allocated only %i of %i samples", allocated, node->in.vectorize);
+			throw new RuntimeError("Failed to allocate {} samples from receive pool.", d->node->in.vectorize);
+		else if (allocated < d->node->in.vectorize)
+			logger->warn("Receive pool underrun: allocated only {} of {} samples", allocated, d->node->in.vectorize);
 
 		release = allocated;
 
-		recv = node_read(node, smps, allocated, &release);
+		recv = node_read(d->node, smps, allocated, &release);
 		if (recv < 0)
-			warn("Failed to receive samples from node %s: reason=%d", node_name(node), recv);
+			logger->warn("Failed to receive samples from node {}: reason={}", node_name(d->node), recv);
 		else {
-			io_print(&io, smps, recv);
+			io_print(d->io, smps, recv);
 
 			cnt += recv;
-			if (recvv.limit > 0 && cnt >= recvv.limit)
+			if (d->limit > 0 && cnt >= d->limit)
 				goto leave;
 		}
 
@@ -232,7 +217,7 @@ static void * recv_loop(void *ctx)
 		pthread_testcancel();
 	}
 
-leave:	info("Reached receive limit. Terminating...");
+leave:	logger->info("Reached receive limit. Terminating...");
 	killme(SIGTERM);
 
 	return nullptr;
@@ -244,11 +229,11 @@ int main(int argc, char *argv[])
 	bool reverse = false;
 	const char *format = "villas.human";
 
-	sendd.enabled = true;
-	sendd.limit = -1;
+	struct node *node;
+	static struct io io = { .state = STATE_DESTROYED };
 
-	recvv.enabled = true;
-	recvv.limit = -1;
+	Direction sendd(&io);
+	Direction recvv(&io);
 
 	json_t *cfg_cli = json_object();
 
@@ -257,7 +242,7 @@ int main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "Vhxrsd:l:L:t:f:o:")) != -1) {
 		switch (c) {
 			case 'V':
-				print_version();
+				utils::print_version();
 				exit(EXIT_SUCCESS);
 
 			case 'f':
@@ -291,8 +276,13 @@ int main(int argc, char *argv[])
 			case 'o':
 				ret = json_object_extend_str(cfg_cli, optarg);
 				if (ret)
-					error("Invalid option: %s", optarg);
+					throw new RuntimeError("Invalid option: {}", optarg);
 				break;
+
+			case 'd':
+				logging.setLevel(optarg);
+				break;
+
 			case 'h':
 			case '?':
 				usage();
@@ -302,7 +292,7 @@ int main(int argc, char *argv[])
 		continue;
 
 check:		if (optarg == endptr)
-			error("Failed to parse parse option argument '-%c %s'", c, optarg);
+			throw new RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
 	}
 
 	if (argc != optind + 2) {
@@ -310,56 +300,59 @@ check:		if (optarg == endptr)
 		exit(EXIT_FAILURE);
 	}
 
-	char *configfile = argv[optind];
-	char *nodestr    = argv[optind+1];
+	char *uri = argv[optind];
+	char *nodestr = argv[optind+1];
 	struct format_type *fmt;
 
-	ret = signals_init(quit);
+	ret = utils::signals_init(quit);
 	if (ret)
-		error("Failed to initialize signals");
+		throw new RuntimeError("Failed to initialize signals");
 
-	ret = sn.parseUri(configfile);
-	if (ret)
-		error("Failed to parse configuration");
+	if (uri) {
+		ret = sn.parseUri(uri);
+		if (ret)
+			throw new RuntimeError("Failed to parse configuration");
+	}
+	else
+		logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
 	ret = sn.init();
 	if (ret)
-		error("Failed to initialize super-node");
-
-	ret = log_open(sn.getLog());
-	if (ret)
-		error("Failed to start log");
+		throw new RuntimeError("Failed to initialize super-node");
 
 	fmt = format_type_lookup(format);
 	if (!fmt)
-		error("Invalid format: %s", format);
+		throw new RuntimeError("Invalid format: {}", format);
 
 	ret = io_init_auto(&io, fmt, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
 	if (ret)
-		error("Failed to initialize IO");
+		throw new RuntimeError("Failed to initialize IO");
 
 	ret = io_check(&io);
 	if (ret)
-		error("Failed to validate IO configuration");
+		throw new RuntimeError("Failed to validate IO configuration");
 
 	ret = io_open(&io, nullptr);
 	if (ret)
-		error("Failed to open IO");
+		throw new RuntimeError("Failed to open IO");
 
 	node = sn.getNode(nodestr);
 	if (!node)
-		error("Node %s does not exist!", nodestr);
+		throw new RuntimeError("Node {} does not exist!", nodestr);
 
+<<<<<<< HEAD
 #ifdef LIBWEBSOCKETS_FOUND
+=======
+/** @todo Port to C++ */
+#ifdef __Libwebsockets_FOUND
+>>>>>>> cpp: use new supernode class
 	/* Only start web subsystem if villas-pipe is used with a websocket node */
 	if (node_type(node)->start == websocket_start) {
-		ret = web_start(sn.getWeb());
-		if (ret)
-			error("Failed to start web subsystem");
+		Web *w = sn.getWeb();
+		Api *a = sn.getApi();
 
-		ret = api_start(sn.getApi());
-		if (ret)
-			error("Failed to start API subsystem");
+		w->start();
+		a->start();
 	}
 #endif /* LIBWEBSOCKETS_FOUND */
 
@@ -368,31 +361,75 @@ check:		if (optarg == endptr)
 
 	ret = node_type_start(node->_vt);//, &sn); // @todo: port to C++
 	if (ret)
-		error("Failed to intialize node type %s: reason=%d", node_type_name(node->_vt), ret);
+		throw new RuntimeError("Failed to intialize node type {}: reason={}", node_type_name(node->_vt), ret);
 
 	ret = node_check(node);
 	if (ret)
-		error("Invalid node configuration");
+		throw new RuntimeError("Invalid node configuration");
 
 	ret = node_init2(node);
 	if (ret)
-		error("Failed to start node %s: reason=%d", node_name(node), ret);
+		throw new RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 
 	ret = node_start(node);
 	if (ret)
-		error("Failed to start node %s: reason=%d", node_name(node), ret);
+		throw new RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 
 	/* Start threads */
-	if (recvv.enabled)
-		pthread_create(&recvv.thread, NULL, recv_loop, NULL);
+	if (recvv.enabled) {
+		recvv.node = node;
+		pthread_create(&recvv.thread, nullptr, recv_loop, &recvv);
+	}
 
-	if (sendd.enabled)
-		pthread_create(&sendd.thread, NULL, send_loop, NULL);
+	if (sendd.enabled) {
+		sendd.node = node;
+		pthread_create(&sendd.thread, nullptr, send_loop, &sendd);
+	}
 
 	alarm(timeout);
 
-	for (;;)
+	while (!stop)
 		pause();
+
+	if (recvv.enabled) {
+		pthread_cancel(recvv.thread);
+		pthread_join(recvv.thread, nullptr);
+	}
+
+	if (sendd.enabled) {
+		pthread_cancel(sendd.thread);
+		pthread_join(sendd.thread, nullptr);
+	}
+
+	ret = node_stop(node);
+	if (ret)
+		throw new RuntimeError("Failed to stop node {}: reason={}", node_name(node), ret);
+
+	ret = node_type_stop(node->_vt);//, &sn); // @todo: port to C++
+	if (ret)
+		throw new RuntimeError("Failed to stop node type {}: reason={}", node_type_name(node->_vt), ret);
+
+	if (recvv.enabled) {
+		ret = pool_destroy(&recvv.pool);
+		if (ret)
+			throw new RuntimeError("Failed to destroy pool");
+	}
+
+	if (sendd.enabled) {
+		ret = pool_destroy(&sendd.pool);
+		if (ret)
+			throw new RuntimeError("Failed to destroy pool");
+	}
+
+	ret = io_close(&io);
+	if (ret)
+		throw new RuntimeError("Failed to close IO");
+
+	ret = io_destroy(&io);
+	if (ret)
+		throw new RuntimeError("Failed to destroy IO");
+
+	logger->info(CLR_GRN("Goodbye!"));
 
 	return 0;
 }

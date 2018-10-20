@@ -28,9 +28,12 @@
 #include <math.h>
 #include <string.h>
 #include <iostream>
+#include <atomic>
 
 #include <villas/io.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
+#include <villas/exceptions.hpp>
+#include <villas/log.hpp>
 #include <villas/sample.h>
 #include <villas/timing.h>
 #include <villas/node.h>
@@ -38,12 +41,17 @@
 #include <villas/plugin.h>
 #include <villas/nodes/signal_generator.h>
 
+using namespace villas;
+
 /* Some default values */
 struct node n;
-struct log l;
 struct io io;
 struct pool q;
 struct sample *t;
+
+static Logger logger = logging.get("signal");
+
+static std::atomic<bool> stop(false);
 
 json_t * parse_cli(int argc, char *argv[])
 {
@@ -61,7 +69,7 @@ json_t * parse_cli(int argc, char *argv[])
 	/* Parse optional command line arguments */
 	int c;
 	char *endptr;
-	while ((c = getopt(argc, argv, "v:r:f:l:a:D:no:")) != -1) {
+	while ((c = getopt(argc, argv, "v:r:f:l:a:D:no:d:")) != -1) {
 		switch (c) {
 			case 'n':
 				rt = 0;
@@ -95,6 +103,10 @@ json_t * parse_cli(int argc, char *argv[])
 				stddev = strtof(optarg, &endptr);
 				goto check;
 
+			case 'd':
+				logging.setLevel(optarg);
+				break;
+
 			case '?':
 				break;
 		}
@@ -102,7 +114,7 @@ json_t * parse_cli(int argc, char *argv[])
 		continue;
 
 check:		if (optarg == endptr)
-			warn("Failed to parse parse option argument '-%c %s'", c, optarg);
+			logger->warn("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
 
 	if (argc != optind + 1)
@@ -148,39 +160,12 @@ void usage()
 	          << "    -o OFF  the DC bias" << std::endl
 	          << "    -l NUM  only send LIMIT messages and stop" << std::endl << std::endl;
 
-	print_copyright();
+	utils::print_copyright();
 }
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
-	int ret;
-
-	ret = node_stop(&n);
-	if (ret)
-		error("Failed to stop node");
-
-	ret = node_destroy(&n);
-	if (ret)
-		error("Failed to destroy node");
-
-	ret = io_close(&io);
-	if (ret)
-		error("Failed to close IO");
-
-	ret = io_destroy(&io);
-	if (ret)
-		error("Failed to destroy IO");
-
-	ret = pool_destroy(&q);
-	if (ret)
-		error("Failed to destroy pool");
-
-	ret = log_close(&l);
-	if (ret)
-		error("Failed to stop log");
-
-	info(CLR_GRN("Goodbye!"));
-	exit(EXIT_SUCCESS);
+	stop = true;
 }
 
 int main(int argc, char *argv[])
@@ -192,35 +177,23 @@ int main(int argc, char *argv[])
 
 	const char *format = "villas.human"; /** @todo hardcoded for now */
 
-	ret = log_init(&l, "signal", l.level, LOG_ALL);
+	ret = utils::signals_init(quit);
 	if (ret)
-		error("Failed to initialize log");
-
-	ret = log_parse_wrapper(&l, n.cfg);
-	if (ret)
-		error("Failed to parse log");
-
-	ret = log_open(&l);
-	if (ret)
-		error("Failed to start log");
-
-	ret = signals_init(quit);
-	if (ret)
-		error("Failed to intialize signals");
+		throw new RuntimeError("Failed to intialize signals");
 
 	ft = format_type_lookup(format);
 	if (!ft)
-		error("Invalid output format '%s'", format);
+		throw new RuntimeError("Invalid output format '{}'", format);
 
 	memory_init(0); // Otherwise, ht->size in hash_table_hash() will be zero
 
 	nt = node_type_lookup("signal");
 	if (!nt)
-		error("Signal generation is not supported.");
+		throw new RuntimeError("Signal generation is not supported.");
 
 	ret = node_init(&n, nt);
 	if (ret)
-		error("Failed to initialize node");
+		throw new RuntimeError("Failed to initialize node");
 
 	cfg = parse_cli(argc, argv);
 	if (!cfg) {
@@ -237,46 +210,69 @@ int main(int argc, char *argv[])
 	// nt == n._vt
 	ret = node_type_start(nt); /// @todo: Port to C++
 	if (ret)
-		error("Failed to initialize node type: %s", node_type_name(nt));
+		throw new RuntimeError("Failed to initialize node type: {}", node_type_name(nt));
 
 	ret = node_check(&n);
 	if (ret)
-		error("Failed to verify node configuration");
+		throw new RuntimeError("Failed to verify node configuration");
 
 	ret = pool_init(&q, 16, SAMPLE_LENGTH(list_length(&n.signals)), &memory_heap);
 	if (ret)
-		error("Failed to initialize pool");
+		throw new RuntimeError("Failed to initialize pool");
 
 	ret = node_init2(&n);
 	if (ret)
-		error("Failed to start node %s: reason=%d", node_name(&n), ret);
+		throw new RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
 
 	ret = node_start(&n);
 	if (ret)
-		error("Failed to start node %s: reason=%d", node_name(&n), ret);
+		throw new RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
 
 	ret = io_init(&io, ft, &n.signals, IO_FLUSH | (SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET));
 	if (ret)
-		error("Failed to initialize output");
+		throw new RuntimeError("Failed to initialize output");
 
 	ret = io_check(&io);
 	if (ret)
-		error("Failed to validate IO configuration");
+		throw new RuntimeError("Failed to validate IO configuration");
 
-	ret = io_open(&io, NULL);
+	ret = io_open(&io, nullptr);
 	if (ret)
-		error("Failed to open output");
+		throw new RuntimeError("Failed to open output");
 
-	for (;;) {
+	while (!stop) {
 		t = sample_alloc(&q);
 
 		unsigned release = 1; // release = allocated
 
-		node_read(&n, &t, 1, &release);
-		io_print(&io, &t, 1);
+		ret = node_read(&n, &t, 1, &release);
+		if (ret > 0)
+			io_print(&io, &t, 1);
 
 		sample_decref(t);
 	}
+
+	ret = node_stop(&n);
+	if (ret)
+		throw new RuntimeError("Failed to stop node");
+
+	ret = node_destroy(&n);
+	if (ret)
+		throw new RuntimeError("Failed to destroy node");
+
+	ret = io_close(&io);
+	if (ret)
+		throw new RuntimeError("Failed to close IO");
+
+	ret = io_destroy(&io);
+	if (ret)
+		throw new RuntimeError("Failed to destroy IO");
+
+	ret = pool_destroy(&q);
+	if (ret)
+		throw new RuntimeError("Failed to destroy pool");
+
+	logger->info(CLR_GRN("Goodbye!"));
 
 	return 0;
 }

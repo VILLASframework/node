@@ -27,58 +27,37 @@
  */
 
 #include <iostream>
+#include <atomic>
 #include <unistd.h>
 
 #include <villas/timing.h>
 #include <villas/sample.h>
 #include <villas/io.h>
 #include <villas/hook.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/pool.h>
-#include <villas/log.h>
+#include <villas/log.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/plugin.h>
 #include <villas/config_helper.h>
-#include <villas/kernel/rt.h>
+#include <villas/kernel/rt.hpp>
 #include <villas/node/config.h>
+
+using namespace villas;
 
 int cnt;
 
-struct sample **smps;
+static std::atomic<bool> stop(false);
 
-struct log l = { .state = STATE_DESTROYED };
+static Logger logger = logging.get("hook");
+
 struct pool p = { .state = STATE_DESTROYED };
 struct hook h = { .state = STATE_DESTROYED };
 struct io  io = { .state = STATE_DESTROYED };
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
-	int ret;
-
-	ret = hook_stop(&h);
-	if (ret)
-		error("Failed to stop hook");
-
-	ret = hook_destroy(&h);
-	if (ret)
-		error("Failed to destroy hook");
-
-	ret = io_close(&io);
-	if (ret)
-		error("Failed to close IO");
-
-	ret = io_destroy(&io);
-	if (ret)
-		error("Failed to destroy IO");
-
-	sample_free_many(smps, cnt);
-
-	ret = pool_destroy(&p);
-	if (ret)
-		error("Failed to destroy memory pool");
-
-	info(CLR_GRN("Goodbye!"));
-
-	exit(EXIT_SUCCESS);
+	stop = true;
 }
 
 static void usage()
@@ -101,11 +80,11 @@ static void usage()
 	plugin_dump(PLUGIN_TYPE_FORMAT);
 	std::cout << std::endl;
 
-	std::cout << "Example:" << std::endl;
-	std::cout << "  villas-signal random | villas-hook skip_first seconds=10" << std::endl;
-	std::cout << std::endl;
+	std::cout << "Example:" << std::endl
+	          << "  villas-signal random | villas-hook skip_first seconds=10" << std::endl
+	          << std::endl;
 
-	print_copyright();
+	utils::print_copyright();
 }
 
 int main(int argc, char *argv[])
@@ -115,6 +94,7 @@ int main(int argc, char *argv[])
 
 	struct format_type *ft;
 	struct hook_type *ht;
+	struct sample **smps;
 
 	/* Default values */
 	cnt = 1;
@@ -126,7 +106,7 @@ int main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "Vhv:d:f:o:")) != -1) {
 		switch (c) {
 			case 'V':
-				print_version();
+				utils::print_version();
 				exit(EXIT_SUCCESS);
 
 			case 'f':
@@ -138,13 +118,13 @@ int main(int argc, char *argv[])
 				goto check;
 
 			case 'd':
-				l.level = strtoul(optarg, &endptr, 0);
-				goto check;
+				logging.setLevel(optarg);
+				break;
 
 			case 'o':
 				ret = json_object_extend_str(cfg_cli, optarg);
 				if (ret)
-					error("Invalid option: %s", optarg);
+					throw new RuntimeError("Invalid option: {}", optarg);
 				break;
 
 			case '?':
@@ -156,7 +136,7 @@ int main(int argc, char *argv[])
 		continue;
 
 check:		if (optarg == endptr)
-			error("Failed to parse parse option argument '-%c %s'", c, optarg);
+			throw new RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
 
 	}
 
@@ -167,85 +147,71 @@ check:		if (optarg == endptr)
 
 	char *hook = argv[optind];
 
-	ret = log_init(&l, "hook", l.level, LOG_ALL);
+	ret = utils::signals_init(quit);
 	if (ret)
-		error("Failed to initialize log");
-
-	ret = log_parse_wrapper(&l, cfg_cli);
-	if (ret)
-		error("Failed to parse log");
-
-	ret = log_open(&l);
-	if (ret)
-		error("Failed to start log");
-
-	ret = signals_init(quit);
-	if (ret)
-		error("Failed to intialize signals");
+		throw new RuntimeError("Failed to intialize signals");
 
 	if (cnt < 1)
-		error("Vectorize option must be greater than 0");
+		throw new RuntimeError("Vectorize option must be greater than 0");
 
 	ret = memory_init(DEFAULT_NR_HUGEPAGES);
 	if (ret)
-		error("Failed to initialize memory");
+		throw new RuntimeError("Failed to initialize memory");
 
-	smps = (struct sample **) alloc(cnt * sizeof(struct sample *));
+	smps = new struct sample*[cnt];
 
 	ret = pool_init(&p, 10 * cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_hugepage);
 	if (ret)
-		error("Failed to initilize memory pool");
+		throw new RuntimeError("Failed to initilize memory pool");
 
 	/* Initialize IO */
 	ft = format_type_lookup(format);
 	if (!ft)
-		error("Unknown IO format '%s'", format);
+		throw new RuntimeError("Unknown IO format '{}'", format);
 
 	ret = io_init_auto(&io, ft, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
 	if (ret)
-		error("Failed to initialize IO");
+		throw new RuntimeError("Failed to initialize IO");
 
 	ret = io_check(&io);
 	if (ret)
-		error("Failed to validate IO configuration");
+		throw new RuntimeError("Failed to validate IO configuration");
 
 	ret = io_open(&io, nullptr);
 	if (ret)
-		error("Failed to open IO");
+		throw new RuntimeError("Failed to open IO");
 
 	/* Initialize hook */
 	ht = hook_type_lookup(hook);
 	if (!ht)
-		error("Unknown hook function '%s'", hook);
+		throw new RuntimeError("Unknown hook function '{}'", hook);
 
 	ret = hook_init(&h, ht, nullptr, nullptr);
 	if (ret)
-		error("Failed to initialize hook");
+		throw new RuntimeError("Failed to initialize hook");
 
 	ret = hook_parse(&h, cfg_cli);
 	if (ret)
-		error("Failed to parse hook config");
+		throw new RuntimeError("Failed to parse hook config");
 
 	ret = hook_start(&h);
 	if (ret)
-		error("Failed to start hook");
+		throw new RuntimeError("Failed to start hook");
 
-	for (;;) {
+	while (!stop) {
 		ret = sample_alloc_many(&p, smps, cnt);
 		if (ret != cnt)
-			error("Failed to allocate %d smps from pool", cnt);
+			throw new RuntimeError("Failed to allocate %d smps from pool", cnt);
 
 		recv = io_scan(&io, smps, cnt);
 		if (recv < 0) {
-			if (io_eof(&io)) {
-				killme(SIGTERM);
-				pause();
-			}
+			if (io_eof(&io))
+				break;
 
-			error("Failed to read from stdin");
+			throw new RuntimeError("Failed to read from stdin");
 		}
 
-		debug(15, "Read %u smps from stdin", recv);
+		logger->debug("Read {} smps from stdin", recv);
 
 		unsigned send = recv;
 
@@ -253,10 +219,36 @@ check:		if (optarg == endptr)
 
 		sent = io_print(&io, smps, send);
 		if (sent < 0)
-			error("Failed to write to stdout");
+			throw new RuntimeError("Failed to write to stdout");
 
 		sample_free_many(smps, cnt);
 	}
+
+	ret = hook_stop(&h);
+	if (ret)
+		throw new RuntimeError("Failed to stop hook");
+
+	ret = hook_destroy(&h);
+	if (ret)
+		throw new RuntimeError("Failed to destroy hook");
+
+	ret = io_close(&io);
+	if (ret)
+		throw new RuntimeError("Failed to close IO");
+
+	ret = io_destroy(&io);
+	if (ret)
+		throw new RuntimeError("Failed to destroy IO");
+
+	sample_free_many(smps, cnt);
+
+	delete smps;
+
+	ret = pool_destroy(&p);
+	if (ret)
+		throw new RuntimeError("Failed to destroy memory pool");
+
+	logger->info(CLR_GRN("Goodbye!"));
 
 	return 0;
 }

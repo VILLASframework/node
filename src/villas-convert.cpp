@@ -26,10 +26,14 @@
 
 #include <iostream>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
+#include <villas/log.hpp>
 #include <villas/io.h>
 #include <villas/sample.h>
 #include <villas/plugin.h>
+#include <villas/exceptions.hpp>
+
+using namespace villas;
 
 static void usage()
 {
@@ -41,12 +45,12 @@ static void usage()
 	          << "    -h               show this usage information" << std::endl
 	          << "    -V               show the version of the tool" << std::endl << std::endl;
 
-	print_copyright();
+	utils::print_copyright();
 }
 
 int main(int argc, char *argv[])
 {
-	int ret, level = 2;
+	int ret;
 	const char *input_format = "villas.human";
 	const char *output_format = "villas.human";
 
@@ -55,7 +59,7 @@ int main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "Vhd:i:o:")) != -1) {
 		switch (c) {
 			case 'V':
-				print_version();
+				utils::print_version();
 				exit(EXIT_SUCCESS);
 
 			case 'i':
@@ -67,18 +71,14 @@ int main(int argc, char *argv[])
 				break;
 
 			case 'd':
-				level = strtoul(optarg, &endptr, 10);
-				goto check;
+				logging.setLevel(optarg);
+				break;
+
 			case 'h':
 			case '?':
 				usage();
 				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
-
-		continue;
-
-check:		if (optarg == endptr)
-			error("Failed to parse parse option argument '-%c %s'", c, optarg);
 	}
 
 	if (argc != optind) {
@@ -87,17 +87,8 @@ check:		if (optarg == endptr)
 	}
 
 	struct format_type *fmt;
-	struct log log;
 	struct io input = { .state = STATE_DESTROYED };
 	struct io output = { .state = STATE_DESTROYED };
-
-	ret = log_init(&log, "convert", level, LOG_ALL);
-	if (ret)
-		error("Failed to initialize log");
-
-	ret = log_open(&log);
-	if (ret)
-		error("Failed to start log");
 
 	struct {
 		const char *name;
@@ -110,19 +101,19 @@ check:		if (optarg == endptr)
 	for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
 		fmt = format_type_lookup(dirs[i].name);
 		if (!fmt)
-			error("Invalid format: %s", dirs[i].name);
+			throw new RuntimeError("Invalid format: {}", dirs[i].name);
 
 		ret = io_init_auto(dirs[i].io, fmt, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
 		if (ret)
-			error("Failed to initialize IO: %s", dirs[i].name);
+			throw new RuntimeError("Failed to initialize IO: {}", dirs[i].name);
 
 		ret = io_check(dirs[i].io);
 		if (ret)
-			error("Failed to validate IO configuration");
+			throw new RuntimeError("Failed to validate IO configuration");
 
 		ret = io_open(dirs[i].io, nullptr);
 		if (ret)
-			error("Failed to open IO");
+			throw new RuntimeError("Failed to open IO");
 	}
 
 	struct sample *smp = sample_alloc_mem(DEFAULT_SAMPLE_LENGTH);
@@ -140,11 +131,11 @@ check:		if (optarg == endptr)
 	for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
 		ret = io_close(dirs[i].io);
 		if (ret)
-			error("Failed to close IO");
+			throw new RuntimeError("Failed to close IO");
 
 		ret = io_destroy(dirs[i].io);
 		if (ret)
-			error("Failed to destroy IO");
+			throw new RuntimeError("Failed to destroy IO");
 	}
 
 	return 0;

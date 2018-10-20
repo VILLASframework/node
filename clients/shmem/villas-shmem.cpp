@@ -25,17 +25,23 @@
 
 #include <string.h>
 #include <iostream>
+#include <atomic>
 
 #include <villas/node/config.h>
-#include <villas/log.h>
+#include <villas/log.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/node.h>
 #include <villas/pool.h>
 #include <villas/sample.h>
 #include <villas/shmem.h>
 #include <villas/utils.h>
+#include <villas/utils.hpp>
 
-void *base;
-struct shmem_int shm;
+using namespace villas;
+
+static Logger logger = logging.get("test-shmem");
+
+static std::atomic<bool> stop(false);
 
 void usage()
 {
@@ -45,51 +51,51 @@ void usage()
 	          << "  VECTORIZE maximum number of samples to read/write at a time" << std::endl;
 }
 
-void quit(int sig)
+void quit(int, siginfo_t*, void*)
 {
-	shmem_int_close(&shm);
-	exit(1);
+	stop = true;
 }
 
 int main(int argc, char* argv[])
 {
-	struct log log;
-	int readcnt, writecnt, avail;
+	int ret, readcnt, writecnt, avail;
+
+	struct shmem_int shm;
 	struct shmem_conf conf = {
 		.polling = 0,
 		.queuelen = DEFAULT_SHMEM_QUEUELEN,
 		.samplelen = DEFAULT_SHMEM_SAMPLELEN
 	};
 
-	log_init(&log, "test-shmem", 2, LOG_ALL);
-	log_open(&log);
-
 	if (argc != 4) {
 		usage();
 		return 1;
 	}
 
+	ret = utils::signals_init(quit);
+	if (ret)
+		throw new RuntimeError("Failed to initialize signals");
+
 	char *wname = argv[1];
 	char *rname = argv[2];
 	int vectorize = atoi(argv[3]);
 
-	if (shmem_int_open(wname, rname, &shm, &conf) < 0)
-		serror("Failed to open shmem interface");
+	ret = shmem_int_open(wname, rname, &shm, &conf);
+	if (ret < 0)
+		throw new RuntimeError("Failed to open shared-memory interface");
 
-	signal(SIGINT, quit);
-	signal(SIGTERM, quit);
 	struct sample *insmps[vectorize], *outsmps[vectorize];
 
-	while (1) {
+	while (!stop) {
 		readcnt = shmem_int_read(&shm, insmps, vectorize);
 		if (readcnt == -1) {
-			std::cout << "Node stopped, exiting" << std::endl;
+			logger->info("Node stopped, exiting");
 			break;
 		}
 
 		avail = shmem_int_alloc(&shm, outsmps, readcnt);
 		if (avail < readcnt)
-			warn("Pool underrun: %d / %d\n", avail, readcnt);
+			logger->warn("Pool underrun: %d / %d\n", avail, readcnt);
 
 		for (int i = 0; i < avail; i++) {
 			outsmps[i]->sequence = insmps[i]->sequence;
@@ -106,9 +112,16 @@ int main(int argc, char* argv[])
 
 		writecnt = shmem_int_write(&shm, outsmps, avail);
 		if (writecnt < avail)
-			warn("Short write");
+			logger->warn("Short write");
 
-		info("Read / Write: %d / %d", readcnt, writecnt);
+		logger->info("Read / Write: {}/{}", readcnt, writecnt);
 	}
-	shmem_int_close(&shm);
+
+	ret = shmem_int_close(&shm);
+	if (ret)
+		throw new RuntimeError("Failed to close shared-memory interface");
+
+	logger->info(CLR_GRN("Goodbye!"));
+
+	return 0;
 }
