@@ -45,6 +45,12 @@ enum io_flags {
 	IO_AUTO_DETECT_FORMAT	= (1 << 13)	/**< This IO instance supports format auto-detection during decoding. */
 };
 
+enum io_mode {
+	IO_MODE_STDIO,
+	IO_MODE_ADVIO,
+	IO_MODE_CUSTOM
+};
+
 struct io {
 	enum state state;
 	int flags;
@@ -68,11 +74,7 @@ struct io {
 	struct list *signals;			/**< Signal meta data for parsed samples by io_scan() */
 	bool header_printed;
 
-	enum {
-		IO_MODE_STDIO,
-		IO_MODE_ADVIO,
-		IO_MODE_CUSTOM
-	} mode;
+	enum io_mode mode;
 
 	void *_vd;
 	const struct format_type *_vt;
