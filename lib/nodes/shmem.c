@@ -39,7 +39,7 @@
 int shmem_parse(struct node *n, json_t *cfg)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
-	const char *val;
+	const char *val, *mode_str = NULL;
 
 	int ret;
 	json_t *json_exec = NULL;
@@ -51,17 +51,26 @@ int shmem_parse(struct node *n, json_t *cfg)
 	shm->conf.polling = false;
 	shm->exec = NULL;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: { s: s }, s: { s: s }, s?: i, s?: b, s?: o }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: { s: s }, s: { s: s }, s?: i, s?: o, s?: s }",
 		"out",
 			"name", &shm->out_name,
 		"in",
 			"name", &shm->in_name,
 		"queuelen", &shm->conf.queuelen,
-		"polling", &shm->conf.polling,
-		"exec", &json_exec
+		"exec", &json_exec,
+		"mode", &mode_str
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+
+	if (mode_str) {
+		if (!strcmp(mode_str, "polling"))
+			shm->conf.polling = true;
+		else if (!strcmp(mode_str, "pthread"))
+			shm->conf.polling = false;
+		else
+			error("Unknown mode '%s' in node %s", mode_str, node_name(n));
+	}
 
 	if (json_exec) {
 		if (!json_is_array(json_exec))
