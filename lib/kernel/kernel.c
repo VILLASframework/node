@@ -36,22 +36,6 @@
 #include <villas/config.h>
 #include <villas/kernel/kernel.h>
 
-int kernel_get_cacheline_size()
-{
-#if defined(__linux__) && defined(__x86_64__)
-	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
-#else
-	return 64; /** @todo fixme */
-#endif
-}
-
-#if defined(__linux__) || defined(__APPLE__)
-int kernel_get_page_size()
-{
-	return sysconf(_SC_PAGESIZE);
-}
-#endif
-
 #ifdef __linux__
 
 int kernel_module_set_param(const char *module, const char *param, const char *value)
@@ -121,19 +105,6 @@ int kernel_module_loaded(const char *module)
 	return ret;
 }
 
-int kernel_get_version(struct version *v)
-{
-	struct utsname uts;
-
-	if (uname(&uts) < 0)
-		return -1;
-
-	if (version_parse(uts.release, v))
-		return -1;
-
-	return 0;
-}
-
 int kernel_get_cmdline_param(const char *param, char *buf, size_t len)
 {
 	int ret;
@@ -170,35 +141,6 @@ out:
 	fclose(f);
 
 	return -1; /* not found or error */
-}
-
-/* There is no sysconf interface to get the hugepage size */
-int kernel_get_hugepage_size()
-{
-	char *key, *value, *unit, *line = NULL;
-	int sz = -1;
-	size_t len = 0;
-	FILE *f;
-
-	f = fopen(PROCFS_PATH "/meminfo", "r");
-	if (!f)
-		return -1;
-
-	while (getline(&line, &len, f) != -1) {
-		key   = strtok(line, ": ");
-		value = strtok(NULL, " ");
-		unit  = strtok(NULL, "\n");
-
-		if (!strcmp(key, "Hugepagesize") && !strcmp(unit, "kB")) {
-			sz = strtoul(value, NULL, 10) * 1024;
-			break;
-		}
-	}
-
-	free(line);
-	fclose(f);
-
-	return sz;
 }
 
 int kernel_get_nr_hugepages()
@@ -343,3 +285,73 @@ out:	fclose(f);
 	return ret;
 }
 #endif /* __linux__ */
+
+int kernel_get_version(struct version *v)
+{
+	struct utsname uts;
+
+	if (uname(&uts) < 0)
+		return -1;
+
+	if (version_parse(uts.release, v))
+		return -1;
+
+	return 0;
+}
+
+int kernel_get_cacheline_size()
+{
+#if defined(__linux__) && defined(__x86_64__)
+	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
+#elif defined(__x86_64__) || defined(__i386__)
+	return 64; /** @todo fixme */
+#else
+  #error "Unsupported architecture"
+#endif
+}
+
+#if defined(__linux__) || defined(__APPLE__)
+int kernel_get_page_size()
+{
+	return sysconf(_SC_PAGESIZE);
+}
+#else
+  #error "Unsupported platform"
+#endif
+
+/* There is no sysconf interface to get the hugepage size */
+int kernel_get_hugepage_size()
+{
+#ifdef __linux__
+	char *key, *value, *unit, *line = NULL;
+	int sz = -1;
+	size_t len = 0;
+	FILE *f;
+
+	f = fopen(PROCFS_PATH "/meminfo", "r");
+	if (!f)
+		return -1;
+
+	while (getline(&line, &len, f) != -1) {
+		key   = strtok(line, ": ");
+		value = strtok(NULL, " ");
+		unit  = strtok(NULL, "\n");
+
+		if (!strcmp(key, "Hugepagesize") && !strcmp(unit, "kB")) {
+			sz = strtoul(value, NULL, 10) * 1024;
+			break;
+		}
+	}
+
+	free(line);
+	fclose(f);
+
+	return sz;
+#elif defined(__x86_64__)
+	return 1 << 21;
+#elif defined(__i386__)
+	return 1 << 22;
+#else
+  #error "Unsupported architecture"
+#endif
+}
