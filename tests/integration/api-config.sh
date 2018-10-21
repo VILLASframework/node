@@ -25,28 +25,40 @@
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname ${SCRIPT})
 
-LOCAL_CONF=${SCRIPTPATH}/../../etc/loopback.json
-
+CONFIG_FILE=$(mktemp)
 FETCHED_CONF=$(mktemp)
+
+cat > ${CONFIG_FILE} <<EOF
+{
+	"http" : {
+		"port" : 8080
+	},
+	"nodes" : {
+		"node1" : {
+			"type" : "loopback"
+		}
+	}
+}
+EOF
 
 ID=$(uuidgen)
 
 # Start VILLASnode instance with local config (via advio)
-villas-node file://${LOCAL_CONF} &
+villas-node ${CONFIG_FILE} &
 
 # Wait for node to complete init
 sleep 1
 
 # Fetch config via API
-curl -sX POST --data '{ "action" : "config", "id" : "'${ID}'" }' http://localhost/api/v1 > ${FETCHED_CONF}
+curl -sX POST --data '{ "action" : "config", "id" : "'${ID}'" }' http://localhost:8080/api/v1 > ${FETCHED_CONF}
 
 # Shutdown VILLASnode
 kill $!
 
 # Compare local config with the fetched one
-diff -u <(jq -S .response < ${FETCHED_CONF}) <(jq -S . < ${LOCAL_CONF})
+diff -u <(jq -S .response < ${FETCHED_CONF}) <(jq -S . < ${CONFIG_FILE})
 RC=$?
 
-rm -f ${FETCHED_CONF}
+rm -f ${FETCHED_CONF} ${CONFIG_FILE}
 
 exit $RC
