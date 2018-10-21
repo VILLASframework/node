@@ -39,7 +39,6 @@ add_library(villas-common SHARED
 	memory_manager.cpp
 	plugin.cpp
 	table.c
-    tsc.c
 	task.c
 	timing.c
 	utils.c
@@ -48,6 +47,16 @@ add_library(villas-common SHARED
 	terminal.cpp
 	version.cpp
 )
+
+execute_process( 
+	COMMAND uname -m
+	COMMAND tr -d '\n'
+	OUTPUT_VARIABLE ARCH
+)
+
+if(ARCH STREQUAL "x86_64")
+	target_sources(villas-common PRIVATE tsc.c)
+endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 	target_sources(villas-common PRIVATE
