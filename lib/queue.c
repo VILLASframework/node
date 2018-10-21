@@ -44,7 +44,7 @@ int queue_init(struct queue *q, size_t size, struct memory_type *m)
 	if (!IS_POW2(size)) {
 		size_t old_size = size;
 		size = LOG2_CEIL(size);
-		warn("A queue size was changed from %zu to %zu", old_size, size);
+		warning("A queue size was changed from %zu to %zu", old_size, size);
 	}
 
 	q->buffer_mask = size - 1;

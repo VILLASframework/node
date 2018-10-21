@@ -163,13 +163,13 @@ int nanomsg_start(struct node *n)
 
 	ret = m->in.socket = nn_socket(AF_SP, NN_SUB);
 	if (ret < 0) {
-		warn("Failed to create nanomsg socket: node=%s, error=%s", node_name(n), nn_strerror(errno));
+		warning("Failed to create nanomsg socket: node=%s, error=%s", node_name(n), nn_strerror(errno));
 		return ret;
 	}
 
 	ret = m->out.socket = nn_socket(AF_SP, NN_PUB);
 	if (ret < 0) {
-		warn("Failed to create nanomsg socket: node=%s, error=%s", node_name(n), nn_strerror(errno));
+		warning("Failed to create nanomsg socket: node=%s, error=%s", node_name(n), nn_strerror(errno));
 		return ret;
 	}
 
@@ -184,7 +184,7 @@ int nanomsg_start(struct node *n)
 
 		ret = nn_bind(m->out.socket, ep);
 		if (ret < 0) {
-			warn("Failed to connect nanomsg socket: node=%s, endpoint=%s, error=%s", node_name(n), ep, nn_strerror(errno));
+			warning("Failed to connect nanomsg socket: node=%s, endpoint=%s, error=%s", node_name(n), ep, nn_strerror(errno));
 			return ret;
 		}
 	}
@@ -195,7 +195,7 @@ int nanomsg_start(struct node *n)
 
 		ret = nn_connect(m->in.socket, ep);
 		if (ret < 0) {
-			warn("Failed to connect nanomsg socket: node=%s, endpoint=%s, error=%s", node_name(n), ep, nn_strerror(errno));
+			warning("Failed to connect nanomsg socket: node=%s, endpoint=%s, error=%s", node_name(n), ep, nn_strerror(errno));
 			return ret;
 		}
 	}

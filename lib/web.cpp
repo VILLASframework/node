@@ -253,7 +253,7 @@ void Web::start()
 			break;
 
 		ctx_info.port++;
-		warn("WebSocket: failed to setup vhost. Trying another port: %d", ctx_info.port);
+		logger->warn("WebSocket: failed to setup vhost. Trying another port: {}", ctx_info.port);
 	}
 
 	if (vhost == NULL)

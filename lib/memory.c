@@ -71,8 +71,8 @@ int memory_init(int hugepages)
 			debug(LOG_MEM | 2, "Increased number of reserved hugepages from %d to %d", pagecnt, hugepages);
 		}
 		else {
-			warn("Failed to reserved hugepages. Please re-run as super-user or reserve manually via:");
-			warn("   $ echo %d > /proc/sys/vm/nr_hugepages", hugepages);
+			warning("Failed to reserved hugepages. Please re-run as super-user or reserve manually via:");
+			warning("   $ echo %d > /proc/sys/vm/nr_hugepages", hugepages);
 
 			return -1;
 		}
@@ -92,9 +92,9 @@ int memory_init(int hugepages)
 	if (l.rlim_cur < lock) {
 		if (l.rlim_max < lock) {
 			if (getuid() != 0) {
-				warn("Failed to in increase ressource limit of locked memory from %lu to %zu bytes", l.rlim_cur, lock);
-				warn("Please re-run as super-user or raise manually via:");
-				warn("   $ ulimit -Hl %zu", lock);
+				warning("Failed to in increase ressource limit of locked memory from %lu to %zu bytes", l.rlim_cur, lock);
+				warning("Please re-run as super-user or raise manually via:");
+				warning("   $ ulimit -Hl %zu", lock);
 
 				return -1;
 			}
@@ -125,13 +125,13 @@ void * memory_alloc_aligned(struct memory_type *m, size_t len, size_t alignment)
 
 	struct memory_allocation *ma = m->alloc(m, len, alignment);
 	if (ma == NULL) {
-		warn("memory_alloc_aligned: allocating memory for memory_allocation failed for memory type %s. Reason: %s", m->name, strerror(errno) );
+		warning("memory_alloc_aligned: allocating memory for memory_allocation failed for memory type %s. Reason: %s", m->name, strerror(errno) );
 		return NULL;
 	}
 
 	ret = hash_table_insert(&allocations, ma->address, ma);
 	if (ret) {
-		warn("memory_alloc_aligned: Inserting into hash table failed!");
+		warning("memory_alloc_aligned: Inserting into hash table failed!");
 		return NULL;
 	}
 

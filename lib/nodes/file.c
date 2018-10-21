@@ -278,7 +278,7 @@ int file_start(struct node *n)
 		struct sample *smps[] = { &s };
 
 		if (io_eof(&f->io)) {
-			warn("Empty file");
+			warning("Empty file");
 		}
 		else {
 			ret = io_scan(&f->io, smps, 1);
@@ -287,7 +287,7 @@ int file_start(struct node *n)
 				f->offset = file_calc_offset(&f->first, &f->epoch, f->epoch_mode);
 			}
 			else
-				warn("Failed to read first timestamp of node %s", node_name(n));
+				warning("Failed to read first timestamp of node %s", node_name(n));
 		}
 	}
 
@@ -365,7 +365,7 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 			}
 		}
 		else
-			warn("Failed to read messages from node %s: reason=%d", node_name(n), ret);
+			warning("Failed to read messages from node %s: reason=%d", node_name(n), ret);
 
 		return 0;
 	}
@@ -390,7 +390,7 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 	if      (steps == 0)
 		serror("Failed to wait for timer");
 	else if (steps != 1)
-		warn("Missed steps: %" PRIu64, steps - 1);
+		warning("Missed steps: %" PRIu64, steps - 1);
 
 	return cnt;
 }

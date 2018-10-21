@@ -135,7 +135,7 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		/* This can only really mean that the other process has exited, so close
 		 * the interface to make sure the shared memory object is unlinked */
 		shmem_int_close(&shm->intf);
-		warn("Shared memory segment has been closed for node: %s", node_name(n));
+		warning("Shared memory segment has been closed for node: %s", node_name(n));
 		return recv;
 	}
 
@@ -153,15 +153,15 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 	avail = sample_alloc_many(&shm->intf.write.shared->pool, shared_smps, cnt);
 	if (avail != cnt)
-		warn("Pool underrun for shmem node %s", shm->out_name);
+		warning("Pool underrun for shmem node %s", shm->out_name);
 
 	copied = sample_copy_many(shared_smps, smps, avail);
 	if (copied < avail)
-		warn("Outgoing pool underrun for node %s", node_name(n));
+		warning("Outgoing pool underrun for node %s", node_name(n));
 
 	pushed = shmem_int_write(&shm->intf, shared_smps, copied);
 	if (pushed != avail)
-		warn("Outgoing queue overrun for node %s", node_name(n));
+		warning("Outgoing queue overrun for node %s", node_name(n));
 
 	return pushed;
 }

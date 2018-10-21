@@ -550,7 +550,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 				return 0;
 		}
 		else if (ret == 0) {
-			warn("select timeout, no samples available");
+			warning("select timeout, no samples available");
 			return 0;
 		}
 		else {
@@ -597,7 +597,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 					smps[i]->data[si].f = comedi_to_phys(raw, d->chanspecs[si].range, d->chanspecs[si].maxdata);
 
 					if (isnan(smps[i]->data[si].f))
-						warn("Input: channel %d clipped", CR_CHAN(d->chanlist[si]));
+						warning("Input: channel %d clipped", CR_CHAN(d->chanlist[si]));
 				}
 			}
 
@@ -675,8 +675,8 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	if ((c->bufpos + bytes_available) >= d->buffer_size) {
 		/* Let comedi do the wraparound, only consume until end of buffer */
 		villas_sample_count = (d->buffer_size - c->bufpos) / villas_sample_size;
-		warn("Reducing consumption from %d to %ld bytes", ret, bytes_available);
-		warn("Only consume %ld villas samples b/c of buffer wraparound", villas_sample_count);
+		warning("Reducing consumption from %d to %ld bytes", ret, bytes_available);
+		warning("Only consume %ld villas samples b/c of buffer wraparound", villas_sample_count);
 	}
 #endif
 
@@ -685,7 +685,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 #if 0
 	if (bytes_available != 0 && bytes_available < villas_sample_size) {
-		warn("Cannot consume samples, only %d bytes available, throw away", ret);
+		warning("Cannot consume samples, only %d bytes available, throw away", ret);
 
 		ret = comedi_mark_buffer_read(c->dev, d->subdevice, bytes_available);
 		if (ret != bytes_available)
@@ -700,11 +700,11 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 	ret = comedi_mark_buffer_read(c->dev, d->subdevice, samples_total_bytes);
 	if (ret == 0) {
-		warn("Marking read buffer (%ld bytes) not working, try again later", samples_total_bytes);
+		warning("Marking read buffer (%ld bytes) not working, try again later", samples_total_bytes);
 		return 0;
 	}
 	else if (ret != samples_total_bytes) {
-		warn("Can only mark %d bytes as read, reducing samples", ret);
+		warning("Can only mark %d bytes as read, reducing samples", ret);
 		return 0;
 	}
 	else
@@ -746,7 +746,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 			c->bufpos += d->sample_size;
 			if (c->bufpos >= d->buffer_size) {
-				warn("read buffer wraparound");
+				warning("read buffer wraparound");
 //				c->bufpos = 0;
 			}
 		}
@@ -764,7 +764,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 			ret = c->bufpos;
 	}
 
-	warn("change bufpos: %ld to %d", c->bufpos, ret);
+	warning("change bufpos: %ld to %d", c->bufpos, ret);
 	c->bufpos = ret;
 
 #if 0
@@ -786,13 +786,13 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 			if (ret < 0)
 				error("Failed to get read buffer offset");
 
-			warn("change bufpos1: %ld to %d", c->bufpos, ret);
+			warning("change bufpos1: %ld to %d", c->bufpos, ret);
 			c->bufpos = ret;
 		}
 		else {
-//			warn("change bufpos2: %ld to %ld", c->bufpos, c->);
+//			warning("change bufpos2: %ld to %ld", c->bufpos, c->);
 //			c->bufpos += bytes_consumed;
-			warn("keep bufpos=%ld", c->bufpos);
+			warning("keep bufpos=%ld", c->bufpos);
 		}
 
 //		c->bufpos = 0;
@@ -815,7 +815,7 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 	struct comedi_direction *d = &c->out;
 
 	if (!d->enabled) {
-		warn("Attempting to write, but output is not enabled");
+		warning("Attempting to write, but output is not enabled");
 		return 0;
 	}
 
@@ -849,7 +849,7 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 	const size_t villas_samples_in_buffer = raw_samples_in_buffer / d->chanlist_len;
 
 	if (villas_samples_in_buffer == buffer_capacity_villas) {
-		warn("Comedi buffer is full");
+		warning("Comedi buffer is full");
 		return 0;
 	}
 	else {
@@ -923,7 +923,7 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 	}
 
 	if (villas_samples_written == 0) {
-		warn("Nothing done");
+		warning("Nothing done");
 	}
 
 	d->counter += villas_samples_written;

@@ -157,7 +157,7 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 
 	pushed = queue_push_many(&c->queue, (void **) smps, cnt);
 	if (pushed < cnt)
-		warn("Queue overrun in WebSocket connection: %s", websocket_connection_name(c));
+		warning("Queue overrun in WebSocket connection: %s", websocket_connection_name(c));
 
 	sample_incref_many(smps, pushed);
 
@@ -209,14 +209,14 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_GET_URI); /* The path component of the*/
 				if (strlen(uri) <= 0) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_PROTOCOL_ERR, "Invalid URL");
-					warn("Failed to get request URI");
+					warning("Failed to get request URI");
 					return -1;
 				}
 
 				node = strtok(uri, "/.");
 				if (!node) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown node");
-					warn("Failed to tokenize request URI");
+					warning("Failed to tokenize request URI");
 					return -1;
 				}
 
@@ -228,14 +228,14 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				c->node = list_lookup(&p.node.instances, node);
 				if (!c->node) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown node");
-					warn("Failed to find node: node=%s", node);
+					warning("Failed to find node: node=%s", node);
 					return -1;
 				}
 
 				c->format = format_type_lookup(format);
 				if (!c->format) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown format");
-					warn("Failed to find format: format=%s", format);
+					warning("Failed to find format: format=%s", format);
 					return -1;
 				}
 			}
@@ -243,7 +243,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			ret = websocket_connection_init(c);
 			if (ret) {
 				websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Internal error");
-				warn("Failed to intialize websocket connection: reason=%d", ret);
+				warning("Failed to intialize websocket connection: reason=%d", ret);
 				return -1;
 			}
 
@@ -255,7 +255,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 		case LWS_CALLBACK_CLIENT_CONNECTION_ERROR:
 			c->state = WEBSOCKET_CONNECTION_STATE_ERROR;
 
-			warn("Failed to establish WebSocket connection: %s, reason=%s", websocket_connection_name(c), in ? (char *) in : "unkown");
+			warning("Failed to establish WebSocket connection: %s, reason=%s", websocket_connection_name(c), in ? (char *) in : "unkown");
 
 			return -1;
 
@@ -323,17 +323,17 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				struct websocket *w = (struct websocket *) n->_vd;
 				struct sample **smps = alloca(cnt * sizeof(struct sample *));
 				if (!smps) {
-					warn("Failed to allocate memory for connection: %s", websocket_connection_name(c));
+					warning("Failed to allocate memory for connection: %s", websocket_connection_name(c));
 					break;
 				}
 
 				avail = sample_alloc_many(&w->pool, smps, cnt);
 				if (avail < cnt)
-					warn("Pool underrun for connection: %s", websocket_connection_name(c));
+					warning("Pool underrun for connection: %s", websocket_connection_name(c));
 
 				recvd = io_sscan(&c->io, c->buffers.recv.buf, c->buffers.recv.len, NULL, smps, avail);
 				if (recvd < 0) {
-					warn("Failed to parse sample data received on connection: %s", websocket_connection_name(c));
+					warning("Failed to parse sample data received on connection: %s", websocket_connection_name(c));
 					break;
 				}
 
@@ -347,7 +347,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 				enqueued = queue_signalled_push_many(&w->queue, (void **) smps, recvd);
 				if (enqueued < recvd)
-					warn("Queue overrun in connection: %s", websocket_connection_name(c));
+					warning("Queue overrun in connection: %s", websocket_connection_name(c));
 
 				/* Release unused samples back to pool */
 				if (enqueued < avail)
@@ -512,7 +512,7 @@ int websocket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigne
 	/* Make copies of all samples */
 	avail = sample_alloc_many(&w->pool, cpys, cnt);
 	if (avail < cnt)
-		warn("Pool underrun for node %s: avail=%u", node_name(n), avail);
+		warning("Pool underrun for node %s: avail=%u", node_name(n), avail);
 
 	sample_copy_many(cpys, smps, avail);
 

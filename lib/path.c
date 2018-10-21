@@ -87,7 +87,7 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 	/* Fill smps[] free sample blocks from the pool */
 	allocated = sample_alloc_many(&ps->pool, read_smps, cnt);
 	if (allocated != cnt)
-		warn("Pool underrun for path source %s", node_name(ps->node));
+		warning("Pool underrun for path source %s", node_name(ps->node));
 
 	/* Read ready samples and store them to blocks pointed by smps[] */
 	release = allocated;
@@ -98,7 +98,7 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 	else if (recv < 0)
 		error("Failed to read samples from node %s", node_name(ps->node));
 	else if (recv < allocated)
-		warn("Partial read for path %s: read=%u, expected=%u", path_name(p), recv, allocated);
+		warning("Partial read for path %s: read=%u, expected=%u", path_name(p), recv, allocated);
 
 	bitset_set(&p->received, i);
 
@@ -193,14 +193,14 @@ static void path_destination_enqueue(struct path *p, struct sample *smps[], unsi
 
 	cloned = sample_clone_many(clones, smps, cnt);
 	if (cloned < cnt)
-		warn("Pool underrun in path %s", path_name(p));
+		warning("Pool underrun in path %s", path_name(p));
 
 	for (size_t i = 0; i < list_length(&p->destinations); i++) {
 		struct path_destination *pd = (struct path_destination *) list_at(&p->destinations, i);
 
 		enqueued = queue_push_many(&pd->queue, (void **) clones, cloned);
 		if (enqueued != cnt)
-			warn("Queue overrun for path %s", path_name(p));
+			warning("Queue overrun for path %s", path_name(p));
 
 		/* Increase reference counter of these samples as they are now also owned by the queue. */
 		sample_incref_many(clones, cloned);
@@ -237,7 +237,7 @@ static void path_destination_write(struct path_destination *pd, struct path *p)
 		if (sent < 0)
 			error("Failed to sent %u samples to node %s", cnt, node_name(pd->node));
 		else if (sent < allocated)
-			warn("Partial write to node %s: written=%d, expected=%d", node_name(pd->node), sent, allocated);
+			warning("Partial write to node %s: written=%d, expected=%d", node_name(pd->node), sent, allocated);
 
 		released = sample_decref_many(smps, release);
 
@@ -450,7 +450,7 @@ int path_init2(struct path *p)
 				if (me->type == MAPPING_TYPE_DATA) {
 					sig = (struct signal *) list_at_safe(&me->node->signals, me->data.offset + j);
 					if (!sig) {
-						warn("Failed to create signal description for path %s", path_name(p));
+						warning("Failed to create signal description for path %s", path_name(p));
 						continue;
 					}
 
@@ -685,7 +685,7 @@ int path_check(struct path *p)
 
 	if (!IS_POW2(p->queuelen)) {
 		p->queuelen = LOG2_CEIL(p->queuelen);
-		warn("Queue length should always be a power of 2. Adjusting to %d", p->queuelen);
+		warning("Queue length should always be a power of 2. Adjusting to %d", p->queuelen);
 	}
 
 	p->state = STATE_CHECKED;

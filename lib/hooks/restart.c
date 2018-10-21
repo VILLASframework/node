@@ -68,7 +68,7 @@ static int restart_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 		if (prev) {
 			/* A wrap around of the sequence no should not be treated as a simulation restart */
 			if (cur->sequence == 0 && prev->sequence != 0 && prev->sequence > UINT64_MAX - 16) {
-				warn("Simulation from node %s restarted (previous->sequence=%" PRIu64 ", current->sequence=%" PRIu64 ")",
+				warning("Simulation from node %s restarted (previous->sequence=%" PRIu64 ", current->sequence=%" PRIu64 ")",
 					node_name(h->node), prev->sequence, cur->sequence);
 
 				cur->flags |= SAMPLE_IS_FIRST;

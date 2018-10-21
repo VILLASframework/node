@@ -447,7 +447,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 	if (s->verify_source && socket_compare_addr(&src.sa, &s->remote.sa) != 0) {
 		char *buf = socket_print_addr((struct sockaddr *) &src);
-		warn("Received packet from unauthorized source: %s", buf);
+		warning("Received packet from unauthorized source: %s", buf);
 		free(buf);
 
 		return 0;
@@ -456,7 +456,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	ret = io_sscan(&s->io, ptr, bytes, &rbytes, smps, cnt);
 
 	if (ret < 0 || bytes != rbytes)
-		warn("Received invalid packet from node: %s ret=%d, bytes=%zu, rbytes=%zu", node_name(n), ret, bytes, rbytes);
+		warning("Received invalid packet from node: %s ret=%d, bytes=%zu, rbytes=%zu", node_name(n), ret, bytes, rbytes);
 
 	return ret;
 }
@@ -514,17 +514,17 @@ retry2:	bytes = sendto(s->sd, s->out.buf, wbytes, 0, (struct sockaddr *) &s->rem
 	if (bytes < 0) {
 		if ((errno == EPERM) ||
 		    (errno == ENOENT && s->layer == SOCKET_LAYER_UNIX))
-			warn("Failed send to node %s: %s", node_name(n), strerror(errno));
+			warning("Failed send to node %s: %s", node_name(n), strerror(errno));
 		else if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
-			warn("socket: send would block");
+			warning("socket: send would block");
 			goto retry2;
 		}
 		else
-			warn("Failed sendto() to node %s", node_name(n));
+			warning("Failed sendto() to node %s", node_name(n));
 	}
 
 	if (bytes != wbytes)
-		warn("Partial sendto() to node %s", node_name(n));
+		warning("Partial send to node %s", node_name(n));
 
 	return cnt;
 }

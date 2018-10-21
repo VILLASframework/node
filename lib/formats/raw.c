@@ -222,13 +222,13 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 		return -1;
 
 	if (len % (bits / 8)) {
-		warn("Invalid RAW Payload length: %#zx", len);
+		warning("Invalid RAW Payload length: %#zx", len);
 		return -1;
 	}
 
 	if (io->flags & RAW_FAKE_HEADER) {
 		if (nlen < o + 3) {
-			warn("Received a packet with no fake header. Skipping...");
+			warning("Received a packet with no fake header. Skipping...");
 			return -1;
 		}
 
@@ -349,7 +349,7 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 
 			case SIGNAL_TYPE_AUTO:
 			case SIGNAL_TYPE_INVALID:
-				warn("Unsupported format in RAW payload");
+				warning("Unsupported format in RAW payload");
 				return -1;
 		}
 	}
@@ -357,7 +357,7 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 	smp->length = i;
 
 	if (smp->length > smp->capacity) {
-		warn("Received more values than supported: length=%u, capacity=%u", smp->length, smp->capacity);
+		warning("Received more values than supported: length=%u, capacity=%u", smp->length, smp->capacity);
 		smp->length = smp->capacity;
 	}
 

@@ -38,7 +38,7 @@ static void mqtt_log_cb(struct mosquitto *mosq, void *userdata, int level, const
 			break;
 
 		case MOSQ_LOG_WARNING:
-			warn("MQTT: %s", str);
+			warning("MQTT: %s", str);
 			break;
 
 		case MOSQ_LOG_ERR:
@@ -63,10 +63,10 @@ static void mqtt_connect_cb(struct mosquitto *mosq, void *userdata, int result)
 	if (m->subscribe) {
 		ret = mosquitto_subscribe(m->client, NULL, m->subscribe, m->qos);
 		if (ret)
-			warn("MQTT: failed to subscribe to topic '%s' for node %s", m->subscribe, node_name(n));
+			warning("MQTT: failed to subscribe to topic '%s' for node %s", m->subscribe, node_name(n));
 	}
 	else
-		warn("MQTT: no subscribe for node %s as no subscribe topic is given", node_name(n));
+		warning("MQTT: no subscribe for node %s as no subscribe topic is given", node_name(n));
 }
 
 static void mqtt_disconnect_cb(struct mosquitto *mosq, void *userdata, int result)
@@ -88,14 +88,14 @@ static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct
 
     	ret = sample_alloc_many(&m->pool, smps, n->in.vectorize);
 	if (ret<0) {
-		warn("Pool underrun in subscriber of %s", node_name(n));
+		warning("Pool underrun in subscriber of %s", node_name(n));
 		return;
 	}
 
 	ret = io_sscan(&m->io, msg->payload, msg->payloadlen, NULL, smps, n->in.vectorize);
 	if (ret < 0) {
-		warn("MQTT: Node %s received an invalid message", node_name(n));
-		warn("  Payload: %s", (char *) msg->payload);
+		warning("MQTT: Node %s received an invalid message", node_name(n));
+		warning("  Payload: %s", (char *) msg->payload);
 		return;
 	}
 	if (ret == 0) {
@@ -399,12 +399,12 @@ int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		ret = mosquitto_publish(m->client, NULL /* mid */, m->publish, wbytes, data, m->qos,
                                 m->retain);
 		if (ret != MOSQ_ERR_SUCCESS) {
-			warn("MQTT: publish failed for node %s: %s", node_name(n), mosquitto_strerror(ret));
+			warning("MQTT: publish failed for node %s: %s", node_name(n), mosquitto_strerror(ret));
 			return -abs(ret);
 		}
 	}
 	else {
-        	warn("MQTT: no publish for node %s possible because no publish topic is given", node_name(n));
+        	warning("MQTT: no publish for node %s possible because no publish topic is given", node_name(n));
 	}
 
 	return cnt;

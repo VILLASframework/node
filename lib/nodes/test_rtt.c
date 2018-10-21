@@ -325,7 +325,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 	/* Wait */
 	steps = task_wait(&t->task);
 	if (steps > 1)
-		warn("Skipped %ld steps", (long) (steps - 1));
+		warning("Skipped %ld steps", (long) (steps - 1));
 
 	struct timespec now = time_now();
 
@@ -334,7 +334,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 		values = c->values;
 		if (smps[i]->capacity < values) {
 			values = smps[i]->capacity;
-			warn("Sample capacity too small. Limiting to %d values.", values);
+			warning("Sample capacity too small. Limiting to %d values.", values);
 		}
 
 		smps[i]->length = values;
@@ -370,7 +370,7 @@ int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 	int i;
 	for (i = 0; i < cnt; i++) {
 		if (smps[i]->length != c->values) {
-			warn("Discarding invalid sample due to mismatching length: expecting=%d, has=%d", c->values, smps[i]->length);
+			warning("Discarding invalid sample due to mismatching length: expecting=%d, has=%d", c->values, smps[i]->length);
 			continue;
 		}
 

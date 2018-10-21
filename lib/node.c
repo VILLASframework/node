@@ -259,7 +259,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 		}
 	}
 	else {
-		warn("No signal definition found for node %s. Using the default config of %d floating point signals.", node_name(n), DEFAULT_SAMPLE_LENGTH);
+		warning("No signal definition found for node %s. Using the default config of %d floating point signals.", node_name(n), DEFAULT_SAMPLE_LENGTH);
 
 		signal_list_generate(&n->signals, DEFAULT_SAMPLE_LENGTH, SIGNAL_TYPE_FLOAT);
 	}

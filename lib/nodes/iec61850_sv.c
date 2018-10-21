@@ -51,7 +51,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 
 	sz = SVSubscriber_ASDU_getDataSize(asdu);
 	if (sz < i->in.total_size) {
-		warn("Received truncated ASDU: size=%d, expected=%d", SVSubscriber_ASDU_getDataSize(asdu), i->in.total_size);
+		warning("Received truncated ASDU: size=%d, expected=%d", SVSubscriber_ASDU_getDataSize(asdu), i->in.total_size);
 		return;
 	}
 
@@ -67,7 +67,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 
 	smp = sample_alloc(&i->in.pool);
 	if (!smp) {
-		warn("Pool underrun in subscriber of %s", node_name(n));
+		warning("Pool underrun in subscriber of %s", node_name(n));
 		return;
 	}
 

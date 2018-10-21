@@ -48,7 +48,7 @@ int if_init(struct interface *i, struct rtnl_link *link)
 	if (n > 0)
 		debug(6, "Found %u IRQs for interface '%s'", n, rtnl_link_get_name(i->nl_link));
 	else
-		warn("Did not found any interrupts for interface '%s'", rtnl_link_get_name(i->nl_link));
+		warning("Did not found any interrupts for interface '%s'", rtnl_link_get_name(i->nl_link));
 
 	list_init(&i->sockets);
 

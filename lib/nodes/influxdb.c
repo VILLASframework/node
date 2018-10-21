@@ -89,7 +89,7 @@ int influxdb_open(struct node *n)
 
 		ret = connect(i->sd, p->ai_addr, p->ai_addrlen);
 		if (ret == -1) {
-			warn("connect");
+			warning("connect");
 	        	close(i->sd);
 	        	continue;
 		}
@@ -136,7 +136,7 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 			union signal_data *data = &smp->data[k];
 
 			if (sig->type == SIGNAL_TYPE_AUTO || sig->type == SIGNAL_TYPE_COMPLEX) {
-				warn("Unsupported signal format for node %s. Skipping", node_name(n));
+				warning("Unsupported signal format for node %s. Skipping", node_name(n));
 				continue;
 			}
 
@@ -177,7 +177,7 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 	if (sentlen < 0)
 		return -1;
 	else if (sentlen < buflen)
-		warn("Partial sent");
+		warning("Partial sent");
 
 	free(buf);
 

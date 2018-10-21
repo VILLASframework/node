@@ -268,14 +268,14 @@ static int ngsi_parse_context_response(json_t *response, int *code, char **reaso
 				"reasonPhrase", reason
 	);
 	if (ret) {
-		warn("Failed to find NGSI response code");
+		warning("Failed to find NGSI response code");
 		return ret;
 	}
 
 	*code = atoi(codestr);
 
 	if (*code != 200)
-		warn("NGSI response: %s %s", codestr, *reason);
+		warning("NGSI response: %s %s", codestr, *reason);
 
 	return ret;
 }
@@ -321,7 +321,7 @@ static int ngsi_request(CURL *handle, const char *endpoint, const char *operatio
 	pthread_setcancelstate(old, NULL);
 
 	if (ret) {
-		warn("HTTP request failed: %s", curl_easy_strerror(ret));
+		warning("HTTP request failed: %s", curl_easy_strerror(ret));
 		goto out;
 	}
 
@@ -332,7 +332,7 @@ static int ngsi_request(CURL *handle, const char *endpoint, const char *operatio
 
 	*response = json_loads(chunk.data, 0, &err);
 	if (!*response)
-		warn("Received invalid JSON: %s in %s:%u:%u\n%s", err.text, err.source, err.line, err.column, chunk.data);
+		warning("Received invalid JSON: %s in %s:%u:%u\n%s", err.text, err.source, err.line, err.column, chunk.data);
 
 out:	free(post);
 	free(chunk.data);
@@ -489,7 +489,7 @@ int ngsi_start(struct node *n)
 
 	/* Create task */
 	if (i->timeout > 1 / i->rate)
-		warn("Timeout is to large for given rate: %f", i->rate);
+		warning("Timeout is to large for given rate: %f", i->rate);
 
 	ret = task_init(&i->task, i->rate, CLOCK_MONOTONIC);
 	if (ret)

@@ -119,7 +119,7 @@ int loopback_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 
 	copied = sample_alloc_many(&l->pool, copies, cnt);
 	if (copied < cnt)
-		warn("Pool underrun for node %s", node_name(n));
+		warning("Pool underrun for node %s", node_name(n));
 
 	sample_copy_many(copies, smps, copied);
 

@@ -157,7 +157,7 @@ int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, s
 		smp->signals = io->signals;
 
 		if (pb_smp->type != VILLAS__NODE__SAMPLE__TYPE__DATA) {
-			warn("Parsed non supported message type. Skipping");
+			warning("Parsed non supported message type. Skipping");
 			continue;
 		}
 

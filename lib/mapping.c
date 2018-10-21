@@ -42,13 +42,13 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 	if (nodes) {
 		node = strtok(cpy, ".");
 		if (!node) {
-			warn("Missing node name");
+			warning("Missing node name");
 			goto invalid_format;
 		}
 
 		me->node = list_lookup(nodes, node);
 		if (!me->node) {
-			warn("Unknown node %s", node);
+			warning("Unknown node %s", node);
 			goto invalid_format;
 		}
 
@@ -70,19 +70,19 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 
 		field = strtok(NULL, ".");
 		if (!field) {
-			warn("Missing stats type");
+			warning("Missing stats type");
 			goto invalid_format;
 		}
 
 		subfield = strtok(NULL, ".");
 		if (!subfield) {
-			warn("Missing stats sub-type");
+			warning("Missing stats sub-type");
 			goto invalid_format;
 		}
 
 		id = stats_lookup_id(field);
 		if (id < 0) {
-			warn("Invalid stats type");
+			warning("Invalid stats type");
 			goto invalid_format;
 		}
 
@@ -103,7 +103,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 		else if (!strcmp(subfield, "stddev"))
 			me->stats.type = MAPPING_STATS_TYPE_STDDEV;
 		else {
-			warn("Invalid stats sub-type");
+			warning("Invalid stats sub-type");
 			goto invalid_format;
 		}
 	}
@@ -113,7 +113,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 
 		field = strtok(NULL, ".");
 		if (!field) {
-			warn("Missing header type");
+			warning("Missing header type");
 			goto invalid_format;
 		}
 
@@ -122,7 +122,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 		else if (!strcmp(field, "length"))
 			me->header.type = MAPPING_HEADER_TYPE_LENGTH;
 		else {
-			warn("Invalid header type");
+			warning("Invalid header type");
 			goto invalid_format;
 		}
 	}
@@ -132,7 +132,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 
 		field = strtok(NULL, ".");
 		if (!field) {
-			warn("Missing timestamp type");
+			warning("Missing timestamp type");
 			goto invalid_format;
 		}
 
@@ -141,7 +141,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 		else if (!strcmp(field, "received"))
 			me->timestamp.type = MAPPING_TIMESTAMP_TYPE_RECEIVED;
 		else {
-			warn("Invalid timestamp type");
+			warning("Invalid timestamp type");
 			goto invalid_format;
 		}
 	}
@@ -160,7 +160,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 				char *endptr;
 				first = strtoul(first_str, &endptr, 10);
 				if (endptr != first_str + strlen(first_str)) {
-					warn("Failed to parse data range");
+					warning("Failed to parse data range");
 					goto invalid_format;
 				}
 			}
@@ -181,7 +181,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 				char *endptr;
 				last = strtoul(last_str, &endptr, 10);
 				if (endptr != last_str + strlen(last_str)) {
-					warn("Failed to parse data range");
+					warning("Failed to parse data range");
 					goto invalid_format;
 				}
 			}

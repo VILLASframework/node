@@ -102,7 +102,7 @@ retry:	if (use_huge) {
 	ma->address = mmap(NULL, ma->length, PROT_READ | PROT_WRITE, flags, fd, 0);
 	if (ma->address == MAP_FAILED) {
 		if (use_huge) {
-			warn("Failed to map hugepages, try with normal pages instead");
+			warning("Failed to map hugepages, try with normal pages instead");
 			use_huge = false;
 			goto retry;
 		}

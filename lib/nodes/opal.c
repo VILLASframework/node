@@ -237,7 +237,7 @@ int opal_read(struct node *n, struct pool *pool, unsigned cnt)
 	/* Get the size of the data being sent by the unblocking SendID */
 	OpalGetAsyncSendIconDataLength(&len, o->send_id);
 	if (len > sizeof(data)) {
-		warn("Ignoring the last %u of %u values for OPAL node %s (send_id=%u).",
+		warning("Ignoring the last %u of %u values for OPAL node %s (send_id=%u).",
 		len / sizeof(double) - MSG_VALUES, len / sizeof(double), node_name(n), o->send_id);
 
 		len = sizeof(data);
@@ -293,7 +293,7 @@ int opal_write(struct node *n, struct pool *pool, unsigned cnt)
 	/* Get the number of signals to send back to the model */
 	OpalGetAsyncRecvIconDataLength(&len, o->recv_id);
 	if (len > sizeof(data))
-		warn("Node %s is expecting more signals (%u) than values in message (%u)", node_name(n), len / sizeof(double), m->length);
+		warning("Node %s is expecting more signals (%u) than values in message (%u)", node_name(n), len / sizeof(double), m->length);
 
 	for (int i = 0; i < m->length; i++)
 		data[i] = (double) m->data[i].f; /* OPAL expects double precission */

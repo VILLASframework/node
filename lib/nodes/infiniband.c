@@ -359,7 +359,7 @@ int ib_check(struct node *n)
 	int max_recv_pow = (int) pow(2, ceil(log2(ib->qp_init.cap.max_recv_wr)));
 
 	if (ib->qp_init.cap.max_send_wr != max_send_pow) {
-		warn("Max nr. of send WRs (%i) is not a power of 2! It will be changed to a power of 2: %i",
+		warning("Max nr. of send WRs (%i) is not a power of 2! It will be changed to a power of 2: %i",
 			ib->qp_init.cap.max_send_wr, max_send_pow);
 
 		// Change it now, because otherwise errors are possible in ib_start().
@@ -367,7 +367,7 @@ int ib_check(struct node *n)
 	}
 
 	if (ib->qp_init.cap.max_recv_wr != max_recv_pow) {
-		warn("Max nr. of recv WRs (%i) is not a power of 2! It will be changed to a power of 2: %i",
+		warning("Max nr. of recv WRs (%i) is not a power of 2! It will be changed to a power of 2: %i",
 			ib->qp_init.cap.max_recv_wr, max_recv_pow);
 
 		// Change it now, because otherwise errors are possible in ib_start().
@@ -376,10 +376,10 @@ int ib_check(struct node *n)
 
 	// Check maximum size of max_recv_wr and max_send_wr
 	if (ib->qp_init.cap.max_send_wr > 8192)
-		warn("Max number of send WRs (%i) is bigger than send queue!", ib->qp_init.cap.max_send_wr);
+		warning("Max number of send WRs (%i) is bigger than send queue!", ib->qp_init.cap.max_send_wr);
 
 	if (ib->qp_init.cap.max_recv_wr > 8192)
-		warn("Max number of receive WRs (%i) is bigger than send queue!", ib->qp_init.cap.max_recv_wr);
+		warning("Max number of receive WRs (%i) is bigger than send queue!", ib->qp_init.cap.max_recv_wr);
 
 	// Set periodic signaling
 	// This is done here, so that it uses the checked max_send_wr value
@@ -388,7 +388,7 @@ int ib_check(struct node *n)
 
 	// Warn user if he changed the default inline value
 	if (ib->qp_init.cap.max_inline_data != 0)
-		warn("You changed the default value of max_inline_data. This might influence the maximum number "
+		warning("You changed the default value of max_inline_data. This might influence the maximum number "
 			"of outstanding Work Requests in the Queue Pair and can be a reason for the Queue Pair creation to fail");
 
 	info("Finished check of node %s", node_name(n));
@@ -472,7 +472,7 @@ static void ib_continue_as_listen(struct node *n, struct rdma_cm_event *event)
 	int ret;
 
 	if (ib->conn.use_fallback)
-		warn("Trying to continue as listening node");
+		warning("Trying to continue as listening node");
 	else
 		error("Cannot establish a connection with remote host! If you want that %s tries to "
 			"continue as listening node in such cases, set use_fallback = true in the configuration",
@@ -522,7 +522,7 @@ void * ib_rdma_cm_event_thread(void *n)
 				break;
 
 			case RDMA_CM_EVENT_ADDR_ERROR:
-				warn("Address resolution (rdma_resolve_addr) failed!");
+				warning("Address resolution (rdma_resolve_addr) failed!");
 
 				ib_continue_as_listen(n, event);
 
@@ -533,14 +533,14 @@ void * ib_rdma_cm_event_thread(void *n)
 				break;
 
 			case RDMA_CM_EVENT_ROUTE_ERROR:
-				warn("Route resolution (rdma_resovle_route) failed!");
+				warning("Route resolution (rdma_resovle_route) failed!");
 
 				ib_continue_as_listen(n, event);
 
 				break;
 
 			case RDMA_CM_EVENT_UNREACHABLE:
-				warn("Remote server unreachable!");
+				warning("Remote server unreachable!");
 
 				ib_continue_as_listen(n, event);
 				break;
@@ -559,14 +559,14 @@ void * ib_rdma_cm_event_thread(void *n)
 				break;
 
 			case RDMA_CM_EVENT_CONNECT_ERROR:
-				warn("An error has occurred trying to establish a connection!");
+				warning("An error has occurred trying to establish a connection!");
 
 				ib_continue_as_listen(n, event);
 
 				break;
 
 			case RDMA_CM_EVENT_REJECTED:
-				warn("Connection request or response was rejected by the remote end point!");
+				warning("Connection request or response was rejected by the remote end point!");
 
 				ib_continue_as_listen(n, event);
 
@@ -844,7 +844,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 			if (wc[j].status == IBV_WC_WR_FLUSH_ERR)
 				debug(LOG_IB | 5, "Received IBV_WC_WR_FLUSH_ERR (ib_read). Ignore it.");
 			else if (wc[j].status != IBV_WC_SUCCESS)
-				warn("Work Completion status was not IBV_WC_SUCCES in node %s: %i",
+				warning("Work Completion status was not IBV_WC_SUCCES in node %s: %i",
 					node_name(n), wc[j].status);
 
 			// 32 byte of meta data is always transferred. We should substract it.
@@ -979,7 +979,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 		for (int i = 0; i < ret; i++) {
 			if (wc[i].status != IBV_WC_SUCCESS && wc[i].status != IBV_WC_WR_FLUSH_ERR)
-				warn("Work Completion status was not IBV_WC_SUCCES in node %s: %i",
+				warning("Work Completion status was not IBV_WC_SUCCES in node %s: %i",
 					node_name(n), wc[i].status);
 
 			smps[*release] = (struct sample *) (wc[i].wr_id);
