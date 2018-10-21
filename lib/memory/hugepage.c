@@ -41,21 +41,20 @@
 #include <villas/utils.h>
 #include <villas/kernel/kernel.h>
 
-#define HUGEPAGESIZE	(1 << 21) /* 2 MiB */
-
 /** Allocate memory backed by hugepages with malloc() like interface */
 static struct memory_allocation * memory_hugepage_alloc(struct memory_type *m, size_t len, size_t alignment)
 {
 	int prot = PROT_READ | PROT_WRITE;
 	int flags = MAP_PRIVATE | MAP_ANONYMOUS;
+	int ret, fd = -1;
+
+	size_t pgsz = kernel_get_page_size();
+	size_t hugepgsz = kernel_get_hugepage_size();
 
 #ifdef __MACH__
-	flags |= VM_FLAGS_SUPERPAGE_SIZE_2MB;
+	fd = VM_FLAGS_SUPERPAGE_SIZE_2MB;
 #elif defined(__linux__)
 	flags |= MAP_HUGETLB;
-
-	if (getuid() == 0)
-		flags |= MAP_LOCKED;
 #endif
 
 	struct memory_allocation *ma = alloc(sizeof(struct memory_allocation));
@@ -66,32 +65,34 @@ static struct memory_allocation * memory_hugepage_alloc(struct memory_type *m, s
 	 *
 	 * See: https://lkml.org/lkml/2014/10/22/925
 	 */
-	ma->length = ALIGN(len, HUGEPAGESIZE);
-	ma->alignment = alignment;
+	ma->length = ALIGN(len, hugepgsz);
+	ma->alignment = ALIGN(alignment, hugepgsz);
 	ma->type = m;
 
-	ma->address = mmap(NULL, ma->length, prot, flags, -1, 0);
+	ma->address = mmap(NULL, ma->length, prot, flags, fd, 0);
 	if (ma->address == MAP_FAILED) {
-		/* Try again without hugepages as fallback solution, warn the user */
-		prot= PROT_READ | PROT_WRITE;
+		warn("memory_hugepage_alloc: %s. Mapped as normal pages instead!", strerror(errno));
+		//warn("  aligned=%#zx, length=%#zx", ma->alignment, ma->length);
 
-		/* Same flags as above without hugepages */
-		flags = MAP_PRIVATE | MAP_ANONYMOUS;
-#ifdef __linux__
-		if (getuid() == 0)
-			flags |= MAP_LOCKED;
+#ifdef __MACH__
+		fd = -1;
+#elif defined(__linux__)
+		flags &= ~MAP_HUGETLB;
 #endif
-		/* Length has to be aligned with pagesize */
-		ma->length = ALIGN(len, kernel_get_page_size());
 
-		/* Try mmap again */
-		ma->address = mmap(NULL, ma->length, prot, flags, -1, 0);
+		ma->length = ALIGN(len, pgsz);
+		ma->alignment = ALIGN(alignment, pgsz);
+		ma->address = mmap(NULL, ma->length, prot, flags, fd, 0);
 		if (ma->address == MAP_FAILED) {
 			free(ma);
 			return NULL;
 		}
+	}
 
-		warn("memory_hugepage_alloc: hugepage could not be mapped, mapped without hugepages instead!");
+	if (getuid() == 0) {
+		ret = mlock(ma->address, ma->length);
+		if (ret)
+			return NULL;
 	}
 
 	return ma;
