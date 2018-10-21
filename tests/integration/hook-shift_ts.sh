@@ -27,10 +27,11 @@ STATS_FILE=$(mktemp)
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
 OFFSET=-10.0
-EPSILON=0.05
+EPSILON=0.5
 
 villas-signal -l ${NUM_SAMPLES} -r 50 random | \
 villas-hook -o offset=${OFFSET} shift_ts | \
+villas-hook fix | \
 villas-hook -o format=json -o output="${STATS_FILE}" stats > /dev/null
 
 jq .owd ${STATS_FILE}
