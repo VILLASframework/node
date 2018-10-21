@@ -28,7 +28,6 @@
 
 #include <libwebsockets.h>
 
-#include <villas/web.hpp>
 #include <villas/timing.h>
 #include <villas/utils.h>
 #include <villas/buffer.h>
@@ -41,7 +40,9 @@
 
 /* Private static storage */
 static struct list connections = { .state = STATE_DESTROYED };	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
-static struct web *web;
+
+// TODO: port to C++
+//static struct web *web;
 
 /* Forward declarations */
 static struct plugin p;
@@ -369,16 +370,17 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 	return 0;
 }
 
-int websocket_type_start() /// @todo: Port to C++
+int websocket_type_start() // @todo: Port to C++
 {
 	list_init(&connections);
 
-	web = NULL; /// @todo: Port to C++ &sn->web;
+	//web = NULL; /// @todo: Port to C++ &sn->web;
 
 	return -1;
 
-	if (web->state != STATE_STARTED)
-		return -1;
+	// @todo: Port to C++
+	//if (web->state != STATE_STARTED)
+	//	return -1;
 
 	return 0;
 }
@@ -414,8 +416,9 @@ int websocket_start(struct node *n)
 		c->node = n;
 		c->destination = d;
 
-		d->info.context = web->context;
-		d->info.vhost = web->vhost;
+		// @todo: Port to C++
+		//d->info.context = web->context;
+		//d->info.vhost = web->vhost;
 		d->info.userdata = c;
 
 		lws_client_connect_via_info(&d->info);
