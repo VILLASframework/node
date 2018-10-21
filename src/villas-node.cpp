@@ -54,9 +54,6 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::plugin;
 
-static SuperNode sn;
-static Logger logger = logging.get("node");
-
 static std::atomic<bool> stop(false);
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
@@ -109,6 +106,9 @@ static void usage()
 int main(int argc, char *argv[])
 {
 	int ret;
+
+	SuperNode sn;
+	Logger logger = logging.get("node");
 
 	try {
 

@@ -51,9 +51,6 @@
 using namespace villas;
 using namespace villas::node;
 
-static SuperNode sn; /**< The global configuration */
-static Logger logger = logging.get("pipe");
-
 class Direction {
 
 public:
@@ -77,6 +74,8 @@ static std::atomic<bool> stop(false);
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
+	Logger logger = logging.get("pipe");
+
 	if (signal == SIGALRM)
 		logger->info("Reached timeout. Terminating...");
 
@@ -107,6 +106,7 @@ static void usage()
 static void * send_loop(void *ctx)
 {
 	Direction *d = static_cast<Direction *>(ctx);
+	Logger logger = logging.get("pipe");
 
 	unsigned last_sequenceno = 0, release;
 	int ret, scanned, sent, allocated, cnt = 0;
@@ -180,6 +180,7 @@ leave:	if (io_eof(d->io)) {
 static void * recv_loop(void *ctx)
 {
 	Direction *d = static_cast<Direction *>(ctx);
+	Logger logger = logging.get("pipe");
 
 	int recv, ret, cnt = 0, allocated = 0;
 	unsigned release;
@@ -234,6 +235,9 @@ int main(int argc, char *argv[])
 
 	Direction sendd(&io);
 	Direction recvv(&io);
+
+	SuperNode sn; /**< The global configuration */
+	Logger logger = logging.get("pipe");
 
 	json_t *cfg_cli = json_object();
 

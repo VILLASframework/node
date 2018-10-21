@@ -45,15 +45,7 @@
 
 using namespace villas;
 
-int cnt;
-
 static std::atomic<bool> stop(false);
-
-static Logger logger = logging.get("hook");
-
-struct pool p = { .state = STATE_DESTROYED };
-struct hook h = { .state = STATE_DESTROYED };
-struct io  io = { .state = STATE_DESTROYED };
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
@@ -89,12 +81,18 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	int ret, recv, sent;
+	int ret, recv, sent, cnt;
 	const char *format = "villas.human";
 
 	struct format_type *ft;
 	struct hook_type *ht;
 	struct sample **smps;
+
+	Logger logger = logging.get("hook");
+
+	struct pool p = { .state = STATE_DESTROYED };
+	struct hook h = { .state = STATE_DESTROYED };
+	struct io  io = { .state = STATE_DESTROYED };
 
 	/* Default values */
 	cnt = 1;

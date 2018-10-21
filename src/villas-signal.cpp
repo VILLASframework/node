@@ -43,18 +43,12 @@
 
 using namespace villas;
 
-/* Some default values */
-struct node n;
-struct io io;
-struct pool q;
-struct sample *t;
-
-static Logger logger = logging.get("signal");
-
 static std::atomic<bool> stop(false);
 
 json_t * parse_cli(int argc, char *argv[])
 {
+	Logger logger = logging.get("signal");
+
 	/* Default values */
 	double rate = 10;
 	double frequency = 1;
@@ -176,6 +170,13 @@ int main(int argc, char *argv[])
 	struct format_type *ft;
 
 	const char *format = "villas.human"; /** @todo hardcoded for now */
+
+	struct node n;
+	struct io io;
+	struct pool q;
+	struct sample *t;
+
+	Logger logger = logging.get("signal");
 
 	ret = utils::signals_init(quit);
 	if (ret)

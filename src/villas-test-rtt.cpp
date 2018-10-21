@@ -46,9 +46,6 @@
 using namespace villas;
 using namespace villas::node;
 
-static SuperNode sn;
-static Logger logger = logging.get("test-rtt");
-
 static std::atomic<bool> stop(false);
 
 void quit(int signal, siginfo_t *sinfo, void *ctx)
@@ -83,6 +80,9 @@ int main(int argc, char *argv[])
 	struct sample *smp_recv = (struct sample *) new char[SAMPLE_LENGTH(2)];
 
 	struct node *node;
+
+	SuperNode sn;
+	Logger logger = logging.get("test-rtt");
 
 	/* Test options */
 	int count =  -1;		/**< Amount of messages which should be sent (default: -1 for unlimited) */
