@@ -27,8 +27,6 @@
 
 TestSuite(kernel, .description = "Kernel features");
 
-#ifdef __linux__
-
 #if defined(__x86_64__) || defined(__i386__)
   #define PAGESIZE (1 << 12)
   #define CACHELINESIZE 64
@@ -57,6 +55,7 @@ Test(kernel, sizes)
 	cr_assert_eq(sz, CACHELINESIZE);
 }
 
+#ifdef __linux__
 Test(kernel, hugepages)
 {
 	int ret;
@@ -108,5 +107,4 @@ Test(kernel, frequency)
 	/* Check for plausability only */
 	cr_assert(freq > 1e9 && freq < 5e9);
 }
-
-#endif /* __linux__ */
+#endif
