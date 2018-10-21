@@ -22,7 +22,6 @@
 
 add_executable(unit-tests-common
 	logging.cpp
-
 	advio.cpp
 	json_buffer.cpp
 	bitset.cpp
@@ -31,7 +30,6 @@ add_executable(unit-tests-common
 	hist.cpp
 	kernel.cpp
 	list.cpp
-	log.cpp
 	task.cpp
 	timing.cpp
 	tsc.cpp

@@ -118,10 +118,6 @@ Test(list, destructor)
 	cr_assert_eq(elm.destroyed, 1);
 }
 
-static int compare(const void *a, const void *b) {
-	return (intptr_t) b - (intptr_t) a;
-}
-
 Test(list, basics)
 {
 	uintptr_t i;
@@ -147,13 +143,13 @@ Test(list, basics)
 		cr_assert_eq(k, (void *) i++);
 	}
 
-	list_sort(&l, compare); /* Reverse list */
+	list_sort(&l, (cmp_cb_t) [](const void *a, const void *b) -> int {
+		return (intptr_t) b - (intptr_t) a;
+	});
 
-	for (size_t j = 0, i = 99; j < list_length(&l); j++) {
-		void *k = list_at(&l, j);
-
-		cr_assert_eq(k, (void *) i, "Is %#zx, expected %p", i, k);
-		i--;
+	for (size_t j = 0, i = 99; j <= 99; j++, i--) {
+		uintptr_t k = (uintptr_t) list_at(&l, j);
+		cr_assert_eq(k, i, "Is %zu, expected %zu", k, i);
 	}
 
 	ret = list_contains(&l, (void *) 55);
@@ -164,7 +160,8 @@ Test(list, basics)
 	ret = list_contains(&l, (void *) 55);
 	cr_assert(!ret);
 
-	list_destroy(&l, nullptr, false);
+	ret = list_destroy(&l, nullptr, false);
+	cr_assert(!ret);
 
 	ret = list_length(&l);
 	cr_assert_eq(ret, -1, "List not properly destroyed: l.length = %zd", l.length);
