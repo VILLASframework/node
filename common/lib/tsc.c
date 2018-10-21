@@ -25,7 +25,7 @@
 
 int tsc_init(struct tsc *t)
 {
-	uint32_t eax, ebx, ecx, edx;
+	uint32_t eax = 0, ebx = 0, ecx = 0, edx = 0;
 
 	/** Check if TSC is supported */
 	__get_cpuid(0x1, &eax, &ebx, &ecx, &edx);
