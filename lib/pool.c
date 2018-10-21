@@ -41,6 +41,7 @@ int pool_init(struct pool *p, size_t cnt, size_t blocksz, struct memory_type *m)
 		serror("Failed to allocate memory for memory pool");
 	else
 		debug(LOG_POOL | 4, "Allocated %#zx bytes for memory pool", p->len);
+
 	p->buffer_off = (char*) buffer - (char*) p;
 
 	ret = queue_init(&p->queue, LOG2_CEIL(cnt), m);
