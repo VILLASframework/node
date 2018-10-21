@@ -90,7 +90,7 @@ void info(const char *fmt, ...)
 	__attribute__ ((format(printf, 1, 2)));
 
 /** Printf alike warning message. */
-void warn(const char *fmt, ...)
+void warning(const char *fmt, ...)
 	__attribute__ ((format(printf, 1, 2)));
 
 /** Printf alike statistics message. */
