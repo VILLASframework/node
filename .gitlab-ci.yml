@@ -105,6 +105,18 @@ test:unit:
   tags:
     - docker
 
+test:unit-common:
+  stage: test
+  dependencies:
+    - build:source
+  script:
+    - mkdir -p build && cd build
+    - cmake .. && make unit-tests-common
+    - "common/tests/unit-tests-common || true"
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+  tags:
+    - docker
+
 test:integration:
   stage: test
   dependencies:
