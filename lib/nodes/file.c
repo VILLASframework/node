@@ -214,7 +214,8 @@ int file_start(struct node *n)
 
 	/* Check if directory exists */
 	struct stat sb;
-	char *dir = dirname(f->uri);
+	char *cpy = strdup(f->uri);
+	char *dir = dirname(cpy);
 
 	ret = stat(dir, &sb);
 	if (ret) {
@@ -231,6 +232,8 @@ int file_start(struct node *n)
 		if (ret)
 			serror("Failed to create directory");
 	}
+
+	free(cpy);
 
 	/* Open file */
 	flags = SAMPLE_HAS_ALL;
