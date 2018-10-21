@@ -88,7 +88,7 @@ static inline uint64_t rdtsc()
 	return tsc;
 }
 
-__attribute__((unused,always_inline))
+__attribute__((unused))
 static uint64_t tsc_now(struct tsc *t)
 {
 	return t->rdtscp_supported
