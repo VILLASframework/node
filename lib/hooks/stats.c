@@ -164,17 +164,26 @@ static int stats_collect_process(struct hook *h, struct sample *smps[], unsigned
 	struct sample *previous = p->last;
 
 	for (int i = 0; i < *cnt; i++) {
-		if (previous) {
-			stats_update(s, STATS_GAP_RECEIVED, time_delta(&previous->ts.received, &smps[i]->ts.received));
-			stats_update(s, STATS_GAP_SAMPLE,   time_delta(&previous->ts.origin,   &smps[i]->ts.origin));
-			stats_update(s, STATS_OWD,          time_delta(&smps[i]->ts.origin,    &smps[i]->ts.received));
+		struct sample *current = smps[i];
 
-			dist = smps[i]->sequence - (int32_t) previous->sequence;
-			if (dist != 1)
-				stats_update(s, STATS_REORDERED,    dist);
+		if (previous) {
+			if (current->flags & previous->flags & SAMPLE_HAS_TS_RECEIVED)
+				stats_update(s, STATS_GAP_RECEIVED, time_delta(&previous->ts.received, &current->ts.received));
+
+			if (current->flags & previous->flags & SAMPLE_HAS_TS_ORIGIN)
+				stats_update(s, STATS_GAP_SAMPLE, time_delta(&previous->ts.origin, &current->ts.origin));
+
+			if ((current->flags & SAMPLE_HAS_TS_ORIGIN) && (current->flags & SAMPLE_HAS_TS_RECEIVED))
+				stats_update(s, STATS_OWD, time_delta(&current->ts.origin, &current->ts.received));
+
+			if (current->flags & previous->flags & SAMPLE_HAS_SEQUENCE) {
+				dist = current->sequence - (int32_t) previous->sequence;
+				if (dist != 1)
+					stats_update(s, STATS_REORDERED, dist);
+			}
 		}
 
-		previous = smps[i];
+		previous = current;
 	}
 
 	if (p->last)
