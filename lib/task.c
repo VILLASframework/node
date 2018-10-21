@@ -94,7 +94,6 @@ int task_set_next(struct task *t, struct timespec *next)
 
 int task_set_rate(struct task *t, double rate)
 {
-
 #if PERIODIC_TASK_IMPL == RDTSC
 	t->period = tsc_rate_to_cycles(&t->tsc, rate);
 	t->next = tsc_now(&t->tsc) + t->period;
@@ -155,13 +154,22 @@ uint64_t task_wait(struct task *t)
 		ret = clock_nanosleep(t->clock, TIMER_ABSTIME, &t->next, NULL);
 	} while (ret == EINTR);
   #elif PERIODIC_TASK_IMPL == NANOSLEEP
-	struct timespec delta;
+	struct timespec req, rem = time_diff(&now, &t->next);
 
-	delta = time_diff(&now, &t->next);
-	ret = nanosleep(&delta, NULL);
+	do {
+		req = rem;
+		ret = nanosleep(&req, &rem);
+	} while (ret < 0 && errno == EINTR);
   #endif
-	if (ret < 0)
+	if (ret)
 		return 0;
+
+	ret = clock_gettime(t->clock, &now);
+	if (ret)
+		return ret;
+
+	for (; time_cmp(&t->next, &now) < 0; runs++)
+		t->next = time_add(&t->next, &t->period);
 #elif PERIODIC_TASK_IMPL == TIMERFD
 	int ret;
 
