@@ -56,6 +56,14 @@ ParameterizedTestParameters(log, facility_expression)
 		{ "",			0 }
 	};
 
+	for (int i = 0; i < ARRAY_LEN(params); i++) {
+		struct param *p = &params[i];
+
+		char *expression = cr_malloc(strlen(p->expression) + 1);
+		strcpy(expression, p->expression);
+		p->expression = expression;
+	}
+
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
 }
 

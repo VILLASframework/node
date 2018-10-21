@@ -72,6 +72,20 @@ ParameterizedTestParameters(json, json_load_cli)
 		}
 	};
 
+	for (int i = 0; i < ARRAY_LEN(params); i++) {
+		struct param *p = &params[i];
+
+		char *json = cr_malloc(strlen(p->json) + 1);
+		strcpy(json, p->json);
+		p->json = json;
+
+		for (char **a = p->argv; *a; a++) {
+			char *argv = cr_malloc(strlen(*a) + 1);
+			strcpy(argv , *a);
+			*a = argv;
+		}
+	}
+
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
 }
 

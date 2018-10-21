@@ -31,10 +31,7 @@ Test(timing, time_now)
 	struct timespec now1 = time_now();
 	struct timespec now2 = time_now();
 
-	double delta = time_delta(&now1, &now2);
-
-	cr_assert_float_eq(delta, 0, 1e-5, "time_now() shows large variance!");
-	cr_assert_gt(delta, 0, "time_now() was reordered!");
+	cr_assert(time_cmp(&now1, &now2) <= 0, "time_now() was reordered!");
 }
 
 Test(timing, time_diff)

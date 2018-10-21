@@ -37,21 +37,25 @@ extern void init_memory();
 TheoryDataPoints(memory, aligned) = {
 	DataPoints(size_t, 1, 32, 55, 1 << 10, PAGESIZE, HUGEPAGESIZE),
 	DataPoints(size_t, 1, 8, PAGESIZE, PAGESIZE),
-	DataPoints(struct memory_type *, &memory_heap, &memory_hugepage, &memory_hugepage)
+	DataPoints(enum memory_type_flags, MEMORY_HEAP, MEMORY_HUGEPAGE, MEMORY_HUGEPAGE)
 };
 
-Theory((size_t len, size_t align, struct memory_type *m), memory, aligned, .init = init_memory) {
+Theory((size_t len, size_t align, enum memory_type_flags memory_type), memory, aligned, .init = init_memory) {
 	int ret;
 	void *ptr;
 
-	ptr = memory_alloc_aligned(m, len, align);
+	struct memory_type *mt = memory_type_lookup(memory_type);
+
+	ptr = memory_alloc_aligned(mt, len, align);
 	cr_assert_not_null(ptr, "Failed to allocate memory");
 
 	cr_assert(IS_ALIGNED(ptr, align), "Memory at %p is not alligned to %#zx byte bounary", ptr, align);
 
-	if (m == &memory_hugepage) {
+#ifndef __APPLE__
+	if (mt == &memory_hugepage) {
 		cr_assert(IS_ALIGNED(ptr, HUGEPAGESIZE), "Memory at %p is not alligned to %#x byte bounary", ptr, HUGEPAGESIZE);
 	}
+#endif
 
 	ret = memory_free(ptr);
 	cr_assert_eq(ret, 0, "Failed to release memory: ret=%d, ptr=%p, len=%zu: %s", ret, ptr, len, strerror(errno));

@@ -36,7 +36,7 @@ extern void init_memory();
 
 struct param {
 	int flags;
-	void * (*consumer_func)(void *);
+	bool polled;
 };
 
 static void * producer(void * ctx)
@@ -112,14 +112,14 @@ again:		ret = poll(&pfd, 1, -1);
 ParameterizedTestParameters(queue_signalled, simple)
 {
 	static struct param params[] = {
-		{ 0, consumer },
-		{ QUEUE_SIGNALLED_PTHREAD, consumer },
-		{ QUEUE_SIGNALLED_PTHREAD, consumer },
-		{ QUEUE_SIGNALLED_PTHREAD | QUEUE_SIGNALLED_PROCESS_SHARED, consumer },
-		{ QUEUE_SIGNALLED_POLLING, consumer },
+		{ 0, false },
+		{ QUEUE_SIGNALLED_PTHREAD, false },
+		{ QUEUE_SIGNALLED_PTHREAD, false },
+		{ QUEUE_SIGNALLED_PTHREAD | QUEUE_SIGNALLED_PROCESS_SHARED, false },
+		{ QUEUE_SIGNALLED_POLLING, false },
 #if defined(__linux__) && defined(HAS_EVENTFD)
-		{ QUEUE_SIGNALLED_EVENTFD, consumer },
-		{ QUEUE_SIGNALLED_EVENTFD, polled_consumer }
+		{ QUEUE_SIGNALLED_EVENTFD, false },
+		{ QUEUE_SIGNALLED_EVENTFD, true }
 #endif
 	};
 
@@ -140,7 +140,7 @@ ParameterizedTest(struct param *param, queue_signalled, simple, .timeout = 5, .i
 	ret = pthread_create(&t1, NULL, producer, &q);
 	cr_assert_eq(ret, 0);
 
-	ret = pthread_create(&t2, NULL, param->consumer_func, &q);
+	ret = pthread_create(&t2, NULL, param->polled ? polled_consumer : consumer, &q);
 	cr_assert_eq(ret, 0);
 
 	ret = pthread_join(t1, &r1);

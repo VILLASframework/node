@@ -52,9 +52,9 @@ struct param {
 	int queue_size;
 	int iter_count;
 	int batch_size;
-	void * (*thread_func)(void *);
+	bool many;
 	struct queue queue;
-	const struct memory_type *memory_type;
+	enum memory_type_flags memory_type;
 };
 
 /** Get thread id as integer
@@ -266,37 +266,37 @@ ParameterizedTestParameters(queue, multi_threaded)
 			.iter_count = 1 << 12,
 			.queue_size = 1 << 9,
 			.thread_count = 32,
-			.thread_func = producer_consumer_many,
+			.many = true,
 			.batch_size = 10,
-			.memory_type = &memory_heap
+			.memory_type = MEMORY_HEAP
 		}, {
 			.iter_count = 1 << 8,
 			.queue_size = 1 << 9,
 			.thread_count = 4,
-			.thread_func = producer_consumer_many,
+			.many = true,
 			.batch_size = 100,
-			.memory_type = &memory_heap
+			.memory_type = MEMORY_HEAP
 		}, {
 			.iter_count = 1 << 16,
 			.queue_size = 1 << 14,
 			.thread_count = 16,
-			.thread_func = producer_consumer_many,
+			.many = true,
 			.batch_size = 100,
-			.memory_type = &memory_heap
+			.memory_type = MEMORY_HEAP
 		}, {
 			.iter_count = 1 << 8,
 			.queue_size = 1 << 9,
 			.thread_count = 4,
-			.thread_func = producer_consumer_many,
+			.many = true,
 			.batch_size = 10,
-			.memory_type = &memory_heap
+			.memory_type = MEMORY_HEAP
 		}, {
 			.iter_count = 1 << 16,
 			.queue_size = 1 << 9,
 			.thread_count = 16,
-			.thread_func = producer_consumer,
+			.many = false,
 			.batch_size = 10,
-			.memory_type = &memory_hugepage
+			.memory_type = MEMORY_HUGEPAGE
 		}
 	};
 
@@ -312,7 +312,9 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 
 	p->start = 0;
 
-	ret = queue_init(&p->queue, p->queue_size, &memory_heap);
+	struct memory_type *mt = memory_type_lookup(p->memory_type);
+
+	ret = queue_init(&p->queue, p->queue_size, mt);
 	cr_assert_eq(ret, 0, "Failed to create queue");
 
 	uint64_t start_tsc_time, end_tsc_time;
@@ -320,7 +322,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 	pthread_barrier_init(&barrier, NULL, p->thread_count);
 
 	for (int i = 0; i < p->thread_count; ++i)
-		pthread_create(&threads[i], NULL, p->thread_func, p);
+		pthread_create(&threads[i], NULL, p->many ? producer_consumer_many : producer_consumer, p);
 
 	sleep(0.2);
 

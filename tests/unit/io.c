@@ -41,7 +41,7 @@ extern void init_memory();
 #define NUM_VALUES 10
 
 struct param {
-	const char *fmt;
+	char *fmt;
 	int cnt;
 	int bits;
 };
@@ -189,6 +189,15 @@ void cr_assert_eq_sample_raw(struct sample *a, struct sample *b, int flags, int 
 
 ParameterizedTestParameters(io, lowlevel)
 {
+	for (int i = 0; i < ARRAY_LEN(params); i++) {
+		struct param *p = &params[i];
+
+		char *fmt = cr_malloc(strlen(p->fmt) + 1);
+		strcpy(fmt, p->fmt);
+
+		p->fmt = fmt;
+	}
+
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
 }
 
@@ -255,6 +264,16 @@ ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
 
 ParameterizedTestParameters(io, highlevel)
 {
+	for (int i = 0; i < ARRAY_LEN(params); i++) {
+		struct param *p = &params[i];
+
+		char *fmt = cr_malloc(strlen(p->fmt) + 1);
+		strcpy(fmt, p->fmt);
+
+		p->fmt = fmt;
+	}
+
+
 	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
 }
 
