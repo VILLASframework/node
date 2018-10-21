@@ -218,12 +218,12 @@ int file_start(struct node *n)
 
 	ret = stat(dir, &sb);
 	if (ret) {
-		if (errno == ENOENT && errno == ENOTDIR) {
+		if (errno == ENOENT || errno == ENOTDIR) {
 			ret = mkdir(dir, 0644);
 			if (ret)
 				serror("Failed to create directory");
 		}
-		else
+		else if (errno != EISDIR)
 			serror("Failed to stat");
 	}
 	else if (!S_ISDIR(sb.st_mode)) {
