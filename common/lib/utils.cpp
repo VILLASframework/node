@@ -75,7 +75,7 @@ void print_version()
 ssize_t read_random(char *buf, size_t len)
 {
 	int fd;
-	ssize_t bytes;
+	ssize_t bytes = -1;
 
 	fd = open("/dev/urandom", O_RDONLY);
 	if (fd < 0)
