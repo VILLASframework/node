@@ -41,7 +41,12 @@ static int cmp_contains(const void *a, const void *b) {
 	return a == b ? 0 : 1;
 }
 
+
+#ifdef __APPLE__
+static int cmp_sort(void *thunk, const void *a, const void *b) {
+#else
 static int cmp_sort(const void *a, const void *b, void *thunk) {
+#endif
 	cmp_cb_t cmp = (cmp_cb_t) thunk;
 
 	return cmp(*(void **) a, *(void **) b);
@@ -193,7 +198,11 @@ void list_sort(struct list *l, cmp_cb_t cmp)
 
 	assert(l->state == STATE_INITIALIZED);
 
+#ifdef __APPLE__
+	qsort_r(l->array, l->length, sizeof(void *), (void *) cmp, cmp_sort);
+#else
 	qsort_r(l->array, l->length, sizeof(void *), cmp_sort, (void *) cmp);
+#endif
 
 	pthread_mutex_unlock(&l->lock);
 }
