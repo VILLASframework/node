@@ -39,8 +39,23 @@ int kernel_get_cacheline_size()
 {
 #if defined(__linux__) && defined(__x86_64__)
 	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
-#else
+#elif defined(__MACH__)
+	  /* Open the command for reading. */
+	FILE *fp = popen("sysctl -n machdep.cpu.cache.linesize", "r");
+	if (fp == NULL)
+		return -1;
+
+	int ret, size;
+
+	ret = fscanf(fp, "%d", &size);
+
+	pclose(fp);
+
+	return ret == 1 ? size : -1;
+#elif defined(__x86_64__) || defined(__i386__)
 	return 64; /** @todo fixme */
+#else
+  #error "Unsupported architecture"
 #endif
 }
 
@@ -49,7 +64,46 @@ int kernel_get_page_size()
 {
 	return sysconf(_SC_PAGESIZE);
 }
+#else
+  #error "Unsupported platform"
 #endif
+
+/* There is no sysconf interface to get the hugepage size */
+int kernel_get_hugepage_size()
+{
+#ifdef __linux__
+	char *key, *value, *unit, *line = NULL;
+	int sz = -1;
+	size_t len = 0;
+	FILE *f;
+
+	f = fopen(PROCFS_PATH "/meminfo", "r");
+	if (!f)
+		return -1;
+
+	while (getline(&line, &len, f) != -1) {
+		key   = strtok(line, ": ");
+		value = strtok(NULL, " ");
+		unit  = strtok(NULL, "\n");
+
+		if (!strcmp(key, "Hugepagesize") && !strcmp(unit, "kB")) {
+			sz = strtoul(value, NULL, 10) * 1024;
+			break;
+		}
+	}
+
+	free(line);
+	fclose(f);
+
+	return sz;
+#elif defined(__x86_64__)
+	return 1 << 21;
+#elif defined(__i386__)
+	return 1 << 22;
+#else
+  #error "Unsupported architecture"
+#endif
+}
 
 #ifdef __linux__
 
@@ -156,35 +210,6 @@ out:
 	fclose(f);
 
 	return -1; /* not found or error */
-}
-
-/* There is no sysconf interface to get the hugepage size */
-int kernel_get_hugepage_size()
-{
-	char *key, *value, *unit, *line = NULL;
-	int sz = -1;
-	size_t len = 0;
-	FILE *f;
-
-	f = fopen(PROCFS_PATH "/meminfo", "r");
-	if (!f)
-		return -1;
-
-	while (getline(&line, &len, f) != -1) {
-		key   = strtok(line, ": ");
-		value = strtok(NULL, " ");
-		unit  = strtok(NULL, "\n");
-
-		if (!strcmp(key, "Hugepagesize") && !strcmp(unit, "kB")) {
-			sz = strtoul(value, NULL, 10) * 1024;
-			break;
-		}
-	}
-
-	free(line);
-	fclose(f);
-
-	return sz;
 }
 
 int kernel_get_nr_hugepages()
