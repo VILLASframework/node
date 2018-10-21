@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <string.h>
+
 #include <villas/node.h>
 #include <villas/plugin.h>
 #include <villas/config.h>
