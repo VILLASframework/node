@@ -22,7 +22,7 @@
 
 set(DOCKER_FILE Dockerfile)
 set(DOCKER_IMAGE villas/node)
-set(DOCKER_TAG ${GIT_BRANCH})
+set(DOCKER_TAG ${CMAKE_PROJECT_GIT_BRANCH})
 set(DOCKER_RUN_OPTS
 	--interactive
 	--tty
