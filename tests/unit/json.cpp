@@ -27,9 +27,11 @@
 #include <villas/utils.h>
 #include <villas/config_helper.h>
 
+using str = std::basic_string<char, std::char_traits<char>, criterion::allocator<char>>;
+
 struct param {
-	const char *argv[32];
-	const char *json;
+	std::vector<str, criterion::allocator<str>> argv;
+	str json;
 };
 
 ParameterizedTestParameters(json, json_load_cli)
@@ -37,56 +39,42 @@ ParameterizedTestParameters(json, json_load_cli)
 	static struct param params[] = {
 		// Combined long option
 		{
-			.argv = { "dummy", "--option=value", nullptr },
+			.argv = { "dummy", "--option=value" },
 			.json = "{ \"option\" : \"value\" }"
 		},
 		// Separated long option
 		{
-			.argv = { "dummy", "--option", "value", nullptr },
+			.argv = { "dummy", "--option", "value" },
 			.json = "{ \"option\" : \"value\" }"
 		},
 		// All kinds of data types
 		{
-			.argv = { "dummy", "--integer", "1", "--real", "1.1", "--bool", "true", "--null", "null", "--string", "hello world", nullptr },
+			.argv = { "dummy", "--integer", "1", "--real", "1.1", "--bool", "true", "--null", "null", "--string", "hello world" },
 			.json = "{ \"integer\" : 1, \"real\" : 1.1, \"bool\" : true, \"null\" : null, \"string\" : \"hello world\" }"
 		},
 		// Array generation
 		{
-			.argv = { "dummy", "--bool", "true", "--bool", "false", nullptr },
+			.argv = { "dummy", "--bool", "true", "--bool", "false" },
 			.json = "{ \"bool\" : [ true, false ] }"
 		},
 		// Dots in the option name generate sub objects
 		{
-			.argv = { "dummy", "--sub.option", "value", nullptr },
+			.argv = { "dummy", "--sub.option", "value" },
 			.json = "{ \"sub\" : { \"option\" : \"value\" } }"
 		},
 		// Nesting is possible
 		{
-			.argv = { "dummy", "--sub.sub.option", "value", nullptr },
+			.argv = { "dummy", "--sub.sub.option", "value" },
 			.json = "{ \"sub\" : { \"sub\" : { \"option\" : \"value\" } } }"
 		},
 		// Multiple subgroups are merged
 		{
-			.argv = { "dummy", "--sub.sub.option", "value1", "--sub.option", "value2", nullptr },
+			.argv = { "dummy", "--sub.sub.option", "value1", "--sub.option", "value2" },
 			.json = "{ \"sub\" : { \"option\" : \"value2\", \"sub\" : { \"option\" : \"value1\" } } }"
 		}
 	};
 
-	for (int i = 0; i < ARRAY_LEN(params); i++) {
-		struct param *p = &params[i];
-
-		char *json = cr_malloc(strlen(p->json) + 1);
-		strcpy(json, p->json);
-		p->json = json;
-
-		for (char **a = p->argv; *a; a++) {
-			char *argv = cr_malloc(strlen(*a) + 1);
-			strcpy(argv , *a);
-			*a = argv;
-		}
-	}
-
-	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
+	return criterion_test_params(params);
 }
 
 ParameterizedTest(struct param *p, json, json_load_cli)
@@ -94,15 +82,15 @@ ParameterizedTest(struct param *p, json, json_load_cli)
 	json_error_t err;
 	json_t *json, *cli;
 
-	/* Calculate argc */
-	int argc = 0;
-	while (p->argv[argc])
-		argc++;
-
-	json = json_loads(p->json, 0, &err);
+	json = json_loads(p->json.c_str(), 0, &err);
 	cr_assert_not_null(json);
 
-	cli = json_load_cli(argc, p->argv);
+	auto argv = new const char*[p->argv.size() + 1];
+	for (int i = 0; i < p->argv.size(); i++)
+		argv[i] = p->argv[i].c_str();
+	argv[p->argv.size()] = nullptr;
+
+	cli = json_load_cli(p->argv.size(), argv);
 	cr_assert_not_null(cli);
 
 	//json_dumpf(json, stdout, JSON_INDENT(2)); putc('\n', stdout);

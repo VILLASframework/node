@@ -35,7 +35,6 @@
 #include <villas/pool.h>
 #include <villas/io.h>
 #include <villas/log.hpp>
-#include <villas/formats/raw.h>
 
 using namespace villas;
 
@@ -44,7 +43,7 @@ extern void init_memory();
 #define NUM_VALUES 10
 
 struct param {
-	char *fmt;
+	std::basic_string<char, std::char_traits<char>, criterion::allocator<char>> fmt;
 	int cnt;
 	int bits;
 };
@@ -206,16 +205,7 @@ void cr_assert_eq_sample_raw(struct sample *a, struct sample *b, int flags, int 
 
 ParameterizedTestParameters(io, lowlevel)
 {
-	for (int i = 0; i < ARRAY_LEN(params); i++) {
-		struct param *p = &params[i];
-
-		char *fmt = cr_malloc(strlen(p->fmt) + 1);
-		strcpy(fmt, p->fmt);
-
-		p->fmt = fmt;
-	}
-
-	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
+	return criterion_test_params(params);
 }
 
 ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
@@ -251,8 +241,8 @@ ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
 
 	fill_sample_data(&signals, smps, p->cnt);
 
-	f = format_type_lookup(p->fmt);
-	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt);
+	f = format_type_lookup(p->fmt.c_str());
+	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt.c_str());
 
 	ret = io_init(&io, f, &signals, SAMPLE_HAS_ALL);
 	cr_assert_eq(ret, 0);
@@ -284,17 +274,7 @@ ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
 
 ParameterizedTestParameters(io, highlevel)
 {
-	for (int i = 0; i < ARRAY_LEN(params); i++) {
-		struct param *p = &params[i];
-
-		char *fmt = cr_malloc(strlen(p->fmt) + 1);
-		strcpy(fmt, p->fmt);
-
-		p->fmt = fmt;
-	}
-
-
-	return cr_make_param_array(struct param, params, ARRAY_LEN(params));
+	return criterion_test_params(params);
 }
 
 ParameterizedTest(struct param *p, io, highlevel, .init = init_memory)
@@ -342,8 +322,8 @@ ParameterizedTest(struct param *p, io, highlevel, .init = init_memory)
 	ret = asprintf(&fn, "%s/file", dir);
 	cr_assert_gt(ret, 0);
 
-	f = format_type_lookup(p->fmt);
-	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt);
+	f = format_type_lookup(p->fmt.c_str());
+	cr_assert_not_null(f, "Format '%s' does not exist", p->fmt.c_str());
 
 	ret = io_init(&io, f, &signals, SAMPLE_HAS_ALL);
 	cr_assert_eq(ret, 0);
