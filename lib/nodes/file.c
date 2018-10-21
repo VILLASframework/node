@@ -217,10 +217,16 @@ int file_start(struct node *n)
 	char *dir = dirname(f->uri);
 
 	ret = stat(dir, &sb);
-	if (ret)
-		serror("Failed to stat");
-
-	if (!S_ISDIR(sb.st_mode)) {
+	if (ret) {
+		if (errno == ENOENT && errno == ENOTDIR) {
+			ret = mkdir(dir, 0644);
+			if (ret)
+				serror("Failed to create directory");
+		}
+		else
+			serror("Failed to stat");
+	}
+	else if (!S_ISDIR(sb.st_mode)) {
 		ret = mkdir(dir, 0644);
 		if (ret)
 			serror("Failed to create directory");
