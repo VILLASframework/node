@@ -163,3 +163,13 @@ struct memory_allocation * memory_get_allocation(void *ptr)
 	struct memory_allocation *ma = (struct memory_allocation *) hash_table_lookup(&allocations, ptr);
 	return ma;
 }
+
+struct memory_type * memory_type_lookup(enum memory_type_flags flags)
+{
+	if (flags & MEMORY_HUGEPAGE)
+		return &memory_hugepage;
+	else if (flags & MEMORY_HEAP)
+		return &memory_heap;
+	else
+		return NULL;
+}
