@@ -94,7 +94,6 @@ int task_set_next(struct task *t, struct timespec *next)
 
 int task_set_rate(struct task *t, double rate)
 {
-
 #if PERIODIC_TASK_IMPL == RDTSC
 	t->period = tsc_rate_to_cycles(&t->tsc, rate);
 	t->next = tsc_now(&t->tsc) + t->period;
@@ -135,18 +134,6 @@ int task_destroy(struct task *t)
 	return 0;
 }
 
-#if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP || PERIODIC_TASK_IMPL == NANOSLEEP
-static int time_lt(const struct timespec *lhs, const struct timespec *rhs)
-{
-	if (lhs->tv_sec == rhs->tv_sec)
-		return lhs->tv_nsec < rhs->tv_nsec;
-	else
-		return lhs->tv_sec < rhs->tv_sec;
-
-	return 0;
-}
-#endif
-
 uint64_t task_wait(struct task *t)
 {
 	uint64_t runs;
@@ -155,29 +142,33 @@ uint64_t task_wait(struct task *t)
 	int ret;
 	struct timespec now;
 
+	ret = clock_gettime(t->clock, &now);
+	if (ret)
+		return ret;
+
+	for (runs = 0; time_cmp(&t->next, &now) < 0; runs++)
+		t->next = time_add(&t->next, &t->period);
+
   #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP
 	do {
 		ret = clock_nanosleep(t->clock, TIMER_ABSTIME, &t->next, NULL);
 	} while (ret == EINTR);
   #elif PERIODIC_TASK_IMPL == NANOSLEEP
-	struct timespec delta;
+	struct timespec req, rem = time_diff(&now, &t->next);
+
+	do {
+		req = rem;
+		ret = nanosleep(&req, &rem);
+	} while (ret < 0 && errno == EINTR);
+  #endif
+	if (ret)
+		return 0;
 
 	ret = clock_gettime(t->clock, &now);
 	if (ret)
 		return ret;
 
-	delta = time_diff(&now, &t->next);
-
-	ret = nanosleep(&delta, NULL);
-  #endif
-	if (ret < 0)
-		return 0;
-
-	ret = clock_gettime(t->clock, &now);
-	if (ret)
-		return 0;
-
-	for (runs = 0; time_lt(&t->next, &now); runs++)
+	for (; time_cmp(&t->next, &now) < 0; runs++)
 		t->next = time_add(&t->next, &t->period);
 #elif PERIODIC_TASK_IMPL == TIMERFD
 	int ret;
@@ -189,7 +180,7 @@ uint64_t task_wait(struct task *t)
 	uint64_t now;
 
 	do {
-		now = rdtscp();
+		now = tsc_now(&t->tsc);
 	} while (now < t->next);
 
 
