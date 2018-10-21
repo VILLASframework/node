@@ -80,7 +80,6 @@ endif()
 # Check packages
 find_package(PkgConfig REQUIRED)
 find_package(Threads REQUIRED)
-find_package(Libwebsockets 2.3.0 REQUIRED)
 find_package(Mosquitto)
 find_package(Opal)
 find_package(IBVerbs)
