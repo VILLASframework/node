@@ -66,7 +66,7 @@ void info(const char *fmt, ...)
 	free(buf);
 }
 
-void warn(const char *fmt, ...)
+void warning(const char *fmt, ...)
 {
 	va_list ap;
 
