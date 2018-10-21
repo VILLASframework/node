@@ -408,6 +408,9 @@ int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
 				case MAPPING_STATS_TYPE_STDDEV:
 					type = "stddev";
 					break;
+
+				default:
+					type = NULL;
 			}
 
 			strcatf(str, "stats.%s", type);
@@ -415,8 +418,16 @@ int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
 
 		case MAPPING_TYPE_HEADER:
 			switch (me->header.type) {
-				case MAPPING_HEADER_TYPE_LENGTH:   type = "length"; break;
-				case MAPPING_HEADER_TYPE_SEQUENCE: type = "sequence"; break;
+				case MAPPING_HEADER_TYPE_LENGTH:
+					type = "length";
+					break;
+
+				case MAPPING_HEADER_TYPE_SEQUENCE:
+					type = "sequence";
+					break;
+
+				default:
+					type = NULL;
 			}
 
 			strcatf(str, "hdr.%s", type);
@@ -424,8 +435,16 @@ int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
 
 		case MAPPING_TYPE_TIMESTAMP:
 			switch (me->timestamp.type) {
-				case MAPPING_TIMESTAMP_TYPE_ORIGIN:   type = "origin"; break;
-				case MAPPING_TIMESTAMP_TYPE_RECEIVED: type = "received"; break;
+				case MAPPING_TIMESTAMP_TYPE_ORIGIN:
+					type = "origin";
+					break;
+
+				case MAPPING_TIMESTAMP_TYPE_RECEIVED:
+					type = "received";
+					break;
+
+				default:
+					type = NULL;
 			}
 
 			strcatf(str, "ts.%s.%s", type, index == 0 ? "sec" : "nsec");
