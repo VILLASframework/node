@@ -64,6 +64,10 @@ struct infiniband {
 	/* Bool, set if threads should be aborted */
 	int stopThreads;
 
+	/* When most messages are sent inline, once every <X> cycles a signal must be sent. */
+	unsigned signalling_counter;
+	unsigned periodic_signalling;
+
 	/* Connection specific variables */
 	struct connection_s {
 		struct addrinfo *src_addr;

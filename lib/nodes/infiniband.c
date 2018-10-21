@@ -175,6 +175,7 @@ int ib_parse(struct node *n, json_t *cfg)
 	char *local = NULL;
 	char *remote = NULL;
 	const char *transport_mode = "RC";
+	unsigned periodic_signalling = 0;
 	int timeout = 1000;
 	int recv_cq_size = 128;
 	int send_cq_size = 128;
@@ -214,7 +215,7 @@ int ib_parse(struct node *n, json_t *cfg)
 	}
 
 	if (json_out) {
-		ret = json_unpack_ex(json_out, &err, 0, "{ s?: s, s?: i, s?: i, s?: i, s?: i, s?: b, s?: i, s?: b}",
+		ret = json_unpack_ex(json_out, &err, 0, "{ s?: s, s?: i, s?: i, s?: i, s?: i, s?: b, s?: i, s?: b, s?: i}",
 			"address", &remote,
 			"resolution_timeout", &timeout,
 			"cq_size", &send_cq_size,
@@ -222,7 +223,8 @@ int ib_parse(struct node *n, json_t *cfg)
 			"max_inline_data", &max_inline_data,
 			"send_inline", &send_inline,
 			"vectorize", &vectorize_out,
-			"use_fallback", &use_fallback
+			"use_fallback", &use_fallback,
+			"periodic_signalling", &periodic_signalling
 		);
 		if (ret)
 			jerror(&err, "Failed to parse output configuration of node %s", node_name(n));
@@ -320,6 +322,13 @@ int ib_parse(struct node *n, json_t *cfg)
 
 	// Set number of bytes to be send inline
 	ib->qp_init.cap.max_inline_data = max_inline_data;
+
+	// Set periodic signalling
+	if (periodic_signalling == 0)
+		ib->periodic_signalling = MIN(ib->qp_init.cap.max_send_wr, ib->send_cq_size) / 2;
+	else
+		ib->periodic_signalling = periodic_signalling;
+
 
 	// If node will send data, set remote address
 	if (ib->is_source) {
@@ -910,8 +919,12 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 			// Check if data can be send inline
 			// 32 byte meta data is always send.
-			int send_inline = ( (sge[sent][j-1].length + META_SIZE) < ib->qp_init.cap.max_inline_data) ?
-						ib->conn.send_inline : 0;
+			// Once every max_send_wr iterations a signal must be generated. Since we would need
+			// an additional buffer if we were sending inlines with IBV_SEND_SIGNALED, we prefer
+			// to send one samples every max_send_wr NOT inline (which thus generates a signal)
+			int send_inline = ((sge[sent][j-1].length + META_SIZE) < ib->qp_init.cap.max_inline_data)
+				&& !(++ib->signalling_counter % ib->periodic_signalling)  ?
+				ib->conn.send_inline : 0;
 
 
 			debug(LOG_IB | 10, "Sample will be send inline [0/1]: %i", send_inline);
