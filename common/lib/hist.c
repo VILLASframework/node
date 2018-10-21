@@ -112,7 +112,7 @@ void hist_reset(struct hist *h)
 	h->higher = 0;
 	h->lower = 0;
 
-	h->highest = DBL_MIN;
+	h->highest = -DBL_MAX;
 	h->lowest = DBL_MAX;
 
 	if (h->data)
