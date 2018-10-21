@@ -25,10 +25,9 @@ link_libraries(villas)
 
 add_executable(villas-node villas-node.cpp)
 add_executable(villas-test-rtt villas-test-rtt.cpp)
-add_executable(villas-test-shmem villas-test-shmem.cpp)
 
 install(
-    TARGETS villas-node villas-test-rtt villas-test-shmem
+    TARGETS villas-node villas-test-rtt
     COMPONENT bin
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

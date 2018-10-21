@@ -22,3 +22,13 @@
 
 add_subdirectory(python)
 add_subdirectory(opal)
+
+add_executable(villas-shmem shmem/villas-shmem.cpp)
+
+target_link_libraries(villas-shmem PUBLIC villas)
+
+install(
+    TARGETS villas-shmem
+    COMPONENT bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
