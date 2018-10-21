@@ -24,6 +24,7 @@ set(NODE_SRC
     influxdb.c
     stats.c
     signal_generator.c
+    loopback.c
 )
 
 if(LIBNL3_ROUTE_FOUND)
@@ -41,7 +42,6 @@ endif()
 
 if(HAS_EVENTFD)
     list(APPEND NODE_SRC
-        loopback.c
         cbuilder.c
     )
 endif()
