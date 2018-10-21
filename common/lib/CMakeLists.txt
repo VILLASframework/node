@@ -22,13 +22,13 @@
 
 add_library(villas-common SHARED
 	advio.c
-    bitset.c
-    buffer.c
+	bitset.c
+	buffer.c
 	json_buffer.cpp
 	compat.c
-    crypt.c
-    hash_table.c
-    hist.c
+	crypt.c
+	hash_table.c
+	hist.c
 	kernel/kernel.c
 	kernel/kernel.cpp
 	kernel/rt.cpp
@@ -39,9 +39,9 @@ add_library(villas-common SHARED
 	memory_manager.cpp
 	plugin.cpp
 	table.c
-    task.c
-    timing.c
     tsc.c
+	task.c
+	timing.c
 	utils.c
 	utils.cpp
 	cpuset.cpp
