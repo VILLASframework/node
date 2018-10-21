@@ -99,8 +99,8 @@ test:unit:
     - build:source
   script:
     - mkdir -p build && cd build
-    - cmake ..
-    - make run-unit-tests
+    - cmake .. && make unit-tests
+    - tests/unit/unit-tests
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker
