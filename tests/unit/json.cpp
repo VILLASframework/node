@@ -86,7 +86,7 @@ ParameterizedTest(struct param *p, json, json_load_cli)
 	cr_assert_not_null(json);
 
 	auto argv = new const char*[p->argv.size() + 1];
-	for (int i = 0; i < p->argv.size(); i++)
+	for (unsigned i = 0; i < p->argv.size(); i++)
 		argv[i] = p->argv[i].c_str();
 	argv[p->argv.size()] = nullptr;
 
