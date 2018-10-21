@@ -52,7 +52,7 @@ cat <<EOF > ${EXPECT_FILE}
 1490500400.676379108(9)	-0.587785	-58	-58	-0.587785
 EOF
 
-villas-hook convert -o mode=fixed -o scale=100 -o mask=0x6 < ${INPUT_FILE} > ${OUTPUT_FILE}
+villas-hook -o mode=fixed -o scale=100 -o mask=0x6 convert < ${INPUT_FILE} > ${OUTPUT_FILE}
 
 # Compare only the data values
 villas-test-cmp ${OUTPUT_FILE} ${EXPECT_FILE}

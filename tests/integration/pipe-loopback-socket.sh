@@ -35,7 +35,7 @@ NUM_SAMPLES=${NUM_SAMPLES:-100}
 NUM_VALUES=${NUM_VALUES:-4}
 
 # Generate test data
-villas-signal random -v ${NUM_VALUES} -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
+villas-signal -v ${NUM_VALUES} -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
 for FORMAT in villas.human villas.binary villas.web csv json gtnet.fake raw.32.le raw.64.be protobuf; do
 for LAYER in udp ip eth unix; do

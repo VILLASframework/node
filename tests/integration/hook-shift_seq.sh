@@ -26,8 +26,8 @@ OUTPUT_FILE=$(mktemp)
 
 OFFSET=100
 
-villas-signal random -l ${NUM_SAMPLES} -n | \
-villas-hook shift_seq -o offset=${OFFSET} > ${OUTPUT_FILE}
+villas-signal -l ${NUM_SAMPLES} -n random | \
+villas-hook -o offset=${OFFSET} shift_seq > ${OUTPUT_FILE}
 
 # Compare shifted sequence no
 diff -u \

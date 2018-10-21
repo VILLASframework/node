@@ -33,7 +33,7 @@ OUTPUT_FILE=$(mktemp)
 NUM_SAMPLES=${NUM_SAMPLES:-100}
 
 # Generate test data
-villas-signal random -l ${NUM_SAMPLES} -v 4 -n > ${INPUT_FILE}
+villas-signal -l ${NUM_SAMPLES} -v 4 -n random > ${INPUT_FILE}
 
 cat > ${CONFIG_FILE} << EOF
 {

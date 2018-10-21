@@ -55,7 +55,7 @@ RC=0
 
 # Generate test data for RC, UC, and UD test
 VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
-villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
+villas-signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
 # Set config file with a MODE flag
 cat > ${CONFIG_FILE} <<EOF

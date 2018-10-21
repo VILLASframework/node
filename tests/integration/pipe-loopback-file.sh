@@ -50,7 +50,7 @@ cat > ${CONFIG_FILE} << EOF
 EOF
 
 # Generate test data
-villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
+villas-signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 

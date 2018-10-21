@@ -38,7 +38,7 @@ NUM_SAMPLES=${NUM_SAMPLES:-20}
 NUM_VALUES=${NUM_VALUES:-5}
 
 # Generate test data
-villas-signal random -l ${NUM_SAMPLES} -v ${NUM_VALUES} -n > ${INPUT_FILE}
+villas-signal -l ${NUM_SAMPLES} -v ${NUM_VALUES} -n random > ${INPUT_FILE}
 
 case ${LAYER} in
 	unix)

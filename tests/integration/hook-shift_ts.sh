@@ -29,9 +29,9 @@ NUM_SAMPLES=${NUM_SAMPLES:-10}
 OFFSET=-10.0
 EPSILON=0.05
 
-villas-signal random -l ${NUM_SAMPLES} -r 50 | \
-villas-hook shift_ts -o offset=${OFFSET}  | \
-villas-hook stats -o format=json -o output="${STATS_FILE}" > /dev/null
+villas-signal -l ${NUM_SAMPLES} -r 50 random | \
+villas-hook -o offset=${OFFSET} shift_ts | \
+villas-hook -o format=json -o output="${STATS_FILE}" stats > /dev/null
 
 jq .owd ${STATS_FILE}
 jq -e ".owd.mean + ${OFFSET} | length < ${EPSILON}" ${STATS_FILE} > /dev/null

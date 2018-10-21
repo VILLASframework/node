@@ -64,7 +64,7 @@ EOF
 
 # Generate test data
 VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
-villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
+villas-signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
 VILLAS_LOG_PREFIX=$(colorize "[Recv]  ") \
 villas-pipe -r -d 15 -l ${NUM_SAMPLES} ${CONFIG_FILE2} node2 | tee ${OUTPUT_FILE} &

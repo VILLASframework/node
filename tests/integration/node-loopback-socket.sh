@@ -75,7 +75,7 @@ EOF
 
 # Generate test data
 VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
-villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
+villas-signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
 # Start node
 VILLAS_LOG_PREFIX=$(colorize "[Node]  ") \

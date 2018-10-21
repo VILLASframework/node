@@ -58,11 +58,11 @@ cat > ${CONFIG_FILE} << EOF
 EOF
 
 # Generate test data
-villas-signal random -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
+villas-signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
 # Check network emulation characteristics
-villas-hook stats -o verbose < ${OUTPUT_FILE} > /dev/null
+villas-hook -o verbose stats < ${OUTPUT_FILE} > /dev/null
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}

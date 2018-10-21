@@ -55,7 +55,7 @@ cat <<EOF > ${EXPECT_FILE}
 EOF
 
 cat ${INPUT_FILE} | \
-villas-hook scale -o scale=100 | \
+villas-hook -o scale=100 scale | \
 villas-hook cast | \
 tee ${OUTPUT_FILE}
 

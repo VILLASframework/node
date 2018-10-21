@@ -61,7 +61,7 @@ curl -sX DELETE ${URI} > /dev/null
 
 # Generate test data
 VILLAS_LOG_PREFIX=$(colorize "[Signal] ") \
-villas-signal random -n -l ${NUM_SAMPLES} > ${INPUT_FILE}
+villas-signal -n -l ${NUM_SAMPLES} random > ${INPUT_FILE}
 
 # Upload data to cloud
 VILLAS_LOG_PREFIX=$(colorize "[Send]  ") \

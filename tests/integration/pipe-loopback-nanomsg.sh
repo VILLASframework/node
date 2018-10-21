@@ -33,7 +33,7 @@ OUTPUT_FILE=$(mktemp)
 NUM_SAMPLES=${NUM_SAMPLES:-100}
 
 # Generate test data
-villas-signal mixed -v 5 -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
+villas-signal -v 5 -l ${NUM_SAMPLES} -n mixed > ${INPUT_FILE}
 
 FORMAT="protobuf"	
 VECTORIZE="10"
