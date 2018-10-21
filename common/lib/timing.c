@@ -84,3 +84,11 @@ double time_delta(const struct timespec *start, const struct timespec *end)
 
 	return time_to_double(&diff);
 }
+
+ssize_t time_cmp(const struct timespec *a, const struct timespec *b)
+{
+	ssize_t sd = a->tv_sec - b->tv_sec;
+	ssize_t nsd = a->tv_nsec - b->tv_nsec;
+
+	return sd != 0 ? sd : nsd;
+}
