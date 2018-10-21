@@ -50,11 +50,11 @@ int main(int argc, char *argv[])
 	/* Run criterion tests */
 	tests = criterion_initialize();
 
-	ret = criterion_handle_args(argc, argv, true);
-	if (ret)
-		ret = !criterion_run_all_tests(tests);
+	int result = 0;
+	if (criterion_handle_args(argc, argv, true))
+		result = !criterion_run_all_tests(tests);
 
 	criterion_finalize(tests);
 
-	return ret;
+	return result;
 }
