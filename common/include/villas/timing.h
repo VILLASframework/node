@@ -32,6 +32,9 @@
 extern "C" {
 #endif
 
+/** Compare two timestamps. Return zero if they are equal */
+ssize_t time_cmp(const struct timespec *a, const struct timespec *b);
+
 /** Get delta between two timespec structs */
 struct timespec time_diff(const struct timespec *start, const struct timespec *end);
 
