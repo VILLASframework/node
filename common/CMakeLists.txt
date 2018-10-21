@@ -63,6 +63,8 @@ set(SPDLOG_BUILD_BENCH OFF)
 add_subdirectory(thirdparty/spdlog)
 add_subdirectory(thirdparty/fmtlib)
 
+target_compile_options(fmt PUBLIC -fPIC)
+
 pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson>=2.7)
 pkg_check_modules(LIBCONFIG IMPORTED_TARGET libconfig>=1.4.9)
 
