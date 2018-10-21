@@ -248,15 +248,15 @@ void Web::start()
 		throw new RuntimeError("Failed to initialize server context");
 
 	for (int tries = 10; tries > 0; tries--) {
-		w->vhost = lws_create_vhost(w->context, &ctx_info);
-		if (w->vhost)
+		vhost = lws_create_vhost(context, &ctx_info);
+		if (vhost)
 			break;
 
 		ctx_info.port++;
 		warn("WebSocket: failed to setup vhost. Trying another port: %d", ctx_info.port);
 	}
 
-	if (w->vhost == NULL)
+	if (vhost == NULL)
 		throw new RuntimeError("Failed to initialize virtual host");
 
 	/* Start thread */
