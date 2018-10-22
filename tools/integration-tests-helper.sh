@@ -25,10 +25,9 @@
 function villas_format_supports_vectorize() {
 	local FORMAT=$1
 	
-	case $FORMAT in
-		raw.*) ;&
-		gtnet) ;&
-		gtnet.fake) return 1 ;;
+	case ${FORMAT} in
+		raw*) return 1 ;;
+		gtnet*) return 1 ;;
 	esac
 	
 	return 0
@@ -38,7 +37,7 @@ function villas_format_supports_header() {
 	local FORMAT=$1
 
 	case $FORMAT in
-		raw-*) ;&
+		raw*) return 1 ;;
 		gtnet) return 1 ;;
 	esac
 	
