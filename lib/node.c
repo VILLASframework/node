@@ -60,6 +60,7 @@ static int node_direction_init(struct node_direction *nd, struct node *n)
 	nd->enabled = 0;
 	nd->vectorize = 1;
 	nd->builtin = 1;
+	nd->hooks.state = STATE_DESTROYED;
 
 	ret = list_init(&nd->hooks);
 	if (ret)
@@ -174,6 +175,7 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_name = NULL;
 	n->_name_long = NULL;
 
+	n->signals.state = STATE_DESTROYED;
 	list_init(&n->signals);
 
 	/* Default values */
