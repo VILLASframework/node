@@ -27,7 +27,7 @@
 
 # ${NUM_VALUES}, ${RATE_SAMPLES}, and ${IB_MODES} may be a list.
 
-NUM_VALUES=(1)
+NUM_VALUES=(8)
 RATE_SAMPLES=(10)
 TIME_TO_RUN=5
 IB_MODES=("RC")
@@ -114,46 +114,12 @@ echo ${CONFIG_FILES[1]}
 
 for NODETYPE in "${NODETYPES[@]}"
 do
-    ######################################
-    # SPECIAL CASES FOR SOME NODES #######
-    ######################################
-    
-    # Some nodes require special treatment:
-    #   * loopback node: target_node is identical to source_node
-    #   * infiniband node: one node must be executed in a namespace
-    
-    # loopback
-    if [ "${NODETYPE}" == "loopback" ]; then 
-        TARGET_NODE='source_node'
-    else
-        TARGET_NODE='target_node'
-    fi
-    
-    # infiniband
-    if [ "${NODETYPE}" == "infiniband" ]; then 
-        NAMESPACE_CMD='ip netns exec namespace0'
-    else
-        NAMESPACE_CMD=''
-    fi
 
     ######################################
     # CREATE PATH CONFIG FILES ###########
     ######################################
     
     # Set target and source config file, which is the same for both runs
-cat > ${CONFIG_TARGET} <<EOF
-@include "${CONFIG//\/tmp\/}"
-
-paths = (
-    {
-        in = "${TARGET_NODE}",
-        out = "results_out",
-
-        original_sequence_no = true
-    }
-)
-EOF
-
 cat > ${CONFIG_SOURCE} <<EOF
 @include "${CONFIG//\/tmp\/}"
 
@@ -164,6 +130,54 @@ paths = (
     }
 )
 EOF
+
+cat > ${CONFIG_TARGET} <<EOF
+@include "${CONFIG//\/tmp\/}"
+
+paths = (
+    {
+        in = "target_node",
+        out = "results_out",
+
+        original_sequence_no = true
+    }
+)
+EOF
+    ######################################
+    # SPECIAL TREATMENT FOR SOME NODES ###
+    ######################################
+    
+    # Some nodes require special treatment:
+    #   * loopback node: target_node is identical to source_node
+    #   * infiniband node: one node must be executed in a namespace
+    
+    # loopback
+    if [ "${NODETYPE}" == "loopback" ]; then 
+cat > ${CONFIG_TARGET} <<EOF
+@include "${CONFIG//\/tmp\/}"
+
+paths = (
+    {
+        in = "siggen",
+        out = ("source_node", "results_in"),
+    },
+    {
+        in = "source_node",
+        out = "results_out",
+
+        original_sequence_no = true
+    }
+)
+EOF
+    fi
+    
+    # infiniband
+    if [ "${NODETYPE}" == "infiniband" ]; then 
+        NAMESPACE_CMD='ip netns exec namespace0'
+    else
+        NAMESPACE_CMD=''
+    fi
+
 
     ######################################
     # RUN THROUGH MODES ##################
@@ -237,19 +251,21 @@ cat >> ${CONFIG} <<EOF
 }
 EOF
 
-                # Start receiving node
-                VILLAS_LOG_PREFIX=$(colorize "[Target Node]  ") \
-                cset proc --set=real-time-0 --exec ../../build/src/villas-node -- ${CONFIG_TARGET} &
-                target_node_proc=$!
+                    # Start receiving node
+                    VILLAS_LOG_PREFIX=$(colorize "[Target Node]  ") \
+                    cset proc --set=real-time-0 --exec ../../build/src/villas-node -- ${CONFIG_TARGET} &
+                    target_node_proc=$!
+                    
+                    # Wait for node to complete init
+                    sleep 2
                 
-                # Wait for node to complete init
-                sleep 2
-                
-                # Start sending pipe
-                VILLAS_LOG_PREFIX=$(colorize "[Source Node]  ") \
-                ${NAMESPACE_CMD} cset proc --set=real-time-1 --exec ../../build/src/villas-node -- ${CONFIG_SOURCE} &
-                source_node_proc=$!
-                
+                if [ ! "${NODETYPE}" == "loopback" ]; then 
+                    # Start sending pipe
+                    VILLAS_LOG_PREFIX=$(colorize "[Source Node]  ") \
+                    ${NAMESPACE_CMD} cset proc --set=real-time-1 --exec ../../build/src/villas-node -- ${CONFIG_SOURCE} &
+                    source_node_proc=$!
+                fi
+                    
                 sleep $((${TIME_TO_RUN} + 5))
                 
                 # Stop node
@@ -258,7 +274,7 @@ EOF
                 sleep 1
     
                 echo "########################################################"
-                echo "## STOP $IB_MODE"-${NUM_VALUE}-${RATE_SAMPLE}-${NUM_SAMPLE}
+                echo "## STOP ${IB_MODE}-${NUM_VALUE}-${RATE_SAMPLE}-${NUM_SAMPLE}"
                 echo "########################################################"
                 echo ""
     
