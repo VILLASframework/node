@@ -333,6 +333,9 @@ int json_scan(struct io *io, struct sample *smps[], unsigned cnt)
 	FILE *f = io_stream_input(io);
 
 	for (i = 0; i < cnt; i++) {
+		if (feof(f))
+			return -1;
+
 skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 		if (!json)
 			break;
