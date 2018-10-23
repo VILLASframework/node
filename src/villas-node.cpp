@@ -167,10 +167,6 @@ int main(int argc, char *argv[])
 	else
 		logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
-	ret = sn.init();
-	if (ret)
-		throw new RuntimeError("Failed to initialize super node");
-
 	ret = sn.check();
 	if (ret)
 		throw new RuntimeError("Failed to verify configuration");

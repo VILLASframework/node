@@ -320,10 +320,6 @@ check:		if (optarg == endptr)
 	else
 		logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
-	ret = sn.init();
-	if (ret)
-		throw new RuntimeError("Failed to initialize super-node");
-
 	fmt = format_type_lookup(format);
 	if (!fmt)
 		throw new RuntimeError("Invalid format: {}", format);

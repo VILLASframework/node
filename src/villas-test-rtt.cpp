@@ -158,10 +158,6 @@ check:		if (optarg == endptr)
 	else
 		logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
-	ret = sn.init();
-	if (ret)
-		throw new RuntimeError("Initialization failed!");
-
 	node = sn.getNode(nodestr);
 	if (!node)
 		throw new RuntimeError("There's no node with the name '{}'", nodestr);

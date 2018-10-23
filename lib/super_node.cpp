@@ -61,23 +61,6 @@ SuperNode::SuperNode() :
 	gethostname(hname, 128);
 
 	name = hname;
-
-	init();
-}
-
-int SuperNode::init()
-{
-	int ret;
-
-	ret = kernel::rt::init(priority, affinity);
-	if (ret)
-		return ret;
-
-	ret = memory_init(hugepages);
-	if (ret)
-		return ret;
-
-	return 0;
 }
 
 int SuperNode::parseUri(const std::string &u)
