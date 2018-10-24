@@ -30,7 +30,6 @@
 #include <villas/utils.h>
 #include <villas/node.h>
 #include <villas/plugin.h>
-#include <villas/config_helper.h>
 
 int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node *n)
 {

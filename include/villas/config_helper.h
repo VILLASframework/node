@@ -23,7 +23,10 @@
 #pragma once
 
 #include <jansson.h>
+
+#ifdef LIBCONFIG_FOUND
 #include <libconfig.h>
+#endif /* LIBCONFIG_FOUND */
 
 #include <villas/sample.h>
 
@@ -31,11 +34,13 @@
 extern "C" {
 #endif
 
+#ifdef LIBCONFIG_FOUND
 /* Convert a libconfig object to a jansson object */
 json_t *config_to_json(config_setting_t *cfg);
 
 /* Convert a jansson object into a libconfig object. */
 int json_to_config(json_t *json, config_setting_t *parent);
+#endif /* LIBCONFIG_FOUND */
 
 /* Create a JSON object from command line parameters. */
 json_t *json_load_cli(int argc, char *argv[]);
