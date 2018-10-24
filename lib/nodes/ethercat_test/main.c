@@ -82,7 +82,7 @@ static uint8_t *domain1_pd = NULL;
 #define BusCouplerPos   0, 2
 #define AnaOutSlavePos  0, 3
 #define AnaInSlavePos   0, 4
-#define PCISlave        0, 5
+#define PCISlavePos     0, 5
 
 #define Beckhoff_EK1100 0x00000002, 0x044c2c52
 #define Beckhoff_EL2004 0x00000002, 0x07d43052
@@ -98,7 +98,7 @@ static uint8_t *domain1_pd = NULL;
 
 // offsets for PDO entries
 static unsigned int off_ana_out_values[8] = {0};
-static unsigned int off_ana_in_values[8];
+static unsigned int off_ana_in_values[8] = {0};
 
 const static ec_pdo_entry_reg_t domain1_regs[] = {
     {AnaOutSlavePos, Beckhoff_EL4038, 0x7000, 0x01, off_ana_out_values},
@@ -271,17 +271,22 @@ static ec_sync_info_t slave_4_syncs[] = {
 
 /*****************************************************************************/
 
+
+static const char* DOMAIN_STATES[] = {[0]="ZERO",
+                                      [1]="INCOMPLETE",
+                                      [2]="COMPLETE",
+                                     };
 void check_domain1_state(void)
 {
     ec_domain_state_t ds;
 
     ecrt_domain_state(domain1, &ds);
 
-    if (ds.working_counter != domain1_state.working_counter) {
-        printf("Domain1: WC %u.\n", ds.working_counter);
-    }
+    /*if (ds.working_counter != domain1_state.working_counter) {
+        printf("Domain1: new working counter %u.\n", ds.working_counter);
+    }*/
     if (ds.wc_state != domain1_state.wc_state) {
-        printf("Domain1: State %u.\n", ds.wc_state);
+        printf("Domain1: State %s.\n", DOMAIN_STATES[ds.wc_state]);
     }
 
     domain1_state = ds;
@@ -289,10 +294,10 @@ void check_domain1_state(void)
 
 /*****************************************************************************/
 
-static const char* MASTER_AL_STATES[] = {"INIT",
-                                         "PREOP",
-                                         "SAFEOP",
-                                         "OP"};
+static const char* MASTER_AL_STATES[] = {[1]="INIT",
+                                         [2]="PREOP",
+                                         [4]="SAFEOP",
+                                         [8]="OP"};
 
 void check_master_state(void)
 {
@@ -304,10 +309,16 @@ void check_master_state(void)
         printf("%u slave(s).\n", ms.slaves_responding);
     }
     if (ms.al_states != master_state.al_states) {
-        if (ms.al_states > 3) {
+        if (ms.al_states >= (1<<4)) {
             printf("AL states: unknown: 0x%02X\n", ms.al_states);
         } else {
-            printf("AL states: %s.\n", MASTER_AL_STATES[ms.al_states]);
+            printf("AL states: ");
+            for (unsigned char i = 1; i < (1<<4); i <<= 1) {
+                if (ms.al_states & i) {
+                    printf("%s, ", MASTER_AL_STATES[i]);
+                }
+            }
+            printf("\n");
         }
     }
     if (ms.link_up != master_state.link_up) {
@@ -402,15 +413,15 @@ void cyclic_task()
 #if 1
     // write process data
     for(int i=0; i<8; ++i) {
-        EC_WRITE_U16(domain1_pd + off_ana_out_values[i], 0x7FFF);
+        EC_WRITE_U16(domain1_pd + off_ana_out_values[i], 0x8000);
     }
     //EC_WRITE_U8(domain1_pd + off_dig_out, blink ? 0x06 : 0x09);
 #endif
 
     // send process data
-    printf("queue\n");
+    //printf("queue\n");
     ecrt_domain_queue(domain1);
-    printf("send\n");
+    //printf("send\n");
     ecrt_master_send(master);
 }
 
@@ -472,6 +483,13 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    //Configure PCI Slave
+    /*sc = ecrt_master_slave_config(master, PCISlavePos, Beckhoff_FC1100);
+    if (!sc) {
+        fprintf(stderr, "failed to configure PCI Card (FC1100)\n");
+        return -1;
+    }*/
+
 
     if (ecrt_domain_reg_pdo_entry_list(domain1, domain1_regs)) {
         fprintf(stderr, "PDO entry registration failed!\n");
@@ -510,7 +528,7 @@ int main(int argc, char **argv)
     wakeup_time.tv_sec += 1; /* start in future */
     wakeup_time.tv_nsec = 0;
 
-    for (int i=0; i != 1000; ++i) {
+    for (int i=0; i != 10000; ++i) {
         ret = clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME,
                 &wakeup_time, NULL);
         if (ret) {
