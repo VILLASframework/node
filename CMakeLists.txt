@@ -62,7 +62,7 @@ else()
     add_compile_options(-Wall -Werror)
 endif()
 
-execute_process( 
+execute_process(
 	COMMAND uname -m
 	COMMAND tr -d '\n'
 	OUTPUT_VARIABLE ARCH
@@ -104,7 +104,7 @@ pkg_check_modules(LIBCONFIG IMPORTED_TARGET libconfig>=1.4.9)
 pkg_check_modules(RABBITMQ_C IMPORTED_TARGET librabbitmq>=0.8.0)
 pkg_check_modules(COMEDILIB IMPORTED_TARGET comedilib>=0.11.0)
 pkg_check_modules(LIBZMQ IMPORTED_TARGET libzmq>=2.2.0)
-pkg_check_modules(LIBWEBSOCKETS IMPORTED_TARGET libwebsockets>=2.3.0)
+pkg_check_modules(LIBWEBSOCKETS IMPORTED_TARGET REQUIRED libwebsockets>=2.3.0)
 pkg_check_modules(NANOMSG IMPORTED_TARGET nanomsg)
 if(NOT NANOMSG_FOUND)
     pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg>=1.0.0)
@@ -169,7 +169,7 @@ else()
         OUTPUT_VARIABLE GIT_REV
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
-    
+
     execute_process(
         COMMAND git rev-parse --abbrev-ref HEAD
         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
