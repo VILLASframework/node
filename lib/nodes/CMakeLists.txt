@@ -23,7 +23,7 @@
 set(NODE_SRC
     influxdb.c
     stats.c
-    signal_generator.c    
+    signal_generator.c
 )
 
 if(LIBNL3_ROUTE_FOUND)
@@ -31,11 +31,11 @@ if(LIBNL3_ROUTE_FOUND)
     list(APPEND INCLUDE_DIRS LIBNL3_ROUTE_INCLUDE_DIRS)
 endif()
 
-if(WITH_IO)
+if(LIBNL3_ROUTE_FOUND AND WITH_IO)
     list(APPEND NODE_SRC
         test_rtt.c
         file.c
-        socket.c    
+        socket.c
     )
 endif()
 
@@ -49,7 +49,7 @@ endif()
 # Enable shared memory node-type
 if(HAS_SEMAPHORE AND HAS_MMAN)
     list(APPEND NODE_SRC shmem.c)
-    
+
     if(CMAKE_SUSTEM_NAME STREQUAL Linux)
         list(APPEND LIBRARIES rt)
     endif()
