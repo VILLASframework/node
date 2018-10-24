@@ -39,6 +39,7 @@
 #include <villas/plugin.h>
 #include <villas/memory.h>
 #include <villas/config.h>
+#include <villas/config_helper.h>
 
 #include <villas/kernel/rt.h>
 

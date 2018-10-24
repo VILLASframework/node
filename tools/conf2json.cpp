@@ -25,6 +25,7 @@
 #include <jansson.h>
 #include <libconfig.h>
 
+#include <villas/config.h>
 #include <villas/config_helper.h>
 #include <villas/utils.h>
 
