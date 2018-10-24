@@ -85,6 +85,7 @@ find_package(Opal)
 find_package(IBVerbs)
 find_package(RDMACM)
 find_package(spdlog)
+find_package(Etherlab)
 
 # Check programs
 find_program(PROTOBUFC_COMPILER NAMES protoc-c)
