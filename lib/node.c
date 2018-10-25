@@ -28,7 +28,6 @@
 #include <villas/node.h>
 #include <villas/utils.h>
 #include <villas/plugin.h>
-#include <villas/config_helper.h>
 #include <villas/mapping.h>
 #include <villas/timing.h>
 #include <villas/signal.h>
