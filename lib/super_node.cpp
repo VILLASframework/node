@@ -51,7 +51,8 @@ SuperNode::SuperNode() :
 	hugepages(DEFAULT_NR_HUGEPAGES),
 	stats(0),
 	api(this),
-	web(&api)
+	web(&api),
+	json(nullptr)
 {
 	list_init(&nodes);
 	list_init(&paths);
@@ -467,7 +468,8 @@ SuperNode::~SuperNode()
 	list_destroy(&paths,   (dtor_cb_t) path_destroy, true);
 	list_destroy(&nodes,   (dtor_cb_t) node_destroy, true);
 
-	json_decref(json);
+	if (json)
+		json_decref(json);
 }
 
 int SuperNode::periodic()
