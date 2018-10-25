@@ -32,7 +32,12 @@ set(LIBRARIES
     PkgConfig::JANSSON
     villas-common
     m
+    stdc++
 )
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL GNU)
+	list(APPEND LIBRARIES "-lstdc++fs")
+endif()
 
 set(LIB_SRC
     super_node.cpp

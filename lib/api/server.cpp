@@ -27,6 +27,7 @@
 
 #include <exception>
 #include <algorithm>
+#include <filesystem>
 
 #include <villas/config.h>
 #include <villas/exceptions.hpp>
@@ -67,14 +68,32 @@ void Server::start()
 	pfds.push_back(pfd);
 	sessions.push_back(nullptr);
 
-	std::string path = PREFIX "/var/lib/villas/node-" + api->getSuperNode()->getName() + ".sock";
-
 	struct sockaddr_un sun = { .sun_family = AF_UNIX };
-	strncpy(sun.sun_path, path.c_str(), sizeof(sun.sun_path) - 1);
 
-	ret = unlink(sun.sun_path);
-	if (ret && errno != ENOENT && errno != ENOTDIR)
-		throw new SystemError("Failed to delete API socket");
+#ifdef __GNU__
+	std::filesystem::path socketPath = PREFIX "/var/lib/villas";
+	if (!std::filesystem::exists(socketPath.parent_path())) {
+		logging.get("api")->info("Creating directory for API socket: {}", socketPath);
+		std::filesystem::create_directories(socketPath);
+	}
+
+	socketPath += "/node-" + api->getSuperNode()->getName() + ".sock";
+
+	if (std::filesystem::exists(socketPath)) {
+		logging.get("api")->info("Removing existing socket: {}", socketPath);
+		std::filesystem::remove(socketPath);
+	}
+
+	strncpy(sun.sun_path, socketPath.c_str(), sizeof(sun.sun_path) - 1);
+#else
+	std::string socketPath = fmt::format(PREFIX "/var/lib/villas/node-{}.sock", api->getSuperNode()->getName());
+
+	ret = unlink(socketPath.c_str());
+	if (ret && errno != ENOENT)
+		throw new SystemError("Failed to unlink API socket");
+
+	strncpy(sun.sun_path, socketPath.c_str(), sizeof(sun.sun_path) - 1);
+#endif
 
 	ret = bind(sd, (struct sockaddr *) &sun, sizeof(struct sockaddr_un));
 	if (ret)
