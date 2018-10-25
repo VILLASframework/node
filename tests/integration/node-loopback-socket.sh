@@ -42,9 +42,10 @@ cat > ${CONFIG_FILE} <<EOF
 			},
 			"in" : {
 				"address": "*:12000",
-				"signals" : [
-					{ "type" : "float" }
-				]
+				"signals" : {
+					"type" : "float",
+					"count" : 1
+				}
 			}
 		},
 		"node2": {
@@ -55,9 +56,10 @@ cat > ${CONFIG_FILE} <<EOF
 			},
 			"in" : {
 				"address" : "*:12001",
-				"signals" : [
-					{ "type" : "float" }
-				]
+				"signals" : {
+					"type" : "float",
+					"count" : 1
+				}
 			}
 		}
 	},

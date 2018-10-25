@@ -90,12 +90,10 @@ cat > ${CONFIG_FILE} << EOF
 			"in" : {
 				"address" : "${LOCAL}",
 				"verify_source" : ${VERIFY_SOURCE},
-				"signals" : [
-					{ "type" : "float" },
-					{ "type" : "float" },
-					{ "type" : "float" },
-					{ "type" : "float" }
-				]
+				"signals" : {
+					"count" : ${NUM_VALUES},
+					"type" : "float"
+				}
 			}
 		}
 	}
