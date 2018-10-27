@@ -19,7 +19,7 @@
     },
 
     "median_plot": {
-        "export_figures": true,
+        "enabled": true,
         "labels": [
             "RC",
             "UC",
@@ -33,6 +33,9 @@
             "x": [1, 2, 4, 8, 16, 32, 64],
             "y": [0, 1, 2, 3, 4, 5, 6]
         },
+
+        "log_scale": false,
+        "print_missed_steps": true,
 
         "colors": [
              "#000000",
@@ -48,7 +51,7 @@
     },
 
     "histograms": {
-        "export_figures": true,
+        "enabled": true,
         "labels": [
             "$\\mathtt{t_{lat} = t_{recv}-t_{generation}}$"
         ],
