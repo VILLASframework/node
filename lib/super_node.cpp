@@ -68,8 +68,6 @@ int SuperNode::parseUri(const std::string &u)
 {
 	json_error_t err;
 
-	logger->info("Parsing configuration");
-
 	FILE *f;
 	AFILE *af;
 
