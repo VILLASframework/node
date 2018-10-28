@@ -20,6 +20,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-add_subdirectory(python)
-add_subdirectory(opal)
-add_subdirectory(shmem)
+add_executable(villas-shmem villas-shmem.cpp)
+
+target_link_libraries(villas-shmem PUBLIC villas)
+
+install(
+    TARGETS villas-shmem
+    COMPONENT bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
