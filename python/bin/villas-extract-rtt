@@ -1,0 +1,20 @@
+#!/usr/bin/env python
+
+import csv
+import sys
+import villas.human as vh
+
+# check if called correctly
+if len(sys.argv) != 1:
+	sys.exit('Usage: %s < IN_FILE > OUT_FILE' % sys.argv[0])
+
+with sys.stdin as f:
+	reader = csv.reader(f, delimiter='\t')
+
+	for row in reader:
+		m = vh.Message.parse(row)
+
+		if m.ts == None or m.ts.offset == None:
+			 continue
+
+		print(m.ts.offset)
