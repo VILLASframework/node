@@ -52,7 +52,7 @@ for VECTORIZE in ${VECTORIZES}; do
 
 case ${LAYER} in
 	udp)
-		LOCAL="*:12000"
+		LOCAL="127.0.0.1:12000"
 		REMOTE="127.0.0.1:12000"
 		;;
 
@@ -63,7 +63,6 @@ case ${LAYER} in
 		;;
 
 	eth)
-		# We use IP protocol number 253 which is reserved for experimentation and testing according to RFC 7042
 		LOCAL="00:00:00:00:00:00%lo:34997"
 		REMOTE="00:00:00:00:00:00%lo:34997"
 		;;
@@ -100,7 +99,7 @@ cat > ${CONFIG_FILE} << EOF
 }
 EOF
 
-villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
+villas-pipe -d DEBUG -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 < ${INPUT_FILE}
 
 # Ignore timestamp and seqeunce no if in raw format 
 if ! villas_format_supports_header $FORMAT; then
@@ -113,10 +112,13 @@ RC=$?
 
 if (( ${RC} != 0 )); then
 	echo "=========== Sub-test failed for: format=${FORMAT}, layer=${LAYER}, verify_source=${VERIFY_SOURCE}, vectorize=${VECTORIZE}"
+	echo "Config:"
 	cat ${CONFIG_FILE}
 	echo
+	echo "Input:"
 	cat ${INPUT_FILE}
 	echo
+	echo "Output:"
 	cat ${OUTPUT_FILE}
 	exit ${RC}
 else
