@@ -39,7 +39,7 @@ struct sample;
 
 enum raw_flags {
 	/** Treat the first three values as: sequenceno, seconds, nanoseconds */
-	RAW_FAKE_HEADER	= (1 << 16) | SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE,
+	RAW_FAKE_HEADER	= (1 << 16),
 	RAW_BIG_ENDIAN	= (1 << 7),	/**< Encode data in big-endian byte order */
 
 	RAW_BITS_8	= (3 << 24),	/**< Pack each value as a byte. */
