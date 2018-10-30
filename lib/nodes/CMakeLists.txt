@@ -32,7 +32,7 @@ if(LIBNL3_ROUTE_FOUND)
     list(APPEND INCLUDE_DIRS LIBNL3_ROUTE_INCLUDE_DIRS)
 endif()
 
-if(LIBNL3_ROUTE_FOUND AND WITH_IO)
+if(WITH_IO)
     list(APPEND NODE_SRC
         test_rtt.c
         file.c
