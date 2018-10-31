@@ -40,13 +40,14 @@
 #include <villas/config.h>
 #include <villas/io.h>
 
-#ifdef LIBNL3_ROUTE_FOUND
+#if defined(LIBNL3_ROUTE_FOUND) && defined(__linux__)
   #include <villas/kernel/if.h>
   #include <villas/kernel/nl.h>
   #include <villas/kernel/tc.h>
 
   #define WITH_NETEM
-#endif /* LIBNL3_ROUTE_FOUND */
+  #define WITH_AF_PACKET
+#endif
 
 #include <villas/node.h>
 

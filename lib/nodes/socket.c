@@ -275,11 +275,11 @@ int socket_start(struct node *n)
 			addrlen = SUN_LEN(&s->local.sun);
 			break;
 
-#ifdef __linux__
+#ifdef WITH_AF_PACKET
 		case AF_PACKET:
 			addrlen = sizeof(struct sockaddr_ll);
 			break;
-#endif
+#endif /* WITH_AF_PACKET */
 		default:
 			addrlen = sizeof(s->local);
 	}
@@ -502,11 +502,11 @@ retry:	ret = io_sprint(&s->io, buf, buflen, &wbytes, smps, cnt);
 			addrlen = SUN_LEN(&s->local.sun);
 			break;
 
-#ifdef __linux__
+#ifdef WITH_AF_PACKET
 		case AF_PACKET:
 			addrlen = sizeof(struct sockaddr_ll);
 			break;
-#endif
+#endif /* WITH_AF_PACKET */
 		default:
 			addrlen = sizeof(s->local);
 	}
@@ -667,13 +667,13 @@ char * socket_print_addr(struct sockaddr *saddr)
 			inet_ntop(AF_INET, &sa->sin.sin_addr, buf, 64);
 			break;
 
-#ifdef __linux__
+#ifdef WITH_AF_PACKET
 		case AF_PACKET:
 			strcatf(&buf, "%02x", sa->sll.sll_addr[0]);
 			for (int i = 1; i < sa->sll.sll_halen; i++)
 				strcatf(&buf, ":%02x", sa->sll.sll_addr[i]);
 			break;
-#endif /* __linux__ */
+#endif /* WITH_AF_PACKET */
 		case AF_UNIX:
 			strcatf(&buf, "%s", sa->sun.sun_path);
 			break;
@@ -689,7 +689,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 			strcatf(&buf, ":%hu", ntohs(sa->sin.sin_port));
 			break;
 
-#ifdef __linux__
+#ifdef WITH_AF_PACKET
 		case AF_PACKET: {
 			struct nl_cache *cache = nl_cache_mngt_require("route/link");
 			struct rtnl_link *link = rtnl_link_get(cache, sa->sll.sll_ifindex);
@@ -700,7 +700,7 @@ char * socket_print_addr(struct sockaddr *saddr)
 			strcatf(&buf, ":%hu", ntohs(sa->sll.sll_protocol));
 			break;
 		}
-#endif /* __linux__ */
+#endif /* WITH_AF_PACKET */
 	}
 
 	return buf;
@@ -752,7 +752,7 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum socket_l
 
 		ret = 0;
 	}
-#endif /* __linux__ */
+#endif /* WITH_AF_PACKET */
 	else {	/* Format: "192.168.0.10:12001" */
 		struct addrinfo hint = {
 			.ai_flags = flags,
@@ -830,7 +830,7 @@ int socket_compare_addr(struct sockaddr *x, struct sockaddr *y)
 
 			return memcmp(xu->sin6.sin6_addr.s6_addr, yu->sin6.sin6_addr.s6_addr, sizeof(xu->sin6.sin6_addr.s6_addr));
 
-#ifdef __linux__
+#ifdef WITH_AF_PACKET
 		case AF_PACKET:
 			CMP(ntohs(xu->sll.sll_protocol), ntohs(yu->sll.sll_protocol));
 			CMP(xu->sll.sll_ifindex, yu->sll.sll_ifindex);
@@ -839,7 +839,7 @@ int socket_compare_addr(struct sockaddr *x, struct sockaddr *y)
 
 			CMP(xu->sll.sll_halen, yu->sll.sll_halen);
 			return memcmp(xu->sll.sll_addr, yu->sll.sll_addr, xu->sll.sll_halen);
-#endif /* __linux__ */
+#endif /* WITH_AF_PACKET */
 
 		default:
 			return -1;
