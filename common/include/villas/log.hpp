@@ -70,6 +70,8 @@ public:
 
 	void setLevel(Level lvl);
 	void setLevel(const std::string &lvl);
+
+	Level getLevel() const;
 };
 
 } // namespace villas

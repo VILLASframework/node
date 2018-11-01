@@ -152,4 +152,7 @@ void Log::setLevel(const std::string &lvl)
 	setLevel(level);
 }
 
-
+Log::Level Log::getLevel() const
+{
+	return level;
+}
