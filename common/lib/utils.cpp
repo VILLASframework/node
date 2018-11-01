@@ -30,6 +30,7 @@
 #include <villas/utils.h>
 #include <villas/utils.hpp>
 #include <villas/config.h>
+#include <villas/log.hpp>
 
 namespace villas {
 namespace utils {
@@ -100,7 +101,9 @@ int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 {
 	int ret;
 
-	info("Initialize signals");
+	auto logger = logging.get("signals");
+
+	logger->info("Initialize subsystem");
 
 	struct sigaction sa_quit;
 	sa_quit.sa_flags = SA_SIGINFO | SA_NODEFER;
