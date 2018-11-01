@@ -20,6 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <list>
+#include <algorithm>
+
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/syslog_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
@@ -138,7 +141,13 @@ void Log::setLevel(Level lvl)
 
 void Log::setLevel(const std::string &lvl)
 {
-	auto level = spdlog::level::from_str(lvl);
+	std::list<std::string> l = SPDLOG_LEVEL_NAMES;
+
+	auto it = std::find(l.begin(), l.end(), lvl);
+	if (it == l.end())
+		throw RuntimeError("Invalid log level {}", lvl);
+
+	level = spdlog::level::from_str(lvl);
 
 	setLevel(level);
 }
