@@ -46,7 +46,7 @@ static auto logger = logging.get("kernel:rt");
 
 int init(int priority, int affinity)
 {
-	logger->info("Initialize real-time sub-system");
+	logger->info("Initialize sub-system");
 
 #ifdef __linux__
 	int is_rt;
