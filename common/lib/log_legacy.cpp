@@ -29,6 +29,8 @@
 
 using namespace villas;
 
+auto logger = logging.get("default");
+
 int log_get_width()
 {
 	return logging.getWidth();
@@ -38,7 +40,6 @@ void debug(long long, const char *fmt, ...)
 {
 	va_list ap;
 
-	auto logger = logging.get("default");
 	char *buf;
 
 	va_start(ap, fmt);
@@ -54,7 +55,6 @@ void info(const char *fmt, ...)
 {
 	va_list ap;
 
-	auto logger = logging.get("default");
 	char *buf;
 
 	va_start(ap, fmt);
@@ -70,7 +70,6 @@ void warning(const char *fmt, ...)
 {
 	va_list ap;
 
-	auto logger = logging.get("default");
 	char *buf;
 
 	va_start(ap, fmt);
@@ -86,7 +85,6 @@ void stats(const char *fmt, ...)
 {
 	va_list ap;
 
-	auto logger = logging.get("default");
 	char *buf;
 
 	va_start(ap, fmt);
@@ -102,7 +100,6 @@ void error(const char *fmt, ...)
 {
 	va_list ap;
 
-	auto logger = logging.get("default");
 	char *buf;
 
 	va_start(ap, fmt);
@@ -121,7 +118,6 @@ void serror(const char *fmt, ...)
 {
 	va_list ap;
 
-	auto logger = logging.get("default");
 	char *buf;
 
 	va_start(ap, fmt);
@@ -140,7 +136,6 @@ void jerror(json_error_t *err, const char *fmt, ...)
 {
 	va_list ap;
 
-	auto logger = logging.get("default");
 	char *buf;
 
 	va_start(ap, fmt);
