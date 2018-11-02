@@ -42,8 +42,6 @@ WebSocket::WebSocket(Api *a, lws *w) :
 	sscanf(uri, "/v%d", (int *) &version);
 
 	/** @todo Check version */
-
-	logger->debug("Initiated API session: {}", getName());
 }
 
 WebSocket::~WebSocket()

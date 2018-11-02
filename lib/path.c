@@ -235,7 +235,7 @@ static void path_destination_write(struct path_destination *pd, struct path *p)
 
 		sent = node_write(pd->node, smps, allocated, &release);
 		if (sent < 0)
-			error("Failed to sent %u samples to node %s", cnt, node_name(pd->node));
+			error("Failed to sent %u samples to node %s: reason=%d", cnt, node_name(pd->node), sent);
 		else if (sent < allocated)
 			warning("Partial write to node %s: written=%d, expected=%d", node_name(pd->node), sent, allocated);
 

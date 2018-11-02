@@ -160,6 +160,8 @@ void Web::worker()
 {
 	lws *wsi;
 
+	logger->info("Starting worker");
+
 	while (running) {
 		lws_service(context, 100);
 
@@ -240,6 +242,7 @@ void Web::start()
 	};
 
 	logger->info("Starting sub-system: htdocs={}", htdocs.c_str());
+
 	/* update web root of mount point */
 	mounts[1].origin = htdocs.c_str();
 
