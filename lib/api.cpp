@@ -68,7 +68,7 @@ void Api::stop()
 	for (Session *s : sessions)
 		s->shutdown();
 
-	for (int i = 0; i < 10 && sessions.size() > 0; i++) {
+	for (int i = 0; i < 2 && sessions.size() > 0; i++) {
 		logger->info("Waiting for {} sessions to terminate", sessions.size());
 		usleep(1 * 1e6);
 	}
@@ -89,8 +89,14 @@ void Api::run()
 
 	/* Process pending actions */
 	Session *s = pending.pop();
-	if (s)
+	if (s) {
+		/* Check that the session is still alive */
+		auto it = std::find(sessions.begin(), sessions.end(), s);
+		if (it == sessions.end())
+			return;
+
 		s->runPendingActions();
+	}
 }
 
 void Api::worker()
