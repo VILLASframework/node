@@ -39,6 +39,8 @@ namespace villas {
 namespace node {
 namespace api {
 
+const int version = 1;
+
 /* Forward declarations */
 class Session;
 

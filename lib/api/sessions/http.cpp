@@ -24,11 +24,13 @@
 
 #include <libwebsockets.h>
 
+#include <villas/exceptions.hpp>
 #include <villas/web.hpp>
 #include <villas/log.hpp>
 #include <villas/config.h>
 #include <villas/api/sessions/http.hpp>
 
+using namespace villas;
 using namespace villas::node;
 using namespace villas::node::api::sessions;
 
@@ -49,7 +51,8 @@ Http::Http(Api *a, lws *w) :
 	/* Parse request URI */
 	sscanf(uri, "/api/v%d", (int *) &version);
 
-	/** @todo Check version */
+	if (version != api::version)
+		throw RuntimeError("Unsupported API version: {}", version);
 
 	/* This is an OPTIONS request.
 	 *

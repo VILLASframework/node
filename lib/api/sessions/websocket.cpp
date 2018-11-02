@@ -25,6 +25,7 @@
 #include <libwebsockets.h>
 
 #include <villas/web.hpp>
+#include <villas/exceptions.hpp>
 #include <villas/log.hpp>
 #include <villas/api/sessions/websocket.hpp>
 
@@ -41,7 +42,8 @@ WebSocket::WebSocket(Api *a, lws *w) :
 
 	sscanf(uri, "/v%d", (int *) &version);
 
-	/** @todo Check version */
+	if (version != api::version)
+		throw RuntimeError("Unsupported API version: {}", version);
 }
 
 WebSocket::~WebSocket()
