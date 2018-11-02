@@ -104,6 +104,11 @@ struct socket {
 	struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Network emulator queuing discipline */
 	struct rtnl_cls *tc_classifier;	/**< libnl3: Firewall mark classifier */
 #endif /* WITH_NETEM */
+
+	struct {
+		char *buf;		/**< Buffer for receiving messages */
+		size_t buflen;
+	} in, out;
 };
 
 
