@@ -65,8 +65,8 @@ struct infiniband {
 	int stopThreads;
 
 	/* When most messages are sent inline, once every <X> cycles a signal must be sent. */
-	unsigned signalling_counter;
-	unsigned periodic_signalling;
+	unsigned signaling_counter;
+	unsigned periodic_signaling;
 
 	/* Connection specific variables */
 	struct connection_s {
