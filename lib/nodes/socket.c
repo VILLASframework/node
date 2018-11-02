@@ -471,12 +471,12 @@ int socket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 
 retry:	ret = io_sprint(&s->io, s->out.buf, s->out.buflen, &wbytes, smps, cnt);
 	if (ret < 0) {
-		warn("Failed to format payload: reason=%d", ret);
+		warning("Failed to format payload: reason=%d", ret);
 		return ret;
 	}
 
 	if (wbytes == 0) {
-		warn("Failed to format payload: wbytes=%zu", wbytes);
+		warning("Failed to format payload: wbytes=%zu", wbytes);
 		return -1;
 	}
 
@@ -524,7 +524,7 @@ retry2:	bytes = sendto(s->sd, s->out.buf, wbytes, 0, (struct sockaddr *) &s->rem
 	}
 
 	if (bytes != wbytes)
-		warning("Partial send to node %s", node_name(n));
+		warning("Partial sendto() to node %s", node_name(n));
 
 	return cnt;
 }
