@@ -54,6 +54,8 @@ protected:
 	Logger logger = logging.get("log");
 	DistSink sinks;
 
+	Level level;
+
 	std::string pattern;		/**< Logging format. */
 	std::string prefix;		/**< Prefix each line with this string. */
 

@@ -35,16 +35,14 @@ using namespace villas;
 /** The global log instance */
 Log villas::logging;
 
-Log::Log(Level level) :
-	sinks(std::make_shared<DistSink::element_type>()),
-	pattern("%H:%M:%S %P %^%l%$: %v")
+Log::Log(Level level)
 {
 	char *p = getenv("VILLAS_LOG_PREFIX");
 	if (p)
 		prefix = p;
 
-	spdlog::set_level(level);
-	spdlog::set_pattern(pattern, spdlog::pattern_time_type::utc);
+	setLevel(level);
+	setPattern("%H:%M:%S %^%l%$ %n: %v");
 
 	auto sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
 
@@ -143,6 +141,8 @@ void Log::setPattern(const std::string &pat)
 
 void Log::setLevel(Level lvl)
 {
+	level = lvl;
+
 	spdlog::set_level(lvl);
 }
 
@@ -154,9 +154,7 @@ void Log::setLevel(const std::string &lvl)
 	if (it == l.end())
 		throw RuntimeError("Invalid log level {}", lvl);
 
-	level = spdlog::level::from_str(lvl);
-
-	setLevel(level);
+	setLevel(spdlog::level::from_str(lvl));
 }
 
 Log::Level Log::getLevel() const
