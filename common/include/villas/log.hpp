@@ -68,6 +68,7 @@ public:
 
 	Logger get(const std::string &name);
 
+	void setPattern(const std::string &pattern);
 	void setLevel(Level lvl);
 	void setLevel(const std::string &lvl);
 

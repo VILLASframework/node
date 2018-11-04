@@ -134,6 +134,13 @@ void Log::parse(json_t *cfg)
 	}
 }
 
+void Log::setPattern(const std::string &pat)
+{
+	pattern = pat;
+
+	spdlog::set_pattern(pattern, spdlog::pattern_time_type::utc);
+}
+
 void Log::setLevel(Level lvl)
 {
 	spdlog::set_level(lvl);
