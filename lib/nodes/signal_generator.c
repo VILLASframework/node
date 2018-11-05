@@ -94,7 +94,7 @@ static void signal_generator_init_signals(struct node *n)
 		int rtype = s->type == SIGNAL_GENERATOR_TYPE_MIXED ? i % 7 : s->type;
 
 		sig->name = strdup(signal_generator_type_str(rtype));
-		sig->type = SIGNAL_TYPE_FLOAT; /* All generated sinals are of type float */
+		sig->type = SIGNAL_TYPE_FLOAT; /* All generated signals are of type float */
 
 		list_push(&n->signals, sig);
 	}
