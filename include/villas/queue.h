@@ -39,6 +39,7 @@
 
 #include <villas/atomic.h>
 #include <villas/common.h>
+#include <villas/config.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,7 +48,6 @@ extern "C" {
 /* Forward declarations */
 struct memory_type;
 
-#define CACHELINE_SIZE 64
 typedef char cacheline_pad_t[CACHELINE_SIZE];
 
 struct queue_cell {

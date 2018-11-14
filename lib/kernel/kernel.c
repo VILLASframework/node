@@ -299,14 +299,13 @@ int kernel_get_version(struct version *v)
 	return 0;
 }
 
+/** @todo Do not rely on hard-coded sizes */
 int kernel_get_cacheline_size()
 {
 #if defined(__linux__) && defined(__x86_64__)
 	return sysconf(_SC_LEVEL1_ICACHE_LINESIZE);
-#elif defined(__x86_64__) || defined(__i386__)
-	return 64; /** @todo fixme */
 #else
-  #error "Unsupported architecture"
+	return CACHELINE_SIZE;
 #endif
 }
 

@@ -57,6 +57,13 @@ extern "C" {
 
 #define USER_AGENT		"VILLASnode (" BUILDID ")"
 
+/* Hard-coded cache line size */
+#if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__)
+  #define CACHELINE_SIZE 64
+#else
+  #error "Unsupported architecture"
+#endif
+
 /* Required kernel version */
 #define KERNEL_VERSION_MAJ	3
 #define KERNEL_VERSION_MIN	6
