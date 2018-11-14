@@ -27,7 +27,6 @@
 #include <stdint.h>
 
 #include <time.h>
-#include <villas/tsc.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,6 +47,10 @@ extern "C" {
   #error "Platform not supported"
 #endif
 
+#if PERIODIC_TASK_IMPL == RDTSC
+  #include <villas/tsc.h>
+#endif
+
 struct task {
 	int clock;			/**< CLOCK_{MONOTONIC,REALTIME} */
 
@@ -62,7 +65,7 @@ struct task {
 #if PERIODIC_TASK_IMPL == TIMERFD
 	int fd;				/**< The timerfd_create(2) file descriptior. */
 #elif PERIODIC_TASK_IMPL == RDTSC
-	struct tsc tsc;		/**< Initialized by tsc_init(). */
+	struct tsc tsc;			/**< Initialized by tsc_init(). */
 #endif
 };
 

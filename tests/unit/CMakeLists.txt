@@ -41,9 +41,12 @@ if(CRITERION_FOUND)
 		task.c
 		timing.c
 		utils.c
-		tsc.c
 		hash_table.c
 	)
+
+	if(ARCH STREQUAL "x86_64")
+		list(APPEND TEST_SRC tsc.c)
+	endif()
 
 	add_executable(unit-tests ${TEST_SRC})
 	target_link_libraries(unit-tests PUBLIC

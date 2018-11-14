@@ -30,8 +30,6 @@
 
 #if PERIODIC_TASK_IMPL == TIMERFD
   #include <sys/timerfd.h>
-#elif PERIODIC_TASK_IMPL == RDTSC
-  #include <villas/tsc.h>
 #endif
 
 int task_init(struct task *t, double rate, int clock)
