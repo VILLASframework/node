@@ -125,6 +125,13 @@ if(IBVERBS_FOUND AND RDMACM_FOUND)
     list(APPEND LIBRARIES ${IBVERBS_LIBRARIES} ${RDMACM_LIBRARIES})
 endif()
 
+# Enable RTP node type when libre is available
+if(RE_FOUND AND WITH_IO)
+    list(APPEND NODE_SRC rtp.c)
+    list(APPEND INCLUDE_DIRS ${RE_INCLUDE_DIRS})
+    list(APPEND LIBRARIES PkgConfig::RE)
+endif()
+
 add_library(nodes STATIC ${NODE_SRC})
 target_include_directories(nodes PUBLIC ${INCLUDE_DIRS})
 target_link_libraries(nodes LINK_PRIVATE ${LIBRARIES})

@@ -109,6 +109,10 @@ pkg_check_modules(NANOMSG IMPORTED_TARGET nanomsg)
 if(NOT NANOMSG_FOUND)
     pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg>=1.0.0)
 endif()
+pkg_check_modules(RE IMPORTED_TARGET re)
+if(NOT RE_FOUND)
+    pkg_check_modules(RE IMPORTED_TARGET libre>=1.0.0)
+endif()
 
 # Build options
 option(WITH_HOOKS   "Build with support for processing hook plugins" ON)
