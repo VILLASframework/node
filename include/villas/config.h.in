@@ -58,7 +58,7 @@ extern "C" {
 #define USER_AGENT		"VILLASnode (" BUILDID ")"
 
 /* Hard-coded cache line size */
-#if defined(__x86_64__) || defined(__i386__) || defined(__aarch64__)
+#if defined(__x86_64__) || defined(__i386__) || defined(__arm__)
   #define CACHELINE_SIZE 64
 #else
   #error "Unsupported architecture"
