@@ -111,7 +111,7 @@ if(NOT NANOMSG_FOUND)
 endif()
 pkg_check_modules(RE IMPORTED_TARGET re)
 if(NOT RE_FOUND)
-    pkg_check_modules(RE IMPORTED_TARGET libre>=1.0.0)
+    pkg_check_modules(RE IMPORTED_TARGET libre>=0.5.9)
 endif()
 
 # Build options
