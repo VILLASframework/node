@@ -20,9 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/* TODO: individual includes instead of wrapper include */
-#include <re/re.h>
+#include <inttypes.h>
 #include <string.h>
+
+#include <re/re.h>
 
 #include <villas/plugin.h>
 #include <villas/nodes/rtp.h>
@@ -31,19 +32,19 @@
 
 int rtp_reverse(struct node *n)
 {
-	struct rtp *m = (struct rtp *) n->_vd;
+	/* struct rtp *m = (struct rtp *) n->_vd; */
 
 	/* TODO */
 
-	return 0;
+	return -1;
 }
 
 int rtp_parse(struct node *n, json_t *cfg)
 {
-	int ret;
-	struct rtp *m = (struct rtp *) n->_vd;
+	int ret = 0;
+	/* struct rtp *m = (struct rtp *) n->_vd; */
 
-	const char *format = "villas.binary";
+	/* const char *format = "villas.binary"; */
 
 	json_error_t err;
 
@@ -51,14 +52,15 @@ int rtp_parse(struct node *n, json_t *cfg)
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-	return 0;
+	return -1;
 }
 
 char * rtp_print(struct node *n)
 {
-	struct rtp *m = (struct rtp *) n->_vd;
-
+	/* struct rtp *m = (struct rtp *) n->_vd; */
+	
 	char *buf = NULL;
+	
 
 	/* TODO */
 
@@ -67,22 +69,27 @@ char * rtp_print(struct node *n)
 
 int rtp_start(struct node *n)
 {
+	/*
 	int ret;
 	struct rtp *m = (struct rtp *) n->_vd;
+	*/
 
 	/* TODO */
 
-	return 0;
+	return -1;
 }
 
 int rtp_stop(struct node *n)
 {
+	/*
 	int ret;
 	struct rtp *m = (struct rtp *) n->_vd;
+	*/
 
 	/* TODO */
+	re_cancel();
 
-	return 0;
+	return -1;
 }
 
 int rtp_type_stop()
@@ -94,9 +101,11 @@ int rtp_type_stop()
 
 int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
+	/*
 	struct rtp *m = (struct rtp *) n->_vd;
 	int bytes;
 	char data[RTP_MAX_PACKET_LEN];
+	*/
 
     /* TODO */
 
@@ -105,25 +114,23 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 int rtp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	int ret;
-	struct rtp *m = (struct rtp *) n->_vd;
+	/* struct rtp *m = (struct rtp *) n->_vd; */
 
-	size_t wbytes;
+	/* size_t wbytes; */
 
-	char data[RTP_MAX_PACKET_LEN];
+	/* char data[RTP_MAX_PACKET_LEN]; */
 
 	/* TODO */
+	rtp_send(NULL, NULL, 0, 0, 0, 0, NULL);
 
 	return cnt;
 }
 
 int rtp_fd(struct node *n)
 {
-	int ret;
-	struct rtp *m = (struct rtp *) n->_vd;
+	/* struct rtp *m = (struct rtp *) n->_vd; */
 
 	int fd;
-	size_t len = sizeof(fd);
 
 	/* TODO */
 
