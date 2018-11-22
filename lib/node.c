@@ -362,17 +362,16 @@ int node_stop(struct node *n)
 		return 0;
 
 	info("Stopping node %s", node_name(n));
-	{
-		ret = node_direction_stop(&n->in, n);
-		if (ret)
-			return ret;
 
-		ret = node_direction_stop(&n->out, n);
-		if (ret)
-			return ret;
+	ret = node_direction_stop(&n->in, n);
+	if (ret)
+		return ret;
 
-		ret = node_type(n)->stop ? node_type(n)->stop(n) : 0;
-	}
+	ret = node_direction_stop(&n->out, n);
+	if (ret)
+		return ret;
+
+	ret = node_type(n)->stop ? node_type(n)->stop(n) : 0;
 
 	if (ret == 0)
 		n->state = STATE_STOPPED;
