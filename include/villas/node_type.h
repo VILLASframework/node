@@ -61,6 +61,7 @@ struct node_type {
 		/** Global initialization per node type.
 		 *
 		 * This callback is invoked once per node-type.
+		 * This callback is optional.
 		 *
 		 * @retval 0	Success. Everything went well.
 		 * @retval <0	Error. Something went wrong.
@@ -70,6 +71,7 @@ struct node_type {
 		/** Global de-initialization per node type.
 		 *
 		 * This callback is invoked once per node-type.
+		 * This callback is optional.
 		 *
 		 * @retval 0	Success. Everything went well.
 		 * @retval <0	Error. Something went wrong.
@@ -107,6 +109,8 @@ struct node_type {
 
 	/** Check the current node configuration for plausability and errors.
 	 *
+	 * This callback is optional.
+	 *
 	 * @param n	A pointer to the node object.
 	 * @retval 0 	Success. Node configuration is good.
 	 * @retval <0	Error. The node configuration is bogus.
@@ -130,6 +134,8 @@ struct node_type {
 
 	/** Restart this node.
 	 *
+	 * This callback is optional.
+	 *
 	 * @param n	A pointer to the node object.
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
@@ -146,6 +152,8 @@ struct node_type {
 
 	/** Pause this node.
 	 *
+	 * This callback is optional.
+	 *
 	 * @param n	A pointer to the node object.
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
@@ -154,6 +162,8 @@ struct node_type {
 
 	/** Resume this node.
 	 *
+	 * This callback is optional.
+	 *
 	 * @param n	A pointer to the node object.
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
@@ -161,6 +171,8 @@ struct node_type {
 	int (*resume)(struct node *n);
 
 	/** Receive multiple messages at once.
+	 *
+	 * This callback is optional.
 	 *
 	 * Messages are received with a single recvmsg() syscall by
 	 * using gathering techniques (struct iovec).
@@ -178,6 +190,8 @@ struct node_type {
 
 	/** Send multiple messages in a single datagram / packet.
 	 *
+	 * This callback is optional.
+	 *
 	 * Messages are sent with a single sendmsg() syscall by
 	 * using gathering techniques (struct iovec).
 	 * The messages have to be stored in a circular buffer / array m.
@@ -193,13 +207,18 @@ struct node_type {
 
 	/** Reverse source and destination of a node.
 	 *
-	 * This is not supported by all node-types!
+	 * This callback is optional.
 	 *
 	 * @param n	A pointer to the node object.
 	 */
 	int (*reverse)(struct node *n);
 
-	/** Return a file descriptor which can be used by poll / select to detect the availability of new data. */
+	/** Return a file descriptor which can be used by poll / select to detect the availability of new data.
+	 *
+	 * This callback is optional.
+	 *
+	 * @return This file descriptor.
+	 */
 	int (*fd)(struct node *n);
 
 	/** Return a memory allocator which should be used for sample pools passed to this node. */
