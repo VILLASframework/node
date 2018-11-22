@@ -23,7 +23,10 @@
 #include <inttypes.h>
 #include <string.h>
 
-#include <re/re.h>
+#include <re/re_types.h>
+#include <re/re_main.h>
+#include <re/re_rtp.h>
+#undef ALIGN_MASK
 
 #include <villas/plugin.h>
 #include <villas/nodes/rtp.h>
@@ -42,17 +45,43 @@ int rtp_reverse(struct node *n)
 int rtp_parse(struct node *n, json_t *cfg)
 {
 	int ret = 0;
-	/* struct rtp *m = (struct rtp *) n->_vd; */
+	struct rtp *sr = (struct rtp *) n->_vd;
 
-	/* const char *format = "villas.binary"; */
+	const char *local, *remote;
+	const char *format = "villas.binary";
 
 	json_error_t err;
 
-	/* TODO ret = json_unpack_ex(...); */
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: { s: s }, s: { s: s } }",
+		"format", &format,
+		"out",
+			"address", &remote,
+		"in",
+			"address", &local
+	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-	return -1;
+	/* Format */
+	sr->format = format_type_lookup(format);
+	if(!sr->format)
+		error("Invalid format '%s' for node %s", format, node_name(n));
+
+	ret = sa_decode(&sr->remote, remote, strlen(remote));
+	if (ret) {
+		error("Failed to resolve remote address '%s' of node %s: %s",
+			remote, node_name(n), strerror(ret));
+	}
+
+	ret = sa_decode(&sr->local, local, strlen(local));
+	if (ret) {
+		error("Failed to resolve local address '%s' of node %s: %s",
+			local, node_name(n), strerror(ret));
+	}
+
+	info("### MKL ### rtp_parse success\n");
+
+	return ret;
 }
 
 char * rtp_print(struct node *n)
@@ -130,7 +159,7 @@ int rtp_fd(struct node *n)
 {
 	/* struct rtp *m = (struct rtp *) n->_vd; */
 
-	int fd;
+	int fd = -1;
 
 	/* TODO */
 

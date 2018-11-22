@@ -29,6 +29,8 @@
 
 #pragma once
 
+#include <re/re_sa.h>
+
 #include <villas/node.h>
 #include <villas/list.h>
 #include <villas/io.h>
@@ -49,10 +51,13 @@ struct rtp {
 		int socket;
 		struct list endpoints;
 	} in, out;
+	*/
+
+	struct sa local;	/**< Local address of the socket */
+	struct sa remote;	/**< Remote address of the socket */
 
 	struct format_type *format;
 	struct io io;
-	*/
 };
 
 /** @see node_type::print */
