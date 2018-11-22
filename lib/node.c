@@ -380,6 +380,66 @@ int node_stop(struct node *n)
 	return ret;
 }
 
+int node_pause(struct node *n)
+{
+	int ret;
+
+	if (n->state != STATE_STARTED)
+		return -1;
+
+	info("Pausing node %s", node_name(n));
+
+	ret = node_type(n)->pause ? node_type(n)->pause(n) : 0;
+
+	if (ret == 0)
+		n->state = STATE_PAUSED;
+
+	return ret;
+}
+
+int node_resume(struct node *n)
+{
+	int ret;
+
+	if (n->state != STATE_PAUSED)
+		return -1;
+
+	info("Resuming node %s", node_name(n));
+
+	ret = node_type(n)->resume ? node_type(n)->resume(n) : 0;
+
+	if (ret == 0)
+		n->state = STATE_STARTED;
+
+	return ret;
+}
+
+int node_restart(struct node *n)
+{
+	int ret;
+
+	if (n->state != STATE_STARTED)
+		return -1;
+
+	info("Restarting node %s", node_name(n));
+
+	if (node_type(n)->restart) {
+		ret = node_type(n)->restart(n);
+	}
+	else {
+		ret = node_type(n)->stop ? node_type(n)->stop(n) : 0;
+		if (ret)
+			return ret;
+
+		ret = node_type(n)->start ? node_type(n)->start(n) : 0;
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
+
 int node_destroy(struct node *n)
 {
 	int ret;

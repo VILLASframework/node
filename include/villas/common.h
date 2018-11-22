@@ -40,7 +40,8 @@ enum state {
 	STATE_UNLOADED		= 5, /* alias for STATE_STARTED used by struct plugin */
 	STATE_CLOSED		= 5, /* alias for STATE_STARTED used by struct io */
 	STATE_PENDING_CONNECT	= 6,
-	STATE_CONNECTED		= 7
+	STATE_CONNECTED		= 7,
+	STATE_PAUSED		= 9
 };
 
 /** Callback to destroy list elements.

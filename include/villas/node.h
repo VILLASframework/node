@@ -125,6 +125,24 @@ int node_start(struct node *n);
  */
 int node_stop(struct node *n);
 
+/** Pauses operation of a node.
+ *
+ * @see node_type::close
+ */
+int node_pause(struct node *n);
+
+/** Resumes operation of a node.
+ *
+ * @see node_type::close
+ */
+int node_resume(struct node *n);
+
+/** Restarts operation of a node.
+ *
+ * @see node_type::close
+ */
+int node_restart(struct node *n);
+
 /** Destroy node by freeing dynamically allocated memory.
  *
  * @see node_type::destroy

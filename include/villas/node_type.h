@@ -128,6 +128,14 @@ struct node_type {
 	 */
 	int (*start)(struct node *n);
 
+	/** Restart this node.
+	 *
+	 * @param n	A pointer to the node object.
+	 * @retval 0	Success. Everything went well.
+	 * @retval <0	Error. Something went wrong.
+	 */
+	int (*restart)(struct node *n);
+
 	/** Stop this node.
 	 *
 	 * @param n	A pointer to the node object.
@@ -135,6 +143,22 @@ struct node_type {
 	 * @retval <0	Error. Something went wrong.
 	 */
 	int (*stop)(struct node *n);
+
+	/** Pause this node.
+	 *
+	 * @param n	A pointer to the node object.
+	 * @retval 0	Success. Everything went well.
+	 * @retval <0	Error. Something went wrong.
+	 */
+	int (*pause)(struct node *n);
+
+	/** Resume this node.
+	 *
+	 * @param n	A pointer to the node object.
+	 * @retval 0	Success. Everything went well.
+	 * @retval <0	Error. Something went wrong.
+	 */
+	int (*resume)(struct node *n);
 
 	/** Receive multiple messages at once.
 	 *
