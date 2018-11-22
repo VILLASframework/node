@@ -46,18 +46,15 @@ extern "C" {
 struct format_type;
 
 struct rtp {
-	/*
-	struct {
-		int socket;
-		struct list endpoints;
-	} in, out;
-	*/
+	struct rtp_sock *rs;	/**< RTP socket */
 
 	struct sa local;	/**< Local address of the socket */
 	struct sa remote;	/**< Remote address of the socket */
 
 	struct format_type *format;
 	struct io io;
+
+	bool enable_rtcp;
 };
 
 /** @see node_type::print */

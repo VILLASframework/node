@@ -30,30 +30,36 @@
 
 #include <villas/plugin.h>
 #include <villas/nodes/rtp.h>
+#include <villas/nodes/socket.h>
 #include <villas/utils.h>
 #include <villas/format_type.h>
 
 int rtp_reverse(struct node *n)
 {
-	/* struct rtp *m = (struct rtp *) n->_vd; */
+	struct rtp *r = (struct rtp *) n->_vd;
+	struct sa tmp;
 
-	/* TODO */
+	tmp = r->local;
+	r->local = r->remote;
+	r->remote = tmp;
 
-	return -1;
+	return 0;
 }
 
 int rtp_parse(struct node *n, json_t *cfg)
 {
 	int ret = 0;
-	struct rtp *sr = (struct rtp *) n->_vd;
+	struct rtp *r = (struct rtp *) n->_vd;
 
 	const char *local, *remote;
 	const char *format = "villas.binary";
+	bool enable_rtcp = false;
 
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: { s: s }, s: { s: s } }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: b, s: { s: s }, s: { s: s } }",
 		"format", &format,
+		"enable_rtcp", &enable_rtcp,
 		"out",
 			"address", &remote,
 		"in",
@@ -63,49 +69,70 @@ int rtp_parse(struct node *n, json_t *cfg)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 	/* Format */
-	sr->format = format_type_lookup(format);
-	if(!sr->format)
+	r->format = format_type_lookup(format);
+	if(!r->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 
-	ret = sa_decode(&sr->remote, remote, strlen(remote));
+	/* Enable RTCP */ 
+	r->enable_rtcp = enable_rtcp;
+	if(enable_rtcp)
+		error("RTCP is not implemented yet.");
+
+	/* Remote address */
+	ret = sa_decode(&r->remote, remote, strlen(remote));
 	if (ret) {
 		error("Failed to resolve remote address '%s' of node %s: %s",
 			remote, node_name(n), strerror(ret));
 	}
 
-	ret = sa_decode(&sr->local, local, strlen(local));
+	/* Local address */
+	ret = sa_decode(&r->local, local, strlen(local));
 	if (ret) {
 		error("Failed to resolve local address '%s' of node %s: %s",
 			local, node_name(n), strerror(ret));
 	}
 
-	info("### MKL ### rtp_parse success\n");
+	/** @todo parse * in addresses */
 
 	return ret;
 }
 
 char * rtp_print(struct node *n)
 {
-	/* struct rtp *m = (struct rtp *) n->_vd; */
-	
-	char *buf = NULL;
-	
+	struct rtp *r = (struct rtp *) n->_vd;
+	char *buf;
 
-	/* TODO */
+	char *local = socket_print_addr((struct sockaddr *) &r->local.u);
+	char *remote = socket_print_addr((struct sockaddr *) &r->remote.u);
+
+	buf = strf("format=%s, in.address=%s, out.address=%s", format_type_name(r->format), local, remote);
+
+	free(local);
+	free(remote);
 
 	return buf;
 }
 
 int rtp_start(struct node *n)
 {
-	/*
 	int ret;
-	struct rtp *m = (struct rtp *) n->_vd;
-	*/
+	struct rtp *r = (struct rtp *) n->_vd;
+	
+	/* Initialize IO */
+	ret = io_init(&r->io, r->format, &n->signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
+	if (ret)
+		return ret;
+
+	ret = io_check(&r->io);
+	if (ret)
+		return ret;
+
+	uint16_t port = sa_port(&r->local) & ~1;
+	ret = rtp_listen(&r->rs, IPPROTO_UDP, &r->local, port, port+1, r->enable_rtcp, NULL, NULL, NULL);
 
 	/* TODO */
 
-	return -1;
+	return ret;
 }
 
 int rtp_stop(struct node *n)
@@ -159,11 +186,9 @@ int rtp_fd(struct node *n)
 {
 	/* struct rtp *m = (struct rtp *) n->_vd; */
 
-	int fd = -1;
+	error("No acces to file descriptor.");
 
-	/* TODO */
-
-	return fd;
+	return -1;
 }
 
 static struct plugin p = {
