@@ -50,7 +50,7 @@ message Timestamp {
 message Value {
 	oneof value {
 		double f = 1;				// Floating point values.
-		int64 i = 2;                            // Integer values.
+		int64 i = 2;				// Integer values.
 		bool b = 3;				// Boolean values.
 		Complex z = 4;				// Complex values.
 	}
