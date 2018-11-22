@@ -1,7 +1,7 @@
 /** Node type: IEC 61850-8-1 (MMS)
  *
  * @author Iris Koester <ikoester@eonerc.rwth-aachen.de>
- * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -24,6 +24,9 @@
 
 #include <villas/queue_signalled.h>
 #include <libiec61850/mms_client_connection.h>
+#include <villas/node.h>
+#include <villas/pool.h>
+#include <villas/nodes/iec61850.h>
 
 
 struct iec61850_mms {
@@ -33,9 +36,9 @@ struct iec61850_mms {
     char * domainID;    /**< Domain ID of the to-be-read item */
     char * itemID;      /**< item ID (name of MMS value) */
 
-    MmsConnection conn;
-    struct queue_signalled queue;
-    //struct sockaddr_in mms_server_addr;
-};
+    MmsConnection conn;     /**< Connection instance to MMS Server */
 
+    struct queue_signalled queue;   /**< lock-free multiple-producer, multiple-consumer (MPMC) queue */
+    struct pool pool;       /**< thread-safe memory pool */
+};
 
