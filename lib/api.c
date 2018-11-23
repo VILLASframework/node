@@ -326,7 +326,7 @@ int api_stop(struct api *a)
 
 		s->state = API_SESSION_STATE_SHUTDOWN;
 
-		lws_callback_on_writable(s->wsi);
+		web_callback_on_writable(s->wsi);
 	}
 
 	for (int i = 0; i < 10 && list_length(&a->sessions) > 0; i++) {
@@ -373,7 +373,7 @@ static void * api_worker(void *ctx)
 
 		queue_push(&s->response.queue, resp);
 
-		lws_callback_on_writable(s->wsi);
+		web_callback_on_writable(s->wsi);
 	}
 
 	return NULL;

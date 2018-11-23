@@ -26,6 +26,7 @@
 #include <pthread.h>
 
 #include <villas/common.h>
+#include <villas/queue.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,6 +42,8 @@ struct web {
 
 	struct lws_context *context;	/**< The libwebsockets server context. */
 	struct lws_vhost *vhost;	/**< The libwebsockets vhost. */
+
+	struct queue writables;		/**< Queue of WSIs for which we will call lws_callback_on_writable() */
 
 	int port;			/**< Port of the build in HTTP / WebSocket server. */
 	char *htdocs;			/**< The root directory for files served via HTTP. */
@@ -64,6 +67,8 @@ int web_stop(struct web *w);
 
 /** Parse HTTPd and WebSocket related options */
 int web_parse(struct web *w, json_t *cfg);
+
+void web_callback_on_writable(struct lws *wsi);
 
 #ifdef __cplusplus
 }

@@ -164,7 +164,7 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 
 	/* Client connections which are currently conecting don't have an associate c->wsi yet */
 	if (c->wsi)
-		lws_callback_on_writable(c->wsi);
+		web_callback_on_writable(c->wsi);
 
 	return 0;
 }

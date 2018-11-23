@@ -165,19 +165,34 @@ static void logger(int level, const char *msg) {
 	}
 }
 
+void web_callback_on_writable(struct lws *wsi)
+{
+	struct lws_context *ctx = lws_get_context(wsi);
+	struct web *w = lws_context_user(ctx);
+
+	queue_push(&w->writables, (void *) wsi);
+}
+
 static void * web_worker(void *ctx)
 {
+	struct lws *wsi;
 	struct web *w = ctx;
 
-	for (;;)
+	for (;;) {
 		lws_service(w->context, 100);
+
+		while (queue_available(&w->writables)) {
+			queue_pull(&w->writables, (void **) &wsi);
+			lws_callback_on_writable(wsi);
+		}
+	}
 
 	return NULL;
 }
 
 int web_init(struct web *w, struct api *a)
 {
-	int lvl = LLL_ERR | LLL_WARN | LLL_NOTICE;
+	int ret, lvl = LLL_ERR | LLL_WARN | LLL_NOTICE;
 
 	if (global_log->level >=10 && global_log->facilities & LOG_WEB)
 		lvl |= (1 << LLL_COUNT) - 1;
@@ -189,6 +204,10 @@ int web_init(struct web *w, struct api *a)
 	/* Default values */
 	w->port = getuid() > 0 ? 8080 : 80; /**< @todo Use libcap to check if user can bind to ports < 1024 */
 	w->htdocs = strdup(WEB_PATH);
+
+	ret = queue_init(&w->writables, 128, &memory_heap);
+	if (ret)
+		return ret;
 
 	w->state = STATE_INITIALIZED;
 
@@ -312,6 +331,8 @@ int web_stop(struct web *w)
 
 int web_destroy(struct web *w)
 {
+	int ret;
+
 	if (w->state == STATE_DESTROYED)
 		return 0;
 
@@ -327,6 +348,10 @@ int web_destroy(struct web *w)
 
 	if (w->htdocs)
 		free(w->htdocs);
+
+	ret = queue_destroy(&w->writables);
+	if (ret)
+		return ret;
 
 	w->state = STATE_DESTROYED;
 
