@@ -51,7 +51,14 @@ static void destroy_allocations()
 
 int memory_init(int hugepages)
 {
+	int ret;
+
 	info("Initialize memory sub-system: #hugepages=%d", hugepages);
+
+	/* Initialize hugepage allocator */
+	ret = memory_hugepage_init();
+	if (ret)
+		return ret;
 
 #if defined(__linux__) && defined(__x86_64__)
 	int pagecnt, pagesz, ret;
@@ -101,7 +108,7 @@ int memory_init(int hugepages)
 		if (ret)
 			return ret;
 
-		debug(LOG_MEM | 2, "Increased ressource limit of locked memory to %d bytes", pagesz * pagecnt);
+		debug(LOG_MEM | 2, "Increased ressource limit of locked memory to %d bytes", lock);
 	}
 #endif
 	return 0;

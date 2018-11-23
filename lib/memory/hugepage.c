@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <errno.h>
 #include <strings.h>
@@ -41,49 +42,69 @@
 #include <villas/utils.h>
 #include <villas/kernel/kernel.h>
 
+static size_t pgsz = -1;
+static size_t hugepgsz = -1;
+static bool use_huge = true;
+
+int memory_hugepage_init()
+{
+	pgsz = kernel_get_page_size();
+	if (pgsz < 0)
+		return -1;
+
+	hugepgsz = kernel_get_hugepage_size();
+	if (hugepgsz < 0)
+		return -1;
+
+	return 0;
+}
+
 /** Allocate memory backed by hugepages with malloc() like interface */
 static struct memory_allocation * memory_hugepage_alloc(struct memory_type *m, size_t len, size_t alignment)
 {
-	int prot = PROT_READ | PROT_WRITE;
-	int flags = MAP_PRIVATE | MAP_ANONYMOUS;
-	int ret, fd = -1;
-
-	size_t pgsz = kernel_get_page_size();
-	size_t hugepgsz = kernel_get_hugepage_size();
-
-#ifdef __MACH__
-	fd = VM_FLAGS_SUPERPAGE_SIZE_2MB;
-#elif defined(__linux__)
-	flags |= MAP_HUGETLB;
-#endif
+	int ret, flags, fd;
+	size_t sz;
 
 	struct memory_allocation *ma = alloc(sizeof(struct memory_allocation));
 	if (!ma)
 		return NULL;
 
-	/** We must make sure that len is a multiple of the hugepage size
+retry:	if (use_huge) {
+#ifdef __linux__
+		flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB;
+#else
+		flags = MAP_PRIVATE | MAP_ANONYMOUS;
+#endif
+
+#ifdef __MACH__
+		fd = VM_FLAGS_SUPERPAGE_SIZE_2MB;
+#else
+		fd = -1;
+#endif
+		sz = hugepgsz;
+	}
+	else {
+		flags = MAP_PRIVATE | MAP_ANONYMOUS;
+		fd = -1;
+
+		sz = pgsz;
+	}
+
+	/** We must make sure that len is a multiple of the (huge)page size
 	 *
 	 * See: https://lkml.org/lkml/2014/10/22/925
 	 */
-	ma->length = ALIGN(len, hugepgsz);
-	ma->alignment = ALIGN(alignment, hugepgsz);
+	ma->length = ALIGN(len, sz);
+	ma->alignment = ALIGN(alignment, sz);
 	ma->type = m;
 
-	ma->address = mmap(NULL, ma->length, prot, flags, fd, 0);
+	ma->address = mmap(NULL, ma->length, PROT_READ | PROT_WRITE, flags, fd, 0);
 	if (ma->address == MAP_FAILED) {
-		warn("memory_hugepage_alloc: %s. Mapped as normal pages instead!", strerror(errno));
-		//warn("  aligned=%#zx, length=%#zx", ma->alignment, ma->length);
-
-#ifdef __MACH__
-		fd = -1;
-#elif defined(__linux__)
-		flags &= ~MAP_HUGETLB;
-#endif
-
-		ma->length = ALIGN(len, pgsz);
-		ma->alignment = ALIGN(alignment, pgsz);
-		ma->address = mmap(NULL, ma->length, prot, flags, fd, 0);
-		if (ma->address == MAP_FAILED) {
+		if (use_huge) {
+			use_huge = false;
+			goto retry;
+		}
+		else {
 			free(ma);
 			return NULL;
 		}
