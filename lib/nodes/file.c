@@ -317,6 +317,16 @@ int file_stop(struct node *n)
 	return 0;
 }
 
+int file_restart(struct node *n)
+{
+	struct file *f = (struct file *) n->_vd;
+
+	f->offset = file_calc_offset(&f->first, &f->epoch, f->epoch_mode);
+	io_rewind(&f->io);
+
+	return 0;
+}
+
 int file_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct file *f = (struct file *) n->_vd;
@@ -423,6 +433,7 @@ static struct plugin p = {
 		.print		= file_print,
 		.start		= file_start,
 		.stop		= file_stop,
+		.restart	= file_restart,
 		.read		= file_read,
 		.write		= file_write,
 		.fd		= file_fd
