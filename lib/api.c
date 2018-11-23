@@ -367,7 +367,7 @@ static void * api_worker(void *ctx)
 
 		queue_pull(&s->request.queue, (void **) &req);
 
-		api_session_run_command(s, req, &resp);
+		api_session_run_action(s, req, &resp);
 
 		json_decref(req);
 

@@ -81,7 +81,7 @@ int api_session_destroy(struct api_session *s)
 	return 0;
 }
 
-int api_session_run_command(struct api_session *s, json_t *json_in, json_t **json_out)
+int api_session_run_action(struct api_session *s, json_t *json_in, json_t **json_out)
 {
 	int ret;
 	const char *action;
@@ -110,7 +110,7 @@ int api_session_run_command(struct api_session *s, json_t *json_in, json_t **jso
 				"action", action,
 				"id", id,
 				"code", ret,
-				"error", "command not found");
+				"error", "action not found");
 		goto out;
 	}
 
@@ -122,7 +122,7 @@ int api_session_run_command(struct api_session *s, json_t *json_in, json_t **jso
 				"action", action,
 				"id", id,
 				"code", ret,
-				"error", "command failed");
+				"error", "action failed");
 	else
 		*json_out = json_pack("{ s: s, s: s }",
 				"action", action,

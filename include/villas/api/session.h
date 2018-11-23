@@ -71,7 +71,7 @@ int api_session_init(struct api_session *s, enum api_mode m);
 
 int api_session_destroy(struct api_session *s);
 
-int api_session_run_command(struct api_session *s, json_t *req, json_t **resp);
+int api_session_run_action(struct api_session *s, json_t *req, json_t **resp);
 
 char * api_session_name(struct api_session *s);
 
