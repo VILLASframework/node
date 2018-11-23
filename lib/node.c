@@ -485,6 +485,9 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 {
 	int readd, nread = 0;
 
+	if (n->state == STATE_PAUSED)
+		return 0;
+
 	assert(n->state == STATE_STARTED || n->state == STATE_CONNECTED || n->state == STATE_PENDING_CONNECT);
 	assert(node_type(n)->read);
 
