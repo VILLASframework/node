@@ -360,7 +360,7 @@ check:		if (optarg == endptr)
 	if (!node)
 		error("Node %s does not exist!", nodestr);
 
-#ifdef Libwebsockets_FOUND
+#ifdef LIBWEBSOCKETS_FOUND
 	/* Only start web subsystem if villas-pipe is used with a websocket node */
 	if (node->_vt->start == websocket_start) {
 		ret = web_start(&sn.web);
@@ -371,7 +371,7 @@ check:		if (optarg == endptr)
 		if (ret)
 			error("Failed to start API subsystem");
 	}
-#endif /* Libwebsockets_FOUND */
+#endif /* LIBWEBSOCKETS_FOUND */
 
 	if (reverse)
 		node_reverse(node);

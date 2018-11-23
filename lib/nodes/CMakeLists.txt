@@ -91,10 +91,10 @@ if(CURL_FOUND)
 endif()
 
 # Enable WebSocket support
-if(Libwebsockets_FOUND AND WITH_WEB AND WITH_IO)
+if(LIBWEBSOCKETS_FOUND AND WITH_WEB AND WITH_IO)
     list(APPEND NODE_SRC websocket.c)
     list(APPEND INCLUDE_DIRS ${LIBWEBSOCKETS_INCLUDE_DIRS})
-    list(APPEND LIBRARIES websockets_shared)
+    list(APPEND LIBRARIES ${LIBWEBSOCKETS_LDLIBS})
 endif()
 
 # Enable AMQP support

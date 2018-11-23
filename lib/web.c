@@ -58,14 +58,14 @@ lws_callback_function websocket_protocol_cb;
 		.rx_buffer_size = 0
 	},
 #endif /* WITH_API */
-#ifdef Libwebsockets_FOUND
+#ifdef LIBWEBSOCKETS_FOUND
 	{
 		.name = "live",
 		.callback = websocket_protocol_cb,
 		.per_session_data_size = sizeof(struct websocket_connection),
 		.rx_buffer_size = 0
 	},
-#endif /* Libwebsockets_FOUND */
+#endif /* LIBWEBSOCKETS_FOUND */
 #if 0 /* not supported yet */
 	{
 		.name = "log",

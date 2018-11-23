@@ -82,7 +82,7 @@ extern "C" {
 
 #cmakedefine HAS_SEMAPHORE
 
-#cmakedefine Libwebsockets_FOUND
+#cmakedefine LIBWEBSOCKETS_FOUND
 #cmakedefine HDF5_FOUND
 #cmakedefine PROTOBUF_FOUND
 #cmakedefine LIBNL3_ROUTE_FOUND
