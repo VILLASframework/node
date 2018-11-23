@@ -30,6 +30,7 @@ set(API_SRC
     actions/restart.c
     actions/shutdown.c
     actions/status.c
+    actions/node.c
 )
 
 add_library(api STATIC ${API_SRC})
