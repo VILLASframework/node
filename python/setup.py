@@ -43,6 +43,7 @@ setup(
         'Programming Language :: Python :: 3'
     ],
     install_requires = [
+        'requests'
     ],
     setup_requires = [
         'm2r'
