@@ -1,6 +1,6 @@
-/** Some common defines, enums and datastructures.
+
+/** Common code.
  *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -21,37 +21,50 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#pragma once
+#include <villas/common.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <stdlib.h>
 
-/* Common states for most objects in VILLASnode (paths, nodes, hooks, plugins) */
-enum state {
-	STATE_DESTROYED		= 0,
-	STATE_INITIALIZED	= 1,
-	STATE_PARSED		= 2,
-	STATE_CHECKED		= 3,
-	STATE_STARTED		= 4,
-	STATE_LOADED		= 4, /* alias for STATE_STARTED used by struct plugin */
-	STATE_OPENED		= 4, /* alias for STATE_STARTED used by struct io */
-	STATE_STOPPED		= 5,
-	STATE_UNLOADED		= 5, /* alias for STATE_STARTED used by struct plugin */
-	STATE_CLOSED		= 5, /* alias for STATE_STARTED used by struct io */
-	STATE_PENDING_CONNECT	= 6,
-	STATE_CONNECTED		= 7,
-	STATE_PAUSED		= 9
-};
+const char * state_print(enum state s)
+{
+	switch (s) {
+		case STATE_DESTROYED:
+			return "destroyed";
+			break;
 
-/** Callback to destroy list elements.
- *
- * @param data A pointer to the data which should be freed.
- */
-typedef int (*dtor_cb_t)(void *);
+		case STATE_INITIALIZED:
+			return "initialized";
+			break;
 
-const char * state_print(enum state s);
+		case STATE_PARSED:
+			return "parsed";
+			break;
 
-#ifdef __cplusplus
+		case STATE_CHECKED:
+			return "checked";
+			break;
+
+		case STATE_STARTED:
+			return "running";
+			break;
+
+		case STATE_STOPPED:
+			return "stopped";
+			break;
+
+		case STATE_PENDING_CONNECT:
+			return "pending-connect";
+			break;
+
+		case STATE_CONNECTED:
+			return "connected";
+			break;
+
+		case STATE_PAUSED:
+			return "paused";
+			break;
+
+		default:
+			return NULL;
+	}
 }
-#endif

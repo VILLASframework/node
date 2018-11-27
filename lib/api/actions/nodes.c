@@ -37,9 +37,9 @@ static int api_nodes(struct api_action *r, json_t *args, json_t **resp, struct a
 	for (size_t i = 0; i < list_length(&s->api->super_node->nodes); i++) {
 		struct node *n = (struct node *) list_at(&s->api->super_node->nodes, i);
 
-		json_t *json_node = json_pack("{ s: s, s: i, s: i, s: { s: i }, s: { s: i } }",
+		json_t *json_node = json_pack("{ s: s, s: s, s: i, s: { s: i }, s: { s: i } }",
 			"name",		node_name_short(n),
-			"state",	n->state,
+			"state",	state_print(n->state),
 			"affinity",	n->affinity,
 			"in",
 				"vectorize",	n->in.vectorize,

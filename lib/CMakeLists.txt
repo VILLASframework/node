@@ -73,6 +73,7 @@ set(LIB_SRC
     table.c
     bitset.c
     signal.c
+    common.c
 )
 
 
