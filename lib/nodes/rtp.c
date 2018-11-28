@@ -113,6 +113,15 @@ char * rtp_print(struct node *n)
 	return buf;
 }
 
+static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, struct mbuf *mb, void *arg)
+{
+	(void)hdr;
+	(void)arg;
+	(void)mb;
+
+	/* placeholder */
+}
+
 int rtp_start(struct node *n)
 {
 	int ret;
@@ -128,7 +137,7 @@ int rtp_start(struct node *n)
 		return ret;
 
 	uint16_t port = sa_port(&r->local) & ~1;
-	ret = rtp_listen(&r->rs, IPPROTO_UDP, &r->local, port, port+1, r->enable_rtcp, NULL, NULL, NULL);
+	ret = rtp_listen(&r->rs, IPPROTO_UDP, &r->local, port, port+1, r->enable_rtcp, rtp_handler, NULL, NULL);
 
 	/* TODO */
 
