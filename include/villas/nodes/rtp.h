@@ -40,7 +40,7 @@ extern "C" {
 #endif
 
 /** The maximum length of a packet which contains stuct rtp. */
-#define RTP_MAX_PACKET_LEN 1500
+#define RTP_INITIAL_BUFFER_LEN 1500
 
 /* Forward declarations */
 struct format_type;

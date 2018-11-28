@@ -22,15 +22,18 @@
 
 #include <inttypes.h>
 #include <string.h>
+#include <time.h>
 
 #include <re/re_types.h>
 #include <re/re_main.h>
+#include <re/re_mbuf.h>
 #include <re/re_rtp.h>
+#include <re/re_sys.h>
 #undef ALIGN_MASK
 
 #include <villas/plugin.h>
-#include <villas/nodes/rtp.h>
 #include <villas/nodes/socket.h>
+#include <villas/nodes/rtp.h>
 #include <villas/utils.h>
 #include <villas/format_type.h>
 
@@ -136,10 +139,12 @@ int rtp_start(struct node *n)
 	if (ret)
 		return ret;
 
+	/* Initialize random number generator */
+	rand_init();
+
+	/* Initialize RTP socket */
 	uint16_t port = sa_port(&r->local) & ~1;
 	ret = rtp_listen(&r->rs, IPPROTO_UDP, &r->local, port, port+1, r->enable_rtcp, rtp_handler, NULL, NULL);
-
-	/* TODO */
 
 	return ret;
 }
@@ -148,26 +153,26 @@ int rtp_stop(struct node *n)
 {
 	/*
 	int ret;
-	struct rtp *m = (struct rtp *) n->_vd;
+	struct rtp *r = (struct rtp *) n->_vd;
 	*/
 
 	/* TODO */
 	re_cancel();
 
-	return -1;
+	return 0;
 }
 
 int rtp_type_stop()
 {
 	/* TODO */
 
-	return -1;
+	return 0;
 }
 
 int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	/*
-	struct rtp *m = (struct rtp *) n->_vd;
+	struct rtp *r = (struct rtp *) n->_vd;
 	int bytes;
 	char data[RTP_MAX_PACKET_LEN];
 	*/
@@ -179,21 +184,60 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 int rtp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	/* struct rtp *m = (struct rtp *) n->_vd; */
+	int ret;
+	struct rtp *r = (struct rtp *) n->_vd;
 
-	/* size_t wbytes; */
+	char *buf;
+	char pad[12] = { 0 };
+	size_t buflen;
+	/* ssize_t bytes; */
+	size_t wbytes;
 
-	/* char data[RTP_MAX_PACKET_LEN]; */
+	buflen = RTP_INITIAL_BUFFER_LEN;
+	buf = alloc(buflen);
+	if (!buf)
+		return -1;
 
-	/* TODO */
-	rtp_send(NULL, NULL, 0, 0, 0, 0, NULL);
+retry:	ret = io_sprint(&r->io, buf, buflen, &wbytes, smps, cnt);
+	if (ret < 0)
+		goto out;
 
-	return cnt;
+	if (wbytes <= 0)
+		goto out;
+
+	if (wbytes > buflen) {
+		buflen = wbytes;
+		buf = realloc(buf, buflen);
+		goto retry;
+	}
+
+	/* Prepare mbuf */
+	struct mbuf *mb = mbuf_alloc(buflen + 12);
+	ret = mbuf_write_str(mb, pad);
+	if(ret) {
+		error("Error writing to mbuf");
+		return ret;
+	}
+	ret = mbuf_write_str(mb, buf);
+	if(ret) {
+		error("Error writing to mbuf");
+		return ret;
+	}
+	mbuf_set_pos(mb, 12);
+
+	/* Send dataset */
+	ret = rtp_send(r->rs, &r->remote, false, false, 61, (uint32_t)time(NULL), mb);
+	if(ret)
+		return ret;
+
+out:	free(buf);
+
+	return ret;
 }
 
 int rtp_fd(struct node *n)
 {
-	/* struct rtp *m = (struct rtp *) n->_vd; */
+	/* struct rtp *r = (struct rtp *) n->_vd; */
 
 	error("No acces to file descriptor.");
 
