@@ -47,8 +47,8 @@ extern Log logging;
 class Log {
 
 public:
-	using DistSink = std::shared_ptr<spdlog::sinks::dist_sink_mt>;
 	using Level = spdlog::level::level_enum;
+	using DistSink = spdlog::sinks::dist_sink_mt;
 
 protected:
 	Logger logger = logging.get("log");

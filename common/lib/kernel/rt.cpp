@@ -42,7 +42,7 @@ namespace villas {
 namespace kernel {
 namespace rt {
 
-static auto logger = logging.get("kernel:rt");
+static Logger logger = logging.get("kernel:rt");
 
 int init(int priority, int affinity)
 {

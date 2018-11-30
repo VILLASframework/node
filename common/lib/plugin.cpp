@@ -96,7 +96,7 @@ Plugin::unload()
 void
 Plugin::dump()
 {
-	auto logger = Registry::getLogger();
+	Logger logger = Registry::getLogger();
 	logger->info("Name: '{}' Description: '{}'", name, description);
 }
 

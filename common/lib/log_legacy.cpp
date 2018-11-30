@@ -29,7 +29,7 @@
 
 using namespace villas;
 
-auto logger = logging.get("default");
+Logger logger = logging.get("default");
 
 int log_get_width()
 {

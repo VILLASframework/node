@@ -62,7 +62,7 @@ int Log::getWidth()
 
 Logger Log::get(const std::string &name)
 {
-	auto logger = spdlog::get(name);
+	Logger logger = spdlog::get(name);
 
 	if (not logger)
 		logger = std::make_shared<Logger::element_type>(name, sinks);
@@ -98,13 +98,13 @@ void Log::parse(json_t *cfg)
 	if (path) {
 		auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path);
 
-		sinks->add_sink(sink);
+		sinks.add_sink(sink);
 	}
 
 	if (syslog) {
 		auto sink = std::make_shared<spdlog::sinks::syslog_sink_mt>("villas", LOG_PID, LOG_DAEMON);
 
-		sinks->add_sink(sink);
+		sinks.add_sink(sink);
 	}
 
 	if (json_expressions) {
@@ -124,7 +124,7 @@ void Log::parse(json_t *cfg)
 			if (ret)
 				throw new JsonError(err);
 
-			auto logger = get(name);
+			Logger logger = get(name);
 			auto level = spdlog::level::from_str(lvl);
 
 			logger->set_level(level);

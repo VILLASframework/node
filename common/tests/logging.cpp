@@ -58,7 +58,7 @@ static int format_msg(char *buf, size_t buflen, const char *msg, va_list args)
 
 void criterion_log_noformat(enum criterion_severity severity, const char *msg)
 {
-	auto logger = logging.get("criterion");
+	Logger logger = logging.get("criterion");
 
 	switch (severity) {
 		case CR_LOG_WARNING:
@@ -84,7 +84,7 @@ void criterion_vlog(enum criterion_logging_level /* level */, const char *msg, v
 
 	format_msg(formatted_msg, sizeof(formatted_msg), msg, args);
 
-	auto logger = logging.get("test");
+	Logger logger = logging.get("test");
 	logger->info(formatted_msg);
 }
 
@@ -101,7 +101,7 @@ void criterion_plog(enum criterion_logging_level /* level */, const struct crite
 	format_msg(formatted_msg, sizeof(formatted_msg), msg, args);
 	va_end(args);
 
-	auto logger = logging.get("test");
+	Logger logger = logging.get("test");
 
 	if      (!strcmp(prefix->prefix, "----") && !strcmp(prefix->color, "\33[0;34m"))
 		logger->info(formatted_msg);

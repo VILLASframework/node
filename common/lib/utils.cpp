@@ -101,7 +101,7 @@ int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 {
 	int ret;
 
-	auto logger = logging.get("signals");
+	Logger logger = logging.get("signals");
 
 	logger->info("Initialize subsystem");
 
