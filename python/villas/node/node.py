@@ -37,23 +37,27 @@ class Node(object):
 
         self.log = open(self.log_filename, 'w+')
 
-        LOGGER.info("Starting VILLASnode with config: %s", self.config_file.name)
+        LOGGER.info("Starting VILLASnode instance with config: %s", self.config_file.name)
 
         self.child = subprocess.Popen([self.executable, self.config_file.name], stdout=self.log, stderr=self.log)
 
     def pause(self):
+        LOGGER.info("Pausing VILLASnode instance")
         self.child.send_signal(signal.SIGSTOP)
 
     def resume(self):
+        LOGGER.info("Resuming VILLASnode instance")
         self.child.send_signal(signal.SIGCONT)
 
     def stop(self):
+        LOGGER.info("Stopping VILLASnode instance")
         self.child.send_signal(signal.SIGTERM)
         self.child.wait()
 
         self.log.close()
 
     def restart(self):
+        LOGGER.info("Restarting VILLASnode instance")
         self.request('restart')
 
     @property
