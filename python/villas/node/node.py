@@ -33,7 +33,7 @@ class Node(object):
 
         if self.log_filename is None:
             now = datetime.datetime.now()
-            self.log_filename = now.strftime('villas-node_%Y-%m%-%d_%H-%M-%S.log')
+            self.log_filename = now.strftime('villas-node_%Y-%m-%d_%H-%M-%S.log')
 
         self.log = open(self.log_filename, 'w+')
 
