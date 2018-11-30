@@ -46,7 +46,7 @@
 
 using namespace villas;
 
-static auto logger = logging.get("kernel:vfio");
+static Logger logger = logging.get("kernel:vfio");
 
 static const char *vfio_pci_region_names[] = {
     "PCI_BAR0",		// VFIO_PCI_BAR0_REGION_INDEX,

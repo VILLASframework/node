@@ -69,7 +69,7 @@ void Terminal::resize(int, siginfo_t *, void *)
 	if (ret)
 		throw new SystemError("Failed to get terminal dimensions");
 
-	auto logger = logging.get("terminal");
+	Logger logger = logging.get("terminal");
 
 	logger->debug("New terminal size: {}x{}", window.ws_row, window.ws_col);
 };
