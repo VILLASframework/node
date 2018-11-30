@@ -44,7 +44,6 @@
 
 static size_t pgsz = -1;
 static size_t hugepgsz = -1;
-static bool use_huge = true;
 
 int memory_hugepage_init()
 {
@@ -62,6 +61,8 @@ int memory_hugepage_init()
 /** Allocate memory backed by hugepages with malloc() like interface */
 static struct memory_allocation * memory_hugepage_alloc(struct memory_type *m, size_t len, size_t alignment)
 {
+	static bool use_huge = true;
+
 	int ret, flags, fd;
 	size_t sz;
 
@@ -101,6 +102,7 @@ retry:	if (use_huge) {
 	ma->address = mmap(NULL, ma->length, PROT_READ | PROT_WRITE, flags, fd, 0);
 	if (ma->address == MAP_FAILED) {
 		if (use_huge) {
+			warn("Failed to map hugepages, try with normal pages instead");
 			use_huge = false;
 			goto retry;
 		}
