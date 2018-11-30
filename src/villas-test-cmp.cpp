@@ -79,7 +79,8 @@ int main(int argc, char *argv[])
 	struct pool pool = { .state = STATE_DESTROYED };
 
 	/* Parse Arguments */
-	char c, *endptr;
+	int c;
+	char *endptr;
 	while ((c = getopt (argc, argv, "he:vtsf:V")) != -1) {
 		switch (c) {
 			case 'e':

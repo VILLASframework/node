@@ -87,7 +87,8 @@ int main(int argc, char *argv[])
 	int ret;
 
 	/* Parse Arguments */
-	char c, *endptr;
+	int c;
+	char *endptr;
 	while ((c = getopt (argc, argv, "w:h:r:f:c:b:V")) != -1) {
 		switch (c) {
 			case 'c':

@@ -50,7 +50,8 @@ int main(int argc, char *argv[])
 	const char *input_format = "villas.human";
 	const char *output_format = "villas.human";
 
-	char c, *endptr;
+	int c;
+	char *endptr;
 	while ((c = getopt(argc, argv, "Vhd:i:o:")) != -1) {
 		switch (c) {
 			case 'V':
