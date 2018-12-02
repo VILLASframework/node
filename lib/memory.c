@@ -108,7 +108,7 @@ int memory_init(int hugepages)
 		if (ret)
 			return ret;
 
-		debug(LOG_MEM | 2, "Increased ressource limit of locked memory to %d bytes", lock);
+		debug(LOG_MEM | 2, "Increased ressource limit of locked memory to %zd bytes", lock);
 	}
 #endif
 	return 0;
