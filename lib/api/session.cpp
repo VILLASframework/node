@@ -50,6 +50,7 @@ Session::~Session()
 {
 	queue_destroy(&request.queue);
 	queue_destroy(&response.queue);
+	logger->debug("Destroyed API session: {}", getName());
 }
 
 

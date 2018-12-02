@@ -30,6 +30,8 @@ void Wsi::runPendingActions()
 {
 	Session::runPendingActions();
 
+	logger->debug("Ran pending actions. Triggering on_writeable callback: wsi={}", (void *) wsi);
+
 	web->callbackOnWritable(wsi);
 }
 

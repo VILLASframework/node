@@ -103,6 +103,8 @@ void Server::start()
 	if (ret)
 		throw SystemError("Failed to listen on API socket");
 
+	logger->info("Listening on UNIX socket: {}", socketPath);
+
 	state = STATE_STARTED;
 }
 

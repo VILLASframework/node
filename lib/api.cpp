@@ -101,10 +101,12 @@ void Api::run()
 
 void Api::worker()
 {
+	logger->info("Started worker");
+
 	while (running) {
 		run();
 		server.run();
 	}
 
-	logger->info("Stopping worker");
+	logger->info("Stopped worker");
 }
