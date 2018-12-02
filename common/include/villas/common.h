@@ -50,6 +50,9 @@ enum state {
  */
 typedef int (*dtor_cb_t)(void *);
 
+/** Convert state enum to human readable string. */
+const char * state_print(enum state s);
+
 #ifdef __cplusplus
 }
 #endif
