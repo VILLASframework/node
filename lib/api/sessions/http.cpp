@@ -109,18 +109,13 @@ int Http::write()
 
 	ret = lws_write(wsi, (unsigned char *) headers.str().data(), headers.str().size(), LWS_WRITE_HTTP_HEADERS);
 	if (ret < 0)
-		return 1;
+		return -1;
 
 	ret = lws_write(wsi, (unsigned char *) response.buffer.data(), response.buffer.size(), LWS_WRITE_HTTP);
 	if (ret < 0)
-		return 1;
+		return -1;
 
-	return 0;
-}
-
-Http::~Http()
-{
-	logger->debug("Closed API session: {}", getName());
+	return 1;
 }
 
 std::string Http::getName()
@@ -159,9 +154,9 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			if (!s)
 				return -1;
 
-			s->~Http();
-
 			a->sessions.remove(s);
+
+			s->~Http();
 
 			return 1;
 
@@ -178,7 +173,11 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			break;
 
 		case LWS_CALLBACK_HTTP_WRITEABLE:
-			s->write();
+			ret = s->write();
+			if (ret == 0) {
+				goto try_to_reuse;
+				break;
+			}
 
 			goto try_to_reuse;
 
