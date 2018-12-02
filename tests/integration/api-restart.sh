@@ -24,6 +24,7 @@
 
 set -e
 
+BASE_CONF=$(mktemp)
 LOCAL_CONF=$(mktemp)
 FETCHED_CONF=$(mktemp)
 
@@ -57,20 +58,28 @@ cat <<EOF > ${LOCAL_CONF}
 }
 EOF
 
-# Start without a configuration
-villas-node &
+cat <<EOF > ${BASE_CONF}
+{
+	"http" : {
+		"port" : 8080
+	}
+}
+EOF
+
+# Start with base configuration
+villas-node ${BASE_CONF} &
 
 # Wait for node to complete init
-sleep 0.2
+sleep 1
 
 # Restart with configuration
 curl -sX POST --data '{ "action" : "restart", "request" : { "config": "'${LOCAL_CONF}'" }, "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost:8080/api/v1
 
 # Wait for node to complete init
-sleep 1
+sleep 2
 
 # Fetch config via API
-curl -sX POST --data '{ "action" : "config", "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost/api/v1 > ${FETCHED_CONF}
+curl -sX POST --data '{ "action" : "config", "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost:8080/api/v1 > ${FETCHED_CONF}
 
 # Shutdown VILLASnode
 kill %%
@@ -79,6 +88,6 @@ kill %%
 diff -u <(jq -S .response < ${FETCHED_CONF}) <(jq -S . < ${LOCAL_CONF})
 RC=$?
 
-rm -f ${LOCAL_CONF} ${FETCHED_CONF}
+rm -f ${LOCAL_CONF} ${FETCHED_CONF} ${BASE_CONF}
 
 exit $RC
