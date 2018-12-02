@@ -41,7 +41,7 @@ cat > ${CONFIG_FILE} <<EOF
 				"address": "127.0.0.1:12001"
 			},
 			"in" : {
-				"address": "*:12000",
+				"address": "127.0.0.1:12000",
 				"signals" : {
 					"type" : "float",
 					"count" : 1
@@ -55,7 +55,7 @@ cat > ${CONFIG_FILE} <<EOF
 				"address": "127.0.0.1:12000"
 			},
 			"in" : {
-				"address" : "*:12001",
+				"address" : "127.0.0.1:12001",
 				"signals" : {
 					"type" : "float",
 					"count" : 1
