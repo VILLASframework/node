@@ -85,7 +85,7 @@ int lockMemory()
 #ifdef _POSIX_MEMLOCK
 	ret = mlockall(MCL_CURRENT | MCL_FUTURE);
 	if (ret)
-		throw new SystemError("Failed to lock memory");
+		throw SystemError("Failed to lock memory");
 #endif
 
 	return 0;
@@ -117,7 +117,7 @@ int setAffinity(int affinity)
 
 	ret = sched_setaffinity(0, cset_pin.size(), cset_pin);
 	if (ret)
-		throw new SystemError("Failed to set CPU affinity to {}", (std::string) cset_pin);
+		throw SystemError("Failed to set CPU affinity to {}", (std::string) cset_pin);
 
 	logger->debug("Set affinity to {}", (std::string) cset_pin);
 
@@ -133,7 +133,7 @@ int setPriority(int priority)
 
 	ret = sched_setscheduler(0, SCHED_FIFO, &param);
 	if (ret)
-		throw new SystemError("Failed to set real time priority");
+		throw SystemError("Failed to set real time priority");
 
 	logger->debug("Task priority set to {}", priority);
 

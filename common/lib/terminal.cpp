@@ -45,12 +45,12 @@ Terminal::Terminal()
 
 		ret = sigaction(SIGWINCH, &sa_resize, NULL);
 		if (ret)
-			throw new SystemError("Failed to register signal handler");
+			throw SystemError("Failed to register signal handler");
 
 		/* Try to get initial terminal dimensions */
 		ret = ioctl(STDERR_FILENO, TIOCGWINSZ, &window);
 		if (ret)
-			throw new SystemError("Failed to get terminal dimensions");
+			throw SystemError("Failed to get terminal dimensions");
 	}
 
 	/* Fallback if for some reason we can not determine a prober window size */
@@ -67,7 +67,7 @@ void Terminal::resize(int, siginfo_t *, void *)
 
 	ret = ioctl(STDERR_FILENO, TIOCGWINSZ, &window);
 	if (ret)
-		throw new SystemError("Failed to get terminal dimensions");
+		throw SystemError("Failed to get terminal dimensions");
 
 	Logger logger = logging.get("terminal");
 
