@@ -47,6 +47,6 @@ target_link_libraries(unit-tests-common PUBLIC
 )
 
 add_custom_target(run-unit-tests-common
-		COMMAND $<TARGET_FILE:unit-tests-common> ${CRITERION_OPTS}
-		USES_TERMINAL
-	)
+	COMMAND $<TARGET_FILE:unit-tests-common> ${CRITERION_OPTS}
+	USES_TERMINAL
+)

@@ -117,7 +117,6 @@ private:
 	std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn> memoryBlock;
 };
 
-
 /**
  * @brief Base memory allocator
  *
