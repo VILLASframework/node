@@ -25,15 +25,15 @@
 
 #include <mutex>
 #include <condition_variable>
-#include <queue>
+
+#include <villas/queue.hpp>
 
 namespace villas {
 
 template<typename T>
-class QueueSignalled {
+class QueueSignalled : public Queue<T> {
 
 private:
-	std::queue<T> queue;
 	std::mutex mutex;
 	std::condition_variable cv;
 
@@ -42,7 +42,8 @@ public:
 	{
 		std::lock_guard<std::mutex> l(mutex);
 
-		queue.push(data);
+		Queue<T>::push(data);
+
 		cv.notify_one();
 	}
 
@@ -50,20 +51,17 @@ public:
 	{
 		std::unique_lock<std::mutex> l(mutex);
 
-		while(queue.empty())
-		  cv.wait(l);
+		while (Queue<T>::empty())
+			cv.wait(l);
 
-		T res = queue.front();
-		queue.pop();
-
-		return res;
+		return Queue<T>::pop();
 	}
 
 	bool empty()
 	{
 		std::unique_lock<std::mutex> l(mutex);
 
-		return queue.empty();
+		return Queue<T>::empty();
 	}
 };
 
