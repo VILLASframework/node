@@ -24,10 +24,11 @@
 
 #include <villas/plugin.h>
 #include <villas/node.h>
-#include <villas/super_node.h>
+#include <villas/super_node.hpp>
 #include <villas/utils.h>
 #include <villas/stats.h>
-
+#include <villas/api/session.hpp>
+#include <villas/api/action.hpp>
 #include <villas/api.hpp>
 
 namespace villas {
@@ -37,10 +38,9 @@ namespace api {
 template<int (*A)(struct node *)>
 class NodeAction : public Action  {
 
-proctected:
-	int action(struct node *n) = 0;
-
 public:
+	using Action::Action;
+
 	virtual int execute(json_t *args, json_t **resp)
 	{
 		int ret;
@@ -53,13 +53,13 @@ public:
 		if (ret)
 			return ret;
 
-		struct list *nodes = &s->api->super_node->nodes;
-		struct node *node = list_lookup(nodes, node_str);
+		struct list *nodes = session->getSuperNode()->getNodes();
+		struct node *n = (struct node *) list_lookup(nodes, node_str);
 
-		if (!node)
+		if (!n)
 			return -1;
 
-		return A(node);
+		return A(n);
 	}
 
 };
