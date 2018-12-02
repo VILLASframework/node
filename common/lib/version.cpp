@@ -36,14 +36,14 @@ Version::Version(const std::string &str)
 	auto comp = tokenize(str, ".");
 
 	if (comp.size() > 3)
-		throw new std::invalid_argument("Not a valid version string");
+		throw std::invalid_argument("Not a valid version string");
 
 	for (unsigned i = 0; i < 3; i++) {
 		if (i < comp.size()) {
 			components[i] = std::stoi(comp[i], &endpos, 10);
 
 			if (comp[i].begin() + endpos != comp[i].end())
-				throw new std::invalid_argument("Not a valid version string");
+				throw std::invalid_argument("Not a valid version string");
 		}
 		else
 			components[i] = 0;

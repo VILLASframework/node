@@ -50,7 +50,7 @@ public:
 
 		setp = CPU_ALLOC(num_cpus);
 		if (!setp)
-			throw new villas::RuntimeError("Failed to allocated memory");
+			throw villas::RuntimeError("Failed to allocated memory");
 
 		zero();
 	}

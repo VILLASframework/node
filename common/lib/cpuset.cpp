@@ -63,7 +63,7 @@ CpuSet::CpuSet(const std::string &str) :
 			start = std::stoi(token, &endpos);
 
 			if (token.begin() + endpos != token.end())
-				throw new std::invalid_argument("Not a valid CPU set");
+				throw std::invalid_argument("Not a valid CPU set");
 
 			if (start < num_cpus)
 				set(start);
@@ -72,14 +72,14 @@ CpuSet::CpuSet(const std::string &str) :
 			start = std::stoi(token, &endpos);
 
 			if (token.begin() + endpos != token.begin() + sep)
-				throw new std::invalid_argument("Not a valid CPU set");
+				throw std::invalid_argument("Not a valid CPU set");
 
 			auto token2 = token.substr(endpos + 1);
 
 			end = std::stoi(token2, &endpos);
 
 			if (token2.begin() + endpos != token2.end())
-				throw new std::invalid_argument("Not a valid CPU set");
+				throw std::invalid_argument("Not a valid CPU set");
 
 			for (size_t i = start; i <= end && i < num_cpus; i++)
 				set(i);

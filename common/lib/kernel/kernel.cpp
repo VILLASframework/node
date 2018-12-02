@@ -32,7 +32,7 @@ Version villas::kernel::getVersion()
 	struct utsname uts;
 
 	if (uname(&uts) < 0)
-		throw new SystemError("Failed to retrieve system identification");
+		throw SystemError("Failed to retrieve system identification");
 
 	std::string rel = uts.release;
 
