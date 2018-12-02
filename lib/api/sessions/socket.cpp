@@ -50,7 +50,6 @@ std::string Socket::getName()
 
 int Socket::read()
 {
-	int ret;
 	json_t *j;
 	json_error_t err;
 
