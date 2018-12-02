@@ -52,10 +52,8 @@ int kernel_get_cacheline_size()
 	pclose(fp);
 
 	return ret == 1 ? size : -1;
-#elif defined(__x86_64__) || defined(__i386__)
-	return 64; /** @todo fixme */
 #else
-  #error "Unsupported architecture"
+	return CACHELINE_SIZE;
 #endif
 }
 
