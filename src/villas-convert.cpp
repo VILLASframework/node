@@ -101,19 +101,19 @@ int main(int argc, char *argv[])
 	for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
 		fmt = format_type_lookup(dirs[i].name);
 		if (!fmt)
-			throw new RuntimeError("Invalid format: {}", dirs[i].name);
+			throw RuntimeError("Invalid format: {}", dirs[i].name);
 
 		ret = io_init_auto(dirs[i].io, fmt, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
 		if (ret)
-			throw new RuntimeError("Failed to initialize IO: {}", dirs[i].name);
+			throw RuntimeError("Failed to initialize IO: {}", dirs[i].name);
 
 		ret = io_check(dirs[i].io);
 		if (ret)
-			throw new RuntimeError("Failed to validate IO configuration");
+			throw RuntimeError("Failed to validate IO configuration");
 
 		ret = io_open(dirs[i].io, nullptr);
 		if (ret)
-			throw new RuntimeError("Failed to open IO");
+			throw RuntimeError("Failed to open IO");
 	}
 
 	struct sample *smp = sample_alloc_mem(DEFAULT_SAMPLE_LENGTH);
@@ -131,11 +131,11 @@ int main(int argc, char *argv[])
 	for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
 		ret = io_close(dirs[i].io);
 		if (ret)
-			throw new RuntimeError("Failed to close IO");
+			throw RuntimeError("Failed to close IO");
 
 		ret = io_destroy(dirs[i].io);
 		if (ret)
-			throw new RuntimeError("Failed to destroy IO");
+			throw RuntimeError("Failed to destroy IO");
 	}
 
 	return 0;

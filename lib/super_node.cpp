@@ -83,7 +83,7 @@ int SuperNode::parseUri(const std::string &u)
 
 		af = afopen(u.c_str(), "r");
 		if (!af)
-			throw new RuntimeError("Failed to open configuration from: {}", u);
+			throw RuntimeError("Failed to open configuration from: {}", u);
 
 		f = af->file;
 	}
@@ -130,11 +130,11 @@ int SuperNode::parseUri(const std::string &u)
 
 		json = config_to_json(json_root);
 		if (json == nullptr)
-			throw new RuntimeError("Failed to convert JSON to configuration file");
+			throw RuntimeError("Failed to convert JSON to configuration file");
 
 		config_destroy(&cfg);
 #else
-		throw new JsonError(err, "Failed to parse configuration file");
+		throw JsonError(err, "Failed to parse configuration file");
 #endif /* LIBCONFIG_FOUND */
 		}
 
@@ -179,7 +179,7 @@ int SuperNode::parseJson(json_t *j)
 		"name", &nme
 	);
 	if (ret)
-		throw new JsonError(err, "Failed to parse global configuration");
+		throw JsonError(err, "Failed to parse global configuration");
 
 	if (nme)
 		name = nme;
@@ -195,7 +195,7 @@ int SuperNode::parseJson(json_t *j)
 	/* Parse plugins */
 	if (json_plugins) {
 		if (!json_is_array(json_plugins))
-			throw new ConfigError(json_plugins, "node-config-plugins", "Setting 'plugins' must be a list of strings");
+			throw ConfigError(json_plugins, "node-config-plugins", "Setting 'plugins' must be a list of strings");
 
 		size_t i;
 		json_t *json_plugin;
@@ -204,11 +204,11 @@ int SuperNode::parseJson(json_t *j)
 
 			ret = plugin_init(p);
 			if (ret)
-				throw new RuntimeError("Failed to initialize plugin");
+				throw RuntimeError("Failed to initialize plugin");
 
 			ret = plugin_parse(p, json_plugin);
 			if (ret)
-				throw new RuntimeError("Failed to parse plugin");
+				throw RuntimeError("Failed to parse plugin");
 
 			list_push(&plugins, p);
 		}
@@ -217,7 +217,7 @@ int SuperNode::parseJson(json_t *j)
 	/* Parse nodes */
 	if (json_nodes) {
 		if (!json_is_object(json_nodes))
-			throw new ConfigError(json_nodes, "node-config-nodes", "Setting 'nodes' must be a group with node name => group mappings.");
+			throw ConfigError(json_nodes, "node-config-nodes", "Setting 'nodes' must be a group with node name => group mappings.");
 
 		const char *name;
 		json_t *json_node;
@@ -227,21 +227,21 @@ int SuperNode::parseJson(json_t *j)
 
 			ret = json_unpack_ex(json_node, &err, 0, "{ s: s }", "type", &type);
 			if (ret)
-				throw new JsonError(err, "Failed to parse node");
+				throw JsonError(err, "Failed to parse node");
 
 			nt = node_type_lookup(type);
 			if (!nt)
-				throw new RuntimeError("Invalid node type: {}", type);
+				throw RuntimeError("Invalid node type: {}", type);
 
 			auto *n = (struct node *) alloc(sizeof(struct node));
 
 			ret = node_init(n, nt);
 			if (ret)
-				throw new RuntimeError("Failed to initialize node");
+				throw RuntimeError("Failed to initialize node");
 
 			ret = node_parse(n, json_node, name);
 			if (ret)
-				throw new RuntimeError("Failed to parse node");
+				throw RuntimeError("Failed to parse node");
 
 			list_push(&nodes, n);
 		}
@@ -259,11 +259,11 @@ int SuperNode::parseJson(json_t *j)
 
 			ret = path_init(p);
 			if (ret)
-				throw new RuntimeError("Failed to initialize path");
+				throw RuntimeError("Failed to initialize path");
 
 			ret = path_parse(p, json_path, &nodes);
 			if (ret)
-				throw new RuntimeError("Failed to parse path");
+				throw RuntimeError("Failed to parse path");
 
 			list_push(&paths, p);
 
@@ -272,11 +272,11 @@ int SuperNode::parseJson(json_t *j)
 
 				ret = path_init(r);
 				if (ret)
-					throw new RuntimeError("Failed to init path");
+					throw RuntimeError("Failed to init path");
 
 				ret = path_reverse(p, r);
 				if (ret)
-					throw new RuntimeError("Failed to reverse path {}", path_name(p));
+					throw RuntimeError("Failed to reverse path {}", path_name(p));
 
 				list_push(&paths, r);
 			}
@@ -301,7 +301,7 @@ int SuperNode::check()
 
 		ret = node_check(n);
 		if (ret)
-			throw new RuntimeError("Invalid configuration for node {}", node_name(n));
+			throw RuntimeError("Invalid configuration for node {}", node_name(n));
 	}
 
 	for (size_t i = 0; i < list_length(&paths); i++) {
@@ -309,7 +309,7 @@ int SuperNode::check()
 
 		ret = path_check(p);
 		if (ret)
-			throw new RuntimeError("Invalid configuration for path {}", path_name(p));
+			throw RuntimeError("Invalid configuration for path {}", path_name(p));
 	}
 
 	state = STATE_CHECKED;
@@ -340,7 +340,7 @@ int SuperNode::start()
 
 		ret = node_type_start(n->_vt, reinterpret_cast<super_node *>(this));
 		if (ret)
-			throw new RuntimeError("Failed to start node-type: {}", node_type_name(n->_vt));
+			throw RuntimeError("Failed to start node-type: {}", node_type_name(n->_vt));
 	}
 
 	logger->info("Starting nodes");
@@ -349,13 +349,13 @@ int SuperNode::start()
 
 		ret = node_init2(n);
 		if (ret)
-			throw new RuntimeError("Failed to prepare node: {}", node_name(n));
+			throw RuntimeError("Failed to prepare node: {}", node_name(n));
 
 		int refs = list_count(&paths, (cmp_cb_t) path_uses_node, n);
 		if (refs > 0) {
 			ret = node_start(n);
 			if (ret)
-				throw new RuntimeError("Failed to start node: {}", node_name(n));
+				throw RuntimeError("Failed to start node: {}", node_name(n));
 		}
 		else
 			logger->warn("No path is using the node {}. Skipping...", node_name(n));
@@ -368,11 +368,11 @@ int SuperNode::start()
 		if (p->enabled) {
 			ret = path_init2(p);
 			if (ret)
-				throw new RuntimeError("Failed to prepare path: {}", path_name(p));
+				throw RuntimeError("Failed to prepare path: {}", path_name(p));
 
 			ret = path_start(p);
 			if (ret)
-				throw new RuntimeError("Failed to start path: {}", path_name(p));
+				throw RuntimeError("Failed to start path: {}", path_name(p));
 		}
 		else
 			logger->warn("Path {} is disabled. Skipping...", path_name(p));
@@ -384,7 +384,7 @@ int SuperNode::start()
 
 		ret = task_init(&task, 1.0 / stats, CLOCK_REALTIME);
 		if (ret)
-			throw new RuntimeError("Failed to create stats timer");
+			throw RuntimeError("Failed to create stats timer");
 	}
 #endif /* WITH_HOOKS */
 
@@ -403,7 +403,7 @@ int SuperNode::stop()
 
 		ret = task_destroy(&task);
 		if (ret)
-			throw new RuntimeError("Failed to stop stats timer");
+			throw RuntimeError("Failed to stop stats timer");
 	}
 #endif /* WITH_HOOKS */
 
@@ -413,7 +413,7 @@ int SuperNode::stop()
 
 		ret = path_stop(p);
 		if (ret)
-			throw new RuntimeError("Failed to stop path: {}", path_name(p));
+			throw RuntimeError("Failed to stop path: {}", path_name(p));
 	}
 
 	logger->info("Stopping nodes");
@@ -422,7 +422,7 @@ int SuperNode::stop()
 
 		ret = node_stop(n);
 		if (ret)
-			throw new RuntimeError("Failed to stop node: {}", node_name(n));
+			throw RuntimeError("Failed to stop node: {}", node_name(n));
 	}
 
 	logger->info("Stopping node-types");
@@ -432,7 +432,7 @@ int SuperNode::stop()
 		if (p->type == PLUGIN_TYPE_NODE) {
 			ret = node_type_stop(&p->node);
 			if (ret)
-				throw new RuntimeError("Failed to stop node-type: {}", node_type_name(&p->node));
+				throw RuntimeError("Failed to stop node-type: {}", node_type_name(&p->node));
 		}
 	}
 

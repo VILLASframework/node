@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
 		continue;
 
 check:		if (optarg == endptr)
-				throw new RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
+				throw RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
 	}
 
 	if (argc != optind + 2) {
@@ -148,35 +148,35 @@ check:		if (optarg == endptr)
 
 	ret = utils::signals_init(quit);
 	if (ret)
-		throw new RuntimeError("Failed to initialize signals subsystem");
+		throw RuntimeError("Failed to initialize signals subsystem");
 
 	if (uri) {
 		ret = sn.parseUri(uri);
 		if (ret)
-			throw new RuntimeError("Failed to parse configuration");
+			throw RuntimeError("Failed to parse configuration");
 	}
 	else
 		logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
 	node = sn.getNode(nodestr);
 	if (!node)
-		throw new RuntimeError("There's no node with the name '{}'", nodestr);
+		throw RuntimeError("There's no node with the name '{}'", nodestr);
 
 	ret = node_type_start(node->_vt, reinterpret_cast<super_node *>(&sn));
 	if (ret)
-		throw new RuntimeError("Failed to start node-type {}: reason={}", node_type_name(node->_vt), ret);
+		throw RuntimeError("Failed to start node-type {}: reason={}", node_type_name(node->_vt), ret);
 
 	ret = node_init2(node);
 	if (ret)
-		throw new RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
+		throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 
 	ret = node_start(node);
 	if (ret)
-		throw new RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
+		throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 
 	ret = hist_init(&hist, hist_buckets, hist_warmup);
 	if (ret)
-		throw new RuntimeError("Failed to initialize histogram");
+		throw RuntimeError("Failed to initialize histogram");
 
 	/* Print header */
 	fprintf(stdout, "%17s%5s%10s%10s%10s%10s%10s\n", "timestamp", "seq", "rtt", "min", "max", "mean", "stddev");
@@ -216,21 +216,21 @@ check:		if (optarg == endptr)
 		fclose(f);
 	}
 	else
-		throw new RuntimeError("Invalid file descriptor: {}", fd);
+		throw RuntimeError("Invalid file descriptor: {}", fd);
 
 	hist_print(&hist, 1);
 
 	ret = hist_destroy(&hist);
 	if (ret)
-		throw new RuntimeError("Failed to destroy histogram");
+		throw RuntimeError("Failed to destroy histogram");
 
 	ret = node_stop(node);
 	if (ret)
-		throw new RuntimeError("Failed to stop node {}: reason={}", node_name(node), ret);
+		throw RuntimeError("Failed to stop node {}: reason={}", node_name(node), ret);
 
 	ret = node_type_stop(node->_vt);
 	if (ret)
-		throw new RuntimeError("Failed to stop node-type {}: reason={}", node_type_name(node->_vt), ret);
+		throw RuntimeError("Failed to stop node-type {}: reason={}", node_type_name(node->_vt), ret);
 
 	delete smp_send;
 	delete smp_recv;

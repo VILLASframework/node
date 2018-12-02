@@ -206,7 +206,7 @@ int Web::parse(json_t *cfg)
 		"enabled", &enabled
 	);
 	if (ret)
-		throw new JsonError(err, "Failed to http section of configuration file");
+		throw JsonError(err, "Failed to http section of configuration file");
 
 	if (cert)
 		ssl_cert = cert;
@@ -248,7 +248,7 @@ void Web::start()
 
 	context = lws_create_context(&ctx_info);
 	if (context == nullptr)
-		throw new RuntimeError("Failed to initialize server context");
+		throw RuntimeError("Failed to initialize server context");
 
 	for (int tries = 10; tries > 0; tries--) {
 		vhost = lws_create_vhost(context, &ctx_info);
@@ -260,7 +260,7 @@ void Web::start()
 	}
 
 	if (vhost == NULL)
-		throw new RuntimeError("Failed to initialize virtual host");
+		throw RuntimeError("Failed to initialize virtual host");
 
 	/* Start thread */
 	running = true;

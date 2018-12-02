@@ -58,7 +58,7 @@ void Server::start()
 
 	sd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sd < 0)
-		throw new SystemError("Failed to create Api socket");
+		throw SystemError("Failed to create Api socket");
 
 	pollfd pfd = {
 		.fd = sd,
@@ -90,18 +90,18 @@ void Server::start()
 
 	ret = unlink(socketPath.c_str());
 	if (ret && errno != ENOENT)
-		throw new SystemError("Failed to unlink API socket");
+		throw SystemError("Failed to unlink API socket");
 
 	strncpy(sun.sun_path, socketPath.c_str(), sizeof(sun.sun_path) - 1);
 #endif
 
 	ret = bind(sd, (struct sockaddr *) &sun, sizeof(struct sockaddr_un));
 	if (ret)
-		throw new SystemError("Failed to bind API socket");
+		throw SystemError("Failed to bind API socket");
 
 	ret = listen(sd, 5);
 	if (ret)
-		throw new SystemError("Failed to listen on API socket");
+		throw SystemError("Failed to listen on API socket");
 
 	state = STATE_STARTED;
 }
@@ -114,7 +114,7 @@ void Server::stop()
 
 	ret = close(sd);
 	if (ret)
-		throw new SystemError("Failed to close API socket");;
+		throw SystemError("Failed to close API socket");;
 
 	state = STATE_STOPPED;
 }
@@ -127,7 +127,7 @@ void Server::run(int timeout)
 
 	ret = poll(pfds.data(), pfds.size(), timeout);
 	if (ret < 0)
-		throw new SystemError("Failed to poll on API socket");;
+		throw SystemError("Failed to poll on API socket");;
 
 	for (unsigned i = 0; i < pfds.size(); i++) {
 		auto &pfd = pfds[i];

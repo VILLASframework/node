@@ -134,7 +134,7 @@ static void * send_loop(void *ctx)
 	while (!io_eof(dirs->send.io)) {
 		allocated = sample_alloc_many(&dirs->send.pool, smps, dirs->send.node->out.vectorize);
 		if (ret < 0)
-			throw new RuntimeError("Failed to get {} samples out of send pool ({}).", dirs->send.node->out.vectorize, ret);
+			throw RuntimeError("Failed to get {} samples out of send pool ({}).", dirs->send.node->out.vectorize, ret);
 		else if (allocated < dirs->send.node->out.vectorize)
 			logger->warn("Send pool underrun");
 
@@ -207,7 +207,7 @@ static void * recv_loop(void *ctx)
 	for (;;) {
 		allocated = sample_alloc_many(&dirs->recv.pool, smps, dirs->recv.node->in.vectorize);
 		if (allocated < 0)
-			throw new RuntimeError("Failed to allocate {} samples from receive pool.", dirs->recv.node->in.vectorize);
+			throw RuntimeError("Failed to allocate {} samples from receive pool.", dirs->recv.node->in.vectorize);
 		else if (allocated < dirs->recv.node->in.vectorize)
 			logger->warn("Receive pool underrun: allocated only {} of {} samples", allocated, dirs->recv.node->in.vectorize);
 
@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
 			case 'o':
 				ret = json_object_extend_str(cfg_cli, optarg);
 				if (ret)
-					throw new RuntimeError("Invalid option: {}", optarg);
+					throw RuntimeError("Invalid option: {}", optarg);
 				break;
 
 			case 'd':
@@ -308,7 +308,7 @@ int main(int argc, char *argv[])
 		continue;
 
 check:		if (optarg == endptr)
-			throw new RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
+			throw RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
 	}
 
 	if (argc != optind + 2) {
@@ -324,35 +324,35 @@ check:		if (optarg == endptr)
 
 	ret = utils::signals_init(quit);
 	if (ret)
-		throw new RuntimeError("Failed to initialize signals");
+		throw RuntimeError("Failed to initialize signals");
 
 	if (uri) {
 		ret = sn.parseUri(uri);
 		if (ret)
-			throw new RuntimeError("Failed to parse configuration");
+			throw RuntimeError("Failed to parse configuration");
 	}
 	else
 		logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
 	fmt = format_type_lookup(format);
 	if (!fmt)
-		throw new RuntimeError("Invalid format: {}", format);
+		throw RuntimeError("Invalid format: {}", format);
 
 	ret = io_init_auto(&io, fmt, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
 	if (ret)
-		throw new RuntimeError("Failed to initialize IO");
+		throw RuntimeError("Failed to initialize IO");
 
 	ret = io_check(&io);
 	if (ret)
-		throw new RuntimeError("Failed to validate IO configuration");
+		throw RuntimeError("Failed to validate IO configuration");
 
 	ret = io_open(&io, nullptr);
 	if (ret)
-		throw new RuntimeError("Failed to open IO");
+		throw RuntimeError("Failed to open IO");
 
 	node = sn.getNode(nodestr);
 	if (!node)
-		throw new RuntimeError("Node {} does not exist!", nodestr);
+		throw RuntimeError("Node {} does not exist!", nodestr);
 
 <<<<<<< HEAD
 #ifdef LIBWEBSOCKETS_FOUND
@@ -375,19 +375,19 @@ check:		if (optarg == endptr)
 
 	ret = node_type_start(node->_vt, reinterpret_cast<super_node *>(&sn));
 	if (ret)
-		throw new RuntimeError("Failed to intialize node type {}: reason={}", node_type_name(node->_vt), ret);
+		throw RuntimeError("Failed to intialize node type {}: reason={}", node_type_name(node->_vt), ret);
 
 	ret = node_check(node);
 	if (ret)
-		throw new RuntimeError("Invalid node configuration");
+		throw RuntimeError("Invalid node configuration");
 
 	ret = node_init2(node);
 	if (ret)
-		throw new RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
+		throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 
 	ret = node_start(node);
 	if (ret)
-		throw new RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
+		throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 
 	/* Start threads */
 	if (dirs.recv.enabled) {
@@ -417,7 +417,7 @@ check:		if (optarg == endptr)
 
 	ret = node_stop(node);
 	if (ret)
-		throw new RuntimeError("Failed to stop node {}: reason={}", node_name(node), ret);
+		throw RuntimeError("Failed to stop node {}: reason={}", node_name(node), ret);
 
 	ret = node_type_stop(node->_vt);
 	if (ret)
@@ -437,11 +437,11 @@ check:		if (optarg == endptr)
 
 	ret = io_close(&io);
 	if (ret)
-		throw new RuntimeError("Failed to close IO");
+		throw RuntimeError("Failed to close IO");
 
 	ret = io_destroy(&io);
 	if (ret)
-		throw new RuntimeError("Failed to destroy IO");
+		throw RuntimeError("Failed to destroy IO");
 
 	logger->info(CLR_GRN("Goodbye!"));
 

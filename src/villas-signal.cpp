@@ -180,21 +180,21 @@ int main(int argc, char *argv[])
 
 	ret = utils::signals_init(quit);
 	if (ret)
-		throw new RuntimeError("Failed to intialize signals");
+		throw RuntimeError("Failed to intialize signals");
 
 	ft = format_type_lookup(format);
 	if (!ft)
-		throw new RuntimeError("Invalid output format '{}'", format);
+		throw RuntimeError("Invalid output format '{}'", format);
 
 	memory_init(0); // Otherwise, ht->size in hash_table_hash() will be zero
 
 	nt = node_type_lookup("signal");
 	if (!nt)
-		throw new RuntimeError("Signal generation is not supported.");
+		throw RuntimeError("Signal generation is not supported.");
 
 	ret = node_init(&n, nt);
 	if (ret)
-		throw new RuntimeError("Failed to initialize node");
+		throw RuntimeError("Failed to initialize node");
 
 	cfg = parse_cli(argc, argv);
 	if (!cfg) {
@@ -211,35 +211,35 @@ int main(int argc, char *argv[])
 	// nt == n._vt
 	ret = node_type_start(nt, nullptr);
 	if (ret)
-		throw new RuntimeError("Failed to initialize node type: {}", node_type_name(nt));
+		throw RuntimeError("Failed to initialize node type: {}", node_type_name(nt));
 
 	ret = node_check(&n);
 	if (ret)
-		throw new RuntimeError("Failed to verify node configuration");
+		throw RuntimeError("Failed to verify node configuration");
 
 	ret = pool_init(&q, 16, SAMPLE_LENGTH(list_length(&n.signals)), &memory_heap);
 	if (ret)
-		throw new RuntimeError("Failed to initialize pool");
+		throw RuntimeError("Failed to initialize pool");
 
 	ret = node_init2(&n);
 	if (ret)
-		throw new RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
+		throw RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
 
 	ret = node_start(&n);
 	if (ret)
-		throw new RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
+		throw RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
 
 	ret = io_init(&io, ft, &n.signals, IO_FLUSH | (SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET));
 	if (ret)
-		throw new RuntimeError("Failed to initialize output");
+		throw RuntimeError("Failed to initialize output");
 
 	ret = io_check(&io);
 	if (ret)
-		throw new RuntimeError("Failed to validate IO configuration");
+		throw RuntimeError("Failed to validate IO configuration");
 
 	ret = io_open(&io, nullptr);
 	if (ret)
-		throw new RuntimeError("Failed to open output");
+		throw RuntimeError("Failed to open output");
 
 	while (!stop) {
 		t = sample_alloc(&q);
@@ -255,23 +255,23 @@ int main(int argc, char *argv[])
 
 	ret = node_stop(&n);
 	if (ret)
-		throw new RuntimeError("Failed to stop node");
+		throw RuntimeError("Failed to stop node");
 
 	ret = node_destroy(&n);
 	if (ret)
-		throw new RuntimeError("Failed to destroy node");
+		throw RuntimeError("Failed to destroy node");
 
 	ret = io_close(&io);
 	if (ret)
-		throw new RuntimeError("Failed to close IO");
+		throw RuntimeError("Failed to close IO");
 
 	ret = io_destroy(&io);
 	if (ret)
-		throw new RuntimeError("Failed to destroy IO");
+		throw RuntimeError("Failed to destroy IO");
 
 	ret = pool_destroy(&q);
 	if (ret)
-		throw new RuntimeError("Failed to destroy pool");
+		throw RuntimeError("Failed to destroy pool");
 
 	logger->info(CLR_GRN("Goodbye!"));
 

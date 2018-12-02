@@ -152,35 +152,35 @@ int main(int argc, char *argv[])
 	/* Checks system requirements*/
 	auto required = utils::Version(KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
 	if (kernel::getVersion() < required)
-		throw new RuntimeError("Your kernel version is to old: required >= {}.{}", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
+		throw RuntimeError("Your kernel version is to old: required >= {}.{}", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
 #endif /* __linux__ */
 
 	ret = utils::signals_init(quit);
 	if (ret)
-		throw new RuntimeError("Failed to initialize signal subsystem");
+		throw RuntimeError("Failed to initialize signal subsystem");
 
 	if (uri) {
 		ret = sn.parseUri(uri);
 		if (ret)
-			throw new RuntimeError("Failed to parse command line arguments");
+			throw RuntimeError("Failed to parse command line arguments");
 	}
 	else
 		logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
 	ret = sn.check();
 	if (ret)
-		throw new RuntimeError("Failed to verify configuration");
+		throw RuntimeError("Failed to verify configuration");
 
 	ret = sn.start();
 	if (ret)
-		throw new RuntimeError("Failed to start super node");
+		throw RuntimeError("Failed to start super node");
 
 	while (!stop)
 		sn.run();
 
 	ret = sn.stop();
 	if (ret)
-		throw new RuntimeError("Failed to stop super node");
+		throw RuntimeError("Failed to stop super node");
 
 	logger->info(CLR_GRN("Goodbye!"));
 

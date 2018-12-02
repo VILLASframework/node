@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
 			case 'o':
 				ret = json_object_extend_str(cfg_cli, optarg);
 				if (ret)
-					throw new RuntimeError("Invalid option: {}", optarg);
+					throw RuntimeError("Invalid option: {}", optarg);
 				break;
 
 			case '?':
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
 		continue;
 
 check:		if (optarg == endptr)
-			throw new RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
+			throw RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
 
 	}
 
@@ -147,66 +147,66 @@ check:		if (optarg == endptr)
 
 	ret = utils::signals_init(quit);
 	if (ret)
-		throw new RuntimeError("Failed to intialize signals");
+		throw RuntimeError("Failed to intialize signals");
 
 	if (cnt < 1)
-		throw new RuntimeError("Vectorize option must be greater than 0");
+		throw RuntimeError("Vectorize option must be greater than 0");
 
 	ret = memory_init(DEFAULT_NR_HUGEPAGES);
 	if (ret)
-		throw new RuntimeError("Failed to initialize memory");
+		throw RuntimeError("Failed to initialize memory");
 
 	smps = new struct sample*[cnt];
 
 	ret = pool_init(&p, 10 * cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_hugepage);
 	if (ret)
-		throw new RuntimeError("Failed to initilize memory pool");
+		throw RuntimeError("Failed to initilize memory pool");
 
 	/* Initialize IO */
 	ft = format_type_lookup(format);
 	if (!ft)
-		throw new RuntimeError("Unknown IO format '{}'", format);
+		throw RuntimeError("Unknown IO format '{}'", format);
 
 	ret = io_init_auto(&io, ft, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
 	if (ret)
-		throw new RuntimeError("Failed to initialize IO");
+		throw RuntimeError("Failed to initialize IO");
 
 	ret = io_check(&io);
 	if (ret)
-		throw new RuntimeError("Failed to validate IO configuration");
+		throw RuntimeError("Failed to validate IO configuration");
 
 	ret = io_open(&io, nullptr);
 	if (ret)
-		throw new RuntimeError("Failed to open IO");
+		throw RuntimeError("Failed to open IO");
 
 	/* Initialize hook */
 	ht = hook_type_lookup(hook);
 	if (!ht)
-		throw new RuntimeError("Unknown hook function '{}'", hook);
+		throw RuntimeError("Unknown hook function '{}'", hook);
 
 	ret = hook_init(&h, ht, nullptr, nullptr);
 	if (ret)
-		throw new RuntimeError("Failed to initialize hook");
+		throw RuntimeError("Failed to initialize hook");
 
 	ret = hook_parse(&h, cfg_cli);
 	if (ret)
-		throw new RuntimeError("Failed to parse hook config");
+		throw RuntimeError("Failed to parse hook config");
 
 	ret = hook_start(&h);
 	if (ret)
-		throw new RuntimeError("Failed to start hook");
+		throw RuntimeError("Failed to start hook");
 
 	while (!stop) {
 		ret = sample_alloc_many(&p, smps, cnt);
 		if (ret != cnt)
-			throw new RuntimeError("Failed to allocate %d smps from pool", cnt);
+			throw RuntimeError("Failed to allocate %d smps from pool", cnt);
 
 		recv = io_scan(&io, smps, cnt);
 		if (recv < 0) {
 			if (io_eof(&io))
 				break;
 
-			throw new RuntimeError("Failed to read from stdin");
+			throw RuntimeError("Failed to read from stdin");
 		}
 
 		logger->debug("Read {} smps from stdin", recv);
@@ -217,26 +217,26 @@ check:		if (optarg == endptr)
 
 		sent = io_print(&io, smps, send);
 		if (sent < 0)
-			throw new RuntimeError("Failed to write to stdout");
+			throw RuntimeError("Failed to write to stdout");
 
 		sample_free_many(smps, cnt);
 	}
 
 	ret = hook_stop(&h);
 	if (ret)
-		throw new RuntimeError("Failed to stop hook");
+		throw RuntimeError("Failed to stop hook");
 
 	ret = hook_destroy(&h);
 	if (ret)
-		throw new RuntimeError("Failed to destroy hook");
+		throw RuntimeError("Failed to destroy hook");
 
 	ret = io_close(&io);
 	if (ret)
-		throw new RuntimeError("Failed to close IO");
+		throw RuntimeError("Failed to close IO");
 
 	ret = io_destroy(&io);
 	if (ret)
-		throw new RuntimeError("Failed to destroy IO");
+		throw RuntimeError("Failed to destroy IO");
 
 	sample_free_many(smps, cnt);
 
@@ -244,7 +244,7 @@ check:		if (optarg == endptr)
 
 	ret = pool_destroy(&p);
 	if (ret)
-		throw new RuntimeError("Failed to destroy memory pool");
+		throw RuntimeError("Failed to destroy memory pool");
 
 	logger->info(CLR_GRN("Goodbye!"));
 

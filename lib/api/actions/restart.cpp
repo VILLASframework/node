@@ -48,7 +48,7 @@ protected:
 		logger->info("Restart instance: config={}", cfg);
 		ret = execvp("/proc/self/exe", (char **) argv);
 		if (ret)
-			throw new SystemError("Failed to restart");
+			throw SystemError("Failed to restart");
 	}
 
 public:

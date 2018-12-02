@@ -56,19 +56,19 @@ public:
 		io.state = STATE_DESTROYED;
 		ret = io_init_auto(&io, format, DEFAULT_SAMPLE_LENGTH, 0);
 		if (ret)
-			throw new RuntimeError("Failed to initialize IO");
+			throw RuntimeError("Failed to initialize IO");
 
 		ret = io_check(&io);
 		if (ret)
-			throw new RuntimeError("Failed to validate IO configuration");
+			throw RuntimeError("Failed to validate IO configuration");
 
 		ret = io_open(&io, path.c_str());
 		if (ret)
-			throw new RuntimeError("Failed to open file: {}", path);
+			throw RuntimeError("Failed to open file: {}", path);
 
 		sample = sample_alloc(p);
 		if (!sample)
-			throw new RuntimeError("Failed to allocate samples");
+			throw RuntimeError("Failed to allocate samples");
 	}
 
 	~Side() noexcept(false)
@@ -77,11 +77,11 @@ public:
 
 		ret = io_close(&io);
 		if (ret)
-			throw new RuntimeError("Failed to close IO");
+			throw RuntimeError("Failed to close IO");
 
 		ret = io_destroy(&io);
 		if (ret)
-			throw new RuntimeError("Failed to destroy IO");
+			throw RuntimeError("Failed to destroy IO");
 
 		sample_decref(sample);
 	}
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 		continue;
 
 check:		if (optarg == endptr)
-			throw new RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
+			throw RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
 	}
 
 	if (argc - optind < 2) {
@@ -178,15 +178,15 @@ check:		if (optarg == endptr)
 
 	ret = memory_init(0);
 	if (ret)
-		throw new RuntimeError("Failed to initialize memory system");
+		throw RuntimeError("Failed to initialize memory system");
 
 	ret = pool_init(&pool, n, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_heap);
 	if (ret)
-		throw new RuntimeError("Failed to initialize pool");
+		throw RuntimeError("Failed to initialize pool");
 
 	struct format_type *fmt = format_type_lookup(format);
 	if (!fmt)
-		throw new RuntimeError("Invalid IO format: {}", format);
+		throw RuntimeError("Invalid IO format: {}", format);
 
 	/* Open files */
 	for (int i = 0; i < n; i++)
@@ -239,7 +239,7 @@ out:	for (int i = 0; i < n; i++)
 
 	ret = pool_destroy(&pool);
 	if (ret)
-		throw new RuntimeError("Failed to destroy pool");
+		throw RuntimeError("Failed to destroy pool");
 
 	return rc;
 }

@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
 
 	ret = utils::signals_init(quit);
 	if (ret)
-		throw new RuntimeError("Failed to initialize signals");
+		throw RuntimeError("Failed to initialize signals");
 
 	char *wname = argv[1];
 	char *rname = argv[2];
@@ -82,7 +82,7 @@ int main(int argc, char* argv[])
 
 	ret = shmem_int_open(wname, rname, &shm, &conf);
 	if (ret < 0)
-		throw new RuntimeError("Failed to open shared-memory interface");
+		throw RuntimeError("Failed to open shared-memory interface");
 
 	struct sample *insmps[vectorize], *outsmps[vectorize];
 
@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
 
 	ret = shmem_int_close(&shm);
 	if (ret)
-		throw new RuntimeError("Failed to close shared-memory interface");
+		throw RuntimeError("Failed to close shared-memory interface");
 
 	logger->info(CLR_GRN("Goodbye!"));
 
