@@ -36,7 +36,10 @@
 #include <villas/api/server.hpp>
 #include <villas/api/sessions/socket.hpp>
 
+using namespace villas;
 using namespace villas::node::api;
+
+static Logger logger = logging.get("api");
 
 Server::Server(Api *a) :
 	state(STATE_INITIALIZED),
@@ -66,7 +69,6 @@ void Server::start()
 	};
 
 	pfds.push_back(pfd);
-	sessions.push_back(nullptr);
 
 	struct sockaddr_un sun = { .sun_family = AF_UNIX };
 
@@ -127,30 +129,40 @@ void Server::run(int timeout)
 
 	assert(state == STATE_STARTED);
 
-	ret = poll(pfds.data(), pfds.size(), timeout);
+	logger->info("pfds.size() = {}", pfds.size());
+
+	auto len = pfds.size();
+
+	ret = poll(pfds.data(), len, timeout);
 	if (ret < 0)
-		throw SystemError("Failed to poll on API socket");;
+		throw SystemError("Failed to poll on API socket");
 
-	for (unsigned i = 0; i < pfds.size(); i++) {
+	std::vector<sessions::Socket *> closing;
+
+	for (unsigned i = 1; i < len; i++) {
 		auto &pfd = pfds[i];
-		auto s = sessions[i];
 
-		if (pfd.revents & POLLOUT) {
-			if (s)
-				s->write();
-		}
+		/* pfds[0] is the server socket */
+		auto s = sessions[pfd.fd];
 
 		if (pfd.revents & POLLIN) {
-			/* New connection */
-			if (s) {
-				ret = s->read();
-				if (ret < 0)
-					closeSession(s);
-			}
-			else
-				acceptNewSession();
+			ret = s->read();
+			if (ret < 0)
+				closing.push_back(s);
+		}
+
+		if (pfd.revents & POLLOUT) {
+			s->write();
 		}
 	}
+
+	/* Destroy closed sessions */
+	for (auto *s : closing)
+		closeSession(s);
+
+	/* Accept new connections */
+	if (pfds[0].revents & POLLIN)
+		acceptNewSession();
 }
 
 void Server::acceptNewSession() {
@@ -164,21 +176,21 @@ void Server::acceptNewSession() {
 	};
 
 	pfds.push_back(pfd);
-	sessions.push_back(s);
+	sessions[fd] = s;
 
 	api->sessions.push_back(s);
 }
 
 void Server::closeSession(sessions::Socket *s)
 {
+	int sd = s->getSd();
+
+	sessions.erase(sd);
 	api->sessions.remove(s);
 
-	ptrdiff_t pos = std::find(sessions.begin(), sessions.end(), s) - sessions.begin();
+	pfds.erase(std::remove_if(pfds.begin(), pfds.end(),
+		[sd](const pollfd &p){ return p.fd == sd; })
+	);
 
-	if (pos < (ptrdiff_t) sessions.size()) {
-		pfds.erase(pfds.begin() + pos);
-		sessions.erase(sessions.begin() + pos);
-
-		delete s;
-	}
+	delete s;
 }

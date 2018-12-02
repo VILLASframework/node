@@ -47,6 +47,8 @@ public:
 	int write();
 
 	virtual std::string getName();
+
+	int getSd() const { return sd; }
 };
 
 } // sessions

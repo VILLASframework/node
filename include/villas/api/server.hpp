@@ -25,6 +25,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 #include <poll.h>
 
@@ -54,7 +55,7 @@ protected:
 	int sd;
 
 	std::vector<pollfd> pfds;
-	std::vector<sessions::Socket *> sessions;
+	std::map<int, sessions::Socket *> sessions;
 
 	void acceptNewSession();
 	void closeSession(sessions::Socket *s);
