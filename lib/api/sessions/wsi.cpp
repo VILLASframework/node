@@ -65,8 +65,8 @@ Wsi::Wsi(Api *a, lws *w) :
 {
 	state = Session::State::ESTABLISHED;
 
-	lws_context *ctx = lws_get_context(wsi);
-	void *ctx = lws_context_user(ctx);
+	lws_context *user_ctx = lws_get_context(wsi);
+	void *ctx = lws_context_user(user_ctx);
 
 	web = static_cast<Web*>(ctx);
 }
