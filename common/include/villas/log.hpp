@@ -75,6 +75,7 @@ public:
 	void setLevel(const std::string &lvl);
 
 	Level getLevel() const;
+	std::string getLevelName() const;
 };
 
 } // namespace villas

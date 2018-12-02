@@ -161,3 +161,8 @@ Log::Level Log::getLevel() const
 {
 	return level;
 }
+
+std::string Log::getLevelName() const
+{
+	return std::string(spdlog::level::to_c_str(level));
+}
