@@ -67,12 +67,12 @@ VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
 villas-signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
 VILLAS_LOG_PREFIX=$(colorize "[Recv]  ") \
-villas-pipe -r -d 15 -l ${NUM_SAMPLES} ${CONFIG_FILE2} node2 | tee ${OUTPUT_FILE} &
+villas-pipe -r -d debug -l ${NUM_SAMPLES} ${CONFIG_FILE2} node2 | tee ${OUTPUT_FILE} &
 
 sleep 1
 
 VILLAS_LOG_PREFIX=$(colorize "[Send]  ") \
-villas-pipe -s -d 15 ${CONFIG_FILE} node1 < <(sleep 1; cat ${INPUT_FILE})
+villas-pipe -s -d debug ${CONFIG_FILE} node1 < <(sleep 1; cat ${INPUT_FILE})
 
 wait $!
 

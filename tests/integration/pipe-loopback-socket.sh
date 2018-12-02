@@ -99,7 +99,7 @@ cat > ${CONFIG_FILE} << EOF
 }
 EOF
 
-villas-pipe -d DEBUG -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 < ${INPUT_FILE}
+villas-pipe -d debug -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 < ${INPUT_FILE} > ${OUTPUT_FILE}
 
 # Ignore timestamp and seqeunce no if in raw format 
 if ! villas_format_supports_header $FORMAT; then
