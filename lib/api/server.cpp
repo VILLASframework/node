@@ -129,8 +129,6 @@ void Server::run(int timeout)
 
 	assert(state == STATE_STARTED);
 
-	logger->info("pfds.size() = {}", pfds.size());
-
 	auto len = pfds.size();
 
 	ret = poll(pfds.data(), len, timeout);
