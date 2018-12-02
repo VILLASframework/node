@@ -37,6 +37,7 @@ extern "C" {
 #include <villas/memory.h>
 
 /* Forward declarations */
+struct super_node;
 struct node;
 struct sample;
 
@@ -222,7 +223,7 @@ struct node_type {
  *
  * @see node_type::init
  */
-int node_type_start(struct node_type *vt);
+int node_type_start(struct node_type *vt, struct super_node *sn);
 
 /** De-initialize node type subsystems.
  *

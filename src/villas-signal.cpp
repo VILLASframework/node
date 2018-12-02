@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
 	}
 
 	// nt == n._vt
-	ret = node_type_start(nt); /// @todo: Port to C++
+	ret = node_type_start(nt, nullptr);
 	if (ret)
 		throw new RuntimeError("Failed to initialize node type: {}", node_type_name(nt));
 

@@ -338,7 +338,7 @@ int SuperNode::start()
 	for (size_t i = 0; i < list_length(&nodes); i++) {
 		auto *n = (struct node *) list_at(&nodes, i);
 
-		ret = node_type_start(n->_vt);//, this); // @todo: port to C++
+		ret = node_type_start(n->_vt, reinterpret_cast<super_node *>(this));
 		if (ret)
 			throw new RuntimeError("Failed to start node-type: {}", node_type_name(n->_vt));
 	}
@@ -514,4 +514,36 @@ int SuperNode::periodic()
 	}
 #endif
 	return 0;
+}
+
+
+/* C-compatability */
+extern "C" {
+	struct list * super_node_get_nodes(struct super_node *sn)
+	{
+		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
+
+		return ssn->getNodes();
+	}
+
+	struct lws_context * super_node_get_web_context(struct super_node *sn)
+	{
+		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
+
+		return ssn->getWeb()->getContext();
+	}
+
+	struct lws_vhost * super_node_get_web_vhost(struct super_node *sn)
+	{
+		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
+
+		return ssn->getWeb()->getVHost();
+	}
+
+	enum state super_node_get_web_state(struct super_node *sn)
+	{
+		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
+
+		return ssn->getWeb()->getState();
+	}
 }

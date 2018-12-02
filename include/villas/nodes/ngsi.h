@@ -72,7 +72,7 @@ struct ngsi {
  *
  * @see node_type::type_start
  */
-int ngsi_type_start();
+int ngsi_type_start(struct super_node *sn);
 
 /** Free global NGSI settings and unmaps shared memory regions.
  *

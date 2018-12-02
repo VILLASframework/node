@@ -35,14 +35,16 @@
 #include <villas/nodes/websocket.h>
 #include <villas/format_type.h>
 #include <villas/formats/msg_format.h>
+#include <villas/super_node.h>
 
 #define DEFAULT_WEBSOCKET_BUFFER_SIZE (1 << 12)
 
 /* Private static storage */
 static struct list connections = { .state = STATE_DESTROYED };	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
 
-// TODO: port to C++
+// @todo: port to C++
 //static struct web *web;
+static struct super_node *sn;
 
 /* Forward declarations */
 static struct plugin p;
@@ -164,8 +166,9 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 	debug(LOG_WEBSOCKET | 10, "Enqueued %u samples to %s", pushed, websocket_connection_name(c));
 
 	/* Client connections which are currently conecting don't have an associate c->wsi yet */
-	if (c->wsi)
-		web_callback_on_writable(c->wsi);
+	// @todo: port to C++
+	//if (c->wsi)
+	//	web_callback_on_writable(c->wsi);
 
 	return 0;
 }
@@ -370,17 +373,17 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 	return 0;
 }
 
-int websocket_type_start() // @todo: Port to C++
+int websocket_type_start(struct super_node *ssn)
 {
 	list_init(&connections);
 
 	//web = NULL; /// @todo: Port to C++ &sn->web;
+	sn = ssn;
 
-	return -1;
+	info("web state: %d", super_node_get_web_state(sn));
 
-	// @todo: Port to C++
-	//if (web->state != STATE_STARTED)
-	//	return -1;
+	if (super_node_get_web_state(sn) != STATE_STARTED)
+		return -1;
 
 	return 0;
 }
@@ -416,9 +419,8 @@ int websocket_start(struct node *n)
 		c->node = n;
 		c->destination = d;
 
-		// @todo: Port to C++
-		//d->info.context = web->context;
-		//d->info.vhost = web->vhost;
+		d->info.context = super_node_get_web_context(sn);
+		d->info.vhost = super_node_get_web_vhost(sn);
 		d->info.userdata = c;
 
 		lws_client_connect_via_info(&d->info);

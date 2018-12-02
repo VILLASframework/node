@@ -157,7 +157,7 @@ int iec61850_parse_signals(json_t *json_signals, struct list *signals, struct li
 	return total_size;
 }
 
-int iec61850_type_start()
+int iec61850_type_start(struct super_node *sn)
 {
 	int ret;
 

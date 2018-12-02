@@ -82,6 +82,22 @@ public:
 		return api;
 	}
 
+	/* for C-compatability */
+	lws_context * getContext()
+	{
+		return context;
+	}
+
+	lws_vhost * getVHost()
+	{
+		return vhost;
+	}
+
+	enum state getState() const
+	{
+		return state;
+	}
+
 	void callbackOnWritable(struct lws *wsi);
 };
 

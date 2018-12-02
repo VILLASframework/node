@@ -1,4 +1,4 @@
-/** Node-type for stats streaming.
+/** The super node object holding the state of the application (C-compatability header).
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -21,56 +21,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/**
- * @ingroup node
- * @addtogroup stats Sending stats
- * @{
- */
-
-#pragma once
-
-#include <jansson.h>
-
-#include <villas/task.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* Forward declarations */
-struct node;
-struct sample;
+struct list;
 struct super_node;
 
-struct stats_node {
-	double rate;
-	char *node_str;
+struct list * super_node_get_nodes(struct super_node *sn);
 
-	struct task task;
+struct list * super_node_get_nodes(struct super_node *sn);
 
-	struct node *node;
-};
+struct lws_context * super_node_get_web_context(struct super_node *sn);
 
-/** @see node_type::print */
-int stats_node_type_start(struct super_node *sn);
+struct lws_vhost * super_node_get_web_vhost(struct super_node *sn);
 
-/** @see node_type::print */
-char *stats_node_print(struct node *n);
+enum state super_node_get_web_state(struct super_node *sn);
 
-/** @see node_type::parse */
-int stats_node_parse(struct node *n, json_t *cfg);
-
-/** @see node_type::start */
-int stats_node_start(struct node *n);
-
-/** @see node_type::stop */
-int stats_node_stop(struct node *n);
-
-/** @see node_type::read */
-int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
-
-#ifdef __cplusplus
-}
-#endif
-
-/** @} */
+int super_node_get_cli_argc(struct super_node *sn);

@@ -389,7 +389,7 @@ out:	json_decref(request);
 	return ret;
 }
 
-int ngsi_type_start()
+int ngsi_type_start(struct super_node *sn)
 {
 	return curl_global_init(CURL_GLOBAL_ALL);
 }

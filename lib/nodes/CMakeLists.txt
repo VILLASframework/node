@@ -22,8 +22,7 @@
 
 set(NODE_SRC
     influxdb.c
-# @todo: Port to C++
-#    stats.c
+    stats.c
     signal_generator.c    
     loopback.c
 )

@@ -28,7 +28,7 @@
 #include <villas/node/config.h>
 #include <villas/plugin.h>
 
-int node_type_start(struct node_type *vt)
+int node_type_start(struct node_type *vt, struct super_node *sn)
 {
 	int ret;
 
@@ -37,7 +37,7 @@ int node_type_start(struct node_type *vt)
 
 	info("Initializing " CLR_YEL("%s") " node type which is used by %zu nodes", node_type_name(vt), list_length(&vt->instances));
 
-	ret = vt->type.start ? vt->type.start() : 0; // @todo: port to C++
+	ret = vt->type.start ? vt->type.start(sn) : 0;
 	if (ret == 0)
 		vt->state = STATE_STARTED;
 

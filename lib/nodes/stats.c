@@ -30,7 +30,7 @@
 #include <villas/hook.h>
 #include <villas/plugin.h>
 #include <villas/stats.h>
-#include <villas/super_node.hpp>
+#include <villas/super_node.h>
 #include <villas/sample.h>
 #include <villas/node.h>
 
@@ -89,11 +89,11 @@ static void stats_init_signals(struct node *n)
 	}
 }
 
-int stats_node_type_start() /// @todo: Port to C++
+int stats_node_type_start(struct super_node *sn)
 {
-	nodes = NULL;
+	nodes = super_node_get_nodes(sn);
 
-	return -1;
+	return 0;
 }
 
 int stats_node_start(struct node *n)

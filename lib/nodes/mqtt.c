@@ -346,7 +346,7 @@ int mqtt_stop(struct node *n)
 	return 0;
 }
 
-int mqtt_type_start()
+int mqtt_type_start(struct super_node *sn)
 {
 	int ret;
 

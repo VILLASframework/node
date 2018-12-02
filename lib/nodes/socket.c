@@ -53,7 +53,7 @@ static struct plugin p;
 /* Private static storage */
 struct list interfaces = { .state = STATE_DESTROYED };
 
-int socket_type_start()
+int socket_type_start(struct super_node *sn)
 {
 #ifdef WITH_NETEM
 	int ret;
@@ -454,7 +454,6 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	}
 
 	ret = io_sscan(&s->io, ptr, bytes, &rbytes, smps, cnt);
-
 	if (ret < 0 || bytes != rbytes)
 		warning("Received invalid packet from node: %s ret=%d, bytes=%zu, rbytes=%zu", node_name(n), ret, bytes, rbytes);
 
