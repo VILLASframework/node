@@ -354,12 +354,7 @@ check:		if (optarg == endptr)
 	if (!node)
 		throw RuntimeError("Node {} does not exist!", nodestr);
 
-<<<<<<< HEAD
 #ifdef LIBWEBSOCKETS_FOUND
-=======
-/** @todo Port to C++ */
-#ifdef __Libwebsockets_FOUND
->>>>>>> cpp: use new supernode class
 	/* Only start web subsystem if villas-pipe is used with a websocket node */
 	if (node_type(node)->start == websocket_start) {
 		Web *w = sn.getWeb();
