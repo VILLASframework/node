@@ -41,14 +41,13 @@ class Http : public Wsi {
 
 public:
 	Http(Api *s, lws *w);
+	virtual ~Http() { };
 
 	void read(void *in, size_t len);
 
 	int complete();
 
 	int write();
-
-	virtual ~Http();
 
 	virtual std::string getName();
 };

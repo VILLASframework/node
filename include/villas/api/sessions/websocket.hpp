@@ -40,8 +40,7 @@ class WebSocket : public Wsi {
 
 public:
 	WebSocket(Api *a, lws *w);
-
-	virtual ~WebSocket();
+	virtual ~WebSocket() { };
 
 	virtual std::string getName();
 

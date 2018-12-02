@@ -46,11 +46,6 @@ WebSocket::WebSocket(Api *a, lws *w) :
 		throw RuntimeError("Unsupported API version: {}", version);
 }
 
-WebSocket::~WebSocket()
-{
-	logger->debug("Closed API session: {}", getName());
-}
-
 int WebSocket::read(void *in, size_t len)
 {
 	int pushed;
