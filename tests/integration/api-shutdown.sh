@@ -25,13 +25,18 @@
 set -e
 
 # Start without a configuration
-timeout -s SIGKILL 3 villas-node &
+timeout -s SIGKILL 3 villas-node & <<EOF
+{
+	"http" : {
+		"port" : 8080
+	}
+EOF
 
 # Wait for node to complete init
 sleep 1
 
 # Restart with configuration
-curl -sX POST --data '{ "action" : "shutdown", "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost/api/v1
+curl -sX POST --data '{ "action" : "shutdown", "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost:8080/api/v1
 
 # Wait returns the return code of villas-node
 # which will be 0 (success) in case of normal shutdown

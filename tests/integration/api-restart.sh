@@ -29,6 +29,9 @@ FETCHED_CONF=$(mktemp)
 
 cat <<EOF > ${LOCAL_CONF}
 {
+	"http" : {
+		"port" : 8080
+	},
 	"nodes" : {
 		"node1" : {
 			"type"   : "socket",
@@ -61,7 +64,7 @@ villas-node &
 sleep 0.2
 
 # Restart with configuration
-curl -sX POST --data '{ "action" : "restart", "request" : { "config": "'${LOCAL_CONF}'" }, "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost/api/v1
+curl -sX POST --data '{ "action" : "restart", "request" : { "config": "'${LOCAL_CONF}'" }, "id" : "5a786626-fbc6-4c04-98c2-48027e68c2fa" }' http://localhost:8080/api/v1
 
 # Wait for node to complete init
 sleep 1

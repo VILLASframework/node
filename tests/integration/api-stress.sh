@@ -56,7 +56,7 @@ for J in {1..${RUNS}}; do
 
 		FETCHED_CONF=$(mktemp)
 		
-		curl -sX POST --data '{ "action" : "config", "id" : "'$(uuidgen)'" }' http://localhost/api/v1 > ${FETCHED_CONF}
+		curl -sX POST --data '{ "action" : "config", "id" : "'$(uuidgen)'" }' http://localhost:8080/api/v1 > ${FETCHED_CONF}
 		diff -u <(jq -S .response < ${FETCHED_CONF}) <(jq -S . < ${LOCAL_CONF})
 		RC=$?
 		

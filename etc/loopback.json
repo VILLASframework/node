@@ -1,4 +1,7 @@
 {
+	"http" : {
+		"port" : 8080
+	},
 	"nodes" : {
 		"node1" : {
 			"type" : "loopback"
