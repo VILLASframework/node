@@ -64,7 +64,7 @@ lws_protocols protocols[] = {
 		.rx_buffer_size = 0
 	},
 #endif /* WITH_API */
-#ifdef __LIBWEBSOCKETS_FOUND /** @todo: Port to C++ */
+#ifdef LIBWEBSOCKETS_FOUND
 	{
 		.name = "live",
 		.callback = websocket_protocol_cb,
@@ -166,7 +166,7 @@ void Web::worker()
 		lws_service(context, 100);
 
 		while (!writables.empty()) {
-			wsi = writables.pull();
+			wsi = writables.pop();
 
 			lws_callback_on_writable(wsi);
 		}
