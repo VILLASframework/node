@@ -54,6 +54,10 @@ SuperNode::SuperNode() :
 	web(&api),
 	json(nullptr)
 {
+	nodes.state = STATE_DESTROYED;
+	paths.state = STATE_DESTROYED;
+	plugins.state = STATE_DESTROYED;
+
 	list_init(&nodes);
 	list_init(&paths);
 	list_init(&plugins);

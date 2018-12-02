@@ -171,10 +171,12 @@ int main(int argc, char *argv[])
 
 	const char *format = "villas.human"; /** @todo hardcoded for now */
 
-	struct node n;
-	struct io io;
-	struct pool q;
+	struct node n = { .state = STATE_DESTROYED };
+	struct io io = { .state = STATE_DESTROYED };
+	struct pool q = { .state = STATE_DESTROYED };
 	struct sample *t;
+
+	q.queue.state = STATE_DESTROYED;
 
 	Logger logger = logging.get("signal");
 
