@@ -63,7 +63,7 @@ protected:
 
 	struct {
 		JsonBuffer buffer;
-		struct queue queue;
+		Queue<json_t *> queue;
 	} request, response;
 
 	Api *api;

@@ -40,16 +40,11 @@ Session::Session(Api *a) :
 	runs(0),
 	api(a)
 {
-	queue_init(&request.queue, 128, &memory_heap);
-	queue_init(&response.queue, 128, &memory_heap);
-
 	logger->debug("Initiated API session: {}", getName());
 }
 
 Session::~Session()
 {
-	queue_destroy(&request.queue);
-	queue_destroy(&response.queue);
 	logger->debug("Destroyed API session: {}", getName());
 }
 
@@ -58,14 +53,14 @@ void Session::runPendingActions()
 {
 	json_t *req, *resp;
 
-	while (queue_available(&request.queue) > 0) {
-		queue_pull(&request.queue, (void **) &req);
+	while (!request.queue.empty()) {
+		req = request.queue.pop();
 
 		runAction(req, &resp);
 
 		json_decref(req);
 
-		queue_push(&response.queue, resp);
+		response.queue.push(resp);
 	}
 }
 

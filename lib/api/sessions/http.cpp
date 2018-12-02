@@ -71,7 +71,6 @@ void Http::read(void *in, size_t len)
 
 int Http::complete()
 {
-	int pushed;
 	json_t *req;
 
 	req = request.buffer.decode();
@@ -79,26 +78,22 @@ int Http::complete()
 		return 0;
 
 	request.buffer.clear();
-
-	pushed = queue_push(&request.queue, req);
-	if (pushed != 1)
-		logger->warn("Queue overrun for API session: {}", getName());
+	request.queue.push(req);
 
 	return 1;
 }
 
 int Http::write()
 {
-	int ret, pulled;
+	int ret;
 	json_t *resp;
 
-	pulled = queue_pull(&response.queue, (void **) &resp);
-	if (pulled) {
-		response.buffer.clear();
-		response.buffer.encode(resp);
+	resp = response.queue.pop();
 
-		json_decref(resp);
-	}
+	response.buffer.clear();
+	response.buffer.encode(resp);
+
+	json_decref(resp);
 
 	std::stringstream headers;
 

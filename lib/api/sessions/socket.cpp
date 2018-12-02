@@ -58,9 +58,7 @@ int Socket::read()
 	if (!j)
 		return -1;
 
-	ret = queue_push(&request.queue, (json_t *) j);
-	if (ret != 1)
-		return -1;
+	request.queue.push(j);
 
 	api->pending.push(this);
 
@@ -72,7 +70,9 @@ int Socket::write()
 	int ret;
 	json_t *j;
 
-	while (queue_pull(&response.queue, (void **) &j)) {
+	while (!response.queue.empty()) {
+		j = response.queue.pop();
+
 		ret = json_dumpfd(j, sd, 0);
 		if (ret)
 			return ret;

@@ -48,7 +48,6 @@ WebSocket::WebSocket(Api *a, lws *w) :
 
 int WebSocket::read(void *in, size_t len)
 {
-	int pushed;
 	json_t *req;
 
 	if (lws_is_first_fragment(wsi))
@@ -61,9 +60,7 @@ int WebSocket::read(void *in, size_t len)
 		if (!req)
 			return 0;
 
-		pushed = queue_push(&request.queue, req);
-		if (pushed != 1)
-			logger->warn("Queue overun in API session");
+		request.queue.push(req);
 
 		return 1;
 	}
@@ -73,24 +70,22 @@ int WebSocket::read(void *in, size_t len)
 
 int WebSocket::write()
 {
-	int pulled;
 	json_t *resp;
 
 	if (state == State::SHUTDOWN)
 		return -1;
 
-	pulled = queue_pull(&response.queue, (void **) &resp);
-	if (pulled) {
-		char pad[LWS_PRE];
+	resp = response.queue.pop();
 
-		response.buffer.clear();
-		response.buffer.append(pad, sizeof(pad));
-		response.buffer.encode(resp);
+	char pad[LWS_PRE];
 
-		json_decref(resp);
+	response.buffer.clear();
+	response.buffer.append(pad, sizeof(pad));
+	response.buffer.encode(resp);
 
-		lws_write(wsi, (unsigned char *) response.buffer.data() + LWS_PRE, response.buffer.size() - LWS_PRE, LWS_WRITE_TEXT);
-	}
+	json_decref(resp);
+
+	lws_write(wsi, (unsigned char *) response.buffer.data() + LWS_PRE, response.buffer.size() - LWS_PRE, LWS_WRITE_TEXT);
 
 	return 0;
 }
