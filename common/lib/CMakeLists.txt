@@ -46,6 +46,7 @@ add_library(villas-common SHARED
 	cpuset.cpp
 	terminal.cpp
 	version.cpp
+	common.c
 )
 
 execute_process( 
