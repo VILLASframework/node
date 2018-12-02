@@ -72,9 +72,8 @@ void Server::start()
 
 	struct sockaddr_un sun = { .sun_family = AF_UNIX };
 
-#ifdef __GNU__
 	std::filesystem::path socketPath = PREFIX "/var/lib/villas";
-	if (!std::filesystem::exists(socketPath.parent_path())) {
+	if (!std::filesystem::exists(socketPath)) {
 		logging.get("api")->info("Creating directory for API socket: {}", socketPath);
 		std::filesystem::create_directories(socketPath);
 	}
@@ -87,15 +86,6 @@ void Server::start()
 	}
 
 	strncpy(sun.sun_path, socketPath.c_str(), sizeof(sun.sun_path) - 1);
-#else
-	std::string socketPath = fmt::format(PREFIX "/var/lib/villas/node-{}.sock", api->getSuperNode()->getName());
-
-	ret = unlink(socketPath.c_str());
-	if (ret && errno != ENOENT)
-		throw SystemError("Failed to unlink API socket");
-
-	strncpy(sun.sun_path, socketPath.c_str(), sizeof(sun.sun_path) - 1);
-#endif
 
 	ret = bind(sd, (struct sockaddr *) &sun, sizeof(struct sockaddr_un));
 	if (ret)
