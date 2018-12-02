@@ -32,9 +32,12 @@ add_executable(unit-tests-common
 	list.cpp
 	task.cpp
 	timing.cpp
-	tsc.cpp
 	utils.cpp
 )
+
+if(ARCH STREQUAL "x86_64")
+	list(APPEND TEST_SRC tsc.cpp)
+endif()
 
 target_include_directories(unit-tests-common PUBLIC
 	${PROJECT_SOURCE_DIR}/include
