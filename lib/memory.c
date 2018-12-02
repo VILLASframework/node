@@ -61,7 +61,7 @@ int memory_init(int hugepages)
 		return ret;
 
 #if defined(__linux__) && defined(__x86_64__)
-	int pagecnt, pagesz, ret;
+	int pagecnt, pagesz;
 	struct rlimit l;
 
 	pagecnt = kernel_get_nr_hugepages();
