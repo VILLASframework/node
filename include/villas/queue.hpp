@@ -24,7 +24,6 @@
 #pragma once
 
 #include <mutex>
-#include <condition_variable>
 #include <queue>
 
 namespace villas {
@@ -34,15 +33,20 @@ class Queue {
 
 protected:
 	std::queue<T> queue;
+	std::mutex mtx;
 
 public:
 	void push(T p)
 	{
+		std::unique_lock<std::mutex> guard(mtx);
+
 		queue.push(p);
 	}
 
 	T pop()
 	{
+		std::unique_lock<std::mutex> guard(mtx);
+
 		T res = queue.front();
 		queue.pop();
 
@@ -51,6 +55,8 @@ public:
 
 	bool empty()
 	{
+		std::unique_lock<std::mutex> guard(mtx);
+
 		return queue.empty();
 	}
 

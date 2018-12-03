@@ -34,14 +34,11 @@ template<typename T>
 class QueueSignalled : public Queue<T> {
 
 private:
-	std::mutex mutex;
 	std::condition_variable cv;
 
 public:
 	void push(const T& data)
 	{
-		std::lock_guard<std::mutex> l(mutex);
-
 		Queue<T>::push(data);
 
 		cv.notify_one();
@@ -49,19 +46,15 @@ public:
 
 	T pop()
 	{
-		std::unique_lock<std::mutex> l(mutex);
+		std::unique_lock<std::mutex> l(Queue<T>::mtx);
 
-		while (Queue<T>::empty())
+		while (Queue<T>::queue.empty())
 			cv.wait(l);
 
-		return Queue<T>::pop();
-	}
+		T res = Queue<T>::queue.front();
+		Queue<T>::queue.pop();
 
-	bool empty()
-	{
-		std::unique_lock<std::mutex> l(mutex);
-
-		return Queue<T>::empty();
+		return res;
 	}
 };
 
