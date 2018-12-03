@@ -88,14 +88,16 @@ void Api::run()
 		return;
 
 	/* Process pending actions */
-	Session *s = pending.pop();
-	if (s) {
-		/* Check that the session is still alive */
-		auto it = std::find(sessions.begin(), sessions.end(), s);
-		if (it == sessions.end())
-			return;
+	while (!pending.empty()) {
+		Session *s = pending.pop();
+		if (s) {
+			/* Check that the session is still alive */
+			auto it = std::find(sessions.begin(), sessions.end(), s);
+			if (it == sessions.end())
+				return;
 
-		s->runPendingActions();
+			s->runPendingActions();
+		}
 	}
 }
 
