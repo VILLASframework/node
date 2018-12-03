@@ -100,11 +100,12 @@ int Http::write()
 	headers << "HTTP/1.1 200 OK\r\n"
 	        << "Content-type: application/json\r\n"
 	        << "User-agent: " USER_AGENT "\r\n"
+	        << "Connection: close\r\n"
+	        << "Content-Length: " << response.buffer.size() << "\r\n"
 	        << "Access-Control-Allow-Origin: *\r\n"
 	        << "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
 	        << "Access-Control-Allow-Headers: Content-Type\r\n"
 	        << "Access-Control-Max-Age: 86400\r\n"
-	        << "Content-Length: " << response.buffer.size() << "\r\n"
 	        << "\r\n";
 
 	ret = lws_write(wsi, (unsigned char *) headers.str().data(), headers.str().size(), LWS_WRITE_HTTP_HEADERS);
@@ -151,14 +152,14 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 			break;
 
 		case LWS_CALLBACK_HTTP_DROP_PROTOCOL:
-			if (!s)
+			if (s == nullptr)
 				return -1;
 
 			a->sessions.remove(s);
 
 			s->~Http();
 
-			return 1;
+			break;
 
 		case LWS_CALLBACK_HTTP_BODY:
 			s->read(in, len);
@@ -174,22 +175,15 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 
 		case LWS_CALLBACK_HTTP_WRITEABLE:
 			ret = s->write();
-			if (ret == 0) {
-				goto try_to_reuse;
-				break;
-			}
 
-			goto try_to_reuse;
+			if (lws_http_transaction_completed(wsi))
+				return -1;
+
+			return 0;
 
 		default:
 			break;
 	}
-
-	return 0;
-
-try_to_reuse:
-	if (lws_http_transaction_completed(wsi))
-		return -1;
 
 	return 0;
 }
