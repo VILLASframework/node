@@ -160,7 +160,7 @@ void Web::worker()
 {
 	lws *wsi;
 
-	logger->info("Starting worker");
+	logger->info("Started worker");
 
 	while (running) {
 		lws_service(context, 100);
@@ -172,7 +172,7 @@ void Web::worker()
 		}
 	}
 
-	logger->info("Stopping worker");
+	logger->info("Stopped worker");
 }
 
 Web::Web(Api *a) :
