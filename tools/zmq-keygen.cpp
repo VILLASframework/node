@@ -36,7 +36,7 @@
   #include <zmq_utils.h>
 #endif
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	int ret;
 	char public_key[41];
