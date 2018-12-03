@@ -238,7 +238,11 @@ void Web::start()
 		.uid = -1,
 		.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS | LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT,
 		.user = (void *) this,
-		.mounts = mounts,
+#if LWS_LIBRARY_VERSION_NUMBER <= 3000000
+		// https://github.com/warmcat/libwebsockets/issues/1249
+		.max_http_header_pool = 1024,
+ #endif
+		.mounts = mounts
 	};
 
 	logger->info("Starting sub-system: htdocs={}", htdocs.c_str());
