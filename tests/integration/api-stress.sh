@@ -49,7 +49,7 @@ mkfifo ${FIFO}
 exec 5<>${FIFO}
 
 JOBS=""
-for J in {1..${RUNS}}; do
+for J in $(seq 1 ${RUNS}); do
 	(
 		set -e
 		trap "echo error-trap >> ${FIFO}" ERR
@@ -77,7 +77,7 @@ wait $PID
 echo "Check return codes"
 FAILED=0
 SUCCESS=0
-for J in {1..${RUNS}}; do
+for J in $(seq 1 ${RUNS}); do
 	read status <&5
 	
 	if [ "$status" == "success" ]; then
