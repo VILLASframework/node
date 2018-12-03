@@ -144,7 +144,7 @@ static void * send_loop(void *ctx)
 
 	while (!io_eof(dirs->send.io)) {
 		allocated = sample_alloc_many(&dirs->send.pool, smps, dirs->send.node->out.vectorize);
-		if (ret < 0)
+		if (allocated < 0)
 			throw RuntimeError("Failed to get {} samples out of send pool ({}).", dirs->send.node->out.vectorize, ret);
 		else if (allocated < dirs->send.node->out.vectorize)
 			logger->warn("Send pool underrun");
