@@ -48,7 +48,7 @@ class Log {
 
 public:
 	using Level = spdlog::level::level_enum;
-	using DistSink = spdlog::sinks::dist_sink_mt;
+	using DistSink = std::shared_ptr<spdlog::sinks::dist_sink_mt>;
 
 protected:
 	Logger logger = logging.get("log");
@@ -58,6 +58,8 @@ protected:
 
 	std::string pattern;		/**< Logging format. */
 	std::string prefix;		/**< Prefix each line with this string. */
+
+	void init();
 
 public:
 

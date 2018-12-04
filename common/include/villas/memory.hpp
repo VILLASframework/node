@@ -134,7 +134,8 @@ public:
 	{
 		// CRTP
 		derivedAlloc = static_cast<DerivedAllocator*>(this);
-		logger = logging.get(derivedAlloc->getName());
+		std::string loggerName = fmt::format("memory:", derivedAlloc->getName());
+		logger = logging.get(loggerName);
 
 		// default deallocation callback
 		free = [&](MemoryBlock* mem) {
