@@ -35,7 +35,6 @@ NUM_SAMPLES=${NUM_SAMPLES:-100}
 
 cat > ${CONFIG_FILE} << EOF
 {
-	"logging" : { "level" : 15 },
 	"nodes" : {
 		"node1" : {
 			"type" : "websocket",
@@ -53,7 +52,6 @@ cat > ${CONFIG_FILE2} << EOF
 	"http" : {
 		"port" : 8080
 	},
-	"logging" : { "level" : 15 },
 	"nodes" : {
 		"node2" : {
 			"type" : "websocket"
@@ -67,12 +65,12 @@ VILLAS_LOG_PREFIX=$(colorize "[Signal]") \
 villas-signal -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
 VILLAS_LOG_PREFIX=$(colorize "[Recv]  ") \
-villas-pipe -r -d debug -l ${NUM_SAMPLES} ${CONFIG_FILE2} node2 | tee ${OUTPUT_FILE} &
+villas-pipe -r -l ${NUM_SAMPLES} ${CONFIG_FILE2} node2 | tee ${OUTPUT_FILE} &
 
 sleep 1
 
 VILLAS_LOG_PREFIX=$(colorize "[Send]  ") \
-villas-pipe -s -d debug ${CONFIG_FILE} node1 < <(sleep 1; cat ${INPUT_FILE})
+villas-pipe -s ${CONFIG_FILE} node1 < <(sleep 1; cat ${INPUT_FILE})
 
 wait $!
 

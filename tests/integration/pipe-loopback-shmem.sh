@@ -34,9 +34,6 @@ for VECTORIZE	in 1 5 25; do
 
 cat > ${CONFIG_FILE} << EOF
 {
-	"logging" : {
-		"level" : 2
-	},
 	"nodes" : {
 		"node1" : {
 			"type" : "shmem",
