@@ -35,7 +35,11 @@ using namespace villas;
 /** The global log instance */
 Log villas::logging;
 
-Log::Log(Level level)
+Log::Log(Level lvl) :
+	level(lvl)
+{ }
+
+void Log::init()
 {
 	char *p = getenv("VILLAS_LOG_PREFIX");
 	if (p)
@@ -44,9 +48,11 @@ Log::Log(Level level)
 	setLevel(level);
 	setPattern("%H:%M:%S %^%l%$ %n: %v");
 
+	sinks = std::make_shared<DistSink::element_type>();
+
+	// Default sink
 	auto sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
 
-	sink->set_pattern(prefix + pattern);
 	sinks->add_sink(sink);
 }
 
@@ -64,8 +70,17 @@ Logger Log::get(const std::string &name)
 {
 	Logger logger = spdlog::get(name);
 
-	if (not logger)
+	if (not sinks)
+		init();
+
+	if (not logger) {
 		logger = std::make_shared<Logger::element_type>(name, sinks);
+
+		logger->set_level(level);
+		logger->set_pattern(prefix + pattern);
+
+		spdlog::register_logger(logger);
+	}
 
 	return logger;
 }
@@ -80,7 +95,7 @@ void Log::parse(json_t *cfg)
 	int ret;
 
 	json_error_t err;
-	json_t *json_expressions;
+	json_t *json_expressions = nullptr;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: b, s?: s }",
 		"level", &level,
@@ -98,13 +113,13 @@ void Log::parse(json_t *cfg)
 	if (path) {
 		auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path);
 
-		sinks.add_sink(sink);
+		sinks->add_sink(sink);
 	}
 
 	if (syslog) {
 		auto sink = std::make_shared<spdlog::sinks::syslog_sink_mt>("villas", LOG_PID, LOG_DAEMON);
 
-		sinks.add_sink(sink);
+		sinks->add_sink(sink);
 	}
 
 	if (json_expressions) {

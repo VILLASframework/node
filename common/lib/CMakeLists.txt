@@ -81,6 +81,7 @@ target_link_libraries(villas-common PUBLIC
 	${CMAKE_DL_LIBS}
 	spdlog
 	fmt
+	stdc++
 )
 
 target_compile_definitions(villas-common PUBLIC
