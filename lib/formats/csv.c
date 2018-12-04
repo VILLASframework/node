@@ -96,11 +96,13 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 
 	smp->flags |= SAMPLE_HAS_TS_ORIGIN;
 
+#if 0
 	double offset __attribute__((unused)) = strtof(ptr, &end);
 	if (end == ptr || *end == io->delimiter)
 		goto out;
 
 	ptr = end + 1;
+#endif
 
 	smp->sequence = strtoul(ptr, &end, 10);
 	if (end == ptr || *end == io->delimiter)
