@@ -57,7 +57,7 @@ extern "C" {
 struct format_type;
 
 /** The maximum length of a packet which contains stuct msg. */
-#define SOCKET_INITIAL_BUFFER_LEN 1500
+#define SOCKET_INITIAL_BUFFER_LEN (64*1024)
 
 enum socket_layer {
 	SOCKET_LAYER_ETH,
