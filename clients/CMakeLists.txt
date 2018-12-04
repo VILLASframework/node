@@ -20,6 +20,5 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-add_subdirectory(python)
 add_subdirectory(opal)
 add_subdirectory(shmem)

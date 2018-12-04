@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import villas_pb2
-import time, socket, errno, sys, os, os.path
+import time, socket, errno, sys, os, signal
 
 layer = sys.argv[1] if len(sys.argv) == 2 else 'udp'
 
@@ -44,20 +44,25 @@ print('Ready. Ctrl-C to quit.')
 
 msg = villas_pb2.Message()
 
-while True:
-	try:
-		dgram = skt.recv(1024)
-		if not dgram:
-			break
-		else:
-			msg.ParseFromString(dgram)
-			print(msg)
-			
-			skt.send(msg.SerializeToString())
 
-	except KeyboardInterrupt:
-		print('Shutting down.')
+# Gracefully shutdown
+def sighandler(signum, frame):
+	running = False
+
+signal.signal(signal.SIGINT, sighandler)
+signal.signal(signal.SIGTERM, sighandler)
+
+running = True
+
+while running:
+	dgram = skt.recv(1024)
+	if not dgram:
 		break
+	else:
+		msg.ParseFromString(dgram)
+		print(msg)
+		
+		skt.send(msg.SerializeToString())
 
 skt.close()
 

@@ -134,6 +134,7 @@ add_subdirectory(etc)
 add_subdirectory(lib)
 add_subdirectory(web)
 add_subdirectory(packaging)
+add_subdirectory(python)
 
 if(WITH_SRC)
     add_subdirectory(src)

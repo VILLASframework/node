@@ -71,10 +71,10 @@ cat > ${CONFIG_FILE} << EOF
 }
 EOF
 
-export PYTHONPATH=${BUILDDIR}/clients/python
+export PYTHONPATH=${BUILDDIR}/python:${SRCDIR}/python
 
 # Start Python client in background
-python ${SRCDIR}/clients/python/villas.py unix &
+python ${SRCDIR}/clients/python/client.py unix &
 CPID=$!
 
 # Wait for client to be ready
@@ -83,11 +83,13 @@ if [ "${LAYER}" = "unix" ]; then
 		sleep 1
 	done
 fi
+
 sleep 1
 
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} py-client > ${OUTPUT_FILE} < ${INPUT_FILE}
 
 kill ${CPID}
+wait ${CPID}
 
 # Compare data
 villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
