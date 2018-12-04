@@ -71,6 +71,8 @@ struct memory_allocation {
 /** Initilialize memory subsystem */
 int memory_init(int hugepages);
 
+int memory_lock(size_t lock);
+
 /** Allocate \p len bytes memory of type \p m.
  *
  * @retval NULL If allocation failed.

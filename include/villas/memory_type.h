@@ -62,7 +62,7 @@ extern struct memory_type memory_hugepage;
 struct memory_type * memory_ib(struct node *n, struct memory_type *parent);
 struct memory_type * memory_managed(void *ptr, size_t len);
 
-int memory_hugepage_init();
+int memory_hugepage_init(int hugepages);
 
 struct memory_type * memory_type_lookup(enum memory_type_flags flags);
 

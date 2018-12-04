@@ -55,35 +55,24 @@ int memory_init(int hugepages)
 
 	info("Initialize memory sub-system: #hugepages=%d", hugepages);
 
-	/* Initialize hugepage allocator */
-	ret = memory_hugepage_init();
+	ret = memory_hugepage_init(hugepages);
 	if (ret)
 		return ret;
 
+	size_t lock = kernel_get_hugepage_size() * hugepages;
+
+	ret = memory_lock(lock);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+int memory_lock(size_t lock)
+{
 #if defined(__linux__) && defined(__x86_64__)
-	int pagecnt, pagesz;
+	int ret;
 	struct rlimit l;
-
-	pagecnt = kernel_get_nr_hugepages();
-	if (pagecnt < hugepages) {
-		if (getuid() == 0) {
-			kernel_set_nr_hugepages(hugepages);
-			debug(LOG_MEM | 2, "Increased number of reserved hugepages from %d to %d", pagecnt, hugepages);
-		}
-		else {
-			warning("Failed to reserved hugepages. Please re-run as super-user or reserve manually via:");
-			warning("   $ echo %d > /proc/sys/vm/nr_hugepages", hugepages);
-
-			return -1;
-		}
-	}
-
-	pagesz = kernel_get_hugepage_size();
-	if (pagesz < 0)
-		return -1;
-
-	/* Amount of memory which should be lockable */
-	size_t lock = pagesz * hugepages;
 
 	ret = getrlimit(RLIMIT_MEMLOCK, &l);
 	if (ret)
@@ -111,6 +100,7 @@ int memory_init(int hugepages)
 		debug(LOG_MEM | 2, "Increased ressource limit of locked memory to %zd bytes", lock);
 	}
 #endif
+
 	return 0;
 }
 
@@ -125,13 +115,13 @@ void * memory_alloc_aligned(struct memory_type *m, size_t len, size_t alignment)
 
 	struct memory_allocation *ma = m->alloc(m, len, alignment);
 	if (ma == NULL) {
-		warning("memory_alloc_aligned: allocating memory for memory_allocation failed for memory type %s. Reason: %s", m->name, strerror(errno) );
+		warning("Memory allocation of type %s failed. reason=%s", m->name, strerror(errno) );
 		return NULL;
 	}
 
 	ret = hash_table_insert(&allocations, ma->address, ma);
 	if (ret) {
-		warning("memory_alloc_aligned: Inserting into hash table failed!");
+		warning("Inserting into hash table failed!");
 		return NULL;
 	}
 
