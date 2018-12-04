@@ -28,9 +28,9 @@ OUTPUT_FILE=$(mktemp)
 
 NUM_SAMPLES=${NUM_SAMPLES:-10}
 
-for SAMPLELEN	in 1 10 100; do
-for POLLING	in true false; do
-for VECTORIZE	in 1 5 25; do
+for MODE in polling pthread; do
+for VECTORIZE in 1 5 25; do
+for SIGNAL_COUNT in 1 10 100; do
 
 cat > ${CONFIG_FILE} << EOF
 {
@@ -43,9 +43,8 @@ cat > ${CONFIG_FILE} << EOF
 			"in" : {
 				"name" : "/villas-test"	
 			},
-			"samplelen" : ${SAMPLELEN},
 			"queuelen" : 1024,
-			"polling" : ${POLLING},
+			"mode" : "${MODE}",
 			"vectorize" : ${VECTORIZE}
 		}
 	}
@@ -53,7 +52,7 @@ cat > ${CONFIG_FILE} << EOF
 EOF
 
 # Generate test data
-villas-signal -l ${NUM_SAMPLES} -v ${SAMPLELEN} -n random > ${INPUT_FILE}
+villas-signal -l ${NUM_SAMPLES} -v ${SIGNAL_COUNT} -n random > ${INPUT_FILE}
 
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
@@ -62,7 +61,7 @@ villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 if (( ${RC} != 0 )); then
-	echo "=========== Sub-test failed for: polling=${POLLING}, vectorize=${VECTORIZE}, samplelen=${SAMPLELEN}"
+	echo "=========== Sub-test failed for: mode=${MODE}, vectorize=${VECTORIZE}, SIGNAL_COUNT=${SIGNAL_COUNT}"
 	cat ${CONFIG_FILE}
 	echo
 	cat ${INPUT_FILE}
@@ -70,7 +69,7 @@ if (( ${RC} != 0 )); then
 	cat ${OUTPUT_FILE}
 	exit ${RC}
 else
-	echo "=========== Sub-test succeeded for: polling=${POLLING}, vectorize=${VECTORIZE}, samplelen=${SAMPLELEN}"
+	echo "=========== Sub-test succeeded for: mode=${MODE}, vectorize=${VECTORIZE}, SIGNAL_COUNT=${SIGNAL_COUNT}"
 fi
 
 done; done; done
