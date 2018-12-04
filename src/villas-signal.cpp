@@ -188,7 +188,9 @@ int main(int argc, char *argv[])
 	if (!ft)
 		throw RuntimeError("Invalid output format '{}'", format);
 
-	memory_init(0); // Otherwise, ht->size in hash_table_hash() will be zero
+	ret = memory_init(0);
+	if (ret)
+		throw RuntimeError("Failed to initialize memory");
 
 	nt = node_type_lookup("signal");
 	if (!nt)

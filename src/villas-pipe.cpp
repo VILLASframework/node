@@ -323,6 +323,10 @@ check:		if (optarg == endptr)
 	char *nodestr = argv[optind+1];
 	struct format_type *fmt;
 
+	ret = memory_init(0);
+	if (ret)
+		throw RuntimeError("Failed to intialize memory");
+
 	ret = utils::signals_init(quit);
 	if (ret)
 		throw RuntimeError("Failed to initialize signals");
