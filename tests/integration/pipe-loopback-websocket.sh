@@ -41,7 +41,7 @@ cat > ${CONFIG_FILE} << EOF
 			"type" : "websocket",
 
 			"destinations" : [
-				"ws://127.0.0.1:81/node2.protobuf"
+				"ws://127.0.0.1:8080/node2.protobuf"
 			]
 		}
 	}
@@ -51,7 +51,7 @@ EOF
 cat > ${CONFIG_FILE2} << EOF
 {
 	"http" : {
-		"port" : 81
+		"port" : 8080
 	},
 	"logging" : { "level" : 15 },
 	"nodes" : {
