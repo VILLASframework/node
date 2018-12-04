@@ -213,28 +213,30 @@ int file_start(struct node *n)
 	/* Prepare file name */
 	f->uri = file_format_name(f->uri_tmpl, &now);
 
-	/* Check if directory exists */
-	struct stat sb;
-	char *cpy = strdup(f->uri);
-	char *dir = dirname(cpy);
+	/* Check if local directory exists */
+	if (aislocal(f->uri)) {
+		struct stat sb;
+		char *cpy = strdup(f->uri);
+		char *dir = dirname(cpy);
 
-	ret = stat(dir, &sb);
-	if (ret) {
-		if (errno == ENOENT || errno == ENOTDIR) {
+		ret = stat(dir, &sb);
+		if (ret) {
+			if (errno == ENOENT || errno == ENOTDIR) {
+				ret = mkdir(dir, 0644);
+				if (ret)
+					serror("Failed to create directory");
+			}
+			else if (errno != EISDIR)
+				serror("Failed to stat");
+		}
+		else if (!S_ISDIR(sb.st_mode)) {
 			ret = mkdir(dir, 0644);
 			if (ret)
 				serror("Failed to create directory");
 		}
-		else if (errno != EISDIR)
-			serror("Failed to stat");
-	}
-	else if (!S_ISDIR(sb.st_mode)) {
-		ret = mkdir(dir, 0644);
-		if (ret)
-			serror("Failed to create directory");
-	}
 
-	free(cpy);
+		free(cpy);
+	}
 
 	/* Open file */
 	flags = SAMPLE_HAS_ALL;
@@ -352,8 +354,18 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 					usleep(100000);
 
 					/* Try to download more data if this is a remote file. */
-					if (f->io.mode == IO_MODE_ADVIO)
-						adownload(f->io.in.stream.adv, 1);
+					switch (f->io.mode) {
+						case IO_MODE_ADVIO:
+							adownload(f->io.in.stream.adv, 1);
+							break;
+
+						case IO_MODE_STDIO:
+							clearerr(f->io.in.stream.std);
+							break;
+
+						case IO_MODE_CUSTOM:
+							break;
+					}
 
 					goto retry;
 
