@@ -29,6 +29,8 @@
 
 #pragma once
 
+#include <pthread.h>
+
 #include <re/re_sa.h>
 
 #include <villas/node.h>
@@ -55,6 +57,10 @@ struct rtp {
 	struct io io;
 
 	bool enable_rtcp;
+
+	char *recv_buf;
+	size_t recv_size;
+	pthread_mutex_t recv_mutex;
 };
 
 /** @see node_type::print */
