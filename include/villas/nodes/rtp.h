@@ -36,6 +36,7 @@
 #include <villas/node.h>
 #include <villas/list.h>
 #include <villas/io.h>
+#include <villas/queue.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,9 +59,7 @@ struct rtp {
 
 	bool enable_rtcp;
 
-	char *recv_buf;
-	size_t recv_size;
-	pthread_mutex_t recv_mutex;
+	struct queue recv_queue;
 };
 
 /** @see node_type::print */
