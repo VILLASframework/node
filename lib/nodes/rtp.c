@@ -127,8 +127,9 @@ static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, stru
 	if (queue_push(&r->recv_queue, (void *) mbuf_alloc_ref(mb)) != 1)
 		warn("Failed to push to queue");
 
-	/* header not yet used */
-	(void)hdr;
+	/* source, header not yet used */
+	(void) src;
+	(void) hdr;
 }
 
 int rtp_start(struct node *n)
@@ -236,6 +237,7 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	if (ret < 0)
 		warn("Received invalid packet from node %s: reason=%d", node_name(n), ret);
 
+	free(buf);
 	return ret;
 }
 
@@ -297,6 +299,7 @@ retry:	cnt = io_sprint(&r->io, buf, buflen, &wbytes, smps, cnt);
 	}
 
 out:	free(buf);
+		mem_deref(mb);
 
 	return cnt;
 }
