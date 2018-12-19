@@ -160,9 +160,18 @@ int rtp_start(struct node *n)
 
 int rtp_stop(struct node *n)
 {
+	int ret;
 	struct rtp *r = (struct rtp *) n->_vd;
 
 	/*mem_deref(r->rs);*/
+
+	ret = queue_close(&r->recv_queue);
+	if (ret)
+		warn("Problem closing queue");
+
+	ret = queue_destroy(&r->recv_queue);
+	if (ret)
+		warn("Problem destroying queue");
 
 	return io_destroy(&r->io);
 }
