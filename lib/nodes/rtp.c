@@ -46,9 +46,13 @@ int rtp_reverse(struct node *n)
 	struct rtp *r = (struct rtp *) n->_vd;
 	struct sa tmp;
 
-	tmp = r->local;
-	r->local = r->remote;
-	r->remote = tmp;
+	tmp = r->local_rtp;
+	r->local_rtp = r->remote_rtp;
+	r->remote_rtp = tmp;
+
+	tmp = r->local_rtcp;
+	r->local_rtcp = r->remote_rtcp;
+	r->remote_rtcp = tmp;
 
 	return 0;
 }
@@ -61,6 +65,7 @@ int rtp_parse(struct node *n, json_t *cfg)
 	const char *local, *remote;
 	const char *format = "villas.binary";
 	bool enable_rtcp = false;
+	uint16_t port;
 
 	json_error_t err;
 
@@ -83,21 +88,33 @@ int rtp_parse(struct node *n, json_t *cfg)
 	/* Enable RTCP */
 	r->enable_rtcp = enable_rtcp;
 	if(enable_rtcp)
-		error("RTCP is not implemented yet.");
+		warn("RTCP is not implemented yet");
 
 	/* Remote address */
-	ret = sa_decode(&r->remote, remote, strlen(remote));
+	ret = sa_decode(&r->remote_rtp, remote, strlen(remote));
 	if (ret) {
 		error("Failed to resolve remote address '%s' of node %s: %s",
 			remote, node_name(n), strerror(ret));
 	}
 
+	/* Assign even port number to RTP socket, next odd number to RTCP socket */
+	port = sa_port(&r->remote_rtp) & ~1;
+	sa_set_sa(&r->remote_rtcp, &r->remote_rtp.u.sa);
+	sa_set_port(&r->remote_rtp, port);
+	sa_set_port(&r->remote_rtcp, port+1);
+
 	/* Local address */
-	ret = sa_decode(&r->local, local, strlen(local));
+	ret = sa_decode(&r->local_rtp, local, strlen(local));
 	if (ret) {
 		error("Failed to resolve local address '%s' of node %s: %s",
 			local, node_name(n), strerror(ret));
 	}
+
+	/* Assign even port number to RTP socket, next odd number to RTCP socket */
+	port = sa_port(&r->local_rtp) & ~1;
+	sa_set_sa(&r->local_rtcp, &r->local_rtp.u.sa);
+	sa_set_port(&r->local_rtp, port);
+	sa_set_port(&r->local_rtcp, port+1);
 
 	/** @todo parse * in addresses */
 
@@ -109,8 +126,8 @@ char * rtp_print(struct node *n)
 	struct rtp *r = (struct rtp *) n->_vd;
 	char *buf;
 
-	char *local = socket_print_addr((struct sockaddr *) &r->local.u);
-	char *remote = socket_print_addr((struct sockaddr *) &r->remote.u);
+	char *local = socket_print_addr((struct sockaddr *) &r->local_rtp.u);
+	char *remote = socket_print_addr((struct sockaddr *) &r->remote_rtp.u);
 
 	buf = strf("format=%s, in.address=%s, out.address=%s", format_type_name(r->format), local, remote);
 
@@ -130,6 +147,14 @@ static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, stru
 	/* source, header not yet used */
 	(void) src;
 	(void) hdr;
+}
+
+static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
+{
+	(void)src;
+	(void)arg;
+
+	printf("rtcp: recv %s\n", rtcp_type_name(msg->hdr.pt));
 }
 
 int rtp_start(struct node *n)
@@ -152,8 +177,11 @@ int rtp_start(struct node *n)
 		return ret;
 
 	/* Initialize RTP socket */
-	uint16_t port = sa_port(&r->local) & ~1;
-	ret = rtp_listen(&r->rs, IPPROTO_UDP, &r->local, port, port+1, r->enable_rtcp, rtp_handler, NULL, n->_vd);
+	uint16_t port = sa_port(&r->local_rtp) & ~1;
+	ret = rtp_listen(&r->rs, IPPROTO_UDP, &r->local_rtp, port, port+1, r->enable_rtcp, rtp_handler, rtcp_handler, n->_vd);
+
+	/* Start RTCP session */
+	rtcp_start(r->rs, node_name(n), &r->remote_rtcp);
 
 	return ret;
 }
@@ -301,7 +329,7 @@ retry:	cnt = io_sprint(&r->io, buf, buflen, &wbytes, smps, cnt);
 	mbuf_set_pos(mb, 12);
 
 	/* Send dataset */
-	ret = rtp_send(r->rs, &r->remote, false, false, 21, (uint32_t) time(NULL), mb);
+	ret = rtp_send(r->rs, &r->remote_rtp, false, false, 21, (uint32_t) time(NULL), mb);
 	if (ret) {
 		error("Error from rtp_send, reason: %d", ret);
 		cnt = ret;
@@ -338,7 +366,7 @@ static struct plugin p = {
 		.stop		= rtp_stop,
 		.read		= rtp_read,
 		.write		= rtp_write,
-		.fd		= rtp_fd
+		.fd			= rtp_fd
 	}
 };
 

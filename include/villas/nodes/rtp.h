@@ -51,8 +51,10 @@ struct format_type;
 struct rtp {
 	struct rtp_sock *rs;	/**< RTP socket */
 
-	struct sa local;	/**< Local address of the socket */
-	struct sa remote;	/**< Remote address of the socket */
+	struct sa local_rtp;	/**< Local address of the RTP socket */
+	struct sa local_rtcp;	/**< Local address of the RTCP socket */
+	struct sa remote_rtp;	/**< Remote address of the RTP socket */
+	struct sa remote_rtcp;	/**< Remote address of the RTCP socket */
 
 	struct format_type *format;
 	struct io io;
