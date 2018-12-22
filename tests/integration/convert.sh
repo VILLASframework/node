@@ -29,12 +29,12 @@ INPUT_FILE=$(mktemp)
 
 FORMATS="villas.human csv tsv json"
 
+# Generate test data
+villas-signal -v5 -n -l20 mixed > ${INPUT_FILE}
+
 for FORMAT in ${FORMATS}; do
-    villas-signal -v5 -n -l20 mixed | \
-    tee ${INPUT_FILE} | \
-    villas-convert -o ${FORMAT} | \
-    villas-convert -i ${FORMAT} | \
-    tee ${OUTPUT_FILE}
-    
-    villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
+	villas-convert -o ${FORMAT} < ${INPUT_FILE} | tee ${TEMP} | \
+	villas-convert -i ${FORMAT} > ${OUTPUT_FILE}
+
+	villas-test-cmp ${INPUT_FILE} ${OUTPUT_FILE}
 done
