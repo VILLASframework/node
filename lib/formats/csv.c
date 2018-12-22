@@ -224,7 +224,8 @@ static struct plugin p1 = {
 		.sscan	= csv_sscan,
 		.header	= csv_header,
 		.size 	= 0,
-		.flags	= IO_NEWLINES,
+		.flags	= IO_NEWLINES | IO_AUTO_DETECT_FORMAT |
+		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA,
 		.separator = '\t'
 	}
 };
