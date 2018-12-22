@@ -24,7 +24,7 @@
 
 # Check if tools are present
 if ! command -v lspci; then
-    echo "lspci tool is missing"
+    echo "'lspci' tool is missing"
     exit 99
 fi
 
