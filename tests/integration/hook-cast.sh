@@ -22,6 +22,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ##################################################################################
 
+# We skip this test for now
+echo "Test not yet supported"
 exit 99
 
 INPUT_FILE=$(mktemp)
