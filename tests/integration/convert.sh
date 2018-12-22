@@ -27,7 +27,7 @@ set -e
 OUTPUT_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 
-FORMATS="villas.human csv json"
+FORMATS="villas.human csv tsv json"
 
 for FORMAT in ${FORMATS}; do
     villas-signal -v5 -n -l20 mixed | \
