@@ -138,14 +138,14 @@ static void * send_loop(void *ctx)
 	Logger logger = logging.get("pipe");
 
 	unsigned last_sequenceno = 0, release;
-	int ret, scanned, sent, allocated, cnt = 0;
+	int scanned, sent, allocated, cnt = 0;
 
 	struct sample *smps[dirs->send.node->out.vectorize];
 
 	while (!io_eof(dirs->send.io)) {
 		allocated = sample_alloc_many(&dirs->send.pool, smps, dirs->send.node->out.vectorize);
 		if (allocated < 0)
-			throw RuntimeError("Failed to get {} samples out of send pool ({}).", dirs->send.node->out.vectorize, ret);
+			throw RuntimeError("Failed to get {} samples out of send pool.", dirs->send.node->out.vectorize);
 		else if (allocated < dirs->send.node->out.vectorize)
 			logger->warn("Send pool underrun");
 
