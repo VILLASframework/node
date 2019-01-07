@@ -88,7 +88,7 @@ int rtp_parse(struct node *n, json_t *cfg)
 	/* Enable RTCP */
 	r->enable_rtcp = enable_rtcp;
 	if(enable_rtcp)
-		warn("RTCP is not implemented yet");
+		warning("RTCP is not implemented yet");
 
 	/* Remote address */
 	ret = sa_decode(&r->remote_rtp, remote, strlen(remote));
@@ -142,7 +142,7 @@ static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, stru
 	struct rtp *r = (struct rtp *) arg;
 
 	if (queue_push(&r->recv_queue, (void *) mbuf_alloc_ref(mb)) != 1)
-		warn("Failed to push to queue");
+		warning("Failed to push to queue");
 
 	/* source, header not yet used */
 	(void) src;
@@ -195,11 +195,11 @@ int rtp_stop(struct node *n)
 
 	ret = queue_close(&r->recv_queue);
 	if (ret)
-		warn("Problem closing queue");
+		warning("Problem closing queue");
 
 	ret = queue_destroy(&r->recv_queue);
 	if (ret)
-		warn("Problem destroying queue");
+		warning("Problem destroying queue");
 
 	return io_destroy(&r->io);
 }
@@ -260,7 +260,7 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	ret = queue_pull(&r->recv_queue, (void **) &mb);
 	if (ret <= 0) {
 		if (ret < 0)
-			warn("Failed to pull from queue");
+			warning("Failed to pull from queue");
 		return ret;
 	}
 
@@ -272,7 +272,7 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	/* Unpack data */
 	ret = io_sscan(&r->io, buf, bytes, NULL, smps, cnt);
 	if (ret < 0)
-		warn("Received invalid packet from node %s: reason=%d", node_name(n), ret);
+		warning("Received invalid packet from node %s: reason=%d", node_name(n), ret);
 
 	free(buf);
 	return ret;
