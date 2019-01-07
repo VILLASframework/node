@@ -59,7 +59,7 @@ static size_t csv_sprint_single(struct io *io, char *buf, size_t len, const stru
 
 	if (io->flags & SAMPLE_HAS_DATA) {
 		for (int i = 0; i < smp->length; i++) {
-			sig = list_at_safe(smp->signals, i);
+			sig = vlist_at_safe(smp->signals, i);
 			if (!sig)
 				break;
 
@@ -113,7 +113,7 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 		if (*end == io->delimiter)
 			goto out;
 
-		struct signal *sig = (struct signal *) list_at_safe(smp->signals, i);
+		struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, i);
 		if (!sig)
 			goto out;
 
@@ -195,7 +195,7 @@ void csv_header(struct io *io, const struct sample *smp)
 
 	if (io->flags & SAMPLE_HAS_DATA) {
 		for (int i = 0; i < smp->length; i++) {
-			struct signal *sig = (struct signal *) list_at(smp->signals, i);
+			struct signal *sig = (struct signal *) vlist_at(smp->signals, i);
 
 			if (sig->name)
 				fprintf(f, "%s", sig->name);

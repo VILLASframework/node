@@ -55,7 +55,7 @@ struct path_source {
 	bool masked;
 
 	struct pool pool;
-	struct list mappings;			/**< List of mappings (struct mapping_entry). */
+	struct vlist mappings;			/**< List of mappings (struct mapping_entry). */
 };
 
 struct path_destination {
@@ -85,10 +85,10 @@ struct path {
 	struct sample *last_sample;
 	int last_sequence;
 
-	struct list sources;		/**< List of all incoming nodes (struct path_source). */
-	struct list destinations;	/**< List of all outgoing nodes (struct path_destination). */
-	struct list hooks;		/**< List of processing hooks (struct hook). */
-	struct list signals;		/**< List of signals which this path creates (struct signal). */
+	struct vlist sources;		/**< List of all incoming nodes (struct path_source). */
+	struct vlist destinations;	/**< List of all outgoing nodes (struct path_destination). */
+	struct vlist hooks;		/**< List of processing hooks (struct hook). */
+	struct vlist signals;		/**< List of signals which this path creates (struct signal). */
 
 	struct task timeout;
 
@@ -170,7 +170,7 @@ int path_uses_node(struct path *p, struct node *n);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int path_parse(struct path *p, json_t *cfg, struct list *nodes);
+int path_parse(struct path *p, json_t *cfg, struct vlist *nodes);
 
 /** @} */
 

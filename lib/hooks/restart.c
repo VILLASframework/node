@@ -74,14 +74,14 @@ static int restart_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 				cur->flags |= SAMPLE_IS_FIRST;
 
 				/* Run restart hooks */
-				for (size_t i = 0; i < list_length(&h->node->in.hooks); i++) {
-					struct hook *k = (struct hook *) list_at(&h->node->in.hooks, i);
+				for (size_t i = 0; i < vlist_length(&h->node->in.hooks); i++) {
+					struct hook *k = (struct hook *) vlist_at(&h->node->in.hooks, i);
 
 					hook_restart(k);
 				}
 
-				for (size_t i = 0; i < list_length(&h->node->out.hooks); i++) {
-					struct hook *k = (struct hook *) list_at(&h->node->out.hooks, i);
+				for (size_t i = 0; i < vlist_length(&h->node->out.hooks); i++) {
+					struct hook *k = (struct hook *) vlist_at(&h->node->out.hooks, i);
 
 					hook_restart(k);
 				}

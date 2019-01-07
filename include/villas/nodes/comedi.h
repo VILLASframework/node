@@ -61,7 +61,7 @@ struct comedi_direction {
 	size_t counter;				///< Number of villas samples transfered
 	struct comedi_chanspec *chanspecs;	///< Range and maxdata config of channels
 	unsigned *chanlist;			///< Channel list in comedi's packed format
-	size_t chanlist_len;			///< Number of channels for this direction
+	size_t chanvlist_len;			///< Number of channels for this direction
 
 	char* buffer;
 	char* bufptr;

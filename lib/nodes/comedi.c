@@ -64,16 +64,16 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 	size_t i;
 	json_t *json_chan;
 
-	d->chanlist_len = json_array_size(json_chans);
-	if (d->chanlist_len == 0) {
+	d->chanvlist_len = json_array_size(json_chans);
+	if (d->chanvlist_len == 0) {
 		error("No channels configured");
 		return 0;
 	}
 
-	d->chanlist = alloc(d->chanlist_len * sizeof(*d->chanlist));
+	d->chanlist = alloc(d->chanvlist_len * sizeof(*d->chanlist));
 	assert(d->chanlist != NULL);
 
-	d->chanspecs = alloc(d->chanlist_len * sizeof(*d->chanspecs));
+	d->chanspecs = alloc(d->chanvlist_len * sizeof(*d->chanspecs));
 	assert(d->chanspecs != NULL);
 
 	json_array_foreach(json_chans, i, json_chan) {
@@ -109,7 +109,7 @@ static int comedi_start_common(struct node *n)
 			continue;
 
 		/* Sanity-check channel config and populate chanspec for later */
-		for (int i = 0; i < d->chanlist_len; i++) {
+		for (int i = 0; i < d->chanvlist_len; i++) {
 			const unsigned int channel = CR_CHAN(d->chanlist[i]);
 			const int range = CR_RANGE(d->chanlist[i]);
 
@@ -207,13 +207,13 @@ static int comedi_start_in(struct node *n)
 
 	/* Terminate scan after each channel has been converted */
 	cmd.scan_end_src = TRIG_COUNT;
-	cmd.scan_end_arg = d->chanlist_len;
+	cmd.scan_end_arg = d->chanvlist_len;
 
 	/* Contionous sampling */
 	cmd.stop_src = TRIG_NONE;
 
 	cmd.chanlist = d->chanlist;
-	cmd.chanlist_len = d->chanlist_len;
+	cmd.chanvlist_len = d->chanvlist_len;
 
 	/* First run might change command, second should return successfully */
 	ret = comedi_command_test(c->dev, &cmd);
@@ -292,14 +292,14 @@ static int comedi_start_out(struct node *n)
 	cmd.convert_arg = 0;
 
 	cmd.scan_end_src = TRIG_COUNT;
-	cmd.scan_end_arg = d->chanlist_len;
+	cmd.scan_end_arg = d->chanvlist_len;
 
 	/* Continous sampling */
 	cmd.stop_src = TRIG_NONE;
 	cmd.stop_arg = 0;
 
 	cmd.chanlist = d->chanlist;
-	cmd.chanlist_len = d->chanlist_len;
+	cmd.chanvlist_len = d->chanvlist_len;
 
 	/* First run might change command, second should return successfully */
 	ret = comedi_command_test(c->dev, &cmd);
@@ -323,13 +323,13 @@ static int comedi_start_out(struct node *n)
 
 	/* Allocate buffer for one complete villas sample */
 	/** @todo: maybe increase buffer size according to c->vectorize */
-	const size_t local_buffer_size = d->sample_size * d->chanlist_len;
+	const size_t local_buffer_size = d->sample_size * d->chanvlist_len;
 	d->buffer = alloc(local_buffer_size);
 	d->bufptr = d->buffer;
 	assert(d->buffer != NULL);
 
 	/* Initialize local buffer used for write() syscalls */
-	for (int channel = 0; channel < d->chanlist_len; channel++) {
+	for (int channel = 0; channel < d->chanvlist_len; channel++) {
 		const unsigned raw = comedi_from_phys(0.0f, d->chanspecs[channel].range, d->chanspecs[channel].maxdata);
 
 		if (d->sample_size == sizeof(sampl_t))
@@ -348,7 +348,7 @@ static int comedi_start_out(struct node *n)
 		}
 	}
 
-	const size_t villas_samples_in_kernel_buf = d->buffer_size / (d->sample_size * d->chanlist_len);
+	const size_t villas_samples_in_kernel_buf = d->buffer_size / (d->sample_size * d->chanvlist_len);
 	const double latencyMs = (double)villas_samples_in_kernel_buf / d->sample_rate_hz * 1e3;
 	info("Added latency due to buffering: %4.1f ms\n", latencyMs);
 
@@ -515,7 +515,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	int ret;
 	struct comedi *c = (struct comedi *) n->_vd;
 	struct comedi_direction *d = &c->in;
-	const size_t villas_sample_size = d->chanlist_len * d->sample_size;
+	const size_t villas_sample_size = d->chanvlist_len * d->sample_size;
 
 	ret = comedi_get_buffer_contents(c->dev, d->subdevice);
 	if (ret < 0) {
@@ -557,7 +557,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 			/* Sample handling here */
 			const size_t bytes_available = ret;
 			const size_t raw_samples_available = bytes_available / d->sample_size;
-			const size_t villas_samples_available = raw_samples_available / d->chanlist_len;
+			const size_t villas_samples_available = raw_samples_available / d->chanvlist_len;
 
 			info("there are %ld bytes available (%ld requested) => %ld villas samples",
 			     bytes_available, bytes_requested, villas_samples_available);
@@ -572,19 +572,19 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 				d->counter++;
 
 				smps[i]->flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE;
-				smps[i]->sequence = d->counter / d->chanlist_len;
+				smps[i]->sequence = d->counter / d->chanvlist_len;
 
 				struct timespec offset = time_from_double(d->counter * 1.0 / d->sample_rate_hz);
 				smps[i]->ts.origin = time_add(&d->started, &offset);
 
-				smps[i]->length = d->chanlist_len;
+				smps[i]->length = d->chanvlist_len;
 
-				if (smps[i]->capacity < d->chanlist_len) {
+				if (smps[i]->capacity < d->chanvlist_len) {
 					error("Sample has insufficient capacity: %d < %ld",
-					      smps[i]->capacity, d->chanlist_len);
+					      smps[i]->capacity, d->chanvlist_len);
 				}
 
-				for (int si = 0; si < d->chanlist_len; si++) {
+				for (int si = 0; si < d->chanvlist_len; si++) {
 					unsigned int raw;
 
 					if (d->sample_size == sizeof(sampl_t))
@@ -633,7 +633,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	struct comedi *c = (struct comedi *) n->_vd;
 	struct comedi_direction *d = &c->in;
 
-	const size_t villas_sample_size = d->chanlist_len * d->sample_size;
+	const size_t villas_sample_size = d->chanvlist_len * d->sample_size;
 
 	comedi_set_read_subdevice(c->dev, d->subdevice);
 
@@ -662,11 +662,11 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 	const size_t bytes_available = ret;
 	const size_t raw_sample_count = bytes_available / d->sample_size;
-	size_t villas_sample_count = raw_sample_count / d->chanlist_len;
+	size_t villas_sample_count = raw_sample_count / d->chanvlist_len;
 	if (villas_sample_count == 0)
 		return 0;
 
-	info("there are %ld villas samples (%ld raw bytes, %ld channels)", villas_sample_count, bytes_available, d->chanlist_len);
+	info("there are %ld villas samples (%ld raw bytes, %ld channels)", villas_sample_count, bytes_available, d->chanvlist_len);
 
 #if 0
 	if (villas_sample_count == 1)
@@ -717,18 +717,18 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 		d->counter++;
 
 		smps[i]->flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE;
-		smps[i]->sequence = d->counter / d->chanlist_len;
+		smps[i]->sequence = d->counter / d->chanvlist_len;
 
 		struct timespec offset = time_from_double(d->counter * 1.0 / d->sample_rate_hz);
 		smps[i]->ts.origin = time_add(&d->started, &offset);
 
-		smps[i]->length = d->chanlist_len;
+		smps[i]->length = d->chanvlist_len;
 
-		if (smps[i]->capacity < d->chanlist_len)
+		if (smps[i]->capacity < d->chanvlist_len)
 			error("Sample has insufficient capacity: %d < %ld",
-			      smps[i]->capacity, d->chanlist_len);
+			      smps[i]->capacity, d->chanvlist_len);
 
-		for (int si = 0; si < d->chanlist_len; si++) {
+		for (int si = 0; si < d->chanvlist_len; si++) {
 			unsigned int raw;
 
 			if (d->sample_size == sizeof(sampl_t))
@@ -833,8 +833,8 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 	}
 
 	const size_t buffer_capacity_raw = d->buffer_size / d->sample_size;
-	const size_t buffer_capacity_villas = buffer_capacity_raw / d->chanlist_len;
-	const size_t villas_sample_size = d->sample_size * d->chanlist_len;
+	const size_t buffer_capacity_villas = buffer_capacity_raw / d->chanvlist_len;
+	const size_t villas_sample_size = d->sample_size * d->chanvlist_len;
 
 	ret = comedi_get_buffer_contents(c->dev, d->subdevice);
 	if (ret < 0) {
@@ -846,7 +846,7 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 
 	const size_t bytes_in_buffer = ret;
 	const size_t raw_samples_in_buffer = bytes_in_buffer / d->sample_size;
-	const size_t villas_samples_in_buffer = raw_samples_in_buffer / d->chanlist_len;
+	const size_t villas_samples_in_buffer = raw_samples_in_buffer / d->chanvlist_len;
 
 	if (villas_samples_in_buffer == buffer_capacity_villas) {
 		warning("Comedi buffer is full");
@@ -867,9 +867,9 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 
 	while (villas_samples_written < cnt) {
 		struct sample *sample = smps[villas_samples_written];
-		if (sample->length != d->chanlist_len)
+		if (sample->length != d->chanvlist_len)
 			error("Value count in sample (%d) != configured output channels (%ld)",
-			      sample->length, d->chanlist_len);
+			      sample->length, d->chanvlist_len);
 
 		d->bufptr = d->buffer;
 

@@ -60,7 +60,7 @@ const struct iec61850_type_descriptor type_descriptors[] = {
 };
 
 /** Each network interface needs a separate receiver */
-static struct list receivers;
+static struct vlist receivers;
 static pthread_t thread;
 static EthernetHandleSet hset;
 static int users = 0;
@@ -76,8 +76,8 @@ static void * iec61850_thread(void *ctx)
 		if (ret < 0)
 			continue;
 
-		for (unsigned i = 0; i < list_length(&receivers); i++) {
-			struct iec61850_receiver *r = (struct iec61850_receiver *) list_at(&receivers, i);
+		for (unsigned i = 0; i < vlist_length(&receivers); i++) {
+			struct iec61850_receiver *r = (struct iec61850_receiver *) vlist_at(&receivers, i);
 
 			switch (r->type) {
 				case IEC61850_RECEIVER_GOOSE:	GooseReceiver_tick(r->goose); break;
@@ -99,12 +99,12 @@ const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name)
 	return NULL;
 }
 
-int iec61850_parse_signals(json_t *json_signals, struct list *signals, struct list *node_signals)
+int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct vlist *node_signals)
 {
 	int ret, total_size = 0;
 	const char *iec_type;
 
-	ret = list_init(signals);
+	ret = vlist_init(signals);
 	if (ret)
 		return ret;
 
@@ -123,7 +123,7 @@ int iec61850_parse_signals(json_t *json_signals, struct list *signals, struct li
 			if (!node_signals)
 				return -1;
 
-			sig = list_at(node_signals, i);
+			sig = vlist_at(node_signals, i);
 			if (!sig)
 				return -1;
 
@@ -149,7 +149,7 @@ int iec61850_parse_signals(json_t *json_signals, struct list *signals, struct li
 		if (!td)
 			return -1;
 
-		list_push(signals, (void *) td);
+		vlist_push(signals, (void *) td);
 
 		total_size += td->size;
 	}
@@ -181,8 +181,8 @@ int iec61850_type_stop()
 	if (--users > 0)
 		return 0;
 
-	for (unsigned i = 0; i < list_length(&receivers); i++) {
-		struct iec61850_receiver *r = (struct iec61850_receiver *) list_at(&receivers, i);
+	for (unsigned i = 0; i < vlist_length(&receivers); i++) {
+		struct iec61850_receiver *r = (struct iec61850_receiver *) vlist_at(&receivers, i);
 
 		iec61850_receiver_stop(r);
 	}
@@ -197,7 +197,7 @@ int iec61850_type_stop()
 
 	EthernetHandleSet_destroy(hset);
 
-	list_destroy(&receivers, (dtor_cb_t) iec61850_receiver_destroy, true);
+	vlist_destroy(&receivers, (dtor_cb_t) iec61850_receiver_destroy, true);
 
 	return 0;
 }
@@ -255,8 +255,8 @@ int iec61850_receiver_destroy(struct iec61850_receiver *r)
 
 struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver_type t, const char *intf)
 {
-	for (unsigned i = 0; i < list_length(&receivers); i++) {
-		struct iec61850_receiver *r = (struct iec61850_receiver *) list_at(&receivers, i);
+	for (unsigned i = 0; i < vlist_length(&receivers); i++) {
+		struct iec61850_receiver *r = (struct iec61850_receiver *) vlist_at(&receivers, i);
 
 		if (r->type == t && strcmp(r->interface, intf) == 0)
 			return r;
@@ -293,7 +293,7 @@ struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver_type 
 
 		iec61850_receiver_start(r);
 
-		list_push(&receivers, r);
+		vlist_push(&receivers, r);
 	}
 
 	return r;

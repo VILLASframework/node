@@ -30,7 +30,7 @@
 #include <villas/node.h>
 #include <villas/signal.h>
 
-int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *nodes)
+int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *nodes)
 {
 	int id;
 	char *cpy, *node, *type, *field, *subfield, *end;
@@ -46,7 +46,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 			goto invalid_format;
 		}
 
-		me->node = list_lookup(nodes, node);
+		me->node = vlist_lookup(nodes, node);
 		if (!me->node) {
 			warning("Unknown node %s", node);
 			goto invalid_format;
@@ -154,7 +154,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 		first_str = strtok(NULL, "-]");
 		if (first_str) {
 			if (me->node)
-				first = list_lookup_index(&me->node->signals, first_str);
+				first = vlist_lookup_index(&me->node->signals, first_str);
 
 			if (first < 0) {
 				char *endptr;
@@ -168,14 +168,14 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct list *no
 		else {
 			/* Map all signals */
 			me->data.offset = 0;
-			me->length = me->node ? list_length(&me->node->signals) : 0;
+			me->length = me->node ? vlist_length(&me->node->signals) : 0;
 			goto end;
 		}
 
 		last_str = strtok(NULL, "]");
 		if (last_str) {
 			if (me->node)
-				last = list_lookup_index(&me->node->signals, last_str);
+				last = vlist_lookup_index(&me->node->signals, last_str);
 
 			if (last < 0) {
 				char *endptr;
@@ -214,7 +214,7 @@ invalid_format:
 	return -1;
 }
 
-int mapping_parse(struct mapping_entry *me, json_t *cfg, struct list *nodes)
+int mapping_parse(struct mapping_entry *me, json_t *cfg, struct vlist *nodes)
 {
 	const char *str;
 
@@ -225,7 +225,7 @@ int mapping_parse(struct mapping_entry *me, json_t *cfg, struct list *nodes)
 	return mapping_parse_str(me, str, nodes);
 }
 
-int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes)
+int mapping_parse_list(struct vlist *l, json_t *cfg, struct vlist *nodes)
 {
 	int ret, off;
 
@@ -253,7 +253,7 @@ int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes)
 		me->offset = off;
 		off += me->length;
 
-		list_push(l, me);
+		vlist_push(l, me);
 	}
 
 	ret = 0;
@@ -354,12 +354,12 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 	return 0;
 }
 
-int mapping_remap(const struct list *m, struct sample *remapped, const struct sample *original, const struct stats *s)
+int mapping_remap(const struct vlist *m, struct sample *remapped, const struct sample *original, const struct stats *s)
 {
 	int ret;
 
-	for (size_t i = 0; i < list_length(m); i++) {
-		struct mapping_entry *me = (struct mapping_entry *) list_at(m, i);
+	for (size_t i = 0; i < vlist_length(m); i++) {
+		struct mapping_entry *me = (struct mapping_entry *) vlist_at(m, i);
 
 		ret = mapping_update(me, remapped, original, s);
 		if (ret)
@@ -451,8 +451,8 @@ int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
 			break;
 
 		case MAPPING_TYPE_DATA:
-			if (me->node && index < list_length(&me->node->signals)) {
-				struct signal *s = list_at(&me->node->signals, index);
+			if (me->node && index < vlist_length(&me->node->signals)) {
+				struct signal *s = vlist_at(&me->node->signals, index);
 
 				strcatf(str, "data[%s]", s->name);
 			}

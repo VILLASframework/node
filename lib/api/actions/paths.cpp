@@ -40,10 +40,10 @@ public:
 	{
 		json_t *json_paths = json_array();
 
-		struct list *paths = session->getSuperNode()->getPaths();
+		struct vlist *paths = session->getSuperNode()->getPaths();
 
-		for (size_t i = 0; i < list_length(paths); i++) {
-			struct path *p = (struct path *) list_at(paths, i);
+		for (size_t i = 0; i < vlist_length(paths); i++) {
+			struct path *p = (struct path *) vlist_at(paths, i);
 
 			json_t *json_path = json_pack("{ s: i }",
 				"state",	p->state

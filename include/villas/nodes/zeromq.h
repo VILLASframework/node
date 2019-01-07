@@ -79,7 +79,7 @@ struct zeromq {
 
 	struct {
 		void *socket;	/**< ZeroMQ socket. */
-		struct list endpoints;
+		struct vlist endpoints;
 		char *filter;
 	} out;
 };

@@ -60,7 +60,7 @@ struct test_rtt {
 	int current;		/**< Index of current test in test_rtt::cases */
 	int counter;
 
-	struct list cases;	/**< List of test cases */
+	struct vlist cases;	/**< List of test cases */
 
 	char *output;	/**< The directory where we place the results. */
 	char *prefix;	/**< An optional prefix in the filename. */

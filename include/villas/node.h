@@ -47,7 +47,7 @@ struct node_direction {
 	int builtin;		/**< This node should use built-in hooks by default. */
 	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
 
-	struct list hooks;	/**< List of write hooks (struct hook). */
+	struct vlist hooks;	/**< List of write hooks (struct hook). */
 
 	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
 };
@@ -71,7 +71,7 @@ struct node
 
 	struct node_direction in, out;
 
-	struct list signals;	/**< Signal meta data for data which is __received__ by node_read(). */
+	struct vlist signals;	/**< Signal meta data for data which is __received__ by node_read(). */
 
 	enum state state;
 
@@ -105,10 +105,10 @@ int node_parse(struct node *n, json_t *cfg, const char *name);
  * @param nodes The nodes will be added to this list.
  * @param all This list contains all valid nodes.
  */
-int node_parse_list(struct list *list, json_t *cfg, struct list *all);
+int node_parse_list(struct vlist *list, json_t *cfg, struct vlist *all);
 
 /** Parse the list of signal definitions. */
-int node_parse_signals(struct list *list, json_t *cfg);
+int node_parse_signals(struct vlist *list, json_t *cfg);
 
 /** Validate node configuration. */
 int node_check(struct node *n);

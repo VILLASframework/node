@@ -50,7 +50,7 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 	for (int i = 0; i < smp->length; i++) {
 		struct signal *sig;
 
-		sig = list_at_safe(smp->signals, i);
+		sig = vlist_at_safe(smp->signals, i);
 		if (!sig)
 			return -1;
 
@@ -186,12 +186,12 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 
 		struct signal *sig;
 
-		sig = (struct signal *) list_lookup(io->signals, name);
+		sig = (struct signal *) vlist_lookup(io->signals, name);
 		if (sig) {
 			if (!sig->enabled)
 				continue;
 
-			idx = list_index(io->signals, sig);
+			idx = vlist_index(io->signals, sig);
 		}
 		else {
 			ret = sscanf(name, "signal_%d", &idx);

@@ -52,7 +52,7 @@ struct node_type {
 
 	enum state state;		/**< State of this node-type. */
 
-	struct list instances;		/**< A list of all existing nodes of this type. */
+	struct vlist instances;		/**< A list of all existing nodes of this type. */
 
 	size_t size;			/**< Size of private data bock. @see node::_vd */
 	size_t pool_size;

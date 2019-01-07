@@ -71,7 +71,7 @@ struct io {
 		size_t buflen;
 	} in, out;
 
-	struct list *signals;			/**< Signal meta data for parsed samples by io_scan() */
+	struct vlist *signals;			/**< Signal meta data for parsed samples by io_scan() */
 	bool header_printed;
 
 	enum io_mode mode;
@@ -80,7 +80,7 @@ struct io {
 	const struct format_type *_vt;
 };
 
-int io_init(struct io *io, const struct format_type *fmt, struct list *signals, int flags);
+int io_init(struct io *io, const struct format_type *fmt, struct vlist *signals, int flags);
 
 int io_init_auto(struct io *io, const struct format_type *fmt, int len, int flags);
 

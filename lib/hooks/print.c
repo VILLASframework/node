@@ -56,7 +56,7 @@ static int print_start(struct hook *h)
 	struct print *p = (struct print *) h->_vd;
 	int ret;
 
-	struct list *signals;
+	struct vlist *signals;
 
 	if (h->node)
 		signals = &h->node->signals;

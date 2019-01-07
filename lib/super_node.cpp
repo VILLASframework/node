@@ -58,9 +58,9 @@ SuperNode::SuperNode() :
 	paths.state = STATE_DESTROYED;
 	plugins.state = STATE_DESTROYED;
 
-	list_init(&nodes);
-	list_init(&paths);
-	list_init(&plugins);
+	vlist_init(&nodes);
+	vlist_init(&paths);
+	vlist_init(&plugins);
 
 	char hname[128];
 	gethostname(hname, 128);
@@ -214,7 +214,7 @@ int SuperNode::parseJson(json_t *j)
 			if (ret)
 				throw RuntimeError("Failed to parse plugin");
 
-			list_push(&plugins, p);
+			vlist_push(&plugins, p);
 		}
 	}
 
@@ -247,7 +247,7 @@ int SuperNode::parseJson(json_t *j)
 			if (ret)
 				throw RuntimeError("Failed to parse node");
 
-			list_push(&nodes, n);
+			vlist_push(&nodes, n);
 		}
 	}
 
@@ -269,7 +269,7 @@ int SuperNode::parseJson(json_t *j)
 			if (ret)
 				throw RuntimeError("Failed to parse path");
 
-			list_push(&paths, p);
+			vlist_push(&paths, p);
 
 			if (p->reverse) {
 				path *r = (path *) alloc(sizeof(path));
@@ -282,7 +282,7 @@ int SuperNode::parseJson(json_t *j)
 				if (ret)
 					throw RuntimeError("Failed to reverse path {}", path_name(p));
 
-				list_push(&paths, r);
+				vlist_push(&paths, r);
 			}
 		}
 	}
@@ -300,16 +300,16 @@ int SuperNode::check()
 
 	assert(state == STATE_INITIALIZED || state == STATE_PARSED || state == STATE_CHECKED);
 
-	for (size_t i = 0; i < list_length(&nodes); i++) {
-		auto *n = (struct node *) list_at(&nodes, i);
+	for (size_t i = 0; i < vlist_length(&nodes); i++) {
+		auto *n = (struct node *) vlist_at(&nodes, i);
 
 		ret = node_check(n);
 		if (ret)
 			throw RuntimeError("Invalid configuration for node {}", node_name(n));
 	}
 
-	for (size_t i = 0; i < list_length(&paths); i++) {
-		auto *p = (struct path *) list_at(&paths, i);
+	for (size_t i = 0; i < vlist_length(&paths); i++) {
+		auto *p = (struct path *) vlist_at(&paths, i);
 
 		ret = path_check(p);
 		if (ret)
@@ -339,8 +339,8 @@ int SuperNode::start()
 #endif
 
 	logger->info("Starting node-types");
-	for (size_t i = 0; i < list_length(&nodes); i++) {
-		auto *n = (struct node *) list_at(&nodes, i);
+	for (size_t i = 0; i < vlist_length(&nodes); i++) {
+		auto *n = (struct node *) vlist_at(&nodes, i);
 
 		ret = node_type_start(n->_vt, reinterpret_cast<super_node *>(this));
 		if (ret)
@@ -348,14 +348,14 @@ int SuperNode::start()
 	}
 
 	logger->info("Starting nodes");
-	for (size_t i = 0; i < list_length(&nodes); i++) {
-		auto *n = (struct node *) list_at(&nodes, i);
+	for (size_t i = 0; i < vlist_length(&nodes); i++) {
+		auto *n = (struct node *) vlist_at(&nodes, i);
 
 		ret = node_init2(n);
 		if (ret)
 			throw RuntimeError("Failed to prepare node: {}", node_name(n));
 
-		int refs = list_count(&paths, (cmp_cb_t) path_uses_node, n);
+		int refs = vlist_count(&paths, (cmp_cb_t) path_uses_node, n);
 		if (refs > 0) {
 			ret = node_start(n);
 			if (ret)
@@ -366,8 +366,8 @@ int SuperNode::start()
 	}
 
 	logger->info("Starting paths");
-	for (size_t i = 0; i < list_length(&paths); i++) {
-		auto *p = (struct path *) list_at(&paths, i);
+	for (size_t i = 0; i < vlist_length(&paths); i++) {
+		auto *p = (struct path *) vlist_at(&paths, i);
 
 		if (p->enabled) {
 			ret = path_init2(p);
@@ -412,8 +412,8 @@ int SuperNode::stop()
 #endif /* WITH_HOOKS */
 
 	logger->info("Stopping paths");
-	for (size_t i = 0; i < list_length(&paths); i++) {
-		auto *p = (struct path *) list_at(&paths, i);
+	for (size_t i = 0; i < vlist_length(&paths); i++) {
+		auto *p = (struct path *) vlist_at(&paths, i);
 
 		ret = path_stop(p);
 		if (ret)
@@ -421,8 +421,8 @@ int SuperNode::stop()
 	}
 
 	logger->info("Stopping nodes");
-	for (size_t i = 0; i < list_length(&nodes); i++) {
-		auto *n = (struct node *) list_at(&nodes, i);
+	for (size_t i = 0; i < vlist_length(&nodes); i++) {
+		auto *n = (struct node *) vlist_at(&nodes, i);
 
 		ret = node_stop(n);
 		if (ret)
@@ -430,8 +430,8 @@ int SuperNode::stop()
 	}
 
 	logger->info("Stopping node-types");
-	for (size_t i = 0; i < list_length(&plugins); i++) {
-		auto *p = (struct plugin *) list_at(&plugins, i);
+	for (size_t i = 0; i < vlist_length(&plugins); i++) {
+		auto *p = (struct plugin *) vlist_at(&plugins, i);
 
 		if (p->type == PLUGIN_TYPE_NODE) {
 			ret = node_type_stop(&p->node);
@@ -466,9 +466,9 @@ SuperNode::~SuperNode()
 {
 	assert(state != STATE_STARTED);
 
-	list_destroy(&plugins, (dtor_cb_t) plugin_destroy, false);
-	list_destroy(&paths,   (dtor_cb_t) path_destroy, true);
-	list_destroy(&nodes,   (dtor_cb_t) node_destroy, true);
+	vlist_destroy(&plugins, (dtor_cb_t) plugin_destroy, false);
+	vlist_destroy(&paths,   (dtor_cb_t) path_destroy, true);
+	vlist_destroy(&nodes,   (dtor_cb_t) node_destroy, true);
 
 	if (json)
 		json_decref(json);
@@ -479,14 +479,14 @@ int SuperNode::periodic()
 #ifdef WITH_HOOKS
 	int ret;
 
-	for (size_t i = 0; i < list_length(&paths); i++) {
-		auto *p = (struct path *) list_at(&paths, i);
+	for (size_t i = 0; i < vlist_length(&paths); i++) {
+		auto *p = (struct path *) vlist_at(&paths, i);
 
 		if (p->state != STATE_STARTED)
 			continue;
 
-		for (size_t j = 0; j < list_length(&p->hooks); j++) {
-			hook *h = (struct hook *) list_at(&p->hooks, j);
+		for (size_t j = 0; j < vlist_length(&p->hooks); j++) {
+			hook *h = (struct hook *) vlist_at(&p->hooks, j);
 
 			ret = hook_periodic(h);
 			if (ret)
@@ -494,22 +494,22 @@ int SuperNode::periodic()
 		}
 	}
 
-	for (size_t i = 0; i < list_length(&nodes); i++) {
-		auto *n = (struct node *) list_at(&nodes, i);
+	for (size_t i = 0; i < vlist_length(&nodes); i++) {
+		auto *n = (struct node *) vlist_at(&nodes, i);
 
 		if (n->state != STATE_STARTED)
 			continue;
 
-		for (size_t j = 0; j < list_length(&n->in.hooks); j++) {
-			auto *h = (struct hook *) list_at(&n->in.hooks, j);
+		for (size_t j = 0; j < vlist_length(&n->in.hooks); j++) {
+			auto *h = (struct hook *) vlist_at(&n->in.hooks, j);
 
 			ret = hook_periodic(h);
 			if (ret)
 				return ret;
 		}
 
-		for (size_t j = 0; j < list_length(&n->out.hooks); j++) {
-			auto *h = (struct hook *) list_at(&n->out.hooks, j);
+		for (size_t j = 0; j < vlist_length(&n->out.hooks); j++) {
+			auto *h = (struct hook *) vlist_at(&n->out.hooks, j);
 
 			ret = hook_periodic(h);
 			if (ret)
@@ -523,7 +523,7 @@ int SuperNode::periodic()
 
 /* C-compatability */
 extern "C" {
-	struct list * super_node_get_nodes(struct super_node *sn)
+	struct vlist * super_node_get_nodes(struct super_node *sn)
 	{
 		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
 

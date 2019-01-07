@@ -41,10 +41,10 @@ public:
 	{
 		json_t *json_nodes = json_array();
 
-		struct list *nodes = session->getSuperNode()->getNodes();
+		struct vlist *nodes = session->getSuperNode()->getNodes();
 
-		for (size_t i = 0; i < list_length(nodes); i++) {
-			struct node *n = (struct node *) list_at(nodes, i);
+		for (size_t i = 0; i < vlist_length(nodes); i++) {
+			struct node *n = (struct node *) vlist_at(nodes, i);
 
 			json_t *json_node = json_pack("{ s: s, s: s, s: i, s: { s: i }, s: { s: i } }",
 				"name",		node_name_short(n),

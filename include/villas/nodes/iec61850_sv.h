@@ -58,7 +58,7 @@ struct iec61850_sv {
 		struct queue_signalled queue;
 		struct pool pool;
 
-		struct list signals;		/**< Mappings of type struct iec61850_type_descriptor */
+		struct vlist signals;		/**< Mappings of type struct iec61850_type_descriptor */
 		int total_size;
 	} in;
 
@@ -76,7 +76,7 @@ struct iec61850_sv {
 		int smprate;
 		int confrev;
 
-		struct list signals;		/**< Mappings of type struct iec61850_type_descriptor */
+		struct vlist signals;		/**< Mappings of type struct iec61850_type_descriptor */
 		int total_size;
 	} out;
 };

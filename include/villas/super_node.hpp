@@ -47,9 +47,9 @@ protected:
 
 	static Logger logger;
 
-	struct list nodes;
-	struct list paths;
-	struct list plugins;
+	struct vlist nodes;
+	struct vlist paths;
+	struct vlist plugins;
 
 #ifdef WITH_API
 	Api api;
@@ -96,15 +96,15 @@ public:
 
 	struct node * getNode(const std::string &name)
 	{
-		return (struct node *) list_lookup(&nodes, name.c_str());
+		return (struct node *) vlist_lookup(&nodes, name.c_str());
 	}
 
-	struct list * getNodes()
+	struct vlist * getNodes()
 	{
 		return &nodes;
 	}
 
-	struct list * getPaths() {
+	struct vlist * getPaths() {
 		return &paths;
 	}
 

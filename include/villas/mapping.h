@@ -36,7 +36,7 @@ extern "C" {
 struct node;
 struct sample;
 struct signal;
-struct list;
+struct vlist;
 
 enum mapping_type {
 	MAPPING_TYPE_DATA,
@@ -98,15 +98,15 @@ struct mapping_entry {
 	};
 };
 
-int mapping_remap(const struct list *m, struct sample *remapped, const struct sample *original, const struct stats *s);
+int mapping_remap(const struct vlist *m, struct sample *remapped, const struct sample *original, const struct stats *s);
 
 int mapping_update(const struct mapping_entry *e, struct sample *remapped, const struct sample *original, const struct stats *s);
 
-int mapping_parse(struct mapping_entry *e, json_t *cfg, struct list *nodes);
+int mapping_parse(struct mapping_entry *e, json_t *cfg, struct vlist *nodes);
 
-int mapping_parse_str(struct mapping_entry *e, const char *str, struct list *nodes);
+int mapping_parse_str(struct mapping_entry *e, const char *str, struct vlist *nodes);
 
-int mapping_parse_list(struct list *l, json_t *cfg, struct list *nodes);
+int mapping_parse_list(struct vlist *l, json_t *cfg, struct vlist *nodes);
 
 int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str);
 

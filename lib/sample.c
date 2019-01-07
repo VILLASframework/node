@@ -280,7 +280,7 @@ enum signal_type sample_format(const struct sample *s, unsigned idx)
 {
 	struct signal *sig;
 
-	sig = (struct signal *) list_at_safe(s->signals, idx);
+	sig = (struct signal *) vlist_at_safe(s->signals, idx);
 
 	return sig ? sig->type : SIGNAL_TYPE_AUTO;
 }

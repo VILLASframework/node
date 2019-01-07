@@ -53,8 +53,8 @@ public:
 		if (ret)
 			return ret;
 
-		struct list *nodes = session->getSuperNode()->getNodes();
-		struct node *n = (struct node *) list_lookup(nodes, node_str);
+		struct vlist *nodes = session->getSuperNode()->getNodes();
+		struct node *n = (struct node *) vlist_lookup(nodes, node_str);
 
 		if (!n)
 			return -1;

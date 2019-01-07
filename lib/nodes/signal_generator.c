@@ -86,7 +86,7 @@ static void signal_generator_init_signals(struct node *n)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
-	assert(list_length(&n->signals) == 0);
+	assert(vlist_length(&n->signals) == 0);
 
 	for (int i = 0; i < s->values; i++) {
 		struct signal *sig = alloc(sizeof(struct signal));
@@ -96,7 +96,7 @@ static void signal_generator_init_signals(struct node *n)
 		sig->name = strdup(signal_generator_type_str(rtype));
 		sig->type = SIGNAL_TYPE_FLOAT; /* All generated signals are of type float */
 
-		list_push(&n->signals, sig);
+		vlist_push(&n->signals, sig);
 	}
 }
 

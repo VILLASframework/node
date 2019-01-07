@@ -40,7 +40,7 @@
 #define DEFAULT_WEBSOCKET_BUFFER_SIZE (1 << 12)
 
 /* Private static storage */
-static struct list connections = { .state = STATE_DESTROYED };	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
+static struct vlist connections = { .state = STATE_DESTROYED };	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
 
 // @todo: port to C++
 //static struct web *web;
@@ -228,7 +228,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 					format = "villas.web";
 
 				/* Search for node whose name matches the URI. */
-				c->node = list_lookup(&p.node.instances, node);
+				c->node = vlist_lookup(&p.node.instances, node);
 				if (!c->node) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown node");
 					warning("Failed to find node: node=%s", node);
@@ -250,7 +250,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				return -1;
 			}
 
-			list_push(&connections, c);
+			vlist_push(&connections, c);
 
 			debug(LOG_WEBSOCKET | 10, "Initialized WebSocket connection: %s", websocket_connection_name(c));
 			break;
@@ -270,7 +270,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			}
 
 			if (connections.state == STATE_INITIALIZED)
-				list_remove(&connections, c);
+				vlist_remove(&connections, c);
 
 			if (c->state == WEBSOCKET_CONNECTION_STATE_INITIALIZED)
 				websocket_connection_destroy(c);
@@ -375,7 +375,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 int websocket_type_start(struct super_node *ssn)
 {
-	list_init(&connections);
+	vlist_init(&connections);
 
 	//web = NULL; /// @todo: Port to C++ &sn->web;
 	sn = ssn;
@@ -401,9 +401,9 @@ int websocket_start(struct node *n)
 	if (ret)
 		return ret;
 
-	for (int i = 0; i < list_length(&w->destinations); i++) {
+	for (int i = 0; i < vlist_length(&w->destinations); i++) {
 		const char *format;
-		struct websocket_destination *d = (struct websocket_destination *) list_at(&w->destinations, i);
+		struct websocket_destination *d = (struct websocket_destination *) vlist_at(&w->destinations, i);
 		struct websocket_connection *c = (struct websocket_connection *) alloc(sizeof(struct websocket_connection));
 
 		c->state = WEBSOCKET_CONNECTION_STATE_CONNECTING;
@@ -434,8 +434,8 @@ int websocket_stop(struct node *n)
 	int ret;
 	struct websocket *w = (struct websocket *) n->_vd;
 
-	for (size_t i = 0; i < list_length(&connections); i++) {
-		struct websocket_connection *c = (struct websocket_connection *) list_at(&connections, i);
+	for (size_t i = 0; i < vlist_length(&connections); i++) {
+		struct websocket_connection *c = (struct websocket_connection *) vlist_at(&connections, i);
 
 		if (c->node != n)
 			continue;
@@ -450,8 +450,8 @@ int websocket_stop(struct node *n)
 		int open_connections = 0;
 
 		/* Count open connections belonging to this node */
-		for (int i = 0; i < list_length(&connections); i++) {
-			struct websocket_connection *c = (struct websocket_connection *) list_at(&connections, i);
+		for (int i = 0; i < vlist_length(&connections); i++) {
+			struct websocket_connection *c = (struct websocket_connection *) vlist_at(&connections, i);
 
 			if (c->node == n)
 				open_connections++;
@@ -460,7 +460,7 @@ int websocket_stop(struct node *n)
 		if (open_connections == 0)
 			break;
 
-		info("Waiting for shutdown of %zu connections... %d/10", list_length(&connections), j);
+		info("Waiting for shutdown of %zu connections... %d/10", vlist_length(&connections), j);
 		sleep(1);
 	}
 
@@ -480,7 +480,7 @@ int websocket_destroy(struct node *n)
 	struct websocket *w = (struct websocket *) n->_vd;
 	int ret;
 
-	ret = list_destroy(&w->destinations, (dtor_cb_t) websocket_destination_destroy, true);
+	ret = vlist_destroy(&w->destinations, (dtor_cb_t) websocket_destination_destroy, true);
 	if (ret)
 		return ret;
 
@@ -518,8 +518,8 @@ int websocket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigne
 
 	sample_copy_many(cpys, smps, avail);
 
-	for (size_t i = 0; i < list_length(&connections); i++) {
-		struct websocket_connection *c = (struct websocket_connection *) list_at(&connections, i);
+	for (size_t i = 0; i < vlist_length(&connections); i++) {
+		struct websocket_connection *c = (struct websocket_connection *) vlist_at(&connections, i);
 
 		if (c->node == n)
 			websocket_connection_write(c, cpys, cnt);
@@ -540,7 +540,7 @@ int websocket_parse(struct node *n, json_t *cfg)
 	json_t *json_dest;
 	json_error_t err;
 
-	list_init(&w->destinations);
+	vlist_init(&w->destinations);
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o }", "destinations", &json_dests);
 	if (ret)
@@ -573,7 +573,7 @@ int websocket_parse(struct node *n, json_t *cfg)
 			d->info.ietf_version_or_minus_one = -1;
 			d->info.protocol = "live";
 
-			list_push(&w->destinations, d);
+			vlist_push(&w->destinations, d);
 		}
 	}
 
@@ -588,8 +588,8 @@ char * websocket_print(struct node *n)
 
 	buf = strcatf(&buf, "destinations=[ ");
 
-	for (size_t i = 0; i < list_length(&w->destinations); i++) {
-		struct websocket_destination *d = (struct websocket_destination *) list_at(&w->destinations, i);
+	for (size_t i = 0; i < vlist_length(&w->destinations); i++) {
+		struct websocket_destination *d = (struct websocket_destination *) vlist_at(&w->destinations, i);
 
 		buf = strcatf(&buf, "%s://%s:%d/%s ",
 			d->info.ssl_connection ? "wss" : "ws",

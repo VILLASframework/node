@@ -79,14 +79,14 @@ int zeromq_reverse(struct node *n)
 {
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
-	if (list_length(&z->out.endpoints) != 1)
+	if (vlist_length(&z->out.endpoints) != 1)
 		return -1;
 
 	char *subscriber = z->in.endpoint;
-	char *publisher = list_first(&z->out.endpoints);
+	char *publisher = vlist_first(&z->out.endpoints);
 
 	z->in.endpoint = publisher;
-	list_set(&z->out.endpoints, 0, subscriber);
+	vlist_set(&z->out.endpoints, 0, subscriber);
 
 	return 0;
 }
@@ -108,7 +108,7 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	json_t *json_val;
 	json_error_t err;
 
-	list_init(&z->out.endpoints);
+	vlist_init(&z->out.endpoints);
 
 	z->curve.enabled = false;
 	z->ipv6 = 0;
@@ -144,14 +144,14 @@ int zeromq_parse(struct node *n, json_t *cfg)
 					if (!ep)
 						error("All 'publish' settings must be strings");
 
-					list_push(&z->out.endpoints, strdup(ep));
+					vlist_push(&z->out.endpoints, strdup(ep));
 				}
 				break;
 
 			case JSON_STRING:
 				ep = json_string_value(json_pub);
 
-				list_push(&z->out.endpoints, strdup(ep));
+				vlist_push(&z->out.endpoints, strdup(ep));
 
 				break;
 
@@ -223,8 +223,8 @@ char * zeromq_print(struct node *n)
 		z->in.endpoint ? z->in.endpoint : ""
 	);
 
-	for (size_t i = 0; i < list_length(&z->out.endpoints); i++) {
-		char *ep = (char *) list_at(&z->out.endpoints, i);
+	for (size_t i = 0; i < vlist_length(&z->out.endpoints); i++) {
+		char *ep = (char *) vlist_at(&z->out.endpoints, i);
 
 		strcatf(&buf, "%s ", ep);
 	}
@@ -365,8 +365,8 @@ int zeromq_start(struct node *n)
 #endif
 
 	/* Spawn server for publisher */
-	for (size_t i = 0; i < list_length(&z->out.endpoints); i++) {
-		char *ep = (char *) list_at(&z->out.endpoints, i);
+	for (size_t i = 0; i < vlist_length(&z->out.endpoints); i++) {
+		char *ep = (char *) vlist_at(&z->out.endpoints, i);
 
 		ret = zmq_bind(z->out.socket, ep);
 		if (ret < 0)
@@ -432,7 +432,7 @@ int zeromq_destroy(struct node *n)
 	if (z->out.filter)
 		free(z->out.filter);
 
-	ret = list_destroy(&z->out.endpoints, NULL, true);
+	ret = vlist_destroy(&z->out.endpoints, NULL, true);
 	if (ret)
 		return ret;
 

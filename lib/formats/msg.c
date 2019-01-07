@@ -73,7 +73,7 @@ int msg_verify(struct msg *m)
 		return 0;
 }
 
-int msg_to_sample(struct msg *msg, struct sample *smp, struct list *signals)
+int msg_to_sample(struct msg *msg, struct sample *smp, struct vlist *signals)
 {
 	int ret;
 
@@ -87,7 +87,7 @@ int msg_to_sample(struct msg *msg, struct sample *smp, struct list *signals)
 	smp->ts.origin = MSG_TS(msg);
 
 	for (int i = 0; i < smp->length; i++) {
-		struct signal *sig = list_at(signals, i);
+		struct signal *sig = vlist_at(signals, i);
 
 		switch (sig->type) {
 			case SIGNAL_TYPE_FLOAT:
@@ -106,7 +106,7 @@ int msg_to_sample(struct msg *msg, struct sample *smp, struct list *signals)
 	return 0;
 }
 
-int msg_from_sample(struct msg *msg, struct sample *smp, struct list *signals)
+int msg_from_sample(struct msg *msg, struct sample *smp, struct vlist *signals)
 {
 	*msg = MSG_INIT(smp->length, smp->sequence);
 
@@ -114,7 +114,7 @@ int msg_from_sample(struct msg *msg, struct sample *smp, struct list *signals)
 	msg->ts.nsec = smp->ts.origin.tv_nsec;
 
 	for (int i = 0; i < smp->length; i++) {
-		struct signal *sig = list_at(signals, i);
+		struct signal *sig = vlist_at(signals, i);
 
 		switch (sig->type) {
 			case SIGNAL_TYPE_FLOAT:

@@ -38,7 +38,7 @@ extern "C" {
 #endif
 
 /* Forward declarations */
-struct list;
+struct vlist;
 struct node;
 struct mapping_entry;
 
@@ -106,11 +106,11 @@ int signal_parse(struct signal *s, json_t *cfg);
 /** Initialize signal from a mapping_entry. */
 int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, unsigned index);
 
-int signal_list_parse(struct list *list, json_t *cfg);
+int signal_vlist_parse(struct vlist *list, json_t *cfg);
 
-int signal_list_generate(struct list *list, unsigned len, enum signal_type fmt);
+int signal_vlist_generate(struct vlist *list, unsigned len, enum signal_type fmt);
 
-void signal_list_dump(const struct list *list);
+void signal_vlist_dump(const struct vlist *list);
 
 enum signal_type signal_type_from_str(const char *str);
 

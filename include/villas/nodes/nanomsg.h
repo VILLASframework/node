@@ -46,7 +46,7 @@ struct format_type;
 struct nanomsg {
 	struct {
 		int socket;
-		struct list endpoints;
+		struct vlist endpoints;
 	} in, out;
 
 	struct format_type *format;

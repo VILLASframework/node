@@ -85,9 +85,9 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	}
 
 	unsigned offset = 0;
-	for (size_t j = 0; j < list_length(&i->in.signals); j++) {
-		struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) list_at(&i->in.signals, j);
-		struct signal *sig = (struct signal *) list_at_safe(smp->signals, j);
+	for (size_t j = 0; j < vlist_length(&i->in.signals); j++) {
+		struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&i->in.signals, j);
+		struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, j);
 		if (!sig)
 			continue;
 
@@ -231,13 +231,13 @@ char * iec61850_sv_print(struct node *n)
 			i->out.vlan_priority,
 			i->out.vlan_id,
 			i->out.confrev,
-			list_length(&i->out.signals)
+			vlist_length(&i->out.signals)
 		);
 	}
 
 	/* Subscriber part */
 	if (i->in.enabled)
-		strcatf(&buf, ", sub.#fields=%zu", list_length(&i->in.signals));
+		strcatf(&buf, ", sub.#fields=%zu", vlist_length(&i->in.signals));
 
 	return buf;
 }
@@ -252,8 +252,8 @@ int iec61850_sv_start(struct node *n)
 		i->out.publisher = SVPublisher_create(NULL, i->interface);
 		i->out.asdu = SVPublisher_addASDU(i->out.publisher, i->out.svid, node_name_short(n), i->out.confrev);
 
-		for (unsigned k = 0; k < list_length(&i->out.signals); k++) {
-			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) list_at(&i->out.signals, k);
+		for (unsigned k = 0; k < vlist_length(&i->out.signals); k++) {
+			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) vlist_at(&i->out.signals, k);
 
 			switch (m->type) {
 				case IEC61850_TYPE_INT8:    SVPublisher_ASDU_addINT8(i->out.asdu); break;
@@ -288,7 +288,7 @@ int iec61850_sv_start(struct node *n)
 		SVReceiver_addSubscriber(i->in.receiver, i->in.subscriber);
 
 		/* Initialize pool and queue to pass samples between threads */
-		ret = pool_init(&i->in.pool, 1024, SAMPLE_LENGTH(list_length(&n->signals)), &memory_hugepage);
+		ret = pool_init(&i->in.pool, 1024, SAMPLE_LENGTH(vlist_length(&n->signals)), &memory_hugepage);
 		if (ret)
 			return ret;
 
@@ -296,9 +296,9 @@ int iec61850_sv_start(struct node *n)
 		if (ret)
 			return ret;
 
-		for (unsigned k = 0; k < list_length(&i->in.signals); k++) {
-			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) list_at(&i->in.signals, k);
-			struct signal *sig = (struct signal *) list_at(&n->signals, k);
+		for (unsigned k = 0; k < vlist_length(&i->in.signals); k++) {
+			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) vlist_at(&i->in.signals, k);
+			struct signal *sig = (struct signal *) vlist_at(&n->signals, k);
 
 			if (sig->type == SIGNAL_TYPE_AUTO)
 				sig->type = m->format;
@@ -369,8 +369,8 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsig
 
 	for (unsigned j = 0; j < cnt; j++) {
 		unsigned offset = 0;
-		for (unsigned k = 0; k < MIN(smps[j]->length, list_length(&i->out.signals)); k++) {
-			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) list_at(&i->out.signals, k);
+		for (unsigned k = 0; k < MIN(smps[j]->length, vlist_length(&i->out.signals)); k++) {
+			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) vlist_at(&i->out.signals, k);
 
 			int ival = 0;
 			double fval = 0;

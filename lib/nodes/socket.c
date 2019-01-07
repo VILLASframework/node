@@ -51,7 +51,7 @@
 static struct plugin p;
 
 /* Private static storage */
-struct list interfaces = { .state = STATE_DESTROYED };
+struct vlist interfaces = { .state = STATE_DESTROYED };
 
 int socket_type_start(struct super_node *sn)
 {
@@ -59,11 +59,11 @@ int socket_type_start(struct super_node *sn)
 	int ret;
 
 	nl_init(); /* Fill link cache */
-	list_init(&interfaces);
+	vlist_init(&interfaces);
 
 	/* Gather list of used network interfaces */
-	for (size_t i = 0; i < list_length(&p.node.instances); i++) {
-		struct node *n = (struct node *) list_at(&p.node.instances, i);
+	for (size_t i = 0; i < vlist_length(&p.node.instances); i++) {
+		struct node *n = (struct node *) vlist_at(&p.node.instances, i);
 		struct socket *s = (struct socket *) n->_vd;
 		struct rtnl_link *link;
 
@@ -83,8 +83,8 @@ int socket_type_start(struct super_node *sn)
 		/* Search of existing interface with correct ifindex */
 		struct interface *i;
 
-		for (size_t k = 0; k < list_length(&interfaces); k++) {
-			i = (struct interface *) list_at(&interfaces, k);
+		for (size_t k = 0; k < vlist_length(&interfaces); k++) {
+			i = (struct interface *) vlist_at(&interfaces, k);
 
 			if (rtnl_link_get_ifindex(i->nl_link) == rtnl_link_get_ifindex(link))
 				goto found;
@@ -97,13 +97,13 @@ int socket_type_start(struct super_node *sn)
 		if (ret)
 			continue;
 
-		list_push(&interfaces, i);
+		vlist_push(&interfaces, i);
 
-found:		list_push(&i->sockets, s);
+found:		vlist_push(&i->sockets, s);
 	}
 
-	for (size_t j = 0; j < list_length(&interfaces); j++) {
-		struct interface *i = (struct interface *) list_at(&interfaces, j);
+	for (size_t j = 0; j < vlist_length(&interfaces); j++) {
+		struct interface *i = (struct interface *) vlist_at(&interfaces, j);
 
 		if_start(i);
 	}
@@ -115,13 +115,13 @@ found:		list_push(&i->sockets, s);
 int socket_type_stop()
 {
 #ifdef WITH_NETEM
-	for (size_t j = 0; j < list_length(&interfaces); j++) {
-		struct interface *i = (struct interface *) list_at(&interfaces, j);
+	for (size_t j = 0; j < vlist_length(&interfaces); j++) {
+		struct interface *i = (struct interface *) vlist_at(&interfaces, j);
 
 		if_stop(i);
 	}
 
-	list_destroy(&interfaces, (dtor_cb_t) if_destroy, false);
+	vlist_destroy(&interfaces, (dtor_cb_t) if_destroy, false);
 #endif /* WITH_NETEM */
 
 	return 0;

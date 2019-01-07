@@ -65,7 +65,7 @@ struct ngsi {
 
 	CURL *curl;			/**< libcurl: handle */
 
-	struct list mapping;		/**< A mapping between indices of the VILLASnode samples and the attributes in ngsi::context */
+	struct vlist mapping;		/**< A mapping between indices of the VILLASnode samples and the attributes in ngsi::context */
 };
 
 /** Initialize global NGSI settings and maps shared memory regions.

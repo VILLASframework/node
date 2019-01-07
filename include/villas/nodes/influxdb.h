@@ -47,7 +47,7 @@ struct influxdb {
 	char *port;
 	char *key;
 
-	struct list fields;
+	struct vlist fields;
 
 	int sd;
 };

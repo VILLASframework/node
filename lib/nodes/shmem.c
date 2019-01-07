@@ -47,7 +47,7 @@ int shmem_parse(struct node *n, json_t *cfg)
 
 	/* Default values */
 	shm->conf.queuelen = MAX(DEFAULT_SHMEM_QUEUELEN, n->in.vectorize);
-	shm->conf.samplelen = list_length(&n->signals);
+	shm->conf.samplelen = vlist_length(&n->signals);
 	shm->conf.polling = false;
 	shm->exec = NULL;
 

@@ -50,7 +50,7 @@ int if_init(struct interface *i, struct rtnl_link *link)
 	else
 		warning("Did not found any interrupts for interface '%s'", rtnl_link_get_name(i->nl_link));
 
-	list_init(&i->sockets);
+	vlist_init(&i->sockets);
 
 	return 0;
 }
@@ -58,7 +58,7 @@ int if_init(struct interface *i, struct rtnl_link *link)
 int if_destroy(struct interface *i)
 {
 	/* List members are freed by the nodes they belong to. */
-	list_destroy(&i->sockets, NULL, false);
+	vlist_destroy(&i->sockets, NULL, false);
 
 	rtnl_qdisc_put(i->tc_qdisc);
 
@@ -69,7 +69,7 @@ int if_destroy(struct interface *i)
 
 int if_start(struct interface *i)
 {
-	info("Starting interface '%s' which is used by %zu sockets", rtnl_link_get_name(i->nl_link), list_length(&i->sockets));
+	info("Starting interface '%s' which is used by %zu sockets", rtnl_link_get_name(i->nl_link), vlist_length(&i->sockets));
 
 	{
 		/* Set affinity for network interfaces (skip _loopback_ dev) */
@@ -77,8 +77,8 @@ int if_start(struct interface *i)
 
 		/* Assign fwmark's to socket nodes which have netem options */
 		int ret, mark = 0;
-		for (size_t j = 0; j < list_length(&i->sockets); j++) {
-			struct socket *s = (struct socket *) list_at(&i->sockets, j);
+		for (size_t j = 0; j < vlist_length(&i->sockets); j++) {
+			struct socket *s = (struct socket *) vlist_at(&i->sockets, j);
 
 			if (s->tc_qdisc)
 				s->mark = 1 + mark++;
@@ -97,8 +97,8 @@ int if_start(struct interface *i)
 			error("Failed to setup priority queuing discipline: %s", nl_geterror(ret));
 
 		/* Create netem qdisks and appropriate filter per netem node */
-		for (size_t j = 0; j < list_length(&i->sockets); j++) {
-			struct socket *s = (struct socket *) list_at(&i->sockets, j);
+		for (size_t j = 0; j < vlist_length(&i->sockets); j++) {
+			struct socket *s = (struct socket *) vlist_at(&i->sockets, j);
 
 			if (s->tc_qdisc) {
 				ret = tc_mark(i,  &s->tc_classifier, TC_HANDLE(1, s->mark), s->mark);

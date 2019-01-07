@@ -79,7 +79,7 @@ skip:		bytes = getdelim(&io->in.buffer, &io->in.buflen, io->delimiter, f);
 	return i;
 }
 
-int io_init(struct io *io, const struct format_type *fmt, struct list *signals, int flags)
+int io_init(struct io *io, const struct format_type *fmt, struct vlist *signals, int flags)
 {
 	int ret;
 
@@ -112,17 +112,17 @@ int io_init(struct io *io, const struct format_type *fmt, struct list *signals, 
 int io_init_auto(struct io *io, const struct format_type *fmt, int len, int flags)
 {
 	int ret;
-	struct list *signals;
+	struct vlist *signals;
 
-	signals = alloc(sizeof(struct list));
+	signals = alloc(sizeof(struct vlist));
 
 	signals->state = STATE_DESTROYED;
 
-	ret = list_init(signals);
+	ret = vlist_init(signals);
 	if (ret)
 		return ret;
 
-	ret = signal_list_generate(signals, len, SIGNAL_TYPE_AUTO);
+	ret = signal_vlist_generate(signals, len, SIGNAL_TYPE_AUTO);
 	if (ret)
 		return ret;
 
@@ -146,7 +146,7 @@ int io_destroy(struct io *io)
 	free(io->out.buffer);
 
 	if (io->flags & IO_DESTROY_SIGNALS) {
-		ret = list_destroy(io->signals, (dtor_cb_t) signal_decref, false);
+		ret = vlist_destroy(io->signals, (dtor_cb_t) signal_decref, false);
 		if (ret)
 			return ret;
 	}
@@ -160,8 +160,8 @@ int io_check(struct io *io)
 {
 	assert(io->state != STATE_DESTROYED);
 
-	for (size_t i = 0; i < list_length(io->signals); i++) {
-		struct signal *sig = (struct signal *) list_at(io->signals, i);
+	for (size_t i = 0; i < vlist_length(io->signals); i++) {
+		struct signal *sig = (struct signal *) vlist_at(io->signals, i);
 
 		if (sig->type == SIGNAL_TYPE_AUTO) {
 			if (io_type(io)->flags & IO_AUTO_DETECT_FORMAT)

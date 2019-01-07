@@ -48,15 +48,15 @@ extern "C" {
 #define REGISTER_PLUGIN(p)					\
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {\
 	if (plugins.state == STATE_DESTROYED)			\
-		list_init(&plugins);				\
-	list_push(&plugins, p);					\
+		vlist_init(&plugins);				\
+	vlist_push(&plugins, p);					\
 }								\
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {	\
 	if (plugins.state != STATE_DESTROYED)			\
-		list_remove(&plugins, p);			\
+		vlist_remove(&plugins, p);			\
 }
 
-extern struct list plugins;
+extern struct vlist plugins;
 
 enum plugin_type {
 	PLUGIN_TYPE_HOOK,

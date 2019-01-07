@@ -132,7 +132,7 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 
 		/* Fields */
 		for (int j = 0; j < smp->length; j++) {
-			struct signal *sig = (struct signal *) list_at(smp->signals, j);
+			struct signal *sig = (struct signal *) vlist_at(smp->signals, j);
 			union signal_data *data = &smp->data[k];
 
 			if (sig->type == SIGNAL_TYPE_AUTO || sig->type == SIGNAL_TYPE_COMPLEX) {
@@ -142,7 +142,7 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 
 			strcatf(&buf, "%c", j == 0 ? ' ' : ',');
 
-			sig = (struct signal *) list_at(smp->signals, j);
+			sig = (struct signal *) vlist_at(smp->signals, j);
 			if (!sig)
 				return -1;
 

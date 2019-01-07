@@ -54,7 +54,7 @@ struct ngsi_attribute {
 	char *type;
 
 	int index;
-	struct list metadata;
+	struct vlist metadata;
 };
 
 struct ngsi_response {
@@ -73,8 +73,8 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct sample *smps[], unsigned
 	if (flags & NGSI_ENTITY_ATTRIBUTES) {
 		json_t *attributes = json_array();
 
-		for (size_t j = 0; j < list_length(&i->mapping); j++) {
-			struct ngsi_attribute *map = (struct ngsi_attribute *) list_at(&i->mapping, j);
+		for (size_t j = 0; j < vlist_length(&i->mapping); j++) {
+			struct ngsi_attribute *map = (struct ngsi_attribute *) vlist_at(&i->mapping, j);
 
 			json_t *attribute = json_pack("{ s: s, s: s }",
 				"name",		map->name,
@@ -97,8 +97,8 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct sample *smps[], unsigned
 			if (flags & NGSI_ENTITY_METADATA) { /* Create Metadata for attribute */
 				json_t *metadatas = json_array();
 
-				for (size_t i = 0; i < list_length(&map->metadata); i++) {
-					struct ngsi_metadata *meta = (struct ngsi_metadata *) list_at(&map->metadata, i);
+				for (size_t i = 0; i < vlist_length(&map->metadata); i++) {
+					struct ngsi_metadata *meta = (struct ngsi_metadata *) vlist_at(&map->metadata, i);
 
 					json_array_append_new(metadatas, json_pack("{ s: s, s: s, s: s }",
 						"name",  meta->name,
@@ -156,7 +156,7 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 			return -3;
 
 		/* Check attribute name and type */
-		map = list_lookup(&i->mapping, name);
+		map = vlist_lookup(&i->mapping, name);
 		if (!map || strcmp(map->type, type))
 			return -4;
 
@@ -196,12 +196,12 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 	return cnt;
 }
 
-static int ngsi_parse_mapping(struct list *mapping, json_t *cfg)
+static int ngsi_parse_mapping(struct vlist *mapping, json_t *cfg)
 {
 	if (!json_is_array(cfg))
 		return -1;
 
-	list_init(mapping);
+	vlist_init(mapping);
 
 	size_t j;
 	json_t *json_token;
@@ -225,11 +225,11 @@ static int ngsi_parse_mapping(struct list *mapping, json_t *cfg)
 		token += bytes;
 
 		/* MetadataName(MetadataType)=MetadataValue */
-		list_init(&a->metadata);
+		vlist_init(&a->metadata);
 
 		struct ngsi_metadata m;
 		while (sscanf(token, " %m[^(](%m[^)])=%ms%n", &m.name, &m.type, &m.value, &bytes) == 3) {
-			list_push(&a->metadata, memdup(&m, sizeof(m)));
+			vlist_push(&a->metadata, memdup(&m, sizeof(m)));
 			token += bytes;
 		}
 
@@ -247,10 +247,10 @@ static int ngsi_parse_mapping(struct list *mapping, json_t *cfg)
 		};
 		assert(asprintf(&i.value, "%zu", j));
 
-		list_push(&a->metadata, memdup(&s, sizeof(s)));
-		list_push(&a->metadata, memdup(&i, sizeof(i)));
+		vlist_push(&a->metadata, memdup(&s, sizeof(s)));
+		vlist_push(&a->metadata, memdup(&i, sizeof(i)));
 
-		list_push(mapping, a);
+		vlist_push(mapping, a);
 	}
 
 	return 0;
@@ -442,7 +442,7 @@ char * ngsi_print(struct node *n)
 	struct ngsi *i = (struct ngsi *) n->_vd;
 
 	return strf("endpoint=%s, timeout=%.3f secs, #mappings=%zu",
-		i->endpoint, i->timeout, list_length(&i->mapping));
+		i->endpoint, i->timeout, vlist_length(&i->mapping));
 }
 
 static int ngsi_metadata_destroy(struct ngsi_metadata *meta)
@@ -459,7 +459,7 @@ static int ngsi_attribute_destroy(struct ngsi_attribute *attr)
 	free(attr->name);
 	free(attr->type);
 
-	list_destroy(&attr->metadata, (dtor_cb_t) ngsi_metadata_destroy, true);
+	vlist_destroy(&attr->metadata, (dtor_cb_t) ngsi_metadata_destroy, true);
 
 	return 0;
 }
@@ -468,7 +468,7 @@ int ngsi_destroy(struct node *n)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 
-	list_destroy(&i->mapping, (dtor_cb_t) ngsi_attribute_destroy, true);
+	vlist_destroy(&i->mapping, (dtor_cb_t) ngsi_attribute_destroy, true);
 
 	return 0;
 }
@@ -484,7 +484,7 @@ int ngsi_start(struct node *n)
 	if (i->access_token) {
 		char buf[128];
 		snprintf(buf, sizeof(buf), "Auth-Token: %s", i->access_token);
-		i->headers = curl_slist_append(i->headers, buf);
+		i->headers = curl_svlist_append(i->headers, buf);
 	}
 
 	/* Create task */
@@ -495,8 +495,8 @@ int ngsi_start(struct node *n)
 	if (ret)
 		serror("Failed to create task");
 
-	i->headers = curl_slist_append(i->headers, "Accept: application/json");
-	i->headers = curl_slist_append(i->headers, "Content-Type: application/json");
+	i->headers = curl_svlist_append(i->headers, "Accept: application/json");
+	i->headers = curl_svlist_append(i->headers, "Content-Type: application/json");
 
 	curl_easy_setopt(i->curl, CURLOPT_SSL_VERIFYPEER, i->ssl_verify);
 	curl_easy_setopt(i->curl, CURLOPT_TIMEOUT_MS, i->timeout * 1e3);
@@ -528,7 +528,7 @@ int ngsi_stop(struct node *n)
 	json_decref(entity);
 
 	curl_easy_cleanup(i->curl);
-	curl_slist_free_all(i->headers);
+	curl_svlist_free_all(i->headers);
 
 	return ret;
 }

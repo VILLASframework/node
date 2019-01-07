@@ -166,12 +166,12 @@ int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 		return 0;
 }
 
-int hook_process_list(struct list *hs, struct sample *smps[], unsigned cnt)
+int hook_process_list(struct vlist *hs, struct sample *smps[], unsigned cnt)
 {
 	unsigned ret;
 
-	for (size_t i = 0; i < list_length(hs); i++) {
-		struct hook *h = (struct hook *) list_at(hs, i);
+	for (size_t i = 0; i < vlist_length(hs); i++) {
+		struct hook *h = (struct hook *) vlist_at(hs, i);
 
 		ret = hook_process(h, smps, &cnt);
 		if (ret || !cnt)
@@ -191,7 +191,7 @@ int hook_cmp_priority(const void *a, const void *b)
 	return ha->priority - hb->priority;
 }
 
-int hook_parse_list(struct list *list, json_t *cfg, int mask, struct path *o, struct node *n)
+int hook_parse_list(struct vlist *list, json_t *cfg, int mask, struct path *o, struct node *n)
 {
 	if (!json_is_array(cfg))
 		error("Hooks must be configured as a list of objects");
@@ -225,20 +225,20 @@ int hook_parse_list(struct list *list, json_t *cfg, int mask, struct path *o, st
 		if (ret)
 			jerror(&err, "Failed to parse hook configuration");
 
-		list_push(list, h);
+		vlist_push(list, h);
 	}
 
 	return 0;
 }
 
-int hook_init_builtin_list(struct list *l, bool builtin, int mask, struct path *p, struct node *n)
+int hook_init_builtin_list(struct vlist *l, bool builtin, int mask, struct path *p, struct node *n)
 {
 	int ret;
 
 	assert(l->state == STATE_INITIALIZED);
 
-	for (size_t i = 0; i < list_length(&plugins); i++) {
-		struct plugin *q = (struct plugin *) list_at(&plugins, i);
+	for (size_t i = 0; i < vlist_length(&plugins); i++) {
+		struct plugin *q = (struct plugin *) vlist_at(&plugins, i);
 
 		struct hook *h;
 		struct hook_type *vt = &q->hook;
@@ -259,7 +259,7 @@ int hook_init_builtin_list(struct list *l, bool builtin, int mask, struct path *
 			if (ret)
 				return ret;
 
-			list_push(l, h);
+			vlist_push(l, h);
 		}
 	}
 

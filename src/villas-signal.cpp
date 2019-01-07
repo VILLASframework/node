@@ -221,7 +221,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		throw RuntimeError("Failed to verify node configuration");
 
-	ret = pool_init(&q, 16, SAMPLE_LENGTH(list_length(&n.signals)), &memory_heap);
+	ret = pool_init(&q, 16, SAMPLE_LENGTH(vlist_length(&n.signals)), &memory_heap);
 	if (ret)
 		throw RuntimeError("Failed to initialize pool");
 

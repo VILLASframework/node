@@ -33,20 +33,20 @@ int nanomsg_reverse(struct node *n)
 {
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
-	if (list_length(&m->out.endpoints)  != 1 ||
-	    list_length(&m->in.endpoints) != 1)
+	if (vlist_length(&m->out.endpoints)  != 1 ||
+	    vlist_length(&m->in.endpoints) != 1)
 		return -1;
 
-	char *subscriber = list_first(&m->in.endpoints);
-	char *publisher = list_first(&m->out.endpoints);
+	char *subscriber = vlist_first(&m->in.endpoints);
+	char *publisher = vlist_first(&m->out.endpoints);
 
-	list_set(&m->in.endpoints, 0, publisher);
-	list_set(&m->out.endpoints, 0, subscriber);
+	vlist_set(&m->in.endpoints, 0, publisher);
+	vlist_set(&m->out.endpoints, 0, subscriber);
 
 	return 0;
 }
 
-static int nanomsg_parse_endpoints(struct list *l, json_t *cfg)
+static int nanomsg_parse_endpoints(struct vlist *l, json_t *cfg)
 {
 	const char *ep;
 
@@ -60,14 +60,14 @@ static int nanomsg_parse_endpoints(struct list *l, json_t *cfg)
 				if (!ep)
 					return -1;
 
-				list_push(l, strdup(ep));
+				vlist_push(l, strdup(ep));
 			}
 			break;
 
 		case JSON_STRING:
 			ep = json_string_value(cfg);
 
-			list_push(l, strdup(ep));
+			vlist_push(l, strdup(ep));
 			break;
 
 		default:
@@ -89,8 +89,8 @@ int nanomsg_parse(struct node *n, json_t *cfg)
 	json_t *json_out_endpoints = NULL;
 	json_t *json_in_endpoints = NULL;
 
-	list_init(&m->out.endpoints);
-	list_init(&m->in.endpoints);
+	vlist_init(&m->out.endpoints);
+	vlist_init(&m->in.endpoints);
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: { s?: o }, s?: { s?: o } }",
 		"format", &format,
@@ -129,16 +129,16 @@ char * nanomsg_print(struct node *n)
 
 	strcatf(&buf, "format=%s, in.endpoints=[ ", format_type_name(m->format));
 
-	for (size_t i = 0; i < list_length(&m->in.endpoints); i++) {
-		char *ep = (char *) list_at(&m->in.endpoints, i);
+	for (size_t i = 0; i < vlist_length(&m->in.endpoints); i++) {
+		char *ep = (char *) vlist_at(&m->in.endpoints, i);
 
 		strcatf(&buf, "%s ", ep);
 	}
 
 	strcatf(&buf, "], out.endpoints=[ ");
 
-	for (size_t i = 0; i < list_length(&m->out.endpoints); i++) {
-		char *ep = (char *) list_at(&m->out.endpoints, i);
+	for (size_t i = 0; i < vlist_length(&m->out.endpoints); i++) {
+		char *ep = (char *) vlist_at(&m->out.endpoints, i);
 
 		strcatf(&buf, "%s ", ep);
 	}
@@ -179,8 +179,8 @@ int nanomsg_start(struct node *n)
 		return ret;
 
 	/* Bind publisher to socket */
-	for (size_t i = 0; i < list_length(&m->out.endpoints); i++) {
-		char *ep = (char *) list_at(&m->out.endpoints, i);
+	for (size_t i = 0; i < vlist_length(&m->out.endpoints); i++) {
+		char *ep = (char *) vlist_at(&m->out.endpoints, i);
 
 		ret = nn_bind(m->out.socket, ep);
 		if (ret < 0) {
@@ -190,8 +190,8 @@ int nanomsg_start(struct node *n)
 	}
 
 	/* Connect subscribers socket */
-	for (size_t i = 0; i < list_length(&m->in.endpoints); i++) {
-		char *ep = (char *) list_at(&m->in.endpoints, i);
+	for (size_t i = 0; i < vlist_length(&m->in.endpoints); i++) {
+		char *ep = (char *) vlist_at(&m->in.endpoints, i);
 
 		ret = nn_connect(m->in.socket, ep);
 		if (ret < 0) {

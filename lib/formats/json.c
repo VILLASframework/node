@@ -208,7 +208,7 @@ static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *sm
 		if (i >= smp->capacity)
 			break;
 
-		struct signal *sig = list_at_safe(smp->signals, i);
+		struct signal *sig = vlist_at_safe(smp->signals, i);
 		if (!sig)
 			return -1;
 

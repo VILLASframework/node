@@ -67,7 +67,7 @@ static struct param params[] = {
 #endif
 };
 
-void fill_sample_data(struct list *signals, struct sample *smps[], unsigned cnt)
+void fill_sample_data(struct vlist *signals, struct sample *smps[], unsigned cnt)
 {
 	struct timespec delta, now;
 
@@ -78,13 +78,13 @@ void fill_sample_data(struct list *signals, struct sample *smps[], unsigned cnt)
 		struct sample *smp = smps[i];
 
 		smps[i]->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA | SAMPLE_HAS_TS_ORIGIN;
-		smps[i]->length = list_length(signals);
+		smps[i]->length = vlist_length(signals);
 		smps[i]->sequence = 235 + i;
 		smps[i]->ts.origin = now;
 		smps[i]->signals = signals;
 
-		for (size_t j = 0; j < list_length(signals); j++) {
-			struct signal *sig = (struct signal *) list_at(signals, j);
+		for (size_t j = 0; j < vlist_length(signals); j++) {
+			struct signal *sig = (struct signal *) vlist_at(signals, j);
 			union signal_data *data = &smp->data[j];
 
 			switch (sig->type) {
@@ -223,15 +223,15 @@ ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
 
 	struct pool pool = { .state = STATE_DESTROYED };
 	struct io io = { .state = STATE_DESTROYED };
-	struct list signals = { .state = STATE_DESTROYED };
+	struct vlist signals = { .state = STATE_DESTROYED };
 	struct sample *smps[p->cnt];
 	struct sample *smpt[p->cnt];
 
 	ret = pool_init(&pool, 2 * p->cnt, SAMPLE_LENGTH(NUM_VALUES), &memory_hugepage);
 	cr_assert_eq(ret, 0);
 
-	list_init(&signals);
-	signal_list_generate(&signals, NUM_VALUES, SIGNAL_TYPE_FLOAT);
+	vlist_init(&signals);
+	signal_vlist_generate(&signals, NUM_VALUES, SIGNAL_TYPE_FLOAT);
 
 	ret = sample_alloc_many(&pool, smps, p->cnt);
 	cr_assert_eq(ret, p->cnt);
@@ -292,7 +292,7 @@ ParameterizedTest(struct param *p, io, highlevel, .init = init_memory)
 
 	struct io io = { .state = STATE_DESTROYED };
 	struct pool pool = { .state = STATE_DESTROYED };
-	struct list signals = { .state = STATE_DESTROYED };
+	struct vlist signals = { .state = STATE_DESTROYED };
 
 	struct sample *smps[p->cnt];
 	struct sample *smpt[p->cnt];
@@ -306,8 +306,8 @@ ParameterizedTest(struct param *p, io, highlevel, .init = init_memory)
 	ret = sample_alloc_many(&pool, smpt, p->cnt);
 	cr_assert_eq(ret, p->cnt);
 
-	list_init(&signals);
-	signal_list_generate(&signals, NUM_VALUES, SIGNAL_TYPE_FLOAT);
+	vlist_init(&signals);
+	signal_vlist_generate(&signals, NUM_VALUES, SIGNAL_TYPE_FLOAT);
 
 	fill_sample_data(&signals, smps, p->cnt);
 

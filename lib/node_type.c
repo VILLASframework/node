@@ -35,7 +35,7 @@ int node_type_start(struct node_type *vt, struct super_node *sn)
 	if (vt->state != STATE_DESTROYED)
 		return 0;
 
-	info("Initializing " CLR_YEL("%s") " node type which is used by %zu nodes", node_type_name(vt), list_length(&vt->instances));
+	info("Initializing " CLR_YEL("%s") " node type which is used by %zu nodes", node_type_name(vt), vlist_length(&vt->instances));
 
 	ret = vt->type.start ? vt->type.start(sn) : 0;
 	if (ret == 0)

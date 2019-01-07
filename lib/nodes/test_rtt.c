@@ -33,7 +33,7 @@
 static int test_rtt_case_start(struct test_rtt *t, int id)
 {
 	int ret;
-	struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, id);
+	struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, id);
 
 	/* Open file */
 	ret = io_open(&t->io, c->filename);
@@ -91,7 +91,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 	t->cooldown = 1.0;
 
 	/* Generate list of test cases */
-	list_init(&t->cases);
+	vlist_init(&t->cases);
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: F, s: o }",
 		"prefix", &prefix,
@@ -112,7 +112,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 		error("Invalid value for setting 'format' of node %s", node_name(n));
 
 
-	/* Construct list of test cases */
+	/* Construct vlist of test cases */
 	if (!json_is_array(json_cases))
 		error("The 'cases' setting of node %s must be an array.", node_name(n));
 
@@ -192,7 +192,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 
 				c->filename = strf("%s/%s_%d_%.0f.log", t->output, t->prefix, c->values, c->rate);
 
-				list_push(&t->cases, c);
+				vlist_push(&t->cases, c);
 			}
 		}
 	}
@@ -208,7 +208,7 @@ int test_rtt_destroy(struct node *n)
 	int ret;
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
-	ret = list_destroy(&t->cases, NULL, true);
+	ret = vlist_destroy(&t->cases, NULL, true);
 	if (ret)
 		return ret;
 
@@ -229,7 +229,7 @@ char * test_rtt_print(struct node *n)
 {
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
-	return strf("output=%s, prefix=%s, cooldown=%f, #cases=%zu", t->output, t->prefix, t->cooldown, list_length(&t->cases));
+	return strf("output=%s, prefix=%s, cooldown=%f, #cases=%zu", t->output, t->prefix, t->cooldown, vlist_length(&t->cases));
 }
 
 int test_rtt_start(struct node *n)
@@ -237,7 +237,7 @@ int test_rtt_start(struct node *n)
 	int ret;
 	struct stat st;
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
-	struct test_rtt_case *c = list_first(&t->cases);
+	struct test_rtt_case *c = vlist_first(&t->cases);
 
 	/* Create folder for results if not present */
 	ret = stat(t->output, &st);
@@ -306,13 +306,13 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 			t->current++;
 		}
 
-		if (t->current >= list_length(&t->cases)) {
+		if (t->current >= vlist_length(&t->cases)) {
 			info("This was the last case. Terminating.");
 			killme(SIGTERM);
 			pause();
 		}
 		else {
-			struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, t->current);
+			struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, t->current);
 			info("Starting case #%d: filename=%s, rate=%f, values=%d, limit=%d", t->current, c->filename, c->rate, c->values, c->limit);
 			ret = test_rtt_case_start(t, t->current);
 			if (ret)
@@ -320,7 +320,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 		}
 	}
 
-	struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, t->current);
+	struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, t->current);
 
 	/* Wait */
 	steps = task_wait(&t->task);
@@ -365,7 +365,7 @@ int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 	if (t->current < 0)
 		return 0;
 
-	struct test_rtt_case *c = (struct test_rtt_case *) list_at(&t->cases, t->current);
+	struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, t->current);
 
 	int i;
 	for (i = 0; i < cnt; i++) {

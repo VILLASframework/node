@@ -70,7 +70,7 @@ struct sample {
 	int capacity;		/**< The number of values in sample::values for which memory is reserved. */
 	int flags;		/**< Flags are used to store binary properties of a sample. */
 
-	struct list *signals;	/**< The list of signal descriptors. */
+	struct vlist *signals;	/**< The list of signal descriptors. */
 
 	atomic_int refcnt;	/**< Reference counter. */
 	ptrdiff_t pool_off;	/**< This sample belongs to this memory pool (relative pointer). See sample_pool(). */

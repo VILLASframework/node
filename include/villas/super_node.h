@@ -21,12 +21,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-struct list;
+struct vlist;
 struct super_node;
 
-struct list * super_node_get_nodes(struct super_node *sn);
+struct vlist * super_node_get_nodes(struct super_node *sn);
 
-struct list * super_node_get_nodes(struct super_node *sn);
+struct vlist * super_node_get_nodes(struct super_node *sn);
 
 struct lws_context * super_node_get_web_context(struct super_node *sn);
 

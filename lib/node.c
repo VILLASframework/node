@@ -47,7 +47,7 @@ static int node_direction_init2(struct node_direction *nd, struct node *n)
 		return ret;
 
 	/* We sort the hooks according to their priority before starting the path */
-	list_sort(&nd->hooks, hook_cmp_priority);
+	vlist_sort(&nd->hooks, hook_cmp_priority);
 #endif /* WITH_HOOKS */
 
 	return 0;
@@ -62,7 +62,7 @@ static int node_direction_init(struct node_direction *nd, struct node *n)
 	nd->builtin = 1;
 	nd->hooks.state = STATE_DESTROYED;
 
-	ret = list_init(&nd->hooks);
+	ret = vlist_init(&nd->hooks);
 	if (ret)
 		return ret;
 
@@ -74,7 +74,7 @@ static int node_direction_destroy(struct node_direction *nd, struct node *n)
 	int ret = 0;
 
 #ifdef WITH_HOOKS
-	ret = list_destroy(&nd->hooks, (dtor_cb_t) hook_destroy, true);
+	ret = vlist_destroy(&nd->hooks, (dtor_cb_t) hook_destroy, true);
 	if (ret)
 		return ret;
 #endif
@@ -133,8 +133,8 @@ static int node_direction_start(struct node_direction *nd, struct node *n)
 #ifdef WITH_HOOKS
 	int ret;
 
-	for (size_t i = 0; i < list_length(&nd->hooks); i++) {
-		struct hook *h = (struct hook *) list_at(&nd->hooks, i);
+	for (size_t i = 0; i < vlist_length(&nd->hooks); i++) {
+		struct hook *h = (struct hook *) vlist_at(&nd->hooks, i);
 
 		ret = hook_start(h);
 		if (ret)
@@ -150,8 +150,8 @@ static int node_direction_stop(struct node_direction *nd, struct node *n)
 #ifdef WITH_HOOKS
 	int ret;
 
-	for (size_t i = 0; i < list_length(&nd->hooks); i++) {
-		struct hook *h = (struct hook *) list_at(&nd->hooks, i);
+	for (size_t i = 0; i < vlist_length(&nd->hooks); i++) {
+		struct hook *h = (struct hook *) vlist_at(&nd->hooks, i);
 
 		ret = hook_stop(h);
 		if (ret)
@@ -176,7 +176,7 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_name_long = NULL;
 
 	n->signals.state = STATE_DESTROYED;
-	list_init(&n->signals);
+	vlist_init(&n->signals);
 
 	/* Default values */
 	ret = node_direction_init(&n->in, n);
@@ -189,7 +189,7 @@ int node_init(struct node *n, struct node_type *vt)
 
 	n->state = STATE_INITIALIZED;
 
-	list_push(&vt->instances, n);
+	vlist_push(&vt->instances, n);
 
 	return 0;
 }
@@ -240,7 +240,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 	}
 	else if (json_signals) {
 		if (json_is_array(json_signals)) {
-			ret = signal_list_parse(&n->signals, json_signals);
+			ret = signal_vlist_parse(&n->signals, json_signals);
 			if (ret)
 				error("Failed to parse signal definition of node %s", node_name(n));
 		}
@@ -257,13 +257,13 @@ int node_parse(struct node *n, json_t *json, const char *name)
 			if (type < 0)
 				error("Invalid signal type %s", type_str);
 
-			signal_list_generate(&n->signals, count, type);
+			signal_vlist_generate(&n->signals, count, type);
 		}
 	}
 	else {
 		warning("No signal definition found for node %s. Using the default config of %d floating point signals.", node_name(n), DEFAULT_SAMPLE_LENGTH);
 
-		signal_list_generate(&n->signals, DEFAULT_SAMPLE_LENGTH, SIGNAL_TYPE_FLOAT);
+		signal_vlist_generate(&n->signals, DEFAULT_SAMPLE_LENGTH, SIGNAL_TYPE_FLOAT);
 	}
 
 	struct {
@@ -446,7 +446,7 @@ int node_destroy(struct node *n)
 	int ret;
 	assert(n->state != STATE_DESTROYED && n->state != STATE_STARTED);
 
-	ret = list_destroy(&n->signals, (dtor_cb_t) signal_decref, false);
+	ret = vlist_destroy(&n->signals, (dtor_cb_t) signal_decref, false);
 	if (ret)
 		return ret;
 
@@ -464,7 +464,7 @@ int node_destroy(struct node *n)
 			return ret;
 	}
 
-	list_remove(&node_type(n)->instances, n);
+	vlist_remove(&node_type(n)->instances, n);
 
 	if (n->_vd)
 		free(n->_vd);
@@ -580,9 +580,9 @@ char * node_name_long(struct node *n)
 			char *name_long = vt->print(n);
 			strcatf(&n->_name_long, "%s: #in.signals=%zu, #in.hooks=%zu, in.vectorize=%d, #out.hooks=%zu, out.vectorize=%d, %s",
 				node_name(n),
-				list_length(&n->signals),
-				list_length(&n->in.hooks), n->in.vectorize,
-				list_length(&n->out.hooks), n->out.vectorize,
+				vlist_length(&n->signals),
+				vlist_length(&n->in.hooks), n->in.vectorize,
+				vlist_length(&n->out.hooks), n->out.vectorize,
 				name_long
 			);
 
@@ -622,7 +622,7 @@ struct memory_type * node_memory_type(struct node *n, struct memory_type *parent
 	return node_type(n)->memory_type ? node_type(n)->memory_type(n, parent) : &memory_hugepage;
 }
 
-int node_parse_list(struct list *list, json_t *cfg, struct list *all)
+int node_parse_list(struct vlist *list, json_t *cfg, struct vlist *all)
 {
 	struct node *node;
 	const char *str;
@@ -634,11 +634,11 @@ int node_parse_list(struct list *list, json_t *cfg, struct list *all)
 	switch (json_typeof(cfg)) {
 		case JSON_STRING:
 			str = json_string_value(cfg);
-			node = list_lookup(all, str);
+			node = vlist_lookup(all, str);
 			if (!node)
 				goto invalid2;
 
-			list_push(list, node);
+			vlist_push(list, node);
 			break;
 
 		case JSON_ARRAY:
@@ -646,11 +646,11 @@ int node_parse_list(struct list *list, json_t *cfg, struct list *all)
 				if (!json_is_string(elm))
 					goto invalid;
 
-				node = list_lookup(all, json_string_value(elm));
+				node = vlist_lookup(all, json_string_value(elm));
 				if (!node)
 					goto invalid;
 
-				list_push(list, node);
+				vlist_push(list, node);
 			}
 			break;
 
@@ -666,8 +666,8 @@ invalid:
 	return -1;
 
 invalid2:
-	for (size_t i = 0; i < list_length(all); i++) {
-		struct node *n = (struct node *) list_at(all, i);
+	for (size_t i = 0; i < vlist_length(all); i++) {
+		struct node *n = (struct node *) vlist_at(all, i);
 
 		strcatf(&allstr, " %s", node_name_short(n));
 	}

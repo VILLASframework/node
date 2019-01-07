@@ -307,7 +307,7 @@ int mqtt_start(struct node *n)
 	if (ret)
 		return ret;
 
-	ret = pool_init(&m->pool, 1024, SAMPLE_LENGTH(list_length(&n->signals)), &memory_hugepage);
+	ret = pool_init(&m->pool, 1024, SAMPLE_LENGTH(vlist_length(&n->signals)), &memory_hugepage);
 	if (ret)
 		return ret;
 

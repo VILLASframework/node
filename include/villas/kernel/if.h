@@ -57,7 +57,7 @@ struct interface {
 	char irqs[IF_IRQ_MAX];		/**< List of IRQs of the NIC. */
 	int affinity;			/**< IRQ / Core Affinity of this interface. */
 
-	struct list sockets;		/**< Linked list of associated sockets. */
+	struct vlist sockets;		/**< Linked list of associated sockets. */
 };
 
 /** Add a new interface to the global list and lookup name, irqs...

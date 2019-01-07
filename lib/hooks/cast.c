@@ -34,16 +34,16 @@
 #include <villas/sample.h>
 
 struct cast {
-	struct list operations;
+	struct vlist operations;
 
-	struct list signals;
+	struct vlist signals;
 };
 
 static int cast_init(struct hook *h)
 {
 	int ret;
 	struct cast *c = (struct cast *) h->_vd;
-	struct list *orig_signals;
+	struct vlist *orig_signals;
 
 	if (h->node)
 		orig_signals = &h->node->signals;
@@ -52,16 +52,16 @@ static int cast_init(struct hook *h)
 	else
 		return -1;
 
-	ret = list_init(&c->signals);
+	ret = vlist_init(&c->signals);
 	if (ret)
 		return ret;
 
 	/* Copy original signal list */
-	for (int i = 0; i < list_length(orig_signals); i++) {
-		struct signal *orig_sig = list_at(orig_signals, i);
+	for (int i = 0; i < vlist_length(orig_signals); i++) {
+		struct signal *orig_sig = vlist_at(orig_signals, i);
 		struct signal *new_sig = signal_copy(orig_sig);
 
-		list_push(&c->signals, new_sig);
+		vlist_push(&c->signals, new_sig);
 	}
 
 	return 0;
@@ -72,7 +72,7 @@ static int cast_destroy(struct hook *h)
 	int ret;
 	struct cast *c = (struct cast *) h->_vd;
 
-	ret = list_destroy(&c->signals, (dtor_cb_t) signal_decref, false);
+	ret = vlist_destroy(&c->signals, (dtor_cb_t) signal_decref, false);
 	if (ret)
 		return ret;
 
@@ -124,8 +124,8 @@ static int cast_parse(struct hook *h, json_t *cfg)
 			return -1;
 
 		sig = name
-			? list_lookup(&c->signals, name)
-			: list_at_safe(&c->signals, index);
+			? vlist_lookup(&c->signals, name)
+			: vlist_at_safe(&c->signals, index);
 		if (!sig)
 			return -1;
 
@@ -168,8 +168,8 @@ static int cast_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 		struct sample *smp = smps[i];
 
 		for (int j = 0; j < smp->length; j++) {
-			struct signal *orig_sig = list_at(smp->signals, j);
-			struct signal *new_sig = list_at(&c->signals, j);
+			struct signal *orig_sig = vlist_at(smp->signals, j);
+			struct signal *new_sig = vlist_at(&c->signals, j);
 
 			signal_data_cast(&smp->data[j], orig_sig, new_sig);
 		}

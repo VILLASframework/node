@@ -44,7 +44,7 @@ extern "C" {
 /* Forward declarations */
 struct path;
 struct sample;
-struct list;
+struct vlist;
 
 /** Descriptor for user defined hooks. See hooks[]. */
 struct hook {
@@ -63,7 +63,7 @@ struct hook {
 };
 
 int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node *n);
-int hook_init_builtin_list(struct list *l, bool builtin, int mask, struct path *p, struct node *n);
+int hook_init_builtin_list(struct vlist *l, bool builtin, int mask, struct path *p, struct node *n);
 
 int hook_parse(struct hook *h, json_t *cfg);
 
@@ -76,9 +76,9 @@ int hook_periodic(struct hook *h);
 int hook_restart(struct hook *h);
 
 int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt);
-int hook_process_list(struct list *hs, struct sample *smps[], unsigned cnt);
+int hook_process_list(struct vlist *hs, struct sample *smps[], unsigned cnt);
 
-/** Compare two hook functions with their priority. Used by list_sort() */
+/** Compare two hook functions with their priority. Used by vlist_sort() */
 int hook_cmp_priority(const void *a, const void *b);
 
 /** Parses an object of hooks
@@ -95,7 +95,7 @@ int hook_cmp_priority(const void *a, const void *b);
  *    hooks = [ "print" ]
  * }
  */
-int hook_parse_list(struct list *list, json_t *cfg, int mask, struct path *p, struct node *n);
+int hook_parse_list(struct vlist *list, json_t *cfg, int mask, struct path *p, struct node *n);
 
 #ifdef __cplusplus
 }

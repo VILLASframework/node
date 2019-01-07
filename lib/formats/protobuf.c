@@ -177,7 +177,7 @@ int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, s
 
 			enum signal_type fmt = protobuf_detect_format(pb_val);
 
-			struct signal *sig = (struct signal *) list_at_safe(smp->signals, j);
+			struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, j);
 			if (!sig)
 				return -1;
 

@@ -36,7 +36,7 @@
 
 #define STATS_METRICS 6
 
-static struct list *nodes; /** The global list of nodes */
+static struct vlist *nodes; /** The global list of nodes */
 
 static void stats_init_signals(struct node *n)
 {
@@ -50,42 +50,42 @@ static void stats_init_signals(struct node *n)
 		sig = alloc(sizeof(struct signal));
 		sig->name = strf("%s.%s", desc->name, "total");
 		sig->type = SIGNAL_TYPE_INTEGER;
-		list_push(&n->signals, sig);
+		vlist_push(&n->signals, sig);
 
 		/* Last */
 		sig = alloc(sizeof(struct signal));
 		sig->name = strf("%s.%s", desc->name, "last");
 		sig->unit = strdup(desc->unit);
 		sig->type = SIGNAL_TYPE_FLOAT;
-		list_push(&n->signals, sig);
+		vlist_push(&n->signals, sig);
 
 		/* Highest */
 		sig = alloc(sizeof(struct signal));
 		sig->name = strf("%s.%s", desc->name, "highest");
 		sig->unit = strdup(desc->unit);
 		sig->type = SIGNAL_TYPE_FLOAT;
-		list_push(&n->signals, sig);
+		vlist_push(&n->signals, sig);
 
 		/* Lowest */
 		sig = alloc(sizeof(struct signal));
 		sig->name = strf("%s.%s", desc->name, "lowest");
 		sig->unit = strdup(desc->unit);
 		sig->type = SIGNAL_TYPE_FLOAT;
-		list_push(&n->signals, sig);
+		vlist_push(&n->signals, sig);
 
 		/* Mean */
 		sig = alloc(sizeof(struct signal));
 		sig->name = strf("%s.%s", desc->name, "mean");
 		sig->unit = strdup(desc->unit);
 		sig->type = SIGNAL_TYPE_FLOAT;
-		list_push(&n->signals, sig);
+		vlist_push(&n->signals, sig);
 
 		/* Variance */
 		sig = alloc(sizeof(struct signal));
 		sig->name = strf("%s.%s", desc->name, "var");
 		sig->unit = strf("%s^2", desc->unit); // variance has squared unit of variable
 		sig->type = SIGNAL_TYPE_FLOAT;
-		list_push(&n->signals, sig);
+		vlist_push(&n->signals, sig);
 	}
 }
 
@@ -105,7 +105,7 @@ int stats_node_start(struct node *n)
 	if (ret)
 		serror("Failed to create task");
 
-	s->node = list_lookup(nodes, s->node_str);
+	s->node = vlist_lookup(nodes, s->node_str);
 	if (!s->node)
 		error("Invalid reference node %s for setting 'node' of node %s", s->node_str, node_name(n));
 
