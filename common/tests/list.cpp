@@ -36,12 +36,12 @@ struct data {
 
 TestSuite(list, .description = "List datastructure");
 
-Test(list, list_lookup)
+Test(list, vlist_lookup)
 {
-	struct list l;
+	struct vlist l;
 	l.state = STATE_DESTROYED;
 
-	list_init(&l);
+	vlist_init(&l);
 
 	for (unsigned i = 0; i < ARRAY_LEN(nouns); i++) {
 		struct data *d = new struct data;
@@ -49,42 +49,42 @@ Test(list, list_lookup)
 		d->tag = nouns[i];
 		d->data = i;
 
-		list_push(&l, d);
+		vlist_push(&l, d);
 	}
 
-	struct data *found = (struct data *) list_lookup(&l, "woman");
+	struct data *found = (struct data *) vlist_lookup(&l, "woman");
 
 	cr_assert_eq(found->data, 13);
 
-	list_destroy(&l, nullptr, true);
+	vlist_destroy(&l, nullptr, true);
 }
 
-Test(list, list_search)
+Test(list, vlist_search)
 {
-	struct list l;
+	struct vlist l;
 	l.state = STATE_DESTROYED;
 
-	list_init(&l);
+	vlist_init(&l);
 
 	/* Fill list */
 	for (unsigned i = 0; i < ARRAY_LEN(nouns); i++)
-		list_push(&l, (void *) nouns[i]);
+		vlist_push(&l, (void *) nouns[i]);
 
-	cr_assert_eq(list_length(&l), ARRAY_LEN(nouns));
+	cr_assert_eq(vlist_length(&l), ARRAY_LEN(nouns));
 
 	/* Declare on stack! */
 	char positive[] = "woman";
 	char negative[] = "dinosaurrier";
 
-	char *found = (char *) list_search(&l, (cmp_cb_t) strcmp, positive);
+	char *found = (char *) vlist_search(&l, (cmp_cb_t) strcmp, positive);
 	cr_assert_not_null(found);
 	cr_assert_eq(found, nouns[13], "found = %p, nouns[13] = %p", found, nouns[13]);
 	cr_assert_str_eq(found, positive);
 
-	char *not_found = (char *) list_search(&l, (cmp_cb_t) strcmp, negative);
+	char *not_found = (char *) vlist_search(&l, (cmp_cb_t) strcmp, negative);
 	cr_assert_null(not_found);
 
-	list_destroy(&l, nullptr, false);
+	vlist_destroy(&l, nullptr, false);
 }
 
 struct content {
@@ -102,18 +102,18 @@ static int dtor(void *ptr)
 
 Test(list, destructor)
 {
-	struct list l;
+	struct vlist l;
 	l.state = STATE_DESTROYED;
 
 	struct content elm;
 	elm.destroyed = 0;
 
-	list_init(&l);
-	list_push(&l, &elm);
+	vlist_init(&l);
+	vlist_push(&l, &elm);
 
-	cr_assert_eq(list_length(&l), 1);
+	cr_assert_eq(vlist_length(&l), 1);
 
-	list_destroy(&l, dtor, false);
+	vlist_destroy(&l, dtor, false);
 
 	cr_assert_eq(elm.destroyed, 1);
 }
@@ -122,47 +122,47 @@ Test(list, basics)
 {
 	uintptr_t i;
 	int ret;
-	struct list l;
+	struct vlist l;
 	l.state = STATE_DESTROYED;
 
-	list_init(&l);
+	vlist_init(&l);
 
 	for (i = 0; i < 100; i++) {
-		cr_assert_eq(list_length(&l), i);
+		cr_assert_eq(vlist_length(&l), i);
 
-		list_push(&l, (void *) i);
+		vlist_push(&l, (void *) i);
 	}
 
-	cr_assert_eq(list_at_safe(&l, 555), nullptr);
-	cr_assert_eq(list_last(&l), (void *) 99);
-	cr_assert_eq(list_first(&l), (void *) 0);
+	cr_assert_eq(vlist_at_safe(&l, 555), nullptr);
+	cr_assert_eq(vlist_last(&l), (void *) 99);
+	cr_assert_eq(vlist_first(&l), (void *) 0);
 
-	for (size_t j = 0, i = 0; j < list_length(&l); j++) {
-		void *k = list_at(&l, j);
+	for (size_t j = 0, i = 0; j < vlist_length(&l); j++) {
+		void *k = vlist_at(&l, j);
 
 		cr_assert_eq(k, (void *) i++);
 	}
 
-	list_sort(&l, (cmp_cb_t) [](const void *a, const void *b) -> int {
+	vlist_sort(&l, (cmp_cb_t) [](const void *a, const void *b) -> int {
 		return (intptr_t) b - (intptr_t) a;
 	});
 
 	for (size_t j = 0, i = 99; j <= 99; j++, i--) {
-		uintptr_t k = (uintptr_t) list_at(&l, j);
+		uintptr_t k = (uintptr_t) vlist_at(&l, j);
 		cr_assert_eq(k, i, "Is %zu, expected %zu", k, i);
 	}
 
-	ret = list_contains(&l, (void *) 55);
+	ret = vlist_contains(&l, (void *) 55);
 	cr_assert(ret);
 
-	list_remove(&l, (void *) 55);
+	vlist_remove(&l, (void *) 55);
 
-	ret = list_contains(&l, (void *) 55);
+	ret = vlist_contains(&l, (void *) 55);
 	cr_assert(!ret);
 
-	ret = list_destroy(&l, nullptr, false);
+	ret = vlist_destroy(&l, nullptr, false);
 	cr_assert(!ret);
 
-	ret = list_length(&l);
+	ret = vlist_length(&l);
 	cr_assert_eq(ret, -1, "List not properly destroyed: l.length = %zd", l.length);
 }

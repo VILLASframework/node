@@ -71,7 +71,7 @@ int vfio_destroy(struct vfio_container *v)
 	int ret;
 
 	/* Release memory and close fds */
-	list_destroy(&v->groups, (dtor_cb_t) vfio_group_destroy, true);
+	vlist_destroy(&v->groups, (dtor_cb_t) vfio_group_destroy, true);
 
 	/* Close container */
 	ret = close(v->fd);
@@ -87,7 +87,7 @@ int vfio_group_destroy(struct vfio_group *g)
 {
 	int ret;
 
-	list_destroy(&g->devices, (dtor_cb_t) vfio_device_destroy, false);
+	vlist_destroy(&g->devices, (dtor_cb_t) vfio_device_destroy, false);
 
 	ret = ioctl(g->fd, VFIO_GROUP_UNSET_CONTAINER);
 	if (ret)
@@ -131,7 +131,7 @@ int vfio_init(struct vfio_container *v)
 	/* Initialize datastructures */
 	memset(v, 0, sizeof(*v));
 
-	list_init(&v->groups);
+	vlist_init(&v->groups);
 
 	/* Load VFIO kernel module */
 	if (kernel_module_load("vfio"))
@@ -168,7 +168,7 @@ int vfio_group_attach(struct vfio_group *g, struct vfio_container *c, int index)
 	g->index = index;
 	g->container = c;
 
-	list_init(&g->devices);
+	vlist_init(&g->devices);
 
 	/* Open group fd */
 	snprintf(buf, sizeof(buf), VFIO_DEV("%u"), g->index);
@@ -196,7 +196,7 @@ int vfio_group_attach(struct vfio_group *g, struct vfio_container *c, int index)
 	if (!(g->status.flags & VFIO_GROUP_FLAGS_VIABLE))
 		error("VFIO group is not available: bind all devices to the VFIO driver!");
 
-	list_push(&c->groups, g);
+	vlist_push(&c->groups, g);
 
 	return 0;
 }
@@ -244,8 +244,8 @@ int vfio_device_attach(struct vfio_device *d, struct vfio_container *c, const ch
 	struct vfio_group *g = NULL;
 
 	/* Check if group already exists */
-	for (size_t i = 0; i < list_length(&c->groups); i++) {
-		struct vfio_group *h = (struct vfio_group *) list_at(&c->groups, i);
+	for (size_t i = 0; i < vlist_length(&c->groups); i++) {
+		struct vfio_group *h = (struct vfio_group *) vlist_at(&c->groups, i);
 
 		if (h->index == index)
 			g = h;
@@ -305,7 +305,7 @@ int vfio_device_attach(struct vfio_device *d, struct vfio_container *c, const ch
 			serror("Failed to get IRQs of VFIO device: %s", d->name);
 	}
 
-	list_push(&d->group->devices, d);
+	vlist_push(&d->group->devices, d);
 
 	return 0;
 }
@@ -496,8 +496,8 @@ void vfio_dump(struct vfio_container *v)
 	info("VFIO Version: %u", v->version);
 	info("VFIO Extensions: %#x", v->extensions);
 
-	for (size_t i = 0; i < list_length(&v->groups); i++) {
-		struct vfio_group *g = (struct vfio_group *) list_at(&v->groups, i);
+	for (size_t i = 0; i < vlist_length(&v->groups); i++) {
+		struct vfio_group *g = (struct vfio_group *) vlist_at(&v->groups, i);
 
 		info("VFIO Group %u, viable=%u, container=%d", g->index,
 			(g->status.flags & VFIO_GROUP_FLAGS_VIABLE) > 0,
@@ -505,8 +505,8 @@ void vfio_dump(struct vfio_container *v)
 		);
 
 
-		for (size_t i = 0; i < list_length(&g->devices); i++) {
-			struct vfio_device *d = (struct vfio_device *) list_at(&g->devices, i);
+		for (size_t i = 0; i < vlist_length(&g->devices); i++) {
+			struct vfio_device *d = (struct vfio_device *) vlist_at(&g->devices, i);
 
 			info("Device %s: regions=%u, irqs=%u, flags=%#x", d->name,
 				d->info.num_regions,

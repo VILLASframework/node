@@ -44,24 +44,24 @@ extern "C" {
 #define LIST_INIT_STATIC(l)					\
 __attribute__((constructor(105))) static void UNIQUE(__ctor)() {\
 	if ((l)->state == STATE_DESTROYED)			\
-		list_init(l);					\
+		vlist_init(l);					\
 }								\
 __attribute__((destructor(105))) static void UNIQUE(__dtor)() {	\
-	list_destroy(l, NULL, false);				\
+	vlist_destroy(l, NULL, false);				\
 }
 
-#define list_length(list)	((list)->length)
-#define list_at_safe(list, index) ((list)->length > index ? (list)->array[index] : NULL)
-#define list_at(list, index)	((list)->array[index])
+#define vlist_length(list)	((list)->length)
+#define vlist_at_safe(list, index) ((list)->length > index ? (list)->array[index] : NULL)
+#define vlist_at(list, index)	((list)->array[index])
 
-#define list_first(list)	list_at(list, 0)
-#define list_last(list)		list_at(list, (list)->length-1)
+#define vlist_first(list)	vlist_at(list, 0)
+#define vlist_last(list)		vlist_at(list, (list)->length-1)
 
 /** Callback to search or sort a list. */
 typedef int (*cmp_cb_t)(const void *, const void *);
 
 /* The list data structure. */
-struct list {
+struct vlist {
 	void **array;		/**< Array of pointers to list elements */
 	size_t capacity;	/**< Size of list::array in elements */
 	size_t length;		/**< Number of elements of list::array which are in use */
@@ -73,21 +73,21 @@ struct list {
  *
  * @param l A pointer to the list data structure.
  */
-int list_init(struct list *l);
+int vlist_init(struct vlist *l);
 
 /** Destroy a list and call destructors for all list elements
  *
- * @param free free() all list members during when calling list_destroy()
+ * @param free free() all list members during when calling vlist_destroy()
  * @param dtor A function pointer to a desctructor which will be called for every list item when the list is destroyed.
  * @param l A pointer to the list data structure.
  */
-int list_destroy(struct list *l, dtor_cb_t dtor, bool free);
+int vlist_destroy(struct vlist *l, dtor_cb_t dtor, bool free);
 
 /** Append an element to the end of the list */
-void list_push(struct list *l, void *p);
+void vlist_push(struct vlist *l, void *p);
 
 /** Remove all occurences of a list item */
-void list_remove(struct list *l, void *p);
+void vlist_remove(struct vlist *l, void *p);
 
 /** Return the first list element which is identified by a string in its first member variable.
  *
@@ -100,34 +100,34 @@ void list_remove(struct list *l, void *p);
  *
  * @see Only possible because of §1424 of http://c0x.coding-guidelines.com/6.7.2.1.html
  */
-void * list_lookup(struct list *l, const char *name);
+void * vlist_lookup(struct vlist *l, const char *name);
 
-ssize_t list_lookup_index(struct list *l, const char *name);
+ssize_t vlist_lookup_index(struct vlist *l, const char *name);
 
 /** Return the first element of the list for which cmp returns zero */
-void * list_search(struct list *l, cmp_cb_t cmp, void *ctx);
+void * vlist_search(struct vlist *l, cmp_cb_t cmp, void *ctx);
 
 /** Returns the number of occurences for which cmp returns zero when called on all list elements. */
-int list_count(struct list *l, cmp_cb_t cmp, void *ctx);
+int vlist_count(struct vlist *l, cmp_cb_t cmp, void *ctx);
 
 /** Return 0 if list contains pointer p */
-int list_contains(struct list *l, void *p);
+int vlist_contains(struct vlist *l, void *p);
 
 /** Sort the list using the quicksort algorithm of libc */
-void list_sort(struct list *l, cmp_cb_t cmp);
+void vlist_sort(struct vlist *l, cmp_cb_t cmp);
 
 /** Set single element in list */
-int list_set(struct list *l, int index, void *value);
+int vlist_set(struct vlist *l, int index, void *value);
 
 /** Return index in list for value.
  *
  * @retval <0 No list entry  matching \p value was found.
  * @retval >=0 Entry \p value was found at returned index.
  */
-ssize_t list_index(struct list *l, void *value);
+ssize_t vlist_index(struct vlist *l, void *value);
 
 /** Extend the list to the given length by filling new slots with given value. */
-void list_extend(struct list *l, size_t len, void *val);
+void vlist_extend(struct vlist *l, size_t len, void *val);
 
 #ifdef __cplusplus
 }

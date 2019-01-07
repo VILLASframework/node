@@ -39,7 +39,7 @@ int pci_init(struct pci *p)
 	char path[PATH_MAX];
 	int ret;
 
-	list_init(&p->devices);
+	vlist_init(&p->devices);
 
 	snprintf(path, sizeof(path), "%s/bus/pci/devices", SYSFS_PATH);
 
@@ -83,7 +83,7 @@ int pci_init(struct pci *p)
 		if (ret != 4)
 			error("Failed to parse PCI slot number: %s", e->d_name);
 
-		list_push(&p->devices, d);
+		vlist_push(&p->devices, d);
 	}
 
 	closedir(dp);
@@ -93,7 +93,7 @@ int pci_init(struct pci *p)
 
 int pci_destroy(struct pci *p)
 {
-	list_destroy(&p->devices, NULL, true);
+	vlist_destroy(&p->devices, NULL, true);
 
 	return 0;
 }
@@ -250,7 +250,7 @@ int pci_device_compare(const struct pci_device *d, const struct pci_device *f)
 
 struct pci_device * pci_lookup_device(struct pci *p, struct pci_device *f)
 {
-	return list_search(&p->devices, (cmp_cb_t) pci_device_compare, (void *) f);
+	return vlist_search(&p->devices, (cmp_cb_t) pci_device_compare, (void *) f);
 }
 
 size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)

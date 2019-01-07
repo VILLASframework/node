@@ -59,7 +59,7 @@ struct pci_region {
 };
 
 struct pci {
-	struct list devices; /**< List of available PCI devices in the system (struct pci_device) */
+	struct vlist devices; /**< List of available PCI devices in the system (struct pci_device) */
 };
 
 /** Initialize Linux PCI handle.
