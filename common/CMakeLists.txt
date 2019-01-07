@@ -45,6 +45,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
 
 include(FindPkgConfig)
 include(FeatureSummary)
+include(GNUInstallDirs)
 include(GetVersion)
 
 # Get version info and buildid from Git
