@@ -24,6 +24,7 @@
 #include <pthread.h>
 #include <string.h>
 #include <time.h>
+#include <signal.h>
 
 #include <re/re_types.h>
 #include <re/re_main.h>
@@ -228,6 +229,14 @@ int rtp_type_start()
 		return ret;
 	}
 
+	struct sigaction sa;
+	sa.sa_flags = SA_SIGINFO;
+	sa.sa_sigaction = stop_handler;
+
+	ret = sigaction(SIGUSR1, &sa, NULL);
+	if (ret)
+		return ret;
+
 	return ret;
 }
 
@@ -236,8 +245,7 @@ int rtp_type_stop()
 	int ret;
 
 	/* Join worker thread */
-	re_cancel();
-	pthread_cancel(re_pthread); /* @todo avoid using pthread_cancel */
+	pthread_kill(re_pthread, SIGUSR1);
 	ret = pthread_join(re_pthread, NULL);
 	if (ret) {
 		error("Error joining rtp node type pthread");
