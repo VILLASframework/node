@@ -36,7 +36,7 @@
 #include <villas/node.h>
 #include <villas/list.h>
 #include <villas/io.h>
-#include <villas/queue.h>
+#include <villas/queue_signalled.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,7 +61,7 @@ struct rtp {
 
 	bool enable_rtcp;
 
-	struct queue recv_queue;
+	struct queue_signalled recv_queue;
 };
 
 /** @see node_type::print */

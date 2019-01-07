@@ -141,7 +141,7 @@ static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, stru
 {
 	struct rtp *r = (struct rtp *) arg;
 
-	if (queue_push(&r->recv_queue, (void *) mbuf_alloc_ref(mb)) != 1)
+	if (queue_signalled_push(&r->recv_queue, (void *) mbuf_alloc_ref(mb)) != 1)
 		warning("Failed to push to queue");
 
 	/* source, header not yet used */
@@ -163,7 +163,7 @@ int rtp_start(struct node *n)
 	struct rtp *r = (struct rtp *) n->_vd;
 
 	/* Initialize Queue */
-	ret = queue_init(&r->recv_queue, 8, &memory_heap);
+	ret = queue_signalled_init(&r->recv_queue, 8, &memory_heap, 0);
 	if (ret)
 		return ret;
 
@@ -193,11 +193,11 @@ int rtp_stop(struct node *n)
 
 	/*mem_deref(r->rs);*/
 
-	ret = queue_close(&r->recv_queue);
+	ret = queue_signalled_close(&r->recv_queue);
 	if (ret)
 		warning("Problem closing queue");
 
-	ret = queue_destroy(&r->recv_queue);
+	ret = queue_signalled_destroy(&r->recv_queue);
 	if (ret)
 		warning("Problem destroying queue");
 
@@ -257,7 +257,7 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	struct mbuf *mb;
 
 	/* Get data from queue */
-	ret = queue_pull(&r->recv_queue, (void **) &mb);
+	ret = queue_signalled_pull(&r->recv_queue, (void **) &mb);
 	if (ret <= 0) {
 		if (ret < 0)
 			warning("Failed to pull from queue");
