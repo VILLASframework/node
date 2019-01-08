@@ -211,6 +211,11 @@ static void * th_func(void *arg)
 	return NULL;
 }
 
+static void stop_handler(int sig, siginfo_t *si, void *ctx)
+{
+	re_cancel();
+}
+
 int rtp_type_start()
 {
 	int ret;
@@ -253,6 +258,7 @@ int rtp_type_stop()
 	}
 
 	libre_close();
+
 	return ret;
 }
 
