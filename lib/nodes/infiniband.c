@@ -992,11 +992,6 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	return sent;
 }
 
-int ib_fd(struct node *n)
-{
-	return 0;
-}
-
 static struct plugin p = {
 	.name		= "infiniband",
 	.description	= "Infiniband interface (libibverbs, librdmacm)",
@@ -1014,7 +1009,6 @@ static struct plugin p = {
 		.stop		= ib_stop,
 		.read		= ib_read,
 		.write		= ib_write,
-		.fd		= ib_fd,
 		.memory_type	= memory_ib
 	}
 };
