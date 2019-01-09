@@ -641,11 +641,7 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 	if (p->poll == -1) {
 		struct path_source *ps = (struct path_source *) vlist_at(&p->sources, 0);
 
-		p->poll = (
-			     p->rate > 0 ||
-		             vlist_length(&p->sources) > 1
-		          )
-			  && node_fd(ps->node) != 1;
+		p->poll = (p->rate > 0 || vlist_length(&p->sources) > 1) && node_fd(ps->node) != -1;
 	}
 
 	ret = vlist_destroy(&sources, NULL, false);
