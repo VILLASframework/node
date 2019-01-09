@@ -46,6 +46,13 @@ if(HAS_EVENTFD)
     )
 endif()
 
+# Enable Universal Library for Linux DAQ devices (libuldaq)
+if(LIBULDAQ_FOUND)
+    list(APPEND NODE_SRC uldaq.c)
+    list(APPEND INCLUDE_DIRS ${ULDAQ_INCLUDE_DIRS})
+    list(APPEND LIBRARIES PkgConfig::LIBULDAQ)
+endif()
+
 # Enable shared memory node-type
 if(HAS_SEMAPHORE AND HAS_MMAN)
     list(APPEND NODE_SRC shmem.c)

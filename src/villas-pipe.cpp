@@ -254,6 +254,7 @@ int main(int argc, char *argv[])
 	bool enable_send = true, enable_recv = true;
 	int limit_send = -1, limit_recv = -1;
 
+	/* Parse optional command line arguments */
 	int c;
 	char *endptr;
 	while ((c = getopt(argc, argv, "Vhxrsd:l:L:t:f:o:")) != -1) {

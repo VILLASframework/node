@@ -99,6 +99,7 @@ int main(int argc, char *argv[])
 
 	json_t *cfg_cli = json_object();
 
+	/* Parse optional command line arguments */
 	int c;
 	char *endptr;
 	while ((c = getopt(argc, argv, "Vhv:d:f:o:")) != -1) {
