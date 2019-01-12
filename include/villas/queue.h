@@ -4,7 +4,7 @@
  *   http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
  *
  * @author Steffen Vogel <post@steffenvogel.de>
- * @copyright 2017 Steffen Vogel
+ * @copyright 2014-2019, Steffen Vogel
  * @license BSD 2-Clause License
  *
  * All rights reserved.

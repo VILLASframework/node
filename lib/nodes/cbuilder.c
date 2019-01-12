@@ -1,7 +1,7 @@
 /** Node type: Wrapper around RSCAD CBuilder model
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2017, Steffen Vogel
+ * @copyright 2014-2019, Steffen Vogel
  **********************************************************************************/
 
 #include <sys/eventfd.h>

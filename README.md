@@ -34,7 +34,7 @@ User documentation is available here: <https://villas.fein-aachen.org/doc/node.h
 
 ## Copyright
 
-2018, Institute for Automation of Complex Power Systems, EONERC  
+2014-2019, Institute for Automation of Complex Power Systems, EONERC  
 
 ## License
 

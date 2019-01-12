@@ -2,7 +2,7 @@
  *
  * @file
  * @author Dennis Potter <dennis@dennispotter.eu>
- * @copyright 2018, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
