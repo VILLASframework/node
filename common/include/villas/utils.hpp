@@ -3,7 +3,7 @@
  * @file
  * @author Steffen Vogel <github@daniel-krebs.net>
  * @author Daniel Krebs <github@daniel-krebs.net>
- * @copyright 2017-2018, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLAScommon
