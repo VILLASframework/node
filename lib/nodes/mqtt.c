@@ -171,6 +171,9 @@ int mqtt_parse(struct node *n, json_t *cfg)
 	m->username = username ? strdup(username) : NULL;
 	m->password = password ? strdup(password) : NULL;
 
+	if (!m->publish && !m->subscribe)
+		error("At least one topic has to be specified for node %s", node_name(n));
+
 	if (json_ssl) {
 		const char *cafile = NULL;
 		const char *capath = NULL;
