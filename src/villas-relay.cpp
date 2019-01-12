@@ -49,7 +49,7 @@ lws_callback_function protocol_cb;
 class Session;
 class Connection;
 
-static std::map<std::string, std::shared_ptr<Session>> sessions;
+static std::map<std::string, Session *> sessions;
 
 class InvalidUrlException { };
 
@@ -77,7 +77,7 @@ class Session {
 public:
 	typedef std::string Identifier;
 
-	static std::shared_ptr<Session> get(lws *wsi)
+	static Session * get(lws *wsi)
 	{
 		char uri[64];
 
@@ -95,16 +95,10 @@ public:
 
 		auto it = sessions.find(sid);
 		if (it == sessions.end()) {
-			auto s = std::make_shared<Session>(sid);
-
-			sessions[sid] = s;
-
-			console->debug("Creating new session: {}", sid);
-
-			return s;
+			return new Session(sid);
 		}
 		else {
-			console->debug("Found existing session: {}", sid);
+			console->info("Found existing session: {}", sid);
 
 			return it->second;
 		}
@@ -112,14 +106,22 @@ public:
 
 	Session(Identifier sid) :
 		identifier(sid)
-	{ }
+	{
+		console->info("Session created: {}", identifier);
+
+		sessions[sid] = this;
+	}
 
 	~Session()
-	{ }
+	{
+		console->info("Session destroyed: {}", identifier);
+
+		sessions.erase(identifier);
+	}
 
 	Identifier identifier;
 
-	std::map<lws *, std::shared_ptr<Connection>> connections;
+	std::map<lws *, Connection *> connections;
 };
 
 class Connection {
@@ -131,7 +133,10 @@ protected:
 
 	std::queue<std::shared_ptr<Frame>> outgoingFrames;
 
-	std::shared_ptr<Session> session;
+	Session *session;
+
+	char name[128];
+	char ip[128];
 
 public:
 	Connection(lws *w) :
@@ -140,15 +145,20 @@ public:
 		outgoingFrames()
 	{
 		session = Session::get(wsi);
-		session->connections[wsi] = std::shared_ptr<Connection>(this);
+		session->connections[wsi] = this;
 
-		console->info("New connection established to session: {}", session->identifier);
+		lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi), name, sizeof(name), ip, sizeof(ip));
+
+		console->info("New connection established: session={}, remote={} ({})", session->identifier, name, ip);
 	}
 
 	~Connection() {
-		console->info("Connection closed");
+		console->info("Connection closed: session={}, remote={} ({})", session->identifier, name, ip);
 
 		session->connections.erase(wsi);
+
+		if (session->connections.empty())
+			delete session;
 	}
 
 	void write() {
@@ -172,7 +182,7 @@ public:
 
 				/* We skip the current connection in order
 				 * to avoid receiving our own data */
-				if (opts.loopback == false && c.get() == this)
+				if (opts.loopback == false && c == this)
 					continue;
 
 				c->outgoingFrames.push(currentFrame);
@@ -237,8 +247,6 @@ int protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in
 	switch (reason) {
 
 		case LWS_CALLBACK_ESTABLISHED: {
-			auto s = Session::get(wsi);
-
 			try {
 				new (c) Connection(wsi);
 			}
