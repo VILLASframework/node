@@ -530,24 +530,37 @@ extern "C" {
 		return ssn->getNodes();
 	}
 
-	struct lws_context * super_node_get_web_context(struct super_node *sn)
+	struct web * super_node_get_web(struct super_node *sn)
 	{
 		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
+		Web *w = ssn->getWeb();
 
-		return ssn->getWeb()->getContext();
+		return reinterpret_cast<web *>(w);
 	}
 
-	struct lws_vhost * super_node_get_web_vhost(struct super_node *sn)
+	struct lws_context * web_get_context(struct web *w)
 	{
-		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
+		Web *ws = reinterpret_cast<Web *>(w);
 
-		return ssn->getWeb()->getVHost();
+		return ws->getContext();
 	}
 
-	enum state super_node_get_web_state(struct super_node *sn)
+	struct lws_vhost * web_get_vhost(struct web *w)
 	{
-		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
+		Web *ws = reinterpret_cast<Web *>(w);
 
-		return ssn->getWeb()->getState();
+		return ws->getVHost();
+	}
+
+	enum state web_get_state(struct web *w)
+	{
+		Web *ws = reinterpret_cast<Web *>(w);
+
+		return ws->getState();
+	}
+
+	int web_callback_on_writable(struct web *w, struct lws *wsi)
+	{
+		return lws_callback_on_writable(wsi);
 	}
 }

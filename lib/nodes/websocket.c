@@ -42,9 +42,7 @@
 /* Private static storage */
 static struct vlist connections = { .state = STATE_DESTROYED };	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
 
-// @todo: port to C++
-//static struct web *web;
-static struct super_node *sn;
+static struct web *web;
 
 /* Forward declarations */
 static struct plugin p;
@@ -166,9 +164,8 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 	debug(LOG_WEBSOCKET | 10, "Enqueued %u samples to %s", pushed, websocket_connection_name(c));
 
 	/* Client connections which are currently conecting don't have an associate c->wsi yet */
-	// @todo: port to C++
-	//if (c->wsi)
-	//	web_callback_on_writable(c->wsi);
+	if (c->wsi)
+		web_callback_on_writable(web, c->wsi);
 
 	return 0;
 }
@@ -373,16 +370,15 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 	return 0;
 }
 
-int websocket_type_start(struct super_node *ssn)
+int websocket_type_start(struct super_node *sn)
 {
 	vlist_init(&connections);
 
-	//web = NULL; /// @todo: Port to C++ &sn->web;
-	sn = ssn;
+	web = super_node_get_web(sn);
 
-	info("web state: %d", super_node_get_web_state(sn));
+	info("web state: %d", web_get_state(web));
 
-	if (super_node_get_web_state(sn) != STATE_STARTED)
+	if (web_get_state(web) != STATE_STARTED)
 		return -1;
 
 	return 0;
@@ -419,8 +415,8 @@ int websocket_start(struct node *n)
 		c->node = n;
 		c->destination = d;
 
-		d->info.context = super_node_get_web_context(sn);
-		d->info.vhost = super_node_get_web_vhost(sn);
+		d->info.context = web_get_context(web);
+		d->info.vhost = web_get_vhost(web);
 		d->info.userdata = c;
 
 		lws_client_connect_via_info(&d->info);

@@ -22,16 +22,22 @@
  *********************************************************************************/
 
 struct vlist;
+struct web;
 struct super_node;
+struct lws;
 
 struct vlist * super_node_get_nodes(struct super_node *sn);
 
 struct vlist * super_node_get_nodes(struct super_node *sn);
-
-struct lws_context * super_node_get_web_context(struct super_node *sn);
-
-struct lws_vhost * super_node_get_web_vhost(struct super_node *sn);
-
-enum state super_node_get_web_state(struct super_node *sn);
 
 int super_node_get_cli_argc(struct super_node *sn);
+
+struct web * super_node_get_web(struct super_node *sn);
+
+struct lws_context * web_get_context(struct web *w);
+
+struct lws_vhost * web_get_vhost(struct web *w);
+
+enum state web_get_state(struct web *w);
+
+int web_callback_on_writable(struct web *w, struct lws *wsi);
