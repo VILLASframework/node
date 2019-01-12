@@ -25,21 +25,22 @@ set(CPACK_BUILD_SOURCE_DIRS ${PROJECT_SOURCE_DIR}/src;${PROJECT_SOURCE_DIR}/lib;
 set(CPACK_PACKAGE_NAME "villas-node")
 set(CPACK_PACKAGE_VENDOR ${PROJECT_AUTHOR})
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "This is VILLASnode, a gateway for processing and forwardning simulation data between real-time simulators.")
-set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
-set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_MAJOR_VERSION})
-set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_MINOR_VERSION})
-set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_PATCH_VERSION})
+set(CPACK_PACKAGE_VERSION ${CMAKE_PROJECT_VERSION})
+set(CPACK_PACKAGE_VERSION_MAJOR ${CMAKE_PROJECT_MAJOR_VERSION})
+set(CPACK_PACKAGE_VERSION_MINOR ${CMAKE_PROJECT_MINOR_VERSION})
+set(CPACK_PACKAGE_VERSION_PATCH ${CMAKE_PROJECT_PATCH_VERSION})
 
-set(CPACK_RPM_PACKAGE_RELEASE ${PROJECT_RELEASE})
+set(CPACK_RPM_PACKAGE_RELEASE ${CMAKE_PROJECT_RELEASE})
 set(CPACK_RPM_PACKAGE_ARCHITECTURE "x86_64")
 
 set(CPACK_RPM_COMPONENT_INSTALL ON)
 set(CPACK_RPM_MAIN_COMPONENT bin)
 
-#set(CPACK_RPM_DEBUGINFO_PACKAGE ON)
-#set(CPACK_RPM_DEBUGINFO_SINGLE_PACKAGE ON)
-#set(CPACK_RPM_DEBUGINGO_PACKAGE_NAME villas-node-debuginfo)
-#set(CPACK_RPM_DEBUGINFO_PACKAGE "${CPACK_RPM_DEBUGINGO_PACKAGE_NAME}-${SUFFIX}")
+# TODO: Debuginfos are broken for some reason in CMake
+# set(CPACK_RPM_DEBUGINFO_PACKAGE ON)
+# set(CPACK_RPM_DEBUGINFO_SINGLE_PACKAGE ON)
+# set(CPACK_RPM_DEBUGINGO_PACKAGE_NAME villas-node-debuginfo)
+# set(CPACK_RPM_DEBUGINFO_PACKAGE "${CPACK_RPM_DEBUGINGO_PACKAGE_NAME}-${SUFFIX}")
 
 set(CPACK_RPM_LIB_PACKAGE_NAME libvillas)
 set(CPACK_RPM_DEVEL_PACKAGE_NAME libvillas-devel)
@@ -56,11 +57,11 @@ set(CPACK_RPM_PLUGINS_FILE_NAME "${CPACK_RPM_PLUGINS_PACKAGE_NAME}-${SUFFIX}")
 set(CPACK_RPM_TOOLS_FILE_NAME   "${CPACK_RPM_TOOLS_PACKAGE_NAME}-${SUFFIX}")
 set(CPACK_RPM_DOC_FILE_NAME     "${CPACK_RPM_DOC_PACKAGE_NAME}-${SUFFIX}")
 
-set(CPACK_RPM_LIB_PACKAGE_REQUIRES "openssl libconfig libnl3 libcurl jansson libwebsockets zeromq nanomsg libiec61850 librabbitmq mosquitto comedilib")
+set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES   "${CPACK_RPM_LIB_PACKAGE_NAME} openssl-devel >= 1.0.0, protobuf-devel >= 2.6.0, protobuf-c-devel >= 1.1.0, libconfig-devel >= 1.4.9, libnl3-devel >= 3.2.27, libcurl-devel >= 7.29.0, jansson-devel >= 2.7, libwebsockets-devel >= 2.3.0, zeromq-devel >= 2.2.0, nanomsg >= 1.0.0, libiec61850 >= 1.3.1, librabbitmq-devel >= 0.8.0, mosquitto-devel >= 1.4.15, comedilib-devel >= 0.11.0, libibverbs-devel >= 16.2, librdmacm-devel >= 16.2, re-devel >= 0.6.0, uldaq-devel >= 1.0.0")
+set(CPACK_RPM_LIB_PACKAGE_REQUIRES     "                              openssl-libs >= 1.0.0,  protobuf >= 2.6.0,       protobuf-c >= 1.1.0,       libconfig >= 1.4.9,       libnl3 >= 3.2.27,       libcurl >= 7.29.0,       jansson >= 2.7,       libwebsockets >= 2.3.0,       zeromq >= 2.2.0,       nanomsg >= 1.0.0, libiec61850 >= 1.3.1, librabbitmq >= 0.8.0,       mosquitto >= 1.4.15,       comedilib >= 0.11.0,       libibverbs >= 16.2,       librdmacm >= 16.2,       re >= 0.6.0,       uldaq >= 1.0.0")
 set(CPACK_RPM_BIN_PACKAGE_REQUIRES     ${CPACK_RPM_LIB_PACKAGE_NAME})
 set(CPACK_RPM_PLUGINS_PACKAGE_REQUIRES ${CPACK_RPM_LIB_PACKAGE_NAME})
 set(CPACK_RPM_TOOLS_PACKAGE_REQUIRES   ${CPACK_RPM_LIB_PACKAGE_NAME})
-set(CPACK_RPM_DEVEL_PACKAGE_REQUIRES   "${CPACK_RPM_LIB_PACKAGE_NAME} openssl openssl-devel libconfig-devel libnl3-devel libcurl-devel jansson-devel zeromq-devel protobuf-devel protobuf-c-devel librabbitmq-devel mosquitto-devel comedilib-devel comedilib libibverbs-devel librdmacm-devel nanomsg libiec61850")
 
 set(CPACK_RPM_BIN_PACKAGE_SUGGESTS "villas-node-tools villas-node-plugins villas-node-doc")
 
