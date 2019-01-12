@@ -214,9 +214,9 @@ static const lws_extension extensions[] = {
 static void logger(int level, const char *msg) {
 	auto log = spdlog::get("lws");
 
-	int len = strlen(msg);
-	if (strchr(msg, '\n'))
-		len -= 1;
+	char *nl = (char *) strchr(msg, '\n');
+	if (nl)
+		*nl = 0;
 
 	/* Decrease severity for some errors. */
 	if (strstr(msg, "Unable to open") == msg)
