@@ -65,8 +65,6 @@ static pthread_t thread;
 static EthernetHandleSet hset;
 static int users = 0;
 
-LIST_INIT_STATIC(&receivers);
-
 static void * iec61850_thread(void *ctx)
 {
 	int ret;
@@ -164,6 +162,10 @@ int iec61850_type_start(struct super_node *sn)
 	/* Check if already initialized */
 	if (users > 0)
 		return 0;
+
+	ret = vlist_init(&receivers);
+	if (ret)
+		return ret;
 
 	hset = EthernetHandleSet_new();
 
