@@ -152,6 +152,7 @@ install(
     COMPONENT devel
     FILES_MATCHING
         PATTERN "*.h"
+        PATTERN "*.hpp"
 )
 
 install(
@@ -160,6 +161,7 @@ install(
     COMPONENT devel
     FILES_MATCHING
         PATTERN "*.h"
+        PATTERN "*.hpp"
 )
 
 #install(
