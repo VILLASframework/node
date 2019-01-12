@@ -330,7 +330,7 @@ enum signal_type signal_type_detect(const char *val)
 	char *brk;
 	int len;
 
-	debug(LOG_IO | 5, "Attempt to detect type of: %s", val);
+	debug(LOG_IO | 5, "Attempt to detect type of value: %s", val);
 
 	brk = strchr(val, 'i');
 	if (brk)

@@ -99,12 +99,12 @@ public:
 
 			sessions[sid] = s;
 
-			console->info("Creating new session: {}", sid);
+			console->debug("Creating new session: {}", sid);
 
 			return s;
 		}
 		else {
-			console->info("Reusing existing session: ", sid);
+			console->debug("Found existing session: {}", sid);
 
 			return it->second;
 		}
