@@ -405,10 +405,12 @@ int websocket_start(struct node *n)
 		c->state = WEBSOCKET_CONNECTION_STATE_CONNECTING;
 
 		format = strchr(d->info.path, '.');
-		if (!format)
+		if (format)
+			format = format + 1; // remove "."
+		else
 			format = "villas.web";
 
-		c->format = format_type_lookup(format + 1);
+		c->format = format_type_lookup(format);
 		if (!c->format)
 			return -1;
 
