@@ -23,6 +23,10 @@
 
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdlib.h>
 #include <stdint.h>
 #include <sched.h>
@@ -32,10 +36,6 @@
 
 #include <villas/config.h>
 #include <villas/log.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 extern pthread_t main_thread;
 
