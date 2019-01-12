@@ -91,7 +91,7 @@ public:
 		if (strlen(uri) <= 0)
 			throw InvalidUrlException();
 
-		Identifier sid = uri;//&uri[1];
+		Identifier sid = uri;
 
 		auto it = sessions.find(sid);
 		if (it == sessions.end()) {
@@ -284,6 +284,7 @@ void usage()
 
 int main(int argc, char *argv[])
 {
+	/* Initialize logging */
 	spdlog::stdout_color_mt("lws");
 	lws_set_log_level((1 << LLL_COUNT) - 1, logger);
 
@@ -303,15 +304,19 @@ int main(int argc, char *argv[])
 			case 'p':
 				ctx_info.port = strtoul(optarg, &endptr, 10);
 				goto check;
+
 			case 'P':
 				protocols[0].name = optarg;
 				break;
+
 			case 'l':
 				opts.loopback = true;
 				break;
+
 			case 'V':
 				villas::print_version();
 				exit(EXIT_SUCCESS);
+
 			case 'h':
 			case '?':
 				usage();
