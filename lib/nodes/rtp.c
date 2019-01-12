@@ -305,19 +305,20 @@ int rtp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	buflen = RTP_INITIAL_BUFFER_LEN;
 	buf = alloc(buflen);
 	if (!buf) {
-		error("Error allocating buffer space");
+		warning("Error allocating buffer space");
 		return -1;
 	}
 
 retry:	cnt = io_sprint(&r->io, buf, buflen, &wbytes, smps, cnt);
 	if (cnt < 0) {
-		error("Error from io_sprint, reason: %d", cnt);
-		goto out;
+		warning("Error from io_sprint, reason: %d", cnt);
+		goto out1;
 	}
 
 	if (wbytes <= 0) {
-		error("Error written bytes = %ld <= 0", wbytes);
-		goto out;
+		warning("Error written bytes = %ld <= 0", wbytes);
+		cnt = -1;
+		goto out1;
 	}
 
 	if (wbytes > buflen) {
@@ -328,40 +329,39 @@ retry:	cnt = io_sprint(&r->io, buf, buflen, &wbytes, smps, cnt);
 
 	/* Prepare mbuf */
 	struct mbuf *mb = mbuf_alloc(buflen + 12);
+	if (!mb) {
+		warning("Failed to allocate memory");
+		cnt = -1;
+		goto out2;
+	}
+
 	ret = mbuf_write_str(mb, pad);
 	if (ret) {
-		error("Error writing padding to mbuf");
+		warning("Error writing padding to mbuf");
 		cnt = ret;
-		goto out;
+		goto out2;
 	}
+
 	ret = mbuf_write_mem(mb, (uint8_t*)buf, buflen);
 	if (ret) {
-		error("Error writing data to mbuf");
+		warning("Error writing data to mbuf");
 		cnt = ret;
-		goto out;
+		goto out2;
 	}
+
 	mbuf_set_pos(mb, 12);
 
 	/* Send dataset */
 	ret = rtp_send(r->rs, &r->remote_rtp, false, false, 21, (uint32_t) time(NULL), mb);
 	if (ret) {
-		error("Error from rtp_send, reason: %d", ret);
+		warning("Error from rtp_send, reason: %d", ret);
 		cnt = ret;
 	}
 
-out:	free(buf);
-		mem_deref(mb);
+out2:	mem_deref(mb);
+out1:	free(buf);
 
 	return cnt;
-}
-
-int rtp_fd(struct node *n)
-{
-	/* struct rtp *r = (struct rtp *) n->_vd; */
-
-	error("No access to file descriptor.");
-
-	return -1;
 }
 
 static struct plugin p = {
@@ -371,7 +371,7 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0,
 		.size		= sizeof(struct rtp),
-		.type.start = rtp_type_start,
+		.type.start	= rtp_type_start,
 		.type.stop	= rtp_type_stop,
 		.reverse	= rtp_reverse,
 		.parse		= rtp_parse,
@@ -380,7 +380,6 @@ static struct plugin p = {
 		.stop		= rtp_stop,
 		.read		= rtp_read,
 		.write		= rtp_write,
-		.fd			= rtp_fd
 	}
 };
 

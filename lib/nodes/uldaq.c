@@ -22,6 +22,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <string.h>
+
 #include <villas/node.h>
 #include <villas/plugin.h>
 #include <villas/config.h>
@@ -175,7 +177,7 @@ static int uldaq_connect(struct node *n)
 	if (!u->device_descriptor) {
 		u->device_descriptor = uldaq_find_device(u);
 		if (u->device_descriptor) {
-			warn("Unable to find a matching device for node '%s'", node_name(n));
+			warning("Unable to find a matching device for node '%s'", node_name(n));
 			return -1;
 		}
 	}
@@ -184,7 +186,7 @@ static int uldaq_connect(struct node *n)
 	if (!u->device_handle) {
 		u->device_handle = ulCreateDaqDevice(descriptors[0]);
 		if (!u->device_handle) {
-			warn("Unable to create handle for DAQ device for node '%s'", node_name(n));
+			warning("Unable to create handle for DAQ device for node '%s'", node_name(n));
 			return -1;
 		}
 	}
@@ -199,7 +201,7 @@ static int uldaq_connect(struct node *n)
 	if (!connected) {
 		err = ulConnectDaqDevice(u->device_handle);
 		if (err != ERR_NO_ERROR) {
-			warn("Failed to connect to DAQ device for node '%s'", node_name(n));
+			warning("Failed to connect to DAQ device for node '%s'", node_name(n));
 			return -1;
 		}
 	}
@@ -214,7 +216,7 @@ int uldaq_type_start(struct super_node *sn)
 	/* Get descriptors for all of the available DAQ devices */
 	err = ulGetDaqDeviceInventory(ANY_IFC, descriptors, &num_devs);
 	if (err != ERR_NO_ERROR) {
-		warn("Failed to retrieve DAQ device list");
+		warning("Failed to retrieve DAQ device list");
 		return -1;
 	}
 
@@ -305,7 +307,7 @@ int uldaq_parse(struct node *n, json_t *cfg)
 		u->device_interface_type = iftype;
 	}
 
-	u->in.channel_count = list_length(&n->signals);
+	u->in.channel_count = vlist_length(&n->signals);
 	u->in.queues = realloc(u->in.queues, sizeof(struct AiQueueElement) * u->in.channel_count);
 
 	json_array_foreach(json_signals, i, json_signal) {
@@ -375,7 +377,7 @@ int uldaq_check(struct node *n)
 	UlError err;
 
 	if (n->in.vectorize < 100) {
-		warn("vectorize setting of node '%s' must be larger than 100", node_name(n));
+		warning("vectorize setting of node '%s' must be larger than 100", node_name(n));
 		return -1;
 	}
 
@@ -427,26 +429,26 @@ int uldaq_check(struct node *n)
 	}
 
 	if (!has_ai) {
-		warn("DAQ device has no analog input channels");
+		warning("DAQ device has no analog input channels");
 		return -1;
 	}
 
 	if (!(event_types & DE_ON_DATA_AVAILABLE)) {
-		warn("DAQ device does not support events");
+		warning("DAQ device does not support events");
 		return -1;
 	}
 
 	if ((scan_options & u->in.scan_options) != u->in.scan_options) {
-		warn("DAQ device does not support required scan options");
+		warning("DAQ device does not support required scan options");
 		return -1;
 	}
 
-	for (size_t i = 0; i < list_length(&n->signals); i++) {
-		struct signal *s = (struct signal *) list_at(&n->signals, i);
+	for (size_t i = 0; i < vlist_length(&n->signals); i++) {
+		struct signal *s = (struct signal *) vlist_at(&n->signals, i);
 		AiQueueElement *q = &u->in.queues[i];
 
 		if (s->type != SIGNAL_TYPE_FLOAT) {
-			warn("Node '%s' only supports signals of type = float!", node_name(n));
+			warning("Node '%s' only supports signals of type = float!", node_name(n));
 			return -1;
 		}
 
@@ -467,11 +469,11 @@ int uldaq_check(struct node *n)
 				break;
 		}
 
-		warn("Unsupported range for signal %zu", i);
+		warning("Unsupported range for signal %zu", i);
 		return -1;
 
 found:		if (q->channel > max_channel) {
-			warn("DAQ device does not support more than %lld channels", max_channel);
+			warning("DAQ device does not support more than %lld channels", max_channel);
 			return -1;
 		}
 	}
@@ -489,7 +491,7 @@ void uldaq_data_available(DaqDeviceHandle device_handle, DaqEventType event_type
 	UlError err;
 	err = ulAInScanStatus(device_handle, &u->in.status, &u->in.transfer_status);
 	if (err != ERR_NO_ERROR)
-		warn("Failed to retrieve scan status in event callback");
+		warning("Failed to retrieve scan status in event callback");
 
 	pthread_mutex_unlock(&u->in.mutex);
 
@@ -511,7 +513,7 @@ int uldaq_start(struct node *n)
 	u->in.buffer_len = u->in.channel_count * n->in.vectorize * 50;
 	u->in.buffer = (double *) alloc(u->in.buffer_len * sizeof(double));
 	if (!u->in.buffer) {
-		warn("Out of memory, unable to create scan buffer");
+		warning("Out of memory, unable to create scan buffer");
 		return -1;
 	}
 
@@ -519,9 +521,9 @@ int uldaq_start(struct node *n)
 	if (ret)
 		return ret;
 
-	err = ulAInLoadQueue(u->device_handle, u->in.queues, list_length(&n->signals));
+	err = ulAInLoadQueue(u->device_handle, u->in.queues, vlist_length(&n->signals));
 	if (err != ERR_NO_ERROR) {
-		warn("Failed to load input queue to DAQ device for node '%s'", node_name(n));
+		warning("Failed to load input queue to DAQ device for node '%s'", node_name(n));
 		return -1;
 	}
 
@@ -531,19 +533,19 @@ int uldaq_start(struct node *n)
 	/* Start the acquisition */
 	err = ulAInScan(u->device_handle, 0, 0, 0, 0, u->in.buffer_len / u->in.channel_count, &u->in.sample_rate, u->in.scan_options, u->in.flags, u->in.buffer);
 	if (err != ERR_NO_ERROR) {
-		warn("Failed to start acquisition on DAQ device for node '%s'", node_name(n));
+		warning("Failed to start acquisition on DAQ device for node '%s'", node_name(n));
 		return -1;
 	}
 
 	/* Get the initial status of the acquisition */
 	err = ulAInScanStatus(u->device_handle, &u->in.status, &u->in.transfer_status);
 	if (err != ERR_NO_ERROR) {
-		warn("Failed to retrieve scan status on DAQ device for node '%s'", node_name(n));
+		warning("Failed to retrieve scan status on DAQ device for node '%s'", node_name(n));
 		return -1;
 	}
 
 	if (u->in.status != SS_RUNNING) {
-		warn ("Acquisition did not start on DAQ device for node '%s'", node_name(n));
+		warning("Acquisition did not start on DAQ device for node '%s'", node_name(n));
 		return -1;
 	}
 
