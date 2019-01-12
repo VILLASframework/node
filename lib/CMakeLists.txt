@@ -55,10 +55,9 @@ set(LIB_SRC
     shmem.c
     config_helper.c
     signal.c
-    copyright.c
     pool.c
     queue.c
-    queue_signalled.c
+	queue_signalled.c
 )
 
 if(IBVERBS_FOUND AND RDMACM_FOUND)
