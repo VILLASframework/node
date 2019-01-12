@@ -20,11 +20,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-# All executables link against libvillas
-link_libraries(villas)
-
 add_executable(villas-node villas-node.cpp)
+target_link_libraries(villas-node PUBLIC villas)
+
 add_executable(villas-test-rtt villas-test-rtt.cpp)
+target_link_libraries(villas-test-rtt PUBLIC villas)
 
 install(
     TARGETS villas-node villas-test-rtt
@@ -32,13 +32,30 @@ install(
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+if(WITH_WEB)
+    add_executable(villas-relay villas-relay.cpp)
+    target_include_directories(villas-relay PRIVATE ${LIBWEBSOCKETS_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/common/include)
+    target_link_libraries(villas-relay PRIVATE PkgConfig::LIBWEBSOCKETS villas-common spdlog)
+
+    install(
+        TARGETS villas-relay
+        COMPONENT bin
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+endif()
+
 if(WITH_IO)
     add_executable(villas-test-cmp villas-test-cmp.cpp)
-    add_executable(villas-convert villas-convert.cpp)
-    add_executable(villas-pipe villas-pipe.cpp)
-    add_executable(villas-signal villas-signal.cpp)
+    target_link_libraries(villas-test-cmp PUBLIC villas)
 
-    target_link_libraries(villas-pipe PUBLIC Threads::Threads)
+    add_executable(villas-convert villas-convert.cpp)
+    target_link_libraries(villas-convert PUBLIC villas)
+
+    add_executable(villas-pipe villas-pipe.cpp)
+    target_link_libraries(villas-pipe PUBLIC villas Threads::Threads)
+
+    add_executable(villas-signal villas-signal.cpp)
+    target_link_libraries(villas-signal PUBLIC villas)
 
     install(
         TARGETS villas-convert villas-pipe villas-signal villas-test-cmp
@@ -49,6 +66,7 @@ endif()
 
 if(WITH_IO AND WITH_HOOKS)
     add_executable(villas-hook villas-hook.cpp)
+    target_link_libraries(villas-hook PUBLIC villas)
 
     install(
         TARGETS villas-hook

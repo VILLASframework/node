@@ -28,12 +28,13 @@
 #include <villas/config.h>
 #include <villas/config_helper.h>
 #include <villas/utils.hpp>
+#include <villas/copyright.hpp>
 
 void usage()
 {
 	std::cout << "Usage: conf2json input.conf > output.json" << std::endl << std::endl;
 
-	villas::utils::print_copyright();
+	villas::print_copyright();
 }
 
 int main(int argc, char *argv[])

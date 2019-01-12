@@ -31,6 +31,7 @@
 #include <villas/format_type.h>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
+#include <villas/copyright.hpp>
 #include <villas/pool.h>
 #include <villas/exceptions.hpp>
 #include <villas/node/config.h>
@@ -108,7 +109,7 @@ void usage()
 	          << "  4   number of values is not equal" << std::endl
 	          << "  5   data is not equal" << std::endl << std::endl;
 
-	utils::print_copyright();
+	print_copyright();
 }
 
 int main(int argc, char *argv[])
@@ -148,7 +149,7 @@ int main(int argc, char *argv[])
 				break;
 
 			case 'V':
-				utils::print_version();
+				print_version();
 				exit(EXIT_SUCCESS);
 
 			case 'd':

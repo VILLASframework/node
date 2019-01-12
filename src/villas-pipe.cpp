@@ -36,6 +36,7 @@
 #include <villas/node/config.h>
 #include <villas/config_helper.h>
 #include <villas/super_node.hpp>
+#include <villas/copyright.hpp>
 #include <villas/utils.hpp>
 #include <villas/utils.h>
 #include <villas/log.hpp>
@@ -129,7 +130,7 @@ static void usage()
 	          << "    -d               set logging level" << std::endl
 	          << "    -V               show the version of the tool" << std::endl << std::endl;
 
-	utils::print_copyright();
+	print_copyright();
 }
 
 static void * send_loop(void *ctx)
@@ -260,7 +261,7 @@ int main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "Vhxrsd:l:L:t:f:o:")) != -1) {
 		switch (c) {
 			case 'V':
-				utils::print_version();
+				print_version();
 				exit(EXIT_SUCCESS);
 
 			case 'f':
@@ -374,9 +375,9 @@ check:		if (optarg == endptr)
 	if (reverse)
 		node_reverse(node);
 
-	ret = node_type_start(node->_vt, reinterpret_cast<super_node *>(&sn));
+	ret = node_type_start(node_type(node), reinterpret_cast<super_node *>(&sn));
 	if (ret)
-		throw RuntimeError("Failed to intialize node type {}: reason={}", node_type_name(node->_vt), ret);
+		throw RuntimeError("Failed to intialize node type {}: reason={}", node_type_name(node_type(node)), ret);
 
 	ret = node_check(node);
 	if (ret)

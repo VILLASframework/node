@@ -40,6 +40,7 @@
 #include <villas/web.hpp>
 #include <villas/log.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/copyright.hpp>
 #include <villas/plugin.h>
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/rt.hpp>
@@ -98,7 +99,7 @@ static void usage()
 	plugin_dump(PLUGIN_TYPE_FORMAT);
 	std::cout << std::endl;
 
-	utils::print_copyright();
+	print_copyright();
 
 	exit(EXIT_FAILURE);
 }
@@ -127,7 +128,7 @@ int main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "hVd:")) != -1) {
 		switch (c) {
 			case 'V':
-				utils::print_version();
+				print_version();
 				exit(EXIT_SUCCESS);
 
 			case 'd':

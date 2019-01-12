@@ -32,6 +32,7 @@
 #include <villas/sample.h>
 #include <villas/plugin.h>
 #include <villas/exceptions.hpp>
+#include <villas/copyright.hpp>
 
 using namespace villas;
 
@@ -45,7 +46,7 @@ static void usage()
 	          << "    -h               show this usage information" << std::endl
 	          << "    -V               show the version of the tool" << std::endl << std::endl;
 
-	utils::print_copyright();
+	print_copyright();
 }
 
 int main(int argc, char *argv[])
@@ -59,7 +60,7 @@ int main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "Vhd:i:o:")) != -1) {
 		switch (c) {
 			case 'V':
-				utils::print_version();
+				print_version();
 				exit(EXIT_SUCCESS);
 
 			case 'i':

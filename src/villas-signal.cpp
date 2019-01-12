@@ -33,6 +33,7 @@
 #include <villas/io.h>
 #include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/copyright.hpp>
 #include <villas/log.hpp>
 #include <villas/sample.h>
 #include <villas/timing.h>
@@ -154,7 +155,7 @@ void usage()
 	          << "    -o OFF  the DC bias" << std::endl
 	          << "    -l NUM  only send LIMIT messages and stop" << std::endl << std::endl;
 
-	utils::print_copyright();
+	print_copyright();
 }
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)

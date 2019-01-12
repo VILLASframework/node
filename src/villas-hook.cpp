@@ -38,6 +38,7 @@
 #include <villas/pool.h>
 #include <villas/log.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/copyright.hpp>
 #include <villas/plugin.h>
 #include <villas/config_helper.h>
 #include <villas/kernel/rt.hpp>
@@ -76,7 +77,7 @@ static void usage()
 	          << "  villas-signal random | villas-hook skip_first seconds=10" << std::endl
 	          << std::endl;
 
-	utils::print_copyright();
+	print_copyright();
 }
 
 int main(int argc, char *argv[])
@@ -105,7 +106,7 @@ int main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "Vhv:d:f:o:")) != -1) {
 		switch (c) {
 			case 'V':
-				utils::print_version();
+				print_version();
 				exit(EXIT_SUCCESS);
 
 			case 'f':

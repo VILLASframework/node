@@ -33,6 +33,7 @@
 #include <villas/node/config.h>
 #include <villas/super_node.hpp>
 #include <villas/exceptions.hpp>
+#include <villas/copyright.hpp>
 #include <villas/log.hpp>
 #include <villas/node.h>
 #include <villas/utils.hpp>
@@ -66,7 +67,7 @@ void usage()
 	          << "    -h      show this usage information" << std::endl
 	          << "    -V      show the version of the tool" << std::endl << std::endl;
 
-	utils::print_copyright();
+	print_copyright();
 }
 
 int main(int argc, char *argv[])
@@ -119,7 +120,7 @@ int main(int argc, char *argv[])
 				goto check;
 
 			case 'V':
-				utils::print_version();
+				print_version();
 				exit(EXIT_SUCCESS);
 
 			case 'd':
