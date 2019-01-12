@@ -89,6 +89,11 @@ target_compile_definitions(villas-common PUBLIC
 	-D__STDC_FORMAT_MACROS -D_GNU_SOURCE
 )
 
+set_target_properties(villas-common PROPERTIES
+    VERSION ${CMAKE_PROJECT_VERSION}
+    SOVERSION 1
+)
+
 install(
     TARGETS villas-common
     EXPORT VILLASCommonConfig
