@@ -65,22 +65,24 @@ RUN pip install \
 
 # Dependencies
 RUN dnf -y install \
-	openssl openssl-devel \
+	openssl-devel \
+	protobuf-devel \
+	protobuf-c-devel \
 	libconfig-devel \
 	libnl3-devel \
 	libcurl-devel \
 	jansson-devel \
+	libwebsockets-devel \
 	zeromq-devel \
-	protobuf-devel \
-	protobuf-c-devel \
+	nanomsg \
+	libiec61850 \
 	librabbitmq-devel \
 	mosquitto-devel \
-	comedilib-devel comedilib \
+	comedilib-devel \
 	libibverbs-devel \
 	librdmacm-devel \
-	libwebsockets-devel \
-	nanomsg \
-	libiec61850
+	re-devel \
+	uldaq-devel
 
 # Build & Install Criterion
 RUN cd /tmp && \

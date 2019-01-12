@@ -28,7 +28,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-FROM centos:7
+# This is a Centos 7 image including the devtoolset-7 for a more recenter toolchain
+# See: https://www.softwarecollections.org/en/scls/rhscl/devtoolset-7/
+FROM registry.centos.org/centos/devtoolset-7-toolchain-centos7
 
 ARG GIT_REV=unknown
 ARG GIT_BRANCH=unknown
@@ -38,8 +40,10 @@ ARG VARIANT=unknown
 # Some of the dependencies are only available in our own repo
 ADD https://villas.fein-aachen.org/packages/villas.repo /etc/yum.repos.d/
 
-# Enable Extra Packages for Enterprise Linux (EPEL) and Software collection repo
-RUN yum -y install epel-release centos-release-scl
+USER root
+
+# Enable Extra Packages for Enterprise Linux (EPEL) repo
+RUN yum -y install epel-release
 
 # Toolchain
 RUN yum -y install \
@@ -69,18 +73,24 @@ RUN pip install \
 
 # Dependencies
 RUN yum -y install \
-	openssl openssl-devel \
+	openssl-devel \
+	protobuf-devel \
+	protobuf-c-devel \
 	libconfig-devel \
 	libnl3-devel \
 	libcurl-devel \
 	jansson-devel \
+	libwebsockets-devel \
 	zeromq-devel \
-	nanomsg-devel \
-	protobuf-devel \
-	protobuf-c-devel \
-	libiec61850-devel \
+	nanomsg \
+	libiec61850 \
 	librabbitmq-devel \
-	mosquitto-devel
+	mosquitto-devel \
+	comedilib-devel \
+	libibverbs-devel \
+	librdmacm-devel \
+	re-devel \
+	uldaq-devel
 
 # Build & Install Criterion
 RUN cd /tmp && \
