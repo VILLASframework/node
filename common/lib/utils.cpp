@@ -60,19 +60,6 @@ tokenize(std::string s, std::string delimiter)
 	return tokens;
 }
 
-void print_copyright()
-{
-	std::cout << PROJECT_NAME " " << CLR_BLU(PROJECT_BUILD_ID)
-	          << " (built on " CLR_MAG(__DATE__) " " CLR_MAG(__TIME__) ")" << std::endl
-	          << " Copyright 2014-2017, Institute for Automation of Complex Power Systems, EONERC" << std::endl
-	          << " Steffen Vogel <StVogel@eonerc.rwth-aachen.de>" << std::endl;
-}
-
-void print_version()
-{
-	std::cout << PROJECT_BUILD_ID << std::endl;
-}
-
 ssize_t read_random(char *buf, size_t len)
 {
 	int fd;

@@ -191,7 +191,7 @@ public:
 	}
 };
 
-} // namespace villas
 } // namespace utils
+} // namespace villas
 
 #endif
