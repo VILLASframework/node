@@ -5,12 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.6.5] - Unreleased
+## [0.7.0] - 2019-01-13
 
 ### Added
 
 - A new sub-command `villas-relay` implements a client-to-client WebSocket relay.
   It can be used as a proxy for nodes which sit behind a NAT firewall.
+- New node-types: infiniband, rtp, uldaq
+- VILLASnode got a similarily named Python package: `villas.node`.
+  It can be used to interact or start an VILLASnode instance. 
+
+### Changed
+
+- The syntax of the configuration file has changed in several places.
+  Most node configs are now separated into `in` and `out` sections.
+- We ported major parts of the VILLASnode code base to C++.
+- Some of the common utilities have been moved to a new repo.
+  VILLAScommon is used also by other related VILLAS components.
+  Please make sure to checkout / update the `common/` Git sub-module.
+- We build and test VILLASnode now with Fedora 29.
+
+### Fixed
+
+- All unit tests are running again. Most of the integration tests run again as well.
+- We added support for the ARM architecture.
 
 ## [0.6.4] - 2018-07-18
 
