@@ -299,8 +299,12 @@ int main(int argc, char *argv[])
 	ctx_info.port = 8088;
 
 	char c, *endptr;
-	while ((c = getopt (argc, argv, "hVp:P:l")) != -1) {
+	while ((c = getopt (argc, argv, "hVp:P:ld:")) != -1) {
 		switch (c) {
+			case 'd':
+				spdlog::set_level(spdlog::level::from_str(optarg));
+				break;
+
 			case 'p':
 				ctx_info.port = strtoul(optarg, &endptr, 10);
 				goto check;
