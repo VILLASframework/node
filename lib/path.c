@@ -744,7 +744,7 @@ int path_start(struct path *p)
 	p->last_sample->length = vlist_length(&p->signals);
 	p->last_sample->signals = &p->signals;
 	p->last_sample->sequence = 0;
-	p->last_sample->flags = 0;
+	p->last_sample->flags = p->last_sample->length > 0 ? SAMPLE_HAS_DATA : 0;
 
 	for (size_t i = 0; i < p->last_sample->length; i++) {
 		struct signal *sig = (struct signal *) vlist_at(p->last_sample->signals, i);
