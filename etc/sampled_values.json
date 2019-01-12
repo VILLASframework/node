@@ -1,0 +1,58 @@
+{
+	"nodes" : {
+		"node1" : {
+			"type" : "iec61850-9-2",
+			
+			"interface" : "lo",
+			"dst_address" : "01:0c:cd:01:00:01",
+		
+			"out" : {
+				"signals" : [
+					{ "name" : "sig1", "type" : "float", "iec_type" : "float32" },
+					{ "name" : "sig1", "type" : "float", "iec_type" : "float64" },
+					{ "name" : "sig1", "type" : "integer", "iec_type" : "int8" },
+					{ "name" : "sig1", "type" : "integer", "iec_type" : "int32" }
+				],
+				
+				"svid" : "test1234",
+				"datset" : "test",
+				"smpmod" : "samples_per_second",
+				"confrev" : 55
+			},
+			"int" : {
+				"signals" : [
+					{ "name" : "sig1", "type" : "float", "iec_type" : "float32" },
+					{ "name" : "sig1", "type" : "float", "iec_type" : "float64" },
+					{ "name" : "sig1", "type" : "integer", "iec_type" : "int8" },
+					{ "name" : "sig1", "type" : "integer", "iec_type" : "int32" }
+				]
+			}
+		},
+		
+		"node2" : {
+			"type" : "iec61850-9-2",
+		
+			"interface" : "lo",
+		
+			"out" : {
+				"svid" : "testSV",
+				"datset" : "abc",
+				"signals" : [
+					{ "name" : "sig1", "type" : "float", "iec_type" : "float32" },
+					{ "name" : "sig1", "type" : "float", "iec_type" : "float64" },
+					{ "name" : "sig1", "type" : "integer", "iec_type" : "int8" },
+					{ "name" : "sig1", "type" : "integer", "iec_type" : "int32" }
+				]
+			},
+			"in" : {
+				"signals" : [
+					{ "name" : "sig1", "type" : "float", "iec_type" : "float32" },
+					{ "name" : "sig1", "type" : "float", "iec_type" : "float64" },
+					{ "name" : "sig1", "type" : "integer", "iec_type" : "int8" },
+					{ "name" : "sig1", "type" : "integer", "iec_type" : "int32" }
+				]
+			}
+		}
+
+	}
+}
