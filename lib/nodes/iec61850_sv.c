@@ -267,6 +267,8 @@ int iec61850_sv_start(struct node *n)
 		if (i->out.smpmod >= 0)
 			SVPublisher_ASDU_setSmpMod(i->out.asdu, i->out.smpmod);
 
+		SVPublisher_ASDU_enableRefrTm(i->out.asdu);
+
 //		if (s->out.smprate >= 0)
 //			SV_ASDU_setSmpRate(i->out.asdu, i->out.smprate);
 
