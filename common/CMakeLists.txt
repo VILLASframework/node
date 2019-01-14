@@ -58,17 +58,7 @@ find_package(OpenSSL 1.0.0 REQUIRED)
 find_package(CURL 7.29 REQUIRED)
 find_package(Criterion)
 
-set(SPDLOG_BUILD_EXAMPLES OFF CACHE BOOL "Build examples" FORCE)
-set(SPDLOG_BUILD_TESTING OFF CACHE BOOL "Build spdlog tests" FORCE)
-set(SPDLOG_BUILD_BENCH OFF CACHE BOOL "Build spdlog benchmarks" FORCE)
-add_subdirectory(thirdparty/spdlog)
-
-set(FMT_DOC OFF CACHE BOOL "Generate the doc target." FORCE)
-set(FMT_INSTALL OFF CACHE BOOL "Generate the install target." FORCE)
-set(FMT_TEST OFF CACHE BOOL "Generate the test target." FORCE)
-add_subdirectory(thirdparty/fmtlib)
-
-target_compile_options(fmt PUBLIC -fPIC)
+add_subdirectory(thirdparty)
 
 pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson>=2.7)
 pkg_check_modules(LIBCONFIG IMPORTED_TARGET libconfig>=1.4.9)
