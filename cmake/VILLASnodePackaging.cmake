@@ -20,6 +20,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
+include(CPackComponent)
+get_cmake_property(CPACK_COMPONENTS_ALL COMPONENTS)
+list(REMOVE_ITEM CPACK_COMPONENTS_ALL "Unspecified")
+
 set(CPACK_BUILD_SOURCE_DIRS ${PROJECT_SOURCE_DIR}/src;${PROJECT_SOURCE_DIR}/lib;${PROJECT_SOURCE_DIR}/include)
 
 set(CPACK_PACKAGE_NAME "villas-node")
