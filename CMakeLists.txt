@@ -29,7 +29,7 @@ project(villas-node
 
 # Some more project settings
 set(PROJECT_AUTHOR "Steffen Vogel")
-set(PROJECT_COPYRIGHT "2017-2019, Institute for Automation of Complex Power Systems, RWTH Aachen University")
+set(PROJECT_COPYRIGHT "2014-2019, Institute for Automation of Complex Power Systems, RWTH Aachen University")
 set(PROJECT_HOMEPAGE_URL "https://www.fein-aachen.org/projects/villas-node/")
 
 # Several CMake settings/defaults
