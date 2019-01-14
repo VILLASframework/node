@@ -290,6 +290,9 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 
 				sample_decref_many(smps, pulled);
 
+				if (ret < 0)
+					return ret;
+
 				debug(LOG_WEBSOCKET | 10, "Send %d samples to connection: %s, bytes=%d", pulled, websocket_connection_name(c), ret);
 			}
 

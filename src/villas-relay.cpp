@@ -164,10 +164,14 @@ public:
 
 	void write()
 	{
+		int ret;
+
 		while (!outgoingFrames.empty()) {
 			std::shared_ptr<Frame> fr = outgoingFrames.front();
 
-			lws_write(wsi, fr->data(), fr->size(), LWS_WRITE_BINARY);
+			ret = lws_write(wsi, fr->data(), fr->size(), LWS_WRITE_BINARY);
+			if (ret < 0)
+				return;
 
 			outgoingFrames.pop();
 		}
