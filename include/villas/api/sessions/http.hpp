@@ -39,6 +39,9 @@ namespace sessions {
 
 class Http : public Wsi {
 
+protected:
+	bool headersSent;
+
 public:
 	Http(Api *s, lws *w);
 	virtual ~Http() { };

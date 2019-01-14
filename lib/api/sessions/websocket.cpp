@@ -85,9 +85,7 @@ int WebSocket::write()
 
 	json_decref(resp);
 
-	lws_write(wsi, (unsigned char *) response.buffer.data() + LWS_PRE, response.buffer.size() - LWS_PRE, LWS_WRITE_TEXT);
-
-	return 0;
+	return lws_write(wsi, (unsigned char *) response.buffer.data() + LWS_PRE, response.buffer.size() - LWS_PRE, LWS_WRITE_TEXT);
 }
 
 std::string WebSocket::getName()

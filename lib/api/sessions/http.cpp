@@ -35,7 +35,8 @@ using namespace villas::node;
 using namespace villas::node::api::sessions;
 
 Http::Http(Api *a, lws *w) :
-	Wsi(a, w)
+	Wsi(a, w),
+	headersSent(false)
 {
 	int hdrlen, options = -1, version;
 	char *uri;
@@ -86,37 +87,47 @@ int Http::complete()
 int Http::write()
 {
 	int ret;
-	json_t *resp;
 
-	resp = response.queue.pop();
+	if (!headersSent) {
+		std::stringstream headers;
 
-	response.buffer.clear();
-	response.buffer.encode(resp);
+		json_t *resp = response.queue.pop();
 
-	json_decref(resp);
+		response.buffer.clear();
+		response.buffer.encode(resp);
 
-	std::stringstream headers;
+		json_decref(resp);
 
-	headers << "HTTP/1.1 200 OK\r\n"
-	        << "Content-type: application/json\r\n"
-	        << "User-agent: " USER_AGENT "\r\n"
-	        << "Connection: close\r\n"
-	        << "Content-Length: " << response.buffer.size() << "\r\n"
-	        << "Access-Control-Allow-Origin: *\r\n"
-	        << "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
-	        << "Access-Control-Allow-Headers: Content-Type\r\n"
-	        << "Access-Control-Max-Age: 86400\r\n"
-	        << "\r\n";
+		headers << "HTTP/1.1 200 OK\r\n"
+			<< "Content-type: application/json\r\n"
+			<< "User-agent: " USER_AGENT "\r\n"
+			<< "Connection: close\r\n"
+			<< "Content-Length: " << response.buffer.size() << "\r\n"
+			<< "Access-Control-Allow-Origin: *\r\n"
+			<< "Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n"
+			<< "Access-Control-Allow-Headers: Content-Type\r\n"
+			<< "Access-Control-Max-Age: 86400\r\n"
+			<< "\r\n";
 
-	ret = lws_write(wsi, (unsigned char *) headers.str().data(), headers.str().size(), LWS_WRITE_HTTP_HEADERS);
-	if (ret < 0)
-		return -1;
+		ret = lws_write(wsi, (unsigned char *) headers.str().data(), headers.str().size(), LWS_WRITE_HTTP_HEADERS);
+		if (ret < 0)
+			return -1;
 
-	ret = lws_write(wsi, (unsigned char *) response.buffer.data(), response.buffer.size(), LWS_WRITE_HTTP);
-	if (ret < 0)
-		return -1;
+		/* No wait, until we can send the body */
+		headersSent = true;
+		lws_callback_on_writable(wsi);
 
-	return 1;
+		return 0;
+	}
+	else {
+		ret = lws_write(wsi, (unsigned char *) response.buffer.data(), response.buffer.size(), LWS_WRITE_HTTP_FINAL);
+		if (ret < 0)
+			return -1;
+
+		headersSent = false;
+
+		return 1;
+	}
 }
 
 std::string Http::getName()
@@ -175,9 +186,10 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 
 		case LWS_CALLBACK_HTTP_WRITEABLE:
 			ret = s->write();
-
-			if (lws_http_transaction_completed(wsi))
-				return -1;
+			if (ret) {
+				if (lws_http_transaction_completed(wsi))
+					return -1;
+			}
 
 			return 0;
 
