@@ -60,7 +60,7 @@ struct Options {
 class Frame : public std::vector<uint8_t> {
 public:
 	Frame() {
-		// lws_write() requires LWS_PRE bytes in front of the payload
+		/* lws_write() requires LWS_PRE bytes in front of the payload */
 		insert(end(), LWS_PRE, 0);
 	}
 
@@ -152,7 +152,8 @@ public:
 		console->info("New connection established: session={}, remote={} ({})", session->identifier, name, ip);
 	}
 
-	~Connection() {
+	~Connection()
+	{
 		console->info("Connection closed: session={}, remote={} ({})", session->identifier, name, ip);
 
 		session->connections.erase(wsi);
@@ -161,7 +162,8 @@ public:
 			delete session;
 	}
 
-	void write() {
+	void write()
+	{
 		while (!outgoingFrames.empty()) {
 			std::shared_ptr<Frame> fr = outgoingFrames.front();
 
@@ -171,7 +173,8 @@ public:
 		}
 	}
 
-	void read(void *in, size_t len) {
+	void read(void *in, size_t len)
+	{
 		currentFrame->insert(currentFrame->end(), (uint8_t *) in, (uint8_t *) in + len);
 
 		if (lws_is_final_fragment(wsi)) {
@@ -221,7 +224,8 @@ static const lws_extension extensions[] = {
 	{ NULL /* terminator */ }
 };
 
-static void logger(int level, const char *msg) {
+static void logger(int level, const char *msg)
+{
 	auto log = spdlog::get("lws");
 
 	char *nl = (char *) strchr(msg, '\n');
