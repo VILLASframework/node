@@ -55,10 +55,10 @@ foreach(SUFFIX app dev dev-centos dev-ubuntu)
 			--tag ${DOCKER_IMAGE}-${SUFFIX}:latest
 			--build-arg BUILDER_IMAGE=${DOCKER_IMAGE}-dev:${DOCKER_TAG}
 			--build-arg DOCKER_TAG=${DOCKER_TAG}
-			--build-arg GIT_BRANCH=${GIT_BRANCH}
-			--build-arg GIT_REV=${GIT_REV}
-			--build-arg VERSION=${PROJECT_VERSION}
-			--build-arg VARIANT=${VARIANT}
+			--build-arg GIT_BRANCH=${CMAKE_PROJECT_GIT_BRANCH}
+			--build-arg GIT_REV=${CMAKE_PROJECT_GIT_REV}
+			--build-arg VERSION=${CMAKE_PROJECT_VERSION}
+			--build-arg VARIANT=${CMAKE_PROJECT_VARIANT}
 			${DOCKER_BUILD_OPTS} ${PROJECT_SOURCE_DIR}
 		COMMENT "Build Docker image: ${DOCKER_IMAGE}-${SUFFIX}:${DOCKER_TAG}"
 	)
