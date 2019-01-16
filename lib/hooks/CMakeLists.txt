@@ -36,6 +36,7 @@ set(HOOK_SRC
     cast.c
     average.c
     dump.c
+    dp.c
 )
 
 if(WITH_IO)
