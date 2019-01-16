@@ -57,7 +57,7 @@ struct node_direction {
 	int builtin;		/**< This node should use built-in hooks by default. */
 	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
 
-	struct vlist hooks;	/**< List of write hooks (struct hook). */
+	struct vlist hooks;	/**< List of read / write hooks (struct hook). */
 	struct vlist signals;	/**< Signal description. */
 
 	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
