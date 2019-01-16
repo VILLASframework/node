@@ -27,18 +27,49 @@
 #include <villas/node.h>
 #include <villas/pool.h>
 #include <villas/nodes/iec61850.h>
+#include <villas/sample.h>
+#include <villas/task.h>
 
 
 struct iec61850_mms {
+    struct task task; /**< timer for periodic events */
     char * host;    /**< hostname / IP address of MMS Server */
     int port;       /**< TCP port of MMS Server */
+
+    int rate; /**< sampling rate */
+    int counter; /**< number of samples already transmitted */
 
     char * domainID;    /**< Domain ID of the to-be-read item */
     char * itemID;      /**< item ID (name of MMS value) */
 
     MmsConnection conn;     /**< Connection instance to MMS Server */
 
-    struct queue_signalled queue;   /**< lock-free multiple-producer, multiple-consumer (MPMC) queue */
-    struct pool pool;       /**< thread-safe memory pool */
+    struct {
+        bool enabled;
+        struct queue_signalled queue; // TODO: delete?   /**< lock-free multiple-producer, multiple-consumer (MPMC) queue */
+
+        struct list iecTypeList;
+        struct list domain_ids;  /**< list of const char *, contains domainIDs for MMS values */
+        struct list item_ids;  /**< list of const char *, contains itemIDs for MMS values */
+
+
+        int totalsize;  /**< length of all lists: iecType, domainIDs, itemIDs */
+    } in;
+
+    struct {
+        bool enabled;
+
+        struct list iecList;
+        int total_size;
+    } out;
 };
 
+/** Parse MMS configuration parameters
+  *
+  *@param mms_ids JSON object that contains pairs of domain and item IDs
+  *@param domainIDs pointer to list into which the domain IDs will be written
+  *@param itemIDs pointer to list into which the item IDs will be written
+  *
+  *@return length the lists
+  */
+int iec61850_mms_parse_ids(json_t * mms_ids, struct list * domainIDs, struct list * itemIDs);
