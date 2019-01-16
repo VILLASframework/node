@@ -40,7 +40,7 @@
 #include <villas/utils.h>
 #include <villas/format_type.h>
 
-pthread_t re_pthread;
+static pthread_t re_pthread;
 
 int rtp_reverse(struct node *n)
 {
@@ -192,7 +192,7 @@ int rtp_stop(struct node *n)
 	int ret;
 	struct rtp *r = (struct rtp *) n->_vd;
 
-	/*mem_deref(r->rs);*/
+	mem_deref(r->rs);
 
 	ret = queue_signalled_close(&r->recv_queue);
 	if (ret)
