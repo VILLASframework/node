@@ -34,9 +34,7 @@
 #include <villas/sample.h>
 
 struct cast {
-	struct vlist operations;
-
-	struct vlist signals;
+	int index;
 };
 
 static int cast_init(struct hook *h)
@@ -52,17 +50,8 @@ static int cast_init(struct hook *h)
 	else
 		return -1;
 
-	ret = vlist_init(&c->signals);
-	if (ret)
-		return ret;
-
-	/* Copy original signal list */
-	for (int i = 0; i < vlist_length(orig_signals); i++) {
-		struct signal *orig_sig = vlist_at(orig_signals, i);
-		struct signal *new_sig = signal_copy(orig_sig);
-
-		vlist_push(&c->signals, new_sig);
-	}
+	struct signal *orig_sig = vlist_at(orig_signals, i);
+	struct signal *new_sig = signal_copy(orig_sig);
 
 	return 0;
 }
@@ -71,10 +60,6 @@ static int cast_destroy(struct hook *h)
 {
 	int ret;
 	struct cast *c = (struct cast *) h->_vd;
-
-	ret = vlist_destroy(&c->signals, (dtor_cb_t) signal_decref, false);
-	if (ret)
-		return ret;
 
 	return 0;
 }
@@ -86,75 +71,63 @@ static int cast_parse(struct hook *h, json_t *cfg)
 	struct signal *sig;
 
 	size_t i;
-	json_t *json_signals;
-	json_t *json_signal;
+	json_error_t err;
 
-	ret = json_unpack(cfg, "{ s: o }",
-		"signals", &json_signals
+	int index = -1;
+	const char *name = NULL;
+
+	const char *new_name = NULL;
+	const char *new_unit = NULL;
+	const char *new_format = NULL;
+
+	ret = json_unpack_ex(cfg, &err, "{ s?: s, s?: i, s?: s, s?: s, s?: s }",
+		"name", &name,
+		"index", &index,
+		"new_format", &new_format,
+		"new_name", &new_name,
+		"new_unit", &new_unit
 	);
 	if (ret)
 		return ret;
 
-	if (json_is_array(json_signals))
+	/* Find matching original signal descriptor */
+	if (index >= 0 && name != NULL)
 		return -1;
 
-	json_array_foreach(json_signals, i, json_signal) {
-		int index = -1;
-		const char *name = NULL;
+	if (index < 0 && name == NULL)
+		return -1;
 
-		const char *new_name = NULL;
-		const char *new_unit = NULL;
-		const char *new_format = NULL;
+	sig = name
+		? vlist_lookup(&c->signals, name)
+		: vlist_at_safe(&c->signals, index);
+	if (!sig)
+		return -1;
 
-		ret = json_unpack(json_signal, "{ s?: s, s?: i, s?: s, s?: s, s?: s }",
-			"name", &name,
-			"index", &index,
-			"new_format", &new_format,
-			"new_name", &new_name,
-			"new_unit", &new_unit
-		);
-		if (ret)
-			return ret;
+	/* Cast to new format */
+	if (new_format) {
+		enum signal_type fmt;
 
-		/* Find matching original signal descriptor */
-		if (index >= 0 && name != NULL)
+		fmt = signal_type_from_str(new_format);
+		if (fmt == SIGNAL_TYPE_INVALID)
 			return -1;
 
-		if (index < 0 && name == NULL)
-			return -1;
+		sig->type = fmt;
+	}
 
-		sig = name
-			? vlist_lookup(&c->signals, name)
-			: vlist_at_safe(&c->signals, index);
-		if (!sig)
-			return -1;
+	/* Set new name */
+	if (new_name) {
+		if (sig->name)
+			free(sig->name);
 
-		/* Cast to new format */
-		if (new_format) {
-			enum signal_type fmt;
+		sig->name = strdup(new_name);
+	}
 
-			fmt = signal_type_from_str(new_format);
-			if (fmt == SIGNAL_TYPE_INVALID)
-				return -1;
+	/* Set new unit */
+	if (new_unit) {
+		if (sig->unit)
+			free(sig->unit);
 
-			sig->type = fmt;
-		}
-
-		/* Set new name */
-		if (new_name) {
-			if (sig->name)
-				free(sig->name);
-
-			sig->name = strdup(new_name);
-		}
-
-		/* Set new unit */
-		if (new_unit) {
-			if (sig->unit)
-				free(sig->unit);
-
-			sig->unit = strdup(new_unit);
-		}
+		sig->unit = strdup(new_unit);
 	}
 
 	return 0;
@@ -183,7 +156,7 @@ static int cast_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 
 static struct plugin p = {
 	.name		= "cast",
-	.description	= "Cast signals",
+	.description	= "Cast signals types",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
 		.flags		= HOOK_NODE_READ | HOOK_PATH,
