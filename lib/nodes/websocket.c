@@ -378,9 +378,6 @@ int websocket_type_start(struct super_node *sn)
 	vlist_init(&connections);
 
 	web = super_node_get_web(sn);
-
-	info("web state: %d", web_get_state(web));
-
 	if (web_get_state(web) != STATE_STARTED)
 		return -1;
 
