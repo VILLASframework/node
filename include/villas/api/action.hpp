@@ -41,12 +41,14 @@ class Action {
 protected:
 	Session *session;
 
-	static Logger logger;
+	Logger logger;
 
 public:
 	Action(Session *s) :
 		session(s)
-	{ }
+	{
+		logger = logging.get("api:action");
+	}
 
 	virtual int execute(json_t *args, json_t **resp) = 0;
 };

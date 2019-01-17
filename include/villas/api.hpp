@@ -52,7 +52,7 @@ class SuperNode;
 class Api {
 
 protected:
-	static Logger logger;
+	Logger logger;
 
 	enum state state;
 

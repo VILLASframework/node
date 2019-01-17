@@ -39,8 +39,6 @@
 
 using namespace villas;
 
-static Logger logger = logging.get("test-shmem");
-
 static std::atomic<bool> stop(false);
 
 void usage()
@@ -59,6 +57,8 @@ void quit(int, siginfo_t*, void*)
 int main(int argc, char* argv[])
 {
 	int ret, readcnt, writecnt, avail;
+
+	Logger logger = logging.get("test-shmem");
 
 	struct shmem_int shm;
 	struct shmem_conf conf = {

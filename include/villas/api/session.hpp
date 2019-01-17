@@ -57,7 +57,7 @@ protected:
 	enum State state;
 	enum Version version;
 
-	static Logger logger;
+	Logger logger;
 
 	int runs;
 

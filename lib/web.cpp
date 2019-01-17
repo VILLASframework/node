@@ -40,8 +40,6 @@ using namespace villas::node;
 /* Forward declarations */
 lws_callback_function websocket_protocol_cb;
 
-Logger Web::logger = logging.get("web");
-
 /** List of libwebsockets protocols. */
 lws_protocols protocols[] = {
  	{
@@ -188,6 +186,8 @@ Web::Web(Api *a) :
 
 	/* Default values */
 	port = getuid() > 0 ? 8080 : 80;
+
+	logger = logging.get("web");
 }
 
 int Web::parse(json_t *cfg)

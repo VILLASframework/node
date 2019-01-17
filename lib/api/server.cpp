@@ -39,13 +39,11 @@
 using namespace villas;
 using namespace villas::node::api;
 
-static Logger logger = logging.get("api");
-
 Server::Server(Api *a) :
 	state(STATE_INITIALIZED),
 	api(a)
 {
-
+	logger = logging.get("api:server");
 }
 
 Server::~Server()

@@ -34,12 +34,12 @@
 using namespace villas;
 using namespace villas::node::api;
 
-Logger Session::logger = logging.get("api:session");
-
 Session::Session(Api *a) :
 	runs(0),
 	api(a)
 {
+	logger = logging.get("api:session");
+
 	logger->debug("Initiated API session: {}", getName());
 }
 

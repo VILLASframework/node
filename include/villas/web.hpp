@@ -43,7 +43,7 @@ class Web {
 protected:
 	enum state state;
 
-	static Logger logger;
+	Logger logger;
 
 	lws_context *context;		/**< The libwebsockets server context. */
 	lws_vhost *vhost;		/**< The libwebsockets vhost. */

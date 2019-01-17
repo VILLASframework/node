@@ -23,7 +23,6 @@
 
 set(API_SRC
     session.cpp
-    action.cpp
     server.cpp
 
     sessions/socket.cpp

@@ -45,7 +45,7 @@ protected:
 	int hugepages;		/**< Number of hugepages to reserve. */
 	double stats;		/**< Interval for path statistics. Set to 0 to disable them. */
 
-	static Logger logger;
+	Logger logger;
 
 	struct vlist nodes;
 	struct vlist paths;

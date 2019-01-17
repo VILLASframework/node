@@ -42,8 +42,6 @@
 using namespace villas;
 using namespace villas::node;
 
-Logger SuperNode::logger = logging.get("super_node");
-
 SuperNode::SuperNode() :
 	state(STATE_INITIALIZED),
 	priority(0),
@@ -66,6 +64,8 @@ SuperNode::SuperNode() :
 	gethostname(hname, 128);
 
 	name = hname;
+
+	logger = logging.get("super_node")
 }
 
 int SuperNode::parseUri(const std::string &u)
