@@ -35,7 +35,7 @@ install(
 if(WITH_WEB)
     add_executable(villas-relay villas-relay.cpp)
     target_include_directories(villas-relay PRIVATE ${LIBWEBSOCKETS_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/common/include)
-    target_link_libraries(villas-relay PRIVATE PkgConfig::LIBWEBSOCKETS villas-common spdlog)
+    target_link_libraries(villas-relay PRIVATE PkgConfig::LIBWEBSOCKETS PkgConfig::UUID villas-common spdlog)
 
     install(
         TARGETS villas-relay

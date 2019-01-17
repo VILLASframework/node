@@ -76,6 +76,7 @@ RUN yum -y install \
 	openssl-devel \
 	protobuf-devel \
 	protobuf-c-devel \
+	libuuid-devel \
 	libconfig-devel \
 	libnl3-devel \
 	libcurl-devel \
