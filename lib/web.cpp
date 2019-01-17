@@ -22,7 +22,6 @@
 
 #include <libwebsockets.h>
 #include <string.h>
-#include <pthread.h>
 
 #include <villas/node/config.h>
 #include <villas/utils.h>
