@@ -203,54 +203,10 @@ int iec61850_mms_read(struct node * n, struct sample * smps[], unsigned cnt, uns
         smp->length++;
     }
 
-
-
-
     MmsValue_delete(mms_val);
 
     return 1;
 }
-
-
-/*
-// read from MMS Server
-int iec61850_mms_read(struct node * n, struct sample * smps[], unsigned cnt, unsigned * release)
-{
-struct iec61850_mms * mms = (struct iec61850_mms *) n->_vd;
-//struct sample *smpt[cnt];
-
-
-// read value from MMS server
-MmsError error;
-MmsValue * mms_val = MmsConnection_readVariable(mms->conn, &error, mms->domainID, mms->itemID);
-
-if (mms_val == NULL) {
-warn("Reading MMS value from server failed");
-return -1; // TODO: improve this
-}
-
-
-// create sample and write MMS value into sample
-struct sample * smp;
-smp = sample_alloc_mem(1); // allocate sample array of capacity 1 and length 0
-if (!smp) {
-warn("Could not allocate sample in %s", node_name(n));
-return -1;
-}
-
-smp->flags = SAMPLE_HAS_DATA;
-
-if ( strcmp(mms->iecType, "int32") ) {
-smp->data[0].i = MmsValue_toInt32(mms_val);
-} else { // TODO
-}
-
- *smps = smp;
-
- MmsValue_delete(mms_val);
-
- return 1;
- } */
 
 // not neccessary for now
 int iec61850_mms_write(struct node * n, struct sample * smps[], unsigned cnt, unsigned * release)
@@ -260,10 +216,7 @@ int iec61850_mms_write(struct node * n, struct sample * smps[], unsigned cnt, un
     if(!mms->out.enabled) { return 0; }
 
 
-    // TODO: check mqtt
-
-
-
+    // TODO
 
     return 0;
 }
@@ -319,4 +272,3 @@ static struct plugin p = {
 
 REGISTER_PLUGIN(&p);
 LIST_INIT_STATIC(&p.node.instances);
-
