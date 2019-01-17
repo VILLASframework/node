@@ -73,11 +73,11 @@ int iec61850_mms_parse(struct node * n, json_t * cfg)
     json_t * json_signals = NULL;
     json_t * json_mms_ids = NULL;
 
-    ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s: s, s: i, s: i, s: s, s: s }",
-            "in", &json_in,
+    ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: i, s: i, s: o }",
             "host", &host,
             "port", &mms->port,
-            "rate", &mms->rate
+            "rate", &mms->rate,
+            "in", &json_in
             );
 
     if (ret)
@@ -100,15 +100,16 @@ int iec61850_mms_parse(struct node * n, json_t * cfg)
 
         int length_mms_ids = iec61850_mms_parse_ids(json_mms_ids, &mms->in.domain_ids, &mms->in.item_ids);
 
+        int length_iec_types = mms->in.iecTypeList.length;
         if (length_mms_ids == -1)
             error("Configuration error in node '%s': json error while parsing", node_name(n));
-        else if (ret != length_mms_ids)  // length of the lists is not the same
-            error("Configuration error in node '%s': one set of 'mms_ids' should match one value of 'iecTypes'", node_name(n));
+        else if (length_iec_types != length_mms_ids)  // length of the lists is not the same
+            error("Configuration error in node '%s': one set of 'mms_ids'(%d value(s)) should match one value of 'iecTypes'(%d value(s))", node_name(n), length_mms_ids, length_iec_types);
     }
 
     mms->host = strdup(host);
 
-    return ret;
+    return 0;
 }
 
 char * iec61850_mms_print(struct node * n)
