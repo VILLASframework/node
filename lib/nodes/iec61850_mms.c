@@ -70,15 +70,18 @@ int iec61850_mms_parse(struct node * n, json_t * cfg)
 
     const char * host = NULL;
     json_t * json_in = NULL;
+    json_t * json_out = NULL;
     json_t * json_signals = NULL;
     json_t * json_mms_ids = NULL;
 
-    ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: i, s: i, s: o }",
+    ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: i, s: i, s?: o, s?: o }",
             "host", &host,
             "port", &mms->port,
             "rate", &mms->rate,
-            "in", &json_in
+            "in", &json_in,
+            "out", &json_out
             );
+    mms->host = strdup(host);
 
     if (ret)
         jerror (&err, "Failed to parse configuration of node %s", node_name(n));
@@ -107,7 +110,30 @@ int iec61850_mms_parse(struct node * n, json_t * cfg)
             error("Configuration error in node '%s': one set of 'mms_ids'(%d value(s)) should match one value of 'iecTypes'(%d value(s))", node_name(n), length_mms_ids, length_iec_types);
     }
 
-    mms->host = strdup(host);
+    if (json_out) {
+        ret = json_unpack_ex(json_out, &err, 0, "{ s?: b, s?: i, s: o, s: o }",
+                "test", &mms->out.isTest,
+                "testvalue", &mms->out.testvalue,
+                "iec_types", &json_signals,
+                "mms_ids", &json_mms_ids
+                );
+        if (ret)
+            jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+
+        ret = iec61850_parse_signals(json_signals, &mms->out.iecTypeList, &n->signals);
+        if (ret <= 0)
+            error("Failed to parse setting 'iecList' of node %s", node_name(n));
+
+        mms->out.totalsize = ret;
+
+        int length_mms_ids = iec61850_mms_parse_ids(json_mms_ids, &mms->out.domain_ids, &mms->out.item_ids);
+
+        int length_iec_types = mms->out.iecTypeList.length;
+        if (length_mms_ids == -1)
+            error("Configuration error in node '%s': json error while parsing", node_name(n));
+        else if (length_iec_types != length_mms_ids)  // length of the lists is not the same
+            error("Configuration error in node '%s': one set of 'mms_ids'(%d value(s)) should match one value of 'iecTypes'(%d value(s))", node_name(n), length_mms_ids, length_iec_types);
+    }
 
     return 0;
 }
@@ -159,7 +185,6 @@ int iec61850_mms_read(struct node * n, struct sample * smps[], unsigned cnt, uns
     struct sample * smp = smps[0];
     //struct timespec time;
 
-
     // read value from MMS server
     MmsError error;
     MmsValue * mms_val;
@@ -173,7 +198,6 @@ int iec61850_mms_read(struct node * n, struct sample * smps[], unsigned cnt, uns
     smp->flags = SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE;
     smp->length = 0;
 
-
     const char * domainID;
     const char * itemID;
 
@@ -186,7 +210,7 @@ int iec61850_mms_read(struct node * n, struct sample * smps[], unsigned cnt, uns
         mms_val = MmsConnection_readVariable(mms->conn, &error, domainID, itemID);
 
         if (mms_val == NULL) {
-            warn("Reading MMS value from server failed"); // TODO: elaborate
+            warn("Reading MMS value from server failed");
         }
 
         // convert result according data type
@@ -208,32 +232,20 @@ int iec61850_mms_read(struct node * n, struct sample * smps[], unsigned cnt, uns
     return 1;
 }
 
-// not neccessary for now
+// TODO
 int iec61850_mms_write(struct node * n, struct sample * smps[], unsigned cnt, unsigned * release)
 {
-    struct iec61850_mms * mms = (struct iec61850_mms *) n->_vd;
+//    struct iec61850_mms * mms = (struct iec61850_mms *) n->_vd;
 
-    if(!mms->out.enabled) { return 0; }
-
-
-    // TODO
 
     return 0;
 }
 
 int iec61850_mms_destroy(struct node * n)
 {
-    int ret;
     struct iec61850_mms * mms = (struct iec61850_mms *) n->_vd;
 
     MmsConnection_destroy(mms->conn);
-
-    //ret = pool_destroy(&mms->pool);
-    //if (ret) { return ret; }
-
-    ret = queue_signalled_destroy(&mms->in.queue);
-    if (ret) { return ret; }
-
 
     free(mms->host);
     free(mms->domainID);

@@ -45,22 +45,21 @@ struct iec61850_mms {
     MmsConnection conn;     /**< Connection instance to MMS Server */
 
     struct {
-        bool enabled;
-        struct queue_signalled queue; // TODO: delete?   /**< lock-free multiple-producer, multiple-consumer (MPMC) queue */
-
-        struct list iecTypeList;
+        struct list iecTypeList;  /**< mappings of type struct iec61850_type_descriptor */
         struct list domain_ids;  /**< list of const char *, contains domainIDs for MMS values */
         struct list item_ids;  /**< list of const char *, contains itemIDs for MMS values */
-
 
         int totalsize;  /**< length of all lists: iecType, domainIDs, itemIDs */
     } in;
 
     struct {
-        bool enabled;
+        bool isTest;
+        int testvalue;
+        struct list iecTypeList;  /**< mappings of type struct iec61850_type_descriptor */
+        struct list domain_ids;  /**< list of const char *, contains domainIDs for MMS values */
+        struct list item_ids;  /**< list of const char *, contains itemIDs for MMS values */
 
-        struct list iecList;
-        int total_size;
+        int totalsize;  /**< length of all lists: iecType, domainIDs, itemIDs */
     } out;
 };
 
