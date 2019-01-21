@@ -49,6 +49,7 @@ protected:
 
 	struct vlist nodes;
 	struct vlist paths;
+	struct vlist interfaces;
 	struct vlist plugins;
 
 #ifdef WITH_API
@@ -105,6 +106,10 @@ public:
 	}
 
 	struct vlist * getPaths() {
+		return &paths;
+	}
+
+	struct vlist * getInterfaces() {
 		return &paths;
 	}
 

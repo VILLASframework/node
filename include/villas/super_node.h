@@ -28,7 +28,9 @@ struct lws;
 
 struct vlist * super_node_get_nodes(struct super_node *sn);
 
-struct vlist * super_node_get_nodes(struct super_node *sn);
+struct vlist * super_node_get_paths(struct super_node *sn);
+
+struct vlist * super_node_get_interfaces(struct super_node *sn);
 
 int super_node_get_cli_argc(struct super_node *sn);
 

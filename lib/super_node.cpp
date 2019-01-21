@@ -38,6 +38,7 @@
 #include <villas/log.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/kernel/rt.hpp>
+#include <villas/kernel/if.h>
 
 using namespace villas;
 using namespace villas::node;
@@ -58,6 +59,7 @@ SuperNode::SuperNode() :
 
 	vlist_init(&nodes);
 	vlist_init(&paths);
+	vlist_init(&interfaces);
 	vlist_init(&plugins);
 
 	char hname[128];
@@ -347,6 +349,17 @@ int SuperNode::start()
 			throw RuntimeError("Failed to start node-type: {}", node_type_name(n->_vt));
 	}
 
+#ifdef WITH_NETEM
+	logger->info("Starting interfaces");
+	for (size_t i = 0; i < vlist_length(&interfaces); i++) {
+		auto *i = (struct interface *) vlist_at(&interfaces, i);
+
+		ret = if_start(i);
+		if (ret)
+			throw RuntimeError("Failed to initialize network interface: {}", if_name(i));
+	}
+#endif /* WITH_NETEM */
+
 	logger->info("Starting nodes");
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct node *) vlist_at(&nodes, i);
@@ -440,6 +453,19 @@ int SuperNode::stop()
 		}
 	}
 
+#ifdef WITH_NETEM
+	logger->info("Stopping interfaces");
+	for (size_t j = 0; j < vlist_length(&interfaces); j++) {
+		struct interface *i = (struct interface *) vlist_at(&interfaces, j);
+
+		ret = if_stop(i);
+		if (ret)
+			throw RuntimeError("Failed to stop interface: {}", if_name(i));
+	}
+
+	vlist_destroy(&interfaces, (dtor_cb_t) if_destroy, false);
+#endif /* WITH_NETEM */
+
 #ifdef WITH_API
 	api.stop();
 #endif
@@ -466,9 +492,10 @@ SuperNode::~SuperNode()
 {
 	assert(state != STATE_STARTED);
 
-	vlist_destroy(&plugins, (dtor_cb_t) plugin_destroy, false);
-	vlist_destroy(&paths,   (dtor_cb_t) path_destroy, true);
-	vlist_destroy(&nodes,   (dtor_cb_t) node_destroy, true);
+	vlist_destroy(&plugins,    (dtor_cb_t) plugin_destroy, false);
+	vlist_destroy(&paths,      (dtor_cb_t) path_destroy, true);
+	vlist_destroy(&nodes,      (dtor_cb_t) node_destroy, true);
+	vlist_destroy(&interfaces, (dtor_cb_t) if_destroy, true);
 
 	if (json)
 		json_decref(json);
@@ -528,6 +555,20 @@ extern "C" {
 		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
 
 		return ssn->getNodes();
+	}
+
+	struct vlist * super_node_get_paths(struct super_node *sn)
+	{
+		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
+
+		return ssn->getPaths();
+	}
+
+	struct vlist * super_node_get_interfaces(struct super_node *sn)
+	{
+		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
+
+		return ssn->getInterfaces();
 	}
 
 	struct web * super_node_get_web(struct super_node *sn)
