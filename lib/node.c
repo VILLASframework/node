@@ -33,6 +33,13 @@
 #include <villas/signal.h>
 #include <villas/memory.h>
 
+#ifdef WITH_NETEM
+  #include <villas/kernel/if.h>
+  #include <villas/kernel/nl.h>
+  #include <villas/kernel/tc.h>
+  #include <villas/kernel/tc_netem.h>
+#endif /* WITH_NETEM */
+
 static int node_direction_init2(struct node_direction *nd, struct node *n)
 {
 #ifdef WITH_HOOKS

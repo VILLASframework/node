@@ -42,6 +42,11 @@
   #include <netinet/ether.h>
 #endif /* WITH_SOCKET_LAYER_ETH */
 
+#ifdef WITH_NETEM
+  #include <villas/kernel/if.h>
+  #include <villas/kernel/nl.h>
+#endif /* WITH_NETEM */
+
 /* Forward declartions */
 static struct plugin p;
 

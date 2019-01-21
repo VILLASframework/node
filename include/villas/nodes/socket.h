@@ -38,11 +38,6 @@
 #include <villas/io.h>
 
 #if defined(LIBNL3_ROUTE_FOUND) && defined(__linux__)
-  #include <villas/kernel/if.h>
-  #include <villas/kernel/nl.h>
-  #include <villas/kernel/tc.h>
-
-  #define WITH_NETEM
   #define WITH_SOCKET_LAYER_ETH
 
   #include <linux/if_packet.h>

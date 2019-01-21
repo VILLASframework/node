@@ -45,6 +45,10 @@
 #include <villas/format_type.h>
 #include <villas/super_node.h>
 
+#ifdef WITH_NETEM
+  #include <villas/kernel/if.h>
+#endif /* WITH_NETEM */
+
 static pthread_t re_pthread;
 
 /* Forward declartions */

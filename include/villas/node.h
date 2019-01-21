@@ -38,15 +38,19 @@
 #include <villas/queue.h>
 #include <villas/common.h>
 
+#if defined(LIBNL3_ROUTE_FOUND) && defined(__linux__)
+  #define WITH_NETEM
+#endif /* LIBNL3_ROUTE_FOUND */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Forward declarations */
-#ifdef __linux__
+#ifdef WITH_NETEM
   struct rtnl_qdisc;
   struct rtnl_cls;
-#endif /* __linux__ */
+#endif /* WITH_NETEM */
 
 struct node_direction {
 	int enabled;
@@ -82,12 +86,12 @@ struct node
 
 	struct vlist signals;	/**< Signal meta data for data which is __received__ by node_read(). */
 
-#ifdef __linux__
+#ifdef WITH_NETEM
 	int mark;			/**< Socket mark for netem, routing and filtering */
 
 	struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Network emulator queuing discipline */
 	struct rtnl_cls *tc_classifier;	/**< libnl3: Firewall mark classifier */
-#endif /* __linux__ */
+#endif /* WITH_NETEM */
 
 	struct node_type *_vt;	/**< Virtual functions (C++ OOP style) */
 	void *_vd;		/**< Virtual data (used by struct node::_vt functions) */
