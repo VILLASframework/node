@@ -59,7 +59,26 @@ struct rtp {
 	struct format_type *format;
 	struct io io;
 
-	bool enable_rtcp;
+	double rate;		/**< Sample rate of source */
+
+	struct {
+		int enabled;
+
+		enum {
+			RTCP_MODE_AIMD,
+		} mode;
+
+		enum {
+			RTCP_THROTTLE_HOOK_DECIMATE,
+			RTCP_THROTTLE_HOOK_LIMIT_RATE
+		} throttle_mode;
+
+		struct hook *throttle_hook;
+	} rtcp;
+
+	struct {
+
+	} aimd;			/** AIMD state */
 
 	struct queue_signalled recv_queue;
 };
