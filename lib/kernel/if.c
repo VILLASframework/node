@@ -168,6 +168,8 @@ struct interface * if_get_egress(struct sockaddr *sa, struct vlist *interfaces)
 	if (ret)
 		NULL;
 
+	vlist_push(interfaces, i);
+
 	return i;
 }
 
