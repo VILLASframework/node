@@ -35,7 +35,7 @@ using namespace villas::node::api;
 Api::Api(SuperNode *sn) :
 	state(STATE_INITIALIZED),
 	super_node(sn),
-	server(this),
+	server(this)
 {
 	logger = logging.get("api");
 }

@@ -65,7 +65,7 @@ SuperNode::SuperNode() :
 
 	name = hname;
 
-	logger = logging.get("super_node")
+	logger = logging.get("super_node");
 }
 
 int SuperNode::parseUri(const std::string &u)
