@@ -34,6 +34,7 @@ set(HOOK_SRC
     scale.c
     fix.c
     cast.c
+    average.c
 )
 
 if(WITH_IO)
