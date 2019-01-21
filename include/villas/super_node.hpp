@@ -109,7 +109,7 @@ public:
 	}
 
 	struct vlist * getInterfaces() {
-		return &paths;
+		return &interfaces;
 	}
 
 #ifdef WITH_API
