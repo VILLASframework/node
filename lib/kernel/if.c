@@ -42,13 +42,13 @@ int if_init(struct interface *i, struct rtnl_link *link)
 {
 	i->nl_link = link;
 
-	debug(LOG_IF | 3, "Created interface '%s'", rtnl_link_get_name(i->nl_link));
+	debug(LOG_IF | 3, "Created interface '%s'", if_name(i));
 
 	int  n = if_get_irqs(i);
 	if (n > 0)
-		debug(6, "Found %u IRQs for interface '%s'", n, rtnl_link_get_name(i->nl_link));
+		debug(6, "Found %u IRQs for interface '%s'", n, if_name(i));
 	else
-		warning("Did not found any interrupts for interface '%s'", rtnl_link_get_name(i->nl_link));
+		warning("Did not found any interrupts for interface '%s'", if_name(i));
 
 	vlist_init(&i->sockets);
 
@@ -122,7 +122,7 @@ int if_start(struct interface *i)
 
 int if_stop(struct interface *i)
 {
-	info("Stopping interface '%s'", rtnl_link_get_name(i->nl_link));
+	info("Stopping interface '%s'", if_name(i));
 
 	if_set_affinity(i, -1L);
 
@@ -133,6 +133,11 @@ int if_stop(struct interface *i)
 }
 
 int if_get_egress(struct sockaddr *sa, struct rtnl_link **link)
+const char * if_name(struct interface *i)
+{
+	return rtnl_link_get_name(i->nl_link);
+}
+
 {
 	int ifindex = -1;
 
@@ -173,7 +178,7 @@ int if_get_irqs(struct interface *i)
 	char dirname[NAME_MAX];
 	int irq, n = 0;
 
-	snprintf(dirname, sizeof(dirname), "/sys/class/net/%s/device/msi_irqs/", rtnl_link_get_name(i->nl_link));
+	snprintf(dirname, sizeof(dirname), "/sys/class/net/%s/device/msi_irqs/", if_name(i));
 	DIR *dir = opendir(dirname);
 	if (dir) {
 		memset(&i->irqs, 0, sizeof(char) * IF_IRQ_MAX);
@@ -205,10 +210,10 @@ int if_set_affinity(struct interface *i, int affinity)
 				error("Failed to set affinity for IRQ %u", i->irqs[n]);
 
 			fclose(file);
-			debug(LOG_IF | 5, "Set affinity of IRQ %u for interface '%s' to %#x", i->irqs[n], rtnl_link_get_name(i->nl_link), affinity);
+			debug(LOG_IF | 5, "Set affinity of IRQ %u for interface '%s' to %#x", i->irqs[n], if_name(i), affinity);
 		}
 		else
-			error("Failed to set affinity for interface '%s'", rtnl_link_get_name(i->nl_link));
+			error("Failed to set affinity for interface '%s'", if_name(i));
 	}
 
 	return 0;

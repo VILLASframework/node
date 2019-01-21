@@ -68,6 +68,8 @@ struct interface {
  */
 int if_init(struct interface * , struct rtnl_link *link);
 
+/** Get name of interface */
+const char * if_name(struct interface *);
 
 /** Destroy interface by freeing dynamically allocated memory.
  *
