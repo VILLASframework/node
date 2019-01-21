@@ -391,6 +391,8 @@ check:		if (optarg == endptr)
 	if (ret)
 		throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 
+	sn.startInterfaces();
+
 	/* Start threads */
 	Directions dirs = {
 		.send = Direction(node, &io, enable_send, limit_send),
@@ -429,6 +431,8 @@ check:		if (optarg == endptr)
 	ret = node_type_stop(node->_vt);
 	if (ret)
 		throw RuntimeError("Failed to stop node type {}: reason={}", node_type_name(node->_vt), ret);
+
+	sn.stopInterfaces();
 
 	ret = io_close(&io);
 	if (ret)
