@@ -183,8 +183,8 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_name_long = NULL;
 
 #ifdef WITH_NETEM
-	s->tc_qdisc = NULL;
-	s->tc_classifier = NULL;
+	n->tc_qdisc = NULL;
+	n->tc_classifier = NULL;
 #endif /* WITH_NETEM */
 
 	n->signals.state = STATE_DESTROYED;
@@ -262,9 +262,9 @@ int node_parse(struct node *n, json_t *json, const char *name)
 			jerror(&err, "Failed to parse setting 'netem' of node %s", node_name(n));
 
 		if (enabled)
-			tc_netem_parse(&s->tc_qdisc, json_netem);
+			tc_netem_parse(&n->tc_qdisc, json_netem);
 		else
-			s->tc_qdisc = NULL;
+			n->tc_qdisc = NULL;
 #endif /* WITH_NETEM */
 	}
 
@@ -635,11 +635,12 @@ char * node_name_long(struct node *n)
 		if (node_type(n)->print) {
 			struct node_type *vt = node_type(n);
 			char *name_long = vt->print(n);
-			strcatf(&n->_name_long, "%s: #in.signals=%zu, #in.hooks=%zu, in.vectorize=%d, #out.hooks=%zu, out.vectorize=%d, %s",
+			strcatf(&n->_name_long, "%s: #in.signals=%zu, #in.hooks=%zu, in.vectorize=%d, #out.hooks=%zu, out.vectorize=%d, out.netem=%s, %s",
 				node_name(n),
 				vlist_length(&n->signals),
 				vlist_length(&n->in.hooks), n->in.vectorize,
 				vlist_length(&n->out.hooks), n->out.vectorize,
+				n->tc_qdisc ? "yes" : "no",
 				name_long
 			);
 

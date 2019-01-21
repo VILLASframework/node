@@ -40,6 +40,10 @@
 #include <villas/kernel/rt.hpp>
 #include <villas/kernel/if.h>
 
+#ifdef WITH_NETEM
+  #include <villas/kernel/nl.h>
+#endif
+
 using namespace villas;
 using namespace villas::node;
 
