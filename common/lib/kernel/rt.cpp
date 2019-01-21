@@ -42,10 +42,10 @@ namespace villas {
 namespace kernel {
 namespace rt {
 
-static Logger logger = logging.get("kernel:rt");
-
 int init(int priority, int affinity)
 {
+	Logger logger = logging.get("kernel:rt");
+
 	logger->info("Initialize sub-system");
 
 #ifdef __linux__
@@ -96,6 +96,8 @@ int setAffinity(int affinity)
 	char isolcpus[255];
 	int is_isol, ret;
 
+	Logger logger = logging.get("kernel:rt");
+
 	/* Pin threads to CPUs by setting the affinity */
 	CpuSet cset_pin, cset_isol, cset_non_isol;
 
@@ -130,6 +132,8 @@ int setPriority(int priority)
 	struct sched_param param = {
 		.sched_priority = priority
 	};
+
+	Logger logger = logging.get("kernel:rt");
 
 	ret = sched_setscheduler(0, SCHED_FIFO, &param);
 	if (ret)

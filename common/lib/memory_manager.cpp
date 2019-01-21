@@ -190,6 +190,7 @@ MemoryTranslation&
 MemoryTranslation::operator+=(const MemoryTranslation& other)
 {
 	Logger logger = logging.get("MemoryTranslation");
+
 	// set level to debug to enable debug output
 	logger->set_level(spdlog::level::info);
 

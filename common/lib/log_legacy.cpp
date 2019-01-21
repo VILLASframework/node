@@ -29,8 +29,6 @@
 
 using namespace villas;
 
-Logger logger = logging.get("default");
-
 int log_get_width()
 {
 	return logging.getWidth();
@@ -45,6 +43,8 @@ void debug(long long, const char *fmt, ...)
 	va_start(ap, fmt);
 	vasprintf(&buf, fmt, ap);
 	va_end(ap);
+
+	Logger logger = logging.get("default");
 
 	logger->debug(buf);
 
@@ -61,6 +61,8 @@ void info(const char *fmt, ...)
 	vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
+	Logger logger = logging.get("default");
+
 	logger->info(buf);
 
 	free(buf);
@@ -75,6 +77,8 @@ void warning(const char *fmt, ...)
 	va_start(ap, fmt);
 	vasprintf(&buf, fmt, ap);
 	va_end(ap);
+
+	Logger logger = logging.get("default");
 
 	logger->warn(buf);
 
@@ -91,6 +95,8 @@ void stats(const char *fmt, ...)
 	vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
+	Logger logger = logging.get("default");
+
 	logger->info(buf);
 
 	free(buf);
@@ -105,6 +111,8 @@ void error(const char *fmt, ...)
 	va_start(ap, fmt);
 	vasprintf(&buf, fmt, ap);
 	va_end(ap);
+
+	Logger logger = logging.get("default");
 
 	logger->error(buf);
 
@@ -124,6 +132,8 @@ void serror(const char *fmt, ...)
 	vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
+	Logger logger = logging.get("default");
+
 	logger->error(buf);
 
 	free(buf);
@@ -141,6 +151,8 @@ void jerror(json_error_t *err, const char *fmt, ...)
 	va_start(ap, fmt);
 	vasprintf(&buf, fmt, ap);
 	va_end(ap);
+
+	Logger logger = logging.get("default");
 
 	logger->error("{}:", buf);
 	logger->error("   {} in {}:{}:{}", err->text, err->source, err->line, err->column);

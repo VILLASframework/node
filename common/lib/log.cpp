@@ -37,7 +37,9 @@ Log villas::logging;
 
 Log::Log(Level lvl) :
 	level(lvl)
-{ }
+{
+	logger = logging.get("log");
+}
 
 void Log::init()
 {
