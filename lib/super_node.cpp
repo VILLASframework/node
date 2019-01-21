@@ -55,12 +55,11 @@ SuperNode::SuperNode() :
 {
 	nodes.state = STATE_DESTROYED;
 	paths.state = STATE_DESTROYED;
-	plugins.state = STATE_DESTROYED;
+	interfaces.state = STATE_DESTROYED;
 
 	vlist_init(&nodes);
 	vlist_init(&paths);
 	vlist_init(&interfaces);
-	vlist_init(&plugins);
 
 #ifdef WITH_NETEM
 	nl_init(); /* Fill link cache */
@@ -170,16 +169,14 @@ int SuperNode::parseJson(json_t *j)
 
 	json_t *json_nodes = nullptr;
 	json_t *json_paths = nullptr;
-	json_t *json_plugins = nullptr;
 	json_t *json_logging = nullptr;
 	json_t *json_web = nullptr;
 
 	json_error_t err;
 
-	ret = json_unpack_ex(j, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: F, s?: s }",
+	ret = json_unpack_ex(j, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: F, s?: s }",
 		"http", &json_web,
 		"logging", &json_logging,
-		"plugins", &json_plugins,
 		"nodes", &json_nodes,
 		"paths", &json_paths,
 		"hugepages", &hugepages,
@@ -201,28 +198,6 @@ int SuperNode::parseJson(json_t *j)
 
 	if (json_logging)
 		logging.parse(json_logging);
-
-	/* Parse plugins */
-	if (json_plugins) {
-		if (!json_is_array(json_plugins))
-			throw ConfigError(json_plugins, "node-config-plugins", "Setting 'plugins' must be a list of strings");
-
-		size_t i;
-		json_t *json_plugin;
-		json_array_foreach(json_plugins, i, json_plugin) {
-			auto *p = (plugin *) alloc(sizeof(plugin));
-
-			ret = plugin_init(p);
-			if (ret)
-				throw RuntimeError("Failed to initialize plugin");
-
-			ret = plugin_parse(p, json_plugin);
-			if (ret)
-				throw RuntimeError("Failed to parse plugin");
-
-			vlist_push(&plugins, p);
-		}
-	}
 
 	/* Parse nodes */
 	if (json_nodes) {
@@ -496,7 +471,6 @@ SuperNode::~SuperNode()
 {
 	assert(state != STATE_STARTED);
 
-	vlist_destroy(&plugins,    (dtor_cb_t) plugin_destroy, false);
 	vlist_destroy(&paths,      (dtor_cb_t) path_destroy, true);
 	vlist_destroy(&nodes,      (dtor_cb_t) node_destroy, true);
 	vlist_destroy(&interfaces, (dtor_cb_t) if_destroy, true);

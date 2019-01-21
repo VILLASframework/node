@@ -30,64 +30,6 @@ struct vlist plugins = { .state = STATE_DESTROYED };
 
 LIST_INIT_STATIC(&plugins)
 
-int plugin_init(struct plugin *p)
-{
-	assert(p->state == STATE_DESTROYED);
-
-	p->state = STATE_INITIALIZED;
-
-	return 0;
-}
-
-int plugin_parse(struct plugin *p, json_t *cfg)
-{
-	const char *path;
-
-	path = json_string_value(cfg);
-	if (!path)
-		return -1;
-
-	p->path = strdup(path);
-
-	return 0;
-}
-
-int plugin_load(struct plugin *p)
-{
-	p->handle = dlopen(p->path, RTLD_NOW);
-	if (!p->path)
-		return -1;
-
-	p->state = STATE_LOADED;
-
-	return 0;
-}
-
-int plugin_unload(struct plugin *p)
-{
-	int ret;
-
-	assert(p->state == STATE_LOADED);
-
-	ret = dlclose(p->handle);
-	if (ret)
-		return -1;
-
-	p->state = STATE_UNLOADED;
-
-	return 0;
-}
-
-int plugin_destroy(struct plugin *p)
-{
-	assert(p->state != STATE_DESTROYED && p->state != STATE_LOADED);
-
-	if (p->path)
-		free(p->path);
-
-	return 0;
-}
-
 struct plugin * plugin_lookup(enum plugin_type type, const char *name)
 {
 	for (size_t i = 0; i < vlist_length(&plugins); i++) {

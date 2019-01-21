@@ -50,7 +50,6 @@ protected:
 	struct vlist nodes;
 	struct vlist paths;
 	struct vlist interfaces;
-	struct vlist plugins;
 
 #ifdef WITH_API
 	Api api;

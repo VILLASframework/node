@@ -69,14 +69,8 @@ enum plugin_type {
 struct plugin {
 	const char *name;
 	const char *description;
-	void *handle;
-	char *path;
 
 	enum plugin_type type;
-	enum state state;
-
-	int (*load)(struct plugin *p);
-	int (*unload)(struct plugin *p);
 
 	union {
 		struct format_type	format;
@@ -91,16 +85,6 @@ struct plugin {
 
 #define plugin_name(vt) plugin(vt)->name
 #define plugin_description(vt) plugin(vt)->description
-
-int plugin_init(struct plugin *p);
-
-int plugin_destroy(struct plugin *p);
-
-int plugin_parse(struct plugin *p, json_t *cfg);
-
-int plugin_load(struct plugin *p);
-
-int plugin_unload(struct plugin *p);
 
 void plugin_dump(enum plugin_type type);
 
