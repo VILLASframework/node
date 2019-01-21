@@ -31,6 +31,7 @@ class CapabilitiesAction : public Action {
 
 public:
 	using Action::Action;
+
 	virtual int execute(json_t *args, json_t **resp)
 	{
 		json_t *json_hooks = json_array();

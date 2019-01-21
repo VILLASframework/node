@@ -33,6 +33,7 @@ class ShutdownAction : public Action {
 
 public:
 	using Action::Action;
+
 	virtual int execute(json_t *args, json_t **resp)
 	{
 		killme(SIGTERM);

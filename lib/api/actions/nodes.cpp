@@ -37,6 +37,7 @@ class NodesAction : public Action {
 
 public:
 	using Action::Action;
+
 	virtual int execute(json_t *args, json_t **resp)
 	{
 		json_t *json_nodes = json_array();

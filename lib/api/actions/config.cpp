@@ -32,6 +32,7 @@ class ConfigAction : public Action {
 
 public:
 	using Action::Action;
+
 	virtual int execute(json_t *args, json_t **resp)
 	{
 		json_t *cfg = session->getSuperNode()->getConfig();

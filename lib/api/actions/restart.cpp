@@ -46,6 +46,7 @@ protected:
 		const char *argv[] = { "villas-node", cfg, nullptr };
 
 		logger->info("Restart instance: config={}", cfg);
+
 		ret = execvp("/proc/self/exe", (char **) argv);
 		if (ret)
 			throw SystemError("Failed to restart");
@@ -53,6 +54,7 @@ protected:
 
 public:
 	using Action::Action;
+
 	virtual int execute(json_t *args, json_t **resp)
 	{
 		int ret;
