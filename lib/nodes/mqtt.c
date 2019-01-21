@@ -406,18 +406,19 @@ int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 			return -abs(ret);
 		}
 	}
-	else {
-        	warning("MQTT: no publish for node %s possible because no publish topic is given", node_name(n));
-	}
+	else
+		warning("MQTT: no publish for node %s possible because no publish topic is given", node_name(n));
 
 	return cnt;
 }
 
-int mqtt_fd(struct node *n)
+int mqtt_poll_fds(struct node *n, int fds[])
 {
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
-	return queue_signalled_fd(&m->queue);
+	fds[0] = queue_signalled_fd(&m->queue);
+
+	return 1;
 }
 
 static struct plugin p = {
@@ -437,7 +438,7 @@ static struct plugin p = {
 		.stop		= mqtt_stop,
 		.read		= mqtt_read,
 		.write		= mqtt_write,
-		.fd		= mqtt_fd
+		.poll_fds	= mqtt_poll_fds
 	}
 };
 

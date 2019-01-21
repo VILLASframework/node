@@ -365,12 +365,17 @@ int path_init_poll(struct path *p)
 	for (int i = 0; i < vlist_length(&p->sources); i++) {
 		struct path_source *ps = (struct path_source *) vlist_at(&p->sources, i);
 
-		/* This slot is only used if it is not masked */
-		p->reader.pfds[i].events = POLLIN;
-		p->reader.pfds[i].fd = node_fd(ps->node);
+		int fds[16];
+		int num_fds = node_poll_fds(ps->node, fds);
 
-		if (p->reader.pfds[i].fd < 0)
-			error("Failed to get file descriptor for node %s", node_name(ps->node));
+		for (int i = 0; i < num_fds; i++) {
+			if (fds[i] < 0)
+				error("Failed to get file descriptor for node %s", node_name(ps->node));
+
+			/* This slot is only used if it is not masked */
+			p->reader.pfds[i].events = POLLIN;
+			p->reader.pfds[i].fd = fds[i];
+		}
 	}
 
 	/* We use the last slot for the timeout timer. */
@@ -641,7 +646,10 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 	if (p->poll == -1) {
 		struct path_source *ps = (struct path_source *) vlist_at(&p->sources, 0);
 
-		p->poll = (p->rate > 0 || vlist_length(&p->sources) > 1) && node_fd(ps->node) != -1;
+		int fds[16];
+		int num_fds = node_poll_fds(ps->node, fds);
+
+		p->poll = (p->rate > 0 || vlist_length(&p->sources) > 1) && num_fds > 0;
 	}
 
 	ret = vlist_destroy(&sources, NULL, false);

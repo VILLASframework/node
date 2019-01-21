@@ -289,11 +289,13 @@ char * signal_generator_print(struct node *n)
 	return buf;
 }
 
-int signal_generator_fd(struct node *n)
+int signal_generator_poll_fds(struct node *n, int fds[])
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
-	return task_fd(&s->task);
+	fds[0] = task_fd(&s->task);
+
+	return 1;
 }
 
 static struct plugin p = {
@@ -309,7 +311,7 @@ static struct plugin p = {
 		.start		= signal_generator_start,
 		.stop		= signal_generator_stop,
 		.read		= signal_generator_read,
-		.fd		= signal_generator_fd
+		.poll_fds	= signal_generator_poll_fds
 	}
 };
 

@@ -264,7 +264,7 @@ int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 	return cnt;
 }
 
-int nanomsg_fd(struct node *n)
+int nanomsg_poll_fds(struct node *n, int fds[])
 {
 	int ret;
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
@@ -276,7 +276,9 @@ int nanomsg_fd(struct node *n)
 	if (ret)
 		return ret;
 
-	return fd;
+	fds[0] = fd;
+
+	return 1;
 }
 
 static struct plugin p = {
@@ -294,7 +296,7 @@ static struct plugin p = {
 		.stop		= nanomsg_stop,
 		.read		= nanomsg_read,
 		.write		= nanomsg_write,
-		.fd		= nanomsg_fd
+		.poll_fds	= nanomsg_poll_fds
 	}
 };
 

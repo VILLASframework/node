@@ -197,11 +197,13 @@ int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigne
 	return 1;
 }
 
-int stats_node_fd(struct node *n)
+int stats_node_poll_fds(struct node *n, int fds[])
 {
 	struct stats_node *s = (struct stats_node *) n->_vd;
 
-	return task_fd(&s->task);
+	fds[0] = task_fd(&s->task);
+
+	return 0;
 }
 
 static struct plugin p = {
@@ -219,7 +221,7 @@ static struct plugin p = {
 		.start		= stats_node_start,
 		.stop		= stats_node_stop,
 		.read		= stats_node_read,
-		.fd		= stats_node_fd
+		.poll_fds	= stats_node_poll_fds,
 	}
 };
 

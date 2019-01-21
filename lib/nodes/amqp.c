@@ -356,13 +356,15 @@ int amqp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return cnt;
 }
 
-int amqp_fd(struct node *n)
+int amqp_poll_fds(struct node *n, int fds[])
 {
 	struct amqp *a = n->_vd;
 
 	amqp_socket_t *sock = amqp_get_socket(a->consumer);
 
-	return amqp_socket_get_sockfd(sock);
+	fds[0] = amqp_socket_get_sockfd(sock);
+
+	return 1;
 }
 
 int amqp_destroy(struct node *n)
@@ -404,7 +406,7 @@ static struct plugin p = {
 		.read		= amqp_read,
 		.write		= amqp_write,
 		.destroy	= amqp_destroy,
-		.fd		= amqp_fd
+		.poll_fds	= amqp_poll_fds
 	}
 };
 

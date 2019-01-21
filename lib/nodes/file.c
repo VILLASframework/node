@@ -421,15 +421,19 @@ int file_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return cnt;
 }
 
-int file_fd(struct node *n)
+int file_poll_fds(struct node *n, int fds[])
 {
 	struct file *f = (struct file *) n->_vd;
 
-	if (f->rate)
-		return task_fd(&f->task);
+	if (f->rate) {
+		fds[0] = task_fd(&f->task);
+		return 1;
+	}
 	else {
-		if (f->epoch_mode == FILE_EPOCH_ORIGINAL)
-			return io_fd(&f->io);
+		if (f->epoch_mode == FILE_EPOCH_ORIGINAL) {
+			fds[0] = io_fd(&f->io);
+			return 1;
+		}
 		else
 			return -1; /** @todo not supported yet */
 	}
@@ -449,7 +453,7 @@ static struct plugin p = {
 		.restart	= file_restart,
 		.read		= file_read,
 		.write		= file_write,
-		.fd		= file_fd
+		.poll_fds	= file_poll_fds
 	}
 };
 

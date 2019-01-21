@@ -978,10 +978,13 @@ void comedi_dump_cmd(comedi_cmd *cmd, int debug_level)
 	debug(LOG_COMEDI | debug_level, "stop:       %-8s %u", src, cmd->stop_arg);
 }
 
-int comedi_fd(struct node *n)
+int comedi_poll_fds(struct node *n, int fds[])
 {
 	struct comedi *c = (struct comedi *) n->_vd;
-	return comedi_fileno(c->dev);
+
+	fds[0] = comedi_fileno(c->dev);
+
+	return 0;
 }
 
 static struct plugin p = {
@@ -997,7 +1000,7 @@ static struct plugin p = {
 		.stop		= comedi_stop,
 		.read		= comedi_read,
 		.write		= comedi_write,
-	    .fd			= comedi_fd
+		.poll_fds	= comedi_poll_fds
 	}
 };
 

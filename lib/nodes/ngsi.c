@@ -572,11 +572,13 @@ int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return ret ? 0 : cnt;
 }
 
-int ngsi_fd(struct node *n)
+int ngsi_poll_fds(struct node *n)
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 
-	return task_fd(&i->task);
+	fds[0] = task_fd(&i->task);
+
+	return 1;
 }
 
 static struct plugin p = {
@@ -594,7 +596,7 @@ static struct plugin p = {
 		.stop		= ngsi_stop,
 		.read		= ngsi_read,
 		.write		= ngsi_write,
-		.fd		= ngsi_fd
+		.poll_fds	= ngsi_poll_fds
 	}
 };
 

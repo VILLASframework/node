@@ -844,11 +844,13 @@ int socket_compare_addr(struct sockaddr *x, struct sockaddr *y)
 #undef CMP
 }
 
-int socket_fd(struct node *n)
+int socket_fds(struct node *n, int fds[])
 {
 	struct socket *s = (struct socket *) n->_vd;
 
-	return s->sd;
+	fds[0] = s->sd;
+
+	return 1;
 }
 
 static struct plugin p = {
@@ -873,7 +875,7 @@ static struct plugin p = {
 		.stop		= socket_stop,
 		.read		= socket_read,
 		.write		= socket_write,
-		.fd		= socket_fd
+		.poll_fds	= socket_fds,
 	}
 };
 

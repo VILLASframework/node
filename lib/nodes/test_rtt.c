@@ -380,11 +380,13 @@ int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 	return i;
 }
 
-int test_rtt_fd(struct node *n)
+int test_rtt_poll_fds(struct node *n, int fds[])
 {
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
-	return task_fd(&t->task);
+	fds[0] = task_fd(&t->task);
+
+	return 1;
 }
 
 static struct plugin p = {
@@ -402,7 +404,7 @@ static struct plugin p = {
 		.stop		= test_rtt_stop,
 		.read		= test_rtt_read,
 		.write		= test_rtt_write,
-		.fd		= test_rtt_fd
+		.poll_fds	= test_rtt_poll_fds
 	}
 };
 

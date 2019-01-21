@@ -525,7 +525,7 @@ fail:
 	return ret;
 }
 
-int zeromq_fd(struct node *n)
+int zeromq_poll_fds(struct node *n, int fds[])
 {
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
@@ -537,7 +537,9 @@ int zeromq_fd(struct node *n)
 	if (ret)
 		return ret;
 
-	return fd;
+	fds[0] = fd;
+
+	return 1;
 }
 
 static struct plugin p = {
@@ -557,7 +559,7 @@ static struct plugin p = {
 		.destroy	= zeromq_destroy,
 		.read		= zeromq_read,
 		.write		= zeromq_write,
-		.fd		= zeromq_fd
+		.poll_fds	= zeromq_poll_fds
 	}
 };
 

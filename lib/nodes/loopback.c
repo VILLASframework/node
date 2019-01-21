@@ -136,11 +136,13 @@ char * loopback_print(struct node *n)
 	return buf;
 }
 
-int loopback_fd(struct node *n)
+int loopback_poll_fds(struct node *n, int fds[])
 {
 	struct loopback *l = (struct loopback *) n->_vd;
 
-	return queue_signalled_fd(&l->queue);
+	fds[0] = queue_signalled_fd(&l->queue);
+
+	return 1;
 }
 
 static struct plugin p = {
@@ -149,15 +151,15 @@ static struct plugin p = {
 	.type = PLUGIN_TYPE_NODE,
 	.node = {
 		.vectorize = 0,
-		.flags	= NODE_TYPE_PROVIDES_SIGNALS,
-		.size	= sizeof(struct loopback),
-		.parse	= loopback_parse,
-		.print	= loopback_print,
-		.start	= loopback_start,
-		.stop	= loopback_stop,
-		.read	= loopback_read,
-		.write	= loopback_write,
-		.fd	= loopback_fd
+		.flags		= NODE_TYPE_PROVIDES_SIGNALS,
+		.size		= sizeof(struct loopback),
+		.parse		= loopback_parse,
+		.print		= loopback_print,
+		.start		= loopback_start,
+		.stop		= loopback_stop,
+		.read		= loopback_read,
+		.write		= loopback_write,
+		.poll_fds	= loopback_poll_fds
 	}
 };
 

@@ -609,7 +609,10 @@ int node_reverse(struct node *n)
 	return node_type(n)->reverse ? node_type(n)->reverse(n) : -1;
 }
 
-int node_fd(struct node *n)
+int node_poll_fds(struct node *n, int fds[])
+{
+	return node_type(n)->poll_fds ? node_type(n)->poll_fds(n, fds) : -1;
+}
 {
 	return node_type(n)->fd ? node_type(n)->fd(n) : -1;
 }

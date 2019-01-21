@@ -154,11 +154,13 @@ int cbuilder_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 	return 1;
 }
 
-int cbuilder_fd(struct node *n)
+int cbuilder_poll_fds(struct node *n, int fds[])
 {
 	struct cbuilder *cb = (struct cbuilder *) n->_vd;
 
-	return cb->eventfd;
+	fds[0] = cb->eventfd;
+
+	return 1;
 }
 
 static struct plugin p = {
@@ -173,7 +175,7 @@ static struct plugin p = {
 		.stop		= cbuilder_stop,
 		.read		= cbuilder_read,
 		.write		= cbuilder_write,
-		.fd		= cbuilder_fd
+		.poll_fds	= cbuilder_poll_fds
 	}
 };
 

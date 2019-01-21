@@ -207,13 +207,13 @@ struct node_type {
 	 */
 	int (*reverse)(struct node *n);
 
-	/** Return a file descriptor which can be used by poll / select to detect the availability of new data.
+	/** Get list of file descriptors which can be used by poll/select to detect the availability of new data.
 	 *
 	 * This callback is optional.
 	 *
-	 * @return This file descriptor.
+	 * @return The number of file descriptors which have been put into \p fds.
 	 */
-	int (*fd)(struct node *n);
+	int (*poll_fds)(struct node *n, int fds[]);
 
 	/** Return a memory allocator which should be used for sample pools passed to this node. */
 	struct memory_type * (*memory_type)(struct node *n, struct memory_type *parent);

@@ -416,11 +416,13 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsig
 	return cnt;
 }
 
-int iec61850_sv_fd(struct node *n)
+int iec61850_sv_poll_fds(struct node *n, int fds[])
 {
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
-	return queue_signalled_fd(&i->in.queue);
+	fds[0] = queue_signalled_fd(&i->in.queue);
+
+	return 1;
 }
 
 static struct plugin p = {
@@ -439,7 +441,7 @@ static struct plugin p = {
 		.destroy	= iec61850_sv_destroy,
 		.read		= iec61850_sv_read,
 		.write		= iec61850_sv_write,
-		.fd		= iec61850_sv_fd
+		.poll_fds	= iec61850_sv_poll_fds
 	}
 };
 

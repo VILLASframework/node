@@ -602,11 +602,13 @@ char * websocket_print(struct node *n)
 	return buf;
 }
 
-int websocket_fd(struct node *n)
+int websocket_poll_fds(struct node *n, int fds[])
 {
 	struct websocket *w = (struct websocket *) n->_vd;
 
-	return queue_signalled_fd(&w->queue);
+	fds[0] = queue_signalled_fd(&w->queue);
+
+	return 1;
 }
 
 static struct plugin p = {
@@ -624,7 +626,7 @@ static struct plugin p = {
 		.write		= websocket_write,
 		.print		= websocket_print,
 		.parse		= websocket_parse,
-		.fd		= websocket_fd
+		.poll_fds	= websocket_poll_fds
 	}
 };
 

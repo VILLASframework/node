@@ -177,7 +177,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 
 int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
-int node_fd(struct node *n);
+int node_poll_fds(struct node *n, int fds[]);
 
 struct node_type * node_type(struct node *n);
 
