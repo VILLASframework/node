@@ -174,16 +174,12 @@ int main(int argc, char *argv[])
 	if (ret)
 		throw RuntimeError("Failed to verify configuration");
 
-	ret = sn.start();
-	if (ret)
-		throw RuntimeError("Failed to start super node");
+	sn.start();
 
 	while (!stop)
 		sn.run();
 
-	ret = sn.stop();
-	if (ret)
-		throw RuntimeError("Failed to stop super node");
+	sn.stop();
 
 	logger->info(CLR_GRN("Goodbye!"));
 
