@@ -331,11 +331,11 @@ int SuperNode::start()
 #ifdef WITH_NETEM
 	logger->info("Starting interfaces");
 	for (size_t i = 0; i < vlist_length(&interfaces); i++) {
-		auto *i = (struct interface *) vlist_at(&interfaces, i);
+		auto *j = (struct interface *) vlist_at(&interfaces, i);
 
-		ret = if_start(i);
+		ret = if_start(j);
 		if (ret)
-			throw RuntimeError("Failed to initialize network interface: {}", if_name(i));
+			throw RuntimeError("Failed to initialize network interface: {}", if_name(j));
 	}
 #endif /* WITH_NETEM */
 
