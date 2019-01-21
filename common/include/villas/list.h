@@ -62,11 +62,11 @@ typedef int (*cmp_cb_t)(const void *, const void *);
 
 /* The list data structure. */
 struct vlist {
+	enum state state;	/**< The state of this list. */
 	void **array;		/**< Array of pointers to list elements */
 	size_t capacity;	/**< Size of list::array in elements */
 	size_t length;		/**< Number of elements of list::array which are in use */
 	pthread_mutex_t lock;	/**< A mutex to allow thread-safe accesses */
-	enum state state;	/**< The state of this list. */
 };
 
 /** Initialize a list.
