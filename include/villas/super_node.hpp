@@ -87,9 +87,19 @@ public:
 	int check();
 
 	/** Initialize after parsing the configuration file. */
-	int start();
-	int stop();
+	void start();
+	void stop();
 	void run();
+
+	void startPaths();
+	void startNodes();
+	void startNodeTypes();
+	void startInterfaces();
+
+	void stopPaths();
+	void stopNodes();
+	void stopNodeTypes();
+	void stopInterfaces();
 
 	/** Run periodic hooks of this super node. */
 	int periodic();

@@ -302,22 +302,9 @@ int SuperNode::check()
 	return 0;
 }
 
-int SuperNode::start()
+void SuperNode::startNodeTypes()
 {
 	int ret;
-
-	assert(state == STATE_CHECKED);
-
-	memory_init(hugepages);
-	kernel::rt::init(priority, affinity);
-
-#ifdef WITH_API
-	api.start();
-#endif
-
-#ifdef WITH_WEB
-	web.start();
-#endif
 
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct node *) vlist_at(&nodes, i);
@@ -326,8 +313,13 @@ int SuperNode::start()
 		if (ret)
 			throw RuntimeError("Failed to start node-type: {}", node_type_name(n->_vt));
 	}
+}
 
+void SuperNode::startInterfaces()
+{
 #ifdef WITH_NETEM
+	int ret;
+
 	for (size_t i = 0; i < vlist_length(&interfaces); i++) {
 		auto *j = (struct interface *) vlist_at(&interfaces, i);
 
@@ -336,6 +328,11 @@ int SuperNode::start()
 			throw RuntimeError("Failed to initialize network interface: {}", if_name(j));
 	}
 #endif /* WITH_NETEM */
+}
+
+void SuperNode::startNodes()
+{
+	int ret;
 
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct node *) vlist_at(&nodes, i);
@@ -353,6 +350,11 @@ int SuperNode::start()
 		else
 			logger->warn("No path is using the node {}. Skipping...", node_name(n));
 	}
+}
+
+void SuperNode::startPaths()
+{
+	int ret;
 
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
 		auto *p = (struct path *) vlist_at(&paths, i);
@@ -369,8 +371,31 @@ int SuperNode::start()
 		else
 			logger->warn("Path {} is disabled. Skipping...", path_name(p));
 	}
+}
+
+void SuperNode::start()
+{
+	assert(state == STATE_CHECKED);
+
+	memory_init(hugepages);
+	kernel::rt::init(priority, affinity);
+
+#ifdef WITH_API
+	api.start();
+#endif
+
+#ifdef WITH_WEB
+	web.start();
+#endif
+
+	startNodeTypes();
+	startInterfaces();
+	startNodes();
+	startPaths();
 
 #ifdef WITH_HOOKS
+	int ret;
+
 	if (stats > 0) {
 		stats_print_header(STATS_FORMAT_HUMAN);
 
@@ -381,11 +406,67 @@ int SuperNode::start()
 #endif /* WITH_HOOKS */
 
 	state = STATE_STARTED;
-
-	return 0;
 }
 
-int SuperNode::stop()
+void SuperNode::stopPaths()
+{
+	int ret;
+
+	for (size_t i = 0; i < vlist_length(&paths); i++) {
+		auto *p = (struct path *) vlist_at(&paths, i);
+
+		ret = path_stop(p);
+		if (ret)
+			throw RuntimeError("Failed to stop path: {}", path_name(p));
+	}
+}
+
+void SuperNode::stopNodes()
+{
+	int ret;
+
+	for (size_t i = 0; i < vlist_length(&nodes); i++) {
+		auto *n = (struct node *) vlist_at(&nodes, i);
+
+		ret = node_stop(n);
+		if (ret)
+			throw RuntimeError("Failed to stop node: {}", node_name(n));
+	}
+}
+
+void SuperNode::stopNodeTypes()
+{
+	int ret;
+
+	for (size_t i = 0; i < vlist_length(&plugins); i++) {
+		auto *p = (struct plugin *) vlist_at(&plugins, i);
+
+		if (p->type == PLUGIN_TYPE_NODE) {
+			ret = node_type_stop(&p->node);
+			if (ret)
+				throw RuntimeError("Failed to stop node-type: {}", node_type_name(&p->node));
+		}
+	}
+}
+
+void SuperNode::stopInterfaces()
+{
+#ifdef WITH_NETEM
+	int ret;
+
+	for (size_t j = 0; j < vlist_length(&interfaces); j++) {
+		struct interface *i = (struct interface *) vlist_at(&interfaces, j);
+
+		ret = if_stop(i);
+		if (ret)
+			throw RuntimeError("Failed to stop interface: {}", if_name(i));
+	}
+
+	vlist_destroy(&interfaces, (dtor_cb_t) if_destroy, false);
+#endif /* WITH_NETEM */
+}
+
+void SuperNode::stop()
 {
 	int ret;
 
@@ -399,43 +480,10 @@ int SuperNode::stop()
 	}
 #endif /* WITH_HOOKS */
 
-	for (size_t i = 0; i < vlist_length(&paths); i++) {
-		auto *p = (struct path *) vlist_at(&paths, i);
-
-		ret = path_stop(p);
-		if (ret)
-			throw RuntimeError("Failed to stop path: {}", path_name(p));
-	}
-
-	for (size_t i = 0; i < vlist_length(&nodes); i++) {
-		auto *n = (struct node *) vlist_at(&nodes, i);
-
-		ret = node_stop(n);
-		if (ret)
-			throw RuntimeError("Failed to stop node: {}", node_name(n));
-	}
-
-	for (size_t i = 0; i < vlist_length(&plugins); i++) {
-		auto *p = (struct plugin *) vlist_at(&plugins, i);
-
-		if (p->type == PLUGIN_TYPE_NODE) {
-			ret = node_type_stop(&p->node);
-			if (ret)
-				throw RuntimeError("Failed to stop node-type: {}", node_type_name(&p->node));
-		}
-	}
-
-#ifdef WITH_NETEM
-	for (size_t j = 0; j < vlist_length(&interfaces); j++) {
-		struct interface *i = (struct interface *) vlist_at(&interfaces, j);
-
-		ret = if_stop(i);
-		if (ret)
-			throw RuntimeError("Failed to stop interface: {}", if_name(i));
-	}
-
-	vlist_destroy(&interfaces, (dtor_cb_t) if_destroy, false);
-#endif /* WITH_NETEM */
+	stopPaths();
+	stopNodes();
+	stopNodeTypes();
+	stopInterfaces();
 
 #ifdef WITH_API
 	api.stop();
@@ -445,8 +493,6 @@ int SuperNode::stop()
 #endif
 
 	state = STATE_STOPPED;
-
-	return 0;
 }
 
 void SuperNode::run()
