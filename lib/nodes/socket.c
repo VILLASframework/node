@@ -36,92 +36,33 @@
 #include <villas/queue.h>
 #include <villas/plugin.h>
 #include <villas/compat.h>
+#include <villas/super_node.h>
 
 #ifdef WITH_SOCKET_LAYER_ETH
   #include <netinet/ether.h>
 #endif /* WITH_SOCKET_LAYER_ETH */
 
-#ifdef WITH_NETEM
-  #include <villas/kernel/if.h>
-  #include <villas/kernel/nl.h>
-  #include <villas/kernel/tc_netem.h>
-#endif /* WITH_NETEM */
-
 /* Forward declartions */
 static struct plugin p;
-
-/* Private static storage */
-struct vlist interfaces = { .state = STATE_DESTROYED };
 
 int socket_type_start(struct super_node *sn)
 {
 #ifdef WITH_NETEM
-	int ret;
-
-	nl_init(); /* Fill link cache */
-	vlist_init(&interfaces);
+	struct vlist *interfaces = super_node_get_interfaces(sn);
 
 	/* Gather list of used network interfaces */
 	for (size_t i = 0; i < vlist_length(&p.node.instances); i++) {
 		struct node *n = (struct node *) vlist_at(&p.node.instances, i);
 		struct socket *s = (struct socket *) n->_vd;
-		struct rtnl_link *link;
 
-		if (s->layer != SOCKET_LAYER_ETH &&
-		    s->layer != SOCKET_LAYER_IP &&
-		    s->layer != SOCKET_LAYER_UDP)
-			    continue;
-
-		/* Determine outgoing interface */
-		ret = if_get_egress((struct sockaddr *) &s->remote, &link);
-		if (ret) {
-			char *buf = socket_print_addr((struct sockaddr *) &s->remote);
-			error("Failed to get interface for socket address '%s'", buf);
-			free(buf);
-		}
-
-		/* Search of existing interface with correct ifindex */
-		struct interface *i;
-
-		for (size_t k = 0; k < vlist_length(&interfaces); k++) {
-			i = (struct interface *) vlist_at(&interfaces, k);
-
-			if (rtnl_link_get_ifindex(i->nl_link) == rtnl_link_get_ifindex(link))
-				goto found;
-		}
-
-		/* If not found, create a new interface */
-		i = alloc(sizeof(struct interface));
-
-		ret = if_init(i, link);
-		if (ret)
+		if (s->layer == SOCKET_LAYER_UNIX)
 			continue;
 
-		vlist_push(&interfaces, i);
+		/* Determine outgoing interface */
+		struct interface *i = if_get_egress((struct sockaddr *) &s->out.saddr, interfaces);
 
-found:		vlist_push(&i->sockets, s);
+		vlist_push(&i->nodes, n);
 	}
-
-	for (size_t j = 0; j < vlist_length(&interfaces); j++) {
-		struct interface *i = (struct interface *) vlist_at(&interfaces, j);
-
-		if_start(i);
-	}
-#endif /* WITH_NETEM */
-
-	return 0;
-}
-
-int socket_type_stop()
-{
-#ifdef WITH_NETEM
-	for (size_t j = 0; j < vlist_length(&interfaces); j++) {
-		struct interface *i = (struct interface *) vlist_at(&interfaces, j);
-
-		if_stop(i);
-	}
-
-	vlist_destroy(&interfaces, (dtor_cb_t) if_destroy, false);
 #endif /* WITH_NETEM */
 
 	return 0;
@@ -150,8 +91,8 @@ char * socket_print(struct node *n)
 			break;
 	}
 
-	char *local = socket_print_addr((struct sockaddr *) &s->local);
-	char *remote = socket_print_addr((struct sockaddr *) &s->remote);
+	char *local = socket_print_addr((struct sockaddr *) &s->in.saddr);
+	char *remote = socket_print_addr((struct sockaddr *) &s->out.saddr);
 
 	buf = strf("layer=%s, format=%s, in.address=%s, out.address=%s", layer, format_type_name(s->format), local, remote);
 
@@ -181,26 +122,26 @@ int socket_check(struct node *n)
 
 	/* Some checks on the addresses */
 	if (s->layer != SOCKET_LAYER_UNIX) {
-		if (s->local.sa.sa_family != s->remote.sa.sa_family)
+		if (s->in.saddr.sa.sa_family != s->out.saddr.sa.sa_family)
 			error("Address families of local and remote must match!");
 	}
 
 	if (s->layer == SOCKET_LAYER_IP) {
-		if (ntohs(s->local.sin.sin_port) != ntohs(s->remote.sin.sin_port))
+		if (ntohs(s->in.saddr.sin.sin_port) != ntohs(s->out.saddr.sin.sin_port))
 			error("IP protocol numbers of local and remote must match!");
 	}
 #ifdef WITH_SOCKET_LAYER_ETH
 	else if (s->layer == SOCKET_LAYER_ETH) {
-		if (ntohs(s->local.sll.sll_protocol) != ntohs(s->remote.sll.sll_protocol))
+		if (ntohs(s->in.saddr.sll.sll_protocol) != ntohs(s->out.saddr.sll.sll_protocol))
 			error("Ethertypes of local and remote must match!");
 
-		if (ntohs(s->local.sll.sll_protocol) <= 0x5DC)
+		if (ntohs(s->in.saddr.sll.sll_protocol) <= 0x5DC)
 			error("Ethertype must be large than %d or it is interpreted as an IEEE802.3 length field!", 0x5DC);
 	}
 #endif /* WITH_SOCKET_LAYER_ETH */
 
 	if (s->multicast.enabled) {
-		if (s->local.sa.sa_family != AF_INET)
+		if (s->in.saddr.sa.sa_family != AF_INET)
 			error("Multicast is only supported by IPv4 for node %s", node_name(n));
 
 		uint32_t addr = ntohl(s->multicast.mreq.imr_multiaddr.s_addr);
@@ -228,21 +169,21 @@ int socket_start(struct node *n)
 	/* Create socket */
 	switch (s->layer) {
 		case SOCKET_LAYER_UDP:
-			s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
+			s->sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM, IPPROTO_UDP);
 			break;
 
 		case SOCKET_LAYER_IP:
-			s->sd = socket(s->local.sa.sa_family, SOCK_RAW, ntohs(s->local.sin.sin_port));
+			s->sd = socket(s->in.saddr.sa.sa_family, SOCK_RAW, ntohs(s->in.saddr.sin.sin_port));
 			break;
 
 #ifdef WITH_SOCKET_LAYER_ETH
 		case SOCKET_LAYER_ETH:
-			s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM, s->local.sll.sll_protocol);
+			s->sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM, s->in.saddr.sll.sll_protocol);
 			break;
 #endif /* WITH_SOCKET_LAYER_ETH */
 
 		case SOCKET_LAYER_UNIX:
-			s->sd = socket(s->local.sa.sa_family, SOCK_DGRAM, 0);
+			s->sd = socket(s->in.saddr.sa.sa_family, SOCK_DGRAM, 0);
 			break;
 
 		default:
@@ -254,14 +195,14 @@ int socket_start(struct node *n)
 
 	/* Delete Unix domain socket if already existing */
 	if (s->layer == SOCKET_LAYER_UNIX) {
-		ret = unlink(s->local.sun.sun_path);
+		ret = unlink(s->in.saddr.sun.sun_path);
 		if (ret && errno != ENOENT)
 			return ret;
 	}
 
 	/* Bind socket for receiving */
 	socklen_t addrlen = 0;
-	switch(s->local.ss.ss_family) {
+	switch(s->in.saddr.ss.ss_family) {
 		case AF_INET:
 			addrlen = sizeof(struct sockaddr_in);
 			break;
@@ -271,7 +212,7 @@ int socket_start(struct node *n)
 			break;
 
 		case AF_UNIX:
-			addrlen = SUN_LEN(&s->local.sun);
+			addrlen = SUN_LEN(&s->in.saddr.sun);
 			break;
 
 #ifdef WITH_SOCKET_LAYER_ETH
@@ -280,23 +221,12 @@ int socket_start(struct node *n)
 			break;
 #endif /* WITH_SOCKET_LAYER_ETH */
 		default:
-			addrlen = sizeof(s->local);
+			addrlen = sizeof(s->in.saddr);
 	}
 
-	ret = bind(s->sd, (struct sockaddr *) &s->local, addrlen);
+	ret = bind(s->sd, (struct sockaddr *) &s->in.saddr, addrlen);
 	if (ret < 0)
 		serror("Failed to bind socket");
-
-#ifdef __linux__
-	/* Set fwmark for outgoing packets if netem is enabled for this node */
-	if (s->mark) {
-		ret = setsockopt(s->sd, SOL_SOCKET, SO_MARK, &s->mark, sizeof(s->mark));
-		if (ret)
-			serror("Failed to set FW mark for outgoing packets");
-		else
-			debug(LOG_SOCKET | 4, "Set FW mark for socket (sd=%u) to %u", s->sd, s->mark);
-	}
-#endif /* __linux__ */
 
 	if (s->multicast.enabled) {
 		ret = setsockopt(s->sd, IPPROTO_IP, IP_MULTICAST_LOOP, &s->multicast.loop, sizeof(s->multicast.loop));
@@ -356,9 +286,9 @@ int socket_reverse(struct node *n)
 	struct socket *s = (struct socket *) n->_vd;
 	union sockaddr_union tmp;
 
-	tmp = s->local;
-	s->local = s->remote;
-	s->remote = tmp;
+	tmp = s->in.saddr;
+	s->in.saddr = s->out.saddr;
+	s->out.saddr = tmp;
 
 	return 0;
 }
@@ -386,18 +316,6 @@ int socket_stop(struct node *n)
 
 	free(s->in.buf);
 	free(s->out.buf);
-
-	return 0;
-}
-
-int socket_destroy(struct node *n)
-{
-#ifdef WITH_NETEM
-	struct socket *s = (struct socket *) n->_vd;
-
-	rtnl_qdisc_put(s->tc_qdisc);
-	rtnl_cls_put(s->tc_classifier);
-#endif /* WITH_NETEM */
 
 	return 0;
 }
@@ -436,16 +354,16 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	if (s->layer == SOCKET_LAYER_IP) {
 		switch (src.sa.sa_family) {
 			case AF_INET:
-				src.sin.sin_port = s->remote.sin.sin_port;
+				src.sin.sin_port = s->out.saddr.sin.sin_port;
 				break;
 
 			case AF_INET6:
-				src.sin6.sin6_port = s->remote.sin6.sin6_port;
+				src.sin6.sin6_port = s->out.saddr.sin6.sin6_port;
 				break;
 		}
 	}
 
-	if (s->verify_source && socket_compare_addr(&src.sa, &s->remote.sa) != 0) {
+	if (s->verify_source && socket_compare_addr(&src.sa, &s->out.saddr.sa) != 0) {
 		char *buf = socket_print_addr((struct sockaddr *) &src);
 		warning("Received packet from unauthorized source: %s", buf);
 		free(buf);
@@ -487,7 +405,7 @@ retry:	ret = io_sprint(&s->io, s->out.buf, s->out.buflen, &wbytes, smps, cnt);
 
 	/* Send message */
 	socklen_t addrlen = 0;
-	switch(s->local.ss.ss_family) {
+	switch(s->in.saddr.ss.ss_family) {
 		case AF_INET:
 			addrlen = sizeof(struct sockaddr_in);
 			break;
@@ -497,7 +415,7 @@ retry:	ret = io_sprint(&s->io, s->out.buf, s->out.buflen, &wbytes, smps, cnt);
 			break;
 
 		case AF_UNIX:
-			addrlen = SUN_LEN(&s->local.sun);
+			addrlen = SUN_LEN(&s->in.saddr.sun);
 			break;
 
 #ifdef WITH_SOCKET_LAYER_ETH
@@ -506,10 +424,10 @@ retry:	ret = io_sprint(&s->io, s->out.buf, s->out.buflen, &wbytes, smps, cnt);
 			break;
 #endif /* WITH_SOCKET_LAYER_ETH */
 		default:
-			addrlen = sizeof(s->local);
+			addrlen = sizeof(s->in.saddr);
 	}
 
-retry2:	bytes = sendto(s->sd, s->out.buf, wbytes, 0, (struct sockaddr *) &s->remote, addrlen);
+retry2:	bytes = sendto(s->sd, s->out.buf, wbytes, 0, (struct sockaddr *) &s->out.saddr, addrlen);
 	if (bytes < 0) {
 		if ((errno == EPERM) ||
 		    (errno == ENOENT && s->layer == SOCKET_LAYER_UNIX))
@@ -539,22 +457,17 @@ int socket_parse(struct node *n, json_t *cfg)
 	int ret;
 
 	json_t *json_multicast = NULL;
-	json_t *json_netem = NULL;
 	json_error_t err;
 
 	/* Default values */
 	s->layer = SOCKET_LAYER_UDP;
 	s->verify_source = 0;
-#ifdef WITH_NETEM
-	s->tc_qdisc = NULL;
-#endif /* WITH_NETEM */
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s: { s: s, s?: o }, s: { s: s, s?: b, s?: o } }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s: { s: s }, s: { s: s, s?: b, s?: o } }",
 		"layer", &layer,
 		"format", &format,
 		"out",
 			"address", &remote,
-			"netem", &json_netem,
 		"in",
 			"address", &local,
 			"verify_source", &s->verify_source,
@@ -584,13 +497,13 @@ int socket_parse(struct node *n, json_t *cfg)
 			error("Invalid layer '%s' for node %s", layer, node_name(n));
 	}
 
-	ret = socket_parse_address(remote, (struct sockaddr *) &s->remote, s->layer, 0);
+	ret = socket_parse_address(remote, (struct sockaddr *) &s->out.saddr, s->layer, 0);
 	if (ret) {
 		error("Failed to resolve remote address '%s' of node %s: %s",
 			remote, node_name(n), gai_strerror(ret));
 	}
 
-	ret = socket_parse_address(local, (struct sockaddr *) &s->local, s->layer, AI_PASSIVE);
+	ret = socket_parse_address(local, (struct sockaddr *) &s->in.saddr, s->layer, AI_PASSIVE);
 	if (ret) {
 		error("Failed to resolve local address '%s' of node %s: %s",
 			local, node_name(n), gai_strerror(ret));
@@ -628,21 +541,6 @@ int socket_parse(struct node *n, json_t *cfg)
 					interface, node_name(n));
 			}
 		}
-	}
-
-	if (json_netem) {
-#ifdef WITH_NETEM
-		int enabled = 1;
-
-		ret = json_unpack_ex(json_netem, &err, 0, "{ s?: b }",  "enabled", &enabled);
-		if (ret)
-			jerror(&err, "Failed to parse setting 'netem' of node %s", node_name(n));
-
-		if (enabled)
-			tc_netem_parse(&s->tc_qdisc, json_netem);
-		else
-			s->tc_qdisc = NULL;
-#endif /* WITH_NETEM */
 	}
 
 	return 0;
@@ -865,8 +763,6 @@ static struct plugin p = {
 		.vectorize	= 0,
 		.size		= sizeof(struct socket),
 		.type.start	= socket_type_start,
-		.type.stop	= socket_type_stop,
-		.destroy	= socket_destroy,
 		.reverse	= socket_reverse,
 		.parse		= socket_parse,
 		.print		= socket_print,
@@ -876,9 +772,9 @@ static struct plugin p = {
 		.read		= socket_read,
 		.write		= socket_write,
 		.poll_fds	= socket_fds,
+		.netem_fds	= socket_fds
 	}
 };
 
 REGISTER_PLUGIN(&p)
 LIST_INIT_STATIC(&p.node.instances)
-

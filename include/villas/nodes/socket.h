@@ -48,7 +48,6 @@
   #include <linux/if_packet.h>
 #endif /* LIBNL3_ROUTE_FOUND */
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -79,13 +78,9 @@ union sockaddr_union {
 
 struct socket {
 	int sd;				/**< The socket descriptor */
-	int mark;			/**< Socket mark for netem, routing and filtering */
 	int verify_source;		/**< Verify the source address of incoming packets against socket::remote. */
 
 	enum socket_layer layer;	/**< The OSI / IP layer which should be used for this socket */
-
-	union sockaddr_union local;	/**< Local address of the socket */
-	union sockaddr_union remote;	/**< Remote address of the socket */
 
 	struct format_type *format;
 	struct io io;
@@ -98,14 +93,10 @@ struct socket {
 		struct ip_mreq mreq;	/**< A multicast group to join. */
 	} multicast;
 
-#ifdef WITH_NETEM
-	struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Network emulator queuing discipline */
-	struct rtnl_cls *tc_classifier;	/**< libnl3: Firewall mark classifier */
-#endif /* WITH_NETEM */
-
 	struct {
 		char *buf;		/**< Buffer for receiving messages */
 		size_t buflen;
+		union sockaddr_union saddr;	/**< Remote address of the socket */
 	} in, out;
 };
 

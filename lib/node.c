@@ -175,6 +175,11 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_name = NULL;
 	n->_name_long = NULL;
 
+#ifdef WITH_NETEM
+	s->tc_qdisc = NULL;
+	s->tc_classifier = NULL;
+#endif /* WITH_NETEM */
+
 	n->signals.state = STATE_DESTROYED;
 	vlist_init(&n->signals);
 
@@ -222,21 +227,39 @@ int node_parse(struct node *n, json_t *json, const char *name)
 
 	json_error_t err;
 	json_t *json_signals = NULL;
+	json_t *json_netem = NULL;
 
 	const char *type;
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o }, s?: { s?: o } }",
 		"type", &type,
 		"in",
-			"signals", &json_signals
+			"signals", &json_signals,
+		"out",
+			"netem", &json_netem
 	);
 	if (ret)
 		jerror(&err, "Failed to parse node %s", node_name(n));
 
 	nt = node_type_lookup(type);
 	assert(nt == node_type(n));
+
+	if (json_netem) {
+#ifdef WITH_NETEM
+		int enabled = 1;
+
+		ret = json_unpack_ex(json_netem, &err, 0, "{ s?: b }",  "enabled", &enabled);
+		if (ret)
+			jerror(&err, "Failed to parse setting 'netem' of node %s", node_name(n));
+
+		if (enabled)
+			tc_netem_parse(&s->tc_qdisc, json_netem);
+		else
+			s->tc_qdisc = NULL;
+#endif /* WITH_NETEM */
+	}
 
 	if (nt->flags & NODE_TYPE_PROVIDES_SIGNALS) {
 		if (json_signals)
@@ -353,6 +376,24 @@ int node_start(struct node *n)
 	ret = node_type(n)->start ? node_type(n)->start(n) : 0;
 	if (ret)
 		return ret;
+
+#ifdef __linux__
+	/* Set fwmark for outgoing packets if netem is enabled for this node */
+	if (n->mark) {
+		int fds[16];
+		int num_sds = node_netem_fds(n, fds);
+
+		for (int i = 0; i < num_sds; i++) {
+			int fd = fds[i];
+
+			ret = setsockopt(fd, SOL_SOCKET, SO_MARK, &n->mark, sizeof(n->mark));
+			if (ret)
+				serror("Failed to set FW mark for outgoing packets");
+			else
+				debug(LOG_SOCKET | 4, "Set FW mark for socket (sd=%u) to %u", fd, n->mark);
+		}
+	}
+#endif /* __linux__ */
 
 	n->state = STATE_STARTED;
 	n->sequence = 0;
@@ -481,6 +522,11 @@ int node_destroy(struct node *n)
 
 	if (n->name)
 		free(n->name);
+
+#ifdef WITH_NETEM
+	rtnl_qdisc_put(n->tc_qdisc);
+	rtnl_cls_put(n->tc_classifier);
+#endif /* WITH_NETEM */
 
 	n->state = STATE_DESTROYED;
 
@@ -613,8 +659,10 @@ int node_poll_fds(struct node *n, int fds[])
 {
 	return node_type(n)->poll_fds ? node_type(n)->poll_fds(n, fds) : -1;
 }
+
+int node_netem_fds(struct node *n, int fds[])
 {
-	return node_type(n)->fd ? node_type(n)->fd(n) : -1;
+	return node_type(n)->netem_fds ? node_type(n)->netem_fds(n, fds) : -1;
 }
 
 struct node_type * node_type(struct node *n)

@@ -62,6 +62,10 @@ SuperNode::SuperNode() :
 	vlist_init(&interfaces);
 	vlist_init(&plugins);
 
+#ifdef WITH_NETEM
+	nl_init(); /* Fill link cache */
+#endif /* WITH_NETEM */
+
 	char hname[128];
 	gethostname(hname, 128);
 

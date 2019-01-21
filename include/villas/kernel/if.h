@@ -57,7 +57,7 @@ struct interface {
 	char irqs[IF_IRQ_MAX];		/**< List of IRQs of the NIC. */
 	int affinity;			/**< IRQ / Core Affinity of this interface. */
 
-	struct vlist sockets;		/**< Linked list of associated sockets. */
+	struct vlist nodes;		/**< Linked list of nodes which use this interface. */
 };
 
 /** Add a new interface to the global list and lookup name, irqs...
@@ -99,6 +99,11 @@ int if_start(struct interface *i);
  */
 int if_stop(struct interface *i);
 
+/** Find existing or create new interface instance on which packets for a certain destination
+ *  will leave the system.
+ */
+struct interface * if_get_egress(struct sockaddr *sa, struct vlist *interfaces);
+
 /** Lookup routing tables to get the interface on which packets for a certain destination
  *  will leave the system.
  *
@@ -107,7 +112,7 @@ int if_stop(struct interface *i);
  * @retval 0 Success. Everything went well.
  * @retval <0 Error. Something went wrong.
  */
-int if_get_egress(struct sockaddr *sa, struct rtnl_link **link);
+struct rtnl_link * if_get_egress_link(struct sockaddr *sa);
 
 /** Get all IRQs for this interface.
  *

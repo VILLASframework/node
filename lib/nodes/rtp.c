@@ -32,6 +32,7 @@
 #include <re/re_mem.h>
 #include <re/re_rtp.h>
 #include <re/re_sys.h>
+#include <re/re_udp.h>
 #undef ALIGN_MASK
 
 #include <villas/plugin.h>
@@ -42,8 +43,12 @@
 #include <villas/utils.h>
 #include <villas/hook.h>
 #include <villas/format_type.h>
+#include <villas/super_node.h>
 
 static pthread_t re_pthread;
+
+/* Forward declartions */
+static struct plugin p;
 
 static int rtp_set_rate(struct node *n, double rate)
 {
@@ -92,13 +97,13 @@ int rtp_reverse(struct node *n)
 	struct rtp *r = (struct rtp *) n->_vd;
 	struct sa tmp;
 
-	tmp = r->local_rtp;
-	r->local_rtp = r->remote_rtp;
-	r->remote_rtp = tmp;
+	tmp = r->in.saddr_rtp;
+	r->in.saddr_rtp = r->out.saddr_rtp;
+	r->out.saddr_rtp = tmp;
 
-	tmp = r->local_rtcp;
-	r->local_rtcp = r->remote_rtcp;
-	r->remote_rtcp = tmp;
+	tmp = r->in.saddr_rtcp;
+	r->in.saddr_rtcp = r->out.saddr_rtcp;
+	r->out.saddr_rtcp = tmp;
 
 	return 0;
 }
@@ -177,30 +182,30 @@ int rtp_parse(struct node *n, json_t *cfg)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 
 	/* Remote address */
-	ret = sa_decode(&r->remote_rtp, remote, strlen(remote));
+	ret = sa_decode(&r->out.saddr_rtp, remote, strlen(remote));
 	if (ret) {
 		error("Failed to resolve remote address '%s' of node %s: %s",
 			remote, node_name(n), strerror(ret));
 	}
 
 	/* Assign even port number to RTP socket, next odd number to RTCP socket */
-	port = sa_port(&r->remote_rtp) & ~1;
-	sa_set_sa(&r->remote_rtcp, &r->remote_rtp.u.sa);
-	sa_set_port(&r->remote_rtp, port);
-	sa_set_port(&r->remote_rtcp, port+1);
+	port = sa_port(&r->out.saddr_rtp) & ~1;
+	sa_set_sa(&r->out.saddr_rtcp, &r->out.saddr_rtp.u.sa);
+	sa_set_port(&r->out.saddr_rtp, port);
+	sa_set_port(&r->out.saddr_rtcp, port+1);
 
 	/* Local address */
-	ret = sa_decode(&r->local_rtp, local, strlen(local));
+	ret = sa_decode(&r->in.saddr_rtp, local, strlen(local));
 	if (ret) {
 		error("Failed to resolve local address '%s' of node %s: %s",
 			local, node_name(n), strerror(ret));
 	}
 
 	/* Assign even port number to RTP socket, next odd number to RTCP socket */
-	port = sa_port(&r->local_rtp) & ~1;
-	sa_set_sa(&r->local_rtcp, &r->local_rtp.u.sa);
-	sa_set_port(&r->local_rtp, port);
-	sa_set_port(&r->local_rtcp, port+1);
+	port = sa_port(&r->in.saddr_rtp) & ~1;
+	sa_set_sa(&r->in.saddr_rtcp, &r->in.saddr_rtp.u.sa);
+	sa_set_port(&r->in.saddr_rtp, port);
+	sa_set_port(&r->in.saddr_rtcp, port+1);
 
 	/** @todo parse * in addresses */
 
@@ -212,8 +217,8 @@ char * rtp_print(struct node *n)
 	struct rtp *r = (struct rtp *) n->_vd;
 	char *buf;
 
-	char *local = socket_print_addr((struct sockaddr *) &r->local_rtp.u);
-	char *remote = socket_print_addr((struct sockaddr *) &r->remote_rtp.u);
+	char *local = socket_print_addr((struct sockaddr *) &r->in.saddr_rtp.u);
+	char *remote = socket_print_addr((struct sockaddr *) &r->out.saddr_rtp.u);
 
 	buf = strf("format=%s, in.address=%s, out.address=%s, rtcp.enabled=%s",
 		format_type_name(r->format),
@@ -319,11 +324,11 @@ int rtp_start(struct node *n)
 	vlist_push(&n->out.hooks, r->rtcp.throttle_hook);
 
 	/* Initialize RTP socket */
-	uint16_t port = sa_port(&r->local_rtp) & ~1;
-	ret = rtp_listen(&r->rs, IPPROTO_UDP, &r->local_rtp, port, port+1, r->rtcp.enabled, rtp_handler, rtcp_handler, n);
+	uint16_t port = sa_port(&r->in.saddr_rtp) & ~1;
+	ret = rtp_listen(&r->rs, IPPROTO_UDP, &r->in.saddr_rtp, port, port+1, r->rtcp.enabled, rtp_handler, rtcp_handler, n);
 
 	/* Start RTCP session */
-	rtcp_start(r->rs, node_name(n), &r->remote_rtcp);
+	rtcp_start(r->rs, node_name(n), &r->out.saddr_rtcp);
 
 	return ret;
 }
@@ -357,7 +362,7 @@ static void stop_handler(int sig, siginfo_t *si, void *ctx)
 	re_cancel();
 }
 
-int rtp_type_start()
+int rtp_type_start(struct super_node *sn)
 {
 	int ret;
 
@@ -382,6 +387,22 @@ int rtp_type_start()
 	ret = sigaction(SIGUSR1, &sa, NULL);
 	if (ret)
 		return ret;
+
+#ifdef WITH_NETEM
+	struct vlist *interfaces = super_node_get_interfaces(sn);
+
+	/* Gather list of used network interfaces */
+	for (size_t i = 0; i < vlist_length(&p.node.instances); i++) {
+		struct node *n = (struct node *) vlist_at(&p.node.instances, i);
+		struct rtp *r = (struct rtp *) n->_vd;
+		struct interface *i = if_get_egress(&r->out.saddr_rtp.u.sa, interfaces);
+
+		if (!i)
+			error("Failed to find egress interface for node: %s", node_name(n));
+
+		vlist_push(&i->nodes, n);
+	}
+#endif /* WITH_NETEM */
 
 	return ret;
 }
@@ -493,7 +514,7 @@ retry:	cnt = io_sprint(&r->io, buf, buflen, &wbytes, smps, cnt);
 	mbuf_set_pos(mb, 12);
 
 	/* Send dataset */
-	ret = rtp_send(r->rs, &r->remote_rtp, false, false, 21, (uint32_t) time(NULL), mb);
+	ret = rtp_send(r->rs, &r->out.saddr_rtp, false, false, 21, (uint32_t) time(NULL), mb);
 	if (ret) {
 		warning("Error from rtp_send, reason: %d", ret);
 		cnt = ret;
@@ -505,9 +526,38 @@ out1:	free(buf);
 	return cnt;
 }
 
+int rtp_poll_fds(struct node *n, int fds[])
+{
+	struct rtp *r = (struct rtp *) n->_vd;
+
+	fds[0] = queue_signalled_fd(&r->recv_queue);
+
+	return 1;
+}
+
+int rtp_netem_fds(struct node *n, int fds[])
+{
+	struct rtp *r = (struct rtp *) n->_vd;
+
+	int m = 0;
+	struct udp_sock *rtp = (struct udp_sock *) rtp_sock(r->rs);
+	struct udp_sock *rtcp = (struct udp_sock *) rtcp_sock(r->rs);
+
+	fds[m++] = udp_sock_fd(rtp, AF_INET);
+
+	if (r->rtcp.enabled)
+		fds[m++] = udp_sock_fd(rtcp, AF_INET);
+
+	return m;
+}
+
 static struct plugin p = {
 	.name		= "rtp",
+#ifdef WITH_NETEM
+	.description	= "real-time transport protocol (libre, libnl3 netem support)",
+#else
 	.description	= "real-time transport protocol (libre)",
+#endif
 	.type		= PLUGIN_TYPE_NODE,
 	.node		= {
 		.vectorize	= 0,
@@ -521,6 +571,8 @@ static struct plugin p = {
 		.stop		= rtp_stop,
 		.read		= rtp_read,
 		.write		= rtp_write,
+		.poll_fds	= rtp_poll_fds,
+		.netem_fds	= rtp_netem_fds
 	}
 };
 

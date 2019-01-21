@@ -215,6 +215,13 @@ struct node_type {
 	 */
 	int (*poll_fds)(struct node *n, int fds[]);
 
+	/** Get list of socket file descriptors for configuring network emulation.
+	 *
+	 * This callback is optional.
+	 * @return The number of file descriptors which have been put into \p sds.
+	 */
+	int (*netem_fds)(struct node *n, int sds[]);
+
 	/** Return a memory allocator which should be used for sample pools passed to this node. */
 	struct memory_type * (*memory_type)(struct node *n, struct memory_type *parent);
 };

@@ -42,6 +42,12 @@
 extern "C" {
 #endif
 
+/* Forward declarations */
+#ifdef __linux__
+  struct rtnl_qdisc;
+  struct rtnl_cls;
+#endif /* __linux__ */
+
 struct node_direction {
 	int enabled;
 	int builtin;		/**< This node should use built-in hooks by default. */
@@ -74,6 +80,13 @@ struct node
 	struct vlist signals;	/**< Signal meta data for data which is __received__ by node_read(). */
 
 	enum state state;
+
+#ifdef __linux__
+	int mark;			/**< Socket mark for netem, routing and filtering */
+
+	struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Network emulator queuing discipline */
+	struct rtnl_cls *tc_classifier;	/**< libnl3: Firewall mark classifier */
+#endif /* __linux__ */
 
 	struct node_type *_vt;	/**< Virtual functions (C++ OOP style) */
 	void *_vd;		/**< Virtual data (used by struct node::_vt functions) */
@@ -178,6 +191,8 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 int node_poll_fds(struct node *n, int fds[]);
+
+int node_netem_fds(struct node *n, int fds[]);
 
 struct node_type * node_type(struct node *n);
 

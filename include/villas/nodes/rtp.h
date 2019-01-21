@@ -51,15 +51,15 @@ struct format_type;
 struct rtp {
 	struct rtp_sock *rs;	/**< RTP socket */
 
-	struct sa local_rtp;	/**< Local address of the RTP socket */
-	struct sa local_rtcp;	/**< Local address of the RTCP socket */
-	struct sa remote_rtp;	/**< Remote address of the RTP socket */
-	struct sa remote_rtcp;	/**< Remote address of the RTCP socket */
+	struct {
+		struct sa saddr_rtp;	/**< Local/Remote address of the RTP socket */
+		struct sa saddr_rtcp;	/**< Local/Remote address of the RTCP socket */
+	} in, out;
 
 	struct format_type *format;
 	struct io io;
 
-	double rate;		/**< Sample rate of source */
+	double rate;			/**< Sample rate of source */
 
 	struct {
 		int enabled;
