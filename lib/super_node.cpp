@@ -319,7 +319,6 @@ int SuperNode::start()
 	web.start();
 #endif
 
-	logger->info("Starting node-types");
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct node *) vlist_at(&nodes, i);
 
@@ -329,7 +328,6 @@ int SuperNode::start()
 	}
 
 #ifdef WITH_NETEM
-	logger->info("Starting interfaces");
 	for (size_t i = 0; i < vlist_length(&interfaces); i++) {
 		auto *j = (struct interface *) vlist_at(&interfaces, i);
 
@@ -339,7 +337,6 @@ int SuperNode::start()
 	}
 #endif /* WITH_NETEM */
 
-	logger->info("Starting nodes");
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct node *) vlist_at(&nodes, i);
 
@@ -357,7 +354,6 @@ int SuperNode::start()
 			logger->warn("No path is using the node {}. Skipping...", node_name(n));
 	}
 
-	logger->info("Starting paths");
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
 		auto *p = (struct path *) vlist_at(&paths, i);
 
@@ -403,7 +399,6 @@ int SuperNode::stop()
 	}
 #endif /* WITH_HOOKS */
 
-	logger->info("Stopping paths");
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
 		auto *p = (struct path *) vlist_at(&paths, i);
 
@@ -412,7 +407,6 @@ int SuperNode::stop()
 			throw RuntimeError("Failed to stop path: {}", path_name(p));
 	}
 
-	logger->info("Stopping nodes");
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct node *) vlist_at(&nodes, i);
 
@@ -421,7 +415,6 @@ int SuperNode::stop()
 			throw RuntimeError("Failed to stop node: {}", node_name(n));
 	}
 
-	logger->info("Stopping node-types");
 	for (size_t i = 0; i < vlist_length(&plugins); i++) {
 		auto *p = (struct plugin *) vlist_at(&plugins, i);
 
@@ -433,7 +426,6 @@ int SuperNode::stop()
 	}
 
 #ifdef WITH_NETEM
-	logger->info("Stopping interfaces");
 	for (size_t j = 0; j < vlist_length(&interfaces); j++) {
 		struct interface *i = (struct interface *) vlist_at(&interfaces, j);
 
