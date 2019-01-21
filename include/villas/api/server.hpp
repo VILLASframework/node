@@ -30,6 +30,7 @@
 #include <poll.h>
 
 #include <villas/common.h>
+#include <villas/log.hpp>
 
 namespace villas {
 namespace node {
@@ -51,6 +52,7 @@ protected:
 	enum state state;
 
 	Api *api;
+	Logger logger;
 
 	int sd;
 
