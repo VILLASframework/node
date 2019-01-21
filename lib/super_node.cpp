@@ -465,8 +465,6 @@ void SuperNode::stopInterfaces()
 		if (ret)
 			throw RuntimeError("Failed to stop interface: {}", if_name(i));
 	}
-
-	vlist_destroy(&interfaces, (dtor_cb_t) if_destroy, false);
 #endif /* WITH_NETEM */
 }
 
