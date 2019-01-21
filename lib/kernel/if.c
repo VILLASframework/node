@@ -62,8 +62,6 @@ int if_destroy(struct interface *i)
 
 	rtnl_qdisc_put(i->tc_qdisc);
 
-	free(i);
-
 	return 0;
 }
 
