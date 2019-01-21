@@ -379,6 +379,8 @@ check:		if (optarg == endptr)
 	if (ret)
 		throw RuntimeError("Failed to intialize node type {}: reason={}", node_type_name(node_type(node)), ret);
 
+	sn.startInterfaces();
+
 	ret = node_check(node);
 	if (ret)
 		throw RuntimeError("Invalid node configuration");
@@ -390,8 +392,6 @@ check:		if (optarg == endptr)
 	ret = node_start(node);
 	if (ret)
 		throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
-
-	sn.startInterfaces();
 
 	/* Start threads */
 	Directions dirs = {
@@ -428,11 +428,11 @@ check:		if (optarg == endptr)
 	if (ret)
 		throw RuntimeError("Failed to stop node {}: reason={}", node_name(node), ret);
 
+	sn.stopInterfaces();
+
 	ret = node_type_stop(node->_vt);
 	if (ret)
 		throw RuntimeError("Failed to stop node type {}: reason={}", node_type_name(node->_vt), ret);
-
-	sn.stopInterfaces();
 
 	ret = io_close(&io);
 	if (ret)
