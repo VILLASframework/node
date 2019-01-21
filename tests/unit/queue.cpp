@@ -245,11 +245,11 @@ void * producer_consumer_many(void *ctx)
 Test(queue, single_threaded, .init = init_memory)
 {
 	int ret;
-	struct param p = {
-		.iter_count = 1 << 8,
-		.queue_size = 1 << 10,
-		.start = 1 /* we start immeadiatly */
-	};
+	struct param p;
+
+	p.iter_count = 1 << 8;
+	p.queue_size = 1 << 10;
+	p.start = 1; /* we start immeadiatly */
 
 	ret = queue_init(&p.queue, p.queue_size, &memory_heap);
 	cr_assert_eq(ret, 0, "Failed to create queue");

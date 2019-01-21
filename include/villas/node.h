@@ -66,6 +66,9 @@ struct node_direction {
 struct node
 {
 	char *name;		/**< A short identifier of the node, only used for configuration and logging */
+
+	enum state state;
+
 	char *_name;		/**< Singleton: A string used to print to screen. */
 	char *_name_long;	/**< Singleton: A string used to print to screen. */
 
@@ -78,8 +81,6 @@ struct node
 	struct node_direction in, out;
 
 	struct vlist signals;	/**< Signal meta data for data which is __received__ by node_read(). */
-
-	enum state state;
 
 #ifdef __linux__
 	int mark;			/**< Socket mark for netem, routing and filtering */

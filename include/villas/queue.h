@@ -57,9 +57,9 @@ struct queue_cell {
 
 /** A lock-free multiple-producer, multiple-consumer (MPMC) queue. */
 struct queue {
-	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
-
 	atomic_state state;
+
+	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
 
 	size_t buffer_mask;
 	off_t buffer_off;	/**< Relative pointer to struct queue_cell[] */

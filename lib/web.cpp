@@ -69,54 +69,64 @@ lws_protocols protocols[] = {
 		.rx_buffer_size = 0
 	},
 #endif /* LIBWEBSOCKETS_FOUND */
-	{ nullptr /* terminator */ }
+	{
+		.name = nullptr /* terminator */
+	}
 };
 
 /** List of libwebsockets mounts. */
 static lws_http_mount mounts[] = {
 #ifdef WITH_API
 	{
-		.mount_next = &mounts[1],
-		.mountpoint = "/api/v1",
-		.origin = "http-api",
-		.def = nullptr,
-		.cgienv = nullptr,
-		.cgi_timeout = 0,
-		.cache_max_age = 0,
-		.cache_reusable = 0,
-		.cache_revalidate = 0,
-		.cache_intermediaries = 0,
-		.origin_protocol = LWSMPRO_CALLBACK,
-		.mountpoint_len = 7
+		.mount_next =		&mounts[1],	/* linked-list "next" */
+		.mountpoint =		"/api/v1",	/* mountpoint URL */
+		.origin =		"http-api",	/* protocol */
+		.def =			nullptr,
+		.protocol =		"http-api",
+		.cgienv =		nullptr,
+		.extra_mimetypes =	nullptr,
+		.interpret =		nullptr,
+		.cgi_timeout =		0,
+		.cache_max_age =	0,
+		.auth_mask =		0,
+		.cache_reusable =	0,
+		.cache_revalidate =	0,
+		.cache_intermediaries =	0,
+		.origin_protocol =	LWSMPRO_CALLBACK, /* dynamic */
+		.mountpoint_len =	7		/* char count */
 	},
 #endif /* WITH_API */
 	{
-		.mount_next = nullptr,
-		.mountpoint = "/",
-		.origin = nullptr,
-		.def = "/index.html",
-		.cgienv = nullptr,
-		.cgi_timeout = 0,
-		.cache_max_age = 0,
-		.cache_reusable = 0,
-		.cache_revalidate = 0,
+		.mount_next =		nullptr,
+		.mountpoint =		"/",
+		.origin =		nullptr,
+		.def =			"/index.html",
+		.protocol =		nullptr,
+		.cgienv =		nullptr,
+		.extra_mimetypes =	nullptr,
+		.interpret =		nullptr,
+		.cgi_timeout =		0,
+		.cache_max_age =	0,
+		.auth_mask =		0,
+		.cache_reusable =	0,
+		.cache_revalidate =	0,
 		.cache_intermediaries = 0,
-		.origin_protocol = LWSMPRO_FILE,
-		.mountpoint_len = 1
+		.origin_protocol =	LWSMPRO_FILE,
+		.mountpoint_len =	1
 	}
 };
 
 /** List of libwebsockets extensions. */
 static const lws_extension extensions[] = {
 	{
-		"permessage-deflate",
-		lws_extension_callback_pm_deflate,
-		"permessage-deflate"
+		.name = "permessage-deflate",
+		.callback = lws_extension_callback_pm_deflate,
+		.client_offer = "permessage-deflate"
 	},
 	{
-		"deflate-frame",
-		lws_extension_callback_pm_deflate,
-		"deflate_frame"
+		.name = "deflate-frame",
+		.callback = lws_extension_callback_pm_deflate,
+		.client_offer = "deflate_frame"
 	},
 	{ nullptr /* terminator */ }
 };
@@ -227,22 +237,22 @@ int Web::parse(json_t *cfg)
 void Web::start()
 {
 	/* Start server */
-	lws_context_creation_info ctx_info = {
-		.port = port,
-		.protocols = protocols,
-		.extensions = extensions,
-		.ssl_cert_filepath = ssl_cert.empty() ? nullptr : ssl_cert.c_str(),
-		.ssl_private_key_filepath = ssl_private_key.empty() ? nullptr : ssl_private_key.c_str(),
-		.gid = -1,
-		.uid = -1,
-		.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS | LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT,
-		.user = (void *) this,
+	lws_context_creation_info ctx_info;
+
+	ctx_info.port = port;
+	ctx_info.protocols = protocols;
+	ctx_info.extensions = extensions;
+	ctx_info.ssl_cert_filepath = ssl_cert.empty() ? nullptr : ssl_cert.c_str();
+	ctx_info.ssl_private_key_filepath = ssl_private_key.empty() ? nullptr : ssl_private_key.c_str();
+	ctx_info.gid = -1;
+	ctx_info.uid = -1;
+	ctx_info.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS | LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+	ctx_info.user = (void *) this;
 #if LWS_LIBRARY_VERSION_NUMBER <= 3000000
-		// https://github.com/warmcat/libwebsockets/issues/1249
-		.max_http_header_pool = 1024,
+	// https://github.com/warmcat/libwebsockets/issues/1249
+	ctx_info.max_http_header_pool = 1024;
  #endif
-		.mounts = mounts
-	};
+	ctx_info.mounts = mounts;
 
 	logger->info("Starting sub-system: htdocs={}", htdocs.c_str());
 
@@ -262,7 +272,7 @@ void Web::start()
 		logger->warn("WebSocket: failed to setup vhost. Trying another port: {}", ctx_info.port);
 	}
 
-	if (vhost == NULL)
+	if (vhost == nullptr)
 		throw RuntimeError("Failed to initialize virtual host");
 
 	/* Start thread */
