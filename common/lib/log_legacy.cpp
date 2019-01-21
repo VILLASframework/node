@@ -38,10 +38,11 @@ void debug(long long, const char *fmt, ...)
 {
 	va_list ap;
 
+	int ret;
 	char *buf;
 
 	va_start(ap, fmt);
-	vasprintf(&buf, fmt, ap);
+	ret = vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
 	Logger logger = logging.get("default");
@@ -55,10 +56,11 @@ void info(const char *fmt, ...)
 {
 	va_list ap;
 
+	int ret;
 	char *buf;
 
 	va_start(ap, fmt);
-	vasprintf(&buf, fmt, ap);
+	ret = vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
 	Logger logger = logging.get("default");
@@ -72,10 +74,11 @@ void warning(const char *fmt, ...)
 {
 	va_list ap;
 
+	int ret;
 	char *buf;
 
 	va_start(ap, fmt);
-	vasprintf(&buf, fmt, ap);
+	ret = vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
 	Logger logger = logging.get("default");
@@ -89,10 +92,11 @@ void stats(const char *fmt, ...)
 {
 	va_list ap;
 
+	int ret;
 	char *buf;
 
 	va_start(ap, fmt);
-	vasprintf(&buf, fmt, ap);
+	ret = vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
 	Logger logger = logging.get("default");
@@ -106,10 +110,11 @@ void error(const char *fmt, ...)
 {
 	va_list ap;
 
+	int ret;
 	char *buf;
 
 	va_start(ap, fmt);
-	vasprintf(&buf, fmt, ap);
+	ret = vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
 	Logger logger = logging.get("default");
@@ -126,10 +131,11 @@ void serror(const char *fmt, ...)
 {
 	va_list ap;
 
+	int ret;
 	char *buf;
 
 	va_start(ap, fmt);
-	vasprintf(&buf, fmt, ap);
+	ret = vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
 	Logger logger = logging.get("default");
@@ -146,10 +152,11 @@ void jerror(json_error_t *err, const char *fmt, ...)
 {
 	va_list ap;
 
+	int ret;
 	char *buf;
 
 	va_start(ap, fmt);
-	vasprintf(&buf, fmt, ap);
+	ret = vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
 	Logger logger = logging.get("default");
