@@ -77,7 +77,10 @@ struct rtp {
 	} rtcp;
 
 	struct {
+		double a;
+		double b;
 
+		double last_rate;
 	} aimd;			/** AIMD state */
 
 	struct queue_signalled recv_queue;

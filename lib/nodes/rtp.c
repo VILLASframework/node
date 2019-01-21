@@ -68,11 +68,17 @@ static int rtp_set_rate(struct node *n, double rate)
 
 static int rtp_aimd(struct node *n, double loss_frac)
 {
+	struct rtp *r = (struct rtp *) n->_vd;
+
 	int ret;
 	double rate;
 
-	/** @todo: Implement AIMD */
-	rate = 1;
+	if (loss_frac < 1e-3)
+		rate = r->aimd.last_rate + r->aimd.a;
+	else
+		rate = r->aimd.last_rate * r->aimd.b;
+
+	r->aimd.last_rate = rate;
 
 	ret = rtp_set_rate(n, rate);
 	if (ret)
@@ -107,12 +113,18 @@ int rtp_parse(struct node *n, json_t *cfg)
 	uint16_t port;
 
 	json_error_t err;
-	json_t *json_rtcp = NULL;
+	json_t *json_rtcp = NULL, *json_aimd = NULL;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: o, s: { s: s }, s: { s: s } }",
+	/* Default values */
+	r->aimd.a = 10;
+	r->aimd.b = 0.5;
+	r->aimd.last_rate = 1;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: o, s?: o, s: { s: s }, s: { s: s } }",
 		"format", &format,
 		"rate", &r->rate,
 		"rtcp", &json_rtcp,
+		"aimd", &json_aimd,
 		"out",
 			"address", &remote,
 		"in",
@@ -120,6 +132,16 @@ int rtp_parse(struct node *n, json_t *cfg)
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+
+	/* AIMD */
+	if (json_aimd) {
+		ret = json_unpack_ex(json_rtcp, &err, 0, "{ s?: f, s?: f }",
+			"a", &r->aimd.a,
+			"b", &r->aimd.b
+		);
+		if (ret)
+			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+	}
 
 	/* RTCP */
 	if (json_rtcp) {
@@ -131,6 +153,8 @@ int rtp_parse(struct node *n, json_t *cfg)
 			"mode", &mode,
 			"throttle_mode", &throttle_mode
 		);
+		if (ret)
+			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 		/* RTCP Mode */
 		if (!strcmp(mode, "aimd"))
