@@ -27,6 +27,9 @@
 #include <villas/utils.h>
 #include <villas/log.hpp>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result" 
+
 using namespace villas;
 
 int log_get_width()
@@ -38,11 +41,10 @@ void debug(long long, const char *fmt, ...)
 {
 	va_list ap;
 
-	int ret;
 	char *buf;
 
 	va_start(ap, fmt);
-	ret = vasprintf(&buf, fmt, ap);
+	vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
 	Logger logger = logging.get("default");
@@ -56,11 +58,10 @@ void info(const char *fmt, ...)
 {
 	va_list ap;
 
-	int ret;
 	char *buf;
 
 	va_start(ap, fmt);
-	ret = vasprintf(&buf, fmt, ap);
+	vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
 	Logger logger = logging.get("default");
@@ -74,11 +75,10 @@ void warning(const char *fmt, ...)
 {
 	va_list ap;
 
-	int ret;
 	char *buf;
 
 	va_start(ap, fmt);
-	ret = vasprintf(&buf, fmt, ap);
+	vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
 	Logger logger = logging.get("default");
@@ -92,11 +92,10 @@ void stats(const char *fmt, ...)
 {
 	va_list ap;
 
-	int ret;
 	char *buf;
 
 	va_start(ap, fmt);
-	ret = vasprintf(&buf, fmt, ap);
+	vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
 	Logger logger = logging.get("default");
@@ -110,11 +109,10 @@ void error(const char *fmt, ...)
 {
 	va_list ap;
 
-	int ret;
 	char *buf;
 
 	va_start(ap, fmt);
-	ret = vasprintf(&buf, fmt, ap);
+	vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
 	Logger logger = logging.get("default");
@@ -131,11 +129,10 @@ void serror(const char *fmt, ...)
 {
 	va_list ap;
 
-	int ret;
 	char *buf;
 
 	va_start(ap, fmt);
-	ret = vasprintf(&buf, fmt, ap);
+	vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
 	Logger logger = logging.get("default");
@@ -152,11 +149,10 @@ void jerror(json_error_t *err, const char *fmt, ...)
 {
 	va_list ap;
 
-	int ret;
 	char *buf;
 
 	va_start(ap, fmt);
-	ret = vasprintf(&buf, fmt, ap);
+	vasprintf(&buf, fmt, ap);
 	va_end(ap);
 
 	Logger logger = logging.get("default");
@@ -169,3 +165,5 @@ void jerror(json_error_t *err, const char *fmt, ...)
 	killme(SIGABRT);
 	pause();
 }
+
+#pragma GCC diagnostic pop
