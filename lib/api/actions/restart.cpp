@@ -45,6 +45,8 @@ protected:
 
 		const char *argv[] = { "villas-node", cfg, nullptr };
 
+		Logger logger = logging.get("api");
+
 		logger->info("Restart instance: config={}", cfg);
 
 		ret = execvp("/proc/self/exe", (char **) argv);
