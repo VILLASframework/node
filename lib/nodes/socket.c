@@ -64,9 +64,9 @@ int socket_type_start(struct super_node *sn)
 			continue;
 
 		/* Determine outgoing interface */
-		struct interface *i = if_get_egress((struct sockaddr *) &s->out.saddr, interfaces);
+		struct interface *j = if_get_egress((struct sockaddr *) &s->out.saddr, interfaces);
 
-		vlist_push(&i->nodes, n);
+		vlist_push(&j->nodes, n);
 	}
 #endif /* WITH_NETEM */
 
