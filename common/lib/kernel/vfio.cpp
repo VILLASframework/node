@@ -46,8 +46,6 @@
 
 using namespace villas;
 
-static Logger logger = logging.get("kernel:vfio");
-
 static const char *vfio_pci_region_names[] = {
     "PCI_BAR0",		// VFIO_PCI_BAR0_REGION_INDEX,
     "PCI_BAR1",		// VFIO_PCI_BAR1_REGION_INDEX,
@@ -74,6 +72,8 @@ namespace villas {
 VfioContainer::VfioContainer()
     : iova_next(0)
 {
+
+	Logger logger = logging.get("kernel:vfio");
 
 	static constexpr const char* requiredKernelModules[] = {
 	    "vfio", "vfio_pci", "vfio_iommu_type1"
@@ -133,6 +133,8 @@ VfioContainer::VfioContainer()
 
 VfioContainer::~VfioContainer()
 {
+	Logger logger = logging.get("kernel:vfio");
+
 	logger->debug("Clean up container with fd {}", fd);
 
 	/* Release memory and close fds */
@@ -157,6 +159,8 @@ VfioContainer::create()
 void
 VfioContainer::dump()
 {
+	Logger logger = logging.get("kernel:vfio");
+
 	logger->info("File descriptor: {}", fd);
 	logger->info("Version: {}", version);
 	logger->info("Extensions: 0x{:x}", extensions);
@@ -210,6 +214,8 @@ VfioContainer::dump()
 VfioDevice&
 VfioContainer::attachDevice(const char* name, int index)
 {
+	Logger logger = logging.get("kernel:vfio");
+
 	VfioGroup& group = getOrAttachGroup(index);
 	auto device = std::make_unique<VfioDevice>(name, group);
 
@@ -285,6 +291,8 @@ VfioContainer::attachDevice(const pci_device* pdev)
 	char name[32];
 	static constexpr const char* kernelDriver = "vfio-pci";
 
+	Logger logger = logging.get("kernel:vfio");
+
 	/* Load PCI bus driver for VFIO */
 	if (kernel_module_load("vfio_pci")) {
 		logger->error("Failed to load kernel driver: vfio_pci");
@@ -333,7 +341,9 @@ VfioContainer::memoryMap(uintptr_t virt, uintptr_t phys, size_t length)
 {
 	int ret;
 
-	if(not hasIommu) {
+	Logger logger = logging.get("kernel:vfio");
+
+	if (not hasIommu) {
 		logger->error("DMA mapping not supported without IOMMU");
 		return UINTPTR_MAX;
 	}
@@ -382,9 +392,10 @@ VfioContainer::memoryUnmap(uintptr_t phys, size_t length)
 {
 	int ret;
 
-	if(not hasIommu) {
+	Logger logger = logging.get("kernel:vfio");
+
+	if (not hasIommu)
 		return true;
-	}
 
 	struct vfio_iommu_type1_dma_unmap dmaUnmap;
 	dmaUnmap.argsz = sizeof(struct vfio_iommu_type1_dma_unmap);
@@ -405,8 +416,10 @@ VfioContainer::memoryUnmap(uintptr_t phys, size_t length)
 VfioGroup&
 VfioContainer::getOrAttachGroup(int index)
 {
+	Logger logger = logging.get("kernel:vfio");
+
 	// search if group with index already exists
-	for(auto& group : groups) {
+	for (auto& group : groups) {
 		if(group->index == index) {
 			return *group;
 		}
@@ -414,7 +427,7 @@ VfioContainer::getOrAttachGroup(int index)
 
 	// group not yet part of this container, so acquire ownership
 	auto group = VfioGroup::attach(*this, index);
-	if(not group) {
+	if (not group) {
 		logger->error("Failed to attach to IOMMU group: {}", index);
 		throw std::exception();
 	} else {
@@ -430,6 +443,8 @@ VfioContainer::getOrAttachGroup(int index)
 
 VfioDevice::~VfioDevice()
 {
+	Logger logger = logging.get("kernel:vfio");
+
 	logger->debug("Clean up device {} with fd {}", this->name, this->fd);
 
 	for(auto& region : regions) {
@@ -476,6 +491,8 @@ VfioDevice::regionUnmap(size_t index)
 	int ret;
 	struct vfio_region_info *r = &regions[index];
 
+	Logger logger = logging.get("kernel:vfio");
+
 	if (!mappings[index])
 		return false; /* was not mapped */
 
@@ -494,6 +511,8 @@ VfioDevice::regionUnmap(size_t index)
 size_t
 VfioDevice::regionGetSize(size_t index)
 {
+	Logger logger = logging.get("kernel:vfio");
+
 	if(index >= regions.size()) {
 		logger->error("Index out of range: {} >= {}", index, regions.size());
 		throw std::out_of_range("Index out of range");
@@ -533,6 +552,8 @@ VfioDevice::pciEnable()
 bool
 VfioDevice::pciHotReset()
 {
+	Logger logger = logging.get("kernel:vfio");
+
 	/* Check if this is really a vfio-pci device */
 	if (not isVfioPciDevice())
 		return false;
@@ -722,6 +743,8 @@ VfioDevice::isVfioPciDevice() const
 
 VfioGroup::~VfioGroup()
 {
+	Logger logger = logging.get("kernel:vfio");
+
 	logger->debug("Clean up group {} with fd {}", this->index, this->fd);
 
 	/* Release memory and close fds */
@@ -746,6 +769,8 @@ VfioGroup::~VfioGroup()
 std::unique_ptr<VfioGroup>
 VfioGroup::attach(VfioContainer& container, int groupIndex)
 {
+	Logger logger = logging.get("kernel:vfio");
+
 	std::unique_ptr<VfioGroup> group { new VfioGroup(groupIndex) };
 
 	group->container = &container;

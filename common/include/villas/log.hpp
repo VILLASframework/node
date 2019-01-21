@@ -51,7 +51,7 @@ public:
 	using DistSink = std::shared_ptr<spdlog::sinks::dist_sink_mt>;
 
 protected:
-	Logger logger = logging.get("log");
+	Logger logger;
 	DistSink sinks;
 
 	Level level;
