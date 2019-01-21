@@ -32,6 +32,15 @@ struct decimate {
 	unsigned counter;
 };
 
+int decimate_set_ratio(struct hook *h, int ratio)
+{
+	struct decimate *p = (struct decimate *) h->_vd;
+
+	p->ratio = ratio;
+
+	return 0;
+}
+
 static int decimate_init(struct hook *h)
 {
 	struct decimate *p = (struct decimate *) h->_vd;

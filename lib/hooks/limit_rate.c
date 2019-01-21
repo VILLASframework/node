@@ -42,6 +42,15 @@ struct limit_rate {
 	struct timespec last;
 };
 
+int limit_rate_set_rate(struct hook *h, double rate)
+{
+	struct limit_rate *p = (struct limit_rate *) h->_vd;
+
+	p->deadtime = 1.0 / rate;
+
+	return 0;
+}
+
 static int limit_rate_init(struct hook *h)
 {
 	struct limit_rate *p = (struct limit_rate *) h->_vd;
