@@ -27,7 +27,12 @@
 
 #include <exception>
 #include <algorithm>
-#include <filesystem>
+
+#if __GNUC__ <= 7
+  #include <experimental/filesystem>
+#else
+  #include <filesystem>
+#endif
 
 #include <villas/config.h>
 #include <villas/exceptions.hpp>
@@ -38,6 +43,12 @@
 
 using namespace villas;
 using namespace villas::node::api;
+
+#if __GNUC__ <= 7
+  namespace fs = std::experimental::filesystem;
+#else
+  namespace fs = std::filesystem;
+#endif
 
 Server::Server(Api *a) :
 	state(STATE_INITIALIZED),
@@ -70,17 +81,17 @@ void Server::start()
 
 	struct sockaddr_un sun = { .sun_family = AF_UNIX };
 
-	std::filesystem::path socketPath = PREFIX "/var/lib/villas";
-	if (!std::filesystem::exists(socketPath)) {
+	fs::path socketPath = PREFIX "/var/lib/villas";
+	if (!fs::exists(socketPath)) {
 		logging.get("api")->info("Creating directory for API socket: {}", socketPath);
-		std::filesystem::create_directories(socketPath);
+		fs::create_directories(socketPath);
 	}
 
 	socketPath += "/node-" + api->getSuperNode()->getName() + ".sock";
 
-	if (std::filesystem::exists(socketPath)) {
+	if (fs::exists(socketPath)) {
 		logging.get("api")->info("Removing existing socket: {}", socketPath);
-		std::filesystem::remove(socketPath);
+		fs::remove(socketPath);
 	}
 
 	strncpy(sun.sun_path, socketPath.c_str(), sizeof(sun.sun_path) - 1);
