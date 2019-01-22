@@ -57,9 +57,6 @@ void table_header(struct table *t);
 /** Print table rows. */
 void table_row(struct table *t, ...);
 
-/** Print the table footer. */
-void table_footer(struct table *t);
-
 /** @} */
 
 #ifdef __cplusplus

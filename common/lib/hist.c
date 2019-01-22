@@ -196,8 +196,6 @@ void hist_plot(const struct hist *h)
 
 		free(buf);
 	}
-
-	table_footer(&table);
 }
 
 char * hist_dump(const struct hist *h)
