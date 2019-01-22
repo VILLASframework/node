@@ -139,24 +139,24 @@ void hist_print(const struct hist *h, int details)
 	if (h->total > 0) {
 		hist_cnt_t missed = h->total - h->higher - h->lower;
 
-		stats("Counted values: %ju (%ju between %f and %f)", h->total, missed, h->low, h->high);
-		stats("Highest:  %g", h->highest);
-		stats("Lowest:   %g", h->lowest);
-		stats("Mu:       %g", hist_mean(h));
-		stats("1/Mu:     %g", 1.0/hist_mean(h));
-		stats("Variance: %g", hist_var(h));
-		stats("Stddev:   %g", hist_stddev(h));
+		info("Counted values: %ju (%ju between %f and %f)", h->total, missed, h->low, h->high);
+		info("Highest:  %g", h->highest);
+		info("Lowest:   %g", h->lowest);
+		info("Mu:       %g", hist_mean(h));
+		info("1/Mu:     %g", 1.0/hist_mean(h));
+		info("Variance: %g", hist_var(h));
+		info("Stddev:   %g", hist_stddev(h));
 
 		if (details > 0 && h->total - h->higher - h->lower > 0) {
 			char *buf = hist_dump(h);
-			stats("Matlab: %s", buf);
+			info("Matlab: %s", buf);
 			free(buf);
 
 			hist_plot(h);
 		}
 	}
 	else
-		stats("Counted values: %ju", h->total);
+		info("Counted values: %ju", h->total);
 }
 
 void hist_plot(const struct hist *h)
