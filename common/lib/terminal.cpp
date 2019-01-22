@@ -28,7 +28,7 @@
 
 using namespace villas;
 
-struct winsize Terminal::window;
+class Terminal * Terminal::current = nullptr;
 
 Terminal::Terminal()
 {
@@ -65,11 +65,11 @@ void Terminal::resize(int, siginfo_t *, void *)
 {
 	int ret;
 
-	ret = ioctl(STDERR_FILENO, TIOCGWINSZ, &window);
+	ret = ioctl(STDERR_FILENO, TIOCGWINSZ, &current->window);
 	if (ret)
 		throw SystemError("Failed to get terminal dimensions");
 
 	Logger logger = logging.get("terminal");
 
-	logger->debug("New terminal size: {}x{}", window.ws_row, window.ws_col);
+	logger->debug("New terminal size: {}x{}", current->window.ws_row, current->window.ws_col);
 };

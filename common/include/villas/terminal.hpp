@@ -33,9 +33,11 @@ namespace villas {
 class Terminal {
 
 protected:
-	static struct winsize window;	/**< Size of the terminal window. */
+	struct winsize window;	/**< Size of the terminal window. */
 
 	bool isTty;
+
+	static class Terminal *current;
 
 public:
 	Terminal();
@@ -45,12 +47,18 @@ public:
 
 	static int getCols()
 	{
-		return window.ws_col;
+		if (!current)
+			current = new Terminal();
+
+		return current->window.ws_col;
 	}
 
 	static int getRows()
 	{
-		return window.ws_row;
+		if (!current)
+			current = new Terminal();
+
+		return current->window.ws_row;
 	}
 };
 
