@@ -88,23 +88,6 @@ void warning(const char *fmt, ...)
 	free(buf);
 }
 
-void stats(const char *fmt, ...)
-{
-	va_list ap;
-
-	char *buf;
-
-	va_start(ap, fmt);
-	vasprintf(&buf, fmt, ap);
-	va_end(ap);
-
-	Logger logger = logging.get("default");
-
-	logger->info(buf);
-
-	free(buf);
-}
-
 void error(const char *fmt, ...)
 {
 	va_list ap;
