@@ -146,27 +146,6 @@ void table_row(struct table *t, ...)
 
 	va_end(args);
 
-	stats("%s", line);
-	free(line);
-}
-
-void table_footer(struct table *t)
-{
-	if (t->width != log_get_width())
-		table_resize(t, log_get_width());
-
-	char *line = strf("\b");
-
-	for (int i = 0; i < t->ncols; i++) {
-		for (int j = 0; j < t->cols[i]._width + 2; j++)
-			strcatf(&line, BOX_LR);
-
-		if (i == t->ncols - 1)
-			strcatf(&line, "%s", BOX_UL);
-		else
-			strcatf(&line, "%s", BOX_ULR);
-	}
-
 	info("%s", line);
 	free(line);
 }
