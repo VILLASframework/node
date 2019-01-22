@@ -142,6 +142,10 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	sample_copy_many(smps, shared_smps, recv);
 	sample_decref_many(shared_smps, recv);
 
+	/** @todo: signal descriptions are currently not shared between processes */
+	for (int i = 0; i < recv; i++)
+		smps[i]->signals = &n->signals;
+
 	return recv;
 }
 
