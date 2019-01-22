@@ -65,7 +65,6 @@ void table_header(struct table *t)
 	if (t->width != log_get_width())
 		table_resize(t, log_get_width());
 
-	char *line0 = strf("\b");
 	char *line1 = strf("\b\b" BOX_UD);
 	char *line2 = strf("\b\b" BOX_UD);
 	char *line3 = strf("\b");
@@ -90,28 +89,23 @@ void table_header(struct table *t)
 		}
 
 		for (int j = 0; j < t->cols[i]._width + 2; j++) {
-			strcatf(&line0, "%s", BOX_LR);
 			strcatf(&line3, "%s", BOX_LR);
 		}
 
 		if (i == t->ncols - 1) {
-			strcatf(&line0, "%s", BOX_DL);
 			strcatf(&line3, "%s", BOX_UDL);
 		}
 		else {
-			strcatf(&line0, "%s", BOX_DLR);
 			strcatf(&line3, "%s", BOX_UDLR);
 		}
 
 		free(col);
 	}
 
-	stats("%s", line0);
 	info("%s", line1);
 	info("%s", line2);
 	info("%s", line3);
 
-	free(line0);
 	free(line1);
 	free(line2);
 	free(line3);
