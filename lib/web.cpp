@@ -239,6 +239,8 @@ void Web::start()
 	/* Start server */
 	lws_context_creation_info ctx_info;
 
+	memset(&ctx_info, 0, sizeof(ctx_info));
+
 	ctx_info.port = port;
 	ctx_info.protocols = protocols;
 	ctx_info.extensions = extensions;
