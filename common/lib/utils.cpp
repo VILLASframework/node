@@ -35,6 +35,8 @@
 namespace villas {
 namespace utils {
 
+static pthread_t main_thread;
+
 std::vector<std::string>
 tokenize(std::string s, std::string delimiter)
 {
@@ -154,6 +156,19 @@ char * decolor(char *str)
 	*q = '\0';
 
 	return str;
+}
+
+extern "C" {
+
+void killme(int sig)
+{
+	/* Send only to main thread in case the ID was initilized by signals_init() */
+	if (main_thread)
+		pthread_kill(main_thread, sig);
+	else
+		kill(0, sig);
+}
+
 }
 
 } // namespace utils

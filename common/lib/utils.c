@@ -34,8 +34,6 @@
 #include <villas/config.h>
 #include <villas/utils.h>
 
-pthread_t main_thread;
-
 double box_muller(float m, float s)
 {
 	double x1, x2, y1;
@@ -111,15 +109,6 @@ void * memdup(const void *src, size_t bytes)
 	memcpy(dst, src, bytes);
 
 	return dst;
-}
-
-void killme(int sig)
-{
-	/* Send only to main thread in case the ID was initilized by signals_init() */
-	if (main_thread)
-		pthread_kill(main_thread, sig);
-	else
-		kill(0, sig);
 }
 
 pid_t spawn(const char* name, char *const argv[])
