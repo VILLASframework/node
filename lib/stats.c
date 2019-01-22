@@ -182,7 +182,7 @@ void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose)
 			for (int i = 0; i < STATS_COUNT; i++) {
 				struct stats_desc *desc = &stats_metrics[i];
 
-				stats("%s: %s", desc->name, desc->desc);
+				info("%s: %s", desc->name, desc->desc);
 				hist_print(&s->histograms[i], verbose);
 			}
 			break;
