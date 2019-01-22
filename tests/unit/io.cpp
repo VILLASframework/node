@@ -231,7 +231,7 @@ ParameterizedTest(struct param *p, io, lowlevel, .init = init_memory)
 	cr_assert_eq(ret, 0);
 
 	vlist_init(&signals);
-	signal_vlist_generate(&signals, NUM_VALUES, SIGNAL_TYPE_FLOAT);
+	signal_list_generate(&signals, NUM_VALUES, SIGNAL_TYPE_FLOAT);
 
 	ret = sample_alloc_many(&pool, smps, p->cnt);
 	cr_assert_eq(ret, p->cnt);
@@ -307,7 +307,7 @@ ParameterizedTest(struct param *p, io, highlevel, .init = init_memory)
 	cr_assert_eq(ret, p->cnt);
 
 	vlist_init(&signals);
-	signal_vlist_generate(&signals, NUM_VALUES, SIGNAL_TYPE_FLOAT);
+	signal_list_generate(&signals, NUM_VALUES, SIGNAL_TYPE_FLOAT);
 
 	fill_sample_data(&signals, smps, p->cnt);
 

@@ -284,3 +284,20 @@ enum signal_type sample_format(const struct sample *s, unsigned idx)
 
 	return sig ? sig->type : SIGNAL_TYPE_AUTO;
 }
+
+void sample_dump(struct sample *s)
+{
+	debug(5, "Sample: sequence=%zu, length=%d, capacity=%d, flags=%#x, signals=%p, #signals=%zu, "
+		"refcnt=%d, pool_off=%zd",
+		s->sequence, s->length, s->capacity, s->flags, s->signals,
+		s->signals ? vlist_length(s->signals) : 0, atomic_load(&s->refcnt), s->pool_off);
+
+	if (s->flags & SAMPLE_HAS_TS_ORIGIN)
+		debug(5, "  ts.origin=%ld.%ld", s->ts.origin.tv_sec, s->ts.origin.tv_nsec);
+
+	if (s->flags & SAMPLE_HAS_TS_RECEIVED)
+		debug(5, "  ts.received=%ld.%ld", s->ts.received.tv_sec, s->ts.received.tv_nsec);
+
+	if (s->signals)
+		signal_list_dump(s->signals, s->data, s->length);
+}

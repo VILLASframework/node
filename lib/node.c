@@ -274,7 +274,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 	}
 	else if (json_signals) {
 		if (json_is_array(json_signals)) {
-			ret = signal_vlist_parse(&n->signals, json_signals);
+			ret = signal_list_parse(&n->signals, json_signals);
 			if (ret)
 				error("Failed to parse signal definition of node %s", node_name(n));
 		}
@@ -291,13 +291,13 @@ int node_parse(struct node *n, json_t *json, const char *name)
 			if (type < 0)
 				error("Invalid signal type %s", type_str);
 
-			signal_vlist_generate(&n->signals, count, type);
+			signal_list_generate(&n->signals, count, type);
 		}
 	}
 	else {
 		warning("No signal definition found for node %s. Using the default config of %d floating point signals.", node_name(n), DEFAULT_SAMPLE_LENGTH);
 
-		signal_vlist_generate(&n->signals, DEFAULT_SAMPLE_LENGTH, SIGNAL_TYPE_FLOAT);
+		signal_list_generate(&n->signals, DEFAULT_SAMPLE_LENGTH, SIGNAL_TYPE_FLOAT);
 	}
 
 	struct {

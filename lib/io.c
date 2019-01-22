@@ -122,7 +122,7 @@ int io_init_auto(struct io *io, const struct format_type *fmt, int len, int flag
 	if (ret)
 		return ret;
 
-	ret = signal_vlist_generate(signals, len, SIGNAL_TYPE_AUTO);
+	ret = signal_list_generate(signals, len, SIGNAL_TYPE_AUTO);
 	if (ret)
 		return ret;
 

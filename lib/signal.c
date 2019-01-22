@@ -223,7 +223,7 @@ int signal_parse(struct signal *s, json_t *cfg)
 
 /* Signal list */
 
-int signal_vlist_parse(struct vlist *list, json_t *cfg)
+int signal_list_parse(struct vlist *list, json_t *cfg)
 {
 	int ret;
 	struct signal *s;
@@ -252,7 +252,7 @@ int signal_vlist_parse(struct vlist *list, json_t *cfg)
 	return 0;
 }
 
-int signal_vlist_generate(struct vlist *list, unsigned len, enum signal_type fmt)
+int signal_list_generate(struct vlist *list, unsigned len, enum signal_type fmt)
 {
 	for (int i = 0; i < len; i++) {
 		char name[32];
@@ -268,17 +268,33 @@ int signal_vlist_generate(struct vlist *list, unsigned len, enum signal_type fmt
 	return 0;
 }
 
-void signal_vlist_dump(const struct vlist *list)
+void signal_list_dump(const struct vlist *list, const union signal_data *data, int len)
 {
-	info ("Signals:");
+	debug(5, "  Signals:");
 
 	for (int i = 0; i < vlist_length(list); i++) {
 		struct signal *sig = vlist_at(list, i);
 
+		char *buf = strf("    %d:", i);
+
+		if (sig->name)
+			strcatf(&buf, " %s", sig->name);
+
 		if (sig->unit)
-			info("  %d: %s [%s] = %s", i, sig->name, sig->unit, signal_type_to_str(sig->type));
-		else
-			info("  %d: %s = %s", i, sig->name, signal_type_to_str(sig->type));
+			strcatf(&buf, " [%s]", sig->unit);
+
+		strcatf(&buf, "(%s)", signal_type_to_str(sig->type));
+
+		if (data && i < len) {
+			char val[32];
+
+			signal_data_snprint(&data[i], sig, val, sizeof(val));
+
+			strcatf(&buf, " = %s", val);
+		}
+
+		debug(5, buf);
+		free(buf);
 	}
 }
 
