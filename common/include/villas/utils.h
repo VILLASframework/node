@@ -37,8 +37,6 @@ extern "C" {
 #include <villas/config.h>
 #include <villas/log.h>
 
-extern pthread_t main_thread;
-
 #ifdef __GNUC__
   #define LIKELY(x)	__builtin_expect((x),1)
   #define UNLIKELY(x)	__builtin_expect((x),0)
