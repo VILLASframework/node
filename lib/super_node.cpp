@@ -474,8 +474,6 @@ void SuperNode::stop()
 
 #ifdef WITH_HOOKS
 	if (stats > 0) {
-		stats_print_footer(STATS_FORMAT_HUMAN);
-
 		ret = task_destroy(&task);
 		if (ret)
 			throw RuntimeError("Failed to stop stats timer");
