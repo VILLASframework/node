@@ -170,9 +170,9 @@ static void * send_loop(void *ctx)
 
 		sent = node_write(dirs->send.node, smps, scanned, &release);
 		if (sent < 0)
-			logger->warn("Failed to sent samples to node {}: reason={}", node_name(dirs->send.node), sent);
+			logger->warn("Failed to send samples to node {}: reason={}", node_name(dirs->send.node), sent);
 		else if (sent < scanned)
-			logger->warn("Failed to sent {} out of {} samples to node {}", scanned-sent, scanned, node_name(dirs->send.node));
+			logger->warn("Failed to send {} out of {} samples to node {}", scanned-sent, scanned, node_name(dirs->send.node));
 
 		sample_decref_many(smps, release);
 
