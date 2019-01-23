@@ -1,6 +1,7 @@
-/** Node type: rtp
+/** Node type: Real-time Protocol (RTP)
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Marvin Klimke <marvin.klimke@rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
@@ -68,6 +69,9 @@ static int rtp_set_rate(struct node *n, double rate)
 			decimate_set_ratio(r->rtcp.throttle_hook, r->rate / rate);
 			break;
 
+		case RTCP_THROTTLE_DISABLED:
+			return 0;
+
 		default:
 			return -1;
 	}
@@ -109,6 +113,7 @@ int rtp_init(struct node *n)
 	r->aimd.b = 0.5;
 	r->aimd.last_rate = 1;
 
+	r->rtcp.throttle_mode = RTCP_THROTTLE_DISABLED;
 
 	return 0;
 }
@@ -141,7 +146,7 @@ int rtp_parse(struct node *n, json_t *cfg)
 	json_error_t err;
 	json_t *json_rtcp = NULL, *json_aimd = NULL;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: f, s?: o, s?: o, s: { s: s }, s: { s: s } }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: F, s?: o, s?: o, s: { s: s }, s: { s: s } }",
 		"format", &format,
 		"rate", &r->rate,
 		"rtcp", &json_rtcp,
@@ -156,7 +161,7 @@ int rtp_parse(struct node *n, json_t *cfg)
 
 	/* AIMD */
 	if (json_aimd) {
-		ret = json_unpack_ex(json_rtcp, &err, 0, "{ s?: f, s?: f }",
+		ret = json_unpack_ex(json_rtcp, &err, 0, "{ s?: F, s?: F }",
 			"a", &r->aimd.a,
 			"b", &r->aimd.b
 		);
@@ -184,7 +189,9 @@ int rtp_parse(struct node *n, json_t *cfg)
 			error("Unknown RTCP mode: %s", mode);
 
 		/* RTCP Throttle mode */
-		if (!strcmp(throttle_mode, "decimate"))
+		if (r->rtcp.enabled == false)
+			r->rtcp.throttle_mode = RTCP_THROTTLE_DISABLED;
+		else if (!strcmp(throttle_mode, "decimate"))
 			r->rtcp.throttle_mode = RTCP_THROTTLE_HOOK_DECIMATE;
 		else if (!strcmp(throttle_mode, "limit_rate"))
 			r->rtcp.throttle_mode = RTCP_THROTTLE_HOOK_LIMIT_RATE;
@@ -255,9 +262,12 @@ char * rtp_print(struct node *n)
 
 			case RTCP_THROTTLE_HOOK_LIMIT_RATE:
 				throttle_mode = "limit_rate";
+
+			case RTCP_THROTTLE_DISABLED:
+				throttle_mode = "disabled";
 		}
 
-		strcatf(&buf, "rtcp.mode=%s, rtcp.throttle_mode=%s", mode, throttle_mode);
+		strcatf(&buf, ", rtcp.mode=%s, rtcp.throttle_mode=%s", mode, throttle_mode);
 	}
 
 	free(local);
@@ -314,39 +324,46 @@ int rtp_start(struct node *n)
 		return ret;
 
 	/* Initialize throttle hook */
-	struct hook_type *throttle_hook_type;
+	if (r->rtcp.throttle_mode != RTCP_THROTTLE_DISABLED) {
+		struct hook_type *throttle_hook_type;
 
-	r->rtcp.throttle_hook = alloc(sizeof(struct hook));
-	if (!r->rtcp.throttle_hook)
-		return -1;
+		r->rtcp.throttle_hook = alloc(sizeof(struct hook));
+		if (!r->rtcp.throttle_hook)
+			return -1;
 
-	switch (r->rtcp.throttle_mode) {
-		case RTCP_THROTTLE_HOOK_DECIMATE:
-			throttle_hook_type = hook_type_lookup("decimate");
-			break;
+		switch (r->rtcp.throttle_mode) {
+			case RTCP_THROTTLE_HOOK_DECIMATE:
+				throttle_hook_type = hook_type_lookup("decimate");
+				break;
 
-		case RTCP_THROTTLE_HOOK_LIMIT_RATE:
-			throttle_hook_type = hook_type_lookup("limit_rate");
-			break;
+			case RTCP_THROTTLE_HOOK_LIMIT_RATE:
+				throttle_hook_type = hook_type_lookup("limit_rate");
+				break;
+
+			default: { }
+		}
+
+		if (!throttle_hook_type)
+			return -1;
+
+		ret = hook_init(r->rtcp.throttle_hook, throttle_hook_type, NULL, n);
+		if (ret)
+			return ret;
+
+		vlist_push(&n->out.hooks, r->rtcp.throttle_hook);
 	}
 
-	if (!throttle_hook_type)
-		return -1;
-
-	ret = hook_init(r->rtcp.throttle_hook, throttle_hook_type, NULL, n);
+	ret = rtp_set_rate(n, r->aimd.last_rate);
 	if (ret)
 		return ret;
-
-	rtp_set_rate(n, r->aimd.last_rate);
-
-	vlist_push(&n->out.hooks, r->rtcp.throttle_hook);
 
 	/* Initialize RTP socket */
 	uint16_t port = sa_port(&r->in.saddr_rtp) & ~1;
 	ret = rtp_listen(&r->rs, IPPROTO_UDP, &r->in.saddr_rtp, port, port+1, r->rtcp.enabled, rtp_handler, rtcp_handler, n);
 
 	/* Start RTCP session */
-	rtcp_start(r->rs, node_name(n), &r->out.saddr_rtcp);
+	if (r->rtcp.enabled)
+		rtcp_start(r->rs, node_name(n), &r->out.saddr_rtcp);
 
 	return ret;
 }

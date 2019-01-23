@@ -69,6 +69,7 @@ struct rtp {
 		} mode;
 
 		enum {
+			RTCP_THROTTLE_DISABLED,
 			RTCP_THROTTLE_HOOK_DECIMATE,
 			RTCP_THROTTLE_HOOK_LIMIT_RATE
 		} throttle_mode;
