@@ -129,7 +129,7 @@ int rtp_parse(struct node *n, json_t *cfg)
 	r->aimd.b = 0.5;
 	r->aimd.last_rate = 1;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: o, s?: o, s: { s: s }, s: { s: s } }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: f, s?: o, s?: o, s: { s: s }, s: { s: s } }",
 		"format", &format,
 		"rate", &r->rate,
 		"rtcp", &json_rtcp,
