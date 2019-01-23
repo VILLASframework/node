@@ -65,9 +65,9 @@ void table_header(struct table *t)
 	if (t->width != log_get_width())
 		table_resize(t, log_get_width());
 
-	char *line1 = strf("\b\b" BOX_UD);
-	char *line2 = strf("\b\b" BOX_UD);
-	char *line3 = strf("\b");
+	char *line1 = NULL;
+	char *line2 = NULL;
+	char *line3 = NULL;
 
 	for (int i = 0; i < t->ncols; i++) {
 		int w, u;
@@ -80,22 +80,21 @@ void table_header(struct table *t)
 		u = t->cols[i]._width + strlen(unit) - strlenp(unit);
 
 		if (t->cols[i].align == TABLE_ALIGN_LEFT) {
-			strcatf(&line1, " %-*.*s\e[0m " BOX_UD, w, w, col);
-			strcatf(&line2, " %-*.*s\e[0m " BOX_UD, u, u, unit);
+			strcatf(&line1, " %-*.*s\e[0m", w, w, col);
+			strcatf(&line2, " %-*.*s\e[0m", u, u, unit);
 		}
 		else {
-			strcatf(&line1, " %*.*s\e[0m " BOX_UD, w, w, col);
-			strcatf(&line2, " %*.*s\e[0m " BOX_UD, u, u, unit);
+			strcatf(&line1, " %*.*s\e[0m", w, w, col);
+			strcatf(&line2, " %*.*s\e[0m", u, u, unit);
 		}
 
 		for (int j = 0; j < t->cols[i]._width + 2; j++) {
 			strcatf(&line3, "%s", BOX_LR);
 		}
 
-		if (i == t->ncols - 1) {
-			strcatf(&line3, "%s", BOX_UDL);
-		}
-		else {
+		if (i != t->ncols - 1) {
+			strcatf(&line1, " %s", BOX_UD);
+			strcatf(&line2, " %s", BOX_UD);
 			strcatf(&line3, "%s", BOX_UDLR);
 		}
 
@@ -121,7 +120,7 @@ void table_row(struct table *t, ...)
 	va_list args;
 	va_start(args, t);
 
-	char *line = strf("\b\b" BOX_UD);
+	char *line = NULL;
 
 	for (int i = 0; i < t->ncols; ++i) {
 		char *col = vstrf(t->cols[i].format, args);
@@ -131,9 +130,12 @@ void table_row(struct table *t, ...)
 		int w = t->cols[i]._width + r - l;
 
 		if (t->cols[i].align == TABLE_ALIGN_LEFT)
-			strcatf(&line, " %-*.*s\e[0m " BOX_UD, w, w, col);
+			strcatf(&line, " %-*.*s\e[0m ", w, w, col);
 		else
-			strcatf(&line, " %*.*s\e[0m " BOX_UD, w, w, col);
+			strcatf(&line, " %*.*s\e[0m ", w, w, col);
+
+		if (i != t->ncols - 1)
+			strcatf(&line, BOX_UD);
 
 		free(col);
 	}
