@@ -50,13 +50,10 @@ cat > ${CONFIG_FILE} << EOF
 			"in" : {
 				"address" : "127.0.0.1:12000",
 
-				"signals" : [
-					{ "type" : "float" },
-					{ "type" : "float" },
-					{ "type" : "float" },
-					{ "type" : "float" },
-					{ "type" : "float" }
-				]
+				"signals" : {
+					"type" : "float",
+					"count" : 5
+				}
 			},
 			"out" : {
 				"address" : "127.0.0.1:12000"
