@@ -5,13 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - Unreleased
+
+### Fixed
+
+ - Removed most of the static storage variables from libvillas and libvillas-common
+   which caused crashes with DPsim.
+ - Fixed compilation with Ubuntu 16.04 and GCC 7.2.
+ - Fixed broken `shmem` node-type since addition of signal defintions.
+
+### Changed
+
+ - Node-types can now handle more than a single file-descriptor for poll() multiplexing.
+ - Enable network emulation sub-system also for other node-types than `socket`.
+   The `rtp` node-type will support it now as well.
+
+### Added
+
+ - Initial rate-limiting support for `rtp` node-type based on
+   Additive Increase / Multiplicative Decrease (AIMD) and RTCP.
+
 ## [0.7.0] - 2019-01-13
 
 ### Added
 
 - A new sub-command `villas-relay` implements a client-to-client WebSocket relay.
   It can be used as a proxy for nodes which sit behind a NAT firewall.
-- New node-types: infiniband, rtp, uldaq
+- New node-types: `infiniband`, `rtp`, `uldaq`
 - VILLASnode got a similarily named Python package: `villas.node`.
   It can be used to interact or start an VILLASnode instance. 
 
