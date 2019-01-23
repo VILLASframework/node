@@ -340,7 +340,8 @@ int rtp_start(struct node *n)
 				throttle_hook_type = hook_type_lookup("limit_rate");
 				break;
 
-			default: { }
+			default:
+				throttle_hook_type = NULL;
 		}
 
 		if (!throttle_hook_type)
