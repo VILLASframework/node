@@ -87,6 +87,8 @@ static int rtp_aimd(struct node *n, double loss_frac)
 	else
 		rate = r->aimd.last_rate * r->aimd.b;
 
+	debug(5, "Set rate limiting for node %s to %f", node_name(n), rate);
+
 	r->aimd.last_rate = rate;
 
 	ret = rtp_set_rate(n, rate);
@@ -334,6 +336,8 @@ int rtp_start(struct node *n)
 	ret = hook_init(r->rtcp.throttle_hook, throttle_hook_type, NULL, n);
 	if (ret)
 		return ret;
+
+	rtp_set_rate(n, r->aimd.last_rate);
 
 	vlist_push(&n->out.hooks, r->rtcp.throttle_hook);
 
