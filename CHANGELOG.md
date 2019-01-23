@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Node-types can now handle more than a single file-descriptor for poll() multiplexing.
  - Enable network emulation sub-system also for other node-types than `socket`.
    The `rtp` node-type will support it now as well.
+ - Improve readabilty of log output
 
 ### Added
 

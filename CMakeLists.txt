@@ -109,9 +109,9 @@ pkg_check_modules(NANOMSG IMPORTED_TARGET nanomsg)
 if(NOT NANOMSG_FOUND)
     pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg>=1.0.0)
 endif()
-pkg_check_modules(RE IMPORTED_TARGET re)
+pkg_check_modules(RE IMPORTED_TARGET re>=0.5.6)
 if(NOT RE_FOUND)
-    pkg_check_modules(RE IMPORTED_TARGET libre>=0.5.9)
+    pkg_check_modules(RE IMPORTED_TARGET libre>=0.5.6)
 endif()
 
 # Build options
