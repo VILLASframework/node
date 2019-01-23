@@ -23,7 +23,6 @@
 #include <list>
 #include <algorithm>
 
-#include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/syslog_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
 
@@ -36,31 +35,27 @@ using namespace villas;
 Log villas::logging;
 
 Log::Log(Level lvl) :
-	level(lvl)
-{
-	logger = logging.get("log");
-}
-
-void Log::init()
+	level(lvl),
+	pattern("%H:%M:%S %^%l%$ %n: %v")
 {
 	char *p = getenv("VILLAS_LOG_PREFIX");
 	if (p)
 		prefix = p;
 
-	setLevel(level);
-	setPattern("%H:%M:%S %^%l%$ %n: %v");
-
 	sinks = std::make_shared<DistSink::element_type>();
 
+	setLevel(level);
+	setPattern(pattern);
+
 	// Default sink
-	auto sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
+	sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
 
 	sinks->add_sink(sink);
 }
 
 int Log::getWidth()
 {
-	int width = Terminal::getCols() - 25;
+	int width = Terminal::getCols() - 50;
 
 	if (!prefix.empty())
 		width -= prefix.length();
@@ -72,11 +67,8 @@ Logger Log::get(const std::string &name)
 {
 	Logger logger = spdlog::get(name);
 
-	if (not sinks)
-		init();
-
 	if (not logger) {
-		logger = std::make_shared<Logger::element_type>(name, sinks);
+		logger = std::make_shared<Logger::element_type>(name, sink);
 
 		logger->set_level(level);
 		logger->set_pattern(prefix + pattern);
@@ -154,6 +146,7 @@ void Log::setPattern(const std::string &pat)
 	pattern = pat;
 
 	spdlog::set_pattern(pattern, spdlog::pattern_time_type::utc);
+	//sinks.set_pattern(pattern);
 }
 
 void Log::setLevel(Level lvl)
@@ -161,6 +154,7 @@ void Log::setLevel(Level lvl)
 	level = lvl;
 
 	spdlog::set_level(lvl);
+	//sinks.set_level(lvl);
 }
 
 void Log::setLevel(const std::string &lvl)

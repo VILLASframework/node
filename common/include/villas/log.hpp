@@ -29,6 +29,7 @@
 
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/dist_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/fmt/ostr.h>
 
 #include <jansson.h>
@@ -48,18 +49,17 @@ class Log {
 
 public:
 	using Level = spdlog::level::level_enum;
+	using DefaultSink = std::shared_ptr<spdlog::sinks::stderr_color_sink_mt>;
 	using DistSink = std::shared_ptr<spdlog::sinks::dist_sink_mt>;
 
 protected:
-	Logger logger;
 	DistSink sinks;
+	DefaultSink sink;
 
 	Level level;
 
 	std::string pattern;		/**< Logging format. */
 	std::string prefix;		/**< Prefix each line with this string. */
-
-	void init();
 
 public:
 
