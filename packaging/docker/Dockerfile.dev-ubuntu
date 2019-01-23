@@ -84,21 +84,21 @@ RUN apt-get update && apt-get install -y \
 RUN cd /tmp && \
 	git clone --recursive https://github.com/Snaipe/Criterion && \
 	mkdir -p Criterion/build && cd Criterion/build && \
-	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make -j$(nproc) install && \
 	rm -rf /tmp/*
 
 # Build & Install libwebsockets
 RUN cd /tmp && \
 	git clone -b v3.1-stable https://github.com/warmcat/libwebsockets && \
 	mkdir -p libwebsockets/build && cd libwebsockets/build && \
-	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make -j$(nproc) install && \
 	rm -rf /tmp/*
 
 # Build & Install libiec61850
 RUN cd /tmp && \
 	git clone -b v1.3.1 https://github.com/mz-automation/libiec61850 && \
 	mkdir -p libiec61850/build && cd libiec61850/build && \
-	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make -j$(nproc) install && \
 	rm -rf /tmp/*
 
 # Expose ports for HTTP and WebSocket frontend
