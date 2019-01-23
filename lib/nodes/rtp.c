@@ -96,6 +96,21 @@ static int rtp_aimd(struct node *n, double loss_frac)
 	return 0;
 }
 
+int rtp_init(struct node *n)
+{
+	struct rtp *r = (struct rtp *) n->_vd;
+
+	/* Default values */
+	r->rate = 1;
+
+	r->aimd.a = 10;
+	r->aimd.b = 0.5;
+	r->aimd.last_rate = 1;
+
+
+	return 0;
+}
+
 int rtp_reverse(struct node *n)
 {
 	struct rtp *r = (struct rtp *) n->_vd;
@@ -123,11 +138,6 @@ int rtp_parse(struct node *n, json_t *cfg)
 
 	json_error_t err;
 	json_t *json_rtcp = NULL, *json_aimd = NULL;
-
-	/* Default values */
-	r->aimd.a = 10;
-	r->aimd.b = 0.5;
-	r->aimd.last_rate = 1;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: f, s?: o, s?: o, s: { s: s }, s: { s: s } }",
 		"format", &format,
@@ -568,6 +578,7 @@ static struct plugin p = {
 		.size		= sizeof(struct rtp),
 		.type.start	= rtp_type_start,
 		.type.stop	= rtp_type_stop,
+		.init		= rtp_init,
 		.reverse	= rtp_reverse,
 		.parse		= rtp_parse,
 		.print		= rtp_print,
