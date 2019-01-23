@@ -250,6 +250,7 @@ Test(queue, single_threaded, .init = init_memory)
 	p.iter_count = 1 << 8;
 	p.queue_size = 1 << 10;
 	p.start = 1; /* we start immeadiatly */
+	p.queue.state = ATOMIC_VAR_INIT(STATE_DESTROYED);
 
 	ret = queue_init(&p.queue, p.queue_size, &memory_heap);
 	cr_assert_eq(ret, 0, "Failed to create queue");
@@ -318,6 +319,7 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 	pthread_t threads[p->thread_count];
 
 	p->start = 0;
+	p->queue.state = ATOMIC_VAR_INIT(STATE_DESTROYED);
 
 	struct memory_type *mt = memory_type_lookup(p->memory_type);
 
@@ -364,7 +366,9 @@ ParameterizedTest(struct param *p, queue, multi_threaded, .timeout = 20, .init =
 Test(queue, init_destroy, .init = init_memory)
 {
 	int ret;
-	struct queue q = { .state = ATOMIC_VAR_INIT(STATE_DESTROYED) };
+	struct queue q;
+
+	q.state = ATOMIC_VAR_INIT(STATE_DESTROYED);
 
 	ret = queue_init(&q, 1024, &memory_heap);
 	cr_assert_eq(ret, 0); /* Should succeed */
