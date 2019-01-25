@@ -468,18 +468,19 @@ int rtp_type_stop()
 
 int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	int ret;
+	int ret = 0;
 	struct rtp *r = (struct rtp *) n->_vd;
 	size_t bytes;
 	char *buf;
 	struct mbuf *mb;
 
 	/* Get data from queue */
-	ret = queue_signalled_pull(&r->recv_queue, (void **) &mb);
-	if (ret <= 0) {
-		if (ret < 0)
+	while (ret == 0) {
+		ret = queue_signalled_pull(&r->recv_queue, (void **) &mb);
+		if (ret < 0) {
 			warning("Failed to pull from queue");
-		return ret;
+			return ret;
+		}
 	}
 
 	/* Read from mbuf */
