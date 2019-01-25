@@ -2,6 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Marvin Klimke <marvin.klimke@rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
@@ -42,7 +43,7 @@
 extern "C" {
 #endif
 
-/** The maximum length of a packet which contains stuct rtp. */
+/** The maximum length of a packet which contains rtp data. */
 #define RTP_INITIAL_BUFFER_LEN 1500
 
 /* Forward declarations */

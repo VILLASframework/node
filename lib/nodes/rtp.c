@@ -52,7 +52,7 @@
 
 static pthread_t re_pthread;
 
-/* Forward declartions */
+/* Forward declarations */
 static struct plugin p;
 
 static int rtp_set_rate(struct node *n, double rate)
@@ -62,7 +62,6 @@ static int rtp_set_rate(struct node *n, double rate)
 	switch (r->rtcp.throttle_mode) {
 		case RTCP_THROTTLE_HOOK_LIMIT_RATE:
 			limit_rate_set_rate(r->rtcp.throttle_hook, rate);
-
 			break;
 
 		case RTCP_THROTTLE_HOOK_DECIMATE:
@@ -281,27 +280,34 @@ static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, stru
 	struct node *n = (struct node *) arg;
 	struct rtp *r = (struct rtp *) n->_vd;
 
-	if (queue_signalled_push(&r->recv_queue, (void *) mbuf_alloc_ref(mb)) != 1)
-		warning("Failed to push to queue");
-
-	/* source, header not yet used */
+	/* source, header not used */
 	(void) src;
 	(void) hdr;
+
+	if (queue_signalled_push(&r->recv_queue, (void *) mbuf_alloc_ref(mb)) != 1)
+		warning("Failed to push to queue");
 }
 
 static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 {
 	struct node *n = (struct node *) arg;
-	//struct rtp *r = (struct rtp *) n->_vd;
 
+	/* source not used */
 	(void)src;
 
 	printf("rtcp: recv %s\n", rtcp_type_name(msg->hdr.pt));
 
-	/** @todo: parse receive report */
-	double loss_frac = 0;
+	if (msg->hdr.pt == RTCP_SR) {
+		if(msg->hdr.count > 0) {
+			const struct rtcp_rr *rr = &msg->r.sr.rrv[0];
+			printf("fraction lost = %d\n", rr->fraction);
+			rtp_aimd(n, rr->fraction);
+		} else {
+			warning("Received RTCP sender report with zero reception reports");
+		}
+	}
 
-	rtp_aimd(n, loss_frac);
+	/** @todo: parse receive report */
 }
 
 int rtp_start(struct node *n)
@@ -504,7 +510,8 @@ int rtp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	buf = alloc(buflen);
 	if (!buf) {
 		warning("Error allocating buffer space");
-		return -1;
+		cnt = -1;
+		goto out1;
 	}
 
 retry:	cnt = io_sprint(&r->io, buf, buflen, &wbytes, smps, cnt);
