@@ -40,6 +40,9 @@ VECTORIZE="1"
 
 cat > ${CONFIG_FILE} << EOF
 {
+	"logging" : {
+		"level" : "debug"
+	},
 	"nodes" : {
 		"node1" : {
 			"type" : "rtp",

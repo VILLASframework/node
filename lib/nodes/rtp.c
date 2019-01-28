@@ -75,6 +75,8 @@ static int rtp_set_rate(struct node *n, double rate)
 			return -1;
 	}
 
+	debug(5, "Set rate limiting for node %s to %f", node_name(n), rate);
+
 	return 0;
 }
 
@@ -89,8 +91,6 @@ static int rtp_aimd(struct node *n, double loss_frac)
 		rate = r->aimd.last_rate + r->aimd.a;
 	else
 		rate = r->aimd.last_rate * r->aimd.b;
-
-	debug(5, "Set rate limiting for node %s to %f", node_name(n), rate);
 
 	r->aimd.last_rate = rate;
 
@@ -301,12 +301,12 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 	/* source not used */
 	(void) src;
 
-	debug(5, "rtcp: recv %s\n", rtcp_type_name(msg->hdr.pt));
+	debug(5, "rtcp: recv %s", rtcp_type_name(msg->hdr.pt));
 
 	if (msg->hdr.pt == RTCP_SR) {
 		if(msg->hdr.count > 0) {
 			const struct rtcp_rr *rr = &msg->r.sr.rrv[0];
-			debug(5, "rtp: fraction lost = %d\n", rr->fraction);
+			debug(5, "rtp: fraction lost = %d", rr->fraction);
 			rtp_aimd(n, rr->fraction);
 		}
 		else
