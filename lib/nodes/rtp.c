@@ -277,6 +277,7 @@ char * rtp_print(struct node *n)
 
 static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, struct mbuf *mb, void *arg)
 {
+	int ret;
 	struct node *n = (struct node *) arg;
 	struct rtp *r = (struct rtp *) n->_vd;
 
@@ -284,8 +285,13 @@ static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, stru
 	(void) src;
 	(void) hdr;
 
-	if (queue_signalled_push(&r->recv_queue, (void *) mbuf_alloc_ref(mb)) != 1)
+	void *d = mem_ref((void *) mb);
+
+	ret = queue_signalled_push(&r->recv_queue, d);
+	if (ret != 1) {
 		warning("Failed to push to queue");
+		mem_deref(d);
+	}
 }
 
 static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
@@ -293,18 +299,18 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 	struct node *n = (struct node *) arg;
 
 	/* source not used */
-	(void)src;
+	(void) src;
 
-	printf("rtcp: recv %s\n", rtcp_type_name(msg->hdr.pt));
+	debug(5, "rtcp: recv %s\n", rtcp_type_name(msg->hdr.pt));
 
 	if (msg->hdr.pt == RTCP_SR) {
 		if(msg->hdr.count > 0) {
 			const struct rtcp_rr *rr = &msg->r.sr.rrv[0];
-			printf("fraction lost = %d\n", rr->fraction);
+			debug(5, "rtp: fraction lost = %d\n", rr->fraction);
 			rtp_aimd(n, rr->fraction);
-		} else {
-			warning("Received RTCP sender report with zero reception reports");
 		}
+		else
+			warning("Received RTCP sender report with zero reception reports");
 	}
 
 	/** @todo: parse receive report */
@@ -479,7 +485,7 @@ int rtp_type_stop()
 
 int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	int ret = 0;
+	int ret;
 	struct rtp *r = (struct rtp *) n->_vd;
 	struct mbuf *mb;
 
@@ -491,9 +497,9 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	}
 
 	/* Unpack data */
-	ret = io_sscan(&r->io, (char *) r->mb->buf + r->mb->pos, mbuf_get_left(mb), NULL, smps, cnt);
-	if (ret < 0)
-		warning("Received invalid packet from node %s: reason=%d", node_name(n), ret);
+	ret = io_sscan(&r->io, (char *) mb->buf + mb->pos, mbuf_get_left(mb), NULL, smps, cnt);
+
+	mem_deref(mb);
 
 	return ret;
 }
@@ -523,6 +529,8 @@ retry:	mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);
 	}
 	else
 		mbuf_set_end(r->send_mb, r->send_mb->pos + wbytes);
+
+	mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);
 
 	/* Send dataset */
 	ret = rtp_send(r->rs, &r->out.saddr_rtp, false, false, RTP_PACKET_TYPE, ts, r->send_mb);
