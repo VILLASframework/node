@@ -321,7 +321,7 @@ int rtp_start(struct node *n)
 	int ret;
 	struct rtp *r = (struct rtp *) n->_vd;
 
-	/* Initialize Queue */
+	/* Initialize queue */
 	ret = queue_signalled_init(&r->recv_queue, 1024, &memory_heap, 0);
 	if (ret)
 		return ret;
