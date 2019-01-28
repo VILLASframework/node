@@ -326,11 +326,11 @@ int rtp_start(struct node *n)
 		return ret;
 
 	/* Initialize memory buffer for sending */
-	r->mb = mbuf_alloc(RTP_INITIAL_BUFFER_LEN + 12);
-	if (!r->mb)
+	r->send_mb = mbuf_alloc(RTP_INITIAL_BUFFER_LEN);
+	if (!r->send_mb)
 		return -1;
 
-	ret = mbuf_fill(r->mb, 0, 12);
+	ret = mbuf_fill(r->send_mb, 0, RTP_HEADER_SIZE);
 	if (ret)
 		return -1;
 
@@ -399,7 +399,7 @@ int rtp_stop(struct node *n)
 	if (ret)
 		warning("Problem destroying queue");
 
-	mem_deref(r->mb);
+	mem_deref(r->send_mb);
 
 	return io_destroy(&r->io);
 }
@@ -508,24 +508,24 @@ int rtp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 
 	uint32_t ts = (uint32_t) time(NULL);
 
-retry:	mbuf_set_pos(r->mb, 12);
-	avail = mbuf_get_space(r->mb);
-	cnt = io_sprint(&r->io, (char *) r->mb->buf + r->mb->pos, avail, &wbytes, smps, cnt);
+retry:	mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);
+	avail = mbuf_get_space(r->send_mb);
+	cnt = io_sprint(&r->io, (char *) r->send_mb->buf + r->send_mb->pos, avail, &wbytes, smps, cnt);
 	if (cnt < 0)
 		return -1;
 
 	if (wbytes > avail) {
-		ret = mbuf_resize(r->mb, wbytes + 12);
+		ret = mbuf_resize(r->send_mb, wbytes + RTP_HEADER_SIZE);
 		if (!ret)
 			return -1;
 
 		goto retry;
 	}
 	else
-		mbuf_set_end(r->mb, r->mb->pos + wbytes);
+		mbuf_set_end(r->send_mb, r->send_mb->pos + wbytes);
 
 	/* Send dataset */
-	ret = rtp_send(r->rs, &r->out.saddr_rtp, false, false, 21, ts, r->mb);
+	ret = rtp_send(r->rs, &r->out.saddr_rtp, false, false, RTP_PACKET_TYPE, ts, r->send_mb);
 	if (ret) {
 		warning("Error from rtp_send, reason: %d", ret);
 		cnt = ret;

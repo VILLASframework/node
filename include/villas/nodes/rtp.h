@@ -45,6 +45,7 @@ extern "C" {
 
 /** The maximum length of a packet which contains rtp data. */
 #define RTP_INITIAL_BUFFER_LEN 1500
+#define RTP_PACKET_TYPE 21
 
 /* Forward declarations */
 struct format_type;
@@ -59,8 +60,6 @@ struct rtp {
 
 	struct format_type *format;
 	struct io io;
-
-	struct mbuf *mb;
 
 	double rate;			/**< Sample rate of source */
 
@@ -88,6 +87,7 @@ struct rtp {
 	} aimd;			/** AIMD state */
 
 	struct queue_signalled recv_queue;
+	struct mbuf *send_mb;
 };
 
 /** @see node_type::print */
