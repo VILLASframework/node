@@ -72,7 +72,7 @@ static int decimate_process(struct hook *h, struct sample *smps[], unsigned *cnt
 
 	int i, ok;
 	for (i = 0, ok = 0; i < *cnt; i++) {
-		if (p->counter++ % p->ratio == 0) {
+		if (p->ratio && p->counter++ % p->ratio == 0) {
 			struct sample *tmp;
 
 			tmp = smps[ok];
