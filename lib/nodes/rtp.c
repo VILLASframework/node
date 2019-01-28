@@ -163,9 +163,10 @@ int rtp_parse(struct node *n, json_t *cfg)
 
 	/* AIMD */
 	if (json_aimd) {
-		ret = json_unpack_ex(json_rtcp, &err, 0, "{ s?: F, s?: F }",
+		ret = json_unpack_ex(json_rtcp, &err, 0, "{ s?: F, s?: F, s?: F }",
 			"a", &r->aimd.a,
-			"b", &r->aimd.b
+			"b", &r->aimd.b,
+			"start_rate", &r->aimd.last_rate
 		);
 		if (ret)
 			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
