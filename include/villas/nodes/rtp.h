@@ -60,6 +60,8 @@ struct rtp {
 	struct format_type *format;
 	struct io io;
 
+	struct mbuf *mb;
+
 	double rate;			/**< Sample rate of source */
 
 	struct {
