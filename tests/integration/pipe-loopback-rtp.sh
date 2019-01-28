@@ -30,13 +30,11 @@ CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)
 OUTPUT_FILE=$(mktemp)
 
-NUM_SAMPLES=${NUM_SAMPLES:-100}
-
-# Generate test data
-villas-signal mixed -v 5 -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
-
 FORMAT="villas.binary"
 VECTORIZE="1"
+
+RATE=1000
+NUM_SAMPLES=$((10*${RATE}))
 
 cat > ${CONFIG_FILE} << EOF
 {
@@ -55,6 +53,12 @@ cat > ${CONFIG_FILE} << EOF
 				"throttle_mode" : "limit_rate"
 			},
 
+			"aimd" : {
+				"start_rate" : 1,
+				"a" : 10,
+				"b" : 0.5
+			},
+
 			"in" : {
 				"address" : "127.0.0.1:12000",
 
@@ -71,7 +75,8 @@ cat > ${CONFIG_FILE} << EOF
 }
 EOF
 
-villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
+villas-signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
+villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE}
 
 # Compare data
 villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
