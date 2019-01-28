@@ -324,10 +324,7 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 			warning("Received RTCP sender report with zero reception reports");
 	}
 
-
 	r->rtcp.num_rrs++;
-
-	/** @todo: parse receive report */
 }
 
 int rtp_start(struct node *n)
