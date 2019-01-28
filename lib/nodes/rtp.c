@@ -481,8 +481,6 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 {
 	int ret = 0;
 	struct rtp *r = (struct rtp *) n->_vd;
-	size_t bytes;
-	char *buf;
 	struct mbuf *mb;
 
 	/* Get data from queue */
@@ -492,17 +490,11 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 		return ret;
 	}
 
-	/* Read from mbuf */
-	bytes = mbuf_get_left(mb);
-	buf = (char *) alloc(bytes);
-	mbuf_read_mem(mb, (uint8_t *) buf, bytes);
-
 	/* Unpack data */
-	ret = io_sscan(&r->io, buf, bytes, NULL, smps, cnt);
+	ret = io_sscan(&r->io, (char *) r->mb->buf + r->mb->pos, mbuf_get_left(mb), NULL, smps, cnt);
 	if (ret < 0)
 		warning("Received invalid packet from node %s: reason=%d", node_name(n), ret);
 
-	free(buf);
 	return ret;
 }
 
@@ -518,7 +510,7 @@ int rtp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 
 retry:	mbuf_set_pos(r->mb, 12);
 	avail = mbuf_get_space(r->mb);
-	cnt = io_sprint(&r->io, (char *) r->mb->buf, avail, &wbytes, smps, cnt);
+	cnt = io_sprint(&r->io, (char *) r->mb->buf + r->mb->pos, avail, &wbytes, smps, cnt);
 	if (cnt < 0)
 		return -1;
 
