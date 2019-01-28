@@ -112,6 +112,7 @@ int rtp_init(struct node *n)
 	r->aimd.b = 0.5;
 	r->aimd.last_rate = 100;
 
+	r->rtcp.enabled = false;
 	r->rtcp.throttle_mode = RTCP_THROTTLE_DISABLED;
 
 	return 0;
@@ -173,7 +174,10 @@ int rtp_parse(struct node *n, json_t *cfg)
 		const char *mode = "aimd";
 		const char *throttle_mode = "decimate";
 
-		ret = json_unpack_ex(json_rtcp, &err, 0, "{ s?: b, s?: s }",
+		/* Enable if RTCP section is available */
+		r->rtcp.enabled = 1;
+
+		ret = json_unpack_ex(json_rtcp, &err, 0, "{ s?: b, s?: s, s?: s }",
 			"enabled", &r->rtcp.enabled,
 			"mode", &mode,
 			"throttle_mode", &throttle_mode

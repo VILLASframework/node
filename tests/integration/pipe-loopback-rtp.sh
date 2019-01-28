@@ -50,6 +50,11 @@ cat > ${CONFIG_FILE} << EOF
 			"format" : "${FORMAT}",
 			"vectorize" : ${VECTORIZE},
 
+			"rtcp" : {
+				"enabled" : true,
+				"throttle_mode" : "limit_rate"
+			},
+
 			"in" : {
 				"address" : "127.0.0.1:12000",
 
