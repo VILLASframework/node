@@ -110,7 +110,7 @@ int rtp_init(struct node *n)
 
 	r->aimd.a = 10;
 	r->aimd.b = 0.5;
-	r->aimd.last_rate = 1;
+	r->aimd.last_rate = 100;
 
 	r->rtcp.throttle_mode = RTCP_THROTTLE_DISABLED;
 
