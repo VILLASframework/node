@@ -587,7 +587,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 
 int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	int sent, nsent = 0;
+	int tosend, sent, nsent = 0;
 
 	assert(n->state == STATE_STARTED || n->state == STATE_CONNECTED);
 	assert(node_type(n)->write);
@@ -602,9 +602,14 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	/* Send in parts if vector not supported */
 	if (node_type(n)->vectorize > 0 && node_type(n)->vectorize < cnt) {
 		while (cnt - nsent > 0) {
-			sent = node_type(n)->write(n, &smps[nsent], MIN(cnt - nsent, node_type(n)->vectorize), release);
-			if (sent < 0)
+			tosend = MIN(cnt - nsent, node_type(n)->vectorize);
+			sent = node_type(n)->write(n, &smps[nsent], tosend, release);
+			if (sent < 0) {
+				warning("Failed to send samples to node %s: reason=%d", node_name(n), sent);
 				return sent;
+			}
+			else if (sent < tosend)
+				warning("Failed to send %d out of %d samples to node %s", tosend-sent, tosend, node_name(n));
 
 			nsent += sent;
 			debug(LOG_NODE | 5, "Sent %u samples to node %s", sent, node_name(n));
@@ -612,8 +617,13 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	}
 	else {
 		nsent = node_type(n)->write(n, smps, cnt, release);
-		if (nsent < 0)
+		if (nsent < 0) {
+			warning("Failed to send samples to node %s: reason=%d", node_name(n), nsent);
 			return nsent;
+		}
+		else if (nsent < cnt)
+			warning("Failed to send %d out of %d samples to node %s", cnt-nsent, cnt, node_name(n));
+
 
 		debug(LOG_NODE | 5, "Sent %u samples to node %s", nsent, node_name(n));
 	}
