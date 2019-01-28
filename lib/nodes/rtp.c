@@ -258,12 +258,15 @@ char * rtp_print(struct node *n)
 		switch (r->rtcp.throttle_mode) {
 			case RTCP_THROTTLE_HOOK_DECIMATE:
 				throttle_mode = "decimate";
+				break;
 
 			case RTCP_THROTTLE_HOOK_LIMIT_RATE:
 				throttle_mode = "limit_rate";
+				break;
 
 			case RTCP_THROTTLE_DISABLED:
 				throttle_mode = "disabled";
+				break;
 		}
 
 		strcatf(&buf, ", rtcp.mode=%s, rtcp.throttle_mode=%s", mode, throttle_mode);
