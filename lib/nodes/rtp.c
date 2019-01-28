@@ -98,6 +98,8 @@ static int rtp_aimd(struct node *n, double loss_frac)
 	if (ret)
 		return ret;
 
+	fprintf(r->aimd.log, "%d\t%f\t%f\n", r->rtcp.num_rrs, loss_frac, rate);
+
 	return 0;
 }
 
@@ -304,6 +306,7 @@ static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, stru
 static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 {
 	struct node *n = (struct node *) arg;
+	struct rtp *r = (struct rtp *) n->_vd;
 
 	/* source not used */
 	(void) src;
@@ -319,6 +322,9 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 		else
 			warning("Received RTCP sender report with zero reception reports");
 	}
+
+
+	r->rtcp.num_rrs++;
 
 	/** @todo: parse receive report */
 }
@@ -391,8 +397,29 @@ int rtp_start(struct node *n)
 	ret = rtp_listen(&r->rs, IPPROTO_UDP, &r->in.saddr_rtp, port, port+1, r->rtcp.enabled, rtp_handler, rtcp_handler, n);
 
 	/* Start RTCP session */
-	if (r->rtcp.enabled)
+	if (r->rtcp.enabled) {
+		r->rtcp.num_rrs = 0;
+
 		rtcp_start(r->rs, node_name(n), &r->out.saddr_rtcp);
+
+		if (r->rtcp.mode == RTCP_MODE_AIMD) {
+			char date[32], fn[128];
+
+			time_t ts = time(NULL);
+			struct tm tm;
+
+			/* Convert time */
+			gmtime_r(&ts, &tm);
+			strftime(date, sizeof(date), "%Y_%m_%d_%s", &tm);
+			snprintf(fn, sizeof(fn), "aimd-rates-%s-%s.log", node_name_short(n), date);
+
+			r->aimd.log = fopen(fn, "w+");
+			if (!r->aimd.log)
+				return -1;
+
+			fprintf(r->aimd.log, "# cnt\tfrac_loss\trate\n");
+		}
+	}
 
 	return ret;
 }
@@ -413,6 +440,12 @@ int rtp_stop(struct node *n)
 		warning("Problem destroying queue");
 
 	mem_deref(r->send_mb);
+
+	if (r->rtcp.enabled && r->rtcp.mode == RTCP_MODE_AIMD) {
+		ret = fclose(r->aimd.log);
+		if (ret)
+			return ret;
+	}
 
 	return io_destroy(&r->io);
 }

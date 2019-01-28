@@ -66,6 +66,8 @@ struct rtp {
 	struct {
 		int enabled;
 
+		int num_rrs;
+
 		enum {
 			RTCP_MODE_AIMD,
 		} mode;
@@ -84,6 +86,8 @@ struct rtp {
 		double b;
 
 		double last_rate;
+
+		FILE *log;
 	} aimd;			/** AIMD state */
 
 	struct queue_signalled recv_queue;
