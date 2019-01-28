@@ -475,12 +475,10 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	struct mbuf *mb;
 
 	/* Get data from queue */
-	while (ret == 0) {
-		ret = queue_signalled_pull(&r->recv_queue, (void **) &mb);
-		if (ret < 0) {
-			warning("Failed to pull from queue");
-			return ret;
-		}
+	ret = queue_signalled_pull(&r->recv_queue, (void **) &mb);
+	if (ret < 0) {
+		warning("Failed to pull from queue");
+		return ret;
 	}
 
 	/* Read from mbuf */
