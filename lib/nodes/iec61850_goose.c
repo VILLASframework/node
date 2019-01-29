@@ -79,7 +79,7 @@ int iec61850_goose_write(struct node *n, struct sample *smps[], unsigned cnt, un
 
 static struct plugin p = {
 	.name		= "iec61850-8-1",
-	.description	= "IEC 61850-8-1 (GOOSE)",
+	.description	= "IEC 61850-8-1 GOOSE (libiec61850)",
 	.type		= PLUGIN_TYPE_NODE,
 	.node		= {
 		.vectorize	= 0,

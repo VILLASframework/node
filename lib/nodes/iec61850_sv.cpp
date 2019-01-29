@@ -483,7 +483,7 @@ static void register_plugin() {
 		vlist_init(&plugins);
 
 	p.name			= "iec61850-9-2";
-	p.description		= "IEC 61850-9-2 (Sampled Values)";
+	p.description		= "IEC 61850-9-2 Sampled Values (libiec61850)",
 	p.type			= PluginType::NODE;
 	p.node.instances.state	= State::DESTROYED;
 	p.node.vectorize	= 0;
