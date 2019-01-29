@@ -645,16 +645,19 @@ char * node_name_long(struct node *n)
 		if (node_type(n)->print) {
 			struct node_type *vt = node_type(n);
 
-			strcatf(&n->_name_long, "%s: #in.signals=%zu, #in.hooks=%zu, in.vectorize=%d, #out.hooks=%zu, out.vectorize=%d, out.netem=%s",
+			strcatf(&n->_name_long, "%s: #in.signals=%zu, #in.hooks=%zu, in.vectorize=%d, #out.hooks=%zu, out.vectorize=%d",
 				node_name(n),
 				vlist_length(&n->signals),
 				vlist_length(&n->in.hooks), n->in.vectorize,
-				vlist_length(&n->out.hooks), n->out.vectorize,
-				n->tc_qdisc ? "yes" : "no"
+				vlist_length(&n->out.hooks), n->out.vectorize
 			);
+
+#ifdef WITH_NETEM
+			strcatf(&n->_name_long, ", out.netem=%s", n->tc_qdisc ? "yes" : "no");
 
 			if (n->tc_qdisc)
 				strcatf(&n->_name_long, ", mark=%d", n->mark);
+#endif /* WITH_NETEM */
 
 			/* Append node-type specific details */
 			char *name_long = vt->print(n);

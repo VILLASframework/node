@@ -287,7 +287,7 @@ enum signal_type sample_format(const struct sample *s, unsigned idx)
 
 void sample_dump(struct sample *s)
 {
-	debug(5, "Sample: sequence=%zu, length=%d, capacity=%d, flags=%#x, signals=%p, #signals=%zu, "
+	debug(5, "Sample: sequence=%llu, length=%d, capacity=%d, flags=%#x, signals=%p, #signals=%zu, "
 		"refcnt=%d, pool_off=%zd",
 		s->sequence, s->length, s->capacity, s->flags, s->signals,
 		s->signals ? vlist_length(s->signals) : 0, atomic_load(&s->refcnt), s->pool_off);
