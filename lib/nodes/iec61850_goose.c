@@ -1,7 +1,7 @@
 /** Node type: IEC 61850-8-1 (GOOSE)
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
- * @copyright 2017, Institute for Automation of Complex Power Systems, EONERC
+ * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
  * VILLASnode
@@ -22,10 +22,10 @@
 
 #include <string.h>
 
-#include "plugin.h"
-#include "nodes/iec61850_goose.h"
-#include "utils.h"
-#include "msg.h"
+#include <villas/plugin.h>
+#include <villas/nodes/iec61850_goose.h>
+#include <villas/utils.h>
+#include <villas/formats/msg.h>
 
 int iec61850_goose_reverse(struct node *n)
 {
@@ -34,7 +34,7 @@ int iec61850_goose_reverse(struct node *n)
 	return 0;
 }
 
-int iec61850_goose_parse(struct node *n, config_setting_t *cfg)
+int iec61850_goose_parse(struct node *n, json_t *cfg)
 {
 	struct iec61850_goose *i __attribute__((unused)) = n->_vd;
 
@@ -63,20 +63,14 @@ int iec61850_goose_stop(struct node *n)
 	return 0;
 }
 
-int iec61850_goose_deinit()
-{
-
-	return 0;
-}
-
-int iec61850_goose_read(struct node *n, struct sample *smps[], unsigned cnt)
+int iec61850_goose_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct iec61850_goose *i __attribute__((unused)) = n->_vd;
 
 	return 0;
 }
 
-int iec61850_goose_write(struct node *n, struct sample *smps[], unsigned cnt)
+int iec61850_goose_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct iec61850_goose *i __attribute__((unused)) = n->_vd;
 
@@ -95,11 +89,10 @@ static struct plugin p = {
 		.print		= iec61850_goose_print,
 		.start		= iec61850_goose_start,
 		.stop		= iec61850_goose_stop,
-		.deinit		= iec61850_goose_deinit,
 		.read		= iec61850_goose_read,
-		.write		= iec61850_goose_write,
-		.instances	= LIST_INIT()
+		.write		= iec61850_goose_write
 	}
 };
 
 REGISTER_PLUGIN(&p)
+LIST_INIT_STATIC(&p.node.instances)

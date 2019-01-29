@@ -31,11 +31,11 @@
 
 #include <stdint.h>
 
-#include "node.h"
-#include "list.h"
+#include <villas/node.h>
+#include <villas/list.h>
 
 struct iec61850_goose {
-	
+
 };
 
 /** @} */
