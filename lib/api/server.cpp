@@ -28,7 +28,7 @@
 #include <exception>
 #include <algorithm>
 
-#if __GNUC__ <= 7
+#if __GNUC__ <= 7 && !defined(__clang__)
   #include <experimental/filesystem>
 #else
   #include <filesystem>
@@ -44,7 +44,7 @@
 using namespace villas;
 using namespace villas::node::api;
 
-#if __GNUC__ <= 7
+#if __GNUC__ <= 7 && !defined(__clang__)
   namespace fs = std::experimental::filesystem;
 #else
   namespace fs = std::filesystem;
