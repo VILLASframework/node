@@ -121,7 +121,7 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 		if (sig->type == SIGNAL_TYPE_AUTO) {
 
 			/* Find end of the current column */
-			next = strpbrk(ptr, (char[]) { io->separator, io->delimiter, 0 });
+			next = strpbrk(ptr, ((char[]) { io->separator, io->delimiter, 0 }));
 			if (next == NULL)
 				goto out;
 
