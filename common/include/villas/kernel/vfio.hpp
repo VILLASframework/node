@@ -21,6 +21,10 @@
 #define VFIO_PATH	"/dev/vfio/"
 #define VFIO_DEV	VFIO_PATH "vfio"
 
+#ifndef VFIO_NOIOMMU_IOMMU
+  #define VFIO_NOIOMMU_IOMMU 8
+#endif
+
 /* Forward declarations */
 struct pci_device;
 
