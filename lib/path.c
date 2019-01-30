@@ -116,11 +116,8 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 			? sample_clone(p->last_sample)
 			: sample_clone(muxed_smps[i-1]);
 
-		muxed_smps[i]->flags = 0;
-		if (p->original_sequence_no) {
+		if (p->original_sequence_no)
 			muxed_smps[i]->sequence = tomux_smps[i]->sequence;
-			muxed_smps[i]->flags |= tomux_smps[i]->flags & SAMPLE_HAS_SEQUENCE;
-		}
 		else {
 			muxed_smps[i]->sequence = p->last_sequence++;
 			muxed_smps[i]->flags |= SAMPLE_HAS_SEQUENCE;
