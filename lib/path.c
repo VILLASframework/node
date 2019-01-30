@@ -350,28 +350,28 @@ int path_init(struct path *p)
 
 int path_init_poll(struct path *p)
 {
-	int ret, nfds;
+	int fds[16], ret, n = 0, m;
 
-	nfds = vlist_length(&p->sources);
-	if (p->rate > 0)
-		nfds++;
-
-	p->reader.nfds = nfds;
-	p->reader.pfds = alloc(sizeof(struct pollfd) * p->reader.nfds);
+	p->reader.pfds = NULL;
+	p->reader.nfds = 0;
 
 	for (int i = 0; i < vlist_length(&p->sources); i++) {
 		struct path_source *ps = (struct path_source *) vlist_at(&p->sources, i);
 
-		int fds[16];
-		int num_fds = node_poll_fds(ps->node, fds);
+		m = node_poll_fds(ps->node, fds);
+		if (m < 0)
+			continue;
 
-		for (int i = 0; i < num_fds; i++) {
+		p->reader.nfds += m;
+		p->reader.pfds = realloc(p->reader.pfds, p->reader.nfds * sizeof(struct pollfd));
+
+		for (int i = 0; i < m; i++) {
 			if (fds[i] < 0)
 				error("Failed to get file descriptor for node %s", node_name(ps->node));
 
 			/* This slot is only used if it is not masked */
-			p->reader.pfds[i].events = POLLIN;
-			p->reader.pfds[i].fd = fds[i];
+			p->reader.pfds[n].events = POLLIN;
+			p->reader.pfds[n++].fd = fds[i];
 		}
 	}
 
@@ -381,9 +381,12 @@ int path_init_poll(struct path *p)
 		if (ret)
 			return ret;
 
-		p->reader.pfds[nfds-1].events = POLLIN;
-		p->reader.pfds[nfds-1].fd = task_fd(&p->timeout);
-		if (p->reader.pfds[nfds-1].fd < 0)
+		p->reader.nfds++;
+		p->reader.pfds = realloc(p->reader.pfds, p->reader.nfds * sizeof(struct pollfd));
+
+		p->reader.pfds[p->reader.nfds-1].events = POLLIN;
+		p->reader.pfds[p->reader.nfds-1].fd = task_fd(&p->timeout);
+		if (p->reader.pfds[p->reader.nfds-1].fd < 0)
 			error("Failed to get file descriptor for timer of path %s", path_name(p));
 	}
 
