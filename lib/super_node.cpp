@@ -53,8 +53,12 @@ SuperNode::SuperNode() :
 	affinity(0),
 	hugepages(DEFAULT_NR_HUGEPAGES),
 	stats(0),
+#ifdef WITH_API
 	api(this),
+#ifdef WITH_WEB
 	web(&api),
+#endif
+#endif
 	json(nullptr)
 {
 	nodes.state = STATE_DESTROYED;
@@ -470,9 +474,9 @@ void SuperNode::stopInterfaces()
 
 void SuperNode::stop()
 {
-	int ret;
 
 #ifdef WITH_HOOKS
+	int ret;
 	if (stats > 0) {
 		ret = task_destroy(&task);
 		if (ret)
@@ -586,7 +590,7 @@ extern "C" {
 
 		return ssn->getInterfaces();
 	}
-
+#ifdef WITH_WEB
 	struct web * super_node_get_web(struct super_node *sn)
 	{
 		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
@@ -594,7 +598,7 @@ extern "C" {
 
 		return reinterpret_cast<web *>(w);
 	}
-
+#endif
 	struct lws_context * web_get_context(struct web *w)
 	{
 		Web *ws = reinterpret_cast<Web *>(w);
