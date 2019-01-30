@@ -673,11 +673,32 @@ int path_check(struct path *p)
 	if (p->rate < 0)
 		error("Setting 'rate' of path %s must be a positive number.", path_name(p));
 
+	if (p->poll) {
+		if (p->rate <= 0) {
+			/* Check that all path sources provide a file descriptor for polling */
+			for (size_t i = 0; i < vlist_length(&p->sources); i++) {
+				struct path_source *ps = (struct path_source *) vlist_at(&p->sources, i);
+
+				if (!ps->node->_vt->poll_fds)
+					error("Node %s can not be used in polling mode with path %s", node_name(ps->node), path_name(p));
+			}
+		}
+	}
+	else {
+		/* Check that we do not need to multiplex between multiple sources when polling is disabled */
+		if (vlist_length(&p->sources) > 1)
+			error("Setting 'poll' must be active if the path has more than one source");
+
+		/* Check that we do not use the fixed rate feature when polling is disabled */
+		if (p->rate > 0)
+			error("Setting 'poll' must be activated when used together with setting 'rate'");
+	}
+
 	for (size_t i = 0; i < vlist_length(&p->sources); i++) {
 		struct path_source *ps = (struct path_source *) vlist_at(&p->sources, i);
 
 		if (!ps->node->_vt->read)
-			error("Source node %s is not supported as a source for path %s", node_name(ps->node), path_name(p));
+			error("Node %s is not supported as a source for path %s", node_name(ps->node), path_name(p));
 	}
 
 	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
@@ -712,7 +733,7 @@ int path_start(struct path *p)
 
 	mask = bitset_dump(&p->mask);
 
-	info("Starting path %s: #signals=%zu, mode=%s, poll=%s, mask=%s, rate=%.2f, enabled=%s, reversed=%s, queuelen=%d, #hooks=%zu, #sources=%zu, #destinations=%zu, #original_sequence_no=%s",
+	info("Starting path %s: #signals=%zu, mode=%s, poll=%s, mask=%s, rate=%.2f, enabled=%s, reversed=%s, queuelen=%d, #hooks=%zu, #sources=%zu, #destinations=%zu, original_sequence_no=%s",
 		path_name(p),
 		vlist_length(&p->signals),
 		mode,
