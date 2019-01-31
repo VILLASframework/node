@@ -25,17 +25,17 @@
 #include <villas/log.h>
 
 
-int iec61850_mms_parse_ids(json_t * mms_ids, struct list * domainIDs, struct list * itemIDs)
+int iec61850_mms_parse_ids(json_t * mms_ids, struct vlist * domainIDs, struct vlist * itemIDs)
 {
 	int ret = 0, totalsize = 0;
 	const char * domainID;
 	const char * itemID;
 
-	ret = list_init(domainIDs);
+	ret = vlist_init(domainIDs);
 	if (ret)
 		return ret;
 
-	ret = list_init(itemIDs);
+	ret = vlist_init(itemIDs);
 	if (ret)
 		return ret;
 
@@ -53,8 +53,8 @@ int iec61850_mms_parse_ids(json_t * mms_ids, struct list * domainIDs, struct lis
 				warn("Failed to parse configuration while reading domain and item ids");
 
 
-		list_push(domainIDs, (void *) domainID);
-		list_push(itemIDs, (void *) itemID);
+		vlist_push(domainIDs, (void *) domainID);
+		vlist_push(itemIDs, (void *) itemID);
 
 		totalsize++;
 	}
@@ -201,11 +201,11 @@ int iec61850_mms_read(struct node * n, struct sample * smps[], unsigned cnt, uns
 	const char * domainID;
 	const char * itemID;
 
-	for (size_t j = 0; j < list_length(&mms->in.iecTypeList); j++)
+	for (size_t j = 0; j < vlist_length(&mms->in.iecTypeList); j++)
 	{
 		// get MMS Value from server
-		domainID = (const char *) list_at(&mms->in.domain_ids, j);
-		itemID = (const char *) list_at(&mms->in.item_ids, j);
+		domainID = (const char *) vlist_at(&mms->in.domain_ids, j);
+		itemID = (const char *) vlist_at(&mms->in.item_ids, j);
 
 		mms_val = MmsConnection_readVariable(mms->conn, &error, domainID, itemID);
 
@@ -214,7 +214,7 @@ int iec61850_mms_read(struct node * n, struct sample * smps[], unsigned cnt, uns
 		}
 
 		// convert result according data type
-		struct iec61850_type_descriptor * td = (struct iec61850_type_descriptor *) list_at(&mms->in.iecTypeList, j);
+		struct iec61850_type_descriptor * td = (struct iec61850_type_descriptor *) vlist_at(&mms->in.iecTypeList, j);
 
 		switch (td->type) {
 				case IEC61850_TYPE_INT32:	smp->data[j].i = MmsValue_toInt32(mms_val); break;
@@ -283,4 +283,4 @@ static struct plugin p = {
 };
 
 REGISTER_PLUGIN(&p);
-LIST_INIT_STATIC(&p.node.instances);
+vlist_INIT_STATIC(&p.node.instances);
