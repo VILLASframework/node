@@ -263,7 +263,7 @@ int iec61850_mms_poll_fds(struct node *n, int fds[])
 
 
 static struct plugin p = {
-	.name		= "iec61850-8-1",
+	.name		= "iec61850-mms",
 	.description	= "IEC 61850-8-1 MMS (libiec61850)",
 	.type		= PLUGIN_TYPE_NODE,
 	.node		= {
