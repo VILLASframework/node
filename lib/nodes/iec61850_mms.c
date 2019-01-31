@@ -264,7 +264,7 @@ int iec61850_mms_fd(struct node * n)
 
 static struct plugin p = {
     .name           = "iec61850-8-1",
-    .description    = "IEC 61850-8-1 (MMS)",
+    .description    = "IEC 61850-8-1 MMS (libiec61850)",
     .type           = PLUGIN_TYPE_NODE,
     .node           = {
         .vectorize      = 0, /* unlimited */
