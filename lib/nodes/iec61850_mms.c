@@ -216,10 +216,22 @@ int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsig
 		struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&mms->in.iec_type_list, j);
 
 		switch (td->type) {
-			case IEC61850_TYPE_INT32:	smp->data[j].i = MmsValue_toInt32(mms_val); break;
-			case IEC61850_TYPE_INT32U:  smp->data[j].i = MmsValue_toUint32(mms_val); break;
-			case IEC61850_TYPE_FLOAT32: smp->data[j].f = MmsValue_toFloat(mms_val); break;
-			case IEC61850_TYPE_FLOAT64: smp->data[j].f = MmsValue_toDouble(mms_val); break;
+			case IEC61850_TYPE_INT32:
+				smp->data[j].i = MmsValue_toInt32(mms_val);
+				break;
+
+			case IEC61850_TYPE_INT32U:
+				smp->data[j].i = MmsValue_toUint32(mms_val);
+				break;
+
+			case IEC61850_TYPE_FLOAT32:
+				smp->data[j].f = MmsValue_toFloat(mms_val);
+				break;
+
+			case IEC61850_TYPE_FLOAT64:
+				smp->data[j].f = MmsValue_toDouble(mms_val);
+				break;
+
 			default: { }
 		}
 
