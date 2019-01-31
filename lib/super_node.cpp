@@ -620,8 +620,10 @@ extern "C" {
 		return ws->getState();
 	}
 
+#ifdef WITH_WEB
 	int web_callback_on_writable(struct web *w, struct lws *wsi)
 	{
 		return lws_callback_on_writable(wsi);
 	}
+#endif
 }
