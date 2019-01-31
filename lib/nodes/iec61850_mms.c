@@ -58,6 +58,7 @@ int iec61850_mms_parse_ids(json_t *mms_ids, struct vlist *domain_ids, struct vli
 
 		totalsize++;
 	}
+
 	return totalsize;
 }
 
@@ -81,13 +82,13 @@ int iec61850_mms_parse(struct node *n, json_t *cfg)
 		"in", &json_in,
 		"out", &json_out
 	);
+
 	mms->host = strdup(host);
 
 	if (ret)
 		jerror (&err, "Failed to parse configuration of node %s", node_name(n));
 
 	if (json_in) {
-
 		ret = json_unpack_ex(json_in, &err, 0, "{ s: o, s: o }",
 			"iec_types", &json_signals,
 			"mms_ids", &json_mms_ids
@@ -174,7 +175,9 @@ int iec61850_mms_start(struct node *n)
 int iec61850_mms_stop(struct node *n)
 {
 	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
+
 	MmsConnection_destroy(mms->conn); // doesn't have return value
+
 	return 0;
 }
 
@@ -236,7 +239,6 @@ int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsig
 int iec61850_mms_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 //	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
-
 
 	return 0;
 }
