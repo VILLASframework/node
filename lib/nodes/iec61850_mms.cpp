@@ -194,8 +194,10 @@ int iec61850_mms_stop(struct node *n)
 int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
+
+	assert(cnt == 1);
+
 	struct sample *smp = smps[0];
-	//struct timespec time;
 
 	// read value from MMS server
 	MmsError error;
@@ -216,7 +218,7 @@ int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsig
 		struct iec61850_mms_signal *sig = vlist_at(&mms->in.signals, j);
 
 		mms_val = MmsConnection_readVariable(mms->conn, &error, sig->domain_id, sig->item_id);
-		if (mms_val == NULL) {
+		if (!mms_val) {
 			warning("Reading MMS value from server failed");
 			continue;
 		}
