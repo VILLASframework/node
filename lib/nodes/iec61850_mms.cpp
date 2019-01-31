@@ -201,11 +201,13 @@ int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsig
 	MmsError error;
 	MmsValue *mms_val;
 
-	task_wait(&mms->task);
+	uint64_t ticks;
+
+	ticks = task_wait(&mms->task);
+	if (ticks > 1)
+		warning("Missed %" PRIu64 " step in node %s", node_name(n));
 
 	// TODO: timestamp von MMS server?
-	//time = time_now();
-
 
 	smp->flags = SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE;
 	smp->length = 0;
