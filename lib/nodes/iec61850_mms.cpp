@@ -216,8 +216,10 @@ int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsig
 		struct iec61850_mms_signal *sig = vlist_at(&mms->in.signals, j);
 
 		mms_val = MmsConnection_readVariable(mms->conn, &error, sig->domain_id, sig->item_id);
-		if (mms_val == NULL)
+		if (mms_val == NULL) {
 			warning("Reading MMS value from server failed");
+			continue;
+		}
 
 		// convert result according data type
 		switch (sig->type->type) {
