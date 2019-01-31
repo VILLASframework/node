@@ -310,8 +310,8 @@ int iec61850_mms_poll_fds(struct node *n, int fds[])
 
 
 static struct plugin p = {
-	.name		= "iec61850-mms",
-	.description	= "IEC 61850-8-1 MMS (libiec61850)",
+	.name		= "iec61850-mms-client",
+	.description	= "IEC 61850-8-1 MMS Client (libiec61850)",
 	.type		= PLUGIN_TYPE_NODE,
 	.node		= {
 		.vectorize	= 1, /* we can only read one sample at a time */
