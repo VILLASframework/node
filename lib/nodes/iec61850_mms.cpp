@@ -180,12 +180,10 @@ int iec61850_mms_start(struct node *n)
 	return 0;
 }
 
-// destroy connection to MMS server
+// stop connection to MMS server
 int iec61850_mms_stop(struct node *n)
 {
-	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
-
-	MmsConnection_destroy(mms->conn); // doesn't have return value
+//	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
 
 	return 0;
 }
