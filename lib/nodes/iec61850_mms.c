@@ -25,11 +25,11 @@
 #include <villas/log.h>
 
 
-int iec61850_mms_parse_ids(json_t * mms_ids, struct vlist * domainIDs, struct vlist * itemIDs)
+int iec61850_mms_parse_ids(json_t *mms_ids, struct vlist *domainIDs, struct vlist *itemIDs)
 {
 	int ret = 0, totalsize = 0;
-	const char * domainID;
-	const char * itemID;
+	const char *domainID;
+	const char *itemID;
 
 	ret = vlist_init(domainIDs);
 	if (ret)
@@ -40,7 +40,7 @@ int iec61850_mms_parse_ids(json_t * mms_ids, struct vlist * domainIDs, struct vl
 		return ret;
 
 	size_t i = 0;
-	json_t * mms_id;
+	json_t *mms_id;
 	json_error_t err;
 	json_array_foreach(mms_ids, i, mms_id) {
 
@@ -61,18 +61,18 @@ int iec61850_mms_parse_ids(json_t * mms_ids, struct vlist * domainIDs, struct vl
 	return totalsize;
 }
 
-int iec61850_mms_parse(struct node * n, json_t * cfg)
+int iec61850_mms_parse(struct node *n, json_t *cfg)
 {
 	int ret;
-	struct iec61850_mms * mms = (struct iec61850_mms *) n->_vd;
+	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
 
 	json_error_t err;
 
-	const char * host = NULL;
-	json_t * json_in = NULL;
-	json_t * json_out = NULL;
-	json_t * json_signals = NULL;
-	json_t * json_mms_ids = NULL;
+	const char *host = NULL;
+	json_t *json_in = NULL;
+	json_t *json_out = NULL;
+	json_t *json_signals = NULL;
+	json_t *json_mms_ids = NULL;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: i, s: i, s?: o, s?: o }",
 				"host", &host,
@@ -138,10 +138,10 @@ int iec61850_mms_parse(struct node * n, json_t * cfg)
 	return 0;
 }
 
-char * iec61850_mms_print(struct node * n)
+char *iec61850_mms_print(struct node *n)
 {
-	char * buf;
-	struct iec61850_mms * mms = (struct iec61850_mms *) n->_vd;
+	char *buf;
+	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
 
 	buf = strf("host = %s, port = %d, domainID = %s, itemID = %s", mms->host, mms->port, mms->domainID, mms->itemID);
 
@@ -149,9 +149,9 @@ char * iec61850_mms_print(struct node * n)
 }
 
 // create connection to MMS server
-int iec61850_mms_start(struct node * n)
+int iec61850_mms_start(struct node *n)
 {
-	struct iec61850_mms * mms = (struct iec61850_mms *) n->_vd;
+	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
 
 	mms->conn = MmsConnection_create();
 
@@ -171,23 +171,23 @@ int iec61850_mms_start(struct node * n)
 }
 
 // destroy connection to MMS server
-int iec61850_mms_stop(struct node * n)
+int iec61850_mms_stop(struct node *n)
 {
-	struct iec61850_mms * mms = (struct iec61850_mms *) n->_vd;
+	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
 	MmsConnection_destroy(mms->conn); // doesn't have return value
 	return 0;
 }
 
 // read from MMS Server
-int iec61850_mms_read(struct node * n, struct sample * smps[], unsigned cnt, unsigned * release)
+int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	struct iec61850_mms * mms = (struct iec61850_mms *) n->_vd;
-	struct sample * smp = smps[0];
+	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
+	struct sample *smp = smps[0];
 	//struct timespec time;
 
 	// read value from MMS server
 	MmsError error;
-	MmsValue * mms_val;
+	MmsValue *mms_val;
 
 	task_wait(&mms->task);
 
@@ -198,8 +198,8 @@ int iec61850_mms_read(struct node * n, struct sample * smps[], unsigned cnt, uns
 	smp->flags = SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE;
 	smp->length = 0;
 
-	const char * domainID;
-	const char * itemID;
+	const char *domainID;
+	const char *itemID;
 
 	for (size_t j = 0; j < vlist_length(&mms->in.iecTypeList); j++)
 	{
@@ -214,7 +214,7 @@ int iec61850_mms_read(struct node * n, struct sample * smps[], unsigned cnt, uns
 		}
 
 		// convert result according data type
-		struct iec61850_type_descriptor * td = (struct iec61850_type_descriptor *) vlist_at(&mms->in.iecTypeList, j);
+		struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&mms->in.iecTypeList, j);
 
 		switch (td->type) {
 				case IEC61850_TYPE_INT32:	smp->data[j].i = MmsValue_toInt32(mms_val); break;
@@ -233,17 +233,17 @@ int iec61850_mms_read(struct node * n, struct sample * smps[], unsigned cnt, uns
 }
 
 // TODO
-int iec61850_mms_write(struct node * n, struct sample * smps[], unsigned cnt, unsigned * release)
+int iec61850_mms_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-//	struct iec61850_mms * mms = (struct iec61850_mms *) n->_vd;
+//	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
 
 
 	return 0;
 }
 
-int iec61850_mms_destroy(struct node * n)
+int iec61850_mms_destroy(struct node *n)
 {
-	struct iec61850_mms * mms = (struct iec61850_mms *) n->_vd;
+	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
 
 	MmsConnection_destroy(mms->conn);
 
@@ -254,9 +254,9 @@ int iec61850_mms_destroy(struct node * n)
 	return 0;
 }
 
-int iec61850_mms_fd(struct node * n)
+int iec61850_mms_fd(struct node *n)
 {
-	struct iec61850_mms * mms = (struct iec61850_mms *) n->_vd;
+	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
 
 	return task_fd(&mms->task);
 }
