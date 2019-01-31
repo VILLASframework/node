@@ -50,7 +50,7 @@ int iec61850_mms_parse_ids(json_t *mms_ids, struct vlist *domain_ids, struct vli
 					);
 
 		if (ret)
-				warn("Failed to parse configuration while reading domain and item ids");
+			warning("Failed to parse configuration while reading domain and item ids");
 
 
 		vlist_push(domain_ids, (void *) domain_id);
@@ -67,9 +67,9 @@ int iec61850_mms_parse(struct node *n, json_t *cfg)
 	int ret;
 	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
 
-	json_error_t err;
-
 	const char *host = NULL;
+
+	json_error_t err;
 	json_t *json_in = NULL;
 	json_t *json_out = NULL;
 	json_t *json_signals = NULL;
@@ -207,7 +207,7 @@ int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsig
 		mms_val = MmsConnection_readVariable(mms->conn, &error, domain_id, item_id);
 
 		if (mms_val == NULL)
-			warn("Reading MMS value from server failed");
+			warning("Reading MMS value from server failed");
 
 		// convert result according data type
 		struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&mms->in.iec_type_list, j);
@@ -291,5 +291,5 @@ static struct plugin p = {
 	}
 };
 
-REGISTER_PLUGIN(&p);
-vlist_INIT_STATIC(&p.node.instances);
+REGISTER_PLUGIN(&p)
+LIST_INIT_STATIC(&p.node.instances)
