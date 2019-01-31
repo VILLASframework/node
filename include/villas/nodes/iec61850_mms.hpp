@@ -24,15 +24,21 @@
 
 #include <villas/queue_signalled.h>
 #include <libiec61850/mms_client_connection.h>
-#include <villas/node.h>
-#include <villas/pool.h>
-#include <villas/nodes/iec61850.h>
-#include <villas/sample.h>
-#include <villas/task.h>
+#include <villas/node.hpp>
+#include <villas/pool.hpp>
+#include <villas/nodes/iec61850.hpp>
+#include <villas/sample.hpp>
+#include <villas/task.hpp>
 
+struct iec61850_mms_signal {
+	const struct iec61850_type_descriptor *type;
+
+	char *domain_id;	/**< contains domainIDs for MMS values */
+	char *item_id;		/**< contains itemIDs for MMS values */
+};
 
 struct iec61850_mms {
-	struct task task;	/**< timer for periodic events */
+	Task task;		/**< timer for periodic events */
 	char *host;		/**< hostname / IP address of MMS Server */
 	int port;		/**< TCP port of MMS Server */
 
@@ -42,31 +48,17 @@ struct iec61850_mms {
 	MmsConnection conn;	/**< Connection instance to MMS Server */
 
 	struct {
-		struct vlist iec_type_list;	/**< mappings of type struct iec61850_type_descriptor */
-		struct vlist domain_ids;	/**< list of const char *, contains domainIDs for MMS values */
-		struct vlist item_ids;		/**< list of const char *, contains itemIDs for MMS values */
+		std::vector<struct iec61850_mms_signal> signals;
 
-		int totalsize;			/**< length of all lists: iecType, domainIDs, itemIDs */
+		int total_size;
 	} in;
 
 	struct {
 		bool is_test;
 		int testvalue;
 
-		struct vlist iec_type_list;	/**< mappings of type struct iec61850_type_descriptor */
-		struct vlist domain_ids;	/**< list of const char *, contains domainIDs for MMS values */
-		struct vlist item_ids;		/**< list of const char *, contains itemIDs for MMS values */
+		std::vector<struct iec61850_mms_signal> signals;
 
-		int totalsize;			/**< length of all lists: iecType, domainIDs, itemIDs */
+		int total_size;
 	} out;
 };
-
-/** Parse MMS configuration parameters
-  *
-  *@param mms_ids JSON object that contains pairs of domain and item IDs
-  *@param domainIDs pointer to list into which the domain IDs will be written
-  *@param itemIDs pointer to list into which the item IDs will be written
-  *
-  *@return length the lists
-  */
-int iec61850_mms_parse_ids(json_t mms_ids, struct vlist *domainIDs, struct vlist *itemIDs);

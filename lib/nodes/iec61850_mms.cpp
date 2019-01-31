@@ -20,46 +20,81 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/nodes/iec61850_mms.h>
-#include <villas/plugin.h>
-#include <villas/log.h>
+#include <villas/nodes/iec61850_mms.hpp>
+#include <villas/plugin.hpp>
+#include <villas/log.hpp>
 
-
-int iec61850_mms_parse_ids(json_t *mms_ids, struct vlist *domain_ids, struct vlist *item_ids)
+static int iec61850_mms_signal_destroy(struct iec61850_mms_signal *s)
 {
-	int ret = 0, totalsize = 0;
-	const char *domain_id;
-	const char *item_id;
+	free(s->domain_id);
+	free(s->item_id);
 
-	ret = vlist_init(domain_ids);
-	if (ret)
-		return ret;
+	return 0;
+}
 
-	ret = vlist_init(item_ids);
+static int iec61850_mms_parse_signal(json_t *json_signal, struct iec61850_mms_signal *mms_sig, struct signal *sig)
+{
+	int ret = 0;
+	const char *domain_id, *item_id;
+
+	json_error_t err;
+	ret = json_unpack_ex(json_signal, &err, 0, "{ s: s, s: s }",
+		"domain", &domain_id,
+		"item", &item_id
+	);
 	if (ret)
-		return ret;
+		warning("Failed to parse configuration while reading domain and item ids");
+
+	mms_sig->domain_id = strdup(domain_id);
+	mms_sig->item_id = strdup(item_id);
+	mms_sig->type = iec61850_parse_signal(json_signal, sig);
+	if (!sig->type)
+		return -1;
+
+	return 0;
+}
+
+/** Parse MMS configuration parameters
+  *
+  * @param mms_ids JSON object that contains pairs of domain and item IDs
+  * @param signals pointer to list of type struct iec61850_mms_signal
+  * @param node_signals pointer to list of type struct signal
+  *
+  * @return total size of data
+  */
+static int iec61850_mms_parse_signals(json_t *json_signals, struct vlist *signals, struct vlist *node_signals)
+{
+	int ret;
 
 	size_t i = 0;
-	json_t *mms_id;
-	json_error_t err;
-	json_array_foreach(mms_ids, i, mms_id) {
+	json_t *json_signal;
 
-		ret = json_unpack_ex(mms_id, &err, 0, "{s: s, s: s}",
-					"domain_ID", &domain_id,
-					"item_ID", &item_id
-					);
+	int total_size = 0;
 
-		if (ret)
-			warning("Failed to parse configuration while reading domain and item ids");
+	json_array_foreach(json_signals, i, json_signal) {
+		struct signal *sig;
+		struct iec61850_mms_signal *mms_sig;
 
+		sig = vlist_at(node_signals, i);
+		if (!sig)
+			return -1;
 
-		vlist_push(domain_ids, (void *) domain_id);
-		vlist_push(item_ids, (void *) item_id);
+		mms_sig = alloc(sizeof(struct iec61850_mms_signal));
+		if (!sig)
+			return -1;
 
-		totalsize++;
+		ret = iec61850_mms_parse_signal(json_signal, mms_sig, sig);
+		if (ret) {
+			free(sig);
+			return -2;
+		}
+
+		total_size += mms_sig->type->size;
+
+		vlist_push(signals, (void *) sig);
 	}
 
-	return totalsize;
+	return total_size;
 }
 
 int iec61850_mms_parse(struct node *n, json_t *cfg)
@@ -73,7 +108,6 @@ int iec61850_mms_parse(struct node *n, json_t *cfg)
 	json_t *json_in = NULL;
 	json_t *json_out = NULL;
 	json_t *json_signals = NULL;
-	json_t *json_mms_ids = NULL;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: i, s: i, s?: o, s?: o }",
 		"host", &host,
@@ -89,51 +123,29 @@ int iec61850_mms_parse(struct node *n, json_t *cfg)
 		jerror (&err, "Failed to parse configuration of node %s", node_name(n));
 
 	if (json_in) {
-		ret = json_unpack_ex(json_in, &err, 0, "{ s: o, s: o }",
-			"iec_types", &json_signals,
-			"mms_ids", &json_mms_ids
+		ret = json_unpack_ex(json_in, &err, 0, "{ s: o }",
+			"signals", &json_signals
 		);
 		if (ret)
 			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-		ret = iec61850_parse_signals(json_signals, &mms->in.iec_type_list, &n->signals);
+		ret = iec61850_mms_parse_signals(json_signals, &mms->in.signals, &n->signals);
 		if (ret <= 0)
 			error("Failed to parse setting 'signals' of node %s", node_name(n));
-
-		mms->in.totalsize = ret;
-
-		int length_mms_ids = iec61850_mms_parse_ids(json_mms_ids, &mms->in.domain_ids, &mms->in.item_ids);
-
-		int length_iec_types = mms->in.iec_type_list.length;
-		if (length_mms_ids == -1)
-			error("Configuration error in node '%s': json error while parsing", node_name(n));
-		else if (length_iec_types != length_mms_ids)  // length of the lists is not the same
-			error("Configuration error in node '%s': one set of 'mms_ids'(%d value(s)) should match one value of 'iecTypes'(%d value(s))", node_name(n), length_mms_ids, length_iec_types);
 	}
 
 	if (json_out) {
-		ret = json_unpack_ex(json_out, &err, 0, "{ s?: b, s?: i, s: o, s: o }",
+		ret = json_unpack_ex(json_out, &err, 0, "{ s?: b, s?: i, s: o }",
 			"test", &mms->out.is_test,
 			"testvalue", &mms->out.testvalue,
-			"iec_types", &json_signals,
-			"mms_ids", &json_mms_ids
+			"signals", &json_signals
 		);
 		if (ret)
 			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-		ret = iec61850_parse_signals(json_signals, &mms->out.iec_type_list, &n->signals);
+		ret = iec61850_mms_parse_signals(json_signals, &mms->out.signals, &n->signals);
 		if (ret <= 0)
 			error("Failed to parse setting 'iecList' of node %s", node_name(n));
-
-		mms->out.totalsize = ret;
-
-		int length_mms_ids = iec61850_mms_parse_ids(json_mms_ids, &mms->out.domain_ids, &mms->out.item_ids);
-
-		int length_iec_types = mms->out.iec_type_list.length;
-		if (length_mms_ids == -1)
-			error("Configuration error in node '%s': json error while parsing", node_name(n));
-		else if (length_iec_types != length_mms_ids)  // length of the lists is not the same
-			error("Configuration error in node '%s': one set of 'mms_ids'(%d value(s)) should match one value of 'iecTypes'(%d value(s))", node_name(n), length_mms_ids, length_iec_types);
 	}
 
 	return 0;
@@ -196,23 +208,15 @@ int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsig
 	smp->flags = SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE;
 	smp->length = 0;
 
-	const char *domain_id;
-	const char *item_id;
+	for (size_t j = 0; j < vlist_length(&mms->in.signals); j++) {
+		struct iec61850_mms_signal *sig = vlist_at(&mms->in.signals, j);
 
-	for (size_t j = 0; j < vlist_length(&mms->in.iec_type_list); j++) {
-		// get MMS Value from server
-		domain_id = (const char *) vlist_at(&mms->in.domain_ids, j);
-		item_id = (const char *) vlist_at(&mms->in.item_ids, j);
-
-		mms_val = MmsConnection_readVariable(mms->conn, &error, domain_id, item_id);
-
+		mms_val = MmsConnection_readVariable(mms->conn, &error, sig->domain_id, sig->item_id);
 		if (mms_val == NULL)
 			warning("Reading MMS value from server failed");
 
 		// convert result according data type
-		struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&mms->in.iec_type_list, j);
-
-		switch (td->type) {
+		switch (sig->type->type) {
 			case IEC61850_TYPE_INT32:
 				smp->data[j].i = MmsValue_toInt32(mms_val);
 				break;
@@ -248,9 +252,34 @@ int iec61850_mms_write(struct node *n, struct sample *smps[], unsigned cnt, unsi
 	return 0;
 }
 
+int iec61850_mms_init(struct node *n)
+{
+	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
+	int ret;
+
+	ret = vlist_init(&mms->in.signals);
+	if (ret)
+		return ret;
+
+	ret = vlist_init(&mms->out.signals);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
 int iec61850_mms_destroy(struct node *n)
 {
 	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
+	int ret;
+
+	ret = vlist_destroy(&mms->in.signals, (dtor_cb_t) iec61850_mms_signal_destroy, true);
+	if (ret)
+		return ret;
+
+	ret = vlist_destroy(&mms->out.signals, (dtor_cb_t) iec61850_mms_signal_destroy, true);
+	if (ret)
+		return ret;
 
 	MmsConnection_destroy(mms->conn);
 

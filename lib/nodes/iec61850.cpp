@@ -102,67 +102,58 @@ const struct iec61850_type_descriptor * villas::node::iec61850_lookup_type(const
 	return nullptr;
 }
 
+const struct iec61850_type_descriptor * iec61850_parse_signal(json_t *json_signal, Signal::Ptr sig)
+{
+	int ret;
+	const char *iec_type;
+
+	ret = json_unpack(json_signal, "{ s?: s }",
+		"iec_type", &iec_type
+	);
+	if (ret)
+		return NULL;
+
+	/* Try to deduct the IEC 61850 data type from VILLAS signal format */
+	if (!iec_type) {
+		switch (sig->type) {
+			case SignalType::BOOLEAN:
+				iec_type = "boolean";
+				break;
+
+			case SignalType::FLOAT:
+				iec_type = "float64";
+				break;
+
+			case SignalType::INTEGER:
+				iec_type = "int64";
+				break;
+
+			default:
+				return NULL;
+		}
+	}
+
+	return iec61850_lookup_type(iec_type);
+}
+
 int villas::node::iec61850_parse_signals(json_t *json_signals, struct List *signals, SignalList::Ptr node_signals)
 {
 	int ret, total_size = 0;
-	const char *iec_type;
-	const struct iec61850_type_descriptor *td;
-	json_error_t err;
 
 	ret = list_init(signals);
 	if (ret)
 		return ret;
 
-	if (json_is_array(json_signals)) {
-		json_t *json_signal;
-		size_t i;
-		json_array_foreach(json_signals, i, json_signal) {
-			json_unpack_ex(json_signal, &err, 0, "{ s?: s }",
-				"iec_type", &iec_type
-			);
+	if (!node_signals)
+		return -1;
 
-			/* Try to deduct the IEC 61850 data type from VILLAS signal format */
-			if (!iec_type) {
-				if (!node_signals)
-					return -1;
+	json_t *json_signal;
+	size_t i;
+	json_array_foreach(json_signals, i, json_signal) {
+		const struct iec61850_type_descriptor *td;
+		auto sig = node_signals->getByIndex(i);
 
-				auto sig = node_signals->getByIndex(i);
-				if (!sig)
-					return -1;
-
-				switch (sig->type) {
-					case SignalType::BOOLEAN:
-						iec_type = "boolean";
-						break;
-
-					case SignalType::FLOAT:
-						iec_type = "float64";
-						break;
-
-					case SignalType::INTEGER:
-						iec_type = "int64";
-						break;
-
-					default:
-						return -1;
-				}
-			}
-
-			td = iec61850_lookup_type(iec_type);
-			if (!td)
-				return -1;
-
-			list_push(signals, (void *) td);
-
-			total_size += td->size;
-		}
-	}
-	else {
-		ret = json_unpack_ex(json_signals, &err, 0, "{ s: s }", "iec_type", &iec_type);
-		if (ret)
-			return ret;
-
-		td = iec61850_lookup_type(iec_type);
+		td = iec61850_parse_signal(json_signal, sig);
 		if (!td)
 			return -1;
 

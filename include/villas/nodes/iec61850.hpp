@@ -104,6 +104,8 @@ const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name);
 
 int iec61850_parse_signals(json_t *json_signals, struct List *signals, SignalList::Ptr node_signals);
 
+const struct iec61850_type_descriptor * iec61850_parse_signal(json_t *json_signal, Signal::Ptr *sig);
+
 struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver::Type t, const char *intf);
 
 struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver::Type t, const char *intf);
