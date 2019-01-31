@@ -22,7 +22,7 @@
 
 #include <inttypes.h>
 
-#include <villas/nodes/iec61850_mms.hpp>
+#include <villas/nodes/iec61850_client.hpp>
 #include <villas/plugin.hpp>
 #include <villas/log.hpp>
 
@@ -137,9 +137,7 @@ int iec61850_mms_parse(struct node *n, json_t *cfg)
 	}
 
 	if (json_out) {
-		ret = json_unpack_ex(json_out, &err, 0, "{ s?: b, s?: i, s: o }",
-			"test", &mms->out.is_test,
-			"testvalue", &mms->out.testvalue,
+		ret = json_unpack_ex(json_out, &err, 0, "{ s: o }",
 			"signals", &json_signals
 		);
 		if (ret)
