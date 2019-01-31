@@ -39,13 +39,13 @@ struct iec61850_mms {
 	int rate;		/**< sampling rate */
 	int counter;		/**< number of samples already transmitted */
 
-	char *domainID;		/**< Domain ID of the to-be-read item */
-	char *itemID;		/**< item ID (name of MMS value) */
+	char *domain_id;	/**< Domain ID of the to-be-read item */
+	char *item_id;		/**< item ID (name of MMS value) */
 
 	MmsConnection conn;	/**< Connection instance to MMS Server */
 
 	struct {
-		struct vlist iecTypeList;	/**< mappings of type struct iec61850_type_descriptor */
+		struct vlist iec_type_list;	/**< mappings of type struct iec61850_type_descriptor */
 		struct vlist domain_ids;	/**< list of const char *, contains domainIDs for MMS values */
 		struct vlist item_ids;		/**< list of const char *, contains itemIDs for MMS values */
 
@@ -53,9 +53,10 @@ struct iec61850_mms {
 	} in;
 
 	struct {
-		bool isTest;
+		bool is_test;
 		int testvalue;
-		struct vlist iecTypeList;	/**< mappings of type struct iec61850_type_descriptor */
+
+		struct vlist iec_type_list;	/**< mappings of type struct iec61850_type_descriptor */
 		struct vlist domain_ids;	/**< list of const char *, contains domainIDs for MMS values */
 		struct vlist item_ids;		/**< list of const char *, contains itemIDs for MMS values */
 
