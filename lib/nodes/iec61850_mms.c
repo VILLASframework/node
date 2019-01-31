@@ -252,11 +252,13 @@ int iec61850_mms_destroy(struct node *n)
 	return 0;
 }
 
-int iec61850_mms_fd(struct node *n)
+int iec61850_mms_poll_fds(struct node *n, int fds[])
 {
 	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
 
-	return task_fd(&mms->task);
+	fds[0] = task_fd(&mms->task);
+
+	return 1;
 }
 
 
@@ -276,7 +278,7 @@ static struct plugin p = {
 		.destroy	= iec61850_mms_destroy,
 		.read		= iec61850_mms_read,
 		.write		= iec61850_mms_write,	// TODO: Rumpf erstellt
-		.fd		= iec61850_mms_fd
+		.poll_fds	= iec61850_mms_poll_fds
 	}
 };
 
