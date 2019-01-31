@@ -75,12 +75,12 @@ int iec61850_mms_parse(struct node *n, json_t *cfg)
 	json_t *json_mms_ids = NULL;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: i, s: i, s?: o, s?: o }",
-				"host", &host,
-				"port", &mms->port,
-				"rate", &mms->rate,
-				"in", &json_in,
-				"out", &json_out
-				);
+		"host", &host,
+		"port", &mms->port,
+		"rate", &mms->rate,
+		"in", &json_in,
+		"out", &json_out
+	);
 	mms->host = strdup(host);
 
 	if (ret)
@@ -89,15 +89,15 @@ int iec61850_mms_parse(struct node *n, json_t *cfg)
 	if (json_in) {
 
 		ret = json_unpack_ex(json_in, &err, 0, "{ s: o, s: o }",
-					"iec_types", &json_signals,
-					"mms_ids", &json_mms_ids
-					);
+			"iec_types", &json_signals,
+			"mms_ids", &json_mms_ids
+		);
 		if (ret)
-				jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 		ret = iec61850_parse_signals(json_signals, &mms->in.iec_type_list, &n->signals);
 		if (ret <= 0)
-				error("Failed to parse setting 'signals' of node %s", node_name(n));
+			error("Failed to parse setting 'signals' of node %s", node_name(n));
 
 		mms->in.totalsize = ret;
 
@@ -105,24 +105,24 @@ int iec61850_mms_parse(struct node *n, json_t *cfg)
 
 		int length_iec_types = mms->in.iec_type_list.length;
 		if (length_mms_ids == -1)
-				error("Configuration error in node '%s': json error while parsing", node_name(n));
+			error("Configuration error in node '%s': json error while parsing", node_name(n));
 		else if (length_iec_types != length_mms_ids)  // length of the lists is not the same
-				error("Configuration error in node '%s': one set of 'mms_ids'(%d value(s)) should match one value of 'iecTypes'(%d value(s))", node_name(n), length_mms_ids, length_iec_types);
+			error("Configuration error in node '%s': one set of 'mms_ids'(%d value(s)) should match one value of 'iecTypes'(%d value(s))", node_name(n), length_mms_ids, length_iec_types);
 	}
 
 	if (json_out) {
 		ret = json_unpack_ex(json_out, &err, 0, "{ s?: b, s?: i, s: o, s: o }",
-					"test", &mms->out.is_test,
-					"testvalue", &mms->out.testvalue,
-					"iec_types", &json_signals,
-					"mms_ids", &json_mms_ids
-					);
+			"test", &mms->out.is_test,
+			"testvalue", &mms->out.testvalue,
+			"iec_types", &json_signals,
+			"mms_ids", &json_mms_ids
+		);
 		if (ret)
-				jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 		ret = iec61850_parse_signals(json_signals, &mms->out.iec_type_list, &n->signals);
 		if (ret <= 0)
-				error("Failed to parse setting 'iecList' of node %s", node_name(n));
+			error("Failed to parse setting 'iecList' of node %s", node_name(n));
 
 		mms->out.totalsize = ret;
 
@@ -130,9 +130,9 @@ int iec61850_mms_parse(struct node *n, json_t *cfg)
 
 		int length_iec_types = mms->out.iec_type_list.length;
 		if (length_mms_ids == -1)
-				error("Configuration error in node '%s': json error while parsing", node_name(n));
+			error("Configuration error in node '%s': json error while parsing", node_name(n));
 		else if (length_iec_types != length_mms_ids)  // length of the lists is not the same
-				error("Configuration error in node '%s': one set of 'mms_ids'(%d value(s)) should match one value of 'iecTypes'(%d value(s))", node_name(n), length_mms_ids, length_iec_types);
+			error("Configuration error in node '%s': one set of 'mms_ids'(%d value(s)) should match one value of 'iecTypes'(%d value(s))", node_name(n), length_mms_ids, length_iec_types);
 	}
 
 	return 0;
@@ -210,18 +210,18 @@ int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsig
 		mms_val = MmsConnection_readVariable(mms->conn, &error, domain_id, item_id);
 
 		if (mms_val == NULL) {
-				warn("Reading MMS value from server failed");
+			warn("Reading MMS value from server failed");
 		}
 
 		// convert result according data type
 		struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&mms->in.iec_type_list, j);
 
 		switch (td->type) {
-				case IEC61850_TYPE_INT32:	smp->data[j].i = MmsValue_toInt32(mms_val); break;
-				case IEC61850_TYPE_INT32U:  smp->data[j].i = MmsValue_toUint32(mms_val); break;
-				case IEC61850_TYPE_FLOAT32: smp->data[j].f = MmsValue_toFloat(mms_val); break;
-				case IEC61850_TYPE_FLOAT64: smp->data[j].f = MmsValue_toDouble(mms_val); break;
-				default: { }
+			case IEC61850_TYPE_INT32:	smp->data[j].i = MmsValue_toInt32(mms_val); break;
+			case IEC61850_TYPE_INT32U:  smp->data[j].i = MmsValue_toUint32(mms_val); break;
+			case IEC61850_TYPE_FLOAT32: smp->data[j].f = MmsValue_toFloat(mms_val); break;
+			case IEC61850_TYPE_FLOAT64: smp->data[j].f = MmsValue_toDouble(mms_val); break;
+			default: { }
 		}
 
 		smp->length++;
