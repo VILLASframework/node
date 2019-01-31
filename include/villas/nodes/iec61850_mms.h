@@ -39,15 +39,15 @@ struct iec61850_mms {
 	int rate;		/**< sampling rate */
 	int counter;		/**< number of samples already transmitted */
 
-	char *domainID;	/**< Domain ID of the to-be-read item */
+	char *domainID;		/**< Domain ID of the to-be-read item */
 	char *itemID;		/**< item ID (name of MMS value) */
 
 	MmsConnection conn;	/**< Connection instance to MMS Server */
 
 	struct {
-		struct list iecTypeList;	/**< mappings of type struct iec61850_type_descriptor */
-		struct list domain_ids;		/**< list of const char *, contains domainIDs for MMS values */
-		struct list item_ids;		/**< list of const char *, contains itemIDs for MMS values */
+		struct vlist iecTypeList;	/**< mappings of type struct iec61850_type_descriptor */
+		struct vlist domain_ids;	/**< list of const char *, contains domainIDs for MMS values */
+		struct vlist item_ids;		/**< list of const char *, contains itemIDs for MMS values */
 
 		int totalsize;			/**< length of all lists: iecType, domainIDs, itemIDs */
 	} in;
@@ -55,9 +55,9 @@ struct iec61850_mms {
 	struct {
 		bool isTest;
 		int testvalue;
-		struct list iecTypeList;	/**< mappings of type struct iec61850_type_descriptor */
-		struct list domain_ids;		/**< list of const char *, contains domainIDs for MMS values */
-		struct list item_ids;		/**< list of const char *, contains itemIDs for MMS values */
+		struct vlist iecTypeList;	/**< mappings of type struct iec61850_type_descriptor */
+		struct vlist domain_ids;	/**< list of const char *, contains domainIDs for MMS values */
+		struct vlist item_ids;		/**< list of const char *, contains itemIDs for MMS values */
 
 		int totalsize;			/**< length of all lists: iecType, domainIDs, itemIDs */
 	} out;
@@ -71,4 +71,4 @@ struct iec61850_mms {
   *
   *@return length the lists
   */
-int iec61850_mms_parse_ids(json_t mms_ids, struct list *domainIDs, struct list *itemIDs);
+int iec61850_mms_parse_ids(json_t mms_ids, struct vlist *domainIDs, struct vlist *itemIDs);
