@@ -32,35 +32,35 @@
 
 
 struct iec61850_mms {
-    struct task task; /**< timer for periodic events */
-    char * host;    /**< hostname / IP address of MMS Server */
-    int port;       /**< TCP port of MMS Server */
+	struct task task;	/**< timer for periodic events */
+	char * host;		/**< hostname / IP address of MMS Server */
+	int port;		/**< TCP port of MMS Server */
 
-    int rate; /**< sampling rate */
-    int counter; /**< number of samples already transmitted */
+	int rate;		/**< sampling rate */
+	int counter;		/**< number of samples already transmitted */
 
-    char * domainID;    /**< Domain ID of the to-be-read item */
-    char * itemID;      /**< item ID (name of MMS value) */
+	char * domainID;	/**< Domain ID of the to-be-read item */
+	char * itemID;		/**< item ID (name of MMS value) */
 
-    MmsConnection conn;     /**< Connection instance to MMS Server */
+	MmsConnection conn;	/**< Connection instance to MMS Server */
 
-    struct {
-        struct list iecTypeList;  /**< mappings of type struct iec61850_type_descriptor */
-        struct list domain_ids;  /**< list of const char *, contains domainIDs for MMS values */
-        struct list item_ids;  /**< list of const char *, contains itemIDs for MMS values */
+	struct {
+		struct list iecTypeList;	/**< mappings of type struct iec61850_type_descriptor */
+		struct list domain_ids;		/**< list of const char *, contains domainIDs for MMS values */
+		struct list item_ids;		/**< list of const char *, contains itemIDs for MMS values */
 
-        int totalsize;  /**< length of all lists: iecType, domainIDs, itemIDs */
-    } in;
+		int totalsize;			/**< length of all lists: iecType, domainIDs, itemIDs */
+	} in;
 
-    struct {
-        bool isTest;
-        int testvalue;
-        struct list iecTypeList;  /**< mappings of type struct iec61850_type_descriptor */
-        struct list domain_ids;  /**< list of const char *, contains domainIDs for MMS values */
-        struct list item_ids;  /**< list of const char *, contains itemIDs for MMS values */
+	struct {
+		bool isTest;
+		int testvalue;
+		struct list iecTypeList;	/**< mappings of type struct iec61850_type_descriptor */
+		struct list domain_ids;		/**< list of const char *, contains domainIDs for MMS values */
+		struct list item_ids;		/**< list of const char *, contains itemIDs for MMS values */
 
-        int totalsize;  /**< length of all lists: iecType, domainIDs, itemIDs */
-    } out;
+		int totalsize;			/**< length of all lists: iecType, domainIDs, itemIDs */
+	} out;
 };
 
 /** Parse MMS configuration parameters
