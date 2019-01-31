@@ -143,7 +143,7 @@ char *iec61850_mms_print(struct node *n)
 {
 	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
 
-	return strf("host=%s, port=%d, domain_id=%s, item_id=%s", mms->host, mms->port, mms->domain_id, mms->item_id);
+	return strf("host=%s, port=%d", mms->host, mms->port);
 }
 
 // create connection to MMS server
@@ -255,8 +255,6 @@ int iec61850_mms_destroy(struct node *n)
 	MmsConnection_destroy(mms->conn);
 
 	free(mms->host);
-	free(mms->domain_id);
-	free(mms->item_id);
 
 	return 0;
 }

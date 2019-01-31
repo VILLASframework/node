@@ -39,9 +39,6 @@ struct iec61850_mms {
 	int rate;		/**< sampling rate */
 	int counter;		/**< number of samples already transmitted */
 
-	char *domain_id;	/**< Domain ID of the to-be-read item */
-	char *item_id;		/**< item ID (name of MMS value) */
-
 	MmsConnection conn;	/**< Connection instance to MMS Server */
 
 	struct {
