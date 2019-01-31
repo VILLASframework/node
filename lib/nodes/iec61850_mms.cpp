@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <inttypes.h>
+
 #include <villas/nodes/iec61850_mms.hpp>
 #include <villas/plugin.hpp>
 #include <villas/log.hpp>
@@ -203,7 +205,7 @@ int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsig
 
 	ticks = task_wait(&mms->task);
 	if (ticks > 1)
-		warning("Missed %" PRIu64 " step in node %s", node_name(n));
+		warning("Missed %" PRIu64 " step in node %s", ticks - 1, node_name(n));
 
 	// TODO: timestamp von MMS server?
 
