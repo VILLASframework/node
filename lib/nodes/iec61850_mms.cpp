@@ -161,17 +161,19 @@ char *iec61850_mms_print(struct node *n)
 // create connection to MMS server
 int iec61850_mms_start(struct node *n)
 {
+	int ret;
 	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
 
 	mms->conn = MmsConnection_create();
 
 	/* Connect to MMS Server */
 	MmsError err;
-	if (!MmsConnection_connect(mms->conn, &err, mms->host, mms->port))
+	ret = MmsConnection_connect(mms->conn, &err, mms->host, mms->port);
+	if (!ret)
 		error("Cannot connect to MMS server: %s:%d", mms->host, mms->port);
 
 	// setup task
-	int ret = task_init(&mms->task, mms->rate, CLOCK_MONOTONIC);
+	ret = task_init(&mms->task, mms->rate, CLOCK_MONOTONIC);
 	if (ret)
 		return ret;
 
