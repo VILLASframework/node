@@ -260,7 +260,22 @@ int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsig
 // TODO
 int iec61850_mms_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-//	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
+	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
+
+	assert(cnt == 1);
+
+	struct sample *smp = smps[0];
+
+	MmsError error;
+	MmsValue *mms_val;
+
+	int len = MIN(vlist_length(&mms->out.signals), smp->length);
+
+	for (size_t i = 0; i < len; i++) {
+		struct iec61850_mms_signal *sig = vlist_at(&mms->out.signals, i);
+
+
+	}
 
 	return 0;
 }
