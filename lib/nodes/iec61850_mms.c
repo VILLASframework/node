@@ -159,9 +159,7 @@ int iec61850_mms_start(struct node *n)
 	/* Connect to MMS Server */
 	MmsError err;
 	if (!MmsConnection_connect(mms->conn, &err, mms->host, mms->port))
-	{
 		error("Cannot connect to MMS server: %s:%d", mms->host, mms->port);
-	}
 
 	// setup task
 	int ret = task_init(&mms->task, mms->rate, CLOCK_MONOTONIC);
@@ -204,17 +202,15 @@ int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsig
 	const char *domain_id;
 	const char *item_id;
 
-	for (size_t j = 0; j < vlist_length(&mms->in.iec_type_list); j++)
-	{
+	for (size_t j = 0; j < vlist_length(&mms->in.iec_type_list); j++) {
 		// get MMS Value from server
 		domain_id = (const char *) vlist_at(&mms->in.domain_ids, j);
 		item_id = (const char *) vlist_at(&mms->in.item_ids, j);
 
 		mms_val = MmsConnection_readVariable(mms->conn, &error, domain_id, item_id);
 
-		if (mms_val == NULL) {
+		if (mms_val == NULL)
 			warn("Reading MMS value from server failed");
-		}
 
 		// convert result according data type
 		struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&mms->in.iec_type_list, j);
