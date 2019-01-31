@@ -33,14 +33,14 @@
 
 struct iec61850_mms {
 	struct task task;	/**< timer for periodic events */
-	char * host;		/**< hostname / IP address of MMS Server */
+	char *host;		/**< hostname / IP address of MMS Server */
 	int port;		/**< TCP port of MMS Server */
 
 	int rate;		/**< sampling rate */
 	int counter;		/**< number of samples already transmitted */
 
-	char * domainID;	/**< Domain ID of the to-be-read item */
-	char * itemID;		/**< item ID (name of MMS value) */
+	char *domainID;	/**< Domain ID of the to-be-read item */
+	char *itemID;		/**< item ID (name of MMS value) */
 
 	MmsConnection conn;	/**< Connection instance to MMS Server */
 
@@ -71,4 +71,4 @@ struct iec61850_mms {
   *
   *@return length the lists
   */
-int iec61850_mms_parse_ids(json_t * mms_ids, struct list * domainIDs, struct list * itemIDs);
+int iec61850_mms_parse_ids(json_t mms_ids, struct list *domainIDs, struct list *itemIDs);
