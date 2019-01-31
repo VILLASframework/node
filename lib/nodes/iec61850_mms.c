@@ -269,12 +269,12 @@ static struct plugin p = {
 		.size		= sizeof(struct iec61850_mms),
 		.type.start	= iec61850_type_start,	// TODO
 		.type.stop	= iec61850_type_stop,	// TODO
-		.parse		= iec61850_mms_parse,	/* done */
-		.print		= iec61850_mms_print,	/* done */
-		.start		= iec61850_mms_start,	/* done */
+		.parse		= iec61850_mms_parse,
+		.print		= iec61850_mms_print,
+		.start		= iec61850_mms_start,
 		.stop		= iec61850_mms_stop,	// TODO
-		.destroy	= iec61850_mms_destroy,	/* done */
-		.read		= iec61850_mms_read,	/* done */
+		.destroy	= iec61850_mms_destroy,
+		.read		= iec61850_mms_read,
 		.write		= iec61850_mms_write,	// TODO: Rumpf erstellt
 		.fd		= iec61850_mms_fd
 	}
