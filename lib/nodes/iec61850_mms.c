@@ -141,12 +141,9 @@ int iec61850_mms_parse(struct node *n, json_t *cfg)
 
 char *iec61850_mms_print(struct node *n)
 {
-	char *buf;
 	struct iec61850_mms *mms = (struct iec61850_mms *) n->_vd;
 
-	buf = strf("host = %s, port = %d, domain_id = %s, item_id = %s", mms->host, mms->port, mms->domain_id, mms->item_id);
-
-	return buf;
+	return strf("host=%s, port=%d, domain_id=%s, item_id=%s", mms->host, mms->port, mms->domain_id, mms->item_id);
 }
 
 // create connection to MMS server
