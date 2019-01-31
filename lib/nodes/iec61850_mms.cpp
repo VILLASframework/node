@@ -209,7 +209,7 @@ int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsig
 
 	// TODO: timestamp von MMS server?
 
-	smp->flags = SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE;
+	smp->flags = SAMPLE_HAS_SEQUENCE;
 	smp->length = 0;
 
 	for (size_t j = 0; j < vlist_length(&mms->in.signals); j++) {
@@ -242,6 +242,11 @@ int iec61850_mms_read(struct node *n, struct sample *smps[], unsigned cnt, unsig
 
 		smp->length++;
 	}
+
+	smp->sequence = mms->counter++;
+
+	if (smp->length > 0)
+		smp->flags = SAMPLE_HAS_DATA;
 
 	MmsValue_delete(mms_val);
 
