@@ -64,9 +64,10 @@ static int node_direction_init(struct node_direction *nd, struct node *n)
 {
 	int ret;
 
-	nd->enabled = 0;
+	nd->enabled = 1;
 	nd->vectorize = 1;
 	nd->builtin = 1;
+
 	nd->hooks.state = STATE_DESTROYED;
 	nd->signals.state = STATE_DESTROYED;
 
@@ -109,7 +110,6 @@ static int node_direction_parse(struct node_direction *nd, struct node *n, json_
 	json_t *json_signals = NULL;
 
 	nd->cfg = cfg;
-	nd->enabled = 1;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: i, s?: b, s?: b }",
 		"hooks", &json_hooks,
