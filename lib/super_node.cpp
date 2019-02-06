@@ -110,9 +110,6 @@ int SuperNode::parseUri(const std::string &u)
 		config_t cfg;
 		config_setting_t *json_root = nullptr;
 
-		logger->warn("Failed to parse JSON configuration. Re-trying with old libconfig format.");
-		logger->warn("  Please consider migrating to the new format using the 'conf2json' command.");
-
 		config_init(&cfg);
 		config_set_auto_convert(&cfg, 1);
 
