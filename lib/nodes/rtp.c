@@ -274,6 +274,9 @@ char * rtp_print(struct node *n)
 			case RTCP_THROTTLE_DISABLED:
 				throttle_mode = "disabled";
 				break;
+
+			default:
+				throttle_mode = "unknown";
 		}
 
 		strcatf(&buf, ", rtcp.mode=%s, rtcp.throttle_mode=%s", mode, throttle_mode);
