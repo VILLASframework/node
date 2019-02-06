@@ -257,7 +257,7 @@ int zeromq_start(struct node *n)
 	int ret;
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
-	ret = io_init(&z->io, z->format, &n->signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
+	ret = io_init(&z->io, z->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
 	if (ret)
 		return ret;
 

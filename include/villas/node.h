@@ -58,6 +58,7 @@ struct node_direction {
 	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
 
 	struct vlist hooks;	/**< List of write hooks (struct hook). */
+	struct vlist signals;	/**< Signal description. */
 
 	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
 };
@@ -67,8 +68,7 @@ struct node_direction {
  * Every entity which exchanges messages is represented by a node.
  * Nodes can be remote machines and simulators or locally running processes.
  */
-struct node
-{
+struct node {
 	char *name;		/**< A short identifier of the node, only used for configuration and logging */
 
 	enum state state;
@@ -83,8 +83,6 @@ struct node
 	struct stats *stats;	/**< Statistic counters. This is a pointer to the statistic hooks private data. */
 
 	struct node_direction in, out;
-
-	struct vlist signals;	/**< Signal meta data for data which is __received__ by node_read(). */
 
 #ifdef WITH_NETEM
 	int mark;			/**< Socket mark for netem, routing and filtering */

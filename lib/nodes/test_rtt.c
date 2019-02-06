@@ -247,7 +247,7 @@ int test_rtt_start(struct node *n)
 			return ret;
 	}
 
-	ret = io_init(&t->io, t->format, &n->signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_DATA);
+	ret = io_init(&t->io, t->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_DATA);
 	if (ret)
 		return ret;
 

@@ -307,7 +307,7 @@ int uldaq_parse(struct node *n, json_t *cfg)
 		u->device_interface_type = iftype;
 	}
 
-	u->in.channel_count = vlist_length(&n->signals);
+	u->in.channel_count = vlist_length(&n->in.signals);
 	u->in.queues = realloc(u->in.queues, sizeof(struct AiQueueElement) * u->in.channel_count);
 
 	json_array_foreach(json_signals, i, json_signal) {
@@ -443,8 +443,8 @@ int uldaq_check(struct node *n)
 		return -1;
 	}
 
-	for (size_t i = 0; i < vlist_length(&n->signals); i++) {
-		struct signal *s = (struct signal *) vlist_at(&n->signals, i);
+	for (size_t i = 0; i < vlist_length(&n->in.signals); i++) {
+		struct signal *s = (struct signal *) vlist_at(&n->in.signals, i);
 		AiQueueElement *q = &u->in.queues[i];
 
 		if (s->type != SIGNAL_TYPE_FLOAT) {
@@ -521,7 +521,7 @@ int uldaq_start(struct node *n)
 	if (ret)
 		return ret;
 
-	err = ulAInLoadQueue(u->device_handle, u->in.queues, vlist_length(&n->signals));
+	err = ulAInLoadQueue(u->device_handle, u->in.queues, vlist_length(&n->in.signals));
 	if (err != ERR_NO_ERROR) {
 		warning("Failed to load input queue to DAQ device for node '%s'", node_name(n));
 		return -1;
@@ -636,7 +636,7 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		}
 
 		smp->length = u->in.channel_count;
-		smp->signals = &n->signals;
+		smp->signals = &n->in.signals;
 		smp->sequence = u->sequence++;
 		smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
 	}

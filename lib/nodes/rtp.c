@@ -338,7 +338,7 @@ int rtp_start(struct node *n)
 		return ret;
 
 	/* Initialize IO */
-	ret = io_init(&r->io, r->format, &n->signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
+	ret = io_init(&r->io, r->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
 	if (ret)
 		return ret;
 

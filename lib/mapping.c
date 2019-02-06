@@ -154,7 +154,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		first_str = strtok(NULL, "-]");
 		if (first_str) {
 			if (me->node)
-				first = vlist_lookup_index(&me->node->signals, first_str);
+				first = vlist_lookup_index(&me->node->in.signals, first_str);
 
 			if (first < 0) {
 				char *endptr;
@@ -168,14 +168,14 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		else {
 			/* Map all signals */
 			me->data.offset = 0;
-			me->length = me->node ? vlist_length(&me->node->signals) : 0;
+			me->length = me->node ? vlist_length(&me->node->in.signals) : 0;
 			goto end;
 		}
 
 		last_str = strtok(NULL, "]");
 		if (last_str) {
 			if (me->node)
-				last = vlist_lookup_index(&me->node->signals, last_str);
+				last = vlist_lookup_index(&me->node->in.signals, last_str);
 
 			if (last < 0) {
 				char *endptr;
@@ -451,8 +451,8 @@ int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
 			break;
 
 		case MAPPING_TYPE_DATA:
-			if (me->node && index < vlist_length(&me->node->signals)) {
-				struct signal *s = vlist_at(&me->node->signals, index);
+			if (me->node && index < vlist_length(&me->node->in.signals)) {
+				struct signal *s = vlist_at(&me->node->in.signals, index);
 
 				strcatf(str, "data[%s]", s->name);
 			}

@@ -163,7 +163,7 @@ int socket_start(struct node *n)
 	int ret;
 
 	/* Initialize IO */
-	ret = io_init(&s->io, s->format, &n->signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
+	ret = io_init(&s->io, s->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
 	if (ret)
 		return ret;
 

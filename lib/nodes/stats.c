@@ -50,42 +50,42 @@ static void stats_init_signals(struct node *n)
 		sig = alloc(sizeof(struct signal));
 		sig->name = strf("%s.%s", desc->name, "total");
 		sig->type = SIGNAL_TYPE_INTEGER;
-		vlist_push(&n->signals, sig);
+		vlist_push(&n->in.signals, sig);
 
 		/* Last */
 		sig = alloc(sizeof(struct signal));
 		sig->name = strf("%s.%s", desc->name, "last");
 		sig->unit = strdup(desc->unit);
 		sig->type = SIGNAL_TYPE_FLOAT;
-		vlist_push(&n->signals, sig);
+		vlist_push(&n->in.signals, sig);
 
 		/* Highest */
 		sig = alloc(sizeof(struct signal));
 		sig->name = strf("%s.%s", desc->name, "highest");
 		sig->unit = strdup(desc->unit);
 		sig->type = SIGNAL_TYPE_FLOAT;
-		vlist_push(&n->signals, sig);
+		vlist_push(&n->in.signals, sig);
 
 		/* Lowest */
 		sig = alloc(sizeof(struct signal));
 		sig->name = strf("%s.%s", desc->name, "lowest");
 		sig->unit = strdup(desc->unit);
 		sig->type = SIGNAL_TYPE_FLOAT;
-		vlist_push(&n->signals, sig);
+		vlist_push(&n->in.signals, sig);
 
 		/* Mean */
 		sig = alloc(sizeof(struct signal));
 		sig->name = strf("%s.%s", desc->name, "mean");
 		sig->unit = strdup(desc->unit);
 		sig->type = SIGNAL_TYPE_FLOAT;
-		vlist_push(&n->signals, sig);
+		vlist_push(&n->in.signals, sig);
 
 		/* Variance */
 		sig = alloc(sizeof(struct signal));
 		sig->name = strf("%s.%s", desc->name, "var");
 		sig->unit = strf("%s^2", desc->unit); // variance has squared unit of variable
 		sig->type = SIGNAL_TYPE_FLOAT;
-		vlist_push(&n->signals, sig);
+		vlist_push(&n->in.signals, sig);
 	}
 }
 

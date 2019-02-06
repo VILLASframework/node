@@ -68,8 +68,13 @@ static int node_direction_init(struct node_direction *nd, struct node *n)
 	nd->vectorize = 1;
 	nd->builtin = 1;
 	nd->hooks.state = STATE_DESTROYED;
+	nd->signals.state = STATE_DESTROYED;
 
 	ret = vlist_init(&nd->hooks);
+	if (ret)
+		return ret;
+
+	ret = vlist_init(&nd->signals);
 	if (ret)
 		return ret;
 
@@ -86,6 +91,10 @@ static int node_direction_destroy(struct node_direction *nd, struct node *n)
 		return ret;
 #endif
 
+	ret = vlist_destroy(&nd->signals, (dtor_cb_t) signal_decref, false);
+	if (ret)
+		return ret;
+
 	return ret;
 }
 
@@ -95,18 +104,49 @@ static int node_direction_parse(struct node_direction *nd, struct node *n, json_
 
 	json_error_t err;
 	json_t *json_hooks = NULL;
+	json_t *json_signals = NULL;
 
 	nd->cfg = cfg;
 	nd->enabled = 1;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: i, s?: b, s?: b }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: i, s?: b, s?: b }",
 		"hooks", &json_hooks,
+		"signals", &json_signals,
 		"vectorize", &nd->vectorize,
 		"builtin", &nd->builtin,
 		"enabled", &nd->enabled
 	);
 	if (ret)
 		jerror(&err, "Failed to parse node %s", node_name(n));
+
+	if (n->_vt->flags & NODE_TYPE_PROVIDES_SIGNALS) {
+		if (json_signals)
+			error("Node %s does not support signal definitions", node_name(n));
+	}
+	else if (json_is_array(json_signals)) {
+		ret = signal_list_parse(&nd->signals, json_signals);
+		if (ret)
+			error("Failed to parse signal definition of node %s", node_name(n));
+	}
+	else {
+		int count = DEFAULT_SAMPLE_LENGTH;
+		const char *type_str = "float";
+
+		if (json_is_object(json_signals)) {
+			json_unpack_ex(json_signals, &err, 0, "{ s: i, s: s }",
+				"count", &count,
+				"type", &type_str
+			);
+		}
+		else
+			warning("No signal definition found for node %s. Using the default config of %d floating point signals.", node_name(n), DEFAULT_SAMPLE_LENGTH);
+
+		int type = signal_type_from_str(type_str);
+		if (type < 0)
+			error("Invalid signal type %s", type_str);
+
+		signal_list_generate(&nd->signals, count, type);
+	}
 
 #ifdef WITH_HOOKS
 	int m = nd == &n->out
@@ -187,9 +227,6 @@ int node_init(struct node *n, struct node_type *vt)
 	n->tc_classifier = NULL;
 #endif /* WITH_NETEM */
 
-	n->signals.state = STATE_DESTROYED;
-	vlist_init(&n->signals);
-
 	/* Default values */
 	ret = node_direction_init(&n->in, n);
 	if (ret)
@@ -268,38 +305,6 @@ int node_parse(struct node *n, json_t *json, const char *name)
 #endif /* WITH_NETEM */
 	}
 
-	if (nt->flags & NODE_TYPE_PROVIDES_SIGNALS) {
-		if (json_signals)
-			error("Node %s does not support signal definitions", node_name(n));
-	}
-	else if (json_signals) {
-		if (json_is_array(json_signals)) {
-			ret = signal_list_parse(&n->signals, json_signals);
-			if (ret)
-				error("Failed to parse signal definition of node %s", node_name(n));
-		}
-		else {
-			int count;
-			const char *type_str;
-
-			json_unpack_ex(json_signals, &err, 0, "{ s: i, s: s }",
-				"count", &count,
-				"type", &type_str
-			);
-
-			int type = signal_type_from_str(type_str);
-			if (type < 0)
-				error("Invalid signal type %s", type_str);
-
-			signal_list_generate(&n->signals, count, type);
-		}
-	}
-	else {
-		warning("No signal definition found for node %s. Using the default config of %d floating point signals.", node_name(n), DEFAULT_SAMPLE_LENGTH);
-
-		signal_list_generate(&n->signals, DEFAULT_SAMPLE_LENGTH, SIGNAL_TYPE_FLOAT);
-	}
-
 	struct {
 		const char *str;
 		struct node_direction *dir;
@@ -308,7 +313,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 		{ "out", &n->out }
 	};
 
-	const char *fields[] = { "builtin", "vectorize", "hooks" };
+	const char *fields[] = { "signals", "builtin", "vectorize", "hooks" };
 
 	for (int j = 0; j < ARRAY_LEN(dirs); j++) {
 		json_t *json_dir = json_object_get(json, dirs[j].str);
@@ -492,15 +497,10 @@ int node_restart(struct node *n)
 	return 0;
 }
 
-
 int node_destroy(struct node *n)
 {
 	int ret;
 	assert(n->state != STATE_DESTROYED && n->state != STATE_STARTED);
-
-	ret = vlist_destroy(&n->signals, (dtor_cb_t) signal_decref, false);
-	if (ret)
-		return ret;
 
 	ret = node_direction_destroy(&n->in, n);
 	if (ret)
@@ -645,11 +645,11 @@ char * node_name_long(struct node *n)
 		if (node_type(n)->print) {
 			struct node_type *vt = node_type(n);
 
-			strcatf(&n->_name_long, "%s: #in.signals=%zu, #in.hooks=%zu, in.vectorize=%d, #out.hooks=%zu, out.vectorize=%d",
+			strcatf(&n->_name_long, "%s: #in.signals=%zu, #out.signals=%zu, #in.hooks=%zu, #out.hooks=%zu, in.vectorize=%d, out.vectorize=%d",
 				node_name(n),
-				vlist_length(&n->signals),
-				vlist_length(&n->in.hooks), n->in.vectorize,
-				vlist_length(&n->out.hooks), n->out.vectorize
+				vlist_length(&n->in.signals), vlist_length(&n->out.signals),
+				vlist_length(&n->in.hooks),   vlist_length(&n->out.hooks),
+				n->in.vectorize, n->out.vectorize
 			);
 
 #ifdef WITH_NETEM

@@ -74,7 +74,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	smp->sequence = smpcnt;
 	smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
 	smp->length = 0;
-	smp->signals = &n->signals;
+	smp->signals = &n->in.signals;
 
 	if (SVSubscriber_ASDU_hasRefrTm(asdu)) {
 		uint64_t refrtm = SVSubscriber_ASDU_getRefrTmAsMs(asdu);

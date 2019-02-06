@@ -47,9 +47,9 @@ Test(mapping, parse_nodes)
 		struct node *n = new struct node;
 
 		n->name = strdup(node_names[i]);
-		n->signals.state = STATE_DESTROYED;
+		n->in.signals.state = STATE_DESTROYED;
 
-		vlist_init(&n->signals);
+		vlist_init(&n->in.signals);
 
 		for (unsigned j = 0; j < ARRAY_LEN(signal_names[i]); j++) {
 			struct signal *sig;
@@ -57,7 +57,7 @@ Test(mapping, parse_nodes)
 			sig = signal_create(signal_names[i][j], nullptr, SIGNAL_TYPE_AUTO);
 			cr_assert_not_null(sig);
 
-			vlist_push(&n->signals, sig);
+			vlist_push(&n->in.signals, sig);
 		}
 
 		vlist_push(&nodes, n);
