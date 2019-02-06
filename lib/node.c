@@ -70,9 +70,11 @@ static int node_direction_init(struct node_direction *nd, struct node *n)
 	nd->hooks.state = STATE_DESTROYED;
 	nd->signals.state = STATE_DESTROYED;
 
+#ifdef WITH_HOOKS
 	ret = vlist_init(&nd->hooks);
 	if (ret)
 		return ret;
+#endif /* WITH_HOOKS */
 
 	ret = vlist_init(&nd->signals);
 	if (ret)
@@ -89,7 +91,7 @@ static int node_direction_destroy(struct node_direction *nd, struct node *n)
 	ret = vlist_destroy(&nd->hooks, (dtor_cb_t) hook_destroy, true);
 	if (ret)
 		return ret;
-#endif
+#endif /* WITH_HOOKS */
 
 	ret = vlist_destroy(&nd->signals, (dtor_cb_t) signal_decref, false);
 	if (ret)
