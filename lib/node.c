@@ -292,6 +292,8 @@ int node_parse(struct node *n, json_t *json, const char *name)
 	nt = node_type_lookup(type);
 	assert(nt == node_type(n));
 
+	n->_vt = nt;
+
 	if (json_netem) {
 #ifdef WITH_NETEM
 		int enabled = 1;
