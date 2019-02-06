@@ -51,7 +51,7 @@ static int path_source_init(struct path_source *ps)
 	if (ps->node->_vt->pool_size)
 		pool_size = ps->node->_vt->pool_size;
 
-	ret = pool_init(&ps->pool, pool_size, SAMPLE_LENGTH(vlist_length(&ps->node->signals)), node_memory_type(ps->node, &memory_hugepage));
+	ret = pool_init(&ps->pool, pool_size, SAMPLE_LENGTH(vlist_length(&ps->node->in.signals)), node_memory_type(ps->node, &memory_hugepage));
 	if (ret)
 		return ret;
 
@@ -453,7 +453,7 @@ int path_init2(struct path *p)
 				/* For data mappings we simple refer to the existing
 				 * signal descriptors of the source node. */
 				if (me->type == MAPPING_TYPE_DATA) {
-					sig = (struct signal *) vlist_at_safe(&me->node->signals, me->data.offset + j);
+					sig = (struct signal *) vlist_at_safe(&me->node->in.signals, me->data.offset + j);
 					if (!sig) {
 						warning("Failed to create signal description for path %s", path_name(p));
 						continue;

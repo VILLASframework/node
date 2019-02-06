@@ -88,7 +88,7 @@ static int websocket_connection_init(struct websocket_connection *c)
 	if (ret)
 		return ret;
 
-	ret = io_init(&c->io, c->format, &c->node->signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
+	ret = io_init(&c->io, c->format, &c->node->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
 	if (ret)
 		return ret;
 

@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		throw RuntimeError("Failed to verify node configuration");
 
-	ret = pool_init(&q, 16, SAMPLE_LENGTH(vlist_length(&n.signals)), &memory_heap);
+	ret = pool_init(&q, 16, SAMPLE_LENGTH(vlist_length(&n.in.signals)), &memory_heap);
 	if (ret)
 		throw RuntimeError("Failed to initialize pool");
 
@@ -234,7 +234,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		throw RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
 
-	ret = io_init(&io, ft, &n.signals, IO_FLUSH | (SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET));
+	ret = io_init(&io, ft, &n.in.signals, IO_FLUSH | (SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET));
 	if (ret)
 		throw RuntimeError("Failed to initialize output");
 

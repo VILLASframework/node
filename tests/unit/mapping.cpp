@@ -88,7 +88,7 @@ Test(mapping, parse_nodes)
 	cr_assert_eq(m.node, vlist_lookup(&nodes, "carrot"));
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 0);
-	cr_assert_eq(m.length, vlist_length(&m.node->signals));
+	cr_assert_eq(m.length, vlist_length(&m.node->in.signals));
 
 	ret = mapping_parse_str(&m, "carrot.data[sole]", &nodes);
 	cr_assert_eq(ret, 0);

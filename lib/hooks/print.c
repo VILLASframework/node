@@ -59,7 +59,7 @@ static int print_start(struct hook *h)
 	struct vlist *signals;
 
 	if (h->node)
-		signals = &h->node->signals;
+		signals = &h->node->in.signals;
 	else if (h->path)
 		signals = &h->path->signals;
 	else
