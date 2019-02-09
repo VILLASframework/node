@@ -92,7 +92,7 @@ find_program(PROTOBUF_COMPILER NAMES protoc)
 
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig:/usr/lib64/pkgconfig")
 
-pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson>=2.10)
+pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson>=2.9)
 pkg_check_modules(LIBWEBSOCKETS IMPORTED_TARGET REQUIRED libwebsockets>=2.3.0)
 pkg_check_modules(PROTOBUF IMPORTED_TARGET protobuf>=2.6.0)
 pkg_check_modules(PROTOBUFC IMPORTED_TARGET libprotobuf-c>=1.1.0)

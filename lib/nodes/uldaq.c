@@ -413,19 +413,15 @@ int uldaq_check(struct node *n)
 	Range ranges_se[num_ranges_se];
 
 	for (int i = 0; i < num_ranges_diff; i++) {
-		long long rng;
-
-		err = ulAIGetInfo(u->device_handle, AI_INFO_DIFF_RANGE, i, &rng);
-
-		ranges_diff[i] = *(Range *) rng;
+		err = ulAIGetInfo(u->device_handle, AI_INFO_DIFF_RANGE, i, (long long *) &ranges_diff[i]);
+		if (err != ERR_NO_ERROR)
+			return -1;
 	}
 
 	for (int i = 0; i < num_ranges_se; i++) {
-		long long rng;
-
-		err = ulAIGetInfo(u->device_handle, AI_INFO_SE_RANGE, i, &rng);
-
-		ranges_se[i] = *(Range *) rng;
+		err = ulAIGetInfo(u->device_handle, AI_INFO_SE_RANGE, i, (long long *) &ranges_se[i]);
+		if (err != ERR_NO_ERROR)
+			return -1;
 	}
 
 	if (!has_ai) {
