@@ -68,7 +68,8 @@ public:
 
 
 		/* Initialize memory */
-		unsigned pool_size = node_type(node)->pool_size ? node_type(node)->pool_size : LOG2_CEIL(node->out.vectorize);
+		unsigned vec = LOG2_CEIL(MAX(node->out.vectorize, node->in.vectorize));
+		unsigned pool_size = node_type(node)->pool_size ? node_type(node)->pool_size : vec;
 
 		int ret = pool_init(&pool, pool_size, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), node_memory_type(node, &memory_hugepage));
 		if (ret < 0)
