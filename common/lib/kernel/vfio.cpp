@@ -24,6 +24,11 @@
 
 #define _DEFAULT_SOURCE
 
+#ifdef __arm__
+  #define _LARGEFILE64_SOURCE 1
+  #define _FILE_OFFSET_BITS 64
+#endif
+
 #include <algorithm>
 #include <string>
 #include <sstream>
@@ -476,10 +481,15 @@ VfioDevice::regionMap(size_t index)
 	if (!(r->flags & VFIO_REGION_INFO_FLAG_MMAP))
 		return MAP_FAILED;
 
+	int flags = MAP_SHARED;
+
+#ifndef __arm__
+	flags |= MAP_SHARED;
+#endif
+
 	mappings[index] = mmap(nullptr, r->size,
 	                       PROT_READ | PROT_WRITE,
-	                       MAP_SHARED | MAP_32BIT,
-	                       fd, r->offset);
+	                       flags, fd, r->offset);
 
 	return mappings[index];
 }

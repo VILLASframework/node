@@ -39,7 +39,7 @@ HostRam::HostRamAllocator::allocateBlock(size_t size)
 		size &= size_t(~0xFFF);
 	}
 
-#ifdef __linux__
+#if defined(__linux__) && !defined(__arm__)
 	const int mmap_flags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT;
 #else
 	const int mmap_flags = MAP_PRIVATE | MAP_ANONYMOUS;
