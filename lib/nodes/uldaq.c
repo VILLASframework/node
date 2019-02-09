@@ -152,6 +152,8 @@ static DaqDeviceDescriptor * uldaq_find_device(struct uldaq *u) {
 		return &descriptors[0];
 
 	for (int i = 0; i < num_devs; i++) {
+		d = &descriptors[i];
+
 		if (u->device_id) {
 			if (strcmp(u->device_id, d->uniqueId))
 				break;
@@ -176,7 +178,7 @@ static int uldaq_connect(struct node *n)
 	/* Find Matching device */
 	if (!u->device_descriptor) {
 		u->device_descriptor = uldaq_find_device(u);
-		if (u->device_descriptor) {
+		if (!u->device_descriptor) {
 			warning("Unable to find a matching device for node '%s'", node_name(n));
 			return -1;
 		}
@@ -224,7 +226,7 @@ int uldaq_type_start(struct super_node *sn)
 	for (int i = 0; i < num_devs; i++) {
 		DaqDeviceDescriptor *desc = &descriptors[i];
 
-		info("  %d: %s %s", i, desc->uniqueId, desc->devString);
+		info("  %d: %s %s (%s)", i, desc->uniqueId, desc->devString,  uldaq_print_interface_type(desc->devInterface));
 	}
 
 	return 0;
@@ -358,11 +360,21 @@ char * uldaq_print(struct node *n)
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	char *buf = NULL;
-	char *uid = u->device_descriptor->uniqueId;
-	char *name = u->device_descriptor->productName;
-	const char *iftype = uldaq_print_interface_type(u->device_descriptor->devInterface);
 
-	buf = strcatf(&buf, "device=%s (%s), interface=%s", uid, name, iftype);
+	if (u->device_descriptor) {
+		char *uid = u->device_descriptor->uniqueId;
+		char *name = u->device_descriptor->productName;
+		const char *iftype = uldaq_print_interface_type(u->device_descriptor->devInterface);
+
+		buf = strcatf(&buf, "device=%s (%s), interface=%s", uid, name, iftype);
+	}
+	else {
+		const char *uid = u->device_id;
+		const char *iftype = uldaq_print_interface_type(u->device_interface_type);
+
+		buf = strcatf(&buf, "device=%s, interface=%s", uid, iftype);
+	}
+
 	buf = strcatf(&buf, ", in.sample_rate=%f", u->in.sample_rate);
 
 	return buf;
@@ -604,23 +616,9 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	if (u->in.status != SS_RUNNING)
 		return -1;
 
-	/* Wait for data available condition triggered by event callback */
-	pthread_mutex_lock(&u->in.mutex);
+	long long start_index = u->in.buffer_pos;
 
-	long long current_index = u->in.transfer_status.currentIndex + u->in.channel_count;
-	long long start_index = u->buffer_pos;
-
-	if (start_index + n->in.vectorize * u->in.channel_count > current_index)
-		pthread_cond_wait(&u->in.cv, &u->in.mutex);
-
-#if 0
-	debug(2, "total count = %lld", u->in.transfer_status.currentTotalCount);
-	debug(2, "index  = %lld", u->in.transfer_status.currentIndex);
-	debug(2, "scan count = %lld", u->in.transfer_status.currentScanCount);
-	debug(2, "start index= %lld", start_index);
-#endif
-
-	for (int j = 0; j < n->in.vectorize; j++) {
+	for (int j = 0; j < cnt; j++) {
 		struct sample *smp = smps[j];
 
 		long long scan_index = start_index + j * u->in.channel_count;
@@ -637,7 +635,7 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
 	}
 
-	u->buffer_pos += u->in.channel_count * cnt;
+	u->in.buffer_pos += u->in.channel_count * cnt;
 
 	pthread_mutex_unlock(&u->in.mutex);
 
