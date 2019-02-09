@@ -22,8 +22,7 @@
 
 cmake_minimum_required(VERSION 3.6)
 
-project(villas-node 
-    DESCRIPTION "VILLASnode"
+project(villas-node
     LANGUAGES C CXX
 )
 
@@ -155,7 +154,7 @@ if(WITH_PLUGINS)
     add_subdirectory(plugins)
 endif()
 
-if(WITH_DOC)
+if(WITH_DOC AND ${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.9.0")
     add_subdirectory(doc)
 endif()
 
