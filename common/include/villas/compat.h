@@ -32,6 +32,9 @@ extern "C" {
 
 #if JANSSON_VERSION_HEX < 0x020A00
 size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags);
+
+int json_dumpfd(const json_t *json, int output, size_t flags);
+json_t *json_loadfd(int input, size_t flags, json_error_t *error);
 #endif
 
 #if defined(LIBCONFIG_FOUND) && (LIBCONFIG_VER_MAJOR <= 1) && (LIBCONFIG_VER_MINOR < 5)
