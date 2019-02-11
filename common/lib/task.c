@@ -127,9 +127,9 @@ int task_destroy(struct task *t)
 {
 #if PERIODIC_TASK_IMPL == TIMERFD
 	return close(t->fd);
-#endif
-
+#else
 	return 0;
+#endif
 }
 
 uint64_t task_wait(struct task *t)

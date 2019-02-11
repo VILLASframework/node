@@ -41,7 +41,11 @@ enum state {
 	STATE_CLOSED		= 5, /* alias for STATE_STARTED used by struct io */
 	STATE_PENDING_CONNECT	= 6,
 	STATE_CONNECTED		= 7,
-	STATE_PAUSED		= 8
+	STATE_PAUSED		= 8,
+	STATE_STARTING		= 9,
+	STATE_STOPPING		= 10,
+	STATE_PAUSING		= 11,
+	STATE_RESUMING		= 12
 };
 
 /** Callback to destroy list elements.
