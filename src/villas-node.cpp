@@ -55,11 +55,22 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::plugin;
 
-static std::atomic<bool> stop(false);
+SuperNode sn;
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
-	stop = true;
+	Logger logger = logging.get("node");
+
+	switch (signal)  {
+		case  SIGALRM:
+			logger->info("Reached timeout. Terminating...");
+			break;
+
+		default:
+			logger->info("Received {} signal. Terminating...", strsignal(signal));
+	}
+
+	sn.setState(STATE_STOPPING);
 }
 
 static void usage()
@@ -108,7 +119,6 @@ int main(int argc, char *argv[])
 {
 	int ret;
 
-	SuperNode sn;
 	Logger logger = logging.get("node");
 
 	try {
@@ -175,6 +185,7 @@ int main(int argc, char *argv[])
 		throw RuntimeError("Failed to verify configuration");
 
 	sn.start();
+	sn.run();
 	sn.stop();
 
 	logger->info(CLR_GRN("Goodbye!"));

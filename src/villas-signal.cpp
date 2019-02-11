@@ -160,6 +160,17 @@ void usage()
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
+	Logger logger = logging.get("signal");
+
+	switch (signal)  {
+		case  SIGALRM:
+			logger->info("Reached timeout. Terminating...");
+			break;
+
+		default:
+			logger->info("Received {} signal. Terminating...", strsignal(signal));
+	}
+
 	stop = true;
 }
 
@@ -246,16 +257,20 @@ int main(int argc, char *argv[])
 	if (ret)
 		throw RuntimeError("Failed to open output");
 
-	while (!stop) {
+	while (!stop && n.state == STATE_STARTED) {
 		t = sample_alloc(&q);
 
 		unsigned release = 1; // release = allocated
 
-		ret = node_read(&n, &t, 1, &release);
-		if (ret > 0)
-			io_print(&io, &t, 1);
+retry:		ret = node_read(&n, &t, 1, &release);
+		if (ret == 0)
+			goto retry;
+		else if (ret < 0)
+			goto out;
 
-		sample_decref(t);
+		io_print(&io, &t, 1);
+
+out:		sample_decref(t);
 	}
 
 	ret = node_stop(&n);

@@ -513,21 +513,25 @@ SuperNode::~SuperNode()
 
 int SuperNode::periodic()
 {
-#ifdef WITH_HOOKS
 	int ret;
+
+	int started = 0;
 
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
 		auto *p = (struct path *) vlist_at(&paths, i);
 
-		if (p->state != STATE_STARTED)
-			continue;
+		if (p->state == STATE_STARTED) {
+			started++;
 
-		for (size_t j = 0; j < vlist_length(&p->hooks); j++) {
-			hook *h = (struct hook *) vlist_at(&p->hooks, j);
+#ifdef WITH_HOOKS
+			for (size_t j = 0; j < vlist_length(&p->hooks); j++) {
+				hook *h = (struct hook *) vlist_at(&p->hooks, j);
 
-			ret = hook_periodic(h);
-			if (ret)
-				return ret;
+				ret = hook_periodic(h);
+				if (ret)
+					return ret;
+			}
+#endif /* WITH_HOOKS */
 		}
 	}
 
@@ -537,6 +541,7 @@ int SuperNode::periodic()
 		if (n->state != STATE_STARTED)
 			continue;
 
+#ifdef WITH_HOOKS
 		for (size_t j = 0; j < vlist_length(&n->in.hooks); j++) {
 			auto *h = (struct hook *) vlist_at(&n->in.hooks, j);
 
@@ -552,8 +557,15 @@ int SuperNode::periodic()
 			if (ret)
 				return ret;
 		}
+#endif /* WITH_HOOKS */
 	}
-#endif
+
+	if (state == STATE_STARTED && started == 0) {
+		info("No more active paths. Stopping super-node");
+
+		return -1;
+	}
+
 	return 0;
 }
 

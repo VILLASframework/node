@@ -421,7 +421,7 @@ int node_stop(struct node *n)
 {
 	int ret;
 
-	if (n->state != STATE_STARTED && n->state != STATE_CONNECTED && n->state != STATE_PENDING_CONNECT)
+	if (n->state != STATE_STOPPING && n->state != STATE_STARTED && n->state != STATE_CONNECTED && n->state != STATE_PENDING_CONNECT)
 		return 0;
 
 	info("Stopping node %s", node_name(n));
@@ -548,11 +548,12 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 {
 	int readd, nread = 0;
 
-	if (n->state == STATE_PAUSED)
-		return 0;
-
-	assert(n->state == STATE_STARTED || n->state == STATE_CONNECTED || n->state == STATE_PENDING_CONNECT);
 	assert(node_type(n)->read);
+
+	if (n->state == STATE_PAUSED || n->state == STATE_PENDING_CONNECT)
+		return 0;
+	else if (n->state != STATE_STARTED && n->state != STATE_CONNECTED)
+		return -1;
 
 	/* Send in parts if vector not supported */
 	if (node_type(n)->vectorize > 0 && node_type(n)->vectorize < cnt) {
@@ -593,8 +594,12 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 {
 	int tosend, sent, nsent = 0;
 
-	assert(n->state == STATE_STARTED || n->state == STATE_CONNECTED);
 	assert(node_type(n)->write);
+
+	if (n->state == STATE_PAUSED || n->state == STATE_PENDING_CONNECT)
+		return 0;
+	else if (n->state != STATE_STARTED && n->state != STATE_CONNECTED)
+		return -1;
 
 #ifdef WITH_HOOKS
 	/* Run write hooks */

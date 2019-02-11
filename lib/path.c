@@ -73,9 +73,9 @@ static int path_source_destroy(struct path_source *ps)
 	return 0;
 }
 
-static void path_source_read(struct path_source *ps, struct path *p, int i)
+static int path_source_read(struct path_source *ps, struct path *p, int i)
 {
-	int recv, tomux, allocated, cnt;
+	int recv, tomux, allocated, cnt, toenqueue, enqueued = 0;
 	unsigned release;
 
 	cnt = ps->node->in.vectorize;
@@ -93,10 +93,20 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 	release = allocated;
 
 	recv = node_read(ps->node, read_smps, allocated, &release);
-	if (recv == 0)
+	if (recv == 0) {
+		enqueued = 0;
 		goto out2;
-	else if (recv < 0)
-		error("Failed to read samples from node %s", node_name(ps->node));
+	}
+	else if (recv < 0) {
+		if (ps->node->state == STATE_STOPPING) {
+			p->state = STATE_STOPPING;
+
+			enqueued = -1;
+			goto out2;
+		}
+		else
+			error("Failed to read samples from node %s", node_name(ps->node));
+	}
 	else if (recv < allocated)
 		warning("Partial read for path %s: read=%u, expected=%u", path_name(p), recv, allocated);
 
@@ -134,30 +144,33 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 	debug(15, "Path %s received = %s", path_name(p), bitset_dump(&p->received));
 
 #ifdef WITH_HOOKS
-	int toenqueue = hook_process_list(&p->hooks, muxed_smps, tomux);
+	toenqueue = hook_process_list(&p->hooks, muxed_smps, tomux);
 	if (toenqueue != tomux) {
 		int skipped = tomux - toenqueue;
 
 		debug(LOG_NODES | 10, "Hooks skipped %u out of %u samples for path %s", skipped, tomux, path_name(p));
 	}
 #else
-	int toenqueue = tomux;
+	toenqueue = tomux;
 #endif
 
 	if (bitset_test(&p->mask, i)) {
 		/* Check if we received an update from all nodes/ */
 		if ((p->mode == PATH_MODE_ANY) ||
-		    (p->mode == PATH_MODE_ALL && !bitset_cmp(&p->mask, &p->received)))
-		{
+		    (p->mode == PATH_MODE_ALL && !bitset_cmp(&p->mask, &p->received))) {
 			path_destination_enqueue(p, muxed_smps, toenqueue);
 
 			/* Reset bitset of updated nodes */
 			bitset_clear_all(&p->received);
+
+			enqueued = toenqueue;
 		}
 	}
 
 	sample_decref_many(muxed_smps, tomux);
 out2:	sample_decref_many(read_smps, release);
+
+	return enqueued;
 }
 
 static int path_destination_init(struct path_destination *pd, int queuelen)
@@ -244,21 +257,24 @@ static void path_destination_write(struct path_destination *pd, struct path *p)
 
 static void * path_run_single(void *arg)
 {
+	int ret;
 	struct path *p = arg;
 	struct path_source *ps = (struct path_source *) vlist_at(&p->sources, 0);
 
 	debug(1, "Started path %s in single mode", path_name(p));
 
-	for (;;) {
-		path_source_read(ps, p, 0);
+	while (p->state == STATE_STARTED) {
+		pthread_testcancel();
+
+		ret = path_source_read(ps, p, 0);
+		if (ret <= 0)
+			continue;
 
 		for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
 			struct path_destination *pd = (struct path_destination *) vlist_at(&p->destinations, i);
 
 			path_destination_write(pd, p);
 		}
-
-		pthread_testcancel();
 	}
 
 	return NULL;
@@ -272,7 +288,7 @@ static void * path_run_poll(void *arg)
 
 	debug(1, "Started path %s in polling mode", path_name(p));
 
-	for (;;) {
+	while (p->state == STATE_STARTED) {
 		ret = poll(p->reader.pfds, p->reader.nfds, -1);
 		if (ret < 0)
 			serror("Failed to poll");
@@ -292,9 +308,8 @@ static void * path_run_poll(void *arg)
 					path_destination_enqueue(p, &p->last_sample, 1);
 				}
 				/* A source is ready to receive samples */
-				else {
+				else
 					path_source_read(ps, p, i);
-				}
 			}
 		}
 
@@ -521,7 +536,6 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 		"rate", &p->rate,
 		"mask", &json_mask,
 		"original_sequence_no", &p->original_sequence_no
-
 	);
 	if (ret)
 		jerror(&err, "Failed to parse path configuration");
@@ -806,14 +820,13 @@ int path_stop(struct path *p)
 {
 	int ret;
 
-	if (p->state != STATE_STARTED)
+	if (p->state != STATE_STARTED && p->state != STATE_STOPPING)
 		return 0;
 
 	info("Stopping path: %s", path_name(p));
 
-	ret = pthread_cancel(p->tid);
-	if (ret)
-		return ret;
+	if (p->state != STATE_STOPPING)
+		p->state = STATE_STOPPING;
 
 	ret = pthread_join(p->tid, NULL);
 	if (ret)
@@ -930,7 +943,7 @@ int path_reverse(struct path *p, struct path *r)
 	new_me->node = new_ps->node;
 	new_me->type = MAPPING_TYPE_DATA;
 	new_me->data.offset = 0;
-	new_me->length = 0;
+	new_me->length = vlist_length(&new_me->node->in.signals);
 
 	vlist_init(&new_ps->mappings);
 	vlist_push(&new_ps->mappings, new_me);
@@ -952,5 +965,6 @@ int path_reverse(struct path *p, struct path *r)
 		vlist_push(&r->hooks, g);
 	}
 #endif /* WITH_HOOKS */
+
 	return 0;
 }
