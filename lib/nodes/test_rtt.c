@@ -307,9 +307,11 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 		}
 
 		if (t->current >= vlist_length(&t->cases)) {
-			info("This was the last case. Terminating.");
-			killme(SIGTERM);
-			pause();
+			info("This was the last case. Stopping node %s", node_name(n));
+
+			n->state = STATE_STOPPING;
+
+			return -1;
 		}
 		else {
 			struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, t->current);
