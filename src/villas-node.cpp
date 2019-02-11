@@ -175,10 +175,6 @@ int main(int argc, char *argv[])
 		throw RuntimeError("Failed to verify configuration");
 
 	sn.start();
-
-	while (!stop)
-		sn.run();
-
 	sn.stop();
 
 	logger->info(CLR_GRN("Goodbye!"));

@@ -488,12 +488,15 @@ void SuperNode::stop()
 
 void SuperNode::run()
 {
-#ifdef WITH_HOOKS
-	task_wait(&task);
-	periodic();
-#else
-	pause();
-#endif /* WITH_HOOKS */
+	int ret;
+
+	while (state == STATE_STARTED) {
+		task_wait(&task);
+
+		ret = periodic();
+		if (ret)
+			state = STATE_STOPPING;
+	}
 }
 
 SuperNode::~SuperNode()
