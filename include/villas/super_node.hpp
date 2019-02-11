@@ -103,6 +103,11 @@ public:
 	/** Run periodic hooks of this super node. */
 	int periodic();
 
+	void setState(enum state st)
+	{
+		state = st;
+	}
+
 	struct node * getNode(const std::string &name)
 	{
 		return (struct node *) vlist_lookup(&nodes, name.c_str());
@@ -119,6 +124,10 @@ public:
 
 	struct vlist * getInterfaces() {
 		return &interfaces;
+	}
+
+	enum state getState() {
+		return state;
 	}
 
 #ifdef WITH_API
