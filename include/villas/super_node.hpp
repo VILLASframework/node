@@ -43,7 +43,6 @@ protected:
 	int priority;		/**< Process priority (lower is better) */
 	int affinity;		/**< Process affinity of the server and all created threads */
 	int hugepages;		/**< Number of hugepages to reserve. */
-	double stats;		/**< Interval for path statistics. Set to 0 to disable them. */
 
 	Logger logger;
 

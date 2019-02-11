@@ -52,7 +52,6 @@ SuperNode::SuperNode() :
 	priority(0),
 	affinity(0),
 	hugepages(DEFAULT_NR_HUGEPAGES),
-	stats(0),
 #ifdef WITH_API
 	api(this),
 #ifdef WITH_WEB
@@ -179,7 +178,7 @@ int SuperNode::parseJson(json_t *j)
 
 	json_error_t err;
 
-	ret = json_unpack_ex(j, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: F, s?: s }",
+	ret = json_unpack_ex(j, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s }",
 		"http", &json_web,
 		"logging", &json_logging,
 		"nodes", &json_nodes,
@@ -187,7 +186,6 @@ int SuperNode::parseJson(json_t *j)
 		"hugepages", &hugepages,
 		"affinity", &affinity,
 		"priority", &priority,
-		"stats", &stats,
 		"name", &nme
 	);
 	if (ret)
@@ -380,6 +378,8 @@ void SuperNode::startPaths()
 
 void SuperNode::start()
 {
+	int ret;
+
 	assert(state == STATE_CHECKED);
 
 	memory_init(hugepages);
@@ -398,17 +398,11 @@ void SuperNode::start()
 	startNodes();
 	startPaths();
 
-#ifdef WITH_HOOKS
-	int ret;
+	ret = task_init(&task, 1.0, CLOCK_REALTIME);
+	if (ret)
+		throw RuntimeError("Failed to create timer");
 
-	if (stats > 0) {
-		stats_print_header(STATS_FORMAT_HUMAN);
-
-		ret = task_init(&task, 1.0 / stats, CLOCK_REALTIME);
-		if (ret)
-			throw RuntimeError("Failed to create stats timer");
-	}
-#endif /* WITH_HOOKS */
+	stats_print_header(STATS_FORMAT_HUMAN);
 
 	state = STATE_STARTED;
 }
@@ -471,15 +465,11 @@ void SuperNode::stopInterfaces()
 
 void SuperNode::stop()
 {
-
-#ifdef WITH_HOOKS
 	int ret;
-	if (stats > 0) {
-		ret = task_destroy(&task);
-		if (ret)
-			throw RuntimeError("Failed to stop stats timer");
-	}
-#endif /* WITH_HOOKS */
+
+	ret = task_destroy(&task);
+	if (ret)
+		throw RuntimeError("Failed to stop timer");
 
 	stopPaths();
 	stopNodes();
