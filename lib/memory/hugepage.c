@@ -65,10 +65,8 @@ int memory_hugepage_init(int hugepages)
 			debug(LOG_MEM | 2, "Increased number of reserved hugepages from %d to %d", pagecnt, hugepages);
 		}
 		else {
-			warning("Failed to reserved hugepages. Please re-run as super-user or reserve manually via:");
+			warning("Failed to reserved hugepages. Please reserve manually by running as root:");
 			warning("   $ echo %d > /proc/sys/vm/nr_hugepages", hugepages);
-
-			return -1;
 		}
 	}
 #endif
@@ -81,7 +79,7 @@ static struct memory_allocation * memory_hugepage_alloc(struct memory_type *m, s
 {
 	static bool use_huge = true;
 
-	int ret, flags, fd;
+	int flags, fd;
 	size_t sz;
 
 	struct memory_allocation *ma = alloc(sizeof(struct memory_allocation));
@@ -120,7 +118,7 @@ retry:	if (use_huge) {
 	ma->address = mmap(NULL, ma->length, PROT_READ | PROT_WRITE, flags, fd, 0);
 	if (ma->address == MAP_FAILED) {
 		if (use_huge) {
-			warning("Failed to map hugepages, try with normal pages instead");
+			warning("Failed to map hugepages, try with normal pages instead!");
 			use_huge = false;
 			goto retry;
 		}

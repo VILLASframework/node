@@ -27,6 +27,7 @@
 
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/mman.h>
 
 #include <villas/log.h>
 #include <villas/memory.h>
@@ -70,10 +71,14 @@ int memory_init(int hugepages)
 
 int memory_lock(size_t lock)
 {
-#if defined(__linux__) && defined(__x86_64__)
 	int ret;
+
+#ifdef __linux__
+
+#ifndef __arm__
 	struct rlimit l;
 
+	/* Increase ressource limit for locked memory */
 	ret = getrlimit(RLIMIT_MEMLOCK, &l);
 	if (ret)
 		return ret;
@@ -81,11 +86,10 @@ int memory_lock(size_t lock)
 	if (l.rlim_cur < lock) {
 		if (l.rlim_max < lock) {
 			if (getuid() != 0) {
-				warning("Failed to in increase ressource limit of locked memory from %lu to %zu bytes", l.rlim_cur, lock);
-				warning("Please re-run as super-user or raise manually via:");
+				warning("Failed to in increase ressource limit of locked memory. Please increase manually by running as root:");
 				warning("   $ ulimit -Hl %zu", lock);
 
-				return -1;
+				goto out;
 			}
 
 			l.rlim_max = lock;
@@ -99,7 +103,16 @@ int memory_lock(size_t lock)
 
 		debug(LOG_MEM | 2, "Increased ressource limit of locked memory to %zd bytes", lock);
 	}
-#endif
+#endif /* __arm__ */
+out:
+#ifdef _POSIX_MEMLOCK
+	/* Lock all current and future memory allocations */
+	ret = mlockall(MCL_CURRENT | MCL_FUTURE);
+	if (ret) {
+		return -1;
+#endif /* _POSIX_MEMLOCK */
+
+#endif /* __linux__ */
 
 	return 0;
 }
