@@ -130,12 +130,6 @@ retry:	if (use_huge) {
 		}
 	}
 
-	if (getuid() == 0) {
-		ret = mlock(ma->address, ma->length);
-		if (ret)
-			return NULL;
-	}
-
 	return ma;
 }
 
