@@ -40,6 +40,8 @@ class SuperNode {
 protected:
 	enum state state;
 
+	int idleStop;
+
 	int priority;		/**< Process priority (lower is better) */
 	int affinity;		/**< Process affinity of the server and all created threads */
 	int hugepages;		/**< Number of hugepages to reserve. */

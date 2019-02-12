@@ -49,6 +49,7 @@ using namespace villas::node;
 
 SuperNode::SuperNode() :
 	state(STATE_INITIALIZED),
+	idleStop(false),
 	priority(0),
 	affinity(0),
 	hugepages(DEFAULT_NR_HUGEPAGES),
@@ -178,7 +179,9 @@ int SuperNode::parseJson(json_t *j)
 
 	json_error_t err;
 
-	ret = json_unpack_ex(j, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s }",
+	idleStop = true;
+
+	ret = json_unpack_ex(j, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s, s?: b }",
 		"http", &json_web,
 		"logging", &json_logging,
 		"nodes", &json_nodes,
@@ -186,7 +189,8 @@ int SuperNode::parseJson(json_t *j)
 		"hugepages", &hugepages,
 		"affinity", &affinity,
 		"priority", &priority,
-		"name", &nme
+		"name", &nme,
+		"idle_stop", &idleStop
 	);
 	if (ret)
 		throw JsonError(err, "Failed to parse global configuration");
@@ -560,7 +564,7 @@ int SuperNode::periodic()
 #endif /* WITH_HOOKS */
 	}
 
-	if (state == STATE_STARTED && started == 0) {
+	if (idleStop && state == STATE_STARTED && started == 0) {
 		info("No more active paths. Stopping super-node");
 
 		return -1;
