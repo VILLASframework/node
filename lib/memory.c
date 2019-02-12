@@ -108,7 +108,7 @@ out:
 #ifdef _POSIX_MEMLOCK
 	/* Lock all current and future memory allocations */
 	ret = mlockall(MCL_CURRENT | MCL_FUTURE);
-	if (ret) {
+	if (ret)
 		return -1;
 #endif /* _POSIX_MEMLOCK */
 
