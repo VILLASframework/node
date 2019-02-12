@@ -419,8 +419,7 @@ int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		return ret;
 
 	if (m->publish) {
-		ret = mosquitto_publish(m->client, NULL /* mid */, m->publish, wbytes, data, m->qos,
-                                m->retain);
+		ret = mosquitto_publish(m->client, NULL /* mid */, m->publish, wbytes, data, m->qos, m->retain);
 		if (ret != MOSQ_ERR_SUCCESS) {
 			warning("MQTT: publish failed for node %s: %s", node_name(n), mosquitto_strerror(ret));
 			return -abs(ret);
