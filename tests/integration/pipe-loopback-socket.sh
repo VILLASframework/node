@@ -39,7 +39,6 @@ villas-signal -v ${NUM_VALUES} -l ${NUM_SAMPLES} -n random > ${INPUT_FILE}
 
 for FORMAT in villas.human gtnet.fake protobuf; do
 for LAYER in udp ip eth unix; do
-for VERIFY_SOURCE in true false; do
 	
 VECTORIZES="1"
 
@@ -88,7 +87,6 @@ cat > ${CONFIG_FILE} << EOF
 			},
 			"in" : {
 				"address" : "${LOCAL}",
-				"verify_source" : ${VERIFY_SOURCE},
 				"signals" : {
 					"count" : ${NUM_VALUES},
 					"type" : "float"
@@ -111,7 +109,7 @@ villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 if (( ${RC} != 0 )); then
-	echo "=========== Sub-test failed for: format=${FORMAT}, layer=${LAYER}, verify_source=${VERIFY_SOURCE}, vectorize=${VECTORIZE}"
+	echo "=========== Sub-test failed for: format=${FORMAT}, layer=${LAYER}, vectorize=${VECTORIZE}"
 	echo "Config:"
 	cat ${CONFIG_FILE}
 	echo
@@ -122,10 +120,10 @@ if (( ${RC} != 0 )); then
 	cat ${OUTPUT_FILE}
 	exit ${RC}
 else
-	echo "=========== Sub-test succeeded for: format=${FORMAT}, layer=${LAYER}, verify_source=${VERIFY_SOURCE}, vectorize=${VECTORIZE}"
+	echo "=========== Sub-test succeeded for: format=${FORMAT}, layer=${LAYER}, vectorize=${VECTORIZE}"
 fi
 
-done; done; done; done
+done; done; done
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE} ${THEORIES}
 
