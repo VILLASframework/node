@@ -38,8 +38,6 @@ int setAffinity(int affinity);
 
 int setPriority(int priority);
 
-int lockMemory();
-
 /** Checks for realtime (PREEMPT_RT) patched kernel.
  *
  * See https://rt.wiki.kernel.org
