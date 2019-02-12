@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
 	return 0;
 
 	}
-	catch (std::exception *e) {
-		logger->error(e->what());
+	catch (RuntimeError &e) {
+		logger->error("{}", e.what());
 	}
 }
