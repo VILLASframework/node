@@ -190,7 +190,7 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 
 		i->out.svid = svid ? strdup(svid) : NULL;
 
-		ret = iec61850_parse_signals(json_signals, &i->out.signals, NULL);
+		ret = iec61850_parse_signals(json_signals, &i->out.signals, &n->out.signals);
 		if (ret <= 0)
 			error("Failed to parse setting 'signals' of node %s", node_name(n));
 
