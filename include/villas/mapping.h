@@ -45,16 +45,6 @@ enum mapping_type {
 	MAPPING_TYPE_TIMESTAMP
 };
 
-enum mapping_stats_type {
-	MAPPING_STATS_TYPE_LAST,
-	MAPPING_STATS_TYPE_HIGHEST,
-	MAPPING_STATS_TYPE_LOWEST,
-	MAPPING_STATS_TYPE_MEAN,
-	MAPPING_STATS_TYPE_VAR,
-	MAPPING_STATS_TYPE_STDDEV,
-	MAPPING_STATS_TYPE_TOTAL
-};
-
 enum mapping_header_type {
 	MAPPING_HEADER_TYPE_LENGTH,
 	MAPPING_HEADER_TYPE_SEQUENCE
@@ -85,7 +75,7 @@ struct mapping_entry {
 
 		struct {
 			enum stats_id id;
-			enum mapping_stats_type type;
+			enum stats_type type;
 		} stats;
 
 		struct {

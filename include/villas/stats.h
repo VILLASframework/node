@@ -51,6 +51,16 @@ enum stats_id {
 	STATS_COUNT		/**< Just here to have an updated number of statistics. */
 };
 
+enum stats_type {
+	STATS_TYPE_LAST,
+	STATS_TYPE_HIGHEST,
+	STATS_TYPE_LOWEST,
+	STATS_TYPE_MEAN,
+	STATS_TYPE_VAR,
+	STATS_TYPE_STDDEV,
+	STATS_TYPE_TOTAL
+};
+
 struct stats_desc {
 	const char *name;
 	const char *unit;

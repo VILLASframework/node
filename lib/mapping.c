@@ -89,19 +89,19 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		me->stats.id = id;
 
 		if      (!strcmp(subfield, "total"))
-			me->stats.type = MAPPING_STATS_TYPE_TOTAL;
+			me->stats.type = STATS_TYPE_TOTAL;
 		else if (!strcmp(subfield, "last"))
-			me->stats.type = MAPPING_STATS_TYPE_LAST;
+			me->stats.type = STATS_TYPE_LAST;
 		else if (!strcmp(subfield, "lowest"))
-			me->stats.type = MAPPING_STATS_TYPE_LOWEST;
+			me->stats.type = STATS_TYPE_LOWEST;
 		else if (!strcmp(subfield, "highest"))
-			me->stats.type = MAPPING_STATS_TYPE_HIGHEST;
+			me->stats.type = STATS_TYPE_HIGHEST;
 		else if (!strcmp(subfield, "mean"))
-			me->stats.type = MAPPING_STATS_TYPE_MEAN;
+			me->stats.type = STATS_TYPE_MEAN;
 		else if (!strcmp(subfield, "var"))
-			me->stats.type = MAPPING_STATS_TYPE_VAR;
+			me->stats.type = STATS_TYPE_VAR;
 		else if (!strcmp(subfield, "stddev"))
-			me->stats.type = MAPPING_STATS_TYPE_STDDEV;
+			me->stats.type = STATS_TYPE_STDDEV;
 		else {
 			warning("Invalid stats sub-type");
 			goto invalid_format;
@@ -280,25 +280,25 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 			const struct hist *h = &s->histograms[me->stats.id];
 
 			switch (me->stats.type) {
-				case MAPPING_STATS_TYPE_TOTAL:
+				case STATS_TYPE_TOTAL:
 					remapped->data[off++].i = h->total;
 					break;
-				case MAPPING_STATS_TYPE_LAST:
+				case STATS_TYPE_LAST:
 					remapped->data[off++].f = h->last;
 					break;
-				case MAPPING_STATS_TYPE_HIGHEST:
+				case STATS_TYPE_HIGHEST:
 					remapped->data[off++].f = h->highest;
 					break;
-				case MAPPING_STATS_TYPE_LOWEST:
+				case STATS_TYPE_LOWEST:
 					remapped->data[off++].f = h->lowest;
 					break;
-				case MAPPING_STATS_TYPE_MEAN:
+				case STATS_TYPE_MEAN:
 					remapped->data[off++].f = hist_mean(h);
 					break;
-				case MAPPING_STATS_TYPE_STDDEV:
+				case STATS_TYPE_STDDEV:
 					remapped->data[off++].f = hist_stddev(h);
 					break;
-				case MAPPING_STATS_TYPE_VAR:
+				case STATS_TYPE_VAR:
 					remapped->data[off++].f = hist_var(h);
 					break;
 				default:
@@ -381,31 +381,31 @@ int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
 	switch (me->type) {
 		case MAPPING_TYPE_STATS:
 			switch (me->stats.type) {
-				case MAPPING_STATS_TYPE_TOTAL:
+				case STATS_TYPE_TOTAL:
 					type = "total";
 					break;
 
-				case MAPPING_STATS_TYPE_LAST:
+				case STATS_TYPE_LAST:
 					type = "last";
 					break;
 
-				case MAPPING_STATS_TYPE_LOWEST:
+				case STATS_TYPE_LOWEST:
 					type = "lowest";
 					break;
 
-				case MAPPING_STATS_TYPE_HIGHEST:
+				case STATS_TYPE_HIGHEST:
 					type = "highest";
 					break;
 
-				case MAPPING_STATS_TYPE_MEAN:
+				case STATS_TYPE_MEAN:
 					type = "mean";
 					break;
 
-				case MAPPING_STATS_TYPE_VAR:
+				case STATS_TYPE_VAR:
 					type = "var";
 					break;
 
-				case MAPPING_STATS_TYPE_STDDEV:
+				case STATS_TYPE_STDDEV:
 					type = "stddev";
 					break;
 

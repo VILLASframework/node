@@ -74,7 +74,7 @@ Test(mapping, parse_nodes)
 	cr_assert_eq(m.node, vlist_lookup(&nodes, "cherry"));
 	cr_assert_eq(m.type, MAPPING_TYPE_STATS);
 	cr_assert_eq(m.stats.id, STATS_OWD);
-	cr_assert_eq(m.stats.type, MAPPING_STATS_TYPE_MEAN);
+	cr_assert_eq(m.stats.type, STATS_TYPE_MEAN);
 
 	ret = mapping_parse_str(&m, "carrot.data[1-2]", &nodes);
 	cr_assert_eq(ret, 0);
@@ -127,7 +127,7 @@ Test(mapping, parse)
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_STATS);
 	cr_assert_eq(m.stats.id, STATS_OWD);
-	cr_assert_eq(m.stats.type, MAPPING_STATS_TYPE_MEAN);
+	cr_assert_eq(m.stats.type, STATS_TYPE_MEAN);
 
 	ret = mapping_parse_str(&m, "data[1-2]", nullptr);
 	cr_assert_eq(ret, 0);
