@@ -201,6 +201,8 @@ struct node_type * node_type(struct node *n);
 
 struct memory_type * node_memory_type(struct node *n, struct memory_type *parent);
 
+int node_is_valid_name(const char *name);
+
 #ifdef __cplusplus
 }
 #endif

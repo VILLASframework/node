@@ -217,6 +217,10 @@ int SuperNode::parseJson(json_t *j)
 			struct node_type *nt;
 			const char *type;
 
+			ret = node_is_valid_name(name);
+			if (ret)
+				throw RuntimeError("Invalid name for node: {}", name);
+
 			ret = json_unpack_ex(json_node, &err, 0, "{ s: s }", "type", &type);
 			if (ret)
 				throw JsonError(err, "Failed to parse node");

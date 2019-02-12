@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include <string.h>
+#include <ctype.h>
 
 #include <villas/node/config.h>
 #include <villas/hook.h>
@@ -763,6 +764,18 @@ invalid2:
 	}
 
 	error("Unknown node %s. Choose of one of: %s", str, allstr);
+
+	return 0;
+}
+
+int node_is_valid_name(const char *name)
+{
+	for (const char *p = name; *p; p++) {
+		if (isalnum(*p) || (*p == '_') || (*p == '-'))
+			continue;
+
+		return -1;
+	}
 
 	return 0;
 }
