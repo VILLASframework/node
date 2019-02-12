@@ -352,7 +352,7 @@ int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt, unsign
 	struct sample *smpt[cnt];
 
 	if (!i->in.enabled)
-		return 0;
+		return -1;
 
 	pulled = queue_signalled_pull_many(&i->in.queue, (void **) smpt, cnt);
 
@@ -367,7 +367,7 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsig
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
 	if (!i->out.enabled)
-		return 0;
+		return -1;
 
 	for (unsigned j = 0; j < cnt; j++) {
 		unsigned offset = 0;
