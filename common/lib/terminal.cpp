@@ -34,6 +34,9 @@ Terminal::Terminal()
 {
 	int ret;
 
+	window.ws_row = 0;
+	window.ws_col = 0;
+
 	isTty = isatty(fileno(stdin));
 
 	if (isTty) {
