@@ -32,20 +32,20 @@ namespace villas {
 namespace kernel {
 namespace rt {
 
-int init(int priority, int affinity);
+void init(int priority, int affinity);
 
-int setAffinity(int affinity);
+void setAffinity(int affinity);
 
-int setPriority(int priority);
+void setPriority(int priority);
 
 /** Checks for realtime (PREEMPT_RT) patched kernel.
  *
  * See https://rt.wiki.kernel.org
  *
- * @retval 0 Kernel is patched.
- * @reval <>0 Kernel is not patched.
+ * @retval true Kernel is patched.
+ * @retval false Kernel is not patched.
  */
-int isPreemptible();
+bool isPreemptible();
 
 } // namespace villas
 } // namespace kernel
