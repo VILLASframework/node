@@ -251,7 +251,7 @@ int SuperNode::parseJson(json_t *j)
 		size_t i;
 		json_t *json_path;
 		json_array_foreach(json_paths, i, json_path) {
-			path *p = (path *) alloc(sizeof(path));
+parse:			path *p = (path *) alloc(sizeof(path));
 
 			ret = path_init(p);
 			if (ret)
@@ -264,17 +264,25 @@ int SuperNode::parseJson(json_t *j)
 			vlist_push(&paths, p);
 
 			if (p->reverse) {
-				path *r = (path *) alloc(sizeof(path));
-
-				ret = path_init(r);
+				/* Only simple paths can be reversed */
+				ret = path_is_simple(p);
 				if (ret)
-					throw RuntimeError("Failed to init path");
+					throw RuntimeError("Complex paths can not be reversed!");
 
-				ret = path_reverse(p, r);
-				if (ret)
-					throw RuntimeError("Failed to reverse path {}", path_name(p));
+				/* Parse a second time with in/out reversed */
+				json_path = json_copy(json_path);
 
-				vlist_push(&paths, r);
+				json_t *json_in = json_object_get(json_path, "in");
+				json_t *json_out = json_object_get(json_path, "out");
+
+				if (json_equal(json_in, json_out))
+					throw RuntimeError("Can not reverse path with identical in/out nodes!");
+
+				json_object_set(json_path, "reverse", json_false());
+				json_object_set(json_path, "in", json_out);
+				json_object_set(json_path, "out", json_in);
+
+				goto parse;
 			}
 		}
 	}

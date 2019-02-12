@@ -921,50 +921,22 @@ int path_uses_node(struct path *p, struct node *n)
 	return -1;
 }
 
-int path_reverse(struct path *p, struct path *r)
+int path_is_simple(struct path *p)
 {
-	if (vlist_length(&p->destinations) != 1 || vlist_length(&p->sources) != 1)
-		return -1;
+	int ret;
+	const char *in = NULL, *out = NULL;
 
-	/* General */
-	r->enabled = p->enabled;
+	ret = json_unpack(p->cfg, "{ s: s, s: s }", "in", &in, "out", &out);
+	if (ret)
+		return ret;
 
-	/* Source / Destinations */
-	struct path_destination *orig_pd = vlist_first(&p->destinations);
-	struct path_source      *orig_ps = vlist_first(&p->sources);
+	ret = node_is_valid_name(in);
+	if (ret)
+		return ret;
 
-	struct path_destination *new_pd = (struct path_destination *) alloc(sizeof(struct path_destination));
-	struct path_source      *new_ps = (struct path_source *) alloc(sizeof(struct path_source));
-	struct mapping_entry    *new_me = alloc(sizeof(struct mapping_entry));
-	new_pd->node = orig_ps->node;
-	new_ps->node = orig_pd->node;
-	new_ps->masked = true;
-
-	new_me->node = new_ps->node;
-	new_me->type = MAPPING_TYPE_DATA;
-	new_me->data.offset = 0;
-	new_me->length = vlist_length(&new_me->node->in.signals);
-
-	vlist_init(&new_ps->mappings);
-	vlist_push(&new_ps->mappings, new_me);
-
-	vlist_push(&r->destinations, new_pd);
-	vlist_push(&r->sources, new_ps);
-
-#ifdef WITH_HOOKS
-	for (size_t i = 0; i < vlist_length(&p->hooks); i++) {
-		int ret;
-
-		struct hook *h = (struct hook *) vlist_at(&p->hooks, i);
-		struct hook *g = (struct hook *) alloc(sizeof(struct hook));
-
-		ret = hook_init(g, h->_vt, r, NULL);
-		if (ret)
-			return ret;
-
-		vlist_push(&r->hooks, g);
-	}
-#endif /* WITH_HOOKS */
+	ret = node_is_valid_name(out);
+	if (ret)
+		return ret;
 
 	return 0;
 }
