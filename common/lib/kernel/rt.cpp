@@ -22,7 +22,6 @@
 
 #include <sched.h>
 #include <unistd.h>
-#include <sys/mman.h>
 
 #include <villas/log.hpp>
 #include <villas/cpuset.hpp>
@@ -42,7 +41,7 @@ namespace villas {
 namespace kernel {
 namespace rt {
 
-int init(int priority, int affinity)
+void init(int priority, int affinity)
 {
 	Logger logger = logging.get("kernel:rt");
 
@@ -53,7 +52,7 @@ int init(int priority, int affinity)
 
 	/* Use FIFO scheduler with real time priority */
 	is_rt = isPreemptible();
-	if (is_rt)
+	if (!is_rt)
 		logger->warn("We recommend to use an PREEMPT_RT patched kernel!");
 
 	if (priority)
@@ -65,20 +64,16 @@ int init(int priority, int affinity)
 		setAffinity(affinity);
 	else
 		logger->warn("You might want to use the 'affinity' setting to pin " PROJECT_NAME " to dedicate CPU cores");
-
-	lockMemory();
 #else
 	logger->warn("This platform is not optimized for real-time execution");
+
 	(void) affinity;
 	(void) priority;
 #endif
-
-	return 0;
 }
 
 #ifdef __linux__
-
-int setAffinity(int affinity)
+void setAffinity(int affinity)
 {
 	char isolcpus[255];
 	int is_isol, ret;
@@ -109,11 +104,9 @@ int setAffinity(int affinity)
 		throw SystemError("Failed to set CPU affinity to {}", (std::string) cset_pin);
 
 	logger->debug("Set affinity to {}", (std::string) cset_pin);
-
-	return 0;
 }
 
-int setPriority(int priority)
+void setPriority(int priority)
 {
 	int ret;
 	struct sched_param param = {
@@ -127,13 +120,11 @@ int setPriority(int priority)
 		throw SystemError("Failed to set real time priority");
 
 	logger->debug("Task priority set to {}", priority);
-
-	return 0;
 }
 
-int isPreemptible()
+bool isPreemptible()
 {
-	return access(SYSFS_PATH "/kernel/realtime", R_OK);
+	return access(SYSFS_PATH "/kernel/realtime", R_OK) == 0;
 }
 
 #endif /* __linux__ */
