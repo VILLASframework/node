@@ -828,6 +828,11 @@ int path_stop(struct path *p)
 	if (p->state != STATE_STOPPING)
 		p->state = STATE_STOPPING;
 
+	/* Cancel the thread in case is currently in a blocking syscall */
+	ret = pthread_cancel(p->tid);
+	if (ret)
+		return ret;
+
 	ret = pthread_join(p->tid, NULL);
 	if (ret)
 		return ret;
