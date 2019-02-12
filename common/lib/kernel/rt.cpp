@@ -78,19 +78,6 @@ int init(int priority, int affinity)
 
 #ifdef __linux__
 
-int lockMemory()
-{
-	int ret;
-
-#ifdef _POSIX_MEMLOCK
-	ret = mlockall(MCL_CURRENT | MCL_FUTURE);
-	if (ret)
-		throw SystemError("Failed to lock memory");
-#endif
-
-	return 0;
-}
-
 int setAffinity(int affinity)
 {
 	char isolcpus[255];
