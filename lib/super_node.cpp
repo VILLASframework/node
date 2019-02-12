@@ -386,7 +386,10 @@ void SuperNode::start()
 
 	assert(state == STATE_CHECKED);
 
-	memory_init(hugepages);
+	ret = memory_init(hugepages);
+	if (ret)
+		throw RuntimeError("Failed to initialize memory system");
+
 	kernel::rt::init(priority, affinity);
 
 #ifdef WITH_API
