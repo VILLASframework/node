@@ -176,7 +176,7 @@ int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigne
 		return 0;
 
 	if (!sn->node->stats)
-		return 0;
+		return -1;
 
 	task_wait(&sn->task);
 
