@@ -40,7 +40,7 @@ OUTPUT_FILE=$(mktemp)
 FORMAT="villas.binary"
 VECTORIZE="1"
 
-RATE=10000
+RATE=100
 NUM_SAMPLES=100
 
 cat > ${CONFIG_FILE_SRC} << EOF
@@ -52,7 +52,7 @@ cat > ${CONFIG_FILE_SRC} << EOF
 			"vectorize" : ${VECTORIZE},
 			"rate" : ${RATE},
 			"rtcp" : {
-				"enabled" : false,
+				"enabled" : true,
 				"mode" : "aimd",
 				"throttle_mode" : "decimate"
 			},
@@ -84,7 +84,7 @@ cat > ${CONFIG_FILE_DEST} << EOF
 			"vectorize" : ${VECTORIZE},
 			"rate" : ${RATE},
 			"rtcp": {
-				"enabled" : false,
+				"enabled" : true,
 				"mode" : "aimd",
 				"throttle_mode" : "decimate"
 			},
@@ -107,7 +107,7 @@ cat > ${CONFIG_FILE_DEST} << EOF
 }
 EOF
 
-villas-signal mixed -v 5 -l ${NUM_SAMPLES} > ${INPUT_FILE}
+villas-signal mixed -v 5 -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
 
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE_DEST} rtp_node > ${OUTPUT_FILE} &
 
