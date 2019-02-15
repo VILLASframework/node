@@ -40,7 +40,7 @@ OUTPUT_FILE=$(mktemp)
 FORMAT="villas.binary"
 VECTORIZE="1"
 
-RATE=5000
+RATE=1000
 NUM_SAMPLES=100000
 
 cat > ${CONFIG_FILE_SRC} << EOF
@@ -62,7 +62,7 @@ cat > ${CONFIG_FILE_SRC} << EOF
 			"aimd" : {
 				"a" : 10,
 				"b" : 0.5,
-				"start_rate" : 5000
+				"start_rate" : ${RATE}
 			},
 			"in" : {
 				"address" : "0.0.0.0:12002",
@@ -99,7 +99,7 @@ cat > ${CONFIG_FILE_DEST} << EOF
 			"aimd" : {
 				"a" : 10,
 				"b" : 0.5,
-				"start_rate" : 5000
+				"start_rate" : ${RATE}
 			},
 			"in" : {
 				"address" : "0.0.0.0:12000",

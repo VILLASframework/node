@@ -82,14 +82,14 @@ int if_start(struct interface *i)
 	}
 
 	/* Abort if no node is using netem */
-	if (mark == 0)
+	if (fwmark == 0)
 		return 0;
 
 	if (getuid() != 0)
 		error("Network emulation requires super-user privileges!");
 
 	/* Replace root qdisc */
-	ret = tc_prio(i, &i->tc_qdisc, TC_HANDLE(1, 0), TC_H_ROOT, mark);
+	ret = tc_prio(i, &i->tc_qdisc, TC_HANDLE(1, 0), TC_H_ROOT, fwmark);
 	if (ret)
 		error("Failed to setup priority queuing discipline: %s", nl_geterror(ret));
 
