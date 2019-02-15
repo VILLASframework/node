@@ -289,6 +289,9 @@ char * rtp_print(struct node *n)
 		}
 
 		strcatf(&buf, ", rtcp.mode=%s, rtcp.throttle_mode=%s", mode, throttle_mode);
+
+		if (r->rtcp.throttle_mode == RTCP_MODE_AIMD)
+			strcatf(&buf, ", aimd.a=%f, aimd.b=%f, aimd.start_rate", r->aimd.a, r->aimd.b, r->aimd.last_rate);
 	}
 
 	free(local);
