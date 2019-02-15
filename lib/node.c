@@ -282,12 +282,13 @@ int node_parse(struct node *n, json_t *json, const char *name)
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o }, s?: { s?: o } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o }, s?: { s?: o, s: i } }",
 		"type", &type,
 		"in",
 			"signals", &json_signals,
 		"out",
-			"netem", &json_netem
+			"netem", &json_netem,
+			"fwmark", &n->fwmark
 	);
 	if (ret)
 		jerror(&err, "Failed to parse node %s", node_name(n));
