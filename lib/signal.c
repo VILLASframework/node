@@ -55,20 +55,7 @@ int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, u
 
 	switch (me->type) {
 		case MAPPING_TYPE_STATS:
-			switch (me->stats.type) {
-				case STATS_TYPE_TOTAL:
-					s->type = SIGNAL_TYPE_INTEGER;
-					break;
-
-				case STATS_TYPE_LAST:
-				case STATS_TYPE_LOWEST:
-				case STATS_TYPE_HIGHEST:
-				case STATS_TYPE_MEAN:
-				case STATS_TYPE_VAR:
-				case STATS_TYPE_STDDEV:
-					s->type = SIGNAL_TYPE_FLOAT;
-					break;
-			}
+			s->type = stats_types[me->stats.type].signal_type;
 			break;
 
 		case MAPPING_TYPE_HEADER:

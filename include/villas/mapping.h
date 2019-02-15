@@ -74,7 +74,7 @@ struct mapping_entry {
 		} data;
 
 		struct {
-			enum stats_id id;
+			enum stats_metric metric;
 			enum stats_type type;
 		} stats;
 

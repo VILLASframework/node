@@ -168,18 +168,18 @@ static int stats_collect_process(struct hook *h, struct sample *smps[], unsigned
 
 		if (previous) {
 			if (current->flags & previous->flags & SAMPLE_HAS_TS_RECEIVED)
-				stats_update(s, STATS_GAP_RECEIVED, time_delta(&previous->ts.received, &current->ts.received));
+				stats_update(s, STATS_METRIC_GAP_RECEIVED, time_delta(&previous->ts.received, &current->ts.received));
 
 			if (current->flags & previous->flags & SAMPLE_HAS_TS_ORIGIN)
-				stats_update(s, STATS_GAP_SAMPLE, time_delta(&previous->ts.origin, &current->ts.origin));
+				stats_update(s, STATS_METRIC_GAP_SAMPLE, time_delta(&previous->ts.origin, &current->ts.origin));
 
 			if ((current->flags & SAMPLE_HAS_TS_ORIGIN) && (current->flags & SAMPLE_HAS_TS_RECEIVED))
-				stats_update(s, STATS_OWD, time_delta(&current->ts.origin, &current->ts.received));
+				stats_update(s, STATS_METRIC_OWD, time_delta(&current->ts.origin, &current->ts.received));
 
 			if (current->flags & previous->flags & SAMPLE_HAS_SEQUENCE) {
 				dist = current->sequence - (int32_t) previous->sequence;
 				if (dist != 1)
-					stats_update(s, STATS_REORDERED, dist);
+					stats_update(s, STATS_METRIC_REORDERED, dist);
 			}
 		}
 

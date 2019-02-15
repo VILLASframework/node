@@ -261,8 +261,6 @@ static void * path_run_single(void *arg)
 	struct path *p = arg;
 	struct path_source *ps = (struct path_source *) vlist_at(&p->sources, 0);
 
-	debug(1, "Started path %s in single mode", path_name(p));
-
 	while (p->state == STATE_STARTED) {
 		pthread_testcancel();
 
@@ -285,8 +283,6 @@ static void * path_run_poll(void *arg)
 {
 	int ret;
 	struct path *p = arg;
-
-	debug(1, "Started path %s in polling mode", path_name(p));
 
 	while (p->state == STATE_STARTED) {
 		ret = poll(p->reader.pfds, p->reader.nfds, -1);
