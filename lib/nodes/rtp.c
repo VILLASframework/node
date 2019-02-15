@@ -216,7 +216,7 @@ int rtp_parse(struct node *n, json_t *cfg)
 
 	/* Format */
 	r->format = format_type_lookup(format);
-	if(!r->format)
+	if (!r->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 
 	/* Remote address */
@@ -327,7 +327,7 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 	debug(5, "rtcp: recv %s", rtcp_type_name(msg->hdr.pt));
 
 	if (msg->hdr.pt == RTCP_SR) {
-		if(msg->hdr.count > 0) {
+		if (msg->hdr.count > 0) {
 			const struct rtcp_rr *rr = &msg->r.sr.rrv[0];
 			debug(5, "rtp: fraction lost = %d", rr->fraction);
 			rtp_aimd(n, rr->fraction);
