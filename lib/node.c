@@ -225,7 +225,9 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_name = NULL;
 	n->_name_long = NULL;
 
+#ifdef __linux__
 	n->fwmark = -1;
+#endif /* __linux__ *
 
 #ifdef WITH_NETEM
 	n->tc_qdisc = NULL;
@@ -282,16 +284,23 @@ int node_parse(struct node *n, json_t *json, const char *name)
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o }, s?: { s?: o, s: i } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o } }",
 		"type", &type,
 		"in",
-			"signals", &json_signals,
+			"signals", &json_signals
+	);
+	if (ret)
+		jerror(&err, "Failed to parse node %s", node_name(n));
+
+#ifdef __linux__
+	ret = json_unpack_ex(json, &err, 0, "{ s?: { s: o, s: i } }",
 		"out",
 			"netem", &json_netem,
 			"fwmark", &n->fwmark
 	);
 	if (ret)
 		jerror(&err, "Failed to parse node %s", node_name(n));
+#endif /* __linux__ */
 
 	nt = node_type_lookup(type);
 	assert(nt == node_type(n));
