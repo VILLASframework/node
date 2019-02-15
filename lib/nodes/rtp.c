@@ -291,7 +291,7 @@ char * rtp_print(struct node *n)
 		strcatf(&buf, ", rtcp.mode=%s, rtcp.throttle_mode=%s", mode, throttle_mode);
 
 		if (r->rtcp.throttle_mode == RTCP_MODE_AIMD)
-			strcatf(&buf, ", aimd.a=%f, aimd.b=%f, aimd.start_rate", r->aimd.a, r->aimd.b, r->aimd.last_rate);
+			strcatf(&buf, ", aimd.a=%f, aimd.b=%f, aimd.start_rate=%f", r->aimd.a, r->aimd.b, r->aimd.last_rate);
 	}
 
 	free(local);
@@ -481,14 +481,14 @@ int rtp_type_start(struct super_node *sn)
 	/* Initialize library */
 	ret = libre_init();
 	if (ret) {
-		error("Error initializing libre");
+		warning("Error initializing libre");
 		return ret;
 	}
 
 	/* Add worker thread */
 	ret = pthread_create(&re_pthread, NULL, th_func, NULL);
 	if (ret) {
-		error("Error creating rtp node type pthread");
+		warning("Error creating rtp node type pthread");
 		return ret;
 	}
 
