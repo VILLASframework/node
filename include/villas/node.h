@@ -85,7 +85,7 @@ struct node {
 	struct node_direction in, out;
 
 #ifdef WITH_NETEM
-	int mark;			/**< Socket mark for netem, routing and filtering */
+	int fwmark;			/**< Socket mark for netem, routing and filtering */
 
 	struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Network emulator queuing discipline */
 	struct rtnl_cls *tc_classifier;	/**< libnl3: Firewall mark classifier */

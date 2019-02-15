@@ -225,6 +225,8 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_name = NULL;
 	n->_name_long = NULL;
 
+	n->fwmark = -1;
+
 #ifdef WITH_NETEM
 	n->tc_qdisc = NULL;
 	n->tc_classifier = NULL;
@@ -396,18 +398,18 @@ int node_start(struct node *n)
 
 #ifdef __linux__
 	/* Set fwmark for outgoing packets if netem is enabled for this node */
-	if (n->mark) {
+	if (n->fwmark) {
 		int fds[16];
 		int num_sds = node_netem_fds(n, fds);
 
 		for (int i = 0; i < num_sds; i++) {
 			int fd = fds[i];
 
-			ret = setsockopt(fd, SOL_SOCKET, SO_MARK, &n->mark, sizeof(n->mark));
+			ret = setsockopt(fd, SOL_SOCKET, SO_MARK, &n->fwmark, sizeof(n->fwmark));
 			if (ret)
 				serror("Failed to set FW mark for outgoing packets");
 			else
-				debug(LOG_SOCKET | 4, "Set FW mark for socket (sd=%u) to %u", fd, n->mark);
+				debug(LOG_SOCKET | 4, "Set FW mark for socket (sd=%u) to %u", fd, n->fwmark);
 		}
 	}
 #endif /* __linux__ */
@@ -657,7 +659,7 @@ char * node_name_long(struct node *n)
 			strcatf(&n->_name_long, ", out.netem=%s", n->tc_qdisc ? "yes" : "no");
 
 			if (n->tc_qdisc)
-				strcatf(&n->_name_long, ", mark=%d", n->mark);
+				strcatf(&n->_name_long, ", fwmark=%d", n->fwmark);
 #endif /* WITH_NETEM */
 
 			/* Append node-type specific details */

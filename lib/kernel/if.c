@@ -73,12 +73,12 @@ int if_start(struct interface *i)
 	//if_set_affinity(i, i->affinity);
 
 	/* Assign fwmark's to nodes which have netem options */
-	int ret, mark = 0;
+	int ret, fwmark = 0;
 	for (size_t j = 0; j < vlist_length(&i->nodes); j++) {
 		struct node *n = (struct node *) vlist_at(&i->nodes, j);
 
-		if (n->tc_qdisc)
-			n->mark = 1 + mark++;
+		if (n->tc_qdisc && n->fwmark < 0)
+			n->fwmark = 1 + fwmark++;
 	}
 
 	/* Abort if no node is using netem */
@@ -98,16 +98,16 @@ int if_start(struct interface *i)
 		struct node *n = (struct node *) vlist_at(&i->nodes, j);
 
 		if (n->tc_qdisc) {
-			ret = tc_mark(i,  &n->tc_classifier, TC_HANDLE(1, n->mark), n->mark);
+			ret = tc_mark(i,  &n->tc_classifier, TC_HANDLE(1, n->fwmark), n->fwmark);
 			if (ret)
 				error("Failed to setup FW mark classifier: %s", nl_geterror(ret));
 
 			char *buf = tc_netem_print(n->tc_qdisc);
 			debug(LOG_IF | 5, "Starting network emulation on interface '%s' for FW mark %u: %s",
-					if_name(i), n->mark, buf);
+					if_name(i), n->fwmark, buf);
 			free(buf);
 
-			ret = tc_netem(i, &n->tc_qdisc, TC_HANDLE(0x1000+n->mark, 0), TC_HANDLE(1, n->mark));
+			ret = tc_netem(i, &n->tc_qdisc, TC_HANDLE(0x1000+n->fwmark, 0), TC_HANDLE(1, n->fwmark));
 			if (ret)
 				error("Failed to setup netem qdisc: %s", nl_geterror(ret));
 		}
