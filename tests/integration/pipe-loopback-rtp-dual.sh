@@ -45,6 +45,9 @@ NUM_SAMPLES=100
 
 cat > ${CONFIG_FILE_SRC} << EOF
 {
+	"logging" : {
+		"level" : "debug"
+	},
 	"nodes" : {
 		"rtp_node" : {
 			"type" : "rtp",
@@ -77,6 +80,9 @@ EOF
 
 cat > ${CONFIG_FILE_DEST} << EOF
 {
+	"logging" : {
+		"level" : "debug"
+	},
 	"nodes" : {
 		"rtp_node" : {
 			"type" : "rtp",
@@ -107,16 +113,23 @@ cat > ${CONFIG_FILE_DEST} << EOF
 }
 EOF
 
-villas-signal mixed -v 5 -l ${NUM_SAMPLES} -n > ${INPUT_FILE}
-
+VILLAS_LOG_PREFIX="[DEST] " \
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE_DEST} rtp_node > ${OUTPUT_FILE} &
+PID=$!
 
-villas-pipe ${CONFIG_FILE_SRC} rtp_node < ${INPUT_FILE}
+sleep 1
+
+VILLAS_LOG_PREFIX="[SIGN] " \
+villas-signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
+VILLAS_LOG_PREFIX="[SRC]  " \
+villas-pipe ${CONFIG_FILE_SRC} rtp_node > ${OUTPUT_FILE}
 
 # Compare data
 villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
+
+kill $PID
 
 exit $RC

@@ -58,6 +58,7 @@ static struct plugin p;
 static int rtp_set_rate(struct node *n, double rate)
 {
 	struct rtp *r = (struct rtp *) n->_vd;
+	int ratio;
 
 	switch (r->rtcp.throttle_mode) {
 		case RTCP_THROTTLE_HOOK_LIMIT_RATE:
@@ -65,7 +66,10 @@ static int rtp_set_rate(struct node *n, double rate)
 			break;
 
 		case RTCP_THROTTLE_HOOK_DECIMATE:
-			decimate_set_ratio(r->rtcp.throttle_hook, r->rate / rate);
+			ratio = r->rate / rate;
+			if (ratio == 0)
+				ratio = 1;
+			decimate_set_ratio(r->rtcp.throttle_hook, ratio);
 			break;
 
 		case RTCP_THROTTLE_DISABLED:
@@ -87,6 +91,9 @@ static int rtp_aimd(struct node *n, double loss_frac)
 	int ret;
 	double rate;
 
+	if (!r->rtcp.enabled)
+		return -1;
+
 	if (loss_frac < 1e-3)
 		rate = r->aimd.last_rate + r->aimd.a;
 	else
@@ -98,7 +105,8 @@ static int rtp_aimd(struct node *n, double loss_frac)
 	if (ret)
 		return ret;
 
-	fprintf(r->aimd.log, "%d\t%f\t%f\n", r->rtcp.num_rrs, loss_frac, rate);
+	if (r->aimd.log)
+		fprintf(r->aimd.log, "%d\t%f\t%f\n", r->rtcp.num_rrs, loss_frac, rate);
 
 	return 0;
 }
@@ -113,6 +121,7 @@ int rtp_init(struct node *n)
 	r->aimd.a = 10;
 	r->aimd.b = 0.5;
 	r->aimd.last_rate = 100;
+	r->aimd.log = NULL;
 
 	r->rtcp.enabled = false;
 	r->rtcp.throttle_mode = RTCP_THROTTLE_DISABLED;
