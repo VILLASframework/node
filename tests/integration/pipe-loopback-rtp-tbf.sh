@@ -40,8 +40,9 @@ OUTPUT_FILE=$(mktemp)
 FORMAT="villas.binary"
 VECTORIZE="1"
 
-RATE=1000
-NUM_SAMPLES=100000
+RATE=500
+NUM_SAMPLES=10000000
+NUM_VALUES=5
 
 cat > ${CONFIG_FILE_SRC} << EOF
 {
@@ -61,13 +62,13 @@ cat > ${CONFIG_FILE_SRC} << EOF
 			},
 			"aimd" : {
 				"a" : 10,
-				"b" : 0.5,
+				"b" : 0.75,
 				"start_rate" : ${RATE}
 			},
 			"in" : {
 				"address" : "0.0.0.0:12002",
 				"signals" : {
-					"count" : 5,
+					"count" : ${NUM_VALUES},
 					"type" : "float"
 				}
 			},
@@ -96,21 +97,15 @@ cat > ${CONFIG_FILE_DEST} << EOF
 				"mode" : "aimd",
 				"throttle_mode" : "decimate"
 			},
-			"aimd" : {
-				"a" : 10,
-				"b" : 0.5,
-				"start_rate" : ${RATE}
-			},
 			"in" : {
 				"address" : "0.0.0.0:12000",
 				"signals" : {
-					"count" : 5,
+					"count" : ${NUM_VALUES},
 					"type" : "float"
 				}
 			},
 			"out" : {
-				"address" : "127.0.0.1:12002",
-				"fwmark" : 123
+				"address" : "127.0.0.1:12002"
 			}
 		}
 	}
@@ -128,12 +123,10 @@ VILLAS_LOG_PREFIX="[DEST] " \
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE_DEST} rtp_node > ${OUTPUT_FILE} &
 PID=$!
 
-tail -f *.log &
-
 sleep 1
 
 VILLAS_LOG_PREFIX="[SIGN] " \
-villas-signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
+villas-signal mixed -v ${NUM_VALUES} -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
 VILLAS_LOG_PREFIX="[SRC]  " \
 villas-pipe ${CONFIG_FILE_SRC} rtp_node > ${OUTPUT_FILE}
 
@@ -143,8 +136,5 @@ RC=$?
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
 
-tc qdisc del dev lo root
-
 kill $PID
-
 exit $RC
