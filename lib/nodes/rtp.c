@@ -120,7 +120,7 @@ int rtp_init(struct node *n)
 
 	r->aimd.a = 10;
 	r->aimd.b = 0.5;
-	r->aimd.last_rate = 100;
+	r->aimd.last_rate = 2000;
 	r->aimd.log = NULL;
 
 	r->rtcp.enabled = false;
