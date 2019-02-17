@@ -117,7 +117,7 @@ test:integration:
     name: ${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}
     when: always
     paths:
-      - build/release/tests/integration/
+      - build/tests/integration/
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker
