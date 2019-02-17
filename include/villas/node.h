@@ -84,12 +84,14 @@ struct node {
 
 	struct node_direction in, out;
 
-#ifdef WITH_NETEM
-	int mark;			/**< Socket mark for netem, routing and filtering */
+#ifdef __linux__
+	int fwmark;			/**< Socket mark for netem, routing and filtering */
 
+#ifdef WITH_NETEM
 	struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Network emulator queuing discipline */
 	struct rtnl_cls *tc_classifier;	/**< libnl3: Firewall mark classifier */
 #endif /* WITH_NETEM */
+#endif /* __linux__ */
 
 	struct node_type *_vt;	/**< Virtual functions (C++ OOP style) */
 	void *_vd;		/**< Virtual data (used by struct node::_vt functions) */

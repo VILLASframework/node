@@ -58,6 +58,7 @@ static struct plugin p;
 static int rtp_set_rate(struct node *n, double rate)
 {
 	struct rtp *r = (struct rtp *) n->_vd;
+	int ratio;
 
 	switch (r->rtcp.throttle_mode) {
 		case RTCP_THROTTLE_HOOK_LIMIT_RATE:
@@ -65,7 +66,10 @@ static int rtp_set_rate(struct node *n, double rate)
 			break;
 
 		case RTCP_THROTTLE_HOOK_DECIMATE:
-			decimate_set_ratio(r->rtcp.throttle_hook, r->rate / rate);
+			ratio = r->rate / rate;
+			if (ratio == 0)
+				ratio = 1;
+			decimate_set_ratio(r->rtcp.throttle_hook, ratio);
 			break;
 
 		case RTCP_THROTTLE_DISABLED:
@@ -75,7 +79,7 @@ static int rtp_set_rate(struct node *n, double rate)
 			return -1;
 	}
 
-	debug(5, "Set rate limiting for node %s to %f", node_name(n), rate);
+	info("Set rate limiting for node %s to %f", node_name(n), rate);
 
 	return 0;
 }
@@ -87,7 +91,10 @@ static int rtp_aimd(struct node *n, double loss_frac)
 	int ret;
 	double rate;
 
-	if (loss_frac < 1e-3)
+	if (!r->rtcp.enabled)
+		return -1;
+
+	if (loss_frac < 0.01)
 		rate = r->aimd.last_rate + r->aimd.a;
 	else
 		rate = r->aimd.last_rate * r->aimd.b;
@@ -98,7 +105,10 @@ static int rtp_aimd(struct node *n, double loss_frac)
 	if (ret)
 		return ret;
 
-	fprintf(r->aimd.log, "%d\t%f\t%f\n", r->rtcp.num_rrs, loss_frac, rate);
+	if (r->aimd.log)
+		fprintf(r->aimd.log, "%d\t%f\t%f\n", r->rtcp.num_rrs, loss_frac, rate);
+
+	info("AIMD: %d\t%f\t%f", r->rtcp.num_rrs, loss_frac, rate);
 
 	return 0;
 }
@@ -112,7 +122,8 @@ int rtp_init(struct node *n)
 
 	r->aimd.a = 10;
 	r->aimd.b = 0.5;
-	r->aimd.last_rate = 100;
+	r->aimd.last_rate = 2000;
+	r->aimd.log = NULL;
 
 	r->rtcp.enabled = false;
 	r->rtcp.throttle_mode = RTCP_THROTTLE_DISABLED;
@@ -163,7 +174,7 @@ int rtp_parse(struct node *n, json_t *cfg)
 
 	/* AIMD */
 	if (json_aimd) {
-		ret = json_unpack_ex(json_rtcp, &err, 0, "{ s?: F, s?: F, s?: F }",
+		ret = json_unpack_ex(json_aimd, &err, 0, "{ s?: F, s?: F, s?: F }",
 			"a", &r->aimd.a,
 			"b", &r->aimd.b,
 			"start_rate", &r->aimd.last_rate
@@ -207,7 +218,7 @@ int rtp_parse(struct node *n, json_t *cfg)
 
 	/* Format */
 	r->format = format_type_lookup(format);
-	if(!r->format)
+	if (!r->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 
 	/* Remote address */
@@ -280,6 +291,9 @@ char * rtp_print(struct node *n)
 		}
 
 		strcatf(&buf, ", rtcp.mode=%s, rtcp.throttle_mode=%s", mode, throttle_mode);
+
+		if (r->rtcp.mode == RTCP_MODE_AIMD)
+			strcatf(&buf, ", aimd.a=%f, aimd.b=%f, aimd.start_rate=%f", r->aimd.a, r->aimd.b, r->aimd.last_rate);
 	}
 
 	free(local);
@@ -315,16 +329,16 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 	/* source not used */
 	(void) src;
 
-	debug(5, "rtcp: recv %s", rtcp_type_name(msg->hdr.pt));
+	debug(5, "RTCP: recv %s", rtcp_type_name(msg->hdr.pt));
 
 	if (msg->hdr.pt == RTCP_SR) {
-		if(msg->hdr.count > 0) {
+		if (msg->hdr.count > 0) {
 			const struct rtcp_rr *rr = &msg->r.sr.rrv[0];
-			debug(5, "rtp: fraction lost = %d", rr->fraction);
-			rtp_aimd(n, rr->fraction);
+			debug(5, "RTP: fraction lost = %d", rr->fraction);
+			rtp_aimd(n, (double) rr->fraction / 256);
 		}
 		else
-			warning("Received RTCP sender report with zero reception reports");
+			debug(5, "RTCP: Received sender report with zero reception reports");
 	}
 
 	r->rtcp.num_rrs++;
@@ -469,14 +483,14 @@ int rtp_type_start(struct super_node *sn)
 	/* Initialize library */
 	ret = libre_init();
 	if (ret) {
-		error("Error initializing libre");
+		warning("Error initializing libre");
 		return ret;
 	}
 
 	/* Add worker thread */
 	ret = pthread_create(&re_pthread, NULL, th_func, NULL);
 	if (ret) {
-		error("Error creating rtp node type pthread");
+		warning("Error creating rtp node type pthread");
 		return ret;
 	}
 

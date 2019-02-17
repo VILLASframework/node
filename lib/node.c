@@ -225,6 +225,10 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_name = NULL;
 	n->_name_long = NULL;
 
+#ifdef __linux__
+	n->fwmark = -1;
+#endif /* __linux__ */
+
 #ifdef WITH_NETEM
 	n->tc_qdisc = NULL;
 	n->tc_classifier = NULL;
@@ -280,15 +284,23 @@ int node_parse(struct node *n, json_t *json, const char *name)
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o }, s?: { s?: o } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o } }",
 		"type", &type,
 		"in",
-			"signals", &json_signals,
-		"out",
-			"netem", &json_netem
+			"signals", &json_signals
 	);
 	if (ret)
 		jerror(&err, "Failed to parse node %s", node_name(n));
+
+#ifdef __linux__
+	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: o, s?: i } }",
+		"out",
+			"netem", &json_netem,
+			"fwmark", &n->fwmark
+	);
+	if (ret)
+		jerror(&err, "Failed to parse node %s", node_name(n));
+#endif /* __linux__ */
 
 	nt = node_type_lookup(type);
 	assert(nt == node_type(n));
@@ -396,18 +408,18 @@ int node_start(struct node *n)
 
 #ifdef __linux__
 	/* Set fwmark for outgoing packets if netem is enabled for this node */
-	if (n->mark) {
+	if (n->fwmark) {
 		int fds[16];
 		int num_sds = node_netem_fds(n, fds);
 
 		for (int i = 0; i < num_sds; i++) {
 			int fd = fds[i];
 
-			ret = setsockopt(fd, SOL_SOCKET, SO_MARK, &n->mark, sizeof(n->mark));
+			ret = setsockopt(fd, SOL_SOCKET, SO_MARK, &n->fwmark, sizeof(n->fwmark));
 			if (ret)
 				serror("Failed to set FW mark for outgoing packets");
 			else
-				debug(LOG_SOCKET | 4, "Set FW mark for socket (sd=%u) to %u", fd, n->mark);
+				debug(LOG_SOCKET | 4, "Set FW mark for socket (sd=%u) to %u", fd, n->fwmark);
 		}
 	}
 #endif /* __linux__ */
@@ -657,7 +669,7 @@ char * node_name_long(struct node *n)
 			strcatf(&n->_name_long, ", out.netem=%s", n->tc_qdisc ? "yes" : "no");
 
 			if (n->tc_qdisc)
-				strcatf(&n->_name_long, ", mark=%d", n->mark);
+				strcatf(&n->_name_long, ", fwmark=%d", n->fwmark);
 #endif /* WITH_NETEM */
 
 			/* Append node-type specific details */

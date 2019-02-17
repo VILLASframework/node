@@ -40,13 +40,14 @@ OUTPUT_FILE=$(mktemp)
 FORMAT="villas.binary"
 VECTORIZE="1"
 
-RATE=100
-NUM_SAMPLES=100
+RATE=500
+NUM_SAMPLES=10000000
+NUM_VALUES=5
 
 cat > ${CONFIG_FILE_SRC} << EOF
 {
 	"logging" : {
-		"level" : "debug"
+		"level" : "info"
 	},
 	"nodes" : {
 		"rtp_node" : {
@@ -61,17 +62,19 @@ cat > ${CONFIG_FILE_SRC} << EOF
 			},
 			"aimd" : {
 				"a" : 10,
-				"b" : 0.5
+				"b" : 0.75,
+				"start_rate" : ${RATE}
 			},
 			"in" : {
 				"address" : "0.0.0.0:12002",
 				"signals" : {
-					"count" : 5,
+					"count" : ${NUM_VALUES},
 					"type" : "float"
 				}
 			},
 			"out" : {
-				"address" : "127.0.0.1:12000"
+				"address" : "127.0.0.1:12000",
+				"fwmark" : 123
 			}
 		}
 	}
@@ -81,7 +84,7 @@ EOF
 cat > ${CONFIG_FILE_DEST} << EOF
 {
 	"logging" : {
-		"level" : "debug"
+		"level" : "info"
 	},
 	"nodes" : {
 		"rtp_node" : {
@@ -94,14 +97,10 @@ cat > ${CONFIG_FILE_DEST} << EOF
 				"mode" : "aimd",
 				"throttle_mode" : "decimate"
 			},
-			"aimd" : {
-				"a" : 10,
-				"b" : 0.5
-			},
 			"in" : {
 				"address" : "0.0.0.0:12000",
 				"signals" : {
-					"count" : 5,
+					"count" : ${NUM_VALUES},
 					"type" : "float"
 				}
 			},
@@ -113,6 +112,13 @@ cat > ${CONFIG_FILE_DEST} << EOF
 }
 EOF
 
+tc qdisc del dev lo root
+tc qdisc add dev lo root handle 4000 prio bands 4 priomap 1 2 2 2 1 2 0 0 1 1 1 1 1 1 1 1
+tc qdisc add dev lo parent 4000:3 tbf rate 40kbps burst 32kbit latency 200ms #peakrate 40kbps mtu 1000 minburst 1520
+tc filter add dev lo protocol ip handle 123 fw flowid 4000:3
+
+#exit
+
 VILLAS_LOG_PREFIX="[DEST] " \
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE_DEST} rtp_node > ${OUTPUT_FILE} &
 PID=$!
@@ -120,7 +126,7 @@ PID=$!
 sleep 1
 
 VILLAS_LOG_PREFIX="[SIGN] " \
-villas-signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
+villas-signal mixed -v ${NUM_VALUES} -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
 VILLAS_LOG_PREFIX="[SRC]  " \
 villas-pipe ${CONFIG_FILE_SRC} rtp_node > ${OUTPUT_FILE}
 
@@ -131,5 +137,4 @@ RC=$?
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
 
 kill $PID
-
 exit $RC
