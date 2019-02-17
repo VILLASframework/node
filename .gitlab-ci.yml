@@ -4,7 +4,7 @@ variables:
   PREFIX: /usr/
   RSYNC_OPTS: --recursive --ignore-missing-args --chown ${DEPLOY_USER}:${DEPLOY_USER}
   CRITERION_OPTS: --ignore-warnings
-  DOCKER_TAG: $CI_COMMIT_TAG
+  DOCKER_TAG: ${CI_COMMIT_TAG}
   DOCKER_TAG_DEV: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE: villas/node
   DOCKER_IMAGE_DEV: villas/node-dev
@@ -158,8 +158,7 @@ deploy:packages:
 docker:
   stage: docker
   script:
-    - docker build -f packaging/docker/Dockerfile.app -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
-    - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+    - docker build -f packaging/docker/Dockerfile.app -t ${DOCKER_IMAGE}:${DOCKER_TAG_DEV} .
     - docker push ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - shell
