@@ -31,44 +31,9 @@
 #include <villas/hook.h>
 #include <villas/plugin.h>
 #include <villas/sample.h>
+#include <villas/window.h>
 
 #define J _Complex_I
-
-struct delay {
-	double *data;
-	size_t steps;
-	size_t mask;
-	size_t pos;
-}
-
-int delay_init(struct delay *w, double dt, double period)
-{
-	size_t len = LOG2_CEIL(period / dt);
-
-	/* Allocate memory for ciruclar history buffer */
-	w->data = alloc(len * sizeof(double));
-	if (!w->data)
-		return -1;
-
-	w->pos = 0;
-	w->mask = len - 1;
-
-	return 0;
-}
-
-int delay_destroy(struct delay *w)
-{
-	free(w->data);
-}
-
-double delay_update(struct delay *w, double in)
-{
-	double out = w->data[pos & w->mask];
-
-	w->data[w->pos++]
-
-	return out;
-}
 
 struct dp {
 	int index;
@@ -82,13 +47,13 @@ struct dp {
 	int *fharmonics;
 	int  fharmonics_len;
 
-	struct window history;
-}
+	struct window window;
+};
 
 static void dp_step(struct dp *d, double *in, float complex *out)
 {
 	double newest = *in;
-	double oldest = delay_update(&d->hist, newest);
+	double oldest = window_update(&d->window, newest);
 
 	for (int i = 0; i < d->fharmonics_len; i++) {
 		double pi_fharm = 2.0 * M_PI * d->fharmonics[i];
@@ -97,8 +62,8 @@ static void dp_step(struct dp *d, double *in, float complex *out)
 		d->coeffs[i] = (d->coeffs[i] + (newest - oldest)) * cexp(pi_fharm);
 
 		/* Correction for stationary phasor */
-		double complex correction = cexp(pi_fharm * (d->t - (d->history_len + 1)));
-		double complex result = 2.0 / d->history_len * d->coeffs[i] / correction;
+		double complex correction = cexp(pi_fharm * (d->t - (d->window.steps + 1)));
+		double complex result = 2.0 / d->window.steps * d->coeffs[i] / correction;
 
 		/* DC component */
 		if (i == 0)
@@ -125,14 +90,24 @@ static void dp_istep(struct dp *d, complex float *in, double *out)
 
 static int dp_start(struct hook *h)
 {
+	int ret;
 	struct dp *d = (struct dp *) h->_vd;
 
 	d->t = 0;
 
-	double cycle = 1.0 / d->f0;
+	ret = window_init(&d->window, (1.0 / d->f0) / d->dt, 0.0);
+	if (ret)
+		return ret;
 
-	/* Delay for one cycle */
-	ret = delay_init(&d->history, d->dt, cycle);
+	return 0;
+}
+
+static int dp_stop(struct hook *h)
+{
+	int ret;
+	struct dp *d = (struct dp *) h->_vd;
+
+	ret = window_destroy(&d->window);
 	if (ret)
 		return ret;
 
@@ -154,7 +129,6 @@ static int dp_destroy(struct hook *h)
 	struct dp *d = (struct dp *) h->_vd;
 
 	/* Release memory */
-	free(d->history);
 	free(d->fharmonics);
 	free(d->coeffs);
 
@@ -250,6 +224,7 @@ static struct plugin p = {
 		.init		= dp_init,
 		.destroy	= dp_destroy,
 		.start		= dp_start,
+		.stop		= dp_stop,
 		.parse		= dp_parse,
 		.process	= dp_process,
 		.size		= sizeof(struct dp)
