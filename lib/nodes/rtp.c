@@ -79,7 +79,7 @@ static int rtp_set_rate(struct node *n, double rate)
 			return -1;
 	}
 
-	debug(5, "Set rate limiting for node %s to %f", node_name(n), rate);
+	info("Set rate limiting for node %s to %f", node_name(n), rate);
 
 	return 0;
 }
@@ -107,6 +107,8 @@ static int rtp_aimd(struct node *n, double loss_frac)
 
 	if (r->aimd.log)
 		fprintf(r->aimd.log, "%d\t%f\t%f\n", r->rtcp.num_rrs, loss_frac, rate);
+
+	info("AIMD: %d\t%f\t%f", r->rtcp.num_rrs, loss_frac, rate);
 
 	return 0;
 }
@@ -327,16 +329,16 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 	/* source not used */
 	(void) src;
 
-	debug(5, "rtcp: recv %s", rtcp_type_name(msg->hdr.pt));
+	debug(5, "RTCP: recv %s", rtcp_type_name(msg->hdr.pt));
 
 	if (msg->hdr.pt == RTCP_SR) {
 		if (msg->hdr.count > 0) {
 			const struct rtcp_rr *rr = &msg->r.sr.rrv[0];
-			debug(5, "rtp: fraction lost = %d", rr->fraction);
+			debug(5, "RTP: fraction lost = %d", rr->fraction);
 			rtp_aimd(n, (double) rr->fraction / 256);
 		}
 		else
-			warning("Received RTCP sender report with zero reception reports");
+			debug(5, "RTCP: Received sender report with zero reception reports");
 	}
 
 	r->rtcp.num_rrs++;
