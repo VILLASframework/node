@@ -94,7 +94,7 @@ static int rtp_aimd(struct node *n, double loss_frac)
 	if (!r->rtcp.enabled)
 		return -1;
 
-	if (loss_frac < 1e-3)
+	if (loss_frac < 0.01)
 		rate = r->aimd.last_rate + r->aimd.a;
 	else
 		rate = r->aimd.last_rate * r->aimd.b;
@@ -333,7 +333,7 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 		if (msg->hdr.count > 0) {
 			const struct rtcp_rr *rr = &msg->r.sr.rrv[0];
 			debug(5, "rtp: fraction lost = %d", rr->fraction);
-			rtp_aimd(n, rr->fraction);
+			rtp_aimd(n, (double) rr->fraction / 256);
 		}
 		else
 			warning("Received RTCP sender report with zero reception reports");
