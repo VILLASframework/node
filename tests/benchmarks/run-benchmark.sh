@@ -94,7 +94,7 @@ fi
 # Set paths
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/integration-tests-helper.sh
+source ${SCRIPTPATH}/../../tools/villas-helper.sh
 
 # Declare location of config files
 CONFIG=$(mktemp /tmp/nodetype-benchmark-config-XXXX.conf)

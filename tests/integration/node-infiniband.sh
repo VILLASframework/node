@@ -43,7 +43,7 @@ fi
 
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/integration-tests-helper.sh
+source ${SCRIPTPATH}/../../tools/villas-helper.sh
 
 CONFIG_FILE=$(mktemp /tmp/ib-configuration-XXXX.conf)
 CONFIG_FILE_TARGET=$(mktemp /tmp/ib-configuration-target-XXXX.conf)
