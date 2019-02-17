@@ -70,7 +70,7 @@ enum stats_metric stats_lookup_metric(const char *str)
 			return d->metric;
 	}
 
-	return -1;
+	return STATS_METRIC_INVALID;
 }
 
 enum stats_type stats_lookup_type(const char *str)
@@ -82,7 +82,7 @@ enum stats_type stats_lookup_type(const char *str)
 			return d->type;
 	}
 
-	return -1;
+	return STATS_TYPE_INVALID;
 }
 
 int stats_init(struct stats *s, int buckets, int warmup)

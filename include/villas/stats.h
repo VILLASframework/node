@@ -44,6 +44,7 @@ enum stats_format {
 };
 
 enum stats_metric {
+	STATS_METRIC_INVALID = -1,
 	STATS_METRIC_SKIPPED,		/**< Counter for skipped samples due to hooks. */
 	STATS_METRIC_REORDERED,		/**< Counter for reordered samples. */
 	STATS_METRIC_GAP_SAMPLE,	/**< Histogram for inter sample timestamps (as sent by remote). */
@@ -53,6 +54,7 @@ enum stats_metric {
 };
 
 enum stats_type {
+	STATS_TYPE_INVALID = -1,
 	STATS_TYPE_LAST,
 	STATS_TYPE_HIGHEST,
 	STATS_TYPE_LOWEST,
