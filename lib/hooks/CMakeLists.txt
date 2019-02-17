@@ -33,7 +33,7 @@ set(HOOK_SRC
     limit_rate.c
     scale.c
     fix.c
-    cast.c
+#    cast.c
     average.c
     dump.c
     dp.c
