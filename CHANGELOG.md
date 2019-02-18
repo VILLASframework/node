@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.7.1] - Unreleased
+## [0.7.1] - 2019-01-23
 
 ### Fixed
 
@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
  - Node-types can now handle more than a single file-descriptor for poll() multiplexing.
  - Enable network emulation sub-system also for other node-types than `socket`.
    The `rtp` node-type will support it now as well.
+ - Improve readabilty of log output
 
 ### Added
 

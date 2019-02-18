@@ -22,6 +22,7 @@
 
 #include <sstream>
 
+#include <villas/compat.h>
 #include <villas/log.hpp>
 #include <villas/api/sessions/socket.hpp>
 

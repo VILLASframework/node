@@ -21,14 +21,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <sys/socket.h>
-#include <sys/un.h>
 #include <unistd.h>
+#include <sys/types.h>
 
 #include <exception>
 #include <algorithm>
 
-#if __GNUC__ <= 7
+#if __GNUC__ <= 7 && !defined(__clang__)
   #include <experimental/filesystem>
 #else
   #include <filesystem>
@@ -44,7 +43,7 @@
 using namespace villas;
 using namespace villas::node::api;
 
-#if __GNUC__ <= 7
+#if __GNUC__ <= 7 && !defined(__clang__)
   namespace fs = std::experimental::filesystem;
 #else
   namespace fs = std::filesystem;
@@ -79,9 +78,36 @@ void Server::start()
 
 	pfds.push_back(pfd);
 
+	struct sockaddr_un sun = getSocketAddress();
+
+	ret = bind(sd, (struct sockaddr *) &sun, sizeof(struct sockaddr_un));
+	if (ret)
+		throw SystemError("Failed to bind API socket");
+
+	ret = listen(sd, 5);
+	if (ret)
+		throw SystemError("Failed to listen on API socket");
+
+	logger->info("Listening on UNIX socket: {}", sun.sun_path);
+
+	state = STATE_STARTED;
+}
+
+struct sockaddr_un Server::getSocketAddress()
+{
 	struct sockaddr_un sun = { .sun_family = AF_UNIX };
 
-	fs::path socketPath = PREFIX "/var/lib/villas";
+	fs::path socketPath;
+
+	if (getuid() == 0) {
+		socketPath = PREFIX "/var/lib/villas";
+	}
+	else {
+		std::string homeDir = getenv("HOME");
+
+		socketPath = homeDir + "/.villas";
+	}
+
 	if (!fs::exists(socketPath)) {
 		logging.get("api")->info("Creating directory for API socket: {}", socketPath);
 		fs::create_directories(socketPath);
@@ -96,17 +122,7 @@ void Server::start()
 
 	strncpy(sun.sun_path, socketPath.c_str(), sizeof(sun.sun_path) - 1);
 
-	ret = bind(sd, (struct sockaddr *) &sun, sizeof(struct sockaddr_un));
-	if (ret)
-		throw SystemError("Failed to bind API socket");
-
-	ret = listen(sd, 5);
-	if (ret)
-		throw SystemError("Failed to listen on API socket");
-
-	logger->info("Listening on UNIX socket: {}", socketPath);
-
-	state = STATE_STARTED;
+	return sun;
 }
 
 void Server::stop()

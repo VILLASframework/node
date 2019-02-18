@@ -23,7 +23,7 @@
 set(NODE_SRC
     influxdb.c
     stats.c
-    signal_generator.c    
+    signal_generator.c
     loopback.c
 )
 
@@ -49,8 +49,8 @@ endif()
 # Enable Universal Library for Linux DAQ devices (libuldaq)
 if(LIBULDAQ_FOUND)
     list(APPEND NODE_SRC uldaq.c)
-    list(APPEND INCLUDE_DIRS ${ULDAQ_INCLUDE_DIRS})
-    list(APPEND LIBRARIES PkgConfig::LIBULDAQ)
+    list(APPEND INCLUDE_DIRS ${LIBULDAQ_INCLUDE_DIRS})
+    list(APPEND LIBRARIES PkgConfig::LIBULDAQ uldaq)
 endif()
 
 # Enable shared memory node-type
@@ -66,7 +66,7 @@ endif()
 if(LIBIEC61850_FOUND)
     list(APPEND NODE_SRC iec61850_sv.c iec61850.c)
     list(APPEND INCLUDE_DIRS ${LIBIEC61850_INCLUDE_DIRS})
-    list(APPEND LIBRARIES PkgConfig::LIBIEC61850)
+    list(APPEND LIBRARIES PkgConfig::LIBIEC61850 ${LIBIEC61850_LIBRARIES})
 endif()
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)

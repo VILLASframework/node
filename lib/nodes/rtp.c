@@ -52,21 +52,24 @@
 
 static pthread_t re_pthread;
 
-/* Forward declartions */
+/* Forward declarations */
 static struct plugin p;
 
 static int rtp_set_rate(struct node *n, double rate)
 {
 	struct rtp *r = (struct rtp *) n->_vd;
+	int ratio;
 
 	switch (r->rtcp.throttle_mode) {
 		case RTCP_THROTTLE_HOOK_LIMIT_RATE:
 			limit_rate_set_rate(r->rtcp.throttle_hook, rate);
-
 			break;
 
 		case RTCP_THROTTLE_HOOK_DECIMATE:
-			decimate_set_ratio(r->rtcp.throttle_hook, r->rate / rate);
+			ratio = r->rate / rate;
+			if (ratio == 0)
+				ratio = 1;
+			decimate_set_ratio(r->rtcp.throttle_hook, ratio);
 			break;
 
 		case RTCP_THROTTLE_DISABLED:
@@ -75,6 +78,8 @@ static int rtp_set_rate(struct node *n, double rate)
 		default:
 			return -1;
 	}
+
+	info("Set rate limiting for node %s to %f", node_name(n), rate);
 
 	return 0;
 }
@@ -86,18 +91,24 @@ static int rtp_aimd(struct node *n, double loss_frac)
 	int ret;
 	double rate;
 
-	if (loss_frac < 1e-3)
+	if (!r->rtcp.enabled)
+		return -1;
+
+	if (loss_frac < 0.01)
 		rate = r->aimd.last_rate + r->aimd.a;
 	else
 		rate = r->aimd.last_rate * r->aimd.b;
-
-	debug(5, "Set rate limiting for node %s to %f", node_name(n), rate);
 
 	r->aimd.last_rate = rate;
 
 	ret = rtp_set_rate(n, rate);
 	if (ret)
 		return ret;
+
+	if (r->aimd.log)
+		fprintf(r->aimd.log, "%d\t%f\t%f\n", r->rtcp.num_rrs, loss_frac, rate);
+
+	info("AIMD: %d\t%f\t%f", r->rtcp.num_rrs, loss_frac, rate);
 
 	return 0;
 }
@@ -111,8 +122,10 @@ int rtp_init(struct node *n)
 
 	r->aimd.a = 10;
 	r->aimd.b = 0.5;
-	r->aimd.last_rate = 1;
+	r->aimd.last_rate = 2000;
+	r->aimd.log = NULL;
 
+	r->rtcp.enabled = false;
 	r->rtcp.throttle_mode = RTCP_THROTTLE_DISABLED;
 
 	return 0;
@@ -161,9 +174,10 @@ int rtp_parse(struct node *n, json_t *cfg)
 
 	/* AIMD */
 	if (json_aimd) {
-		ret = json_unpack_ex(json_rtcp, &err, 0, "{ s?: F, s?: F }",
+		ret = json_unpack_ex(json_aimd, &err, 0, "{ s?: F, s?: F, s?: F }",
 			"a", &r->aimd.a,
-			"b", &r->aimd.b
+			"b", &r->aimd.b,
+			"start_rate", &r->aimd.last_rate
 		);
 		if (ret)
 			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
@@ -174,7 +188,10 @@ int rtp_parse(struct node *n, json_t *cfg)
 		const char *mode = "aimd";
 		const char *throttle_mode = "decimate";
 
-		ret = json_unpack_ex(json_rtcp, &err, 0, "{ s?: b, s?: s }",
+		/* Enable if RTCP section is available */
+		r->rtcp.enabled = 1;
+
+		ret = json_unpack_ex(json_rtcp, &err, 0, "{ s?: b, s?: s, s?: s }",
 			"enabled", &r->rtcp.enabled,
 			"mode", &mode,
 			"throttle_mode", &throttle_mode
@@ -201,7 +218,7 @@ int rtp_parse(struct node *n, json_t *cfg)
 
 	/* Format */
 	r->format = format_type_lookup(format);
-	if(!r->format)
+	if (!r->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 
 	/* Remote address */
@@ -259,15 +276,24 @@ char * rtp_print(struct node *n)
 		switch (r->rtcp.throttle_mode) {
 			case RTCP_THROTTLE_HOOK_DECIMATE:
 				throttle_mode = "decimate";
+				break;
 
 			case RTCP_THROTTLE_HOOK_LIMIT_RATE:
 				throttle_mode = "limit_rate";
+				break;
 
 			case RTCP_THROTTLE_DISABLED:
 				throttle_mode = "disabled";
+				break;
+
+			default:
+				throttle_mode = "unknown";
 		}
 
 		strcatf(&buf, ", rtcp.mode=%s, rtcp.throttle_mode=%s", mode, throttle_mode);
+
+		if (r->rtcp.mode == RTCP_MODE_AIMD)
+			strcatf(&buf, ", aimd.a=%f, aimd.b=%f, aimd.start_rate=%f", r->aimd.a, r->aimd.b, r->aimd.last_rate);
 	}
 
 	free(local);
@@ -278,30 +304,44 @@ char * rtp_print(struct node *n)
 
 static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, struct mbuf *mb, void *arg)
 {
+	int ret;
 	struct node *n = (struct node *) arg;
 	struct rtp *r = (struct rtp *) n->_vd;
 
-	if (queue_signalled_push(&r->recv_queue, (void *) mbuf_alloc_ref(mb)) != 1)
-		warning("Failed to push to queue");
-
-	/* source, header not yet used */
+	/* source, header not used */
 	(void) src;
 	(void) hdr;
+
+	void *d = mem_ref((void *) mb);
+
+	ret = queue_signalled_push(&r->recv_queue, d);
+	if (ret != 1) {
+		warning("Failed to push to queue");
+		mem_deref(d);
+	}
 }
 
 static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 {
 	struct node *n = (struct node *) arg;
-	//struct rtp *r = (struct rtp *) n->_vd;
+	struct rtp *r = (struct rtp *) n->_vd;
 
-	(void)src;
+	/* source not used */
+	(void) src;
 
-	printf("rtcp: recv %s\n", rtcp_type_name(msg->hdr.pt));
+	debug(5, "RTCP: recv %s", rtcp_type_name(msg->hdr.pt));
 
-	/** @todo: parse receive report */
-	double loss_frac = 0;
+	if (msg->hdr.pt == RTCP_SR) {
+		if (msg->hdr.count > 0) {
+			const struct rtcp_rr *rr = &msg->r.sr.rrv[0];
+			debug(5, "RTP: fraction lost = %d", rr->fraction);
+			rtp_aimd(n, (double) rr->fraction / 256);
+		}
+		else
+			debug(5, "RTCP: Received sender report with zero reception reports");
+	}
 
-	rtp_aimd(n, loss_frac);
+	r->rtcp.num_rrs++;
 }
 
 int rtp_start(struct node *n)
@@ -309,15 +349,24 @@ int rtp_start(struct node *n)
 	int ret;
 	struct rtp *r = (struct rtp *) n->_vd;
 
-	/* Initialize Queue */
+	/* Initialize queue */
 	ret = queue_signalled_init(&r->recv_queue, 1024, &memory_heap, 0);
 	if (ret)
 		return ret;
 
 	/* Initialize IO */
-	ret = io_init(&r->io, r->format, &n->signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
+	ret = io_init(&r->io, r->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
 	if (ret)
 		return ret;
+
+	/* Initialize memory buffer for sending */
+	r->send_mb = mbuf_alloc(RTP_INITIAL_BUFFER_LEN);
+	if (!r->send_mb)
+		return -1;
+
+	ret = mbuf_fill(r->send_mb, 0, RTP_HEADER_SIZE);
+	if (ret)
+		return -1;
 
 	ret = io_check(&r->io);
 	if (ret)
@@ -340,7 +389,8 @@ int rtp_start(struct node *n)
 				throttle_hook_type = hook_type_lookup("limit_rate");
 				break;
 
-			default: { }
+			default:
+				throttle_hook_type = NULL;
 		}
 
 		if (!throttle_hook_type)
@@ -362,8 +412,29 @@ int rtp_start(struct node *n)
 	ret = rtp_listen(&r->rs, IPPROTO_UDP, &r->in.saddr_rtp, port, port+1, r->rtcp.enabled, rtp_handler, rtcp_handler, n);
 
 	/* Start RTCP session */
-	if (r->rtcp.enabled)
+	if (r->rtcp.enabled) {
+		r->rtcp.num_rrs = 0;
+
 		rtcp_start(r->rs, node_name(n), &r->out.saddr_rtcp);
+
+		if (r->rtcp.mode == RTCP_MODE_AIMD) {
+			char date[32], fn[128];
+
+			time_t ts = time(NULL);
+			struct tm tm;
+
+			/* Convert time */
+			gmtime_r(&ts, &tm);
+			strftime(date, sizeof(date), "%Y_%m_%d_%s", &tm);
+			snprintf(fn, sizeof(fn), "aimd-rates-%s-%s.log", node_name_short(n), date);
+
+			r->aimd.log = fopen(fn, "w+");
+			if (!r->aimd.log)
+				return -1;
+
+			fprintf(r->aimd.log, "# cnt\tfrac_loss\trate\n");
+		}
+	}
 
 	return ret;
 }
@@ -382,6 +453,14 @@ int rtp_stop(struct node *n)
 	ret = queue_signalled_destroy(&r->recv_queue);
 	if (ret)
 		warning("Problem destroying queue");
+
+	mem_deref(r->send_mb);
+
+	if (r->rtcp.enabled && r->rtcp.mode == RTCP_MODE_AIMD) {
+		ret = fclose(r->aimd.log);
+		if (ret)
+			return ret;
+	}
 
 	return io_destroy(&r->io);
 }
@@ -404,14 +483,14 @@ int rtp_type_start(struct super_node *sn)
 	/* Initialize library */
 	ret = libre_init();
 	if (ret) {
-		error("Error initializing libre");
+		warning("Error initializing libre");
 		return ret;
 	}
 
 	/* Add worker thread */
 	ret = pthread_create(&re_pthread, NULL, th_func, NULL);
 	if (ret) {
-		error("Error creating rtp node type pthread");
+		warning("Error creating rtp node type pthread");
 		return ret;
 	}
 
@@ -463,29 +542,20 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 {
 	int ret;
 	struct rtp *r = (struct rtp *) n->_vd;
-	size_t bytes;
-	char *buf;
 	struct mbuf *mb;
 
 	/* Get data from queue */
 	ret = queue_signalled_pull(&r->recv_queue, (void **) &mb);
-	if (ret <= 0) {
-		if (ret < 0)
-			warning("Failed to pull from queue");
+	if (ret < 0) {
+		warning("Failed to pull from queue");
 		return ret;
 	}
 
-	/* Read from mbuf */
-	bytes = mbuf_get_left(mb);
-	buf = (char *) alloc(bytes);
-	mbuf_read_mem(mb, (uint8_t *) buf, bytes);
-
 	/* Unpack data */
-	ret = io_sscan(&r->io, buf, bytes, NULL, smps, cnt);
-	if (ret < 0)
-		warning("Received invalid packet from node %s: reason=%d", node_name(n), ret);
+	ret = io_sscan(&r->io, (char *) mb->buf + mb->pos, mbuf_get_left(mb), NULL, smps, cnt);
 
-	free(buf);
+	mem_deref(mb);
+
 	return ret;
 }
 
@@ -494,69 +564,35 @@ int rtp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	int ret;
 	struct rtp *r = (struct rtp *) n->_vd;
 
-	char *buf;
-	char pad[] = "            ";
-	size_t buflen;
 	size_t wbytes;
+	size_t avail;
 
-	buflen = RTP_INITIAL_BUFFER_LEN;
-	buf = alloc(buflen);
-	if (!buf) {
-		warning("Error allocating buffer space");
+	uint32_t ts = (uint32_t) time(NULL);
+
+retry:	mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);
+	avail = mbuf_get_space(r->send_mb);
+	cnt = io_sprint(&r->io, (char *) r->send_mb->buf + r->send_mb->pos, avail, &wbytes, smps, cnt);
+	if (cnt < 0)
 		return -1;
-	}
 
-retry:	cnt = io_sprint(&r->io, buf, buflen, &wbytes, smps, cnt);
-	if (cnt < 0) {
-		warning("Error from io_sprint, reason: %d", cnt);
-		goto out1;
-	}
+	if (wbytes > avail) {
+		ret = mbuf_resize(r->send_mb, wbytes + RTP_HEADER_SIZE);
+		if (!ret)
+			return -1;
 
-	if (wbytes <= 0) {
-		warning("Error written bytes = %ld <= 0", wbytes);
-		cnt = -1;
-		goto out1;
-	}
-
-	if (wbytes > buflen) {
-		buflen = wbytes;
-		buf = realloc(buf, buflen);
 		goto retry;
 	}
+	else
+		mbuf_set_end(r->send_mb, r->send_mb->pos + wbytes);
 
-	/* Prepare mbuf */
-	struct mbuf *mb = mbuf_alloc(buflen + 12);
-	if (!mb) {
-		warning("Failed to allocate memory");
-		cnt = -1;
-		goto out2;
-	}
-
-	ret = mbuf_write_str(mb, pad);
-	if (ret) {
-		warning("Error writing padding to mbuf");
-		cnt = ret;
-		goto out2;
-	}
-
-	ret = mbuf_write_mem(mb, (uint8_t*)buf, buflen);
-	if (ret) {
-		warning("Error writing data to mbuf");
-		cnt = ret;
-		goto out2;
-	}
-
-	mbuf_set_pos(mb, 12);
+	mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);
 
 	/* Send dataset */
-	ret = rtp_send(r->rs, &r->out.saddr_rtp, false, false, 21, (uint32_t) time(NULL), mb);
+	ret = rtp_send(r->rs, &r->out.saddr_rtp, false, false, RTP_PACKET_TYPE, ts, r->send_mb);
 	if (ret) {
 		warning("Error from rtp_send, reason: %d", ret);
 		cnt = ret;
 	}
-
-out2:	mem_deref(mb);
-out1:	free(buf);
 
 	return cnt;
 }

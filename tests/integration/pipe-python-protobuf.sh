@@ -25,7 +25,7 @@
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname ${SCRIPT})
 SRCDIR=$(realpath ${SCRIPTPATH}/../..)
-source ${SRCDIR}/tools/integration-tests-helper.sh
+source ${SRCDIR}/tools/villas-helper.sh
 
 CONFIG_FILE=$(mktemp)
 INPUT_FILE=$(mktemp)

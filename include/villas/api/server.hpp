@@ -27,6 +27,8 @@
 #include <vector>
 #include <map>
 
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <poll.h>
 
 #include <villas/common.h>
@@ -61,6 +63,8 @@ protected:
 
 	void acceptNewSession();
 	void closeSession(sessions::Socket *s);
+
+	struct sockaddr_un getSocketAddress();
 
 public:
 	Server(Api *a);

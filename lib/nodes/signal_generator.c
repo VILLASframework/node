@@ -86,7 +86,7 @@ static void signal_generator_init_signals(struct node *n)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
-	assert(vlist_length(&n->signals) == 0);
+	assert(vlist_length(&n->in.signals) == 0);
 
 	for (int i = 0; i < s->values; i++) {
 		struct signal *sig = alloc(sizeof(struct signal));
@@ -96,7 +96,7 @@ static void signal_generator_init_signals(struct node *n)
 		sig->name = strdup(signal_generator_type_str(rtype));
 		sig->type = SIGNAL_TYPE_FLOAT; /* All generated signals are of type float */
 
-		vlist_push(&n->signals, sig);
+		vlist_push(&n->in.signals, sig);
 	}
 }
 
@@ -226,7 +226,7 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 	t->ts.origin = ts;
 	t->sequence = s->counter;
 	t->length = MIN(s->values, t->capacity);
-	t->signals = &n->signals;
+	t->signals = &n->in.signals;
 
 	for (int i = 0; i < MIN(s->values, t->capacity); i++) {
 		int rtype = (s->type != SIGNAL_GENERATOR_TYPE_MIXED) ? s->type : i % 7;
@@ -264,9 +264,11 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 	}
 
 	if (s->limit > 0 && s->counter >= s->limit) {
-		info("Reached limit of node %s", node_name(n));
-		killme(SIGTERM);
-		return 0;
+		info("Reached limit.");
+
+		n->state = STATE_STOPPING;
+
+		return -1;
 	}
 
 	s->counter += steps;

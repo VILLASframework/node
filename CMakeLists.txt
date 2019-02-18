@@ -22,8 +22,7 @@
 
 cmake_minimum_required(VERSION 3.6)
 
-project(villas-node 
-    DESCRIPTION "VILLASnode"
+project(villas-node
     LANGUAGES C CXX
 )
 
@@ -92,7 +91,7 @@ find_program(PROTOBUF_COMPILER NAMES protoc)
 
 set(ENV{PKG_CONFIG_PATH} "$ENV{PKG_CONFIG_PATH}:/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/local/share/pkgconfig:/usr/lib64/pkgconfig")
 
-pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson>=2.7)
+pkg_check_modules(JANSSON IMPORTED_TARGET REQUIRED jansson>=2.9)
 pkg_check_modules(LIBWEBSOCKETS IMPORTED_TARGET REQUIRED libwebsockets>=2.3.0)
 pkg_check_modules(PROTOBUF IMPORTED_TARGET protobuf>=2.6.0)
 pkg_check_modules(PROTOBUFC IMPORTED_TARGET libprotobuf-c>=1.1.0)
@@ -104,14 +103,14 @@ pkg_check_modules(RABBITMQ_C IMPORTED_TARGET librabbitmq>=0.8.0)
 pkg_check_modules(COMEDILIB IMPORTED_TARGET comedilib>=0.11.0)
 pkg_check_modules(LIBZMQ IMPORTED_TARGET libzmq>=2.2.0)
 pkg_check_modules(LIBULDAQ IMPORTED_TARGET libuldaq>=1.0.0)
-pkg_check_modules(UUID IMPORTED_TARGET uuid)
+pkg_check_modules(UUID IMPORTED_TARGET REQUIRED uuid)
 pkg_check_modules(NANOMSG IMPORTED_TARGET nanomsg)
 if(NOT NANOMSG_FOUND)
     pkg_check_modules(NANOMSG IMPORTED_TARGET libnanomsg>=1.0.0)
 endif()
-pkg_check_modules(RE IMPORTED_TARGET re)
+pkg_check_modules(RE IMPORTED_TARGET re>=0.5.6)
 if(NOT RE_FOUND)
-    pkg_check_modules(RE IMPORTED_TARGET libre>=0.5.9)
+    pkg_check_modules(RE IMPORTED_TARGET libre>=0.5.6)
 endif()
 
 # Build options
@@ -155,7 +154,7 @@ if(WITH_PLUGINS)
     add_subdirectory(plugins)
 endif()
 
-if(WITH_DOC)
+if(WITH_DOC AND ${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.9.0")
     add_subdirectory(doc)
 endif()
 

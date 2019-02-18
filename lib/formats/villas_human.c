@@ -146,7 +146,7 @@ static size_t villas_human_sscan_single(struct io *io, const char *buf, size_t l
 		if (sig->type == SIGNAL_TYPE_AUTO) {
 
 			/* Find end of the current column */
-			next = strpbrk(ptr, (char[]) { io->separator, io->delimiter, 0 });
+			next = strpbrk(ptr, ((char[]) { io->separator, io->delimiter, 0 }));
 			if (next == NULL)
 				goto out;
 
@@ -227,7 +227,7 @@ void villas_human_header(struct io *io, const struct sample *smp)
 		fprintf(f, "(sequence)");
 
 	if (io->flags & SAMPLE_HAS_DATA) {
-		for (int i = 0; i < smp->length; i++) {
+		for (int i = 0; i < MIN(smp->length, vlist_length(smp->signals)); i++) {
 			struct signal *sig = (struct signal *) vlist_at(smp->signals, i);
 
 			if (sig->name)

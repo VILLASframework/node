@@ -1,4 +1,6 @@
 {
+	"idle_stop" : false,
+
 	"http" : {
 		"port" : 8080
 	},

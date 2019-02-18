@@ -247,7 +247,7 @@ int test_rtt_start(struct node *n)
 			return ret;
 	}
 
-	ret = io_init(&t->io, t->format, &n->signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_DATA);
+	ret = io_init(&t->io, t->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_DATA);
 	if (ret)
 		return ret;
 
@@ -307,9 +307,11 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 		}
 
 		if (t->current >= vlist_length(&t->cases)) {
-			info("This was the last case. Terminating.");
-			killme(SIGTERM);
-			pause();
+			info("This was the last case. Stopping node %s", node_name(n));
+
+			n->state = STATE_STOPPING;
+
+			return -1;
 		}
 		else {
 			struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, t->current);

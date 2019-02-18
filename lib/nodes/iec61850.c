@@ -101,55 +101,72 @@ int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct v
 {
 	int ret, total_size = 0;
 	const char *iec_type;
+	const struct iec61850_type_descriptor *td;
+	struct signal *sig;
 
 	ret = vlist_init(signals);
 	if (ret)
 		return ret;
 
-	json_t *json_signal;
-	size_t i;
-	json_array_foreach(json_signals, i, json_signal) {
-		const struct iec61850_type_descriptor *td;
-		struct signal *sig;
+	if (json_is_array(json_signals)) {
 
-		json_unpack(json_signal, "{ s?: s }",
-			"iec_type", &iec_type
-		);
+		json_t *json_signal;
+		size_t i;
+		json_array_foreach(json_signals, i, json_signal) {
+			json_unpack(json_signal, "{ s?: s }",
+				"iec_type", &iec_type
+			);
 
-		/* Try to deduct the IEC 61850 data type from VILLAS signal format */
-		if (!iec_type) {
-			if (!node_signals)
-				return -1;
-
-			sig = vlist_at(node_signals, i);
-			if (!sig)
-				return -1;
-
-			switch (sig->type) {
-				case SIGNAL_TYPE_BOOLEAN:
-					iec_type = "boolean";
-					break;
-
-				case SIGNAL_TYPE_FLOAT:
-					iec_type = "float64";
-					break;
-
-				case SIGNAL_TYPE_INTEGER:
-					iec_type = "int64";
-					break;
-
-				default:
+			/* Try to deduct the IEC 61850 data type from VILLAS signal format */
+			if (!iec_type) {
+				if (!node_signals)
 					return -1;
+
+				sig = vlist_at(node_signals, i);
+				if (!sig)
+					return -1;
+
+				switch (sig->type) {
+					case SIGNAL_TYPE_BOOLEAN:
+						iec_type = "boolean";
+						break;
+
+					case SIGNAL_TYPE_FLOAT:
+						iec_type = "float64";
+						break;
+
+					case SIGNAL_TYPE_INTEGER:
+						iec_type = "int64";
+						break;
+
+					default:
+						return -1;
+				}
 			}
+
+			td = iec61850_lookup_type(iec_type);
+			if (!td)
+				return -1;
+
+			vlist_push(signals, (void *) td);
+
+			total_size += td->size;
 		}
+	}
+	else {
+		ret = json_unpack(json_signals, "{ s: s }", "iec_type", &iec_type);
+		if (ret)
+			return ret;
 
 		td = iec61850_lookup_type(iec_type);
 		if (!td)
 			return -1;
 
-		vlist_push(signals, (void *) td);
+		for (int i = 0; i < vlist_length(node_signals); i++) {
+			vlist_push(signals, (void *) td);
 
-		total_size += td->size;
+			total_size += td->size;
+		}
 	}
 
 	return total_size;

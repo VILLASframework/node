@@ -76,6 +76,7 @@ retry:	fd = shm_open(wname, O_RDWR|O_CREAT|O_EXCL, 0600);
 			ret = shm_unlink(wname);
 			if (ret)
 				return -12;
+
 			goto retry;
 		}
 

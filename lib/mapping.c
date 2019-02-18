@@ -32,8 +32,7 @@
 
 int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *nodes)
 {
-	int id;
-	char *cpy, *node, *type, *field, *subfield, *end;
+	char *cpy, *node, *type, *field, *end;
 
 	cpy = strdup(str);
 	if (!cpy)
@@ -68,44 +67,21 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		me->type = MAPPING_TYPE_STATS;
 		me->length = 1;
 
-		field = strtok(NULL, ".");
-		if (!field) {
-			warning("Missing stats type");
+		char *metric = strtok(NULL, ".");
+		if (!metric)
 			goto invalid_format;
-		}
 
-		subfield = strtok(NULL, ".");
-		if (!subfield) {
-			warning("Missing stats sub-type");
+		type = strtok(NULL, ".");
+		if (!type)
 			goto invalid_format;
-		}
 
-		id = stats_lookup_id(field);
-		if (id < 0) {
-			warning("Invalid stats type");
+		me->stats.metric = stats_lookup_metric(metric);
+		if (me->stats.metric < 0)
 			goto invalid_format;
-		}
 
-		me->stats.id = id;
-
-		if      (!strcmp(subfield, "total"))
-			me->stats.type = MAPPING_STATS_TYPE_TOTAL;
-		else if (!strcmp(subfield, "last"))
-			me->stats.type = MAPPING_STATS_TYPE_LAST;
-		else if (!strcmp(subfield, "lowest"))
-			me->stats.type = MAPPING_STATS_TYPE_LOWEST;
-		else if (!strcmp(subfield, "highest"))
-			me->stats.type = MAPPING_STATS_TYPE_HIGHEST;
-		else if (!strcmp(subfield, "mean"))
-			me->stats.type = MAPPING_STATS_TYPE_MEAN;
-		else if (!strcmp(subfield, "var"))
-			me->stats.type = MAPPING_STATS_TYPE_VAR;
-		else if (!strcmp(subfield, "stddev"))
-			me->stats.type = MAPPING_STATS_TYPE_STDDEV;
-		else {
-			warning("Invalid stats sub-type");
+		me->stats.type = stats_lookup_type(type);
+		if (me->stats.type  < 0)
 			goto invalid_format;
-		}
 	}
 	else if (!strcmp(type, "hdr")) {
 		me->type = MAPPING_TYPE_HEADER;
@@ -154,7 +130,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		first_str = strtok(NULL, "-]");
 		if (first_str) {
 			if (me->node)
-				first = vlist_lookup_index(&me->node->signals, first_str);
+				first = vlist_lookup_index(&me->node->in.signals, first_str);
 
 			if (first < 0) {
 				char *endptr;
@@ -168,14 +144,14 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		else {
 			/* Map all signals */
 			me->data.offset = 0;
-			me->length = me->node ? vlist_length(&me->node->signals) : 0;
+			me->length = me->node ? vlist_length(&me->node->in.signals) : 0;
 			goto end;
 		}
 
 		last_str = strtok(NULL, "]");
 		if (last_str) {
 			if (me->node)
-				last = vlist_lookup_index(&me->node->signals, last_str);
+				last = vlist_lookup_index(&me->node->in.signals, last_str);
 
 			if (last < 0) {
 				char *endptr;
@@ -276,35 +252,9 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 		return -1;
 
 	switch (me->type) {
-		case MAPPING_TYPE_STATS: {
-			const struct hist *h = &s->histograms[me->stats.id];
-
-			switch (me->stats.type) {
-				case MAPPING_STATS_TYPE_TOTAL:
-					remapped->data[off++].i = h->total;
-					break;
-				case MAPPING_STATS_TYPE_LAST:
-					remapped->data[off++].f = h->last;
-					break;
-				case MAPPING_STATS_TYPE_HIGHEST:
-					remapped->data[off++].f = h->highest;
-					break;
-				case MAPPING_STATS_TYPE_LOWEST:
-					remapped->data[off++].f = h->lowest;
-					break;
-				case MAPPING_STATS_TYPE_MEAN:
-					remapped->data[off++].f = hist_mean(h);
-					break;
-				case MAPPING_STATS_TYPE_STDDEV:
-					remapped->data[off++].f = hist_stddev(h);
-					break;
-				case MAPPING_STATS_TYPE_VAR:
-					remapped->data[off++].f = hist_var(h);
-					break;
-				default:
-					return -1;
-			}
-		}
+		case MAPPING_TYPE_STATS:
+			remapped->data[off++] = stats_get_value(s, me->stats.metric, me->stats.type);
+			break;
 
 		case MAPPING_TYPE_TIMESTAMP: {
 			const struct timespec *ts;
@@ -380,40 +330,10 @@ int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
 
 	switch (me->type) {
 		case MAPPING_TYPE_STATS:
-			switch (me->stats.type) {
-				case MAPPING_STATS_TYPE_TOTAL:
-					type = "total";
-					break;
-
-				case MAPPING_STATS_TYPE_LAST:
-					type = "last";
-					break;
-
-				case MAPPING_STATS_TYPE_LOWEST:
-					type = "lowest";
-					break;
-
-				case MAPPING_STATS_TYPE_HIGHEST:
-					type = "highest";
-					break;
-
-				case MAPPING_STATS_TYPE_MEAN:
-					type = "mean";
-					break;
-
-				case MAPPING_STATS_TYPE_VAR:
-					type = "var";
-					break;
-
-				case MAPPING_STATS_TYPE_STDDEV:
-					type = "stddev";
-					break;
-
-				default:
-					type = NULL;
-			}
-
-			strcatf(str, "stats.%s", type);
+			strcatf(str, "stats.%s.%s",
+				stats_metrics[me->stats.metric].name,
+				stats_types[me->stats.type].name
+			);
 			break;
 
 		case MAPPING_TYPE_HEADER:
@@ -451,8 +371,8 @@ int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
 			break;
 
 		case MAPPING_TYPE_DATA:
-			if (me->node && index < vlist_length(&me->node->signals)) {
-				struct signal *s = vlist_at(&me->node->signals, index);
+			if (me->node && index < vlist_length(&me->node->in.signals)) {
+				struct signal *s = vlist_at(&me->node->in.signals, index);
 
 				strcatf(str, "data[%s]", s->name);
 			}

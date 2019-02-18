@@ -74,7 +74,12 @@ int loopback_start(struct node *n)
 	int ret;
 	struct loopback *l = (struct loopback *) n->_vd;
 
-	ret = pool_init(&l->pool, l->queuelen, SAMPLE_LENGTH(vlist_length(&n->signals)), &memory_hugepage);
+	int len = MAX(
+		vlist_length(&n->in.signals),
+		vlist_length(&n->out.signals)
+	);
+
+	ret = pool_init(&l->pool, l->queuelen, SAMPLE_LENGTH(len), &memory_hugepage);
 	if (ret)
 		return ret;
 

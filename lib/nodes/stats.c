@@ -38,55 +38,57 @@
 
 static struct vlist *nodes; /** The global list of nodes */
 
-static void stats_init_signals(struct node *n)
+int stats_node_signal_destroy(struct stats_node_signal *s)
 {
-	struct stats_desc *desc;
-	struct signal *sig;
+	free(s->node_str);
 
-	for (int i = 0; i < STATS_COUNT; i++) {
-		desc = &stats_metrics[i];
+	return 0;
+}
 
-		/* Total */
-		sig = alloc(sizeof(struct signal));
-		sig->name = strf("%s.%s", desc->name, "total");
-		sig->type = SIGNAL_TYPE_INTEGER;
-		vlist_push(&n->signals, sig);
+int stats_node_signal_parse(struct stats_node_signal *s, json_t *cfg)
+{
+	json_error_t err;
 
-		/* Last */
-		sig = alloc(sizeof(struct signal));
-		sig->name = strf("%s.%s", desc->name, "last");
-		sig->unit = strdup(desc->unit);
-		sig->type = SIGNAL_TYPE_FLOAT;
-		vlist_push(&n->signals, sig);
+	int ret;
+	const char *stats;
+	char *metric, *type, *node, *cpy;
 
-		/* Highest */
-		sig = alloc(sizeof(struct signal));
-		sig->name = strf("%s.%s", desc->name, "highest");
-		sig->unit = strdup(desc->unit);
-		sig->type = SIGNAL_TYPE_FLOAT;
-		vlist_push(&n->signals, sig);
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: s }",
+		"stats", &stats
+	);
+	if (ret)
+		return -1;
 
-		/* Lowest */
-		sig = alloc(sizeof(struct signal));
-		sig->name = strf("%s.%s", desc->name, "lowest");
-		sig->unit = strdup(desc->unit);
-		sig->type = SIGNAL_TYPE_FLOAT;
-		vlist_push(&n->signals, sig);
+	cpy = strdup(stats);
 
-		/* Mean */
-		sig = alloc(sizeof(struct signal));
-		sig->name = strf("%s.%s", desc->name, "mean");
-		sig->unit = strdup(desc->unit);
-		sig->type = SIGNAL_TYPE_FLOAT;
-		vlist_push(&n->signals, sig);
+	node = strtok(cpy, ".");
+	if (!node)
+		goto invalid_format;
 
-		/* Variance */
-		sig = alloc(sizeof(struct signal));
-		sig->name = strf("%s.%s", desc->name, "var");
-		sig->unit = strf("%s^2", desc->unit); // variance has squared unit of variable
-		sig->type = SIGNAL_TYPE_FLOAT;
-		vlist_push(&n->signals, sig);
-	}
+	metric = strtok(NULL, ".");
+	if (!metric)
+		goto invalid_format;
+
+	type = strtok(NULL, ".");
+	if (!type)
+		goto invalid_format;
+
+	s->metric = stats_lookup_metric(metric);
+	if (s->metric < 0)
+		goto invalid_format;
+
+	s->type = stats_lookup_type(type);
+	if (s->type < 0)
+		goto invalid_format;
+
+	s->node_str = strdup(node);
+
+	free(cpy);
+	return 0;
+
+invalid_format:
+	free(cpy);
+	return -1;
 }
 
 int stats_node_type_start(struct super_node *sn)
@@ -105,9 +107,13 @@ int stats_node_start(struct node *n)
 	if (ret)
 		serror("Failed to create task");
 
-	s->node = vlist_lookup(nodes, s->node_str);
-	if (!s->node)
-		error("Invalid reference node %s for setting 'node' of node %s", s->node_str, node_name(n));
+	for (size_t i = 0; i < vlist_length(&s->signals); i++) {
+		struct stats_node_signal *stats_sig = (struct stats_node_signal *) vlist_at(&s->signals, i);
+
+		stats_sig->node = vlist_lookup(nodes, stats_sig->node_str);
+		if (!stats_sig->node)
+			error("Invalid reference node %s for setting 'node' of node %s", stats_sig->node_str, node_name(n));
+	}
 
 	return 0;
 }
@@ -128,7 +134,31 @@ char * stats_node_print(struct node *n)
 {
 	struct stats_node *s = (struct stats_node *) n->_vd;
 
-	return strf("node=%s, rate=%f", s->node_str, s->rate);
+	return strf("rate=%f", s->rate);
+}
+
+int stats_node_init(struct node *n)
+{
+	int ret;
+	struct stats_node *s = (struct stats_node *) n->_vd;
+
+	ret = vlist_init(&s->signals);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+int stats_node_destroy(struct node *n)
+{
+	int ret;
+	struct stats_node *s = (struct stats_node *) n->_vd;
+
+	ret = vlist_destroy(&s->signals, (dtor_cb_t) stats_node_signal_destroy, true);
+	if (ret)
+		return ret;
+
+	return 0;
 }
 
 int stats_node_parse(struct node *n, json_t *cfg)
@@ -136,13 +166,14 @@ int stats_node_parse(struct node *n, json_t *cfg)
 	struct stats_node *s = (struct stats_node *) n->_vd;
 
 	int ret;
+	size_t i;
 	json_error_t err;
+	json_t *json_signals, *json_signal;
 
-	const char *node;
-
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s: F }",
-		"node", &node,
-		"rate", &s->rate
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: F, s: { s: o } }",
+		"rate", &s->rate,
+		"in",
+			"signals", &json_signals
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
@@ -150,49 +181,67 @@ int stats_node_parse(struct node *n, json_t *cfg)
 	if (s->rate <= 0)
 		error("Setting 'rate' of node %s must be positive", node_name(n));
 
-	s->node_str = strdup(node);
+	if (!json_is_array(json_signals))
+		error("Setting 'in.signals' of node %s must be an array", node_name(n));
 
-	stats_init_signals(n);
+	json_array_foreach(json_signals, i, json_signal) {
+		struct signal *sig = (struct signal *) vlist_at(&n->in.signals, i);
+		struct stats_node_signal *stats_sig;
 
-	return 0;
-}
+		stats_sig = alloc(sizeof(struct stats_node_signal));
+		if (!stats_sig)
+			return -1;
 
-int stats_node_destroy(struct node *n)
-{
-	struct stats_node *s = (struct stats_node *) n->_vd;
+		ret = stats_node_signal_parse(stats_sig, json_signal);
+		if (ret)
+			error("Failed to parse signal definition of node %s", node_name(n));
 
-	if (s->node_str)
-		free(s->node_str);
+		if (!sig->name) {
+			const char *metric = stats_metrics[stats_sig->metric].name;
+			const char *type = stats_types[stats_sig->type].name;
+
+			sig->name = strf("%s.%s.%s", stats_sig->node_str, metric, type);
+		}
+
+		if (!sig->unit)
+			sig->unit = strdup(stats_metrics[stats_sig->metric].unit);
+
+		if (sig->type == SIGNAL_TYPE_AUTO)
+			sig->type = stats_types[stats_sig->type].signal_type;
+		else if (sig->type != stats_types[stats_sig->type].signal_type)
+			error("Invalid type for signal %zu in node %s", i, node_name(n));
+
+		vlist_push(&s->signals, stats_sig);
+	}
 
 	return 0;
 }
 
 int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	struct stats_node *sn = (struct stats_node *) n->_vd;
-	struct stats *s = sn->node->stats;
+	struct stats_node *s = (struct stats_node *) n->_vd;
 
 	if (!cnt)
 		return 0;
 
-	if (!sn->node->stats)
-		return 0;
+	task_wait(&s->task);
 
-	task_wait(&sn->task);
+	int len = MIN(vlist_length(&s->signals), smps[0]->capacity);
 
-	smps[0]->length = MIN(STATS_COUNT * 6, smps[0]->capacity);
-	smps[0]->flags = SAMPLE_HAS_DATA;
+	for (size_t i = 0; i < len; i++) {
+		struct stats *st;
+		struct stats_node_signal *sig = (struct stats_node_signal *) vlist_at(&s->signals, i);
 
-	for (int i = 0; i < 6 && (i+1)*STATS_METRICS <= smps[0]->length; i++) {
-		int tot = hist_total(&s->histograms[i]);
+		st = sig->node->stats;
+		if (!st)
+			return -1;
 
-		smps[0]->data[i*STATS_METRICS+0].f = tot ? hist_total(&s->histograms[i]) : 0;
-		smps[0]->data[i*STATS_METRICS+1].f = tot ? hist_last(&s->histograms[i]) : 0;
-		smps[0]->data[i*STATS_METRICS+2].f = tot ? hist_highest(&s->histograms[i]) : 0;
-		smps[0]->data[i*STATS_METRICS+3].f = tot ? hist_lowest(&s->histograms[i]) : 0;
-		smps[0]->data[i*STATS_METRICS+4].f = tot ? hist_mean(&s->histograms[i]) : 0;
-		smps[0]->data[i*STATS_METRICS+5].f = tot ? hist_var(&s->histograms[i]) : 0;
+		smps[0]->data[i] = stats_get_value(st, sig->metric, sig->type);
 	}
+
+	smps[0]->length = len;
+	smps[0]->flags = SAMPLE_HAS_DATA;
+	smps[0]->signals = &n->in.signals;
 
 	return 1;
 }
@@ -212,10 +261,11 @@ static struct plugin p = {
 	.type		= PLUGIN_TYPE_NODE,
 	.node		= {
 		.vectorize	= 1,
-		.flags		= NODE_TYPE_PROVIDES_SIGNALS,
+		.flags		= 0,
 		.size		= sizeof(struct stats_node),
 		.type.start	= stats_node_type_start,
 		.parse		= stats_node_parse,
+		.init		= stats_node_init,
 		.destroy	= stats_node_destroy,
 		.print		= stats_node_print,
 		.start		= stats_node_start,

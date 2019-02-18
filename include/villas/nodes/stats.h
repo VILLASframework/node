@@ -31,7 +31,9 @@
 
 #include <jansson.h>
 
+#include <villas/stats.h>
 #include <villas/task.h>
+#include <villas/list.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,13 +44,20 @@ struct node;
 struct sample;
 struct super_node;
 
+struct stats_node_signal {
+	struct node *node;
+	char *node_str;
+
+	enum stats_metric metric;
+	enum stats_type type;
+};
+
 struct stats_node {
 	double rate;
-	char *node_str;
 
 	struct task task;
 
-	struct node *node;
+	struct vlist signals; /** List of type struct stats_node_signal */
 };
 
 /** @see node_type::print */
@@ -59,6 +68,8 @@ char *stats_node_print(struct node *n);
 
 /** @see node_type::parse */
 int stats_node_parse(struct node *n, json_t *cfg);
+
+int stats_node_parse_signal(struct stats_node_signal *s, json_t *cfg);
 
 /** @see node_type::start */
 int stats_node_start(struct node *n);

@@ -62,7 +62,7 @@ struct file {
 	} epoch_mode;			/**< Specifies how file::offset is calculated. */
 
 	enum {
-		FILE_EOF_EXIT,		/**< Terminate when EOF is reached. */
+		FILE_EOF_STOP,		/**< Terminate when EOF is reached. */
 		FILE_EOF_REWIND,	/**< Rewind the file when EOF is reached. */
 		FILE_EOF_WAIT		/**< Blocking wait when EOF is reached. */
 	} eof;

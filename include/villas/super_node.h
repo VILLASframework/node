@@ -42,4 +42,6 @@ struct lws_vhost * web_get_vhost(struct web *w);
 
 enum state web_get_state(struct web *w);
 
+#ifdef WITH_WEB
 int web_callback_on_writable(struct web *w, struct lws *wsi);
+#endif

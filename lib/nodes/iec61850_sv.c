@@ -74,7 +74,7 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 	smp->sequence = smpcnt;
 	smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
 	smp->length = 0;
-	smp->signals = &n->signals;
+	smp->signals = &n->in.signals;
 
 	if (SVSubscriber_ASDU_hasRefrTm(asdu)) {
 		uint64_t refrtm = SVSubscriber_ASDU_getRefrTmAsMs(asdu);
@@ -190,7 +190,7 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 
 		i->out.svid = svid ? strdup(svid) : NULL;
 
-		ret = iec61850_parse_signals(json_signals, &i->out.signals, NULL);
+		ret = iec61850_parse_signals(json_signals, &i->out.signals, &n->out.signals);
 		if (ret <= 0)
 			error("Failed to parse setting 'signals' of node %s", node_name(n));
 
@@ -207,7 +207,7 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 		if (ret)
 			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-		ret = iec61850_parse_signals(json_signals, &i->in.signals, &n->signals);
+		ret = iec61850_parse_signals(json_signals, &i->in.signals, &n->in.signals);
 		if (ret <= 0)
 			error("Failed to parse setting 'signals' of node %s", node_name(n));
 
@@ -290,7 +290,7 @@ int iec61850_sv_start(struct node *n)
 		SVReceiver_addSubscriber(i->in.receiver, i->in.subscriber);
 
 		/* Initialize pool and queue to pass samples between threads */
-		ret = pool_init(&i->in.pool, 1024, SAMPLE_LENGTH(vlist_length(&n->signals)), &memory_hugepage);
+		ret = pool_init(&i->in.pool, 1024, SAMPLE_LENGTH(vlist_length(&n->in.signals)), &memory_hugepage);
 		if (ret)
 			return ret;
 
@@ -300,7 +300,7 @@ int iec61850_sv_start(struct node *n)
 
 		for (unsigned k = 0; k < vlist_length(&i->in.signals); k++) {
 			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) vlist_at(&i->in.signals, k);
-			struct signal *sig = (struct signal *) vlist_at(&n->signals, k);
+			struct signal *sig = (struct signal *) vlist_at(&n->in.signals, k);
 
 			if (sig->type == SIGNAL_TYPE_AUTO)
 				sig->type = m->format;
@@ -352,7 +352,7 @@ int iec61850_sv_read(struct node *n, struct sample *smps[], unsigned cnt, unsign
 	struct sample *smpt[cnt];
 
 	if (!i->in.enabled)
-		return 0;
+		return -1;
 
 	pulled = queue_signalled_pull_many(&i->in.queue, (void **) smpt, cnt);
 
@@ -367,7 +367,7 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsig
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
 	if (!i->out.enabled)
-		return 0;
+		return -1;
 
 	for (unsigned j = 0; j < cnt; j++) {
 		unsigned offset = 0;

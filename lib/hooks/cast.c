@@ -46,7 +46,7 @@ static int cast_init(struct hook *h)
 	struct vlist *orig_signals;
 
 	if (h->node)
-		orig_signals = &h->node->signals;
+		orig_signals = &h->node->in.signals;
 	else if (h->path)
 		orig_signals = &h->path->signals;
 	else

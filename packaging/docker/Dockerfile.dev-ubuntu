@@ -64,37 +64,41 @@ RUN pip install \
 # Dependencies
 RUN apt-get update && apt-get install -y \
 	libssl-dev \
+	libprotobuf-dev \
+	libprotobuf-c-dev \
+	uuid-dev \
 	libconfig-dev \
 	libnl-3-dev libnl-route-3-dev \
 	libcurl4-openssl-dev \
 	libjansson-dev \
 	libzmq3-dev \
 	libnanomsg-dev \
-	libprotobuf-dev \
-	libprotobuf-c-dev \
 	librabbitmq-dev \
 	libmosquitto-dev \
-	libcomedi-dev
+	libcomedi-dev \
+	libibverbs-dev \
+	librdmacm-dev \
+	libre-dev
 
 # Build & Install Criterion
 RUN cd /tmp && \
 	git clone --recursive https://github.com/Snaipe/Criterion && \
 	mkdir -p Criterion/build && cd Criterion/build && \
-	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make -j$(nproc) install && \
 	rm -rf /tmp/*
 
-# Build & Install Criterion
+# Build & Install libwebsockets
 RUN cd /tmp && \
-	git clone -b v2.4-stable http://github.com/warmcat/libwebsockets && \
+	git clone -b v3.1-stable https://github.com/warmcat/libwebsockets && \
 	mkdir -p libwebsockets/build && cd libwebsockets/build && \
-	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make -j$(nproc) install && \
 	rm -rf /tmp/*
 
 # Build & Install libiec61850
 RUN cd /tmp && \
-	git clone -b v1.2 https://github.com/mz-automation/libiec61850 && \
+	git clone -b v1.3.1 https://github.com/mz-automation/libiec61850 && \
 	mkdir -p libiec61850/build && cd libiec61850/build && \
-	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make install && \
+	cmake -DCMAKE_INSTALL_LIBDIR=/usr/local/lib64 .. && make -j$(nproc) install && \
 	rm -rf /tmp/*
 
 # Expose ports for HTTP and WebSocket frontend

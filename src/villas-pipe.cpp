@@ -68,7 +68,8 @@ public:
 
 
 		/* Initialize memory */
-		unsigned pool_size = node_type(node)->pool_size ? node_type(node)->pool_size : LOG2_CEIL(node->out.vectorize);
+		unsigned vec = LOG2_CEIL(MAX(node->out.vectorize, node->in.vectorize));
+		unsigned pool_size = node_type(node)->pool_size ? node_type(node)->pool_size : vec;
 
 		int ret = pool_init(&pool, pool_size, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), node_memory_type(node, &memory_hugepage));
 		if (ret < 0)
@@ -106,8 +107,15 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 {
 	Logger logger = logging.get("pipe");
 
-	if (signal == SIGALRM)
-		logger->info("Reached timeout. Terminating...");
+	switch (signal)  {
+		case  SIGALRM:
+			logger->info("Reached timeout. Terminating...");
+			break;
+
+		default:
+			logger->info("Received {} signal. Terminating...", strsignal(signal));
+			break;
+	}
 
 	stop = true;
 }
@@ -141,13 +149,14 @@ static void * send_loop(void *ctx)
 	unsigned last_sequenceno = 0, release;
 	int scanned, sent, allocated, cnt = 0;
 
-	struct sample *smps[dirs->send.node->out.vectorize];
+	struct node *node = dirs->send.node;
+	struct sample *smps[node->out.vectorize];
 
-	while (!io_eof(dirs->send.io)) {
-		allocated = sample_alloc_many(&dirs->send.pool, smps, dirs->send.node->out.vectorize);
+	while (node->state == STATE_STARTED && !io_eof(dirs->send.io)) {
+		allocated = sample_alloc_many(&dirs->send.pool, smps, node->out.vectorize);
 		if (allocated < 0)
-			throw RuntimeError("Failed to get {} samples out of send pool.", dirs->send.node->out.vectorize);
-		else if (allocated < dirs->send.node->out.vectorize)
+			throw RuntimeError("Failed to get {} samples out of send pool.", node->out.vectorize);
+		else if (allocated < node->out.vectorize)
 			logger->warn("Send pool underrun");
 
 		scanned = io_scan(dirs->send.io, smps, allocated);
@@ -168,11 +177,7 @@ static void * send_loop(void *ctx)
 
 		release = allocated;
 
-		sent = node_write(dirs->send.node, smps, scanned, &release);
-		if (sent < 0)
-			logger->warn("Failed to sent samples to node {}: reason={}", node_name(dirs->send.node), sent);
-		else if (sent < scanned)
-			logger->warn("Failed to sent {} out of {} samples to node {}", scanned-sent, scanned, node_name(dirs->send.node));
+		sent = node_write(node, smps, scanned, &release);
 
 		sample_decref_many(smps, release);
 
@@ -186,14 +191,14 @@ static void * send_loop(void *ctx)
 leave:	if (io_eof(dirs->send.io)) {
 		if (dirs->recv.limit < 0) {
 			logger->info("Reached end-of-file. Terminating...");
-			killme(SIGTERM);
+			stop = true;
 		}
 		else
 			logger->info("Reached end-of-file. Wait for receive side...");
 	}
 	else {
 		logger->info("Reached send limit. Terminating...");
-		killme(SIGTERM);
+		stop = true;
 	}
 
 	return nullptr;
@@ -206,20 +211,25 @@ static void * recv_loop(void *ctx)
 
 	int recv, cnt = 0, allocated = 0;
 	unsigned release;
-	struct sample *smps[dirs->recv.node->in.vectorize];
+	struct node *node = dirs->recv.node;
+	struct sample *smps[node->in.vectorize];
 
-	for (;;) {
-		allocated = sample_alloc_many(&dirs->recv.pool, smps, dirs->recv.node->in.vectorize);
+	while (node->state == STATE_STARTED) {
+		allocated = sample_alloc_many(&dirs->recv.pool, smps, node->in.vectorize);
 		if (allocated < 0)
-			throw RuntimeError("Failed to allocate {} samples from receive pool.", dirs->recv.node->in.vectorize);
-		else if (allocated < dirs->recv.node->in.vectorize)
-			logger->warn("Receive pool underrun: allocated only {} of {} samples", allocated, dirs->recv.node->in.vectorize);
+			throw RuntimeError("Failed to allocate {} samples from receive pool.", node->in.vectorize);
+		else if (allocated < node->in.vectorize)
+			logger->warn("Receive pool underrun: allocated only {} of {} samples", allocated, node->in.vectorize);
 
 		release = allocated;
 
-		recv = node_read(dirs->recv.node, smps, allocated, &release);
-		if (recv < 0)
-			logger->warn("Failed to receive samples from node {}: reason={}", node_name(dirs->recv.node), recv);
+		recv = node_read(node, smps, allocated, &release);
+		if (recv < 0) {
+			if (node->state == STATE_STOPPING)
+				goto leave2;
+			else
+				logger->warn("Failed to receive samples from node {}: reason={}", node_name(node), recv);
+		}
 		else {
 			io_print(dirs->recv.io, smps, recv);
 
@@ -233,7 +243,7 @@ static void * recv_loop(void *ctx)
 	}
 
 leave:	logger->info("Reached receive limit. Terminating...");
-	killme(SIGTERM);
+leave2:	stop = true;
 
 	return nullptr;
 }
@@ -412,7 +422,7 @@ check:		if (optarg == endptr)
 	alarm(timeout);
 
 	while (!stop)
-		pause();
+		sleep(1);
 
 	if (dirs.recv.enabled) {
 		pthread_cancel(dirs.recv.thread);

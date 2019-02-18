@@ -89,7 +89,7 @@ int file_parse(struct node *n, json_t *cfg)
 
 	/* Default values */
 	f->rate = 0;
-	f->eof = FILE_EOF_EXIT;
+	f->eof = FILE_EOF_STOP;
 	f->epoch_mode = FILE_EPOCH_DIRECT;
 	f->flush = 0;
 	f->buffer_size_in = 0;
@@ -119,8 +119,8 @@ int file_parse(struct node *n, json_t *cfg)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 
 	if (eof) {
-		if      (!strcmp(eof, "exit"))
-			f->eof = FILE_EOF_EXIT;
+		if      (!strcmp(eof, "exit") || !strcmp(eof, "stop"))
+			f->eof = FILE_EOF_STOP;
 		else if (!strcmp(eof, "rewind"))
 			f->eof = FILE_EOF_REWIND;
 		else if (!strcmp(eof, "wait"))
@@ -166,7 +166,7 @@ char * file_print(struct node *n)
 	}
 
 	switch (f->eof) {
-		case FILE_EOF_EXIT:		eof_str = "exit";	break;
+		case FILE_EOF_STOP:		eof_str = "stop";	break;
 		case FILE_EOF_WAIT:		eof_str = "wait";	break;
 		case FILE_EOF_REWIND:		eof_str = "rewind";	break;
 	}
@@ -243,7 +243,7 @@ int file_start(struct node *n)
 	if (f->flush)
 		flags |= IO_FLUSH;
 
-	ret = io_init(&f->io, f->format, &n->signals, flags);
+	ret = io_init(&f->io, f->format, &n->in.signals, flags);
 	if (ret)
 		return ret;
 
@@ -369,11 +369,12 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 
 					goto retry;
 
-				case FILE_EOF_EXIT:
-					info("Reached end-of-file of node %s", node_name(n));
+				case FILE_EOF_STOP:
+					info("Reached end-of-file.");
 
-					killme(SIGTERM);
-					pause();
+					n->state = STATE_STOPPING;
+
+					return -1;
 			}
 		}
 		else

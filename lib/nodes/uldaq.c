@@ -152,6 +152,8 @@ static DaqDeviceDescriptor * uldaq_find_device(struct uldaq *u) {
 		return &descriptors[0];
 
 	for (int i = 0; i < num_devs; i++) {
+		d = &descriptors[i];
+
 		if (u->device_id) {
 			if (strcmp(u->device_id, d->uniqueId))
 				break;
@@ -176,7 +178,7 @@ static int uldaq_connect(struct node *n)
 	/* Find Matching device */
 	if (!u->device_descriptor) {
 		u->device_descriptor = uldaq_find_device(u);
-		if (u->device_descriptor) {
+		if (!u->device_descriptor) {
 			warning("Unable to find a matching device for node '%s'", node_name(n));
 			return -1;
 		}
@@ -224,7 +226,7 @@ int uldaq_type_start(struct super_node *sn)
 	for (int i = 0; i < num_devs; i++) {
 		DaqDeviceDescriptor *desc = &descriptors[i];
 
-		info("  %d: %s %s", i, desc->uniqueId, desc->devString);
+		info("  %d: %s %s (%s)", i, desc->uniqueId, desc->devString,  uldaq_print_interface_type(desc->devInterface));
 	}
 
 	return 0;
@@ -307,7 +309,7 @@ int uldaq_parse(struct node *n, json_t *cfg)
 		u->device_interface_type = iftype;
 	}
 
-	u->in.channel_count = vlist_length(&n->signals);
+	u->in.channel_count = vlist_length(&n->in.signals);
 	u->in.queues = realloc(u->in.queues, sizeof(struct AiQueueElement) * u->in.channel_count);
 
 	json_array_foreach(json_signals, i, json_signal) {
@@ -358,11 +360,21 @@ char * uldaq_print(struct node *n)
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
 	char *buf = NULL;
-	char *uid = u->device_descriptor->uniqueId;
-	char *name = u->device_descriptor->productName;
-	const char *iftype = uldaq_print_interface_type(u->device_descriptor->devInterface);
 
-	buf = strcatf(&buf, "device=%s (%s), interface=%s", uid, name, iftype);
+	if (u->device_descriptor) {
+		char *uid = u->device_descriptor->uniqueId;
+		char *name = u->device_descriptor->productName;
+		const char *iftype = uldaq_print_interface_type(u->device_descriptor->devInterface);
+
+		buf = strcatf(&buf, "device=%s (%s), interface=%s", uid, name, iftype);
+	}
+	else {
+		const char *uid = u->device_id;
+		const char *iftype = uldaq_print_interface_type(u->device_interface_type);
+
+		buf = strcatf(&buf, "device=%s, interface=%s", uid, iftype);
+	}
+
 	buf = strcatf(&buf, ", in.sample_rate=%f", u->in.sample_rate);
 
 	return buf;
@@ -413,19 +425,15 @@ int uldaq_check(struct node *n)
 	Range ranges_se[num_ranges_se];
 
 	for (int i = 0; i < num_ranges_diff; i++) {
-		long long rng;
-
-		err = ulAIGetInfo(u->device_handle, AI_INFO_DIFF_RANGE, i, &rng);
-
-		ranges_diff[i] = *(Range *) rng;
+		err = ulAIGetInfo(u->device_handle, AI_INFO_DIFF_RANGE, i, (long long *) &ranges_diff[i]);
+		if (err != ERR_NO_ERROR)
+			return -1;
 	}
 
 	for (int i = 0; i < num_ranges_se; i++) {
-		long long rng;
-
-		err = ulAIGetInfo(u->device_handle, AI_INFO_SE_RANGE, i, &rng);
-
-		ranges_se[i] = *(Range *) rng;
+		err = ulAIGetInfo(u->device_handle, AI_INFO_SE_RANGE, i, (long long *) &ranges_se[i]);
+		if (err != ERR_NO_ERROR)
+			return -1;
 	}
 
 	if (!has_ai) {
@@ -443,8 +451,8 @@ int uldaq_check(struct node *n)
 		return -1;
 	}
 
-	for (size_t i = 0; i < vlist_length(&n->signals); i++) {
-		struct signal *s = (struct signal *) vlist_at(&n->signals, i);
+	for (size_t i = 0; i < vlist_length(&n->in.signals); i++) {
+		struct signal *s = (struct signal *) vlist_at(&n->in.signals, i);
 		AiQueueElement *q = &u->in.queues[i];
 
 		if (s->type != SIGNAL_TYPE_FLOAT) {
@@ -521,7 +529,7 @@ int uldaq_start(struct node *n)
 	if (ret)
 		return ret;
 
-	err = ulAInLoadQueue(u->device_handle, u->in.queues, vlist_length(&n->signals));
+	err = ulAInLoadQueue(u->device_handle, u->in.queues, vlist_length(&n->in.signals));
 	if (err != ERR_NO_ERROR) {
 		warning("Failed to load input queue to DAQ device for node '%s'", node_name(n));
 		return -1;
@@ -608,23 +616,9 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	if (u->in.status != SS_RUNNING)
 		return -1;
 
-	/* Wait for data available condition triggered by event callback */
-	pthread_mutex_lock(&u->in.mutex);
+	long long start_index = u->in.buffer_pos;
 
-	long long current_index = u->in.transfer_status.currentIndex + u->in.channel_count;
-	long long start_index = u->buffer_pos;
-
-	if (start_index + n->in.vectorize * u->in.channel_count > current_index)
-		pthread_cond_wait(&u->in.cv, &u->in.mutex);
-
-#if 0
-	debug(2, "total count = %lld", u->in.transfer_status.currentTotalCount);
-	debug(2, "index  = %lld", u->in.transfer_status.currentIndex);
-	debug(2, "scan count = %lld", u->in.transfer_status.currentScanCount);
-	debug(2, "start index= %lld", start_index);
-#endif
-
-	for (int j = 0; j < n->in.vectorize; j++) {
+	for (int j = 0; j < cnt; j++) {
 		struct sample *smp = smps[j];
 
 		long long scan_index = start_index + j * u->in.channel_count;
@@ -636,12 +630,12 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		}
 
 		smp->length = u->in.channel_count;
-		smp->signals = &n->signals;
+		smp->signals = &n->in.signals;
 		smp->sequence = u->sequence++;
 		smp->flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
 	}
 
-	u->buffer_pos += u->in.channel_count * cnt;
+	u->in.buffer_pos += u->in.channel_count * cnt;
 
 	pthread_mutex_unlock(&u->in.mutex);
 

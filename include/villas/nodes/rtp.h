@@ -2,6 +2,7 @@
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Marvin Klimke <marvin.klimke@rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
@@ -42,8 +43,9 @@
 extern "C" {
 #endif
 
-/** The maximum length of a packet which contains stuct rtp. */
+/** The maximum length of a packet which contains rtp data. */
 #define RTP_INITIAL_BUFFER_LEN 1500
+#define RTP_PACKET_TYPE 21
 
 /* Forward declarations */
 struct format_type;
@@ -64,6 +66,8 @@ struct rtp {
 	struct {
 		int enabled;
 
+		int num_rrs;
+
 		enum {
 			RTCP_MODE_AIMD,
 		} mode;
@@ -82,9 +86,12 @@ struct rtp {
 		double b;
 
 		double last_rate;
+
+		FILE *log;
 	} aimd;			/** AIMD state */
 
 	struct queue_signalled recv_queue;
+	struct mbuf *send_mb;
 };
 
 /** @see node_type::print */

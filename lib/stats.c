@@ -31,12 +31,22 @@
 #include <villas/node.h>
 #include <villas/table.h>
 
-struct stats_desc stats_metrics[] = {
-	{ "skipped",	  "samples", "Skipped samples and the distance between them",			25 },
-	{ "reordered",	  "samples", "Reordered samples and the distance between them",			25 },
-	{ "gap_sent",	  "seconds", "Inter-message timestamps (as sent by remote)",			25 },
-	{ "gap_received", "seconds", "Inter-message arrival time (as received by this instance)",	25 },
-	{ "owd",	  "seconds", "One-way-delay (OWD) of received messages",			25 }
+struct stats_metric_description stats_metrics[] = {
+	{ "skipped",		STATS_METRIC_SKIPPED,		"samples", "Skipped samples and the distance between them",		25 },
+	{ "reordered",		STATS_METRIC_REORDERED, 	"samples", "Reordered samples and the distance between them",		25 },
+	{ "gap_sent",		STATS_METRIC_GAP_SAMPLE,	"seconds", "Inter-message timestamps (as sent by remote)",		25 },
+	{ "gap_received",	STATS_METRIC_GAP_RECEIVED,	"seconds", "Inter-message arrival time (as received by this instance)",	25 },
+	{ "owd",		STATS_METRIC_OWD,		"seconds", "One-way-delay (OWD) of received messages",			25 }
+};
+
+struct stats_type_description stats_types[] = {
+	{ "last",		STATS_TYPE_LAST,	SIGNAL_TYPE_FLOAT },
+	{ "highest",		STATS_TYPE_HIGHEST,	SIGNAL_TYPE_FLOAT },
+	{ "lowest",		STATS_TYPE_LOWEST,	SIGNAL_TYPE_FLOAT },
+	{ "mean",		STATS_TYPE_MEAN,	SIGNAL_TYPE_FLOAT },
+	{ "var",		STATS_TYPE_VAR,		SIGNAL_TYPE_FLOAT },
+	{ "stddev",		STATS_TYPE_STDDEV,	SIGNAL_TYPE_FLOAT },
+	{ "total",		STATS_TYPE_TOTAL,	SIGNAL_TYPE_INTEGER }
 };
 
 int stats_lookup_format(const char *str)
@@ -51,9 +61,33 @@ int stats_lookup_format(const char *str)
 		return -1;
 }
 
+enum stats_metric stats_lookup_metric(const char *str)
+{
+	for (int i = 0; i < STATS_METRIC_COUNT; i++) {
+		struct stats_metric_description *d = &stats_metrics[i];
+
+		if (!strcmp(str, d->name))
+			return d->metric;
+	}
+
+	return STATS_METRIC_INVALID;
+}
+
+enum stats_type stats_lookup_type(const char *str)
+{
+	for (int i = 0; i < STATS_TYPE_COUNT; i++) {
+		struct stats_type_description *d = &stats_types[i];
+
+		if (!strcmp(str, d->name))
+			return d->type;
+	}
+
+	return STATS_TYPE_INVALID;
+}
+
 int stats_init(struct stats *s, int buckets, int warmup)
 {
-	for (int i = 0; i < STATS_COUNT; i++)
+	for (int i = 0; i < STATS_METRIC_COUNT; i++)
 		hist_init(&s->histograms[i], buckets, warmup);
 
 	s->delta = alloc(sizeof(struct stats_delta));
@@ -63,7 +97,7 @@ int stats_init(struct stats *s, int buckets, int warmup)
 
 int stats_destroy(struct stats *s)
 {
-	for (int i = 0; i < STATS_COUNT; i++)
+	for (int i = 0; i < STATS_METRIC_COUNT; i++)
 		hist_destroy(&s->histograms[i]);
 
 	free(s->delta);
@@ -71,7 +105,7 @@ int stats_destroy(struct stats *s)
 	return 0;
 }
 
-void stats_update(struct stats *s, enum stats_id id, double val)
+void stats_update(struct stats *s, enum stats_metric id, double val)
 {
 	s->delta->values[id] = val;
 	s->delta->update |= 1 << id;
@@ -79,7 +113,7 @@ void stats_update(struct stats *s, enum stats_id id, double val)
 
 int stats_commit(struct stats *s)
 {
-	for (int i = 0; i < STATS_COUNT; i++) {
+	for (int i = 0; i < STATS_METRIC_COUNT; i++) {
 		if (s->delta->update & 1 << i) {
 			hist_put(&s->histograms[i], s->delta->values[i]);
 			s->delta->update &= ~(1 << i);
@@ -93,8 +127,8 @@ json_t * stats_json(struct stats *s)
 {
 	json_t *obj = json_object();
 
-	for (int i = 0; i < STATS_COUNT; i++) {
-		struct stats_desc *d = &stats_metrics[i];
+	for (int i = 0; i < STATS_METRIC_COUNT; i++) {
+		struct stats_metric_description *d = &stats_metrics[i];
 		struct hist *h = &s->histograms[i];
 
 		json_object_set_new(obj, d->name, hist_json(h));
@@ -107,17 +141,17 @@ json_t * stats_json_periodic(struct stats *s, struct node *n)
 {
 	return json_pack("{ s: s, s: i, s: f, s: f, s: i, s: i }",
 		"node", node_name(n),
-		"processed", hist_total(&s->histograms[STATS_OWD]),
-		"owd", hist_last(&s->histograms[STATS_OWD]),
-		"rate", 1.0 / hist_last(&s->histograms[STATS_GAP_SAMPLE]),
-		"dropped", hist_total(&s->histograms[STATS_REORDERED]),
-		"skipped", hist_total(&s->histograms[STATS_SKIPPED])
+		"processed", hist_total(&s->histograms[STATS_METRIC_OWD]),
+		"owd", hist_last(&s->histograms[STATS_METRIC_OWD]),
+		"rate", 1.0 / hist_last(&s->histograms[STATS_METRIC_GAP_SAMPLE]),
+		"dropped", hist_total(&s->histograms[STATS_METRIC_REORDERED]),
+		"skipped", hist_total(&s->histograms[STATS_METRIC_SKIPPED])
 	);
 }
 
 void stats_reset(struct stats *s)
 {
-	for (int i = 0; i < STATS_COUNT; i++)
+	for (int i = 0; i < STATS_METRIC_COUNT; i++)
 		hist_reset(&s->histograms[i]);
 }
 
@@ -155,13 +189,13 @@ void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int v
 		case STATS_FORMAT_HUMAN:
 			table_row(&stats_table,
 				node_name_short(n),
-				hist_total(&s->histograms[STATS_OWD]),
-				hist_last(&s->histograms[STATS_OWD]),
-				hist_mean(&s->histograms[STATS_OWD]),
-				1.0 / hist_last(&s->histograms[STATS_GAP_RECEIVED]),
-				1.0 / hist_mean(&s->histograms[STATS_GAP_RECEIVED]),
-				hist_total(&s->histograms[STATS_REORDERED]),
-				hist_total(&s->histograms[STATS_SKIPPED])
+				hist_total(&s->histograms[STATS_METRIC_OWD]),
+				hist_last(&s->histograms[STATS_METRIC_OWD]),
+				hist_mean(&s->histograms[STATS_METRIC_OWD]),
+				1.0 / hist_last(&s->histograms[STATS_METRIC_GAP_RECEIVED]),
+				1.0 / hist_mean(&s->histograms[STATS_METRIC_GAP_RECEIVED]),
+				hist_total(&s->histograms[STATS_METRIC_REORDERED]),
+				hist_total(&s->histograms[STATS_METRIC_SKIPPED])
 			);
 			break;
 
@@ -179,10 +213,10 @@ void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose)
 {
 	switch (fmt) {
 		case STATS_FORMAT_HUMAN:
-			for (int i = 0; i < STATS_COUNT; i++) {
-				struct stats_desc *desc = &stats_metrics[i];
+			for (int i = 0; i < STATS_METRIC_COUNT; i++) {
+				struct stats_metric_description *d = &stats_metrics[i];
 
-				info("%s: %s", desc->name, desc->desc);
+				info("%s: %s", d->name, d->desc);
 				hist_print(&s->histograms[i], verbose);
 			}
 			break;
@@ -198,14 +232,44 @@ void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose)
 	}
 }
 
-enum stats_id stats_lookup_id(const char *name)
+union signal_data stats_get_value(const struct stats *s, enum stats_metric sm, enum stats_type st)
 {
-	for (int i = 0; i < STATS_COUNT; i++) {
-		struct stats_desc *desc = &stats_metrics[i];
+	const struct hist *h = &s->histograms[sm];
 
-		if (!strcmp(desc->name, name))
-			return i;
+	union signal_data d;
+
+	switch (st) {
+		case STATS_TYPE_TOTAL:
+			d.i = h->total;
+			break;
+
+		case STATS_TYPE_LAST:
+			d.f = h->last;
+			break;
+
+		case STATS_TYPE_HIGHEST:
+			d.f = h->highest;
+			break;
+
+		case STATS_TYPE_LOWEST:
+			d.f = h->lowest;
+			break;
+
+		case STATS_TYPE_MEAN:
+			d.f = hist_mean(h);
+			break;
+
+		case STATS_TYPE_STDDEV:
+			d.f = hist_stddev(h);
+			break;
+
+		case STATS_TYPE_VAR:
+			d.f = hist_var(h);
+			break;
+
+		default:
+			d.f = -1;
 	}
 
-	return -1;
+	return d;
 }

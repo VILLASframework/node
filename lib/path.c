@@ -51,7 +51,7 @@ static int path_source_init(struct path_source *ps)
 	if (ps->node->_vt->pool_size)
 		pool_size = ps->node->_vt->pool_size;
 
-	ret = pool_init(&ps->pool, pool_size, SAMPLE_LENGTH(vlist_length(&ps->node->signals)), node_memory_type(ps->node, &memory_hugepage));
+	ret = pool_init(&ps->pool, pool_size, SAMPLE_LENGTH(vlist_length(&ps->node->in.signals)), node_memory_type(ps->node, &memory_hugepage));
 	if (ret)
 		return ret;
 
@@ -73,9 +73,9 @@ static int path_source_destroy(struct path_source *ps)
 	return 0;
 }
 
-static void path_source_read(struct path_source *ps, struct path *p, int i)
+static int path_source_read(struct path_source *ps, struct path *p, int i)
 {
-	int recv, tomux, allocated, cnt;
+	int recv, tomux, allocated, cnt, toenqueue, enqueued = 0;
 	unsigned release;
 
 	cnt = ps->node->in.vectorize;
@@ -93,10 +93,20 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 	release = allocated;
 
 	recv = node_read(ps->node, read_smps, allocated, &release);
-	if (recv == 0)
+	if (recv == 0) {
+		enqueued = 0;
 		goto out2;
-	else if (recv < 0)
-		error("Failed to read samples from node %s", node_name(ps->node));
+	}
+	else if (recv < 0) {
+		if (ps->node->state == STATE_STOPPING) {
+			p->state = STATE_STOPPING;
+
+			enqueued = -1;
+			goto out2;
+		}
+		else
+			error("Failed to read samples from node %s", node_name(ps->node));
+	}
 	else if (recv < allocated)
 		warning("Partial read for path %s: read=%u, expected=%u", path_name(p), recv, allocated);
 
@@ -116,11 +126,8 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 			? sample_clone(p->last_sample)
 			: sample_clone(muxed_smps[i-1]);
 
-		muxed_smps[i]->flags = 0;
-		if (p->original_sequence_no) {
+		if (p->original_sequence_no)
 			muxed_smps[i]->sequence = tomux_smps[i]->sequence;
-			muxed_smps[i]->flags |= tomux_smps[i]->flags & SAMPLE_HAS_SEQUENCE;
-		}
 		else {
 			muxed_smps[i]->sequence = p->last_sequence++;
 			muxed_smps[i]->flags |= SAMPLE_HAS_SEQUENCE;
@@ -137,30 +144,33 @@ static void path_source_read(struct path_source *ps, struct path *p, int i)
 	debug(15, "Path %s received = %s", path_name(p), bitset_dump(&p->received));
 
 #ifdef WITH_HOOKS
-	int toenqueue = hook_process_list(&p->hooks, muxed_smps, tomux);
+	toenqueue = hook_process_list(&p->hooks, muxed_smps, tomux);
 	if (toenqueue != tomux) {
 		int skipped = tomux - toenqueue;
 
 		debug(LOG_NODES | 10, "Hooks skipped %u out of %u samples for path %s", skipped, tomux, path_name(p));
 	}
 #else
-	int toenqueue = tomux;
+	toenqueue = tomux;
 #endif
 
 	if (bitset_test(&p->mask, i)) {
 		/* Check if we received an update from all nodes/ */
 		if ((p->mode == PATH_MODE_ANY) ||
-		    (p->mode == PATH_MODE_ALL && !bitset_cmp(&p->mask, &p->received)))
-		{
+		    (p->mode == PATH_MODE_ALL && !bitset_cmp(&p->mask, &p->received))) {
 			path_destination_enqueue(p, muxed_smps, toenqueue);
 
 			/* Reset bitset of updated nodes */
 			bitset_clear_all(&p->received);
+
+			enqueued = toenqueue;
 		}
 	}
 
 	sample_decref_many(muxed_smps, tomux);
 out2:	sample_decref_many(read_smps, release);
+
+	return enqueued;
 }
 
 static int path_destination_init(struct path_destination *pd, int queuelen)
@@ -247,21 +257,22 @@ static void path_destination_write(struct path_destination *pd, struct path *p)
 
 static void * path_run_single(void *arg)
 {
+	int ret;
 	struct path *p = arg;
 	struct path_source *ps = (struct path_source *) vlist_at(&p->sources, 0);
 
-	debug(1, "Started path %s in single mode", path_name(p));
+	while (p->state == STATE_STARTED) {
+		pthread_testcancel();
 
-	for (;;) {
-		path_source_read(ps, p, 0);
+		ret = path_source_read(ps, p, 0);
+		if (ret <= 0)
+			continue;
 
 		for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
 			struct path_destination *pd = (struct path_destination *) vlist_at(&p->destinations, i);
 
 			path_destination_write(pd, p);
 		}
-
-		pthread_testcancel();
 	}
 
 	return NULL;
@@ -273,9 +284,7 @@ static void * path_run_poll(void *arg)
 	int ret;
 	struct path *p = arg;
 
-	debug(1, "Started path %s in polling mode", path_name(p));
-
-	for (;;) {
+	while (p->state == STATE_STARTED) {
 		ret = poll(p->reader.pfds, p->reader.nfds, -1);
 		if (ret < 0)
 			serror("Failed to poll");
@@ -295,9 +304,8 @@ static void * path_run_poll(void *arg)
 					path_destination_enqueue(p, &p->last_sample, 1);
 				}
 				/* A source is ready to receive samples */
-				else {
+				else
 					path_source_read(ps, p, i);
-				}
 			}
 		}
 
@@ -353,28 +361,28 @@ int path_init(struct path *p)
 
 int path_init_poll(struct path *p)
 {
-	int ret, nfds;
+	int fds[16], ret, n = 0, m;
 
-	nfds = vlist_length(&p->sources);
-	if (p->rate > 0)
-		nfds++;
-
-	p->reader.nfds = nfds;
-	p->reader.pfds = alloc(sizeof(struct pollfd) * p->reader.nfds);
+	p->reader.pfds = NULL;
+	p->reader.nfds = 0;
 
 	for (int i = 0; i < vlist_length(&p->sources); i++) {
 		struct path_source *ps = (struct path_source *) vlist_at(&p->sources, i);
 
-		int fds[16];
-		int num_fds = node_poll_fds(ps->node, fds);
+		m = node_poll_fds(ps->node, fds);
+		if (m < 0)
+			continue;
 
-		for (int i = 0; i < num_fds; i++) {
+		p->reader.nfds += m;
+		p->reader.pfds = realloc(p->reader.pfds, p->reader.nfds * sizeof(struct pollfd));
+
+		for (int i = 0; i < m; i++) {
 			if (fds[i] < 0)
 				error("Failed to get file descriptor for node %s", node_name(ps->node));
 
 			/* This slot is only used if it is not masked */
-			p->reader.pfds[i].events = POLLIN;
-			p->reader.pfds[i].fd = fds[i];
+			p->reader.pfds[n].events = POLLIN;
+			p->reader.pfds[n++].fd = fds[i];
 		}
 	}
 
@@ -384,9 +392,12 @@ int path_init_poll(struct path *p)
 		if (ret)
 			return ret;
 
-		p->reader.pfds[nfds-1].events = POLLIN;
-		p->reader.pfds[nfds-1].fd = task_fd(&p->timeout);
-		if (p->reader.pfds[nfds-1].fd < 0)
+		p->reader.nfds++;
+		p->reader.pfds = realloc(p->reader.pfds, p->reader.nfds * sizeof(struct pollfd));
+
+		p->reader.pfds[p->reader.nfds-1].events = POLLIN;
+		p->reader.pfds[p->reader.nfds-1].fd = task_fd(&p->timeout);
+		if (p->reader.pfds[p->reader.nfds-1].fd < 0)
 			error("Failed to get file descriptor for timer of path %s", path_name(p));
 	}
 
@@ -453,7 +464,7 @@ int path_init2(struct path *p)
 				/* For data mappings we simple refer to the existing
 				 * signal descriptors of the source node. */
 				if (me->type == MAPPING_TYPE_DATA) {
-					sig = (struct signal *) vlist_at_safe(&me->node->signals, me->data.offset + j);
+					sig = (struct signal *) vlist_at_safe(&me->node->in.signals, me->data.offset + j);
 					if (!sig) {
 						warning("Failed to create signal description for path %s", path_name(p));
 						continue;
@@ -521,7 +532,6 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 		"rate", &p->rate,
 		"mask", &json_mask,
 		"original_sequence_no", &p->original_sequence_no
-
 	);
 	if (ret)
 		jerror(&err, "Failed to parse path configuration");
@@ -644,12 +654,12 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 
 	/* Autodetect whether to use poll() for this path or not */
 	if (p->poll == -1) {
-		struct path_source *ps = (struct path_source *) vlist_at(&p->sources, 0);
-
-		int fds[16];
-		int num_fds = node_poll_fds(ps->node, fds);
-
-		p->poll = (p->rate > 0 || vlist_length(&p->sources) > 1) && num_fds > 0;
+		if (p->rate > 0)
+			p->poll = 1;
+		else if (vlist_length(&p->sources) > 1)
+			p->poll = 1;
+		else
+			p->poll = 0;
 	}
 
 	ret = vlist_destroy(&sources, NULL, false);
@@ -673,11 +683,32 @@ int path_check(struct path *p)
 	if (p->rate < 0)
 		error("Setting 'rate' of path %s must be a positive number.", path_name(p));
 
+	if (p->poll) {
+		if (p->rate <= 0) {
+			/* Check that all path sources provide a file descriptor for polling */
+			for (size_t i = 0; i < vlist_length(&p->sources); i++) {
+				struct path_source *ps = (struct path_source *) vlist_at(&p->sources, i);
+
+				if (!ps->node->_vt->poll_fds)
+					error("Node %s can not be used in polling mode with path %s", node_name(ps->node), path_name(p));
+			}
+		}
+	}
+	else {
+		/* Check that we do not need to multiplex between multiple sources when polling is disabled */
+		if (vlist_length(&p->sources) > 1)
+			error("Setting 'poll' must be active if the path has more than one source");
+
+		/* Check that we do not use the fixed rate feature when polling is disabled */
+		if (p->rate > 0)
+			error("Setting 'poll' must be activated when used together with setting 'rate'");
+	}
+
 	for (size_t i = 0; i < vlist_length(&p->sources); i++) {
 		struct path_source *ps = (struct path_source *) vlist_at(&p->sources, i);
 
 		if (!ps->node->_vt->read)
-			error("Source node %s is not supported as a source for path %s", node_name(ps->node), path_name(p));
+			error("Node %s is not supported as a source for path %s", node_name(ps->node), path_name(p));
 	}
 
 	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
@@ -712,7 +743,7 @@ int path_start(struct path *p)
 
 	mask = bitset_dump(&p->mask);
 
-	info("Starting path %s: #signals=%zu, mode=%s, poll=%s, mask=%s, rate=%.2f, enabled=%s, reversed=%s, queuelen=%d, #hooks=%zu, #sources=%zu, #destinations=%zu, #original_sequence_no=%s",
+	info("Starting path %s: #signals=%zu, mode=%s, poll=%s, mask=%s, rate=%.2f, enabled=%s, reversed=%s, queuelen=%d, #hooks=%zu, #sources=%zu, #destinations=%zu, original_sequence_no=%s",
 		path_name(p),
 		vlist_length(&p->signals),
 		mode,
@@ -779,11 +810,15 @@ int path_stop(struct path *p)
 {
 	int ret;
 
-	if (p->state != STATE_STARTED)
+	if (p->state != STATE_STARTED && p->state != STATE_STOPPING)
 		return 0;
 
 	info("Stopping path: %s", path_name(p));
 
+	if (p->state != STATE_STOPPING)
+		p->state = STATE_STOPPING;
+
+	/* Cancel the thread in case is currently in a blocking syscall */
 	ret = pthread_cancel(p->tid);
 	if (ret)
 		return ret;
@@ -881,49 +916,22 @@ int path_uses_node(struct path *p, struct node *n)
 	return -1;
 }
 
-int path_reverse(struct path *p, struct path *r)
+int path_is_simple(struct path *p)
 {
-	if (vlist_length(&p->destinations) != 1 || vlist_length(&p->sources) != 1)
-		return -1;
+	int ret;
+	const char *in = NULL, *out = NULL;
 
-	/* General */
-	r->enabled = p->enabled;
+	ret = json_unpack(p->cfg, "{ s: s, s: s }", "in", &in, "out", &out);
+	if (ret)
+		return ret;
 
-	/* Source / Destinations */
-	struct path_destination *orig_pd = vlist_first(&p->destinations);
-	struct path_source      *orig_ps = vlist_first(&p->sources);
+	ret = node_is_valid_name(in);
+	if (ret)
+		return ret;
 
-	struct path_destination *new_pd = (struct path_destination *) alloc(sizeof(struct path_destination));
-	struct path_source      *new_ps = (struct path_source *) alloc(sizeof(struct path_source));
-	struct mapping_entry    *new_me = alloc(sizeof(struct mapping_entry));
-	new_pd->node = orig_ps->node;
-	new_ps->node = orig_pd->node;
-	new_ps->masked = true;
+	ret = node_is_valid_name(out);
+	if (ret)
+		return ret;
 
-	new_me->node = new_ps->node;
-	new_me->type = MAPPING_TYPE_DATA;
-	new_me->data.offset = 0;
-	new_me->length = 0;
-
-	vlist_init(&new_ps->mappings);
-	vlist_push(&new_ps->mappings, new_me);
-
-	vlist_push(&r->destinations, new_pd);
-	vlist_push(&r->sources, new_ps);
-
-#ifdef WITH_HOOKS
-	for (size_t i = 0; i < vlist_length(&p->hooks); i++) {
-		int ret;
-
-		struct hook *h = (struct hook *) vlist_at(&p->hooks, i);
-		struct hook *g = (struct hook *) alloc(sizeof(struct hook));
-
-		ret = hook_init(g, h->_vt, r, NULL);
-		if (ret)
-			return ret;
-
-		vlist_push(&r->hooks, g);
-	}
-#endif /* WITH_HOOKS */
 	return 0;
 }

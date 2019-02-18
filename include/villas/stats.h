@@ -27,6 +27,7 @@
 #include <jansson.h>
 
 #include <villas/hist.h>
+#include <villas/signal.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,44 +43,68 @@ enum stats_format {
 	STATS_FORMAT_MATLAB
 };
 
-enum stats_id {
-	STATS_SKIPPED,		/**< Counter for skipped samples due to hooks. */
-	STATS_REORDERED,	/**< Counter for reordered samples. */
-	STATS_GAP_SAMPLE,	/**< Histogram for inter sample timestamps (as sent by remote). */
-	STATS_GAP_RECEIVED,	/**< Histogram for inter sample arrival time (as seen by this instance). */
-	STATS_OWD,		/**< Histogram for one-way-delay (OWD) of received samples. */
-	STATS_COUNT		/**< Just here to have an updated number of statistics. */
+enum stats_metric {
+	STATS_METRIC_INVALID = -1,
+	STATS_METRIC_SKIPPED,		/**< Counter for skipped samples due to hooks. */
+	STATS_METRIC_REORDERED,		/**< Counter for reordered samples. */
+	STATS_METRIC_GAP_SAMPLE,	/**< Histogram for inter sample timestamps (as sent by remote). */
+	STATS_METRIC_GAP_RECEIVED,	/**< Histogram for inter sample arrival time (as seen by this instance). */
+	STATS_METRIC_OWD,		/**< Histogram for one-way-delay (OWD) of received samples. */
+	STATS_METRIC_COUNT		/**< Just here to have an updated number of statistics. */
 };
 
-struct stats_desc {
+enum stats_type {
+	STATS_TYPE_INVALID = -1,
+	STATS_TYPE_LAST,
+	STATS_TYPE_HIGHEST,
+	STATS_TYPE_LOWEST,
+	STATS_TYPE_MEAN,
+	STATS_TYPE_VAR,
+	STATS_TYPE_STDDEV,
+	STATS_TYPE_TOTAL,
+	STATS_TYPE_COUNT
+};
+
+struct stats_metric_description {
 	const char *name;
+	enum stats_metric metric;
 	const char *unit;
 	const char *desc;
 	int hist_buckets;
 };
 
-struct stats_delta {
-	double values[STATS_COUNT];
+struct stats_type_description {
+	const char *name;
+	enum stats_type type;
+	enum signal_type signal_type;
+};
 
-	int update;		/**< Bitmask of stats_id. Only those which are masked will be updated */
+struct stats_delta {
+	double values[STATS_METRIC_COUNT];
+
+	int update;		/**< Bitmask of stats_metric. Only those which are masked will be updated */
 };
 
 struct stats {
-	struct hist histograms[STATS_COUNT];
+	struct hist histograms[STATS_METRIC_COUNT];
 
 	struct stats_delta *delta;
 };
 
-extern
-struct stats_desc stats_metrics[];
+extern struct stats_metric_description stats_metrics[];
+extern struct stats_type_description stats_types[];
 
 int stats_lookup_format(const char *str);
+
+enum stats_metric stats_lookup_metric(const char *str);
+
+enum stats_type stats_lookup_type(const char *str);
 
 int stats_init(struct stats *s, int buckets, int warmup);
 
 int stats_destroy(struct stats *s);
 
-void stats_update(struct stats *s, enum stats_id id, double val);
+void stats_update(struct stats *s, enum stats_metric id, double val);
 
 void stats_collect(struct stats *s, struct sample *smps[], size_t *cnt);
 
@@ -95,7 +120,7 @@ void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int v
 
 void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose);
 
-enum stats_id stats_lookup_id(const char *name);
+union signal_data stats_get_value(const struct stats *s, enum stats_metric sm, enum stats_type st);
 
 #ifdef __cplusplus
 }

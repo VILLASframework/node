@@ -45,9 +45,11 @@ int shmem_parse(struct node *n, json_t *cfg)
 	json_t *json_exec = NULL;
 	json_error_t err;
 
+	int len = MAX(vlist_length(&n->in.signals), vlist_length(&n->out.signals));
+
 	/* Default values */
 	shm->conf.queuelen = MAX(DEFAULT_SHMEM_QUEUELEN, n->in.vectorize);
-	shm->conf.samplelen = vlist_length(&n->signals);
+	shm->conf.samplelen = len;
 	shm->conf.polling = false;
 	shm->exec = NULL;
 
@@ -134,8 +136,11 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	if (recv < 0) {
 		/* This can only really mean that the other process has exited, so close
 		 * the interface to make sure the shared memory object is unlinked */
-		shmem_int_close(&shm->intf);
-		warning("Shared memory segment has been closed for node: %s", node_name(n));
+
+		info("Shared memory segment has been closed.");
+
+		n->state = STATE_STOPPING;
+
 		return recv;
 	}
 
@@ -144,7 +149,7 @@ int shmem_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 	/** @todo: signal descriptions are currently not shared between processes */
 	for (int i = 0; i < recv; i++)
-		smps[i]->signals = &n->signals;
+		smps[i]->signals = &n->in.signals;
 
 	return recv;
 }

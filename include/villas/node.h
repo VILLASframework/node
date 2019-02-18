@@ -58,6 +58,7 @@ struct node_direction {
 	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
 
 	struct vlist hooks;	/**< List of write hooks (struct hook). */
+	struct vlist signals;	/**< Signal description. */
 
 	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
 };
@@ -67,8 +68,7 @@ struct node_direction {
  * Every entity which exchanges messages is represented by a node.
  * Nodes can be remote machines and simulators or locally running processes.
  */
-struct node
-{
+struct node {
 	char *name;		/**< A short identifier of the node, only used for configuration and logging */
 
 	enum state state;
@@ -84,14 +84,14 @@ struct node
 
 	struct node_direction in, out;
 
-	struct vlist signals;	/**< Signal meta data for data which is __received__ by node_read(). */
+#ifdef __linux__
+	int fwmark;			/**< Socket mark for netem, routing and filtering */
 
 #ifdef WITH_NETEM
-	int mark;			/**< Socket mark for netem, routing and filtering */
-
 	struct rtnl_qdisc *tc_qdisc;	/**< libnl3: Network emulator queuing discipline */
 	struct rtnl_cls *tc_classifier;	/**< libnl3: Firewall mark classifier */
 #endif /* WITH_NETEM */
+#endif /* __linux__ */
 
 	struct node_type *_vt;	/**< Virtual functions (C++ OOP style) */
 	void *_vd;		/**< Virtual data (used by struct node::_vt functions) */
@@ -202,6 +202,8 @@ int node_netem_fds(struct node *n, int fds[]);
 struct node_type * node_type(struct node *n);
 
 struct memory_type * node_memory_type(struct node *n, struct memory_type *parent);
+
+int node_is_valid_name(const char *name);
 
 #ifdef __cplusplus
 }

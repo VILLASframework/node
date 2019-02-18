@@ -56,6 +56,13 @@ if(DOXYGEN_FOUND)
 		WORKING_DIRECTORY ${PROJECT_DIR}
 	)
 
+	# Ensure that documentation is built before installing it
+	install(CODE "execute_process(
+			COMMAND ${CMAKE_COMMAND} --build \"${CMAKE_CURRENT_BINARY_DIR}\" --target doc
+			WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\"
+		)"
+	)
+
 	install(
 		DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/html
 		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/doc/villas/node

@@ -63,7 +63,7 @@ static void mqtt_connect_cb(struct mosquitto *mosq, void *userdata, int result)
 	if (m->subscribe) {
 		ret = mosquitto_subscribe(m->client, NULL, m->subscribe, m->qos);
 		if (ret)
-			warning("MQTT: failed to subscribe to topic '%s' for node %s", m->subscribe, node_name(n));
+			warning("MQTT: failed to subscribe to topic '%s' for node %s: %s", m->subscribe, node_name(n), mosquitto_strerror(ret));
 	}
 	else
 		warning("MQTT: no subscribe for node %s as no subscribe topic is given", node_name(n));
@@ -207,11 +207,11 @@ int mqtt_parse(struct node *n, json_t *cfg)
 	// Some checks
 	ret = mosquitto_sub_topic_check(m->subscribe);
 	if (ret != MOSQ_ERR_SUCCESS)
-		error("Invalid subscribe topic: '%s' for node %s", m->subscribe, node_name(n));
+		error("Invalid subscribe topic: '%s' for node %s: %s", m->subscribe, node_name(n), mosquitto_strerror(ret));
 
 	ret = mosquitto_pub_topic_check(m->publish);
 	if (ret != MOSQ_ERR_SUCCESS)
-		error("Invalid publish topic: '%s' for node %s", m->publish, node_name(n));
+		error("Invalid publish topic: '%s' for node %s: %s", m->publish, node_name(n), mosquitto_strerror(ret));
 
 	return 0;
 }
@@ -283,17 +283,17 @@ int mqtt_start(struct node *n)
 	if (m->username && m->password) {
 		ret = mosquitto_username_pw_set(m->client, m->username, m->password);
 		if (ret)
-			return ret;
+			goto mosquitto_error;
 	}
 
 	if (m->ssl.enabled) {
 		ret = mosquitto_tls_set(m->client, m->ssl.cafile, m->ssl.capath, m->ssl.certfile, m->ssl.keyfile, NULL);
 		if (ret)
-			return ret;
+			goto mosquitto_error;
 
 		ret = mosquitto_tls_insecure_set(m->client, m->ssl.insecure);
 		if (ret)
-			return ret;
+			goto mosquitto_error;
 	}
 
 	mosquitto_log_callback_set(m->client, mqtt_log_cb);
@@ -302,7 +302,7 @@ int mqtt_start(struct node *n)
 	mosquitto_message_callback_set(m->client, mqtt_message_cb);
 	mosquitto_subscribe_callback_set(m->client, mqtt_subscribe_cb);
 
-	ret = io_init(&m->io, m->format, &n->signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
+	ret = io_init(&m->io, m->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET);
 	if (ret)
 		return ret;
 
@@ -310,7 +310,7 @@ int mqtt_start(struct node *n)
 	if (ret)
 		return ret;
 
-	ret = pool_init(&m->pool, 1024, SAMPLE_LENGTH(vlist_length(&n->signals)), &memory_hugepage);
+	ret = pool_init(&m->pool, 1024, SAMPLE_LENGTH(vlist_length(&n->in.signals)), &memory_hugepage);
 	if (ret)
 		return ret;
 
@@ -320,13 +320,18 @@ int mqtt_start(struct node *n)
 
 	ret = mosquitto_connect(m->client, m->host, m->port, m->keepalive);
 	if (ret)
-		return ret;
+		goto mosquitto_error;
 
 	ret = mosquitto_loop_start(m->client);
 	if (ret)
-		return ret;
+		goto mosquitto_error;
 
 	return 0;
+
+mosquitto_error:
+	warning("MQTT: %s", mosquitto_strerror(ret));
+
+	return ret;
 }
 
 int mqtt_stop(struct node *n)
@@ -336,17 +341,22 @@ int mqtt_stop(struct node *n)
 
 	ret = mosquitto_disconnect(m->client);
 	if (ret)
-		return ret;
+		goto mosquitto_error;
 
 	ret = mosquitto_loop_stop(m->client, 0);
 	if (ret)
-		return ret;
+		goto mosquitto_error;
 
 	ret = io_destroy(&m->io);
 	if (ret)
 		return ret;
 
 	return 0;
+
+mosquitto_error:
+	warning("MQTT: %s", mosquitto_strerror(ret));
+
+	return ret;
 }
 
 int mqtt_type_start(struct super_node *sn)
@@ -355,9 +365,14 @@ int mqtt_type_start(struct super_node *sn)
 
 	ret = mosquitto_lib_init();
 	if (ret)
-		return ret;
+		goto mosquitto_error;
 
 	return 0;
+
+mosquitto_error:
+	warning("MQTT: %s", mosquitto_strerror(ret));
+
+	return ret;
 }
 
 int mqtt_type_stop()
@@ -366,9 +381,14 @@ int mqtt_type_stop()
 
 	ret = mosquitto_lib_cleanup();
 	if (ret)
-		return ret;
+		goto mosquitto_error;
 
 	return 0;
+
+mosquitto_error:
+	warning("MQTT: %s", mosquitto_strerror(ret));
+
+	return ret;
 }
 
 int mqtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
@@ -399,8 +419,7 @@ int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		return ret;
 
 	if (m->publish) {
-		ret = mosquitto_publish(m->client, NULL /* mid */, m->publish, wbytes, data, m->qos,
-                                m->retain);
+		ret = mosquitto_publish(m->client, NULL /* mid */, m->publish, wbytes, data, m->qos, m->retain);
 		if (ret != MOSQ_ERR_SUCCESS) {
 			warning("MQTT: publish failed for node %s: %s", node_name(n), mosquitto_strerror(ret));
 			return -abs(ret);
