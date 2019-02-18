@@ -48,6 +48,8 @@ struct dp {
 	int  fharmonics_len;
 
 	struct window window;
+
+	struct vlist *signals;
 };
 
 static void dp_step(struct dp *d, double *in, float complex *out)
@@ -94,6 +96,10 @@ static int dp_start(struct hook *h)
 	struct dp *d = (struct dp *) h->_vd;
 
 	d->t = 0;
+	d->signals = NULL;
+
+	for (int i = 0; i < d->fharmonics_len; i++)
+		d->coeffs[i] = 0;
 
 	ret = window_init(&d->window, (1.0 / d->f0) / d->dt, 0.0);
 	if (ret)
@@ -146,7 +152,7 @@ static int dp_parse(struct hook *h, json_t *cfg)
 
 	double rate = -1, dt = -1;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s: F, s: F, s: o, s?: b }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s: F, s?: F, s?: F, s: o, s?: b }",
 		"index", &d->index,
 		"f0", &d->f0,
 		"dt", &dt,
@@ -193,20 +199,47 @@ static int dp_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 		if (d->index > smp->length)
 			continue;
 
-		struct signal *s = (struct signal *) vlist_at(smp->signals, d->index);
+		if (!d->signals) {
+			struct signal *orig_sig, *new_sig;
 
-		if (d->inverse) {
-			if (s->type != SIGNAL_TYPE_FLOAT)
+			d->signals = alloc(sizeof(struct vlist));
+			d->signals->state = STATE_DESTROYED;
+
+			vlist_copy(d->signals, smp->signals);
+
+			orig_sig = vlist_at(smp->signals, d->index);
+			if (!orig_sig)
 				return -1;
 
+			if (d->inverse) {
+				if (orig_sig->type != SIGNAL_TYPE_COMPLEX)
+					return -1;
+			}
+			else {
+				if (orig_sig->type != SIGNAL_TYPE_FLOAT)
+					return -1;
+			}
+
+			new_sig = signal_copy(orig_sig);
+			if (!new_sig)
+				return -1;
+
+			if (d->inverse)
+				new_sig->type = SIGNAL_TYPE_FLOAT;
+			else
+				new_sig->type = SIGNAL_TYPE_COMPLEX;
+
+			int ret = vlist_set(d->signals, d->index, new_sig);
+			if (ret)
+				return ret;
+		}
+
+		smp->signals = d->signals;
+
+		if (d->inverse)
 			dp_istep(d, &smp->data[d->index].z, &smp->data[d->index].f);
-		}
-		else {
-			if (s->type != SIGNAL_TYPE_COMPLEX)
-				return -1;
-
+		else
 			dp_step(d, &smp->data[d->index].f, &smp->data[d->index].z);
-		}
 	}
 
 	d->t += d->dt;
