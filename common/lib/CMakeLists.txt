@@ -48,6 +48,7 @@ add_library(villas-common SHARED
 	version.cpp
 	copyright.cpp
 	common.c
+	window.c
 )
 
 execute_process( 
