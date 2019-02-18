@@ -165,9 +165,26 @@ int json_to_config(json_t *json, config_setting_t *parent)
 }
 #endif /* LIBCONFIG_FOUND */
 
+void json_object_extend_key_value_token(json_t *obj, const char *key, const char *value)
+{
+	char *str = strdup(value);
+	char *delim = ",";
+
+	char *lasts;
+	char *token = strtok_r(str, delim, &lasts);
+
+	while (token) {
+		json_object_extend_key_value(obj, key, token);
+
+		token = strtok_r(NULL, delim, &lasts);
+	}
+
+	free(str);
+}
+
 void json_object_extend_key_value(json_t *obj, const char *key, const char *value)
 {
-	char *end, *cpy, *key1, *key2;
+	char *end, *cpy, *key1, *key2, *lasts;
 
 	double real;
 	long integer;
@@ -178,8 +195,8 @@ void json_object_extend_key_value(json_t *obj, const char *key, const char *valu
 	subobj = obj;
 	cpy = strdup(key);
 
-	key1 = strtok(cpy, ".");
-	key2 = strtok(NULL, ".");
+	key1 = strtok_r(cpy, ".", &lasts);
+	key2 = strtok_r(NULL, ".", &lasts);
 
 	while (key1 && key2) {
 		existing = json_object_get(subobj, key1);
@@ -193,7 +210,7 @@ void json_object_extend_key_value(json_t *obj, const char *key, const char *valu
 		}
 
 		key1 = key2;
-		key2 = strtok(NULL, ".");
+		key2 = strtok_r(NULL, ".", &lasts);
  	}
 
 	/* Try to parse as integer */
@@ -254,7 +271,7 @@ json_t * json_load_cli(int argc, const char *argv[])
 	const char *key = NULL;
 	const char *value = NULL;
 	const char *sep;
-	char *cpy;
+	char *cpy, *lasts;
 
 	json_t *json = json_object();
 
@@ -274,10 +291,10 @@ json_t * json_load_cli(int argc, const char *argv[])
 			if (sep) {
 				cpy = strdup(key);
 
-				key = strtok(cpy, "=");
-				value = strtok(NULL, "");
+				key = strtok_r(cpy, "=", &lasts);
+				value = strtok_r(NULL, "", &lasts);
 
-				json_object_extend_key_value(json, key, value);
+				json_object_extend_key_value_token(json, key, value);
 
 				free(cpy);
 				key = NULL;
@@ -291,7 +308,7 @@ json_t * json_load_cli(int argc, const char *argv[])
 
 			value = opt;
 
-			json_object_extend_key_value(json, key, value);
+			json_object_extend_key_value_token(json, key, value);
 			key = NULL;
 		}
 	}
@@ -324,17 +341,17 @@ int json_object_extend(json_t *obj, json_t *merge)
 
 int json_object_extend_str(json_t *obj, const char *str)
 {
-	char *key, *value, *cpy;
+	char *key, *value, *cpy, *lasts;
 
 	cpy = strdup(str);
 
-	key = strtok(cpy, "=");
-	value = strtok(NULL, "");
+	key = strtok_r(cpy, "=", &lasts);
+	value = strtok_r(NULL, "", &lasts);
 
 	if (!key || !value)
 		return -1;
 
-	json_object_extend_key_value(obj, key, value);
+	json_object_extend_key_value_token(obj, key, value);
 
 	free(cpy);
 
