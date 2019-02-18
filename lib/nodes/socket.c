@@ -626,9 +626,10 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum socket_l
 #ifdef WITH_SOCKET_LAYER_ETH
 	else if (layer == SOCKET_LAYER_ETH) { /* Format: "ab:cd:ef:12:34:56%ifname:protocol" */
 		/* Split string */
-		char *node = strtok(copy, "%");
-		char *ifname = strtok(NULL, ":");
-		char *proto = strtok(NULL, "\0");
+		char *lasts;
+		char *node = strtok_r(copy, "%", &lasts);
+		char *ifname = strtok_r(NULL, ":", &lasts);
+		char *proto = strtok_r(NULL, "\0", &lasts);
 
 		/* Parse link layer (MAC) address */
 		struct ether_addr *mac = ether_aton(node);
@@ -659,8 +660,9 @@ int socket_parse_address(const char *addr, struct sockaddr *saddr, enum socket_l
 		};
 
 		/* Split string */
-		char *node = strtok(copy, ":");
-		char *service = strtok(NULL, "\0");
+		char *lasts;
+		char *node = strtok_r(copy, ":", &lasts);
+		char *service = strtok_r(NULL, "\0", &lasts);
 
 		if (node && !strcmp(node, "*"))
 			node = NULL;

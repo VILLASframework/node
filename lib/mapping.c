@@ -32,14 +32,14 @@
 
 int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *nodes)
 {
-	char *cpy, *node, *type, *field, *end;
+	char *cpy, *node, *type, *field, *end, *lasts;
 
 	cpy = strdup(str);
 	if (!cpy)
 		return -1;
 
 	if (nodes) {
-		node = strtok(cpy, ".");
+		node = strtok_r(cpy, ".", &lasts);
 		if (!node) {
 			warning("Missing node name");
 			goto invalid_format;
@@ -51,14 +51,14 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 			goto invalid_format;
 		}
 
-		type = strtok(NULL, ".[");
+		type = strtok_r(NULL, ".[", &lasts);
 		if (!type)
 			type = "data";
 	}
 	else {
 		me->node = NULL;
 
-		type = strtok(cpy, ".[");
+		type = strtok_r(cpy, ".[", &lasts);
 		if (!type)
 			goto invalid_format;
 	}
@@ -67,11 +67,11 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		me->type = MAPPING_TYPE_STATS;
 		me->length = 1;
 
-		char *metric = strtok(NULL, ".");
+		char *metric = strtok_r(NULL, ".", &lasts);
 		if (!metric)
 			goto invalid_format;
 
-		type = strtok(NULL, ".");
+		type = strtok_r(NULL, ".", &lasts);
 		if (!type)
 			goto invalid_format;
 
@@ -87,7 +87,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		me->type = MAPPING_TYPE_HEADER;
 		me->length = 1;
 
-		field = strtok(NULL, ".");
+		field = strtok_r(NULL, ".", &lasts);
 		if (!field) {
 			warning("Missing header type");
 			goto invalid_format;
@@ -106,7 +106,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		me->type = MAPPING_TYPE_TIMESTAMP;
 		me->length = 2;
 
-		field = strtok(NULL, ".");
+		field = strtok_r(NULL, ".", &lasts);
 		if (!field) {
 			warning("Missing timestamp type");
 			goto invalid_format;
@@ -127,7 +127,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 
 		me->type = MAPPING_TYPE_DATA;
 
-		first_str = strtok(NULL, "-]");
+		first_str = strtok_r(NULL, "-]", &lasts);
 		if (first_str) {
 			if (me->node)
 				first = vlist_lookup_index(&me->node->in.signals, first_str);
@@ -148,7 +148,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 			goto end;
 		}
 
-		last_str = strtok(NULL, "]");
+		last_str = strtok_r(NULL, "]", &lasts);
 		if (last_str) {
 			if (me->node)
 				last = vlist_lookup_index(&me->node->in.signals, last_str);
@@ -175,7 +175,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		goto invalid_format;
 
 end:	/* Check that there is no garbage at the end */
-	end = strtok(NULL, "");
+	end = strtok_r(NULL, "", &lasts);
 	if (end)
 		goto invalid_format;
 

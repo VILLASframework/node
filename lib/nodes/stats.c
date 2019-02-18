@@ -51,7 +51,7 @@ int stats_node_signal_parse(struct stats_node_signal *s, json_t *cfg)
 
 	int ret;
 	const char *stats;
-	char *metric, *type, *node, *cpy;
+	char *metric, *type, *node, *cpy, *lasts;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: s }",
 		"stats", &stats
@@ -61,15 +61,15 @@ int stats_node_signal_parse(struct stats_node_signal *s, json_t *cfg)
 
 	cpy = strdup(stats);
 
-	node = strtok(cpy, ".");
+	node = strtok_r(cpy, ".", &lasts);
 	if (!node)
 		goto invalid_format;
 
-	metric = strtok(NULL, ".");
+	metric = strtok_r(NULL, ".", &lasts);
 	if (!metric)
 		goto invalid_format;
 
-	type = strtok(NULL, ".");
+	type = strtok_r(NULL, ".", &lasts);
 	if (!type)
 		goto invalid_format;
 

@@ -203,7 +203,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				 */
 
 				/* Get path of incoming request */
-				char *node, *format;
+				char *node, *format, *lasts;
 				char uri[64];
 
 				lws_hdr_copy(wsi, uri, sizeof(uri), WSI_TOKEN_GET_URI); /* The path component of the*/
@@ -213,14 +213,14 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 					return -1;
 				}
 
-				node = strtok(uri, "/.");
+				node = strtok_r(uri, "/.", &lasts);
 				if (!node) {
 					websocket_connection_close(c, wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, "Unknown node");
 					warning("Failed to tokenize request URI");
 					return -1;
 				}
 
-				format = strtok(NULL, "");
+				format = strtok_r(NULL, "", &lasts);
 				if (!format)
 					format = "villas.web";
 
