@@ -353,7 +353,7 @@ int vfio_pci_reset(struct vfio_device *d)
 int vfio_pci_msi_find(struct vfio_device *d, int nos[32])
 {
 	int ret, idx, irq;
-	char *end, *col, *last, line[1024], name[13];
+	char *end, *col, *last, *lasts, line[1024], name[13];
 	FILE *f;
 
 	f = fopen("/proc/interrupts", "r");
@@ -365,7 +365,7 @@ int vfio_pci_msi_find(struct vfio_device *d, int nos[32])
 
 	/* For each line in /proc/interruipts */
 	while (fgets(line, sizeof(line), f)) {
-		col = strtok(line, " ");
+		col = strtok_r(line, " ", &lasts);
 
 		/* IRQ number is in first column */
 		irq = strtol(col, &end, 10);
@@ -375,7 +375,7 @@ int vfio_pci_msi_find(struct vfio_device *d, int nos[32])
 		/* Find last column of line */
 		do {
 			last = col;
-		} while ((col = strtok(NULL, " ")));
+		} while ((col = strtok_r(NULL, " ", &lasts)));
 
 
 		ret = sscanf(last, "vfio-msi[%u](%12[0-9:])", &idx, name);

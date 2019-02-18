@@ -70,7 +70,7 @@ int kernel_get_page_size()
 int kernel_get_hugepage_size()
 {
 #ifdef __linux__
-	char *key, *value, *unit, *line = NULL;
+	char *key, *value, *unit, *line = NULL, *lasts;
 	int sz = -1;
 	size_t len = 0;
 	FILE *f;
@@ -80,9 +80,9 @@ int kernel_get_hugepage_size()
 		return -1;
 
 	while (getline(&line, &len, f) != -1) {
-		key   = strtok(line, ": ");
-		value = strtok(NULL, " ");
-		unit  = strtok(NULL, "\n");
+		key   = strtok_r(line, ": ", &lasts);
+		value = strtok_r(NULL, " ", &lasts);
+		unit  = strtok_r(NULL, "\n", &lasts);
 
 		if (!strcmp(key, "Hugepagesize") && !strcmp(unit, "kB")) {
 			sz = strtoul(value, NULL, 10) * 1024;
@@ -175,7 +175,7 @@ int kernel_module_loaded(const char *module)
 int kernel_get_cmdline_param(const char *param, char *buf, size_t len)
 {
 	int ret;
-	char cmdline[512];
+	char cmdline[512], *lasts;
 
 	FILE *f = fopen(PROCFS_PATH "/cmdline", "r");
 	if (!f)
@@ -184,7 +184,7 @@ int kernel_get_cmdline_param(const char *param, char *buf, size_t len)
 	if (!fgets(cmdline, sizeof(cmdline), f))
 		goto out;
 
-	char *tok = strtok(cmdline, " \t");
+	char *tok = strtok_r(cmdline, " \t", &lasts);
 	do {
 		char key[128], value[128];
 
@@ -202,7 +202,7 @@ int kernel_get_cmdline_param(const char *param, char *buf, size_t len)
 				return 0; /* found */
 			}
 		}
-	} while((tok = strtok(NULL, " \t")));
+	} while ((tok = strtok_r(NULL, " \t", &lasts)));
 
 out:
 	fclose(f);
