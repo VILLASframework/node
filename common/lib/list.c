@@ -245,3 +245,20 @@ void vlist_extend(struct vlist *l, size_t len, void *val)
 	while (vlist_length(l) < len)
 		vlist_push(l, val);
 }
+
+int vlist_copy(struct vlist *dst, const struct vlist *src)
+{
+	int ret;
+
+	ret = vlist_init(dst);
+	if (ret)
+		return ret;
+
+	for (size_t i = 0; i < vlist_length(src); i++) {
+		void *p = vlist_at(src, i);
+
+		vlist_push(dst, p);
+	}
+
+	return 0;
+}
