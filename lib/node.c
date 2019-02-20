@@ -21,6 +21,7 @@
  *********************************************************************************/
 
 #include <string.h>
+#include <ctype.h>
 
 #include <villas/node/config.h>
 #include <villas/hook.h>
@@ -224,6 +225,10 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_name = NULL;
 	n->_name_long = NULL;
 
+#ifdef __linux__
+	n->fwmark = -1;
+#endif /* __linux__ */
+
 #ifdef WITH_NETEM
 	n->tc_qdisc = NULL;
 	n->tc_classifier = NULL;
@@ -279,15 +284,23 @@ int node_parse(struct node *n, json_t *json, const char *name)
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o }, s?: { s?: o } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o } }",
 		"type", &type,
 		"in",
-			"signals", &json_signals,
-		"out",
-			"netem", &json_netem
+			"signals", &json_signals
 	);
 	if (ret)
 		jerror(&err, "Failed to parse node %s", node_name(n));
+
+#ifdef __linux__
+	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: o, s?: i } }",
+		"out",
+			"netem", &json_netem,
+			"fwmark", &n->fwmark
+	);
+	if (ret)
+		jerror(&err, "Failed to parse node %s", node_name(n));
+#endif /* __linux__ */
 
 	nt = node_type_lookup(type);
 	assert(nt == node_type(n));
@@ -395,18 +408,18 @@ int node_start(struct node *n)
 
 #ifdef __linux__
 	/* Set fwmark for outgoing packets if netem is enabled for this node */
-	if (n->mark) {
+	if (n->fwmark) {
 		int fds[16];
 		int num_sds = node_netem_fds(n, fds);
 
 		for (int i = 0; i < num_sds; i++) {
 			int fd = fds[i];
 
-			ret = setsockopt(fd, SOL_SOCKET, SO_MARK, &n->mark, sizeof(n->mark));
+			ret = setsockopt(fd, SOL_SOCKET, SO_MARK, &n->fwmark, sizeof(n->fwmark));
 			if (ret)
 				serror("Failed to set FW mark for outgoing packets");
 			else
-				debug(LOG_SOCKET | 4, "Set FW mark for socket (sd=%u) to %u", fd, n->mark);
+				debug(LOG_SOCKET | 4, "Set FW mark for socket (sd=%u) to %u", fd, n->fwmark);
 		}
 	}
 #endif /* __linux__ */
@@ -421,7 +434,7 @@ int node_stop(struct node *n)
 {
 	int ret;
 
-	if (n->state != STATE_STARTED && n->state != STATE_CONNECTED && n->state != STATE_PENDING_CONNECT)
+	if (n->state != STATE_STOPPING && n->state != STATE_STARTED && n->state != STATE_CONNECTED && n->state != STATE_PENDING_CONNECT)
 		return 0;
 
 	info("Stopping node %s", node_name(n));
@@ -548,11 +561,12 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 {
 	int readd, nread = 0;
 
-	if (n->state == STATE_PAUSED)
-		return 0;
-
-	assert(n->state == STATE_STARTED || n->state == STATE_CONNECTED || n->state == STATE_PENDING_CONNECT);
 	assert(node_type(n)->read);
+
+	if (n->state == STATE_PAUSED || n->state == STATE_PENDING_CONNECT)
+		return 0;
+	else if (n->state != STATE_STARTED && n->state != STATE_CONNECTED)
+		return -1;
 
 	/* Send in parts if vector not supported */
 	if (node_type(n)->vectorize > 0 && node_type(n)->vectorize < cnt) {
@@ -576,7 +590,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	int skipped = nread - rread;
 
 	if (skipped > 0 && n->stats != NULL) {
-		stats_update(n->stats, STATS_SKIPPED, skipped);
+		stats_update(n->stats, STATS_METRIC_SKIPPED, skipped);
 	}
 
 	debug(LOG_NODE | 5, "Received %u samples from node %s of which %d have been skipped", nread, node_name(n), skipped);
@@ -593,8 +607,12 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 {
 	int tosend, sent, nsent = 0;
 
-	assert(n->state == STATE_STARTED || n->state == STATE_CONNECTED);
 	assert(node_type(n)->write);
+
+	if (n->state == STATE_PAUSED || n->state == STATE_PENDING_CONNECT)
+		return 0;
+	else if (n->state != STATE_STARTED && n->state != STATE_CONNECTED)
+		return -1;
 
 #ifdef WITH_HOOKS
 	/* Run write hooks */
@@ -608,12 +626,8 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		while (cnt - nsent > 0) {
 			tosend = MIN(cnt - nsent, node_type(n)->vectorize);
 			sent = node_type(n)->write(n, &smps[nsent], tosend, release);
-			if (sent < 0) {
-				warning("Failed to send samples to node %s: reason=%d", node_name(n), sent);
+			if (sent < 0)
 				return sent;
-			}
-			else if (sent < tosend)
-				warning("Failed to send %d out of %d samples to node %s", tosend-sent, tosend, node_name(n));
 
 			nsent += sent;
 			debug(LOG_NODE | 5, "Sent %u samples to node %s", sent, node_name(n));
@@ -621,13 +635,8 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	}
 	else {
 		nsent = node_type(n)->write(n, smps, cnt, release);
-		if (nsent < 0) {
-			warning("Failed to send samples to node %s: reason=%d", node_name(n), nsent);
+		if (nsent < 0)
 			return nsent;
-		}
-		else if (nsent < cnt)
-			warning("Failed to send %d out of %d samples to node %s", cnt-nsent, cnt, node_name(n));
-
 
 		debug(LOG_NODE | 5, "Sent %u samples to node %s", nsent, node_name(n));
 	}
@@ -660,7 +669,7 @@ char * node_name_long(struct node *n)
 			strcatf(&n->_name_long, ", out.netem=%s", n->tc_qdisc ? "yes" : "no");
 
 			if (n->tc_qdisc)
-				strcatf(&n->_name_long, ", mark=%d", n->mark);
+				strcatf(&n->_name_long, ", fwmark=%d", n->fwmark);
 #endif /* WITH_NETEM */
 
 			/* Append node-type specific details */
@@ -758,6 +767,18 @@ invalid2:
 	}
 
 	error("Unknown node %s. Choose of one of: %s", str, allstr);
+
+	return 0;
+}
+
+int node_is_valid_name(const char *name)
+{
+	for (const char *p = name; *p; p++) {
+		if (isalnum(*p) || (*p == '_') || (*p == '-'))
+			continue;
+
+		return -1;
+	}
 
 	return 0;
 }

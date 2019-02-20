@@ -49,10 +49,10 @@ using namespace villas::node;
 
 SuperNode::SuperNode() :
 	state(STATE_INITIALIZED),
+	idleStop(false),
 	priority(0),
 	affinity(0),
 	hugepages(DEFAULT_NR_HUGEPAGES),
-	stats(0),
 #ifdef WITH_API
 	api(this),
 #ifdef WITH_WEB
@@ -179,7 +179,9 @@ int SuperNode::parseJson(json_t *j)
 
 	json_error_t err;
 
-	ret = json_unpack_ex(j, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: F, s?: s }",
+	idleStop = true;
+
+	ret = json_unpack_ex(j, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s, s?: b }",
 		"http", &json_web,
 		"logging", &json_logging,
 		"nodes", &json_nodes,
@@ -187,8 +189,8 @@ int SuperNode::parseJson(json_t *j)
 		"hugepages", &hugepages,
 		"affinity", &affinity,
 		"priority", &priority,
-		"stats", &stats,
-		"name", &nme
+		"name", &nme,
+		"idle_stop", &idleStop
 	);
 	if (ret)
 		throw JsonError(err, "Failed to parse global configuration");
@@ -214,6 +216,10 @@ int SuperNode::parseJson(json_t *j)
 		json_object_foreach(json_nodes, name, json_node) {
 			struct node_type *nt;
 			const char *type;
+
+			ret = node_is_valid_name(name);
+			if (ret)
+				throw RuntimeError("Invalid name for node: {}", name);
 
 			ret = json_unpack_ex(json_node, &err, 0, "{ s: s }", "type", &type);
 			if (ret)
@@ -245,7 +251,7 @@ int SuperNode::parseJson(json_t *j)
 		size_t i;
 		json_t *json_path;
 		json_array_foreach(json_paths, i, json_path) {
-			path *p = (path *) alloc(sizeof(path));
+parse:			path *p = (path *) alloc(sizeof(path));
 
 			ret = path_init(p);
 			if (ret)
@@ -258,17 +264,25 @@ int SuperNode::parseJson(json_t *j)
 			vlist_push(&paths, p);
 
 			if (p->reverse) {
-				path *r = (path *) alloc(sizeof(path));
-
-				ret = path_init(r);
+				/* Only simple paths can be reversed */
+				ret = path_is_simple(p);
 				if (ret)
-					throw RuntimeError("Failed to init path");
+					throw RuntimeError("Complex paths can not be reversed!");
 
-				ret = path_reverse(p, r);
-				if (ret)
-					throw RuntimeError("Failed to reverse path {}", path_name(p));
+				/* Parse a second time with in/out reversed */
+				json_path = json_copy(json_path);
 
-				vlist_push(&paths, r);
+				json_t *json_in = json_object_get(json_path, "in");
+				json_t *json_out = json_object_get(json_path, "out");
+
+				if (json_equal(json_in, json_out))
+					throw RuntimeError("Can not reverse path with identical in/out nodes!");
+
+				json_object_set(json_path, "reverse", json_false());
+				json_object_set(json_path, "in", json_out);
+				json_object_set(json_path, "out", json_in);
+
+				goto parse;
 			}
 		}
 	}
@@ -380,9 +394,14 @@ void SuperNode::startPaths()
 
 void SuperNode::start()
 {
+	int ret;
+
 	assert(state == STATE_CHECKED);
 
-	memory_init(hugepages);
+	ret = memory_init(hugepages);
+	if (ret)
+		throw RuntimeError("Failed to initialize memory system");
+
 	kernel::rt::init(priority, affinity);
 
 #ifdef WITH_API
@@ -398,17 +417,11 @@ void SuperNode::start()
 	startNodes();
 	startPaths();
 
-#ifdef WITH_HOOKS
-	int ret;
+	ret = task_init(&task, 1.0, CLOCK_REALTIME);
+	if (ret)
+		throw RuntimeError("Failed to create timer");
 
-	if (stats > 0) {
-		stats_print_header(STATS_FORMAT_HUMAN);
-
-		ret = task_init(&task, 1.0 / stats, CLOCK_REALTIME);
-		if (ret)
-			throw RuntimeError("Failed to create stats timer");
-	}
-#endif /* WITH_HOOKS */
+	stats_print_header(STATS_FORMAT_HUMAN);
 
 	state = STATE_STARTED;
 }
@@ -471,15 +484,11 @@ void SuperNode::stopInterfaces()
 
 void SuperNode::stop()
 {
-
-#ifdef WITH_HOOKS
 	int ret;
-	if (stats > 0) {
-		ret = task_destroy(&task);
-		if (ret)
-			throw RuntimeError("Failed to stop stats timer");
-	}
-#endif /* WITH_HOOKS */
+
+	ret = task_destroy(&task);
+	if (ret)
+		throw RuntimeError("Failed to stop timer");
 
 	stopPaths();
 	stopNodes();
@@ -498,12 +507,15 @@ void SuperNode::stop()
 
 void SuperNode::run()
 {
-#ifdef WITH_HOOKS
-	task_wait(&task);
-	periodic();
-#else
-	pause();
-#endif /* WITH_HOOKS */
+	int ret;
+
+	while (state == STATE_STARTED) {
+		task_wait(&task);
+
+		ret = periodic();
+		if (ret)
+			state = STATE_STOPPING;
+	}
 }
 
 SuperNode::~SuperNode()
@@ -520,21 +532,25 @@ SuperNode::~SuperNode()
 
 int SuperNode::periodic()
 {
-#ifdef WITH_HOOKS
 	int ret;
+
+	int started = 0;
 
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
 		auto *p = (struct path *) vlist_at(&paths, i);
 
-		if (p->state != STATE_STARTED)
-			continue;
+		if (p->state == STATE_STARTED) {
+			started++;
 
-		for (size_t j = 0; j < vlist_length(&p->hooks); j++) {
-			hook *h = (struct hook *) vlist_at(&p->hooks, j);
+#ifdef WITH_HOOKS
+			for (size_t j = 0; j < vlist_length(&p->hooks); j++) {
+				hook *h = (struct hook *) vlist_at(&p->hooks, j);
 
-			ret = hook_periodic(h);
-			if (ret)
-				return ret;
+				ret = hook_periodic(h);
+				if (ret)
+					return ret;
+			}
+#endif /* WITH_HOOKS */
 		}
 	}
 
@@ -544,6 +560,7 @@ int SuperNode::periodic()
 		if (n->state != STATE_STARTED)
 			continue;
 
+#ifdef WITH_HOOKS
 		for (size_t j = 0; j < vlist_length(&n->in.hooks); j++) {
 			auto *h = (struct hook *) vlist_at(&n->in.hooks, j);
 
@@ -559,8 +576,15 @@ int SuperNode::periodic()
 			if (ret)
 				return ret;
 		}
+#endif /* WITH_HOOKS */
 	}
-#endif
+
+	if (idleStop && state == STATE_STARTED && started == 0) {
+		info("No more active paths. Stopping super-node");
+
+		return -1;
+	}
+
 	return 0;
 }
 

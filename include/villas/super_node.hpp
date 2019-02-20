@@ -40,10 +40,11 @@ class SuperNode {
 protected:
 	enum state state;
 
+	int idleStop;
+
 	int priority;		/**< Process priority (lower is better) */
 	int affinity;		/**< Process affinity of the server and all created threads */
 	int hugepages;		/**< Number of hugepages to reserve. */
-	double stats;		/**< Interval for path statistics. Set to 0 to disable them. */
 
 	Logger logger;
 
@@ -104,6 +105,11 @@ public:
 	/** Run periodic hooks of this super node. */
 	int periodic();
 
+	void setState(enum state st)
+	{
+		state = st;
+	}
+
 	struct node * getNode(const std::string &name)
 	{
 		return (struct node *) vlist_lookup(&nodes, name.c_str());
@@ -120,6 +126,10 @@ public:
 
 	struct vlist * getInterfaces() {
 		return &interfaces;
+	}
+
+	enum state getState() {
+		return state;
 	}
 
 #ifdef WITH_API

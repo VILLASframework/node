@@ -258,7 +258,7 @@ int protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in
 			try {
 				new (c) Connection(wsi);
 			}
-			catch (InvalidUrlException e) {
+			catch (InvalidUrlException &e) {
 				lws_close_reason(wsi, LWS_CLOSE_STATUS_PROTOCOL_ERR, (unsigned char *) "Invalid URL", strlen("Invalid URL"));
 				return -1;
 			}

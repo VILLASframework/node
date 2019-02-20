@@ -264,9 +264,11 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 	}
 
 	if (s->limit > 0 && s->counter >= s->limit) {
-		info("Reached limit of node %s", node_name(n));
-		killme(SIGTERM);
-		return 0;
+		info("Reached limit.");
+
+		n->state = STATE_STOPPING;
+
+		return -1;
 	}
 
 	s->counter += steps;

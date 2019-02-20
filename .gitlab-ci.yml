@@ -4,7 +4,7 @@ variables:
   PREFIX: /usr/
   RSYNC_OPTS: --recursive --ignore-missing-args --chown ${DEPLOY_USER}:${DEPLOY_USER}
   CRITERION_OPTS: --ignore-warnings
-  DOCKER_TAG: $CI_COMMIT_TAG
+  DOCKER_TAG: ${CI_COMMIT_TAG}
   DOCKER_TAG_DEV: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE: villas/node
   DOCKER_IMAGE_DEV: villas/node-dev
@@ -28,7 +28,9 @@ before_script:
 docker-dev:
   stage: prepare
   script:
-    - docker build -f packaging/docker/Dockerfile.dev -t ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV} .
+    - docker build
+        --file packaging/docker/Dockerfile.dev
+        --tag ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV} .
   tags:
     - shell
     - linux
@@ -105,18 +107,6 @@ test:unit:
   tags:
     - docker
 
-test:unit-common:
-  stage: test
-  dependencies:
-    - build:source
-  script:
-    - mkdir -p build && cd build
-    - cmake .. && make unit-tests-common
-    - "common/tests/unit-tests-common || true"
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
-  tags:
-    - docker
-
 test:integration:
   stage: test
   dependencies:
@@ -129,7 +119,7 @@ test:integration:
     name: ${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}
     when: always
     paths:
-      - build/release/tests/integration/
+      - build/tests/integration/
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - docker
@@ -170,8 +160,10 @@ deploy:packages:
 docker:
   stage: docker
   script:
-    - docker build -f packaging/docker/Dockerfile.app -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
-    - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+    - docker build
+        --build-arg BUILDER_IMAGE=${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+        --file packaging/docker/Dockerfile.app
+        --tag ${DOCKER_IMAGE}:${DOCKER_TAG_DEV} .
     - docker push ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
   tags:
     - shell

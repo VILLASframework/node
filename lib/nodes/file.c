@@ -370,10 +370,11 @@ retry:	ret = io_scan(&f->io, smps, cnt);
 					goto retry;
 
 				case FILE_EOF_STOP:
-					info("Reached end-of-file. Stopping node %s", node_name(n));
+					info("Reached end-of-file.");
 
-					killme(SIGTERM);
-					pause();
+					n->state = STATE_STOPPING;
+
+					return -1;
 			}
 		}
 		else

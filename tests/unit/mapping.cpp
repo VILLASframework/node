@@ -73,8 +73,8 @@ Test(mapping, parse_nodes)
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, vlist_lookup(&nodes, "cherry"));
 	cr_assert_eq(m.type, MAPPING_TYPE_STATS);
-	cr_assert_eq(m.stats.id, STATS_OWD);
-	cr_assert_eq(m.stats.type, MAPPING_STATS_TYPE_MEAN);
+	cr_assert_eq(m.stats.metric, STATS_METRIC_OWD);
+	cr_assert_eq(m.stats.type, STATS_TYPE_MEAN);
 
 	ret = mapping_parse_str(&m, "carrot.data[1-2]", &nodes);
 	cr_assert_eq(ret, 0);
@@ -126,8 +126,8 @@ Test(mapping, parse)
 	ret = mapping_parse_str(&m, "stats.owd.mean", nullptr);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_STATS);
-	cr_assert_eq(m.stats.id, STATS_OWD);
-	cr_assert_eq(m.stats.type, MAPPING_STATS_TYPE_MEAN);
+	cr_assert_eq(m.stats.metric, STATS_METRIC_OWD);
+	cr_assert_eq(m.stats.type, STATS_TYPE_MEAN);
 
 	ret = mapping_parse_str(&m, "data[1-2]", nullptr);
 	cr_assert_eq(ret, 0);
@@ -171,10 +171,10 @@ Test(mapping, parse)
 	cr_assert_neq(ret, 0);
 
 	/* Check for superfluous chars at the end */
-	ret = mapping_parse_str(&m, "stats.ts.origin.bla", nullptr);
+	ret = mapping_parse_str(&m, "hdr.ts.origin.bla", nullptr);
 	cr_assert_neq(ret, 0);
 
-	ret = mapping_parse_str(&m, "stats.ts.origin.", nullptr);
+	ret = mapping_parse_str(&m, "hdr.ts.origin.", nullptr);
 	cr_assert_neq(ret, 0);
 
 	ret = mapping_parse_str(&m, "data[1-2]bla", nullptr);
