@@ -598,25 +598,17 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-	size_t buffer_incr = n->in.vectorize * u->in.channel_count;
-
 	pthread_mutex_lock(&u->in.mutex);
 
-	/* Wait for data available condition triggered by event callback */
-	if (u->in.buffer_pos + buffer_incr < u->in.transfer_status.currentIndex)
-		pthread_cond_wait(&u->in.cv, &u->in.mutex);
-
-#if 1
-	debug(2, "Total count = %lld", u->in.transfer_status.currentTotalCount);
-	debug(2, "Index  = %lld", u->in.transfer_status.currentIndex);
-	debug(2, "Scan count = %lld", u->in.transfer_status.currentScanCount);
-	debug(2, "Buffer pos = %zu", u->in.buffer_pos);
-#endif
 
 	if (u->in.status != SS_RUNNING)
 		return -1;
 
 	long long start_index = u->in.buffer_pos;
+
+	/* Wait for data available condition triggered by event callback */
+	if (start_index + n->in.vectorize * u->in.channel_count > u->in.transfer_status.currentScanCount)
+		pthread_cond_wait(&u->in.cv, &u->in.mutex);
 
 	for (int j = 0; j < cnt; j++) {
 		struct sample *smp = smps[j];
