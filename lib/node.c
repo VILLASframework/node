@@ -98,6 +98,8 @@ int node_prepare(struct node *n)
 	if (ret)
 		return ret;
 
+	n->state = STATE_PREPARED;
+
 	return 0;
 }
 
@@ -220,7 +222,7 @@ int node_start(struct node *n)
 {
 	int ret;
 
-	assert(n->state == STATE_CHECKED);
+	assert(n->state == STATE_PREPARED);
 	assert(node_type(n)->state == STATE_STARTED);
 
 	info("Starting node %s", node_name_long(n));

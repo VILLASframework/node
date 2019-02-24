@@ -287,6 +287,8 @@ int path_prepare(struct path *p)
 			return ret;
 	}
 
+	p->state = STATE_PREPARED;
+
 	return 0;
 }
 
@@ -528,7 +530,7 @@ int path_start(struct path *p)
 	int ret;
 	char *mode, *mask;
 
-	assert(p->state == STATE_CHECKED);
+	assert(p->state == STATE_PREPARED);
 
 	switch (p->mode) {
 		case PATH_MODE_ANY: mode = "any";     break;

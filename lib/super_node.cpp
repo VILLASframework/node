@@ -356,18 +356,12 @@ void SuperNode::startNodes()
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct node *) vlist_at(&nodes, i);
 
-		ret = node_prepare(n);
-		if (ret)
-			throw RuntimeError("Failed to prepare node: {}", node_name(n));
+		if (!node_is_enabled(n))
+			continue;
 
-		int refs = vlist_count(&paths, (cmp_cb_t) path_uses_node, n);
-		if (refs > 0) {
-			ret = node_start(n);
-			if (ret)
-				throw RuntimeError("Failed to start node: {}", node_name(n));
-		}
-		else
-			logger->warn("No path is using the node {}. Skipping...", node_name(n));
+		ret = node_start(n);
+		if (ret)
+			throw RuntimeError("Failed to start node: {}", node_name(n));
 	}
 }
 
@@ -378,18 +372,57 @@ void SuperNode::startPaths()
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
 		auto *p = (struct path *) vlist_at(&paths, i);
 
-		if (p->enabled) {
-			ret = path_prepare(p);
-			if (ret)
-				throw RuntimeError("Failed to prepare path: {}", path_name(p));
+		if (!path_is_enabled(p))
+			continue;
 
-			ret = path_start(p);
-			if (ret)
-				throw RuntimeError("Failed to start path: {}", path_name(p));
-		}
-		else
-			logger->warn("Path {} is disabled. Skipping...", path_name(p));
+		ret = path_start(p);
+		if (ret)
+			throw RuntimeError("Failed to start path: {}", path_name(p));
 	}
+}
+
+void SuperNode::prepareNodes()
+{
+	int ret, refs;
+
+	for (size_t i = 0; i < vlist_length(&nodes); i++) {
+		auto *n = (struct node *) vlist_at(&nodes, i);
+
+		refs = vlist_count(&paths, (cmp_cb_t) path_uses_node, n);
+		if (refs <= 0) {
+			logger->warn("No path is using the node {}. Skipping...", node_name(n));
+			n->enabled = false;
+		}
+
+		if (!node_is_enabled(n))
+			continue;
+
+		ret = node_prepare(n);
+		if (ret)
+			throw RuntimeError("Failed to prepare node: {}", node_name(n));
+	}
+}
+
+void SuperNode::preparePaths()
+{
+	int ret;
+
+	for (size_t i = 0; i < vlist_length(&paths); i++) {
+		auto *p = (struct path *) vlist_at(&paths, i);
+
+		if (!path_is_enabled(p))
+			continue;
+
+		ret = path_prepare(p);
+		if (ret)
+			throw RuntimeError("Failed to prepare path: {}", path_name(p));
+	}
+}
+
+void SuperNode::prepare()
+{
+	prepareNodes();
+	preparePaths();
 }
 
 void SuperNode::start()
