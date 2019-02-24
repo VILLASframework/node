@@ -218,7 +218,7 @@ int SuperNode::parseJson(json_t *j)
 			const char *type;
 
 			ret = node_is_valid_name(name);
-			if (ret)
+			if (!ret)
 				throw RuntimeError("Invalid name for node: {}", name);
 
 			ret = json_unpack_ex(json_node, &err, 0, "{ s: s }", "type", &type);
@@ -266,7 +266,7 @@ parse:			path *p = (path *) alloc(sizeof(path));
 			if (p->reverse) {
 				/* Only simple paths can be reversed */
 				ret = path_is_simple(p);
-				if (ret)
+				if (!ret)
 					throw RuntimeError("Complex paths can not be reversed!");
 
 				/* Parse a second time with in/out reversed */

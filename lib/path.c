@@ -545,8 +545,8 @@ int path_start(struct path *p)
 		p->poll ? "yes" : "no",
 		mask,
 		p->rate,
-		p->enabled ? "yes" : "no",
-		p->reverse ? "yes" : "no",
+		path_is_enabled(p) ? "yes" : "no",
+		path_is_reversed(p) ? "yes" : "no",
 		p->queuelen,
 		vlist_length(&p->hooks),
 		vlist_length(&p->sources),
@@ -723,22 +723,32 @@ int path_uses_node(struct path *p, struct node *n)
 	return -1;
 }
 
-int path_is_simple(struct path *p)
+bool path_is_simple(const struct path *p)
 {
 	int ret;
 	const char *in = NULL, *out = NULL;
 
 	ret = json_unpack(p->cfg, "{ s: s, s: s }", "in", &in, "out", &out);
 	if (ret)
-		return ret;
+		return false;
 
 	ret = node_is_valid_name(in);
-	if (ret)
-		return ret;
+	if (!ret)
+		return false;
 
 	ret = node_is_valid_name(out);
-	if (ret)
-		return ret;
+	if (!ret)
+		return false;
 
-	return 0;
+	return true;
+}
+
+bool path_is_enabled(const struct path *p)
+{
+	return p->enabled;
+}
+
+bool path_is_reversed(const struct path *p)
+{
+	return p->reverse;
 }

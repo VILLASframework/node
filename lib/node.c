@@ -595,16 +595,18 @@ invalid2:
 	return 0;
 }
 
-int node_is_valid_name(const char *name)
+bool node_is_valid_name(const char *name)
 {
 	for (const char *p = name; *p; p++) {
 		if (isalnum(*p) || (*p == '_') || (*p == '-'))
 			continue;
 
-		return -1;
+		return false;
 	}
 
-	return 0;
+	return true;
+}
+
 bool node_is_enabled(const struct node *n)
 {
 	return n->enabled;

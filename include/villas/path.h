@@ -157,7 +157,11 @@ int path_uses_node(struct path *p, struct node *n);
  */
 int path_parse(struct path *p, json_t *cfg, struct vlist *nodes);
 
-int path_is_simple(struct path *p);
+bool path_is_simple(const struct path *p);
+
+bool path_is_enabled(const struct path *p);
+
+bool path_is_reversed(const struct path *p);
 
 /** @} */
 
