@@ -78,7 +78,7 @@ static int node_direction_init(struct node_direction *nd, struct node *n)
 		return ret;
 #endif /* WITH_HOOKS */
 
-	ret = vlist_init(&nd->signals);
+	ret = signal_list_init(&nd->signals);
 	if (ret)
 		return ret;
 
@@ -95,7 +95,7 @@ static int node_direction_destroy(struct node_direction *nd, struct node *n)
 		return ret;
 #endif /* WITH_HOOKS */
 
-	ret = vlist_destroy(&nd->signals, (dtor_cb_t) signal_decref, false);
+	ret = signal_list_destroy(&nd->signals);
 	if (ret)
 		return ret;
 
@@ -716,7 +716,7 @@ struct memory_type * node_memory_type(struct node *n, struct memory_type *parent
 	return node_type(n)->memory_type ? node_type(n)->memory_type(n, parent) : &memory_hugepage;
 }
 
-int node_parse_list(struct vlist *list, json_t *cfg, struct vlist *all)
+int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all)
 {
 	struct node *node;
 	const char *str;

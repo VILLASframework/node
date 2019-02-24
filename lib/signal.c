@@ -210,6 +210,28 @@ int signal_parse(struct signal *s, json_t *cfg)
 
 /* Signal list */
 
+int signal_list_init(struct vlist *list)
+{
+	int ret;
+
+	ret = vlist_init(list);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+int signal_list_destroy(struct vlist *list)
+{
+	int ret;
+
+	ret = vlist_destroy(list, (dtor_cb_t) signal_decref, false);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
 int signal_list_parse(struct vlist *list, json_t *cfg)
 {
 	int ret;

@@ -333,7 +333,7 @@ int path_init(struct path *p)
 	if (ret)
 		return ret;
 
-	ret = vlist_init(&p->signals);
+	ret = signal_list_init(&p->signals);
 	if (ret)
 		return ret;
 
@@ -553,7 +553,7 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 
 	/* Output node(s) */
 	if (json_out) {
-		ret = node_parse_list(&destinations, json_out, nodes);
+		ret = node_list_parse(&destinations, json_out, nodes);
 		if (ret)
 			jerror(&err, "Failed to parse output nodes");
 	}

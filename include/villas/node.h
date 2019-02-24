@@ -123,7 +123,7 @@ int node_parse(struct node *n, json_t *cfg, const char *name);
  * @param nodes The nodes will be added to this list.
  * @param all This list contains all valid nodes.
  */
-int node_parse_list(struct vlist *list, json_t *cfg, struct vlist *all);
+int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all);
 
 /** Parse the list of signal definitions. */
 int node_parse_signals(struct vlist *list, json_t *cfg);
