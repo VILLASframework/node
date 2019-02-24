@@ -111,7 +111,59 @@ void vlist_push(struct vlist *l, void *p)
 	pthread_mutex_unlock(&l->lock);
 }
 
-void vlist_remove(struct vlist *l, void *p)
+int vlist_remove(struct vlist *l, size_t idx)
+{
+	pthread_mutex_lock(&l->lock);
+
+	assert(l->state == STATE_INITIALIZED);
+
+	if (idx >= l->length)
+		return -1;
+
+	for (size_t i = idx; i < l->length - 1; i++)
+		l->array[i] = l->array[i+1];
+
+	l->length--;
+
+	pthread_mutex_unlock(&l->lock);
+
+	return 0;
+}
+
+int vlist_insert(struct vlist *l, size_t idx, void *p)
+{
+	size_t i;
+	void *t, *o;
+
+	pthread_mutex_lock(&l->lock);
+
+	assert(l->state == STATE_INITIALIZED);
+
+	if (idx >= l->length)
+		return -1;
+
+	/* Resize array if out of capacity */
+	if (l->length + 1 > l->capacity) {
+		l->capacity += LIST_CHUNKSIZE;
+		l->array = realloc(l->array, l->capacity * sizeof(void *));
+	}
+
+	o = p;
+	for (i = idx; i < l->length; i++) {
+		t = l->array[i];
+		l->array[i] = o;
+		o = t;
+	}
+
+	l->array[l->length] = o;
+	l->length++;
+
+	pthread_mutex_unlock(&l->lock);
+
+	return 0;
+}
+
+void vlist_remove_all(struct vlist *l, void *p)
 {
 	int removed = 0;
 

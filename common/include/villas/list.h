@@ -87,7 +87,11 @@ int vlist_destroy(struct vlist *l, dtor_cb_t dtor, bool free);
 void vlist_push(struct vlist *l, void *p);
 
 /** Remove all occurences of a list item */
-void vlist_remove(struct vlist *l, void *p);
+void vlist_remove_all(struct vlist *l, void *p);
+
+int vlist_remove(struct vlist *l, size_t idx);
+
+int vlist_insert(struct vlist *l, size_t idx, void *p);
 
 /** Return the first list element which is identified by a string in its first member variable.
  *
@@ -131,6 +135,7 @@ void vlist_extend(struct vlist *l, size_t len, void *val);
 
 /** Shallow copy a list. */
 int vlist_copy(struct vlist *dst, const struct vlist *src);
+
 
 #ifdef __cplusplus
 }

@@ -155,7 +155,24 @@ Test(list, basics)
 	ret = vlist_contains(&l, (void *) 55);
 	cr_assert(ret);
 
-	vlist_remove(&l, (void *) 55);
+	void *before_ptr = vlist_at(&l, 12);
+
+	ret = vlist_insert(&l, 12, (void *) 123);
+	cr_assert_eq(ret, 0);
+	cr_assert_eq(vlist_at(&l, 12), (void *) 123, "Is: %p", vlist_at(&l, 12));
+
+	ret = vlist_remove(&l, 12);
+	cr_assert_eq(ret, 0);
+	cr_assert_eq(vlist_at(&l, 12), before_ptr);
+
+	int counts, before_len;
+
+	before_len = vlist_length(&l);
+	counts = vlist_contains(&l, (void *) 55);
+	cr_assert_gt(counts, 0);
+
+	vlist_remove_all(&l, (void *) 55);
+	cr_assert_eq(vlist_length(&l), before_len - counts);
 
 	ret = vlist_contains(&l, (void *) 55);
 	cr_assert(!ret);
