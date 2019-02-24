@@ -45,7 +45,7 @@ int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node 
 	h->_vt = vt;
 	h->_vd = alloc(vt->size);
 
-	ret = h->_vt->init ? h->_vt->init(h) : 0;
+	ret = hook_type(h)->init ? hook_type(h)->init(h) : 0;
 	if (ret)
 		return ret;
 
@@ -66,9 +66,9 @@ int hook_parse(struct hook *h, json_t *cfg)
 		"enabled", &h->enabled
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of hook '%s'", hook_type_name(h->_vt));
+		jerror(&err, "Failed to parse configuration of hook '%s'", hook_type_name(hook_type(h)));
 
-	ret = h->_vt->parse ? h->_vt->parse(h, cfg) : 0;
+	ret = hook_type(h)->parse ? hook_type(h)->parse(h, cfg) : 0;
 	if (ret)
 		return ret;
 
@@ -84,7 +84,7 @@ int hook_destroy(struct hook *h)
 
 	assert(h->state != STATE_DESTROYED);
 
-	ret = h->_vt->destroy ? h->_vt->destroy(h) : 0;
+	ret = hook_type(h)->destroy ? hook_type(h)->destroy(h) : 0;
 	if (ret)
 		return ret;
 
@@ -101,10 +101,10 @@ int hook_start(struct hook *h)
 	if (!h->enabled)
 		return 0;
 
-	if (h->_vt->start) {
-		debug(LOG_HOOK | 10, "Start hook %s: priority=%d", hook_type_name(h->_vt), h->priority);
+	if (hook_type(h)->start) {
+		debug(LOG_HOOK | 10, "Start hook %s: priority=%d", hook_type_name(hook_type(h)), h->priority);
 
-		return h->_vt->start(h);
+		return hook_type(h)->start(h);
 	}
 	else
 		return 0;
@@ -115,10 +115,10 @@ int hook_stop(struct hook *h)
 	if (!h->enabled)
 		return 0;
 
-	if (h->_vt->stop) {
-		debug(LOG_HOOK | 10, "Stopping hook %s: priority=%d", hook_type_name(h->_vt), h->priority);
+	if (hook_type(h)->stop) {
+		debug(LOG_HOOK | 10, "Stopping hook %s: priority=%d", hook_type_name(hook_type(h)), h->priority);
 
-		return h->_vt->stop(h);
+		return hook_type(h)->stop(h);
 	}
 	else
 		return 0;
@@ -129,10 +129,10 @@ int hook_periodic(struct hook *h)
 	if (!h->enabled)
 		return 0;
 
-	if (h->_vt->periodic) {
-		debug(LOG_HOOK | 10, "Periodic hook %s: priority=%d", hook_type_name(h->_vt), h->priority);
+	if (hook_type(h)->periodic) {
+		debug(LOG_HOOK | 10, "Periodic hook %s: priority=%d", hook_type_name(hook_type(h)), h->priority);
 
-		return h->_vt->periodic(h);
+		return hook_type(h)->periodic(h);
 	}
 	else
 		return 0;
@@ -143,10 +143,10 @@ int hook_restart(struct hook *h)
 	if (!h->enabled)
 		return 0;
 
-	if (h->_vt->restart) {
-		debug(LOG_HOOK | 10, "Restarting hook %s: priority=%d", hook_type_name(h->_vt), h->priority);
+	if (hook_type(h)->restart) {
+		debug(LOG_HOOK | 10, "Restarting hook %s: priority=%d", hook_type_name(hook_type(h)), h->priority);
 
-		return h->_vt->restart(h);
+		return hook_type(h)->restart(h);
 	}
 	else
 		return 0;
@@ -157,10 +157,10 @@ int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 	if (!h->enabled)
 		return 0;
 
-	if (h->_vt->process) {
-		debug(LOG_HOOK | 10, "Process hook %s: priority=%d, cnt=%d", hook_type_name(h->_vt), h->priority, *cnt);
+	if (hook_type(h)->process) {
+		debug(LOG_HOOK | 10, "Process hook %s: priority=%d, cnt=%d", hook_type_name(hook_type(h)), h->priority, *cnt);
 
-		return h->_vt->process(h, smps, cnt);
+		return hook_type(h)->process(h, smps, cnt);
 	}
 	else
 		return 0;

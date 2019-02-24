@@ -704,13 +704,6 @@ int node_netem_fds(struct node *n, int fds[])
 	return node_type(n)->netem_fds ? node_type(n)->netem_fds(n, fds) : -1;
 }
 
-struct node_type * node_type(struct node *n)
-{
-	assert(n->state != STATE_DESTROYED);
-
-	return n->_vt;
-}
-
 struct memory_type * node_memory_type(struct node *n, struct memory_type *parent)
 {
 	return node_type(n)->memory_type ? node_type(n)->memory_type(n, parent) : &memory_hugepage;

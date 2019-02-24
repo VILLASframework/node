@@ -199,7 +199,11 @@ int node_poll_fds(struct node *n, int fds[]);
 
 int node_netem_fds(struct node *n, int fds[]);
 
-struct node_type * node_type(struct node *n);
+static inline
+struct node_type * node_type(struct node *n)
+{
+	return n->_vt;
+}
 
 struct memory_type * node_memory_type(struct node *n, struct memory_type *parent);
 

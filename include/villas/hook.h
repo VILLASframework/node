@@ -81,6 +81,12 @@ int hook_process_list(struct vlist *hs, struct sample *smps[], unsigned cnt);
 /** Compare two hook functions with their priority. Used by vlist_sort() */
 int hook_cmp_priority(const void *a, const void *b);
 
+static inline
+struct hook_type * hook_type(struct hook *h)
+{
+	return h->_vt;
+}
+
 /** Parses an object of hooks
  *
  * Example:
