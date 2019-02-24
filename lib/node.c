@@ -533,7 +533,7 @@ int node_destroy(struct node *n)
 			return ret;
 	}
 
-	vlist_remove(&node_type(n)->instances, n);
+	vlist_remove_all(&node_type(n)->instances, n);
 
 	if (n->_vd)
 		free(n->_vd);

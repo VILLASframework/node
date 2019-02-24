@@ -267,7 +267,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 			}
 
 			if (connections.state == STATE_INITIALIZED)
-				vlist_remove(&connections, c);
+				vlist_remove_all(&connections, c);
 
 			if (c->state == WEBSOCKET_CONNECTION_STATE_INITIALIZED)
 				websocket_connection_destroy(c);
