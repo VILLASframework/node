@@ -49,21 +49,6 @@ extern "C" {
 struct stats;
 struct node;
 
-struct path_source {
-	struct node *node;
-
-	bool masked;
-
-	struct pool pool;
-	struct vlist mappings;			/**< List of mappings (struct mapping_entry). */
-};
-
-struct path_destination {
-	struct node *node;
-
-	struct queue queue;
-};
-
 /** The register mode determines under which condition the path is triggered. */
 enum path_mode {
 	PATH_MODE_ANY,				/**< The path is triggered whenever one of the sources receives samples. */

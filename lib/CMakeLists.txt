@@ -46,6 +46,8 @@ set(LIB_SRC
     memory/managed.c
     sample.c
     path.c
+    path_source.c
+    path_destination.c
     node.c
     memory.c
     plugin.c
