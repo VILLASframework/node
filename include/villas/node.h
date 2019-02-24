@@ -60,6 +60,7 @@ extern "C" {
  */
 struct node {
 	char *name;		/**< A short identifier of the node, only used for configuration and logging */
+	int enabled;
 
 	enum state state;
 
@@ -198,6 +199,8 @@ struct node_type * node_type(struct node *n)
 struct memory_type * node_memory_type(struct node *n, struct memory_type *parent);
 
 int node_is_valid_name(const char *name);
+bool node_is_enabled(const struct node *n);
+
 
 #ifdef __cplusplus
 }

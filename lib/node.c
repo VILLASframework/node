@@ -53,6 +53,7 @@ int node_init(struct node *n, struct node_type *vt)
 	n->name = NULL;
 	n->_name = NULL;
 	n->_name_long = NULL;
+	n->enabled = 1;
 
 #ifdef __linux__
 	n->fwmark = -1;
@@ -113,8 +114,9 @@ int node_parse(struct node *n, json_t *json, const char *name)
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: b, s?: { s?: o } }",
 		"type", &type,
+		"enabled", &n->enabled,
 		"in",
 			"signals", &json_signals
 	);
@@ -603,4 +605,9 @@ int node_is_valid_name(const char *name)
 	}
 
 	return 0;
+bool node_is_enabled(const struct node *n)
+{
+	return n->enabled;
+}
+
 }

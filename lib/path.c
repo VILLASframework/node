@@ -375,6 +375,9 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 			vlist_push(&p->sources, ps);
 		}
 
+		if (!node_is_enabled(ps->node))
+			error("Source %s of path %s is not enabled", node_name(ps->node), path_name(p));
+
 		vlist_push(&ps->mappings, me);
 	}
 
@@ -384,6 +387,9 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 		struct path_destination *pd = (struct path_destination *) alloc(sizeof(struct path_destination));
 
 		pd->node = n;
+
+		if (!node_is_enabled(pd->node))
+			error("Destination %s of path %s is not enabled", node_name(pd->node), path_name(p));
 
 		vlist_push(&p->destinations, pd);
 	}
