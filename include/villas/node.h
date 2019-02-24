@@ -33,6 +33,7 @@
 #include <jansson.h>
 
 #include <villas/node_type.h>
+#include <villas/node_direction.h>
 #include <villas/sample.h>
 #include <villas/list.h>
 #include <villas/queue.h>
@@ -51,17 +52,6 @@ extern "C" {
   struct rtnl_qdisc;
   struct rtnl_cls;
 #endif /* WITH_NETEM */
-
-struct node_direction {
-	int enabled;
-	int builtin;		/**< This node should use built-in hooks by default. */
-	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
-
-	struct vlist hooks;	/**< List of read / write hooks (struct hook). */
-	struct vlist signals;	/**< Signal description. */
-
-	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
-};
 
 /** The data structure for a node.
  *
