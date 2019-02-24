@@ -45,7 +45,8 @@ enum state {
 	STATE_STARTING		= 9,
 	STATE_STOPPING		= 10,
 	STATE_PAUSING		= 11,
-	STATE_RESUMING		= 12
+	STATE_RESUMING		= 12,
+	STATE_PREPARED		= 13
 };
 
 /** Callback to destroy list elements.
