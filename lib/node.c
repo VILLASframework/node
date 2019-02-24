@@ -331,9 +331,8 @@ int node_restart(struct node *n)
 
 	info("Restarting node %s", node_name(n));
 
-	if (node_type(n)->restart) {
+	if (node_type(n)->restart)
 		ret = node_type(n)->restart(n);
-	}
 	else {
 		ret = node_type(n)->stop ? node_type(n)->stop(n) : 0;
 		if (ret)

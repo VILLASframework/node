@@ -70,9 +70,11 @@ int hook_parse(struct hook *h, json_t *cfg);
 int hook_destroy(struct hook *h);
 
 int hook_start(struct hook *h);
+
 int hook_stop(struct hook *h);
 
 int hook_periodic(struct hook *h);
+
 int hook_restart(struct hook *h);
 
 int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt);
