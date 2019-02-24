@@ -112,7 +112,7 @@ struct path {
 /** Initialize internal data structures. */
 int path_init(struct path *p);
 
-int path_init2(struct path *p);
+int path_prepare(struct path *p);
 
 /** Check if path configuration is proper. */
 int path_check(struct path *p);

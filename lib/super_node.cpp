@@ -356,7 +356,7 @@ void SuperNode::startNodes()
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct node *) vlist_at(&nodes, i);
 
-		ret = node_init2(n);
+		ret = node_prepare(n);
 		if (ret)
 			throw RuntimeError("Failed to prepare node: {}", node_name(n));
 
@@ -379,7 +379,7 @@ void SuperNode::startPaths()
 		auto *p = (struct path *) vlist_at(&paths, i);
 
 		if (p->enabled) {
-			ret = path_init2(p);
+			ret = path_prepare(p);
 			if (ret)
 				throw RuntimeError("Failed to prepare path: {}", path_name(p));
 

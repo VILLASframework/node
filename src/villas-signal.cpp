@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		throw RuntimeError("Failed to initialize pool");
 
-	ret = node_init2(&n);
+	ret = node_prepare(&n);
 	if (ret)
 		throw RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
 

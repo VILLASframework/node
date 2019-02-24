@@ -167,7 +167,7 @@ check:		if (optarg == endptr)
 	if (ret)
 		throw RuntimeError("Failed to start node-type {}: reason={}", node_type_name(node->_vt), ret);
 
-	ret = node_init2(node);
+	ret = node_prepare(node);
 	if (ret)
 		throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 

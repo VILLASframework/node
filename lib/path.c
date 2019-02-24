@@ -404,7 +404,7 @@ int path_init_poll(struct path *p)
 	return 0;
 }
 
-int path_init2(struct path *p)
+int path_prepare(struct path *p)
 {
 	int ret;
 

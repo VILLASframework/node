@@ -103,7 +103,7 @@ struct node {
 int node_init(struct node *n, struct node_type *vt);
 
 /** Do initialization after parsing the configuration */
-int node_init2(struct node *n);
+int node_prepare(struct node *n);
 
 /** Parse settings of a node.
  *

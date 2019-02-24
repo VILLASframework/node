@@ -41,7 +41,7 @@
   #include <villas/kernel/tc_netem.h>
 #endif /* WITH_NETEM */
 
-static int node_direction_init2(struct node_direction *nd, struct node *n)
+int node_direction_prepare(struct node_direction *nd, struct node *n)
 {
 #ifdef WITH_HOOKS
 	int ret;
@@ -254,17 +254,17 @@ int node_init(struct node *n, struct node_type *vt)
 	return 0;
 }
 
-int node_init2(struct node *n)
+int node_prepare(struct node *n)
 {
 	int ret;
 
 	assert(n->state == STATE_CHECKED);
 
-	ret = node_direction_init2(&n->in, n);
+	ret = node_direction_prepare(&n->in, n);
 	if (ret)
 		return ret;
 
-	ret = node_direction_init2(&n->out, n);
+	ret = node_direction_prepare(&n->in, n);
 	if (ret)
 		return ret;
 
