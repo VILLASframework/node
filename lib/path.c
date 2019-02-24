@@ -216,10 +216,10 @@ int path_prepare(struct path *p)
 	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
 		struct path_destination *pd = (struct path_destination *) vlist_at(&p->destinations, i);
 
-		if (pd->node->_vt->pool_size > pool_size)
-			pool_size = pd->node->_vt->pool_size;
+		if (node_type(pd->node)->pool_size > pool_size)
+			pool_size = node_type(pd->node)->pool_size;
 
-		if (pd->node->_vt->memory_type)
+		if (node_type(pd->node)->memory_type)
 			pool_mt = node_memory_type(pd->node, &memory_hugepage);
 
 		ret = path_destination_init(pd, p->queuelen);
@@ -484,7 +484,7 @@ int path_check(struct path *p)
 			for (size_t i = 0; i < vlist_length(&p->sources); i++) {
 				struct path_source *ps = (struct path_source *) vlist_at(&p->sources, i);
 
-				if (!ps->node->_vt->poll_fds)
+				if (!node_type(ps->node)->poll_fds)
 					error("Node %s can not be used in polling mode with path %s", node_name(ps->node), path_name(p));
 			}
 		}
@@ -502,14 +502,14 @@ int path_check(struct path *p)
 	for (size_t i = 0; i < vlist_length(&p->sources); i++) {
 		struct path_source *ps = (struct path_source *) vlist_at(&p->sources, i);
 
-		if (!ps->node->_vt->read)
+		if (!node_type(ps->node)->read)
 			error("Node %s is not supported as a source for path %s", node_name(ps->node), path_name(p));
 	}
 
 	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
 		struct path_destination *pd = (struct path_destination *) vlist_at(&p->destinations, i);
 
-		if (!pd->node->_vt->write)
+		if (!node_type(pd->node)->write)
 			error("Destiation node %s is not supported as a sink for path %s", node_name(pd->node), path_name(p));
 	}
 
