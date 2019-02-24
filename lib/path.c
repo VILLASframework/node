@@ -146,7 +146,7 @@ int path_init(struct path *p)
 	return 0;
 }
 
-int path_init_poll(struct path *p)
+static int path_prepare_poll(struct path *p)
 {
 	int fds[16], ret, n = 0, m;
 
@@ -282,7 +282,7 @@ int path_prepare(struct path *p)
 
 	/* Prepare poll() */
 	if (p->poll) {
-		ret = path_init_poll(p);
+		ret = path_prepare_poll(p);
 		if (ret)
 			return ret;
 	}
