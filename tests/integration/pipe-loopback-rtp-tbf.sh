@@ -134,7 +134,7 @@ villas-pipe ${CONFIG_FILE_SRC} rtp_node > ${OUTPUT_FILE}
 villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
-rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
+rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE_SRC} ${CONFIG_FILE_DEST}
 
 kill $PID
 exit $RC
