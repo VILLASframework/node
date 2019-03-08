@@ -42,6 +42,12 @@ int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node 
 	h->path = p;
 	h->node = n;
 
+	h->signals.state = STATE_DESTROYED;
+
+	ret = signal_list_init(&h->signals);
+	if (ret)
+		return ret;
+
 	h->_vt = vt;
 	h->_vd = alloc(vt->size);
 
@@ -49,7 +55,30 @@ int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node 
 	if (ret)
 		return ret;
 
-	h->state = STATE_INITIALIZED;
+	// We dont need to parse builtin hooks
+	h->state = hook_type(h)->flags & HOOK_BUILTIN ? STATE_PARSED : STATE_INITIALIZED;
+
+	return 0;
+}
+
+int hook_prepare(struct hook *h, struct vlist *signals)
+{
+	int ret;
+
+	assert(h->state == STATE_PARSED);
+
+	if (!h->enabled)
+		return 0;
+
+	ret = signal_list_copy(&h->signals, signals);
+	if (ret)
+		return -1;
+
+	ret = hook_type(h)->init_signals ? hook_type(h)->init_signals(h) : 0;
+	if (ret)
+		return ret;
+
+	h->state = STATE_PREPARED;
 
 	return 0;
 }
@@ -82,7 +111,11 @@ int hook_destroy(struct hook *h)
 {
 	int ret;
 
-	assert(h->state != STATE_DESTROYED);
+	assert(h->state != STATE_DESTROYED && h->state != STATE_STARTED);
+
+	ret = signal_list_destroy(&h->signals);
+	if (ret)
+		return ret;
 
 	ret = hook_type(h)->destroy ? hook_type(h)->destroy(h) : 0;
 	if (ret)
@@ -98,34 +131,46 @@ int hook_destroy(struct hook *h)
 
 int hook_start(struct hook *h)
 {
+	int ret;
+	assert(h->state == STATE_PREPARED);
+
 	if (!h->enabled)
 		return 0;
 
-	if (hook_type(h)->start) {
-		debug(LOG_HOOK | 10, "Start hook %s: priority=%d", hook_type_name(hook_type(h)), h->priority);
+	debug(LOG_HOOK | 10, "Start hook %s: priority=%d", hook_type_name(hook_type(h)), h->priority);
 
-		return hook_type(h)->start(h);
-	}
-	else
-		return 0;
+	ret = hook_type(h)->start ? hook_type(h)->start(h) : 0;
+	if (ret)
+		return ret;
+
+	h->state = STATE_STARTED;
+
+	return 0;
 }
 
 int hook_stop(struct hook *h)
 {
+	int ret;
+	assert(h->state == STATE_STARTED);
+
 	if (!h->enabled)
 		return 0;
 
-	if (hook_type(h)->stop) {
-		debug(LOG_HOOK | 10, "Stopping hook %s: priority=%d", hook_type_name(hook_type(h)), h->priority);
+	debug(LOG_HOOK | 10, "Stopping hook %s: priority=%d", hook_type_name(hook_type(h)), h->priority);
 
-		return hook_type(h)->stop(h);
-	}
-	else
-		return 0;
+	ret = hook_type(h)->stop ? hook_type(h)->stop(h) : 0;
+	if (ret)
+		return ret;
+
+	h->state = STATE_STOPPED;
+
+	return 0;
 }
 
 int hook_periodic(struct hook *h)
 {
+	assert(h->state == STATE_STARTED);
+
 	if (!h->enabled)
 		return 0;
 
@@ -140,47 +185,36 @@ int hook_periodic(struct hook *h)
 
 int hook_restart(struct hook *h)
 {
+	int ret;
+	assert(h->state == STATE_STARTED);
+
 	if (!h->enabled)
 		return 0;
 
-	if (hook_type(h)->restart) {
-		debug(LOG_HOOK | 10, "Restarting hook %s: priority=%d", hook_type_name(hook_type(h)), h->priority);
+	debug(LOG_HOOK | 10, "Restarting hook %s: priority=%d", hook_type_name(hook_type(h)), h->priority);
 
-		return hook_type(h)->restart(h);
-	}
-	else
-		return 0;
+	ret = hook_type(h)->restart ? hook_type(h)->restart(h) : 0;
+	if (ret)
+		return ret;
+
+	return 0;
 }
 
 int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
+	int ret;
+	assert(h->state == STATE_STARTED);
+
 	if (!h->enabled)
 		return 0;
 
-	if (hook_type(h)->process) {
-		debug(LOG_HOOK | 10, "Process hook %s: priority=%d, cnt=%d", hook_type_name(hook_type(h)), h->priority, *cnt);
+	debug(LOG_HOOK | 10, "Process hook %s: priority=%d, cnt=%d", hook_type_name(hook_type(h)), h->priority, *cnt);
 
-		return hook_type(h)->process(h, smps, cnt);
-	}
-	else
-		return 0;
-}
+	ret = hook_type(h)->process ? hook_type(h)->process(h, smps, cnt) : 0;
+	if (ret)
+		return ret;
 
-int hook_process_list(struct vlist *hs, struct sample *smps[], unsigned cnt)
-{
-	unsigned ret;
-
-	for (size_t i = 0; i < vlist_length(hs); i++) {
-		struct hook *h = (struct hook *) vlist_at(hs, i);
-
-		ret = hook_process(h, smps, &cnt);
-		if (ret || !cnt)
-			/* Abort hook processing if earlier hooks removed all samples
-			 * or they returned something non-zero */
-			break;
-	}
-
-	return cnt;
+	return 0;
 }
 
 int hook_cmp_priority(const void *a, const void *b)
@@ -191,7 +225,29 @@ int hook_cmp_priority(const void *a, const void *b)
 	return ha->priority - hb->priority;
 }
 
-int hook_parse_list(struct vlist *list, json_t *cfg, int mask, struct path *o, struct node *n)
+int hook_list_init(struct vlist *hs)
+{
+	int ret;
+
+	ret = vlist_init(hs);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+int hook_list_destroy(struct vlist *hs)
+{
+	int ret;
+
+	ret = vlist_destroy(hs, (dtor_cb_t) hook_destroy, true);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+int hook_list_parse(struct vlist *hs, json_t *cfg, int mask, struct path *o, struct node *n)
 {
 	if (!json_is_array(cfg))
 		error("Hooks must be configured as a list of objects");
@@ -225,17 +281,42 @@ int hook_parse_list(struct vlist *list, json_t *cfg, int mask, struct path *o, s
 		if (ret)
 			jerror(&err, "Failed to parse hook configuration");
 
-		vlist_push(list, h);
+		vlist_push(hs, h);
 	}
 
 	return 0;
 }
 
-int hook_init_builtin_list(struct vlist *l, bool builtin, int mask, struct path *p, struct node *n)
+int hook_list_prepare(struct vlist *hs, struct vlist *sigs, int m, struct path *p, struct node *n)
 {
 	int ret;
 
-	assert(l->state == STATE_INITIALIZED);
+	/* Add internal hooks if they are not already in the list */
+	ret = hook_list_add(hs, m, p, n);
+	if (ret)
+		return ret;
+
+	/* We sort the hooks according to their priority */
+	vlist_sort(hs, hook_cmp_priority);
+
+	for (size_t i = 0; i < vlist_length(hs); i++) {
+		struct hook *h = (struct hook *) vlist_at(hs, i);
+
+		ret = hook_prepare(h, sigs);
+		if (ret)
+			return ret;
+
+		sigs = &h->signals;
+	}
+
+	return 0;
+}
+
+int hook_list_add(struct vlist *hs, int mask, struct path *p, struct node *n)
+{
+	int ret;
+
+	assert(hs->state == STATE_INITIALIZED);
 
 	for (size_t i = 0; i < vlist_length(&plugins); i++) {
 		struct plugin *q = (struct plugin *) vlist_at(&plugins, i);
@@ -246,11 +327,7 @@ int hook_init_builtin_list(struct vlist *l, bool builtin, int mask, struct path 
 		if (q->type != PLUGIN_TYPE_HOOK)
 			continue;
 
-		if (builtin &&
-		    vt->flags & HOOK_BUILTIN &&
-		    vt->flags & mask)
-		{
-
+		if ((vt->flags & mask) == mask) {
 			h = (struct hook *) alloc(sizeof(struct hook));
 			if (!h)
 				return -1;
@@ -259,7 +336,7 @@ int hook_init_builtin_list(struct vlist *l, bool builtin, int mask, struct path 
 			if (ret)
 				return ret;
 
-			vlist_push(l, h);
+			vlist_push(hs, h);
 		}
 	}
 
@@ -269,4 +346,21 @@ int hook_init_builtin_list(struct vlist *l, bool builtin, int mask, struct path 
 const char * hook_type_name(struct hook_type *vt)
 {
 	return plugin_name(vt);
+}
+
+int hook_list_process(struct vlist *hs, struct sample *smps[], unsigned cnt)
+{
+	unsigned ret;
+
+	for (size_t i = 0; i < vlist_length(hs); i++) {
+		struct hook *h = (struct hook *) vlist_at(hs, i);
+
+		ret = hook_process(h, smps, &cnt);
+		if (ret || !cnt)
+			/* Abort hook processing if earlier hooks removed all samples
+			 * or they returned something non-zero */
+			break;
+	}
+
+	return cnt;
 }

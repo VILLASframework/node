@@ -421,12 +421,6 @@ void SuperNode::preparePaths()
 
 void SuperNode::prepare()
 {
-	prepareNodes();
-	preparePaths();
-}
-
-void SuperNode::start()
-{
 	int ret;
 
 	assert(state == STATE_CHECKED);
@@ -436,6 +430,18 @@ void SuperNode::start()
 		throw RuntimeError("Failed to initialize memory system");
 
 	kernel::rt::init(priority, affinity);
+
+	prepareNodes();
+	preparePaths();
+
+	state = STATE_PREPARED;
+}
+
+void SuperNode::start()
+{
+	int ret;
+
+	assert(state == STATE_PREPARED);
 
 #ifdef WITH_API
 	api.start();

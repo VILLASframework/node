@@ -241,19 +241,21 @@ int path_prepare(struct path *p)
 		if (ps->masked)
 			bitset_set(&p->mask, i);
 
+		ret = mapping_list_prepare(&ps->mappings);
+		if (ret)
+			return ret;
+
 		for (size_t i = 0; i < vlist_length(&ps->mappings); i++) {
 			struct mapping_entry *me = (struct mapping_entry *) vlist_at(&ps->mappings, i);
+			struct vlist *sigs = node_get_signals(me->node, NODE_DIR_IN);
 
-			int off = me->offset;
-			int len = me->length;
-
-			for (int j = 0; j < len; j++) {
+			for (int j = 0; j < me->length; j++) {
 				struct signal *sig;
 
 				/* For data mappings we simple refer to the existing
 				 * signal descriptors of the source node. */
 				if (me->type == MAPPING_TYPE_DATA) {
-					sig = (struct signal *) vlist_at_safe(&me->node->in.signals, me->data.offset + j);
+					sig = (struct signal *) vlist_at_safe(sigs, me->data.offset + j);
 					if (!sig) {
 						warning("Failed to create signal description for path %s", path_name(p));
 						continue;
@@ -270,8 +272,8 @@ int path_prepare(struct path *p)
 						return -1;
 				}
 
-				vlist_extend(&p->signals, off + j + 1, NULL);
-				vlist_set(&p->signals, off + j, sig);
+				vlist_extend(&p->signals, me->offset + j + 1, NULL);
+				vlist_set(&p->signals, me->offset + j, sig);
 			}
 		}
 	}
@@ -328,7 +330,7 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 		jerror(&err, "Failed to parse path configuration");
 
 	/* Input node(s) */
-	ret = mapping_parse_list(&sources, json_in, nodes);
+	ret = mapping_list_parse(&sources, json_in, nodes);
 	if (ret)
 		error("Failed to parse input mapping of path %s", path_name(p));
 

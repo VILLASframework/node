@@ -226,7 +226,7 @@ struct vlist * node_direction_get_signals(struct node_direction *nd)
 
 	struct hook *h = vlist_last(&nd->hooks);
 
-	return h->signals;
+	return &h->signals;
 #else
 	return &nd->signals;
 #endif

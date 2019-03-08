@@ -65,11 +65,11 @@ int node_init(struct node *n, struct node_type *vt)
 #endif /* WITH_NETEM */
 
 	/* Default values */
-	ret = node_direction_init(&n->in, n);
+	ret = node_direction_init(&n->in, NODE_DIR_IN, n);
 	if (ret)
 		return ret;
 
-	ret = node_direction_init(&n->out, n);
+	ret = node_direction_init(&n->out, NODE_DIR_OUT, n);
 	if (ret)
 		return ret;
 
@@ -94,7 +94,7 @@ int node_prepare(struct node *n)
 	if (ret)
 		return ret;
 
-	ret = node_direction_prepare(&n->in, n);
+	ret = node_direction_prepare(&n->out, n);
 	if (ret)
 		return ret;
 
@@ -418,7 +418,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 
 #ifdef WITH_HOOKS
 	/* Run read hooks */
-	int rread = hook_process_list(&n->in.hooks, smps, nread);
+	int rread = hook_list_process(&n->in.hooks, smps, nread);
 	int skipped = nread - rread;
 
 	if (skipped > 0 && n->stats != NULL) {
@@ -448,7 +448,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 #ifdef WITH_HOOKS
 	/* Run write hooks */
-	cnt = hook_process_list(&n->out.hooks, smps, cnt);
+	cnt = hook_list_process(&n->out.hooks, smps, cnt);
 	if (cnt <= 0)
 		return cnt;
 #endif /* WITH_HOOKS */
@@ -479,7 +479,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 char * node_name(struct node *n)
 {
 	if (!n->_name)
-		strcatf(&n->_name, CLR_RED("%s") "(" CLR_YEL("%s") ")", n->name, node_type_name(n->_vt));
+		strcatf(&n->_name, CLR_RED("%s") "(" CLR_YEL("%s") ")", n->name, node_type_name(node_type(n)));
 
 	return n->_name;
 }

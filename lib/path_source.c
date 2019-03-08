@@ -121,7 +121,7 @@ int path_source_read(struct path_source *ps, struct path *p, int i)
 		muxed_smps[i]->ts = tomux_smps[i]->ts;
 		muxed_smps[i]->flags |= tomux_smps[i]->flags & (SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_TS_RECEIVED);
 
-		mapping_remap(&ps->mappings, muxed_smps[i], tomux_smps[i], NULL);
+		mapping_list_remap(&ps->mappings, muxed_smps[i], tomux_smps[i]);
 	}
 
 	sample_copy(p->last_sample, muxed_smps[tomux-1]);

@@ -65,6 +65,8 @@ struct hook_type {
 	int (*init)(struct hook *h);	/**< Called before hook is started to parsed. */
 	int (*destroy)(struct hook *h);	/**< Called after path has been stopped to release memory allocated by HOOK_INIT */
 
+	int (*init_signals)(struct hook *h);
+
 	int (*start)(struct hook *h);	/**< Called whenever a hook is started; before threads are created. */
 	int (*stop)(struct hook *h);	/**< Called whenever a hook is stopped; after threads are destoyed. */
 

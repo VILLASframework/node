@@ -144,7 +144,7 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		else {
 			/* Map all signals */
 			me->data.offset = 0;
-			me->length = me->node ? vlist_length(&me->node->in.signals) : 0;
+			me->length = -1;
 			goto end;
 		}
 
@@ -201,9 +201,9 @@ int mapping_parse(struct mapping_entry *me, json_t *cfg, struct vlist *nodes)
 	return mapping_parse_str(me, str, nodes);
 }
 
-int mapping_parse_list(struct vlist *l, json_t *cfg, struct vlist *nodes)
+int mapping_list_parse(struct vlist *ml, json_t *cfg, struct vlist *nodes)
 {
-	int ret, off;
+	int ret;
 
 	size_t i;
 	json_t *json_entry;
@@ -218,7 +218,6 @@ int mapping_parse_list(struct vlist *l, json_t *cfg, struct vlist *nodes)
 	else
 		return -1;
 
-	off = 0;
 	json_array_foreach(json_mapping, i, json_entry) {
 		struct mapping_entry *me = (struct mapping_entry *) alloc(sizeof(struct mapping_entry));
 
@@ -226,10 +225,7 @@ int mapping_parse_list(struct vlist *l, json_t *cfg, struct vlist *nodes)
 		if (ret)
 			goto out;
 
-		me->offset = off;
-		off += me->length;
-
-		vlist_push(l, me);
+		vlist_push(ml, me);
 	}
 
 	ret = 0;
@@ -239,22 +235,16 @@ out:	json_decref(json_mapping);
 	return ret;
 }
 
-int mapping_update(const struct mapping_entry *me, struct sample *remapped, const struct sample *original, const struct stats *s)
+int mapping_update(const struct mapping_entry *me, struct sample *remapped, const struct sample *original)
 {
-	int len = me->length;
-	int off = me->offset;
-
-	/* me->length == 0 means that we want to take all values */
-	if (!len)
-		len = original->length;
-
-	if (len + off > remapped->capacity)
+	if (me->length + me->offset > remapped->capacity)
 		return -1;
 
 	switch (me->type) {
-		case MAPPING_TYPE_STATS:
-			remapped->data[off++] = stats_get_value(s, me->stats.metric, me->stats.type);
+		case MAPPING_TYPE_STATS: {
+			remapped->data[me->offset] = stats_get_value(me->node->stats, me->stats.metric, me->stats.type);
 			break;
+		}
 
 		case MAPPING_TYPE_TIMESTAMP: {
 			const struct timespec *ts;
@@ -270,8 +260,8 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 					return -1;
 			}
 
-			remapped->data[off++].i = ts->tv_sec;
-			remapped->data[off++].i = ts->tv_nsec;
+			remapped->data[me->offset + 0].i = ts->tv_sec;
+			remapped->data[me->offset + 1].i = ts->tv_nsec;
 
 			break;
 		}
@@ -279,11 +269,13 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 		case MAPPING_TYPE_HEADER:
 			switch (me->header.type) {
 				case MAPPING_HEADER_TYPE_LENGTH:
-					remapped->data[off++].i = original->length;
+					remapped->data[me->offset].i = original->length;
 					break;
+
 				case MAPPING_HEADER_TYPE_SEQUENCE:
-					remapped->data[off++].i = original->sequence;
+					remapped->data[me->offset].i = original->sequence;
 					break;
+
 				default:
 					return -1;
 			}
@@ -291,11 +283,11 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 			break;
 
 		case MAPPING_TYPE_DATA:
-			for (int j = me->data.offset; j < len + me->data.offset; j++) {
+			for (int j = me->data.offset, i = me->offset; j < me->length + me->data.offset; j++, i++) {
 				if (j >= original->length)
-					remapped->data[off++].f = 0;
+					remapped->data[i].f = -1;
 				else
-					remapped->data[off++] = original->data[j];
+					remapped->data[i] = original->data[j];
 			}
 
 			break;
@@ -304,16 +296,34 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 	return 0;
 }
 
-int mapping_remap(const struct vlist *m, struct sample *remapped, const struct sample *original, const struct stats *s)
+int mapping_list_remap(const struct vlist *ml, struct sample *remapped, const struct sample *original)
 {
 	int ret;
 
-	for (size_t i = 0; i < vlist_length(m); i++) {
-		struct mapping_entry *me = (struct mapping_entry *) vlist_at(m, i);
+	for (size_t i = 0; i < vlist_length(ml); i++) {
+		struct mapping_entry *me = (struct mapping_entry *) vlist_at(ml, i);
 
-		ret = mapping_update(me, remapped, original, s);
+		ret = mapping_update(me, remapped, original);
 		if (ret)
 			return ret;
+	}
+
+	return 0;
+}
+
+int mapping_list_prepare(struct vlist *ml)
+{
+	for (size_t i = 0, off = 0; i < vlist_length(ml); i++) {
+		struct mapping_entry *me = (struct mapping_entry *) vlist_at(ml, i);
+
+		if (me->length < 0) {
+			struct vlist *sigs = node_get_signals(me->node, NODE_DIR_IN);
+
+			me->length = vlist_length(sigs);
+		}
+
+		me->offset = off;
+		off += me->length;
 	}
 
 	return 0;
