@@ -88,7 +88,7 @@ Test(mapping, parse_nodes)
 	cr_assert_eq(m.node, vlist_lookup(&nodes, "carrot"));
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 0);
-	cr_assert_eq(m.length, vlist_length(&m.node->in.signals));
+	cr_assert_eq(m.length, -1);
 
 	ret = mapping_parse_str(&m, "carrot.data[sole]", &nodes);
 	cr_assert_eq(ret, 0);
@@ -151,13 +151,13 @@ Test(mapping, parse)
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 0);
-	cr_assert_eq(m.length, 0);
+	cr_assert_eq(m.length, -1);
 
 	ret = mapping_parse_str(&m, "data[]", nullptr);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_DATA);
 	cr_assert_eq(m.data.offset, 0);
-	cr_assert_eq(m.length, 0);
+	cr_assert_eq(m.length, -1);
 
 	ret = mapping_parse_str(&m, "data[1.1-2f]", nullptr);
 	cr_assert_neq(ret, 0);
@@ -182,5 +182,5 @@ Test(mapping, parse)
 
 	/* Negative length of chunk */
 	ret = mapping_parse_str(&m, "data[5-3]", nullptr);
-	cr_assert_eq(ret, -1);
+	cr_assert_neq(ret, 0);
 }
