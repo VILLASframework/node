@@ -723,7 +723,7 @@ struct sockaddr_in rec_addr;
 	struct msg *msg = (struct msg *) buf;
 
 	struct timespec now;
-	unsigned int sequence = 0;
+	static unsigned sequence;
 
 	if (switchs == 1) {
 		clock_gettime(CLOCK_REALTIME, &now);
