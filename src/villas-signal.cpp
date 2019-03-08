@@ -109,7 +109,7 @@ json_t * parse_cli(int argc, char *argv[])
 		continue;
 
 check:		if (optarg == endptr)
-			logger->warn("Failed to parse parse option argument '-%c %s'", c, optarg);
+			logger->warn("Failed to parse parse option argument '-{} {}'", c, optarg);
 	}
 
 	if (argc != optind + 1)
