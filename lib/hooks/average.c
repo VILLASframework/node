@@ -31,7 +31,7 @@
 #include <villas/sample.h>
 
 struct average {
-	int mask;
+	uint64_t mask;
 	int offset;
 };
 
@@ -42,7 +42,7 @@ static int average_parse(struct hook *h, json_t *cfg)
 	int ret;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s: i }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s: I }",
 		"offset", &p->offset,
 		"mask", &p->mask
 	);
@@ -62,7 +62,7 @@ static int average_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 		int n = 0;
 
 		for (int k = 0; k < smp->length; k++) {
-			if (!(p->mask & (1 << k)))
+			if (!(p->mask & (1LL << k)))
 				continue;
 
 			switch (sample_format(smps[i], k)) {
