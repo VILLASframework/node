@@ -24,27 +24,30 @@
 
 set -x
 
-INPUT_FILE=$(mktemp)
-OUTPUT_FILE=$(mktemp)
-EXPECT_FILE=$(mktemp)
+#INPUT_FILE=$(mktemp)
+#OUTPUT_FILE=$(mktemp)
+#RECON_FILE=$(mktemp)
 
-NUM_SAMPLES=40000
+INPUT_FILE=in
+OUTPUT_FILE=out
+RECON_FILE=recon
+
+NUM_SAMPLES=10000
 RATE=5000
 F0=50
 
-OPTS="-d debug -o f0=${F0} -o rate=${RATE} -o index=0 -o harmonics=0,1,3,5"
+OPTS="-o f0=${F0} -o rate=${RATE} -o signal=0 -o harmonics=0,1,3,5,7"
 
 villas-signal sine -v1 -l ${NUM_SAMPLES} -f ${F0} -r ${RATE} -n > ${INPUT_FILE}
 
 villas-hook dp -o inverse=false ${OPTS} < ${INPUT_FILE} > ${OUTPUT_FILE}
 
-cat ${OUTPUT_FILE}
+villas-hook dp -o inverse=true ${OPTS} < ${OUTPUT_FILE} > ${RECON_FILE}
 
-exit 1
+exit 0
 
 # Compare only the data values
 villas-test-cmp ${OUTPUT_FILE} ${EXPECT_FILE}
-
 RC=$?
 
 rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE}
