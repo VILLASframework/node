@@ -55,7 +55,7 @@ double window_update(struct window *w, double in)
 {
 	double out = w->data[(w->pos - w->steps) & w->mask];
 
-	w->data[w->pos++] = in;
+	w->data[w->pos++ & w->mask] = in;
 
 	return out;
 }
