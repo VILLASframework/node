@@ -56,18 +56,7 @@ static int print_start(struct hook *h)
 	struct print *p = (struct print *) h->_vd;
 	int ret;
 
-	struct vlist *signals;
-
-	if (h->node)
-		signals = &h->node->in.signals;
-	else if (h->path)
-		signals = &h->path->signals;
-	else
-		signals = NULL;
-
-	ret = signals
-		? io_init(&p->io, p->format, signals, SAMPLE_HAS_ALL)
-		: io_init_auto(&p->io, p->format, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
+	ret = io_init(&p->io, p->format, &h->signals, SAMPLE_HAS_ALL);
 	if (ret)
 		return ret;
 

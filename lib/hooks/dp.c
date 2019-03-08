@@ -36,7 +36,10 @@
 #define J _Complex_I
 
 struct dp {
-	int index;
+	char *signal_name;
+	int   signal_index;
+
+	int offset;
 	int inverse;
 
 	double f0;
@@ -48,30 +51,31 @@ struct dp {
 	int  fharmonics_len;
 
 	struct window window;
-
-	struct vlist *signals;
 };
 
 static void dp_step(struct dp *d, double *in, float complex *out)
 {
+	int n = d->window.steps;
+	double r = 0.9999999999;
+	double complex om, corr;
 	double newest = *in;
 	double oldest = window_update(&d->window, newest);
 
 	for (int i = 0; i < d->fharmonics_len; i++) {
-		double pi_fharm = 2.0 * M_PI * d->fharmonics[i];
+		om = 2.0 * M_PI * J * d->fharmonics[i] / n;
 
 		/* Recursive update */
-		d->coeffs[i] = (d->coeffs[i] + (newest - oldest)) * cexp(pi_fharm);
+		//d->coeffs[i] = cexp(om) * (d->coeffs[i] + (newest - oldest));
+		d->coeffs[i] = d->coeffs[i] * r * cexp(om) - powf(r, n) * oldest + newest;
 
 		/* Correction for stationary phasor */
-		double complex correction = cexp(pi_fharm * (d->t - (d->window.steps + 1)));
-		double complex result = 2.0 / d->window.steps * d->coeffs[i] / correction;
+		corr = cexp(-om * (d->t - (d->window.steps + 1)));
+
+		out[i] = (2.0 / d->window.steps) * (d->coeffs[i] * corr);
 
 		/* DC component */
-		if (i == 0)
-			result /= 2.0;
-
-		out[i] = result;
+		if (d->fharmonics[i] == 0)
+			out[i] /= 2.0;
 	}
 }
 
@@ -96,7 +100,6 @@ static int dp_start(struct hook *h)
 	struct dp *d = (struct dp *) h->_vd;
 
 	d->t = 0;
-	d->signals = NULL;
 
 	for (int i = 0; i < d->fharmonics_len; i++)
 		d->coeffs[i] = 0;
@@ -138,6 +141,9 @@ static int dp_destroy(struct hook *h)
 	free(d->fharmonics);
 	free(d->coeffs);
 
+	if (d->signal_name)
+		free(d->signal_name);
+
 	return 0;
 }
 
@@ -147,13 +153,13 @@ static int dp_parse(struct hook *h, json_t *cfg)
 
 	int ret;
 	json_error_t err;
-	json_t *json_harmonics, *json_harmonic;
+	json_t *json_harmonics, *json_harmonic, *json_signal;
 	size_t i;
 
 	double rate = -1, dt = -1;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s: F, s?: F, s?: F, s: o, s?: b }",
-		"index", &d->index,
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s: F, s?: F, s?: F, s: o, s?: b }",
+		"signal", &json_signal,
 		"f0", &d->f0,
 		"dt", &dt,
 		"rate", &rate,
@@ -173,6 +179,20 @@ static int dp_parse(struct hook *h, json_t *cfg)
 	if (!json_is_array(json_harmonics))
 		error("Setting 'harmonics' of hook '%s' must be a list of integers", plugin_name(h->_vt));
 
+	switch (json_typeof(json_signal)) {
+		case JSON_STRING:
+			d->signal_name = strdup(json_string_value(json_signal));
+			break;
+
+		case JSON_INTEGER:
+			d->signal_name = NULL;
+			d->signal_index = json_integer_value(json_signal);
+			break;
+
+		default:
+			error("Invalid value for setting 'signal' in hook '%s'", hook_type_name(h->_vt));
+	}
+
 	d->fharmonics_len = json_array_size(json_harmonics);
 	d->fharmonics = alloc(d->fharmonics_len * sizeof(double));
 	d->coeffs = alloc(d->fharmonics_len * sizeof(double complex));
@@ -183,7 +203,79 @@ static int dp_parse(struct hook *h, json_t *cfg)
 		if (!json_is_integer(json_harmonic))
 			error("Setting 'harmonics' of hook '%s' must be a list of integers", plugin_name(h->_vt));
 
-		d->fharmonics[i] = d->f0 * json_integer_value(json_harmonic);
+		d->fharmonics[i] = json_integer_value(json_harmonic);
+	}
+
+	return 0;
+}
+
+static int dp_prepare(struct hook *h)
+{
+	int ret;
+	struct dp *d = (struct dp *) h->_vd;
+
+	char *new_sig_name;
+	struct signal *orig_sig, *new_sig;
+
+	if (d->signal_name) {
+		d->signal_index = vlist_lookup_index(&h->signals, d->signal_name);
+		if (d->signal_index < 0)
+			return -1;
+	}
+
+	if (d->inverse) {
+		/* Remove complex-valued coefficient signals */
+		for (int i = 0; i < d->fharmonics_len; i++) {
+			orig_sig = vlist_at_safe(&h->signals, d->signal_index + i);
+			if (!orig_sig)
+				return -1;
+
+			/** @todo: SIGNAL_TYPE_AUTO is bad here */
+			if (orig_sig->type != SIGNAL_TYPE_COMPLEX && orig_sig->type != SIGNAL_TYPE_AUTO)
+				return -1;
+
+			ret = vlist_remove(&h->signals, d->signal_index + i);
+			if (ret)
+				return -1;
+
+			signal_decref(orig_sig);
+		}
+
+		/* Add new real-valued reconstructed signals */
+		new_sig = signal_create("dp", "idp", SIGNAL_TYPE_FLOAT);
+		if (!new_sig)
+			return -1;
+
+		ret = vlist_insert(&h->signals, d->offset, new_sig);
+		if (ret)
+			return -1;
+	}
+	else {
+		orig_sig = vlist_at_safe(&h->signals, d->signal_index);
+		if (!orig_sig)
+			return -1;
+
+		/** @todo: SIGNAL_TYPE_AUTO is bad here */
+		if (orig_sig->type != SIGNAL_TYPE_FLOAT && orig_sig->type != SIGNAL_TYPE_AUTO)
+			return -1;
+
+		ret = vlist_remove(&h->signals, d->signal_index);
+		if (ret)
+			return -1;
+
+		for (int i = 0; i < d->fharmonics_len; i++) {
+			new_sig_name = strf("%s_harm%d", orig_sig->name, i);
+
+			new_sig = signal_create(new_sig_name, orig_sig->unit, SIGNAL_TYPE_COMPLEX);
+			if (!new_sig)
+				return -1;
+
+			ret = vlist_insert(&h->signals, d->offset + i, new_sig);
+			if (ret)
+				return -1;
+		}
+
+		signal_decref(orig_sig);
 	}
 
 	return 0;
@@ -196,50 +288,29 @@ static int dp_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 	for (unsigned j = 0; j < *cnt; j++) {
 		struct sample *smp = smps[j];
 
-		if (d->index > smp->length)
+		if (d->signal_index > smp->length)
 			continue;
 
-		if (!d->signals) {
-			struct signal *orig_sig, *new_sig;
+		if (d->inverse) {
+			double signal;
+			float complex *coeffs = &smp->data[d->signal_index].z;
 
-			d->signals = alloc(sizeof(struct vlist));
-			d->signals->state = STATE_DESTROYED;
+			dp_istep(d, coeffs, &signal);
 
-			vlist_copy(d->signals, smp->signals);
+			sample_data_remove(smp, d->signal_index, d->fharmonics_len);
+			sample_data_insert(smp, (union signal_data *) &signal, d->offset, 1);
+		}
+		else {
+			double signal = smp->data[d->signal_index].f;
+			float complex coeffs[d->fharmonics_len];
 
-			orig_sig = vlist_at(smp->signals, d->index);
-			if (!orig_sig)
-				return -1;
+			dp_step(d, &signal, coeffs);
 
-			if (d->inverse) {
-				if (orig_sig->type != SIGNAL_TYPE_COMPLEX)
-					return -1;
-			}
-			else {
-				if (orig_sig->type != SIGNAL_TYPE_FLOAT)
-					return -1;
-			}
-
-			new_sig = signal_copy(orig_sig);
-			if (!new_sig)
-				return -1;
-
-			if (d->inverse)
-				new_sig->type = SIGNAL_TYPE_FLOAT;
-			else
-				new_sig->type = SIGNAL_TYPE_COMPLEX;
-
-			int ret = vlist_set(d->signals, d->index, new_sig);
-			if (ret)
-				return ret;
+			sample_data_remove(smp, d->signal_index, 1);
+			sample_data_insert(smp, (union signal_data *) coeffs, d->offset, d->fharmonics_len);
 		}
 
-		smp->signals = d->signals;
-
-		if (d->inverse)
-			dp_istep(d, &smp->data[d->index].z, &smp->data[d->index].f);
-		else
-			dp_step(d, &smp->data[d->index].f, &smp->data[d->index].z);
+		smp->signals = &h->signals;
 	}
 
 	d->t += d->dt;
@@ -252,9 +323,10 @@ static struct plugin p = {
 	.description	= "Transform to/from dynamic phasor domain",
 	.type		= PLUGIN_TYPE_HOOK,
 	.hook		= {
-		.flags		= HOOK_PATH,
+		.flags		= HOOK_PATH | HOOK_NODE_READ | HOOK_NODE_WRITE,
 		.priority	= 99,
 		.init		= dp_init,
+		.init_signals	= dp_prepare,
 		.destroy	= dp_destroy,
 		.start		= dp_start,
 		.stop		= dp_stop,

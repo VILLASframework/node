@@ -29,43 +29,129 @@
 #include <villas/hook.h>
 #include <villas/plugin.h>
 #include <villas/sample.h>
+#include <villas/bitset.h>
 
 struct average {
-	int mask;
 	int offset;
+
+	struct bitset mask;
+	struct vlist signal_names;
 };
+
+static int average_init(struct hook *h)
+{
+	int ret;
+	struct average *a = (struct average *) h->_vd;
+
+	ret = vlist_init(&a->signal_names);
+	if (ret)
+		return ret;
+
+	ret = bitset_init(&a->mask, 128);
+	if (ret)
+		return ret;
+
+	bitset_clear_all(&a->mask);
+
+	return 0;
+}
+
+static int average_destroy(struct hook *h)
+{
+	int ret;
+	struct average *a = (struct average *) h->_vd;
+
+	ret = vlist_destroy(&a->signal_names, NULL, true);
+	if (ret)
+		return ret;
+
+	ret = bitset_destroy(&a->mask);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+static int average_prepare(struct hook *h)
+{
+	int ret;
+	struct average *a = (struct average *) h->_vd;
+	struct signal *avg_sig;
+
+	/* Setup mask */
+	for (size_t i = 0; i < vlist_length(&a->signal_names); i++) {
+		char *signal_name = (char *) vlist_at_safe(&a->signal_names, i);
+
+		int index = vlist_lookup_index(&a->signal_names, signal_name);
+		if (index < 0)
+			return -1;
+
+		bitset_set(&a->mask, index);
+	}
+
+	/* Add averaged signal */
+	avg_sig = signal_create("average", NULL, SIGNAL_TYPE_FLOAT);
+	if (!avg_sig)
+		return -1;
+
+	ret = vlist_insert(&h->signals, a->offset, avg_sig);
+	if (ret)
+		return ret;
+
+	return 0;
+}
 
 static int average_parse(struct hook *h, json_t *cfg)
 {
-	struct average *p = (struct average *) h->_vd;
+	struct average *a = (struct average *) h->_vd;
 
 	int ret;
+	size_t i;
 	json_error_t err;
+	json_t *json_signals, *json_signal;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s: i }",
-		"offset", &p->offset,
-		"mask", &p->mask
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: i, s: o }",
+		"offset", &a->offset,
+		"signals", &json_signals
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of hook '%s'", hook_type_name(h->_vt));
+
+	if (!json_is_array(json_signals))
+		error("Setting 'signals' of hook '%s' must be a list of signal names", hook_type_name(h->_vt));
+
+	json_array_foreach(json_signals, i, json_signal) {
+		switch (json_typeof(json_signal)) {
+			case JSON_STRING:
+				vlist_push(&a->signal_names, strdup(json_string_value(json_signal)));
+				break;
+
+			case JSON_INTEGER:
+				bitset_set(&a->mask, json_integer_value(json_signal));
+				break;
+
+			default:
+				error("Invalid value for setting 'signals' in hook '%s'", hook_type_name(h->_vt));
+		}
+	}
 
 	return 0;
 }
 
 static int average_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	struct average *p = (struct average *) h->_vd;
+	struct average *a = (struct average *) h->_vd;
 
 	for (int i = 0; i < *cnt; i++) {
 		struct sample *smp = smps[i];
-		double sum = 0;
+		double avg, sum = 0;
 		int n = 0;
 
 		for (int k = 0; k < smp->length; k++) {
-			if (!(p->mask & (1 << k)))
+			if (!bitset_test(&a->mask, k))
 				continue;
 
-			switch (sample_format(smps[i], k)) {
+			switch (sample_format(smp, k)) {
 				case SIGNAL_TYPE_INTEGER:
 					sum += smp->data[k].i;
 					break;
@@ -84,7 +170,9 @@ static int average_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 			n++;
 		}
 
-		smp->data[p->offset].f = sum / n;
+		avg = n == 0 ? 0 : sum / n;
+		sample_data_insert(smp, (union signal_data *) &avg, a->offset, 1);
+		smp->signals = &h->signals;
 	}
 
 	return 0;
@@ -99,6 +187,9 @@ static struct plugin p = {
 		.priority	= 99,
 		.parse		= average_parse,
 		.process	= average_process,
+		.init		= average_init,
+		.init_signals	= average_prepare,
+		.destroy	= average_destroy,
 		.size		= sizeof(struct average)
 	}
 };

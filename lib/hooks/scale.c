@@ -31,63 +31,105 @@
 #include <villas/sample.h>
 
 struct scale {
+	char *signal_name;
+	int signal_index;
+
 	double scale;
 	double offset;
 };
 
 static int scale_init(struct hook *h)
 {
-	struct scale *p = (struct scale *) h->_vd;
+	struct scale *s = (struct scale *) h->_vd;
 
-	p->scale = 1;
-	p->offset = 0;
+	s->scale = 1;
+	s->offset = 0;
+
+	return 0;
+}
+
+static int scale_prepare(struct hook *h)
+{
+	struct scale *s = (struct scale *) h->_vd;
+
+	if (s->signal_name) {
+		s->signal_index = vlist_lookup_index(&h->signals, s->signal_name);
+		if (s->signal_index < 0)
+			return -1;
+	}
+
+	return 0;
+}
+
+static int scale_destroy(struct hook *h)
+{
+	struct scale *s = (struct scale *) h->_vd;
+
+	if (s->signal_name)
+		free(s->signal_name);
 
 	return 0;
 }
 
 static int scale_parse(struct hook *h, json_t *cfg)
 {
-	struct scale *p = (struct scale *) h->_vd;
+	struct scale *s = (struct scale *) h->_vd;
 
 	int ret;
+	json_t *json_signal;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: F, s?: F }",
-		"scale", &p->scale,
-		"offset", &p->offset
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: F, s?: F, s: o }",
+		"scale", &s->scale,
+		"offset", &s->offset,
+		"signal", &json_signal
 	);
 	if (ret)
 		jerror(&err, "Failed to parse configuration of hook '%s'", hook_type_name(h->_vt));
+
+	switch (json_typeof(json_signal)) {
+		case JSON_STRING:
+			s->signal_name = strdup(json_string_value(json_signal));
+			break;
+
+		case JSON_INTEGER:
+			s->signal_name = NULL;
+			s->signal_index = json_integer_value(json_signal);
+			break;
+
+		default:
+			error("Invalid value for setting 'signal' in hook '%s'", hook_type_name(h->_vt));
+	}
 
 	return 0;
 }
 
 static int scale_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 {
-	struct scale *p = (struct scale *) h->_vd;
+	struct scale *s = (struct scale *) h->_vd;
 
 	for (int i = 0; i < *cnt; i++) {
-		for (int k = 0; k < smps[i]->length; k++) {
+		struct sample *smp = smps[i];
+		int k = s->signal_index;
 
-			switch (sample_format(smps[i], k)) {
-				case SIGNAL_TYPE_INTEGER:
-					smps[i]->data[k].i = smps[i]->data[k].i * p->scale + p->offset;
-					break;
+		switch (sample_format(smp, k)) {
+			case SIGNAL_TYPE_INTEGER:
+				smp->data[k].i = smp->data[k].i * s->scale + s->offset;
+				break;
 
-				case SIGNAL_TYPE_FLOAT:
-					smps[i]->data[k].f = smps[i]->data[k].f * p->scale + p->offset;
-					break;
+			case SIGNAL_TYPE_FLOAT:
+				smp->data[k].f = smp->data[k].f * s->scale + s->offset;
+				break;
 
-				case SIGNAL_TYPE_COMPLEX:
-					smps[i]->data[k].z = smps[i]->data[k].z * p->scale + p->offset;
-					break;
+			case SIGNAL_TYPE_COMPLEX:
+				smp->data[k].z = smp->data[k].z * s->scale + s->offset;
+				break;
 
-				case SIGNAL_TYPE_BOOLEAN:
-					smps[i]->data[k].b = smps[i]->data[k].b * p->scale + p->offset;
-					break;
+			case SIGNAL_TYPE_BOOLEAN:
+				smp->data[k].b = smp->data[k].b * s->scale + s->offset;
+				break;
 
-				default: { }
-			}
+			default: { }
 		}
 	}
 
@@ -102,6 +144,8 @@ static struct plugin p = {
 		.flags		= HOOK_PATH,
 		.priority	= 99,
 		.init		= scale_init,
+		.init_signals	= scale_prepare,
+		.destroy	= scale_destroy,
 		.parse		= scale_parse,
 		.process	= scale_process,
 		.size		= sizeof(struct scale)
