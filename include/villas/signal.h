@@ -111,6 +111,7 @@ int signal_list_destroy(struct vlist *list);
 int signal_list_parse(struct vlist *list, json_t *cfg);
 int signal_list_generate(struct vlist *list, unsigned len, enum signal_type fmt);
 void signal_list_dump(const struct vlist *list, const union signal_data *data, int len);
+int signal_list_copy(struct vlist *dst, const struct vlist *src);
 
 enum signal_type signal_type_from_str(const char *str);
 
