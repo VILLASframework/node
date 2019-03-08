@@ -218,7 +218,7 @@ int SuperNode::parseJson(json_t *j)
 			const char *type;
 
 			ret = node_is_valid_name(name);
-			if (ret)
+			if (!ret)
 				throw RuntimeError("Invalid name for node: {}", name);
 
 			ret = json_unpack_ex(json_node, &err, 0, "{ s: s }", "type", &type);
@@ -266,7 +266,7 @@ parse:			path *p = (path *) alloc(sizeof(path));
 			if (p->reverse) {
 				/* Only simple paths can be reversed */
 				ret = path_is_simple(p);
-				if (ret)
+				if (!ret)
 					throw RuntimeError("Complex paths can not be reversed!");
 
 				/* Parse a second time with in/out reversed */
@@ -356,18 +356,12 @@ void SuperNode::startNodes()
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct node *) vlist_at(&nodes, i);
 
-		ret = node_init2(n);
-		if (ret)
-			throw RuntimeError("Failed to prepare node: {}", node_name(n));
+		if (!node_is_enabled(n))
+			continue;
 
-		int refs = vlist_count(&paths, (cmp_cb_t) path_uses_node, n);
-		if (refs > 0) {
-			ret = node_start(n);
-			if (ret)
-				throw RuntimeError("Failed to start node: {}", node_name(n));
-		}
-		else
-			logger->warn("No path is using the node {}. Skipping...", node_name(n));
+		ret = node_start(n);
+		if (ret)
+			throw RuntimeError("Failed to start node: {}", node_name(n));
 	}
 }
 
@@ -378,21 +372,54 @@ void SuperNode::startPaths()
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
 		auto *p = (struct path *) vlist_at(&paths, i);
 
-		if (p->enabled) {
-			ret = path_init2(p);
-			if (ret)
-				throw RuntimeError("Failed to prepare path: {}", path_name(p));
+		if (!path_is_enabled(p))
+			continue;
 
-			ret = path_start(p);
-			if (ret)
-				throw RuntimeError("Failed to start path: {}", path_name(p));
-		}
-		else
-			logger->warn("Path {} is disabled. Skipping...", path_name(p));
+		ret = path_start(p);
+		if (ret)
+			throw RuntimeError("Failed to start path: {}", path_name(p));
 	}
 }
 
-void SuperNode::start()
+void SuperNode::prepareNodes()
+{
+	int ret, refs;
+
+	for (size_t i = 0; i < vlist_length(&nodes); i++) {
+		auto *n = (struct node *) vlist_at(&nodes, i);
+
+		refs = vlist_count(&paths, (cmp_cb_t) path_uses_node, n);
+		if (refs <= 0) {
+			logger->warn("No path is using the node {}. Skipping...", node_name(n));
+			n->enabled = false;
+		}
+
+		if (!node_is_enabled(n))
+			continue;
+
+		ret = node_prepare(n);
+		if (ret)
+			throw RuntimeError("Failed to prepare node: {}", node_name(n));
+	}
+}
+
+void SuperNode::preparePaths()
+{
+	int ret;
+
+	for (size_t i = 0; i < vlist_length(&paths); i++) {
+		auto *p = (struct path *) vlist_at(&paths, i);
+
+		if (!path_is_enabled(p))
+			continue;
+
+		ret = path_prepare(p);
+		if (ret)
+			throw RuntimeError("Failed to prepare path: {}", path_name(p));
+	}
+}
+
+void SuperNode::prepare()
 {
 	int ret;
 
@@ -403,6 +430,18 @@ void SuperNode::start()
 		throw RuntimeError("Failed to initialize memory system");
 
 	kernel::rt::init(priority, affinity);
+
+	prepareNodes();
+	preparePaths();
+
+	state = STATE_PREPARED;
+}
+
+void SuperNode::start()
+{
+	int ret;
+
+	assert(state == STATE_PREPARED);
 
 #ifdef WITH_API
 	api.start();

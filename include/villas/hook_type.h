@@ -1,6 +1,6 @@
 /** Hook funktions
  *
- * Every path can register a hook function which is called for every received
+ * Every path or node can register a hook function which is called for every received
  * message. This can be used to debug the data flow, get statistics
  * or alter the message.
  *
@@ -62,11 +62,13 @@ struct hook_type {
 
 	int (*parse)(struct hook *h, json_t *cfg);
 
-	int (*init)(struct hook *h);	/**< Called before path is started to parsed. */
+	int (*init)(struct hook *h);	/**< Called before hook is started to parsed. */
 	int (*destroy)(struct hook *h);	/**< Called after path has been stopped to release memory allocated by HOOK_INIT */
 
-	int (*start)(struct hook *h);	/**< Called whenever a path is started; before threads are created. */
-	int (*stop)(struct hook *h);	/**< Called whenever a path is stopped; after threads are destoyed. */
+	int (*init_signals)(struct hook *h);
+
+	int (*start)(struct hook *h);	/**< Called whenever a hook is started; before threads are created. */
+	int (*stop)(struct hook *h);	/**< Called whenever a hook is stopped; after threads are destoyed. */
 
 	int (*periodic)(struct hook *h);/**< Called periodically. Period is set by global 'stats' option in the configuration file. */
 	int (*restart)(struct hook *h);	/**< Called whenever a new simulation case is started. This is detected by a sequence no equal to zero. */

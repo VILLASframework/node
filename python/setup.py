@@ -13,7 +13,7 @@ setup(
     description = 'Python-support for VILLASnode simulation-data gateway',
     license = 'GPL-3.0',
     keywords = 'simulation power system real-time villas',
-    url = 'https://git.rwth-aachen.de/acs/public/villas/dataprocessing',
+    url = 'https://git.rwth-aachen.de/acs/public/villas/VILLASnode',
     packages = [ 'villas.node' ],
     long_description = long_description,
     long_description_content_type = 'text/markdown',

@@ -184,6 +184,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		throw RuntimeError("Failed to verify configuration");
 
+	sn.prepare();
 	sn.start();
 	sn.run();
 	sn.stop();

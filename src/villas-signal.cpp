@@ -109,7 +109,7 @@ json_t * parse_cli(int argc, char *argv[])
 		continue;
 
 check:		if (optarg == endptr)
-			logger->warn("Failed to parse parse option argument '-%c %s'", c, optarg);
+			logger->warn("Failed to parse parse option argument '-{} {}'", c, optarg);
 	}
 
 	if (argc != optind + 1)
@@ -237,7 +237,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		throw RuntimeError("Failed to initialize pool");
 
-	ret = node_init2(&n);
+	ret = node_prepare(&n);
 	if (ret)
 		throw RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
 

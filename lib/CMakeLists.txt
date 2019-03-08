@@ -46,10 +46,13 @@ set(LIB_SRC
     memory/managed.c
     sample.c
     path.c
+    path_source.c
+    path_destination.c
     node.c
+    node_type.c
+    node_direction.c
     memory.c
     plugin.c
-    node_type.c
     stats.c
     mapping.c
     shmem.c

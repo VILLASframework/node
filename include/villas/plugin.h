@@ -53,7 +53,7 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {\
 }								\
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {	\
 	if (plugins.state != STATE_DESTROYED)			\
-		vlist_remove(&plugins, p);			\
+		vlist_remove_all(&plugins, p);			\
 }
 
 extern struct vlist plugins;

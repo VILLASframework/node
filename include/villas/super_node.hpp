@@ -88,9 +88,13 @@ public:
 	int check();
 
 	/** Initialize after parsing the configuration file. */
+	void prepare();
 	void start();
 	void stop();
 	void run();
+
+	void preparePaths();
+	void prepareNodes();
 
 	void startPaths();
 	void startNodes();

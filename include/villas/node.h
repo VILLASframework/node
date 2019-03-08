@@ -33,6 +33,7 @@
 #include <jansson.h>
 
 #include <villas/node_type.h>
+#include <villas/node_direction.h>
 #include <villas/sample.h>
 #include <villas/list.h>
 #include <villas/queue.h>
@@ -52,17 +53,6 @@ extern "C" {
   struct rtnl_cls;
 #endif /* WITH_NETEM */
 
-struct node_direction {
-	int enabled;
-	int builtin;		/**< This node should use built-in hooks by default. */
-	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
-
-	struct vlist hooks;	/**< List of write hooks (struct hook). */
-	struct vlist signals;	/**< Signal description. */
-
-	json_t *cfg;		/**< A JSON object containing the configuration of the node. */
-};
-
 /** The data structure for a node.
  *
  * Every entity which exchanges messages is represented by a node.
@@ -70,6 +60,7 @@ struct node_direction {
  */
 struct node {
 	char *name;		/**< A short identifier of the node, only used for configuration and logging */
+	int enabled;
 
 	enum state state;
 
@@ -103,7 +94,7 @@ struct node {
 int node_init(struct node *n, struct node_type *vt);
 
 /** Do initialization after parsing the configuration */
-int node_init2(struct node *n);
+int node_prepare(struct node *n);
 
 /** Parse settings of a node.
  *
@@ -123,7 +114,7 @@ int node_parse(struct node *n, json_t *cfg, const char *name);
  * @param nodes The nodes will be added to this list.
  * @param all This list contains all valid nodes.
  */
-int node_parse_list(struct vlist *list, json_t *cfg, struct vlist *all);
+int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all);
 
 /** Parse the list of signal definitions. */
 int node_parse_signals(struct vlist *list, json_t *cfg);
@@ -199,11 +190,19 @@ int node_poll_fds(struct node *n, int fds[]);
 
 int node_netem_fds(struct node *n, int fds[]);
 
-struct node_type * node_type(struct node *n);
+static inline
+struct node_type * node_type(struct node *n)
+{
+	return n->_vt;
+}
 
 struct memory_type * node_memory_type(struct node *n, struct memory_type *parent);
 
-int node_is_valid_name(const char *name);
+bool node_is_valid_name(const char *name);
+
+bool node_is_enabled(const struct node *n);
+
+struct vlist * node_get_signals(struct node *n, enum node_dir dir);
 
 #ifdef __cplusplus
 }

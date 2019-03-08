@@ -174,8 +174,7 @@ int ib_parse(struct node *n, json_t *cfg)
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 
 	int ret;
-	char *local = NULL;
-	char *remote = NULL;
+	char *local = NULL, *remote = NULL, *lasts;
 	const char *transport_mode = "RC";
 	int timeout = 1000;
 	int recv_cq_size = 128;
@@ -255,8 +254,8 @@ int ib_parse(struct node *n, json_t *cfg)
 	debug(LOG_IB | 4, "Set buffer subtraction to %i in node %s", buffer_subtraction, node_name(n));
 
 	// Translate IP:PORT to a struct addrinfo
-	char* ip_adr = strtok(local, ":");
-	char* port = strtok(NULL, ":");
+	char* ip_adr = strtok_r(local, ":", &lasts);
+	char* port = strtok_r(NULL, ":", &lasts);
 
 	ret = getaddrinfo(ip_adr, port, NULL, &ib->conn.src_addr);
 	if (ret)
@@ -327,8 +326,8 @@ int ib_parse(struct node *n, json_t *cfg)
 	// If node will send data, set remote address
 	if (ib->is_source) {
 		// Translate address info
-		char* ip_adr = strtok(remote, ":");
-		char* port = strtok(NULL, ":");
+		char *ip_adr = strtok_r(remote, ":", &lasts);
+		char *port = strtok_r(NULL, ":", &lasts);
 
 		ret = getaddrinfo(ip_adr, port, NULL, &ib->conn.dst_addr);
 		if (ret)

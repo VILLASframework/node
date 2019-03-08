@@ -210,6 +210,28 @@ int signal_parse(struct signal *s, json_t *cfg)
 
 /* Signal list */
 
+int signal_list_init(struct vlist *list)
+{
+	int ret;
+
+	ret = vlist_init(list);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
+int signal_list_destroy(struct vlist *list)
+{
+	int ret;
+
+	ret = vlist_destroy(list, (dtor_cb_t) signal_decref, false);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
 int signal_list_parse(struct vlist *list, json_t *cfg)
 {
 	int ret;
@@ -283,6 +305,22 @@ void signal_list_dump(const struct vlist *list, const union signal_data *data, i
 		debug(5, "%s", buf);
 		free(buf);
 	}
+}
+
+int signal_list_copy(struct vlist *dst, const struct vlist *src)
+{
+	assert(src->state == STATE_INITIALIZED);
+	assert(dst->state == STATE_INITIALIZED);
+
+	for (size_t i = 0; i < vlist_length(src); i++) {
+		struct signal *s = (struct signal *) vlist_at_safe(src, i);
+
+		signal_incref(s);
+
+		vlist_push(dst, s);
+	}
+
+	return 0;
 }
 
 /* Signal type */

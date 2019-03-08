@@ -194,6 +194,10 @@ check:		if (optarg == endptr)
 	if (ret)
 		throw RuntimeError("Failed to parse hook config");
 
+	ret = hook_prepare(&h, io.signals);
+	if (ret)
+		throw RuntimeError("Failed to prepare hook");
+
 	ret = hook_start(&h);
 	if (ret)
 		throw RuntimeError("Failed to start hook");
@@ -215,7 +219,9 @@ check:		if (optarg == endptr)
 
 		unsigned send = recv;
 
-		hook_process(&h, smps, (unsigned *) &send);
+		ret = hook_process(&h, smps, (unsigned *) &send);
+		if (ret < 0)
+			throw RuntimeError("Failed to process samples");
 
 		sent = io_print(&io, smps, send);
 		if (sent < 0)

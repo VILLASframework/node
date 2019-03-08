@@ -26,6 +26,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 /**
  * @addtogroup hooks User-defined hook functions
  * @ingroup path
@@ -35,6 +36,7 @@
 #pragma once
 
 #include <villas/hook_type.h>
+#include <villas/list.h>
 #include <villas/common.h>
 
 #ifdef __cplusplus
@@ -44,7 +46,6 @@ extern "C" {
 /* Forward declarations */
 struct path;
 struct sample;
-struct vlist;
 
 /** Descriptor for user defined hooks. See hooks[]. */
 struct hook {
@@ -56,6 +57,8 @@ struct hook {
 	struct path *path;
 	struct node *node;
 
+	struct vlist signals;
+
 	struct hook_type *_vt;	/**< C++ like Vtable pointer. */
 	void *_vd;		/**< Private data for this hook. This pointer can be used to pass data between consecutive calls of the callback. */
 
@@ -63,23 +66,37 @@ struct hook {
 };
 
 int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node *n);
-int hook_init_builtin_list(struct vlist *l, bool builtin, int mask, struct path *p, struct node *n);
+
+int hook_init_signals(struct hook *h, struct vlist *signals);
 
 int hook_parse(struct hook *h, json_t *cfg);
+
+int hook_prepare(struct hook *h, struct vlist *signals);
 
 int hook_destroy(struct hook *h);
 
 int hook_start(struct hook *h);
+
 int hook_stop(struct hook *h);
 
 int hook_periodic(struct hook *h);
+
 int hook_restart(struct hook *h);
 
 int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt);
-int hook_process_list(struct vlist *hs, struct sample *smps[], unsigned cnt);
 
 /** Compare two hook functions with their priority. Used by vlist_sort() */
 int hook_cmp_priority(const void *a, const void *b);
+
+static inline
+struct hook_type * hook_type(struct hook *h)
+{
+	return h->_vt;
+}
+
+int hook_list_init(struct vlist *hs);
+
+int hook_list_destroy(struct vlist *hs);
 
 /** Parses an object of hooks
  *
@@ -95,7 +112,15 @@ int hook_cmp_priority(const void *a, const void *b);
  *    hooks = [ "print" ]
  * }
  */
-int hook_parse_list(struct vlist *list, json_t *cfg, int mask, struct path *p, struct node *n);
+int hook_list_parse(struct vlist *hs, json_t *cfg, int mask, struct path *p, struct node *n);
+
+int hook_list_prepare(struct vlist *hs, struct vlist *sigs, int mask, struct path *p, struct node *n);
+
+int hook_list_prepare_signals(struct vlist *hs, struct vlist *signals);
+
+int hook_list_add(struct vlist *hs, int mask, struct path *p, struct node *n);
+
+int hook_list_process(struct vlist *hs, struct sample *smps[], unsigned cnt);
 
 #ifdef __cplusplus
 }

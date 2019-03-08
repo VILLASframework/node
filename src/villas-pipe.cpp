@@ -395,7 +395,7 @@ check:		if (optarg == endptr)
 	if (ret)
 		throw RuntimeError("Invalid node configuration");
 
-	ret = node_init2(node);
+	ret = node_prepare(node);
 	if (ret)
 		throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 

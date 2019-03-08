@@ -40,7 +40,7 @@ int influxdb_parse(struct node *n, json_t *json)
 	json_error_t err;
 	int ret;
 
-	char *tmp, *host, *port;
+	char *tmp, *host, *port, *lasts;
 	const char *server, *key;
 
 	ret = json_unpack_ex(json, &err, 0, "{ s: s, s: s, s?: o }",
@@ -52,8 +52,8 @@ int influxdb_parse(struct node *n, json_t *json)
 
 	tmp = strdup(server);
 
-	host = strtok(tmp, ":");
-	port = strtok(NULL, "");
+	host = strtok_r(tmp, ":", &lasts);
+	port = strtok_r(NULL, "", &lasts);
 
 	i->key = strdup(key);
 	i->host = strdup(host);

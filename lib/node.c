@@ -41,177 +41,6 @@
   #include <villas/kernel/tc_netem.h>
 #endif /* WITH_NETEM */
 
-static int node_direction_init2(struct node_direction *nd, struct node *n)
-{
-#ifdef WITH_HOOKS
-	int ret;
-	int m = nd == &n->out
-		? HOOK_NODE_WRITE
-		: HOOK_NODE_READ;
-
-	/* Add internal hooks if they are not already in the list */
-	ret = hook_init_builtin_list(&nd->hooks, nd->builtin, m, NULL, n);
-	if (ret)
-		return ret;
-
-	/* We sort the hooks according to their priority before starting the path */
-	vlist_sort(&nd->hooks, hook_cmp_priority);
-#endif /* WITH_HOOKS */
-
-	return 0;
-}
-
-static int node_direction_init(struct node_direction *nd, struct node *n)
-{
-	int ret;
-
-	nd->enabled = 1;
-	nd->vectorize = 1;
-	nd->builtin = 1;
-
-	nd->hooks.state = STATE_DESTROYED;
-	nd->signals.state = STATE_DESTROYED;
-
-#ifdef WITH_HOOKS
-	ret = vlist_init(&nd->hooks);
-	if (ret)
-		return ret;
-#endif /* WITH_HOOKS */
-
-	ret = vlist_init(&nd->signals);
-	if (ret)
-		return ret;
-
-	return 0;
-}
-
-static int node_direction_destroy(struct node_direction *nd, struct node *n)
-{
-	int ret = 0;
-
-#ifdef WITH_HOOKS
-	ret = vlist_destroy(&nd->hooks, (dtor_cb_t) hook_destroy, true);
-	if (ret)
-		return ret;
-#endif /* WITH_HOOKS */
-
-	ret = vlist_destroy(&nd->signals, (dtor_cb_t) signal_decref, false);
-	if (ret)
-		return ret;
-
-	return ret;
-}
-
-static int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
-{
-	int ret;
-
-	json_error_t err;
-	json_t *json_hooks = NULL;
-	json_t *json_signals = NULL;
-
-	nd->cfg = cfg;
-
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: i, s?: b, s?: b }",
-		"hooks", &json_hooks,
-		"signals", &json_signals,
-		"vectorize", &nd->vectorize,
-		"builtin", &nd->builtin,
-		"enabled", &nd->enabled
-	);
-	if (ret)
-		jerror(&err, "Failed to parse node %s", node_name(n));
-
-	if (n->_vt->flags & NODE_TYPE_PROVIDES_SIGNALS) {
-		if (json_signals)
-			error("Node %s does not support signal definitions", node_name(n));
-	}
-	else if (json_is_array(json_signals)) {
-		ret = signal_list_parse(&nd->signals, json_signals);
-		if (ret)
-			error("Failed to parse signal definition of node %s", node_name(n));
-	}
-	else {
-		int count = DEFAULT_SAMPLE_LENGTH;
-		const char *type_str = "float";
-
-		if (json_is_object(json_signals)) {
-			json_unpack_ex(json_signals, &err, 0, "{ s: i, s: s }",
-				"count", &count,
-				"type", &type_str
-			);
-		}
-		else
-			warning("No signal definition found for node %s. Using the default config of %d floating point signals.", node_name(n), DEFAULT_SAMPLE_LENGTH);
-
-		int type = signal_type_from_str(type_str);
-		if (type < 0)
-			error("Invalid signal type %s", type_str);
-
-		signal_list_generate(&nd->signals, count, type);
-	}
-
-#ifdef WITH_HOOKS
-	int m = nd == &n->out
-		? HOOK_NODE_WRITE
-		: HOOK_NODE_READ;
-
-	if (json_hooks) {
-		ret = hook_parse_list(&nd->hooks, json_hooks, m, NULL, n);
-		if (ret < 0)
-			return ret;
-	}
-#endif /* WITH_HOOKS */
-
-	return 0;
-}
-
-static int node_direction_check(struct node_direction *nd, struct node *n)
-{
-	if (nd->vectorize <= 0)
-		error("Invalid setting 'vectorize' with value %d for node %s. Must be natural number!", nd->vectorize, node_name(n));
-
-	if (node_type(n)->vectorize && node_type(n)->vectorize < nd->vectorize)
-		error("Invalid value for setting 'vectorize'. Node type requires a number smaller than %d!",
-			node_type(n)->vectorize);
-
-	return 0;
-}
-
-static int node_direction_start(struct node_direction *nd, struct node *n)
-{
-#ifdef WITH_HOOKS
-	int ret;
-
-	for (size_t i = 0; i < vlist_length(&nd->hooks); i++) {
-		struct hook *h = (struct hook *) vlist_at(&nd->hooks, i);
-
-		ret = hook_start(h);
-		if (ret)
-			return ret;
-	}
-#endif /* WITH_HOOKS */
-
-	return 0;
-}
-
-static int node_direction_stop(struct node_direction *nd, struct node *n)
-{
-#ifdef WITH_HOOKS
-	int ret;
-
-	for (size_t i = 0; i < vlist_length(&nd->hooks); i++) {
-		struct hook *h = (struct hook *) vlist_at(&nd->hooks, i);
-
-		ret = hook_stop(h);
-		if (ret)
-			return ret;
-	}
-#endif /* WITH_HOOKS */
-
-	return 0;
-}
-
 int node_init(struct node *n, struct node_type *vt)
 {
 	int ret;
@@ -224,6 +53,7 @@ int node_init(struct node *n, struct node_type *vt)
 	n->name = NULL;
 	n->_name = NULL;
 	n->_name_long = NULL;
+	n->enabled = 1;
 
 #ifdef __linux__
 	n->fwmark = -1;
@@ -235,11 +65,11 @@ int node_init(struct node *n, struct node_type *vt)
 #endif /* WITH_NETEM */
 
 	/* Default values */
-	ret = node_direction_init(&n->in, n);
+	ret = node_direction_init(&n->in, NODE_DIR_IN, n);
 	if (ret)
 		return ret;
 
-	ret = node_direction_init(&n->out, n);
+	ret = node_direction_init(&n->out, NODE_DIR_OUT, n);
 	if (ret)
 		return ret;
 
@@ -254,19 +84,21 @@ int node_init(struct node *n, struct node_type *vt)
 	return 0;
 }
 
-int node_init2(struct node *n)
+int node_prepare(struct node *n)
 {
 	int ret;
 
 	assert(n->state == STATE_CHECKED);
 
-	ret = node_direction_init2(&n->in, n);
+	ret = node_direction_prepare(&n->in, n);
 	if (ret)
 		return ret;
 
-	ret = node_direction_init2(&n->out, n);
+	ret = node_direction_prepare(&n->out, n);
 	if (ret)
 		return ret;
+
+	n->state = STATE_PREPARED;
 
 	return 0;
 }
@@ -284,8 +116,9 @@ int node_parse(struct node *n, json_t *json, const char *name)
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: { s?: o } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: b, s?: { s?: o } }",
 		"type", &type,
+		"enabled", &n->enabled,
 		"in",
 			"signals", &json_signals
 	);
@@ -389,7 +222,7 @@ int node_start(struct node *n)
 {
 	int ret;
 
-	assert(n->state == STATE_CHECKED);
+	assert(n->state == STATE_PREPARED);
 	assert(node_type(n)->state == STATE_STARTED);
 
 	info("Starting node %s", node_name_long(n));
@@ -498,9 +331,8 @@ int node_restart(struct node *n)
 
 	info("Restarting node %s", node_name(n));
 
-	if (node_type(n)->restart) {
+	if (node_type(n)->restart)
 		ret = node_type(n)->restart(n);
-	}
 	else {
 		ret = node_type(n)->stop ? node_type(n)->stop(n) : 0;
 		if (ret)
@@ -533,7 +365,7 @@ int node_destroy(struct node *n)
 			return ret;
 	}
 
-	vlist_remove(&node_type(n)->instances, n);
+	vlist_remove_all(&node_type(n)->instances, n);
 
 	if (n->_vd)
 		free(n->_vd);
@@ -586,7 +418,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 
 #ifdef WITH_HOOKS
 	/* Run read hooks */
-	int rread = hook_process_list(&n->in.hooks, smps, nread);
+	int rread = hook_list_process(&n->in.hooks, smps, nread);
 	int skipped = nread - rread;
 
 	if (skipped > 0 && n->stats != NULL) {
@@ -616,7 +448,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 #ifdef WITH_HOOKS
 	/* Run write hooks */
-	cnt = hook_process_list(&n->out.hooks, smps, cnt);
+	cnt = hook_list_process(&n->out.hooks, smps, cnt);
 	if (cnt <= 0)
 		return cnt;
 #endif /* WITH_HOOKS */
@@ -647,7 +479,7 @@ int node_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 char * node_name(struct node *n)
 {
 	if (!n->_name)
-		strcatf(&n->_name, CLR_RED("%s") "(" CLR_YEL("%s") ")", n->name, node_type_name(n->_vt));
+		strcatf(&n->_name, CLR_RED("%s") "(" CLR_YEL("%s") ")", n->name, node_type_name(node_type(n)));
 
 	return n->_name;
 }
@@ -704,19 +536,12 @@ int node_netem_fds(struct node *n, int fds[])
 	return node_type(n)->netem_fds ? node_type(n)->netem_fds(n, fds) : -1;
 }
 
-struct node_type * node_type(struct node *n)
-{
-	assert(n->state != STATE_DESTROYED);
-
-	return n->_vt;
-}
-
 struct memory_type * node_memory_type(struct node *n, struct memory_type *parent)
 {
 	return node_type(n)->memory_type ? node_type(n)->memory_type(n, parent) : &memory_hugepage;
 }
 
-int node_parse_list(struct vlist *list, json_t *cfg, struct vlist *all)
+int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all)
 {
 	struct node *node;
 	const char *str;
@@ -771,14 +596,26 @@ invalid2:
 	return 0;
 }
 
-int node_is_valid_name(const char *name)
+bool node_is_valid_name(const char *name)
 {
 	for (const char *p = name; *p; p++) {
 		if (isalnum(*p) || (*p == '_') || (*p == '-'))
 			continue;
 
-		return -1;
+		return false;
 	}
 
-	return 0;
+	return true;
+}
+
+bool node_is_enabled(const struct node *n)
+{
+	return n->enabled;
+}
+
+struct vlist * node_get_signals(struct node *n, enum node_dir dir)
+{
+	struct node_direction *nd = dir == NODE_DIR_IN ? &n->in : &n->out;
+
+	return node_direction_get_signals(nd);
 }

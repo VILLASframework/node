@@ -1,4 +1,6 @@
-# CMakeLists.
+#!/bin/bash
+#
+# Integration test for dp hook.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
@@ -18,33 +20,36 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-###################################################################################
+##################################################################################
 
-set(HOOK_SRC
-    decimate.c
-    drop.c
-    jitter_calc.c
-    restart.c
-    shift_seq.c
-    shift_ts.c
-    skip_first.c
-    stats.c
-    ts.c
-    limit_rate.c
-    scale.c
-    fix.c
-    cast.c
-    average.c
-    dump.c
-    dp.c
-)
+set -x
 
-if(WITH_IO)
-    list(APPEND HOOK_SRC
-        print.c
-    )
-endif()
+#INPUT_FILE=$(mktemp)
+#OUTPUT_FILE=$(mktemp)
+#RECON_FILE=$(mktemp)
 
-add_library(hooks STATIC ${HOOK_SRC})
-target_include_directories(hooks PUBLIC ${INCLUDE_DIRS})
-target_link_libraries(hooks INTERFACE ${LIBRARIES} PUBLIC villas-common)
+INPUT_FILE=in
+OUTPUT_FILE=out
+RECON_FILE=recon
+
+NUM_SAMPLES=10000
+RATE=5000
+F0=50
+
+OPTS="-o f0=${F0} -o rate=${RATE} -o signal=0 -o harmonics=0,1,3,5,7"
+
+villas-signal sine -v1 -l ${NUM_SAMPLES} -f ${F0} -r ${RATE} -n > ${INPUT_FILE}
+
+villas-hook dp -o inverse=false ${OPTS} < ${INPUT_FILE} > ${OUTPUT_FILE}
+
+villas-hook dp -o inverse=true ${OPTS} < ${OUTPUT_FILE} > ${RECON_FILE}
+
+exit 0
+
+# Compare only the data values
+villas-test-cmp ${OUTPUT_FILE} ${EXPECT_FILE}
+RC=$?
+
+rm -f ${INPUT_FILE} ${OUTPUT_FILE} ${EXPECT_FILE}
+
+exit $RC

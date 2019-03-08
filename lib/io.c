@@ -115,7 +115,6 @@ int io_init_auto(struct io *io, const struct format_type *fmt, int len, int flag
 	struct vlist *signals;
 
 	signals = alloc(sizeof(struct vlist));
-
 	signals->state = STATE_DESTROYED;
 
 	ret = vlist_init(signals);
