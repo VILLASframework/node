@@ -613,4 +613,9 @@ bool node_is_enabled(const struct node *n)
 	return n->enabled;
 }
 
+struct vlist * node_get_signals(struct node *n, enum node_dir dir)
+{
+	struct node_direction *nd = dir == NODE_DIR_IN ? &n->in : &n->out;
+
+	return node_direction_get_signals(nd);
 }

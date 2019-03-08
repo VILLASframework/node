@@ -754,3 +754,8 @@ bool path_is_reversed(const struct path *p)
 {
 	return p->reverse;
 }
+
+struct vlist * path_get_signals(struct path *p)
+{
+	return &p->signals;
+}

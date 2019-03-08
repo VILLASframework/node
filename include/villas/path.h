@@ -163,6 +163,8 @@ bool path_is_enabled(const struct path *p);
 
 bool path_is_reversed(const struct path *p);
 
+struct vlist * path_get_signals(struct path *p);
+
 /** @} */
 
 #ifdef __cplusplus
