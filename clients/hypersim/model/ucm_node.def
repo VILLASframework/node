@@ -745,9 +745,8 @@ struct sockaddr_in rec_addr;
 		msg->ts.sec   = htonl(msg->ts.sec);
 		msg->ts.nsec  = htonl(msg->ts.nsec);
 		
-		ret = sendto(sockfds, (char *) msg, sizeof(buf), 0, (struct sockaddr *) &send_addr, sizeof(send_addr));
-}
-				
+		ret = sendto(sockfds, (char *) msg, MSG_LEN(NO_SEND_DATA), 0, (struct sockaddr *) &send_addr, sizeof(send_addr));
+	}
 
 %% END AFTER VOLTAGE CALCULATION CODE
 %%^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
