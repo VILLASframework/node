@@ -133,10 +133,6 @@ ssize_t vlist_index(struct vlist *l, void *value);
 /** Extend the list to the given length by filling new slots with given value. */
 void vlist_extend(struct vlist *l, size_t len, void *val);
 
-/** Shallow copy a list. */
-int vlist_copy(struct vlist *dst, const struct vlist *src);
-
-
 #ifdef __cplusplus
 }
 #endif
