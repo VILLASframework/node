@@ -301,3 +301,20 @@ void sample_dump(struct sample *s)
 	if (s->signals)
 		signal_list_dump(s->signals, s->data, s->length);
 }
+
+void sample_data_insert(struct sample *smp, const union signal_data *src, size_t offset, size_t len)
+{
+	memmove(&smp->data[offset + len], &smp->data[offset], sizeof(smp->data[0]) * (smp->length - offset));
+	memcpy(&smp->data[offset], src, sizeof(smp->data[0]) * len);
+
+	smp->length += len;
+}
+
+void sample_data_remove(struct sample *smp, size_t offset, size_t len)
+{
+	size_t sz = sizeof(smp->data[0]) * len;
+
+	memmove(&smp->data[offset], &smp->data[offset + len], sz);
+
+	smp->length -= len;
+}

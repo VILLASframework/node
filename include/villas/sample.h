@@ -136,6 +136,10 @@ int sample_decref_many(struct sample *smps[], int cnt);
 
 enum signal_type sample_format(const struct sample *s, unsigned idx);
 
+void sample_data_insert(struct sample *smp, const union signal_data *src, size_t offset, size_t len);
+
+void sample_data_remove(struct sample *smp, size_t offset, size_t len);
+
 #ifdef __cplusplus
 }
 #endif
