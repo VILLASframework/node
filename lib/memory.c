@@ -104,7 +104,7 @@ int memory_lock(size_t lock)
 		debug(LOG_MEM | 2, "Increased ressource limit of locked memory to %zd bytes", lock);
 	}
 #endif /* __arm__ */
-
+out:
 #ifdef _POSIX_MEMLOCK
 	/* Lock all current and future memory allocations */
 	ret = mlockall(MCL_CURRENT | MCL_FUTURE);
