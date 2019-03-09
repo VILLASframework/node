@@ -4,8 +4,7 @@ variables:
   PREFIX: /usr/
   RSYNC_OPTS: --recursive --ignore-missing-args --chown ${DEPLOY_USER}:${DEPLOY_USER}
   CRITERION_OPTS: --ignore-warnings
-  DOCKER_TAG: ${CI_COMMIT_TAG}
-  DOCKER_TAG_DEV: ${CI_COMMIT_REF_NAME}
+  DOCKER_TAG: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE: villas/node
   DOCKER_IMAGE_DEV: villas/node-dev
 
@@ -30,7 +29,7 @@ docker-dev:
   script:
     - docker build
         --file packaging/docker/Dockerfile.dev
-        --tag ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV} .
+        --tag ${DOCKER_IMAGE_DEV}:${DOCKER_TAG} .
   tags:
     - shell
     - linux
@@ -49,7 +48,7 @@ build:source:
     name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
     paths:
       - build/
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
     - docker
 
@@ -63,7 +62,7 @@ build:docs:
     - mkdir -p build && cd build
     - cmake ..
     - make doc
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
     - docker
   only:
@@ -84,7 +83,7 @@ build2:packages:
     paths:
       - build/*.tar.gz
       - build/*.rpm
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
     - docker
   only:
@@ -103,7 +102,7 @@ test:unit:
     - mkdir -p build && cd build
     - cmake .. && make unit-tests
     - "tests/unit/unit-tests || true"
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
     - docker
 
@@ -120,7 +119,7 @@ test:integration:
     when: always
     paths:
       - build/tests/integration/
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
     - docker
 
@@ -161,11 +160,11 @@ docker:
   stage: docker
   script:
     - docker build
-        --build-arg BUILDER_IMAGE=${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+        --build-arg BUILDER_IMAGE=${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
         --file packaging/docker/Dockerfile.app
         --tag ${DOCKER_IMAGE}:${DOCKER_TAG} .
     - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
-    - docker push ${DOCKER_IMAGE_DEV}:${DOCKER_TAG_DEV}
+    - docker push ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
     - shell
     - linux
