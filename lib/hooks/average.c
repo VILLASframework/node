@@ -160,7 +160,6 @@ static int average_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 					sum += smp->data[k].f;
 					break;
 
-				case SIGNAL_TYPE_AUTO:
 				case SIGNAL_TYPE_INVALID:
 				case SIGNAL_TYPE_COMPLEX:
 				case SIGNAL_TYPE_BOOLEAN:

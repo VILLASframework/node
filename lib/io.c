@@ -109,7 +109,7 @@ int io_init(struct io *io, const struct format_type *fmt, struct vlist *signals,
 	return 0;
 }
 
-int io_init_auto(struct io *io, const struct format_type *fmt, int len, int flags)
+int io_init2(struct io *io, const struct format_type *fmt, enum signal_type type, int len, int flags)
 {
 	int ret;
 	struct vlist *signals;
@@ -121,7 +121,7 @@ int io_init_auto(struct io *io, const struct format_type *fmt, int len, int flag
 	if (ret)
 		return ret;
 
-	ret = signal_list_generate(signals, len, SIGNAL_TYPE_AUTO);
+	ret = signal_list_generate(signals, len, type);
 	if (ret)
 		return ret;
 
@@ -158,17 +158,6 @@ int io_destroy(struct io *io)
 int io_check(struct io *io)
 {
 	assert(io->state != STATE_DESTROYED);
-
-	for (size_t i = 0; i < vlist_length(io->signals); i++) {
-		struct signal *sig = (struct signal *) vlist_at(io->signals, i);
-
-		if (sig->type == SIGNAL_TYPE_AUTO) {
-			if (io_type(io)->flags & IO_AUTO_DETECT_FORMAT)
-				continue;
-
-			return -1;
-		}
-	}
 
 	io->state = STATE_CHECKED;
 

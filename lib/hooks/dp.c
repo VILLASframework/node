@@ -230,8 +230,7 @@ static int dp_prepare(struct hook *h)
 			if (!orig_sig)
 				return -1;
 
-			/** @todo: SIGNAL_TYPE_AUTO is bad here */
-			if (orig_sig->type != SIGNAL_TYPE_COMPLEX && orig_sig->type != SIGNAL_TYPE_AUTO)
+			if (orig_sig->type != SIGNAL_TYPE_COMPLEX)
 				return -1;
 
 			ret = vlist_remove(&h->signals, d->signal_index + i);
@@ -255,8 +254,7 @@ static int dp_prepare(struct hook *h)
 		if (!orig_sig)
 			return -1;
 
-		/** @todo: SIGNAL_TYPE_AUTO is bad here */
-		if (orig_sig->type != SIGNAL_TYPE_FLOAT && orig_sig->type != SIGNAL_TYPE_AUTO)
+		if (orig_sig->type != SIGNAL_TYPE_FLOAT)
 			return -1;
 
 		ret = vlist_remove(&h->signals, d->signal_index);

@@ -34,7 +34,7 @@ int signal_init(struct signal *s)
 
 	s->name = NULL;
 	s->unit = NULL;
-	s->type = SIGNAL_TYPE_AUTO;
+	s->type = SIGNAL_TYPE_INVALID;
 
 	s->refcnt = ATOMIC_VAR_INIT(1);
 
@@ -335,8 +335,6 @@ enum signal_type signal_type_from_str(const char *str)
 		return SIGNAL_TYPE_FLOAT;
 	else if (!strcmp(str, "integer"))
 		return SIGNAL_TYPE_INTEGER;
-	else if (!strcmp(str, "auto"))
-		return SIGNAL_TYPE_AUTO;
 	else
 		return SIGNAL_TYPE_INVALID;
 }
@@ -355,9 +353,6 @@ const char * signal_type_to_str(enum signal_type fmt)
 
 		case SIGNAL_TYPE_INTEGER:
 			return "integer";
-
-		case SIGNAL_TYPE_AUTO:
-			return "auto";
 
 		case SIGNAL_TYPE_INVALID:
 			return "invalid";
@@ -410,7 +405,6 @@ void signal_data_set(union signal_data *data, const struct signal *sig, double v
 			break;
 
 		case SIGNAL_TYPE_INVALID:
-		case SIGNAL_TYPE_AUTO:
 			memset(data, 0, sizeof(union signal_data));
 			break;
 	}
@@ -551,7 +545,6 @@ int signal_data_parse_str(union signal_data *data, const struct signal *sig, con
 			break;
 		}
 
-		case SIGNAL_TYPE_AUTO:
 		case SIGNAL_TYPE_INVALID:
 			return -1;
 	}
@@ -591,7 +584,6 @@ int signal_data_parse_json(union signal_data *data, const struct signal *sig, js
 		}
 
 		case SIGNAL_TYPE_INVALID:
-		case SIGNAL_TYPE_AUTO:
 			return -1;
 	}
 

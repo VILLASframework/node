@@ -46,7 +46,7 @@ static enum signal_type json_detect_format(json_t *val)
 			return SIGNAL_TYPE_COMPLEX; /* must be a complex number */
 
 		default:
-			return SIGNAL_TYPE_AUTO;
+			return -1;
 	}
 }
 
@@ -133,10 +133,7 @@ static int json_pack_sample(struct io *io, json_t **j, struct sample *smp)
 					);
 					break;
 
-				case SIGNAL_TYPE_INVALID:
-				case SIGNAL_TYPE_AUTO:
-					json_value = json_null(); /* Unknown type */
-					break;
+				case SIGNAL_TYPE_INVALID: { }
 			}
 
 			json_array_append(json_data, json_value);
@@ -213,11 +210,7 @@ static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *sm
 			return -1;
 
 		enum signal_type fmt = json_detect_format(json_value);
-		if (sig->type == SIGNAL_TYPE_AUTO) {
-			debug(LOG_IO | 5, "Learned data type for index %zu: %s", i, signal_type_to_str(fmt));
-			sig->type = fmt;
-		}
-		else if (sig->type != fmt) {
+		if (sig->type != fmt) {
 			error("Received invalid data type in JSON payload: Received %s, expected %s for signal %s (index %zu).",
 				signal_type_to_str(fmt), signal_type_to_str(sig->type), sig->name, i);
 			return -2;
@@ -361,8 +354,7 @@ static struct plugin p = {
 		.sprint	= json_sprint,
 		.size = 0,
 		.delimiter = '\n',
-		.flags =  IO_AUTO_DETECT_FORMAT |
-		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA
+		.flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA
 	},
 };
 

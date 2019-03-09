@@ -206,9 +206,7 @@ int stats_node_parse(struct node *n, json_t *cfg)
 		if (!sig->unit)
 			sig->unit = strdup(stats_metrics[stats_sig->metric].unit);
 
-		if (sig->type == SIGNAL_TYPE_AUTO)
-			sig->type = stats_types[stats_sig->type].signal_type;
-		else if (sig->type != stats_types[stats_sig->type].signal_type)
+		if (sig->type != stats_types[stats_sig->type].signal_type)
 			error("Invalid type for signal %zu in node %s", i, node_name(n));
 
 		vlist_push(&s->signals, stats_sig);

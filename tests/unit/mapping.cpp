@@ -54,7 +54,7 @@ Test(mapping, parse_nodes)
 		for (unsigned j = 0; j < ARRAY_LEN(signal_names[i]); j++) {
 			struct signal *sig;
 
-			sig = signal_create(signal_names[i][j], nullptr, SIGNAL_TYPE_AUTO);
+			sig = signal_create(signal_names[i][j], nullptr, SIGNAL_TYPE_FLOAT);
 			cr_assert_not_null(sig);
 
 			vlist_push(&n->in.signals, sig);

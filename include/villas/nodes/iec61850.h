@@ -77,8 +77,8 @@ enum iec61850_type {
 
 struct iec61850_type_descriptor {
 	const char *name;
-	enum iec61850_type type;
-	enum signal_type format;
+	enum iec61850_type iec_type;
+	enum signal_type type;
 	unsigned size;
 	bool publisher;
 	bool subscriber;

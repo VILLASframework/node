@@ -169,7 +169,7 @@ check:		if (optarg == endptr)
 	if (!ft)
 		throw RuntimeError("Unknown IO format '{}'", format);
 
-	ret = io_init_auto(&io, ft, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
+	ret = io_init2(&io, ft, SIGNAL_TYPE_FLOAT, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
 	if (ret)
 		throw RuntimeError("Failed to initialize IO");
 

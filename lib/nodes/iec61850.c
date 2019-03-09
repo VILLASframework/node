@@ -36,7 +36,7 @@
 #define CONFIG_SV_DEFAULT_VLAN_ID 0
 
 const struct iec61850_type_descriptor type_descriptors[] = {
-	/* name,              type,                             format,               size, supported */
+	/* name,              iec_type,                         type,                 size, supported */
 	{ "boolean",          IEC61850_TYPE_BOOLEAN,		SIGNAL_TYPE_BOOLEAN,	 1, false, false },
 	{ "int8",             IEC61850_TYPE_INT8,		SIGNAL_TYPE_INTEGER,	 1, false, false },
 	{ "int16",            IEC61850_TYPE_INT16,		SIGNAL_TYPE_INTEGER,	 2, false, false },

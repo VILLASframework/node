@@ -115,7 +115,6 @@ int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct
 					pb_val->z->imag = cimag(smp->data[j].z);
 					break;
 
-				case SIGNAL_TYPE_AUTO:
 				case SIGNAL_TYPE_INVALID:
 					pb_val->value_case = VILLAS__NODE__VALUE__VALUE__NOT_SET;
 					break;
@@ -181,11 +180,7 @@ int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, s
 			if (!sig)
 				return -1;
 
-			if (sig->type == SIGNAL_TYPE_AUTO) {
-				debug(LOG_IO | 5, "Learned data type for index %u: %s", j, signal_type_to_str(fmt));
-				sig->type = fmt;
-			}
-			else if (sig->type != fmt) {
+			if (sig->type != fmt) {
 				error("Received invalid data type in Protobuf payload: Received %s, expected %s for signal %s (index %u).",
 					signal_type_to_str(fmt), signal_type_to_str(sig->type), sig->name, i);
 				return -2;
@@ -231,9 +226,9 @@ static struct plugin p = {
 	.description = "Google Protobuf",
 	.type = PLUGIN_TYPE_FORMAT,
 	.format = {
-		.sprint = protobuf_sprint,
-		.sscan  = protobuf_sscan,
-		.flags  = IO_AUTO_DETECT_FORMAT | IO_HAS_BINARY_PAYLOAD |
+		.sprint	= protobuf_sprint,
+		.sscan	= protobuf_sscan,
+		.flags	= IO_HAS_BINARY_PAYLOAD |
 		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA
 	}
 };

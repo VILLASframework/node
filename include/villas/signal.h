@@ -55,11 +55,10 @@ union signal_data {
 
 enum signal_type {
 	SIGNAL_TYPE_INVALID	= 0,	/**< Signal type is invalid. */
-	SIGNAL_TYPE_AUTO	= 1,	/**< Signal type is unknown. Attempt autodetection. */
-	SIGNAL_TYPE_FLOAT	= 2,	/**< See signal_data::f */
-	SIGNAL_TYPE_INTEGER	= 3,	/**< See signal_data::i */
-	SIGNAL_TYPE_BOOLEAN 	= 4,	/**< See signal_data::b */
-	SIGNAL_TYPE_COMPLEX 	= 5	/**< See signal_data::z */
+	SIGNAL_TYPE_FLOAT	= 1,	/**< See signal_data::f */
+	SIGNAL_TYPE_INTEGER	= 2,	/**< See signal_data::i */
+	SIGNAL_TYPE_BOOLEAN 	= 3,	/**< See signal_data::b */
+	SIGNAL_TYPE_COMPLEX 	= 4	/**< See signal_data::z */
 };
 
 /** Signal descriptor.

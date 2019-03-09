@@ -91,15 +91,39 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 		if (!sig)
 			continue;
 
-		switch (td->type) {
-			case IEC61850_TYPE_INT8:    smp->data[j].i = SVSubscriber_ASDU_getINT8(asdu,    offset); break;
-			case IEC61850_TYPE_INT16:   smp->data[j].i = SVSubscriber_ASDU_getINT16(asdu,   offset); break;
-			case IEC61850_TYPE_INT32:   smp->data[j].i = SVSubscriber_ASDU_getINT32(asdu,   offset); break;
-			case IEC61850_TYPE_INT8U:   smp->data[j].i = SVSubscriber_ASDU_getINT8U(asdu,   offset); break;
-			case IEC61850_TYPE_INT16U:  smp->data[j].i = SVSubscriber_ASDU_getINT16U(asdu,  offset); break;
-			case IEC61850_TYPE_INT32U:  smp->data[j].i = SVSubscriber_ASDU_getINT32U(asdu,  offset); break;
-			case IEC61850_TYPE_FLOAT32: smp->data[j].f = SVSubscriber_ASDU_getFLOAT32(asdu, offset); break;
-			case IEC61850_TYPE_FLOAT64: smp->data[j].f = SVSubscriber_ASDU_getFLOAT64(asdu, offset); break;
+		switch (td->iec_type) {
+			case IEC61850_TYPE_INT8:
+				smp->data[j].i = SVSubscriber_ASDU_getINT8(asdu,    offset);
+				break;
+
+			case IEC61850_TYPE_INT16:
+				smp->data[j].i = SVSubscriber_ASDU_getINT16(asdu,   offset);
+				break;
+
+			case IEC61850_TYPE_INT32:
+				smp->data[j].i = SVSubscriber_ASDU_getINT32(asdu,   offset);
+				break;
+
+			case IEC61850_TYPE_INT8U:
+				smp->data[j].i = SVSubscriber_ASDU_getINT8U(asdu,   offset);
+				break;
+
+			case IEC61850_TYPE_INT16U:
+				smp->data[j].i = SVSubscriber_ASDU_getINT16U(asdu,  offset);
+				break;
+
+			case IEC61850_TYPE_INT32U:
+				smp->data[j].i = SVSubscriber_ASDU_getINT32U(asdu,  offset);
+				break;
+
+			case IEC61850_TYPE_FLOAT32:
+				smp->data[j].f = SVSubscriber_ASDU_getFLOAT32(asdu, offset);
+				break;
+
+			case IEC61850_TYPE_FLOAT64:
+				smp->data[j].f = SVSubscriber_ASDU_getFLOAT64(asdu, offset);
+				break;
+
 			default: { }
 		}
 
@@ -253,13 +277,25 @@ int iec61850_sv_start(struct node *n)
 		i->out.asdu = SVPublisher_addASDU(i->out.publisher, i->out.svid, node_name_short(n), i->out.confrev);
 
 		for (unsigned k = 0; k < vlist_length(&i->out.signals); k++) {
-			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) vlist_at(&i->out.signals, k);
+			struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&i->out.signals, k);
 
-			switch (m->type) {
-				case IEC61850_TYPE_INT8:    SVPublisher_ASDU_addINT8(i->out.asdu); break;
-				case IEC61850_TYPE_INT32:   SVPublisher_ASDU_addINT32(i->out.asdu); break;
-				case IEC61850_TYPE_FLOAT32: SVPublisher_ASDU_addFLOAT(i->out.asdu); break;
-				case IEC61850_TYPE_FLOAT64: SVPublisher_ASDU_addFLOAT64(i->out.asdu); break;
+			switch (td->iec_type) {
+				case IEC61850_TYPE_INT8:
+					SVPublisher_ASDU_addINT8(i->out.asdu);
+					break;
+
+				case IEC61850_TYPE_INT32:
+					SVPublisher_ASDU_addINT32(i->out.asdu);
+					break;
+
+				case IEC61850_TYPE_FLOAT32:
+					SVPublisher_ASDU_addFLOAT(i->out.asdu);
+					break;
+
+				case IEC61850_TYPE_FLOAT64:
+					SVPublisher_ASDU_addFLOAT64(i->out.asdu);
+					break;
+
 				default: { }
 			}
 		}
@@ -299,12 +335,12 @@ int iec61850_sv_start(struct node *n)
 			return ret;
 
 		for (unsigned k = 0; k < vlist_length(&i->in.signals); k++) {
-			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) vlist_at(&i->in.signals, k);
+			struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&i->in.signals, k);
 			struct signal *sig = (struct signal *) vlist_at(&n->in.signals, k);
 
-			if (sig->type == SIGNAL_TYPE_AUTO)
-				sig->type = m->format;
-			else if (sig->type != m->format)
+			if (sig->type == SIGNAL_TYPE_INVALID)
+				sig->type = td->type;
+			else if (sig->type != td->type)
 				return -1;
 		}
 	}
@@ -372,12 +408,12 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsig
 	for (unsigned j = 0; j < cnt; j++) {
 		unsigned offset = 0;
 		for (unsigned k = 0; k < MIN(smps[j]->length, vlist_length(&i->out.signals)); k++) {
-			struct iec61850_type_descriptor *m = (struct iec61850_type_descriptor *) vlist_at(&i->out.signals, k);
+			struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&i->out.signals, k);
 
 			int ival = 0;
 			double fval = 0;
 
-			switch (m->type) {
+			switch (td->iec_type) {
 				case IEC61850_TYPE_INT8:
 				case IEC61850_TYPE_INT32:
 					ival = sample_format(smps[j], k) == SIGNAL_TYPE_FLOAT ? smps[j]->data[k].f : smps[j]->data[k].i;
@@ -391,15 +427,27 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsig
 				default: { }
 			}
 
-			switch (m->type) {
-				case IEC61850_TYPE_INT8:    SVPublisher_ASDU_setINT8(i->out.asdu,    offset, ival); break;
-				case IEC61850_TYPE_INT32:   SVPublisher_ASDU_setINT32(i->out.asdu,   offset, ival); break;
-				case IEC61850_TYPE_FLOAT32: SVPublisher_ASDU_setFLOAT(i->out.asdu,   offset, fval); break;
-				case IEC61850_TYPE_FLOAT64: SVPublisher_ASDU_setFLOAT64(i->out.asdu, offset, fval); break;
+			switch (td->iec_type) {
+				case IEC61850_TYPE_INT8:
+					SVPublisher_ASDU_setINT8(i->out.asdu,    offset, ival);
+					break;
+
+				case IEC61850_TYPE_INT32:
+					SVPublisher_ASDU_setINT32(i->out.asdu,   offset, ival);
+					break;
+
+				case IEC61850_TYPE_FLOAT32:
+					SVPublisher_ASDU_setFLOAT(i->out.asdu,   offset, fval);
+					break;
+
+				case IEC61850_TYPE_FLOAT64:
+					SVPublisher_ASDU_setFLOAT64(i->out.asdu, offset, fval);
+					break;
+
 				default: { }
 			}
 
-			offset += m->size;
+			offset += td->size;
 		}
 
 		SVPublisher_ASDU_setSmpCnt(i->out.asdu, smps[j]->sequence);

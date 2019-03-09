@@ -182,7 +182,6 @@ int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 					}
 					break;
 
-				case SIGNAL_TYPE_AUTO:
 				case SIGNAL_TYPE_INVALID:
 					return -1;
 			}
@@ -344,7 +343,6 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 				}
 				break;
 
-			case SIGNAL_TYPE_AUTO:
 			case SIGNAL_TYPE_INVALID:
 				warning("Unsupported format in RAW payload");
 				return -1;

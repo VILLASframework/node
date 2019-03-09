@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 		if (!fmt)
 			throw RuntimeError("Invalid format: {}", dirs[i].name);
 
-		ret = io_init_auto(dirs[i].io, fmt, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
+		ret = io_init2(dirs[i].io, fmt, SIGNAL_TYPE_FLOAT, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
 		if (ret)
 			throw RuntimeError("Failed to initialize IO: {}", dirs[i].name);
 

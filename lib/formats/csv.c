@@ -77,7 +77,7 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 {
 	int ret, i = 0;
 	const char *ptr = buf;
-	char *end, *next;
+	char *end;
 
 	smp->flags = 0;
 	smp->signals = io->signals;
@@ -116,25 +116,6 @@ static size_t csv_sscan_single(struct io *io, const char *buf, size_t len, struc
 		struct signal *sig = (struct signal *) vlist_at_safe(smp->signals, i);
 		if (!sig)
 			goto out;
-
-		/* Perform signal detection only once */
-		if (sig->type == SIGNAL_TYPE_AUTO) {
-
-			/* Find end of the current column */
-			next = strpbrk(ptr, ((char[]) { io->separator, io->delimiter, 0 }));
-			if (next == NULL)
-				goto out;
-
-			/* Copy value to temporary '\0' terminated buffer */
-			size_t len = next - ptr;
-			char val[len+1];
-			strncpy(val, ptr, len);
-			val[len] = '\0';
-
-			sig->type = signal_type_detect(val);
-
-			debug(LOG_IO | 5, "Learned data type for index %u: %s", i, signal_type_to_str(sig->type));
-		}
 
 		ret = signal_data_parse_str(&smp->data[i], sig, ptr, &end);
 		if (ret || end == ptr) /* There are no valid values anymore. */
@@ -222,7 +203,7 @@ static struct plugin p1 = {
 		.sscan	= csv_sscan,
 		.header	= csv_header,
 		.size 	= 0,
-		.flags	= IO_NEWLINES | IO_AUTO_DETECT_FORMAT |
+		.flags	= IO_NEWLINES |
 		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA,
 		.separator = '\t'
 	}
@@ -237,7 +218,7 @@ static struct plugin p2 = {
 		.sscan	= csv_sscan,
 		.header	= csv_header,
 		.size 	= 0,
-		.flags	= IO_NEWLINES | IO_AUTO_DETECT_FORMAT |
+		.flags	= IO_NEWLINES |
 		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA,
 		.separator = ','
 	}

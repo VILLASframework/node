@@ -26,6 +26,7 @@
 #include <villas/advio.h>
 #include <villas/common.h>
 #include <villas/node.h>
+#include <villas/signal.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,8 +42,7 @@ enum io_flags {
 	IO_NONBLOCK		= (1 << 9),	/**< Dont block io_read() while waiting for new samples. */
 	IO_NEWLINES		= (1 << 10),	/**< The samples of this format are newline delimited. */
 	IO_DESTROY_SIGNALS	= (1 << 11),	/**< Signal descriptors are managed by this IO instance. Destroy them in io_destoy() */
-	IO_HAS_BINARY_PAYLOAD	= (1 << 12),	/**< This IO instance en/decodes binary payloads. */
-	IO_AUTO_DETECT_FORMAT	= (1 << 13)	/**< This IO instance supports format auto-detection during decoding. */
+	IO_HAS_BINARY_PAYLOAD	= (1 << 12)	/**< This IO instance en/decodes binary payloads. */
 };
 
 enum io_mode {
@@ -82,7 +82,7 @@ struct io {
 
 int io_init(struct io *io, const struct format_type *fmt, struct vlist *signals, int flags);
 
-int io_init_auto(struct io *io, const struct format_type *fmt, int len, int flags);
+int io_init2(struct io *io, const struct format_type *fmt, enum signal_type type, int len, int flags);
 
 int io_destroy(struct io *io);
 

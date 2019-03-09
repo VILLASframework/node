@@ -355,7 +355,7 @@ check:		if (optarg == endptr)
 	if (!fmt)
 		throw RuntimeError("Invalid format: {}", format);
 
-	ret = io_init_auto(&io, fmt, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
+	ret = io_init2(&io, fmt, SIGNAL_TYPE_FLOAT, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
 	if (ret)
 		throw RuntimeError("Failed to initialize IO");
 

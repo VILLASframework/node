@@ -56,7 +56,7 @@ static int cast_prepare(struct hook *h)
 
 	orig_sig = vlist_at_safe(&h->signals, c->signal_index);
 
-	type = c->new_type != SIGNAL_TYPE_AUTO ? c->new_type : orig_sig->type;
+	type = c->new_type != SIGNAL_TYPE_INVALID ? c->new_type : orig_sig->type;
 	name = c->new_name ? c->new_name : orig_sig->name;
 	unit = c->new_unit ? c->new_unit : orig_sig->unit;
 
@@ -125,7 +125,7 @@ static int cast_parse(struct hook *h, json_t *cfg)
 			return -1;
 	}
 	else
-		c->new_type = SIGNAL_TYPE_AUTO; // We use this constant to indicate that we dont want to change the type
+		c->new_type = SIGNAL_TYPE_INVALID; // We use this constant to indicate that we dont want to change the type
 
 	if (new_name)
 		c->new_name = strdup(new_name);

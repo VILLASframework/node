@@ -897,7 +897,6 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 					break;
 
 				case SIGNAL_TYPE_INVALID:
-				case SIGNAL_TYPE_AUTO:
 					raw_value = 0;
 					break;
 			}

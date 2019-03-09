@@ -55,7 +55,7 @@ public:
 		int ret;
 
 		io.state = STATE_DESTROYED;
-		ret = io_init_auto(&io, format, DEFAULT_SAMPLE_LENGTH, 0);
+		ret = io_init2(&io, format, SIGNAL_TYPE_FLOAT, DEFAULT_SAMPLE_LENGTH, 0);
 		if (ret)
 			throw RuntimeError("Failed to initialize IO");
 

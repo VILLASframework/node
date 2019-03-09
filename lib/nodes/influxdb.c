@@ -135,7 +135,11 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 			struct signal *sig = (struct signal *) vlist_at(smp->signals, j);
 			union signal_data *data = &smp->data[k];
 
-			if (sig->type == SIGNAL_TYPE_AUTO || sig->type == SIGNAL_TYPE_COMPLEX) {
+			if (
+				sig->type != SIGNAL_TYPE_BOOLEAN &&
+				sig->type != SIGNAL_TYPE_INTEGER &&
+				sig->type != SIGNAL_TYPE_INTEGER
+			) {
 				warning("Unsupported signal format for node %s. Skipping", node_name(n));
 				continue;
 			}
