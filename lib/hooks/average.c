@@ -32,7 +32,6 @@
 #include <villas/bitset.h>
 
 struct average {
-	uint64_t mask;
 	int offset;
 
 	struct bitset mask;
