@@ -31,10 +31,10 @@ fi
 LOCAL_ADDR=137.226.133.195
 REMOTE_ADDR=157.230.251.200
 REMOTE_USER=root
-REMOTE=ssh ${REMOTE_USER}@${REMOTE_ADDR}
+REMOTE="ssh ${REMOTE_USER}@${REMOTE_ADDR}"
 
 PATH=/projects/villas/node/build/src:${PATH}
-REMOTE PATH=/projects/villas/node/build/src:${PATH}
+${REMOTE} PATH=/projects/villas/node/build/src:${PATH}
 
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname ${SCRIPT})
@@ -131,7 +131,7 @@ PID=$!
 sleep 1
 
 villas-signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
-villas-pipe ${CONFIG_FILE_SRC} rtp_node
+	villas-pipe ${CONFIG_FILE_SRC} rtp_node
 
 scp ${REMOTE_USER}@${REMOTE_ADDR}:${OUTPUT_FILE} ${OUTPUT_FILE}
 
