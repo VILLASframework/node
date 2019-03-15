@@ -241,7 +241,7 @@ int node_start(struct node *n)
 
 #ifdef __linux__
 	/* Set fwmark for outgoing packets if netem is enabled for this node */
-	if (n->fwmark) {
+	if (n->fwmark >= 0) {
 		int fds[16];
 		int num_sds = node_netem_fds(n, fds);
 
