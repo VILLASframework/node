@@ -56,7 +56,6 @@ struct dp {
 static void dp_step(struct dp *d, double *in, float complex *out)
 {
 	int n = d->window.steps;
-	double r = 0.9999999999;
 	double complex om, corr;
 	double newest = *in;
 	double oldest = window_update(&d->window, newest);
@@ -65,8 +64,7 @@ static void dp_step(struct dp *d, double *in, float complex *out)
 		om = 2.0 * M_PI * J * d->fharmonics[i] / n;
 
 		/* Recursive update */
-		//d->coeffs[i] = cexp(om) * (d->coeffs[i] + (newest - oldest));
-		d->coeffs[i] = d->coeffs[i] * r * cexp(om) - powf(r, n) * oldest + newest;
+		d->coeffs[i] = cexp(om) * (d->coeffs[i] + (newest - oldest));
 
 		/* Correction for stationary phasor */
 		corr = cexp(-om * (d->t - (d->window.steps + 1)));
