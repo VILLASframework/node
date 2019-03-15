@@ -120,7 +120,7 @@ int if_stop(struct interface *i)
 {
 	info("Stopping interface '%s'", if_name(i));
 
-	if_set_affinity(i, -1L);
+	//if_set_affinity(i, -1L);
 
 	if (i->tc_qdisc)
 		tc_reset(i);
