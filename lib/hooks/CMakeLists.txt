@@ -21,22 +21,23 @@
 ###################################################################################
 
 set(HOOK_SRC
+    average.c
+    cast.c
     decimate.c
+    dp.c
     drop.c
+    dump.c
+    ebm.c
+    fix.c
     jitter_calc.c
+    limit_rate.c
     restart.c
+    scale.c
     shift_seq.c
     shift_ts.c
     skip_first.c
     stats.c
     ts.c
-    limit_rate.c
-    scale.c
-    fix.c
-    cast.c
-    average.c
-    dump.c
-    dp.c
 )
 
 if(WITH_IO)
