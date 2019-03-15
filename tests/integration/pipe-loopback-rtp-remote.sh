@@ -28,9 +28,17 @@ if [ -n "${CI}" ]; then
 	exit 99
 fi
 
+LOCAL_ADDR=137.226.133.195
+REMOTE_ADDR=157.230.251.200
+REMOTE_USER=root
+REMOTE="ssh ${REMOTE_USER}@${REMOTE_ADDR}"
+
+PATH=/projects/villas/node/build/src:${PATH}
+${REMOTE} PATH=/projects/villas/node/build/src:${PATH}
+
 SCRIPT=$(realpath $0)
 SCRIPTPATH=$(dirname ${SCRIPT})
-source ${SCRIPTPATH}/../../tools/villas-helper.sh
+source ${SCRIPTPATH}/../../tools/integration-tests-helper.sh
 
 CONFIG_FILE_SRC=$(mktemp)
 CONFIG_FILE_DEST=$(mktemp)
@@ -40,14 +48,13 @@ OUTPUT_FILE=$(mktemp)
 FORMAT="villas.binary"
 VECTORIZE="1"
 
-RATE=500
-NUM_SAMPLES=10000000
-NUM_VALUES=5
+RATE=100
+NUM_SAMPLES=100
 
 cat > ${CONFIG_FILE_SRC} << EOF
 {
 	"logging" : {
-		"level" : "info"
+		"level" : "debug"
 	},
 	"nodes" : {
 		"rtp_node" : {
@@ -62,29 +69,29 @@ cat > ${CONFIG_FILE_SRC} << EOF
 			},
 			"aimd" : {
 				"a" : 10,
-				"b" : 0.75,
-				"start_rate" : ${RATE}
+				"b" : 0.5
 			},
 			"in" : {
-				"address" : "0.0.0.0:12002",
+				"address" : "0.0.0.0:33466",
 				"signals" : {
-					"count" : ${NUM_VALUES},
+					"count" : 5,
 					"type" : "float"
 				}
 			},
 			"out" : {
-				"address" : "127.0.0.1:12000",
-				"fwmark" : 123
+				"address" : "${REMOTE_ADDR}:33464"
 			}
 		}
 	}
 }
 EOF
 
+# UDP ports: 33434 - 33534
+
 cat > ${CONFIG_FILE_DEST} << EOF
 {
 	"logging" : {
-		"level" : "info"
+		"level" : "debug"
 	},
 	"nodes" : {
 		"rtp_node" : {
@@ -97,44 +104,44 @@ cat > ${CONFIG_FILE_DEST} << EOF
 				"mode" : "aimd",
 				"throttle_mode" : "decimate"
 			},
+			"aimd" : {
+				"a" : 10,
+				"b" : 0.5
+			},
 			"in" : {
-				"address" : "0.0.0.0:12000",
+				"address" : "0.0.0.0:33464",
 				"signals" : {
-					"count" : ${NUM_VALUES},
+					"count" : 5,
 					"type" : "float"
 				}
 			},
 			"out" : {
-				"address" : "127.0.0.1:12002"
+				"address" : "${LOCAL_ADDR}:33466"
 			}
 		}
 	}
 }
 EOF
 
-tc qdisc del dev lo root
-tc qdisc add dev lo root handle 4000 prio bands 4 priomap 1 2 2 2 1 2 0 0 1 1 1 1 1 1 1 1
-tc qdisc add dev lo parent 4000:3 tbf rate 40kbps burst 32kbit latency 200ms #peakrate 40kbps mtu 1000 minburst 1520
-tc filter add dev lo protocol ip handle 123 fw flowid 4000:3
+scp ${CONFIG_FILE_DEST} ${REMOTE_USER}@${REMOTE_ADDR}:${CONFIG_FILE_DEST}
 
-#exit
-
-VILLAS_LOG_PREFIX="[DEST] " \
-villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE_DEST} rtp_node > ${OUTPUT_FILE} &
+${REMOTE} villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE_DEST} rtp_node > ${OUTPUT_FILE} &
 PID=$!
 
 sleep 1
 
-VILLAS_LOG_PREFIX="[SIGN] " \
-villas-signal mixed -v ${NUM_VALUES} -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
-VILLAS_LOG_PREFIX="[SRC]  " \
-villas-pipe ${CONFIG_FILE_SRC} rtp_node > ${OUTPUT_FILE}
+villas-signal mixed -v 5 -r ${RATE} -l ${NUM_SAMPLES} | tee ${INPUT_FILE} | \
+	villas-pipe ${CONFIG_FILE_SRC} rtp_node
+
+scp ${REMOTE_USER}@${REMOTE_ADDR}:${OUTPUT_FILE} ${OUTPUT_FILE}
 
 # Compare data
 villas-test-cmp ${CMPFLAGS} ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
-rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE_SRC} ${CONFIG_FILE_DEST}
+rm ${INPUT_FILE} ${OUTPUT_FILE} ${CONFIG_FILE_DEST} ${CONFIG_FILE_SRC}
+${REMOTE} rm ${OUTPUT_FILE} ${CONFIG_FILE_DEST}
 
-kill $PID
+kill ${PID}
+
 exit $RC
