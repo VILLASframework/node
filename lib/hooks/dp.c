@@ -307,9 +307,9 @@ static int dp_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 		}
 
 		smp->signals = &h->signals;
-	}
 
-	d->t += d->dt;
+		d->t += d->dt;
+	}
 
 	return 0;
 }
