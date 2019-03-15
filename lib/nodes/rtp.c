@@ -380,6 +380,8 @@ int rtp_start(struct node *n)
 		if (!r->rtcp.throttle_hook)
 			return -1;
 
+		r->rtcp.throttle_hook->state = STATE_DESTROYED;
+
 		switch (r->rtcp.throttle_mode) {
 			case RTCP_THROTTLE_HOOK_DECIMATE:
 				throttle_hook_type = hook_type_lookup("decimate");
