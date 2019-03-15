@@ -111,6 +111,8 @@ struct node_type {
 	 */
 	int (*check)(struct node *n);
 
+	int (*prepare)(struct node *);
+
 	/** Returns a string with a textual represenation of this node.
 	 *
 	 * @param n	A pointer to the node object.

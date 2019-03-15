@@ -90,6 +90,10 @@ int node_prepare(struct node *n)
 
 	assert(n->state == STATE_CHECKED);
 
+	ret = node_type(n)->prepare ? node_type(n)->prepare(n) : 0;
+	if (ret)
+		return ret;
+
 	ret = node_direction_prepare(&n->in, n);
 	if (ret)
 		return ret;
