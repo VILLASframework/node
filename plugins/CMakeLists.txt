@@ -24,13 +24,6 @@
 link_libraries(villas)
 add_definitions("-DVILLAS")
 
-add_library(simple_circuit MODULE models/simple_circuit.c)
-install(
-    TARGETS simple_circuit
-    COMPONENT plugins
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}/villas/node/plugins
-)
-
 if(WITH_HOOKS)
     add_library(example_hook MODULE hooks/example_hook.c)
     install(

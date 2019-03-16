@@ -25,7 +25,6 @@
 
 #include <villas/common.h>
 #include <villas/utils.h>
-#include <villas/nodes/cbuilder.h>
 #include <villas/hook_type.h>
 #include <villas/node_type.h>
 #include <villas/format_type.h>
@@ -63,7 +62,6 @@ enum plugin_type {
 	PLUGIN_TYPE_NODE,
 	PLUGIN_TYPE_API,
 	PLUGIN_TYPE_FORMAT,
-	PLUGIN_TYPE_MODEL_CBUILDER
 };
 
 struct plugin {
@@ -76,7 +74,6 @@ struct plugin {
 		struct format_type	format;
 		struct node_type	node;
 		struct hook_type	hook;
-		struct cbuilder_model	cb;
 	};
 };
 

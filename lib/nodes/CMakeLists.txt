@@ -40,12 +40,6 @@ if(WITH_IO)
     )
 endif()
 
-if(HAS_EVENTFD)
-    list(APPEND NODE_SRC
-        cbuilder.c
-    )
-endif()
-
 # Enable Universal Library for Linux DAQ devices (libuldaq)
 if(LIBULDAQ_FOUND)
     list(APPEND NODE_SRC uldaq.c)
