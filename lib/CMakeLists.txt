@@ -89,7 +89,7 @@ if(WITH_HOOKS)
     list(APPEND LIB_SRC
         hook.c
         hook_type.c
-        hook_list.c
+        hook_list.cpp
     )
 
     add_subdirectory(hooks)

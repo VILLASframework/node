@@ -27,7 +27,9 @@
 #include <villas/list.h>
 #include <villas/log.h>
 
-int hook_list_init(struct vlist *hs)
+extern "C" {
+
+int hook_list_init(vlist *hs)
 {
 	int ret;
 
@@ -38,7 +40,7 @@ int hook_list_init(struct vlist *hs)
 	return 0;
 }
 
-int hook_list_destroy(struct vlist *hs)
+int hook_list_destroy(vlist *hs)
 {
 	int ret;
 
@@ -49,7 +51,7 @@ int hook_list_destroy(struct vlist *hs)
 	return 0;
 }
 
-int hook_list_parse(struct vlist *hs, json_t *cfg, int mask, struct path *o, struct node *n)
+int hook_list_parse(vlist *hs, json_t *cfg, int mask, path *o, node *n)
 {
 	if (!json_is_array(cfg))
 		error("Hooks must be configured as a list of objects");
@@ -73,7 +75,7 @@ int hook_list_parse(struct vlist *hs, json_t *cfg, int mask, struct path *o, str
 		if (!(ht->flags & mask))
 			error("Hook %s not allowed here.", type);
 
-		struct hook *h = (struct hook *) alloc(sizeof(struct hook));
+		hook *h = (hook *) alloc(sizeof(hook));
 
 		ret = hook_init(h, ht, o, n);
 		if (ret)
@@ -89,7 +91,7 @@ int hook_list_parse(struct vlist *hs, json_t *cfg, int mask, struct path *o, str
 	return 0;
 }
 
-int hook_list_prepare(struct vlist *hs, struct vlist *sigs, int m, struct path *p, struct node *n)
+int hook_list_prepare(vlist *hs, vlist *sigs, int m, path *p, node *n)
 {
 	int ret;
 
@@ -102,7 +104,7 @@ int hook_list_prepare(struct vlist *hs, struct vlist *sigs, int m, struct path *
 	vlist_sort(hs, hook_cmp_priority);
 
 	for (size_t i = 0; i < vlist_length(hs); i++) {
-		struct hook *h = (struct hook *) vlist_at(hs, i);
+		hook *h = (hook *) vlist_at(hs, i);
 
 		ret = hook_prepare(h, sigs);
 		if (ret)
@@ -114,27 +116,27 @@ int hook_list_prepare(struct vlist *hs, struct vlist *sigs, int m, struct path *
 	return 0;
 }
 
-int hook_list_add(struct vlist *hs, int mask, struct path *p, struct node *n)
+int hook_list_add(vlist *hs, int mask, path *p, node *n)
 {
 	int ret;
 
 	assert(hs->state == STATE_INITIALIZED);
 
 	for (size_t i = 0; i < vlist_length(&plugins); i++) {
-		struct plugin *q = (struct plugin *) vlist_at(&plugins, i);
+		plugin *q = (plugin *) vlist_at(&plugins, i);
 
-		struct hook *h;
-		struct hook_type *vt = &q->hook;
+		hook *h;
+		struct hook_type *ht = &q->hook;
 
 		if (q->type != PLUGIN_TYPE_HOOK)
 			continue;
 
-		if ((vt->flags & mask) == mask) {
-			h = (struct hook *) alloc(sizeof(struct hook));
+		if ((ht->flags & mask) == mask) {
+			h = (hook *) alloc(sizeof(hook));
 			if (!h)
 				return -1;
 
-			ret = hook_init(h, vt, p, n);
+			ret = hook_init(h, ht, p, n);
 			if (ret)
 				return ret;
 
@@ -145,15 +147,15 @@ int hook_list_add(struct vlist *hs, int mask, struct path *p, struct node *n)
 	return 0;
 }
 
-int hook_list_process(struct vlist *hs, struct sample *smps[], unsigned cnt)
+int hook_list_process(vlist *hs, sample *smps[], unsigned cnt)
 {
 	unsigned ret, curent, processed = 0;
 
 	for (curent = 0; curent < cnt; curent++) {
-		struct sample *smp = smps[curent];
+		sample *smp = smps[curent];
 
 		for (size_t i = 0; i < vlist_length(hs); i++) {
-			struct hook *h = (struct hook *) vlist_at(hs, i);
+			hook *h = (hook *) vlist_at(hs, i);
 
 			ret = hook_process(h, smp);
 			switch (ret) {
@@ -177,12 +179,12 @@ skip: {}
 stop:	return processed;
 }
 
-int hook_list_periodic(struct vlist *hs)
+int hook_list_periodic(vlist *hs)
 {
 	int ret;
 
 	for (size_t j = 0; j < vlist_length(hs); j++) {
-		struct hook *h = (struct hook *) vlist_at(hs, j);
+		hook *h = (hook *) vlist_at(hs, j);
 
 		ret = hook_periodic(h);
 		if (ret)
@@ -192,12 +194,12 @@ int hook_list_periodic(struct vlist *hs)
 	return 0;
 }
 
-int hook_list_start(struct vlist *hs)
+int hook_list_start(vlist *hs)
 {
 	int ret;
 
 	for (size_t i = 0; i < vlist_length(hs); i++) {
-		struct hook *h = (struct hook *) vlist_at(hs, i);
+		hook *h = (hook *) vlist_at(hs, i);
 
 		ret = hook_start(h);
 		if (ret)
@@ -207,12 +209,12 @@ int hook_list_start(struct vlist *hs)
 	return 0;
 }
 
-int hook_list_stop(struct vlist *hs)
+int hook_list_stop(vlist *hs)
 {
 	int ret;
 
 	for (size_t i = 0; i < vlist_length(hs); i++) {
-		struct hook *h = (struct hook *) vlist_at(hs, i);
+		hook *h = (hook *) vlist_at(hs, i);
 
 		ret = hook_stop(h);
 		if (ret)
@@ -222,9 +224,11 @@ int hook_list_stop(struct vlist *hs)
 	return 0;
 }
 
-struct vlist * hook_list_get_signals(struct vlist *hs)
+vlist * hook_list_get_signals(vlist *hs)
 {
-	struct hook *h = vlist_last(hs);
+	hook *h = (hook *) vlist_last(hs);
 
 	return &h->signals;
+}
+
 }
