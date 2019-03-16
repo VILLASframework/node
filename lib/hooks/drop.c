@@ -55,51 +55,29 @@ static int drop_stop(struct hook *h)
 	return 0;
 }
 
-static int drop_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int drop_process(struct hook *h, struct sample *smp)
 {
-	int i, ok, dist;
+	int dist;
 
 	struct drop *d = (struct drop *) h->_vd;
-	struct sample *prev, *cur = NULL;
 
-	for (i = 0, ok = 0, prev = d->prev; i < *cnt; i++, prev = cur) {
-		cur = smps[i];
 
-		if (prev) {
-			dist = cur->sequence - (int64_t) prev->sequence;
-			if (dist <= 0) {
-				cur->flags |= SAMPLE_IS_REORDERED;
+	if (d->prev) {
+		dist = smp->sequence - (int64_t) d->prev->sequence;
+		if (dist <= 0) {
+			debug(10, "Dropping reordered sample: sequence=%" PRIu64 ", distance=%d", smp->sequence, dist);
 
-				debug(10, "Dropping reordered sample: sequence=%" PRIu64 ", distance=%d", cur->sequence, dist);
-			}
-			else
-				goto ok;
+			return HOOK_SKIP_SAMPLE;
 		}
-		else
-			goto ok;
-
-		continue;
-
-ok:		/* To discard the first X samples in 'smps[]' we must
-		 * shift them to the end of the 'smps[]' array.
-		 * In case the hook returns a number 'ok' which is smaller than 'cnt',
-		 * only the first 'ok' samples in 'smps[]' are accepted and further processed.
-		 */
-
-		smps[i] = smps[ok];
-		smps[ok++] = cur;
 	}
 
-	if (cur)
-		sample_incref(cur);
+	sample_incref(smp);
 	if (d->prev)
 		sample_decref(d->prev);
 
-	d->prev = cur;
+	d->prev = smp;
 
-	*cnt = ok;
-
-	return 0;
+	return HOOK_OK;
 }
 
 static int drop_restart(struct hook *h)

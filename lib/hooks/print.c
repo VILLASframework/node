@@ -117,7 +117,7 @@ static int print_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int print_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int print_process(struct hook *h, struct sample *smp)
 {
 	struct print *p = (struct print *) h->_vd;
 
@@ -128,7 +128,7 @@ static int print_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 	else if (h->path)
 		printf("Path %s: ", path_name(h->path));
 
-	io_print(&p->io, smps, *cnt);
+	io_print(&p->io, &smp, 1);
 
 	return 0;
 }

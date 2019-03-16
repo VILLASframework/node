@@ -217,13 +217,29 @@ check:		if (optarg == endptr)
 
 		logger->debug("Read {} smps from stdin", recv);
 
-		unsigned send = recv;
+		unsigned send = 0;
+		for (int processed = 0; processed < recv; processed++) {
+			struct sample *smp = smps[processed];
 
-		ret = hook_process(&h, smps, (unsigned *) &send);
-		if (ret < 0)
-			throw RuntimeError("Failed to process samples");
+			ret = hook_process(&h, smp);
+			switch (ret) {
+				case HOOK_ERROR:
+					throw RuntimeError("Failed to process samples");
 
-		sent = io_print(&io, smps, send);
+				case HOOK_OK:
+					smps[send++] = smp;
+					break;
+
+				case HOOK_SKIP_SAMPLE:
+					goto skip;
+
+				case HOOK_STOP_PROCESSING:
+					goto stop;
+			}
+skip: 		logger->info("Skip: seq={}", smp->sequence);
+		}
+
+stop:		sent = io_print(&io, smps, send);
 		if (sent < 0)
 			throw RuntimeError("Failed to write to stdout");
 

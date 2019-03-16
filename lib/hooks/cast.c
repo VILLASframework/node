@@ -136,23 +136,19 @@ static int cast_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int cast_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int cast_process(struct hook *h, struct sample *smp)
 {
 	struct cast *c = (struct cast *) h->_vd;
 
-	for (int i = 0; i < *cnt; i++) {
-		struct sample *smp = smps[i];
+	struct signal *orig_sig = vlist_at(smp->signals, c->signal_index);
+	struct signal *new_sig  = vlist_at(&h->signals,  c->signal_index);
 
-		struct signal *orig_sig = vlist_at(smp->signals, c->signal_index);
-		struct signal *new_sig  = vlist_at(&h->signals,  c->signal_index);
+	signal_data_cast(&smp->data[c->signal_index], orig_sig, new_sig);
 
-		signal_data_cast(&smp->data[c->signal_index], orig_sig, new_sig);
+	/* Replace signal descriptors of sample */
+	smp->signals = &h->signals;
 
-		/* Replace signal descriptors of sample */
-		smp->signals = &h->signals;
-	}
-
-	return 0;
+	return HOOK_OK;
 }
 
 static struct plugin p = {

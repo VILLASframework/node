@@ -73,7 +73,7 @@ struct hook_type {
 	int (*periodic)(struct hook *h);/**< Called periodically. Period is set by global 'stats' option in the configuration file. */
 	int (*restart)(struct hook *h);	/**< Called whenever a new simulation case is started. This is detected by a sequence no equal to zero. */
 
-	int (*process)(struct hook *h, struct sample *smps[], unsigned *cnt);	/**< Called whenever muxed samples are processed. */
+	int (*process)(struct hook *h, struct sample *smp);	/**< Called whenever a sample is processed. */
 };
 
 struct hook_type * hook_type_lookup(const char *name);

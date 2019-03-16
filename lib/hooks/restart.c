@@ -54,49 +54,42 @@ static int restart_stop(struct hook *h)
 	return 0;
 }
 
-static int restart_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int restart_process(struct hook *h, struct sample *smp)
 {
-	unsigned i;
 	struct restart *r = (struct restart *) h->_vd;
-	struct sample *prev, *cur = NULL;
 
 	assert(h->node);
 
-	for (i = 0, prev = r->prev; i < *cnt; i++, prev = cur) {
-		cur = smps[i];
+	if (r->prev) {
+		/* A wrap around of the sequence no should not be treated as a simulation restart */
+		if (smp->sequence == 0 && r->prev->sequence != 0 && r->prev->sequence > UINT64_MAX - 16) {
+			warning("Simulation from node %s restarted (previous->sequence=%" PRIu64 ", current->sequence=%" PRIu64 ")",
+				node_name(h->node), r->prev->sequence, smp->sequence);
 
-		if (prev) {
-			/* A wrap around of the sequence no should not be treated as a simulation restart */
-			if (cur->sequence == 0 && prev->sequence != 0 && prev->sequence > UINT64_MAX - 16) {
-				warning("Simulation from node %s restarted (previous->sequence=%" PRIu64 ", current->sequence=%" PRIu64 ")",
-					node_name(h->node), prev->sequence, cur->sequence);
+			smp->flags |= SAMPLE_IS_FIRST;
 
-				cur->flags |= SAMPLE_IS_FIRST;
+			/* Run restart hooks */
+			for (size_t i = 0; i < vlist_length(&h->node->in.hooks); i++) {
+				struct hook *k = (struct hook *) vlist_at(&h->node->in.hooks, i);
 
-				/* Run restart hooks */
-				for (size_t i = 0; i < vlist_length(&h->node->in.hooks); i++) {
-					struct hook *k = (struct hook *) vlist_at(&h->node->in.hooks, i);
+				hook_restart(k);
+			}
 
-					hook_restart(k);
-				}
+			for (size_t i = 0; i < vlist_length(&h->node->out.hooks); i++) {
+				struct hook *k = (struct hook *) vlist_at(&h->node->out.hooks, i);
 
-				for (size_t i = 0; i < vlist_length(&h->node->out.hooks); i++) {
-					struct hook *k = (struct hook *) vlist_at(&h->node->out.hooks, i);
-
-					hook_restart(k);
-				}
+				hook_restart(k);
 			}
 		}
 	}
 
-	if (cur)
-		sample_incref(cur);
+	sample_incref(smp);
 	if (r->prev)
 		sample_decref(r->prev);
 
-	r->prev = cur;
+	r->prev = smp;
 
-	return 0;
+	return HOOK_OK;
 }
 
 static struct plugin p = {

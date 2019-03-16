@@ -31,6 +31,10 @@
 #include <villas/node.h>
 #include <villas/plugin.h>
 
+const char *hook_reasons[] = {
+	"ok", "error", "skip-sample", "stop-processing"
+};
+
 int hook_init(struct hook *h, struct hook_type *vt, struct path *p, struct node *n)
 {
 	int ret;
@@ -200,7 +204,7 @@ int hook_restart(struct hook *h)
 	return 0;
 }
 
-int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+int hook_process(struct hook *h, struct sample *smp)
 {
 	int ret;
 	assert(h->state == STATE_STARTED);
@@ -208,11 +212,11 @@ int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt)
 	if (!h->enabled)
 		return 0;
 
-	debug(LOG_HOOK | 10, "Process hook %s: priority=%d, cnt=%d", hook_type_name(hook_type(h)), h->priority, *cnt);
-
-	ret = hook_type(h)->process ? hook_type(h)->process(h, smps, cnt) : 0;
+	ret = hook_type(h)->process ? hook_type(h)->process(h, smp) : 0;
 	if (ret)
 		return ret;
+
+	debug(LOG_HOOK | 10, "Hook %s processed: priority=%d, return=%s", hook_type_name(hook_type(h)), h->priority, hook_reasons[ret]);
 
 	return 0;
 }
@@ -350,17 +354,32 @@ const char * hook_type_name(struct hook_type *vt)
 
 int hook_list_process(struct vlist *hs, struct sample *smps[], unsigned cnt)
 {
-	unsigned ret;
+	unsigned ret, curent, processed = 0;
 
-	for (size_t i = 0; i < vlist_length(hs); i++) {
-		struct hook *h = (struct hook *) vlist_at(hs, i);
+	for (curent = 0; curent < cnt; curent++) {
+		struct sample *smp = smps[curent];
 
-		ret = hook_process(h, smps, &cnt);
-		if (ret || !cnt)
-			/* Abort hook processing if earlier hooks removed all samples
-			 * or they returned something non-zero */
-			break;
+		for (size_t i = 0; i < vlist_length(hs); i++) {
+			struct hook *h = (struct hook *) vlist_at(hs, i);
+
+			ret = hook_process(h, smp);
+			switch (ret) {
+				case HOOK_ERROR:
+					return -1;
+
+				case HOOK_OK:
+					smps[processed++] = smp;
+					break;
+
+				case HOOK_SKIP_SAMPLE:
+					goto skip;
+
+				case HOOK_STOP_PROCESSING:
+					goto stop;
+			}
+		}
+skip: {}
 	}
 
-	return cnt;
+stop:	return processed;
 }

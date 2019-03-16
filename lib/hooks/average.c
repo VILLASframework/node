@@ -138,43 +138,40 @@ static int average_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int average_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int average_process(struct hook *h, struct sample *smp)
 {
 	struct average *a = (struct average *) h->_vd;
 
-	for (int i = 0; i < *cnt; i++) {
-		struct sample *smp = smps[i];
-		double avg, sum = 0;
-		int n = 0;
+	double avg, sum = 0;
+	int n = 0;
 
-		for (int k = 0; k < smp->length; k++) {
-			if (!bitset_test(&a->mask, k))
-				continue;
+	for (int k = 0; k < smp->length; k++) {
+		if (!bitset_test(&a->mask, k))
+			continue;
 
-			switch (sample_format(smp, k)) {
-				case SIGNAL_TYPE_INTEGER:
-					sum += smp->data[k].i;
-					break;
+		switch (sample_format(smp, k)) {
+			case SIGNAL_TYPE_INTEGER:
+				sum += smp->data[k].i;
+				break;
 
-				case SIGNAL_TYPE_FLOAT:
-					sum += smp->data[k].f;
-					break;
+			case SIGNAL_TYPE_FLOAT:
+				sum += smp->data[k].f;
+				break;
 
-				case SIGNAL_TYPE_INVALID:
-				case SIGNAL_TYPE_COMPLEX:
-				case SIGNAL_TYPE_BOOLEAN:
-					return -1; /* not supported */
-			}
-
-			n++;
+			case SIGNAL_TYPE_INVALID:
+			case SIGNAL_TYPE_COMPLEX:
+			case SIGNAL_TYPE_BOOLEAN:
+				return -1; /* not supported */
 		}
 
-		avg = n == 0 ? 0 : sum / n;
-		sample_data_insert(smp, (union signal_data *) &avg, a->offset, 1);
-		smp->signals = &h->signals;
+		n++;
 	}
 
-	return 0;
+	avg = n == 0 ? 0 : sum / n;
+	sample_data_insert(smp, (union signal_data *) &avg, a->offset, 1);
+	smp->signals = &h->signals;
+
+	return HOOK_OK;
 }
 
 static struct plugin p = {

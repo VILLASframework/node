@@ -89,7 +89,7 @@ static int skip_first_restart(struct hook *h)
 	return 0;
 }
 
-static int skip_first_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int skip_first_process(struct hook *h, struct sample *smp)
 {
 	struct skip_first *p = (struct skip_first *) h->_vd;
 
@@ -97,51 +97,33 @@ static int skip_first_process(struct hook *h, struct sample *smps[], unsigned *c
 	if (p->state == HOOK_SKIP_FIRST_STATE_STARTED) {
 		switch (p->mode) {
 			case HOOK_SKIP_MODE_SAMPLES:
-				p->samples.until = smps[0]->sequence + p->samples.wait;
+				p->samples.until = smp->sequence + p->samples.wait;
 				break;
 
 			case HOOK_SKIP_MODE_SECONDS:
-				p->seconds.until = time_add(&smps[0]->ts.origin, &p->seconds.wait);
+				p->seconds.until = time_add(&smp->ts.origin, &p->seconds.wait);
 				break;
 		}
 
 		p->state = HOOK_SKIP_FIRST_STATE_SKIPPING;
 	}
 
-	int i, ok;
-	for (i = 0, ok = 0; i < *cnt; i++) {
-		bool skip;
-		switch (p->mode) {
-			case HOOK_SKIP_MODE_SAMPLES:
-				skip = p->samples.until > smps[i]->sequence;
-				break;
+	switch (p->mode) {
+		case HOOK_SKIP_MODE_SAMPLES:
+			if (p->samples.until > smp->sequence)
+				return HOOK_SKIP_SAMPLE;
+			break;
 
-			case HOOK_SKIP_MODE_SECONDS:
-				skip = time_delta(&p->seconds.until, &smps[i]->ts.origin) < 0;
-				break;
-			default:
-				skip = false;
-				break;
-		}
+		case HOOK_SKIP_MODE_SECONDS:
+			if (time_delta(&p->seconds.until, &smp->ts.origin) < 0)
+				return HOOK_SKIP_SAMPLE;
+			break;
 
-		if (!skip) {
-			struct sample *tmp;
-
-			tmp = smps[i];
-			smps[i] = smps[ok];
-			smps[ok++] = tmp;
-		}
-
-		/* To discard the first X samples in 'smps[]' we must
-		 * shift them to the end of the 'smps[]' array.
-		 * In case the hook returns a number 'ok' which is smaller than 'cnt',
-		 * only the first 'ok' samples in 'smps[]' are accepted and further processed.
-		 */
+		default:
+			break;
 	}
 
-	*cnt = ok;
-
-	return 0;
+	return HOOK_OK;
 }
 
 static struct plugin p = {

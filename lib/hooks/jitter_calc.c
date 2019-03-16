@@ -87,42 +87,40 @@ int jitter_calc_deinit(struct hook *h)
  * is high (i.e. several mins depending on GPS_NTP_DELAY_WIN_SIZE),
  * the variance value will overrun the 64bit value.
  */
-static int jitter_calc_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int jitter_calc_process(struct hook *h, struct sample *smp)
 {
 	struct jitter_calc *j = (struct jitter_calc *) h->_vd;
 
 	struct timespec now = time_now();
 	int64_t delay_sec, delay_nsec, curr_delay_us;
 
-	for(int i = 0; i < *cnt; i++) {
-		delay_sec = now.tv_sec - smps[i]->ts.origin.tv_sec;
-		delay_nsec = now.tv_nsec - smps[i]->ts.origin.tv_nsec;
+	delay_sec = now.tv_sec - smp->ts.origin.tv_sec;
+	delay_nsec = now.tv_nsec - smp->ts.origin.tv_nsec;
 
-		/* Calc on microsec instead of nenosec delay as variance formula overflows otherwise.*/
-		curr_delay_us = delay_sec * 1000000 + delay_nsec / 1000;
+	/* Calc on microsec instead of nenosec delay as variance formula overflows otherwise.*/
+	curr_delay_us = delay_sec * 1000000 + delay_nsec / 1000;
 
-		j->delay_mov_sum = j->delay_mov_sum + curr_delay_us - j->delay_series[j->curr_count];
-		j->moving_avg[j->curr_count] = j->delay_mov_sum / GPS_NTP_DELAY_WIN_SIZE; /* Will be valid after GPS_NTP_DELAY_WIN_SIZE initial values */
+	j->delay_mov_sum = j->delay_mov_sum + curr_delay_us - j->delay_series[j->curr_count];
+	j->moving_avg[j->curr_count] = j->delay_mov_sum / GPS_NTP_DELAY_WIN_SIZE; /* Will be valid after GPS_NTP_DELAY_WIN_SIZE initial values */
 
-		j->delay_mov_sum_sqrd = j->delay_mov_sum_sqrd + (curr_delay_us * curr_delay_us) - (j->delay_series[j->curr_count] * j->delay_series[j->curr_count]);
-		j->moving_var[j->curr_count] = (j->delay_mov_sum_sqrd - (j->delay_mov_sum * j->delay_mov_sum) / GPS_NTP_DELAY_WIN_SIZE) / (GPS_NTP_DELAY_WIN_SIZE - 1);
+	j->delay_mov_sum_sqrd = j->delay_mov_sum_sqrd + (curr_delay_us * curr_delay_us) - (j->delay_series[j->curr_count] * j->delay_series[j->curr_count]);
+	j->moving_var[j->curr_count] = (j->delay_mov_sum_sqrd - (j->delay_mov_sum * j->delay_mov_sum) / GPS_NTP_DELAY_WIN_SIZE) / (GPS_NTP_DELAY_WIN_SIZE - 1);
 
-		j->delay_series[j->curr_count] = curr_delay_us; /* Update the last delay value */
+	j->delay_series[j->curr_count] = curr_delay_us; /* Update the last delay value */
 
-		/* Jitter calc formula as used in Wireshark according to RFC3550 (RTP)
-			D(i,j) = (Rj-Ri)-(Sj-Si) = (Rj-Sj)-(Ri-Si)
-			J(i) = J(i-1)+(|D(i-1,i)|-J(i-1))/16
-		*/
-		j->jitter_val[(j->curr_count + 1) % GPS_NTP_DELAY_WIN_SIZE] = j->jitter_val[j->curr_count] + (labs(curr_delay_us) - j->jitter_val[j->curr_count]) / 16;
+	/* Jitter calc formula as used in Wireshark according to RFC3550 (RTP)
+		D(i,j) = (Rj-Ri)-(Sj-Si) = (Rj-Sj)-(Ri-Si)
+		J(i) = J(i-1)+(|D(i-1,i)|-J(i-1))/16
+	*/
+	j->jitter_val[(j->curr_count + 1) % GPS_NTP_DELAY_WIN_SIZE] = j->jitter_val[j->curr_count] + (labs(curr_delay_us) - j->jitter_val[j->curr_count]) / 16;
 
-		info("%s: jitter=%" PRId64 " usec, moving average=%" PRId64 " usec, moving variance=%" PRId64 " usec", __FUNCTION__, j->jitter_val[(j->curr_count + 1) % GPS_NTP_DELAY_WIN_SIZE], j->moving_avg[j->curr_count], j->moving_var[j->curr_count]);
+	info("%s: jitter=%" PRId64 " usec, moving average=%" PRId64 " usec, moving variance=%" PRId64 " usec", __FUNCTION__, j->jitter_val[(j->curr_count + 1) % GPS_NTP_DELAY_WIN_SIZE], j->moving_avg[j->curr_count], j->moving_var[j->curr_count]);
 
-		j->curr_count++;
-		if (j->curr_count >= GPS_NTP_DELAY_WIN_SIZE)
-			j->curr_count = 0;
-	}
+	j->curr_count++;
+	if (j->curr_count >= GPS_NTP_DELAY_WIN_SIZE)
+		j->curr_count = 0;
 
-	return 0;
+	return HOOK_OK;
 }
 
 static struct plugin p = {

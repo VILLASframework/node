@@ -96,38 +96,31 @@ static int limit_rate_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int limit_rate_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int limit_rate_process(struct hook *h, struct sample *smp)
 {
 	struct limit_rate *p = (struct limit_rate *) h->_vd;
 
 	struct timespec next;
-	unsigned ret = 0;
+	switch (p->mode) {
+		case LIMIT_RATE_LOCAL:
+			next = time_now();
+			break;
 
-	for (unsigned i = 0; i < *cnt; i++) {
-		switch (p->mode) {
-			case LIMIT_RATE_LOCAL:
-				next = time_now();
-				break;
+		case LIMIT_RATE_ORIGIN:
+			next = smp->ts.origin;
+			break;
 
-			case LIMIT_RATE_ORIGIN:
-				next = smps[i]->ts.origin;
-				break;
-
-			case LIMIT_RATE_RECEIVED:
-				next = smps[i]->ts.received;
-				break;
-		}
-
-		if (time_delta(&p->last, &next) < p->deadtime)
-			continue; /* Drop this sample */
-
-		p->last = next;
-		smps[ret++] = smps[i];
+		case LIMIT_RATE_RECEIVED:
+			next = smp->ts.received;
+			break;
 	}
 
-	*cnt = ret;
+	if (time_delta(&p->last, &next) < p->deadtime)
+		return HOOK_SKIP_SAMPLE;
 
-	return 0;
+	p->last = next;
+
+	return HOOK_OK;
 }
 
 static struct plugin p = {

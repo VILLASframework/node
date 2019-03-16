@@ -47,6 +47,13 @@ extern "C" {
 struct path;
 struct sample;
 
+enum hook_reason {
+	HOOK_OK,
+	HOOK_ERROR,
+	HOOK_SKIP_SAMPLE,
+	HOOK_STOP_PROCESSING
+};
+
 /** Descriptor for user defined hooks. See hooks[]. */
 struct hook {
 	enum state state;
@@ -83,7 +90,7 @@ int hook_periodic(struct hook *h);
 
 int hook_restart(struct hook *h);
 
-int hook_process(struct hook *h, struct sample *smps[], unsigned *cnt);
+int hook_process(struct hook *h, struct sample *smp);
 
 /** Compare two hook functions with their priority. Used by vlist_sort() */
 int hook_cmp_priority(const void *a, const void *b);

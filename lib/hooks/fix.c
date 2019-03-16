@@ -33,30 +33,26 @@
 #include <villas/sample.h>
 #include <villas/timing.h>
 
-static int fix_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int fix_process(struct hook *h, struct sample *smp)
 {
 	struct timespec now = time_now();
 
-	for (int i = 0; i < *cnt; i++) {
-		struct sample *smp = smps[i];
-
-		if (!(smp->flags & SAMPLE_HAS_SEQUENCE) && h->node) {
-			smp->sequence = h->node->sequence++;
-			smp->flags |= SAMPLE_HAS_SEQUENCE;
-		}
-
-		if (!(smp->flags & SAMPLE_HAS_TS_RECEIVED)) {
-			smp->ts.received = now;
-			smp->flags |= SAMPLE_HAS_TS_RECEIVED;
-		}
-
-		if (!(smp->flags & SAMPLE_HAS_TS_ORIGIN)) {
-			smp->ts.origin = smp->ts.received;
-			smp->flags |= SAMPLE_HAS_TS_ORIGIN;
-		}
+	if (!(smp->flags & SAMPLE_HAS_SEQUENCE) && h->node) {
+		smp->sequence = h->node->sequence++;
+		smp->flags |= SAMPLE_HAS_SEQUENCE;
 	}
 
-	return 0;
+	if (!(smp->flags & SAMPLE_HAS_TS_RECEIVED)) {
+		smp->ts.received = now;
+		smp->flags |= SAMPLE_HAS_TS_RECEIVED;
+	}
+
+	if (!(smp->flags & SAMPLE_HAS_TS_ORIGIN)) {
+		smp->ts.origin = smp->ts.received;
+		smp->flags |= SAMPLE_HAS_TS_ORIGIN;
+	}
+
+	return HOOK_OK;
 }
 
 static struct plugin p = {

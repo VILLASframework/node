@@ -66,24 +66,14 @@ static int decimate_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int decimate_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int decimate_process(struct hook *h, struct sample *smp)
 {
 	struct decimate *p = (struct decimate *) h->_vd;
 
-	int i, ok;
-	for (i = 0, ok = 0; i < *cnt; i++) {
-		if (p->ratio && p->counter++ % p->ratio == 0) {
-			struct sample *tmp;
+	if (p->ratio && p->counter++ % p->ratio != 0)
+		return HOOK_SKIP_SAMPLE;
 
-			tmp = smps[ok];
-			smps[ok++] = smps[i];
-			smps[i] = tmp;
-		}
-	}
-
-	*cnt = ok;
-
-	return 0;
+	return HOOK_OK;
 }
 
 static struct plugin p = {

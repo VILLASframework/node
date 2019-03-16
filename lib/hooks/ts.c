@@ -29,12 +29,11 @@
 #include <villas/timing.h>
 #include <villas/sample.h>
 
-static int ts_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int ts_process(struct hook *h, struct sample *smp)
 {
-	for (int i = 0; i < *cnt; i++)
-		smps[i]->ts.origin = smps[i]->ts.received;
+	smp->ts.origin = smp->ts.received;
 
-	return 0;
+	return HOOK_OK;
 }
 
 static struct plugin p = {

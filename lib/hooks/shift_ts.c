@@ -77,24 +77,28 @@ static int shift_ts_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int shift_ts_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int shift_ts_process(struct hook *h, struct sample *smp)
 {
 	struct shift_ts *p = (struct shift_ts *) h->_vd;
 
-	for (int i = 0; i < *cnt; i++) {
-		struct sample *s = smps[i];
-		struct timespec *ts;
+	struct timespec *ts;
 
-		switch (p->mode) {
-			case SHIFT_ORIGIN: ts = &s->ts.origin; break;
-			case SHIFT_RECEIVED: ts = &s->ts.received; break;
-			default: return -1;
-		}
+	switch (p->mode) {
+		case SHIFT_ORIGIN:
+			ts = &smp->ts.origin;
+			break;
 
-		*ts = time_add(ts, &p->offset); break;
+		case SHIFT_RECEIVED:
+			ts = &smp->ts.received;
+			break;
+
+		default:
+			return HOOK_ERROR;
 	}
 
-	return 0;
+	*ts = time_add(ts, &p->offset);;
+
+	return HOOK_OK;
 }
 
 static struct plugin p = {

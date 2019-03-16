@@ -155,48 +155,38 @@ static int stats_collect_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int stats_collect_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int stats_collect_process(struct hook *h, struct sample *smp)
 {
 	struct stats_collect *p = (struct stats_collect *) h->_vd;
 	struct stats *s = &p->stats;
 
-	int dist;
-	struct sample *previous = p->last;
+	if (p->last) {
+		if (smp->flags & p->last->flags & SAMPLE_HAS_TS_RECEIVED)
+			stats_update(s, STATS_METRIC_GAP_RECEIVED, time_delta(&p->last->ts.received, &smp->ts.received));
 
-	for (int i = 0; i < *cnt; i++) {
-		struct sample *current = smps[i];
+		if (smp->flags & p->last->flags & SAMPLE_HAS_TS_ORIGIN)
+			stats_update(s, STATS_METRIC_GAP_SAMPLE, time_delta(&p->last->ts.origin, &smp->ts.origin));
 
-		if (previous) {
-			if (current->flags & previous->flags & SAMPLE_HAS_TS_RECEIVED)
-				stats_update(s, STATS_METRIC_GAP_RECEIVED, time_delta(&previous->ts.received, &current->ts.received));
+		if ((smp->flags & SAMPLE_HAS_TS_ORIGIN) && (smp->flags & SAMPLE_HAS_TS_RECEIVED))
+			stats_update(s, STATS_METRIC_OWD, time_delta(&smp->ts.origin, &smp->ts.received));
 
-			if (current->flags & previous->flags & SAMPLE_HAS_TS_ORIGIN)
-				stats_update(s, STATS_METRIC_GAP_SAMPLE, time_delta(&previous->ts.origin, &current->ts.origin));
-
-			if ((current->flags & SAMPLE_HAS_TS_ORIGIN) && (current->flags & SAMPLE_HAS_TS_RECEIVED))
-				stats_update(s, STATS_METRIC_OWD, time_delta(&current->ts.origin, &current->ts.received));
-
-			if (current->flags & previous->flags & SAMPLE_HAS_SEQUENCE) {
-				dist = current->sequence - (int32_t) previous->sequence;
-				if (dist != 1)
-					stats_update(s, STATS_METRIC_REORDERED, dist);
-			}
+		if (smp->flags & p->last->flags & SAMPLE_HAS_SEQUENCE) {
+			int dist = smp->sequence - (int32_t) p->last->sequence;
+			if (dist != 1)
+				stats_update(s, STATS_METRIC_REORDERED, dist);
 		}
-
-		previous = current;
 	}
+
+	sample_incref(smp);
 
 	if (p->last)
 		sample_decref(p->last);
 
-	if (previous)
-		sample_incref(previous);
-
-	p->last = previous;
+	p->last = smp;
 
 	stats_commit(&p->stats);
 
-	return 0;
+	return HOOK_OK;
 }
 
 static struct plugin p = {

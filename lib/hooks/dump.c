@@ -30,12 +30,11 @@
 #include <villas/node.h>
 #include <villas/sample.h>
 
-static int dump_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int dump_process(struct hook *h, struct sample *smp)
 {
-	for (int i = 0; i < *cnt; i++)
-		sample_dump(smps[i]);
+	sample_dump(smp);
 
-	return 0;
+	return HOOK_OK;
 }
 
 static struct plugin p = {

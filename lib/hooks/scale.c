@@ -104,36 +104,33 @@ static int scale_parse(struct hook *h, json_t *cfg)
 	return 0;
 }
 
-static int scale_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int scale_process(struct hook *h, struct sample *smp)
 {
 	struct scale *s = (struct scale *) h->_vd;
 
-	for (int i = 0; i < *cnt; i++) {
-		struct sample *smp = smps[i];
-		int k = s->signal_index;
+	int k = s->signal_index;
 
-		switch (sample_format(smp, k)) {
-			case SIGNAL_TYPE_INTEGER:
-				smp->data[k].i = smp->data[k].i * s->scale + s->offset;
-				break;
+	switch (sample_format(smp, k)) {
+		case SIGNAL_TYPE_INTEGER:
+			smp->data[k].i = smp->data[k].i * s->scale + s->offset;
+			break;
 
-			case SIGNAL_TYPE_FLOAT:
-				smp->data[k].f = smp->data[k].f * s->scale + s->offset;
-				break;
+		case SIGNAL_TYPE_FLOAT:
+			smp->data[k].f = smp->data[k].f * s->scale + s->offset;
+			break;
 
-			case SIGNAL_TYPE_COMPLEX:
-				smp->data[k].z = smp->data[k].z * s->scale + s->offset;
-				break;
+		case SIGNAL_TYPE_COMPLEX:
+			smp->data[k].z = smp->data[k].z * s->scale + s->offset;
+			break;
 
-			case SIGNAL_TYPE_BOOLEAN:
-				smp->data[k].b = smp->data[k].b * s->scale + s->offset;
-				break;
+		case SIGNAL_TYPE_BOOLEAN:
+			smp->data[k].b = smp->data[k].b * s->scale + s->offset;
+			break;
 
-			default: { }
-		}
+		default: { }
 	}
 
-	return 0;
+	return HOOK_OK;
 }
 
 static struct plugin p = {

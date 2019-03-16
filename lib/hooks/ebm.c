@@ -29,7 +29,10 @@
 #include <villas/sample.h>
 
 struct ebm {
+	char *signal_name;
+	int   signal_index;
 
+	double total_energy;
 };
 
 static int ebm_init(struct hook *h)
@@ -75,7 +78,7 @@ static int ebm_prepare(struct hook *h)
 }
 
 
-static int ebm_process(struct hook *h, struct sample *smps[], unsigned *cnt)
+static int ebm_process(struct hook *h, struct sample *smp)
 {
 	__attribute__((unused)) struct ebm *e = (struct ebm *) h->_vd;
 

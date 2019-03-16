@@ -60,8 +60,7 @@ enum sample_flags {
 	SAMPLE_HAS_ALL		= (1 << 5) - 1, /**< Enable all output options. */
 
 	SAMPLE_IS_FIRST		= (1 << 16), /**< This sample is the first of a new simulation case */
-	SAMPLE_IS_LAST		= (1 << 17), /**< This sample is the last of a running simulation case */
-	SAMPLE_IS_REORDERED	= (1 << 18), /**< This sample is reordered. */
+	SAMPLE_IS_LAST		= (1 << 17) /**< This sample is the last of a running simulation case */
 };
 
 struct sample {
