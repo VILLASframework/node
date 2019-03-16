@@ -47,15 +47,17 @@ public:
 
 	struct io io;
 	struct format_type *format;
+	const char *dtypes;
 
-	Side(const std::string &pth, struct format_type *fmt, struct pool *p) :
+	Side(const std::string &pth, struct format_type *fmt, const char *dt, struct pool *p) :
 		path(pth),
-		format(fmt)
+		format(fmt),
+		dtypes(dt)
 	{
 		int ret;
 
 		io.state = STATE_DESTROYED;
-		ret = io_init2(&io, format, SIGNAL_TYPE_FLOAT, DEFAULT_SAMPLE_LENGTH, 0);
+		ret = io_init2(&io, format, dtypes, 0);
 		if (ret)
 			throw RuntimeError("Failed to initialize IO");
 
@@ -96,9 +98,10 @@ void usage()
 	          << "    -d LVL  adjust the debug level" << std::endl
 	          << "    -e EPS  set epsilon for floating point comparisons to EPS" << std::endl
 	          << "    -v      ignore data values" << std::endl
-	          << "    -t      ignore timestamp" << std::endl
+	          << "    -T      ignore timestamp" << std::endl
 	          << "    -s      ignore sequence no" << std::endl
 	          << "    -f FMT  file format for all files" << std::endl
+		  << "    -t DT   the data-type format string" << std::endl
 	          << "    -h      show this usage information" << std::endl
 	          << "    -V      show the version of the tool" << std::endl << std::endl
 	          << "Return codes:" << std::endl
@@ -119,6 +122,7 @@ int main(int argc, char *argv[])
 	/* Default values */
 	double epsilon = 1e-9;
 	const char *format = "villas.human";
+	const char *dtypes = "64f";
 	int flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA | SAMPLE_HAS_TS_ORIGIN;
 
 	struct pool pool = { .state = STATE_DESTROYED };
@@ -126,7 +130,7 @@ int main(int argc, char *argv[])
 	/* Parse Arguments */
 	int c;
 	char *endptr;
-	while ((c = getopt (argc, argv, "he:vtsf:Vd:")) != -1) {
+	while ((c = getopt (argc, argv, "he:vTsf:t:Vd:")) != -1) {
 		switch (c) {
 			case 'e':
 				epsilon = strtod(optarg, &endptr);
@@ -136,7 +140,7 @@ int main(int argc, char *argv[])
 				flags &= ~SAMPLE_HAS_DATA;
 				break;
 
-			case 't':
+			case 'T':
 				flags &= ~SAMPLE_HAS_TS_ORIGIN;
 				break;
 
@@ -146,6 +150,10 @@ int main(int argc, char *argv[])
 
 			case 'f':
 				format = optarg;
+				break;
+
+			case 't':
+				dtypes = optarg;
 				break;
 
 			case 'V':
@@ -191,7 +199,7 @@ check:		if (optarg == endptr)
 
 	/* Open files */
 	for (int i = 0; i < n; i++)
-		s[i] = new Side(argv[optind + i], fmt, &pool);
+		s[i] = new Side(argv[optind + i], fmt, dtypes, &pool);
 
 	line = 0;
 	for (;;) {

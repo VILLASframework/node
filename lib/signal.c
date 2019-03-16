@@ -261,17 +261,47 @@ int signal_list_parse(struct vlist *list, json_t *cfg)
 	return 0;
 }
 
-int signal_list_generate(struct vlist *list, unsigned len, enum signal_type fmt)
+int signal_list_generate(struct vlist *list, unsigned len, enum signal_type typ)
 {
+	char name[32];
+
 	for (int i = 0; i < len; i++) {
-		char name[32];
 		snprintf(name, sizeof(name), "signal%d", i);
 
-		struct signal *sig = signal_create(name, NULL, fmt);
+		struct signal *sig = signal_create(name, NULL, typ);
 		if (!sig)
 			return -1;
 
 		vlist_push(list, sig);
+	}
+
+	return 0;
+}
+
+int signal_list_generate2(struct vlist *list, const char *dt)
+{
+	int len, i = 0;
+	char name[32], *e;
+	enum signal_type typ;
+
+	for (const char *t = dt; *t; t = e + 1) {
+		len = strtoul(t, &e, 10);
+		if (t == e)
+			len = 1;
+
+		typ = signal_type_from_fmtstr(*e);
+		if (typ == SIGNAL_TYPE_INVALID)
+			return -1;
+
+		for (int j = 0; j < len; j++) {
+			snprintf(name, sizeof(name), "signal%d", i++);
+
+			struct signal *sig = signal_create(name, NULL, typ);
+			if (!sig)
+				return -1;
+
+			vlist_push(list, sig);
+		}
 	}
 
 	return 0;
@@ -337,6 +367,26 @@ enum signal_type signal_type_from_str(const char *str)
 		return SIGNAL_TYPE_INTEGER;
 	else
 		return SIGNAL_TYPE_INVALID;
+}
+
+enum signal_type signal_type_from_fmtstr(char c)
+{
+	switch (c) {
+		case 'f':
+			return SIGNAL_TYPE_FLOAT;
+
+		case 'i':
+			return SIGNAL_TYPE_INTEGER;
+
+		case 'c':
+			return SIGNAL_TYPE_COMPLEX;
+
+		case 'b':
+			return SIGNAL_TYPE_BOOLEAN;
+
+		default:
+			return SIGNAL_TYPE_INVALID;
+	}
 }
 
 const char * signal_type_to_str(enum signal_type fmt)

@@ -42,6 +42,7 @@ static void usage()
 	          << "  OPTIONS are:" << std::endl
 	          << "    -i FMT           set the input format" << std::endl
 	          << "    -o FMT           set the output format" << std::endl
+	          << "    -t DT            the data-type format string" << std::endl
 	          << "    -d LVL           set debug log level to LVL" << std::endl
 	          << "    -h               show this usage information" << std::endl
 	          << "    -V               show the version of the tool" << std::endl << std::endl;
@@ -54,10 +55,11 @@ int main(int argc, char *argv[])
 	int ret;
 	const char *input_format = "villas.human";
 	const char *output_format = "villas.human";
+	const char *dtypes = "64f";
 
 	/* Parse optional command line arguments */
 	int c;
-	while ((c = getopt(argc, argv, "Vhd:i:o:")) != -1) {
+	while ((c = getopt(argc, argv, "Vhd:i:o:t:")) != -1) {
 		switch (c) {
 			case 'V':
 				print_version();
@@ -69,6 +71,10 @@ int main(int argc, char *argv[])
 
 			case 'o':
 				output_format = optarg;
+				break;
+
+			case 't':
+				dtypes = optarg;
 				break;
 
 			case 'd':
@@ -87,7 +93,7 @@ int main(int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	struct format_type *fmt;
+	struct format_type *ft;
 	struct io input = { .state = STATE_DESTROYED };
 	struct io output = { .state = STATE_DESTROYED };
 
@@ -100,11 +106,11 @@ int main(int argc, char *argv[])
 	};
 
 	for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
-		fmt = format_type_lookup(dirs[i].name);
-		if (!fmt)
+		ft = format_type_lookup(dirs[i].name);
+		if (!ft)
 			throw RuntimeError("Invalid format: {}", dirs[i].name);
 
-		ret = io_init2(dirs[i].io, fmt, SIGNAL_TYPE_FLOAT, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
+		ret = io_init2(dirs[i].io, ft, dtypes, SAMPLE_HAS_ALL);
 		if (ret)
 			throw RuntimeError("Failed to initialize IO: {}", dirs[i].name);
 

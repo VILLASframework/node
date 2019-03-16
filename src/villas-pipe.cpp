@@ -127,11 +127,12 @@ static void usage()
 	          << "  NODE    the name of the node to which samples are sent and received from" << std::endl
 	          << "  OPTIONS are:" << std::endl
 	          << "    -f FMT           set the format" << std::endl
+	          << "    -t DT            the data-type format string" << std::endl
 	          << "    -o OPTION=VALUE  overwrite options in config file" << std::endl
 	          << "    -x               swap read / write endpoints" << std::endl
 	          << "    -s               only read data from stdin and send it to node" << std::endl
 	          << "    -r               only read data from node and write it to stdout" << std::endl
-	          << "    -t NUM           terminate after NUM seconds" << std::endl
+	          << "    -T NUM           terminate after NUM seconds" << std::endl
 	          << "    -L NUM           terminate after NUM samples sent" << std::endl
 	          << "    -l NUM           terminate after NUM samples received" << std::endl
 	          << "    -h               show this usage information" << std::endl
@@ -253,6 +254,7 @@ int main(int argc, char *argv[])
 	int ret, timeout = 0;
 	bool reverse = false;
 	const char *format = "villas.human";
+	const char *dtypes = "64f";
 
 	struct node *node;
 	static struct io io = { .state = STATE_DESTROYED };
@@ -268,7 +270,7 @@ int main(int argc, char *argv[])
 	/* Parse optional command line arguments */
 	int c;
 	char *endptr;
-	while ((c = getopt(argc, argv, "Vhxrsd:l:L:t:f:o:")) != -1) {
+	while ((c = getopt(argc, argv, "Vhxrsd:l:L:T:f:t:o:")) != -1) {
 		switch (c) {
 			case 'V':
 				print_version();
@@ -276,6 +278,10 @@ int main(int argc, char *argv[])
 
 			case 'f':
 				format = optarg;
+				break;
+
+			case 't':
+				dtypes = optarg;
 				break;
 
 			case 'x':
@@ -298,7 +304,7 @@ int main(int argc, char *argv[])
 				limit_send = strtoul(optarg, &endptr, 10);
 				goto check;
 
-			case 't':
+			case 'T':
 				timeout = strtoul(optarg, &endptr, 10);
 				goto check;
 
@@ -333,7 +339,7 @@ check:		if (optarg == endptr)
 
 	char *uri = argv[optind];
 	char *nodestr = argv[optind+1];
-	struct format_type *fmt;
+	struct format_type *ft;
 
 	ret = memory_init(0);
 	if (ret)
@@ -351,11 +357,11 @@ check:		if (optarg == endptr)
 	else
 		logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
-	fmt = format_type_lookup(format);
-	if (!fmt)
+	ft = format_type_lookup(format);
+	if (!ft)
 		throw RuntimeError("Invalid format: {}", format);
 
-	ret = io_init2(&io, fmt, SIGNAL_TYPE_FLOAT, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
+	ret = io_init2(&io, ft, dtypes, SAMPLE_HAS_ALL);
 	if (ret)
 		throw RuntimeError("Failed to initialize IO");
 

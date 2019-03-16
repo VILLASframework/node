@@ -109,7 +109,7 @@ int io_init(struct io *io, const struct format_type *fmt, struct vlist *signals,
 	return 0;
 }
 
-int io_init2(struct io *io, const struct format_type *fmt, enum signal_type type, int len, int flags)
+int io_init2(struct io *io, const struct format_type *fmt, const char *dt, int flags)
 {
 	int ret;
 	struct vlist *signals;
@@ -121,7 +121,7 @@ int io_init2(struct io *io, const struct format_type *fmt, enum signal_type type
 	if (ret)
 		return ret;
 
-	ret = signal_list_generate(signals, len, type);
+	ret = signal_list_generate2(signals, dt);
 	if (ret)
 		return ret;
 

@@ -60,6 +60,7 @@ static void usage()
 	          << "  PARAM*    a string of configuration settings for the hook" << std::endl
 	          << "  OPTIONS is one or more of the following options:" << std::endl
 	          << "    -f FMT  the data format" << std::endl
+	          << "    -t DT   the data-type format string" << std::endl
 	          << "    -d LVL  set debug level to LVL" << std::endl
 	          << "    -v CNT  process CNT smps at once" << std::endl
 	          << "    -h      show this help" << std::endl
@@ -84,6 +85,7 @@ int main(int argc, char *argv[])
 {
 	int ret, recv, sent, cnt;
 	const char *format = "villas.human";
+	const char *dtypes = "64f";
 
 	struct format_type *ft;
 	struct hook_type *ht;
@@ -103,7 +105,7 @@ int main(int argc, char *argv[])
 	/* Parse optional command line arguments */
 	int c;
 	char *endptr;
-	while ((c = getopt(argc, argv, "Vhv:d:f:o:")) != -1) {
+	while ((c = getopt(argc, argv, "Vhv:d:f:t:o:")) != -1) {
 		switch (c) {
 			case 'V':
 				print_version();
@@ -111,6 +113,10 @@ int main(int argc, char *argv[])
 
 			case 'f':
 				format = optarg;
+				break;
+
+			case 't':
+				dtypes = optarg;
 				break;
 
 			case 'v':
@@ -169,7 +175,7 @@ check:		if (optarg == endptr)
 	if (!ft)
 		throw RuntimeError("Unknown IO format '{}'", format);
 
-	ret = io_init2(&io, ft, SIGNAL_TYPE_FLOAT, DEFAULT_SAMPLE_LENGTH, SAMPLE_HAS_ALL);
+	ret = io_init2(&io, ft, dtypes, SAMPLE_HAS_ALL);
 	if (ret)
 		throw RuntimeError("Failed to initialize IO");
 

@@ -82,7 +82,7 @@ struct io {
 
 int io_init(struct io *io, const struct format_type *fmt, struct vlist *signals, int flags);
 
-int io_init2(struct io *io, const struct format_type *fmt, enum signal_type type, int len, int flags);
+int io_init2(struct io *io, const struct format_type *fmt, const char *dt, int flags);
 
 int io_destroy(struct io *io);
 

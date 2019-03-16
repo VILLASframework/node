@@ -126,8 +126,15 @@ int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
 		if (ret)
 			error("Failed to parse signal definition of node %s", node_name(n));
 	}
+	else if (json_is_string(json_signals)) {
+		const char *dt = json_string_value(json_signals);
+
+		ret = signal_list_generate2(&nd->signals, dt);
+		if (ret)
+			return ret;
+	}
 	else {
-		int count = DEFAULT_SAMPLE_LENGTH;
+		int count = 64;
 		const char *type_str = "float";
 
 		if (json_is_object(json_signals)) {
@@ -137,13 +144,15 @@ int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
 			);
 		}
 		else
-			warning("No signal definition found for node %s. Using the default config of %d floating point signals.", node_name(n), DEFAULT_SAMPLE_LENGTH);
+			warning("No signal definition found for node %s. Using the default config of 64 floating point signals.", node_name(n));
 
 		int type = signal_type_from_str(type_str);
 		if (type < 0)
 			error("Invalid signal type %s", type_str);
 
-		signal_list_generate(&nd->signals, count, type);
+		ret = signal_list_generate(&nd->signals, count, type);
+		if (ret)
+			return ret;
 	}
 
 #ifdef WITH_HOOKS
