@@ -37,7 +37,6 @@
 #include <villas/pool.h>
 #include <villas/bitset.h>
 #include <villas/common.h>
-#include <villas/hook.h>
 #include <villas/mapping.h>
 #include <villas/task.h>
 

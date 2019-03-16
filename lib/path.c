@@ -32,7 +32,7 @@
 #include <villas/timing.h>
 #include <villas/pool.h>
 #include <villas/queue.h>
-#include <villas/hook.h>
+#include <villas/hook_list.h>
 #include <villas/plugin.h>
 #include <villas/memory.h>
 #include <villas/stats.h>
@@ -204,9 +204,6 @@ int path_prepare(struct path *p)
 	ret = hook_list_prepare(&p->hooks, &p->signals, m, p, NULL);
 	if (ret)
 		return ret;
-
-	/* We sort the hooks according to their priority before starting the path */
-	vlist_sort(&p->hooks, hook_cmp_priority);
 #endif /* WITH_HOOKS */
 
 	/* Initialize destinations */
@@ -561,13 +558,9 @@ int path_start(struct path *p)
 	free(mask);
 
 #ifdef WITH_HOOKS
-	for (size_t i = 0; i < vlist_length(&p->hooks); i++) {
-		struct hook *h = (struct hook *) vlist_at(&p->hooks, i);
-
-		ret = hook_start(h);
-		if (ret)
-			return ret;
-	}
+	ret = hook_list_start(&p->hooks);
+	if (ret)
+		return ret;
 #endif /* WITH_HOOKS */
 
 	p->last_sequence = 0;
@@ -627,13 +620,9 @@ int path_stop(struct path *p)
 		return ret;
 
 #ifdef WITH_HOOKS
-	for (size_t i = 0; i < vlist_length(&p->hooks); i++) {
-		struct hook *h = (struct hook *) vlist_at(&p->hooks, i);
-
-		ret = hook_stop(h);
-		if (ret)
-			return ret;
-	}
+	ret = hook_list_stop(&p->hooks);
+	if (ret)
+		return ret;
 #endif /* WITH_HOOKS */
 
 	sample_decref(p->last_sample);

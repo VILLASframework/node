@@ -23,6 +23,7 @@
 
 #include <villas/utils.h>
 #include <villas/hook.h>
+#include <villas/hook_list.h>
 #include <villas/node.h>
 #include <villas/node_direction.h>
 
@@ -193,13 +194,9 @@ int node_direction_start(struct node_direction *nd, struct node *n)
 #ifdef WITH_HOOKS
 	int ret;
 
-	for (size_t i = 0; i < vlist_length(&nd->hooks); i++) {
-		struct hook *h = (struct hook *) vlist_at(&nd->hooks, i);
-
-		ret = hook_start(h);
-		if (ret)
-			return ret;
-	}
+	ret = hook_list_start(&nd->hooks);
+	if (ret)
+		return ret;
 #endif /* WITH_HOOKS */
 
 	nd->state = STATE_STARTED;
@@ -214,13 +211,9 @@ int node_direction_stop(struct node_direction *nd, struct node *n)
 #ifdef WITH_HOOKS
 	int ret;
 
-	for (size_t i = 0; i < vlist_length(&nd->hooks); i++) {
-		struct hook *h = (struct hook *) vlist_at(&nd->hooks, i);
-
-		ret = hook_stop(h);
-		if (ret)
-			return ret;
-	}
+	ret = hook_list_stop(&nd->hooks);
+	if (ret)
+		return ret;
 #endif /* WITH_HOOKS */
 
 	nd->state = STATE_STOPPED;
@@ -233,9 +226,7 @@ struct vlist * node_direction_get_signals(struct node_direction *nd)
 #ifdef WITH_HOOKS
 	assert(nd->state == STATE_PREPARED);
 
-	struct hook *h = vlist_last(&nd->hooks);
-
-	return &h->signals;
+	return hook_list_get_signals(&nd->hooks);
 #else
 	return &nd->signals;
 #endif

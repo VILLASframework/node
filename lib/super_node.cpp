@@ -30,7 +30,7 @@
 #include <villas/path.h>
 #include <villas/utils.h>
 #include <villas/list.h>
-#include <villas/hook.h>
+#include <villas/hook_list.h>
 #include <villas/advio.h>
 #include <villas/plugin.h>
 #include <villas/memory.h>
@@ -571,8 +571,6 @@ SuperNode::~SuperNode()
 
 int SuperNode::periodic()
 {
-	int ret;
-
 	int started = 0;
 
 	for (size_t i = 0; i < vlist_length(&paths); i++) {
@@ -582,13 +580,7 @@ int SuperNode::periodic()
 			started++;
 
 #ifdef WITH_HOOKS
-			for (size_t j = 0; j < vlist_length(&p->hooks); j++) {
-				hook *h = (struct hook *) vlist_at(&p->hooks, j);
-
-				ret = hook_periodic(h);
-				if (ret)
-					return ret;
-			}
+		hook_list_periodic(&p->hooks);
 #endif /* WITH_HOOKS */
 		}
 	}
@@ -600,21 +592,8 @@ int SuperNode::periodic()
 			continue;
 
 #ifdef WITH_HOOKS
-		for (size_t j = 0; j < vlist_length(&n->in.hooks); j++) {
-			auto *h = (struct hook *) vlist_at(&n->in.hooks, j);
-
-			ret = hook_periodic(h);
-			if (ret)
-				return ret;
-		}
-
-		for (size_t j = 0; j < vlist_length(&n->out.hooks); j++) {
-			auto *h = (struct hook *) vlist_at(&n->out.hooks, j);
-
-			ret = hook_periodic(h);
-			if (ret)
-				return ret;
-		}
+		hook_list_periodic(&n->in.hooks);
+		hook_list_periodic(&n->out.hooks);
 #endif /* WITH_HOOKS */
 	}
 

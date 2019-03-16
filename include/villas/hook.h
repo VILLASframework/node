@@ -1,8 +1,8 @@
-/** Hook funktions
+/** Hook functions
  *
- * Every path can register a hook function which is called for every received
- * message. This can be used to debug the data flow, get statistics
- * or alter the message.
+ * Every node or path can register hook functions which is called for every
+ * processed sample. This can be used to debug the data flow, get statistics
+ * or alter the sample contents.
  *
  * This file includes some examples.
  *
@@ -100,34 +100,6 @@ struct hook_type * hook_type(struct hook *h)
 {
 	return h->_vt;
 }
-
-int hook_list_init(struct vlist *hs);
-
-int hook_list_destroy(struct vlist *hs);
-
-/** Parses an object of hooks
- *
- * Example:
- *
- * {
- *    stats = {
- *       output = "stdout"
- *    },
- *    skip_first = {
- *       seconds = 10
- *    },
- *    hooks = [ "print" ]
- * }
- */
-int hook_list_parse(struct vlist *hs, json_t *cfg, int mask, struct path *p, struct node *n);
-
-int hook_list_prepare(struct vlist *hs, struct vlist *sigs, int mask, struct path *p, struct node *n);
-
-int hook_list_prepare_signals(struct vlist *hs, struct vlist *signals);
-
-int hook_list_add(struct vlist *hs, int mask, struct path *p, struct node *n);
-
-int hook_list_process(struct vlist *hs, struct sample *smps[], unsigned cnt);
 
 #ifdef __cplusplus
 }
