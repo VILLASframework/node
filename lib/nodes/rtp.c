@@ -465,18 +465,15 @@ int rtp_stop(struct node *n)
 	}
 
 	return io_destroy(&r->io);
-}
 
-static void * th_func(void *arg)
-{
-	re_main(NULL);
-	return NULL;
 }
 
 static void stop_handler(int sig, siginfo_t *si, void *ctx)
 {
 	re_cancel();
 }
+
+typedef void *(*pthread_start_routine)(void *);
 
 int rtp_type_start(struct super_node *sn)
 {
@@ -490,7 +487,7 @@ int rtp_type_start(struct super_node *sn)
 	}
 
 	/* Add worker thread */
-	ret = pthread_create(&re_pthread, NULL, th_func, NULL);
+	ret = pthread_create(&re_pthread, NULL, (pthread_start_routine) re_main, NULL);
 	if (ret) {
 		warning("Error creating rtp node type pthread");
 		return ret;
