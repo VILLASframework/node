@@ -81,7 +81,7 @@ SuperNode::SuperNode() :
 	logger = logging.get("super_node");
 }
 
-int SuperNode::parseUri(const std::string &u)
+void SuperNode::parseUri(const std::string &u)
 {
 	json_error_t err;
 
@@ -160,12 +160,10 @@ int SuperNode::parseUri(const std::string &u)
 
 	uri = u;
 
-	return parseJson(json);
-
-	return 0;
+	parseJson(json);
 }
 
-int SuperNode::parseJson(json_t *j)
+void SuperNode::parseJson(json_t *j)
 {
 	int ret;
 	const char *nme = nullptr;
@@ -290,11 +288,9 @@ parse:			path *p = (path *) alloc(sizeof(path));
 	json = j;
 
 	state = STATE_PARSED;
-
-	return 0;
 }
 
-int SuperNode::check()
+void SuperNode::check()
 {
 	int ret;
 
@@ -317,8 +313,6 @@ int SuperNode::check()
 	}
 
 	state = STATE_CHECKED;
-
-	return 0;
 }
 
 void SuperNode::startNodeTypes()

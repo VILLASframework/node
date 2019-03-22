@@ -73,19 +73,17 @@ public:
 
 	int init();
 
-	/** Wrapper for super_node_parse() */
-	int parseUri(const std::string &name);
+	/** Wrapper for parse() */
+	void parseUri(const std::string &name);
 
 	/** Parse super-node configuration.
 	 *
 	 * @param cfg A libjansson object which contains the configuration.
-	 * @retval 0 Success. Everything went well.
-	 * @retval <0 Error. Something went wrong.
 	 */
-	int parseJson(json_t *cfg);
+	void parseJson(json_t *cfg);
 
 	/** Check validity of super node configuration. */
-	int check();
+	void check();
 
 	/** Initialize after parsing the configuration file. */
 	void prepare();
