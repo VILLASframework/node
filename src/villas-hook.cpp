@@ -93,6 +93,8 @@ int main(int argc, char *argv[])
 
 	Logger logger = logging.get("hook");
 
+	try {
+
 	struct pool p = { .state = STATE_DESTROYED };
 	struct hook h = { .state = STATE_DESTROYED };
 	struct io  io = { .state = STATE_DESTROYED };
@@ -279,4 +281,9 @@ stop:		sent = io_print(&io, smps, send);
 	logger->info(CLR_GRN("Goodbye!"));
 
 	return 0;
+
+	}
+	catch (std::runtime_error &e) {
+		logger->error("{}", e.what());
+	}
 }

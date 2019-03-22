@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
 	return 0;
 
 	}
-	catch (RuntimeError &e) {
+	catch (std::runtime_error &e) {
 		logger->error("{}", e.what());
 	}
 }
