@@ -125,9 +125,10 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 	const char *id, *name, *type;
 
 	size_t l;
+	json_error_t err;
 	json_t *attribute, *attributes;
 
-	ret = json_unpack(entity, "{ s: s, s: s, s: o }",
+	ret = json_unpack_ex(entity, &err, 0, "{ s: s, s: s, s: o }",
 		"id", &id,
 		"type", &type,
 		"attributes", &attributes
@@ -143,10 +144,11 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 
 	json_array_foreach(attributes, l, attribute) {
 		struct ngsi_attribute *map;
+		json_error_t err;
 		json_t *metadata, *values, *tuple;
 
 		/* Parse JSON */
-		ret = json_unpack(attribute, "{ s: s, s: s, s: o, s?: o }",
+		ret = json_unpack_ex(attribute, &err, 0, "{ s: s, s: s, s: o, s?: o }",
 			"name", &name,
 			"type", &type,
 			"value", &values,
@@ -176,7 +178,7 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 
 			char *end;
 			const char *value, *ts, *seq;
-			ret = json_unpack(tuple, "[ s, s, s ]", &ts, &value, &seq);
+			ret = json_unpack_ex(tuple, &err, 0, "[ s, s, s ]", &ts, &value, &seq);
 			if (ret)
 				return -8;
 
@@ -260,7 +262,9 @@ static int ngsi_parse_context_response(json_t *response, int *code, char **reaso
 	int ret;
 	char *codestr;
 
-	ret = json_unpack(response, "{ s: [ { s: O, s: { s: s, s: s } } ] }",
+	json_error_t err;
+
+	ret = json_unpack_ex(response, &err, 0, "{ s: [ { s: O, s: { s: s, s: s } } ] }",
 		"contextResponses",
 			"contextElement", rentity,
 			"statusCode",

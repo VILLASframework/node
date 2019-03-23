@@ -721,7 +721,8 @@ bool path_is_simple(const struct path *p)
 	int ret;
 	const char *in = NULL, *out = NULL;
 
-	ret = json_unpack(p->cfg, "{ s: s, s: s }", "in", &in, "out", &out);
+	json_error_t err;
+	ret = json_unpack_ex(p->cfg, &err, 0, "{ s: s, s: s }", "in", &in, "out", &out);
 	if (ret)
 		return false;
 

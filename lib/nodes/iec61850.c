@@ -103,17 +103,17 @@ int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct v
 	const char *iec_type;
 	const struct iec61850_type_descriptor *td;
 	struct signal *sig;
+	json_error_t err;
 
 	ret = vlist_init(signals);
 	if (ret)
 		return ret;
 
 	if (json_is_array(json_signals)) {
-
 		json_t *json_signal;
 		size_t i;
 		json_array_foreach(json_signals, i, json_signal) {
-			json_unpack(json_signal, "{ s?: s }",
+			json_unpack_ex(json_signal, &err, 0, "{ s?: s }",
 				"iec_type", &iec_type
 			);
 
@@ -154,7 +154,7 @@ int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct v
 		}
 	}
 	else {
-		ret = json_unpack(json_signals, "{ s: s }", "iec_type", &iec_type);
+		ret = json_unpack_ex(json_signals, &err, 0, "{ s: s }", "iec_type", &iec_type);
 		if (ret)
 			return ret;
 

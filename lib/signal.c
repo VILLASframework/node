@@ -622,7 +622,8 @@ int signal_data_parse_json(union signal_data *data, const struct signal *sig, js
 		case SIGNAL_TYPE_COMPLEX: {
 			double real, imag;
 
-			ret = json_unpack(cfg, "{ s: F, s: F }",
+			json_error_t err;
+			ret = json_unpack_ex(cfg, &err, 0, "{ s: F, s: F }",
 				"real", &real,
 				"imag", &imag
 			);

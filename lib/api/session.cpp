@@ -70,10 +70,11 @@ int Session::runAction(json_t *json_in, json_t **json_out)
 	const char *action;
 	char *id;
 
+	json_error_t err;
 	json_t *json_args = nullptr;
 	json_t *json_resp = nullptr;
 
-	ret = json_unpack(json_in, "{ s: s, s: s, s?: o }",
+	ret = json_unpack_ex(json_in, &err, 0, "{ s: s, s: s, s?: o }",
 		"action", &action,
 		"id", &id,
 		"request", &json_args);
