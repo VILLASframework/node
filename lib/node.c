@@ -114,7 +114,6 @@ int node_parse(struct node *n, json_t *json, const char *name)
 	int ret;
 
 	json_error_t err;
-	json_t *json_signals = NULL;
 	json_t *json_netem = NULL;
 
 	const char *type;
@@ -123,9 +122,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 
 	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: b, s?: { s?: o } }",
 		"type", &type,
-		"enabled", &n->enabled,
-		"in",
-			"signals", &json_signals
+		"enabled", &n->enabled
 	);
 	if (ret)
 		jerror(&err, "Failed to parse node %s", node_name(n));
