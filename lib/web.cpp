@@ -207,7 +207,7 @@ int Web::parse(json_t *cfg)
 	const char *htd = nullptr;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: i, s?: b }",
+	ret = json_unpack_ex(cfg, &err, JSON_STRICT, "{ s?: s, s?: s, s?: s, s?: i, s?: b }",
 		"ssl_cert", &cert,
 		"ssl_private_key", &pkey,
 		"htdocs", &htd,

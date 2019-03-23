@@ -179,7 +179,7 @@ void SuperNode::parseJson(json_t *j)
 
 	idleStop = true;
 
-	ret = json_unpack_ex(j, &err, 0, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s, s?: b }",
+	ret = json_unpack_ex(j, &err, JSON_STRICT, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s, s?: b }",
 		"http", &json_web,
 		"logging", &json_logging,
 		"nodes", &json_nodes,
