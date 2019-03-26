@@ -66,10 +66,8 @@ public:
 
 		if (args) {
 			ret = json_unpack_ex(args, &err, 0, "{ s?: s }", "config", &cfg);
-			if (ret < 0) {
-				*resp = json_string("failed to parse request");
-				return -1;
-			}
+			if (ret < 0)
+				return ret;
 		}
 
 		/* If no config is provided via request, we will use the previous one */
@@ -98,7 +96,7 @@ public:
 		/* Register exit handler */
 		ret = atexit(handler);
 		if (ret)
-			return 0;
+			return ret;
 
 		/* Properly terminate current instance */
 		killme(SIGTERM);

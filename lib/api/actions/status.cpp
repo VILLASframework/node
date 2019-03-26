@@ -42,10 +42,12 @@ public:
 		char buf[4096];
 
 		ret = lws_json_dump_context(ctx, buf, sizeof(buf), 0);
+		if (ret)
+			return ret;
 
 		*resp = json_loads(buf, 0, nullptr);
 
-		return ret;
+		return 0;
 	}
 };
 

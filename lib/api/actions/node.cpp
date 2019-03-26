@@ -50,7 +50,7 @@ public:
 		ret = json_unpack_ex(args, &err, 0, "{ s: s }",
 			"node", &node_str
 		);
-		if (ret)
+		if (ret < 0)
 			return ret;
 
 		struct vlist *nodes = session->getSuperNode()->getNodes();
