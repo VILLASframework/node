@@ -57,15 +57,14 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 	catch (ParseError &e) {
-		logger->info("{}", e.what());
+		logger->error("{}", e.what());
 	}
 	catch (ConfigError &e) {
-		logger->info("{}", e.what());
+		logger->error("{}", e.what());
 	}
 	catch (std::runtime_error &e) {
-		logger->info("{}", e.what());
+		logger->error("{}", e.what());
 	}
-
 
 	return -1;
 }
