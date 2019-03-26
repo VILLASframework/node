@@ -464,8 +464,11 @@ int rtp_stop(struct node *n)
 			return ret;
 	}
 
-	return io_destroy(&r->io);
+	ret = io_destroy(&r->io);
+	if (ret)
+		return ret;
 
+	return ret;
 }
 
 static void stop_handler(int sig, siginfo_t *si, void *ctx)
