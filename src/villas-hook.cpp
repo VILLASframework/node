@@ -97,183 +97,183 @@ int main(int argc, char *argv[])
 	Logger logger = logging.get("hook");
 
 	try {
+		struct pool p = { .state = STATE_DESTROYED };
+		struct io  io = { .state = STATE_DESTROYED };
 
-	struct pool p = { .state = STATE_DESTROYED };
-	struct io  io = { .state = STATE_DESTROYED };
+		/* Default values */
+		cnt = 1;
 
-	/* Default values */
-	cnt = 1;
+		json_t *cfg_cli = json_object();
 
-	json_t *cfg_cli = json_object();
+		/* Parse optional command line arguments */
+		int c;
+		char *endptr;
+		while ((c = getopt(argc, argv, "Vhv:d:f:t:o:")) != -1) {
+			switch (c) {
+				case 'V':
+					print_version();
+					exit(EXIT_SUCCESS);
 
-	/* Parse optional command line arguments */
-	int c;
-	char *endptr;
-	while ((c = getopt(argc, argv, "Vhv:d:f:t:o:")) != -1) {
-		switch (c) {
-			case 'V':
-				print_version();
-				exit(EXIT_SUCCESS);
-
-			case 'f':
-				format = optarg;
-				break;
-
-			case 't':
-				dtypes = optarg;
-				break;
-
-			case 'v':
-				cnt = strtoul(optarg, &endptr, 0);
-				goto check;
-
-			case 'd':
-				logging.setLevel(optarg);
-				break;
-
-			case 'o':
-				ret = json_object_extend_str(cfg_cli, optarg);
-				if (ret)
-					throw RuntimeError("Invalid option: {}", optarg);
-				break;
-
-			case '?':
-			case 'h':
-				usage();
-				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
-		}
-
-		continue;
-
-check:		if (optarg == endptr)
-			throw RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
-
-	}
-
-	if (argc < optind + 1) {
-		usage();
-		exit(EXIT_FAILURE);
-	}
-
-	char *hook = argv[optind];
-
-	ret = utils::signals_init(quit);
-	if (ret)
-		throw RuntimeError("Failed to intialize signals");
-
-	if (cnt < 1)
-		throw RuntimeError("Vectorize option must be greater than 0");
-
-	ret = memory_init(DEFAULT_NR_HUGEPAGES);
-	if (ret)
-		throw RuntimeError("Failed to initialize memory");
-
-	smps = new struct sample*[cnt];
-
-	ret = pool_init(&p, 10 * cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_hugepage);
-	if (ret)
-		throw RuntimeError("Failed to initilize memory pool");
-
-	/* Initialize IO */
-	ft = format_type_lookup(format);
-	if (!ft)
-		throw RuntimeError("Unknown IO format '{}'", format);
-
-	ret = io_init2(&io, ft, dtypes, SAMPLE_HAS_ALL);
-	if (ret)
-		throw RuntimeError("Failed to initialize IO");
-
-	ret = io_check(&io);
-	if (ret)
-		throw RuntimeError("Failed to validate IO configuration");
-
-	ret = io_open(&io, nullptr);
-	if (ret)
-		throw RuntimeError("Failed to open IO");
-
-	/* Initialize hook */
-	auto hf = plugin::Registry::lookup<HookFactory>(hook);
-	if (!hf)
-		throw RuntimeError("Unknown hook function '{}'", hook);
-
-	auto h = hf->make(nullptr, nullptr);
-	if (!h)
-		throw RuntimeError("Failed to initialize hook");
-
-	h->parse(cfg_cli);
-	h->check();
-	h->prepare(io.signals);
-	h->start();
-
-	while (!stop) {
-		ret = sample_alloc_many(&p, smps, cnt);
-		if (ret != cnt)
-			throw RuntimeError("Failed to allocate %d smps from pool", cnt);
-
-		recv = io_scan(&io, smps, cnt);
-		if (recv < 0) {
-			if (io_eof(&io))
-				break;
-
-			throw RuntimeError("Failed to read from stdin");
-		}
-
-		logger->debug("Read {} smps from stdin", recv);
-
-		unsigned send = 0;
-		for (int processed = 0; processed < recv; processed++) {
-			struct sample *smp = smps[processed];
-
-			ret = h->process(smp);
-			switch (ret) {
-				case HOOK_ERROR:
-					throw RuntimeError("Failed to process samples");
-
-				case HOOK_OK:
-					smps[send++] = smp;
+				case 'f':
+					format = optarg;
 					break;
 
-				case HOOK_SKIP_SAMPLE:
+				case 't':
+					dtypes = optarg;
 					break;
 
-				case HOOK_STOP_PROCESSING:
-					goto stop;
+				case 'v':
+					cnt = strtoul(optarg, &endptr, 0);
+					goto check;
+
+				case 'd':
+					logging.setLevel(optarg);
+					break;
+
+				case 'o':
+					ret = json_object_extend_str(cfg_cli, optarg);
+					if (ret)
+						throw RuntimeError("Invalid option: {}", optarg);
+					break;
+
+				case '?':
+				case 'h':
+					usage();
+					exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 			}
+
+			continue;
+
+check:			if (optarg == endptr)
+				throw RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
+
 		}
 
-stop:		sent = io_print(&io, smps, send);
-		if (sent < 0)
-			throw RuntimeError("Failed to write to stdout");
+		if (argc < optind + 1) {
+			usage();
+			exit(EXIT_FAILURE);
+		}
+
+		char *hook = argv[optind];
+
+		ret = utils::signals_init(quit);
+		if (ret)
+			throw RuntimeError("Failed to intialize signals");
+
+		if (cnt < 1)
+			throw RuntimeError("Vectorize option must be greater than 0");
+
+		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		if (ret)
+			throw RuntimeError("Failed to initialize memory");
+
+		smps = new struct sample*[cnt];
+
+		ret = pool_init(&p, 10 * cnt, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_hugepage);
+		if (ret)
+			throw RuntimeError("Failed to initilize memory pool");
+
+		/* Initialize IO */
+		ft = format_type_lookup(format);
+		if (!ft)
+			throw RuntimeError("Unknown IO format '{}'", format);
+
+		ret = io_init2(&io, ft, dtypes, SAMPLE_HAS_ALL);
+		if (ret)
+			throw RuntimeError("Failed to initialize IO");
+
+		ret = io_check(&io);
+		if (ret)
+			throw RuntimeError("Failed to validate IO configuration");
+
+		ret = io_open(&io, nullptr);
+		if (ret)
+			throw RuntimeError("Failed to open IO");
+
+		/* Initialize hook */
+		auto hf = plugin::Registry::lookup<HookFactory>(hook);
+		if (!hf)
+			throw RuntimeError("Unknown hook function '{}'", hook);
+
+		auto h = hf->make(nullptr, nullptr);
+		if (!h)
+			throw RuntimeError("Failed to initialize hook");
+
+		h->parse(cfg_cli);
+		h->check();
+		h->prepare(io.signals);
+		h->start();
+
+		while (!stop) {
+			ret = sample_alloc_many(&p, smps, cnt);
+			if (ret != cnt)
+				throw RuntimeError("Failed to allocate %d smps from pool", cnt);
+
+			recv = io_scan(&io, smps, cnt);
+			if (recv < 0) {
+				if (io_eof(&io))
+					break;
+
+				throw RuntimeError("Failed to read from stdin");
+			}
+
+			logger->debug("Read {} smps from stdin", recv);
+
+			unsigned send = 0;
+			for (int processed = 0; processed < recv; processed++) {
+				struct sample *smp = smps[processed];
+
+				ret = h->process(smp);
+				switch (ret) {
+					case HOOK_ERROR:
+						throw RuntimeError("Failed to process samples");
+
+					case HOOK_OK:
+						smps[send++] = smp;
+						break;
+
+					case HOOK_SKIP_SAMPLE:
+						break;
+
+					case HOOK_STOP_PROCESSING:
+						goto stop;
+				}
+			}
+
+stop:			sent = io_print(&io, smps, send);
+			if (sent < 0)
+				throw RuntimeError("Failed to write to stdout");
+
+			sample_free_many(smps, cnt);
+		}
+
+		h->stop();
+
+		delete h;
+
+		ret = io_close(&io);
+		if (ret)
+			throw RuntimeError("Failed to close IO");
+
+		ret = io_destroy(&io);
+		if (ret)
+			throw RuntimeError("Failed to destroy IO");
 
 		sample_free_many(smps, cnt);
-	}
 
-	h->stop();
+		delete smps;
 
-	delete h;
+		ret = pool_destroy(&p);
+		if (ret)
+			throw RuntimeError("Failed to destroy memory pool");
 
-	ret = io_close(&io);
-	if (ret)
-		throw RuntimeError("Failed to close IO");
+		logger->info(CLR_GRN("Goodbye!"));
 
-	ret = io_destroy(&io);
-	if (ret)
-		throw RuntimeError("Failed to destroy IO");
-
-	sample_free_many(smps, cnt);
-
-	delete smps;
-
-	ret = pool_destroy(&p);
-	if (ret)
-		throw RuntimeError("Failed to destroy memory pool");
-
-	logger->info(CLR_GRN("Goodbye!"));
-
-	return 0;
-
+		return 0;
 	}
 	catch (std::runtime_error &e) {
 		logger->error("{}", e.what());
+
+		return -1;
 	}
 }

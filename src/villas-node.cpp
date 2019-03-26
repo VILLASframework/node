@@ -123,73 +123,73 @@ int main(int argc, char *argv[])
 	Logger logger = logging.get("node");
 
 	try {
-
-	/* Check arguments */
+		/* Check arguments */
 #ifdef ENABLE_OPAL_ASYNC
-	if (argc != 4)
-		usage(argv[0]);
+		if (argc != 4)
+			usage(argv[0]);
 
-	opal_register_region(argc, argv);
+		opal_register_region(argc, argv);
 
-	const char *uri = "opal-shmem.conf";
+		const char *uri = "opal-shmem.conf";
 #else
 
-	/* Parse optional command line arguments */
-	int c;
-	while ((c = getopt(argc, argv, "hVd:")) != -1) {
-		switch (c) {
-			case 'V':
-				print_version();
-				exit(EXIT_SUCCESS);
+		/* Parse optional command line arguments */
+		int c;
+		while ((c = getopt(argc, argv, "hVd:")) != -1) {
+			switch (c) {
+				case 'V':
+					print_version();
+					exit(EXIT_SUCCESS);
 
-			case 'd':
-				logging.setLevel(optarg);
-				break;
+				case 'd':
+					logging.setLevel(optarg);
+					break;
 
-			case 'h':
-			case '?':
-				usage();
-				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+				case 'h':
+				case '?':
+					usage();
+					exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+			}
+
+			continue;
 		}
 
-		continue;
-	}
-
-	char *uri = argc == optind + 1 ? argv[optind] : nullptr;
+		char *uri = argc == optind + 1 ? argv[optind] : nullptr;
 #endif /* ENABLE_OPAL_ASYNC */
 
-	logger->info("This is VILLASnode {} (built on {}, {})",
-		CLR_BLD(CLR_YEL(PROJECT_BUILD_ID)),
-		CLR_BLD(CLR_MAG(__DATE__)), CLR_BLD(CLR_MAG(__TIME__)));
+		logger->info("This is VILLASnode {} (built on {}, {})",
+			CLR_BLD(CLR_YEL(PROJECT_BUILD_ID)),
+			CLR_BLD(CLR_MAG(__DATE__)), CLR_BLD(CLR_MAG(__TIME__)));
 
 #ifdef __linux__
-	/* Checks system requirements*/
-	auto required = utils::Version(KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
-	if (kernel::getVersion() < required)
-		throw RuntimeError("Your kernel version is to old: required >= {}.{}", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
+		/* Checks system requirements*/
+		auto required = utils::Version(KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
+		if (kernel::getVersion() < required)
+			throw RuntimeError("Your kernel version is to old: required >= {}.{}", KERNEL_VERSION_MAJ, KERNEL_VERSION_MIN);
 #endif /* __linux__ */
 
-	ret = utils::signals_init(quit);
-	if (ret)
-		throw RuntimeError("Failed to initialize signal subsystem");
+		ret = utils::signals_init(quit);
+		if (ret)
+			throw RuntimeError("Failed to initialize signal subsystem");
 
-	if (uri)
-		sn.parse(uri);
-	else
-		logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
+		if (uri)
+			sn.parse(uri);
+		else
+			logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
-	sn.check();
-	sn.prepare();
-	sn.start();
-	sn.run();
-	sn.stop();
+		sn.check();
+		sn.prepare();
+		sn.start();
+		sn.run();
+		sn.stop();
 
-	logger->info(CLR_GRN("Goodbye!"));
+		logger->info(CLR_GRN("Goodbye!"));
 
-	return 0;
-
+		return 0;
 	}
 	catch (std::runtime_error &e) {
 		logger->error("{}", e.what());
+
+		return -1;
 	}
 }
