@@ -21,6 +21,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#pragma once
+
+#include <villas/config.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Forward declarations */
 struct vlist;
 struct web;
 struct super_node;
@@ -44,4 +53,8 @@ enum state web_get_state(struct web *w);
 
 #ifdef WITH_WEB
 int web_callback_on_writable(struct web *w, struct lws *wsi);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
