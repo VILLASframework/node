@@ -91,6 +91,27 @@ char * vstrcatf(char **dest, const char *fmt, va_list ap)
 	return *dest;
 }
 
+char * strf(const char *fmt, ...)
+{
+	char *buf = NULL;
+
+	va_list ap;
+	va_start(ap, fmt);
+	vstrcatf(&buf, fmt, ap);
+	va_end(ap);
+
+	return buf;
+}
+
+char * vstrf(const char *fmt, va_list va)
+{
+	char *buf = NULL;
+
+	vstrcatf(&buf, fmt, va);
+
+	return buf;
+}
+
 void * alloc(size_t bytes)
 {
 	void *p = malloc(bytes);
