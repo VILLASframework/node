@@ -25,8 +25,18 @@
 
 set -e
 
-CONFIGS=$(find ${SRCDIR}/etc/ -name '*.conf' -o -name '*.json')
+cd ${SRCDIR}/etc/
+
+CONFIGS=$(find . -name '*.conf' -o -name '*.json')
 
 for CONFIG in ${CONFIGS}; do
+    if [ "$(basename ${CONFIG})" == "opal.conf" ] ||
+       [ "$(basename ${CONFIG})" == "paths.conf" ] ||
+       [ "$(basename ${CONFIG})" == "global.conf" ]; then
+        echo "=== Skipping config: ${CONFIG}"
+        continue
+    fi
+
+    echo "=== Testing config: ${CONFIG}"
     villas-config-check ${CONFIG}
 done
