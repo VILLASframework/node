@@ -91,7 +91,7 @@ void Log::parse(json_t *cfg)
 	json_error_t err;
 	json_t *json_expressions = nullptr;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: s, s?: s, s?: b, s?: s }",
+	ret = json_unpack_ex(cfg, &err, JSON_STRICT, "{ s?: s, s?: s, s?: s, s?: b, s?: s }",
 		"level", &level,
 		"file", &path,
 		"expressions", &json_expressions,
@@ -126,7 +126,7 @@ void Log::parse(json_t *cfg)
 			const char *name;
 			const char *lvl;
 
-			ret = json_unpack_ex(json_expression, &err, 0, "{ s: s, s: s }",
+			ret = json_unpack_ex(json_expression, &err, JSON_STRICT, "{ s: s, s: s }",
 				"name", &name,
 				"level", &lvl
 			);
