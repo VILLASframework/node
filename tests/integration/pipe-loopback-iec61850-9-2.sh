@@ -65,12 +65,10 @@ cat > ${CONFIG_FILE} << EOF
 }
 EOF
 
-cat ${CONFIG_FILE}
-
 villas-pipe -l ${NUM_SAMPLES} ${CONFIG_FILE} node1 > ${OUTPUT_FILE} < ${INPUT_FILE}
 
 # Compare data
-villas-test-cmp -t ${INPUT_FILE} ${OUTPUT_FILE}
+villas-test-cmp -T ${INPUT_FILE} ${OUTPUT_FILE}
 RC=$?
 
 rm ${OUTPUT_FILE} ${INPUT_FILE} ${CONFIG_FILE}
