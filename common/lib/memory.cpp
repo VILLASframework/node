@@ -53,7 +53,7 @@ HostRam::HostRamAllocator::allocateBlock(size_t size)
 
 	auto& mm = MemoryManager::get();
 
-	// assemble name for this block
+	/* Assemble name for this block */
 	std::stringstream name;
 	name << std::showbase << std::hex << reinterpret_cast<uintptr_t>(addr);
 
@@ -78,7 +78,7 @@ LinearAllocator::LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId
     internalOffset(internalOffset),
     allocationCount(0)
 {
-	// make sure to start at aligned offset, reduce size in case we need padding
+	/* Make sure to start at aligned offset, reduce size in case we need padding */
 	if(const size_t paddingBytes = getAlignmentPadding(internalOffset)) {
 		assert(paddingBytes < memorySize);
 
@@ -86,7 +86,7 @@ LinearAllocator::LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId
 		memorySize -= paddingBytes;
 	}
 
-	// deallocation callback
+	/* Deallocation callback */
 	free = [&](MemoryBlock* mem) {
 		logger->debug("Deallocating memory block at local addr {:#x} (addr space {})",
 		              mem->getOffset(), mem->getAddrSpaceId());
@@ -97,7 +97,7 @@ LinearAllocator::LinearAllocator(MemoryManager::AddressSpaceId memoryAddrSpaceId
 		if(allocationCount == 0) {
 			logger->debug("All allocations are deallocated now, freeing memory");
 
-			// all allocations have been deallocated, free all memory
+			/* All allocations have been deallocated, free all memory */
 			nextFreeAddress = 0;
 		}
 
@@ -126,28 +126,28 @@ LinearAllocator::allocateBlock(size_t size)
 		throw std::bad_alloc();
 	}
 
-	// assign address
+	/* Assign address */
 	const uintptr_t localAddr = nextFreeAddress + internalOffset;
 
-	// reserve memory
+	/* Reserve memory */
 	nextFreeAddress += size;
 
-	// make sure it is aligned
+	/* Make sure it is aligned */
 	if(const size_t paddingBytes = getAlignmentPadding(nextFreeAddress)) {
 		nextFreeAddress += paddingBytes;
 
-		// if next free address is outside this block due to padding, cap it
+		/* If next free address is outside this block due to padding, cap it */
 		nextFreeAddress = std::min(nextFreeAddress, memorySize);
 	}
 
 
 	auto& mm = MemoryManager::get();
 
-	// assemble name for this block
+	/* Assemble name for this block */
 	std::stringstream blockName;
 	blockName << std::showbase << std::hex << localAddr;
 
-	// create address space
+	/* Create address space */
 	auto addrSpaceName = mm.getSlaveAddrSpaceName(getName(), blockName.str());
 	auto addrSpaceId = mm.getOrCreateAddressSpace(addrSpaceName);
 
@@ -157,10 +157,10 @@ LinearAllocator::allocateBlock(size_t size)
 	std::unique_ptr<MemoryBlock, MemoryBlock::deallocator_fn>
 	        mem(new MemoryBlock(localAddr, size, addrSpaceId), this->free);
 
-	// mount block into the memory graph
+	/* Mount block into the memory graph */
 	insertMemoryBlock(*mem);
 
-	// increase the allocation count
+	/* Increase the allocation count */
 	allocationCount++;
 
 	return mem;
@@ -233,13 +233,13 @@ HostDmaRam::HostDmaRamAllocator::~HostDmaRamAllocator()
 		auto translation = mm.getTranslationFromProcess(getAddrSpaceId());
 		baseVirt = reinterpret_cast<void*>(translation.getLocalAddr(0));
 	} catch(const std::out_of_range&) {
-		// not mapped, nothing to do
+		/* Not mapped, nothing to do */
 		return;
 	}
 
 	logger->debug("Unmapping {}", getName());
 
-	// try to unmap it
+	/* Try to unmap it */
 	if(::munmap(baseVirt, getSize()) != 0) {
 		logger->warn("munmap() failed for {:p} of size {:#x}",
 		             baseVirt, getSize());
@@ -301,4 +301,4 @@ HostDmaRam::HostDmaRamAllocator&HostDmaRam::getAllocator(int num)
 	return *allocator;
 }
 
-} // namespace villas
+} /* namespace villas */

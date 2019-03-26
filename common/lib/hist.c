@@ -99,7 +99,7 @@ void hist_put(struct hist *h, double value)
 		h->_m[0] = h->_m[1] + (value - h->_m[1]) / h->total;
 		h->_s[0] = h->_s[1] + (value - h->_m[1]) * (value - h->_m[0]);
 
-		// set up for next iteration
+		/* Set up for next iteration */
 		h->_m[1] = h->_m[0];
 		h->_s[1] = h->_s[0];
 	}

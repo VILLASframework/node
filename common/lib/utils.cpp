@@ -49,11 +49,11 @@ tokenize(std::string s, std::string delimiter)
 		const size_t tokenLength = curentPos - lastPos;
 		tokens.push_back(s.substr(lastPos, tokenLength));
 
-		// advance in string
+		/* Advance in string */
 		lastPos = curentPos + delimiter.length();
 	}
 
-	// check if there's a last token behind the last delimiter
+	/* Check if there's a last token behind the last delimiter. */
 	if(lastPos != s.length()) {
 		const size_t lastTokenLength = s.length() - lastPos;
 		tokens.push_back(s.substr(lastPos, lastTokenLength));
@@ -171,5 +171,5 @@ void killme(int sig)
 
 }
 
-} // namespace utils
-} // namespace villas
+} /* namespace utils */
+} /* namespace villas */
