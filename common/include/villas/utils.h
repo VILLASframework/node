@@ -196,9 +196,8 @@ char * strcatf(char **dest, const char *fmt, ...)
 char * vstrcatf(char **dest, const char *fmt, va_list va)
 	__attribute__ ((format(printf, 2, 0)));
 
-/** Format string like strcatf() just starting with empty string */
-#define strf(fmt, ...) strcatf(&(char *) { NULL }, fmt, ##__VA_ARGS__)
-#define vstrf(fmt, va) vstrcatf(&(char *) { NULL }, fmt, va)
+char * strf(const char *fmt, ...);
+char * vstrf(const char *fmt, va_list va);
 
 /** Allocate and initialize memory. */
 void * alloc(size_t bytes);
