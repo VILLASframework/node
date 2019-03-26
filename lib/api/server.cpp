@@ -34,7 +34,7 @@
 #endif
 
 #include <villas/config.h>
-#include <villas/exceptions.hpp>
+#include <villas/node/exceptions.hpp>
 #include <villas/utils.h>
 #include <villas/super_node.hpp>
 #include <villas/api/server.hpp>

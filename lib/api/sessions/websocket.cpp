@@ -25,7 +25,7 @@
 #include <libwebsockets.h>
 
 #include <villas/web.hpp>
-#include <villas/exceptions.hpp>
+#include <villas/node/exceptions.hpp>
 #include <villas/log.hpp>
 #include <villas/api/sessions/websocket.hpp>
 

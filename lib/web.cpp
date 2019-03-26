@@ -27,7 +27,7 @@
 #include <villas/utils.h>
 #include <villas/web.hpp>
 #include <villas/api.hpp>
-#include <villas/exceptions.hpp>
+#include <villas/node/exceptions.hpp>
 #include <villas/api/sessions/http.hpp>
 #include <villas/api/sessions/websocket.hpp>
 
@@ -215,7 +215,7 @@ int Web::parse(json_t *cfg)
 		"enabled", &enabled
 	);
 	if (ret)
-		throw JsonError(err, "Failed to http section of configuration file");
+		throw ConfigError(cfg, err, "node-config-http");
 
 	if (cert)
 		ssl_cert = cert;

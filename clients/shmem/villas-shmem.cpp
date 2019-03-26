@@ -29,7 +29,7 @@
 
 #include <villas/node/config.h>
 #include <villas/log.hpp>
-#include <villas/exceptions.hpp>
+#include <villas/node/exceptions.hpp>
 #include <villas/node.h>
 #include <villas/pool.h>
 #include <villas/sample.h>

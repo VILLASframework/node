@@ -34,7 +34,7 @@
 #include <villas/memory.h>
 #include <villas/config_helper.hpp>
 #include <villas/log.hpp>
-#include <villas/exceptions.hpp>
+#include <villas/node/exceptions.hpp>
 #include <villas/kernel/rt.hpp>
 #include <villas/kernel/if.h>
 
@@ -113,7 +113,7 @@ void SuperNode::parse(json_t *cfg)
 		"idle_stop", &idleStop
 	);
 	if (ret)
-		throw JsonError(err, "Failed to parse global configuration");
+		throw ConfigError(cfg, err, "node-config");
 
 	if (nme)
 		name = nme;
@@ -143,11 +143,11 @@ void SuperNode::parse(json_t *cfg)
 
 			ret = json_unpack_ex(json_node, &err, 0, "{ s: s }", "type", &type);
 			if (ret)
-				throw JsonError(err, "Failed to parse node");
+				throw ConfigError(cfg, err, "node-config-node-type", "Failed to parse type of node '{}'", name);
 
 			nt = node_type_lookup(type);
 			if (!nt)
-				throw RuntimeError("Invalid node type: {}", type);
+				throw ConfigError(json_node, "node-config-node-type", "Invalid node type: {}", type);
 
 			auto *n = (struct node *) alloc(sizeof(struct node));
 
@@ -156,8 +156,11 @@ void SuperNode::parse(json_t *cfg)
 				throw RuntimeError("Failed to initialize node");
 
 			ret = node_parse(n, json_node, name);
-			if (ret)
-				throw RuntimeError("Failed to parse node");
+			if (ret) {
+				auto config_id = fmt::format("node-config-node-{}", type);
+
+				throw ConfigError(json_node, config_id, "Failed to parse configuration of node '{}'", name);
+			}
 
 			vlist_push(&nodes, n);
 		}
