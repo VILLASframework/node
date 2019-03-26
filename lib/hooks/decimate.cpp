@@ -1,4 +1,4 @@
-/** Shift sequence number of samples
+/** Decimate hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
@@ -24,52 +24,55 @@
  * @{
  */
 
-#include <villas/hook.h>
-#include <villas/plugin.h>
-#include <villas/sample.h>
+#include <villas/hooks/decimate.hpp>
 
-struct shift {
-	int offset;
-};
+namespace villas {
+namespace node {
 
-static int shift_seq_parse(struct hook *h, json_t *cfg)
+void DecimateHook::start()
 {
-	struct shift *p = (struct shift *) h->_vd;
+	assert(state == STATE_PREPARED);
 
-	json_error_t err;
-	int ret;
+	counter = 0;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: i }",
-		"offset", &p->offset
-	);
-	if (ret)
-		jerror(&err, "Failed to parse configuration of hook '%s'", hook_type_name(h->_vt));
-
-	return 0;
+	state = STATE_STARTED;
 }
 
-static int shift_seq_process(struct hook *h, struct sample *smp)
+void DecimateHook::parse(json_t *cfg)
 {
-	struct shift *p = (struct shift *) h->_vd;
+	int ret;
+	json_error_t err;
 
-	smp->sequence += p->offset;
+	assert(state != STATE_STARTED);
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: i }",
+		"ratio", &ratio
+	);
+	if (ret)
+		throw ConfigError(cfg, err, "node-config-hook-decimate");
+
+	state = STATE_PARSED;
+}
+
+int DecimateHook::process(sample *smp)
+{
+	assert(state == STATE_STARTED);
+
+	if (ratio && counter++ % ratio != 0)
+		return HOOK_SKIP_SAMPLE;
 
 	return HOOK_OK;
 }
 
-static struct plugin p = {
-	.name		= "shift_seq",
-	.description	= "Shift sequence number of samples",
-	.type		= PLUGIN_TYPE_HOOK,
-	.hook		= {
-		.flags		= HOOK_NODE_READ | HOOK_PATH,
-		.priority	= 99,
-		.parse		= shift_seq_parse,
-		.process	= shift_seq_process,
-		.size		= sizeof(struct shift),
-	}
-};
+/* Register hook */
+static HookPlugin<DecimateHook> p(
+	"decimate",
+	"Downsamping by integer factor",
+	HOOK_NODE_READ | HOOK_NODE_WRITE | HOOK_PATH,
+	99
+);
 
-REGISTER_PLUGIN(&p)
+} /* namespace node */
+} /* namespace villas */
 
 /** @} */

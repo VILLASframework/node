@@ -1,4 +1,4 @@
-/** Rate-limiting hook.
+/** A simple example hook function which can be loaded as a plugin.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
@@ -20,17 +20,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#pragma once
+#include <villas/hook.hpp>
+#include <villas/path.h>
 
-/** @addtogroup hooks Hook functions
- * @{
- */
+namespace villas {
+namespace node {
 
-/* Forward declarations */
-struct hook;
+class ExampleHook : public Hook {
 
-int limit_rate_set_rate(struct hook *h, double rate);
+public:
+	using Hook::Hook;
 
-/**
- * @}
- */
+	virtual void restart()
+	{
+		logger->info("The path {} restarted!", path_name(path));
+	}
+};
+
+/* Register hook */
+static HookPlugin<ExampleHook> p(
+	"example",
+	"This is just a simple example hook",
+	HOOK_PATH,
+	99
+);
+
+} // namespace node
+} // namespace villas

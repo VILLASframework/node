@@ -1,4 +1,5 @@
-/** Hook-releated functions.
+
+/** Dump hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
@@ -20,16 +21,41 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <villas/hook_type.h>
-#include <villas/plugin.h>
+/** @addtogroup hooks Hook functions
+ * @{
+ */
 
-struct hook_type * hook_type_lookup(const char *name)
-{
-	struct plugin *p;
+#include <villas/hook.hpp>
+#include <villas/node.h>
+#include <villas/sample.h>
 
-	p = plugin_lookup(PLUGIN_TYPE_HOOK, name);
-	if (!p)
-		return NULL;
+namespace villas {
+namespace node {
 
-	return &p->hook;
-}
+class DumpHook : public Hook {
+
+public:
+	using Hook::Hook;
+
+	virtual int process(sample *smp)
+	{
+		assert(state == STATE_STARTED);
+
+		sample_dump(smp);
+
+		return HOOK_OK;
+	}
+};
+
+/* Register hook */
+static HookPlugin<DumpHook> p(
+	"dump",
+	"Dump data to stdout",
+	HOOK_NODE_READ | HOOK_NODE_WRITE | HOOK_PATH,
+	1
+);
+
+} /* namespace node */
+} /* namespace villas */
+
+/** @} */

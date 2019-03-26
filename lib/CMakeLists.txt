@@ -88,8 +88,7 @@ endif()
 
 if(WITH_HOOKS)
     list(APPEND LIB_SRC
-        hook.c
-        hook_type.c
+        hook.cpp
         hook_list.cpp
     )
 

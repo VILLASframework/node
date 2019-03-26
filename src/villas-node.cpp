@@ -37,6 +37,7 @@
 #include <villas/node.h>
 #include <villas/path.h>
 #include <villas/api.hpp>
+#include <villas/hook.hpp>
 #include <villas/web.hpp>
 #include <villas/log.hpp>
 #include <villas/exceptions.hpp>
@@ -94,7 +95,8 @@ static void usage()
 
 #ifdef WITH_HOOKS
 	std::cout << "Supported hooks:" << std::endl;
-	plugin_dump(PLUGIN_TYPE_HOOK);
+	for (Plugin *p : Registry::lookup<HookFactory>())
+		std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
 	std::cout << std::endl;
 #endif /* WITH_HOOKS */
 

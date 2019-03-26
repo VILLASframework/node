@@ -1,5 +1,4 @@
-
-/** Dump hook.
+/** Rate-limiting hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
@@ -21,33 +20,53 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#pragma once
+
+#include <villas/hook.hpp>
+
 /** @addtogroup hooks Hook functions
  * @{
  */
 
-#include <villas/hook.h>
-#include <villas/plugin.h>
-#include <villas/node.h>
-#include <villas/sample.h>
+namespace villas {
+namespace node {
 
-static int dump_process(struct hook *h, struct sample *smp)
-{
-	sample_dump(smp);
+class LimitRateHook : public Hook {
 
-	return HOOK_OK;
-}
+protected:
+	enum {
+		LIMIT_RATE_LOCAL,
+		LIMIT_RATE_RECEIVED,
+		LIMIT_RATE_ORIGIN
+	} mode; /**< The timestamp which should be used for limiting. */
 
-static struct plugin p = {
-	.name		= "dump",
-	.description	= "dump data to stdout",
-	.type		= PLUGIN_TYPE_HOOK,
-	.hook		= {
-		.flags		= HOOK_NODE_READ | HOOK_NODE_WRITE | HOOK_PATH,
-		.priority	= 1,
-		.process	= dump_process
+	double deadtime;
+	timespec last;
+
+public:
+	using Hook::Hook;
+
+	void setRate(double rate)
+	{
+		deadtime = 1.0 / rate;
 	}
+
+	LimitRateHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
+		Hook(p, n, fl, prio, en),
+		mode(LIMIT_RATE_LOCAL)
+	{
+		last = (timespec) { 0, 0 };
+	}
+
+	virtual void parse(json_t *cfg);
+
+	virtual int process(sample *smp);
 };
 
-REGISTER_PLUGIN(&p)
 
-/** @} */
+} /* namespace node */
+} /* namespace villas */
+
+/**
+ * @}
+ */

@@ -1,4 +1,4 @@
-/** Decimate hook.
+/** Energy-based Metric hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
@@ -20,17 +20,43 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#pragma once
-
 /** @addtogroup hooks Hook functions
  * @{
  */
 
-/* Forward declarations */
-struct hook;
+#include <villas/hook.hpp>
+#include <villas/sample.h>
 
-int decimate_set_ratio(struct hook *h, int ratio);
+namespace villas {
+namespace node {
 
-/**
- * @}
- */
+class EBMHook : public Hook {
+
+protected:
+	char *signal_name;
+	unsigned signal_index;
+
+	double total_energy;
+
+public:
+	using Hook::Hook;
+
+	virtual int process(sample *smp)
+	{
+		assert(state == STATE_STARTED);
+
+		return HOOK_ERROR;
+	}
+};
+
+static HookPlugin<EBMHook> p(
+	"ebm",
+	"Energy-based Metric",
+	HOOK_PATH | HOOK_NODE_READ | HOOK_NODE_WRITE,
+	99
+);
+
+} /* namespace node */
+} /* namespace villas */
+
+/** @} */

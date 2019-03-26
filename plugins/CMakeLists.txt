@@ -25,7 +25,7 @@ link_libraries(villas)
 add_definitions("-DVILLAS")
 
 if(WITH_HOOKS)
-    add_library(example_hook MODULE hooks/example_hook.c)
+    add_library(example_hook MODULE example_hook.cpp)
     install(
         TARGETS example_hook
         COMPONENT plugins

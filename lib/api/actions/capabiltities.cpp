@@ -22,6 +22,7 @@
 
 #include <villas/config.h>
 #include <villas/api/action.hpp>
+#include <villas/hook.hpp>
 
 namespace villas {
 namespace node {
@@ -46,17 +47,17 @@ public:
 			json_array_append_new(json_apis, json_name);
 		}
 
-#if 0 // @todo Port to C++
+		for (auto f : plugin::Registry::lookup<HookFactory>()) {
+			json_name = json_string(f->getName().c_str());
+
+			json_array_append_new(json_hooks, json_name);
+		}
+
+#if 0 /* @todo Port to C++ */
 		for (auto f : NodeFactory::lookup()) {
 			json_name = json_string(f->getName().c_str());
 
 			json_array_append_new(json_nodes, json_name);
-		}
-
-		for (auto f : HookFactory::lookup()) {
-			json_name = json_string(f->getName().c_str());
-
-			json_array_append_new(json_hooks, json_name);
 		}
 
 		for (auto f : FormatFactory::lookup()) {

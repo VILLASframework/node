@@ -25,7 +25,6 @@
 
 #include <villas/common.h>
 #include <villas/utils.h>
-#include <villas/hook_type.h>
 #include <villas/node_type.h>
 #include <villas/format_type.h>
 
@@ -58,9 +57,7 @@ __attribute__((destructor(110))) static void UNIQUE(__dtor)() {	\
 extern struct vlist plugins;
 
 enum plugin_type {
-	PLUGIN_TYPE_HOOK,
 	PLUGIN_TYPE_NODE,
-	PLUGIN_TYPE_API,
 	PLUGIN_TYPE_FORMAT,
 };
 
@@ -73,7 +70,6 @@ struct plugin {
 	union {
 		struct format_type	format;
 		struct node_type	node;
-		struct hook_type	hook;
 	};
 };
 

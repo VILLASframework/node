@@ -1,4 +1,5 @@
-/** Timestamp hook.
+
+/** Drop hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
@@ -24,29 +25,56 @@
  * @{
  */
 
-#include <villas/hook.h>
-#include <villas/plugin.h>
-#include <villas/timing.h>
+#include <inttypes.h>
+
+#include <villas/hook.hpp>
+#include <villas/node.h>
 #include <villas/sample.h>
+#include <villas/timing.h>
 
-static int ts_process(struct hook *h, struct sample *smp)
-{
-	smp->ts.origin = smp->ts.received;
+namespace villas {
+namespace node {
 
-	return HOOK_OK;
-}
+class FixHook : public Hook {
 
-static struct plugin p = {
-	.name		= "ts",
-	.description	= "Overwrite origin timestamp of samples with receive timestamp",
-	.type		= PLUGIN_TYPE_HOOK,
-	.hook		= {
-		.flags		= HOOK_NODE_READ,
-		.priority	= 99,
-		.process	= ts_process
+public:
+	using Hook::Hook;
+
+	virtual int process(sample *smp)
+	{
+		assert(state == STATE_STARTED);
+
+		timespec now = time_now();
+
+		if (!(smp->flags & SAMPLE_HAS_SEQUENCE) && node) {
+			smp->sequence = node->sequence++;
+			smp->flags |= SAMPLE_HAS_SEQUENCE;
+		}
+
+		if (!(smp->flags & SAMPLE_HAS_TS_RECEIVED)) {
+			smp->ts.received = now;
+			smp->flags |= SAMPLE_HAS_TS_RECEIVED;
+		}
+
+		if (!(smp->flags & SAMPLE_HAS_TS_ORIGIN)) {
+			smp->ts.origin = smp->ts.received;
+			smp->flags |= SAMPLE_HAS_TS_ORIGIN;
+		}
+
+		return HOOK_OK;
 	}
 };
 
-REGISTER_PLUGIN(&p)
+/* Register hook */
+static HookPlugin<FixHook> p(
+	"fix",
+	"Fix received data by adding missing fields",
+	HOOK_BUILTIN | HOOK_NODE_READ,
+	1
+);
+
+} /* namespace node */
+} /* namespace villas */
 
 /** @} */
+

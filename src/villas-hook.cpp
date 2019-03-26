@@ -33,18 +33,21 @@
 #include <villas/timing.h>
 #include <villas/sample.h>
 #include <villas/io.h>
-#include <villas/hook.h>
+#include <villas/hook.hpp>
 #include <villas/utils.hpp>
 #include <villas/pool.h>
 #include <villas/log.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/copyright.hpp>
+#include <villas/plugin.hpp>
 #include <villas/plugin.h>
 #include <villas/config_helper.hpp>
 #include <villas/kernel/rt.hpp>
 #include <villas/node/config.h>
 
 using namespace villas;
+using namespace villas::node;
+using namespace villas::plugin;
 
 static std::atomic<bool> stop(false);
 
@@ -67,7 +70,8 @@ static void usage()
 	          << "    -V      show the version of the tool" << std::endl << std::endl;
 
 	std::cout << "Supported hooks:" << std::endl;
-	plugin_dump(PLUGIN_TYPE_HOOK);
+	for (Plugin *p : Registry::lookup<HookFactory>())
+		std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
 	std::cout << std::endl;
 
 	std::cout << "Supported IO formats:" << std::endl;
@@ -88,7 +92,6 @@ int main(int argc, char *argv[])
 	const char *dtypes = "64f";
 
 	struct format_type *ft;
-	struct hook_type *ht;
 	struct sample **smps;
 
 	Logger logger = logging.get("hook");
@@ -96,7 +99,6 @@ int main(int argc, char *argv[])
 	try {
 
 	struct pool p = { .state = STATE_DESTROYED };
-	struct hook h = { .state = STATE_DESTROYED };
 	struct io  io = { .state = STATE_DESTROYED };
 
 	/* Default values */
@@ -190,25 +192,18 @@ check:		if (optarg == endptr)
 		throw RuntimeError("Failed to open IO");
 
 	/* Initialize hook */
-	ht = hook_type_lookup(hook);
-	if (!ht)
+	auto hf = plugin::Registry::lookup<HookFactory>(hook);
+	if (!hf)
 		throw RuntimeError("Unknown hook function '{}'", hook);
 
-	ret = hook_init(&h, ht, nullptr, nullptr);
-	if (ret)
+	auto h = hf->make(nullptr, nullptr);
+	if (!h)
 		throw RuntimeError("Failed to initialize hook");
 
-	ret = hook_parse(&h, cfg_cli);
-	if (ret)
-		throw RuntimeError("Failed to parse hook config");
-
-	ret = hook_prepare(&h, io.signals);
-	if (ret)
-		throw RuntimeError("Failed to prepare hook");
-
-	ret = hook_start(&h);
-	if (ret)
-		throw RuntimeError("Failed to start hook");
+	h->parse(cfg_cli);
+	h->check();
+	h->prepare(io.signals);
+	h->start();
 
 	while (!stop) {
 		ret = sample_alloc_many(&p, smps, cnt);
@@ -229,7 +224,7 @@ check:		if (optarg == endptr)
 		for (int processed = 0; processed < recv; processed++) {
 			struct sample *smp = smps[processed];
 
-			ret = hook_process(&h, smp);
+			ret = h->process(smp);
 			switch (ret) {
 				case HOOK_ERROR:
 					throw RuntimeError("Failed to process samples");
@@ -239,12 +234,11 @@ check:		if (optarg == endptr)
 					break;
 
 				case HOOK_SKIP_SAMPLE:
-					goto skip;
+					break;
 
 				case HOOK_STOP_PROCESSING:
 					goto stop;
 			}
-skip: 		logger->info("Skip: seq={}", smp->sequence);
 		}
 
 stop:		sent = io_print(&io, smps, send);
@@ -254,13 +248,9 @@ stop:		sent = io_print(&io, smps, send);
 		sample_free_many(smps, cnt);
 	}
 
-	ret = hook_stop(&h);
-	if (ret)
-		throw RuntimeError("Failed to stop hook");
+	h->stop();
 
-	ret = hook_destroy(&h);
-	if (ret)
-		throw RuntimeError("Failed to destroy hook");
+	delete h;
 
 	ret = io_close(&io);
 	if (ret)

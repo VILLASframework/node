@@ -21,28 +21,28 @@
 ###################################################################################
 
 set(HOOK_SRC
-    average.c
-    cast.c
-    decimate.c
-    dp.c
-    drop.c
-    dump.c
-    ebm.c
-    fix.c
-    jitter_calc.c
-    limit_rate.c
-    restart.c
-    scale.c
-    shift_seq.c
-    shift_ts.c
-    skip_first.c
-    stats.c
-    ts.c
+    average.cpp
+    cast.cpp
+    decimate.cpp
+    dp.cpp
+    drop.cpp
+    dump.cpp
+    ebm.cpp
+    fix.cpp
+    jitter_calc.cpp
+    limit_rate.cpp
+    restart.cpp
+    scale.cpp
+    shift_seq.cpp
+    shift_ts.cpp
+    skip_first.cpp
+    stats.cpp
+    ts.cpp
 )
 
 if(WITH_IO)
     list(APPEND HOOK_SRC
-        print.c
+        print.cpp
     )
 endif()
 

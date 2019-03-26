@@ -1,10 +1,5 @@
-/** Hook functions
+/** Decimate hook.
  *
- * Every node or path can register hook functions which is called for every
- * processed sample. This can be used to debug the data flow, get statistics
- * or alter the sample contents.
- *
- * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -23,34 +18,43 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-
-/**
- * @addtogroup hooks User-defined hook functions
- * @ingroup path
- * @{
  *********************************************************************************/
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <villas/hook.hpp>
 
-enum hook_flags {
-	HOOK_BUILTIN	= (1 << 0), /**< Should we add this hook by default to every path?. */
-	HOOK_PATH	= (1 << 1), /**< This hook type is used by paths. */
-	HOOK_NODE_READ	= (1 << 2), /**< This hook type is used by nodes. */
-	HOOK_NODE_WRITE	= (1 << 3)  /**< This hook type is used by nodes. */
+/** @addtogroup hooks Hook functions
+ * @{
+ */
+
+namespace villas {
+namespace node {
+
+class DecimateHook : public Hook {
+
+protected:
+	int ratio;
+	unsigned counter;
+
+public:
+	using Hook::Hook;
+
+	void setRatio(int ratio)
+	{
+		ratio = ratio;
+	}
+
+	virtual void start();
+
+	virtual void parse(json_t *cfg);
+
+	virtual int process(sample *smp);
 };
 
-enum hook_reason {
-	HOOK_OK,
-	HOOK_ERROR,
-	HOOK_SKIP_SAMPLE,
-	HOOK_STOP_PROCESSING
-};
+} /* namespace node */
+} /* namespace villas */
 
-#ifdef __cplusplus
-}
-#endif
+/**
+ * @}
+ */

@@ -1,5 +1,4 @@
-
-/** Drop hook.
+/** Timestamp hook.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
@@ -25,47 +24,37 @@
  * @{
  */
 
-#include <inttypes.h>
-
-#include <villas/hook.h>
-#include <villas/plugin.h>
-#include <villas/node.h>
-#include <villas/sample.h>
+#include <villas/hook.hpp>
 #include <villas/timing.h>
+#include <villas/sample.h>
 
-static int fix_process(struct hook *h, struct sample *smp)
-{
-	struct timespec now = time_now();
+namespace villas {
+namespace node {
 
-	if (!(smp->flags & SAMPLE_HAS_SEQUENCE) && h->node) {
-		smp->sequence = h->node->sequence++;
-		smp->flags |= SAMPLE_HAS_SEQUENCE;
-	}
+class TsHook : public Hook {
 
-	if (!(smp->flags & SAMPLE_HAS_TS_RECEIVED)) {
-		smp->ts.received = now;
-		smp->flags |= SAMPLE_HAS_TS_RECEIVED;
-	}
+public:
+	using Hook::Hook;
 
-	if (!(smp->flags & SAMPLE_HAS_TS_ORIGIN)) {
+	virtual int process(sample *smp)
+	{
+		assert(state == STATE_STARTED);
+
 		smp->ts.origin = smp->ts.received;
-		smp->flags |= SAMPLE_HAS_TS_ORIGIN;
-	}
 
-	return HOOK_OK;
-}
-
-static struct plugin p = {
-	.name		= "fix",
-	.description	= "Fix received data by adding missing fields",
-	.type		= PLUGIN_TYPE_HOOK,
-	.hook		= {
-		.flags		= HOOK_BUILTIN | HOOK_NODE_READ,
-		.priority	= 1,
-		.process	= fix_process
+		return HOOK_OK;
 	}
 };
 
-REGISTER_PLUGIN(&p)
+/* Register hook */
+static HookPlugin<TsHook> p(
+	"ts",
+	"Overwrite origin timestamp of samples with receive timestamp",
+	HOOK_NODE_READ,
+	99
+);
+
+} /* namespace node */
+} /* namespace villas */
 
 /** @} */
