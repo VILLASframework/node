@@ -421,7 +421,7 @@ int ngsi_parse(struct node *n, json_t *cfg)
 	i->timeout = 1; /* default value */
 	i->rate = 5; /* default value */
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: s, s: s, s: s, s?: b, s?: F, s?: F }",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s: s, s: s, s: s, s?: b, s?: F, s?: F, s: o }",
 		"access_token", &i->access_token,
 		"endpoint", &i->endpoint,
 		"entity_id", &i->entity_id,
@@ -488,7 +488,7 @@ int ngsi_start(struct node *n)
 	if (i->access_token) {
 		char buf[128];
 		snprintf(buf, sizeof(buf), "Auth-Token: %s", i->access_token);
-		i->headers = curl_svlist_append(i->headers, buf);
+		i->headers = curl_slist_append(i->headers, buf);
 	}
 
 	/* Create task */
@@ -499,8 +499,8 @@ int ngsi_start(struct node *n)
 	if (ret)
 		serror("Failed to create task");
 
-	i->headers = curl_svlist_append(i->headers, "Accept: application/json");
-	i->headers = curl_svlist_append(i->headers, "Content-Type: application/json");
+	i->headers = curl_slist_append(i->headers, "Accept: application/json");
+	i->headers = curl_slist_append(i->headers, "Content-Type: application/json");
 
 	curl_easy_setopt(i->curl, CURLOPT_SSL_VERIFYPEER, i->ssl_verify);
 	curl_easy_setopt(i->curl, CURLOPT_TIMEOUT_MS, i->timeout * 1e3);
@@ -532,7 +532,7 @@ int ngsi_stop(struct node *n)
 	json_decref(entity);
 
 	curl_easy_cleanup(i->curl);
-	curl_svlist_free_all(i->headers);
+	curl_slist_free_all(i->headers);
 
 	return ret;
 }
@@ -576,7 +576,7 @@ int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return ret ? 0 : cnt;
 }
 
-int ngsi_poll_fds(struct node *n)
+int ngsi_poll_fds(struct node *n, int fds[])
 {
 	struct ngsi *i = (struct ngsi *) n->_vd;
 
