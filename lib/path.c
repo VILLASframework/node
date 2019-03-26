@@ -26,6 +26,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <poll.h>
+#include <errno.h>
 
 #include <villas/node/config.h>
 #include <villas/utils.h>
@@ -611,10 +612,13 @@ int path_stop(struct path *p)
 	if (p->state != STATE_STOPPING)
 		p->state = STATE_STOPPING;
 
-	/* Cancel the thread in case is currently in a blocking syscall */
+	/* Cancel the thread in case is currently in a blocking syscall.
+	 *
+	 * We dont care if the thread has already been terminated.
+	 */
 	ret = pthread_cancel(p->tid);
-	if (ret)
-		return ret;
+	if (ret && ret != ESRCH)
+	 	return ret;
 
 	ret = pthread_join(p->tid, NULL);
 	if (ret)
