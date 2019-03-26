@@ -32,23 +32,33 @@
 
 #include <pthread.h>
 
+extern "C" {
 #include <re/re_sa.h>
+}
 
 #include <villas/node.h>
 #include <villas/list.h>
 #include <villas/io.h>
 #include <villas/queue_signalled.h>
+#include <villas/hooks/limit_rate.hpp>
+#include <villas/hooks/decimate.hpp>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/* Forward declarations */
+struct format_type;
 
 /** The maximum length of a packet which contains rtp data. */
 #define RTP_INITIAL_BUFFER_LEN 1500
 #define RTP_PACKET_TYPE 21
 
-/* Forward declarations */
-struct format_type;
+enum rtp_throttle_mode {
+	RTCP_THROTTLE_DISABLED,
+	RTCP_THROTTLE_HOOK_DECIMATE,
+	RTCP_THROTTLE_HOOK_LIMIT_RATE
+};
+
+enum rtp_rtcp_mode {
+	RTCP_MODE_AIMD
+};
 
 struct rtp {
 	struct rtp_sock *rs;	/**< RTP socket */
@@ -68,17 +78,14 @@ struct rtp {
 
 		int num_rrs;
 
-		enum {
-			RTCP_MODE_AIMD,
-		} mode;
+		enum rtp_rtcp_mode mode;
 
-		enum {
-			RTCP_THROTTLE_DISABLED,
-			RTCP_THROTTLE_HOOK_DECIMATE,
-			RTCP_THROTTLE_HOOK_LIMIT_RATE
-		} throttle_mode;
+		enum rtp_throttle_mode throttle_mode;
 
-		struct hook *throttle_hook;
+		union {
+			villas::node::DecimateHook *decimate;
+			villas::node::LimitRateHook *limit_rate;
+		} throttle_hook;
 	} rtcp;
 
 	struct {
@@ -93,6 +100,8 @@ struct rtp {
 	struct queue_signalled recv_queue;
 	struct mbuf *send_mb;
 };
+
+extern "C" {
 
 /** @see node_type::print */
 char * rtp_print(struct node *n);
@@ -112,8 +121,6 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 /** @see node_type::write */
 int rtp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
-#ifdef __cplusplus
 }
-#endif
 
 /** @} */

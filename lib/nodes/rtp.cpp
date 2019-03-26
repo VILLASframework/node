@@ -27,6 +27,7 @@
 #include <time.h>
 #include <signal.h>
 
+extern "C" {
 #include <re/re_types.h>
 #include <re/re_main.h>
 #include <re/re_mbuf.h>
@@ -35,12 +36,11 @@
 #include <re/re_sys.h>
 #include <re/re_udp.h>
 #undef ALIGN_MASK
+}
 
 #include <villas/plugin.h>
 #include <villas/nodes/socket.h>
-#include <villas/hooks/limit_rate.h>
-#include <villas/hooks/decimate.h>
-#include <villas/nodes/rtp.h>
+#include <villas/nodes/rtp.hpp>
 #include <villas/utils.h>
 #include <villas/hook.h>
 #include <villas/format_type.h>
@@ -52,8 +52,12 @@
 
 static pthread_t re_pthread;
 
+using namespace villas::node;
+
+extern "C" {
+
 /* Forward declarations */
-static struct plugin p;
+extern struct plugin p;
 
 static int rtp_set_rate(struct node *n, double rate)
 {
@@ -62,14 +66,15 @@ static int rtp_set_rate(struct node *n, double rate)
 
 	switch (r->rtcp.throttle_mode) {
 		case RTCP_THROTTLE_HOOK_LIMIT_RATE:
-			limit_rate_set_rate(r->rtcp.throttle_hook, rate);
+			r->rtcp.throttle_hook.limit_rate->setRate(rate);
 			break;
 
 		case RTCP_THROTTLE_HOOK_DECIMATE:
 			ratio = r->rate / rate;
 			if (ratio == 0)
 				ratio = 1;
-			decimate_set_ratio(r->rtcp.throttle_hook, ratio);
+
+			r->rtcp.throttle_hook.decimate->setRatio(ratio);
 			break;
 
 		case RTCP_THROTTLE_DISABLED:
@@ -329,7 +334,7 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 	/* source not used */
 	(void) src;
 
-	debug(5, "RTCP: recv %s", rtcp_type_name(msg->hdr.pt));
+	debug(5, "RTCP: recv %s", rtcp_type_name((enum rtcp_type) msg->hdr.pt));
 
 	if (msg->hdr.pt == RTCP_SR) {
 		if (msg->hdr.count > 0) {
@@ -374,35 +379,20 @@ int rtp_start(struct node *n)
 
 	/* Initialize throttle hook */
 	if (r->rtcp.throttle_mode != RTCP_THROTTLE_DISABLED) {
-		struct hook_type *throttle_hook_type;
-
-		r->rtcp.throttle_hook = alloc(sizeof(struct hook));
-		if (!r->rtcp.throttle_hook)
-			return -1;
-
-		r->rtcp.throttle_hook->state = STATE_DESTROYED;
-
 		switch (r->rtcp.throttle_mode) {
 			case RTCP_THROTTLE_HOOK_DECIMATE:
-				throttle_hook_type = hook_type_lookup("decimate");
+				r->rtcp.throttle_hook.decimate = new DecimateHook(nullptr, n, 0, 0);
 				break;
 
 			case RTCP_THROTTLE_HOOK_LIMIT_RATE:
-				throttle_hook_type = hook_type_lookup("limit_rate");
+				r->rtcp.throttle_hook.limit_rate = new LimitRateHook(nullptr, n, 0, 0);
 				break;
 
 			default:
-				throttle_hook_type = NULL;
+				return -1;
 		}
 
-		if (!throttle_hook_type)
-			return -1;
-
-		ret = hook_init(r->rtcp.throttle_hook, throttle_hook_type, NULL, n);
-		if (ret)
-			return ret;
-
-		vlist_push(&n->out.hooks, r->rtcp.throttle_hook);
+		vlist_push(&n->out.hooks, (void *) r->rtcp.throttle_hook.limit_rate);
 	}
 
 	ret = rtp_set_rate(n, r->aimd.last_rate);
@@ -511,12 +501,12 @@ int rtp_type_start(struct super_node *sn)
 	for (size_t i = 0; i < vlist_length(&p.node.instances); i++) {
 		struct node *n = (struct node *) vlist_at(&p.node.instances, i);
 		struct rtp *r = (struct rtp *) n->_vd;
-		struct interface *i = if_get_egress(&r->out.saddr_rtp.u.sa, interfaces);
+		struct interface *j = if_get_egress(&r->out.saddr_rtp.u.sa, interfaces);
 
-		if (!i)
+		if (!j)
 			error("Failed to find egress interface for node: %s", node_name(n));
 
-		vlist_push(&i->nodes, n);
+		vlist_push(&j->nodes, n);
 	}
 #endif /* WITH_NETEM */
 
@@ -624,7 +614,7 @@ int rtp_netem_fds(struct node *n, int fds[])
 	return m;
 }
 
-static struct plugin p = {
+struct plugin p = {
 	.name		= "rtp",
 #ifdef WITH_NETEM
 	.description	= "real-time transport protocol (libre, libnl3 netem support)",
@@ -635,20 +625,24 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0,
 		.size		= sizeof(struct rtp),
-		.type.start	= rtp_type_start,
-		.type.stop	= rtp_type_stop,
+		.type = {
+			.start	= rtp_type_start,
+			.stop	= rtp_type_stop
+		},
 		.init		= rtp_init,
-		.reverse	= rtp_reverse,
 		.parse		= rtp_parse,
 		.print		= rtp_print,
 		.start		= rtp_start,
 		.stop		= rtp_stop,
 		.read		= rtp_read,
 		.write		= rtp_write,
+		.reverse	= rtp_reverse,
 		.poll_fds	= rtp_poll_fds,
 		.netem_fds	= rtp_netem_fds
 	}
 };
+
+} /* extern C */
 
 REGISTER_PLUGIN(&p)
 LIST_INIT_STATIC(&p.node.instances)

@@ -126,7 +126,7 @@ endif()
 
 # Enable RTP node type when libre is available
 if(RE_FOUND AND WITH_IO)
-    list(APPEND NODE_SRC rtp.c)
+    list(APPEND NODE_SRC rtp.cpp)
     list(APPEND INCLUDE_DIRS ${RE_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::RE)
 endif()
