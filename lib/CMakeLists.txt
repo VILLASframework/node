@@ -40,28 +40,28 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL GNU)
 endif()
 
 set(LIB_SRC
-    super_node.cpp
     config_helper.cpp
     config.cpp
+    mapping.c
+    memory.c
     memory/heap.c
     memory/hugepage.c
     memory/managed.c
-    sample.c
-    path.c
-    path_source.c
-    path_destination.c
-    node.c
-    node_type.c
     node_direction.c
-    memory.c
+    node_type.c
+    node.c
+    path_destination.c
+    path_source.c
+    path.c
     plugin.c
-    stats.c
-    mapping.c
+    pool.c
+    queue_signalled.c
+    queue.c
+    sample.c
     shmem.c
     signal.c
-    pool.c
-    queue.c
-	queue_signalled.c
+    stats.c
+    super_node.cpp
 )
 
 if(IBVERBS_FOUND AND RDMACM_FOUND)
