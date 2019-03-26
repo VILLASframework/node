@@ -87,32 +87,44 @@ enum stats_type stats_lookup_type(const char *str)
 
 int stats_init(struct stats *s, int buckets, int warmup)
 {
+	assert(s->state == STATE_DESTROYED);
+
 	for (int i = 0; i < STATS_METRIC_COUNT; i++)
 		hist_init(&s->histograms[i], buckets, warmup);
 
 	s->delta = alloc(sizeof(struct stats_delta));
+
+	s->state = STATE_INITIALIZED;
 
 	return 0;
 }
 
 int stats_destroy(struct stats *s)
 {
+	assert(s->state != STATE_DESTROYED);
+
 	for (int i = 0; i < STATS_METRIC_COUNT; i++)
 		hist_destroy(&s->histograms[i]);
 
 	free(s->delta);
+
+	s->state = STATE_DESTROYED;
 
 	return 0;
 }
 
 void stats_update(struct stats *s, enum stats_metric id, double val)
 {
+	assert(s->state == STATE_INITIALIZED);
+
 	s->delta->values[id] = val;
 	s->delta->update |= 1 << id;
 }
 
 int stats_commit(struct stats *s)
 {
+	assert(s->state == STATE_INITIALIZED);
+
 	for (int i = 0; i < STATS_METRIC_COUNT; i++) {
 		if (s->delta->update & 1 << i) {
 			hist_put(&s->histograms[i], s->delta->values[i]);
@@ -125,6 +137,8 @@ int stats_commit(struct stats *s)
 
 json_t * stats_json(struct stats *s)
 {
+	assert(s->state == STATE_INITIALIZED);
+
 	json_t *obj = json_object();
 
 	for (int i = 0; i < STATS_METRIC_COUNT; i++) {
@@ -139,6 +153,8 @@ json_t * stats_json(struct stats *s)
 
 json_t * stats_json_periodic(struct stats *s, struct node *n)
 {
+	assert(s->state == STATE_INITIALIZED);
+
 	return json_pack("{ s: s, s: i, s: f, s: f, s: i, s: i }",
 		"node", node_name(n),
 		"processed", hist_total(&s->histograms[STATS_METRIC_OWD]),
@@ -151,6 +167,8 @@ json_t * stats_json_periodic(struct stats *s, struct node *n)
 
 void stats_reset(struct stats *s)
 {
+	assert(s->state == STATE_INITIALIZED);
+
 	for (int i = 0; i < STATS_METRIC_COUNT; i++)
 		hist_reset(&s->histograms[i]);
 }
@@ -185,6 +203,8 @@ void stats_print_header(enum stats_format fmt)
 
 void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int verbose, struct node *n)
 {
+	assert(s->state == STATE_INITIALIZED);
+
 	switch (fmt) {
 		case STATS_FORMAT_HUMAN:
 			table_row(&stats_table,
@@ -211,6 +231,8 @@ void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int v
 
 void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose)
 {
+	assert(s->state == STATE_INITIALIZED);
+
 	switch (fmt) {
 		case STATS_FORMAT_HUMAN:
 			for (int i = 0; i < STATS_METRIC_COUNT; i++) {
@@ -234,8 +256,9 @@ void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose)
 
 union signal_data stats_get_value(const struct stats *s, enum stats_metric sm, enum stats_type st)
 {
-	const struct hist *h = &s->histograms[sm];
+	assert(s->state == STATE_INITIALIZED);
 
+	const struct hist *h = &s->histograms[sm];
 	union signal_data d;
 
 	switch (st) {

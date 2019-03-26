@@ -26,6 +26,7 @@
 #include <stdint.h>
 #include <jansson.h>
 
+#include <villas/common.h>
 #include <villas/hist.h>
 #include <villas/signal.h>
 
@@ -86,6 +87,7 @@ struct stats_delta {
 };
 
 struct stats {
+	enum state state;
 	struct hist histograms[STATS_METRIC_COUNT];
 
 	struct stats_delta *delta;
