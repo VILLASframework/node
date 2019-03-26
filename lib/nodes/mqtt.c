@@ -204,7 +204,14 @@ int mqtt_parse(struct node *n, json_t *cfg)
 	if (!m->format)
 		error("Invalid format '%s' for node %s", format, node_name(n));
 
-	// Some checks
+	return 0;
+}
+
+int mqtt_check(struct node *n)
+{
+	int ret;
+	struct mqtt *m = (struct mqtt *) n->_vd;
+
 	ret = mosquitto_sub_topic_check(m->subscribe);
 	if (ret != MOSQ_ERR_SUCCESS)
 		error("Invalid subscribe topic: '%s' for node %s: %s", m->subscribe, node_name(n), mosquitto_strerror(ret));
@@ -451,6 +458,7 @@ static struct plugin p = {
 		.type.stop	= mqtt_type_stop,
 		.reverse	= mqtt_reverse,
 		.parse		= mqtt_parse,
+		.check		= mqtt_check,
 		.print		= mqtt_print,
 		.start		= mqtt_start,
 		.destroy	= mqtt_destroy,
