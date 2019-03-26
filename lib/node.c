@@ -125,7 +125,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 		"enabled", &n->enabled
 	);
 	if (ret)
-		jerror(&err, "Failed to parse node %s", node_name(n));
+		return ret;
 
 #ifdef __linux__
 	ret = json_unpack_ex(json, &err, 0, "{ s?: { s?: o, s?: i } }",
@@ -134,7 +134,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 			"fwmark", &n->fwmark
 	);
 	if (ret)
-		jerror(&err, "Failed to parse node %s", node_name(n));
+		return ret;
 #endif /* __linux__ */
 
 	nt = node_type_lookup(type);
@@ -148,7 +148,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 
 		ret = json_unpack_ex(json_netem, &err, 0, "{ s?: b }",  "enabled", &enabled);
 		if (ret)
-			jerror(&err, "Failed to parse setting 'netem' of node %s", node_name(n));
+			return ret;
 
 		if (enabled)
 			tc_netem_parse(&n->tc_qdisc, json_netem);
@@ -185,17 +185,17 @@ int node_parse(struct node *n, json_t *json, const char *name)
 
 		ret = node_direction_parse(dirs[j].dir, n, json_dir);
 		if (ret)
-			error("Failed to parse %s direction of node %s", dirs[j].str, node_name(n));
+			return ret;
 	}
 
 	ret = node_type(n)->parse ? node_type(n)->parse(n, json) : 0;
 	if (ret)
-		error("Failed to parse node %s", node_name(n));
+		return ret;
 
 	n->cfg = json;
 	n->state = STATE_PARSED;
 
-	return ret;
+	return 0;
 }
 
 int node_check(struct node *n)
