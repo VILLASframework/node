@@ -48,14 +48,14 @@ MemoryManager::AddressSpaceId
 MemoryManager::getOrCreateAddressSpace(std::string name)
 {
 	try {
-		// try fast lookup
+		/* Try fast lookup */
 		return addrSpaceLookup.at(name);
 	} catch (const std::out_of_range&) {
-		// does not yet exist, create
+		/* Does not yet exist, create */
 		std::shared_ptr<AddressSpace> addrSpace(new AddressSpace);
 		addrSpace->name = name;
 
-		// cache it for the next access
+		/* Cache it for the next access */
 		addrSpaceLookup[name] = memoryGraph.addVertex(addrSpace);
 
 		return addrSpaceLookup[name];
@@ -104,7 +104,7 @@ MemoryManager::findPath(MemoryManager::AddressSpaceId fromAddrSpaceId,
 	auto fromAddrSpace = memoryGraph.getVertex(fromAddrSpaceId);
 	auto toAddrSpace = memoryGraph.getVertex(toAddrSpaceId);
 
-	// find a path through the memory graph
+	/* Find a path through the memory graph */
 	MemoryGraph::Path pathGraph;
 	if(not memoryGraph.getPath(fromAddrSpaceId, toAddrSpaceId, pathGraph, pathCheckFunc)) {
 
@@ -126,7 +126,7 @@ MemoryTranslation
 MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
                               MemoryManager::AddressSpaceId toAddrSpaceId)
 {
-	// find a path through the memory graph
+	/* Find a path through the memory graph */
 	MemoryGraph::Path path;
 	if(not memoryGraph.getPath(fromAddrSpaceId, toAddrSpaceId, path, pathCheckFunc)) {
 
@@ -138,10 +138,10 @@ MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
 		throw std::out_of_range("no translation found");
 	}
 
-	// start with an identity mapping
+	/* Start with an identity mapping */
 	MemoryTranslation translation(0, 0, SIZE_MAX);
 
-	// iterate through path and merge all mappings into a single translation
+	/* Iterate through path and merge all mappings into a single translation */
 	for(auto& mappingId : path) {
 		auto mapping = memoryGraph.getEdge(mappingId);
 		translation += getTranslationFromMapping(*mapping);
@@ -153,11 +153,12 @@ MemoryManager::getTranslation(MemoryManager::AddressSpaceId fromAddrSpaceId,
 bool
 MemoryManager::pathCheck(const MemoryGraph::Path& path)
 {
-	// start with an identity mapping
+	/* Start with an identity mapping */
 	MemoryTranslation translation(0, 0, SIZE_MAX);
 
-	// Try to add all mappings together to a common translation. If this fails
-	// there is a non-overlapping window
+	/* Try to add all mappings together to a common translation. If this fails
+	 * there is a non-overlapping window.
+	 */
 	for(auto& mappingId : path) {
 		auto mapping = memoryGraph.getEdge(mappingId);
 		try {
@@ -191,7 +192,7 @@ MemoryTranslation::operator+=(const MemoryTranslation& other)
 {
 	Logger logger = logging.get("MemoryTranslation");
 
-	// set level to debug to enable debug output
+	/* Set level to debug to enable debug output */
 	logger->set_level(spdlog::level::info);
 
 	const uintptr_t this_dst_high = this->dst + this->size;
@@ -206,7 +207,7 @@ MemoryTranslation::operator+=(const MemoryTranslation& other)
 	logger->debug("this_dst_high:  {:#x}", this_dst_high);
 	logger->debug("other_src_high: {:#x}", other_src_high);
 
-	// make sure there is a common memory area
+	/* Make sure there is a common memory area */
 	assertExcept(other.src < this_dst_high, MemoryManager::InvalidTranslation());
 	assertExcept(this->dst < other_src_high, MemoryManager::InvalidTranslation());
 
@@ -227,23 +228,25 @@ MemoryTranslation::operator+=(const MemoryTranslation& other)
 	logger->debug("diff_hi:        {:#x}", diff_hi);
 	logger->debug("diff_lo:        {:#x}", diff_lo);
 
-	// new size of aperture, can only stay or shrink
+	/* New size of aperture, can only stay or shrink */
 	this->size = (hi - lo) - diff_hi - diff_lo;
 
-	// new translation will come out other's destination (by default)
+	/* New translation will come out other's destination (by default) */
 	this->dst = other.dst;
 
-	// the source stays the same and can only increase with merged translations
+	/* The source stays the same and can only increase with merged translations */
 	//this->src = this->src;
 
 	if(otherSrcIsSmaller) {
-		// other mapping starts at lower addresses, so we actually arrive at
-		// higher addresses
+		/* Other mapping starts at lower addresses, so we actually arrive at
+		 * higher addresses
+		 */
 		this->dst += diff_lo;
 	} else {
-		// other mapping starts at higher addresses than this, so we have to
-		// increase the start
-		// NOTE: for addresses equality, this just adds 0
+		/* Other mapping starts at higher addresses than this, so we have to
+		 * increase the start
+		 * NOTE: for addresses equality, this just adds 0
+		 */
 		this->src += diff_lo;
 	}
 
@@ -254,4 +257,4 @@ MemoryTranslation::operator+=(const MemoryTranslation& other)
 	return *this;
 }
 
-} // namespace villas
+} /* namespace villas */

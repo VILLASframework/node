@@ -47,7 +47,7 @@ Log::Log(Level lvl) :
 	setLevel(level);
 	setPattern(pattern);
 
-	// Default sink
+	/* Default sink */
 	sink = std::make_shared<spdlog::sinks::stderr_color_sink_mt>();
 
 	sinks->add_sink(sink);

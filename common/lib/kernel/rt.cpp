@@ -129,6 +129,6 @@ bool isPreemptible()
 
 #endif /* __linux__ */
 
-} // namespace villas
-} // namespace kernel
-} // namespace rt
+} /* namespace villas */
+} /* namespace kernel */
+} /* namespace rt */

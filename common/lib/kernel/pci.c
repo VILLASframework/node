@@ -50,8 +50,7 @@ int pci_init(struct pci *p)
 	}
 
 	while ((e = readdir(dp))) {
-
-		// ignore special entries
+		/* Ignore special entries */
 		if ((strcmp(e->d_name, ".") == 0) ||
 		    (strcmp(e->d_name, "..") == 0) )
 			continue;
@@ -244,8 +243,7 @@ int pci_device_compare(const struct pci_device *d, const struct pci_device *f)
 	if ((f->id.class_code != 0) || (f->id.class_code != d->id.class_code))
 		return 1;
 
-	// found
-	return 0;
+	return 0; /* found */
 }
 
 struct pci_device * pci_lookup_device(struct pci *p, struct pci_device *f)
@@ -276,7 +274,8 @@ size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
 	size_t len = 0;
 
 	int region = 0;
-	// cap to 8 regions, just because we don't know how many may exist
+
+	/* Cap to 8 regions, just because we don't know how many may exist. */
 	while(region < 8 && (bytesRead = getline(&line, &len, f)) != -1) {
 		unsigned long long tokens[3];
 		char* s = line;
@@ -285,7 +284,7 @@ size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
 			tokens[i] = strtoull(s, &end, 16);
 			if(s == end) {
 				printf("Error parsing line %d of %s\n", region + 1, sysfs);
-				tokens[0] = tokens[1] = 0; // mark invalid
+				tokens[0] = tokens[1] = 0; /* Mark invalid */
 				break;
 			}
 			s = end;
@@ -293,12 +292,12 @@ size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
 
 		free(line);
 
-		// required for getline() to allocate a new buffer on the next iteration
+		/* Required for getline() to allocate a new buffer on the next iteration. */
 		line = NULL;
 		len = 0;
 
 		if(tokens[0] != tokens[1]) {
-			// this is a valid region
+			/* This is a valid region */
 			cur_region->num = region;
 			cur_region->start = tokens[0];
 			cur_region->end = tokens[1];

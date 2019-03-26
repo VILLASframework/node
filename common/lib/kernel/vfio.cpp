@@ -52,23 +52,23 @@
 using namespace villas;
 
 static const char *vfio_pci_region_names[] = {
-    "PCI_BAR0",		// VFIO_PCI_BAR0_REGION_INDEX,
-    "PCI_BAR1",		// VFIO_PCI_BAR1_REGION_INDEX,
-    "PCI_BAR2",		// VFIO_PCI_BAR2_REGION_INDEX,
-    "PCI_BAR3",		// VFIO_PCI_BAR3_REGION_INDEX,
-    "PCI_BAR4",		// VFIO_PCI_BAR4_REGION_INDEX,
-    "PCI_BAR5",		// VFIO_PCI_BAR5_REGION_INDEX,
-    "PCI_ROM",		// VFIO_PCI_ROM_REGION_INDEX,
-    "PCI_CONFIG",	// VFIO_PCI_CONFIG_REGION_INDEX,
-    "PCI_VGA"		//  VFIO_PCI_INTX_IRQ_INDEX,
+    "PCI_BAR0",		/* VFIO_PCI_BAR0_REGION_INDEX */
+    "PCI_BAR1",		/* VFIO_PCI_BAR1_REGION_INDEX */
+    "PCI_BAR2",		/* VFIO_PCI_BAR2_REGION_INDEX */
+    "PCI_BAR3",		/* VFIO_PCI_BAR3_REGION_INDEX */
+    "PCI_BAR4",		/* VFIO_PCI_BAR4_REGION_INDEX */
+    "PCI_BAR5",		/* VFIO_PCI_BAR5_REGION_INDEX */
+    "PCI_ROM",		/* VFIO_PCI_ROM_REGION_INDEX */
+    "PCI_CONFIG",	/* VFIO_PCI_CONFIG_REGION_INDEX */
+    "PCI_VGA"		/* VFIO_PCI_INTX_IRQ_INDEX */
 };
 
 static const char *vfio_pci_irq_names[] = {
-    "PCI_INTX",		// VFIO_PCI_INTX_IRQ_INDEX,
-    "PCI_MSI", 		// VFIO_PCI_MSI_IRQ_INDEX,
-    "PCI_MSIX",		// VFIO_PCI_MSIX_IRQ_INDEX,
-    "PCI_ERR", 		// VFIO_PCI_ERR_IRQ_INDEX,
-    "PCI_REQ"		// VFIO_PCI_REQ_IRQ_INDEX,
+    "PCI_INTX",		/* VFIO_PCI_INTX_IRQ_INDEX */
+    "PCI_MSI", 		/* VFIO_PCI_MSI_IRQ_INDEX */
+    "PCI_MSIX",		/* VFIO_PCI_MSIX_IRQ_INDEX */
+    "PCI_ERR", 		/* VFIO_PCI_ERR_IRQ_INDEX */
+    "PCI_REQ"		/* VFIO_PCI_REQ_IRQ_INDEX */
 };
 
 namespace villas {
@@ -243,7 +243,7 @@ VfioContainer::attachDevice(const char* name, int index)
 	logger->debug("Device has {} regions", device->info.num_regions);
 	logger->debug("Device has {} IRQs", device->info.num_irqs);
 
-	// reserve slots already so that we can use the []-operator for access
+	/* Reserve slots already so that we can use the []-operator for access */
 	device->irqs.resize(device->info.num_irqs);
 	device->regions.resize(device->info.num_regions);
 	device->mappings.resize(device->info.num_regions);
@@ -383,11 +383,12 @@ VfioContainer::memoryMap(uintptr_t virt, uintptr_t phys, size_t length)
 	logger->debug("DMA map size={:#x}, iova={:#x}, vaddr={:#x}",
 	              dmaMap.size, dmaMap.iova, dmaMap.vaddr);
 
-	// mapping successful, advance IOVA allocator
+	/* Mapping successful, advance IOVA allocator */
 	this->iova_next += iovaIncrement;
 
-	// we intentionally don't return the actual mapped length, the users are
-	// only guaranteed to have their demanded memory mapped correctly
+	/* We intentionally don't return the actual mapped length, the users are
+	 * only guaranteed to have their demanded memory mapped correctly
+	 */
 	return dmaMap.iova;
 }
 
@@ -423,14 +424,14 @@ VfioContainer::getOrAttachGroup(int index)
 {
 	Logger logger = logging.get("kernel:vfio");
 
-	// search if group with index already exists
+	/* Search if group with index already exists */
 	for (auto& group : groups) {
 		if(group->index == index) {
 			return *group;
 		}
 	}
 
-	// group not yet part of this container, so acquire ownership
+	/* Group not yet part of this container, so acquire ownership */
 	auto group = VfioGroup::attach(*this, index);
 	if (not group) {
 		logger->error("Failed to attach to IOMMU group: {}", index);
@@ -439,7 +440,7 @@ VfioContainer::getOrAttachGroup(int index)
 		logger->debug("Attached new group {} to VFIO container", index);
 	}
 
-	// push to our list
+	/* Push to our list */
 	groups.push_back(std::move(group));
 
 	return *groups.back();
@@ -837,5 +838,5 @@ VfioGroup::attach(VfioContainer& container, int groupIndex)
 	return group;
 }
 
-} // namespace villas
+} /* namespace villas */
 

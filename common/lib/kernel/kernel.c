@@ -134,12 +134,12 @@ int kernel_module_load(const char *module)
 
 	pid_t pid = fork();
 	switch (pid) {
-		case -1: // error
+		case -1: /* error */
 			return -1;
 
-		case 0:  // child
+		case 0:  /* child */
 			execlp("modprobe", "modprobe", module, (char *) 0);
-			exit(EXIT_FAILURE);   // exec never returns
+			exit(EXIT_FAILURE);   /* exec never returns */
 
 		default:
 			wait(&ret);

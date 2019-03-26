@@ -36,7 +36,7 @@ size_t json_dumpb(const json_t *json, char *buffer, size_t size, size_t flags)
 	if (!str)
 		return 0;
 
-	len = strlen(str); // not \0 terminated
+	len = strlen(str); /* not \0 terminated */
 	if (buffer && len <= size)
 		memcpy(buffer, str, len);
 
