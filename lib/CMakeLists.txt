@@ -41,6 +41,7 @@ endif()
 
 set(LIB_SRC
     super_node.cpp
+    config_helper.cpp
     memory/heap.c
     memory/hugepage.c
     memory/managed.c
@@ -56,7 +57,6 @@ set(LIB_SRC
     stats.c
     mapping.c
     shmem.c
-    config_helper.c
     signal.c
     pool.c
     queue.c

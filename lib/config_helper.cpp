@@ -20,10 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <iostream>
+#include <fstream>
+
 #include <string.h>
 
 #include <villas/node/config.h>
-#include <villas/config_helper.h>
+#include <villas/config_helper.hpp>
 #include <villas/utils.h>
 
 #ifdef LIBCONFIG_FOUND
@@ -168,7 +171,7 @@ int json_to_config(json_t *json, config_setting_t *parent)
 void json_object_extend_key_value_token(json_t *obj, const char *key, const char *value)
 {
 	char *str = strdup(value);
-	char *delim = ",";
+	const char *delim = ",";
 
 	char *lasts;
 	char *token = strtok_r(str, delim, &lasts);
@@ -189,7 +192,7 @@ void json_object_extend_key_value(json_t *obj, const char *key, const char *valu
 	double real;
 	long integer;
 
-	json_t *arr, *new, *existing, *subobj;
+	json_t *arr, *add, *existing, *subobj;
 
 	/* Is the key pointing to an object? */
 	subobj = obj;
@@ -203,10 +206,10 @@ void json_object_extend_key_value(json_t *obj, const char *key, const char *valu
 		if (existing)
 			subobj = existing;
 		else {
-			new = json_object();
-			json_object_set(subobj, key1, new);
+			add = json_object();
+			json_object_set(subobj, key1, add);
 
-			subobj = new;
+			subobj = add;
 		}
 
 		key1 = key2;
@@ -216,35 +219,35 @@ void json_object_extend_key_value(json_t *obj, const char *key, const char *valu
 	/* Try to parse as integer */
 	integer = strtol(value, &end, 0);
 	if (*end == 0) {
-		new = json_integer(integer);
+		add = json_integer(integer);
 		goto success;
 	}
 
 	/* Try to parse as floating point */
 	real = strtod(value, &end);
 	if (*end == 0) {
-		new = json_real(real);
+		add = json_real(real);
 		goto success;
 	}
 
 	/* Try to parse special types */
 	if (!strcmp(value, "true")) {
-		new = json_true();
+		add = json_true();
 		goto success;
 	}
 
 	if (!strcmp(value, "false")) {
-		new = json_false();
+		add = json_false();
 		goto success;
 	}
 
 	if (!strcmp(value, "null")) {
-		new = json_null();
+		add = json_null();
 		goto success;
 	}
 
 	/* Fallback to string */
-	new = json_string(value);
+	add = json_string(value);
 
 success:
 	/* Does the key already exist?
@@ -259,10 +262,10 @@ success:
 			json_array_append(arr, existing);
 		}
 
-		json_array_append(arr, new);
+		json_array_append(arr, add);
 	}
 	else
-		json_object_set(subobj, key1, new);
+		json_object_set(subobj, key1, add);
 }
 
 json_t * json_load_cli(int argc, const char *argv[])

@@ -25,7 +25,7 @@
 #include <criterion/parameterized.h>
 
 #include <villas/utils.h>
-#include <villas/config_helper.h>
+#include <villas/config_helper.hpp>
 
 using str = std::basic_string<char, std::char_traits<char>, criterion::allocator<char>>;
 

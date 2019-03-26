@@ -34,7 +34,7 @@
 #include <villas/advio.h>
 #include <villas/plugin.h>
 #include <villas/memory.h>
-#include <villas/config_helper.h>
+#include <villas/config_helper.hpp>
 #include <villas/log.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/kernel/rt.hpp>

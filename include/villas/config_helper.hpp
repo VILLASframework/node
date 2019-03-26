@@ -30,28 +30,21 @@
 
 #include <villas/sample.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifdef LIBCONFIG_FOUND
-/* Convert a libconfig object to a jansson object */
+/** Convert a libconfig object to a jansson object */
 json_t *config_to_json(config_setting_t *cfg);
 
-/* Convert a jansson object into a libconfig object. */
+/** Convert a jansson object into a libconfig object. */
 int json_to_config(json_t *json, config_setting_t *parent);
 #endif /* LIBCONFIG_FOUND */
-
-/* Create a JSON object from command line parameters. */
-json_t *json_load_cli(int argc, const char *argv[]);
 
 int json_object_extend_str(json_t *orig, const char *str);
 
 void json_object_extend_key_value(json_t *obj, const char *key, const char *value);
 
-/* Merge two JSON objects recursively. */
+void json_object_extend_key_value_token(json_t *obj, const char *key, const char *value);
+
+/** Merge two JSON objects recursively. */
 int json_object_extend(json_t *orig, json_t *merge);
 
-#ifdef __cplusplus
-}
-#endif
+json_t * json_load_cli(int argc, const char *argv[]);

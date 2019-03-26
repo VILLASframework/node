@@ -34,7 +34,7 @@
 #include <atomic>
 
 #include <villas/node/config.h>
-#include <villas/config_helper.h>
+#include <villas/config_helper.hpp>
 #include <villas/super_node.hpp>
 #include <villas/copyright.hpp>
 #include <villas/utils.hpp>

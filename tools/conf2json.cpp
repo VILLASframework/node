@@ -26,7 +26,7 @@
 #include <libconfig.h>
 
 #include <villas/config.h>
-#include <villas/config_helper.h>
+#include <villas/config_helper.hpp>
 #include <villas/utils.hpp>
 #include <villas/copyright.hpp>
 
