@@ -117,7 +117,9 @@ public:
 		ss << " Please consult the user documentation for details:" << std::endl;
 		ss << "   " << docUri() << std::endl;
 
-		return ss.str().c_str();
+		auto str = new std::string(ss.str());
+
+		return str->c_str();
 	}
 };
 
