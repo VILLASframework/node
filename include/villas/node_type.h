@@ -66,7 +66,7 @@ struct node_type {
 		 * @retval 0	Success. Everything went well.
 		 * @retval <0	Error. Something went wrong.
 		 */
-		int (*start)();
+		int (*start)(struct super_node *sn);
 
 		/** Global de-initialization per node type.
 		 *
@@ -84,7 +84,7 @@ struct node_type {
 	 * @retval 0	Success. Everything went well.
 	 * @retval <0	Error. Something went wrong.
 	 */
-	int (*init)();
+	int (*init)(struct node *n);
 
 	/** Free memory of an instance of this type.
 	 *
