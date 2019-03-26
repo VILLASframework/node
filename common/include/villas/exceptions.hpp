@@ -1,4 +1,4 @@
-/** Custom exceptions.
+/** Common exceptions.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -32,6 +32,12 @@
 #include <fmt/core.h>
 #include <jansson.h>
 
+#include <villas/config.h>
+
+#ifdef LIBCONFIG_FOUND
+#include <libconfig.h>
+#endif /* LIBCONFIG_FOUND */
+
 namespace villas {
 
 class SystemError : public std::system_error {
@@ -63,20 +69,16 @@ public:
 class JsonError : public std::runtime_error {
 
 protected:
+	const json_t *setting;
 	json_error_t error;
 
 public:
-	JsonError(const json_error_t &err) :
-		std::runtime_error("Failed to decode JSON document"),
-		error(err)
-	{ }
-
 	template<typename... Args>
-	JsonError(const json_error_t &err, const std::string &what, Args&&... args) :
-		std::runtime_error(fmt::format(what, std::forward<Args>(args)...))
-	{
-		(void) err;
-	}
+	JsonError(const json_t *s, const json_error_t &e, const std::string &what = std::string(), Args&&... args) :
+		std::runtime_error(fmt::format(what, std::forward<Args>(args)...)),
+		setting(s),
+		error(e)
+	{ }
 
 	virtual const char * what() const noexcept
 	{
@@ -90,16 +92,25 @@ public:
 class ConfigError : public std::runtime_error {
 
 protected:
-
+	/** A setting-id referencing the setting. */
 	std::string id;
 	json_t *setting;
+	json_error_t error;
 
 public:
 	template<typename... Args>
-	ConfigError(json_t *s, const std::string &i, const std::string &what, Args&&... args) :
+	ConfigError(json_t *s, const std::string &i, const std::string &what = "Failed to parse configuration", Args&&... args) :
 		std::runtime_error(fmt::format(what, std::forward<Args>(args)...)),
 		id(i),
 		setting(s)
+	{ }
+
+	template<typename... Args>
+	ConfigError(json_t *s, const json_error_t &e, const std::string &i, const std::string &what = "Failed to parse configuration", Args&&... args) :
+		std::runtime_error(fmt::format(what, std::forward<Args>(args)...)),
+		id(i),
+		setting(s),
+		error(e)
 	{ }
 
 	std::string docUri() const
@@ -113,9 +124,8 @@ public:
 	{
 		std::stringstream ss;
 
-		ss << "Invalid configuration setting: " << std::endl;
-		ss << " Please consult the user documentation for details:" << std::endl;
-		ss << "   " << docUri() << std::endl;
+		ss << std::runtime_error::what() << std::endl;
+		ss << " Please consult the user documentation for details: " << docUri();
 
 		auto str = new std::string(ss.str());
 
