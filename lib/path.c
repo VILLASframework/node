@@ -197,15 +197,6 @@ int path_prepare(struct path *p)
 
 	assert(p->state == STATE_CHECKED);
 
-#ifdef WITH_HOOKS
-	int m = p->builtin ? HOOK_PATH | HOOK_BUILTIN : 0;
-
-	/* Add internal hooks if they are not already in the list */
-	ret = hook_list_prepare(&p->hooks, &p->signals, m, p, NULL);
-	if (ret)
-		return ret;
-#endif /* WITH_HOOKS */
-
 	/* Initialize destinations */
 	struct memory_type *pool_mt = &memory_hugepage;
 	int pool_size = MAX(1, vlist_length(&p->destinations)) * p->queuelen;
@@ -275,6 +266,16 @@ int path_prepare(struct path *p)
 		}
 	}
 
+#ifdef WITH_HOOKS
+	int m = p->builtin ? HOOK_PATH | HOOK_BUILTIN : 0;
+
+	/* Add internal hooks if they are not already in the list */
+	ret = hook_list_prepare(&p->hooks, &p->signals, m, p, NULL);
+	if (ret)
+		return ret;
+#endif /* WITH_HOOKS */
+
+	/* Initialize pool */
 	ret = pool_init(&p->pool, pool_size, SAMPLE_LENGTH(vlist_length(&p->signals)), pool_mt);
 	if (ret)
 		return ret;

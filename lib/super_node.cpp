@@ -446,8 +446,8 @@ void SuperNode::stop()
 	if (ret)
 		throw RuntimeError("Failed to stop timer");
 
-	stopPaths();
 	stopNodes();
+	stopPaths();
 	stopNodeTypes();
 	stopInterfaces();
 
@@ -494,7 +494,7 @@ int SuperNode::periodic()
 			started++;
 
 #ifdef WITH_HOOKS
-		hook_list_periodic(&p->hooks);
+			hook_list_periodic(&p->hooks);
 #endif /* WITH_HOOKS */
 		}
 	}
@@ -502,13 +502,12 @@ int SuperNode::periodic()
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct node *) vlist_at(&nodes, i);
 
-		if (n->state != STATE_STARTED)
-			continue;
-
+		if (n->state == STATE_STARTED) {
 #ifdef WITH_HOOKS
-		hook_list_periodic(&n->in.hooks);
-		hook_list_periodic(&n->out.hooks);
+			hook_list_periodic(&n->in.hooks);
+			hook_list_periodic(&n->out.hooks);
 #endif /* WITH_HOOKS */
+		}
 	}
 
 	if (idleStop && state == STATE_STARTED && started == 0) {
