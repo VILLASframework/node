@@ -89,6 +89,7 @@ extern "C" {
   #define BOX_UL	"┘" /**< Boxdrawing: ┘ */
   #define BOX_DLR	"┬" /**< Boxdrawing: ┘ */
   #define BOX_DL	"┐" /**< Boxdrawing: ┘ */
+  #define BOX_UR	"└" /**< Boxdrawing: └ */
 #else /* ASCII */
   #define BOX_LR	"-" /**< Boxdrawing: ─ */
   #define BOX_UD	"|" /**< Boxdrawing: │ */
