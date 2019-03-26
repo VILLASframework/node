@@ -51,6 +51,6 @@ static ActionPlugin<ConfigAction> p(
 	"get configuration of this VILLASnode instance"
 );
 
-} // api
-} // node
-} // villas
+} /* namespace api */
+} /* namespace node */
+} /* namespace villas */

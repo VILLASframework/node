@@ -140,7 +140,7 @@ int mqtt_parse(struct node *n, json_t *cfg)
 	m->port = 1883;
 	m->qos = 0;
 	m->retain = 0;
-	m->keepalive = 1; // 1 second
+	m->keepalive = 1; /* 1 second */
 	m->ssl.enabled = 0;
 	m->ssl.insecure = 0;
 

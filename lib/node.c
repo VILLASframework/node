@@ -170,11 +170,11 @@ int node_parse(struct node *n, json_t *json, const char *name)
 	for (int j = 0; j < ARRAY_LEN(dirs); j++) {
 		json_t *json_dir = json_object_get(json, dirs[j].str);
 
-		// Skip if direction is unused
+		/* Skip if direction is unused */
 		if (!json_dir)
 			json_dir = json_pack("{ s: b }", "enabled", 0);
 
-		// Copy missing fields from main node config to direction config
+		/* Copy missing fields from main node config to direction config */
 		for (int i = 0; i < ARRAY_LEN(fields); i++) {
 			json_t *json_field_dir  = json_object_get(json_dir, fields[i]);
 			json_t *json_field_node = json_object_get(json, fields[i]);

@@ -83,6 +83,6 @@ static ActionPlugin<CapabilitiesAction> p(
 	"get capabiltities and details about this VILLASnode instance"
 );
 
-} // api
-} // node
-} // villas
+} /* namespace api */
+} /* namespace node */
+} /* namespace villas */

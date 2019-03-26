@@ -55,8 +55,8 @@ static ActionPlugin<StatusAction> p(
 	"get status and statistics of web server"
 );
 
-} // api
-} // node
-} // villas
+} /* namespace api */
+} /* namespace node */
+} /* namespace villas */
 
 #endif /* LWS_WITH_SERVER_STATUS */

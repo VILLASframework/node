@@ -251,7 +251,7 @@ void Web::start()
 	ctx_info.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS | LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
 	ctx_info.user = (void *) this;
 #if LWS_LIBRARY_VERSION_NUMBER <= 3000000
-	// https://github.com/warmcat/libwebsockets/issues/1249
+	/* See: https://github.com/warmcat/libwebsockets/issues/1249 */
 	ctx_info.max_http_header_pool = 1024;
  #endif
 	ctx_info.mounts = mounts;

@@ -566,7 +566,7 @@ int uldaq_stop(struct node *n)
 
 	UlError err;
 
-	// @todo: fix deadlock
+	/* @todo: Fix deadlock */
 	//pthread_mutex_lock(&u->in.mutex);
 
 	/* Get the current status of the acquisition */

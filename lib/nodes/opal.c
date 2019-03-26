@@ -52,9 +52,9 @@ int opal_type_start(struct super_node *sn)
 {
 	int err;
 
-	/// @todo: Port to C++
-	//if (sn->cli.argc != 4)
-	//	return -1;
+	/* @todo: Port to C++
+	if (sn->cli.argc != 4)
+		return -1; */
 
 	pthread_mutex_init(&lock, NULL);
 
@@ -227,7 +227,7 @@ int opal_read(struct node *n, struct pool *pool, unsigned cnt)
 			if ((state == STATE_RESET) || (state == STATE_STOP))
 				error("OpalGetAsyncModelState(): Model stopped or resetted!");
 
-			return -1; // FIXME: correct return value
+			return -1; /* @todo correct return value */
 		}
 	} while (id != o->send_id);
 

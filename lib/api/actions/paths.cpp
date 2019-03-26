@@ -69,6 +69,6 @@ static ActionPlugin<PathsAction> p(
 	"retrieve list of all paths with details"
 );
 
-} // api
-} // node
-} // villas
+} /* namespace api */
+} /* namespace node */
+} /* namespace villas */

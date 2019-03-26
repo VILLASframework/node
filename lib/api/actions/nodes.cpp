@@ -79,7 +79,7 @@ static ActionPlugin<NodesAction> p(
 	"retrieve list of all known nodes"
 );
 
-} // api
-} // node
-} // villas
+} /* namespace api */
+} /* namespace node */
+} /* namespace villas */
 

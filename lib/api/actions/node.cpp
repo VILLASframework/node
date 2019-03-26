@@ -71,6 +71,6 @@ static ActionPlugin<NodeAction<node_pause>>    p3("node.pause",   "pause a node"
 static ActionPlugin<NodeAction<node_resume>>   p4("node.resume",  "resume a node");
 static ActionPlugin<NodeAction<node_restart>>  p5("node.restart", "restart a node");
 
-} // api
-} // node
-} // villas
+} /* namespace api */
+} /* namespace node */
+} /* namespace villas */

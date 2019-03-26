@@ -406,7 +406,7 @@ int websocket_start(struct node *n)
 
 		format = strchr(d->info.path, '.');
 		if (format)
-			format = format + 1; // remove "."
+			format = format + 1; /* Removes "." */
 		else
 			format = "villas.web";
 

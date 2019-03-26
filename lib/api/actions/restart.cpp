@@ -115,7 +115,7 @@ static ActionPlugin<RestartAction> p(
 	"restart VILLASnode with new configuration"
 );
 
-} // api
-} // node
-} // villas
+} /* namespace api */
+} /* namespace node */
+} /* namespace villas */
 

@@ -48,6 +48,6 @@ static ActionPlugin<ShutdownAction> p(
 	"quit VILLASnode"
 );
 
-} // api
-} // node
-} // villas
+} /* namespace api */
+} /* namespace node */
+} /* namespace villas */

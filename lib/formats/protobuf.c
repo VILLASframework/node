@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-// Generated message descriptors by protoc
+/* Generated message descriptors by protoc */
 #include <villas.pb-c.h>
 
 #include <villas/sample.h>
