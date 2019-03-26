@@ -22,8 +22,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <libgen.h>
-#include <unistd.h>
 
 #include <villas/super_node.hpp>
 #include <villas/node.h>
@@ -50,16 +48,15 @@ using namespace villas::node;
 SuperNode::SuperNode() :
 	state(STATE_INITIALIZED),
 	idleStop(false),
-	priority(0),
-	affinity(0),
-	hugepages(DEFAULT_NR_HUGEPAGES),
 #ifdef WITH_API
 	api(this),
 #ifdef WITH_WEB
 	web(&api),
 #endif
+	priority(0),
+	affinity(0),
+	hugepages(DEFAULT_NR_HUGEPAGES)
 #endif
-	json(nullptr)
 {
 	nodes.state = STATE_DESTROYED;
 	paths.state = STATE_DESTROYED;
@@ -81,89 +78,14 @@ SuperNode::SuperNode() :
 	logger = logging.get("super_node");
 }
 
-void SuperNode::parseUri(const std::string &u)
+void SuperNode::parse(const std::string &u)
 {
-	json_error_t err;
+	config.load(u);
 
-	FILE *f;
-	AFILE *af;
-
-	/* Via stdin */
-	if (u == "-") {
-		logger->info("Reading configuration from standard input");
-
-		af = nullptr;
-		f = stdin;
-	}
-	else {
-		logger->info("Reading configuration from URI: {}", u);
-
-		af = afopen(u.c_str(), "r");
-		if (!af)
-			throw RuntimeError("Failed to open configuration from: {}", u);
-
-		f = af->file;
-	}
-
-	/* Parse config */
-	json = json_loadf(f, 0, &err);
-	if (json == nullptr) {
-#ifdef LIBCONFIG_FOUND
-		int ret;
-
-		config_t cfg;
-		config_setting_t *json_root = nullptr;
-
-		config_init(&cfg);
-		config_set_auto_convert(&cfg, 1);
-
-		/* Setup libconfig include path.
-		 * This is only supported for local files */
-		if (access(u.c_str(), F_OK) != -1) {
-			char *cpy = strdup(u.c_str());
-
-			config_set_include_dir(&cfg, dirname(cpy));
-
-			free(cpy);
-		}
-
-		if (af)
-			arewind(af);
-		else
-			rewind(f);
-
-		ret = config_read(&cfg, f);
-		if (ret != CONFIG_TRUE) {
-			logger->warn("conf: {} in {}:{}", config_error_text(&cfg), u.c_str(), config_error_line(&cfg));
-			logger->warn("json: {} in {}:{}:{}", err.text, err.source, err.line, err.column);
-			logger->error("Failed to parse configuration");
-			killme(SIGABRT);
-		}
-
-		json_root = config_root_setting(&cfg);
-
-		json = config_to_json(json_root);
-		if (json == nullptr)
-			throw RuntimeError("Failed to convert JSON to configuration file");
-
-		config_destroy(&cfg);
-#else
-		throw JsonError(err, "Failed to parse configuration file");
-#endif /* LIBCONFIG_FOUND */
-		}
-
-	/* Close configuration file */
-	if (af)
-		afclose(af);
-	else if (f != stdin)
-		fclose(f);
-
-	uri = u;
-
-	parseJson(json);
+	parse(config.root);
 }
 
-void SuperNode::parseJson(json_t *j)
+void SuperNode::parse(json_t *cfg)
 {
 	int ret;
 	const char *nme = nullptr;
@@ -179,7 +101,7 @@ void SuperNode::parseJson(json_t *j)
 
 	idleStop = true;
 
-	ret = json_unpack_ex(j, &err, JSON_STRICT, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s, s?: b }",
+	ret = json_unpack_ex(cfg, &err, JSON_STRICT, "{ s?: o, s?: o, s?: o, s?: o, s?: i, s?: i, s?: i, s?: s, s?: b }",
 		"http", &json_web,
 		"logging", &json_logging,
 		"nodes", &json_nodes,
@@ -284,8 +206,6 @@ parse:			path *p = (path *) alloc(sizeof(path));
 			}
 		}
 	}
-
-	json = j;
 
 	state = STATE_PARSED;
 }
@@ -558,9 +478,6 @@ SuperNode::~SuperNode()
 	vlist_destroy(&paths,      (dtor_cb_t) path_destroy, true);
 	vlist_destroy(&nodes,      (dtor_cb_t) node_destroy, true);
 	vlist_destroy(&interfaces, (dtor_cb_t) if_destroy, true);
-
-	if (json)
-		json_decref(json);
 }
 
 int SuperNode::periodic()

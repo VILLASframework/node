@@ -152,7 +152,7 @@ check:		if (optarg == endptr)
 		throw RuntimeError("Failed to initialize signals subsystem");
 
 	if (uri)
-		sn.parseUri(uri);
+		sn.parse(uri);
 	else
 		logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 

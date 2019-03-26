@@ -42,6 +42,7 @@ endif()
 set(LIB_SRC
     super_node.cpp
     config_helper.cpp
+    config.cpp
     memory/heap.c
     memory/hugepage.c
     memory/managed.c

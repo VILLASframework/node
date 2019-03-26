@@ -27,6 +27,7 @@
 #include <villas/api.hpp>
 #include <villas/web.hpp>
 #include <villas/log.hpp>
+#include <villas/config.hpp>
 #include <villas/node.h>
 #include <villas/task.h>
 #include <villas/common.h>
@@ -42,10 +43,6 @@ protected:
 
 	int idleStop;
 
-	int priority;		/**< Process priority (lower is better) */
-	int affinity;		/**< Process affinity of the server and all created threads */
-	int hugepages;		/**< Number of hugepages to reserve. */
-
 	Logger logger;
 
 	struct vlist nodes;
@@ -60,12 +57,16 @@ protected:
 	Web web;
 #endif
 
+	int priority;		/**< Process priority (lower is better) */
+	int affinity;		/**< Process affinity of the server and all created threads */
+	int hugepages;		/**< Number of hugepages to reserve. */
+
 	struct task task;	/**< Task for periodic stats output */
 
 	std::string name;	/**< A name of this super node. Usually the hostname. */
 	std::string uri;	/**< URI of configuration */
 
-	json_t *json;		/**< JSON representation of the configuration. */
+	Config config;		/** The configuration file. */
 
 public:
 	/** Inititalize configuration object before parsing the configuration. */
@@ -73,14 +74,14 @@ public:
 
 	int init();
 
-	/** Wrapper for parse() */
-	void parseUri(const std::string &name);
+	/** Wrapper for parse() which loads the config first. */
+	void parse(const std::string &name);
 
 	/** Parse super-node configuration.
 	 *
 	 * @param cfg A libjansson object which contains the configuration.
 	 */
-	void parseJson(json_t *cfg);
+	void parse(json_t *cfg);
 
 	/** Check validity of super node configuration. */
 	void check();
@@ -148,7 +149,7 @@ public:
 
 	json_t * getConfig()
 	{
-		return json;
+		return config.root;
 	}
 
 	std::string getConfigUri()
