@@ -120,7 +120,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 
 	n->name = strdup(name);
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: b, s?: { s?: o } }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s?: b }",
 		"type", &type,
 		"enabled", &n->enabled
 	);
