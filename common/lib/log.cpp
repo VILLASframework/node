@@ -99,7 +99,7 @@ void Log::parse(json_t *cfg)
 		"pattern", &pattern
 	);
 	if (ret)
-		throw JsonError(err);
+		throw ConfigError(cfg, err, "node-config-logging");
 
 	if (level)
 		setLevel(level);
@@ -118,7 +118,7 @@ void Log::parse(json_t *cfg)
 
 	if (json_expressions) {
 		if (!json_is_array(json_expressions))
-			throw ConfigError(json_expressions, "node-config.html#node-config-logging-expressions", "The 'expressions' setting must be a list of objects.");
+			throw ConfigError(json_expressions, "node-config-logging-expressions", "The 'expressions' setting must be a list of objects.");
 
 		size_t i;
 		json_t *json_expression;
@@ -131,7 +131,7 @@ void Log::parse(json_t *cfg)
 				"level", &lvl
 			);
 			if (ret)
-				throw JsonError(err);
+				throw ConfigError(json_expression, err, "node-config-logging-expressions");
 
 			Logger logger = get(name);
 			auto level = spdlog::level::from_str(lvl);
