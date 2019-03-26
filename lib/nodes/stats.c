@@ -194,7 +194,7 @@ int stats_node_parse(struct node *n, json_t *cfg)
 
 		ret = stats_node_signal_parse(stats_sig, json_signal);
 		if (ret)
-			error("Failed to parse signal definition of node %s", node_name(n));
+			error("Failed to parse statistics signal definition of node %s", node_name(n));
 
 		if (!sig->name) {
 			const char *metric = stats_metrics[stats_sig->metric].name;
