@@ -144,8 +144,6 @@ int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
 				"type", &type_str
 			);
 		}
-		else
-			warning("No signal definition found for node %s. Using the default config of 64 floating point signals.", node_name(n));
 
 		int type = signal_type_from_str(type_str);
 		if (type < 0)
