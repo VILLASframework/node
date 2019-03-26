@@ -36,7 +36,6 @@
 #include <villas/hook_list.h>
 #include <villas/plugin.h>
 #include <villas/memory.h>
-#include <villas/stats.h>
 #include <villas/node.h>
 #include <villas/signal.h>
 #include <villas/path.h>
