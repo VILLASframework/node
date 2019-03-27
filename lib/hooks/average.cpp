@@ -87,6 +87,9 @@ public:
 			bitset_set(&mask, index);
 		}
 
+		if (!bitset_get_value(&mask))
+			throw RuntimeError("Invalid signal mask");
+
 		/* Add averaged signal */
 		avg_sig = signal_create("average", NULL, SIGNAL_TYPE_FLOAT);
 		if (!avg_sig)
@@ -167,7 +170,7 @@ public:
 			n++;
 		}
 
-		avg = n == 0 ? 0 : sum / n;
+		avg = sum / n;
 		sample_data_insert(smp, (union signal_data *) &avg, offset, 1);
 		smp->signals = &signals;
 
