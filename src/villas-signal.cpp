@@ -183,7 +183,11 @@ int main(int argc, char *argv[])
 
 	const char *format = "villas.human"; /** @todo hardcoded for now */
 
-	struct node n = { .name = nullptr, .state = STATE_DESTROYED };
+	struct node n;
+	n.state = STATE_DESTROYED;
+	n.in.state = STATE_DESTROYED;
+	n.out.state = STATE_DESTROYED;
+
 	struct io io = { .state = STATE_DESTROYED };
 	struct pool q = { .state = STATE_DESTROYED };
 	struct sample *t;

@@ -614,33 +614,40 @@ int rtp_netem_fds(struct node *n, int fds[])
 	return m;
 }
 
-struct plugin p = {
-	.name		= "rtp",
+struct plugin p;
+
+__attribute__((constructor(110)))
+static void register_plugin() {
+	p.name		= "rtp";
 #ifdef WITH_NETEM
-	.description	= "real-time transport protocol (libre, libnl3 netem support)",
+	p.description	= "real-time transport protocol (libre, libnl3 netem support)";
 #else
-	.description	= "real-time transport protocol (libre)",
+	p.description	= "real-time transport protocol (libre)";
 #endif
-	.type		= PLUGIN_TYPE_NODE,
-	.node		= {
-		.vectorize	= 0,
-		.size		= sizeof(struct rtp),
-		.type = {
-			.start	= rtp_type_start,
-			.stop	= rtp_type_stop
-		},
-		.init		= rtp_init,
-		.parse		= rtp_parse,
-		.print		= rtp_print,
-		.start		= rtp_start,
-		.stop		= rtp_stop,
-		.read		= rtp_read,
-		.write		= rtp_write,
-		.reverse	= rtp_reverse,
-		.poll_fds	= rtp_poll_fds,
-		.netem_fds	= rtp_netem_fds
-	}
-};
+	p.type		= PLUGIN_TYPE_NODE;
+	p.node.vectorize	= 0;
+	p.node.size		= sizeof(struct rtp);
+	p.node.type.start	= rtp_type_start;
+	p.node.type.stop	= rtp_type_stop;
+	p.node.init		= rtp_init;
+	p.node.parse		= rtp_parse;
+	p.node.print		= rtp_print;
+	p.node.start		= rtp_start;
+	p.node.stop		= rtp_stop;
+	p.node.read		= rtp_read;
+	p.node.write		= rtp_write;
+	p.node.reverse		= rtp_reverse;
+	p.node.poll_fds	= rtp_poll_fds;
+	p.node.netem_fds	= rtp_netem_fds;
+
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}
 
 } /* extern C */
 

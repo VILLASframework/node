@@ -105,8 +105,9 @@ protected:
 		for (int k = 0; k < fharmonics_len; k++) {
 			double freq = fharmonics[k];
 			std::complex<double> coeff = in[k];
+			std::complex<double> om = 2.0i * M_PI * freq * time;
 
-			value += coeff * std::exp(2i * M_PI * freq * time);
+			value += coeff * std::exp(om);
 		}
 
 		*out = std::real(value);
