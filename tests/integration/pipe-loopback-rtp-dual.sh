@@ -41,12 +41,12 @@ FORMAT="villas.binary"
 VECTORIZE="1"
 
 RATE=100
-NUM_SAMPLES=100
+NUM_SAMPLES=2000
 
 cat > ${CONFIG_FILE_SRC} << EOF
 {
 	"logging" : {
-		"level" : "debug"
+		"level" : "info"
 	},
 	"nodes" : {
 		"rtp_node" : {
@@ -81,7 +81,7 @@ EOF
 cat > ${CONFIG_FILE_DEST} << EOF
 {
 	"logging" : {
-		"level" : "debug"
+		"level" : "info"
 	},
 	"nodes" : {
 		"rtp_node" : {
