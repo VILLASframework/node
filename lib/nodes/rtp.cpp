@@ -139,15 +139,9 @@ int rtp_init(struct node *n)
 int rtp_reverse(struct node *n)
 {
 	struct rtp *r = (struct rtp *) n->_vd;
-	struct sa tmp;
 
-	tmp = r->in.saddr_rtp;
-	r->in.saddr_rtp = r->out.saddr_rtp;
-	r->out.saddr_rtp = tmp;
-
-	tmp = r->in.saddr_rtcp;
-	r->in.saddr_rtcp = r->out.saddr_rtcp;
-	r->out.saddr_rtcp = tmp;
+	SWAP(r->in.saddr_rtp, r->out.saddr_rtp);
+	SWAP(r->in.saddr_rtcp, r->out.saddr_rtcp);
 
 	return 0;
 }
