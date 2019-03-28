@@ -27,7 +27,6 @@
 #include <inttypes.h>
 
 #include <villas/hook.hpp>
-#include <villas/stats.h>
 #include <villas/node.h>
 #include <villas/sample.h>
 

@@ -23,7 +23,6 @@
 #include <string.h>
 
 #include <villas/mapping.h>
-#include <villas/stats.h>
 #include <villas/sample.h>
 #include <villas/list.h>
 #include <villas/utils.h>

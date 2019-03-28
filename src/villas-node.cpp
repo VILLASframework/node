@@ -45,7 +45,6 @@
 #include <villas/plugin.h>
 #include <villas/kernel/kernel.hpp>
 #include <villas/kernel/rt.hpp>
-#include <villas/stats.h>
 
 #ifdef ENABLE_OPAL_ASYNC
   #include <villas/nodes/opal.h>
