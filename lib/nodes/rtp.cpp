@@ -156,7 +156,7 @@ int rtp_parse(struct node *n, json_t *cfg)
 	uint16_t port;
 
 	json_error_t err;
-	json_t *json_rtcp = NULL, *json_aimd = NULL;
+	json_t *json_rtcp = nullptr, *json_aimd = nullptr;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: s, s?: F, s?: o, s?: o, s: { s: s }, s: { s: s } }",
 		"format", &format,
@@ -406,7 +406,7 @@ int rtp_start(struct node *n)
 		if (r->rtcp.mode == RTCP_MODE_AIMD) {
 			char date[32], fn[128];
 
-			time_t ts = time(NULL);
+			time_t ts = time(nullptr);
 			struct tm tm;
 
 			/* Convert time */
@@ -474,7 +474,7 @@ int rtp_type_start(struct super_node *sn)
 	}
 
 	/* Add worker thread */
-	ret = pthread_create(&re_pthread, NULL, (pthread_start_routine) re_main, NULL);
+	ret = pthread_create(&re_pthread, nullptr, (pthread_start_routine) re_main, nullptr);
 	if (ret) {
 		warning("Error creating rtp node type pthread");
 		return ret;
@@ -484,7 +484,7 @@ int rtp_type_start(struct super_node *sn)
 	sa.sa_flags = SA_SIGINFO;
 	sa.sa_sigaction = stop_handler;
 
-	ret = sigaction(SIGUSR1, &sa, NULL);
+	ret = sigaction(SIGUSR1, &sa, nullptr);
 	if (ret)
 		return ret;
 
@@ -513,7 +513,7 @@ int rtp_type_stop()
 
 	/* Join worker thread */
 	pthread_kill(re_pthread, SIGUSR1);
-	ret = pthread_join(re_pthread, NULL);
+	ret = pthread_join(re_pthread, nullptr);
 	if (ret) {
 		error("Error joining rtp node type pthread");
 		return ret;
@@ -538,7 +538,7 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	}
 
 	/* Unpack data */
-	ret = io_sscan(&r->io, (char *) mb->buf + mb->pos, mbuf_get_left(mb), NULL, smps, cnt);
+	ret = io_sscan(&r->io, (char *) mb->buf + mb->pos, mbuf_get_left(mb), nullptr, smps, cnt);
 
 	mem_deref(mb);
 
@@ -553,7 +553,7 @@ int rtp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	size_t wbytes;
 	size_t avail;
 
-	uint32_t ts = (uint32_t) time(NULL);
+	uint32_t ts = (uint32_t) time(nullptr);
 
 retry:	mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);
 	avail = mbuf_get_space(r->send_mb);
