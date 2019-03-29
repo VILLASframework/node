@@ -32,11 +32,11 @@
 #include <villas/table.h>
 
 struct stats_metric_description stats_metrics[] = {
-	{ "skipped",		STATS_METRIC_SKIPPED,		"samples", "Skipped samples and the distance between them",		25 },
-	{ "reordered",		STATS_METRIC_REORDERED, 	"samples", "Reordered samples and the distance between them",		25 },
-	{ "gap_sent",		STATS_METRIC_GAP_SAMPLE,	"seconds", "Inter-message timestamps (as sent by remote)",		25 },
-	{ "gap_received",	STATS_METRIC_GAP_RECEIVED,	"seconds", "Inter-message arrival time (as received by this instance)",	25 },
-	{ "owd",		STATS_METRIC_OWD,		"seconds", "One-way-delay (OWD) of received messages",			25 }
+	{ "skipped",		STATS_METRIC_SMPS_SKIPPED,	"samples",	"Skipped samples and the distance between them",		25 },
+	{ "reordered",		STATS_METRIC_SMPS_REORDERED, 	"samples",	"Reordered samples and the distance between them",		25 },
+	{ "gap_sent",		STATS_METRIC_GAP_SAMPLE,	"seconds",	"Inter-message timestamps (as sent by remote)",			25 },
+	{ "gap_received",	STATS_METRIC_GAP_RECEIVED,	"seconds",	"Inter-message arrival time (as received by this instance)",	25 },
+	{ "owd",		STATS_METRIC_OWD,		"seconds",	"One-way-delay (OWD) of received messages",			25 },
 };
 
 struct stats_type_description stats_types[] = {
@@ -141,8 +141,8 @@ json_t * stats_json_periodic(struct stats *s, struct node *n)
 		"processed", hist_total(&s->histograms[STATS_METRIC_OWD]),
 		"owd", hist_last(&s->histograms[STATS_METRIC_OWD]),
 		"rate", 1.0 / hist_last(&s->histograms[STATS_METRIC_GAP_SAMPLE]),
-		"dropped", hist_total(&s->histograms[STATS_METRIC_REORDERED]),
-		"skipped", hist_total(&s->histograms[STATS_METRIC_SKIPPED])
+		"dropped", hist_total(&s->histograms[STATS_METRIC_SMPS_REORDERED]),
+		"skipped", hist_total(&s->histograms[STATS_METRIC_SMPS_SKIPPED])
 	);
 }
 
@@ -195,8 +195,8 @@ void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int v
 				hist_mean(&s->histograms[STATS_METRIC_OWD]),
 				1.0 / hist_last(&s->histograms[STATS_METRIC_GAP_RECEIVED]),
 				1.0 / hist_mean(&s->histograms[STATS_METRIC_GAP_RECEIVED]),
-				hist_total(&s->histograms[STATS_METRIC_REORDERED]),
-				hist_total(&s->histograms[STATS_METRIC_SKIPPED])
+				hist_total(&s->histograms[STATS_METRIC_SMPS_REORDERED]),
+				hist_total(&s->histograms[STATS_METRIC_SMPS_SKIPPED])
 			);
 			break;
 

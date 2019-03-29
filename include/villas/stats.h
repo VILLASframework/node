@@ -46,8 +46,9 @@ enum stats_format {
 
 enum stats_metric {
 	STATS_METRIC_INVALID = -1,
-	STATS_METRIC_SKIPPED,		/**< Counter for skipped samples due to hooks. */
-	STATS_METRIC_REORDERED,		/**< Counter for reordered samples. */
+
+	STATS_METRIC_SMPS_SKIPPED,	/**< Counter for skipped samples due to hooks. */
+	STATS_METRIC_SMPS_REORDERED,	/**< Counter for reordered samples. */
 	STATS_METRIC_GAP_SAMPLE,	/**< Histogram for inter sample timestamps (as sent by remote). */
 	STATS_METRIC_GAP_RECEIVED,	/**< Histogram for inter sample arrival time (as seen by this instance). */
 	STATS_METRIC_OWD,		/**< Histogram for one-way-delay (OWD) of received samples. */

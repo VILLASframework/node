@@ -183,7 +183,7 @@ public:
 			if (smp->flags & last->flags & SAMPLE_HAS_SEQUENCE) {
 				int dist = smp->sequence - (int32_t) last->sequence;
 				if (dist != 1)
-					stats_update(s, STATS_METRIC_REORDERED, dist);
+					stats_update(s, STATS_METRIC_SMPS_REORDERED, dist);
 			}
 		}
 
