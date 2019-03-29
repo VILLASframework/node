@@ -84,7 +84,7 @@ static int rtp_set_rate(struct node *n, double rate)
 			return -1;
 	}
 
-	info("Set rate limiting for node %s to %f", node_name(n), rate);
+	r->logger->debug("Set rate limiting for node {} to {}", node_name(n), rate);
 
 	return 0;
 }
@@ -113,7 +113,7 @@ static int rtp_aimd(struct node *n, double loss_frac)
 	if (r->aimd.log)
 		fprintf(r->aimd.log, "%d\t%f\t%f\n", r->rtcp.num_rrs, loss_frac, rate);
 
-	info("AIMD: %d\t%f\t%f", r->rtcp.num_rrs, loss_frac, rate);
+	r->logger->debug("AIMD: {}\t{}\t{}", r->rtcp.num_rrs, loss_frac, rate);
 
 	return 0;
 }
@@ -121,6 +121,8 @@ static int rtp_aimd(struct node *n, double loss_frac)
 int rtp_init(struct node *n)
 {
 	struct rtp *r = (struct rtp *) n->_vd;
+
+	r->logger = villas::logging.get("node:rtp");
 
 	/* Default values */
 	r->rate = 1;
@@ -169,7 +171,7 @@ int rtp_parse(struct node *n, json_t *cfg)
 			"address", &local
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		r->logger->error("Failed to parse configuration of node {}", node_name(n));
 
 	/* AIMD */
 	if (json_aimd) {
@@ -196,13 +198,13 @@ int rtp_parse(struct node *n, json_t *cfg)
 			"throttle_mode", &throttle_mode
 		);
 		if (ret)
-			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+			r->logger->error("Failed to parse configuration of node {}", node_name(n));
 
 		/* RTCP Mode */
 		if (!strcmp(mode, "aimd"))
 			r->rtcp.mode = RTCP_MODE_AIMD;
 		else
-			error("Unknown RTCP mode: %s", mode);
+			r->logger->error("Unknown RTCP mode: {}", mode);
 
 		/* RTCP Throttle mode */
 		if (r->rtcp.enabled == false)
@@ -212,18 +214,18 @@ int rtp_parse(struct node *n, json_t *cfg)
 		else if (!strcmp(throttle_mode, "limit_rate"))
 			r->rtcp.throttle_mode = RTCP_THROTTLE_HOOK_LIMIT_RATE;
 		else
-			error("Unknown RTCP throttle mode: %s", throttle_mode);
+			r->logger->error("Unknown RTCP throttle mode: {}", throttle_mode);
 	}
 
 	/* Format */
 	r->format = format_type_lookup(format);
 	if (!r->format)
-		error("Invalid format '%s' for node %s", format, node_name(n));
+		r->logger->error("Invalid format '{}' for node {}", format, node_name(n));
 
 	/* Remote address */
 	ret = sa_decode(&r->out.saddr_rtp, remote, strlen(remote));
 	if (ret) {
-		error("Failed to resolve remote address '%s' of node %s: %s",
+		r->logger->error("Failed to resolve remote address '{}' of node {}: {}",
 			remote, node_name(n), strerror(ret));
 	}
 
@@ -236,7 +238,7 @@ int rtp_parse(struct node *n, json_t *cfg)
 	/* Local address */
 	ret = sa_decode(&r->in.saddr_rtp, local, strlen(local));
 	if (ret) {
-		error("Failed to resolve local address '%s' of node %s: %s",
+		r->logger->error("Failed to resolve local address '{}' of node {}: {}",
 			local, node_name(n), strerror(ret));
 	}
 
@@ -315,7 +317,7 @@ static void rtp_handler(const struct sa *src, const struct rtp_header *hdr, stru
 
 	ret = queue_signalled_push(&r->recv_queue, d);
 	if (ret != 1) {
-		warning("Failed to push to queue");
+		r->logger->warn("Failed to push to queue");
 		mem_deref(d);
 	}
 }
@@ -433,12 +435,16 @@ int rtp_stop(struct node *n)
 	mem_deref(r->rs);
 
 	ret = queue_signalled_close(&r->recv_queue);
-	if (ret)
-		warning("Problem closing queue");
+	if (ret) {
+		r->logger->error("Problem closing queue");
+		return ret;
+	}
 
 	ret = queue_signalled_destroy(&r->recv_queue);
-	if (ret)
-		warning("Problem destroying queue");
+	if (ret) {
+		r->logger->error("Problem destroying queue");
+		return ret;
+	}
 
 	mem_deref(r->send_mb);
 
@@ -469,14 +475,14 @@ int rtp_type_start(struct super_node *sn)
 	/* Initialize library */
 	ret = libre_init();
 	if (ret) {
-		warning("Error initializing libre");
+		error("Error initializing libre");
 		return ret;
 	}
 
 	/* Add worker thread */
 	ret = pthread_create(&re_pthread, nullptr, (pthread_start_routine) re_main, nullptr);
 	if (ret) {
-		warning("Error creating rtp node type pthread");
+		error("Error creating rtp node type pthread");
 		return ret;
 	}
 
@@ -497,8 +503,10 @@ int rtp_type_start(struct super_node *sn)
 		struct rtp *r = (struct rtp *) n->_vd;
 		struct interface *j = if_get_egress(&r->out.saddr_rtp.u.sa, interfaces);
 
-		if (!j)
-			error("Failed to find egress interface for node: %s", node_name(n));
+		if (!j) {
+			r->logger->error("Failed to find egress interface for node: {}", node_name(n));
+			return -1;
+		}
 
 		vlist_push(&j->nodes, n);
 	}
@@ -533,7 +541,7 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	/* Get data from queue */
 	ret = queue_signalled_pull(&r->recv_queue, (void **) &mb);
 	if (ret < 0) {
-		warning("Failed to pull from queue");
+		r->logger->error("Failed to pull from queue");
 		return ret;
 	}
 
@@ -576,8 +584,8 @@ retry:	mbuf_set_pos(r->send_mb, RTP_HEADER_SIZE);
 	/* Send dataset */
 	ret = rtp_send(r->rs, &r->out.saddr_rtp, false, false, RTP_PACKET_TYPE, ts, r->send_mb);
 	if (ret) {
-		warning("Error from rtp_send, reason: %d", ret);
-		cnt = ret;
+		r->logger->error("Error from rtp_send, reason: {}", ret);
+		return ret;
 	}
 
 	return cnt;

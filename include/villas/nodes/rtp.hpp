@@ -38,6 +38,7 @@ extern "C" {
 
 #include <villas/node.h>
 #include <villas/list.h>
+#include <villas/log.hpp>
 #include <villas/io.h>
 #include <villas/queue_signalled.h>
 #include <villas/hooks/limit_rate.hpp>
@@ -62,6 +63,8 @@ enum rtp_rtcp_mode {
 
 struct rtp {
 	struct rtp_sock *rs;	/**< RTP socket */
+
+	villas::Logger logger;
 
 	struct {
 		struct sa saddr_rtp;	/**< Local/Remote address of the RTP socket */
