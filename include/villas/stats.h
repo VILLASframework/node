@@ -80,17 +80,9 @@ struct stats_type_description {
 	enum signal_type signal_type;
 };
 
-struct stats_delta {
-	double values[STATS_METRIC_COUNT];
-
-	int update;		/**< Bitmask of stats_metric. Only those which are masked will be updated */
-};
-
 struct stats {
 	enum state state;
 	struct hist histograms[STATS_METRIC_COUNT];
-
-	struct stats_delta *delta;
 };
 
 extern struct stats_metric_description stats_metrics[];
@@ -107,10 +99,6 @@ int stats_init(struct stats *s, int buckets, int warmup);
 int stats_destroy(struct stats *s);
 
 void stats_update(struct stats *s, enum stats_metric id, double val);
-
-void stats_collect(struct stats *s, struct sample *smps[], size_t *cnt);
-
-int stats_commit(struct stats *s);
 
 json_t * stats_json(struct stats *s);
 

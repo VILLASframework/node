@@ -194,8 +194,6 @@ public:
 
 		last = smp;
 
-		stats_commit(&stats);
-
 		return HOOK_OK;
 	}
 };

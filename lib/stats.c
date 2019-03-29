@@ -92,8 +92,6 @@ int stats_init(struct stats *s, int buckets, int warmup)
 	for (int i = 0; i < STATS_METRIC_COUNT; i++)
 		hist_init(&s->histograms[i], buckets, warmup);
 
-	s->delta = alloc(sizeof(struct stats_delta));
-
 	s->state = STATE_INITIALIZED;
 
 	return 0;
@@ -106,8 +104,6 @@ int stats_destroy(struct stats *s)
 	for (int i = 0; i < STATS_METRIC_COUNT; i++)
 		hist_destroy(&s->histograms[i]);
 
-	free(s->delta);
-
 	s->state = STATE_DESTROYED;
 
 	return 0;
@@ -117,22 +113,7 @@ void stats_update(struct stats *s, enum stats_metric id, double val)
 {
 	assert(s->state == STATE_INITIALIZED);
 
-	s->delta->values[id] = val;
-	s->delta->update |= 1 << id;
-}
-
-int stats_commit(struct stats *s)
-{
-	assert(s->state == STATE_INITIALIZED);
-
-	for (int i = 0; i < STATS_METRIC_COUNT; i++) {
-		if (s->delta->update & 1 << i) {
-			hist_put(&s->histograms[i], s->delta->values[i]);
-			s->delta->update &= ~(1 << i);
-		}
-	}
-
-	return 0;
+	hist_put(&s->histograms[id], val);
 }
 
 json_t * stats_json(struct stats *s)
