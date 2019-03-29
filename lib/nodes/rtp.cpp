@@ -111,8 +111,8 @@ static int rtp_aimd(struct node *n, double loss_frac)
 	if (ret)
 		return ret;
 
-	if (r->aimd.log.is_open())
-		r->aimd.log << r->rtcp.num_rrs << "\t" << loss_frac << "\t" << rate << std::endl;
+	if (r->aimd.log)
+		*(r->aimd.log) << r->rtcp.num_rrs << "\t" << loss_frac << "\t" << rate << std::endl;
 
 	r->logger->debug("AIMD: {}\t{}\t{}", r->rtcp.num_rrs, loss_frac, rate);
 
@@ -132,7 +132,7 @@ int rtp_init(struct node *n)
 	r->aimd.b = 0.5;
 	r->aimd.last_rate = 2000;
 	r->aimd.log_filename = nullptr;
-	r->aimd.log = std::ofstream();
+	r->aimd.log = nullptr;
 
 	r->rtcp.enabled = false;
 	r->rtcp.throttle_mode = RTCP_THROTTLE_DISABLED;
@@ -431,9 +431,9 @@ int rtp_start(struct node *n)
 			gmtime_r(&ts, &tm);
 			strftime(fn, sizeof(fn), r->aimd.log_filename, &tm);
 
-			r->aimd.log = std::ofstream(fn, std::ios::out | std::ios::trunc);
+			r->aimd.log = new std::ofstream(fn, std::ios::out | std::ios::trunc);
 
-			r->aimd.log << "# cnt\tfrac_loss\trate" << std::endl;
+			*(r->aimd.log) << "# cnt\tfrac_loss\trate" << std::endl;
 		}
 	}
 
@@ -461,8 +461,8 @@ int rtp_stop(struct node *n)
 
 	mem_deref(r->send_mb);
 
-	if (r->aimd.log.is_open())
-		r->aimd.log.close();
+	if (r->aimd.log)
+		r->aimd.log->close();
 
 	ret = io_destroy(&r->io);
 	if (ret)
@@ -476,6 +476,9 @@ int rtp_destroy(struct node *n)
 	struct rtp *r = (struct rtp *) n->_vd;
 
 	//r->logger.~Logger();
+
+	if (r->aimd.log)
+		delete r->aimd.log;
 
 	if (r->aimd.log_filename)
 		free(r->aimd.log_filename);

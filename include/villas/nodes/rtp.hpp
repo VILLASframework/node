@@ -99,7 +99,7 @@ struct rtp {
 
 		double last_rate;
 
-		std::ofstream log;
+		std::ofstream *log;
 		char *log_filename;
 	} aimd;				/** AIMD state */
 
