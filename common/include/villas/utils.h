@@ -117,12 +117,21 @@ extern "C" {
 #define ALIGN_MASK(x, m) (((uintptr_t) (x) + (m)) & ~(m))
 #define IS_ALIGNED(x, a) (ALIGN(x, a) == (uintptr_t) x)
 
-#define SWAP(x,y) do {	\
-  __auto_type _x = x;	\
-  __auto_type _y = y;	\
-  x = _y;		\
-  y = _x;		\
+#ifdef __cplusplus
+  #define SWAP(x,y) do {\
+    auto &_x = x;	\
+    auto &_y = y;	\
+    x = _y;		\
+    y = _x;		\
 } while(0)
+#else
+  #define SWAP(x,y) do {\
+    __auto_type _x = x;	\
+    __auto_type _y = y;	\
+    x = _y;		\
+    y = _x;		\
+} while(0)
+#endif
 
 /** Round-up integer division */
 #define CEIL(x, y)	(((x) + (y) - 1) / (y))
