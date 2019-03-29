@@ -110,8 +110,8 @@ static int rtp_aimd(struct node *n, double loss_frac)
 	if (ret)
 		return ret;
 
-	if (r->aimd.log)
-		fprintf(r->aimd.log, "%d\t%f\t%f\n", r->rtcp.num_rrs, loss_frac, rate);
+	if (r->aimd.log.is_open())
+		r->aimd.log << r->rtcp.num_rrs << "\t" << loss_frac << "\t" << rate << std::endl;
 
 	r->logger->debug("AIMD: {}\t{}\t{}", r->rtcp.num_rrs, loss_frac, rate);
 
@@ -130,7 +130,8 @@ int rtp_init(struct node *n)
 	r->aimd.a = 10;
 	r->aimd.b = 0.5;
 	r->aimd.last_rate = 2000;
-	r->aimd.log = NULL;
+	r->aimd.log_filename = nullptr;
+	r->aimd.log = std::ofstream();
 
 	r->rtcp.enabled = false;
 	r->rtcp.throttle_mode = RTCP_THROTTLE_DISABLED;
@@ -155,6 +156,7 @@ int rtp_parse(struct node *n, json_t *cfg)
 
 	const char *local, *remote;
 	const char *format = "villas.binary";
+	const char *log = nullptr;
 	uint16_t port;
 
 	json_error_t err;
@@ -175,14 +177,18 @@ int rtp_parse(struct node *n, json_t *cfg)
 
 	/* AIMD */
 	if (json_aimd) {
-		ret = json_unpack_ex(json_aimd, &err, 0, "{ s?: F, s?: F, s?: F }",
+		ret = json_unpack_ex(json_aimd, &err, 0, "{ s?: F, s?: F, s?: F, s?: s }",
 			"a", &r->aimd.a,
 			"b", &r->aimd.b,
-			"start_rate", &r->aimd.last_rate
+			"start_rate", &r->aimd.last_rate,
+			"log", &log
 		);
 		if (ret)
-			jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+			r->logger->error("Failed to parse configuration of node {}", node_name(n));
 	}
+
+	if (log)
+		r->aimd.log_filename = strdup(log);
 
 	/* RTCP */
 	if (json_rtcp) {
@@ -406,21 +412,18 @@ int rtp_start(struct node *n)
 		rtcp_start(r->rs, node_name(n), &r->out.saddr_rtcp);
 
 		if (r->rtcp.mode == RTCP_MODE_AIMD) {
-			char date[32], fn[128];
+			char fn[128];
 
 			time_t ts = time(nullptr);
 			struct tm tm;
 
 			/* Convert time */
 			gmtime_r(&ts, &tm);
-			strftime(date, sizeof(date), "%Y_%m_%d_%s", &tm);
-			snprintf(fn, sizeof(fn), "aimd-rates-%s-%s.log", node_name_short(n), date);
+			strftime(fn, sizeof(fn), r->aimd.log_filename, &tm);
 
-			r->aimd.log = fopen(fn, "w+");
-			if (!r->aimd.log)
-				return -1;
+			r->aimd.log = std::ofstream(fn, std::ios::out | std::ios::trunc);
 
-			fprintf(r->aimd.log, "# cnt\tfrac_loss\trate\n");
+			r->aimd.log << "# cnt\tfrac_loss\trate" << std::endl;
 		}
 	}
 
@@ -448,17 +451,26 @@ int rtp_stop(struct node *n)
 
 	mem_deref(r->send_mb);
 
-	if (r->rtcp.enabled && r->rtcp.mode == RTCP_MODE_AIMD) {
-		ret = fclose(r->aimd.log);
-		if (ret)
-			return ret;
-	}
+	if (r->aimd.log.is_open())
+		r->aimd.log.close();
 
 	ret = io_destroy(&r->io);
 	if (ret)
 		return ret;
 
 	return ret;
+}
+
+int rtp_destroy(struct node *n)
+{
+	struct rtp *r = (struct rtp *) n->_vd;
+
+	//r->logger.~Logger();
+
+	if (r->aimd.log_filename)
+		free(r->aimd.log_filename);
+
+	return 0;
 }
 
 static void stop_handler(int sig, siginfo_t *si, void *ctx)
@@ -632,6 +644,7 @@ static void register_plugin() {
 	p.node.type.start	= rtp_type_start;
 	p.node.type.stop	= rtp_type_stop;
 	p.node.init		= rtp_init;
+	p.node.destroy		= rtp_destroy;
 	p.node.parse		= rtp_parse;
 	p.node.print		= rtp_print;
 	p.node.start		= rtp_start;

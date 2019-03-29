@@ -32,6 +32,8 @@
 
 #include <pthread.h>
 
+#include <fstream>
+
 extern "C" {
 #include <re/re_sa.h>
 }
@@ -97,8 +99,9 @@ struct rtp {
 
 		double last_rate;
 
-		FILE *log;
-	} aimd;			/** AIMD state */
+		std::ofstream log;
+		char *log_filename;
+	} aimd;				/** AIMD state */
 
 	struct queue_signalled recv_queue;
 	struct mbuf *send_mb;
