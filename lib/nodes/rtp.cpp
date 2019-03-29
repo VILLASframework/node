@@ -42,6 +42,7 @@ extern "C" {
 #include <villas/nodes/socket.h>
 #include <villas/nodes/rtp.hpp>
 #include <villas/utils.h>
+#include <villas/stats.h>
 #include <villas/hook.h>
 #include <villas/format_type.h>
 #include <villas/super_node.h>
@@ -342,7 +343,16 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 		if (msg->hdr.count > 0) {
 			const struct rtcp_rr *rr = &msg->r.sr.rrv[0];
 			debug(5, "RTP: fraction lost = %d", rr->fraction);
-			rtp_aimd(n, (double) rr->fraction / 256);
+
+			double loss = (double) rr->fraction / 256;
+
+			rtp_aimd(n, loss);
+
+			if (n->stats) {
+				stats_update(n->stats, STATS_METRIC_RTP_PKTS_LOST, rr->lost);
+				stats_update(n->stats, STATS_METRIC_RTP_LOSS_FRACTION, loss);
+				stats_update(n->stats, STATS_METRIC_RTP_JITTER, rr->jitter);
+			}
 		}
 		else
 			debug(5, "RTCP: Received sender report with zero reception reports");

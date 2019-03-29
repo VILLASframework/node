@@ -49,9 +49,18 @@ enum stats_metric {
 
 	STATS_METRIC_SMPS_SKIPPED,	/**< Counter for skipped samples due to hooks. */
 	STATS_METRIC_SMPS_REORDERED,	/**< Counter for reordered samples. */
+
+	/* Timings */
 	STATS_METRIC_GAP_SAMPLE,	/**< Histogram for inter sample timestamps (as sent by remote). */
 	STATS_METRIC_GAP_RECEIVED,	/**< Histogram for inter sample arrival time (as seen by this instance). */
 	STATS_METRIC_OWD,		/**< Histogram for one-way-delay (OWD) of received samples. */
+
+	/* RTP metrics */
+	STATS_METRIC_RTP_LOSS_FRACTION,	/**< Fraction lost since last RTP SR/RR. */
+	STATS_METRIC_RTP_PKTS_LOST,	/**< Cumul. no. pkts lost. */
+	STATS_METRIC_RTP_JITTER,	/**< Interarrival jitter. */
+
+	/* Always last */
 	STATS_METRIC_COUNT		/**< Just here to have an updated number of statistics. */
 };
 
