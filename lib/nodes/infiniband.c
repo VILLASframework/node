@@ -192,7 +192,7 @@ int ib_parse(struct node *n, json_t *cfg)
 	json_t *json_out = NULL;
 	json_error_t err;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{s?: o, s?: o, s?: s, s?: s}",
+	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: s }",
 		"in", &json_in,
 		"out", &json_out,
 		"rdma_transport_mode", &transport_mode
