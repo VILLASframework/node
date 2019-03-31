@@ -24,8 +24,9 @@
 ##################################################################################
 
 if [ -n "${CI}" ]; then
-	echo "RTP tests are not ready yet"
-	exit 99
+  # We skip this test for now in CI
+  echo "Test not yet supported"
+  exit 99
 fi
 
 LOCAL_ADDR=137.226.133.195
