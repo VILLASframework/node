@@ -35,12 +35,14 @@ using namespace villas::node;
 
 static void usage()
 {
-	std::cout << "Usage: villas-config-check CONFIG" << std::endl
-	          << "  CONFIG is the path to an optional configuration file" << std::endl << std::endl;
+	std::cout << "Usage: villas-test-config [OPTIONS] CONFIG" << std::endl
+	          << "  CONFIG is the path to an optional configuration file" << std::endl
+		  << "  OPTIONS is one or more of the following options:" << std::endl
+	          << "    -d LVL  set debug level" << std::endl
+	          << "    -V        show version and exit" << std::endl
+	          << "    -h        show usage and exit" << std::endl << std::endl;
 
 	print_copyright();
-
-	exit(EXIT_FAILURE);
 }
 
 int main(int argc, char *argv[])
@@ -48,11 +50,36 @@ int main(int argc, char *argv[])
 	SuperNode sn;
 	Logger logger = logging.get("config-test");
 
-	try {
-		if (argc != 2)
-			usage();
+	bool check = false;
 
-		sn.parse(argv[1]);
+	int c;
+	while ((c = getopt (argc, argv, "hcV")) != -1) {
+		switch (c) {
+			case 'c':
+				check = true;
+				break;
+
+			case 'V':
+				print_version();
+				exit(EXIT_SUCCESS);
+
+			case 'h':
+			case '?':
+				usage();
+				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+		}
+	}
+
+	if (argc - optind < 2) {
+		usage();
+		exit(EXIT_FAILURE);
+	}
+
+	try {
+		sn.parse(argv[argc - optind]);
+
+		if (check)
+			sn.check();
 
 		return 0;
 	}

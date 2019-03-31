@@ -23,8 +23,8 @@
 add_executable(villas-node villas-node.cpp)
 target_link_libraries(villas-node PUBLIC villas)
 
-add_executable(villas-config-check villas-config-check.cpp)
-target_link_libraries(villas-config-check PUBLIC villas)
+add_executable(villas-test-config villas-test-config.cpp)
+target_link_libraries(villas-test-config PUBLIC villas)
 
 add_executable(villas-test-rtt villas-test-rtt.cpp)
 target_link_libraries(villas-test-rtt PUBLIC villas)
