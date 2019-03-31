@@ -7,6 +7,7 @@ variables:
   DOCKER_TAG: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE: villas/node
   DOCKER_IMAGE_DEV: villas/node-dev
+  MAKE_OPTS: -j 16
 
 stages:
   - prepare
@@ -42,7 +43,7 @@ build:source:
   script:
     - mkdir -p build && cd build
     - cmake ..
-    - make
+    - make ${MAKE_OPTS}
   artifacts:
     expire_in: 1 week
     name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
@@ -61,7 +62,7 @@ build:docs:
   script:
     - mkdir -p build && cd build
     - cmake ..
-    - make doc
+    - make ${MAKE_OPTS} doc
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
     - docker
@@ -76,7 +77,7 @@ build2:packages:
   script:
     - mkdir -p build && cd build
     - cmake ..
-    - make package
+    - make ${MAKE_OPTS} package
   artifacts:
     expire_in: 1 week
     name: ${CI_PROJECT_NAME}-packages-${CI_BUILD_REF}
@@ -100,7 +101,7 @@ test:unit:
     - build:source
   script:
     - mkdir -p build && cd build
-    - cmake .. && make unit-tests
+    - cmake .. && make ${MAKE_OPTS} unit-tests
     - "tests/unit/unit-tests || true"
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
@@ -113,7 +114,7 @@ test:integration:
   script:
     - mkdir -p build && cd build
     - cmake ..
-    - make run-integration-tests
+    - make ${MAKE_OPTS} run-integration-tests
   artifacts:
     name: ${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}
     when: always
