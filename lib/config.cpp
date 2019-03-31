@@ -57,7 +57,7 @@ Config::~Config()
 	/* Close configuration file */
 	if (remote_file)
 		afclose(remote_file);
-	else if (local_file != stdin)
+	else if (local_file && local_file != stdin)
 		fclose(local_file);
 
 	if (root)
