@@ -43,7 +43,7 @@ int influxdb_parse(struct node *n, json_t *json)
 	char *tmp, *host, *port, *lasts;
 	const char *server, *key;
 
-	ret = json_unpack_ex(json, &err, 0, "{ s: s, s: s, s?: o }",
+	ret = json_unpack_ex(json, &err, 0, "{ s: s, s: s }",
 		"server", &server,
 		"key", &key
 	);
