@@ -90,7 +90,7 @@ public:
 	}
 };
 
-void usage()
+static void usage()
 {
 	std::cout << "Usage: villas-test-cmp [OPTIONS] FILE1 FILE2 ... FILEn" << std::endl
 	          << "  FILE     a list of files to compare" << std::endl

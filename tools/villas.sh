@@ -40,12 +40,13 @@ ARGS=${@:2}
 
 # Check if tool is available
 if ! [[ "$TOOL" =~ $(echo ^\($TOOLS\)$) ]]; then
-	echo "Usage: villas [TOOL]" 1>&2
+	echo "Usage: villas [TOOL]"
 	echo "  TOOL     is one of ${TOOLS}"
 	echo
-	echo "For detailed documentation, please run 'villas node'"
-	echo " and point your web browser to http://localhost:80"
+	echo "For detailed documentation, please see: 'villas node'"
+	echo "  http://villas.fein-aachen.org/doc/"
 	echo
+
 	# Show VILLASnode copyright and contact info
 	villas-node -h | tail -n3
 	exit 1

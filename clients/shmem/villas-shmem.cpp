@@ -36,17 +36,20 @@
 #include <villas/shmem.h>
 #include <villas/utils.h>
 #include <villas/utils.hpp>
+#include <villas/copyright.hpp>
 
 using namespace villas;
 
 static std::atomic<bool> stop(false);
 
-void usage()
+static void usage()
 {
 	std::cout << "Usage: villas-test-shmem WNAME VECTORIZE" << std::endl
 	          << "  WNAME     name of the shared memory object for the output queue" << std::endl
 	          << "  RNAME     name of the shared memory object for the input queue" << std::endl
 	          << "  VECTORIZE maximum number of samples to read/write at a time" << std::endl;
+
+	print_copyright();
 }
 
 void quit(int, siginfo_t*, void*)

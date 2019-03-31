@@ -54,7 +54,7 @@ void quit(int signal, siginfo_t *sinfo, void *ctx)
 	stop = true;
 }
 
-void usage()
+static void usage()
 {
 	std::cout << "Usage: villas-test-rtt [OPTIONS] CONFIG NODE" << std::endl
 	          << "  CONFIG  path to a configuration file" << std::endl
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 	/* Parse Arguments */
 	int c;
 	char *endptr;
-	while ((c = getopt (argc, argv, "w:h:r:f:c:b:Vd:")) != -1) {
+	while ((c = getopt (argc, argv, "w:hr:f:c:b:Vd:")) != -1) {
 		switch (c) {
 			case 'c':
 				count = strtoul(optarg, &endptr, 10);

@@ -111,8 +111,6 @@ static void usage()
 	std::cout << std::endl;
 
 	print_copyright();
-
-	exit(EXIT_FAILURE);
 }
 
 int main(int argc, char *argv[])
@@ -124,8 +122,10 @@ int main(int argc, char *argv[])
 	try {
 		/* Check arguments */
 #ifdef ENABLE_OPAL_ASYNC
-		if (argc != 4)
-			usage(argv[0]);
+		if (argc != 4) {
+			usage();
+			exit(EXIT_FAILURE);
+		}
 
 		opal_register_region(argc, argv);
 

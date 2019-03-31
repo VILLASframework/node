@@ -46,6 +46,33 @@ using namespace villas;
 
 static std::atomic<bool> stop(false);
 
+static void usage()
+{
+	std::cout << "Usage: villas-signal [OPTIONS] SIGNAL" << std::endl
+	          << "  SIGNAL   is on of the following signal types:" << std::endl
+	          << "    mixed" << std::endl
+	          << "    random" << std::endl
+	          << "    sine" << std::endl
+	          << "    triangle" << std::endl
+	          << "    square" << std::endl
+	          << "    ramp" << std::endl
+	          << "    constants" << std::endl
+	          << "    counter" << std::endl << std::endl
+	          << "  OPTIONS is one or more of the following options:" << std::endl
+	          << "    -d LVL  set debug level" << std::endl
+	          << "    -f FMT  set the format" << std::endl
+	          << "    -v NUM  specifies how many values a message should contain" << std::endl
+	          << "    -r HZ   how many messages per second" << std::endl
+	          << "    -n      non real-time mode. do not throttle output." << std::endl
+	          << "    -F HZ   the frequency of the signal" << std::endl
+	          << "    -a FLT  the amplitude" << std::endl
+	          << "    -D FLT  the standard deviation for 'random' signals" << std::endl
+	          << "    -o OFF  the DC bias" << std::endl
+	          << "    -l NUM  only send LIMIT messages and stop" << std::endl << std::endl;
+
+	print_copyright();
+}
+
 json_t * parse_cli(int argc, char *argv[])
 {
 	Logger logger = logging.get("signal");
@@ -64,7 +91,7 @@ json_t * parse_cli(int argc, char *argv[])
 	/* Parse optional command line arguments */
 	int c;
 	char *endptr;
-	while ((c = getopt(argc, argv, "v:r:f:l:a:D:no:d:")) != -1) {
+	while ((c = getopt(argc, argv, "v:r:f:l:a:D:no:d:hV")) != -1) {
 		switch (c) {
 			case 'n':
 				rt = 0;
@@ -102,8 +129,14 @@ json_t * parse_cli(int argc, char *argv[])
 				logging.setLevel(optarg);
 				break;
 
+			case 'V':
+				print_version();
+				exit(EXIT_SUCCESS);
+
+			case 'h':
 			case '?':
-				break;
+				usage();
+				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 		}
 
 		continue;
@@ -129,33 +162,6 @@ check:		if (optarg == endptr)
 		"values", values,
 		"limit", limit
 	);
-}
-
-void usage()
-{
-	std::cout << "Usage: villas-signal [OPTIONS] SIGNAL" << std::endl
-	          << "  SIGNAL   is on of the following signal types:" << std::endl
-	          << "    mixed" << std::endl
-	          << "    random" << std::endl
-	          << "    sine" << std::endl
-	          << "    triangle" << std::endl
-	          << "    square" << std::endl
-	          << "    ramp" << std::endl
-	          << "    constants" << std::endl
-	          << "    counter" << std::endl << std::endl
-	          << "  OPTIONS is one or more of the following options:" << std::endl
-	          << "    -d LVL  set debug level" << std::endl
-	          << "    -f FMT  set the format" << std::endl
-	          << "    -v NUM  specifies how many values a message should contain" << std::endl
-	          << "    -r HZ   how many messages per second" << std::endl
-	          << "    -n      non real-time mode. do not throttle output." << std::endl
-	          << "    -F HZ   the frequency of the signal" << std::endl
-	          << "    -a FLT  the amplitude" << std::endl
-	          << "    -D FLT  the standard deviation for 'random' signals" << std::endl
-	          << "    -o OFF  the DC bias" << std::endl
-	          << "    -l NUM  only send LIMIT messages and stop" << std::endl << std::endl;
-
-	print_copyright();
 }
 
 static void quit(int signal, siginfo_t *sinfo, void *ctx)

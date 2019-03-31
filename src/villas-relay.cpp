@@ -388,17 +388,16 @@ int protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in
 	return 0;
 }
 
-void usage()
+static void usage()
 {
-	std::cout << "Usage: villas-relay [OPTIONS]" << std::endl;
-	std::cout << "  OPTIONS is one or more of the following options:" << std::endl;
-	std::cout << "    -d LVL    set debug level" << std::endl;
-	std::cout << "    -p PORT   the port number to listen on" << std::endl;
-	std::cout << "    -P PROT   the websocket protocol" << std::endl;
-	std::cout << "    -l        enable loopback of own data" << std::endl;
-	std::cout << "    -V        show version and exit" << std::endl;
-	std::cout << "    -h        show usage and exit" << std::endl;
-	std::cout << std::endl;
+	std::cout << "Usage: villas-relay [OPTIONS]" << std::endl
+	          << "  OPTIONS is one or more of the following options:" << std::endl
+	          << "    -d LVL    set debug level" << std::endl
+	          << "    -p PORT   the port number to listen on" << std::endl
+	          << "    -P PROT   the websocket protocol" << std::endl
+	          << "    -l        enable loopback of own data" << std::endl
+	          << "    -V        show version and exit" << std::endl
+	          << "    -h        show usage and exit" << std::endl << std::endl;
 
 	villas::print_copyright();
 }
