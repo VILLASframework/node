@@ -429,7 +429,7 @@ int websocket_start(struct node *n)
 
 int websocket_stop(struct node *n)
 {
-	int ret;
+	int ret, open_connections = 0;;
 	struct websocket *w = (struct websocket *) n->_vd;
 
 	for (size_t i = 0; i < vlist_length(&connections); i++) {
@@ -443,24 +443,22 @@ int websocket_stop(struct node *n)
 		lws_callback_on_writable(c->wsi);
 	}
 
-	/* Wait for all connections to be closed */
-	for (int j = 1; j <= 10; j++) {
-		int open_connections = 0;
+	/* Count open connections belonging to this node */
+	for (int i = 0; i < vlist_length(&connections); i++) {
+		struct websocket_connection *c = (struct websocket_connection *) vlist_at(&connections, i);
 
-		/* Count open connections belonging to this node */
-		for (int i = 0; i < vlist_length(&connections); i++) {
-			struct websocket_connection *c = (struct websocket_connection *) vlist_at(&connections, i);
+		if (c->node == n)
+			open_connections++;
+	}
 
-			if (c->node == n)
-				open_connections++;
-		}
-
-		if (open_connections == 0)
-			break;
-
-		info("Waiting for shutdown of %zu connections... %d/10", vlist_length(&connections), j);
+	if (open_connections > 0) {
+		info("Waiting for shutdown of %u connections...", open_connections);
 		sleep(1);
 	}
+
+	ret = queue_signalled_close(&w->queue);
+	if (ret)
+		return ret;
 
 	ret = queue_signalled_destroy(&w->queue);
 	if (ret)
