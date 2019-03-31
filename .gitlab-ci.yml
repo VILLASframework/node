@@ -20,6 +20,7 @@ stages:
 # For some reason, GitLab CI prunes the contents of the submodules so we need to restore them.
 before_script:
   - git submodule foreach git checkout .
+  - export LD_PRELOAD=/usr/lib64/libSegFault.so
 
 # Stage: prepare
 ##############################################################################
@@ -120,7 +121,6 @@ test:integration:
     when: always
     paths:
       - build/tests/integration/
-      - etc/core
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
   tags:
     - docker
