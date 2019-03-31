@@ -50,7 +50,7 @@ public:
 static HookPlugin<TsHook> p(
 	"ts",
 	"Overwrite origin timestamp of samples with receive timestamp",
-	HOOK_NODE_READ,
+	HOOK_NODE_READ | HOOK_NODE_WRITE | HOOK_PATH,
 	99
 );
 
