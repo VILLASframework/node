@@ -343,8 +343,6 @@ int ib_check(struct node *n)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 
-	info("Starting check of node %s", node_name(n));
-
 	/* Check if read substraction makes sense */
 	if (ib->conn.buffer_subtraction <  2 * n->in.vectorize)
 		error("The buffer substraction value must be bigger than 2 * in.vectorize");
@@ -388,8 +386,6 @@ int ib_check(struct node *n)
 	if (ib->qp_init.cap.max_inline_data != 0)
 		warning("You changed the default value of max_inline_data. This might influence the maximum number "
 			"of outstanding Work Requests in the Queue Pair and can be a reason for the Queue Pair creation to fail");
-
-	info("Finished check of node %s", node_name(n));
 
 	return 0;
 }
