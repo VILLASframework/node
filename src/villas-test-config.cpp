@@ -70,13 +70,13 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (argc - optind < 2) {
+	if (argc - optind < 1) {
 		usage();
 		exit(EXIT_FAILURE);
 	}
 
 	try {
-		sn.parse(argv[argc - optind]);
+		sn.parse(argv[optind]);
 
 		if (check)
 			sn.check();
