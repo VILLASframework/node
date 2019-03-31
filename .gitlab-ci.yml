@@ -8,6 +8,9 @@ variables:
   DOCKER_IMAGE: villas/node
   DOCKER_IMAGE_DEV: villas/node-dev
   MAKE_OPTS: -j 16
+  LD_PRELOAD: /usr/lib64/libSegFault.so
+  SEGFAULT_SIGNALS: all
+  SEGFAULT_SIGNALS: bus abrt
 
 stages:
   - prepare
@@ -20,7 +23,6 @@ stages:
 # For some reason, GitLab CI prunes the contents of the submodules so we need to restore them.
 before_script:
   - git submodule foreach git checkout .
-  - export LD_PRELOAD=/usr/lib64/libSegFault.so
 
 # Stage: prepare
 ##############################################################################
