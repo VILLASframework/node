@@ -81,7 +81,6 @@ struct stats_metric_description {
 	enum stats_metric metric;
 	const char *unit;
 	const char *desc;
-	int hist_buckets;
 };
 
 struct stats_type_description {
