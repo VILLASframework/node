@@ -82,7 +82,7 @@ static const char * signal_generator_type_str(enum signal_generator_type type)
 	}
 }
 
-static void signal_generator_init_signals(struct node *n)
+int signal_generator_prepare(struct node *n)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
@@ -98,6 +98,8 @@ static void signal_generator_init_signals(struct node *n)
 
 		vlist_push(&n->in.signals, sig);
 	}
+
+	return 0;
 }
 
 int signal_generator_parse(struct node *n, json_t *cfg)
@@ -143,8 +145,6 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 	}
 	else
 		s->type = SIGNAL_GENERATOR_TYPE_MIXED;
-
-	signal_generator_init_signals(n);
 
 	return 0;
 }
@@ -309,6 +309,7 @@ static struct plugin p = {
 		.flags		= NODE_TYPE_PROVIDES_SIGNALS,
 		.size		= sizeof(struct signal_generator),
 		.parse		= signal_generator_parse,
+		.prepare	= signal_generator_prepare,
 		.print		= signal_generator_print,
 		.start		= signal_generator_start,
 		.stop		= signal_generator_stop,
