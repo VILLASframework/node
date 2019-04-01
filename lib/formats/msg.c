@@ -86,7 +86,7 @@ int msg_to_sample(struct msg *msg, struct sample *smp, struct vlist *signals)
 	smp->sequence = msg->sequence;
 	smp->ts.origin = MSG_TS(msg);
 
-	for (int i = 0; i < smp->length; i++) {
+	for (int i = 0; i < MIN(smp->length, vlist_length(signals)); i++) {
 		struct signal *sig = vlist_at(signals, i);
 
 		switch (sig->type) {
