@@ -68,6 +68,26 @@ static int test_rtt_case_stop(struct test_rtt *t, int id)
 	return 0;
 }
 
+int test_rtt_prepare(struct node *n)
+{
+	struct test_rtt *t = (struct test_rtt *) n->_vd;
+
+	int ret, max_values = 0;
+
+	for (size_t i = 0; i < vlist_length(&t->cases); i++) {
+		struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, i);
+
+		if (c->values > max_values)
+			max_values = c->values;
+	}
+
+	ret = signal_list_generate(&n->in.signals, max_values, SIGNAL_TYPE_FLOAT);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
 int test_rtt_parse(struct node *n, json_t *cfg)
 {
 	int ret;
@@ -400,6 +420,7 @@ static struct plugin p = {
 		.flags		= NODE_TYPE_PROVIDES_SIGNALS,
 		.size		= sizeof(struct test_rtt),
 		.parse		= test_rtt_parse,
+		.prepare	= test_rtt_prepare,
 		.destroy	= test_rtt_destroy,
 		.print		= test_rtt_print,
 		.start		= test_rtt_start,
