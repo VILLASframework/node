@@ -332,7 +332,7 @@ int io_open(struct io *io, const char *uri)
 {
 	int ret;
 
-	assert(io->state == STATE_CHECKED);
+	assert(io->state == STATE_CHECKED || io->state == STATE_CLOSED);
 
 	ret = io_type(io)->open
 		? io_type(io)->open(io, uri)
