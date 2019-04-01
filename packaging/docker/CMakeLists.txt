@@ -67,7 +67,7 @@ foreach(SUFFIX app dev dev-centos dev-ubuntu)
 	add_dependencies(run-docker-${SUFFIX} docker-${SUFFIX})
 endforeach()
 	
-# Special cases for 'docker'target
+# Special cases for 'docker' target
 add_custom_target(run-docker
 	COMMAND docker run ${DOCKER_RUN_OPTS} ${DOCKER_IMAGE}:${DOCKER_TAG} node -h
 	COMMENT "Run Docker image: ${DOCKER_IMAGE}:${DOCKER_TAG}"
