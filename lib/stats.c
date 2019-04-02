@@ -159,7 +159,7 @@ void stats_reset(struct stats *s)
 
 static struct table_column stats_cols[] = {
 	{ 10, "Node",		"%s",	NULL,		TABLE_ALIGN_LEFT },
-	{ 10, "Recv",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
+//	{ 10, "Recv",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
 	{ 10, "Sent",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
 	{ 10, "OWD last",	"%f",	"secs",		TABLE_ALIGN_RIGHT },
 	{ 10, "OWD mean",	"%f",	"secs",		TABLE_ALIGN_RIGHT },
