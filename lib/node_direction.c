@@ -221,11 +221,12 @@ int node_direction_stop(struct node_direction *nd, struct node *n)
 
 struct vlist * node_direction_get_signals(struct node_direction *nd)
 {
-#ifdef WITH_HOOKS
 	assert(nd->state == STATE_PREPARED);
 
-	return hook_list_get_signals(&nd->hooks);
-#else
-	return &nd->signals;
+#ifdef WITH_HOOKS
+	if (vlist_length(&nd->hooks) > 0)
+		return hook_list_get_signals(&nd->hooks);
 #endif
+
+	return &nd->signals;
 }

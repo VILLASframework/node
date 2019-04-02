@@ -109,6 +109,9 @@ int hook_list_prepare(vlist *hs, vlist *sigs, int m, struct path *p, struct node
 {
 	assert(hs->state == STATE_INITIALIZED);
 
+	if (!m)
+		goto skip_add;
+
 	/* Add internal hooks if they are not already in the list */
 	for (auto f : plugin::Registry::lookup<HookFactory>()) {
 		if ((f->getFlags() & m) == m) {
@@ -118,6 +121,7 @@ int hook_list_prepare(vlist *hs, vlist *sigs, int m, struct path *p, struct node
 		}
 	}
 
+skip_add:
 	/* We sort the hooks according to their priority */
 	vlist_sort(hs, (cmp_cb_t) hook_cmp_priority);
 
