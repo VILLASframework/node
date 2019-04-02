@@ -140,7 +140,7 @@ int path_init(struct path *p)
 	p->enabled = 1;
 	p->poll = -1;
 	p->queuelen = DEFAULT_QUEUE_LENGTH;
-	p->original_sequence_no = 0;
+	p->original_sequence_no = -1;
 
 	p->state = STATE_INITIALIZED;
 
@@ -287,6 +287,9 @@ int path_prepare(struct path *p)
 		if (ret)
 			return ret;
 	}
+
+	if (p->original_sequence_no == -1)
+		p->original_sequence_no = vlist_length(&p->sources) == 1;
 
 	p->state = STATE_PREPARED;
 
