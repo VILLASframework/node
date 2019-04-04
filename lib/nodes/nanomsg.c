@@ -281,6 +281,15 @@ int nanomsg_poll_fds(struct node *n, int fds[])
 	return 1;
 }
 
+int nanomsg_netem_fds(struct node *n, int fds[])
+{
+	struct nanomsg *m = (struct nanomsg *) n->_vd;
+
+	fds[0] = m->out.socket;
+
+	return 1;
+}
+
 static struct plugin p = {
 	.name		= "nanomsg",
 	.description	= "scalability protocols library (libnanomsg)",
@@ -296,7 +305,8 @@ static struct plugin p = {
 		.stop		= nanomsg_stop,
 		.read		= nanomsg_read,
 		.write		= nanomsg_write,
-		.poll_fds	= nanomsg_poll_fds
+		.poll_fds	= nanomsg_poll_fds,
+		.netem_fds	= nanomsg_netem_fds
 	}
 };
 
