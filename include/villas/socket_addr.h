@@ -34,6 +34,7 @@
   #define WITH_SOCKET_LAYER_ETH
 
   #include <linux/if_packet.h>
+  #include <netinet/ether.h>
 #endif /* LIBNL3_ROUTE_FOUND */
 
 enum socket_layer {
