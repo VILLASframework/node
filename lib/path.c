@@ -546,9 +546,12 @@ int path_start(struct path *p)
 
 	mask = bitset_dump(&p->mask);
 
-	info("Starting path %s: #signals=%zu, mode=%s, poll=%s, mask=%s, rate=%.2f, enabled=%s, reversed=%s, queuelen=%d, #hooks=%zu, #sources=%zu, #destinations=%zu, original_sequence_no=%s",
+	info("Starting path %s: #signals=%zu, #hooks=%zu, #sources=%zu, #destinations=%zu, mode=%s, poll=%s, mask=%s, rate=%.2f, enabled=%s, reversed=%s, queuelen=%d, original_sequence_no=%s",
 		path_name(p),
 		vlist_length(&p->signals),
+		vlist_length(&p->hooks),
+		vlist_length(&p->sources),
+		vlist_length(&p->destinations),
 		mode,
 		p->poll ? "yes" : "no",
 		mask,
@@ -556,9 +559,6 @@ int path_start(struct path *p)
 		path_is_enabled(p) ? "yes" : "no",
 		path_is_reversed(p) ? "yes" : "no",
 		p->queuelen,
-		vlist_length(&p->hooks),
-		vlist_length(&p->sources),
-		vlist_length(&p->destinations),
 		p->original_sequence_no ? "yes" : "no"
 	);
 
