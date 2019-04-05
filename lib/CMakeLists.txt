@@ -62,6 +62,7 @@ set(LIB_SRC
     signal.c
     stats.c
     super_node.cpp
+    socket_addr.c
 )
 
 if(IBVERBS_FOUND AND RDMACM_FOUND)
