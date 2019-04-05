@@ -30,7 +30,7 @@
 
 #if PERIODIC_TASK_IMPL == TIMERFD
   #include <sys/timerfd.h>
-#endif
+#endif /* PERIODIC_TASK_IMPL */
 
 int task_init(struct task *t, double rate, int clock)
 {
@@ -46,7 +46,7 @@ int task_init(struct task *t, double rate, int clock)
 	ret = tsc_init(&t->tsc);
 	if (ret)
 		return ret;
-#endif
+#endif /* PERIODIC_TASK_IMPL */
 
 	ret = task_set_rate(t, rate);
 	if (ret)
@@ -70,8 +70,7 @@ int task_set_timeout(struct task *t, double to)
 int task_set_next(struct task *t, struct timespec *next)
 {
 
-#if PERIODIC_TASK_IMPL == RDTSC
-#else
+#if PERIODIC_TASK_IMPL != RDTSC
 	t->next = *next;
 
   #if PERIODIC_TASK_IMPL == TIMERFD
@@ -84,8 +83,8 @@ int task_set_next(struct task *t, struct timespec *next)
 	ret = timerfd_settime(t->fd, TFD_TIMER_ABSTIME, &its, NULL);
 	if (ret)
 		return ret;
-  #endif
-#endif
+  #endif /* PERIODIC_TASK_IMPL == TIMERFD */
+#endif /* PERIODIC_TASK_IMPL != RDTSC */
 
 	return 0;
 }
@@ -117,8 +116,8 @@ int task_set_rate(struct task *t, double rate)
 	ret = timerfd_settime(t->fd, 0, &its, NULL);
 	if (ret)
 		return ret;
-  #endif
-#endif
+  #endif /* PERIODIC_TASK_IMPL */
+#endif /* PERIODIC_TASK_IMPL == RDTSC */
 
 	return 0;
 }
