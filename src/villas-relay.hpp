@@ -27,6 +27,10 @@
 #include <spdlog/spdlog.h>
 #include <uuid/uuid.h>
 
+#ifdef UUID_STR_LEN
+  #define UUID_STR_LEN   37
+#endif
+
 #include <libwebsockets.h>
 
 /* Forward declarations */
