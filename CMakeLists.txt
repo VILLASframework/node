@@ -33,7 +33,7 @@ set(PROJECT_HOMEPAGE_URL "https://www.fein-aachen.org/projects/villas-node/")
 
 # Several CMake settings/defaults
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake;${PROJECT_SOURCE_DIR}/common/cmake")
 
