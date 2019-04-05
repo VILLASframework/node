@@ -24,13 +24,12 @@
 
 #include <jansson.h>
 
-#ifdef WITH_CONFIG
-  #include <libconfig.h>
-#endif /* WITH_CONFIG */
-
+#include <villas/node/config.h>
 #include <villas/sample.h>
 
 #ifdef WITH_CONFIG
+  #include <libconfig.h>
+
 /** Convert a libconfig object to a jansson object */
 json_t *config_to_json(config_setting_t *cfg);
 

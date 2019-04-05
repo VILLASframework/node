@@ -35,7 +35,7 @@ if(WITH_NODE_STATS)
     list(APPEND NODE_SRC stats.c)
 endif()
 
-if(WITH_NODE_SIGNAL_GENERATOR)
+if(WITH_NODE_SIGNAL)
     list(APPEND NODE_SRC signal_generator.c)
 endif()
 
@@ -63,7 +63,7 @@ if(WITH_NODE_ULDAQ)
 endif()
 
 # Enable shared memory node-type
-if(WITH_NODE_SHMEM AND HAS_SEMAPHORE AND HAS_MMAN)
+if(WITH_NODE_SHMEM)
     list(APPEND NODE_SRC shmem.c)
 
     if(CMAKE_SUSTEM_NAME STREQUAL Linux)
@@ -79,7 +79,7 @@ if(WITH_NODE_IEC61850)
 endif()
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
-if(WITH_NODE_OPAL AND BUILD32)
+if(WITH_NODE_OPAL)
     list(APPEND NODE_SRC opal.c)
     list(APPEND INCLUDE_DIRS ${OPAL_INCLUDE_DIRS})
     list(APPEND LIBRARIES ${OPAL_LIBRARIES})
@@ -100,14 +100,14 @@ if(WITH_NODE_ZEROMQ)
 endif()
 
 # Enable NGSI support
-if(WITH_NGSI)
+if(WITH_NODE_NGSI)
     list(APPEND NODE_SRC ngsi.c)
     list(APPEND INCLUDE_DIRS ${CURL_INCLUDE_DIRS})
     list(APPEND LIBRARIES ${CURL_LIBRARIES})
 endif()
 
 # Enable WebSocket support
-if(WITH_NODE_WEBSOCKET AND WITH_WEB)
+if(WITH_NODE_WEBSOCKET)
     list(APPEND NODE_SRC websocket.c)
     list(APPEND INCLUDE_DIRS ${LIBWEBSOCKETS_INCLUDE_DIRS})
     list(APPEND LIBRARIES ${LIBWEBSOCKETS_LDLIBS})
@@ -142,7 +142,7 @@ if(WITH_NODE_INFINIBAND)
 endif()
 
 # Enable RTP node type when libre is available
-if(WITH_NODE_RE)
+if(WITH_NODE_RTP)
     list(APPEND NODE_SRC rtp.cpp)
     list(APPEND INCLUDE_DIRS ${RE_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::RE)

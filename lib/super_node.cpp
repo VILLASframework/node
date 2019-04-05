@@ -458,6 +458,7 @@ void SuperNode::stop()
 #ifdef WITH_API
 	api.stop();
 #endif
+
 #ifdef WITH_WEB
 	web.stop();
 #endif

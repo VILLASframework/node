@@ -68,7 +68,7 @@ set(LIB_SRC
 
 )
 
-if(IBVERBS_FOUND AND RDMACM_FOUND)
+if(WITH_NODE_INFINIBAND)
     list(APPEND LIB_SRC memory/ib.c)
 endif()
 
@@ -102,7 +102,7 @@ if(WITH_WEB)
     list(APPEND LIBRARIES PkgConfig::LIBWEBSOCKETS)
 endif()
 
-if(WITH_API AND WITH_WEB)
+if(WITH_API)
     list(APPEND LIB_SRC
         api.cpp
     )
