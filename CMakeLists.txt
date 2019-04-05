@@ -115,7 +115,6 @@ endif()
 
 # Build options
 option(WITH_HOOKS   "Build with support for processing hook plugins" ON)
-option(WITH_IO      "Build with support format plugins" ON)
 option(WITH_WEB     "Build with internal webserver" ON)
 option(WITH_API     "Build with remote control API" ON)
 option(WITH_CONFIG  "Build with support for libconfig configuration syntax" ON)
@@ -173,7 +172,6 @@ configure_file(
 
 # Show feature summary
 add_feature_info(HOOKS   WITH_HOOKS   "Build with support for processing hook plugins")
-add_feature_info(IO      WITH_IO      "Build with support format plugins")
 add_feature_info(WEB     WITH_WEB     "Build with internal webserver")
 add_feature_info(API     WITH_API     "Build with remote control API")
 add_feature_info(CONFIG  WITH_CONFIG  "Build with support for libconfig configuration syntax")

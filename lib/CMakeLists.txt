@@ -63,6 +63,9 @@ set(LIB_SRC
     stats.c
     super_node.cpp
     socket_addr.c
+    io.c
+    format_type.c
+
 )
 
 if(IBVERBS_FOUND AND RDMACM_FOUND)
@@ -72,19 +75,12 @@ endif()
 add_subdirectory(nodes)
 list(APPEND WHOLE_ARCHIVES nodes)
 
+add_subdirectory(formats)
+list(APPEND WHOLE_ARCHIVES formats)
+
 if(LIBCONFIG_FOUND)
     list(APPEND INCLUDE_DIRS ${LIBCONFIG_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::LIBCONFIG)
-endif()
-
-if(WITH_IO)
-    list(APPEND LIB_SRC
-        io.c
-        format_type.c
-    )
-    
-    add_subdirectory(formats)
-    list(APPEND WHOLE_ARCHIVES formats)
 endif()
 
 if(WITH_HOOKS)

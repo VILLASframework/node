@@ -51,7 +51,6 @@
 #cmakedefine WITH_WEB
 #cmakedefine WITH_API
 #cmakedefine WITH_HOOKS
-#cmakedefine WITH_IO
 
 /* OS Headers */
 #cmakedefine HAS_EVENTFD
