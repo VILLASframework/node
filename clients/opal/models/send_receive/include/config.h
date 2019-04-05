@@ -36,6 +36,6 @@
 /* Default protocol */
 #ifndef PROTOCOL
   #define PROTOCOL VILLAS
-#endif
+#endif /* PROTOCOL */
 
 #endif /* _CONFIG_H_ */

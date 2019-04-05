@@ -129,7 +129,8 @@ int path_init(struct path *p)
 	ret = hook_list_init(&p->hooks);
 	if (ret)
 		return ret;
-#endif
+#endif /* WITH_HOOKS */
+
 	p->_name = NULL;
 
 	/* Default values */

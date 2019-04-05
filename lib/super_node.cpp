@@ -50,13 +50,13 @@ SuperNode::SuperNode() :
 	idleStop(false),
 #ifdef WITH_API
 	api(this),
+#endif
 #ifdef WITH_WEB
 	web(&api),
 #endif
 	priority(0),
 	affinity(0),
 	hugepages(DEFAULT_NR_HUGEPAGES)
-#endif
 {
 	nodes.state = STATE_DESTROYED;
 	paths.state = STATE_DESTROYED;

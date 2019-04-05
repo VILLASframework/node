@@ -34,7 +34,7 @@
 /* Required to allocate hugepages on Apple OS X */
 #ifdef __MACH__
   #include <mach/vm_statistics.h>
-#endif
+#endif /* __MACH__ */
 
 #include <villas/kernel/kernel.h>
 #include <villas/log.h>
