@@ -78,7 +78,7 @@ list(APPEND WHOLE_ARCHIVES nodes)
 add_subdirectory(formats)
 list(APPEND WHOLE_ARCHIVES formats)
 
-if(LIBCONFIG_FOUND)
+if(WITH_CONFIG)
     list(APPEND INCLUDE_DIRS ${LIBCONFIG_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::LIBCONFIG)
 endif()

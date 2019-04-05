@@ -50,10 +50,10 @@ protected:
 	/** Decode configuration file. */
 	void decode();
 
-#ifdef LIBCONFIG_FOUND
+#ifdef WITH_CONFIG
 	/** Convert libconfig .conf file to libjansson .json file. */
 	void libconfigDecode();
-#endif /* LIBCONFIG_FOUND */
+#endif /* WITH_CONFIG */
 
 	/** Load configuration from standard input (stdim). */
 	void loadFromStdio();

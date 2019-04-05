@@ -20,7 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-if(LIBCONFIG_FOUND)
+if(WITH_CONFIG)
     add_executable(conf2json conf2json.cpp)
     target_link_libraries(conf2json PUBLIC villas)
 
