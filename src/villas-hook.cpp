@@ -69,10 +69,12 @@ static void usage()
 	          << "    -h      show this help" << std::endl
 	          << "    -V      show the version of the tool" << std::endl << std::endl;
 
+#ifdef WITH_HOOKS
 	std::cout << "Supported hooks:" << std::endl;
 	for (Plugin *p : Registry::lookup<HookFactory>())
 		std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
 	std::cout << std::endl;
+#endif /* WITH_HOOKS */
 
 	std::cout << "Supported IO formats:" << std::endl;
 	plugin_dump(PLUGIN_TYPE_FORMAT);
