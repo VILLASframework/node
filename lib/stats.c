@@ -37,6 +37,7 @@ struct stats_metric_description stats_metrics[] = {
 	{ "gap_sent",		STATS_METRIC_GAP_SAMPLE,	"seconds",	"Inter-message timestamps (as sent by remote)" 			},
 	{ "gap_received",	STATS_METRIC_GAP_RECEIVED,	"seconds",	"Inter-message arrival time (as received by this instance)" 	},
 	{ "owd",		STATS_METRIC_OWD,		"seconds",	"One-way-delay (OWD) of received messages" 			},
+	{ "age",		STATS_METRIC_AGE,		"seconds",	"Processing time of packets within the from receive to sent" 			},
 	{ "rtp.loss_fraction",	STATS_METRIC_RTP_LOSS_FRACTION,	"percent",	"Fraction lost since last RTP SR/RR."				},
 	{ "rtp.pkts_lost",	STATS_METRIC_RTP_PKTS_LOST,	"packets",	"Cumulative number of packtes lost" 				},
 	{ "rtp.jitter",		STATS_METRIC_RTP_JITTER,	"seconds",	"Interarrival jitter" 						},
@@ -159,7 +160,7 @@ void stats_reset(struct stats *s)
 
 static struct table_column stats_cols[] = {
 	{ 10, "Node",		"%s",	NULL,		TABLE_ALIGN_LEFT },
-//	{ 10, "Recv",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
+	{ 10, "Recv",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
 	{ 10, "Sent",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
 	{ 10, "OWD last",	"%f",	"secs",		TABLE_ALIGN_RIGHT },
 	{ 10, "OWD mean",	"%f",	"secs",		TABLE_ALIGN_RIGHT },
@@ -194,6 +195,7 @@ void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int v
 			table_row(&stats_table,
 				node_name_short(n),
 				hist_total(&s->histograms[STATS_METRIC_OWD]),
+				hist_total(&s->histograms[STATS_METRIC_AGE]),
 				hist_last(&s->histograms[STATS_METRIC_OWD]),
 				hist_mean(&s->histograms[STATS_METRIC_OWD]),
 				1.0 / hist_last(&s->histograms[STATS_METRIC_GAP_RECEIVED]),
