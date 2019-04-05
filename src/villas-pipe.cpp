@@ -378,10 +378,7 @@ check:		if (optarg == endptr)
 	/* Only start web subsystem if villas-pipe is used with a websocket node */
 	if (node_type(node)->start == websocket_start) {
 		Web *w = sn.getWeb();
-		Api *a = sn.getApi();
-
 		w->start();
-		a->start();
 	}
 #endif /* WITH_NODE_WEBSOCKET */
 
