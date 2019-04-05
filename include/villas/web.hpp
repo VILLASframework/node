@@ -69,7 +69,7 @@ public:
  	 *
  	 * The web interface is based on the libwebsockets library.
  	 */
-	Web(Api *a);
+	Web(Api *a = nullptr);
 
 	void start();
 	void stop();

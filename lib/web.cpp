@@ -61,14 +61,12 @@ lws_protocols protocols[] = {
 		.rx_buffer_size = 0
 	},
 #endif /* WITH_API */
-#ifdef LIBWEBSOCKETS_FOUND
 	{
 		.name = "live",
 		.callback = websocket_protocol_cb,
 		.per_session_data_size = sizeof(websocket_connection),
 		.rx_buffer_size = 0
 	},
-#endif /* LIBWEBSOCKETS_FOUND */
 	{
 		.name = nullptr /* terminator */
 	}

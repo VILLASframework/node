@@ -52,7 +52,11 @@ SuperNode::SuperNode() :
 	api(this),
 #endif
 #ifdef WITH_WEB
+  #ifdef WITH_API
 	web(&api),
+  #else
+	web(),
+  #endif
 #endif
 	priority(0),
 	affinity(0),

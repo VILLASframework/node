@@ -20,35 +20,50 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
-set(NODE_SRC
-    influxdb.c
-    stats.c
-    signal_generator.c
-    loopback.c
-)
+set(NODE_SRC)
 
 if(LIBNL3_ROUTE_FOUND)
     list(APPEND LIBRARIES PkgConfig::LIBNL3_ROUTE)
     list(APPEND INCLUDE_DIRS ${LIBNL3_ROUTE_INCLUDE_DIRS})
 endif()
 
-if(WITH_IO)
-    list(APPEND NODE_SRC
-        test_rtt.c
-        file.c
-        socket.c
-    )
+if(WITH_NODE_INFLUXDB)
+    list(APPEND NODE_SRC influxdb.c)
+endif()
+
+if(WITH_NODE_STATS)
+    list(APPEND NODE_SRC stats.c)
+endif()
+
+if(WITH_NODE_SIGNAL_GENERATOR)
+    list(APPEND NODE_SRC signal_generator.c)
+endif()
+
+if(WITH_NODE_LOOPBACK)
+    list(APPEND NODE_SRC loopback.c)
+endif()
+
+if(WITH_NODE_TEST_RTT)
+    list(APPEND NODE_SRC test_rtt.c)
+endif()
+
+if(WITH_NODE_SOCKET)
+    list(APPEND NODE_SRC socket.c)
+endif()
+
+if(WITH_NODE_FILE)
+    list(APPEND NODE_SRC file.c)
 endif()
 
 # Enable Universal Library for Linux DAQ devices (libuldaq)
-if(LIBULDAQ_FOUND)
+if(WITH_NODE_ULDAQ)
     list(APPEND NODE_SRC uldaq.c)
     list(APPEND INCLUDE_DIRS ${LIBULDAQ_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::LIBULDAQ uldaq)
 endif()
 
 # Enable shared memory node-type
-if(HAS_SEMAPHORE AND HAS_MMAN)
+if(WITH_NODE_SHMEM AND HAS_SEMAPHORE AND HAS_MMAN)
     list(APPEND NODE_SRC shmem.c)
 
     if(CMAKE_SUSTEM_NAME STREQUAL Linux)
@@ -57,75 +72,77 @@ if(HAS_SEMAPHORE AND HAS_MMAN)
 endif()
 
 # Enable IEC61850 node-types when libiec61850 is available
-if(LIBIEC61850_FOUND)
+if(WITH_NODE_IEC61850)
     list(APPEND NODE_SRC iec61850_sv.c iec61850.c)
     list(APPEND INCLUDE_DIRS ${LIBIEC61850_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::LIBIEC61850 ${LIBIEC61850_LIBRARIES})
 endif()
 
 # Enable OPAL-RT Asynchronous Process support (will result in 32bit binary!!!)
-if(OPAL_FOUND AND BUILD32)
+if(WITH_NODE_OPAL AND BUILD32)
     list(APPEND NODE_SRC opal.c)
     list(APPEND INCLUDE_DIRS ${OPAL_INCLUDE_DIRS})
     list(APPEND LIBRARIES ${OPAL_LIBRARIES})
 endif()
 
 # Enable nanomsg node type when libnanomsg is available
-if(NANOMSG_FOUND AND WITH_IO)
+if(WITH_NODE_NANOMSG)
     list(APPEND NODE_SRC nanomsg.c)
     list(APPEND INCLUDE_DIRS ${NANOMSG_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::NANOMSG)
 endif()
 
 # Enable ZeroMQ node type when libzmq is available
-if(LIBZMQ_FOUND AND WITH_IO)
+if(WITH_NODE_ZEROMQ)
     list(APPEND NODE_SRC zeromq.c)
     list(APPEND INCLUDE_DIRS ${LIBZMQ_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::LIBZMQ)
 endif()
 
 # Enable NGSI support
-list(APPEND NODE_SRC ngsi.c)
-list(APPEND INCLUDE_DIRS ${CURL_INCLUDE_DIRS})
-list(APPEND LIBRARIES ${CURL_LIBRARIES})
+if(WITH_NGSI)
+    list(APPEND NODE_SRC ngsi.c)
+    list(APPEND INCLUDE_DIRS ${CURL_INCLUDE_DIRS})
+    list(APPEND LIBRARIES ${CURL_LIBRARIES})
+endif()
 
 # Enable WebSocket support
-if(LIBWEBSOCKETS_FOUND AND WITH_WEB AND WITH_IO)
+if(WITH_NODE_WEBSOCKET AND WITH_WEB)
     list(APPEND NODE_SRC websocket.c)
     list(APPEND INCLUDE_DIRS ${LIBWEBSOCKETS_INCLUDE_DIRS})
     list(APPEND LIBRARIES ${LIBWEBSOCKETS_LDLIBS})
 endif()
 
 # Enable AMQP support
-if(RABBITMQ_C_FOUND AND WITH_IO)
+if(WITH_NODE_AMQP)
     list(APPEND NODE_SRC amqp.c)
     list(APPEND INCLUDE_DIRS ${RABBITMQ_C_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::RABBITMQ_C)
 endif()
 
 # Enable MQTT support
-if(MOSQUITTO_FOUND AND WITH_IO)
+if(WITH_NODE_MQTT)
     list(APPEND NODE_SRC mqtt.c)
     list(APPEND INCLUDE_DIRS ${MOSQUITTO_INCLUDE_DIRS})
     list(APPEND LIBRARIES ${MOSQUITTO_LIBRARIES})
 endif()
 
 # Enable Comedi support
-if(COMEDILIB_FOUND)
+if(WITH_NODE_COMEDI)
     list(APPEND NODE_SRC comedi.c)
     list(APPEND INCLUDE_DIRS ${COMEDILIB_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::COMEDILIB)
 endif()
 
-# Enable infiniband support
-if(IBVERBS_FOUND AND RDMACM_FOUND)
+# Enable Infiniband support
+if(WITH_NODE_INFINIBAND)
     list(APPEND NODE_SRC infiniband.c)
     list(APPEND INCLUDE_DIRS ${IBVERBS_INCLUDE_DIRS} ${RDMACM_INCLUDE_DIRS})
     list(APPEND LIBRARIES ${IBVERBS_LIBRARIES} ${RDMACM_LIBRARIES})
 endif()
 
 # Enable RTP node type when libre is available
-if(RE_FOUND AND WITH_IO)
+if(WITH_NODE_RE)
     list(APPEND NODE_SRC rtp.cpp)
     list(APPEND INCLUDE_DIRS ${RE_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::RE)

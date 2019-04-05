@@ -58,8 +58,6 @@
 #cmakedefine HAS_SEMAPHORE
 
 /* Available Libraries */
-#cmakedefine LIBWEBSOCKETS_FOUND
-#cmakedefine HDF5_FOUND
 #cmakedefine PROTOBUF_FOUND
 #cmakedefine LIBNL3_ROUTE_FOUND
 #cmakedefine IBVERBS_FOUND
