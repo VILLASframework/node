@@ -23,6 +23,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#include <arpa/inet.h>
+#include <netinet/ip.h>
 
 #include <villas/nodes/socket.h>
 #include <villas/utils.h>
