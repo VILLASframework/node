@@ -4,6 +4,7 @@ variables:
   PREFIX: /usr/
   RSYNC_OPTS: --recursive --ignore-missing-args --chown ${DEPLOY_USER}:${DEPLOY_USER}
   CRITERION_OPTS: --ignore-warnings
+  DOCKER_FILE: packaging/docker/Dockerfile.dev
   DOCKER_TAG: ${CI_COMMIT_REF_NAME}
   DOCKER_IMAGE: villas/node
   DOCKER_IMAGE_DEV: villas/node-dev
@@ -31,31 +32,24 @@ prepare:fedora:docker-dev:
   stage: prepare
   script:
     - docker build
-        --file packaging/docker/Dockerfile.dev
+        --file ${DOCKER_FILE}
         --tag ${DOCKER_IMAGE_DEV}:${DOCKER_TAG} .
   tags:
     - shell
     - linux
 
 prepare:raspbian:docker-dev:
-  stage: prepare
-  script:
-    - docker build
-        --file packaging/docker/Dockerfile.dev-raspbian
-        --tag ${DOCKER_IMAGE_DEV}-raspbian:${DOCKER_TAG} .
-  tags:
-    - shell
-    - linux
+  extends: prepare:fedora:docker-dev
+  variables:
+    DOCKER_FILE: packaging/docker/Dockerfile.dev-raspbian
+    DOCKER_IMAGE_DEV: villas/node-dev-raspbian
 
 prepare:ubuntu:docker-dev:
-  stage: prepare
-  script:
-    - docker build
-        --file packaging/docker/Dockerfile.dev-ubuntu
-        --tag ${DOCKER_IMAGE_DEV}-ubuntu:${DOCKER_TAG} .
-  tags:
-    - shell
-    - linux
+  extends: prepare:fedora:docker-dev
+  variables:
+    DOCKER_FILE: packaging/docker/Dockerfile.dev-ubuntu
+    DOCKER_IMAGE_DEV: villas/node-dev-ubuntu
+
 
 # Stage: build
 ##############################################################################
@@ -64,11 +58,10 @@ build:fedora:x86_64:
   stage: build
   script:
     - mkdir -p build && cd build
-    - cmake ..
+    - cmake .. ${CMAKE_OPTS}
     - make ${MAKE_OPTS}
   artifacts:
     expire_in: 1 week
-    name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
     paths:
       - build/
   image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
@@ -76,34 +69,21 @@ build:fedora:x86_64:
     - docker
 
 build:fedora-minimal:x86_64:
-  stage: build
-  script:
-    - mkdir -p build && cd build
-    - cmake .. -DWITH_HOOKS=OFF -DWITH_IO=OFF -DWITH_WEB=OFF -DWITH_API=OFF -DWITH_CONFIG=OFF -DWITH_SRC=OFF -DWITH_TOOLS=OFF -DWITH_TESTS=OFF -DWITH_PLUGINS=OFF -DWITH_CLIENTS=OFF -DWITH_DOC=OFF
-    - make ${MAKE_OPTS}
-  artifacts:
-    expire_in: 1 week
-    name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
-    paths:
-      - build/
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
-  tags:
-    - docker
+  extends: build:fedora:x86_64
+  variables:
+    CMAKE_OPTS: -DWITH_HOOKS=OFF -DWITH_IO=OFF -DWITH_WEB=OFF -DWITH_API=OFF -DWITH_CONFIG=OFF -DWITH_SRC=OFF -DWITH_TOOLS=OFF -DWITH_TESTS=OFF -DWITH_PLUGINS=OFF -DWITH_CLIENTS=OFF -DWITH_DOC=OFF
+
+build:ubuntu:x86_64:
+  extends: build:fedora:x86_64
+  variables:
+    LD_PRELOAD: /lib/x86_64-linux-gnu/libSegFault.so
+    DOCKER_IMAGE_DEV: villas/node-dev-ubuntu
 
 build:raspbian:armv6l:
-  stage: build
-  script:
-    - mkdir -p build && cd build
-    - cmake ..
-    - make ${MAKE_OPTS}
-  artifacts:
-    expire_in: 1 week
-    name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
-    paths:
-      - build/
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
-  tags:
-    - docker
+  extends: build:fedora:x86_64
+  variables:
+    LD_PRELOAD: /lib/arm-linux-gnueabihf/libSegFault.so
+    DOCKER_IMAGE_DEV: villas/node-dev-raspbian
 
 build:docs:
   stage: build
