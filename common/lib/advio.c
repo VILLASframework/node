@@ -249,7 +249,7 @@ AFILE * afopen(const char *uri, const char *mode)
 #if LIBCURL_VERSION_NUM >= 0x072000
 		curl_easy_setopt(af->curl, CURLOPT_XFERINFOFUNCTION, advio_xferinfo);
 		curl_easy_setopt(af->curl, CURLOPT_XFERINFODATA, af);
-#endif
+#endif /* LIBCURL_VERSION_NUM >= 0x072000 */
 
 	ret = adownload(af, 0);
 	if (ret)

@@ -69,7 +69,7 @@ void init(int priority, int affinity)
 
 	(void) affinity;
 	(void) priority;
-#endif
+#endif /* __linux__ */
 }
 
 #ifdef __linux__
