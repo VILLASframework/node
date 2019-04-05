@@ -242,34 +242,6 @@ int kernel_set_nr_hugepages(int nr)
 	return 0;
 }
 
-#if 0
-int kernel_has_cap(cap_value_t cap)
-{
-	int ret;
-
-	cap_t caps;
-	cap_flag_value_t value;
-
-	caps = cap_get_proc();
-	if (caps == NULL)
-		return -1;
-
-	ret = cap_get_proc(caps);
-	if (ret == -1)
-		return -1;
-
-	ret = cap_get_flag(caps, cap, CAP_EFFECTIVE, &value);
-	if (ret == -1)
-		return -1;
-
-	ret = cap_free(caps);
-	if (ret)
-		return -1;
-
-	return value == CAP_SET ? 0 : -1;
-}
-#endif
-
 int kernel_irq_setaffinity(unsigned irq, uintmax_t aff, uintmax_t *old)
 {
 	char fn[64];
