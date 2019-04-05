@@ -15,10 +15,9 @@ variables:
 stages:
   - prepare
   - build
-  - build2
   - test
+  - packaging
   - deploy
-  - docker
 
 # For some reason, GitLab CI prunes the contents of the submodules so we need to restore them.
 before_script:
@@ -28,7 +27,7 @@ before_script:
 ##############################################################################
 
 # Build docker image which is used to build & test VILLASnode
-docker-dev:
+prepare:fedora:docker-dev:
   stage: prepare
   script:
     - docker build
@@ -38,10 +37,60 @@ docker-dev:
     - shell
     - linux
 
+prepare:raspbian:docker-dev:
+  stage: prepare
+  script:
+    - docker build
+        --file packaging/docker/Dockerfile.dev-raspbian
+        --tag ${DOCKER_IMAGE_DEV}-raspbian:${DOCKER_TAG} .
+  tags:
+    - shell
+    - linux
+
+prepare:ubuntu:docker-dev:
+  stage: prepare
+  script:
+    - docker build
+        --file packaging/docker/Dockerfile.dev-ubuntu
+        --tag ${DOCKER_IMAGE_DEV}-ubuntu:${DOCKER_TAG} .
+  tags:
+    - shell
+    - linux
+
 # Stage: build
 ##############################################################################
 
-build:source:
+build:fedora:x86_64:
+  stage: build
+  script:
+    - mkdir -p build && cd build
+    - cmake ..
+    - make ${MAKE_OPTS}
+  artifacts:
+    expire_in: 1 week
+    name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
+    paths:
+      - build/
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+  tags:
+    - docker
+
+build:fedora-minimal:x86_64:
+  stage: build
+  script:
+    - mkdir -p build && cd build
+    - cmake .. -DWITH_HOOKS=OFF -DWITH_IO=OFF -DWITH_WEB=OFF -DWITH_API=OFF -DWITH_CONFIG=OFF -DWITH_SRC=OFF -DWITH_TOOLS=OFF -DWITH_TESTS=OFF -DWITH_PLUGINS=OFF -DWITH_CLIENTS=OFF -DWITH_DOC=OFF
+    - make ${MAKE_OPTS}
+  artifacts:
+    expire_in: 1 week
+    name: ${CI_PROJECT_NAME}-${CI_BUILD_REF}
+    paths:
+      - build/
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+  tags:
+    - docker
+
+build:raspbian:armv6l:
   stage: build
   script:
     - mkdir -p build && cd build
@@ -73,8 +122,57 @@ build:docs:
     - tags
     - master
 
-build2:packages:
-  stage: build2
+
+# Stage: test
+##############################################################################
+
+test:unit:
+  stage: test
+  dependencies:
+    - build:fedora:x86_64
+  script:
+    - mkdir -p build && cd build
+    - cmake .. && make ${MAKE_OPTS} unit-tests
+    - "tests/unit/unit-tests || true"
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+  tags:
+    - docker
+
+test:integration:
+  stage: test
+  dependencies:
+    - build:fedora:x86_64
+  script:
+    - mkdir -p build && cd build
+    - cmake ..
+    - make ${MAKE_OPTS} run-integration-tests
+  artifacts:
+    name: ${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}
+    when: always
+    paths:
+      - build/tests/integration/
+  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+  tags:
+    - docker
+
+# Stage: packaging
+##############################################################################
+
+packaging:docker:
+  stage: packaging
+  script:
+    - docker build
+        --build-arg BUILDER_IMAGE=${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+        --file packaging/docker/Dockerfile.app
+        --tag ${DOCKER_IMAGE}:${DOCKER_TAG} .
+    - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+    - docker push ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
+  tags:
+    - shell
+    - linux
+
+packaging:rpm:
+  stage: packaging
   dependencies:
     - build:docs
   script:
@@ -94,39 +192,6 @@ build2:packages:
     - tags
     - master
 
-
-# Stage: test
-##############################################################################
-
-test:unit:
-  stage: test
-  dependencies:
-    - build:source
-  script:
-    - mkdir -p build && cd build
-    - cmake .. && make ${MAKE_OPTS} unit-tests
-    - "tests/unit/unit-tests || true"
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
-  tags:
-    - docker
-
-test:integration:
-  stage: test
-  dependencies:
-    - build:source
-  script:
-    - mkdir -p build && cd build
-    - cmake ..
-    - make ${MAKE_OPTS} run-integration-tests
-  artifacts:
-    name: ${CI_PROJECT_NAME}-integration-tests-${CI_BUILD_REF}
-    when: always
-    paths:
-      - build/tests/integration/
-  image: ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
-  tags:
-    - docker
-
 # Stage: deploy
 ##############################################################################
 
@@ -134,8 +199,8 @@ deploy:web:
   stage: deploy
   script:
     - ssh ${DEPLOY_USER}@${DEPLOY_HOST} mkdir -p ${DEPLOY_PATH}/{coverage,doc}/${CI_BUILD_REF_NAME}/
-    - rsync ${RSYNC_OPTS} build/doc/html/                   ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/doc/$CI_BUILD_REF_NAME/
-    - rsync ${RSYNC_OPTS} web/                              ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/
+    - rsync ${RSYNC_OPTS} build/doc/html/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/doc/$CI_BUILD_REF_NAME/
+    - rsync ${RSYNC_OPTS} web/            ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/
   dependencies:
     - build:docs
   only:
@@ -151,24 +216,8 @@ deploy:packages:
     - rsync ${RSYNC_OPTS} build/*.tar.gz ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/dist/
     - ssh ${DEPLOY_USER}@${DEPLOY_HOST} createrepo ${DEPLOY_PATH}/../packages
   dependencies:
-    - build2:packages
+    - packaging:rpm
   tags:
     - villas-deploy
   only:
     - tags
-
-# Stage: docker
-##############################################################################
-
-docker:
-  stage: docker
-  script:
-    - docker build
-        --build-arg BUILDER_IMAGE=${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
-        --file packaging/docker/Dockerfile.app
-        --tag ${DOCKER_IMAGE}:${DOCKER_TAG} .
-    - docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
-    - docker push ${DOCKER_IMAGE_DEV}:${DOCKER_TAG}
-  tags:
-    - shell
-    - linux

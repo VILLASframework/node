@@ -1,0 +1,115 @@
+# Dockerfile for VILLASnode development.
+#
+# This Dockerfile builds an image which contains all library dependencies
+# and tools to build VILLASnode.
+# However, VILLASnode itself it not part of the image.
+#
+# This image can be used for developing VILLASnode
+# by running:
+#   make docker
+#
+# @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+# @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
+# @license GNU General Public License (version 3)
+#
+# VILLASnode
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+###################################################################################
+
+FROM balenalib/rpi-raspbian
+
+ARG GIT_REV=unknown
+ARG GIT_BRANCH=unknown
+ARG VERSION=unknown
+ARG VARIANT=unknown
+
+# Toolchain
+RUN apt-get update && apt-get install -y \
+	gcc g++ \
+	pkg-config cmake make ninja-build \
+	texinfo git curl tar \
+	protobuf-compiler protobuf-c-compiler
+
+# Several tools only needed for developement and testing
+RUN apt-get install -y \
+	doxygen dia graphviz \
+	openssh-client \
+	jq netcat \
+	iproute2 \
+	python-pip \
+	valgrind gdb gdbserver \
+	xmlto asciidoctor \
+	rabbitmq-server mosquitto
+
+# Dependencies
+RUN apt-get install -y \
+	libssl-dev \
+	libprotobuf-dev \
+	libprotobuf-c-dev \
+	uuid-dev \
+	libconfig-dev \
+	libnl-3-dev libnl-route-3-dev \
+	libcurl4-openssl-dev \
+	libjansson-dev \
+	libzmq3-dev \
+	libnanomsg-dev \
+	librabbitmq-dev \
+	libmosquitto-dev \
+	libcomedi-dev \
+	libibverbs-dev \
+	librdmacm-dev \
+	libre-dev
+
+# Build & Install libwebsockets
+RUN cd /tmp && \
+	git clone -b v3.1-stable https://github.com/warmcat/libwebsockets && \
+	mkdir -p libwebsockets/build && cd libwebsockets/build && \
+	cmake .. && make -j$(nproc) install && \
+	rm -rf /tmp/*
+
+# Build & Install libiec61850
+RUN cd /tmp && \
+	git clone -b v1.3.1 https://github.com/mz-automation/libiec61850 && \
+	mkdir -p libiec61850/build && cd libiec61850/build && \
+	cmake .. && make -j$(nproc) install && \
+	rm -rf /tmp/*
+
+# Expose ports for HTTP and WebSocket frontend
+EXPOSE 80
+EXPOSE 443
+
+ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
+
+# Workaround for libnl3's search path for netem distributions
+RUN ln -s /usr/lib64/tc /usr/lib/tc
+
+WORKDIR /villas
+ENTRYPOINT bash
+
+LABEL \
+	org.label-schema.schema-version="1.0" \
+	org.label-schema.name="VILLASnode" \
+	org.label-schema.license="GPL-3.0" \
+	org.label-schema.vcs-ref="$GIT_REV" \
+	org.label-schema.vcs-branch="$GIT_BRANCH" \
+	org.label-schema.version="$VERSION" \
+	org.label-schema.variant="$VARIANT" \
+	org.label-schema.vendor="Institute for Automation of Complex Power Systems, RWTH Aachen University" \
+	org.label-schema.author.name="Steffen Vogel" \
+	org.label-schema.author.email="stvogel@eonerc.rwth-aachen.de" \
+	org.label-schema.description="A image containing all build-time dependencies for VILLASnode based on Ubuntu" \
+	org.label-schema.url="http://fein-aachen.org/projects/villas-framework/" \
+	org.label-schema.vcs-url="https://git.rwth-aachen.de/VILLASframework/VILLASnode" \
+	org.label-schema.usage="https://villas.fein-aachen.org/doc/node-installation.html#node-installation-docker"
