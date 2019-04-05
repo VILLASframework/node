@@ -49,14 +49,14 @@ static int ib_disconnect(struct node *n)
 		ib->conn.available_recv_wrs -= wcs;
 
 		for (int j = 0; j < wcs; j++)
-			sample_decref((struct sample *) (wc[j].wr_id));
+			sample_decref((struct sample *) (intptr_t) (wc[j].wr_id));
 	}
 
 	/* Send Queue */
 	while ((wcs = ibv_poll_cq(ib->ctx.send_cq, ib->send_cq_size, wc)))
 		for (int j = 0; j < wcs; j++)
 			if (wc[j].wr_id > 0)
-				sample_decref((struct sample *) (wc[j].wr_id));
+				sample_decref((struct sample *) (intptr_t) (wc[j].wr_id));
 
 	/* Destroy QP */
 	rdma_destroy_qp(ib->ctx.id);
@@ -253,8 +253,8 @@ int ib_parse(struct node *n, json_t *cfg)
 	debug(LOG_IB | 4, "Set buffer subtraction to %i in node %s", buffer_subtraction, node_name(n));
 
 	/* Translate IP:PORT to a struct addrinfo */
-	char* ip_adr = strtok_r(local, ":", &lasts);
-	char* port = strtok_r(NULL, ":", &lasts);
+	char *ip_adr = strtok_r(local, ":", &lasts);
+	char *port = strtok_r(NULL, ":", &lasts);
 
 	ret = getaddrinfo(ip_adr, port, NULL, &ib->conn.src_addr);
 	if (ret)
@@ -959,7 +959,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 				/* The remaining work requests will be bad. Ripple through list
 				 * and prepare them to be released
 				 */
-				debug(LOG_IB | 4, "Bad WR occured with ID: 0x%lx and S/G address: 0x%px: %i",
+				debug(LOG_IB | 4, "Bad WR occured with ID: 0x%zx and S/G address: 0x%px: %i",
 						bad_wr->wr_id, bad_wr->sg_list, ret);
 
 				while (1) {

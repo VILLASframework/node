@@ -32,6 +32,7 @@
 #include <jansson.h>
 
 #include <villas/config.h>
+#include <villas/compat.h>
 #include <villas/log.hpp>
 #include <villas/copyright.hpp>
 
