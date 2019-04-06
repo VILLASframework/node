@@ -40,9 +40,9 @@ protected:
 public:
 	using Hook::Hook;
 
-	void setRatio(int ratio)
+	void setRatio(int r)
 	{
-		ratio = ratio;
+		ratio = r;
 	}
 
 	virtual void start();
