@@ -37,7 +37,7 @@ int json_dumpfd(const json_t *json, int output, size_t flags);
 json_t *json_loadfd(int input, size_t flags, json_error_t *error);
 #endif
 
-#if defined(LIBCONFIG_FOUND) && (LIBCONFIG_VER_MAJOR <= 1) && (LIBCONFIG_VER_MINOR < 5)
+#if defined(WITH_CONFIG) && (LIBCONFIG_VER_MAJOR <= 1) && (LIBCONFIG_VER_MINOR < 5)
   #include <libconfig.h>
 
   #define config_setting_lookup config_lookup_from

@@ -77,7 +77,6 @@ target_include_directories(villas-common PUBLIC
 
 target_link_libraries(villas-common PUBLIC
 	PkgConfig::JANSSON
-	PkgConfig::LIBCONFIG
 	${OPENSSL_LIBRARIES}
 	${CURL_LIBRARIES}
 	${CMAKE_DL_LIBS}
@@ -85,6 +84,12 @@ target_link_libraries(villas-common PUBLIC
 	fmt
 	stdc++
 )
+
+if(WITH_CONFIG)
+	target_link_libraries(villas-common PUBLIC
+		PkgConfig::LIBCONFIG
+	)
+endif()
 
 target_compile_definitions(villas-common PUBLIC
 	-D__STDC_FORMAT_MACROS -D_GNU_SOURCE
