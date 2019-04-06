@@ -116,6 +116,7 @@ static void usage()
 int main(int argc, char *argv[])
 {
 	int ret;
+	const char *uri;
 
 	Logger logger = logging.get("node");
 
@@ -129,7 +130,7 @@ int main(int argc, char *argv[])
 
 		opal_register_region(argc, argv);
 
-		const char *uri = "opal-shmem.conf";
+		uri = "opal-shmem.conf";
 #else
 
 		/* Parse optional command line arguments */
@@ -153,7 +154,14 @@ int main(int argc, char *argv[])
 			continue;
 		}
 
-		char *uri = argc == optind + 1 ? argv[optind] : nullptr;
+		if (argc == optind + 1)
+			uri = argv[optind];
+		else if (argc == optind)
+			uri = nullptr;
+		else {
+			usage();
+			exit(EXIT_FAILURE);
+		}
 #endif /* ENABLE_OPAL_ASYNC */
 
 		logger->info("This is VILLASnode {} (built on {}, {})",
