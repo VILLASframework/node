@@ -104,10 +104,12 @@ int api_ws_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, v
 	lws_context *ctx = lws_get_context(wsi);
 	void *user_ctx = lws_context_user(ctx);
 
-	Web *w = static_cast<Web*>(user_ctx);
+	Web *w = static_cast<Web *>(user_ctx);
+	WebSocket *s = static_cast<WebSocket *>(user);
 	Api *a = w->getApi();
 
-	WebSocket *s = static_cast<WebSocket *>(user);
+	if (a == nullptr)
+		return -1;
 
 	switch (reason) {
 		case LWS_CALLBACK_ESTABLISHED:

@@ -652,6 +652,7 @@ static void register_plugin() {
 	p.description	= "real-time transport protocol (libre)";
 #endif
 	p.type		= PLUGIN_TYPE_NODE;
+	p.node.instances.state = STATE_DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct rtp);
 	p.node.type.start	= rtp_type_start;
@@ -678,6 +679,3 @@ static void deregister_plugin() {
 }
 
 } /* extern C */
-
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)

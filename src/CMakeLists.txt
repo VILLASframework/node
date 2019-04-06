@@ -47,27 +47,25 @@ if(WITH_WEB)
     )
 endif()
 
-if(WITH_IO)
-    add_executable(villas-test-cmp villas-test-cmp.cpp)
-    target_link_libraries(villas-test-cmp PUBLIC villas)
+add_executable(villas-test-cmp villas-test-cmp.cpp)
+target_link_libraries(villas-test-cmp PUBLIC villas)
 
-    add_executable(villas-convert villas-convert.cpp)
-    target_link_libraries(villas-convert PUBLIC villas)
+add_executable(villas-convert villas-convert.cpp)
+target_link_libraries(villas-convert PUBLIC villas)
 
-    add_executable(villas-pipe villas-pipe.cpp)
-    target_link_libraries(villas-pipe PUBLIC villas Threads::Threads)
+add_executable(villas-pipe villas-pipe.cpp)
+target_link_libraries(villas-pipe PUBLIC villas Threads::Threads)
 
-    add_executable(villas-signal villas-signal.cpp)
-    target_link_libraries(villas-signal PUBLIC villas)
+add_executable(villas-signal villas-signal.cpp)
+target_link_libraries(villas-signal PUBLIC villas)
 
-    install(
-        TARGETS villas-convert villas-pipe villas-signal villas-test-cmp
-        COMPONENT bin
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
-endif()
+install(
+    TARGETS villas-convert villas-pipe villas-signal villas-test-cmp
+    COMPONENT bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
 
-if(WITH_IO AND WITH_HOOKS)
+if(WITH_HOOKS)
     add_executable(villas-hook villas-hook.cpp)
     target_link_libraries(villas-hook PUBLIC villas)
 

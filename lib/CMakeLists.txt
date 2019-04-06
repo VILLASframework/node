@@ -62,28 +62,25 @@ set(LIB_SRC
     signal.c
     stats.c
     super_node.cpp
+    socket_addr.c
+    io.c
+    format_type.c
+
 )
 
-if(IBVERBS_FOUND AND RDMACM_FOUND)
+if(WITH_NODE_INFINIBAND)
     list(APPEND LIB_SRC memory/ib.c)
 endif()
 
 add_subdirectory(nodes)
 list(APPEND WHOLE_ARCHIVES nodes)
 
-if(LIBCONFIG_FOUND)
+add_subdirectory(formats)
+list(APPEND WHOLE_ARCHIVES formats)
+
+if(WITH_CONFIG)
     list(APPEND INCLUDE_DIRS ${LIBCONFIG_INCLUDE_DIRS})
     list(APPEND LIBRARIES PkgConfig::LIBCONFIG)
-endif()
-
-if(WITH_IO)
-    list(APPEND LIB_SRC
-        io.c
-        format_type.c
-    )
-    
-    add_subdirectory(formats)
-    list(APPEND WHOLE_ARCHIVES formats)
 endif()
 
 if(WITH_HOOKS)
@@ -105,7 +102,7 @@ if(WITH_WEB)
     list(APPEND LIBRARIES PkgConfig::LIBWEBSOCKETS)
 endif()
 
-if(WITH_API AND WITH_WEB)
+if(WITH_API)
     list(APPEND LIB_SRC
         api.cpp
     )

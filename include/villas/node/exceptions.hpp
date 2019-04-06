@@ -46,7 +46,7 @@ public:
 	{ }
 };
 
-#ifdef LIBCONFIG_FOUND
+#ifdef WITH_CONFIG
 class LibconfigParseError : public ParseError {
 
 protected:
@@ -62,7 +62,7 @@ public:
 		config(c)
 	{ }
 };
-#endif /* LIBCONFIG_FOUND */
+#endif /* WITH_CONFIG */
 
 class JanssonParseError : public ParseError {
 

@@ -62,7 +62,7 @@ static struct param params[] = {
 	{ "villas.binary",	10, 0 },
 	{ "csv",		10, 0 },
 	{ "json",		10, 0 },
-#ifdef LIBPROTOBUF_FOUND
+#ifdef PROTOBUF_FOUND
 	{ "protobuf",		10, 0 }
 #endif
 };

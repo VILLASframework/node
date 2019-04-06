@@ -44,8 +44,6 @@ protected:
 	timespec last;
 
 public:
-	using Hook::Hook;
-
 	void setRate(double rate)
 	{
 		deadtime = 1.0 / rate;

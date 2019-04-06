@@ -73,7 +73,7 @@ struct msg
 	unsigned version: 4;	/**< Specifies the format of the remaining message (see MGS_VERSION) */
 #else
   #error Invalid byte-order
-#endif
+#endif /* BYTEORDER */
 
 	uint8_t id;		/**< An id which identifies the source of this sample */
 	uint16_t length;	/**< The number of values in msg::data[]. */

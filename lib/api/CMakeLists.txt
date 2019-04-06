@@ -26,9 +26,6 @@ set(API_SRC
     server.cpp
 
     sessions/socket.cpp
-    sessions/wsi.cpp
-    sessions/http.cpp
-    sessions/websocket.cpp
 
     actions/capabiltities.cpp
     actions/shutdown.cpp
@@ -39,6 +36,14 @@ set(API_SRC
     actions/restart.cpp
     actions/node.cpp
 )
+
+if(WITH_WEB)
+    list(APPEND API_SRC
+        sessions/wsi.cpp
+        sessions/http.cpp
+        sessions/websocket.cpp
+    )
+endif()
 
 add_library(api STATIC ${API_SRC})
 target_include_directories(api PUBLIC ${INCLUDE_DIRS})

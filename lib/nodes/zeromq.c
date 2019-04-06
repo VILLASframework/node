@@ -542,6 +542,23 @@ int zeromq_poll_fds(struct node *n, int fds[])
 	return 1;
 }
 
+int zeromq_netem_fds(struct node *n, int fds[])
+{
+	int ret;
+	struct zeromq *z = (struct zeromq *) n->_vd;
+
+	int fd;
+	size_t len = sizeof(fd);
+
+	ret = zmq_getsockopt(z->out.socket, ZMQ_FD, &fd, &len);
+	if (ret)
+		return ret;
+
+	fds[0] = fd;
+
+	return 1;
+}
+
 static struct plugin p = {
 	.name		= "zeromq",
 	.description	= "ZeroMQ Distributed Messaging (libzmq)",
@@ -559,7 +576,8 @@ static struct plugin p = {
 		.destroy	= zeromq_destroy,
 		.read		= zeromq_read,
 		.write		= zeromq_write,
-		.poll_fds	= zeromq_poll_fds
+		.poll_fds	= zeromq_poll_fds,
+		.netem_fds	= zeromq_netem_fds,
 	}
 };
 

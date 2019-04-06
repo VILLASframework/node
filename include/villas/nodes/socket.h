@@ -29,19 +29,10 @@
 
 #pragma once
 
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <netinet/in.h>
-
 #include <villas/node/config.h>
 #include <villas/node.h>
+#include <villas/socket_addr.h>
 #include <villas/io.h>
-
-#if defined(LIBNL3_ROUTE_FOUND) && defined(__linux__)
-  #define WITH_SOCKET_LAYER_ETH
-
-  #include <linux/if_packet.h>
-#endif /* LIBNL3_ROUTE_FOUND */
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,24 +43,6 @@ struct format_type;
 
 /** The maximum length of a packet which contains stuct msg. */
 #define SOCKET_INITIAL_BUFFER_LEN (64*1024)
-
-enum socket_layer {
-	SOCKET_LAYER_ETH,
-	SOCKET_LAYER_IP,
-	SOCKET_LAYER_UDP,
-	SOCKET_LAYER_UNIX
-};
-
-union sockaddr_union {
-	struct sockaddr sa;
-	struct sockaddr_storage ss;
-	struct sockaddr_in sin;
-	struct sockaddr_in6 sin6;
-	struct sockaddr_un sun;
-#ifdef WITH_SOCKET_LAYER_ETH
-	struct sockaddr_ll sll;
-#endif
-};
 
 struct socket {
 	int sd;				/**< The socket descriptor */
@@ -119,34 +92,6 @@ int socket_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::print */
 char * socket_print(struct node *n);
-
-/** Generate printable socket address depending on the address family
- *
- * A IPv4 address is formatted as dotted decimals followed by the port/protocol number
- * A link layer address is formatted in hexadecimals digits seperated by colons and the inferface name
- *
- * @param sa	A pointer to the socket address.
- * @return	The buffer containing the textual representation of the address. The caller is responsible to free() this buffer!
- */
-char * socket_print_addr(struct sockaddr *saddr);
-
-/** Parse a socket address depending on the address family
- *
- * A IPv4 address has the follwing format: [hostname/ip]:[port/protocol]
- * A link layer address has the following format: [mac]%[interface]:[ethertype]
- *
- * @todo Add support for autodetection of address type
- *
- * @param str	A string specifiying the socket address. See description for allowed formats.
- * @param sa	A pointer to the resolved address
- * @param layer Specifies the address type in which the addr is given
- * @param flags	Flags for getaddrinfo(2)
- * @retval 0	Success. Everything went well.
- * @retval <0	Error. Something went wrong.
- */
-int socket_parse_address(const char *str, struct sockaddr *sa, enum socket_layer layer, int flags);
-
-int socket_compare_addr(struct sockaddr *x, struct sockaddr *y);
 
 /** @} */
 

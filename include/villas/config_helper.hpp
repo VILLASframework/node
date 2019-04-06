@@ -24,19 +24,18 @@
 
 #include <jansson.h>
 
-#ifdef LIBCONFIG_FOUND
-#include <libconfig.h>
-#endif /* LIBCONFIG_FOUND */
-
+#include <villas/node/config.h>
 #include <villas/sample.h>
 
-#ifdef LIBCONFIG_FOUND
+#ifdef WITH_CONFIG
+  #include <libconfig.h>
+
 /** Convert a libconfig object to a jansson object */
 json_t *config_to_json(config_setting_t *cfg);
 
 /** Convert a jansson object into a libconfig object. */
 int json_to_config(json_t *json, config_setting_t *parent);
-#endif /* LIBCONFIG_FOUND */
+#endif /* WITH_CONFIG */
 
 int json_object_extend_str(json_t *orig, const char *str);
 

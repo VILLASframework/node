@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <villas/config.h>
+#include <villas/node/config.h>
 
 #ifdef __cplusplus
 extern "C" {

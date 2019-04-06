@@ -54,6 +54,7 @@ enum stats_metric {
 	STATS_METRIC_GAP_SAMPLE,	/**< Histogram for inter sample timestamps (as sent by remote). */
 	STATS_METRIC_GAP_RECEIVED,	/**< Histogram for inter sample arrival time (as seen by this instance). */
 	STATS_METRIC_OWD,		/**< Histogram for one-way-delay (OWD) of received samples. */
+	STATS_METRIC_AGE,		/**< Processing time of packets within VILLASnode. */
 
 	/* RTP metrics */
 	STATS_METRIC_RTP_LOSS_FRACTION,	/**< Fraction lost since last RTP SR/RR. */

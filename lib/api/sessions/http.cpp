@@ -147,9 +147,11 @@ int api_http_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, void
 	void *user_ctx = lws_context_user(ctx);
 
 	Web *w = static_cast<Web *>(user_ctx);
+	Http *s = static_cast<Http *>(user);
 	Api *a = w->getApi();
 
-	Http *s = static_cast<Http *>(user);
+	if (a == nullptr)
+		return -1;
 
 	switch (reason) {
 		case LWS_CALLBACK_HTTP_BIND_PROTOCOL:

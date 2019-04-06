@@ -51,15 +51,13 @@
 #cmakedefine WITH_WEB
 #cmakedefine WITH_API
 #cmakedefine WITH_HOOKS
-#cmakedefine WITH_IO
+#cmakedefine WITH_CONFIG
 
 /* OS Headers */
 #cmakedefine HAS_EVENTFD
 #cmakedefine HAS_SEMAPHORE
 
 /* Available Libraries */
-#cmakedefine LIBWEBSOCKETS_FOUND
-#cmakedefine HDF5_FOUND
 #cmakedefine PROTOBUF_FOUND
 #cmakedefine LIBNL3_ROUTE_FOUND
 #cmakedefine IBVERBS_FOUND

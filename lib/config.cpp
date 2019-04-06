@@ -113,15 +113,16 @@ void Config::decode()
 
 	root = json_loadf(local_file, 0, &err);
 	if (root == nullptr) {
-#ifdef LIBCONFIG_FOUND
+#ifdef WITH_CONFIG
 		/* We try again to parse the config in the legacy format */
 		libconfigDecode();
 #else
 		throw JanssonParseError(err);
-#endif /* LIBCONFIG_FOUND */
+#endif /* WITH_CONFIG */
 	}
 }
 
+#ifdef WITH_CONFIG
 void Config::libconfigDecode()
 {
 	int ret;
@@ -158,6 +159,7 @@ void Config::libconfigDecode()
 
 	config_destroy(&cfg);
 }
+#endif /* WITH_CONFIG */
 
 void Config::prettyPrintError(json_error_t err)
 {

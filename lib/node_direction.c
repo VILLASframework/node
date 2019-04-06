@@ -21,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <villas/config.h>
 #include <villas/utils.h>
 #include <villas/hook.h>
 #include <villas/hook_list.h>
@@ -226,7 +227,7 @@ struct vlist * node_direction_get_signals(struct node_direction *nd)
 #ifdef WITH_HOOKS
 	if (vlist_length(&nd->hooks) > 0)
 		return hook_list_get_signals(&nd->hooks);
-#endif
+#endif /* WITH_HOOKS */
 
 	return &nd->signals;
 }

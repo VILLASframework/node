@@ -38,13 +38,8 @@ set(HOOK_SRC
     skip_first.cpp
     stats.cpp
     ts.cpp
+    print.cpp
 )
-
-if(WITH_IO)
-    list(APPEND HOOK_SRC
-        print.cpp
-    )
-endif()
 
 add_library(hooks STATIC ${HOOK_SRC})
 target_include_directories(hooks PUBLIC ${INCLUDE_DIRS})

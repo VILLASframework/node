@@ -62,7 +62,7 @@ int path_source_destroy(struct path_source *ps)
 
 int path_source_read(struct path_source *ps, struct path *p, int i)
 {
-	int recv, tomux, allocated, cnt, toenqueue, enqueued = 0;
+	int ret, recv, tomux, allocated, cnt, toenqueue, enqueued = 0;
 	unsigned release;
 
 	cnt = ps->node->in.vectorize;
@@ -123,7 +123,9 @@ int path_source_read(struct path_source *ps, struct path *p, int i)
 		muxed_smps[i]->ts = tomux_smps[i]->ts;
 		muxed_smps[i]->flags |= tomux_smps[i]->flags & (SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_TS_RECEIVED);
 
-		mapping_list_remap(&ps->mappings, muxed_smps[i], tomux_smps[i]);
+		ret = mapping_list_remap(&ps->mappings, muxed_smps[i], tomux_smps[i]);
+		if (ret)
+			return ret;
 	}
 
 	sample_copy(p->last_sample, muxed_smps[tomux-1]);
