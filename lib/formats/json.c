@@ -133,7 +133,8 @@ static int json_pack_sample(struct io *io, json_t **j, struct sample *smp)
 					);
 					break;
 
-				case SIGNAL_TYPE_INVALID: { }
+				case SIGNAL_TYPE_INVALID:
+					return -1;
 			}
 
 			json_array_append(json_data, json_value);
