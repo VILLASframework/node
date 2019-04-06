@@ -2,6 +2,7 @@
  *
  * @file
  * @author Daniel Krebs <github@daniel-krebs.net>
+ * @author Steffen Vogel <post@steffenvogel.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
