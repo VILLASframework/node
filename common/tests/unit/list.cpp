@@ -172,7 +172,7 @@ Test(list, basics)
 	cr_assert_gt(counts, 0);
 
 	vlist_remove_all(&l, (void *) 55);
-	cr_assert_eq(vlist_length(&l), before_len - counts);
+	cr_assert_eq(vlist_length(&l), (size_t) (before_len - counts));
 
 	ret = vlist_contains(&l, (void *) 55);
 	cr_assert(!ret);
