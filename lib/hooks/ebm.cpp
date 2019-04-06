@@ -24,8 +24,12 @@
  * @{
  */
 
+#include <vector>
+
 #include <villas/hook.hpp>
+#include <villas/log.h>
 #include <villas/sample.h>
+#include <villas/timing.h>
 
 namespace villas {
 namespace node {
@@ -33,19 +37,86 @@ namespace node {
 class EBMHook : public Hook {
 
 protected:
-	char *signal_name;
-	unsigned signal_index;
+	std::vector<std::pair<int, int>> phases;
 
-	double total_energy;
+	double energy;
+
+	sample *last;
 
 public:
 	using Hook::Hook;
 
-	virtual int process(sample *smp)
+	virtual void parse(json_t *cfg)
+	{
+		int ret;
+
+		size_t i;
+		json_error_t err;
+		json_t *json_phases, *json_phase;
+
+		ret = json_unpack_ex(cfg, &err, 0, "{ s: o }",
+			"phases", &json_phases
+		);
+		if (ret)
+			throw ConfigError(cfg, err, "node-config-hook-ebm");
+
+		if (!json_is_array(json_phases))
+			throw ConfigError(json_phases, "node-config-hook-ebm-phases");
+
+		json_array_foreach(json_phases, i, json_phase) {
+			int voltage, current;
+
+			ret = json_unpack_ex(json_phase, &err, 0, "[ i, i ]",
+				&voltage, &current
+			);
+			if (ret)
+				throw ConfigError(cfg, err, "node-config-hook-ebm-phases");
+
+			phases.emplace_back(voltage, current);
+		}
+	}
+
+	virtual void start()
+	{
+		assert(state == STATE_PREPARED);
+
+		energy = 0;
+		last = nullptr;
+
+		state = STATE_STARTED;
+	}
+
+	virtual void periodic()
 	{
 		assert(state == STATE_STARTED);
 
-		return HOOK_ERROR;
+		info("Energy: %f", energy);
+	}
+
+	virtual int process(sample *smp)
+	{
+		double P, P_last, dt;
+
+		assert(state == STATE_STARTED);
+
+		if (last) {
+			for (auto phase : phases) {
+				/* Trapazoidal rule */
+				dt = time_delta(&last->ts.origin, &smp->ts.origin);
+
+				P      =  smp->data[phase.first].f *  smp->data[phase.second].f;
+				P_last = last->data[phase.first].f * last->data[phase.second].f;
+
+				energy += dt * (P_last + P) / 2.0;
+			}
+
+			sample_decref(last);
+		}
+
+		sample_incref(smp);
+		last = smp;
+
+		return HOOK_OK;
 	}
 };
 
