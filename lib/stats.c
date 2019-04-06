@@ -140,13 +140,18 @@ json_t * stats_json_periodic(struct stats *s, struct node *n)
 {
 	assert(s->state == STATE_INITIALIZED);
 
-	return json_pack("{ s: s, s: i, s: f, s: f, s: i, s: i }",
+	return json_pack("{ s: s, s: i, s: i, s: i, s: i, s: f, s: f, s: f, s: f, s: f, s: f }",
 		"node", node_name(n),
-		"processed", hist_total(&s->histograms[STATS_METRIC_OWD]),
-		"owd", hist_last(&s->histograms[STATS_METRIC_OWD]),
-		"rate", 1.0 / hist_last(&s->histograms[STATS_METRIC_GAP_SAMPLE]),
+		"recv", hist_total(&s->histograms[STATS_METRIC_OWD]),
+		"sent", hist_total(&s->histograms[STATS_METRIC_AGE]),
 		"dropped", hist_total(&s->histograms[STATS_METRIC_SMPS_REORDERED]),
-		"skipped", hist_total(&s->histograms[STATS_METRIC_SMPS_SKIPPED])
+		"skipped", hist_total(&s->histograms[STATS_METRIC_SMPS_SKIPPED]),
+		"owd_last", 1.0 / hist_last(&s->histograms[STATS_METRIC_OWD]),
+		"owd_mean", 1.0 / hist_mean(&s->histograms[STATS_METRIC_OWD]),
+		"rate_last", 1.0 / hist_last(&s->histograms[STATS_METRIC_GAP_SAMPLE]),
+		"rate_mean", 1.0 / hist_mean(&s->histograms[STATS_METRIC_GAP_SAMPLE]),
+		"age_mean", hist_mean(&s->histograms[STATS_METRIC_AGE]),
+		"age_max", hist_highest(&s->histograms[STATS_METRIC_AGE])
 	);
 }
 
@@ -162,12 +167,14 @@ static struct table_column stats_cols[] = {
 	{ 10, "Node",		"%s",	NULL,		TABLE_ALIGN_LEFT },
 	{ 10, "Recv",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
 	{ 10, "Sent",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
+	{ 10, "Drop",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
+	{ 10, "Skip",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
 	{ 10, "OWD last",	"%f",	"secs",		TABLE_ALIGN_RIGHT },
 	{ 10, "OWD mean",	"%f",	"secs",		TABLE_ALIGN_RIGHT },
 	{ 10, "Rate last",	"%f",	"pkt/sec",	TABLE_ALIGN_RIGHT },
 	{ 10, "Rate mean",	"%f",	"pkt/sec",	TABLE_ALIGN_RIGHT },
-	{ 10, "Drop",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
-	{ 10, "Skip",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT }
+	{ 10, "Age mean",	"%f",	"secs",		TABLE_ALIGN_RIGHT },
+	{ 10, "Age Max",	"%f",	"sec",		TABLE_ALIGN_RIGHT },
 };
 
 static struct table stats_table = {
@@ -196,12 +203,14 @@ void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int v
 				node_name_short(n),
 				hist_total(&s->histograms[STATS_METRIC_OWD]),
 				hist_total(&s->histograms[STATS_METRIC_AGE]),
+				hist_total(&s->histograms[STATS_METRIC_SMPS_REORDERED]),
+				hist_total(&s->histograms[STATS_METRIC_SMPS_SKIPPED]),
 				hist_last(&s->histograms[STATS_METRIC_OWD]),
 				hist_mean(&s->histograms[STATS_METRIC_OWD]),
 				1.0 / hist_last(&s->histograms[STATS_METRIC_GAP_RECEIVED]),
 				1.0 / hist_mean(&s->histograms[STATS_METRIC_GAP_RECEIVED]),
-				hist_total(&s->histograms[STATS_METRIC_SMPS_REORDERED]),
-				hist_total(&s->histograms[STATS_METRIC_SMPS_SKIPPED])
+				hist_mean(&s->histograms[STATS_METRIC_AGE]),
+				hist_highest(&s->histograms[STATS_METRIC_AGE])
 			);
 			break;
 
