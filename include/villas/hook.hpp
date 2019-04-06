@@ -116,8 +116,6 @@ public:
 	/** Called whenever a sample is processed. */
 	virtual int process(sample *smp)
 	{
-		assert(state == STATE_STARTED);
-
 		return HOOK_OK;
 	};
 
