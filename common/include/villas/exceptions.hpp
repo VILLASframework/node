@@ -34,9 +34,9 @@
 
 #include <villas/config.h>
 
-#ifdef LIBCONFIG_FOUND
-#include <libconfig.h>
-#endif /* LIBCONFIG_FOUND */
+#ifdef WITH_CONFIG
+  #include <libconfig.h>
+#endif /* WITH_CONFIG */
 
 namespace villas {
 
@@ -99,14 +99,29 @@ protected:
 
 public:
 	template<typename... Args>
-	ConfigError(json_t *s, const std::string &i, const std::string &what = "Failed to parse configuration", Args&&... args) :
+	ConfigError(json_t *s, const std::string &i, const std::string &what = "Failed to parse configuration") :
+		std::runtime_error(what),
+		id(i),
+		setting(s)
+	{ }
+
+	template<typename... Args>
+	ConfigError(json_t *s, const std::string &i, const std::string &what, Args&&... args) :
 		std::runtime_error(fmt::format(what, std::forward<Args>(args)...)),
 		id(i),
 		setting(s)
 	{ }
 
 	template<typename... Args>
-	ConfigError(json_t *s, const json_error_t &e, const std::string &i, const std::string &what = "Failed to parse configuration", Args&&... args) :
+	ConfigError(json_t *s, const json_error_t &e, const std::string &i, const std::string &what = "Failed to parse configuration") :
+		std::runtime_error(what),
+		id(i),
+		setting(s),
+		error(e)
+	{ }
+
+	template<typename... Args>
+	ConfigError(json_t *s, const json_error_t &e, const std::string &i, const std::string &what, Args&&... args) :
 		std::runtime_error(fmt::format(what, std::forward<Args>(args)...)),
 		id(i),
 		setting(s),
