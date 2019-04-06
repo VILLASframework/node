@@ -391,6 +391,7 @@ int rtp_start(struct node *n)
 
 	/* Initialize throttle hook */
 	if (r->rtcp.throttle_mode != RTCP_THROTTLE_DISABLED) {
+#ifdef WITH_HOOKS
 		switch (r->rtcp.throttle_mode) {
 			case RTCP_THROTTLE_HOOK_DECIMATE:
 				r->rtcp.throttle_hook.decimate = new DecimateHook(nullptr, n, 0, 0);
@@ -405,6 +406,10 @@ int rtp_start(struct node *n)
 		}
 
 		vlist_push(&n->out.hooks, (void *) r->rtcp.throttle_hook.limit_rate);
+#else
+		r->logger->error("Throttle hooks not supported");
+		return -1;
+#endif
 	}
 
 	ret = rtp_set_rate(n, r->aimd.last_rate);
