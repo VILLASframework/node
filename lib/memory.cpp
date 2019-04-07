@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
+#include <unordered_map>
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -32,23 +34,9 @@
 #include <villas/log.h>
 #include <villas/memory.h>
 #include <villas/utils.h>
-#include <villas/hash_table.h>
 #include <villas/kernel/kernel.h>
 
-static struct hash_table allocations = { .state = STATE_DESTROYED };
-
-__attribute__((constructor))
-static void init_allocations()
-{
-	hash_table_init(&allocations, 100);
-}
-
-__attribute__((destructor))
-static void destroy_allocations()
-{
-	/** @todo: Release remaining allocations? */
-	hash_table_destroy(&allocations, nullptr, false);
-}
+static std::unordered_map<void *, struct memory_allocation *> allocations;
 
 int memory_init(int hugepages)
 {
@@ -124,19 +112,13 @@ void * memory_alloc(struct memory_type *m, size_t len)
 
 void * memory_alloc_aligned(struct memory_type *m, size_t len, size_t alignment)
 {
-	int ret;
-
 	struct memory_allocation *ma = m->alloc(m, len, alignment);
 	if (ma == nullptr) {
 		warning("Memory allocation of type %s failed. reason=%s", m->name, strerror(errno) );
 		return nullptr;
 	}
 
-	ret = hash_table_insert(&allocations, ma->address, ma);
-	if (ret) {
-		warning("Inserting into hash table failed!");
-		return nullptr;
-	}
+	allocations[ma->address] = ma;
 
 	debug(LOG_MEM | 5, "Allocated %#zx bytes of %#zx-byte-aligned %s memory: %p", ma->length, ma->alignment, ma->type->name, ma->address);
 
@@ -148,7 +130,7 @@ int memory_free(void *ptr)
 	int ret;
 
 	/* Find corresponding memory allocation entry */
-	struct memory_allocation *ma = (struct memory_allocation *) hash_table_lookup(&allocations, ptr);
+	struct memory_allocation *ma = allocations[ptr];
 	if (!ma)
 		return -1;
 
@@ -159,10 +141,11 @@ int memory_free(void *ptr)
 		return ret;
 
 	/* Remove allocation entry */
-	ret = hash_table_delete(&allocations, ptr);
-	if (ret)
-		return ret;
+	auto iter = allocations.find(ptr);
+  	if (iter == allocations.end())
+		return -1;
 
+    allocations.erase(iter);
 	free(ma);
 
 	return 0;
@@ -170,8 +153,7 @@ int memory_free(void *ptr)
 
 struct memory_allocation * memory_get_allocation(void *ptr)
 {
-	struct memory_allocation *ma = (struct memory_allocation *) hash_table_lookup(&allocations, ptr);
-	return ma;
+	return allocations[ptr];
 }
 
 struct memory_type * memory_type_lookup(enum memory_type_flags flags)
