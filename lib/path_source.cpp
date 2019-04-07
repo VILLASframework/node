@@ -73,7 +73,7 @@ int path_source_read(struct path_source *ps, struct path *p, int i)
 	/* Fill smps[] free sample blocks from the pool */
 	allocated = sample_alloc_many(&ps->pool, read_smps, cnt);
 	if (allocated != cnt)
-		warning("Pool underrun for path source %s", node_name(ps->node));
+		p->logger->warn("Pool underrun for path source {}", node_name(ps->node));
 
 	/* Read ready samples and store them to blocks pointed by smps[] */
 	release = allocated;
@@ -90,11 +90,13 @@ int path_source_read(struct path_source *ps, struct path *p, int i)
 			enqueued = -1;
 			goto out2;
 		}
-		else
-			error("Failed to read samples from node %s", node_name(ps->node));
+		else {
+			p->logger->error("Failed to read samples from node {}", node_name(ps->node));
+			goto out2;
+		}
 	}
 	else if (recv < allocated)
-		warning("Partial read for path %s: read=%u, expected=%u", path_name(p), recv, allocated);
+		p->logger->warn("Partial read for path {}: read={}, expected={}", path_name(p), recv, allocated);
 
 	p->received.set(i);
 
@@ -129,14 +131,14 @@ int path_source_read(struct path_source *ps, struct path *p, int i)
 
 	sample_copy(p->last_sample, muxed_smps[tomux-1]);
 
-	debug(15, "Path %s received = %s", path_name(p), p->received.to_string().c_str());
+	p->logger->debug("Path {} received = {}", path_name(p), p->received.to_ullong());
 
 #ifdef WITH_HOOKS
 	toenqueue = hook_list_process(&p->hooks, muxed_smps, tomux);
 	if (toenqueue != tomux) {
 		int skipped = tomux - toenqueue;
 
-		debug(LOG_NODES | 10, "Hooks skipped %u out of %u samples for path %s", skipped, tomux, path_name(p));
+		p->logger->debug("Hooks skipped {} out of {} samples for path {}", skipped, tomux, path_name(p));
 	}
 #else
 	toenqueue = tomux;

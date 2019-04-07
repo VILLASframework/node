@@ -57,19 +57,19 @@ void path_destination_enqueue(struct path *p, struct sample *smps[], unsigned cn
 
 	cloned = sample_clone_many(clones, smps, cnt);
 	if (cloned < cnt)
-		warning("Pool underrun in path %s", path_name(p));
+		p->logger->warn("Pool underrun in path {}", path_name(p));
 
 	for (size_t i = 0; i < vlist_length(&p->destinations); i++) {
 		struct path_destination *pd = (struct path_destination *) vlist_at(&p->destinations, i);
 
 		enqueued = queue_push_many(&pd->queue, (void **) clones, cloned);
 		if (enqueued != cnt)
-			warning("Queue overrun for path %s", path_name(p));
+			p->logger->warn("Queue overrun for path {}", path_name(p));
 
 		/* Increase reference counter of these samples as they are now also owned by the queue. */
 		sample_incref_many(clones, cloned);
 
-		debug(LOG_PATH | 15, "Enqueued %u samples to destination %s of path %s", enqueued, node_name(pd->node), path_name(p));
+		p->logger->debug("Enqueued {} samples to destination {} of path {}", enqueued, node_name(pd->node), path_name(p));
 	}
 
 	sample_decref_many(clones, cloned);
@@ -91,20 +91,22 @@ void path_destination_write(struct path_destination *pd, struct path *p)
 		if (allocated == 0)
 			break;
 		else if (allocated < cnt)
-			debug(LOG_PATH | 5, "Queue underrun for path %s: allocated=%u expected=%u", path_name(p), allocated, cnt);
+			p->logger->debug("Queue underrun for path {}: allocated={} expected={}", path_name(p), allocated, cnt);
 
-		debug(LOG_PATH | 15, "Dequeued %u samples from queue of node %s which is part of path %s", allocated, node_name(pd->node), path_name(p));
+		p->logger->debug("Dequeued {} samples from queue of node {} which is part of path {}", allocated, node_name(pd->node), path_name(p));
 
 		release = allocated;
 
 		sent = node_write(pd->node, smps, allocated, &release);
-		if (sent < 0)
-			error("Failed to sent %u samples to node %s: reason=%d", cnt, node_name(pd->node), sent);
+		if (sent < 0) {
+			p->logger->error("Failed to sent {} samples to node {}: reason={}", cnt, node_name(pd->node), sent);
+			return;
+		}
 		else if (sent < allocated)
-			warning("Partial write to node %s: written=%d, expected=%d", node_name(pd->node), sent, allocated);
+			p->logger->warn("Partial write to node {}: written={}, expected={}", node_name(pd->node), sent, allocated);
 
 		released = sample_decref_many(smps, release);
 
-		debug(LOG_PATH | 15, "Released %d samples back to memory pool", released);
+		p->logger->debug("Released {} samples back to memory pool", released);
 	}
 }

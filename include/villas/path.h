@@ -42,6 +42,8 @@
 #ifdef __cplusplus
   #include <bitset>
 
+  #include <villas/log.hpp>
+
 extern "C" {
 #endif
 
@@ -91,6 +93,8 @@ struct path {
 	json_t *cfg;			/**< A JSON object containing the configuration of the path. */
 
 #ifdef __cplusplus
+	villas::Logger logger;
+
 	std::bitset<128> mask;		/**< A mask of path_sources which are enabled for poll(). */
 	std::bitset<128> received;		/**< A mask of path_sources for which we already received samples. */
 #endif
