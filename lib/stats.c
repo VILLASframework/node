@@ -136,25 +136,6 @@ json_t * stats_json(struct stats *s)
 	return obj;
 }
 
-json_t * stats_json_periodic(struct stats *s, struct node *n)
-{
-	assert(s->state == STATE_INITIALIZED);
-
-	return json_pack("{ s: s, s: i, s: i, s: i, s: i, s: f, s: f, s: f, s: f, s: f, s: f }",
-		"node", node_name(n),
-		"recv", hist_total(&s->histograms[STATS_METRIC_OWD]),
-		"sent", hist_total(&s->histograms[STATS_METRIC_AGE]),
-		"dropped", hist_total(&s->histograms[STATS_METRIC_SMPS_REORDERED]),
-		"skipped", hist_total(&s->histograms[STATS_METRIC_SMPS_SKIPPED]),
-		"owd_last", 1.0 / hist_last(&s->histograms[STATS_METRIC_OWD]),
-		"owd_mean", 1.0 / hist_mean(&s->histograms[STATS_METRIC_OWD]),
-		"rate_last", 1.0 / hist_last(&s->histograms[STATS_METRIC_GAP_SAMPLE]),
-		"rate_mean", 1.0 / hist_mean(&s->histograms[STATS_METRIC_GAP_SAMPLE]),
-		"age_mean", hist_mean(&s->histograms[STATS_METRIC_AGE]),
-		"age_max", hist_highest(&s->histograms[STATS_METRIC_AGE])
-	);
-}
-
 void stats_reset(struct stats *s)
 {
 	assert(s->state == STATE_INITIALIZED);
@@ -169,12 +150,12 @@ static struct table_column stats_cols[] = {
 	{ 10, "Sent",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
 	{ 10, "Drop",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
 	{ 10, "Skip",		"%ju",	"pkts",		TABLE_ALIGN_RIGHT },
-	{ 10, "OWD last",	"%f",	"secs",		TABLE_ALIGN_RIGHT },
-	{ 10, "OWD mean",	"%f",	"secs",		TABLE_ALIGN_RIGHT },
-	{ 10, "Rate last",	"%f",	"pkt/sec",	TABLE_ALIGN_RIGHT },
-	{ 10, "Rate mean",	"%f",	"pkt/sec",	TABLE_ALIGN_RIGHT },
-	{ 10, "Age mean",	"%f",	"secs",		TABLE_ALIGN_RIGHT },
-	{ 10, "Age Max",	"%f",	"sec",		TABLE_ALIGN_RIGHT },
+	{ 10, "OWD last",	"%lf",	"secs",		TABLE_ALIGN_RIGHT },
+	{ 10, "OWD mean",	"%lf",	"secs",		TABLE_ALIGN_RIGHT },
+	{ 10, "Rate last",	"%lf",	"pkt/sec",	TABLE_ALIGN_RIGHT },
+	{ 10, "Rate mean",	"%lf",	"pkt/sec",	TABLE_ALIGN_RIGHT },
+	{ 10, "Age mean",	"%lf",	"secs",		TABLE_ALIGN_RIGHT },
+	{ 10, "Age Max",	"%lf",	"sec",		TABLE_ALIGN_RIGHT }
 };
 
 static struct table stats_table = {
@@ -193,7 +174,7 @@ void stats_print_header(enum stats_format fmt)
 	}
 }
 
-void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int verbose, struct node *n)
+void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, struct node *n)
 {
 	assert(s->state == STATE_INITIALIZED);
 
@@ -201,21 +182,33 @@ void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int v
 		case STATS_FORMAT_HUMAN:
 			table_row(&stats_table,
 				node_name_short(n),
-				hist_total(&s->histograms[STATS_METRIC_OWD]),
-				hist_total(&s->histograms[STATS_METRIC_AGE]),
-				hist_total(&s->histograms[STATS_METRIC_SMPS_REORDERED]),
-				hist_total(&s->histograms[STATS_METRIC_SMPS_SKIPPED]),
-				hist_last(&s->histograms[STATS_METRIC_OWD]),
-				hist_mean(&s->histograms[STATS_METRIC_OWD]),
-				1.0 / hist_last(&s->histograms[STATS_METRIC_GAP_RECEIVED]),
-				1.0 / hist_mean(&s->histograms[STATS_METRIC_GAP_RECEIVED]),
-				hist_mean(&s->histograms[STATS_METRIC_AGE]),
-				hist_highest(&s->histograms[STATS_METRIC_AGE])
+				(uintmax_t) hist_total(&s->histograms[STATS_METRIC_OWD]),
+				(uintmax_t) hist_total(&s->histograms[STATS_METRIC_AGE]),
+				(uintmax_t) hist_total(&s->histograms[STATS_METRIC_SMPS_REORDERED]),
+				(uintmax_t) hist_total(&s->histograms[STATS_METRIC_SMPS_SKIPPED]),
+				(double)    hist_last(&s->histograms[STATS_METRIC_OWD]),
+				(double)    hist_mean(&s->histograms[STATS_METRIC_OWD]),
+				(double)    1.0 / hist_last(&s->histograms[STATS_METRIC_GAP_RECEIVED]),
+				(double)    1.0 / hist_mean(&s->histograms[STATS_METRIC_GAP_RECEIVED]),
+				(double)    hist_mean(&s->histograms[STATS_METRIC_AGE]),
+				(double)    hist_highest(&s->histograms[STATS_METRIC_AGE])
 			);
 			break;
 
 		case STATS_FORMAT_JSON: {
-			json_t *json_stats = stats_json_periodic(s, n);
+			json_t *json_stats = json_pack("{ s: s, s: i, s: i, s: i, s: i, s: f, s: f, s: f, s: f, s: f, s: f }",
+				"node", node_name(n),
+				"recv", hist_total(&s->histograms[STATS_METRIC_OWD]),
+				"sent", hist_total(&s->histograms[STATS_METRIC_AGE]),
+				"dropped", hist_total(&s->histograms[STATS_METRIC_SMPS_REORDERED]),
+				"skipped", hist_total(&s->histograms[STATS_METRIC_SMPS_SKIPPED]),
+				"owd_last", 1.0 / hist_last(&s->histograms[STATS_METRIC_OWD]),
+				"owd_mean", 1.0 / hist_mean(&s->histograms[STATS_METRIC_OWD]),
+				"rate_last", 1.0 / hist_last(&s->histograms[STATS_METRIC_GAP_SAMPLE]),
+				"rate_mean", 1.0 / hist_mean(&s->histograms[STATS_METRIC_GAP_SAMPLE]),
+				"age_mean", hist_mean(&s->histograms[STATS_METRIC_AGE]),
+				"age_max", hist_highest(&s->histograms[STATS_METRIC_AGE])
+			);
 			json_dumpf(json_stats, f, 0);
 			break;
 		}

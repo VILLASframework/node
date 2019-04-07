@@ -116,7 +116,7 @@ void stats_reset(struct stats *s);
 
 void stats_print_header(enum stats_format fmt);
 
-void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, int verbose, struct node *p);
+void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, struct node *p);
 
 void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose);
 
