@@ -22,7 +22,6 @@
 
 add_library(villas-common SHARED
 	advio.cpp
-	bitset.cpp
 	buffer.cpp
 	json_buffer.cpp
 	compat.cpp
