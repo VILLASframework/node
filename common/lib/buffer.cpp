@@ -30,7 +30,7 @@ int buffer_init(struct buffer *b, size_t size)
 {
 	b->len = 0;
 	b->size = size;
-	b->buf = malloc(size);
+	b->buf = (char *) malloc(size);
 	if (!b->buf)
 		return -1;
 
@@ -58,7 +58,7 @@ int buffer_append(struct buffer *b, const char *data, size_t len)
 {
 	if (b->len + len > b->size) {
 		b->size = b->len + len;
-		b->buf = realloc(b->buf, b->size);
+		b->buf = (char *) realloc(b->buf, b->size);
 		if (!b->buf)
 			return -1;
 	}
@@ -85,7 +85,7 @@ int buffer_append_json(struct buffer *b, json_t *j)
 
 retry:	len = json_dumpb(j, b->buf + b->len, b->size - b->len, 0);
 	if (b->size < b->len + len) {
-		b->buf = realloc(b->buf, b->len + len);
+		b->buf = (char *) realloc(b->buf, b->len + len);
 		if (!b->buf)
 			return -1;
 

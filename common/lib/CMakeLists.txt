@@ -21,34 +21,33 @@
 ##############################################################################
 
 add_library(villas-common SHARED
-	advio.c
-	bitset.c
-	buffer.c
+	advio.cpp
+	bitset.cpp
+	buffer.cpp
 	json_buffer.cpp
-	compat.c
-	crypt.c
-	hash_table.c
-	hist.c
-	kernel/kernel.c
+	compat.cpp
+	crypt.cpp
+	hash_table.cpp
+	hist.cpp
+	kernel/kernel.cpp
 	kernel/kernel.cpp
 	kernel/rt.cpp
-	list.c
+	list.cpp
 	log.cpp
 	log_legacy.cpp
 	memory.cpp
 	memory_manager.cpp
 	plugin.cpp
-	table.c
-	task.c
-	timing.c
-	utils.c
+	table.cpp
+	task.cpp
+	timing.cpp
 	utils.cpp
 	cpuset.cpp
 	terminal.cpp
 	version.cpp
 	copyright.cpp
-	common.c
-	window.c
+	common.cpp
+	window.cpp
 )
 
 execute_process( 
@@ -58,13 +57,14 @@ execute_process(
 )
 
 if(ARCH STREQUAL "x86_64")
-	target_sources(villas-common PRIVATE tsc.c)
+	target_sources(villas-common PRIVATE tsc.cpp)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL Linux)
 	target_sources(villas-common PRIVATE
-		kernel/pci.c
+		kernel/pci.cpp
 		kernel/vfio.cpp
+#		kernel/vfio_legacy.cpp
 	)
 endif()
 

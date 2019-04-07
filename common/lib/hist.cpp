@@ -28,9 +28,9 @@
 #include <time.h>
 
 #include <villas/utils.h>
-#include <villas/hist.h>
+#include <villas/hist.hpp>
 #include <villas/config.h>
-#include <villas/table.h>
+#include <villas/table.hpp>
 
 #define VAL(h, i)	((h)->low + (i) * (h)->resolution)
 #define INDEX(h, v)	round((v - (h)->low) / (h)->resolution)
@@ -40,7 +40,7 @@ int hist_init(struct hist *h, int buckets, hist_cnt_t warmup)
 	h->length = buckets;
 	h->warmup = warmup;
 
-	h->data = buckets ? alloc(h->length * sizeof(hist_cnt_t)) : NULL;
+	h->data = (hist_cnt_t *) (buckets ? alloc(h->length * sizeof(hist_cnt_t)) : nullptr);
 
 	hist_reset(h);
 
@@ -51,7 +51,7 @@ int hist_destroy(struct hist *h)
 {
 	if (h->data) {
 		free(h->data);
-		h->data = NULL;
+		h->data = nullptr;
 	}
 
 	return 0;
@@ -83,7 +83,7 @@ void hist_put(struct hist *h, double value)
 			h->higher++;
 		else if (idx < 0)
 			h->lower++;
-		else if (h->data != NULL)
+		else if (h->data != nullptr)
 			h->data[idx]++;
 	}
 
@@ -169,30 +169,27 @@ void hist_plot(const struct hist *h)
 			max = h->data[i];
 	}
 
-	struct table_column cols[] = {
-		{ -9, "Value", "%+9.3g", NULL,         TABLE_ALIGN_RIGHT },
-		{ -6, "Count", "%6ju",   NULL,         TABLE_ALIGN_RIGHT },
-		{  0, "Plot",  "%s",     "occurences", TABLE_ALIGN_LEFT  }
+	std::vector<TableColumn> cols = {
+		{ -9, TableColumn::align::RIGHT, "Value", "%+9.3g" },
+		{ -6, TableColumn::align::RIGHT, "Count", "%6ju" },
+		{  0, TableColumn::align::LEFT,  "Plot",  "%s",     "occurences" }
 	};
 
-	struct table table = {
-		.ncols = ARRAY_LEN(cols),
-		.cols = cols
-	};
+	Table table = Table(cols);
 
 	/* Print plot */
-	table_header(&table);
+	table.header();
 
 	for (int i = 0; i < h->length; i++) {
 		double value = VAL(h, i);
 		hist_cnt_t cnt = h->data[i];
-		int bar = cols[2]._width * ((double) cnt / max);
+		int bar = cols[2].getWidth() * ((double) cnt / max);
 
 		char *buf = strf("%s", "");
 		for (int i = 0; i < bar; i++)
 			buf = strcatf(&buf, "\u2588");
 
-		table_row(&table, value, cnt, buf);
+		table.row(value, cnt, buf);
 
 		free(buf);
 	}
@@ -200,7 +197,7 @@ void hist_plot(const struct hist *h)
 
 char * hist_dump(const struct hist *h)
 {
-	char *buf = alloc(128);
+	char *buf = (char *) alloc(128);
 
 	strcatf(&buf, "[ ");
 

@@ -24,62 +24,62 @@
 #include <string.h>
 
 #include <villas/utils.h>
-#include <villas/table.h>
+#include <villas/table.hpp>
 #include <villas/log.h>
 
-static int table_resize(struct table *t, int width)
+int Table::resize(int w)
 {
 	int norm, flex, fixed, total;
 
-	t->width = width;
+	width = w;
 
 	norm  = 0;
 	flex  = 0;
 	fixed = 0;
-	total = t->width - t->ncols * 2;
+	total = width - columns.size() * 2;
 
 	/* Normalize width */
-	for (int i = 0; i < t->ncols; i++) {
-		if (t->cols[i].width > 0)
-			norm += t->cols[i].width;
-		if (t->cols[i].width == 0)
+	for (unsigned i = 0; i < columns.size(); i++) {
+		if (columns[i].width > 0)
+			norm += columns[i].width;
+		if (columns[i].width == 0)
 			flex++;
-		if (t->cols[i].width < 0)
-			fixed += -1 * t->cols[i].width;
+		if (columns[i].width < 0)
+			fixed += -1 * columns[i].width;
 	}
 
-	for (int i = 0; i < t->ncols; i++) {
-		if (t->cols[i].width > 0)
-			t->cols[i]._width = t->cols[i].width * (float) (total - fixed) / norm;
-		if (t->cols[i].width == 0)
-			t->cols[i]._width = (float) (total - fixed) / flex;
-		if (t->cols[i].width < 0)
-			t->cols[i]._width = -1 * t->cols[i].width;
+	for (unsigned i = 0; i < columns.size(); i++) {
+		if (columns[i].width > 0)
+			columns[i]._width = columns[i].width * (float) (total - fixed) / norm;
+		if (columns[i].width == 0)
+			columns[i]._width = (float) (total - fixed) / flex;
+		if (columns[i].width < 0)
+			columns[i]._width = -1 * columns[i].width;
 	}
 
 	return 0;
 }
 
-void table_header(struct table *t)
+void Table::header()
 {
-	if (t->width != log_get_width())
-		table_resize(t, log_get_width());
+	if (width != log_get_width())
+		resize(log_get_width());
 
-	char *line1 = NULL;
-	char *line2 = NULL;
-	char *line3 = NULL;
+	char *line1 = nullptr;
+	char *line2 = nullptr;
+	char *line3 = nullptr;
 
-	for (int i = 0; i < t->ncols; i++) {
+	for (unsigned i = 0; i < columns.size(); i++) {
 		int w, u;
 		char *col, *unit;
 
-		col = strf(CLR_BLD("%s"), t->cols[i].title);
-		unit = t->cols[i].unit ? strf(CLR_YEL("%s"), t->cols[i].unit) : "";
+		col = strf(CLR_BLD("%s"), columns[i].title.c_str());
+		unit = columns[i].unit.size() ? strf(CLR_YEL("%s"), columns[i].unit.c_str()) : strf("");
 
-		w = t->cols[i]._width + strlen(col) - strlenp(col);
-		u = t->cols[i]._width + strlen(unit) - strlenp(unit);
+		w = columns[i]._width + strlen(col) - strlenp(col);
+		u = columns[i]._width + strlen(unit) - strlenp(unit);
 
-		if (t->cols[i].align == TABLE_ALIGN_LEFT) {
+		if (columns[i].align == TableColumn::align::LEFT) {
 			strcatf(&line1, " %-*.*s\e[0m", w, w, col);
 			strcatf(&line2, " %-*.*s\e[0m", u, u, unit);
 		}
@@ -88,11 +88,11 @@ void table_header(struct table *t)
 			strcatf(&line2, " %*.*s\e[0m", u, u, unit);
 		}
 
-		for (int j = 0; j < t->cols[i]._width + 2; j++) {
+		for (int j = 0; j < columns[i]._width + 2; j++) {
 			strcatf(&line3, "%s", BOX_LR);
 		}
 
-		if (i != t->ncols - 1) {
+		if (i != columns.size() - 1) {
 			strcatf(&line1, " %s", BOX_UD);
 			strcatf(&line2, " %s", BOX_UD);
 			strcatf(&line3, "%s", BOX_UDLR);
@@ -110,31 +110,31 @@ void table_header(struct table *t)
 	free(line3);
 }
 
-void table_row(struct table *t, ...)
+void Table::row(int count, ...)
 {
-	if (t->width != log_get_width()) {
-		table_resize(t, log_get_width());
-		table_header(t);
+	if (width != log_get_width()) {
+		resize(log_get_width());
+		header();
 	}
 
 	va_list args;
-	va_start(args, t);
+	va_start(args, count);
 
-	char *line = NULL;
+	char *line = nullptr;
 
-	for (int i = 0; i < t->ncols; ++i) {
-		char *col = vstrf(t->cols[i].format, args);
+	for (unsigned i = 0; i < columns.size(); ++i) {
+		char *col = vstrf(columns[i].format.c_str(), args);
 
 		int l = strlenp(col);
 		int r = strlen(col);
-		int w = t->cols[i]._width + r - l;
+		int w = columns[i]._width + r - l;
 
-		if (t->cols[i].align == TABLE_ALIGN_LEFT)
+		if (columns[i].align == TableColumn::align::LEFT)
 			strcatf(&line, " %-*.*s\e[0m ", w, w, col);
 		else
 			strcatf(&line, " %*.*s\e[0m ", w, w, col);
 
-		if (i != t->ncols - 1)
+		if (i != columns.size() - 1)
 			strcatf(&line, BOX_UD);
 
 		free(col);

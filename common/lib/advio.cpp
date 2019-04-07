@@ -39,7 +39,7 @@
 
 #define BAR_WIDTH 60 /**< How wide you want the progress meter to be. */
 
-static int advio_trace(CURL *handle, curl_infotype type, char *data, size_t size, void *userp)
+static int advio_trace(CURL * /* handle */, curl_infotype type, char *data, size_t size, void * /* userp */)
 {
 	const char *text;
 
@@ -83,7 +83,7 @@ static int advio_trace(CURL *handle, curl_infotype type, char *data, size_t size
 
 static char * advio_human_time(double t, char *buf, size_t len)
 {
-	int i = 0;
+	unsigned i = 0;
 	const char *units[] = { "secs", "mins", "hrs", "days", "weeks", "months", "years" };
 	int divs[]          = {     60,     60,    24,      7,       4,       12 };
 
@@ -99,7 +99,7 @@ static char * advio_human_time(double t, char *buf, size_t len)
 
 static char * advio_human_size(double s, char *buf, size_t len)
 {
-	int i = 0;
+	unsigned i = 0;
 	const char *units[] = { "B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB" };
 
 	while (s > 1024 && i < ARRAY_LEN(units)) {
@@ -180,14 +180,14 @@ static int advio_xferinfo(void *p, curl_off_t dl_total_bytes, curl_off_t dl_byte
 
 int aislocal(const char *uri)
 {
-	char *sep;
+	const char *sep;
 	const char *supported_schemas[] = { "file", "http", "https", "tftp", "ftp", "scp", "sftp", "smb", "smbs" };
 
 	sep = strstr(uri, "://");
 	if (!sep)
 		return 1; /* no schema, we assume its a local file */
 
-	for (int i = 0; i < ARRAY_LEN(supported_schemas); i++) {
+	for (unsigned i = 0; i < ARRAY_LEN(supported_schemas); i++) {
 		if (!strncmp(supported_schemas[i], uri, sep - uri))
 			return 0;
 	}
@@ -198,9 +198,10 @@ int aislocal(const char *uri)
 AFILE * afopen(const char *uri, const char *mode)
 {
 	int ret;
-	char *sep, *cwd;
+	char *cwd;
+	const char *sep;
 
-	AFILE *af = alloc(sizeof(AFILE));
+	AFILE *af = (AFILE *) alloc(sizeof(AFILE));
 
 	snprintf(af->mode, sizeof(af->mode), "%s", mode);
 
@@ -290,29 +291,29 @@ int afclose(AFILE *af)
 
 int afseek(AFILE *af, long offset, int origin)
 {
-	long new, cur = aftell(af);
+	long new_seek, cur_seek = aftell(af);
 
 	switch (origin) {
 		case SEEK_SET:
-			new = offset;
+			new_seek = offset;
 			break;
 
 		case SEEK_END:
 			fseek(af->file, 0, SEEK_END);
-			new = aftell(af);
-			fseek(af->file, cur, SEEK_SET);
+			new_seek = aftell(af);
+			fseek(af->file, cur_seek, SEEK_SET);
 			break;
 
 		case SEEK_CUR:
-			new = cur + offset;
+			new_seek = cur_seek + offset;
 			break;
 
 		default:
 			return -1;
 	}
 
-	if (new < af->uploaded)
-		af->uploaded = new;
+	if (new_seek < af->uploaded)
+		af->uploaded = new_seek;
 
 	return fseek(af->file, offset, origin);
 }
@@ -403,6 +404,7 @@ int adownload(AFILE *af, int resume)
 
 	double total_bytes = 0, total_time = 0;
 	char buf[2][32];
+	char *total_bytes_human, *total_time_human;
 
 	pos = aftell(af);
 
@@ -428,8 +430,8 @@ int adownload(AFILE *af, int resume)
 			curl_easy_getinfo(af->curl, CURLINFO_SIZE_DOWNLOAD, &total_bytes);
 			curl_easy_getinfo(af->curl, CURLINFO_TOTAL_TIME, &total_time);
 
-			char *total_bytes_human = advio_human_size(total_bytes, buf[0], sizeof(buf[0]));
-			char *total_time_human  = advio_human_time(total_time,  buf[1], sizeof(buf[1]));
+			total_bytes_human = advio_human_size(total_bytes, buf[0], sizeof(buf[0]));
+			total_time_human  = advio_human_time(total_time,  buf[1], sizeof(buf[1]));
 
 			info("Finished download of %s in %s", total_bytes_human, total_time_human);
 
@@ -460,6 +462,7 @@ int adownload(AFILE *af, int resume)
 			af->file = fopen(af->uri, af->mode);
 			if (!af->file)
 				return -1;
+			break;
 
 		default:
 			error("Failed to download file: %s: %s", af->uri, curl_easy_strerror(res));

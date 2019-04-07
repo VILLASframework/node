@@ -34,7 +34,7 @@ int bitset_init(struct bitset *b, size_t dim)
 {
 	int s = bitset_nslots(dim);
 
-	b->set = alloc(s * CHAR_BIT);
+	b->set = (char *) alloc(s * CHAR_BIT);
 	b->dimension = dim;
 
 	return 0;
@@ -163,7 +163,7 @@ char * bitset_dump(struct bitset *b)
 {
 	char *str = NULL;
 
-	for (int i = 0; i < b->dimension; i++)
+	for (unsigned i = 0; i < b->dimension; i++)
 		strcatf(&str, "%d", bitset_test(b, i));
 
 	return str;
