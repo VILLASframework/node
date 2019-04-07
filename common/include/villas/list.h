@@ -121,7 +121,7 @@ int vlist_contains(struct vlist *l, void *p);
 void vlist_sort(struct vlist *l, cmp_cb_t cmp);
 
 /** Set single element in list */
-int vlist_set(struct vlist *l, int index, void *value);
+int vlist_set(struct vlist *l, unsigned index, void *value);
 
 /** Return index in list for value.
  *

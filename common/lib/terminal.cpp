@@ -46,7 +46,7 @@ Terminal::Terminal()
 
 		sigemptyset(&sa_resize.sa_mask);
 
-		ret = sigaction(SIGWINCH, &sa_resize, NULL);
+		ret = sigaction(SIGWINCH, &sa_resize, nullptr);
 		if (ret)
 			throw SystemError("Failed to register signal handler");
 

@@ -43,7 +43,7 @@ int hash_table_init(struct hash_table *ht, size_t size)
 	if (ret)
 		return ret;
 
-	ht->table = alloc(len);
+	ht->table = (struct hash_table_entry **) alloc(len);
 
 	memset(ht->table, 0, len);
 
@@ -62,7 +62,7 @@ int hash_table_destroy(struct hash_table *ht, dtor_cb_t dtor, bool release)
 
 	pthread_mutex_lock(&ht->lock);
 
-	for (int i = 0; i < ht->size; i++) {
+	for (unsigned i = 0; i < ht->size; i++) {
 		for (cur = ht->table[i]; cur; cur = next) {
 			if (dtor)
 				dtor(cur->data);
@@ -106,7 +106,7 @@ int hash_table_insert(struct hash_table *ht, const void *key, void *data)
 	if (cur)
 		ret = -1;
 	else {
-		hte = alloc(sizeof(struct hash_table_entry));
+		hte = (struct hash_table_entry *) alloc(sizeof(struct hash_table_entry));
 		if (hte) {
 			hte->key = key;
 			hte->data = data;
@@ -191,7 +191,7 @@ void hash_table_dump(struct hash_table *ht)
 
 	pthread_mutex_lock(&ht->lock);
 
-	for (int i = 0; i < ht->size; i++) {
+	for (unsigned i = 0; i < ht->size; i++) {
 		char *strlst = NULL;
 
 		for (hte = ht->table[i]; hte; hte = hte->next)

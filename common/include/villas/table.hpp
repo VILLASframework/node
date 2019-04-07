@@ -27,38 +27,72 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <vector>
+#include <string>
 
-struct table_column {
-	int width;	/**< Width of the column. */
-	char *title;	/**< The title as shown in the table header. */
-	char *format;	/**< The format which is used to print the table rows. */
-	char *unit;	/**< An optional unit which will be shown in the table header. */
+class Table;
 
-	enum {
-		TABLE_ALIGN_LEFT,
-		TABLE_ALIGN_RIGHT
-	} align;
+class TableColumn {
 
+	friend Table;
+
+public:
+	enum align {
+		LEFT,
+		RIGHT
+	};
+
+protected:
 	int _width;	/**< The real width of this column. Calculated by table_header() */
+
+	int width;	/**< Width of the column. */
+
+public:
+	TableColumn(int w, enum align a, const std::string &t, const std::string &f, const std::string &u = "") :
+		width(w),
+		title(t),
+		format(f),
+		unit(u),
+		align(a)
+	{ }
+	
+	std::string title;	/**< The title as shown in the table header. */
+	std::string format;	/**< The format which is used to print the table rows. */
+	std::string unit;	/**< An optional unit which will be shown in the table header. */
+
+	enum align align;
+	
+	int getWidth() const
+	{
+		return _width;
+	}
 };
 
-struct table {
-	int ncols;
+class Table {
+
+protected:
+	int resize(int w);
+
 	int width;
-	struct table_column *cols;
+	
+	std::vector<TableColumn> columns;
+	
+public:
+	Table(const std::vector<TableColumn> &cols) :
+		width(-1),
+		columns(cols)
+	{ }
+
+	/** Print a table header consisting of \p n columns. */
+	void header();
+
+	/** Print table rows. */
+	void row(int count, ...);
+
+	int getWidth() const
+	{
+		return width;
+	}
 };
-
-/** Print a table header consisting of \p n columns. */
-void table_header(struct table *t);
-
-/** Print table rows. */
-void table_row(struct table *t, ...);
 
 /** @} */
-
-#ifdef __cplusplus
-}
-#endif

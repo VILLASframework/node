@@ -30,7 +30,7 @@ int window_init(struct window *w, size_t steps, double init)
 	size_t len = LOG2_CEIL(steps);
 
 	/* Allocate memory for ciruclar history buffer */
-	w->data = alloc(len * sizeof(double));
+	w->data = (double *) alloc(len * sizeof(double));
 	if (!w->data)
 		return -1;
 

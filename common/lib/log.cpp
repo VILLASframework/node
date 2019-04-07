@@ -81,9 +81,9 @@ Logger Log::get(const std::string &name)
 
 void Log::parse(json_t *cfg)
 {
-	const char *level = NULL;
-	const char *path = NULL;
-	const char *pattern = NULL;
+	const char *level = nullptr;
+	const char *path = nullptr;
+	const char *pattern = nullptr;
 
 	int syslog;
 	int ret;

@@ -30,11 +30,13 @@
 
 /* Compare functions */
 static int cmp_lookup(const void *a, const void *b) {
-	const struct {
+	struct name_tag {
 		char *name;
-	} *obj = a;
+	};
 
-	return strcmp(obj->name, b);
+	const name_tag *obj = (struct name_tag *) a;
+
+	return strcmp(obj->name, (char *) b);
 }
 
 static int cmp_contains(const void *a, const void *b) {
@@ -102,7 +104,7 @@ void vlist_push(struct vlist *l, void *p)
 	/* Resize array if out of capacity */
 	if (l->length >= l->capacity) {
 		l->capacity += LIST_CHUNKSIZE;
-		l->array = realloc(l->array, l->capacity * sizeof(void *));
+		l->array = (void **) realloc(l->array, l->capacity * sizeof(void *));
 	}
 
 	l->array[l->length] = p;
@@ -145,7 +147,7 @@ int vlist_insert(struct vlist *l, size_t idx, void *p)
 	/* Resize array if out of capacity */
 	if (l->length + 1 > l->capacity) {
 		l->capacity += LIST_CHUNKSIZE;
-		l->array = realloc(l->array, l->capacity * sizeof(void *));
+		l->array = (void **) realloc(l->array, l->capacity * sizeof(void *));
 	}
 
 	o = p;
@@ -258,7 +260,7 @@ void vlist_sort(struct vlist *l, cmp_cb_t cmp)
 	pthread_mutex_unlock(&l->lock);
 }
 
-int vlist_set(struct vlist *l, int index, void *value)
+int vlist_set(struct vlist *l, unsigned index, void *value)
 {
 	if (index >= l->length)
 		return -1;

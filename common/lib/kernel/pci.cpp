@@ -175,19 +175,20 @@ fail:
 int pci_device_parse_id(struct pci_device *f, const char *str, const char **error)
 {
 	char *s, *c, *e;
+	char *tmp = strdup(str);
 
-	if (!*str)
+	if (!*tmp)
 		return 0;
 
-	s = strchr(str, ':');
+	s = strchr(tmp, ':');
 	if (!s) {
 		*error = "':' expected";
 		goto fail;
 	}
 
 	*s++ = 0;
-	if (str[0] && strcmp(str, "*")) {
-		long int x = strtol(str, &e, 16);
+	if (tmp[0] && strcmp(tmp, "*")) {
+		long int x = strtol(tmp, &e, 16);
 
 		if ((e && *e) || (x < 0 || x > 0xffff)) {
 			*error = "Invalid vendor ID";
@@ -225,6 +226,7 @@ int pci_device_parse_id(struct pci_device *f, const char *str, const char **erro
 	return 0;
 
 fail:
+	free(tmp);
 	return -1;
 }
 
@@ -248,7 +250,7 @@ int pci_device_compare(const struct pci_device *d, const struct pci_device *f)
 
 struct pci_device * pci_lookup_device(struct pci *p, struct pci_device *f)
 {
-	return vlist_search(&p->devices, (cmp_cb_t) pci_device_compare, (void *) f);
+	return (struct pci_device *) vlist_search(&p->devices, (cmp_cb_t) pci_device_compare, (void *) f);
 }
 
 size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
@@ -276,10 +278,10 @@ size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
 	int region = 0;
 
 	/* Cap to 8 regions, just because we don't know how many may exist. */
-	while(region < 8 && (bytesRead = getline(&line, &len, f)) != -1) {
+	while (region < 8 && (bytesRead = getline(&line, &len, f)) != -1) {
 		unsigned long long tokens[3];
 		char* s = line;
-		for(int i = 0; i < 3; i++) {
+		for (int i = 0; i < 3; i++) {
 			char* end;
 			tokens[i] = strtoull(s, &end, 16);
 			if(s == end) {
@@ -296,7 +298,7 @@ size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
 		line = NULL;
 		len = 0;
 
-		if(tokens[0] != tokens[1]) {
+		if (tokens[0] != tokens[1]) {
 			/* This is a valid region */
 			cur_region->num = region;
 			cur_region->start = tokens[0];
@@ -309,9 +311,9 @@ size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
 		region++;
 	}
 
-	if(valid_regions > 0) {
+	if (valid_regions > 0) {
 		const size_t len = valid_regions * sizeof (struct pci_region);
-		*regions = malloc(len);
+		*regions = (struct pci_region *) malloc(len);
 		memcpy(*regions, _regions, len);
 	}
 
