@@ -35,12 +35,13 @@
 #include <villas/list.h>
 #include <villas/queue.h>
 #include <villas/pool.h>
-#include <villas/bitset.h>
 #include <villas/common.h>
 #include <villas/mapping.h>
 #include <villas/task.h>
 
 #ifdef __cplusplus
+  #include <bitset>
+
 extern "C" {
 #endif
 
@@ -86,11 +87,13 @@ struct path {
 
 	char *_name;			/**< Singleton: A string which is used to print this path to screen. */
 
-	struct bitset mask;		/**< A mask of path_sources which are enabled for poll(). */
-	struct bitset received;		/**< A mask of path_sources for which we already received samples. */
-
 	pthread_t tid;			/**< The thread id for this path. */
 	json_t *cfg;			/**< A JSON object containing the configuration of the path. */
+
+#ifdef __cplusplus
+	std::bitset<128> mask;		/**< A mask of path_sources which are enabled for poll(). */
+	std::bitset<128> received;		/**< A mask of path_sources for which we already received samples. */
+#endif
 };
 
 /** Initialize internal data structures. */

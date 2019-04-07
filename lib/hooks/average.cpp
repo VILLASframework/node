@@ -24,13 +24,14 @@
  * @{
  */
 
+#include <bitset>
+
 #include <string.h>
 
 #include <villas/hook.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/signal.h>
 #include <villas/sample.h>
-#include <villas/bitset.h>
 
 namespace villas {
 namespace node {
@@ -40,7 +41,7 @@ class AverageHook : public Hook {
 protected:
 	int offset;
 
-	bitset mask;
+	std::bitset<128> mask;
 	vlist signal_names;
 
 public:
@@ -53,20 +54,12 @@ public:
 		if (ret)
 			throw RuntimeError("Failed to intialize list");
 
-		ret = bitset_init(&mask, 128);
-		if (ret)
-			throw RuntimeError("Failed to intialize bitset");
-
-		bitset_clear_all(&mask);
-
 		state = STATE_INITIALIZED;
 	}
 
 	virtual ~AverageHook()
 	{
 		vlist_destroy(&signal_names, nullptr, true);
-
-		bitset_destroy(&mask);
 	}
 
 	virtual void prepare()
@@ -84,10 +77,10 @@ public:
 			if (index < 0)
 				throw RuntimeError("Failed to find signal {}", signal_name);
 
-			bitset_set(&mask, index);
+			mask.set(index);
 		}
 
-		if (!bitset_get_value(&mask))
+		if (mask.none())
 			throw RuntimeError("Invalid signal mask");
 
 		/* Add averaged signal */
@@ -130,7 +123,7 @@ public:
 					break;
 
 				case JSON_INTEGER:
-					bitset_set(&mask, json_integer_value(json_signal));
+					mask.set(json_integer_value(json_signal));
 					break;
 
 				default:
@@ -149,7 +142,7 @@ public:
 		assert(state == STATE_STARTED);
 
 		for (unsigned k = 0; k < smp->length; k++) {
-			if (!bitset_test(&mask, k))
+			if (!mask.test(k))
 				continue;
 
 			switch (sample_format(smp, k)) {

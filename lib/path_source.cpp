@@ -21,7 +21,6 @@
  *********************************************************************************/
 
 #include <villas/utils.h>
-#include <villas/bitset.h>
 #include <villas/sample.h>
 #include <villas/node.h>
 #include <villas/path.h>
@@ -97,7 +96,7 @@ int path_source_read(struct path_source *ps, struct path *p, int i)
 	else if (recv < allocated)
 		warning("Partial read for path %s: read=%u, expected=%u", path_name(p), recv, allocated);
 
-	bitset_set(&p->received, i);
+	p->received.set(i);
 
 	if (p->mode == PATH_MODE_ANY) { /* Mux all samples */
 		tomux_smps = read_smps;
@@ -130,7 +129,7 @@ int path_source_read(struct path_source *ps, struct path *p, int i)
 
 	sample_copy(p->last_sample, muxed_smps[tomux-1]);
 
-	debug(15, "Path %s received = %s", path_name(p), bitset_dump(&p->received));
+	debug(15, "Path %s received = %s", path_name(p), p->received.to_string().c_str());
 
 #ifdef WITH_HOOKS
 	toenqueue = hook_list_process(&p->hooks, muxed_smps, tomux);
@@ -143,14 +142,14 @@ int path_source_read(struct path_source *ps, struct path *p, int i)
 	toenqueue = tomux;
 #endif
 
-	if (bitset_test(&p->mask, i)) {
+	if (p->mask.test(i)) {
 		/* Check if we received an update from all nodes/ */
 		if ((p->mode == PATH_MODE_ANY) ||
-		    (p->mode == PATH_MODE_ALL && !bitset_cmp(&p->mask, &p->received))) {
+		    (p->mode == PATH_MODE_ALL && p->mask == p->received)) {
 			path_destination_enqueue(p, muxed_smps, toenqueue);
 
-			/* Reset bitset of updated nodes */
-			bitset_clear_all(&p->received);
+			/* Reset mask of updated nodes */
+			p->received.reset();
 
 			enqueued = toenqueue;
 		}

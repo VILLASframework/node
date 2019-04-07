@@ -218,8 +218,8 @@ int path_prepare(struct path *p)
 			return ret;
 	}
 
-	bitset_init(&p->received, vlist_length(&p->sources));
-	bitset_init(&p->mask, vlist_length(&p->sources));
+	new (&p->received) std::bitset<128>;
+	new (&p->mask) std::bitset<128>;
 
 	/* Initialize sources */
 	for (size_t i = 0; i < vlist_length(&p->sources); i++) {
@@ -230,7 +230,7 @@ int path_prepare(struct path *p)
 			return ret;
 
 		if (ps->masked)
-			bitset_set(&p->mask, i);
+			p->mask.set(i);
 
 		ret = mapping_list_prepare(&ps->mappings);
 		if (ret)
@@ -535,7 +535,6 @@ int path_start(struct path *p)
 {
 	int ret;
 	const char *mode;
-	char *mask;
 
 	assert(p->state == STATE_PREPARED);
 
@@ -553,8 +552,6 @@ int path_start(struct path *p)
 			break;
 	}
 
-	mask = bitset_dump(&p->mask);
-
 	info("Starting path %s: #signals=%zu, #hooks=%zu, #sources=%zu, #destinations=%zu, mode=%s, poll=%s, mask=%s, rate=%.2f, enabled=%s, reversed=%s, queuelen=%d, original_sequence_no=%s",
 		path_name(p),
 		vlist_length(&p->signals),
@@ -563,15 +560,13 @@ int path_start(struct path *p)
 		vlist_length(&p->destinations),
 		mode,
 		p->poll ? "yes" : "no",
-		mask,
+		p->mask.to_string().c_str(),
 		p->rate,
 		path_is_enabled(p) ? "yes" : "no",
 		path_is_reversed(p) ? "yes" : "no",
 		p->queuelen,
 		p->original_sequence_no ? "yes" : "no"
 	);
-
-	free(mask);
 
 #ifdef WITH_HOOKS
 	ret = hook_list_start(&p->hooks);
@@ -581,7 +576,7 @@ int path_start(struct path *p)
 
 	p->last_sequence = 0;
 
-	bitset_clear_all(&p->received);
+	p->received.reset();
 
 	/* We initialize the intial sample */
 	p->last_sample = sample_alloc(&p->pool);
