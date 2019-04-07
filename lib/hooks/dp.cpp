@@ -201,7 +201,7 @@ public:
 				break;
 
 			case JSON_INTEGER:
-				signal_name = NULL;
+				signal_name = nullptr;
 				signal_index = json_integer_value(json_signal);
 				break;
 

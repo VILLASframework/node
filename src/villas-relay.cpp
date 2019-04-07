@@ -74,7 +74,7 @@ lws_protocols protocols[] = {
 		.per_session_data_size = sizeof(Connection),
 		.rx_buffer_size = 0
 	},
-	{ NULL /* terminator */ }
+	{ nullptr /* terminator */ }
 };
 
 /** List of libwebsockets extensions. */
@@ -89,18 +89,18 @@ static const lws_extension extensions[] = {
 		lws_extension_callback_pm_deflate,
 		"deflate_frame"
 	},
-	{ NULL /* terminator */ }
+	{ nullptr /* terminator */ }
 };
 
 static const lws_http_mount mount = {
-	.mount_next =		NULL, /* linked-list "next" */
+	.mount_next =		nullptr, /* linked-list "next" */
 	.mountpoint =		"/api/v1", /* mountpoint URL */
-	.origin =		NULL,	/* protocol */
-	.def =			NULL,
+	.origin =		nullptr,	/* protocol */
+	.def =			nullptr,
 	.protocol =		"http-api",
-	.cgienv =		NULL,
-	.extra_mimetypes =	NULL,
-	.interpret =		NULL,
+	.cgienv =		nullptr,
+	.extra_mimetypes =	nullptr,
+	.interpret =		nullptr,
 	.cgi_timeout =		0,
 	.cache_max_age =	0,
 	.auth_mask =		0,
@@ -109,7 +109,7 @@ static const lws_http_mount mount = {
 	.cache_intermediaries =	0,
 	.origin_protocol =	LWSMPRO_CALLBACK, /* dynamic */
 	.mountpoint_len =	7, /* char count */
-	.basic_auth_login_file =NULL,
+	.basic_auth_login_file =nullptr,
 };
 
 Session::Session(Identifier sid) :
@@ -120,7 +120,7 @@ Session::Session(Identifier sid) :
 
 	sessions[sid] = this;
 
-	created = time(NULL);
+	created = time(nullptr);
 
 	uuid_generate(uuid);
 }
@@ -196,7 +196,7 @@ Connection::Connection(lws *w) :
 
 	lws_get_peer_addresses(wsi, lws_get_socket_fd(wsi), name, sizeof(name), ip, sizeof(ip));
 
-	created = time(NULL);
+	created = time(nullptr);
 
 	console->info("New connection established: session={}, remote={} ({})", session->identifier, name, ip);
 }
@@ -465,13 +465,13 @@ check:		if (optarg == endptr) {
 	ctx_info.mounts = &mount;
 
 	context = lws_create_context(&ctx_info);
-	if (context == NULL) {
+	if (context == nullptr) {
 		console->error("WebSocket: failed to initialize server context");
 		exit(EXIT_FAILURE);
 	}
 
 	vhost = lws_create_vhost(context, &ctx_info);
-	if (vhost == NULL) {
+	if (vhost == nullptr) {
 		console->error("WebSocket: failed to initialize virtual host");
 		exit(EXIT_FAILURE);
 	}

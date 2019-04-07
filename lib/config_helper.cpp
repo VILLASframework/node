@@ -137,7 +137,7 @@ int json_to_config(json_t *json, config_setting_t *parent)
 			json_array_foreach(json, i, json_value) {
 				type = json_to_config_type(json_typeof(json_value));
 
-				cfg = config_setting_add(parent, NULL, type);
+				cfg = config_setting_add(parent, nullptr, type);
 				ret = json_to_config(json_value, cfg);
 				if (ret)
 					return ret;
@@ -179,7 +179,7 @@ void json_object_extend_key_value_token(json_t *obj, const char *key, const char
 	while (token) {
 		json_object_extend_key_value(obj, key, token);
 
-		token = strtok_r(NULL, delim, &lasts);
+		token = strtok_r(nullptr, delim, &lasts);
 	}
 
 	free(str);
@@ -199,7 +199,7 @@ void json_object_extend_key_value(json_t *obj, const char *key, const char *valu
 	cpy = strdup(key);
 
 	key1 = strtok_r(cpy, ".", &lasts);
-	key2 = strtok_r(NULL, ".", &lasts);
+	key2 = strtok_r(nullptr, ".", &lasts);
 
 	while (key1 && key2) {
 		existing = json_object_get(subobj, key1);
@@ -271,8 +271,8 @@ success:
 json_t * json_load_cli(int argc, const char *argv[])
 {
 	const char *opt;
-	const char *key = NULL;
-	const char *value = NULL;
+	const char *key = nullptr;
+	const char *value = nullptr;
 	const char *sep;
 	char *cpy, *lasts;
 
@@ -284,8 +284,8 @@ json_t * json_load_cli(int argc, const char *argv[])
 		/* Long Option */
 		if (opt[0] == '-' && opt[1] == '-') {
 			/* Option without value? Abort. */
-			if (key != NULL)
-				return NULL;
+			if (key != nullptr)
+				return nullptr;
 
 			key = opt + 2;
 
@@ -295,24 +295,24 @@ json_t * json_load_cli(int argc, const char *argv[])
 				cpy = strdup(key);
 
 				key = strtok_r(cpy, "=", &lasts);
-				value = strtok_r(NULL, "", &lasts);
+				value = strtok_r(nullptr, "", &lasts);
 
 				json_object_extend_key_value_token(json, key, value);
 
 				free(cpy);
-				key = NULL;
+				key = nullptr;
 			}
 		}
 		/* Value */
 		else {
 			/* Value without key. Abort. */
-			if (key == NULL)
-				return NULL;
+			if (key == nullptr)
+				return nullptr;
 
 			value = opt;
 
 			json_object_extend_key_value_token(json, key, value);
-			key = NULL;
+			key = nullptr;
 		}
 	}
 

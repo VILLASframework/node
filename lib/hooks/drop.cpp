@@ -45,7 +45,7 @@ public:
 	{
 		assert(state == STATE_PREPARED || state == STATE_STOPPED);
 
-		prev = NULL;
+		prev = nullptr;
 
 		state = STATE_STARTED;
 	}
@@ -90,7 +90,7 @@ public:
 
 		if (prev) {
 			sample_decref(prev);
-			prev = NULL;
+			prev = nullptr;
 		}
 	}
 };

@@ -45,7 +45,7 @@ public:
 	{
 		assert(state == STATE_PREPARED);
 
-		prev = NULL;
+		prev = nullptr;
 
 		state = STATE_STARTED;
 	}

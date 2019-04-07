@@ -95,7 +95,7 @@ public:
 
 	virtual void parse(json_t *cfg)
 	{
-		const char *f = NULL, *p = NULL, *u = NULL;
+		const char *f = nullptr, *p = nullptr, *u = nullptr;
 		int ret;
 		json_error_t err;
 

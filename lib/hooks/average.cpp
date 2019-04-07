@@ -64,7 +64,7 @@ public:
 
 	virtual ~AverageHook()
 	{
-		vlist_destroy(&signal_names, NULL, true);
+		vlist_destroy(&signal_names, nullptr, true);
 
 		bitset_destroy(&mask);
 	}
@@ -91,7 +91,7 @@ public:
 			throw RuntimeError("Invalid signal mask");
 
 		/* Add averaged signal */
-		avg_sig = signal_create("average", NULL, SIGNAL_TYPE_FLOAT);
+		avg_sig = signal_create("average", nullptr, SIGNAL_TYPE_FLOAT);
 		if (!avg_sig)
 			throw RuntimeError("Failed to create new signal");
 

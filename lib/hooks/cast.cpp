@@ -103,9 +103,9 @@ public:
 
 		assert(state != STATE_STARTED);
 
-		const char *name = NULL;
-		const char *unit = NULL;
-		const char *type = NULL;
+		const char *name = nullptr;
+		const char *unit = nullptr;
+		const char *type = nullptr;
 
 		ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: s, s?: s, s?: s }",
 			"signal", &json_signal,
@@ -122,7 +122,7 @@ public:
 				break;
 
 			case JSON_INTEGER:
-				signal_name = NULL;
+				signal_name = nullptr;
 				signal_index = json_integer_value(json_signal);
 				break;
 
