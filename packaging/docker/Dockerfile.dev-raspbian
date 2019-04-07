@@ -33,12 +33,12 @@ RUN echo 'deb http://archive.raspbian.org/raspbian buster main contrib non-free 
 # Toolchain
 RUN apt-get update && apt-get install -y \
 	autoconf automake libtool \
-	pkg-config cmake make \
+	pkg-config make \
 	git curl tar bzip2 \
 	protobuf-compiler protobuf-c-compiler
 
 RUN apt-get install -y -t buster \
-	gcc-8 g++-8
+	gcc-8 g++-8 cmake
 
 # Dependencies
 RUN apt-get install -y \
