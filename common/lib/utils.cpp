@@ -105,6 +105,7 @@ int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 	main_thread = pthread_self();
 
 	sigemptyset(&sa_quit.sa_mask);
+	sigemptyset(&sa_chld.sa_mask);
 
 	ret = sigaction(SIGINT, &sa_quit, NULL);
 	if (ret)
