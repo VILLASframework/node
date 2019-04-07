@@ -25,6 +25,7 @@
 
 #include <villas/utils.h>
 #include <villas/table.hpp>
+#include <villas/boxes.hpp>
 #include <villas/log.h>
 
 int Table::resize(int w)
