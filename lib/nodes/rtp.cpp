@@ -55,10 +55,8 @@ static pthread_t re_pthread;
 
 using namespace villas::node;
 
-extern "C" {
-
 /* Forward declarations */
-extern struct plugin p;
+static struct plugin p;
 
 static int rtp_set_rate(struct node *n, double rate)
 {
@@ -646,8 +644,6 @@ int rtp_netem_fds(struct node *n, int fds[])
 	return m;
 }
 
-struct plugin p;
-
 __attribute__((constructor(110)))
 static void register_plugin() {
 	p.name		= "rtp";
@@ -682,5 +678,3 @@ static void deregister_plugin() {
 	if (plugins.state != STATE_DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }
-
-} /* extern C */

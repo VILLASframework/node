@@ -46,7 +46,7 @@ if(DEFINED PROTOBUFC_COMPILER AND PROTOBUFC_FOUND)
     )
 
     list(APPEND FORMAT_SRC
-        protobuf.c
+        protobuf.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/villas.pb-c.c
     )
 
@@ -61,13 +61,13 @@ if(DEFINED PROTOBUFC_COMPILER AND PROTOBUFC_FOUND)
 endif()
 
 list(APPEND FORMAT_SRC
-    json.c
-    json_reserve.c
-    villas_binary.c
-    villas_human.c
-    csv.c
-    raw.c
-    msg.c
+    json.cpp
+    json_reserve.cpp
+    villas_binary.cpp
+    villas_human.cpp
+    csv.cpp
+    raw.cpp
+    msg.cpp
 )
 
 add_library(formats STATIC ${FORMAT_SRC})

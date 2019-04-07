@@ -48,10 +48,10 @@ extern "C" {
 
 /** Initialize a message with default values */
 #define MSG_INIT(len, seq) (struct msg) {\
-	.version  = MSG_VERSION,	\
 	.type     = MSG_TYPE_DATA,	\
-	.length   = len,	 	\
-	.sequence = seq,		\
+	.version  = MSG_VERSION,	\
+	.length   = (uint16_t) (len),	\
+	.sequence = (uint32_t) (seq),	\
 }
 
 /** The timestamp of a message in struct timespec format */

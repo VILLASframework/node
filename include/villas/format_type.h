@@ -89,11 +89,11 @@ struct format_type {
 	 * Low-level interface
 	 */
 
-	/** @see format_type_sscan */
-	int (*sscan)(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
-
 	/** @see format_type_sprint */
 	int (*sprint)(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
+
+	/** @see format_type_sscan */
+	int (*sscan)(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
 
 	/** @} */
 

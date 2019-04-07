@@ -33,6 +33,10 @@
 #include <villas/common.h>
 #include <villas/list.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Forward declarations */
 struct node;
 
@@ -47,7 +51,7 @@ struct node_direction {
 
 	int enabled;
 	int builtin;		/**< This node should use built-in hooks by default. */
-	int vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
+	unsigned vectorize;		/**< Number of messages to send / recv at once (scatter / gather) */
 
 	struct vlist hooks;	/**< List of read / write hooks (struct hook). */
 	struct vlist signals;	/**< Signal description. */
@@ -72,3 +76,7 @@ int node_direction_destroy(struct node_direction *nd, struct node *n);
 struct vlist * node_direction_get_signals(struct node_direction *nd);
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif

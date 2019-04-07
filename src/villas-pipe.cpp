@@ -157,7 +157,7 @@ static void * send_loop(void *ctx)
 		allocated = sample_alloc_many(&dirs->send.pool, smps, node->out.vectorize);
 		if (allocated < 0)
 			throw RuntimeError("Failed to get {} samples out of send pool.", node->out.vectorize);
-		else if (allocated < node->out.vectorize)
+		else if (allocated < (int) node->out.vectorize)
 			logger->warn("Send pool underrun");
 
 		scanned = io_scan(dirs->send.io, smps, allocated);
@@ -219,7 +219,7 @@ static void * recv_loop(void *ctx)
 		allocated = sample_alloc_many(&dirs->recv.pool, smps, node->in.vectorize);
 		if (allocated < 0)
 			throw RuntimeError("Failed to allocate {} samples from receive pool.", node->in.vectorize);
-		else if (allocated < node->in.vectorize)
+		else if (allocated < (int) node->in.vectorize)
 			logger->warn("Receive pool underrun: allocated only {} of {} samples", allocated, node->in.vectorize);
 
 		release = allocated;

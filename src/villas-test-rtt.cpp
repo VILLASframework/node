@@ -37,7 +37,7 @@
 #include <villas/log.hpp>
 #include <villas/node.h>
 #include <villas/utils.hpp>
-#include <villas/hist.h>
+#include <villas/hist.hpp>
 #include <villas/timing.h>
 #include <villas/pool.h>
 #include <villas/kernel/rt.hpp>

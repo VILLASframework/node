@@ -32,7 +32,7 @@ if(WITH_NODE_INFLUXDB)
 endif()
 
 if(WITH_NODE_STATS)
-    list(APPEND NODE_SRC stats.c)
+    list(APPEND NODE_SRC stats.cpp)
 endif()
 
 if(WITH_NODE_SIGNAL)

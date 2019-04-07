@@ -1,7 +1,6 @@
-/** Memory allocators.
+/** Read / write sample data in different formats.
  *
- * @file
- * @author Dennis Potter <dennis@dennispotter.eu>
+ * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
@@ -21,21 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#pragma once
+#include <stdlib.h>
+#include <stdio.h>
 
-#include <villas/node.h>
+#include <villas/plugin.h>
+#include <villas/format_type.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+struct format_type * format_type_lookup(const char *name)
+{
+	struct plugin *p;
 
-struct memory_ib {
-    struct ibv_pd *pd;
-    struct memory_type *parent;
-};
+	p = plugin_lookup(PLUGIN_TYPE_FORMAT, name);
+	if (!p)
+		return nullptr;
 
-struct ibv_mr * memory_ib_get_mr(void *ptr);
-
-#ifdef __cplusplus
+	return &p->format;
 }
-#endif
+
+const char * format_type_name(struct format_type *vt)
+{
+	return plugin_name(vt);
+}

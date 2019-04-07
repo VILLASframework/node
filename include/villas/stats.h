@@ -27,7 +27,7 @@
 #include <jansson.h>
 
 #include <villas/common.h>
-#include <villas/hist.h>
+#include <villas/hist.hpp>
 #include <villas/signal.h>
 
 #ifdef __cplusplus

@@ -213,7 +213,7 @@ void json_object_extend_key_value(json_t *obj, const char *key, const char *valu
 		}
 
 		key1 = key2;
-		key2 = strtok_r(NULL, ".", &lasts);
+		key2 = strtok_r(nullptr, ".", &lasts);
  	}
 
 	/* Try to parse as integer */
@@ -349,7 +349,7 @@ int json_object_extend_str(json_t *obj, const char *str)
 	cpy = strdup(str);
 
 	key = strtok_r(cpy, "=", &lasts);
-	value = strtok_r(NULL, "", &lasts);
+	value = strtok_r(nullptr, "", &lasts);
 
 	if (!key || !value)
 		return -1;

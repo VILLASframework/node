@@ -225,7 +225,7 @@ public:
 	{
 		assert(state == STATE_STARTED);
 
-		stats_print_periodic(&stats, uri ? output->file : stdout, format, verbose, node);
+		stats_print_periodic(&stats, uri ? output->file : stdout, format, node);
 	}
 
 	virtual void parse(json_t *cfg)

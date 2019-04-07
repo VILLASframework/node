@@ -47,7 +47,7 @@ enum node_type_flags {
 
 /** C++ like vtable construct for node_types */
 struct node_type {
-	int vectorize;			/**< Maximal vector length supported by this node type. Zero is unlimited. */
+	unsigned vectorize;			/**< Maximal vector length supported by this node type. Zero is unlimited. */
 	int flags;
 
 	enum state state;		/**< State of this node-type. */

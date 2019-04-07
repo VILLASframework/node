@@ -42,34 +42,33 @@ endif()
 set(LIB_SRC
     config_helper.cpp
     config.cpp
-    mapping.c
-    memory.c
-    memory/heap.c
-    memory/hugepage.c
-    memory/managed.c
-    node_direction.c
-    node_type.c
-    node.c
-    path_destination.c
-    path_source.c
-    path.c
-    plugin.c
-    pool.c
-    queue_signalled.c
-    queue.c
-    sample.c
-    shmem.c
-    signal.c
-    stats.c
+    mapping.cpp
+    memory.cpp
+    memory/heap.cpp
+    memory/hugepage.cpp
+    memory/managed.cpp
+    node_direction.cpp
+    node_type.cpp
+    node.cpp
+    path_destination.cpp
+    path_source.cpp
+    path.cpp
+    plugin.cpp
+    pool.cpp
+    queue_signalled.cpp
+    queue.cpp
+    sample.cpp
+    shmem.cpp
+    signal.cpp
+    stats.cpp
     super_node.cpp
-    socket_addr.c
-    io.c
-    format_type.c
-
+    socket_addr.cpp
+    io.cpp
+    format_type.cpp
 )
 
 if(WITH_NODE_INFINIBAND)
-    list(APPEND LIB_SRC memory/ib.c)
+    list(APPEND LIB_SRC memory/ib.cpp)
 endif()
 
 add_subdirectory(nodes)
@@ -114,10 +113,10 @@ endif()
 # libnl3 is optional but required for network emulation and IRQ pinning
 if(LIBNL3_ROUTE_FOUND)
     list(APPEND LIB_SRC
-        kernel/nl.c
-        kernel/tc.c
-        kernel/tc_netem.c
-        kernel/if.c
+        kernel/nl.cpp
+        kernel/tc.cpp
+        kernel/tc_netem.cpp
+        kernel/if.cpp
     )
 
     list(APPEND INCLUDE_DIRS ${LIBNL3_ROUTE_INCLUDE_DIRS})
