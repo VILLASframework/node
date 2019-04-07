@@ -27,7 +27,6 @@ add_library(villas-common SHARED
 	json_buffer.cpp
 	compat.cpp
 	crypt.cpp
-	hash_table.cpp
 	hist.cpp
 	kernel/kernel.cpp
 	kernel/kernel.cpp
