@@ -25,7 +25,6 @@ add_executable(unit-tests-common
 	json_buffer.cpp
 	bitset.cpp
 	graph.cpp
-	hash_table.cpp
 	hist.cpp
 	kernel.cpp
 	list.cpp
