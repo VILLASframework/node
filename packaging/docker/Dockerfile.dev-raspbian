@@ -1,12 +1,4 @@
-# Dockerfile for VILLASnode development.
-#
-# This Dockerfile builds an image which contains all library dependencies
-# and tools to build VILLASnode.
-# However, VILLASnode itself it not part of the image.
-#
-# This image can be used for developing VILLASnode
-# by running:
-#   make docker
+# Dockerfile for cross-compilation in Docker targeting the Raspberyy Pi.
 #
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
@@ -35,24 +27,18 @@ ARG GIT_BRANCH=unknown
 ARG VERSION=unknown
 ARG VARIANT=unknown
 
+RUN echo 'APT::Default-Release "stable";' > /etc/apt/apt.conf.d/99defaultrelease
+RUN echo 'deb http://archive.raspbian.org/raspbian buster main contrib non-free rpi firmware' >> /etc/apt/sources.list.d/buster.list
+
 # Toolchain
 RUN apt-get update && apt-get install -y \
-	gcc g++ \
 	autoconf automake libtool \
-	pkg-config cmake make ninja-build \
-	texinfo git curl tar \
+	pkg-config cmake make \
+	git curl tar bzip2 \
 	protobuf-compiler protobuf-c-compiler
 
-# Several tools only needed for developement and testing
-RUN apt-get install -y \
-	doxygen dia graphviz \
-	openssh-client \
-	jq netcat \
-	iproute2 \
-	python-pip \
-	valgrind gdb gdbserver \
-	xmlto asciidoctor \
-	rabbitmq-server mosquitto
+RUN apt-get install -y -t buster \
+	gcc-8 g++-8
 
 # Dependencies
 RUN apt-get install -y \
@@ -74,6 +60,9 @@ RUN apt-get install -y \
 	libre-dev \
 	libusb-1.0-0-dev
 
+ENV CC=gcc-8
+ENV CXX=gcc-8
+
 # Build & Install libwebsockets
 RUN cd /tmp && \
 	git clone -b v3.1-stable https://github.com/warmcat/libwebsockets && \
@@ -91,17 +80,15 @@ RUN cd /tmp && \
 RUN cd /tmp && \
 	git clone -b rpm https://github.com/stv0g/uldaq && \
 	cd uldaq && \
-	autoreconf -i && ./configure && make -j$(nproc) install && \
+	autoreconf -i && ./configure --enable-examples=no && \
+	make -j$(nproc) install && \
 	rm -rf /tmp/*
 
 # Expose ports for HTTP and WebSocket frontend
 EXPOSE 80
 EXPOSE 443
 
-ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib64
-
-# Workaround for libnl3's search path for netem distributions
-RUN ln -s /usr/lib64/tc /usr/lib/tc
+ENV LD_LIBRARY_PATH /usr/local/lib
 
 WORKDIR /villas
 ENTRYPOINT bash

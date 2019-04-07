@@ -1,9 +1,5 @@
 # Dockerfile
 #
-# This image can be used for running VILLASnode
-# by running:
-#   make docker
-#
 # @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
 # @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
 # @license GNU General Public License (version 3)
@@ -31,14 +27,14 @@ ARG GIT_BRANCH=unknown
 ARG VERSION=unknown
 ARG VARIANT=unknown
 
-# This image is built by villas-node-git/packaging/docker/Dockerfile.dev
+# This image is built by villas-node-git/packaging/docker/Dockerfile.dev-raspbian
 FROM $BUILDER_IMAGE
 
 COPY . /villas/
 
 RUN rm -rf /villas/build && mkdir /villas/build
 WORKDIR /villas/build
-RUN cmake -DCPACK_GENERATOR=RPM ..
+RUN cmake ..
 RUN make -j$(nproc) install
 
 # For WebSocket / API access
