@@ -32,6 +32,7 @@
 #include <villas/utils.h>
 #include <villas/log.hpp>
 #include <villas/config.hpp>
+#include <villas/boxes.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/config_helper.hpp>
 
