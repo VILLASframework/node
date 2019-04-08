@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <linux/limits.h>
 
 #include <villas/node.h>
 #include <villas/sample.h>
@@ -38,7 +39,7 @@ static int test_rtt_case_start(struct test_rtt *t, int id)
 	struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, id);
 
 	/* Open file */
-	ret = io_open(&t->io, c->filename);
+	ret = io_open(&t->io, c->filename_formatted);
 	if (ret)
 		return ret;
 
@@ -70,6 +71,17 @@ static int test_rtt_case_stop(struct test_rtt *t, int id)
 	return 0;
 }
 
+static int test_rtt_case_destroy(struct test_rtt_case *c)
+{
+	if (c->filename)
+		free(c->filename);
+
+	if (c->filename_formatted)
+		free(c->filename_formatted);
+
+	return 0;
+}
+
 int test_rtt_prepare(struct node *n)
 {
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
@@ -77,11 +89,20 @@ int test_rtt_prepare(struct node *n)
 	int ret;
 	unsigned max_values = 0;
 
+	/* Take current for time for test case prefix */
+	time_t ts = time(nullptr);
+	struct tm tm;
+	gmtime_r(&ts, &tm);
+
 	for (size_t i = 0; i < vlist_length(&t->cases); i++) {
 		struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, i);
 
 		if (c->values > max_values)
 			max_values = c->values;
+
+		c->filename_formatted = (char *) alloc(NAME_MAX);
+	
+		strftime(c->filename_formatted, NAME_MAX, c->filename, &tm);
 	}
 
 	ret = signal_list_generate(&n->in.signals, max_values, SIGNAL_TYPE_FLOAT);
@@ -213,7 +234,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 				else
 					c->limit = 1000; /* default value */
 
-				c->filename = strf("%s/%s_%d_%.0f.log", t->output, t->prefix, c->values, c->rate);
+				c->filename = strf("%s/%s_values%d_rate%.0f.log", t->output, t->prefix, c->values, c->rate);
 
 				vlist_push(&t->cases, c);
 			}
@@ -231,7 +252,7 @@ int test_rtt_destroy(struct node *n)
 	int ret;
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
-	ret = vlist_destroy(&t->cases, nullptr, true);
+	ret = vlist_destroy(&t->cases, (dtor_cb_t) test_rtt_case_destroy, true);
 	if (ret)
 		return ret;
 

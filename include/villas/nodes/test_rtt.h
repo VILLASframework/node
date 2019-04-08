@@ -48,6 +48,7 @@ struct test_rtt_case {
 	unsigned limit;		/**< The number of samples we take per test. */
 
 	char *filename;
+	char *filename_formatted;
 };
 
 struct test_rtt {
