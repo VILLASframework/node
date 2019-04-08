@@ -132,7 +132,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 	json_t *json_rates = nullptr, *json_values = nullptr;
 	json_error_t err;
 
-	t->cooldown = 1.0;
+	t->cooldown = 0;
 
 	/* Generate list of test cases */
 	vlist_init(&t->cases);
@@ -392,12 +392,11 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 
 	if ((unsigned) t->counter >= c->limit) {
 		info("Stopping case #%d", t->current);
+		
+		t->counter = -1;
 
 		if (t->cooldown) {
 			info("Entering cooldown phase. Waiting %f seconds...", t->cooldown);
-
-			t->counter = -1;
-
 			ret = task_set_timeout(&t->task, t->cooldown);
 			if (ret < 0)
 				return ret;
