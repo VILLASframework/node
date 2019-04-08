@@ -65,6 +65,10 @@ static int json_dumpfd_callback(const char *buffer, size_t size, void *data)
 
 	if (write(*dest, buffer, size) == (ssize_t)size)
 		return 0;
+#else
+	(void)buffer;
+	(void)size;
+	(void)data;
 #endif /* HAVE_UNISTD_H */
 
 	return -1;
