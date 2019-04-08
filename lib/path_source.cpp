@@ -121,6 +121,12 @@ int path_source_read(struct path_source *ps, struct path *p, int i)
 			muxed_smps[i]->flags |= SAMPLE_HAS_SEQUENCE;
 		}
 
+		/* We reset the sample length after each restart of the simulation.
+		 * This is necessary for the test_rtt node to work properly.
+		 */
+		if (tomux_smps[i]->flags & SAMPLE_IS_FIRST)
+			muxed_smps[i]->length = 0;
+
 		muxed_smps[i]->ts = tomux_smps[i]->ts;
 		muxed_smps[i]->flags |= tomux_smps[i]->flags & (SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_TS_RECEIVED);
 
