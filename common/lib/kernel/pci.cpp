@@ -44,7 +44,7 @@ int pci_init(struct pci *p)
 	snprintf(path, sizeof(path), "%s/bus/pci/devices", SYSFS_PATH);
 
 	dp = opendir(path);
-	if (dp == NULL) {
+	if (dp == nullptr) {
 		serror("Failed to detect PCI devices");
 		return -1;
 	}
@@ -92,7 +92,7 @@ int pci_init(struct pci *p)
 
 int pci_destroy(struct pci *p)
 {
-	vlist_destroy(&p->devices, NULL, true);
+	vlist_destroy(&p->devices, nullptr, true);
 
 	return 0;
 }
@@ -258,7 +258,7 @@ size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
 	FILE* f;
 	char sysfs[1024];
 
-	assert(regions != NULL);
+	assert(regions != nullptr);
 
 	snprintf(sysfs, sizeof(sysfs), "%s/bus/pci/devices/%04x:%02x:%02x.%x/resource",
 	         SYSFS_PATH, d->slot.domain, d->slot.bus, d->slot.device, d->slot.function);
@@ -272,7 +272,7 @@ size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
 	size_t valid_regions = 0;
 
 	ssize_t bytesRead;
-	char* line = NULL;
+	char* line = nullptr;
 	size_t len = 0;
 
 	int region = 0;
@@ -295,7 +295,7 @@ size_t pci_get_regions(const struct pci_device *d, struct pci_region** regions)
 		free(line);
 
 		/* Required for getline() to allocate a new buffer on the next iteration. */
-		line = NULL;
+		line = nullptr;
 		len = 0;
 
 		if (tokens[0] != tokens[1]) {

@@ -241,7 +241,7 @@ int vfio_pci_attach(struct vfio_device *d, struct vfio_container *c, struct pci_
 int vfio_device_attach(struct vfio_device *d, struct vfio_container *c, const char *name, int index)
 {
 	int ret;
-	struct vfio_group *g = NULL;
+	struct vfio_group *g = nullptr;
 
 	/* Check if group already exists */
 	for (size_t i = 0; i < vlist_length(&c->groups); i++) {
@@ -375,7 +375,7 @@ int vfio_pci_msi_find(struct vfio_device *d, int nos[32])
 		/* Find last column of line */
 		do {
 			last = col;
-		} while ((col = strtok_r(NULL, " ", &lasts)));
+		} while ((col = strtok_r(nullptr, " ", &lasts)));
 
 
 		ret = sscanf(last, "vfio-msi[%u](%12[0-9:])", &idx, name);
@@ -547,7 +547,7 @@ void * vfio_map_region(struct vfio_device *d, int idx)
 	if (!(r->flags & VFIO_REGION_INFO_FLAG_MMAP))
 		return MAP_FAILED;
 
-	d->mappings[idx] = mmap(NULL, r->size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_32BIT, d->fd, r->offset);
+	d->mappings[idx] = mmap(nullptr, r->size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_32BIT, d->fd, r->offset);
 
 	return d->mappings[idx];
 }
@@ -566,7 +566,7 @@ int vfio_unmap_region(struct vfio_device *d, int idx)
 	if (ret)
 		return -2;
 
-	d->mappings[idx] = NULL;
+	d->mappings[idx] = nullptr;
 
 	return 0;
 }

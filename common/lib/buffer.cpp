@@ -72,7 +72,7 @@ int buffer_append(struct buffer *b, const char *data, size_t len)
 
 int buffer_parse_json(struct buffer *b, json_t **j)
 {
-	*j = json_loadb(b->buf, b->len, 0, NULL);
+	*j = json_loadb(b->buf, b->len, 0, nullptr);
 	if (!*j)
 		return -1;
 
