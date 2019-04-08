@@ -44,7 +44,7 @@ if(WITH_NODE_LOOPBACK)
 endif()
 
 if(WITH_NODE_TEST_RTT)
-    list(APPEND NODE_SRC test_rtt.c)
+    list(APPEND NODE_SRC test_rtt.cpp)
 endif()
 
 if(WITH_NODE_SOCKET)

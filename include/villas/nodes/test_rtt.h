@@ -44,8 +44,8 @@ struct sample;
 
 struct test_rtt_case {
 	double rate;
-	int values;
-	int limit;		/**< The number of samples we take per test. */
+	unsigned values;
+	unsigned limit;		/**< The number of samples we take per test. */
 
 	char *filename;
 };
@@ -57,7 +57,7 @@ struct test_rtt {
 
 	double cooldown;	/**< Number of seconds to wait beween tests. */
 
-	int current;		/**< Index of current test in test_rtt::cases */
+	unsigned current;		/**< Index of current test in test_rtt::cases */
 	int counter;
 
 	struct vlist cases;	/**< List of test cases */

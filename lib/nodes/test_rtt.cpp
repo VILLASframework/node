@@ -30,6 +30,8 @@
 #include <villas/plugin.h>
 #include <villas/nodes/test_rtt.h>
 
+static struct plugin p;
+
 static int test_rtt_case_start(struct test_rtt *t, int id)
 {
 	int ret;
@@ -72,7 +74,8 @@ int test_rtt_prepare(struct node *n)
 {
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
-	int ret, max_values = 0;
+	int ret;
+	unsigned max_values = 0;
 
 	for (size_t i = 0; i < vlist_length(&t->cases); i++) {
 		struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, i);
@@ -97,15 +100,15 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 	const char *output = ".";
 	const char *prefix = node_name_short(n);
 
-	int *rates = NULL;
-	int *values = NULL;
+	int *rates = nullptr;
+	int *values = nullptr;
 
 	int numrates = 0;
 	int numvalues = 0;
 
 	size_t i;
 	json_t *json_cases, *json_case, *json_val;
-	json_t *json_rates = NULL, *json_values = NULL;
+	json_t *json_rates = nullptr, *json_values = nullptr;
 	json_error_t err;
 
 	t->cooldown = 1.0;
@@ -164,8 +167,8 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 		else
 			error("The 'values' setting of node %s must be an integer or an array of integers", node_name(n));
 
-		rates  = realloc(rates, sizeof(rates[0]) * numrates);
-		values = realloc(values, sizeof(values[0]) * numvalues);
+		rates  = (int *) realloc(rates, sizeof(rates[0]) * numrates);
+		values = (int *) realloc(values, sizeof(values[0]) * numvalues);
 
 		if (json_is_array(json_rates)) {
 			size_t j;
@@ -228,7 +231,7 @@ int test_rtt_destroy(struct node *n)
 	int ret;
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
-	ret = vlist_destroy(&t->cases, NULL, true);
+	ret = vlist_destroy(&t->cases, nullptr, true);
 	if (ret)
 		return ret;
 
@@ -257,14 +260,16 @@ int test_rtt_start(struct node *n)
 	int ret;
 	struct stat st;
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
-	struct test_rtt_case *c = vlist_first(&t->cases);
+	struct test_rtt_case *c = (struct test_rtt_case *) vlist_first(&t->cases);
 
 	/* Create folder for results if not present */
 	ret = stat(t->output, &st);
 	if (ret || !S_ISDIR(st.st_mode)) {
 		ret = mkdir(t->output, 0777);
-		if (ret)
+		if (ret) {
+			warning("Failed to create output director: %s", t->output);
 			return ret;
+		}
 	}
 
 	ret = io_init(&t->io, t->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_DATA);
@@ -309,7 +314,8 @@ int test_rtt_stop(struct node *n)
 
 int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	int i, ret, values;
+	int ret;
+	unsigned i, values;
 	uint64_t steps;
 
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
@@ -367,7 +373,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 		t->counter++;
 	}
 
-	if (t->counter >= c->limit) {
+	if ((unsigned) t->counter >= c->limit) {
 		info("Entering cooldown phase. Waiting %f seconds...", t->cooldown);
 
 		t->counter = -1;
@@ -389,7 +395,7 @@ int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 
 	struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, t->current);
 
-	int i;
+	unsigned i;
 	for (i = 0; i < cnt; i++) {
 		if (smps[i]->length != c->values) {
 			warning("Discarding invalid sample due to mismatching length: expecting=%d, has=%d", c->values, smps[i]->length);
@@ -411,25 +417,30 @@ int test_rtt_poll_fds(struct node *n, int fds[])
 	return 1;
 }
 
-static struct plugin p = {
-	.name		= "test_rtt",
-	.description	= "Test round-trip time with loopback",
-	.type		= PLUGIN_TYPE_NODE,
-	.node		= {
-		.vectorize	= 0,
-		.flags		= NODE_TYPE_PROVIDES_SIGNALS,
-		.size		= sizeof(struct test_rtt),
-		.parse		= test_rtt_parse,
-		.prepare	= test_rtt_prepare,
-		.destroy	= test_rtt_destroy,
-		.print		= test_rtt_print,
-		.start		= test_rtt_start,
-		.stop		= test_rtt_stop,
-		.read		= test_rtt_read,
-		.write		= test_rtt_write,
-		.poll_fds	= test_rtt_poll_fds
-	}
-};
+__attribute__((constructor(110)))
+static void register_plugin() {
+	p.name		= "test_rtt";
+	p.description	= "Test round-trip time with loopback";
+	p.type		= PLUGIN_TYPE_NODE;
+	p.node.instances.state = STATE_DESTROYED;
+	p.node.vectorize	= 0;
+	p.node.flags		= NODE_TYPE_PROVIDES_SIGNALS;
+	p.node.size		= sizeof(struct test_rtt);
+	p.node.parse		= test_rtt_parse;
+	p.node.prepare	= test_rtt_prepare;
+	p.node.destroy	= test_rtt_destroy;
+	p.node.print		= test_rtt_print;
+	p.node.start		= test_rtt_start;
+	p.node.stop		= test_rtt_stop;
+	p.node.read		= test_rtt_read;
+	p.node.write		= test_rtt_write;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}
