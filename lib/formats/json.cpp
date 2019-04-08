@@ -67,8 +67,8 @@ static int json_unpack_timestamps(json_t *json_ts, struct sample *smp)
 {
 	int ret;
 	json_error_t err;
-	json_t *json_ts_origin = nullptr;
-	json_t *json_ts_received = nullptr;
+	json_t *json_ts_origin = NULL;
+	json_t *json_ts_received = NULL;
 
 	json_unpack_ex(json_ts, &err, 0, "{ s?: o, s?: o }",
 		"origin",   &json_ts_origin,
@@ -173,7 +173,7 @@ static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *sm
 {
 	int ret;
 	json_error_t err;
-	json_t *json_data, *json_value, *json_ts = nullptr;
+	json_t *json_data, *json_value, *json_ts = NULL;
 	size_t i;
 	int64_t sequence = -1;
 

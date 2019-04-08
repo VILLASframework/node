@@ -37,8 +37,8 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 {
 	json_error_t err;
 	json_t *json_data, *json_name, *json_unit, *json_value;
-	json_t *json_created = nullptr;
-	json_t *json_sequence = nullptr;
+	json_t *json_created = NULL;
+	json_t *json_sequence = NULL;
 
 	if (smp->flags & SAMPLE_HAS_TS_ORIGIN)
 		json_created = json_integer(time_to_double(&smp->ts.origin) * 1e3);
@@ -67,7 +67,7 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 		if (sig->unit)
 			json_unit = json_string(sig->unit);
 		else
-			json_unit = nullptr;
+			json_unit = NULL;
 
 		json_value = json_pack_ex(&err, 0, "{ s: o, s: f }",
 			"name", json_name,
@@ -94,7 +94,7 @@ static int json_reserve_pack_sample(struct io *io, json_t **j, struct sample *sm
 	*j = json_pack_ex(&err, 0, "{ s: o }",
 		"measurements", json_data
 	);
-	if (*j == nullptr)
+	if (*j == NULL)
 		return -1;
 #if 0
 #ifdef JSON_RESERVE_INTEGER_TARGET
@@ -124,8 +124,8 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 	int ret, idx;
 	double created = -1;
 	json_error_t err;
-	json_t *json_value, *json_data = nullptr;
-	json_t *json_origin = nullptr, *json_target = nullptr;
+	json_t *json_value, *json_data = NULL;
+	json_t *json_origin = NULL, *json_target = NULL;
 	size_t i;
 
 	ret = json_unpack_ex(json_smp, &err, 0, "{ s?: o, s?: o, s?: o, s?: o }",
@@ -173,7 +173,7 @@ static int json_reserve_unpack_sample(struct io *io, json_t *json_smp, struct sa
 	smp->length = 0;
 
 	json_array_foreach(json_data, i, json_value) {
-		const char *name, *unit = nullptr;
+		const char *name, *unit = NULL;
 		double value;
 
 		ret = json_unpack_ex(json_value, &err, 0, "{ s: s, s?: s, s: F, s?: F }",
