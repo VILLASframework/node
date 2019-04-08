@@ -55,7 +55,6 @@ static pthread_t re_pthread;
 
 using namespace villas::node;
 
-/* Forward declarations */
 static struct plugin p;
 
 static int rtp_set_rate(struct node *n, double rate)
@@ -670,6 +669,7 @@ static void register_plugin() {
 	p.node.poll_fds	= rtp_poll_fds;
 	p.node.netem_fds	= rtp_netem_fds;
 
+	vlist_init(&p.node.instances);
 	vlist_push(&plugins, &p);
 }
 

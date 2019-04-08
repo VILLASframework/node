@@ -260,6 +260,7 @@ static void register_plugin() {
 	p.name		= "stats";
 	p.description	= "Send statistics to another node";
 	p.type		= PLUGIN_TYPE_NODE;
+	p.node.instances.state = STATE_DESTROYED;
 	p.node.vectorize	= 1;
 	p.node.flags		= 0;
 	p.node.size		= sizeof(struct stats_node);
@@ -273,6 +274,7 @@ static void register_plugin() {
 	p.node.read		= stats_node_read;
 	p.node.poll_fds	= stats_node_poll_fds;
 
+	vlist_init(&p.node.instances);
 	vlist_push(&plugins, &p);
 }
 
