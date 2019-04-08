@@ -50,10 +50,10 @@ int node_init(struct node *n, struct node_type *vt)
 	n->_vt = vt;
 	n->_vd = alloc(vt->size);
 
-	n->stats = NULL;
-	n->name = NULL;
-	n->_name = NULL;
-	n->_name_long = NULL;
+	n->stats = nullptr;
+	n->name = nullptr;
+	n->_name = nullptr;
+	n->_name_long = nullptr;
 	n->enabled = 1;
 
 #ifdef __linux__
@@ -61,8 +61,8 @@ int node_init(struct node *n, struct node_type *vt)
 #endif /* __linux__ */
 
 #ifdef WITH_NETEM
-	n->tc_qdisc = NULL;
-	n->tc_classifier = NULL;
+	n->tc_qdisc = nullptr;
+	n->tc_classifier = nullptr;
 #endif /* WITH_NETEM */
 
 	/* Default values */
@@ -114,7 +114,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 	int ret;
 
 	json_error_t err;
-	json_t *json_netem = NULL;
+	json_t *json_netem = nullptr;
 
 	const char *type;
 
@@ -153,7 +153,7 @@ int node_parse(struct node *n, json_t *json, const char *name)
 		if (enabled)
 			tc_netem_parse(&n->tc_qdisc, json_netem);
 		else
-			n->tc_qdisc = NULL;
+			n->tc_qdisc = nullptr;
 #endif /* WITH_NETEM */
 	}
 
@@ -423,7 +423,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	int rread = hook_list_process(&n->in.hooks, smps, nread);
 	int skipped = nread - rread;
 
-	if (skipped > 0 && n->stats != NULL) {
+	if (skipped > 0 && n->stats != nullptr) {
 		stats_update(n->stats, STATS_METRIC_SMPS_SKIPPED, skipped);
 	}
 
@@ -547,7 +547,7 @@ int node_list_parse(struct vlist *list, json_t *cfg, struct vlist *all)
 {
 	struct node *node;
 	const char *str;
-	char *allstr = NULL;
+	char *allstr = nullptr;
 
 	size_t index;
 	json_t *elm;

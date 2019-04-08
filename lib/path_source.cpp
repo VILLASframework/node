@@ -52,7 +52,7 @@ int path_source_destroy(struct path_source *ps)
 	if (ret)
 		return ret;
 
-	ret = vlist_destroy(&ps->mappings, NULL, true);
+	ret = vlist_destroy(&ps->mappings, nullptr, true);
 	if (ret)
 		return ret;
 

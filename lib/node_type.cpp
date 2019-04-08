@@ -71,7 +71,7 @@ struct node_type * node_type_lookup(const char *name)
 
 	p = plugin_lookup(PLUGIN_TYPE_NODE, name);
 	if (!p)
-		return NULL;
+		return nullptr;
 
 	return &p->node;
 }

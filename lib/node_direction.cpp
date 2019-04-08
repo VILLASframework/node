@@ -37,7 +37,7 @@ int node_direction_prepare(struct node_direction *nd, struct node *n)
 	int t = nd->direction == NODE_DIR_OUT ? HOOK_NODE_WRITE : HOOK_NODE_READ;
 	int m = nd->builtin ? t | HOOK_BUILTIN : 0;
 
-	ret = hook_list_prepare(&nd->hooks, &nd->signals, m, NULL, n);
+	ret = hook_list_prepare(&nd->hooks, &nd->signals, m, nullptr, n);
 	if (ret)
 		return ret;
 #endif /* WITH_HOOKS */
@@ -104,8 +104,8 @@ int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
 	assert(nd->state == STATE_INITIALIZED);
 
 	json_error_t err;
-	json_t *json_hooks = NULL;
-	json_t *json_signals = NULL;
+	json_t *json_hooks = nullptr;
+	json_t *json_signals = nullptr;
 
 	nd->cfg = cfg;
 
@@ -159,7 +159,7 @@ int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
 	if (json_hooks) {
 		int m = nd->direction == NODE_DIR_OUT ? HOOK_NODE_WRITE : HOOK_NODE_READ;
 
-		ret = hook_list_parse(&nd->hooks, json_hooks, m, NULL, n);
+		ret = hook_list_parse(&nd->hooks, json_hooks, m, nullptr, n);
 		if (ret < 0)
 			return ret;
 	}

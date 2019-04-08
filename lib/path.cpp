@@ -65,7 +65,7 @@ static void * path_run_single(void *arg)
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 /** Main thread function per path: read samples -> write samples */
@@ -106,7 +106,7 @@ static void * path_run_poll(void *arg)
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 int path_init(struct path *p)
@@ -138,7 +138,7 @@ int path_init(struct path *p)
 		return ret;
 #endif /* WITH_HOOKS */
 
-	p->_name = NULL;
+	p->_name = nullptr;
 
 	/* Default values */
 	p->mode = PATH_MODE_ANY;
@@ -160,7 +160,7 @@ static int path_prepare_poll(struct path *p)
 {
 	int fds[16], ret, n = 0, m;
 
-	p->reader.pfds = NULL;
+	p->reader.pfds = nullptr;
 	p->reader.nfds = 0;
 
 	for (unsigned i = 0; i < vlist_length(&p->sources); i++) {
@@ -271,7 +271,7 @@ int path_prepare(struct path *p)
 						return -1;
 				}
 
-				vlist_extend(&p->signals, me->offset + j + 1, NULL);
+				vlist_extend(&p->signals, me->offset + j + 1, nullptr);
 				vlist_set(&p->signals, me->offset + j, sig);
 			}
 		}
@@ -281,7 +281,7 @@ int path_prepare(struct path *p)
 	int m = p->builtin ? HOOK_PATH | HOOK_BUILTIN : 0;
 
 	/* Add internal hooks if they are not already in the list */
-	ret = hook_list_prepare(&p->hooks, &p->signals, m, p, NULL);
+	ret = hook_list_prepare(&p->hooks, &p->signals, m, p, nullptr);
 	if (ret)
 		return ret;
 #endif /* WITH_HOOKS */
@@ -312,11 +312,11 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 
 	json_error_t err;
 	json_t *json_in;
-	json_t *json_out = NULL;
-	json_t *json_hooks = NULL;
-	json_t *json_mask = NULL;
+	json_t *json_out = nullptr;
+	json_t *json_hooks = nullptr;
+	json_t *json_mask = nullptr;
 
-	const char *mode = NULL;
+	const char *mode = nullptr;
 
 	struct vlist sources = { .state = STATE_DESTROYED };
 	struct vlist destinations = { .state = STATE_DESTROYED };
@@ -369,7 +369,7 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 
 	for (size_t i = 0; i < vlist_length(&sources); i++) {
 		struct mapping_entry *me = (struct mapping_entry *) vlist_at(&sources, i);
-		struct path_source *ps = NULL;
+		struct path_source *ps = nullptr;
 
 		/* Check if there is already a path_source for this source */
 		for (size_t j = 0; j < vlist_length(&p->sources); j++) {
@@ -430,7 +430,7 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 		json_array_foreach(json_mask, i, json_entry) {
 			const char *name;
 			struct node *node;
-			struct path_source *ps = NULL;
+			struct path_source *ps = nullptr;
 
 			name = json_string_value(json_entry);
 			if (!name) {
@@ -473,7 +473,7 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 
 #ifdef WITH_HOOKS
 	if (json_hooks) {
-		ret = hook_list_parse(&p->hooks, json_hooks, HOOK_PATH, p, NULL);
+		ret = hook_list_parse(&p->hooks, json_hooks, HOOK_PATH, p, nullptr);
 		if (ret)
 			return ret;
 	}
@@ -489,11 +489,11 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 			p->poll = 0;
 	}
 
-	ret = vlist_destroy(&sources, NULL, false);
+	ret = vlist_destroy(&sources, nullptr, false);
 	if (ret)
 		return ret;
 
-	ret = vlist_destroy(&destinations, NULL, false);
+	ret = vlist_destroy(&destinations, nullptr, false);
 	if (ret)
 		return ret;
 
@@ -638,7 +638,7 @@ int path_start(struct path *p)
 	 * does not offer a file descriptor for polling, we will use a special
 	 * thread function.
 	 */
-	ret = pthread_create(&p->tid, NULL, p->poll ? path_run_poll : path_run_single, p);
+	ret = pthread_create(&p->tid, nullptr, p->poll ? path_run_poll : path_run_single, p);
 	if (ret)
 		return ret;
 
@@ -667,7 +667,7 @@ int path_stop(struct path *p)
 	if (ret && ret != ESRCH)
 	 	return ret;
 
-	ret = pthread_join(p->tid, NULL);
+	ret = pthread_join(p->tid, nullptr);
 	if (ret)
 		return ret;
 
@@ -780,7 +780,7 @@ int path_uses_node(struct path *p, struct node *n)
 bool path_is_simple(const struct path *p)
 {
 	int ret;
-	const char *in = NULL, *out = NULL;
+	const char *in = nullptr, *out = nullptr;
 
 	json_error_t err;
 	ret = json_unpack_ex(p->cfg, &err, 0, "{ s: s, s: s }", "in", &in, "out", &out);

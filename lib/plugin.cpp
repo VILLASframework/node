@@ -39,7 +39,7 @@ struct plugin * plugin_lookup(enum plugin_type type, const char *name)
 			return p;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 void plugin_dump(enum plugin_type type)
