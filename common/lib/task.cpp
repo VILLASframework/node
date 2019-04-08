@@ -80,7 +80,7 @@ int task_set_next(struct task *t, struct timespec *next)
 		.it_value = t->next
 	};
 
-	ret = timerfd_settime(t->fd, TFD_TIMER_ABSTIME, &its, NULL);
+	ret = timerfd_settime(t->fd, TFD_TIMER_ABSTIME, &its, nullptr);
 	if (ret)
 		return ret;
   #endif /* PERIODIC_TASK_IMPL == TIMERFD */
@@ -113,7 +113,7 @@ int task_set_rate(struct task *t, double rate)
 		.it_value = t->period
 	};
 
-	ret = timerfd_settime(t->fd, 0, &its, NULL);
+	ret = timerfd_settime(t->fd, 0, &its, nullptr);
 	if (ret)
 		return ret;
   #endif /* PERIODIC_TASK_IMPL */
@@ -148,7 +148,7 @@ uint64_t task_wait(struct task *t)
 
   #if PERIODIC_TASK_IMPL == CLOCK_NANOSLEEP
 	do {
-		ret = clock_nanosleep(t->clock, TIMER_ABSTIME, &t->next, NULL);
+		ret = clock_nanosleep(t->clock, TIMER_ABSTIME, &t->next, nullptr);
 	} while (ret == EINTR);
   #elif PERIODIC_TASK_IMPL == NANOSLEEP
 	struct timespec req, rem = time_diff(&now, &t->next);

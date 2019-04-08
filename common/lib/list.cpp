@@ -57,11 +57,11 @@ int vlist_init(struct vlist *l)
 {
 	assert(l->state == STATE_DESTROYED);
 
-	pthread_mutex_init(&l->lock, NULL);
+	pthread_mutex_init(&l->lock, nullptr);
 
 	l->length = 0;
 	l->capacity = 0;
-	l->array = NULL;
+	l->array = nullptr;
 	l->state = STATE_INITIALIZED;
 
 	return 0;
@@ -86,7 +86,7 @@ int vlist_destroy(struct vlist *l, dtor_cb_t destructor, bool release)
 
 	l->length = -1;
 	l->capacity = 0;
-	l->array = NULL;
+	l->array = nullptr;
 	l->state = STATE_DESTROYED;
 
 	pthread_mutex_unlock(&l->lock);
@@ -238,7 +238,7 @@ void * vlist_search(struct vlist *l, cmp_cb_t cmp, void *ctx)
 			goto out;
 	}
 
-	e = NULL; /* not found */
+	e = nullptr; /* not found */
 
 out:	pthread_mutex_unlock(&l->lock);
 

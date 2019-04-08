@@ -64,7 +64,7 @@ int kernel_get_cacheline_size()
 #elif defined(__MACH__)
 	  /* Open the command for reading. */
 	FILE *fp = popen("sysctl -n machdep.cpu.cache.linesize", "r");
-	if (fp == NULL)
+	if (fp == nullptr)
 		return -1;
 
 	int ret, size;
@@ -92,7 +92,7 @@ int kernel_get_page_size()
 int kernel_get_hugepage_size()
 {
 #ifdef __linux__
-	char *key, *value, *unit, *line = NULL, *lasts;
+	char *key, *value, *unit, *line = nullptr, *lasts;
 	int sz = -1;
 	size_t len = 0;
 	FILE *f;
@@ -103,11 +103,11 @@ int kernel_get_hugepage_size()
 
 	while (getline(&line, &len, f) != -1) {
 		key   = strtok_r(line, ": ", &lasts);
-		value = strtok_r(NULL, " ", &lasts);
-		unit  = strtok_r(NULL, "\n", &lasts);
+		value = strtok_r(nullptr, " ", &lasts);
+		unit  = strtok_r(nullptr, "\n", &lasts);
 
 		if (!strcmp(key, "Hugepagesize") && !strcmp(unit, "kB")) {
-			sz = strtoul(value, NULL, 10) * 1024;
+			sz = strtoul(value, nullptr, 10) * 1024;
 			break;
 		}
 	}
@@ -174,7 +174,7 @@ int kernel_module_loaded(const char *module)
 {
 	FILE *f;
 	int ret = -1;
-	char *line = NULL;
+	char *line = nullptr;
 	size_t len = 0;
 
 	f = fopen(PROCFS_PATH "/modules", "r");
@@ -222,7 +222,7 @@ int kernel_get_cmdline_param(const char *param, char *buf, size_t len)
 				return 0; /* found */
 			}
 		}
-	} while ((tok = strtok_r(NULL, " \t", &lasts)));
+	} while ((tok = strtok_r(nullptr, " \t", &lasts)));
 
 out:
 	fclose(f);
@@ -285,7 +285,7 @@ int kernel_irq_setaffinity(unsigned irq, uintmax_t aff, uintmax_t *old)
 
 int kernel_get_cpu_frequency(uint64_t *freq)
 {
-	char *line = NULL, *sep, *end;
+	char *line = nullptr, *sep, *end;
 	size_t len = 0;
 	double dfreq;
 	int ret;

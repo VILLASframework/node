@@ -213,11 +213,11 @@ AFILE * afopen(const char *uri, const char *mode)
 	}
 	else { /* Open local file by prepending file:// schema. */
 		if (strlen(uri) <= 1)
-			return NULL;
+			return nullptr;
 
 		/* Handle relative paths */
 		if (uri[0] != '/') {
-			cwd = getcwd(NULL, 0);
+			cwd = getcwd(nullptr, 0);
 
 			af->uri = strf("file://%s/%s", cwd, uri);
 
@@ -266,7 +266,7 @@ out1:	fclose(af->file);
 out2:	free(af->uri);
 	free(af);
 
-	return NULL;
+	return nullptr;
 }
 
 int afclose(AFILE *af)

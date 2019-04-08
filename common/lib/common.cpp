@@ -65,6 +65,6 @@ const char * state_print(enum state s)
 			break;
 
 		default:
-			return NULL;
+			return nullptr;
 	}
 }

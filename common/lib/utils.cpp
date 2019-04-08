@@ -234,7 +234,7 @@ char * vstrcatf(char **dest, const char *fmt, va_list ap)
 	int i = vasprintf(&tmp, fmt, ap);
 
 	*dest = (char *)(realloc(*dest, n + i + 1));
-	if (*dest != NULL)
+	if (*dest != nullptr)
 		strncpy(*dest+n, tmp, i + 1);
 
 	free(tmp);
@@ -244,7 +244,7 @@ char * vstrcatf(char **dest, const char *fmt, va_list ap)
 
 char * strf(const char *fmt, ...)
 {
-	char *buf = NULL;
+	char *buf = nullptr;
 
 	va_list ap;
 	va_start(ap, fmt);
@@ -256,7 +256,7 @@ char * strf(const char *fmt, ...)
 
 char * vstrf(const char *fmt, va_list va)
 {
-	char *buf = NULL;
+	char *buf = nullptr;
 
 	vstrcatf(&buf, fmt, va);
 

@@ -59,8 +59,8 @@ int tsc_init(struct tsc *t)
 
 		/** @todo: machdep.tsc.frequency seems to be a measured frequency (based on local APIC?
 		 *         We should figure out which frequency is more accurate */
-//		ret = sysctlbyname("hw.cpufrequency", &frequency, &lenp, NULL, 0);
-		ret = sysctlbyname("machdep.tsc.frequency", &frequency, &lenp, NULL, 0);
+//		ret = sysctlbyname("hw.cpufrequency", &frequency, &lenp, nullptr, 0);
+		ret = sysctlbyname("machdep.tsc.frequency", &frequency, &lenp, nullptr, 0);
 		if (ret)
 			return ret;
 
