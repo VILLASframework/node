@@ -336,11 +336,12 @@ int test_rtt_stop(struct node *n)
 int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
-	unsigned i, values;
+	unsigned i;
 	uint64_t steps;
 
 	struct test_rtt *t = (struct test_rtt *) n->_vd;
 
+	/* Handle start/stop of new cases */
 	if (t->counter == -1) {
 		if (t->current < 0) {
 			t->current = 0;
@@ -353,7 +354,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 			t->current++;
 		}
 
-		if (t->current >= vlist_length(&t->cases)) {
+		if ((unsigned) t->current >= vlist_length(&t->cases)) {
 			info("This was the last case. Stopping node %s", node_name(n));
 
 			n->state = STATE_STOPPING;
@@ -361,8 +362,6 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 			return -1;
 		}
 		else {
-			struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, t->current);
-			info("Starting case #%d: filename=%s, rate=%f, values=%d, limit=%d", t->current, c->filename, c->rate, c->values, c->limit);
 			ret = test_rtt_case_start(t, t->current);
 			if (ret)
 				return ret;
@@ -376,17 +375,14 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 	if (steps > 1)
 		warning("Skipped %ld steps", (long) (steps - 1));
 
+	if (t->counter == 0)
+		info("Starting case #%d: filename=%s, rate=%f, values=%d, limit=%d", t->current, c->filename_formatted, c->rate, c->values, c->limit);
+
 	struct timespec now = time_now();
 
 	/* Prepare samples */
 	for (i = 0; i < cnt; i++) {
-		values = c->values;
-		if (smps[i]->capacity < values) {
-			values = smps[i]->capacity;
-			warning("Sample capacity too small. Limiting to %d values.", values);
-		}
-
-		smps[i]->length = values;
+		smps[i]->length = c->values;
 		smps[i]->sequence = t->counter;
 		smps[i]->ts.origin = now;
 		smps[i]->flags = SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_TS_ORIGIN;
@@ -395,13 +391,17 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 	}
 
 	if ((unsigned) t->counter >= c->limit) {
-		info("Entering cooldown phase. Waiting %f seconds...", t->cooldown);
+		info("Stopping case #%d", t->current);
 
-		t->counter = -1;
+		if (t->cooldown) {
+			info("Entering cooldown phase. Waiting %f seconds...", t->cooldown);
 
-		ret = task_set_timeout(&t->task, t->cooldown);
-		if (ret < 0)
-			return ret;
+			t->counter = -1;
+
+			ret = task_set_timeout(&t->task, t->cooldown);
+			if (ret < 0)
+				return ret;
+		}
 	}
 
 	return i;

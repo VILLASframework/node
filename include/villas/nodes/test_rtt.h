@@ -58,7 +58,7 @@ struct test_rtt {
 
 	double cooldown;	/**< Number of seconds to wait beween tests. */
 
-	unsigned current;		/**< Index of current test in test_rtt::cases */
+	int current;		/**< Index of current test in test_rtt::cases */
 	int counter;
 
 	struct vlist cases;	/**< List of test cases */
