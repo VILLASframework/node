@@ -224,19 +224,26 @@ void villas_human_header(struct io *io, const struct sample *smp)
 	fprintf(f, "%c", io->delimiter);
 }
 
-static struct plugin p = {
-	.name = "villas.human",
-	.description = "VILLAS human readable format",
-	.type = PLUGIN_TYPE_FORMAT,
-	.format = {
-		.header = villas_human_header,
-		.sprint	= villas_human_sprint,
-		.sscan	= villas_human_sscan,
-		.size	= 0,
-		.flags	= IO_NEWLINES | SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA,
-		.delimiter = '\n',
-		.separator = '\t'
-	}
-};
+static struct plugin p;
+__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
+        if (plugins.state == STATE_DESTROYED)
+	                vlist_init(&plugins);
 
-REGISTER_PLUGIN(&p);
+	p.name = "villas.human";
+	p.description = "VILLAS human readable format";
+	p.type = PLUGIN_TYPE_FORMAT;
+	p.format.header = villas_human_header;
+	p.format.sprint	= villas_human_sprint;
+	p.format.sscan	= villas_human_sscan;
+	p.format.size	= 0;
+	p.format.flags	= IO_NEWLINES | SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+	p.format.delimiter = '\n';
+	p.format.separator = '\t';
+
+        vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
+        if (plugins.state != STATE_DESTROYED)
+                vlist_remove_all(&plugins, &p);
+}

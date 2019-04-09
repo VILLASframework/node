@@ -323,17 +323,25 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 	return i;
 }
 
-static struct plugin p = {
-	.name = "json.reserve",
-	.description = "RESERVE JSON format",
-	.type = PLUGIN_TYPE_FORMAT,
-	.format = {
-		.print	= json_reserve_print,
-		.scan	= json_reserve_scan,
-		.sprint	= json_reserve_sprint,
-		.sscan	= json_reserve_sscan,
-		.size = 0
-	},
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p);
+__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name = "json.reserve";
+	p.description = "RESERVE JSON format";
+	p.type = PLUGIN_TYPE_FORMAT;
+	p.format.print	= json_reserve_print;
+	p.format.scan	= json_reserve_scan;
+	p.format.sprint	= json_reserve_sprint;
+	p.format.sscan	= json_reserve_sscan;
+	p.format.size = 0;
+       
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

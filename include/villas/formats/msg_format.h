@@ -47,12 +47,11 @@ extern "C" {
 #define MSG_DATA_OFFSET(msg)	((char *) (msg) + offsetof(struct msg, data))
 
 /** Initialize a message with default values */
-#define MSG_INIT(len, seq) (struct msg) {\
-	.type     = MSG_TYPE_DATA,	\
-	.version  = MSG_VERSION,	\
-	.length   = (uint16_t) (len),	\
-	.sequence = (uint32_t) (seq),	\
-}
+#define MSG_INIT(len, seq, i) \
+	i->type     = MSG_TYPE_DATA;	\
+	i->version  = MSG_VERSION;	\
+	i->length   = (uint16_t) (len);	\
+	i->sequence = (uint32_t) (seq);
 
 /** The timestamp of a message in struct timespec format */
 #define MSG_TS(msg) (struct timespec) {	\

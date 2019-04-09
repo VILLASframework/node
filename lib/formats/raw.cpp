@@ -408,20 +408,27 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 	return 1;
 }
 
-#define REGISTER_FORMAT_RAW(i, n, d, f)		\
-static struct plugin i = {			\
-	.name = n,				\
-	.description = d,			\
-	.type = PLUGIN_TYPE_FORMAT,		\
-	.format = {				\
-		.sprint = raw_sprint,		\
-		.sscan  = raw_sscan,		\
-		.flags = f | IO_HAS_BINARY_PAYLOAD |\
-			     SAMPLE_HAS_DATA	\
-	}					\
-};						\
-REGISTER_PLUGIN(& i);
-
+#define REGISTER_FORMAT_RAW(i, n, d, f)					\
+static struct plugin i;							\
+__attribute__((constructor(110))) static void UNIQUE(__ctor)() {	\
+	if (plugins.state == STATE_DESTROYED)				\
+		vlist_init(&plugins);					\
+									\
+	i.name 		= n;						\
+	i.description 	= d;						\
+	i.type 		= PLUGIN_TYPE_FORMAT;				\
+	i.format.sprint = raw_sprint;					\
+	i.format.sscan  = raw_sscan;					\
+	i.format.flags 	= f | IO_HAS_BINARY_PAYLOAD |			\
+			     SAMPLE_HAS_DATA;				\
+									\
+	vlist_push(&plugins, &i);					\
+}									\
+									\
+__attribute__((destructor(110))) static void UNIQUE(__dtor)() {		\
+        if (plugins.state != STATE_DESTROYED)				\
+	        vlist_remove_all(&plugins, &i);				\
+}
 /* Feel free to add additional format identifiers here to suit your needs */
 REGISTER_FORMAT_RAW(p_8,	"raw.8",	"Raw  8 bit",					RAW_BITS_8)
 REGISTER_FORMAT_RAW(p_16be,	"raw.16.be",	"Raw 16 bit, big endian byte-order",		RAW_BITS_16 | RAW_BIG_ENDIAN)

@@ -347,19 +347,27 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 	return i;
 }
 
-static struct plugin p = {
-	.name = "json",
-	.description = "Javascript Object Notation",
-	.type = PLUGIN_TYPE_FORMAT,
-	.format = {
-		.print	= json_print,
-		.scan	= json_scan,
-		.sprint	= json_sprint,
-		.sscan	= json_sscan,
-		.size = 0,
-		.flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA,
-		.delimiter = '\n'
-	},
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p);
+__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
+	if (plugins.state == STATE_DESTROYED)
+                vlist_init(&plugins);
+
+	p.name = "json";
+	p.description = "Javascript Object Notation";
+	p.type = PLUGIN_TYPE_FORMAT;
+	p.format.print = json_print;
+	p.format.scan = json_scan;
+	p.format.sprint = json_sprint;
+	p.format.sscan = json_sscan;
+	p.format.size = 0;
+	p.format.flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+	p.format.delimiter = '\n';
+
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

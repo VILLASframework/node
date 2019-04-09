@@ -29,10 +29,6 @@
 #include <villas/plugin.h>
 #include <villas/formats/protobuf.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 static enum signal_type protobuf_detect_format(Villas__Node__Value *val)
 {
 	switch (val->value_case) {
@@ -225,18 +221,25 @@ int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, s
 	return i;
 }
 
-static struct plugin p = {
-	.name = "protobuf",
-	.description = "Google Protobuf",
-	.type = PLUGIN_TYPE_FORMAT,
-	.format = {
-		.sprint	= protobuf_sprint,
-		.sscan	= protobuf_sscan,
-		.flags	= IO_HAS_BINARY_PAYLOAD |
-		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA
-	}
-};
-REGISTER_PLUGIN(&p);
-#ifdef __cplusplus
+static struct plugin p;
+
+__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name = "protobuf";
+	p.description = "Google Protobuf";
+	p.type = PLUGIN_TYPE_FORMAT;
+	p.format.sprint	= protobuf_sprint;
+	p.format.sscan = protobuf_sscan;
+	p.format.flags = IO_HAS_BINARY_PAYLOAD |
+		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+
+	vlist_push(&plugins, &p);
 }
-#endif
+
+__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}
+
