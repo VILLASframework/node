@@ -172,7 +172,7 @@ void hist_plot(const struct hist *h)
 	std::vector<TableColumn> cols = {
 		{ -9, TableColumn::align::RIGHT, "Value", "%+9.3g" },
 		{ -6, TableColumn::align::RIGHT, "Count", "%6ju" },
-		{  0, TableColumn::align::LEFT,  "Plot",  "%s",     "occurences" }
+		{  0, TableColumn::align::LEFT,  "Plot",  "%s", "occurences" }
 	};
 
 	Table table = Table(cols);
@@ -189,7 +189,7 @@ void hist_plot(const struct hist *h)
 		for (int i = 0; i < bar; i++)
 			buf = strcatf(&buf, "\u2588");
 
-		table.row(value, cnt, buf);
+		table.row(3, value, cnt, buf);
 
 		free(buf);
 	}
