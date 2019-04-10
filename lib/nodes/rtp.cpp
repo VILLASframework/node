@@ -82,7 +82,7 @@ static int rtp_set_rate(struct node *n, double rate)
 			return -1;
 	}
 
-	r->logger->debug("Set rate limiting for node {} to {}", node_name(n), rate);
+	r->logger->info("Set rate limiting for node {} to {}", node_name(n), rate);
 
 	return 0;
 }
@@ -110,8 +110,6 @@ static int rtp_aimd(struct node *n, double loss_frac)
 
 	if (r->aimd.log)
 		*(r->aimd.log) << r->rtcp.num_rrs << "\t" << loss_frac << "\t" << rate << std::endl;
-
-	r->logger->debug("AIMD: {}\t{}\t{}", r->rtcp.num_rrs, loss_frac, rate);
 
 	return 0;
 }
@@ -339,17 +337,18 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 	if (msg->hdr.pt == RTCP_SR) {
 		if (msg->hdr.count > 0) {
 			const struct rtcp_rr *rr = &msg->r.sr.rrv[0];
-			debug(5, "RTP: fraction lost = %d", rr->fraction);
 
-			double loss = (double) rr->fraction / 256;
+			double loss_frac = (double) rr->fraction / 256;
 
-			rtp_aimd(n, loss);
+			rtp_aimd(n, loss_frac);
 
 			if (n->stats) {
 				stats_update(n->stats, STATS_METRIC_RTP_PKTS_LOST, rr->lost);
-				stats_update(n->stats, STATS_METRIC_RTP_LOSS_FRACTION, loss);
+				stats_update(n->stats, STATS_METRIC_RTP_LOSS_FRACTION, loss_frac);
 				stats_update(n->stats, STATS_METRIC_RTP_JITTER, rr->jitter);
 			}
+
+			r->logger->info("RTCP: rr: num_rrs={}, loss_frac={}, pkts_lost={}, jitter={}", r->rtcp.num_rrs, loss_frac, rr->lost, rr->jitter);
 		}
 		else
 			debug(5, "RTCP: Received sender report with zero reception reports");
@@ -392,10 +391,18 @@ int rtp_start(struct node *n)
 		switch (r->rtcp.throttle_mode) {
 			case RTCP_THROTTLE_HOOK_DECIMATE:
 				r->rtcp.throttle_hook.decimate = new DecimateHook(nullptr, n, 0, 0);
+				r->rtcp.throttle_hook.decimate->parse();
+				r->rtcp.throttle_hook.decimate->check();
+				r->rtcp.throttle_hook.decimate->prepare();
+				r->rtcp.throttle_hook.decimate->start();
 				break;
 
 			case RTCP_THROTTLE_HOOK_LIMIT_RATE:
 				r->rtcp.throttle_hook.limit_rate = new LimitRateHook(nullptr, n, 0, 0);
+				r->rtcp.throttle_hook.limit_rate->parse();
+				r->rtcp.throttle_hook.limit_rate->check();
+				r->rtcp.throttle_hook.limit_rate->prepare();
+				r->rtcp.throttle_hook.limit_rate->start();
 				break;
 
 			default:
@@ -423,7 +430,7 @@ int rtp_start(struct node *n)
 
 		rtcp_start(r->rs, node_name(n), &r->out.saddr_rtcp);
 
-		if (r->rtcp.mode == RTCP_MODE_AIMD) {
+		if (r->aimd.log) {
 			char fn[128];
 
 			time_t ts = time(nullptr);
