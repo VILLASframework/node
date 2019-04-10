@@ -153,7 +153,12 @@ public:
 		output(nullptr),
 		uri(nullptr)
 	{
+		int ret;
+
 		stats.state = STATE_DESTROYED;
+		ret = stats_init(&stats, buckets, warmup);
+		if (ret)
+			throw RuntimeError("Failed to initialize stats");
 
 		/* Register statistic object to path.
 		*
@@ -175,18 +180,6 @@ public:
 
 		if (stats.state != STATE_DESTROYED)
 			stats_destroy(&stats);
-	}
-
-	virtual void prepare()
-	{
-		int ret;
-		assert(state == STATE_CHECKED);
-
-		ret = stats_init(&stats, buckets, warmup);
-		if (ret)
-			throw RuntimeError("Failed to initialze stats");
-
-		state = STATE_PREPARED;
 	}
 
 	virtual void start()
