@@ -57,9 +57,14 @@ int queue_init(struct queue *q, size_t size, struct memory_type *m)
 	for (size_t i = 0; i != size; i += 1)
 		std::atomic_store_explicit(&buffer[i].sequence, i, std::memory_order_relaxed);
 
+#ifndef __arm__
 	std::atomic_store_explicit(&q->tail, 0ul, std::memory_order_relaxed);
 	std::atomic_store_explicit(&q->head, 0ul, std::memory_order_relaxed);
+#else
+	std::atomic_store_explicit(&q->tail, 0u, std::memory_order_relaxed);
+	std::atomic_store_explicit(&q->head, 0u, std::memory_order_relaxed);
 
+#endif
 	q->state = STATE_INITIALIZED;
 
 	return 0;
