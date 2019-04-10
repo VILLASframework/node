@@ -108,8 +108,10 @@ int msg_to_sample(struct msg *msg, struct sample *smp, struct vlist *signals)
 
 int msg_from_sample(struct msg *msgIn, struct sample *smp, struct vlist *signals)
 {
-	MSG_INIT(smp->length, smp->sequence, msgIn);
-
+	msgIn->type     = MSG_TYPE_DATA;
+	msgIn->version  = MSG_VERSION;
+	msgIn->length   = (uint16_t) smp->length;
+	msgIn->sequence = (uint32_t) smp->sequence;
 	msgIn->ts.sec  = smp->ts.origin.tv_sec;
 	msgIn->ts.nsec = smp->ts.origin.tv_nsec;
 

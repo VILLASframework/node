@@ -46,13 +46,6 @@ extern "C" {
 /** The offset to the first data value in a message. */
 #define MSG_DATA_OFFSET(msg)	((char *) (msg) + offsetof(struct msg, data))
 
-/** Initialize a message with default values */
-#define MSG_INIT(len, seq, i) \
-	i->type     = MSG_TYPE_DATA;	\
-	i->version  = MSG_VERSION;	\
-	i->length   = (uint16_t) (len);	\
-	i->sequence = (uint32_t) (seq);
-
 /** The timestamp of a message in struct timespec format */
 #define MSG_TS(msg) (struct timespec) {	\
 	.tv_sec  = (msg)->ts.sec,	\
