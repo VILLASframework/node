@@ -43,7 +43,7 @@ public:
 	};
 
 protected:
-	int _width;	/**< The real width of this column. Calculated by table_header() */
+	int _width;	/**< The real width of this column. Calculated by Table::resize() */
 
 	int width;	/**< Width of the column. */
 
