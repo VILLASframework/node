@@ -67,8 +67,8 @@ static int json_unpack_timestamps(json_t *json_ts, struct sample *smp)
 {
 	int ret;
 	json_error_t err;
-	json_t *json_ts_origin = nullptr;
-	json_t *json_ts_received = nullptr;
+	json_t *json_ts_origin = NULL;
+	json_t *json_ts_received = NULL;
 
 	json_unpack_ex(json_ts, &err, 0, "{ s?: o, s?: o }",
 		"origin",   &json_ts_origin,
@@ -173,7 +173,7 @@ static int json_unpack_sample(struct io *io, json_t *json_smp, struct sample *sm
 {
 	int ret;
 	json_error_t err;
-	json_t *json_data, *json_value, *json_ts = nullptr;
+	json_t *json_data, *json_value, *json_ts = NULL;
 	size_t i;
 	int64_t sequence = -1;
 
@@ -347,19 +347,27 @@ skip:		json = json_loadf(f, JSON_DISABLE_EOF_CHECK, &err);
 	return i;
 }
 
-static struct plugin p = {
-	.name = "json",
-	.description = "Javascript Object Notation",
-	.type = PLUGIN_TYPE_FORMAT,
-	.format = {
-		.print	= json_print,
-		.scan	= json_scan,
-		.sprint	= json_sprint,
-		.sscan	= json_sscan,
-		.size = 0,
-		.flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA,
-		.delimiter = '\n'
-	},
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p);
+__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
+	if (plugins.state == STATE_DESTROYED)
+                vlist_init(&plugins);
+
+	p.name = "json";
+	p.description = "Javascript Object Notation";
+	p.type = PLUGIN_TYPE_FORMAT;
+	p.format.print = json_print;
+	p.format.scan = json_scan;
+	p.format.sprint = json_sprint;
+	p.format.sscan = json_sscan;
+	p.format.size = 0;
+	p.format.flags = SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+	p.format.delimiter = '\n';
+
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

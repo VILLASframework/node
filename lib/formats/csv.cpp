@@ -197,35 +197,50 @@ void csv_header(struct io *io, const struct sample *smp)
 	fprintf(f, "%c", io->delimiter);
 }
 
-static struct plugin p1 = {
-	.name = "tsv",
-	.description = "Tabulator-separated values",
-	.type = PLUGIN_TYPE_FORMAT,
-	.format = {
-		.header	= csv_header,
-		.sprint	= csv_sprint,
-		.sscan	= csv_sscan,
-		.size 	= 0,
-		.flags	= IO_NEWLINES |
-		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA,
-		.separator = '\t'
-	}
-};
+static struct plugin p1;
+__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
+        if (plugins.state == STATE_DESTROYED)
+	                vlist_init(&plugins);
 
-static struct plugin p2 = {
-	.name = "csv",
-	.description = "Comma-separated values",
-	.type = PLUGIN_TYPE_FORMAT,
-	.format = {
-		.header	= csv_header,
-		.sprint	= csv_sprint,
-		.sscan	= csv_sscan,
-		.size 	= 0,
-		.flags	= IO_NEWLINES |
-		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA,
-		.separator = ','
-	}
-};
+	p1.name = "tsv";
+	p1.description = "Tabulator-separated values";
+	p1.type = PLUGIN_TYPE_FORMAT;
+	p1.format.header = csv_header;
+	p1.format.sprint = csv_sprint;
+	p1.format.sscan	= csv_sscan;
+	p1.format.size 	= 0;
+	p1.format.flags	= IO_NEWLINES |
+		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+	p1.format.separator = '\t';
 
-REGISTER_PLUGIN(&p1);
-REGISTER_PLUGIN(&p2);
+	vlist_push(&plugins, &p1);
+}
+
+__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
+        if (plugins.state != STATE_DESTROYED)
+                vlist_remove_all(&plugins, &p1);
+}
+
+static struct plugin p2;
+__attribute__((constructor(110))) static void UNIQUE(__ctor)() {
+        if (plugins.state == STATE_DESTROYED)
+	                vlist_init(&plugins);
+
+	p2.name = "csv";
+	p2.description = "Comma-separated values";
+	p2.type = PLUGIN_TYPE_FORMAT;
+	p1.format.header = csv_header;
+	p1.format.sprint = csv_sprint;
+	p1.format.sscan	= csv_sscan;
+	p1.format.size 	= 0;
+	p1.format.flags	= IO_NEWLINES |
+			  SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
+	p1.format.separator = ',';
+
+	vlist_push(&plugins, &p2);
+}
+
+__attribute__((destructor(110))) static void UNIQUE(__dtor)() {
+        if (plugins.state != STATE_DESTROYED)
+                vlist_remove_all(&plugins, &p2);
+}
