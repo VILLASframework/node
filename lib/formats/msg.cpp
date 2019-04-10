@@ -106,25 +106,25 @@ int msg_to_sample(struct msg *msg, struct sample *smp, struct vlist *signals)
 	return 0;
 }
 
-int msg_from_sample(struct msg *msgIn, struct sample *smp, struct vlist *signals)
+int msg_from_sample(struct msg *msg_in, struct sample *smp, struct vlist *signals)
 {
-	msgIn->type     = MSG_TYPE_DATA;
-	msgIn->version  = MSG_VERSION;
-	msgIn->length   = (uint16_t) smp->length;
-	msgIn->sequence = (uint32_t) smp->sequence;
-	msgIn->ts.sec  = smp->ts.origin.tv_sec;
-	msgIn->ts.nsec = smp->ts.origin.tv_nsec;
+	msg_in->type     = MSG_TYPE_DATA;
+	msg_in->version  = MSG_VERSION;
+	msg_in->length   = (uint16_t) smp->length;
+	msg_in->sequence = (uint32_t) smp->sequence;
+	msg_in->ts.sec  = smp->ts.origin.tv_sec;
+	msg_in->ts.nsec = smp->ts.origin.tv_nsec;
 
 	for (unsigned i = 0; i < smp->length; i++) {
 		struct signal *sig = (struct signal *) vlist_at(signals, i);
 
 		switch (sig->type) {
 			case SIGNAL_TYPE_FLOAT:
-				msgIn->data[i].f = smp->data[i].f;
+				msg_in->data[i].f = smp->data[i].f;
 				break;
 
 			case SIGNAL_TYPE_INTEGER:
-				msgIn->data[i].i = smp->data[i].i;
+				msg_in->data[i].i = smp->data[i].i;
 				break;
 
 			default:
