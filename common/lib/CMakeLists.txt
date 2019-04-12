@@ -27,6 +27,7 @@ add_library(villas-common SHARED
 	compat.cpp
 	crypt.cpp
 	hist.cpp
+	dsp/pid.cpp
 	kernel/kernel.cpp
 	kernel/kernel.cpp
 	kernel/rt.cpp
