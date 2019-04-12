@@ -140,6 +140,15 @@ public:
 	}
 };
 
+class LimitHook : public Hook {
+
+public:
+	using Hook::Hook;
+
+	virtual void setRate(double rate, double maxRate = -1) = 0;
+
+};
+
 class HookFactory : public plugin::Plugin {
 
 protected:
