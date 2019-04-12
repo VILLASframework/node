@@ -1,5 +1,6 @@
 /** A sliding/moving window.
  *
+ * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -20,42 +21,62 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdlib.h>
+#pragma once
 
-#include <villas/window.h>
 #include <villas/utils.h>
 
-int window_init(struct window *w, size_t steps, double init)
-{
-	size_t len = LOG2_CEIL(steps);
+namespace villas {
+namespace dsp {
 
-	/* Allocate memory for ciruclar history buffer */
-	w->data = (double *) alloc(len * sizeof(double));
-	if (!w->data)
-		return -1;
+template<typename T>
+class Window {
 
-	for (size_t i = 0; i < len; i++)
-		w->data[i] = init;
+public:
+	typedef typename std::vector<T>::size_type size_type;
 
-	w->steps = steps;
-	w->pos = len;
-	w->mask = len - 1;
+protected:
+	std::vector<T> data;
 
-	return 0;
-}
+	T init;
 
-int window_destroy(struct window *w)
-{
-	free(w->data);
+	size_type steps;
+	size_type mask;
+	size_type pos;
 
-	return 0;
-}
+public:
 
-double window_update(struct window *w, double in)
-{
-	double out = w->data[(w->pos - w->steps) & w->mask];
+	Window(size_type steps = 0, T i = 0) :
+		init(i)
+	{
+		size_type len = LOG2_CEIL(steps);
 
-	w->data[w->pos++ & w->mask] = in;
+		/* Allocate memory for ciruclar history buffer */
+		data = std::vector<T>(len, i);
 
-	return out;
-}
+		steps = steps;
+		pos = len;
+		mask = len - 1;
+	}
+
+	T update(T in)
+	{
+		T out = data[(pos - steps) & mask];
+
+		data[pos++ & mask] = in;
+
+		return out;
+	}
+
+	size_type getPos() const
+	{
+		return steps;
+	}
+
+	T operator[](int i) const
+	{
+		return data[(pos + i) & mask];
+	}
+};
+
+} // namespace dsp
+} // namespace villas
