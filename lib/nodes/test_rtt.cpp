@@ -101,7 +101,7 @@ int test_rtt_prepare(struct node *n)
 			max_values = c->values;
 
 		c->filename_formatted = (char *) alloc(NAME_MAX);
-	
+
 		strftime(c->filename_formatted, NAME_MAX, c->filename, &tm);
 	}
 
@@ -392,7 +392,7 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 
 	if ((unsigned) t->counter >= c->limit) {
 		info("Stopping case #%d", t->current);
-		
+
 		t->counter = -1;
 
 		if (t->cooldown) {
