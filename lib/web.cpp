@@ -259,7 +259,7 @@ void Web::start()
 	logger->info("Starting sub-system: htdocs={}", htdocs.c_str());
 
 	/* update web root of mount point */
-	mounts[1].origin = htdocs.c_str();
+	mounts[ARRAY_LEN(mounts)-1].origin = htdocs.c_str();
 
 	context = lws_create_context(&ctx_info);
 	if (context == nullptr)
