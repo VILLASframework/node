@@ -45,6 +45,7 @@ extern "C" {
 #include <villas/queue_signalled.h>
 #include <villas/hooks/limit_rate.hpp>
 #include <villas/hooks/decimate.hpp>
+#include <villas/dsp/pid.hpp>
 
 /* Forward declarations */
 struct format_type;
@@ -53,14 +54,10 @@ struct format_type;
 #define RTP_INITIAL_BUFFER_LEN 1500
 #define RTP_PACKET_TYPE 21
 
-enum rtp_throttle_mode {
-	RTCP_THROTTLE_DISABLED,
-	RTCP_THROTTLE_HOOK_DECIMATE,
-	RTCP_THROTTLE_HOOK_LIMIT_RATE
-};
-
-enum rtp_rtcp_mode {
-	RTCP_MODE_AIMD
+enum rtp_hook_type {
+	RTCP_HOOK_DISABLED,
+	RTCP_HOOK_DECIMATE,
+	RTCP_HOOK_LIMIT_RATE
 };
 
 struct rtp {
@@ -76,28 +73,28 @@ struct rtp {
 	struct format_type *format;
 	struct io io;
 
-	double rate;			/**< Sample rate of source */
-
 	struct {
 		int enabled;
 
 		int num_rrs;
-
-		enum rtp_rtcp_mode mode;
-
-		enum rtp_throttle_mode throttle_mode;
-
-		union {
-			villas::node::DecimateHook *decimate;
-			villas::node::LimitRateHook *limit_rate;
-		} throttle_hook;
 	} rtcp;
 
 	struct {
 		double a;
 		double b;
 
-		double last_rate;
+		enum rtp_hook_type rate_hook_type;
+
+		villas::node::LimitHook *rate_hook;
+		villas::dsp::PID rate_pid;
+
+		/* PID parameters for rate controller */
+		double Kp, Ki, Kd;
+		double rate_min;
+
+		double rate;
+		double rate_last;
+		double rate_source;		/**< Sample rate of source */
 
 		std::ofstream *log;
 		char *log_filename;
