@@ -38,6 +38,8 @@ static int test_rtt_case_start(struct test_rtt *t, int id)
 	int ret;
 	struct test_rtt_case *c = (struct test_rtt_case *) vlist_at(&t->cases, id);
 
+	info("Starting case #%d: filename=%s, rate=%f, values=%d, limit=%d", t->current, c->filename_formatted, c->rate, c->values, c->limit);
+
 	/* Open file */
 	ret = io_open(&t->io, c->filename_formatted);
 	if (ret)
@@ -67,6 +69,8 @@ static int test_rtt_case_stop(struct test_rtt *t, int id)
 	ret = io_close(&t->io);
 	if (ret)
 		return ret;
+
+	info("Stopping case #%d", id);
 
 	return 0;
 }
@@ -197,7 +201,7 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 				if (!json_is_number(json_val))
 					error("The 'rates' setting of node %s must be an array of real numbers", node_name(n));
 
-				rates[i] = json_integer_value(json_val);
+				rates[j] = json_integer_value(json_val);
 			}
 		}
 		else
@@ -210,15 +214,10 @@ int test_rtt_parse(struct node *n, json_t *cfg)
 					error("The 'values' setting of node %s must be an array of integers", node_name(n));
 
 				values[j] = json_integer_value(json_val);
-				if (values[j] < 2)
-					error("Each 'values' entry must be at least 2 or larger");
 			}
 		}
-		else {
+		else
 			values[0] = json_integer_value(json_values);
-			if (values[0] <= 2)
-				error("Each 'values' entry must be at least 2 or larger");
-		}
 
 		for (int i = 0; i < numrates; i++) {
 			for (int j = 0; j < numvalues; j++) {
@@ -288,16 +287,12 @@ int test_rtt_start(struct node *n)
 	if (ret || !S_ISDIR(st.st_mode)) {
 		ret = mkdir(t->output, 0777);
 		if (ret) {
-			warning("Failed to create output director: %s", t->output);
+			warning("Failed to create output directory: %s", t->output);
 			return ret;
 		}
 	}
 
 	ret = io_init(&t->io, t->format, &n->in.signals, SAMPLE_HAS_ALL & ~SAMPLE_HAS_DATA);
-	if (ret)
-		return ret;
-
-	ret = io_check(&t->io);
 	if (ret)
 		return ret;
 
@@ -375,21 +370,6 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 	if (steps > 1)
 		warning("Skipped %ld steps", (long) (steps - 1));
 
-	if (t->counter == 0)
-		info("Starting case #%d: filename=%s, rate=%f, values=%d, limit=%d", t->current, c->filename_formatted, c->rate, c->values, c->limit);
-
-	struct timespec now = time_now();
-
-	/* Prepare samples */
-	for (i = 0; i < cnt; i++) {
-		smps[i]->length = c->values;
-		smps[i]->sequence = t->counter;
-		smps[i]->ts.origin = now;
-		smps[i]->flags = SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_TS_ORIGIN;
-
-		t->counter++;
-	}
-
 	if ((unsigned) t->counter >= c->limit) {
 		info("Stopping case #%d", t->current);
 
@@ -401,9 +381,25 @@ int test_rtt_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 			if (ret < 0)
 				return ret;
 		}
-	}
 
-	return i;
+		return 0;
+	}
+	else {
+		struct timespec now = time_now();
+
+		/* Prepare samples */
+		for (i = 0; i < cnt; i++) {
+			smps[i]->length = c->values;
+			smps[i]->sequence = t->counter;
+			smps[i]->ts.origin = now;
+			smps[i]->flags = SAMPLE_HAS_DATA | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_TS_ORIGIN;
+
+			t->counter++;
+		}
+
+
+		return i;
+	}
 }
 
 int test_rtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)

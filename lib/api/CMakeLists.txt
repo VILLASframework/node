@@ -35,6 +35,7 @@ set(API_SRC
     actions/paths.cpp
     actions/restart.cpp
     actions/node.cpp
+    actions/stats.cpp
 )
 
 if(WITH_WEB)
