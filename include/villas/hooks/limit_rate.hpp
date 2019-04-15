@@ -31,7 +31,7 @@
 namespace villas {
 namespace node {
 
-class LimitRateHook : public Hook {
+class LimitRateHook : public LimitHook {
 
 protected:
 	enum {
@@ -44,16 +44,16 @@ protected:
 	timespec last;
 
 public:
-	void setRate(double rate)
-	{
-		deadtime = 1.0 / rate;
-	}
-
 	LimitRateHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
-		Hook(p, n, fl, prio, en),
+		LimitHook(p, n, fl, prio, en),
 		mode(LIMIT_RATE_LOCAL)
 	{
 		last = (timespec) { 0, 0 };
+	}
+
+	virtual void setRate(double rate, double maxRate = -1)
+	{
+		deadtime = 1.0 / rate;
 	}
 
 	virtual void parse(json_t *cfg);

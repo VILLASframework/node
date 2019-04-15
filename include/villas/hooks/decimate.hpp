@@ -31,14 +31,25 @@
 namespace villas {
 namespace node {
 
-class DecimateHook : public Hook {
+class DecimateHook : public LimitHook {
 
 protected:
 	int ratio;
 	unsigned counter;
 
 public:
-	using Hook::Hook;
+	using LimitHook::LimitHook;
+
+	virtual void setRate(double rate, double maxRate = -1)
+	{
+		assert(maxRate > 0);
+
+		int ratio = maxRate / rate;
+		if (ratio == 0)
+			ratio = 1;
+
+		setRatio(ratio);
+	}
 
 	void setRatio(int r)
 	{
