@@ -67,9 +67,14 @@ public:
 		return out;
 	}
 
-	size_type getPos() const
+	size_type getSteps() const
 	{
 		return steps;
+	}
+
+	size_type getPos() const
+	{
+		return pos;
 	}
 
 	T operator[](int i) const
