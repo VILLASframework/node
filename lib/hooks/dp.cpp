@@ -31,7 +31,7 @@
 
 #include <villas/hook.hpp>
 #include <villas/sample.h>
-#include <villas/window.h>
+#include <villas/dsp/window.hpp>
 #include <villas/utils.h>
 
 using namespace std::complex_literals;
@@ -57,27 +57,27 @@ protected:
 	int *fharmonics;
 	int  fharmonics_len;
 
-	struct window window;
+	dsp::Window<double> window;
 
 	void step(double *in, std::complex<float> *out)
 	{
-		int N = window.steps;
+		int N = window.getSteps();
 		__attribute__((unused)) std::complex<double> om_k, corr;
 		double newest = *in;
-		__attribute__((unused)) double oldest = window_update(&window, newest);
+		__attribute__((unused)) double oldest = window.update(newest);
 
 		for (int k = 0; k < fharmonics_len; k++) {
 			om_k = 2.0i * M_PI * (double) fharmonics[k] / (double) N;
 
 			/* Correction for stationary phasor */
-			corr = std::exp(-om_k * (steps - (window.steps + 1)));
+			corr = std::exp(-om_k * (steps - (N + 1)));
 			//corr = 1;
 
 #if 0
 			/* Recursive update */
 			coeffs[k] = std::exp(om) * (coeffs[k] + (newest - oldest));
 
-			out[k] = (2.0 / window.steps) * (coeffs[i] * corr);
+			out[k] = (2.0 / N) * (coeffs[i] * corr);
 
 			/* DC component */
 			if (fharmonics[k] == 0)
@@ -87,7 +87,7 @@ protected:
 			std::complex<double> X_k = 0;
 
 			for (int n = 0; n < N; n++) {
-				double x_n = window.data[(window.pos - window.steps + n) & window.mask];
+				double x_n = window[window.getPos() + n];
 
 				X_k += x_n * std::exp(om_k * (double) n);
 			}
@@ -135,8 +135,6 @@ public:
 
 	virtual void start()
 	{
-		int ret;
-
 		assert(state == STATE_PREPARED);
 
 		time = 0;
@@ -145,24 +143,9 @@ public:
 		for (int i = 0; i < fharmonics_len; i++)
 			coeffs[i] = 0;
 
-		ret = window_init(&window, (1.0 / f0) / timestep, 0.0);
-		if (ret)
-			throw RuntimeError("Failed to initialize window");
+		window = dsp::Window<double>((1.0 / f0) / timestep, 0.0);
 
 		state = STATE_STARTED;
-	}
-
-	virtual void stop()
-	{
-		int ret;
-
-		assert(state == STATE_STARTED);
-
-		ret = window_destroy(&window);
-		if (ret)
-			throw RuntimeError("Failed to destroy window");
-
-		state = STATE_STOPPED;
 	}
 
 	virtual void parse(json_t *cfg)
