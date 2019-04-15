@@ -105,7 +105,7 @@ int test_rtt_prepare(struct node *n)
 			max_values = c->values;
 
 		c->filename_formatted = (char *) alloc(NAME_MAX);
-	
+
 		strftime(c->filename_formatted, NAME_MAX, c->filename, &tm);
 	}
 

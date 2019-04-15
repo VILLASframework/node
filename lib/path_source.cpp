@@ -151,7 +151,7 @@ int path_source_read(struct path_source *ps, struct path *p, int i)
 #endif
 
 	if (p->mask.test(i)) {
-		/* Check if we received an update from all nodes/ */
+		/* Check if we received an update from all nodes */
 		if ((p->mode == PATH_MODE_ANY) ||
 		    (p->mode == PATH_MODE_ALL && p->mask == p->received)) {
 			path_destination_enqueue(p, muxed_smps, toenqueue);
