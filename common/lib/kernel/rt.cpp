@@ -81,29 +81,24 @@ void setAffinity(int affinity)
 	Logger logger = logging.get("kernel:rt");
 
 	/* Pin threads to CPUs by setting the affinity */
-	CpuSet cset_pin, cset_isol, cset_non_isol;
-
-	cset_pin = CpuSet(affinity);
+	CpuSet cset_pin(affinity);
 
 	is_isol = kernel_get_cmdline_param("isolcpus", isolcpus, sizeof(isolcpus));
-	if (is_isol) {
+	if (is_isol)
 		logger->warn("You should reserve some cores for " PROJECT_NAME " (see 'isolcpus')");
-
-		cset_isol.zero();
-	}
 	else {
-		cset_isol = CpuSet(isolcpus);
-		cset_non_isol = cset_isol ^ cset_pin;
+		CpuSet cset_isol(isolcpus);
+		CpuSet cset_non_isol = ~cset_isol & cset_pin;
 
 		if (cset_non_isol.count() > 0)
-			logger->warn("Affinity setting includes cores which are not isolated: affinity={} isolcpus={}", (std::string) cset_pin, (std::string) cset_isol);
+			logger->warn("Affinity setting includes cores which are not isolated: affinity={}, isolcpus={}, non_isolated={}", (std::string) cset_pin, (std::string) cset_isol, (std::string) cset_non_isol);
 	}
 
 	ret = sched_setaffinity(0, cset_pin.size(), cset_pin);
 	if (ret)
-		throw SystemError("Failed to set CPU affinity to {}", (std::string) cset_pin);
+		throw SystemError("Failed to set CPU affinity to cores: {}", (std::string) cset_pin);
 
-	logger->debug("Set affinity to {}", (std::string) cset_pin);
+	logger->debug("Set affinity to cores: {}", (std::string) cset_pin);
 }
 
 void setPriority(int priority)

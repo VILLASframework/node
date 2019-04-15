@@ -61,6 +61,8 @@ public:
 	 */
 	CpuSet(const std::string &str);
 
+	CpuSet(const char *str);
+
 	/** Convert integer to cpu_set_t.
 	 *
 	 * @param set An integer number which is used as the mask
