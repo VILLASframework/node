@@ -87,6 +87,10 @@ CpuSet::CpuSet(const std::string &str) :
 	}
 }
 
+CpuSet::CpuSet(const char *str)
+	: CpuSet(std::string(str))
+{ }
+
 CpuSet::operator std::string ()
 {
 	std::stringstream ss;
