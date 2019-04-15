@@ -103,7 +103,7 @@ void path_destination_write(struct path_destination *pd, struct path *p)
 			return;
 		}
 		else if (sent < allocated)
-			p->logger->warn("Partial write to node {}: written={}, expected={}", node_name(pd->node), sent, allocated);
+			p->logger->debug("Partial write to node {}: written={}, expected={}", node_name(pd->node), sent, allocated);
 
 		released = sample_decref_many(smps, release);
 
