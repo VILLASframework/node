@@ -299,3 +299,20 @@ void vlist_extend(struct vlist *l, size_t len, void *val)
 	while (vlist_length(l) < len)
 		vlist_push(l, val);
 }
+
+void vlist_filter(struct vlist *l, dtor_cb_t cb)
+{
+	size_t u, j;
+	pthread_mutex_lock(&l->lock);
+
+	for (i  = 0, j = 0; i < vlist_length(l); i++) {
+		void *e = vlist_at(l, i);
+
+		if (!cb(e))
+			l->array[j++] = e;
+	}
+
+	l->length = j;
+
+	pthread_mutex_unlock(&l->lock);
+}
