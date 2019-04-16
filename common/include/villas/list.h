@@ -133,6 +133,9 @@ ssize_t vlist_index(struct vlist *l, void *value);
 /** Extend the list to the given length by filling new slots with given value. */
 void vlist_extend(struct vlist *l, size_t len, void *val);
 
+/** Remove all elements for which the callback returns a non-zero return code. */
+void vlist_filter(struct vlist *l, dtor_cb_t cb);
+
 #ifdef __cplusplus
 }
 #endif
