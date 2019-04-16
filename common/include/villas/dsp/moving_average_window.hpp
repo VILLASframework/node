@@ -1,4 +1,4 @@
-/** A moving average filter.
+/** A moving average window.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -23,13 +23,13 @@
 
 #pragma once
 
-#include <villas/window.hpp>
+#include <villas/dsp/window.hpp>
 
 namespace villas {
 namespace dsp {
 
 template<typename T>
-class MovingAverage {
+class MovingAverageWindow {
 
 public:
 	typedef typename Window<T>::size_type size_type;
@@ -37,14 +37,11 @@ public:
 protected:
 	Window<T> window;
 
-	size_type length;
-
 	T state;
 
 public:
-	MovingAverage(size_type len, T i) :
+	MovingAverageWindow(size_type len, T i = 0) :
 		window(len, i),
-		length(len),
 		state(i)
 	{ }
 
@@ -55,7 +52,7 @@ public:
 		state += in;
 		state -= out;
 
-		return state / len;
+		return state / window.getSteps();
 	}
 };
 
