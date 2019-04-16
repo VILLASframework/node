@@ -49,7 +49,7 @@ public:
 	{
 		size_type len = LOG2_CEIL(s);
 
-		/* Allocate memory for ciruclar history buffer */
+		/* Allocate memory for circular history buffer */
 		data = std::vector<T>(len, i);
 
 		steps = s;
