@@ -117,138 +117,147 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	int ret, rc = 0;
+	Logger logger = logging.get("test-cmp");
 
-	/* Default values */
-	double epsilon = 1e-9;
-	const char *format = "villas.human";
-	const char *dtypes = "64f";
-	int flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA | SAMPLE_HAS_TS_ORIGIN;
+	try {
+		int ret, rc = 0;
 
-	struct pool pool = { .state = STATE_DESTROYED };
+		/* Default values */
+		double epsilon = 1e-9;
+		const char *format = "villas.human";
+		const char *dtypes = "64f";
+		int flags = SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA | SAMPLE_HAS_TS_ORIGIN;
 
-	/* Parse Arguments */
-	int c;
-	char *endptr;
-	while ((c = getopt (argc, argv, "he:vTsf:t:Vd:")) != -1) {
-		switch (c) {
-			case 'e':
-				epsilon = strtod(optarg, &endptr);
-				goto check;
+		struct pool pool = { .state = STATE_DESTROYED };
 
-			case 'v':
-				flags &= ~SAMPLE_HAS_DATA;
-				break;
+		/* Parse Arguments */
+		int c;
+		char *endptr;
+		while ((c = getopt (argc, argv, "he:vTsf:t:Vd:")) != -1) {
+			switch (c) {
+				case 'e':
+					epsilon = strtod(optarg, &endptr);
+					goto check;
 
-			case 'T':
-				flags &= ~SAMPLE_HAS_TS_ORIGIN;
-				break;
+				case 'v':
+					flags &= ~SAMPLE_HAS_DATA;
+					break;
 
-			case 's':
-				flags &= ~SAMPLE_HAS_SEQUENCE;
-				break;
+				case 'T':
+					flags &= ~SAMPLE_HAS_TS_ORIGIN;
+					break;
 
-			case 'f':
-				format = optarg;
-				break;
+				case 's':
+					flags &= ~SAMPLE_HAS_SEQUENCE;
+					break;
 
-			case 't':
-				dtypes = optarg;
-				break;
+				case 'f':
+					format = optarg;
+					break;
 
-			case 'V':
-				print_version();
-				exit(EXIT_SUCCESS);
+				case 't':
+					dtypes = optarg;
+					break;
 
-			case 'd':
-				logging.setLevel(optarg);
-				break;
+				case 'V':
+					print_version();
+					exit(EXIT_SUCCESS);
 
-			case 'h':
-			case '?':
-				usage();
-				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
-		}
+				case 'd':
+					logging.setLevel(optarg);
+					break;
 
-		continue;
-
-check:		if (optarg == endptr)
-			throw RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
-	}
-
-	if (argc - optind < 2) {
-		usage();
-		exit(EXIT_FAILURE);
-	}
-
-	int eofs, line, failed;
-	int n = argc - optind; /* The number of files which we compare */
-	Side *s[n];
-
-	ret = memory_init(0);
-	if (ret)
-		throw RuntimeError("Failed to initialize memory system");
-
-	ret = pool_init(&pool, n, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_heap);
-	if (ret)
-		throw RuntimeError("Failed to initialize pool");
-
-	struct format_type *fmt = format_type_lookup(format);
-	if (!fmt)
-		throw RuntimeError("Invalid IO format: {}", format);
-
-	/* Open files */
-	for (int i = 0; i < n; i++)
-		s[i] = new Side(argv[optind + i], fmt, dtypes, &pool);
-
-	line = 0;
-	for (;;) {
-		/* Read next sample from all files */
-retry:		eofs = 0;
-		for (int i = 0; i < n; i++) {
-			ret = io_eof(&s[i]->io);
-			if (ret)
-				eofs++;
-		}
-
-		if (eofs) {
-			if (eofs == n)
-				ret = 0;
-			else {
-				std::cout << "length unequal" << std::endl;
-				rc = 1;
+				case 'h':
+				case '?':
+					usage();
+					exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
 			}
 
-			goto out;
+			continue;
+
+check:			if (optarg == endptr)
+				throw RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
 		}
 
-		failed = 0;
-		for (int i = 0; i < n; i++) {
-			ret = io_scan(&s[i]->io, &s[i]->sample, 1);
-			if (ret <= 0)
-				failed++;
+		if (argc - optind < 2) {
+			usage();
+			exit(EXIT_FAILURE);
 		}
-		if (failed)
-			goto retry;
 
-		/* We compare all files against the first one */
-		for (int i = 1; i < n; i++) {
-			ret = sample_cmp(s[0]->sample, s[i]->sample, epsilon, flags);
-			if (ret) {
-				rc = ret;
+		int eofs, line, failed;
+		int n = argc - optind; /* The number of files which we compare */
+		Side *s[n];
+
+		ret = memory_init(0);
+		if (ret)
+			throw RuntimeError("Failed to initialize memory system");
+
+		ret = pool_init(&pool, n, SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_heap);
+		if (ret)
+			throw RuntimeError("Failed to initialize pool");
+
+		struct format_type *fmt = format_type_lookup(format);
+		if (!fmt)
+			throw RuntimeError("Invalid IO format: {}", format);
+
+		/* Open files */
+		for (int i = 0; i < n; i++)
+			s[i] = new Side(argv[optind + i], fmt, dtypes, &pool);
+
+		line = 0;
+		for (;;) {
+			/* Read next sample from all files */
+retry:			eofs = 0;
+			for (int i = 0; i < n; i++) {
+				ret = io_eof(&s[i]->io);
+				if (ret)
+					eofs++;
+			}
+
+			if (eofs) {
+				if (eofs == n)
+					ret = 0;
+				else {
+					std::cout << "length unequal" << std::endl;
+					rc = 1;
+				}
+
 				goto out;
 			}
+
+			failed = 0;
+			for (int i = 0; i < n; i++) {
+				ret = io_scan(&s[i]->io, &s[i]->sample, 1);
+				if (ret <= 0)
+					failed++;
+			}
+			if (failed)
+				goto retry;
+
+			/* We compare all files against the first one */
+			for (int i = 1; i < n; i++) {
+				ret = sample_cmp(s[0]->sample, s[i]->sample, epsilon, flags);
+				if (ret) {
+					rc = ret;
+					goto out;
+				}
+			}
+
+			line++;
 		}
 
-		line++;
+out:		for (int i = 0; i < n; i++)
+			delete s[i];
+
+		ret = pool_destroy(&pool);
+		if (ret)
+			throw RuntimeError("Failed to destroy pool");
+
+		return rc;
 	}
+	catch (std::runtime_error &e) {
+		logger->error("{}", e.what());
 
-out:	for (int i = 0; i < n; i++)
-		delete s[i];
-
-	ret = pool_destroy(&pool);
-	if (ret)
-		throw RuntimeError("Failed to destroy pool");
-
-	return rc;
+		return -1;
+	}
 }

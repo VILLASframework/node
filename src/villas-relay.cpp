@@ -44,8 +44,9 @@ static lws_context *context;
 /** The libwebsockets vhost. */
 static lws_vhost *vhost;
 
-auto console = villas::logging.get("console");
 std::map<std::string, Session *> sessions;
+
+using Logger = villas::Logger;
 
 /* Default options */
 struct Options opts = {
@@ -116,7 +117,9 @@ Session::Session(Identifier sid) :
 	identifier(sid),
 	connects(0)
 {
-	console->info("Session created: {}", identifier);
+	Logger logger = villas::logging.get("console");
+
+	logger->info("Session created: {}", identifier);
 
 	sessions[sid] = this;
 
@@ -127,13 +130,17 @@ Session::Session(Identifier sid) :
 
 Session::~Session()
 {
-	console->info("Session destroyed: {}", identifier);
+	Logger logger = villas::logging.get("console");
+
+	logger->info("Session destroyed: {}", identifier);
 
 	sessions.erase(identifier);
 }
 
 Session * Session::get(lws *wsi)
 {
+	Logger logger = villas::logging.get("console");
+
 	char uri[64];
 
 	/* We use the URI to associate this connection to a session
@@ -153,7 +160,7 @@ Session * Session::get(lws *wsi)
 		return new Session(sid);
 	}
 	else {
-		console->info("Found existing session: {}", sid);
+		logger->info("Found existing session: {}", sid);
 
 		return it->second;
 	}
@@ -190,6 +197,8 @@ Connection::Connection(lws *w) :
 	frames_recv(0),
 	frames_sent(0)
 {
+	Logger logger = villas::logging.get("console");
+
 	session = Session::get(wsi);
 	session->connections[wsi] = this;
 	session->connects++;
@@ -198,12 +207,14 @@ Connection::Connection(lws *w) :
 
 	created = time(nullptr);
 
-	console->info("New connection established: session={}, remote={} ({})", session->identifier, name, ip);
+	logger->info("New connection established: session={}, remote={} ({})", session->identifier, name, ip);
 }
 
 Connection::~Connection()
 {
-	console->info("Connection closed: session={}, remote={} ({})", session->identifier, name, ip);
+	Logger logger = villas::logging.get("console");
+
+	logger->info("Connection closed: session={}, remote={} ({})", session->identifier, name, ip);
 
 	session->connections.erase(wsi);
 
@@ -245,13 +256,15 @@ void Connection::write()
 
 void Connection::read(void *in, size_t len)
 {
+	Logger logger = villas::logging.get("console");
+
 	currentFrame->insert(currentFrame->end(), (uint8_t *) in, (uint8_t *) in + len);
 
 	bytes_recv += len;
 
 	if (lws_is_final_fragment(wsi)) {
 		frames_recv++;
-		console->debug("Received frame, relaying to {} connections", session->connections.size() - (opts.loopback ? 0 : 1));
+		logger->debug("Received frame, relaying to {} connections", session->connections.size() - (opts.loopback ? 0 : 1));
 
 		for (auto p : session->connections) {
 			auto c = p.second;
@@ -270,7 +283,7 @@ void Connection::read(void *in, size_t len)
 	}
 }
 
-static void logger(int level, const char *msg)
+static void logger_cb(int level, const char *msg)
 {
 	auto log = spdlog::get("lws");
 
@@ -295,6 +308,8 @@ int http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, voi
 	int ret;
 	size_t json_len;
 	json_t *json_sessions, *json_body;
+
+	Logger logger = villas::logging.get("console");
 
 	unsigned char buf[LWS_PRE + 2048], *start = &buf[LWS_PRE], *end = &buf[sizeof(buf) - LWS_PRE - 1], *p = start;
 
@@ -341,7 +356,7 @@ int http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, voi
 			if (ret < 0)
 				return ret;
 
-			console->info("Handled API request");
+			logger->info("Handled API request");
 
 			//if (lws_http_transaction_completed(wsi))
 				return -1;
@@ -405,79 +420,88 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	/* Initialize logging */
-	spdlog::stdout_color_mt("lws");
-	lws_set_log_level((1 << LLL_COUNT) - 1, logger);
+	Logger logger = villas::logging.get("console");
 
-	/* Start server */
-	lws_context_creation_info ctx_info = { 0 };
+	try {
+		/* Initialize logging */
+		spdlog::stdout_color_mt("lws");
+		lws_set_log_level((1 << LLL_COUNT) - 1, logger_cb);
 
-	char c, *endptr;
-	while ((c = getopt (argc, argv, "hVp:P:ld:")) != -1) {
-		switch (c) {
-			case 'd':
-				spdlog::set_level(spdlog::level::from_str(optarg));
-				break;
+		/* Start server */
+		lws_context_creation_info ctx_info = { 0 };
 
-			case 'p':
-				opts.port = strtoul(optarg, &endptr, 10);
-				goto check;
+		char c, *endptr;
+		while ((c = getopt (argc, argv, "hVp:P:ld:")) != -1) {
+			switch (c) {
+				case 'd':
+					spdlog::set_level(spdlog::level::from_str(optarg));
+					break;
 
-			case 'P':
-				opts.protocol = strdup(optarg);
-				break;
+				case 'p':
+					opts.port = strtoul(optarg, &endptr, 10);
+					goto check;
 
-			case 'l':
-				opts.loopback = true;
-				break;
+				case 'P':
+					opts.protocol = strdup(optarg);
+					break;
 
-			case 'V':
-				villas::print_version();
-				exit(EXIT_SUCCESS);
+				case 'l':
+					opts.loopback = true;
+					break;
 
-			case 'h':
-			case '?':
-				usage();
-				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+				case 'V':
+					villas::print_version();
+					exit(EXIT_SUCCESS);
+
+				case 'h':
+				case '?':
+					usage();
+					exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+			}
+
+			continue;
+
+check:			if (optarg == endptr) {
+				logger->error("Failed to parse parse option argument '-{} {}'", c, optarg);
+				exit(EXIT_FAILURE);
+			}
 		}
 
-		continue;
-
-check:		if (optarg == endptr) {
-			console->error("Failed to parse parse option argument '-{} {}'", c, optarg);
+		if (argc - optind < 0) {
+			usage();
 			exit(EXIT_FAILURE);
 		}
+
+		protocols[2].name = opts.protocol;
+
+		ctx_info.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS | LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+		ctx_info.gid = -1;
+		ctx_info.uid = -1;
+		ctx_info.protocols = protocols;
+		ctx_info.extensions = extensions;
+		ctx_info.port = opts.port;
+		ctx_info.mounts = &mount;
+
+		context = lws_create_context(&ctx_info);
+		if (context == nullptr) {
+			logger->error("WebSocket: failed to initialize server context");
+			exit(EXIT_FAILURE);
+		}
+
+		vhost = lws_create_vhost(context, &ctx_info);
+		if (vhost == nullptr) {
+			logger->error("WebSocket: failed to initialize virtual host");
+			exit(EXIT_FAILURE);
+		}
+
+		for (;;)
+			lws_service(context, 100);
+
+		return 0;
 	}
+	catch (std::runtime_error &e) {
+		logger->error("{}", e.what());
 
-	if (argc - optind < 0) {
-		usage();
-		exit(EXIT_FAILURE);
+		return -1;
 	}
-
-	protocols[2].name = opts.protocol;
-
-	ctx_info.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS | LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
-	ctx_info.gid = -1;
-	ctx_info.uid = -1;
-	ctx_info.protocols = protocols;
-	ctx_info.extensions = extensions;
-	ctx_info.port = opts.port;
-	ctx_info.mounts = &mount;
-
-	context = lws_create_context(&ctx_info);
-	if (context == nullptr) {
-		console->error("WebSocket: failed to initialize server context");
-		exit(EXIT_FAILURE);
-	}
-
-	vhost = lws_create_vhost(context, &ctx_info);
-	if (vhost == nullptr) {
-		console->error("WebSocket: failed to initialize virtual host");
-		exit(EXIT_FAILURE);
-	}
-
-	for (;;)
-		lws_service(context, 100);
-
-	return 0;
 }

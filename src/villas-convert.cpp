@@ -52,100 +52,112 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	int ret;
-	const char *input_format = "villas.human";
-	const char *output_format = "villas.human";
-	const char *dtypes = "64f";
+	Logger logger = logging.get("test-rtt");
 
-	/* Parse optional command line arguments */
-	int c;
-	while ((c = getopt(argc, argv, "Vhd:i:o:t:")) != -1) {
-		switch (c) {
-			case 'V':
-				print_version();
-				exit(EXIT_SUCCESS);
+	try {
+		int ret;
+		const char *input_format = "villas.human";
+		const char *output_format = "villas.human";
+		const char *dtypes = "64f";
 
-			case 'i':
-				input_format = optarg;
-				break;
+		/* Parse optional command line arguments */
+		int c;
+		while ((c = getopt(argc, argv, "Vhd:i:o:t:")) != -1) {
+			switch (c) {
+				case 'V':
+					print_version();
+					exit(EXIT_SUCCESS);
 
-			case 'o':
-				output_format = optarg;
-				break;
+				case 'i':
+					input_format = optarg;
+					break;
 
-			case 't':
-				dtypes = optarg;
-				break;
+				case 'o':
+					output_format = optarg;
+					break;
 
-			case 'd':
-				logging.setLevel(optarg);
-				break;
+				case 't':
+					dtypes = optarg;
+					break;
 
-			case 'h':
-			case '?':
-				usage();
-				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+				case 'd':
+					logging.setLevel(optarg);
+					break;
+
+				case 'h':
+				case '?':
+					usage();
+					exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+			}
 		}
+
+		if (argc != optind) {
+			usage();
+			exit(EXIT_FAILURE);
+		}
+
+		struct format_type *ft;
+		struct io input;
+		struct io output;
+
+		input.state = STATE_DESTROYED;
+		output.state = STATE_DESTROYED;
+
+		struct {
+			const char *name;
+			struct io *io;
+		} dirs[] = {
+			{ input_format, &input },
+			{ output_format, &output },
+		};
+
+		for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
+			ft = format_type_lookup(dirs[i].name);
+			if (!ft)
+				throw RuntimeError("Invalid format: {}", dirs[i].name);
+
+			ret = io_init2(dirs[i].io, ft, dtypes, SAMPLE_HAS_ALL);
+			if (ret)
+				throw RuntimeError("Failed to initialize IO: {}", dirs[i].name);
+
+			ret = io_check(dirs[i].io);
+			if (ret)
+				throw RuntimeError("Failed to validate IO configuration");
+
+			ret = io_open(dirs[i].io, nullptr);
+			if (ret)
+				throw RuntimeError("Failed to open IO");
+		}
+
+		struct sample *smp = sample_alloc_mem(DEFAULT_SAMPLE_LENGTH);
+
+		for (;;) {
+			ret = io_scan(&input, &smp, 1);
+			if (ret == 0)
+				continue;
+			if (ret < 0)
+				break;
+
+			io_print(&output, &smp, 1);
+		}
+
+		for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
+			ret = io_close(dirs[i].io);
+			if (ret)
+				throw RuntimeError("Failed to close IO");
+
+			ret = io_destroy(dirs[i].io);
+			if (ret)
+				throw RuntimeError("Failed to destroy IO");
+		}
+
+		return 0;
 	}
+	catch (std::runtime_error &e) {
+		logger->error("{}", e.what());
 
-	if (argc != optind) {
-		usage();
-		exit(EXIT_FAILURE);
+		return -1;
 	}
-
-	struct format_type *ft;
-	struct io input = { .state = STATE_DESTROYED };
-	struct io output = { .state = STATE_DESTROYED };
-
-	struct {
-		const char *name;
-		struct io *io;
-	} dirs[] = {
-		{ input_format, &input },
-		{ output_format, &output },
-	};
-
-	for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
-		ft = format_type_lookup(dirs[i].name);
-		if (!ft)
-			throw RuntimeError("Invalid format: {}", dirs[i].name);
-
-		ret = io_init2(dirs[i].io, ft, dtypes, SAMPLE_HAS_ALL);
-		if (ret)
-			throw RuntimeError("Failed to initialize IO: {}", dirs[i].name);
-
-		ret = io_check(dirs[i].io);
-		if (ret)
-			throw RuntimeError("Failed to validate IO configuration");
-
-		ret = io_open(dirs[i].io, nullptr);
-		if (ret)
-			throw RuntimeError("Failed to open IO");
-	}
-
-	struct sample *smp = sample_alloc_mem(DEFAULT_SAMPLE_LENGTH);
-
-	for (;;) {
-		ret = io_scan(&input, &smp, 1);
-		if (ret == 0)
-			continue;
-		if (ret < 0)
-			break;
-
-		io_print(&output, &smp, 1);
-	}
-
-	for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
-		ret = io_close(dirs[i].io);
-		if (ret)
-			throw RuntimeError("Failed to close IO");
-
-		ret = io_destroy(dirs[i].io);
-		if (ret)
-			throw RuntimeError("Failed to destroy IO");
-	}
-
-	return 0;
 }
 
 /** @} */

@@ -186,130 +186,138 @@ static void quit(int signal, siginfo_t *sinfo, void *ctx)
 
 int main(int argc, char *argv[])
 {
-	int ret;
-	json_t *cfg;
-	struct node_type *nt;
-	struct format_type *ft;
-
-	const char *format = "villas.human"; /** @todo hardcoded for now */
-
-	struct node n;
-	n.state = STATE_DESTROYED;
-	n.in.state = STATE_DESTROYED;
-	n.out.state = STATE_DESTROYED;
-
-	struct io io = { .state = STATE_DESTROYED };
-	struct pool q = { .state = STATE_DESTROYED };
-	struct sample *t;
-
-	q.queue.state = STATE_DESTROYED;
-
 	Logger logger = logging.get("signal");
 
-	ret = utils::signals_init(quit);
-	if (ret)
-		throw RuntimeError("Failed to intialize signals");
+	try {
+		int ret;
+		json_t *cfg;
+		struct node_type *nt;
+		struct format_type *ft;
 
-	ret = memory_init(0);
-	if (ret)
-		throw RuntimeError("Failed to initialize memory");
+		char *format = (char *) "villas.human"; /** @todo hardcoded for now */
 
-	nt = node_type_lookup("signal");
-	if (!nt)
-		throw RuntimeError("Signal generation is not supported.");
+		struct node n;
+		struct io io;
+		struct pool q;
+		struct sample *t;
 
-	ret = node_init(&n, nt);
-	if (ret)
-		throw RuntimeError("Failed to initialize node");
+		n.state = STATE_DESTROYED;
+		n.in.state = STATE_DESTROYED;
+		n.out.state = STATE_DESTROYED;
+		io.state = STATE_DESTROYED;
+		q.state = STATE_DESTROYED;
+		q.queue.state = STATE_DESTROYED;
 
-	cfg = parse_cli(argc, argv, &format);
-	if (!cfg) {
-		usage();
-		exit(EXIT_FAILURE);
+		ret = utils::signals_init(quit);
+		if (ret)
+			throw RuntimeError("Failed to intialize signals");
+
+		ret = memory_init(0);
+		if (ret)
+			throw RuntimeError("Failed to initialize memory");
+
+		nt = node_type_lookup("signal");
+		if (!nt)
+			throw RuntimeError("Signal generation is not supported.");
+
+		ret = node_init(&n, nt);
+		if (ret)
+			throw RuntimeError("Failed to initialize node");
+
+		cfg = parse_cli(argc, argv, &format);
+		if (!cfg) {
+			usage();
+			exit(EXIT_FAILURE);
+		}
+
+		ret = node_parse(&n, cfg, "cli");
+		if (ret) {
+			usage();
+			exit(EXIT_FAILURE);
+		}
+
+		ft = format_type_lookup(format);
+		if (!ft)
+			throw RuntimeError("Invalid output format '{}'", format);
+
+		// nt == n._vt
+		ret = node_type_start(nt, nullptr);
+		if (ret)
+			throw RuntimeError("Failed to initialize node type: {}", node_type_name(nt));
+
+		ret = node_check(&n);
+		if (ret)
+			throw RuntimeError("Failed to verify node configuration");
+
+		ret = pool_init(&q, 16, SAMPLE_LENGTH(vlist_length(&n.in.signals)), &memory_heap);
+		if (ret)
+			throw RuntimeError("Failed to initialize pool");
+
+		ret = node_prepare(&n);
+		if (ret)
+			throw RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
+
+		ret = node_start(&n);
+		if (ret)
+			throw RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
+
+		ret = io_init(&io, ft, &n.in.signals, IO_FLUSH | (SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET));
+		if (ret)
+			throw RuntimeError("Failed to initialize output");
+
+		ret = io_check(&io);
+		if (ret)
+			throw RuntimeError("Failed to validate IO configuration");
+
+		ret = io_open(&io, nullptr);
+		if (ret)
+			throw RuntimeError("Failed to open output");
+
+		while (!stop && n.state == STATE_STARTED) {
+			t = sample_alloc(&q);
+
+			unsigned release = 1; // release = allocated
+
+retry:			ret = node_read(&n, &t, 1, &release);
+			if (ret == 0)
+				goto retry;
+			else if (ret < 0)
+				goto out;
+
+			io_print(&io, &t, 1);
+
+out:			sample_decref(t);
+		}
+
+		ret = node_stop(&n);
+		if (ret)
+			throw RuntimeError("Failed to stop node");
+
+		ret = node_destroy(&n);
+		if (ret)
+			throw RuntimeError("Failed to destroy node");
+
+		ret = io_close(&io);
+		if (ret)
+			throw RuntimeError("Failed to close IO");
+
+		ret = io_destroy(&io);
+		if (ret)
+			throw RuntimeError("Failed to destroy IO");
+
+		ret = pool_destroy(&q);
+		if (ret)
+			throw RuntimeError("Failed to destroy pool");
+
+		logger->info(CLR_GRN("Goodbye!"));
+
+		return 0;
 	}
+	catch (std::runtime_error &e) {
+		logger->error("{}", e.what());
 
-	ret = node_parse(&n, cfg, "cli");
-	if (ret) {
-		usage();
-		exit(EXIT_FAILURE);
+		return -1;
 	}
-
-	ft = format_type_lookup(format);
-	if (!ft)
-		throw RuntimeError("Invalid output format '{}'", format);
-
-	// nt == n._vt
-	ret = node_type_start(nt, nullptr);
-	if (ret)
-		throw RuntimeError("Failed to initialize node type: {}", node_type_name(nt));
-
-	ret = node_check(&n);
-	if (ret)
-		throw RuntimeError("Failed to verify node configuration");
-
-	ret = pool_init(&q, 16, SAMPLE_LENGTH(vlist_length(&n.in.signals)), &memory_heap);
-	if (ret)
-		throw RuntimeError("Failed to initialize pool");
-
-	ret = node_prepare(&n);
-	if (ret)
-		throw RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
-
-	ret = node_start(&n);
-	if (ret)
-		throw RuntimeError("Failed to start node {}: reason={}", node_name(&n), ret);
-
-	ret = io_init(&io, ft, &n.in.signals, IO_FLUSH | (SAMPLE_HAS_ALL & ~SAMPLE_HAS_OFFSET));
-	if (ret)
-		throw RuntimeError("Failed to initialize output");
-
-	ret = io_check(&io);
-	if (ret)
-		throw RuntimeError("Failed to validate IO configuration");
-
-	ret = io_open(&io, nullptr);
-	if (ret)
-		throw RuntimeError("Failed to open output");
-
-	while (!stop && n.state == STATE_STARTED) {
-		t = sample_alloc(&q);
-
-		unsigned release = 1; // release = allocated
-
-retry:		ret = node_read(&n, &t, 1, &release);
-		if (ret == 0)
-			goto retry;
-		else if (ret < 0)
-			goto out;
-
-		io_print(&io, &t, 1);
-
-out:		sample_decref(t);
-	}
-
-	ret = node_stop(&n);
-	if (ret)
-		throw RuntimeError("Failed to stop node");
-
-	ret = node_destroy(&n);
-	if (ret)
-		throw RuntimeError("Failed to destroy node");
-
-	ret = io_close(&io);
-	if (ret)
-		throw RuntimeError("Failed to close IO");
-
-	ret = io_destroy(&io);
-	if (ret)
-		throw RuntimeError("Failed to destroy IO");
-
-	ret = pool_destroy(&q);
-	if (ret)
-		throw RuntimeError("Failed to destroy pool");
-
-	logger->info(CLR_GRN("Goodbye!"));
-
-	return 0;
 }
 
 /** @} */

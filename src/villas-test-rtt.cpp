@@ -72,166 +72,174 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	int ret;
-
-	struct hist hist;
-	struct timespec send, recv;
-
-	struct sample *smp_send = (struct sample *) new char[SAMPLE_LENGTH(2)];
-	struct sample *smp_recv = (struct sample *) new char[SAMPLE_LENGTH(2)];
-
-	struct node *node;
-
-	SuperNode sn;
 	Logger logger = logging.get("test-rtt");
 
-	/* Test options */
-	int count =  -1;		/**< Amount of messages which should be sent (default: -1 for unlimited) */
+	try {
+		int ret;
 
-	hist_cnt_t hist_warmup = 100;
-	int hist_buckets = 20;
+		struct hist hist;
+		struct timespec send, recv;
 
-	/** File descriptor for Matlab results.
-	 * This allows you to write Matlab results in a seperate log file:
-	 *
-	 *    ./test etc/example.conf rtt -f 3 3>> measurement_results.m
-	 */
-	int fd = STDOUT_FILENO;
+		struct sample *smp_send = (struct sample *) new char[SAMPLE_LENGTH(2)];
+		struct sample *smp_recv = (struct sample *) new char[SAMPLE_LENGTH(2)];
 
-	/* Parse Arguments */
-	int c;
-	char *endptr;
-	while ((c = getopt (argc, argv, "w:hr:f:c:b:Vd:")) != -1) {
-		switch (c) {
-			case 'c':
-				count = strtoul(optarg, &endptr, 10);
-				goto check;
+		struct node *node;
 
-			case 'f':
-				fd = strtoul(optarg, &endptr, 10);
-				goto check;
+		SuperNode sn;
 
-			case 'w':
-				hist_warmup = strtoul(optarg, &endptr, 10);
-				goto check;
+		/* Test options */
+		int count =  -1;		/**< Amount of messages which should be sent (default: -1 for unlimited) */
 
-			case 'b':
-				hist_buckets = strtoul(optarg, &endptr, 10);
-				goto check;
+		hist_cnt_t hist_warmup = 100;
+		int hist_buckets = 20;
 
-			case 'V':
-				print_version();
-				exit(EXIT_SUCCESS);
+		/** File descriptor for Matlab results.
+		 * This allows you to write Matlab results in a seperate log file:
+		 *
+		 *    ./test etc/example.conf rtt -f 3 3>> measurement_results.m
+		 */
+		int fd = STDOUT_FILENO;
 
-			case 'd':
-				logging.setLevel(optarg);
-				break;
+		/* Parse Arguments */
+		int c;
+		char *endptr;
+		while ((c = getopt (argc, argv, "w:hr:f:c:b:Vd:")) != -1) {
+			switch (c) {
+				case 'c':
+					count = strtoul(optarg, &endptr, 10);
+					goto check;
 
-			case 'h':
-			case '?':
-				usage();
-				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+				case 'f':
+					fd = strtoul(optarg, &endptr, 10);
+					goto check;
+
+				case 'w':
+					hist_warmup = strtoul(optarg, &endptr, 10);
+					goto check;
+
+				case 'b':
+					hist_buckets = strtoul(optarg, &endptr, 10);
+					goto check;
+
+				case 'V':
+					print_version();
+					exit(EXIT_SUCCESS);
+
+				case 'd':
+					logging.setLevel(optarg);
+					break;
+
+				case 'h':
+				case '?':
+					usage();
+					exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+			}
+
+			continue;
+
+check:			if (optarg == endptr)
+					throw RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
 		}
 
-		continue;
+		if (argc != optind + 2) {
+			usage();
+			exit(EXIT_FAILURE);
+		}
 
-check:		if (optarg == endptr)
-				throw RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
+		char *uri = argv[optind];
+		char *nodestr = argv[optind + 1];
+
+		ret = utils::signals_init(quit);
+		if (ret)
+			throw RuntimeError("Failed to initialize signals subsystem");
+
+		if (uri)
+			sn.parse(uri);
+		else
+			logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
+
+		node = sn.getNode(nodestr);
+		if (!node)
+			throw RuntimeError("There's no node with the name '{}'", nodestr);
+
+		ret = node_type_start(node->_vt, reinterpret_cast<super_node *>(&sn));
+		if (ret)
+			throw RuntimeError("Failed to start node-type {}: reason={}", node_type_name(node->_vt), ret);
+
+		ret = node_prepare(node);
+		if (ret)
+			throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
+
+		ret = node_start(node);
+		if (ret)
+			throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
+
+		ret = hist_init(&hist, hist_buckets, hist_warmup);
+		if (ret)
+			throw RuntimeError("Failed to initialize histogram");
+
+		/* Print header */
+		fprintf(stdout, "%17s%5s%10s%10s%10s%10s%10s\n", "timestamp", "seq", "rtt", "min", "max", "mean", "stddev");
+
+		while (!stop && (count < 0 || count--)) {
+			clock_gettime(CLOCK_ID, &send);
+
+			unsigned release;
+
+			release = 1; // release = allocated
+			node_write(node, &smp_send, 1, &release); /* Ping */
+
+			release = 1; // release = allocated
+			node_read(node,  &smp_recv, 1, &release); /* Pong */
+
+			clock_gettime(CLOCK_ID, &recv);
+
+			double rtt = time_delta(&recv, &send);
+
+			if (rtt < 0)
+				logger->warn("Negative RTT: {}", rtt);
+
+			hist_put(&hist, rtt);
+
+			smp_send->sequence++;
+
+			fprintf(stdout, "%10lu.%06lu%5" PRIu64 "%10.3f%10.3f%10.3f%10.3f%10.3f\n",
+				recv.tv_sec, recv.tv_nsec / 1000, smp_send->sequence,
+				1e3 * rtt, 1e3 * hist.lowest, 1e3 * hist.highest,
+				1e3 * hist_mean(&hist), 1e3 * hist_stddev(&hist));
+		}
+
+		struct stat st;
+		if (!fstat(fd, &st)) {
+			FILE *f = fdopen(fd, "w");
+			hist_dump_matlab(&hist, f);
+			fclose(f);
+		}
+		else
+			throw RuntimeError("Invalid file descriptor: {}", fd);
+
+		hist_print(&hist, 1);
+
+		ret = hist_destroy(&hist);
+		if (ret)
+			throw RuntimeError("Failed to destroy histogram");
+
+		ret = node_stop(node);
+		if (ret)
+			throw RuntimeError("Failed to stop node {}: reason={}", node_name(node), ret);
+
+		ret = node_type_stop(node->_vt);
+		if (ret)
+			throw RuntimeError("Failed to stop node-type {}: reason={}", node_type_name(node->_vt), ret);
+
+		delete smp_send;
+		delete smp_recv;
+
+		return 0;
 	}
+	catch (std::runtime_error &e) {
+		logger->error("{}", e.what());
 
-	if (argc != optind + 2) {
-		usage();
-		exit(EXIT_FAILURE);
+		return -1;
 	}
-
-	char *uri = argv[optind];
-	char *nodestr = argv[optind + 1];
-
-	ret = utils::signals_init(quit);
-	if (ret)
-		throw RuntimeError("Failed to initialize signals subsystem");
-
-	if (uri)
-		sn.parse(uri);
-	else
-		logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
-
-	node = sn.getNode(nodestr);
-	if (!node)
-		throw RuntimeError("There's no node with the name '{}'", nodestr);
-
-	ret = node_type_start(node->_vt, reinterpret_cast<super_node *>(&sn));
-	if (ret)
-		throw RuntimeError("Failed to start node-type {}: reason={}", node_type_name(node->_vt), ret);
-
-	ret = node_prepare(node);
-	if (ret)
-		throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
-
-	ret = node_start(node);
-	if (ret)
-		throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
-
-	ret = hist_init(&hist, hist_buckets, hist_warmup);
-	if (ret)
-		throw RuntimeError("Failed to initialize histogram");
-
-	/* Print header */
-	fprintf(stdout, "%17s%5s%10s%10s%10s%10s%10s\n", "timestamp", "seq", "rtt", "min", "max", "mean", "stddev");
-
-	while (!stop && (count < 0 || count--)) {
-		clock_gettime(CLOCK_ID, &send);
-
-		unsigned release;
-
-		release = 1; // release = allocated
-		node_write(node, &smp_send, 1, &release); /* Ping */
-
-		release = 1; // release = allocated
-		node_read(node,  &smp_recv, 1, &release); /* Pong */
-
-		clock_gettime(CLOCK_ID, &recv);
-
-		double rtt = time_delta(&recv, &send);
-
-		if (rtt < 0)
-			logger->warn("Negative RTT: {}", rtt);
-
-		hist_put(&hist, rtt);
-
-		smp_send->sequence++;
-
-		fprintf(stdout, "%10lu.%06lu%5" PRIu64 "%10.3f%10.3f%10.3f%10.3f%10.3f\n",
-			recv.tv_sec, recv.tv_nsec / 1000, smp_send->sequence,
-			1e3 * rtt, 1e3 * hist.lowest, 1e3 * hist.highest,
-			1e3 * hist_mean(&hist), 1e3 * hist_stddev(&hist));
-	}
-
-	struct stat st;
-	if (!fstat(fd, &st)) {
-		FILE *f = fdopen(fd, "w");
-		hist_dump_matlab(&hist, f);
-		fclose(f);
-	}
-	else
-		throw RuntimeError("Invalid file descriptor: {}", fd);
-
-	hist_print(&hist, 1);
-
-	ret = hist_destroy(&hist);
-	if (ret)
-		throw RuntimeError("Failed to destroy histogram");
-
-	ret = node_stop(node);
-	if (ret)
-		throw RuntimeError("Failed to stop node {}: reason={}", node_name(node), ret);
-
-	ret = node_type_stop(node->_vt);
-	if (ret)
-		throw RuntimeError("Failed to stop node-type {}: reason={}", node_type_name(node->_vt), ret);
-
-	delete smp_send;
-	delete smp_recv;
-
-	return 0;
 }

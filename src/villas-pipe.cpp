@@ -251,210 +251,218 @@ leave2:	stop = true;
 
 int main(int argc, char *argv[])
 {
-	int ret, timeout = 0;
-	bool reverse = false;
-	const char *format = "villas.human";
-	const char *dtypes = "64f";
-
-	struct node *node;
-	static struct io io = { .state = STATE_DESTROYED };
-
-	SuperNode sn; /**< The global configuration */
 	Logger logger = logging.get("pipe");
 
-	json_t *cfg_cli = json_object();
+	try {
+		int ret, timeout = 0;
+		bool reverse = false;
+		const char *format = "villas.human";
+		const char *dtypes = "64f";
 
-	bool enable_send = true, enable_recv = true;
-	int limit_send = -1, limit_recv = -1;
+		struct node *node;
+		static struct io io = { .state = STATE_DESTROYED };
 
-	/* Parse optional command line arguments */
-	int c;
-	char *endptr;
-	while ((c = getopt(argc, argv, "Vhxrsd:l:L:T:f:t:o:")) != -1) {
-		switch (c) {
-			case 'V':
-				print_version();
-				exit(EXIT_SUCCESS);
+		SuperNode sn; /**< The global configuration */
 
-			case 'f':
-				format = optarg;
-				break;
+		json_t *cfg_cli = json_object();
 
-			case 't':
-				dtypes = optarg;
-				break;
+		bool enable_send = true, enable_recv = true;
+		int limit_send = -1, limit_recv = -1;
 
-			case 'x':
-				reverse = true;
-				break;
+		/* Parse optional command line arguments */
+		int c;
+		char *endptr;
+		while ((c = getopt(argc, argv, "Vhxrsd:l:L:T:f:t:o:")) != -1) {
+			switch (c) {
+				case 'V':
+					print_version();
+					exit(EXIT_SUCCESS);
 
-			case 's':
-				enable_recv = false; // send only
-				break;
+				case 'f':
+					format = optarg;
+					break;
 
-			case 'r':
-				enable_send = false; // receive only
-				break;
+				case 't':
+					dtypes = optarg;
+					break;
 
-			case 'l':
-				limit_recv = strtoul(optarg, &endptr, 10);
-				goto check;
+				case 'x':
+					reverse = true;
+					break;
 
-			case 'L':
-				limit_send = strtoul(optarg, &endptr, 10);
-				goto check;
+				case 's':
+					enable_recv = false; // send only
+					break;
 
-			case 'T':
-				timeout = strtoul(optarg, &endptr, 10);
-				goto check;
+				case 'r':
+					enable_send = false; // receive only
+					break;
 
-			case 'o':
-				ret = json_object_extend_str(cfg_cli, optarg);
-				if (ret)
-					throw RuntimeError("Invalid option: {}", optarg);
-				break;
+				case 'l':
+					limit_recv = strtoul(optarg, &endptr, 10);
+					goto check;
 
-			case 'd':
-				logging.setLevel(optarg);
-				break;
+				case 'L':
+					limit_send = strtoul(optarg, &endptr, 10);
+					goto check;
 
-			case 'h':
-			case '?':
-				usage();
-				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+				case 'T':
+					timeout = strtoul(optarg, &endptr, 10);
+					goto check;
+
+				case 'o':
+					ret = json_object_extend_str(cfg_cli, optarg);
+					if (ret)
+						throw RuntimeError("Invalid option: {}", optarg);
+					break;
+
+				case 'd':
+					logging.setLevel(optarg);
+					break;
+
+				case 'h':
+				case '?':
+					usage();
+					exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+			}
+
+			continue;
+
+check:			if (optarg == endptr)
+				throw RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
 		}
 
-		continue;
+		if (argc != optind + 2) {
+			usage();
+			exit(EXIT_FAILURE);
+		}
 
-check:		if (optarg == endptr)
-			throw RuntimeError("Failed to parse parse option argument '-{} {}'", c, optarg);
-	}
+		logger->info("Logging level: {}", logging.getLevelName());
 
-	if (argc != optind + 2) {
-		usage();
-		exit(EXIT_FAILURE);
-	}
+		char *uri = argv[optind];
+		char *nodestr = argv[optind+1];
+		struct format_type *ft;
 
-	logger->info("Logging level: {}", logging.getLevelName());
+		ret = memory_init(0);
+		if (ret)
+			throw RuntimeError("Failed to intialize memory");
 
-	char *uri = argv[optind];
-	char *nodestr = argv[optind+1];
-	struct format_type *ft;
+		ret = utils::signals_init(quit);
+		if (ret)
+			throw RuntimeError("Failed to initialize signals");
 
-	ret = memory_init(0);
-	if (ret)
-		throw RuntimeError("Failed to intialize memory");
+		if (uri)
+			sn.parse(uri);
+		else
+			logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
 
-	ret = utils::signals_init(quit);
-	if (ret)
-		throw RuntimeError("Failed to initialize signals");
+		ft = format_type_lookup(format);
+		if (!ft)
+			throw RuntimeError("Invalid format: {}", format);
 
-	if (uri)
-		sn.parse(uri);
-	else
-		logger->warn("No configuration file specified. Starting unconfigured. Use the API to configure this instance.");
+		ret = io_init2(&io, ft, dtypes, SAMPLE_HAS_ALL);
+		if (ret)
+			throw RuntimeError("Failed to initialize IO");
 
-	ft = format_type_lookup(format);
-	if (!ft)
-		throw RuntimeError("Invalid format: {}", format);
+		ret = io_check(&io);
+		if (ret)
+			throw RuntimeError("Failed to validate IO configuration");
 
-	ret = io_init2(&io, ft, dtypes, SAMPLE_HAS_ALL);
-	if (ret)
-		throw RuntimeError("Failed to initialize IO");
+		ret = io_open(&io, nullptr);
+		if (ret)
+			throw RuntimeError("Failed to open IO");
 
-	ret = io_check(&io);
-	if (ret)
-		throw RuntimeError("Failed to validate IO configuration");
-
-	ret = io_open(&io, nullptr);
-	if (ret)
-		throw RuntimeError("Failed to open IO");
-
-	node = sn.getNode(nodestr);
-	if (!node)
-		throw RuntimeError("Node {} does not exist!", nodestr);
+		node = sn.getNode(nodestr);
+		if (!node)
+			throw RuntimeError("Node {} does not exist!", nodestr);
 
 #ifdef WITH_NODE_WEBSOCKET
-	/* Only start web subsystem if villas-pipe is used with a websocket node */
-	if (node_type(node)->start == websocket_start) {
-		Web *w = sn.getWeb();
-		w->start();
-	}
+		/* Only start web subsystem if villas-pipe is used with a websocket node */
+		if (node_type(node)->start == websocket_start) {
+			Web *w = sn.getWeb();
+			w->start();
+		}
 #endif /* WITH_NODE_WEBSOCKET */
 
-	if (reverse)
-		node_reverse(node);
+		if (reverse)
+			node_reverse(node);
 
-	ret = node_type_start(node_type(node), reinterpret_cast<super_node *>(&sn));
-	if (ret)
-		throw RuntimeError("Failed to intialize node type {}: reason={}", node_type_name(node_type(node)), ret);
+		ret = node_type_start(node_type(node), reinterpret_cast<super_node *>(&sn));
+		if (ret)
+			throw RuntimeError("Failed to intialize node type {}: reason={}", node_type_name(node_type(node)), ret);
 
-	sn.startInterfaces();
+		sn.startInterfaces();
 
-	ret = node_check(node);
-	if (ret)
-		throw RuntimeError("Invalid node configuration");
+		ret = node_check(node);
+		if (ret)
+			throw RuntimeError("Invalid node configuration");
 
-	ret = node_prepare(node);
-	if (ret)
-		throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
+		ret = node_prepare(node);
+		if (ret)
+			throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 
-	ret = node_start(node);
-	if (ret)
-		throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
+		ret = node_start(node);
+		if (ret)
+			throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 
-	/* Start threads */
-	Directions dirs = {
-		.send = Direction(node, &io, enable_send, limit_send),
-		.recv = Direction(node, &io, enable_recv, limit_recv)
-	};
+		/* Start threads */
+		Directions dirs = {
+			.send = Direction(node, &io, enable_send, limit_send),
+			.recv = Direction(node, &io, enable_recv, limit_recv)
+		};
 
-	if (dirs.recv.enabled) {
-		dirs.recv.node = node;
-		pthread_create(&dirs.recv.thread, nullptr, recv_loop, &dirs);
+		if (dirs.recv.enabled) {
+			dirs.recv.node = node;
+			pthread_create(&dirs.recv.thread, nullptr, recv_loop, &dirs);
+		}
+
+		if (dirs.send.enabled) {
+			dirs.send.node = node;
+			pthread_create(&dirs.send.thread, nullptr, send_loop, &dirs);
+		}
+
+		alarm(timeout);
+
+		while (!stop)
+			sleep(1);
+
+		if (dirs.recv.enabled) {
+			pthread_cancel(dirs.recv.thread);
+			pthread_join(dirs.recv.thread, nullptr);
+		}
+
+		if (dirs.send.enabled) {
+			pthread_cancel(dirs.send.thread);
+			pthread_join(dirs.send.thread, nullptr);
+		}
+
+		ret = node_stop(node);
+		if (ret)
+			throw RuntimeError("Failed to stop node {}: reason={}", node_name(node), ret);
+
+		sn.stopInterfaces();
+
+		ret = node_type_stop(node->_vt);
+		if (ret)
+			throw RuntimeError("Failed to stop node type {}: reason={}", node_type_name(node->_vt), ret);
+
+		ret = io_close(&io);
+		if (ret)
+			throw RuntimeError("Failed to close IO");
+
+		ret = io_destroy(&io);
+		if (ret)
+			throw RuntimeError("Failed to destroy IO");
+
+		logger->info(CLR_GRN("Goodbye!"));
+
+		return 0;
 	}
+	catch (std::runtime_error &e) {
+		logger->error("{}", e.what());
 
-	if (dirs.send.enabled) {
-		dirs.send.node = node;
-		pthread_create(&dirs.send.thread, nullptr, send_loop, &dirs);
+		return -1;
 	}
-
-	alarm(timeout);
-
-	while (!stop)
-		sleep(1);
-
-	if (dirs.recv.enabled) {
-		pthread_cancel(dirs.recv.thread);
-		pthread_join(dirs.recv.thread, nullptr);
-	}
-
-	if (dirs.send.enabled) {
-		pthread_cancel(dirs.send.thread);
-		pthread_join(dirs.send.thread, nullptr);
-	}
-
-	ret = node_stop(node);
-	if (ret)
-		throw RuntimeError("Failed to stop node {}: reason={}", node_name(node), ret);
-
-	sn.stopInterfaces();
-
-	ret = node_type_stop(node->_vt);
-	if (ret)
-		throw RuntimeError("Failed to stop node type {}: reason={}", node_type_name(node->_vt), ret);
-
-	ret = io_close(&io);
-	if (ret)
-		throw RuntimeError("Failed to close IO");
-
-	ret = io_destroy(&io);
-	if (ret)
-		throw RuntimeError("Failed to destroy IO");
-
-	logger->info(CLR_GRN("Goodbye!"));
-
-	return 0;
 }
 
 /** @} */

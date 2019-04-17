@@ -99,8 +99,11 @@ int main(int argc, char *argv[])
 	Logger logger = logging.get("hook");
 
 	try {
-		struct pool p = { .state = STATE_DESTROYED };
-		struct io  io = { .state = STATE_DESTROYED };
+		struct pool p;
+		struct io  io;
+
+		p.state = STATE_DESTROYED;
+		io.state = STATE_DESTROYED;
 
 		/* Default values */
 		cnt = 1;

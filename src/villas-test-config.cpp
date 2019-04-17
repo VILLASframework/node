@@ -47,35 +47,36 @@ static void usage()
 
 int main(int argc, char *argv[])
 {
-	SuperNode sn;
-	Logger logger = logging.get("config-test");
-
-	bool check = false;
-
-	int c;
-	while ((c = getopt (argc, argv, "hcV")) != -1) {
-		switch (c) {
-			case 'c':
-				check = true;
-				break;
-
-			case 'V':
-				print_version();
-				exit(EXIT_SUCCESS);
-
-			case 'h':
-			case '?':
-				usage();
-				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
-		}
-	}
-
-	if (argc - optind < 1) {
-		usage();
-		exit(EXIT_FAILURE);
-	}
+	Logger logger = logging.get("test-config");
 
 	try {
+		SuperNode sn;
+
+		bool check = false;
+
+		int c;
+		while ((c = getopt (argc, argv, "hcV")) != -1) {
+			switch (c) {
+				case 'c':
+					check = true;
+					break;
+
+				case 'V':
+					print_version();
+					exit(EXIT_SUCCESS);
+
+				case 'h':
+				case '?':
+					usage();
+					exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+			}
+		}
+
+		if (argc - optind < 1) {
+			usage();
+			exit(EXIT_FAILURE);
+		}
+
 		sn.parse(argv[optind]);
 
 		if (check)
