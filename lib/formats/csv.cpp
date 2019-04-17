@@ -229,13 +229,13 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 	p2.name = "csv";
 	p2.description = "Comma-separated values";
 	p2.type = PLUGIN_TYPE_FORMAT;
-	p1.format.header = csv_header;
-	p1.format.sprint = csv_sprint;
-	p1.format.sscan	= csv_sscan;
-	p1.format.size 	= 0;
-	p1.format.flags	= IO_NEWLINES |
+	p2.format.header = csv_header;
+	p2.format.sprint = csv_sprint;
+	p2.format.sscan	= csv_sscan;
+	p2.format.size 	= 0;
+	p2.format.flags	= IO_NEWLINES |
 			  SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
-	p1.format.separator = ',';
+	p2.format.separator = ',';
 
 	vlist_push(&plugins, &p2);
 }
