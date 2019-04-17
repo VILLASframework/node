@@ -54,14 +54,20 @@ static json_t * json_pack_timestamps(struct io *io, struct sample *smp)
 {
 	json_t *json_ts = json_object();
 
+#ifdef __arm__ // TODO: check
+	const char *fmt = "[ i, i ]";
+#else
+	const char *fmt = "[ I, I ]";
+#endif
+
 	if (io->flags & SAMPLE_HAS_TS_ORIGIN) {
 		if (smp->flags & SAMPLE_HAS_TS_ORIGIN)
-			json_object_set(json_ts, "origin", json_pack("[ I, I ]", smp->ts.origin.tv_sec, smp->ts.origin.tv_nsec));
+			json_object_set(json_ts, "origin", json_pack(fmt, smp->ts.origin.tv_sec, smp->ts.origin.tv_nsec));
 	}
 
 	if (io->flags & SAMPLE_HAS_TS_RECEIVED) {
 		if (smp->flags & SAMPLE_HAS_TS_RECEIVED)
-			json_object_set(json_ts, "received", json_pack("[ I, I ]", smp->ts.received.tv_sec, smp->ts.received.tv_nsec));
+			json_object_set(json_ts, "received", json_pack(fmt, smp->ts.received.tv_sec, smp->ts.received.tv_nsec));
 	}
 
 	return json_ts;
