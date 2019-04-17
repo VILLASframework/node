@@ -417,7 +417,7 @@ retry:	ret = io_sprint(&s->io, s->out.buf, s->out.buflen, &wbytes, smps, cnt);
 			break;
 
 		case AF_UNIX:
-			addrlen = SUN_LEN(&s->in.saddr.sun);
+			addrlen = SUN_LEN(&s->out.saddr.sun);
 			break;
 
 #ifdef WITH_SOCKET_LAYER_ETH
