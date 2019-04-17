@@ -44,7 +44,7 @@ static size_t csv_sprint_single(struct io *io, char *buf, size_t len, const stru
 	}
 
 	if (io->flags & SAMPLE_HAS_OFFSET) {
-		if (smp->flags & SAMPLE_HAS_TS_RECEIVED)
+		if ((smp->flags & SAMPLE_HAS_TS_RECEIVED) && (smp->flags & SAMPLE_HAS_TS_RECEIVED))
 			off += snprintf(buf + off, len - off, "%c%.09f", io->separator, time_delta(&smp->ts.origin, &smp->ts.received));
 		else
 			off += snprintf(buf + off, len - off, "%cnan", io->separator);
