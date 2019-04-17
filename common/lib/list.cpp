@@ -302,7 +302,7 @@ void vlist_extend(struct vlist *l, size_t len, void *val)
 
 void vlist_filter(struct vlist *l, dtor_cb_t cb)
 {
-	size_t u, j;
+	size_t i, j;
 	pthread_mutex_lock(&l->lock);
 
 	for (i  = 0, j = 0; i < vlist_length(l); i++) {
