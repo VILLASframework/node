@@ -44,16 +44,15 @@ protected:
 	size_type pos;
 
 public:
-
-	Window(size_type steps = 0, T i = 0) :
+	Window(size_type s = 0, T i = 0) :
 		init(i)
 	{
-		size_type len = LOG2_CEIL(steps);
+		size_type len = LOG2_CEIL(s);
 
 		/* Allocate memory for ciruclar history buffer */
 		data = std::vector<T>(len, i);
 
-		steps = steps;
+		steps = s;
 		pos = len;
 		mask = len - 1;
 	}
