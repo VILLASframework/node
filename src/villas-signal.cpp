@@ -73,7 +73,7 @@ static void usage()
 	print_copyright();
 }
 
-json_t * parse_cli(int argc, char *argv[])
+json_t * parse_cli(int argc, char *argv[], char **format)
 {
 	Logger logger = logging.get("signal");
 
@@ -91,10 +91,14 @@ json_t * parse_cli(int argc, char *argv[])
 	/* Parse optional command line arguments */
 	int c;
 	char *endptr;
-	while ((c = getopt(argc, argv, "v:r:f:l:a:D:no:d:hV")) != -1) {
+	while ((c = getopt(argc, argv, "v:r:F:f:l:a:D:no:d:hV")) != -1) {
 		switch (c) {
 			case 'n':
 				rt = 0;
+				break;
+
+			case 'f':
+				*format = optarg;
 				break;
 
 			case 'l':
@@ -113,7 +117,7 @@ json_t * parse_cli(int argc, char *argv[])
 				offset = strtof(optarg, &endptr);
 				goto check;
 
-			case 'f':
+			case 'F':
 				frequency = strtof(optarg, &endptr);
 				goto check;
 
@@ -206,10 +210,6 @@ int main(int argc, char *argv[])
 	if (ret)
 		throw RuntimeError("Failed to intialize signals");
 
-	ft = format_type_lookup(format);
-	if (!ft)
-		throw RuntimeError("Invalid output format '{}'", format);
-
 	ret = memory_init(0);
 	if (ret)
 		throw RuntimeError("Failed to initialize memory");
@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
 	if (ret)
 		throw RuntimeError("Failed to initialize node");
 
-	cfg = parse_cli(argc, argv);
+	cfg = parse_cli(argc, argv, &format);
 	if (!cfg) {
 		usage();
 		exit(EXIT_FAILURE);
@@ -233,6 +233,10 @@ int main(int argc, char *argv[])
 		usage();
 		exit(EXIT_FAILURE);
 	}
+
+	ft = format_type_lookup(format);
+	if (!ft)
+		throw RuntimeError("Invalid output format '{}'", format);
 
 	// nt == n._vt
 	ret = node_type_start(nt, nullptr);
