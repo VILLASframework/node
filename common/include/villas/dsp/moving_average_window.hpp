@@ -23,36 +23,32 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <villas/dsp/window.hpp>
 
 namespace villas {
 namespace dsp {
 
 template<typename T>
-class MovingAverageWindow {
-
-public:
-	typedef typename Window<T>::size_type size_type;
+class MovingAverageWindow : public Window<T> {
 
 protected:
-	Window<T> window;
-
 	T state;
 
 public:
-	MovingAverageWindow(size_type len, T i = 0) :
-		window(len, i),
+	MovingAverageWindow(size_t len, T i = 0) :
+		Window<T>(len, i),
 		state(i)
 	{ }
 
 	T update(T in)
 	{
-		T out = window.update(in);
+		T out = Window<T>::update(in);
 
 		state += in;
 		state -= out;
 
-		return state / window.getSteps();
+		return state / (double) Window<T>::getLength();
 	}
 };
 
