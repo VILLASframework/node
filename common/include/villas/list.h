@@ -50,11 +50,11 @@ __attribute__((destructor(105))) static void UNIQUE(__dtor)() {	\
 	vlist_destroy(l, NULL, false);				\
 }
 
-#define vlist_length(list)	((list)->length)
-#define vlist_at_safe(list, index) ((list)->length > index ? (list)->array[index] : NULL)
-#define vlist_at(list, index)	((list)->array[index])
+#define vlist_length(list)		((list)->length)
+#define vlist_at_safe(list, index)	((list)->length > index ? (list)->array[index] : NULL)
+#define vlist_at(list, index)		((list)->array[index])
 
-#define vlist_first(list)	vlist_at(list, 0)
+#define vlist_first(list)		vlist_at(list, 0)
 #define vlist_last(list)		vlist_at(list, (list)->length-1)
 
 /** Callback to search or sort a list. */
