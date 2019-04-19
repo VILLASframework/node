@@ -34,10 +34,6 @@
 
 #include <villas/config.h>
 
-#ifdef WITH_CONFIG
-  #include <libconfig.h>
-#endif /* WITH_CONFIG */
-
 namespace villas {
 
 class SystemError : public std::system_error {
