@@ -22,8 +22,8 @@
 
 #include <iostream>
 
+#include <villas/tool.hpp>
 #include <villas/node/config.h>
-#include <villas/copyright.hpp>
 #include <villas/log.hpp>
 #include <villas/version.hpp>
 #include <villas/utils.hpp>
@@ -33,27 +33,43 @@
 using namespace villas;
 using namespace villas::node;
 
-static void usage()
-{
-	std::cout << "Usage: villas-test-config [OPTIONS] CONFIG" << std::endl
-	          << "  CONFIG is the path to an optional configuration file" << std::endl
-		  << "  OPTIONS is one or more of the following options:" << std::endl
-	          << "    -d LVL  set debug level" << std::endl
-	          << "    -V        show version and exit" << std::endl
-	          << "    -h        show usage and exit" << std::endl << std::endl;
+namespace villas {
+namespace node {
+namespace tools {
 
-	print_copyright();
-}
+class TestConfig : public Tool {
 
-int main(int argc, char *argv[])
-{
-	Logger logger = logging.get("test-config");
+public:
+	TestConfig(int argc, char *argv[]) :
+		Tool(argc, argv, "test-config"),
+		check(false)
+	{
+		int ret;
 
-	try {
-		SuperNode sn;
+		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		if (ret)
+			throw RuntimeError("Failed to initialize memory");
+	}
 
-		bool check = false;
+protected:
+	std::string uri;
 
+	bool check;
+
+	void usage()
+	{
+		std::cout << "Usage: villas-test-config [OPTIONS] CONFIG" << std::endl
+			<< "  CONFIG is the path to an optional configuration file" << std::endl
+			<< "  OPTIONS is one or more of the following options:" << std::endl
+			<< "    -d LVL  set debug level" << std::endl
+			<< "    -V        show version and exit" << std::endl
+			<< "    -h        show usage and exit" << std::endl << std::endl;
+
+		printCopyright();
+	}
+
+	void parse()
+	{
 		int c;
 		while ((c = getopt (argc, argv, "hcV")) != -1) {
 			switch (c) {
@@ -62,7 +78,7 @@ int main(int argc, char *argv[])
 					break;
 
 				case 'V':
-					print_version();
+					printVersion();
 					exit(EXIT_SUCCESS);
 
 				case 'h':
@@ -77,26 +93,29 @@ int main(int argc, char *argv[])
 			exit(EXIT_FAILURE);
 		}
 
-		sn.parse(argv[optind]);
+		uri = argv[optind];
+	}
+
+	int main()
+	{
+		SuperNode sn;
+
+		sn.parse(uri);
 
 		if (check)
 			sn.check();
 
 		return 0;
 	}
-	catch (ParseError &e) {
-		logger->error("{}", e.what());
+};
 
-		return -1;
-	}
-	catch (ConfigError &e) {
-		logger->error("{}", e.what());
+} // namespace tools
+} // namespace node
+} // namespace villas
 
-		return -1;
-	}
-	catch (std::runtime_error &e) {
-		logger->error("{}", e.what());
+int main(int argc, char *argv[])
+{
+	auto t = villas::node::tools::TestConfig(argc, argv);
 
-		return -1;
-	}
+	return t.run();
 }

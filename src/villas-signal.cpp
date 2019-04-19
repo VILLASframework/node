@@ -30,11 +30,11 @@
 #include <iostream>
 #include <atomic>
 
+#include <villas/tool.hpp>
 #include <villas/io.h>
 #include <villas/utils.hpp>
 #include <villas/colors.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/copyright.hpp>
 #include <villas/log.hpp>
 #include <villas/sample.h>
 #include <villas/timing.h>
@@ -45,162 +45,19 @@
 
 using namespace villas;
 
-static std::atomic<bool> stop(false);
+namespace villas {
+namespace node {
+namespace tools {
 
-static void usage()
-{
-	std::cout << "Usage: villas-signal [OPTIONS] SIGNAL" << std::endl
-	          << "  SIGNAL   is on of the following signal types:" << std::endl
-	          << "    mixed" << std::endl
-	          << "    random" << std::endl
-	          << "    sine" << std::endl
-	          << "    triangle" << std::endl
-	          << "    square" << std::endl
-	          << "    ramp" << std::endl
-	          << "    constants" << std::endl
-	          << "    counter" << std::endl << std::endl
-	          << "  OPTIONS is one or more of the following options:" << std::endl
-	          << "    -d LVL  set debug level" << std::endl
-	          << "    -f FMT  set the format" << std::endl
-	          << "    -v NUM  specifies how many values a message should contain" << std::endl
-	          << "    -r HZ   how many messages per second" << std::endl
-	          << "    -n      non real-time mode. do not throttle output." << std::endl
-	          << "    -F HZ   the frequency of the signal" << std::endl
-	          << "    -a FLT  the amplitude" << std::endl
-	          << "    -D FLT  the standard deviation for 'random' signals" << std::endl
-	          << "    -o OFF  the DC bias" << std::endl
-	          << "    -l NUM  only send LIMIT messages and stop" << std::endl << std::endl;
+class Signal : public Tool {
 
-	print_copyright();
-}
-
-json_t * parse_cli(int argc, char *argv[], char **format)
-{
-	Logger logger = logging.get("signal");
-
-	/* Default values */
-	double rate = 10;
-	double frequency = 1;
-	double amplitude = 1;
-	double stddev = 0.02;
-	double offset = 0;
-	char *type;
-	int rt = 1;
-	int values = 1;
-	int limit = -1;
-
-	/* Parse optional command line arguments */
-	int c;
-	char *endptr;
-	while ((c = getopt(argc, argv, "v:r:F:f:l:a:D:no:d:hV")) != -1) {
-		switch (c) {
-			case 'n':
-				rt = 0;
-				break;
-
-			case 'f':
-				*format = optarg;
-				break;
-
-			case 'l':
-				limit = strtoul(optarg, &endptr, 10);
-				goto check;
-
-			case 'v':
-				values = strtoul(optarg, &endptr, 10);
-				goto check;
-
-			case 'r':
-				rate = strtof(optarg, &endptr);
-				goto check;
-
-			case 'o':
-				offset = strtof(optarg, &endptr);
-				goto check;
-
-			case 'F':
-				frequency = strtof(optarg, &endptr);
-				goto check;
-
-			case 'a':
-				amplitude = strtof(optarg, &endptr);
-				goto check;
-
-			case 'D':
-				stddev = strtof(optarg, &endptr);
-				goto check;
-
-			case 'd':
-				logging.setLevel(optarg);
-				break;
-
-			case 'V':
-				print_version();
-				exit(EXIT_SUCCESS);
-
-			case 'h':
-			case '?':
-				usage();
-				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
-		}
-
-		continue;
-
-check:		if (optarg == endptr)
-			logger->warn("Failed to parse parse option argument '-{} {}'", c, optarg);
-	}
-
-	if (argc != optind + 1)
-		return nullptr;
-
-	type = argv[optind];
-
-	return json_pack("{ s: s, s: s, s: f, s: f, s: f, s: f, s: f, s: b, s: i, s: i }",
-		"type", "signal",
-		"signal", type,
-		"rate", rate,
-		"frequency", frequency,
-		"amplitude", amplitude,
-		"stddev", stddev,
-		"offset", offset,
-		"realtime", rt,
-		"values", values,
-		"limit", limit
-	);
-}
-
-static void quit(int signal, siginfo_t *sinfo, void *ctx)
-{
-	Logger logger = logging.get("signal");
-
-	switch (signal)  {
-		case  SIGALRM:
-			logger->info("Reached timeout. Terminating...");
-			break;
-
-		default:
-			logger->info("Received {} signal. Terminating...", strsignal(signal));
-	}
-
-	stop = true;
-}
-
-int main(int argc, char *argv[])
-{
-	Logger logger = logging.get("signal");
-
-	try {
+public:
+	Signal(int argc, char *argv[]) :
+		Tool(argc, argv, "signal"),
+		stop(false),
+		format("villas.human")
+	{
 		int ret;
-		json_t *cfg;
-		struct node_type *nt;
-		struct format_type *ft;
-
-		char *format = (char *) "villas.human"; /** @todo hardcoded for now */
-
-		struct node n;
-		struct io io;
-		struct pool q;
-		struct sample *t;
 
 		n.state = STATE_DESTROYED;
 		n.in.state = STATE_DESTROYED;
@@ -209,13 +66,164 @@ int main(int argc, char *argv[])
 		q.state = STATE_DESTROYED;
 		q.queue.state = STATE_DESTROYED;
 
-		ret = utils::signals_init(quit);
-		if (ret)
-			throw RuntimeError("Failed to intialize signals");
-
-		ret = memory_init(0);
+		ret = memory_init(DEFAULT_NR_HUGEPAGES);
 		if (ret)
 			throw RuntimeError("Failed to initialize memory");
+	}
+
+protected:
+	std::atomic<bool> stop;
+
+	struct node n;
+	struct io io;
+	struct pool q;
+
+	std::string format;
+
+	void usage()
+	{
+		std::cout << "Usage: villas-signal [OPTIONS] SIGNAL" << std::endl
+			<< "  SIGNAL   is on of the following signal types:" << std::endl
+			<< "    mixed" << std::endl
+			<< "    random" << std::endl
+			<< "    sine" << std::endl
+			<< "    triangle" << std::endl
+			<< "    square" << std::endl
+			<< "    ramp" << std::endl
+			<< "    constants" << std::endl
+			<< "    counter" << std::endl << std::endl
+			<< "  OPTIONS is one or more of the following options:" << std::endl
+			<< "    -d LVL  set debug level" << std::endl
+			<< "    -f FMT  set the format" << std::endl
+			<< "    -v NUM  specifies how many values a message should contain" << std::endl
+			<< "    -r HZ   how many messages per second" << std::endl
+			<< "    -n      non real-time mode. do not throttle output." << std::endl
+			<< "    -F HZ   the frequency of the signal" << std::endl
+			<< "    -a FLT  the amplitude" << std::endl
+			<< "    -D FLT  the standard deviation for 'random' signals" << std::endl
+			<< "    -o OFF  the DC bias" << std::endl
+			<< "    -l NUM  only send LIMIT messages and stop" << std::endl << std::endl;
+
+		printCopyright();
+	}
+
+	json_t * parse_cli(int argc, char *argv[])
+	{
+		/* Default values */
+		double rate = 10;
+		double frequency = 1;
+		double amplitude = 1;
+		double stddev = 0.02;
+		double offset = 0;
+		std::string type;
+		int rt = 1;
+		int values = 1;
+		int limit = -1;
+
+		/* Parse optional command line arguments */
+		int c;
+		char *endptr;
+		while ((c = getopt(argc, argv, "v:r:F:f:l:a:D:no:d:hV")) != -1) {
+			switch (c) {
+				case 'n':
+					rt = 0;
+					break;
+
+				case 'f':
+					format = optarg;
+					break;
+
+				case 'l':
+					limit = strtoul(optarg, &endptr, 10);
+					goto check;
+
+				case 'v':
+					values = strtoul(optarg, &endptr, 10);
+					goto check;
+
+				case 'r':
+					rate = strtof(optarg, &endptr);
+					goto check;
+
+				case 'o':
+					offset = strtof(optarg, &endptr);
+					goto check;
+
+				case 'F':
+					frequency = strtof(optarg, &endptr);
+					goto check;
+
+				case 'a':
+					amplitude = strtof(optarg, &endptr);
+					goto check;
+
+				case 'D':
+					stddev = strtof(optarg, &endptr);
+					goto check;
+
+				case 'd':
+					logging.setLevel(optarg);
+					break;
+
+				case 'V':
+					printVersion();
+					exit(EXIT_SUCCESS);
+
+				case 'h':
+				case '?':
+					usage();
+					exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+			}
+
+			continue;
+
+check:			if (optarg == endptr)
+				logger->warn("Failed to parse parse option argument '-{} {}'", c, optarg);
+		}
+
+		if (argc != optind + 1)
+			return nullptr;
+
+		type = argv[optind];
+
+		return json_pack("{ s: s, s: s, s: f, s: f, s: f, s: f, s: f, s: b, s: i, s: i }",
+			"type", "signal",
+			"signal", type.c_str(),
+			"rate", rate,
+			"frequency", frequency,
+			"amplitude", amplitude,
+			"stddev", stddev,
+			"offset", offset,
+			"realtime", rt,
+			"values", values,
+			"limit", limit
+		);
+	}
+
+	void handler(int signal, siginfo_t *sinfo, void *ctx)
+	{
+		Logger logger = logging.get("signal");
+
+		switch (signal)  {
+			case  SIGALRM:
+				logger->info("Reached timeout. Terminating...");
+				break;
+
+			default:
+				logger->info("Received {} signal. Terminating...", strsignal(signal));
+		}
+
+		stop = true;
+	}
+
+	int main()
+	{
+		int ret;
+		json_t *cfg;
+		struct node_type *nt;
+		struct format_type *ft;
+
+		struct sample *t;
 
 		nt = node_type_lookup("signal");
 		if (!nt)
@@ -225,7 +233,7 @@ int main(int argc, char *argv[])
 		if (ret)
 			throw RuntimeError("Failed to initialize node");
 
-		cfg = parse_cli(argc, argv, &format);
+		cfg = parse_cli(argc, argv);
 		if (!cfg) {
 			usage();
 			exit(EXIT_FAILURE);
@@ -237,7 +245,7 @@ int main(int argc, char *argv[])
 			exit(EXIT_FAILURE);
 		}
 
-		ft = format_type_lookup(format);
+		ft = format_type_lookup(format.c_str());
 		if (!ft)
 			throw RuntimeError("Invalid output format '{}'", format);
 
@@ -310,15 +318,19 @@ out:			sample_decref(t);
 		if (ret)
 			throw RuntimeError("Failed to destroy pool");
 
-		logger->info(CLR_GRN("Goodbye!"));
-
 		return 0;
 	}
-	catch (std::runtime_error &e) {
-		logger->error("{}", e.what());
+};
 
-		return -1;
-	}
+} // namespace tools
+} // namespace node
+} // namespace villas
+
+int main(int argc, char *argv[])
+{
+	auto t = villas::node::tools::Signal(argc, argv);
+
+	return t.run();
 }
 
 /** @} */

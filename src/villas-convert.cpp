@@ -26,54 +26,78 @@
 
 #include <iostream>
 
+#include <villas/tool.hpp>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
 #include <villas/io.h>
 #include <villas/sample.h>
 #include <villas/plugin.h>
 #include <villas/exceptions.hpp>
-#include <villas/copyright.hpp>
 
 using namespace villas;
 
-static void usage()
-{
-	std::cout << "Usage: villas-convert [OPTIONS]" << std::endl
-	          << "  OPTIONS are:" << std::endl
-	          << "    -i FMT           set the input format" << std::endl
-	          << "    -o FMT           set the output format" << std::endl
-	          << "    -t DT            the data-type format string" << std::endl
-	          << "    -d LVL           set debug log level to LVL" << std::endl
-	          << "    -h               show this usage information" << std::endl
-	          << "    -V               show the version of the tool" << std::endl << std::endl;
+namespace villas {
+namespace node {
+namespace tools {
 
-	print_copyright();
-}
+class Convert : public Tool {
 
-int main(int argc, char *argv[])
-{
-	Logger logger = logging.get("test-rtt");
-
-	try {
+public:
+	Convert(int argc, char *argv[]) :
+		Tool(argc, argv, "convert"),
+		dtypes("64f")
+	{
 		int ret;
-		const char *input_format = "villas.human";
-		const char *output_format = "villas.human";
-		const char *dtypes = "64f";
 
+		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		if (ret)
+			throw RuntimeError("Failed to initialize memory");
+
+		for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
+			dirs[i].format = "villas.human";
+			dirs[i].io.state = STATE_DESTROYED;
+		}
+	}
+
+protected:
+	std::string dtypes;
+
+	struct {
+		std::string name;
+		std::string format;
+		struct io io;
+	} dirs[2];
+
+	void usage()
+	{
+		std::cout << "Usage: villas-convert [OPTIONS]" << std::endl
+			<< "  OPTIONS are:" << std::endl
+			<< "    -i FMT           set the input format" << std::endl
+			<< "    -o FMT           set the output format" << std::endl
+			<< "    -t DT            the data-type format string" << std::endl
+			<< "    -d LVL           set debug log level to LVL" << std::endl
+			<< "    -h               show this usage information" << std::endl
+			<< "    -V               show the version of the tool" << std::endl << std::endl;
+
+		printCopyright();
+	}
+
+	void parse()
+	{
 		/* Parse optional command line arguments */
 		int c;
 		while ((c = getopt(argc, argv, "Vhd:i:o:t:")) != -1) {
 			switch (c) {
 				case 'V':
-					print_version();
+					printVersion();
 					exit(EXIT_SUCCESS);
 
 				case 'i':
-					input_format = optarg;
+					dirs[0].format = optarg;
 					break;
 
 				case 'o':
-					output_format = optarg;
+					dirs[1].format = optarg;
 					break;
 
 				case 't':
@@ -95,36 +119,28 @@ int main(int argc, char *argv[])
 			usage();
 			exit(EXIT_FAILURE);
 		}
+	}
 
-		struct format_type *ft;
-		struct io input;
-		struct io output;
-
-		input.state = STATE_DESTROYED;
-		output.state = STATE_DESTROYED;
-
-		struct {
-			const char *name;
-			struct io *io;
-		} dirs[] = {
-			{ input_format, &input },
-			{ output_format, &output },
-		};
+	int main()
+	{
+		int ret;
 
 		for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
-			ft = format_type_lookup(dirs[i].name);
-			if (!ft)
-				throw RuntimeError("Invalid format: {}", dirs[i].name);
+			struct format_type *ft;
 
-			ret = io_init2(dirs[i].io, ft, dtypes, SAMPLE_HAS_ALL);
+			ft = format_type_lookup(dirs[i].format.c_str());
+			if (!ft)
+				throw RuntimeError("Invalid format: {}", dirs[i].format);
+
+			ret = io_init2(&dirs[i].io, ft, dtypes.c_str(), SAMPLE_HAS_ALL);
 			if (ret)
 				throw RuntimeError("Failed to initialize IO: {}", dirs[i].name);
 
-			ret = io_check(dirs[i].io);
+			ret = io_check(&dirs[i].io);
 			if (ret)
 				throw RuntimeError("Failed to validate IO configuration");
 
-			ret = io_open(dirs[i].io, nullptr);
+			ret = io_open(&dirs[i].io, nullptr);
 			if (ret)
 				throw RuntimeError("Failed to open IO");
 		}
@@ -132,32 +148,38 @@ int main(int argc, char *argv[])
 		struct sample *smp = sample_alloc_mem(DEFAULT_SAMPLE_LENGTH);
 
 		for (;;) {
-			ret = io_scan(&input, &smp, 1);
+			ret = io_scan(&dirs[0].io, &smp, 1);
 			if (ret == 0)
 				continue;
 			if (ret < 0)
 				break;
 
-			io_print(&output, &smp, 1);
+			io_print(&dirs[1].io, &smp, 1);
 		}
 
 		for (unsigned i = 0; i < ARRAY_LEN(dirs); i++) {
-			ret = io_close(dirs[i].io);
+			ret = io_close(&dirs[i].io);
 			if (ret)
 				throw RuntimeError("Failed to close IO");
 
-			ret = io_destroy(dirs[i].io);
+			ret = io_destroy(&dirs[i].io);
 			if (ret)
 				throw RuntimeError("Failed to destroy IO");
 		}
 
 		return 0;
 	}
-	catch (std::runtime_error &e) {
-		logger->error("{}", e.what());
+};
 
-		return -1;
-	}
+} // namespace tools
+} // namespace node
+} // namespace villas
+
+int main(int argc, char *argv[])
+{
+	auto t = villas::node::tools::Convert(argc, argv);
+
+	return t.run();
 }
 
 /** @} */

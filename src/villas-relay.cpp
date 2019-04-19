@@ -31,95 +31,26 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <jansson.h>
 
-#include <villas/config.h>
+#include <villas/node/config.h>
 #include <villas/compat.h>
+#include <villas/memory.h>
+#include <villas/tool.hpp>
 #include <villas/log.hpp>
-#include <villas/copyright.hpp>
 
 #include "villas-relay.hpp"
 
-/** The libwebsockets server context. */
-static lws_context *context;
 
-/** The libwebsockets vhost. */
-static lws_vhost *vhost;
+namespace villas {
+namespace node {
+namespace tools {
 
-std::map<std::string, Session *> sessions;
-
-using Logger = villas::Logger;
-
-/* Default options */
-struct Options opts = {
-	.loopback = false,
-	.port = 8088,
-	.protocol = "live"
-};
-
-/** List of libwebsockets protocols. */
-lws_protocols protocols[] = {
-	{
- 		.name = "http",
- 		.callback = lws_callback_http_dummy,
- 		.per_session_data_size = 0,
- 		.rx_buffer_size = 1024
- 	},
-	{
-		.name = "http-api",
-		.callback = http_protocol_cb,
-		.per_session_data_size = 0,
-		.rx_buffer_size = 1024
-	},
-	{
-		.name = "live",
-		.callback = protocol_cb,
-		.per_session_data_size = sizeof(Connection),
-		.rx_buffer_size = 0
-	},
-	{ nullptr /* terminator */ }
-};
-
-/** List of libwebsockets extensions. */
-static const lws_extension extensions[] = {
-	{
-		"permessage-deflate",
-		lws_extension_callback_pm_deflate,
-		"permessage-deflate"
-	},
-	{
-		"deflate-frame",
-		lws_extension_callback_pm_deflate,
-		"deflate_frame"
-	},
-	{ nullptr /* terminator */ }
-};
-
-static const lws_http_mount mount = {
-	.mount_next =		nullptr, /* linked-list "next" */
-	.mountpoint =		"/api/v1", /* mountpoint URL */
-	.origin =		nullptr,	/* protocol */
-	.def =			nullptr,
-	.protocol =		"http-api",
-	.cgienv =		nullptr,
-	.extra_mimetypes =	nullptr,
-	.interpret =		nullptr,
-	.cgi_timeout =		0,
-	.cache_max_age =	0,
-	.auth_mask =		0,
-	.cache_reusable =	0,
-	.cache_revalidate =	0,
-	.cache_intermediaries =	0,
-	.origin_protocol =	LWSMPRO_CALLBACK, /* dynamic */
-	.mountpoint_len =	7, /* char count */
-	.basic_auth_login_file =nullptr,
-};
-
-Session::Session(Identifier sid) :
+RelaySession::RelaySession(Identifier sid) :
 	identifier(sid),
 	connects(0)
 {
 	Logger logger = villas::logging.get("console");
 
-	logger->info("Session created: {}", identifier);
+	logger->info("RelaySession created: {}", identifier);
 
 	sessions[sid] = this;
 
@@ -128,16 +59,16 @@ Session::Session(Identifier sid) :
 	uuid_generate(uuid);
 }
 
-Session::~Session()
+RelaySession::~RelaySession()
 {
 	Logger logger = villas::logging.get("console");
 
-	logger->info("Session destroyed: {}", identifier);
+	logger->info("RelaySession destroyed: {}", identifier);
 
 	sessions.erase(identifier);
 }
 
-Session * Session::get(lws *wsi)
+RelaySession * RelaySession::get(lws *wsi)
 {
 	Logger logger = villas::logging.get("console");
 
@@ -157,7 +88,7 @@ Session * Session::get(lws *wsi)
 
 	auto it = sessions.find(sid);
 	if (it == sessions.end()) {
-		return new Session(sid);
+		return new RelaySession(sid);
 	}
 	else {
 		logger->info("Found existing session: {}", sid);
@@ -166,7 +97,7 @@ Session * Session::get(lws *wsi)
 	}
 }
 
-json_t * Session::toJson() const
+json_t * RelaySession::toJson() const
 {
 	json_t *json_connections = json_array();
 
@@ -188,18 +119,21 @@ json_t * Session::toJson() const
 	);
 }
 
-Connection::Connection(lws *w) :
+std::map<std::string, RelaySession *> RelaySession::sessions;
+
+RelayConnection::RelayConnection(lws *w, bool lo) :
 	wsi(w),
 	currentFrame(std::make_shared<Frame>()),
 	outgoingFrames(),
 	bytes_recv(0),
 	bytes_sent(0),
 	frames_recv(0),
-	frames_sent(0)
+	frames_sent(0),
+	loopback(lo)
 {
 	Logger logger = villas::logging.get("console");
 
-	session = Session::get(wsi);
+	session = RelaySession::get(wsi);
 	session->connections[wsi] = this;
 	session->connects++;
 
@@ -210,11 +144,11 @@ Connection::Connection(lws *w) :
 	logger->info("New connection established: session={}, remote={} ({})", session->identifier, name, ip);
 }
 
-Connection::~Connection()
+RelayConnection::~RelayConnection()
 {
 	Logger logger = villas::logging.get("console");
 
-	logger->info("Connection closed: session={}, remote={} ({})", session->identifier, name, ip);
+	logger->info("RelayConnection closed: session={}, remote={} ({})", session->identifier, name, ip);
 
 	session->connections.erase(wsi);
 
@@ -222,7 +156,7 @@ Connection::~Connection()
 		delete session;
 }
 
-json_t * Connection::toJson() const
+json_t * RelayConnection::toJson() const
 {
 	return json_pack("{ s: s, s: s, s: I, s: I, s: I, s: I, s: I }",
 		"name", name,
@@ -235,7 +169,7 @@ json_t * Connection::toJson() const
 	);
 }
 
-void Connection::write()
+void RelayConnection::write()
 {
 	int ret;
 
@@ -254,7 +188,7 @@ void Connection::write()
 		lws_callback_on_writable(wsi);
 }
 
-void Connection::read(void *in, size_t len)
+void RelayConnection::read(void *in, size_t len)
 {
 	Logger logger = villas::logging.get("console");
 
@@ -264,14 +198,14 @@ void Connection::read(void *in, size_t len)
 
 	if (lws_is_final_fragment(wsi)) {
 		frames_recv++;
-		logger->debug("Received frame, relaying to {} connections", session->connections.size() - (opts.loopback ? 0 : 1));
+		logger->debug("Received frame, relaying to {} connections", session->connections.size() - (loopback ? 0 : 1));
 
 		for (auto p : session->connections) {
 			auto c = p.second;
 
 			/* We skip the current connection in order
 				* to avoid receiving our own data */
-			if (opts.loopback == false && c == this)
+			if (loopback == false && c == this)
 				continue;
 
 			c->outgoingFrames.push(currentFrame);
@@ -283,7 +217,47 @@ void Connection::read(void *in, size_t len)
 	}
 }
 
-static void logger_cb(int level, const char *msg)
+Relay::Relay(int argc, char *argv[]) :
+	Tool(argc, argv, "relay"),
+	stop(false),
+	loopback(false),
+	port(8088),
+	protocol("live")
+{
+	int ret;
+
+	ret = memory_init(DEFAULT_NR_HUGEPAGES);
+	if (ret)
+		throw RuntimeError("Failed to initialize memory");
+
+	/* Initialize logging */
+	spdlog::stdout_color_mt("lws");
+	lws_set_log_level((1 << LLL_COUNT) - 1, logger_cb);
+
+	protocols = {
+		{
+			.name = "http",
+			.callback = lws_callback_http_dummy,
+			.per_session_data_size = 0,
+			.rx_buffer_size = 1024
+		},
+		{
+			.name = "http-api",
+			.callback = http_protocol_cb,
+			.per_session_data_size = 0,
+			.rx_buffer_size = 1024
+		},
+		{
+			.name = "live",
+			.callback = protocol_cb,
+			.per_session_data_size = sizeof(RelayConnection),
+			.rx_buffer_size = 0
+		},
+		{ nullptr /* terminator */ }
+	};
+}
+
+void Relay::logger_cb(int level, const char *msg)
 {
 	auto log = spdlog::get("lws");
 
@@ -296,20 +270,34 @@ static void logger_cb(int level, const char *msg)
 		level = LLL_WARN;
 
 	switch (level) {
-		case LLL_ERR:   log->error("{}", msg); break;
-		case LLL_WARN:	log->warn( "{}", msg); break;
-		case LLL_INFO:	log->info( "{}", msg); break;
-		default:        log->debug("{}", msg); break;
+		case LLL_ERR:
+			log->error("{}", msg);
+			break;
+
+		case LLL_WARN:
+			log->warn( "{}", msg);
+			break;
+
+		case LLL_INFO:
+			log->info( "{}", msg);
+			break;
+
+		default:
+			log->debug("{}", msg);
+			break;
 	}
 }
 
-int http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
+int Relay::http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
 	int ret;
 	size_t json_len;
 	json_t *json_sessions, *json_body;
 
-	Logger logger = villas::logging.get("console");
+	lws_context *ctx = lws_get_context(wsi);
+	void *user_ctx = lws_context_user(ctx);
+
+	Relay           *r = reinterpret_cast<Relay *>(user_ctx);
 
 	unsigned char buf[LWS_PRE + 2048], *start = &buf[LWS_PRE], *end = &buf[sizeof(buf) - LWS_PRE - 1], *p = start;
 
@@ -320,6 +308,7 @@ int http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, voi
 					LWS_ILLEGAL_HTTP_CONTENT_LEN, /* no content len */
 					&p, end))
 				return 1;
+
 			if (lws_finalize_write_http_header(wsi, start, &p, end))
 				return 1;
 
@@ -331,7 +320,7 @@ int http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, voi
 		case LWS_CALLBACK_HTTP_WRITEABLE:
 
 			json_sessions = json_array();
-			for (auto it : sessions) {
+			for (auto it : RelaySession::sessions) {
 				auto &session = it.second;
 
 				json_array_append(json_sessions, session->toJson());
@@ -345,9 +334,9 @@ int http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, voi
 				"version", PROJECT_VERSION_STR,
 				"hostname", hname,
 				"options",
-					"loopback", opts.loopback,
-					"port", opts.port,
-					"protocol", opts.protocol
+					"loopback", r->loopback,
+					"port", r->port,
+					"protocol", r->protocol.c_str()
 			);
 
 			json_len = json_dumpb(json_body, (char *) buf + LWS_PRE, sizeof(buf) - LWS_PRE, JSON_INDENT(4));
@@ -356,7 +345,7 @@ int http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, voi
 			if (ret < 0)
 				return ret;
 
-			logger->info("Handled API request");
+			r->logger->info("Handled API request");
 
 			//if (lws_http_transaction_completed(wsi))
 				return -1;
@@ -368,15 +357,19 @@ int http_protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, voi
 	return lws_callback_http_dummy(wsi, reason, user, in, len);
 }
 
-int protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
+int Relay::protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in, size_t len)
 {
-	Connection *c = reinterpret_cast<Connection *>(user);
+	lws_context *ctx = lws_get_context(wsi);
+	void *user_ctx = lws_context_user(ctx);
+
+	Relay           *r = reinterpret_cast<Relay *>(user_ctx);
+	RelayConnection *c = reinterpret_cast<RelayConnection *>(user);
 
 	switch (reason) {
 
 		case LWS_CALLBACK_ESTABLISHED:
 			try {
-				new (c) Connection(wsi);
+				new (c) RelayConnection(wsi, r->loopback);
 			}
 			catch (InvalidUrlException &e) {
 				lws_close_reason(wsi, LWS_CLOSE_STATUS_PROTOCOL_ERR, (unsigned char *) "Invalid URL", strlen("Invalid URL"));
@@ -386,7 +379,7 @@ int protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in
 			break;
 
 		case LWS_CALLBACK_CLOSED:
-			c->~Connection();
+			c->~RelayConnection();
 			break;
 
 		case LWS_CALLBACK_SERVER_WRITEABLE:
@@ -404,104 +397,141 @@ int protocol_cb(lws *wsi, enum lws_callback_reasons reason, void *user, void *in
 	return 0;
 }
 
-static void usage()
+void Relay::usage()
 {
 	std::cout << "Usage: villas-relay [OPTIONS]" << std::endl
-	          << "  OPTIONS is one or more of the following options:" << std::endl
-	          << "    -d LVL    set debug level" << std::endl
-	          << "    -p PORT   the port number to listen on" << std::endl
-	          << "    -P PROT   the websocket protocol" << std::endl
-	          << "    -l        enable loopback of own data" << std::endl
-	          << "    -V        show version and exit" << std::endl
-	          << "    -h        show usage and exit" << std::endl << std::endl;
+		<< "  OPTIONS is one or more of the following options:" << std::endl
+		<< "    -d LVL    set debug level" << std::endl
+		<< "    -p PORT   the port number to listen on" << std::endl
+		<< "    -P PROT   the websocket protocol" << std::endl
+		<< "    -l        enable loopback of own data" << std::endl
+		<< "    -V        show version and exit" << std::endl
+		<< "    -h        show usage and exit" << std::endl << std::endl;
 
-	villas::print_copyright();
+	printCopyright();
 }
+
+void Relay::parse()
+{
+	char c, *endptr;
+	while ((c = getopt (argc, argv, "hVp:P:ld:")) != -1) {
+		switch (c) {
+			case 'd':
+				spdlog::set_level(spdlog::level::from_str(optarg));
+				break;
+
+			case 'p':
+				port = strtoul(optarg, &endptr, 10);
+				goto check;
+
+			case 'P':
+				protocol = optarg;
+				break;
+
+			case 'l':
+				loopback = true;
+				break;
+
+			case 'V':
+				printVersion();
+				exit(EXIT_SUCCESS);
+
+			case 'h':
+			case '?':
+				usage();
+				exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
+		}
+
+		continue;
+
+check:		if (optarg == endptr) {
+			logger->error("Failed to parse parse option argument '-{} {}'", c, optarg);
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	if (argc - optind < 0) {
+		usage();
+		exit(EXIT_FAILURE);
+	}
+}
+
+int Relay::main() {
+	/* Start server */
+	lws_context_creation_info ctx_info = { 0 };
+
+	protocols[2].name = protocol.c_str();
+
+	ctx_info.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS | LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
+	ctx_info.gid = -1;
+	ctx_info.uid = -1;
+	ctx_info.protocols = protocols.data();
+	ctx_info.extensions = extensions.data();
+	ctx_info.port = port;
+	ctx_info.mounts = &mount;
+	ctx_info.user = (void *) this;
+
+	context = lws_create_context(&ctx_info);
+	if (context == nullptr) {
+		logger->error("WebSocket: failed to initialize server context");
+		exit(EXIT_FAILURE);
+	}
+
+	vhost = lws_create_vhost(context, &ctx_info);
+	if (vhost == nullptr) {
+		logger->error("WebSocket: failed to initialize virtual host");
+		exit(EXIT_FAILURE);
+	}
+
+	while (!stop)
+		lws_service(context, 100);
+
+	return 0;
+}
+
+const std::vector<lws_extension> Relay::extensions = {
+	{
+		"permessage-deflate",
+		lws_extension_callback_pm_deflate,
+		"permessage-deflate"
+	},
+	{
+		"deflate-frame",
+		lws_extension_callback_pm_deflate,
+		"deflate_frame"
+	},
+	{ nullptr /* terminator */ }
+};
+
+const lws_http_mount Relay::mount = {
+	.mount_next =		nullptr, /* linked-list "next" */
+	.mountpoint =		"/api/v1", /* mountpoint URL */
+	.origin =		nullptr,	/* protocol */
+	.def =			nullptr,
+	.protocol =		"http-api",
+	.cgienv =		nullptr,
+	.extra_mimetypes =	nullptr,
+	.interpret =		nullptr,
+	.cgi_timeout =		0,
+	.cache_max_age =	0,
+	.auth_mask =		0,
+	.cache_reusable =	0,
+	.cache_revalidate =	0,
+	.cache_intermediaries =	0,
+	.origin_protocol =	LWSMPRO_CALLBACK, /* dynamic */
+	.mountpoint_len =	7, /* char count */
+	.basic_auth_login_file =nullptr,
+};
+
+} // namespace tools
+} // namespace node
+} // namespace villas
 
 int main(int argc, char *argv[])
 {
-	Logger logger = villas::logging.get("console");
+	auto t = villas::node::tools::Relay(argc, argv);
 
-	try {
-		/* Initialize logging */
-		spdlog::stdout_color_mt("lws");
-		lws_set_log_level((1 << LLL_COUNT) - 1, logger_cb);
-
-		/* Start server */
-		lws_context_creation_info ctx_info = { 0 };
-
-		char c, *endptr;
-		while ((c = getopt (argc, argv, "hVp:P:ld:")) != -1) {
-			switch (c) {
-				case 'd':
-					spdlog::set_level(spdlog::level::from_str(optarg));
-					break;
-
-				case 'p':
-					opts.port = strtoul(optarg, &endptr, 10);
-					goto check;
-
-				case 'P':
-					opts.protocol = strdup(optarg);
-					break;
-
-				case 'l':
-					opts.loopback = true;
-					break;
-
-				case 'V':
-					villas::print_version();
-					exit(EXIT_SUCCESS);
-
-				case 'h':
-				case '?':
-					usage();
-					exit(c == '?' ? EXIT_FAILURE : EXIT_SUCCESS);
-			}
-
-			continue;
-
-check:			if (optarg == endptr) {
-				logger->error("Failed to parse parse option argument '-{} {}'", c, optarg);
-				exit(EXIT_FAILURE);
-			}
-		}
-
-		if (argc - optind < 0) {
-			usage();
-			exit(EXIT_FAILURE);
-		}
-
-		protocols[2].name = opts.protocol;
-
-		ctx_info.options = LWS_SERVER_OPTION_EXPLICIT_VHOSTS | LWS_SERVER_OPTION_DO_SSL_GLOBAL_INIT;
-		ctx_info.gid = -1;
-		ctx_info.uid = -1;
-		ctx_info.protocols = protocols;
-		ctx_info.extensions = extensions;
-		ctx_info.port = opts.port;
-		ctx_info.mounts = &mount;
-
-		context = lws_create_context(&ctx_info);
-		if (context == nullptr) {
-			logger->error("WebSocket: failed to initialize server context");
-			exit(EXIT_FAILURE);
-		}
-
-		vhost = lws_create_vhost(context, &ctx_info);
-		if (vhost == nullptr) {
-			logger->error("WebSocket: failed to initialize virtual host");
-			exit(EXIT_FAILURE);
-		}
-
-		for (;;)
-			lws_service(context, 100);
-
-		return 0;
-	}
-	catch (std::runtime_error &e) {
-		logger->error("{}", e.what());
-
-		return -1;
-	}
+	return t.run();
 }
+
+

@@ -20,6 +20,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###################################################################################
 
+set(SRCS
+    villas-node
+    villas-test-config
+    villas-test-rtt
+    villas-test-cmp
+    villas-convert
+    villas-pipe
+    villas-signal
+)
+
 add_executable(villas-node villas-node.cpp)
 target_link_libraries(villas-node PUBLIC villas)
 
@@ -28,24 +38,6 @@ target_link_libraries(villas-test-config PUBLIC villas)
 
 add_executable(villas-test-rtt villas-test-rtt.cpp)
 target_link_libraries(villas-test-rtt PUBLIC villas)
-
-install(
-    TARGETS villas-node villas-test-rtt
-    COMPONENT bin
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
-
-if(WITH_WEB)
-    add_executable(villas-relay villas-relay.cpp)
-    target_include_directories(villas-relay PRIVATE ${LIBWEBSOCKETS_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/common/include)
-    target_link_libraries(villas-relay PRIVATE PkgConfig::LIBWEBSOCKETS PkgConfig::UUID villas-common spdlog)
-
-    install(
-        TARGETS villas-relay
-        COMPONENT bin
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
-endif()
 
 add_executable(villas-test-cmp villas-test-cmp.cpp)
 target_link_libraries(villas-test-cmp PUBLIC villas)
@@ -59,20 +51,37 @@ target_link_libraries(villas-pipe PUBLIC villas Threads::Threads)
 add_executable(villas-signal villas-signal.cpp)
 target_link_libraries(villas-signal PUBLIC villas)
 
-install(
-    TARGETS villas-convert villas-pipe villas-signal villas-test-cmp
-    COMPONENT bin
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+if(WITH_WEB)
+    add_executable(villas-relay villas-relay.cpp)
+    target_include_directories(villas-relay PRIVATE ${LIBWEBSOCKETS_INCLUDE_DIRS} ${OPENSSL_INCLUDE_DIR})
+    target_link_libraries(villas-relay PRIVATE PkgConfig::UUID villas)
+
+    list(APPEND SRCS villas-relay)
+endif()
+
+if(WITH_CONFIG)
+    add_executable(villas-conf2json villas-conf2json.cpp)
+    target_link_libraries(villas-conf2json PUBLIC villas)
+
+    list(APPEND SRCS villas-conf2json)
+endif()
+
+if(LIBZMQ_FOUND)
+    add_executable(villas-zmq-keygen villas-zmq-keygen.cpp)
+    target_link_libraries(villas-zmq-keygen PUBLIC villas-common PkgConfig::LIBZMQ)
+    
+    list(APPEND SRC villas-zmq-keygen)
+endif()
 
 if(WITH_HOOKS)
     add_executable(villas-hook villas-hook.cpp)
     target_link_libraries(villas-hook PUBLIC villas)
 
-    install(
-        TARGETS villas-hook
-        COMPONENT bin
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    )
+    list(APPEND SRCS villas-hook)
 endif()
 
+install(
+    TARGETS ${SRCS}
+    COMPONENT bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)

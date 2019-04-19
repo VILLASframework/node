@@ -30,6 +30,7 @@
 #include <atomic>
 #include <unistd.h>
 
+#include <villas/tool.hpp>
 #include <villas/timing.h>
 #include <villas/sample.h>
 #include <villas/io.h>
@@ -39,7 +40,6 @@
 #include <villas/log.hpp>
 #include <villas/colors.hpp>
 #include <villas/exceptions.hpp>
-#include <villas/copyright.hpp>
 #include <villas/plugin.hpp>
 #include <villas/plugin.h>
 #include <villas/config_helper.hpp>
@@ -50,66 +50,92 @@ using namespace villas;
 using namespace villas::node;
 using namespace villas::plugin;
 
-static std::atomic<bool> stop(false);
+namespace villas {
+namespace node {
+namespace tools {
 
-static void quit(int signal, siginfo_t *sinfo, void *ctx)
-{
-	stop = true;
-}
+class Hook : public Tool {
 
-static void usage()
-{
-	std::cout << "Usage: villas-hook [OPTIONS] NAME [[PARAM1] [PARAM2] ...]" << std::endl
-	          << "  NAME      the name of the hook function" << std::endl
-	          << "  PARAM*    a string of configuration settings for the hook" << std::endl
-	          << "  OPTIONS is one or more of the following options:" << std::endl
-	          << "    -f FMT  the data format" << std::endl
-	          << "    -t DT   the data-type format string" << std::endl
-	          << "    -d LVL  set debug level to LVL" << std::endl
-	          << "    -v CNT  process CNT smps at once" << std::endl
-	          << "    -h      show this help" << std::endl
-	          << "    -V      show the version of the tool" << std::endl << std::endl;
+public:
+	Hook(int argc, char *argv[]) :
+		Tool(argc, argv, "hook"),
+		stop(false),
+		format("villas.human"),
+		dtypes("64f"),
+		cnt(1)
+	{
+		int ret;
 
-#ifdef WITH_HOOKS
-	std::cout << "Supported hooks:" << std::endl;
-	for (Plugin *p : Registry::lookup<HookFactory>())
-		std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
-	std::cout << std::endl;
-#endif /* WITH_HOOKS */
-
-	std::cout << "Supported IO formats:" << std::endl;
-	plugin_dump(PLUGIN_TYPE_FORMAT);
-	std::cout << std::endl;
-
-	std::cout << "Example:" << std::endl
-	          << "  villas-signal random | villas-hook skip_first seconds=10" << std::endl
-	          << std::endl;
-
-	print_copyright();
-}
-
-int main(int argc, char *argv[])
-{
-	int ret, recv, sent, cnt;
-	const char *format = "villas.human";
-	const char *dtypes = "64f";
-
-	struct format_type *ft;
-	struct sample **smps;
-
-	Logger logger = logging.get("hook");
-
-	try {
-		struct pool p;
-		struct io  io;
+		ret = memory_init(DEFAULT_NR_HUGEPAGES);
+		if (ret)
+			throw RuntimeError("Failed to initialize memory");
 
 		p.state = STATE_DESTROYED;
 		io.state = STATE_DESTROYED;
 
-		/* Default values */
-		cnt = 1;
+		cfg_cli = json_object();
+	}
 
-		json_t *cfg_cli = json_object();
+	~Hook()
+	{
+		json_decref(cfg_cli);
+	}
+
+protected:
+
+	std::atomic<bool> stop;
+
+	std::string hook;
+
+	std::string format;
+	std::string dtypes;
+
+	struct pool p;
+	struct io  io;
+
+	int cnt;
+
+	json_t *cfg_cli;
+
+	void handler(int signal, siginfo_t *sinfo, void *ctx)
+	{
+		stop = true;
+	}
+
+	void usage()
+	{
+		std::cout << "Usage: villas-hook [OPTIONS] NAME [[PARAM1] [PARAM2] ...]" << std::endl
+			<< "  NAME      the name of the hook function" << std::endl
+			<< "  PARAM*    a string of configuration settings for the hook" << std::endl
+			<< "  OPTIONS is one or more of the following options:" << std::endl
+			<< "    -f FMT  the data format" << std::endl
+			<< "    -t DT   the data-type format string" << std::endl
+			<< "    -d LVL  set debug level to LVL" << std::endl
+			<< "    -v CNT  process CNT smps at once" << std::endl
+			<< "    -h      show this help" << std::endl
+			<< "    -V      show the version of the tool" << std::endl << std::endl;
+
+#ifdef WITH_HOOKS
+		std::cout << "Supported hooks:" << std::endl;
+		for (Plugin *p : Registry::lookup<HookFactory>())
+			std::cout << " - " << p->getName() << ": " << p->getDescription() << std::endl;
+		std::cout << std::endl;
+#endif /* WITH_HOOKS */
+
+		std::cout << "Supported IO formats:" << std::endl;
+		plugin_dump(PLUGIN_TYPE_FORMAT);
+		std::cout << std::endl;
+
+		std::cout << "Example:" << std::endl
+			<< "  villas-signal random | villas-hook skip_first seconds=10" << std::endl
+			<< std::endl;
+
+		printCopyright();
+	}
+
+	void parse()
+	{
+		int ret;
 
 		/* Parse optional command line arguments */
 		int c;
@@ -117,7 +143,7 @@ int main(int argc, char *argv[])
 		while ((c = getopt(argc, argv, "Vhv:d:f:t:o:")) != -1) {
 			switch (c) {
 				case 'V':
-					print_version();
+					printVersion();
 					exit(EXIT_SUCCESS);
 
 				case 'f':
@@ -160,18 +186,18 @@ check:			if (optarg == endptr)
 			exit(EXIT_FAILURE);
 		}
 
-		char *hook = argv[optind];
+		hook = argv[optind];
+	}
 
-		ret = utils::signals_init(quit);
-		if (ret)
-			throw RuntimeError("Failed to intialize signals");
+	int main()
+	{
+		int ret, recv, sent;
+
+		struct format_type *ft;
+		struct sample **smps;
 
 		if (cnt < 1)
 			throw RuntimeError("Vectorize option must be greater than 0");
-
-		ret = memory_init(DEFAULT_NR_HUGEPAGES);
-		if (ret)
-			throw RuntimeError("Failed to initialize memory");
 
 		smps = new struct sample*[cnt];
 
@@ -180,11 +206,11 @@ check:			if (optarg == endptr)
 			throw RuntimeError("Failed to initilize memory pool");
 
 		/* Initialize IO */
-		ft = format_type_lookup(format);
+		ft = format_type_lookup(format.c_str());
 		if (!ft)
 			throw RuntimeError("Unknown IO format '{}'", format);
 
-		ret = io_init2(&io, ft, dtypes, SAMPLE_HAS_ALL);
+		ret = io_init2(&io, ft, dtypes.c_str(), SAMPLE_HAS_ALL);
 		if (ret)
 			throw RuntimeError("Failed to initialize IO");
 
@@ -280,13 +306,17 @@ stop:			sent = io_print(&io, smps, send);
 		if (ret)
 			throw RuntimeError("Failed to destroy memory pool");
 
-		logger->info(CLR_GRN("Goodbye!"));
-
 		return 0;
 	}
-	catch (std::runtime_error &e) {
-		logger->error("{}", e.what());
+};
 
-		return -1;
-	}
+} // namespace tools
+} // namespace node
+} // namespace villas
+
+int main(int argc, char *argv[])
+{
+	auto t = villas::node::tools::Hook(argc, argv);
+
+	return t.run();
 }
