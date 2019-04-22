@@ -51,28 +51,28 @@ extern "C" {
 
 enum iec61850_type {
 	/* According to IEC 61850-7-2 */
-	IEC61850_TYPE_BOOLEAN,
-	IEC61850_TYPE_INT8,
-	IEC61850_TYPE_INT16,
-	IEC61850_TYPE_INT32,
-	IEC61850_TYPE_INT64,
-	IEC61850_TYPE_INT8U,
-	IEC61850_TYPE_INT16U,
-	IEC61850_TYPE_INT32U,
-	IEC61850_TYPE_INT64U,
-	IEC61850_TYPE_FLOAT32,
-	IEC61850_TYPE_FLOAT64,
-	IEC61850_TYPE_ENUMERATED,
-	IEC61850_TYPE_CODED_ENUM,
-	IEC61850_TYPE_OCTET_STRING,
-	IEC61850_TYPE_VISIBLE_STRING,
-	IEC61850_TYPE_OBJECTNAME,
-	IEC61850_TYPE_OBJECTREFERENCE,
-	IEC61850_TYPE_TIMESTAMP,
-	IEC61850_TYPE_ENTRYTIME,
+	BOOLEAN,
+	INT8,
+	INT16,
+	INT32,
+	INT64,
+	INT8U,
+	INT16U,
+	INT32U,
+	INT64U,
+	FLOAT32,
+	FLOAT64,
+	ENUMERATED,
+	CODED_ENUM,
+	OCTET_STRING,
+	VISIBLE_STRING,
+	OBJECTNAME,
+	OBJECTREFERENCE,
+	TIMESTAMP,
+	ENTRYTIME,
 
 	/* According to IEC 61850-8-1 */
-	IEC61850_TYPE_BITSTRING
+	BITSTRING
 };
 
 struct iec61850_type_descriptor {
@@ -89,9 +89,9 @@ struct iec61850_receiver {
 
 	EthernetSocket socket;
 
-	enum iec61850_receiver_type {
-		IEC61850_RECEIVER_GOOSE,
-		IEC61850_RECEIVER_SV
+	enum type {
+		GOOSE,
+		SAMPLED_VALUES
 	} type;
 
 	union {
@@ -110,9 +110,9 @@ const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name);
 
 int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct vlist *node_signals);
 
-struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver_type t, const char *intf);
+struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver::type t, const char *intf);
 
-struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver_type t, const char *intf);
+struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver::type t, const char *intf);
 
 int iec61850_receiver_start(struct iec61850_receiver *r);
 

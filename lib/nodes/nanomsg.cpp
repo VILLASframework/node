@@ -37,8 +37,8 @@ int nanomsg_reverse(struct node *n)
 	    vlist_length(&m->in.endpoints) != 1)
 		return -1;
 
-	char *subscriber = vlist_first(&m->in.endpoints);
-	char *publisher = vlist_first(&m->out.endpoints);
+	char *subscriber = (char *) vlist_first(&m->in.endpoints);
+	char *publisher = (char *) vlist_first(&m->out.endpoints);
 
 	vlist_set(&m->in.endpoints, 0, publisher);
 	vlist_set(&m->out.endpoints, 0, subscriber);
@@ -297,14 +297,16 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0,
 		.size		= sizeof(struct nanomsg),
-		.type.stop	= nanomsg_type_stop,
-		.reverse	= nanomsg_reverse,
+		.type = {
+			.stop	= nanomsg_type_stop
+		},
 		.parse		= nanomsg_parse,
 		.print		= nanomsg_print,
 		.start		= nanomsg_start,
 		.stop		= nanomsg_stop,
 		.read		= nanomsg_read,
 		.write		= nanomsg_write,
+		.reverse	= nanomsg_reverse,
 		.poll_fds	= nanomsg_poll_fds,
 		.netem_fds	= nanomsg_netem_fds
 	}

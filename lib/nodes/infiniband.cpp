@@ -351,8 +351,8 @@ int ib_check(struct node *n)
 		error("The buffer substraction value cannot be bigger than in.max_wrs - in.vectorize");
 
 	/* Check if the set value is a power of 2, and warn the user if this is not the case */
-	int max_send_pow = (int) pow(2, ceil(log2(ib->qp_init.cap.max_send_wr)));
-	int max_recv_pow = (int) pow(2, ceil(log2(ib->qp_init.cap.max_recv_wr)));
+	unsigned max_send_pow = (int) pow(2, ceil(log2(ib->qp_init.cap.max_send_wr)));
+	unsigned max_recv_pow = (int) pow(2, ceil(log2(ib->qp_init.cap.max_recv_wr)));
 
 	if (ib->qp_init.cap.max_send_wr != max_send_pow) {
 		warning("Max nr. of send WRs (%i) is not a power of 2! It will be changed to a power of 2: %i",
@@ -513,35 +513,35 @@ void * ib_rdma_cm_event_thread(void *n)
 
 		switch(event->event) {
 			case RDMA_CM_EVENT_ADDR_RESOLVED:
-				ret = ib_addr_resolved(n);
+				ret = ib_addr_resolved(node);
 				break;
 
 			case RDMA_CM_EVENT_ADDR_ERROR:
 				warning("Address resolution (rdma_resolve_addr) failed!");
 
-				ib_continue_as_listen(n, event);
+				ib_continue_as_listen(node, event);
 
 				break;
 
 			case RDMA_CM_EVENT_ROUTE_RESOLVED:
-				ret = ib_route_resolved(n);
+				ret = ib_route_resolved(node);
 				break;
 
 			case RDMA_CM_EVENT_ROUTE_ERROR:
 				warning("Route resolution (rdma_resovle_route) failed!");
 
-				ib_continue_as_listen(n, event);
+				ib_continue_as_listen(node, event);
 
 				break;
 
 			case RDMA_CM_EVENT_UNREACHABLE:
 				warning("Remote server unreachable!");
 
-				ib_continue_as_listen(n, event);
+				ib_continue_as_listen(node, event);
 				break;
 
 			case RDMA_CM_EVENT_CONNECT_REQUEST:
-				ret = ib_connect_request(n, event->id);
+				ret = ib_connect_request(node, event->id);
 
 				/* A target UDP node will never really connect. In order to receive data,
 				 * we set it to connected after it answered the connection request
@@ -557,14 +557,14 @@ void * ib_rdma_cm_event_thread(void *n)
 			case RDMA_CM_EVENT_CONNECT_ERROR:
 				warning("An error has occurred trying to establish a connection!");
 
-				ib_continue_as_listen(n, event);
+				ib_continue_as_listen(node, event);
 
 				break;
 
 			case RDMA_CM_EVENT_REJECTED:
 				warning("Connection request or response was rejected by the remote end point!");
 
-				ib_continue_as_listen(n, event);
+				ib_continue_as_listen(node, event);
 
 				break;
 
@@ -577,14 +577,14 @@ void * ib_rdma_cm_event_thread(void *n)
 
 				node->state = STATE_CONNECTED;
 
-				info("Connection established in node %s", node_name(n));
+				info("Connection established in node %s", node_name(node));
 
 				break;
 
 			case RDMA_CM_EVENT_DISCONNECTED:
 				node->state = STATE_STARTED;
 
-				ret = ib_disconnect(n);
+				ret = ib_disconnect(node);
 
 				if (!ret)
 					info("Host disconnected. Ready to accept new connections.");
@@ -874,7 +874,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	struct ibv_mr *mr;
 
 	int ret;
-	int sent = 0; /* Used for first loop: prepare work requests to post to send queue */
+	unsigned sent = 0; /* Used for first loop: prepare work requests to post to send queue */
 
 	debug(LOG_IB | 10, "ib_write is called");
 
@@ -951,7 +951,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 		/* Reorder list. Place inline and unposted samples to the top
 		 * m will always be equal or smaller than *release
 		 */
-		for (int m = 0; m < cnt; m++) {
+		for (unsigned m = 0; m < cnt; m++) {
 			/* We can't use wr_id as identifier, since it is 0 for inline
 			 * elements
 			 */
@@ -1007,15 +1007,15 @@ static struct plugin p = {
 		.vectorize	= 0,
 		.size		= sizeof(struct infiniband),
 		.pool_size	= 8192,
-		.reverse	= ib_reverse,
+		.destroy	= ib_destroy,
 		.parse		= ib_parse,
 		.check		= ib_check,
 		.print		= ib_print,
 		.start		= ib_start,
-		.destroy	= ib_destroy,
 		.stop		= ib_stop,
 		.read		= ib_read,
 		.write		= ib_write,
+		.reverse	= ib_reverse,
 		.memory_type	= memory_ib
 	}
 };

@@ -92,7 +92,7 @@ static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct
 		return;
 	}
 
-	ret = io_sscan(&m->io, msg->payload, msg->payloadlen, NULL, smps, n->in.vectorize);
+	ret = io_sscan(&m->io, (char *) msg->payload, msg->payloadlen, NULL, smps, n->in.vectorize);
 	if (ret < 0) {
 		warning("MQTT: Node %s received an invalid message", node_name(n));
 		warning("  Payload: %s", (char *) msg->payload);
@@ -104,7 +104,7 @@ static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct
 		return;
 	}
 
-	queue_signalled_push_many(&m->queue, (void *) smps, n->in.vectorize);
+	queue_signalled_push_many(&m->queue, (void **) smps, n->in.vectorize);
 }
 
 static void mqtt_subscribe_cb(struct mosquitto *mosq, void *userdata, int mid, int qos_count, const int *granted_qos)
@@ -454,17 +454,19 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0,
 		.size		= sizeof(struct mqtt),
-		.type.start	= mqtt_type_start,
-		.type.stop	= mqtt_type_stop,
-		.reverse	= mqtt_reverse,
+		.type ={
+			.start	= mqtt_type_start,
+			.stop	= mqtt_type_stop
+		},
+		.destroy	= mqtt_destroy,
 		.parse		= mqtt_parse,
 		.check		= mqtt_check,
 		.print		= mqtt_print,
 		.start		= mqtt_start,
-		.destroy	= mqtt_destroy,
 		.stop		= mqtt_stop,
 		.read		= mqtt_read,
 		.write		= mqtt_write,
+		.reverse	= mqtt_reverse,
 		.poll_fds	= mqtt_poll_fds
 	}
 };

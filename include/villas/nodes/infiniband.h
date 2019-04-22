@@ -89,11 +89,11 @@ struct infiniband {
 		int use_fallback;
 
 		/* Counter to keep track of available recv. WRs */
-		int available_recv_wrs;
+		unsigned available_recv_wrs;
 
 		/* Fixed number to substract from min. number available
 		 * WRs in receive queue */
-		int buffer_subtraction;
+		unsigned buffer_subtraction;
 
 		/* Unrealiable connectionless data */
 		struct ud_s {

@@ -117,10 +117,10 @@ int loopback_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned 
 
 int loopback_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
-	int copied;
-
 	struct loopback *l = (struct loopback *) n->_vd;
 	struct sample *copies[cnt];
+
+	unsigned copied;
 
 	copied = sample_alloc_many(&l->pool, copies, cnt);
 	if (copied < cnt)

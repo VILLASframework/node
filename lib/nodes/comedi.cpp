@@ -70,10 +70,10 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 		return 0;
 	}
 
-	d->chanlist = alloc(d->chanlist_len * sizeof(*d->chanlist));
+	d->chanlist = (unsigned int*) alloc(d->chanlist_len * sizeof(*d->chanlist));
 	assert(d->chanlist != NULL);
 
-	d->chanspecs = alloc(d->chanlist_len * sizeof(*d->chanspecs));
+	d->chanspecs = (comedi_chanspec *) alloc(d->chanlist_len * sizeof(*d->chanspecs));
 	assert(d->chanspecs != NULL);
 
 	json_array_foreach(json_chans, i, json_chan) {
@@ -109,7 +109,7 @@ static int comedi_start_common(struct node *n)
 			continue;
 
 		/* Sanity-check channel config and populate chanspec for later */
-		for (int i = 0; i < d->chanlist_len; i++) {
+		for (unsigned i = 0; i < d->chanlist_len; i++) {
 			const unsigned int channel = CR_CHAN(d->chanlist[i]);
 			const int range = CR_RANGE(d->chanlist[i]);
 
@@ -234,7 +234,7 @@ static int comedi_start_in(struct node *n)
 
 #if COMEDI_USE_READ
 	/* Be prepared to consume one entire buffer */
-	c->buf = alloc(c->in.buffer_size);
+	c->buf = (char *) alloc(c->in.buffer_size);
 	c->bufptr = c->buf;
 	assert(c->bufptr != NULL);
 
@@ -324,12 +324,12 @@ static int comedi_start_out(struct node *n)
 	/* Allocate buffer for one complete villas sample */
 	/** @todo: maybe increase buffer size according to c->vectorize */
 	const size_t local_buffer_size = d->sample_size * d->chanlist_len;
-	d->buffer = alloc(local_buffer_size);
+	d->buffer = (char *) alloc(local_buffer_size);
 	d->bufptr = d->buffer;
 	assert(d->buffer != NULL);
 
 	/* Initialize local buffer used for write() syscalls */
-	for (int channel = 0; channel < d->chanlist_len; channel++) {
+	for (unsigned channel = 0; channel < d->chanlist_len; channel++) {
 		const unsigned raw = comedi_from_phys(0.0f, d->chanspecs[channel].range, d->chanspecs[channel].maxdata);
 
 		if (d->sample_size == sizeof(sampl_t))
@@ -341,9 +341,9 @@ static int comedi_start_out(struct node *n)
 	}
 
 	/* Preload comedi output buffer */
-	for (int i = 0; i < d->buffer_size / local_buffer_size; i++) {
-		ret = write(comedi_fileno(c->dev), d->buffer, local_buffer_size);
-		if (ret != local_buffer_size) {
+	for (unsigned i = 0; i < d->buffer_size / local_buffer_size; i++) {
+		size_t written = write(comedi_fileno(c->dev), d->buffer, local_buffer_size);
+		if (written != local_buffer_size) {
 			error("Cannot preload Comedi buffer");
 		}
 	}
@@ -584,7 +584,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 					      smps[i]->capacity, d->chanlist_len);
 				}
 
-				for (int si = 0; si < d->chanlist_len; si++) {
+				for (unsigned si = 0; si < d->chanlist_len; si++) {
 					unsigned int raw;
 
 					if (d->sample_size == sizeof(sampl_t))
@@ -874,7 +874,7 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 		d->bufptr = d->buffer;
 
 		/* Move samples from villas into local buffer for comedi */
-		for (int si = 0; si < sample->length; si++) {
+		for (unsigned si = 0; si < sample->length; si++) {
 			unsigned raw_value = 0;
 
 			switch (sample_format(sample, si)) {
@@ -910,15 +910,15 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 		}
 
 		/* Try to write one complete villas sample to comedi */
-		ret = write(comedi_fileno(c->dev), d->buffer, villas_sample_size);
-		if (ret < 0)
+		size_t written = write(comedi_fileno(c->dev), d->buffer, villas_sample_size);
+		if (written < 0)
 			error("write");
-		else if (ret == 0)
+		else if (written == 0)
 			break;	/* Comedi doesn't accept any more samples at the moment */
-		else if (ret == villas_sample_size)
+		else if (written == villas_sample_size)
 			villas_samples_written++;
 		else
-			error("Only partial sample written (%d bytes), oops", ret);
+			error("Only partial sample written (%zu bytes), oops", written);
 	}
 
 	if (villas_samples_written == 0) {

@@ -28,53 +28,53 @@
 #include <villas/plugin.h>
 #include <villas/nodes/signal_generator.h>
 
-static enum signal_generator_type signal_generator_lookup_type(const char *type)
+static enum signal_generator::type signal_generator_lookup_type(const char *type)
 {
 	if      (!strcmp(type, "random"))
-		return SIGNAL_GENERATOR_TYPE_RANDOM;
+		return signal_generator::type::RANDOM;
 	else if (!strcmp(type, "sine"))
-		return SIGNAL_GENERATOR_TYPE_SINE;
+		return signal_generator::type::SINE;
 	else if (!strcmp(type, "square"))
-		return SIGNAL_GENERATOR_TYPE_SQUARE;
+		return signal_generator::type::SQUARE;
 	else if (!strcmp(type, "triangle"))
-		return SIGNAL_GENERATOR_TYPE_TRIANGLE;
+		return signal_generator::type::TRIANGLE;
 	else if (!strcmp(type, "ramp"))
-		return SIGNAL_GENERATOR_TYPE_RAMP;
+		return signal_generator::type::RAMP;
 	else if (!strcmp(type, "counter"))
-		return SIGNAL_GENERATOR_TYPE_COUNTER;
+		return signal_generator::type::COUNTER;
 	else if (!strcmp(type, "constant"))
-		return SIGNAL_GENERATOR_TYPE_CONSTANT;
+		return signal_generator::type::CONSTANT;
 	else if (!strcmp(type, "mixed"))
-		return SIGNAL_GENERATOR_TYPE_MIXED;
+		return signal_generator::type::MIXED;
 	else
-		return -1;
+		return signal_generator::type::INVALID;
 }
 
-static const char * signal_generator_type_str(enum signal_generator_type type)
+static const char * signal_generator_type_str(enum signal_generator::type type)
 {
 	switch (type) {
-		case SIGNAL_GENERATOR_TYPE_CONSTANT:
+		case signal_generator::type::CONSTANT:
 			return "constant";
 
-		case SIGNAL_GENERATOR_TYPE_SINE:
+		case signal_generator::type::SINE:
 			return "sine";
 
-		case SIGNAL_GENERATOR_TYPE_TRIANGLE:
+		case signal_generator::type::TRIANGLE:
 			return "triangle";
 
-		case SIGNAL_GENERATOR_TYPE_SQUARE:
+		case signal_generator::type::SQUARE:
 			return "square";
 
-		case SIGNAL_GENERATOR_TYPE_RAMP:
+		case signal_generator::type::RAMP:
 			return "ramp";
 
-		case SIGNAL_GENERATOR_TYPE_COUNTER:
+		case signal_generator::type::COUNTER:
 			return "counter";
 
-		case SIGNAL_GENERATOR_TYPE_RANDOM:
+		case signal_generator::type::RANDOM:
 			return "random";
 
-		case SIGNAL_GENERATOR_TYPE_MIXED:
+		case signal_generator::type::MIXED:
 			return "mixed";
 
 		default:
@@ -88,12 +88,12 @@ int signal_generator_prepare(struct node *n)
 
 	assert(vlist_length(&n->in.signals) == 0);
 
-	for (int i = 0; i < s->values; i++) {
-		struct signal *sig = alloc(sizeof(struct signal));
+	for (unsigned i = 0; i < s->values; i++) {
+		struct signal *sig = (struct signal *) alloc(sizeof(struct signal));
 
-		int rtype = s->type == SIGNAL_GENERATOR_TYPE_MIXED ? i % 7 : s->type;
+		int rtype = s->type == signal_generator::type::MIXED ? i % 7 : s->type;
 
-		sig->name = strdup(signal_generator_type_str(rtype));
+		sig->name = strdup(signal_generator_type_str((enum signal_generator::type) rtype));
 		sig->type = SIGNAL_TYPE_FLOAT; /* All generated signals are of type float */
 
 		vlist_push(&n->in.signals, sig);
@@ -141,10 +141,10 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 		if (ret == -1)
 			error("Unknown signal type '%s' of node %s", type, node_name(n));
 
-		s->type = ret;
+		s->type = (enum signal_generator::type) ret;
 	}
 	else
-		s->type = SIGNAL_GENERATOR_TYPE_MIXED;
+		s->type = signal_generator::type::MIXED;
 
 	return 0;
 }
@@ -157,9 +157,9 @@ int signal_generator_start(struct node *n)
 	s->missed_steps = 0;
 	s->counter = 0;
 	s->started = time_now();
-	s->last = alloc(sizeof(double) * s->values);
+	s->last = (double *) alloc(sizeof(double) * s->values);
 
-	for (int i = 0; i < s->values; i++)
+	for (unsigned i = 0; i < s->values; i++)
 		s->last[i] = s->offset;
 
 	/* Setup task */
@@ -228,42 +228,42 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 	t->length = MIN(s->values, t->capacity);
 	t->signals = &n->in.signals;
 
-	for (int i = 0; i < MIN(s->values, t->capacity); i++) {
-		int rtype = (s->type != SIGNAL_GENERATOR_TYPE_MIXED) ? s->type : i % 7;
+	for (unsigned i = 0; i < MIN(s->values, t->capacity); i++) {
+		int rtype = (s->type != signal_generator::type::MIXED) ? s->type : i % 7;
 
 		switch (rtype) {
-			case SIGNAL_GENERATOR_TYPE_CONSTANT:
+			case signal_generator::type::CONSTANT:
 				t->data[i].f = s->offset + s->amplitude;
 				break;
 
-			case SIGNAL_GENERATOR_TYPE_SINE:
+			case signal_generator::type::SINE:
 				t->data[i].f = s->offset + s->amplitude *        sin(running * s->frequency * 2 * M_PI);
 				break;
 
-			case SIGNAL_GENERATOR_TYPE_TRIANGLE:
+			case signal_generator::type::TRIANGLE:
 				t->data[i].f = s->offset + s->amplitude * (fabs(fmod(running * s->frequency, 1) - .5) - 0.25) * 4;
 				break;
 
-			case SIGNAL_GENERATOR_TYPE_SQUARE:
+			case signal_generator::type::SQUARE:
 				t->data[i].f = s->offset + s->amplitude * (    (fmod(running * s->frequency, 1) < .5) ? -1 : 1);
 				break;
 
-			case SIGNAL_GENERATOR_TYPE_RAMP:
+			case signal_generator::type::RAMP:
 				t->data[i].f = s->offset + s->amplitude *       fmod(running, s->frequency);
 				break;
 
-			case SIGNAL_GENERATOR_TYPE_COUNTER:
+			case signal_generator::type::COUNTER:
 				t->data[i].f = s->offset + s->amplitude * s->counter;
 				break;
 
-			case SIGNAL_GENERATOR_TYPE_RANDOM:
+			case signal_generator::type::RANDOM:
 				s->last[i] += box_muller(0, s->stddev);
 				t->data[i].f = s->last[i];
 				break;
 		}
 	}
 
-	if (s->limit > 0 && s->counter >= s->limit) {
+	if (s->limit > 0 && s->counter >= (unsigned) s->limit) {
 		info("Reached limit.");
 
 		n->state = STATE_STOPPING;

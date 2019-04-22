@@ -73,7 +73,8 @@ int socket_type_start(struct super_node *sn)
 char * socket_print(struct node *n)
 {
 	struct socket *s = (struct socket *) n->_vd;
-	char *layer = NULL, *buf;
+	const char *layer = NULL;
+	char *buf;
 
 	switch (s->layer) {
 		case SOCKET_LAYER_UDP:
@@ -270,12 +271,12 @@ int socket_start(struct node *n)
 	}
 
 	s->out.buflen = SOCKET_INITIAL_BUFFER_LEN;
-	s->out.buf = alloc(s->out.buflen);
+	s->out.buf = (char *) alloc(s->out.buflen);
 	if (!s->out.buf)
 		return -1;
 
 	s->in.buflen = SOCKET_INITIAL_BUFFER_LEN;
-	s->in.buf = alloc(s->in.buflen);
+	s->in.buf = (char *) alloc(s->in.buflen);
 	if (!s->in.buf)
 		return -1;
 
@@ -374,7 +375,7 @@ int socket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	}
 
 	ret = io_sscan(&s->io, ptr, bytes, &rbytes, smps, cnt);
-	if (ret < 0 || bytes != rbytes)
+	if (ret < 0 || (size_t) bytes != rbytes)
 		warning("Received invalid packet from node: %s ret=%d, bytes=%zu, rbytes=%zu", node_name(n), ret, bytes, rbytes);
 
 	return ret;
@@ -401,7 +402,7 @@ retry:	ret = io_sprint(&s->io, s->out.buf, s->out.buflen, &wbytes, smps, cnt);
 
 	if (wbytes > s->out.buflen) {
 		s->out.buflen = wbytes;
-		s->out.buf = realloc(s->out.buf, s->out.buflen);
+		s->out.buf = (char *) realloc(s->out.buf, s->out.buflen);
 		goto retry;
 	}
 
@@ -441,8 +442,7 @@ retry2:	bytes = sendto(s->sd, s->out.buf, wbytes, 0, (struct sockaddr *) &s->out
 		else
 			warning("Failed sendto() to node %s", node_name(n));
 	}
-
-	if (bytes != wbytes)
+	else if ((size_t) bytes < wbytes)
 		warning("Partial sendto() to node %s", node_name(n));
 
 	return cnt;
@@ -557,30 +557,35 @@ int socket_fds(struct node *n, int fds[])
 	return 1;
 }
 
-static struct plugin p = {
-	.name		= "socket",
+__attribute__((constructor(110)))
+static void register_plugin() {
+	p.name		= "socket";
 #ifdef WITH_NETEM
-	.description	= "BSD network sockets for Ethernet / IP / UDP (libnl3, netem support)",
+	p.description	= "BSD network sockets for Ethernet / IP / UDP (libnl3, netem support)";
 #else
-	.description	= "BSD network sockets for Ethernet / IP / UDP",
+	p.description	= "BSD network sockets for Ethernet / IP / UDP";
 #endif
-	.type		= PLUGIN_TYPE_NODE,
-	.node		= {
-		.vectorize	= 0,
-		.size		= sizeof(struct socket),
-		.type.start	= socket_type_start,
-		.reverse	= socket_reverse,
-		.parse		= socket_parse,
-		.print		= socket_print,
-		.check		= socket_check,
-		.start		= socket_start,
-		.stop		= socket_stop,
-		.read		= socket_read,
-		.write		= socket_write,
-		.poll_fds	= socket_fds,
-		.netem_fds	= socket_fds
-	}
-};
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.vectorize	= 0;
+	p.node.size		= sizeof(struct socket);
+	p.node.type.start	= socket_type_start;
+	p.node.reverse		= socket_reverse;
+	p.node.parse		= socket_parse;
+	p.node.print		= socket_print;
+	p.node.check		= socket_check;
+	p.node.start		= socket_start;
+	p.node.stop		= socket_stop;
+	p.node.read		= socket_read;
+	p.node.write		= socket_write;
+	p.node.poll_fds		= socket_fds;
+	p.node.netem_fds	= socket_fds;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

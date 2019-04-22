@@ -104,27 +104,27 @@ static const struct {
 
 static AiInputMode uldaq_parse_input_mode(const char *str)
 {
-	for (int i = 0; i < ARRAY_LEN(input_modes); i++) {
+	for (unsigned i = 0; i < ARRAY_LEN(input_modes); i++) {
 		if (!strcmp(input_modes[i].name, str))
 			return input_modes[i].mode;
 	}
 
-	return -1;
+	return (AiInputMode) -1;
 }
 
 static DaqDeviceInterface uldaq_parse_interface_type(const char *str)
 {
-	for (int i = 0; i < ARRAY_LEN(interface_types); i++) {
+	for (unsigned i = 0; i < ARRAY_LEN(interface_types); i++) {
 		if (!strcmp(interface_types[i].name, str))
 			return interface_types[i].interface;
 	}
 
-	return -1;
+	return (DaqDeviceInterface) -1;
 }
 
 static const char * uldaq_print_interface_type(DaqDeviceInterface iftype)
 {
-	for (int i = 0; i < ARRAY_LEN(interface_types); i++) {
+	for (unsigned i = 0; i < ARRAY_LEN(interface_types); i++) {
 		if (interface_types[i].interface == iftype)
 			return interface_types[i].name;
 	}
@@ -134,12 +134,12 @@ static const char * uldaq_print_interface_type(DaqDeviceInterface iftype)
 
 static Range uldaq_parse_range(const char *str)
 {
-	for (int i = 0; i < ARRAY_LEN(ranges); i++) {
+	for (unsigned i = 0; i < ARRAY_LEN(ranges); i++) {
 		if (!strcmp(ranges[i].name, str))
 			return ranges[i].range;
 	}
 
-	return -1;
+	return (Range) -1;
 }
 
 static DaqDeviceDescriptor * uldaq_find_device(struct uldaq *u) {
@@ -151,7 +151,7 @@ static DaqDeviceDescriptor * uldaq_find_device(struct uldaq *u) {
 	if (u->device_interface_type == ANY_IFC && u->device_id == NULL)
 		return &descriptors[0];
 
-	for (int i = 0; i < num_devs; i++) {
+	for (unsigned i = 0; i < num_devs; i++) {
 		d = &descriptors[i];
 
 		if (u->device_id) {
@@ -223,7 +223,7 @@ int uldaq_type_start(struct super_node *sn)
 	}
 
 	info("Found %d DAQ devices", num_devs);
-	for (int i = 0; i < num_devs; i++) {
+	for (unsigned i = 0; i < num_devs; i++) {
 		DaqDeviceDescriptor *desc = &descriptors[i];
 
 		info("  %d: %s %s (%s)", i, desc->uniqueId, desc->devString,  uldaq_print_interface_type(desc->devInterface));
@@ -306,11 +306,11 @@ int uldaq_parse(struct node *n, json_t *cfg)
 		if (iftype < 0)
 			error("Invalid interface type: %s for node '%s'", interface_type, node_name(n));
 
-		u->device_interface_type = iftype;
+		u->device_interface_type = (DaqDeviceInterface) iftype;
 	}
 
 	u->in.channel_count = vlist_length(&n->in.signals);
-	u->in.queues = realloc(u->in.queues, sizeof(struct AiQueueElement) * u->in.channel_count);
+	u->in.queues = (struct AiQueueElement *) realloc(u->in.queues, sizeof(struct AiQueueElement) * u->in.channel_count);
 
 	json_array_foreach(json_signals, i, json_signal) {
 		const char *range_str = NULL, *input_mode_str = NULL;
@@ -347,8 +347,8 @@ int uldaq_parse(struct node *n, json_t *cfg)
 		if (input_mode < 0)
 			error("Invalid input mode specified for signal %zu of node %s.", i, node_name(n));
 
-		u->in.queues[i].range = range;
-		u->in.queues[i].inputMode = input_mode;
+		u->in.queues[i].range = (Range) range;
+		u->in.queues[i].inputMode = (AiInputMode) input_mode;
 		u->in.queues[i].channel = channel;
 	}
 
@@ -539,7 +539,7 @@ int uldaq_start(struct node *n)
 	err = ulEnableEvent(u->device_handle, DE_ON_DATA_AVAILABLE, n->in.vectorize, uldaq_data_available, n);
 
 	/* Start the acquisition */
-	err = ulAInScan(u->device_handle, 0, 0, 0, 0, u->in.buffer_len / u->in.channel_count, &u->in.sample_rate, u->in.scan_options, u->in.flags, u->in.buffer);
+	err = ulAInScan(u->device_handle, 0, 0, (AiInputMode) 0, (Range) 0, u->in.buffer_len / u->in.channel_count, &u->in.sample_rate, u->in.scan_options, u->in.flags, u->in.buffer);
 	if (err != ERR_NO_ERROR) {
 		warning("Failed to start acquisition on DAQ device for node '%s'", node_name(n));
 		return -1;
@@ -610,12 +610,12 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	if (start_index + n->in.vectorize * u->in.channel_count > u->in.transfer_status.currentScanCount)
 		pthread_cond_wait(&u->in.cv, &u->in.mutex);
 
-	for (int j = 0; j < cnt; j++) {
+	for (unsigned j = 0; j < cnt; j++) {
 		struct sample *smp = smps[j];
 
 		long long scan_index = start_index + j * u->in.channel_count;
 
-		for (int i = 0; i < u->in.channel_count; i++) {
+		for (unsigned i = 0; i < u->in.channel_count; i++) {
 			long long channel_index = (scan_index + i) % u->in.buffer_len;
 
 			smp->data[i].f = u->in.buffer[channel_index];
@@ -642,10 +642,12 @@ static struct plugin p = {
 		.vectorize	= 0,
 		.flags		= 0,
 		.size		= sizeof(struct uldaq),
-		.type.start	= uldaq_type_start,
-		.parse		= uldaq_parse,
+		.type = {
+			.start	= uldaq_type_start
+		},
 		.init		= uldaq_init,
 		.destroy	= uldaq_destroy,
+		.parse		= uldaq_parse,
 		.print		= uldaq_print,
 		.start		= uldaq_start,
 		.stop		= uldaq_stop,

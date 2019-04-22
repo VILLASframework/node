@@ -124,14 +124,14 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 	char *buf = NULL;
 	ssize_t sentlen, buflen;
 
-	for (int k = 0; k < cnt; k++) {
+	for (unsigned k = 0; k < cnt; k++) {
 		struct sample *smp = smps[k];
 
 		/* Key */
 		strcatf(&buf, "%s", i->key);
 
 		/* Fields */
-		for (int j = 0; j < smp->length; j++) {
+		for (unsigned j = 0; j < smp->length; j++) {
 			struct signal *sig = (struct signal *) vlist_at(smp->signals, j);
 			union signal_data *data = &smp->data[k];
 

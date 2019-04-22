@@ -37,26 +37,26 @@
 
 const struct iec61850_type_descriptor type_descriptors[] = {
 	/* name,              iec_type,                         type,                 size, supported */
-	{ "boolean",          IEC61850_TYPE_BOOLEAN,		SIGNAL_TYPE_BOOLEAN,	 1, false, false },
-	{ "int8",             IEC61850_TYPE_INT8,		SIGNAL_TYPE_INTEGER,	 1, false, false },
-	{ "int16",            IEC61850_TYPE_INT16,		SIGNAL_TYPE_INTEGER,	 2, false, false },
-	{ "int32",            IEC61850_TYPE_INT32,		SIGNAL_TYPE_INTEGER,	 4, false, false },
-	{ "int64",            IEC61850_TYPE_INT64,		SIGNAL_TYPE_INTEGER,	 8, false, false },
-	{ "int8u",            IEC61850_TYPE_INT8U,		SIGNAL_TYPE_INTEGER,	 1, false, false },
-	{ "int16u",           IEC61850_TYPE_INT16U,		SIGNAL_TYPE_INTEGER,	 2, false, false },
-	{ "int32u",           IEC61850_TYPE_INT32U,		SIGNAL_TYPE_INTEGER,	 4, false, false },
-	{ "int64u",           IEC61850_TYPE_INT64U,		SIGNAL_TYPE_INTEGER,	 8, false, false },
-	{ "float32",          IEC61850_TYPE_FLOAT32,		SIGNAL_TYPE_FLOAT,	 4, false, false },
-	{ "float64",          IEC61850_TYPE_FLOAT64,		SIGNAL_TYPE_FLOAT,	 8, false, false },
-	{ "enumerated",       IEC61850_TYPE_ENUMERATED,		SIGNAL_TYPE_INVALID,	 4, false, false },
-	{ "coded_enum",       IEC61850_TYPE_CODED_ENUM,		SIGNAL_TYPE_INVALID,	 4, false, false },
-	{ "octet_string",     IEC61850_TYPE_OCTET_STRING,	SIGNAL_TYPE_INVALID,	20, false, false },
-	{ "visible_string",   IEC61850_TYPE_VISIBLE_STRING,	SIGNAL_TYPE_INVALID,	35, false, false },
-	{ "objectname",       IEC61850_TYPE_OBJECTNAME,		SIGNAL_TYPE_INVALID,	20, false, false },
-	{ "objectreference",  IEC61850_TYPE_OBJECTREFERENCE,	SIGNAL_TYPE_INVALID,	20, false, false },
-	{ "timestamp",        IEC61850_TYPE_TIMESTAMP,		SIGNAL_TYPE_INVALID,	 8, false, false },
-	{ "entrytime",        IEC61850_TYPE_ENTRYTIME,		SIGNAL_TYPE_INVALID,	 6, false, false },
-	{ "bitstring",        IEC61850_TYPE_BITSTRING,		SIGNAL_TYPE_INVALID,	 4, false, false }
+	{ "boolean",          iec61850_type::BOOLEAN,		SIGNAL_TYPE_BOOLEAN,	 1, false, false },
+	{ "int8",             iec61850_type::INT8,		SIGNAL_TYPE_INTEGER,	 1, false, false },
+	{ "int16",            iec61850_type::INT16,		SIGNAL_TYPE_INTEGER,	 2, false, false },
+	{ "int32",            iec61850_type::INT32,		SIGNAL_TYPE_INTEGER,	 4, false, false },
+	{ "int64",            iec61850_type::INT64,		SIGNAL_TYPE_INTEGER,	 8, false, false },
+	{ "int8u",            iec61850_type::INT8U,		SIGNAL_TYPE_INTEGER,	 1, false, false },
+	{ "int16u",           iec61850_type::INT16U,		SIGNAL_TYPE_INTEGER,	 2, false, false },
+	{ "int32u",           iec61850_type::INT32U,		SIGNAL_TYPE_INTEGER,	 4, false, false },
+	{ "int64u",           iec61850_type::INT64U,		SIGNAL_TYPE_INTEGER,	 8, false, false },
+	{ "float32",          iec61850_type::FLOAT32,		SIGNAL_TYPE_FLOAT,	 4, false, false },
+	{ "float64",          iec61850_type::FLOAT64,		SIGNAL_TYPE_FLOAT,	 8, false, false },
+	{ "enumerated",       iec61850_type::ENUMERATED,		SIGNAL_TYPE_INVALID,	 4, false, false },
+	{ "coded_enum",       iec61850_type::CODED_ENUM,		SIGNAL_TYPE_INVALID,	 4, false, false },
+	{ "octet_string",     iec61850_type::OCTET_STRING,	SIGNAL_TYPE_INVALID,	20, false, false },
+	{ "visible_string",   iec61850_type::VISIBLE_STRING,	SIGNAL_TYPE_INVALID,	35, false, false },
+	{ "objectname",       iec61850_type::OBJECTNAME,		SIGNAL_TYPE_INVALID,	20, false, false },
+	{ "objectreference",  iec61850_type::OBJECTREFERENCE,	SIGNAL_TYPE_INVALID,	20, false, false },
+	{ "timestamp",        iec61850_type::TIMESTAMP,		SIGNAL_TYPE_INVALID,	 8, false, false },
+	{ "entrytime",        iec61850_type::ENTRYTIME,		SIGNAL_TYPE_INVALID,	 6, false, false },
+	{ "bitstring",        iec61850_type::BITSTRING,		SIGNAL_TYPE_INVALID,	 4, false, false }
 };
 
 /** Each network interface needs a separate receiver */
@@ -78,8 +78,8 @@ static void * iec61850_thread(void *ctx)
 			struct iec61850_receiver *r = (struct iec61850_receiver *) vlist_at(&receivers, i);
 
 			switch (r->type) {
-				case IEC61850_RECEIVER_GOOSE:	GooseReceiver_tick(r->goose); break;
-				case IEC61850_RECEIVER_SV:	SVReceiver_tick(r->sv); break;
+				case iec61850_receiver::type::GOOSE:	GooseReceiver_tick(r->goose); break;
+				case iec61850_receiver::type::SAMPLED_VALUES:	SVReceiver_tick(r->sv); break;
 			}
 		}
 	}
@@ -122,7 +122,7 @@ int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct v
 				if (!node_signals)
 					return -1;
 
-				sig = vlist_at(node_signals, i);
+				sig = (struct signal *) vlist_at(node_signals, i);
 				if (!sig)
 					return -1;
 
@@ -162,7 +162,7 @@ int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct v
 		if (!td)
 			return -1;
 
-		for (int i = 0; i < vlist_length(node_signals); i++) {
+		for (unsigned i = 0; i < vlist_length(node_signals); i++) {
 			vlist_push(signals, (void *) td);
 
 			total_size += td->size;
@@ -224,11 +224,11 @@ int iec61850_type_stop()
 int iec61850_receiver_start(struct iec61850_receiver *r)
 {
 	switch (r->type) {
-		case IEC61850_RECEIVER_GOOSE:
+		case iec61850_receiver::type::GOOSE:
 			r->socket = GooseReceiver_startThreadless(r->goose);
 			break;
 
-		case IEC61850_RECEIVER_SV:
+		case iec61850_receiver::type::SAMPLED_VALUES:
 			r->socket = SVReceiver_startThreadless(r->sv);
 			break;
 	}
@@ -243,11 +243,11 @@ int iec61850_receiver_stop(struct iec61850_receiver *r)
 	EthernetHandleSet_removeSocket(hset, r->socket);
 
 	switch (r->type) {
-		case IEC61850_RECEIVER_GOOSE:
+		case iec61850_receiver::type::GOOSE:
 			GooseReceiver_stopThreadless(r->goose);
 			break;
 
-		case IEC61850_RECEIVER_SV:
+		case iec61850_receiver::type::SAMPLED_VALUES:
 			SVReceiver_stopThreadless(r->sv);
 			break;
 	}
@@ -258,11 +258,11 @@ int iec61850_receiver_stop(struct iec61850_receiver *r)
 int iec61850_receiver_destroy(struct iec61850_receiver *r)
 {
 	switch (r->type) {
-		case IEC61850_RECEIVER_GOOSE:
+		case iec61850_receiver::type::GOOSE:
 			GooseReceiver_destroy(r->goose);
 			break;
 
-		case IEC61850_RECEIVER_SV:
+		case iec61850_receiver::type::SAMPLED_VALUES:
 			SVReceiver_destroy(r->sv);
 			break;
 	}
@@ -272,7 +272,7 @@ int iec61850_receiver_destroy(struct iec61850_receiver *r)
 	return 0;
 }
 
-struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver_type t, const char *intf)
+struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver::type t, const char *intf)
 {
 	for (unsigned i = 0; i < vlist_length(&receivers); i++) {
 		struct iec61850_receiver *r = (struct iec61850_receiver *) vlist_at(&receivers, i);
@@ -284,14 +284,14 @@ struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver_type 
 	return NULL;
 }
 
-struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver_type t, const char *intf)
+struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver::type t, const char *intf)
 {
 	struct iec61850_receiver *r;
 
 	/* Check if there is already a SVReceiver for this interface */
 	r = iec61850_receiver_lookup(t, intf);
 	if (!r) {
-		r = alloc(sizeof(struct iec61850_receiver));
+		r = (struct iec61850_receiver *) alloc(sizeof(struct iec61850_receiver));
 		if (!r)
 			return NULL;
 
@@ -299,12 +299,12 @@ struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver_type 
 		r->type = t;
 
 		switch (r->type) {
-			case IEC61850_RECEIVER_GOOSE:
+			case iec61850_receiver::type::GOOSE:
 				r->goose = GooseReceiver_create();
 				GooseReceiver_setInterfaceId(r->goose, r->interface);
 				break;
 
-			case IEC61850_RECEIVER_SV:
+			case iec61850_receiver::type::SAMPLED_VALUES:
 				r->sv = SVReceiver_create();
 				SVReceiver_setInterfaceId(r->sv, r->interface);
 				break;

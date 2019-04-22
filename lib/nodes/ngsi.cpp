@@ -83,7 +83,7 @@ static json_t* ngsi_build_entity(struct ngsi *i, struct sample *smps[], unsigned
 
 			if (flags & NGSI_ENTITY_VALUES) { /* Build value vector */
 				json_t *values = json_array();
-				for (int k = 0; k < cnt; k++) {
+				for (unsigned k = 0; k < cnt; k++) {
 					json_array_append_new(values, json_pack("[ f, f, i ]",
 						time_to_double(&smps[k]->ts.origin),
 						smps[k]->data[map->index].f,
@@ -139,7 +139,7 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 	if (strcmp(id, i->entity_id) || strcmp(type, i->entity_type))
 		return -2;
 
-	for (int k = 0; k < cnt; k++)
+	for (unsigned k = 0; k < cnt; k++)
 		smps[k]->length = json_array_size(attributes);
 
 	json_array_foreach(attributes, l, attribute) {
@@ -158,7 +158,7 @@ static int ngsi_parse_entity(json_t *entity, struct ngsi *i, struct sample *smps
 			return -3;
 
 		/* Check attribute name and type */
-		map = vlist_lookup(&i->mapping, name);
+		map = (struct ngsi_attribute *) vlist_lookup(&i->mapping, name);
 		if (!map || strcmp(map->type, type))
 			return -4;
 
@@ -237,15 +237,15 @@ static int ngsi_parse_mapping(struct vlist *mapping, json_t *cfg)
 
 		/* Metadata: source(string)=name */
 		struct ngsi_metadata s = {
-			.name = "source",
-			.type = "string",
+			.name = strdup("source"),
+			.type = strdup("string"),
 			.value = name
 		};
 
 		/* Metadata: index(integer)=j */
 		struct ngsi_metadata i = {
-			.name = "index",
-			.type = "integer"
+			.name = strdup("index"),
+			.type = strdup("integer")
 		};
 		assert(asprintf(&i.value, "%zu", j));
 
@@ -289,7 +289,7 @@ static size_t ngsi_request_writer(void *contents, size_t size, size_t nmemb, voi
 	size_t realsize = size * nmemb;
 	struct ngsi_response *mem = (struct ngsi_response *) userp;
 
-	mem->data = realloc(mem->data, mem->len + realsize + 1);
+	mem->data = (char *) realloc(mem->data, mem->len + realsize + 1);
 	if (mem->data == NULL) /* out of memory! */
 		error("Not enough memory (realloc returned NULL)");
 
@@ -592,8 +592,10 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0, /* unlimited */
 		.size		= sizeof(struct ngsi),
-		.type.start	= ngsi_type_start,
-		.type.stop	= ngsi_type_stop,
+		.type = {
+			.start	= ngsi_type_start,
+			.stop	= ngsi_type_stop
+		},
 		.parse		= ngsi_parse,
 		.print		= ngsi_print,
 		.start		= ngsi_start,

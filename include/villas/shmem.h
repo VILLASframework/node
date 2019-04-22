@@ -29,17 +29,17 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <villas/pool.h>
 #include <villas/queue.h>
 #include <villas/queue_signalled.h>
 #include <villas/sample.h>
 
-#define DEFAULT_SHMEM_QUEUELEN	512
-#define DEFAULT_SHMEM_SAMPLELEN	64
+#define DEFAULT_SHMEM_QUEUELEN	512u
+#define DEFAULT_SHMEM_SAMPLELEN	64u
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** Struct containing all parameters that need to be known when creating a new
  * shared memory object. */

@@ -114,7 +114,7 @@ static int amqp_close(amqp_connection_state_t conn)
 int amqp_parse(struct node *n, json_t *json)
 {
 	int ret;
-	struct amqp *a = n->_vd;
+	struct amqp *a = (struct amqp *) n->_vd;
 
 	int port = 5672;
 	const char *format = "json";
@@ -195,7 +195,7 @@ int amqp_parse(struct node *n, json_t *json)
 
 char * amqp_print(struct node *n)
 {
-	struct amqp *a = n->_vd;
+	struct amqp *a = (struct amqp *) n->_vd;
 
 	char *buf = NULL;
 
@@ -233,7 +233,7 @@ char * amqp_print(struct node *n)
 int amqp_start(struct node *n)
 {
 	int ret;
-	struct amqp *a = n->_vd;
+	struct amqp *a = (struct amqp *) n->_vd;
 
 	amqp_bytes_t queue;
 	amqp_rpc_reply_t rep;
@@ -293,7 +293,7 @@ int amqp_start(struct node *n)
 int amqp_stop(struct node *n)
 {
 	int ret;
-	struct amqp *a = n->_vd;
+	struct amqp *a = (struct amqp *) n->_vd;
 
 	ret = amqp_close(a->consumer);
 	if (ret)
@@ -313,7 +313,7 @@ int amqp_stop(struct node *n)
 int amqp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
-	struct amqp *a = n->_vd;
+	struct amqp *a = (struct amqp *) n->_vd;
 	amqp_envelope_t env;
 	amqp_rpc_reply_t rep;
 
@@ -321,7 +321,7 @@ int amqp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
 		return -1;
 
-	ret = io_sscan(&a->io, env.message.body.bytes, env.message.body.len, NULL, smps, cnt);
+	ret = io_sscan(&a->io, static_cast<char *>(env.message.body.bytes), env.message.body.len, NULL, smps, cnt);
 
 	amqp_destroy_envelope(&env);
 
@@ -331,7 +331,7 @@ int amqp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 int amqp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	int ret;
-	struct amqp *a = n->_vd;
+	struct amqp *a = (struct amqp *) n->_vd;
 	char data[1500];
 	size_t wbytes;
 
@@ -358,7 +358,7 @@ int amqp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 
 int amqp_poll_fds(struct node *n, int fds[])
 {
-	struct amqp *a = n->_vd;
+	struct amqp *a = (struct amqp *) n->_vd;
 
 	amqp_socket_t *sock = amqp_get_socket(a->consumer);
 
@@ -369,7 +369,7 @@ int amqp_poll_fds(struct node *n, int fds[])
 
 int amqp_destroy(struct node *n)
 {
-	struct amqp *a = n->_vd;
+	struct amqp *a = (struct amqp *) n->_vd;
 
 	if (a->uri)
 		free(a->uri);
@@ -399,13 +399,13 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0,
 		.size		= sizeof(struct amqp),
+		.destroy	= amqp_destroy,
 		.parse		= amqp_parse,
 		.print		= amqp_print,
 		.start		= amqp_start,
 		.stop		= amqp_stop,
 		.read		= amqp_read,
 		.write		= amqp_write,
-		.destroy	= amqp_destroy,
 		.poll_fds	= amqp_poll_fds
 	}
 };

@@ -92,35 +92,35 @@ static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscribe
 			continue;
 
 		switch (td->iec_type) {
-			case IEC61850_TYPE_INT8:
+			case iec61850_type::INT8:
 				smp->data[j].i = SVSubscriber_ASDU_getINT8(asdu,    offset);
 				break;
 
-			case IEC61850_TYPE_INT16:
+			case iec61850_type::INT16:
 				smp->data[j].i = SVSubscriber_ASDU_getINT16(asdu,   offset);
 				break;
 
-			case IEC61850_TYPE_INT32:
+			case iec61850_type::INT32:
 				smp->data[j].i = SVSubscriber_ASDU_getINT32(asdu,   offset);
 				break;
 
-			case IEC61850_TYPE_INT8U:
+			case iec61850_type::INT8U:
 				smp->data[j].i = SVSubscriber_ASDU_getINT8U(asdu,   offset);
 				break;
 
-			case IEC61850_TYPE_INT16U:
+			case iec61850_type::INT16U:
 				smp->data[j].i = SVSubscriber_ASDU_getINT16U(asdu,  offset);
 				break;
 
-			case IEC61850_TYPE_INT32U:
+			case iec61850_type::INT32U:
 				smp->data[j].i = SVSubscriber_ASDU_getINT32U(asdu,  offset);
 				break;
 
-			case IEC61850_TYPE_FLOAT32:
+			case iec61850_type::FLOAT32:
 				smp->data[j].f = SVSubscriber_ASDU_getFLOAT32(asdu, offset);
 				break;
 
-			case IEC61850_TYPE_FLOAT64:
+			case iec61850_type::FLOAT64:
 				smp->data[j].f = SVSubscriber_ASDU_getFLOAT64(asdu, offset);
 				break;
 
@@ -280,19 +280,19 @@ int iec61850_sv_start(struct node *n)
 			struct iec61850_type_descriptor *td = (struct iec61850_type_descriptor *) vlist_at(&i->out.signals, k);
 
 			switch (td->iec_type) {
-				case IEC61850_TYPE_INT8:
+				case iec61850_type::INT8:
 					SVPublisher_ASDU_addINT8(i->out.asdu);
 					break;
 
-				case IEC61850_TYPE_INT32:
+				case iec61850_type::INT32:
 					SVPublisher_ASDU_addINT32(i->out.asdu);
 					break;
 
-				case IEC61850_TYPE_FLOAT32:
+				case iec61850_type::FLOAT32:
 					SVPublisher_ASDU_addFLOAT(i->out.asdu);
 					break;
 
-				case IEC61850_TYPE_FLOAT64:
+				case iec61850_type::FLOAT64:
 					SVPublisher_ASDU_addFLOAT64(i->out.asdu);
 					break;
 
@@ -314,7 +314,7 @@ int iec61850_sv_start(struct node *n)
 
 	/* Start subscriber */
 	if (i->in.enabled) {
-		struct iec61850_receiver *r = iec61850_receiver_create(IEC61850_RECEIVER_SV, i->interface);
+		struct iec61850_receiver *r = iec61850_receiver_create(iec61850_receiver::type::SAMPLED_VALUES, i->interface);
 
 		i->in.receiver = r->sv;
 		i->in.subscriber = SVSubscriber_create(i->dst_address.ether_addr_octet, i->app_id);
@@ -414,13 +414,13 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsig
 			double fval = 0;
 
 			switch (td->iec_type) {
-				case IEC61850_TYPE_INT8:
-				case IEC61850_TYPE_INT32:
+				case iec61850_type::INT8:
+				case iec61850_type::INT32:
 					ival = sample_format(smps[j], k) == SIGNAL_TYPE_FLOAT ? smps[j]->data[k].f : smps[j]->data[k].i;
 					break;
 
-				case IEC61850_TYPE_FLOAT32:
-				case IEC61850_TYPE_FLOAT64:
+				case iec61850_type::FLOAT32:
+				case iec61850_type::FLOAT64:
 					fval = sample_format(smps[j], k) == SIGNAL_TYPE_FLOAT ? smps[j]->data[k].f : smps[j]->data[k].i;
 					break;
 
@@ -428,19 +428,19 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsig
 			}
 
 			switch (td->iec_type) {
-				case IEC61850_TYPE_INT8:
+				case iec61850_type::INT8:
 					SVPublisher_ASDU_setINT8(i->out.asdu,    offset, ival);
 					break;
 
-				case IEC61850_TYPE_INT32:
+				case iec61850_type::INT32:
 					SVPublisher_ASDU_setINT32(i->out.asdu,   offset, ival);
 					break;
 
-				case IEC61850_TYPE_FLOAT32:
+				case iec61850_type::FLOAT32:
 					SVPublisher_ASDU_setFLOAT(i->out.asdu,   offset, fval);
 					break;
 
-				case IEC61850_TYPE_FLOAT64:
+				case iec61850_type::FLOAT64:
 					SVPublisher_ASDU_setFLOAT64(i->out.asdu, offset, fval);
 					break;
 
@@ -480,13 +480,15 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0,
 		.size		= sizeof(struct iec61850_sv),
-		.type.start	= iec61850_type_start,
-		.type.stop	= iec61850_type_stop,
+		.type = {
+			.start	= iec61850_type_start,
+			.stop	= iec61850_type_stop
+		},
+		.destroy	= iec61850_sv_destroy,
 		.parse		= iec61850_sv_parse,
 		.print		= iec61850_sv_print,
 		.start		= iec61850_sv_start,
 		.stop		= iec61850_sv_stop,
-		.destroy	= iec61850_sv_destroy,
 		.read		= iec61850_sv_read,
 		.write		= iec61850_sv_write,
 		.poll_fds	= iec61850_sv_poll_fds

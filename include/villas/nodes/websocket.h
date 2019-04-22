@@ -57,19 +57,19 @@ struct websocket {
 
 /* Internal datastructures */
 struct websocket_connection {
-	enum websocket_connection_state {
-		WEBSOCKET_CONNECTION_STATE_DESTROYED,
-		WEBSOCKET_CONNECTION_STATE_INITIALIZED,
-		WEBSOCKET_CONNECTION_STATE_CONNECTING,
-		WEBSOCKET_CONNECTION_STATE_RECONNECTING,
-		WEBSOCKET_CONNECTION_STATE_ESTABLISHED,
-		WEBSOCKET_CONNECTION_STATE_SHUTDOWN,
-		WEBSOCKET_CONNECTION_STATE_ERROR
+	enum state {
+		DESTROYED,
+		INITIALIZED,
+		CONNECTING,
+		RECONNECTING,
+		ESTABLISHED,
+		SHUTDOWN,
+		ERROR
 	} state;				/**< The current status of this connection. */
 
-	enum {
-		WEBSOCKET_MODE_CLIENT,
-		WEBSOCKET_MODE_SERVER,
+	enum mode {
+		CLIENT,
+		SERVER,
 	} mode;
 
 	struct lws *wsi;

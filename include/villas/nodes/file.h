@@ -53,19 +53,19 @@ struct file {
 	size_t buffer_size_out;		/**< Defines size of output stream buffer. No buffer is created if value is set to zero. */
 	size_t buffer_size_in;		/**< Defines size of input stream buffer. No buffer is created if value is set to zero. */
 
-	enum epoch_mode {
-		FILE_EPOCH_DIRECT,
-		FILE_EPOCH_WAIT,
-		FILE_EPOCH_RELATIVE,
-		FILE_EPOCH_ABSOLUTE,
-		FILE_EPOCH_ORIGINAL
+	enum epoch {
+		DIRECT,
+		WAIT,
+		RELATIVE,
+		ABSOLUTE,
+		ORIGINAL
 	} epoch_mode;			/**< Specifies how file::offset is calculated. */
 
-	enum {
-		FILE_EOF_STOP,		/**< Terminate when EOF is reached. */
-		FILE_EOF_REWIND,	/**< Rewind the file when EOF is reached. */
-		FILE_EOF_WAIT		/**< Blocking wait when EOF is reached. */
-	} eof;
+	enum eof {
+		STOP,			/**< Terminate when EOF is reached. */
+		REWIND,			/**< Rewind the file when EOF is reached. */
+		SUSPEND			/**< Blocking wait when EOF is reached. */
+	} eof_mode;
 
 	struct timespec first;		/**< The first timestamp in the file file::{read,write}::uri */
 	struct timespec epoch;		/**< The epoch timestamp from the configuration. */

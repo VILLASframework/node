@@ -83,7 +83,7 @@ int zeromq_reverse(struct node *n)
 		return -1;
 
 	char *subscriber = z->in.endpoint;
-	char *publisher = vlist_first(&z->out.endpoints);
+	char *publisher = (char *) vlist_first(&z->out.endpoints);
 
 	z->in.endpoint = publisher;
 	vlist_set(&z->out.endpoints, 0, subscriber);
@@ -189,10 +189,10 @@ int zeromq_parse(struct node *n, json_t *cfg)
 
 	if (type) {
 		if      (!strcmp(type, "pubsub"))
-			z->pattern = ZEROMQ_PATTERN_PUBSUB;
+			z->pattern = zeromq::pattern::PUBSUB;
 #ifdef ZMQ_BUILD_DISH
 		else if (!strcmp(type, "radiodish"))
-			z->pattern = ZEROMQ_PATTERN_RADIODISH;
+			z->pattern = zeromq::pattern::RADIODISH;
 #endif
 		else
 			error("Invalid type for ZeroMQ node: %s", node_name_short(n));
@@ -206,12 +206,17 @@ char * zeromq_print(struct node *n)
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
 	char *buf = NULL;
-	char *pattern = NULL;
+	const char *pattern = NULL;
 
 	switch (z->pattern) {
-		case ZEROMQ_PATTERN_PUBSUB: pattern = "pubsub"; break;
+		case zeromq::pattern::PUBSUB:
+			pattern = "pubsub";
+			break;
+
 #ifdef ZMQ_BUILD_DISH
-		case ZEROMQ_PATTERN_RADIODISH: pattern = "radiodish"; break;
+		case zeromq::pattern::RADIODISH:
+			pattern = "radiodish";
+			break;
 #endif
 	}
 
@@ -267,13 +272,13 @@ int zeromq_start(struct node *n)
 
 	switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
-		case ZEROMQ_PATTERN_RADIODISH:
+		case zeromq::pattern::RADIODISH:
 			z->in.socket = zmq_socket(context, ZMQ_DISH);
 			z->out.socket  = zmq_socket(context, ZMQ_RADIO);
 			break;
 #endif
 
-		case ZEROMQ_PATTERN_PUBSUB:
+		case zeromq::pattern::PUBSUB:
 			z->in.socket = zmq_socket(context, ZMQ_SUB);
 			z->out.socket  = zmq_socket(context, ZMQ_PUB);
 			break;
@@ -287,12 +292,12 @@ int zeromq_start(struct node *n)
 	/* Join group */
 	switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
-		case ZEROMQ_PATTERN_RADIODISH:
+		case zeromq::pattern::RADIODISH:
 			ret = zmq_join(z->in.socket, z->in.filter);
 			break;
 #endif
 
-		case ZEROMQ_PATTERN_PUBSUB:
+		case zeromq::pattern::PUBSUB:
 			ret = zmq_setsockopt(z->in.socket, ZMQ_SUBSCRIBE, z->in.filter, z->in.filter ? strlen(z->in.filter) : 0);
 			break;
 
@@ -452,7 +457,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 	if (z->in.filter) {
 		switch (z->pattern) {
-			case ZEROMQ_PATTERN_PUBSUB:
+			case zeromq::pattern::PUBSUB:
 				/* Discard envelope */
 				zmq_recv(z->in.socket, NULL, 0, 0);
 				break;
@@ -466,7 +471,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	if (ret < 0)
 		return ret;
 
-	recv = io_sscan(&z->io, zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, cnt);
+	recv = io_sscan(&z->io, (const char *) zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, cnt);
 
 	ret = zmq_msg_close(&m);
 	if (ret)
@@ -494,14 +499,14 @@ int zeromq_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 	if (z->out.filter) {
 		switch (z->pattern) {
 #ifdef ZMQ_BUILD_DISH
-			case ZEROMQ_PATTERN_RADIODISH:
+			case zeromq::pattern::RADIODISH:
 				ret = zmq_msg_set_group(&m, z->out.filter);
 				if (ret < 0)
 					goto fail;
 				break;
 #endif
 
-			case ZEROMQ_PATTERN_PUBSUB: /* Send envelope */
+			case zeromq::pattern::PUBSUB: /* Send envelope */
 				zmq_send(z->out.socket, z->out.filter, strlen(z->out.filter), ZMQ_SNDMORE);
 				break;
 		}
@@ -566,16 +571,18 @@ static struct plugin p = {
 	.node		= {
 		.vectorize	= 0,
 		.size		= sizeof(struct zeromq),
-		.type.start	= zeromq_type_start,
-		.type.stop	= zeromq_type_stop,
-		.reverse	= zeromq_reverse,
+		.type = {
+			.start	= zeromq_type_start,
+			.stop	= zeromq_type_stop,
+		},
+		.destroy	= zeromq_destroy,
 		.parse		= zeromq_parse,
 		.print		= zeromq_print,
 		.start		= zeromq_start,
 		.stop		= zeromq_stop,
-		.destroy	= zeromq_destroy,
 		.read		= zeromq_read,
 		.write		= zeromq_write,
+		.reverse	= zeromq_reverse,
 		.poll_fds	= zeromq_poll_fds,
 		.netem_fds	= zeromq_netem_fds,
 	}
