@@ -224,7 +224,7 @@ __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
 static struct plugin p2;
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
         if (plugins.state == STATE_DESTROYED)
-	                vlist_init(&plugins);
+	        vlist_init(&plugins);
 
 	p2.name = "csv";
 	p2.description = "Comma-separated values";
