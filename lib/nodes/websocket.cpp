@@ -58,7 +58,7 @@ static char * websocket_connection_name(struct websocket_connection *c)
 
 			strcatf(&c->_name, "remote.ip=%s, remote.name=%s", ip, name);
 		}
-		else if (c->mode == websocket_connection::mode::CLIENT && c->destination != NULL)
+		else if (c->mode == websocket_connection::mode::CLIENT && c->destination != nullptr)
 			strcatf(&c->_name, "dest=%s:%d", c->destination->info.address, c->destination->info.port);
 
 		if (c->node)
@@ -82,7 +82,7 @@ static int websocket_connection_init(struct websocket_connection *c)
 {
 	int ret;
 
-	c->_name = NULL;
+	c->_name = nullptr;
 
 	ret = queue_init(&c->queue, DEFAULT_QUEUE_LENGTH, &memory_hugepage);
 	if (ret)
@@ -140,8 +140,8 @@ static int websocket_connection_destroy(struct websocket_connection *c)
 	if (ret)
 		return ret;
 
-	c->wsi = NULL;
-	c->_name = NULL;
+	c->wsi = nullptr;
+	c->_name = nullptr;
 
 	c->state = websocket_connection::state::DESTROYED;
 
@@ -220,7 +220,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 					return -1;
 				}
 
-				format = strtok_r(NULL, "", &lasts);
+				format = strtok_r(nullptr, "", &lasts);
 				if (!format)
 					format = (char *) "villas.web";
 
@@ -334,7 +334,7 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 				if (avail < cnt)
 					warning("Pool underrun for connection: %s", websocket_connection_name(c));
 
-				recvd = io_sscan(&c->io, c->buffers.recv.buf, c->buffers.recv.len, NULL, smps, avail);
+				recvd = io_sscan(&c->io, c->buffers.recv.buf, c->buffers.recv.len, nullptr, smps, avail);
 				if (recvd < 0) {
 					warning("Failed to parse sample data received on connection: %s", websocket_connection_name(c));
 					break;
@@ -532,7 +532,7 @@ int websocket_parse(struct node *n, json_t *cfg)
 	int ret;
 
 	size_t i;
-	json_t *json_dests = NULL;
+	json_t *json_dests = nullptr;
 	json_t *json_dest;
 	json_error_t err;
 
@@ -580,7 +580,7 @@ char * websocket_print(struct node *n)
 {
 	struct websocket *w = (struct websocket *) n->_vd;
 
-	char *buf = NULL;
+	char *buf = nullptr;
 
 	buf = strcatf(&buf, "destinations=[ ");
 

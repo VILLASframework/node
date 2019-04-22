@@ -84,7 +84,7 @@ static void * iec61850_thread(void *ctx)
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name)
@@ -94,7 +94,7 @@ const struct iec61850_type_descriptor * iec61850_lookup_type(const char *name)
 			return &type_descriptors[i];
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 int iec61850_parse_signals(json_t *json_signals, struct vlist *signals, struct vlist *node_signals)
@@ -186,7 +186,7 @@ int iec61850_type_start(struct super_node *sn)
 
 	hset = EthernetHandleSet_new();
 
-	ret = pthread_create(&thread, NULL, iec61850_thread, NULL);
+	ret = pthread_create(&thread, nullptr, iec61850_thread, nullptr);
 	if (ret)
 		return ret;
 
@@ -210,7 +210,7 @@ int iec61850_type_stop()
 	if (ret)
 		return ret;
 
-	ret = pthread_join(thread, NULL);
+	ret = pthread_join(thread, nullptr);
 	if (ret)
 		return ret;
 
@@ -281,7 +281,7 @@ struct iec61850_receiver * iec61850_receiver_lookup(enum iec61850_receiver::type
 			return r;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver::type t, const char *intf)
@@ -293,7 +293,7 @@ struct iec61850_receiver * iec61850_receiver_create(enum iec61850_receiver::type
 	if (!r) {
 		r = (struct iec61850_receiver *) alloc(sizeof(struct iec61850_receiver));
 		if (!r)
-			return NULL;
+			return nullptr;
 
 		r->interface = strdup(intf);
 		r->type = t;

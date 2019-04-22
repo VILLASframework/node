@@ -140,14 +140,14 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 	int ret;
 	struct iec61850_sv *i = (struct iec61850_sv *) n->_vd;
 
-	const char *dst_address = NULL;
-	const char *interface = NULL;
-	const char *svid = NULL;
-	const char *smpmod = NULL;
+	const char *dst_address = nullptr;
+	const char *interface = nullptr;
+	const char *svid = nullptr;
+	const char *smpmod = nullptr;
 
-	json_t *json_in = NULL;
-	json_t *json_out = NULL;
-	json_t *json_signals = NULL;
+	json_t *json_in = nullptr;
+	json_t *json_out = nullptr;
+	json_t *json_signals = nullptr;
 	json_error_t err;
 
 	/* Default values */
@@ -212,7 +212,7 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 				error("Invalid value '%s' for setting 'smpmod'", smpmod);
 		}
 
-		i->out.svid = svid ? strdup(svid) : NULL;
+		i->out.svid = svid ? strdup(svid) : nullptr;
 
 		ret = iec61850_parse_signals(json_signals, &i->out.signals, &n->out.signals);
 		if (ret <= 0)
@@ -224,7 +224,7 @@ int iec61850_sv_parse(struct node *n, json_t *json)
 	if (json_in) {
 		i->in.enabled = true;
 
-		json_signals = NULL;
+		json_signals = nullptr;
 		ret = json_unpack_ex(json_in, &err, 0, "{ s: o }",
 			"signals", &json_signals
 		);
@@ -273,7 +273,7 @@ int iec61850_sv_start(struct node *n)
 
 	/* Initialize publisher */
 	if (i->out.enabled) {
-		i->out.publisher = SVPublisher_create(NULL, i->interface);
+		i->out.publisher = SVPublisher_create(nullptr, i->interface);
 		i->out.asdu = SVPublisher_addASDU(i->out.publisher, i->out.svid, node_name_short(n), i->out.confrev);
 
 		for (unsigned k = 0; k < vlist_length(&i->out.signals); k++) {

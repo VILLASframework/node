@@ -86,8 +86,8 @@ int nanomsg_parse(struct node *n, json_t *cfg)
 
 	json_error_t err;
 
-	json_t *json_out_endpoints = NULL;
-	json_t *json_in_endpoints = NULL;
+	json_t *json_out_endpoints = nullptr;
+	json_t *json_in_endpoints = nullptr;
 
 	vlist_init(&m->out.endpoints);
 	vlist_init(&m->in.endpoints);
@@ -125,7 +125,7 @@ char * nanomsg_print(struct node *n)
 {
 	struct nanomsg *m = (struct nanomsg *) n->_vd;
 
-	char *buf = NULL;
+	char *buf = nullptr;
 
 	strcatf(&buf, "format=%s, in.endpoints=[ ", format_type_name(m->format));
 
@@ -241,7 +241,7 @@ int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 	if (bytes < 0)
 		return -1;
 
-	return io_sscan(&m->io, data, bytes, NULL, smps, cnt);
+	return io_sscan(&m->io, data, bytes, nullptr, smps, cnt);
 }
 
 int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)

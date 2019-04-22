@@ -81,10 +81,10 @@ int file_parse(struct node *n, json_t *cfg)
 	int ret;
 	json_error_t err;
 
-	const char *uri_tmpl = NULL;
+	const char *uri_tmpl = nullptr;
 	const char *format = "villas.human";
-	const char *eof = NULL;
-	const char *epoch = NULL;
+	const char *eof = nullptr;
+	const char *epoch = nullptr;
 	double epoch_flt = 0;
 
 	/* Default values */
@@ -112,7 +112,7 @@ int file_parse(struct node *n, json_t *cfg)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 	f->epoch = time_from_double(epoch_flt);
-	f->uri_tmpl = uri_tmpl ? strdup(uri_tmpl) : NULL;
+	f->uri_tmpl = uri_tmpl ? strdup(uri_tmpl) : nullptr;
 
 	f->format = format_type_lookup(format);
 	if (!f->format)
@@ -152,10 +152,10 @@ int file_parse(struct node *n, json_t *cfg)
 char * file_print(struct node *n)
 {
 	struct file *f = (struct file *) n->_vd;
-	char *buf = NULL;
+	char *buf = nullptr;
 
-	const char *epoch_str = NULL;
-	const char *eof_str = NULL;
+	const char *epoch_str = nullptr;
+	const char *eof_str = nullptr;
 
 	switch (f->epoch_mode) {
 		case file::epoch::DIRECT:
@@ -286,13 +286,13 @@ int file_start(struct node *n)
 		return ret;
 
 	if (f->buffer_size_in) {
-		ret = setvbuf(f->io.in.stream.std, NULL, _IOFBF, f->buffer_size_in);
+		ret = setvbuf(f->io.in.stream.std, nullptr, _IOFBF, f->buffer_size_in);
 		if (ret)
 			return ret;
 	}
 
 	if (f->buffer_size_out) {
-		ret = setvbuf(f->io.out.stream.std, NULL, _IOFBF, f->buffer_size_out);
+		ret = setvbuf(f->io.out.stream.std, nullptr, _IOFBF, f->buffer_size_out);
 		if (ret)
 			return ret;
 	}

@@ -71,10 +71,10 @@ static int comedi_parse_direction(struct comedi *c, struct comedi_direction *d, 
 	}
 
 	d->chanlist = (unsigned int*) alloc(d->chanlist_len * sizeof(*d->chanlist));
-	assert(d->chanlist != NULL);
+	assert(d->chanlist != nullptr);
 
 	d->chanspecs = (comedi_chanspec *) alloc(d->chanlist_len * sizeof(*d->chanspecs));
-	assert(d->chanspecs != NULL);
+	assert(d->chanspecs != nullptr);
 
 	json_array_foreach(json_chans, i, json_chan) {
 		int num, range, aref;
@@ -236,7 +236,7 @@ static int comedi_start_in(struct node *n)
 	/* Be prepared to consume one entire buffer */
 	c->buf = (char *) alloc(c->in.buffer_size);
 	c->bufptr = c->buf;
-	assert(c->bufptr != NULL);
+	assert(c->bufptr != nullptr);
 
 	info("Compiled for kernel read() interface");
 #else
@@ -326,7 +326,7 @@ static int comedi_start_out(struct node *n)
 	const size_t local_buffer_size = d->sample_size * d->chanlist_len;
 	d->buffer = (char *) alloc(local_buffer_size);
 	d->bufptr = d->buffer;
-	assert(d->buffer != NULL);
+	assert(d->buffer != nullptr);
 
 	/* Initialize local buffer used for write() syscalls */
 	for (unsigned channel = 0; channel < d->chanlist_len; channel++) {
@@ -392,8 +392,8 @@ int comedi_parse(struct node *n, json_t *cfg)
 
 	const char *device;
 
-	json_t *json_in = NULL;
-	json_t *json_out = NULL;
+	json_t *json_in = nullptr;
+	json_t *json_out = nullptr;
 	json_error_t err;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: o, s?: o }",
@@ -404,11 +404,11 @@ int comedi_parse(struct node *n, json_t *cfg)
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-	c->in.present = json_in != NULL;
+	c->in.present = json_in != nullptr;
 	c->in.enabled = false;
 	c->in.running = false;
 
-	c->out.present = json_out != NULL;
+	c->out.present = json_out != nullptr;
 	c->out.enabled = false;
 	c->out.running = false;
 
@@ -433,7 +433,7 @@ char * comedi_print(struct node *n)
 {
 	struct comedi *c = (struct comedi *) n->_vd;
 
-	char *buf = NULL;
+	char *buf = nullptr;
 
 	const char *board = comedi_get_board_name(c->dev);
 	const char *driver = comedi_get_driver_name(c->dev);
@@ -478,7 +478,7 @@ int comedi_start(struct node *n)
 
 #if !COMEDI_USE_READ
 	info("Mapping Comedi buffer of %d bytes", c->in.buffer_size);
-	c->map = mmap(NULL, c->in.buffer_size, PROT_READ, MAP_SHARED, comedi_fileno(c->dev), 0);
+	c->map = mmap(nullptr, c->in.buffer_size, PROT_READ, MAP_SHARED, comedi_fileno(c->dev), 0);
 	if (c->map == MAP_FAILED)
 		error("Failed to map comedi buffer of node '%s'", node_name(n));
 
@@ -533,7 +533,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 5000;
 
-	ret = select(comedi_fileno(c->dev) + 1, &rdset, NULL, NULL, &timeout);
+	ret = select(comedi_fileno(c->dev) + 1, &rdset, nullptr, nullptr, &timeout);
 	if (ret < 0)
 		error("select");
 	else if (ret == 0) /* hit timeout */

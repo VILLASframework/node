@@ -73,7 +73,7 @@ int socket_type_start(struct super_node *sn)
 char * socket_print(struct node *n)
 {
 	struct socket *s = (struct socket *) n->_vd;
-	const char *layer = NULL;
+	const char *layer = nullptr;
 	char *buf;
 
 	switch (s->layer) {
@@ -453,12 +453,12 @@ int socket_parse(struct node *n, json_t *cfg)
 	struct socket *s = (struct socket *) n->_vd;
 
 	const char *local, *remote;
-	const char *layer = NULL;
+	const char *layer = nullptr;
 	const char *format = "villas.binary";
 
 	int ret;
 
-	json_t *json_multicast = NULL;
+	json_t *json_multicast = nullptr;
 	json_error_t err;
 
 	/* Default values */
@@ -512,7 +512,7 @@ int socket_parse(struct node *n, json_t *cfg)
 	}
 
 	if (json_multicast) {
-		const char *group, *interface = NULL;
+		const char *group, *interface = nullptr;
 
 		/* Default values */
 		s->multicast.enabled = true;

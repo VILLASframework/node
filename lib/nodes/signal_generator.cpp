@@ -78,7 +78,7 @@ static const char * signal_generator_type_str(enum signal_generator::type type)
 			return "mixed";
 
 		default:
-			return NULL;
+			return nullptr;
 	}
 }
 
@@ -107,7 +107,7 @@ int signal_generator_parse(struct node *n, json_t *cfg)
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
 
 	int ret;
-	const char *type = NULL;
+	const char *type = nullptr;
 
 	json_error_t err;
 
@@ -279,7 +279,7 @@ int signal_generator_read(struct node *n, struct sample *smps[], unsigned cnt, u
 char * signal_generator_print(struct node *n)
 {
 	struct signal_generator *s = (struct signal_generator *) n->_vd;
-	char *buf = NULL;
+	char *buf = nullptr;
 	const char *type = signal_generator_type_str(s->type);
 
 	strcatf(&buf, "signal=%s, rt=%s, rate=%.2f, values=%d, frequency=%.2f, amplitude=%.2f, stddev=%.2f, offset=%.2f",

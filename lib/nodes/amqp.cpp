@@ -34,9 +34,9 @@ static void amqp_default_ssl_info(struct amqp_ssl_info *s)
 {
 	s->verify_peer = 1;
 	s->verify_hostname = 1;
-	s->client_key = NULL;
-	s->client_cert = NULL;
-	s->ca_cert = NULL;
+	s->client_key = nullptr;
+	s->client_cert = nullptr;
+	s->ca_cert = nullptr;
 }
 
 static amqp_bytes_t amqp_bytes_strdup(const char *str)
@@ -58,12 +58,12 @@ static amqp_connection_state_t amqp_connect(struct amqp_connection_info *ci, str
 
 	conn = amqp_new_connection();
 	if (!conn)
-		return NULL;
+		return nullptr;
 
 	if (ci->ssl) {
 		sock = amqp_ssl_socket_new(conn);
 		if (!sock)
-			return NULL;
+			return nullptr;
 
 		amqp_ssl_socket_set_verify_peer(sock, ssl->verify_peer);
 		amqp_ssl_socket_set_verify_hostname(sock, ssl->verify_hostname);
@@ -77,21 +77,21 @@ static amqp_connection_state_t amqp_connect(struct amqp_connection_info *ci, str
 	else {
 		sock = amqp_tcp_socket_new(conn);
 		if (!sock)
-			return NULL;
+			return nullptr;
 	}
 
 	ret = amqp_socket_open(sock, ci->host, ci->port);
 	if (ret != AMQP_STATUS_OK)
-		return NULL;
+		return nullptr;
 
 	rep = amqp_login(conn, ci->vhost, 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, ci->user, ci->password);
 	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
-		return NULL;
+		return nullptr;
 
 	amqp_channel_open(conn, 1);
 	rep = amqp_get_rpc_reply(conn);
 	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
-		return NULL;
+		return nullptr;
 
 	return conn;
 }
@@ -118,7 +118,7 @@ int amqp_parse(struct node *n, json_t *json)
 
 	int port = 5672;
 	const char *format = "json";
-	const char *uri = NULL;
+	const char *uri = nullptr;
 	const char *host = "localhost";
 	const char *vhost = "/";
 	const char *username = "guest";
@@ -127,7 +127,7 @@ int amqp_parse(struct node *n, json_t *json)
 
 	json_error_t err;
 
-	json_t *json_ssl = NULL;
+	json_t *json_ssl = nullptr;
 
 	/* Default values */
 	amqp_default_ssl_info(&a->ssl_info);
@@ -162,9 +162,9 @@ int amqp_parse(struct node *n, json_t *json)
 		error("Failed to parse URI '%s' of node %s", uri, node_name(n));
 
 	if (json_ssl) {
-		const char *ca_cert = NULL;
-		const char *client_cert = NULL;
-		const char *client_key = NULL;
+		const char *ca_cert = nullptr;
+		const char *client_cert = nullptr;
+		const char *client_key = nullptr;
 
 		ret = json_unpack_ex(json_ssl, &err, 0, "{ s?: b, s?: b, s?: s, s?: s, s?: s }",
 			"verify_peer", &a->ssl_info.verify_peer,
@@ -197,7 +197,7 @@ char * amqp_print(struct node *n)
 {
 	struct amqp *a = (struct amqp *) n->_vd;
 
-	char *buf = NULL;
+	char *buf = nullptr;
 
 	strcatf(&buf, "format=%s, uri=%s://%s:%s@%s:%d%s, exchange=%s, routing_key=%s",
 		format_type_name(a->format),
@@ -270,7 +270,7 @@ int amqp_start(struct node *n)
 		return -1;
 
 	queue = amqp_bytes_malloc_dup(r->queue);
-	if (queue.bytes == NULL)
+	if (queue.bytes == nullptr)
 		return -1;
 
 	/* Bind queue to exchange */
@@ -317,11 +317,11 @@ int amqp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	amqp_envelope_t env;
 	amqp_rpc_reply_t rep;
 
-	rep = amqp_consume_message(a->consumer, &env, NULL, 0);
+	rep = amqp_consume_message(a->consumer, &env, nullptr, 0);
 	if (rep.reply_type != AMQP_RESPONSE_NORMAL)
 		return -1;
 
-	ret = io_sscan(&a->io, static_cast<char *>(env.message.body.bytes), env.message.body.len, NULL, smps, cnt);
+	ret = io_sscan(&a->io, static_cast<char *>(env.message.body.bytes), env.message.body.len, nullptr, smps, cnt);
 
 	amqp_destroy_envelope(&env);
 
@@ -348,7 +348,7 @@ int amqp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	ret = amqp_basic_publish(a->producer, 1,
 		a->exchange,
 		a->routing_key,
-		0, 0, NULL, message);
+		0, 0, nullptr, message);
 
 	if (ret != AMQP_STATUS_OK)
 		return -1;

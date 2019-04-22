@@ -73,13 +73,13 @@ static void ib_build_ibv(struct node *n)
 	debug(LOG_IB | 1, "Starting to build IBV components");
 
 	/* Create completion queues (No completion channel!) */
-	ib->ctx.recv_cq = ibv_create_cq(ib->ctx.id->verbs, ib->recv_cq_size, NULL, NULL, 0);
+	ib->ctx.recv_cq = ibv_create_cq(ib->ctx.id->verbs, ib->recv_cq_size, nullptr, nullptr, 0);
 	if (!ib->ctx.recv_cq)
 		error("Could not create receive completion queue in node %s", node_name(n));
 
 	debug(LOG_IB | 3, "Created receive Completion Queue");
 
-	ib->ctx.send_cq = ibv_create_cq(ib->ctx.id->verbs, ib->send_cq_size, NULL, NULL, 0);
+	ib->ctx.send_cq = ibv_create_cq(ib->ctx.id->verbs, ib->send_cq_size, nullptr, nullptr, 0);
 	if (!ib->ctx.send_cq)
 		error("Could not create send completion queue in node %s", node_name(n));
 
@@ -173,7 +173,7 @@ int ib_parse(struct node *n, json_t *cfg)
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 
 	int ret;
-	char *local = NULL, *remote = NULL, *lasts;
+	char *local = nullptr, *remote = nullptr, *lasts;
 	const char *transport_mode = "RC";
 	int timeout = 1000;
 	int recv_cq_size = 128;
@@ -188,8 +188,8 @@ int ib_parse(struct node *n, json_t *cfg)
 	int use_fallback = 1;
 
 	/* Parse JSON files and copy to local variables */
-	json_t *json_in = NULL;
-	json_t *json_out = NULL;
+	json_t *json_in = nullptr;
+	json_t *json_out = nullptr;
 	json_error_t err;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: o, s?: o, s?: s }",
@@ -254,9 +254,9 @@ int ib_parse(struct node *n, json_t *cfg)
 
 	/* Translate IP:PORT to a struct addrinfo */
 	char *ip_adr = strtok_r(local, ":", &lasts);
-	char *port = strtok_r(NULL, ":", &lasts);
+	char *port = strtok_r(nullptr, ":", &lasts);
 
-	ret = getaddrinfo(ip_adr, port, NULL, &ib->conn.src_addr);
+	ret = getaddrinfo(ip_adr, port, nullptr, &ib->conn.src_addr);
 	if (ret)
 		error("Failed to resolve local address '%s' of node %s: %s",
 			local, node_name(n), gai_strerror(ret));
@@ -326,9 +326,9 @@ int ib_parse(struct node *n, json_t *cfg)
 	if (ib->is_source) {
 		/* Translate address info */
 		char *ip_adr = strtok_r(remote, ":", &lasts);
-		char *port = strtok_r(NULL, ":", &lasts);
+		char *port = strtok_r(nullptr, ":", &lasts);
 
-		ret = getaddrinfo(ip_adr, port, NULL, &ib->conn.dst_addr);
+		ret = getaddrinfo(ip_adr, port, nullptr, &ib->conn.dst_addr);
 		if (ret)
 			error("Failed to resolve remote address '%s' of node %s: %s",
 				remote, node_name(n), gai_strerror(ret));
@@ -437,9 +437,9 @@ static void ib_create_bind_id(struct node *n)
 	 *
 	 */
 #ifdef RDMA_CMA_H_CUSTOM
-	ret = rdma_create_id2(ib->ctx.ec, &ib->ctx.id, NULL, ib->conn.port_space, ib->qp_init.qp_type);
+	ret = rdma_create_id2(ib->ctx.ec, &ib->ctx.id, nullptr, ib->conn.port_space, ib->qp_init.qp_type);
 #else
-	ret = rdma_create_id(ib->ctx.ec, &ib->ctx.id, NULL, ib->conn.port_space);
+	ret = rdma_create_id(ib->ctx.ec, &ib->ctx.id, nullptr, ib->conn.port_space);
 #endif
 	if (ret)
 		error("Failed to create rdma_cm_id of node %s: %s", node_name(n), gai_strerror(ret));
@@ -604,7 +604,7 @@ void * ib_rdma_cm_event_thread(void *n)
 			break;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 int ib_start(struct node *n)
@@ -629,7 +629,7 @@ int ib_start(struct node *n)
 	/* Resolve address or listen to rdma_cm_id */
 	if (ib->is_source) {
 		/* Resolve address */
-		ret = rdma_resolve_addr(ib->ctx.id, NULL, ib->conn.dst_addr->ai_addr, ib->conn.timeout);
+		ret = rdma_resolve_addr(ib->ctx.id, nullptr, ib->conn.dst_addr->ai_addr, ib->conn.timeout);
 		if (ret)
 			error("Failed to resolve remote address after %ims of node %s: %s",
 				ib->conn.timeout, node_name(n), gai_strerror(ret));
@@ -662,7 +662,7 @@ int ib_start(struct node *n)
 	debug(LOG_IB | 1, "Starting to monitor events on rdma_cm_id");
 
 	/* Create thread to monitor rdma_cm_event channel */
-	ret = pthread_create(&ib->conn.rdma_cm_event_thread, NULL, ib_rdma_cm_event_thread, n);
+	ret = pthread_create(&ib->conn.rdma_cm_event_thread, nullptr, ib_rdma_cm_event_thread, n);
 	if (ret)
 		error("Failed to create thread to monitor rdma_cm events in node %s: %s",
 			node_name(n), gai_strerror(ret));
@@ -701,7 +701,7 @@ int ib_stop(struct node *n)
 	info("Disconnecting... Waiting for threads to join.");
 
 	/* Wait for event thread to join */
-	ret = pthread_join(ib->conn.rdma_cm_event_thread, NULL);
+	ret = pthread_join(ib->conn.rdma_cm_event_thread, nullptr);
 	if (ret)
 		error("Error while joining rdma_cm_event_thread in node %s: %i", node_name(n), ret);
 
@@ -728,7 +728,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
 	struct ibv_wc wc[cnt];
-	struct ibv_recv_wr wr[cnt], *bad_wr = NULL;
+	struct ibv_recv_wr wr[cnt], *bad_wr = nullptr;
     	struct ibv_sge sge[cnt][ib->qp_init.cap.max_recv_sge];
 	struct ibv_mr *mr;
 	struct timespec ts_receive;
@@ -821,7 +821,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
     			wr[i].num_sge = j;
 		}
 
-		wr[max_wr_post-1].next = NULL;
+		wr[max_wr_post-1].next = nullptr;
 
 		debug(LOG_IB | 5, "Prepared %i new receive Work Requests", max_wr_post);
 		debug(LOG_IB | 5, "%i receive Work Requests in Receive Queue", ib->conn.available_recv_wrs);
@@ -868,7 +868,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;
-	struct ibv_send_wr wr[cnt], *bad_wr = NULL;
+	struct ibv_send_wr wr[cnt], *bad_wr = nullptr;
 	struct ibv_sge sge[cnt][ib->qp_init.cap.max_recv_sge];
 	struct ibv_wc wc[cnt];
 	struct ibv_mr *mr;
@@ -942,7 +942,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 		}
 
 		debug(LOG_IB | 10, "Prepared %i send Work Requests", cnt);
-		wr[cnt-1].next = NULL;
+		wr[cnt-1].next = nullptr;
 
 		/* Send linked list of Work Requests */
 		ret = ibv_post_send(ib->ctx.id->qp, wr, &bad_wr);

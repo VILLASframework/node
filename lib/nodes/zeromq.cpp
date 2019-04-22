@@ -96,15 +96,15 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
 	int ret;
-	const char *ep = NULL;
-	const char *type = NULL;
-	const char *in_filter = NULL;
-	const char *out_filter = NULL;
+	const char *ep = nullptr;
+	const char *type = nullptr;
+	const char *in_filter = nullptr;
+	const char *out_filter = nullptr;
 	const char *format = "villas.binary";
 
 	size_t i;
-	json_t *json_pub = NULL;
-	json_t *json_curve = NULL;
+	json_t *json_pub = nullptr;
+	json_t *json_curve = nullptr;
 	json_t *json_val;
 	json_error_t err;
 
@@ -128,9 +128,9 @@ int zeromq_parse(struct node *n, json_t *cfg)
 	if (ret)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
-	z->in.endpoint = ep ? strdup(ep) : NULL;
-	z->in.filter = in_filter ? strdup(in_filter) : NULL;
-	z->out.filter = out_filter ? strdup(out_filter) : NULL;
+	z->in.endpoint = ep ? strdup(ep) : nullptr;
+	z->in.filter = in_filter ? strdup(in_filter) : nullptr;
+	z->out.filter = out_filter ? strdup(out_filter) : nullptr;
 
 	z->format = format_type_lookup(format);
 	if (!z->format)
@@ -205,8 +205,8 @@ char * zeromq_print(struct node *n)
 {
 	struct zeromq *z = (struct zeromq *) n->_vd;
 
-	char *buf = NULL;
-	const char *pattern = NULL;
+	char *buf = nullptr;
+	const char *pattern = nullptr;
 
 	switch (z->pattern) {
 		case zeromq::pattern::PUBSUB:
@@ -249,7 +249,7 @@ int zeromq_type_start(struct super_node *sn)
 {
 	context = zmq_ctx_new();
 
-	return context == NULL;
+	return context == nullptr;
 }
 
 int zeromq_type_stop()
@@ -389,7 +389,7 @@ int zeromq_start(struct node *n)
 
 #if defined(ZMQ_BUILD_DRAFT_API) && ZMQ_MAJOR_VERSION >= 4 && ZMQ_MINOR_VERSION >= 2 && ZMQ_MINOR_VERSION >= 3
 	if (z->curve.enabled) {
-		ret = get_monitor_event(z->in.mon_socket, NULL, NULL);
+		ret = get_monitor_event(z->in.mon_socket, nullptr, nullptr);
 		return ret == ZMQ_EVENT_HANDSHAKE_SUCCEEDED;
 	}
 	else
@@ -437,7 +437,7 @@ int zeromq_destroy(struct node *n)
 	if (z->out.filter)
 		free(z->out.filter);
 
-	ret = vlist_destroy(&z->out.endpoints, NULL, true);
+	ret = vlist_destroy(&z->out.endpoints, nullptr, true);
 	if (ret)
 		return ret;
 
@@ -459,7 +459,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 		switch (z->pattern) {
 			case zeromq::pattern::PUBSUB:
 				/* Discard envelope */
-				zmq_recv(z->in.socket, NULL, 0, 0);
+				zmq_recv(z->in.socket, nullptr, 0, 0);
 				break;
 
 			default: { }
@@ -471,7 +471,7 @@ int zeromq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 	if (ret < 0)
 		return ret;
 
-	recv = io_sscan(&z->io, (const char *) zmq_msg_data(&m), zmq_msg_size(&m), NULL, smps, cnt);
+	recv = io_sscan(&z->io, (const char *) zmq_msg_data(&m), zmq_msg_size(&m), nullptr, smps, cnt);
 
 	ret = zmq_msg_close(&m);
 	if (ret)

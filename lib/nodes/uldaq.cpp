@@ -129,7 +129,7 @@ static const char * uldaq_print_interface_type(DaqDeviceInterface iftype)
 			return interface_types[i].name;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 static Range uldaq_parse_range(const char *str)
@@ -143,12 +143,12 @@ static Range uldaq_parse_range(const char *str)
 }
 
 static DaqDeviceDescriptor * uldaq_find_device(struct uldaq *u) {
-	DaqDeviceDescriptor *d = NULL;
+	DaqDeviceDescriptor *d = nullptr;
 
 	if (num_devs == 0)
-		return NULL;
+		return nullptr;
 
-	if (u->device_interface_type == ANY_IFC && u->device_id == NULL)
+	if (u->device_interface_type == ANY_IFC && u->device_id == nullptr)
 		return &descriptors[0];
 
 	for (unsigned i = 0; i < num_devs; i++) {
@@ -167,7 +167,7 @@ static DaqDeviceDescriptor * uldaq_find_device(struct uldaq *u) {
 		return d;
 	}
 
-	return NULL;
+	return nullptr;
 }
 
 static int uldaq_connect(struct node *n)
@@ -237,19 +237,19 @@ int uldaq_init(struct node *n)
 	int ret;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-	u->device_id = NULL;
+	u->device_id = nullptr;
 	u->device_interface_type = ANY_IFC;
 
-	u->in.queues = NULL;
+	u->in.queues = nullptr;
 	u->in.sample_rate = 1000;
 	u->in.scan_options = (ScanOption) (SO_DEFAULTIO | SO_CONTINUOUS);
 	u->in.flags = AINSCAN_FF_DEFAULT;
 
-	ret = pthread_mutex_init(&u->in.mutex, NULL);
+	ret = pthread_mutex_init(&u->in.mutex, nullptr);
 	if (ret)
 		return ret;
 
-	ret = pthread_cond_init(&u->in.cv, NULL);
+	ret = pthread_cond_init(&u->in.cv, nullptr);
 	if (ret)
 		return ret;
 
@@ -280,9 +280,9 @@ int uldaq_parse(struct node *n, json_t *cfg)
 	int ret;
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-	const char *default_range_str = NULL;
-	const char *default_input_mode_str = NULL;
-	const char *interface_type = NULL;
+	const char *default_range_str = nullptr;
+	const char *default_input_mode_str = nullptr;
+	const char *interface_type = nullptr;
 
 	size_t i;
 	json_t *json_signals;
@@ -313,7 +313,7 @@ int uldaq_parse(struct node *n, json_t *cfg)
 	u->in.queues = (struct AiQueueElement *) realloc(u->in.queues, sizeof(struct AiQueueElement) * u->in.channel_count);
 
 	json_array_foreach(json_signals, i, json_signal) {
-		const char *range_str = NULL, *input_mode_str = NULL;
+		const char *range_str = nullptr, *input_mode_str = nullptr;
 		int channel = -1, input_mode, range;
 
 		ret = json_unpack_ex(json_signal, &err, 0, "{ s?: s, s?: s, s?: i }",
@@ -359,7 +359,7 @@ char * uldaq_print(struct node *n)
 {
 	struct uldaq *u = (struct uldaq *) n->_vd;
 
-	char *buf = NULL;
+	char *buf = nullptr;
 
 	if (u->device_descriptor) {
 		char *uid = u->device_descriptor->uniqueId;

@@ -35,7 +35,7 @@
 #include <villas/node/config.h>
 
 /* Some global settings */
-static char *name = NULL;
+static char *name = nullptr;
 
 enum ngsi_flags {
 	NGSI_ENTITY_ATTRIBUTES = (1 << 0),
@@ -290,8 +290,8 @@ static size_t ngsi_request_writer(void *contents, size_t size, size_t nmemb, voi
 	struct ngsi_response *mem = (struct ngsi_response *) userp;
 
 	mem->data = (char *) realloc(mem->data, mem->len + realsize + 1);
-	if (mem->data == NULL) /* out of memory! */
-		error("Not enough memory (realloc returned NULL)");
+	if (mem->data == nullptr) /* out of memory! */
+		error("Not enough memory (realloc returned nullptr)");
 
 	memcpy(&(mem->data[mem->len]), contents, realsize);
 	mem->len += realsize;
@@ -322,7 +322,7 @@ static int ngsi_request(CURL *handle, const char *endpoint, const char *operatio
 	/* We don't want to leave the handle in an invalid state */
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &old);
 	CURLcode ret = curl_easy_perform(handle);
-	pthread_setcancelstate(old, NULL);
+	pthread_setcancelstate(old, nullptr);
 
 	if (ret) {
 		warning("HTTP request failed: %s", curl_easy_strerror(ret));
@@ -416,7 +416,7 @@ int ngsi_parse(struct node *n, json_t *cfg)
 	json_t *json_mapping;
 
 	/* Default values */
-	i->access_token = NULL; /* disabled by default */
+	i->access_token = nullptr; /* disabled by default */
 	i->ssl_verify = 1; /* verify by default */
 	i->timeout = 1; /* default value */
 	i->rate = 5; /* default value */
@@ -483,7 +483,7 @@ int ngsi_start(struct node *n)
 	int ret;
 
 	i->curl = curl_easy_init();
-	i->headers = NULL;
+	i->headers = nullptr;
 
 	if (i->access_token) {
 		char buf[128];
@@ -508,7 +508,7 @@ int ngsi_start(struct node *n)
 	curl_easy_setopt(i->curl, CURLOPT_USERAGENT, USER_AGENT);
 
 	/* Create entity and atributes */
-	json_t *entity = ngsi_build_entity(i, NULL, 0, NGSI_ENTITY_METADATA);
+	json_t *entity = ngsi_build_entity(i, nullptr, 0, NGSI_ENTITY_METADATA);
 
 	ret = ngsi_request_context_update(i->curl, i->endpoint, "APPEND", entity);
 	if (ret)
@@ -525,7 +525,7 @@ int ngsi_stop(struct node *n)
 	int ret;
 
 	/* Delete complete entity (not just attributes) */
-	json_t *entity = ngsi_build_entity(i, NULL, 0, 0);
+	json_t *entity = ngsi_build_entity(i, nullptr, 0, 0);
 
 	ret = ngsi_request_context_update(i->curl, i->endpoint, "DELETE", entity);
 
@@ -546,7 +546,7 @@ int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 		perror("Failed to wait for task");
 
 	json_t *rentity;
-	json_t *entity = ngsi_build_entity(i, NULL, 0, 0);
+	json_t *entity = ngsi_build_entity(i, nullptr, 0, 0);
 
 	ret = ngsi_request_context_query(i->curl, i->endpoint, entity, &rentity);
 	if (ret)

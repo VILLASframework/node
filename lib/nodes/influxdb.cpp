@@ -53,7 +53,7 @@ int influxdb_parse(struct node *n, json_t *json)
 	tmp = strdup(server);
 
 	host = strtok_r(tmp, ":", &lasts);
-	port = strtok_r(NULL, "", &lasts);
+	port = strtok_r(nullptr, "", &lasts);
 
 	i->key = strdup(key);
 	i->host = strdup(host);
@@ -80,7 +80,7 @@ int influxdb_open(struct node *n)
 	    error("Failed to lookup server: %s", gai_strerror(ret));
 
 	/* Loop through all the results and connect to the first we can */
-	for (p = servinfo; p != NULL; p = p->ai_next) {
+	for (p = servinfo; p != nullptr; p = p->ai_next) {
 		i->sd = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
 		if (i->sd == -1) {
 	        	serror("socket");
@@ -121,7 +121,7 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 {
 	struct influxdb *i = (struct influxdb *) n->_vd;
 
-	char *buf = NULL;
+	char *buf = nullptr;
 	ssize_t sentlen, buflen;
 
 	for (unsigned k = 0; k < cnt; k++) {
@@ -191,7 +191,7 @@ int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 char * influxdb_print(struct node *n)
 {
 	struct influxdb *i = (struct influxdb *) n->_vd;
-	char *buf = NULL;
+	char *buf = nullptr;
 
 	strcatf(&buf, "host=%s, port=%s, key=%s", i->host, i->port, i->key);
 

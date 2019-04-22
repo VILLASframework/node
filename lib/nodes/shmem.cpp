@@ -39,10 +39,10 @@
 int shmem_parse(struct node *n, json_t *cfg)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
-	const char *val, *mode_str = NULL;
+	const char *val, *mode_str = nullptr;
 
 	int ret;
-	json_t *json_exec = NULL;
+	json_t *json_exec = nullptr;
 	json_error_t err;
 
 	int len = MAX(vlist_length(&n->in.signals), vlist_length(&n->out.signals));
@@ -51,7 +51,7 @@ int shmem_parse(struct node *n, json_t *cfg)
 	shm->conf.queuelen = MAX(DEFAULT_SHMEM_QUEUELEN, n->in.vectorize);
 	shm->conf.samplelen = len;
 	shm->conf.polling = false;
-	shm->exec = NULL;
+	shm->exec = nullptr;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: { s: s }, s: { s: s }, s?: i, s?: o, s?: s }",
 		"out",
@@ -90,7 +90,7 @@ int shmem_parse(struct node *n, json_t *cfg)
 			shm->exec[i] = strdup(val);
 		}
 
-		shm->exec[i] = NULL;
+		shm->exec[i] = nullptr;
 	}
 
 	return 0;
@@ -178,7 +178,7 @@ int shmem_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 char * shmem_print(struct node *n)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;
-	char *buf = NULL;
+	char *buf = nullptr;
 
 	strcatf(&buf, "out_name=%s, in_name=%s, queuelen=%d, polling=%s",
 		shm->out_name, shm->in_name, shm->conf.queuelen, shm->conf.polling ? "yes" : "no");

@@ -31,7 +31,7 @@
 int loopback_parse(struct node *n, json_t *cfg)
 {
 	struct loopback *l = (struct loopback *) n->_vd;
-	const char *mode_str = NULL;
+	const char *mode_str = nullptr;
 
 	json_error_t err;
 	int ret;
@@ -134,7 +134,7 @@ int loopback_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 char * loopback_print(struct node *n)
 {
 	struct loopback *l = (struct loopback *) n->_vd;
-	char *buf = NULL;
+	char *buf = nullptr;
 
 	strcatf(&buf, "queuelen=%d", l->queuelen);
 

@@ -61,7 +61,7 @@ static void mqtt_connect_cb(struct mosquitto *mosq, void *userdata, int result)
 	info("MQTT: Node %s connected to broker %s", node_name(n), m->host);
 
 	if (m->subscribe) {
-		ret = mosquitto_subscribe(m->client, NULL, m->subscribe, m->qos);
+		ret = mosquitto_subscribe(m->client, nullptr, m->subscribe, m->qos);
 		if (ret)
 			warning("MQTT: failed to subscribe to topic '%s' for node %s: %s", m->subscribe, node_name(n), mosquitto_strerror(ret));
 	}
@@ -92,7 +92,7 @@ static void mqtt_message_cb(struct mosquitto *mosq, void *userdata, const struct
 		return;
 	}
 
-	ret = io_sscan(&m->io, (char *) msg->payload, msg->payloadlen, NULL, smps, n->in.vectorize);
+	ret = io_sscan(&m->io, (char *) msg->payload, msg->payloadlen, nullptr, smps, n->in.vectorize);
 	if (ret < 0) {
 		warning("MQTT: Node %s received an invalid message", node_name(n));
 		warning("  Payload: %s", (char *) msg->payload);
@@ -131,10 +131,10 @@ int mqtt_parse(struct node *n, json_t *cfg)
 
 	const char *host;
 	const char *format = "villas.binary";
-	const char *publish = NULL;
-	const char *subscribe = NULL;
-	const char *username = NULL;
-	const char *password = NULL;
+	const char *publish = nullptr;
+	const char *subscribe = nullptr;
+	const char *username = nullptr;
+	const char *password = nullptr;
 
 	/* Default values */
 	m->port = 1883;
@@ -145,7 +145,7 @@ int mqtt_parse(struct node *n, json_t *cfg)
 	m->ssl.insecure = 0;
 
 	json_error_t err;
-	json_t *json_ssl = NULL;
+	json_t *json_ssl = nullptr;
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s?: { s?: s }, s?: { s?: s }, s?: s, s: s, s?: i, s?: i, s?: i, s?: b, s?: s, s?: s, s?: o }",
 		"out",
@@ -166,19 +166,19 @@ int mqtt_parse(struct node *n, json_t *cfg)
 		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
 
 	m->host = strdup(host);
-	m->publish = publish ? strdup(publish) : NULL;
-	m->subscribe = subscribe ? strdup(subscribe) : NULL;
-	m->username = username ? strdup(username) : NULL;
-	m->password = password ? strdup(password) : NULL;
+	m->publish = publish ? strdup(publish) : nullptr;
+	m->subscribe = subscribe ? strdup(subscribe) : nullptr;
+	m->username = username ? strdup(username) : nullptr;
+	m->password = password ? strdup(password) : nullptr;
 
 	if (!m->publish && !m->subscribe)
 		error("At least one topic has to be specified for node %s", node_name(n));
 
 	if (json_ssl) {
-		const char *cafile = NULL;
-		const char *capath = NULL;
-		const char *certfile = NULL;
-		const char *keyfile = NULL;
+		const char *cafile = nullptr;
+		const char *capath = nullptr;
+		const char *certfile = nullptr;
+		const char *keyfile = nullptr;
 
 		ret = json_unpack_ex(cfg, &err, 0, "{ s?: b, s?: b, s?: s, s?: s, s?: s, s?: s }",
 			"enabled", &m->ssl.enabled,
@@ -194,10 +194,10 @@ int mqtt_parse(struct node *n, json_t *cfg)
 		if (m->ssl.enabled && !cafile && !capath)
 			error("Either 'ssl.cafile' or 'ssl.capath' settings must be set for node %s.", node_name(n));
 
-		m->ssl.cafile = cafile ? strdup(cafile) : NULL;
-		m->ssl.capath = capath ? strdup(capath) : NULL;
-		m->ssl.certfile = certfile ? strdup(certfile) : NULL;
-		m->ssl.keyfile = keyfile ? strdup(keyfile) : NULL;
+		m->ssl.cafile = cafile ? strdup(cafile) : nullptr;
+		m->ssl.capath = capath ? strdup(capath) : nullptr;
+		m->ssl.certfile = certfile ? strdup(certfile) : nullptr;
+		m->ssl.keyfile = keyfile ? strdup(keyfile) : nullptr;
 	}
 
 	m->format = format_type_lookup(format);
@@ -227,7 +227,7 @@ char * mqtt_print(struct node *n)
 {
 	struct mqtt *m = (struct mqtt *) n->_vd;
 
-	char *buf = NULL;
+	char *buf = nullptr;
 
 	strcatf(&buf, "format=%s, host=%s, port=%d, keepalive=%s, ssl=%s", format_type_name(m->format),
 		m->host,
@@ -294,7 +294,7 @@ int mqtt_start(struct node *n)
 	}
 
 	if (m->ssl.enabled) {
-		ret = mosquitto_tls_set(m->client, m->ssl.cafile, m->ssl.capath, m->ssl.certfile, m->ssl.keyfile, NULL);
+		ret = mosquitto_tls_set(m->client, m->ssl.cafile, m->ssl.capath, m->ssl.certfile, m->ssl.keyfile, nullptr);
 		if (ret)
 			goto mosquitto_error;
 
@@ -426,7 +426,7 @@ int mqtt_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 		return ret;
 
 	if (m->publish) {
-		ret = mosquitto_publish(m->client, NULL /* mid */, m->publish, wbytes, data, m->qos, m->retain);
+		ret = mosquitto_publish(m->client, nullptr /* mid */, m->publish, wbytes, data, m->qos, m->retain);
 		if (ret != MOSQ_ERR_SUCCESS) {
 			warning("MQTT: publish failed for node %s: %s", node_name(n), mosquitto_strerror(ret));
 			return -abs(ret);

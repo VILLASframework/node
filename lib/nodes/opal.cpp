@@ -56,7 +56,7 @@ int opal_type_start(struct super_node *sn)
 	if (sn->cli.argc != 4)
 		return -1; */
 
-	pthread_mutex_init(&lock, NULL);
+	pthread_mutex_init(&lock, nullptr);
 
 	/* Enable the OpalPrint function. This prints to the OpalDisplay. */
 	err = OpalSystemCtrl_Register(print_shmem_name);
