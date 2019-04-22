@@ -303,23 +303,34 @@ int opal_write(struct node *n, struct pool *pool, unsigned cnt)
 	return 1;
 }
 
-static struct plugin p = {
-	.name		= "opal",
-	.description	= "run as OPAL Asynchronous Process (libOpalAsyncApi)",
-	.type		= PLUGIN_TYPE_NODE,
-	.node		= {
-		.vectoroize	= 1,
-		.size		= sizeof(struct opal),
-		.type.start	= opal_type_start,
-		.type.stop	= opal_type_stop,
-		.parse		= opal_parse,
-		.print		= opal_print,
-		.start		= opal_start,
-		.stop		= opal_stop,
-		.read		= opal_read,
-		.write		= opal_write
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "opal";
+	p.description		= "run as OPAL Asynchronous Process (libOpalAsyncApi)";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectoroize	= 1;
+	p.node.size		= sizeof(struct opal);
+	p.node.type.start	= opal_type_start;
+	p.node.type.stop	= opal_type_stop;
+	p.node.parse		= opal_parse;
+	p.node.print		= opal_print;
+	p.node.start		= opal_start;
+	p.node.stop		= opal_stop;
+	p.node.read		= opal_read;
+	p.node.write		= opal_write;
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

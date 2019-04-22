@@ -999,26 +999,37 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 	return sent;
 }
 
-static struct plugin p = {
-	.name		= "infiniband",
-	.description	= "Infiniband interface (libibverbs, librdmacm)",
-	.type		= PLUGIN_TYPE_NODE,
-	.node		= {
-		.vectorize	= 0,
-		.size		= sizeof(struct infiniband),
-		.pool_size	= 8192,
-		.destroy	= ib_destroy,
-		.parse		= ib_parse,
-		.check		= ib_check,
-		.print		= ib_print,
-		.start		= ib_start,
-		.stop		= ib_stop,
-		.read		= ib_read,
-		.write		= ib_write,
-		.reverse	= ib_reverse,
-		.memory_type	= memory_ib
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "infiniband";
+	p.description		= "Infiniband interface (libibverbs, librdmacm)";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectorize	= 0;
+	p.node.size		= sizeof(struct infiniband);
+	p.node.pool_size	= 8192;
+	p.node.destroy		= ib_destroy;
+	p.node.parse		= ib_parse;
+	p.node.check		= ib_check;
+	p.node.print		= ib_print;
+	p.node.start		= ib_start;
+	p.node.stop		= ib_stop;
+	p.node.read		= ib_read;
+	p.node.write		= ib_write;
+	p.node.reverse		= ib_reverse;
+	p.node.memory_type	= memory_ib;
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

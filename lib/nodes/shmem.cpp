@@ -195,21 +195,33 @@ char * shmem_print(struct node *n)
 	return buf;
 }
 
-static struct plugin p = {
-	.name = "shmem",
-	.description = "POSIX shared memory interface with external processes",
-	.type = PLUGIN_TYPE_NODE,
-	.node = {
-		.vectorize = 0,
-		.size	= sizeof(struct shmem),
-		.parse	= shmem_parse,
-		.print	= shmem_print,
-		.start	= shmem_start,
-		.stop	= shmem_stop,
-		.read	= shmem_read,
-		.write	= shmem_write
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "shmem";
+	p.description		= "POSIX shared memory interface with external processes";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectorize	= 0;
+	p.node.size		= sizeof(struct shmem);
+	p.node.parse		= shmem_parse;
+	p.node.print		= shmem_print;
+	p.node.start		= shmem_start;
+	p.node.stop		= shmem_stop;
+	p.node.read		= shmem_read;
+	p.node.write		= shmem_write;
+
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

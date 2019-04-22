@@ -610,12 +610,12 @@ int websocket_poll_fds(struct node *n, int fds[])
 }
 
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-        if (plugins.state == STATE_DESTROYED)
-	        vlist_init(&plugins);
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
 
-	p.name		= "websocket";
-	p.description	= "Send and receive samples of a WebSocket connection (libwebsockets)";
-	p.type		= PLUGIN_TYPE_NODE;
+	p.name			= "websocket";
+	p.description		= "Send and receive samples of a WebSocket connection (libwebsockets)";
+	p.type			= PLUGIN_TYPE_NODE;
 	p.node.vectorize	= 0; /* unlimited */
 	p.node.size		= sizeof(struct websocket);
 	p.node.instances.state  = STATE_DESTROYED;
@@ -630,7 +630,6 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 	p.node.poll_fds		= websocket_poll_fds;
 
 	vlist_init(&p.node.instances);
-
 	vlist_push(&plugins, &p);
 }
 

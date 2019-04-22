@@ -986,22 +986,33 @@ int comedi_poll_fds(struct node *n, int fds[])
 	return 0;
 }
 
-static struct plugin p = {
-	.name			= "comedi",
-	.description	= "Comedi-compatible DAQ/ADC cards",
-	.type			= PLUGIN_TYPE_NODE,
-	.node			= {
-		.vectorize	= 0,
-		.size		= sizeof(struct comedi),
-		.parse		= comedi_parse,
-		.print		= comedi_print,
-		.start		= comedi_start,
-		.stop		= comedi_stop,
-		.read		= comedi_read,
-		.write		= comedi_write,
-		.poll_fds	= comedi_poll_fds
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "comedi";
+	p.description		= "Comedi-compatible DAQ/ADC cards";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectorize	= 0;
+	p.node.size		= sizeof(struct comedi);
+	p.node.parse		= comedi_parse;
+	p.node.print		= comedi_print;
+	p.node.start		= comedi_start;
+	p.node.stop		= comedi_stop;
+	p.node.read		= comedi_read;
+	p.node.write		= comedi_write;
+	p.node.poll_fds		= comedi_poll_fds;
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

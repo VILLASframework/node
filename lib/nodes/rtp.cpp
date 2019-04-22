@@ -607,14 +607,17 @@ int rtp_netem_fds(struct node *n, int fds[])
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name		= "rtp";
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "rtp";
 #ifdef WITH_NETEM
-	p.description	= "real-time transport protocol (libre, libnl3 netem support)";
+	p.description		= "real-time transport protocol (libre, libnl3 netem support)";
 #else
-	p.description	= "real-time transport protocol (libre)";
+	p.description		= "real-time transport protocol (libre)";
 #endif
-	p.type		= PLUGIN_TYPE_NODE;
-	p.node.instances.state = STATE_DESTROYED;
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct rtp);
 	p.node.type.start	= rtp_type_start;

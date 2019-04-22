@@ -150,23 +150,34 @@ int loopback_poll_fds(struct node *n, int fds[])
 	return 1;
 }
 
-static struct plugin p = {
-	.name = "loopback",
-	.description = "Loopback to connect multiple paths",
-	.type = PLUGIN_TYPE_NODE,
-	.node = {
-		.vectorize = 0,
-		.flags		= NODE_TYPE_PROVIDES_SIGNALS,
-		.size		= sizeof(struct loopback),
-		.parse		= loopback_parse,
-		.print		= loopback_print,
-		.start		= loopback_start,
-		.stop		= loopback_stop,
-		.read		= loopback_read,
-		.write		= loopback_write,
-		.poll_fds	= loopback_poll_fds
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "loopback";
+	p.description		= "Loopback to connect multiple paths";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectorize	= 0;
+	p.node.flags		= NODE_TYPE_PROVIDES_SIGNALS;
+	p.node.size		= sizeof(struct loopback);
+	p.node.parse		= loopback_parse;
+	p.node.print		= loopback_print;
+	p.node.start		= loopback_start;
+	p.node.stop		= loopback_stop;
+	p.node.read		= loopback_read;
+	p.node.write		= loopback_write;
+	p.node.poll_fds		= loopback_poll_fds;
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

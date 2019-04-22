@@ -300,23 +300,35 @@ int signal_generator_poll_fds(struct node *n, int fds[])
 	return 1;
 }
 
-static struct plugin p = {
-	.name = "signal",
-	.description = "Signal generator",
-	.type = PLUGIN_TYPE_NODE,
-	.node = {
-		.vectorize	= 1,
-		.flags		= NODE_TYPE_PROVIDES_SIGNALS,
-		.size		= sizeof(struct signal_generator),
-		.parse		= signal_generator_parse,
-		.prepare	= signal_generator_prepare,
-		.print		= signal_generator_print,
-		.start		= signal_generator_start,
-		.stop		= signal_generator_stop,
-		.read		= signal_generator_read,
-		.poll_fds	= signal_generator_poll_fds
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "signal";
+	p.description		= "Signal generator";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectorize	= 1;
+	p.node.flags		= NODE_TYPE_PROVIDES_SIGNALS;
+	p.node.size		= sizeof(struct signal_generator);
+	p.node.parse		= signal_generator_parse;
+	p.node.prepare		= signal_generator_prepare;
+	p.node.print		= signal_generator_print;
+	p.node.start		= signal_generator_start;
+	p.node.stop		= signal_generator_stop;
+	p.node.read		= signal_generator_read;
+	p.node.poll_fds		= signal_generator_poll_fds;
+
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

@@ -564,29 +564,38 @@ int zeromq_netem_fds(struct node *n, int fds[])
 	return 1;
 }
 
-static struct plugin p = {
-	.name		= "zeromq",
-	.description	= "ZeroMQ Distributed Messaging (libzmq)",
-	.type		= PLUGIN_TYPE_NODE,
-	.node		= {
-		.vectorize	= 0,
-		.size		= sizeof(struct zeromq),
-		.type = {
-			.start	= zeromq_type_start,
-			.stop	= zeromq_type_stop,
-		},
-		.destroy	= zeromq_destroy,
-		.parse		= zeromq_parse,
-		.print		= zeromq_print,
-		.start		= zeromq_start,
-		.stop		= zeromq_stop,
-		.read		= zeromq_read,
-		.write		= zeromq_write,
-		.reverse	= zeromq_reverse,
-		.poll_fds	= zeromq_poll_fds,
-		.netem_fds	= zeromq_netem_fds,
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "zeromq";
+	p.description		= "ZeroMQ Distributed Messaging (libzmq)";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectorize	= 0;
+	p.node.size		= sizeof(struct zeromq);
+	p.node.type.start	= zeromq_type_start;
+	p.node.type.stop	= zeromq_type_stop;
+	p.node.destroy		= zeromq_destroy;
+	p.node.parse		= zeromq_parse;
+	p.node.print		= zeromq_print;
+	p.node.start		= zeromq_start;
+	p.node.stop		= zeromq_stop;
+	p.node.read		= zeromq_read;
+	p.node.write		= zeromq_write;
+	p.node.reverse		= zeromq_reverse;
+	p.node.poll_fds		= zeromq_poll_fds;
+	p.node.netem_fds	= zeromq_netem_fds;
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

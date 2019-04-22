@@ -20,10 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-/** @addtogroup hooks Hook functions
- * @{
- */
-
 #include <string.h>
 
 #include <villas/nodes/stats.hpp>
@@ -257,22 +253,25 @@ static struct plugin p;
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name		= "stats";
-	p.description	= "Send statistics to another node";
-	p.type		= PLUGIN_TYPE_NODE;
-	p.node.instances.state = STATE_DESTROYED;
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "stats";
+	p.description		= "Send statistics to another node";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
 	p.node.vectorize	= 1;
 	p.node.flags		= 0;
 	p.node.size		= sizeof(struct stats_node);
 	p.node.type.start	= stats_node_type_start;
 	p.node.parse		= stats_node_parse;
 	p.node.init		= stats_node_init;
-	p.node.destroy	= stats_node_destroy;
+	p.node.destroy		= stats_node_destroy;
 	p.node.print		= stats_node_print;
 	p.node.start		= stats_node_start;
 	p.node.stop		= stats_node_stop;
 	p.node.read		= stats_node_read;
-	p.node.poll_fds	= stats_node_poll_fds;
+	p.node.poll_fds		= stats_node_poll_fds;
 
 	vlist_init(&p.node.instances);
 	vlist_push(&plugins, &p);
@@ -283,5 +282,3 @@ static void deregister_plugin() {
 	if (plugins.state != STATE_DESTROYED)
 		vlist_remove_all(&plugins, &p);
 }
-
-/** @} */

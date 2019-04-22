@@ -559,6 +559,9 @@ int socket_fds(struct node *n, int fds[])
 
 __attribute__((constructor(110)))
 static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
 	p.name		= "socket";
 #ifdef WITH_NETEM
 	p.description	= "BSD network sockets for Ethernet / IP / UDP (libnl3, netem support)";
@@ -566,6 +569,7 @@ static void register_plugin() {
 	p.description	= "BSD network sockets for Ethernet / IP / UDP";
 #endif
 	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.size		= sizeof(struct socket);
 	p.node.type.start	= socket_type_start;

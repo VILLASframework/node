@@ -447,29 +447,38 @@ int mqtt_poll_fds(struct node *n, int fds[])
 	return 1;
 }
 
-static struct plugin p = {
-	.name		= "mqtt",
-	.description	= "Message Queuing Telemetry Transport (libmosquitto)",
-	.type		= PLUGIN_TYPE_NODE,
-	.node		= {
-		.vectorize	= 0,
-		.size		= sizeof(struct mqtt),
-		.type ={
-			.start	= mqtt_type_start,
-			.stop	= mqtt_type_stop
-		},
-		.destroy	= mqtt_destroy,
-		.parse		= mqtt_parse,
-		.check		= mqtt_check,
-		.print		= mqtt_print,
-		.start		= mqtt_start,
-		.stop		= mqtt_stop,
-		.read		= mqtt_read,
-		.write		= mqtt_write,
-		.reverse	= mqtt_reverse,
-		.poll_fds	= mqtt_poll_fds
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "mqtt";
+	p.description		= "Message Queuing Telemetry Transport (libmosquitto)";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectorize	= 0;
+	p.node.size		= sizeof(struct mqtt);
+	p.node.type.start	= mqtt_type_start;
+	p.node.type.stop	= mqtt_type_stop;
+	p.node.destroy		= mqtt_destroy;
+	p.node.parse		= mqtt_parse;
+	p.node.check		= mqtt_check;
+	p.node.print		= mqtt_print;
+	p.node.start		= mqtt_start;
+	p.node.stop		= mqtt_stop;
+	p.node.read		= mqtt_read;
+	p.node.write		= mqtt_write;
+	p.node.reverse		= mqtt_reverse;
+	p.node.poll_fds		= mqtt_poll_fds;
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

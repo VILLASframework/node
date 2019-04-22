@@ -392,23 +392,36 @@ int amqp_destroy(struct node *n)
 	return 0;
 }
 
-static struct plugin p = {
-	.name		= "amqp",
-	.description	= "Advanced Message Queueing Protoocl (rabbitmq-c)",
-	.type		= PLUGIN_TYPE_NODE,
-	.node		= {
-		.vectorize	= 0,
-		.size		= sizeof(struct amqp),
-		.destroy	= amqp_destroy,
-		.parse		= amqp_parse,
-		.print		= amqp_print,
-		.start		= amqp_start,
-		.stop		= amqp_stop,
-		.read		= amqp_read,
-		.write		= amqp_write,
-		.poll_fds	= amqp_poll_fds
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "amqp";
+	p.description		= "Advanced Message Queueing Protoocl (rabbitmq-c)";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectorize	= 0;
+	p.node.size		= sizeof(struct amqp);
+	p.node.destroy		= amqp_destroy;
+	p.node.parse		= amqp_parse;
+	p.node.print		= amqp_print;
+	p.node.start		= amqp_start;
+	p.node.stop		= amqp_stop;
+	p.node.read		= amqp_read;
+	p.node.write		= amqp_write;
+	p.node.poll_fds		= amqp_poll_fds;
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}
+
+

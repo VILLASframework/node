@@ -585,26 +585,35 @@ int ngsi_poll_fds(struct node *n, int fds[])
 	return 1;
 }
 
-static struct plugin p = {
-	.name		= "ngsi",
-	.description	= "OMA Next Generation Services Interface 10 (libcurl, libjansson)",
-	.type		= PLUGIN_TYPE_NODE,
-	.node		= {
-		.vectorize	= 0, /* unlimited */
-		.size		= sizeof(struct ngsi),
-		.type = {
-			.start	= ngsi_type_start,
-			.stop	= ngsi_type_stop
-		},
-		.parse		= ngsi_parse,
-		.print		= ngsi_print,
-		.start		= ngsi_start,
-		.stop		= ngsi_stop,
-		.read		= ngsi_read,
-		.write		= ngsi_write,
-		.poll_fds	= ngsi_poll_fds
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "ngsi";
+	p.description		= "OMA Next Generation Services Interface 10 (libcurl, libjansson)";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectorize	= 0, /* unlimited */
+	p.node.size		= sizeof(struct ngsi);
+	p.node.type.start	= ngsi_type_start;
+	p.node.type.stop	= ngsi_type_stop;
+	p.node.parse		= ngsi_parse;
+	p.node.print		= ngsi_print;
+	p.node.start		= ngsi_start;
+	p.node.stop		= ngsi_stop;
+	p.node.read		= ngsi_read;
+	p.node.write		= ngsi_write;
+	p.node.poll_fds		= ngsi_poll_fds;
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

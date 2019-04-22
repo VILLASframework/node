@@ -105,6 +105,11 @@ static int hook_cmp_priority(const Hook *a, const Hook *b)
 	return a->getPriority() - b->getPriority();
 }
 
+static int hook_is_enabled(const Hook *h)
+{
+	return h->isEnabled() ? 0 : -1;
+}
+
 int hook_list_prepare(vlist *hs, vlist *sigs, int m, struct path *p, struct node *n)
 {
 	assert(hs->state == STATE_INITIALIZED);
@@ -122,14 +127,14 @@ int hook_list_prepare(vlist *hs, vlist *sigs, int m, struct path *p, struct node
 	}
 
 skip_add:
+	/* Remove filters which are not enabled */
+	vlist_filter(hs, (dtor_cb_t) hook_is_enabled);
+
 	/* We sort the hooks according to their priority */
 	vlist_sort(hs, (cmp_cb_t) hook_cmp_priority);
 
 	for (size_t i = 0; i < vlist_length(hs); i++) {
 		Hook *h = (Hook *) vlist_at(hs, i);
-
-		if (!h->isEnabled())
-			continue;
 
 		try {
 			h->prepare(sigs);
@@ -145,19 +150,16 @@ skip_add:
 
 int hook_list_process(vlist *hs, sample *smps[], unsigned cnt)
 {
-	unsigned ret, curent, processed = 0;
+	unsigned ret, current, processed = 0;
 
 	if (vlist_length(hs) == 0)
 		return cnt;
 
-	for (curent = 0; curent < cnt; curent++) {
-		sample *smp = smps[curent];
+	for (current = 0; current < cnt; current++) {
+		sample *smp = smps[current];
 
 		for (size_t i = 0; i < vlist_length(hs); i++) {
 			Hook *h = (Hook *) vlist_at(hs, i);
-
-			if (!h->isEnabled())
-				continue;
 
 			ret = h->process(smp);
 			switch (ret) {
@@ -187,9 +189,6 @@ int hook_list_periodic(vlist *hs)
 	for (size_t j = 0; j < vlist_length(hs); j++) {
 		Hook *h = (Hook *) vlist_at(hs, j);
 
-		if (!h->isEnabled())
-			continue;
-
 		try {
 			h->periodic();
 		} catch (...) {
@@ -204,9 +203,6 @@ int hook_list_start(vlist *hs)
 {
 	for (size_t i = 0; i < vlist_length(hs); i++) {
 		Hook *h = (Hook *) vlist_at(hs, i);
-
-		if (!h->isEnabled())
-			continue;
 
 		try {
 			h->start();

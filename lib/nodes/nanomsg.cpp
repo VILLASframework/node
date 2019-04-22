@@ -290,27 +290,36 @@ int nanomsg_netem_fds(struct node *n, int fds[])
 	return 1;
 }
 
-static struct plugin p = {
-	.name		= "nanomsg",
-	.description	= "scalability protocols library (libnanomsg)",
-	.type		= PLUGIN_TYPE_NODE,
-	.node		= {
-		.vectorize	= 0,
-		.size		= sizeof(struct nanomsg),
-		.type = {
-			.stop	= nanomsg_type_stop
-		},
-		.parse		= nanomsg_parse,
-		.print		= nanomsg_print,
-		.start		= nanomsg_start,
-		.stop		= nanomsg_stop,
-		.read		= nanomsg_read,
-		.write		= nanomsg_write,
-		.reverse	= nanomsg_reverse,
-		.poll_fds	= nanomsg_poll_fds,
-		.netem_fds	= nanomsg_netem_fds
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "nanomsg";
+	p.description		= "scalability protocols library (libnanomsg)";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectorize	= 0;
+	p.node.size		= sizeof(struct nanomsg);
+	p.node.type.stop	= nanomsg_type_stop;
+	p.node.parse		= nanomsg_parse;
+	p.node.print		= nanomsg_print;
+	p.node.start		= nanomsg_start;
+	p.node.stop		= nanomsg_stop;
+	p.node.read		= nanomsg_read;
+	p.node.write		= nanomsg_write;
+	p.node.reverse		= nanomsg_reverse;
+	p.node.poll_fds		= nanomsg_poll_fds;
+	p.node.netem_fds	= nanomsg_netem_fds;
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

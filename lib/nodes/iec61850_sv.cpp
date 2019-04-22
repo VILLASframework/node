@@ -473,29 +473,38 @@ int iec61850_sv_poll_fds(struct node *n, int fds[])
 	return 1;
 }
 
-static struct plugin p = {
-	.name		= "iec61850-9-2",
-	.description	= "IEC 61850-9-2 (Sampled Values)",
-	.type		= PLUGIN_TYPE_NODE,
-	.node		= {
-		.vectorize	= 0,
-		.size		= sizeof(struct iec61850_sv),
-		.type = {
-			.start	= iec61850_type_start,
-			.stop	= iec61850_type_stop
-		},
-		.destroy	= iec61850_sv_destroy,
-		.parse		= iec61850_sv_parse,
-		.print		= iec61850_sv_print,
-		.start		= iec61850_sv_start,
-		.stop		= iec61850_sv_stop,
-		.read		= iec61850_sv_read,
-		.write		= iec61850_sv_write,
-		.poll_fds	= iec61850_sv_poll_fds
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "iec61850-9-2";
+	p.description		= "IEC 61850-9-2 (Sampled Values)";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectorize	= 0;
+	p.node.size		= sizeof(struct iec61850_sv);
+	p.node.type.start	= iec61850_type_start;
+	p.node.type.stop	= iec61850_type_stop;
+	p.node.destroy		= iec61850_sv_destroy;
+	p.node.parse		= iec61850_sv_parse;
+	p.node.print		= iec61850_sv_print;
+	p.node.start		= iec61850_sv_start;
+	p.node.stop		= iec61850_sv_stop;
+	p.node.read		= iec61850_sv_read;
+	p.node.write		= iec61850_sv_write;
+	p.node.poll_fds		= iec61850_sv_poll_fds;
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}
 
 #endif /* CONFIG_IEC61850_SAMPLED_VALUES_SUPPORT */

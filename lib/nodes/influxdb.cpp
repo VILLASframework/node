@@ -198,20 +198,32 @@ char * influxdb_print(struct node *n)
 	return buf;
 }
 
-static struct plugin p = {
-	.name = "influxdb",
-	.description = "Write results to InfluxDB",
-	.type = PLUGIN_TYPE_NODE,
-	.node = {
-		.vectorize = 0,
-		.size	= sizeof(struct influxdb),
-		.parse	= influxdb_parse,
-		.print	= influxdb_print,
-		.start	= influxdb_open,
-		.stop	= influxdb_close,
-		.write	= influxdb_write,
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "influxdb";
+	p.description		= "Write results to InfluxDB";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectorize	= 0;
+	p.node.size		= sizeof(struct influxdb);
+	p.node.parse		= influxdb_parse;
+	p.node.print		= influxdb_print;
+	p.node.start		= influxdb_open;
+	p.node.stop		= influxdb_close;
+	p.node.write		= influxdb_write;
+
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

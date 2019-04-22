@@ -634,26 +634,35 @@ int uldaq_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *re
 	return cnt;
 }
 
-static struct plugin p = {
-	.name = "uldaq",
-	.description = "Measurement Computing DAQ devices like UL201 (libuldaq)",
-	.type = PLUGIN_TYPE_NODE,
-	.node = {
-		.vectorize	= 0,
-		.flags		= 0,
-		.size		= sizeof(struct uldaq),
-		.type = {
-			.start	= uldaq_type_start
-		},
-		.init		= uldaq_init,
-		.destroy	= uldaq_destroy,
-		.parse		= uldaq_parse,
-		.print		= uldaq_print,
-		.start		= uldaq_start,
-		.stop		= uldaq_stop,
-		.read		= uldaq_read
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "uldaq";
+	p.description		= "Measurement Computing DAQ devices like UL201 (libuldaq)";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectorize	= 0;
+	p.node.flags		= 0;
+	p.node.size		= sizeof(struct uldaq);
+	p.node.type.start	= uldaq_type_start;
+	p.node.init		= uldaq_init;
+	p.node.destroy		= uldaq_destroy;
+	p.node.parse		= uldaq_parse;
+	p.node.print		= uldaq_print;
+	p.node.start		= uldaq_start;
+	p.node.stop		= uldaq_stop;
+	p.node.read		= uldaq_read;
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}

@@ -435,16 +435,19 @@ int test_rtt_poll_fds(struct node *n, int fds[])
 
 __attribute__((constructor(110)))
 static void register_plugin() {
-	p.name		= "test_rtt";
-	p.description	= "Test round-trip time with loopback";
-	p.type		= PLUGIN_TYPE_NODE;
-	p.node.instances.state = STATE_DESTROYED;
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "test_rtt";
+	p.description		= "Test round-trip time with loopback";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
 	p.node.vectorize	= 0;
 	p.node.flags		= NODE_TYPE_PROVIDES_SIGNALS;
 	p.node.size		= sizeof(struct test_rtt);
 	p.node.parse		= test_rtt_parse;
-	p.node.prepare	= test_rtt_prepare;
-	p.node.destroy	= test_rtt_destroy;
+	p.node.prepare		= test_rtt_prepare;
+	p.node.destroy		= test_rtt_destroy;
 	p.node.print		= test_rtt_print;
 	p.node.start		= test_rtt_start;
 	p.node.stop		= test_rtt_stop;

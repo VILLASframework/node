@@ -472,23 +472,34 @@ int file_poll_fds(struct node *n, int fds[])
 	return -1; /** @todo not supported yet */
 }
 
-static struct plugin p = {
-	.name		= "file",
-	.description	= "support for file log / replay node type",
-	.type		= PLUGIN_TYPE_NODE,
-	.node		= {
-		.vectorize	= 1,
-		.size		= sizeof(struct file),
-		.parse		= file_parse,
-		.print		= file_print,
-		.start		= file_start,
-		.restart	= file_restart,
-		.stop		= file_stop,
-		.read		= file_read,
-		.write		= file_write,
-		.poll_fds	= file_poll_fds
-	}
-};
+static struct plugin p;
 
-REGISTER_PLUGIN(&p)
-LIST_INIT_STATIC(&p.node.instances)
+__attribute__((constructor(110)))
+static void register_plugin() {
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
+
+	p.name			= "file";
+	p.description		= "support for file log / replay node type";
+	p.type			= PLUGIN_TYPE_NODE;
+	p.node.instances.state	= STATE_DESTROYED;
+	p.node.vectorize	= 1;
+	p.node.size		= sizeof(struct file);
+	p.node.parse		= file_parse;
+	p.node.print		= file_print;
+	p.node.start		= file_start;
+	p.node.restart		= file_restart;
+	p.node.stop		= file_stop;
+	p.node.read		= file_read;
+	p.node.write		= file_write;
+	p.node.poll_fds		= file_poll_fds;
+
+	vlist_init(&p.node.instances);
+	vlist_push(&plugins, &p);
+}
+
+__attribute__((destructor(110)))
+static void deregister_plugin() {
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p);
+}
