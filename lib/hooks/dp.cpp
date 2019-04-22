@@ -61,7 +61,7 @@ protected:
 
 	void step(double *in, std::complex<float> *out)
 	{
-		int N = window.getSteps();
+		int N = window.getLength();
 		__attribute__((unused)) std::complex<double> om_k, corr;
 		double newest = *in;
 		__attribute__((unused)) double oldest = window.update(newest);
@@ -87,7 +87,7 @@ protected:
 			std::complex<double> X_k = 0;
 
 			for (int n = 0; n < N; n++) {
-				double x_n = window[window.getPos() + n];
+				double x_n = window[n];
 
 				X_k += x_n * std::exp(om_k * (double) n);
 			}
