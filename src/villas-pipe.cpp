@@ -47,7 +47,7 @@
 #include <villas/kernel/rt.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/format_type.h>
-#include <villas/nodes/websocket.h>
+#include <villas/nodes/websocket.hpp>
 
 using namespace villas;
 using namespace villas::node;

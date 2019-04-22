@@ -35,10 +35,6 @@
 #include <villas/list.h>
 #include <villas/io.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct format_type;
 
@@ -84,9 +80,5 @@ int amqp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 
 /** @see node_type::write */
 int amqp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
-
-#ifdef __cplusplus
-}
-#endif
 
 /** @} */

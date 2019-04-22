@@ -1,7 +1,7 @@
-/** Node-type for loopback connections.
+/** Node-type for shared memory communication.
  *
  * @file
- * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
+ * @author Georg Martin Reinke <georg.reinke@rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
  *
@@ -23,53 +23,46 @@
 
 /**
  * @ingroup node
- * @addtogroup loopback Loopback connections
+ * @addtogroup shmem_node Shared memory node type
  * @{
  */
 
 #pragma once
 
-#include <villas/queue_signalled.h>
+#include <villas/node.h>
+#include <villas/memory.h>
 #include <villas/pool.h>
+#include <villas/queue.h>
+#include <villas/node/config.h>
+#include <villas/shmem.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* Forward declarations */
-struct node;
-struct sample;
-
-/** Node-type for signal generation.
+/** Node-type for shared memory communication.
  * @see node_type
  */
-struct loopback {
-	int queuelen;
-	int queueflags;
-	struct queue_signalled queue;
-	struct pool pool;
+struct shmem {
+	const char* out_name;   	/**< Name of the shm object for the output queue. */
+	const char* in_name;    	/**< Name of the shm object for the input queue. */
+	struct shmem_conf conf; 	/**< Interface configuration struct. */
+	char **exec;            	/**< External program to execute on start. */
+	struct shmem_int intf;  	/**< Shmem interface */
 };
 
 /** @see node_type::print */
-char * loopback_print(struct node *n);
+char * shmem_print(struct node *n);
 
 /** @see node_type::parse */
-int loopback_parse(struct node *n, json_t *cfg);
+int shmem_parse(struct node *n, json_t *cfg);
 
-/** @see node_type::open */
-int loopback_open(struct node *n);
+/** @see node_type::start */
+int shmem_start(struct node *n);
 
-/** @see node_type::close */
-int loopback_close(struct node *n);
+/** @see node_type::stop */
+int shmem_stop(struct node *n);
 
 /** @see node_type::read */
-int loopback_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int shmem_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int loopback_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
-
-#ifdef __cplusplus
-}
-#endif
+int shmem_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

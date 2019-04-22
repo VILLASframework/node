@@ -32,7 +32,7 @@
 #include <villas/utils.h>
 #include <villas/buffer.h>
 #include <villas/plugin.h>
-#include <villas/nodes/websocket.h>
+#include <villas/nodes/websocket.hpp>
 #include <villas/format_type.h>
 #include <villas/formats/msg_format.h>
 #include <villas/super_node.h>

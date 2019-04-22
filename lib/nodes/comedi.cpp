@@ -28,7 +28,7 @@
 #include <comedi_errno.h>
 
 #include <villas/plugin.h>
-#include <villas/nodes/comedi.h>
+#include <villas/nodes/comedi.hpp>
 #include <villas/utils.h>
 
 /* Utility functions to dump a comedi_cmd graciously taken from comedilib demo */

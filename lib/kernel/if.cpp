@@ -36,7 +36,7 @@
 #include <villas/kernel/nl.h>
 #include <villas/kernel/kernel.h>
 
-#include <villas/nodes/socket.h>
+#include <villas/nodes/socket.hpp>
 
 int if_init(struct interface *i, struct rtnl_link *link)
 {

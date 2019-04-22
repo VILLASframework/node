@@ -1,4 +1,4 @@
-/** Node type: nanomsg
+/** Node-type for InfluxDB.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -22,57 +22,45 @@
  *********************************************************************************/
 
 /**
- * @addtogroup nanomsg nanomsg node type
  * @ingroup node
+ * @addtogroup influxdb InfluxDB node-type
  * @{
  */
 
 #pragma once
 
-#include <villas/node.h>
 #include <villas/list.h>
-#include <villas/io.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/** The maximum length of a packet which contains stuct msg. */
-#define NANOMSG_MAX_PACKET_LEN 1500
 
 /* Forward declarations */
-struct format_type;
+struct node;
+struct sample;
 
-struct nanomsg {
-	struct {
-		int socket;
-		struct vlist endpoints;
-	} in, out;
+/** Node-type for signal generation.
+ * @see node_type
+ */
+struct influxdb {
+	char *host;
+	char *port;
+	char *key;
 
-	struct format_type *format;
-	struct io io;
+	struct vlist fields;
+
+	int sd;
 };
 
 /** @see node_type::print */
-char * nanomsg_print(struct node *n);
+char * influxdb_print(struct node *n);
 
 /** @see node_type::parse */
-int nanomsg_parse(struct node *n, json_t *cfg);
+int influxdb_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::open */
-int nanomsg_start(struct node *n);
+int influxdb_open(struct node *n);
 
 /** @see node_type::close */
-int nanomsg_stop(struct node *n);
-
-/** @see node_type::read */
-int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+int influxdb_close(struct node *n);
 
 /** @see node_type::write */
-int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
-
-#ifdef __cplusplus
-}
-#endif
+int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

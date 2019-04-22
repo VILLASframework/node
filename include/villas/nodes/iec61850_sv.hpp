@@ -38,11 +38,7 @@
 #include <villas/pool.h>
 #include <villas/node.h>
 #include <villas/list.h>
-#include <villas/nodes/iec61850.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <villas/nodes/iec61850.hpp>
 
 struct iec61850_sv {
 	char *interface;
@@ -107,9 +103,5 @@ int iec61850_sv_write(struct node *n, struct sample *smps[], unsigned cnt, unsig
 
 /** @see node_type::fd */
 int iec61850_sv_fd(struct node *n);
-
-#ifdef __cplusplus
-}
-#endif
 
 /** @} */

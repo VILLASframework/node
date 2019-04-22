@@ -1,7 +1,6 @@
-/** Node-type for uldaq connections.
+/** Node type: nanomsg
  *
  * @file
- * @author Manuel Pitz <manuel.pitz@eonerc.rwth-aachen.de>
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
  * @license GNU General Public License (version 3)
@@ -23,60 +22,49 @@
  *********************************************************************************/
 
 /**
+ * @addtogroup nanomsg nanomsg node type
  * @ingroup node
- * @addtogroup uldaq Read USB analog to digital converters
  * @{
  */
 
 #pragma once
 
-#include <pthread.h>
+#include <villas/node.h>
+#include <villas/list.h>
+#include <villas/io.h>
 
-#include <villas/queue_signalled.h>
-#include <villas/pool.h>
+/** The maximum length of a packet which contains stuct msg. */
+#define NANOMSG_MAX_PACKET_LEN 1500
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+/* Forward declarations */
+struct format_type;
 
-#include <uldaq.h>
-
-#define ULDAQ_MAX_DEV_COUNT 100
-#define ULDAQ_MAX_RANGE_COUNT 8
-
-struct uldaq {
-	const char *device_id;
-
-	DaqDeviceHandle device_handle;
-	DaqDeviceDescriptor *device_descriptor;
-	DaqDeviceInterface device_interface_type;
-
-	uint64_t sequence;
-
+struct nanomsg {
 	struct {
-		double sample_rate;
-		double *buffer;
-		size_t buffer_len;
-		size_t buffer_pos;
-		size_t channel_count;
+		int socket;
+		struct vlist endpoints;
+	} in, out;
 
-		ScanOption scan_options;
-		AInScanFlag flags;
-		AiQueueElement *queues;
-		ScanStatus status; // protected by mutex
-		TransferStatus transfer_status; // protected by mutex
-
-		pthread_mutex_t mutex;
-		pthread_cond_t cv;
-	} in;
-
-	struct {
-		// TODO
-	} out;
+	struct format_type *format;
+	struct io io;
 };
 
-#ifdef __cplusplus
-}
-#endif
+/** @see node_type::print */
+char * nanomsg_print(struct node *n);
+
+/** @see node_type::parse */
+int nanomsg_parse(struct node *n, json_t *cfg);
+
+/** @see node_type::open */
+int nanomsg_start(struct node *n);
+
+/** @see node_type::close */
+int nanomsg_stop(struct node *n);
+
+/** @see node_type::read */
+int nanomsg_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
+
+/** @see node_type::write */
+int nanomsg_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

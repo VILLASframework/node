@@ -47,7 +47,7 @@
 #include <villas/kernel/rt.hpp>
 
 #ifdef ENABLE_OPAL_ASYNC
-  #include <villas/nodes/opal.h>
+  #include <villas/nodes/opal.hpp>
 #endif
 
 using namespace villas;

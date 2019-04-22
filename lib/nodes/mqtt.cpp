@@ -23,7 +23,7 @@
 #include <string.h>
 #include <mosquitto.h>
 
-#include <villas/nodes/mqtt.h>
+#include <villas/nodes/mqtt.hpp>
 #include <villas/plugin.h>
 #include <villas/utils.h>
 #include <villas/format_type.h>

@@ -35,10 +35,6 @@
 #include <villas/list.h>
 #include <villas/timing.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // whether to use read() or mmap() kernel interface
 #define COMEDI_USE_READ (1)
 //#define COMEDI_USE_READ (0)
@@ -103,7 +99,3 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */
-
-#ifdef __cplusplus
-}
-#endif

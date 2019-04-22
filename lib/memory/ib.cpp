@@ -22,7 +22,7 @@
 
 #include <rdma/rdma_cma.h>
 
-#include <villas/nodes/infiniband.h>
+#include <villas/nodes/infiniband.hpp>
 #include <villas/memory.h>
 #include <villas/utils.h>
 #include <villas/memory/ib.h>

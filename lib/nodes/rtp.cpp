@@ -27,20 +27,20 @@
 #include <time.h>
 #include <signal.h>
 
+#include <villas/nodes/rtp.hpp>
+
 extern "C" {
-#include <re/re_types.h>
-#include <re/re_main.h>
-#include <re/re_mbuf.h>
-#include <re/re_mem.h>
-#include <re/re_rtp.h>
-#include <re/re_sys.h>
-#include <re/re_udp.h>
-#undef ALIGN_MASK
+  #include <re/re_main.h>
+  #include <re/re_types.h>
+  #include <re/re_mbuf.h>
+  #include <re/re_mem.h>
+  #include <re/re_sys.h>
+  #include <re/re_udp.h>
+  #undef ALIGN_MASK
 }
 
 #include <villas/plugin.h>
-#include <villas/nodes/socket.h>
-#include <villas/nodes/rtp.hpp>
+#include <villas/nodes/socket.hpp>
 #include <villas/utils.h>
 #include <villas/stats.h>
 #include <villas/hook.h>

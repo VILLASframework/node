@@ -34,10 +34,6 @@
 #include <villas/socket_addr.h>
 #include <villas/io.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct format_type;
 
@@ -94,7 +90,3 @@ int socket_parse(struct node *n, json_t *cfg);
 char * socket_print(struct node *n);
 
 /** @} */
-
-#ifdef __cplusplus
-}
-#endif

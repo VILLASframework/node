@@ -31,7 +31,7 @@
 #include <villas/kernel/kernel.h>
 #include <villas/log.h>
 #include <villas/shmem.h>
-#include <villas/nodes/shmem.h>
+#include <villas/nodes/shmem.hpp>
 #include <villas/plugin.h>
 #include <villas/timing.h>
 #include <villas/utils.h>

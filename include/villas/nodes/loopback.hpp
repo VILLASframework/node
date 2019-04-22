@@ -1,4 +1,4 @@
-/** Node-type for InfluxDB.
+/** Node-type for loopback connections.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -23,17 +23,14 @@
 
 /**
  * @ingroup node
- * @addtogroup influxdb InfluxDB node-type
+ * @addtogroup loopback Loopback connections
  * @{
  */
 
 #pragma once
 
-#include <villas/list.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <villas/queue_signalled.h>
+#include <villas/pool.h>
 
 /* Forward declarations */
 struct node;
@@ -42,33 +39,29 @@ struct sample;
 /** Node-type for signal generation.
  * @see node_type
  */
-struct influxdb {
-	char *host;
-	char *port;
-	char *key;
-
-	struct vlist fields;
-
-	int sd;
+struct loopback {
+	int queuelen;
+	int queueflags;
+	struct queue_signalled queue;
+	struct pool pool;
 };
 
 /** @see node_type::print */
-char * influxdb_print(struct node *n);
+char * loopback_print(struct node *n);
 
 /** @see node_type::parse */
-int influxdb_parse(struct node *n, json_t *cfg);
+int loopback_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::open */
-int influxdb_open(struct node *n);
+int loopback_open(struct node *n);
 
 /** @see node_type::close */
-int influxdb_close(struct node *n);
+int loopback_close(struct node *n);
+
+/** @see node_type::read */
+int loopback_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @see node_type::write */
-int influxdb_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
-
-#ifdef __cplusplus
-}
-#endif
+int loopback_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */

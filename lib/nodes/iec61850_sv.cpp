@@ -28,7 +28,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include <villas/nodes/iec61850_sv.h>
+#include <villas/nodes/iec61850_sv.hpp>
 #include <villas/plugin.h>
 
 #define CONFIG_SV_DEFAULT_APPID 0x4000

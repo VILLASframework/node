@@ -35,10 +35,6 @@
 #include <villas/task.h>
 #include <villas/list.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct node;
 struct sample;
@@ -79,9 +75,5 @@ int stats_node_stop(struct node *n);
 
 /** @see node_type::read */
 int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
-
-#ifdef __cplusplus
-}
-#endif
 
 /** @} */

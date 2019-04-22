@@ -25,7 +25,7 @@
 #include <villas/node.h>
 #include <villas/plugin.h>
 #include <villas/node/config.h>
-#include <villas/nodes/loopback.h>
+#include <villas/nodes/loopback.hpp>
 #include <villas/memory.h>
 
 int loopback_parse(struct node *n, json_t *cfg)

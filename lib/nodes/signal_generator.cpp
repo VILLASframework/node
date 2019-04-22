@@ -26,7 +26,7 @@
 
 #include <villas/node.h>
 #include <villas/plugin.h>
-#include <villas/nodes/signal_generator.h>
+#include <villas/nodes/signal_generator.hpp>
 
 static enum signal_generator::type signal_generator_lookup_type(const char *type)
 {

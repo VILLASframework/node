@@ -26,7 +26,7 @@
 #include <arpa/inet.h>
 #include <netinet/ip.h>
 
-#include <villas/nodes/socket.h>
+#include <villas/nodes/socket.hpp>
 #include <villas/utils.h>
 #include <villas/format_type.h>
 #include <villas/sample.h>

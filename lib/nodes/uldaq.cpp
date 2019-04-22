@@ -27,7 +27,7 @@
 #include <villas/node.h>
 #include <villas/plugin.h>
 #include <villas/config.h>
-#include <villas/nodes/uldaq.h>
+#include <villas/nodes/uldaq.hpp>
 #include <villas/memory.h>
 
 static unsigned num_devs = ULDAQ_MAX_DEV_COUNT;

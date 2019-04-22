@@ -30,7 +30,7 @@
 #include <villas/plugin.h>
 #include <villas/signal.h>
 #include <villas/node/config.h>
-#include <villas/nodes/influxdb.h>
+#include <villas/nodes/influxdb.hpp>
 #include <villas/memory.h>
 
 int influxdb_parse(struct node *n, json_t *json)

@@ -41,10 +41,6 @@
 #include "AsyncApi.h"
 #include "OpalGenAsyncParamCtrl.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct opal {
 	int reply;
 	int mode;
@@ -88,9 +84,5 @@ int opal_read(struct node *n, struct sample *smps[], unsigned cnt);
 
 /** @see node_type::write */
 int opal_write(struct node *n, struct sample *smps[], unsigned cnt);
-
-#ifdef __cplusplus
-}
-#endif
 
 /** @} */

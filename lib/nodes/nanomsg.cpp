@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include <villas/plugin.h>
-#include <villas/nodes/nanomsg.h>
+#include <villas/nodes/nanomsg.hpp>
 #include <villas/utils.h>
 #include <villas/format_type.h>
 

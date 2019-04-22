@@ -42,10 +42,6 @@
 #include <villas/node.h>
 #include <villas/task.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct node;
 
@@ -99,7 +95,3 @@ int ngsi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 int ngsi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */
-
-#ifdef __cplusplus
-}
-#endif

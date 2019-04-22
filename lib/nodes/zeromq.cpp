@@ -27,7 +27,7 @@
   #include <zmq_utils.h>
 #endif
 
-#include <villas/nodes/zeromq.h>
+#include <villas/nodes/zeromq.hpp>
 #include <villas/node.h>
 #include <villas/utils.h>
 #include <villas/queue.h>

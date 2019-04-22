@@ -33,10 +33,6 @@
 #include <villas/node.h>
 #include <villas/task.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define FILE_MAX_PATHLEN	512
 
 struct file {
@@ -91,7 +87,3 @@ int file_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 int file_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */
-
-#ifdef __cplusplus
-}
-#endif

@@ -28,7 +28,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include <villas/nodes/ngsi.h>
+#include <villas/nodes/ngsi.hpp>
 #include <villas/utils.h>
 #include <villas/timing.h>
 #include <villas/plugin.h>

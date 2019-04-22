@@ -27,7 +27,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#include <villas/nodes/file.h>
+#include <villas/nodes/file.hpp>
 #include <villas/utils.h>
 #include <villas/timing.h>
 #include <villas/queue.h>

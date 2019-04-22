@@ -25,7 +25,7 @@
 #include <netdb.h>
 
 #include <villas/node/config.h>
-#include <villas/nodes/infiniband.h>
+#include <villas/nodes/infiniband.hpp>
 #include <villas/plugin.h>
 #include <villas/utils.h>
 #include <villas/format_type.h>

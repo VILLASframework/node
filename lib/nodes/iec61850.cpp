@@ -26,7 +26,7 @@
 #include <pthread.h>
 #include <unistd.h>
 
-#include <villas/nodes/iec61850_sv.h>
+#include <villas/nodes/iec61850_sv.hpp>
 #include <villas/plugin.h>
 #include <villas/signal.h>
 

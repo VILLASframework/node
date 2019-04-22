@@ -34,10 +34,6 @@
 
 #include <fstream>
 
-extern "C" {
-#include <re/re_sa.h>
-}
-
 #include <villas/node.h>
 #include <villas/list.h>
 #include <villas/log.hpp>
@@ -46,6 +42,11 @@ extern "C" {
 #include <villas/hooks/limit_rate.hpp>
 #include <villas/hooks/decimate.hpp>
 #include <villas/dsp/pid.hpp>
+
+extern "C" {
+  #include <re/re_sa.h>
+  #include <re/re_rtp.h>
+}
 
 /* Forward declarations */
 struct format_type;
@@ -104,8 +105,6 @@ struct rtp {
 	struct mbuf *send_mb;
 };
 
-extern "C" {
-
 /** @see node_type::print */
 char * rtp_print(struct node *n);
 
@@ -123,7 +122,5 @@ int rtp_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 
 /** @see node_type::write */
 int rtp_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
-
-}
 
 /** @} */

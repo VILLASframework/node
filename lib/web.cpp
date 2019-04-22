@@ -31,7 +31,7 @@
 #include <villas/api/sessions/http.hpp>
 #include <villas/api/sessions/websocket.hpp>
 
-#include <villas/nodes/websocket.h>
+#include <villas/nodes/websocket.hpp>
 
 using namespace villas;
 using namespace villas::node;

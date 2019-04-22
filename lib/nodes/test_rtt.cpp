@@ -29,7 +29,7 @@
 #include <villas/sample.h>
 #include <villas/timing.h>
 #include <villas/plugin.h>
-#include <villas/nodes/test_rtt.h>
+#include <villas/nodes/test_rtt.hpp>
 
 static struct plugin p;
 

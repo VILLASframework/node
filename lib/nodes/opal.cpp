@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include <villas/nodes/opal.h>
+#include <villas/nodes/opal.hpp>
 #include <villas/utils.h>
 #include <villas/plugin.h>
 

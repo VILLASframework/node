@@ -26,7 +26,7 @@
 #include <amqp_tcp_socket.h>
 
 #include <villas/plugin.h>
-#include <villas/nodes/amqp.h>
+#include <villas/nodes/amqp.hpp>
 #include <villas/utils.h>
 #include <villas/format_type.h>
 

@@ -37,10 +37,6 @@
 #include <villas/io.h>
 #include <villas/node/config.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define DEFAULT_WEBSOCKET_QUEUE_LENGTH	(DEFAULT_QUEUE_LENGTH * 64)
 #define DEFAULT_WEBSOCKET_SAMPLE_LENGTH	DEFAULT_SAMPLE_LENGTH
 
@@ -117,7 +113,3 @@ int websocket_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned
 int websocket_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *release);
 
 /** @} */
-
-#ifdef __cplusplus
-}
-#endif
