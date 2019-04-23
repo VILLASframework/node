@@ -132,7 +132,7 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 	p1.format.size	= 0;
 	p1.format.flags	= IO_HAS_BINARY_PAYLOAD |
 		          SAMPLE_HAS_TS_ORIGIN | SAMPLE_HAS_SEQUENCE | SAMPLE_HAS_DATA;
-	
+
 	vlist_push(&plugins, &p1);
 }
 
@@ -164,5 +164,3 @@ __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
 	if (plugins.state != STATE_DESTROYED)
 		vlist_remove_all(&plugins, &p2);
 }
-REGISTER_PLUGIN(&p1);
-REGISTER_PLUGIN(&p2);
