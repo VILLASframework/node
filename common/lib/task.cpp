@@ -24,7 +24,7 @@
 #include <time.h>
 #include <errno.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/task.h>
 #include <villas/timing.h>
 

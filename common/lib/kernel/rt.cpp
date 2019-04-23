@@ -26,7 +26,7 @@
 #include <villas/log.hpp>
 #include <villas/cpuset.hpp>
 #include <villas/config.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 
 #include <villas/kernel/kernel.h>

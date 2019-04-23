@@ -24,7 +24,7 @@
 #include <cstdio>
 #include <cerrno>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/log.hpp>
 
 #pragma GCC diagnostic push

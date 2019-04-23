@@ -14,7 +14,7 @@
 #include <sys/ioctl.h>
 #include <sys/eventfd.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/log.h>
 #include <villas/config.h>
 #include <villas/kernel/kernel.h>

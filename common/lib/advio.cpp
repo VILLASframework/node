@@ -32,7 +32,7 @@
 
 #include <curl/curl.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/config.h>
 #include <villas/advio.h>
 #include <villas/crypt.h>

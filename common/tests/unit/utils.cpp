@@ -23,7 +23,6 @@
 #include <criterion/criterion.h>
 
 #include <villas/crypt.h>
-#include <villas/utils.h>
 #include <villas/utils.hpp>
 #include <villas/version.hpp>
 #include <villas/cpuset.hpp>
