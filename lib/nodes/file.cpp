@@ -306,13 +306,15 @@ int file_start(struct node *n)
 	if (f->epoch_mode != file::epoch::ORIGINAL) {
 		io_rewind(&f->io);
 
-		struct sample s = { .capacity = 0 };
-		struct sample *smps[] = { &s };
-
 		if (io_eof(&f->io)) {
 			warning("Empty file");
 		}
 		else {
+			struct sample s;
+			struct sample *smps[] = { &s };
+
+			s.capacity = 0;
+
 			ret = io_scan(&f->io, smps, 1);
 			if (ret == 1) {
 				f->first = s.ts.origin;
