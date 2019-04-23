@@ -76,7 +76,7 @@ RUN dnf -y install \
 	libwebsockets-devel \
 	zeromq-devel \
 	nanomsg-devel \
-	libiec61850 \
+	libiec61850-1.4.2 \
 	librabbitmq-devel \
 	mosquitto-devel \
 	comedilib-devel \
