@@ -85,7 +85,7 @@ int mqtt_destroy(struct node *n);
 int mqtt_stop(struct node *n);
 
 /** @see node_type::type_start */
-int mqtt_type_start(struct super_node *sn);
+int mqtt_type_start(villas::node::SuperNode *sn);
 
 /** @see node_type::type_stop */
 int mqtt_type_stop();

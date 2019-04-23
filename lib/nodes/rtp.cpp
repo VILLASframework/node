@@ -45,7 +45,7 @@ extern "C" {
 #include <villas/stats.h>
 #include <villas/hook.h>
 #include <villas/format_type.h>
-#include <villas/super_node.h>
+#include <villas/super_node.hpp>
 
 #ifdef WITH_NETEM
   #include <villas/kernel/if.h>
@@ -457,7 +457,7 @@ static void stop_handler(int sig, siginfo_t *si, void *ctx)
 
 typedef void *(*pthread_start_routine)(void *);
 
-int rtp_type_start(struct super_node *sn)
+int rtp_type_start(villas::node::SuperNode *sn)
 {
 	int ret;
 
@@ -484,7 +484,7 @@ int rtp_type_start(struct super_node *sn)
 		return ret;
 
 #ifdef WITH_NETEM
-	struct vlist *interfaces = super_node_get_interfaces(sn);
+	struct vlist *interfaces = sn->getInterfaces();
 
 	/* Gather list of used network interfaces */
 	for (size_t i = 0; i < vlist_length(&p.node.instances); i++) {

@@ -66,7 +66,7 @@ struct socket {
 
 
 /** @see node_vtable::type_start */
-int socket_type_start(struct super_node *sn);
+int socket_type_start(villas::node::SuperNode *sn);
 
 /** @see node_type::type_stop */
 int socket_type_stop();

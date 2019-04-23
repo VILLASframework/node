@@ -35,14 +35,14 @@
 #include <villas/nodes/websocket.hpp>
 #include <villas/format_type.h>
 #include <villas/formats/msg_format.h>
-#include <villas/super_node.h>
+#include <villas/super_node.hpp>
 
 #define DEFAULT_WEBSOCKET_BUFFER_SIZE (1 << 12)
 
 /* Private static storage */
 static struct vlist connections = { .state = STATE_DESTROYED };	/**< List of active libwebsocket connections which receive samples from all nodes (catch all) */
 
-static struct web *web;
+static villas::node::Web *web;
 
 /* Forward declarations */
 static struct plugin p;
@@ -165,7 +165,7 @@ static int websocket_connection_write(struct websocket_connection *c, struct sam
 
 	/* Client connections which are currently conecting don't have an associate c->wsi yet */
 	if (c->wsi)
-		web_callback_on_writable(web, c->wsi);
+		web->callbackOnWritable(c->wsi);
 
 	return 0;
 }
@@ -373,12 +373,12 @@ int websocket_protocol_cb(struct lws *wsi, enum lws_callback_reasons reason, voi
 	return 0;
 }
 
-int websocket_type_start(struct super_node *sn)
+int websocket_type_start(villas::node::SuperNode *sn)
 {
 	vlist_init(&connections);
 
-	web = super_node_get_web(sn);
-	if (web_get_state(web) != STATE_STARTED)
+	web = sn->getWeb();
+	if (web->getState() != STATE_STARTED)
 		return -1;
 
 	return 0;
@@ -417,8 +417,8 @@ int websocket_start(struct node *n)
 		c->node = n;
 		c->destination = d;
 
-		d->info.context = web_get_context(web);
-		d->info.vhost = web_get_vhost(web);
+		d->info.context = web->getContext();
+		d->info.vhost = web->getVHost();
 		d->info.userdata = c;
 
 		lws_client_connect_via_info(&d->info);

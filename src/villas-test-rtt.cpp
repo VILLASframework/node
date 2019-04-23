@@ -162,7 +162,7 @@ check:			if (optarg == endptr)
 		if (!node)
 			throw RuntimeError("There's no node with the name '{}'", nodestr);
 
-		ret = node_type_start(node->_vt, reinterpret_cast<super_node *>(&sn));
+		ret = node_type_start(node->_vt, &sn);
 		if (ret)
 			throw RuntimeError("Failed to start node-type {}: reason={}", node_type_name(node->_vt), ret);
 

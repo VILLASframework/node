@@ -29,7 +29,7 @@
 #include <villas/node/config.h>
 #include <villas/plugin.h>
 
-int node_type_start(struct node_type *vt, struct super_node *sn)
+int node_type_start(struct node_type *vt, villas::node::SuperNode *sn)
 {
 	int ret;
 

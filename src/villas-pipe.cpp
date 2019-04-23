@@ -388,7 +388,7 @@ check:			if (optarg == endptr)
 		if (reverse)
 			node_reverse(node);
 
-		ret = node_type_start(node_type(node), reinterpret_cast<super_node *>(&sn));
+		ret = node_type_start(node_type(node), &sn);
 		if (ret)
 			throw RuntimeError("Failed to intialize node type {}: reason={}", node_type_name(node_type(node)), ret);
 

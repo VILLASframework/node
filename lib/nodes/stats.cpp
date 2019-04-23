@@ -26,11 +26,13 @@
 #include <villas/hook.h>
 #include <villas/plugin.h>
 #include <villas/stats.h>
-#include <villas/super_node.h>
+#include <villas/super_node.hpp>
 #include <villas/sample.h>
 #include <villas/node.h>
 
 #define STATS_METRICS 6
+
+using namespace villas::node;
 
 static struct vlist *nodes; /** The global list of nodes */
 
@@ -87,9 +89,9 @@ invalid_format:
 	return -1;
 }
 
-int stats_node_type_start(struct super_node *sn)
+int stats_node_type_start(villas::node::SuperNode *sn)
 {
-	nodes = super_node_get_nodes(sn);
+	nodes = sn->getNodes();
 
 	return 0;
 }

@@ -87,7 +87,7 @@ char * zeromq_print(struct node *n);
 int zeromq_parse(struct node *n, json_t *cfg);
 
 /** @see node_type::type_start */
-int zeromq_type_start(struct super_node *sn);
+int zeromq_type_start(villas::node::SuperNode *sn);
 
 /** @see node_type::type_stop */
 int zeromq_type_stop();

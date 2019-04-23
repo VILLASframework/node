@@ -211,7 +211,7 @@ static int uldaq_connect(struct node *n)
 	return 0;
 }
 
-int uldaq_type_start(struct super_node *sn)
+int uldaq_type_start(villas::node::SuperNode *sn)
 {
 	UlError err;
 

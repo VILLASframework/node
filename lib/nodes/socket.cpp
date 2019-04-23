@@ -33,7 +33,7 @@
 #include <villas/queue.h>
 #include <villas/plugin.h>
 #include <villas/compat.h>
-#include <villas/super_node.h>
+#include <villas/super_node.hpp>
 
 #ifdef WITH_SOCKET_LAYER_ETH
   #include <netinet/ether.h>
@@ -47,10 +47,12 @@
 /* Forward declartions */
 static struct plugin p;
 
-int socket_type_start(struct super_node *sn)
+using namespace villas::node;
+
+int socket_type_start(villas::node::SuperNode *sn)
 {
 #ifdef WITH_NETEM
-	struct vlist *interfaces = super_node_get_interfaces(sn);
+	struct vlist *interfaces = sn->getInterfaces();
 
 	/* Gather list of used network interfaces */
 	for (size_t i = 0; i < vlist_length(&p.node.instances); i++) {

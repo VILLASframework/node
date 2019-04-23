@@ -32,6 +32,9 @@
 #include <villas/task.h>
 #include <villas/common.h>
 
+/* Forward declarations */
+struct node;
+
 namespace villas {
 namespace node {
 

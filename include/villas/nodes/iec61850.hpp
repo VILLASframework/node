@@ -97,7 +97,7 @@ struct iec61850_receiver {
 };
 
 /** @see node_type::type_start */
-int iec61850_type_start(struct super_node *sn);
+int iec61850_type_start(villas::node::SuperNode *sn);
 
 /** @see node_type::type_stop */
 int iec61850_type_stop();

@@ -48,7 +48,7 @@ int opal_register_region(int argc, char *argv[])
 	print_shmem_name = argv[3];
 }
 
-int opal_type_start(struct super_node *sn)
+int opal_type_start(villas::node::SuperNode *sn)
 {
 	int err;
 

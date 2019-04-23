@@ -31,14 +31,10 @@
 
 #include <jansson.h>
 
+#include <villas/node.h>
 #include <villas/stats.h>
 #include <villas/task.h>
 #include <villas/list.h>
-
-/* Forward declarations */
-struct node;
-struct sample;
-struct super_node;
 
 struct stats_node_signal {
 	struct node *node;
@@ -57,7 +53,7 @@ struct stats_node {
 };
 
 /** @see node_type::print */
-int stats_node_type_start(struct super_node *sn);
+int stats_node_type_start(villas::node::SuperNode *sn);
 
 /** @see node_type::print */
 char *stats_node_print(struct node *n);

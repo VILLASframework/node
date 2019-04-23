@@ -249,7 +249,7 @@ void SuperNode::startNodeTypes()
 	for (size_t i = 0; i < vlist_length(&nodes); i++) {
 		auto *n = (struct node *) vlist_at(&nodes, i);
 
-		ret = node_type_start(n->_vt, reinterpret_cast<super_node *>(this));
+		ret = node_type_start(n->_vt, this);
 		if (ret)
 			throw RuntimeError("Failed to start node-type: {}", node_type_name(n->_vt));
 	}
@@ -522,65 +522,4 @@ int SuperNode::periodic()
 	}
 
 	return 0;
-}
-
-
-/* C-compatability */
-extern "C" {
-	struct vlist * super_node_get_nodes(struct super_node *sn)
-	{
-		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
-
-		return ssn->getNodes();
-	}
-
-	struct vlist * super_node_get_paths(struct super_node *sn)
-	{
-		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
-
-		return ssn->getPaths();
-	}
-
-	struct vlist * super_node_get_interfaces(struct super_node *sn)
-	{
-		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
-
-		return ssn->getInterfaces();
-	}
-#ifdef WITH_WEB
-	struct web * super_node_get_web(struct super_node *sn)
-	{
-		SuperNode *ssn = reinterpret_cast<SuperNode *>(sn);
-		Web *w = ssn->getWeb();
-
-		return reinterpret_cast<web *>(w);
-	}
-#endif
-	struct lws_context * web_get_context(struct web *w)
-	{
-		Web *ws = reinterpret_cast<Web *>(w);
-
-		return ws->getContext();
-	}
-
-	struct lws_vhost * web_get_vhost(struct web *w)
-	{
-		Web *ws = reinterpret_cast<Web *>(w);
-
-		return ws->getVHost();
-	}
-
-	enum state web_get_state(struct web *w)
-	{
-		Web *ws = reinterpret_cast<Web *>(w);
-
-		return ws->getState();
-	}
-
-#ifdef WITH_WEB
-	int web_callback_on_writable(struct web *w, struct lws *wsi)
-	{
-		return lws_callback_on_writable(wsi);
-	}
-#endif
 }
