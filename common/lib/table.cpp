@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/table.hpp>
 #include <villas/boxes.hpp>
 #include <villas/log.h>

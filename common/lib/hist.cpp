@@ -27,7 +27,7 @@
 #include <math.h>
 #include <time.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/hist.hpp>
 #include <villas/config.h>
 #include <villas/table.hpp>

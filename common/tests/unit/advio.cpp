@@ -24,7 +24,7 @@
 
 #include <criterion/criterion.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/utils.hpp>
 #include <villas/advio.h>
 

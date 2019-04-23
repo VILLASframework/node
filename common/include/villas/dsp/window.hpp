@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 namespace villas {
 namespace dsp {

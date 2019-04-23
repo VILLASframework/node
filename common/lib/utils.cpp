@@ -37,15 +37,15 @@
 #include <fcntl.h>
 
 #include <villas/config.h>
-#include <villas/utils.h>
 #include <villas/utils.hpp>
+#include <villas/colors.hpp>
 #include <villas/config.h>
 #include <villas/log.hpp>
 
+static pthread_t main_thread;
+
 namespace villas {
 namespace utils {
-
-static pthread_t main_thread;
 
 std::vector<std::string>
 tokenize(std::string s, std::string delimiter)
@@ -169,8 +169,6 @@ char * decolor(char *str)
 	return str;
 }
 
-extern "C" {
-
 void killme(int sig)
 {
 	/* Send only to main thread in case the ID was initilized by signals_init() */
@@ -179,11 +177,6 @@ void killme(int sig)
 	else
 		kill(0, sig);
 }
-
-}
-
-} /* namespace utils */
-} /* namespace villas */
 
 double box_muller(float m, float s)
 {
@@ -217,14 +210,15 @@ double randf()
 	return (double) random() / RAND_MAX;
 }
 
-char * strcatf(char **dest, const char *fmt, ...)
+void * alloc(size_t bytes)
 {
-	va_list ap;
-	va_start(ap, fmt);
-	vstrcatf(dest, fmt, ap);
-	va_end(ap);
+	void *p = malloc(bytes);
+	if (!p)
+		error("Failed to allocate memory");
 
-	return *dest;
+	memset(p, 0, bytes);
+
+	return p;
 }
 
 char * vstrcatf(char **dest, const char *fmt, va_list ap)
@@ -238,6 +232,16 @@ char * vstrcatf(char **dest, const char *fmt, va_list ap)
 		strncpy(*dest+n, tmp, i + 1);
 
 	free(tmp);
+
+	return *dest;
+}
+
+char * strcatf(char **dest, const char *fmt, ...)
+{
+	va_list ap;
+	va_start(ap, fmt);
+	vstrcatf(dest, fmt, ap);
+	va_end(ap);
 
 	return *dest;
 }
@@ -261,17 +265,6 @@ char * vstrf(const char *fmt, va_list va)
 	vstrcatf(&buf, fmt, va);
 
 	return buf;
-}
-
-void * alloc(size_t bytes)
-{
-	void *p = malloc(bytes);
-	if (!p)
-		error("Failed to allocate memory");
-
-	memset(p, 0, bytes);
-
-	return p;
 }
 
 void * memdup(const void *src, size_t bytes)
@@ -334,3 +327,6 @@ size_t strlenp(const char *str)
 
 	return sz;
 }
+
+} /* namespace utils */
+} /* namespace villas */

@@ -24,7 +24,7 @@
 #include <string.h>
 #include <criterion/criterion.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/list.h>
 
 static const char *nouns[] = { "time", "person", "year", "way", "day", "thing", "man", "world", "life", "hand", "part", "child", "eye", "woman", "place", "work", "week", "case", "point", "government", "company", "number", "group", "problem", "fact" };
