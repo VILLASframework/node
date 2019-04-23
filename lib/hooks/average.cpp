@@ -41,7 +41,7 @@ class AverageHook : public Hook {
 protected:
 	int offset;
 
-	std::bitset<128> mask;
+	std::bitset<MAX_SAMPLE_LENGTH> mask;
 	vlist signal_names;
 
 public:

@@ -116,9 +116,9 @@ int path_init(struct path *p)
 	assert(p->state == STATE_DESTROYED);
 
 	p->logger = logging.get("path");
+	new (&p->received) std::bitset<MAX_SAMPLE_LENGTH>;
+	new (&p->mask) std::bitset<MAX_SAMPLE_LENGTH>;
 
-	new (&p->received) std::bitset<128>;
-	new (&p->mask) std::bitset<128>;
 
 	ret = vlist_init(&p->destinations);
 	if (ret)
@@ -721,7 +721,7 @@ int path_destroy(struct path *p)
 	if (ret)
 		return ret;
 
-	using bs = std::bitset<128>;
+	using bs = std::bitset<MAX_SAMPLE_LENGTH>;
 	using lg = spdlog::logger;
 
 	p->received.~bs();

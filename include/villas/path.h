@@ -95,8 +95,8 @@ struct path {
 #ifdef __cplusplus
 	villas::Logger logger;
 
-	std::bitset<128> mask;		/**< A mask of path_sources which are enabled for poll(). */
-	std::bitset<128> received;		/**< A mask of path_sources for which we already received samples. */
+	std::bitset<MAX_SAMPLE_LENGTH> mask;		/**< A mask of path_sources which are enabled for poll(). */
+	std::bitset<MAX_SAMPLE_LENGTH> received;		/**< A mask of path_sources for which we already received samples. */
 #endif
 };
 
