@@ -32,8 +32,6 @@
 
 using namespace villas;
 
-extern "C" {
-
 int log_get_width()
 {
 	return logging.getWidth();
@@ -149,8 +147,6 @@ void jerror(json_error_t *err, const char *fmt, ...)
 
 	killme(SIGABRT);
 	pause();
-}
-
 }
 
 #pragma GCC diagnostic pop
