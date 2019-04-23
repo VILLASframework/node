@@ -101,7 +101,7 @@ int file_parse(struct node *n, json_t *cfg)
 		"in",
 			"eof", &eof,
 			"rate", &f->rate,
-			"epoch", &epoch,
+			"epoch_mode", &epoch,
 			"epoch", &epoch_flt,
 			"buffer_size", &f->buffer_size_in,
 		"out",
