@@ -33,11 +33,12 @@
 
 #pragma once
 
+#include <atomic>
+
 #include <stddef.h>
 #include <stdint.h>
 #include <unistd.h>
 
-#include <villas/atomic.h>
 #include <villas/common.h>
 #include <villas/config.h>
 
@@ -47,13 +48,13 @@ struct memory_type;
 typedef char cacheline_pad_t[CACHELINE_SIZE];
 
 struct queue_cell {
-	atomic_size_t sequence;
+	std::atomic<size_t> sequence;
 	off_t data_off; /**< Pointer relative to the queue struct */
 };
 
 /** A lock-free multiple-producer, multiple-consumer (MPMC) queue. */
 struct queue {
-	atomic_state state;
+	std::atomic<enum state> state;
 
 	cacheline_pad_t _pad0;	/**< Shared area: all threads read */
 
@@ -62,11 +63,11 @@ struct queue {
 
 	cacheline_pad_t	_pad1;	/**< Producer area: only producers read & write */
 
-	atomic_size_t	tail;	/**< Queue tail pointer */
+	std::atomic<size_t>	tail;	/**< Queue tail pointer */
 
 	cacheline_pad_t	_pad2;	/**< Consumer area: only consumers read & write */
 
-	atomic_size_t	head;	/**< Queue head pointer */
+	std::atomic<size_t>	head;	/**< Queue head pointer */
 
 	cacheline_pad_t	_pad3;	/**< @todo Why needed? */
 };

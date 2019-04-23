@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include <atomic>
+
 #include <jansson.h>
 #include <complex.h>
 #include <stdint.h>
@@ -30,8 +32,6 @@
 
 /* "I" defined by complex.h collides with a define in OpenSSL */
 #undef I
-
-#include <villas/atomic.h>
 
 /* Forward declarations */
 struct vlist;
@@ -69,7 +69,7 @@ struct signal {
 
 	int enabled;
 
-	atomic_int refcnt;	/**< Reference counter. */
+	std::atomic<int> refcnt;	/**< Reference counter. */
 
 	enum signal_type type;
 };

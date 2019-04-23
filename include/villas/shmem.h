@@ -63,7 +63,7 @@ struct shmem_dir {
 /** Main structure representing the shared memory interface. */
 struct shmem_int {
 	struct shmem_dir read, write;
-	atomic_int readers, writers, closed;
+	std::atomic<int> readers, writers, closed;
 };
 
 /** Open the shared memory objects and retrieve / initialize the shared data structures.

@@ -23,12 +23,13 @@
 
 #pragma once
 
+#include <atomic>
+
 #include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 
-#include <villas/atomic.h>
 #include <villas/signal.h>
 
 /* Forward declarations */
@@ -67,7 +68,7 @@ struct sample {
 
 	struct vlist *signals;	/**< The list of signal descriptors. */
 
-	atomic_int refcnt;	/**< Reference counter. */
+	std::atomic<int> refcnt;	/**< Reference counter. */
 	ptrdiff_t pool_off;	/**< This sample belongs to this memory pool (relative pointer). See sample_pool(). */
 
 	/** All timestamps are seconds / nano seconds after 1.1.1970 UTC */
