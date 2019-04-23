@@ -27,6 +27,7 @@
 #include <villas/pool.h>
 #include <villas/sample.h>
 #include <villas/utils.hpp>
+#include <villas/colors.hpp>
 #include <villas/timing.h>
 #include <villas/signal.h>
 #include <villas/list.h>

@@ -29,6 +29,7 @@
 #include <villas/sample.h>
 #include <villas/node.h>
 #include <villas/utils.hpp>
+#include <villas/colors.hpp>
 #include <villas/plugin.h>
 #include <villas/mapping.h>
 #include <villas/timing.h>

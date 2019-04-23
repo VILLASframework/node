@@ -37,6 +37,7 @@
 #include <villas/utils.hpp>
 #include <villas/pool.h>
 #include <villas/log.hpp>
+#include <villas/colors.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/copyright.hpp>
 #include <villas/plugin.hpp>

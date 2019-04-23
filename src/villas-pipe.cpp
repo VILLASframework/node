@@ -40,6 +40,7 @@
 #include <villas/utils.hpp>
 #include <villas/utils.hpp>
 #include <villas/log.hpp>
+#include <villas/colors.hpp>
 #include <villas/node.h>
 #include <villas/timing.h>
 #include <villas/pool.h>

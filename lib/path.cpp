@@ -30,6 +30,7 @@
 
 #include <villas/node/config.h>
 #include <villas/utils.hpp>
+#include <villas/colors.hpp>
 #include <villas/timing.h>
 #include <villas/pool.h>
 #include <villas/queue.h>

@@ -34,6 +34,7 @@
 #include <villas/pool.h>
 #include <villas/sample.h>
 #include <villas/shmem.h>
+#include <villas/colors.hpp>
 #include <villas/utils.hpp>
 #include <villas/copyright.hpp>
 

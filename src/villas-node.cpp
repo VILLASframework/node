@@ -38,6 +38,7 @@
 #include <villas/path.h>
 #include <villas/api.hpp>
 #include <villas/hook.hpp>
+#include <villas/colors.hpp>
 #include <villas/web.hpp>
 #include <villas/log.hpp>
 #include <villas/exceptions.hpp>

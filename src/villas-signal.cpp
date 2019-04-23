@@ -32,6 +32,7 @@
 
 #include <villas/io.h>
 #include <villas/utils.hpp>
+#include <villas/colors.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/copyright.hpp>
 #include <villas/log.hpp>
