@@ -39,10 +39,6 @@
 
 #include <jansson.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef uint32_t tc_hdl_t;
 
 struct interface;
@@ -77,9 +73,5 @@ int tc_prio(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl
  * @retval <0 Error. Something went wrong.
 */
 int tc_mark(struct interface *i, struct rtnl_cls **cls, tc_hdl_t flowid, uint32_t mark);
-
-#ifdef __cplusplus
-}
-#endif
 
 /** @} */

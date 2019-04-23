@@ -28,10 +28,6 @@
 #include <villas/stats.h>
 #include <villas/common.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct node;
 struct sample;
@@ -101,7 +97,3 @@ int mapping_list_parse(struct vlist *ml, json_t *cfg, struct vlist *nodes);
 int mapping_list_prepare(struct vlist *ml);
 
 int mapping_list_remap(const struct vlist *ml, struct sample *remapped, const struct sample *original);
-
-#ifdef __cplusplus
-}
-#endif

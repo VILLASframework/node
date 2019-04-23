@@ -25,10 +25,6 @@
 
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /** The current version number for the message format */
 #define MSG_VERSION		2
 
@@ -86,7 +82,3 @@ struct msg
 		uint32_t i;	/**< Integer values. */
 	} data[];
 } __attribute__((packed));
-
-#ifdef __cplusplus
-}
-#endif

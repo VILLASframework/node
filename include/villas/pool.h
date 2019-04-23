@@ -32,10 +32,6 @@
 #include <villas/common.h>
 #include <villas/memory.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /** A thread-safe memory pool */
 struct pool {
 	enum state state;
@@ -95,7 +91,3 @@ INLINE int pool_put(struct pool *p, void *buf)
 {
 	return queue_push(&p->queue, buf);
 }
-
-#ifdef __cplusplus
-}
-#endif

@@ -55,10 +55,6 @@ union sockaddr_union {
 #endif
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /** Generate printable socket address depending on the address family
  *
  * A IPv4 address is formatted as dotted decimals followed by the port/protocol number
@@ -86,7 +82,3 @@ char * socket_print_addr(struct sockaddr *saddr);
 int socket_parse_address(const char *str, struct sockaddr *sa, enum socket_layer layer, int flags);
 
 int socket_compare_addr(struct sockaddr *x, struct sockaddr *y);
-
-#ifdef __cplusplus
-}
-#endif

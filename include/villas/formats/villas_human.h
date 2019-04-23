@@ -25,10 +25,6 @@
 
 #include <stdio.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct io;
 struct sample;
@@ -37,7 +33,3 @@ void villas_human_header(struct io *io, const struct sample *smp);
 
 int villas_human_print(struct io *io, struct sample *smps[], unsigned cnt);
 int villas_human_scan(struct io *io, struct sample *smps[], unsigned cnt);
-
-#ifdef __cplusplus
-}
-#endif

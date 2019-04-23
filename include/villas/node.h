@@ -43,10 +43,6 @@
   #define WITH_NETEM
 #endif /* LIBNL3_ROUTE_FOUND */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 #ifdef WITH_NETEM
   struct rtnl_qdisc;
@@ -203,9 +199,5 @@ bool node_is_valid_name(const char *name);
 bool node_is_enabled(const struct node *n);
 
 struct vlist * node_get_signals(struct node *n, enum node_dir dir);
-
-#ifdef __cplusplus
-}
-#endif
 
 /** @} */

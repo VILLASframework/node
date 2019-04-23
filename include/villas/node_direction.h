@@ -33,10 +33,6 @@
 #include <villas/common.h>
 #include <villas/list.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct node;
 
@@ -76,7 +72,3 @@ int node_direction_destroy(struct node_direction *nd, struct node *n);
 struct vlist * node_direction_get_signals(struct node_direction *nd);
 
 /** @} */
-
-#ifdef __cplusplus
-}
-#endif

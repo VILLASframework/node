@@ -32,10 +32,6 @@
 #include <villas/pool.h>
 #include <villas/list.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct path;
 struct sample;
@@ -54,9 +50,5 @@ int path_source_init(struct path_source *ps);
 int path_source_destroy(struct path_source *ps);
 
 int path_source_read(struct path_source *ps, struct path *p, int i);
-
-#ifdef __cplusplus
-}
-#endif
 
 /** @} */

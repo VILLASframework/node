@@ -39,10 +39,6 @@
 
 #include <jansson.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef uint32_t tc_hdl_t;
 
 struct interface;
@@ -75,9 +71,5 @@ char * tc_netem_print(struct rtnl_qdisc *ne);
 int tc_netem(struct interface *i, struct rtnl_qdisc **qd, tc_hdl_t handle, tc_hdl_t parent);
 
 int tc_netem_set_delay_distribution(struct rtnl_qdisc *qdisc, json_t *json);
-
-#ifdef __cplusplus
-}
-#endif
 
 /** @} */

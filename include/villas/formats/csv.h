@@ -25,10 +25,6 @@
 
 #include <stdlib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations. */
 struct io;
 struct sample;
@@ -37,7 +33,3 @@ void csv_header(struct io *io, const struct sample *smp);
 
 int csv_sprint(struct io *io, char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
 int csv_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
-
-#ifdef __cplusplus
-}
-#endif

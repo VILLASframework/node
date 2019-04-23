@@ -29,6 +29,8 @@
 
 #pragma once
 
+#include <bitset>
+
 #include <pthread.h>
 #include <jansson.h>
 
@@ -39,13 +41,7 @@
 #include <villas/mapping.h>
 #include <villas/task.h>
 
-#ifdef __cplusplus
-  #include <bitset>
-
-  #include <villas/log.hpp>
-
-extern "C" {
-#endif
+#include <villas/log.hpp>
 
 /* Forward declarations */
 struct stats;
@@ -92,12 +88,10 @@ struct path {
 	pthread_t tid;			/**< The thread id for this path. */
 	json_t *cfg;			/**< A JSON object containing the configuration of the path. */
 
-#ifdef __cplusplus
 	villas::Logger logger;
 
 	std::bitset<MAX_SAMPLE_LENGTH> mask;		/**< A mask of path_sources which are enabled for poll(). */
 	std::bitset<MAX_SAMPLE_LENGTH> received;		/**< A mask of path_sources for which we already received samples. */
-#endif
 };
 
 /** Initialize internal data structures. */
@@ -172,7 +166,3 @@ bool path_is_reversed(const struct path *p);
 struct vlist * path_get_signals(struct path *p);
 
 /** @} */
-
-#ifdef __cplusplus
-}
-#endif

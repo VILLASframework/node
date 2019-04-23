@@ -37,10 +37,6 @@
 #define DEFAULT_SHMEM_QUEUELEN	512u
 #define DEFAULT_SHMEM_SAMPLELEN	64u
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /** Struct containing all parameters that need to be known when creating a new
  * shared memory object. */
 struct shmem_conf {
@@ -128,7 +124,3 @@ int shmem_int_alloc(struct shmem_int *shm, struct sample *smps[], unsigned cnt);
 size_t shmem_total_size(int queuelen, int samplelen);
 
 /** @} */
-
-#ifdef __cplusplus
-}
-#endif

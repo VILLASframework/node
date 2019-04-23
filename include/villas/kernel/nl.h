@@ -31,10 +31,6 @@
 #include <netlink/route/route.h>
 #include <netlink/route/link.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /** Get index of outgoing interface for given destination address.
  *
  * @retval >=0 Interface index of outgoing interface.
@@ -47,9 +43,5 @@ struct nl_sock *nl_init();
 
 /** Close and free global netlink socket. */
 void nl_shutdown();
-
-#ifdef __cplusplus
-}
-#endif
 
 /** @} */

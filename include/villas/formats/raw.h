@@ -25,10 +25,6 @@
 
 #include <stdlib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* float128 is currently not yet supported as htole128() functions a missing */
 #if 0 && defined(__GNUC__) && defined(__linux__)
   #define HAS_128BIT
@@ -57,6 +53,3 @@ int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 /** Read struct sample's from buffer \p buf into samples \p smps. */
 int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct sample *smps[], unsigned cnt);
 
-#ifdef __cplusplus
-}
-#endif

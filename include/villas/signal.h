@@ -33,10 +33,6 @@
 
 #include <villas/atomic.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct vlist;
 struct node;
@@ -133,6 +129,3 @@ int signal_data_parse_json(union signal_data *data, const struct signal *sig, js
 
 void signal_data_set(union signal_data *data, const struct signal *sig, double val);
 
-#ifdef __cplusplus
-}
-#endif

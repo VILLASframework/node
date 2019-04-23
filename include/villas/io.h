@@ -28,10 +28,6 @@
 #include <villas/node.h>
 #include <villas/signal.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct sample;
 struct format_type;
@@ -150,7 +146,3 @@ int io_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct 
  * @retval <0		Something went wrong.
  */
 int io_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt);
-
-#ifdef __cplusplus
-}
-#endif

@@ -30,10 +30,6 @@
 #include <villas/node/config.h>
 #include <villas/memory_type.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct node;
 
@@ -85,7 +81,3 @@ void * memory_alloc_aligned(struct memory_type *m, size_t len, size_t alignment)
 int memory_free(void *ptr);
 
 struct memory_allocation * memory_get_allocation(void *ptr);
-
-#ifdef __cplusplus
-}
-#endif

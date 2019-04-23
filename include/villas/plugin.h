@@ -28,10 +28,6 @@
 #include <villas/node_type.h>
 #include <villas/format_type.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /** (De-)Register a plugin by adding it to the global plugin list.
  *
  * We make use of GCC's / Clang's constructor/destructor function
@@ -83,7 +79,3 @@ void plugin_dump(enum plugin_type type);
 
 /** Find registered and loaded plugin with given name and type. */
 struct plugin * plugin_lookup(enum plugin_type type, const char *name);
-
-#ifdef __cplusplus
-}
-#endif

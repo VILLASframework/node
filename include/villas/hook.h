@@ -33,10 +33,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 enum hook_flags {
 	HOOK_BUILTIN	= (1 << 0), /**< Should we add this hook by default to every path?. */
 	HOOK_PATH	= (1 << 1), /**< This hook type is used by paths. */
@@ -50,7 +46,3 @@ enum hook_reason {
 	HOOK_SKIP_SAMPLE,
 	HOOK_STOP_PROCESSING
 };
-
-#ifdef __cplusplus
-}
-#endif

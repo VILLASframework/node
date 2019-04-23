@@ -30,10 +30,6 @@
 #include <villas/hist.hpp>
 #include <villas/signal.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct sample;
 struct node;
@@ -122,6 +118,3 @@ void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose);
 
 union signal_data stats_get_value(const struct stats *s, enum stats_metric sm, enum stats_type st);
 
-#ifdef __cplusplus
-}
-#endif

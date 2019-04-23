@@ -26,10 +26,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct memory_type;
 struct node;
@@ -66,6 +62,3 @@ int memory_hugepage_init(int hugepages);
 
 struct memory_type * memory_type_lookup(enum memory_type_flags flags);
 
-#ifdef __cplusplus
-}
-#endif

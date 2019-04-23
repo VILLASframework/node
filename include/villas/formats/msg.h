@@ -22,10 +22,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declaration */
 struct msg;
 struct sample;
@@ -58,7 +54,3 @@ int msg_to_sample(struct msg *msg, struct sample *smp, struct vlist *signals);
 
 /** Copy fields form \p smp into \p msg. */
 int msg_from_sample(struct msg *msg, struct sample *smp, struct vlist *signals);
-
-#ifdef __cplusplus
-}
-#endif

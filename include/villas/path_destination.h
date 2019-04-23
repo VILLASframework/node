@@ -31,10 +31,6 @@
 
 #include <villas/queue.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct path;
 struct sample;
@@ -52,9 +48,5 @@ int path_destination_destroy(struct path_destination *pd);
 void path_destination_enqueue(struct path *p, struct sample *smps[], unsigned cnt);
 
 void path_destination_write(struct path_destination *pd, struct path *p);
-
-#ifdef __cplusplus
-}
-#endif
 
 /** @} */

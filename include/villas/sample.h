@@ -31,10 +31,6 @@
 #include <villas/atomic.h>
 #include <villas/signal.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Forward declarations */
 struct pool;
 
@@ -138,7 +134,3 @@ enum signal_type sample_format(const struct sample *s, unsigned idx);
 void sample_data_insert(struct sample *smp, const union signal_data *src, size_t offset, size_t len);
 
 void sample_data_remove(struct sample *smp, size_t offset, size_t len);
-
-#ifdef __cplusplus
-}
-#endif
