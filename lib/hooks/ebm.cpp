@@ -74,6 +74,8 @@ public:
 
 			phases.emplace_back(voltage, current);
 		}
+
+		state = STATE_PARSED;
 	}
 
 	virtual void start()
