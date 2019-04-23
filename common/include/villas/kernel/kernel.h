@@ -30,10 +30,6 @@
 #include <string.h>
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #if WITH_CAP
 #include <sys/capability.h>
 
@@ -91,9 +87,5 @@ int kernel_get_cpu_frequency(uint64_t *freq);
 
 /** Set SMP affinity of IRQ */
 int kernel_irq_setaffinity(unsigned irq, uintmax_t aff , uintmax_t *old);
-
-#ifdef __cplusplus
-}
-#endif
 
 /** @} */

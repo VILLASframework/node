@@ -23,10 +23,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Common states for most objects in VILLAScommon (paths, nodes, hooks, plugins) */
 enum state {
 	STATE_DESTROYED		= 0,
@@ -57,7 +53,3 @@ typedef int (*dtor_cb_t)(void *);
 
 /** Convert state enum to human readable string. */
 const char * state_print(enum state s);
-
-#ifdef __cplusplus
-}
-#endif
