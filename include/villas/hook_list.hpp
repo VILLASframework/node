@@ -31,10 +31,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <jansson.h>
 
 /* Forward declarations */
@@ -78,7 +74,3 @@ int hook_list_start(struct vlist *hs);
 int hook_list_stop(struct vlist *hs);
 
 struct vlist * hook_list_get_signals(struct vlist *hs);
-
-#ifdef __cplusplus
-}
-#endif

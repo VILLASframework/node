@@ -22,14 +22,12 @@
 
 #include <villas/plugin.hpp>
 #include <villas/hook.hpp>
-#include <villas/hook_list.h>
+#include <villas/hook_list.hpp>
 #include <villas/list.h>
 #include <villas/log.h>
 
 using namespace villas;
 using namespace villas::node;
-
-extern "C" {
 
 int hook_list_init(vlist *hs)
 {
@@ -234,6 +232,4 @@ vlist * hook_list_get_signals(vlist *hs)
 	Hook *h = (Hook *) vlist_last(hs);
 
 	return h->getSignals();
-}
-
 }

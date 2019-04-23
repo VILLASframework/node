@@ -25,7 +25,7 @@
 
 #include <villas/node/config.h>
 #include <villas/hook.h>
-#include <villas/hook_list.h>
+#include <villas/hook_list.hpp>
 #include <villas/sample.h>
 #include <villas/node.h>
 #include <villas/utils.hpp>

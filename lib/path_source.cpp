@@ -24,7 +24,7 @@
 #include <villas/sample.h>
 #include <villas/node.h>
 #include <villas/path.h>
-#include <villas/hook_list.h>
+#include <villas/hook_list.hpp>
 
 #include <villas/path_destination.h>
 #include <villas/path_source.h>
