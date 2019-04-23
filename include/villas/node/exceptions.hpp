@@ -23,7 +23,12 @@
 
 #pragma once
 
+#include <villas/node/config.h>
 #include <villas/exceptions.hpp>
+
+#ifdef WITH_CONFIG
+  #include <libconfig.h>
+#endif
 
 namespace villas {
 namespace node {
