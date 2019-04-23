@@ -376,7 +376,7 @@ check:			if (optarg == endptr)
 		if (!node)
 			throw RuntimeError("Node {} does not exist!", nodestr);
 
-#ifdef WITH_NODE_WEBSOCKET
+#if defined(WITH_NODE_WEBSOCKET) && defined(WITH_WEB)
 		/* Only start web subsystem if villas-pipe is used with a websocket node */
 		if (node_type(node)->start == websocket_start) {
 			Web *w = sn.getWeb();
