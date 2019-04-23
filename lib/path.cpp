@@ -115,10 +115,11 @@ int path_init(struct path *p)
 
 	assert(p->state == STATE_DESTROYED);
 
-	p->logger = logging.get("path");
+	new (&p->logger) Logger;
 	new (&p->received) std::bitset<MAX_SAMPLE_LENGTH>;
 	new (&p->mask) std::bitset<MAX_SAMPLE_LENGTH>;
 
+	p->logger = logging.get("path");
 
 	ret = vlist_init(&p->destinations);
 	if (ret)
@@ -554,7 +555,7 @@ int path_check(struct path *p)
 		if (!node_type(pd->node)->write) {
 			p->logger->error("Destiation node {} is not supported as a sink for path ", node_name(pd->node), path_name(p));
 			return -1;
-		}	
+		}
 	}
 
 	if (!IS_POW2(p->queuelen)) {
@@ -722,11 +723,11 @@ int path_destroy(struct path *p)
 		return ret;
 
 	using bs = std::bitset<MAX_SAMPLE_LENGTH>;
-	using lg = spdlog::logger;
+	using lg = std::shared_ptr<spdlog::logger>;
 
 	p->received.~bs();
 	p->mask.~bs();
-	p->logger->~lg();
+	p->logger.~lg();
 
 	p->state = STATE_DESTROYED;
 
