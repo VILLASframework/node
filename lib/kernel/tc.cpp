@@ -27,7 +27,7 @@
 
 #include <linux/if_ether.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 #include <villas/kernel/kernel.h>
 #include <villas/kernel/if.h>

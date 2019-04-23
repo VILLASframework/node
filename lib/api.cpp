@@ -23,7 +23,7 @@
 #include <villas/api.hpp>
 #include <villas/api/session.hpp>
 #include <villas/super_node.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/node/config.h>
 #include <villas/memory.h>
 #include <villas/compat.h>

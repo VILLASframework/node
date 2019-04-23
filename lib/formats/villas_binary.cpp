@@ -27,7 +27,7 @@
 #include <villas/formats/msg.h>
 #include <villas/formats/msg_format.h>
 #include <villas/sample.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/plugin.h>
 
 int villas_binary_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct sample *smps[], unsigned cnt)

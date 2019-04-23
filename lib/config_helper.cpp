@@ -27,7 +27,7 @@
 
 #include <villas/node/config.h>
 #include <villas/config_helper.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 #ifdef WITH_CONFIG
 

@@ -38,7 +38,7 @@
 #include <villas/super_node.hpp>
 #include <villas/copyright.hpp>
 #include <villas/utils.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/log.hpp>
 #include <villas/node.h>
 #include <villas/timing.h>

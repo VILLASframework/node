@@ -26,7 +26,7 @@
 #include <signal.h>
 
 #include <villas/pool.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 extern void init_memory();
 

@@ -32,7 +32,7 @@
 
 #include <villas/log.h>
 #include <villas/memory.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 static struct memory_allocation * memory_managed_alloc(struct memory_type *m, size_t len, size_t alignment)
 {

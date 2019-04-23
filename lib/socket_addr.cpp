@@ -26,7 +26,7 @@
 #include <arpa/inet.h>
 
 #include <villas/socket_addr.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/kernel/nl.h>
 
 char * socket_print_addr(struct sockaddr *saddr)

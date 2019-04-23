@@ -30,7 +30,7 @@
 #include <criterion/criterion.h>
 #include <criterion/parameterized.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/queue.h>
 #include <villas/memory.h>
 #include <villas/tsc.h>

@@ -28,7 +28,7 @@
 #include <villas/hook.hpp>
 #include <villas/node/exceptions.hpp>
 #include <villas/path.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/node.h>
 
 const char *hook_reasons[] = {

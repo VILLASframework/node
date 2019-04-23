@@ -26,7 +26,7 @@
 #include <villas/formats/msg_format.h>
 #include <villas/sample.h>
 #include <villas/signal.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/list.h>
 
 void msg_ntoh(struct msg *m)

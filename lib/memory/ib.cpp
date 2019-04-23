@@ -24,7 +24,7 @@
 
 #include <villas/nodes/infiniband.hpp>
 #include <villas/memory.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/memory/ib.h>
 
 struct ibv_mr * memory_ib_get_mr(void *ptr)

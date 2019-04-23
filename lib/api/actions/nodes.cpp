@@ -24,7 +24,7 @@
 
 #include <villas/super_node.hpp>
 #include <villas/node.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/stats.h>
 #include <villas/api/action.hpp>
 #include <villas/api/session.hpp>

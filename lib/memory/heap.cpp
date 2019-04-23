@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/memory.h>
 
 static struct memory_allocation * memory_heap_alloc(struct memory_type *m, size_t len, size_t alignment)

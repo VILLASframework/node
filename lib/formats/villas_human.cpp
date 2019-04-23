@@ -26,7 +26,7 @@
 
 #include <villas/io.h>
 #include <villas/plugin.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/timing.h>
 #include <villas/sample.h>
 #include <villas/signal.h>

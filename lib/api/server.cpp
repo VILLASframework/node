@@ -35,7 +35,7 @@
 
 #include <villas/config.h>
 #include <villas/node/exceptions.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/super_node.hpp>
 #include <villas/api/server.hpp>
 #include <villas/api/sessions/socket.hpp>

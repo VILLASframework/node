@@ -27,7 +27,7 @@
 #include <jansson.h>
 #include <libconfig.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/config_helper.hpp>
 
 const char *cfg_example = "test : \n"

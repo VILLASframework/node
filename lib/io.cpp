@@ -28,7 +28,7 @@
 
 #include <villas/io.h>
 #include <villas/format_type.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/sample.h>
 
 static int io_print_lines(struct io *io, struct sample *smps[], unsigned cnt)

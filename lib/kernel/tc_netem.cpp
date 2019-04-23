@@ -32,7 +32,7 @@
 #include <villas/kernel/nl-private.h>
 #include <villas/kernel/tc_netem.h>
 #include <villas/kernel/kernel.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 static const double max_percent_value = 0xffffffff;
 

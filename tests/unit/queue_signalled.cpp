@@ -26,7 +26,7 @@
 #include <pthread.h>
 #include <poll.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/memory.h>
 #include <villas/queue_signalled.h>
 

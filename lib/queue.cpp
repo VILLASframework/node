@@ -32,7 +32,7 @@
  *********************************************************************************/
 
 #include <villas/queue.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/memory.h>
 
 /** Initialize MPMC queue */

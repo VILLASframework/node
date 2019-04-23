@@ -26,7 +26,7 @@
 #include <villas/hist.hpp>
 #include <villas/timing.h>
 #include <villas/node.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/log.h>
 #include <villas/node.h>
 #include <villas/table.hpp>

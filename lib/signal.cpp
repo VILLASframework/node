@@ -24,7 +24,7 @@
 #include <inttypes.h>
 #include <villas/signal.h>
 #include <villas/list.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/node.h>
 #include <villas/mapping.h>
 

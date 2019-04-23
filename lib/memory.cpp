@@ -33,7 +33,7 @@
 
 #include <villas/log.h>
 #include <villas/memory.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/kernel/kernel.h>
 
 static std::unordered_map<void *, struct memory_allocation *> allocations;

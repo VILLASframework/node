@@ -24,7 +24,7 @@
 #include <string.h>
 
 #include <villas/node/config.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/web.hpp>
 #include <villas/api.hpp>
 #include <villas/node/exceptions.hpp>

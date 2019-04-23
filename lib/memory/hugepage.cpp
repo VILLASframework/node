@@ -39,7 +39,7 @@
 #include <villas/kernel/kernel.h>
 #include <villas/log.h>
 #include <villas/memory.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/kernel/kernel.h>
 
 static size_t pgsz = -1;

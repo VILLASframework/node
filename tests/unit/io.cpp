@@ -27,7 +27,7 @@
 #include <criterion/criterion.h>
 #include <criterion/parameterized.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/timing.h>
 #include <villas/sample.h>
 #include <villas/signal.h>

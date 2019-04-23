@@ -25,7 +25,7 @@
 #include <villas/api/session.hpp>
 #include <villas/log.hpp>
 #include <villas/node/exceptions.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 namespace villas {
 namespace node {

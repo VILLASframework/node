@@ -29,7 +29,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/log.hpp>
 #include <villas/config.hpp>
 #include <villas/boxes.hpp>

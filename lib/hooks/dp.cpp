@@ -32,7 +32,7 @@
 #include <villas/hook.hpp>
 #include <villas/sample.h>
 #include <villas/dsp/window.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 using namespace std::complex_literals;
 

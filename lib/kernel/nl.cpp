@@ -27,7 +27,7 @@
 #include <netlink/route/route.h>
 #include <netlink/route/link.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/kernel/nl.h>
 
 /** Singleton for global netlink socket */

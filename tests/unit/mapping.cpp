@@ -25,7 +25,7 @@
 #include <villas/mapping.h>
 #include <villas/node.h>
 #include <villas/list.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/signal.h>
 
 Test(mapping, parse_nodes)

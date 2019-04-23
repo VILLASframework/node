@@ -22,7 +22,7 @@
 
 #include <signal.h>
 
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/api/action.hpp>
 
 namespace villas {

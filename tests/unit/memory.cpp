@@ -26,7 +26,7 @@
 #include <errno.h>
 
 #include <villas/memory.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/log.hpp>
 
 extern void init_memory();

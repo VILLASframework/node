@@ -28,7 +28,7 @@
 #include <villas/hook_list.h>
 #include <villas/sample.h>
 #include <villas/node.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/plugin.h>
 #include <villas/mapping.h>
 #include <villas/timing.h>

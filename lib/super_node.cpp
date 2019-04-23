@@ -26,7 +26,7 @@
 #include <villas/super_node.hpp>
 #include <villas/node.h>
 #include <villas/path.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/list.h>
 #include <villas/hook_list.h>
 #include <villas/advio.h>

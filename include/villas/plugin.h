@@ -24,7 +24,7 @@
 #pragma once
 
 #include <villas/common.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/node_type.h>
 #include <villas/format_type.h>
 

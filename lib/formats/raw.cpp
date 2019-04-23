@@ -22,7 +22,7 @@
 
 #include <villas/sample.h>
 #include <villas/plugin.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/io.h>
 #include <villas/formats/raw.h>
 #include <villas/compat.h>
@@ -180,7 +180,7 @@ int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 				case SIGNAL_TYPE_BOOLEAN:
 					switch (bits) {
 						case 8:
-							i8 [o++] = data->b ? 1 : 0; 
+							i8 [o++] = data->b ? 1 : 0;
 							break;
 
 						case 16:
@@ -374,7 +374,7 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 
 					case 32: data->z = SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 32, f32[o++])
 							+ _Complex_I * SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 32, f32[o++]);
-					        
+
 						break;
 
 					case 64: data->z = SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 64, f64[o++])

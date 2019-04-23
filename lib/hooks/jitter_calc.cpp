@@ -30,7 +30,7 @@
 #include <villas/hook.hpp>
 #include <villas/timing.h>
 #include <villas/sample.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 #define GPS_NTP_DELAY_WIN_SIZE 16
 
