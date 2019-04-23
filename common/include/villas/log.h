@@ -27,10 +27,6 @@
 
 #include <jansson.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* The log level which is passed as first argument to print() */
 enum log_level {
 	LOG_LVL_DEBUG,
@@ -103,7 +99,3 @@ void serror(const char *fmt, ...)
 /** Print configuration error and exit. */
 void jerror(json_error_t *err, const char *fmt, ...)
 	__attribute__ ((format(printf, 2, 3)));
-
-#ifdef __cplusplus
-}
-#endif

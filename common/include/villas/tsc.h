@@ -34,10 +34,6 @@
 
 #include <villas/kernel/kernel.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifndef bit_TSC
   #define bit_TSC (1 << 4)
 #endif
@@ -103,7 +99,3 @@ static uint64_t tsc_now(struct tsc *t)
 int tsc_init(struct tsc *t);
 
 uint64_t tsc_rate_to_cycles(struct tsc *t, double rate);
-
-#ifdef __cplusplus
-}
-#endif

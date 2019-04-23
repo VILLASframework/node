@@ -28,10 +28,6 @@
 
 #include <time.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /** We can choose between two periodic task implementations */
 //#define PERIODIC_TASK_IMPL NANOSLEEP
 #define TIMERFD		1
@@ -90,7 +86,3 @@ int task_set_rate(struct task *t, double rate);
  * Note: currently not supported on all platforms.
  */
 int task_fd(struct task *t);
-
-#ifdef __cplusplus
-}
-#endif

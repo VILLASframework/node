@@ -28,10 +28,6 @@
 
 #include <time.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /** Compare two timestamps. Return zero if they are equal */
 ssize_t time_cmp(const struct timespec *a, const struct timespec *b);
 
@@ -52,7 +48,3 @@ double time_to_double(const struct timespec *ts);
 
 /** Convert double containing seconds after 1970 to timespec. */
 struct timespec time_from_double(double secs);
-
-#ifdef __cplusplus
-}
-#endif

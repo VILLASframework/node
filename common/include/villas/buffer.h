@@ -29,10 +29,6 @@
 
 #include <villas/common.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct buffer {
 	enum state state;
 
@@ -52,7 +48,3 @@ int buffer_append(struct buffer *b, const char *data, size_t len);
 int buffer_parse_json(struct buffer *b, json_t **j);
 
 int buffer_append_json(struct buffer *b, json_t *j);
-
-#ifdef __cplusplus
-}
-#endif
