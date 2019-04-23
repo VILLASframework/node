@@ -27,7 +27,7 @@
 #include <netinet/ip.h>
 
 #include <villas/nodes/socket.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/format_type.h>
 #include <villas/sample.h>
 #include <villas/queue.h>

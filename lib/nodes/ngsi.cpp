@@ -29,7 +29,7 @@
 #include <unistd.h>
 
 #include <villas/nodes/ngsi.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/timing.h>
 #include <villas/plugin.h>
 #include <villas/node/config.h>

@@ -29,7 +29,7 @@
 #include <libwebsockets.h>
 
 #include <villas/timing.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/buffer.h>
 #include <villas/plugin.h>
 #include <villas/nodes/websocket.hpp>

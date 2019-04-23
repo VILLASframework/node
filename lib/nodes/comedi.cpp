@@ -29,7 +29,7 @@
 
 #include <villas/plugin.h>
 #include <villas/nodes/comedi.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 /* Utility functions to dump a comedi_cmd graciously taken from comedilib demo */
 static char* comedi_cmd_trigger_src(unsigned int src, char *buf);

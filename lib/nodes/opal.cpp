@@ -26,7 +26,7 @@
 #include <math.h>
 
 #include <villas/nodes/opal.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/plugin.h>
 
 /* Private static storage */

@@ -28,7 +28,7 @@
 #include <errno.h>
 
 #include <villas/nodes/file.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/timing.h>
 #include <villas/queue.h>
 #include <villas/plugin.h>

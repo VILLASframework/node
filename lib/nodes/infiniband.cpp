@@ -27,7 +27,7 @@
 #include <villas/node/config.h>
 #include <villas/nodes/infiniband.hpp>
 #include <villas/plugin.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/format_type.h>
 #include <villas/memory.h>
 #include <villas/memory/ib.h>

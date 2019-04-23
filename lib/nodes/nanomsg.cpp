@@ -26,7 +26,7 @@
 
 #include <villas/plugin.h>
 #include <villas/nodes/nanomsg.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/format_type.h>
 
 int nanomsg_reverse(struct node *n)

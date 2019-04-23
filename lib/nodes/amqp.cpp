@@ -27,7 +27,7 @@
 
 #include <villas/plugin.h>
 #include <villas/nodes/amqp.hpp>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/format_type.h>
 
 static void amqp_default_ssl_info(struct amqp_ssl_info *s)

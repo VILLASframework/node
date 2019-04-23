@@ -29,7 +29,7 @@
 
 #include <villas/nodes/zeromq.hpp>
 #include <villas/node.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 #include <villas/queue.h>
 #include <villas/plugin.h>
 #include <villas/format_type.h>

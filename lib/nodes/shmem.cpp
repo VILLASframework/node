@@ -34,7 +34,7 @@
 #include <villas/nodes/shmem.hpp>
 #include <villas/plugin.h>
 #include <villas/timing.h>
-#include <villas/utils.h>
+#include <villas/utils.hpp>
 
 int shmem_parse(struct node *n, json_t *cfg)
 {
