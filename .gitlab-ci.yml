@@ -38,11 +38,11 @@ prepare:fedora:docker-dev:
     - shell
     - linux
 
-#prepare:raspbian:docker-dev:
-#  extends: prepare:fedora:docker-dev
-#  variables:
-#    DOCKER_FILE: packaging/docker/Dockerfile.dev-raspbian
-#    DOCKER_IMAGE_DEV: villas/node-dev-raspbian
+prepare:raspbian:docker-dev:
+  extends: prepare:fedora:docker-dev
+  variables:
+    DOCKER_FILE: packaging/docker/Dockerfile.dev-raspbian
+    DOCKER_IMAGE_DEV: villas/node-dev-raspbian
 
 prepare:ubuntu:docker-dev:
   extends: prepare:fedora:docker-dev
@@ -79,11 +79,12 @@ build:ubuntu:x86_64:
     LD_PRELOAD: /lib/x86_64-linux-gnu/libSegFault.so
     DOCKER_IMAGE_DEV: villas/node-dev-ubuntu
 
-#build:raspbian:armv6l:
-#  extends: build:fedora:x86_64
-#  variables:
-#    LD_PRELOAD: /lib/arm-linux-gnueabihf/libSegFault.so
-#    DOCKER_IMAGE_DEV: villas/node-dev-raspbian
+build:raspbian:armv6l:
+  extends: build:fedora:x86_64
+  variables:
+    LD_PRELOAD: /lib/arm-linux-gnueabihf/libSegFault.so
+    DOCKER_IMAGE_DEV: villas/node-dev-raspbian
+    CMAKE_OPTS: -DWITH_NODE_INFINIBAND=OFF -DWITH_API=OFF
 
 build:docs:
   stage: build
