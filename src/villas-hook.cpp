@@ -222,6 +222,12 @@ check:			if (optarg == endptr)
 
 				throw RuntimeError("Failed to read from stdin");
 			}
+			
+			if (!(smp->flags & SAMPLE_HAS_TS_RECEIVED)){
+			 timespec now = time_now();
+			smp->ts.received = now;
+			smp->flags |= SAMPLE_HAS_TS_RECEIVED;
+			}
 
 			logger->debug("Read {} smps from stdin", recv);
 
