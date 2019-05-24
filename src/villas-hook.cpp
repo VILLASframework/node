@@ -222,18 +222,19 @@ check:			if (optarg == endptr)
 
 				throw RuntimeError("Failed to read from stdin");
 			}
-			
-			if (!(smp->flags & SAMPLE_HAS_TS_RECEIVED)){
-			 timespec now = time_now();
-			smp->ts.received = now;
-			smp->flags |= SAMPLE_HAS_TS_RECEIVED;
-			}
+
+			timespec now = time_now();
 
 			logger->debug("Read {} smps from stdin", recv);
 
 			unsigned send = 0;
 			for (int processed = 0; processed < recv; processed++) {
 				struct sample *smp = smps[processed];
+
+				if (!(smp->flags & SAMPLE_HAS_TS_RECEIVED)){
+					smp->ts.received = now;
+					smp->flags |= SAMPLE_HAS_TS_RECEIVED;
+				}
 
 				ret = h->process(smp);
 				switch (ret) {
