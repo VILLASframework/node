@@ -25,7 +25,6 @@ add_library(villas-common SHARED
 	buffer.cpp
 	json_buffer.cpp
 	compat.cpp
-	crypt.cpp
 	hist.cpp
 	dsp/pid.cpp
 	kernel/kernel.cpp

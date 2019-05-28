@@ -36,6 +36,10 @@
 #include <ctype.h>
 #include <fcntl.h>
 
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+#include <openssl/evp.h>
+
 #include <villas/config.h>
 #include <villas/utils.hpp>
 #include <villas/colors.hpp>
@@ -47,15 +51,14 @@ static pthread_t main_thread;
 namespace villas {
 namespace utils {
 
-std::vector<std::string>
-tokenize(std::string s, std::string delimiter)
+std::vector<std::string> tokenize(std::string s, std::string delimiter)
 {
 	std::vector<std::string> tokens;
 
 	size_t lastPos = 0;
 	size_t curentPos;
 
-	while((curentPos = s.find(delimiter, lastPos)) != std::string::npos) {
+	while ((curentPos = s.find(delimiter, lastPos)) != std::string::npos) {
 		const size_t tokenLength = curentPos - lastPos;
 		tokens.push_back(s.substr(lastPos, tokenLength));
 
@@ -64,7 +67,7 @@ tokenize(std::string s, std::string delimiter)
 	}
 
 	/* Check if there's a last token behind the last delimiter. */
-	if(lastPos != s.length()) {
+	if (lastPos != s.length()) {
 		const size_t lastTokenLength = s.length() - lastPos;
 		tokens.push_back(s.substr(lastPos, lastTokenLength));
 	}
@@ -328,5 +331,82 @@ size_t strlenp(const char *str)
 	return sz;
 }
 
+int sha1sum(FILE *f, unsigned char *sha1)
+{
+	SHA_CTX c;
+	char buf[512];
+	ssize_t bytes;
+	long seek;
+
+	seek = ftell(f);
+	fseek(f, 0, SEEK_SET);
+
+	SHA1_Init(&c);
+
+	bytes = fread(buf, 1, 512, f);
+	while (bytes > 0) {
+		SHA1_Update(&c, buf, bytes);
+		bytes = fread(buf, 1, 512, f);
+	}
+
+	SHA1_Final(sha1, &c);
+
+	fseek(f, seek, SEEK_SET);
+
+	return 0;
+}
+
+namespace base64 {
+
+std::string encode(const std::string &str)
+{
+	return encode((unsigned char *) str.data(), str.size());
+}
+
+std::string decode(const std::string &str)
+{
+	return decode((unsigned char *) str.data(), str.size());
+}
+
+std::string encode(const unsigned char *input, size_t len)
+{
+	BIO *bmem, *b64;
+	BUF_MEM *bptr;
+
+	b64 = BIO_new(BIO_f_base64());
+	bmem = BIO_new(BIO_s_mem());
+	b64 = BIO_push(b64, bmem);
+	BIO_write(b64, input, len);
+	BIO_flush(b64);
+	BIO_get_mem_ptr(b64, &bptr);
+
+	std::string str(bptr->data, bptr->length);
+
+	BIO_free_all(b64);
+
+	return str;
+}
+
+std::string decode(unsigned char *input, size_t len)
+{
+	BIO *b64, *bmem;
+
+	std::string str(len, 0);
+
+	char *buffer = (char *) malloc(len);
+	memset(buffer, 0, len);
+
+	b64 = BIO_new(BIO_f_base64());
+	bmem = BIO_new_mem_buf(input, len);
+	bmem = BIO_push(b64, bmem);
+
+	BIO_read(bmem, str.data(), str.capacity());
+
+	BIO_free_all(bmem);
+
+	return buffer;
+}
+
+} /* namespace base64 */
 } /* namespace utils */
 } /* namespace villas */

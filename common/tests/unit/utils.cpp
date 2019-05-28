@@ -22,7 +22,6 @@
 
 #include <criterion/criterion.h>
 
-#include <villas/crypt.h>
 #include <villas/colors.hpp>
 #include <villas/utils.hpp>
 #include <villas/version.hpp>

@@ -35,7 +35,6 @@
 #include <villas/utils.hpp>
 #include <villas/config.h>
 #include <villas/advio.h>
-#include <villas/crypt.h>
 
 #define BAR_WIDTH 60 /**< How wide you want the progress meter to be. */
 
