@@ -32,7 +32,6 @@
 #include <villas/sample.h>
 #include <villas/shmem.h>
 #include <villas/colors.hpp>
-#include <villas/utils.h>
 #include <villas/tool.hpp>
 #include <villas/log.hpp>
 #include <villas/utils.hpp>
