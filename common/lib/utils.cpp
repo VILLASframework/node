@@ -400,7 +400,7 @@ std::string decode(unsigned char *input, size_t len)
 	bmem = BIO_new_mem_buf(input, len);
 	bmem = BIO_push(b64, bmem);
 
-	BIO_read(bmem, str.data(), str.capacity());
+	BIO_read(bmem, const_cast<std::string::value_type *>(str.data()), str.capacity());
 
 	BIO_free_all(bmem);
 
