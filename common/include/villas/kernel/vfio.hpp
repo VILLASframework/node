@@ -162,4 +162,4 @@ private:
 
 /** @} */
 
-} // namespace villas
+} /* namespace villas */

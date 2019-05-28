@@ -271,4 +271,4 @@ private:
 	static MemoryManager* instance;
 };
 
-} // namespace villas
+} /* namespace villas */

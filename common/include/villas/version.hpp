@@ -49,5 +49,5 @@ public:
 	inline bool operator>=(const Version& rhs) { return cmp(*this, rhs) >= 0; }
 };
 
-} // namespace villas
-} // namespace utils
+} /* namespace villas */
+} /* namespace utils */

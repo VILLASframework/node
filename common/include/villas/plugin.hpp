@@ -135,5 +135,5 @@ protected:
 	}
 };
 
-} // namespace plugin
-} // namespace villas
+} /* namespace plugin */
+} /* namespace villas */

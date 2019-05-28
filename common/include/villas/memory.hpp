@@ -329,4 +329,4 @@ private:
 	static std::map<int, std::unique_ptr<HostDmaRamAllocator>> allocators;
 };
 
-} // namespace villas
+} /* namespace villas */

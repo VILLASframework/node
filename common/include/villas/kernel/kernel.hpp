@@ -31,5 +31,5 @@ namespace kernel {
 /** Get the version of the kernel. */
 utils::Version getVersion();
 
-} // namespace villas
-} // namespace kernel
+} /* namespace villas */
+} /* namespace kernel */
