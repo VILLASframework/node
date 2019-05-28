@@ -81,4 +81,4 @@ public:
 	std::string getLevelName() const;
 };
 
-} // namespace villas
+} /* namespace villas */

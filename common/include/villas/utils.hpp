@@ -28,14 +28,13 @@
 #include <vector>
 
 #include <signal.h>
-
-
 #include <stdlib.h>
 #include <stdint.h>
 #include <sched.h>
 #include <assert.h>
 #include <sys/types.h>
-#include <signal.h>
+
+#include <openssl/sha.h>
 
 #include <villas/config.h>
 #include <villas/log.h>
@@ -202,7 +201,23 @@ pid_t spawn(const char *name, char *const argv[]);
 /** Determines the string length as printed on the screen (ignores escable sequences). */
 size_t strlenp(const char *str);
 
-} // namespace utils
-} // namespace villas
+/** Calculate SHA1 hash of complete file \p f and place it into \p sha1.
+ *
+ * @param sha1[out] Must be SHA_DIGEST_LENGTH (20) in size.
+ * @retval 0 Everything was okay.
+ */
+int sha1sum(FILE *f, unsigned char *sha1);
+
+namespace base64 {
+
+std::string encode(const std::string &str);
+std::string encode(const unsigned char *input, size_t len);
+
+std::string decode(const std::string &str);
+std::string decode(unsigned char *input, size_t len);
+
+} /* namespace base64 */
+} /* namespace utils */
+} /* namespace villas */
 
 using namespace villas::utils;

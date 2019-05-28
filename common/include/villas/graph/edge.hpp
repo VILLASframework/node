@@ -54,4 +54,4 @@ private:
 };
 
 } // namespacae graph
-} // namespace villas
+} /* namespace villas */

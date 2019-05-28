@@ -55,4 +55,4 @@ public:
 	json_t * decode();
 };
 
-} // namespace villas
+} /* namespace villas */
