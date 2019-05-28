@@ -26,7 +26,7 @@
 
 #include <curl/curl.h>
 
-#include <villas/crypt.h>
+#include <villas/utils.hpp>
 
 struct advio {
 	CURL *curl;
