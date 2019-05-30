@@ -30,6 +30,7 @@ add_executable(unit-tests-common
 	task.cpp
 	timing.cpp
 	utils.cpp
+	base64.cpp
 )
 
 if(ARCH STREQUAL "x86_64")

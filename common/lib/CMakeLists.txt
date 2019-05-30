@@ -45,6 +45,7 @@ add_library(villas-common SHARED
 	version.cpp
 	common.cpp
 	tool.cpp
+	base64.cpp
 )
 
 execute_process( 

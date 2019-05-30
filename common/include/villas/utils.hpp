@@ -210,11 +210,10 @@ int sha1sum(FILE *f, unsigned char *sha1);
 
 namespace base64 {
 
-std::string encode(const std::string &str);
-std::string encode(const unsigned char *input, size_t len);
+using byte = std::uint8_t;
 
-std::string decode(const std::string &str);
-std::string decode(unsigned char *input, size_t len);
+std::string encode(const std::vector<byte> &input);
+std::vector<byte> decode(const std::string &input);
 
 } /* namespace base64 */
 } /* namespace utils */

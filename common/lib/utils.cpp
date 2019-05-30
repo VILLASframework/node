@@ -356,57 +356,5 @@ int sha1sum(FILE *f, unsigned char *sha1)
 	return 0;
 }
 
-namespace base64 {
-
-std::string encode(const std::string &str)
-{
-	return encode((unsigned char *) str.data(), str.size());
-}
-
-std::string decode(const std::string &str)
-{
-	return decode((unsigned char *) str.data(), str.size());
-}
-
-std::string encode(const unsigned char *input, size_t len)
-{
-	BIO *bmem, *b64;
-	BUF_MEM *bptr;
-
-	b64 = BIO_new(BIO_f_base64());
-	bmem = BIO_new(BIO_s_mem());
-	b64 = BIO_push(b64, bmem);
-	BIO_write(b64, input, len);
-	BIO_flush(b64);
-	BIO_get_mem_ptr(b64, &bptr);
-
-	std::string str(bptr->data, bptr->length);
-
-	BIO_free_all(b64);
-
-	return str;
-}
-
-std::string decode(unsigned char *input, size_t len)
-{
-	BIO *b64, *bmem;
-
-	std::string str(len, 0);
-
-	char *buffer = (char *) malloc(len);
-	memset(buffer, 0, len);
-
-	b64 = BIO_new(BIO_f_base64());
-	bmem = BIO_new_mem_buf(input, len);
-	bmem = BIO_push(b64, bmem);
-
-	BIO_read(bmem, const_cast<std::string::value_type *>(str.data()), str.capacity());
-
-	BIO_free_all(bmem);
-
-	return buffer;
-}
-
-} /* namespace base64 */
 } /* namespace utils */
 } /* namespace villas */
