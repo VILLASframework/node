@@ -31,6 +31,7 @@
 #pragma GCC diagnostic ignored "-Wunused-result"
 
 using namespace villas;
+using namespace villas::utils;
 
 int log_get_width()
 {

@@ -219,5 +219,3 @@ std::string decode(unsigned char *input, size_t len);
 } /* namespace base64 */
 } /* namespace utils */
 } /* namespace villas */
-
-using namespace villas::utils;
