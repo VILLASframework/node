@@ -31,6 +31,8 @@
 #include <villas/config.h>
 #include <villas/kernel/pci.h>
 
+using namespace villas::utils;
+
 int pci_init(struct pci *p)
 {
 	struct dirent *e;

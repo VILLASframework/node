@@ -29,6 +29,8 @@
 #include <villas/boxes.hpp>
 #include <villas/log.h>
 
+using namespace villas::utils;
+
 int Table::resize(int w)
 {
 	int norm, flex, fixed, total;

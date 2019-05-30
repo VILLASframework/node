@@ -36,6 +36,8 @@
 #include <villas/config.h>
 #include <villas/advio.h>
 
+using namespace villas::utils;
+
 #define BAR_WIDTH 60 /**< How wide you want the progress meter to be. */
 
 static int advio_trace(CURL * /* handle */, curl_infotype type, char *data, size_t size, void * /* userp */)

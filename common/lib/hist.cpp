@@ -32,6 +32,8 @@
 #include <villas/config.h>
 #include <villas/table.hpp>
 
+using namespace villas::utils;
+
 #define VAL(h, i)	((h)->low + (i) * (h)->resolution)
 #define INDEX(h, v)	round((v - (h)->low) / (h)->resolution)
 
