@@ -46,6 +46,7 @@ add_library(villas-common SHARED
 	common.cpp
 	tool.cpp
 	base64.cpp
+	popen.cpp
 )
 
 execute_process( 
