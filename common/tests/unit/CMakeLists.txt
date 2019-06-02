@@ -31,6 +31,7 @@ add_executable(unit-tests-common
 	timing.cpp
 	utils.cpp
 	base64.cpp
+	popen.cpp
 )
 
 if(ARCH STREQUAL "x86_64")
