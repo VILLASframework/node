@@ -129,7 +129,7 @@ double Hist::getStddev() const
 	return sqrt(getVar());
 }
 
-void Hist::print(int details) const
+void Hist::print(bool details) const
 {
 	if (total > 0) {
 		Hist::cnt_t missed = total - higher - lower;
@@ -142,7 +142,7 @@ void Hist::print(int details) const
 		info("Variance: %g", getVar());
 		info("Stddev:   %g", getStddev());
 
-		if (details > 0 && total - higher - lower > 0) {
+		if (details && total - higher - lower > 0) {
 			char *buf =dump();
 			info("Matlab: %s", buf);
 			free(buf);
