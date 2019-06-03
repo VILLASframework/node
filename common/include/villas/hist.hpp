@@ -61,7 +61,7 @@ public:
 	double getStddev() const;
 
 	/** Print all statistical properties of distribution including a graphilcal plot of the histogram. */
-	void print(const int details) const;
+	void print(bool details) const;
 
 	/** Print ASCII style plot of histogram */
 	void plot() const;
