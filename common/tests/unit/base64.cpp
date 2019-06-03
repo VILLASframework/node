@@ -35,10 +35,10 @@ static std::vector<byte> vec(const char *str)
 	return std::vector<byte>((byte *) str, (byte *) str + strlen(str));
 }
 
-static std::string str(const std::vector<byte> &vec)
-{
-	return std::string((char *) vec.data(), vec.size());
-}
+// static std::string str(const std::vector<byte> &vec)
+// {
+// 	return std::string((char *) vec.data(), vec.size());
+// }
 
 Test(base64, encoding)
 {
