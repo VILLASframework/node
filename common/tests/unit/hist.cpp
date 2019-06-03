@@ -33,7 +33,7 @@ TestSuite(hist, .description = "Histogram");
 
 Test(hist, simple) {
 
-	Hist h(0, 0);
+	Hist h;
 
 	for (unsigned i = 0; i < ARRAY_LEN(test_data); i++)
 		h.put(test_data[i]);

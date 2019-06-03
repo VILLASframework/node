@@ -40,7 +40,7 @@ public:
 	using cnt_t = uintmax_t;
 
 	/** Initialize struct hist with supplied values and allocate memory for buckets. */
-	Hist(int buckets, cnt_t warmup);
+	Hist(int buckets = 0, cnt_t warmup = 0);
 
 	/** Free the dynamically allocated memory. */
 	~Hist();
