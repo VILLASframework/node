@@ -58,6 +58,11 @@ public:
 		return *(output.stream);
 	}
 
+	int fd()
+	{
+		return input.buffer->fd();
+	}
+
 protected:
 	std::string command;
 	pid_t pid;
