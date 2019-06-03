@@ -1,4 +1,4 @@
-/** Histogram functions.
+/** Histogram class.
  *
  * @file
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
@@ -28,13 +28,81 @@
 
 #include <jansson.h>
 
-#define HIST_HEIGHT	(LOG_WIDTH - 55)
-#define HIST_SEQ	17
+#define HEIGHT	(LOG_WIDTH - 55)
+#define SEQ	17
 
-typedef uintmax_t hist_cnt_t;
+namespace villas {
 
 /** Histogram structure used to collect statistics. */
-struct hist {
+class Hist {
+
+public:
+	using cnt_t = uintmax_t;
+
+	/** Initialize struct hist with supplied values and allocate memory for buckets. */
+	Hist(int buckets, cnt_t warmup);
+
+	/** Free the dynamically allocated memory. */
+	~Hist();
+
+	/** Reset all counters and values back to zero. */
+	void reset();
+
+	/** Count a value within its corresponding bucket. */
+	void put(double value);
+
+	/** Calcluate the variance of all counted values. */
+	double getVar() const;
+
+	/** Calculate the mean average of all counted values. */
+	double getMean() const;
+
+	/** Calculate the standard derivation of all counted values. */
+	double getStddev() const;
+
+	/** Print all statistical properties of distribution including a graphilcal plot of the histogram. */
+	void print(const int details) const;
+
+	/** Print ASCII style plot of histogram */
+	void plot() const;
+
+	/** Dump histogram data in Matlab format.
+	 *
+	 * @return The string containing the dump. The caller is responsible to free() the buffer.
+	 */
+	char * dump() const;
+
+	/** Prints Matlab struct containing all infos to file. */
+	int dumpMatlab(FILE *f) const;
+
+	/** Write the histogram in JSON format to fiel \p f. */
+	int dumpJson(FILE *f) const;
+
+	/** Build a libjansson / JSON object of the histogram. */
+	json_t * toJson() const;
+
+	double getHigh() const
+	{
+		return high;
+	}
+	double getLow() const
+	{
+		return low;
+	}
+	double getHighest() const
+	{
+		return highest;
+	}
+	double getLowest() const
+	{
+		return lowest;
+	}
+	double getLast() const
+	{
+		return last;
+	}
+
+protected:
 	double resolution;	/**< The distance between two adjacent buckets. */
 
 	double high;		/**< The value of the highest bucket. */
@@ -46,60 +114,16 @@ struct hist {
 
 	int length;		/**< The number of buckets in #data. */
 
-	hist_cnt_t total;	/**< Total number of counted values. */
-	hist_cnt_t warmup;	/**< Number of values which are used during warmup phase. */
+	cnt_t total;		/**< Total number of counted values. */
+	cnt_t warmup;		/**< Number of values which are used during warmup phase. */
 
-	hist_cnt_t higher;	/**< The number of values which are higher than #high. */
-	hist_cnt_t lower;	/**< The number of values which are lower than #low. */
+	cnt_t higher;		/**< The number of values which are higher than #high. */
+	cnt_t lower;		/**< The number of values which are lower than #low. */
 
-	hist_cnt_t *data;	/**< Pointer to dynamically allocated array of size length. */
+
+	cnt_t *data;		/**< Pointer to dynamically allocated array of size length. */
 
 	double _m[2], _s[2];	/**< Private variables for online variance calculation */
 };
 
-#define hist_last(h)	((h)->last)
-#define hist_highest(h)	((h)->highest)
-#define hist_lowest(h)	((h)->lowest)
-#define hist_total(h)	((h)->total)
-
-/** Initialize struct hist with supplied values and allocate memory for buckets. */
-int hist_init(struct hist *h, int buckets, hist_cnt_t warmup);
-
-/** Free the dynamically allocated memory. */
-int hist_destroy(struct hist *h);
-
-/** Reset all counters and values back to zero. */
-void hist_reset(struct hist *h);
-
-/** Count a value within its corresponding bucket. */
-void hist_put(struct hist *h, double value);
-
-/** Calcluate the variance of all counted values. */
-double hist_var(const struct hist *h);
-
-/** Calculate the mean average of all counted values. */
-double hist_mean(const struct hist *h);
-
-/** Calculate the standard derivation of all counted values. */
-double hist_stddev(const struct hist *h);
-
-/** Print all statistical properties of distribution including a graphilcal plot of the histogram. */
-void hist_print(const struct hist *h, int details);
-
-/** Print ASCII style plot of histogram */
-void hist_plot(const struct hist *h);
-
-/** Dump histogram data in Matlab format.
- *
- * @return The string containing the dump. The caller is responsible to free() the buffer.
- */
-char * hist_dump(const struct hist *h);
-
-/** Prints Matlab struct containing all infos to file. */
-int hist_dump_matlab(const struct hist *h, FILE *f);
-
-/** Write the histogram in JSON format to fiel \p f. */
-int hist_dump_json(const struct hist *h, FILE *f);
-
-/** Build a libjansson / JSON object of the histogram. */
-json_t * hist_json(const struct hist *h);
+} /* namespace villas */

@@ -27,21 +27,18 @@
 
 const double test_data[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
+using namespace villas;
+
 TestSuite(hist, .description = "Histogram");
 
 Test(hist, simple) {
-	struct hist h;
-	int ret;
 
-	ret = hist_init(&h, 0, 0);
-	cr_assert_eq(ret, 0);
+	Hist h(0, 0);
 
 	for (unsigned i = 0; i < ARRAY_LEN(test_data); i++)
-		hist_put(&h, test_data[i]);
+		h.put(test_data[i]);
 
-	cr_assert_float_eq(hist_mean(&h), 5.5, 1e-6);
-	cr_assert_float_eq(hist_var(&h), 9.1666, 1e-3,);
-	cr_assert_float_eq(hist_stddev(&h), 3.027650, 1e-6);
-
-	hist_destroy(&h);
+	cr_assert_float_eq(h.getMean(), 5.5, 1e-6);
+	cr_assert_float_eq(h.getVar(), 9.1666, 1e-3,);
+	cr_assert_float_eq(h.getStddev(), 3.027650, 1e-6);
 }

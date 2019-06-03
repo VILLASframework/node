@@ -1,4 +1,4 @@
-/** Histogram functions.
+/** Histogram class.
  *
  * @author Steffen Vogel <stvogel@eonerc.rwth-aachen.de>
  * @copyright 2014-2019, Institute for Automation of Complex Power Systems, EONERC
@@ -34,141 +34,134 @@
 
 using namespace villas::utils;
 
-#define VAL(h, i)	((h)->low + (i) * (h)->resolution)
-#define INDEX(h, v)	round((v - (h)->low) / (h)->resolution)
+namespace villas {
 
-int hist_init(struct hist *h, int buckets, hist_cnt_t warmup)
+Hist::Hist(int buckets, Hist::cnt_t wu)
 {
-	h->length = buckets;
-	h->warmup = warmup;
+	length = buckets;
+	warmup = wu;
 
-	h->data = (hist_cnt_t *) (buckets ? alloc(h->length * sizeof(hist_cnt_t)) : nullptr);
+	data = (Hist::cnt_t *) (buckets ? alloc(length * sizeof(Hist::cnt_t)) : nullptr);
 
-	hist_reset(h);
-
-	return 0;
+	Hist::reset();
 }
 
-int hist_destroy(struct hist *h)
+Hist::~Hist()
 {
-	if (h->data) {
-		free(h->data);
-		h->data = nullptr;
-	}
-
-	return 0;
+	if (data)
+		free(data);
 }
 
-void hist_put(struct hist *h, double value)
+void Hist::put(double value)
 {
-	h->last = value;
+	last = value;
 
 	/* Update min/max */
-	if (value > h->highest)
-		h->highest = value;
-	if (value < h->lowest)
-		h->lowest = value;
+	if (value > highest)
+		highest = value;
+	if (value < lowest)
+		lowest = value;
 
-	if (h->total < h->warmup) {
+	if (total < warmup) {
 
 	}
-	else if (h->total == h->warmup) {
-		h->low  = hist_mean(h) - 3 * hist_stddev(h);
-		h->high = hist_mean(h) + 3 * hist_stddev(h);
-		h->resolution = (h->high - h->low) / h->length;
+	else if (total == warmup) {
+		low  = getMean() - 3 * getStddev();
+		high = getMean() + 3 * getStddev();
+		resolution = (high - low) / length;
 	}
 	else {
-		int idx = INDEX(h, value);
+		int idx = round((value - low) / resolution);
 
 		/* Check bounds and increment */
-		if      (idx >= h->length)
-			h->higher++;
+		if      (idx >= length)
+			higher++;
 		else if (idx < 0)
-			h->lower++;
-		else if (h->data != nullptr)
-			h->data[idx]++;
+			lower++;
+		else if (data != nullptr)
+			data[idx]++;
 	}
 
-	h->total++;
+	total++;
 
 	/* Online / running calculation of variance and mean
 	 *  by Donald Knuth’s Art of Computer Programming, Vol 2, page 232, 3rd edition */
-	if (h->total == 1) {
-		h->_m[1] = h->_m[0] = value;
-		h->_s[1] = 0.0;
+	if (total == 1) {
+		_m[1] = _m[0] = value;
+		_s[1] = 0.0;
 	}
 	else {
-		h->_m[0] = h->_m[1] + (value - h->_m[1]) / h->total;
-		h->_s[0] = h->_s[1] + (value - h->_m[1]) * (value - h->_m[0]);
+		_m[0] = _m[1] + (value - _m[1]) / total;
+		_s[0] = _s[1] + (value - _m[1]) * (value - _m[0]);
 
 		/* Set up for next iteration */
-		h->_m[1] = h->_m[0];
-		h->_s[1] = h->_s[0];
+		_m[1] = _m[0];
+		_s[1] = _s[0];
 	}
 
 }
 
-void hist_reset(struct hist *h)
+void Hist::reset()
 {
-	h->total = 0;
-	h->higher = 0;
-	h->lower = 0;
+	total = 0;
+	higher = 0;
+	lower = 0;
 
-	h->highest = -DBL_MAX;
-	h->lowest = DBL_MAX;
+	highest = -DBL_MAX;
+	lowest = DBL_MAX;
 
-	if (h->data)
-		memset(h->data, 0, h->length * sizeof(unsigned));
+	if (data)
+		memset(data, 0, length * sizeof(unsigned));
 }
 
-double hist_mean(const struct hist *h)
+double Hist::getMean() const
 {
-	return (h->total > 0) ? h->_m[0] : NAN;
+	return (total > 0) ? _m[0] : NAN;
 }
 
-double hist_var(const struct hist *h)
+double Hist::getVar() const
 {
-	return (h->total > 1) ? h->_s[0] / (h->total - 1) : NAN;
+	return (total > 1) ? _s[0] / (total - 1) : NAN;
 }
 
-double hist_stddev(const struct hist *h)
+double Hist::getStddev() const
 {
-	return sqrt(hist_var(h));
+	return sqrt(getVar());
 }
 
-void hist_print(const struct hist *h, int details)
+void Hist::print(int details) const
 {
-	if (h->total > 0) {
-		hist_cnt_t missed = h->total - h->higher - h->lower;
+	if (total > 0) {
+		Hist::cnt_t missed = total - higher - lower;
 
-		info("Counted values: %ju (%ju between %f and %f)", h->total, missed, h->low, h->high);
-		info("Highest:  %g", h->highest);
-		info("Lowest:   %g", h->lowest);
-		info("Mu:       %g", hist_mean(h));
-		info("1/Mu:     %g", 1.0/hist_mean(h));
-		info("Variance: %g", hist_var(h));
-		info("Stddev:   %g", hist_stddev(h));
+		info("Counted values: %ju (%ju between %f and %f)", total, missed, low, high);
+		info("Highest:  %g", highest);
+		info("Lowest:   %g", lowest);
+		info("Mu:       %g", getMean());
+		info("1/Mu:     %g", 1.0 / getMean());
+		info("Variance: %g", getVar());
+		info("Stddev:   %g", getStddev());
 
-		if (details > 0 && h->total - h->higher - h->lower > 0) {
-			char *buf = hist_dump(h);
+		if (details > 0 && total - higher - lower > 0) {
+			char *buf =dump();
 			info("Matlab: %s", buf);
 			free(buf);
 
-			hist_plot(h);
+			plot();
 		}
 	}
 	else
-		info("Counted values: %ju", h->total);
+		info("Counted values: %ju", total);
 }
 
-void hist_plot(const struct hist *h)
+void Hist::plot() const
 {
-	hist_cnt_t max = 1;
+	Hist::cnt_t max = 1;
 
 	/* Get highest bar */
-	for (int i = 0; i < h->length; i++) {
-		if (h->data[i] > max)
-			max = h->data[i];
+	for (int i = 0; i < length; i++) {
+		if (data[i] > max)
+			max = data[i];
 	}
 
 	std::vector<TableColumn> cols = {
@@ -182,9 +175,9 @@ void hist_plot(const struct hist *h)
 	/* Print plot */
 	table.header();
 
-	for (int i = 0; i < h->length; i++) {
-		double value = VAL(h, i);
-		hist_cnt_t cnt = h->data[i];
+	for (int i = 0; i < length; i++) {
+		double value = low + (i) * resolution;
+		Hist::cnt_t cnt = data[i];
 		int bar = cols[2].getWidth() * ((double) cnt / max);
 
 		char *buf = strf("%s", "");
@@ -197,47 +190,47 @@ void hist_plot(const struct hist *h)
 	}
 }
 
-char * hist_dump(const struct hist *h)
+char * Hist::dump() const
 {
 	char *buf = (char *) alloc(128);
 
 	strcatf(&buf, "[ ");
 
-	for (int i = 0; i < h->length; i++)
-		strcatf(&buf, "%ju ", h->data[i]);
+	for (int i = 0; i < length; i++)
+		strcatf(&buf, "%ju ", data[i]);
 
 	strcatf(&buf, "]");
 
 	return buf;
 }
 
-json_t * hist_json(const struct hist *h)
+json_t * Hist::toJson() const
 {
 	json_t *json_buckets, *json_hist;
 
 	json_hist = json_pack("{ s: f, s: f, s: i }",
-		"low", h->low,
-		"high", h->high,
-		"total", h->total
+		"low", low,
+		"high", high,
+		"total", total
 	);
 
-	if (h->total > 0) {
+	if (total > 0) {
 		json_object_update(json_hist, json_pack("{ s: i, s: i, s: f, s: f, s: f, s: f, s: f }",
-			"higher", h->higher,
-			"lower", h->lower,
-			"highest", h->highest,
-			"lowest", h->lowest,
-			"mean", hist_mean(h),
-			"variance", hist_var(h),
-			"stddev", hist_stddev(h)
+			"higher", higher,
+			"lower", lower,
+			"highest", highest,
+			"lowest", lowest,
+			"mean", getMean(),
+			"variance", getVar(),
+			"stddev", getStddev()
 		));
 	}
 
-	if (h->total - h->lower - h->higher > 0) {
+	if (total - lower - higher > 0) {
 		json_buckets = json_array();
 
-		for (int i = 0; i < h->length; i++)
-			json_array_append(json_buckets, json_integer(h->data[i]));
+		for (int i = 0; i < length; i++)
+			json_array_append(json_buckets, json_integer(data[i]));
 
 		json_object_set(json_hist, "buckets", json_buckets);
 	}
@@ -245,9 +238,9 @@ json_t * hist_json(const struct hist *h)
 	return json_hist;
 }
 
-int hist_dump_json(const struct hist *h, FILE *f)
+int Hist::dumpJson(FILE *f) const
 {
-	json_t *j = hist_json(h);
+	json_t *j = Hist::toJson();
 
 	int ret = json_dumpf(j, f, 0);
 
@@ -256,29 +249,31 @@ int hist_dump_json(const struct hist *h, FILE *f)
 	return ret;
 }
 
-int hist_dump_matlab(const struct hist *h, FILE *f)
+int Hist::dumpMatlab(FILE *f) const
 {
 	fprintf(f, "struct(");
-	fprintf(f, "'low', %f, ", h->low);
-	fprintf(f, "'high', %f, ", h->high);
-	fprintf(f, "'total', %ju, ", h->total);
-	fprintf(f, "'higher', %ju, ", h->higher);
-	fprintf(f, "'lower', %ju, ", h->lower);
-	fprintf(f, "'highest', %f, ", h->highest);
-	fprintf(f, "'lowest', %f, ", h->lowest);
-	fprintf(f, "'mean', %f, ", hist_mean(h));
-	fprintf(f, "'variance', %f, ", hist_var(h));
-	fprintf(f, "'stddev', %f, ", hist_stddev(h));
+	fprintf(f, "'low', %f, ", low);
+	fprintf(f, "'high', %f, ", high);
+	fprintf(f, "'total', %ju, ", total);
+	fprintf(f, "'higher', %ju, ", higher);
+	fprintf(f, "'lower', %ju, ", lower);
+	fprintf(f, "'highest', %f, ", highest);
+	fprintf(f, "'lowest', %f, ", lowest);
+	fprintf(f, "'mean', %f, ", getMean());
+	fprintf(f, "'variance', %f, ", getVar());
+	fprintf(f, "'stddev', %f, ", getStddev());
 
-	if (h->total - h->lower - h->higher > 0) {
-		char *buf = hist_dump(h);
+	if (total - lower - higher > 0) {
+		char *buf = dump();
 		fprintf(f, "'buckets', %s", buf);
 		free(buf);
 	}
 	else
-		fprintf(f, "'buckets', zeros(1, %d)", h->length);
+		fprintf(f, "'buckets', zeros(1, %d)", length);
 
 	fprintf(f, ")");
 
 	return 0;
 }
+
+} /* namespace villas */
