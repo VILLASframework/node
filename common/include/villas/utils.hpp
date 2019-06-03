@@ -82,7 +82,7 @@
 #define CEIL(x, y)	(((x) + (y) - 1) / (y))
 
 /** Get nearest up-rounded power of 2 */
-#define LOG2_CEIL(x)	(1 << (log2i((x) - 1) + 1))
+#define LOG2_CEIL(x)	(1 << (villas::utils::log2i((x) - 1) + 1))
 
 /** Check if the number is a power of 2 */
 #define IS_POW2(x)	(((x) != 0) && !((x) & ((x) - 1)))
@@ -186,12 +186,7 @@ void * memdup(const void *src, size_t bytes);
 void die();
 
 /** Get log2 of long long integers */
-static inline int log2i(long long x) {
-	if (x == 0)
-		return 1;
-
-	return sizeof(x) * 8 - __builtin_clzll(x) - 1;
-}
+int log2i(long long x);
 
 /** Send signal \p sig to main thread. */
 void killme(int sig);

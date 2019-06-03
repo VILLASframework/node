@@ -331,6 +331,13 @@ size_t strlenp(const char *str)
 	return sz;
 }
 
+int log2i(long long x) {
+	if (x == 0)
+		return 1;
+
+	return sizeof(x) * 8 - __builtin_clzll(x) - 1;
+}
+
 int sha1sum(FILE *f, unsigned char *sha1)
 {
 	SHA_CTX c;
