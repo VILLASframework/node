@@ -40,7 +40,7 @@ struct stats_metric_description stats_metrics[] = {
 	{ "gap_sent",		STATS_METRIC_GAP_SAMPLE,	"seconds",	"Inter-message timestamps (as sent by remote)" 			},
 	{ "gap_received",	STATS_METRIC_GAP_RECEIVED,	"seconds",	"Inter-message arrival time (as received by this instance)" 	},
 	{ "owd",		STATS_METRIC_OWD,		"seconds",	"One-way-delay (OWD) of received messages" 			},
-	{ "age",		STATS_METRIC_AGE,		"seconds",	"Processing time of packets within the from receive to sent" 			},
+	{ "age",		STATS_METRIC_AGE,		"seconds",	"Processing time of packets within the from receive to sent" 	},
 	{ "rtp.loss_fraction",	STATS_METRIC_RTP_LOSS_FRACTION,	"percent",	"Fraction lost since last RTP SR/RR."				},
 	{ "rtp.pkts_lost",	STATS_METRIC_RTP_PKTS_LOST,	"packets",	"Cumulative number of packtes lost" 				},
 	{ "rtp.jitter",		STATS_METRIC_RTP_JITTER,	"seconds",	"Interarrival jitter" 						},

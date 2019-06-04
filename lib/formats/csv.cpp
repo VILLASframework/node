@@ -219,14 +219,14 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-        if (plugins.state != STATE_DESTROYED)
-                vlist_remove_all(&plugins, &p1);
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p1);
 }
 
 static struct plugin p2;
 __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
-        if (plugins.state == STATE_DESTROYED)
-	        vlist_init(&plugins);
+	if (plugins.state == STATE_DESTROYED)
+		vlist_init(&plugins);
 
 	p2.name = "csv";
 	p2.description = "Comma-separated values";
@@ -243,6 +243,6 @@ __attribute__((constructor(110))) static void UNIQUE(__ctor)() {
 }
 
 __attribute__((destructor(110))) static void UNIQUE(__dtor)() {
-        if (plugins.state != STATE_DESTROYED)
-                vlist_remove_all(&plugins, &p2);
+	if (plugins.state != STATE_DESTROYED)
+		vlist_remove_all(&plugins, &p2);
 }
