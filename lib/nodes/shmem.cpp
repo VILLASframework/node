@@ -36,6 +36,8 @@
 #include <villas/timing.h>
 #include <villas/utils.hpp>
 
+using namespace villas::utils;
+
 int shmem_parse(struct node *n, json_t *cfg)
 {
 	struct shmem *shm = (struct shmem *) n->_vd;

@@ -54,6 +54,7 @@ extern "C" {
 static pthread_t re_pthread;
 
 using namespace villas::node;
+using namespace villas::utils;
 
 static struct plugin p;
 

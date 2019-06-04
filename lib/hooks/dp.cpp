@@ -35,6 +35,7 @@
 #include <villas/utils.hpp>
 
 using namespace std::complex_literals;
+using namespace villas::utils;
 
 namespace villas {
 namespace node {

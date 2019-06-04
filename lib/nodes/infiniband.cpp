@@ -33,6 +33,8 @@
 #include <villas/memory/ib.h>
 #include <villas/timing.h>
 
+using namespace villas::utils;
+
 static int ib_disconnect(struct node *n)
 {
 	struct infiniband *ib = (struct infiniband *) n->_vd;

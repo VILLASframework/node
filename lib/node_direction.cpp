@@ -28,6 +28,8 @@
 #include <villas/node.h>
 #include <villas/node_direction.h>
 
+using namespace villas::utils;
+
 int node_direction_prepare(struct node_direction *nd, struct node *n)
 {
 	assert(nd->state == STATE_CHECKED);

@@ -30,6 +30,8 @@
 #include <villas/nodes/uldaq.hpp>
 #include <villas/memory.h>
 
+using namespace villas::utils;
+
 static unsigned num_devs = ULDAQ_MAX_DEV_COUNT;
 static DaqDeviceDescriptor descriptors[ULDAQ_MAX_DEV_COUNT];
 

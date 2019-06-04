@@ -45,6 +45,7 @@
 #include <villas/path_destination.h>
 
 using namespace villas;
+using namespace villas::utils;
 
 static void * path_run_single(void *arg)
 {

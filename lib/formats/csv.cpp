@@ -31,6 +31,8 @@
 #include <villas/signal.h>
 #include <villas/timing.h>
 
+using namespace villas::utils;
+
 static size_t csv_sprint_single(struct io *io, char *buf, size_t len, const struct sample *smp)
 {
 	size_t off = 0;

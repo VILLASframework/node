@@ -44,6 +44,7 @@
 
 using namespace villas;
 using namespace villas::node;
+using namespace villas::utils;
 
 SuperNode::SuperNode() :
 	state(STATE_INITIALIZED),

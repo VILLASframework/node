@@ -34,6 +34,8 @@
 #include <villas/plugin.h>
 #include <villas/node/config.h>
 
+using namespace villas::utils;
+
 /* Some global settings */
 static char *name = nullptr;
 

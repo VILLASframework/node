@@ -28,6 +28,8 @@
 #include <villas/utils.hpp>
 #include <villas/format_type.h>
 
+using namespace villas::utils;
+
 static void mqtt_log_cb(struct mosquitto *mosq, void *userdata, int level, const char *str)
 {
 	switch (level) {

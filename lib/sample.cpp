@@ -32,6 +32,8 @@
 #include <villas/signal.h>
 #include <villas/list.h>
 
+using namespace villas::utils;
+
 int sample_init(struct sample *s)
 {
 	struct pool *p = sample_pool(s);

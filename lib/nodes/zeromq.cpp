@@ -34,6 +34,8 @@
 #include <villas/plugin.h>
 #include <villas/format_type.h>
 
+using namespace villas::utils;
+
 static void *context;
 
 #if defined(ZMQ_BUILD_DRAFT_API) && ZMQ_MAJOR_VERSION >= 4 && ZMQ_MINOR_VERSION >= 2 && ZMQ_MINOR_VERSION >= 3

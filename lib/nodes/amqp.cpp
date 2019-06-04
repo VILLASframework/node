@@ -30,6 +30,8 @@
 #include <villas/utils.hpp>
 #include <villas/format_type.h>
 
+using namespace villas::utils;
+
 static void amqp_default_ssl_info(struct amqp_ssl_info *s)
 {
 	s->verify_peer = 1;

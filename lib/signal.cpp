@@ -28,6 +28,8 @@
 #include <villas/node.h>
 #include <villas/mapping.h>
 
+using namespace villas::utils;
+
 int signal_init(struct signal *s)
 {
 	s->enabled = true;

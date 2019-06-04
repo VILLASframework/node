@@ -34,6 +34,8 @@
 #include <villas/kernel/kernel.h>
 #include <villas/utils.hpp>
 
+using namespace villas::utils;
+
 static const double max_percent_value = 0xffffffff;
 
 int tc_netem_parse(struct rtnl_qdisc **netem, json_t *cfg)

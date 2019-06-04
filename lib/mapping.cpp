@@ -29,6 +29,8 @@
 #include <villas/node.h>
 #include <villas/signal.h>
 
+using namespace villas::utils;
+
 int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *nodes)
 {
 	char *cpy, *node, *type, *field, *end, *lasts;

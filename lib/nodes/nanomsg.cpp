@@ -29,6 +29,8 @@
 #include <villas/utils.hpp>
 #include <villas/format_type.h>
 
+using namespace villas::utils;
+
 int nanomsg_reverse(struct node *n)
 {
 	struct nanomsg *m = (struct nanomsg *) n->_vd;

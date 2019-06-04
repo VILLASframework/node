@@ -168,7 +168,7 @@ check:			if (optarg == endptr)
 	{
 		int ret;
 
-		struct hist hist;
+		Hist hist(hist_buckets, hist_warmup);
 		struct timespec send, recv;
 
 		struct sample *smp_send = (struct sample *) new char[SAMPLE_LENGTH(2)];
@@ -197,10 +197,6 @@ check:			if (optarg == endptr)
 		if (ret)
 			throw RuntimeError("Failed to start node {}: reason={}", node_name(node), ret);
 
-		ret = hist_init(&hist, hist_buckets, hist_warmup);
-		if (ret)
-			throw RuntimeError("Failed to initialize histogram");
-
 		/* Print header */
 		fprintf(stdout, "%17s%5s%10s%10s%10s%10s%10s\n", "timestamp", "seq", "rtt", "min", "max", "mean", "stddev");
 
@@ -222,30 +218,26 @@ check:			if (optarg == endptr)
 			if (rtt < 0)
 				logger->warn("Negative RTT: {}", rtt);
 
-			hist_put(&hist, rtt);
+			hist.put(rtt);
 
 			smp_send->sequence++;
 
 			fprintf(stdout, "%10lu.%06lu%5" PRIu64 "%10.3f%10.3f%10.3f%10.3f%10.3f\n",
 				recv.tv_sec, recv.tv_nsec / 1000, smp_send->sequence,
-				1e3 * rtt, 1e3 * hist.lowest, 1e3 * hist.highest,
-				1e3 * hist_mean(&hist), 1e3 * hist_stddev(&hist));
+				1e3 * rtt, 1e3 * hist.getLowest(), 1e3 * hist.getHighest(),
+				1e3 * hist.getMean(), 1e3 * hist.getStddev());
 		}
 
 		struct stat st;
 		if (!fstat(fd, &st)) {
 			FILE *f = fdopen(fd, "w");
-			hist_dump_matlab(&hist, f);
+			hist.dumpMatlab(f);
 			fclose(f);
 		}
 		else
 			throw RuntimeError("Invalid file descriptor: {}", fd);
 
-		hist_print(&hist, 1);
-
-		ret = hist_destroy(&hist);
-		if (ret)
-			throw RuntimeError("Failed to destroy histogram");
+		hist.print(true);
 
 		ret = node_stop(node);
 		if (ret)

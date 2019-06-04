@@ -29,6 +29,8 @@
 #include <villas/utils.hpp>
 #include <villas/kernel/nl.h>
 
+using namespace villas::utils;
+
 char * socket_print_addr(struct sockaddr *saddr)
 {
 	union sockaddr_union *sa = (union sockaddr_union *) saddr;

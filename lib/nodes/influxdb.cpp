@@ -33,6 +33,8 @@
 #include <villas/nodes/influxdb.hpp>
 #include <villas/memory.h>
 
+using namespace villas::utils;
+
 int influxdb_parse(struct node *n, json_t *json)
 {
 	struct influxdb *i = (struct influxdb *) n->_vd;

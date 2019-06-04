@@ -37,6 +37,8 @@
 #include <villas/formats/msg_format.h>
 #include <villas/super_node.hpp>
 
+using namespace villas::utils;
+
 #define DEFAULT_WEBSOCKET_BUFFER_SIZE (1 << 12)
 
 /* Private static storage */

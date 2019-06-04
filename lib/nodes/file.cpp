@@ -34,6 +34,8 @@
 #include <villas/plugin.h>
 #include <villas/io.h>
 
+using namespace villas::utils;
+
 static char * file_format_name(const char *format, struct timespec *ts)
 {
 	struct tm tm;

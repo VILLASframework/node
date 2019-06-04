@@ -31,6 +31,9 @@
 #include <villas/node.h>
 #include <villas/table.hpp>
 
+using namespace villas;
+using namespace villas::utils;
+
 struct stats_metric_description stats_metrics[] = {
 	{ "skipped",		STATS_METRIC_SMPS_SKIPPED,	"samples",	"Skipped samples and the distance between them" 		},
 	{ "reordered",		STATS_METRIC_SMPS_REORDERED, 	"samples",	"Reordered samples and the distance between them" 		},
@@ -94,7 +97,7 @@ int stats_init(struct stats *s, int buckets, int warmup)
 	assert(s->state == STATE_DESTROYED);
 
 	for (int i = 0; i < STATS_METRIC_COUNT; i++)
-		hist_init(&s->histograms[i], buckets, warmup);
+		new (&s->histograms[i]) Hist(buckets, warmup);
 
 	s->state = STATE_INITIALIZED;
 
@@ -106,7 +109,7 @@ int stats_destroy(struct stats *s)
 	assert(s->state != STATE_DESTROYED);
 
 	for (int i = 0; i < STATS_METRIC_COUNT; i++)
-		hist_destroy(&s->histograms[i]);
+		s->histograms[i].~Hist();
 
 	s->state = STATE_DESTROYED;
 
@@ -117,7 +120,7 @@ void stats_update(struct stats *s, enum stats_metric id, double val)
 {
 	assert(s->state == STATE_INITIALIZED);
 
-	hist_put(&s->histograms[id], val);
+	s->histograms[id].put(val);
 }
 
 json_t * stats_json(struct stats *s)
@@ -128,9 +131,9 @@ json_t * stats_json(struct stats *s)
 
 	for (int i = 0; i < STATS_METRIC_COUNT; i++) {
 		struct stats_metric_description *d = &stats_metrics[i];
-		struct hist *h = &s->histograms[i];
+		const Hist &h = s->histograms[i];
 
-		json_object_set_new(obj, d->name, hist_json(h));
+		json_object_set_new(obj, d->name, h.toJson());
 	}
 
 	return obj;
@@ -141,11 +144,11 @@ void stats_reset(struct stats *s)
 	assert(s->state == STATE_INITIALIZED);
 
 	for (int i = 0; i < STATS_METRIC_COUNT; i++)
-		hist_reset(&s->histograms[i]);
+		s->histograms[i].reset();
 }
 
 static std::vector<TableColumn> stats_columns = {
-	{ 10, TableColumn::align::LEFT,		"Node",		"%s"				},
+	{ 10, TableColumn::align::LEFT,		"Node",		"%s"			},
 	{ 10, TableColumn::align::RIGHT,	"Recv",		"%ju",	"pkts"		},
 	{ 10, TableColumn::align::RIGHT,	"Sent",		"%ju",	"pkts"		},
 	{ 10, TableColumn::align::RIGHT,	"Drop",		"%ju",	"pkts"		},
@@ -179,32 +182,32 @@ void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, struc
 		case STATS_FORMAT_HUMAN:
 			stats_table.row(11,
 				node_name_short(n),
-				(uintmax_t) hist_total(&s->histograms[STATS_METRIC_OWD]),
-				(uintmax_t) hist_total(&s->histograms[STATS_METRIC_AGE]),
-				(uintmax_t) hist_total(&s->histograms[STATS_METRIC_SMPS_REORDERED]),
-				(uintmax_t) hist_total(&s->histograms[STATS_METRIC_SMPS_SKIPPED]),
-				(double)    hist_last(&s->histograms[STATS_METRIC_OWD]),
-				(double)    hist_mean(&s->histograms[STATS_METRIC_OWD]),
-				(double)    1.0 / hist_last(&s->histograms[STATS_METRIC_GAP_RECEIVED]),
-				(double)    1.0 / hist_mean(&s->histograms[STATS_METRIC_GAP_RECEIVED]),
-				(double)    hist_mean(&s->histograms[STATS_METRIC_AGE]),
-				(double)    hist_highest(&s->histograms[STATS_METRIC_AGE])
+				(uintmax_t)    s->histograms[STATS_METRIC_OWD].getTotal(),
+				(uintmax_t)    s->histograms[STATS_METRIC_AGE].getTotal(),
+				(uintmax_t)    s->histograms[STATS_METRIC_SMPS_REORDERED].getTotal(),
+				(uintmax_t)    s->histograms[STATS_METRIC_SMPS_SKIPPED].getTotal(),
+				(double)       s->histograms[STATS_METRIC_OWD].getLast(),
+				(double)       s->histograms[STATS_METRIC_OWD].getMean(),
+				(double) 1.0 / s->histograms[STATS_METRIC_GAP_RECEIVED].getLast(),
+				(double) 1.0 / s->histograms[STATS_METRIC_GAP_RECEIVED].getMean(),
+				(double)       s->histograms[STATS_METRIC_AGE].getMean(),
+				(double)       s->histograms[STATS_METRIC_AGE].getHighest()
 			);
 			break;
 
 		case STATS_FORMAT_JSON: {
 			json_t *json_stats = json_pack("{ s: s, s: i, s: i, s: i, s: i, s: f, s: f, s: f, s: f, s: f, s: f }",
 				"node", node_name(n),
-				"recv", hist_total(&s->histograms[STATS_METRIC_OWD]),
-				"sent", hist_total(&s->histograms[STATS_METRIC_AGE]),
-				"dropped", hist_total(&s->histograms[STATS_METRIC_SMPS_REORDERED]),
-				"skipped", hist_total(&s->histograms[STATS_METRIC_SMPS_SKIPPED]),
-				"owd_last", 1.0 / hist_last(&s->histograms[STATS_METRIC_OWD]),
-				"owd_mean", 1.0 / hist_mean(&s->histograms[STATS_METRIC_OWD]),
-				"rate_last", 1.0 / hist_last(&s->histograms[STATS_METRIC_GAP_SAMPLE]),
-				"rate_mean", 1.0 / hist_mean(&s->histograms[STATS_METRIC_GAP_SAMPLE]),
-				"age_mean", hist_mean(&s->histograms[STATS_METRIC_AGE]),
-				"age_max", hist_highest(&s->histograms[STATS_METRIC_AGE])
+				"recv",            s->histograms[STATS_METRIC_OWD].getTotal(),
+				"sent",            s->histograms[STATS_METRIC_AGE].getTotal(),
+				"dropped",         s->histograms[STATS_METRIC_SMPS_REORDERED].getTotal(),
+				"skipped",         s->histograms[STATS_METRIC_SMPS_SKIPPED].getTotal(),
+				"owd_last",  1.0 / s->histograms[STATS_METRIC_OWD].getLast(),
+				"owd_mean",  1.0 / s->histograms[STATS_METRIC_OWD].getMean(),
+				"rate_last", 1.0 / s->histograms[STATS_METRIC_GAP_SAMPLE].getLast(),
+				"rate_mean", 1.0 / s->histograms[STATS_METRIC_GAP_SAMPLE].getMean(),
+				"age_mean",        s->histograms[STATS_METRIC_AGE].getMean(),
+				"age_max",         s->histograms[STATS_METRIC_AGE].getHighest()
 			);
 			json_dumpf(json_stats, f, 0);
 			break;
@@ -224,7 +227,7 @@ void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose)
 				struct stats_metric_description *d = &stats_metrics[i];
 
 				info("%s: %s", d->name, d->desc);
-				hist_print(&s->histograms[i], verbose);
+				s->histograms[i].print(verbose);
 			}
 			break;
 
@@ -243,36 +246,36 @@ union signal_data stats_get_value(const struct stats *s, enum stats_metric sm, e
 {
 	assert(s->state == STATE_INITIALIZED);
 
-	const struct hist *h = &s->histograms[sm];
+	const Hist &h = s->histograms[sm];
 	union signal_data d;
 
 	switch (st) {
 		case STATS_TYPE_TOTAL:
-			d.i = h->total;
+			d.i = h.getTotal();
 			break;
 
 		case STATS_TYPE_LAST:
-			d.f = h->last;
+			d.f = h.getLast();
 			break;
 
 		case STATS_TYPE_HIGHEST:
-			d.f = h->highest;
+			d.f = h.getHighest();
 			break;
 
 		case STATS_TYPE_LOWEST:
-			d.f = h->lowest;
+			d.f = h.getLowest();
 			break;
 
 		case STATS_TYPE_MEAN:
-			d.f = hist_mean(h);
+			d.f = h.getMean();
 			break;
 
 		case STATS_TYPE_STDDEV:
-			d.f = hist_stddev(h);
+			d.f = h.getStddev();
 			break;
 
 		case STATS_TYPE_VAR:
-			d.f = hist_var(h);
+			d.f = h.getVar();
 			break;
 
 		default:

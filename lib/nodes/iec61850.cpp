@@ -35,6 +35,8 @@
 #define CONFIG_SV_DEFAULT_PRIORITY 4
 #define CONFIG_SV_DEFAULT_VLAN_ID 0
 
+using namespace villas::utils;
+
 const struct iec61850_type_descriptor type_descriptors[] = {
 	/* name,              iec_type,                         type,                 size, supported */
 	{ "boolean",          iec61850_type::BOOLEAN,		SIGNAL_TYPE_BOOLEAN,	 1, false, false },

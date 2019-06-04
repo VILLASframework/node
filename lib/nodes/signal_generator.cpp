@@ -28,6 +28,8 @@
 #include <villas/plugin.h>
 #include <villas/nodes/signal_generator.hpp>
 
+using namespace villas::utils;
+
 static enum signal_generator::type signal_generator_lookup_type(const char *type)
 {
 	if      (!strcmp(type, "random"))

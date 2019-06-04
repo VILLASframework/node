@@ -25,6 +25,8 @@
 #include <villas/utils.hpp>
 #include <villas/memory.h>
 
+using namespace villas::utils;
+
 static struct memory_allocation * memory_heap_alloc(struct memory_type *m, size_t len, size_t alignment)
 {
 	int ret;

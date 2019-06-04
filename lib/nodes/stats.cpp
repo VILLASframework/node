@@ -33,6 +33,7 @@
 #define STATS_METRICS 6
 
 using namespace villas::node;
+using namespace villas::utils;
 
 static struct vlist *nodes; /** The global list of nodes */
 

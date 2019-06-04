@@ -28,6 +28,8 @@
 #include <villas/nodes/loopback.hpp>
 #include <villas/memory.h>
 
+using namespace villas::utils;
+
 int loopback_parse(struct node *n, json_t *cfg)
 {
 	struct loopback *l = (struct loopback *) n->_vd;

@@ -31,6 +31,8 @@
 #include <villas/plugin.h>
 #include <villas/nodes/test_rtt.hpp>
 
+using namespace villas::utils;
+
 static struct plugin p;
 
 static int test_rtt_case_start(struct test_rtt *t, int id)

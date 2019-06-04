@@ -48,6 +48,7 @@
 static struct plugin p;
 
 using namespace villas::node;
+using namespace villas::utils;
 
 int socket_type_start(villas::node::SuperNode *sn)
 {

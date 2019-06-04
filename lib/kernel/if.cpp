@@ -38,6 +38,8 @@
 
 #include <villas/nodes/socket.hpp>
 
+using namespace villas::utils;
+
 int if_init(struct interface *i, struct rtnl_link *link)
 {
 	i->nl_link = link;

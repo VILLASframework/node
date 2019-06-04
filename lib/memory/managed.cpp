@@ -34,6 +34,8 @@
 #include <villas/memory.h>
 #include <villas/utils.hpp>
 
+using namespace villas::utils;
+
 static struct memory_allocation * memory_managed_alloc(struct memory_type *m, size_t len, size_t alignment)
 {
 	/* Simple first-fit allocation */

@@ -43,6 +43,8 @@
   #include <villas/kernel/tc_netem.h>
 #endif /* WITH_NETEM */
 
+using namespace villas::utils;
+
 int node_init(struct node *n, struct node_type *vt)
 {
 	int ret;

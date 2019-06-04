@@ -31,6 +31,8 @@
 #include <villas/nodes/comedi.hpp>
 #include <villas/utils.hpp>
 
+using namespace villas::utils;
+
 /* Utility functions to dump a comedi_cmd graciously taken from comedilib demo */
 static char* comedi_cmd_trigger_src(unsigned int src, char *buf);
 static void comedi_dump_cmd(comedi_cmd *cmd, int debug_level);

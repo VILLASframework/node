@@ -31,6 +31,8 @@
 #include <villas/utils.hpp>
 #include <villas/sample.h>
 
+using namespace villas::utils;
+
 static int io_print_lines(struct io *io, struct sample *smps[], unsigned cnt)
 {
 	int ret;

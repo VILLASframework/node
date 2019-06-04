@@ -36,7 +36,7 @@ public:
 
 	virtual int execute(json_t *args, json_t **resp)
 	{
-		killme(SIGTERM);
+		utils::killme(SIGTERM);
 
 		return 0;
 	}

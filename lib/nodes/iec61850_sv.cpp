@@ -36,6 +36,8 @@
 #define CONFIG_SV_DEFAULT_PRIORITY 4
 #define CONFIG_SV_DEFAULT_VLAN_ID 0
 
+using namespace villas::utils;
+
 static void iec61850_sv_listener(SVSubscriber subscriber, void *ctx, SVSubscriber_ASDU asdu)
 {
 	struct node *n = (struct node *) ctx;

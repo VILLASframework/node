@@ -42,6 +42,8 @@
 #include <villas/utils.hpp>
 #include <villas/kernel/kernel.h>
 
+using namespace villas::utils;
+
 static size_t pgsz = -1;
 static size_t hugepgsz = -1;
 

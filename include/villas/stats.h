@@ -88,7 +88,7 @@ struct stats_type_description {
 
 struct stats {
 	enum state state;
-	struct hist histograms[STATS_METRIC_COUNT];
+	villas::Hist histograms[STATS_METRIC_COUNT];
 };
 
 extern struct stats_metric_description stats_metrics[];

@@ -29,6 +29,8 @@
 #include <villas/plugin.h>
 #include <villas/formats/protobuf.h>
 
+using namespace villas::utils;
+
 static enum signal_type protobuf_detect_format(Villas__Node__Value *val)
 {
 	switch (val->value_case) {
