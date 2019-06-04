@@ -85,21 +85,30 @@ public:
 	{
 		return high;
 	}
+
 	double getLow() const
 	{
 		return low;
 	}
+
 	double getHighest() const
 	{
 		return highest;
 	}
+
 	double getLowest() const
 	{
 		return lowest;
 	}
+
 	double getLast() const
 	{
 		return last;
+	}
+
+	cnt_t getTotal() const
+	{
+		return total;
 	}
 
 protected:
