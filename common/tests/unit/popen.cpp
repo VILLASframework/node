@@ -33,12 +33,12 @@ Test(popen, cat)
 {
 	Popen proc("cat");
 
-	proc.out() << "Hello World" << std::endl;
-	proc.out().flush();
+	proc.cout() << "Hello World" << std::endl;
+	proc.cout().flush();
 
 	std::string str, str2;
 
-	proc.in() >> str >> str2;
+	proc.cin() >> str >> str2;
 
 	cr_assert_eq(str, "Hello");
 	cr_assert_eq(str2, "World");
