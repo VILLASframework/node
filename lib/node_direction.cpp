@@ -138,7 +138,7 @@ int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
 			return ret;
 	}
 	else {
-		int count = 64;
+		int count = DEFAULT_SAMPLE_LENGTH;
 		const char *type_str = "float";
 
 		if (json_is_object(json_signals)) {
