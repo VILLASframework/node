@@ -128,6 +128,10 @@ int signals_init(void (*cb)(int signal, siginfo_t *sinfo, void *ctx))
 	if (ret)
 		return ret;
 
+	ret = sigaction(SIGUSR1, &sa_quit, nullptr);
+	if (ret)
+		return ret;
+
 	ret = sigaction(SIGALRM, &sa_quit, nullptr);
 	if (ret)
 		return ret;
