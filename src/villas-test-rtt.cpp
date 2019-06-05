@@ -88,7 +88,7 @@ protected:
 	int count;
 
 
-	hist_cnt_t hist_warmup;
+	Hist::cnt_t hist_warmup;
 	int hist_buckets;
 
 	void handler(int signal, siginfo_t *sinfo, void *ctx)
