@@ -48,19 +48,24 @@ public:
 	int close();
 	void kill(int signal = SIGINT);
 
-	std::istream &in()
+	std::istream &cin()
 	{
 		return *(input.stream);
 	}
 
-	std::ostream &out()
+	std::ostream &cout()
 	{
 		return *(output.stream);
 	}
 
-	int fd()
+	int getFd()
 	{
 		return input.buffer->fd();
+	}
+
+	pid_t getPid() const
+	{
+		return pid;
 	}
 
 protected:
