@@ -293,7 +293,7 @@ VfioDevice&
 VfioContainer::attachDevice(const pci_device* pdev)
 {
 	int ret;
-	char name[32];
+	char name[32], iommu_state[4];
 	static constexpr const char* kernelDriver = "vfio-pci";
 
 	Logger logger = logging.get("kernel:vfio");
@@ -318,6 +318,13 @@ VfioContainer::attachDevice(const pci_device* pdev)
 	/* Get IOMMU group of device */
 	int index = isIommuEnabled() ? pci_get_iommu_group(pdev) : 0;
 	if (index < 0) {
+		ret = kernel_get_cmdline_param("intel_iommu", iommu_state, sizeof(iommu_state));
+		if(ret != 0 || strcmp("on", iommu_state) != 0)
+			logger->warn("Kernel booted without command line parameter "
+					"'intel_iommu' set to 'on'. Please check documentation "
+					"(https://villas.fein-aachen.org/doc/fpga-setup.html) "
+					"for help with troubleshooting.");
+
 		logger->error("Failed to get IOMMU group of device");
 		throw std::exception();
 	}
