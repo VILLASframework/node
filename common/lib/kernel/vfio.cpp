@@ -85,8 +85,8 @@ VfioContainer::VfioContainer()
 	};
 
 	for(const char* module : requiredKernelModules) {
-		if(kernel_module_loaded(module) != 0) {
-			logger->error("Kernel module '{}' required but not loaded. "
+		if(kernel_module_load(module) != 0) {
+			logger->error("Kernel module '{}' required but could not be loaded. "
 			              "Please load manually!", module);
 			throw std::exception();
 		}
