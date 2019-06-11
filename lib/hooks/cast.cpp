@@ -81,6 +81,8 @@ public:
 		enum signal_type type;
 
 		orig_sig = (struct signal *) vlist_at_safe(&signals, signal_index);
+		if (!orig_sig)
+			throw RuntimeError("Failed to find signal: {}", signal_name);
 
 		type = new_type != SIGNAL_TYPE_INVALID ? new_type : orig_sig->type;
 		name = new_name ? new_name : orig_sig->name;
