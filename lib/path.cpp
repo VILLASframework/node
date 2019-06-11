@@ -135,6 +135,10 @@ int path_init(struct path *p)
 	if (ret)
 		return ret;
 
+	ret = vlist_init(&p->mappings);
+	if (ret)
+		return ret;
+
 #ifdef WITH_HOOKS
 	ret = hook_list_init(&p->hooks);
 	if (ret)
@@ -233,6 +237,10 @@ int path_prepare(struct path *p)
 	}
 
 	/* Initialize sources */
+	ret = mapping_list_prepare(&p->mappings);
+	if (ret)
+		return ret;
+
 	for (size_t i = 0; i < vlist_length(&p->sources); i++) {
 		struct path_source *ps = (struct path_source *) vlist_at(&p->sources, i);
 
@@ -242,10 +250,6 @@ int path_prepare(struct path *p)
 
 		if (ps->masked)
 			p->mask.set(i);
-
-		ret = mapping_list_prepare(&ps->mappings);
-		if (ret)
-			return ret;
 
 		for (size_t i = 0; i < vlist_length(&ps->mappings); i++) {
 			struct mapping_entry *me = (struct mapping_entry *) vlist_at(&ps->mappings, i);
@@ -319,10 +323,8 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 
 	const char *mode = nullptr;
 
-	struct vlist sources = { .state = STATE_DESTROYED };
 	struct vlist destinations = { .state = STATE_DESTROYED };
 
-	vlist_init(&sources);
 	vlist_init(&destinations);
 
 	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: o, s?: o, s?: b, s?: b, s?: b, s?: i, s?: s, s?: b, s?: F, s?: o, s?: b}",
@@ -343,7 +345,7 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 		jerror(&err, "Failed to parse path configuration");
 
 	/* Input node(s) */
-	ret = mapping_list_parse(&sources, json_in, nodes);
+	ret = mapping_list_parse(&p->mappings, json_in, nodes);
 	if (ret) {
 		p->logger->error("Failed to parse input mapping of path {}", path_name(p));
 		return -1;
@@ -368,8 +370,8 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 			jerror(&err, "Failed to parse output nodes");
 	}
 
-	for (size_t i = 0; i < vlist_length(&sources); i++) {
-		struct mapping_entry *me = (struct mapping_entry *) vlist_at(&sources, i);
+	for (size_t i = 0; i < vlist_length(&p->mappings); i++) {
+		struct mapping_entry *me = (struct mapping_entry *) vlist_at(&p->mappings, i);
 		struct path_source *ps = nullptr;
 
 		/* Check if there is already a path_source for this source */
@@ -474,9 +476,7 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 
 #ifdef WITH_HOOKS
 	if (json_hooks) {
-		ret = hook_list_parse(&p->hooks, json_hooks, HOOK_PATH, p, nullptr);
-		if (ret)
-			return ret;
+		hook_list_parse(&p->hooks, json_hooks, HOOK_PATH, p, nullptr);
 	}
 #endif /* WITH_HOOKS */
 
@@ -489,10 +489,6 @@ int path_parse(struct path *p, json_t *cfg, struct vlist *nodes)
 		else
 			p->poll = 0;
 	}
-
-	ret = vlist_destroy(&sources, nullptr, false);
-	if (ret)
-		return ret;
 
 	ret = vlist_destroy(&destinations, nullptr, false);
 	if (ret)
@@ -702,6 +698,10 @@ int path_destroy(struct path *p)
 		return ret;
 
 	ret = vlist_destroy(&p->destinations, (dtor_cb_t) path_destination_destroy, true);
+	if (ret)
+		return ret;
+
+	ret = vlist_destroy(&p->mappings, nullptr, true);
 	if (ret)
 		return ret;
 
