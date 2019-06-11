@@ -284,9 +284,7 @@ int path_prepare(struct path *p)
 	int m = p->builtin ? HOOK_PATH | HOOK_BUILTIN : 0;
 
 	/* Add internal hooks if they are not already in the list */
-	ret = hook_list_prepare(&p->hooks, &p->signals, m, p, nullptr);
-	if (ret)
-		return ret;
+	hook_list_prepare(&p->hooks, &p->signals, m, p, nullptr);
 #endif /* WITH_HOOKS */
 
 	/* Initialize pool */
@@ -610,9 +608,7 @@ int path_start(struct path *p)
 	);
 
 #ifdef WITH_HOOKS
-	ret = hook_list_start(&p->hooks);
-	if (ret)
-		return ret;
+	hook_list_start(&p->hooks);
 #endif /* WITH_HOOKS */
 
 	p->last_sequence = 0;
@@ -675,9 +671,7 @@ int path_stop(struct path *p)
 		return ret;
 
 #ifdef WITH_HOOKS
-	ret = hook_list_stop(&p->hooks);
-	if (ret)
-		return ret;
+	hook_list_stop(&p->hooks);
 #endif /* WITH_HOOKS */
 
 	sample_decref(p->last_sample);
