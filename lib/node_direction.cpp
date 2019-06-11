@@ -35,13 +35,10 @@ int node_direction_prepare(struct node_direction *nd, struct node *n)
 	assert(nd->state == STATE_CHECKED);
 
 #ifdef WITH_HOOKS
-	int ret;
 	int t = nd->direction == NODE_DIR_OUT ? HOOK_NODE_WRITE : HOOK_NODE_READ;
 	int m = nd->builtin ? t | HOOK_BUILTIN : 0;
 
-	ret = hook_list_prepare(&nd->hooks, &nd->signals, m, nullptr, n);
-	if (ret)
-		return ret;
+	hook_list_prepare(&nd->hooks, &nd->signals, m, nullptr, n);
 #endif /* WITH_HOOKS */
 
 	nd->state = STATE_PREPARED;
@@ -161,9 +158,7 @@ int node_direction_parse(struct node_direction *nd, struct node *n, json_t *cfg)
 	if (json_hooks) {
 		int m = nd->direction == NODE_DIR_OUT ? HOOK_NODE_WRITE : HOOK_NODE_READ;
 
-		ret = hook_list_parse(&nd->hooks, json_hooks, m, nullptr, n);
-		if (ret < 0)
-			return ret;
+		hook_list_parse(&nd->hooks, json_hooks, m, nullptr, n);
 	}
 #endif /* WITH_HOOKS */
 
@@ -193,11 +188,7 @@ int node_direction_start(struct node_direction *nd, struct node *n)
 	assert(nd->state == STATE_PREPARED);
 
 #ifdef WITH_HOOKS
-	int ret;
-
-	ret = hook_list_start(&nd->hooks);
-	if (ret)
-		return ret;
+	hook_list_start(&nd->hooks);
 #endif /* WITH_HOOKS */
 
 	nd->state = STATE_STARTED;
@@ -210,11 +201,7 @@ int node_direction_stop(struct node_direction *nd, struct node *n)
 	assert(nd->state == STATE_STARTED);
 
 #ifdef WITH_HOOKS
-	int ret;
-
-	ret = hook_list_stop(&nd->hooks);
-	if (ret)
-		return ret;
+	hook_list_stop(&nd->hooks);
 #endif /* WITH_HOOKS */
 
 	nd->state = STATE_STOPPED;

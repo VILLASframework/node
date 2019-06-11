@@ -57,9 +57,9 @@ int hook_list_destroy(struct vlist *hs);
  *    hooks = [ "print" ]
  * }
  */
-int hook_list_parse(struct vlist *hs, json_t *cfg, int mask, struct path *p, struct node *n);
+void hook_list_parse(struct vlist *hs, json_t *cfg, int mask, struct path *p, struct node *n);
 
-int hook_list_prepare(struct vlist *hs, struct vlist *sigs, int mask, struct path *p, struct node *n);
+void hook_list_prepare(struct vlist *hs, struct vlist *sigs, int mask, struct path *p, struct node *n);
 
 int hook_list_prepare_signals(struct vlist *hs, struct vlist *signals);
 
@@ -67,10 +67,10 @@ int hook_list_add(struct vlist *hs, int mask, struct path *p, struct node *n);
 
 int hook_list_process(struct vlist *hs, struct sample *smps[], unsigned cnt);
 
-int hook_list_periodic(struct vlist *hs);
+void hook_list_periodic(struct vlist *hs);
 
-int hook_list_start(struct vlist *hs);
+void hook_list_start(struct vlist *hs);
 
-int hook_list_stop(struct vlist *hs);
+void hook_list_stop(struct vlist *hs);
 
 struct vlist * hook_list_get_signals(struct vlist *hs);

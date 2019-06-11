@@ -70,6 +70,7 @@ struct path {
 
 	struct vlist sources;		/**< List of all incoming nodes (struct path_source). */
 	struct vlist destinations;	/**< List of all outgoing nodes (struct path_destination). */
+	struct vlist mappings;		/**< List of all input mappings (struct mapping_entry). */
 	struct vlist hooks;		/**< List of processing hooks (struct hook). */
 	struct vlist signals;		/**< List of signals which this path creates (struct signal). */
 

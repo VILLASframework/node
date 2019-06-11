@@ -58,11 +58,10 @@ int hook_list_destroy(vlist *hs)
 	return 0;
 }
 
-int hook_list_parse(vlist *hs, json_t *cfg, int mask, struct path *o, struct node *n)
+void hook_list_parse(vlist *hs, json_t *cfg, int mask, struct path *o, struct node *n)
 {
 	if (!json_is_array(cfg))
-		//throw ConfigError(cfg, "node-config-hook", "Hooks must be configured as a list of hook objects");
-		return -1;
+		throw ConfigError(cfg, "node-config-hook", "Hooks must be configured as a list of hook objects");
 
 	size_t i;
 	json_t *json_hook;
@@ -83,19 +82,12 @@ int hook_list_parse(vlist *hs, json_t *cfg, int mask, struct path *o, struct nod
 		if (!(hf->getFlags() & mask))
 			throw ConfigError(json_hook, "node-config-hook", "Hook '{}' not allowed here", type);
 
-		try {
-			h = hf->make(o, n);
-			h->parse(json_hook);
-			h->check();
-		}
-		catch (...) {
-			return -1;
-		}
+		h = hf->make(o, n);
+		h->parse(json_hook);
+		h->check();
 
 		vlist_push(hs, h);
 	}
-
-	return 0;
 }
 
 static int hook_cmp_priority(const Hook *a, const Hook *b)
@@ -108,7 +100,7 @@ static int hook_is_enabled(const Hook *h)
 	return h->isEnabled() ? 0 : -1;
 }
 
-int hook_list_prepare(vlist *hs, vlist *sigs, int m, struct path *p, struct node *n)
+void hook_list_prepare(vlist *hs, vlist *sigs, int m, struct path *p, struct node *n)
 {
 	assert(hs->state == STATE_INITIALIZED);
 
@@ -134,16 +126,10 @@ skip_add:
 	for (size_t i = 0; i < vlist_length(hs); i++) {
 		Hook *h = (Hook *) vlist_at(hs, i);
 
-		try {
-			h->prepare(sigs);
-		} catch (...) {
-			return -1;
-		}
+		h->prepare(sigs);
 
 		sigs = h->getSignals();
 	}
-
-	return 0;
 }
 
 int hook_list_process(vlist *hs, sample *smps[], unsigned cnt)
@@ -182,49 +168,31 @@ skip: {}
 stop:	return processed;
 }
 
-int hook_list_periodic(vlist *hs)
+void hook_list_periodic(vlist *hs)
 {
 	for (size_t j = 0; j < vlist_length(hs); j++) {
 		Hook *h = (Hook *) vlist_at(hs, j);
 
-		try {
-			h->periodic();
-		} catch (...) {
-			return -1;
-		}
+		h->periodic();
 	}
-
-	return 0;
 }
 
-int hook_list_start(vlist *hs)
+void hook_list_start(vlist *hs)
 {
 	for (size_t i = 0; i < vlist_length(hs); i++) {
 		Hook *h = (Hook *) vlist_at(hs, i);
 
-		try {
-			h->start();
-		} catch (...) {
-			return -1;
-		}
+		h->start();
 	}
-
-	return 0;
 }
 
-int hook_list_stop(vlist *hs)
+void hook_list_stop(vlist *hs)
 {
 	for (size_t i = 0; i < vlist_length(hs); i++) {
 		Hook *h = (Hook *) vlist_at(hs, i);
 
-		try {
-			h->stop();
-		} catch (...) {
-			return -1;
-		}
+		h->stop();
 	}
-
-	return 0;
 }
 
 vlist * hook_list_get_signals(vlist *hs)
