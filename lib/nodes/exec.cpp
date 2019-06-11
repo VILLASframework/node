@@ -74,6 +74,10 @@ int exec_prepare(struct node *n)
 	if (ret)
 		return ret;
 
+	/* Start subprocess */
+	e->proc = std::make_unique<Popen>(e->command);
+	debug(2, "Started sub-process with pid=%d", e->proc->getPid());
+
 	return 0;
 }
 
@@ -91,11 +95,7 @@ int exec_destroy(struct node *n)
 
 int exec_start(struct node *n)
 {
-	struct exec *e = (struct exec *) n->_vd;
-
-	/* Start subprocess */
-	e->proc = std::make_unique<Popen>(e->command);
-	debug(2, "Started sub-process with pid=%d", e->proc->getPid());
+//	struct exec *e = (struct exec *) n->_vd;
 
 	return 0;
 }
