@@ -286,7 +286,7 @@ out:		for (auto side : sides)
 
 int main(int argc, char *argv[])
 {
-	auto t = villas::node::tools::TestCmp(argc, argv);
+	villas::node::tools::TestCmp t(argc, argv);
 
 	return t.run();
 }

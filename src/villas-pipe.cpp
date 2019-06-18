@@ -504,7 +504,7 @@ check:			if (optarg == endptr)
 
 int main(int argc, char *argv[])
 {
-	auto t = villas::node::tools::Pipe(argc, argv);
+	villas::node::tools::Pipe t(argc, argv);
 
 	return t.run();
 }

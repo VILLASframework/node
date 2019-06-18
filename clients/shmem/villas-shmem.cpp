@@ -138,7 +138,7 @@ protected:
 
 int main(int argc, char *argv[])
 {
-	auto t = villas::node::tools::Shmem(argc, argv);
+	villas::node::tools::Shmem t(argc, argv);
 
 	return t.run();
 }

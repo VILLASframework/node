@@ -260,7 +260,7 @@ check:			if (optarg == endptr)
 
 int main(int argc, char *argv[])
 {
-	auto t = villas::node::tools::TestRtt(argc, argv);
+	villas::node::tools::TestRtt t(argc, argv);
 
 	return t.run();
 }

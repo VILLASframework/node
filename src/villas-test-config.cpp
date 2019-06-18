@@ -115,7 +115,7 @@ protected:
 
 int main(int argc, char *argv[])
 {
-	auto t = villas::node::tools::TestConfig(argc, argv);
+	villas::node::tools::TestConfig t(argc, argv);
 
 	return t.run();
 }

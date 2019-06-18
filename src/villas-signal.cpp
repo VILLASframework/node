@@ -328,7 +328,7 @@ out:			sample_decref(t);
 
 int main(int argc, char *argv[])
 {
-	auto t = villas::node::tools::Signal(argc, argv);
+	villas::node::tools::Signal t(argc, argv);
 
 	return t.run();
 }

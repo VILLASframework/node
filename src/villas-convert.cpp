@@ -177,7 +177,7 @@ protected:
 
 int main(int argc, char *argv[])
 {
-	auto t = villas::node::tools::Convert(argc, argv);
+	villas::node::tools::Convert t(argc, argv);
 
 	return t.run();
 }

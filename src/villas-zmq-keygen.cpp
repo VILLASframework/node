@@ -79,7 +79,7 @@ protected:
 
 int main(int argc, char *argv[])
 {
-	auto t = villas::node::tools::ZmqKeygen(argc, argv);
+	villas::node::tools::ZmqKeygen t(argc, argv);
 
 	return t.run();
 }

@@ -206,7 +206,7 @@ protected:
 
 int main(int argc, char *argv[])
 {
-	auto t = villas::node::tools::Node(argc, argv);
+	villas::node::tools::Node t(argc, argv);
 
 	return t.run();
 }

@@ -316,7 +316,7 @@ stop:			sent = io_print(&io, smps, send);
 
 int main(int argc, char *argv[])
 {
-	auto t = villas::node::tools::Hook(argc, argv);
+	villas::node::tools::Hook t(argc, argv);
 
 	return t.run();
 }

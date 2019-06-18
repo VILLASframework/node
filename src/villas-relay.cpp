@@ -529,7 +529,7 @@ const lws_http_mount Relay::mount = {
 
 int main(int argc, char *argv[])
 {
-	auto t = villas::node::tools::Relay(argc, argv);
+	villas::node::tools::Relay t(argc, argv);
 
 	return t.run();
 }

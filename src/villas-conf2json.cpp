@@ -99,7 +99,7 @@ protected:
 
 int main(int argc, char *argv[])
 {
-	auto t = villas::node::tools::Config2Json(argc, argv);
+	villas::node::tools::Config2Json t(argc, argv);
 
 	return t.run();
 }
