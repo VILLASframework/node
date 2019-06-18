@@ -20,8 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
-#include <math.h>
+#include <cstring>
+#include <cmath>
+#include <cinttypes>
 #include <netdb.h>
 
 #include <villas/node/config.h>
@@ -832,7 +833,7 @@ int ib_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *relea
 		ret = ibv_post_recv(ib->ctx.id->qp, &wr[0], &bad_wr);
 
 		if (ret)
-			error("Was unable to post receive WR in node %s: %i, bad WR ID: 0x%lx",
+			error("Was unable to post receive WR in node %s: %i, bad WR ID: 0x%" PRIu64,
 			node_name(n), ret, bad_wr->wr_id);
 
 		debug(LOG_IB | 10, "Succesfully posted receive Work Requests");
@@ -961,7 +962,7 @@ int ib_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rele
 				/* The remaining work requests will be bad. Ripple through list
 				 * and prepare them to be released
 				 */
-				debug(LOG_IB | 4, "Bad WR occured with ID: 0x%zx and S/G address: 0x%px: %i",
+				debug(LOG_IB | 4, "Bad WR occured with ID: 0x%" PRIu64 " and S/G address: 0x%px: %i",
 						bad_wr->wr_id, bad_wr->sg_list, ret);
 
 				while (1) {
