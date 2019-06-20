@@ -218,14 +218,14 @@ check:			if (optarg == endptr)
 		if (!fmt)
 			throw RuntimeError("Invalid IO format: {}", format);
 
+		ret = pool_init(&pool, filenames.size(), SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_heap);
+		if (ret)
+			throw RuntimeError("Failed to initialize pool");
+
 		/* Open files */
 		std::vector<TestCmpSide *> sides;
 		for (auto filename : filenames)
 			sides.push_back(new TestCmpSide(filename, fmt, dtypes, &pool));
-
-		ret = pool_init(&pool, sides.size(), SAMPLE_LENGTH(DEFAULT_SAMPLE_LENGTH), &memory_heap);
-		if (ret)
-			throw RuntimeError("Failed to initialize pool");
 
 		line = 0;
 		for (;;) {
