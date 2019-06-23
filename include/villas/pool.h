@@ -83,7 +83,7 @@ INLINE ssize_t pool_put_many(struct pool *p, void *blocks[], size_t cnt)
 INLINE void * pool_get(struct pool *p)
 {
 	void *ptr;
-	return queue_pull(&p->queue, &ptr) == 1 ? ptr : NULL;
+	return queue_pull(&p->queue, &ptr) == 1 ? ptr : nullptr;
 }
 
 /** Release a memory block back to the pool. */

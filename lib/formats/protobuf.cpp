@@ -130,14 +130,14 @@ int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct
 		goto out;
 
 	villas__node__message__pack(pb_msg, (uint8_t *) buf);
-	villas__node__message__free_unpacked(pb_msg, NULL);
+	villas__node__message__free_unpacked(pb_msg, nullptr);
 
 	*wbytes = psz;
 
 	return cnt;
 
 out:
-	villas__node__message__free_unpacked(pb_msg, NULL);
+	villas__node__message__free_unpacked(pb_msg, nullptr);
 
 	return -1;
 }
@@ -147,7 +147,7 @@ int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, s
 	unsigned i, j;
 	Villas__Node__Message *pb_msg;
 
-	pb_msg = villas__node__message__unpack(NULL, len, (uint8_t *) buf);
+	pb_msg = villas__node__message__unpack(nullptr, len, (uint8_t *) buf);
 	if (!pb_msg)
 		return -1;
 
@@ -218,7 +218,7 @@ int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, s
 	if (rbytes)
 		*rbytes = villas__node__message__get_packed_size(pb_msg);
 
-	villas__node__message__free_unpacked(pb_msg, NULL);
+	villas__node__message__free_unpacked(pb_msg, nullptr);
 
 	return i;
 }

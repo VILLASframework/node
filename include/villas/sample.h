@@ -93,7 +93,7 @@ struct sample {
 #define SAMPLE_NON_POOL PTRDIFF_MIN
 
 /** Get the address of the pool to which the sample belongs. */
-#define sample_pool(s) ((s)->pool_off == SAMPLE_NON_POOL ? NULL : (struct pool *) ((char *) (s) + (s)->pool_off))
+#define sample_pool(s) ((s)->pool_off == SAMPLE_NON_POOL ? nullptr : (struct pool *) ((char *) (s) + (s)->pool_off))
 
 struct sample * sample_alloc(struct pool *p);
 

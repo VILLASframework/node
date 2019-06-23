@@ -138,7 +138,7 @@ int io_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct 
  *
  * @param buf[out]	The buffer which should be filled with serialized data.
  * @param len[in]	The length of the buffer \p buf.
- * @param rbytes[out]	The number of bytes which have been written to \p buf. Ignored if NULL.
+ * @param rbytes[out]	The number of bytes which have been written to \p buf. Ignored if nullptr.
  * @param smps[in]	The array of pointers to samples.
  * @param cnt[in]	The number of pointers in the array \p smps.
  *

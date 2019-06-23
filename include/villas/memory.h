@@ -70,7 +70,7 @@ int memory_lock(size_t lock);
 
 /** Allocate \p len bytes memory of type \p m.
  *
- * @retval NULL If allocation failed.
+ * @retval nullptr If allocation failed.
  * @retval <>0  If allocation was successful.
  */
 void * memory_alloc(struct memory_type *m, size_t len);
