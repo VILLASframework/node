@@ -83,8 +83,8 @@ int exec_parse(struct node *n, json_t *cfg)
 
 			if (i == 0)
 				e->command = json_string_value(json_arg);
-			else
-				e->arguments.push_back(json_string_value(json_arg));
+
+			e->arguments.push_back(json_string_value(json_arg));
 		}
 	}
 
