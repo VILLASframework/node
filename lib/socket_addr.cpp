@@ -21,8 +21,8 @@
  */
 
 #include <netdb.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include <arpa/inet.h>
 
 #include <villas/socket_addr.h>

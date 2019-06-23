@@ -24,7 +24,7 @@
  * @{
  */
 
-#include <string.h>
+#include <cstring>
 
 #include <villas/hook.hpp>
 #include <villas/sample.h>
@@ -116,11 +116,11 @@ public:
 				break;
 
 			case SignalType::COMPLEX:
-				smp->data[k].z = smp->data[k].z * scale + offset;
+				smp->data[k].z = smp->data[k].z * (float) scale + (float) offset;
 				break;
 
 			case SignalType::BOOLEAN:
-				smp->data[k].b = smp->data[k].b * scale + offset;
+				smp->data[k].b = smp->data[k].b * (float) scale + (float) offset;
 				break;
 
 			default: { }

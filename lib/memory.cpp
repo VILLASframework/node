@@ -22,9 +22,9 @@
 
 #include <unordered_map>
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <unistd.h>
-#include <errno.h>
+#include <cerrno>
 #include <strings.h>
 
 #include <sys/time.h>

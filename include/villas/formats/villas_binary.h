@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <stdlib.h>
+#include <cstdlib>
 
 /* Forward declarations. */
 struct sample;

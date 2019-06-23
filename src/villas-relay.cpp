@@ -26,7 +26,7 @@
 #include <string>
 #include <utility>
 
-#include <string.h>
+#include <cstring>
 
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <jansson.h>

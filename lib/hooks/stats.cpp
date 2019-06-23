@@ -24,7 +24,7 @@
  * @{
  */
 
-#include <string.h>
+#include <cstring>
 
 #include <villas/common.h>
 #include <villas/advio.h>

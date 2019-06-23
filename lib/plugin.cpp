@@ -21,7 +21,7 @@
  *********************************************************************************/
 
 #include <dlfcn.h>
-#include <string.h>
+#include <cstring>
 
 #include <villas/plugin.h>
 

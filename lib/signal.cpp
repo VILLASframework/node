@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
-#include <inttypes.h>
+#include <cstring>
+#include <cinttypes>
 #include <villas/signal.h>
 #include <villas/list.h>
 #include <villas/utils.hpp>
@@ -466,7 +466,7 @@ void signal_data_set(union signal_data *data, const struct signal *sig, double v
 			break;
 
 		case SignalType::INVALID:
-			memset(data, 0, sizeof(union signal_data));
+			*data = signal_data::nan();
 			break;
 	}
 }
@@ -492,7 +492,7 @@ void signal_data_cast(union signal_data *data, const struct signal *from, const 
 					break;
 
 				case SignalType::COMPLEX:
-					data->b = creal(data->z);
+					data->b = std::real(data->z);
 					break;
 
 				default: { }
@@ -514,7 +514,7 @@ void signal_data_cast(union signal_data *data, const struct signal *from, const 
 					break;
 
 				case SignalType::COMPLEX:
-					data->i = creal(data->z);
+					data->i = std::real(data->z);
 					break;
 
 				default: { }
@@ -536,7 +536,7 @@ void signal_data_cast(union signal_data *data, const struct signal *from, const 
 					break;
 
 				case SignalType::COMPLEX:
-					data->f = creal(data->z);
+					data->f = std::real(data->z);
 					break;
 
 				default: { }
@@ -602,7 +602,7 @@ int signal_data_parse_str(union signal_data *data, const struct signal *sig, con
 
 			(*end)++;
 
-			data->z = real + _Complex_I * imag;
+			data->z = std::complex<float>(real, imag);
 			break;
 		}
 
@@ -641,7 +641,7 @@ int signal_data_parse_json(union signal_data *data, const struct signal *sig, js
 			if (ret)
 				return -2;
 
-			data->z = real + _Complex_I * imag;
+			data->z = std::complex<float>(real, imag);
 			break;
 		}
 
@@ -665,7 +665,7 @@ int signal_data_snprint(const union signal_data *data, const struct signal *sig,
 			return snprintf(buf, len, "%u", data->b);
 
 		case SignalType::COMPLEX:
-			return snprintf(buf, len, "%.6f%+.6fi", creal(data->z), cimag(data->z));
+			return snprintf(buf, len, "%.6f%+.6fi", std::real(data->z), std::imag(data->z));
 
 		default:
 			return 0;

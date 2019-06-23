@@ -24,7 +24,7 @@
  * @{
  */
 
-#include <string.h>
+#include <cstring>
 
 #include <villas/timing.h>
 #include <villas/sample.h>

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include <villas/utils.hpp>
 #include <villas/memory.h>

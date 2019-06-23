@@ -216,18 +216,18 @@ int raw_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct samp
 							break;
 
 						case 32:
-							f32[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  32, (float) creal(data->z));
-							f32[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  32, (float ) cimag(data->z));
+							f32[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  32, (float) std::real(data->z));
+							f32[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  32, (float) std::imag(data->z));
 							break;
 
 						case 64:
-							f64[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  64, creal(data->z));
-							f64[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  64, cimag(data->z));
+							f64[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  64, std::real(data->z));
+							f64[o++]  = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN,  64, std::imag(data->z));
 							break;
 #ifdef HAS_128BIT
 						case 128:
-							f128[o++] = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, creal(data->z);
-							f128[o++] = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, cimag(data->z);
+							f128[o++] = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, std::real(data->z);
+							f128[o++] = SWAP_FLOAT_HTOX(io->flags & RAW_BIG_ENDIAN, 128, std::imag(data->z);
 							break;
 #endif
 					}
@@ -369,21 +369,24 @@ int raw_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, struct
 
 			case SignalType::COMPLEX:
 				switch (bits) {
-					case 8:  data->z = -1 + _Complex_I * -1; o += 2; break; /* Not supported */
-					case 16: data->z = -1 + _Complex_I * -1; o += 2; break; /* Not supported */
+					case 8:  data->z = std::complex<float>(-1, -1); o += 2; break; /* Not supported */
+					case 16: data->z = std::complex<float>(-1, -1); o += 2; break; /* Not supported */
 
-					case 32: data->z = SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 32, f32[o++])
-							+ _Complex_I * SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 32, f32[o++]);
+					case 32: data->z = std::complex<float>(
+								SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 32, f32[o++]),
+								SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 32, f32[o++]));
 
 						break;
 
-					case 64: data->z = SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 64, f64[o++])
-							+ _Complex_I * SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 64, f64[o++]);
+					case 64: data->z = std::complex<float>(
+								SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 64, f64[o++]),
+								SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 64, f64[o++]));
 						break;
 
 #if HAS_128BIT
-					case 128: data->z = SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 128, f128[o++])
-							+ _Complex_I * SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 128, f128[o++]);
+					case 128: data->z = std::complex<float>(
+								SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 128, f128[o++]),
+								SWAP_FLOAT_XTOH(io->flags & RAW_BIG_ENDIAN, 128, f128[o++]));
 						break;
 #endif
 				}

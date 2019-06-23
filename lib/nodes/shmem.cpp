@@ -23,7 +23,7 @@
 
 #include <fcntl.h>
 #include <pthread.h>
-#include <string.h>
+#include <cstring>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>

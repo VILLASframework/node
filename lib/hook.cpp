@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
-#include <math.h>
+#include <cstring>
+#include <cmath>
 
 #include <villas/timing.h>
 #include <villas/node/config.h>

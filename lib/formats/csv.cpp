@@ -20,9 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <ctype.h>
-#include <inttypes.h>
-#include <string.h>
+#include <cctype>
+#include <cinttypes>
+#include <cstring>
 
 #include <villas/io.h>
 #include <villas/formats/csv.h>

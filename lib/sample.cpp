@@ -20,9 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
-#include <math.h>
-#include <inttypes.h>
+#include <cstring>
+#include <cmath>
+#include <cinttypes>
 
 #include <villas/pool.h>
 #include <villas/sample.h>
@@ -265,8 +265,8 @@ int sample_cmp(struct sample *a, struct sample *b, double epsilon, int flags)
 					break;
 
 				case SignalType::COMPLEX:
-					if (cabs(a->data[i].z - b->data[i].z) > epsilon) {
-						printf("data[%d].z: %f+%fi != %f+%fi\n", i, creal(a->data[i].z), cimag(a->data[i].z), creal(b->data[i].z), cimag(b->data[i].z));
+					if (std::abs(a->data[i].z - b->data[i].z) > epsilon) {
+						printf("data[%d].z: %f+%fi != %f+%fi\n", i, std::real(a->data[i].z), std::imag(a->data[i].z), std::real(b->data[i].z), std::imag(b->data[i].z));
 						return 5;
 					}
 					break;

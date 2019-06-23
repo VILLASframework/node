@@ -20,13 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include <signal.h>
 #include <unistd.h>
-#include <ctype.h>
+#include <cctype>
 #include <sys/stat.h>
-#include <inttypes.h>
+#include <cinttypes>
 #include <iostream>
 #include <atomic>
 

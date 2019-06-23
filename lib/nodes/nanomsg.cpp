@@ -22,7 +22,7 @@
 
 #include <nanomsg/nn.h>
 #include <nanomsg/pubsub.h>
-#include <string.h>
+#include <cstring>
 
 #include <villas/plugin.h>
 #include <villas/nodes/nanomsg.hpp>

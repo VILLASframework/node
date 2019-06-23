@@ -113,8 +113,8 @@ int protobuf_sprint(struct io *io, char *buf, size_t len, size_t *wbytes, struct
 
 					villas__node__complex__init(pb_val->z);
 
-					pb_val->z->real = creal(smp->data[j].z);
-					pb_val->z->imag = cimag(smp->data[j].z);
+					pb_val->z->real = std::real(smp->data[j].z);
+					pb_val->z->imag = std::imag(smp->data[j].z);
 					break;
 
 				case SignalType::INVALID:
@@ -202,7 +202,7 @@ int protobuf_sscan(struct io *io, const char *buf, size_t len, size_t *rbytes, s
 					break;
 
 				case SignalType::COMPLEX:
-					smp->data[j].z = pb_val->z->real + _Complex_I * pb_val->z->imag;
+					smp->data[j].z = std::complex<float>(pb_val->z->real, pb_val->z->imag);
 					break;
 
 				default: { }

@@ -21,11 +21,11 @@
  *********************************************************************************/
 
 #include <unistd.h>
-#include <string.h>
-#include <inttypes.h>
+#include <cstring>
+#include <cinttypes>
 #include <libgen.h>
 #include <sys/stat.h>
-#include <errno.h>
+#include <cerrno>
 
 #include <villas/nodes/file.hpp>
 #include <villas/utils.hpp>

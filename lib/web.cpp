@@ -21,7 +21,7 @@
  *********************************************************************************/
 
 #include <libwebsockets.h>
-#include <string.h>
+#include <cstring>
 
 #include <villas/node/config.h>
 #include <villas/utils.hpp>

@@ -24,10 +24,9 @@
  * @{
  *********************************************************************************/
 
-#include <stdlib.h>
-#include <stdbool.h>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
-#include <string.h>
 #include <signal.h>
 
 #include <thread>

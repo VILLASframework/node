@@ -26,7 +26,7 @@
 
 #include <bitset>
 
-#include <string.h>
+#include <cstring>
 
 #include <villas/hook.hpp>
 #include <villas/node/exceptions.hpp>

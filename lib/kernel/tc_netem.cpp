@@ -23,7 +23,7 @@
  *********************************************************************************/
 
 #include <jansson.h>
-#include <math.h>
+#include <cmath>
 
 #include <netlink/route/qdisc/netem.h>
 

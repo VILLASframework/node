@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <stdlib.h>
+#include <cstdlib>
 
 /* float128 is currently not yet supported as htole128() functions a missing */
 #if 0 && defined(__GNUC__) && defined(__linux__)

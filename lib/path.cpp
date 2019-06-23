@@ -20,13 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <cstdint>
+#include <cstring>
+#include <cinttypes>
+#include <cerrno>
+
 #include <unistd.h>
-#include <string.h>
-#include <inttypes.h>
 #include <poll.h>
-#include <errno.h>
 
 #include <villas/node/config.h>
 #include <villas/utils.hpp>

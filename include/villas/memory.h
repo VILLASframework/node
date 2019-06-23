@@ -23,9 +23,8 @@
 
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include <cstddef>
+#include <cstdint>
 
 #include <villas/node/config.h>
 #include <villas/memory_type.h>

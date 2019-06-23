@@ -21,8 +21,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <string.h>
-#include <math.h>
+#include <cstring>
+#include <cmath>
 #include <sys/mman.h>
 #include <comedilib.h>
 #include <comedi_errno.h>
@@ -598,7 +598,7 @@ int comedi_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *r
 
 					smps[i]->data[si].f = comedi_to_phys(raw, d->chanspecs[si].range, d->chanspecs[si].maxdata);
 
-					if (isnan(smps[i]->data[si].f))
+					if (std::isnan(smps[i]->data[si].f))
 						warning("Input: channel %d clipped", CR_CHAN(d->chanlist[si]));
 				}
 			}
@@ -895,7 +895,7 @@ int comedi_write(struct node *n, struct sample *smps[], unsigned cnt, unsigned *
 
 				case SignalType::COMPLEX:
 					/* We only output the real part */
-					raw_value = comedi_from_phys(creal(sample->data[si].z), d->chanspecs[si].range, d->chanspecs[si].maxdata);
+					raw_value = comedi_from_phys(std::real(sample->data[si].z), d->chanspecs[si].range, d->chanspecs[si].maxdata);
 					break;
 
 				case SignalType::INVALID:

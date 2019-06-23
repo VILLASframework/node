@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
 #include <sys/types.h>
 
 #include <villas/queue.h>

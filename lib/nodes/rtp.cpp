@@ -21,10 +21,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <inttypes.h>
+#include <cinttypes>
 #include <pthread.h>
-#include <string.h>
-#include <time.h>
+#include <cstring>
+#include <ctime>
 #include <signal.h>
 
 #include <villas/nodes/rtp.hpp>

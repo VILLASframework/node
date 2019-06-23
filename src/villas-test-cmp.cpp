@@ -21,7 +21,6 @@
  *********************************************************************************/
 
 #include <iostream>
-#include <stdbool.h>
 #include <getopt.h>
 
 #include <jansson.h>

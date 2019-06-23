@@ -22,7 +22,7 @@
 
 #include <libiec61850/stack_config.h>
 
-#include <string.h>
+#include <cstring>
 #include <pthread.h>
 #include <unistd.h>
 

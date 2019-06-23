@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #ifdef __APPLE__
   #include <net/ethernet.h>

@@ -141,8 +141,8 @@ static int json_pack_sample(struct io *io, json_t **j, struct sample *smp)
 
 				case SignalType::COMPLEX:
 					json_value = json_pack("{ s: f, s: f }",
-						"real", creal(smp->data[i].z),
-						"imag", cimag(smp->data[i].z)
+						"real", std::real(smp->data[i].z),
+						"imag", std::imag(smp->data[i].z)
 					);
 					break;
 

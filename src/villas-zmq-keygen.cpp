@@ -28,8 +28,8 @@
  *********************************************************************************/
 
 #include <iostream>
-#include <stdlib.h>
-#include <assert.h>
+#include <cstdlib>
+#include <cassert>
 #include <zmq.h>
 #include <villas/tool.hpp>
 

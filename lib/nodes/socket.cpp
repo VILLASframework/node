@@ -21,8 +21,8 @@
  *********************************************************************************/
 
 #include <unistd.h>
-#include <string.h>
-#include <errno.h>
+#include <cstring>
+#include <cerrno>
 #include <arpa/inet.h>
 #include <netinet/ip.h>
 

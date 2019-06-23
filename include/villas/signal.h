@@ -23,12 +23,13 @@
 
 #pragma once
 
-#include <atomic>
-
 #include <jansson.h>
-#include <complex.h>
-#include <stdint.h>
-#include <stdbool.h>
+
+#include <limits>
+#include <atomic>
+#include <complex>
+
+#include <cstdint>
 
 /* "I" defined by complex.h collides with a define in OpenSSL */
 #undef I
@@ -46,7 +47,19 @@ union signal_data {
 	double f;		/**< Floating point values. */
 	int64_t i;		/**< Integer values. */
 	bool b;			/**< Boolean values. */
-	float _Complex z;	/**< Complex values. */
+	std::complex<float> z;	/**< Complex values. */
+
+	signal_data()
+	{ }
+
+	static union signal_data nan()
+	{
+		union signal_data d;
+
+		d.f = std::numeric_limits<double>::quiet_NaN();
+
+		return d;
+	}
 };
 
 enum class SignalType {

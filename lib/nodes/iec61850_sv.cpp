@@ -24,7 +24,7 @@
 
 #if CONFIG_IEC61850_SAMPLED_VALUES_SUPPORT == 1
 
-#include <string.h>
+#include <cstring>
 #include <pthread.h>
 #include <unistd.h>
 

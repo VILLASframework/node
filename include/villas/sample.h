@@ -25,10 +25,10 @@
 
 #include <atomic>
 
-#include <stddef.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
+#include <cstddef>
+#include <cstdlib>
+#include <cstdio>
+#include <ctime>
 
 #include <villas/signal.h>
 

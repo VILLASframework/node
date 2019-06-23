@@ -24,8 +24,8 @@
  * @{
  */
 
-#include <inttypes.h>
-#include <string.h>
+#include <cinttypes>
+#include <cstring>
 
 #include <villas/hook.hpp>
 #include <villas/timing.h>

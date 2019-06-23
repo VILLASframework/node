@@ -35,8 +35,8 @@
 
 #include <atomic>
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <unistd.h>
 
 #include <villas/common.h>

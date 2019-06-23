@@ -29,7 +29,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 #include <libiec61850/sv_publisher.h>
 #include <libiec61850/sv_subscriber.h>

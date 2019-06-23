@@ -23,7 +23,7 @@
 #include <criterion/criterion.h>
 #include <criterion/theories.h>
 
-#include <errno.h>
+#include <cerrno>
 
 #include <villas/memory.h>
 #include <villas/utils.hpp>

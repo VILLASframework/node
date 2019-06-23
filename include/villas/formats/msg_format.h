@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 
 /** The current version number for the message format */
 #define MSG_VERSION		2

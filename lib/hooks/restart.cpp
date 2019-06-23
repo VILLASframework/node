@@ -24,7 +24,7 @@
  * @{
  */
 
-#include <inttypes.h>
+#include <cinttypes>
 
 #include <villas/hook.hpp>
 #include <villas/node.h>
