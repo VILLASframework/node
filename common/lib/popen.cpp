@@ -20,26 +20,40 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <paths.h>
 #include <dirent.h>
 
+#include <cstring>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+
+#include <iostream>
+
+#include <fmt/core.h>
+#include <villas/utils.hpp>
 #include <villas/exceptions.hpp>
 #include <villas/popen.hpp>
 
 namespace villas {
 namespace utils {
 
-Popen::Popen(const std::string &cmd) :
-	command(cmd)
+Popen::Popen(const std::string &cmd,
+             const arg_list &args,
+             const env_map &env,
+             const std::string &wd,
+             bool sh) :
+	command(cmd),
+	working_dir(wd),
+	arguments(args),
+	environment(env),
+	shell(sh)
 {
 	open();
 }
@@ -56,13 +70,14 @@ void Popen::kill(int signal)
 
 void Popen::open()
 {
+	std::vector<char *> argv, envp;
+
 	const int READ = 0;
 	const int WRITE = 1;
 
 	int ret;
 	int inpipe[2];
 	int outpipe[2];
-	char *argv[4];
 
 	ret = pipe(inpipe);
 	if (ret)
@@ -83,6 +98,35 @@ void Popen::open()
 		goto clean_outpipe_out;
 
 	if (pid == 0) {
+		/* Prepare arguments */
+		if (shell) {
+			argv.push_back((char *) "sh");
+			argv.push_back((char *) "-c");
+			argv.push_back((char *) command.c_str());
+		}
+		else {
+			for (auto arg: arguments) {
+				auto s = strdup(arg.c_str());
+
+				argv.push_back(s);
+			}
+		}
+
+		/* Prepare environment */
+		for (char **p = environ; *p; p++)
+			envp.push_back(*p);
+
+		for (auto env: environment) {
+			auto e = fmt::format("{}={}", env.first, env.second);
+			auto s = strdup(e.c_str());
+
+			envp.push_back(s);
+		}
+
+		argv.push_back(nullptr);
+		envp.push_back(nullptr);
+
+		/* Redirect IO */
 		::close(outpipe[READ]);
 		::close(inpipe[WRITE]);
 
@@ -96,12 +140,11 @@ void Popen::open()
 			::close(outpipe[WRITE]);
 		}
 
-		argv[0] = (char *) "sh";
-		argv[1] = (char *) "-c";
-		argv[2] = (char *) command.c_str();
-		argv[3] = nullptr;
+		/* Change working directory */
+		if (!working_dir.empty())
+			chdir(working_dir.c_str());
 
-		execv(_PATH_BSHELL, (char * const *) argv);
+		execvpe(shell ? _PATH_BSHELL : command.c_str(), (char * const *) argv.data(), (char * const *) envp.data());
 		exit(127);
 	}
 
