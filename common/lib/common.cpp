@@ -25,42 +25,42 @@
 
 #include <stdlib.h>
 
-const char * state_print(enum state s)
+const char * state_print(enum State s)
 {
 	switch (s) {
-		case STATE_DESTROYED:
+		case State::DESTROYED:
 			return "destroyed";
 			break;
 
-		case STATE_INITIALIZED:
+		case State::INITIALIZED:
 			return "initialized";
 			break;
 
-		case STATE_PARSED:
+		case State::PARSED:
 			return "parsed";
 			break;
 
-		case STATE_CHECKED:
+		case State::CHECKED:
 			return "checked";
 			break;
 
-		case STATE_STARTED:
+		case State::STARTED:
 			return "running";
 			break;
 
-		case STATE_STOPPED:
+		case State::STOPPED:
 			return "stopped";
 			break;
 
-		case STATE_PENDING_CONNECT:
+		case State::PENDING_CONNECT:
 			return "pending-connect";
 			break;
 
-		case STATE_CONNECTED:
+		case State::CONNECTED:
 			return "connected";
 			break;
 
-		case STATE_PAUSED:
+		case State::PAUSED:
 			return "paused";
 			break;
 

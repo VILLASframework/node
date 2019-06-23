@@ -55,14 +55,14 @@ static int cmp_sort(const void *a, const void *b, void *thunk) {
 
 int vlist_init(struct vlist *l)
 {
-	assert(l->state == STATE_DESTROYED);
+	assert(l->state == State::DESTROYED);
 
 	pthread_mutex_init(&l->lock, nullptr);
 
 	l->length = 0;
 	l->capacity = 0;
 	l->array = nullptr;
-	l->state = STATE_INITIALIZED;
+	l->state = State::INITIALIZED;
 
 	return 0;
 }
@@ -71,7 +71,7 @@ int vlist_destroy(struct vlist *l, dtor_cb_t destructor, bool release)
 {
 	pthread_mutex_lock(&l->lock);
 
-	assert(l->state != STATE_DESTROYED);
+	assert(l->state != State::DESTROYED);
 
 	for (size_t i = 0; i < vlist_length(l); i++) {
 		void *e = vlist_at(l, i);
@@ -87,7 +87,7 @@ int vlist_destroy(struct vlist *l, dtor_cb_t destructor, bool release)
 	l->length = -1;
 	l->capacity = 0;
 	l->array = nullptr;
-	l->state = STATE_DESTROYED;
+	l->state = State::DESTROYED;
 
 	pthread_mutex_unlock(&l->lock);
 	pthread_mutex_destroy(&l->lock);
@@ -99,7 +99,7 @@ void vlist_push(struct vlist *l, void *p)
 {
 	pthread_mutex_lock(&l->lock);
 
-	assert(l->state == STATE_INITIALIZED);
+	assert(l->state == State::INITIALIZED);
 
 	/* Resize array if out of capacity */
 	if (l->length >= l->capacity) {
@@ -117,7 +117,7 @@ int vlist_remove(struct vlist *l, size_t idx)
 {
 	pthread_mutex_lock(&l->lock);
 
-	assert(l->state == STATE_INITIALIZED);
+	assert(l->state == State::INITIALIZED);
 
 	if (idx >= l->length)
 		return -1;
@@ -139,7 +139,7 @@ int vlist_insert(struct vlist *l, size_t idx, void *p)
 
 	pthread_mutex_lock(&l->lock);
 
-	assert(l->state == STATE_INITIALIZED);
+	assert(l->state == State::INITIALIZED);
 
 	if (idx >= l->length)
 		return -1;
@@ -171,7 +171,7 @@ void vlist_remove_all(struct vlist *l, void *p)
 
 	pthread_mutex_lock(&l->lock);
 
-	assert(l->state == STATE_INITIALIZED);
+	assert(l->state == State::INITIALIZED);
 
 	for (size_t i = 0; i < vlist_length(l); i++) {
 		if (vlist_at(l, i) == p)
@@ -211,7 +211,7 @@ int vlist_count(struct vlist *l, cmp_cb_t cmp, void *ctx)
 
 	pthread_mutex_lock(&l->lock);
 
-	assert(l->state == STATE_INITIALIZED);
+	assert(l->state == State::INITIALIZED);
 
 	for (size_t i = 0; i < vlist_length(l); i++) {
 		e = vlist_at(l, i);
@@ -230,7 +230,7 @@ void * vlist_search(struct vlist *l, cmp_cb_t cmp, void *ctx)
 
 	pthread_mutex_lock(&l->lock);
 
-	assert(l->state == STATE_INITIALIZED);
+	assert(l->state == State::INITIALIZED);
 
 	for (size_t i = 0; i < vlist_length(l); i++) {
 		e = vlist_at(l, i);
@@ -249,7 +249,7 @@ void vlist_sort(struct vlist *l, cmp_cb_t cmp)
 {
 	pthread_mutex_lock(&l->lock);
 
-	assert(l->state == STATE_INITIALIZED);
+	assert(l->state == State::INITIALIZED);
 
 #ifdef __APPLE__
 	qsort_r(l->array, l->length, sizeof(void *), (void *) cmp, cmp_sort);
@@ -277,7 +277,7 @@ ssize_t vlist_index(struct vlist *l, void *p)
 
 	pthread_mutex_lock(&l->lock);
 
-	assert(l->state == STATE_INITIALIZED);
+	assert(l->state == State::INITIALIZED);
 
 	for (size_t i = 0; i < vlist_length(l); i++) {
 		e = vlist_at(l, i);

@@ -141,8 +141,13 @@ void Popen::open()
 		}
 
 		/* Change working directory */
-		if (!working_dir.empty())
-			chdir(working_dir.c_str());
+		if (!working_dir.empty()) {
+			int ret;
+
+			ret = chdir(working_dir.c_str());
+			if (ret)
+				exit(127);
+		}
 
 		execvpe(shell ? _PATH_BSHELL : command.c_str(), (char * const *) argv.data(), (char * const *) envp.data());
 		exit(127);

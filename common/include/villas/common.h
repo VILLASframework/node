@@ -24,25 +24,25 @@
 #pragma once
 
 /* Common states for most objects in VILLAScommon (paths, nodes, hooks, plugins) */
-enum state {
-	STATE_DESTROYED		= 0,
-	STATE_INITIALIZED	= 1,
-	STATE_PARSED		= 2,
-	STATE_CHECKED		= 3,
-	STATE_STARTED		= 4,
-	STATE_LOADED		= 4, /* alias for STATE_STARTED used by struct plugin */
-	STATE_OPENED		= 4, /* alias for STATE_STARTED used by struct io */
-	STATE_STOPPED		= 5,
-	STATE_UNLOADED		= 5, /* alias for STATE_STARTED used by struct plugin */
-	STATE_CLOSED		= 5, /* alias for STATE_STARTED used by struct io */
-	STATE_PENDING_CONNECT	= 6,
-	STATE_CONNECTED		= 7,
-	STATE_PAUSED		= 8,
-	STATE_STARTING		= 9,
-	STATE_STOPPING		= 10,
-	STATE_PAUSING		= 11,
-	STATE_RESUMING		= 12,
-	STATE_PREPARED		= 13
+enum class State {
+	DESTROYED	= 0,
+	INITIALIZED	= 1,
+	PARSED		= 2,
+	CHECKED		= 3,
+	STARTED		= 4,
+	LOADED		= 4, /* alias for STARTED used by struct plugin */
+	OPENED		= 4, /* alias for STARTED used by struct io */
+	STOPPED		= 5,
+	UNLOADED	= 5, /* alias for STARTED used by struct plugin */
+	CLOSED		= 5, /* alias for STARTED used by struct io */
+	PENDING_CONNECT	= 6,
+	CONNECTED	= 7,
+	PAUSED		= 8,
+	STARTING	= 9,
+	STOPPING	= 10,
+	PAUSING		= 11,
+	RESUMING	= 12,
+	PREPARED	= 13
 };
 
 /** Callback to destroy list elements.
@@ -52,4 +52,4 @@ enum state {
 typedef int (*dtor_cb_t)(void *);
 
 /** Convert state enum to human readable string. */
-const char * state_print(enum state s);
+const char * state_print(enum State s);
