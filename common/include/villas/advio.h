@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include <stdio.h>
+#include <cstdio>
 
 #include <curl/curl.h>
 

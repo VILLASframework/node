@@ -24,16 +24,16 @@
 #include <string>
 #include <iostream>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdarg.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstdio>
+#include <cstdint>
+#include <cstdbool>
+#include <cstdarg>
+#include <cstring>
 #include <unistd.h>
-#include <math.h>
+#include <cmath>
 #include <pthread.h>
-#include <ctype.h>
+#include <cctype>
 #include <fcntl.h>
 
 #include <openssl/bio.h>

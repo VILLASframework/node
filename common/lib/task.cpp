@@ -21,8 +21,8 @@
  *********************************************************************************/
 
 #include <unistd.h>
-#include <time.h>
-#include <errno.h>
+#include <ctime>
+#include <cerrno>
 
 #include <villas/utils.hpp>
 #include <villas/task.h>

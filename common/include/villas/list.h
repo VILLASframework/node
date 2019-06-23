@@ -28,7 +28,7 @@
 
 #pragma once
 
-#include <stdbool.h>
+#include <cstdbool>
 #include <sys/types.h>
 #include <pthread.h>
 

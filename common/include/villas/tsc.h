@@ -23,9 +23,9 @@
 
 #pragma once
 
-#include <stdbool.h>
+#include <cstdbool>
 #include <cpuid.h>
-#include <inttypes.h>
+#include <cinttypes>
 
 #ifdef __APPLE__
   #include <sys/types.h>

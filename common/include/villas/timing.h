@@ -23,10 +23,10 @@
 
 #pragma once
 
-#include <stdio.h>
-#include <stdint.h>
+#include <cstdio>
+#include <cstdint>
 
-#include <time.h>
+#include <ctime>
 
 /** Compare two timestamps. Return zero if they are equal */
 ssize_t time_cmp(const struct timespec *a, const struct timespec *b);

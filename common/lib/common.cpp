@@ -23,7 +23,7 @@
 
 #include <villas/common.h>
 
-#include <stdlib.h>
+#include <cstdlib>
 
 const char * state_print(enum State s)
 {

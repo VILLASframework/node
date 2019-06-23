@@ -23,10 +23,10 @@
 
 #pragma once
 
-#include <stdio.h>
-#include <stdint.h>
+#include <cstdio>
+#include <cstdint>
 
-#include <time.h>
+#include <ctime>
 
 /** We can choose between two periodic task implementations */
 //#define PERIODIC_TASK_IMPL NANOSLEEP

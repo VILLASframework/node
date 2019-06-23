@@ -6,11 +6,11 @@
 
 #define _DEFAULT_SOURCE
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 #include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
+#include <cstring>
 #include <sys/ioctl.h>
 #include <sys/eventfd.h>
 

@@ -21,12 +21,12 @@
  *********************************************************************************/
 
 #include <sys/utsname.h>
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
+#include <cstdio>
+#include <cstring>
+#include <ctime>
 #include <unistd.h>
 #include <fcntl.h>
-#include <inttypes.h>
+#include <cinttypes>
 
 #include <sys/types.h>
 #include <sys/types.h>
