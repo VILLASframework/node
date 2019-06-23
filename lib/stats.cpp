@@ -22,7 +22,7 @@
 
 #include <string.h>
 
-#include <villas/stats.h>
+#include <villas/stats.hpp>
 #include <villas/hist.hpp>
 #include <villas/timing.h>
 #include <villas/node.h>
@@ -34,180 +34,155 @@
 using namespace villas;
 using namespace villas::utils;
 
-struct stats_metric_description stats_metrics[] = {
-	{ "skipped",		STATS_METRIC_SMPS_SKIPPED,	"samples",	"Skipped samples and the distance between them" 		},
-	{ "reordered",		STATS_METRIC_SMPS_REORDERED, 	"samples",	"Reordered samples and the distance between them" 		},
-	{ "gap_sent",		STATS_METRIC_GAP_SAMPLE,	"seconds",	"Inter-message timestamps (as sent by remote)" 			},
-	{ "gap_received",	STATS_METRIC_GAP_RECEIVED,	"seconds",	"Inter-message arrival time (as received by this instance)" 	},
-	{ "owd",		STATS_METRIC_OWD,		"seconds",	"One-way-delay (OWD) of received messages" 			},
-	{ "age",		STATS_METRIC_AGE,		"seconds",	"Processing time of packets within the from receive to sent" 	},
-	{ "rtp.loss_fraction",	STATS_METRIC_RTP_LOSS_FRACTION,	"percent",	"Fraction lost since last RTP SR/RR."				},
-	{ "rtp.pkts_lost",	STATS_METRIC_RTP_PKTS_LOST,	"packets",	"Cumulative number of packtes lost" 				},
-	{ "rtp.jitter",		STATS_METRIC_RTP_JITTER,	"seconds",	"Interarrival jitter" 						},
+std::unordered_map<Stats::Metric, Stats::MetricDescription> Stats::metrics = {
+	{ Stats::Metric::SMPS_SKIPPED, 		{ "skipped",		"samples", "Skipped samples and the distance between them" 		}},
+	{ Stats::Metric::SMPS_REORDERED, 	{ "reordered",		"samples", "Reordered samples and the distance between them" 		}},
+	{ Stats::Metric::GAP_SAMPLE, 		{ "gap_sent",		"seconds", "Inter-message timestamps (as sent by remote)" 		}},
+	{ Stats::Metric::GAP_RECEIVED, 		{ "gap_received",	"seconds", "Inter-message arrival time (as received by this instance)" 	}},
+	{ Stats::Metric::OWD, 			{ "owd",		"seconds", "One-way-delay (OWD) of received messages" 			}},
+	{ Stats::Metric::AGE, 			{ "age",		"seconds", "Processing time of packets within the from receive to sent" }},
+	{ Stats::Metric::RTP_LOSS_FRACTION, 	{ "rtp.loss_fraction",	"percent", "Fraction lost since last RTP SR/RR."			}},
+	{ Stats::Metric::RTP_PKTS_LOST, 	{ "rtp.pkts_lost",	"packets", "Cumulative number of packtes lost" 				}},
+	{ Stats::Metric::RTP_JITTER, 		{ "rtp.jitter",		"seconds", "Interarrival jitter" 					}},
 };
 
-struct stats_type_description stats_types[] = {
-	{ "last",		STATS_TYPE_LAST,	SIGNAL_TYPE_FLOAT },
-	{ "highest",		STATS_TYPE_HIGHEST,	SIGNAL_TYPE_FLOAT },
-	{ "lowest",		STATS_TYPE_LOWEST,	SIGNAL_TYPE_FLOAT },
-	{ "mean",		STATS_TYPE_MEAN,	SIGNAL_TYPE_FLOAT },
-	{ "var",		STATS_TYPE_VAR,		SIGNAL_TYPE_FLOAT },
-	{ "stddev",		STATS_TYPE_STDDEV,	SIGNAL_TYPE_FLOAT },
-	{ "total",		STATS_TYPE_TOTAL,	SIGNAL_TYPE_INTEGER }
+std::unordered_map<Stats::Type, Stats::TypeDescription> Stats::types = {
+	{ Stats::Type::LAST,			{ "last",		SIGNAL_TYPE_FLOAT }},
+	{ Stats::Type::HIGHEST,			{ "highest",		SIGNAL_TYPE_FLOAT }},
+	{ Stats::Type::LOWEST,			{ "lowest",		SIGNAL_TYPE_FLOAT }},
+	{ Stats::Type::MEAN,			{ "mean",		SIGNAL_TYPE_FLOAT }},
+	{ Stats::Type::VAR,			{ "var",		SIGNAL_TYPE_FLOAT }},
+	{ Stats::Type::STDDEV,			{ "stddev",		SIGNAL_TYPE_FLOAT }},
+	{ Stats::Type::TOTAL,			{ "total",		SIGNAL_TYPE_INTEGER }}
 };
 
-int stats_lookup_format(const char *str)
+std::vector<TableColumn> Stats::columns = {
+	{ 10, TableColumn::Alignment::LEFT,  "Node",		"%s"		 },
+	{ 10, TableColumn::Alignment::RIGHT, "Recv",		"%ju", "pkts"	 },
+	{ 10, TableColumn::Alignment::RIGHT, "Sent",		"%ju", "pkts"	 },
+	{ 10, TableColumn::Alignment::RIGHT, "Drop",		"%ju", "pkts"	 },
+	{ 10, TableColumn::Alignment::RIGHT, "Skip",		"%ju", "pkts"	 },
+	{ 10, TableColumn::Alignment::RIGHT, "OWD last",	"%lf", "secs"	 },
+	{ 10, TableColumn::Alignment::RIGHT, "OWD mean",	"%lf", "secs"	 },
+	{ 10, TableColumn::Alignment::RIGHT, "Rate last",	"%lf", "pkt/sec" },
+	{ 10, TableColumn::Alignment::RIGHT, "Rate mean",	"%lf", "pkt/sec" },
+	{ 10, TableColumn::Alignment::RIGHT, "Age mean",	"%lf", "secs"	 },
+	{ 10, TableColumn::Alignment::RIGHT, "Age Max",		"%lf", "sec"	 }
+};
+
+enum Stats::Format Stats::lookupFormat(const std::string &str)
 {
-	if      (!strcmp(str, "human"))
-		return STATS_FORMAT_HUMAN;
-	else if (!strcmp(str, "json"))
-		return STATS_FORMAT_JSON;
-	else if (!strcmp(str, "matlab"))
-	 	return STATS_FORMAT_MATLAB;
-	else
-		return -1;
+	if      (str == "human")
+		return Format::HUMAN;
+	else if (str == "json")
+		return Format::JSON;
+	else if (str == "matlab")
+	 	return Format::MATLAB;
+
+	throw std::invalid_argument("Invalid format");
 }
 
-enum stats_metric stats_lookup_metric(const char *str)
+enum Stats::Metric Stats::lookupMetric(const std::string &str)
 {
-	for (int i = 0; i < STATS_METRIC_COUNT; i++) {
-		struct stats_metric_description *d = &stats_metrics[i];
-
-		if (!strcmp(str, d->name))
-			return d->metric;
+	for (auto m : metrics) {
+		if (str == m.second.name)
+			return m.first;
 	}
 
-	return STATS_METRIC_INVALID;
+	throw std::invalid_argument("Invalid metric");
 }
 
-enum stats_type stats_lookup_type(const char *str)
+enum Stats::Type Stats::lookupType(const std::string &str)
 {
-	for (int i = 0; i < STATS_TYPE_COUNT; i++) {
-		struct stats_type_description *d = &stats_types[i];
-
-		if (!strcmp(str, d->name))
-			return d->type;
+	for (auto t : types) {
+		if (str == t.second.name)
+			return t.first;
 	}
 
-	return STATS_TYPE_INVALID;
+	throw std::invalid_argument("Invalid type");
 }
 
-int stats_init(struct stats *s, int buckets, int warmup)
+Stats::Stats(int buckets, int warmup)
 {
-	assert(s->state == STATE_DESTROYED);
-
-	for (int i = 0; i < STATS_METRIC_COUNT; i++)
-		new (&s->histograms[i]) Hist(buckets, warmup);
-
-	s->state = STATE_INITIALIZED;
-
-	return 0;
+	for (auto m : metrics)
+		histograms[m.first] = Hist(buckets, warmup);
 }
 
-int stats_destroy(struct stats *s)
+void Stats::update(enum Metric m, double val)
 {
-	assert(s->state != STATE_DESTROYED);
-
-	for (int i = 0; i < STATS_METRIC_COUNT; i++)
-		s->histograms[i].~Hist();
-
-	s->state = STATE_DESTROYED;
-
-	return 0;
+	histograms[m].put(val);
 }
 
-void stats_update(struct stats *s, enum stats_metric id, double val)
+void Stats::reset()
 {
-	assert(s->state == STATE_INITIALIZED);
-
-	s->histograms[id].put(val);
+	for (auto m : metrics)
+		histograms[m.first].reset();
 }
 
-json_t * stats_json(struct stats *s)
+json_t * Stats::toJson() const
 {
-	assert(s->state == STATE_INITIALIZED);
-
 	json_t *obj = json_object();
 
-	for (int i = 0; i < STATS_METRIC_COUNT; i++) {
-		struct stats_metric_description *d = &stats_metrics[i];
-		const Hist &h = s->histograms[i];
+	for (auto m : metrics) {
+		const Hist &h = histograms.at(m.first);
 
-		json_object_set_new(obj, d->name, h.toJson());
+		json_object_set_new(obj, m.second.name, h.toJson());
 	}
 
 	return obj;
 }
 
-void stats_reset(struct stats *s)
-{
-	assert(s->state == STATE_INITIALIZED);
-
-	for (int i = 0; i < STATS_METRIC_COUNT; i++)
-		s->histograms[i].reset();
-}
-
-static std::vector<TableColumn> stats_columns = {
-	{ 10, TableColumn::align::LEFT,		"Node",		"%s"			},
-	{ 10, TableColumn::align::RIGHT,	"Recv",		"%ju",	"pkts"		},
-	{ 10, TableColumn::align::RIGHT,	"Sent",		"%ju",	"pkts"		},
-	{ 10, TableColumn::align::RIGHT,	"Drop",		"%ju",	"pkts"		},
-	{ 10, TableColumn::align::RIGHT,	"Skip",		"%ju",	"pkts"		},
-	{ 10, TableColumn::align::RIGHT,	"OWD last",	"%lf",	"secs"		},
-	{ 10, TableColumn::align::RIGHT,	"OWD mean",	"%lf",	"secs"		},
-	{ 10, TableColumn::align::RIGHT,	"Rate last",	"%lf",	"pkt/sec"	},
-	{ 10, TableColumn::align::RIGHT,	"Rate mean",	"%lf",	"pkt/sec"	},
-	{ 10, TableColumn::align::RIGHT,	"Age mean",	"%lf",	"secs"		},
-	{ 10, TableColumn::align::RIGHT,	"Age Max",	"%lf",	"sec"		}
-};
-
-static Table stats_table = Table(stats_columns);
-
-void stats_print_header(enum stats_format fmt)
+void Stats::printHeader(enum Format fmt)
 {
 	switch (fmt) {
-		case STATS_FORMAT_HUMAN:
-			stats_table.header();
+		case Format::HUMAN:
+			setupTable();
+			table->header();
 			break;
 
 		default: { }
 	}
 }
 
-void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, struct node *n)
+void Stats::setupTable()
 {
-	assert(s->state == STATE_INITIALIZED);
+	if (!table)
+		table = std::make_shared<Table>(columns);
+}
 
+void Stats::printPeriodic(FILE *f, enum Format fmt, struct node *n) const
+{
 	switch (fmt) {
-		case STATS_FORMAT_HUMAN:
-			stats_table.row(11,
+		case Format::HUMAN:
+			setupTable();
+			table->row(11,
 				node_name_short(n),
-				(uintmax_t)    s->histograms[STATS_METRIC_OWD].getTotal(),
-				(uintmax_t)    s->histograms[STATS_METRIC_AGE].getTotal(),
-				(uintmax_t)    s->histograms[STATS_METRIC_SMPS_REORDERED].getTotal(),
-				(uintmax_t)    s->histograms[STATS_METRIC_SMPS_SKIPPED].getTotal(),
-				(double)       s->histograms[STATS_METRIC_OWD].getLast(),
-				(double)       s->histograms[STATS_METRIC_OWD].getMean(),
-				(double) 1.0 / s->histograms[STATS_METRIC_GAP_RECEIVED].getLast(),
-				(double) 1.0 / s->histograms[STATS_METRIC_GAP_RECEIVED].getMean(),
-				(double)       s->histograms[STATS_METRIC_AGE].getMean(),
-				(double)       s->histograms[STATS_METRIC_AGE].getHighest()
+				(uintmax_t)    histograms.at(Metric::OWD).getTotal(),
+				(uintmax_t)    histograms.at(Metric::AGE).getTotal(),
+				(uintmax_t)    histograms.at(Metric::SMPS_REORDERED).getTotal(),
+				(uintmax_t)    histograms.at(Metric::SMPS_SKIPPED).getTotal(),
+				(double)       histograms.at(Metric::OWD).getLast(),
+				(double)       histograms.at(Metric::OWD).getMean(),
+				(double) 1.0 / histograms.at(Metric::GAP_RECEIVED).getLast(),
+				(double) 1.0 / histograms.at(Metric::GAP_RECEIVED).getMean(),
+				(double)       histograms.at(Metric::AGE).getMean(),
+				(double)       histograms.at(Metric::AGE).getHighest()
 			);
 			break;
 
-		case STATS_FORMAT_JSON: {
+		case Format::JSON: {
 			json_t *json_stats = json_pack("{ s: s, s: i, s: i, s: i, s: i, s: f, s: f, s: f, s: f, s: f, s: f }",
 				"node", node_name(n),
-				"recv",            s->histograms[STATS_METRIC_OWD].getTotal(),
-				"sent",            s->histograms[STATS_METRIC_AGE].getTotal(),
-				"dropped",         s->histograms[STATS_METRIC_SMPS_REORDERED].getTotal(),
-				"skipped",         s->histograms[STATS_METRIC_SMPS_SKIPPED].getTotal(),
-				"owd_last",  1.0 / s->histograms[STATS_METRIC_OWD].getLast(),
-				"owd_mean",  1.0 / s->histograms[STATS_METRIC_OWD].getMean(),
-				"rate_last", 1.0 / s->histograms[STATS_METRIC_GAP_SAMPLE].getLast(),
-				"rate_mean", 1.0 / s->histograms[STATS_METRIC_GAP_SAMPLE].getMean(),
-				"age_mean",        s->histograms[STATS_METRIC_AGE].getMean(),
-				"age_max",         s->histograms[STATS_METRIC_AGE].getHighest()
+				"recv",            histograms.at(Metric::OWD).getTotal(),
+				"sent",            histograms.at(Metric::AGE).getTotal(),
+				"dropped",         histograms.at(Metric::SMPS_REORDERED).getTotal(),
+				"skipped",         histograms.at(Metric::SMPS_SKIPPED).getTotal(),
+				"owd_last",  1.0 / histograms.at(Metric::OWD).getLast(),
+				"owd_mean",  1.0 / histograms.at(Metric::OWD).getMean(),
+				"rate_last", 1.0 / histograms.at(Metric::GAP_SAMPLE).getLast(),
+				"rate_mean", 1.0 / histograms.at(Metric::GAP_SAMPLE).getMean(),
+				"age_mean",        histograms.at(Metric::AGE).getMean(),
+				"age_max",         histograms.at(Metric::AGE).getHighest()
 			);
 			json_dumpf(json_stats, f, 0);
 			break;
@@ -217,64 +192,56 @@ void stats_print_periodic(struct stats *s, FILE *f, enum stats_format fmt, struc
 	}
 }
 
-void stats_print(struct stats *s, FILE *f, enum stats_format fmt, int verbose)
+void Stats::print(FILE *f, enum Format fmt, int verbose) const
 {
-	assert(s->state == STATE_INITIALIZED);
-
 	switch (fmt) {
-		case STATS_FORMAT_HUMAN:
-			for (int i = 0; i < STATS_METRIC_COUNT; i++) {
-				struct stats_metric_description *d = &stats_metrics[i];
-
-				info("%s: %s", d->name, d->desc);
-				s->histograms[i].print(verbose);
+		case Format::HUMAN:
+			for (auto m : metrics) {
+				info("%s: %s", m.second.name, m.second.desc);
+				histograms.at(m.first).print(verbose);
 			}
 			break;
 
-		case STATS_FORMAT_JSON: {
-			json_t *json_stats = stats_json(s);
-			json_dumpf(json_stats, f, 0);
+		case Format::JSON:
+			json_dumpf(toJson(), f, 0);
 			fflush(f);
 			break;
-		}
 
 		default: { }
 	}
 }
 
-union signal_data stats_get_value(const struct stats *s, enum stats_metric sm, enum stats_type st)
+union signal_data Stats::getValue(enum Metric sm, enum Type st) const
 {
-	assert(s->state == STATE_INITIALIZED);
-
-	const Hist &h = s->histograms[sm];
+	const Hist &h = histograms.at(sm);
 	union signal_data d;
 
 	switch (st) {
-		case STATS_TYPE_TOTAL:
+		case Type::TOTAL:
 			d.i = h.getTotal();
 			break;
 
-		case STATS_TYPE_LAST:
+		case Type::LAST:
 			d.f = h.getLast();
 			break;
 
-		case STATS_TYPE_HIGHEST:
+		case Type::HIGHEST:
 			d.f = h.getHighest();
 			break;
 
-		case STATS_TYPE_LOWEST:
+		case Type::LOWEST:
 			d.f = h.getLowest();
 			break;
 
-		case STATS_TYPE_MEAN:
+		case Type::MEAN:
 			d.f = h.getMean();
 			break;
 
-		case STATS_TYPE_STDDEV:
+		case Type::STDDEV:
 			d.f = h.getStddev();
 			break;
 
-		case STATS_TYPE_VAR:
+		case Type::VAR:
 			d.f = h.getVar();
 			break;
 
@@ -284,3 +251,10 @@ union signal_data stats_get_value(const struct stats *s, enum stats_metric sm, e
 
 	return d;
 }
+
+const Hist & Stats::getHistogram(enum Metric sm) const
+{
+	return histograms.at(sm);
+}
+
+std::shared_ptr<Table> Stats::table = std::shared_ptr<Table>();

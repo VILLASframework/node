@@ -25,13 +25,12 @@
 #include <villas/nodes/stats.hpp>
 #include <villas/hook.h>
 #include <villas/plugin.h>
-#include <villas/stats.h>
+#include <villas/stats.hpp>
 #include <villas/super_node.hpp>
 #include <villas/sample.h>
 #include <villas/node.h>
 
-#define STATS_METRICS 6
-
+using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
@@ -72,13 +71,8 @@ int stats_node_signal_parse(struct stats_node_signal *s, json_t *cfg)
 	if (!type)
 		goto invalid_format;
 
-	s->metric = stats_lookup_metric(metric);
-	if (s->metric < 0)
-		goto invalid_format;
-
-	s->type = stats_lookup_type(type);
-	if (s->type < 0)
-		goto invalid_format;
+	s->metric = Stats::lookupMetric(metric);
+	s->type = Stats::lookupType(type);
 
 	s->node_str = strdup(node);
 
@@ -196,16 +190,16 @@ int stats_node_parse(struct node *n, json_t *cfg)
 			error("Failed to parse statistics signal definition of node %s", node_name(n));
 
 		if (!sig->name) {
-			const char *metric = stats_metrics[stats_sig->metric].name;
-			const char *type = stats_types[stats_sig->type].name;
+			const char *metric = Stats::metrics[stats_sig->metric].name;
+			const char *type = Stats::types[stats_sig->type].name;
 
 			sig->name = strf("%s.%s.%s", stats_sig->node_str, metric, type);
 		}
 
 		if (!sig->unit)
-			sig->unit = strdup(stats_metrics[stats_sig->metric].unit);
+			sig->unit = strdup(Stats::metrics[stats_sig->metric].unit);
 
-		if (sig->type != stats_types[stats_sig->type].signal_type)
+		if (sig->type != Stats::types[stats_sig->type].signal_type)
 			error("Invalid type for signal %zu in node %s", i, node_name(n));
 
 		vlist_push(&s->signals, stats_sig);
@@ -226,14 +220,14 @@ int stats_node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigne
 	unsigned len = MIN(vlist_length(&s->signals), smps[0]->capacity);
 
 	for (size_t i = 0; i < len; i++) {
-		struct stats *st;
+		Stats *st;
 		struct stats_node_signal *sig = (struct stats_node_signal *) vlist_at(&s->signals, i);
 
 		st = sig->node->stats;
 		if (!st)
 			return -1;
 
-		smps[0]->data[i] = stats_get_value(st, sig->metric, sig->type);
+		smps[0]->data[i] = st->getValue(sig->metric, sig->type);
 	}
 
 	smps[0]->length = len;

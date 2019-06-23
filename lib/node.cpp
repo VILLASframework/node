@@ -43,6 +43,7 @@
   #include <villas/kernel/tc_netem.h>
 #endif /* WITH_NETEM */
 
+using namespace villas;
 using namespace villas::utils;
 
 int node_init(struct node *n, struct node_type *vt)
@@ -427,7 +428,7 @@ int node_read(struct node *n, struct sample *smps[], unsigned cnt, unsigned *rel
 	int skipped = nread - rread;
 
 	if (skipped > 0 && n->stats != nullptr) {
-		stats_update(n->stats, STATS_METRIC_SMPS_SKIPPED, skipped);
+		n->stats->update(Stats::Metric::SMPS_SKIPPED, skipped);
 	}
 
 	debug(LOG_NODE | 5, "Received %u samples from node %s of which %d have been skipped", nread, node_name(n), skipped);

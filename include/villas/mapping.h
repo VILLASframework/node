@@ -25,7 +25,7 @@
 
 #include <jansson.h>
 
-#include <villas/stats.h>
+#include <villas/stats.hpp>
 #include <villas/common.h>
 
 /* Forward declarations */
@@ -70,8 +70,8 @@ struct mapping_entry {
 		} data;
 
 		struct {
-			enum stats_metric metric;
-			enum stats_type type;
+			enum villas::Stats::Metric metric;
+			enum villas::Stats::Type type;
 		} stats;
 
 		struct {

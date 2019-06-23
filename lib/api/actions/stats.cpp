@@ -24,7 +24,7 @@
 
 #include <villas/log.h>
 #include <villas/node.h>
-#include <villas/stats.h>
+#include <villas/stats.hpp>
 #include <villas/super_node.hpp>
 #include <villas/utils.hpp>
 #include <villas/api/session.hpp>
@@ -58,7 +58,7 @@ public:
 
 			if (n->stats) {
 				if (reset) {
-					stats_reset(n->stats);
+					n->stats->reset();
 					info("Stats resetted for node %s", node_name(n));
 				}
 			}

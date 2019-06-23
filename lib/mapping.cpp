@@ -29,6 +29,7 @@
 #include <villas/node.h>
 #include <villas/signal.h>
 
+using namespace villas;
 using namespace villas::utils;
 
 int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *nodes)
@@ -76,13 +77,8 @@ int mapping_parse_str(struct mapping_entry *me, const char *str, struct vlist *n
 		if (!type)
 			goto invalid_format;
 
-		me->stats.metric = stats_lookup_metric(metric);
-		if (me->stats.metric < 0)
-			goto invalid_format;
-
-		me->stats.type = stats_lookup_type(type);
-		if (me->stats.type  < 0)
-			goto invalid_format;
+		me->stats.metric = Stats::lookupMetric(metric);
+		me->stats.type = Stats::lookupType(type);
 	}
 	else if (!strcmp(type, "hdr")) {
 		me->type = MAPPING_TYPE_HEADER;
@@ -245,7 +241,7 @@ int mapping_update(const struct mapping_entry *me, struct sample *remapped, cons
 
 	switch (me->type) {
 		case MAPPING_TYPE_STATS:
-			remapped->data[me->offset] = stats_get_value(me->node->stats, me->stats.metric, me->stats.type);
+			remapped->data[me->offset] = me->node->stats->getValue(me->stats.metric, me->stats.type);
 			break;
 
 		case MAPPING_TYPE_TIMESTAMP: {
@@ -350,8 +346,8 @@ int mapping_to_str(const struct mapping_entry *me, unsigned index, char **str)
 	switch (me->type) {
 		case MAPPING_TYPE_STATS:
 			strcatf(str, "stats.%s.%s",
-				stats_metrics[me->stats.metric].name,
-				stats_types[me->stats.type].name
+				Stats::metrics[me->stats.metric].name,
+				Stats::types[me->stats.type].name
 			);
 			break;
 

@@ -30,7 +30,7 @@
 #include <villas/advio.h>
 #include <villas/hook.hpp>
 #include <villas/node/exceptions.hpp>
-#include <villas/stats.h>
+#include <villas/stats.hpp>
 #include <villas/node.h>
 #include <villas/timing.h>
 
@@ -53,11 +53,11 @@ public:
 
 	virtual int process(sample *smp)
 	{
-		stats *s = node->stats;
+		Stats *s = node->stats;
 
 		timespec now = time_now();
 
-		stats_update(s, STATS_METRIC_AGE, time_delta(&smp->ts.received, &now));
+		s->update(Stats::Metric::AGE, time_delta(&smp->ts.received, &now));
 
 		return HOOK_OK;
 	}
@@ -96,22 +96,22 @@ public:
 
 	virtual int process(sample *smp)
 	{
-		stats *s = node->stats;
+		Stats *s = node->stats;
 
 		if (last) {
 			if (smp->flags & last->flags & SAMPLE_HAS_TS_RECEIVED)
-				stats_update(s, STATS_METRIC_GAP_RECEIVED, time_delta(&last->ts.received, &smp->ts.received));
+				s->update(Stats::Metric::GAP_RECEIVED, time_delta(&last->ts.received, &smp->ts.received));
 
 			if (smp->flags & last->flags & SAMPLE_HAS_TS_ORIGIN)
-				stats_update(s, STATS_METRIC_GAP_SAMPLE, time_delta(&last->ts.origin, &smp->ts.origin));
+				s->update(Stats::Metric::GAP_SAMPLE, time_delta(&last->ts.origin, &smp->ts.origin));
 
 			if ((smp->flags & SAMPLE_HAS_TS_ORIGIN) && (smp->flags & SAMPLE_HAS_TS_RECEIVED))
-				stats_update(s, STATS_METRIC_OWD, time_delta(&smp->ts.origin, &smp->ts.received));
+				s->update(Stats::Metric::OWD, time_delta(&smp->ts.origin, &smp->ts.received));
 
 			if (smp->flags & last->flags & SAMPLE_HAS_SEQUENCE) {
 				int dist = smp->sequence - (int32_t) last->sequence;
 				if (dist != 1)
-					stats_update(s, STATS_METRIC_SMPS_REORDERED, dist);
+					s->update(Stats::Metric::SMPS_REORDERED, dist);
 			}
 		}
 
@@ -129,12 +129,12 @@ public:
 class StatsHook : public Hook {
 
 protected:
-	struct stats stats;
+	Stats stats;
 
 	StatsReadHook *readHook;
 	StatsWriteHook *writeHook;
 
-	enum stats_format format;
+	enum Stats::Format format;
 	int verbose;
 	int warmup;
 	int buckets;
@@ -146,20 +146,14 @@ public:
 
 	StatsHook(struct path *p, struct node *n, int fl, int prio, bool en = true) :
 		Hook(p, n, fl, prio, en),
-		format(STATS_FORMAT_HUMAN),
+		stats(buckets, warmup),
+		format(Stats::Format::HUMAN),
 		verbose(0),
 		warmup(500),
 		buckets(20),
 		output(nullptr),
 		uri(nullptr)
 	{
-		int ret;
-
-		stats.state = STATE_DESTROYED;
-		ret = stats_init(&stats, buckets, warmup);
-		if (ret)
-			throw RuntimeError("Failed to initialize stats");
-
 		/* Register statistic object to path.
 		*
 		* This allows the path code to update statistics. */
@@ -178,8 +172,7 @@ public:
 		if (uri)
 			free(uri);
 
-		if (stats.state != STATE_DESTROYED)
-			stats_destroy(&stats);
+		stats.~Stats();
 	}
 
 	virtual void start()
@@ -199,7 +192,7 @@ public:
 	{
 		assert(state == STATE_STARTED);
 
-		stats_print(&stats, uri ? output->file : stdout, format, verbose);
+		stats.print(uri ? output->file : stdout, format, verbose);
 
 		if (uri)
 			afclose(output);
@@ -211,19 +204,19 @@ public:
 	{
 		assert(state == STATE_STARTED);
 
-		stats_reset(&stats);
+		stats.reset();
 	}
 
 	virtual void periodic()
 	{
 		assert(state == STATE_STARTED);
 
-		stats_print_periodic(&stats, uri ? output->file : stdout, format, node);
+		stats.printPeriodic(uri ? output->file : stdout, format, node);
 	}
 
 	virtual void parse(json_t *cfg)
 	{
-		int ret, fmt;
+		int ret;
 		json_error_t err;
 
 		assert(state != STATE_STARTED);
@@ -242,11 +235,11 @@ public:
 			throw ConfigError(cfg, err, "node-config-hook-stats");
 
 		if (f) {
-			fmt = stats_lookup_format(f);
-			if (fmt < 0)
+			try {
+				format = Stats::lookupFormat(f);
+			} catch (std::invalid_argument &e) {
 				throw ConfigError(cfg, "node-config-hook-stats", "Invalid statistic output format: {}", f);
-
-			format = static_cast<stats_format>(fmt);
+			}
 		}
 
 		if (u)

@@ -28,6 +28,7 @@
 #include <villas/node.h>
 #include <villas/mapping.h>
 
+using namespace villas;
 using namespace villas::utils;
 
 int signal_init(struct signal *s)
@@ -57,7 +58,7 @@ int signal_init_from_mapping(struct signal *s, const struct mapping_entry *me, u
 
 	switch (me->type) {
 		case MAPPING_TYPE_STATS:
-			s->type = stats_types[me->stats.type].signal_type;
+			s->type = Stats::types[me->stats.type].signal_type;
 			break;
 
 		case MAPPING_TYPE_HEADER:

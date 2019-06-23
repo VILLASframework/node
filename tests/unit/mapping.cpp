@@ -28,6 +28,8 @@
 #include <villas/utils.hpp>
 #include <villas/signal.h>
 
+using namespace villas;
+
 Test(mapping, parse_nodes)
 {
 	int ret;
@@ -73,8 +75,8 @@ Test(mapping, parse_nodes)
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.node, vlist_lookup(&nodes, "cherry"));
 	cr_assert_eq(m.type, MAPPING_TYPE_STATS);
-	cr_assert_eq(m.stats.metric, STATS_METRIC_OWD);
-	cr_assert_eq(m.stats.type, STATS_TYPE_MEAN);
+	cr_assert_eq(m.stats.metric, Stats::Metric::OWD);
+	cr_assert_eq(m.stats.type, Stats::Type::MEAN);
 
 	ret = mapping_parse_str(&m, "carrot.data[1-2]", &nodes);
 	cr_assert_eq(ret, 0);
@@ -126,8 +128,8 @@ Test(mapping, parse)
 	ret = mapping_parse_str(&m, "stats.owd.mean", nullptr);
 	cr_assert_eq(ret, 0);
 	cr_assert_eq(m.type, MAPPING_TYPE_STATS);
-	cr_assert_eq(m.stats.metric, STATS_METRIC_OWD);
-	cr_assert_eq(m.stats.type, STATS_TYPE_MEAN);
+	cr_assert_eq(m.stats.metric, Stats::Metric::OWD);
+	cr_assert_eq(m.stats.type, Stats::Type::MEAN);
 
 	ret = mapping_parse_str(&m, "data[1-2]", nullptr);
 	cr_assert_eq(ret, 0);

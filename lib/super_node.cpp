@@ -382,7 +382,7 @@ void SuperNode::start()
 	if (ret)
 		throw RuntimeError("Failed to create timer");
 
-	stats_print_header(STATS_FORMAT_HUMAN);
+	Stats::printHeader(Stats::Format::HUMAN);
 
 	state = STATE_STARTED;
 }

@@ -42,7 +42,7 @@ extern "C" {
 #include <villas/plugin.h>
 #include <villas/nodes/socket.hpp>
 #include <villas/utils.hpp>
-#include <villas/stats.h>
+#include <villas/stats.hpp>
 #include <villas/hook.h>
 #include <villas/format_type.h>
 #include <villas/super_node.hpp>
@@ -53,6 +53,7 @@ extern "C" {
 
 static pthread_t re_pthread;
 
+using namespace villas;
 using namespace villas::node;
 using namespace villas::utils;
 
@@ -300,9 +301,9 @@ static void rtcp_handler(const struct sa *src, struct rtcp_msg *msg, void *arg)
 			rtp_aimd(n, loss_frac);
 
 			if (n->stats) {
-				stats_update(n->stats, STATS_METRIC_RTP_PKTS_LOST, rr->lost);
-				stats_update(n->stats, STATS_METRIC_RTP_LOSS_FRACTION, loss_frac);
-				stats_update(n->stats, STATS_METRIC_RTP_JITTER, rr->jitter);
+				n->stats->update(Stats::Metric::RTP_PKTS_LOST, rr->lost);
+				n->stats->update(Stats::Metric::RTP_LOSS_FRACTION, loss_frac);
+				n->stats->update(Stats::Metric::RTP_JITTER, rr->jitter);
 			}
 
 			r->logger->info("RTCP: rr: num_rrs={}, loss_frac={}, pkts_lost={}, jitter={}", r->rtcp.num_rrs, loss_frac, rr->lost, rr->jitter);
