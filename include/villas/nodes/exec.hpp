@@ -44,7 +44,11 @@ struct exec {
 	std::unique_ptr<villas::utils::Popen> proc;
 
 	bool flush;
+	bool shell;
+	std::string working_dir;
 	std::string command;
+	villas::utils::Popen::arg_list arguments;
+	villas::utils::Popen::env_map environment;
 	struct format_type *format;
 	struct io io;
 };

@@ -26,7 +26,9 @@
 #include <villas/plugin.h>
 #include <villas/node/config.h>
 #include <villas/nodes/exec.hpp>
+#include <villas/node/exceptions.hpp>
 
+using namespace villas;
 using namespace villas::utils;
 
 int exec_parse(struct node *n, json_t *cfg)
@@ -36,26 +38,79 @@ int exec_parse(struct node *n, json_t *cfg)
 	json_error_t err;
 	int ret, flush = 0;
 
-	const char *command;
-	const char *format = "villas.human";
+	json_t *json_exec;
+	json_t *json_env = nullptr;
 
-	ret = json_unpack_ex(cfg, &err, 0, "{ s: s, s?: s, s?: b }",
-		"exec", &command,
+	const char *wd = nullptr;
+	const char *format = "villas.human";
+	int shell = -1;
+
+	ret = json_unpack_ex(cfg, &err, 0, "{ s: o, s?: s, s?: b, s?: o, s?: b, s?: s }",
+		"exec", &json_exec,
 		"format", &format,
-		"flush", &flush
+		"flush", &flush,
+		"environment", &json_env,
+		"shell", &shell,
+		"working_directory", &wd
 	);
 	if (ret)
-		jerror(&err, "Failed to parse configuration of node %s", node_name(n));
+		throw ConfigError(cfg, err, "node-config-node-exec");
 
-	e->command = command;
 	e->flush = flush;
+	e->shell = shell < 0 ? json_is_string(json_exec) : shell;
+
+	e->arguments.clear();
+	e->environment.clear();
+
+	if (json_is_string(json_exec)) {
+		if (shell == 0)
+			throw ConfigError(json_exec, "node-config-node-exec-shell", "The exec setting must be an array if shell mode is disabled.");
+
+		e->command = json_string_value(json_exec);
+	}
+	else if (json_is_array(json_exec)) {
+		if (shell == 1)
+			throw ConfigError(json_exec, "node-config-node-exec-shell", "The exec setting must be a string if shell mode is enabled.");
+
+		if (json_array_size(json_exec) < 1)
+			throw ConfigError(json_exec, "node-config-node-exec-exec", "At least one argument must be given");
+
+		size_t i;
+		json_t *json_arg;
+		json_array_foreach(json_exec, i, json_arg) {
+			if (!json_is_string(json_arg))
+				throw ConfigError(json_arg, "node-config-node-exec-exec", "All arguments must be of string type");
+
+			if (i == 0)
+				e->command = json_string_value(json_arg);
+			else
+				e->arguments.push_back(json_string_value(json_arg));
+		}
+	}
+
+	if (json_env) {
+		/* obj is a JSON object */
+		const char *key;
+		json_t *json_value;
+
+		json_object_foreach(json_env, key, json_value) {
+			if (!json_is_string(json_value))
+				throw ConfigError(json_value, "node-config-node-exec-environment", "Environment variables must be of string type");
+
+			e->environment[key] = json_string_value(json_value);
+		}
+	}
 
 	e->format = format_type_lookup(format);
-	if (!e->format)
-		error("Invalid format '%s' for node %s", format, node_name(n));
+	if (!e->format) {
+		json_t *json_format = json_object_get(cfg, "format");
+		throw ConfigError(json_format, "node-config-node-exec-format", "Invalid format: {)", format);
+	}
 
-	if (!(e->format->flags & IO_NEWLINES))
-		error("The exec node-type currently supports only line-delimited formats");
+	if (!(e->format->flags & IO_NEWLINES)) {
+		json_t *json_format = json_object_get(cfg, "format");
+		throw ConfigError(json_format, "node-config-node-exec-format", "Only line-delimited formats are currently supported");
+	}
 
 	return 0;
 }
@@ -75,7 +130,7 @@ int exec_prepare(struct node *n)
 		return ret;
 
 	/* Start subprocess */
-	e->proc = std::make_unique<Popen>(e->command);
+	e->proc = std::make_unique<Popen>(e->command, e->arguments, e->environment, e->working_dir, e->shell);
 	debug(2, "Started sub-process with pid=%d", e->proc->getPid());
 
 	return 0;

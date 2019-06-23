@@ -44,7 +44,7 @@ cat > ${CONFIG_FILE} << EOF
 			"type" : "exec",
 			"format" : "${FORMAT}",
 
-			"command" : "cat"
+			"exec" : "cat"
 		}
 	}
 }
