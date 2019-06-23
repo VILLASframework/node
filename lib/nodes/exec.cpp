@@ -214,10 +214,14 @@ char * exec_print(struct node *n)
 	struct exec *e = (struct exec *) n->_vd;
 	char *buf = nullptr;
 
-	strcatf(&buf, "format=%s, exec=%s, flush=%s",
+	strcatf(&buf, "format=%s, exec=%s, shell=%s, flush=%s, #environment=%zu, #arguments=%zu, working_dir=%s",
 		format_type_name(e->format),
 		e->command.c_str(),
-		e->flush ? "yes" : "no"
+		e->shell ? "yes" : "no",
+		e->flush ? "yes" : "no",
+		e->environment.size(),
+		e->arguments.size(),
+		e->working_dir.c_str()
 	);
 
 	return buf;
