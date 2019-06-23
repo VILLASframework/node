@@ -36,7 +36,7 @@ int exec_parse(struct node *n, json_t *cfg)
 	struct exec *e = (struct exec *) n->_vd;
 
 	json_error_t err;
-	int ret, flush = 0;
+	int ret, flush = 1;
 
 	json_t *json_exec;
 	json_t *json_env = nullptr;
