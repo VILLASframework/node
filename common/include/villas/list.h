@@ -28,7 +28,6 @@
 
 #pragma once
 
-#include <cstdbool>
 #include <sys/types.h>
 #include <pthread.h>
 

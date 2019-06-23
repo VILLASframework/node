@@ -27,7 +27,6 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstdint>
-#include <cstdbool>
 #include <cstdarg>
 #include <cstring>
 #include <unistd.h>

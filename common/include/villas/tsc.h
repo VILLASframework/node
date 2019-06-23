@@ -23,7 +23,6 @@
 
 #pragma once
 
-#include <cstdbool>
 #include <cpuid.h>
 #include <cinttypes>
 
