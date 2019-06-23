@@ -25,8 +25,8 @@
 
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
+#include <cstddef>
+#include <cstdint>
 #include <villas/list.h>
 
 #define PCI_SLOT(devfn)		(((devfn) >> 3) & 0x1f)

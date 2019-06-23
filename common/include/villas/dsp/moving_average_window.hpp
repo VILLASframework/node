@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <stddef.h>
+#include <cstddef>
 #include <villas/dsp/window.hpp>
 
 namespace villas {

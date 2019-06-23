@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *********************************************************************************/
 
-#include <stdint.h>
-#include <string.h>
+#include <cstdint>
+#include <cstring>
 #include <criterion/criterion.h>
 
 #include <villas/utils.hpp>

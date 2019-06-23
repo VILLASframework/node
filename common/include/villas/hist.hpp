@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include <stdio.h>
-#include <stdint.h>
+#include <cstdio>
+#include <cstdint>
 
 #include <jansson.h>
 

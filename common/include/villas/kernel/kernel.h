@@ -27,8 +27,8 @@
 
 #pragma once
 
-#include <string.h>
-#include <stdint.h>
+#include <cstring>
+#include <cstdint>
 
 #if WITH_CAP
 #include <sys/capability.h>

@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include <stdarg.h>
+#include <cstdarg>
 
 #include <jansson.h>
 

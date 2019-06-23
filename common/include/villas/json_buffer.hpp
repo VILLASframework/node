@@ -25,7 +25,7 @@
 
 #include <vector>
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include <jansson.h>
 

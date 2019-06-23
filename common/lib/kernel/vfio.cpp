@@ -37,7 +37,7 @@
 #include <cstdlib>
 #include <cstring>
 
-#include <stdint.h>
+#include <cstdint>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>

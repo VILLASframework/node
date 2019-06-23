@@ -22,7 +22,7 @@
 
 #include <dirent.h>
 #include <libgen.h>
-#include <string.h>
+#include <cstring>
 #include <unistd.h>
 #include <linux/limits.h>
 

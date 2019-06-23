@@ -28,10 +28,10 @@
 #include <vector>
 
 #include <signal.h>
-#include <stdlib.h>
-#include <stdint.h>
+#include <cstdlib>
+#include <cstdint>
 #include <sched.h>
-#include <assert.h>
+#include <cassert>
 #include <sys/types.h>
 
 #include <openssl/sha.h>
